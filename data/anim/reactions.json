@@ -1,0 +1,927 @@
+{
+  "schema": "anim.reactions/1",
+  "_about": "Hit reactions with variety (docs/animation/hit-reactions.md). Until now every blow drew the same two flinch poses with a body region's additive pose; here each blow picks a variant by its weight, the way it came and the body part it hit, and never the one the last blow picked. A variant is a set of bone turns (radians about x, y, z, in the bone's own frame: z pitches, y turns, x rolls) scaled by the blow's weight and shaped by an envelope (in over `attack` seconds, held `hold`, out by `dur`), plus how much of the generic flinch it replaces (`base`, 0 to 1), the body's own push along the blow (`dx`, `dy`) and a hips drop. Pitch turns are in the away-from-the-blow frame: positive tips the part away (a front blow's head goes back), and a blow from behind mirrors them; yaw and roll take a side from the blow's own draw. `weight`: light (force under `light_max`), medium (to `medium_max`), heavy (over). `region`: head, core, arms, legs or any. `dir`: front, back or any. `vert`: up (the blow lifts him), level, down (the blow drives him down) or any. After the variant a recovery (`recover`, by weight) draws the body getting itself back: a nod, a shake of the head, a breath. Every envelope's attack is 0.05 s or more and every recovery ramp 6 ticks or more (the snappy profile solves on twos). Under reduced motion the turns are 0.6. Render only, outside the sim's data hash. First values, Animation's.",
+  "light_max": 0.5,
+  "medium_max": 1.0,
+  "attack": 0.05,
+  "variants": [
+    {
+      "id": "jolt",
+      "weight": [
+        "light"
+      ],
+      "region": [
+        "any"
+      ],
+      "dir": [
+        "any"
+      ],
+      "vert": [
+        "any"
+      ],
+      "dur": 0.32,
+      "hold": 0.04,
+      "base": 0.8,
+      "dx": 1.0,
+      "dy": 0.0,
+      "hips": 0.4,
+      "bones": {
+        "head": [
+          0,
+          0,
+          0.22
+        ],
+        "neck": [
+          0,
+          0,
+          0.12
+        ],
+        "spine_2": [
+          0,
+          0,
+          0.06
+        ]
+      }
+    },
+    {
+      "id": "turn_away",
+      "weight": [
+        "light",
+        "medium"
+      ],
+      "region": [
+        "head",
+        "core",
+        "arms"
+      ],
+      "dir": [
+        "any"
+      ],
+      "vert": [
+        "level",
+        "up"
+      ],
+      "dur": 0.38,
+      "hold": 0.06,
+      "base": 0.6,
+      "dx": 0.8,
+      "dy": 0.0,
+      "hips": 0.0,
+      "bones": {
+        "pelvis": [
+          0,
+          0.24,
+          0
+        ],
+        "spine_2": [
+          0,
+          -0.2,
+          0.04
+        ],
+        "head": [
+          0,
+          -0.3,
+          0.1
+        ]
+      }
+    },
+    {
+      "id": "shrug",
+      "weight": [
+        "light"
+      ],
+      "region": [
+        "arms",
+        "core"
+      ],
+      "dir": [
+        "any"
+      ],
+      "vert": [
+        "any"
+      ],
+      "dur": 0.36,
+      "hold": 0.08,
+      "base": 0.7,
+      "dx": 0.7,
+      "dy": 0.0,
+      "hips": 0.5,
+      "bones": {
+        "clavicle_r": [
+          0,
+          0,
+          0.2
+        ],
+        "clavicle_l": [
+          0,
+          0,
+          0.2
+        ],
+        "head": [
+          0,
+          0,
+          -0.08
+        ],
+        "spine_1": [
+          0,
+          0,
+          -0.1
+        ]
+      }
+    },
+    {
+      "id": "step_back",
+      "weight": [
+        "light",
+        "medium"
+      ],
+      "region": [
+        "legs",
+        "core"
+      ],
+      "dir": [
+        "front"
+      ],
+      "vert": [
+        "level",
+        "down"
+      ],
+      "dur": 0.42,
+      "hold": 0.08,
+      "base": 0.6,
+      "dx": 1.2,
+      "dy": 0.0,
+      "hips": 0.8,
+      "bones": {
+        "thigh_r": [
+          0,
+          0,
+          0.38
+        ],
+        "shin_r": [
+          0,
+          0,
+          -0.5
+        ],
+        "spine_1": [
+          0,
+          0,
+          0.1
+        ],
+        "pelvis": [
+          0,
+          0.1,
+          0
+        ]
+      }
+    },
+    {
+      "id": "head_whip",
+      "weight": [
+        "medium",
+        "heavy"
+      ],
+      "region": [
+        "head"
+      ],
+      "dir": [
+        "any"
+      ],
+      "vert": [
+        "level",
+        "up"
+      ],
+      "dur": 0.55,
+      "hold": 0.08,
+      "base": 0.45,
+      "dx": 1.1,
+      "dy": 0.0,
+      "hips": 0.6,
+      "bones": {
+        "neck": [
+          0,
+          0,
+          0.5
+        ],
+        "head": [
+          0,
+          0,
+          0.65
+        ],
+        "spine_2": [
+          0,
+          0,
+          0.2
+        ],
+        "spine_1": [
+          0,
+          0,
+          0.08
+        ]
+      }
+    },
+    {
+      "id": "gut_fold",
+      "weight": [
+        "medium"
+      ],
+      "region": [
+        "core"
+      ],
+      "dir": [
+        "any"
+      ],
+      "vert": [
+        "level",
+        "down"
+      ],
+      "dur": 0.5,
+      "hold": 0.12,
+      "base": 0.35,
+      "dx": 0.8,
+      "dy": 0.0,
+      "hips": 1.2,
+      "bones": {
+        "spine_1": [
+          0,
+          0,
+          -0.42
+        ],
+        "spine_2": [
+          0,
+          0,
+          -0.5
+        ],
+        "head": [
+          0,
+          0,
+          -0.25
+        ],
+        "neck": [
+          0,
+          0,
+          -0.1
+        ]
+      }
+    },
+    {
+      "id": "arch_back",
+      "weight": [
+        "medium",
+        "heavy"
+      ],
+      "region": [
+        "core",
+        "head"
+      ],
+      "dir": [
+        "any"
+      ],
+      "vert": [
+        "up",
+        "level"
+      ],
+      "dur": 0.52,
+      "hold": 0.1,
+      "base": 0.4,
+      "dx": 1.1,
+      "dy": 0.4,
+      "hips": 0.0,
+      "bones": {
+        "spine_1": [
+          0,
+          0,
+          0.3
+        ],
+        "spine_2": [
+          0,
+          0,
+          0.4
+        ],
+        "head": [
+          0,
+          0,
+          0.35
+        ],
+        "neck": [
+          0,
+          0,
+          0.15
+        ]
+      }
+    },
+    {
+      "id": "stagger_side",
+      "weight": [
+        "medium",
+        "heavy"
+      ],
+      "region": [
+        "any"
+      ],
+      "dir": [
+        "any"
+      ],
+      "vert": [
+        "level"
+      ],
+      "dur": 0.55,
+      "hold": 0.1,
+      "base": 0.5,
+      "dx": 1.0,
+      "dy": 0.0,
+      "hips": 0.9,
+      "bones": {
+        "thigh_l": [
+          0,
+          0,
+          0.42
+        ],
+        "shin_l": [
+          0,
+          0,
+          -0.62
+        ],
+        "thigh_r": [
+          0,
+          0,
+          -0.2
+        ],
+        "pelvis": [
+          0,
+          0.22,
+          0
+        ],
+        "spine_2": [
+          0,
+          -0.16,
+          0
+        ]
+      }
+    },
+    {
+      "id": "knee_buckle",
+      "weight": [
+        "medium",
+        "heavy"
+      ],
+      "region": [
+        "legs"
+      ],
+      "dir": [
+        "any"
+      ],
+      "vert": [
+        "any"
+      ],
+      "dur": 0.6,
+      "hold": 0.14,
+      "base": 0.3,
+      "dx": 0.6,
+      "dy": 0.0,
+      "hips": 3.6,
+      "bones": {
+        "thigh_r": [
+          0,
+          0,
+          0.5
+        ],
+        "thigh_l": [
+          0,
+          0,
+          0.4
+        ],
+        "shin_r": [
+          0,
+          0,
+          -0.9
+        ],
+        "shin_l": [
+          0,
+          0,
+          -0.8
+        ],
+        "spine_1": [
+          0,
+          0,
+          -0.12
+        ]
+      }
+    },
+    {
+      "id": "spin_off",
+      "weight": [
+        "heavy"
+      ],
+      "region": [
+        "any"
+      ],
+      "dir": [
+        "any"
+      ],
+      "vert": [
+        "level",
+        "up"
+      ],
+      "dur": 0.6,
+      "hold": 0.1,
+      "base": 0.35,
+      "dx": 1.3,
+      "dy": 0.0,
+      "hips": 0.8,
+      "bones": {
+        "pelvis": [
+          0,
+          0.55,
+          0
+        ],
+        "spine_1": [
+          0,
+          -0.2,
+          0
+        ],
+        "spine_2": [
+          0,
+          -0.4,
+          0
+        ],
+        "head": [
+          0,
+          -0.5,
+          0.1
+        ],
+        "thigh_r": [
+          0,
+          0,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "double_over",
+      "weight": [
+        "heavy"
+      ],
+      "region": [
+        "core"
+      ],
+      "dir": [
+        "any"
+      ],
+      "vert": [
+        "level",
+        "down"
+      ],
+      "dur": 0.66,
+      "hold": 0.18,
+      "base": 0.25,
+      "dx": 0.9,
+      "dy": 0.0,
+      "hips": 3.0,
+      "bones": {
+        "spine_1": [
+          0,
+          0,
+          -0.65
+        ],
+        "spine_2": [
+          0,
+          0,
+          -0.75
+        ],
+        "head": [
+          0,
+          0,
+          -0.4
+        ],
+        "thigh_r": [
+          0,
+          0,
+          0.35
+        ],
+        "thigh_l": [
+          0,
+          0,
+          0.35
+        ],
+        "shin_r": [
+          0,
+          0,
+          -0.55
+        ],
+        "shin_l": [
+          0,
+          0,
+          -0.55
+        ]
+      }
+    },
+    {
+      "id": "arms_flung",
+      "weight": [
+        "heavy"
+      ],
+      "region": [
+        "arms",
+        "core"
+      ],
+      "dir": [
+        "any"
+      ],
+      "vert": [
+        "any"
+      ],
+      "dur": 0.6,
+      "hold": 0.1,
+      "base": 0.4,
+      "dx": 1.0,
+      "dy": 0.0,
+      "hips": 1.0,
+      "pose": "react.arms",
+      "pose_w": 0.6,
+      "bones": {
+        "spine_2": [
+          0,
+          0,
+          0.25
+        ],
+        "head": [
+          0,
+          0,
+          0.3
+        ]
+      }
+    },
+    {
+      "id": "slump",
+      "weight": [
+        "heavy"
+      ],
+      "region": [
+        "legs",
+        "core"
+      ],
+      "dir": [
+        "any"
+      ],
+      "vert": [
+        "down",
+        "level"
+      ],
+      "dur": 0.7,
+      "hold": 0.2,
+      "base": 0.25,
+      "dx": 0.5,
+      "dy": 0.0,
+      "hips": 5.0,
+      "bones": {
+        "thigh_r": [
+          0,
+          0,
+          0.5
+        ],
+        "thigh_l": [
+          0,
+          0,
+          0.5
+        ],
+        "shin_r": [
+          0,
+          0,
+          -1.0
+        ],
+        "shin_l": [
+          0,
+          0,
+          -1.0
+        ],
+        "spine_1": [
+          0,
+          0,
+          -0.3
+        ],
+        "head": [
+          0,
+          0,
+          -0.15
+        ]
+      }
+    },
+    {
+      "id": "duck_under",
+      "weight": [
+        "light",
+        "medium"
+      ],
+      "region": [
+        "head"
+      ],
+      "dir": [
+        "any"
+      ],
+      "vert": [
+        "any"
+      ],
+      "dur": 0.42,
+      "hold": 0.08,
+      "base": 0.55,
+      "dx": 0.8,
+      "dy": 0.0,
+      "hips": 2.0,
+      "bones": {
+        "head": [
+          0,
+          0,
+          -0.3
+        ],
+        "neck": [
+          0,
+          0,
+          -0.1
+        ],
+        "spine_1": [
+          0,
+          0,
+          -0.2
+        ],
+        "spine_2": [
+          0,
+          0,
+          -0.15
+        ]
+      }
+    },
+    {
+      "id": "hop_back",
+      "weight": [
+        "light"
+      ],
+      "region": [
+        "legs"
+      ],
+      "dir": [
+        "any"
+      ],
+      "vert": [
+        "any"
+      ],
+      "dur": 0.4,
+      "hold": 0.06,
+      "base": 0.6,
+      "dx": 1.2,
+      "dy": 0.0,
+      "hips": -0.6,
+      "bones": {
+        "thigh_r": [
+          0,
+          0,
+          0.3
+        ],
+        "thigh_l": [
+          0,
+          0,
+          0.3
+        ],
+        "shin_r": [
+          0,
+          0,
+          -0.5
+        ],
+        "shin_l": [
+          0,
+          0,
+          -0.5
+        ],
+        "spine_1": [
+          0,
+          0,
+          0.1
+        ]
+      }
+    },
+    {
+      "id": "shoulder_spin",
+      "weight": [
+        "medium"
+      ],
+      "region": [
+        "arms"
+      ],
+      "dir": [
+        "any"
+      ],
+      "vert": [
+        "any"
+      ],
+      "dur": 0.5,
+      "hold": 0.08,
+      "base": 0.45,
+      "dx": 1.0,
+      "dy": 0.0,
+      "hips": 0.5,
+      "bones": {
+        "pelvis": [
+          0,
+          0.3,
+          0
+        ],
+        "spine_2": [
+          0,
+          -0.32,
+          0.05
+        ],
+        "clavicle_r": [
+          0,
+          0,
+          0.25
+        ],
+        "clavicle_l": [
+          0,
+          0,
+          0.25
+        ],
+        "head": [
+          0,
+          -0.22,
+          0.1
+        ]
+      }
+    },
+    {
+      "id": "drop_head",
+      "weight": [
+        "medium",
+        "heavy"
+      ],
+      "region": [
+        "head"
+      ],
+      "dir": [
+        "any"
+      ],
+      "vert": [
+        "down"
+      ],
+      "dur": 0.55,
+      "hold": 0.12,
+      "base": 0.4,
+      "dx": 0.8,
+      "dy": 0.0,
+      "hips": 1.5,
+      "bones": {
+        "neck": [
+          0,
+          0,
+          -0.4
+        ],
+        "head": [
+          0,
+          0,
+          -0.5
+        ],
+        "spine_1": [
+          0,
+          0,
+          -0.2
+        ],
+        "spine_2": [
+          0,
+          0,
+          -0.25
+        ]
+      }
+    },
+    {
+      "id": "stumble_fwd",
+      "weight": [
+        "medium",
+        "heavy"
+      ],
+      "region": [
+        "any"
+      ],
+      "dir": [
+        "any"
+      ],
+      "vert": [
+        "any"
+      ],
+      "dur": 0.58,
+      "hold": 0.1,
+      "base": 0.45,
+      "dx": 0.9,
+      "dy": 0.0,
+      "hips": 1.2,
+      "bones": {
+        "thigh_r": [
+          0,
+          0,
+          0.45
+        ],
+        "thigh_l": [
+          0,
+          0,
+          -0.3
+        ],
+        "shin_l": [
+          0,
+          0,
+          -0.6
+        ],
+        "spine_1": [
+          0,
+          0,
+          -0.2
+        ],
+        "spine_2": [
+          0,
+          0,
+          -0.12
+        ]
+      }
+    }
+  ],
+  "recover": [
+    {
+      "id": "settle",
+      "weight": [
+        "light"
+      ],
+      "start": 0.2,
+      "dur": 0.3,
+      "hips": 0.0,
+      "bones": {
+        "head": [
+          0,
+          0,
+          -0.07
+        ],
+        "clavicle_r": [
+          0,
+          0,
+          -0.1
+        ],
+        "clavicle_l": [
+          0,
+          0,
+          -0.1
+        ]
+      },
+      "shake": 0.0
+    },
+    {
+      "id": "shake_off",
+      "weight": [
+        "medium"
+      ],
+      "start": 0.34,
+      "dur": 0.45,
+      "hips": 0.0,
+      "bones": {
+        "spine_2": [
+          0,
+          0.08,
+          0
+        ]
+      },
+      "shake": 0.3
+    },
+    {
+      "id": "catch_breath",
+      "weight": [
+        "heavy"
+      ],
+      "start": 0.46,
+      "dur": 0.7,
+      "hips": 1.5,
+      "bones": {
+        "spine_1": [
+          0,
+          0,
+          -0.22
+        ],
+        "spine_2": [
+          0,
+          0,
+          -0.18
+        ],
+        "clavicle_r": [
+          0,
+          0,
+          0.12
+        ],
+        "clavicle_l": [
+          0,
+          0,
+          0.12
+        ],
+        "head": [
+          0,
+          0,
+          -0.1
+        ]
+      },
+      "shake": 0.0
+    }
+  ]
+}

@@ -21,7 +21,14 @@
     {"id":"ua_r_tw","bone":"upper_arm_r","axis":"y","oop":1,"beta":0,"k_stiff":50,"k_loose":9,"c":5,"drag":0,"inertia":0,"lo":-1.1,"hi":1.1,"tsg":0,"tuck":0,"brace":0,"crumple":0,"arch":1,"lag":4},
     {"id":"pel_tw","bone":"pelvis","axis":"y","oop":1,"beta":0,"k_stiff":70,"k_loose":12,"c":6,"drag":0,"inertia":0,"lo":-0.5,"hi":0.5,"tsg":0,"tuck":0,"brace":0,"crumple":0,"arch":1,"lag":3}
   ],
-  "variety": {"hz":0.18,"phase":0.6,"amp":0.2,"side_dead":0.25},
+  "variety": {"hz":0.18,"phase":0.6,"amp":0.2,"side_dead":0.25, "comp": {"strength": 0.85, "max": 4.0}, "families": [
+      {"name": "rag", "amp": {"head": 0.8, "spine": 0.7, "arm": 0.9, "leg": 0.8, "oop": 1.0}, "hz": {"head": 0.4, "spine": 0.4, "arm": 0.4, "leg": 0.4, "oop": 0.4}, "dur": 1.25},
+      {"name": "windmill", "amp": {"head": 0.7, "spine": 0.8, "arm": 1.9, "leg": 0.6, "oop": 1.0}, "hz": {"head": 1.0, "spine": 1.0, "arm": 1.35, "leg": 1.0, "oop": 1.0}, "anti": {"arm": 1, "leg": 0}, "dur": 1.0},
+      {"name": "starfish", "amp": {"head": 0.4, "spine": 0.4, "arm": 0.5, "leg": 0.5, "oop": 0.5}, "hz": {"head": 0.9, "spine": 0.9, "arm": 0.9, "leg": 0.9, "oop": 0.9}, "bias": {"ua_l": 1.5, "ua_r": 1.5, "ua_l_x": 0.7, "ua_r_x": -0.7, "th_l": 0.5, "th_r": -0.4}, "dur": 1.1},
+      {"name": "frantic", "amp": {"head": 1.5, "spine": 1.5, "arm": 1.7, "leg": 1.7, "oop": 1.3}, "hz": {"head": 2.0, "spine": 2.0, "arm": 2.0, "leg": 2.0, "oop": 1.8}, "phase": 2.0, "dur": 0.8},
+      {"name": "whip", "amp": {"head": 2.0, "spine": 2.0, "arm": 0.5, "leg": 0.6, "oop": 2.0}, "hz": {"head": 1.4, "spine": 1.2, "arm": 1.0, "leg": 1.0, "oop": 1.3}, "dur": 0.9},
+      {"name": "cartwheel", "amp": {"head": 0.9, "spine": 1.0, "arm": 1.4, "leg": 1.6, "oop": 1.0}, "hz": {"head": 0.8, "spine": 0.8, "arm": 0.8, "leg": 0.8, "oop": 0.8}, "anti": {"arm": 0, "leg": 0}, "dur": 1.35}
+    ]},
   "drive": {"v0":1500,"a0":6000,"a_max":40000,"gate":0.25,"free_rate":18},
   "regimes": {"free":{"launched":0.85,"slide":0.55,"down":0.25},"tuck_spin":[10,15],"brace_time":[0.08,0.3]}
 }

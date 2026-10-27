@@ -608,6 +608,26 @@
       "schema": "anim-grip-feed.schema.json"
     },
     {
+      "match": "data/anim/locomotion.json",
+      "schema": "anim-locomotion.schema.json"
+    },
+    {
+      "match": "data/anim/ground_motion.json",
+      "schema": "anim-ground-motion.schema.json"
+    },
+    {
+      "match": "data/anim/reactions.json",
+      "schema": "anim-reactions.schema.json"
+    },
+    {
+      "match": "data/anim/secondary.json",
+      "schema": "anim-secondary.schema.json"
+    },
+    {
+      "match": "data/anim/pop.json",
+      "schema": "anim-pop.schema.json"
+    },
+    {
       "match": "data/anim/struggle.json",
       "schema": "anim-struggle.schema.json"
     },

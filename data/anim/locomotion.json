@@ -1,0 +1,15 @@
+{
+  "schema": "anim.locomotion/1",
+  "_about": "Flight locomotion (docs/animation/flight-locomotion.md). A free fighter in the air moves with weight: an acceleration lean on a spring that overshoots (shoulders lead, hips and head follow), a braking flare when he stops hard from speed (the brake skid's own pose, mixed in at a part weight), a dash's anticipation (a short coil with the weight back, over `dash_ticks`, that the surge then takes forward), a bank into curves (the body rolls about its forward axis and leans into the turn) and a hover that breathes. All of it is read from the sim's velocity and the dash input and never writes the sim. `lean`: stiff and damp are the spring's, `max_deg` the forward lean at `acc_ref` (`back_scale` of it going back) units a second squared of forward acceleration, `lag` how much of it the pelvis, neck and head take (the pelvis opposite). `flare`: `pose` is mixed in at `w` when he decelerates past `brake_ref` from over `min_speed`, in over `ticks`. `dash`: the anticipation. `bank`: `roll_deg` at `omega_ref` radians a second of the velocity's heading, from `min_speed`. `hover`: the breath (`rate_hz`, `chest_deg`, `shoulder_deg`, `bob` units) while slower than `still_speed` and off the ground; `fighters`: a roster id's own breath (`rate`, `depth`: the Protagonist's slow and wide, the Anti-hero's quicker and tighter) and lean (`lean` its scale, `damp` the spring's damping scale: the Protagonist floaty with more overshoot, the Anti-hero crisp). Every ramp is 6 ticks or more (the snappy profile solves on twos: a shorter one reads as a snap). Under reduced motion the lean, bank and breath are 0.5. Render only, outside the sim's data hash. First values, Animation's.",
+  "enter_ticks": 8,
+  "lean": {"stiff": 85.0, "damp": 9.5, "max_deg": 12.0, "back_scale": 0.65, "acc_ref": 2600.0, "filter_s": 0.05, "lag": {"pelvis": -0.22, "neck": 0.25, "head": 0.3}},
+  "flare": {"pose": "ab.skid.hold", "w": 0.3, "brake_ref": 1800.0, "min_speed": 330.0, "ticks": 12},
+  "dash": {"dash_ticks": 8, "lean_back": 0.5, "dip": 2.4},
+  "bank": {"roll_deg": 12.0, "omega_ref": 3.2, "min_speed": 280.0, "lean_in": 0.35},
+  "hover": {"still_speed": 140.0, "rate_hz": 0.3, "chest_deg": 2.4, "shoulder_deg": 3.0, "bob": 1.2, "off_ground": 8.0},
+  "recover": {"pose": "ab.skid.enter", "w": 0.55, "ticks": 28, "rock": 0.4, "min_air": 40.0, "min_speed": 250.0, "ref_speed": 1500.0},
+  "fighters": {
+    "PROTAGONIST": {"rate": 1.0, "depth": 1.0, "lean": 1.0, "damp": 0.85},
+    "RIVAL": {"rate": 1.45, "depth": 0.7, "lean": 1.0, "damp": 1.0}
+  }
+}

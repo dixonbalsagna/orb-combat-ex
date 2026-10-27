@@ -301828,6 +301828,6797 @@
       }
     },
     {
+      "id": "anim-locomotion-valid",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/schema": "anim.locomotion/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-locomotion-underscore-key-ok",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-locomotion-key-required-schema",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-locomotion-key-required-enter_ticks",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "del": [
+            "/enter_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-locomotion-key-required-lean",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "del": [
+            "/lean"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-locomotion-key-required-flare",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "del": [
+            "/flare"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-locomotion-key-required-dash",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "del": [
+            "/dash"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-locomotion-key-required-bank",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "del": [
+            "/bank"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-locomotion-key-required-hover",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "del": [
+            "/hover"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-locomotion-key-required-recover",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "del": [
+            "/recover"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-locomotion-key-required-fighters",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "del": [
+            "/fighters"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-locomotion-unknown-key",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "anim-locomotion-schema-version",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/schema": "anim.locomotion/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-locomotion-enter-ticks-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/enter_ticks": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/enter_ticks"
+      }
+    },
+    {
+      "id": "anim-locomotion-enter-ticks-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/enter_ticks": 31
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/enter_ticks"
+      }
+    },
+    {
+      "id": "anim-locomotion-enter-fraction",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/enter_ticks": 8.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enter_ticks"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-stiff-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/stiff": 9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/lean/stiff"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-stiff-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/stiff": 401
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/lean/stiff"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-damp-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/damp": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/lean/damp"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-damp-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/damp": 61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/lean/damp"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-max-deg-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/max_deg": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/lean/max_deg"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-max-deg-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/max_deg": 31
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/lean/max_deg"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-back-scale-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/back_scale": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/lean/back_scale"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-back-scale-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/back_scale": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/lean/back_scale"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-acc-ref-zero",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/acc_ref": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/lean/acc_ref"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-filter-s-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/filter_s": 0.001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/lean/filter_s"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-filter-s-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/filter_s": 0.6
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/lean/filter_s"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-lag-pelvis-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/lag/pelvis": -1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/lean/lag/pelvis"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-lag-pelvis-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/lag/pelvis": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/lean/lag/pelvis"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-lag-neck-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/lag/neck": -1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/lean/lag/neck"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-lag-neck-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/lag/neck": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/lean/lag/neck"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-lag-head-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/lag/head": -1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/lean/lag/head"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-lag-head-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/lag/head": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/lean/lag/head"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-key-missing",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "del": [
+            "/lean/lag"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/lean"
+      }
+    },
+    {
+      "id": "anim-locomotion-lean-unknown-key",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/lean/wobble": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/lean/wobble"
+      }
+    },
+    {
+      "id": "anim-locomotion-flare-w-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/flare/w": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/flare/w"
+      }
+    },
+    {
+      "id": "anim-locomotion-flare-w-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/flare/w": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/flare/w"
+      }
+    },
+    {
+      "id": "anim-locomotion-flare-brake-ref-zero",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/flare/brake_ref": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/flare/brake_ref"
+      }
+    },
+    {
+      "id": "anim-locomotion-flare-min-speed-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/flare/min_speed": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/flare/min_speed"
+      }
+    },
+    {
+      "id": "anim-locomotion-flare-min-speed-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/flare/min_speed": 2001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/flare/min_speed"
+      }
+    },
+    {
+      "id": "anim-locomotion-flare-ticks-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/flare/ticks": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/flare/ticks"
+      }
+    },
+    {
+      "id": "anim-locomotion-flare-ticks-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/flare/ticks": 31
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/flare/ticks"
+      }
+    },
+    {
+      "id": "anim-locomotion-flare-pose-shape",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/flare/pose": "Skid Hold"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/flare/pose"
+      }
+    },
+    {
+      "id": "anim-locomotion-flare-pose-missing",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/flare/pose": "ab.no_such.pose"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-locomotion-pose",
+        "pointer": "/flare/pose"
+      }
+    },
+    {
+      "id": "anim-locomotion-recover-w-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/recover/w": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/recover/w"
+      }
+    },
+    {
+      "id": "anim-locomotion-recover-w-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/recover/w": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/recover/w"
+      }
+    },
+    {
+      "id": "anim-locomotion-recover-ticks-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/recover/ticks": 11
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/recover/ticks"
+      }
+    },
+    {
+      "id": "anim-locomotion-recover-ticks-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/recover/ticks": 61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/recover/ticks"
+      }
+    },
+    {
+      "id": "anim-locomotion-recover-rock-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/recover/rock": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/recover/rock"
+      }
+    },
+    {
+      "id": "anim-locomotion-recover-rock-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/recover/rock": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/recover/rock"
+      }
+    },
+    {
+      "id": "anim-locomotion-recover-min-air-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/recover/min_air": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/recover/min_air"
+      }
+    },
+    {
+      "id": "anim-locomotion-recover-min-air-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/recover/min_air": 501
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/recover/min_air"
+      }
+    },
+    {
+      "id": "anim-locomotion-recover-min-speed-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/recover/min_speed": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/recover/min_speed"
+      }
+    },
+    {
+      "id": "anim-locomotion-recover-min-speed-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/recover/min_speed": 3001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/recover/min_speed"
+      }
+    },
+    {
+      "id": "anim-locomotion-recover-ticks-fraction",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/recover/ticks": 28.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/recover/ticks"
+      }
+    },
+    {
+      "id": "anim-locomotion-recover-ref-speed-zero",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/recover/ref_speed": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/recover/ref_speed"
+      }
+    },
+    {
+      "id": "anim-locomotion-recover-key-missing",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "del": [
+            "/recover/rock"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/recover"
+      }
+    },
+    {
+      "id": "anim-locomotion-recover-unknown-key",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/recover/spin": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/recover/spin"
+      }
+    },
+    {
+      "id": "anim-locomotion-recover-pose-shape",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/recover/pose": "Skid Enter"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/recover/pose"
+      }
+    },
+    {
+      "id": "anim-locomotion-recover-pose-missing",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/recover/pose": "ab.no_such.pose"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-locomotion-pose",
+        "pointer": "/recover/pose"
+      }
+    },
+    {
+      "id": "anim-locomotion-dash-dash-ticks-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/dash/dash_ticks": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/dash/dash_ticks"
+      }
+    },
+    {
+      "id": "anim-locomotion-dash-dash-ticks-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/dash/dash_ticks": 31
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/dash/dash_ticks"
+      }
+    },
+    {
+      "id": "anim-locomotion-dash-lean-back-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/dash/lean_back": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/dash/lean_back"
+      }
+    },
+    {
+      "id": "anim-locomotion-dash-lean-back-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/dash/lean_back": 1.6
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/dash/lean_back"
+      }
+    },
+    {
+      "id": "anim-locomotion-dash-dip-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/dash/dip": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/dash/dip"
+      }
+    },
+    {
+      "id": "anim-locomotion-dash-dip-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/dash/dip": 11
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/dash/dip"
+      }
+    },
+    {
+      "id": "anim-locomotion-bank-roll-deg-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/bank/roll_deg": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/bank/roll_deg"
+      }
+    },
+    {
+      "id": "anim-locomotion-bank-roll-deg-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/bank/roll_deg": 31
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/bank/roll_deg"
+      }
+    },
+    {
+      "id": "anim-locomotion-bank-omega-ref-zero",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/bank/omega_ref": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/bank/omega_ref"
+      }
+    },
+    {
+      "id": "anim-locomotion-bank-min-speed-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/bank/min_speed": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/bank/min_speed"
+      }
+    },
+    {
+      "id": "anim-locomotion-bank-min-speed-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/bank/min_speed": 2001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/bank/min_speed"
+      }
+    },
+    {
+      "id": "anim-locomotion-bank-lean-in-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/bank/lean_in": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/bank/lean_in"
+      }
+    },
+    {
+      "id": "anim-locomotion-bank-lean-in-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/bank/lean_in": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/bank/lean_in"
+      }
+    },
+    {
+      "id": "anim-locomotion-hover-still-speed-zero",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/hover/still_speed": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/hover/still_speed"
+      }
+    },
+    {
+      "id": "anim-locomotion-hover-rate-hz-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/hover/rate_hz": 0.01
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/hover/rate_hz"
+      }
+    },
+    {
+      "id": "anim-locomotion-hover-rate-hz-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/hover/rate_hz": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/hover/rate_hz"
+      }
+    },
+    {
+      "id": "anim-locomotion-hover-chest-deg-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/hover/chest_deg": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/hover/chest_deg"
+      }
+    },
+    {
+      "id": "anim-locomotion-hover-chest-deg-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/hover/chest_deg": 11
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/hover/chest_deg"
+      }
+    },
+    {
+      "id": "anim-locomotion-hover-shoulder-deg-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/hover/shoulder_deg": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/hover/shoulder_deg"
+      }
+    },
+    {
+      "id": "anim-locomotion-hover-shoulder-deg-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/hover/shoulder_deg": 11
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/hover/shoulder_deg"
+      }
+    },
+    {
+      "id": "anim-locomotion-hover-bob-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/hover/bob": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/hover/bob"
+      }
+    },
+    {
+      "id": "anim-locomotion-hover-bob-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/hover/bob": 6
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/hover/bob"
+      }
+    },
+    {
+      "id": "anim-locomotion-hover-off-ground-under",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/hover/off_ground": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/hover/off_ground"
+      }
+    },
+    {
+      "id": "anim-locomotion-hover-off-ground-over",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/hover/off_ground": 101
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/hover/off_ground"
+      }
+    },
+    {
+      "id": "anim-locomotion-fighter-key-not-an-id",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/fighters/rival": {
+              "rate": 1,
+              "depth": 1,
+              "lean": 1,
+              "damp": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/fighters/rival"
+      }
+    },
+    {
+      "id": "anim-locomotion-fighter-key-missing",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "del": [
+            "/fighters/RIVAL/damp"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/fighters/RIVAL"
+      }
+    },
+    {
+      "id": "anim-locomotion-fighter-unknown-key",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/fighters/RIVAL/speed": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/fighters/RIVAL/speed"
+      }
+    },
+    {
+      "id": "anim-locomotion-fighter-rate-over-3",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/fighters/RIVAL/rate": 4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/fighters/RIVAL/rate"
+      }
+    },
+    {
+      "id": "anim-locomotion-fighter-depth-negative",
+      "schema": "anim-locomotion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/locomotion.json",
+          "set": {
+            "/fighters/RIVAL/depth": -0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/fighters/RIVAL/depth"
+      }
+    },
+    {
+      "id": "anim-ground-motion-valid",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/schema": "anim.ground_motion/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-ground-motion-underscore-key-ok",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-ground-motion-key-required-schema",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-ground-motion-key-required-enter_ticks",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "del": [
+            "/enter_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-ground-motion-key-required-gait",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "del": [
+            "/gait"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-ground-motion-key-required-takeoff",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "del": [
+            "/takeoff"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-ground-motion-key-required-land",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "del": [
+            "/land"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-ground-motion-key-required-surfaces",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "del": [
+            "/surfaces"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-ground-motion-key-required-look",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "del": [
+            "/look"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-ground-motion-key-required-fighters",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "del": [
+            "/fighters"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-ground-motion-unknown-key",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "anim-ground-motion-schema-version",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/schema": "anim.ground_motion/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-ground-motion-enter-ticks-under",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/enter_ticks": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/enter_ticks"
+      }
+    },
+    {
+      "id": "anim-ground-motion-enter-ticks-over",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/enter_ticks": 31
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/enter_ticks"
+      }
+    },
+    {
+      "id": "anim-ground-motion-enter-fraction",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/enter_ticks": 8.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enter_ticks"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-min-speed-under",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/min_speed": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/gait/min_speed"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-min-speed-over",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/min_speed": 3001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/gait/min_speed"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-full-speed-under",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/full_speed": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/gait/full_speed"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-full-speed-over",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/full_speed": 3001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/gait/full_speed"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-run-speed-under",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/run_speed": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/gait/run_speed"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-run-speed-over",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/run_speed": 3001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/gait/run_speed"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-max-speed-under",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/max_speed": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/gait/max_speed"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-max-speed-over",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/max_speed": 3001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/gait/max_speed"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-stride-under",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/stride": 9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/gait/stride"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-stride-over",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/stride": 301
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/gait/stride"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-lean-deg-under",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/lean_deg": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/gait/lean_deg"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-lean-deg-over",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/lean_deg": 16
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/gait/lean_deg"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-thigh-over-3",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/thigh/1": 3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/gait/thigh/1"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-thigh-negative",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/thigh/0": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/gait/thigh/0"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-thigh-needs-two",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/thigh": [
+              0.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/gait/thigh"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-knee-over-3",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/knee/1": 3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/gait/knee/1"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-knee-negative",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/knee/0": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/gait/knee/0"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-knee-needs-two",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/knee": [
+              0.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/gait/knee"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-bob-over-3",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/bob/1": 3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/gait/bob/1"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-bob-negative",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/bob/0": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/gait/bob/0"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-bob-needs-two",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/bob": [
+              0.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/gait/bob"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-twist-over-3",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/twist/1": 3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/gait/twist/1"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-twist-negative",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/twist/0": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/gait/twist/0"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-twist-needs-two",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/twist": [
+              0.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/gait/twist"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-key-missing",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "del": [
+            "/gait/stride"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/gait"
+      }
+    },
+    {
+      "id": "anim-ground-motion-gait-unknown-key",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/gallop": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/gait/gallop"
+      }
+    },
+    {
+      "id": "anim-ground-motion-speeds-equal",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/full_speed": 40
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:ground-motion-speeds",
+        "pointer": "/gait/full_speed"
+      }
+    },
+    {
+      "id": "anim-ground-motion-speeds-descend",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/run_speed": 100
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:ground-motion-speeds",
+        "pointer": "/gait/run_speed"
+      }
+    },
+    {
+      "id": "anim-ground-motion-speeds-max-under-run",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/gait/max_speed": 500
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:ground-motion-speeds",
+        "pointer": "/gait/max_speed"
+      }
+    },
+    {
+      "id": "anim-ground-motion-takeoff-min-vy-under",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/takeoff/min_vy": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/takeoff/min_vy"
+      }
+    },
+    {
+      "id": "anim-ground-motion-takeoff-min-vy-over",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/takeoff/min_vy": 2001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/takeoff/min_vy"
+      }
+    },
+    {
+      "id": "anim-ground-motion-takeoff-ticks-under",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/takeoff/ticks": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/takeoff/ticks"
+      }
+    },
+    {
+      "id": "anim-ground-motion-takeoff-ticks-over",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/takeoff/ticks": 41
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/takeoff/ticks"
+      }
+    },
+    {
+      "id": "anim-ground-motion-takeoff-kick-under",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/takeoff/kick": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/takeoff/kick"
+      }
+    },
+    {
+      "id": "anim-ground-motion-takeoff-kick-over",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/takeoff/kick": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/takeoff/kick"
+      }
+    },
+    {
+      "id": "anim-ground-motion-takeoff-stretch-under",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/takeoff/stretch": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/takeoff/stretch"
+      }
+    },
+    {
+      "id": "anim-ground-motion-takeoff-stretch-over",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/takeoff/stretch": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/takeoff/stretch"
+      }
+    },
+    {
+      "id": "anim-ground-motion-takeoff-lift-under",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/takeoff/lift": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/takeoff/lift"
+      }
+    },
+    {
+      "id": "anim-ground-motion-takeoff-lift-over",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/takeoff/lift": 11
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/takeoff/lift"
+      }
+    },
+    {
+      "id": "anim-ground-motion-land-min-vy-under",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/land/min_vy": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/land/min_vy"
+      }
+    },
+    {
+      "id": "anim-ground-motion-land-min-vy-over",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/land/min_vy": 2001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/land/min_vy"
+      }
+    },
+    {
+      "id": "anim-ground-motion-land-ticks-under",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/land/ticks": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/land/ticks"
+      }
+    },
+    {
+      "id": "anim-ground-motion-land-ticks-over",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/land/ticks": 61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/land/ticks"
+      }
+    },
+    {
+      "id": "anim-ground-motion-land-knee-under",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/land/knee": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/land/knee"
+      }
+    },
+    {
+      "id": "anim-ground-motion-land-knee-over",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/land/knee": 3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/land/knee"
+      }
+    },
+    {
+      "id": "anim-ground-motion-land-ref-vy-zero",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/land/ref_vy": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/land/ref_vy"
+      }
+    },
+    {
+      "id": "anim-ground-motion-land-sink-over-20",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/land/sink/1": 21
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/land/sink/1"
+      }
+    },
+    {
+      "id": "anim-ground-motion-land-flex-over-2",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/land/flex/1": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/land/flex/1"
+      }
+    },
+    {
+      "id": "anim-ground-motion-surface-missing",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "del": [
+            "/surfaces/water"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/surfaces"
+      }
+    },
+    {
+      "id": "anim-ground-motion-surface-unknown",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/surfaces/lava": {
+              "sink": 1,
+              "ticks": 1,
+              "slide": 0,
+              "stumble": 0,
+              "lift": 1,
+              "amp": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/surfaces/lava"
+      }
+    },
+    {
+      "id": "anim-ground-motion-surface-key-missing",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "del": [
+            "/surfaces/sand/slide"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/surfaces/sand"
+      }
+    },
+    {
+      "id": "anim-ground-motion-surface-unknown-key",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/surfaces/sand/grip": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/surfaces/sand/grip"
+      }
+    },
+    {
+      "id": "anim-ground-motion-surface-sink-over-20",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/surfaces/sand/sink": 21
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/surfaces/sand/sink"
+      }
+    },
+    {
+      "id": "anim-ground-motion-surface-amp-negative",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/surfaces/sand/amp": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/surfaces/sand/amp"
+      }
+    },
+    {
+      "id": "anim-ground-motion-look-class-missing",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "del": [
+            "/look/ash"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/look"
+      }
+    },
+    {
+      "id": "anim-ground-motion-look-class-unknown",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/look/lava": "rock"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/look/lava"
+      }
+    },
+    {
+      "id": "anim-ground-motion-look-surface-unknown",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/look/ice": "glass"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/look/ice"
+      }
+    },
+    {
+      "id": "anim-ground-motion-look-value-not-a-string",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/look/ice": 3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/look/ice"
+      }
+    },
+    {
+      "id": "anim-ground-motion-fighter-key-not-an-id",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/fighters/rival": {
+              "cadence": 1,
+              "amp": 1,
+              "bob": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/fighters/rival"
+      }
+    },
+    {
+      "id": "anim-ground-motion-fighter-key-missing",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "del": [
+            "/fighters/RIVAL/bob"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/fighters/RIVAL"
+      }
+    },
+    {
+      "id": "anim-ground-motion-fighter-unknown-key",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/fighters/RIVAL/speed": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/fighters/RIVAL/speed"
+      }
+    },
+    {
+      "id": "anim-ground-motion-fighter-cadence-over-3",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/fighters/RIVAL/cadence": 4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/fighters/RIVAL/cadence"
+      }
+    },
+    {
+      "id": "anim-ground-motion-fighter-amp-negative",
+      "schema": "anim-ground-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ground_motion.json",
+          "set": {
+            "/fighters/RIVAL/amp": -0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/fighters/RIVAL/amp"
+      }
+    },
+    {
+      "id": "anim-reactions-valid",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/schema": "anim.reactions/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-reactions-underscore-key-ok",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-reactions-key-required-schema",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-reactions-key-required-light-max",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "del": [
+            "/light_max"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-reactions-key-required-medium-max",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "del": [
+            "/medium_max"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-reactions-key-required-attack",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "del": [
+            "/attack"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-reactions-key-required-variants",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "del": [
+            "/variants"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-reactions-key-required-recover",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "del": [
+            "/recover"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-reactions-unknown-key",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "anim-reactions-schema-version",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/schema": "anim.reactions/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-reactions-light-max-zero",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/light_max": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/light_max"
+      }
+    },
+    {
+      "id": "anim-reactions-medium-max-zero",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/medium_max": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/medium_max"
+      }
+    },
+    {
+      "id": "anim-reactions-medium-not-above-light",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/medium_max": 0.4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-reactions-weights",
+        "pointer": "/medium_max"
+      }
+    },
+    {
+      "id": "anim-reactions-attack-under",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/attack": 0.01
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/attack"
+      }
+    },
+    {
+      "id": "anim-reactions-attack-over",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/attack": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/attack"
+      }
+    },
+    {
+      "id": "anim-reactions-variant-key-missing",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "del": [
+            "/variants/0/dur"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variants/0"
+      }
+    },
+    {
+      "id": "anim-reactions-variant-unknown-key",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/spin": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/variants/0/spin"
+      }
+    },
+    {
+      "id": "anim-reactions-variant-id-shape",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/id": "Jolt It"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/variants/0/id"
+      }
+    },
+    {
+      "id": "anim-reactions-variant-id-duplicate",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/1/id": "jolt"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-reactions-id",
+        "pointer": "/variants/1/id"
+      }
+    },
+    {
+      "id": "anim-reactions-variant-weight-word",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/weight": [
+              "feather"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/variants/0/weight/0"
+      }
+    },
+    {
+      "id": "anim-reactions-variant-weight-empty",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/weight": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/variants/0/weight"
+      }
+    },
+    {
+      "id": "anim-reactions-variant-region-word",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/region": [
+              "tail"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/variants/0/region/0"
+      }
+    },
+    {
+      "id": "anim-reactions-variant-dir-word",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/dir": [
+              "sideways"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/variants/0/dir/0"
+      }
+    },
+    {
+      "id": "anim-reactions-variant-vert-word",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/vert": [
+              "across"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/variants/0/vert/0"
+      }
+    },
+    {
+      "id": "anim-reactions-variants-0-dur-under",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/dur": 0.05
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/variants/0/dur"
+      }
+    },
+    {
+      "id": "anim-reactions-variants-0-dur-over",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/dur": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/variants/0/dur"
+      }
+    },
+    {
+      "id": "anim-reactions-variants-0-hold-under",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/hold": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/variants/0/hold"
+      }
+    },
+    {
+      "id": "anim-reactions-variants-0-hold-over",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/hold": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/variants/0/hold"
+      }
+    },
+    {
+      "id": "anim-reactions-variants-0-base-under",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/base": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/variants/0/base"
+      }
+    },
+    {
+      "id": "anim-reactions-variants-0-base-over",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/base": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/variants/0/base"
+      }
+    },
+    {
+      "id": "anim-reactions-variants-0-dx-under",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/dx": -3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/variants/0/dx"
+      }
+    },
+    {
+      "id": "anim-reactions-variants-0-dx-over",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/dx": 3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/variants/0/dx"
+      }
+    },
+    {
+      "id": "anim-reactions-variants-0-dy-under",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/dy": -3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/variants/0/dy"
+      }
+    },
+    {
+      "id": "anim-reactions-variants-0-dy-over",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/dy": 3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/variants/0/dy"
+      }
+    },
+    {
+      "id": "anim-reactions-variants-0-hips-under",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/hips": -11
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/variants/0/hips"
+      }
+    },
+    {
+      "id": "anim-reactions-variants-0-hips-over",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/hips": 11
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/variants/0/hips"
+      }
+    },
+    {
+      "id": "anim-reactions-bones-value-over",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/bones/head": [
+              0,
+              0,
+              2
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/variants/0/bones/head/2"
+      }
+    },
+    {
+      "id": "anim-reactions-bones-value-under",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/bones/head": [
+              -2,
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/variants/0/bones/head/0"
+      }
+    },
+    {
+      "id": "anim-reactions-bones-need-three",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/bones/head": [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/variants/0/bones/head"
+      }
+    },
+    {
+      "id": "anim-reactions-bone-not-a-bone",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/bones/tail": [
+              0,
+              0,
+              0.1
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-reactions-bone",
+        "pointer": "/variants/0/bones/tail"
+      }
+    },
+    {
+      "id": "anim-reactions-recover-bone-not-a-bone",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/recover/0/bones/wing": [
+              0,
+              0,
+              0.1
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-reactions-bone",
+        "pointer": "/recover/0/bones/wing"
+      }
+    },
+    {
+      "id": "anim-reactions-pose-missing",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/pose": "react.no_such_pose",
+            "/variants/0/pose_w": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-reactions-pose",
+        "pointer": "/variants/0/pose"
+      }
+    },
+    {
+      "id": "anim-reactions-pose-w-over-one",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/pose_w": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/variants/0/pose_w"
+      }
+    },
+    {
+      "id": "anim-reactions-variety-too-few",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants": [
+              {
+                "id": "only",
+                "weight": [
+                  "light"
+                ],
+                "region": [
+                  "any"
+                ],
+                "dir": [
+                  "any"
+                ],
+                "vert": [
+                  "any"
+                ],
+                "dur": 0.3,
+                "hold": 0,
+                "base": 0.5,
+                "dx": 0,
+                "dy": 0,
+                "hips": 0,
+                "bones": {
+                  "head": [
+                    0,
+                    0,
+                    0.1
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-reactions-variety",
+        "pointer": "/variants"
+      }
+    },
+    {
+      "id": "anim-reactions-variety-one-short",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/variants/0/weight": [
+              "medium"
+            ],
+            "/variants/1/weight": [
+              "medium"
+            ],
+            "/variants/2/weight": [
+              "medium"
+            ],
+            "/variants/3/weight": [
+              "medium"
+            ],
+            "/variants/14/weight": [
+              "medium"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-reactions-variety",
+        "pointer": "/variants"
+      }
+    },
+    {
+      "id": "anim-reactions-recover-key-missing",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "del": [
+            "/recover/0/shake"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/recover/0"
+      }
+    },
+    {
+      "id": "anim-reactions-recover-id-duplicate",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/recover/1/id": "settle"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-reactions-id",
+        "pointer": "/recover/1/id"
+      }
+    },
+    {
+      "id": "anim-reactions-recover-start-over",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/recover/0/start": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/recover/0/start"
+      }
+    },
+    {
+      "id": "anim-reactions-recover-dur-under",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/recover/0/dur": 0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/recover/0/dur"
+      }
+    },
+    {
+      "id": "anim-reactions-recover-shake-over",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/recover/0/shake": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/recover/0/shake"
+      }
+    },
+    {
+      "id": "anim-reactions-recover-hips-over",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/recover/0/hips": 11
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/recover/0/hips"
+      }
+    },
+    {
+      "id": "anim-reactions-recover-weight-missing",
+      "schema": "anim-reactions.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/reactions.json",
+          "set": {
+            "/recover/2/weight": [
+              "medium"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-reactions-recover",
+        "pointer": "/recover"
+      }
+    },
+    {
+      "id": "anim-secondary-valid",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/schema": "anim.secondary/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-secondary-underscore-key-ok",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-secondary-key-required-schema",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-secondary-key-required-dv-ref",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "del": [
+            "/dv_ref"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-secondary-key-required-hit",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "del": [
+            "/hit"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-secondary-key-required-parts",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "del": [
+            "/parts"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-secondary-key-required-fighters",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "del": [
+            "/fighters"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-secondary-unknown-key",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "anim-secondary-schema-version",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/schema": "anim.secondary/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-secondary-dv-ref-needs-two",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/dv_ref": [
+              110
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/dv_ref"
+      }
+    },
+    {
+      "id": "anim-secondary-dv-ref-zero",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/dv_ref/0": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/dv_ref/0"
+      }
+    },
+    {
+      "id": "anim-secondary-dv-ref-reversed",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/dv_ref": [
+              600,
+              110
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-secondary-dv-ref",
+        "pointer": "/dv_ref"
+      }
+    },
+    {
+      "id": "anim-secondary-dv-ref-equal",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/dv_ref": [
+              200,
+              200
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-secondary-dv-ref",
+        "pointer": "/dv_ref"
+      }
+    },
+    {
+      "id": "anim-secondary-hit-force-ref-zero",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/hit/force_ref": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/hit/force_ref"
+      }
+    },
+    {
+      "id": "anim-secondary-hit-key-missing",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "del": [
+            "/hit/force_ref"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/hit"
+      }
+    },
+    {
+      "id": "anim-secondary-part-missing",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "del": [
+            "/parts/head"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/parts"
+      }
+    },
+    {
+      "id": "anim-secondary-part-unknown",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/tail": {
+              "stiff": 50,
+              "damp": 5,
+              "gx": 0,
+              "gy": 0,
+              "hit": 1,
+              "max": 0.3
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/parts/tail"
+      }
+    },
+    {
+      "id": "anim-secondary-part-key-missing",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "del": [
+            "/parts/head/max"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/parts/head"
+      }
+    },
+    {
+      "id": "anim-secondary-part-unknown-key",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/head/wobble": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/parts/head/wobble"
+      }
+    },
+    {
+      "id": "anim-secondary-parts-head-stiff-under",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/head/stiff": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/parts/head/stiff"
+      }
+    },
+    {
+      "id": "anim-secondary-parts-head-stiff-over",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/head/stiff": 301
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/parts/head/stiff"
+      }
+    },
+    {
+      "id": "anim-secondary-parts-head-damp-under",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/head/damp": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/parts/head/damp"
+      }
+    },
+    {
+      "id": "anim-secondary-parts-head-damp-over",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/head/damp": 31
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/parts/head/damp"
+      }
+    },
+    {
+      "id": "anim-secondary-parts-head-gx-under",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/head/gx": -11
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/parts/head/gx"
+      }
+    },
+    {
+      "id": "anim-secondary-parts-head-gx-over",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/head/gx": 11
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/parts/head/gx"
+      }
+    },
+    {
+      "id": "anim-secondary-parts-head-gy-under",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/head/gy": -11
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/parts/head/gy"
+      }
+    },
+    {
+      "id": "anim-secondary-parts-head-gy-over",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/head/gy": 11
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/parts/head/gy"
+      }
+    },
+    {
+      "id": "anim-secondary-parts-head-hit-under",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/head/hit": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/parts/head/hit"
+      }
+    },
+    {
+      "id": "anim-secondary-parts-head-hit-over",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/head/hit": 21
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/parts/head/hit"
+      }
+    },
+    {
+      "id": "anim-secondary-parts-head-max-under",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/head/max": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/parts/head/max"
+      }
+    },
+    {
+      "id": "anim-secondary-parts-head-max-over",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/head/max": 1.3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/parts/head/max"
+      }
+    },
+    {
+      "id": "anim-secondary-parts-forearm-l-stiff-under",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/forearm_l/stiff": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/parts/forearm_l/stiff"
+      }
+    },
+    {
+      "id": "anim-secondary-parts-forearm-l-stiff-over",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/forearm_l/stiff": 301
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/parts/forearm_l/stiff"
+      }
+    },
+    {
+      "id": "anim-secondary-parts-forearm-r-max-under",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/forearm_r/max": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/parts/forearm_r/max"
+      }
+    },
+    {
+      "id": "anim-secondary-parts-forearm-r-max-over",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/parts/forearm_r/max": 1.3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/parts/forearm_r/max"
+      }
+    },
+    {
+      "id": "anim-secondary-fighter-key-not-an-id",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/fighters/rival": {
+              "scale": 1,
+              "damp": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/fighters/rival"
+      }
+    },
+    {
+      "id": "anim-secondary-fighter-key-missing",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "del": [
+            "/fighters/RIVAL/damp"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/fighters/RIVAL"
+      }
+    },
+    {
+      "id": "anim-secondary-fighter-unknown-key",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/fighters/RIVAL/speed": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/fighters/RIVAL/speed"
+      }
+    },
+    {
+      "id": "anim-secondary-fighters-RIVAL-scale-under",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/fighters/RIVAL/scale": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/fighters/RIVAL/scale"
+      }
+    },
+    {
+      "id": "anim-secondary-fighters-RIVAL-scale-over",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/fighters/RIVAL/scale": 3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/fighters/RIVAL/scale"
+      }
+    },
+    {
+      "id": "anim-secondary-fighters-RIVAL-damp-under",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/fighters/RIVAL/damp": 0.05
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/fighters/RIVAL/damp"
+      }
+    },
+    {
+      "id": "anim-secondary-fighters-RIVAL-damp-over",
+      "schema": "anim-secondary.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/secondary.json",
+          "set": {
+            "/fighters/RIVAL/damp": 3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/fighters/RIVAL/damp"
+      }
+    },
+    {
+      "id": "anim-pop-valid",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/schema": "anim.pop/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pop-underscore-key-ok",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pop-key-required-schema",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-pop-key-required-ramp-ticks",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "del": [
+            "/ramp_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-pop-key-required-busy-scale",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "del": [
+            "/busy_scale"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-pop-key-required-height-ref",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "del": [
+            "/height_ref"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-pop-key-required-up",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "del": [
+            "/up"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-pop-key-required-slam",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "del": [
+            "/slam"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-pop-key-required-spike",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "del": [
+            "/spike"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-pop-key-required-burst",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "del": [
+            "/burst"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-pop-key-required-land",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "del": [
+            "/land"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-pop-unknown-key",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "anim-pop-schema-version",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/schema": "anim.pop/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-pop-ramp-ticks-under",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/ramp_ticks": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/ramp_ticks"
+      }
+    },
+    {
+      "id": "anim-pop-ramp-ticks-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/ramp_ticks": 31
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/ramp_ticks"
+      }
+    },
+    {
+      "id": "anim-pop-busy-scale-under",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/busy_scale": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/busy_scale"
+      }
+    },
+    {
+      "id": "anim-pop-busy-scale-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/busy_scale": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/busy_scale"
+      }
+    },
+    {
+      "id": "anim-pop-ramp-fraction",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/ramp_ticks": 6.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/ramp_ticks"
+      }
+    },
+    {
+      "id": "anim-pop-height-ref-zero",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/height_ref": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/height_ref"
+      }
+    },
+    {
+      "id": "anim-pop-up-phase-missing",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "del": [
+            "/up/apex"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/up"
+      }
+    },
+    {
+      "id": "anim-pop-up-unknown-phase",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/peak": {
+              "pose": "launch.tuck",
+              "w": 0.5,
+              "from": [
+                0.5,
+                0.6
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/up/peak"
+      }
+    },
+    {
+      "id": "anim-pop-up-rise-w-under",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/rise/w": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/up/rise/w"
+      }
+    },
+    {
+      "id": "anim-pop-up-rise-w-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/rise/w": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/up/rise/w"
+      }
+    },
+    {
+      "id": "anim-pop-up-rise-from-under",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/rise/from": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/up/rise/from"
+      }
+    },
+    {
+      "id": "anim-pop-up-rise-from-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/rise/from": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/up/rise/from"
+      }
+    },
+    {
+      "id": "anim-pop-up-apex-w-under",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/apex/w": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/up/apex/w"
+      }
+    },
+    {
+      "id": "anim-pop-up-apex-w-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/apex/w": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/up/apex/w"
+      }
+    },
+    {
+      "id": "anim-pop-up-fall-w-under",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/fall/w": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/up/fall/w"
+      }
+    },
+    {
+      "id": "anim-pop-up-fall-w-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/fall/w": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/up/fall/w"
+      }
+    },
+    {
+      "id": "anim-pop-rise-to-over-one",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/rise/to/1": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/up/rise/to/1"
+      }
+    },
+    {
+      "id": "anim-pop-rise-to-needs-two",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/rise/to": [
+              0.3
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/up/rise/to"
+      }
+    },
+    {
+      "id": "anim-pop-apex-in-negative",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/apex/in/0": -0.2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/up/apex/in/0"
+      }
+    },
+    {
+      "id": "anim-pop-apex-out-over-one",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/apex/out/1": 1.2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/up/apex/out/1"
+      }
+    },
+    {
+      "id": "anim-pop-fall-from-over-one",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/fall/from/1": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/up/fall/from/1"
+      }
+    },
+    {
+      "id": "anim-pop-rise-to-reversed",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/rise/to": [
+              0.5,
+              0.3
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-pop-range",
+        "pointer": "/up/rise/to"
+      }
+    },
+    {
+      "id": "anim-pop-apex-in-reversed",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/apex/in": [
+              0.5,
+              0.25
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-pop-range",
+        "pointer": "/up/apex/in"
+      }
+    },
+    {
+      "id": "anim-pop-apex-out-reversed",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/apex/out": [
+              0.75,
+              0.55
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-pop-range",
+        "pointer": "/up/apex/out"
+      }
+    },
+    {
+      "id": "anim-pop-fall-from-reversed",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/fall/from": [
+              0.8,
+              0.55
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-pop-range",
+        "pointer": "/up/fall/from"
+      }
+    },
+    {
+      "id": "anim-pop-slam-ticks-under",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/slam/ticks": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/slam/ticks"
+      }
+    },
+    {
+      "id": "anim-pop-slam-ticks-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/slam/ticks": 61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/slam/ticks"
+      }
+    },
+    {
+      "id": "anim-pop-slam-w-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/slam/w": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/slam/w"
+      }
+    },
+    {
+      "id": "anim-pop-slam-pose-missing",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/slam/pose": "launch.no_such_pose"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-pop-pose",
+        "pointer": "/slam/pose"
+      }
+    },
+    {
+      "id": "anim-pop-spike-ticks-under",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/spike/ticks": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/spike/ticks"
+      }
+    },
+    {
+      "id": "anim-pop-spike-ticks-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/spike/ticks": 61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/spike/ticks"
+      }
+    },
+    {
+      "id": "anim-pop-spike-w-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/spike/w": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/spike/w"
+      }
+    },
+    {
+      "id": "anim-pop-spike-pose-missing",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/spike/pose": "launch.no_such_pose"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-pop-pose",
+        "pointer": "/spike/pose"
+      }
+    },
+    {
+      "id": "anim-pop-burst-ticks-under",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/burst/ticks": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/burst/ticks"
+      }
+    },
+    {
+      "id": "anim-pop-burst-ticks-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/burst/ticks": 61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/burst/ticks"
+      }
+    },
+    {
+      "id": "anim-pop-burst-w-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/burst/w": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/burst/w"
+      }
+    },
+    {
+      "id": "anim-pop-burst-pose-missing",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/burst/pose": "launch.no_such_pose"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-pop-pose",
+        "pointer": "/burst/pose"
+      }
+    },
+    {
+      "id": "anim-pop-land-set-ticks-under",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/land/set/ticks": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/land/set/ticks"
+      }
+    },
+    {
+      "id": "anim-pop-land-set-ticks-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/land/set/ticks": 61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/land/set/ticks"
+      }
+    },
+    {
+      "id": "anim-pop-land-set-w-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/land/set/w": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/land/set/w"
+      }
+    },
+    {
+      "id": "anim-pop-land-set-pose-missing",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/land/set/pose": "launch.no_such_pose"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-pop-pose",
+        "pointer": "/land/set/pose"
+      }
+    },
+    {
+      "id": "anim-pop-land-reel-ticks-under",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/land/reel/ticks": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/land/reel/ticks"
+      }
+    },
+    {
+      "id": "anim-pop-land-reel-ticks-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/land/reel/ticks": 61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/land/reel/ticks"
+      }
+    },
+    {
+      "id": "anim-pop-land-reel-w-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/land/reel/w": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/land/reel/w"
+      }
+    },
+    {
+      "id": "anim-pop-land-reel-pose-missing",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/land/reel/pose": "launch.no_such_pose"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-pop-pose",
+        "pointer": "/land/reel/pose"
+      }
+    },
+    {
+      "id": "anim-pop-land-spike-ticks-under",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/land/spike/ticks": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/land/spike/ticks"
+      }
+    },
+    {
+      "id": "anim-pop-land-spike-ticks-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/land/spike/ticks": 61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/land/spike/ticks"
+      }
+    },
+    {
+      "id": "anim-pop-land-spike-w-over",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/land/spike/w": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/land/spike/w"
+      }
+    },
+    {
+      "id": "anim-pop-land-spike-pose-missing",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/land/spike/pose": "launch.no_such_pose"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-pop-pose",
+        "pointer": "/land/spike/pose"
+      }
+    },
+    {
+      "id": "anim-pop-slam-key-missing",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "del": [
+            "/slam/pose"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/slam"
+      }
+    },
+    {
+      "id": "anim-pop-slam-unknown-key",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/slam/force": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/slam/force"
+      }
+    },
+    {
+      "id": "anim-pop-slam-ticks-fraction",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/slam/ticks": 8.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/slam/ticks"
+      }
+    },
+    {
+      "id": "anim-pop-pose-shape",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/slam/pose": "Launch Stream"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/slam/pose"
+      }
+    },
+    {
+      "id": "anim-pop-land-key-missing",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "del": [
+            "/land/reel"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/land"
+      }
+    },
+    {
+      "id": "anim-pop-land-unknown-key",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/land/crash": {
+              "pose": "react.fold",
+              "w": 0.5,
+              "ticks": 10
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/land/crash"
+      }
+    },
+    {
+      "id": "anim-pop-rise-pose-missing",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/rise/pose": "launch.no_such_pose"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-pop-pose",
+        "pointer": "/up/rise/pose"
+      }
+    },
+    {
+      "id": "anim-pop-apex-pose-missing",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/apex/pose": "wound.no_such_pose"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-pop-pose",
+        "pointer": "/up/apex/pose"
+      }
+    },
+    {
+      "id": "anim-pop-fall-pose-missing",
+      "schema": "anim-pop.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pop.json",
+          "set": {
+            "/up/fall/pose": "launch.no_such_pose"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-pop-pose",
+        "pointer": "/up/fall/pose"
+      }
+    },
+    {
+      "id": "anim-ragdoll-variety-comp-valid",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/comp/strength": 0.5
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-ragdoll-variety-key-required-comp",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/comp"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety"
+      }
+    },
+    {
+      "id": "anim-ragdoll-variety-key-required-families",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/families"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety"
+      }
+    },
+    {
+      "id": "anim-ragdoll-variety-comp-key-required-strength",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/comp/strength"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety/comp"
+      }
+    },
+    {
+      "id": "anim-ragdoll-variety-comp-key-required-max",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/comp/max"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety/comp"
+      }
+    },
+    {
+      "id": "anim-ragdoll-variety-comp-unknown-key",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/comp/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/variety/comp/extra"
+      }
+    },
+    {
+      "id": "anim-ragdoll-variety-comp-strength-under",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/comp/strength": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/variety/comp/strength"
+      }
+    },
+    {
+      "id": "anim-ragdoll-variety-comp-strength-over",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/comp/strength": 1.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/variety/comp/strength"
+      }
+    },
+    {
+      "id": "anim-ragdoll-variety-comp-max-under",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/comp/max": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/variety/comp/max"
+      }
+    },
+    {
+      "id": "anim-ragdoll-variety-comp-max-over",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/comp/max": 11
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/variety/comp/max"
+      }
+    },
+    {
+      "id": "anim-ragdoll-variety-comp-type",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/comp/strength": "high"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/variety/comp/strength"
+      }
+    },
+    {
+      "id": "anim-ragdoll-families-empty",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/variety/families"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-underscore-key-ok",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/0/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-ragdoll-family-key-required-name",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/families/0/name"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety/families/0"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-key-required-amp",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/families/0/amp"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety/families/0"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-key-required-hz",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/families/0/hz"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety/families/0"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-key-required-dur",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/families/0/dur"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety/families/0"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-unknown-key",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/0/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/variety/families/0/extra"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-name-shape",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/0/name": "Rag Doll"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/variety/families/0/name"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-name-duplicate",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/1/name": "rag"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:ragdoll-family",
+        "pointer": "/variety/families/1/name"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-amp-key-required-head",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/families/0/amp/head"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety/families/0/amp"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-amp-key-required-spine",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/families/0/amp/spine"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety/families/0/amp"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-amp-key-required-arm",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/families/0/amp/arm"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety/families/0/amp"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-amp-key-required-leg",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/families/0/amp/leg"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety/families/0/amp"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-amp-key-required-oop",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/families/0/amp/oop"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety/families/0/amp"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-amp-unknown-key",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/0/amp/tail": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/variety/families/0/amp/tail"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-amp-negative",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/0/amp/arm": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/variety/families/0/amp/arm"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-amp-over",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/0/amp/arm": 4.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/variety/families/0/amp/arm"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-amp-type",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/0/amp/arm": "big"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/variety/families/0/amp/arm"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-hz-key-required-head",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/families/0/hz/head"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety/families/0/hz"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-hz-key-required-spine",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/families/0/hz/spine"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety/families/0/hz"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-hz-key-required-arm",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/families/0/hz/arm"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety/families/0/hz"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-hz-key-required-leg",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/families/0/hz/leg"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety/families/0/hz"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-hz-key-required-oop",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "del": [
+            "/variety/families/0/hz/oop"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/variety/families/0/hz"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-hz-unknown-key",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/0/hz/tail": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/variety/families/0/hz/tail"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-hz-negative",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/0/hz/arm": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/variety/families/0/hz/arm"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-hz-over",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/0/hz/arm": 4.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/variety/families/0/hz/arm"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-hz-type",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/0/hz/arm": "big"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/variety/families/0/hz/arm"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-anti-value",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/1/anti/arm": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/variety/families/1/anti/arm"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-anti-fraction",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/1/anti/leg": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/variety/families/1/anti/leg"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-anti-unknown-key",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/1/anti/head": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/variety/families/1/anti/head"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-bias-valid",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/2/bias/ua_l": -3
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-ragdoll-family-bias-over",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/2/bias/ua_l": 3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/variety/families/2/bias/ua_l"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-bias-under",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/2/bias/ua_l": -3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/variety/families/2/bias/ua_l"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-bias-type",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/2/bias/ua_l": "left"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/variety/families/2/bias/ua_l"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-bias-unknown-dof",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/2/bias/ua_q": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:ragdoll-family",
+        "pointer": "/variety/families/2/bias/ua_q"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-phase-negative",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/3/phase": -0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/variety/families/3/phase"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-phase-over",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/3/phase": 3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/variety/families/3/phase"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-dur-under",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/0/dur": 0.2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/variety/families/0/dur"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-dur-over",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/0/dur": 3.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/variety/families/0/dur"
+      }
+    },
+    {
+      "id": "anim-ragdoll-family-dur-type",
+      "schema": "anim-ragdoll.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll.json",
+          "set": {
+            "/variety/families/0/dur": "long"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/variety/families/0/dur"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-valid",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/ref_speed": 1200
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-key-required-launch",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "del": [
+            "/weight/launch"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/weight"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-key-required-ref-speed",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "del": [
+            "/weight/launch/ref_speed"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/weight/launch"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-key-required-speed",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "del": [
+            "/weight/launch/speed"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/weight/launch"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-key-required-amp",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "del": [
+            "/weight/launch/amp"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/weight/launch"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-key-required-dur",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "del": [
+            "/weight/launch/dur"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/weight/launch"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-unknown-key",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/weight/launch/extra"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-underscore-key-ok",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-ref-speed-zero",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/ref_speed": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/weight/launch/ref_speed"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-ref-speed-type",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/ref_speed": "fast"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/weight/launch/ref_speed"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-speed-needs-two",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/speed": [
+              0.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/weight/launch/speed"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-speed-three",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/speed": [
+              0.5,
+              1,
+              1.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maxItems",
+        "pointer": "/weight/launch/speed"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-speed-negative",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/speed/0": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/weight/launch/speed/0"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-speed-type",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/speed/1": "high"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/weight/launch/speed/1"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-speed-reversed",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/speed": [
+              1.5,
+              0.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:ragdoll-launch-order",
+        "pointer": "/weight/launch/speed/0"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-amp-needs-two",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/amp": [
+              0.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/weight/launch/amp"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-amp-three",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/amp": [
+              0.5,
+              1,
+              1.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maxItems",
+        "pointer": "/weight/launch/amp"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-amp-negative",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/amp/0": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/weight/launch/amp/0"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-amp-type",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/amp/1": "high"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/weight/launch/amp/1"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-amp-reversed",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/amp": [
+              1.5,
+              0.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:ragdoll-launch-order",
+        "pointer": "/weight/launch/amp/0"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-dur-needs-two",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/dur": [
+              0.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/weight/launch/dur"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-dur-three",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/dur": [
+              0.5,
+              1,
+              1.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maxItems",
+        "pointer": "/weight/launch/dur"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-dur-negative",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/dur/0": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/weight/launch/dur/0"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-dur-type",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/dur/1": "high"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/weight/launch/dur/1"
+      }
+    },
+    {
+      "id": "anim-ragdoll-motion-weight-launch-dur-reversed",
+      "schema": "anim-ragdoll-motion.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/ragdoll_motion.json",
+          "set": {
+            "/weight/launch/dur": [
+              1.5,
+              0.5
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:ragdoll-launch-order",
+        "pointer": "/weight/launch/dur/0"
+      }
+    },
+    {
+      "id": "anim-brake-judder-valid",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/judder": 0.2
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-brake-key-required-judder",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "del": [
+            "/judder"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-brake-key-required-judder-hz",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "del": [
+            "/judder_hz"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-brake-type-judder",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/judder": "some"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/judder"
+      }
+    },
+    {
+      "id": "anim-brake-negative-judder",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/judder": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/judder"
+      }
+    },
+    {
+      "id": "anim-brake-judder-over",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/judder": 0.6
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/judder"
+      }
+    },
+    {
+      "id": "anim-brake-type-judder-hz",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/judder_hz": "fast"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/judder_hz"
+      }
+    },
+    {
+      "id": "anim-brake-judder-hz-under",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/judder_hz": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/judder_hz"
+      }
+    },
+    {
+      "id": "anim-brake-judder-hz-over",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/judder_hz": 31
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/judder_hz"
+      }
+    },
+    {
       "id": "fight-ricochet-angle-zero",
       "schema": "fight-ricochet.schema.json",
       "mutate": [

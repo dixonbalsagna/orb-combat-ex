@@ -1,10 +1,15 @@
 {
   "schema": "anim.press_ack/1",
-  "_about": "The anticipation of a press that has to wait (docs/animation/press-ack.md). Encounter sends a cue press_ack, text queued, on a player's press tick when the press can't start yet (actor the presser, source its button cell: x a light, y a heavy, b a signature; n the tick it is due to start when the wait is a cooldown, else -1; amount the ticks to it). AnimFighter.on_press_ack plays the cell's pose (wave ack1, prefix ak: a light's short lean in, a heavy's weight moving forward and a shoulder wound, a signature's sink) mixed over the idle stance at `w` (0 to 1) and ramped in over enter_ticks (6: the snappy profile solves on twos, so a 3-tick ramp showed as one jump of 0.72). It is held until the exchange starts (the wind-up cue, a blow taken, the fighter leaving his stand, an approach) or hold ends (the wait, else max_ticks), and let go over exit_ticks, so the real wind-up takes over with nothing popping: the pose is a part weight and shallower than the held blows' bodies. A wait under min_wait ticks shows nothing (the exchange starts before it could read). fighters: a roster id's own pose for a cell. Under reduced motion the weight is scaled by 0.6. Render only, outside the sim's data hash. First values, Animation's.",
+  "_about": "The anticipation of a press that has to wait (docs/animation/press-ack.md). Encounter sends a cue press_ack, text queued, on a player's press tick when the press can't start yet (actor the presser, source its button cell: x a light, y a heavy, b a signature; n the tick it is due to start when the wait is a cooldown, else -1; amount the ticks to it). AnimFighter.on_press_ack plays the cell's pose (wave ack1, prefix ak: a light's short lean in, a heavy's weight moving forward and a shoulder wound, a signature's sink) mixed over the idle stance at `w` (0 to 1) and ramped in over enter_ticks (6: the snappy profile solves on twos, so a 3-tick ramp showed as one jump of 0.72). It is held until the exchange starts (the wind-up cue, a blow taken, the fighter leaving his stand, an approach) or hold ends (the wait, else max_ticks), and let go over exit_ticks, so the real wind-up takes over with nothing popping: the pose is a part weight and shallower than the held blows' bodies. A wait under min_wait ticks shows nothing (the exchange starts before it could read). fighters: a roster id's own pose for a cell. Under reduced motion the weight is scaled by 0.6. `lunge` (2026-10-23): the mid-band lunge's authored wind-up crouch (data/director/interrupts.json bands.lunge.windupTicks: light 6, heavy 10; and the return's) is drawn from Encounter's lunge_light, lunge_heavy and return cues on the press tick: the cell's pose (`cell`, the fighter's own through `fighters`) at `w`, ramped in over the cue's own `amount` ticks (the crouch deepens until it moves) and let go over exit_ticks as the travel starts, so the body hands over to the lunge with no snap. Render only, outside the sim's data hash. First values, Animation's.",
   "enter_ticks": 6,
   "exit_ticks": 6,
   "max_ticks": 36,
   "min_wait": 6,
+  "lunge": {
+    "light": {"cell": "x", "w": 0.9},
+    "heavy": {"cell": "y", "w": 0.95},
+    "return": {"cell": "x", "w": 0.8}
+  },
   "cells": {
     "x": {"pose": "ak.x_p.set", "w": 0.6},
     "y": {"pose": "ak.y_p.set", "w": 0.7},

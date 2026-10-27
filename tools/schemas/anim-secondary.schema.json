@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-secondary",
+  "title": "anim.secondary/1",
+  "description": "data/anim/secondary.json: follow-through (docs/animation/secondary-motion.md; AnimFighter's secondary layer): the head, the upper back and the two forearms lag behind the body and swing past on every change of its velocity and on every blow, one damped spring per part. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore; every key is required. Cross-reference in tools/lib/xref-fight.js (anim-secondary-dv-ref: dv_ref runs low to high).",
+  "type": "object",
+  "required": [
+    "schema",
+    "dv_ref",
+    "hit",
+    "parts",
+    "fighters"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.secondary/1"
+    },
+    "dv_ref": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 100000
+      },
+      "description": "[low, high]: the change of velocity, in units a second, that starts and that gives the full swing (rule anim-secondary-dv-ref: low is below high)."
+    },
+    "hit": {
+      "type": "object",
+      "required": [
+        "force_ref"
+      ],
+      "properties": {
+        "force_ref": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "description": "The blow force that gives the full kick."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "How a blow kicks the parts."
+    },
+    "parts": {
+      "type": "object",
+      "required": [
+        "head",
+        "spine_2",
+        "forearm_l",
+        "forearm_r"
+      ],
+      "properties": {
+        "head": {
+          "type": "object",
+          "required": [
+            "stiff",
+            "damp",
+            "gx",
+            "gy",
+            "hit",
+            "max"
+          ],
+          "properties": {
+            "stiff": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 300,
+              "description": "The spring's stiffness."
+            },
+            "damp": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 30,
+              "description": "The spring's damping."
+            },
+            "gx": {
+              "type": "number",
+              "minimum": -10,
+              "maximum": 10,
+              "description": "How hard a change of velocity along x pulls it."
+            },
+            "gy": {
+              "type": "number",
+              "minimum": -10,
+              "maximum": 10,
+              "description": "How hard a change of velocity along y pulls it."
+            },
+            "hit": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "How hard a blow kicks it."
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1.2,
+              "description": "The most it swings, in radians."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "spine_2": {
+          "type": "object",
+          "required": [
+            "stiff",
+            "damp",
+            "gx",
+            "gy",
+            "hit",
+            "max"
+          ],
+          "properties": {
+            "stiff": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 300,
+              "description": "The spring's stiffness."
+            },
+            "damp": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 30,
+              "description": "The spring's damping."
+            },
+            "gx": {
+              "type": "number",
+              "minimum": -10,
+              "maximum": 10,
+              "description": "How hard a change of velocity along x pulls it."
+            },
+            "gy": {
+              "type": "number",
+              "minimum": -10,
+              "maximum": 10,
+              "description": "How hard a change of velocity along y pulls it."
+            },
+            "hit": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "How hard a blow kicks it."
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1.2,
+              "description": "The most it swings, in radians."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "forearm_l": {
+          "type": "object",
+          "required": [
+            "stiff",
+            "damp",
+            "gx",
+            "gy",
+            "hit",
+            "max"
+          ],
+          "properties": {
+            "stiff": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 300,
+              "description": "The spring's stiffness."
+            },
+            "damp": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 30,
+              "description": "The spring's damping."
+            },
+            "gx": {
+              "type": "number",
+              "minimum": -10,
+              "maximum": 10,
+              "description": "How hard a change of velocity along x pulls it."
+            },
+            "gy": {
+              "type": "number",
+              "minimum": -10,
+              "maximum": 10,
+              "description": "How hard a change of velocity along y pulls it."
+            },
+            "hit": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "How hard a blow kicks it."
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1.2,
+              "description": "The most it swings, in radians."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "forearm_r": {
+          "type": "object",
+          "required": [
+            "stiff",
+            "damp",
+            "gx",
+            "gy",
+            "hit",
+            "max"
+          ],
+          "properties": {
+            "stiff": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 300,
+              "description": "The spring's stiffness."
+            },
+            "damp": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 30,
+              "description": "The spring's damping."
+            },
+            "gx": {
+              "type": "number",
+              "minimum": -10,
+              "maximum": 10,
+              "description": "How hard a change of velocity along x pulls it."
+            },
+            "gy": {
+              "type": "number",
+              "minimum": -10,
+              "maximum": 10,
+              "description": "How hard a change of velocity along y pulls it."
+            },
+            "hit": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "How hard a blow kicks it."
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1.2,
+              "description": "The most it swings, in radians."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "Exactly head, spine_2, forearm_l and forearm_r."
+    },
+    "fighters": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(_.*|[A-Z][A-Z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "scale",
+          "damp"
+        ],
+        "properties": {
+          "scale": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3,
+            "description": "Multiplies the swing."
+          },
+          "damp": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 3,
+            "description": "Multiplies the damping."
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "A roster id to his own multipliers."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

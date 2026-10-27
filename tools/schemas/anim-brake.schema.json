@@ -13,7 +13,9 @@
     "enter_ticks",
     "exit_ticks",
     "lead_rate",
-    "whip"
+    "whip",
+    "judder",
+    "judder_hz"
   ],
   "properties": {
     "schema": {
@@ -93,6 +95,18 @@
       "minimum": 0,
       "maximum": 10,
       "description": "How hard the body whips as the brake ends."
+    },
+    "judder": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.5,
+      "description": "How far (radians) the arms and head judder while braking, by the skid's weight: friction made visible."
+    },
+    "judder_hz": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 30,
+      "description": "The judder's rate in Hz."
     }
   },
   "additionalProperties": false,

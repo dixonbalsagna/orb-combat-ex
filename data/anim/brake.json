@@ -4,9 +4,9 @@
   "poses": {"enter": "ab.skid.enter", "hold": "ab.skid.hold", "exit": "ab.skid.exit"},
   "lean_deg": [18, 45],
   "decel_ref": 3000,
-  "min_w": 0.35,
+  "min_w": 0.5,
   "enter_ticks": 4,
   "exit_ticks": 8,
   "lead_rate": 18,
-  "whip": 2.0
+  "whip": 3.2, "judder": 0.1, "judder_hz": 9.0
 }

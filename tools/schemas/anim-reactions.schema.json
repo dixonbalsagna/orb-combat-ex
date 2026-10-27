@@ -1,0 +1,284 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-reactions",
+  "title": "anim.reactions/1",
+  "description": "data/anim/reactions.json: hit reactions with variety (docs/animation/hit-reactions.md; AnimFighter._pick_reaction): a blow picks a variant by its weight, the way it came and the body part, then a recovery by weight. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore; every key is required (a variant's pose and pose_w are optional). Cross-references in tools/lib/xref-fight.js (anim-reactions-weights, -id, -pose, -bone, -variety: every weight x part x way x draw has at least two variants, -recover: every weight has a recovery).",
+  "type": "object",
+  "required": [
+    "schema",
+    "light_max",
+    "medium_max",
+    "attack",
+    "variants",
+    "recover"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.reactions/1"
+    },
+    "light_max": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 10,
+      "description": "A blow lighter than this is light."
+    },
+    "medium_max": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 10,
+      "description": "A blow lighter than this is medium, over it heavy (rule anim-reactions-weights: above light_max)."
+    },
+    "attack": {
+      "type": "number",
+      "minimum": 0.05,
+      "maximum": 0.3,
+      "description": "Seconds the reaction takes to come in."
+    },
+    "variants": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "weight",
+          "region",
+          "dir",
+          "vert",
+          "dur",
+          "hold",
+          "base",
+          "dx",
+          "dy",
+          "hips",
+          "bones"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "The variant's name (each once: rule anim-reactions-id)."
+          },
+          "weight": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "light",
+                "medium",
+                "heavy"
+              ]
+            },
+            "description": "The blow weights it answers: light, medium or heavy."
+          },
+          "region": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "head",
+                "core",
+                "arms",
+                "legs",
+                "any"
+              ]
+            },
+            "description": "The body parts it answers (any: all)."
+          },
+          "dir": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "front",
+                "back",
+                "any"
+              ]
+            },
+            "description": "The ways the blow came."
+          },
+          "vert": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "up",
+                "level",
+                "down",
+                "any"
+              ]
+            },
+            "description": "The draw's vertical part."
+          },
+          "dur": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 2,
+            "description": "Seconds the variant lasts."
+          },
+          "hold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "The share of the variant held at its peak."
+          },
+          "base": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "How much of the plain flinch stays under it."
+          },
+          "dx": {
+            "type": "number",
+            "minimum": -3,
+            "maximum": 3,
+            "description": "Sideways push, in units."
+          },
+          "dy": {
+            "type": "number",
+            "minimum": -3,
+            "maximum": 3,
+            "description": "Vertical push, in units."
+          },
+          "hips": {
+            "type": "number",
+            "minimum": -10,
+            "maximum": 10,
+            "description": "The hips' move, in units."
+          },
+          "bones": {
+            "type": "object",
+            "propertyNames": {
+              "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+            },
+            "additionalProperties": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "number",
+                "minimum": -1.6,
+                "maximum": 1.6
+              },
+              "description": "Turns in radians about the three axes."
+            },
+            "patternProperties": {
+              "^_": true
+            },
+            "description": "A rig bone to its three turns (rule anim-reactions-bone: every name is a bone of data/anim/profiles.json bone_lag)."
+          },
+          "pose": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+            "description": "A pose mixed in (a pose of poses.json or a wave: rule anim-reactions-pose)."
+          },
+          "pose_w": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "How far the pose is mixed in."
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "description": "The variants."
+    },
+    "recover": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "weight",
+          "start",
+          "dur",
+          "hips",
+          "bones",
+          "shake"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "The recovery's name (each once)."
+          },
+          "weight": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "light",
+                "medium",
+                "heavy"
+              ]
+            },
+            "description": "The blow weights it follows."
+          },
+          "start": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2,
+            "description": "Seconds after the blow it starts."
+          },
+          "dur": {
+            "type": "number",
+            "minimum": 0.2,
+            "maximum": 2,
+            "description": "Seconds it lasts."
+          },
+          "hips": {
+            "type": "number",
+            "minimum": -10,
+            "maximum": 10,
+            "description": "The hips' move, in units."
+          },
+          "bones": {
+            "type": "object",
+            "propertyNames": {
+              "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+            },
+            "additionalProperties": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "number",
+                "minimum": -1.6,
+                "maximum": 1.6
+              },
+              "description": "Turns in radians about the three axes."
+            },
+            "patternProperties": {
+              "^_": true
+            },
+            "description": "A rig bone to its three turns (rule anim-reactions-bone: every name is a bone of data/anim/profiles.json bone_lag)."
+          },
+          "shake": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "The head shake, 0 to 1."
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "description": "The recoveries."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

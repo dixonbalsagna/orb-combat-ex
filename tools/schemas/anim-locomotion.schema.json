@@ -1,0 +1,403 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-locomotion",
+  "title": "anim.locomotion/1",
+  "description": "data/anim/locomotion.json: flight locomotion (docs/animation/flight-locomotion.md; AnimFighter's locomotion layer): a free fighter in the air moves with weight: an acceleration lean on a spring, a braking flare, a dash's anticipation, a bank into curves, a hover when still, and each fighter's own rate, depth, lean and damp. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore; every key is required. Cross-reference in tools/lib/xref-fight.js (anim-locomotion-pose: the flare pose and the recover pose exist in a wave).",
+  "type": "object",
+  "required": [
+    "schema",
+    "enter_ticks",
+    "lean",
+    "flare",
+    "dash",
+    "bank",
+    "hover",
+    "recover",
+    "fighters"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.locomotion/1"
+    },
+    "enter_ticks": {
+      "type": "integer",
+      "minimum": 6,
+      "maximum": 30,
+      "description": "Ticks the locomotion layer takes to ease in."
+    },
+    "lean": {
+      "type": "object",
+      "required": [
+        "stiff",
+        "damp",
+        "max_deg",
+        "back_scale",
+        "acc_ref",
+        "filter_s",
+        "lag"
+      ],
+      "properties": {
+        "stiff": {
+          "type": "number",
+          "minimum": 10,
+          "maximum": 400,
+          "description": "The lean spring's stiffness."
+        },
+        "damp": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 60,
+          "description": "The spring's damping."
+        },
+        "max_deg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "The most the body leans, in degrees."
+        },
+        "back_scale": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How much of the lean a backward acceleration gets."
+        },
+        "acc_ref": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1000000,
+          "description": "The acceleration, in units a second squared, that gives the full lean."
+        },
+        "filter_s": {
+          "type": "number",
+          "minimum": 0.005,
+          "maximum": 0.5,
+          "description": "The acceleration filter, in seconds."
+        },
+        "lag": {
+          "type": "object",
+          "required": [
+            "pelvis",
+            "neck",
+            "head"
+          ],
+          "properties": {
+            "pelvis": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1,
+              "description": "How the pelvis lags the shoulders (negative: it leads back)."
+            },
+            "neck": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1,
+              "description": "The neck's lag."
+            },
+            "head": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1,
+              "description": "The head's lag."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "How far each part follows the lean."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The acceleration lean."
+    },
+    "flare": {
+      "type": "object",
+      "required": [
+        "pose",
+        "w",
+        "brake_ref",
+        "min_speed",
+        "ticks"
+      ],
+      "properties": {
+        "pose": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The pose of the braking flare (a pose of a wave: rule anim-locomotion-pose)."
+        },
+        "w": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How far the pose is mixed in, 0 to 1."
+        },
+        "brake_ref": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1000000,
+          "description": "The braking, in units a second squared, that gives the full flare."
+        },
+        "min_speed": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2000,
+          "description": "The least speed, in units a second, a flare needs."
+        },
+        "ticks": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 30,
+          "description": "Ticks the flare lasts."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The flare when he stops hard from speed."
+    },
+    "dash": {
+      "type": "object",
+      "required": [
+        "dash_ticks",
+        "lean_back",
+        "dip"
+      ],
+      "properties": {
+        "dash_ticks": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 30,
+          "description": "Ticks of the dash's coil."
+        },
+        "lean_back": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1.5,
+          "description": "How far the weight goes back in the coil."
+        },
+        "dip": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "How far the body dips, in units."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The dash's anticipation."
+    },
+    "bank": {
+      "type": "object",
+      "required": [
+        "roll_deg",
+        "omega_ref",
+        "min_speed",
+        "lean_in"
+      ],
+      "properties": {
+        "roll_deg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "The most the body rolls into a curve, in degrees."
+        },
+        "omega_ref": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1000,
+          "description": "The turn rate, in radians a second, that gives the full roll."
+        },
+        "min_speed": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2000,
+          "description": "The least speed a bank needs."
+        },
+        "lean_in": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How much the body leans into the turn."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The bank into curves."
+    },
+    "hover": {
+      "type": "object",
+      "required": [
+        "still_speed",
+        "rate_hz",
+        "chest_deg",
+        "shoulder_deg",
+        "bob",
+        "off_ground"
+      ],
+      "properties": {
+        "still_speed": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000,
+          "description": "Under this speed he counts as still."
+        },
+        "rate_hz": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 2,
+          "description": "The hover's rate, in hertz."
+        },
+        "chest_deg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "The chest's sway, in degrees."
+        },
+        "shoulder_deg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "The shoulders' sway, in degrees."
+        },
+        "bob": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5,
+          "description": "The vertical bob, in units."
+        },
+        "off_ground": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "How far off the ground he must be to hover, in units."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The hover when still in the air."
+    },
+    "recover": {
+      "type": "object",
+      "required": [
+        "pose",
+        "w",
+        "ticks",
+        "rock",
+        "min_air",
+        "min_speed",
+        "ref_speed"
+      ],
+      "properties": {
+        "pose": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The pose of the catch when control returns in the air (a pose of a wave: rule anim-locomotion-pose)."
+        },
+        "w": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How far the pose is mixed in."
+        },
+        "ticks": {
+          "type": "integer",
+          "minimum": 12,
+          "maximum": 60,
+          "description": "Ticks the catch lasts."
+        },
+        "rock": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How much the body rocks as it catches."
+        },
+        "min_air": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 500,
+          "description": "The least height above the ground, in units, for a catch."
+        },
+        "min_speed": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3000,
+          "description": "The least speed, in units a second, for a catch."
+        },
+        "ref_speed": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100000,
+          "description": "The speed that gives the full catch."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The air recovery (docs/animation/air-recovery.md): the catch when a launched or dropped fighter becomes free well off the ground."
+    },
+    "fighters": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(_.*|[A-Z][A-Z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "rate",
+          "depth",
+          "lean",
+          "damp"
+        ],
+        "properties": {
+          "rate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3,
+            "description": "Multiplies the hover's rate."
+          },
+          "depth": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3,
+            "description": "Multiplies the hover's depth."
+          },
+          "lean": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3,
+            "description": "Multiplies the lean."
+          },
+          "damp": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3,
+            "description": "Multiplies the damping."
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "A roster id to its own multipliers."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

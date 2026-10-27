@@ -1,0 +1,743 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-ground-motion",
+  "title": "anim.ground_motion/1",
+  "description": "data/anim/ground_motion.json: ground locomotion (docs/animation/ground-locomotion.md; AnimFighter's gait layer): a free fighter on the ground walks and runs on a gait driven by the distance he covers, takes off and lands with weight, moves differently on each surface, and each fighter has his own cadence. `look` maps World's gen 2 look classes to a surface. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore; every key is required. Cross-references in tools/lib/xref-fight.js (ground-motion-speeds: min < full < run < max; ground-motion-look: every look value is a key of surfaces).",
+  "type": "object",
+  "required": [
+    "schema",
+    "enter_ticks",
+    "gait",
+    "takeoff",
+    "land",
+    "surfaces",
+    "look",
+    "fighters"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.ground_motion/1"
+    },
+    "enter_ticks": {
+      "type": "integer",
+      "minimum": 6,
+      "maximum": 30,
+      "description": "Ticks the layer takes to ease in."
+    },
+    "gait": {
+      "type": "object",
+      "required": [
+        "min_speed",
+        "full_speed",
+        "run_speed",
+        "max_speed",
+        "stride",
+        "thigh",
+        "knee",
+        "bob",
+        "twist",
+        "lean_deg"
+      ],
+      "properties": {
+        "min_speed": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3000,
+          "description": "Under this the gait is not played."
+        },
+        "full_speed": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3000,
+          "description": "The speed at which the gait is at its first value."
+        },
+        "run_speed": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3000,
+          "description": "The speed at which it is at its last value."
+        },
+        "max_speed": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3000,
+          "description": "From run_speed to here the flight pose takes over."
+        },
+        "stride": {
+          "type": "number",
+          "minimum": 10,
+          "maximum": 300,
+          "description": "Units covered in one cycle."
+        },
+        "thigh": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3
+          },
+          "description": "[at full_speed, at run_speed]."
+        },
+        "knee": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3
+          },
+          "description": "[at full_speed, at run_speed]."
+        },
+        "bob": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3
+          },
+          "description": "[at full_speed, at run_speed]."
+        },
+        "twist": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3
+          },
+          "description": "[at full_speed, at run_speed]."
+        },
+        "lean_deg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 15,
+          "description": "The forward lean at speed, in degrees."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The walk and run cycle."
+    },
+    "takeoff": {
+      "type": "object",
+      "required": [
+        "min_vy",
+        "ticks",
+        "kick",
+        "stretch",
+        "lift"
+      ],
+      "properties": {
+        "min_vy": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2000,
+          "description": "The least rising speed that counts as a take-off."
+        },
+        "ticks": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 40,
+          "description": "Ticks the take-off lasts."
+        },
+        "kick": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The push-off."
+        },
+        "stretch": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The body's stretch."
+        },
+        "lift": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "The lift, in units."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The take-off."
+    },
+    "land": {
+      "type": "object",
+      "required": [
+        "min_vy",
+        "ref_vy",
+        "ticks",
+        "sink",
+        "flex",
+        "knee"
+      ],
+      "properties": {
+        "min_vy": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2000,
+          "description": "The least falling speed that counts as a landing."
+        },
+        "ref_vy": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 10000,
+          "description": "The falling speed that gives the full landing."
+        },
+        "ticks": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 60,
+          "description": "Ticks the landing lasts."
+        },
+        "sink": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 20
+          },
+          "description": "[least, greatest] sink, in units."
+        },
+        "flex": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2
+          },
+          "description": "[least, greatest] flex."
+        },
+        "knee": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3,
+          "description": "The knee bend."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The landing."
+    },
+    "surfaces": {
+      "type": "object",
+      "required": [
+        "soil",
+        "paving",
+        "rock",
+        "sand",
+        "rubble",
+        "water"
+      ],
+      "properties": {
+        "soil": {
+          "type": "object",
+          "required": [
+            "sink",
+            "ticks",
+            "slide",
+            "stumble",
+            "lift",
+            "amp"
+          ],
+          "properties": {
+            "sink": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "sink: a multiplier or amount on this surface, 0 to 20."
+            },
+            "ticks": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "ticks: a multiplier or amount on this surface, 0 to 20."
+            },
+            "slide": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "slide: a multiplier or amount on this surface, 0 to 20."
+            },
+            "stumble": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "stumble: a multiplier or amount on this surface, 0 to 20."
+            },
+            "lift": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "lift: a multiplier or amount on this surface, 0 to 20."
+            },
+            "amp": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "amp: a multiplier or amount on this surface, 0 to 20."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "paving": {
+          "type": "object",
+          "required": [
+            "sink",
+            "ticks",
+            "slide",
+            "stumble",
+            "lift",
+            "amp"
+          ],
+          "properties": {
+            "sink": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "sink: a multiplier or amount on this surface, 0 to 20."
+            },
+            "ticks": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "ticks: a multiplier or amount on this surface, 0 to 20."
+            },
+            "slide": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "slide: a multiplier or amount on this surface, 0 to 20."
+            },
+            "stumble": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "stumble: a multiplier or amount on this surface, 0 to 20."
+            },
+            "lift": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "lift: a multiplier or amount on this surface, 0 to 20."
+            },
+            "amp": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "amp: a multiplier or amount on this surface, 0 to 20."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "rock": {
+          "type": "object",
+          "required": [
+            "sink",
+            "ticks",
+            "slide",
+            "stumble",
+            "lift",
+            "amp"
+          ],
+          "properties": {
+            "sink": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "sink: a multiplier or amount on this surface, 0 to 20."
+            },
+            "ticks": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "ticks: a multiplier or amount on this surface, 0 to 20."
+            },
+            "slide": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "slide: a multiplier or amount on this surface, 0 to 20."
+            },
+            "stumble": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "stumble: a multiplier or amount on this surface, 0 to 20."
+            },
+            "lift": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "lift: a multiplier or amount on this surface, 0 to 20."
+            },
+            "amp": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "amp: a multiplier or amount on this surface, 0 to 20."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "sand": {
+          "type": "object",
+          "required": [
+            "sink",
+            "ticks",
+            "slide",
+            "stumble",
+            "lift",
+            "amp"
+          ],
+          "properties": {
+            "sink": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "sink: a multiplier or amount on this surface, 0 to 20."
+            },
+            "ticks": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "ticks: a multiplier or amount on this surface, 0 to 20."
+            },
+            "slide": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "slide: a multiplier or amount on this surface, 0 to 20."
+            },
+            "stumble": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "stumble: a multiplier or amount on this surface, 0 to 20."
+            },
+            "lift": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "lift: a multiplier or amount on this surface, 0 to 20."
+            },
+            "amp": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "amp: a multiplier or amount on this surface, 0 to 20."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "rubble": {
+          "type": "object",
+          "required": [
+            "sink",
+            "ticks",
+            "slide",
+            "stumble",
+            "lift",
+            "amp"
+          ],
+          "properties": {
+            "sink": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "sink: a multiplier or amount on this surface, 0 to 20."
+            },
+            "ticks": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "ticks: a multiplier or amount on this surface, 0 to 20."
+            },
+            "slide": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "slide: a multiplier or amount on this surface, 0 to 20."
+            },
+            "stumble": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "stumble: a multiplier or amount on this surface, 0 to 20."
+            },
+            "lift": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "lift: a multiplier or amount on this surface, 0 to 20."
+            },
+            "amp": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "amp: a multiplier or amount on this surface, 0 to 20."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "water": {
+          "type": "object",
+          "required": [
+            "sink",
+            "ticks",
+            "slide",
+            "stumble",
+            "lift",
+            "amp"
+          ],
+          "properties": {
+            "sink": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "sink: a multiplier or amount on this surface, 0 to 20."
+            },
+            "ticks": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "ticks: a multiplier or amount on this surface, 0 to 20."
+            },
+            "slide": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "slide: a multiplier or amount on this surface, 0 to 20."
+            },
+            "stumble": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "stumble: a multiplier or amount on this surface, 0 to 20."
+            },
+            "lift": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "lift: a multiplier or amount on this surface, 0 to 20."
+            },
+            "amp": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "amp: a multiplier or amount on this surface, 0 to 20."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "How each surface changes the gait: exactly soil, paving, rock, sand, rubble and water."
+    },
+    "look": {
+      "type": "object",
+      "required": [
+        "ice",
+        "snow",
+        "frost",
+        "mud",
+        "turf",
+        "litter",
+        "ash",
+        "crust",
+        "shingle"
+      ],
+      "properties": {
+        "ice": {
+          "enum": [
+            "soil",
+            "paving",
+            "rock",
+            "sand",
+            "rubble",
+            "water"
+          ],
+          "description": "The surface the look class \"ice\" plays as (rule ground-motion-look)."
+        },
+        "snow": {
+          "enum": [
+            "soil",
+            "paving",
+            "rock",
+            "sand",
+            "rubble",
+            "water"
+          ],
+          "description": "The surface the look class \"snow\" plays as (rule ground-motion-look)."
+        },
+        "frost": {
+          "enum": [
+            "soil",
+            "paving",
+            "rock",
+            "sand",
+            "rubble",
+            "water"
+          ],
+          "description": "The surface the look class \"frost\" plays as (rule ground-motion-look)."
+        },
+        "mud": {
+          "enum": [
+            "soil",
+            "paving",
+            "rock",
+            "sand",
+            "rubble",
+            "water"
+          ],
+          "description": "The surface the look class \"mud\" plays as (rule ground-motion-look)."
+        },
+        "turf": {
+          "enum": [
+            "soil",
+            "paving",
+            "rock",
+            "sand",
+            "rubble",
+            "water"
+          ],
+          "description": "The surface the look class \"turf\" plays as (rule ground-motion-look)."
+        },
+        "litter": {
+          "enum": [
+            "soil",
+            "paving",
+            "rock",
+            "sand",
+            "rubble",
+            "water"
+          ],
+          "description": "The surface the look class \"litter\" plays as (rule ground-motion-look)."
+        },
+        "ash": {
+          "enum": [
+            "soil",
+            "paving",
+            "rock",
+            "sand",
+            "rubble",
+            "water"
+          ],
+          "description": "The surface the look class \"ash\" plays as (rule ground-motion-look)."
+        },
+        "crust": {
+          "enum": [
+            "soil",
+            "paving",
+            "rock",
+            "sand",
+            "rubble",
+            "water"
+          ],
+          "description": "The surface the look class \"crust\" plays as (rule ground-motion-look)."
+        },
+        "shingle": {
+          "enum": [
+            "soil",
+            "paving",
+            "rock",
+            "sand",
+            "rubble",
+            "water"
+          ],
+          "description": "The surface the look class \"shingle\" plays as (rule ground-motion-look)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "World's gen 2 look classes, each to a surface."
+    },
+    "fighters": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(_.*|[A-Z][A-Z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "cadence",
+          "amp",
+          "bob"
+        ],
+        "properties": {
+          "cadence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3,
+            "description": "Multiplies the cycle's rate."
+          },
+          "amp": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3,
+            "description": "Multiplies the swing."
+          },
+          "bob": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3,
+            "description": "Multiplies the bob."
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "A roster id to his own multipliers."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

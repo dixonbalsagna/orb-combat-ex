@@ -1258,12 +1258,14 @@ func _test_round10() -> void:
 	var ci: Dictionary = af0._press_prof({}, "super", {"cash_in": true})
 	_expect(int(ci.load_ticks.heavy) == 2 and int(ci.snap_ticks) == 0, "cash-in: a 2-tick heavy (%s)" % str(ci.load_ticks))
 	# a held hit: the flinch is kept past 0.7 s for the hang, and the same hit without a hang is not
+	RenderAnim.hit_variants = false   # the hang is the plain flinch's own length
 	var h1 := AnimFighter.new(1)
 	var h2 := AnimFighter.new(1)
 	h1.on_hit(0.0, "chest", true, 0.5, "light", Vector2.ZERO, 0.6, 1, 0.1, 0)
 	h2.on_hit(0.0, "chest", true, 0.5, "light", Vector2.ZERO, 0.6, 1, 0.0, 0)
 	h1._reaction_layer(0.75)
 	h2._reaction_layer(0.75)
+	RenderAnim.hit_variants = true
 	_expect(h1._reacts.size() == 1 and h2._reacts.size() == 0, "held hit: the flinch hangs (%d kept with a hang, %d without)" % [h1._reacts.size(), h2._reacts.size()])
 	var ent: bool = AnimData.entries.has("rt.air_tech") and AnimData.pose_exists("rt.interject.tell") and AnimData.pose_exists("rt.chase.dive")
 	_expect(ent, "round 10: the air tech sequence and the interjection and chase poses are baked")
@@ -1769,6 +1771,67 @@ func _test_ragdoll_vary() -> void:
 	print("ragdoll variety: launches differ by %.3f rad, the same one repeats exactly, the side of the hit picks fold or arch" % d_ab)
 
 
+## Flail families and the launch's own power (docs/animation/ragdoll-families.md). Six families, each its own way of going limp or fighting the air, picked by a hash of the slot and the launch number; a light pop flails gently and a full send frantically.
+## The flail alone (the springs' target, no pose), 90 ticks, the head, spine, arms, legs and out-of-plane joints measured by how far they swing.
+func _rg_fam_run(launch_n: int, speed: float) -> Dictionary:
+	var rd := AnimRagdoll.new()
+	rd.n_on = AnimRagdoll.N
+	rd.set_flail_seed(0, launch_n, 1, speed)
+	rd.w_flail = 1.0
+	var act := [0.0, 0.0, 0.0, 0.0, 0.0]   # how fast each group moves: the mean angular speed over the flail, rad a second
+	var cnt := [0, 0, 0, 0, 0]
+	var hist: Array = []
+	for k in range(90):
+		rd.step(1.0 / 60.0, Vector2(900.0, 0.0), Vector2.ZERO, 0.85, 1.0, 5.0 + float(k) / 60.0)
+		hist.append(rd.th.duplicate())
+		for i in range(AnimRagdoll.N):
+			var g: int = AnimRagdoll.group_of[i]
+			act[g] += absf(rd.om[i])
+			cnt[g] += 1
+	for g in range(5):
+		act[g] = float(act[g]) / maxf(float(cnt[g]), 1.0)
+	return {"fam": rd.fam_idx, "hist": hist, "sw": act, "dur": rd.fam_dur * rd.launch_dur, "amp": rd.launch_amp}
+
+
+func _test_ragdoll_families() -> void:
+	AnimRagdoll.setup()
+	var bad: Array = []
+	var by_fam: Dictionary = {}
+	for n in range(1, 80):
+		var r: Dictionary = _rg_fam_run(n, 1500.0)
+		if not by_fam.has(int(r.fam)):
+			by_fam[int(r.fam)] = r
+	if by_fam.size() != AnimRagdoll.families.size():
+		bad.append("%d of %d families came up in 80 launches" % [by_fam.size(), AnimRagdoll.families.size()])
+	# two families differ when some joint's whole trajectory differs: the rms of the difference over the flail, the most of any joint
+	var worst: float = 1.0e9
+	var keys: Array = by_fam.keys()
+	for a in range(keys.size()):
+		for b in range(a + 1, keys.size()):
+			var d: float = 0.0
+			for i in range(AnimRagdoll.N):
+				var ss: float = 0.0
+				for k in range(90):
+					var df: float = float(by_fam[keys[a]].hist[k][i]) - float(by_fam[keys[b]].hist[k][i])
+					ss += df * df
+				d = maxf(d, sqrt(ss / 90.0))
+			worst = minf(worst, d)
+	if worst < 0.25:
+		bad.append("two families are within %.2f rad (rms) of each other in every joint (0.25 wanted)" % worst)
+	# a light pop against a full send: the same launch, the flail wider and longer
+	var light: Dictionary = _rg_fam_run(3, 450.0)
+	var full: Dictionary = _rg_fam_run(3, 2600.0)
+	var sl: float = 0.0
+	var sf: float = 0.0
+	for g in range(5):
+		sl += float(light.sw[g])
+		sf += float(full.sw[g])
+	if sf < 1.35 * sl or float(full.dur) < 1.5 * float(light.dur):
+		bad.append("a full send moves %.2f against %.2f rad a second for a light pop and lasts %.2f against %.2f (1.35 and 1.5 times wanted)" % [sf, sl, float(full.dur), float(light.dur)])
+	_expect(bad.is_empty(), "ragdoll families: six distinct flails, a full send wider and longer than a light pop: %s" % str(bad))
+	print("ragdoll families: %d families, the closest pair %.2f rad apart (rms) in their most different joint; light pop %.1f rad a second of motion (summed over the groups) for %.2f s of flail scale, full send %.1f for %.2f" % [by_fam.size(), worst, sl, float(light.dur), sf, float(full.dur)])
+
+
 ## RG1: the ragdoll has weight. A heavier body moves less for the same blow, a higher tier moves it more, and a blow travels down the body (the head first, the legs last).
 func _test_ragdoll_weight() -> void:
 	AnimRagdoll.setup()
@@ -1848,7 +1911,7 @@ func _test_ragdoll_oop() -> void:
 			rd2.apply(q1, 1.0)
 			viol += AnimJoints.violations(q1, rd2.shape_key).size()
 	_expect(viol == 0, "ragdoll oop: the six at their extremes leave %d joints past a limit on the guard stance (0 allowed)" % viol)
-	_expect(RenderAnim.rd_oop == false, "ragdoll oop: the switch is off by default (Orb sees the before and after first)")
+	_expect(RenderAnim.rd_oop == true, "ragdoll oop: the switch is on by default (Orb, 2026-10-25: turn them on)")
 	print("ragdoll oop: on, the body turns up to %.2f rad out of its plane; off, none; no joint past a limit at the extremes" % float(on.peak))
 
 
@@ -2925,6 +2988,871 @@ func _test_incremental_bake() -> void:
 	print("incremental bake: the queue holds, orders and drains; the eager and lazy poses are identical; %d pieces queued for one fighter" % queued)
 
 
+## The mid-band lunge's wind-up crouch (docs/animation/lunge-crouch.md). From the lunge cue on its own tick the body deepens into the cell's pose over the cue's ticks (light 6, heavy 10, the return's 10), and hands over to the travel
+## with no snap: the pose is let go over its exit ramp when the rush begins, and the body is exactly the stand again after. A wind-up of 3 to 5 ticks is drawn over 6; under 3 nothing. Nothing may be NaN or past a limit.
+func _lunge_probe(who: String, weight: String, wind: int, ticks: int, off: bool) -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = who
+	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
+	f0.x = 1000.0
+	f1.x = 1250.0
+	f0.y = 0.0
+	f1.y = 0.0
+	f0.state = "free"
+	f1.state = "free"
+	RenderAnim.press_ack = not off
+	var res := {"nan": 0, "viol": 0, "samples": [], "cleared_at": -1}
+	for k in range(ticks):
+		S.tick = 8700 + k
+		S.T = 880.0 + float(k) / 60.0
+		if k == 4:
+			RenderAnim.fighter(S, f0).on_lunge_crouch(weight, wind, S.T)
+		if k == 4 + wind:
+			f0.rush = SimState.Rush.new()   # the travel begins: the layer lets go
+			f0.rush.tgt = f1
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		var a0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		for i in range(AnimRig.N):
+			if is_nan(a0.q[i].x) or is_nan(a0.q[i].w):
+				res.nan += 1
+		res.viol += AnimJoints.violations(a0.q, a0._rd.shape_key).size()
+		var pel: Vector3 = a0.socket("pelvis")
+		var hd: Vector3 = a0.head_center()
+		res.samples.append([(hd.x - pel.x) * a0.vface, pel.y])
+		if res.cleared_at < 0 and k > 4 and a0._ack.is_empty():
+			res.cleared_at = k
+	RenderAnim.press_ack = true
+	return res
+
+
+func _test_lunge_crouch() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var seen: Array = []
+	for who in ["PROTAGONIST", "RIVAL"]:
+		for spec in [["light", 6], ["light", 5], ["heavy", 10], ["return", 10]]:
+			var weight: String = String(spec[0])
+			var wind: int = int(spec[1])
+			var on: Dictionary = _lunge_probe(who, weight, wind, 40, false)
+			var off: Dictionary = _lunge_probe(who, weight, wind, 40, true)
+			var excursion: float = 0.0
+			var step: float = 0.0
+			var early: float = 0.0
+			for k in range(on.samples.size()):
+				var d := Vector2(float(on.samples[k][0]) - float(off.samples[k][0]), float(on.samples[k][1]) - float(off.samples[k][1]))
+				excursion = maxf(excursion, d.length())
+				if k >= 1:
+					var dp := Vector2(float(on.samples[k - 1][0]) - float(off.samples[k - 1][0]), float(on.samples[k - 1][1]) - float(off.samples[k - 1][1]))
+					step = maxf(step, (d - dp).length())
+				if k == 4 + wind - 1:
+					early = d.length()
+			var rest: float = Vector2(float(on.samples[39][0]) - float(off.samples[39][0]), float(on.samples[39][1]) - float(off.samples[39][1])).length()
+			seen.append("%s %s %d ticks: crouch %.1f at the end, rest %.2f, step %.2f of %.1f" % [who.substr(0, 1), weight, wind, early, rest, step, excursion])
+			if int(on.nan) > 0 or int(on.viol) > 0:
+				bad.append("%s %s: nan %d viol %d" % [who, weight, int(on.nan), int(on.viol)])
+			if early < 2.5:
+				bad.append("%s %s: the crouch is %.2f units deep at the end of its wind-up (2.5 wanted)" % [who, weight, early])
+			if rest > 0.35 or int(on.cleared_at) < 0:
+				bad.append("%s %s: not back to the stand after the travel starts (diff %.2f, cleared %d)" % [who, weight, rest, int(on.cleared_at)])
+			if step > 0.6 * excursion:
+				bad.append("%s %s: the body changes by %.2f of its %.2f units in one tick (0.6 at most)" % [who, weight, step, excursion])
+	var tiny: Dictionary = _lunge_probe("PROTAGONIST", "light", 2, 20, false)
+	if int(tiny.cleared_at) != 5:
+		bad.append("a 2-tick crouch was drawn (cleared at %d: 5 means it never started)" % int(tiny.cleared_at))
+	_expect(bad.is_empty(), "the lunge's wind-up crouch: drawn over the cue's ticks, handed to the travel without a snap, gone after: %s" % str(bad))
+	print("lunge crouch: %s" % " | ".join(seen))
+
+
+## Flight locomotion (docs/animation/flight-locomotion.md). A free fighter in the air leans into an acceleration on a spring that overshoots, flares when he stops hard from speed, coils at a dash's press, banks into a curve and breathes
+## in the hover; none of it while he is busy. The sim's velocity is driven here with its own smoothing (fighter.gd: k = 1 - 0.0008^dt toward the stick's speed). Nothing may be NaN or past a limit, and nothing pops.
+func _loco_run(who: String, course: Array, ticks: int, off: bool) -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = who
+	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
+	f0.x = 1000.0
+	f1.x = 1900.0
+	f0.y = WorldTerrain.groundY(S, f0.x, f0.z) + 400.0
+	f1.y = WorldTerrain.groundY(S, f1.x, f1.z)
+	f0.state = "free"
+	f1.state = "free"
+	f0.face = 1.0
+	f0.vx = 0.0
+	f0.vy = 0.0
+	RenderAnim.flight_loco = not off
+	var res := {"nan": 0, "viol": 0, "lean": [], "flare": [], "bank": [], "hover": [], "head": [], "pel": [], "hips": [], "moved": 0.0}
+	var k_s: float = 1.0 - pow(0.0008, 1.0 / 60.0)
+	for k in range(ticks):
+		S.tick = 9100 + k
+		S.T = 930.0 + float(k) / 60.0
+		var seg: Array = course[0]
+		for c in course:
+			if k >= int(c[0]):
+				seg = c
+		var mx: float = float(seg[1])
+		var my: float = float(seg[2])
+		var dash: bool = bool(seg[3])
+		var sp: float = 1300.0 if dash else 430.0
+		f0.input.dash = dash
+		f0.vx += (mx * sp - f0.vx) * k_s
+		f0.vy += (my * sp * 0.85 - f0.vy) * k_s
+		f0.y += f0.vy / 60.0
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		RenderAnim.debug_checks = true
+		var a0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		RenderAnim.debug_checks = false
+		for i in range(AnimRig.N):
+			if is_nan(a0.q[i].x) or is_nan(a0.q[i].w):
+				res.nan += 1
+		res.viol += AnimJoints.violations(a0.q, a0._rd.shape_key).size()
+		res.lean.append(float(a0.debug.get("loco_lean", 0.0)))
+		res.flare.append(float(a0.debug.get("loco_flare", 0.0)))
+		res.bank.append(float(a0.debug.get("loco_bank", 0.0)))
+		res.hover.append(float(a0.debug.get("loco_hover", 0.0)))
+		var pel: Vector3 = a0.socket("pelvis")
+		var hd: Vector3 = a0.head_center()
+		res.head.append((hd.x - pel.x) * a0.vface)
+		res.pel.append(pel.y)
+		res.hips.append(hd.y)
+		res.moved = maxf(float(res.moved), absf(f0.x - 1000.0))
+	RenderAnim.flight_loco = true
+	return res
+
+
+func _test_locomotion() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var seen: Array = []
+	# hover 0-59, cruise right 60-129, dash 130-199, stop 200-279, an arc up and over 280-339, a reversal 340-389, hover 390-479
+	var course: Array = [[0, 0.0, 0.0, false], [60, 1.0, 0.0, false], [130, 1.0, 0.0, true], [200, 0.0, 0.0, false], [280, 1.0, 1.0, false], [310, 1.0, -1.0, false], [340, -1.0, 0.0, false], [390, 0.0, 0.0, false]]
+	for who in ["PROTAGONIST", "RIVAL"]:
+		var on: Dictionary = _loco_run(who, course, 600, false)
+		var off: Dictionary = _loco_run(who, course, 600, true)
+		if int(on.nan) > 0 or int(on.viol) > 0:
+			bad.append("%s: nan %d viol %d" % [who, int(on.nan), int(on.viol)])
+		# the lean: forward in the cruise's acceleration, back in the stop, and the spring overshoots (it crosses zero after the stop's back lean)
+		var lean_acc: float = (on.lean.slice(62, 90) as Array).max()
+		var lean_brake: float = (on.lean.slice(200, 235) as Array).min()
+		var lean_after: float = (on.lean.slice(222, 280) as Array).max()
+		var forward: float = 0.0
+		for k in range(62, 90):
+			forward = maxf(forward, float(on.head[k]) - float(off.head[k]))
+		seen.append("%s accel lean %.2f (head forward %.1f), brake %.2f then %.2f, flare %.2f, bank %.2f, hover %.2f" % [who.substr(0, 1), lean_acc, forward, lean_brake, lean_after, (on.flare as Array).max(), maxf((on.bank as Array).max(), -(on.bank as Array).min()), (on.hover as Array).max()])
+		if lean_acc < 0.35 or forward < 1.2:
+			bad.append("%s: the acceleration leans %.2f and the head goes %.1f forward (0.35 and 1.2 wanted)" % [who, lean_acc, forward])
+		if lean_brake > -0.3:
+			bad.append("%s: the stop leans back only %.2f (0.25 wanted)" % [who, -lean_brake])
+		if lean_after < 0.02:
+			bad.append("%s: the lean does not overshoot after the stop (%.3f)" % [who, lean_after])
+		# the flare in the stop from the dash, and none in the cruise's start
+		if (on.flare.slice(200, 240) as Array).max() < 0.3:
+			bad.append("%s: no braking flare after the dash (%.2f)" % [who, (on.flare.slice(200, 240) as Array).max()])
+		if (on.flare.slice(60, 100) as Array).max() > 0.05:
+			bad.append("%s: a flare in the cruise's start (%.2f)" % [who, (on.flare.slice(60, 100) as Array).max()])
+		# the dash's coil: the weight goes down and back at the press, before the speed is up
+		var dip: float = 0.0
+		for k in range(131, 142):
+			dip = maxf(dip, float(off.hips[k]) - float(on.hips[k]))
+		if dip < 0.8:
+			bad.append("%s: the dash's coil dips the head only %.2f at the press (0.8 wanted)" % [who, dip])
+		# the bank: in the arc
+		var bk: float = 0.0
+		for k in range(285, 345):
+			bk = maxf(bk, absf(float(on.bank[k])))
+		if bk < 0.25:
+			bad.append("%s: the arc banks only %.2f (0.25 wanted)" % [who, bk])
+		# the hover breathes: the head moves through a breath, and not at speed
+		var hmin: float = 1.0e9
+		var hmax: float = -1.0e9
+		for k in range(440, 600):
+			hmin = minf(hmin, float(on.hips[k]) - float(off.hips[k]))
+			hmax = maxf(hmax, float(on.hips[k]) - float(off.hips[k]))
+		if hmax - hmin < 0.3:
+			bad.append("%s: the hover does not breathe (the head moves %.2f)" % [who, hmax - hmin])
+		if (on.hover.slice(160, 190) as Array).max() > 0.05:
+			bad.append("%s: the hover breathes at dash speed (%.2f)" % [who, (on.hover.slice(160, 190) as Array).max()])
+		# nothing pops: the head and pelvis change by 4 units a tick at most against the plain run (a stop from a dash), and the sim's position is what the course made it
+		var step: float = 0.0
+		for k in range(1, 600):
+			var d1 := Vector2(float(on.head[k]) - float(off.head[k]), float(on.hips[k]) - float(off.hips[k]))
+			var d0 := Vector2(float(on.head[k - 1]) - float(off.head[k - 1]), float(on.hips[k - 1]) - float(off.hips[k - 1]))
+			step = maxf(step, (d1 - d0).length())
+		if step > 4.0:
+			bad.append("%s: the head moves %.2f units a tick against the plain run (4 at most: a hard stop from a dash is quick)" % [who, step])
+	# busy: nothing in a lock
+	var busy: Dictionary = _loco_busy_probe()
+	if float(busy.lean) > 0.001:
+		bad.append("the layer is still leaning (%.3f) 30 ticks after a lock began" % float(busy.lean))
+	_expect(bad.is_empty(), "flight locomotion: the lean, the flare, the dash's coil, the bank and the hover's breath: %s" % str(bad))
+	print("flight locomotion: %s" % " | ".join(seen))
+
+
+func _loco_busy_probe() -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	RenderAnim._fighters.clear()
+	f0.y = WorldTerrain.groundY(S, f0.x, f0.z) + 400.0
+	f0.state = "free"
+	f0.face = 1.0
+	var lean: float = 0.0
+	for k in range(80):
+		S.tick = 9300 + k
+		S.T = 950.0 + float(k) / 60.0
+		f0.vx = 300.0 + 400.0 * sin(float(k) / 6.0)
+		f0.state = "locked" if k >= 30 else "free"
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		RenderAnim.debug_checks = true
+		var a0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.debug_checks = false
+		if k == 79:
+			lean = absf(a0._lo_act) * absf(float(a0.debug.get("loco_lean", 0.0)))
+	return {"lean": lean}
+
+
+## Ground locomotion (docs/animation/ground-locomotion.md). A free fighter on the ground walks and runs on a gait that follows the distance he covers, kicks off the ground when he rises from it, and absorbs his landing by the arrival
+## speed and the surface; none of it while he is busy. The sim's velocity is driven here with its own smoothing. Nothing may be NaN or past a limit, and nothing pops.
+func _gl_run(who: String, course: Array, ticks: int, off: bool, surface: String) -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = who
+	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
+	f0.x = 1000.0
+	f1.x = 1900.0
+	f0.y = WorldTerrain.groundY(S, f0.x, f0.z) + float(course[0][4]) if course[0].size() > 4 else WorldTerrain.groundY(S, f0.x, f0.z)
+	f1.y = WorldTerrain.groundY(S, f1.x, f1.z)
+	f0.state = "free"
+	f1.state = "free"
+	f0.face = 1.0
+	f0.vx = 0.0
+	f0.vy = 0.0
+	RenderAnim.ground_loco = not off
+	var res := {"nan": 0, "viol": 0, "foot": [], "hips": [], "head": [], "gait": [], "air": [], "surface": ""}
+	var k_s: float = 1.0 - pow(0.0008, 1.0 / 60.0)
+	var af0: AnimFighter = RenderAnim.fighter(S, f0)
+	af0._gl_surface_override = surface
+	for k in range(ticks):
+		S.tick = 9600 + k
+		S.T = 960.0 + float(k) / 60.0
+		var seg: Array = course[0]
+		for c in course:
+			if k >= int(c[0]):
+				seg = c
+		var g: float = WorldTerrain.groundY(S, f0.x, f0.z)
+		var sp: float = 430.0
+		f0.vx += (float(seg[1]) * sp - f0.vx) * k_s
+		if bool(seg[3]):
+			f0.vy = float(seg[2])   # a plain vertical velocity for the take-off and the fall
+		else:
+			f0.vy += (float(seg[2]) * sp * 0.85 - f0.vy) * k_s
+		f0.y += f0.vy / 60.0
+		if f0.y <= g:
+			f0.y = g
+			if f0.vy < 0.0:
+				f0.vy = 0.0
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		RenderAnim.debug_checks = true
+		var a0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		RenderAnim.debug_checks = false
+		for i in range(AnimRig.N):
+			if is_nan(a0.q[i].x) or is_nan(a0.q[i].w):
+				res.nan += 1
+		res.viol += AnimJoints.violations(a0.q, a0._rd.shape_key).size()
+		var pel: Vector3 = a0.socket("pelvis")
+		var ft: Vector3 = a0.socket("foot_r")
+		var hd: Vector3 = a0.head_center()
+		res.foot.append(ft.x - pel.x)
+		res.hips.append(pel.y)
+		res.head.append(hd.y)
+		res.gait.append(float(a0.debug.get("gl_gait", 0.0)))
+		res.air.append(f0.y - g)
+		res.surface = String(a0.debug.get("gl_surface", ""))
+	RenderAnim.ground_loco = true
+	return res
+
+
+func _test_ground_motion() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var seen: Array = []
+	# stand 0-39, walk 40-109 (stick 0.35), run 110-179 (stick 1), stop 180-249
+	var walk: Array = [[0, 0.0, 0.0, false], [40, 0.35, 0.0, false], [110, 1.0, 0.0, false], [180, 0.0, 0.0, false]]
+	# stand 0-29, rise 30-59 (vy 500), hover 60-89, fall 90-200 (vy -900) to the ground
+	var hop: Array = [[0, 0.0, 0.0, false, 0.0], [30, 0.0, 500.0, true], [60, 0.0, 0.0, true], [90, 0.0, -900.0, true]]
+	for who in ["PROTAGONIST", "RIVAL"]:
+		var on: Dictionary = _gl_run(who, walk, 250, false, "")
+		var off: Dictionary = _gl_run(who, walk, 250, true, "")
+		if int(on.nan) > 0 or int(on.viol) > 0:
+			bad.append("%s: nan %d viol %d" % [who, int(on.nan), int(on.viol)])
+		var fw_lo: float = 1.0e9
+		var fw_hi: float = -1.0e9
+		var fr_lo: float = 1.0e9
+		var fr_hi: float = -1.0e9
+		for k in range(70, 110):
+			fw_lo = minf(fw_lo, float(on.foot[k]) - float(off.foot[k]))
+			fw_hi = maxf(fw_hi, float(on.foot[k]) - float(off.foot[k]))
+		for k in range(140, 180):
+			fr_lo = minf(fr_lo, float(on.foot[k]) - float(off.foot[k]))
+			fr_hi = maxf(fr_hi, float(on.foot[k]) - float(off.foot[k]))
+		var bob: float = 0.0
+		for k in range(140, 180):
+			bob = maxf(bob, absf(float(on.hips[k]) - float(off.hips[k])))
+		seen.append("%s walk foot swing %.1f, run %.1f, bob %.1f" % [who.substr(0, 1), fw_hi - fw_lo, fr_hi - fr_lo, bob])
+		if fw_hi - fw_lo < 3.0:
+			bad.append("%s: the walk swings the foot only %.1f units (3 wanted)" % [who, fw_hi - fw_lo])
+		if fr_hi - fr_lo < 8.0:
+			bad.append("%s: the run swings the foot only %.1f units (8 wanted)" % [who, fr_hi - fr_lo])
+		if bob < 0.5:
+			bad.append("%s: the run bobs the hips only %.2f (0.5 wanted)" % [who, bob])
+		if (on.gait.slice(10, 30) as Array).max() > 0.01:
+			bad.append("%s: a gait while standing still (%.2f)" % [who, (on.gait.slice(10, 30) as Array).max()])
+		if (on.gait.slice(235, 250) as Array).max() > 0.05:
+			bad.append("%s: the gait goes on after the stop (%.2f)" % [who, (on.gait.slice(235, 250) as Array).max()])
+		# nothing pops: the head moves 3 units a tick at most against the plain run
+		var step: float = 0.0
+		for k in range(1, 250):
+			step = maxf(step, absf((float(on.head[k]) - float(off.head[k])) - (float(on.head[k - 1]) - float(off.head[k - 1]))))
+		if step > 3.0:
+			bad.append("%s: the head moves %.2f units a tick against the plain run (3 at most)" % [who, step])
+		# the kick-off and the landing
+		for surf in ["soil", "rock", "sand", "rubble", "water"]:
+			var hon: Dictionary = _gl_run(who, hop, 230, false, surf)
+			var hoff: Dictionary = _gl_run(who, hop, 230, true, surf)
+			if int(hon.nan) > 0 or int(hon.viol) > 0:
+				bad.append("%s %s hop: nan %d viol %d" % [who, surf, int(hon.nan), int(hon.viol)])
+			var land_at: int = -1
+			for k in range(91, 229):
+				if float(hoff.air[k]) <= 0.5 and land_at < 0:
+					land_at = k
+			var sink: float = 0.0
+			if land_at >= 0:
+				for k in range(land_at, mini(land_at + 14, 229)):
+					sink = maxf(sink, float(hoff.hips[k]) - float(hon.hips[k]))
+			var kick: float = 0.0
+			for k in range(31, 44):
+				kick = maxf(kick, float(hoff.foot[k]) - float(hon.foot[k]))
+			seen.append("%s %s kick %.1f sink %.1f" % [who.substr(0, 1), surf, kick, sink])
+			if land_at < 0:
+				bad.append("%s %s hop: never landed in the probe" % [who, surf])
+			elif sink < 2.0:
+				bad.append("%s %s: the landing sinks the hips only %.2f (2 wanted)" % [who, surf, sink])
+			if kick < 1.5:
+				bad.append("%s %s: the kick-off trails the foot only %.2f (1.5 wanted)" % [who, surf, kick])
+	# water sinks deeper than rock, and sand is the one that slides the drawn body (the hop on each, Protagonist)
+	var w_hon: Dictionary = _gl_run("PROTAGONIST", hop, 230, false, "water")
+	var r_hon: Dictionary = _gl_run("PROTAGONIST", hop, 230, false, "rock")
+	var wmin: float = 1.0e9
+	var rmin: float = 1.0e9
+	for k in range(100, 229):
+		wmin = minf(wmin, float(w_hon.hips[k]))
+		rmin = minf(rmin, float(r_hon.hips[k]))
+	if wmin > rmin - 0.8:
+		bad.append("water does not sink deeper than rock (%.1f against %.1f)" % [wmin, rmin])
+	var busy: Dictionary = _gl_busy_probe()
+	if float(busy.gait) > 0.001:
+		bad.append("the gait still shows (%.3f) 30 ticks after a lock began" % float(busy.gait))
+	_expect(bad.is_empty(), "ground locomotion: the gait, the kick-off and the landing by surface, none while busy: %s" % str(bad))
+	print("ground locomotion: %s" % " | ".join(seen))
+
+
+func _gl_busy_probe() -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	RenderAnim._fighters.clear()
+	f0.y = WorldTerrain.groundY(S, f0.x, f0.z)
+	f0.face = 1.0
+	var gait: float = 0.0
+	for k in range(80):
+		S.tick = 9800 + k
+		S.T = 980.0 + float(k) / 60.0
+		f0.vx = 300.0
+		f0.state = "locked" if k >= 30 else "free"
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		RenderAnim.debug_checks = true
+		var a0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.debug_checks = false
+		if k == 79:
+			gait = absf(a0._gl_act) * float(a0.debug.get("gl_gait", 0.0))
+	return {"gait": gait}
+
+
+## Hit reactions with variety (docs/animation/hit-reactions.md). Each blow picks a variant by weight, direction and body part, never the one the last blow picked, and the same hits pick the same variants on a replay; every variant and every
+## recovery plays clean for both fighters, shows against the plain flinch, and hands the body back. Nothing may be NaN or past a limit.
+func _hv_run(who: String, hits: Array, ticks: int, off: bool) -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = who
+	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
+	f0.x = 1000.0
+	f1.x = 1250.0
+	f0.y = 0.0
+	f1.y = 0.0
+	f0.state = "free"
+	f1.state = "free"
+	RenderAnim.hit_variants = not off
+	var res := {"nan": 0, "viol": 0, "head": [], "hips": [], "ids": [], "var": 0}
+	var af: AnimFighter = RenderAnim.fighter(S, f0)
+	for k in range(ticks):
+		S.tick = 9900 + k
+		S.T = 990.0 + float(k) / 60.0
+		for h in hits:
+			if int(h[0]) == k:
+				af.on_hit(S.T, String(h[1]), bool(h[2]), clampf(float(h[3]), 0.2, 1.0), String(h[4]), Vector2(float(h[5]), float(h[6])), float(h[3]), S.tick, 0.0, 0)
+				res.ids.append(String(af._reacts[-1].get("var", "")))
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		RenderAnim.debug_checks = true
+		var a0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.debug_checks = false
+		RenderAnim.solve(S, f1)
+		for i in range(AnimRig.N):
+			if is_nan(a0.q[i].x) or is_nan(a0.q[i].w):
+				res.nan += 1
+		res.viol += AnimJoints.violations(a0.q, a0._rd.shape_key).size()
+		var pel: Vector3 = a0.socket("pelvis")
+		var hd: Vector3 = a0.head_center()
+		res.head.append(Vector2((hd.x - pel.x) * a0.vface, hd.y - pel.y))
+		res.hips.append(pel.y)
+		res.var = int(a0.debug.get("reaction_variants", 0))
+	RenderAnim.hit_variants = true
+	return res
+
+
+func _test_reactions() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var seen: Array = []
+	var R: Dictionary = AnimData.reactions
+	if R.is_empty():
+		bad.append("no reactions data")
+	# one hit of each weight, region, direction and draw: [tick, region, front, force, kind, dx, dy]
+	var specs: Array = []
+	var k: int = 10
+	for fo in [0.35, 0.8, 1.3]:
+		for rg in ["head", "core", "arms", "legs"]:
+			for fr in [true, false]:
+				for dy in [0.0, -0.7]:
+					specs.append([k, rg, fr, fo, "light" if fo < 0.5 else "heavy", -1.0 if fr else 1.0, dy])
+					k += 60
+	var all_used: Dictionary = {}
+	var by_weight: Dictionary = {"light": {}, "medium": {}, "heavy": {}}
+	var worst: float = 0.0
+	for who in ["PROTAGONIST", "RIVAL"]:
+		# the hits one at a time are too many runs: the whole list in one run each way, sampled by the hit
+		var total: int = k + 80
+		var on: Dictionary = _hv_run(who, specs, total, false)
+		var off: Dictionary = _hv_run(who, specs, total, true)
+		if int(on.nan) > 0 or int(on.viol) > 0:
+			bad.append("%s: nan %d viol %d" % [who, int(on.nan), int(on.viol)])
+		var prev: String = "-"
+		for i in range(on.ids.size()):
+			var id: String = String(on.ids[i])
+			all_used[id] = true
+			var sp: Array = specs[i]
+			var wc: String = "light" if float(sp[3]) < 0.5 else ("medium" if float(sp[3]) < 1.0 else "heavy")
+			by_weight[wc][id] = true
+			if id == "":
+				bad.append("%s hit %d (%s %s, force %.2f) picked no variant" % [who, i, String(sp[1]), "front" if bool(sp[2]) else "back", float(sp[3])])
+			if id == prev and id != "":
+				bad.append("%s: hit %d picked %s again" % [who, i, id])
+			prev = id
+		# each hit shows against the plain flinch: the head or the hips differ by 0.6 units somewhere in its first 0.6 s, and the body is back (0.4) 1.3 s after
+		var shown: int = 0
+		for i in range(specs.size()):
+			var t0: int = int(specs[i][0])
+			var dmax: float = 0.0
+			for tt in range(t0, mini(t0 + 36, int(on.head.size()))):
+				dmax = maxf(dmax, (Vector2(on.head[tt]) - Vector2(off.head[tt])).length() + absf(float(on.hips[tt]) - float(off.hips[tt])))
+			worst = maxf(worst, dmax)
+			if dmax >= 0.6:
+				shown += 1
+		if shown < specs.size() - 4:
+			bad.append("%s: only %d of %d hits differ from the plain flinch by 0.6 units" % [who, shown, specs.size()])
+		seen.append("%s %d hits, %d variants shown, the largest swing from plain %.1f" % [who.substr(0, 1), specs.size(), shown, worst])
+	# the same hits draw the same variants on a replay
+	var a: Dictionary = _hv_run("PROTAGONIST", specs.slice(0, 12), 12 * 60 + 80, false)
+	var b: Dictionary = _hv_run("PROTAGONIST", specs.slice(0, 12), 12 * 60 + 80, false)
+	if str(a.ids) != str(b.ids):
+		bad.append("a replay picks other variants: %s against %s" % [str(a.ids), str(b.ids)])
+	# a lighter blow and a heavier one do not draw from the same pool
+	var shared: Array = []
+	for id in by_weight.light:
+		if by_weight.heavy.has(id):
+			shared.append(id)
+	if not shared.is_empty() and (by_weight.light.size() <= shared.size() or by_weight.heavy.size() <= shared.size()):
+		bad.append("light and heavy draw the same variants: %s" % str(shared))
+	all_used.erase("")
+	if all_used.size() < 12:
+		bad.append("only %d variants were picked in the sweep (12 or more wanted)" % all_used.size())
+	_expect(bad.is_empty(), "hit reactions: variety by weight, direction and body part, never the same twice in a row, clean, back to the stand: %s" % str(bad))
+	print("hit reactions: %s; %d variants used (%s)" % [" | ".join(seen), all_used.size(), ", ".join(PackedStringArray(all_used.keys()))])
+
+
+## The air recovery (docs/animation/air-recovery.md). A launched body that gets control back well off the ground, at speed, catches itself: the arms fling, the torso rocks once and settles. Launched 20 to 59, free after; `height` is how high above the ground he is.
+func _ar_run(who: String, speed: float, height: float, off: bool) -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = who
+	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
+	f0.x = 1000.0
+	f1.x = 1900.0
+	f1.y = WorldTerrain.groundY(S, f1.x, f1.z)
+	f0.face = 1.0
+	RenderAnim.air_recover = not off
+	var res := {"nan": 0, "viol": 0, "head": [], "hips": [], "env": []}
+	for k in range(150):
+		S.tick = 9700 + k
+		S.T = 970.0 + float(k) / 60.0
+		var g: float = WorldTerrain.groundY(S, f0.x, f0.z)
+		if k < 20:
+			f0.state = "free"
+			f0.vx = 0.0
+			f0.vy = 0.0
+			f0.y = g + height
+		elif k < 60:
+			f0.state = "launched"
+			f0.vx = speed * (1.0 - float(k - 20) / 45.0)
+			f0.vy = 0.0
+		else:
+			f0.state = "free"
+			f0.vx *= 0.9
+			f0.vy = 0.0
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		RenderAnim.debug_checks = true
+		var a0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		RenderAnim.debug_checks = false
+		for i in range(AnimRig.N):
+			if is_nan(a0.q[i].x) or is_nan(a0.q[i].w):
+				res.nan += 1
+		res.viol += AnimJoints.violations(a0.q, a0._rd.shape_key).size()
+		var hd: Vector3 = a0.head_center()
+		var pel: Vector3 = a0.socket("pelvis")
+		res.head.append(Vector2((hd.x - pel.x) * a0.vface, hd.y - pel.y))
+		res.hips.append(pel.y)
+		res.env.append(float(a0.debug.get("ar_env", 0.0)))
+	RenderAnim.air_recover = true
+	return res
+
+
+func _test_air_recover() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var seen: Array = []
+	for who in ["PROTAGONIST", "RIVAL"]:
+		var on: Dictionary = _ar_run(who, 1500.0, 400.0, false)
+		var off: Dictionary = _ar_run(who, 1500.0, 400.0, true)
+		if int(on.nan) > 0 or int(on.viol) > 0:
+			bad.append("%s: nan %d viol %d" % [who, int(on.nan), int(on.viol)])
+		var peak: float = 0.0
+		var step: float = 0.0
+		var prev: float = 0.0
+		for k in range(60, 100):
+			var d: float = (Vector2(on.head[k]) - Vector2(off.head[k])).length()
+			peak = maxf(peak, d)
+			step = maxf(step, absf(d - prev))
+			prev = d
+		var tail: float = 0.0
+		for k in range(120, 150):
+			tail = maxf(tail, (Vector2(on.head[k]) - Vector2(off.head[k])).length())
+		var before: float = 0.0
+		for k in range(0, 60):
+			before = maxf(before, (Vector2(on.head[k]) - Vector2(off.head[k])).length())
+		seen.append("%s catch %.1f, step %.2f, tail %.2f" % [who.substr(0, 1), peak, step, tail])
+		if peak < 2.5:
+			bad.append("%s: the air recovery moves the head only %.2f units (2.5 wanted)" % [who, peak])
+		if step > 2.0:
+			bad.append("%s: the recovery moves the head %.2f units a tick against none (2 at most)" % [who, step])
+		if tail > 0.3:
+			bad.append("%s: the recovery has not let go 1 s on (%.2f)" % [who, tail])
+		if before > 0.05:
+			bad.append("%s: the recovery shows before the launch ends (%.2f)" % [who, before])
+		# a slow launch and a launch near the ground are caught by nothing
+		var slow_on: Dictionary = _ar_run(who, 150.0, 400.0, false)
+		var slow_off: Dictionary = _ar_run(who, 150.0, 400.0, true)
+		var low_on: Dictionary = _ar_run(who, 1500.0, 8.0, false)
+		var low_off: Dictionary = _ar_run(who, 1500.0, 8.0, true)
+		var sd: float = 0.0
+		var ld: float = 0.0
+		for k in range(60, 100):
+			sd = maxf(sd, (Vector2(slow_on.head[k]) - Vector2(slow_off.head[k])).length())
+			ld = maxf(ld, (Vector2(low_on.head[k]) - Vector2(low_off.head[k])).length())
+		if sd > 0.05:
+			bad.append("%s: a slow launch is caught anyway (%.2f)" % [who, sd])
+		if ld > 0.05:
+			bad.append("%s: a launch at the ground is caught anyway (%.2f)" % [who, ld])
+	_expect(bad.is_empty(), "air recovery: a body that gets control back in the air at speed catches itself and lets go, none when slow or low: %s" % str(bad))
+	print("air recovery: %s" % " | ".join(seen))
+
+
+## Follow-through (docs/animation/secondary-motion.md). A run, a stop, a hop and a landing, and a blow, with the head, upper back and forearms free against fixed; nothing pops, nothing stays moving, nothing moves standing still.
+func _sec_run(who: String, off: bool) -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = who
+	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
+	f0.x = 1000.0
+	f1.x = 1900.0
+	f0.y = WorldTerrain.groundY(S, f0.x, f0.z)
+	f1.y = WorldTerrain.groundY(S, f1.x, f1.z)
+	f0.state = "free"
+	f1.state = "free"
+	f0.face = 1.0
+	f0.vx = 0.0
+	f0.vy = 0.0
+	RenderAnim.secondary_motion = not off
+	var res := {"nan": 0, "viol": 0, "head": [], "hand": [], "ang": []}
+	var k_s: float = 1.0 - pow(0.0008, 1.0 / 60.0)
+	var af0: AnimFighter = RenderAnim.fighter(S, f0)
+	for k in range(420):
+		S.tick = 9800 + k
+		S.T = 980.0 + float(k) / 60.0
+		var g: float = WorldTerrain.groundY(S, f0.x, f0.z)
+		var stick: float = 1.0 if (k >= 30 and k < 90) else 0.0
+		f0.vx += (stick * 430.0 - f0.vx) * k_s
+		if k >= 140 and k < 160:
+			f0.vy = 500.0
+		elif k >= 160 and f0.y > g + 0.01:
+			f0.vy = maxf(f0.vy - 25.0, -900.0)
+		f0.y += f0.vy / 60.0
+		if f0.y <= g:
+			f0.y = g
+			if f0.vy < 0.0:
+				f0.vy = 0.0
+		if k == 280:
+			af0.on_hit(S.T, "core", true, 0.8, "heavy", Vector2(-1.0, 0.0), 1.0, S.tick, 0.0, 0)
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		RenderAnim.debug_checks = true
+		var a0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		RenderAnim.debug_checks = false
+		for i in range(AnimRig.N):
+			if is_nan(a0.q[i].x) or is_nan(a0.q[i].w):
+				res.nan += 1
+		res.viol += AnimJoints.violations(a0.q, a0._rd.shape_key).size()
+		var pel: Vector3 = a0.socket("pelvis")
+		var hd: Vector3 = a0.head_center()
+		var hn: Vector3 = a0.socket("hand_r")
+		res.head.append(Vector2((hd.x - pel.x) * a0.vface, hd.y - pel.y))
+		res.hand.append(Vector2((hn.x - pel.x) * a0.vface, hn.y - pel.y))
+		res.ang.append(Vector2(float(a0.debug.get("fw_head", 0.0)), float(a0.debug.get("fw_arm", 0.0))))
+	RenderAnim.secondary_motion = true
+	return res
+
+
+func _sec_diff(on: Array, off: Array, a: int, b: int) -> float:
+	var m: float = 0.0
+	for k in range(a, b):
+		m = maxf(m, (Vector2(on[k]) - Vector2(off[k])).length())
+	return m
+
+
+func _test_secondary() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var seen: Array = []
+	for who in ["PROTAGONIST", "RIVAL"]:
+		var on: Dictionary = _sec_run(who, false)
+		var off: Dictionary = _sec_run(who, true)
+		if int(on.nan) > 0 or int(on.viol) > 0:
+			bad.append("%s: nan %d viol %d" % [who, int(on.nan), int(on.viol)])
+		var still: float = _sec_diff(on.hand, off.hand, 0, 30) + _sec_diff(on.head, off.head, 0, 30)
+		var run_h: float = _sec_diff(on.hand, off.hand, 30, 80)
+		var stop_h: float = _sec_diff(on.hand, off.hand, 90, 130)
+		var land_h: float = _sec_diff(on.hand, off.hand, 160, 270)
+		var land_d: float = _sec_diff(on.head, off.head, 160, 270)
+		var hit_h: float = _sec_diff(on.hand, off.hand, 280, 340)
+		var hit_d: float = _sec_diff(on.head, off.head, 280, 340)
+		var tail: float = _sec_diff(on.hand, off.hand, 380, 420) + _sec_diff(on.head, off.head, 380, 420)
+		# the angles themselves move smoothly: 0.09 rad a tick at most, and never past their bound
+		var step: float = 0.0
+		var top: float = 0.0
+		for k in range(1, 420):
+			step = maxf(step, (Vector2(on.ang[k]) - Vector2(on.ang[k - 1])).length())
+			top = maxf(top, maxf(absf(Vector2(on.ang[k]).x), absf(Vector2(on.ang[k]).y)))
+		seen.append("%s run %.1f stop %.1f land %.1f/%.1f hit %.1f/%.1f step %.3f top %.2f tail %.2f" % [who.substr(0, 1), run_h, stop_h, land_h, land_d, hit_h, hit_d, step, top, tail])
+		if still > 0.02:
+			bad.append("%s: follow-through while standing still (%.2f)" % [who, still])
+		if run_h < 1.5 or stop_h < 1.5:
+			bad.append("%s: the forearms barely follow a start or a stop (%.2f, %.2f; 1.5 wanted)" % [who, run_h, stop_h])
+		if land_h < 2.0 or land_d < 0.5:
+			bad.append("%s: the landing sets the forearms and head swinging only %.2f and %.2f (2 and 0.5 wanted)" % [who, land_h, land_d])
+		if hit_h < 2.0 or hit_d < 0.6:
+			bad.append("%s: a blow sets the forearms and head swinging only %.2f and %.2f (2 and 0.6 wanted)" % [who, hit_h, hit_d])
+		if step > 0.09:
+			bad.append("%s: the follow-through turns a part %.3f rad a tick (0.09 at most)" % [who, step])
+		if tail > 0.3:
+			bad.append("%s: the follow-through has not settled 1 s after the last blow (%.2f)" % [who, tail])
+	_expect(bad.is_empty(), "secondary motion: the head, back and forearms follow a start, a stop, a landing and a blow, settle, and are still at rest: %s" % str(bad))
+	print("secondary motion: %s" % " | ".join(seen))
+
+
+## The pop (docs/animation/pop-juggle.md). The cue sequences of Encounter's pop on the popped fighter, drawn with and without the layer: up then land set, up then land reel, up then slam then land, up then burst; the body differs while he is up, nothing pops, nothing stays after.
+func _pop_run(who: String, seq: Array, ticks: int, off: bool) -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = who
+	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
+	f0.x = 1000.0
+	f1.x = 1250.0
+	f0.y = WorldTerrain.groundY(S, f0.x, f0.z) + 90.0
+	f1.y = WorldTerrain.groundY(S, f1.x, f1.z)
+	f0.state = "free"
+	f1.state = "free"
+	f0.vx = 0.0
+	f0.vy = 0.0
+	RenderAnim.pop_juggle = not off
+	var res := {"nan": 0, "viol": 0, "head": [], "hips": [], "pops": 0}
+	var af0: AnimFighter = RenderAnim.fighter(S, f0)
+	for k in range(ticks):
+		S.tick = 9900 + k
+		S.T = 990.0 + float(k) / 60.0
+		for c in seq:
+			if int(c[0]) == k:
+				af0.on_pop(String(c[1]), int(c[2]), float(c[3]), float(c[4]), S.T)
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		RenderAnim.debug_checks = true
+		var a0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		RenderAnim.debug_checks = false
+		for i in range(AnimRig.N):
+			if is_nan(a0.q[i].x) or is_nan(a0.q[i].w):
+				res.nan += 1
+		res.viol += AnimJoints.violations(a0.q, a0._rd.shape_key).size()
+		var pel: Vector3 = a0.socket("pelvis")
+		var hd: Vector3 = a0.head_center()
+		res.head.append(Vector2((hd.x - pel.x) * a0.vface, hd.y - pel.y))
+		res.hips.append(pel.y)
+		res.pops = int(a0.debug.get("pops", 0))
+	RenderAnim.pop_juggle = true
+	return res
+
+
+func _test_pop() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var seen: Array = []
+	var seqs := {
+		"up+set": [[10, "up", 40, 30, 2.5], [40, "land", 1, 0, 0.0]],
+		"up+reel": [[10, "up", 40, 30, 2.5], [40, "land", 0, 0, 0.0]],
+		"up+slam": [[10, "up", 40, 30, 2.5], [24, "slam", 30, 6, 0.0], [30, "land", 0, 0, 0.0]],
+		"up+spike": [[10, "up", 40, 30, 2.5], [22, "spike", 0, 8, 0.0], [30, "land", 0, 0, 1.0]],
+		"up+burst": [[10, "up", 40, 30, 2.5], [28, "burst", 0, 0, 0.0], [40, "land", 1, 0, 0.0]],
+	}
+	for who in ["PROTAGONIST", "RIVAL"]:
+		for name in seqs:
+			var on: Dictionary = _pop_run(who, seqs[name], 140, false)
+			var off: Dictionary = _pop_run(who, seqs[name], 140, true)
+			if int(on.nan) > 0 or int(on.viol) > 0:
+				bad.append("%s %s: nan %d viol %d" % [who, name, int(on.nan), int(on.viol)])
+			var peak: float = 0.0
+			var step: float = 0.0
+			var prev: float = 0.0
+			for k in range(10, 140):
+				var d: float = (Vector2(on.head[k]) - Vector2(off.head[k])).length() + absf(float(on.hips[k]) - float(off.hips[k]))
+				peak = maxf(peak, d)
+				step = maxf(step, absf(d - prev))
+				prev = d
+			var before: float = 0.0
+			for k in range(0, 10):
+				before = maxf(before, (Vector2(on.head[k]) - Vector2(off.head[k])).length())
+			var tail: float = 0.0
+			for k in range(120, 140):
+				tail = maxf(tail, (Vector2(on.head[k]) - Vector2(off.head[k])).length() + absf(float(on.hips[k]) - float(off.hips[k])))
+			seen.append("%s %s swing %.1f step %.2f tail %.2f" % [who.substr(0, 1), name, peak, step, tail])
+			if peak < 4.0:
+				bad.append("%s %s: the pop moves the body only %.2f units (4 wanted)" % [who, name, peak])
+			if step > 0.45 * peak:
+				bad.append("%s %s: the pop changes the body by %.2f of its %.2f units in one solve (0.45 at most: a snap)" % [who, name, step, peak])
+			if tail > 0.3 or before > 0.05:
+				bad.append("%s %s: not clean at the edges (before %.2f, after %.2f)" % [who, name, before, tail])
+	# the tech plays the air tech's own sequence and no pop pose
+	var t_on: Dictionary = _pop_run("PROTAGONIST", [[10, "up", 40, 30, 2.5], [30, "tech", 40, 0, 0.0]], 80, false)
+	if int(t_on.pops) != 1:
+		bad.append("a tech cue counted %d pops (the up alone is one)" % int(t_on.pops))
+	_expect(bad.is_empty(), "the pop: the body shows the rise, the hang, the fall, the slam, the burst and the landing, without a snap, clean at both edges: %s" % str(bad))
+	print("pop: %s" % " | ".join(seen))
+
+
 func _test_pulled() -> void:
 	AnimData.load_every_wave()
 	main.start_match(4, {"p1": false, "p2": false})
@@ -3068,6 +3996,7 @@ func _cell_distance(a: Dictionary, b: Dictionary) -> float:
 
 func _test_styles() -> void:
 	AnimData.load_every_wave()
+	RenderAnim.hit_variants = false   # the styles are the attackers' own: the defender answers with the plain flinch here
 	_run_cells(true)
 	var feat := {}
 	var groups := {}
@@ -3101,6 +4030,7 @@ func _test_styles() -> void:
 			for j in range(i + 1, CELLS.size()):
 				if String(CELLS[i]).substr(0, 1) != String(CELLS[j]).substr(0, 1):
 					cross_min = minf(cross_min, _cell_distance(feat["%s:%s" % [CELLS[i], who]], feat["%s:%s" % [CELLS[j], who]]))
+	RenderAnim.hit_variants = true
 	_expect(worst_d >= 2.5, "styles: the nearest two styles of a button are %.2f apart (%s); the threshold is 2.5 (the fighters are %.2f apart at the median, the nearest two buttons %.2f)" % [worst_d, worst, float(fighters[fighters.size() / 2]), cross_min])
 	print("styles: 18 style pairs, nearest %.2f (%s); the fighters %.2f apart at the median; the nearest two buttons %.2f" % [worst_d, worst, float(fighters[fighters.size() / 2]), cross_min])
 
@@ -5591,6 +6521,7 @@ func _run() -> void:
 	_test_guard()
 	_test_ragdoll_vary()
 	_test_ragdoll_weight()
+	_test_ragdoll_families()
 	_test_ragdoll_oop()
 	_test_air_brake()
 	_test_chain()
@@ -5599,6 +6530,13 @@ func _run() -> void:
 	_test_grip()
 	_test_recoil()
 	_test_press_ack()
+	_test_lunge_crouch()
+	_test_locomotion()
+	_test_ground_motion()
+	_test_reactions()
+	_test_air_recover()
+	_test_secondary()
+	_test_pop()
 	_test_struggle()
 	_test_grip_feed()
 	_test_grip_throw()

@@ -1,0 +1,16 @@
+{
+  "schema": "anim.secondary/1",
+  "_about": "Follow-through (docs/animation/secondary-motion.md). Loose parts of the body lag behind the body and swing past on every change of its velocity and on every blow: the head and the upper back, and the two forearms (hanging free, they trail a run, fling up at a landing and swing on after a hit). One damped spring per part (`stiff`, `damp`), stepped once per sim tick beside the sash and pack cloth, so a replay shows the same. A part is kicked by the change in the body's velocity over the tick (`dv_ref`: the change in units a tick, along the way he faces and up, that is a full kick; `gx` and `gy` are the part's turn in radians a second at a full kick along and up, signed: a positive turn swings a down-pointing part forward and an up-pointing part back) and by a blow (`hit`: radians a second at a force of `force_ref`, away from the blow). `max` bounds the angle. Fighters: `scale` is the size of the follow-through (the Protagonist loose, the Anti-hero tight) and `damp` the damping scale. Under reduced motion it is 0.5; a frozen tick (hit-stop) runs at a tenth. Render only, outside the sim's data hash. First values, Animation's.",
+  "dv_ref": [110.0, 600.0],
+  "hit": {"force_ref": 1.3},
+  "parts": {
+    "head": {"stiff": 75.0, "damp": 6.5, "gx": 1.2, "gy": -1.0, "hit": 2.6, "max": 0.3},
+    "spine_2": {"stiff": 60.0, "damp": 7.5, "gx": 0.6, "gy": -0.5, "hit": 1.2, "max": 0.18},
+    "forearm_l": {"stiff": 48.0, "damp": 4.2, "gx": -1.1, "gy": 1.1, "hit": 2.6, "max": 0.55},
+    "forearm_r": {"stiff": 52.0, "damp": 4.2, "gx": -1.1, "gy": 1.1, "hit": 2.6, "max": 0.55}
+  },
+  "fighters": {
+    "PROTAGONIST": {"scale": 1.15, "damp": 0.85},
+    "RIVAL": {"scale": 0.85, "damp": 1.15}
+  }
+}

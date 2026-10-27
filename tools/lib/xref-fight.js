@@ -463,6 +463,14 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor, root }) {
     if (isObj(dr) && typeof dr.a0 === 'number' && typeof dr.a_max === 'number' && dr.a0 > dr.a_max) err(RG, '/drive/a0', 'ragdoll-limits', `a0 ${dr.a0} is above a_max ${dr.a_max}`);
     const rg = rag.regimes;
     if (isObj(rg)) for (const k of ['tuck_spin', 'brace_time']) if (Array.isArray(rg[k]) && rg[k].length === 2 && rg[k][0] > rg[k][1]) err(RG, `/regimes/${k}`, 'ragdoll-limits', `${k} runs from ${rg[k][0]} down to ${rg[k][1]}; it must rise`);
+    const fams = isObj(rag.variety) && Array.isArray(rag.variety.families) ? rag.variety.families : [];
+    const famSeen = new Map();
+    fams.forEach((f, i) => {
+      if (!isObj(f)) return;
+      const at = `/variety/families/${i}`;
+      if (typeof f.name === 'string') { if (famSeen.has(f.name)) err(RG, `${at}/name`, 'ragdoll-family', `family "${f.name}" is already named at /variety/families/${famSeen.get(f.name)}`); else famSeen.set(f.name, i); }
+      if (isObj(f.bias) && seenIds.size) for (const k of Object.keys(f.bias)) if (!k.startsWith('_') && !seenIds.has(k)) err(RG, `${at}/bias/${esc(k)}`, 'ragdoll-family', `bias names "${k}", which is not a dof id in dofs`);
+    });
   }
 
   // ---- director launch: the drive angle and height orders, CRATER SLAM goes down ----
@@ -523,6 +531,8 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor, root }) {
       if (hd.length !== n) err(MO, '/hit/dofs', 'ragdoll-motion-dofs', `hit.dofs has ${hd.length} entries but ragdoll.json has ${n} dofs`);
       hd.forEach((h, i) => { if (isObj(h) && i < n && h.id !== dofs[i].id) err(MO, `/hit/dofs/${i}/id`, 'ragdoll-motion-dofs', `hit dof ${i} is "${h.id}" but ragdoll.json dof ${i} is "${dofs[i].id}" (same order)`); });
     }
+    const lw = isObj(motion.weight) && isObj(motion.weight.launch) ? motion.weight.launch : undefined;
+    if (lw) for (const k of ['speed', 'amp', 'dur']) if (Array.isArray(lw[k]) && lw[k].length === 2 && typeof lw[k][0] === 'number' && typeof lw[k][1] === 'number' && lw[k][0] > lw[k][1]) err(MO, `/weight/launch/${k}/0`, 'ragdoll-launch-order', `launch ${k} runs from ${lw[k][0]} down to ${lw[k][1]}; it must rise`);
   }
 
   // ---- anim quality: each level switches off at least what the level above does ----
@@ -1126,6 +1136,55 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor, root }) {
         if (kind.startsWith('_') || !isObj(hs)) continue;
         for (const [h, r] of Object.entries(hs)) if (!h.startsWith('_') && typeof r === 'string' && !regs.includes(r)) err(GF, `/grips/${esc(kind)}/${esc(h)}`, 'anim-grip-feed-region', `region "${r}" is not a region of data/anim/sockets.json`);
       }
+    }
+    const loc = get('data/anim/locomotion.json');
+    for (const blk of ['flare', 'recover']) if (isObj(loc) && isObj(loc[blk]) && typeof loc[blk].pose === 'string' && posesP.size && !posesP.has(loc[blk].pose)) err('data/anim/locomotion.json', `/${blk}/pose`, 'anim-locomotion-pose', `pose "${loc[blk].pose}" is not in poses.json nor a wave's poses file`);
+    const gmo = get('data/anim/ground_motion.json');
+    if (isObj(gmo)) {
+      const GM = 'data/anim/ground_motion.json';
+      if (isObj(gmo.gait)) {
+        const sp = ['min_speed', 'full_speed', 'run_speed', 'max_speed'];
+        for (let i = 1; i < sp.length; i++) if (typeof gmo.gait[sp[i]] === 'number' && typeof gmo.gait[sp[i - 1]] === 'number' && gmo.gait[sp[i]] <= gmo.gait[sp[i - 1]]) err(GM, `/gait/${sp[i]}`, 'ground-motion-speeds', `${sp[i]} ${gmo.gait[sp[i]]} is not above ${sp[i - 1]} ${gmo.gait[sp[i - 1]]}: the gait's speeds must ascend`);
+      }
+      if (isObj(gmo.look) && isObj(gmo.surfaces)) for (const [k, v] of Object.entries(gmo.look)) if (!k.startsWith('_') && typeof v === 'string' && !(v in gmo.surfaces)) err(GM, `/look/${esc(k)}`, 'ground-motion-look', `the look class "${k}" plays as "${v}", which is not a key of surfaces`);
+    }
+    const rct = get('data/anim/reactions.json');
+    if (isObj(rct)) {
+      const RX = 'data/anim/reactions.json';
+      if (typeof rct.light_max === 'number' && typeof rct.medium_max === 'number' && rct.medium_max <= rct.light_max) err(RX, '/medium_max', 'anim-reactions-weights', `medium_max ${rct.medium_max} is not above light_max ${rct.light_max}`);
+      const prof = get('data/anim/profiles.json');
+      const rig = isObj(prof) && isObj(prof.bone_lag) ? new Set(Object.keys(prof.bone_lag)) : null;
+      const vs = Array.isArray(rct.variants) ? rct.variants : [], rs = Array.isArray(rct.recover) ? rct.recover : [];
+      for (const [list, name] of [[vs, 'variants'], [rs, 'recover']]) {
+        const seen = new Set();
+        list.forEach((v, i) => {
+          if (!isObj(v)) return;
+          if (typeof v.id === 'string') { if (seen.has(v.id)) err(RX, `/${name}/${i}/id`, 'anim-reactions-id', `the id "${v.id}" is used twice in ${name}`); seen.add(v.id); }
+          if (rig && isObj(v.bones)) for (const b of Object.keys(v.bones)) if (!b.startsWith('_') && !rig.has(b)) err(RX, `/${name}/${i}/bones/${esc(b)}`, 'anim-reactions-bone', `"${b}" is not a bone of data/anim/profiles.json bone_lag`);
+          if (name === 'variants' && typeof v.pose === 'string' && posesP.size && !posesP.has(v.pose)) err(RX, `/${name}/${i}/pose`, 'anim-reactions-pose', `pose "${v.pose}" is not in poses.json nor a wave's poses file`);
+        });
+      }
+      // every weight x part x way x draw has at least two variants to choose from (Animation checked this by script)
+      const has = (a, w) => Array.isArray(a) && (a.includes(w) || a.includes('any'));
+      const okV = vs.filter((v) => isObj(v));
+      if (okV.length) {
+        let shown = 0;
+        for (const w of ['light', 'medium', 'heavy']) for (const r of ['head', 'core', 'arms', 'legs']) for (const d of ['front', 'back']) for (const y of ['up', 'level', 'down']) {
+          const n = okV.filter((v) => (Array.isArray(v.weight) && v.weight.includes(w)) && has(v.region, r) && has(v.dir, d) && has(v.vert, y)).length;
+          if (n < 2 && shown < 3) { shown++; err(RX, '/variants', 'anim-reactions-variety', `a ${w} blow to the ${r}, from the ${d}, drawing ${y}, has ${n} variant${n === 1 ? '' : 's'} to choose from (at least two are needed)`); }
+        }
+      }
+      for (const w of ['light', 'medium', 'heavy']) if (rs.length && !rs.some((r) => isObj(r) && Array.isArray(r.weight) && r.weight.includes(w))) err(RX, '/recover', 'anim-reactions-recover', `a ${w} blow has no recovery`);
+    }
+    const sec = get('data/anim/secondary.json');
+    if (isObj(sec) && Array.isArray(sec.dv_ref) && typeof sec.dv_ref[0] === 'number' && typeof sec.dv_ref[1] === 'number' && sec.dv_ref[0] >= sec.dv_ref[1]) err('data/anim/secondary.json', '/dv_ref', 'anim-secondary-dv-ref', `dv_ref [${sec.dv_ref[0]}, ${sec.dv_ref[1]}] must run from low to high`);
+    const pop = get('data/anim/pop.json');
+    if (isObj(pop)) {
+      const PP = 'data/anim/pop.json';
+      const where = [['/up/rise', isObj(pop.up) ? pop.up.rise : null, ['to']], ['/up/apex', isObj(pop.up) ? pop.up.apex : null, ['in', 'out']], ['/up/fall', isObj(pop.up) ? pop.up.fall : null, ['from']]];
+      const blocks = [...where.map(([p, b]) => [p, b]), ['/slam', pop.slam], ['/spike', pop.spike], ['/burst', pop.burst], ...(isObj(pop.land) ? Object.entries(pop.land).filter(([k]) => !k.startsWith('_')).map(([k, b]) => [`/land/${esc(k)}`, b]) : [])];
+      for (const [p, b] of blocks) if (isObj(b) && typeof b.pose === 'string' && posesP.size && !posesP.has(b.pose)) err(PP, `${p}/pose`, 'anim-pop-pose', `pose "${b.pose}" is not in poses.json nor a wave's poses file`);
+      for (const [p, b, keys] of where) if (isObj(b)) for (const k of keys) { const r = b[k]; if (Array.isArray(r) && typeof r[0] === 'number' && typeof r[1] === 'number' && r[0] > r[1]) err(PP, `${p}/${k}`, 'anim-pop-range', `${k} [${r[0]}, ${r[1]}] must run from low to high`); }
     }
     const thr = get('data/anim/throws.json');
     if (isObj(thr) && isObj(thr.sends)) {

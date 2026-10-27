@@ -1,0 +1,21 @@
+{
+  "schema": "anim.ground_motion/1",
+  "_about": "Ground locomotion (docs/animation/ground-locomotion.md). A free fighter on the ground walks and runs on a gait instead of sliding in his stance: a cycle driven by the distance he covers (one cycle every `stride` units), the thighs swinging in turn, the swing leg's knee lifting, the hips bobbing twice a cycle and the shoulders turning against the pelvis, each growing from `thigh`, `knee`, `bob` and `twist` at `full_speed` to their last value at `run_speed`, and fading out from `run_speed` to `max_speed` where the laid-out flight pose takes over. A take-off (rising faster than `min_vy` off the ground) kicks off for `ticks`: the legs trail behind and the body stretches. A landing (arriving faster than `min_vy`) absorbs: the hips sink by `sink` (scaled by the arrival speed against `ref_vy`), the knees flex, and he settles over `ticks`. The surface (WorldContact.surfaceAt, and the gen 2 look class through WorldContact.lookAt when it exists) changes the landing and the run: sand slides the drawn body on and sinks deeper, rock and paving are crisp and shallow, rubble stumbles (one knee catches, the hips hitch), water wades (the knees lift high, the landing sinks deep and rises slowly), mud is heavy and slow. `surfaces` rows are scales (`sink`, `ticks`, `slide` in units, `stumble` 0 to 1, `lift` the swing knee's scale, `amp` the gait's); `look` maps a gen 2 look class to a row. `fighters`: his own `cadence`, `amp`, `bob` (the Protagonist long, loose and bouncy, the Anti-hero short, quick and low). Every ramp is 6 ticks or more (the snappy profile solves on twos). It stands aside while he is in an exchange, a lock, a rush, a hold, a recoil, a press-ack or a launch, and eases away over `enter_ticks`. Under reduced motion the gait, the bob and the sink are 0.5. Read from the sim's velocity and ground, never written. Render only, outside the sim's data hash. First values, Animation's.",
+  "enter_ticks": 8,
+  "gait": {"min_speed": 40.0, "full_speed": 130.0, "run_speed": 520.0, "max_speed": 900.0, "stride": 64.0, "thigh": [0.12, 0.46], "knee": [0.4, 1.0], "bob": [0.5, 1.7], "twist": [0.02, 0.07], "lean_deg": 2.5},
+  "takeoff": {"min_vy": 150.0, "ticks": 12, "kick": 0.32, "stretch": 0.18, "lift": 1.6},
+  "land": {"min_vy": 140.0, "ref_vy": 1400.0, "ticks": 18, "sink": [2.4, 6.2], "flex": [0.2, 0.62], "knee": 1.15},
+  "surfaces": {
+    "soil": {"sink": 1.0, "ticks": 1.0, "slide": 0.0, "stumble": 0.0, "lift": 1.0, "amp": 1.0},
+    "paving": {"sink": 0.8, "ticks": 0.8, "slide": 0.0, "stumble": 0.0, "lift": 1.0, "amp": 1.05},
+    "rock": {"sink": 0.85, "ticks": 0.85, "slide": 0.0, "stumble": 0.0, "lift": 1.05, "amp": 1.0},
+    "sand": {"sink": 1.25, "ticks": 1.2, "slide": 8.0, "stumble": 0.0, "lift": 1.15, "amp": 0.9},
+    "rubble": {"sink": 1.0, "ticks": 1.0, "slide": 0.0, "stumble": 1.0, "lift": 1.35, "amp": 0.95},
+    "water": {"sink": 1.5, "ticks": 1.5, "slide": 0.0, "stumble": 0.0, "lift": 1.7, "amp": 0.8}
+  },
+  "look": {"ice": "paving", "snow": "sand", "frost": "rock", "mud": "water", "turf": "soil", "litter": "soil", "ash": "sand", "crust": "rock", "shingle": "rubble"},
+  "fighters": {
+    "PROTAGONIST": {"cadence": 1.0, "amp": 1.0, "bob": 1.0},
+    "RIVAL": {"cadence": 1.15, "amp": 0.88, "bob": 0.7}
+  }
+}

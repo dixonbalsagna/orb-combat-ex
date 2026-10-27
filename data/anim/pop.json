@@ -1,0 +1,20 @@
+{
+  "schema": "anim.pop/1",
+  "_about": "The pop (docs/animation/pop-juggle.md; Encounter's cue `pop`, rulings-2026-10-23c: a launcher under power pops the struck fighter up and back down in reach, the brawl holding). The popped fighter (the cue's actor) is carried by the sim's own arc; the body only shows it. `up` (the cue's `dur` ticks, `amount` the height in body heights): in the rise the body is stretched and trailing (`rise`), at the apex it hangs limp (`apex`), in the fall it tucks and folds (`fall`); each phase's pose is mixed at a weight that moves toward its target over `ramp_ticks` (6 or more: the snappy profile solves on twos), so a phase, a second cue or the end hands over without a snap. `slam` and `spike` (a second pop or a launcher at him in the air brings him down: head down in a few ticks, the pose held `ticks` and let go over the ramp), `burst` (his light press breaks out of the pop: the burst pose), `tech` (a dodge tap in the landing's last ticks: the air tech's own sequence rt.air_tech) and `land` (n 1 set: caught in a guard; n 0 reeling: a stagger; amount 1: the spike's landing, a fold). `height_ref` is the height in body heights at which the phases are at full weight; a lower pop shows 0.6 of it. While he strikes or guards in the air (free from the apex) a beat is playing on him and the pop's weights are `busy_scale` of themselves. Under reduced motion the weights are 0.6. Render only, outside the sim's data hash. First values, Animation's.",
+  "ramp_ticks": 8,
+  "busy_scale": 0.35,
+  "height_ref": 3.0,
+  "up": {
+    "rise": {"pose": "launch.spread", "w": 0.8, "from": 0.0, "to": [0.3, 0.5]},
+    "apex": {"pose": "wound.arm_limp", "w": 0.45, "in": [0.25, 0.5], "out": [0.55, 0.75]},
+    "fall": {"pose": "launch.tuck", "w": 0.5, "from": [0.55, 0.8]}
+  },
+  "slam": {"pose": "launch.stream", "w": 0.9, "ticks": 8},
+  "spike": {"pose": "launch.stream", "w": 0.95, "ticks": 8},
+  "burst": {"pose": "move.burst", "w": 0.9, "ticks": 8},
+  "land": {
+    "set": {"pose": "stance.defensive", "w": 0.55, "ticks": 10},
+    "reel": {"pose": "react.stagger", "w": 0.65, "ticks": 12},
+    "spike": {"pose": "react.fold", "w": 0.75, "ticks": 16}
+  }
+}

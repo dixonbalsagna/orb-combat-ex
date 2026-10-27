@@ -1,0 +1,391 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-pop",
+  "title": "anim.pop/1",
+  "description": "data/anim/pop.json: the pop juggle (docs/animation/pop-juggle.md; AnimFighter's pop layer, Encounter's cue `pop`): a launcher under power pops the struck fighter up and back down; the sim carries the arc and the body shows it: stretched in the rise, limp at the apex, tucked in the fall, then the slam, spike or burst, and the landing. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore; every key is required. Cross-references in tools/lib/xref-fight.js (anim-pop-pose: every pose exists; anim-pop-range: each [low, high] pair runs low to high).",
+  "type": "object",
+  "required": [
+    "schema",
+    "ramp_ticks",
+    "busy_scale",
+    "height_ref",
+    "up",
+    "slam",
+    "spike",
+    "burst",
+    "land"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.pop/1"
+    },
+    "ramp_ticks": {
+      "type": "integer",
+      "minimum": 6,
+      "maximum": 30,
+      "description": "Ticks the layer takes to ease in and out."
+    },
+    "busy_scale": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "How much of the pop shows while the body is busy with something else."
+    },
+    "height_ref": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 100,
+      "description": "The pop height, in body heights, that gives the full effect."
+    },
+    "up": {
+      "type": "object",
+      "required": [
+        "rise",
+        "apex",
+        "fall"
+      ],
+      "properties": {
+        "rise": {
+          "type": "object",
+          "required": [
+            "pose",
+            "w",
+            "from",
+            "to"
+          ],
+          "properties": {
+            "pose": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "A pose id of poses.json or a wave (rule anim-pop-pose)."
+            },
+            "w": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Weight."
+            },
+            "from": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Where in the rise the pose starts, 0 to 1."
+            },
+            "to": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "description": "[low, high]: where in the rise it reaches full."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "The rise."
+        },
+        "apex": {
+          "type": "object",
+          "required": [
+            "pose",
+            "w",
+            "in",
+            "out"
+          ],
+          "properties": {
+            "pose": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "A pose id of poses.json or a wave (rule anim-pop-pose)."
+            },
+            "w": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Weight."
+            },
+            "in": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "description": "[low, high]: where the apex pose comes in."
+            },
+            "out": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "description": "[low, high]: where it goes out."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "The apex."
+        },
+        "fall": {
+          "type": "object",
+          "required": [
+            "pose",
+            "w",
+            "from"
+          ],
+          "properties": {
+            "pose": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "A pose id of poses.json or a wave (rule anim-pop-pose)."
+            },
+            "w": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Weight."
+            },
+            "from": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "description": "[low, high]: where the fall pose comes in."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "The fall."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The pop in the air, by the share of its duration."
+    },
+    "slam": {
+      "type": "object",
+      "required": [
+        "pose",
+        "w",
+        "ticks"
+      ],
+      "properties": {
+        "pose": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "A pose id of poses.json or a wave (rule anim-pop-pose)."
+        },
+        "w": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How far the pose is mixed in, 0 to 1."
+        },
+        "ticks": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 60,
+          "description": "Ticks the phase takes."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "spike": {
+      "type": "object",
+      "required": [
+        "pose",
+        "w",
+        "ticks"
+      ],
+      "properties": {
+        "pose": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "A pose id of poses.json or a wave (rule anim-pop-pose)."
+        },
+        "w": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How far the pose is mixed in, 0 to 1."
+        },
+        "ticks": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 60,
+          "description": "Ticks the phase takes."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "burst": {
+      "type": "object",
+      "required": [
+        "pose",
+        "w",
+        "ticks"
+      ],
+      "properties": {
+        "pose": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "A pose id of poses.json or a wave (rule anim-pop-pose)."
+        },
+        "w": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How far the pose is mixed in, 0 to 1."
+        },
+        "ticks": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 60,
+          "description": "Ticks the phase takes."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "land": {
+      "type": "object",
+      "required": [
+        "set",
+        "reel",
+        "spike"
+      ],
+      "properties": {
+        "set": {
+          "type": "object",
+          "required": [
+            "pose",
+            "w",
+            "ticks"
+          ],
+          "properties": {
+            "pose": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "A pose id of poses.json or a wave (rule anim-pop-pose)."
+            },
+            "w": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "How far the pose is mixed in, 0 to 1."
+            },
+            "ticks": {
+              "type": "integer",
+              "minimum": 6,
+              "maximum": 60,
+              "description": "Ticks the phase takes."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "reel": {
+          "type": "object",
+          "required": [
+            "pose",
+            "w",
+            "ticks"
+          ],
+          "properties": {
+            "pose": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "A pose id of poses.json or a wave (rule anim-pop-pose)."
+            },
+            "w": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "How far the pose is mixed in, 0 to 1."
+            },
+            "ticks": {
+              "type": "integer",
+              "minimum": 6,
+              "maximum": 60,
+              "description": "Ticks the phase takes."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "spike": {
+          "type": "object",
+          "required": [
+            "pose",
+            "w",
+            "ticks"
+          ],
+          "properties": {
+            "pose": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "A pose id of poses.json or a wave (rule anim-pop-pose)."
+            },
+            "w": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "How far the pose is mixed in, 0 to 1."
+            },
+            "ticks": {
+              "type": "integer",
+              "minimum": 6,
+              "maximum": 60,
+              "description": "Ticks the phase takes."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The landing, by how the pop ends."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

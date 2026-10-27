@@ -11,7 +11,8 @@
     "max_ticks",
     "min_wait",
     "cells",
-    "fighters"
+    "fighters",
+    "lunge"
   ],
   "properties": {
     "schema": {
@@ -153,6 +154,102 @@
         "^_": true
       },
       "description": "A roster id to its own pose for a cell (x, y or b)."
+    },
+    "lunge": {
+      "type": "object",
+      "required": [
+        "light",
+        "heavy",
+        "return"
+      ],
+      "properties": {
+        "light": {
+          "type": "object",
+          "required": [
+            "cell",
+            "w"
+          ],
+          "properties": {
+            "cell": {
+              "enum": [
+                "x",
+                "y",
+                "b"
+              ],
+              "description": "The button cell whose pose is the crouch (the fighter's own through `fighters`)."
+            },
+            "w": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "How far the pose is mixed in at the end of the wind-up, 0 to 1."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "heavy": {
+          "type": "object",
+          "required": [
+            "cell",
+            "w"
+          ],
+          "properties": {
+            "cell": {
+              "enum": [
+                "x",
+                "y",
+                "b"
+              ],
+              "description": "The button cell whose pose is the crouch (the fighter's own through `fighters`)."
+            },
+            "w": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "How far the pose is mixed in at the end of the wind-up, 0 to 1."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "return": {
+          "type": "object",
+          "required": [
+            "cell",
+            "w"
+          ],
+          "properties": {
+            "cell": {
+              "enum": [
+                "x",
+                "y",
+                "b"
+              ],
+              "description": "The button cell whose pose is the crouch (the fighter's own through `fighters`)."
+            },
+            "w": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "How far the pose is mixed in at the end of the wind-up, 0 to 1."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The mid-band lunge's wind-up crouch (Encounter's cues lunge_light, lunge_heavy and return, `amount` the crouch's ticks): which cell's pose and how far."
     }
   },
   "additionalProperties": false,

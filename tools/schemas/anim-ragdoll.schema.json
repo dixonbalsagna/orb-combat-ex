@@ -254,7 +254,9 @@
         "hz",
         "phase",
         "amp",
-        "side_dead"
+        "side_dead",
+        "comp",
+        "families"
       ],
       "properties": {
         "hz": {
@@ -276,6 +278,201 @@
           "type": "number",
           "minimum": 0,
           "description": "The dead zone of the side it leans to."
+        },
+        "comp": {
+          "type": "object",
+          "required": [
+            "strength",
+            "max"
+          ],
+          "properties": {
+            "strength": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "How much of what the spring takes away at the flail's rate the target gives back (1 would swing the target big enough to draw the amplitude asked for)."
+            },
+            "max": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 10,
+              "description": "The most the target is made bigger by, as a multiple."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "The flail's compensation for the loose joint's own spring (docs/animation/ragdoll-families.md): the target is made bigger by what the spring will take away at that rate."
+        },
+        "families": {
+          "type": "array",
+          "minItems": 1,
+          "description": "The flail families, one picked per launch by a hash of the slot, the launch number and his flights (replay-safe). Names are unique (rule ragdoll-family).",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "amp",
+              "hz",
+              "dur"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$",
+                "description": "The family's name (unique: rule ragdoll-family)."
+              },
+              "amp": {
+                "type": "object",
+                "required": [
+                  "head",
+                  "spine",
+                  "arm",
+                  "leg",
+                  "oop"
+                ],
+                "properties": {
+                  "head": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 4,
+                    "description": "head group."
+                  },
+                  "spine": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 4,
+                    "description": "spine group."
+                  },
+                  "arm": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 4,
+                    "description": "arm group."
+                  },
+                  "leg": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 4,
+                    "description": "leg group."
+                  },
+                  "oop": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 4,
+                    "description": "oop group."
+                  }
+                },
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_": true
+                },
+                "description": "A multiplier on each joint group's amplitude."
+              },
+              "hz": {
+                "type": "object",
+                "required": [
+                  "head",
+                  "spine",
+                  "arm",
+                  "leg",
+                  "oop"
+                ],
+                "properties": {
+                  "head": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 4,
+                    "description": "head group."
+                  },
+                  "spine": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 4,
+                    "description": "spine group."
+                  },
+                  "arm": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 4,
+                    "description": "arm group."
+                  },
+                  "leg": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 4,
+                    "description": "leg group."
+                  },
+                  "oop": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 4,
+                    "description": "oop group."
+                  }
+                },
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_": true
+                },
+                "description": "A multiplier on each joint group's rate."
+              },
+              "anti": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "arm": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "1: the left arm swings against the right."
+                  },
+                  "leg": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "1: the left leg swings against the right."
+                  }
+                },
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_": true
+                },
+                "description": "Optional. Which limb pairs swing against each other."
+              },
+              "bias": {
+                "type": "object",
+                "propertyNames": {
+                  "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+                },
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": -3,
+                  "maximum": 3
+                },
+                "patternProperties": {
+                  "^_": true
+                },
+                "description": "Optional. A resting bias (rad) by dof id; each key is a dof of `dofs` (rule ragdoll-family)."
+              },
+              "phase": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 3,
+                "description": "Optional. How far apart the joints' phases are spread."
+              },
+              "dur": {
+                "type": "number",
+                "minimum": 0.3,
+                "maximum": 3,
+                "description": "The flail's duration as a multiple of its scale."
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          }
         }
       },
       "additionalProperties": false,

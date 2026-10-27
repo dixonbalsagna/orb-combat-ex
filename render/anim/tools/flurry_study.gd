@@ -55,6 +55,7 @@ const CUE_SCENARIOS := {
 	"cue_cast_charge": {"kind": "beam", "actor": 0, "target": -1, "text": "charge", "span": 0, "label": "a beam charging (the left one): the fighter's own casting pose (data/anim/pair_live.json roles.<fighter>.beam)"},
 	"cue_cast_fire": {"kind": "beam", "actor": 0, "target": -1, "text": "fire", "span": 0, "label": "a beam fired (the left one): the fighter's own casting pose, the arm thrown out"},
 	"rd_launch": {"kind": "rd", "actor": 0, "target": -1, "text": "launch", "span": 0, "label": "a launch (the left one): a heavy blow at tick 6, then 84 ticks of flight with the ragdoll (RG0 to RG3: `window.__oop = 1` for the out-of-plane joints)"},
+	"rd_catch": {"kind": "rd", "actor": 0, "target": -1, "text": "catch", "span": 0, "label": "the air recovery (the left one): launched at 1,500 u/s, the air brake from tick 30 to 60, then control back in the air (`window.__noar = 1` is the before)"},
 	"rd_brake": {"kind": "rd", "actor": 0, "target": -1, "text": "brake", "span": 0, "label": "the mid-air skid (the left one): launched at 1,500 u/s, the sim's air brake from tick 30 to 60 (RG2)"},
 	"rd_poses": {"kind": "rd", "actor": 0, "target": -1, "text": "poses", "span": 0, "label": "pose sheet (the left one): the poses named in `window.__poses` (a comma list), ten ticks each, up to nine, standing in place"},
 	"fs_open_palm": {"kind": "fs", "actor": 0, "target": -1, "text": "open_palm", "span": 0, "n": 150, "label": "finisher style Open Palm (Protagonist): the blast over, then one open hand held out low to the fallen rival; a wide low camera pulling back and up; one steady Trial-teal pulse"},
@@ -71,6 +72,15 @@ const CUE_SCENARIOS := {
 	"gp_throw_up": {"kind": "gp2", "actor": 0, "target": -1, "text": "up", "span": 0, "n": 70, "label": "the grip ends in a throw up: the leader sets his hips at two ahead, then lifts"},
 	"gp_throw_down": {"kind": "gp2", "actor": 0, "target": -1, "text": "down", "span": 0, "n": 70, "label": "the grip ends in a throw down: the leader sets his hips at two ahead, then drives him down"},
 	"gp_throw_across": {"kind": "gp2", "actor": 0, "target": -1, "text": "across", "span": 0, "n": 70, "label": "the grip ends in a throw across: the leader sets his hips at two ahead, then sends him"},
+	"lu_light": {"kind": "lu", "actor": 0, "target": -1, "text": "light", "span": 6, "n": 40, "label": "the mid-band lunge's crouch, a light: 6 ticks, then it moves"},
+	"lu_heavy": {"kind": "lu", "actor": 0, "target": -1, "text": "heavy", "span": 10, "n": 44, "label": "the mid-band lunge's crouch, a heavy: 10 ticks, then it moves"},
+	"fl_course": {"kind": "fl", "actor": 0, "target": -1, "text": "course", "span": 0, "n": 440, "label": "flight locomotion: a hover that breathes, a cruise, a dash (the coil, the surge), a hard stop (the flare, the overshoot), an arc (the bank), a reversal, a hover"},
+	"gr_course": {"kind": "gr", "actor": 0, "target": -1, "text": "course", "span": 0, "n": 600, "label": "ground locomotion: idle, a walk, a run, a dash, a stop, a reversal, a take-off, a hover, a landing"},
+	"sc_course": {"kind": "gr", "actor": 0, "target": -1, "text": "course", "span": 0, "n": 680, "hit_k": 600, "label": "follow-through: the ground course (a walk, a run, a dash, a stop, a reversal, a take-off, a landing) and a heavy blow at tick 600 (`window.__nosec = 1` is the before)"},
+	"gr_sand": {"kind": "gr", "actor": 0, "target": -1, "text": "sand", "span": 0, "n": 600, "label": "the same course on sand"},
+	"gr_rubble": {"kind": "gr", "actor": 0, "target": -1, "text": "rubble", "span": 0, "n": 600, "label": "the same course on rubble"},
+	"gr_water": {"kind": "gr", "actor": 0, "target": -1, "text": "water", "span": 0, "n": 600, "label": "the same course through water"},
+	"hv_set": {"kind": "hv", "actor": 0, "target": -1, "text": "set", "span": 0, "n": 900, "label": "hit reactions with variety: fourteen blows of every weight on every body part, front and back, the dummy answering each in its own way"},
 	"cue_interject": {"kind": "windup", "actor": 0, "target": -1, "text": "interject", "span": 24, "dur": 24.0, "label": "an interjection's tell: the guard (the left one) shows a 24-tick wind-up"},
 }
 const PAL_A := {"body": Color("#3d8fdc"), "legs": Color("#1b1f2a"), "arms": Color("#e6b995"), "skin": Color("#efc7a2"), "gear": Color("#cdd6e4"), "accent": Color("#4fb9a8"), "hair": Color("#22c7a0")}
@@ -159,6 +169,16 @@ func _ready() -> void:
 			RenderAnim.struggle_dig = false
 		if float(_js("window.__nogf || 0", 0.0)) > 0.0:   # the grip stages' before: no hold
 			RenderAnim.grip_feed = false
+		if float(_js("window.__noloco || 0", 0.0)) > 0.0:   # flight locomotion's before
+			RenderAnim.flight_loco = false
+		if float(_js("window.__nogl || 0", 0.0)) > 0.0:   # ground locomotion's before
+			RenderAnim.ground_loco = false
+		if float(_js("window.__nosec || 0", 0.0)) > 0.0:   # the follow-through's before
+			RenderAnim.secondary_motion = false
+		if float(_js("window.__noar || 0", 0.0)) > 0.0:   # the air recovery's before
+			RenderAnim.air_recover = false
+		if float(_js("window.__nohv || 0", 0.0)) > 0.0:   # hit reactions' before
+			RenderAnim.hit_variants = false
 		if float(_js("window.__noab || 0", 0.0)) > 0.0:   # RG2's before: no mid-air skid
 			RenderAnim.air_brake = false
 		if float(_js("window.__novary || 0", 0.0)) > 0.0:   # RG0's before: every launch flails the same, a hit always folds
@@ -515,6 +535,60 @@ func _step_tick() -> void:
 			RenderAnim.fighter(S, f1)._feed_from(S, f1, td1, S.T)
 			if k == 40:
 				RenderAnim.fighter(S, f0).on_grip_throw({"up": "thrown_up", "down": "thrown_down", "across": "throw_across"}.get(String(sc.cue.text), "throw_across"), false, S.T)
+	if sc.has("cue") and String(sc.cue.kind) == "lu" and k == 10 and not (float(_js("window.__nolu || 0", 0.0)) > 0.0):
+		f0.state = "free"
+		f0.rush = null
+		RenderAnim.fighter(S, f0).on_lunge_crouch(String(sc.cue.text), int(sc.cue.span), S.T)
+	if sc.has("cue") and String(sc.cue.kind) == "fl":
+		# the stick's course as the sim's own smoothing makes it a velocity (fighter.gd: k = 1 - 0.0008^dt toward the stick's speed); the body is drawn in place
+		var fcourse: Array = [[0, 0.0, 0.0, false], [60, 1.0, 0.0, false], [130, 1.0, 0.0, true], [200, 0.0, 0.0, false], [280, 1.0, 1.0, false], [310, 1.0, -1.0, false], [340, -1.0, 0.0, false], [390, 0.0, 0.0, false]]
+		var fseg: Array = fcourse[0]
+		for fc in fcourse:
+			if k >= int(fc[0]):
+				fseg = fc
+		if k == 0:
+			f0.state = "free"
+			f0.rush = null
+			f0.vx = 0.0
+			f0.vy = 0.0
+			f0.y = WorldTerrain.groundY(S, f0.x, f0.z) + 400.0
+		var fks: float = 1.0 - pow(0.0008, 1.0 / 60.0)
+		var fsp: float = 1300.0 if bool(fseg[3]) else 430.0
+		f0.input.dash = bool(fseg[3])
+		f0.vx += (float(fseg[1]) * fsp - f0.vx) * fks
+		f0.vy += (float(fseg[2]) * fsp * 0.85 - f0.vy) * fks
+		f0.y += f0.vy / 60.0
+	if sc.has("cue") and String(sc.cue.kind) == "gr":
+		# the stick's course on the ground as the sim's smoothing makes it a velocity: [from tick, stick x, stick y, dash]; the body is drawn in place
+		var gcourse: Array = [[0, 0.0, 0.0, false], [60, 0.25, 0.0, false], [130, 0.6, 0.0, false], [190, 1.0, 0.0, false], [250, 1.0, 0.0, true], [300, 0.0, 0.0, false], [350, -0.6, 0.0, false], [400, 0.0, 0.0, false], [430, 0.0, 1.0, false], [470, 0.0, 0.0, false], [490, 0.0, -1.0, false], [560, 0.0, 0.0, false]]
+		var gseg: Array = gcourse[0]
+		for gc in gcourse:
+			if k >= int(gc[0]):
+				gseg = gc
+		if k == 0:
+			f0.state = "free"
+			f0.rush = null
+			f0.vx = 0.0
+			f0.vy = 0.0
+			f0.y = WorldTerrain.groundY(S, f0.x, f0.z)
+			RenderAnim.fighter(S, f0)._gl_surface_override = String(sc.cue.text) if String(sc.cue.text) != "course" else ""
+		if sc.cue.has("hit_k") and k == int(sc.cue.hit_k):
+			RenderAnim.fighter(S, f0).on_hit(S.T, "core", true, 0.8, "heavy", Vector2(-1.0, 0.0), 1.0, S.tick, 0.0, 0)
+		var gks: float = 1.0 - pow(0.0008, 1.0 / 60.0)
+		var gsp: float = 1300.0 if bool(gseg[3]) else 430.0
+		f0.input.dash = bool(gseg[3])
+		f0.vx += (float(gseg[1]) * gsp - f0.vx) * gks
+		f0.vy += (float(gseg[2]) * gsp * 0.85 - f0.vy) * gks
+		var gg: float = WorldTerrain.groundY(S, f0.x, f0.z)
+		f0.y = maxf(f0.y + f0.vy / 60.0, gg)
+		if f0.y <= gg and f0.vy < 0.0:
+			f0.vy = 0.0
+	if sc.has("cue") and String(sc.cue.kind) == "hv":
+		# [tick, region, front, force, dy]: the dummy (the right-hand fighter) is hit in turn, light then medium then heavy, each weight over every body part and both ways
+		var hset: Array = [[10, "head", true, 0.35, 0.0], [70, "core", false, 0.35, 0.0], [130, "arms", true, 0.4, 0.0], [190, "legs", true, 0.4, -0.7], [250, "head", true, 0.8, 0.0], [310, "core", true, 0.8, -0.7], [370, "core", false, 0.9, 0.0], [430, "legs", true, 0.8, 0.0], [490, "head", false, 1.3, 0.0], [550, "core", true, 1.3, -0.7], [610, "arms", true, 1.3, 0.0], [670, "legs", false, 1.3, -0.7], [730, "core", true, 1.3, 0.0], [790, "head", true, 1.3, 0.7]]
+		for hh in hset:
+			if k == int(hh[0]):
+				RenderAnim.fighter(S, f1).on_hit(S.T, String(hh[1]), bool(hh[2]), clampf(float(hh[3]), 0.2, 1.0), "light" if float(hh[3]) < 0.5 else "heavy", Vector2(-1.0 if bool(hh[2]) else 1.0, float(hh[4])), float(hh[3]), S.tick, 0.0, 0)
 	if sc.has("cue") and String(sc.cue.kind) == "rd":
 		# a launched body flying free (no ground): the flail, the brace and, with the brake event, the skid. The study draws a body in place, so only its shape shows
 		if k == 0:
@@ -527,10 +601,14 @@ func _step_tick() -> void:
 			f0.slide = 0.0
 			f0.spin = 0.0
 		f0.stateT = float(k) * DT
-		if String(sc.cue.text) == "brake" and k >= 30 and k < 60:
+		var braking: bool = String(sc.cue.text) == "brake" or String(sc.cue.text) == "catch"
+		if braking and k >= 30 and k < 60:
 			f0.vx = maxf(f0.vx - 40.0, 0.0)
+		if String(sc.cue.text) == "catch" and k >= 60:
+			f0.state = "free"   # control back in the air: the launch is over
+			f0.vx *= 0.93
 		f0.x += f0.vx * DT
-		if String(sc.cue.text) == "brake" and (k == 30 or k == 60):
+		if braking and (k == 30 or k == 60):
 			var be := SimState.FxEvent.new()
 			be.type = "air_brake"
 			be.actor = 0.0
@@ -547,7 +625,7 @@ func _step_tick() -> void:
 			he.amount = 90.0
 			he.region = "core"
 			RenderAnim.consume(S, [he])
-	if sc.has("cue") and k == 10 and String(sc.cue.kind) != "beam" and String(sc.cue.kind) != "rd" and String(sc.cue.kind) != "fs" and String(sc.cue.kind) != "gp2" and String(sc.cue.kind) != "gp" and String(sc.cue.kind) != "st" and String(sc.cue.kind) != "pa" and String(sc.cue.kind) != "rc":
+	if sc.has("cue") and k == 10 and String(sc.cue.kind) != "beam" and String(sc.cue.kind) != "rd" and String(sc.cue.kind) != "fs" and String(sc.cue.kind) != "gp2" and String(sc.cue.kind) != "gp" and String(sc.cue.kind) != "st" and String(sc.cue.kind) != "pa" and String(sc.cue.kind) != "rc" and String(sc.cue.kind) != "lu" and String(sc.cue.kind) != "fl" and String(sc.cue.kind) != "gr" and String(sc.cue.kind) != "hv":
 		var cd: Dictionary = sc.cue
 		var ce := SimState.FxEvent.new()
 		ce.type = "cue"

@@ -260,7 +260,8 @@
       "required": [
         "mass",
         "tier_gain",
-        "mass_exp"
+        "mass_exp",
+        "launch"
       ],
       "properties": {
         "mass": {
@@ -293,6 +294,57 @@
           "type": "number",
           "minimum": 0,
           "description": "The exponent of the mass in the division."
+        },
+        "launch": {
+          "type": "object",
+          "required": [
+            "ref_speed",
+            "speed",
+            "amp",
+            "dur"
+          ],
+          "properties": {
+            "ref_speed": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "The launch speed (units a second) that counts as one."
+            },
+            "speed": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "description": "[low, high]: the launch speed, as a multiple of ref_speed, the scale runs between (rule ragdoll-launch-order)."
+            },
+            "amp": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "description": "[low, high]: the flail's amplitude multiple at the low and the high speed (rule ragdoll-launch-order)."
+            },
+            "dur": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "description": "[low, high]: the flail's duration multiple at the low and the high speed (rule ragdoll-launch-order)."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "The flail scales with the launch's own power (docs/animation/ragdoll-families.md): a light pop flails smaller and shorter than a full send."
         }
       },
       "additionalProperties": false,

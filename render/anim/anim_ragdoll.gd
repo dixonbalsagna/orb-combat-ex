@@ -80,6 +80,21 @@ var phase: float = 0.0
 var fv_hz := PackedFloat32Array()              # this launch's own flail: a factor on each degree of freedom's frequency and amplitude, and a phase shift (set_flail_seed)
 var fv_amp := PackedFloat32Array()
 var fv_ph := PackedFloat32Array()
+var fam_amp := PackedFloat32Array()      # this launch's flail family: a multiplier on each degree's amplitude, on its rate, an offset on its phase and a resting bias (set_flail_seed)
+var fam_hz := PackedFloat32Array()
+var fam_ph := PackedFloat32Array()
+var fam_bias := PackedFloat32Array()
+var fam_dur: float = 1.0                       # the family's multiplier on how long the flail lasts
+var fam_idx: int = -1
+var launch_amp: float = 1.0                    # the launch's own power: a light pop flails gently, a full send frantically (ragdoll_motion.json weight.launch)
+var launch_dur: float = 1.0
+static var families: Array = []
+static var comp_strength: float = 0.0   # how much of the springs' own low-pass the flail's target makes up for (a loose joint follows 2 or 3 Hz at a twentieth of the target)
+static var comp_max: float = 1.0
+static var launch_cfg: Dictionary = {}
+static var group_of: PackedInt32Array = PackedInt32Array()   # 0 head, 1 spine, 2 arm, 3 leg, 4 out of the plane
+static var side_of: PackedInt32Array = PackedInt32Array()    # -1 left, 1 right, 0 centre
+static var ids: PackedStringArray = PackedStringArray()
 var n_on: int = N_BASE                         # how many degrees of freedom run: all with RenderAnim.rd_oop, else the sagittal twelve
 var weighted: bool = false                     # RG1 on: impulses are scaled by tier and mass and arrive down the body by the lag (set each tick by the fighter)
 var mass: float = 1.0
@@ -149,6 +164,18 @@ static func setup() -> void:
 	for ti in range(4):
 		tier_gain[ti] = float(tg[mini(ti, tg.size() - 1)])
 	var vr: Dictionary = d.get("variety", {})
+	families = vr.get("families", [])
+	comp_strength = float(vr.get("comp", {}).get("strength", 0.0))
+	comp_max = float(vr.get("comp", {}).get("max", 1.0))
+	launch_cfg = wd.get("launch", {})
+	group_of.resize(N)
+	side_of.resize(N)
+	ids.resize(N)
+	for gi in range(N):
+		var gid: String = String(d.dofs[gi].id)
+		ids[gi] = gid
+		group_of[gi] = 4 if bool(d.dofs[gi].get("oop", false)) else (0 if gid.begins_with("head") else (1 if (gid.begins_with("spine") or gid.begins_with("pel")) else (2 if (gid.begins_with("ua") or gid.begins_with("fa")) else 3)))
+		side_of[gi] = -1 if gid.contains("_l") else (1 if gid.contains("_r") else 0)
 	var_hz = float(vr.get("hz", 0.18))
 	var_phase = float(vr.get("phase", 0.6))
 	var_amp = float(vr.get("amp", 0.2))
@@ -303,7 +330,16 @@ func step(dt: float, v: Vector2, a: Vector2, free_t: float, amp: float, tt: floa
 			var kk: float = lerpf(k_stiff[i], k_loose[i], free)
 			var target: float = tsg[i] * sp * free + wt * s_tuck[i] + wb * s_brace[i] + ws * s_skid[i] + wc * s_crum[i]
 			if wf > 0.001:
-				target += wf * flail_amp[i] * fv_amp[i] * sin(tt * TAU * flail_hz[i] * fv_hz[i] + phase + fv_ph[i] + float(i) * 1.7)
+				var fhz: float = flail_hz[i] * fv_hz[i] * fam_hz[i]
+				var cmp: float = 1.0
+				if comp_strength > 0.0:
+					# the spring's gain at the flail's rate: the target is made bigger by what it will lose, so the joint swings the amplitude the data names
+					var wn: float = sqrt(maxf(kk, 1.0))
+					var rr: float = TAU * fhz / wn
+					var zt: float = damp[i] / (2.0 * wn)
+					var sg: float = 1.0 / sqrt((1.0 - rr * rr) * (1.0 - rr * rr) + 4.0 * zt * zt * rr * rr)
+					cmp = pow(clampf(1.0 / maxf(sg, 0.05), 1.0, comp_max * (0.4 if group_of[i] == 4 else 1.0)), comp_strength)   # the out-of-plane joints are made up for less: a twist saturated in a tumble reads as a stuck rag
+				target += wf * (flail_amp[i] * fv_amp[i] * fam_amp[i] * launch_amp * cmp * sin(tt * TAU * fhz + phase + fv_ph[i] + fam_ph[i] + float(i) * 1.7) + fam_bias[i])
 			var nx: float = beta_c[i]
 			var ny: float = beta_s[i]
 			var drive: float = (-drag[i] * (v.x * nx + v.y * ny) / v0 - inertia[i] * (a.x * nx + a.y * ny) / a0) * g * amp
@@ -350,13 +386,55 @@ func crumple(sev: float, amp: float, side: float = 1.0) -> void:
 
 ## RG0: the flail of this launch, from a hash of the fighter's slot, the launch number and the render's count of his flights (an integer hash, no random draw: the same launch flails the
 ## same way in every replay). Called once as a flight begins; the factors it sets stay until the next one.
-func set_flail_seed(slot: int, launch_n: int, flights: int) -> void:
+func set_flail_seed(slot: int, launch_n: int, flights: int, launch_speed: float = -1.0) -> void:
 	phase = hash01(slot, launch_n, flights * 7 + 1) * TAU
 	for i in range(N):
 		fv_hz[i] = 1.0 + var_hz * (2.0 * hash01(slot * 31 + i, launch_n, flights * 7 + 2) - 1.0)
 		fv_amp[i] = 1.0 + var_amp * (2.0 * hash01(slot * 31 + i, launch_n, flights * 7 + 3) - 1.0)
 		fv_ph[i] = var_phase * (2.0 * hash01(slot * 31 + i, launch_n, flights * 7 + 4) - 1.0)
+	_pick_family(slot, launch_n, flights, launch_speed)
 
+
+
+## The family this launch flails in (a hash of the slot, the launch number and his flights, so a replay draws the same) and the launch's own power: each family is its own way of going limp or fighting the air (the rag, the windmill, the
+## starfish, the frantic, the whip, the cartwheel), a light pop flails gently and a full send frantically.
+func _pick_family(slot: int, launch_n: int, flights: int, launch_speed: float) -> void:
+	fam_amp.resize(N)
+	fam_hz.resize(N)
+	fam_ph.resize(N)
+	fam_bias.resize(N)
+	for i in range(N):
+		fam_amp[i] = 1.0
+		fam_hz[i] = 1.0
+		fam_ph[i] = 0.0
+		fam_bias[i] = 0.0
+	fam_dur = 1.0
+	fam_idx = -1
+	if not families.is_empty():
+		fam_idx = int(hash01(slot, launch_n, flights * 7 + 5) * float(families.size())) % families.size()
+		var F: Dictionary = families[fam_idx]
+		var gn: Array = ["head", "spine", "arm", "leg", "oop"]
+		var anti: Dictionary = F.get("anti", {})
+		var phv: float = float(F.get("phase", 0.0))
+		for i in range(N):
+			var g: String = gn[group_of[i]]
+			fam_amp[i] = float(F.get("amp", {}).get(g, 1.0))
+			fam_hz[i] = float(F.get("hz", {}).get(g, 1.0))
+			if phv > 0.0:
+				fam_ph[i] = phv * (2.0 * hash01(slot * 31 + i, launch_n, flights * 7 + 6) - 1.0)
+			if int(anti.get(g, 0)) == 1 and side_of[i] < 0:
+				fam_ph[i] += PI   # the left against the right
+			fam_bias[i] = float(F.get("bias", {}).get(String(ids[i]), 0.0))
+		fam_dur = float(F.get("dur", 1.0))
+	launch_amp = 1.0
+	launch_dur = 1.0
+	if launch_speed >= 0.0 and not launch_cfg.is_empty():
+		var sr: Array = launch_cfg.get("speed", [0.25, 1.8])
+		var u: float = clampf((launch_speed / float(launch_cfg.get("ref_speed", 1500.0)) - float(sr[0])) / maxf(float(sr[1]) - float(sr[0]), 0.01), 0.0, 1.0)
+		var la: Array = launch_cfg.get("amp", [1.0, 1.0])
+		var ld: Array = launch_cfg.get("dur", [1.0, 1.0])
+		launch_amp = lerpf(float(la[0]), float(la[1]), u)
+		launch_dur = lerpf(float(ld[0]), float(ld[1]), u)
 
 ## 0 to 1 from three integers, by a fixed integer mix (the same on every machine: no float in the mix, no random generator).
 static func hash01(a: int, b: int, c: int) -> float:

@@ -35,12 +35,18 @@ static var source_limits: bool = true          # the contact solve and the join 
 static var hand_retreat: bool = true          # a hand blow whose target is behind the shoulder gives ground the same way (its own switch: Combat rules on it, and the answer is data too, limbs.hand.min_fwd 0); false is the before
 static var rd_variety: bool = true           # RG0 (docs/animation/ragdoll-physics-paper.md): each launch flails its own way (a hash of the slot and the launch number) and a bounce folds or arches by the side that hit; false is the before
 static var rd_weight: bool = true            # RG1: the ragdoll has weight: impulses by the opponent's tier over the body's mass, and a blow travels down the body (head first, legs last); false is the before
-static var rd_oop: bool = false             # RG3: six more degrees of freedom out of the plane (spine twist and side bend, head roll, each upper arm's twist, the pelvis's twist): a flailing body turns about its long axis as a rag does. Off by default until Orb has seen the before and after; --rd-oop switches it on
+static var rd_oop: bool = true             # RG3: six more degrees of freedom out of the plane (spine twist and side bend, head roll, each upper arm's twist, the pelvis's twist): a flailing body turns about its long axis as a rag does. On by default (Orb, 2026-10-25); --no-rd-oop is the before
 static var air_brake: bool = true            # RG2: the sim's air brake braces a launched fighter against his velocity (an `air_brake` event; inert without one); --no-air-brake is the before
 static var chain_poses: bool = true          # RG4: World's interior contacts and its lodge play the ceiling's slam and rebound and the climb out (data/anim/chain.json); inert without those events; --no-chain-poses is the before
 static var grip_layer: bool = true            # the clinch's grip layer (docs/animation/clinch-sizing.md slice C2): the sim's hold read mixes the clinch poses in and puts each gripping hand on its region of the partner; inert without a read; --no-grip-layer is the before
 static var recoil_flips: bool = true          # recoil exits and ricochets (docs/combat/choreography-feel.md): Encounter's cue `recoil` turns the struck body over in an arc (back flip, handspring, back tuck, skip, ricochet); inert without the cue; --no-recoil-flips is the before
 static var press_ack: bool = true            # the anticipation of a press that has to wait (Encounter's cue press_ack, text queued): the first frames of the wind-up on the press tick, handed over to the real one; --no-press-ack is the before
+static var flight_loco: bool = true           # flight locomotion (data/anim/locomotion.json): the lean spring, the braking flare, the dash's coil, the bank and the hover's breath, read from the sim's velocity; --no-flight-loco is the before
+static var ground_loco: bool = true           # ground locomotion (data/anim/ground_motion.json): the gait, the kick-off and the landing by surface, read from the sim's velocity and ground; --no-ground-loco is the before
+static var secondary_motion: bool = true      # follow-through of the head, upper back and forearms on every change of velocity and every blow (data/anim/secondary.json); --no-secondary is the before
+static var pop_juggle: bool = true            # the popped fighter's rise, hang, fall, slam, burst and landing drawn from Encounter's cue `pop` (data/anim/pop.json); --no-pop is the before
+static var air_recover: bool = true         # a launched body that gets control back in the air at speed catches itself (data/anim/locomotion.json `recover`); --no-air-recover is the before
+static var hit_variants: bool = true          # hit reactions with variety (data/anim/reactions.json): a variant by the blow's weight, direction and body part, never the last one twice, and a recovery; --no-hit-variants is the before
 static var struggle_dig: bool = true         # the beam struggle's dig-in (S.game.clash.mid): the pushed-back fighter sinks, trembles and is dragged back along the ground, the winner leans in; --no-struggle-dig is the before
 static var grip_feed: bool = true            # the grip fed from the sim's grapple (DirGrapple.now and its cues) as five stages: the reach, the tie-up by grade, the pummel, the leader's set and the cave; inert with the grapple off; --no-grip-feed is the before
 static var shiver_by_weight: bool = true       # the struck body's shake follows the hit-stop's weight (2 ticks a little over half, 8 as before, 24 at 1.6) and a blow with no stop of its own (a mash's later blows) still shakes, small; --no-shiver-weight is the before
@@ -122,6 +128,8 @@ static func _read_args() -> void:
 			ground_poses = false
 		elif a == "--rd-oop":
 			rd_oop = true
+		elif a == "--no-rd-oop":
+			rd_oop = false
 		elif a == "--no-air-brake":
 			air_brake = false
 		elif a == "--no-chain-poses":
@@ -132,6 +140,18 @@ static func _read_args() -> void:
 			recoil_flips = false
 		elif a == "--no-press-ack":
 			press_ack = false
+		elif a == "--no-flight-loco":
+			flight_loco = false
+		elif a == "--no-ground-loco":
+			ground_loco = false
+		elif a == "--no-secondary":
+			secondary_motion = false
+		elif a == "--no-pop":
+			pop_juggle = false
+		elif a == "--no-air-recover":
+			air_recover = false
+		elif a == "--no-hit-variants":
+			hit_variants = false
 		elif a == "--no-struggle-dig":
 			struggle_dig = false
 		elif a == "--no-grip-feed":
@@ -375,6 +395,9 @@ static func consume(S: SimState, events: Array) -> void:
 					elif kd == "recoil":
 						# Encounter's recoil flip (DirRecoil): source the exit (skip, handspring, tuck, backflip) and dur its ticks to the landing; the sim's own bowed path carries him, the body only turns
 						fighter(S, S.fighters[who]).on_recoil(String(_ev(e, "source", "")), int(roundf(float(_ev(e, "dur", 0.0)))), t_cue, float(_ev(e, "ux", 0.0)), float(_ev(e, "uy", 1.0)))
+					elif kd == "lunge_light" or kd == "lunge_heavy" or kd == "return" or ((kd == "charge_light" or kd == "charge_heavy") and float(_ev(e, "amount", 0.0)) > 0.0):
+						# the mid-band lunge's authored wind-up crouch (bands.lunge.windupTicks: light 6, heavy 10) and the return's: the cue comes on the press tick with `amount` the crouch's ticks, then the body moves
+						fighter(S, S.fighters[who]).on_lunge_crouch("heavy" if kd.ends_with("heavy") else ("return" if kd == "return" else "light"), int(roundf(float(_ev(e, "amount", 0.0)))), t_cue)
 					elif kd == "press_ack" and String(e.text) == "queued":
 						# a press that has to wait, on its press tick: source its button cell (x, y, b), n the tick it is due to start (-1 when the wait is not a cooldown), amount the ticks to it
 						fighter(S, S.fighters[who]).on_press_ack(String(_ev(e, "source", "")), int(roundf(float(_ev(e, "n", -1.0)))), int(roundf(float(_ev(e, "amount", -1.0)))), t_cue)
@@ -388,6 +411,9 @@ static func consume(S: SimState, events: Array) -> void:
 					elif kd == "grapple_pummel":
 						# a pummel for the better grip (text step or sharp): the free hand swims in
 						fighter(S, S.fighters[who]).on_grip_pummel(String(e.text), t_cue)
+					elif kd == "pop":
+						# Encounter's pop (launch anywhere): the popped fighter is the actor; text up, slam, tech, burst or land, n the landing tick (on land 1 set, 0 reeling), dur the ticks up, amount the height in body heights
+						fighter(S, S.fighters[who]).on_pop(String(e.text), int(roundf(float(_ev(e, "n", 0)))), float(_ev(e, "dur", 0.0)), float(_ev(e, "amount", 0.0)), t_cue)
 					elif kd == "charge_full":
 						fighter(S, S.fighters[who]).on_charge_full(t_cue)
 					elif kd == "tech":
