@@ -34,6 +34,7 @@ class Bit:
 	var ky: float = -1e9           # a water streak ends when it falls back below this height (the surface)
 	var mode: int = 0              # a chunk: 0 concrete (the shared rim colour), 2 earth (lit and shaded sides of its own colour)
 	var aw: float = 1.0            # a puff's weight in the pool's drawn-area budget: a plume puff close to its ground in luminance counts less (biome.gd), the default 1
+	var amb: bool = false          # an ambient fleck (biome.gd `ambient`): counted for its recipe's cap
 	var stay: bool = false         # a biome chunk that lands and stays (Art: debris that lands stays): not buried in dust a moment after it comes to rest
 
 ## A spawn waiting for its time (an implode's ripple delay): sim time to fire, and what to do.
@@ -56,6 +57,7 @@ var clear_query: Callable = Callable()   # Rendering's read of what the patch an
 var pane: Dictionary = {}       # the facade's pane grid (VfxPanes.grid) while a caller throws glass from one building: window glass starts at a pane, not at a spot on the wall
 var puff_area_cap: float = INF  # the most of it the pool keeps: the hub sets it from the register's area threshold and the camera's scale; a puff over it is not made (the oldest keep fading)
 var ember_area_cap: float = INF # the most of it a scorch may keep alive: the hub sets it from the register's area threshold and the camera's scale (a flash's bright pixels, docs/vfx/flash-registry.md)
+var ambient_alive: int = 0       # ambient flecks in the pool (biome.gd keeps each recipe under its cap)
 var _spray_alive: int = 0       # water streaks in the pool (cap data/vfx/water.json caps.spray_alive)
 var _rubble_alive: int = 0      # slow rising rubble bits in the pool (cap data/vfx/react.json rubble.alive_cap)
 var _flame_alive: int = 0       # flames in the pool (cap data/vfx/earth.json flame.alive_cap)
@@ -100,6 +102,7 @@ func step(S: SimState, dt: float) -> void:
 	_ember_tick = 0
 	_ember_alive = 0
 	var spray_n: int = 0   # recounted below, after the jobs, so a job's throws see the real count
+	var amb_n: int = 0
 	var rubble_n: int = 0
 	var flame_n: int = 0
 	# Jobs are on unfrozen sim time (S.T): a hit-stopped ripple waits with the world.
@@ -124,6 +127,8 @@ func step(S: SimState, dt: float) -> void:
 			rubble_n += 1
 		if b.kind == FLAME:
 			flame_n += 1
+		if b.amb:
+			amb_n += 1
 		if b.kind == EMBER:
 			_ember_alive += 1
 			_ember_area += b.sx * b.sy
@@ -172,6 +177,7 @@ func step(S: SimState, dt: float) -> void:
 					if b.kind == CHUNK and b.mode == 2 and not b.stay:
 						b.age = maxf(b.age, b.life - 0.3)   # an earth chunk that has come to rest is buried in dust within 0.3 s: it must not lie on the sand as a dark dash
 	_spray_alive = spray_n
+	ambient_alive = amb_n
 	_rubble_alive = rubble_n
 	_flame_alive = flame_n
 	max_live = maxi(max_live, bits.size())
@@ -825,7 +831,7 @@ func chunk(x: float, y: float, z: float, vx: float, vy: float, size: float, life
 
 ## A fleck of a biome's material (biome.gd): kind CHUNK, SNOW, LEAF, ASH, SPLINTER or SPRAY; col its body, col2 the chunk's lit tone; mode the chunk's; grav a share of DEBRIS_GRAV; drag a share lost a
 ## tick; spin the most it turns; rsp a number in -1..1 the caller drew (the bit's turn and seed come from it, so this draws nothing from the pool's streams); ky a spray's kill height.
-func fleck(kind: int, x: float, y: float, z: float, vx: float, vy: float, size: float, life: float, col: Color, col2: Color, mode: int, grav: float, drag: float, spin: float, rsp: float, ky: float = -1e9, stay: bool = false) -> void:
+func fleck(kind: int, x: float, y: float, z: float, vx: float, vy: float, size: float, life: float, col: Color, col2: Color, mode: int, grav: float, drag: float, spin: float, rsp: float, ky: float = -1e9, stay: bool = false, amb: bool = false) -> void:
 	if kind == SPRAY and _spray_alive >= 120:
 		return
 	var b := Bit.new()
@@ -862,6 +868,9 @@ func fleck(kind: int, x: float, y: float, z: float, vx: float, vy: float, size: 
 		b.spin = rsp * spin
 	b.ky = ky if kind == SPRAY else -1e9
 	b.stay = stay
+	b.amb = amb
+	if amb:
+		ambient_alive += 1
 	if kind == SPRAY:
 		_spray_alive += 1
 	_add(b)

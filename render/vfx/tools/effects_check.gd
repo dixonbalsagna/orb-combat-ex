@@ -197,6 +197,9 @@ func _run() -> void:
 	_speed()
 	_earth()
 	_biome_fx()
+	_biome_ambient()
+	_biome_scars()
+	_forest_fire()
 	_trails()
 	_intro()
 	_intro_marks()
@@ -1144,6 +1147,228 @@ func _biome_fx() -> void:
 		_tick(S, hfl, [land.call(forest_x, "slam", 3500.0), crater.call(forest_x, 20.0)])
 	VfxBiome.override_biome = ""
 	_check(hfl.debris.bits.size() <= VfxLook.DEBRIS_CAP, "a flood of impacts stays inside the pool's cap (%d of %d)" % [hfl.debris.bits.size(), VfxLook.DEBRIS_CAP])
+
+
+## Ambient life (docs/vfx/biome-fx.md, window 2): a light drift in each biome's air.
+func _biome_ambient() -> void:
+	print("biome ambient life")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var dat: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/vfx/biome.json"))
+	var art: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/art/biomes.json"))
+	var amb: Dictionary = dat["ambient"]
+	var miss: Array = []
+	for b in amb["by_biome"]:
+		if not art["biomes"].has(b) or not amb["recipes"].has(String(amb["by_biome"][b])):
+			miss.append(b)
+	_check(miss.is_empty() and amb["by_biome"].size() >= 13, "every biome that has an ambient recipe is one of Art's, and every recipe it names exists (%d biomes, wrong: %s)" % [amb["by_biome"].size(), str(miss)])
+	var bad_cols: Array = []
+	for rn in amb["recipes"]:
+		for em in amb["recipes"][rn]["emit"]:
+			for t in em["cols"]:
+				if not (String(t).begins_with("#") or ["lit", "mid", "shade", "ej0", "ej1"].has(String(t))):
+					bad_cols.append(t)
+	_check(bad_cols.is_empty(), "the recipes' colours are tokens or hexes")
+	var run := func(biome: String, ticks: int, reduced: bool, frozen: bool, quality: int) -> VfxHub:
+		VfxBiome.override_biome = biome
+		var h := VfxHub.new()
+		h.reset(S, 6)
+		h.px_per_unit = 0.3
+		h.reduced_motion = reduced
+		h.quality = quality
+		h.biome_ambient_enabled = true      # the shipped default is off (VfxLook.BIOME_AMBIENT_DEFAULT): these lines are about what it draws when on
+		for k in range(ticks):
+			if frozen:
+				var tk := SimState.FxEvent.new()
+				tk.type = "tick"
+				tk.dt = SimConst.DT
+				tk.frozen = true
+				S.T += SimConst.DT
+				S.tick += 1
+				h.consume(S, [tk])
+			else:
+				_tick(S, h, [])
+		VfxBiome.override_biome = ""
+		return h
+	var count := func(h: VfxHub, k: int) -> int:
+		return h.debris.bits.filter(func(b): return b.kind == k).size()
+	var cap_of := func(biome: String) -> int:
+		return int(amb["recipes"][String(amb["by_biome"][biome])]["cap"])
+	var ht: VfxHub = run.call("tundra", 600, false, false, VfxLook.Q_HIGH)
+	_check(count.call(ht, VfxDebris.SNOW) > 8 and ht.debris.ambient_alive <= cap_of.call("tundra"), "tundra: snow drifts in the air (%d flakes, %d of a cap of %d)" % [count.call(ht, VfxDebris.SNOW), ht.debris.ambient_alive, cap_of.call("tundra")])
+	var hc: VfxHub = run.call("city", 600, false, false, VfxLook.Q_HIGH)
+	_check(hc.debris.ambient_alive == 0 and hc.biomefx.amb_recipe == "", "the city (no recipe) has no ambient flecks")
+	var hd: VfxHub = run.call("desert", 400, false, false, VfxLook.Q_HIGH)
+	var rising: int = hd.debris.bits.filter(func(b): return b.kind == VfxDebris.ASH and b.vy > 0.0).size()
+	_check(rising > 3, "the desert's heat is motes of warm light rising (%d rising)" % rising)
+	var hv: VfxHub = run.call("volcanic", 600, false, false, VfxLook.Q_HIGH)
+	var falling: int = hv.debris.bits.filter(func(b): return b.kind == VfxDebris.ASH and b.vy < 0.0).size()
+	_check(falling > 5, "volcanic ground has ash falling (%d falling)" % falling)
+	var hf: VfxHub = run.call("forest", 900, false, false, VfxLook.Q_HIGH)
+	_check(count.call(hf, VfxDebris.LEAF) > 2 and hf.debris.ambient_alive <= cap_of.call("forest"), "the forest drops a few leaves (%d, cap %d)" % [count.call(hf, VfxDebris.LEAF), cap_of.call("forest")])
+	var hr: VfxHub = run.call("tundra", 600, true, false, VfxLook.Q_HIGH)
+	_check(hr.debris.ambient_alive < ht.debris.ambient_alive, "reduced motion halves it (%d against %d)" % [hr.debris.ambient_alive, ht.debris.ambient_alive])
+	var hl: VfxHub = run.call("tundra", 600, false, false, VfxLook.Q_LOW)
+	_check(hl.debris.ambient_alive < ht.debris.ambient_alive, "low quality makes less (%d against %d)" % [hl.debris.ambient_alive, ht.debris.ambient_alive])
+	var hz: VfxHub = run.call("tundra", 300, false, true, VfxLook.Q_HIGH)
+	_check(hz.debris.ambient_alive == 0, "nothing is made while the sim is held (a hit-stop, a pause)")
+	var h1: VfxHub = run.call("jungle", 500, false, false, VfxLook.Q_HIGH)
+	var h2: VfxHub = run.call("jungle", 500, false, false, VfxLook.Q_HIGH)
+	var same: bool = h1.debris.bits.size() == h2.debris.bits.size() and h1.debris.bits.size() > 0
+	if same:
+		for i in range(h1.debris.bits.size()):
+			same = same and h1.debris.bits[i].x == h2.debris.bits[i].x and h1.debris.bits[i].y == h2.debris.bits[i].y
+	_check(same, "the same ticks give the same drift")
+	var mid: float = SimWrap.wrap(S.fighters[0].x + SimWrap.sdx(S.fighters[0].x, S.fighters[1].x) * 0.5)
+	var far: int = ht.debris.bits.filter(func(b): return b.amb and absf(SimWrap.sdx(mid, b.x)) > 4000.0).size()
+	_check(far == 0, "it is made about the fighters, not across the world")
+	VfxBiome.override_biome = "tundra"
+	var hu := VfxHub.new()
+	hu.reset(S, 6)
+	hu.biome_ambient_enabled = false
+	for k in range(300):
+		_tick(S, hu, [])
+	VfxBiome.override_biome = ""
+	_check(hu.debris.ambient_alive == 0, "the switch (biome_ambient_enabled) stops it")
+	VfxBiome.override_biome = "tundra"
+	var hdf := VfxHub.new()
+	hdf.reset(S, 6)
+	for k in range(300):
+		_tick(S, hdf, [])
+	VfxBiome.override_biome = ""
+	_check(not VfxLook.BIOME_AMBIENT_DEFAULT and hdf.debris.ambient_alive == 0, "as shipped it is off until Orb has seen it (VfxLook.BIOME_AMBIENT_DEFAULT false: nothing drifts)")
+
+
+## Biome scars (docs/vfx/biome-fx.md, window 3): what a beam's ground scorch throws up in each biome's ground.
+func _biome_scars() -> void:
+	print("biome scars")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var art: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/art/biomes.json"))
+	var dat: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/vfx/biome.json"))
+	var missing: Array = []
+	for id in art["biomes"]:
+		var k: String = String(art["biomes"][id]["plume"]["kind"])
+		if k != "water" and not dat["scorch"]["kinds"].has(k):
+			missing.append(id)
+	_check(missing.is_empty(), "every plume kind of Art's has a scar answer (missing %s)" % str(missing))
+	var sd: Dictionary = VfxBiome.spec("desert")
+	_check(sd["scar_fill"].is_equal_approx(Color("#1f3d38")) and sd["scar_edge"].is_equal_approx(Color("#bfe0d8")), "the desert's scar colours are Art's glass: dark green-black and a pale edge")
+	var run := func(biome: String, ticks: int, power: float, reduced: bool) -> VfxHub:
+		VfxBiome.override_biome = biome
+		var h := VfxHub.new()
+		h.reset(S, 6)
+		h.px_per_unit = 0.3
+		h.reduced_motion = reduced
+		var x: float = SimWrap.wrap(2250.0 * SimConst.PS)
+		for k in range(ticks):
+			_tick(S, h, [VfxMock.ev("scorch", {"x": x + float(k) * 12.0, "y": WorldTerrain.groundY(S, x), "power": power, "variant": "FIELD SCAR", "z": 0.0})])
+		VfxBiome.override_biome = ""
+		return h
+	var hd: VfxHub = run.call("desert", 60, 1.5, false)
+	_check(int(hd.biomefx.scorch_made.get("ash", 0)) > 5 and int(hd.biomefx.scorch_made.get("chunk", 0)) > 2, "a beam along sand throws glints and dark glass chips (%s)" % str(hd.biomefx.scorch_made))
+	var hi: VfxHub = run.call("ice_sheet", 60, 1.5, false)
+	_check(int(hi.biomefx.scorch_made.get("puff", 0)) > 2 and int(hi.biomefx.scorch_made.get("chunk", 0)) > 2, "off ice: melt steam and slate chips (%s)" % str(hi.biomefx.scorch_made))
+	var hv: VfxHub = run.call("volcanic", 60, 1.5, false)
+	var vsp: Dictionary = VfxBiome.spec("volcanic")
+	var orange: int = hv.debris.bits.filter(func(b): return b.kind == VfxDebris.CHUNK and b.col.is_equal_approx(vsp["scar_edge"])).size()
+	_check(orange > 2 and hv.debris.bits.filter(func(b): return b.kind == VfxDebris.EMBER).size() == 0, "on volcanic ground: steady orange chips in Art's edge colour (%d), never the pulsing ember bit" % orange)
+	var hp: VfxHub = run.call("plains", 60, 1.5, false)
+	_check(int(hp.biomefx.scorch_made.get("ash", 0)) > 3, "on soil: black char flakes (%s)" % str(hp.biomefx.scorch_made))
+	var hc: VfxHub = run.call("city", 60, 1.5, false)
+	_check(hc.biomefx.scorch_made.is_empty(), "in the city nothing is added")
+	var hs: VfxHub = run.call("desert", 60, 3.0, false)
+	var hw: VfxHub = run.call("desert", 60, 0.6, false)
+	_check(int(hs.biomefx.scorch_made.get("ash", 0)) >= int(hw.biomefx.scorch_made.get("ash", 0)), "a stronger beam throws no less (%d against %d)" % [int(hs.biomefx.scorch_made.get("ash", 0)), int(hw.biomefx.scorch_made.get("ash", 0))])
+	var hr: VfxHub = run.call("desert", 60, 1.5, true)
+	_check(int(hr.biomefx.scorch_made.get("ash", 0)) < int(hd.biomefx.scorch_made.get("ash", 0)), "reduced motion throws fewer")
+	var most: int = 0
+	var ht := VfxHub.new()
+	ht.reset(S, 6)
+	ht.px_per_unit = 0.3
+	VfxBiome.override_biome = "volcanic"
+	var many: Array = []
+	for k in range(8):
+		many.append(VfxMock.ev("scorch", {"x": SimWrap.wrap(2250.0 * SimConst.PS) + float(k) * 12.0, "y": WorldTerrain.groundY(S, SimWrap.wrap(2250.0 * SimConst.PS)), "power": 3.0, "variant": "FIELD SCAR", "z": 0.0}))
+	_tick(S, ht, many)
+	VfxBiome.override_biome = ""
+	_check(ht.biomefx._scorch_n <= int(dat["scorch"]["per_tick_cap"]) + 4, "a tick with eight scorch samples stays near the per-tick cap (%d)" % ht.biomefx._scorch_n)
+
+
+func _forest_fire() -> void:
+	print("forest fire")
+	var dat: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/vfx/biome.json"))
+	var fd: Dictionary = dat["fire"]
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var x0: float = SimWrap.wrap(5000.0 * SimConst.PS)
+	for i in range(2):
+		S.fighters[i].x = SimWrap.wrap(x0 + (-110.0 if i == 0 else 110.0))
+	var stand := func(n: int, burn: float, alive: bool) -> void:
+		S.trees.clear()
+		for k in range(n):
+			var tr := SimState.TreeState.new()
+			tr.x = SimWrap.wrap(x0 - 400.0 + float(k) * 30.0)
+			tr.h = 150.0
+			tr.alive = alive
+			tr.burn = burn
+			S.trees.append(tr)
+	var run := func(ticks: int, reduced: bool, enabled: bool) -> VfxHub:
+		var h := VfxHub.new()
+		h.reset(S, 6)
+		h.px_per_unit = 0.3
+		h.reduced_motion = reduced
+		h.forest_fire_enabled = enabled
+		for k in range(ticks):
+			_tick(S, h, [])
+		return h
+	stand.call(1, 0.0, true)
+	var h0: VfxHub = run.call(120, false, true)
+	_check(h0.forestfire.made.is_empty() and h0.forestfire.burning == 0, "a forest with nothing burning makes nothing")
+	stand.call(1, 0.5, true)
+	var h1: VfxHub = run.call(180, false, true)
+	var flames: Array = h1.debris.bits.filter(func(b): return b.kind == VfxDebris.FLAME)
+	_check(int(h1.forestfire.made.get("flame", 0)) > 5 and int(h1.forestfire.made.get("ember", 0)) > 0 and int(h1.forestfire.made.get("smoke", 0)) > 0, "a burning tree makes flames, embers and smoke (%s)" % str(h1.forestfire.made))
+	var near: int = 0
+	for b in flames:
+		if absf(SimWrap.sdx(S.trees[0].x, b.x)) < 150.0 and b.col.is_equal_approx(Color("#ff9a2e")):
+			near += 1
+	_check(flames.size() > 0 and near == flames.size(), "the flames are steady orange and sit in the tree's crown (%d of %d)" % [near, flames.size()])
+	_check(VfxForestFire.intensity(0.0) == 0.0 and VfxForestFire.intensity(0.02) < VfxForestFire.intensity(0.3) and VfxForestFire.intensity(0.97) < VfxForestFire.intensity(0.5) and VfxForestFire.intensity(0.97) > 0.0, "a tree catches up over its first tenth, burns full, and dies down at the end")
+	stand.call(3, 1.0, false)
+	var hc: VfxHub = run.call(120, false, true)
+	_check(hc.forestfire.made.is_empty(), "a charred tree (burn 1, dead) makes nothing")
+	stand.call(3, 0.0, false)
+	var hf: VfxHub = run.call(120, false, true)
+	_check(hf.forestfire.made.is_empty(), "a felled tree (burn 0, dead) makes nothing")
+	stand.call(60, 0.4, true)
+	var hm: VfxHub = run.call(60, false, true)
+	_check(hm.forestfire.burning == 60 and hm.forestfire.drawn <= int(fd["scan"]["max_trees"]), "a stand of 60 burning gives flames to at most max_trees (%d of %d)" % [hm.forestfire.drawn, hm.forestfire.burning])
+	var peak: int = 0
+	var hk := VfxHub.new()
+	hk.reset(S, 6)
+	hk.px_per_unit = 0.3
+	for k in range(240):
+		_tick(S, hk, [])
+		peak = maxi(peak, hk.debris._flame_alive)
+	_check(peak <= int(fd["flame"]["cap"]) + 1, "the flames stay under their cap, which leaves the explosions their room (peak %d, cap %d, earth's %d)" % [peak, int(fd["flame"]["cap"]), 40])
+	stand.call(1, 0.5, true)
+	var hr: VfxHub = run.call(180, true, true)
+	_check(int(hr.forestfire.made.get("flame", 0)) < int(h1.forestfire.made.get("flame", 0)) and int(hr.forestfire.made.get("smoke", 0)) == 0, "reduced motion makes fewer flames (%d against %d) and no smoke" % [int(hr.forestfire.made.get("flame", 0)), int(h1.forestfire.made.get("flame", 0))])
+	var ho: VfxHub = run.call(120, false, false)
+	_check(ho.forestfire.made.is_empty() and ho.debris.bits.filter(func(b): return b.kind == VfxDebris.FLAME).is_empty(), "the switch (forest_fire_enabled) stops it")
+	stand.call(1, 0.5, true)
+	S.trees[0].x = SimWrap.wrap(x0 + 6000.0)
+	var hn: VfxHub = run.call(120, false, true)
+	_check(hn.forestfire.made.is_empty() and hn.forestfire.burning == 1, "a fire beyond the framing's span makes nothing (but is counted)")
+	stand.call(1, 0.5, true)
+	var a1: VfxHub = run.call(90, false, true)
+	var a2: VfxHub = run.call(90, false, true)
+	var xa: Array = a1.debris.bits.filter(func(b): return b.kind == VfxDebris.FLAME).map(func(b): return snappedf(b.x, 0.001))
+	var xb: Array = a2.debris.bits.filter(func(b): return b.kind == VfxDebris.FLAME).map(func(b): return snappedf(b.x, 0.001))
+	_check(xa.size() > 0 and xa == xb, "the same burning tree draws the same fire twice (%d flames)" % xa.size())
+	var embers: Array = h1.debris.bits.filter(func(b): return b.kind == VfxDebris.EMBER)
+	_check(embers.size() <= VfxLook.EMBER_CAP, "the embers stay under the pool's cap (%d)" % embers.size())
 
 
 func _earth() -> void:

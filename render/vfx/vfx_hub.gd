@@ -99,6 +99,9 @@ var earth_enabled: bool = VfxLook.EARTH_DEFAULT   # material chunks for `debris`
 var earth := VfxEarth.new()
 var biomefx := VfxBiome.new()                       # the biome's own material on top of earth's (biome.gd, data/vfx/biome.json)
 var biomefx_enabled: bool = VfxLook.BIOMEFX_DEFAULT
+var biome_ambient_enabled: bool = VfxLook.BIOME_AMBIENT_DEFAULT
+var forestfire := VfxForestFire.new()                # a burning tree's flames, embers and smoke (forest_fire.gd)
+var forest_fire_enabled: bool = VfxLook.FOREST_FIRE_DEFAULT
 var debris := VfxDebris.new()
 var water := VfxWater.new()
 var holes: Array = []               # Hole
@@ -169,6 +172,8 @@ func reset(S: SimState, p_seed: int) -> void:
 	biomefx.debris = debris
 	biomefx.flashes = flashes
 	biomefx.reset()
+	forestfire.debris = debris
+	forestfire.reset()
 	water.debris = debris
 	water.reset()
 	debris.water = water
@@ -387,6 +392,10 @@ func _consume(S: SimState, events: Array) -> void:
 			rocks.step(S, xform.forms, [trails[0].speed_bh, trails[1].speed_bh], VfxLook.QUALITY_SHARDS[clampi(quality, 0, 2)] * (0.5 if reduced_motion else 1.0))
 		if earth_enabled and not frozen:
 			earth.step_skid(S)
+		if forest_fire_enabled and not frozen:
+			forestfire.step(S, dt, VfxLook.QUALITY_SHARDS[clampi(quality, 0, 2)], reduced_motion)
+		if biomefx_enabled and biome_ambient_enabled and not frozen:
+			biomefx.ambient(S, dt, VfxLook.QUALITY_SHARDS[clampi(quality, 0, 2)], reduced_motion)
 		if react_enabled and not frozen:
 			react.step(S, self, xform.forms)
 		if react_enabled:
@@ -427,6 +436,10 @@ func _consume(S: SimState, events: Array) -> void:
 					if embers_enabled:
 						debris.z_shift = float(_g(e, "z", 0.0))
 						debris.embers(S, float(e.x), float(e.y), float(e.power), String(e.variant))
+						debris.z_shift = 0.0
+					if biomefx_enabled:
+						debris.z_shift = float(_g(e, "z", 0.0))
+						biomefx.scorch(S, float(e.x), float(e.y) + 4.0, 0.0, float(e.power), VfxLook.QUALITY_SHARDS[clampi(quality, 0, 2)], reduced_motion)
 						debris.z_shift = 0.0
 				"splash":
 					if water_enabled and int(e.n) >= 10:

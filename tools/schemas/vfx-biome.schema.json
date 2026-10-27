@@ -14,7 +14,10 @@
     "steam",
     "ring",
     "events",
-    "kinds"
+    "kinds",
+    "ambient",
+    "scorch",
+    "fire"
   ],
   "properties": {
     "version": {
@@ -530,6 +533,422 @@
           "$ref": "#/$defs/emitter"
         }
       }
+    },
+    "ambient": {
+      "type": "object",
+      "description": "Ambient life (window 2): what floats in the air of each biome, by recipe.",
+      "required": [
+        "span",
+        "by_biome",
+        "recipes"
+      ],
+      "properties": {
+        "span": {
+          "type": "object",
+          "properties": {
+            "base": {
+              "type": "number",
+              "minimum": 100,
+              "maximum": 3000
+            },
+            "per_sep": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "max": {
+              "type": "number",
+              "minimum": 300,
+              "maximum": 6000
+            }
+          },
+          "additionalProperties": false
+        },
+        "by_biome": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z_]+$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "recipes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "cap",
+              "emit"
+            ],
+            "properties": {
+              "cap": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 120
+              },
+              "emit": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "kind",
+                    "rate",
+                    "size",
+                    "life",
+                    "cols"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "snow",
+                        "leaf",
+                        "ash"
+                      ]
+                    },
+                    "rate": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 20
+                    },
+                    "size": {
+                      "type": "array",
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "items": {
+                        "type": "number"
+                      }
+                    },
+                    "life": {
+                      "type": "array",
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "items": {
+                        "type": "number"
+                      }
+                    },
+                    "vx": {
+                      "type": "array",
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "items": {
+                        "type": "number"
+                      }
+                    },
+                    "vy": {
+                      "type": "array",
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "items": {
+                        "type": "number"
+                      }
+                    },
+                    "h": {
+                      "type": "array",
+                      "minItems": 2,
+                      "maxItems": 2,
+                      "items": {
+                        "type": "number"
+                      }
+                    },
+                    "grav": {
+                      "type": "number",
+                      "minimum": -1,
+                      "maximum": 1
+                    },
+                    "drag": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 0.2
+                    },
+                    "cols": {
+                      "type": "array",
+                      "minItems": 1,
+                      "maxItems": 4,
+                      "items": {
+                        "type": "string",
+                        "pattern": "^(#[0-9a-fA-F]{6}|lit|mid|shade|ej0|ej1)$"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false
+    },
+    "scorch": {
+      "type": "object",
+      "description": "Window 3: what a beam's ground scorch throws up in each plume kind's ground.",
+      "required": [
+        "per_tick_cap",
+        "kinds"
+      ],
+      "properties": {
+        "per_tick_cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "kinds": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/emitter"
+            }
+          }
+        }
+      },
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false
+    },
+    "fire": {
+      "type": "object",
+      "description": "Window 4: what a burning tree looks like (forest_fire.gd): flames, embers and smoke from the tree's own burn state.",
+      "required": [
+        "scan",
+        "span",
+        "flame",
+        "ember",
+        "smoke"
+      ],
+      "properties": {
+        "scan": {
+          "type": "object",
+          "required": [
+            "every",
+            "max_trees"
+          ],
+          "properties": {
+            "every": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60
+            },
+            "max_trees": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 80
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false
+        },
+        "span": {
+          "type": "object",
+          "required": [
+            "base",
+            "per_sep",
+            "max"
+          ],
+          "properties": {
+            "base": {
+              "type": "number",
+              "minimum": 100,
+              "maximum": 3000
+            },
+            "per_sep": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "max": {
+              "type": "number",
+              "minimum": 500,
+              "maximum": 6000
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false
+        },
+        "flame": {
+          "type": "object",
+          "required": [
+            "rate",
+            "size",
+            "min",
+            "max",
+            "h",
+            "rise",
+            "life",
+            "cap"
+          ],
+          "properties": {
+            "rate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 8
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.05,
+                "maximum": 1
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "min": {
+              "type": "number",
+              "minimum": 4,
+              "maximum": 100
+            },
+            "max": {
+              "type": "number",
+              "minimum": 8,
+              "maximum": 200
+            },
+            "h": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "rise": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 400
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "life": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 3
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 40
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false
+        },
+        "ember": {
+          "type": "object",
+          "required": [
+            "rate",
+            "length",
+            "rise",
+            "life",
+            "grav"
+          ],
+          "properties": {
+            "rate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 6
+            },
+            "length": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 4,
+                "maximum": 40
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "rise": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 400
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "life": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.2,
+                "maximum": 4
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "grav": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false
+        },
+        "smoke": {
+          "type": "object",
+          "required": [
+            "rate",
+            "size",
+            "life"
+          ],
+          "properties": {
+            "rate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0.05,
+              "maximum": 1
+            },
+            "life": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.5,
+                "maximum": 8
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false
+        }
+      },
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false
     }
   },
   "patternProperties": {
@@ -551,7 +970,8 @@
             "snow",
             "leaf",
             "ash",
-            "splinter"
+            "splinter",
+            "puff"
           ]
         },
         "n": {
@@ -574,7 +994,9 @@
               "mid",
               "shade",
               "ej0",
-              "ej1"
+              "ej1",
+              "scar_fill",
+              "scar_edge"
             ]
           }
         },
@@ -651,6 +1073,11 @@
           "enum": [
             "embers"
           ]
+        },
+        "grow": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 5
         }
       },
       "additionalProperties": false

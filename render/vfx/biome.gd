@@ -8,7 +8,7 @@ extends RefCounted
 ## bit, so the stream does not depend on the quality level.
 
 const TIER_K: Array = [0.7, 1.0, 1.45, 2.0]
-const KINDS: Dictionary = {"chunk": 1, "snow": 2, "leaf": 3, "ash": 4, "splinter": 5}
+const KINDS: Dictionary = {"chunk": 1, "snow": 2, "leaf": 3, "ash": 4, "splinter": 5, "puff": 6}
 
 static var _data: Dictionary = {}
 static var _art: Dictionary = {}
@@ -24,7 +24,13 @@ var stars: int = 0                       # burst stars drawn
 var stars_refused: int = 0
 var columns: int = 0                     # columns drawn
 var _last_plume_tick: int = -1000
+var _amb_acc: Dictionary = {}               # emitter -> the fraction of a fleck owed
+var amb_made: Dictionary = {}            # ambient flecks made, by kind (for the tests)
+var amb_recipe: String = ""              # the recipe in force at the last tick (for the tests)
 var _last_star_tick: int = -1000
+var scorch_made: Dictionary = {}          # scar flecks made, by kind (for the tests)
+var _scorch_tick: int = -1
+var _scorch_n: int = 0
 var _last_plume_x: float = 0.0
 
 
@@ -44,7 +50,7 @@ static func warm() -> void:
 			for id in a["biomes"]:
 				var pl = a["biomes"][id].get("plume")
 				if pl is Dictionary:
-					_art[String(id)] = _parse(pl, a["biomes"][id].get("palette", {}))
+					_art[String(id)] = _parse(pl, a["biomes"][id].get("palette", {}), a["biomes"][id].get("scar", {}))
 
 
 static func _lin(v: float) -> float:
@@ -62,7 +68,7 @@ static func puff_weight(c: Color, ground: Color) -> float:
 	return 1.0 if step >= 0.10 else 0.3 + 0.7 * step / 0.10
 
 
-static func _parse(pl: Dictionary, pal: Dictionary) -> Dictionary:
+static func _parse(pl: Dictionary, pal: Dictionary, scar: Dictionary = {}) -> Dictionary:
 	var cols: Array = pl.get("cols", [])
 	var ej: Array = pl.get("ej", [])
 	if cols.size() < 3 or ej.size() < 2:
@@ -79,6 +85,7 @@ static func _parse(pl: Dictionary, pal: Dictionary) -> Dictionary:
 		"lit": RenderLook.col(String(cols[0])), "mid": RenderLook.col(String(cols[1])), "shade": RenderLook.col(String(cols[2])),
 		"ej0": RenderLook.col(String(ej[0])), "ej1": RenderLook.col(String(ej[1])),
 		"h": float(pl.get("h", 300.0)), "w": float(pl.get("w", 200.0)),
+		"scar_fill": RenderLook.col(String(scar.get("fill", "#221c18"))), "scar_edge": RenderLook.col(String(scar.get("edge", "#4a4036"))),
 		"ring": bool(pl.get("ring", false)), "steam": bool(pl.get("steam", false)), "wet": bool(pl.get("wet", false)), "embers": bool(pl.get("embers", false)),
 	}
 
@@ -126,12 +133,18 @@ static func _pair(group: String, key: String, a: float, b: float) -> Vector2:
 
 func reset() -> void:
 	made = {}
+	_amb_acc = {}
+	amb_made = {}
+	amb_recipe = ""
 	emitted = 0
 	stars = 0
 	stars_refused = 0
 	columns = 0
 	_last_plume_tick = -1000
 	_last_star_tick = -1000
+	scorch_made = {}
+	_scorch_tick = -1
+	_scorch_n = 0
 	warm()
 
 
@@ -181,6 +194,114 @@ func emit(event: String, S, x: float, y: float, z: float, dirx: float, s: float,
 		_ring(sp, x, y, z, sc, q)
 	if bool(sp["steam"]) and plume_w > 0.0:
 		_steam(sp, x, y, z, q)
+
+
+# --------------------------------------------------------------------------------------------------------------- ambient life
+
+static func recipe_name(biome: String) -> String:
+	warm()
+	var a = _data.get("ambient")
+	if a is Dictionary and a.get("by_biome") is Dictionary and a["by_biome"].has(biome):
+		return String(a["by_biome"][biome])
+	return ""
+
+
+## Once per unfrozen tick: the light drift in the air of the biome at the pair's middle (data `ambient`): snow, heat motes, pollen, leaves, spray, ash. Made over a span about the fighters (the camera
+## frames them), at the recipe's rate (halved in reduced motion, scaled by quality), under the recipe's cap. Small flecks in Art's colours; nothing is blurred and nothing but the pool is drawn.
+func ambient(S: SimState, dt: float, q: float, reduced: bool) -> void:
+	if debris == null or S == null or S.fighters.size() < 2:
+		return
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	var dxp: float = SimWrap.sdx(f0.x, f1.x)
+	var mid: float = SimWrap.wrap(f0.x + dxp * 0.5)
+	var biome: String = key_at(S, mid)
+	var rn: String = recipe_name(biome)
+	amb_recipe = rn
+	if rn == "":
+		return
+	var rec = _data["ambient"]["recipes"].get(rn)
+	if not (rec is Dictionary):
+		return
+	var sp: Dictionary = spec(biome)
+	var span: float = clampf(_ag("base", 700.0) + _ag("per_sep", 0.7) * absf(dxp), _ag("base", 700.0), _ag("max", 2600.0))
+	var cap: int = maxi(1, int(round(float(rec["cap"]) * q * (0.5 if reduced else 1.0))))
+	var rd: SimRng = debris._rd
+	var i: int = 0
+	for em in rec["emit"]:
+		var key: String = "%s:%d" % [rn, i]
+		i += 1
+		var acc: float = float(_amb_acc.get(key, 0.0)) + float(em["rate"]) * dt * q * (0.5 if reduced else 1.0)
+		var toks: Array = em["cols"]
+		var szr: Vector2 = Vector2(float(em["size"][0]), float(em["size"][1]))
+		var lfr: Vector2 = Vector2(float(em["life"][0]), float(em["life"][1]))
+		var vxr: Vector2 = Vector2(float(em["vx"][0]), float(em["vx"][1])) if em.get("vx") is Array else Vector2.ZERO
+		var vyr: Vector2 = Vector2(float(em["vy"][0]), float(em["vy"][1])) if em.get("vy") is Array else Vector2.ZERO
+		var hr: Vector2 = Vector2(float(em["h"][0]), float(em["h"][1])) if em.get("h") is Array else Vector2(0.0, 100.0)
+		var kind: int = VfxDebris.SNOW if String(em["kind"]) == "snow" else (VfxDebris.LEAF if String(em["kind"]) == "leaf" else VfxDebris.ASH)
+		while acc >= 1.0:
+			acc -= 1.0
+			# a fixed number of draws a fleck (eight), made or not
+			var rx: float = rd.range_(-span, span)
+			var rh: float = rd.range_(hr.x, hr.y)
+			var rs: float = rd.range_(szr.x, szr.y)
+			var rl: float = rd.range_(lfr.x, lfr.y)
+			var rvx: float = rd.range_(vxr.x, vxr.y)
+			var rvy: float = rd.range_(vyr.x, vyr.y)
+			var rc: float = rd.next()
+			var rz: float = rd.range_(-40.0, 40.0)
+			if debris.ambient_alive >= cap:
+				continue
+			var tok: String = String(toks[mini(int(rc * float(toks.size())), toks.size() - 1)])
+			var col: Color = RenderLook.col(tok) if tok.begins_with("#") else (sp.get(tok, Color(1.0, 1.0, 1.0)) as Color)
+			var x: float = SimWrap.wrap(mid + rx)
+			var y: float = WorldTerrain.groundY(S, x) + rh
+			amb_made[String(em["kind"])] = int(amb_made.get(String(em["kind"]), 0)) + 1
+			debris.fleck(kind, x, y, f0.z + 6.0 + rz, rvx, rvy, rs, rl, col, col, 0, float(em.get("grav", 0.0)), float(em.get("drag", 0.0)), 3.0, rc * 2.0 - 1.0, -1e9, false, true)
+		_amb_acc[key] = minf(acc, 2.0)
+
+
+static func _ag(key: String, d: float) -> float:
+	var a = _data.get("ambient")
+	if a is Dictionary and a.get("span") is Dictionary and a["span"].has(key):
+		return float(a["span"][key])
+	return d
+
+
+# --------------------------------------------------------------------------------------------------------------- scars
+
+## One `scorch` event (a beam sample along the ground): what the biome's ground throws up where the beam burns it (data `scorch`): glints and glass on sand, steam and slate off ice, pale flakes and steady
+## orange chips on volcanic ground, black char flakes and a little smoke on soil. Small; at most `per_tick_cap` flecks a tick however long the beam. Presentation only.
+func scorch(S, x: float, y: float, z: float, power: float, q: float, reduced: bool) -> void:
+	if debris == null:
+		return
+	var sp: Dictionary = spec(key_at(S, x))
+	if sp.is_empty() or String(sp["kind"]) == "water":
+		return
+	var sc = _data.get("scorch")
+	if not (sc is Dictionary):
+		return
+	var list = sc.get("kinds", {}).get(String(sp["kind"]))
+	if not (list is Array):
+		return
+	var tick: int = int(S.tick) if S != null else 0
+	if tick != _scorch_tick:
+		_scorch_tick = tick
+		_scorch_n = 0
+	var cap: int = int(sc.get("per_tick_cap", 6))
+	if _scorch_n >= cap:
+		return
+	var pw: float = clampf(power, 0.5, 3.0)
+	for em in list:
+		var before: int = 0
+		for k in made:
+			before += int(made[k])
+		_one(em, sp, x, y, z, 0.0, 1.0, 1.0 + 0.4 * (pw - 1.0), 1.0, q * (0.5 if reduced else 1.0), 1.0)
+		var after: int = 0
+		for k in made:
+			after += int(made[k])
+		_scorch_n += after - before
+		scorch_made[String(em.get("kind", "chunk"))] = int(scorch_made.get(String(em.get("kind", "chunk")), 0)) + (after - before)
 
 
 # --------------------------------------------------------------------------------------------------------------- the pieces
@@ -377,3 +498,5 @@ func _one(em: Dictionary, sp: Dictionary, x: float, y: float, z: float, dirx: fl
 				debris.fleck(VfxDebris.ASH, px, py, z + 8.0, vx, vy, size, rl * lk, c, c, 0, grav, drag, 4.0, rsp)
 			"splinter":
 				debris.fleck(VfxDebris.SPLINTER, px, py, z + 8.0, vx, vy, size, rl * lk, c, c, 0, grav, drag, 9.0, rsp)
+			"puff":
+				debris.dust_puff("plains", px, py, z + 12.0, vx, vy, size, size * float(em.get("grow", 1.8)), rl * lk, 0, c, puff_weight(c, sp["ground"]))

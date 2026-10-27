@@ -43,3 +43,36 @@ Every count is multiplied by the **causer's tier** (`tier_k`: 0.7, 1.0, 1.45, 2.
 - The villages and the city have no plume of Art's, so their landings are as they were.
 - Sizes of the ejecta were tuned by eye in the game's framing; Art's colours are exact.
 - Not a Legal clearance. Legal wants a glance at the plumes: still frames, one burst star, steady embers (stills in homework/biome-fx/).
+
+## Window 2: ambient life (render/vfx/biome.gd `ambient`, data/vfx/biome.json `ambient`)
+
+A light, sparse drift in the air of each biome, made around the fighters (the camera frames them; the span is 700 units plus 0.7 of their separation, at most 2,600) by the biome at the pair's middle. Small faceted flecks in Art's colours from the same pool and the same one draw call: **no haze, no blur, no screen effect**.
+
+| Recipe | Biomes | What floats |
+| :--- | :--- | :--- |
+| snowfall, snowwind | tundra, taiga, sea ice (falling); ice sheet (blown across, 120 to 260 u/s) | small snow flakes |
+| heat, heat_pollen | desert, savanna | motes of warm light rising from the hot ground and swaying: the heat shimmer as particles, never a distortion; the savanna adds a little pollen |
+| ashfall | volcanic | grey ash flakes falling slowly |
+| leaves, leaves_sparse | forest; highland | a few leaves that sway down |
+| pollen, pollen_leaves | plains; jungle | pollen motes drifting, and in the jungle a few leaves and pink petals |
+| midges | wetland | a few dark specks |
+| spray, spray_light | beach; ocean | pale spray flecks blowing along the shore and over the sea |
+| motes | mountains | a few dust motes |
+
+Rates are a few flecks a second and each recipe has a cap (12 to 70 alive at once); halved in reduced motion, scaled by quality (1, 0.7, 0.35), and nothing is made while the sim is held (hit-stop, a pause). A fleck sways as it drifts (a push that swings with its own seed) and is gone at the end of its life or a moment after it touches the ground. Randomness is the pool's cosmetic stream with a fixed number of draws a fleck. `hub.biome_ambient_enabled` switches it off. The recipes are data: a new biome is one line of `by_biome`.
+
+## Window 3: biome scars (render/vfx/biome.gd `scorch`, data/vfx/biome.json `scorch`)
+
+A beam along the ground scorches it (the sim's `scorch` events, a sample or two a tick along the path, and the groove World carves). The biome's ground answers with what it is made of, in Art's scar colours (`scar.fill` and `scar.edge` in data/art/biomes.json, docs/art/biomes.md section 4):
+
+| Ground (plume kind) | What the scorch throws up |
+| :--- | :--- |
+| sand (desert, beach) | glints in the glass's pale edge colour and dark green-black glass chips: a beam along sand glasses it |
+| snow (ice sheet, sea ice, tundra, taiga) | melt steam (small pale faceted puffs) and slate chips with melt-blue edges |
+| ash (volcanic) | pale fused flakes and **steady orange chips** (a plain chunk in Art's orange edge colour: never the pulsing ember bit) |
+| dirt, leaf, dust, mud (plains, forest, jungle, savanna, wetland) | black char flakes; a little grey smoke in the wet ground (jungle, wetland) |
+| rock (mountains, highland) | dark chips |
+
+Small: a fleck or two a scorch sample, scaled by the beam's power, halved in reduced motion, at most six flecks a tick however long the beam. The city and villages add nothing.
+
+**The band on the ground itself is Rendering's** (the ground shader's scorch row: a char shade); Art's table wants it to read by biome (glassy dark green-black with a pale edge on sand, a slate streak with a melt-blue edge on ice, a pale-grey fused streak with a thin orange edge on volcanic ground, black char elsewhere). The colours are in Art's data (`scar.fill`, `scar.edge` per biome); that change is Rendering's file and is not in this park.

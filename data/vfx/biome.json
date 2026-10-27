@@ -133,5 +133,1020 @@
       {"kind": "chunk", "n": 8, "max": 14, "cols": ["ej0"], "size": [8, 14], "life": [1.0, 1.7], "vx": [120, 520], "vy": [240, 760], "dir": "both", "spread": 50, "grav": 0.8, "mode": 2, "needs": "embers", "stay": 0.2},
       {"kind": "ash", "n": 8, "max": 16, "cols": ["ej1", "mid"], "size": [9, 17], "life": [2.0, 3.2], "vx": [50, 280], "vy": [150, 520], "dir": "both", "spread": 60, "grav": 0.1, "drag": 0.02}
     ]
+  },
+  "ambient": {
+    "_note": "Ambient life (window 2): a light, sparse drift in the air of each biome, made around the fighters (the camera frames them), by the biome at the pair's middle. `by_biome` names a recipe; a recipe is a list of emitters (rate a second at quality 1, halved in reduced motion) and a cap on how many of its flecks live at once. Wind (`vx`) and `vy` are signed world units a second; `h` is the spawn height above the ground; colours are tokens (lit, mid, shade, ej0, ej1 of Art's plume for the biome) or a hex. Everything is a small faceted fleck in Art's colours: no haze, no blur, no screen effect. Heat shimmer is rising motes of warm light, a geometry-and-particle answer, never a distortion.",
+    "span": {
+      "base": 700,
+      "per_sep": 0.7,
+      "max": 2600
+    },
+    "by_biome": {
+      "tundra": "snowfall",
+      "taiga": "snowfall",
+      "ice_sheet": "snowwind",
+      "sea_ice": "snowfall",
+      "desert": "heat",
+      "savanna": "heat_pollen",
+      "volcanic": "ashfall",
+      "forest": "leaves",
+      "jungle": "pollen_leaves",
+      "plains": "pollen",
+      "wetland": "midges",
+      "beach": "spray",
+      "highland": "leaves_sparse",
+      "mountains": "motes",
+      "ocean": "spray_light"
+    },
+    "recipes": {
+      "snowfall": {
+        "cap": 60,
+        "emit": [
+          {
+            "kind": "snow",
+            "rate": 7.0,
+            "size": [
+              6,
+              11
+            ],
+            "life": [
+              6.0,
+              9.0
+            ],
+            "vx": [
+              -30,
+              20
+            ],
+            "vy": [
+              -60,
+              -30
+            ],
+            "h": [
+              200,
+              700
+            ],
+            "grav": 0.0,
+            "drag": 0.0,
+            "cols": [
+              "lit",
+              "ej0"
+            ]
+          }
+        ]
+      },
+      "snowwind": {
+        "cap": 70,
+        "emit": [
+          {
+            "kind": "snow",
+            "rate": 9.0,
+            "size": [
+              5,
+              10
+            ],
+            "life": [
+              5.0,
+              8.0
+            ],
+            "vx": [
+              120,
+              260
+            ],
+            "vy": [
+              -30,
+              -10
+            ],
+            "h": [
+              20,
+              500
+            ],
+            "grav": 0.0,
+            "drag": 0.0,
+            "cols": [
+              "lit",
+              "ej0"
+            ]
+          }
+        ]
+      },
+      "heat": {
+        "cap": 56,
+        "emit": [
+          {
+            "kind": "ash",
+            "rate": 6.0,
+            "size": [
+              14,
+              22
+            ],
+            "life": [
+              2.8,
+              4.2
+            ],
+            "vx": [
+              -14,
+              14
+            ],
+            "vy": [
+              36,
+              70
+            ],
+            "h": [
+              0,
+              70
+            ],
+            "grav": 0.0,
+            "drag": 0.0,
+            "cols": [
+              "#e0902e",
+              "#c8742a"
+            ]
+          },
+          {
+            "kind": "ash",
+            "rate": 2.0,
+            "size": [
+              11,
+              16
+            ],
+            "life": [
+              2.8,
+              4.2
+            ],
+            "vx": [
+              -14,
+              14
+            ],
+            "vy": [
+              36,
+              70
+            ],
+            "h": [
+              0,
+              70
+            ],
+            "grav": 0.0,
+            "drag": 0.0,
+            "cols": [
+              "#8a4a22"
+            ]
+          }
+        ]
+      },
+      "heat_pollen": {
+        "cap": 56,
+        "emit": [
+          {
+            "kind": "ash",
+            "rate": 4.5,
+            "size": [
+              14,
+              21
+            ],
+            "life": [
+              2.8,
+              4.2
+            ],
+            "vx": [
+              -14,
+              14
+            ],
+            "vy": [
+              36,
+              70
+            ],
+            "h": [
+              0,
+              70
+            ],
+            "grav": 0.0,
+            "drag": 0.0,
+            "cols": [
+              "#d4782a",
+              "#b8622a"
+            ]
+          },
+          {
+            "kind": "snow",
+            "rate": 2.0,
+            "size": [
+              5,
+              8
+            ],
+            "life": [
+              5.0,
+              8.0
+            ],
+            "vx": [
+              20,
+              70
+            ],
+            "vy": [
+              -6,
+              10
+            ],
+            "h": [
+              40,
+              300
+            ],
+            "grav": 0.0,
+            "drag": 0.0,
+            "cols": [
+              "#b8862a"
+            ]
+          }
+        ]
+      },
+      "ashfall": {
+        "cap": 56,
+        "emit": [
+          {
+            "kind": "ash",
+            "rate": 6.0,
+            "size": [
+              7,
+              13
+            ],
+            "life": [
+              6.0,
+              9.0
+            ],
+            "vx": [
+              -20,
+              30
+            ],
+            "vy": [
+              -50,
+              -26
+            ],
+            "h": [
+              200,
+              700
+            ],
+            "grav": 0.0,
+            "drag": 0.0,
+            "cols": [
+              "ej1",
+              "mid"
+            ]
+          }
+        ]
+      },
+      "leaves": {
+        "cap": 24,
+        "emit": [
+          {
+            "kind": "leaf",
+            "rate": 1.4,
+            "size": [
+              12,
+              20
+            ],
+            "life": [
+              6.0,
+              9.0
+            ],
+            "vx": [
+              10,
+              60
+            ],
+            "vy": [
+              -40,
+              -20
+            ],
+            "h": [
+              250,
+              600
+            ],
+            "grav": 0.0,
+            "drag": 0.0,
+            "cols": [
+              "ej0",
+              "mid",
+              "lit"
+            ]
+          }
+        ]
+      },
+      "pollen_leaves": {
+        "cap": 34,
+        "emit": [
+          {
+            "kind": "leaf",
+            "rate": 1.2,
+            "size": [
+              12,
+              20
+            ],
+            "life": [
+              6.0,
+              9.0
+            ],
+            "vx": [
+              6,
+              40
+            ],
+            "vy": [
+              -34,
+              -16
+            ],
+            "h": [
+              250,
+              600
+            ],
+            "grav": 0.0,
+            "drag": 0.0,
+            "cols": [
+              "mid",
+              "lit",
+              "ej0"
+            ]
+          },
+          {
+            "kind": "snow",
+            "rate": 2.5,
+            "size": [
+              4,
+              6
+            ],
+            "life": [
+              6.0,
+              9.0
+            ],
+            "vx": [
+              10,
+              50
+            ],
+            "vy": [
+              -4,
+              14
+            ],
+            "h": [
+              20,
+              320
+            ],
+            "grav": 0.0,
+            "drag": 0.0,
+            "cols": [
+              "#f4e27a",
+              "#ffd9ec"
+            ]
+          }
+        ]
+      },
+      "pollen": {
+        "cap": 20,
+        "emit": [
+          {
+            "kind": "snow",
+            "rate": 2.0,
+            "size": [
+              4,
+              6
+            ],
+            "life": [
+              6.0,
+              9.0
+            ],
+            "vx": [
+              10,
+              50
+            ],
+            "vy": [
+              -4,
+              14
+            ],
+            "h": [
+              20,
+              300
+            ],
+            "grav": 0.0,
+            "drag": 0.0,
+            "cols": [
+              "#f4e27a",
+              "#fff3b0"
+            ]
+          }
+        ]
+      },
+      "midges": {
+        "cap": 18,
+        "emit": [
+          {
+            "kind": "snow",
+            "rate": 2.0,
+            "size": [
+              3,
+              5
+            ],
+            "life": [
+              4.0,
+              7.0
+            ],
+            "vx": [
+              -30,
+              30
+            ],
+            "vy": [
+              -16,
+              16
+            ],
+            "h": [
+              30,
+              200
+            ],
+            "grav": 0.0,
+            "drag": 0.0,
+            "cols": [
+              "#2a2e24",
+              "#3a3c2c"
+            ]
+          }
+        ]
+      },
+      "spray": {
+        "cap": 30,
+        "emit": [
+          {
+            "kind": "snow",
+            "rate": 4.0,
+            "size": [
+              4,
+              8
+            ],
+            "life": [
+              2.0,
+              3.5
+            ],
+            "vx": [
+              90,
+              190
+            ],
+            "vy": [
+              10,
+              60
+            ],
+            "h": [
+              0,
+              80
+            ],
+            "grav": 0.0,
+            "drag": 0.0,
+            "cols": [
+              "#f3fafc",
+              "#cfe6ee"
+            ]
+          }
+        ]
+      },
+      "spray_light": {
+        "cap": 14,
+        "emit": [
+          {
+            "kind": "snow",
+            "rate": 1.4,
+            "size": [
+              4,
+              7
+            ],
+            "life": [
+              2.0,
+              3.5
+            ],
+            "vx": [
+              60,
+              150
+            ],
+            "vy": [
+              10,
+              50
+            ],
+            "h": [
+              0,
+              60
+            ],
+            "grav": 0.0,
+            "drag": 0.0,
+            "cols": [
+              "#f3fafc",
+              "#cfe6ee"
+            ]
+          }
+        ]
+      },
+      "leaves_sparse": {
+        "cap": 12,
+        "emit": [
+          {
+            "kind": "leaf",
+            "rate": 0.5,
+            "size": [
+              10,
+              16
+            ],
+            "life": [
+              6.0,
+              9.0
+            ],
+            "vx": [
+              20,
+              90
+            ],
+            "vy": [
+              -40,
+              -20
+            ],
+            "h": [
+              250,
+              600
+            ],
+            "grav": 0.0,
+            "drag": 0.0,
+            "cols": [
+              "ej1",
+              "mid"
+            ]
+          }
+        ]
+      },
+      "motes": {
+        "cap": 14,
+        "emit": [
+          {
+            "kind": "ash",
+            "rate": 1.2,
+            "size": [
+              5,
+              8
+            ],
+            "life": [
+              4.0,
+              7.0
+            ],
+            "vx": [
+              20,
+              80
+            ],
+            "vy": [
+              -10,
+              10
+            ],
+            "h": [
+              20,
+              300
+            ],
+            "grav": 0.0,
+            "drag": 0.0,
+            "cols": [
+              "lit",
+              "mid"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "scorch": {
+    "_note": "Window 3: biome scars. As a beam scorches the ground (the sim's `scorch` events, a sample or two a tick along its path) the biome's ground answers with what it is made of: sand glints and glass chips (a beam along sand glasses it), melt steam and slate chips off ice, pale fused flakes and steady orange chips on volcanic ground, black char flakes and a little smoke on soil, wet ground steaming. Colours are Art's scar colours (`scar_fill`, `scar_edge` in data/art/biomes.json) or the plume's. Counts are per scorch event at power 1 and scale with the beam's power; a per-tick cap keeps a long beam light. The band on the ground itself is Rendering's ground shader (its colours are in Art's data: see docs/vfx/biome-fx.md).",
+    "per_tick_cap": 6,
+    "kinds": {
+      "sand": [
+        {
+          "kind": "chunk",
+          "n": 0.7,
+          "max": 3,
+          "cols": [
+            "scar_fill"
+          ],
+          "size": [
+            6,
+            10
+          ],
+          "life": [
+            0.7,
+            1.2
+          ],
+          "vx": [
+            40,
+            200
+          ],
+          "vy": [
+            160,
+            420
+          ],
+          "dir": "both",
+          "spread": 30,
+          "grav": 0.8,
+          "mode": 2
+        },
+        {
+          "kind": "ash",
+          "n": 0.9,
+          "max": 4,
+          "cols": [
+            "scar_edge",
+            "lit"
+          ],
+          "size": [
+            6,
+            10
+          ],
+          "life": [
+            0.8,
+            1.4
+          ],
+          "vx": [
+            20,
+            90
+          ],
+          "vy": [
+            120,
+            320
+          ],
+          "dir": "both",
+          "spread": 30,
+          "grav": 0.1
+        }
+      ],
+      "snow": [
+        {
+          "kind": "puff",
+          "n": 0.5,
+          "max": 2,
+          "cols": [
+            "lit"
+          ],
+          "size": [
+            34,
+            56
+          ],
+          "life": [
+            1.2,
+            1.9
+          ],
+          "vx": [
+            10,
+            50
+          ],
+          "vy": [
+            60,
+            110
+          ],
+          "dir": "both",
+          "spread": 30,
+          "grow": 1.8
+        },
+        {
+          "kind": "chunk",
+          "n": 0.6,
+          "max": 3,
+          "cols": [
+            "scar_fill",
+            "scar_edge"
+          ],
+          "size": [
+            5,
+            9
+          ],
+          "life": [
+            0.7,
+            1.2
+          ],
+          "vx": [
+            40,
+            180
+          ],
+          "vy": [
+            140,
+            380
+          ],
+          "dir": "both",
+          "spread": 30,
+          "grav": 0.8,
+          "mode": 2
+        }
+      ],
+      "ash": [
+        {
+          "kind": "ash",
+          "n": 0.9,
+          "max": 4,
+          "cols": [
+            "scar_fill",
+            "mid"
+          ],
+          "size": [
+            7,
+            12
+          ],
+          "life": [
+            1.0,
+            1.8
+          ],
+          "vx": [
+            20,
+            110
+          ],
+          "vy": [
+            100,
+            300
+          ],
+          "dir": "both",
+          "spread": 30,
+          "grav": 0.12
+        },
+        {
+          "kind": "chunk",
+          "n": 0.7,
+          "max": 3,
+          "cols": [
+            "scar_edge"
+          ],
+          "size": [
+            6,
+            10
+          ],
+          "life": [
+            0.8,
+            1.4
+          ],
+          "vx": [
+            30,
+            150
+          ],
+          "vy": [
+            140,
+            360
+          ],
+          "dir": "both",
+          "spread": 30,
+          "grav": 0.7,
+          "mode": 2
+        }
+      ],
+      "dirt": [
+        {
+          "kind": "ash",
+          "n": 0.8,
+          "max": 3,
+          "cols": [
+            "scar_fill",
+            "scar_edge"
+          ],
+          "size": [
+            6,
+            10
+          ],
+          "life": [
+            0.9,
+            1.6
+          ],
+          "vx": [
+            20,
+            100
+          ],
+          "vy": [
+            100,
+            300
+          ],
+          "dir": "both",
+          "spread": 30,
+          "grav": 0.12
+        }
+      ],
+      "leaf": [
+        {
+          "kind": "ash",
+          "n": 0.8,
+          "max": 3,
+          "cols": [
+            "scar_fill",
+            "scar_edge"
+          ],
+          "size": [
+            6,
+            10
+          ],
+          "life": [
+            0.9,
+            1.6
+          ],
+          "vx": [
+            20,
+            100
+          ],
+          "vy": [
+            100,
+            300
+          ],
+          "dir": "both",
+          "spread": 30,
+          "grav": 0.12
+        },
+        {
+          "kind": "puff",
+          "n": 0.3,
+          "max": 1,
+          "cols": [
+            "mid"
+          ],
+          "size": [
+            30,
+            46
+          ],
+          "life": [
+            1.2,
+            1.8
+          ],
+          "vx": [
+            10,
+            40
+          ],
+          "vy": [
+            50,
+            90
+          ],
+          "dir": "both",
+          "spread": 30,
+          "grow": 1.8
+        }
+      ],
+      "dust": [
+        {
+          "kind": "ash",
+          "n": 0.9,
+          "max": 3,
+          "cols": [
+            "scar_fill",
+            "scar_edge"
+          ],
+          "size": [
+            6,
+            10
+          ],
+          "life": [
+            0.9,
+            1.6
+          ],
+          "vx": [
+            20,
+            100
+          ],
+          "vy": [
+            100,
+            300
+          ],
+          "dir": "both",
+          "spread": 30,
+          "grav": 0.12
+        }
+      ],
+      "rock": [
+        {
+          "kind": "chunk",
+          "n": 0.8,
+          "max": 3,
+          "cols": [
+            "scar_fill",
+            "mid"
+          ],
+          "size": [
+            6,
+            11
+          ],
+          "life": [
+            0.8,
+            1.4
+          ],
+          "vx": [
+            60,
+            220
+          ],
+          "vy": [
+            180,
+            420
+          ],
+          "dir": "both",
+          "spread": 30,
+          "grav": 0.9,
+          "mode": 2
+        }
+      ],
+      "mud": [
+        {
+          "kind": "ash",
+          "n": 0.7,
+          "max": 3,
+          "cols": [
+            "scar_fill",
+            "scar_edge"
+          ],
+          "size": [
+            6,
+            10
+          ],
+          "life": [
+            0.9,
+            1.6
+          ],
+          "vx": [
+            20,
+            100
+          ],
+          "vy": [
+            100,
+            300
+          ],
+          "dir": "both",
+          "spread": 30,
+          "grav": 0.12
+        },
+        {
+          "kind": "puff",
+          "n": 0.6,
+          "max": 2,
+          "cols": [
+            "lit"
+          ],
+          "size": [
+            34,
+            52
+          ],
+          "life": [
+            1.2,
+            1.9
+          ],
+          "vx": [
+            10,
+            40
+          ],
+          "vy": [
+            60,
+            100
+          ],
+          "dir": "both",
+          "spread": 30,
+          "grow": 1.8
+        }
+      ]
+    }
+  },
+  "fire": {
+    "_note": "Window 4: what a burning tree looks like (forest_fire.gd; World's burn field, sim/world/fire.gd, sets the tree's own burn). Cel flames in the crown (the pool's flame bit, steady orange), a few embers rising, a thin dark column of smoke. `scan.every` ticks it looks for the burning trees within the framing's span (`span`, as the ambient block's) and keeps the nearest `max_trees`; the rest of a big stand only counts. Rates are a second per tree at full intensity, scaled by quality and halved in reduced motion (no smoke then). `flame.cap` leaves the pool's explosions (earth.json flame.alive_cap 40) their room. Flame size is a share of the tree's width (the planet view's tree is a cone TREE_W wide at its foot); h is where in the tree's height it sits, and the flame is set on the cone's skin there.",
+    "scan": {
+      "every": 6,
+      "max_trees": 24
+    },
+    "span": {
+      "base": 900,
+      "per_sep": 0.7,
+      "max": 2600
+    },
+    "flame": {
+      "rate": 4.0,
+      "size": [
+          0.4,
+          0.62
+        ],
+      "min": 30,
+      "max": 150,
+      "h": [
+        0.12,
+        0.68
+      ],
+      "rise": [
+        50,
+        120
+      ],
+      "life": [
+        0.6,
+        1.0
+      ],
+      "cap": 36
+    },
+    "ember": {
+      "rate": 1.4,
+      "length": [
+        12,
+        18
+      ],
+      "rise": [
+        80,
+        170
+      ],
+      "life": [
+        1.2,
+        2.0
+      ],
+      "grav": 0.15
+    },
+    "smoke": {
+      "rate": 1.0,
+      "size": 0.35,
+      "life": [
+        2.4,
+        3.4
+      ]
+    }
   }
 }
