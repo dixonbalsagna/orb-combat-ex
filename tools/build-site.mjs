@@ -24,6 +24,7 @@ import { join, resolve } from 'node:path';
 import { siteNotice } from './site-notice.mjs';
 import { verify as verifyReleasePass, interimOf } from './flash/release-pass.mjs';
 import { aboutPage, gateOverlay, GATE_SCRIPT } from './site-interim.mjs';
+import { CRUMBS_PRIVACY } from './site-crumbs.mjs';
 
 const args = process.argv.slice(2);
 const opt = (name) => {
@@ -131,7 +132,7 @@ if (config.interim) {
   // the holding page (the plain notice) is /, /bench/, /band/ and /404.html: no game, no link, and where "Not now" goes
   const holding = siteNotice(JSON.parse(readFileSync(join(import.meta.dirname, 'site-notice.json'), 'utf8')));
   for (const where of ['index.html', 'bench/index.html', 'band/index.html', '404.html']) put(where, holding);
-  put('about/index.html', aboutPage(text, lic, { play: '../play/' }));
+  put('about/index.html', aboutPage(text, lic, { play: '../play/', privacy: config.crumbs === true ? CRUMBS_PRIVACY : null }));
   console.log(`site built in ${outDir}: INTERIM (${owner ? 'owner-approved: ' + owner + (I.expires ? ', until ' + I.expires : ', no expiry') : I.legal + ', until ' + I.expires}): /play/ behind the click-through; /, /bench/, /band/ and /404.html are the holding page; /about/ has the notices`);
   process.exit(0);
 }

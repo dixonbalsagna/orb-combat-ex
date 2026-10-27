@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { INTERIM_WAIVES } from './flash/release-pass.mjs';
 import { scanPack, unallowed } from './site-name-scan.mjs';
+import { CRUMBS_PRIVACY } from './site-crumbs.mjs';
 
 const here = import.meta.dirname;
 let ran = 0, failed = 0;
@@ -75,13 +76,15 @@ writeRecord();
 const build = (out, c, extra = ['--local']) => { writeCfg(c); return node('build-site.mjs', ['--web', web, '--out', out, '--config', cfgFile, ...extra]); };
 
 // a repo root of the shipped prefs and feedback target the checker reads
-function prefsRoot(name, { options = true, feature = true, hud = true, target = 'none', lock = true } = {}) {
+const OLD_PRIVACY = 'This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button copies a report to your clipboard for you to paste to Orb; nothing is sent by the game.';
+function prefsRoot(name, { options = true, feature = true, hud = true, target = 'none', lock = true, howto = OLD_PRIVACY } = {}) {
   const r = join(tmp, name);
   mkdirSync(join(r, 'ui/data'), { recursive: true });
   mkdirSync(join(r, 'ui/hud'), { recursive: true });
   writeFileSync(join(r, 'ui/data/options.json'), JSON.stringify({ schema: 1, options: { reduce_flashing: { default: options } } }));
   writeFileSync(join(r, 'ui/data/features.json'), JSON.stringify({ schema: 1, features: { reduce_flashing: feature, lock_reduce_flashing: lock } }));
   writeFileSync(join(r, 'ui/data/send.json'), JSON.stringify({ schema: 1, _target: target }));
+  writeFileSync(join(r, 'ui/data/howto.json'), JSON.stringify({ pages: [{ rows: [{ icon: 'about_privacy_none', col: 1, text: howto }, { icon: 'about_privacy_github', col: 1, text: 'x' }] }] }));
   writeFileSync(join(r, 'ui/hud/ui_hud.gd'), `var opts: Dictionary = {\n\t"reduce_flashing": ${hud},\n}\n`);
   return r;
 }
@@ -90,6 +93,8 @@ const verify = (siteDir, c, root = goodRoot, extra = []) => { writeCfg(c); retur
 let copies = 0;
 const fresh = () => { const d = join(tmp, 'copy-' + (++copies)); cpSync(join(tmp, 'site-good'), d, { recursive: true }); return d; };
 const edit = (d, p, fn) => { const f = join(d, p); writeFileSync(f, fn(readFileSync(f, 'utf8'))); };
+let copies2 = 0;
+const fresh2 = (src) => { const d = join(tmp, 'copy2-' + (++copies2)); cpSync(src, d, { recursive: true }); return d; };
 
 try {
   const b = build(join(tmp, 'site-good'), cfg());
@@ -103,28 +108,66 @@ try {
     check('web-head prints the head block with the real breadcrumbs park', head.status === 0 && head.stdout.includes('ocx.crumbs.v1') && head.stdout.includes('<!--ocx:begin-->'), (head.stderr || '').slice(0, 200));
     const webC = join(tmp, 'web-crumbs');
     mkdirSync(webC, { recursive: true });
-    writeFileSync(join(webC, 'index.html'), exportHtml.replace('<title>Orb Combat EX</title>', '<title>Orb Combat EX</title>' + head.stdout.trim()));
+    const finalWords = head.stdout.trim().split('PLACEHOLDER ').join('').split('prepared once').join('prepared').split('it is still working').join('please wait');   // stands for the words that pass Legal; the park carries placeholders until then
+    writeFileSync(join(webC, 'index.html'), exportHtml.replace('<title>Orb Combat EX</title>', '<title>Orb Combat EX</title>' + finalWords));
+    check('the real park still carries PLACEHOLDER words (so the switch must stay off until the words land)', head.stdout.includes('PLACEHOLDER'));
     for (const f of ['index.js', 'index.wasm', 'index.pck']) writeFileSync(join(webC, f), 'x');
     const on = { ...cfg(), crumbs: true };
     writeCfg(on);
     const bc = node('build-site.mjs', ['--web', webC, '--out', join(tmp, 'site-crumbs'), '--config', cfgFile, '--local']);
     check('an interim site builds from an export that carries the breadcrumbs', bc.status === 0, (bc.stderr || bc.stdout).slice(0, 300));
     const sc = join(tmp, 'site-crumbs');
-    check('"crumbs": true and the breadcrumbs on /play/: the checker passes', verify(sc, on).status === 0, (verify(sc, on).stderr || '').slice(0, 300));
+    const rootOn = prefsRoot('root-crumbs', { howto: CRUMBS_PRIVACY });
+    check('"crumbs": true and the breadcrumbs on /play/: the checker passes', verify(sc, on, rootOn).status === 0, (verify(sc, on, rootOn).stderr || '').slice(0, 300));
     const off = verify(sc, cfg());
     check('breadcrumbs on /play/ with no "crumbs": true: the checker fails (a switched park must not ride in the preset)', off.status === 1 && /does not say "crumbs": true/.test(off.stderr), off.stderr.slice(0, 200));
-    const miss = verify(good, on);
+    const miss = verify(good, on, rootOn);
     check('"crumbs": true but /play/ has none: the checker fails', miss.status === 1 && /does not carry the freeze breadcrumbs/.test(miss.stderr), miss.stderr.slice(0, 200));
     check('"crumbs": false or absent with a plain page passes (the default)', verify(good, { ...cfg(), crumbs: false }).status === 0 && verify(good, cfg()).status === 0);
+    for (const claim of ['prepared once', 'it is still working']) { const dq = join(tmp, 'crumbs-claim-' + claim.length); cpSync(sc, dq, { recursive: true }); edit(dq, 'play/index.html', (x) => x.replace('KEY = ', () => "var zz = '" + claim + "'; KEY = ")); const rq = verify(dq, on, rootOn); check(`the start line that says "${claim}" (Legal took it out): the checker fails`, rq.status === 1 && rq.stderr.includes(claim), rq.stderr.slice(0, 200)); }
+    { const dp = join(tmp, 'crumbs-placeholder'); cpSync(sc, dp, { recursive: true }); edit(dp, 'play/index.html', (x) => x.replace("start_line: '", "start_line: 'PLACEHOLDER ")); const rp = verify(dp, on, rootOn); check('breadcrumbs that still carry PLACEHOLDER words: the checker fails', rp.status === 1 && /PLACEHOLDER words/.test(rp.stderr), rp.stderr.slice(0, 200)); }
     let n = 0;
     for (const [what, inject] of [['a fetch', "fetch('x');"], ['an XMLHttpRequest', 'new XMLHttpRequest();'], ['sendBeacon', "navigator.sendBeacon('x');"], ['a WebSocket', "new WebSocket('x');"], ['a URL', "var u = 'https://example.com';"], ['an image src', 'var i = new Image();']]) {
       const d = join(tmp, 'crumbs-bad-' + (++n));
       cpSync(sc, d, { recursive: true });
       edit(d, 'play/index.html', (t) => t.replace("KEY = 'ocx.crumbs.v1',", () => "KEY = 'ocx.crumbs.v1', zz = (function () { " + inject + " }()),"));
       check(`(the edit for ${what} landed)`, readFileSync(join(d, 'play/index.html'), 'utf8').includes('zz = (function'));
-      const r = verify(d, on);
+      const r = verify(d, on, rootOn);
       check(`breadcrumbs whose script has ${what}: the checker fails`, r.status === 1 && /nothing may be sent off the device/.test(r.stderr), r.stderr.slice(0, 200));
     }
+  }
+  // Legal's switch-keyed privacy words (docs/legal/crumbs-screen.md, Q1, RL-188): ON, the new paragraph on About and in the game's own About line, today's line gone; OFF, today's line exactly
+  {
+    const legal = readFileSync(join(here, '..', 'docs', 'legal', 'crumbs-screen.md'), 'utf8');
+    check('the constant is Legal\'s paragraph word for word (it is quoted in docs/legal/crumbs-screen.md)', legal.split(/\r?\n/).includes('> ' + CRUMBS_PRIVACY));
+    const on = { ...cfg(), crumbs: true }, rootOn = prefsRoot('root-crumbs2', { howto: CRUMBS_PRIVACY }), sc = join(tmp, 'site-crumbs');
+    const aboutOn = readFileSync(join(sc, 'about/index.html'), 'utf8'), aboutOff = readFileSync(join(good, 'about/index.html'), 'utf8');
+    const plain = (h) => h.replace(/<[^>]+>/g, ' ').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/\s+/g, ' ');
+    check('with the switch on, the built About page carries Legal\'s paragraph and no longer today\'s line', plain(aboutOn).includes(CRUMBS_PRIVACY) && !plain(aboutOn).includes('collects and sends no personal data'));
+    check('with the switch off, the built About page carries today\'s line exactly and not Legal\'s', plain(aboutOff).includes(OLD_PRIVACY) && !plain(aboutOff).includes('does not use trackers'));
+    let r1 = verify(sc, on, prefsRoot('root-old-howto'));
+    check('the switch is on but the game\'s own About line is still today\'s: the checker fails', r1.status === 1 && /game's own About line/.test(r1.stderr), r1.stderr.slice(0, 200));
+    r1 = verify(good, cfg(), prefsRoot('root-new-howto', { howto: CRUMBS_PRIVACY }));
+    check('the switch is off but the game\'s own About line is Legal\'s new paragraph: the checker fails', r1.status === 1 && /must stay exactly as it is/.test(r1.stderr), r1.stderr.slice(0, 200));
+    let d = fresh2(sc); edit(d, 'about/index.html', (x) => x.replace(/This game sends no personal data and does not use trackers\./, 'This game collects and sends no personal data.'));
+    r1 = verify(d, on, rootOn);
+    check('the switch is on but About has lost Legal\'s paragraph: the checker fails', r1.status === 1 && /switch-on privacy paragraph word for word/.test(r1.stderr), r1.stderr.slice(0, 200));
+    d = fresh2(sc); edit(d, 'about/index.html', (x) => x.replace('<h2>Privacy</h2>', '<h2>Privacy</h2><p>' + OLD_PRIVACY + '</p>'));
+    r1 = verify(d, on, rootOn);
+    check('the switch is on but About still has today\'s line beside the new one: the checker fails', r1.status === 1 && /still says "collects and sends no personal data"/.test(r1.stderr), r1.stderr.slice(0, 200));
+    d = fresh2(good); edit(d, 'about/index.html', (x) => x.replace(OLD_PRIVACY, CRUMBS_PRIVACY.replace(/"/g, '&quot;')));
+    r1 = verify(d, cfg(), goodRoot);
+    check('the switch is off but About carries Legal\'s new paragraph: the checker fails', r1.status === 1 && /carries the switch-on privacy paragraph/.test(r1.stderr), r1.stderr.slice(0, 200));
+    // no cookie anywhere on the site, with the switch on or off
+    let c = 0;
+    for (const [what, where, code] of [['a document.cookie assignment in the page', 'play/index.html', "document.cookie = 'a=1';"], ['a document.cookie assignment in an engine file', 'play/index.js', "document.cookie='a=1';"], ['a Cookie Store write', 'play/index.js', "cookieStore.set('a', '1');"], ['a Set-Cookie header in a script', 'play/index.audio.worklet.js', "var h = 'Set-Cookie: a=1';"]]) {
+      d = join(tmp, 'cookie-' + (++c)); cpSync(sc, d, { recursive: true });
+      if (where === 'play/index.html') edit(d, where, (x) => x.replace('</body>', '<script>' + code + '</script></body>')); else writeFileSync(join(d, where), code);
+      r1 = verify(d, on, rootOn);
+      check(`${what}: the checker fails (the page says it does not use trackers)`, r1.status === 1 && /sets a cookie/.test(r1.stderr), r1.stderr.slice(0, 200));
+    }
+    check('reading document.cookie is not a finding', (() => { const dd = join(tmp, 'cookie-read'); cpSync(sc, dd, { recursive: true }); edit(dd, 'play/index.html', (x) => x.replace('</body>', '<script>var c = document.cookie;</script></body>')); return verify(dd, on, rootOn).status === 0; })());
+    check('the plain interim site and the switch-on site both set no cookie (the checker passes both with their own root)', verify(good, cfg()).status === 0 && verify(sc, on, rootOn).status === 0);
   }
   const playHtml = readFileSync(join(good, 'play/index.html'), 'utf8');
   check('the gate is first in the body, "Not now" goes to ../ and the page is noindex', /<body>\n<div id="gate"/.test(playHtml) && /<a id="gate-notnow" href="\.\.\/"/.test(playHtml) && playHtml.includes('<meta name="robots" content="noindex">'));

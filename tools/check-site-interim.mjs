@@ -20,6 +20,7 @@ import { join, resolve, relative, sep } from 'node:path';
 import { siteNotice } from './site-notice.mjs';
 import { scanHtml, scanPack, unallowed } from './site-name-scan.mjs';
 import { INTERIM_WAIVES } from './flash/release-pass.mjs';
+import { CRUMBS_PRIVACY } from './site-crumbs.mjs';
 
 const args = process.argv.slice(2);
 const opt = (n) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : undefined; };
@@ -155,6 +156,8 @@ if (play) {
     for (const [re, what] of [[/\bfetch\s*\(/, 'fetch'], [/XMLHttpRequest/, 'XMLHttpRequest'], [/sendBeacon/, 'sendBeacon'], [/WebSocket/, 'WebSocket'], [/EventSource/, 'EventSource'], [/importScripts|import\s*\(/, 'an import'], [/new\s+Image\b|new\s+Worker\b|\.src\s*=/, 'an image, worker or src'], [/https?:\/\//, 'a URL'], [/document\.cookie/, 'a cookie'], [/navigator\.serviceWorker/, 'a service worker']])
       if (re.test(script)) bad(`the freeze breadcrumbs' script uses ${what}: nothing may be sent off the device`);
     if (!script) bad('the freeze breadcrumbs marker is on /play/ but not inside one of its inline scripts');
+    for (const claim of ['prepared once', 'it is still working']) if (script.includes(claim)) bad(`the freeze breadcrumbs' start line still says "${claim}": Legal (docs/legal/crumbs-screen.md section 2) took that claim out (a real hang looks the same; nothing promises once)`);
+    if (script.includes('PLACEHOLDER')) bad('the freeze breadcrumbs still carry PLACEHOLDER words (the start line, the note, the buttons): the visitor must never read them; the words come from Community and Marketing and pass Legal first (docs/legal/crumbs-screen.md section 2)');
   }
 }
 
@@ -205,10 +208,41 @@ for (const p of ALLOWED.filter((x) => x !== 'play/index.html')) {
     if (target !== null) {
       const pt = words && words.privacy_target;
       if (pt !== target) bad(`the privacy line was written for the feedback target "${pt}", but ui/data/send.json _target is "${target}": Legal's matching variant (ui/data/howto.json) must be used`);
-      else if (PRIVACY[target]) { if (!t.includes(PRIVACY[target])) bad("/about/ does not carry Legal's privacy line for the feedback target in use"); }
+      else if (PRIVACY[target]) {
+        // keyed to the freeze-breadcrumbs switch (Legal, docs/legal/crumbs-screen.md Q1): ON, Legal's new paragraph and not today's line; OFF, today's line exactly and not the new one
+        if (config.crumbs === true) {
+          if (target !== 'none') bad('the freeze breadcrumbs are on, but Legal wrote the switch-on privacy paragraph for the feedback target none only');
+          if (!t.includes(CRUMBS_PRIVACY)) bad("the freeze breadcrumbs are on, but /about/ does not carry Legal's switch-on privacy paragraph word for word (docs/legal/crumbs-screen.md, Q1)");
+          if (t.includes('This game collects and sends no personal data')) bad('the freeze breadcrumbs are on, but /about/ still says "collects and sends no personal data": Legal replaced that line while they are on');
+        } else {
+          if (!t.includes(PRIVACY[target])) bad("/about/ does not carry Legal's privacy line for the feedback target in use");
+          if (t.includes('does not use trackers') || t.includes(CRUMBS_PRIVACY.slice(0, 60))) bad('the freeze breadcrumbs are off, but /about/ carries the switch-on privacy paragraph');
+        }
+      }
       else bad(`there is no Legal privacy line recorded for the feedback target "${target}" in tools/check-site-interim.mjs`);
     }
   }
+}
+
+// The game's own About line (ui/data/howto.json, the "none" variant) says what the page says: Legal's switch-on paragraph while the breadcrumbs are on, today's line while they are off.
+{
+  const hf = join(root, 'ui/data/howto.json');
+  if (existsSync(hf)) {
+    let found = null;
+    const walkJ = (n) => { if (found !== null || !n || typeof n !== 'object') return; if (n.icon === 'about_privacy_none' && typeof n.text === 'string') { found = n.text; return; } for (const v of Object.values(n)) walkJ(v); };
+    try { walkJ(JSON.parse(readFileSync(hf, 'utf8'))); } catch (e) { bad(`ui/data/howto.json could not be read: ${e.message}`); }
+    const want = config.crumbs === true ? CRUMBS_PRIVACY : PRIVACY.none;
+    if (found === null) bad('ui/data/howto.json has no about_privacy_none line');
+    else if (found !== want) bad(config.crumbs === true ? "the freeze breadcrumbs are on, but the game's own About line (ui/data/howto.json about_privacy_none) is not Legal's switch-on paragraph (tools/site-crumbs.mjs --apply sets it in the tree that is exported)" : "the game's own About line (ui/data/howto.json about_privacy_none) is not today's privacy line, which must stay exactly as it is while the freeze breadcrumbs are off");
+  }
+}
+
+// No cookie: Legal's switch-on words say the page "does not use trackers", so nothing on the site may set a cookie: no assignment to document.cookie, no Cookie Store write, no Set-Cookie text in any script or page of
+// the site (the engine's own glue and the audio worklets included). A request header cannot be checked here: GitHub Pages sets none, and the breadcrumbs make no request.
+for (const p of files.filter((f) => /\.(js|mjs|html?)$/i.test(f))) {
+  const body = read(p);
+  for (const [re, what] of [[/document\s*\.\s*cookie\s*=(?!=)/, 'an assignment to document.cookie'], [/cookieStore\s*\.\s*(set|delete)\s*\(/, 'a Cookie Store write'], [/Set-Cookie/i, 'Set-Cookie']])
+    if (re.test(body)) bad(`${p} sets a cookie (${what}): the page says it does not use trackers`);
 }
 
 // American spelling: every page's visible text (and, below, the words file) is scanned for the British spellings Legal lists

@@ -15,7 +15,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { applyCrumbs, crumbsOn } from './site-crumbs.mjs';
+import { applyCrumbs, applyPrivacy, crumbsOn } from './site-crumbs.mjs';
 
 const HERE = import.meta.dirname;
 const REPO = resolve(HERE, '..');
@@ -74,7 +74,7 @@ export function exportPinned(pin, webDir, o = {}) {
   }
   // the freeze breadcrumbs (tools/site-crumbs.mjs, off unless tools/site.json says "crumbs": true): folded into THIS tree's Web preset only, by the repository's own web-head.mjs, so the pinned
   // commit need not carry them and the committed preset never does
-  if (o.crumbs) applyCrumbs(join(tree, 'export_presets.cfg'));
+  if (o.crumbs) { applyCrumbs(join(tree, 'export_presets.cfg')); applyPrivacy(tree); }   // and the game's own About line says what the page says (Legal's switch-on words)
   run(['--headless', '--path', tree, '--import']);
   run(['--headless', '--path', tree, '--export-release', 'Web', join(webDir, 'index.html')]);
   if (!existsSync(join(webDir, 'index.html'))) throw new Error('the pinned export produced no index.html');

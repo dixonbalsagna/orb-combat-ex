@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { hashesAt, problemsWith, INTERIM_WAIVES } from './flash/release-pass.mjs';
 import { pinOf, exportPinned } from './site-pin.mjs';
-import { crumbsOn } from './site-crumbs.mjs';
+import { crumbsOn, CRUMBS_PRIVACY } from './site-crumbs.mjs';
 
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
@@ -120,13 +120,17 @@ try {
   check('the lock option refuses a commit whose features.json has no lock key (older than the rf-lock of UI)', (() => { try { exportPinned(Cd, web3, { repo: dir, tree: tree3, godotNode: stub, lock: true }); return false; } catch (e) { return /rf-lock/.test(e.message); } })());
   // the freeze breadcrumbs (tools/site-crumbs.mjs): folded into the pinned tree's own Web preset only on request; the committed preset is untouched
   put('export_presets.cfg', '[preset.0]\n\nname="Web"\nplatform="Web"\nhtml/head_include="<style>x{}</style>"\n\n[preset.1]\n\nname="Windows Desktop"\nplatform="Windows Desktop"\n');
+  put('ui/data/howto.json', JSON.stringify({ rows: [{ icon: 'about_privacy_none', col: 1, text: 'This game collects and sends no personal data.' }, { icon: 'about_privacy_github', col: 1, text: 'other' }] }, null, 2));
   const Ce = commit('a commit with a Web preset');
   const web4 = join(dir, '..', `web4-${process.pid}`), tree4 = join(dir, '..', `tree4-${process.pid}`);
   exportPinned(Ce, web4, { repo: dir, tree: tree4, godotNode: stub, crumbs: true });
   const cfgOn = readFileSync(join(tree4, 'export_presets.cfg'), 'utf8');
   check('with crumbs on, the pinned tree\'s Web preset carries the breadcrumbs (and the shell block), and so does the stub\'s pack', cfgOn.includes('ocx.crumbs.v1') && cfgOn.includes('<!--ocx:begin-->') && readFileSync(join(web4, 'index.pck'), 'utf8').includes('ocx.crumbs.v1'));
+  const howtoOn = JSON.parse(readFileSync(join(tree4, 'ui/data/howto.json'), 'utf8')).rows;
+  check('with crumbs on, the game own About line (the none variant only) is Legals switch-on paragraph in the pinned tree', howtoOn[0].text === CRUMBS_PRIVACY && howtoOn[1].text === 'other');
   check('the other preset and the existing head line are kept', cfgOn.includes('platform="Windows Desktop"') && cfgOn.includes('<style>x{}</style>'));
   exportPinned(Ce, web4, { repo: dir, tree: tree4, godotNode: stub });
+  check('with crumbs off the game own About line is as committed', JSON.parse(readFileSync(join(tree4, 'ui/data/howto.json'), 'utf8')).rows[0].text === 'This game collects and sends no personal data.');
   check('with crumbs off (the default) the export is as committed: no breadcrumbs anywhere', !readFileSync(join(tree4, 'export_presets.cfg'), 'utf8').includes('ocx.crumbs.v1') && !readFileSync(join(web4, 'index.pck'), 'utf8').includes('ocx.crumbs.v1'));
   check('with crumbs on, a commit with no preset is refused (nothing is silently skipped)', (() => { try { exportPinned(Cd, web4, { repo: dir, tree: tree4, godotNode: stub, crumbs: true }); return false; } catch (e) { return /does not exist/.test(e.message); } })());
   check('crumbsOn counts only the value true', crumbsOn({ crumbs: true }) === true && crumbsOn({ crumbs: 'yes' }) === false && crumbsOn({ crumbs: false }) === false && crumbsOn({}) === false && crumbsOn(null) === false);

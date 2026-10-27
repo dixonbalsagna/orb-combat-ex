@@ -46,7 +46,10 @@ ${bodyHtml}
 export function aboutPage(text, lic, links) {
   const parts = [];
   parts.push(`<h1>${esc(text.about.heading)}</h1>`);
-  parts.push(blocksHtml(text.about.blocks));
+  // with the freeze breadcrumbs on (tools/site-crumbs.mjs) the Privacy paragraph is Legal's switch-on paragraph; off, the words file's own
+  let blocks = text.about.blocks;
+  if (links.privacy) { const k = blocks.findIndex((b) => b.h2 === 'Privacy'); if (k < 0 || blocks[k + 1] === undefined || blocks[k + 1].p === undefined) throw new Error('the words file has no Privacy heading with a paragraph after it'); blocks = blocks.map((b, i) => (i === k + 1 ? { p: links.privacy } : b)); }
+  parts.push(blocksHtml(blocks));
   parts.push(`<p><a href="${esc(links.play)}">${esc(text.gate.button)}: the game's first screen</a></p>`);
   parts.push('<h2>Godot Engine</h2>');
   parts.push(`<p>This game runs on the Godot Engine ${esc(lic.godot_version)} (godotengine.org), under its MIT License:</p>`);
