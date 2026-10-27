@@ -1,5 +1,5 @@
 // Scratch: layer cuts. window.__cut = "terrain,water,bld,bld0,trees,crowd,fighters,beams,particles,vfx" hides those layers after each step's frame, so a driver can read
-// the draw calls, primitives and frame time of the scene with a layer missing. Names are PlanetView's copies' children (Terrain*, Water*, Buildings, Buildings0, Trees, Crowd).
+// the draw calls, primitives and frame time of the scene with a layer missing. Names are PlanetView's copies' children (Terrain*, Water*, Buildings, Buildings0, Trees, Crowd, Cover_*: cut name "cover").
 import { readFileSync, writeFileSync } from 'node:fs';
 const p = process.argv[2] + '/render/tools/flash_capture.gd';
 let s = readFileSync(p, 'utf8');
@@ -39,6 +39,8 @@ func _apply_cut() -> void:
 					c.visible = not parts.has("trees")
 				elif n.begins_with("Crowd"):
 					c.visible = not parts.has("crowd")
+				elif n.begins_with("Cover_"):
+					c.visible = not parts.has("cover")   # the biomes' cover (22o: MultiMesh shapes)
 		for v in pane.fighter_views:
 			v.visible = v.visible and not parts.has("fighters")
 		pane.beams.visible = not parts.has("beams")

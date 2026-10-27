@@ -144,14 +144,14 @@ try {
     await page.eval(`(async () => { const fc = window.__flashcap; fc.auto = true; while (fc.tick < ${FREEZE}) await new Promise((r) => requestAnimationFrame(r)); fc.auto = false; await new Promise((r) => requestAnimationFrame(r)); })()`, true);
     const pausedJs = (n) => `(async () => { const fc = window.__flashcap; const rtt = [], di = [], pr = []; let last = null, info = null; for (let i = 0; i < ${n}; i++) { const t = await new Promise((r) => requestAnimationFrame(r)); if (last !== null) { rtt.push(t - last); const q = fc.rinfo || {}; di.push(q.draws); pr.push(q.prims); info = q; } last = t; } return JSON.stringify({ rtt, di, pr, tick: fc.tick, info }); })()`;
     result.layers = []; result.freezeTick = FREEZE;
-    for (const cut of ['', 'terrain', 'water', 'terrain,water', 'bld', 'bld0', 'bld,bld0', 'trees', 'crowd', 'fighters', 'beams', 'particles', 'vfx', 'bld,bld0,trees,crowd', 'terrain,water,bld,bld0,trees,crowd', 'terrain,water,bld,bld0,trees,crowd,fighters,beams,particles,vfx', 'hud', 'terrain,water,bld,bld0,trees,crowd,fighters,beams,particles,vfx,hud']) {
+    for (const cut of ['', 'terrain', 'water', 'terrain,water', 'bld', 'bld0', 'bld,bld0', 'trees', 'crowd', 'cover', 'cover,trees', 'fighters', 'beams', 'particles', 'vfx', 'bld,bld0,trees,crowd', 'terrain,water,bld,bld0,trees,crowd', 'terrain,water,bld,bld0,trees,crowd,fighters,beams,particles,vfx', 'hud', 'terrain,water,bld,bld0,trees,crowd,fighters,beams,particles,vfx,hud']) {
       await page.eval(`window.__cut = ${JSON.stringify(cut)}`);
       await page.eval(pausedJs(20), true);
       const c0 = browserCpuMs(hint);
       const rr = JSON.parse(await page.eval(pausedJs(61), true));
       const c1 = browserCpuMs(hint);
       const cpuf = {}; if (c0 && c1) for (const k of ['renderer', 'gpu-process']) cpuf[k] = +(((c1[k] || 0) - (c0[k] || 0)) / 60).toFixed(2);
-      result.layers.push({ cut: cut || '(none)', frame_p10: +pct(rr.rtt, 0.1).toFixed(2), frame_p50: +pct(rr.rtt, 0.5).toFixed(2), draws: pct(rr.di.filter(Number.isFinite), 0.5), prims_k: +(pct(rr.pr.filter(Number.isFinite), 0.5) / 1000).toFixed(1), tickHeld: rr.tick, panes: rr.info && rr.info.panes, inset: rr.info && rr.info.inset, cpu_ms_per_frame: cpuf });
+      result.layers.push({ cut: cut || '(none)', frame_p10: +pct(rr.rtt, 0.1).toFixed(2), frame_p50: +pct(rr.rtt, 0.5).toFixed(2), frame_p95: +pct(rr.rtt, 0.95).toFixed(2), draws: pct(rr.di.filter(Number.isFinite), 0.5), prims_k: +(pct(rr.pr.filter(Number.isFinite), 0.5) / 1000).toFixed(1), tickHeld: rr.tick, panes: rr.info && rr.info.panes, inset: rr.info && rr.info.inset, cpu_ms_per_frame: cpuf });
     }
     await page.eval('window.__cut = ""');
     await page.eval(`(async () => { const fc = window.__flashcap; fc.auto = true; for (let i = 0; i < 30; i++) await new Promise((r) => requestAnimationFrame(r)); fc.auto = false; })()`, true);

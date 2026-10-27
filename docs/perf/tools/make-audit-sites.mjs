@@ -28,8 +28,10 @@
 //   r22n, r22o  HEAD (which carries 22k, the half-plane, 22l and 22m) + Rendering's re-cut 22n (no flat varyings), then + 22o
 //   gen2       World's gen 2 readiness benches behind window.__slicebench (hook-gen2.mjs; frame-bench.mjs --slice --slice-modes make1,make2,match1,match2,turn2:100000,flow,water)
 //   pb         the scene pb: a rendered planet match (pgen=1|2, pplanet=N, pbiome=desert|forest|city|coast) with the pair idle on that ground (hook-pbiome.mjs)
+//   pblay      pb plus the layer cuts (hook-layers.mjs: window.__cut), for the layer breakdown of a planet scene's frame (frame-bench.mjs --scene pb --layers)
 //   plain      the commit as it is, no hook (the live-site repro of a phone freeze, 257a766c)
 //   bootprof   the pin with time marks through main._ready and the first frames (hook-bootprof.mjs; window.__bp)
+//   bp3        HEAD with the finer boot marks (hook-bootprof3.mjs: an autoload that times the main scene's load, and main._ready cut into its parts)
 //   p1f, a1f   HEAD (with Audio's first park on main) with boot marks and counters, and the same plus the re-cut park docs/audio/pending/warm-async-2 (apply.py from the park folder)
 //   p89, a89   HEAD with boot marks, and HEAD plus Audio's warm-async park (python apply.py from the park folder) with marks on its end and its skipped cues
 //   s22k, s22l 22k + Camera's half-plane patch, without and with 22l (the split culling; ?nocull=1 turns 22l off in the s22l build)
@@ -90,12 +92,15 @@ const SPEC = {
   r22o: { patches: ['docs/rendering/pending/2026-10-23n/batch.diff', 'docs/rendering/pending/2026-10-23o/batch.diff'], hooks: ['perf', 'slice', 'cullstat', 'desert'] },
   gen2: { patches: [], hooks: ['perf', 'slice', 'gen2'] },
   pb: { patches: [], hooks: ['perf', 'slice', 'pbiome'] },
+  pblay: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'layers', 'pbiome'] },
   plain: { patches: [], hooks: [] },
   bootprof: { patches: [], hooks: ['bootprof'] },
   crumbs: { patches: [], hooks: ['bootprof', 'crumbs'] },
   p89: { patches: [], hooks: ['bootprof2'] },
   a89: { patches: [], hooks: ['warmasync', 'bootprof2', 'warmmarksaudio'] },
   p1f: { patches: [], hooks: ['bootprof2', 'warmmarksaudio2'] },
+  bp3: { patches: [], hooks: ['bootprof3', 'warmmarksaudio2'] },
+  cr3: { patches: [], hooks: ['crumbs', 'bootprof2'] },
   a1f: { patches: [], hooks: ['warmasync2', 'bootprof2', 'warmmarksaudio2'] },
   evlog: { patches: [], hooks: ['perf', 'slice', 'evlog'] },
   evprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'evlog'] },
@@ -106,7 +111,7 @@ const SPEC = {
   layerprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'layers'] },
   lowprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'depth', 'lowq'] },
 };
-const HOOK = { perf: ['hook-perf.mjs'], slice: ['hook-slice.mjs', SLICE_LIB], prof: ['hook-prof.mjs'], slicec8: ['hook-slice-c8.mjs'], depth: ['hook-depth.mjs'], layers: ['hook-layers.mjs'], lowq: ['hook-lowq.mjs'], aura: ['hook-aura.mjs'], evlog: ['hook-evlog.mjs'], latency: ['hook-latency.mjs'], strip: ['hook-strip.mjs'], ring: ['hook-ring.mjs'], turn: ['hook-turn.mjs'], calm7b: ['hook-calm7b.mjs'], turnprof: ['hook-turnprof.mjs'], cullstat: ['hook-cullstat.mjs'], desert: ['hook-desert.mjs'], gen2: ['hook-gen2.mjs'], pbiome: ['hook-pbiome.mjs'], bootprof: ['hook-bootprof.mjs'], crumbs: ['hook-crumbs.mjs'], bootprof2: ['hook-bootprof2.mjs'], warmasync: ['hook-warmasync.mjs'], warmmarksaudio: ['hook-warmmarks-audio.mjs'], warmasync2: ['hook-warmasync2.mjs'], warmmarksaudio2: ['hook-warmmarks-audio2.mjs'] };
+const HOOK = { perf: ['hook-perf.mjs'], slice: ['hook-slice.mjs', SLICE_LIB], prof: ['hook-prof.mjs'], slicec8: ['hook-slice-c8.mjs'], depth: ['hook-depth.mjs'], layers: ['hook-layers.mjs'], lowq: ['hook-lowq.mjs'], aura: ['hook-aura.mjs'], evlog: ['hook-evlog.mjs'], latency: ['hook-latency.mjs'], strip: ['hook-strip.mjs'], ring: ['hook-ring.mjs'], turn: ['hook-turn.mjs'], calm7b: ['hook-calm7b.mjs'], turnprof: ['hook-turnprof.mjs'], cullstat: ['hook-cullstat.mjs'], desert: ['hook-desert.mjs'], gen2: ['hook-gen2.mjs'], pbiome: ['hook-pbiome.mjs'], bootprof: ['hook-bootprof.mjs'], crumbs: ['hook-crumbs.mjs'], bootprof2: ['hook-bootprof2.mjs'], bootprof3: ['hook-bootprof3.mjs'], warmasync: ['hook-warmasync.mjs'], warmmarksaudio: ['hook-warmmarks-audio.mjs'], warmasync2: ['hook-warmasync2.mjs'], warmmarksaudio2: ['hook-warmmarks-audio2.mjs'] };
 
 function godot(dir, args, log, limitS) {
   return new Promise((ok) => {

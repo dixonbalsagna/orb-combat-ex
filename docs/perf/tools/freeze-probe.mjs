@@ -57,6 +57,14 @@ const INJECT = `(() => {
     if (c && /webgl/.test(type) && !this.__probed) { this.__probed = true; this.addEventListener('webglcontextlost', () => P.gl.push([now(), 'lost'])); this.addEventListener('webglcontextrestored', () => P.gl.push([now(), 'restored'])); P.gl.push([now(), 'context ' + type]); }
     return c;
   };
+  // page-side boot marks in the same clock as the game's window.__bp: the wasm compile and instantiate (WebAssembly.instantiate / instantiateStreaming), and when each file's download ended (read at the end)
+  try {
+    const bpm = (n) => (window.__bp = window.__bp || []).push([n, performance.now()]);
+    for (const k of ['instantiate', 'instantiateStreaming']) {
+      const f = WebAssembly[k]; if (!f) continue;
+      WebAssembly[k] = function (...a) { bpm('wasm_' + k + '_begin'); return f.apply(this, a).then((r) => { bpm('wasm_' + k + '_end'); return r; }); };
+    }
+  } catch (e) { P.notes.push('no wasm wrap: ' + e); }
   setInterval(() => { try { P.memory.push([now(), performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null, window.Module && Module.HEAP8 ? Math.round(Module.HEAP8.length / 1048576) : null]); } catch (e) {} }, 2000);
 })();`;
 
@@ -118,6 +126,7 @@ try {
   result.probe = probe ? JSON.parse(probe) : null;
   result.gpu = await page.eval(`(() => { try { const gl = document.createElement('canvas').getContext('webgl2'); const e = gl.getExtension('WEBGL_debug_renderer_info'); return gl.getParameter(e.UNMASKED_RENDERER_WEBGL) + ' | max texture ' + gl.getParameter(gl.MAX_TEXTURE_SIZE) + ' | max varyings ' + gl.getParameter(gl.MAX_VARYING_VECTORS); } catch (e) { return String(e); } })()`).catch(() => null);
   result.note = await page.eval("JSON.stringify({ note: (document.getElementById('ocx-crumbs-note') || {}).innerText || null, line: (document.getElementById('ocx-stage-line') || {}).innerText || null, report: window.__ocx && window.__ocx.crumbs ? window.__ocx.crumbs.report() : null })").then((x) => JSON.parse(x)).catch(() => null);
+  result.resources = await page.eval("JSON.stringify(performance.getEntriesByType('resource').filter((e) => /\.(wasm|pck|js)$/.test(e.name)).map((e) => [e.name.split('/').pop(), Math.round(e.startTime), Math.round(e.responseEnd), e.transferSize]))").then((x) => JSON.parse(x)).catch(() => null);   // when each engine file's download started and ended (page clock)
   result.bpreport = await page.eval('JSON.stringify(window.__bpreport || null)').then((x) => JSON.parse(x)).catch(() => null);   // the audio bank's named skipped-cue report (hook-warmmarks-audio2.mjs)
   result.bpskip = await page.eval('JSON.stringify(window.__bpskip || null)').then((x) => JSON.parse(x)).catch(() => null);
   result.bp = await page.eval('JSON.stringify(window.__bp || null)').then((x) => JSON.parse(x)).catch(() => null);
