@@ -220,7 +220,7 @@ func _ready() -> void:
 	audio = AudioVoices.new(host.audio_cues.bank)
 	add_child(audio)
 	host.audio_cues.bank.warm()   # render every sound now, so none renders in the middle of a fight (headless too: a tool times first plays as the game has them)
-	host.stepped_start = not manual and not args.has("syncstart")   # the match starts in pieces, the loading screen between them (docs/architecture/match-start.md); a tool's main starts it whole
+	host.stepped_start = not manual and not args.has("syncstart") and not args.has("flashcap")   # the match starts in pieces, the loading screen between them (docs/architecture/match-start.md); a tool's main starts it whole
 	start_match(int(args["seed"]) if args.has("seed") else fresh_seed())
 	if args.has("human"):
 		take_over()
