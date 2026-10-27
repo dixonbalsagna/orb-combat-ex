@@ -209,6 +209,8 @@ static func genStep(S: SimState, J: GenJob) -> bool:
 	S.scorch = PackedFloat32Array()
 	S.scorch.resize(NC)
 	S.scorch.fill(0.0)
+	if WorldAfter.on():   # a beam's aftermath (after.gd): sized only with the switch on
+		WorldAfter.size(S)
 	S.craters.clear()
 	S.crack = PackedFloat32Array()
 	S.crack.resize(NC)

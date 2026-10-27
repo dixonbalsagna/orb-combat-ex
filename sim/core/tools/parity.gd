@@ -94,6 +94,7 @@ func _init() -> void:
 	check("the planet's load", _planetLoad())
 	check("the calm turn on gen 2", _calmGen2())
 	check("the match's start in pieces", _matchStart())
+	check("the aftermaths", _aftermaths())
 	check("the curve's shared functions, the brake's control back, the camera feed", _shared())
 	check("the air brake", _brake())
 	check("forms: five steps and the slingshot", _forms())
@@ -6088,6 +6089,106 @@ func _matchStart() -> String:
 	if bad or not refusedOk:
 		return "the match's start in pieces: %s; a refused start touches nothing %s" % ["; ".join(lines), str(refusedOk)]
 	return ""
+
+
+## The aftermaths (World's after.gd; docs/world/after.md): off, the hash vector is the base's (nothing appended); on with nothing set it is the base's and two zeros; a start in pieces hashes as a whole start; a
+## job across the seam marks the same columns, shifted; on a gen 2 planet a turn keeps the zone's aftermaths and drops the rest.
+func _aftermaths() -> String:
+	var was: bool = WorldAfter.K_ON
+	var quiet: bool = FighterData.quiet
+	FighterData.quiet = true
+	var bad: PackedStringArray = []
+	# off, then on with nothing laid: the same vector, and on adds two zeros
+	WorldAfter.K_ON = false
+	var A := SimCore.createSim()
+	SimCore.newMatch(A, 21, {}, {"intro": false})
+	for t in range(60):
+		SimCore.step(A)
+	var vOff: Array = SimHash.collect(A, "gameplay")
+	WorldAfter.K_ON = true
+	var B := SimCore.createSim()
+	SimCore.newMatch(B, 21, {}, {"intro": false})
+	for t in range(60):
+		SimCore.step(B)
+	var vOn: Array = SimHash.collect(B, "gameplay")
+	var head: bool = vOn.size() == vOff.size() + 2 and float(vOn[vOn.size() - 1]) == 0.0 and float(vOn[vOn.size() - 2]) == 0.0
+	if head:
+		for k in range(vOff.size()):
+			head = head and vOff[k] == vOn[k]
+	if A.aftermath.size() != 0 or B.aftermath.size() != SimConst.NC or not head:
+		bad.append("off must be the base's vector and on the same with two zeros (off sized %d, on %d, vectors %d and %d, same head and zeros %s)" % [A.aftermath.size(), B.aftermath.size(), vOff.size(), vOn.size(), str(head)])
+	# a stepped start is a whole start (the default world, with the intro skipped)
+	var C := SimCore.createSim()
+	SimCore.newMatch(C, 21, {}, {"intro": false})
+	var D := SimCore.createSim()
+	var j := SimCore.beginMatch(D, 21, {}, {"intro": false})
+	while not j.step():
+		pass
+	if str(SimHash.stateHash(C).gameplay) != str(SimHash.stateHash(D).gameplay) or D.aftermath.size() != SimConst.NC or not D.aftermathJobs.is_empty():
+		bad.append("a start in pieces must hash as a whole start with the switch on")
+	# a job across the seam marks the same columns, shifted: a fire line on flat ground, near the seam and a hundred columns on
+	var marks: Array = []
+	for c in [SimConst.NC - 20, 80]:
+		var F := SimCore.createSim()
+		SimCore.newMatch(F, 3, {}, {"intro": false})
+		F.base.fill(30.0)
+		F.deform.fill(0.0)
+		F.rubble.fill(0.0)
+		F.scorch.fill(0.0)
+		F.craters.clear()
+		F.trees.clear()
+		WorldWater.init(F)
+		for k in range(0, 41, 4):
+			WorldCrater.scorch(F, (float(c + k) + 0.5) * SimConst.COL, 2.5, "FIELD SCAR", null)
+		WorldAfter.lay(F, {"kind": "fireLine", "spreadTicks": 15, "durTicks": 240, "reachCols": 12}, (float(c) + 0.5) * SimConst.COL, (float(c + 40) + 0.5) * SimConst.COL, -1)
+		for t in range(200):
+			WorldWater.step(F)
+		marks.append(Array(F.aftermath))
+		SimCore.dispose(F)
+	var shift: int = posmod(80 - (SimConst.NC - 20), SimConst.NC)
+	var seamOk: bool = int(marks[0].count(WorldAfter.BURNING)) > 40
+	for i in range(SimConst.NC):
+		seamOk = seamOk and marks[0][i] == marks[1][posmod(i + shift, SimConst.NC)]
+	if not seamOk:
+		bad.append("a fire line across the seam must mark the same columns as the same fire line elsewhere, shifted")
+	# gen 2: a turn keeps the zone's aftermaths and drops the rest (the jobs centred in replaced ground end with it)
+	var G := SimCore.createSim()
+	SimCore.newMatch(G, 1, {}, {"planet": 7, "planetGen": 2, "touch": 3, "arena": {"cols": 2400, "turn": true}, "intro": false})
+	for t in range(30):
+		SimCore.step(G)
+	G.T = 100.0
+	if G.epoch == null or G.aftermath.size() != SimConst.NC:
+		bad.append("a gen 2 planet match with arena.turn must have an epoch and a sized aftermath")
+	else:
+		var px: float = 0.5 * (G.fighters[0].x + G.fighters[1].x)
+		var pc: int = posmod(int(round(px / SimConst.COL)), SimConst.NC)
+		var far: int = posmod(pc + 700, SimConst.NC)
+		G.aftermath[pc + 3] = WorldAfter.GLAZE
+		G.aftermath[far] = WorldAfter.GLAZE
+		G.aftermathT[far] = 77
+		G.aftermathJobs.append([pc, 4, 0, 0, WorldAfter.J_EMBER, 0, 0.0, pc, 3, 600])
+		G.aftermathJobs.append([far, 4, 0, 0, WorldAfter.J_EMBER, 0, 0.0, far, 3, 600])
+		var cands: Array = WorldEpoch.ask(G, "test", px, 1, 0)
+		if cands.is_empty():
+			bad.append("the turn must have candidates at 100 s")
+		else:
+			WorldEpoch.choose(G, 1)
+			G.epoch.next.k = 100000
+			var g: int = 0
+			while WorldEpoch.warmAngles(G).size() < G.epoch.warm.size() and g < 100:
+				WorldEpoch.tick(G, false)
+				g += 1
+			WorldEpoch.tick(G, true)
+			var kept: bool = G.epoch.n == 1 and G.aftermath[pc + 3] == WorldAfter.GLAZE and G.aftermath[far] == 0 and G.aftermathT[far] == 0 and G.aftermathJobs.size() == 1 and int(G.aftermathJobs[0][0]) == pc
+			if not kept:
+				bad.append("a turn must keep the zone's aftermaths and jobs and clear the rest (turns %d, near %d, far %d, jobs %d)" % [G.epoch.n, G.aftermath[pc + 3], G.aftermath[far], G.aftermathJobs.size()])
+	for S in [A, B, C, D, G]:
+		SimCore.dispose(S)
+	WorldPlanet.forget()
+	WorldClimate.useGen(0)
+	WorldAfter.K_ON = was
+	FighterData.quiet = quiet
+	return "; ".join(bad)
 
 
 ## The calm turn's read on a gen 2 planet (calm-turn-read.md; Game Design's rulings-2026-10-26 item 28): a form step's

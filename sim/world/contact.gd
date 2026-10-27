@@ -371,6 +371,10 @@ static func lookAt(S: SimState, x: float) -> String:
 	var surf: String = surfaceAt(S, x)
 	if _colLook.size() == 0 or surf == "rubble" or surf == "paving":
 		return surf
+	if S.aftermath.size() > 0:   # a beam's strip (glaze, burnt grass, ember, crust) reads as its own
+		var al: String = WorldAfter.lookAt(S, x)
+		if al != "":
+			return al
 	var code: int = _colLook[_colOf(x)]
 	return surf if code == 255 else String(WorldGround.LOOKS[code])
 
@@ -382,7 +386,10 @@ static func _brake(S: SimState, x: float) -> float:
 		return k
 	if _gGrip.size() > 0 and surf != "rubble" and surf != "paving":
 		var ci: int = _colOf(x)
-		k *= _gGrip[ci] * _gRough[ci]   # gen 2: mud grips, ice slides; stones and roots brake (rough is at least 1: a skid is shortened, never lengthened, and never a tumble: Game Design, rulings 2026-10-23b item 11)
+		k *= _gGrip[ci] * _gRough[ci]
+		if S.aftermath.size() > 0 and S.aftermath[ci] == WorldAfter.GLAZE:
+			k = float(K_BRAKE[surf]) * WorldAfter.glazeGrip()   # a glazed strip brakes as ice does
+		# gen 2: mud grips, ice slides; stones and roots brake (rough is at least 1: a skid is shortened, never lengthened, and never a tumble: Game Design, rulings 2026-10-23b item 11)
 	return k
 
 

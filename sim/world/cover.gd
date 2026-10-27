@@ -21,7 +21,7 @@ static func coverAt(S: SimState, f):
 		var cv = WorldGround.coverOf(f.x)
 		if cv != null and f.y < g + float(cv.low):
 			if cv.kind == "canopy":
-				return "canopy" if nearTree(S, f.x) else null
+				return "canopy" if nearTree(S, f.x) and not WorldAfter.clearedAt(S, f.x) else null
 			return "ridge"
 		return null
 	if b == "forest" and f.y < g + 70.0 * SimConst.WS and nearTree(S, f.x):

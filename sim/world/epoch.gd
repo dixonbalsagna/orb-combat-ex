@@ -646,6 +646,15 @@ static func swap(S: SimState) -> void:
 		S.rubble[i] = S.rubble[i] * (1.0 - w)
 		S.scorch[i] = S.scorch[i] * (1.0 - w)
 		S.crack[i] = S.crack[i] * (1.0 - w)
+		if w >= 0.5 and S.aftermath.size() == NC:
+			S.aftermath[i] = 0   # a beam's strip in ground the new ring replaces is gone with it; the zone keeps its own (weight under 0.5, as the trees)
+			S.aftermathT[i] = 0
+	if S.aftermathJobs.size() > 0:   # a timed aftermath job centred in ground the new ring replaces ends with it
+		var keepJ: Array = []
+		for j in S.aftermathJobs:
+			if wt[posmod(int(j[0]), NC)] < 0.5:
+				keepJ.append(j)
+		S.aftermathJobs = keepJ
 	S.base = ep.base
 	# --- the buildings: those inside the zone stay (their districts renumbered); the places the new ring holds that were not kept are the prepared fresh ones
 	for b in ep.keep:

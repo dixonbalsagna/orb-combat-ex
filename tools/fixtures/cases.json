@@ -292935,6 +292935,70 @@
       }
     },
     {
+      "id": "after-enabled-not-boolean",
+      "schema": "biomes-after.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/after.json",
+          "set": {
+            "/enabled": "on"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "after-bh-zero",
+      "schema": "biomes-after.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/after.json",
+          "set": {
+            "/bh": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/bh"
+      }
+    },
+    {
+      "id": "after-wet-ticks-zero",
+      "schema": "biomes-after.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/after.json",
+          "set": {
+            "/wetTicks": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/wetTicks"
+      }
+    },
+    {
+      "id": "after-band-too-big",
+      "schema": "biomes-after.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/after.json",
+          "set": {
+            "/band": 5000
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/band"
+      }
+    },
+    {
       "id": "platesb-plates-two",
       "schema": "biomes-plates-b.schema.json",
       "mutate": [

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-after",
+  "title": "biomes.after/1",
+  "description": "data/biomes/after.json: what a signature beam leaves in the ground (docs/world/after.md; WorldAfter). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "_about",
+    "enabled",
+    "bh",
+    "berm",
+    "screeHeap",
+    "screeTail",
+    "splitDepth",
+    "wetTicks",
+    "runUpCols",
+    "waveSteps",
+    "band",
+    "glaze"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "biomes.after/1" },
+    "_about": { "type": "string" },
+    "enabled": { "type": "boolean", "description": "The module on or off; off, lay() does nothing and the state is as it was." },
+    "bh": { "type": "number", "minimum": 1.0, "maximum": 500.0, "description": "A fighter height in units." },
+    "berm": { "type": "number", "minimum": 0.0, "maximum": 2.0, "description": "The usual berm, a share of the groove's depth; a heave's plates rise rimMul times it." },
+    "screeHeap": { "type": "number", "minimum": 1.0, "maximum": 10.0, "description": "A scree column's rubble heap at the groove, times contact.json rubbleMin." },
+    "screeTail": { "type": "number", "minimum": 1.0, "maximum": 10.0, "description": "The heap at the run's end, times rubbleMin." },
+    "splitDepth": { "type": "number", "minimum": 1.0, "maximum": 500.0, "description": "How far below sea level a split floe's slot is cut." },
+    "wetTicks": { "type": "integer", "minimum": 1, "maximum": 36000, "description": "How long the shore stays wet after the parted sea's wave." },
+    "runUpCols": { "type": "integer", "minimum": 1, "maximum": 200, "description": "Land columns the wave's run-up reaches inland." },
+    "waveSteps": { "type": "integer", "minimum": 1, "maximum": 120, "description": "Water steps the wave's push is spread over." },
+    "band": { "type": "number", "minimum": 1.0, "maximum": 1000.0, "description": "The wave pushes bodies within this of the surface." },
+    "glaze": { "type": "string", "description": "A climate.json fine biome name: the ground profile whose grip a glazed strip takes." }
+  }
+}

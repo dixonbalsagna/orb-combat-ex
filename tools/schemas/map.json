@@ -460,6 +460,10 @@
       "schema": "biomes-water.schema.json"
     },
     {
+      "match": "data/biomes/after.json",
+      "schema": "biomes-after.schema.json"
+    },
+    {
       "match": "data/biomes/rivers.json",
       "schema": "biomes-rivers.schema.json"
     },

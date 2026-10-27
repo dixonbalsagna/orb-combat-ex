@@ -1,0 +1,15 @@
+{
+  "schema": "biomes.after/1",
+  "_about": "What a signature beam leaves in the ground (docs/world/after.md; read by sim/world/after.gd), Combat's nine aftermath kinds and the ocean's parted sea (docs/combat/biomes.md section 2). enabled: the whole module (off: lay() does nothing and the state is as it was, the golden and every replay byte for byte). The director calls WorldAfter.lay with the row's own numbers (kind, spreadTicks, durTicks, reachCols, rimMul, refill, seaCols, minSlope, openTicks, pushBh, shoreCols, gapBh): World never reads Combat's data, so the file holds only what the row does not say. bh: a fighter height in units. berm: the usual berm, a share of the groove's depth (slide.gd BERM); a heave's plates rise rimMul times it, as a step two columns wide each side (never under 1.25 times the slide's wall rule across one column). screeHeap: a scree column's rubble heap is this multiple of contact.json rubbleMin at the groove, falling to screeTail of it at the run's end. splitDepth: how far below sea level a floe's slot is cut (it fills to the sea). wetTicks and runUpCols: how long the shore stays wet after the parted sea's wave and how many land columns it reaches inland. waveSteps and band: the wave pushes whatever is within band of the surface, a little each step, as water.json's slam wave does. glaze: the ground profile whose grip a glazed strip takes (ground.json).",
+  "enabled": false,
+  "bh": 75.0,
+  "berm": 0.3,
+  "screeHeap": 1.5,
+  "screeTail": 1.0,
+  "splitDepth": 40.0,
+  "wetTicks": 240,
+  "runUpCols": 12,
+  "waveSteps": 6,
+  "band": 100.0,
+  "glaze": "sea_ice"
+}

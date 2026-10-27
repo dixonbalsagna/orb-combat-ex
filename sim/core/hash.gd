@@ -292,6 +292,19 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 	for w in S.waterWin:
 		for v in w:
 			out.append(float(v))
+	if S.aftermath.size() > 0:   # a beam's aftermath (world/after.gd), only with the switch on: the non-zero columns as (column, kind, expiry), then the jobs; two zeros when nothing is set
+		nz = []
+		for i in range(S.aftermath.size()):
+			if S.aftermath[i] != 0 or S.aftermathT[i] != 0:
+				nz.append(i)
+		out.append(float(nz.size()))
+		for i in nz:
+			out.append(float(i)); out.append(float(S.aftermath[i])); out.append(float(S.aftermathT[i]))
+		out.append(float(S.aftermathJobs.size()))
+		for w in S.aftermathJobs:
+			out.append(float(w.size()))
+			for v in w:
+				out.append(float(v))
 	return out
 
 

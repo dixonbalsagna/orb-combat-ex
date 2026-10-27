@@ -80,6 +80,13 @@ static func parsed() -> Dictionary:
 	return data()
 
 
+## How far below the original ground a biome's water stands (water.json table), or NONE for a dry biome.
+static func tableDepth(name: String) -> float:
+	if not _loaded:
+		_load()
+	return float(_tableD[name][0]) if _tableD.has(name) else NONE
+
+
 static func _load() -> void:
 	_loaded = true
 	_errors = []

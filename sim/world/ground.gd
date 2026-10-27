@@ -11,7 +11,7 @@ const PATH := "res://data/biomes/ground.json"
 const SCHEMA := "biomes.ground/1"
 const SURFACES: Array = ["soil", "sand", "rock"]   # the same order as contact.gd's SURF_NAMES, whose codes these are
 const COVER_KINDS: Array = ["canopy", "ridge"]
-const LOOKS: Array = ["paving", "rock", "soil", "sand", "rubble", "ice", "snow", "frost", "mud", "turf", "litter", "ash", "crust", "shingle"]   # the look classes: the five built and the nine of Combat's biome park
+const LOOKS: Array = ["paving", "rock", "soil", "sand", "rubble", "ice", "snow", "frost", "mud", "turf", "litter", "ash", "crust", "shingle", "ember"]   # the look classes: the five built and the nine of Combat's biome park, and the one a beam's glowing ember strip reads as (after.gd)
 
 static var _d: Dictionary = {}
 static var _loaded: bool = false
@@ -121,6 +121,17 @@ static func _load() -> void:
 			var mean: float = (float(g.trees.gap[0]) + float(g.trees.gap[1])) * 0.5 * WS   # a tree to every mean-gap of ground: a chance of COL / mean a column
 			_trees.append([minf(1.0, COL / mean), float(g.trees.h[0]) * WS, float(g.trees.h[1]) * WS])
 		_cover.append(null if g.cover == null else {"kind": String(g.cover.kind), "low": float(g.cover.low) * WS})
+
+
+## The grip times the roughness of a fine biome's profile (an ice strip's brake in after.gd): 1 for a name ground.json does not know.
+static func profileGrip(name: String) -> float:
+	if not _loaded:
+		_load()
+	var fine: Array = WorldClimate.data().get("fine", [])
+	for k in range(mini(fine.size(), _grip.size())):
+		if String(fine[k].name) == name:
+			return _grip[k] * _rough[k]
+	return 1.0
 
 
 ## The ground's numbers per terrain column for a gen 2 match: {"grip", "absorb", "rough", "furrow"} (PackedFloat64Array, 1.0 on a settled column), "surf" (a code into SURFACES, 255 on a settled
