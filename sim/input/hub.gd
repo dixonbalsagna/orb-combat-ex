@@ -46,6 +46,10 @@ var latch_charge_pref: Array = [false, false]
 var sent_pref: Array = [false, false]
 var charges_off_pref: Array = [false, false]
 var _was: Array = [false, false]
+## Each player's hold styles (accessibility, layout only; docs/controls/hold-toggles.md): action ("guard", "dodge", "power", "transform") ->
+## "hold" (the default) or "toggle". Energy has its own, `mode_styles`.
+const HOLD_ACTIONS: Array = ["guard", "dodge", "power", "transform"]
+var hold_style_pref: Array = [{}, {}]
 
 
 func _init() -> void:
@@ -324,6 +328,7 @@ func intent(slot: int) -> SimIntent:
 				pads[d].set_sent(bool(sent_pref[slot]))
 				pads[d].set_latch_charge(bool(latch_charge_pref[slot]))
 				pads[d].set_charges_off(bool(charges_off_pref[slot]))
+				_apply_hold_styles(pads[d], slot)
 				if float(trigger_pref[slot]) > 0.0:
 					pads[d].set_trigger_threshold(float(trigger_pref[slot]))
 				i = pads[d].build()
@@ -343,6 +348,7 @@ func intent(slot: int) -> SimIntent:
 			kl.set_sent(bool(sent_pref[slot]))
 			kl.set_latch_charge(bool(latch_charge_pref[slot]))
 			kl.set_charges_off(bool(charges_off_pref[slot]))
+			_apply_hold_styles(kl, slot)
 			i = kl.build()
 	return SimIntent.canon(i)
 
@@ -475,6 +481,40 @@ func latch_charge_of(slot: int) -> bool:
 
 func charges_off_of(slot: int) -> bool:
 	return bool(charges_off_pref[slot])
+
+
+## The hold style of one action for a slot: "hold" or "toggle" (hold when the player has not chosen).
+func hold_style_of(action: String, slot: int) -> String:
+	return "toggle" if str((hold_style_pref[slot] as Dictionary).get(action, "hold")) == "toggle" else "hold"
+
+
+## The player's choice of "hold or toggle" for Guard, Dodge (the manoeuvre stance), Power (the charging stance) or Transform (the accessibility
+## settings, built the way the energy style is): "hold" or "toggle". -1 is both players. Takes effect on the next tick, mid-match; a toggled
+## hold is let go when the style goes back to hold. Touch is not covered (a thumb on glass has its own one-shot).
+func set_hold_style(action: String, style: String, slot: int = -1) -> void:
+	if not HOLD_ACTIONS.has(action):
+		return
+	for s in range(2):
+		if slot < 0 or s == slot:
+			hold_style_pref[s][action] = "toggle" if style == "toggle" else "hold"
+
+
+## Let go of a slot's toggled holds and cancel a toggled transform that is counting. Nothing in the input layer calls it: it is for a host that
+## wants a KO or a launch to end them (a held finger is not let go by either, so by default neither does a toggle).
+func let_go_toggles(slot: int) -> void:
+	match slot_device[slot]:
+		"pad":
+			if pads.has(slot_pad[slot]):
+				pads[slot_pad[slot]].let_go_toggles()
+		"touch":
+			pass
+		_:
+			_kb_layout(slot).let_go_toggles()
+
+
+func _apply_hold_styles(l: SimLayout, slot: int) -> void:
+	for a in HOLD_ACTIONS:
+		l.set_hold_style(a, hold_style_of(a, slot))
 
 
 ## The trigger sensitivity (the on threshold, 0.2 to 0.6; 0 for the data default). -1 is both players.

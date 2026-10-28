@@ -4,7 +4,7 @@ Controls, 2026-10-22. Nothing in CI or a runner lists the input tests, so this i
 
 ## 1. Every input test
 
-`for t in sim/input/test/*_test.gd` : `godot --headless --path . --script res://sim/input/test/<name>.gd`, each exits 0 on pass. `mash_probe.gd` is a probe, not a test. On main there are 19:
+`for t in sim/input/test/*_test.gd` : `godot --headless --path . --script res://sim/input/test/<name>.gd`, each exits 0 on pass. `mash_probe.gd` is a probe, not a test. On main there are 19; with the hold-toggle window, 20:
 
 | Test | Checks | Covers |
 | :--- | ---: | :--- |
@@ -18,6 +18,7 @@ Controls, 2026-10-22. Nothing in CI or a runner lists the input tests, so this i
 | `join_test.gd` | 53 | joining and leaving |
 | `layout_test.gd` | 128 | the layouts |
 | `mode_test.gd` | 55 | the manoeuvre mode |
+| `hold_toggle_test.gd` | 76 | the hold or toggle styles of Guard, Dodge, Power and Transform: held and toggled sequences give the same packed intent tick by tick and the same state hash (keyboard and Arena pad), two negative controls, auto-repeat, player 2's own style, the style going back to hold, a new match, the cancel, the ring, `let_go_toggles` |
 | `params_cache_test.gd` | 36 | the kept `params()` of the press reader and the aim helper: one read-only copy, equal to a fresh build, and never outliving a data load, a replaced section or `invalidate()` |
 | `press_read_test.gd` | 439 | wind-ups, bursts, pairs, struggle and grapple reads |
 | `remap_test.gd` | 138 | rebinding |

@@ -216,6 +216,9 @@ func _ready() -> void:
 	_on_option_changed("pad_preset_p2", ui_hud.opts["pad_preset_p2"])
 	_on_option_changed("energy_style", ui_hud.opts.get("energy_style", "hold"))
 	_on_option_changed("energy_style_p2", ui_hud.opts.get("energy_style_p2", "hold"))
+	for key in HOLD_STYLE_OPTIONS:
+		_on_option_changed(key, ui_hud.opts.get(key, "hold"))
+		_on_option_changed(key + "_p2", ui_hud.opts.get(key + "_p2", "hold"))
 	for key in CHARGE_OPTIONS:
 		_on_option_changed(key, ui_hud.opts.get(key, false))
 	_touch_last = bool(ui_hud.opts["touch_ui"])
@@ -1032,6 +1035,8 @@ func _on_option_changed(key: String, value) -> void:
 		host.hub.set_mode_style(str(value), 0)
 	elif key == "energy_style_p2":
 		host.hub.set_mode_style(str(value), 1)
+	elif HOLD_STYLE_OPTIONS.has(key.trim_suffix("_p2")):   # hold or toggle for Guard, the manoeuvre and charging stances and Transform, per player
+		host.hub.set_hold_style(str(HOLD_STYLE_OPTIONS[key.trim_suffix("_p2")]), str(value), 1 if key.ends_with("_p2") else 0)
 	elif CHARGE_OPTIONS.has(key):   # three strengths: Latched charge and Charges off, per player (docs/controls/windup-read.md)
 		var fn: String = "set_latch_charge" if key.begins_with("latch_charge") else "set_charges_off"
 		if host.hub.has_method(fn):   # Controls' two functions are not in the hub yet; the guard goes when they land
@@ -1502,6 +1507,8 @@ func _notification(what: int) -> void:
 
 ## UI's options for Controls' two charge settings: slot 0's, and with _p2 slot 1's.
 const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off", "charges_off_p2"]
+## The hold-or-toggle options and the action each is for (Controls' SimInputHub.set_hold_style; docs/controls/hold-toggles.md); each has a _p2.
+const HOLD_STYLE_OPTIONS := {"guard_style": "guard", "manoeuvre_style": "dodge", "charge_style": "power", "transform_style": "transform"}
 ## The options a web page's URL may set (parse_args): off unless the URL names them. Those in LOCAL_ONLY_ARGS start
 ## without UI's notice, change how a match starts or hold a debug value, and are dropped unless the page is on a local
 ## host (gate_args). What a public page's link may still set are four reviewed look switches: skyreact, panhaze, nopanhaze, keyhelp (tools/site-url-words.json; a change to them runs the flash clips

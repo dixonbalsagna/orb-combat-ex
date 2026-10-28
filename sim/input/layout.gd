@@ -39,6 +39,11 @@ extends RefCounted
 ##    count): under read.simpleMediumStart (12) the light (an `light` edge), from 12 the medium (a `heavy` edge), from
 ##    read.simpleHeavyStart (28) the heavy (a `signature` edge, B's cell). While it is held the level says which weight it has
 ##    reached: lightHeld, then heavyHeld, then sigHeld;
+##  - the HOLD STYLES (docs/controls/hold-toggles.md): Guard, Dodge (the manoeuvre stance), Power (the charging stance) and Transform each have
+##    an accessibility style, "hold" (the default, as above) or "toggle". A toggled control's press is "start" and its next press is "stop": the
+##    layout feeds its own press and release to the same code a held button reaches, at the tick of each press, so the intent is the held one
+##    (the sim reads no new input). Transform's toggle starts the half-second count on one press and sends when it is up; a second press before
+##    that cancels it (and does nothing else);
 ##  - the slow buttons (Y, B, A) have two accessibility settings, layout only: a LATCHED CHARGE (a press starts the wind-up and its level
 ##    stays on; the next press of that button lets it go and sends no edge) and CHARGES OFF (the slow buttons report held only on the
 ##    press tick, so every press is a tap). Neither applies to the Simple layouts, whose holds are weights.
@@ -105,6 +110,13 @@ var live: int = 0                  # the live steps the sim took (consumed() cal
 var sent: bool = false             # the host says this fighter is sent (launched): on a Simple slot Guard held is then the air brake's bit
 var latch_charge: bool = false     # the slow buttons: a press latches the charge, the next press lets it go
 var charges_off: bool = false      # the slow buttons never report held beyond the press tick
+## Per action ("guard", "dodge", "power", "transform"): "hold" (the default) or "toggle". See the header and docs/controls/hold-toggles.md.
+var hold_styles: Dictionary = {}
+var _phys: Dictionary = {}         # control -> bool: the finger or key is down, whatever the layout feeds the code below (a toggled control stays "down" after it)
+var _tog_action: Dictionary = {}   # control -> the toggleable action ("guard", "dodge", "power") it carries on its own, from the preset
+var _tog_down: Dictionary = {}     # control -> true while a toggle holds it down
+var _tf_latch: Dictionary = {}     # single transform control -> true while a toggled transform counts without the finger
+var _swallow: Dictionary = {}      # control -> true: its press cancelled a toggled transform, so its release does nothing
 var _wound: Dictionary = {}        # action -> true for an edge the Simple attack made on its release: the blow is already wound, its level is off
 var _latched: Dictionary = {}      # action -> true while its charge is latched on
 var _latch_ctl: Dictionary = {}    # action -> the control that latched it
@@ -158,6 +170,20 @@ func set_preset(p: Dictionary) -> void:
 	_stick_control = ""
 	_hold_attack.clear()
 	_transform_single.clear()
+	_tog_action.clear()
+	var own: Dictionary = {}   # control -> the actions it carries (any layer, any gesture)
+	for b in p.get("bindings", []):
+		if b["controls"].size() == 1:
+			var oc: String = str(b["controls"][0])
+			if not own.has(oc):
+				own[oc] = []
+			own[oc].append(b)
+	for oc in own:
+		if own[oc].size() == 1:
+			var ob: Dictionary = own[oc][0]
+			var oa: String = str(ob["action"])
+			if (oa == "guard" or oa == "dodge" or oa == "power") and ob.get("layer", null) == null and ob.get("gesture", null) == null:
+				_tog_action[oc] = oa
 	for b in p.get("bindings", []):
 		var controls: Array = b["controls"]
 		var action: String = str(b["action"])
@@ -172,7 +198,7 @@ func set_preset(p: Dictionary) -> void:
 		if action == "pause" or action == "hints":
 			continue   # the host's, not the sim's
 		if controls.size() > 1:
-			_chords.append({"controls": controls.duplicate(), "action": action, "active": false, "since": 0, "sent": false})
+			_chords.append({"controls": controls.duplicate(), "action": action, "active": false, "since": 0, "sent": false, "latch": false})
 			continue
 		var c: String = str(controls[0])
 		if not _single.has(c):
@@ -218,6 +244,10 @@ func release_all() -> void:
 	_edge_t0 = -1
 	_up_tick.clear()
 	_last_as.clear()
+	_phys.clear()
+	_tog_down.clear()
+	_tf_latch.clear()
+	_swallow.clear()
 	_stance_since.clear()
 	_stance_off_t.clear()
 	_stance_on = 0
@@ -230,6 +260,7 @@ func release_all() -> void:
 	for ch in _chords:
 		ch["active"] = false
 		ch["sent"] = false
+		ch["latch"] = false
 
 
 ## The sensitivity of the triggers (the accessibility setting): they are down at `on` and up 0.1 below it.
@@ -347,8 +378,40 @@ func _hold_del(action: String, c: String) -> void:
 		_held[action].erase(c)
 
 
-## A control went down. Returns true if this preset uses it.
+## A control went down. Returns true if this preset uses it. The finger's own state is `_phys`; what the code below sees (`_down`, the holds)
+## is the finger's under the "hold" style, and the toggle's under "toggle": the press that starts a toggled hold goes in as a press, the next
+## press as the release (docs/controls/hold-toggles.md). A press that cancels a toggled transform goes in as nothing.
 func press(c: String) -> bool:
+	if not has_control(c):
+		return false
+	if _phys.get(c, false):
+		return true   # a repeat
+	_phys[c] = true
+	if _tf_cancel(c):
+		return true
+	if _tog_on(c):
+		if _tog_down.get(c, false):
+			_tog_down.erase(c)
+			_real_release(c)   # the stop press: the release a held button would have made now
+			return true
+		_tog_down[c] = true
+	return _real_press(c)
+
+
+## A control went up. A toggled control that is on stays down: the finger's release changes nothing.
+func release(c: String) -> void:
+	if not _phys.get(c, false):
+		return
+	_phys[c] = false
+	if _swallow.get(c, false):
+		_swallow.erase(c)
+		return
+	if _tog_down.get(c, false):
+		return
+	_real_release(c)
+
+
+func _real_press(c: String) -> bool:
 	if not has_control(c):
 		return false
 	if _down.get(c, false):
@@ -388,8 +451,7 @@ func press(c: String) -> bool:
 	return true
 
 
-## A control went up.
-func release(c: String) -> void:
+func _real_release(c: String) -> void:
 	if not _down.get(c, false):
 		return
 	_down[c] = false
@@ -418,10 +480,13 @@ func release(c: String) -> void:
 			if b["layer"] == "power" and str(b["action"]) == "signature":
 				_hold_del("signature", c)   # the ultimate's hold ends with the button
 	_as.erase(c)
-	_tf_t0.erase(c)
-	_tf_sent.erase(c)
+	if _tf_t0.has(c) and not _tf_sent.get(c, false) and _transform_toggle():
+		_tf_latch[c] = true   # a toggled transform: the count goes on without the finger
+	else:
+		_tf_t0.erase(c)
+		_tf_sent.erase(c)
 	for ch in _chords:
-		if ch["controls"].has(c) and ch["active"]:
+		if ch["controls"].has(c) and ch["active"] and not ch["latch"]:
 			ch["active"] = false
 			ch["sent"] = false
 	_chorded.erase(c)
@@ -542,6 +607,94 @@ func _oneshot_tap(bit: int, c: String) -> void:
 		_armed[bit] = tick
 
 
+## The hold styles (docs/controls/hold-toggles.md). "toggle" for an action makes its control's press start the hold and its next press stop it.
+func _tog_on(c: String) -> bool:
+	return _tog_action.has(c) and str(hold_styles.get(_tog_action[c], "hold")) == "toggle"
+
+
+func _transform_toggle() -> bool:
+	return str(hold_styles.get("transform", "hold")) == "toggle"
+
+
+## Change one action's style ("guard", "dodge", "power" or "transform"; "hold" or "toggle"). The same style again changes nothing. Leaving
+## the toggle lets the toggled holds go (a finger still on a control keeps it down until it lifts); changing Transform's cancels a count.
+func set_hold_style(action: String, style: String) -> void:
+	style = "toggle" if style == "toggle" else "hold"
+	if str(hold_styles.get(action, "hold")) == style:
+		return
+	hold_styles[action] = style
+	if action == "transform":
+		_tf_cancel_all()
+		return
+	for c in _tog_action.keys():
+		if _tog_action[c] == action and _tog_down.get(c, false):
+			_tog_down.erase(c)
+			if not _phys.get(c, false):
+				_real_release(c)
+
+
+## Let go of every toggled hold and cancel a toggled transform that is counting (a finger still on a control keeps it until it lifts). The host
+## may call it when the fighter is knocked out or launched; nothing in the input layer calls it (a held finger is not let go by a hit either).
+func let_go_toggles() -> void:
+	for c in _tog_down.keys():
+		_tog_down.erase(c)
+		if not _phys.get(c, false):
+			_real_release(c)
+	_tf_cancel_all()
+
+
+func _tf_cancel_all() -> void:
+	for c in _tf_latch.keys():
+		_tf_t0.erase(c)
+	_tf_latch.clear()
+	for ch in _chords:
+		if ch["latch"]:
+			_chord_cancel(ch)
+
+
+## A press that cancels a toggled transform that is counting (a single control, or either control of the chord). The press does nothing else.
+func _tf_cancel(c: String) -> bool:
+	if _tf_latch.get(c, false):
+		_tf_latch.erase(c)
+		_tf_t0.erase(c)
+		_swallow[c] = true
+		return true
+	for ch in _chords:
+		if ch["latch"] and ch["active"] and not ch["sent"] and ch["controls"].has(c):
+			_chord_cancel(ch)
+			_swallow[c] = true
+			return true
+	return false
+
+
+## End a toggled transform chord's count with nothing sent: the toggled holds of its controls go, a finger still down keeps its control.
+func _chord_cancel(ch: Dictionary) -> void:
+	ch["active"] = false
+	ch["sent"] = false
+	ch["latch"] = false
+	for k in ch["controls"]:
+		if _tog_down.get(k, false):
+			_tog_down.erase(k)
+			_real_release(k)
+	for k in ch["controls"]:
+		_chorded.erase(k)
+
+
+## A toggled transform chord was sent: the toggled holds of its controls are part of it and go with it; the chord ends once no control is down
+## (a finger still holding one ends it with the release, as a held transform does).
+func _chord_done(ch: Dictionary) -> void:
+	ch["latch"] = false
+	for k in ch["controls"]:
+		if _tog_down.get(k, false):
+			_tog_down.erase(k)
+			_real_release(k)
+	for k in ch["controls"]:
+		if _down.get(k, false):
+			return
+	ch["active"] = false
+	ch["sent"] = false
+
+
 func _check_chords(c: String) -> void:
 	for ch in _chords:
 		if not ch["controls"].has(c):
@@ -560,6 +713,7 @@ func _check_chords(c: String) -> void:
 			ch["active"] = true
 			ch["since"] = tick
 			ch["sent"] = false
+			ch["latch"] = _transform_toggle()   # a toggled transform: it counts on after the fingers leave, until it is sent or cancelled
 			for k in ch["controls"]:
 				_chorded[k] = true
 
@@ -613,10 +767,19 @@ func build() -> SimIntent:
 		if ch["action"] == "transform" and ch["active"] and not ch["sent"] and tick - int(ch["since"]) >= transform_confirm:
 			ch["sent"] = true
 			tf = true
+			if ch["latch"]:
+				_chord_done(ch)
+	var done: Array = []
 	for c in _tf_t0:
-		if _down.get(c, false) and not _tf_sent.get(c, false) and tick - int(_tf_t0[c]) >= transform_confirm:
+		if (_down.get(c, false) or _tf_latch.get(c, false)) and not _tf_sent.get(c, false) and tick - int(_tf_t0[c]) >= transform_confirm:
 			_tf_sent[c] = true
 			tf = true
+			if _tf_latch.get(c, false):
+				done.append(c)
+	for c in done:   # a toggled transform that was sent with no finger on it is finished
+		_tf_latch.erase(c)
+		_tf_t0.erase(c)
+		_tf_sent.erase(c)
 	i.transform = tf
 	# Guard: held, and its press edge for the perfect block.
 	i.guard = _is_down("guard")
@@ -731,7 +894,7 @@ func transform_hold() -> float:
 		if ch["action"] == "transform" and ch["active"]:
 			best = maxf(best, clampf(float(tick - int(ch["since"])) / float(transform_confirm), 0.0, 1.0))
 	for c in _tf_t0:
-		if _down.get(c, false):
+		if _down.get(c, false) or _tf_latch.get(c, false):
 			best = maxf(best, clampf(float(tick - int(_tf_t0[c])) / float(transform_confirm), 0.0, 1.0))
 	return best
 

@@ -33,6 +33,8 @@ static func data() -> Dictionary:
 ## flag; without it the row is listed but disabled. An id with no option in options.json is skipped.
 ## Options whose rows are listed only once their feature flag is on (features.json): the three-strength charge settings, and Reduce flashing until Legal approves its words.
 const HIDE_UNTIL := {"latch_charge": "three_strengths", "latch_charge_p2": "three_strengths", "charges_off": "three_strengths", "charges_off_p2": "three_strengths", "reduce_flashing": "reduce_flashing"}
+## Player two's hold-or-toggle rows (Controls' hold_style: guard, manoeuvre, charging, transform): listed only while two people play, like energy_style_p2.
+const HOLD_STYLE_P2 := ["guard_style_p2", "manoeuvre_style_p2", "charge_style_p2", "transform_style_p2"]
 
 
 static func rows() -> Array:
@@ -52,7 +54,7 @@ static func rows() -> Array:
 				continue
 			var key: String = str(it)
 			var o: Dictionary = od.get(key, {})
-			if o.is_empty() or ((key == "pad_preset_p2" or key == "energy_style_p2" or key == "latch_charge_p2" or key == "charges_off_p2") and not two_humans):
+			if o.is_empty() or ((key == "pad_preset_p2" or key == "energy_style_p2" or key == "latch_charge_p2" or key == "charges_off_p2" or HOLD_STYLE_P2.has(key)) and not two_humans):
 				continue
 			if HIDE_UNTIL.has(key) and not UiData.feature(str(HIDE_UNTIL[key])):
 				continue   # a row for something that is not live yet is not listed

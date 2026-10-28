@@ -22,6 +22,14 @@
         "show_prompts",
         "energy_style",
         "energy_style_p2",
+        "guard_style",
+        "guard_style_p2",
+        "manoeuvre_style",
+        "manoeuvre_style_p2",
+        "charge_style",
+        "charge_style_p2",
+        "transform_style",
+        "transform_style_p2",
         "latch_charge",
         "latch_charge_p2",
         "charges_off",
@@ -126,6 +134,38 @@
       "toggle": "[Ţöĝĝĺé]"
     },
     "energy_style_p2": {
+      "hold": "[Ĥöĺď]",
+      "toggle": "[Ţöĝĝĺé]"
+    },
+    "guard_style": {
+      "hold": "[Ĥöĺď]",
+      "toggle": "[Ţöĝĝĺé]"
+    },
+    "guard_style_p2": {
+      "hold": "[Ĥöĺď]",
+      "toggle": "[Ţöĝĝĺé]"
+    },
+    "manoeuvre_style": {
+      "hold": "[Ĥöĺď]",
+      "toggle": "[Ţöĝĝĺé]"
+    },
+    "manoeuvre_style_p2": {
+      "hold": "[Ĥöĺď]",
+      "toggle": "[Ţöĝĝĺé]"
+    },
+    "charge_style": {
+      "hold": "[Ĥöĺď]",
+      "toggle": "[Ţöĝĝĺé]"
+    },
+    "charge_style_p2": {
+      "hold": "[Ĥöĺď]",
+      "toggle": "[Ţöĝĝĺé]"
+    },
+    "transform_style": {
+      "hold": "[Ĥöĺď]",
+      "toggle": "[Ţöĝĝĺé]"
+    },
+    "transform_style_p2": {
       "hold": "[Ĥöĺď]",
       "toggle": "[Ţöĝĝĺé]"
     },
