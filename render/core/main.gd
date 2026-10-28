@@ -687,8 +687,8 @@ func _crumb() -> void:
 	if not OS.has_feature("web"):
 		return
 	var st: String = "playing"
-	if _crumb_at == "":
-		st = "first_frame"
+	if _crumb_at == "" and not Engine.has_meta("ocx_first_frame"):
+		st = "first_frame"   # (the bootstrap entry says it, when the game starts through it: render/core/boot_entry.gd)
 	elif host.loading() or not _build_queue.is_empty():
 		st = "loading"
 	elif boot != null:

@@ -35,6 +35,7 @@ var _t: int = 0
 var _hidden: Array = []                # [node, was visible]
 var _line: CanvasLayer
 var _bar: ColorRect
+var _bar_size: Vector2 = RenderLook.BOOT_BAR   # the bar's size on this screen (line_size)
 var _bar_w: float = 0.0
 var _begun: bool = false               # begin() has run and the boot is not done
 
@@ -243,6 +244,16 @@ func _draw(j: Array, i: int) -> Node:
 ## The line under the splash: plain words and a thin bar, centred on a dark ground over the hidden panes and under UI's
 ## layer (the notice and the cards stay over it); the bar moves a whole percent at a time.
 func _make_line(words: String) -> CanvasLayer:
+	var l: Array = line(words, get_viewport().get_visible_rect().size, dp())
+	_bar = l[1]
+	_bar_size = l[2]
+	return l[0]
+
+
+## The boot's line on a screen of this size and density (the bootstrap entry draws it too: render/core/boot_entry.gd):
+## [the CanvasLayer, its bar (empty), the bar's full size].
+static func line(words: String, vp: Vector2, density: float) -> Array:
+	var sz: Array = line_size(vp, density)
 	var layer := CanvasLayer.new()
 	layer.layer = 0   # over the 3D, under the HUD's layer (1): UI's notice and cards draw over it
 	var bg := ColorRect.new()
@@ -262,22 +273,45 @@ func _make_line(words: String) -> CanvasLayer:
 	label.text = words
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_color_override("font_color", RenderLook.col(RenderLook.BOOT_INK))
+	label.add_theme_font_size_override("font_size", int(sz[0]))
 	box.add_child(label)
 	var track := ColorRect.new()
-	track.custom_minimum_size = Vector2(RenderLook.BOOT_BAR.x, RenderLook.BOOT_BAR.y)
+	track.custom_minimum_size = sz[1]
 	track.color = RenderLook.col(RenderLook.BOOT_TRACK)
 	track.mouse_filter = Control.MOUSE_FILTER_IGNORE   # the line never takes a click or a tap: UI's notice and cards have them all
 	box.add_child(track)
-	_bar = ColorRect.new()
-	_bar.color = RenderLook.col(RenderLook.BOOT_INK)
-	_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_bar.size = Vector2(0.0, RenderLook.BOOT_BAR.y)
-	track.add_child(_bar)
-	return layer
+	var bar := ColorRect.new()
+	bar.color = RenderLook.col(RenderLook.BOOT_INK)
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.size = Vector2(0.0, sz[1].y)
+	track.add_child(bar)
+	return [layer, bar, sz[1]]
+
+
+## The line's size, as UI's loading screen sizes its own line (ui/widgets/ui_loading.gd with ui/core/ui_layout.gd's scale:
+## the design screen's share, grown on a dense landscape phone so small text is at least 12 dp), so the boot's words read
+## like the loading screen's: [font px, the bar's size]. RenderLook.BOOT_BAR.y is the bar's least height.
+static func line_size(vp: Vector2, density: float) -> Array:
+	var portrait: bool = vp.y > vp.x * 1.05
+	var design: Vector2 = Vector2(1080.0, 1920.0) if portrait else Vector2(1920.0, 1080.0)
+	var s: float = clampf(minf(vp.x / design.x, vp.y / design.y), 0.45, 2.5)
+	if density > 1.25 and not portrait:
+		s = clampf(maxf(s, minf(12.0 * density / 18.0, 0.30 * vp.x / 380.0)), 0.45, 2.5)
+	var fs: int = maxi(roundi(22.0 * s), ceili(12.0 * maxf(density, 1.0)))
+	var bar := Vector2(clampf(vp.x * 0.34, 200.0 * maxf(density, 1.0), 440.0 * maxf(s, 1.0)), maxf(RenderLook.BOOT_BAR.y, roundf(2.0 * s)))
+	return [fs, bar]
+
+
+## Device pixels per CSS pixel on the web (the browser's devicePixelRatio), else the screen's scale.
+static func dp() -> float:
+	if OS.has_feature("web"):
+		var v = JavaScriptBridge.eval("window.devicePixelRatio || 1", true)
+		return float(v) if v != null else 1.0
+	return DisplayServer.screen_get_scale()
 
 
 func _set_line(p: float) -> void:
-	var w: float = floor(p * 100.0) / 100.0 * RenderLook.BOOT_BAR.x   # a whole percent: nothing redraws between
+	var w: float = floor(p * 100.0) / 100.0 * _bar_size.x   # a whole percent: nothing redraws between
 	if w != _bar_w:
 		_bar_w = w
-		_bar.size = Vector2(w, RenderLook.BOOT_BAR.y)
+		_bar.size = Vector2(w, _bar_size.y)

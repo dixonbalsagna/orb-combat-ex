@@ -6,7 +6,7 @@ config_version=5
 [application]
 
 config/name="Orb Combat EX"
-run/main_scene="res://render/main.tscn"
+run/main_scene="res://render/boot_entry.tscn"
 config/features=PackedStringArray("4.7")
 
 [rendering]

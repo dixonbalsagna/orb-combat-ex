@@ -89,6 +89,35 @@ Simulation timed `_match_built` at 1.4 s natively on the first boot. A probe of 
   - `playing`.
 - **A phone's render scale.** On the web with a coarse pointer (a phone or a tablet), the game's viewport and every pane's draw their 3D at `RenderLook.TOUCH_3D_SCALE` (0.6) of the screen's pixels. UI's layers stay at the full ratio. `?touchscale=1` forces it on a desktop.
 
+## The entry: the scripts loaded a graph a frame (`render/boot_entry.tscn`, `render/core/boot_entry.gd`)
+
+Performance's start-block profile (`docs/perf/boot-start-block-2026-10-27.md`): from the page's start to the first frame was 4.4 s at x1 and 15.5 s at x4, and 70% of it was GDScript compiling main's script graph before anything drew.
+
+- **The entry is the project's main scene.**
+  - It puts the boot's line up at once: `RenderBoot.line`, the same line main's boot shows. `boot.gd` and `RenderLook` pull in four small scripts, none of the sim's.
+  - It then loads the heavy script graphs one a drawn frame (`STEPS`, leaves first, each a tenth or so of main's graph), and then starts main.
+  - A load waits until the frame before it has been drawn (`frame_post_draw`): the first frame's `_process` runs before it draws, so a load there would hold the line back.
+  - A path that is gone is passed over; main loads whatever is left.
+- **Main as before** for a headless run, a tool's switches (`flashcap`, `bench`, `frames`, `shot`, `nobootstage`) and Animation's study scene: the entry starts main at once.
+- **The breadcrumbs.** The entry says `first_frame` when its line is up, then `scripts`. Main goes on from there (`loading`, `compiling`, then the card), and does not say `first_frame` again.
+- **The class graph** (a scratch measure of `class_name` references and preloads):
+  - The sim is one cycle: 77 scripts, about 36,800 lines in `sim/core`, `sim/world`, `sim/director` and `sim/input`. Loading any of them compiles them all, so the sim is the one load the order cannot split (3.3 s at x4).
+  - Everything else falls into loads of about 1.5 s at x4 or less.
+  - What would split the sim (Simulation's call):
+    - Only five references point from `sim/core` and `sim/world` into `sim/director`: `DirExchange` twice, `DirBlast` and `DirBands` from the core, and `DirWallKick` from the world. Taken out, the director (about 15,600 lines) loads on its own.
+    - The 21 references from `sim/world` into `sim/core` are the next cut.
+- **The line's size.** The boot's words and bar are sized as UI's loading screen sizes its own line (`RenderBoot.line_size`: the design screen's share, grown on a dense landscape phone so the words are at least 12 dp). They had been the default 16 pixels, small on a phone's 2,400-pixel-wide screen.
+- **Measured** (Performance's `freeze-probe.mjs`, 915 by 412 at a 2.625 pixel ratio, one run each on a shared machine; the before is main with the crumbs, a3bd4b3c's render):
+
+  | | x1 before | x1 after | x4 before | x4 after |
+  | :--- | :--- | :--- | :--- | :--- |
+  | the first frame (the line up) | 5.1 s | 2.3 s | 18.2 s | 4.0 s |
+  | the match starts loading | 5.4 s | 4.8 s | 18.6 s | 16.8 s |
+  | the longest block before the match loads | 4.9 s | 2.0 s (the engine's start) | 15.5 s | 3.4 s (the engine's start), then 2.8 s (the sim) |
+
+  - At x4 the loads take 10.3 s in all: the sim 2.8 s, VFX 1.3 s, Camera and the HUD 0.9 s each, Animation 0.9 s, the rest under 0.7 s each.
+  - At x1 they take 1.9 s, the sim 0.5 s.
+
 ## Where the rest of the compile goes (main 3d276d57)
 
 A scratch probe timed how long the page waits on each shader program's link, which is where the driver's compile blocks, with each program's pass defines. It ran at x1 on this PC through Tools' launcher.
