@@ -10,7 +10,7 @@ Each file here is a self-contained brief for one fresh cloud session. Orb starts
 | 1 | netcode-rollback.md | Netcode & Online | cloud/netcode-online/rollback-core | landed 04478dc2 |
 | 1 | tools-web-template.md | Tools & Pipeline | cloud/tools-pipeline/web-template | landed 2acfc4cd |
 | 2 | encounter-w2.md | Encounter Systems | cloud/encounter-systems/biomes-w2 | landed (this commit) |
-| 2 | qa-gen2-baseline.md | QA & Balance | cloud/qa-balance/gen2-baseline | routine (plan), 28 Oct; do not start by hand |
+| 2 | qa-gen2-baseline.md | QA & Balance | cloud/qa-balance/gen2-baseline | landed 688f2514 |
 | 2 | accessibility-foundation.md | Accessibility & Localization | cloud/accessibility-localization/foundation | routine (plan), 28 Oct; do not start by hand |
 | 3 | simulation-snapshot-tick.md | Simulation & Engine | cloud/simulation-engine/snapshot-tick | routine (plan) |
 | 3 | tools-ci-linux.md | Tools & Pipeline | cloud/tools-pipeline/ci-linux | routine (plan) |
@@ -29,3 +29,4 @@ Wave 3 runs as routines, which bill the Max plan rather than the credit, so it c
 | 7 | world-w6-flight-hooks.md | World & Environment | cloud/world-environment/biomes-w6 | routine (plan) |
 | 7 | encounter-tick-skip.md | Encounter Systems | cloud/encounter-systems/tick-skip | routine (plan) |
 | 7 | netcode-ai-depth.md | Netcode & Online | cloud/netcode-online/ai-depth | routine (plan) |
+| 8 | world-w7-ring-buildings.md | World & Environment | cloud/world-environment/biomes-w7 | waits for W6 to land |
