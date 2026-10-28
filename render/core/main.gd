@@ -269,7 +269,9 @@ func _ready() -> void:
 			warm.start(pane.get_world_3d())   # after the split view: pane 0's own world, with its environment
 	# Tools' capture hook (--flashcap, on the web /play/?flashcap=1): the game is stepped a tick at a time from the
 	# page, for the frame analyser. Never in normal play, and never under a tool's own main.
-	if args.has("flashcap") and not manual and OS.has_feature("web") and get_parent() == get_tree().root:
+	# Legal's RL-196: a BUILD-TIME feature, never a URL word or a console flag: an unlocked tree (dev, scratch, check-clip) attaches it as always; the locked export (the public demo) only when it was
+	# built as the measurement export (ui/data/features.json capture_hook, set by tools/site-pin.mjs --hook for the nightly), never the deployed one.
+	if args.has("flashcap") and not manual and OS.has_feature("web") and get_parent() == get_tree().root and (UiData.feature("capture_hook") or not UiData.rf_locked()):
 		flashcap = FlashCapture.new(self)
 	if not manual and not args.has("bench") and not args.has("frames") and not args.has("shot") and flashcap == null and not ui_hud.howto_seen():
 		ui_hud.show_howto(true)     # the first run's How to play card (docs/ui/hud-spec.md section 17)
@@ -1453,7 +1455,7 @@ func _unhandled_input(e: InputEvent) -> void:
 					for v in pw.fighter_views:
 						v.flashes_on = flashes_on
 				return
-			if code == "F8":
+			if code == "F8" and not UiData.rf_locked():   # the flashes' shapes before Legal's conditions: refused while Reduce flashing is locked on (RL-196)
 				flash_legacy = not flash_legacy
 				for v in fighter_views:
 					v.flash_view.legacy = flash_legacy
@@ -1501,8 +1503,10 @@ func _notification(what: int) -> void:
 const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off", "charges_off_p2"]
 ## The options a web page's URL may set (parse_args): off unless the URL names them. Those in LOCAL_ONLY_ARGS start
 ## without UI's notice, change how a match starts or hold a debug value, and are dropped unless the page is on a local
-## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze, keyhelp, roll.
-const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood"]
+## host (gate_args). What a public page's link may still set are four reviewed look switches: skyreact, panhaze, nopanhaze, keyhelp (tools/site-url-words.json; a change to them runs the flash clips
+## like any look change, and tools/site-routes.mjs fails on any other word that is not here). The debug and A/B words added since (the camera roll, the slow drift, the far map, the culling and
+## cover switches, the touch scale, the fill, ladder and fine switches) are local-only too (Legal RL-196).
+const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
 const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
 
 

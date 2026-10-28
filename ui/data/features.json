@@ -10,6 +10,7 @@
     "three_strengths": false,
     "reduce_flashing": true,
     "lock_reduce_flashing": false,
+    "capture_hook": false,
     "ring_map": false,
     "minimal_hud": true,
     "text_warm": true,

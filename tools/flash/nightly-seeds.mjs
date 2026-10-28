@@ -8,8 +8,9 @@
 //   2. the night's seeds: the next --count integers from --base that are in neither the recorded set (tools/flash/sources.json) nor the history (tools/flash/nightly-seeds.json), so no seed
 //      is read twice and the set never repeats; the pick is deterministic (the history is the only state);
 //   3. tools/flash/run-pixels.mjs --seeds <those> in both modes through the guarded launcher (below-normal, the cap, a time limit), three at a time;
+//   3b. the `signature` clip in both modes on the same export (Legal RL-195 condition (a)), every night, with its three readings (primary / area-15% / two-second memory) in the line and the row;
 //   4. ONE report line, and an appended row in the history: the commit, the seeds, the largest primary reading and the clip, the clips over 3. Exit 0 when none is over 3, exit 1 when any is
-//      (the take-down trigger: node tools/site-offline.mjs and tell the EP), exit 2 when the run itself failed (a clip missing is not a pass).
+//      (the take-down trigger: node tools/site-offline.mjs and tell the EP), exit 2 when the run itself failed (a clip missing is not a pass, the signature clip included), exit 3 when the signature clip reads, reduced, worse than 2.5 / 3 / 2 (Legal RL-195: tell the EP; not a take-down by itself).
 // Only the primary reading is read here (Legal: "reading only the primary"); the full table of a run stays in <work>/<sha7>/<date>/clips (margins.mjs reads it if a clip is over).
 // About 8 seeds x 2 modes x 15 minutes / 3 jobs: roughly 80 minutes, then the export once (about 3 minutes).
 import { spawnSync } from 'node:child_process';
@@ -18,6 +19,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { exportPinned } from '../site-pin.mjs';
+import { readSignature, worseThan, readingText } from './signature-gate.mjs';
 
 const HERE = import.meta.dirname;
 const DEFAULT_HISTORY = join(HERE, 'nightly-seeds.json');
@@ -53,12 +55,25 @@ export function readRun(rows, seeds, limit = TAKE_DOWN_ABOVE) {
   return { clips: want.length, read: want.length - missing.length, missing, max, maxId, over };
 }
 
+/** The signature clip's part of a night (Legal RL-195 condition (a)): it is read in both modes every night, and reduced is compared with 2.5 / 3 / 2. { normal, reduced, missing, worse }. Pure. */
+export function signatureOf(rows) {
+  const s = readSignature(rows);
+  return { ...s, worse: s.reduced ? worseThan(s.reduced) : [] };
+}
+
+/** The signature clause of the report line. */
+export function signatureText(sig) {
+  if (!sig) return '';
+  if (sig.missing.length) return `; signature NOT READ: ${sig.missing.join(', ')} (a missing clip is not a pass)`;
+  return `; signature normal ${readingText(sig.normal)}, reduced ${readingText(sig.reduced)} (pin limit for reduced 2.5 / 3 / 2${sig.worse.length ? `: WORSE, ${sig.worse.join(', ')}` : ': within'})`;
+}
+
 /** The one report line. */
-export function reportLine(date, commit, seeds, r, limit = TAKE_DOWN_ABOVE) {
+export function reportLine(date, commit, seeds, r, limit = TAKE_DOWN_ABOVE, sig = null) {
   const head = `nightly seeds ${date} on the pinned ${commit.slice(0, 8)}: seeds ${seeds.join(',')} x 2 modes, ${r.read} of ${r.clips} clips read`;
-  if (r.missing.length) return `${head}; NOT COMPLETE: ${r.missing.join(', ')} not read (a missing clip is not a pass)`;
-  if (r.over.length) return `${head}; TAKE DOWN: ${r.over.map((o) => `${o.id} reads ${o.primary}`).join(', ')} on the primary reading (over ${limit})`;
-  return `${head}; largest primary ${r.max} (${r.maxId}); none over ${limit}`;
+  if (r.missing.length) return `${head}; NOT COMPLETE: ${r.missing.join(', ')} not read (a missing clip is not a pass)${signatureText(sig)}`;
+  if (r.over.length) return `${head}; TAKE DOWN: ${r.over.map((o) => `${o.id} reads ${o.primary}`).join(', ')} on the primary reading (over ${limit})${signatureText(sig)}`;
+  return `${head}; largest primary ${r.max} (${r.maxId}); none over ${limit}${signatureText(sig)}`;
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -93,11 +108,11 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (!existsSync(join(web, 'index.html')) && !args.includes('--no-export')) {
     if (opt('--pin')) {
       try {
-        const tree = exportPinned(pin, web, { tree: join(work, 'tree'), godot: opt('--godot') || process.env.GODOT, lock: true });   // lock: the interim's export, as the site would serve it
+        const tree = exportPinned(pin, web, { tree: join(work, 'tree'), godot: opt('--godot') || process.env.GODOT, lock: true, hook: true });   // lock: the interim's export, as the site would serve it; hook: the measurement export (capture_hook true, Legal RL-196), never the one deployed
         console.log(`pinned ${pin.slice(0, 8)} exported to ${web} (tree ${tree})`);
       } catch (e) { console.error(`nightly seeds: the pinned export failed (is $GODOT set?): ${e.message}`); process.exit(2); }
     } else {
-      const ex = spawnSync(process.execPath, [join(HERE, '..', 'site-pin.mjs'), '--export', web, '--tree', join(work, 'tree')], { stdio: 'inherit', env: process.env });
+      const ex = spawnSync(process.execPath, [join(HERE, '..', 'site-pin.mjs'), '--export', web, '--tree', join(work, 'tree'), '--hook'], { stdio: 'inherit', env: process.env });
       if (ex.status !== 0) { console.error('nightly seeds: the pinned export failed (is $GODOT set?)'); process.exit(2); }
     }
   }
@@ -105,13 +120,20 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const rp = spawnSync(process.execPath, [join(HERE, 'run-pixels.mjs'), '--dir', web, '--path', '/index.html?flashcap=1', '--out', join(out, 'clips'), '--jobs', jobs, '--cpu-cap', cap, '--seeds', seeds.join(',')], { stdio: 'inherit', env: { ...process.env, MERIDIAN_SESSION: process.env.MERIDIAN_SESSION || 'tools' } });
   let rows = [];
   try { rows = JSON.parse(readFileSync(join(out, 'clips', 'summary.json'), 'utf8')); } catch { /* reported as missing */ }
+  // the signature clip, both modes, every night (Legal RL-195 condition (a)): on the same pinned export, a second run of the guarded launcher
+  const rps = spawnSync(process.execPath, [join(HERE, 'run-pixels.mjs'), '--dir', web, '--path', '/index.html?flashcap=1', '--out', join(out, 'clips-signature'), '--jobs', '2', '--cpu-cap', cap, '--clip', 'signature-normal,signature-reduced'], { stdio: 'inherit', env: { ...process.env, MERIDIAN_SESSION: process.env.MERIDIAN_SESSION || 'tools' } });
+  let sigRows = [];
+  try { sigRows = JSON.parse(readFileSync(join(out, 'clips-signature', 'summary.json'), 'utf8')); } catch { /* reported as not read */ }
+  const sig = signatureOf(sigRows);
   // 3.5 under the owner-approved interim (Legal's addendum 11); the record gives it when the site is offline or a pin was given, the live site.json when the interim is online
   const limit = opt('--pin') || config.offline === true || !config.interim ? limitFromRecord(words) : limitFor(config);
   const r = readRun(rows, seeds, limit);
-  const line = reportLine(date, pin, seeds, r, limit);
+  const line = reportLine(date, pin, seeds, r, limit, sig);
   console.log(line);
-  hist.runs.push({ date, commit: pin, seeds, read: r.read, clips: r.clips, max: r.max, maxClip: r.maxId, over: r.over, missing: r.missing });
+  hist.runs.push({ date, commit: pin, seeds, read: r.read, clips: r.clips, max: r.max, maxClip: r.maxId, over: r.over, missing: r.missing, signature: { normal: sig.normal, reduced: sig.reduced, missing: sig.missing, worse: sig.worse } });
   writeFileSync(HISTORY, JSON.stringify(hist, null, 2) + '\n');
   writeFileSync(join(out, 'report.txt'), line + '\n');
-  process.exit(r.missing.length ? 2 : r.over.length ? 1 : (rp.status === 0 || rp.status === 1 ? 0 : 2));
+  // 2: a clip (a seed's or the signature clip) was not read; 1: the take-down trigger; 3: the signature clip reads worse, reduced, than the pin condition (2.5 / 3 / 2): not a take-down by itself, tell the EP
+  void rps;
+  process.exit(r.missing.length || sig.missing.length ? 2 : r.over.length ? 1 : sig.worse.length ? 3 : (rp.status === 0 || rp.status === 1 ? 0 : 2));
 }

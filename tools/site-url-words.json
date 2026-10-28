@@ -1,0 +1,12 @@
+{
+  "_why": "The URL words a PUBLIC page may honour (render/core/main.gd URL_ARGS minus LOCAL_ONLY_ARGS), reviewed: Legal's RL-196 (2026-10-27) and the EP's addition (2). They are look switches; none touches the notice, the lock or any flashing option. tools/site-routes.mjs fails on any other word a public page would honour, so a new URL word is gated local-only (LOCAL_ONLY_ARGS) or reviewed here, and a change to these four runs the flash clips like any look change.",
+  "public": ["skyreact", "panhaze", "nopanhaze", "keyhelp"],
+  "_public": {
+    "skyreact": "the clouds part at tier 3 and 4 (off unless asked for)",
+    "panhaze": "the buildings' haze while the camera travels fast: on",
+    "nopanhaze": "the same haze: off",
+    "keyhelp": "the greybox key prompt and key help"
+  },
+  "bypass": ["study", "flashcap", "nointro"],
+  "_bypass": "words that start a run with no gate or no intro: they must be in LOCAL_ONLY_ARGS (dropped on a public page); bench, frames, shot and nonotice are not URL words at all (ui/hud/ui_hud.gd BYPASS_WORDS reads them from the command line and honours them only on a local host)."
+}

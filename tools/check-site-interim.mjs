@@ -22,6 +22,8 @@ import { siteNotice } from './site-notice.mjs';
 import { scanHtml, scanPack, unallowed } from './site-name-scan.mjs';
 import { INTERIM_WAIVES } from './flash/release-pass.mjs';
 import { CRUMBS_PRIVACY, BUILD_LINE } from './site-crumbs.mjs';
+import { scanRoutes } from './site-routes.mjs';
+import { gateProblems, DEFAULT_FILE as SIGNATURE_GATE } from './flash/signature-gate.mjs';
 
 const args = process.argv.slice(2);
 const opt = (n) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : undefined; };
@@ -353,6 +355,24 @@ try {
     const cv = ui['options.json'] && ui['options.json'].options && ui['options.json'].options.colour_vision;
     if (!cv || cv.label !== COLOR_BLIND_LABEL) bad(`ui/data/options.json options.colour_vision.label is not "${COLOR_BLIND_LABEL}" (docs/legal/page-fixed-lines.md, RL-192 addendum)`);
   }
+}
+
+// ---- the lock cannot be lifted by a route (Legal's RL-195 condition (b)): a URL word, a saved setting, a debug key, the capture hook (tools/site-routes.mjs)
+{
+  const routeProblems = scanRoutes(root);
+  // the one pin Legal ruled may stay up while the fix lands (RL-196): tools/site-routes-grandfather.json, for that commit only; every new pin passes the scan in full
+  let gf = null;
+  try { gf = JSON.parse(readFileSync(resolve(opt('--routes-grandfather') || join(here, 'site-routes-grandfather.json')), 'utf8')); } catch { /* none: no pin is excused */ }
+  if (routeProblems.length && gf && /^[0-9a-f]{40}$/.test(String(gf.commit)) && gf.commit === config.pin) {
+    console.log(`interim site check note: the routes scan finds ${routeProblems.length} open route${routeProblems.length === 1 ? '' : 's'} on the pin ${gf.commit.slice(0, 8)}, which ${gf.ruling} lets stay up while the fix lands (tools/site-routes-grandfather.json); a new pin must pass in full`);
+  } else for (const m of routeProblems) bad(`normal mode is reachable: ${m} (Legal RL-195 condition (b), docs/tools/site-interim.md)`);
+}
+
+// ---- the pin only moves to a commit whose signature clip, reduced, reads no worse than 2.5 / 3 / 2 (Legal's RL-195 condition (a); tools/flash/signature-gate.mjs)
+if (OWNER) {
+  let rec = null;
+  try { rec = JSON.parse(readFileSync(resolve(opt('--signature-gate') || SIGNATURE_GATE), 'utf8')); } catch { /* reported by gateProblems */ }
+  for (const m of gateProblems(rec, config.pin)) bad(`the signature gate: ${m}`);
 }
 
 // ---- the words file itself

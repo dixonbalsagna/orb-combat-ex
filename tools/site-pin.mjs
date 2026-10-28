@@ -6,6 +6,7 @@
 //        exit 1, with the reasons on stderr, when the site is online and there is no usable record.
 //   node tools/site-pin.mjs --export <web dir> [--tree <scratch dir>] [--godot <exe>] [--godot-node <script>] [same options]
 //        exports the pinned commit's Web build the way CI exports HEAD's (git archive of the commit into a scratch tree, Godot import, export-release "Web") into <web dir>.
+//        --hook: a MEASUREMENT export (the nightly's): ui/data/features.json capture_hook set true, the build-time feature that lets the capture hook attach on a locked export; never for the site job's export.
 //        $GODOT is the executable when --godot is not given; --godot-node runs a node script as the exporter (the self-test's stub).
 //
 // The pin is the record's own `commit` (tools/flash/release-pass.json: written by release-pass.mjs --record for the commit measured). tools/site.json may also carry "pin": "<sha>";
@@ -72,6 +73,13 @@ export function exportPinned(pin, webDir, o = {}) {
     writeFileSync(ff, txt.replace(/"lock_reduce_flashing"\s*:\s*false/, '"lock_reduce_flashing": true'));
     void nl; void cr;
   }
+  // a MEASUREMENT export (the nightly's, tools/flash/nightly-seeds.mjs): the capture hook is a build-time feature (Legal RL-196): ui/data/features.json capture_hook, false in the public export (this one
+  // is never deployed), true here so the pixel runs can attach the hook on a locked export. A pinned commit older than the feature has no such key: nothing to set (its hook is gated by the page's host).
+  if (o.hook) {
+    const ff = join(tree, 'ui', 'data', 'features.json');
+    const txt = readFileSync(ff, 'utf8');
+    if (/"capture_hook"\s*:/.test(txt)) writeFileSync(ff, txt.replace(/"capture_hook"\s*:\s*false/, '"capture_hook": true'));
+  }
   // the freeze breadcrumbs (tools/site-crumbs.mjs, off unless tools/site.json says "crumbs": true): folded into THIS tree's Web preset only, by the repository's own web-head.mjs, so the pinned
   // commit need not carry them and the committed preset never does
   if (o.crumbs) {   // the report's build line is the pin's short hash and its commit date; the game's own About line says what the page says (Legal's switch-on words)
@@ -96,7 +104,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     if (!pin) { console.error('site pin: the site is offline: there is no pinned commit to export'); process.exit(2); }
     try {
       const godot = opt('--godot') || process.env.GODOT;
-      const tree = exportPinned(pin, resolve(web), { tree: opt('--tree'), godot, godotNode: opt('--godot-node'), lock: !!config.interim, crumbs: crumbsOn(config) });
+      const tree = exportPinned(pin, resolve(web), { tree: opt('--tree'), godot, godotNode: opt('--godot-node'), lock: !!config.interim, crumbs: crumbsOn(config), hook: args.includes('--hook') });
       console.log(`pinned ${pin.slice(0, 8)} exported to ${web} (tree ${tree})`);
     } catch (e) { console.error(`site pin: ${e.message}`); process.exit(1); }
   } else {

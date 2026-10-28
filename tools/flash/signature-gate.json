@@ -1,0 +1,10 @@
+{
+  "_why": "The signature clip read on the pin (Legal RL-195 condition (a)); written by tools/flash/signature-gate.mjs --record, checked by tools/check-site-interim.mjs: the pin can move only to a commit whose signature clip reads, REDUCED, no worse than 2.5 / 3 / 2 (primary / area-15% / two-second memory).",
+  "commit": "257a766c26f8766fb09b063864c41c5d8ba64dc0",
+  "date": "2026-10-27",
+  "grandfathered": true,
+  "_grandfathered": "The live pin Legal ruled on before the condition. Its signature clip, read by Tools on 2026-10-27 (docs/tools/signature-bisect-2026-10-27.md), is reduced 3 / 3 / 3 (over the limits) and normal 2.5 / 2.5 / 3. It stays as measured; the next pin has to pass the limits and replaces this record.",
+  "limits": { "primary": 2.5, "area15": 3, "twoSec": 2 },
+  "reduced": { "primary": 3, "area15": 3, "twoSec": 3 },
+  "normal": { "primary": 2.5, "area15": 2.5, "twoSec": 3 }
+}

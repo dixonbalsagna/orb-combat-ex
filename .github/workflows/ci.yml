@@ -127,6 +127,8 @@ jobs:
         run: node tools/flash/pixel-selftest.mjs --require-browser
       - name: Clip identity self-test (a clip records its seed and pairing; two different matches are not shown side by side)
         run: node tools/flash/clip-id-selftest.mjs --require-browser
+      - name: "Site hook check self-test (the exported public build, on a public hostname: no window.__flashcap; stand-in pages)"
+        run: node tools/check-site-hook-selftest.mjs --require-browser
       - uses: ./.github/actions/setup-godot
       - name: Import project
         run: '"$GODOT" --headless --path . --import'
@@ -240,6 +242,11 @@ jobs:
           # the shipped prefs and the feedback target are the pinned tree's, not HEAD's
           if [ -n "$PIN" ]; then ROOT="${RUNNER_TEMP}/pinned-tree"; else ROOT="."; fi
           node tools/check-site-interim.mjs --site "${RUNNER_TEMP}/site" --root "$ROOT"
+      # The EXPORTED public build, run as a visitor's browser runs it (Legal RL-196): on a public hostname, with the words that start a run without the gate in the URL, the capture hook does not exist.
+      # Only when the site is online with a pinned build (the holding page has no game).
+      - name: Check the exported public build (no capture hook on a public hostname with ?flashcap=1)
+        if: steps.pin.outputs.sha != ''
+        run: node tools/check-site-hook.mjs --site "${RUNNER_TEMP}/site" --software --timeout 420
       - name: Upload the Pages artifact
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0

@@ -86,6 +86,10 @@ const GAME_PROMPT = {
   menu_rf_locked: 'Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes.',
 };
 const GAME_SETTINGS_HELP = 'The notice shown when the game starts: it contains flashing effects, what Reduced motion does and does not change, and that no independent photosensitivity analyzer has been run.';
+// the GDScript the routes scan reads (tools/site-routes.mjs, Legal's RL-195 condition (b)): the smallest good tree; each test breaks one door of it
+const GOOD_UI_DATA = ['class_name UiData', '', 'static func feature(key: String) -> bool:', '\treturn false', '', '', 'static func rf_locked() -> bool:', '\treturn feature("lock_reduce_flashing")', '', '', 'static func set_feature(key: String, value) -> void:', '\tpass', ''].join('\n');
+const GOOD_HUD_FUNCS = ['', '', 'func settings_set(key: String, value) -> void:', '\tif key == "reduce_flashing" and UiData.rf_locked():', '\t\tvalue = true', '\tset_option(key, value)', '', '', 'func load_saved_options() -> void:', '\tfor k in saved:', '\t\tvar sv = saved[k]', '\t\tif k == "reduce_flashing" and UiData.rf_locked():', '\t\t\tsv = true', '\t\tset_option(k, sv)', ''].join('\n');
+const GOOD_MAIN = ['const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood"]', 'const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp"]', '', 'var flash_legacy: bool = false', '', '', 'func _ready() -> void:', '\tif args.has("flashcap") and (UiData.feature("capture_hook") or not UiData.rf_locked()):', '\t\tflashcap = FlashCapture.new(self)', '', '', 'func _unhandled_input(e: InputEvent) -> void:', '\tif code == "F8" and not UiData.rf_locked():', '\t\tflash_legacy = not flash_legacy', ''].join('\n');
 function prefsRoot(name, { options = true, feature = true, hud = true, target = 'none', lock = true, howto = OLD_PRIVACY, build = null } = {}) {
   const r = join(tmp, name);
   mkdirSync(r, { recursive: true });
@@ -95,10 +99,14 @@ function prefsRoot(name, { options = true, feature = true, hud = true, target = 
   writeFileSync(join(r, 'ui/data/options.json'), JSON.stringify({ schema: 1, options: { reduce_flashing: { default: options }, colour_vision: { default: 'off', label: 'Color-blind mode', help: 'Swaps the colors that carry meaning.' } } }));
   writeFileSync(join(r, 'ui/data/terms.json'), JSON.stringify({ schema: 1, note: 'Every word, as data. Colour notes stay.', prompt: { ...GAME_PROMPT } }));
   writeFileSync(join(r, 'ui/data/settings.json'), JSON.stringify({ schema: 1, sections: [{ id: 'access', title: 'Accessibility', items: ['colour_vision', { action: 'photo_notice', label: 'Flashing effects notice', value: 'Read', help: GAME_SETTINGS_HELP }] }] }));
-  writeFileSync(join(r, 'ui/data/features.json'), JSON.stringify({ schema: 1, features: { reduce_flashing: feature, lock_reduce_flashing: lock } }));
+  writeFileSync(join(r, 'ui/data/features.json'), JSON.stringify({ schema: 1, features: { reduce_flashing: feature, lock_reduce_flashing: lock, capture_hook: false } }));
   writeFileSync(join(r, 'ui/data/send.json'), JSON.stringify({ schema: 1, _target: target }));
   writeFileSync(join(r, 'ui/data/howto.json'), JSON.stringify({ pages: [{ rows: [{ icon: 'about_privacy_none', col: 1, text: howto }, { icon: 'about_privacy_github', col: 1, text: 'x' }] }] }));
-  writeFileSync(join(r, 'ui/hud/ui_hud.gd'), `var opts: Dictionary = {\n\t"reduce_flashing": ${hud},\n}\n`);
+  writeFileSync(join(r, 'ui/hud/ui_hud.gd'), `var opts: Dictionary = {\n\t"reduce_flashing": ${hud},\n}\n` + GOOD_HUD_FUNCS);
+  mkdirSync(join(r, 'ui/core'), { recursive: true });
+  writeFileSync(join(r, 'ui/core/ui_data.gd'), GOOD_UI_DATA);
+  mkdirSync(join(r, 'render/core'), { recursive: true });
+  writeFileSync(join(r, 'render/core/main.gd'), GOOD_MAIN);
   return r;
 }
 const goodRoot = prefsRoot('root-good');
@@ -287,14 +295,18 @@ try {
   {
     const ownerWords = join(tmp, 'owner-words.json');
     writeFileSync(ownerWords, readFileSync(join(here, 'site-interim-owner.json'), 'utf8'));
-    const ownerCfg = (over = {}) => ({ offline: false, approved: '2026-10-18', interim: { owner: 'Orb 2026-10-18', approved: '2026-10-18', expires: '2026-10-25', notice: ownerWords, ...over } });
+    const SIG_PIN = 'c'.repeat(40);
+    const sigGate = join(tmp, 'signature-gate.json');
+    const writeGate = (over = {}) => writeFileSync(sigGate, JSON.stringify({ commit: SIG_PIN, reduced: { primary: 2.5, area15: 3, twoSec: 2 }, normal: { primary: 3.5, area15: 5, twoSec: 3 }, ...over }));
+    writeGate();
+    const ownerCfg = (over = {}) => ({ offline: false, approved: '2026-10-18', pin: SIG_PIN, interim: { owner: 'Orb 2026-10-18', approved: '2026-10-18', expires: '2026-10-25', notice: ownerWords, ...over } });
     // a record that would fail everything (empty): the build and the check must not need it
     writeFileSync(recordFile, '{}');
     const ob = build(join(tmp, 'site-owner'), ownerCfg(), []);
     check('the owner-approved site builds from a stub export WITHOUT a recorded run (not --local)', ob.status === 0, (ob.stderr || ob.stdout).slice(0, 400));
     check('the build says it is owner-approved and prints the record as report only', /OWNER-APPROVED \(Orb 2026-10-18\)/.test(ob.stdout) && /report-only:/.test(ob.stdout), ob.stdout.slice(0, 400));
     const goodO = join(tmp, 'site-owner');
-    const verifyO = (d, c = ownerCfg(), root = goodRoot, extra = []) => { writeCfg(c); return node('check-site-interim.mjs', ['--site', d, '--config', cfgFile, '--root', root, '--record', recordFile, '--today', '2026-10-19', '--no-pack-scan', ...extra]); };
+    const verifyO = (d, c = ownerCfg(), root = goodRoot, extra = []) => { writeCfg(c); return node('check-site-interim.mjs', ['--site', d, '--config', cfgFile, '--root', root, '--record', recordFile, '--today', '2026-10-19', '--no-pack-scan', ...(extra.includes('--signature-gate') ? [] : ['--signature-gate', sigGate]), ...extra]); };
     const r1 = verifyO(goodO);
     check('the checker passes the owner-approved site with an empty pass file', r1.status === 0, (r1.stderr || r1.stdout).slice(0, 500));
     const gateO = readFileSync(join(goodO, 'play/index.html'), 'utf8');
@@ -376,6 +388,73 @@ try {
       check('owner mode: an allowlist entry that no longer matches only prints a note (remove it)', rC.status === 0 && /no longer holds a British spelling/.test(rC.stdout), (rC.stderr || rC.stdout).slice(0, 300));
       const rD = verifyO(goodO, ownerCfg(), goodRoot, ['--ui-allow', join(tmp, 'no-such-allow.json')]);
       check('owner mode: a missing allowlist file is a failure, not a pass', rD.status === 1, (rD.stderr || rD.stdout).slice(0, 300));
+    }
+    // normal mode unreachable by any route (Legal's RL-195 condition (b); tools/site-routes.mjs): each test breaks one door of the smallest good tree
+    {
+      let rr = 0;
+      const routeRoot = (file, fn) => { const r = prefsRoot('root-route-' + (++rr)); const p = join(r, file); writeFileSync(p, fn(readFileSync(p, 'utf8'))); return r; };
+      const add = (s) => (t) => t + s;
+      const HUD = 'ui/hud/ui_hud.gd', DATA = 'ui/core/ui_data.gd', MAIN = 'render/core/main.gd';
+      failO('owner mode: a production set_feature (an override of the lock flag) fails', () => {}, ownerCfg(), routeRoot(HUD, add('\nfunc dbg() -> void:\n\tUiData.set_feature("lock_reduce_flashing", false)\n')));
+      failO('owner mode: rf_locked() reading another flag fails', () => {}, ownerCfg(), routeRoot(DATA, (t) => t.replace('feature("lock_reduce_flashing")', 'feature("lock_other")')));
+      failO('owner mode: a URL-word style writer of the option with no lock check fails (set_option("reduce_flashing", false))', () => {}, ownerCfg(), routeRoot(HUD, add('\nfunc url_word() -> void:\n\tset_option("reduce_flashing", false)\n')));
+      failO('owner mode: a writer through opts[...] with no lock check fails', () => {}, ownerCfg(), routeRoot(MAIN, add('\nfunc dbg() -> void:\n\tui_hud.opts["reduce_flashing"] = false\n')));
+      failO('owner mode: the Settings screen\'s door without the lock check fails (settings_set)', () => {}, ownerCfg(), routeRoot(HUD, (t) => t.replace('if key == "reduce_flashing" and UiData.rf_locked():', 'if key == "reduce_flashing" and false:')));
+      failO('owner mode: the saved setting\'s door without the lock check fails (load_saved_options)', () => {}, ownerCfg(), routeRoot(HUD, (t) => t.replace('if k == "reduce_flashing" and UiData.rf_locked():', 'if k == "reduce_flashing" and false:')));
+      failO('owner mode: code that sets the register\'s reduced_flashing to false fails', () => {}, ownerCfg(), routeRoot(MAIN, add('\nfunc dbg() -> void:\n\thost.vfx.reduced_flashing = false\n')));
+      failO('owner mode: code that sets the register by a negation fails (flash_calm = not ...)', () => {}, ownerCfg(), routeRoot(MAIN, add('\nfunc dbg() -> void:\n\tPaneWorld.flash_calm = not locked\n')));
+      failO('owner mode: the F8 debug key (flash_legacy) with no lock check fails', () => {}, ownerCfg(), routeRoot(MAIN, (t) => t.replace(' and not UiData.rf_locked()', '')));
+      failO('owner mode: the capture hook attached with no capture_hook feature fails (?flashcap=1)', () => {}, ownerCfg(), routeRoot(MAIN, (t) => t.replace('UiData.feature("capture_hook") or ', '')));
+      failO('owner mode: the capture hook attached with no lock check fails (a locked export could attach it)', () => {}, ownerCfg(), routeRoot(MAIN, (t) => t.replace(' or not UiData.rf_locked()', '')));
+      failO('owner mode: a URL word nobody reviewed that a public page honours fails (URL_ARGS minus LOCAL_ONLY_ARGS)', () => {}, ownerCfg(), routeRoot(MAIN, (t) => t.replace('"keyhelp"]', '"keyhelp", "nocover"]')));
+      failO('owner mode: a bypass word that is not local-only fails (flashcap out of LOCAL_ONLY_ARGS)', () => {}, ownerCfg(), routeRoot(MAIN, (t) => t.replace('"study", "flashcap", "nointro", "staticsky"', '"study", "nointro", "staticsky"')));
+      failO('owner mode: a bypass word that is not local-only fails (study out of LOCAL_ONLY_ARGS)', () => {}, ownerCfg(), routeRoot(MAIN, (t) => t.replace('["study", "flashcap"', '["flashcap"')));
+      failO('owner mode: an export whose features.json sets capture_hook true fails', () => {}, ownerCfg(), (() => { const r = prefsRoot('root-route-hook'); const p = join(r, 'ui/data/features.json'); const j = JSON.parse(readFileSync(p, 'utf8')); j.features.capture_hook = true; writeFileSync(p, JSON.stringify(j)); return r; })());
+      failO('owner mode: a tree with no ui_data.gd fails (the lock flag cannot be read)', () => {}, ownerCfg(), (() => { const r = prefsRoot('root-route-nodata'); rmSync(join(r, DATA)); return r; })());
+      fail('the routes scan runs in every mode: a URL-word writer fails the Legal-ruling interim too', () => {}, cfg(), routeRoot(HUD, add('\nfunc url_word() -> void:\n\tset_option("reduce_flashing", false)\n')));
+      // the one pin Legal ruled may stay up while the fix lands (RL-196): tools/site-routes-grandfather.json, for that commit only
+      {
+        const openRoot = routeRoot(MAIN, (t) => t.replace(' or not UiData.rf_locked()', ''));
+        const gfFile = join(tmp, 'routes-grandfather.json');
+        writeFileSync(gfFile, JSON.stringify({ commit: SIG_PIN, ruling: 'RL-196' }));
+        const rG = verifyO(goodO, ownerCfg(), openRoot, ['--routes-grandfather', gfFile]);
+        check('owner mode: the grandfathered pin is not failed for its open route, and the check says so (RL-196)', rG.status === 0 && /routes scan finds 1 open route on the pin cccccccc, which RL-196 lets stay up/.test(rG.stdout), (rG.stderr || rG.stdout).slice(0, 300));
+        writeFileSync(gfFile, JSON.stringify({ commit: 'd'.repeat(40), ruling: 'RL-196' }));
+        const rH = verifyO(goodO, ownerCfg(), openRoot, ['--routes-grandfather', gfFile]);
+        check('owner mode: a grandfather record for another commit excuses nothing: a new pin passes the scan in full', rH.status === 1 && /normal mode is reachable/.test(rH.stderr), (rH.stderr || rH.stdout).slice(0, 300));
+        const rI = verifyO(goodO, ownerCfg(), openRoot, ['--routes-grandfather', join(tmp, 'no-such-grandfather.json')]);
+        check('owner mode: with no grandfather record the open route fails', rI.status === 1, (rI.stderr || rI.stdout).slice(0, 300));
+        const rJ = verifyO(goodO, ownerCfg(), goodRoot, ['--routes-grandfather', gfFile]);
+        check('owner mode: a clean tree passes whatever the grandfather record says', rJ.status === 0, (rJ.stderr || rJ.stdout).slice(0, 300));
+      }
+      const okRoot = routeRoot(HUD, add('\nfunc on() -> void:\n\tset_option("reduce_flashing", true)\n\n\nfunc guarded() -> void:\n\tif UiData.rf_locked():\n\t\treturn\n\tset_option("reduce_flashing", false)\n'));
+      const rOk = verifyO(goodO, ownerCfg(), okRoot);
+      check('owner mode: writing On, and a write behind the lock check, pass the routes scan', rOk.status === 0, (rOk.stderr || rOk.stdout).slice(0, 300));
+      const toolRoot = routeRoot(MAIN, (t) => t);
+      mkdirSync(join(toolRoot, 'render/tools'), { recursive: true });
+      writeFileSync(join(toolRoot, 'render/tools/flash_capture.gd'), 'func begin() -> void:\n\tmain.ui_hud.opts["reduce_flashing"] = reduced\n\tUiData.set_feature("x", true)\n');
+      const rTool = verifyO(goodO, ownerCfg(), toolRoot);
+      check('owner mode: the tools folders are not a player\'s path: the hook\'s own writes do not fail the scan', rTool.status === 0, (rTool.stderr || rTool.stdout).slice(0, 300));
+    }
+    // the pin only moves to a commit whose signature clip, reduced, reads no worse than 2.5 / 3 / 2 (Legal's RL-195 condition (a); tools/flash/signature-gate.mjs)
+    {
+      const pass = (name, over, cfgOver) => { writeGate(over); const r = verifyO(goodO, cfgOver ? ownerCfg(cfgOver) : ownerCfg(), goodRoot); check(name, r.status === 0, (r.stderr || r.stdout).slice(0, 300)); };
+      const refuse = (name, over, pin, re) => { writeGate(over); const c = ownerCfg(); if (pin !== undefined) c.pin = pin; const r = verifyO(goodO, c, goodRoot); check(name, r.status === 1 && re.test(r.stderr), (r.stderr || r.stdout).slice(0, 300)); };
+      pass('owner mode: a record for the pin with reduced at 2.5 / 3 / 2 passes the signature gate', {});
+      refuse('owner mode: a pin with no signature reading on record fails (the pin moved before the clip was read)', {}, 'd'.repeat(40), /signature reading on record is for cccccccc, the pin is dddddddd/);
+      refuse('owner mode: reduced over 2.5 on the primary fails the gate', { reduced: { primary: 3, area15: 3, twoSec: 2 } }, undefined, /on the record: primary 3 \(over 2\.5\)/);
+      refuse('owner mode: reduced over 3 on the area reading fails the gate', { reduced: { primary: 2.5, area15: 3.5, twoSec: 2 } }, undefined, /area15 3.5/);
+      refuse('owner mode: reduced over 2 on the two-second memory fails the gate', { reduced: { primary: 2.5, area15: 3, twoSec: 2.5 } }, undefined, /twoSec 2.5/);
+      refuse('owner mode: a reduced reading that is missing from the record fails the gate', { reduced: null }, undefined, /not read/);
+      pass('owner mode: a grandfathered record (the pin Legal ruled on before the condition) passes though it reads worse', { grandfathered: true, reduced: { primary: 3, area15: 3, twoSec: 3 } });
+      refuse('owner mode: a grandfathered record does not carry over to another pin', { grandfathered: true, reduced: { primary: 3, area15: 3, twoSec: 3 } }, 'd'.repeat(40), /is for cccccccc/);
+      const rNo = verifyO(goodO, ownerCfg(), goodRoot, ['--signature-gate', join(tmp, 'no-such-gate.json')]);
+      check('owner mode: a missing signature-gate file fails', rNo.status === 1 && /signature-gate.json is missing/.test(rNo.stderr), (rNo.stderr || rNo.stdout).slice(0, 300));
+      writeGate({ reduced: { primary: 4, area15: 5, twoSec: 4 } });
+      writeRecord();
+      const rLeg = verify(good, cfg(), goodRoot);
+      check('the Legal-ruling interim (no owner) does not read the signature gate', rLeg.status === 0, (rLeg.stderr || rLeg.stdout).slice(0, 300));
+      writeGate();
     }
     writeRecord();
   }

@@ -115,6 +115,20 @@ try {
   check('the interim export sets lock_reduce_flashing true in the pinned tree', JSON.parse(readFileSync(join(tree3, 'ui/data/features.json'), 'utf8')).features.lock_reduce_flashing === true);
   exportPinned(Cc, web3, { repo: dir, tree: tree3, godotNode: stub });
   check('without the lock option the export is as committed', JSON.parse(readFileSync(join(tree3, 'ui/data/features.json'), 'utf8')).features.lock_reduce_flashing === false);
+  // the nightly's MEASUREMENT export sets the build-time capture_hook feature too (Legal RL-196); the public export never does
+  put('ui/data/features.json', JSON.stringify({ schema: 1, features: { reduce_flashing: true, lock_reduce_flashing: false, capture_hook: false } }, null, 2));   // as the real file is written: a space after the colon
+  const Ch = commit('a commit with the capture_hook feature');
+  exportPinned(Ch, web3, { repo: dir, tree: tree3, godotNode: stub, lock: true, hook: true });
+  const featH = JSON.parse(readFileSync(join(tree3, 'ui/data/features.json'), 'utf8')).features;
+  check('the measurement export sets capture_hook true next to the lock', featH.capture_hook === true && featH.lock_reduce_flashing === true);
+  exportPinned(Ch, web3, { repo: dir, tree: tree3, godotNode: stub, lock: true });
+  const featP = JSON.parse(readFileSync(join(tree3, 'ui/data/features.json'), 'utf8')).features;
+  check('the public export (lock, no hook option) leaves capture_hook false', featP.capture_hook === false && featP.lock_reduce_flashing === true);
+  exportPinned(Ch, web3, { repo: dir, tree: tree3, godotNode: stub, hook: true });
+  check('the hook option alone does not lock anything', JSON.parse(readFileSync(join(tree3, 'ui/data/features.json'), 'utf8')).features.lock_reduce_flashing === false);
+  put('ui/data/features.json', JSON.stringify({ schema: 1, features: { reduce_flashing: true, lock_reduce_flashing: false } }));
+  const Cn = commit('a commit older than the capture_hook feature');
+  check('a pinned commit with no capture_hook key exports with the hook option and gets none (its hook is gated by the page host)', (() => { exportPinned(Cn, web3, { repo: dir, tree: tree3, godotNode: stub, hook: true }); return !('capture_hook' in JSON.parse(readFileSync(join(tree3, 'ui/data/features.json'), 'utf8')).features); })());
   put('ui/data/features.json', JSON.stringify({ schema: 1, features: { reduce_flashing: true } }));
   const Cd = commit('a commit older than the lock');
   check('the lock option refuses a commit whose features.json has no lock key (older than the rf-lock of UI)', (() => { try { exportPinned(Cd, web3, { repo: dir, tree: tree3, godotNode: stub, lock: true }); return false; } catch (e) { return /rf-lock/.test(e.message); } })());

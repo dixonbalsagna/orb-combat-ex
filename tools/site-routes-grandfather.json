@@ -1,0 +1,6 @@
+{
+  "_why": "The pin the routes scan (tools/site-routes.mjs, Legal's RL-195 condition (b)) does not fail for: the live demo, which Legal ruled stays up while the lock-route fix lands (RL-196, 2026-10-27). It still has the capture hook and the F8 key without the build-time guards (its URL words are dropped on a public host at run time: UiHud.bypass_allowed), and F8 on it reads as the pin does (reduced 3 / 3 / 3, nothing over 3.5). Every new pin must pass the scan in full; this record is for this commit only, like tools/flash/signature-gate.json's grandfathered record.",
+  "commit": "257a766c26f8766fb09b063864c41c5d8ba64dc0",
+  "ruling": "RL-196",
+  "date": "2026-10-27"
+}
