@@ -949,6 +949,531 @@
         "^_": {}
       },
       "additionalProperties": false
+    },
+    "after": {
+      "type": "object",
+      "required": [
+        "scan",
+        "span",
+        "fire",
+        "ember",
+        "snow",
+        "scree",
+        "wall",
+        "wet",
+        "split"
+      ],
+      "properties": {
+        "scan": {
+          "type": "object",
+          "required": [
+            "every",
+            "max_cols"
+          ],
+          "properties": {
+            "every": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60
+            },
+            "max_cols": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 120
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false
+        },
+        "span": {
+          "type": "object",
+          "required": [
+            "base",
+            "per_sep",
+            "max"
+          ],
+          "properties": {
+            "base": {
+              "type": "number",
+              "minimum": 100,
+              "maximum": 3000
+            },
+            "per_sep": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "max": {
+              "type": "number",
+              "minimum": 500,
+              "maximum": 6000
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false
+        },
+        "fire": {
+          "type": "object",
+          "required": [
+            "rate",
+            "size",
+            "life",
+            "rise",
+            "cap",
+            "smoke_rate",
+            "smoke_size",
+            "ember_rate",
+            "length",
+            "life_ember",
+            "fade",
+            "grav"
+          ],
+          "properties": {
+            "rate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 8
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 4,
+                "maximum": 200
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "life": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 3
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "rise": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 400
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 40
+            },
+            "smoke_rate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "smoke_size": {
+              "type": "number",
+              "minimum": 4,
+              "maximum": 120
+            },
+            "ember_rate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "length": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 2,
+                "maximum": 60
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "life_ember": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 4
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "fade": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 600
+            },
+            "grav": {
+              "type": "number",
+              "minimum": -2,
+              "maximum": 2
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false
+        },
+        "ember": {
+          "type": "object",
+          "required": [
+            "rate",
+            "length",
+            "rise",
+            "life",
+            "grav",
+            "fade"
+          ],
+          "properties": {
+            "rate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 8
+            },
+            "length": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 2,
+                "maximum": 60
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "rise": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 400
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "life": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 4
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "grav": {
+              "type": "number",
+              "minimum": -2,
+              "maximum": 2
+            },
+            "fade": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 600
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false
+        },
+        "snow": {
+          "type": "object",
+          "required": [
+            "rate",
+            "size",
+            "h",
+            "fall",
+            "life",
+            "cap",
+            "puff_rate",
+            "puff_size",
+            "fade"
+          ],
+          "properties": {
+            "rate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 12
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 2,
+                "maximum": 60
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "h": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 600
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "fall": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 400
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "life": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 4
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 400
+            },
+            "puff_rate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "puff_size": {
+              "type": "number",
+              "minimum": 4,
+              "maximum": 120
+            },
+            "fade": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 600
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false
+        },
+        "scree": {
+          "type": "object",
+          "required": [
+            "rate",
+            "size",
+            "life",
+            "puff_rate",
+            "puff_size"
+          ],
+          "properties": {
+            "rate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 8
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 2,
+                "maximum": 60
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "life": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 4
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "puff_rate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "puff_size": {
+              "type": "number",
+              "minimum": 4,
+              "maximum": 120
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false
+        },
+        "wall": {
+          "type": "object",
+          "required": [
+            "rate",
+            "len",
+            "rise",
+            "foam_rate",
+            "foam_size"
+          ],
+          "properties": {
+            "rate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 12
+            },
+            "len": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 4,
+                "maximum": 80
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "rise": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 600
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "foam_rate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "foam_size": {
+              "type": "number",
+              "minimum": 4,
+              "maximum": 120
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false
+        },
+        "wet": {
+          "type": "object",
+          "required": [
+            "rate",
+            "size",
+            "life",
+            "age"
+          ],
+          "properties": {
+            "rate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 8
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 4,
+                "maximum": 80
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "life": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 4
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "age": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 600
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false
+        },
+        "split": {
+          "type": "object",
+          "required": [
+            "rate",
+            "size",
+            "life",
+            "rise"
+          ],
+          "properties": {
+            "rate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 4
+            },
+            "size": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 4,
+                "maximum": 120
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "life": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 6
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "rise": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 200
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false
+        }
+      },
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "description": "What a beam leaves in the ground, drawn (after.gd): flames, embers, powder, spray and mist from World's aftermath state."
     }
   },
   "patternProperties": {

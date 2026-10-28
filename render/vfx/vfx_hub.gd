@@ -102,6 +102,8 @@ var biomefx_enabled: bool = VfxLook.BIOMEFX_DEFAULT
 var biome_ambient_enabled: bool = VfxLook.BIOME_AMBIENT_DEFAULT
 var forestfire := VfxForestFire.new()                # a burning tree's flames, embers and smoke (forest_fire.gd)
 var forest_fire_enabled: bool = VfxLook.FOREST_FIRE_DEFAULT
+var afterfx := VfxAfter.new()                        # what a beam leaves in the ground, drawn (after.gd; World's aftermaths, nothing while its switch is off)
+var after_enabled: bool = VfxLook.AFTER_DEFAULT
 var debris := VfxDebris.new()
 var water := VfxWater.new()
 var holes: Array = []               # Hole
@@ -174,6 +176,8 @@ func reset(S: SimState, p_seed: int) -> void:
 	biomefx.reset()
 	forestfire.debris = debris
 	forestfire.reset()
+	afterfx.debris = debris
+	afterfx.reset()
 	water.debris = debris
 	water.reset()
 	debris.water = water
@@ -394,6 +398,8 @@ func _consume(S: SimState, events: Array) -> void:
 			earth.step_skid(S)
 		if forest_fire_enabled and not frozen:
 			forestfire.step(S, dt, VfxLook.QUALITY_SHARDS[clampi(quality, 0, 2)], reduced_motion)
+		if after_enabled and not frozen:
+			afterfx.step(S, dt, VfxLook.QUALITY_SHARDS[clampi(quality, 0, 2)], reduced_motion)
 		if biomefx_enabled and biome_ambient_enabled and not frozen:
 			biomefx.ambient(S, dt, VfxLook.QUALITY_SHARDS[clampi(quality, 0, 2)], reduced_motion)
 		if react_enabled and not frozen:

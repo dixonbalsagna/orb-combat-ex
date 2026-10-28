@@ -200,6 +200,7 @@ func _run() -> void:
 	_biome_ambient()
 	_biome_scars()
 	_forest_fire()
+	_after()
 	_trails()
 	_intro()
 	_intro_marks()
@@ -1399,6 +1400,122 @@ func _forest_fire() -> void:
 	_check(lp < 1.0e8 and lf < 1.0e8 and lp > 0.55 * 150.0 and lf < lp - 20.0, "the flames follow the kind's crown: a palm's start high up (%.0f), a fir's low (%.0f)" % [lp, lf])
 	var kin := VfxHub.new()
 	_check(not kin.forestfire.kind_of.is_valid() and kin.forestfire._kind(3) == "tree", "with no kind hook every tree is the broadleaf")
+
+
+## What a beam leaves in the ground (docs/vfx/after-fx.md): each strip kind draws its look from World's aftermath state, the ground-side kinds draw nothing, and nothing is drawn while the module is off (no arrays).
+func _after() -> void:
+	print("aftermaths")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var x0: float = SimWrap.wrap(5000.0 * SimConst.PS)
+	for i in range(2):
+		S.fighters[i].x = SimWrap.wrap(x0 + (-110.0 if i == 0 else 110.0))
+	var c0: int = int(floor(x0 / SimConst.COL))
+	var NOW: int = 1000
+	var strip := func(kind: int, n: int, left: int, at: int) -> void:
+		if S.aftermath.size() != SimConst.NC:
+			WorldAfter.size(S)
+		S.aftermath.fill(0)
+		S.aftermathT.fill(0)
+		S.aftermathJobs = []
+		S.waterTick = float(NOW)
+		for k in range(n):
+			var c: int = posmod(c0 + at + k, SimConst.NC)
+			S.aftermath[c] = kind
+			S.aftermathT[c] = NOW + left
+	var run := func(ticks: int, reduced: bool, enabled: bool) -> VfxHub:
+		var h := VfxHub.new()
+		h.reset(S, 6)
+		h.px_per_unit = 0.3
+		h.reduced_motion = reduced
+		h.after_enabled = enabled
+		for k in range(ticks):
+			_tick(S, h, [])
+		return h
+	_check(S.aftermath.size() == 0, "with the aftermaths' switch off the state has no arrays")
+	var h0: VfxHub = run.call(120, false, true)
+	_check(h0.afterfx.made.is_empty(), "with the switch off nothing is drawn")
+	strip.call(WorldAfter.BURNING, 20, 500, 10)
+	var h1: VfxHub = run.call(240, false, true)
+	var fl: Array = h1.debris.bits.filter(func(b): return b.kind == VfxDebris.FLAME)
+	_check(int(h1.afterfx.made.get("flame", 0)) > 10 and int(h1.afterfx.made.get("fsmoke", 0)) > 0 and int(h1.afterfx.made.get("fember", 0)) > 0, "a fire line makes flames, smoke and embers (%s)" % str(h1.afterfx.made))
+	var near: int = 0
+	for b in fl:
+		if absf(SimWrap.sdx(x0 + 20.0 * SimConst.COL, b.x)) < 11.0 * SimConst.COL and b.col.is_equal_approx(Color("#ff9a2e")):
+			near += 1
+	_check(fl.size() > 0 and near == fl.size(), "the flames are steady orange and sit along the strip (%d of %d)" % [near, fl.size()])
+	strip.call(WorldAfter.BURNING, 20, 20, 10)
+	var h2: VfxHub = run.call(240, false, true)
+	_check(int(h2.afterfx.made.get("flame", 0)) < int(h1.afterfx.made.get("flame", 0)) / 2, "a fire line dies down as it ends (%d against %d flames)" % [int(h2.afterfx.made.get("flame", 0)), int(h1.afterfx.made.get("flame", 0))])
+	strip.call(WorldAfter.BURNING, 90, 5000, -45)
+	var peak: int = 0
+	var hp := VfxHub.new()
+	hp.reset(S, 6)
+	hp.px_per_unit = 0.3
+	for k in range(300):
+		_tick(S, hp, [])
+		peak = maxi(peak, hp.debris._flame_alive)
+	_check(peak <= int(VfxAfter._g("fire", "cap", 26.0)) + 2, "a long fire line keeps the flames under their cap (peak %d, cap %d, earth's 40)" % [peak, int(VfxAfter._g("fire", "cap", 26.0))])
+	strip.call(WorldAfter.BURNING, 20, 500, 10)
+	var hr: VfxHub = run.call(240, true, true)
+	_check(int(hr.afterfx.made.get("flame", 0)) < int(h1.afterfx.made.get("flame", 0)) and int(hr.afterfx.made.get("fsmoke", 0)) == 0, "reduced motion makes fewer flames (%d against %d) and no smoke" % [int(hr.afterfx.made.get("flame", 0)), int(h1.afterfx.made.get("flame", 0))])
+	var ha: VfxHub = run.call(90, false, true)
+	var hb: VfxHub = run.call(90, false, true)
+	var xa: Array = ha.debris.bits.filter(func(b): return b.kind == VfxDebris.FLAME).map(func(b): return snappedf(b.x, 0.001))
+	var xb: Array = hb.debris.bits.filter(func(b): return b.kind == VfxDebris.FLAME).map(func(b): return snappedf(b.x, 0.001))
+	_check(xa.size() > 0 and xa == xb, "the same strip draws the same fire twice (%d flames)" % xa.size())
+	var hs: VfxHub = run.call(240, false, false)
+	_check(hs.afterfx.made.is_empty(), "the switch (after_enabled) stops it")
+	strip.call(WorldAfter.BURNING, 20, 500, 400)
+	var hf: VfxHub = run.call(240, false, true)
+	_check(hf.afterfx.made.is_empty(), "a strip beyond the framing's span makes nothing")
+	strip.call(WorldAfter.EMBER, 20, 600, 10)
+	var he: VfxHub = run.call(240, false, true)
+	var embers: Array = he.debris.bits.filter(func(b): return b.kind == VfxDebris.EMBER)
+	_check(int(he.afterfx.made.get("ember", 0)) > 5 and embers.size() <= VfxLook.EMBER_CAP, "a glowing strip sends up embers (%d made, %d alive, under the pool's cap)" % [int(he.afterfx.made.get("ember", 0)), embers.size()])
+	strip.call(WorldAfter.EMBER, 20, 600, 10)
+	S.aftermathT.fill(0)
+	var hc: VfxHub = run.call(240, false, true)
+	_check(hc.afterfx.made.get("ember", 0) == 0 or int(hc.afterfx.made.get("ember", 0)) < 4, "a strip that has cooled (its end time passed) sends up no more")
+	strip.call(WorldAfter.SNOW, 20, 120, 10)
+	var hn: VfxHub = run.call(60, false, true)
+	_check(int(hn.afterfx.made.get("snow", 0)) > 15 and int(hn.afterfx.made.get("spuff", 0)) > 0, "a snow dump makes a powder curtain and ground puffs (%s)" % str(hn.afterfx.made))
+	var snow_flecks: Array = hn.debris.bits.filter(func(b): return b.kind == VfxDebris.SNOW)
+	_check(snow_flecks.size() <= int(VfxAfter._g("snow", "cap", 160.0)) + 8, "the powder stays under its cap (%d)" % snow_flecks.size())
+	strip.call(WorldAfter.SCREE, 12, 0, 10)
+	var hq: VfxHub = run.call(120, false, true)
+	_check(hq.afterfx.made.is_empty(), "a settled rubble strip (no scree run going) makes nothing")
+	var job: Array = []
+	for k in range(14):
+		job.append(0)
+	job[4] = WorldAfter.J_SCREE
+	S.aftermathJobs = [job]
+	var hv: VfxHub = run.call(120, false, true)
+	_check(int(hv.afterfx.made.get("scree", 0)) > 3 and int(hv.afterfx.made.get("sdust", 0)) > 0, "while the scree run goes, chunks and dust come down the slope (%s)" % str(hv.afterfx.made))
+	strip.call(WorldAfter.OPEN, 12, 90, 10)
+	var hw0: VfxHub = run.call(120, false, true)
+	_check(hw0.afterfx.made.is_empty(), "a trench with no water at its sides has no walls to draw")
+	for side_c in [c0 + 9, c0 + 22]:
+		S.water[posmod(side_c, SimConst.NC)] = 60.0
+	var hw: VfxHub = run.call(120, false, true)
+	var sprays: Array = hw.debris.bits.filter(func(b): return b.kind == VfxDebris.SPRAY)
+	_check(int(hw.afterfx.made.get("spray", 0)) > 5 and int(hw.afterfx.made.get("foam", 0)) > 0 and sprays.size() <= 120, "the parted sea's walls throw spray and foam (%s)" % str(hw.afterfx.made))
+	S.water.fill(0.0)
+	strip.call(WorldAfter.WET, 12, 240, 10)
+	var hwf: VfxHub = run.call(120, false, true)
+	strip.call(WorldAfter.WET, 12, 20, 10)
+	var hwo: VfxHub = run.call(120, false, true)
+	_check(int(hwf.afterfx.made.get("wet", 0)) > 3 and int(hwo.afterfx.made.get("wet", 0)) < int(hwf.afterfx.made.get("wet", 0)), "a wet shore is foamiest at the start of its wet time (%d fresh, %d old)" % [int(hwf.afterfx.made.get("wet", 0)), int(hwo.afterfx.made.get("wet", 0))])
+	strip.call(WorldAfter.SPLIT, 10, 0, 10)
+	var hl: VfxHub = run.call(240, false, true)
+	var hlr: VfxHub = run.call(240, true, true)
+	_check(int(hl.afterfx.made.get("mist", 0)) > 0 and hlr.afterfx.made.is_empty(), "a split floe's lead has a sea smoke (none in reduced motion)")
+	var ground_only: bool = true
+	for kind in [WorldAfter.GLAZE, WorldAfter.CLEARED, WorldAfter.PLATES, WorldAfter.BURNT, WorldAfter.CRUST, WorldAfter.FLOODED]:
+		strip.call(kind, 20, 0, 10)
+		var hg: VfxHub = run.call(120, false, true)
+		ground_only = ground_only and hg.afterfx.made.is_empty()
+	_check(ground_only, "glaze, cleared, plates, burnt, crust and flooded ground draw nothing of VFX's (Rendering's looks)")
 
 
 func _earth() -> void:

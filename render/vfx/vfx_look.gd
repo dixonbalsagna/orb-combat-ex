@@ -80,6 +80,7 @@ const BEAMPLAY_DEFAULT: bool = true       # the beam plays on screen: the crossi
 const EARTH_DEFAULT: bool = true         # tumbling material chunks, cel flames and the ground-contact effects
 const BIOMEFX_DEFAULT: bool = true       # what an impact and a landing throw up depends on the biome's material (biome.gd; Orb, 2026-10-23)
 const FOREST_FIRE_DEFAULT: bool = true     # a burning tree (World's burn field) draws flames, embers and smoke (forest_fire.gd); nothing without the sim's fires
+const AFTER_DEFAULT: bool = true           # what a beam leaves in the ground (World's aftermaths) draws its flames, embers, powder, spray and mist (after.gd); nothing while the aftermaths' switch is off
 const BIOME_AMBIENT_DEFAULT: bool = false  # and a light ambient drift in each biome's air (biome.gd `ambient`): OFF until Orb has seen it (EP, 2026-10-27)
 ## Cracks are a pure function of the sim's records (S.craters, S.slides) plus the match seed (render/vfx/crack_gen.gd),
 ## so a seek, a snapshot or a late join draws the same ones. Lengths and widths are in crater radii r or trench half
