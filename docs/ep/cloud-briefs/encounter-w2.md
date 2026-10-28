@@ -4,9 +4,9 @@
 
 **Base.** Make a branch `cloud/encounter-systems/biomes-w2` from origin/main. Then add two commits, in this order:
 1. Your W1 park: `node docs/director/pending/biomes-w1/w1.cjs .`, committed as "Encounter: biomes W1".
-2. World's W3 park: `git -c core.autocrlf=false apply docs/world/pending/biomes-w3/biomes-w3.diff`, committed as "World: biomes W3".
+2. ~~World's W3 park~~: **skip this step.** World's W3 (4be8f1d5) and W4 (bb5cdb43, crater shapes, floes and props) are already on main. If you started before this note and the W3 apply fails with "already applied", that's expected; carry on.
 
-The EP is landing both on main separately with the same content. Build W2 on top of them.
+The EP is landing W1 on main separately with the same content. Build W2 on top of it. World's W4 adds `WorldCraters.eventFor` for crater_shape: send it on a crater event whose `surface` is set. That's W4's NEEDS item 2, now yours.
 
 **W2, rule 3 step 2:**
 1. **The six outcome twists.** Four HITs under the water rule (ocean, sea ice, wetland, beach) and two GUARD push-backs (ice sheet, tundra), as biomes.md specifies.
