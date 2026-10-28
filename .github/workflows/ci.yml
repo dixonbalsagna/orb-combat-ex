@@ -75,7 +75,7 @@ jobs:
           node-version: '24.19.0'
       - name: Validator self-test
         run: node tools/validate.js --self-test
-      - name: Moveset generator tests (tools/movegen: the port matches the reference, Legal's names screen holds)
+      - name: "Moveset generator tests (the port matches the reference; Legal's names screen holds)"
         run: node tools/movegen/test/run.mjs
       - name: Validate the data
         run: node tools/validate.js
