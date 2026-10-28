@@ -858,5 +858,12 @@
       "rule": "authored main-story changes to a fighter (a form gained, a side switched, a rival stepping in) are outside mc01 when they are triggered by story position only (the chapter reached, or an explicit story choice at an authored decision point) and their numbers are authored per branch; they are never triggered or sized by how a fighter fared against this player (a close or flawless win, wounds taken, how often he was beaten); filler never resolves a main-story thread and nothing it does carries back; the provenance record says which story lines are Orb's and which are drafted by AI tools, and no public line says 'human-made' or 'written by hand' for the story as a whole",
       "why": "RL-185; mc01"
     }
+  ],
+  "names": [
+    {
+      "id": "n01",
+      "rule": "the word 'ball' stays banned in a move's name or title (e11); the one allowed phrase is 'ball of the foot' as the plain anatomical name of a foot strike's striking surface (movegen parts.json nameScreen.allow), never as a title word, never beside an energy, light or hand word, and never 'ball of the hand' or 'ball of light'; any further allowed phrase is added here by Legal, not by the generator's own list",
+      "why": "RL-198"
+    }
   ]
 }
