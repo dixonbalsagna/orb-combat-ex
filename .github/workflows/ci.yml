@@ -210,6 +210,23 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/transport_check.gd'
       - name: Transport check, negative control (a smaller-proposal handshake and no time sync must be caught)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/transport_check.gd -- --negative-control'
+      # Rollback with the fighter AIs driving both slots to a KO (docs/net/rollback.md section 12; Netcode's ai-depth report, NEEDS 1): every confirmed tick equal on lan, p120 and far.
+      - name: Rollback check, fighter AIs to a KO (NetAiDriver on every slot, lan, p120 and far)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --ai --seeds=1 --ticks=600 --profiles=lan,p120,far'
+      - name: Rollback check, fighter AIs to a KO, negative control (a restore with one wrong RNG bit, a missed rollback and an impure AI must be caught)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --ai --seeds=1 --ticks=600 --profiles=lan,p120,far --negative-control'
+      - name: Rollback check, sim AI as P2 (the AI inside the tick, re-run by rollbacks)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --ai=sim --seeds=1 --ticks=600 --profiles=lan,p120,far'
+      - name: Rollback check, sim AI as P2, negative control (the same breaks must be caught)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --ai=sim --seeds=1 --ticks=600 --profiles=lan,p120,far --negative-control'
+      - name: Rollback check, depth setup (fight lanes with depth physical, scripted inputs)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=depth --seeds=1 --ticks=300 --profiles=lan,p120,far'
+      - name: Rollback check, depth setup, negative control (a wrong restore and a missed rollback must be caught)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=depth --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control'
+      - name: Rollback check, planet2 setup (a gen 2 ring planet, as QA plays them)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=planet2 --seeds=1 --ticks=300 --profiles=lan,p120,far'
+      - name: Rollback check, planet2 setup, negative control (a wrong restore and a missed rollback must be caught)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=planet2 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control'
       - name: Two-process ENet match on 127.0.0.1 (both processes match each other and the straight run, LAN and p200)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/enet_check.gd -- --ticks=1800 --profiles=lan,p200'
       - name: Two-process ENet match, negative control (a perturbed joiner must be caught)
