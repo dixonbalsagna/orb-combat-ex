@@ -3103,6 +3103,85 @@ func _test_pose_lookup() -> void:
 	print("missing-pose lookup: %d waves, no shared ids; the lookup loaded one wave of two and none for an unknown id" % names.size())
 
 
+## A fighter's pick lists asked for before the queue got to them (docs/animation/cloud-reports/2026-10-28-pair-ready.md): only his own queued waves are loaded and his lists built;
+## the other fighter's work stays queued. The lists are those of the in-order run only because a fighter's lists read no key set outside his own waves and keysets.json
+## (checked here for every fighter: a manifest strike is a key set with his waves alone exactly when it is one with every wave), and the waves share no ids (_test_pose_lookup).
+func _test_pair_ready() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var base_k: Dictionary = AnimData._read("keysets.json").get("keysets", {})
+	var all_k: Dictionary = base_k.duplicate()
+	var da := DirAccess.open(AnimData.DIR + "waves")
+	for fn in da.get_files():
+		if fn.ends_with(".keysets.json"):
+			all_k.merge(AnimData._read("waves/" + fn).get("keysets", {}))
+	var names_of: Dictionary = {}
+	for key in AnimData.fighters_cfg:
+		var names: Array = []
+		var wv: Dictionary = AnimData.fighters_cfg[key].get("waves", {})
+		for k in wv:
+			if wv[k] is Array:
+				names.append_array(wv[k])
+			else:
+				names.append(String(wv[k]))
+		names.append_array(AnimData.pair.get("shared", []))
+		names_of[key] = names
+		var own_k: Dictionary = base_k.duplicate()
+		for wn in names:
+			if FileAccess.file_exists(AnimData.DIR + "waves/" + String(wn) + ".keysets.json"):
+				own_k.merge(AnimData._read("waves/" + String(wn) + ".keysets.json").get("keysets", {}))
+		for wn in names:
+			if FileAccess.file_exists(AnimData.DIR + "waves/" + String(wn) + ".manifest.json"):
+				for st in AnimData._read("waves/" + String(wn) + ".manifest.json").get("strikes", []):
+					if all_k.has(String(st.id)) != own_k.has(String(st.id)):
+						bad.append("%s: %s's strike %s is a key set only with another fighter's waves" % [key, wn, st.id])
+	# the early build itself: one own wave of each queued again, then the lists of the one queued second asked for
+	var kp: String = "protagonist"
+	var kr: String = "antihero"
+	var wp: String = "protag1"
+	var wr: String = "rival1"
+	if not names_of.has(kp) or not names_of.has(kr) or not names_of[kp].has(wp) or not names_of[kr].has(wr):
+		bad.append("the early build's test fighters or waves are not in the data")
+	else:
+		var want: Dictionary = {}
+		var keep: Dictionary = {}
+		for key in [kp, kr]:
+			keep[key] = AnimData.pair_lists.get(key)
+			AnimData._build_lists(key, names_of[key])
+			want[key] = JSON.stringify(AnimData.pair_lists[key])
+			AnimData.pair_lists.erase(key)
+		var was: bool = AnimData.lazy
+		var own: bool = AnimData.pair_own
+		AnimData.lazy = true
+		AnimData.pair_own = true
+		for pr in [[kp, wp], [kr, wr]]:
+			AnimData._waves_done.erase(pr[1])
+			for id in AnimData.wave_of.keys():
+				if AnimData.wave_of[id] == pr[1]:
+					AnimData.poses.erase(id)
+					AnimData.mirrors.erase(id)
+			AnimData._work.append({"k": "wave", "wn": pr[1]})
+			AnimData._work.append({"k": "lists", "key": pr[0], "names": names_of[pr[0]]})
+		var w0: int = AnimData.pair_early_waves
+		var d0: int = AnimData.bake_drains
+		if not AnimData.pair_ready(kr) or not AnimData._waves_done.has(wr) or AnimData._waves_done.has(wp) or AnimData.pair_lists.has(kp) or AnimData.pair_early_waves != w0 + 1:
+			bad.append("the second fighter's lists load his own wave alone and build his lists alone")
+		if AnimData._work.size() != 3 or String(AnimData._work[0].wn) != wp or AnimData.bake_drains != d0:
+			bad.append("the first fighter's work stays queued, in order, and the second's turns are left to do nothing")
+		if JSON.stringify(AnimData.pair_lists.get(kr, {})) != want[kr]:
+			bad.append("the lists built early differ from the in-order ones")
+		AnimData.bake_all()
+		if JSON.stringify(AnimData.pair_lists.get(kp, {})) != want[kp] or not AnimData._waves_done.has(wp) or not AnimData._work.is_empty():
+			bad.append("the queue's own turn builds the first fighter's lists as in order")
+		AnimData.lazy = was
+		AnimData.pair_own = own
+		for key in keep:
+			if keep[key] != null:
+				AnimData.pair_lists[key] = keep[key]
+	_expect(bad.is_empty(), "pair_ready: a fighter's lists read only his own waves, and asked for early they load only his waves and match the in-order lists: %s" % str(bad.slice(0, 8)))
+	print("pair_ready: %d fighters read only their own key sets; the early ask loaded one wave of two and left the other fighter queued" % names_of.size())
+
+
 ## The mid-band lunge's wind-up crouch (docs/animation/lunge-crouch.md). From the lunge cue on its own tick the body deepens into the cell's pose over the cue's ticks (light 6, heavy 10, the return's 10), and hands over to the travel
 ## with no snap: the pose is let go over its exit ramp when the rush begins, and the body is exactly the stand again after. A wind-up of 3 to 5 ticks is drawn over 6; under 3 nothing. Nothing may be NaN or past a limit.
 func _lunge_probe(who: String, weight: String, wind: int, ticks: int, off: bool) -> Dictionary:
@@ -6658,6 +6737,7 @@ func _run() -> void:
 	_test_shake()
 	_test_incremental_bake()
 	_test_pose_lookup()
+	_test_pair_ready()
 	_test_tick_fast()
 	_test_pulled()
 	_test_bends()

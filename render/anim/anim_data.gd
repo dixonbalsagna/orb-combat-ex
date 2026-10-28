@@ -52,6 +52,10 @@ static var bake_over_us: int = 500         # bake.over_us: the most a slice spen
 static var bake_deferred: int = 0          # poses the incremental bake queued in this run
 static var bake_demand: int = 0            # of them baked on the spot because something asked first
 static var bake_early: int = 0            # queued waves loaded ahead of their turn because a pose of theirs was asked for (the missing-pose lookup loads only the wave that holds it)
+static var pair_own: bool = true           # pair_ready builds a fighter's lists from his own waves only (off: --pair-ready-queue, the version before, runs the queue up to them)
+static var pair_runs: int = 0              # times a fighter's lists were asked for before the queue got to them
+static var pair_early_waves: int = 0       # of his waves, loaded ahead of their turn for that
+static var pair_run_worst_us: int = 0      # the longest such ask
 static var bake_worst_us: int = 0          # the longest single slice or on-demand bake
 static var flight: Dictionary = {}       # data/anim/flight.json: the flight lead, a launched body turned head first along its velocity (docs 9.23)
 static var agency: Dictionary = {}       # data/anim/agency.json: how the agency slice's events (knockback, embed, taunt, charges) map to poses
@@ -108,6 +112,7 @@ static func load_all() -> void:
 	lazy = not (cla.has("-s") or cla.has("--script")) and not cua.has("--eager-bake")
 	if cua.has("--lazy-bake"):
 		lazy = true
+	pair_own = not cua.has("--pair-ready-queue")
 	AnimRig.setup()
 	var ej: Dictionary = _read("effectors.json")
 	var hj: Dictionary = ej.get("hunch", {})
@@ -246,12 +251,31 @@ static func _drain_work() -> void:
 		_work_one()
 
 
-## Is this fighter's pick-list data ready? Runs the queued work to the end for him if it is not (a blow asked for it before the match-start queue got there).
+## Is this fighter's pick-list data ready? If a blow asks before the match-start queue got to his lists, only his own waves still queued are loaded and his lists built,
+## ahead of their turn; the other fighter's work stays queued, and the turns of what was done early do nothing. The waves share no ids and a fighter's lists read only key
+## sets of his own waves and keysets.json (anim_check guards both), so the lists and poses are those of the in-order run. `--pair-ready-queue` is the version before (run the queue up to his lists).
 static func pair_ready(key: String) -> bool:
 	if key == "":
 		return false
-	while not pair_lists.has(key) and not _work.is_empty():
-		_work_one()
+	if pair_lists.has(key) or _work.is_empty():
+		return pair_lists.has(key)
+	var t0: int = Time.get_ticks_usec()
+	if pair_own:
+		for i in range(_work.size()):
+			var w: Dictionary = _work[i]
+			if String(w.k) == "lists" and String(w.key) == key:
+				_work.remove_at(i)
+				for wn in w.names:
+					if not _waves_done.has(String(wn)) and FileAccess.file_exists(DIR + "waves/" + String(wn) + ".poses.json"):
+						pair_early_waves += 1
+						_load_wave(String(wn))
+				_build_lists(key, w.names)
+				break
+	else:
+		while not pair_lists.has(key) and not _work.is_empty():
+			_work_one()
+	pair_runs += 1
+	pair_run_worst_us = maxi(pair_run_worst_us, Time.get_ticks_usec() - t0)
 	return pair_lists.has(key)
 
 
