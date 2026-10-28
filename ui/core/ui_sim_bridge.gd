@@ -36,19 +36,34 @@ static func fighters(S) -> Array:
 ## from here changed the hash when an intro played (determinism.gd --intro, tick 60). This reads the slot only if it is already there, from the sim's own constant and config.
 ## The launcher's rest in seconds, from the director's data (launcher.restS), 0 when the brawl is off.
 static func _launcher_rest_total() -> float:
-	var cmap: Dictionary = (DirBrawl as GDScript).get_script_constant_map()
-	if not cmap.has("LAUNCH_AT") or not DirBrawl.on():
+	if _launch_at() < 0 or not DirBrawl.on():
 		return 0.0
 	return float((DirBrawl.cfg().get("launcher", {}) as Dictionary).get("restS", 0.0))
 
 
 static func _launcher_rest_ticks(S, f) -> int:
+	return _rest_ticks(S, f, _launch_at(), DirBrawl.on())
+
+
+## The launcher's slot in a fighter's director ints: DirBrawl's LAUNCH_AT, or -1 when this build has none. A script's constants never change, and get_script_constant_map() builds the whole
+## dictionary each call (25 us), so it is asked once (UiFast off asks every time, as before).
+static var _launch_slot: int = -2
+
+
+static func _launch_at() -> int:
+	if UiFast.on and _launch_slot != -2:
+		return _launch_slot
 	var cmap: Dictionary = (DirBrawl as GDScript).get_script_constant_map()
-	if not cmap.has("LAUNCH_AT") or not DirBrawl.on():
+	_launch_slot = int(cmap["LAUNCH_AT"]) if cmap.has("LAUNCH_AT") else -1
+	return _launch_slot
+
+
+## `slot` is _launch_at() and `brawl_on` DirBrawl.on(), both read once for the whole patch rather than for each fighter.
+static func _rest_ticks(S, f, slot: int, brawl_on: bool) -> int:
+	if slot < 0 or not brawl_on:
 		return -1
 	if not ("act" in f) or not ("dirI" in f.act):
 		return -1
-	var slot: int = int(cmap["LAUNCH_AT"])
 	var at: int = int(f.act.dirI[slot]) if f.act.dirI.size() > slot else 0
 	if at <= 0:
 		return 0
@@ -59,6 +74,9 @@ static func _launcher_rest_ticks(S, f) -> int:
 ## Copy per-fighter state into the HUD. Call once per tick or per frame; it writes only to the HUD's models.
 static func patch(hud: UiHud, S, input_hub = null) -> void:
 	var move_names: Array = []
+	var launch_slot: int = _launch_at()
+	var brawl_on: bool = launch_slot >= 0 and DirBrawl.on()
+	var rest_total: float = _launcher_rest_total() if brawl_on else 0.0
 	for i in range(S.fighters.size()):
 		var f = S.fighters[i]
 		if "sigName" in f:
@@ -75,15 +93,18 @@ static func patch(hud: UiHud, S, input_hub = null) -> void:
 			for r in range(mini(4, f.wear.size())):
 				wear[["head", "core", "arms", "legs"][r]] = float(f.wear[r]) / 6000.0
 		var lp: Dictionary = {}
-		var rest_ticks: int = _launcher_rest_ticks(S, f)
+		var rest_ticks: int = _rest_ticks(S, f, launch_slot, brawl_on)
 		if rest_ticks >= 0:
 			lp["launcher_ready"] = rest_ticks == 0
 			lp["launcher_rest_left"] = float(rest_ticks) / 60.0
-			var rest_total: float = _launcher_rest_total()
 			if rest_total > 0.0:
 				lp["launcher_rest_total"] = rest_total
 		if not lp.is_empty():
-			hud.hub.patch(i, lp)
+			var lm: UiFighterModel = hud.hub.model(i)
+			# A launcher that is ready and still ready (or whose rest has not moved) leaves the model as it is: the patch would set the values it already holds.
+			var same: bool = UiFast.on and lm != null and lm.launcher_known and lm.launcher_ready == lp["launcher_ready"] and lm.launcher_rest_left == lp["launcher_rest_left"] 				and (not lp.has("launcher_rest_total") or lm.launcher_rest_total == lp["launcher_rest_total"])
+			if not same:
+				hud.hub.patch(i, lp)
 		hud.hub.patch(i, {
 			"name": str(f.id), "ai": f.ai != null, "stance": int(f.stance), "tier": tier, "momentum": into,
 			"charge": float(f.ki), "hidden": bool(f.hidden), "charging": str(f.state) == "charging",
@@ -102,7 +123,10 @@ static func patch(hud: UiHud, S, input_hub = null) -> void:
 	hud.hub.set_move_names(move_names)
 	hud.hub.set_clash_mid(clash_mid(S))   # the beam struggle's meeting point (-1 until Encounter's park is applied)
 	var w = S.world
-	hud.hub.consume({"type": "world", "civilians": int(round(float(w.casualties))), "pop0": int(w.pop0), "structures": int(w.structuresLost), "craters": int(w.craters)})
+	if UiFast.on:
+		hud.hub.set_toll(int(round(float(w.casualties))), int(w.pop0), int(w.structuresLost), int(w.craters))
+	else:
+		hud.hub.consume({"type": "world", "civilians": int(round(float(w.casualties))), "pop0": int(w.pop0), "structures": int(w.structuresLost), "craters": int(w.craters)})
 	patch_input(hud, input_hub)   # the arming, when the host passes its input hub (SimHost.hub)
 
 
@@ -116,8 +140,11 @@ static func patch_input(hud: UiHud, hub) -> void:
 		return
 	for slot in range(mini(2, hud.hub.models.size())):
 		var armed: int = int(hub.armed_stance(slot))
-		var share: float = float(hub.armed_share(slot))
-		hud.hub.patch(slot, {"stance_armed": maxf(share, 0.02) if armed != 0 else 0.0})
+		if UiFast.on and armed == 0 and hud.hub.models[slot].stance_armed == 0.0:
+			continue   # nothing armed and the badge already says so: the patch would set the value it holds
+		# The share is read only for an armed stance (it is unused otherwise): one lookup less a slot.
+		var share: float = maxf(float(hub.armed_share(slot)), 0.02) if armed != 0 else 0.0
+		hud.hub.patch(slot, {"stance_armed": share})
 
 
 ## Seconds to contact of every pending blow in the running exchange, per fighter struck (the beat ring): the director's `strike` and `chainStrike` beats
@@ -168,11 +195,55 @@ static func clash_mid(S) -> float:
 	return float(v) if v != null else -1.0
 
 
-static func strip_data(S, cam_x: float, cam_w: float) -> Dictionary:
+## What the strip needs of the world changes rarely, and the full list of buildings is walked to get it: the fallen buildings' x (the strip draws a mark for each; its layer redraws only when
+## their number changes), and the biome segments (a constant). A planet of hundreds of buildings made that walk a visible share of a phone's frame. With UiFast on the list is kept for the
+## sim object, the building count and the sim's own count of structures lost, and looked at again every STRIP_DEAD_MS regardless (a planet turn or the campaign's wear change buildings
+## without that count moving), so a mark that is not a battle's can lag by at most a quarter of a second.
+const STRIP_DEAD_MS := 250
+static var _strip_for: int = 0
+static var _strip_n: int = -1
+static var _strip_lost: int = -1
+static var _strip_ms: int = 0
+static var _strip_dead: Array = []
+static var _strip_segs: Array = []
+static var _aura_color: Dictionary = {}
+
+
+static func _fallen(S) -> Array:
 	var dead: Array = []
 	for b in S.buildings:
 		if not b.alive:
 			dead.append(float(b.x))
+	return dead
+
+
+static func _segments() -> Array:
+	var segs: Array = []
+	for s in WorldBiomes.SEG:
+		segs.append([float(s[0]), float(s[1]), str(s[2])])
+	return segs
+
+
+static func strip_data(S, cam_x: float, cam_w: float) -> Dictionary:
+	var dead: Array
+	var segs: Array
+	if UiFast.on:
+		var now: int = Time.get_ticks_msec()
+		var id: int = S.get_instance_id()
+		var lost: int = int(S.world.structuresLost)
+		if id != _strip_for or S.buildings.size() != _strip_n or lost != _strip_lost or now - _strip_ms >= STRIP_DEAD_MS or now < _strip_ms:
+			_strip_for = id
+			_strip_n = S.buildings.size()
+			_strip_lost = lost
+			_strip_ms = now
+			_strip_dead = _fallen(S)
+		if _strip_segs.is_empty():
+			_strip_segs = _segments()
+		dead = _strip_dead
+		segs = _strip_segs
+	else:
+		dead = _fallen(S)
+		segs = _segments()
 	var fs: Array = []
 	for i in range(S.fighters.size()):
 		var f = S.fighters[i]
@@ -180,8 +251,13 @@ static func strip_data(S, cam_x: float, cam_w: float) -> Dictionary:
 		var seen: float = float(f.x)
 		if o != null and o.lastSeen != null:
 			seen = float(o.lastSeen.x)
-		fs.append({"x": float(f.x), "slot": i, "hidden": bool(f.hidden), "aura": Color.html(str(f.aura)), "seen_x": seen})
-	var segs: Array = []
-	for s in WorldBiomes.SEG:
-		segs.append([float(s[0]), float(s[1]), str(s[2])])
+		fs.append({"x": float(f.x), "slot": i, "hidden": bool(f.hidden), "aura": _aura(str(f.aura)), "seen_x": seen})
 	return {"W": SimConst.W, "segs": segs, "cam_x": cam_x, "cam_w": cam_w, "dead": dead, "fighters": fs}
+
+
+static func _aura(hex: String) -> Color:
+	if not UiFast.on:
+		return Color.html(hex)
+	if not _aura_color.has(hex):
+		_aura_color[hex] = Color.html(hex)
+	return _aura_color[hex]

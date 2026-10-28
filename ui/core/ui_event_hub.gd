@@ -233,7 +233,18 @@ func consume_all(events: Array) -> void:
 		consume(e)
 
 
+## The sim's effect events the HUD does not draw (the last branch of consume's match, which does nothing for them): most of what a tick emits. They are counted and dropped before norm() turns the event
+## into a dictionary field by field (an event is an object, and norm reads fifty fields of it).
+const _NOT_DRAWN: Dictionary = {"revision_fill_reset": true, "encore_start": true, "encore_end": true, "guard_fall": true, "spark": true, "ring": true, "debris": true, "dust": true, "splash": true,
+	"fire": true, "after": true, "charge": true, "crater": true, "scorch": true, "beamSplash": true, "tick": true}
+
+
 func consume(e) -> void:
+	if UiFast.on and (e is Dictionary or e is Object):
+		var ty = e.get("type")
+		if ty is String and _NOT_DRAWN.has(ty):
+			stats["events"] += 1
+			return
 	var d: Dictionary = norm(e)
 	var type: String = str(d.get("type", ""))
 	if type == "":
@@ -496,12 +507,27 @@ func consume(e) -> void:
 var _lost_trail_left: Dictionary = {}
 
 
+## The "world" event's effect without the event: what the bridge hands over every frame (the sim's counters), applied as consume() would. The count of events is kept as consume() keeps it.
+func set_toll(civilians: int, pop0: int, structures: int, craters: int) -> void:
+	stats["events"] += 1
+	var changed: bool = civilians != toll["civilians"] or structures != toll["structures"] or craters != toll["craters"]
+	toll["civilians"] = civilians
+	toll["pop0"] = pop0
+	toll["structures"] = structures
+	toll["craters"] = craters
+	if changed and t_now > 0.0:
+		toll_age = 0.0
+
+
+const _PATCH_KEYS: Array = ["stance", "tier", "charge", "momentum", "ego", "hidden", "charging", "sig_cost", "name", "title", "ai", "chip_station", "device", "form_free", "form_cue_left", "last_stand_left", "energy", "recipe", "stance_armed", "launcher_ready", "launcher_rest_left", "launcher_rest_total"]
+
+
 func patch(actor: int, d: Dictionary) -> void:
 	var m: UiFighterModel = model(actor)
 	if m == null:
 		return
 	var old_stance: int = m.stance
-	for k in ["stance", "tier", "charge", "momentum", "ego", "hidden", "charging", "sig_cost", "name", "title", "ai", "chip_station", "device", "form_free", "form_cue_left", "last_stand_left", "energy", "recipe", "stance_armed", "launcher_ready", "launcher_rest_left", "launcher_rest_total"]:
+	for k in _PATCH_KEYS:
 		if d.has(k):
 			# Hiding is removed from the base game (a future fighter); with the flag off the hidden state is ignored.
 			m.set(k, (bool(d[k]) and UiData.feature("hiding")) if k == "hidden" else (UiData.display_name(str(d[k])) if k == "name" else d[k]))
@@ -1317,6 +1343,8 @@ func _fire_cues(b: Bark) -> void:
 
 
 func _schedule_cards(dt: float) -> void:
+	if UiFast.on and cards.is_empty() and waiting.is_empty():
+		return   # nothing shown and nothing waiting: the loop below would build its lists and find them empty
 	var cap: int = mini(UiLook.CAP_CARDS_PER_SIDE[mode], cap_limit)
 	for slot in range(models.size()):
 		var vis: Array = cards_of(slot)

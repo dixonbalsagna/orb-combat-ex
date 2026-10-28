@@ -1,0 +1,815 @@
+diff --git a/docs/ui/frame-cost.md b/docs/ui/frame-cost.md
+new file mode 100644
+index 0000000..fe4df1a
+--- /dev/null
++++ b/docs/ui/frame-cost.md
+@@ -0,0 +1,51 @@
++# The HUD's frame cost
++
++UI's answer to the EP's phone frame-time brief of 2026-10-27: Rendering profiled the gen 2 coast at x4 and found UI at 2.75 ms a frame, `UiHud.advance` 1.54 ms and `UiSimBridge.patch` 1.22 ms, both every frame. This is what was cut, with no change to anything the player sees or hears, and how that is shown.
++
++## The switch
++
++`UiFast.on` (ui/core/ui_fast.gd) is true in the game. With it false every saving below goes back to the work the HUD did before, so a bench can run the same build both ways: `ui/tools/hud_frame_bench.gd --fast=0|1` natively, and in Rendering's frame bench a scratch line `UiFast.on = false` at the scene's start (the web page flag `nofast=1` in the park's bench build). Nothing else reads it.
++
++## What was cut (microseconds a frame, native headless, the real main on a 1280 by 720 viewport, the switch alternated in blocks of fifteen frames within one run so both sides see the same machine load; two seeds, 870 frames a side)
++
++| piece | before | after | how |
++| --- | --- | --- | --- |
++| `UiSimBridge.patch` | 265 | 135 | The launcher's constant lookup (`get_script_constant_map()` builds a whole dictionary, 25 us, and was called five times a frame) is asked once; the brawl's state is read once per patch, not once per fighter; the armed share is read only for an armed stance and an unarmed badge that already says so is not patched; the world's counters go to `set_toll` instead of through a built event; a launcher that is ready and still ready is not patched again; `display_text` (two regex scans) answers from a memo. |
++| `hub.consume_all` (the drain, once a tick) | 62 | 25 | The sixteen effect events the HUD does not draw (sparks, debris, dust, rings, fire and the rest, most of what a tick emits) are counted and dropped before `norm()` copies fifty fields of the event object into a dictionary. |
++| `UiHud.advance` | 245 to 265 | 215 to 225 | One camera projection per fighter per advance instead of up to four (`_anchor`); the form chip's options dictionary is built only when a chip is wanted; `UiMany` builds the touch buttons' boxes only when a fighter is outside the frame; the card scheduler does not build its lists when nothing shows and nothing waits; `UiData.feature()` answers from a memo (about thirty asks a frame); the planet strip's fallen-building list and its biome segments are kept (below). |
++
++Together: patch, advance and the drain 572 to 375 us on the first seed, 593 to 386 on the second (-34%). On a planet of hundreds of buildings the strip's list is the larger share: `strip_data` walked every building each frame (16 us for 118; it grows with the planet).
++
++The web numbers on Rendering's gen 2 coast are below (section "The web bench").
++
++## What the player could notice, and does not
++
++- Every saving returns the value the old code computed; none skips a change. The strip's fallen-building marks are looked at again when the sim's count of buildings lost moves, when the building count moves, and in any case every quarter second (`STRIP_DEAD_MS`): a building brought down without that count moving (the campaign's wear applied at a planet turn) shows its mark within a quarter second, not on the next frame. That is the one place the old and the new differ in time, and only for that rare case.
++- The anchor memo lives only inside `advance()`; the painters still ask the host themselves.
++- `display_text` and `feature()` memos are cleared when their tables are rebuilt or an override is set (`set_feature`, `reload`).
++
++## How it is shown
++
++`ui/tools/frame_cost_check.gd` (headless): the same seeded match is played twice through the real sim host, savings off and on, gen 1 and a gen 2 coast, with and without the touch buttons, and after every frame a digest is taken of what the HUD would draw (every layer's signature, visibility, position and size, every fighter model's fields, the toll, the strip's data, the cards, barks, banner, hint, telegraph, caption and tug, the HUD clock). The two runs' digests are equal on every frame. Negative controls: a changed fighter field and a changed toll are seen on the frame they change. `--dump=<file>` appends the savings-on digests, so the same check on a tree without the patch (HEAD) can be compared line for line: 9,600 frames, identical. Also: a building that falls without a counted loss reaches the strip within a quarter second, a counted loss at once, and `display_text` answers the same from the memo.
++
++## What is left, and whose it is
++
++At 1280 by 720 about 215 us of `advance` remains, spread over many small things (the plates' signatures 16, the hub's own timers 17, the YOU marker and legend 14, the pointers 11). The two largest single costs are not UI's: the host's anchor projection (`main._hud_anchor`: `split_frame.hud_anchor` with `fighter_pose`, about 10 us a fighter, twice a frame) and Camera's `split_record()` (about 7 us a frame, built fresh each call). A per-frame answer for `fighter_pose` in `_hud_anchor` would save part of the first; that is Rendering's.
++
++## The web bench: Rendering's gen 2 coast, the switch on and off in one build
++
++Rendering's prof-hook (docs/rendering/tools/prof-hook.mjs) on Performance's pb scene (`pgen=2&pbiome=coast&pplanet=7`, `--igpu --reduced --ticks 600`), HEAD with this patch, one scratch export. The switch is a page flag in that export (`nofast=1`: one scratch line at the top of `_pb_place(S)` in `render/tools/flash_capture.gd`, `if _page_kv("nofast") != "": UiFast.on = false`). Two rounds, on and off interleaved, x1 and x4 (Chrome's CPU throttle), every run in the table valid by frame-bench's own load rule (earlier attempts, at 68 to 82 percent load, were invalid and are not reported; some runs in the table needed a second or third attempt for the same reason). Milliseconds a frame, the part's mean (`pt_ms`):
++
++| | x1 off | x1 on | x4 off | x4 on |
++| --- | --- | --- | --- | --- |
++| `UiHud.advance` (hud_advance) | 0.306, 0.191 | 0.176, 0.170 | 3.499, 0.914 | 2.049, 0.803 |
++| `UiSimBridge.patch` (mv_ui_bridge) | 0.199, 0.131 | 0.077, 0.068 | 2.283, 0.636 | 0.787, 0.342 |
++| the drain's `consume_all` (dr_ui_consume) | 0.035, 0.019 | 0.004, 0.003 | 0.392, 0.096 | 0.046, 0.016 |
++
++Each cell is round 0 then round 1. Round 0 of x4 ran with the machine at 50 to 53 percent load (the capture's cores at 44 to 56) and moved about three times as slow as round 1, which ran at 30 percent: read round 1 as the clean x4 pair and round 0 as the same ratios on a busier machine. The two rounds together, x1: advance 0.248 to 0.173 (-30%), patch 0.165 to 0.073 (-56%), drain 0.027 to 0.004; the three together 0.44 to 0.25 ms (-43%). x4, round 1: advance 0.914 to 0.803 (-12%), patch 0.636 to 0.342 (-46%), drain 0.096 to 0.016; the three together 1.65 to 1.16 ms (-29%). Frame time itself did not move beyond noise (x1 mean 15.7 to 16.5 ms off, 15.8 ms on): this scene is bound by the browser's draw, not by UI.
++
++To rerun: a scratch tree of HEAD, `git apply docs/ui/pending/frame-cost/frame-cost-ui.patch`, Performance's `hook-perf.mjs`, `hook-slice.mjs` (with its library) and `hook-pbiome.mjs`, `node docs/rendering/tools/prof-hook.mjs <tree>`, the one `nofast` line, import, export, then `docs/perf/tools/frame-bench.mjs --scene pb --page-args "pgen=2&pbiome=coast&pplanet=7[&nofast=1]" --igpu --reduced --ticks 600 --throttle 1|4` in a quiet window.
++
++## Stills
++
++The same scene, savings on and off, at the same sim ticks (the flashcap hook runs a tick a frame to a tick, then holds): 1280 by 720 at ticks 150 and 420 and 915 by 412 at tick 420. The HUD (both plates, both legends, the charge bars) is pixel for pixel the same; the only differing pixels are on the crowd (the people in the street move with the wall clock, not the sim), 332 to 719 pixels, none in a HUD box. In the park: `still-on-1280x720.png`, `still-off-1280x720.png` and the difference of the two.
+diff --git a/ui/core/ui_data.gd b/ui/core/ui_data.gd
+index 4c2a1d3..ddb3001 100644
+--- a/ui/core/ui_data.gd
++++ b/ui/core/ui_data.gd
+@@ -14,6 +14,8 @@ static var _sig_re: RegEx = null
+ static var _titles: Dictionary = {}         # the roster id in upper case -> the fighter's title
+ static var _sigs: Dictionary = {}           # ... -> the name of its signature move
+ static var _names_built := false
++static var _text_memo: Dictionary = {}     # display_text's answers (it is a pure function of the text and the tables above); cleared when they are built
++const TEXT_MEMO_CAP := 512
+ static var _loaded := false
+ 
+ 
+@@ -26,6 +28,7 @@ static func ensure() -> void:
+ 
+ 
+ static func reload() -> void:
++	_feature_memo.clear()
+ 	_loaded = false
+ 	_names_built = false
+ 	ensure()
+@@ -112,6 +115,7 @@ static func banner(text: String) -> String:
+ static func _build_names() -> void:
+ 	ensure()
+ 	_names_built = true
++	_text_memo = {}
+ 	_names = {}
+ 	_titles = {}
+ 	_sigs = {}
+@@ -167,6 +171,9 @@ static func display_text(text: String) -> String:
+ 		_build_names()
+ 	if _names_re == null or text == "":
+ 		return text
++	if UiFast.on and _text_memo.has(text):
++		return _text_memo[text]
++	var source: String = text
+ 	var out: String = ""
+ 	var at := 0
+ 	for mt in _sig_re.search_all(text):
+@@ -179,7 +186,12 @@ static func display_text(text: String) -> String:
+ 	for mt in _names_re.search_all(text):
+ 		out += text.substr(at, mt.get_start() - at) + str(_names.get(mt.get_string(1), mt.get_string(1)))
+ 		at = mt.get_end()
+-	return out + text.substr(at)
++	var shown: String = out + text.substr(at)
++	if UiFast.on:
++		if _text_memo.size() >= TEXT_MEMO_CAP:
++			_text_memo.clear()
++		_text_memo[source] = shown
++	return shown
+ 
+ 
+ ## The readout profile for a fighter id (its own entry over the default; aliases such as the stand-ins' stand_in_protagonist
+@@ -357,16 +369,26 @@ static func settings() -> Dictionary:
+ 
+ const FEATURES_PATH := "res://ui/data/features.json"
+ static var _features: Dictionary = {}
++static var _feature_memo: Dictionary = {}   # feature()'s answers: the HUD asks about thirty a frame; cleared when an override changes
+ static var _feature_override: Dictionary = {}
+ 
+ 
+ ## A feature flag from ui/data/features.json (off when missing). Tests may override with set_feature.
+ static func feature(key: String) -> bool:
++	if UiFast.on:
++		var seen = _feature_memo.get(key)
++		if seen != null:
++			return seen
++	var on: bool
+ 	if _feature_override.has(key):
+-		return bool(_feature_override[key])
+-	if _features.is_empty():
+-		_features = _read(FEATURES_PATH).get("features", {})
+-	return bool(_features.get(key, false))
++		on = bool(_feature_override[key])
++	else:
++		if _features.is_empty():
++			_features = _read(FEATURES_PATH).get("features", {})
++		on = bool(_features.get(key, false))
++	if UiFast.on:
++		_feature_memo[key] = on
++	return on
+ 
+ 
+ ## Whether Reduce flashing is locked on (Legal's addendum 10, RL-156): the toggle is shown nowhere, a saved Off is ignored, and the game plays the reduced look. Only the capture
+@@ -377,6 +399,7 @@ static func rf_locked() -> bool:
+ 
+ ## Override a flag for this run (tests and demos); pass null to clear the override.
+ static func set_feature(key: String, value) -> void:
++	_feature_memo.clear()
+ 	if value == null:
+ 		_feature_override.erase(key)
+ 	else:
+diff --git a/ui/core/ui_event_hub.gd b/ui/core/ui_event_hub.gd
+index fdc5a43..823bf31 100644
+--- a/ui/core/ui_event_hub.gd
++++ b/ui/core/ui_event_hub.gd
+@@ -233,7 +233,18 @@ func consume_all(events: Array) -> void:
+ 		consume(e)
+ 
+ 
++## The sim's effect events the HUD does not draw (the last branch of consume's match, which does nothing for them): most of what a tick emits. They are counted and dropped before norm() turns the event
++## into a dictionary field by field (an event is an object, and norm reads fifty fields of it).
++const _NOT_DRAWN: Dictionary = {"revision_fill_reset": true, "encore_start": true, "encore_end": true, "guard_fall": true, "spark": true, "ring": true, "debris": true, "dust": true, "splash": true,
++	"fire": true, "after": true, "charge": true, "crater": true, "scorch": true, "beamSplash": true, "tick": true}
++
++
+ func consume(e) -> void:
++	if UiFast.on and (e is Dictionary or e is Object):
++		var ty = e.get("type")
++		if ty is String and _NOT_DRAWN.has(ty):
++			stats["events"] += 1
++			return
+ 	var d: Dictionary = norm(e)
+ 	var type: String = str(d.get("type", ""))
+ 	if type == "":
+@@ -496,12 +507,27 @@ func consume(e) -> void:
+ var _lost_trail_left: Dictionary = {}
+ 
+ 
++## The "world" event's effect without the event: what the bridge hands over every frame (the sim's counters), applied as consume() would. The count of events is kept as consume() keeps it.
++func set_toll(civilians: int, pop0: int, structures: int, craters: int) -> void:
++	stats["events"] += 1
++	var changed: bool = civilians != toll["civilians"] or structures != toll["structures"] or craters != toll["craters"]
++	toll["civilians"] = civilians
++	toll["pop0"] = pop0
++	toll["structures"] = structures
++	toll["craters"] = craters
++	if changed and t_now > 0.0:
++		toll_age = 0.0
++
++
++const _PATCH_KEYS: Array = ["stance", "tier", "charge", "momentum", "ego", "hidden", "charging", "sig_cost", "name", "title", "ai", "chip_station", "device", "form_free", "form_cue_left", "last_stand_left", "energy", "recipe", "stance_armed", "launcher_ready", "launcher_rest_left", "launcher_rest_total"]
++
++
+ func patch(actor: int, d: Dictionary) -> void:
+ 	var m: UiFighterModel = model(actor)
+ 	if m == null:
+ 		return
+ 	var old_stance: int = m.stance
+-	for k in ["stance", "tier", "charge", "momentum", "ego", "hidden", "charging", "sig_cost", "name", "title", "ai", "chip_station", "device", "form_free", "form_cue_left", "last_stand_left", "energy", "recipe", "stance_armed", "launcher_ready", "launcher_rest_left", "launcher_rest_total"]:
++	for k in _PATCH_KEYS:
+ 		if d.has(k):
+ 			# Hiding is removed from the base game (a future fighter); with the flag off the hidden state is ignored.
+ 			m.set(k, (bool(d[k]) and UiData.feature("hiding")) if k == "hidden" else (UiData.display_name(str(d[k])) if k == "name" else d[k]))
+@@ -1317,6 +1343,8 @@ func _fire_cues(b: Bark) -> void:
+ 
+ 
+ func _schedule_cards(dt: float) -> void:
++	if UiFast.on and cards.is_empty() and waiting.is_empty():
++		return   # nothing shown and nothing waiting: the loop below would build its lists and find them empty
+ 	var cap: int = mini(UiLook.CAP_CARDS_PER_SIDE[mode], cap_limit)
+ 	for slot in range(models.size()):
+ 		var vis: Array = cards_of(slot)
+diff --git a/ui/core/ui_fast.gd b/ui/core/ui_fast.gd
+new file mode 100644
+index 0000000..789f78f
+--- /dev/null
++++ b/ui/core/ui_fast.gd
+@@ -0,0 +1,5 @@
++class_name UiFast
++## The switch for the HUD's per-frame savings (docs/ui/frame-cost.md): on in the game, off only for the bench (ui/tools/hud_frame_bench.gd --fast=0), which then plays the cost the HUD had before.
++## Nothing the player sees depends on it: every saving is a result the old code recomputed each frame, kept until its inputs change.
++
++static var on: bool = true
+diff --git a/ui/core/ui_fast.gd.uid b/ui/core/ui_fast.gd.uid
+new file mode 100644
+index 0000000..db276bf
+--- /dev/null
++++ b/ui/core/ui_fast.gd.uid
+@@ -0,0 +1 @@
++uid://b3p7i1v8rsib5
+diff --git a/ui/core/ui_sim_bridge.gd b/ui/core/ui_sim_bridge.gd
+index 9d496b9..5029c98 100644
+--- a/ui/core/ui_sim_bridge.gd
++++ b/ui/core/ui_sim_bridge.gd
+@@ -36,19 +36,34 @@ static func fighters(S) -> Array:
+ ## from here changed the hash when an intro played (determinism.gd --intro, tick 60). This reads the slot only if it is already there, from the sim's own constant and config.
+ ## The launcher's rest in seconds, from the director's data (launcher.restS), 0 when the brawl is off.
+ static func _launcher_rest_total() -> float:
+-	var cmap: Dictionary = (DirBrawl as GDScript).get_script_constant_map()
+-	if not cmap.has("LAUNCH_AT") or not DirBrawl.on():
++	if _launch_at() < 0 or not DirBrawl.on():
+ 		return 0.0
+ 	return float((DirBrawl.cfg().get("launcher", {}) as Dictionary).get("restS", 0.0))
+ 
+ 
+ static func _launcher_rest_ticks(S, f) -> int:
++	return _rest_ticks(S, f, _launch_at(), DirBrawl.on())
++
++
++## The launcher's slot in a fighter's director ints: DirBrawl's LAUNCH_AT, or -1 when this build has none. A script's constants never change, and get_script_constant_map() builds the whole
++## dictionary each call (25 us), so it is asked once (UiFast off asks every time, as before).
++static var _launch_slot: int = -2
++
++
++static func _launch_at() -> int:
++	if UiFast.on and _launch_slot != -2:
++		return _launch_slot
+ 	var cmap: Dictionary = (DirBrawl as GDScript).get_script_constant_map()
+-	if not cmap.has("LAUNCH_AT") or not DirBrawl.on():
++	_launch_slot = int(cmap["LAUNCH_AT"]) if cmap.has("LAUNCH_AT") else -1
++	return _launch_slot
++
++
++## `slot` is _launch_at() and `brawl_on` DirBrawl.on(), both read once for the whole patch rather than for each fighter.
++static func _rest_ticks(S, f, slot: int, brawl_on: bool) -> int:
++	if slot < 0 or not brawl_on:
+ 		return -1
+ 	if not ("act" in f) or not ("dirI" in f.act):
+ 		return -1
+-	var slot: int = int(cmap["LAUNCH_AT"])
+ 	var at: int = int(f.act.dirI[slot]) if f.act.dirI.size() > slot else 0
+ 	if at <= 0:
+ 		return 0
+@@ -59,6 +74,9 @@ static func _launcher_rest_ticks(S, f) -> int:
+ ## Copy per-fighter state into the HUD. Call once per tick or per frame; it writes only to the HUD's models.
+ static func patch(hud: UiHud, S, input_hub = null) -> void:
+ 	var move_names: Array = []
++	var launch_slot: int = _launch_at()
++	var brawl_on: bool = launch_slot >= 0 and DirBrawl.on()
++	var rest_total: float = _launcher_rest_total() if brawl_on else 0.0
+ 	for i in range(S.fighters.size()):
+ 		var f = S.fighters[i]
+ 		if "sigName" in f:
+@@ -75,15 +93,18 @@ static func patch(hud: UiHud, S, input_hub = null) -> void:
+ 			for r in range(mini(4, f.wear.size())):
+ 				wear[["head", "core", "arms", "legs"][r]] = float(f.wear[r]) / 6000.0
+ 		var lp: Dictionary = {}
+-		var rest_ticks: int = _launcher_rest_ticks(S, f)
++		var rest_ticks: int = _rest_ticks(S, f, launch_slot, brawl_on)
+ 		if rest_ticks >= 0:
+ 			lp["launcher_ready"] = rest_ticks == 0
+ 			lp["launcher_rest_left"] = float(rest_ticks) / 60.0
+-			var rest_total: float = _launcher_rest_total()
+ 			if rest_total > 0.0:
+ 				lp["launcher_rest_total"] = rest_total
+ 		if not lp.is_empty():
+-			hud.hub.patch(i, lp)
++			var lm: UiFighterModel = hud.hub.model(i)
++			# A launcher that is ready and still ready (or whose rest has not moved) leaves the model as it is: the patch would set the values it already holds.
++			var same: bool = UiFast.on and lm != null and lm.launcher_known and lm.launcher_ready == lp["launcher_ready"] and lm.launcher_rest_left == lp["launcher_rest_left"] 				and (not lp.has("launcher_rest_total") or lm.launcher_rest_total == lp["launcher_rest_total"])
++			if not same:
++				hud.hub.patch(i, lp)
+ 		hud.hub.patch(i, {
+ 			"name": str(f.id), "ai": f.ai != null, "stance": int(f.stance), "tier": tier, "momentum": into,
+ 			"charge": float(f.ki), "hidden": bool(f.hidden), "charging": str(f.state) == "charging",
+@@ -102,7 +123,10 @@ static func patch(hud: UiHud, S, input_hub = null) -> void:
+ 	hud.hub.set_move_names(move_names)
+ 	hud.hub.set_clash_mid(clash_mid(S))   # the beam struggle's meeting point (-1 until Encounter's park is applied)
+ 	var w = S.world
+-	hud.hub.consume({"type": "world", "civilians": int(round(float(w.casualties))), "pop0": int(w.pop0), "structures": int(w.structuresLost), "craters": int(w.craters)})
++	if UiFast.on:
++		hud.hub.set_toll(int(round(float(w.casualties))), int(w.pop0), int(w.structuresLost), int(w.craters))
++	else:
++		hud.hub.consume({"type": "world", "civilians": int(round(float(w.casualties))), "pop0": int(w.pop0), "structures": int(w.structuresLost), "craters": int(w.craters)})
+ 	patch_input(hud, input_hub)   # the arming, when the host passes its input hub (SimHost.hub)
+ 
+ 
+@@ -116,8 +140,11 @@ static func patch_input(hud: UiHud, hub) -> void:
+ 		return
+ 	for slot in range(mini(2, hud.hub.models.size())):
+ 		var armed: int = int(hub.armed_stance(slot))
+-		var share: float = float(hub.armed_share(slot))
+-		hud.hub.patch(slot, {"stance_armed": maxf(share, 0.02) if armed != 0 else 0.0})
++		if UiFast.on and armed == 0 and hud.hub.models[slot].stance_armed == 0.0:
++			continue   # nothing armed and the badge already says so: the patch would set the value it holds
++		# The share is read only for an armed stance (it is unused otherwise): one lookup less a slot.
++		var share: float = maxf(float(hub.armed_share(slot)), 0.02) if armed != 0 else 0.0
++		hud.hub.patch(slot, {"stance_armed": share})
+ 
+ 
+ ## Seconds to contact of every pending blow in the running exchange, per fighter struck (the beat ring): the director's `strike` and `chainStrike` beats
+@@ -168,11 +195,55 @@ static func clash_mid(S) -> float:
+ 	return float(v) if v != null else -1.0
+ 
+ 
+-static func strip_data(S, cam_x: float, cam_w: float) -> Dictionary:
++## What the strip needs of the world changes rarely, and the full list of buildings is walked to get it: the fallen buildings' x (the strip draws a mark for each; its layer redraws only when
++## their number changes), and the biome segments (a constant). A planet of hundreds of buildings made that walk a visible share of a phone's frame. With UiFast on the list is kept for the
++## sim object, the building count and the sim's own count of structures lost, and looked at again every STRIP_DEAD_MS regardless (a planet turn or the campaign's wear change buildings
++## without that count moving), so a mark that is not a battle's can lag by at most a quarter of a second.
++const STRIP_DEAD_MS := 250
++static var _strip_for: int = 0
++static var _strip_n: int = -1
++static var _strip_lost: int = -1
++static var _strip_ms: int = 0
++static var _strip_dead: Array = []
++static var _strip_segs: Array = []
++static var _aura_color: Dictionary = {}
++
++
++static func _fallen(S) -> Array:
+ 	var dead: Array = []
+ 	for b in S.buildings:
+ 		if not b.alive:
+ 			dead.append(float(b.x))
++	return dead
++
++
++static func _segments() -> Array:
++	var segs: Array = []
++	for s in WorldBiomes.SEG:
++		segs.append([float(s[0]), float(s[1]), str(s[2])])
++	return segs
++
++
++static func strip_data(S, cam_x: float, cam_w: float) -> Dictionary:
++	var dead: Array
++	var segs: Array
++	if UiFast.on:
++		var now: int = Time.get_ticks_msec()
++		var id: int = S.get_instance_id()
++		var lost: int = int(S.world.structuresLost)
++		if id != _strip_for or S.buildings.size() != _strip_n or lost != _strip_lost or now - _strip_ms >= STRIP_DEAD_MS or now < _strip_ms:
++			_strip_for = id
++			_strip_n = S.buildings.size()
++			_strip_lost = lost
++			_strip_ms = now
++			_strip_dead = _fallen(S)
++		if _strip_segs.is_empty():
++			_strip_segs = _segments()
++		dead = _strip_dead
++		segs = _strip_segs
++	else:
++		dead = _fallen(S)
++		segs = _segments()
+ 	var fs: Array = []
+ 	for i in range(S.fighters.size()):
+ 		var f = S.fighters[i]
+@@ -180,8 +251,13 @@ static func strip_data(S, cam_x: float, cam_w: float) -> Dictionary:
+ 		var seen: float = float(f.x)
+ 		if o != null and o.lastSeen != null:
+ 			seen = float(o.lastSeen.x)
+-		fs.append({"x": float(f.x), "slot": i, "hidden": bool(f.hidden), "aura": Color.html(str(f.aura)), "seen_x": seen})
+-	var segs: Array = []
+-	for s in WorldBiomes.SEG:
+-		segs.append([float(s[0]), float(s[1]), str(s[2])])
++		fs.append({"x": float(f.x), "slot": i, "hidden": bool(f.hidden), "aura": _aura(str(f.aura)), "seen_x": seen})
+ 	return {"W": SimConst.W, "segs": segs, "cam_x": cam_x, "cam_w": cam_w, "dead": dead, "fighters": fs}
++
++
++static func _aura(hex: String) -> Color:
++	if not UiFast.on:
++		return Color.html(hex)
++	if not _aura_color.has(hex):
++		_aura_color[hex] = Color.html(hex)
++	return _aura_color[hex]
+diff --git a/ui/hud/ui_hud.gd b/ui/hud/ui_hud.gd
+index 60f301f..3428fd6 100644
+--- a/ui/hud/ui_hud.gd
++++ b/ui/hud/ui_hud.gd
+@@ -433,7 +433,31 @@ func consume_all(events: Array) -> void:
+ 	hub.consume_all(events)
+ 
+ 
++## The fighter's screen anchor from the host. The host's answer is a camera projection, and one advance asks for it up to six times a slot (the panels' side, the pointers, the beam
++## struggle, the YOU marker): within advance() the first answer is kept for the rest (nothing moves the camera in between). The painters ask the host themselves, as before.
++var _anchor_memo: Array = [null, null]
++var _anchor_memo_on: bool = false
++
++
++func _anchor(slot: int) -> Dictionary:
++	if not (UiFast.on and _anchor_memo_on and slot >= 0 and slot < 2):
++		return anchor_fn.call(slot)
++	var a = _anchor_memo[slot]
++	if a == null:
++		a = anchor_fn.call(slot)
++		_anchor_memo[slot] = a
++	return a
++
++
+ func advance(dt: float) -> void:
++	_anchor_memo = [null, null]
++	_anchor_memo_on = true
++	_advance(dt)
++	_anchor_memo_on = false
++	_anchor_memo = [null, null]
++
++
++func _advance(dt: float) -> void:
+ 	_sync_lane_colors()
+ 	hub.keep_hints = bool(opts["keep_hints"])
+ 	_t += dt
+@@ -493,8 +517,8 @@ func _fighters_side() -> int:
+ 			sg = (_split["ring"] as Dictionary).get("sigma")
+ 		return -1 if sg == null else (1 if float(sg) < 0.0 else 0)
+ 	if anchor_fn.is_valid() and hub.models.size() >= 2:
+-		var a0: Dictionary = anchor_fn.call(0)
+-		var a1: Dictionary = anchor_fn.call(1)
++		var a0: Dictionary = _anchor(0)
++		var a1: Dictionary = _anchor(1)
+ 		if a0.is_empty() or a1.is_empty() or not bool(a0.get("visible", true)) or not bool(a1.get("visible", true)):
+ 			return -1
+ 		var dx: float = (a0["pos"] as Vector2).x - (a1["pos"] as Vector2).x
+@@ -705,7 +729,7 @@ func _update_layers() -> void:
+ 	var chips: Array = []
+ 	if not _split.is_empty() and anchor_fn.is_valid() and _lb < 0.5:
+ 		for i in range(mini(2, hub.models.size())):
+-			_anchors[i] = anchor_fn.call(i)
++			_anchors[i] = _anchor(i)
+ 		var bh: float = UiSplit.distance_bh(_split)
+ 		_chip_big = bh >= UiSplit.BIG_FROM or (_chip_big and bh >= UiSplit.BIG_UNTIL)   # a far rival gets the larger chip, with a margin so it does not flicker
+ 		chips = UiSplit.pointers(layout, _split, _anchors, layout.s, _chip_big)
+@@ -724,7 +748,7 @@ func _update_layers() -> void:
+ 	_l_many.update_sig(UiMany.sig(_many_marks, hub) if (not _many_marks.is_empty() and _lb < 0.5) else null)
+ 	# The beam struggle's tug of war: between the two fighters' hands while one is on (UiTug); nothing otherwise.
+ 	if not UiData.feature("minimal_hud") and not hub.tug.is_empty() and anchor_fn.is_valid() and _lb < 0.5:
+-		_tug_plan = UiTug.plan(layout, hub.tug, [anchor_fn.call(int(hub.tug["a"])), anchor_fn.call(int(hub.tug["d"]))], layout.s, bool(opts["reduced_motion"]) or bool(opts["reduce_flashing"]))
++		_tug_plan = UiTug.plan(layout, hub.tug, [_anchor(int(hub.tug["a"])), _anchor(int(hub.tug["d"]))], layout.s, bool(opts["reduced_motion"]) or bool(opts["reduce_flashing"]))
+ 	else:
+ 		_tug_plan = {}
+ 	_l_tug.update_sig(UiTug.sig(_tug_plan))
+@@ -794,7 +818,7 @@ func _update_layers() -> void:
+ 			var ha: float = float((_legend_g[clampi(m.slot, 0, 1)] as Dictionary)["a"])   # the legend is for a keyboard or a pad; the YOU marker is for every screen
+ 			var yk: Dictionary = _you_marker(m)
+ 			if float(yk["a"]) > 0.01 and anchor_fn.is_valid():
+-				var an: Dictionary = anchor_fn.call(m.slot)
++				var an: Dictionary = _anchor(m.slot)
+ 				var ap: Vector2 = an.get("pos", Vector2.ZERO)
+ 				var ea: Dictionary = UiHints.edge_arrow(an, layout.safe, layout.s)
+ 				if not (ea.is_empty() and UiData.feature("minimal_hud")):   # the label over the head is cut under minimal_hud; the arrow at the screen's edge (the fighter is off screen) is not
+@@ -3589,7 +3613,7 @@ func _update_teach() -> void:
+ 
+ 
+ func _update_form(reduced: bool) -> void:
+-	var o: Dictionary = _o()
++	var o: Dictionary = {} if UiFast.on else _o()   # built (below) only for a chip that is wanted: it is 5 us a frame for nothing otherwise
+ 	for i in range(2):
+ 		var chip: UiLayer = _l_form[i]
+ 		var m: UiFighterModel = hub.models[i] if i < hub.models.size() else null
+@@ -3601,6 +3625,8 @@ func _update_form(reduced: bool) -> void:
+ 			form_prompt_shown.emit(i, m.device)
+ 		_form_ready_prev[i] = ready
+ 		var want: bool = UiFormPrompt.wanted(m) and not hub.sim_paused and _lb < 0.5
++		if want and o.is_empty():
++			o = _o()
+ 		var plan: Dictionary = UiFormPrompt.plan(m, layout.form[i], layout.s, o) if want else {}
+ 		_form_plan[i] = plan
+ 		var was_shown: bool = m.form_shown
+diff --git a/ui/tools/frame_cost_check.gd b/ui/tools/frame_cost_check.gd
+new file mode 100644
+index 0000000..f461811
+--- /dev/null
++++ b/ui/tools/frame_cost_check.gd
+@@ -0,0 +1,171 @@
++extends SceneTree
++## The HUD's per-frame savings change nothing the player sees (docs/ui/frame-cost.md). The same seeded match is played twice through the real sim host, with UiFast off (the cost the HUD had) and on, and after
++## every frame's UiSimBridge.patch and UiHud.advance a digest of what the HUD would draw is taken: every layer's signature, visibility, position and size, every fighter model's fields, the toll, the planet strip's
++## data and the feed's size. The two runs' digests must be equal on every frame. Gen 1 and a gen 2 coast, with and without the touch buttons, plus the cases the savings are careful about (a planet turn or the
++## campaign's wear changing the fallen buildings without a loss being counted: the strip's marks catch up within a quarter second). Headless; run from the repo root:
++##   godot --headless --path . --script res://ui/tools/frame_cost_check.gd [-- --ticks=900]
++## `--dump=<file>` appends the digests of the savings-on run, frame by frame, to a file, so the same run on another tree (the HEAD before the savings) can be compared with it line for line.
++## Exits 0 when every check passes.
++
++var fails: int = 0
++var checks: int = 0
++
++
++func _ok(cond: bool, what: String) -> void:
++	checks += 1
++	if not cond:
++		fails += 1
++		print("FAIL  ", what)
++
++
++func _initialize() -> void:
++	_run.call_deferred()
++
++
++func _plain(v) -> bool:
++	return typeof(v) in [TYPE_BOOL, TYPE_INT, TYPE_FLOAT, TYPE_STRING, TYPE_COLOR, TYPE_VECTOR2, TYPE_RECT2, TYPE_ARRAY, TYPE_DICTIONARY, TYPE_NIL, TYPE_STRING_NAME]
++
++
++func _model_digest(m: UiFighterModel) -> String:
++	var out := PackedStringArray()
++	for p in m.get_property_list():
++		if int(p["usage"]) & PROPERTY_USAGE_SCRIPT_VARIABLE == 0:
++			continue
++		var v = m.get(p["name"])
++		if _plain(v):
++			out.append("%s=%s" % [p["name"], var_to_str(v)])
++	return "|".join(out)
++
++
++func _digest(hud: UiHud) -> String:
++	var parts := PackedStringArray()
++	for l in hud._all_layers():
++		if l == null:
++			parts.append("-")
++		else:
++			parts.append("%s@%s/%s/%s" % [var_to_str(l.sig), str(l.visible), str(l.position), str(l.size)])
++	for m in hud.hub.models:
++		parts.append(_model_digest(m))
++	parts.append(var_to_str(hud.hub.toll))
++	parts.append(str(hud.hub.toll_age))
++	parts.append(str(hud.hub.feed.size()))
++	parts.append("%s %s %s %s %s" % [str(hud.hub.cards.size()), str(hud.hub.barks.size()), str(hud.hub.mode), str(hud.hub.t_now), str(hud._t)])
++	parts.append("%s %s %s %s %s" % [var_to_str(hud.hub.banner), var_to_str(hud.hub.hint), var_to_str(hud.hub.telegraph), var_to_str(hud.hub.caption), var_to_str(hud.hub.tug)])
++	parts.append("%s %s %s" % [str(hud._lb), str(hud._swap_fade), str(hud._intro_a)])
++	parts.append(str(hud.hub.stats["events"]))
++	parts.append(var_to_str(hud._strip_data))
++	return "\n".join(parts).sha1_text()
++
++
++## One run: returns the digest of every frame.
++func _play(fast: bool, gen: int, touch: bool, ticks: int, mid: Callable = Callable()) -> Array:
++	UiFast.on = fast
++	var host := SimHost.new()
++	if gen == 2:
++		WorldClimate.useGen(2)
++		host.new_match(4, {"p1": true, "p2": true}, {"planet": 7, "touch": 3, "arena": {"cols": 2400, "turn": true}, "planetGen": 2, "intro": false})
++	else:
++		host.new_match(4)
++	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
++	hud.size = Vector2(1280, 720)
++	root.add_child(hud)
++	await process_frame
++	var f: Array = UiSimBridge.fighters(host.S)
++	hud.setup(f[0], f[1])
++	var vp: Vector2 = hud.layout.vp
++	hud.anchor_fn = func(slot: int) -> Dictionary:
++		var fi = host.S.fighters[slot]
++		var m: float = float(host.S.fighters[0].x) + SimWrap.sdx(float(host.S.fighters[0].x), float(host.S.fighters[1].x)) * 0.5
++		var dx: float = SimWrap.sdx(m, float(fi.x))
++		return {"pos": Vector2(vp.x * 0.5 + dx * 0.35, vp.y * 0.62 - float(fi.y) * 0.35), "h": vp.y * 0.11, "visible": true}
++	hud.strip_fn = func() -> Dictionary:
++		return UiSimBridge.strip_data(host.S, float(host.S.fighters[0].x), 1600.0)
++	host.drained.connect(func(evs: Array, _lines: Array): hud.consume_all(evs))
++	hud.hub.model(0).ai = false
++	if touch:
++		hud.touch_state_fn = host.touch.display_state
++		hud.set_option("touch_ui", true)
++		hud.set_option("touch_preset", "touch-full")
++	var out: Array = []
++	for i in range(ticks):
++		host.tick(1280.0, 720.0)
++		UiSimBridge.patch(hud, host.S, host.hub)
++		hud.advance(1.0 / 60.0)
++		if mid.is_valid():
++			mid.call(host, hud, i)
++		out.append(_digest(hud))
++		if i % 4 == 0:
++			await process_frame
++	hud.queue_free()
++	await process_frame
++	return out
++
++
++func _first_diff(a: Array, b: Array) -> int:
++	for i in range(mini(a.size(), b.size())):
++		if a[i] != b[i]:
++			return i
++	return -1 if a.size() == b.size() else mini(a.size(), b.size())
++
++
++func _run() -> void:
++	var ticks: int = 900
++	var dump: String = ""
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--ticks="):
++			ticks = int(a.substr(8))
++		elif a.begins_with("--dump="):
++			dump = a.substr(7)
++	for gen in [1, 2]:
++		for touch in [false, true]:
++			var off: Array = await _play(false, gen, touch, ticks)
++			if gen == 1 and not touch:
++				var again: Array = await _play(false, gen, touch, ticks)
++				_ok(_first_diff(off, again) == -1, "the digest is repeatable: the same run twice, savings off, is the same on every frame")
++				# Negative controls: the digest does see a changed field, a changed layer and a changed toll.
++				var nudged: Array = await _play(false, gen, touch, 200, func(_h, hud: UiHud, i: int): if i == 150: hud.hub.models[1].tier = 3)
++				_ok(_first_diff(off.slice(0, 200), nudged) == 150, "the digest sees a fighter's field change on the frame it changes (frame %d)" % _first_diff(off.slice(0, 200), nudged))
++				var toll_n: Array = await _play(false, gen, touch, 200, func(_h, hud: UiHud, i: int): if i == 120: hud.hub.toll["craters"] = 99)
++				_ok(_first_diff(off.slice(0, 200), toll_n) == 120, "the digest sees the toll change (frame %d)" % _first_diff(off.slice(0, 200), toll_n))
++			var on: Array = await _play(true, gen, touch, ticks)
++			if dump != "":
++				var lines := PackedStringArray()
++				for i in range(on.size()):
++					lines.append("%d %s %d %s" % [gen, str(touch), i, on[i]])
++				var fa := FileAccess.open(dump, FileAccess.READ_WRITE if FileAccess.file_exists(dump) else FileAccess.WRITE)
++				fa.seek_end()
++				fa.store_string("
++".join(lines) + "
++")
++				fa.close()
++			var d: int = _first_diff(off, on)
++			_ok(d == -1 and off.size() == ticks, "gen %d touch %s: all %d frames draw the same with the savings on (first difference: %d)" % [gen, str(touch), ticks, d])
++	# A building brought down without the sim's count of losses moving (the campaign's wear, a planet turn): the strip's mark is there within a quarter second and not before it is asked for.
++	UiFast.on = true
++	var host := SimHost.new()
++	host.new_match(4)
++	var S: SimState = host.S
++	var before: int = (UiSimBridge.strip_data(S, 0.0, 1600.0)["dead"] as Array).size()
++	S.buildings[0].alive = false
++	var got: int = (UiSimBridge.strip_data(S, 0.0, 1600.0)["dead"] as Array).size()
++	var t0: int = Time.get_ticks_msec()
++	while got == before and Time.get_ticks_msec() - t0 < 1000:
++		OS.delay_msec(20)
++		got = (UiSimBridge.strip_data(S, 0.0, 1600.0)["dead"] as Array).size()
++	_ok(got == before + 1 and Time.get_ticks_msec() - t0 <= 600, "a building that falls without a counted loss reaches the strip within a quarter second (%d ms)" % (Time.get_ticks_msec() - t0))
++	S.world.structuresLost += 1.0
++	S.buildings[1].alive = false
++	_ok((UiSimBridge.strip_data(S, 0.0, 1600.0)["dead"] as Array).size() == before + 2, "a counted loss reaches the strip at once")
++	UiFast.on = false
++	_ok((UiSimBridge.strip_data(S, 0.0, 1600.0)["dead"] as Array).size() == before + 2, "with the savings off the strip reads the buildings every call, as before")
++	# display_text answers the same with the memo.
++	UiFast.on = false
++	var texts: Array = ["K.O.  PROTAGONIST WINS", "RIVAL", "protagonist.sig", "PROTAGONIST.SIG lands", "no names here", "", "the rival smiles"]
++	var plain: Array = texts.map(func(t): return UiData.display_text(t))
++	UiFast.on = true
++	var memo1: Array = texts.map(func(t): return UiData.display_text(t))
++	var memo2: Array = texts.map(func(t): return UiData.display_text(t))
++	_ok(plain == memo1 and plain == memo2, "display_text answers the same from the memo (%s)" % str(plain))
++	UiFast.on = true
++	print("frame_cost_check: %d checks, %d failed" % [checks, fails])
++	quit(1 if fails > 0 else 0)
+diff --git a/ui/tools/frame_cost_check.gd.uid b/ui/tools/frame_cost_check.gd.uid
+new file mode 100644
+index 0000000..9ab7c24
+--- /dev/null
++++ b/ui/tools/frame_cost_check.gd.uid
+@@ -0,0 +1 @@
++uid://dkn6spnwu6uv2
+diff --git a/ui/tools/hud_frame_bench.gd b/ui/tools/hud_frame_bench.gd
+new file mode 100644
+index 0000000..6d1b1f3
+--- /dev/null
++++ b/ui/tools/hud_frame_bench.gd
+@@ -0,0 +1,100 @@
++extends SceneTree
++## The HUD's per-frame cost (the brief of 2026-10-27: UiSimBridge.patch and UiHud.advance on a phone). Plays AI against AI through the real sim host, one tick a frame, with the game's own hookups
++## (anchors, planet strip), and times, per frame, the bridge's patch and UiHud.advance, plus (a second, uncounted call on the same frame) the pieces of advance: the hub's advance and the layers' update.
++## Headless GDScript time, no GPU; the median and the mean in microseconds. Run: godot --headless --path . --script res://ui/tools/hud_frame_bench.gd [-- --seed=4 --ticks=1500 --gen=2 --fast=1]
++## `--fast=0` plays the cost the HUD had before UiFast (the bench's switch).
++
++func _initialize() -> void:
++	_run.call_deferred()
++
++
++func _med(a: Array) -> float:
++	var b: Array = a.duplicate()
++	b.sort()
++	return float(b[b.size() / 2])
++
++
++func _mean(a: Array) -> float:
++	var s := 0.0
++	for x in a:
++		s += float(x)
++	return s / maxf(float(a.size()), 1.0)
++
++
++func _run() -> void:
++	var seed: int = 4
++	var ticks: int = 1500
++	var gen: int = 1
++	var fast: bool = true
++	var touch: bool = false
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--seed="):
++			seed = int(a.substr(7))
++		elif a.begins_with("--ticks="):
++			ticks = int(a.substr(8))
++		elif a.begins_with("--gen="):
++			gen = int(a.substr(6))
++		elif a.begins_with("--fast="):
++			fast = int(a.substr(7)) != 0
++		elif a.begins_with("--touch="):
++			touch = int(a.substr(8)) != 0
++	UiFast.on = fast
++	var host := SimHost.new()
++	if gen == 2:
++		WorldClimate.useGen(2)
++		host.new_match(seed, {"p1": true, "p2": true}, {"planet": 7, "touch": 3, "arena": {"cols": 2400, "turn": true}, "planetGen": 2, "intro": false})
++	else:
++		host.new_match(seed)
++	root.size = Vector2i(1280, 720)
++	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
++	hud.size = Vector2(1280, 720)
++	root.add_child(hud)
++	await process_frame
++	var f: Array = UiSimBridge.fighters(host.S)
++	hud.setup(f[0], f[1])
++	var vp: Vector2 = hud.layout.vp
++	hud.anchor_fn = func(slot: int) -> Dictionary:
++		var fi = host.S.fighters[slot]
++		var mid: float = float(host.S.fighters[0].x) + SimWrap.sdx(float(host.S.fighters[0].x), float(host.S.fighters[1].x)) * 0.5
++		var dx: float = SimWrap.sdx(mid, float(fi.x))
++		return {"pos": Vector2(vp.x * 0.5 + dx * 0.35, vp.y * 0.62 - float(fi.y) * 0.35), "h": vp.y * 0.11, "visible": true}
++	hud.strip_fn = func() -> Dictionary:
++		return UiSimBridge.strip_data(host.S, float(host.S.fighters[0].x), 1600.0)
++	host.drained.connect(func(evs: Array, _lines: Array): hud.consume_all(evs))
++	hud.hub.model(0).ai = false
++	if touch:
++		hud.touch_state_fn = host.touch.display_state
++		hud.set_option("touch_ui", true)
++		hud.set_option("touch_preset", "touch-full")
++	var p_us: Array = []
++	var a_us: Array = []
++	var h_us: Array = []
++	var u_us: Array = []
++	var warm: int = 200
++	for i in range(ticks):
++		host.tick(1280.0, 720.0)
++		var t0: int = Time.get_ticks_usec()
++		UiSimBridge.patch(hud, host.S)
++		var t1: int = Time.get_ticks_usec()
++		UiSimBridge.feed(hud, host.feed.slice(maxi(0, host.feed.size() - 1)))
++		var t2: int = Time.get_ticks_usec()
++		hud.advance(1.0 / 60.0)
++		var t3: int = Time.get_ticks_usec()
++		hud.hub.advance(0.0)
++		var t4: int = Time.get_ticks_usec()
++		hud._update_layers()
++		var t5: int = Time.get_ticks_usec()
++		if i >= warm:
++			p_us.append(t1 - t0)
++			a_us.append(t3 - t2)
++			h_us.append(t4 - t3)
++			u_us.append(t5 - t4)
++		await process_frame
++	print("hud_frame_bench: touch %s, touch controls %d, seed %d gen %d fast %s, %d frames (microseconds, median / mean)" % [str(touch), hud.layout.touch_ctrl.size(), seed, gen, str(fast), p_us.size()])
++	print("  UiSimBridge.patch   %7.0f / %7.0f" % [_med(p_us), _mean(p_us)])
++	print("  UiHud.advance       %7.0f / %7.0f" % [_med(a_us), _mean(a_us)])
++	print("    hub.advance       %7.0f / %7.0f   (a second call with dt 0)" % [_med(h_us), _mean(h_us)])
++	print("    _update_layers    %7.0f / %7.0f   (a second call)" % [_med(u_us), _mean(u_us)])
++	print("  hash gameplay %s" % str(SimHash.stateHash(host.S).gameplay).substr(0, 16))
++	hud.queue_free()
++	quit()
+diff --git a/ui/tools/hud_frame_bench.gd.uid b/ui/tools/hud_frame_bench.gd.uid
+new file mode 100644
+index 0000000..735fc44
+--- /dev/null
++++ b/ui/tools/hud_frame_bench.gd.uid
+@@ -0,0 +1 @@
++uid://c3fc1m0sop4lr
+diff --git a/ui/widgets/ui_many.gd b/ui/widgets/ui_many.gd
+index 9ed4ea2..06eb5fe 100644
+--- a/ui/widgets/ui_many.gd
++++ b/ui/widgets/ui_many.gd
+@@ -49,6 +49,8 @@ static func marks(lay: UiLayout, sp: Dictionary) -> Array:
+ 	var cz: Rect2 = lay.clear_zone
+ 	if cz.size.x <= 0.0 or cz.size.y <= 0.0:
+ 		return out   # no fighters' space on this screen
++	if UiFast.on and listed(sp).is_empty():
++		return out   # two bodies in the frame, the usual fight: nothing to place, and the touch buttons' boxes below are not worth building for it
+ 	var sz: Vector2 = mark_size(lay)
+ 	var gap: float = 6.0 * lay.s
+ 	var boxes: Array = []
+@@ -110,6 +112,8 @@ static func _free(pos: Vector2, sz: Vector2, cz: Rect2, boxes: Array, placed: Ar
+ 
+ ## The markers with the vanished ones held: `keep` maps slot to {m, t}. Returns the markers to draw; `keep` is updated in place.
+ static func held(ms: Array, keep: Dictionary, now: float) -> Array:
++	if UiFast.on and ms.is_empty() and keep.is_empty():
++		return []
+ 	var out: Array = []
+ 	var now_slots := {}
+ 	for m in ms:

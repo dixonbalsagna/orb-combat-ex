@@ -49,6 +49,8 @@ static func marks(lay: UiLayout, sp: Dictionary) -> Array:
 	var cz: Rect2 = lay.clear_zone
 	if cz.size.x <= 0.0 or cz.size.y <= 0.0:
 		return out   # no fighters' space on this screen
+	if UiFast.on and listed(sp).is_empty():
+		return out   # two bodies in the frame, the usual fight: nothing to place, and the touch buttons' boxes below are not worth building for it
 	var sz: Vector2 = mark_size(lay)
 	var gap: float = 6.0 * lay.s
 	var boxes: Array = []
@@ -110,6 +112,8 @@ static func _free(pos: Vector2, sz: Vector2, cz: Rect2, boxes: Array, placed: Ar
 
 ## The markers with the vanished ones held: `keep` maps slot to {m, t}. Returns the markers to draw; `keep` is updated in place.
 static func held(ms: Array, keep: Dictionary, now: float) -> Array:
+	if UiFast.on and ms.is_empty() and keep.is_empty():
+		return []
 	var out: Array = []
 	var now_slots := {}
 	for m in ms:

@@ -14,6 +14,8 @@ static var _sig_re: RegEx = null
 static var _titles: Dictionary = {}         # the roster id in upper case -> the fighter's title
 static var _sigs: Dictionary = {}           # ... -> the name of its signature move
 static var _names_built := false
+static var _text_memo: Dictionary = {}     # display_text's answers (it is a pure function of the text and the tables above); cleared when they are built
+const TEXT_MEMO_CAP := 512
 static var _loaded := false
 
 
@@ -26,6 +28,7 @@ static func ensure() -> void:
 
 
 static func reload() -> void:
+	_feature_memo.clear()
 	_loaded = false
 	_names_built = false
 	ensure()
@@ -112,6 +115,7 @@ static func banner(text: String) -> String:
 static func _build_names() -> void:
 	ensure()
 	_names_built = true
+	_text_memo = {}
 	_names = {}
 	_titles = {}
 	_sigs = {}
@@ -167,6 +171,9 @@ static func display_text(text: String) -> String:
 		_build_names()
 	if _names_re == null or text == "":
 		return text
+	if UiFast.on and _text_memo.has(text):
+		return _text_memo[text]
+	var source: String = text
 	var out: String = ""
 	var at := 0
 	for mt in _sig_re.search_all(text):
@@ -179,7 +186,12 @@ static func display_text(text: String) -> String:
 	for mt in _names_re.search_all(text):
 		out += text.substr(at, mt.get_start() - at) + str(_names.get(mt.get_string(1), mt.get_string(1)))
 		at = mt.get_end()
-	return out + text.substr(at)
+	var shown: String = out + text.substr(at)
+	if UiFast.on:
+		if _text_memo.size() >= TEXT_MEMO_CAP:
+			_text_memo.clear()
+		_text_memo[source] = shown
+	return shown
 
 
 ## The readout profile for a fighter id (its own entry over the default; aliases such as the stand-ins' stand_in_protagonist
@@ -357,16 +369,26 @@ static func settings() -> Dictionary:
 
 const FEATURES_PATH := "res://ui/data/features.json"
 static var _features: Dictionary = {}
+static var _feature_memo: Dictionary = {}   # feature()'s answers: the HUD asks about thirty a frame; cleared when an override changes
 static var _feature_override: Dictionary = {}
 
 
 ## A feature flag from ui/data/features.json (off when missing). Tests may override with set_feature.
 static func feature(key: String) -> bool:
+	if UiFast.on:
+		var seen = _feature_memo.get(key)
+		if seen != null:
+			return seen
+	var on: bool
 	if _feature_override.has(key):
-		return bool(_feature_override[key])
-	if _features.is_empty():
-		_features = _read(FEATURES_PATH).get("features", {})
-	return bool(_features.get(key, false))
+		on = bool(_feature_override[key])
+	else:
+		if _features.is_empty():
+			_features = _read(FEATURES_PATH).get("features", {})
+		on = bool(_features.get(key, false))
+	if UiFast.on:
+		_feature_memo[key] = on
+	return on
 
 
 ## Whether Reduce flashing is locked on (Legal's addendum 10, RL-156): the toggle is shown nowhere, a saved Off is ignored, and the game plays the reduced look. Only the capture
@@ -377,6 +399,7 @@ static func rf_locked() -> bool:
 
 ## Override a flag for this run (tests and demos); pass null to clear the override.
 static func set_feature(key: String, value) -> void:
+	_feature_memo.clear()
 	if value == null:
 		_feature_override.erase(key)
 	else:

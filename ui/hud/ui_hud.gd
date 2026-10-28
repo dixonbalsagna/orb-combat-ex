@@ -433,7 +433,31 @@ func consume_all(events: Array) -> void:
 	hub.consume_all(events)
 
 
+## The fighter's screen anchor from the host. The host's answer is a camera projection, and one advance asks for it up to six times a slot (the panels' side, the pointers, the beam
+## struggle, the YOU marker): within advance() the first answer is kept for the rest (nothing moves the camera in between). The painters ask the host themselves, as before.
+var _anchor_memo: Array = [null, null]
+var _anchor_memo_on: bool = false
+
+
+func _anchor(slot: int) -> Dictionary:
+	if not (UiFast.on and _anchor_memo_on and slot >= 0 and slot < 2):
+		return anchor_fn.call(slot)
+	var a = _anchor_memo[slot]
+	if a == null:
+		a = anchor_fn.call(slot)
+		_anchor_memo[slot] = a
+	return a
+
+
 func advance(dt: float) -> void:
+	_anchor_memo = [null, null]
+	_anchor_memo_on = true
+	_advance(dt)
+	_anchor_memo_on = false
+	_anchor_memo = [null, null]
+
+
+func _advance(dt: float) -> void:
 	_sync_lane_colors()
 	hub.keep_hints = bool(opts["keep_hints"])
 	_t += dt
@@ -493,8 +517,8 @@ func _fighters_side() -> int:
 			sg = (_split["ring"] as Dictionary).get("sigma")
 		return -1 if sg == null else (1 if float(sg) < 0.0 else 0)
 	if anchor_fn.is_valid() and hub.models.size() >= 2:
-		var a0: Dictionary = anchor_fn.call(0)
-		var a1: Dictionary = anchor_fn.call(1)
+		var a0: Dictionary = _anchor(0)
+		var a1: Dictionary = _anchor(1)
 		if a0.is_empty() or a1.is_empty() or not bool(a0.get("visible", true)) or not bool(a1.get("visible", true)):
 			return -1
 		var dx: float = (a0["pos"] as Vector2).x - (a1["pos"] as Vector2).x
@@ -705,7 +729,7 @@ func _update_layers() -> void:
 	var chips: Array = []
 	if not _split.is_empty() and anchor_fn.is_valid() and _lb < 0.5:
 		for i in range(mini(2, hub.models.size())):
-			_anchors[i] = anchor_fn.call(i)
+			_anchors[i] = _anchor(i)
 		var bh: float = UiSplit.distance_bh(_split)
 		_chip_big = bh >= UiSplit.BIG_FROM or (_chip_big and bh >= UiSplit.BIG_UNTIL)   # a far rival gets the larger chip, with a margin so it does not flicker
 		chips = UiSplit.pointers(layout, _split, _anchors, layout.s, _chip_big)
@@ -724,7 +748,7 @@ func _update_layers() -> void:
 	_l_many.update_sig(UiMany.sig(_many_marks, hub) if (not _many_marks.is_empty() and _lb < 0.5) else null)
 	# The beam struggle's tug of war: between the two fighters' hands while one is on (UiTug); nothing otherwise.
 	if not UiData.feature("minimal_hud") and not hub.tug.is_empty() and anchor_fn.is_valid() and _lb < 0.5:
-		_tug_plan = UiTug.plan(layout, hub.tug, [anchor_fn.call(int(hub.tug["a"])), anchor_fn.call(int(hub.tug["d"]))], layout.s, bool(opts["reduced_motion"]) or bool(opts["reduce_flashing"]))
+		_tug_plan = UiTug.plan(layout, hub.tug, [_anchor(int(hub.tug["a"])), _anchor(int(hub.tug["d"]))], layout.s, bool(opts["reduced_motion"]) or bool(opts["reduce_flashing"]))
 	else:
 		_tug_plan = {}
 	_l_tug.update_sig(UiTug.sig(_tug_plan))
@@ -794,7 +818,7 @@ func _update_layers() -> void:
 			var ha: float = float((_legend_g[clampi(m.slot, 0, 1)] as Dictionary)["a"])   # the legend is for a keyboard or a pad; the YOU marker is for every screen
 			var yk: Dictionary = _you_marker(m)
 			if float(yk["a"]) > 0.01 and anchor_fn.is_valid():
-				var an: Dictionary = anchor_fn.call(m.slot)
+				var an: Dictionary = _anchor(m.slot)
 				var ap: Vector2 = an.get("pos", Vector2.ZERO)
 				var ea: Dictionary = UiHints.edge_arrow(an, layout.safe, layout.s)
 				if not (ea.is_empty() and UiData.feature("minimal_hud")):   # the label over the head is cut under minimal_hud; the arrow at the screen's edge (the fighter is off screen) is not
@@ -3589,7 +3613,7 @@ func _update_teach() -> void:
 
 
 func _update_form(reduced: bool) -> void:
-	var o: Dictionary = _o()
+	var o: Dictionary = {} if UiFast.on else _o()   # built (below) only for a chip that is wanted: it is 5 us a frame for nothing otherwise
 	for i in range(2):
 		var chip: UiLayer = _l_form[i]
 		var m: UiFighterModel = hub.models[i] if i < hub.models.size() else null
@@ -3601,6 +3625,8 @@ func _update_form(reduced: bool) -> void:
 			form_prompt_shown.emit(i, m.device)
 		_form_ready_prev[i] = ready
 		var want: bool = UiFormPrompt.wanted(m) and not hub.sim_paused and _lb < 0.5
+		if want and o.is_empty():
+			o = _o()
 		var plan: Dictionary = UiFormPrompt.plan(m, layout.form[i], layout.s, o) if want else {}
 		_form_plan[i] = plan
 		var was_shown: bool = m.form_shown
