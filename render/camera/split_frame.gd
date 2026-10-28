@@ -157,6 +157,18 @@ func apparent_height(i: int, wx: float, wy: float, wz: float = 0.0) -> float:
 	return (screen_pos(i, wx, wy, wz) - screen_pos(i, wx, wy + CamParams.BODY_H, wz)).length()
 
 
+## Whether the fighter's chest point is in pane `slot`'s picture: hud_anchor's "visible" without the rest of the record.
+func sees(slot: int, wx: float, wy: float, wz: float = 0.0) -> bool:
+	if not shows(slot):
+		return false
+	var p: Vector2 = screen_pos(slot, wx, wy + CamParams.CHEST, wz)
+	var on: bool = Rect2(Vector2(-200.0, -200.0), Vector2(vw, vh) + Vector2(400.0, 400.0)).has_point(p)
+	if on and feather <= 0.001:
+		var side: float = (p - c).dot(n)
+		on = side <= 0.0 if slot == 0 else side > 0.0
+	return on
+
+
 func hud_anchor(slot: int, wx: float, wy: float, wz: float = 0.0) -> Dictionary:
 	var p: Vector2 = screen_pos(slot, wx, wy + CamParams.CHEST, wz)
 	var on: bool = shows(slot) and Rect2(Vector2(-200.0, -200.0), Vector2(vw, vh) + Vector2(400.0, 400.0)).has_point(p)
