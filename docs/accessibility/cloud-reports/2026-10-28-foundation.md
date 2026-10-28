@@ -55,4 +55,15 @@ The HUD's accessibility groundwork is strong (no colour-only cue, three colour-b
 Land the switch (need 1), then run a pseudo build locally to catch what the static check cannot (plates, legend, prompt row). Then write `docs/accessibility/checklist.md` from this audit for the P5 gate, and `pot.mjs` when the first volunteer appears.
 
 ## Gates (this tree)
-GATES_PLACEHOLDER
+Godot 4.7.2.stable.official.ed1daf0bf installed as CI does (SHA-512 checked). Every gate exited 0:
+- `node tools/validate.js`: "278 files checked, 0 errors, 0 warnings"
+- `node tools/validate.js --self-test`: "Self-test: 9711 of 9711 checks passed"
+- `node tools/lint-determinism.mjs`: "determinism lint ok"
+- `npm test --prefix sim`: unit, parity, soak and golden PASS; "the frozen JS core reproduces its golden record" (golden unchanged; no sim file touched)
+- `render/anim/tools/anim_check.gd`: "anim check passed"
+- `render/camera/tests/split_sweep.gd`: "split sweep passed"
+- `sim/core/tools/campaign_episode.gd`: "the two plays are the same to the bit"
+- `sim/core/tools/parity.gd`: "golden check passed"
+- `ui/tools/hud_check.gd`: "5816 checks, 0 failed"
+- all 40 `sim/world/tools/*_check.gd`: exit 0
+- own: `strings.mjs --self-test` and `pseudo.mjs --self-test` all passed; `pseudo.mjs --check` current; `overflow_check.gd` exit 0 (results in the plan).
