@@ -94,6 +94,30 @@ export async function cpuLoad(ms = 1000) {
   return dt > 0 ? Math.round((100 * (dt - (b.idle - a.idle))) / dt) : 0;
 }
 
+/** The profile folder a browser is started with, made and PROVEN writable before the browser starts (2026-10-27: "Failed To Create Data Directory", a modal on Orb's desktop, when a launch's folder
+ *  was not there or not writable at the moment Chrome came up). It throws a plain error that names the folder; the launch counts that as a failed attempt and tries again with a new folder. */
+export function prepareProfile(profile) {
+  try {
+    mkdirSync(profile, { recursive: true });
+    const probe = join(profile, `.write-probe-${process.pid}`);
+    writeFileSync(probe, 'x');
+    rmSync(probe, { force: true });
+    if (!existsSync(profile)) throw new Error('the folder is not there after it was made');
+  } catch (e) {
+    throw new Error(`the browser's profile folder ${profile} cannot be created or written: ${e.message}`);
+  }
+}
+
+/** How many processes carry the profile folder on their command line (the browser and its children). */
+export function processesWithProfile(profile) {
+  if (platform() === 'win32') {
+    const r = spawnSync('powershell', ['-NoProfile', '-Command', `@(Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -like '*${profile.replace(/'/g, "''")}*' }).Count`], { encoding: 'utf8', timeout: 30000 });   // not itself: its own command line carries the folder
+    return Number((r.stdout || '0').trim()) || 0;
+  }
+  const r = spawnSync('pgrep', ['-f', profile], { encoding: 'utf8' });
+  return r.stdout.split('\n').filter(Boolean).length;
+}
+
 function killTreeByProfile(profile) {
   if (platform() === 'win32') {
     spawnSync('powershell', ['-NoProfile', '-Command', `Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*${profile.replace(/'/g, "''")}*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`], { stdio: 'ignore', timeout: 30000 });
@@ -136,6 +160,8 @@ export async function launchBrowser(o = {}) {
     }
     try { if (l.helper && l.helper.pid) { if (win) spawnSync('taskkill', ['/PID', String(l.helper.pid), '/T', '/F'], { stdio: 'ignore', timeout: 15000 }); else l.helper.kill('SIGKILL'); } } catch { /* gone */ }
     killTreeByProfile(l.profile);
+    // the folder goes only when nothing carries it any more: a browser still coming up when its folder was removed is what put "Failed To Create Data Directory" on a desktop (2026-10-27)
+    for (let i = 0; i < 20 && processesWithProfile(l.profile) > 0; i++) { killTreeByProfile(l.profile); await sleep(500); }
     for (let i = 0; i < 8; i++) { try { rmSync(l.profile, { recursive: true, force: true }); break; } catch { await sleep(400); } }
     try { rmSync(l.registry, { force: true }); } catch { /* gone */ }
     try { if (l.argsFile) rmSync(l.argsFile, { force: true }); } catch { /* gone */ }
@@ -150,13 +176,14 @@ export async function launchBrowser(o = {}) {
     const id = randomBytes(3).toString('hex');
     const profile = join(tmpdir(), `cap-${session}-${purpose}-${id}`);
     const registry = join(REGISTRY_DIR, `cap-${session}-${purpose}-${id}.json`);
-    mkdirSync(profile, { recursive: true });
+    try { prepareProfile(profile); } catch (e) { last = e.message; log(`browser launch attempt ${attempt} of ${attempts} failed: ${last}${attempt < attempts ? '; trying again' : ''}`); continue; }
     const graceS = o.graceS === undefined ? STARTUP_GRACE_S : Number(o.graceS);
     const deadlineMs = Date.now() + (timeoutS + graceS) * 1000;
     const flags = [`--user-data-dir=${profile}`, '--remote-debugging-port=0', ...(o.headless === false ? [] : ['--headless=new']), '--no-first-run', '--no-default-browser-check', '--disable-extensions',
-      '--disable-sync', '--disable-component-update', '--hide-scrollbars', '--mute-audio', ...(process.env.CI ? ['--no-sandbox'] : []), ...(o.flags || []), 'about:blank'];
+      '--noerrdialogs', '--disable-sync', '--disable-component-update', '--hide-scrollbars', '--mute-audio', ...(process.env.CI ? ['--no-sandbox'] : []), ...(o.flags || []), 'about:blank'];
     const entry = { session, purpose, id, profile, registry, exe, parentPid: process.pid, startedAt: Date.now(), deadlineMs, timeoutS, cpuPercent, state: 'running', cwd: process.cwd(), argv: process.argv.slice(1).join(' ').slice(0, 300) };
     writeFileSync(registry, JSON.stringify(entry, null, 2) + '\n');
+    try { prepareProfile(profile); } catch (e) { last = e.message; try { rmSync(registry, { force: true }); } catch { /* gone */ } log(`browser launch attempt ${attempt} of ${attempts} failed: ${last}${attempt < attempts ? '; trying again' : ''}`); continue; }   // once more, the moment before it starts
     let helper;
     let failed = null;
     let up = false;

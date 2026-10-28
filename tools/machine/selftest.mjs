@@ -1,5 +1,7 @@
 // Proves the capture guards on this machine (docs/tools/machine-captures.md): `node tools/machine/selftest.mjs [--quick]`. Starts real browsers through tools/machine/browser.mjs and checks:
 //   1  a normal launch and close leaves no process and no profile folder behind
+//   1b the profile folder is made and proven writable before a browser starts (a folder that cannot be made is a plain error naming it), the browser carries --noerrdialogs, and a start that fails leaves
+//      no folder behind (2026-10-27: "Failed To Create Data Directory", a modal on a desktop)
 //   2  a capture past its time limit is ended by the guard itself (the caller does nothing)
 //   3  a capture whose launcher is killed mid-run is gone within the watchdog's interval (Windows: the job helper polls the parent; elsewhere a watchdog shell)
 //   3b the launcher's own hard deadline ends the browser AND the launcher, even when it is stuck awaiting a page
@@ -7,10 +9,11 @@
 //   4  the CPU cap holds: a page that keeps every core busy uses about the cap's share, not the machine
 // Exit 0 when every check passes. Takes about a minute (--quick skips check 4).
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
-import { platform, cpus } from 'node:os';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { platform, cpus, tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Cdp, launchBrowser } from './browser.mjs';
+import { Cdp, launchBrowser, prepareProfile, processesWithProfile } from './browser.mjs';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const quick = process.argv.includes('--quick');
@@ -43,6 +46,34 @@ async function waitGone(profile, ms) {
   await b.close();
   const left = treeOf(b.profile).length;
   check('1 a browser starts, answers and is closed without a trace', two === 2 && upBefore > 0 && left === 0 && !existsSync(b.profile), `${upBefore} processes before, ${left} after, profile ${existsSync(b.profile) ? 'left' : 'removed'}`);
+}
+// 1b
+{
+  const base = mkdtempSync(join(tmpdir(), 'selftest-profile-'));
+  try {
+    const good = join(base, 'cap-selftest-good-000001');
+    let ok1 = false, err = '';
+    try { prepareProfile(good); ok1 = existsSync(good); writeFileSync(join(good, 'x'), 'y'); } catch (e) { err = e.message; }
+    check('1b the profile folder is made and writable before the start', ok1 && !err, err);
+    const file = join(base, 'a-file');
+    writeFileSync(file, 'not a folder');
+    let msg = '';
+    try { prepareProfile(join(file, 'cap-selftest-bad-000002')); } catch (e) { msg = e.message; }
+    check('1b a folder that cannot be made is a plain error that names it (the launch counts it a failed attempt)', /cannot be created or written/.test(msg) && msg.includes('cap-selftest-bad-000002'), msg.slice(0, 120));
+    check('1b nothing carries a folder nobody started a browser in', processesWithProfile(join(base, 'cap-selftest-nothing-000003')) === 0);
+  } finally { rmSync(base, { recursive: true, force: true }); }
+  const b = await launchBrowser({ session: 'selftest', purpose: 'noerr', timeoutS: 90, log: () => {} });
+  let cl = '';
+  if (win) cl = spawnSync('powershell', ['-NoProfile', '-Command', `(Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'chrome.exe' -and $_.CommandLine -like '*${b.profile.replace(/'/g, "''")}*' } | Select-Object -First 1).CommandLine`], { encoding: 'utf8' }).stdout;
+  else cl = spawnSync('pgrep', ['-af', b.profile], { encoding: 'utf8' }).stdout;
+  check('1b the browser is started with --noerrdialogs (a failure exits quietly, no modal box on the desktop)', cl.includes('--noerrdialogs'), cl.slice(0, 100));
+  await b.close();
+  // a start that fails (no such browser): the error is raised, and no folder or registry entry of the attempts is left
+  const before = new Set(readdirSync(tmpdir()).filter((n) => n.startsWith('cap-selftest-badexe')));
+  let threw = false;
+  try { await launchBrowser({ exe: join(tmpdir(), 'no-such-browser.exe'), session: 'selftest', purpose: 'badexe', timeoutS: 30, portWaitMs: 4000, attempts: 2, graceS: 30, log: () => {} }); } catch { threw = true; }
+  const after = readdirSync(tmpdir()).filter((n) => n.startsWith('cap-selftest-badexe') && !before.has(n));
+  check('1b a start that fails raises its error and leaves no profile folder behind', threw && after.length === 0, `threw ${threw}, left ${after.join(',') || 'nothing'}`);
 }
 // 2
 {
