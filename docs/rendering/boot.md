@@ -101,11 +101,14 @@ Performance's start-block profile (`docs/perf/boot-start-block-2026-10-27.md`): 
 - **Main as before** for a headless run, a tool's switches (`flashcap`, `bench`, `frames`, `shot`, `nobootstage`) and Animation's study scene: the entry starts main at once.
 - **The breadcrumbs.** The entry says `first_frame` when its line is up, then `scripts`. Main goes on from there (`loading`, `compiling`, then the card), and does not say `first_frame` again.
 - **The class graph** (a scratch measure of `class_name` references and preloads):
-  - The sim is one cycle: 77 scripts, about 36,800 lines in `sim/core`, `sim/world`, `sim/director` and `sim/input`. Loading any of them compiles them all, so the sim is the one load the order cannot split (3.3 s at x4).
+  - **The sim was one cycle:** 77 scripts, about 36,800 lines in `sim/core`, `sim/world`, `sim/director` and `sim/input`. Loading any of them compiled them all (3.3 s at x4).
+  - **Simulation's load split** (8ce4be37; `docs/architecture/load-split.md`) took the director out of the core's and the world's cycle. The entry now loads the sim in five steps:
+    - the core and the world (`act.gd`, about 20,900 lines);
+    - the shots, the input's reading and the aim (the director's leaves);
+    - the director (`exchange.gd`, 29 scripts, about 15,400 lines).
+  - Natively the longest load went from 2.2 to 1.3 s (Simulation's measure).
   - Everything else falls into loads of about 1.5 s at x4 or less.
-  - What would split the sim (Simulation's call):
-    - Only five references point from `sim/core` and `sim/world` into `sim/director`: `DirExchange` twice, `DirBlast` and `DirBands` from the core, and `DirWallKick` from the world. Taken out, the director (about 15,600 lines) loads on its own.
-    - The 21 references from `sim/world` into `sim/core` are the next cut.
+  - **The next cut** is the 21 references from `sim/world` into `sim/core` (the world as a load of its own; `load-split.md` section 5).
 - **The line's size.** The boot's words and bar are sized as UI's loading screen sizes its own line (`RenderBoot.line_size`: the design screen's share, grown on a dense landscape phone so the words are at least 12 dp). They had been the default 16 pixels, small on a phone's 2,400-pixel-wide screen.
 - **Measured** (Performance's `freeze-probe.mjs`, 915 by 412 at a 2.625 pixel ratio, one run each on a shared machine; the before is main with the crumbs, a3bd4b3c's render):
 

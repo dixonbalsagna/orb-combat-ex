@@ -10,11 +10,16 @@ extends Node
 
 const MAIN: String = "res://render/main.tscn"
 ## The loads, one a drawn frame, in this order, leaves first: each compiles its script graph less what is loaded
-## already, so each is about a tenth of main's (Rendering's measure of the class graph, 2026-10-27). The first is the
-## sim's: its 77 scripts reference each other in one cycle, so they compile together whatever loads first. A path that
-## is gone is passed over (main loads whatever is left).
+## already, so each is about a tenth of main's (Rendering's measure of the class graph, 2026-10-27). The sim's are the
+## first five: Simulation's load split (docs/architecture/load-split.md) took the director out of the core's and the
+## world's cycle, so the core and the world load first, then the director's leaves, then the director. A path that is
+## gone is passed over (main loads whatever is left).
 const STEPS: Array = [
-	"res://sim/core/act.gd",               # the sim (sim/core, sim/world, sim/director, sim/input: one cycle)
+	"res://sim/core/act.gd",               # the core and the world
+	"res://sim/core/shots.gd",             # the shots
+	"res://sim/input/press_read.gd",       # the input's reading
+	"res://sim/input/aim.gd",              # the aim
+	"res://sim/director/exchange.gd",      # the director (29 scripts)
 	"res://sim/core/campaign.gd",          # the campaign and the rest of the sim's core
 	"res://sim/input/hub.gd",              # the input layer
 	"res://audio/audio_bank.gd",           # Audio's bank and synth
