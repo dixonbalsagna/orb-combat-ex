@@ -25,3 +25,4 @@ Wave 3 runs as routines, which bill the Max plan rather than the credit, so it c
 | 5 | netcode-transport.md | Netcode & Online | cloud/netcode-online/transport | routine (plan) |
 | 5 | animation-pair-ready.md | Animation | cloud/animation/pair-ready | routine (plan) |
 | 5 | ui-settings-access.md | UI/UX | cloud/ui-ux/settings-access | routine (plan); look gate local before landing |
+| 6 | encounter-w3.md | Encounter Systems | cloud/encounter-systems/biomes-w3 | routine (plan) |
