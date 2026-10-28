@@ -116,6 +116,22 @@ var _fw_x := PackedFloat32Array([0.0, 0.0, 0.0, 0.0])   # follow-through: head, 
 var _fw_v := PackedFloat32Array([0.0, 0.0, 0.0, 0.0])
 var _fw_vw := Vector2.ZERO
 var _fw_have: bool = false
+var _fw_src: Dictionary = {}   # the follow-through data the tables below were read from, and the fighter they were read for (`_fw_read`): the data does not change in a match, so a tick reads arrays, not dictionaries
+var _fw_fid: String = ""
+var _fw_n: int = 0
+var _fw_ref0: float = 1.0
+var _fw_ref1: float = 1.0
+var _fw_scale: float = 1.0
+var _fw_damp: float = 1.0
+var _fw_force_ref: float = 1.0
+var _fw_gx: Array = []
+var _fw_gy: Array = []
+var _fw_stiff: Array = []
+var _fw_dmp: Array = []
+var _fw_max: Array = []
+var _fw_hit: Array = []
+var _fw_bone: Array = []
+var _fw_arm: Array = []
 var _pop: Dictionary = {}                # the pop phase now (kind, t0, dur, amt, set)
 var _pop_pw: Dictionary = {}             # the pop's pose weights, each moved toward its target
 var _pop_cap: Dictionary = {}            # the most each pose has been asked for (a ramp is 6 or more ticks from nothing to that)
@@ -4597,7 +4613,7 @@ func _rd_tick(S: SimState, f, dt: float) -> void:
 	_rd_prev_slide = sliding
 	_rd_prev_speed = speed if st == "launched" else _rd_prev_speed
 	_rd_have = true
-	var active: bool = st == "launched" or st == "down" or st == "dropped" or _rd.free > 0.02 or _rd.energy() > 0.03
+	var active: bool = st == "launched" or st == "down" or st == "dropped" or _rd.free > 0.02 or ((_rd.energy_over(0.03)) if RenderAnim.tick_fast else (_rd.energy() > 0.03))
 	if active:
 		_rd.step(dt, vl, al, free_t, amp, S.T)
 	_rd.out_w = move_toward(_rd.out_w, 1.0 if active else 0.0, dt * 8.0)
@@ -5354,6 +5370,174 @@ func _reaction_layer(T: float) -> void:
 
 ## Follow-through (docs/animation/secondary-motion.md; data/anim/secondary.json): the head, the upper back and the forearms lag the body and swing past on every change of its velocity and on every blow. One tick of the springs; the angles are applied in `_follow_apply`.
 func _follow_tick(S: SimState, f, dt: float, frozen: bool) -> void:
+	if not RenderAnim.tick_fast:
+		_follow_tick_ref(S, f, dt, frozen)
+		return
+	var D: Dictionary = AnimData.secondary
+	if D.is_empty() or not RenderAnim.secondary_motion:
+		for i in range(_fw_x.size()):
+			_fw_x[i] = 0.0
+			_fw_v[i] = 0.0
+		_fw_have = false
+		return
+	var vw := Vector2(f.vx * vface, f.vy)
+	var dv := Vector2.ZERO
+	if _fw_have and f.state != "intro":
+		dv = vw - _fw_vw
+	_fw_vw = vw
+	_fw_have = true
+	_fw_read(D)
+	var kx: float = clampf(dv.x / _fw_ref0, -1.0, 1.0)
+	var ky: float = clampf(dv.y / _fw_ref1, -1.0, 1.0)
+	var sc: float = _fw_scale * (0.5 if RenderAnim.reduced_motion else 1.0)
+	var dm: float = _fw_damp
+	var h_all: float = dt * (0.1 if frozen else 1.0)
+	var n: int = 2
+	var h: float = h_all / float(n)
+	for i in range(_fw_n):
+		_fw_v[i] += (kx * _fw_gx[i] + ky * _fw_gy[i]) * sc
+		for _s in range(n):
+			var a: float = -_fw_stiff[i] * _fw_x[i] - _fw_dmp[i] * dm * _fw_v[i]
+			_fw_v[i] += a * h
+			_fw_x[i] += _fw_v[i] * h
+		var cl: float = clampf(_fw_x[i], -_fw_max[i], _fw_max[i])
+		if cl != _fw_x[i]:
+			_fw_v[i] = 0.0   # at its bound the part stops there
+		_fw_x[i] = cl
+
+
+## The follow-through data as flat arrays for this fighter, read again only when the data or the fighter changes.
+func _fw_read(D: Dictionary) -> void:
+	if is_same(_fw_src, D) and _fw_fid == _fid:
+		return
+	_fw_src = D
+	_fw_fid = _fid
+	var ref: Array = D.dv_ref
+	_fw_ref0 = float(ref[0])
+	_fw_ref1 = float(ref[1])
+	var FP: Dictionary = D.get("fighters", {}).get(_fid, {})
+	_fw_scale = float(FP.get("scale", 1.0))
+	_fw_damp = float(FP.get("damp", 1.0))
+	_fw_force_ref = float(D.hit.force_ref)
+	var parts: Dictionary = D.parts
+	var names: Array = parts.keys()
+	_fw_n = names.size()
+	_fw_gx = []
+	_fw_gy = []
+	_fw_stiff = []
+	_fw_dmp = []
+	_fw_max = []
+	_fw_hit = []
+	_fw_bone = []
+	_fw_arm = []
+	for nm in names:
+		var P: Dictionary = parts[nm]
+		_fw_gx.append(float(P.gx))
+		_fw_gy.append(float(P.gy))
+		_fw_stiff.append(float(P.stiff))
+		_fw_dmp.append(float(P.damp))
+		_fw_max.append(float(P.max))
+		_fw_hit.append(float(P.hit))
+		_fw_bone.append(AnimRig.index[String(nm)])
+		_fw_arm.append(String(nm).begins_with("forearm"))
+
+
+## A blow sets the loose parts swinging, away from it: `front` is a blow from the front, the force the sim's.
+func _follow_kick(front: bool, force: float) -> void:
+	if not RenderAnim.tick_fast:
+		_follow_kick_ref(front, force)
+		return
+	var D: Dictionary = AnimData.secondary
+	if D.is_empty() or not RenderAnim.secondary_motion:
+		return
+	_fw_read(D)
+	var sc: float = _fw_scale * (0.5 if RenderAnim.reduced_motion else 1.0) * clampf(force / _fw_force_ref, 0.2, 1.5)
+	var pf: float = 1.0 if front else -1.0
+	for i in range(_fw_n):
+		_fw_v[i] += _fw_hit[i] * sc * pf
+
+
+func _follow_apply() -> void:
+	if not RenderAnim.tick_fast:
+		_follow_apply_ref()
+		return
+	var D: Dictionary = AnimData.secondary
+	if D.is_empty() or not RenderAnim.secondary_motion:
+		return
+	_fw_read(D)
+	if _fw_n > _fw_x.size():
+		return   # a part the arrays do not hold
+	for i in range(_fw_n):
+		if absf(_fw_x[i]) < 0.0005:
+			continue
+		var bi: int = _fw_bone[i]
+		var ik_keep: float = 1.0 - clampf(_ci_w, 0.0, 1.0) if _fw_arm[i] else 1.0   # a striking arm is on its contact solve: it keeps its target
+		q[bi] = q[bi] * Quaternion(Vector3(0, 0, 1), _fw_x[i] * ik_keep)
+	debug["fw_head"] = _fw_x[0]
+	debug["fw_arm"] = _fw_x[2]
+
+
+## The sash and pack chains, one step per sim tick (never per frame, so a replay shows the same cloth): driven by the velocity along
+## the way he faces, the acceleration, and a flutter at speed (overhaul unit D); frozen ticks run at a tenth.
+const _SPRING_STIFF: Array = [40.0, 60.0, 90.0, 60.0, 90.0]
+const _SPRING_GOAL: Array = [0.5, 1.0, 0.8, 1.0, 0.8]
+
+
+func _spring_tick(S: SimState, f, dt: float, frozen: bool) -> void:
+	if not RenderAnim.tick_fast:
+		_spring_tick_ref(S, f, dt, frozen)
+		return
+	var m: float = vface
+	var vw := Vector2(f.vx * m, f.vy) if not (f.state == "intro" and RenderAnim.intro_poses) else Vector2.ZERO   # no wind in the opening
+	var aw := Vector2.ZERO
+	if _sp_have:
+		aw = (vw - _sp_vw) / maxf(dt, 0.0001)
+	_sp_vw = vw
+	_sp_have = true
+	var h_all: float = dt * (0.1 if frozen else 1.0)
+	var sp_n: float = clampf(vw.length() / 1600.0, 0.0, 1.0)
+	var flutter: float = 0.12 * sp_n * (0.35 if RenderAnim.reduced_motion else 1.0) * (1.0 if RenderAnim.layer("cloth") else 0.0)
+	var ov: float = 1.0 if RenderAnim.layer("cloth") else 0.0
+	var target: float = -clampf(vw.x / 1600.0, -1.0, 1.0) * 0.9 - clampf(aw.x / 12000.0, -1.0, 1.0) * 0.5 * ov - clampf(-vw.y / 2400.0, 0.0, 1.0) * 0.6 * ov
+	var n: int = 2
+	var h: float = h_all / float(n)
+	for kx in range(5):
+		# each spring's goal is the same on both half steps: worked out once
+		var goal: float = target * _SPRING_GOAL[kx] + flutter * sin(S.T * TAU * 4.5 + float(kx) * 1.3 + float(slot))
+		var stiff: float = _SPRING_STIFF[kx]
+		for _s in range(n):
+			var a: float = -stiff * (_sx[kx] - goal) - 5.0 * _sv[kx]
+			_sv[kx] += a * h
+			_sx[kx] += _sv[kx] * h
+
+
+## The cloth and follow-through ticks as they were before their tables were made (`--no-tick-fast`; the bench's before, and what `_test_tick_fast` compares them with).
+func _spring_tick_ref(S: SimState, f, dt: float, frozen: bool) -> void:
+	var m: float = vface
+	var vw := Vector2(f.vx * m, f.vy) if not (f.state == "intro" and RenderAnim.intro_poses) else Vector2.ZERO   # no wind in the opening
+	var aw := Vector2.ZERO
+	if _sp_have:
+		aw = (vw - _sp_vw) / maxf(dt, 0.0001)
+	_sp_vw = vw
+	_sp_have = true
+	var h_all: float = dt * (0.1 if frozen else 1.0)
+	var sp_n: float = clampf(vw.length() / 1600.0, 0.0, 1.0)
+	var flutter: float = 0.12 * sp_n * (0.35 if RenderAnim.reduced_motion else 1.0) * (1.0 if RenderAnim.layer("cloth") else 0.0)
+	var ov: float = 1.0 if RenderAnim.layer("cloth") else 0.0
+	var target: float = -clampf(vw.x / 1600.0, -1.0, 1.0) * 0.9 - clampf(aw.x / 12000.0, -1.0, 1.0) * 0.5 * ov - clampf(-vw.y / 2400.0, 0.0, 1.0) * 0.6 * ov
+	var n: int = 2
+	var h: float = h_all / float(n)
+	for _s in range(n):
+		for kx in range(5):
+			var stiff: float = [40.0, 60.0, 90.0, 60.0, 90.0][kx]
+			var damp: float = 5.0
+			var goal: float = target * [0.5, 1.0, 0.8, 1.0, 0.8][kx] + flutter * sin(S.T * TAU * 4.5 + float(kx) * 1.3 + float(slot))
+			var a: float = -stiff * (_sx[kx] - goal) - damp * _sv[kx]
+			_sv[kx] += a * h
+			_sx[kx] += _sv[kx] * h
+
+
+func _follow_tick_ref(S: SimState, f, dt: float, frozen: bool) -> void:
 	var D: Dictionary = AnimData.secondary
 	if D.is_empty() or not RenderAnim.secondary_motion:
 		for i in range(_fw_x.size()):
@@ -5391,8 +5575,7 @@ func _follow_tick(S: SimState, f, dt: float, frozen: bool) -> void:
 		_fw_x[i] = cl
 
 
-## A blow sets the loose parts swinging, away from it: `front` is a blow from the front, the force the sim's.
-func _follow_kick(front: bool, force: float) -> void:
+func _follow_kick_ref(front: bool, force: float) -> void:
 	var D: Dictionary = AnimData.secondary
 	if D.is_empty() or not RenderAnim.secondary_motion:
 		return
@@ -5405,7 +5588,7 @@ func _follow_kick(front: bool, force: float) -> void:
 		_fw_v[i] += float(parts[names[i]].hit) * sc * pf
 
 
-func _follow_apply() -> void:
+func _follow_apply_ref() -> void:
 	var D: Dictionary = AnimData.secondary
 	if D.is_empty() or not RenderAnim.secondary_motion:
 		return
@@ -5422,32 +5605,6 @@ func _follow_apply() -> void:
 	debug["fw_head"] = _fw_x[0]
 	debug["fw_arm"] = _fw_x[2]
 
-
-## The sash and pack chains, one step per sim tick (never per frame, so a replay shows the same cloth): driven by the velocity along
-## the way he faces, the acceleration, and a flutter at speed (overhaul unit D); frozen ticks run at a tenth.
-func _spring_tick(S: SimState, f, dt: float, frozen: bool) -> void:
-	var m: float = vface
-	var vw := Vector2(f.vx * m, f.vy) if not (f.state == "intro" and RenderAnim.intro_poses) else Vector2.ZERO   # no wind in the opening
-	var aw := Vector2.ZERO
-	if _sp_have:
-		aw = (vw - _sp_vw) / maxf(dt, 0.0001)
-	_sp_vw = vw
-	_sp_have = true
-	var h_all: float = dt * (0.1 if frozen else 1.0)
-	var sp_n: float = clampf(vw.length() / 1600.0, 0.0, 1.0)
-	var flutter: float = 0.12 * sp_n * (0.35 if RenderAnim.reduced_motion else 1.0) * (1.0 if RenderAnim.layer("cloth") else 0.0)
-	var ov: float = 1.0 if RenderAnim.layer("cloth") else 0.0
-	var target: float = -clampf(vw.x / 1600.0, -1.0, 1.0) * 0.9 - clampf(aw.x / 12000.0, -1.0, 1.0) * 0.5 * ov - clampf(-vw.y / 2400.0, 0.0, 1.0) * 0.6 * ov
-	var n: int = 2
-	var h: float = h_all / float(n)
-	for _s in range(n):
-		for kx in range(5):
-			var stiff: float = [40.0, 60.0, 90.0, 60.0, 90.0][kx]
-			var damp: float = 5.0
-			var goal: float = target * [0.5, 1.0, 0.8, 1.0, 0.8][kx] + flutter * sin(S.T * TAU * 4.5 + float(kx) * 1.3 + float(slot))
-			var a: float = -stiff * (_sx[kx] - goal) - damp * _sv[kx]
-			_sv[kx] += a * h
-			_sx[kx] += _sv[kx] * h
 
 
 func _springs(f) -> void:

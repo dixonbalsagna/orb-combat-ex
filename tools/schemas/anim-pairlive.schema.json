@@ -29,6 +29,24 @@
           "minimum": 500,
           "maximum": 50000,
           "description": "The most microseconds a tick spends baking poses (the incremental bake)."
+        },
+        "play_us": {
+          "type": "integer",
+          "minimum": 500,
+          "maximum": 50000,
+          "description": "Optional. The most microseconds a drawn frame spends baking once the intro is over and the fight is on screen (slice_us is the same while the intro plays)."
+        },
+        "over_ms": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 1000,
+          "description": "Optional. A frame longer than this many milliseconds since the last slice counts as over budget."
+        },
+        "over_us": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 50000,
+          "description": "Optional. The most microseconds a slice spends when the frame is over budget (one piece at least)."
         }
       },
       "additionalProperties": false,

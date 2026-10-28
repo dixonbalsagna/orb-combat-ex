@@ -43,3 +43,7 @@ At x4 (a guess: four times the native time): the first frame's work is about 110
 ## Not here
 
 The pair's data files could also be read at build time into one binary file (option b): not needed once the hitch is spread, and it would add a generated file that can go stale. And the tools that read `AnimData.poses` directly stay eager, so none of them changed.
+
+## Note, 2026-10-27: the slice is per drawn frame
+
+On the phone stand-in (x4) the queue outlasted Rendering's profile window and every tick of a frame took its own 4 ms slice, so `consume` read 4.5 ms. The slice is now one a drawn frame, 4 ms in the intro and 1.5 ms after it, 0.5 ms when the frame is already over 20 ms (`bake.play_us`, `over_ms`, `over_us`); see `tick-cost.md`.

@@ -280681,6 +280681,354 @@
       }
     },
     {
+      "id": "anim-pairlive-bake-play-us-valid",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/play_us": 505
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-bake-play-us-low-edge-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/play_us": 500
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-bake-play-us-high-edge-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/play_us": 50000
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-bake-play-us-under",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/play_us": 499
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/bake/play_us"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-play-us-over",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/play_us": 50001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/bake/play_us"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-play-us-fraction",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/play_us": 500.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bake/play_us"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-play-us-type",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/play_us": "fast"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bake/play_us"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-play-us-optional",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "del": [
+            "/bake/play_us"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-bake-over-ms-valid",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/over_ms": 10
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-bake-over-ms-low-edge-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/over_ms": 5
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-bake-over-ms-high-edge-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/over_ms": 1000
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-bake-over-ms-under",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/over_ms": 4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/bake/over_ms"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-over-ms-over",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/over_ms": 1001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/bake/over_ms"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-over-ms-fraction",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/over_ms": 5.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bake/over_ms"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-over-ms-type",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/over_ms": "fast"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bake/over_ms"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-over-ms-optional",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "del": [
+            "/bake/over_ms"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-bake-over-us-valid",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/over_us": 501
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-bake-over-us-low-edge-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/over_us": 100
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-bake-over-us-high-edge-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/over_us": 50000
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-bake-over-us-under",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/over_us": 99
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/bake/over_us"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-over-us-over",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/over_us": 50001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/bake/over_us"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-over-us-fraction",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/over_us": 100.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bake/over_us"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-over-us-type",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/over_us": "fast"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bake/over_us"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-over-us-optional",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "del": [
+            "/bake/over_us"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
       "id": "anim-wave-manifest-bad-wave-name",
       "schema": "anim-wave-manifest.schema.json",
       "mutate": [

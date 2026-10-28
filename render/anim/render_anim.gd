@@ -95,6 +95,9 @@ static func layer(name: String) -> bool:
 	return not _quality_off.has(name) and not layers_off.has(name)
 static var solve_usec: int = 0
 static var solve_count: int = 0
+static var consume_usec: int = 0   # the bench: wall time inside consume, and how many calls
+static var consume_count: int = 0
+static var tick_fast: bool = true   # the per-tick work (the ragdoll step, the cloth and follow-through springs) worked out once a tick; --no-tick-fast is the version before (docs/animation/tick-cost.md)
 
 
 static func _read_args() -> void:
@@ -146,6 +149,10 @@ static func _read_args() -> void:
 			ground_loco = false
 		elif a == "--no-secondary":
 			secondary_motion = false
+		elif a == "--no-tick-fast":
+			tick_fast = false
+		elif a == "--no-bake-frame":
+			bake_frame = false
 		elif a == "--no-pop":
 			pop_juggle = false
 		elif a == "--no-air-recover":
@@ -258,12 +265,13 @@ static func solve(S: SimState, f) -> AnimFighter:
 static func consume(S: SimState, events: Array) -> void:
 	if not is_enabled():
 		return
+	var c0: int = Time.get_ticks_usec()
 	_sync(S)
 	AnimData.load_all()
 	for e in events:
 		match e.type:
 			"tick":
-				if AnimData.bake_pending() == 0:   # the incremental bake: a few milliseconds of the queue a tick (docs/animation/incremental-bake.md)
+				if _bake_tick(S):   # the incremental bake: a slice of the queue once a drawn frame (docs/animation/incremental-bake.md, tick-cost.md)
 					_log_pair_bake(S)
 				for f in S.fighters:
 					fighter(S, f).on_tick(float(e.dt), bool(e.frozen), S, f)
@@ -459,6 +467,45 @@ static func consume(S: SimState, events: Array) -> void:
 					vfa.on_hit(S.T, String(e.region), front, float(e.amount) / 70.0, String(e.kind), dm, float(e.amount) / 60.0, S.tick, hang, int(_ev(e, "duel", 0)), int(roundf(float(_ev(e, "stop", -1.0)))))
 					if String(e.kind) == "guard" and a >= 0 and a < S.fighters.size():
 						fighter(S, S.fighters[a]).on_blocked(S.T)
+	consume_usec += Time.get_ticks_usec() - c0
+	consume_count += 1
+
+
+static var bake_frame: bool = true   # one slice per drawn frame, sized by the frame's time; --no-bake-frame is the version before (a slice every tick)
+static var _bk_frame: int = -1
+static var _bk_wall: int = 0
+static var bake_slices: int = 0
+static var bake_over_slices: int = 0
+static var bake_done_tick: int = -1
+
+
+## The tick's share of the incremental bake; true when the queue is empty. A frame can run several ticks (a slow device catches up), and each used to take its own slice, so a phone spent the slice's 4 ms on every tick of
+## a drain that lasts a thousand. Now the first tick of a drawn frame bakes and the others do not; the slice is `bake.slice_us` while the intro plays (the bake has to be done before the fight), `bake.play_us` after it,
+## and `bake.over_us` when the frame since the last slice took longer than `bake.over_ms` (the device is already behind). One piece is baked at least, so the queue always drains; what is asked for before it is baked is
+## baked on the spot, so the poses are the same whichever tick bakes them (the render's wall clock never reaches the sim).
+static func _bake_tick(S: SimState) -> bool:
+	if AnimData.bake_idle():
+		return true
+	if not bake_frame:
+		return AnimData.bake_pending() == 0
+	var fr: int = Engine.get_process_frames()
+	if fr == _bk_frame:
+		return false
+	_bk_frame = fr
+	var now: int = Time.get_ticks_usec()
+	var over: bool = _bk_wall > 0 and (now - _bk_wall) > AnimData.bake_over_ms * 1000
+	_bk_wall = now
+	var intro: bool = false
+	for f in S.fighters:
+		if f.state == "intro":
+			intro = true
+			break
+	var budget: int = AnimData.bake_slice_us if intro else AnimData.bake_play_us
+	if over:
+		budget = mini(budget, AnimData.bake_over_us)
+		bake_over_slices += 1
+	bake_slices += 1
+	return AnimData.bake_pending(budget) == 0
 
 
 ## One console line per run, once every fighter of the match that plays as the pair has baked his waves: how long the live loader took and how many poses it baked
@@ -475,9 +522,10 @@ static func _log_pair_bake(S: SimState) -> void:
 	if keys.is_empty() or AnimData.pair_lists.size() < keys.size() or not AnimData.bake_idle():
 		return
 	_bake_logged = true
+	bake_done_tick = S.tick
 	print("pair bake: %d ms, %d poses" % [int(round(float(AnimData.pair_bake_usec) / 1000.0)), AnimData.pair_bake_poses])
 	if AnimData.lazy:
-		print("pair bake incremental: %d poses queued, %d baked on demand, %d queue runs, longest piece %.1f ms" % [AnimData.bake_deferred, AnimData.bake_demand, AnimData.bake_drains, float(AnimData.bake_worst_us) / 1000.0])
+		print("pair bake incremental: %d poses queued, %d baked on demand, %d queue runs, longest piece %.1f ms, %d slices (%d over budget), drained at tick %d" % [AnimData.bake_deferred, AnimData.bake_demand, AnimData.bake_drains, float(AnimData.bake_worst_us) / 1000.0, bake_slices, bake_over_slices, S.tick])
 
 
 ## What a far taunt's pick needs to know of the moment: whether he is in the air (the bounce is ground only) and whether any blow has landed yet this match (the nod opens a stand-off).

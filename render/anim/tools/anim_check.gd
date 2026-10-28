@@ -2936,6 +2936,38 @@ func _test_grip_throw() -> void:
 	print("grip throws: %s" % " | ".join(seen))
 
 
+## The per-tick work (docs/animation/tick-cost.md): the ragdoll step and the cloth and follow-through springs worked out once a tick give the same bodies, bit for bit, as the versions before (`--no-tick-fast`). One seeded match (seed 11: a launch, a flail) drawn both ways, a hash of every bone rotation, the hips, the ragdoll's angles and speeds and the springs after every frame.
+func _tick_hash(fast: bool, ticks: int) -> Array:
+	RenderAnim.tick_fast = fast
+	main.start_match(11, {"p1": true, "p2": true})
+	var h: int = 7
+	var launched: int = 0
+	while main.host.ticks < ticks:
+		main.frame(1.0 / 60.0)
+		var S: SimState = main.host.S
+		for f in S.fighters:
+			var af: AnimFighter = RenderAnim.fighter(S, f)
+			for qq in af.q:
+				h = (h * 1000003 + hash(qq)) & 0x7fffffffffff
+			for v in [af.hips, af.root_off]:
+				h = (h * 1000003 + hash(v)) & 0x7fffffffffff
+			for arr in [af._rd.th, af._rd.om, af._fw_x, af._fw_v, af._sx, af._sv]:
+				for v in arr:
+					h = (h * 1000003 + hash(v)) & 0x7fffffffffff
+			if String(f.state) == "launched":
+				launched += 1
+	RenderAnim.tick_fast = true
+	return [h, launched]
+
+
+func _test_tick_fast() -> void:
+	var fast: Array = _tick_hash(true, 1200)
+	var before: Array = _tick_hash(false, 1200)
+	_expect(int(fast[0]) == int(before[0]), "per-tick work: the poses with the work worked out once a tick are the poses before it, bit for bit (hash %d against %d)" % [int(fast[0]), int(before[0])])
+	_expect(int(fast[1]) > 0, "per-tick work: the match used to compare them launches a fighter (%d launched samples), so the ragdoll's flail is in the comparison" % int(fast[1]))
+	print("per-tick work: seed 11, 1200 ticks, hash %d both ways, %d launched samples" % [int(fast[0]), int(fast[1])])
+
+
 ## The incremental bake's queue (docs/animation/incremental-bake.md). A queued pose exists before it is baked, is baked in order a slice at a time or at once when asked for, and is exactly the pose the eager bake makes of the same sketch;
 ## the pick-list work queued for a fighter is done when something asks for it. (The whole-game comparison is tools/bake_check.gd: the same hash eager and lazy.)
 func _test_incremental_bake() -> void:
@@ -6542,6 +6574,7 @@ func _run() -> void:
 	_test_grip_throw()
 	_test_shake()
 	_test_incremental_bake()
+	_test_tick_fast()
 	_test_pulled()
 	_test_bends()
 	_test_styles()

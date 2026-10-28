@@ -273,6 +273,16 @@ func energy() -> float:
 	return e
 
 
+## Whether `energy()` is over `limit`: the same answer, but the sum stops as soon as it is (the terms are never negative).
+func energy_over(limit: float) -> bool:
+	var e: float = 0.0
+	for i in range(N):
+		e += absf(th[i]) + 0.05 * absf(om[i])
+		if e > limit:
+			return true
+	return false
+
+
 func reset() -> void:
 	for i in range(N):
 		th[i] = 0.0
@@ -291,6 +301,87 @@ func reset() -> void:
 ## forward, y up the body); free_t the looseness the regime asks for; the w_ weights (set by the controller) mix the tuck, brace,
 ## skid and crumple shapes and the flail in; tt the sim time (the flail's clock); amp scales the drive (reduced motion).
 func step(dt: float, v: Vector2, a: Vector2, free_t: float, amp: float, tt: float) -> void:
+	if not RenderAnim.tick_fast:
+		_step_ref(dt, v, a, free_t, amp, tt)
+		return
+	# reduced motion also narrows every joint's range (a hard tumble saturates the limits at any amplitude, so the drive alone does not calm it)
+	var lk: float = REDUCED_LIMIT if amp < 0.999 else 1.0
+	_tick += 1
+	if n_on < N:
+		if _oop_live:
+			_oop_live = false   # the out-of-plane joints were just switched off: set them still once
+			for zi in range(n_on, N):
+				th[zi] = 0.0
+				om[zi] = 0.0
+	else:
+		_oop_live = true
+	if not _pend.is_empty():
+		var keep: Array = []
+		for pi in _pend:
+			if int(pi[0]) <= _tick:
+				om[int(pi[1])] += float(pi[2])
+			else:
+				keep.append(pi)
+		_pend = keep
+	free = move_toward(free, free_t, dt * free_rate)
+	var sp: float = clampf(v.length() / v0, 0.0, 2.0)
+	var h: float = dt * 0.5
+	var g: float = gate + (1.0 - gate) * free
+	var s_tuck: PackedFloat32Array = shape.get("tuck", tuck_t)
+	var s_brace: PackedFloat32Array = shape.get("brace", brace_t)
+	var s_skid: PackedFloat32Array = shape.get("skid", tuck_t)
+	var s_crum: PackedFloat32Array = shape.get("crumple", tuck_t)
+	var wt: float = w_tuck * amp
+	var wb: float = w_brace * amp
+	var ws: float = w_skid * amp
+	var wc: float = w_crumple * amp
+	var wf: float = w_flail * amp
+	if wf > 0.001:
+		wf *= gain()
+	# the joints do not touch each other: each one's spring term, target and drive are the same on both half steps, so they are worked out once and the half steps run on the joint
+	for i in range(n_on):
+		var kk: float = lerpf(k_stiff[i], k_loose[i], free)
+		var target: float = tsg[i] * sp * free
+		# a shape whose weight is zero adds nothing: its term is left out (the sum is in the same order)
+		if wt != 0.0:
+			target += wt * s_tuck[i]
+		if wb != 0.0:
+			target += wb * s_brace[i]
+		if ws != 0.0:
+			target += ws * s_skid[i]
+		if wc != 0.0:
+			target += wc * s_crum[i]
+		if wf > 0.001:
+			var fhz: float = flail_hz[i] * fv_hz[i] * fam_hz[i]
+			var cmp: float = 1.0
+			if comp_strength > 0.0:
+				# the spring's gain at the flail's rate: the target is made bigger by what it will lose, so the joint swings the amplitude the data names
+				var wn: float = sqrt(maxf(kk, 1.0))
+				var rr: float = TAU * fhz / wn
+				var zt: float = damp[i] / (2.0 * wn)
+				var sg: float = 1.0 / sqrt((1.0 - rr * rr) * (1.0 - rr * rr) + 4.0 * zt * zt * rr * rr)
+				cmp = pow(clampf(1.0 / maxf(sg, 0.05), 1.0, comp_max * (0.4 if group_of[i] == 4 else 1.0)), comp_strength)   # the out-of-plane joints are made up for less: a twist saturated in a tumble reads as a stuck rag
+			target += wf * (flail_amp[i] * fv_amp[i] * fam_amp[i] * launch_amp * cmp * sin(tt * TAU * fhz + phase + fv_ph[i] + fam_ph[i] + float(i) * 1.7) + fam_bias[i])
+		var nx: float = beta_c[i]
+		var ny: float = beta_s[i]
+		var drive: float = (-drag[i] * (v.x * nx + v.y * ny) / v0 - inertia[i] * (a.x * nx + a.y * ny) / a0) * g * amp
+		var dmp: float = damp[i]
+		var lo_i: float = lo[i] * lk
+		var hi_i: float = hi[i] * lk
+		for _s in range(2):
+			var al: float = -kk * (th[i] - target) - dmp * om[i] + drive
+			om[i] += al * h
+			th[i] += om[i] * h
+			if th[i] < lo_i:
+				th[i] = lo_i
+				om[i] = maxf(om[i], 0.0)
+			elif th[i] > hi_i:
+				th[i] = hi_i
+				om[i] = minf(om[i], 0.0)
+
+
+## The step as it was before the per-joint terms were worked out once (`--no-tick-fast`; the bench's before, and what `_test_tick_fast` compares the step with).
+func _step_ref(dt: float, v: Vector2, a: Vector2, free_t: float, amp: float, tt: float) -> void:
 	# reduced motion also narrows every joint's range (a hard tumble saturates the limits at any amplitude, so the drive alone does not calm it)
 	var lk: float = REDUCED_LIMIT if amp < 0.999 else 1.0
 	_tick += 1

@@ -43,7 +43,10 @@ static var _pend_head: int = 0
 static var _work: Array = []               # the fighters' wave loads and pick-list builds not yet done, in order: {k: wave, wn} and {k: lists, key, names}
 static var _queued: Dictionary = {}        # fighter key -> true once his work is queued
 static var bake_drains: int = 0            # times something asked for a pose that was not there while waves were still queued, and the queue was run to the end
-static var bake_slice_us: int = 4000       # data/anim/pair_live.json bake.slice_us: the most a tick spends baking
+static var bake_slice_us: int = 4000       # data/anim/pair_live.json bake.slice_us: the most a drawn frame spends baking while the intro plays
+static var bake_play_us: int = 1500        # bake.play_us: the same once the intro is over (the fight is on screen)
+static var bake_over_ms: int = 20          # bake.over_ms: a frame longer than this (since the last slice) is over budget
+static var bake_over_us: int = 500         # bake.over_us: the most a slice spends when the frame is over budget (one piece at least)
 static var bake_deferred: int = 0          # poses the incremental bake queued in this run
 static var bake_demand: int = 0            # of them baked on the spot because something asked first
 static var bake_worst_us: int = 0          # the longest single slice or on-demand bake
@@ -209,6 +212,9 @@ static func load_all() -> void:
 	fighters_cfg = _read("fighters.json").get("fighters", {})
 	pair = _read("pair_live.json")
 	bake_slice_us = int(pair.get("bake", {}).get("slice_us", 4000))
+	bake_play_us = int(pair.get("bake", {}).get("play_us", 1500))
+	bake_over_ms = int(pair.get("bake", {}).get("over_ms", 20))
+	bake_over_us = int(pair.get("bake", {}).get("over_us", 500))
 
 
 ## One parked wave's files (poses, key sets, sequences, cues, entries).
