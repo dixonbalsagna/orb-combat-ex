@@ -51,7 +51,7 @@ Gates (the last line, exit code):
 - `campaign_episode.gd`: "the two plays are the same to the bit", 0
 - `load_split.gd`: "ok: the director is a load of its own", 0
 - `rollback_check.gd --negative-control`: "PASS negative control: 56 break(s) caught, 0 missed", 0
-- `rollback_check.gd` (default profiles): still running when this was first pushed; every session so far is "ok" (18 of 36 in a first run that hit my 40-minute timeout, with no difference). The final line follows in the next commit.
+- `rollback_check.gd` (default profiles): "PASS 36 sessions, 86400 confirmed-tick hash comparisons, 0 failure(s)", 0
 - `tick_prof.gd`: the twin hash is "same" in all 6 runs (main, branch and the director patch, each on an AI match and on gen 2).
 
 Bench (`net/tools/rollback_bench.gd -- --quick`). main and the branch ran one after the other on a quiet 4-core Xeon at 2.8 GHz. This machine is about 1.4x slower than the EP's.
