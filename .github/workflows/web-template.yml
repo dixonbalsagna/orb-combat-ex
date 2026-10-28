@@ -1,0 +1,104 @@
+# Custom Web export template (docs/tools/web-template-size.md §5; the cloud report docs/tools/cloud-reports/2026-10-28-web-template.md).
+# Builds Godot 4.7.2-stable's single-threaded Web release template from the official source, with our engine patches (tools/engine/patches/),
+# and uploads the template zip as a workflow artifact with its SHA-512 printed. By hand only: nothing else depends on it yet. The build itself is about 12 minutes on 4 cores, plus about 3 for the toolchain.
+# Every download is pinned and checked: the source against the release's SHA512-SUMS.txt and the hash below, emsdk by tag and commit, SCons by version.
+# Nothing binary is committed. To pin the result for the site job, take the SHA-512 this run prints (as setup-godot pins the standard templates).
+name: Web template
+
+on:
+  workflow_dispatch:
+    inputs:
+      extra_flags:
+        description: 'Extra SCons flags (for example module trims: module_jolt_physics_enabled=no ...). Empty builds the patched template with every module.'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      GODOT_VERSION: 4.7.2-stable
+      # SHA-512 of godot-4.7.2-stable.tar.xz, from the release's SHA512-SUMS.txt.
+      GODOT_SRC_SHA512: 15e23f8423003f5d32da07c34a8651e43af23b050cc0dea2d4fba6944ca445d079edb52b66fdf82b6d5739bba1fe707b9e27b8836b19f09f64f313966160f8fc
+      # The EM_VERSION of 4.7.2's own .github/workflows/web_builds.yml, and the emsdk commit its tag points to.
+      EM_VERSION: 4.0.11
+      EMSDK_COMMIT: d49219d03a41cd12f95a33ba84273c20d41fd350
+      # The SCons version of 4.7.2's own .github/actions/godot-deps.
+      SCONS_VERSION: 4.10.1
+      SCONS_FLAGS: platform=web target=template_release threads=no production=yes optimize=size lto=none
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Fetch and check the Godot source
+        working-directory: ${{ runner.temp }}
+        run: |
+          set -euo pipefail
+          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}"
+          curl -fsSL -o SHA512-SUMS.txt "${base}/SHA512-SUMS.txt"
+          curl -fsSL -o "godot-${GODOT_VERSION}.tar.xz" "${base}/godot-${GODOT_VERSION}.tar.xz"
+          # Both must agree: the release's own list, and the hash pinned here.
+          grep " godot-${GODOT_VERSION}.tar.xz\$" SHA512-SUMS.txt | sha512sum -c -
+          echo "${GODOT_SRC_SHA512}  godot-${GODOT_VERSION}.tar.xz" | sha512sum -c -
+          tar xf "godot-${GODOT_VERSION}.tar.xz"
+          rm "godot-${GODOT_VERSION}.tar.xz"
+
+      - name: Install emsdk ${{ env.EM_VERSION }} and SCons ${{ env.SCONS_VERSION }}
+        working-directory: ${{ runner.temp }}
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch "${EM_VERSION}" https://github.com/emscripten-core/emsdk.git
+          test "$(git -C emsdk rev-parse HEAD)" = "${EMSDK_COMMIT}"
+          ./emsdk/emsdk install "${EM_VERSION}"
+          ./emsdk/emsdk activate "${EM_VERSION}"
+          # A venv: the runner's system Python refuses pip installs (PEP 668).
+          python3 -m venv scons-venv
+          ./scons-venv/bin/pip install "scons==${SCONS_VERSION}"
+          echo "${RUNNER_TEMP}/scons-venv/bin" >> "${GITHUB_PATH}"
+
+      - name: Apply the engine patches
+        working-directory: ${{ runner.temp }}/godot-${{ env.GODOT_VERSION }}
+        run: |
+          set -euo pipefail
+          for p in "${GITHUB_WORKSPACE}"/tools/engine/patches/4.7.2-*.patch; do
+            echo "Applying ${p##*/}"
+            git apply --check -v "${p}"
+            git apply "${p}"
+          done
+
+      - name: Build the template
+        working-directory: ${{ runner.temp }}/godot-${{ env.GODOT_VERSION }}
+        env:
+          EXTRA_FLAGS: ${{ inputs.extra_flags }}
+        run: |
+          set -euo pipefail
+          source "${RUNNER_TEMP}/emsdk/emsdk_env.sh"
+          emcc -v
+          # Word-split EXTRA_FLAGS on purpose: it is a list of SCons options.
+          # shellcheck disable=SC2086
+          scons -j"$(nproc)" ${SCONS_FLAGS} ${EXTRA_FLAGS}
+          out=bin/godot.web.template_release.wasm32.nothreads.zip
+          mkdir -p "${RUNNER_TEMP}/out"
+          cp "${out}" "${RUNNER_TEMP}/out/web_nothreads_release.zip"
+          cd "${RUNNER_TEMP}/out"
+          unzip -o -q web_nothreads_release.zip godot.wasm
+          echo "wasm bytes: $(stat -c%s godot.wasm), gzip -9: $(gzip -9c godot.wasm | wc -c), zip bytes: $(stat -c%s web_nothreads_release.zip)"
+          rm godot.wasm
+          sha512sum web_nothreads_release.zip | tee web_nothreads_release.zip.sha512
+          {
+            echo "### web_nothreads_release.zip"
+            echo "Flags: \`${SCONS_FLAGS} ${EXTRA_FLAGS}\`"
+            echo
+            echo "SHA-512: \`$(cut -d' ' -f1 web_nothreads_release.zip.sha512)\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: web-template-4.7.2-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/out/web_nothreads_release.zip
+            ${{ runner.temp }}/out/web_nothreads_release.zip.sha512
+          if-no-files-found: error
