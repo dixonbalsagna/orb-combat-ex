@@ -15,7 +15,6 @@ Godot: `$GODOT` if set, else the pinned Linux build as cloud-workflow.md says. T
 **Build:**
 1. **Buildings on a ring** (GD ruling 1). Today a Half ring (2,400 columns) stands about 40 structures; give it at least 60, aiming for 80. Other ring lengths scale by columns and never go under 40. GD prefers denser settlements to more sites, so the route's site rules hold. Kinds stay as today (c08). How you do it is your call.
 2. **Long journeys** (QA finding 2). With the extra buildings, re-read the share of journeys over 4,000 units; the band is at most 20%. If the buildings alone don't bring it in, say what else would, but don't touch Combat's or Encounter's tuning.
-4. **PROP SMASH's kinds.** `sim/world/ground.gd`'s SMASH constant still lists `outcrop`. Combat's `data/combat/launch_biome.json` (5130ac2d) now names `lichen_rock` and `lava_rock`. Make the two agree, or read the list from that file.
 3. **Gen 2's bounces** (QA finding 3). Bounces per bounced journey read 2.04 against the 1.2 to 2.0 band, and the cause is gen 2's ground profiles (`data/biomes/ground.json`, absorb). Tune the absorb on the new fine biomes so the row comes back into band. Gen 1 must not move.
 
 **Acceptance criteria:**
