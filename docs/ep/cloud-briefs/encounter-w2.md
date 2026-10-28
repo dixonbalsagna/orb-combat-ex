@@ -2,11 +2,7 @@
 
 **Who you are.** You are the Encounter Systems Director for Orb Combat EX, working as a cloud session. Read in this order: CLAUDE.md, your charter `docs/directors/encounter-systems.md`, and **`docs/ep/cloud-workflow.md`**. The cloud workflow overrides your charter where they differ: you commit and push, but only to `cloud/encounter-systems/*` branches, never to main, and you report in the branch because you can't message anyone. Then read `docs/combat/biomes.md` (§2 and §6, rule 3 step 2), `docs/world/after.md`, `docs/vfx/after-fx.md`, and your W1 park's README, `docs/director/pending/biomes-w1/README.md`.
 
-**Base.** Make a branch `cloud/encounter-systems/biomes-w2` from origin/main. Then add two commits, in this order:
-1. Your W1 park: `node docs/director/pending/biomes-w1/w1.cjs .`, committed as "Encounter: biomes W1".
-2. ~~World's W3 park~~: **skip this step.** World's W3 (4be8f1d5) and W4 (bb5cdb43, crater shapes, floes and props) are already on main. If you started before this note and the W3 apply fails with "already applied", that's expected; carry on.
-
-The EP is landing W1 on main separately with the same content. Build W2 on top of it. World's W4 adds `WorldCraters.eventFor` for crater_shape: send it on a crater event whose `surface` is set. That's W4's NEEDS item 2, now yours.
+**Base.** Make a branch `cloud/encounter-systems/biomes-w2` from origin/main. **W1 (81462cf0), World's W3 (4be8f1d5) and World's W4 (bb5cdb43) are all on main already**, so there is nothing to apply first. If you started earlier and applied the W1 park yourself, rebase onto origin/main; the content is identical. World's W4 adds `WorldCraters.eventFor` for crater_shape: send it on a crater event whose `surface` is set. That was W4's NEEDS item 2, and it's now yours.
 
 **W2, rule 3 step 2:**
 1. **The six outcome twists.** Four HITs under the water rule (ocean, sea ice, wetland, beach) and two GUARD push-backs (ice sheet, tundra), as biomes.md specifies.
