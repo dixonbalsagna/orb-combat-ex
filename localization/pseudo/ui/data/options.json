@@ -335,6 +335,43 @@
       "group": "display",
       "label": "[Pĺááçé ñááméš]",
       "help": "[Ţĥéé pĺááçéé üüñďééŕ ţĥéé çáámééŕáá ööñ ţĥéé pĺááñééţ šţŕííp. ~~]"
+    },
+    "volume_master": {
+      "default": 1,
+      "group": "accessibility",
+      "label": "[Máášţééŕ vöĺüümé]",
+      "help": "[Ĥööŵ ĺööüüď ţĥéé ŵĥööĺéé ĝááméé ííš, fŕööm 0% (šííĺééñţ) ţöö 100%. ~~~~~]",
+      "accessibility": true,
+      "min": 0,
+      "max": 1,
+      "step": 0.05
+    },
+    "volume_effects": {
+      "default": 1,
+      "group": "accessibility",
+      "label": "[ÉÉffééçţš vööĺüümé]",
+      "help": "[Bĺööŵš, bĺáášţš, ţĥéé ŵööŕĺď ááñď ţĥéé çŕööŵďš, fŕööm 0% (šííĺééñţ) ţöö 100%. Tüüŕñ ííţ ďööŵñ ţöö ĥééááŕ ţĥéé vööííçééš bééţţééŕ. ~~~~~~~~~~~~~~~]",
+      "accessibility": true,
+      "min": 0,
+      "max": 1,
+      "step": 0.05
+    },
+    "volume_voice": {
+      "default": 1,
+      "group": "accessibility",
+      "label": "[Vööíçéé vöĺüümé]",
+      "help": "[Ţĥéé fííĝĥţééŕš' vööííçééš ááñď ĝŕüüñţš, fŕööm 0% (šííĺééñţ) ţöö 100%. ~~~~~~~~]",
+      "accessibility": true,
+      "min": 0,
+      "max": 1,
+      "step": 0.05
+    },
+    "mono_audio": {
+      "default": false,
+      "group": "accessibility",
+      "label": "[Mööñö šööüñď]",
+      "help": "[Pĺááýýš ţĥéé šááméé šööüüñď ííñ bööţĥ ééááŕš, fööŕ ööñéé ééááŕbüüď, ööñéé ŵööŕķííñĝ ééááŕ ööŕ áá šííñĝĺéé špééááķééŕ. Šööüüñďš ñöö ĺööñĝééŕ ţééĺĺ ýýööüü ŵĥííçĥ šííďéé ţĥééýý çööméé fŕööm. ~~~~~~]",
+      "accessibility": true
     }
   }
 }

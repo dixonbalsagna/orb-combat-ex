@@ -17,6 +17,7 @@
 // pseudo-locale switch". Nothing in the default build reads localization/.
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { inventory } from './strings.mjs';
 
 const ROOT = process.cwd();
@@ -153,7 +154,7 @@ function selfTest() {
   return fails === 0 ? 0 : 1;
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname);
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
 if (isMain) {
   const args = new Set(process.argv.slice(2));
   if (args.has('--self-test')) process.exit(selfTest());

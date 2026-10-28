@@ -70,6 +70,16 @@
       ]
     },
     {
+      "id": "sound",
+      "title": "[Šöüñď]",
+      "items": [
+        "volume_master",
+        "volume_effects",
+        "volume_voice",
+        "mono_audio"
+      ]
+    },
+    {
       "id": "access",
       "title": "[ÅÅççéššííbíĺííţý]",
       "items": [
