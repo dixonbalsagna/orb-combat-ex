@@ -592,6 +592,12 @@ static func sigKeyAt(x: float) -> String:
 	return k if _sig.variants.has(k) else WorldBiomes.biomeAt(x)
 
 
+## The parsed sigvariants.json (read only).
+static func sigData() -> Dictionary:
+	_ensure()
+	return _sig
+
+
 static func sigRow(key: String) -> Dictionary:
 	_ensure()
 	return _sig.variants[key]

@@ -10,6 +10,7 @@
     "trees": "what the beam does to trees on its path: area (today's area damage), burn, fell (fall inward across the groove), snap (crowns drop), none",
     "fx": "VFX's keys: dust colour, sparks, fire (sampleBeam's branches today; fire.withinAbove is in the prototype's units, times SimConst.WS as sampleBeam reads it); the other flags are new looks for VFX. Positions and counts stay in the code as today (one dust puff at g + 8 and the sparks at g + 6, inside the beam's reach test; one fire at g, under its own height test): the table carries only what varies",
     "aftermath": "what the scar leaves for the rest of the fight (World's to build): null, or a kind from the aftermath table with its numbers. It is laid only on the groove's columns whose biome is the variant's own; where the beam carves on into another biome the groove there is plain",
+    "twist": "optional: the outcome line marked rule:, as Encounter plays it (biomes W2). outcome HIT or GUARD; kind under (the HIT drives him straight down into the water the aftermath left at his column, and World's surfacing rule brings him up set: the water rule), skate (the GUARD push-back on a glazed column slides slideMul times as far, distance only), wall (the GUARD push-back runs flat along the ground and reaches the heaved plates within reachMul of the push's force, where World's wall rule stops it). Played only where the row's aftermath was laid under the defender (aftermathOn, and World's after.json on), so the impact waits for the groove to be carved",
     "outcomes": "the flavour of each outcome here. Presentation unless the line starts with 'rule:', which marks a mechanical twist for Encounter and World"
   },
   "aftermath": {
@@ -30,6 +31,7 @@
       "_ruled": "Game Design 23b items 8 and 10: the ocean's own aftermath settles ocean against plains; the sea parts for 1.5 s. The groove and looks stay today's, so the row is still asBuilt with aftermathOn false",
       "scorch": [1.0, 1.0], "structMul": 1.0, "trees": "area", "fx": {"dust": "#9b8f7e", "spray": true},
       "aftermath": {"kind": "part", "openTicks": 90, "pushBh": 2.0, "shoreCols": 40},
+      "twist": {"outcome": "HIT", "kind": "under"},
       "outcomes": {"CLASH": "the sea under the meeting point is pressed down into a bowl ringed by walls of water", "GUARD": "the guard is driven back along the open trench between the walls", "DODGE": "the dodge goes up and over a wall of water", "HIT": "rule: he is driven under, and surfaces set within 30 ticks (the water rule)", "ESCAPE": "he breaks away along the trench before the sea rushes back"}
     },
     "city": {
@@ -66,12 +68,14 @@
       "fineId": 5, "name": "ICEFIELD THAW", "_today": "read as mountains (WorldPlanetWorld.BIOME_NAME aliases it), so it plays RIDGE BORE",
       "scorch": [0.9, 1.0], "structMul": 1.0, "trees": "none", "fx": {"dust": "#e8f1f6", "steam": true},
       "aftermath": {"kind": "glaze"},
+      "twist": {"outcome": "GUARD", "kind": "skate", "slideMul": 2.5},
       "outcomes": {"CLASH": "the snow under the meeting point melts to a steaming pool that freezes as it ends", "GUARD": "rule: the guard's push-back on the glazed strip slides 2.5 times as far; distance only, he guards throughout (23b item 7)", "DODGE": "the dodge throws up a burst of powder", "HIT": "he lands on the fresh glaze and skids its length", "ESCAPE": "he breaks away along the glaze, sliding"}
     },
     "sea_ice": {
       "fineId": 6, "name": "FLOE SPLIT", "_today": "read as plains (aliased), so it plays FIELD SCAR",
       "scorch": [0.6, 1.0], "structMul": 1.0, "trees": "none", "fx": {"dust": "#e8f1f6", "shards": true},
       "aftermath": {"kind": "split", "gapBh": 1.0},
+      "twist": {"outcome": "HIT", "kind": "under"},
       "outcomes": {"CLASH": "the floe under the meeting point cracks in a ring and tilts", "GUARD": "the guard skids back across the floe toward its edge", "DODGE": "the dodge hops to the next floe", "HIT": "rule: when the lead opens under him he drops into the water and surfaces set within 30 ticks (the water rule)", "ESCAPE": "he breaks away across the floes, floe to floe"}
     },
     "jungle": {
@@ -90,6 +94,7 @@
       "fineId": 9, "name": "FROST HEAVE",
       "scorch": [0.9, 1.0], "structMul": 1.0, "trees": "none", "fx": {"dust": "#d7dcd8", "plates": true},
       "aftermath": {"kind": "heave", "rimMul": 2.0},
+      "twist": {"outcome": "GUARD", "kind": "wall", "reachMul": 2.0},
       "outcomes": {"CLASH": "frozen plates heave up in a ring under the meeting point", "GUARD": "rule: the guard's push-back stops against the heaved plates", "DODGE": "the dodge kicks off a rising plate", "HIT": "he lands across the plates and they break under him", "ESCAPE": "he breaks away behind the heave"}
     },
     "taiga": {
@@ -102,12 +107,14 @@
       "fineId": 11, "name": "MIRE BOIL",
       "scorch": [1.1, 0.9], "structMul": 1.0, "trees": "area", "fx": {"dust": "#5a5a3c", "steam": true},
       "aftermath": {"kind": "flood", "source": "waterTable"},
+      "twist": {"outcome": "HIT", "kind": "under"},
       "outcomes": {"CLASH": "the marsh under the meeting point boils in a wide steaming ring", "GUARD": "the guard sinks and is dragged back through the mud", "DODGE": "the dodge throws up a wall of muddy water", "HIT": "rule: he lands in the flooded trench and surfaces set within 30 ticks (the water rule)", "ESCAPE": "he breaks away behind the steam wall"}
     },
     "beach": {
       "fineId": 12, "name": "SHORE SCOUR",
       "scorch": [1.0, 1.1], "structMul": 1.0, "trees": "area", "fx": {"dust": "#b9ad94", "spray": true},
       "aftermath": {"kind": "flood", "source": "sea", "seaCols": 30},
+      "twist": {"outcome": "HIT", "kind": "under"},
       "outcomes": {"CLASH": "the sea draws back from the shore under the meeting point and breaks back in", "GUARD": "the guard skids back over the shingle, pebbles rolling", "DODGE": "the dodge goes through the thrown-up wave", "HIT": "rule: the sea floods the cut behind him, and he lands in it when the floor is below sea level; he surfaces set within 30 ticks (the water rule)", "ESCAPE": "he breaks away along the surf line"}
     },
     "highland": {
@@ -125,8 +132,8 @@
   },
   "fineOn": false,
   "_fineOn": "Encounter's W1 switch. Off: the row is picked by WorldBiomes.biomeAt, the seven names (today's play). On: by WorldBiomes.fineNameAt, so a gen 2 planet gets the ten new rows while gen 1 and the hand-made world are unchanged",
-  "aftermathOn": true,
-  "_aftermathOn": "ruled on (Game Design 23b items 5, 7, 8). Off, every row's name, groove and looks are read and nothing is left behind, which makes the seven built rows bit-identical with today: the first step of landing the table, before World builds the aftermath kinds",
+  "aftermathOn": false,
+  "_aftermathOn": "ruled on (Game Design 23b items 5, 7, 8). Off, every row's name, groove and looks are read and nothing is left behind, which makes the seven built rows bit-identical with today: the first step of landing the table, before World builds the aftermath kinds. Encounter's W2 (2026-10-28) builds the call: on, when a beam's front has carved its whole path, the row's aftermath is laid with WorldAfter.lay on a gen 2 planet (World's after.json enabled is the second gate) with an aftermath cue, and the row's twist plays. Set off until QA tunes the aftermaths and twists (ruled on; the switch is the gate)",
   "waterRule": {"surfaceWithinTicks": 30, "downState": false, "landedAtSurface": true, "_ruled": "Game Design 23b item 7 (and rulings-2026-10-19b.md 1e): a fighter dropped or landing in water by any row surfaces set within 30 ticks, with no down state beyond that, and counts as landed once he surfaces"},
   "adoptProposed": false,
   "_adoptProposed": "true reads each row of proposed in place of the built row of the same biome. Left: the village's LANE SWEEP. Legal cleared it (RL-175) and Game Design ruled its collateral (23b item 9); it waits on Orb's pick (docs/combat/biomes.md section 2b). The ocean's row was ruled into variants (23b item 8)",
@@ -141,8 +148,8 @@
     }
   },
   "byPersonality": {
-    "enabled": true,
-    "_about": "signature-variants.md 5.1, ruled on by Game Design (23b item 6), inside every collateral budget: near people the carer narrows the bite and the one who feeds on collateral widens it. Off keeps every row as above (the first landing step)",
+    "enabled": false,
+    "_about": "signature-variants.md 5.1, ruled on by Game Design (23b item 6), inside every collateral budget: near people the carer narrows the bite and the one who feeds on collateral widens it. Off keeps every row as above (the first landing step). Encounter's W2 (2026-10-28) builds it: per beam sample, the firer's care sign picks hero or villain, and where WorldStructures.popNear(sample, the launch planner's care radius) is above whenPopAbove the groove's width and the structure radius are times widthMul and the bite times structMul. Set off until QA tunes it: on, it changes the hand-made world's city beams, so gen 1 is no longer bit-identical (the JS oracle has no such term)",
     "hero": {"widthMul": 0.85, "structMul": 0.8, "whenPopAbove": 0.2},
     "villain": {"widthMul": 1.15, "structMul": 1.2, "whenPopAbove": 0.2}
   }

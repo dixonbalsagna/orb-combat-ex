@@ -217,7 +217,7 @@ func _beams(rows: Dictionary, at: Dictionary) -> void:
 			oldOk = hw == (WorldCrater.SCORCH_HW0 + WorldCrater.SCORCH_HW_P * b.pw) * float(old[1])
 		var good: bool = key == k and b.variant == nm and n > 0 and vBad == 0 and wBad == 0 and oldOk and dusts == n and dustBad == 0 \
 			and sparksBad == 0 and (sparks > 0) == fx.has("sparks") and (fires > 0) == fx.has("fire") and b.sf == sfWant
-		ok(good, "beam: %s (seed %d touch %d, x %.0f) fires %s: %d scorch samples at width %.2f%s, %d dust %s, %d sparks, %d fires, bite %s; trees %s plays area" % [
+		ok(good, "beam: %s (seed %d touch %d, x %.0f) fires %s: %d scorch samples at width %.2f%s, %d dust %s, %d sparks, %d fires, bite %s; trees %s (World's treeMode: sigafter_probe)" % [
 			k, int(p[0]), int(p[1]), x, nm, n, hw * 2.0, (" (the retired factor's, to the bit)" if bool(r.get("asBuilt", false)) and oldOk else ""),
 			dusts, String(fx.dust), sparks, fires, str(b.sf), String(r.trees)])
 		SimCore.dispose(S)

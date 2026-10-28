@@ -311,6 +311,43 @@
                 }
               ]
             },
+            "twist": {
+              "description": "Encounter's W2 (biomes.md section 2, the rule: lines): how the row's outcome line plays. under: the HIT drives him down into the aftermath's water (the water rule). skate: the GUARD push-back on a glazed column slides slideMul times as far. wall: the GUARD push-back runs flat and reaches the heaved plates within reachMul of its force",
+              "type": "object",
+              "properties": {
+                "outcome": {
+                  "enum": [
+                    "HIT",
+                    "GUARD"
+                  ]
+                },
+                "kind": {
+                  "enum": [
+                    "under",
+                    "skate",
+                    "wall"
+                  ]
+                },
+                "slideMul": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 5
+                },
+                "reachMul": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 4
+                }
+              },
+              "patternProperties": {
+                "^_": {}
+              },
+              "additionalProperties": false,
+              "required": [
+                "outcome",
+                "kind"
+              ]
+            },
             "outcomes": {
               "type": "object",
               "properties": {
@@ -686,6 +723,43 @@
                     "kind"
                   ]
                 }
+              ]
+            },
+            "twist": {
+              "description": "Encounter's W2 (biomes.md section 2, the rule: lines): how the row's outcome line plays. under: the HIT drives him down into the aftermath's water (the water rule). skate: the GUARD push-back on a glazed column slides slideMul times as far. wall: the GUARD push-back runs flat and reaches the heaved plates within reachMul of its force",
+              "type": "object",
+              "properties": {
+                "outcome": {
+                  "enum": [
+                    "HIT",
+                    "GUARD"
+                  ]
+                },
+                "kind": {
+                  "enum": [
+                    "under",
+                    "skate",
+                    "wall"
+                  ]
+                },
+                "slideMul": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 5
+                },
+                "reachMul": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 4
+                }
+              },
+              "patternProperties": {
+                "^_": {}
+              },
+              "additionalProperties": false,
+              "required": [
+                "outcome",
+                "kind"
               ]
             },
             "outcomes": {

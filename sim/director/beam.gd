@@ -141,13 +141,30 @@ static func opBeamImpact(S: SimState, ex, args) -> void:
 	var out: String = args.out
 	if S.game.ko != null:
 		return
+	# Biomes W2: the row's twist (sigvariants.json `twist`) lands on the aftermath, so its impact waits for the carve.
+	var tw: Dictionary = DirSigAfter.twistFor(S, A, out)
+	if not tw.is_empty() and DirSigAfter.waiting(S, A) and int(args.get("wait", 0)) < DirSigAfter.WAIT_MAX:
+		var a2: Dictionary = args.duplicate()
+		a2["wait"] = int(args.get("wait", 0)) + 1
+		DirExchange.schedule(ex, ex.t + SimConst.DT, "beamImpact", a2)
+		return
 	if D.state == "locked":
 		D.state = "free"
 	SimDamage.hit(S, ex, A, D, (200.0 if out == "GUARD" else 230.0) * sigDamageMul(), {"ignoreStance": out != "GUARD", "stop": 0.14, "shake": 16.0, "big": true})
 	_blast(S, A, D.x, D.y + 30.0, 60.0 + A.tier * 30.0)
 	if S.game.ko == null:
 		D.state = "locked"
-		DirLaunch.doLaunch(S, A, D, {"ux": args.ux, "uy": args.uy * 0.6 + 0.12}, 1300.0 if out == "GUARD" else 2600.0, true)
+		var force: float = 1300.0 if out == "GUARD" else 2600.0
+		var kind: String = String(tw.get("kind", ""))
+		var twisted: bool = false
+		if kind == "under":
+			twisted = DirSigAfter.under(S, A, D)
+		elif kind == "wall":
+			twisted = DirSigAfter.wall(S, A, D, tw, args.ux, force)
+		if not twisted:
+			DirLaunch.doLaunch(S, A, D, {"ux": args.ux, "uy": args.uy * 0.6 + 0.12}, force, true)
+			if kind == "skate":
+				DirSigAfter.skate(S, A, D, tw)
 		DirExchange.decisive(S, ex, A, D, "beam")
 
 
@@ -270,20 +287,23 @@ static func sampleBeam(S: SimState, b, s: float) -> void:
 	var x: float = SimWrap.wrap(b.ox + b.ux * s)
 	var y: float = b.oy + b.uy * s
 	var g: float = WorldTerrain.groundY(S, x)
-	# The variant's row (data/combat/sigvariants.json): its groove factors, structure radius and looks. Its trees are
-	# read as area (today's damageArea) whatever the row says, until World builds burn, fell, snap and none.
+	# The variant's row (data/combat/sigvariants.json): its groove factors, structure radius, trees and looks.
 	var vr: Dictionary = DirData.sigByName(b.variant)
 	var fx: Dictionary = vr.get("fx", {})
+	var sc: Array = vr.get("scorch", [1.0, 1.0])
+	var pm: Array = DirSigAfter.persMul(S, A, x)   # biomes W2: the personality term near people ([1, 1] off)
+	if pm[0] != 1.0:
+		sc = [sc[0], float(sc[1]) * pm[0]]
 	if y < g + WorldCrater.beamReach(P):
 		# Scorch: a groove carved to a target depth along the ground, not a crater per sample (sim quirk 7 is gone).
-		WorldCrater.scorch(S, x, P, b.variant, A, NAN, vr.get("scorch", [1.0, 1.0]))
+		WorldCrater.scorch(S, x, P, b.variant, A, NAN, sc)
 		if not b.struck and b.uy <= -WorldCrater.BEAM_STRIKE_SLOPE:
 			b.struck = true   # a steep beam digs one strike crater where it first meets the ground
 			WorldCrater.dig(S, x, WorldCrater.beamStrikeEnergy(P), A, "beam", 0.0, 1.0, true)
 		SimFx.dust(S, x, g + 8.0, 1, String(fx.get("dust", "#9b8f7e")))
 		if fx.has("sparks"):
 			SimFx.spark(S, x, g + 6.0, int(fx.sparks.n), String(fx.sparks.col), float(fx.sparks.speed))
-	b.levelled += WorldStructures.damageArea(S, x, y, (26.0 + P * 8.0) * SimConst.WS * float(vr.get("areaMul", 1.0)), (110.0 + P * 75.0) * b.sf, A, false, 0.0, maxi(0, b.cap - b.levelled), BEAM_KEEP, 1.0)
+	b.levelled += WorldStructures.damageArea(S, x, y, (26.0 + P * 8.0) * SimConst.WS * float(vr.get("areaMul", 1.0)) * pm[0], (110.0 + P * 75.0) * b.sf * pm[1], A, false, 0.0, maxi(0, b.cap - b.levelled), BEAM_KEEP, 1.0, String(vr.get("trees", "area")))
 	if y < WorldWater.seaTop(S, x) + 30.0:
 		SimFx.beamSplash(S, x)   # the consumer rolls the prototype's 60% splash
 	if fx.has("fire") and y < g + float(fx.fire.withinAbove) * SimConst.WS:
@@ -300,12 +320,16 @@ static func beamStep(S: SimState, dt: float) -> void:
 			np = DirBeamPlay.front(b, tv)   # the beam plays: it reaches the defender at a set tick, at any distance
 		var s0: float = b.p * b.len
 		var s1: float = np * b.len
+		var was: float = b.p
 		b.p = np
 		var s: float = s0
 		while s < s1:
 			sampleBeam(S, b, s)
 			s += 36.0 * SimConst.WS
+		if was < 1.0 and np >= 1.0:
+			DirSigAfter.carved(S, b)   # biomes W2: the path is carved; its row's aftermath is laid on the groove
 		if b.t > b.life:
 			if tv > 0:
 				DirInterrupt.si(b.A, DirInterrupt.BEAM_TRAVEL, 0)
 			S.beams.remove_at(i)
+	DirSigAfter.craterShapes(S)   # biomes W2: crater_shape for the shaped craters dug this tick
