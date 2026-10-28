@@ -1,5 +1,7 @@
 # Working as a cloud session (EP, 2026-10-28)
 
+> **Retired (Orb, 2026-10-28).** Cloud sessions are no longer used. Every brief runs as a local director session again, as CLAUDE.md describes. This page is kept as a record of how the cloud wave ran.
+
 Orb has $250 of cloud-session credit that expires on 4 November 2026. Some directors continue their sessions in the cloud until then. Everything in CLAUDE.md still applies. This page covers what is different in the cloud.
 
 ## What is different
