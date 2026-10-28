@@ -84,6 +84,7 @@ func _run() -> void:
 	await _touch_controls_rules()
 	await _touch_feel_rules()
 	await _settings_rules()
+	await _settings_access_rules()
 	_touch_full_rules()
 	await _remap_rules()
 	await _remap_every_layout()
@@ -3820,6 +3821,132 @@ func _touch_feel_rules() -> void:
 	UiPrefs.path = "user://ui_prefs.json"
 
 
+## Settings for access (docs/ui/cloud-reports/2026-10-28-settings-access.md): the foot's help is never cut, the sound rows set Godot's
+## buses and come back the same after a save and a new run, and the pseudo-locale stays off unless asked for.
+func _settings_access_rules() -> void:
+	# The foot: at every size the focused help fits whole, so none ends in "...", and the foot is the height it always had (the longest help up to
+	# two lines) whenever the focused help fits that: it grows only for a longer one.
+	var cases: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 576), 1.0], [Vector2(3840, 2160), 1.0], [Vector2(2400, 1080), 2.6], [Vector2(2532, 1170), 3.0], [Vector2(1560, 720), 2.0],
+		[Vector2(844, 390), 1.0], [Vector2(1170, 2532), 3.0], [Vector2(1080, 2340), 2.75], [Vector2(828, 1792), 2.0], [Vector2(750, 1334), 2.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0]]
+	var rws: Array = UiSettings.rows()
+	var cut: Array = []
+	var grown: Array = []
+	var base_bad: Array = []
+	for c in cases:
+		var lay := UiLayout.new()
+		lay.dp = c[1]
+		lay.compute(c[0], false)
+		for touch in [false, true]:
+			for i in range(rws.size()):
+				if str(rws[i]["help"]) == "":
+					continue
+				var p: Dictionary = UiSettings.plan(c[0], lay.s, c[1], touch, {"focus": i, "scroll": 0.0}, {})
+				if int(UiSettings.help_wrap(p)["max"]) > 0:
+					cut.append("%dx%d %s" % [int(c[0].x), int(c[0].y), str(rws[i]["key"])])
+				if int(p["help_need"]) <= int(p["help_base"]):
+					if int(p["help_lines"]) != int(p["help_base"]) or int(p["help_base"]) > 2:
+						base_bad.append("%dx%d %s" % [int(c[0].x), int(c[0].y), str(rws[i]["key"])])
+				else:
+					grown.append(int(p["help_lines"]) - int(p["help_base"]))
+	_ok(cut.is_empty(), "settings access: at every size every row's help fits the foot whole (%d cut: %s)" % [cut.size(), str(cut.slice(0, 4))])
+	_ok(base_bad.is_empty() and not grown.is_empty(), "settings access: a help that fits two lines leaves the foot at its usual height at every size (%d off: %s); %d longer helps grow it" % [base_bad.size(), str(base_bad.slice(0, 4)), grown.size()])
+	var lay2 := UiLayout.new()
+	lay2.compute(Vector2(1920, 1080), false)
+	var cvi := -1
+	for i in range(rws.size()):
+		if str(rws[i]["key"]) == "colour_vision":
+			cvi = i
+	var pcv: Dictionary = UiSettings.plan(Vector2(1920, 1080), lay2.s, 1.0, false, {"focus": cvi, "scroll": 0.0}, {})
+	var cvl: PackedStringArray = UiSettings.help_wrap(pcv)["lines"]
+	_ok(cvi >= 0 and cvl.size() <= int(pcv["help_lines"]) and " ".join(cvl).ends_with("a shape.") and float((pcv["body"] as Rect2).size.y) >= float(pcv["tm"]) * UiSettings.HELP_BODY_ROWS, "settings access: at 1920x1080 the colour-blind help shows whole, %d lines, and the body keeps its rows" % cvl.size())
+	# The focused row stays on screen as the foot changes: down through every row and back up, at a phone landscape, a phone portrait and 1080p.
+	var jumped: Array = []
+	for sz in [Vector2i(844, 390), Vector2i(390, 844), Vector2i(1920, 1080)]:
+		root.size = sz
+		var hs: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+		root.add_child(hs)
+		await process_frame
+		await process_frame
+		hs.show_settings()
+		var nrows: int = UiSettings.focusable(UiSettings.rows()).size()
+		for k in range(nrows * 2 + 2):
+			hs.settings_action("down" if k < nrows else "up")
+			var ps: Dictionary = hs.settings_plan()
+			var fr: Rect2 = (ps["rows"] as Array)[hs.settings_focus()]["rect"]
+			var bd: Rect2 = ps["body"]
+			if fr.position.y < bd.position.y - 0.5 or fr.end.y > bd.end.y + 0.5:
+				jumped.append("%dx%d step %d row %s" % [sz.x, sz.y, k, str(UiSettings.rows()[hs.settings_focus()]["key"])])
+		hs.queue_free()
+		await process_frame
+	root.size = Vector2i(1280, 720)
+	_ok(jumped.is_empty(), "settings access: stepping through every row and back, the focused row is always inside the body as the foot grows and shrinks (%d off: %s)" % [jumped.size(), str(jumped.slice(0, 3))])
+	# The sound rows: on the screen, in their own section, at 100% and Off by default.
+	var keys: Array = []
+	for r in rws:
+		keys.append(str(r["key"]))
+	var od: Dictionary = UiData.options()
+	_ok(keys.has("volume_master") and keys.has("volume_effects") and keys.has("volume_voice") and keys.has("mono_audio") and od["volume_master"]["default"] == 1.0 and od["mono_audio"]["default"] == false, "settings access: Master, Effects and Voice volume and Mono sound are on the screen, at 100% and off by default")
+	# The round trip: set each volume, save, start again from the mix's own levels, load, and read the same values and bus dB back.
+	UiPrefs.path = "user://ui_prefs_test_sound.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	var mix: Dictionary = AudioBank.load_json("res://audio/data/mix.json")
+	AudioVoices.setup_buses(mix)
+	var buses: Array = ["Master", "Sfx", "SfxMuffled", "Alert", "Ambience", "Voice", "VoiceMuffled", "Music"]
+	var bus_db := func() -> Array:
+		var out: Array = []
+		for b in buses:
+			out.append(snappedf(AudioServer.get_bus_volume_db(AudioServer.get_bus_index(b)), 0.001))
+		return out
+	var mono_on := func() -> bool:
+		var e: int = AudioVoices._effect_index(0, "AudioEffectStereoEnhance")
+		return e >= 0 and AudioServer.is_bus_effect_enabled(0, e)
+	var db0: Array = bus_db.call()
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	root.add_child(hud)
+	await process_frame
+	var want := {"volume_master": 0.6, "volume_effects": 0.35, "volume_voice": 0.0, "mono_audio": true}
+	for k in want:
+		hud.settings_set(k, want[k])
+	var db1: Array = bus_db.call()
+	var lm: float = linear_to_db(0.6)
+	var le: float = linear_to_db(0.35)
+	_ok(is_equal_approx(db1[0], snappedf(lm, 0.001)) and is_equal_approx(db1[1], snappedf(float(db0[1]) + le, 0.001)) and is_equal_approx(db1[4], snappedf(float(db0[4]) + le, 0.001))
+		and float(db1[5]) <= -80.0 and float(db1[6]) <= -80.0 and db1[7] == db0[7] and mono_on.call(), "settings access: the rows set the buses: Master %.2f dB, effects %+.2f dB on Sfx, SfxMuffled, Alert and Ambience, Voice silent, Music untouched, mono on %s" % [lm, le, str(db1)])
+	hud.queue_free()
+	await process_frame
+	AudioVoices._user_db.clear()   # a new run: nothing set yet
+	AudioVoices.set_mono(false)
+	AudioVoices.setup_buses(mix)
+	_ok(bus_db.call() == db0 and not mono_on.call(), "settings access: a new run starts from the mix's own levels %s" % str(bus_db.call()))
+	var hud2: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	root.add_child(hud2)
+	await process_frame
+	hud2.load_saved_options()
+	var same := true
+	for k in want:
+		same = same and UiSettings._same(hud2.opts[k], want[k])
+	_ok(same and bus_db.call() == db1 and mono_on.call(), "settings access: after a save and a reload the values and every bus's dB read back the same %s" % str(bus_db.call()))
+	# Saved before the buses exist (the game loads the settings first): setup_buses puts the player's levels on as it makes them.
+	AudioVoices.setup_buses(mix)
+	_ok(bus_db.call() == db1, "settings access: setting up the buses again keeps the player's levels")
+	for k in ["volume_master", "volume_effects", "volume_voice"]:
+		hud2.settings_set(k, 1.0)
+	hud2.settings_set("mono_audio", false)
+	_ok(bus_db.call() == db0 and not mono_on.call(), "settings access: back at 100% and mono off the buses are the mix's own again")
+	hud2.queue_free()
+	await process_frame
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	UiPrefs.path = "user://ui_prefs.json"
+	# The pseudo-locale: off in a plain run; when on, a ui/data file with a pseudo twin is read from localization/pseudo/, one without stays.
+	_ok(UiData.pseudo_locale == 0 and UiData._locale_path("res://ui/data/terms.json") == "res://ui/data/terms.json", "settings access: the pseudo-locale is off unless the game is started with -- --pseudo-locale")
+	UiData.pseudo_locale = 1
+	var pl_terms: String = UiData._locale_path("res://ui/data/terms.json")
+	var pl_cv: String = UiData._locale_path("res://ui/data/colour_vision.json")
+	UiData.pseudo_locale = 0
+	_ok(pl_terms == "res://localization/pseudo/ui/data/terms.json" and pl_cv == "res://ui/data/colour_vision.json", "settings access: on, terms.json comes from the pseudo files and colour_vision.json (no twin) from ui/data")
+
+
 func _settings_rules() -> void:
 	var od: Dictionary = UiData.options()
 	var sd: Dictionary = UiData.settings()
@@ -3925,10 +4052,11 @@ func _settings_rules() -> void:
 				var rec: Dictionary = (p["rows"] as Array)[i]
 				if rec["kind"] == UiSettings.HEADING or not bool(rec["enabled"]):
 					continue
-				var sc: float = UiSettings.scroll_to(p, i, 0.0)
+				var pf: Dictionary = UiSettings.plan(sz, lay.s, dpv, touch, {"focus": i, "scroll": 0.0}, vo)   # the foot follows the focused help, as the HUD plans it
+				var sc: float = UiSettings.scroll_to(pf, i, 0.0)
 				var pp: Dictionary = UiSettings.plan(sz, lay.s, dpv, touch, {"focus": i, "scroll": sc}, vo)
 				var rr: Rect2 = (pp["rows"] as Array)[i]["rect"]
-				if rr.position.y < body.position.y - 0.5 or rr.end.y > (pp["body"] as Rect2).end.y + 0.5:
+				if rr.position.y < (pp["body"] as Rect2).position.y - 0.5 or rr.end.y > (pp["body"] as Rect2).end.y + 0.5:
 					vis_ok = false
 				seen += 1
 			_ok(vis_ok and seen >= 20 and (maxs > 0.0 or seen > 0), "%s: every row can be scrolled fully into view by the focus (%d rows, content %d in %d)" % [tag, seen, int(p["content_h"]), int(body.size.y)])

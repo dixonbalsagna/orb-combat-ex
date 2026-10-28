@@ -154,6 +154,10 @@ var _rm_drag: Dictionary = {}
 var _set_open := false
 var _set_focus := -1                  # the focused row of UiSettings.rows()
 var _set_scroll := 0.0
+var _set_help_scroll := 0            # the foot's help, scrolled by whole lines when it is longer than the foot (a tiny screen); back to 0 on a new focus
+var _set_help_focus := -1
+var _set_foot := -1                  # the foot's line count last planned: when it changes the focused row is brought back into the body
+var _rm_foot := -1
 var _set_drag: Dictionary = {}        # a press in progress: {mode: "slider" | "tap" | "scroll", row, part, y0, scroll0, moved}
 var _set_axis: Dictionary = {}        # pad stick axis -> -1, 0 or 1 (a push is one step, like a key press)
 var _set_device := "kbd"              # the last device that drove the screen ("kbd" or "pad"): which key hint it shows
@@ -563,6 +567,10 @@ func _step_swap(dt: float) -> void:
 		_swap_fade = minf(1.0, _swap_fade + dt * rate)
 
 
+## The Settings screen's sound rows -> the bus groups of AudioVoices.set_user_volume.
+const VOLUME_GROUPS := {"volume_master": "master", "volume_effects": "effects", "volume_voice": "voice"}
+
+
 func set_option(key: String, value) -> void:
 	value = UiData.clamp_option(key, value)
 	if key == "touch_ui":
@@ -583,6 +591,10 @@ func set_option(key: String, value) -> void:
 				l.force = bool(value)
 	if key == "colour_vision":
 		_apply_vision()
+	if VOLUME_GROUPS.has(key):
+		AudioVoices.set_user_volume(str(VOLUME_GROUPS[key]), float(value))   # Godot's buses (audio/audio_voices.gd); nothing in the sim
+	elif key == "mono_audio":
+		AudioVoices.set_mono(bool(value))
 	if key == "silhouette" or key == "touch_ui" or key == "left_handed" or key == "touch_preset":
 		_last_size = Vector2.ZERO
 	_relayout()
@@ -2135,7 +2147,20 @@ func settings_focus() -> int:
 
 func settings_plan() -> Dictionary:
 	UiSettings.two_humans = _humans() >= 2
-	return UiSettings.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _set_focus, "scroll": _set_scroll, "device": _set_device}, opts)
+	if _set_help_focus != _set_focus:
+		_set_help_focus = _set_focus
+		_set_help_scroll = 0
+	var p: Dictionary = UiSettings.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _set_focus, "scroll": _set_scroll, "device": _set_device, "help_scroll": _set_help_scroll}, opts)
+	# The foot grows for a long help and shrinks back: the body changes height, so the focused row is kept in it (only then, so a scroll by hand stays).
+	var fl: int = int(p["help_lines"])
+	if fl != _set_foot:
+		_set_foot = fl
+		if _set_focus >= 0:
+			var sc: float = UiSettings.scroll_to(p, _set_focus, float(p["scroll"]))
+			if not is_equal_approx(sc, _set_scroll):
+				_set_scroll = sc
+				p = UiSettings.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _set_focus, "scroll": _set_scroll, "device": _set_device, "help_scroll": _set_help_scroll}, opts)
+	return p
 
 
 func _settings_sig() -> Array:
@@ -2249,7 +2274,22 @@ func _settings_scroll_by(px: float) -> void:
 	_l_settings.invalidate()
 
 
+## Scroll the foot's help by whole lines when it is longer than the foot; a step past the end goes back to the top. False when it fits.
+func _settings_help_by(pos: Vector2, lines: int, wrap: bool) -> bool:
+	var p: Dictionary = settings_plan()
+	var mx: int = int(UiSettings.help_wrap(p)["max"])
+	if mx <= 0 or not (p["footer"] as Rect2).has_point(pos):
+		return false
+	var n: int = _set_help_scroll + lines
+	_set_help_scroll = (posmod(n, mx + 1) if wrap else clampi(n, 0, mx))
+	_l_settings.invalidate()
+	return true
+
+
 func _settings_press(pos: Vector2) -> void:
+	if _settings_help_by(pos, 1, true):
+		_set_drag = {}
+		return
 	var p: Dictionary = settings_plan()
 	var h: Dictionary = UiSettings.hit(p, pos)
 	_set_drag = {}
@@ -2380,9 +2420,11 @@ func _settings_input(event: InputEvent) -> void:
 			else:
 				_settings_release()
 		elif event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			_settings_scroll_by(-maxf(48.0 * dp, 44.0) * 1.2)
+			if not _settings_help_by(event.position, -1, false):
+				_settings_scroll_by(-maxf(48.0 * dp, 44.0) * 1.2)
 		elif event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			_settings_scroll_by(maxf(48.0 * dp, 44.0) * 1.2)
+			if not _settings_help_by(event.position, 1, false):
+				_settings_scroll_by(maxf(48.0 * dp, 44.0) * 1.2)
 	elif event is InputEventMouseMotion:
 		if (event.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0:
 			_settings_motion(event.position)
@@ -2545,7 +2587,17 @@ func remap_plan() -> Dictionary:
 		hint = ""
 	var st := {"rows": rws, "focus": _rm_focus, "scroll": _rm_scroll, "device": _set_device, "title": str(w.get("title", "REMAP CONTROLS")), "hint_text": hint,
 		"status": _rm_status_text(), "confirm": conf, "capture": cap, "capture_word": str(w.get("capture_word", "..."))}
-	return UiSettings.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), st, {"layout": _rm_layout, "slot": _rm_slot})
+	var p: Dictionary = UiSettings.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), st, {"layout": _rm_layout, "slot": _rm_slot})
+	var fl: int = int(p["help_lines"])
+	if fl != _rm_foot:   # as the Settings foot: a longer help or status grows it, the focused row stays in the body
+		_rm_foot = fl
+		if _rm_focus >= 0:
+			var sc: float = UiSettings.scroll_to(p, _rm_focus, float(p["scroll"]))
+			if not is_equal_approx(sc, _rm_scroll):
+				_rm_scroll = sc
+				st["scroll"] = _rm_scroll
+				p = UiSettings.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), st, {"layout": _rm_layout, "slot": _rm_slot})
+	return p
 
 
 func _remap_sig() -> Array:

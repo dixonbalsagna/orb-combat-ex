@@ -188,22 +188,32 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary, 
 	var header_h: float = maxf(UiText.height(fs_title), close_sz)
 	var fits: bool = inner.position.x + UiText.width(title, fs_title) <= close.position.x - pad * 0.5
 	var gap: float = maxf(pad * 0.4, 5.0)
-	# The small print at the foot: the focused row's help, in as many lines as the longest help needs (up to three), so it does not jump.
-	# At most two lines, and never more than a fifth of the card: a short phone screen gives its height to the rows. A longer help ends in "...".
-	var help_lines: int = 1
-	for r in rws:
-		help_lines = maxi(help_lines, mini(2, UiText.wrap(str(r["help"]), fs_small, inner.size.x).size()))
-	help_lines = clampi(mini(help_lines, int(floor(card.size.y * 0.2 / lh_small))), 1, 2)
 	var hint_key: String = "hint_pad" if (not touch and str(st.get("device", "kbd")) != "kbd") else "hint_keys"
 	var hint_text: String = "" if touch else str(d.get(hint_key, ""))
 	if st.has("hint_text"):
 		hint_text = "" if touch else str(st["hint_text"])
 	var status: String = str(st.get("status", ""))
-	if status != "":
-		help_lines = clampi(maxi(help_lines, UiText.wrap(status, fs_small, inner.size.x).size()), 1, 2)
-	var foot_lines: int = help_lines + (1 if hint_text != "" else 0)
 	var confirm: Array = st.get("confirm", [])
 	var conf_h: float = (tm + gap) if not confirm.is_empty() else 0.0
+	# The small print at the foot: the focused row's help. The foot keeps the height it always had (as many lines as the longest help needs,
+	# up to two, and never more than a fifth of the card: a short phone screen gives its height to the rows). Only while the focused help
+	# is longer than that does the foot grow, by the lines it lacks, and only while the body keeps HELP_BODY_ROWS rows; past that the help
+	# scrolls by whole lines (help_scroll). It is never cut with "...". The caller re-anchors the focused row when the foot changes.
+	var base_lines: int = 1
+	for r in rws:
+		base_lines = maxi(base_lines, mini(2, UiText.wrap(str(r["help"]), fs_small, inner.size.x).size()))
+	base_lines = clampi(mini(base_lines, int(floor(card.size.y * 0.2 / lh_small))), 1, 2)
+	var focus_i: int = int(st.get("focus", -1))
+	var help_need: int = 1
+	if status != "":
+		help_need = UiText.wrap(status, fs_small, inner.size.x).size()
+	elif focus_i >= 0 and focus_i < rws.size():
+		help_need = UiText.wrap(str(rws[focus_i]["help"]), fs_small, inner.size.x).size()
+	var hint_n: int = 1 if hint_text != "" else 0
+	var room: float = inner.size.y - header_h - gap * 2.0 - tm * HELP_BODY_ROWS - conf_h - 2.0
+	var help_cap: int = maxi(base_lines, int(floor(room / lh_small)) - hint_n)
+	var help_lines: int = clampi(help_need, base_lines, help_cap)
+	var foot_lines: int = help_lines + hint_n
 	var footer := Rect2(inner.position.x, inner.end.y - float(foot_lines) * lh_small - 2.0 - conf_h, inner.size.x, float(foot_lines) * lh_small + 2.0 + conf_h)
 	var conf_rects: Array = []
 	var cx: float = footer.position.x
@@ -321,7 +331,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary, 
 			bad += 1
 	var out := {"card": card, "inner": inner, "close": close, "cs": cs, "pad": pad, "tm": tm, "title": title, "title_pos": Vector2(inner.position.x, inner.position.y + UiText.ascent(fs_title)),
 		"fs_title": fs_title, "fs_body": fs_body, "fs_small": fs_small, "lh": lh, "lh_small": lh_small, "body": body, "footer": footer, "rows": placed, "content_h": content_h,
-		"max_scroll": max_scroll, "scroll": scroll, "stack": stack, "hint": hint_text, "help_lines": help_lines, "sbw": sbw, "bad": bad, "gap": gap, "focus": int(st.get("focus", -1)),
+		"max_scroll": max_scroll, "scroll": scroll, "stack": stack, "hint": hint_text, "help_lines": help_lines, "help_base": base_lines, "help_need": help_need, "help_scroll": int(st.get("help_scroll", 0)), "sbw": sbw, "bad": bad, "gap": gap, "focus": int(st.get("focus", -1)),
 		"status": status, "confirm": conf_rects, "confirm_labels": confirm}
 	for cr2 in conf_rects:
 		if not card.encloses(cr2):
@@ -329,6 +339,23 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary, 
 	out["bad"] = bad
 	out["fits"] = fits and bad == 0 and body.size.y >= tm
 	return out
+
+
+## The rows the body keeps when the foot grows for a long help (the foot scrolls past that).
+const HELP_BODY_ROWS := 2.6
+
+
+## The focused help's lines in a plan's foot width, and how far it can scroll: {lines, max} (max 0 when it fits).
+static func help_wrap(p: Dictionary) -> Dictionary:
+	var help := ""
+	var focus: int = int(p["focus"])
+	var rws_p: Array = p["rows"]
+	if focus >= 0 and focus < rws_p.size():
+		help = str(rws_p[focus]["help"])
+	if str(p["status"]) != "":
+		help = str(p["status"])
+	var hl: PackedStringArray = UiText.wrap(help, int(p["fs_small"]), (p["footer"] as Rect2).size.x)
+	return {"lines": hl, "max": maxi(0, hl.size() - int(p["help_lines"]))}
 
 
 ## The scroll that brings row `idx` (and its section heading, if it is the first of its section) into the body, from the current scroll.
@@ -380,7 +407,7 @@ static func sig(p: Dictionary, opts: Dictionary, touch: bool) -> Array:
 	var vals: Array = []
 	for rec in p["rows"]:
 		vals.append(rec["word"])
-	return [int((p["card"] as Rect2).size.x), int((p["card"] as Rect2).size.y), int(p["cs"] * 100.0), touch, int(p["focus"]), int(p["scroll"]), vals, p["status"], p["confirm_labels"], str(p["title"]), str(p["hint"])]
+	return [int((p["card"] as Rect2).size.x), int((p["card"] as Rect2).size.y), int(p["cs"] * 100.0), touch, int(p["focus"]), int(p["scroll"]), vals, p["status"], p["confirm_labels"], str(p["title"]), str(p["hint"]), int(p["help_scroll"]), int(p["help_lines"])]
 
 
 # --- Drawing --------------------------------------------------------------------------------------------------------------------
@@ -453,26 +480,22 @@ static func draw(ci: CanvasItem, p: Dictionary, opts: Dictionary) -> void:
 		var th: float = maxf(sb.size.y * frac, tm * 0.5)
 		var ty: float = sb.position.y + (sb.size.y - th) * (float(p["scroll"]) / float(p["max_scroll"]))
 		ci.draw_rect(Rect2(sb.position.x, ty, sb.size.x, th), Color(ink, 0.6))
-	# The foot: the focused row's help, then the keys.
+	# The foot: the focused row's help (scrolled by whole lines when it is longer than the foot, with a thin bar at the right), then the keys.
 	var foot: Rect2 = p["footer"]
 	var fy: float = foot.position.y + UiText.ascent(fs_small)
-	var help := ""
-	var rws_p: Array = p["rows"]
-	if focus >= 0 and focus < rws_p.size():
-		help = str(rws_p[focus]["help"])
-	if str(p["status"]) != "":
-		help = str(p["status"])
-	var hl: PackedStringArray = UiText.wrap(help, fs_small, foot.size.x)
+	var hw: Dictionary = help_wrap(p)
+	var hl: PackedStringArray = hw["lines"]
 	var nl: int = int(p["help_lines"])
+	var h0: int = clampi(int(p["help_scroll"]), 0, int(hw["max"]))
 	for k in range(nl):
-		if k < hl.size():
-			var ln: String = hl[k]
-			if k == nl - 1 and hl.size() > nl:
-				while ln.length() > 3 and UiText.width(ln + "...", fs_small) > foot.size.x:
-					ln = ln.substr(0, ln.length() - 1)
-				ln = ln.strip_edges() + "..."
-			UiText.draw(ci, ln, Vector2(foot.position.x, fy), fs_small, ink, -1)
+		if h0 + k < hl.size():
+			UiText.draw(ci, hl[h0 + k], Vector2(foot.position.x, fy), fs_small, ink, -1)
 		fy += float(p["lh_small"])
+	if int(hw["max"]) > 0:
+		var hb := Rect2(foot.end.x - float(p["sbw"]), foot.position.y, float(p["sbw"]), float(nl) * float(p["lh_small"]))
+		ci.draw_rect(hb, Color(edge, 0.18))
+		var hth: float = hb.size.y * float(nl) / float(hl.size())
+		ci.draw_rect(Rect2(hb.position.x, hb.position.y + (hb.size.y - hth) * float(h0) / float(hw["max"]), hb.size.x, hth), Color(ink, 0.6))
 	if str(p["hint"]) != "":
 		UiText.draw(ci, str(p["hint"]), Vector2(foot.position.x, fy), fs_small, dim, -1)
 	var cl: Array = p["confirm_labels"]

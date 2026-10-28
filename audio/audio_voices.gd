@@ -59,11 +59,11 @@ func _process(delta: float) -> void:
 		var left: float = float(d.until) - _clock
 		if left <= 0.0:
 			if idx != -1:
-				AudioServer.set_bus_volume_db(idx, float(_base_db.get(bus, 0.0)))
+				AudioServer.set_bus_volume_db(idx, float(_base_db.get(bus, 0.0)) + user_db(bus))
 			_duck.erase(bus)
 		elif idx != -1:
 			var k: float = clampf(left / DUCK_RELEASE, 0.0, 1.0)     # 1 while held, then a short ramp back up
-			AudioServer.set_bus_volume_db(idx, float(_base_db.get(bus, 0.0)) + float(d.db) * k)
+			AudioServer.set_bus_volume_db(idx, float(_base_db.get(bus, 0.0)) + user_db(bus) + float(d.db) * k)
 
 
 ## A cue for a sound the warm-up has not rendered: move that sound to the front of the queue, and hold the cue. It plays when the sound
@@ -114,13 +114,68 @@ func _hold_down(bus: String, db: float, ms: int) -> void:
 	if idx == -1:
 		return
 	if not _base_db.has(bus):
-		_base_db[bus] = AudioServer.get_bus_volume_db(idx)
+		_base_db[bus] = float(_mix_db.get(bus, AudioServer.get_bus_volume_db(idx) - user_db(bus)))
 	var until: float = _clock + float(ms) * 0.001 + DUCK_RELEASE
 	if _duck.has(bus):
 		until = maxf(until, float(_duck[bus].until))
 		db = minf(db, float(_duck[bus].db))
 	_duck[bus] = {"db": db, "until": until}
-	AudioServer.set_bus_volume_db(idx, float(_base_db[bus]) + db)
+	AudioServer.set_bus_volume_db(idx, float(_base_db[bus]) + user_db(bus) + db)
+
+
+## The player's volume (UI's Settings screen): a trim in dB per group of buses, on top of mix.json's levels and any
+## ducking, so a duck's release comes back to the player's level. "master" is Godot's Master bus. Set before the buses
+## exist (saved settings load first), it applies when setup_buses makes them. Music has no group yet.
+const USER_GROUPS := {"master": ["Master"], "effects": ["Sfx", "SfxMuffled", "Alert", "Ambience"], "voice": ["Voice", "VoiceMuffled"]}
+const MUTE_DB := -80.0
+static var _user_db: Dictionary = {}     # group -> dB (0 = mix.json's level)
+static var _mix_db: Dictionary = {}      # bus name -> its mix.json level, so a trim never compounds
+static var mono: bool = false            # every bus summed to mono on the Master bus
+
+
+## The trim for one bus, in dB (0 when the player has not changed it).
+static func user_db(bus: String) -> float:
+	for g in USER_GROUPS:
+		if (USER_GROUPS[g] as Array).has(bus):
+			return float(_user_db.get(g, 0.0))
+	return 0.0
+
+
+## Set a group's volume from a linear level (0 silent, 1 mix.json's level) and apply it to the buses that exist now.
+static func set_user_volume(group: String, linear: float) -> void:
+	if not USER_GROUPS.has(group):
+		return
+	var v: float = clampf(linear, 0.0, 1.0)
+	var was: float = float(_user_db.get(group, 0.0))
+	_user_db[group] = MUTE_DB if v <= 0.0 else maxf(linear_to_db(v), MUTE_DB)
+	for bus in USER_GROUPS[group]:
+		var idx: int = AudioServer.get_bus_index(bus)
+		if idx == -1:
+			continue
+		if not _mix_db.has(bus):
+			_mix_db[bus] = 0.0 if bus == "Master" else AudioServer.get_bus_volume_db(idx) - was
+		AudioServer.set_bus_volume_db(idx, float(_mix_db[bus]) + float(_user_db[group]))
+
+
+## Mono sound: a stereo enhancer with no pull-out on the Master bus sums left and right (added on first use, then switched).
+static func set_mono(on: bool) -> void:
+	mono = on
+	var e: int = _effect_index(0, "AudioEffectStereoEnhance")
+	if e == -1:
+		if not on:
+			return
+		var se := AudioEffectStereoEnhance.new()
+		se.pan_pullout = 0.0
+		AudioServer.add_bus_effect(0, se)
+		e = AudioServer.get_bus_effect_count(0) - 1
+	AudioServer.set_bus_effect_enabled(0, e, on)
+
+
+static func _effect_index(bus: int, cls: String) -> int:
+	for i in range(AudioServer.get_bus_effect_count(bus)):
+		if AudioServer.get_bus_effect(bus, i).get_class() == cls:
+			return i
+	return -1
 
 
 ## Create the buses and the master limiter named in mix.json (once; safe to call again).
@@ -136,8 +191,10 @@ static func setup_buses(m: Dictionary) -> void:
 				var lp := AudioEffectLowPassFilter.new()
 				lp.cutoff_hz = float(b.lowpass_hz)
 				AudioServer.add_bus_effect(idx, lp)
-		AudioServer.set_bus_volume_db(idx, float(b.volume_db))
-	if AudioServer.get_bus_effect_count(0) == 0 and m.has("master_limiter"):
+		_mix_db[String(b.name)] = float(b.volume_db)
+		AudioServer.set_bus_volume_db(idx, float(b.volume_db) + user_db(String(b.name)))
+	AudioServer.set_bus_volume_db(0, user_db("Master"))
+	if _effect_index(0, "AudioEffectLimiter") == -1 and m.has("master_limiter"):
 		var lim := AudioEffectLimiter.new()
 		lim.threshold_db = float(m.master_limiter.threshold_db)
 		lim.ceiling_db = float(m.master_limiter.ceiling_db)

@@ -34,7 +34,22 @@ static func reload() -> void:
 	ensure()
 
 
+## The pseudo-locale (tools/l10n/pseudo.mjs, docs/accessibility/l10n-plan.md): off unless the build is started with
+## "-- --pseudo-locale". Then a ui/data file with a twin under res://localization/pseudo/ is read from there instead.
+static var pseudo_locale: int = -1   # -1 not read yet, 0 off, 1 on
+
+static func _locale_path(path: String) -> String:
+	if pseudo_locale < 0:
+		pseudo_locale = 1 if OS.get_cmdline_user_args().has("--pseudo-locale") else 0
+	if pseudo_locale == 1 and path.begins_with("res://ui/data/"):
+		var p: String = "res://localization/pseudo/" + path.trim_prefix("res://")
+		if FileAccess.file_exists(p):
+			return p
+	return path
+
+
 static func _read(path: String) -> Dictionary:
+	path = _locale_path(path)
 	if not FileAccess.file_exists(path):
 		push_error("UiData: missing " + path)
 		return {}
