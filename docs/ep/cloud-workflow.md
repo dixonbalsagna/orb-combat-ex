@@ -5,7 +5,7 @@ Orb has $250 of cloud-session credit that expires on 4 November 2026. Some direc
 ## What is different
 - **You can't message anyone, and the EP can't see your screen.** The EP (local, session "Meridian - Executive Producer") can still send *you* messages. You report by pushing to git.
 - **Your machine is a Linux container, not Orb's PC.** The machine rules about Godot process counts and below-normal priority protect Orb's PC, so they don't apply here; use the cores you have. The browser-capture rules still apply: there is no Tools launcher here, so **run no browser captures at all**. Side-by-sides, flash clips and web profiling stay local.
-- **Godot.** Install it the way CI does. Read `.github/actions/setup-godot/action.yml` for the pinned Linux URL and SHA-512, download that one zip to /tmp, check the SHA-512 (stop if it doesn't match), unzip it, and import once with `$G --headless --path . --import`. Download nothing else unless your brief names it.
+- **Godot.** In the "Meridian" cloud environment, the setup script has already installed the pinned build at `/opt/godot/godot`, and `GODOT` points to it: check with `$GODOT --version` (4.7.2.stable) and use it. Otherwise, install it the way CI does. Read `.github/actions/setup-godot/action.yml` for the pinned Linux URL and SHA-512, download that one zip to /tmp, check the SHA-512 (stop if it doesn't match), unzip it, and import once with `$G --headless --path . --import`. Download nothing else unless your brief names it.
 
 ## How work comes back
 1. Work on a branch named `cloud/<your-slug>/<topic>` (for example `cloud/world-environment/biomes-w4`). **Never push to main.** The EP merges.
