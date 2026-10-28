@@ -1,0 +1,82 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "meridian/combat-identity-proposals",
+ "title": "identity rows for proposed fighters (Combat; tools/movegen --propose)",
+ "description": "docs/combat/proposals/identity.proposals.json: fighters who are not in the build, as templates for Orb. `base` names the roster file whose packs, borrowing policy and named energy-in-reach sets a proposal uses. Each row is laid over the build row it is `like` (docs/combat/pending/movegen/identity.json), key by key, and inside `energy` key by key; `energy.reach` names a set of the base file. The generator reads weights (limb, path, tip, entry), weightsBy, never, cellNever, burst, energy, tier; `title`, `_who` and `manner` are words for Orb, Animation and Legal, and the title is screened against Legal's word lists. Cross-checks (--propose): a key is not a fighter of the build; the two fighters of the build come out unchanged; every move passes Legal's rows and names; each proposal reaches a fifth of the gate on blows. Policy: closed, except keys starting with an underscore.",
+ "type": "object",
+ "required": ["schema", "_about", "base", "fighters"],
+ "properties": {
+  "schema": {"const": "combat.identity.proposals/1"},
+  "base": {"type": "string", "pattern": "^docs/combat/.+\\.json$"},
+  "borrowing": {"enum": ["common", "all"]},
+  "fighters": {
+   "type": "object",
+   "minProperties": 1,
+   "propertyNames": {"pattern": "^(_.*|[a-z][a-z0-9_]*)$"},
+   "additionalProperties": {"$ref": "#/$defs/row"}
+  }
+ },
+ "patternProperties": {"^_": true},
+ "additionalProperties": false,
+ "$defs": {
+  "weights": {"type": "object", "additionalProperties": {"type": "number", "minimum": 0}},
+  "filter": {"type": "object", "additionalProperties": {"type": "array", "items": {"type": ["string", "integer"]}}},
+  "row": {
+   "type": "object",
+   "required": ["like", "tier", "title", "weights", "never", "manner", "energy"],
+   "properties": {
+    "like": {"enum": ["rival", "protagonist"]},
+    "tier": {"enum": [1, 2]},
+    "title": {"type": "string", "minLength": 1},
+    "weights": {
+     "type": "object",
+     "required": ["limb", "path", "tip"],
+     "properties": {
+      "limb": {"$ref": "#/$defs/weights"},
+      "path": {"$ref": "#/$defs/weights"},
+      "tip": {"type": "object", "propertyNames": {"pattern": "^[a-z]+\\.[a-z]+$"}, "additionalProperties": {"type": "number", "minimum": 0}},
+      "entry": {"$ref": "#/$defs/weights"}
+     },
+     "additionalProperties": false
+    },
+    "weightsBy": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "required": ["when"],
+      "properties": {
+       "when": {"$ref": "#/$defs/filter"},
+       "limb": {"$ref": "#/$defs/weights"},
+       "path": {"$ref": "#/$defs/weights"},
+       "target": {"$ref": "#/$defs/weights"},
+       "tip": {"$ref": "#/$defs/weights"}
+      },
+      "patternProperties": {"^_": true},
+      "additionalProperties": false
+     }
+    },
+    "never": {"type": "array", "items": {"type": "object", "required": ["shape", "why"], "properties": {"shape": {"$ref": "#/$defs/filter"}, "why": {"type": "string", "minLength": 1}}, "additionalProperties": false}},
+    "cellNever": {"type": "object", "additionalProperties": {"type": "array"}},
+    "burst": {"type": "object", "properties": {"close": {"$ref": "#/$defs/filter"}, "favour": {"type": "object"}}, "additionalProperties": false},
+    "manner": {"type": "object", "required": ["heavy", "burst", "reach"], "additionalProperties": {"type": "string"}},
+    "energy": {
+     "type": "object",
+     "required": ["hands", "release", "split", "reach"],
+     "properties": {
+      "hands": {"$ref": "#/$defs/weights"},
+      "release": {"$ref": "#/$defs/weights"},
+      "split": {"type": "boolean"},
+      "reach": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
+     },
+     "additionalProperties": false
+    },
+    "waves": {"type": "array", "items": {"type": "string"}},
+    "borrows": {"type": "array", "items": {"type": "string"}},
+    "alt": {"type": "string"},
+    "pron": {"type": "object", "additionalProperties": {"type": "string"}}
+   },
+   "patternProperties": {"^_": true},
+   "additionalProperties": false
+  }
+ }
+}

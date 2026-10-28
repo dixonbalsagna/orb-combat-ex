@@ -2431,6 +2431,36 @@
     "rule": "a beam cast pose (the signature beam and any other): one arm out, the palm or its heel leading, is allowed when the other hand never grips, braces or cups the firing wrist or forearm and stays at least shoulder width from it (open, in guard, or low at the rear); never both palms; no ball, sphere or glow held in either hand; no scream; the charge pose keeps h05 (one arm drawn back at shoulder height or lower, never at a hip); the beam is a plain straight line (e04, e07)",
     "why": "RL-038's condition was the wrist-gripped palm-forward brace; the palm-forward one-arm release without that brace is an ordinary energy-in-reach hand. Closed 2026-10-16",
     "_form": "none: a beam cast pose; no generated move is a beam cast (the shot table's bolts and volleys and energy in reach are not beams)"
+   },
+   {
+    "id": "e11",
+    "rule": "energy-overhaul franchise shapes to avoid: a ball, sphere or orb held in or above a hand; a flat spinning disc or hoop held above the head; a beam with a spiral, drill or helix (a 'lance' is a thin straight beam and a 'twin' beam is two parallel beams with tints alternating along and never around); a beam from a hand-frame (hands forming a triangle or diamond); a fireball from two cupped palms; a lightning-wrapped hand; a finger-gun or two-finger beam; call-outs never shout the technique's own name, never split into a charge chant and a release shout, never shout a multiplier or a countdown; technique names never built on wave, flash, bomb, ball, disc or cannon, nor lead with Destructo, Spirit, Dragon or Final; a charge is a brightness step at the heel of the palm or a thin ring, never a ball, never above or between the hands",
+    "why": "RL-177"
+   },
+   {
+    "id": "e12",
+    "rule": "energy grabs: the ring binds and never cuts (no spinning disc, no edge, no sparks, never held, charged or raised above the head, never a saw); binds take arms, torso or body, never throat, face or hair; the held fighter is drawn struggling or bracing, never limp or hanging, with no sexualised wrapping; no slow motion, zoom or taunt over a bound fighter and no finisher on one; a cage is an energy cage in lane colour, brief, never a prison with a seated person",
+    "why": "RL-177"
+   },
+   {
+    "id": "e13",
+    "rule": "mines, traps and snares: small, in the fighter's colour, dim arming, a slow glow at or under 1 Hz, a 6-tick flare; fizzle after 12 s and never survive their fight, never a lasting hazard for the places or people of a run; never moved toward people or laid on one; the carer's mines hold while a person is in the burst; the people they kill are a count only (c08) with no score, cheer or achievement; the player-facing word is plain 'mine' with no joke about the real thing",
+    "why": "a landmine's real-world harm to civilians, RL-177"
+   },
+   {
+    "id": "e14",
+    "rule": "energy looks from the v2 names: a trap pillar is ground or a solid lane-colour slab (a post a few bh tall) rising over several ticks, never a vertical beam of light into the sky and never round a body; a sheaf of lances is straight, parallel, thin and unrotating (no spiral or corkscrew; no 'Drill' in a name); a thrown crown tumbles on an arc and is never a flat spinning disc or raised overhead, and clings to torso, back or arm, never the head, neck or face; the Cyborg's beam is vented from a chest furnace drawn as a plate or grille with vents, never a maw, teeth, jaw, mouth, head or belly (ln02), with no hazard glyph (c07); his trap is clamps, plates and a pit that holds and drops, never teeth or chewing or swallowing, and is named Scrap Pit; no taunt, zoom or finisher over a fighter kneeling from a banner cage",
+    "why": "RL-178"
+   },
+   {
+    "id": "e15",
+    "rule": "the four energy kits: no net or ring wind-up drawn to the hip (draw to chest or shoulder height); an open palm chambered for a heavy stays at chest height and passes the lint at every tick; a lob's object forms as it leaves the hand and never on the palm during a charge; a thrown slab is a thick block tumbling end over end, never a thin flat disc spinning about its face, never held, charged or raised above the head; the free hand never rests on the firing shoulder, arm or wrist (a shoulder width away, or low and behind); a ring of flakes stays below the head and is one power mark under k01; extra names prefer 'Hanging' to 'Hung'; the arming tick is a soft single tick and never a repeating beep that builds like a bomb timer; no slam line leads with 'kneel before', 'bow before' or 'behold'",
+    "why": "RL-179"
+   },
+   {
+    "id": "e16",
+    "rule": "the Empress's banner cage: four banner staves stamped into the ground round him with cloth banners wrapping his arms and torso only; no lines of light joining the staves into a box or a four-point barrier, no dome, no cell, no hand sign, never six plates pinning the torso (the famous six-plate restraining spell); the kneel is the landing with no slow motion, zoom, taunt or finisher; Throne Quake stays a seam and a lens, never a crescent or a travelling wave front",
+    "why": "RL-180"
    }
   ],
   "grabs": [
@@ -2786,5 +2816,14 @@
     "wrist"
    ]
   }
+ },
+ "nameScreen": {
+  "_about": "The names screen (tools/movegen/lib/names.mjs): every name the generator writes is screened against Legal's word lists, read from Legal's own files each run (docs/legal/movegen-banned.json e11 and e14, docs/legal/never-use-words.md, docs/legal/name-screening.md stage 0) and never copied here. allow: phrases that are plain anatomy, not a technique's name; each is taken out of a name before it is screened, and each waits on Legal's word (docs/combat/cloud-reports/2026-10-28-movegen.md)",
+  "allow": [
+   {
+    "phrase": "ball of the foot",
+    "why": "the striking surface of a front kick, the foot tip `ball` (parts.json strike.heavy.words foot.ball): a heavy's plain name says which part of the body lands. It is not a technique named for a ball (e11), and never a title word"
+   }
+  ]
  }
 }

@@ -1,0 +1,162 @@
+// The reference generator's self-test, case for case: the refusals proved on made-up moves and strings. Ported from
+// gen_moveset.py self_test(). tools/movegen/test/run.mjs adds the port's own cases (Legal's list, names, determinism).
+import {
+  afterTwo, bannedHit, blowShare, dataFindings, flagsOf, formsOf, greedy, groupHits, match, nameOf, quotaOk, reachRun, reachRunBreaks, runBreaks,
+  sequenceBreaks, shapeRows, shapes, stringBreaks, windupOf,
+} from './generator.mjs';
+import { eq, roundTo } from './py.mjs';
+
+export function makeExpect(log = console.log) {
+  const state = { ok: true, n: 0, failed: [] };
+  const expect = (name, got, want) => {
+    const good = eq(got, want);
+    state.ok = state.ok && good;
+    state.n += 1;
+    if (!good) state.failed.push(name);
+    log(`${good ? 'pass' : 'FAIL'}  ${name}` + (good ? '' : `  got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`));
+  };
+  return { expect, state };
+}
+
+export function selfTest(parts, identity, expect) {
+  const g = parts.strike;
+  const rival = identity.fighters.rival;
+  const proto = identity.fighters.protagonist;
+  const ids = (rows, f) => rows.filter(f).map((r) => r.id);
+  expect('a quarter of the blows: half of a cell that is half of what he throws', roundTo(blowShare({ flurry: [5, 10], light: [0, 10] }, { flurry: 0.5, light: 0.5 }), 3), 0.25);
+  expect('his own drawn three times as often: one in four becomes one in two', roundTo(blowShare({ flurry: [1, 4] }, { flurry: 1.0 }, 3.0), 3), 0.5);
+  expect('a cell with nothing to throw gives him nothing', roundTo(blowShare({ flurry: [0, 0], light: [2, 4] }, { flurry: 0.6, light: 0.4 }), 3), 0.2);
+  const leapKnee = { limb: 'knee', tip: 'cap', path: 'rise', target: 'gut', weight: 'heavy' };
+  expect("a leaping knee to the gut passes: Legal's b14 allows a leap for a knee or a foot below the jaw", ids(shapeRows(parts), (r) => bannedHit(r, leapKnee, ['heavy'], 0, { has: ['leap'], not: [] }) === 'match'), []);
+  expect('a leaping hand to the chest is refused by b14 alone', ids(shapeRows(parts), (r) => bannedHit(r, { limb: 'hand', tip: 'fist', path: 'drop', target: 'chest', weight: 'heavy' }, ['heavy'], 1, { has: ['leap'], not: [] }) === 'match'), ['b14']);
+  expect("a quota for what is his alone takes only that (a cell's share rule)", [quotaOk({ own: true }, { _own: true }), quotaOk({ own: true }, { _own: false })], [true, false]);
+  const q1 = { name: 'a', min: 1, filter: { path: ['line'] } };
+  const q2 = { name: 'b', min: 1, filter: { limb: ['foot'] } };
+  const cands = () => [{ path: 'line', limb: 'hand', _w: 2.0 }, { path: 'line', limb: 'foot', _w: 1.0 }, { path: 'drop', limb: 'foot', _w: 3.0 }];
+  expect("his own quota is read before the cell's (identity cellQuotas)", greedy(cands(), 1, [q2, q1], () => 1.0).map((m) => m.limb + ' ' + m.path), ['foot drop']);
+  expect('one pick meets as many of the short quotas as it can', greedy(cands(), 1, [q1, q2], () => 1.0, [], null, true).map((m) => m.limb + ' ' + m.path), ['foot line']);
+  expect('a quota of a form and a shape asks for both (the split by path)', [[['quick'], 'rise'], [['quick'], 'drop'], [[], 'line']].map(([f, p]) => quotaOk({ form: 'quick', filter: { path: ['line', 'rise'] } }, { _forms: f, path: p })), [true, false, false]);
+  expect('a quota for a launcher that sends down asks for both', ['down', 'up'].map((s) => quotaOk({ form: 'launch', sends: 'down' }, { _forms: ['launch'], _sends: s })), [true, false]);
+  const six = [0, 1, 2, 3, 4, 5].map((i) => ({ _w: 6.0 - i, _shared: new Set(i < 4 ? ['a'] : []), n: i }));
+  const capped = greedy(six, 4, [], () => 1.0, [], (picked, m) => !m._shared.size || picked.filter((p) => p._shared.has('a')).length < 2);
+  expect('a cell takes no more than its share from one other fighter, however well his pieces score', capped.map((m) => m.n).sort((a, b) => a - b), [0, 1, 4, 5]);
+  const palmHead = { limb: 'hand', tip: 'palm', path: 'line', target: 'head', weight: 'light' };
+  const fl = flagsOf(g, rival, palmHead, null);
+  expect("the rival's palm to the head is refused (b06)", ids(g.banned, (r) => bannedHit(r, palmHead, ['light', 'flurry'], 1, fl) === 'match'), ['b06']);
+  expect("the Protagonist's open palm to the head is an ask, not a refusal", g.banned.filter((r) => r.id === 'b06').map((r) => bannedHit(r, palmHead, ['light'], 1, flagsOf(g, proto, palmHead, null))), ['ask']);
+  const clasp = { limb: 'hand', tip: 'fist', path: 'drop', target: 'head', weight: 'heavy' };
+  expect('two clasped fists dropped is refused (b05)', ids(g.banned, (r) => bannedHit(r, clasp, ['heavy'], 2, { has: ['clasped'], not: [] }) === 'match'), ['b05']);
+  expect('the same blow on a key set tagged wrists apart is cleared', g.banned.filter((r) => r.id === 'b05').map((r) => bannedHit(r, clasp, ['heavy'], 2, flagsOf(g, proto, clasp, { legal: ['wrists_apart', 'no_clasp'], flags: [] }))), [null]);
+  expect('the same blow on a key set Animation measured with no flag is cleared', g.banned.filter((r) => r.id === 'b05').map((r) => bannedHit(r, clasp, ['heavy'], 2, flagsOf(g, proto, clasp, { legal: [], flags: [], measured: true }))), [null]);
+  const rise = { limb: 'hand', tip: 'fist', path: 'rise', target: 'jaw', weight: 'heavy' };
+  expect('a rising fist on a key set Animation flags with a leap is refused (b03)', ids(g.banned, (r) => bannedHit(r, rise, ['heavy'], 1, flagsOf(g, rival, rise, { legal: [], flags: ['leap'], measured: true })) === 'match'), ['b03', 'b14']);
+  expect('a lit move is refused whatever its parts (b09)', ids(g.banned, (r) => bannedHit(r, clasp, ['heavy'], 1, { has: ['glow'], not: [] }) === 'match'), ['b09']);
+  expect('a held heavy chambered at a hip is refused (b02, b12)', ids(g.banned, (r) => bannedHit(r, clasp, ['heavy', 'held'], 1, { has: ['hip_chamber', 'cupped_at_hip'], not: [] }) === 'match'), ['b02', 'b12']);
+  const gh = (m, kind = 'energy', p = parts) => groupHits(p, m, kind);
+  expect('a volley on a single thrust of one hand passes (e05, as Legal reworded it)', gh({ hand: 'blade_hand', release: 'thrust', body: 'planted', delivery: 'volley' }), []);
+  expect('a volley from one flick passes', gh({ hand: 'blade_hand', release: 'flick', body: 'planted', delivery: 'volley' }), []);
+  expect('a volley pumped repeatedly is refused (e05)', gh({ hand: 'blade_hand', release: 'pump', body: 'planted', delivery: 'volley' }), ['e05']);
+  const two = JSON.parse(JSON.stringify(parts));
+  two.shot.hands.both_palms = { shape: 'open', light: 'hand_edge', hands: 2, height: 'shoulder' };
+  expect('a volley from both palms is refused (e02, e05)', gh({ hand: 'both_palms', release: 'thrust', body: 'planted', delivery: 'volley' }, 'energy', two), ['e02', 'e05']);
+  expect("the rival's lit fist is not refused: b09 is for strikes, e01 for energy", gh({ hand: 'fist_glow', release: 'thrust', body: 'planted', delivery: 'bolt' }), []);
+  expect('a hand Legal has not screened is refused (e01, e02, e03)', gh({ hand: 'cupped_pair', release: 'thrust', body: 'planted', delivery: 'bolt' }), ['e01', 'e02', 'e03']);
+  expect('a charged shot that is lobbed is refused (e04)', gh({ hand: 'open_palm', release: 'lob', body: 'planted', delivery: 'charged' }), ['e04']);
+  expect('a far-side zip that leaves on a fade is refused (m04)', gh({ kind: 'zip', direction: 'far_side', exit: 'fade' }, 'travel'), ['m04']);
+  expect('a far-side zip that leaves round him passes', gh({ kind: 'zip', direction: 'far_side', exit: 'pivot' }, 'travel'), []);
+  expect("a blast from the lit fist passes: Legal's e06 names it as the rival's third hand", gh({ hand: 'fist_glow', release: 'thrust', body: 'planted', delivery: 'blast' }), []);
+  expect('a blast from the clawed palm is refused: open, blade or the lit fist (e06)', gh({ hand: 'clawed_palm', release: 'thrust', body: 'planted', delivery: 'blast' }), ['e06']);
+  expect('a B blast from the blade hand passes', gh({ hand: 'blade_hand', release: 'thrust', body: 'planted', delivery: 'blast' }), []);
+  const bolt = { hand: 'blade_hand', release: 'thrust', body: 'planted', delivery: 'flurry' };
+  expect('an energy flurry that repeats its piece is refused (e06)', stringBreaks(parts, [bolt, { ...bolt }]), ['e06']);
+  expect('an energy flurry that varies its piece passes', stringBreaks(parts, [bolt, { ...bolt, release: 'flick' }, { ...bolt, hand: 'open_palm' }]), []);
+  const row = { direction: 'far_side', entries: ['dash'], exit: 'pivot' };
+  expect('a travel move listed twice is found', dataFindings({ travel: { kinds: { zip: { moves: [row, { ...row }] } } } }), ['parts.json travel.kinds.zip lists a move twice']);
+  const gx = { limb: 'hand', tip: 'fist', path: 'line', target: 'gut', weight: 'light', button: 'x' };
+  const gy = { limb: 'foot', tip: 'ball', path: 'line', target: 'gut', weight: 'heavy', button: 'y' };
+  expect('two gut blows running break the rule across buttons: X then Y (f02, s02)', stringBreaks(parts, [gx, gy]), ['f02', 's02']);
+  expect('a mixed X and Y string that rotates its targets passes', stringBreaks(parts, [gx, { ...gy, target: 'chest' }, { ...gx, target: 'head', path: 'arc_in' }]), []);
+  const med = { limb: 'hand', tip: 'fist', path: 'drop', target: 'head', weight: 'medium' };
+  expect('a charged medium chambered at a hip is refused by the rows written for a held heavy (b02, b12)', ids(g.banned, (r) => bannedHit(r, med, ['quick', 'charged'], 1, { has: ['hip_chamber', 'cupped_at_hip'], not: [] }) === 'match'), ['b02', 'b12']);
+  const h05 = shapeRows(parts).filter((r) => r.id === 'h05');
+  expect('a tapped medium loaded at a hip is refused: a 12-tick wind-up is a held pose (h05)', h05.map((r) => bannedHit(r, med, ['quick', 'charged'], 1, { has: ['hip_chamber'], not: [] })), ['match']);
+  expect("a light loaded at a hip is not h05's", h05.map((r) => bannedHit(r, { ...med, weight: 'light' }, ['light'], 1, { has: ['hip_chamber'], not: [] })), [null]);
+  const elb = { limb: 'elbow', tip: 'point', path: 'rise', target: 'jaw', weight: 'heavy' };
+  expect('a rising elbow to the jaw that leaps is refused: b03 binds an elbow whatever its tip', ids(g.banned, (r) => bannedHit(r, elb, ['quick', 'charged'], 1, { has: ['leap'], not: [] }) === 'match'), ['b03', 'b14']);
+  expect("a rising blade hand that leaps is refused too: Legal's row names every tip of a hand, elbow or knee (b03)", ids(g.banned, (r) => bannedHit(r, { ...elb, limb: 'hand', tip: 'blade' }, ['quick'], 1, { has: ['leap'], not: [] }) === 'match'), ['b03', 'b14']);
+  const foreign = { id: 't', match: { limb: ['hand', 'elbow'], tip: ['fist'], flags: ['leap'] } };
+  expect('a tip list binds only the limbs that can have those tips: an elbow is bound whatever its tip, a blade hand is not', [['elbow', 'point'], ['hand', 'blade'], ['hand', 'fist']].map(([lb, tp]) => bannedHit(foreign, { ...elb, limb: lb, tip: tp }, ['quick'], 1, { has: ['leap'], not: [] })), ['match', null, 'match']);
+  expect("a rising elbow carries the rising blow's condition (L1)", g.conditions.filter((c) => 'when' in c && match(c.when, { ...elb, arms: 1 })).map((c) => c.id), ['L1', 'L6', 'W1', 'D4']);
+  expect('a light is not judged by them (b12)', ids(g.banned, (r) => bannedHit(r, { ...med, weight: 'light' }, ['light'], 1, { has: ['hip_chamber'], not: [] }) === 'match'), []);
+  const line = { limb: 'hand', tip: 'fist', path: 'line', target: 'chest', weight: 'medium' };
+  expect("a straight medium reads on Y's wind-up", [windupOf(g, line, 1).reads, formsOf(g, line, 1)], ['quick', ['quick', 'charged']]);
+  expect('a spinning medium is flagged, not forced: held only', [windupOf(g, { ...line, path: 'spin' }, 1).reads, formsOf(g, { ...line, path: 'spin' }, 1)], ['charged', ['charged']]);
+  expect('a two-arm medium is held only', formsOf(g, line, 2), ['charged']);
+  expect('a medium that leaps is held only', formsOf(g, { ...line, limb: 'foot', tip: 'sole' }, 0, ['leap']), ['charged']);
+  expect('a light takes no wind-up rule', windupOf(g, { ...line, weight: 'light' }, 1), null);
+  const hvy = { limb: 'hand', tip: 'fist', path: 'line', target: 'chest', weight: 'heavy' };
+  expect('a stepping heavy to the chest is a launcher: it reads on half the wind-up', formsOf(g, hvy, 1).includes('launch'), true);
+  expect('a spinning heavy needs the whole wind-up: not a launcher', [windupOf(g, { ...hvy, path: 'spin' }, 1).reads, formsOf(g, { ...hvy, path: 'spin' }, 1).includes('launch')], ['full', false]);
+  expect('a heavy that leaps is not a launcher', formsOf(g, { ...hvy, limb: 'foot', tip: 'sole' }, 0, ['leap']).includes('launch'), false);
+  expect("a heavy to an arm is not a launcher: it is the wrench's", [formsOf(g, { ...hvy, path: 'drop', target: 'arm' }, 1).includes('launch'), formsOf(g, { ...hvy, path: 'drop', target: 'arm' }, 1).includes('wrench')], [false, true]);
+  expect('a launcher is never a wrench', formsOf(g, hvy, 1).includes('wrench'), false);
+  const rb0 = { limb: 'hand', tip: 'blade', weight: 'light', arms: 1, step: [], body: 'in_reach' };
+  const rb = [['blade_hand', 'thrust', 'line', 'gut'], ['fist_glow', 'thrust', 'line', 'chest'], ['blade_hand', 'flick', 'arc_out', 'gut'], ['blade_hand', 'sweep', 'arc_in', 'chest']]
+    .map(([hd, rl, pa, tg], i) => ({ ...rb0, id: `r${i}`, release: rl, path: pa, target: tg, hand: hd }));
+  const cyc = Array.from({ length: 12 }, (_, i) => rb[i % 4]);
+  expect('a run in a fixed order of four repeats on a fixed count (e09)', reachRunBreaks(parts, cyc, ['lead', 'lead', 'free', 'lead', 'lead', 'lead', 'free', 'lead', 'lead', 'free', 'lead', 'lead']), ['e09: the order repeats on a fixed count']);
+  const mixed = [0, 1, 2, 3, 1, 0, 3, 2, 1, 3].map((i) => rb[i]);
+  const rep = (a, n) => Array.from({ length: n }, () => a).flat();
+  expect('left, right, left, right is a pump (e09)', reachRunBreaks(parts, mixed, rep(['lead', 'free'], 5)).includes('e09: the free arm twice in 3, a left-right pump'), true);
+  expect('one arm for the whole run is a pump too (e09)', reachRunBreaks(parts, mixed, rep(['lead'], 10)).includes('e09: one arm pumping, no bolt from the free arm in 6'), true);
+  expect('the free arm on every third bolt is a regular count (e09)', reachRunBreaks(parts, mixed, ['lead', 'lead', 'free', 'lead', 'lead', 'free', 'lead', 'lead', 'free', 'lead']).includes('e09: the free arm comes in on a regular count'), true);
+  expect('five bolts on two paths (e09)', reachRunBreaks(parts, [0, 1, 2, 0, 1].map((i) => rb[i]), ['lead', 'lead', 'free', 'lead', 'lead']).includes('e09: fewer than 3 paths in 5'), true);
+  const made = reachRun(parts, rb, 30, ['self-test']);
+  expect('thirty bolts can be ordered by e09 from four, and the run it makes passes', [made !== null, made !== null && reachRunBreaks(parts, made[0], made[1])], [true, []]);
+  expect('a blast in reach from the lit fist passes (e06, e08)', gh({ hand: 'fist_glow', release: 'thrust', body: 'in_reach', delivery: 'blast', target: 'chest' }), []);
+  expect('a point-blank bolt from the pinch is refused (e06)', gh({ hand: 'pinch', release: 'thrust', body: 'in_reach', delivery: 'point_blank', target: 'chest' }), ['e06']);
+  const vb = { limb: 'hand', tip: 'heel', path: 'line', target: 'arm', weight: 'light', step: [] };
+  expect('four vicious blows on one arm pass when they alternate its three places (s08)', sequenceBreaks(g, [['elbow', 'heel'], ['wrist', 'blade'], ['elbow', 'heel'], ['shoulder', 'blade']].map(([pl, tp]) => ({ ...vb, place: pl, tip: tp }))), []);
+  expect('three running to the elbow break it (s02 by place, s08)', sequenceBreaks(g, rep([{ ...vb, place: 'elbow' }], 3)), ['s02', 's08']);
+  expect('outside a hold an arm is one place: three blows running to it (s02)', sequenceBreaks(g, [vb, { ...vb, tip: 'blade' }, { ...vb, path: 'drop' }]), ['s02']);
+  expect('a point-blank bolt from the blade hand passes', gh({ hand: 'blade_hand', release: 'thrust', body: 'in_reach', delivery: 'point_blank', target: 'chest' }), []);
+  const pb = { id: 'r1', limb: 'hand', tip: 'blade', path: 'line', target: 'chest', hand: 'blade_hand', release: 'thrust', body: 'in_reach' };
+  expect('the same point-blank bolt twice running is refused, even at another place (e06)', stringBreaks(parts, [pb, { ...pb, id: 'r2', target: 'gut' }]), ['e06']);
+  expect('a blast after a bolt of the same hand and release is not a repeat: the delivery counts (e06, as Legal cleared it)', stringBreaks(parts, [{ ...pb, delivery: 'point_blank' }, { ...pb, id: 'r3', delivery: 'blast' }]), []);
+  expect('a point-blank bolt counts as a blow: a third running to the chest (f02, s02)', stringBreaks(parts, [{ ...hvy, id: 'a' }, { ...hvy, id: 'b', tip: 'plate', path: 'arc_in' }, pb]), ['f02', 's02']);
+  const hv = shapes(g).filter((m) => m.weight === 'heavy');
+  expect('the heavy tier has no headbutt, no blow to a shin and no rising hand to the jaw or head', hv.filter((m) => m.limb === 'head' || m.target === 'shins' || (m.limb === 'hand' && m.path === 'rise' && ['jaw', 'head'].includes(m.target))), []);
+  expect('every heavy has a drive and a plain name', hv.filter((m) => !(m.path in g.heavy.drive) || !nameOf(g, m, 1)), []);
+  expect("a heavy's name", nameOf(g, { limb: 'hand', tip: 'fist', path: 'line', target: 'chest' }, 1), 'stepping fist to the chest');
+  expect('a heavy that Animation flags with a leap, rising to the jaw by hand, is refused (b03)', ids(g.banned, (r) => bannedHit(r, { ...rise, weight: 'heavy' }, ['quick', 'charged'], 1, { has: ['leap'], not: [] }) === 'match'), ['b03', 'b14']);
+  expect('the Protagonist never brings a heavy down on a head', proto.never.some((n) => match(n.shape, { limb: 'hand', tip: 'blade', path: 'drop', target: 'head', weight: 'heavy' })), true);
+  expect("the rival's heavies and mediums are never a blade hand", ['light', 'medium', 'heavy'].filter((wt) => rival.never.some((n) => match(n.shape, { limb: 'hand', tip: 'blade', path: 'line', target: 'chest', weight: wt }))), ['medium', 'heavy']);
+  const bu = g.burst;
+  const b1 = { id: 'a', limb: 'hand', tip: 'blade', path: 'line', target: 'head', arms: 1, weight: 'light', step: ['in', 'hold'] };
+  expect('a burst that throws the same blow twice running stutters (u1)', runBreaks(bu.noStutter, [b1, { ...b1, id: 'b', target: 'gut' }]), ['u1']);
+  expect('a burst that lands twice running on one place stutters (u2)', runBreaks(bu.noStutter, [b1, { ...b1, id: 'b', tip: 'fist', path: 'arc_in' }]), ['u2']);
+  expect('three straights running in a burst (u3)', runBreaks(bu.noStutter, [b1, { ...b1, id: 'b', tip: 'fist', target: 'gut' }, { ...b1, id: 'c', limb: 'knee', tip: 'cap', target: 'legs' }]), ['u3']);
+  expect('a piece twice in one burst (u4)', runBreaks(bu.noStutter, [b1, { ...b1, id: 'b', tip: 'fist', path: 'arc_in', target: 'jaw' }, { ...b1 }]), ['u4']);
+  expect('a kick does not fit a fast gap, and fits a slow one', ['fast', 'mid', 'slow'].filter((cl) => match(bu.classes[cl].when, { ...b1, limb: 'foot', tip: 'ball' })), ['slow']);
+  expect('an elbow fits a middle gap and not a fast one', ['fast', 'mid', 'slow'].filter((cl) => match(bu.classes[cl].when, { ...b1, limb: 'elbow', tip: 'point', path: 'arc_in' })), ['mid', 'slow']);
+  const pool = [['hand', 'blade', 'line', 'head'], ['hand', 'fist', 'line', 'gut'], ['hand', 'fist', 'rise', 'gut'], ['hand', 'fist', 'rise', 'jaw'], ['foot', 'heel', 'spin', 'chest'],
+    ['foot', 'heel', 'spin', 'gut'], ['foot', 'ball', 'line', 'gut'], ['hand', 'plate', 'arc_in', 'head'], ['knee', 'cap', 'rise', 'gut']]
+    .map(([lb, t, p, tg], i) => ({ ...b1, id: `p${i}`, tip: t, path: p, target: tg, limb: lb, button: 'x' }));
+  const [quick] = afterTwo(parts, { x: pool });
+  const slow = [];
+  for (const p1 of pool) for (const p2 of pool) if (p1 !== p2 && !stringBreaks(parts, [p1, p2]).length) slow.push(pool.filter((n) => n !== p1 && n !== p2 && !stringBreaks(parts, [p1, p2, n]).length).length);
+  expect('the quick count of what may follow two blows is the same as asking the string rules about every three', quick.x, slow);
+  const jab = { limb: 'hand', tip: 'blade', path: 'line', target: 'head', step: ['in', 'hold'] };
+  const gut = { limb: 'hand', tip: 'fist', path: 'line', target: 'gut', step: ['in', 'hold'] };
+  const spin = { limb: 'foot', tip: 'heel', path: 'spin', target: 'chest', step: ['around', 'out'] };
+  const rs = { limb: 'hand', tip: 'fist', path: 'rise', target: 'jaw', step: ['in', 'hold'] };
+  expect('four of the same blow in a row (s01, s02)', sequenceBreaks(g, [jab, jab, jab, jab]), ['s01', 's02']);
+  expect('three of the same blow in a row breaks only the target rule (s02)', sequenceBreaks(g, [jab, jab, jab]), ['s02']);
+  expect('two gut blows running (s02)', sequenceBreaks(g, [jab, gut, gut]), ['s02']);
+  expect('a spin after a spin (s04)', sequenceBreaks(g, [spin, spin]), ['s04']);
+  expect('a rise after a rise in the air (s05)', sequenceBreaks(g, [rs, { ...rs, target: 'gut' }]), ['s05']);
+  expect('the same on the ground is allowed', sequenceBreaks(g, [rs, { ...rs, target: 'gut' }], false), []);
+  expect('a two-hand drop after a launch (s06)', sequenceBreaks(g, [{ ...jab, event: 'launch' }, { ...clasp, arms: 2 }]), ['s06']);
+  expect('a step that is not drawn (s07)', sequenceBreaks(g, [{ ...jab, step: ['blink'] }]), ['s07']);
+  expect('an ordinary string passes', sequenceBreaks(g, [jab, gut, { ...jab, target: 'chest', path: 'arc_in' }, spin]), []);
+}

@@ -1635,5 +1635,92 @@
     "from": "energy.y.reach"
    }
   }
+ },
+ "pools": {
+  "_about": "The pools of data/combat/recipes.json written from the cells (docs/combat/moveset-generator.md section 1: 'the seven pools, written by the generator from the cells, so Encounter's reader does not change'). tools/movegen/movegen.mjs writes them as pools.json, in the recipes file's own shape (a fighter to a pool to a list of {id, status}), and compares them with the live recipes in coverage.md. A pool row is a move whose key set plays as it is: levels names the keys' levels that do (a hand-state swap or a re-aim needs Animation's derivation first, so it waits). The id is the strike the move is posed on (keys.from), or for an energy piece the strike drawn for it (keys.strike); a strike that two moves share is one row. A rule: from, the cell; form, a form the move must have; filter, parts it must have; quota, the cell's quota whose filter it must meet; burst, the class of gap (parts.json strike.burst.classes) it must fit; also, a list in his identity row of move ids pinned into the pool whatever their form; neverAs, a weight at which his never rows are read too (the launcher's step lower plays a medium as a heavy)",
+  "levels": [
+   "posed",
+   "stand_in"
+  ],
+  "rules": {
+   "brawl.light": {
+    "from": "martial.x"
+   },
+   "brawl.light.toward": {
+    "from": "martial.x",
+    "quota": "toward"
+   },
+   "brawl.flurry": {
+    "from": "martial.x",
+    "form": "flurry"
+   },
+   "brawl.skill": {
+    "from": "martial.x",
+    "form": "skill",
+    "also": "skillAlso"
+   },
+   "burst.fast": {
+    "from": "martial.x",
+    "burst": "fast"
+   },
+   "burst.mid": {
+    "from": "martial.x",
+    "burst": "mid"
+   },
+   "burst.slow": {
+    "from": "martial.x",
+    "burst": "slow"
+   },
+   "brawl.medium": {
+    "from": "martial.y",
+    "form": "quick"
+   },
+   "brawl.medium.held": {
+    "from": "martial.y"
+   },
+   "brawl.reversal": {
+    "from": "martial.y",
+    "form": "quick",
+    "filter": {
+     "path": [
+      "line",
+      "rise"
+     ]
+    }
+   },
+   "brawl.lift": {
+    "from": "martial.y",
+    "form": "lift"
+   },
+   "brawl.heavy": {
+    "from": "martial.b"
+   },
+   "brawl.launcher": {
+    "from": "martial.b",
+    "form": "launch"
+   },
+   "brawl.heavy.lower": {
+    "from": "martial.b.standin"
+   },
+   "brawl.launcher.lower": {
+    "from": "martial.y",
+    "form": "quick",
+    "filter": {
+     "target": [
+      "head",
+      "jaw",
+      "chest",
+      "gut"
+     ]
+    },
+    "neverAs": "heavy"
+   },
+   "reach.bolt": {
+    "from": "energy.x.reach"
+   },
+   "reach.blast": {
+    "from": "energy.y.reach"
+   }
+  }
  }
 }

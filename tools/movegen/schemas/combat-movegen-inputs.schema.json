@@ -1,0 +1,48 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "meridian/combat-movegen-inputs",
+ "title": "the blocks added to the generator's inputs under the movegen brief (Combat; tools/movegen)",
+ "description": "Two new blocks, checked where they sit: parts.json `nameScreen` ($defs/nameScreen) and cells.json `pools` ($defs/pools). The rest of parts.json and cells.json is as the keys for Tools in docs/combat/pending/movegen/README.md section 5 describe; full schemas for those files are Tools' to write when they move to data/combat/. nameScreen: `allow`, phrases taken out of a name before it is screened against Legal's word lists, each with why. pools: `levels`, the key levels whose key set plays as it is; `rules`, a pool name of data/combat/recipes.json to a rule: `from` (a cell id), and optionally `form`, `filter`, `quota` (a quota name of that cell), `burst` (fast, mid or slow), `also` (an identity key listing move ids pinned in) and `neverAs` (a weight at which his never rows are read too). Cross-check (the generator's): every `from` is a cell of cells.json and every `quota` one of its quotas. Policy: closed, except keys starting with an underscore.",
+ "$defs": {
+  "nameScreen": {
+   "type": "object",
+   "required": ["allow"],
+   "properties": {
+    "allow": {
+     "type": "array",
+     "items": {"type": "object", "required": ["phrase", "why"], "properties": {"phrase": {"type": "string", "pattern": "^[a-z][a-z ]*[a-z]$"}, "why": {"type": "string", "minLength": 1}}, "additionalProperties": false}
+    }
+   },
+   "patternProperties": {"^_": true},
+   "additionalProperties": false
+  },
+  "pools": {
+   "type": "object",
+   "required": ["levels", "rules"],
+   "properties": {
+    "levels": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["posed", "hand_state", "re_aim", "hand_state_re_aim", "re_aim_edge", "hand_state_re_aim_edge", "stand_in"]}},
+    "rules": {
+     "type": "object",
+     "minProperties": 1,
+     "propertyNames": {"pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"},
+     "additionalProperties": {
+      "type": "object",
+      "required": ["from"],
+      "properties": {
+       "from": {"type": "string", "pattern": "^(martial|manoeuvre|energy|defensive|charging)\\.[xyab](\\.[a-z][a-z0-9_]*)?$"},
+       "form": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+       "filter": {"type": "object", "additionalProperties": {"type": "array", "items": {"type": "string"}}},
+       "quota": {"type": "string", "minLength": 1},
+       "burst": {"enum": ["fast", "mid", "slow"]},
+       "also": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9]*$"},
+       "neverAs": {"enum": ["light", "medium", "heavy"]}
+      },
+      "additionalProperties": false
+     }
+    }
+   },
+   "patternProperties": {"^_": true},
+   "additionalProperties": false
+  }
+ }
+}

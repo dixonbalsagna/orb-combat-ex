@@ -1,0 +1,39 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "meridian/combat-movegen-pools",
+ "title": "the recipes' pools as the generator writes them (Combat; tools/movegen)",
+ "description": "pools.json, written by tools/movegen/movegen.mjs from the moveset files by the rules in cells.json `pools`: `rules` (the pool names it writes, in order) and `pools`, a fighter to a pool to a list of {id, status}. The pools block is the shape of data/combat/recipes.json `pools` (tools/schemas/combat-recipes.schema.json): the same names, the same rows, so it can replace those pools as it stands. Cross-checks (coverage.md, in --check): every piece of a live brawl pool is in the generated pool; no id twice in a pool. Policy: closed, except keys starting with an underscore.",
+ "type": "object",
+ "required": ["schema", "_about", "rules", "pools"],
+ "properties": {
+  "schema": {"const": "combat.movegen.pools/1"},
+  "rules": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/pool"}},
+  "pools": {
+   "type": "object",
+   "propertyNames": {"pattern": "^[a-z][a-z0-9_]*$"},
+   "additionalProperties": {
+    "type": "object",
+    "propertyNames": {"$ref": "#/$defs/pool"},
+    "additionalProperties": {
+     "type": "array",
+     "minItems": 1,
+     "uniqueItems": true,
+     "items": {
+      "type": "object",
+      "required": ["id", "status"],
+      "properties": {
+       "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"},
+       "status": {"enum": ["live", "posed", "waiting"]}
+      },
+      "additionalProperties": false
+     }
+    }
+   }
+  }
+ },
+ "patternProperties": {"^_": true},
+ "additionalProperties": false,
+ "$defs": {
+  "pool": {"type": "string", "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"}
+ }
+}

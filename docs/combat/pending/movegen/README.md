@@ -15,9 +15,11 @@ Owner: Combat and Choreography. Date: 2026-10-06. Status: parked. Nothing here i
 | `c2t-content.md` | the note for the slice C2t: the launcher, energy in reach, a plan for vicious, and the lists for Animation, VFX, Legal, Tools and Encounter | stays in docs |
 | `second-pass-plan.md` | a plan, not built: what the brawl's second pass (`docs/design/brawl-second-pass.md`) needs from parts, identity and cells, in the EP's build order, with sizes | stays in docs |
 
+**The tool (2026-10-28):** `node tools/movegen/movegen.mjs` generates this folder; `gen_moveset.py` stays as the reference and writes the same bytes (`tools/movegen/README.md`). The tool also writes `pools.json` (the recipes' pools from the cells, by `cells.json` `pools`) and `coverage.md` (them against `data/combat/recipes.json`), screens every name against Legal's word lists (`parts.json` `nameScreen`), and makes proposals (`--propose`, `docs/combat/proposals/`). Legal's e11 to e16 are merged (conditions: none has a machine form). No move changed: the two moveset files changed in their `inputs` line only, and the sheet in its line of Legal's energy rows. The Python commands below still work.
+
 - **To generate:** `python docs/combat/pending/movegen/gen_moveset.py`. It refuses to write if anything matches one of Legal's rows.
 - **To check:** add `--check`: exit 1 when the files are not what the inputs give, on any match with Legal's rows, or when a string runs out of blows (a strike button left with fewer than 3 pieces after some two blows, or a light that cannot open a burst). It passes now, and a second run changes nothing.
-- **To prove the refusals:** `--self-test`, 88 cases.
+- **To prove the refusals:** `--self-test`, 91 cases.
 - **To start a cell over:** `--relock` ignores the lock. Without it, locked moves stay and only free places are filled.
 - **The seed** is 20261004, in `cells.json`.
 

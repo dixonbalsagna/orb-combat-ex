@@ -408,3 +408,7 @@ Orb confirmed the identity split and lifted the hold for the martial arts stance
 ## 9. All five stances, on Animation's data (2026-10-05, later)
 
 `pending/movegen/` now holds all five stances for both fighters, 100 moves each, generated from Animation's own tip, path, flag and re-aim data and held by a lock so an id never changes shape. In the martial arts stance no move waits for a key set any more. The counts, what each stance still needs from Simulation, Animation and VFX, what needs Legal's person screen, and the keys for Tools are in `pending/movegen/README.md`. Sections 3.2 and 6 above are the earlier samples and sizing.
+
+## 10. As a tool (2026-10-28)
+
+The generator is `tools/movegen/` (Node, no dependencies), a port of the reference that writes the same files byte for byte, with the checks of section 5.2 as its `--check` and its own tests (`node tools/movegen/test/run.mjs`). What it adds: the pools of the recipes written from the cells (`cells.json` `pools`; every piece of today's brawl pools is generated, in the same order), a names screen on Legal's own word lists, and proposals for fighters outside the build (`docs/combat/proposals/`: the Prodigy and the Colossus, templates for Orb). The report is `cloud-reports/2026-10-28-movegen.md`.

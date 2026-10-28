@@ -1,0 +1,68 @@
+{
+ "schema": "combat.identity.proposals/1",
+ "_about": "PROPOSALS ONLY, templates for Orb: identity rows for two fighters who are not in the build, so the moveset generator can show what each would throw. Orb writes the universe: the names here are Narrative's placeholders (docs/narrative/roster-twelve-identity.md), the niches are Game Design's templates (docs/design/roster-twelve.md T2 and T4, the first two of its build order), and nothing here is a character. Not loaded, not hashed, not in data/. tools/movegen/movegen.mjs --propose lays each row over the build row it is `like` (as the roster sketches are made, docs/combat/roster-rows.md), generates it beside the two fighters of the build, and writes moveset.<key>.json, lock.proposals.json and review-sheet.md here. Nothing is drawn for either: what is posed is borrowed from the Protagonist's and the rival's common pieces, and what must be his alone comes out as waiting.",
+ "base": "docs/combat/pending/roster/identity.candidates.json",
+ "_base": "the packs a proposal borrows, the borrowing policy (common: only the lights and mediums both fighters of the build have posed) and the named energy-in-reach sets, as the roster sketches use them",
+ "fighters": {
+  "prodigy": {
+   "like": "rival",
+   "tier": 1,
+   "title": "The Prodigy",
+   "_who": "TEMPLATE (Game Design T2, the speedster; Narrative's Prodigy, a placeholder). The newcomer: lanky, loose sleeves that whip, a trailing cord. Light, quick blows from wherever the limb already is: snapping kicks, a backfist, straight hands. His blows are light and he staggers longer when caught, so nothing he throws is a commitment: no spin, no blow with both arms, no headbutt.",
+   "weights": {
+    "limb": {"hand": 3, "foot": 2.5, "elbow": 1, "knee": 1, "shoulder": 0.2, "head": 0.1},
+    "path": {"line": 3, "arc_out": 2.5, "rise": 2, "arc_in": 1.5, "drop": 0.7, "spin": 0.1},
+    "tip": {"hand.heel": 3, "hand.blade": 2, "hand.fist": 2, "hand.palm": 1, "hand.plate": 0.3, "foot.ball": 3, "foot.instep": 2.5, "foot.edge": 1, "foot.heel": 0.7, "foot.sole": 0.5, "elbow.point": 1, "elbow.plate": 0.2, "knee.cap": 1, "shoulder.plate": 0.2, "head.brow": 0.1},
+    "entry": {"dash": 3, "lane_step": 3, "spiral": 2.5, "arc_dive": 2.5, "fade": 2.5, "coil_spring": 2, "skid": 2, "pivot": 1.5, "rising": 1.5, "air_roll": 1.5, "cartwheel_step": 1, "rooted": 0.1}
+   },
+   "weightsBy": [
+    {"when": {"weight": ["heavy"]}, "path": {"line": 1.5, "rise": 1.3}, "target": {"legs": 1.3, "gut": 1.2, "chest": 1.0, "jaw": 0.8, "head": 0.6, "arm": 0.8}, "_why": "a heavy on the move: he arrives on a line or rising and takes the legs out, since his legs are what he trusts"}
+   ],
+   "never": [
+    {"shape": {"path": ["spin"]}, "why": "a spin needs the whole wind-up, and he never stands still that long"},
+    {"shape": {"limb": ["head"]}, "why": "no headbutt: he never puts his face where a blow is"},
+    {"shape": {"limb": ["hand"], "tip": ["plate"]}, "why": "no forearm plate: he has no armour to lead with"},
+    {"shape": {"limb": ["elbow"], "tip": ["plate"]}, "why": "no crossed forearms: both arms committed is the one thing he never does"}
+   ],
+   "cellNever": {},
+   "burst": {"close": {"limb": ["foot"]}},
+   "manner": {
+    "_about": "How he throws, in words, for Animation and Legal. Not read by the generator",
+    "heavy": "Thrown on the move: he arrives on a line or rising, the blow lands as his weight lands, and he is already leaving. The tell is short and real, a dip of the shoulders and a step, never a pose",
+    "burst": "Snaps of the hand and the foot from wherever each already is, loose sleeves trailing each one, and a kick to close",
+    "reach": "An open blade hand flicked at him as he passes, the shot let go off the edge; never a pointed finger and never a palm held out"
+   },
+   "energy": {"hands": {"blade_hand": 3, "open_palm": 1.5}, "release": {"thrust": 3, "flick": 2.5, "drop": 1, "lob": 1}, "split": false, "reach": "blade_hands"}
+  },
+  "colossus": {
+   "like": "rival",
+   "tier": 1,
+   "title": "The Colossus",
+   "_who": "TEMPLATE (Game Design T4, the heavy; Narrative's Colossus, a placeholder). An armoured human on the shared rig, up to a fifth taller and broader, in overlapping plate with one oversized pauldron. Gentle, slow, literal: he leads with the plate and the shoulder, brings a hammer fist or the sole of his foot down, and shoves. He never cuts, never turns a kick, never kicks high.",
+   "weights": {
+    "limb": {"shoulder": 3, "hand": 2.5, "elbow": 2, "knee": 2, "foot": 1.5, "head": 0.5},
+    "path": {"drop": 3, "line": 3, "rise": 1.5, "arc_in": 1.2, "arc_out": 0.3, "spin": 0.2},
+    "tip": {"hand.plate": 3, "hand.heel": 3, "hand.fist": 2, "hand.palm": 1.5, "hand.blade": 0.1, "elbow.point": 2, "elbow.plate": 2.5, "shoulder.plate": 3, "knee.cap": 2, "foot.sole": 3, "foot.heel": 2, "foot.ball": 0.5, "foot.edge": 0.7, "foot.instep": 0.3, "head.brow": 1},
+    "entry": {"rooted": 3, "skid": 2.5, "coil_spring": 1.5, "dash": 1, "rising": 1, "lane_step": 1, "pivot": 1, "arc_dive": 0.5, "air_roll": 0.2, "cartwheel_step": 0.1, "spiral": 0.2, "fade": 0.3}
+   },
+   "weightsBy": [
+    {"when": {"weight": ["heavy"]}, "target": {"chest": 1.5, "gut": 1.3, "head": 1.1, "arm": 1.1, "legs": 0.8, "jaw": 1.0}, "_why": "weight goes into the middle of a body: the chest and the gut, then down on the head or an arm that reached for him"}
+   ],
+   "never": [
+    {"shape": {"limb": ["hand"], "tip": ["blade"]}, "why": "he never cuts: his hands are a fist, a hammer fist, a palm or the plate"},
+    {"shape": {"limb": ["foot"], "path": ["arc_in", "arc_out", "spin"]}, "why": "no turning kick: his kicks are a stamp and a push, the plate does not turn at the hip"},
+    {"shape": {"limb": ["foot"], "target": ["head", "jaw", "chest"]}, "why": "no kick above the gut: his legs are plated and stay under him"},
+    {"shape": {"path": ["spin"]}, "why": "he never shows his back: his weight is planted"}
+   ],
+   "cellNever": {},
+   "burst": {"close": {"path": ["drop"]}},
+   "manner": {
+    "_about": "How he throws, in words, for Animation and Legal. Not read by the generator",
+    "heavy": "Slow and plain: the plate or the shoulder comes forward, or the hammer fist comes down, with his whole weight behind it and his feet staying where they were. The longest tell on the roster, in plain sight, and he apologises to whatever it breaks",
+    "burst": "Short shoves and hammer fists, the pauldron leading, and one that comes down",
+    "reach": "An open palm set flat on him and pushed, the shot let go from the heel of the palm; never two hands, never from the chest"
+   },
+   "energy": {"hands": {"open_palm": 3}, "release": {"thrust": 3, "drop": 2, "lob": 1, "flick": 0.5}, "split": false, "reach": "open_hands"}
+  }
+ }
+}

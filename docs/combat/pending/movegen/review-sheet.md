@@ -41,7 +41,7 @@ Legal screened the martial arts stance (`docs/legal/movegen-screen.md`, RL-072):
 | Group | Rows | The generator refuses a match | Conditions for the owner |
 | :--- | :--- | :--- | :--- |
 | motion | m01 to m12 | m04 | m01, m02, m03, m05, m06, m07, m08, m09, m10, m11, m12 (Animation and VFX; Simulation and Animation; Simulation and Game Design) |
-| energy | e01 to e10 | e01, e02, e03, e04, e05, e06, e09 | e07, e08, e10 (Animation and VFX) |
+| energy | e01 to e16 | e01, e02, e03, e04, e05, e06, e09 | e07, e08, e10, e11, e12, e13, e14, e15, e16 (Animation and VFX) |
 | grabs | g01 to g08 | g01, g04, g05 | g02, g03, g06, g07, g08 (Animation) |
 | held | h01 to h10 | h05 | h01, h02, h03, h04, h06, h07, h08, h09, h10 (Animation (a lint on poses held 12 ticks or more)) |
 | stacking | k01 to k06 | - | k01, k02, k03, k04, k05, k06 (UI; VFX, Animation and Audio) |
