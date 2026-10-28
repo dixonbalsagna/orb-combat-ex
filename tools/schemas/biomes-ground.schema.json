@@ -8,6 +8,7 @@
     "schema",
     "trees",
     "provisionalProps",
+    "smash",
     "grounds",
     "_about"
   ],
@@ -33,6 +34,12 @@
           "description": "Trees stand only where the ground is at least this high, in units (sea level is 0)."
         }
       }
+    },
+    "smash": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "description": "The prop kinds PROP SMASH can break; follows launch_biome.json's PROP SMASH props."
     },
     "provisionalProps": {
       "type": "boolean",

@@ -85,6 +85,18 @@ func stage() -> Array:
 	return [fine, stored, base]
 
 
+## The PROP SMASH row's `props` list wherever it stands in launch_biome.json.
+func _smashProps(v) -> Array:
+	if v is Dictionary:
+		if v.has("PROP SMASH") and v["PROP SMASH"] is Dictionary and v["PROP SMASH"].has("props"):
+			return Array(v["PROP SMASH"]["props"])
+		for k in v:
+			var r: Array = _smashProps(v[k])
+			if not r.is_empty():
+				return r
+	return []
+
+
 func _init() -> void:
 	ok(WorldGround.dataErrors().is_empty(), "ground.json loads clean (%s)" % str(WorldGround.dataErrors()))
 	ok(not WorldGround.K_PROVISIONAL, "provisionalProps is off in the data")
@@ -350,5 +362,14 @@ func _init() -> void:
 		hs.append(str(SimHash.stateHash(T).gameplay))
 	WorldGround.K_PROVISIONAL = false
 	ok(hs[0] == hs[1], "a gen 2 match (planet 6, 600 ticks) is the same match with provisionalProps on (%s)" % hs[0])
+	# --- PROP SMASH's kinds follow Combat's launch_biome.json, and a broken column loses only its smashable prop
+	var lb = JSON.parse_string(FileAccess.get_file_as_string("res://data/combat/launch_biome.json"))
+	var want: Array = _smashProps(lb)
+	var have: Array = WorldGround.SMASH.duplicate()
+	want.sort()
+	have.sort()
+	ok(not want.is_empty() and want == have, "ground.json's smash list equals launch_biome.json's PROP SMASH props (%s)" % str(have))
+	var pk: Array = [{"x": 100.0, "kind": "scrub", "size": 0.9, "col": 3}, {"x": 110.0, "kind": "boulder", "size": 1.4, "col": 3}, {"x": 112.0, "kind": "scrub", "size": 1.2, "col": 3}, {"x": 140.0, "kind": "boulder", "size": 1.1, "col": 4}]
+	ok(WorldGround.smashIn(pk) == 1 and WorldGround.smashIn([pk[0], pk[2]]) == -1 and WorldGround.smashIn([pk[3], {"x": 1.0, "kind": "lichen_rock", "size": 1.1, "col": 4}]) == 0, "smashIn picks the biggest smashable prop of a column, the first of two as big, and none where nothing is smashable (a scrub is never the target)")
 	print("GROUNDPROPS: %d check(s) failed" % fails)
 	quit(1 if fails > 0 else 0)

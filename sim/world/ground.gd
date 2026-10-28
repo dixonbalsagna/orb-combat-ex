@@ -30,7 +30,7 @@ static var _gapRows := PackedInt32Array()   # per fine biome: the index of its p
 static var _gapMax: float = 0.0                  # the widest gap of those rows, in units
 static var _berg: Dictionary = {}               # W5: the berg row {k, per, s0, s1, prov} with planet.json's bergH0 (a cell's least height) and bergCell (the pack's reach into open water); {} for none
 const BH: float = 75.0                           # a fighter's height in units (constants.gd: the world is grown against fighters about 75 units tall)
-const SMASH: Array = ["lone_tree", "outcrop", "boulder", "berg"]   # PROP SMASH's targets (docs/combat/biomes.md section 3)
+static var SMASH: Array = []   # PROP SMASH's targets (docs/combat/biomes.md section 3), from ground.json `smash`: following launch_biome.json's PROP SMASH props
 static var K_PROVISIONAL: bool = false   # provisionalProps: lay the props rows World marked provisional (W4's bergs and lone trees) for Art; off by default
 
 
@@ -65,7 +65,7 @@ static func _load() -> void:
 	if not (j is Dictionary) or j.get("schema", "") != SCHEMA:
 		_errors.append("ground.json: not a %s object" % SCHEMA)
 		return
-	for k in ["trees", "grounds"]:
+	for k in ["trees", "grounds", "smash"]:
 		if not j.has(k):
 			_errors.append("ground.json: %s is missing" % k)
 	if not _errors.is_empty():
@@ -107,6 +107,7 @@ static func _load() -> void:
 	var COL: float = SimConst.COL
 	_minGround = float(j.trees.minGround)
 	K_PROVISIONAL = bool(j.get("provisionalProps", false))
+	SMASH = Array(j.smash)
 	var n: int = j.grounds.size()
 	_grip.resize(n)
 	_absorb.resize(n)
@@ -301,6 +302,61 @@ static func propsIn(fine: PackedByteArray, stored: PackedByteArray, base: Packed
 			if b != null:
 				out.append(b)
 	return out
+
+
+## The match's props between x0 and x1 (biomes W6, docs/world/flight-hooks-w6.md): the one prop query the sim owns, for the
+## director and the renderer alike. They are propsIn's, keyed by the planet's seed (S.planetRing.seed) with the ring's trees
+## and lakes, so what the sim reads is what is drawn; every row is laid, the provisional ones only with provisionalProps on.
+## The span is taken by columns and split at the seam; a span of the whole ring or more lays the ring once. A prop whose
+## column is in `broken` (the director's list of the props launches have broken) is left out. [{"x", "kind", "size", "col"}],
+## in column order from x0; [] on a world with no fine ground (gen 1, the hand-made world). Pure.
+static func matchProps(S: SimState, x0: float, x1: float, broken: PackedInt32Array = PackedInt32Array()) -> Array:
+	if not _loaded:
+		_load()
+	var fc: PackedByteArray = WorldBiomes.fineCols
+	var n: int = fc.size()
+	if n == 0 or S.base.size() != n or not S.planetRing.has("seed"):
+		return []
+	var pc: PackedByteArray = WorldBiomes.planetCols
+	var lakes: Array = S.planetRing.get("lakes", [])
+	var seed: int = int(S.planetRing.seed)
+	var i0: int = int(floor(x0 / SimConst.COL))
+	var i1: int = int(floor(x1 / SimConst.COL)) + 1
+	var parts: Array = [[0, n]]
+	if i1 - i0 < n:
+		var a: int = posmod(i0, n)
+		var b: int = posmod(i1, n)
+		parts = [[a, b]] if a < b else [[a, n], [0, b]]
+	var laid: Array = []
+	for part in parts:
+		laid.append_array(propsIn(fc, pc, S.base, seed, part[0], part[1], S.trees, lakes))
+	if broken.is_empty():
+		return laid
+	var lost: Dictionary = {}   # a broken column loses its biggest smashable prop (what a launch breaks: smashIn), and only that one
+	for c in broken:
+		var here: Array = []
+		for q in range(laid.size()):
+			if int(laid[q].col) == int(c):
+				here.append(q)
+		var pick: int = smashIn(here.map(func(q): return laid[q]))
+		if pick >= 0:
+			lost[here[pick]] = true
+	var out: Array = []
+	for q in range(laid.size()):
+		if not lost.has(q):
+			out.append(laid[q])
+	return out
+
+
+## The index of the prop PROP SMASH breaks among `props` (one column's): the biggest of the smashable kinds, the first of two as big; -1 when none is smashable.
+static func smashIn(props: Array) -> int:
+	if not _loaded:
+		_load()
+	var best: int = -1
+	for q in range(props.size()):
+		if SMASH.has(String(props[q].kind)) and (best < 0 or float(props[q].size) > float(props[best].size)):
+			best = q
+	return best
 
 
 ## PROP SMASH's targets (docs/combat/biomes.md section 3: a lone tree, an outcrop, a boulder or a berg) within reachBh fighter heights of x, by shortest arc: [{"x", "kind", "size", "col", "d"}], d the

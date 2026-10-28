@@ -108,6 +108,7 @@ class Body:
 	var feet: bool = false        # the launch is a knock-back skid (a slide on the feet): a wall ends it with the bump, never the silent halt
 	var z: float = 0.0            # depth (T: the row the ground is read on when depth is on)
 	var rics: int = 0             # Simulation's ricochets in this send's row so far (SimRicochet.inRow): a glance's cap
+	var swallow: bool = false     # biomes W6: the launch is a MARSH SWALLOW (its first landing is a slam that embeds; the runtime's only)
 
 
 # ===================================================================== data
@@ -560,7 +561,7 @@ static func _land(S: SimState, b: Body, g: float, ev: Array) -> void:
 	info["vert"] = vertL
 	# a steep landing is a slam at the first contact, and the landing after a hard slam's hop; a later steep landing after a bounce or a
 	# lip launch is a bounce or a skid by the usual rules (a journey makes one mark)
-	var slam: bool = sea or (sin2 >= K_SLAM2 and (first or wasHopped))
+	var slam: bool = sea or (sin2 >= K_SLAM2 and (first or wasHopped)) or (b.swallow and first)   # biomes W6: the marsh swallows the slam whatever its angle
 	var forceTumble: bool = b.contacts >= K_MAXC or b.t >= K_MAXT
 	if S.ricOn and not sea and not forceTumble and SimRicochet.steepGround(s):   # Simulation's ricochet (sim/core/ricochet.gd): fast and shallow on steep ground, a glance
 		var gl: PackedFloat64Array = SimRicochet.rule(vn, vt, b.rics)
@@ -579,7 +580,7 @@ static func _land(S: SimState, b: Body, g: float, ev: Array) -> void:
 			ev.append({"k": "left_ground", "cause": "glance", "x": b.x, "y": g, "vx": b.vx, "vy": b.vy, "speed": SimDetMath.hypot(vxg, vyg), "slope": s})
 			return
 	if slam:
-		var hop: bool = (not sea) and sp >= K_HOPSPEED and not b.hopped
+		var hop: bool = (not sea) and sp >= K_HOPSPEED and not b.hopped and not b.swallow
 		if hop and first and b.embedOK:   # a blow that will embed him digs in and stays there: no hop
 			var Ee: float = WorldCrater.impactEnergy(sp, b.tier) * (WorldCrater.SPECIAL_E_MULT if b.special else 1.0)
 			var dEst: float = WorldCrater.radiusOf(Ee, b.special) * WorldCrater.DEPTH_RATIO * (WorldCrater.GRAZE_MIN + (1.0 - WorldCrater.GRAZE_MIN) * vertL) / 75.0
@@ -836,6 +837,11 @@ static func journeyControl(S: SimState, b: Body) -> Dictionary:
 # ===================================================================== the runtime: one fighter, one tick
 
 static var _tb := Body.new()   # reused each tick (the sim is single threaded): the runtime step allocates nothing
+const _NO_HOOK: Dictionary = {}
+const PROP_STOP: float = 30.0   # PROP SMASH stops him this far short of the prop (a body's radius, as the director's slide stops short of a wall)
+static var _hk: Dictionary = _NO_HOOK   # biomes W6: the running tick's plan fields (DirLaunch.flightHook), {} outside stepFighter
+static var hookLog: Array = []         # tools only: with hookLogOn, each hook that plays appends {"k", ...}; the sim never reads it
+static var hookLogOn: bool = false
 static var _ev: Array = []
 
 
@@ -873,6 +879,7 @@ static func toBody(S: SimState, f) -> Body:
 	b.slideD = f.slideD
 	b.lips = f.jLips
 	b.rics = SimRicochet.inRow(f)
+	b.swallow = String(_hk.get("kind", "")) == "MARSH SWALLOW"
 	b.mode = AIR
 	if f.slide > 0.0:
 		b.mode = TUMBLE if f.tumbleT >= 0 else SKID
@@ -905,6 +912,7 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 	if f.interior != null:
 		WorldInterior.step(S, f, dt)   # the chain inside a tower (world/interior.gd): the ground's contact waits for it
 		return
+	_hk = hookOf(S, f)   # biomes W6: the plan's biome fields for this tick ({} for nearly every launch)
 	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
 	var b: Body = toBody(S, f)
 	var ev: Array = _ev
@@ -920,21 +928,26 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 			hitNow = WorldBrunt.checkHit(S, f, ox, oy)   # B2: only the building the launch is aimed at can be hit
 			if hitNow:
 				b = toBody(S, f)   # a hit changed his position and speed
+		if not b.done and not _hk.is_empty():
+			_hookPath(S, f, by, b, ox, oy)
 		if not b.done and not (hitNow and f.aimB >= 0):
 			groundPhase(S, b, ev)
 		fromBody(f, b)
 	else:
 		var xa: float = b.x
 		stepContact(S, b, dt, ev)
+		if not _hk.is_empty() and b.dxStep != 0.0:
+			_hookPath(S, f, by, b, xa, b.y)
 		fromBody(f, b)
 		if b.dxStep != 0.0:
 			_skidEffects(S, f, by, b, xa)
-		if skateOn():
+		if skateOn() or String(_hk.get("kind", "")) == "ICE SKID":   # ICE SKID: control at the rock stop, then the skate (biomes W6)
 			_skateCheck(S, f, b)
 	for e in ev:
 		_apply(S, f, by, b, e)
 	if b.done:
 		_finish(S, f, by, b)
+	_hk = _NO_HOOK
 
 
 ## The effects of one skid or tumble tick: the trench (skid only), cracks, dust, the path damage and the speed-lost wear.
@@ -967,6 +980,9 @@ static func _pay(S: SimState, f, by, amount: float) -> void:
 	if f.slideFeet:
 		amount *= K_WFEET   # a knock-back skid hurts half as much as a launch's impact (agency-pass.md section 13, rule 4)
 	var pay: float = SimDir.brawlPayMul(f)   # Game Design's 9a: a launcher's send pays x (1 + power), its cap with it (1 off launch anywhere)
+	var soft: float = float(_hk.get("soft", 0.0))
+	if soft > 0.0:
+		pay *= soft   # biomes W6: a soft landing (the plan's surface row) hurts this much as much, its cap with it
 	amount *= pay
 	var a: float = minf(amount, maxf(f.jV0 * 0.018 * K_WCAP * pay - f.slideDmg, 0.0))
 	if a > 0.0:
@@ -1056,7 +1072,10 @@ static func _contact(S: SimState, f, by, b: Body, e: Dictionary) -> void:
 			var sh: PackedFloat64Array = WorldCraters.shapeAt(S, f.x)   # the material's bowl (craters.json, off: empty, today's bowl); read before the dig changes the ground
 			var rc = WorldCrater.dig(S, f.x, E, by, "impact", f.vx / f.launchT / maxf(sp, 0.000001), vert, f.launchSpecial, f.z, sh)
 			var broke: bool = WorldCraters.after(S, rc, sh, f.z) if sh.size() > 0 else false   # a floe broken through is water, not a bowl to sit in
-			if rc != null and first and not broke and S.T - f.embedCool >= K_EMB_COOL:
+			var swallow: float = float(_hk.get("embed", 0.0)) if String(_hk.get("kind", "")) == "MARSH SWALLOW" else 0.0
+			if rc != null and first and not broke and swallow > 0.0:
+				_swallow(S, f, rc, sh, swallow)   # biomes W6: the marsh always embeds, the body that much deeper
+			elif rc != null and first and not broke and S.T - f.embedCool >= K_EMB_COOL:
 				var dbh: float = rc.depth / 75.0
 				var thr: float = WorldCraters.threshold(sh)   # the threshold scales with the material's depth: today's embed rate on every surface (ruling 3)
 				if dbh >= K_EMB_MIN * thr or (f.launchSpecial and dbh >= K_EMB_SPECIAL * thr):
@@ -1251,3 +1270,108 @@ static func bump(S: SimState, f, by, kind: String, spN: float) -> float:
 	SimFx.shake(S, minf(10.0, spN * 0.004), f.x, f.z)
 	SimFx.debris(S, f.x, f.y + 8.0, 3, "#6d6a66", 400.0, f.z)
 	return dmg
+
+
+# ===================================================================== biomes W6: the flight hooks
+
+## The director's record of f's launch plan (DirLaunch.flightHook; docs/world/flight-hooks-w6.md), reached by the
+## director script's path as SimDir's calls are, so the world's load compiles none of the director: {} when his launch
+## carries no biome field, which is every launch with Combat's biome.enabled off.
+static func hookOf(S: SimState, f) -> Dictionary:
+	if int(f.launchN) == 0:
+		return _NO_HOOK
+	return SimDir._d("launch.gd").flightHook(S, f)
+
+
+## The hooks on the path a tick moved b, from x0 to b.x (in the air, or along a skid or tumble): TREE LINE's trunks snap,
+## PROP SMASH's prop breaks. Changes b; the runtime's only (the planner's journey does not see them).
+static func _hookPath(S: SimState, f, by, b: Body, x0: float, y0: float) -> void:
+	var kind: String = String(_hk.get("kind", ""))
+	var dir: float = (1.0 if b.vx >= 0.0 else -1.0) if b.mode == AIR else b.dir
+	var run: float = SimWrap.sdx(x0, b.x) * dir
+	if run <= 0.0:
+		return
+	if kind == "TREE LINE":
+		_snapTrees(S, f, b, x0, y0, dir, run)
+	elif kind == "PROP SMASH":
+		_smashProp(S, f, by, b, x0, dir, run)
+
+
+## TREE LINE (biomes.md section 3): each standing trunk he passes through (its column crossed this tick, he lower than its
+## top) snaps, and each takes the plan's treeBrake off his speed, the way a building in BUILDING SMASH's chain does.
+static func _snapTrees(S: SimState, f, b: Body, x0: float, y0: float, dir: float, run: float) -> void:
+	var keep: float = 1.0 - float(_hk.get("treeBrake", 0.0))
+	for t in S.trees:
+		if not t.alive:
+			continue
+		var d: float = SimWrap.sdx(x0, t.x) * dir
+		if d <= 0.0 or d > run:
+			continue
+		var g: float = WorldTerrain.groundY(S, t.x)
+		var yAt: float = y0 + (b.y - y0) * d / run   # his height where he crosses it
+		if yAt - g >= t.h:
+			continue   # he flies over its top
+		var sp0: float = SimDetMath.hypot(b.vx / b.launchT, b.vy) if b.mode == AIR else b.vN
+		t.alive = false
+		SimFx.debris(S, t.x, g + t.h * 0.8, 6, "#6b4f2a", 320.0, f.z)
+		SimFx.dust(S, t.x, g, 2, "", f.z)
+		b.vx *= keep
+		if b.mode == AIR:
+			b.vy *= keep
+		else:
+			b.vN *= keep
+		if hookLogOn:
+			hookLog.append({"k": "trunk", "n": f.launchN, "x": t.x, "h": t.h, "before": sp0, "after": sp0 * keep})
+
+
+## PROP SMASH (biomes.md section 3): when he reaches the plan's prop and it still stands on his line (lower than its top),
+## it breaks (the director keeps it broken: DirLaunch.propBroke) and he stops at it, a body's radius short, with the stop's
+## light brunt (bump, a heap's: no dent). In the air he drops from there; on the ground the journey ends as a stop.
+static func _smashProp(S: SimState, f, by, b: Body, x0: float, dir: float, run: float) -> void:
+	var px: float = float(_hk.get("propX", 0.0))
+	var d: float = SimWrap.sdx(x0, px) * dir
+	if d < 0.0 or d > run + PROP_STOP:
+		return
+	var col: int = int(_hk.get("propCol", -1))
+	var here: Array = []
+	for p in WorldGround.matchProps(S, px - SimConst.COL, px + SimConst.COL, SimDir._d("launch.gd").brokenProps(S)):
+		if int(p.col) == col:
+			here.append(p)
+	var pick: int = WorldGround.smashIn(here)   # the column's biggest smashable prop (a scrub or a snow drift beside it is not the target)
+	if pick < 0:
+		return
+	var prop = here[pick]
+	var g: float = WorldTerrain.groundY(S, px)
+	if b.y - g >= float(prop.size) * WorldGround.BH:
+		if hookLogOn:
+			hookLog.append({"k": "prop_over", "n": f.launchN, "x": px, "kind": String(prop.kind), "over": b.y - g - float(prop.size) * WorldGround.BH})
+		return   # over its top: it stands
+	var sp: float = SimDetMath.hypot(b.vx / b.launchT, b.vy) if b.mode == AIR else b.vN
+	SimDir._d("launch.gd").propBroke(S, f)
+	b.x = SimWrap.wrap(px - dir * PROP_STOP)
+	if b.mode == AIR:
+		b.vx = 0.0
+		b.vy = minf(b.vy, 0.0)
+	else:
+		b.y = WorldTerrain.groundY(S, b.x, b.z)
+		b.vx = 0.0
+		b.vN = 0.0
+		b.dxStep = SimWrap.sdx(x0, b.x)
+		b.done = true
+		b.end = "stop"
+	SimFx.debris(S, px, g + float(prop.size) * WorldGround.BH * 0.5, 10, "#7a7064", 520.0, f.z)
+	SimFx.dust(S, px, g, 3, "", f.z)
+	var dmg: float = bump(S, f, by, "heap", sp)
+	if hookLogOn:
+		hookLog.append({"k": "prop", "n": f.launchN, "x": px, "kind": String(prop.kind), "col": col, "speed": sp, "stopX": b.x, "dmg": dmg, "air": b.mode == AIR})
+
+
+## MARSH SWALLOW (biomes.md section 3; Game Design 23b item 3): the first slam always embeds, whatever the bowl's depth or
+## the embed's cool-down, and he sits mul times as deep as the bowl would hold him.
+static func _swallow(S: SimState, f, rc, sh: PackedFloat64Array, mul: float) -> void:
+	var sink: float = rc.depth * WorldCraters.sink(sh)
+	f.embedT = K_EMB_TICKS
+	f.embedCool = S.T
+	SimFx.embed(S, f, f.x, rc.y - rc.depth * mul, sink * mul, rc.r, rc.energy, float(K_EMB_TICKS), _launchN(f))
+	if hookLogOn:
+		hookLog.append({"k": "embed", "n": f.launchN, "x": f.x, "plain": sink, "depth": sink * mul, "bowl": rc.depth})

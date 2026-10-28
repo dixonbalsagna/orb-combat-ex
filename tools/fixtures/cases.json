@@ -293475,6 +293475,22 @@
       }
     },
     {
+      "id": "ground-smash-not-array",
+      "schema": "biomes-ground.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/ground.json",
+          "set": {
+            "/smash": "boulder"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/smash"
+      }
+    },
+    {
       "id": "platesb-plates-two",
       "schema": "biomes-plates-b.schema.json",
       "mutate": [

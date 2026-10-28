@@ -476,33 +476,11 @@ static func _skimAshore(S: SimState, x0: float, y0: float, vx0: float, vy0: floa
 	return null
 
 
-## World's set dressing between x0 and x1 on a gen 2 planet (WorldGround.propsIn, the same pure draw the renderer's
-## strips use), keyed by the match's fine biome map: [{"x", "kind", "size", "col"}]. Empty on any other world.
+## World's set dressing between x0 and x1 on a gen 2 planet: the match's props as the sim owns them (WorldGround.matchProps,
+## keyed by the planet's seed, the same draw the renderer lays), less the props a launch has broken (brokenProps):
+## [{"x", "kind", "size", "col"}]. Empty on any other world.
 static func _propsNear(S: SimState, x0: float, x1: float) -> Array:
-	var fc: PackedByteArray = WorldBiomes.fineCols
-	var NC: int = fc.size()
-	if NC == 0 or S.base.size() != NC:
-		return []
-	var i0: int = int(floor(x0 / SimConst.COL))
-	var i1: int = int(floor(x1 / SimConst.COL)) + 1
-	var seed: int = _propSeed()
-	var parts: Array = [[0, NC]]   # the span in column ranges, split at the seam
-	if i1 - i0 < NC:
-		var a: int = posmod(i0, NC)
-		var b: int = posmod(i1, NC)
-		parts = [[a, b]] if a < b else [[a, NC], [0, b]]
-	var out: Array = []
-	for part in parts:
-		out.append_array(WorldGround.propsIn(fc, WorldBiomes.planetCols, S.base, seed, part[0], part[1]))
-	return out
-
-
-## The props' seed: an FNV-1a hash of the match's fine biome map (no prop seed is kept on the state; NEEDS FROM EP).
-static func _propSeed() -> int:
-	var h: int = 0x811c9dc5
-	for b in WorldBiomes.fineCols:
-		h = SimRng.imul((h ^ int(b)) & SimRng.MASK, 0x01000193)
-	return h & SimRng.MASK
+	return WorldGround.matchProps(S, x0, x1, brokenProps(S))
 
 
 ## The landing's biome terms on a candidate k landing at lx (p its predicted flight): the surface's row by the kind of
@@ -666,8 +644,109 @@ static func doLaunch(S: SimState, att, tgt, plan: Dictionary, force: float, spec
 		S.dirS.craterT[S.fighters.find(att)] = S.T
 	SimFx.launch(S, tgt, att, SimDetMath.hypot(tgt.vx, tgt.vy), 1.0 if tgt.vx >= 0.0 else -1.0)
 	WorldBrunt.arm(S, tgt, att, plan)   # B2: the aimed building, the depth waypoints and the chain's token
+	_hookArm(S, tgt, plan)   # biomes W6: the plan's biome fields for World's flight (biome.enabled only)
 	SimFx.ring(S, tgt.x, tgt.y + 34.0, 600.0, "#ffffff", 0.3, 20.0)
 	SimFx.shake(S, 10.0, tgt.x)
+
+
+## Biomes W6 (docs/world/flight-hooks-w6.md): the launched fighter's record of his plan's biome fields, which World's
+## flight reads (WorldContact, through flightHook) so that each candidate plays as biomes.md section 3 says. It sits in
+## his director integers after the rally's block and is sized only with biome.enabled on, so the hashed count never
+## moves with it off. A record belongs to one launch (HK_LN, the launch number arm gave it); a launch whose plan carries
+## no field writes none. Each broken prop's column is kept in its breaker's ring, so the prop query leaves it out.
+const HK_LN: int = 0       # the launch number the record belongs to (Fighter.launchN); 0 none
+const HK_KIND: int = 1     # HOOKS index plus 1; 0 a plan with only a soft landing
+const HK_A: int = 2        # MARSH SWALLOW: embed x 1e6; TREE LINE: the brake a trunk x 1e6; PROP SMASH: the prop's x x 1000
+const HK_B: int = 3        # PROP SMASH: the prop's column plus 1; TREE LINE: the trunks the planner counted
+const HK_SOFT: int = 4     # the landing's soft factor x 1e6; 0 none
+const HK_BRKI: int = 5     # the next slot of the broken props' ring
+const HK_BRK: int = 6      # the ring: HK_BRK_N columns plus 1 (0 empty)
+const HK_BRK_N: int = 4
+const HK_N: int = 10
+const HOOKS: Array = ["MARSH SWALLOW", "TREE LINE", "PROP SMASH", "ICE SKID"]
+
+
+static func _hkBase() -> int:
+	return DirRally._base() + DirRally.RL_N
+
+
+static func _hkSize(f) -> void:
+	DirGrapple._size(f)
+	if f.act.dirI.size() < _hkBase() + HK_N:
+		f.act.dirI.resize(_hkBase() + HK_N)
+
+
+## doLaunch's: write tgt's record from the plan's fields (embed, treeBrake, land and prop, ICE SKID's name, soft).
+static func _hookArm(S: SimState, tgt, plan: Dictionary) -> void:
+	if not biomeOn():
+		return
+	var nm: String = String(plan.get("name", ""))
+	var kind: int = HOOKS.find(nm) + 1
+	if (kind == 1 and not plan.has("embed")) or (kind == 2 and not plan.has("treeBrake")) or (kind == 3 and not (plan.has("prop") and plan.has("land"))):
+		kind = 0
+	var soft: float = float(plan.get("soft", 0.0))
+	if kind == 0 and soft <= 0.0:
+		return
+	_hkSize(tgt)
+	var i: int = _hkBase()
+	var a: int = 0
+	var b: int = 0
+	if kind == 1:
+		a = int(round(float(plan.embed) * 1.0e6))
+	elif kind == 2:
+		a = int(round(float(plan.treeBrake) * 1.0e6))
+		b = int(plan.get("trees", 0))
+	elif kind == 3:
+		a = int(round(float(plan.land) * 1000.0))
+		b = int(floor(float(plan.land) / SimConst.COL)) % SimConst.NC + 1
+	tgt.act.dirI[i + HK_LN] = int(tgt.launchN)
+	tgt.act.dirI[i + HK_KIND] = kind
+	tgt.act.dirI[i + HK_A] = a
+	tgt.act.dirI[i + HK_B] = b
+	tgt.act.dirI[i + HK_SOFT] = int(round(soft * 1.0e6))
+
+
+## World's read of f's flight: {} when his launch carries no biome field, else {"kind": the candidate's name or "", and
+## by kind "embed", "treeBrake" and "trees", or "propX" and "propCol"; "soft" (0 none)}.
+static func flightHook(S: SimState, f) -> Dictionary:
+	var i: int = _hkBase()
+	if f.act.dirI.size() < i + HK_N or int(f.launchN) == 0 or f.act.dirI[i + HK_LN] != int(f.launchN):
+		return {}
+	var kind: int = f.act.dirI[i + HK_KIND]
+	var h: Dictionary = {"kind": String(HOOKS[kind - 1]) if kind > 0 else "", "soft": float(f.act.dirI[i + HK_SOFT]) / 1.0e6}
+	if kind == 1:
+		h.embed = float(f.act.dirI[i + HK_A]) / 1.0e6
+	elif kind == 2:
+		h.treeBrake = float(f.act.dirI[i + HK_A]) / 1.0e6
+		h.trees = f.act.dirI[i + HK_B]
+	elif kind == 3:
+		h.propX = float(f.act.dirI[i + HK_A]) / 1000.0
+		h.propCol = f.act.dirI[i + HK_B] - 1
+	return h
+
+
+## World's flight broke f's PROP SMASH prop: it goes into his ring (the prop query leaves it out from now on) and the
+## record's kind is spent, so it breaks once.
+static func propBroke(S: SimState, f) -> void:
+	var i: int = _hkBase()
+	if f.act.dirI.size() < i + HK_N or f.act.dirI[i + HK_KIND] != 3:
+		return
+	var k: int = f.act.dirI[i + HK_BRKI]
+	f.act.dirI[i + HK_BRK + k] = f.act.dirI[i + HK_B]
+	f.act.dirI[i + HK_BRKI] = (k + 1) % HK_BRK_N
+	f.act.dirI[i + HK_KIND] = 0
+
+
+## The columns of the props broken in this match (the last HK_BRK_N each fighter broke), for the prop query.
+static func brokenProps(S: SimState) -> PackedInt32Array:
+	var out := PackedInt32Array()
+	var i: int = _hkBase() + HK_BRK
+	for f in S.fighters:
+		if f.act.dirI.size() >= _hkBase() + HK_N:
+			for k in range(HK_BRK_N):
+				if f.act.dirI[i + k] > 0:
+					out.append(f.act.dirI[i + k] - 1)
+	return out
 
 
 const TILT_CONE: float = 0.7071     # the cosine of 45 degrees: how near the stick's tilt a launch candidate must point
