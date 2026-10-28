@@ -42,6 +42,11 @@ export async function checkHook({ site, host = 'public.example', timeoutS = 300,
     // the page is loaded and its scripts have run before the click (the gate's button is in the markup before its handler is bound: a click that comes first starts nothing)
     while (Date.now() < deadline && (await page.eval('document.readyState').catch(() => '')) !== 'complete') await sleep(300);
     await sleep(2500);
+    // the gate's own picture, taken BEFORE the click: what counts as the engine drawing is a picture that is not this one (the engine can have drawn its settled notice before the first shot after the click,
+    // so a count of pictures seen after the click alone can read 1 for a game that ran: the pinned build did on the runner, 2026-10-28), and whether this is a real engine page (the stock export's #status overlay, which the page removes when engine.startGame has resolved, i.e. when main has run)
+    const gateShot = await page.send('Page.captureScreenshot', { format: 'jpeg', quality: 40 }).catch(() => null);
+    const gateHash = gateShot && gateShot.data ? createHash('sha1').update(gateShot.data).digest('hex') : '';
+    const hadStatus = await page.eval(`Boolean(document.getElementById('status'))`).catch(() => false);
     let clicked = false;
     while (!clicked && Date.now() < deadline) { clicked = await page.eval(`(() => { const b = document.getElementById('gate-start'); if (!b) return false; b.click(); return true; })()`).catch(() => false); if (!clicked) await sleep(500); }
     if (!clicked) { problems.push(`the page has no #gate-start button to click within ${timeoutS} s: the click-through is not where this check looks for it`); return { ok: false, problems, notes }; }
@@ -49,22 +54,24 @@ export async function checkHook({ site, host = 'public.example', timeoutS = 300,
     // The game under a lock ends on a still picture (UI's flashing-effects notice, waiting for its own button), so: it drew (the picture changed from the gate's) and then
     // settled (the same big picture three shots running), or it keeps changing (four kinds). The notice is raised after the hook is decided, so a settled picture means main._ready has run.
     const seen = new Set();
-    let ran = false, stable = 0, lastHash = '', lastBig = false;
+    let ran = false, stable = 0, lastHash = '', lastBig = false, started = !hadStatus, fetched = 'no files';
     while (Date.now() < deadline && !ran) {
       await sleep(2500);
       const shot = await page.send('Page.captureScreenshot', { format: 'jpeg', quality: 40 }).catch(() => null);
-      if (shot && shot.data) { const h = createHash('sha1').update(shot.data).digest('hex'); stable = h === lastHash ? stable + 1 : 0; lastHash = h; lastBig = shot.data.length > 20000; seen.add(h); }   // a blank page is a few KB; the notice or the game is far more
+      if (shot && shot.data) { const h = createHash('sha1').update(shot.data).digest('hex'); stable = h === lastHash ? stable + 1 : 0; lastHash = h; lastBig = shot.data.length > 20000; if (h !== gateHash) seen.add(h); else stable = 0; }   // a blank page is a few KB; the notice or the game is far more; the gate's own picture is not the engine drawing
       if (await page.eval('typeof window.__flashcap').catch(() => 'undefined') !== 'undefined') break;   // the hook exists: no need to wait on
       const res = await page.eval('JSON.stringify(performance.getEntriesByType("resource").map((r) => r.name))').catch(() => '[]');
-      const engine = /\.wasm/.test(res) ? /\.pck/.test(res) : true;   // a real engine page has fetched its pack as well as its wasm
-      ran = engine && (seen.size >= 4 || (seen.size >= 2 && stable >= 3 && lastBig));
+      const engine = hadStatus ? /\.wasm/.test(res) && /\.pck/.test(res) : /\.wasm/.test(res) ? /\.pck/.test(res) : true;   // a real engine page has fetched its pack as well as its wasm (a stand-in page may have neither)
+      fetched = `${/\.wasm/.test(res) ? 'wasm' : 'no wasm'}, ${/\.pck/.test(res) ? 'pck' : 'no pck'}`;
+      if (hadStatus && !started) started = await page.eval(`!document.getElementById('status')`).catch(() => false);   // engine.startGame resolved: the page took its own overlay down
+      ran = engine && started && (seen.size >= 4 || (seen.size >= 1 && stable >= 3 && lastBig));
     }
     const state = await page.eval(`JSON.stringify({ host: location.hostname, flashcap: typeof window.__flashcap, canvas: Boolean(document.querySelector('canvas')) })`).catch(() => null);
     const st = state ? JSON.parse(state) : {};
     if (st.host !== host) problems.push(`the page saw the hostname "${st.host}", not the public "${host}": this was not a public-host run`);
     if (st.flashcap !== 'undefined') problems.push(`window.__flashcap exists on the exported public build with ?flashcap=1 (typeof ${st.flashcap}): a visitor's console could call window.__flashcap.start('ai', { reduced: false }) and turn Reduce flashing off`);
-    else if (!ran) problems.push(`not proven: the engine was not seen drawing within ${timeoutS} s (${seen.size} distinct pictures), so the absence of window.__flashcap proves nothing`);
-    else notes.push(`on the hostname ${host} with ${words.join(' ')}: window.__flashcap is undefined and the engine drew ${seen.size} distinct pictures`);
+    else if (!ran) problems.push(`not proven: the engine was not seen drawing within ${timeoutS} s (${seen.size} distinct pictures other than the gate's; the engine ${started ? 'had started' : 'had not started: the page never took its loading overlay down'}; ${fetched}), so the absence of window.__flashcap proves nothing`);
+    else notes.push(`on the hostname ${host} with ${words.join(' ')}: window.__flashcap is undefined and the engine had started (the page took its loading overlay down) and drew ${seen.size} distinct picture${seen.size === 1 ? '' : 's'} other than the gate's`);
   } finally {
     try { if (page) page.close(); } catch { /* gone */ }
     if (browser) await browser.close();

@@ -25,6 +25,23 @@ function startGame() {
 document.getElementById('gate-start') && document.getElementById('gate-start').addEventListener('click', startGame);
 </script>`;
 
+// the stand-in of the REAL export's shape (the stock page: a #status overlay the page removes when engine.startGame resolves, the .wasm and .pck fetched): on the click it fetches its files, takes the overlay down and draws ONE
+// settled, big picture straight away, with no loading states in between, which is what the pinned build did on the runner (2026-10-28: the first shot after the click was already the settled notice)
+const enginePage = ({ fetchWasm = true, fetchPck = true, removeStatus = true, draw = true } = {}) => `<!doctype html><meta charset="utf-8"><title>stand-in engine</title>
+<style>html,body{margin:0;background:#101218}canvas{position:fixed;left:0;top:0;width:100vw;height:100vh}#status{position:fixed;left:0;top:0;width:100vw;height:100vh;background:#101218;color:#ccc}#gate{position:fixed;left:0;top:0;z-index:5;background:#223;color:#fff;width:100vw;height:100vh}</style>
+<div id="gate"><button id="gate-start">I understand, start</button></div>
+<canvas id="canvas" width="960" height="540"></canvas>
+<div id="status">loading</div>
+<script>
+document.getElementById('gate-start').addEventListener('click', async () => {
+  document.getElementById('gate').remove();
+  ${fetchWasm ? "await fetch('x.wasm');" : ''} ${fetchPck ? "await fetch('x.pck');" : ''}
+  ${draw ? "const c = document.getElementById('canvas').getContext('2d'); const im = c.createImageData(960, 540); for (let i = 0; i < im.data.length; i += 4) { const v = (i * 2654435761 >>> 24) & 255; im.data[i] = v; im.data[i + 1] = v ^ 85; im.data[i + 2] = 255 - v; im.data[i + 3] = 255; } c.putImageData(im, 0, 0);" : ''}
+  ${removeStatus ? "document.getElementById('status').remove();" : ''}
+});
+</script>`;
+const engineSite = (name, o) => { const d = site(name, enginePage(o)); writeFileSync(join(d, 'play', 'x.wasm'), 'wasm'); writeFileSync(join(d, 'play', 'x.pck'), 'pck'); return d; };
+
 const tmp = mkdtempSync(join(tmpdir(), 'site-hook-'));
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
@@ -41,6 +58,17 @@ try {
   check('the same page run as localhost fails (the host option really changes what the page sees)', !localHost.ok && /window\.__flashcap exists/.test(localHost.problems.join()), JSON.stringify(localHost.problems));
   const dead = await run(site('dead', page('none', { engine: false })), { timeoutS: 25 });
   check('a page where the engine never draws is not proven, and fails', !dead.ok && /not proven/.test(dead.problems.join()), JSON.stringify(dead.problems));
+  // the real export's shape: the settled picture is there before the first shot after the click
+  const eng = await run(engineSite('engine', {}), { timeoutS: 40 });
+  check('an engine that has drawn its one settled picture before the first shot after the click is proven (the gate picture taken before the click is the baseline, not a second picture)', eng.ok && eng.notes.length === 1, JSON.stringify(eng.problems));
+  const engNoStart = await run(engineSite('engine-nostart', { removeStatus: false }), { timeoutS: 20 });
+  check('an engine page that never takes its loading overlay down (startGame never resolved) is not proven, whatever it draws', !engNoStart.ok && /not proven/.test(engNoStart.problems.join()) && /had not started/.test(engNoStart.problems.join()), JSON.stringify(engNoStart.problems));
+  const engNoPck = await run(engineSite('engine-nopck', { fetchPck: false }), { timeoutS: 20 });
+  check('an engine page that never fetched its pack is not proven', !engNoPck.ok && /not proven/.test(engNoPck.problems.join()) && /no pck/.test(engNoPck.problems.join()), JSON.stringify(engNoPck.problems));
+  const engNoFiles = await run(engineSite('engine-nofiles', { fetchWasm: false, fetchPck: false }), { timeoutS: 20 });
+  check('an engine page that fetched neither file is not proven (a real engine page always has both)', !engNoFiles.ok && /not proven/.test(engNoFiles.problems.join()), JSON.stringify(engNoFiles.problems));
+  const engNothing = await run(engineSite('engine-nothing', { draw: false }), { timeoutS: 20 });
+  check('an engine page that started but drew nothing (a blank page after the gate) is not proven', !engNothing.ok && /not proven/.test(engNothing.problems.join()), JSON.stringify(engNothing.problems));
   const nogate = await run(site('nogate', page('none', { gate: false })), { timeoutS: 12 });
   check('a page with no gate button fails', !nogate.ok && /#gate-start/.test(nogate.problems.join()), JSON.stringify(nogate.problems));
   let threw = false;
