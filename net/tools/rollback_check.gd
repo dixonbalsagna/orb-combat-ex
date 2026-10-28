@@ -9,8 +9,11 @@ extends SceneTree
 ## (NetSession.checkEvery, on at its default) fired. It also checks the state graph has no
 ## shared plain containers (NetSnapshot.aliasAudit) and that sessions free their objects.
 ##   godot --headless --path . --script res://net/tools/rollback_check.gd -- [--seeds=1,2,3] [--ticks=1200]
-##     [--profiles=lan,p80j,...|all] [--setup=default|features|planet|calm] [--delay=2] [--hash-every=1] [--sparse=K]
-##     [--negative-control]
+##     [--profiles=lan,p80j,...|all] [--setup=default|features|planet|calm] [--delay=2|auto] [--devices=1,1]
+##     [--hash-every=1] [--sparse=K] [--negative-control]
+## --delay=auto runs each profile at the delay its handshake agrees (NetLoopback.agree: both peers ping over links of
+## that profile, propose NetDelay.choose for their own device, --devices' slowdowns, and the larger wins), against a
+## straight run with that delay.
 ## --sparse=K runs the sessions as a game would (not in verify mode): a save only before a predicted tick, at most one
 ## every K ticks. The feed and fx of every confirmed tick and the final states are still compared; the SimHash only at
 ## the confirmed ticks whose state the session still holds (a save, or the present).
@@ -32,6 +35,8 @@ const READ_ONLY_SHARED: Array = ["S.planetRing[c] and S.epoch[c0]", "S.planetRin
 var failures: int = 0
 var sabotage: String = ""   # the negative control's current break: "", "restore" or "norollback"
 var sparse: int = 0         # 0: verify mode; K: the game's saving, one save at most every K ticks
+var devices: Array = [NetDelay.device(1.0), NetDelay.device(1.0)]
+var refs: Dictionary = {}   # [seed, delay] -> the straight run
 
 
 func _init() -> void:
@@ -51,7 +56,9 @@ func _init() -> void:
 		elif a.begins_with("--setup="):
 			setupName = a.substr(8)
 		elif a.begins_with("--delay="):
-			delay = int(a.substr(8))
+			delay = -1 if a.substr(8) == "auto" else int(a.substr(8))
+		elif a.begins_with("--devices="):
+			devices = Array(a.substr(10).split(",")).map(func(s): return NetDelay.device(float(s)))
 		elif a.begins_with("--hash-every="):
 			hashEvery = maxi(1, int(a.substr(13)))
 		elif a.begins_with("--sparse="):
@@ -59,7 +66,7 @@ func _init() -> void:
 		elif a == "--negative-control":
 			sabotage = "on"
 	var setup: Dictionary = SETUPS[setupName]
-	print("Orb Combat EX rollback check   Godot %s   setup %s   %d ticks   delay %d   hash every %d   %s" % [Engine.get_version_info().string, setupName, ticks, delay, hashEvery, "verify mode" if sparse == 0 else "sparse saving, every %d" % sparse])
+	print("Orb Combat EX rollback check   Godot %s   setup %s   %d ticks   delay %s   hash every %d   %s" % [Engine.get_version_info().string, setupName, ticks, str(delay) if delay >= 0 else "auto (handshake)", hashEvery, "verify mode" if sparse == 0 else "sparse saving, every %d" % sparse])
 	if sabotage != "":
 		_negative(seeds, setup, ticks, delay, hashEvery, profiles)
 		return
@@ -67,18 +74,16 @@ func _init() -> void:
 	var sessions: int = 0
 	var hashed: int = 0
 	for seed in seeds:
-		var ref := _straight(seed, setup, ticks, delay, hashEvery)
-		if ref.is_empty():
-			continue
-		print("seed %d  straight: %d exchanges, %d ticks with feed or fx, replay %s, KO %s, aliases %s" % [seed, ref.exN, ref.outTicks, "verified" if ref.replayOk else "FAILED", ref.ko, "none" if ref.aliases.is_empty() else str(ref.aliases)])
-		if not ref.replayOk or not ref.aliases.is_empty():
-			failures += 1
 		for pname in profiles:
-			var res := _session(seed, setup, ticks, delay, hashEvery, NetLoopback.PROFILES[pname], ref)
+			var d: int = _delayFor(seed, setupName, setup, pname, delay)
+			if d < 0:
+				continue
+			var ref := _ref(seed, setup, ticks, d, hashEvery)
+			var res := _session(seed, setup, ticks, d, hashEvery, NetLoopback.PROFILES[pname], ref)
 			sessions += 1
 			hashed += int(res.hashed)
 			var tag: String = "ok  " if res.err == "" else "FAIL"
-			print("  %s %-6s  hashes %5d  outs %5d  rollbacks %5d  resim %6d  max depth %2d  stalls %4d  lost %4d/%d  %s" % [tag, pname, res.hashed, res.outs, res.rollbacks, res.resim, res.maxDepth, res.stalls, res.lost, res.sent, res.err])
+			print("  %s %-6s  delay %d  hashes %5d  outs %5d  rollbacks %5d  resim %6d  max depth %2d  stalls %4d  lost %4d/%d  %s" % [tag, pname, d, res.hashed, res.outs, res.rollbacks, res.resim, res.maxDepth, res.stalls, res.lost, res.sent, res.err])
 			if res.err != "":
 				failures += 1
 	var objects1: int = int(Performance.get_monitor(Performance.OBJECT_COUNT))
@@ -98,22 +103,55 @@ func _negative(seeds: Array, setup: Dictionary, ticks: int, delay: int, hashEver
 	var missed: int = 0
 	var caught: int = 0
 	for seed in seeds:
-		var ref := _straight(seed, setup, ticks, delay, hashEvery)
 		for brk in ["restore", "norollback"]:
-			sabotage = brk
 			for pname in profiles:
 				if pname == "lan":
 					continue
-				var res := _session(seed, setup, ticks, delay, hashEvery, NetLoopback.PROFILES[pname], ref)
+				sabotage = ""
+				var d: int = _delayFor(seed, "", setup, pname, delay)
+				if d < 0:
+					continue
+				var ref := _ref(seed, setup, ticks, d, hashEvery)
+				sabotage = brk
+				var res := _session(seed, setup, ticks, d, hashEvery, NetLoopback.PROFILES[pname], ref)
 				if res.mispred == 0:
 					continue   # every input arrived in time: nothing was predicted wrong, so nothing to catch
-				print("  %s %-10s %-6s  %s" % ["caught" if res.err != "" else "MISSED", brk, pname, res.err])
+				print("  %s %-10s %-6s  delay %d  %s" % ["caught" if res.err != "" else "MISSED", brk, pname, d, res.err])
 				if res.err == "":
 					missed += 1
 				else:
 					caught += 1
 	print("%s  negative control: %d break(s) caught, %d missed" % ["PASS" if missed == 0 and caught > 0 else "FAIL", caught, missed])
 	quit(0 if missed == 0 and caught > 0 else 1)
+
+
+## The delay a profile's session runs at: the fixed one, or (fixed < 0) the one its handshake agrees; -1 on a failed
+## handshake (a failure, counted).
+func _delayFor(seed: int, setupName: String, setup: Dictionary, pname: String, fixed: int) -> int:
+	if fixed >= 0:
+		return fixed
+	var ag: Dictionary = NetLoopback.agree(NetHandshake.keyOf(seed, {"p1": false, "p2": false}, setup), NetLoopback.PROFILES[pname], devices, seed * 131 + int(NetLoopback.PROFILES[pname].ping))
+	if setupName != "":
+		print("  handshake %-6s  proposals %d and %d -> delay %d   rtt median %.0f, %.0f ms   %d frames  %s" % [pname, ag.proposals[0], ag.proposals[1], ag.delay, ag.rttMedian[0], ag.rttMedian[1], ag.frames, ag.failed])
+	if ag.failed != "" or ag.delay != maxi(ag.proposals[0], ag.proposals[1]):
+		print("FAIL  handshake on %s: %s" % [pname, ag.failed if ag.failed != "" else "the delay is not the larger proposal"])
+		failures += 1
+		return -1
+	return ag.delay
+
+
+## The straight run for (seed, delay), made once and checked when made.
+func _ref(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery: int) -> Dictionary:
+	var key: Array = [seed, delay]
+	if refs.has(key):
+		return refs[key]
+	var ref := _straight(seed, setup, ticks, delay, hashEvery)
+	if sabotage == "":
+		print("seed %d  delay %d  straight: %d exchanges, %d ticks with feed or fx, replay %s, KO %s, aliases %s" % [seed, delay, ref.exN, ref.outTicks, "verified" if ref.replayOk else "FAILED", ref.ko, "none" if ref.aliases.is_empty() else str(ref.aliases)])
+		if not ref.replayOk or not ref.aliases.is_empty():
+			failures += 1
+	refs[key] = ref
+	return ref
 
 
 ## The straight run: the same inputs, no network. {hash: tick -> gameplay hash, out: tick -> digest, final, inputs,

@@ -1,6 +1,6 @@
 # Rollback netcode: the core
 
-Owner: Netcode and Online. 2026-10-28, cloud briefs `docs/ep/cloud-briefs/netcode-rollback.md` (sections 1 to 6) and `netcode-desync-spectate.md` (sections 7 to 9). Code: `net/`. No transport yet: two peers run in one process over simulated links.
+Owner: Netcode and Online. 2026-10-28, cloud briefs `docs/ep/cloud-briefs/netcode-rollback.md` (sections 1 to 6), `netcode-desync-spectate.md` (sections 7 to 9) and `netcode-transport.md` (section 11). Code: `net/`. The session runs over a transport interface: simulated links in one process (the loopback), or ENet between two processes. WebRTC for the browser is designed, not built (section 11).
 
 ## 1. The model
 
@@ -84,7 +84,7 @@ For p200 with one save a tick, the frame's 5.7 ms divides into 1.4 ms of ticks, 
 **What this means:**
 - **Desktop.** The mean fits easily at every ping: 3 to 6 ms of the 16.7 ms frame up to a 200 ms ping, and under 10 ms even at 400 ms. The p99 is the problem. At a 200 ms ping, one frame in a hundred costs 19 to 22 ms, so it needs either a frame of slack or the work spread over frames. Saving every 2 to 4 ticks instead of every tick cuts the mean by a quarter to a half. One more tick of input delay cuts re-simulation by about half.
 - **Phones and old laptops (x4).** Rollback as it stands does not fit: the mean alone is 9 to 23 ms from an 80 ms ping up. Rolling back there needs three things together: (1) an input delay close to the one-way time, so that little is predicted (with the delay at least the one-way time, nothing is); (2) a snapshot that costs about one tick, not three or four, which needs the sim changes in the cloud report's NEEDS FROM EP; (3) a cheaper tick (Performance). A browser on a phone is the hardest case.
-- **Bandwidth.** It is tiny. A packet holds the unacknowledged inputs, 8 bytes each, plus a header: under 1 KB/s each way at 60 packets a second.
+- **Bandwidth.** The inputs alone are tiny: 8 bytes each, under 1 KB/s each way at 60 packets a second. Measured over ENet with the header and the checkpoint digests, a peer sends 8 to 16 KB/s (section 11).
 
 ## 6. How it is tested
 
@@ -189,13 +189,14 @@ Code: `net/delay.gd` (`NetDelay.choose`). It is a pure function, with no clock a
   - a NaN speed.
 
   The negative control runs the same tests against a chooser that ignores the device and one that reads only the first sample, and both must fail.
-- **Not yet.** It runs once, at match start. Changing the delay mid-match, between exchanges with hysteresis, needs both peers to agree on the tick it changes at, which is a transport-protocol item. The round-trip samples come from the transport's pings (section 10).
+- **In the handshake.** Each peer measures its round trips with the handshake's pings and proposes `NetDelay.choose` for its own device. The match runs at the larger proposal (section 11). `rollback_check.gd --delay=auto` runs every profile at the delay its handshake agrees.
+- **Not yet.** It runs once, at match start. Changing the delay mid-match, between exchanges with hysteresis, needs both peers to agree on the tick it changes at. The host already keeps a rolling round trip during play (`NetHost.rttMs`) for that.
 
 ## 10. Open questions
 
-- **Transport.** Browser peers need WebRTC data channels (unordered, unreliable), and native builds can use ENet or Steam networking. NAT traversal needs a STUN server (free public ones exist) and, for the share of players behind symmetric NATs, a TURN relay, which costs money (ADR 0005: zero budget). One session layer over two transports keeps native and browser players able to meet.
+- **Transport.** ENet (native) is built and the WebRTC design is in section 11. What is still open is NAT traversal over the internet. It needs a STUN server (free public ones exist) and, for the share of players behind symmetric NATs, a TURN relay, which costs money (ADR 0005: zero budget). Both are outside services, so they need a ruling. ENet over the internet also needs one side to be reachable (a forwarded port), or the same STUN-style hole punching.
 - **Matchmaking.** At zero budget: lobby codes over a small signalling service (free tier), or Steam lobbies on Steam. Ranked play is out of scope until there are players.
-- **Time sync.** The loopback runs both peers on one clock. Real peers drift: the peer that is ahead must slow down (skip a frame now and then) by the frame advantage the packets report. Packets already carry the sender's frame for this.
+- **Time sync.** Built (section 11). Its tolerance at long pings is loose: at a 400 ms ping the peers stay about 2 frames apart on average, with peaks near 8.
 - **Desync reports online.** The `vsPeer` walk needs the other peer's snapshot of the mismatched tick. Online, that is an upload of the snapshot (about 160 KB) beside the replay, to a crash-report bucket or straight to the other peer after the match. That needs a transport and somewhere to put the reports, at zero budget. Until then `vsReplay` runs on one side only.
 - **A spectator relay server.** One player relaying to one spectator costs about 1 KB/s. Many spectators need a relay that is not a player. That can be a free-tier server, or a spectator relaying to further spectators: the stream is the same, and every spectator checks the digests.
 - **Changing the delay mid-match.** `NetDelay` chooses once, at match start. Changing the delay between exchanges needs both peers to agree on the tick the change lands at, with hysteresis. That is a transport-protocol item.
@@ -204,3 +205,50 @@ Code: `net/delay.gd` (`NetDelay.choose`). It is a pure function, with no clock a
 - **Platforms not proven bit-identical.** Native x64 and the web are proven (`docs/architecture/web-parity.md`). macOS on ARM, Linux on ARM, Android and iOS are not, and an ARM compiler may contract `a*b+c` into an FMA. The parity gate must run on each before cross-play between them.
 - **More than two players.** The session takes any number of slots. One-versus-many bodies past the pair are AI-driven, so they need no input. Co-op online (after versus, per Orb) is two input slots plus AI bodies, which this core already covers.
 - **Planet matches and the calm turn.** Those caches are statics keyed by world id (`WorldEpoch._plans`, `_jobs`). They should be pure caches, but no planet setup is in the check yet.
+
+## 11. Transport, handshake and time sync
+
+Code: `net/transport.gd` (`NetTransport`, the interface and the wire codec), `net/link_transport.gd` (`NetLinkTransport`, the loopback), `net/enet_transport.gd` (`NetEnetTransport`), `net/handshake.gd` (`NetHandshake`), `net/timesync.gd` (`NetTimeSync`) and `net/host.gd` (`NetHost`). The sim is not touched, and neither is `NetSession`.
+
+```
+NetSession            the rollback core (sections 1 to 9): no clock, no sockets
+   ^
+NetHost               one peer: handshake -> session at the agreed delay; time sync; ping; packets
+   ^
+NetTransport          send(now, packet) / receive(now) / isOpen() / close(), unreliable and unordered
+   |-- NetLinkTransport    the loopback's simulated links (one process, simulated time)
+   |-- NetEnetTransport    ENet, one peer, one unsequenced channel (native)
+   '-- NetWebRtcTransport  a WebRTC data channel (browser): designed below, not built
+```
+
+- **The interface.** `send(now, packet)` and `receive(now)`, where `now` is the host's clock in ms (simulated in the loopback, the wall clock in a real process), plus `isOpen()` and `close()`. Delivery is promised to be no better than UDP: a packet may be lost, delayed or reordered. The protocol needs no more, because every packet resends all the inputs the other side has not acknowledged and every field is idempotent. `NetLoopback` now sends through `NetLinkTransport`, so the rollback, desync and spectator checks run over the same interface.
+- **The wire.** `NetTransport.encode` and `decode`. A game packet has a fixed little-endian layout: 40 bytes, plus 8 per unacknowledged input and 20 per checkpoint digest. The handshake's packets use Godot's Variant encoding (`var_to_bytes`, which never decodes objects). Malformed bytes decode to null. Measured over ENet, a peer sends 8 KB/s on a LAN and 11 to 16 KB/s at 120 to 400 ms: most of it is the four newest checkpoint digests that every packet repeats, and the unacknowledged inputs, which grow with the ping. Section 5's estimate of under 1 KB/s left out the digests and the headers.
+- **ENet.** Godot's built-in `ENetConnection`, so there is no new dependency. One side calls `listen(addr, port)` and the other calls `dial(addr, port)`. Every packet is sent unsequenced on channel 0 and flushed at once: otherwise ENet would send it on the next service, a frame later. For tests, `impair(oneWay, jitter, loss, seed)` puts a loopback `Link` in front of the socket on the sending side, so the loopback's profiles apply over real sockets.
+- **The handshake** (`NetHandshake`, on any transport):
+  1. **Ping.** Each peer sends `{hs: ping, ts}` every frame until it has 16 round trips, or 3 s have passed. The other side answers each ping at once, during the match too. Only pings sent after the other peer was first heard from count. In a first version, pings that waited for the other process to start set the delay to 8 on a LAN.
+  2. **Propose.** Each peer proposes `NetDelay.choose(its round trips, its own device)`.
+  3. **Hello.** Each peer sends `{hs: hello, v, match, delay, got}` every frame. `v` is the protocol version and `match` is the match key (seed, AI flags and setup), and a mismatch in either fails the handshake. The delay is the larger of the two proposals. A peer that has finished answers any hello still marked `got = false`, so a lost last hello costs a frame.
+
+  Packets from a peer that has started playing are dropped until this one has started too. Everything in them comes again.
+- **Ping during play.** Each game packet carries `ts`, `echo` (the newest `ts` received) and `age` (how long it was held). The round trip is now − echo − age, on the sender's own clock, so the two clocks never have to agree. `NetHost.rttMs()` is the median of the last 64 samples. Time sync uses it now, and a mid-match delay change could use it later.
+- **Time sync** (`NetTimeSync`, GGPO's frame advantage). Each packet carries the sender's frame and its own advantage. A peer estimates the other's frame now as the packet's frame plus half the round trip, and its own advantage as its frame minus that. A packet overtaken by a newer one is skipped. Every 30 frames, if this peer's mean advantage over 32 samples exceeds the other's, it waits half the difference, between 1 and 8 frames. The other peer sees the same numbers reversed, so it does not wait. A wait reaches the other side's reports one round trip later, so after a wait the means start afresh and take no samples until then. Without that quiet period, at 400 ms both peers took turns waiting. A waiting host calls `session.sync()`, so packets still go out and rollbacks still happen.
+- **What the proof showed.** The numbers are in the cloud report `docs/net/cloud-reports/2026-10-28-transport.md`.
+  - Two processes over ENet on 127.0.0.1 agree on every confirmed tick from a LAN to a 400 ms ping with 10% loss. With one peer frozen for 40 frames, time sync brings the peers back to under a frame apart on average.
+  - In the frame times there, a p99 of 50 to 78 ms is the test's own cost: verify mode saves before every tick, and a full `SimHash` runs every 60 ticks (26 ms). A game does neither.
+
+### WebRTC (the browser): the design, not built
+
+- **Where it plugs in.** `NetWebRtcTransport extends NetTransport`. It holds Godot's `WebRTCPeerConnection` and one data channel made with `create_data_channel("game", {"negotiated": true, "id": 1, "ordered": false, "maxRetransmits": 0})`, which is unordered and unreliable: the same promise as ENet unsequenced. The methods map directly:
+  - `send` is `channel.put_packet(NetTransport.encode(pk))`;
+  - `receive` calls `peer.poll()`, then drains `channel.get_packet()` through `NetTransport.decode`;
+  - `isOpen` is `channel.get_ready_state() == STATE_OPEN`.
+
+  `NetHost`, `NetHandshake`, `NetTimeSync`, `NetSession` and the codec are unchanged. The bytes are the same as ENet's, so a relay or a recorded packet log works for both.
+- **Godot's support.** WebRTC is built into the web export, which uses the browser's own implementation. Native builds need the `webrtc-native` GDExtension, which is a new dependency and is not in this spike. Until that is approved, browsers play browsers over WebRTC and native builds play native builds over ENet. Cross-play would need the extension, or a relay that speaks both, which is a server.
+- **Signalling with no server.** A connection needs one offer and one answer exchanged out of band: each is SDP with its ICE candidates gathered in, a few hundred bytes compressed. With no signalling service, a lobby is copy and paste:
+  1. the host shows its offer as a code;
+  2. the joiner pastes it and shows its answer;
+  3. the host pastes that.
+
+  It is clumsy but costs nothing. On a LAN, host candidates connect with no STUN. Over the internet, a STUN server is needed and sometimes TURN too. Both are outside services, so they are left for a ruling (NEEDS FROM EP in the report).
+- **Tests when built.** The same `transport_check` parts run on any transport. A two-tab browser test of the web export, with the offer and answer passed through the page, has to run locally, because browser captures do not run in the cloud. `impair()` would wrap the channel as it wraps ENet.

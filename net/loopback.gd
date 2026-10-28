@@ -1,6 +1,7 @@
 class_name NetLoopback
 extends RefCounted
-## Two peers in one process, joined by simulated links with latency, jitter and loss (no sockets). Both run a NetSession
+## Two peers in one process, joined by simulated links with latency, jitter and loss (no sockets), each peer's pair of
+## links wrapped as its NetTransport (NetLinkTransport). Both run a NetSession
 ## at 60 frames a second of simulated wall time; every frame each peer sends one packet with all its inputs the other has
 ## not acknowledged, so a lost packet costs a frame, not an input. Packets can arrive out of order (jitter).
 ## Each packet also carries the peer's newest confirmed checkpoint digests (NetSession.chkOut, desync detection). An
@@ -67,6 +68,7 @@ class Link:
 class Peer:
 	var session: NetSession
 	var bot: NetBot
+	var transport: NetTransport   # a NetLinkTransport over links[k] out and the other's link in
 	var acked: int = 0   # the other peer holds every one of our inputs below this tick
 
 	func packet() -> Dictionary:
@@ -99,7 +101,8 @@ var relayPredicted: bool = false   # tests only (the spectator check's negative 
 
 ## Two peers on fresh sims of the same match. profile is a PROFILES entry; seed seeds the links; bots answer for each
 ## slot from botSeed.
-static func make(matchSeed: int, setup: Dictionary, profile: Dictionary, delay: int, botSeed: int, linkSeed: int) -> NetLoopback:
+## With `wire`, every packet goes through NetTransport's bytes on its way.
+static func make(matchSeed: int, setup: Dictionary, profile: Dictionary, delay: int, botSeed: int, linkSeed: int, wire: bool = false) -> NetLoopback:
 	var L := NetLoopback.new()
 	var skew: float = float(profile.get("skew", 0.5))
 	var ping: float = float(profile.ping)
@@ -112,7 +115,45 @@ static func make(matchSeed: int, setup: Dictionary, profile: Dictionary, delay: 
 		L.peers.append(p)
 		var oneWay: float = ping * (skew if k == 0 else 1.0 - skew)
 		L.links.append(Link.new(oneWay, float(profile.jitter), float(profile.loss), (linkSeed * 7919 + k * 104729) & 0xFFFFFFFF))
+	for k in range(2):
+		L.peers[k].transport = NetLinkTransport.new(L.links[k], L.links[1 - k], wire)
 	return L
+
+
+## The handshake (NetHandshake) between two peers on links of this profile, on simulated time, each with its own
+## device: {delay, proposals: [peer 0's, peer 1's], rttMedian: [ms, ms], frames, failed}. Its links are its own (other
+## seeds), so a check can run the match on make()'s links at the agreed delay. keys gives each peer its own match key,
+## and pickLarger = false breaks the rule (both for tests only).
+static func agree(matchKey: String, profile: Dictionary, devices: Array, linkSeed: int, keys: Array = [], pickLarger: bool = true) -> Dictionary:
+	var skew: float = float(profile.get("skew", 0.5))
+	var ls: Array = []
+	for k in range(2):
+		var oneWay: float = float(profile.ping) * (skew if k == 0 else 1.0 - skew)
+		ls.append(Link.new(oneWay, float(profile.jitter), float(profile.loss), (linkSeed * 5023 + k * 7907 + 3) & 0xFFFFFFFF))
+	var trs: Array = [NetLinkTransport.new(ls[0], ls[1], true), NetLinkTransport.new(ls[1], ls[0], true)]
+	var hss: Array = []
+	for k in range(2):
+		hss.append(NetHandshake.new(keys[k] if keys.size() == 2 else matchKey, devices[k]))
+		hss[k].pickLarger = pickLarger   # tests only
+	var t: float = 0.0
+	var f: int = 0
+	while f < 600:
+		for k in range(2):
+			for pk in trs[k].receive(t):
+				hss[k].take(t, pk, trs[k])
+			hss[k].step(t, trs[k])
+		f += 1
+		t += FRAME_MS
+		if (hss[0].done() and hss[1].done()) or hss[0].failed != "" or hss[1].failed != "":
+			break
+	var fail: String = hss[0].failed if hss[0].failed != "" else hss[1].failed
+	if fail == "" and not (hss[0].done() and hss[1].done()):
+		fail = "the handshake did not finish in %d frames" % f
+	if fail == "" and hss[0].delay != hss[1].delay:
+		fail = "the peers agreed on different delays (%d, %d)" % [hss[0].delay, hss[1].delay]
+	return {"delay": hss[0].delay, "delays": [hss[0].delay, hss[1].delay], "proposals": [int(hss[0].mine.get("delay", -1)), int(hss[1].mine.get("delay", -1))],
+		"rttMedian": [float(hss[0].mine.get("medianMs", -1.0)), float(hss[1].mine.get("medianMs", -1.0))],
+		"samples": [hss[0].rtts.size(), hss[1].rtts.size()], "rtts": [hss[0].rtts, hss[1].rtts], "frames": f, "failed": fail}
 
 
 ## A spectator on a fresh sim of the same match, fed by peer `relay_` over links like the relay's own (the same
@@ -148,7 +189,7 @@ func step(until: int) -> void:
 		var p: Peer = peers[k]
 		var t0: int = clock.call() if clock.is_valid() else 0
 		var playing: bool = p.session.frame < until   # timed: the frames of play, not the flush after the last tick
-		for pk in links[1 - k].receive(now):
+		for pk in p.transport.receive(now):
 			p.take(pk)
 		if p.session.frame < until:
 			if p.session.canAdvance():
@@ -169,7 +210,7 @@ func step(until: int) -> void:
 		if spectator.frame < until:
 			spectator.advance(until)
 	for k in range(2):
-		links[k].send(now, peers[k].packet())
+		peers[k].transport.send(now, peers[k].packet())
 	if spectator != null:
 		specLinks[0].send(now, _relayPacket())
 		specLinks[1].send(now, {"ack": spectator.have})
