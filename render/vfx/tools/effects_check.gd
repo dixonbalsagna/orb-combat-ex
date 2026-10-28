@@ -199,6 +199,7 @@ func _run() -> void:
 	_biome_fx()
 	_biome_ambient()
 	_biome_scars()
+	_variant_debris()
 	_forest_fire()
 	_after()
 	_trails()
@@ -1294,6 +1295,127 @@ func _biome_scars() -> void:
 	_tick(S, ht, many)
 	VfxBiome.override_biome = ""
 	_check(ht.biomefx._scorch_n <= int(dat["scorch"]["per_tick_cap"]) + 4, "a tick with eight scorch samples stays near the per-tick cap (%d)" % ht.biomefx._scorch_n)
+
+
+## The ten gen 2 variants' own debris (biome.gd `variant`, data/vfx/biome.json `variants`; docs/vfx/biome-fx.md window 5): each name draws every one of its row's fx kinds in its biome's colours, no two alike;
+## the seven built names (gen 1) and every name with the switch off draw exactly as before; a long beam stays under the per-tick cap; nothing asks the flash register.
+func _variant_debris() -> void:
+	print("variant debris")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var sig: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/combat/sigvariants.json"))
+	var dat: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/vfx/biome.json"))
+	var rows: Dictionary = dat["variants"]["rows"]
+	var built: Array = []
+	var fresh: Array = []
+	for key in sig["variants"]:
+		var r: Dictionary = sig["variants"][key]
+		if bool(r.get("asBuilt", false)):
+			if not built.has(String(r["name"])):
+				built.append(String(r["name"]))
+		else:
+			fresh.append(String(r["name"]))
+	var gaps: Array = []
+	for nm in fresh:
+		if not rows.has(nm):
+			gaps.append(nm)
+			continue
+		for f in sig["variants"][VfxBiome.sig_row(nm)["biome"]]["fx"]:
+			if not rows[nm].has(String(f)):
+				gaps.append("%s/%s" % [nm, f])
+		for f in rows[nm]:
+			if not VfxBiome.sig_row(nm)["fx"].has(String(f)):
+				gaps.append("%s/+%s" % [nm, f])
+	_check(fresh.size() == 10 and gaps.is_empty(), "the ten new rows each have emitters for every fx kind of their row and none beyond (%d rows; gaps %s)" % [fresh.size(), str(gaps)])
+	var stray: Array = rows.keys().filter(func(n): return not fresh.has(String(n)))
+	_check(stray.is_empty() and built.size() == 6, "no built name (%s) has variant debris (stray %s)" % [", ".join(built), str(stray)])
+	var digest := func(h: VfxHub) -> String:
+		var parts: PackedStringArray = []
+		for b in h.debris.bits:
+			parts.append("%d|%.4f|%.4f|%.4f|%.4f|%.4f|%.4f|%s|%s" % [b.kind, b.x, b.y, b.z, b.vx, b.vy, b.sx, b.col.to_html(), b.col2.to_html()])
+		return "%d;%d;%s" % [h.debris.spawned, h.debris.dropped, ";".join(parts)]
+	var x: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var run := func(name: String, on: bool, ticks: int, power: float, reduced: bool, per_tick: int) -> VfxHub:
+		var h := VfxHub.new()
+		h.reset(S, 6)
+		h.px_per_unit = 0.3
+		h.embers_enabled = true
+		h.variant_debris_enabled = on
+		h.reduced_motion = reduced
+		for k in range(ticks):
+			var evs: Array = []
+			for j in range(per_tick):
+				evs.append(VfxMock.ev("scorch", {"x": x + float(k) * 12.0 + float(j) * 6.0, "y": WorldTerrain.groundY(S, x), "power": power, "variant": name, "z": 0.0}))
+			_tick(S, h, evs)
+		return h
+	# gen 1 draws byte-identically: the seven built names with the switch on and off; and with it off the ten new names keep today's scorch embers
+	var same: Array = []
+	for nm in built + fresh:
+		var a: VfxHub = run.call(nm, true, 30, 2.0, false, 1)
+		var b: VfxHub = run.call(nm, false, 30, 2.0, false, 1)
+		if built.has(nm) and (digest.call(a) != digest.call(b) or not a.biomefx.variant_made.is_empty()):
+			same.append(nm)
+		if not b.biomefx.variant_made.is_empty():
+			same.append(nm + " (off)")
+	_check(same.is_empty(), "the built names draw the same bits with the switch on as off, and nothing of a variant's own draws with it off (differ: %s)" % str(same))
+	# each name draws each of its kinds, in its own colours
+	var sets: Dictionary = {}
+	for nm in fresh:
+		var h: VfxHub = run.call(nm, true, 60, 1.5, false, 1)
+		var vm: Dictionary = h.biomefx.variant_made.get(nm, {"kinds": {}, "fx": {}})
+		var miss: Array = []
+		for f in rows[nm]:
+			if int(vm["fx"].get(String(f), 0)) <= 0:
+				miss.append(String(f))
+			for em in rows[nm][f]:
+				if int(vm["kinds"].get(String(em["kind"]), 0)) <= 0:
+					miss.append("%s:%s" % [f, em["kind"]])
+		_check(miss.is_empty() and h.biomefx.stars == 0, "%s draws %s (%s)%s" % [nm, ", ".join(PackedStringArray(rows[nm].keys())), str(vm["kinds"]), "" if miss.is_empty() else " MISSING %s" % str(miss)])
+		var cs: Dictionary = {}
+		for b in h.debris.bits:
+			cs["%d:%s" % [b.kind, b.col.to_html(false)]] = true
+		var ks: Array = cs.keys()
+		ks.sort()
+		sets[nm] = ",".join(PackedStringArray(ks))
+	var dup: Array = []
+	for i in range(fresh.size()):
+		for j in range(i + 1, fresh.size()):
+			if sets[fresh[i]] == sets[fresh[j]]:
+				dup.append("%s = %s" % [fresh[i], fresh[j]])
+	_check(dup.is_empty(), "no two of the ten throw the same pieces in the same colours (%s)" % str(dup))
+	# the looks named in the rows
+	var pick := func(nm: String, kind: int) -> Array:
+		return run.call(nm, true, 40, 1.5, false, 1).debris.bits.filter(func(b): return b.kind == kind)
+	var ice: Array = pick.call("FLOE SPLIT", VfxDebris.TRI)
+	_check(ice.size() > 2 and ice.all(func(b): return b.col.is_equal_approx(VfxBiome.spec("sea_ice")["lit"]) or b.col.is_equal_approx(VfxBiome.spec("sea_ice")["mid"]) or b.col.is_equal_approx(VfxBiome.spec("sea_ice")["ej0"])), "FLOE SPLIT throws ice shards in the sea ice's colours (%d)" % ice.size())
+	var plates: Array = pick.call("FROST HEAVE", VfxDebris.CHUNK).filter(func(b): return b.sy < b.sx * 0.4)
+	_check(plates.size() > 1, "FROST HEAVE throws thin flat plates (%d)" % plates.size())
+	var cs_bits: Array = run.call("CRUST SEAR", true, 40, 1.5, false, 1).debris.bits
+	var orange: int = cs_bits.filter(func(b): return b.kind == VfxDebris.CHUNK and b.col.is_equal_approx(VfxBiome.spec("volcanic")["ej0"])).size()
+	_check(orange > 2 and cs_bits.filter(func(b): return b.kind == VfxDebris.EMBER).size() == 0 and cs_bits.filter(func(b): return b.kind == VfxDebris.ASH).size() > 2, "CRUST SEAR: steady orange chips (%d) and ash, never the pulsing ember bit" % orange)
+	_check(pick.call("SHORE SCOUR", VfxDebris.SPRAY).size() > 1 and pick.call("MIRE BOIL", VfxDebris.SPRAY).size() > 0, "SHORE SCOUR and MIRE BOIL throw water streaks")
+	_check(pick.call("GRASSLAND BLAZE", VfxDebris.EMBER).size() > 1 and pick.call("GRASSLAND BLAZE", VfxDebris.SPLINTER).size() > 1, "GRASSLAND BLAZE: cinders under the ember budget and tumbling straw")
+	var dust_col: Color = Color(String(sig["variants"]["taiga"]["fx"]["dust"]))
+	_check(run.call("PINE BREAK", true, 40, 1.5, false, 1).debris.bits.filter(func(b): return b.kind == VfxDebris.PUFF and b.col.is_equal_approx(dust_col)).size() > 0, "a row's dust puffs are its own fx.dust colour (PINE BREAK %s)" % dust_col.to_html(false))
+	# scaled and capped
+	var hs: VfxHub = run.call("CRUST SEAR", true, 60, 3.0, false, 1)
+	var hw: VfxHub = run.call("CRUST SEAR", true, 60, 0.6, false, 1)
+	var hr: VfxHub = run.call("CRUST SEAR", true, 60, 1.5, true, 1)
+	var hn: VfxHub = run.call("CRUST SEAR", true, 60, 1.5, false, 1)
+	var tot := func(h: VfxHub) -> int:
+		var t: int = 0
+		for k in h.biomefx.variant_made.get("CRUST SEAR", {"kinds": {}})["kinds"]:
+			t += int(h.biomefx.variant_made["CRUST SEAR"]["kinds"][k])
+		return t
+	_check(int(tot.call(hs)) >= int(tot.call(hw)) and int(tot.call(hr)) < int(tot.call(hn)), "a stronger beam throws no less (%d against %d), reduced motion fewer (%d against %d)" % [tot.call(hs), tot.call(hw), tot.call(hr), tot.call(hn)])
+	var cap: int = int(dat["variants"]["per_tick_cap"])
+	var worst: int = 0
+	for nm in fresh:
+		var h: VfxHub = run.call(nm, true, 1, 3.0, false, 8)
+		worst = maxi(worst, h.biomefx._variant_n)
+	_check(worst <= cap + 6, "a tick with eight scorch samples stays near the per-tick cap of %d (worst %d)" % [cap, worst])
+	var hf: VfxHub = run.call("ICEFIELD THAW", true, 60, 3.0, false, 2)
+	_check(hf.flashes != null and hf.flashes.log_rows().is_empty() and int(tot.call(hs)) > 0, "a long ICEFIELD THAW asks the flash register nothing (%d rows)" % (hf.flashes.log_rows().size() if hf.flashes != null else -1))
 
 
 func _forest_fire() -> void:

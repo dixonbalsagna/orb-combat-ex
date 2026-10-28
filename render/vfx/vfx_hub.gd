@@ -104,6 +104,7 @@ var forestfire := VfxForestFire.new()                # a burning tree's flames, 
 var forest_fire_enabled: bool = VfxLook.FOREST_FIRE_DEFAULT
 var afterfx := VfxAfter.new()                        # what a beam leaves in the ground, drawn (after.gd; World's aftermaths, nothing while its switch is off)
 var after_enabled: bool = VfxLook.AFTER_DEFAULT
+var variant_debris_enabled: bool = VfxLook.VARIANT_DEBRIS_DEFAULT   # the ten gen 2 signature variants' own debris by name (biome.gd `variant`; data/vfx/biome.json `variants`)
 var debris := VfxDebris.new()
 var water := VfxWater.new()
 var holes: Array = []               # Hole
@@ -439,9 +440,14 @@ func _consume(S: SimState, events: Array) -> void:
 					if destruction_enabled:
 						_on_building_fall(S, e)
 				"scorch":
-					if embers_enabled:
+					var own: bool = variant_debris_enabled and VfxBiome.has_variant(String(e.variant))   # a gen 2 row's own debris, in place of the scorch embers
+					if embers_enabled and not own:
 						debris.z_shift = float(_g(e, "z", 0.0))
 						debris.embers(S, float(e.x), float(e.y), float(e.power), String(e.variant))
+						debris.z_shift = 0.0
+					if own:
+						debris.z_shift = float(_g(e, "z", 0.0))
+						biomefx.variant(S, String(e.variant), float(e.x), float(e.y) + 4.0, 0.0, float(e.power), VfxLook.QUALITY_SHARDS[clampi(quality, 0, 2)], reduced_motion)
 						debris.z_shift = 0.0
 					if biomefx_enabled:
 						debris.z_shift = float(_g(e, "z", 0.0))

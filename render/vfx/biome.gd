@@ -8,10 +8,11 @@ extends RefCounted
 ## bit, so the stream does not depend on the quality level.
 
 const TIER_K: Array = [0.7, 1.0, 1.45, 2.0]
-const KINDS: Dictionary = {"chunk": 1, "snow": 2, "leaf": 3, "ash": 4, "splinter": 5, "puff": 6}
+const KINDS: Dictionary = {"chunk": 1, "snow": 2, "leaf": 3, "ash": 4, "splinter": 5, "puff": 6, "shard": 7, "plate": 8, "spray": 9, "cinder": 10}
 
 static var _data: Dictionary = {}
 static var _art: Dictionary = {}
+static var _sig: Dictionary = {}          # data/combat/sigvariants.json's rows by name: {"biome": the row's key, "fx": its fx} (read only)
 static var _loaded: bool = false
 ## Tests and tools only: forces a biome name whatever the sim says (World's fine ids are not in every match).
 static var override_biome: String = ""
@@ -32,6 +33,9 @@ var scorch_made: Dictionary = {}          # scar flecks made, by kind (for the t
 var _scorch_tick: int = -1
 var _scorch_n: int = 0
 var _last_plume_x: float = 0.0
+var variant_made: Dictionary = {}         # variant debris made, by the beam variant's name: {"kinds": by bit kind, "fx": by the row's fx kind} (for the tests)
+var _variant_tick: int = -1
+var _variant_n: int = 0
 
 
 static func warm() -> void:
@@ -51,6 +55,14 @@ static func warm() -> void:
 				var pl = a["biomes"][id].get("plume")
 				if pl is Dictionary:
 					_art[String(id)] = _parse(pl, a["biomes"][id].get("palette", {}), a["biomes"][id].get("scar", {}))
+	var sp := "res://data/combat/sigvariants.json"
+	if FileAccess.file_exists(sp):
+		var g = JSON.parse_string(FileAccess.get_file_as_string(sp))
+		if g is Dictionary and g.get("variants") is Dictionary:
+			for key in g["variants"]:
+				var row = g["variants"][key]
+				if row is Dictionary and row.has("name") and row.get("fx") is Dictionary and not _sig.has(String(row["name"])):
+					_sig[String(row["name"])] = {"biome": String(key), "fx": row["fx"]}
 
 
 static func _lin(v: float) -> float:
@@ -145,6 +157,9 @@ func reset() -> void:
 	scorch_made = {}
 	_scorch_tick = -1
 	_scorch_n = 0
+	variant_made = {}
+	_variant_tick = -1
+	_variant_n = 0
 	warm()
 
 
@@ -302,6 +317,54 @@ func scorch(S, x: float, y: float, z: float, power: float, q: float, reduced: bo
 			after += int(made[k])
 		_scorch_n += after - before
 		scorch_made[String(em.get("kind", "chunk"))] = int(scorch_made.get(String(em.get("kind", "chunk")), 0)) + (after - before)
+
+
+## Whether a beam variant's name has debris of its own (data/vfx/biome.json `variants`): the ten gen 2 rows. The seven built names have none, so a gen 1 beam never reaches `variant`.
+static func has_variant(name: String) -> bool:
+	warm()
+	var v = _data.get("variants")
+	return v is Dictionary and v.get("rows") is Dictionary and v["rows"].has(name) and _sig.has(name)
+
+
+## sigvariants.json's row of a name ({"biome", "fx"}; {} when there is none). Tests and tools.
+static func sig_row(name: String) -> Dictionary:
+	warm()
+	return _sig.get(name, {})
+
+
+## A gen 2 beam's scorch sample (the sim's `scorch` event) in its variant's own material: the emitters of each of the row's fx kinds (data/vfx/biome.json `variants`), in Art's plume colours of the row's
+## biome, the row's dust colour and the steam's. Scaled by the beam's power, quality and reduced motion, at most `per_tick_cap` bits a tick however long the beam. Draws from the pool's cosmetic stream only.
+func variant(S, name: String, x: float, y: float, z: float, power: float, q: float, reduced: bool) -> void:
+	if debris == null or not has_variant(name):
+		return
+	var row: Dictionary = _sig[name]
+	var sp: Dictionary = spec(String(row["biome"]))
+	if sp.is_empty():
+		return
+	sp = sp.duplicate()
+	sp["dust"] = RenderLook.col(String(row["fx"].get("dust", "#9b8f7e")))
+	sp["steam"] = RenderLook.col(String(_data.get("steam", {}).get("col", "#b9c1c0")))
+	var vs: Dictionary = _data["variants"]
+	var tick: int = int(S.tick) if S != null else 0
+	if tick != _variant_tick:
+		_variant_tick = tick
+		_variant_n = 0
+	var cap: int = int(vs.get("per_tick_cap", 8))
+	var pw: float = clampf(power, 0.5, 3.0)
+	var vm: Dictionary = variant_made.get(name, {"kinds": {}, "fx": {}})
+	var fxs: Dictionary = vs["rows"][name]
+	for flag in fxs:
+		for em in fxs[flag]:
+			if _variant_n >= cap:
+				break
+			var before: Dictionary = made.duplicate()
+			_one(em, sp, x, y, z, 0.0, 1.0, 1.0 + 0.4 * (pw - 1.0), 1.0, q * (0.5 if reduced else 1.0), 1.0)
+			var kind: String = String(em.get("kind", "chunk"))
+			var d: int = int(made.get(kind, 0)) - int(before.get(kind, 0))
+			_variant_n += d
+			vm["kinds"][kind] = int(vm["kinds"].get(kind, 0)) + d
+			vm["fx"][String(flag)] = int(vm["fx"].get(String(flag), 0)) + d
+	variant_made[name] = vm
 
 
 # --------------------------------------------------------------------------------------------------------------- the pieces
@@ -500,3 +563,13 @@ func _one(em: Dictionary, sp: Dictionary, x: float, y: float, z: float, dirx: fl
 				debris.fleck(VfxDebris.SPLINTER, px, py, z + 8.0, vx, vy, size, rl * lk, c, c, 0, grav, drag, 9.0, rsp)
 			"puff":
 				debris.dust_puff("plains", px, py, z + 12.0, vx, vy, size, size * float(em.get("grow", 1.8)), rl * lk, 0, c, puff_weight(c, sp["ground"]))
+			"shard":
+				debris.fleck(VfxDebris.TRI, px, py, z + 8.0, vx, vy, size, rl * lk, c, c.lightened(0.35), 0, grav, drag, 9.0, rsp)
+			"plate":
+				# a thin flat slab of the frozen ground, tumbling slowly; a share lands and stays as a chunk does
+				var pstay: bool = rsg < float(em.get("stay", 0.0)) and lk >= 0.99
+				debris.fleck(VfxDebris.CHUNK, px, py, z + 6.0, vx, vy, size, (4.5 + 2.0 * rc) if pstay else rl * lk, c, c.lightened(0.25), int(em.get("mode", 2)), grav, drag, 4.0, rsp, -1e9, pstay, false, 0.32)
+			"spray":
+				debris.fleck(VfxDebris.SPRAY, px, py, z + 8.0, vx, vy, size, rl * lk, c, c.darkened(0.15), 0, grav, drag, 0.0, rsp, y - 2.0)
+			"cinder":
+				debris.ember_bit(px, py, z + 8.0, vx, vy, size, rl * lk, grav)

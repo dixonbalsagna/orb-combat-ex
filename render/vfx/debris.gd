@@ -830,8 +830,8 @@ func chunk(x: float, y: float, z: float, vx: float, vy: float, size: float, life
 
 
 ## A fleck of a biome's material (biome.gd): kind CHUNK, SNOW, LEAF, ASH, SPLINTER or SPRAY; col its body, col2 the chunk's lit tone; mode the chunk's; grav a share of DEBRIS_GRAV; drag a share lost a
-## tick; spin the most it turns; rsp a number in -1..1 the caller drew (the bit's turn and seed come from it, so this draws nothing from the pool's streams); ky a spray's kill height.
-func fleck(kind: int, x: float, y: float, z: float, vx: float, vy: float, size: float, life: float, col: Color, col2: Color, mode: int, grav: float, drag: float, spin: float, rsp: float, ky: float = -1e9, stay: bool = false, amb: bool = false) -> void:
+## tick; spin the most it turns; rsp a number in -1..1 the caller drew (the bit's turn and seed come from it, so this draws nothing from the pool's streams); ky a spray's kill height; flat a chunk's width over its length.
+func fleck(kind: int, x: float, y: float, z: float, vx: float, vy: float, size: float, life: float, col: Color, col2: Color, mode: int, grav: float, drag: float, spin: float, rsp: float, ky: float = -1e9, stay: bool = false, amb: bool = false, flat: float = 0.8) -> void:
 	if kind == SPRAY and _spray_alive >= 120:
 		return
 	var b := Bit.new()
@@ -852,7 +852,7 @@ func fleck(kind: int, x: float, y: float, z: float, vx: float, vy: float, size: 
 		SPRAY:
 			b.sy = maxf(size * 0.2, 7.0)
 		CHUNK:
-			b.sy = size * 0.8
+			b.sy = size * flat     # flat: a chunk's width over its length (0.8; a frozen plate's 0.32)
 		_:
 			b.sy = size
 	b.life = life

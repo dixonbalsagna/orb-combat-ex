@@ -17,6 +17,7 @@
     "kinds",
     "ambient",
     "scorch",
+    "variants",
     "fire"
   ],
   "properties": {
@@ -703,6 +704,52 @@
             "type": "array",
             "items": {
               "$ref": "#/$defs/emitter"
+            }
+          }
+        }
+      },
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false
+    },
+    "variants": {
+      "type": "object",
+      "description": "Window 5: the ten gen 2 signature variants' debris, by the row's name in data/combat/sigvariants.json, one list of emitters for each of the row's fx kinds (render/vfx/biome.gd `variant`). The cross-check against sigvariants.json's rows is in effects_check.",
+      "required": [
+        "per_tick_cap",
+        "rows"
+      ],
+      "properties": {
+        "per_tick_cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "rows": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "propertyNames": {
+              "enum": [
+                "dust",
+                "steam",
+                "shards",
+                "plates",
+                "powder",
+                "spray",
+                "fire",
+                "embers",
+                "ash",
+                "sparks"
+              ]
+            },
+            "additionalProperties": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/emitter"
+              }
             }
           }
         }
@@ -1496,7 +1543,11 @@
             "leaf",
             "ash",
             "splinter",
-            "puff"
+            "puff",
+            "shard",
+            "plate",
+            "spray",
+            "cinder"
           ]
         },
         "n": {
@@ -1521,7 +1572,9 @@
               "ej0",
               "ej1",
               "scar_fill",
-              "scar_edge"
+              "scar_edge",
+              "dust",
+              "steam"
             ]
           }
         },

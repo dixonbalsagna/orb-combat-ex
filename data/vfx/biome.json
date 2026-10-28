@@ -1091,6 +1091,107 @@
       ]
     }
   },
+  "variants": {
+    "_note": "Window 5: the ten gen 2 signature variants' debris (Encounter's W1: a gen 2 beam with sigvariants.json fineOn carries its fine biome's row name). Keyed by the row's name in data/combat/sigvariants.json, one list of emitters for each of the row's fx kinds (dust, steam, shards, plates, powder, spray, fire, embers, ash); the biome whose plume colours they take, and the row's dust colour, are read from that row (its key), so a name here with no row, or a row's fx kind with no emitters here, fails effects_check. Drawn on each of the beam's scorch events (a sample or two a tick along its path) in place of the scorch embers, behind hub.variant_debris_enabled (off until the look is seen); the seven built names never reach this table, so gen 1 draws as before. Emitters as `scorch`, plus four kinds: shard (an ice triangle), plate (a thin flat slab that tumbles and may stay), spray (a water streak that ends at the ground's height) and cinder (the pool's ember needle, under the register's ember budget), and two colour tokens: dust (the row's fx.dust) and steam (this file's steam.col). Counts are per scorch event at power 1, times 1 + 0.4 (power - 1) (power held to 0.5..3), quality and reduced motion; `per_tick_cap` holds a long beam light.",
+    "per_tick_cap": 8,
+    "rows": {
+      "ICEFIELD THAW": {
+        "dust": [
+          {"kind": "puff", "n": 0.4, "max": 1, "cols": ["dust"], "size": [30, 46], "life": [1.0, 1.6], "vx": [10, 40], "vy": [50, 90], "dir": "both", "spread": 30, "grow": 1.6},
+          {"kind": "snow", "n": 0.8, "max": 3, "cols": ["ej0", "lit"], "size": [6, 11], "life": [0.9, 1.6], "vx": [30, 160], "vy": [160, 380], "dir": "both", "spread": 40, "grav": 0.25, "drag": 0.02}
+        ],
+        "steam": [
+          {"kind": "puff", "n": 0.9, "max": 3, "cols": ["steam", "lit"], "size": [40, 64], "life": [1.4, 2.2], "vx": [5, 30], "vy": [70, 130], "dir": "both", "spread": 40, "grow": 2.0},
+          {"kind": "chunk", "n": 0.4, "max": 2, "cols": ["scar_edge"], "size": [5, 9], "life": [0.7, 1.2], "vx": [40, 180], "vy": [140, 380], "dir": "both", "spread": 30, "grav": 0.9, "mode": 2}
+        ]
+      },
+      "FLOE SPLIT": {
+        "dust": [
+          {"kind": "puff", "n": 0.3, "max": 1, "cols": ["dust"], "size": [30, 44], "life": [1.0, 1.5], "vx": [10, 40], "vy": [50, 90], "dir": "both", "spread": 30, "grow": 1.6}
+        ],
+        "shards": [
+          {"kind": "shard", "n": 1.2, "max": 4, "cols": ["lit", "mid", "ej0"], "size": [10, 22], "life": [0.8, 1.4], "vx": [80, 300], "vy": [200, 520], "dir": "both", "spread": 40, "grav": 1.0},
+          {"kind": "spray", "n": 0.5, "max": 2, "cols": ["ej1"], "size": [30, 56], "life": [0.6, 1.0], "vx": [30, 140], "vy": [260, 480], "dir": "both", "spread": 30, "grav": 1.0}
+        ]
+      },
+      "VINE SHEAR": {
+        "dust": [
+          {"kind": "puff", "n": 0.4, "max": 1, "cols": ["dust"], "size": [30, 46], "life": [1.0, 1.6], "vx": [10, 40], "vy": [50, 90], "dir": "both", "spread": 30, "grow": 1.6},
+          {"kind": "splinter", "n": 0.7, "max": 3, "cols": ["ej1"], "size": [14, 26], "life": [0.9, 1.5], "vx": [60, 240], "vy": [160, 400], "dir": "both", "spread": 30, "grav": 0.8},
+          {"kind": "leaf", "n": 0.8, "max": 3, "cols": ["lit", "mid", "ej0"], "size": [8, 14], "life": [1.4, 2.4], "vx": [30, 140], "vy": [120, 300], "dir": "both", "spread": 50, "grav": 0.15, "drag": 0.03}
+        ],
+        "steam": [
+          {"kind": "puff", "n": 0.6, "max": 2, "cols": ["steam"], "size": [36, 56], "life": [1.3, 2.0], "vx": [5, 30], "vy": [60, 110], "dir": "both", "spread": 40, "grow": 1.8}
+        ]
+      },
+      "GRASSLAND BLAZE": {
+        "dust": [
+          {"kind": "puff", "n": 0.4, "max": 1, "cols": ["dust"], "size": [30, 46], "life": [1.0, 1.6], "vx": [10, 40], "vy": [50, 90], "dir": "both", "spread": 30, "grow": 1.6},
+          {"kind": "splinter", "n": 0.9, "max": 3, "cols": ["ej0", "lit"], "size": [10, 20], "life": [1.0, 1.8], "vx": [40, 180], "vy": [140, 360], "dir": "both", "spread": 40, "grav": 0.3, "drag": 0.02}
+        ],
+        "fire": [
+          {"kind": "cinder", "n": 0.8, "max": 3, "cols": ["ej0"], "size": [30, 60], "life": [0.8, 1.4], "vx": [20, 90], "vy": [220, 420], "dir": "both", "spread": 60, "grav": 0.1},
+          {"kind": "puff", "n": 0.4, "max": 1, "cols": ["shade"], "size": [34, 54], "life": [1.4, 2.0], "vx": [5, 25], "vy": [60, 110], "dir": "both", "spread": 30, "grow": 1.8}
+        ]
+      },
+      "FROST HEAVE": {
+        "dust": [
+          {"kind": "puff", "n": 0.4, "max": 1, "cols": ["dust"], "size": [30, 46], "life": [1.0, 1.6], "vx": [10, 40], "vy": [50, 90], "dir": "both", "spread": 30, "grow": 1.6},
+          {"kind": "chunk", "n": 0.5, "max": 2, "cols": ["ej1"], "size": [6, 11], "life": [0.8, 1.4], "vx": [60, 220], "vy": [180, 420], "dir": "both", "spread": 30, "grav": 0.9, "mode": 2}
+        ],
+        "plates": [
+          {"kind": "plate", "n": 0.8, "max": 3, "cols": ["lit", "mid"], "size": [22, 40], "life": [1.0, 1.6], "vx": [30, 140], "vy": [260, 520], "dir": "both", "spread": 50, "grav": 1.1, "mode": 2, "stay": 0.35}
+        ]
+      },
+      "PINE BREAK": {
+        "dust": [
+          {"kind": "puff", "n": 0.4, "max": 1, "cols": ["dust"], "size": [30, 46], "life": [1.0, 1.6], "vx": [10, 40], "vy": [50, 90], "dir": "both", "spread": 30, "grow": 1.6},
+          {"kind": "splinter", "n": 0.5, "max": 2, "cols": ["ej1"], "size": [14, 24], "life": [0.9, 1.5], "vx": [60, 220], "vy": [160, 380], "dir": "both", "spread": 30, "grav": 0.8}
+        ],
+        "powder": [
+          {"kind": "snow", "n": 2.0, "max": 6, "cols": ["lit", "ej0", "mid"], "size": [6, 12], "life": [1.6, 2.8], "vx": [20, 120], "vy": [80, 260], "dir": "both", "spread": 80, "grav": 0.12, "drag": 0.04},
+          {"kind": "puff", "n": 0.6, "max": 2, "cols": ["lit"], "size": [40, 70], "life": [1.4, 2.2], "vx": [10, 40], "vy": [40, 90], "dir": "both", "spread": 60, "grow": 1.8}
+        ]
+      },
+      "MIRE BOIL": {
+        "dust": [
+          {"kind": "puff", "n": 0.4, "max": 1, "cols": ["dust"], "size": [30, 46], "life": [1.0, 1.6], "vx": [10, 40], "vy": [50, 90], "dir": "both", "spread": 30, "grow": 1.6},
+          {"kind": "chunk", "n": 0.8, "max": 3, "cols": ["shade", "mid"], "size": [7, 13], "life": [0.8, 1.3], "vx": [40, 180], "vy": [200, 460], "dir": "both", "spread": 30, "grav": 1.0, "mode": 2}
+        ],
+        "steam": [
+          {"kind": "puff", "n": 1.0, "max": 3, "cols": ["steam"], "size": [44, 70], "life": [1.4, 2.2], "vx": [5, 30], "vy": [70, 130], "dir": "both", "spread": 50, "grow": 2.0},
+          {"kind": "spray", "n": 0.5, "max": 2, "cols": ["ej0"], "size": [24, 44], "life": [0.5, 0.9], "vx": [20, 100], "vy": [220, 420], "dir": "both", "spread": 30, "grav": 1.0}
+        ]
+      },
+      "SHORE SCOUR": {
+        "dust": [
+          {"kind": "puff", "n": 0.4, "max": 1, "cols": ["dust"], "size": [30, 46], "life": [1.0, 1.6], "vx": [10, 40], "vy": [50, 90], "dir": "both", "spread": 30, "grow": 1.6},
+          {"kind": "chunk", "n": 0.6, "max": 2, "cols": ["mid", "ej1"], "size": [5, 9], "life": [0.7, 1.2], "vx": [60, 220], "vy": [160, 400], "dir": "both", "spread": 30, "grav": 0.9, "mode": 2}
+        ],
+        "spray": [
+          {"kind": "spray", "n": 1.2, "max": 4, "cols": ["scar_edge", "lit"], "size": [40, 80], "life": [0.7, 1.2], "vx": [40, 200], "vy": [300, 620], "dir": "both", "spread": 40, "grav": 1.0}
+        ]
+      },
+      "SCREE RUN": {
+        "dust": [
+          {"kind": "puff", "n": 0.5, "max": 2, "cols": ["dust"], "size": [30, 50], "life": [1.0, 1.7], "vx": [20, 70], "vy": [40, 80], "dir": "both", "spread": 40, "grow": 1.6},
+          {"kind": "chunk", "n": 1.0, "max": 4, "cols": ["lit", "mid", "shade"], "size": [7, 14], "life": [1.0, 1.8], "vx": [120, 360], "vy": [60, 200], "dir": "both", "spread": 40, "grav": 1.0, "mode": 2, "stay": 0.3},
+          {"kind": "chunk", "n": 0.3, "max": 1, "cols": ["ej1"], "size": [5, 8], "life": [0.8, 1.3], "vx": [60, 200], "vy": [160, 360], "dir": "both", "spread": 30, "grav": 0.9, "mode": 2}
+        ]
+      },
+      "CRUST SEAR": {
+        "dust": [
+          {"kind": "puff", "n": 0.4, "max": 1, "cols": ["dust"], "size": [30, 46], "life": [1.0, 1.6], "vx": [10, 40], "vy": [50, 90], "dir": "both", "spread": 30, "grow": 1.6}
+        ],
+        "embers": [
+          {"kind": "chunk", "n": 0.8, "max": 3, "cols": ["ej0"], "size": [5, 9], "life": [0.8, 1.4], "vx": [40, 180], "vy": [180, 420], "dir": "both", "spread": 30, "grav": 0.9, "mode": 2}
+        ],
+        "ash": [
+          {"kind": "ash", "n": 1.2, "max": 4, "cols": ["lit", "mid"], "size": [6, 11], "life": [1.4, 2.4], "vx": [20, 100], "vy": [100, 280], "dir": "both", "spread": 40, "grav": 0.1, "drag": 0.03}
+        ]
+      }
+    }
+  },
   "fire": {
     "_note": "Window 4: what a burning tree looks like (forest_fire.gd; World's burn field, sim/world/fire.gd, sets the tree's own burn). Cel flames in the crown (the pool's flame bit, steady orange), a few embers rising, a thin dark column of smoke. `scan.every` ticks it looks for the burning trees within the framing's span (`span`, as the ambient block's) and keeps the nearest `max_trees`; the rest of a big stand only counts. Rates are a second per tree at full intensity, scaled by quality and halved in reduced motion (no smoke then). `flame.cap` leaves the pool's explosions (earth.json flame.alive_cap 40) their room. Flame size is a share of TREE_W; h is where in the tree's live crown it sits (0 the crown's foot, or the trunk once the crown has charred, 1 the char line), and the flame is set inside the kind's silhouette at that height (render/core/cover_meshes.gd, read only).",
     "scan": {

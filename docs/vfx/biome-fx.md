@@ -76,3 +76,26 @@ A beam along the ground scorches it (the sim's `scorch` events, a sample or two 
 Small: a fleck or two a scorch sample, scaled by the beam's power, halved in reduced motion, at most six flecks a tick however long the beam. The city and villages add nothing.
 
 **The band on the ground itself is Rendering's** (the ground shader's scorch row: a char shade); Art's table wants it to read by biome (glassy dark green-black with a pale edge on sand, a slate streak with a melt-blue edge on ice, a pale-grey fused streak with a thin orange edge on volcanic ground, black char elsewhere). The colours are in Art's data (`scar.fill`, `scar.edge` per biome); that change is Rendering's file and is not in this park.
+
+## Window 5: the ten gen 2 variants' own debris (render/vfx/biome.gd `variant`, data/vfx/biome.json `variants`; 2026-10-28)
+
+Encounter's W1 gives a gen 2 beam, with `sigvariants.json` `fineOn`, the name of its fine biome's row (`data/combat/sigvariants.json`, docs/combat/biomes.md section 2). Each of the ten new names now throws its own debris on every scorch sample, built from **its row's `fx` kinds**, in Art's plume language and **the row's biome's colours** (`plume` and `scar` in data/art/biomes.json), with the row's own `fx.dust` for its dust puffs:
+
+| Variant (biome) | fx kinds | What a scorch sample throws |
+| :--- | :--- | :--- |
+| **ICEFIELD THAW** (ice sheet) | dust, steam | tall pale melt steam (the steam colour and the snow's lit tone), snow flecks, a few melt-blue chips (Art's scar edge) |
+| **FLOE SPLIT** (sea ice) | dust, shards | ice triangles in the sea ice's lit, mid and ejecta tones flung high; dark lead water in short streaks |
+| **VINE SHEAR** (jungle) | dust, steam | bark splinters, leaves and the jungle's magenta petals swaying down, steam off the wet ground, dark loam dust |
+| **GRASSLAND BLAZE** (savanna) | dust, fire | cinders (the pool's ember needle, under the register's ember budget) and tumbling straw, a puff of the savanna's shade smoke |
+| **FROST HEAVE** (tundra) | dust, plates | thin flat frozen plates (a chunk a third as wide as it is long) that tumble slowly, a share landing and staying; dark soil clods |
+| **PINE BREAK** (taiga) | dust, powder | a burst of snow powder (many slow-swaying flakes and pale puffs) and dark-green crown splinters |
+| **MIRE BOIL** (wetland) | dust, steam | the widest steam puffs, mud globs in the marsh's shade, short streaks of marsh water |
+| **SHORE SCOUR** (beach) | dust, spray | water streaks in the beach's pale foam edge and sand tones (they end where they fall back to the ground), pebbles |
+| **SCREE RUN** (highland) | dust | low, fast rock chunks in the three rock tones that run along the ground and partly stay, a heather chip |
+| **CRUST SEAR** (volcanic) | dust, embers, ash | **steady orange chips** in Art's ejecta orange (never the pulsing ember bit, as window 1) and pale ash flakes |
+
+- **Where it hooks.** The hub's `scorch` event: with `variant_debris_enabled` and a name in the table, `biomefx.variant` draws **in place of** the scorch embers (`debris.embers`). The seven built names have no row in the table, so they take today's path untouched; with the switch off every name, the ten included, draws exactly as before.
+- **Switch:** `VfxHub.variant_debris_enabled`, `VfxLook.VARIANT_DEBRIS_DEFAULT` **false** until the look is seen (look evidence pending, local).
+- **Budget.** Counts are per scorch sample at power 1, times 1 + 0.4 (power − 1), quality and reduced motion (halved), at most `per_tick_cap` (8) bits a tick (one emitter may finish past it). In real gen 2 play that is about 2 to 4 bits a tick while a beam carves, the same order as the scorch embers it replaces. Nothing asks the flash register: no star, no flash; GRASSLAND BLAZE's cinders go through `ember_bit`, which holds the register's ember area, cap and per-tick budget.
+- **New pieces** in `_one` (any emitter may use them): `shard` (an ice triangle), `plate` (a thin flat slab; `fleck` takes a chunk's `flat`, default 0.8 as before), `spray` (a water streak that ends at the ground's height), `cinder` (the ember needle), and the colour tokens `dust` (the row's fx.dust) and `steam`. Schema: `tools/schemas/vfx-biome.schema.json`.
+- **Checks** (`effects_check.gd`, "variant debris"): the table and sigvariants.json agree (every new row, every fx kind, nothing for a built name); each name draws each of its kinds; no two throw the same pieces in the same colours; the built names draw the same bits with the switch on and off; a stronger beam throws no less, reduced motion fewer; the per-tick cap; no register asks.
