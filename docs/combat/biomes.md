@@ -53,7 +53,7 @@ Owner: Combat and Choreography. Date: 2026-10-23. Paper and three parked data fi
 
 ## 2. Signature variants by biome
 
-The full rows, with every outcome's line, are in `pending/biomes/sigvariants.json`. The ten new rows:
+The full rows, with every outcome's line, are in `data/combat/sigvariants.json` (live since e1521ef5; read by Encounter's W1 and W2). The ten new rows:
 
 | Biome | Variant | The groove (depth × width) | Trees | What it leaves for the rest of the fight |
 | :--- | :--- | :--- | :--- | :--- |
@@ -124,11 +124,11 @@ A block for `data/director/launch.json` (`pending/biomes/launch.biome.json`).
 | **CLIFFSIDE** | A rise ahead steeper than 1.2 over at least 2 bh, out to 166 bh, found from the heights and not from a biome name | across | 18, +1 a bh of rise (cap 8); villain +2 | MOUNTAINSIDE for any biome: highland crags, volcanic cones, sea cliffs. He hits the face: the slide's wall stop, or an embed |
 | **ICE SKID** | Ice within 1 bh of him | across, low and flat, force 0.8 | 14; +6 when it ends in open water, +8 against a berg; hero +2 | **Ice to skid on:** a long slide for little force. Its length is World's ice brake. Ending in a lead puts him in the water. **Ruled:** he has control again where the same send would have stopped on rock, and the rest is a skate he can act out of |
 | **MARSH SWALLOW** | Mud under him, at most 12 bh up | down | 16; hero +6, villain −2 | **The marsh swallows the slam:** it always embeds (the one deliberate embed, as ruled), he sits 1.8 times as deep, the crater closes again and little is destroyed, so the carer likes it |
-| **TREE LINE** | 2 to 6 trunks on the line within 60 bh | across, low | 10, +2 a trunk; hero +2 | **Trees to smash through:** each trunk snaps and slows him by 12%, the way BUILDING SMASH chains buildings |
+| **TREE LINE** | 2 to 6 trunks on the line within 60 bh | across, low | 10, +1.5 a trunk (Game Design 2026-10-28 item 3, from 2); hero +2 | **Trees to smash through:** each trunk snaps and slows him by 12%, the way BUILDING SMASH chains buildings |
 | **SKIM ASHORE** | He is over water, and the path skims 6 times or fewer and lands on dry ground within 160 bh | across, low | 14, and the water penalty is waived | Fights over the sea come back to land. That answers the old ocean-heavy launch mix |
 | **DOWNHILL** | The ground falls 4 bh or more within 40 bh ahead, on rubble, turf, snow, ash or shingle | across | 8, +0.8 a bh of drop (cap 12) | He tumbles down the slope |
-| **VENT LIFT** | A vent within 2 bh (World's prop) | up | 12; villain +2 | The vent's blast adds a quarter to the launch's lift: the landscape answers back |
-| **PROP SMASH** | A lone tree, an outcrop, a boulder or a berg on the line within 40 bh | across | 10; hero +2, villain +2 | A building smash with no people and no chain. The prop breaks and he stops at it |
+| **VENT LIFT** | A vent within 2 bh (World's prop) | up | 12 on top of UPPERCUT's own score there (`onUppercut`, confirmed by Game Design 2026-10-28 item 2); villain +2 | The vent's blast adds a quarter to the launch's lift: the landscape answers back |
+| **PROP SMASH** | A lone tree, a boulder, a berg or one of World's rocks (`lichen_rock`, `lava_rock`; Game Design 2026-10-28 item 3, in place of the outcrop no World kind matched) on the line within 40 bh | across | 10; hero +2, villain +2 | A building smash with no people and no chain. The prop breaks and he stops at it |
 
 **Terms on the landing's surface,** added by the kind of send:
 - **Snow:** +6 down and +2 across, and the impact hurts 0.85 as much. A drift is soft.

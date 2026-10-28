@@ -60,7 +60,8 @@
         "_about": "a low send through a stand of trees: each trunk on the path snaps and slows him, the way BUILDING SMASH chains buildings. Offered when at least minTrees trunks stand on the predicted line within the send's first reachBh",
         "sends": "across", "uy": 0.08,
         "minTrees": 2, "maxTrees": 6, "reachBh": 60.0,
-        "score": 10.0, "perTree": 2.0, "brakePerTree": 0.12,
+        "score": 10.0, "perTree": 1.5, "brakePerTree": 0.12,
+        "_perTree": "Game Design, rulings-2026-10-28 item 3: from 2 to 1.5 (13 to 19 for two to six trunks, from 14 to 22), since TREE LINE was taken in 37% of the launches where it was offered (band 5 to 30%); read again with World's flight hooks before biome.enabled goes on",
         "hero": 2.0, "villain": 0.0,
         "where": "forest, jungle, taiga; savanna's lone trees count one each"
       },
@@ -87,11 +88,12 @@
         "where": "volcanic"
       },
       "PROP SMASH": {
-        "_about": "a send into one big prop on the line: a lone tree, a rock outcrop, a boulder or a berg, the way BUILDING SMASH takes a building but with no people and no chain. Offered when such a prop stands on the predicted line within reachBh. The prop breaks (World) and the body stops at it",
+        "_about": "a send into one big prop on the line: a lone tree, a boulder, a berg or one of World's rocks (lichen_rock, lava_rock), the way BUILDING SMASH takes a building but with no people and no chain. Offered when such a prop stands on the predicted line within reachBh. The prop breaks (World) and the body stops at it",
         "sends": "across", "uy": 0.05,
-        "props": ["lone_tree", "outcrop", "boulder", "berg"], "reachBh": 40.0,
+        "props": ["lone_tree", "boulder", "berg", "lichen_rock", "lava_rock"], "reachBh": 40.0,
+        "_props": "Game Design, rulings-2026-10-28 item 3: outcrop matched no World kind, so World's own rocks take its place (data/biomes/ground.json: lichen_rock in tundra, lava_rock in volcanic). The score stays 10 until PROP SMASH can find its props; read again before biome.enabled goes on",
         "score": 10.0, "hero": 2.0, "villain": 2.0,
-        "where": "savanna, highland, tundra, sea ice; any biome where World places such props"
+        "where": "savanna, highland, tundra, volcanic, sea ice; any biome where World places such props"
       }
     },
     "sends": {
