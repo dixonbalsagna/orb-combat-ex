@@ -286,7 +286,7 @@ func _catch() -> void:
 	var unstamped: Dictionary = {"kind": SimPressRead.CONTEXT, "mode": 0, "down": 100, "up": 105, "beat": SimPressRead.NO_BEAT, "flash": SimPressRead.NO_FLASH, "stance": 0}
 	ok(SimPressRead.catch_read(unstamped, 500) == "tap", "catch: with no live stamps the real ticks stand in")
 	# The numbers are data: a longer tell moves the line.
-	var q: Dictionary = SimPressRead.params()
+	var q: Dictionary = SimPressRead.params().duplicate()   # (params() is read-only)
 	q["catchTell"] = 20
 	ok(SimPressRead.catch_read(_a(-1), 50 + 14, q) == "tell" and SimPressRead.catch_read(_a(-1), 50 + 24, q) == "carry", "catch: the tell is data (20 gives a line at 24)")
 	# Out of reach A keeps its own line: the tackle's coil at 16, not 14.

@@ -39,6 +39,9 @@ static var stances: Dictionary = {}     # data/input/stances.json: the enabled h
 static var presets: Dictionary = {}
 static var actions: Dictionary = {}
 static var loaded: bool = false
+## Bumped by every load_data() and by invalidate(). A reader that keeps a copy of what it built from this data (SimPressRead.params,
+## SimAim.params) keeps it only while this number is the one it was built at.
+static var revision: int = 0
 ## The players' remaps, one layer per slot: overrides[slot][preset id] -> the override entries (SimInputRemap). Two players
 ## on the same preset each have their own.
 static var overrides: Array = [{}, {}]
@@ -69,7 +72,14 @@ static func load_data(dir: String = DIR) -> bool:
 		for x in a["actions"]:
 			actions[str(x["id"])] = x
 	loaded = true
+	revision += 1
 	return ok
+
+
+## Throw away every reader's kept copy. A load does it already; call this after changing a section of `timing` IN PLACE (a section
+## replaced by a new dictionary is noticed by the readers on their own).
+static func invalidate() -> void:
+	revision += 1
 
 
 ## The hybrid stance masks switched on in data/input/stances.json (LT+RB 10, LB+RB 3, LT+LB 9). None until Game Design ships one:

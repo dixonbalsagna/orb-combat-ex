@@ -79,12 +79,30 @@ const DEFAULTS: Dictionary = {
 }
 
 
-## The numbers, from data over the defaults.
+## The numbers, from data over the defaults. Built once (the build is about 35 data lookups, some 60 us) and kept until the data
+## changes: a SimInputData load, invalidate(), or the `read` or `tapHold` section replaced by another dictionary. The same
+## READ-ONLY dictionary comes back every time (a write to it is an error); duplicate() it to change a number.
+static var _pc: Dictionary = {}
+static var _pc_rev: int = -1
+static var _pc_read = null   # the two sections the copy was built from, held by reference
+static var _pc_tap = null
+
+
 static func params() -> Dictionary:
+	SimInputData.ensure()
+	var rd = SimInputData.timing.get("read")
+	var th = SimInputData.timing.get("tapHold")
+	if _pc_rev == SimInputData.revision and not _pc.is_empty() and is_same(rd, _pc_read) and is_same(th, _pc_tap):
+		return _pc
 	var p: Dictionary = DEFAULTS.duplicate()
 	for k in DEFAULTS:
 		p[k] = SimInputData.ti(["read", k], int(DEFAULTS[k]))
 	p["holdTicks"] = SimInputData.ti(["read", "holdTicks"], SimInputData.ti(["tapHold", "holdStart"], int(DEFAULTS["holdTicks"])))
+	p.make_read_only()
+	_pc = p
+	_pc_rev = SimInputData.revision
+	_pc_read = rd
+	_pc_tap = th
 	return p
 
 
@@ -129,7 +147,7 @@ static func set_flash(log: Array, kind: int, tick: int) -> void:
 ## The grade of a distance from a mark: "perfect" within the window's half, "good" within twice that, else "off". `opts` as
 ## classify's (touch, assist, offset, p).
 static func grade_of(distance: int, opts: Dictionary = {}) -> String:
-	var p: Dictionary = opts.get("p", params())
+	var p: Dictionary = opts["p"] if opts.has("p") else params()
 	var half: int = _half(p, opts)
 	var d: int = absi(distance - int(opts.get("offset", 0)))
 	if d <= half:
@@ -314,7 +332,7 @@ static func struggle_press(prev, i: SimIntent, opts: Dictionary = {}) -> String:
 ##   speed: the starter and `zipMashPresses` minus one more presses, each within `zipMashGap` ticks of the one before.
 ## `opts` as classify's (touch, assist, offset, p).
 static func zip_read(log: Array, now: int, zip_start: int, arrival: int, opts: Dictionary = {}) -> String:
-	var p: Dictionary = opts.get("p", params())
+	var p: Dictionary = opts["p"] if opts.has("p") else params()
 	var si: int = -1
 	for k in range(log.size()):
 		if int(log[k]["down"]) == zip_start:
@@ -375,7 +393,7 @@ static func _kinds_of(e: Dictionary) -> Array:
 static func pair_read(log: Array, opts: Dictionary = {}) -> Dictionary:
 	if log.size() < 2:
 		return {}
-	var p: Dictionary = opts.get("p", params())
+	var p: Dictionary = opts["p"] if opts.has("p") else params()
 	var e2: Dictionary = log[log.size() - 1]
 	var e1: Dictionary = log[log.size() - 2]
 	if e1.get("paired", false) or e2.get("paired", false):
@@ -432,7 +450,7 @@ static func flurry_gap(kind: int, p: Dictionary = {}) -> int:
 ## `mashPresses` presses (X) or `flurryNeedSlow` (Y, B). Other buttons in between do not break it: a Y flurry with a light thrown
 ## between its blows is still a Y flurry.
 static func mash_of(log: Array, kind: int, now: int, opts: Dictionary = {}) -> Dictionary:
-	var p: Dictionary = opts.get("p", params())
+	var p: Dictionary = opts["p"] if opts.has("p") else params()
 	var gap: int = flurry_gap(kind, p)
 	var same: Array = []
 	for e in log:
@@ -462,7 +480,7 @@ static func mash_of(log: Array, kind: int, now: int, opts: Dictionary = {}) -> D
 ## `opts.n` caps the chain (8). With `opts.count_mode` a change of mode (fist to bolt: the energy arts in reach, section 5b) counts as a
 ## switch too, so "punches and bolts" read as a mix-up of two instruments although every press is an X.
 static func alternation(log: Array, now: int, opts: Dictionary = {}) -> Dictionary:
-	var p: Dictionary = opts.get("p", params())
+	var p: Dictionary = opts["p"] if opts.has("p") else params()
 	var cap: int = int(opts.get("n", 8))
 	var out: Dictionary = {"presses": 0, "switches": 0, "kinds": 0, "mixup": false}
 	if log.is_empty():
@@ -504,7 +522,7 @@ static func alternation(log: Array, now: int, opts: Dictionary = {}) -> Dictiona
 ##              `since` runs from the second press.
 ## The press log entries carry `ldown` (and `lup`) when the director stamps them; without them the real ticks stand in.
 static func a_read(log: Array, live_now: int, opts: Dictionary = {}) -> Dictionary:
-	var p: Dictionary = opts.get("p", params())
+	var p: Dictionary = opts["p"] if opts.has("p") else params()
 	var out: Dictionary = {"read": "none", "held": 0, "taps": 0, "since": 0, "throw_at": -1, "frac": 0.0}
 	# The grapple replaces the shove and the clinch-by-mash (`switches.grappleReads`, off): only the tackle's coil is read here, a tap is a
 	# plain "tap" with no throw, and a second A is a new press. The catch and the brace are catch_read and brace_read.
@@ -584,7 +602,7 @@ static func beat_offset(tick: int, blows: Array) -> int:
 ##   rate: presses a second over the latest `mixShort` presses (0 with fewer than two); for display only.
 ## Precedence: hold, then rhythm, then mash, then taps. A mash that lands on the blows is rhythm.
 static func classify(log: Array, now: int, opts: Dictionary = {}) -> Dictionary:
-	var p: Dictionary = opts.get("p", params())
+	var p: Dictionary = opts["p"] if opts.has("p") else params()
 	var lapsed: bool = log.is_empty() or now - int(log[log.size() - 1]["down"]) > int(p["expireTicks"])
 	var ms: Dictionary = _mix(log, int(p["mixShort"]), lapsed)
 	var out: Dictionary = {"style": "none", "timing": "none", "streak": 0, "steady": false, "release": "none", "hold_ticks": 0, "on_beat": 0, "presses": 0 if lapsed else log.size(), "mix_short": ms, "mix_long": _mix(log, int(p["logSize"]), lapsed), "recipe": _recipe(ms, int(p["powerShare"])), "rate": 0.0}

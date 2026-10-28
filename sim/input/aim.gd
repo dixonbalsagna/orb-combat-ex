@@ -40,14 +40,28 @@ const DEFAULTS: Dictionary = {
 }
 
 
-## The numbers, from data over the defaults.
+## The numbers, from data over the defaults. Kept until the data changes, as SimPressRead.params is (a SimInputData load,
+## invalidate(), or the `aim` section replaced by another dictionary); the same READ-ONLY dictionary comes back every time.
+static var _pc: Dictionary = {}
+static var _pc_rev: int = -1
+static var _pc_aim = null
+
+
 static func params() -> Dictionary:
+	SimInputData.ensure()
+	var am = SimInputData.timing.get("aim")
+	if _pc_rev == SimInputData.revision and not _pc.is_empty() and is_same(am, _pc_aim):
+		return _pc
 	var p: Dictionary = DEFAULTS.duplicate()
 	p["deadZone"] = SimInputData.tf(["aim", "deadZone"], float(DEFAULTS["deadZone"]))
 	p["latchTicks"] = SimInputData.ti(["aim", "latchTicks"], int(DEFAULTS["latchTicks"]))
 	p["snapMax"] = SimInputData.ti(["aim", "snapMax"], int(DEFAULTS["snapMax"]))
 	p["nudgeStart"] = SimInputData.tf(["aim", "nudgeStart"], float(DEFAULTS["nudgeStart"]))
 	p["nudgeTicks"] = SimInputData.ti(["aim", "nudgeTicks"], int(DEFAULTS["nudgeTicks"]))
+	p.make_read_only()
+	_pc = p
+	_pc_rev = SimInputData.revision
+	_pc_aim = am
 	return p
 
 
@@ -101,7 +115,7 @@ static func update(latch: Dictionary, mx: float, my: float, tick: int, opts: Dic
 
 ## The aim at the launch decision on `tick`: the latched sector if it is at most `latchTicks` old, else NONE.
 static func read(latch: Dictionary, tick: int, opts: Dictionary = {}) -> int:
-	var n: int = int(opts.get("latchTicks", params()["latchTicks"]))
+	var n: int = int(opts["latchTicks"]) if opts.has("latchTicks") else int(params()["latchTicks"])
 	if int(latch["sector"]) != NONE and tick - int(latch["tick"]) <= n:
 		return int(latch["sector"])
 	return NONE
@@ -127,7 +141,7 @@ static func distance(a: int, b: int) -> int:
 static func snap(aim: int, candidates: Array, opts: Dictionary = {}) -> int:
 	if aim < 0:
 		return -1
-	var max_d: int = int(opts.get("snapMax", params()["snapMax"]))
+	var max_d: int = int(opts["snapMax"]) if opts.has("snapMax") else int(params()["snapMax"])
 	var best: int = -1
 	var best_d: int = 99
 	for k in range(candidates.size()):
