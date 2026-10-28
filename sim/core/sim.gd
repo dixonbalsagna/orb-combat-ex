@@ -120,6 +120,7 @@ class MatchJob extends RefCounted:
 				phase = 7
 			7:
 				SimCore._mEnd(self)
+		SimState.sealFresh()   # the world's generation records, sealed piece by piece (snapshots share them)
 		planetCols = WorldBiomes.planetCols   # what this match's pieces have set, bound again at the next
 		fineCols = WorldBiomes.fineCols
 		gen = WorldClimate.curGen
@@ -279,6 +280,12 @@ static func _arenaCols(setup: Dictionary) -> int:
 ## list's end has none). Returns
 ## false during hit-stop (no input consumed; the host keeps its key presses for the next tick), true otherwise.
 static func step(S: SimState, inputs = null) -> bool:
+	var live: bool = _step(S, inputs)
+	SimState.sealFresh()   # the generation records this tick made (the calm turn's) are sealed before a snapshot can share them
+	return live
+
+
+static func _step(S: SimState, inputs) -> bool:
 	if SimConst.NC != S.arenaCols or WorldBiomes.worldId != S.worldId:   # the arena's length and a planet's biomes are statics: a match takes its own again, whatever another match has built since (two sims alive in one process)
 		SimConst.setArena(S.arenaCols)
 		WorldBiomes.planetCols = S.planetCols

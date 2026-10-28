@@ -59,6 +59,32 @@ var ricOn: bool = false               # the ricochet's glance (sim/core/ricochet
 var cata = null                       # the catastrophe's state (sim/core/cata.gd): CataState from the first blast cloud, null before
 var out := Out.new()
 
+## For net/snapshot.gd: the fields a rollback snapshot shares with the live state instead of copying. S.base (the
+## ground as generated) and S.bIdx (WorldStructures.buildIndex) are constants of the world the match is on: built whole
+## before the match starts, and replaced whole (never written in place) by the calm turn, so a snapshot's reference
+## keeps its world's. A packed array is shared by reference, not copied on write: a write in place to either would be a
+## desync, which rollback_check finds. A building's and a tree's generation fields are shared through their `g`.
+const SNAPSHOT: Dictionary = {"share": ["base", "bIdx"]}
+
+static var _b0: BuildingGen = _seal(BuildingGen.new())   # the generation fields of a building not yet written (sealed)
+static var _t0: TreeGen = _seal(TreeGen.new())
+static var _fresh: Array = []   # the generation records made since the last seal (not state: sealing never changes a value)
+
+
+static func _seal(gen):
+	gen.sealed = true
+	return gen
+
+
+## Seal the generation records made since the last call: from now on a write to one copies it first. SimCore.step and
+## each piece of a match's start call it at their end, so a record is sealed before any snapshot can share it.
+static func sealFresh() -> void:
+	if _fresh.is_empty():
+		return
+	for gen in _fresh:
+		gen.sealed = true
+	_fresh.clear()
+
 
 class Game:
 	var ko = null            # the fighter that was KO'd, or null
@@ -244,39 +270,143 @@ class Crater:
 	var sdepth: float = 0.0   # furrow depth at the bowl end
 
 
+## A building's per-tick state. Its generation fields (where it stands, its size and kind, its people at the start) are
+## constants of the world it was built in, so they live apart in its BuildingGen `g`, which every rollback snapshot shares
+## instead of copying (net/snapshot.gd reads SNAPSHOT). They read and write as fields of the building, as before; a write
+## to a sealed g (any g once the tick or match piece that made it is over) gives this building a fresh copy first, so a g a
+## snapshot holds never changes (the calm turn's renumbering of districts and indices writes this way).
 class Building:
-	var district: int = 0      # D1: the district it stands in (index over all settlements), set at generation
-	var shape: String = ""      # D1: the render shape (settlements.json shapes)
-	var landmark: int = 0      # D1: 1-based landmark index (0 none)
-	var floors: int = 1        # floor count (world/brunt.gd floorCount), set at generation
+	const SNAPSHOT: Dictionary = {"share": ["g"], "skip": BuildingGen.FIELDS}
+	var g: BuildingGen = SimState._b0   # the generation fields (shared, copy on write)
+	var district: int:          # D1: the district it stands in (index over all settlements), set at generation
+		get: return g.district
+		set(v): _w().district = v
+	var shape: String:          # D1: the render shape (settlements.json shapes)
+		get: return g.shape
+		set(v): _w().shape = v
+	var landmark: int:          # D1: 1-based landmark index (0 none)
+		get: return g.landmark
+		set(v): _w().landmark = v
+	var floors: int:            # floor count (world/brunt.gd floorCount), set at generation
+		get: return g.floors
+		set(v): _w().floors = v
 	var fmask: int = 1        # one bit per standing floor, bit 0 the ground floor
 	var fdmg := PackedFloat32Array()   # damage per floor, allocated on the first local hit (empty before)
-	var idx: int = 0          # index in S.buildings (set at generation; not hashed)
-	var place: int = -1       # the place it stands in: its settlement index today, the planet's place id (set at generation; not hashed: the world hash covers it)
+	var idx: int:             # index in S.buildings (set at generation and by the calm turn; not hashed)
+		get: return g.idx
+		set(v): _w().idx = v
+	var place: int:           # the place it stands in: its settlement index today, the planet's place id (set at generation; not hashed: the world hash covers it)
+		get: return g.place
+		set(v): _w().place = v
 	var marks: int = 0        # World: sends that have struck it (repeats escalate: each mark is one tier higher for the next send, at most two); counted only with brunt.json repeatMarks above 0; hashed when not 0
-	var plan: int = -1        # its index in that place's plan (the plan is seeded, so the same building has the same index every time; not hashed)
+	var plan: int:            # its index in that place's plan (the plan is seeded, so the same building has the same index every time; not hashed)
+		get: return g.plan
+		set(v): _w().plan = v
 	var fled: float = 0.0     # people who left in the district flight so far (capped at WorldCollateral.FLIGHT_MAX of pop)
-	var z: float = 0.0        # depth of the building's centre from the fighter plane (negative: behind), world units
-	var d: float = 0.0        # footprint depth
-	var row: float = 1.0      # 0 foreground, 1 front street (the fighter plane's row for collisions), 2 mid, 3 back
+	var z: float:             # depth of the building's centre from the fighter plane (negative: behind), world units
+		get: return g.z
+		set(v): _w().z = v
+	var d: float:             # footprint depth
+		get: return g.d
+		set(v): _w().d = v
+	var row: float:           # 0 foreground, 1 front street (the fighter plane's row for collisions), 2 mid, 3 back
+		get: return g.row
+		set(v): _w().row = v
+	var x: float:
+		get: return g.x
+		set(v): _w().x = v
+	var w: float:
+		get: return g.w
+		set(v): _w().w = v
+	var h: float:
+		get: return g.h
+		set(v): _w().h = v
+	var maxhp: float:
+		get: return g.maxhp
+		set(v): _w().maxhp = v
+	var hp: float = 0.0
+	var alive: bool = true
+	var kind: String:
+		get: return g.kind
+		set(v): _w().kind = v
+	var pop: float:
+		get: return g.pop
+		set(v): _w().pop = v
+	var seed: float:
+		get: return g.seed
+		set(v): _w().seed = v
+	var popAlive: float = 0.0
+	var wear: float = 0.0      # the unshown wear a building has taken from shots (WorldBlast.shotBuilding): 0 or more while it only scorches, -1 once it has shown
+
+	func _w() -> BuildingGen:
+		if g.sealed:
+			g = g.copy()
+			SimState._fresh.append(g)
+		return g
+
+
+## A building's generation fields (Building.g): constants of the world it stands in, shared by every snapshot. Sealed
+## (SimState.sealFresh) at the end of the tick or match piece that made it; Building copies it before a write after that.
+class BuildingGen:
+	const FIELDS: Array = ["district", "shape", "landmark", "floors", "idx", "place", "plan", "z", "d", "row", "x", "w", "h", "maxhp", "kind", "pop", "seed"]
+	var sealed: bool = false
+	var district: int = 0
+	var shape: String = ""
+	var landmark: int = 0
+	var floors: int = 1
+	var idx: int = 0
+	var place: int = -1
+	var plan: int = -1
+	var z: float = 0.0
+	var d: float = 0.0
+	var row: float = 1.0
 	var x: float = 0.0
 	var w: float = 0.0
 	var h: float = 0.0
 	var maxhp: float = 0.0
-	var hp: float = 0.0
-	var alive: bool = true
 	var kind: String = ""
 	var pop: float = 0.0
 	var seed: float = 0.0
-	var popAlive: float = 0.0
-	var wear: float = 0.0      # the unshown wear a building has taken from shots (WorldBlast.shotBuilding): 0 or more while it only scorches, -1 once it has shown
+
+	func copy() -> BuildingGen:
+		var c := BuildingGen.new()
+		c.district = district; c.shape = shape; c.landmark = landmark; c.floors = floors; c.idx = idx; c.place = place
+		c.plan = plan; c.z = z; c.d = d; c.row = row; c.x = x; c.w = w; c.h = h; c.maxhp = maxhp; c.kind = kind
+		c.pop = pop; c.seed = seed
+		return c
 
 
+## A tree's per-tick state; its place and height are constants of its world, in its TreeGen `g` (as Building's).
 class TreeState:
-	var x: float = 0.0
-	var h: float = 0.0
+	const SNAPSHOT: Dictionary = {"share": ["g"], "skip": TreeGen.FIELDS}
+	var g: TreeGen = SimState._t0
+	var x: float:
+		get: return g.x
+		set(v): _w().x = v
+	var h: float:
+		get: return g.h
+		set(v): _w().h = v
 	var alive: bool = true
 	var burn: float = 0.0
+
+	func _w() -> TreeGen:
+		if g.sealed:
+			g = g.copy()
+			SimState._fresh.append(g)
+		return g
+
+
+class TreeGen:
+	const FIELDS: Array = ["x", "h"]
+	var sealed: bool = false
+	var x: float = 0.0
+	var h: float = 0.0
+
+	func copy() -> TreeGen:
+		var c := TreeGen.new()
+		c.x = x
+		c.h = h
+		return c
 
 
 class Beam:

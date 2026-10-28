@@ -15,6 +15,11 @@ static var SIN_C := PackedFloat64Array()
 static var COS_C := PackedFloat64Array()
 static var EXP_C := PackedFloat64Array()
 static var LOG_C := PackedFloat64Array()
+## pow's last answers by slot (its arguments and result): the tick asks pow(0.55, dt) and its like again and again, and
+## pow is a pure function, so a hit returns the very double it computed. Not state: it never changes a result.
+static var _px := PackedFloat64Array()
+static var _py := PackedFloat64Array()
+static var _pr := PackedFloat64Array()
 
 
 static func _static_init() -> void:
@@ -31,6 +36,10 @@ static func _static_init() -> void:
 		EXP_C.append(e)
 	for k in range(1, 13):
 		LOG_C.append(1.0 / float(2 * k + 1))
+	_px.resize(16)
+	_px.fill(NAN)   # NaN equals nothing: every slot starts empty
+	_py.resize(16)
+	_pr.resize(16)
 
 
 static func _ksin(r: float) -> float:
@@ -120,7 +129,14 @@ static func pow(x: float, y: float) -> float:
 		return 0.0 if y > 0.0 else INF
 	if x < 0.0:
 		return NAN
-	return SimDetMath.exp(y * SimDetMath.log(x))
+	var h: int = int(x * 4096.0 + y * 977.0) & 15   # any slot will do: a slot only ever holds a computed answer
+	if _px[h] == x and _py[h] == y:
+		return _pr[h]
+	var r: float = SimDetMath.exp(y * SimDetMath.log(x))
+	_px[h] = x
+	_py[h] = y
+	_pr[h] = r
+	return r
 
 
 static func hypot(x: float, y: float) -> float:

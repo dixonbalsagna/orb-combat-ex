@@ -9,6 +9,10 @@ extends RefCounted
 ##   - data definitions (FighterData's WoundsDef, MetersDef, LadderDef, SimForms' FormsDef): read-only after load, so
 ##     the copy points at the same object, as the live state does;
 ##   - S.out (the feed and the fx events): output for the host, drained every tick. restore() clears it.
+##   - the fields a class names in its SNAPSHOT constant ({"share": [...], "skip": [...]}): a "share" field is a per-match
+##     constant the copy points at, as the live state does (SimState's base and bIdx, a building's and a tree's generation
+##     record `g`); a "skip" field is a view of another (a building's x reads its g.x) and is not a field of the copy at all.
+##     Neither is counted by measure() or walked by aliasAudit(). The sim keeps a shared one unchanged (sim/core/state.gd).
 ## Plain arrays and dictionaries are copied by value, so two fields that share one Array would come back as two arrays.
 ## aliasAudit() checks the live state has no such sharing (net/tools/rollback_check.gd runs it).
 ##
@@ -26,6 +30,7 @@ const SKIP_ROOT: Array = ["out"]   # SimState fields a snapshot leaves alone
 
 static var _props: Dictionary = {}   # Script -> PackedStringArray of its script variables
 static var _share: Dictionary = {}   # Script -> true: data definitions shared, never copied
+static var _rules: Dictionary = {}   # Script -> its SNAPSHOT rule's "share" names (PackedStringArray)
 static var _gen = null               # the compiled copy script (GDScript), or false when it could not be built
 static var _genSrc: String = ""
 static var reflectOnly: bool = false # tests: force the reflective copy
@@ -96,17 +101,32 @@ class Pool:
 		free.clear()
 
 
-## The script variables of an object's class, cached per script.
+## The script variables of an object's class, cached per script, less its SNAPSHOT "skip" names.
 static func props(o: Object) -> PackedStringArray:
 	var s: Script = o.get_script()
 	if _props.has(s):
 		return _props[s]
+	var skip: Array = _rule(s).get("skip", [])
 	var names := PackedStringArray()
 	for p in o.get_property_list():
-		if int(p.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE:
+		if int(p.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE and not skip.has(p.name):
 			names.append(p.name)
 	_props[s] = names
 	return names
+
+
+## A class's SNAPSHOT constant ({} when it has none).
+static func _rule(s: Script) -> Dictionary:
+	var r = s.get_script_constant_map().get("SNAPSHOT") if s is GDScript else null
+	return r if r is Dictionary else {}
+
+
+## The fields of an object's class that a snapshot shares (its SNAPSHOT "share" names), cached per script.
+static func shareOf(o: Object) -> PackedStringArray:
+	var s: Script = o.get_script()
+	if not _rules.has(s):
+		_rules[s] = PackedStringArray(_rule(s).get("share", []))
+	return _rules[s]
 
 
 static func shared(o: Object) -> bool:
@@ -148,14 +168,16 @@ static func generatedSource() -> String:
 		head += "\tif s is %s:\n\t\t_c%d(s, d, m)\n\t\treturn true\n" % [name, i]
 		body += "\n\nstatic func _c%d(s: %s, d: %s, m) -> void:\n" % [i, name, name]
 		var n: int = 0
+		var skip: Array = _rule(script).get("skip", [])
+		var share: Array = _rule(script).get("share", [])
 		for p in probe.get_property_list():
 			if not (int(p.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE):
 				continue
 			var k: String = p.name
-			if script == SimState and SKIP_ROOT.has(k):
+			if (script == SimState and SKIP_ROOT.has(k)) or skip.has(k):
 				continue
 			var t: int = int(p.type)
-			if SCALARS.has(t):
+			if SCALARS.has(t) or share.has(k):
 				body += "\td.%s = s.%s\n" % [k, k]
 			elif t >= TYPE_PACKED_BYTE_ARRAY:
 				body += "\td.%s = s.%s.duplicate()\n" % [k, k]
@@ -198,10 +220,11 @@ class Copier:
 	func fill(src: Object, dst: Object, isRoot: bool = false) -> void:
 		if gen != null and gen.fill(src, dst, self):
 			return
+		var sh: PackedStringArray = NetSnapshot.shareOf(src)
 		for k in NetSnapshot.props(src):
 			if isRoot and NetSnapshot.SKIP_ROOT.has(k):
 				continue
-			dst.set(k, value(src.get(k)))
+			dst.set(k, src.get(k) if sh.has(k) else value(src.get(k)))
 
 	func value(v):
 		match typeof(v):
@@ -260,8 +283,9 @@ static func measure(S: SimState) -> Dictionary:
 	var seen: Dictionary = {}
 	seen[S] = true
 	m.objects += 1
+	var sh: PackedStringArray = shareOf(S)
 	for k in props(S):
-		if not SKIP_ROOT.has(k):
+		if not SKIP_ROOT.has(k) and not sh.has(k):
 			_measure(S.get(k), m, seen)
 	return m
 
@@ -284,8 +308,10 @@ static func _measure(v, m: Dictionary, seen: Dictionary) -> void:
 				return
 			seen[v] = true
 			m.objects += 1
+			var sh: PackedStringArray = shareOf(v)
 			for k in props(v):
-				_measure(v.get(k), m, seen)
+				if not sh.has(k):
+					_measure(v.get(k), m, seen)
 		TYPE_ARRAY:
 			m.arrays += 1
 			for e in v:
@@ -319,8 +345,9 @@ static func aliasAudit(S: SimState) -> Array:
 	var bySize: Dictionary = {}   # size -> [[container, path], ...]
 	var seen: Dictionary = {}
 	seen[S] = true
+	var sh: PackedStringArray = shareOf(S)
 	for k in props(S):
-		if not SKIP_ROOT.has(k):
+		if not SKIP_ROOT.has(k) and not sh.has(k):
 			_audit(S.get(k), "S." + k, seen, bySize, found)
 	return found
 
@@ -331,8 +358,10 @@ static func _audit(v, path: String, seen: Dictionary, bySize: Dictionary, found:
 			if v == null or seen.has(v) or shared(v):
 				return
 			seen[v] = true
+			var sh: PackedStringArray = shareOf(v)
 			for k in props(v):
-				_audit(v.get(k), path + "." + k, seen, bySize, found)
+				if not sh.has(k):
+					_audit(v.get(k), path + "." + k, seen, bySize, found)
 		_:
 			if typeof(v) < TYPE_DICTIONARY:
 				return
