@@ -20,9 +20,12 @@ Wave 3 runs as routines, which bill the Max plan rather than the credit, so it c
 | 4 | vfx-variant-debris.md | VFX | cloud/vfx/variant-debris | routine (plan) |
 | 4 | netcode-desync-spectate.md | Netcode & Online | cloud/netcode-online/desync-spectate | routine (plan) |
 | 4 | animation-pose-drain.md | Animation | cloud/animation/pose-drain | routine (plan) |
-| 5 | world-w5-props.md | World & Environment | cloud/world-environment/biomes-w5 | routine (plan) |
+| 5 | world-w5-props.md | World & Environment | cloud/world-environment/biomes-w5 | landed 70c1ab3e |
 | 5 | simulation-packed-structures.md | Simulation & Engine | cloud/simulation-engine/packed-structures | routine (plan) |
-| 5 | netcode-transport.md | Netcode & Online | cloud/netcode-online/transport | routine (plan) |
-| 5 | animation-pair-ready.md | Animation | cloud/animation/pair-ready | routine (plan) |
-| 5 | ui-settings-access.md | UI/UX | cloud/ui-ux/settings-access | routine (plan); look gate local before landing |
-| 6 | encounter-w3.md | Encounter Systems | cloud/encounter-systems/biomes-w3 | routine (plan) |
+| 5 | netcode-transport.md | Netcode & Online | cloud/netcode-online/transport | landed 2afeda13 |
+| 5 | animation-pair-ready.md | Animation | cloud/animation/pair-ready | landed b7fd2250 |
+| 5 | ui-settings-access.md | UI/UX | cloud/ui-ux/settings-access | landed 9979146a (foot re-cut locally) |
+| 6 | encounter-w3.md | Encounter Systems | cloud/encounter-systems/biomes-w3 | landed d0d91c29 |
+| 7 | world-w6-flight-hooks.md | World & Environment | cloud/world-environment/biomes-w6 | routine (plan) |
+| 7 | encounter-tick-skip.md | Encounter Systems | cloud/encounter-systems/tick-skip | routine (plan) |
+| 7 | netcode-ai-depth.md | Netcode & Online | cloud/netcode-online/ai-depth | routine (plan) |
