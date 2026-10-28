@@ -1,0 +1,63 @@
+# The custom Web template in the site build (Tools, 2026-10-28)
+
+Owner: Tools. Brief: the EP, 2026-10-28. Performance's result (`docs/perf/web-template-2026-10-28.md`): on the custom template, boot 27 s to 15 s at x1, parity 51 of 51 keys, the look identical (mash 600 of 600 frames byte-identical, collapse within its own noise). This page is how the site job would get that template, the three ways of doing it compared, what was built (behind a switch, off), and what the release gate needs before the switch is turned.
+
+**Nothing changes today.** `tools/site.json` has no `"template"` key, which means `"standard"`, and no release is published. The switch is built so that flipping it is one edit, and so that it cannot be flipped early.
+
+## What the site job does with the standard template today
+
+`tools/site-pin.mjs --export` takes the pinned commit (`tools/site.json` "pin"), puts it in a scratch tree, and runs Godot's `--export-release "Web"` there. The Web preset has `custom_template/release=""`, so Godot uses the standard `web_nothreads_release.zip` that `.github/actions/setup-godot` installed (its tpz pinned by SHA-512). The custom template means: the scratch tree's copy of the preset points at another zip.
+
+## The three ways to get the zip
+
+| | (a) the site job builds it | (b) a GitHub Release asset, pinned by SHA-512 | (c) an artifact of a pinned workflow run |
+|---|---|---|---|
+| **Shipped bytes are the measured bytes** | only if the build is byte-reproducible, which is not shown (the zip Performance measured and the one the cloud session built locally have different SHA-512s; the build embeds source paths and nothing guarantees equal bytes across runners) | yes: the pin is the bytes Performance and Tools measured | yes, while it lives |
+| **Deploy depends on other hosts** | yes: GitHub (source, emsdk), Google's emscripten storage (LLVM and Binaryen, not hash-pinned by emsdk), nodejs.org, PyPI. A hiccup on any of them fails a deploy | no more than today: one github.com download, the host `setup-godot` already trusts | the Actions artifact store, with a token and an `actions: read` permission |
+| **Time on the deploy path** | about 15 to 20 minutes on a cache miss (12 min build on 4 cores, 3 for the tools), seconds on a hit; a cache unused for 7 days is evicted, so a quiet week costs 20 minutes | seconds | seconds |
+| **Cost** | free on a public repo | free | free |
+| **Lifetime** | as long as every upstream stays reachable | permanent (a release is not expired) | **90 days at most**, then the pin is dead and the site cannot be rebuilt |
+| **Public footprint** | none | a public, permanent release on the repo (a ~10 MB zip of our patched Godot export template, MIT, with the same notices the site already carries): **Orb's call** | none |
+| **Same pattern as today** | no | yes: exactly how `setup-godot` pins the standard editor and templates | no |
+
+**Recommendation: (b), a Release asset pinned by SHA-512**, if Orb agrees to the public release. It is the only option where what runs on the site is, to the byte, what was measured; it removes six upstream hosts from the deploy path; it is the pattern the project already uses for the standard template; and it never expires. (c) is out: it dies in 90 days. (a) is the fallback if Orb does not want a public release, and it needs one experiment first: run `web-template.yml` twice and compare the two SHA-512s. If they are equal, (a) can pin the output hash like (b) and fail on a mismatch; if not, (a) can only pin the inputs and the measured readings do not strictly apply to the rebuilt bytes.
+
+What a release would hold: one file, `web_nothreads_release.zip`, in a release named for the engine, the patch set and the commit (for example `web-template-4.7.2-lazy-1`), published by hand from the workflow's artifact. I did not publish one and will not without the EP's word relayed from Orb.
+
+## What was built (behind the switch, off)
+
+- **`tools/site.json` "template": "standard" | "custom"**, absent = standard. Any other value is an error (`tools/site-template.mjs` refuses it; there is no silent fall back to standard). I did not touch site.json: you flip it.
+- **`tools/web-template.json`**, the pin record: the release asset URL, the SHA-512 of the zip, the SHA-512 of the `godot.wasm` inside it, its size, and the readings **measured on the custom export**. Today it holds `url: null` and Performance's parity result; nothing in it is a pass.
+- **`tools/site-template.mjs`**, `--check` and `--fetch`: with "custom" the check fails unless the record is complete: a `https://github.com/<owner>/<repo>/releases/download/<tag>/<file>.zip` URL, both hashes, the size, and, **each taken on this very zip** (every `measured.*` carries the SHA-512 of the zip it was measured on, so a different zip has none of them): parity matching every key, the signature clip in both modes with reduced no worse than 2.5 / 3 / 2 (RL-195), the collapse clip in both modes, a **nightly run on the pinned commit, exported with this template**, with nothing over the limit and nothing missing, and **the frame comparison** (below). It also fails when **the build changed since the pin** (RL-199 item 2): the record pins `build.flags` (the SCons flags, extra ones included), `build.source` (SHA-512 of the Godot source), `build.emscripten` and `build.patches` (SHA-256 of each engine patch), and the check reads `.github/workflows/web-template.yml` and `tools/engine/patches/` and refuses a flag, source, Emscripten version or patch that differs from the pin, or a patch added or removed: a module switched on or off, a compression or optimisation change, a new patch, each is a **new flip** with this same list (the zip's own SHA-512 changes with them, and the old readings stop applying). `--fetch` downloads with curl and refuses a zip whose size, SHA-512 or inner `godot.wasm` hash is not the pinned one (and removes it).
+- **`tools/flash/compare-frames.mjs`** (RL-199 item 1, self-test 19 checks): the clips already captured, **standard against custom on the same commit**, frame by frame (`frame-NNNNNN.png` of the two folders, matched by name; two different matches are refused as in `side-by-side.mjs`). A frame is identical (same bytes), within noise, or beyond it. A pixel differs when a channel differs by more than 8 of 255; the bound is the larger of the floor (0.1% of the pixels, above Performance's measured 0.078% for standard against standard) and 1.25 times the worst frame of a **noise capture** (`--noise`: a second capture of the standard build, since collapse is not byte-reproducible even against itself). `--json` writes the counts that go in `measured.frames` (`frames`, `identical`, `withinNoise`, `beyondNoise`, `commit`, `template`). **A frame beyond noise sends the flip to the full set:** the check then also requires `measured.full` (every clip PASS, on the pin, on this zip).
+- **`exportPinned` follows the switch.** Every export of the real repository (the site job's and the nightly's measurement export) asks `tools/site.json`; with "custom" it fetches the verified zip and writes `custom_template/release="<path>"` into the **scratch tree's copy of the Web preset only** (`setWebCustomTemplate`, tools/flash/web-preset.mjs; the Windows and Linux presets are untouched; the committed `export_presets.cfg` is never changed). So the nightly measures what the site serves, with no extra step, and a throwaway repo in a self-test never reads the real site.json.
+- **CI** (`ci.yml`): the self-tests (site-template 82 checks, no network, no Godot: curl fetches from a local child-process server; compare-frames 19) in the data job, and `site-template.mjs --check --site <built site>` after the site is assembled: custom, the built `play/index.wasm` must be the pinned `godot.wasm`; standard, it must not be (the site that says standard cannot carry the custom engine). An offline site holds no game and is not compared.
+
+## The release gate: what a template change needs under the existing rules
+
+**What the rules say today, read literally**
+- **The release pass's content hash** (`tools/flash/release-pass.mjs`) hashes the repository's tree. The template is not in the tree, so a template change **does not stale a recorded pass** and asks for nothing. (In owner mode the pin is `site.json`'s own and no pass is read at all.)
+- **`which-set.mjs`** decides by changed paths. The switch is `tools/site.json` and `tools/web-template.json`: both are **NONE** (tools/). RL-128's list (camera, lighting, scenery contrast, an effect, the crowd) is about what the screen shows, and Performance measured no difference in the picture.
+- **The pin rule** (re-run the nightly seeds on the NEW commit before the pin moves; `docs/legal/photosensitivity-note.md`) is about a new commit. A template flip moves no commit.
+
+So the existing rules, read literally, **let the flip through with no flash reading at all.** That is a gap, not a ruling: the engine binary that draws the page is different, and the principle behind the pin ("the published /play/ is built from the commit that was MEASURED") says the measured build and the served build must be the same build. The wasm is the same game code compiled from the same source with three lines changed in the shader-program cache, and Performance's evidence (parity, look) says the picture does not change; but the flash readings were not taken on it.
+
+**What it needs, and what the check now enforces before "custom" works** (my first list, and Legal's RL-199 on it):
+1. **Parity**: `web_parity` 51 of 51 on the custom zip (Performance has this; it goes in the record).
+2. **The signature clip, both modes, on the custom export**, reduced no worse than 2.5 / 3 / 2 (the same condition RL-195(a) puts on a pin move).
+3. **The collapse clip, both modes, on the custom export.**
+4. **A nightly seeds run on the pinned commit exported with the custom template**, nothing over the limit, nothing missing. The nightly's export follows the switch by itself.
+5. **The frame comparison** of the clips already captured, standard against custom on the same commit (RL-199 item 1): every frame identical or within noise; **a frame beyond noise means the full required set is run** on the custom build (`measured.full`).
+6. **The build is pinned** (RL-199 item 2): flags, source, Emscripten, patches and the zip's hash; any change to them is a new flip with this same list.
+7. The site check: the built `play/index.wasm` is the pinned `godot.wasm`.
+
+**The full set is run on the custom build before any release or any toggle restore** (RL-199 item 3: a release of the game, or the Reduce flashing toggle coming back). That is a standing rule, not part of the flip: the flip needs the frame comparison, and the full set only when a frame is beyond noise; a release or a toggle restore needs the full set regardless. `which-set.mjs` and the release pass do not know about the template, so this rests on the people who ship, not on a check: when the release pass is next recorded, record it with the site's template (the custom export), not the standard one.
+
+**What this does not cover:** the web parity CI job (`web-parity.yml`) runs the standard template; a parity run on the custom zip is Performance's scratch tool today and should become a workflow input before the template is a standing part of the build. Radeon, x6, Safari and Firefox were not measured (Performance's "Not covered").
+
+## How to turn it on (when the EP says)
+
+1. Orb decides (b). Publish the release from the `web-template.yml` run's artifact; note the URL, the SHA-512 of the zip, its size, and the SHA-512 of the `godot.wasm` inside (the run prints the first two).
+2. Fill `tools/web-template.json` (`url`, `sha512`, `wasmSha512`, `bytes`).
+3. Set `"template": "custom"` in a scratch copy of `tools/site.json`; export the pin through `site-pin.mjs --export` (it fetches and verifies the zip), run the signature clip and the collapse clip in both modes and a nightly on that export; put the readings in `measured`, each with `"template": "<the zip's SHA-512>"`. Compare the clips already captured, standard against custom: `node tools/flash/compare-frames.mjs --standard <dir> --custom <dir> --noise <second standard capture> --json <file>`; a frame beyond noise means the full set goes in `measured.full`.
+4. `node tools/site-template.mjs --check` says ok. Then flip `tools/site.json`. The next deploy builds with the custom template and checks that the site runs it.

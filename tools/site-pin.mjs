@@ -17,6 +17,8 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { applyCrumbs, applyPrivacy, crumbsOn } from './site-crumbs.mjs';
+import { setWebCustomTemplate } from './flash/web-preset.mjs';
+import { templateFor, RECORD_FILE } from './site-template.mjs';
 
 const HERE = import.meta.dirname;
 const REPO = resolve(HERE, '..');
@@ -40,7 +42,16 @@ export function pinOf(config, recordFile) {
 
 function git(args, cwd = REPO) { return execFileSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 1 << 28 }).trim(); }
 
-/** Exports the pinned commit's Web build into webDir. Returns the scratch tree. */
+/** The zip of the custom Web template when tools/site.json says "template": "custom" (fetched, and checked against tools/web-template.json), else null: the standard template, as ever. Every
+ *  export of the real repo asks it, so the site job and the nightly's measurement export follow the one switch: what is measured is what is served. */
+function defaultTemplate() {
+  const config = JSON.parse(readFileSync(join(HERE, 'site.json'), 'utf8'));
+  let rec = null;
+  try { rec = JSON.parse(readFileSync(RECORD_FILE, 'utf8')); } catch { /* reported by templateFor when custom */ }
+  return templateFor(config, rec, join(tmpdir(), 'site-web-template'));
+}
+
+/** Exports the pinned commit's Web build into webDir. Returns the scratch tree. `o.template`: a template zip to use, or null for the standard one (the default reads tools/site.json). */
 export function exportPinned(pin, webDir, o = {}) {
   const repo = o.repo || REPO;   // the repository holding the commit (the self-test's throwaway one)
   const tree = resolve(o.tree || join(tmpdir(), `site-pinned-${pin.slice(0, 8)}`));
@@ -58,6 +69,13 @@ export function exportPinned(pin, webDir, o = {}) {
   const date = git(['log', '-1', '--format=%cs', pin], repo) || 'unknown';
   writeFileSync(join(tree, 'build_info.json'), `${JSON.stringify({ commit: pin.slice(0, 7), date })}
 `);
+  // the Web export template (tools/site-template.mjs, tools/site.json "template"): the custom one is fetched and checked against its pin and written into THIS tree's copy of the Web preset only; standard
+  // (the default) leaves the preset as committed. A throwaway repo (the self-test's) never reads the real site.json: it passes `template` itself (a zip path, or null).
+  const zip = o.template !== undefined ? o.template : o.repo ? null : defaultTemplate();
+  if (zip) {
+    const cfg = join(tree, 'export_presets.cfg');
+    writeFileSync(cfg, setWebCustomTemplate(readFileSync(cfg, 'utf8'), zip));
+  }
   const run = (args) => {
     const cmd = o.godotNode ? process.execPath : o.godot;
     const a = o.godotNode ? [o.godotNode, ...args] : args;

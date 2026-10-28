@@ -35,3 +35,32 @@ export function webPresetChanged(a, b) {
   if (a == null || b == null) return true;
   return webPresetView(a) !== webPresetView(b);
 }
+
+/** The file with the WEB preset's `custom_template/release` set to `path` (forward slashes), in its options section only: another preset's key is left alone. The key is added when the section has
+ *  none; line endings are kept. Used on a scratch tree's copy by tools/site-pin.mjs when tools/site.json says the site uses the custom template. */
+export function setWebCustomTemplate(text, path) {
+  const crlf = String(text).includes('\r\n');
+  const lines = String(text).replace(/\r\n/g, '\n').split('\n');
+  const webIdx = new Set();
+  let cur = null;
+  for (const l of lines) {
+    const m = /^\[preset\.(\d+)(\.options)?\]\s*$/.exec(l);
+    if (m) { cur = m[1]; continue; }
+    if (/^\[/.test(l)) { cur = null; continue; }
+    if (cur !== null && /^platform="Web"\s*$/.test(l)) webIdx.add(cur);
+  }
+  const want = `custom_template/release="${String(path).replace(/\\/g, '/')}"`;
+  const out = [];
+  let inWebOptions = false, done = false;
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    const m = /^\[preset\.(\d+)(\.options)?\]\s*$/.exec(l);
+    if (m) { if (inWebOptions && !done) { out.push(want); done = true; } inWebOptions = !!m[2] && webIdx.has(m[1]); out.push(l); continue; }
+    if (/^\[/.test(l)) { if (inWebOptions && !done) { out.push(want); done = true; } inWebOptions = false; out.push(l); continue; }
+    if (inWebOptions && /^custom_template\/release=/.test(l)) { out.push(want); done = true; continue; }
+    out.push(l);
+  }
+  if (inWebOptions && !done) out.push(want);
+  const res = out.join('\n');
+  return crlf ? res.replace(/\n/g, '\r\n') : res;
+}

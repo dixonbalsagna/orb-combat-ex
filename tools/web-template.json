@@ -1,0 +1,30 @@
+{
+  "_why": "The pin of the custom Web export template (tools/site-template.mjs, docs/tools/site-template.md). tools/site.json \"template\": \"custom\" is refused until this record is complete: a release asset URL, the SHA-512 of the zip and of the godot.wasm in it, and the build pinned (flags, source, Emscripten, patches: any change is a new flip, Legal RL-199), and the readings measured on the CUSTOM export, each taken on this zip (parity, the signature and collapse clips in both modes, a nightly on the pinned commit, and the frame comparison standard against custom: a frame beyond noise needs the full set in measured.full). It is NOT published and NOT pinned yet: nothing in it is a pass.",
+  "version": "4.7.2-stable",
+  "built_by": ".github/workflows/web-template.yml (run 40624057612, the lazy-specialization patch, no trims)",
+  "build": {
+    "flags": "platform=web target=template_release threads=no production=yes optimize=size lto=none",
+    "source": "15e23f8423003f5d32da07c34a8651e43af23b050cc0dea2d4fba6944ca445d079edb52b66fdf82b6d5739bba1fe707b9e27b8836b19f09f64f313966160f8fc",
+    "emscripten": "4.0.11",
+    "patches": {
+      "4.7.2-lazy-specializations": "149d4969c2f24421826c7b3ba5d3ae0450c9ee3f0888d1fb775bf290be137a71"
+    }
+  },
+  "url": null,
+  "sha512": null,
+  "wasmSha512": null,
+  "bytes": null,
+  "_measured_prefix": "The zip Performance measured (docs/perf/web-template-2026-10-28.md) is 9,861,157 bytes with SHA-512 starting f0b7b0805ef3d63e; its full hash is in that run's log, not here.",
+  "measured": {
+    "parity": {
+      "keys": 51,
+      "match": 51,
+      "by": "Performance, 2026-10-28, on main 9631fc75 (the engine label differs by design)"
+    },
+    "signature": null,
+    "collapse": null,
+    "nightly": null,
+    "frames": null,
+    "full": null
+  }
+}

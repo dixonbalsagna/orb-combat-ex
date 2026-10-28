@@ -118,6 +118,10 @@ jobs:
         run: node tools/site-interim-selftest.mjs
       - name: Pinned deploy self-test (a later game commit leaves the published /play/ byte-identical)
         run: node tools/site-pin-selftest.mjs
+      - name: Site template self-test (the switch, the pin record, the download checks, the Web preset of the scratch tree)
+        run: node tools/site-template-selftest.mjs
+      - name: 'Frame comparison self-test (standard template against custom: identical, within noise, beyond noise)'
+        run: node tools/flash/compare-frames-selftest.mjs
       - name: Nightly seed run self-test (new seeds, never repeated; the take-down trigger)
         run: node tools/flash/nightly-selftest.mjs
       - name: Gate wrapper self-test (a Godot gate whose log has SCRIPT ERROR lines fails, whatever its exit code)
@@ -226,6 +230,9 @@ jobs:
           else
             node tools/build-site.mjs --web "${RUNNER_TEMP}/web" --out "${RUNNER_TEMP}/site" --commit "${GITHUB_SHA}" --band "${RUNNER_TEMP}/band"
           fi
+      # tools/site.json "template" (default standard): with "custom" the pin record must be complete and measured, and the built site's engine must be the pinned one; standard must not carry it (docs/tools/site-template.md).
+      - name: Check the site's Web template (standard by default; custom only when pinned and measured)
+        run: node tools/site-template.mjs --check --site "${RUNNER_TEMP}/site"
       # With "offline": true in tools/site.json the output must hold no game: no .wasm, no .pck, no script, only the notice pages. Fails the job if it does.
       - name: Check the offline site holds no game
         run: |
