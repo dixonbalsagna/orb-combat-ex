@@ -84,6 +84,11 @@ jobs:
         run: node tools/lint-determinism-selftest.mjs
       - name: Determinism lint (no engine trig, PI, random numbers or clock in the sim)
         run: node tools/lint-determinism.mjs
+      # The workflow files themselves must parse (an unquoted ": " in a step name broke this file once and nothing said so before the push): node only, the subset of YAML these files use.
+      - name: Workflow files parse (self-test)
+        run: node tools/check-workflows-selftest.mjs
+      - name: Workflow files parse
+        run: node tools/check-workflows.mjs
       # Platform's phone head block in export_presets.cfg must match docs/perf/web-shell/ (node built-ins, a fifth of a second).
       - name: The web export's phone head is current
         run: node docs/perf/tools/web-head.mjs --check

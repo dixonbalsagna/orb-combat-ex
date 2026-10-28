@@ -6,8 +6,11 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { contentHash, hashesAt, problemsWith, DIP_GAP_TICKS, verdictOf, effective, INTERIM_WAIVES, modeProblems, CANARY, extraSeedProblems } from './release-pass.mjs';
 import { setFor } from './which-set.mjs';
+import { webPresetChanged } from './web-preset.mjs';
+import { fileURLToPath } from 'node:url';
 import { pickSeeds, worstSeedsOf, parseScan } from './pick-seeds.mjs';
 
+const here = dirname(fileURLToPath(import.meta.url));
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
 
@@ -133,6 +136,47 @@ check('a change to the camera needs the full set', setFor(['render/camera/split_
 check('a change to the scenery data needs the full set', setFor(['data/biomes/lanes.json']).set === 'FULL');
 check('a change to the simulation needs the AI seeds only', setFor(['sim/director/brawl.gd', 'tools/x.js']).set === 'AI');
 check('a change to docs and tools needs none', setFor(['docs/x.md', 'tools/flash/a.mjs', 'README.md']).set === 'NONE');
+
+// export_presets.cfg counts by the Web preset's block and the lines outside every preset (Legal's RL-197): a Linux-only or Windows-only change triggers no set, a Web change does
+{
+  const WEB = '[preset.0]\n\nname="Web"\nplatform="Web"\nexport_path="build/web/index.html"\n\n[preset.0.options]\n\nvariant/extensions_support=false\nvram_texture_compression/for_desktop=true\n\n';
+  const WIN = '[preset.1]\n\nname="Windows Desktop"\nplatform="Windows Desktop"\nexport_path="build/windows/x.exe"\n\n[preset.1.options]\n\nbinary_format/embed_pck=false\n\n';
+  const LIN = '[preset.2]\n\nname="Linux"\nplatform="Linux"\nexport_path="build/linux/x.x86_64"\n\n[preset.2.options]\n\nbinary_format/architecture="x86_64"\n';
+  const cfg = ({ head = '', web = WEB, win = WIN, lin = LIN } = {}) => head + web + win + lin;
+  check('a Linux preset added after the Web and Windows ones leaves the Web view alone (the Linux preset patch)', !webPresetChanged(cfg({ lin: '' }), cfg()));
+  check('a change inside the Linux preset leaves it alone', !webPresetChanged(cfg(), cfg({ lin: LIN.replace('x86_64"', 'arm64"') })));
+  check('a change inside the Windows preset leaves it alone', !webPresetChanged(cfg(), cfg({ win: WIN.replace('embed_pck=false', 'embed_pck=true') })));
+  check('a change to the Web preset\'s keys is a change', webPresetChanged(cfg(), cfg({ web: WEB.replace('name="Web"', 'name="Web build"') })));
+  check('a change to the Web preset\'s options is a change', webPresetChanged(cfg(), cfg({ web: WEB.replace('extensions_support=false', 'extensions_support=true') })));
+  check('moving the Web preset to another index is a change', webPresetChanged(cfg(), WIN.replace('[preset.1]', '[preset.0]').replace('[preset.1.options]', '[preset.0.options]') + WEB.replace('[preset.0]', '[preset.1]').replace('[preset.0.options]', '[preset.1.options]') + LIN));
+  check('a line outside every preset (before the first) is a change', webPresetChanged(cfg(), cfg({ head: '; a note\n' })));
+  check('another section outside the presets is a change', webPresetChanged(cfg(), cfg() + '[other]\nx=1\n'));
+  check('a file with no Web preset differs from one that has it', webPresetChanged(cfg(), WIN + LIN) && !webPresetChanged(WIN + LIN, WIN + LIN + '\n'));
+  check('line endings do not matter', !webPresetChanged(cfg(), cfg().replace(/\n/g, '\r\n')));
+  check('no file on either side is no change; no file on one side is', !webPresetChanged(null, null) && webPresetChanged(null, cfg()));
+  check('which-set: a Linux-only change to export_presets.cfg is NONE, a Web change is FULL, and with no reading it stays FULL', setFor(['export_presets.cfg'], { presetsChanged: false }).set === 'NONE' && setFor(['export_presets.cfg'], { presetsChanged: true }).set === 'FULL' && setFor(['export_presets.cfg']).set === 'FULL');
+  check('which-set: the preset file does not hide another change in the same range', setFor(['export_presets.cfg', 'render/a.gd'], { presetsChanged: false }).set === 'FULL' && setFor(['export_presets.cfg', 'sim/a.gd'], { presetsChanged: false }).set === 'AI');
+  // end to end: the content hash in a throwaway repo, and the command's answer for each range
+  const d2 = mkdtempSync(join(tmpdir(), 'release-pass-presets-'));
+  try {
+    const g = (...a) => execFileSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'commit.gpgsign=false', ...a], { cwd: d2, encoding: 'utf8' }).trim();
+    const c = (msg, text) => { writeFileSync(join(d2, 'export_presets.cfg'), text); g('add', '-A'); g('commit', '-q', '-m', msg); return g('rev-parse', 'HEAD'); };
+    g('init', '-q');
+    mkdirSync(join(d2, 'render'), { recursive: true }); writeFileSync(join(d2, 'render', 'a.gd'), 'a'); writeFileSync(join(d2, 'project.godot'), 'p');
+    const a1 = c('web and windows', cfg({ lin: '' }));
+    const a2 = c('the Linux preset', cfg());
+    const a3 = c('a Linux option', cfg({ lin: LIN.replace('x86_64"', 'arm64"') }));
+    const a4 = c('a Web option', cfg({ lin: LIN.replace('x86_64"', 'arm64"'), web: WEB.replace('extensions_support=false', 'extensions_support=true') }));
+    const hh = (s) => contentHash(d2, s).hash;
+    check('content hash: adding the Linux preset and changing it leave it as it was', hh(a1) === hh(a2) && hh(a2) === hh(a3));
+    check('content hash: a Web option changes it', hh(a3) !== hh(a4));
+    check('content hash: its entry for export_presets.cfg is the Web view\'s hash, not the blob id', contentHash(d2, a2).entries.some((e) => /^export_presets\.cfg web-preset-[0-9a-f]{64}$/.test(e)));
+    const ws = (range) => execFileSync(process.execPath, [join(here, 'which-set.mjs'), range], { cwd: d2, encoding: 'utf8' }).split('\n')[0];
+    check('the command: the range that only adds the Linux preset needs no set, the Linux option too', ws(`${a1}..${a2}`) === 'NONE' && ws(`${a2}..${a3}`) === 'NONE');
+    check('the command: the range that changes a Web option needs the full set', ws(`${a3}..${a4}`) === 'FULL');
+    check('the command: a range that holds both is FULL', ws(`${a1}..${a4}`) === 'FULL');
+  } finally { rmSync(d2, { recursive: true, force: true }); }
+}
 
 // RL-131 (Legal's addendum 7): the capture's condition, the second capture, steadiness, the kind of re-capture, the HUD line and the seed pick
 check('a row with no recorded capture condition does not hold', pM([rowM('collapse-normal', { guard: null }), rowM('collapse-reduced')]).some((p) => /no recorded capture condition/.test(p)));

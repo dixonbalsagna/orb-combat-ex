@@ -7,7 +7,8 @@
 //   contentHash      the git tree and blob ids of everything the player runs: every top-level entry of the commit except the ones export_presets.cfg excludes (prototype, qa, research,
 //                    docs, tools, .github) and the repository's own text files (CLAUDE.md, DIRECTORS.md, README.md, dotfiles). A commit that changes only docs/, tools/, qa/, research/,
 //                    prototype/, .github/ or those text files leaves it unchanged, so a docs-only commit does not invalidate a pass. Any change to render/, sim/, data/, ui/, audio/, art/,
-//                    project.godot or export_presets.cfg does (art/ is hashed whole: conservative).
+//                    project.godot does, and so does the Web preset's block of export_presets.cfg or a line outside every preset (Legal RL-197: another preset's change, the Windows or Linux build's,
+//                    leaves it alone; tools/flash/web-preset.mjs). Art/ is hashed whole: conservative.
 //   requiredSetHash  sha-256 of tools/flash/sources.json at the commit (the scenarios, seeds, pairings and lengths): a changed set needs a new run
 //   analyserHash     sha-256 of tools/flash/wcag.js and verdict.js at the commit (the reading of the standard and the verdict rule), line endings normalised
 //   hookHash         sha-256 of render/tools/flash_capture.gd at the commit (the staging the clips were captured with)
@@ -46,6 +47,7 @@ const isDate = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
 export function interimOf(file = RECORD) {
   try { const r = JSON.parse(readFileSync(file, 'utf8')); return r && r.interim && typeof r.interim === 'object' ? r.interim : null; } catch { return null; }
 }
+import { webPresetHash } from './web-preset.mjs';
 const NOT_THE_PLAYER = new Set(['prototype', 'qa', 'research', 'docs', 'tools', '.github', '.git', 'CLAUDE.md', 'DIRECTORS.md', 'README.md', '.gitignore', '.gitattributes', '.gdignore', '.editorconfig', 'LICENSE', 'LICENSE.md']);
 
 const git = (root, args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 }).trim();
@@ -58,7 +60,11 @@ export function contentHash(root, sha) {
   const entries = git(root, ['ls-tree', sha]).split('\n').filter(Boolean).map((l) => {
     const m = /^\d+ \w+ ([0-9a-f]+)\t(.+)$/.exec(l);
     return { oid: m[1], name: m[2] };
-  }).filter((e) => !NOT_THE_PLAYER.has(e.name)).map((e) => `${e.name} ${e.oid}`).sort();
+  }).filter((e) => !NOT_THE_PLAYER.has(e.name)).map((e) => {
+    // export_presets.cfg counts by the WEB preset's block and the lines outside any preset only (Legal RL-197): another preset (Windows, Linux) changes nothing the web page shows
+    if (e.name === 'export_presets.cfg') { try { return `${e.name} web-preset-${webPresetHash(showAt(root, sha, e.name))}`; } catch { /* not readable: the blob id, as before */ } }
+    return `${e.name} ${e.oid}`;
+  }).sort();
   return { hash: sha256(entries.join('\n')), entries };
 }
 
