@@ -55,6 +55,10 @@ var _terrain_mat: ShaderMaterial
 var _water_mat: ShaderMaterial
 static var cull_on: bool = RenderLook.SPLIT_CULL_ON   # the split's culling (cull_to); main's --nocull turns it off
 var _cull: Array = []                  # per copy: [copy, its chunks' union box, [[chunk node, box, left out]...]] (cull_to)
+## The view update's short cuts (the coast's profile, 2026-10-27): the building sweep passes over a building as it was
+## last set, and the culling over a copy whose chunks are all already on the side the copy is. The look is the same;
+## main's --noviewfast turns them off (the A/B).
+static var view_fast: bool = true
 var culled: int = 0                    # the chunks this pane left out of its last frame (for the checks and the bench)
 var _town_mat: ShaderMaterial = null   # the distant towns' (far_town.gdshader): the ground's uniforms, for the far land they stand on
 var _cover_mat: ShaderMaterial = null  # the biomes' cover (cover.gdshader): the ground's uniforms, for the ground it stands on
@@ -347,7 +351,7 @@ func _cull_items(n: Node3D) -> void:
 		pk.append_array(PackedFloat32Array([c.x, c.y, c.z, e.x, e.y, e.z]))
 	var out := PackedByteArray()
 	out.resize(nodes.size())
-	_cull.append([n, all, nodes, pk, out])
+	_cull.append([n, all, nodes, pk, out, 0])   # ... and how many of its chunks are left out now
 
 
 ## The split's culling (Performance, 2026-10-23: each split pane draws the whole world, though only its side of the
@@ -374,6 +378,10 @@ func cull_to(cam: Camera3D, hp: Dictionary) -> void:
 			var e: Vector3 = b.size * 0.5
 			var c: Vector3 = b.position + e
 			whole = _side(pl, bp, c.x + ox, c.y, c.z, e.x, e.y, e.z)   # 1 all can show, -1 none can, 0 test each chunk
+		if view_fast and whole != 0 and int(cc[5]) == (0 if whole > 0 else out.size()):
+			culled += int(cc[5])   # the whole copy on one side, and its chunks already so
+			continue
+		var ones: int = 0
 		for j in range(out.size()):
 			var o: int = 0
 			if whole < 0:
@@ -386,7 +394,9 @@ func cull_to(cam: Camera3D, hp: Dictionary) -> void:
 				for mi in cc[2][j]:
 					(mi as MeshInstance3D).layers = 0 if o == 1 else 1
 			culled += o
+			ones += o
 		cc[4] = out
+		cc[5] = ones
 
 
 ## The world plane the pane's screen line lies in, through the camera: [its normal (toward what can show), the camera's
@@ -755,8 +765,7 @@ func refresh(S: SimState, force: bool) -> void:
 	_last_tick = int(S.tick)
 	_share_n = 1
 	for bi in range(S.buildings.size()):
-		var b = S.buildings[bi]
-		var h: float = WorldStructures.curH(b)
+		var b: SimState.Building = S.buildings[bi]
 		var seen: Array = _bld_seen[bi]
 		var moved: bool = dchg and (force or _foot_dirty(dirty, b))
 		# The figures at home: the people it has, as many as it has figures. Fewer go now (they run or are gone, and the
@@ -765,6 +774,14 @@ func refresh(S: SimState, force: bool) -> void:
 		var show: int = have if _shown[bi] < 0 else mini(have, _shown[bi])
 		if have > show:
 			_grow.append(bi)
+		# A building as it was last set: standing or fallen as before, the same floors and (standing) the same hit points,
+		# not sinking, its ground unchanged. Its height is what it was (WorldStructures.curH reads only these and what was
+		# fixed at generation), so it is not set again; only its people can have changed. Most buildings, most frames.
+		if view_fast and not moved and b.alive == seen[1] and b.fmask == seen[2] and (not b.alive or b.hp == seen[3]) and not _falls.has(bi) and not _drops.has(bi):
+			if show != _shown[bi]:
+				_set_crowd(S, bi, b, show)
+			continue
+		var h: float = WorldStructures.curH(b)
 		if b.alive != seen[1] and not b.alive and seen[1] == true:
 			# Levelled: an implode sinks from the height it last stood at (a folded one from its distance to the blast).
 			if _falls.has(bi):

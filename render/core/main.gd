@@ -243,6 +243,7 @@ func _ready() -> void:
 	roll_on = RenderLook.CAMERA_ROLL_ON or args.has("roll")   # the camera roll on climaxes: off by default (2026-10-22)
 	drift_on = RenderLook.SLOW_DRIFT_ON or args.has("drift")   # the slow drift of the far land and sky: off by default (2026-10-22)
 	PlanetView.cull_on = RenderLook.SPLIT_CULL_ON and not args.has("nocull")   # the split's culling: on; --nocull for the A/B (2026-10-23)
+	PlanetView.view_fast = not args.has("noviewfast")   # the view update's short cuts (the same look): on; --noviewfast for the A/B (2026-10-27)
 	PlanetView.cover_on = RenderLook.COVER_ON and not args.has("nocover")   # the biomes' cover: on; --nocover for the A/B (2026-10-23)
 	PlanetView.fill_on = RenderLook.WATER_FILL_ON and not args.has("nofill")   # the water fill's drama: on; --nofill for the A/B
 	PlanetView.ladder_on = RenderLook.FAR_LADDER_ON and not args.has("noladder")   # the far land's ridges: on; --noladder for the A/B

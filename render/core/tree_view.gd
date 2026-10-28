@@ -84,7 +84,7 @@ func build(S: SimState, g: GroundField, tree_z: PackedFloat64Array) -> void:
 func update(S: SimState) -> void:
 	var steps: float = float(RenderLook.TREE_BURN_STEPS)
 	for ti in range(mini(S.trees.size(), _at.size())):
-		var t = S.trees[ti]
+		var t: SimState.TreeState = S.trees[ti]
 		var burn: float = float(t.burn)
 		var st: float
 		if t.alive:
