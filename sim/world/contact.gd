@@ -309,6 +309,10 @@ static func surfaceAt(S: SimState, x: float) -> String:
 	var col: int = int(floor(SimWrap.wrap(x) / SimConst.COL)) % SimConst.NC
 	if S.rubble[col] >= K_RUBBLE_MIN:
 		return "rubble"
+	if S.aftermath.size() > 0:   # a beam's strip (glaze, ember, crust) is rock (after.gd)
+		var al: String = WorldAfter.surfaceAt(S, x)
+		if al != "":
+			return al
 	var c: int = _colSurf[col]
 	if (c & 4) != 0 and S.deform[col] > K_PAVE_DUG:
 		return "paving"

@@ -11,7 +11,7 @@ const PATH := "res://data/biomes/ground.json"
 const SCHEMA := "biomes.ground/1"
 const SURFACES: Array = ["soil", "sand", "rock"]   # the same order as contact.gd's SURF_NAMES, whose codes these are
 const COVER_KINDS: Array = ["canopy", "ridge"]
-const LOOKS: Array = ["paving", "rock", "soil", "sand", "rubble", "ice", "snow", "frost", "mud", "turf", "litter", "ash", "crust", "shingle", "ember"]   # the look classes: the five built and the nine of Combat's biome park, and the one a beam's glowing ember strip reads as (after.gd)
+const LOOKS: Array = ["paving", "rock", "soil", "sand", "rubble", "ice", "snow", "frost", "mud", "turf", "litter", "ash", "crust", "shingle"]   # the look classes: the five built and the nine of Combat's biome park
 
 static var _d: Dictionary = {}
 static var _loaded: bool = false

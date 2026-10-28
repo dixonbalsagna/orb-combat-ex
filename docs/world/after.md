@@ -25,7 +25,7 @@ Three fields on `SimState` (a grant from Simulation, `grant_sim_after.py`): `aft
 | 2 | cleared | no canopy cover (`WorldCover.coverAt`); the trees in it are felled |
 | 3 | plates | a heave's step of plates, raised in `S.deform` |
 | 4, 5 | burning, burnt | a fire line's grass (`aftermathT` is when it goes out); burnt reads `ash` |
-| 6, 7 | ember, crust | a glowing strip (`aftermathT` is when it cools), then cooled (`ember` is a new look class; crust is today's) |
+| 6, 7 | ember, crust | a glowing strip (`aftermathT` is when it cools), then cooled; both read `crust` (Combat's `stripLooks`: ember reads crust; no new look class) |
 | 8 | snow | the powder curtain while a snow dump refills the groove |
 | 9 | flooded | water stands in `S.water` |
 | 10 | scree | a rubble strip (`S.rubble`, so contact reads surface `rubble`: a slide over it tumbles) |
@@ -60,7 +60,11 @@ Three fields on `SimState` (a grant from Simulation, `grant_sim_after.py`): `aft
 
 ## For VFX and Rendering
 
-Read `S.aftermath[column]` (or `WorldAfter.kindAt`) for the strips, `S.aftermathT` for when a burning, glowing or wet strip ends, `S.water` and `S.deform` for what they changed, and the `water_wave` event for the parted sea's release (`x`, `r`, `amount`, `n`, `dur`). Rendering needs a look for `ember` (the new class) and the strips' kinds above; nothing new is emitted but that one event (the existing type).
+Read `S.aftermath[column]` (or `WorldAfter.kindAt`) for the strips, `S.aftermathT` for when a burning, glowing or wet strip ends, `S.water` and `S.deform` for what they changed, and the `water_wave` event for the parted sea's release (`x`, `r`, `amount`, `n`, `dur`). Rendering needs the strips' kinds above; nothing new is emitted but that one event (the existing type). The look classes a strip reads as (`lookAt`, Combat's `stripLooks`): glaze `ice`, ember and crust `crust`, burnt grass `ash`, a flooded groove `water`; scree is surface `rubble`; `surfaceAt` makes glaze, ember and crust `rock`.
+
+## Trees on a path (window 22)
+
+`WorldStructures.damageArea(..., reachMul, treeMode = "area")`: the director passes the signature variant row's `trees` for each sample of the beam. `area` (the default) is what it always was: the trees in reach are felled, with the fire cue. `burn`: felled and charred (`burn` 1, which the tree view draws as a charred stump), with the fire cue. `fell`: felled, no fire. `snap`: felled, with a crown-drop debris cue at each tree. `none`: the trees stand. A tree is felled when it lies within 0.7 of the sample's radius, as before. Where the row also has the `clearing` aftermath, the strip is marked cleared and the trunks are `trunksIn`.
 
 ## Proof
 

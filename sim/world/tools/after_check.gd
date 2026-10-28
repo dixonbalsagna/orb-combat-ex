@@ -123,7 +123,7 @@ func _init() -> void:
 	var inside: int = count(Sg, WorldAfter.GLAZE, 540, 700)
 	ok(ng > 0 and inside == ng, "glaze: %d scorched columns of the ice sheet are glazed, none beyond (the plains the groove's flank crosses are plain)" % ng)
 	var aft: float = WorldContact._brake(Sg, 620.5 * COL)
-	ok(WorldContact.lookAt(Sg, 620.5 * COL) == "ice" and aft > 0.0, "glaze: the strip reads \"ice\" (brake %.2f where it was %.2f)" % [aft, bef])
+	ok(WorldContact.lookAt(Sg, 620.5 * COL) == "ice" and WorldContact.surfaceAt(Sg, 620.5 * COL) == "rock" and WorldContact.surfaceAt(Sg, 560.5 * COL) == "soil" and aft > 0.0, "glaze: the strip reads \"ice\" on rock (the plains beside it stay soil) (brake %.2f where it was %.2f)" % [aft, bef])
 	# --- clearing: the trees in the strip are felled, the canopy gone for the match, the trunks listable
 	var Sc: SimState = world()
 	region(Sc, 540, 760, fid("forest"))
@@ -184,11 +184,36 @@ func _init() -> void:
 	region(Se, 540, 700, fid("volcanic"))
 	var pe: Array = groove(Se, 600, 640)
 	var ne: int = WorldAfter.lay(Se, {"kind": "ember", "durTicks": 600, "hazard": true}, pe[0], pe[1], fid("volcanic"))
-	ok(ne > 0 and WorldAfter.hazardAt(Se, 620.5 * COL) and WorldContact.lookAt(Se, 620.5 * COL) == "ember", "ember: the groove glows (hazard, look \"ember\"), %d columns" % ne)
+	ok(ne > 0 and WorldAfter.hazardAt(Se, 620.5 * COL) and WorldContact.lookAt(Se, 620.5 * COL) == "crust" and WorldContact.surfaceAt(Se, 620.5 * COL) == "rock", "ember: the groove glows (hazard; Combat's stripLooks: it reads crust, on rock), %d columns" % ne)
 	stepN(Se, 590)
 	ok(WorldAfter.hazardAt(Se, 620.5 * COL), "ember: still glowing at 590 ticks")
 	stepN(Se, 20)
 	ok(not WorldAfter.hazardAt(Se, 620.5 * COL) and WorldContact.lookAt(Se, 620.5 * COL) == "crust" and count(Se, WorldAfter.EMBER) == 0 and WorldAfter.jobs(Se) == 0, "ember: after 600 ticks it reads crust, no hazard, the window closed")
+	# --- trees on a path, by mode: area (today's), burn, fell, snap, none
+	var modes: Dictionary = {}
+	for mode in ["area", "burn", "fell", "snap", "none"]:
+		var St: SimState = world()
+		region(St, 540, 700, fid("forest"))
+		for cc in [600, 610]:
+			var tr2 := SimState.TreeState.new()
+			tr2.x = (float(cc) + 0.5) * COL
+			tr2.h = 400.0
+			St.trees.append(tr2)
+		var far2 := SimState.TreeState.new()
+		far2.x = 3000.0 * COL / 2.0
+		far2.h = 400.0
+		St.trees.append(far2)
+		St.out.fx.clear()
+		WorldStructures.damageArea(St, 605.5 * COL, WorldTerrain.groundY(St, 605.5 * COL) + 20.0, 600.0, 10.0, St.fighters[0], true, 0.0, -1, 0.0, 1.0, mode)
+		var fires: int = 0
+		var debris: int = 0
+		for e in St.out.fx:
+			if e.type == "fire":
+				fires += 1
+			elif e.type == "debris":
+				debris += 1
+		modes[mode] = [St.trees[0].alive, St.trees[0].burn, fires, debris, St.trees[2].alive]
+	ok(modes["area"] == [false, 0.0, 2, 0, true] and modes["burn"] == [false, 1.0, 2, 0, true] and modes["fell"] == [false, 0.0, 0, 0, true] and modes["snap"] == [false, 0.0, 0, 2, true] and modes["none"] == [true, 0.0, 0, 0, true], "trees on a path: area fells with the fire cue (today's), burn fells and chars (burn 1), fell fells with no fire, snap fells with a crown debris cue each, none leaves them standing; the far tree stands in all (%s)" % str(modes))
 	# --- snow dump
 	var Ss: SimState = world()
 	region(Ss, 540, 700, fid("taiga"))
@@ -207,6 +232,7 @@ func _init() -> void:
 	var wl: float = Sw.base[620] - 6.0
 	var surf: float = Sw.base[620] + Sw.deform[620] + Sw.water[620]
 	ok(nw > 0 and Sw.water[620] > 0.0 and absf(surf - wl) < 0.01, "flood (wetland): the groove stands at the water table, 6 below the old ground (surface %.2f, table %.2f)" % [surf, wl])
+	ok(WorldContact.lookAt(Sw, 620.5 * COL) == "water", "flood: the flooded groove reads \"water\" (Combat's stripLooks)")
 	var Sb: SimState = world()
 	region(Sb, 300, 560, fid("beach"), -10.0)
 	var pb: Array = groove(Sb, 330, 370)

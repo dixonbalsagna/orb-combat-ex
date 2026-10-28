@@ -12,7 +12,7 @@ extends RefCounted
 ##   glaze GLAZE (the strip reads ice for the match; contact's brake takes the ice profile's grip) | clearing CLEARED (no canopy cover; the felled trunks are trunksIn) | heave PLATES (a step of two columns each
 ##   side, raised in S.deform) | fireLine BURNING while a column burns (aftermathT is when it goes out), then BURNT (look ash); hazardAt is true while it burns | snowDump SNOW while the powder curtain is up
 ##   (S.deform refilled by `refill`) | flood FLOODED (water stands in S.water) | scree SCREE (a rubble strip: S.rubble, so contact reads surface "rubble") | ember EMBER while it glows (hazardAt; aftermathT is
-##   when it cools), then CRUST (look crust) | split SPLIT (the slot: open water in S.water) | part OPEN while the trench stands, the water_wave cue at the release, then WET on the shore the wave ran up (look only).
+##   when it cools; look crust), then CRUST (look crust) | split SPLIT (the slot: open water in S.water) | part OPEN while the trench stands, the water_wave cue at the release, then WET on the shore the wave ran up (look only).
 
 const PATH := "res://data/biomes/after.json"
 const SCHEMA := "biomes.after/1"
@@ -168,17 +168,26 @@ static func clearedAt(S: SimState, x: float) -> bool:
 	return kindAt(S, x) == CLEARED
 
 
-## The look class a strip reads as, or "" when the ground's own stands: ice (glaze), ash (burnt grass), ember (glowing), crust (cooled).
+## The look class a strip reads as (Combat's stripLooks), or "" when the ground's own stands: ice (glaze), ash (burnt grass), crust (a glowing ember strip and the cooled one: the glow is the hazard and the cue),
+## water (a flooded groove). Scree reads rubble through the surface (S.rubble), not here.
 static func lookAt(S: SimState, x: float) -> String:
 	match kindAt(S, x):
 		GLAZE:
 			return "ice"
 		BURNT:
 			return "ash"
-		EMBER:
-			return "ember"
-		CRUST:
+		EMBER, CRUST:
 			return "crust"
+		FLOODED:
+			return "water"
+	return ""
+
+
+## The contact surface class a strip makes, or "" when the ground's own stands: ice and crust are rock (ground.json: sea_ice and volcanic are rock), as the look classes' "reads as" rows say.
+static func surfaceAt(S: SimState, x: float) -> String:
+	match kindAt(S, x):
+		GLAZE, EMBER, CRUST:
+			return "rock"
 	return ""
 
 

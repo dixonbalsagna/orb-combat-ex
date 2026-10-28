@@ -561,7 +561,9 @@ static func _heapRow(S: SimState, b, anyRow: bool) -> float:
 ## reachMul: the area's growth by the causing fighter's tier (docs/world/structure-reach.md): -1 takes cause.ld.reach, a number
 ## uses that (the beam's path samples pass 1.0: the beam has its own tier gate). The whole blast scales, its falloff too.
 ## ringCap (cause.ld.reachRingCap, -1 off): at most this many buildings levelled beyond the old reach per call.
-static func damageArea(S: SimState, x: float, y: float, r0: float, dmg: float, cause, beam: bool = false, evt: float = 0.0, capLeft: int = -1, keep: float = 0.0, reachMul: float = -1.0) -> int:
+## treeMode (the signature variant row's `trees`, docs/combat/biomes.md section 2): what the trees the area reaches become. "area" (the default) is what it always was: felled, with the fire cue. "burn": felled and charred
+## (burn 1: the tree view draws a charred stump), with the fire cue. "fell": felled, no fire. "snap": felled with the crowns dropping (a debris cue at the crown), no fire. "none": the trees stand.
+static func damageArea(S: SimState, x: float, y: float, r0: float, dmg: float, cause, beam: bool = false, evt: float = 0.0, capLeft: int = -1, keep: float = 0.0, reachMul: float = -1.0, treeMode: String = "area") -> int:
 	var levelled: int = 0
 	S.world.fallTick = -1.0
 	var tf: float = 1.0
@@ -609,10 +611,17 @@ static func damageArea(S: SimState, x: float, y: float, r0: float, dmg: float, c
 	if S.world.fallFold > 0.0:
 		SimFx.buildingFall(S, -1, x, 0.0, 0.0, 0.0, "implode", 0.0, x, 0.0, S.world.fallFold)
 		S.world.fallFold = 0.0
+	if treeMode == "none":
+		return levelled
 	for t in S.trees:
 		if t.alive and absf(SimWrap.sdx(x, t.x)) < r * 0.7 and y < WorldTerrain.groundY(S, t.x) + r:
 			t.alive = false
-			SimFx.fire(S, t.x, WorldTerrain.groundY(S, t.x), 2)
+			if treeMode == "burn":
+				t.burn = 1.0
+			if treeMode == "snap":
+				SimFx.debris(S, t.x, WorldTerrain.groundY(S, t.x) + t.h * 0.8, 6, "#6b4f2a", 320.0)
+			elif treeMode != "fell":
+				SimFx.fire(S, t.x, WorldTerrain.groundY(S, t.x), 2)
 	return levelled
 
 
