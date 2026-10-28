@@ -17,3 +17,6 @@ Each file here is a self-contained brief for one fresh cloud session. Orb starts
 | 3 | combat-moveset-generator.md | Combat & Choreography | cloud/combat-choreography/movegen | routine (plan) |
 
 Wave 3 runs as routines, which bill the Max plan rather than the credit, so it can run while Orb is away.
+| 4 | vfx-variant-debris.md | VFX | cloud/vfx/variant-debris | routine (plan) |
+| 4 | netcode-desync-spectate.md | Netcode & Online | cloud/netcode-online/desync-spectate | routine (plan) |
+| 4 | animation-pose-drain.md | Animation | cloud/animation/pose-drain | routine (plan) |
