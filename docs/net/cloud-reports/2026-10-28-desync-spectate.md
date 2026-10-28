@@ -38,7 +38,7 @@ Every row exited 0.
   - Injected divergence: 108 runs (6 injections × 9 profiles × 2 seeds). 99 were detected by both peers at the next checkpoint (360), with 300 as the last agreed checkpoint. In each, the field walk named the injected field: `S.rng.a`, `S.fighters[1].x`, `S.buildings[0].hp`, `S.deform[1600]`, `S.mood.casGiven` or `S.dirS.cool`.
   - 9 runs healed: on seed 2 the sim overwrote the 1-ulp x before the checkpoint, and the full `SimHash` confirms the state was equal again.
   - Totals: "PASS 70 runs … 0 failure(s)" and "PASS 56 runs … 0 failure(s)".
-  - The planet setup (seed 7): see the gates below.
+  - The planet setup (seeds 7 to 9): see the gates below.
   - Negative control (seeds 1 and 2, 600 ticks): "48 break(s) caught, 0 missed". The blind detector missed every injection. The stale detector raised a false alarm on every profile where a re-run changed a checkpoint's state. p40 and p80j were skipped because their guesses happened to be right.
 - **The spectator check.**
   - Default setup, seeds 1 and 2, all profiles: 18 sessions, 1,620 comparisons, PASS.
@@ -53,7 +53,15 @@ Every row exited 0.
 - `--self-test`: "parser 283 files + 7 text cases; engine 46 cases + 6 unsupported; schemas 170; data cases 8153", 0
 - `node tools/lint-determinism.mjs`: "determinism lint ok: …", 0
 - `npm test --prefix sim`: "all 4 stages passed" (golden: "the frozen JS core reproduces its golden record"), 0. The golden is byte-identical: no sim file changed.
-__GATES__
+- `anim_check.gd`: "anim check passed", 0
+- all 40 `sim/world/tools/*_check.gd` scripts exited 0. Each printed its "0 check(s) failed" line ("CRATERS CHECK: 0 failed"; lane_check prints its avenue table, "… across an avenue: 0").
+- `split_sweep.gd`: "split sweep passed", 0
+- `campaign_episode.gd`: "the two plays are the same to the bit (1800 ticks a stage …)", 0
+- `parity.gd`: "golden check passed", 0. It ran with the new net/ files in the tree.
+- **The planet setup.**
+  - `spectator_check --setup=planet --seeds=7`, on lan, p80j, p200 and far: 4 sessions, 360 comparisons, PASS, 0.
+  - `desync_check --setup=planet`, on lan, p120 and far, 3 seeds × 21 runs: 0 false alarms and 0 missed divergences. The 1-ulp x and the 1e-6 cool-down healed on seeds 7 and 8, confirmed by `SimHash`, and were detected on seed 9. Seed 9 exited 0 with "PASS 21 runs … 0 failure(s)". Seeds 7 and 8 each exit 1 alone, under the check's rule that every injection be detected at least once per invocation. That rule is why the check should run with more than one seed.
+- One change landed after the long runs: `chkStaleWrong`, which is test-only and computed only under `chkStale`. The desync negative control and all the desync checks ran after it. The rollback check's sessions never set `chkStale`.
 
 ## DECISIONS
 - **The digest is MD5 over a packed array of chosen fields, not `SimHash`.** It costs one GDScript append per value, and the engine hashes the blocks. The chosen fields are the ones every divergence reaches within a tick or two. `SimHash` stays the full check, and the field walk is the diagnosis.
@@ -70,7 +78,7 @@ __GATES__
 
 ## NEEDS FROM EP
 1. **Tools: CI.** This is the request from the last report, now with the short new checks:
-   - `desync_check --seeds=1 --ticks=600 --profiles=lan,p120` (about 40 s);
+   - `desync_check --seeds=1 --ticks=600 --profiles=lan,p120` (about 40 s). Seed 1 detects every injection; a seed where a small injection heals fails the run's at-least-once rule (RESULTS);
    - `spectator_check --seeds=1 --ticks=600 --profiles=lan,p120,far` (about 25 s);
    - `delay_check` (about 1 s);
    - each check's `--negative-control` at 600 ticks.
