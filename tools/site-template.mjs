@@ -6,6 +6,9 @@
 //        standard: says so and passes (the record is not read). custom: fails unless the record is complete (a github.com release asset URL, its SHA-512, the SHA-512 of the godot.wasm inside it,
 //        and the readings measured on the CUSTOM export: parity, the signature clip in both modes with reduced within 2.5 / 3 / 2, the collapse clip in both modes, and a nightly on the pinned
 //        commit with nothing over the limit). With --site it also reads the built site's play/index.wasm: custom, it must be the pinned wasm; standard, it must not be.
+//        RL-202 (Legal, 2026-10-28): the signature clip's reduced limit is waived for one pin and one engine, named in "engineFlip" in tools/flash/signature-gate.json (ruling, commit, template tag and SHA-512,
+//        until), and only if no number of any reading (signature and collapse, both modes) is worse than the standard build's on the same commit (measured.standard). The entry ends at the next pin move or its
+//        "until" (--today YYYY-MM-DD overrides the date); a stale one fails this check whatever the template says.
 //   node tools/site-template.mjs --fetch <dir> [--config ...] [--record ...]
 //        custom: downloads the pinned zip into <dir> (curl, as .github/actions/setup-godot does), checks its size and SHA-512 and prints its path; standard: prints nothing.
 //   node tools/site-template.mjs --download <dir> [--record ...]
@@ -35,6 +38,44 @@ export function templateOf(config) {
 }
 
 const reading = (r) => r && typeof r.primary === 'number' && typeof r.area15 === 'number' && typeof r.twoSec === 'number';
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+const READ_NUMS = ['primary', 'area15', 'twoSec'];
+const READ_CLIPS = [['signature', 'reduced'], ['signature', 'normal'], ['collapse', 'reduced'], ['collapse', 'normal']];
+export const utcToday = () => new Date().toISOString().slice(0, 10);
+
+/** Legal's RL-202 (2026-10-28): the engine flip under the grandfathered live pin. The entry is "engineFlip" in tools/flash/signature-gate.json (which `signature-gate.mjs --record` rewrites at the next pin move, so
+ *  the entry goes with it). Why the entry itself is not usable (an array; empty when it is whole, names the pin and has not ended). `today` is a UTC date; the entry holds through `until`, inclusive. Pure. */
+export function flipEntryProblems(entry, config, today, recordCommit) {
+  if (entry === undefined || entry === null) return [];
+  const t = entry && entry.template;
+  if (typeof entry !== 'object' || !entry.ruling || !/^[0-9a-f]{40}$/.test(String(entry.commit)) || !t || !t.tag || !SHA512.test(String(t.sha512)) || !DATE.test(String(entry.until))) return ['the engineFlip entry in tools/flash/signature-gate.json is incomplete: it needs ruling, commit (the pin), template.tag, template.sha512 and until (YYYY-MM-DD)'];
+  const out = [];
+  if (today > entry.until) out.push(`the engineFlip entry in tools/flash/signature-gate.json (${entry.ruling}) ended on ${entry.until} (today is ${today}): remove it; the signature limit applies to every engine in full from here`);
+  if (config && /^[0-9a-f]{40}$/.test(String(config.pin)) && entry.commit !== config.pin) out.push(`the engineFlip entry in tools/flash/signature-gate.json (${entry.ruling}) is for ${entry.commit.slice(0, 8)}, the pin is ${config.pin.slice(0, 8)}: the pin moved, so the entry has ended; remove it`);
+  if (recordCommit && entry.commit !== recordCommit) out.push(`the engineFlip entry in tools/flash/signature-gate.json is for ${entry.commit.slice(0, 8)}, the signature reading beside it is for ${String(recordCommit).slice(0, 8)}: remove the entry`);
+  return out;
+}
+
+/** null when the entry covers THIS record (this pin, this engine's tag and SHA-512, not ended), else why not. Pure. */
+export function flipReason(flip, rec, config) {
+  if (!flip || !flip.entry) return 'there is no engineFlip entry in tools/flash/signature-gate.json';
+  const p = flipEntryProblems(flip.entry, config, flip.today, flip.recordCommit);
+  if (p.length) return p[0];
+  const t = flip.entry.template, url = String(rec && rec.url);
+  if (t.sha512 !== (rec && rec.sha512) || !url.includes(`/releases/download/${t.tag}/`)) return `the engineFlip entry (${flip.entry.ruling}) names the engine ${t.tag} ${t.sha512.slice(0, 16)}..., not this one: the signature limit applies to it in full`;
+  return null;
+}
+
+/** RL-202 condition 1: "no worse" is every number of every reading (signature and collapse, both modes) equal to or lower than the standard build's on the same commit (measured.standard). Pure. */
+export function noWorseProblems(rec, pin) {
+  const m = (rec && rec.measured) || {}, std = m.standard;
+  const whole = std && typeof std === 'object' && READ_CLIPS.every(([c, mode]) => reading(std[c] && std[c][mode]) && reading(m[c] && m[c][mode]));
+  if (!whole) return ['measured.standard is missing or incomplete: the engine flip (RL-202) is allowed only if every number reads no worse than the standard build of the same commit, so the standard build\'s signature and collapse readings, both modes, are recorded beside the custom ones'];
+  const out = [];
+  if (pin && std.commit !== pin) out.push(`measured.standard is for ${String(std.commit).slice(0, 8)}, the pin is ${pin.slice(0, 8)}: record the standard build\'s readings on the pin`);
+  for (const [c, mode] of READ_CLIPS) for (const k of READ_NUMS) if (m[c][mode][k] > std[c][mode][k]) out.push(`measured.${c}.${mode}.${k} reads ${m[c][mode][k]} on the custom engine against the standard build's ${std[c][mode][k]}: RL-202 allows the flip only if no number is worse`);
+  return out;
+}
 
 /** Why a custom template may not be used yet (an array; empty when the pin and its measurements are complete). Pure. */
 export function recordProblems(rec, config, ctx = null) {
@@ -48,7 +89,12 @@ export function recordProblems(rec, config, ctx = null) {
   if (!(m.parity && m.parity.keys > 0 && m.parity.match === m.parity.keys)) out.push('measured.parity is not complete: the web parity check (same sim bits as the standard template) must match every key on the custom template');
   const sig = m.signature || {};
   if (!reading(sig.reduced) || !reading(sig.normal)) out.push('measured.signature has no reading in both modes (primary, area15, twoSec) on the custom export');
-  else if (sig.reduced.primary > REDUCED_MAX.primary || sig.reduced.area15 > REDUCED_MAX.area15 || sig.reduced.twoSec > REDUCED_MAX.twoSec) out.push(`measured.signature.reduced reads worse than ${REDUCED_MAX.primary} / ${REDUCED_MAX.area15} / ${REDUCED_MAX.twoSec} (Legal RL-195 condition (a)): the pin cannot move to it`);
+  else if (sig.reduced.primary > REDUCED_MAX.primary || sig.reduced.area15 > REDUCED_MAX.area15 || sig.reduced.twoSec > REDUCED_MAX.twoSec) {
+    // over the limit: only Legal's RL-202 lets it through, for the grandfathered pin and the one engine its entry names, and only if nothing reads worse than the standard build of the same commit
+    const why = ctx && ctx.flip ? flipReason(ctx.flip, rec, config) : 'there is no engineFlip entry in tools/flash/signature-gate.json';
+    if (why === null) out.push(...noWorseProblems(rec, config && /^[0-9a-f]{40}$/.test(String(config.pin)) ? config.pin : null));
+    else out.push(`measured.signature.reduced reads worse than ${REDUCED_MAX.primary} / ${REDUCED_MAX.area15} / ${REDUCED_MAX.twoSec} (Legal RL-195 condition (a)): the pin cannot move to it (RL-202's engine flip does not cover it: ${why})`);
+  }
   const col = m.collapse || {};
   if (!reading(col.reduced) || !reading(col.normal)) out.push('measured.collapse has no reading in both modes on the custom export');
   const n = m.nightly;
@@ -93,11 +139,13 @@ export function recordProblems(rec, config, ctx = null) {
 }
 
 /** The workflow and the engine patches as the record is checked against (RL-199 item 2). null parts are not compared. */
-export function loadCtx(root = join(HERE, '..')) {
-  const wf = join(root, '.github', 'workflows', 'web-template.yml'), pd = join(root, 'tools', 'engine', 'patches');
+export function loadCtx(root = join(HERE, '..'), today = utcToday()) {
+  const wf = join(root, '.github', 'workflows', 'web-template.yml'), pd = join(root, 'tools', 'engine', 'patches'), gf = join(root, 'tools', 'flash', 'signature-gate.json');
   const patches = {};
   if (existsSync(pd)) for (const f of readdirSync(pd)) if (f.endsWith('.patch')) patches[f.replace(/\.patch$/, '')] = readFileSync(join(pd, f));
-  return { workflow: existsSync(wf) ? readFileSync(wf, 'utf8') : null, patches: existsSync(pd) ? patches : null };
+  let gate = null;
+  try { gate = JSON.parse(readFileSync(gf, 'utf8')); } catch { /* none: no engine flip */ }
+  return { workflow: existsSync(wf) ? readFileSync(wf, 'utf8') : null, patches: existsSync(pd) ? patches : null, flip: { entry: gate && gate.engineFlip, recordCommit: gate && gate.commit, today } };
 }
 
 /** Reads one entry of a zip held in a Buffer (stored or deflated), or null. Just enough of the format for the template zip. */
@@ -169,10 +217,14 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     if (t === 'standard') process.exit(0);
     try { console.log(templateFor(config, rec, resolve(opt('--fetch')))); } catch (e) { console.error(`site template: ${e.message}`); process.exit(1); }
   } else {
-    const problems = t === 'custom' ? recordProblems(rec, config, loadCtx(opt('--root') ? resolve(opt('--root')) : undefined)) : [];
+    const ctx = loadCtx(opt('--root') ? resolve(opt('--root')) : undefined, opt('--today') || utcToday());
+    const problems = t === 'custom' ? recordProblems(rec, config, ctx) : [];
+    problems.push(...flipEntryProblems(ctx.flip.entry, config, ctx.flip.today, ctx.flip.recordCommit));   // a stale or half-written entry fails whatever the template says (RL-202 condition 3)
+    let excused = false;
+    if (t === 'custom' && rec && rec.measured && rec.measured.signature && reading(rec.measured.signature.reduced)) { const r = rec.measured.signature.reduced; excused = (r.primary > REDUCED_MAX.primary || r.area15 > REDUCED_MAX.area15 || r.twoSec > REDUCED_MAX.twoSec) && flipReason(ctx.flip, rec, config) === null; }
     if (opt('--site') && config.offline !== true) problems.push(...siteWasmProblems(config, rec, resolve(opt('--site'))));   // an offline site holds no game: nothing to compare
     if (problems.length) { for (const p of problems) console.error(`site template check FAILED: ${p}`); process.exit(1); }
-    console.log(t === 'standard' ? `site template check ok: standard (the default; ${opt('--site') ? 'the built site\'s engine is not the custom one' : 'nothing to check'})` : `site template check ok: custom ${rec.sha512.slice(0, 16)}... (pinned, measured on the custom export${opt('--site') ? ', and the built site runs it' : ''})`);
+    console.log(t === 'standard' ? `site template check ok: standard (the default; ${opt('--site') ? 'the built site\'s engine is not the custom one' : 'nothing to check'})` : `site template check ok: custom ${rec.sha512.slice(0, 16)}... (pinned, measured on the custom export${opt('--site') ? ', and the built site runs it' : ''})${excused ? `; the signature clip reduced reads over ${REDUCED_MAX.primary} / ${REDUCED_MAX.area15} / ${REDUCED_MAX.twoSec}, no worse than the standard build on any number on this pin, which ${ctx.flip.entry.ruling} lets stand until ${ctx.flip.entry.until} (this engine only, this pin only)` : ''}`);
   }
 }
 void statSync; void writeFileSync;

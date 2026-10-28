@@ -8,7 +8,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { deflateRawSync } from 'node:zlib';
-import { templateOf, recordProblems, readZipEntry, fetchTemplate, templateFor, siteWasmProblems, REDUCED_MAX } from './site-template.mjs';
+import { templateOf, recordProblems, readZipEntry, fetchTemplate, templateFor, siteWasmProblems, REDUCED_MAX, flipEntryProblems, noWorseProblems, loadCtx } from './site-template.mjs';
 import { setWebCustomTemplate, webPresetChanged } from './flash/web-preset.mjs';
 import { exportPinned } from './site-pin.mjs';
 
@@ -119,6 +119,50 @@ bad('a measurement carries no zip at all (signature)', good({ measured: M({ sign
 bad('the zip was replaced (a new SHA-512) and the readings were not retaken', { ...good(), sha512: 'a'.repeat(128) }, /was not taken on this zip/);
 check('the limits are the signature pin\'s (2.5 / 3 / 2)', REDUCED_MAX.primary === 2.5 && REDUCED_MAX.area15 === 3 && REDUCED_MAX.twoSec === 2);
 
+// Legal's RL-202: the engine flip under the grandfathered pin: the signature limit is waived for one pin and one engine, only if nothing reads worse than the standard build of the same commit, until the next pin move or its date
+const STD = { commit: PIN, signature: { reduced: { primary: 3, area15: 3, twoSec: 3 }, normal: { primary: 2.5, area15: 2.5, twoSec: 3 } }, collapse: { reduced: { primary: 2, area15: 2.5, twoSec: 2 }, normal: { primary: 2, area15: 3.5, twoSec: 1 } } };
+const TAG = 'web-template-4.7.2-1';
+const ENTRY = { ruling: 'RL-202', commit: PIN, template: { tag: TAG, sha512: sha512(ZIP) }, until: '2026-11-01' };
+const FLIP = (over = {}, entry = {}) => ({ entry: { ...ENTRY, ...entry }, recordCommit: PIN, today: '2026-10-29', ...over });
+// a record whose measured numbers are STD's (the standard build of the same commit), with the over-limit signature reduced reading
+const flipRec = (patch = {}, std = {}) => { const g = good(); return { ...g, measured: { ...g.measured, signature: { ...g.measured.signature, reduced: STD.signature.reduced, normal: STD.signature.normal }, collapse: { ...g.measured.collapse, reduced: STD.collapse.reduced, normal: STD.collapse.normal }, standard: { ...STD, ...std }, ...patch } }; };
+const flipP = (rec, flip = FLIP(), pin = PIN) => recordProblems(rec, cfg({ pin }), { ...CTX, flip });
+check('RL-202: a reduced reading over 2.5 / 3 / 2 is refused with no engineFlip entry (RL-195 in full)', flipP(flipRec(), null).some((m) => /worse than 2\.5/.test(m)) && flipP(flipRec(), FLIP({ entry: undefined })).some((m) => /no engineFlip entry/.test(m)));
+check('RL-202: the same reading under the entry for this pin and this engine, every number equal to the standard build\'s, has no problem', flipP(flipRec()).length === 0, JSON.stringify(flipP(flipRec())));
+check('RL-202: every number lower than the standard build\'s also passes', flipP(flipRec({}, { collapse: { reduced: { primary: 3, area15: 3, twoSec: 3 }, normal: { primary: 3, area15: 4, twoSec: 2 } } })).length === 0);
+check('RL-202: the entry holds through its last day (inclusive)', flipP(flipRec(), FLIP({ today: '2026-11-01' })).length === 0);
+{
+  // one number worse than the standard build refuses, whichever of the twelve it is
+  let all = true;
+  for (const [c, mode] of [['signature', 'reduced'], ['signature', 'normal'], ['collapse', 'reduced'], ['collapse', 'normal']]) for (const k of ['primary', 'area15', 'twoSec']) {
+    const std = { [c]: { ...STD[c], [mode]: { ...STD[c][mode], [k]: STD[c][mode][k] - 0.5 } } };   // the standard build reads 0.5 lower than the custom one here: the custom number is worse
+    const p = flipP(flipRec({}, std));
+    if (!(p.length === 1 && p[0].includes(`measured.${c}.${mode}.${k} reads`) && /no number is worse/.test(p[0]))) { all = false; console.log(`    ${c}.${mode}.${k}: ${JSON.stringify(p)}`); }
+  }
+  check('RL-202: one number worse than the standard build\'s refuses, each of the twelve (signature and collapse, both modes), and names it', all);
+}
+check('RL-202: no standard readings recorded: refused', flipP(flipRec({ standard: undefined })).some((m) => /measured\.standard is missing/.test(m)) && flipP(flipRec({}, { collapse: undefined })).some((m) => /measured\.standard is missing or incomplete/.test(m)));
+check('RL-202: the standard readings are of another commit than the pin: refused', flipP(flipRec({}, { commit: 'b'.repeat(40) })).some((m) => /measured\.standard is for bbbbbbbb/.test(m)));
+check('RL-202: another pin is refused (the entry is for aaaaaaaa, the pin is cccccccc), twice over: the entry has ended and RL-195 applies', (() => { const p = flipP(flipRec(), FLIP(), 'c'.repeat(40)); return p.some((m) => /worse than 2\.5.*the pin moved/.test(m)); })());
+check('RL-202: another engine is refused (a different SHA-512 for the same tag)', flipP(flipRec(), FLIP({}, { template: { tag: TAG, sha512: 'd'.repeat(128) } })).some((m) => /worse than 2\.5.*not this one/.test(m)));
+check('RL-202: another engine is refused (a different tag for the same SHA-512)', flipP(flipRec(), FLIP({}, { template: { tag: 'web-template-9', sha512: sha512(ZIP) } })).some((m) => /worse than 2\.5.*not this one/.test(m)));
+check('RL-202: the day after the date is refused', flipP(flipRec(), FLIP({ today: '2026-11-02' })).some((m) => /worse than 2\.5.*ended on 2026-11-01/.test(m)));
+check('RL-202: an entry beside a signature reading of another commit is refused', flipP(flipRec(), FLIP({ recordCommit: 'e'.repeat(40) })).some((m) => /worse than 2\.5/.test(m)));
+check('RL-202: an incomplete entry (no date) is refused', flipP(flipRec(), FLIP({}, { until: undefined })).some((m) => /worse than 2\.5.*incomplete/.test(m)) && flipP(flipRec(), FLIP({}, { template: { tag: TAG } })).some((m) => /incomplete/.test(m)));
+check('RL-202: the entry waives the signature limit and nothing else (a collapse clip not measured is still refused)', flipP(flipRec({ collapse: null })).some((m) => /measured\.collapse/.test(m)));
+check('RL-202: a stale entry fails by itself (flipEntryProblems): past its date, for another pin, whole and live is empty', flipEntryProblems(ENTRY, cfg(), '2026-11-02').length === 1 && flipEntryProblems(ENTRY, cfg({ pin: 'c'.repeat(40) }), '2026-10-29').length === 1 && flipEntryProblems(ENTRY, cfg(), '2026-10-29').length === 0 && flipEntryProblems(undefined, cfg(), '2026-12-31').length === 0 && flipEntryProblems({ ruling: 'RL-202' }, cfg(), '2026-10-29').length === 1);
+check('RL-202: noWorseProblems is exported and equal numbers have none', noWorseProblems(flipRec(), PIN).length === 0);
+{
+  // the tree's own files: the entry in signature-gate.json names the pin of site.json and the zip web-template.json pins, and (on a fixed date, so this never rots) the real record passes with the real data
+  const gate = JSON.parse(readFileSync(join(here, 'flash', 'signature-gate.json'), 'utf8')), site = JSON.parse(readFileSync(join(here, 'site.json'), 'utf8')), real = JSON.parse(readFileSync(join(here, 'web-template.json'), 'utf8'));
+  const e = gate.engineFlip;
+  check('the tree: the engineFlip entry names RL-202, the site pin, the pinned zip\'s tag and SHA-512, and ends on 2026-11-01', !!e && e.ruling === 'RL-202' && e.commit === site.pin && e.commit === gate.commit && e.until === '2026-11-01' && e.template.sha512 === real.sha512 && real.url.includes(`/releases/download/${e.template.tag}/`), JSON.stringify(e && e.template));
+  const ctx = loadCtx(join(here, '..'), '2026-10-29');
+  check('the tree: with "custom", the real record passes the real check on 2026-10-29 (RL-202), and the real readings equal the standard build\'s on every number', recordProblems(real, { ...site, template: 'custom' }, ctx).length === 0 && noWorseProblems(real, site.pin).length === 0, JSON.stringify(recordProblems(real, { ...site, template: 'custom' }, ctx)));
+  check('the tree: the same record on 2026-11-02 is refused by RL-195 (the entry has ended)', recordProblems(real, { ...site, template: 'custom' }, loadCtx(join(here, '..'), '2026-11-02')).some((m) => /worse than 2\.5.*ended on 2026-11-01/.test(m)));
+  check('the tree: site.json says "custom" (the flip), and "standard" is the one-step rollback the check accepts', site.template === 'custom' && templateOf({ ...site, template: 'standard' }) === 'standard');
+}
+
 // the zip
 check('readZipEntry reads a deflated entry, a stored one, and says null for a name that is not there', readZipEntry(ZIP, 'godot.wasm').equals(WASM) && readZipEntry(ZIP, 'godot.audio.worklet.js').toString() === 'w' && readZipEntry(ZIP, 'nope') === null);
 check('readZipEntry says null for bytes that are not a zip', readZipEntry(Buffer.from('not a zip at all'), 'godot.wasm') === null);
@@ -207,6 +251,27 @@ try {
   check('--fetch: standard prints nothing and exits 0', (() => { const r = run(['--fetch', join(tmp, 'f1'), '--config', cf(cfg()), '--record', rf(good())]); return r.status === 0 && r.stdout.trim() === ''; })());
   check('--download: a record with no release URL fails whatever the site says', run(['--download', join(tmp, 'dl1'), '--config', cf(cfg()), '--record', rf({ url: null })]).status === 1);
   check('--download: a URL that is not a github.com release asset is refused before anything is fetched', (() => { const r = run(['--download', join(tmp, 'dl2'), '--record', rf(good({ url: 'http://evil.example/x.zip' }))]); return r.status === 1 && /no release asset URL/.test(r.stderr) && !existsSync(join(tmp, 'dl2')); })());
+  // RL-202 through the command: the entry is read from <root>/tools/flash/signature-gate.json
+  {
+    const gateFile = join(root, 'tools', 'flash', 'signature-gate.json');
+    mkdirSync(dirname(gateFile), { recursive: true });
+    const gate = (entry) => { if (entry === null) rmSync(gateFile, { force: true }); else writeFileSync(gateFile, JSON.stringify({ commit: PIN, grandfathered: true, engineFlip: entry })); };
+    const over = flipRec();
+    gate(ENTRY);
+    const ok = run(['--check', '--config', cf(cfg({ template: 'custom' })), '--record', rf(over), '--today', '2026-10-29']);
+    check('--check (RL-202): custom over the reduced limit passes under the entry, no worse than the standard build, and says so', ok.status === 0 && /RL-202 lets stand until 2026-11-01/.test(ok.stdout), ok.stderr + ok.stdout);
+    const worse = run(['--check', '--config', cf(cfg({ template: 'custom' })), '--record', rf(flipRec({}, { collapse: { ...STD.collapse, normal: { ...STD.collapse.normal, area15: 3 } } })), '--today', '2026-10-29']);
+    check('--check (RL-202): one number worse than the standard build fails and names it', worse.status === 1 && /measured\.collapse\.normal\.area15 reads 3\.5/.test(worse.stderr), worse.stderr);
+    const late = run(['--check', '--config', cf(cfg({ template: 'custom' })), '--record', rf(over), '--today', '2026-11-02']);
+    check('--check (RL-202): after the date it fails twice (the reading is over the limit again, and the entry is stale)', late.status === 1 && /worse than 2\.5/.test(late.stderr) && /ended on 2026-11-01/.test(late.stderr));
+    check('--check (RL-202): a stale entry fails even with the standard template (rollback does not hide it)', (() => { const r = run(['--check', '--config', cf(cfg()), '--record', rf({ url: null }), '--today', '2026-11-02']); return r.status === 1 && /ended on 2026-11-01/.test(r.stderr); })());
+    check('--check (RL-202): the standard template passes while the entry is live (the one-step rollback)', run(['--check', '--config', cf(cfg()), '--record', rf({ url: null }), '--today', '2026-10-29']).status === 0);
+    check('--check (RL-202): the pin moved (another pin in site.json) fails the entry', (() => { const r = run(['--check', '--config', cf(cfg({ pin: 'c'.repeat(40) })), '--record', rf({ url: null }), '--today', '2026-10-29']); return r.status === 1 && /the pin moved/.test(r.stderr); })());
+    gate({ ...ENTRY, template: { tag: TAG, sha512: 'd'.repeat(128) } });
+    check('--check (RL-202): an entry for another engine does not cover this one', run(['--check', '--config', cf(cfg({ template: 'custom' })), '--record', rf(over), '--today', '2026-10-29']).status === 1);
+    gate(null);
+    check('--check (RL-202): with no entry at all the reading over the limit is refused (RL-195 in full)', (() => { const r = run(['--check', '--config', cf(cfg({ template: 'custom' })), '--record', rf(over), '--today', '2026-10-29']); return r.status === 1 && /worse than 2\.5/.test(r.stderr); })());
+  }
   check('--fetch: custom with an incomplete record fails', run(['--fetch', join(tmp, 'f2'), '--config', cf(cfg({ template: 'custom' })), '--record', rf({ url: null })]).status === 1);
 } finally {
   srv.kill();

@@ -1,5 +1,5 @@
 {
-  "_why": "The pin of the custom Web export template (tools/site-template.mjs, docs/tools/site-template.md). tools/site.json \"template\": \"custom\" is refused until this record is complete: a release asset URL, the SHA-512 of the zip and of the godot.wasm in it, and the build pinned (flags, source, Emscripten, patches: any change is a new flip, Legal RL-199), and the readings measured on the CUSTOM export, each taken on this zip (parity, the signature and collapse clips in both modes, a nightly on the pinned commit, and the frame comparison standard against custom: a frame beyond noise needs the full set in measured.full). The zip is published (GitHub Release web-template-4.7.2-lazy-1, Orb's yes to option (b), 2026-10-28) and pinned below by SHA-512; the readings are still to be taken, and until signature, collapse, nightly and frames are filled in \"template\": \"custom\" in tools/site.json is refused. Nothing in it is a pass yet.",
+  "_why": "The pin of the custom Web export template (tools/site-template.mjs, docs/tools/site-template.md). tools/site.json \"template\": \"custom\" is refused until this record is complete: a release asset URL, the SHA-512 of the zip and of the godot.wasm in it, and the build pinned (flags, source, Emscripten, patches: any change is a new flip, Legal RL-199), and the readings measured on the CUSTOM export, each taken on this zip (parity, the signature and collapse clips in both modes, a nightly on the pinned commit, and the frame comparison standard against custom: a frame beyond noise needs the full set in measured.full). The zip is published (GitHub Release web-template-4.7.2-lazy-1, Orb's yes to option (b), 2026-10-28) and pinned below by SHA-512; the readings were taken by Performance on the live pin 257a766c (docs/perf/web-template-readings-2026-10-28.md). The signature clip reduced reads 3 / 3 / 3, over RL-195's 2.5 / 3 / 2, exactly as the STANDARD build does on this pin; Legal's RL-202 lets the custom engine go under this one pin on \"no worse than the standard build of the same commit\" (measured.standard, every number), through the engineFlip entry in tools/flash/signature-gate.json, until the next pin move or 2026-11-01. These readings are for that pin: a new pin needs them re-taken.",
   "version": "4.7.2-stable",
   "built_by": ".github/workflows/web-template.yml (run 40624057612, the lazy-specialization patch, no trims)",
   "build": {
@@ -22,10 +22,87 @@
       "by": "Performance, 2026-10-28, on main 9631fc75 (the engine label differs by design)",
       "template": "f0b7b0805ef3d63e966b34cc3e200031734a7f878c536860b6cc8c69229eb68bf5d1264ab9ebf7c6f431cbeac002da83857aafe352bcacf1188456e9503a0b19"
     },
-    "signature": null,
-    "collapse": null,
-    "nightly": null,
-    "frames": null,
-    "full": null
+    "signature": {
+      "normal": {
+        "primary": 2.5,
+        "area15": 2.5,
+        "twoSec": 3
+      },
+      "reduced": {
+        "primary": 3,
+        "area15": 3,
+        "twoSec": 3
+      },
+      "by": "Performance, 2026-10-28, on the pin 257a766c exported with this template (hook and lock, as the nightly exports it), 1500-tick clips, seed 12345",
+      "commit": "257a766c26f8766fb09b063864c41c5d8ba64dc0",
+      "template": "f0b7b0805ef3d63e966b34cc3e200031734a7f878c536860b6cc8c69229eb68bf5d1264ab9ebf7c6f431cbeac002da83857aafe352bcacf1188456e9503a0b19"
+    },
+    "collapse": {
+      "normal": {
+        "primary": 2,
+        "area15": 3.5,
+        "twoSec": 1
+      },
+      "reduced": {
+        "primary": 2,
+        "area15": 2.5,
+        "twoSec": 2
+      },
+      "by": "Performance, 2026-10-28, on the pin 257a766c exported with this template (hook and lock, as the nightly exports it), 1500-tick clips, seed 12345",
+      "commit": "257a766c26f8766fb09b063864c41c5d8ba64dc0",
+      "template": "f0b7b0805ef3d63e966b34cc3e200031734a7f878c536860b6cc8c69229eb68bf5d1264ab9ebf7c6f431cbeac002da83857aafe352bcacf1188456e9503a0b19"
+    },
+    "nightly": {
+      "commit": "257a766c26f8766fb09b063864c41c5d8ba64dc0",
+      "date": "2026-10-28",
+      "seeds": [
+        1040,
+        1041,
+        1042,
+        1043,
+        1044,
+        1045,
+        1046,
+        1047
+      ],
+      "clips": 16,
+      "read": 16,
+      "max": 3.5,
+      "maxClip": "ai-1047-reduced",
+      "limit": 3.5,
+      "over": [],
+      "missing": [],
+      "by": "Performance, 2026-10-28, tools/flash/nightly-seeds.mjs --pin on the custom export (limit 3.5, the owner-approved interim)",
+      "template": "f0b7b0805ef3d63e966b34cc3e200031734a7f878c536860b6cc8c69229eb68bf5d1264ab9ebf7c6f431cbeac002da83857aafe352bcacf1188456e9503a0b19"
+    },
+    "frames": {
+      "commit": "257a766c26f8766fb09b063864c41c5d8ba64dc0",
+      "frames": 6000,
+      "identical": 3402,
+      "withinNoise": 2598,
+      "beyondNoise": 0,
+      "clips": [
+        "signature-normal",
+        "signature-reduced",
+        "collapse-normal",
+        "collapse-reduced"
+      ],
+      "bound": "tools/flash/compare-frames.mjs per clip, tol 8, floor 0.1%, 1.25 x the worst frame of a second standard capture; worst frame / bound (% of pixels): sig-n 0.000 / 0.100, sig-r 0.000 / 0.100, col-n 0.112 / 0.113, col-r 0.112 / 0.157",
+      "by": "Performance, 2026-10-28",
+      "template": "f0b7b0805ef3d63e966b34cc3e200031734a7f878c536860b6cc8c69229eb68bf5d1264ab9ebf7c6f431cbeac002da83857aafe352bcacf1188456e9503a0b19"
+    },
+    "full": null,
+    "standard": {
+      "commit": "257a766c26f8766fb09b063864c41c5d8ba64dc0",
+      "signature": {
+        "normal": { "primary": 2.5, "area15": 2.5, "twoSec": 3 },
+        "reduced": { "primary": 3, "area15": 3, "twoSec": 3 }
+      },
+      "collapse": {
+        "normal": { "primary": 2, "area15": 3.5, "twoSec": 1 },
+        "reduced": { "primary": 2, "area15": 2.5, "twoSec": 2 }
+      },
+      "by": "Performance, 2026-10-28 (docs/perf/web-template-readings-2026-10-28.md): the STANDARD template exported from the same pin through the same exporter, the same clips, seed 12345, 1500 ticks; the signature figures equal Tools' own for this pin (tools/flash/signature-gate.json). Legal RL-202's \"no worse\" is read against these: every number of the custom reading above equal or lower, or the flip is refused. Not a measurement of the custom zip, so it carries no \"template\"."
+    }
   }
 }
