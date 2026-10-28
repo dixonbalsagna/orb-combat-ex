@@ -1,0 +1,31 @@
+diff --git a/render/core/biome_look.gd b/render/core/biome_look.gd
+index 2d4dc1a..62ed8c7 100644
+--- a/render/core/biome_look.gd
++++ b/render/core/biome_look.gd
+@@ -110,11 +110,13 @@ static func tones(d, k: int) -> Array:
+ 	var g: Array = []
+ 	var r: Array = []
+ 	var sub: String = ""
++	var subf: Array = []   # optional: the crater inside as authored faces [lit, mid, shade] (Art, data/art/biomes.json palette.subsoil_faces); without it lite 0.14, the subsoil, dark 0.3
+ 	var scar: Array = SCAR_DEFAULT
+ 	if not b.is_empty():
+ 		g = b.palette.ground
+ 		r = b.palette.rock
+ 		sub = b.palette.subsoil
++		subf = b.palette.get("subsoil_faces", [])
+ 		if b.get("scar") is Dictionary:
+ 			scar = [b.scar.fill, b.scar.edge]
+ 	else:
+@@ -125,7 +127,11 @@ static func tones(d, k: int) -> Array:
+ 	var out: Array = []
+ 	for h in g + r:
+ 		out.append(RenderLook.col(h))
+-	out.append_array([RenderLook.col(_mix(sub, LITE, 0.14)), RenderLook.col(sub), RenderLook.col(_mix(sub, DARK, 0.3))])
++	if subf.size() == 3:
++		for h in subf:
++			out.append(RenderLook.col(h))
++	else:
++		out.append_array([RenderLook.col(_mix(sub, LITE, 0.14)), RenderLook.col(sub), RenderLook.col(_mix(sub, DARK, 0.3))])
+ 	out.append_array([RenderLook.col(scar[0]), RenderLook.col(scar[1])])
+ 	out.append(Color(1.0 if STRATA.has(name) else 0.0, float(ROCK_ABOVE.get(name, 0.0)) / 10000.0, 0.0, 1.0))
+ 	return out

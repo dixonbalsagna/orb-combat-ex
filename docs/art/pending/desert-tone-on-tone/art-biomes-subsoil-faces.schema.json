@@ -1,0 +1,10 @@
+{
+  "_for": "tools/schemas/art-biomes.schema.json: add this under biomes.<id>.palette.properties, next to \"subsoil\"; it is not in \"required\", so a biome without it keeps the old derivation (lite 0.14, the subsoil, dark 0.3). Written by the Art Director, 2026-10-27.",
+  "subsoil_faces": {
+    "type": "array",
+    "minItems": 3,
+    "maxItems": 3,
+    "items": { "type": "string", "pattern": "^#[0-9a-f]{6}$", "description": "A colour, #rrggbb in lower case." },
+    "description": "A crater's inside as authored faces, [lit, mid, shade]. When present the render uses these instead of deriving lit and shade from the subsoil colour, so the faces can stay inside the contrast budget of the ground around them. Only the desert and the beach carry it."
+  }
+}

@@ -1,0 +1,507 @@
+diff --git a/art/concepts/biomes/derive.mjs b/art/concepts/biomes/derive.mjs
+index 78b26b87..e264025d 100644
+--- a/art/concepts/biomes/derive.mjs
++++ b/art/concepts/biomes/derive.mjs
+@@ -6,7 +6,8 @@ import { dE00 } from '../sky/colour.mjs';
+ // the far land: each ridge is the biome's far base hazed toward its horizon, nearest first lightest-last (a value ladder)
+ // the two ices are authored: hazed from a pale base their three ridges were 1.7 to 1.9 CIEDE2000 apart (no read as steps); these are 6 to 8 apart like the other biomes, the nearest ridge 12 to 13 from the horizon, the farthest sinking into the haze (2026-10-27, Rendering's w3 look gate)
+ const PUSHED = { ice_sheet: ['#9cb0c0', '#bccad6', '#d8e2e8'], sea_ice: ['#90a8bb', '#b0c2d0', '#d0dbe4'] };
+-export function ladder(b) { if (PUSHED[b.id]) return PUSHED[b.id]; const base = ['peaks', 'mesas', 'cones'].includes(b.far.kind) ? b.pal.r[1] : ['shelf', 'floesfar'].includes(b.far.kind) ? b.pal.g[0] : mix(b.pal.v[1], b.pal.r[1], 0.25); return [0.26, 0.44, 0.6].map(k => mix(base, b.pal.sky[1], k)); }
++const FAR_BASE = { desert: '#b87a44' };   // the desert's mesas keep their far colour: its near rock was re-cut tone on tone (ground-ladders.md), the far ridges were not
++export function ladder(b) { if (PUSHED[b.id]) return PUSHED[b.id]; const base = ['peaks', 'mesas', 'cones'].includes(b.far.kind) ? (FAR_BASE[b.id] ?? b.pal.r[1]) : ['shelf', 'floesfar'].includes(b.far.kind) ? b.pal.g[0] : mix(b.pal.v[1], b.pal.r[1], 0.25); return [0.26, 0.44, 0.6].map(k => mix(base, b.pal.sky[1], k)); }
+ 
+ // the orbit colour: what the biome reads as from far away. Authored per biome (a blend of its ground and its green or white cover), then 12 percent toward the atmosphere blue.
+ // Seen from orbit the fifteen must stay apart (a minimum pairwise CIEDE2000 is measured in gen.mjs and reported in the doc).
+diff --git a/art/concepts/biomes/gen.mjs b/art/concepts/biomes/gen.mjs
+index 7e80e723..5c00d817 100644
+--- a/art/concepts/biomes/gen.mjs
++++ b/art/concepts/biomes/gen.mjs
+@@ -116,13 +116,13 @@ function keySheet(key) {
+ export function keyNumbers() { const out = {}; for (const key of ['golden', 'sunset', 'dawn', 'night']) { out[key] = {}; for (const [id, b] of Object.entries(BIOMES)) { const [a, bd] = atKey(b, key); out[key][id] = { aura: +a.toFixed(1), body: +bd.toFixed(1) }; } } return out; }
+ 
+ // ---------------------------------------------------------------------------------------------------------------- the data and the generated pages
+-const SCARS = { desert: ['#1f3d38', '#bfe0d8'], beach: ['#1f3d38', '#bfe0d8'], ice_sheet: ['#485765', '#5f8aa2'], sea_ice: ['#485765', '#5f8aa2'], volcanic: ['#8a868e', '#dc6a26'] };
++const SCARS = { desert: ['#a3cebe', '#beded6'], beach: ['#a6d0c0', '#c1e1d8'], ice_sheet: ['#485765', '#5f8aa2'], sea_ice: ['#485765', '#5f8aa2'], volcanic: ['#8a868e', '#dc6a26'] };
+ const WORLD_ID = { ocean: 0, plains: 1, forest: 2, desert: 3, mountains: 4, ice_sheet: 5, sea_ice: 6, jungle: 7, savanna: 8, tundra: 9, taiga: 10, wetland: 11, beach: 12, highland: 13, volcanic: 14 };   // data/biomes/climate.json "fine"
+ export function writeData() {
+   const out = { version: 1, note: 'The biome look bible as data (docs/art/biomes.md, docs/art/biomes-pages.md). Written by art/concepts/biomes/gen.mjs; do not edit by hand. Noon colours: the world-light tint per key (data/art/sky.json) multiplies them. Proposals pending Orb, Rendering and VFX; Tools adds the schema.', rules: { faces: 'lit, mid and shade are the three faces of one surface; flat colours with the keyline (#0a0d14); no gradients, no blur, no fades', readability: 'an aura stays 20 or more CIEDE2000 from every ground, rock, vegetation and water tone and a body 15 or more from ground, rock and vegetation, at every sky key with the world-light tint (the rival coat and the sea are advisory)', far_land: 'three ridges, each hazed toward the horizon: far1 the farthest and lightest, far3 the nearest and darkest', orbit: 'the colour a biome reads as from far away, 12 percent toward the atmosphere blue (8 for ice)' }, orbit_separation: orbitSeparation(), sky_tint: { horizon: 0.1, top: 0.04, _note: 'A fixed per-planet sky tint, set once at planet generation and never changed while playing (no movement, no fade): every sky key mixes its horizon colour 0.10 and its top colour 0.04 in OKLab toward the orbit colour of the dominant biome of the planet. Set both to 0 to switch it off. Ruled 2026-10-27 by the EP for Orb; Rendering builds it.' }, _cover_set: coverSheet().table, biomes: {}, pairs: PAIRS.map(([a, b, eco, note]) => ({ a, b, eco, note })) };
+   for (const [id, b] of Object.entries(BIOMES)) {
+     const rows = measureBiome(b), L = ladder(b);
+-    out.biomes[id] = { _world_id: WORLD_ID[id], name: b.name, order: b.order, line: b.line, palette: { ground: b.pal.g, subsoil: b.pal.sub, rock: b.pal.r, vegetation: b.pal.v, secondary: b.pal.v2, trunk: b.pal.t, water: { shallow: b.pal.w[0], deep: b.pal.w[1] }, accent: b.pal.acc, sky_noon: { top: b.pal.sky[0], horizon: b.pal.sky[1] } }, far_ladder: { far1: L[2], far2: L[1], far3: L[0] }, orbit: orbitHex(id), profile: b.profile, far_land: b.far, cover: b.cover.filter(c => c.n > 0), plume: b.plume, scar: { fill: (SCARS[id] ?? ['#221c18', '#4a4036'])[0], edge: (SCARS[id] ?? ['#221c18', '#4a4036'])[1] }, damage: b.damage, destruction: b.destruction, neighbours: neighboursOf(id).map(n => ({ id: n.other, eco: n.eco, note: n.note })), _colour_vision: (() => { const cr = cvBiome(b); const worst = {}; for (const k of CVK) worst[k] = Math.min(...cr.map(r => r.w[k].aura)); return { rule: 'the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key', worst_aura_dE00: worst, failing_tones: cr.filter(r => !r.ok).map(r => ({ tone: r.name, hex: r.hex })) }; })(), readability: { worst_aura_dE00: Math.min(...rows.map(r => r.aura)), worst_body_dE00: Math.min(...rows.filter(r => /ground|rock|vegetation|secondary/.test(r.name)).map(r => r.bodyP)) }, ...(b.note ? { note: b.note } : {}) };
++    out.biomes[id] = { _world_id: WORLD_ID[id], name: b.name, order: b.order, line: b.line, palette: { ground: b.pal.g, subsoil: b.pal.sub, ...(b.pal.subf ? { subsoil_faces: b.pal.subf } : {}), rock: b.pal.r, vegetation: b.pal.v, secondary: b.pal.v2, trunk: b.pal.t, water: { shallow: b.pal.w[0], deep: b.pal.w[1] }, accent: b.pal.acc, sky_noon: { top: b.pal.sky[0], horizon: b.pal.sky[1] } }, far_ladder: { far1: L[2], far2: L[1], far3: L[0] }, orbit: orbitHex(id), profile: b.profile, far_land: b.far, cover: b.cover.filter(c => c.n > 0), plume: b.plume, scar: { fill: (SCARS[id] ?? ['#221c18', '#4a4036'])[0], edge: (SCARS[id] ?? ['#221c18', '#4a4036'])[1] }, damage: b.damage, destruction: b.destruction, neighbours: neighboursOf(id).map(n => ({ id: n.other, eco: n.eco, note: n.note })), _colour_vision: (() => { const cr = cvBiome(b); const worst = {}; for (const k of CVK) worst[k] = Math.min(...cr.map(r => r.w[k].aura)); return { rule: 'the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key', worst_aura_dE00: worst, failing_tones: cr.filter(r => !r.ok).map(r => ({ tone: r.name, hex: r.hex })) }; })(), readability: { worst_aura_dE00: Math.min(...rows.map(r => r.aura)), worst_body_dE00: Math.min(...rows.filter(r => /ground|rock|vegetation|secondary/.test(r.name)).map(r => r.bodyP)) }, ...(b.note ? { note: b.note } : {}) };
+   }
+   writeFileSync(join(ROOT, 'data', 'art', 'biomes.json'), JSON.stringify(out, null, 2) + '\n');
+   return out;
+diff --git a/art/concepts/biomes/spec.mjs b/art/concepts/biomes/spec.mjs
+index e9b6b081..4f7eebc7 100644
+--- a/art/concepts/biomes/spec.mjs
++++ b/art/concepts/biomes/spec.mjs
+@@ -17,16 +17,16 @@ const RAW = {
+   },
+   beach: {
+     name: 'Beach and coast', order: 13, line: 'pale sand, a wet-sand band, a foam line; palms and dune grass behind',
+-    pal: { g: ['#ead7a2', '#d8c088', '#b09a62'], sub: '#a89060', r: ['#a69985', '#857c70', '#5f584e'], v: ['#6cb85a', '#4a9440', '#2f6a34'], v2: ['#a9bd62', '#7c9745', '#58763a'], t: '#7a5a38', w: ['#3595ac', '#2c78a8'], acc: '#f1f0e6', sky: ['#3a82c8', '#cfe6ee'] },
++    pal: { g: ['#cdc392', '#d4bc84', '#e1b172'], sub: '#e1b786', subf: ['#e1bd84', '#e1b786', '#efaa7e'], r: ['#a69985', '#857c70', '#5f584e'], v: ['#6cb85a', '#4a9440', '#2f6a34'], v2: ['#a9bd62', '#7c9745', '#58763a'], t: '#7a5a38', w: ['#3595ac', '#2c78a8'], acc: '#f1f0e6', sky: ['#3a82c8', '#cfe6ee'] },
+     profile: { kind: 'shore', amp: 10, wave: 340 }, far: { kind: 'low', amp: 26 },
+     cover: [{ k: 'palm', n: 3, h: [150, 240] }, { k: 'dunegrass', n: 8, h: [20, 40] }, { k: 'boulder', n: 3, h: [24, 60] }, { k: 'driftwood', n: 2, h: [14, 20] }],
+     plume: { kind: 'sand', cols: ['#f3e4b2', '#dcc58a', '#a89060'], ej: ['#dcc58a', '#a69985'], h: 300, w: 200, wet: true },
+-    damage: { scorch: 'a glassy black-green band fused into the sand (a beam path), its edge a thin pale line', crater: 'a shallow bowl in dry sand that floods from the water side: wet-sand dark inside, a collapsed rim', burned: 'palms standing as black trunks with no crown, dune grass burnt to stubble, grey ash drifted into the dune lee' },
++    damage: { scorch: 'a pale sea-glass band fused into the sand (a beam path) at about the sand value, its edge a thin lighter line', crater: 'a shallow bowl in dry sand that floods from the water side: wet-sand dark inside, a collapsed rim', burned: 'palms standing as black trunks with no crown, dune grass burnt to stubble, grey ash drifted into the dune lee' },
+     destruction: 'Sand and spray: a wide pale plume that settles fast, and a ring of wet dark sand around the impact.',
+   },
+   plains: {
+     name: 'Plains', order: 2, line: 'rolling meadow; scattered broadleaf trees, boulders, tufts',
+-    pal: { g: ['#8abd50', '#70a246', '#4e7c36'], sub: '#6b5338', r: ['#908a77', '#7e7a6e', '#5a574e'], v: ['#4f9040', '#3b7634', '#2a5628'], v2: ['#a4cc62', '#86b04c', '#5e8a38'], t: '#6a4a30', w: ['#477b88', '#376b7c'], acc: '#e2b04a', sky: ['#2f7cc4', '#c4e0ee'] },
++    pal: { g: ['#8ba427', '#70a245', '#39a14c'], sub: '#6b5338', r: ['#908a77', '#7e7a6e', '#5a574e'], v: ['#4f9040', '#3b7634', '#2a5628'], v2: ['#a4cc62', '#86b04c', '#5e8a38'], t: '#6a4a30', w: ['#477b88', '#376b7c'], acc: '#e2b04a', sky: ['#2f7cc4', '#c4e0ee'] },
+     profile: { kind: 'rolling', amp: 30, wave: 520 }, far: { kind: 'hills', amp: 60 },
+     cover: [{ k: 'tree', n: 4, h: [130, 220] }, { k: 'tuft', n: 14, h: [16, 34] }, { k: 'boulder', n: 3, h: [22, 54] }, { k: 'shrub', n: 5, h: [30, 56] }],
+     plume: { kind: 'dirt', cols: ['#9a7a52', '#6b5338', '#4a3826'], ej: ['#70a246', '#6b5338'], h: 280, w: 190 },
+@@ -35,7 +35,7 @@ const RAW = {
+   },
+   savanna: {
+     name: 'Savanna', order: 9, line: 'gold dry grass, flat-topped acacias, red earth showing, termite towers',
+-    pal: { g: ['#d6c26c', '#c0a650', '#8f7a38'], sub: '#a8643c', r: ['#b0a08a', '#8e806c', '#645a4c'], v: ['#78a040', '#5b8434', '#3e5e28'], v2: ['#e2cf7a', '#c8b25a', '#9a8640'], t: '#6e4a30', w: ['#639d80', '#3f7a80'], acc: '#c86a3c', sky: ['#3a84cc', '#ecdcb0'] },
++    pal: { g: ['#b7af62', '#bfa64f', '#d0982c'], sub: '#a8643c', r: ['#b0a08a', '#8e806c', '#645a4c'], v: ['#78a040', '#5b8434', '#3e5e28'], v2: ['#e2cf7a', '#c8b25a', '#9a8640'], t: '#6e4a30', w: ['#639d80', '#3f7a80'], acc: '#c86a3c', sky: ['#3a84cc', '#ecdcb0'] },
+     profile: { kind: 'rolling', amp: 16, wave: 680 }, far: { kind: 'hills', amp: 34 },
+     cover: [{ k: 'acacia', n: 3, h: [120, 200] }, { k: 'tuft', n: 16, h: [24, 50] }, { k: 'termite', n: 2, h: [50, 90] }, { k: 'boulder', n: 2, h: [30, 80] }],
+     plume: { kind: 'dust', cols: ['#e8c88a', '#c0884c', '#8a5a34'], ej: ['#c8b25a', '#a8643c'], h: 320, w: 230 },
+@@ -71,11 +71,11 @@ const RAW = {
+   },
+   desert: {
+     name: 'Desert', order: 4, line: 'long dunes with a steep lee, red mesas, cacti and scrub; sun-bleached',
+-    pal: { g: ['#ecd28c', '#d8b868', '#a88a44'], sub: '#a07a44', r: ['#d29a5a', '#b87a44', '#8a5634'], v: ['#6aa050', '#4d8040', '#386030'], v2: ['#a8a060', '#8a8448', '#625e34'], t: '#6a4a30', w: ['#387b87', '#357a85'], acc: '#d0e0e8', sky: ['#3c94d0', '#f0e4c0'] },
++    pal: { g: ['#cfc17d', '#d9b868', '#ebac51'], sub: '#efaf62', subf: ['#eab861', '#efaf62', '#f9a55d'], r: ['#feb970', '#feb179', '#fda982'], v: ['#6aa050', '#4d8040', '#386030'], v2: ['#a8a060', '#8a8448', '#625e34'], t: '#6a4a30', w: ['#387b87', '#357a85'], acc: '#d0e0e8', sky: ['#3c94d0', '#f0e4c0'] },
+     profile: { kind: 'dunes', amp: 46, wave: 460 }, far: { kind: 'mesas', amp: 80 },
+     cover: [{ k: 'cactus', n: 3, h: [90, 170] }, { k: 'scrub', n: 6, h: [24, 50] }, { k: 'mesa', n: 1, h: [160, 240] }, { k: 'boulder', n: 3, h: [30, 80] }, { k: 'skull', n: 0, h: [0, 0] }],
+     plume: { kind: 'sand', cols: ['#f3e4b2', '#d8b868', '#a88a44'], ej: ['#d8b868', '#a45a3a'], h: 360, w: 260 },
+-    damage: { scorch: 'a glass trench: the sand fused into a dark green-black glassy band with a bright pale edge (the prototype\'s GLASS TRENCH)', crater: 'a deep clean bowl with a sharp rim; the dune lee collapses into it, the inside packed darker orange sand', burned: 'fused glass patches and black-scorched rock; cacti blackened and split; the dunes streaked grey with ash' },
++    damage: { scorch: 'a glass trench: the sand fused into a pale sea-glass band drawn at about the sand value (never dark, so a pan across it does not flash) with a lighter edge (the prototype\'s GLASS TRENCH)', crater: 'a deep clean bowl with a sharp rim; the dune lee collapses into it, the inside packed darker orange sand', burned: 'fused glass patches and black-scorched rock; cacti blackened and split; the dunes streaked grey with ash' },
+     destruction: 'A sand plume: tall, wide, pale gold with a darker core; it falls fast and the dune face slumps and slides for a second.',
+   },
+   mountains: {
+diff --git a/data/art/biomes.json b/data/art/biomes.json
+index b2d83c0c..f691b2d0 100644
+--- a/data/art/biomes.json
++++ b/data/art/biomes.json
+@@ -766,9 +766,9 @@
+       "line": "rolling meadow; scattered broadleaf trees, boulders, tufts",
+       "palette": {
+         "ground": [
+-          "#8abd50",
+-          "#70a246",
+-          "#4e7c36"
++          "#8ba427",
++          "#70a245",
++          "#39a14c"
+         ],
+         "subsoil": "#6b5338",
+         "rock": [
+@@ -1126,15 +1126,20 @@
+       "line": "long dunes with a steep lee, red mesas, cacti and scrub; sun-bleached",
+       "palette": {
+         "ground": [
+-          "#ecd28c",
+-          "#d8b868",
+-          "#a88a44"
++          "#cfc17d",
++          "#d9b868",
++          "#ebac51"
++        ],
++        "subsoil": "#efaf62",
++        "subsoil_faces": [
++          "#eab861",
++          "#efaf62",
++          "#f9a55d"
+         ],
+-        "subsoil": "#a07a44",
+         "rock": [
+-          "#d29a5a",
+-          "#b87a44",
+-          "#8a5634"
++          "#feb970",
++          "#feb179",
++          "#fda982"
+         ],
+         "vegetation": [
+           "#6aa050",
+@@ -1221,11 +1226,11 @@
+         "w": 260
+       },
+       "scar": {
+-        "fill": "#1f3d38",
+-        "edge": "#bfe0d8"
++        "fill": "#a3cebe",
++        "edge": "#beded6"
+       },
+       "damage": {
+-        "scorch": "a glass trench: the sand fused into a dark green-black glassy band with a bright pale edge (the prototype's GLASS TRENCH)",
++        "scorch": "a glass trench: the sand fused into a pale sea-glass band drawn at about the sand value (never dark, so a pan across it does not flash) with a lighter edge (the prototype's GLASS TRENCH)",
+         "crater": "a deep clean bowl with a sharp rim; the dune lee collapses into it, the inside packed darker orange sand",
+         "burned": "fused glass patches and black-scorched rock; cacti blackened and split; the dunes streaked grey with ash"
+       },
+@@ -1279,13 +1284,13 @@
+         "worst_aura_dE00": {
+           "protan": 14.3,
+           "deutan": 14.2,
+-          "tritan": 17.5
++          "tritan": 15.6
+         },
+         "failing_tones": []
+       },
+       "readability": {
+         "worst_aura_dE00": 26.2,
+-        "worst_body_dE00": 15.6
++        "worst_body_dE00": 25.8
+       }
+     },
+     "mountains": {
+@@ -1955,9 +1960,9 @@
+       "line": "gold dry grass, flat-topped acacias, red earth showing, termite towers",
+       "palette": {
+         "ground": [
+-          "#d6c26c",
+-          "#c0a650",
+-          "#8f7a38"
++          "#b7af62",
++          "#bfa64f",
++          "#d0982c"
+         ],
+         "subsoil": "#a8643c",
+         "rock": [
+@@ -2647,11 +2652,16 @@
+       "line": "pale sand, a wet-sand band, a foam line; palms and dune grass behind",
+       "palette": {
+         "ground": [
+-          "#ead7a2",
+-          "#d8c088",
+-          "#b09a62"
++          "#cdc392",
++          "#d4bc84",
++          "#e1b172"
++        ],
++        "subsoil": "#e1b786",
++        "subsoil_faces": [
++          "#e1bd84",
++          "#e1b786",
++          "#efaa7e"
+         ],
+-        "subsoil": "#a89060",
+         "rock": [
+           "#a69985",
+           "#857c70",
+@@ -2743,11 +2753,11 @@
+         "wet": true
+       },
+       "scar": {
+-        "fill": "#1f3d38",
+-        "edge": "#bfe0d8"
++        "fill": "#a6d0c0",
++        "edge": "#c1e1d8"
+       },
+       "damage": {
+-        "scorch": "a glassy black-green band fused into the sand (a beam path), its edge a thin pale line",
++        "scorch": "a pale sea-glass band fused into the sand (a beam path) at about the sand value, its edge a thin lighter line",
+         "crater": "a shallow bowl in dry sand that floods from the water side: wet-sand dark inside, a collapsed rim",
+         "burned": "palms standing as black trunks with no crown, dune grass burnt to stubble, grey ash drifted into the dune lee"
+       },
+diff --git a/docs/art/README.md b/docs/art/README.md
+index d2a8ccb1..9684872a 100644
+--- a/docs/art/README.md
++++ b/docs/art/README.md
+@@ -21,6 +21,7 @@ Owner: Art Director. 2026-09-29. Art owns `art/` and `docs/art/`.
+ | `sky-and-distance.md` | Audit of the sky, stars, distance haze, far mountains, sea and altitude on main's HEAD (42 stills, contact sheet `img/sky-and-distance-sheet.png`), and a target per layer with the depth order and the colour and contrast relationships. Rendering's next brief | v0 draft, Orb's direction of 2026-10-15 |
+ | `homework-3-sheets.md` | The three sheets for Orb's homework 3: the Anti-hero's aura (five options), his glasses' damage states (clean, cracked, bent, both, and when each shows), and a look pass for the two in the build (three directions each, with costs). Sheets in `art/concepts/looks/`, kept on this PC only | v0 draft, pending Legal review, Orb picks |
+ | `city-facades.md` | The city's towers up close: six tints per look (downtown, mid_rise) at equal luminance, three facade types, a base and crown, which district takes which, and the crown tower's stubs. Sheet `art/concepts/city/city-palettes.svg`, data `data/art/city-looks.json` | v0 draft, pending Legal review; Tools adds the schema |
++| `ground-ladders.md` | The open grounds (desert, savanna, beach, plains) cut tone on tone for the signature flash clip: faces within the 0.085 contrast budget as drawn, told apart by hue, the glass scar on sand at the sand value; each value's luminance and step | v1, Rendering to re-run the clips |
+ | `beam-colours.md` | Art's answer on VFX's beam colour families: the Protagonist +30 (tritan -30), the Rival +34 not -34, the dummy +12, with the second tints in every preset | v0 |
+ | `polar-palette.md` | The polar cold palette for World's ice: two tones (a warm white and a cold slate) over dark water, measured against every lane and body at every key. Sheet `art/concepts/world/polar-palette.svg`, data `data/art/polar.json` | v0 draft, pending Legal review; Tools adds the schema |
+ | `polar-outposts.md` | A research station and a mining camp for the ice caps, buildings only, built from World's shapes in the polar palette. Sheet `art/concepts/world/polar-outposts.svg`, data `data/art/outposts.json` | v0 draft, pending Legal review |
+diff --git a/docs/art/biomes-pages.md b/docs/art/biomes-pages.md
+index 44311af6..9372fe33 100644
+--- a/docs/art/biomes-pages.md
++++ b/docs/art/biomes-pages.md
+@@ -38,7 +38,7 @@ Rolling meadow; scattered broadleaf trees, boulders, tufts. Sheet: `art/concepts
+ 
+ | Part | Lit | Mid | Shade |
+ |---|---|---|---|
+-| Ground | #8abd50 | #70a246 | #4e7c36 |
++| Ground | #8ba427 | #70a245 | #39a14c |
+ | Rock | #908a77 | #7e7a6e | #5a574e |
+ | Vegetation | #4f9040 | #3b7634 | #2a5628 |
+ 
+@@ -104,15 +104,15 @@ Long dunes with a steep lee, red mesas, cacti and scrub; sun-bleached. Sheet: `a
+ 
+ | Part | Lit | Mid | Shade |
+ |---|---|---|---|
+-| Ground | #ecd28c | #d8b868 | #a88a44 |
+-| Rock | #d29a5a | #b87a44 | #8a5634 |
++| Ground | #cfc17d | #d9b868 | #ebac51 |
++| Rock | #feb970 | #feb179 | #fda982 |
+ | Vegetation | #6aa050 | #4d8040 | #386030 |
+ 
+-Subsoil (what a crater shows) #a07a44; secondary cover #8a8448; trunk #6a4a30; water shallow #387b87, deep #357a85; accent #d0e0e8; sky at noon #3c94d0 (top) to #f0e4c0 (horizon); far land #daba8e, #d1a97b, #c79664; from orbit #dbb781.
++Subsoil (what a crater shows) #efaf62; secondary cover #8a8448; trunk #6a4a30; water shallow #387b87, deep #357a85; accent #d0e0e8; sky at noon #3c94d0 (top) to #f0e4c0 (horizon); far land #daba8e, #d1a97b, #c79664; from orbit #dbb781.
+ 
+ **Ground profile:** dunes, amplitude 46 units over about 460; far land: mesas. **Cover:** cactus (3 per 1,200 units, 90 to 170 units tall); scrub (6 per 1,200 units, 24 to 50 units tall); mesa (1 per 1,200 units, 160 to 240 units tall); boulder (3 per 1,200 units, 30 to 80 units tall).
+ 
+-**Scorched:** a glass trench: the sand fused into a dark green-black glassy band with a bright pale edge (the prototype's GLASS TRENCH).
++**Scorched:** a glass trench: the sand fused into a pale sea-glass band drawn at about the sand value (never dark, so a pan across it does not flash) with a lighter edge (the prototype's GLASS TRENCH).
+ 
+ **Cratered:** a deep clean bowl with a sharp rim; the dune lee collapses into it, the inside packed darker orange sand.
+ 
+@@ -120,7 +120,7 @@ Subsoil (what a crater shows) #a07a44; secondary cover #8a8448; trunk #6a4a30; w
+ 
+ **Destruction:** A sand plume: tall, wide, pale gold with a darker core; it falls fast and the dune face slumps and slides for a second.
+ 
+-**Readability:** worst aura 26.2 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 15.6 (rule 15).
++**Readability:** worst aura 26.2 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 25.8 (rule 15).
+ 
+ **Transitions:**
+ - to Beach and coast: The dune sea runs to the shore; only the sand colour steps from pale to gold; no grass at all.
+@@ -260,7 +260,7 @@ Gold dry grass, flat-topped acacias, red earth showing, termite towers. Sheet: `
+ 
+ | Part | Lit | Mid | Shade |
+ |---|---|---|---|
+-| Ground | #d6c26c | #c0a650 | #8f7a38 |
++| Ground | #b7af62 | #bfa64f | #d0982c |
+ | Rock | #b0a08a | #8e806c | #645a4c |
+ | Vegetation | #78a040 | #5b8434 | #3e5e28 |
+ 
+@@ -388,15 +388,15 @@ Pale sand, a wet-sand band, a foam line; palms and dune grass behind. Sheet: `ar
+ 
+ | Part | Lit | Mid | Shade |
+ |---|---|---|---|
+-| Ground | #ead7a2 | #d8c088 | #b09a62 |
++| Ground | #cdc392 | #d4bc84 | #e1b172 |
+ | Rock | #a69985 | #857c70 | #5f584e |
+ | Vegetation | #6cb85a | #4a9440 | #2f6a34 |
+ 
+-Subsoil (what a crater shows) #a89060; secondary cover #7c9745; trunk #7a5a38; water shallow #3595ac, deep #2c78a8; accent #f1f0e6; sky at noon #3a82c8 (top) to #cfe6ee (horizon); far land #a0c3ad, #8db593, #78a576; from orbit #d6cfa6.
++Subsoil (what a crater shows) #e1b786; secondary cover #7c9745; trunk #7a5a38; water shallow #3595ac, deep #2c78a8; accent #f1f0e6; sky at noon #3a82c8 (top) to #cfe6ee (horizon); far land #a0c3ad, #8db593, #78a576; from orbit #d6cfa6.
+ 
+ **Ground profile:** shore, amplitude 10 units over about 340; far land: low. **Cover:** palm (3 per 1,200 units, 150 to 240 units tall); dunegrass (8 per 1,200 units, 20 to 40 units tall); boulder (3 per 1,200 units, 24 to 60 units tall); driftwood (2 per 1,200 units, 14 to 20 units tall).
+ 
+-**Scorched:** a glassy black-green band fused into the sand (a beam path), its edge a thin pale line.
++**Scorched:** a pale sea-glass band fused into the sand (a beam path) at about the sand value, its edge a thin lighter line.
+ 
+ **Cratered:** a shallow bowl in dry sand that floods from the water side: wet-sand dark inside, a collapsed rim.
+ 
+diff --git a/docs/art/biomes.md b/docs/art/biomes.md
+index fa79faff..beb9eb43 100644
+--- a/docs/art/biomes.md
++++ b/docs/art/biomes.md
+@@ -62,7 +62,7 @@ The same three states in every biome, so the player learns one grammar; the mate
+ | | Scorched (a beam along the ground) | Cratered (an impact) | Burned (fire on what grows) |
+ |---|---|---|---|
+ | Drawn as | a flat band along the surface, a thin lighter edge | a bowl in the profile with a raised rim; **the inside is the subsoil colour, not the surface colour**; rubble on the rim; cover inside removed | the ground in that span turns ash grey; trees become black skeletons, grass stubs and ash flakes |
+-| Sand, beach | a glassy dark green-black band with a pale edge (the prototype's GLASS TRENCH) | the bowl floods from the water side on a beach | black palm trunks, grey ash in the dune lee |
++| Sand, beach | a pale sea-glass band at about the sand value (never dark; ground-ladders.md) with a lighter edge (the prototype's GLASS TRENCH, recoloured) | the bowl floods from the water side on a beach | black palm trunks, grey ash in the dune lee |
+ | Ice, sea ice | a slate streak with a melt-blue edge (refreezes in ten seconds) | a clean blue-walled bowl and shattered white blocks | a soot band and a melt pool |
+ | Water | a steam line on the surface for about two seconds | a bowl of water, a ring wave | charred wreckage floating, steam banks |
+ | Wetland | a dark band and burnt reed stubs | fills at once with tea-green water | a reed fire, grey flakes on the water |
+diff --git a/art/concepts/biomes/ground.mjs b/art/concepts/biomes/ground.mjs
+new file mode 100644
+index 00000000..767a20f4
+--- /dev/null
++++ b/art/concepts/biomes/ground.mjs
+@@ -0,0 +1,80 @@
++// Origin: the ground ladders' tone-on-tone cut (desert, savanna, beach, plains) for the signature clip's flash fix. Written by the Art Director session (Claude, claude-sonnet-5-5), 2026-10-27. Human direction: Orb via the EP.
++// Measured on Rendering's still (docs/rendering/img/lookgate/lookgate-sigdesert-faces-t91.png, main e1521ef5): the desert's three faces draw as the authored colour x 1.10 per channel (the front depth step, clipped at 255): #ecd28c, #d8b868 and #a88a44 came out #ffe79a, #eeca73 and #b9984b (relative luminance 0.807, 0.617, 0.333). The band's depth steps are x1.10, x1.02 and x0.94 (RenderLook.DEPTH_STEP).
++// The frame analyser counts a change of 0.1 relative luminance or more where its darker side is under 0.8, so the three faces of a ground are kept within RenderLook.PATTERN_BUDGET (0.085) of each other as drawn, and told apart by hue.
++// Usage: node ground.mjs            (the table for all fifteen, as authored in data/art/biomes.json)
++//        node ground.mjs solve      (the new cuts, printed as spec.mjs lines)
++import fs from 'fs';
++import { hex2rgb, rgb2hex, lchOf, fromOklab, dE00 } from '../sky/colour.mjs';
++
++export const PATTERN_BUDGET = 0.085;
++export const DEPTH = [1.1, 1.02, 0.94];
++const lin = c => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
++export const rlRgb = ([r, g, b]) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
++// the relative luminance a stored face draws at, by depth step (clipped at 255 as the shader's output is)
++export const drawn = (hex, d = 1.1) => rlRgb(hex2rgb(hex).map(v => Math.min(255, Math.round(v * d))));
++const oklch = ([L, C, H]) => { const h = H * Math.PI / 180; return fromOklab([L, C * Math.cos(h), C * Math.sin(h)]); };
++// a colour of this hue and chroma whose drawn luminance (front step) is the target; chroma is reduced if the colour leaves the gamut
++export function solve(H, C, target, d = 1.1) {
++  let c = C;
++  for (let k = 0; k < 40; k++) {
++    let lo = 0.2, hi = 0.98;
++    for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (drawn(oklch([mid, c, H]), d) < target) lo = mid; else hi = mid; }
++    const hex = oklch([(lo + hi) / 2, c, H]);
++    const rgb = hex2rgb(hex);
++    const raw = (() => { const L = (lo + hi) / 2, h = H * Math.PI / 180; return [L, c * Math.cos(h), c * Math.sin(h)]; })();
++    // gamut check through the unclamped linear sRGB of the Oklab triple
++    const l_ = raw[0] + 0.3963377774 * raw[1] + 0.2158037573 * raw[2], m_ = raw[0] - 0.1055613458 * raw[1] - 0.0638541728 * raw[2], s_ = raw[0] - 0.0894841775 * raw[1] - 1.291485548 * raw[2];
++    const l3 = l_ ** 3, m3 = m_ ** 3, s3 = s_ ** 3;
++    const lr = [4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3, -1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3, -0.0041960863 * l3 - 0.7034186147 * m3 + 1.707614701 * s3];
++    if (lr.every(v => v >= -0.002 && v <= 1.002) && rgb.every(v => v >= 0 && v <= 255)) return hex;
++    c *= 0.96;
++  }
++  return null;
++}
++const spread = tri => { const r = tri.map(h => drawn(h)); return [r, Math.max(...r) - Math.min(...r)]; };
++
++if (process.argv[2] !== 'solve') {
++  const j = JSON.parse(fs.readFileSync(new URL('../../../data/art/biomes.json', import.meta.url), 'utf8'));
++  for (const [id, b] of Object.entries(j.biomes)) {
++    const g = b.palette.ground, [r, s] = spread(g);
++    const adj = [r[0] - r[1], r[1] - r[2]].map(x => x.toFixed(3));
++    console.log(id.padEnd(10), g.join(' '), 'drawn', r.map(x => x.toFixed(3)).join(' '), 'adjacent', adj.join(' '), 'spread', s.toFixed(3), s <= PATTERN_BUDGET ? 'OK' : 'over', 'scar', b.scar.fill, drawn(b.scar.fill, 1).toFixed(3));
++  }
++} else {
++  // target drawn luminance (lit, mid, shade) and the hue and chroma moves from the old mid, per biome
++  const CUT = {
++    desert: { t: [0.655, 0.62, 0.585], mid: '#d8b868', lit: [+10, 0.85], shade: [-14, 1.22] },
++    beach: { t: [0.675, 0.64, 0.605], mid: '#d8c088', lit: [+10, 0.85], shade: [-14, 1.25] },
++    savanna: { t: [0.515, 0.48, 0.445], mid: '#c0a650', lit: [+10, 0.9], shade: [-14, 1.22] },
++    plains: { t: [0.40, 0.365, 0.33], mid: '#70a246', lit: [-12, 1.1], shade: [+14, 1.15] },
++  };
++  for (const [id, c] of Object.entries(CUT)) {
++    const [, C, H] = lchOf(c.mid);
++    const tri = [solve(H + c.lit[0], C * c.lit[1], c.t[0]), solve(H, C, c.t[1]), solve(H + c.shade[0], C * c.shade[1], c.t[2])];
++    const [r, s] = spread(tri);
++    const de = [dE00(tri[0], tri[1]), dE00(tri[1], tri[2])].map(x => x.toFixed(1));
++    console.log(id.padEnd(8), JSON.stringify(tri), 'drawn', r.map(x => x.toFixed(3)).join(' '), 'spread', s.toFixed(3), 'dE00 faces', de.join(' '), 'depth steps (lit mid shade):', DEPTH.map(d => tri.map(h => drawn(h, d).toFixed(2)).join('/')).join('  '));
++  }
++}
++if (process.argv[2] === 'scar') {
++  // a glass band on sand: the scar is drawn after the depth step (x1.0), so it is solved at 1.0; its drawn luminance sits inside 0.1 of the sand's faces at the front and middle steps
++  for (const [id, t, te] of [['desert', 0.555, 0.68], ['beach', 0.575, 0.70]]) {
++    const fill = solve(170, 0.05, t, 1.0), edge = solve(178, 0.035, te, 1.0);
++    console.log(id, fill, drawn(fill, 1).toFixed(3), edge, drawn(edge, 1).toFixed(3), 'old', '#1f3d38 0.039', '#bfe0d8', drawn('#bfe0d8', 1).toFixed(3));
++  }
++}
++if (process.argv[2] === 'crater') {
++  const hex = h => lchOf(h).map(v => +v.toFixed(3)).join(' ');
++  console.log('old rock', hex('#d29a5a'), hex('#b87a44'), hex('#8a5634'), 'old sub', hex('#a07a44'), 'sand mid', hex('#d9b868'));
++  const D = JSON.parse(process.env.CR || '{}');
++  const rock = [solve(D.rh + D.dh, D.rc, D.rt[0]), solve(D.rh, D.rc, D.rt[1]), solve(D.rh - D.dh, D.rc * 1.1, D.rt[2])];
++  const sub = [solve(D.sh + D.dh, D.sc, D.st[0], 1.0), solve(D.sh, D.sc, D.st[1], 1.0), solve(D.sh - D.dh, D.sc * 1.1, D.st[2], 1.0)];
++  const sand = ['#cfc17d', '#d9b868', '#ebac51'];
++  console.log('rock', JSON.stringify(rock), rock.map(h => drawn(h).toFixed(3)).join(' '), 'sub', JSON.stringify(sub), sub.map(h => drawn(h, 1).toFixed(3)).join(' '));
++  console.log('dE00 rock-sand (lit,mid,shade)', rock.map((h, i) => dE00(h, sand[i]).toFixed(1)).join(' '), ' sub-sand', sub.map((h, i) => dE00(h, sand[i]).toFixed(1)).join(' '), ' sub-rock', sub.map((h, i) => dE00(h, rock[i]).toFixed(1)).join(' '), ' faces rock', dE00(rock[0], rock[1]).toFixed(1), dE00(rock[1], rock[2]).toFixed(1), 'faces sub', dE00(sub[0], sub[1]).toFixed(1), dE00(sub[1], sub[2]).toFixed(1));
++}
++if (process.argv[2] === 'beachsub') {
++  const sand = ['#cdc392', '#d4bc84', '#e1b172'];
++  const sub = [solve(78, 0.085, 0.541, 1.0), solve(70, 0.08, 0.516, 1.0), solve(54, 0.10, 0.487, 1.0)];
++  console.log(JSON.stringify(sub), sub.map(h => drawn(h, 1).toFixed(3)).join(' '), 'dE00 vs sand', sub.map((h, i) => dE00(h, sand[i]).toFixed(1)).join(' '), 'faces', dE00(sub[0], sub[1]).toFixed(1), dE00(sub[1], sub[2]).toFixed(1));
++}
+diff --git a/docs/art/ground-ladders.md b/docs/art/ground-ladders.md
+new file mode 100644
+index 00000000..8add9eca
+--- /dev/null
++++ b/docs/art/ground-ladders.md
+@@ -0,0 +1,114 @@
++# The open grounds, cut tone on tone (desert, savanna, beach, plains)
++
++Art Director, 2026-10-27. Brief: the EP (relaying Orb's delegation), for the `signature` flash clip that fails in normal mode on main (3.5 of 5) since 22n's desert ground. Rendering's flip map: `docs/rendering/pending/2026-10-27k/README.md`. Tools: `art/concepts/biomes/ground.mjs`. Data: `data/art/biomes.json` (`palette.ground`, `scar`), regenerated through `gen.mjs` and `spec.mjs`.
++
++## What was measured
++
++On Rendering's still of main (`docs/rendering/img/lookgate/lookgate-sigdesert-faces-t91.png`) the desert's three ground faces draw as **the authored colour times 1.10 per channel, clipped at 255** (the front depth step; `RenderLook.DEPTH_STEP` is 1.10, 1.02 and 0.94 front to back):
++
++| Face | Authored | Drawn | Drawn luminance |
++|---|---|---|---|
++| lit | #ecd28c | #ffe79a | 0.807 |
++| mid | #d8b868 | #eeca73 | 0.617 |
++| shade | #a88a44 | #b9984b | 0.333 |
++
++The frame analyser counts a change of 0.1 or more where its darker side is under 0.8. The desert's faces sat 0.19 and 0.28 apart on both sides of that line, and as the split view pans, dunes turn over a face at a time. `ground.mjs` reproduces the table above to three places from the data, so the same figures can be read for any biome (`node art/concepts/biomes/ground.mjs`).
++
++## The rule
++
++**The three faces of an open ground stay within `PATTERN_BUDGET` (0.085 of relative luminance) of each other as drawn** (lit against shade, the widest pair, not only the neighbours), and are told apart by **hue**, not by value. Lit leans toward a paler yellow, shade toward a deeper orange (plains: lit toward yellow-green, shade toward blue-green). The faces stay 5 to 9 CIEDE2000 apart. Drawn values are at the front depth step; the other two steps scale every face together, so the steps between faces only shrink.
++
++The alternative in the brief (lit and mid both above 0.8, shade close under them) was not taken: it would bleach the desert and the beach to cream, and a ground that bright leaves the fighters' auras (20 CIEDE2000) with nothing to stand against.
++
++## The new ladders
++
++Drawn luminance is the relative luminance of the stored colour times 1.10 per channel, as measured above. Step is the difference between neighbouring faces; spread is lit minus shade.
++
++| Biome | Face | Stored | Drawn luminance | Step | Face distance (CIEDE2000) |
++|---|---|---|---|---|---|
++| Desert | lit | #cfc17d | 0.654 | 0.036 | 6.1 to mid |
++| | mid | #d9b868 | 0.618 | 0.034 | 8.2 to shade |
++| | shade | #ebac51 | 0.584 | spread **0.070** | |
++| Beach | lit | #cdc392 | 0.673 | 0.033 | 4.9 |
++| | mid | #d4bc84 | 0.640 | 0.035 | 7.2 |
++| | shade | #e1b172 | 0.605 | spread **0.069** | |
++| Savanna | lit | #b7af62 | 0.516 | 0.034 | 5.7 |
++| | mid | #bfa64f | 0.483 | 0.037 | 9.1 |
++| | shade | #d0982c | 0.445 | spread **0.071** | |
++| Plains | lit | #8ba427 | 0.396 | 0.030 | 7.9 |
++| | mid | #70a245 | 0.366 | 0.034 | 7.8 |
++| | shade | #39a14c | 0.331 | spread **0.064** | |
++
++Before: the spreads were desert 0.475, beach 0.441, savanna 0.420 and plains 0.326. The desert's mid is the same as before (0.617 to 0.618), so the warm sand keeps its centre; the mesas, rock, vegetation and subsoil are unchanged. The plains' lit green is more saturated than a plain hue shift gives because the tritan check (a preset aura against every tone, 14 CIEDE2000) failed the duller greens by 0.4 to 1.2.
++
++## The scar's fill on sand
++
++The beam's glass band was a dark green-black (#1f3d38, luminance 0.039) with a pale edge; panned across the sand it flipped 90k to 110k pixels a tick (ticks 609 to 634). The scar is drawn after the depth step, so its value is as stored. It is now a **pale sea-glass at about the sand's value**, so a pan across it changes by under 0.1 against the sand at the front and middle depth steps:
++
++| | Fill | Luminance | Edge | Luminance |
++|---|---|---|---|---|
++| Desert | #a3cebe (was #1f3d38) | 0.556 (was 0.039) | #beded6 (was #bfe0d8) | 0.680 (was 0.693) |
++| Beach | #a6d0c0 (was #1f3d38) | 0.570 (was 0.039) | #c1e1d8 (was #bfe0d8) | 0.701 (was 0.693) |
++
++Against the desert's faces at the front step (0.654, 0.618, 0.584) the fill is 0.098, 0.062 and 0.028 away; at the middle step (0.55, 0.52, 0.50) it is within 0.06; the back step's far strip (0.46 to 0.42) is 0.10 to 0.14 away and small. The scar now reads by its sea-green hue and its flat edge, not by darkness: **this changes how a beam on sand looks**, so it needs the side-by-side and Orb's eye. If Orb wants it darker, any fill more than 0.1 under the sand's faces at the front step is a change the analyser counts when the band is panned across.
++
++## Not changed, and what it means
++
++- **The dark scars on the grounds that are not sand** (grass, red earth, loam, rock: luminance 0.012) still step 0.35 to 0.5 against their ground, and the other eleven grounds (forest, mountains, jungle, tundra, taiga, wetland, highland, volcanic, ocean and the two ices) still have spreads of 0.10 to 0.88 as drawn. They are not in the signature clip's path and are outside the brief, so I left them. The ices are the other large one (white against slate, 0.88). If another clip fails the same way, the same cut applies. `ground.mjs` prints the table for all fifteen.
++- **Rock** (the desert's mesas and boulders against the sand) is a different layer and still steps about 0.35 from the ground where rock begins by slope. Not in Rendering's flip map as a commonest flip; if the clip's next failing second is a rock edge, that is the next lever.
++
++## Gates run
++
++`node tools/validate.js`: 277 files, 0 errors. The biome generator's readability and colour-vision checks: desert worst aura 26.2 and worst body 15.6 (the dawn key, as before); savanna 26.7 and 21.5; beach 20.6 and 22.8; plains 23.0 and 23.4; colour vision protan, deutan and tritan at or above 14 for desert, savanna and plains (the beach's two water tones stay at 8.9 to 9.0 under protan and deutan, a known lane issue in `biomes.md` section 3). Orbit separation unchanged.
++
++## Second pass: the crater's inside and the desert rock (2026-10-27, evening; the colours below were superseded by the adjustment that follows)
++
++The ladders cleared the split's opening and the scar; the worst second moved to ticks 1140 to 1260, where the beam's impact crater flips against the sand as the right pane's camera follows the flung fighter (the crater's inside about 0.25, its rock walls about 0.44, the sand 0.58; Rendering's notes: `docs/rendering/pending/2026-10-27k/README.md`). Same rule as the ladders: tone on tone within `PATTERN_BUDGET` (0.085), told apart by hue. Tools: `ground.mjs crater`, `ground.mjs beachsub`.
++
++**The desert rock** (the lit, mid and shade of every rock face and the mesa and boulder cover) is now a terracotta at the sand's own value. Hue carries it: pale peach to coral against the sand's gold (CIEDE2000 19 to 24 from the sand face of the same tone, 6 apart from each other).
++
++| Face | Was | Now | Drawn luminance (front step) |
++|---|---|---|---|
++| lit | #d29a5a | #fdb88e | 0.659 (sand lit 0.654) |
++| mid | #b87a44 | #feaf93 | 0.620 (sand mid 0.618) |
++| shade | #8a5634 | #fda79b | 0.585 (sand shade 0.584) |
++
++Rock against sand, any pair, at the five depth steps (1.10, 1.07, 1.02, 0.97, 0.94): at most 0.075, 0.080, 0.095, 0.084 and 0.080. Rock spread 0.074 at the front, less behind. The desert's far mesas keep their old colour (`derive.mjs` `FAR_BASE`): the far ridges are hazed from the old mid, so the far ladder is byte-identical.
++
++**The crater's inside** is no longer the one subsoil colour with a lite and a dark derived from it in the render (lite 0.14, dark 0.3: a spread of 0.36 on the desert). It carries its three faces as data, `palette.subsoil_faces`, for the desert and the beach only:
++
++| Biome | Face | Stored | Luminance (the inside is drawn after the depth step, as stored) | Distance from the sand face of that tone (CIEDE2000) |
++|---|---|---|---|---|
++| Desert | lit | #f6c46c | 0.602 | 10.5 |
++| | mid | #febb71 | 0.578 | 10.4 |
++| | shade | #feb582 | 0.557 | 10.6 |
++| Beach | lit | #e6d3a8 | 0.662 | 5.9 |
++| | mid | #f5ca9a | 0.640 | 8.3 |
++| | shade | #fec199 | 0.615 | 9.8 |
++
++Spreads 0.045 (desert) and 0.047 (beach); the faces are 6 to 8 CIEDE2000 apart. The desert's old `subsoil` was #a07a44 (0.218) and is now the mid face (#febb71); the beach's #a89060 (0.291) is now #f5ca9a. The inside against the sand around it: the desert at most 0.097 at the front step, 0.060 at 1.07 and 0.103 at 1.02; the beach at most 0.058 at 1.10 and 0.097 at 1.07. **The inside is drawn after the depth step, so it does not darken with depth while the sand does**: behind the 1.02 step the gap grows (desert 0.155 at 0.97, 0.184 at 0.94). If a crater can sit that far back in a clip, the render should apply the depth step to the inside too (one line in `terrain.gdshaderinc`, Rendering's); the faces here were cut so that, scaled the same way, they stay within about 0.1 of the sand at every step.
++
++**Needs (not Art's files):** the data key needs a schema line (`docs/art/pending/art-biomes-subsoil-faces.schema.json`, Tools), and the render has to read it (`docs/art/pending/biome-look-subsoil-faces.patch`, Rendering's `render/core/biome_look.gd`, 8 lines; without it the render keeps deriving the faces from `subsoil`, and `subsoil` is now the mid face, so the crater would draw 0.28 to 0.62 on the desert (lit to shade) and 0.30 to 0.68 on the beach, not the cut above). `validate` shows the two unknown-property errors until the schema line lands.
++
++**Not fixable in the palette:** the desert's strata lines on rock (thin dark lines every `STRATA_H`, drawn at 0.62 of the face: `terrain.gdshaderinc`, the biomes that carry them are `STRATA` in `biome_look.gd`). Drawn on the new rock they come out at 0.17 to 0.23 against 0.5 to 0.6, a step of about 0.35 on every line. They are antialiased and thin, but a pan crosses many of them. A gentler factor for the desert (about 0.9) or dropping the desert from `STRATA` is Rendering's call.
++
++Gates: the generator's colour-vision and readability checks for the desert and the beach unchanged or better (desert worst body 25.5, up from 15.6, because the rock is lighter; tritan 14.5; beach as before, its two water tones the only failures, 8.9 to 9.0 under protan and deutan).
++
++## Adjustment: the crater at the ground's own value, the rock warmer (2026-10-27, night)
++
++Rendering's run with the strata, the crater taking the depth step and DEPTH_STEP 1.07 / 0.97 made normal pass (2.5 / 2.5 / 2), but reduced went over (3 / 3 / 3): a camera cut at ticks 615 to 618 swapped the crater's inside (0.64 to 0.69, brighter than the sand) for a dune's shade face on the back step (0.45). **The crater's faces are now stored at the luminance of the ground's own faces of the same tone** (desert 0.529 / 0.500 / 0.478, beach 0.541 / 0.516 / 0.487, as stored), so with the depth step applied to both they draw the same as the sand at every step, and only the hue differs. Rendering pairs it with flatter steps (1.04 / 0.98).
++
++| Biome | Face | Stored | Stored luminance | Sand face (stored) | Distance from the sand (CIEDE2000) |
++|---|---|---|---|---|---|
++| Desert | lit | #eab861 | 0.526 | 0.529 | 10.4 |
++| | mid | #efaf62 | 0.499 | 0.500 | 9.1 |
++| | shade | #f9a55d | 0.478 | 0.478 | 7.7 |
++| Beach | lit | #e1bd84 | 0.541 | 0.541 | 8.3 |
++| | mid | #e1b786 | 0.516 | 0.516 | 6.6 |
++| | shade | #efaa7e | 0.486 | 0.487 | 9.0 |
++
++`subsoil` is the mid face (desert #efaf62, beach #e1b786). The beach's lit and mid faces are 3.4 CIEDE2000 apart (hue and chroma only; the crater is a flat amber there).
++
++**The desert rock, warmer:** from coral-pink toward a sand-terracotta at the same value: lit #feb970, mid #feb179, shade #fda982 (drawn 0.659 / 0.620 / 0.584, as before), 15 CIEDE2000 from the sand face of each tone (was 20 to 24), 7 to 9 from the crater's inside. It still reads as a pale terracotta, not red: red at the sand's value is not possible for a surface this light.
++
++Gates: validate shows only the two `subsoil_faces` errors, until Tools' schema line lands; the desert's colour-vision floor is 14.2 (protan, deutan) and 15.6 (tritan), worst body 25.8; the beach as before.
