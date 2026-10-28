@@ -1,0 +1,8 @@
+{
+  "_why": "The pin whose game strings predate RL-192's swap (condition 2: the in-game notice word for word, no fix promise, American spellings in ui/data). The live demo is pinned to that commit, so tools/check-site-interim.mjs cannot pass its strings and the Build site job stayed red from 2026-10-27, which hid every other failure behind it. Legal ruled RL-200 (2026-10-28): the excuse ends at the next pin move or on the date in \"until\", whichever comes first; the check fails once the file is stale in either way, so the file is removed in the same commit as a pin move. It excuses those string rules (the in-game ui/data strings only, never the lock, the routes, the nightly or the page's own notice) for this commit only, in the exported pin's tree only (its build_info.json must name this commit), and only the kinds listed below; the check prints which lines were excused. Every other pin, and HEAD's own strings, are checked in full. Like tools/site-routes-grandfather.json (RL-196).",
+  "commit": "257a766c26f8766fb09b063864c41c5d8ba64dc0",
+  "ruling": "RL-200",
+  "date": "2026-10-28",
+  "until": "2026-11-01",
+  "rules": ["notice-lines", "fix-promise", "spelling"]
+}

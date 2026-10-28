@@ -13,9 +13,9 @@
 //     "I understand, start", "Not now", the Reduce flashing line, the AI line) or the About page lacks the AI line, the privacy line of the feedback target in use (ui/data/send.json),
 //     the Godot (MIT) line or the Open Sans (OFL) line; or any page uses "safe", "seizure-safe", "tested for photosensitivity", "WCAG compliant", "certified" or "no flashing";
 //   - the freeze breadcrumbs are on /play/ without tools/site.json "crumbs": true (or absent with it), or their script has a network call or a URL;
-//   - the game's own strings (ui/data/*.json, Legal's RL-192 condition 2): the in-game notice (ui/data/terms.json prompt.menu_notice, photo_title, photo_body_a, photo_body_b, menu_rf_locked), the help of the settings row 'Flashing effects notice' and the label 'Color-blind mode' are not Legal's lines word for word (owner mode), a string promises a fix (owner mode), or any string a player reads has a British spelling (every mode; the still-pending ones are listed in tools/site-ui-spelling.json);
+//   - the game's own strings (ui/data/*.json, Legal's RL-192 condition 2): the in-game notice (ui/data/terms.json prompt.menu_notice, photo_title, photo_body_a, photo_body_b, menu_rf_locked), the help of the settings row 'Flashing effects notice' and the label 'Color-blind mode' are not Legal's lines word for word (owner mode), a string promises a fix (owner mode), or any string a player reads has a British spelling (every mode; the still-pending ones are listed in tools/site-ui-spelling.json); on the one pin whose strings predate the swap (tools/site-ui-excuse.json, only in that commit's exported tree, only the listed rule kinds) those failures are printed as notes instead;
 //   - the placeholder-name scan finds KAI, VORR, Meridian or Calamity in a page, or in a file of the game's pack that is not on the allowlist (tools/site-name-scan.json).
-//   node tools/check-site-interim.mjs --site <site dir> [--config <site.json>] [--root <repo root>] [--record <release-pass.json>] [--ui-allow <site-ui-spelling.json>] [--today YYYY-MM-DD] [--no-pack-scan]
+//   node tools/check-site-interim.mjs --site <site dir> [--config <site.json>] [--root <repo root>] [--record <release-pass.json>] [--ui-allow <site-ui-spelling.json>] [--ui-excuse <site-ui-excuse.json>] [--today YYYY-MM-DD] [--no-pack-scan]
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve, relative, sep } from 'node:path';
 import { siteNotice } from './site-notice.mjs';
@@ -338,22 +338,49 @@ try {
   let allow = [];
   try { allow = JSON.parse(readFileSync(allowFile, 'utf8')).allow || []; } catch (e) { bad(`the in-game spelling allowlist could not be read (${allowFile}): ${e.message}`); }
   const used = new Set();
+  // the content rules below (spelling, a fix promise, the notice word for word) collect into uiProblems, kind by kind, so a per-pin excuse can name the kinds it covers (tools/site-ui-excuse.json); a file that cannot be read, or a line that is missing altogether, stays a plain failure (only text that is there and is wrong can be excused)
+  const uiProblems = [];
+  const ubad = (kind, m) => uiProblems.push({ kind, m });
   for (const f of names) for (const [at, s] of strings(ui[f], '', [], true)) {
     const m = BRITISH.exec(s);
     if (!m) continue;
     const i = allow.findIndex((a) => a && a.file === `ui/data/${f}` && a.pointer === at);
     if (i >= 0) { used.add(i); continue; }
-    bad(`ui/data/${f} ${at} uses the British spelling "${m[0]}" in text a player reads (the game's text is American English: docs/legal/page-fixed-lines.md, RL-192 condition 2): ${JSON.stringify(s.length > 80 ? s.slice(0, 80) + '...' : s)}`);
+    ubad('spelling', `ui/data/${f} ${at} uses the British spelling "${m[0]}" in text a player reads (the game's text is American English: docs/legal/page-fixed-lines.md, RL-192 condition 2): ${JSON.stringify(s.length > 80 ? s.slice(0, 80) + '...' : s)}`);
   }
   allow.forEach((a, i) => { if (!used.has(i)) console.log(`interim site check note: tools/site-ui-spelling.json lists ${a && a.file} ${a && a.pointer}, which no longer holds a British spelling: remove the entry`); });
   if (OWNER) {
-    for (const f of names) for (const [at, s] of strings(ui[f], '', [], true)) if (PROMISES_FIX.test(s)) bad(`ui/data/${f} ${at} promises a fix ("we are fixing them" and its kin are untrue since flash work paused, 2026-10-18: docs/legal/page-fixed-lines.md, RL-192)`);
+    for (const f of names) for (const [at, s] of strings(ui[f], '', [], true)) if (PROMISES_FIX.test(s)) ubad('fix-promise', `ui/data/${f} ${at} promises a fix ("we are fixing them" and its kin are untrue since flash work paused, 2026-10-18: docs/legal/page-fixed-lines.md, RL-192)`);
     const prompt = ui['terms.json'] && ui['terms.json'].prompt;
-    for (const [k, want] of Object.entries(GAME_STRINGS)) if (!prompt || prompt[k] !== want) bad(`ui/data/terms.json prompt.${k} is not Legal's line word for word (docs/legal/page-fixed-lines.md, RL-192 addendum): ${JSON.stringify(prompt && typeof prompt[k] === 'string' ? (prompt[k].length > 80 ? prompt[k].slice(0, 80) + '...' : prompt[k]) : prompt && prompt[k])}`);
+    for (const [k, want] of Object.entries(GAME_STRINGS)) if (!prompt || prompt[k] !== want) (prompt && typeof prompt[k] === 'string' ? ubad : (kind, m) => bad(m))('notice-lines', `ui/data/terms.json prompt.${k} is not Legal's line word for word (docs/legal/page-fixed-lines.md, RL-192 addendum): ${JSON.stringify(prompt && typeof prompt[k] === 'string' ? (prompt[k].length > 80 ? prompt[k].slice(0, 80) + '...' : prompt[k]) : prompt && prompt[k])}`);
     const row = ui['settings.json'] && Array.isArray(ui['settings.json'].sections) ? ui['settings.json'].sections.flatMap((s) => (Array.isArray(s.items) ? s.items : [])).find((it) => it && typeof it === 'object' && it.action === 'photo_notice') : null;
-    if (!row || typeof row.help !== 'string' || !row.help.endsWith(SETTINGS_FLASH_END) || /\btested\b/i.test(row.help)) bad(`ui/data/settings.json: the help of the "Flashing effects notice" row does not end "${SETTINGS_FLASH_END}" (and must not say "tested"): docs/legal/page-fixed-lines.md, RL-192 addendum`);
+    if (!row || typeof row.help !== 'string' || !row.help.endsWith(SETTINGS_FLASH_END) || /\btested\b/i.test(row.help)) (row && typeof row.help === 'string' ? ubad : (kind, m) => bad(m))('notice-lines', `ui/data/settings.json: the help of the "Flashing effects notice" row does not end "${SETTINGS_FLASH_END}" (and must not say "tested"): docs/legal/page-fixed-lines.md, RL-192 addendum`);
     const cv = ui['options.json'] && ui['options.json'].options && ui['options.json'].options.colour_vision;
-    if (!cv || cv.label !== COLOR_BLIND_LABEL) bad(`ui/data/options.json options.colour_vision.label is not "${COLOR_BLIND_LABEL}" (docs/legal/page-fixed-lines.md, RL-192 addendum)`);
+    if (!cv || cv.label !== COLOR_BLIND_LABEL) (cv && typeof cv.label === 'string' ? ubad : (kind, m) => bad(m))('notice-lines', `ui/data/options.json options.colour_vision.label is not "${COLOR_BLIND_LABEL}" (docs/legal/page-fixed-lines.md, RL-192 addendum)`);
+  }
+  // The one pin whose strings predate RL-192's swap may stay up while the swap lands (tools/site-ui-excuse.json, a ruling named in the file; same shape as the routes grandfather). The excuse holds only when the pin in site.json AND the tree being checked are that commit
+  // (the exported tree's build_info.json says which commit it is), and only for the rule kinds the file lists; HEAD's own strings, and every other pin's, are checked in full.
+  let ex = null;
+  try { ex = JSON.parse(readFileSync(resolve(opt('--ui-excuse') || join(here, 'site-ui-excuse.json')), 'utf8')); } catch { /* none: no pin is excused */ }
+  let rootCommit = null;
+  try { rootCommit = String(JSON.parse(readFileSync(join(root, 'build_info.json'), 'utf8')).commit || ''); } catch { /* not an exported tree: nothing is excused */ }
+  const exKinds = ex && Array.isArray(ex.rules) ? ex.rules : [];
+  // The excuse ends at the next pin move or on its "until" date, whichever comes first (Legal RL-200): the file present after either is itself a failure, so it is removed in the same commit as a pin move.
+  let exLive = false;
+  if (ex) {
+    const ok = /^\d{4}-\d{2}-\d{2}$/.test(String(ex.until));
+    if (!ok) bad('tools/site-ui-excuse.json has no valid "until" date (YYYY-MM-DD): the excuse ends on a date, so the file must say which');
+    else if (today > ex.until) bad(`the excuse in tools/site-ui-excuse.json (${ex.ruling}) ended on ${ex.until}: remove the file; the game's strings are checked in full from here`);
+    if (ex.commit !== config.pin) bad(`the pin moved off ${String(ex.commit).slice(0, 8)}, the commit tools/site-ui-excuse.json (${ex.ruling}) excuses: remove the file in the same commit as the pin move (the new pin's strings are checked in full)`);
+    exLive = ok && today <= ex.until;
+  }
+  const excused = exLive && /^[0-9a-f]{40}$/.test(String(ex.commit)) && ex.commit === config.pin && rootCommit !== null && rootCommit.length >= 7 && ex.commit.startsWith(rootCommit);
+  const covered = uiProblems.filter((p) => excused && exKinds.includes(p.kind));
+  for (const p of uiProblems) if (!covered.includes(p)) bad(p.m);
+  if (covered.length) {
+    const kinds = [...new Set(covered.map((p) => p.kind))].join(', ');
+    console.log(`interim site check note: ${covered.length} of RL-192 condition 2's string rules (${kinds}) are not met by the strings of the pin ${ex.commit.slice(0, 8)}, which ${ex.ruling} lets stay up while the swap lands (tools/site-ui-excuse.json); a new pin must pass in full`);
+    for (const p of covered) console.log(`interim site check note (excused on ${ex.commit.slice(0, 8)}): ${p.m}`);
   }
 }
 

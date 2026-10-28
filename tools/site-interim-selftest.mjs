@@ -110,7 +110,9 @@ function prefsRoot(name, { options = true, feature = true, hud = true, target = 
   return r;
 }
 const goodRoot = prefsRoot('root-good');
-const verify = (siteDir, c, root = goodRoot, extra = []) => { writeCfg(c); return node('check-site-interim.mjs', ['--site', siteDir, '--config', cfgFile, '--root', root, '--record', recordFile, '--today', '2026-10-16', '--no-pack-scan', ...extra]); };
+// no run uses the real tools/site-ui-excuse.json (it names the live pin, and a stale file is itself a failure): a run that wants an excuse passes its own --ui-excuse
+const NO_EXCUSE = join(tmp, 'no-ui-excuse.json');
+const verify = (siteDir, c, root = goodRoot, extra = []) => { writeCfg(c); return node('check-site-interim.mjs', ['--site', siteDir, '--config', cfgFile, '--root', root, '--record', recordFile, ...(extra.includes('--today') ? [] : ['--today', '2026-10-16']), '--no-pack-scan', ...(extra.includes('--ui-excuse') ? [] : ['--ui-excuse', NO_EXCUSE]), ...extra]); };
 let copies = 0;
 const fresh = () => { const d = join(tmp, 'copy-' + (++copies)); cpSync(join(tmp, 'site-good'), d, { recursive: true }); return d; };
 const edit = (d, p, fn) => { const f = join(d, p); writeFileSync(f, fn(readFileSync(f, 'utf8'))); };
@@ -306,7 +308,7 @@ try {
     check('the owner-approved site builds from a stub export WITHOUT a recorded run (not --local)', ob.status === 0, (ob.stderr || ob.stdout).slice(0, 400));
     check('the build says it is owner-approved and prints the record as report only', /OWNER-APPROVED \(Orb 2026-10-18\)/.test(ob.stdout) && /report-only:/.test(ob.stdout), ob.stdout.slice(0, 400));
     const goodO = join(tmp, 'site-owner');
-    const verifyO = (d, c = ownerCfg(), root = goodRoot, extra = []) => { writeCfg(c); return node('check-site-interim.mjs', ['--site', d, '--config', cfgFile, '--root', root, '--record', recordFile, '--today', '2026-10-19', '--no-pack-scan', ...(extra.includes('--signature-gate') ? [] : ['--signature-gate', sigGate]), ...extra]); };
+    const verifyO = (d, c = ownerCfg(), root = goodRoot, extra = []) => { writeCfg(c); return node('check-site-interim.mjs', ['--site', d, '--config', cfgFile, '--root', root, '--record', recordFile, ...(extra.includes('--today') ? [] : ['--today', '2026-10-19']), '--no-pack-scan', ...(extra.includes('--ui-excuse') ? [] : ['--ui-excuse', NO_EXCUSE]), ...(extra.includes('--signature-gate') ? [] : ['--signature-gate', sigGate]), ...extra]); };
     const r1 = verifyO(goodO);
     check('the checker passes the owner-approved site with an empty pass file', r1.status === 0, (r1.stderr || r1.stdout).slice(0, 500));
     const gateO = readFileSync(join(goodO, 'play/index.html'), 'utf8');
@@ -388,6 +390,64 @@ try {
       check('owner mode: an allowlist entry that no longer matches only prints a note (remove it)', rC.status === 0 && /no longer holds a British spelling/.test(rC.stdout), (rC.stderr || rC.stdout).slice(0, 300));
       const rD = verifyO(goodO, ownerCfg(), goodRoot, ['--ui-allow', join(tmp, 'no-such-allow.json')]);
       check('owner mode: a missing allowlist file is a failure, not a pass', rD.status === 1, (rD.stderr || rD.stdout).slice(0, 300));
+      // the one pin whose strings predate RL-192's swap (tools/site-ui-excuse.json): excused for that commit, in that commit's exported tree, for the listed rule kinds only
+      {
+        const pinRoot = (build) => { const r = uiRoot((e) => { e('terms.json', (j) => { Object.assign(j.prompt, OLD); }); e('options.json', (j) => { j.options.colour_vision.label = 'Colour-blind mode'; }); }); if (build) writeFileSync(join(r, 'build_info.json'), JSON.stringify({ commit: build, date: '2026-10-20' })); return r; };
+        const exFile = join(tmp, 'ui-excuse.json');
+        const writeEx = (o) => writeFileSync(exFile, JSON.stringify({ commit: SIG_PIN, ruling: 'RL-test', until: '2026-11-01', rules: ['notice-lines', 'fix-promise', 'spelling'], ...o }));
+        const ui = ['--ui-excuse', exFile];
+        const verifyPin = (root, c = ownerCfg(), extra = ui) => verifyO(goodO, c, root, extra);
+        const UI_LINES = /uses the British spelling|promises a fix|is not Legal's line word for word/;
+        writeEx({});
+        const oldTree = pinRoot(SIG_PIN.slice(0, 7));
+        const rP = verifyPin(oldTree);
+        check("the pin's own old strings pass with the excuse present, and the check names the ruling and the kinds", rP.status === 0 && /string rules \(spelling, fix-promise, notice-lines\) are not met by the strings of the pin cccccccc, which RL-test lets stay up/.test(rP.stdout), (rP.stderr || rP.stdout).slice(0, 300));
+        check('each excused line is printed as a note, so the log shows what was let through', /note \(excused on cccccccc\): ui\/data\/terms\.json prompt\.menu_notice is not Legal's line word for word/.test(rP.stdout) && /note \(excused on cccccccc\): ui\/data\/options\.json options\.colour_vision\.label/.test(rP.stdout), rP.stdout.slice(0, 300));
+        const rP2 = verifyPin(oldTree, ownerCfg(), ['--ui-excuse', join(tmp, 'no-such-excuse.json')]);
+        check('without the excuse file the same tree fails exactly as before', rP2.status === 1 && UI_LINES.test(rP2.stderr), (rP2.stderr || rP2.stdout).slice(0, 300));
+        writeEx({ commit: 'd'.repeat(40) });
+        const rP3 = verifyPin(oldTree);
+        check('an excuse for another commit excuses nothing', rP3.status === 1 && UI_LINES.test(rP3.stderr), (rP3.stderr || rP3.stdout).slice(0, 300));
+        writeEx({});
+        const rP4 = verifyPin(oldTree, { ...ownerCfg(), pin: 'e'.repeat(40) });
+        check('a different pin is checked in full whatever the excuse says (the tree is not the excused commit either)', rP4.status === 1 && UI_LINES.test(rP4.stderr) && !/lets stay up/.test(rP4.stdout), (rP4.stderr || rP4.stdout).slice(0, 300));
+        const rP5 = verifyPin(pinRoot('eeeeeee'));
+        check("HEAD's own strings stay checked in full: a tree that is not the pin's (its build_info.json names another commit) is not excused though site.json still names the pin", rP5.status === 1 && UI_LINES.test(rP5.stderr) && !/lets stay up/.test(rP5.stdout), (rP5.stderr || rP5.stdout).slice(0, 300));
+        const rP6 = verifyPin(pinRoot(null));
+        check('a tree with no build_info.json (a working copy, not an exported pin) is not excused', rP6.status === 1 && UI_LINES.test(rP6.stderr), (rP6.stderr || rP6.stdout).slice(0, 300));
+        writeEx({ rules: ['spelling'] });
+        const rP7 = verifyPin(oldTree);
+        check('the excuse covers only the kinds it lists: with spelling only, the old notice lines still fail', rP7.status === 1 && /is not Legal's line word for word/.test(rP7.stderr) && !/uses the British spelling/.test(rP7.stderr), (rP7.stderr || rP7.stdout).slice(0, 300));
+        writeEx({});
+        const rP8 = verifyPin(goodRoot);
+        check('a tree that meets the rules passes with the excuse present and prints no excuse note', rP8.status === 0 && !/lets stay up/.test(rP8.stdout), (rP8.stderr || rP8.stdout).slice(0, 300));
+        const rP9 = verifyPin(uiRoot((e, r) => { rmSync(join(r, 'ui/data/terms.json')); writeFileSync(join(r, 'build_info.json'), JSON.stringify({ commit: SIG_PIN.slice(0, 7), date: '2026-10-20' })); }));
+        check('an unreadable or missing ui/data file is never excused', rP9.status === 1, (rP9.stderr || rP9.stdout).slice(0, 300));
+        // RL-200: the excuse ends at the next pin move or on its date, whichever comes first, and the file present after either is a failure
+        const LATE = ownerCfg({ expires: '2026-12-31' });   // the interim's own expiry is a separate check; keep it out of the way of the dates here
+        const rD1 = verifyPin(oldTree, LATE, [...ui, '--today', '2026-11-01']);
+        check('RL-200: on the last day of the excuse (until, inclusive) the pin still passes', rD1.status === 0, (rD1.stderr || rD1.stdout).slice(0, 300));
+        const rD2 = verifyPin(oldTree, LATE, [...ui, '--today', '2026-11-02']);
+        check('RL-200: the day after the date, the check fails: the excuse ended, the strings are checked in full and the file must go', rD2.status === 1 && /ended on 2026-11-01: remove the file/.test(rD2.stderr) && UI_LINES.test(rD2.stderr) && !/lets stay up/.test(rD2.stdout), (rD2.stderr || rD2.stdout).slice(0, 300));
+        const rD3 = verifyPin(goodRoot, LATE, [...ui, '--today', '2026-11-02']);
+        check('RL-200: a stale file fails even on a tree whose strings are right (it must be removed, not left behind)', rD3.status === 1 && /ended on 2026-11-01/.test(rD3.stderr), (rD3.stderr || rD3.stdout).slice(0, 300));
+        writeEx({ until: undefined });
+        const rD4 = verifyPin(oldTree);
+        check('RL-200: an excuse with no "until" date excuses nothing and fails', rD4.status === 1 && /no valid "until" date/.test(rD4.stderr) && UI_LINES.test(rD4.stderr), (rD4.stderr || rD4.stdout).slice(0, 300));
+        writeEx({ until: 'soon' });
+        const rD5 = verifyPin(oldTree);
+        check('RL-200: an "until" that is not a date excuses nothing and fails', rD5.status === 1 && /no valid "until" date/.test(rD5.stderr), (rD5.stderr || rD5.stdout).slice(0, 300));
+        writeEx({});
+        const rD6 = verifyPin(goodRoot, { ...ownerCfg(), pin: 'e'.repeat(40) });
+        check('RL-200: a pin move that leaves the excuse file behind fails, even when the strings of the new pin are right', rD6.status === 1 && /the pin moved off cccccccc.*remove the file in the same commit as the pin move/.test(rD6.stderr), (rD6.stderr || rD6.stdout).slice(0, 300));
+        const rD7 = verifyPin(oldTree, { ...ownerCfg(), pin: 'e'.repeat(40) });
+        check('RL-200: a pin move without the swap fails in full: the old strings are failures, and so is the stale file', rD7.status === 1 && UI_LINES.test(rD7.stderr) && /the pin moved off/.test(rD7.stderr), (rD7.stderr || rD7.stdout).slice(0, 300));
+        const lockOff = (() => { const r = pinRoot(SIG_PIN.slice(0, 7)); const f = join(r, 'ui/data/features.json'); const j = JSON.parse(readFileSync(f, 'utf8')); j.features.lock_reduce_flashing = false; writeFileSync(f, JSON.stringify(j)); return r; })();
+        const rD8 = verifyPin(lockOff);
+        check('RL-200: the excuse covers only the in-game string rules: an unlocked build on the same pin still fails', rD8.status === 1 && /lock_reduce_flashing is not true/.test(rD8.stderr), (rD8.stderr || rD8.stdout).slice(0, 300));
+        const rPr = JSON.parse(readFileSync(new URL('./site-ui-excuse.json', import.meta.url), 'utf8'));
+        check('the real excuse file names one full commit, RL-200, the end date 2026-11-01 and the rule kinds', /^[0-9a-f]{40}$/.test(rPr.commit) && rPr.ruling === 'RL-200' && rPr.until === '2026-11-01' && Array.isArray(rPr.rules) && rPr.rules.every((k) => ['notice-lines', 'fix-promise', 'spelling'].includes(k)));
+      }
     }
     // normal mode unreachable by any route (Legal's RL-195 condition (b); tools/site-routes.mjs): each test breaks one door of the smallest good tree
     {
@@ -498,11 +558,11 @@ try {
     const d = fresh();
     writeFileSync(join(d, 'play/index.pck'), pack([['ui/core/ui_text.gd', 'Meridian Warden']]));
     writeCfg(cfg());
-    const r = node('check-site-interim.mjs', ['--site', d, '--config', cfgFile, '--root', goodRoot, '--record', recordFile, '--today', '2026-10-16']);
+    const r = node('check-site-interim.mjs', ['--site', d, '--config', cfgFile, '--root', goodRoot, '--record', recordFile, '--today', '2026-10-16', '--ui-excuse', NO_EXCUSE]);
     check('the check fails when the game pack holds a placeholder name in a file that is not allowlisted', r.status === 1 && /Meridian/.test(r.stderr));
     const d2 = fresh();
     writeFileSync(join(d2, 'play/index.pck'), pack([['sim/core/test/frozen/golden-js.json', 'Meridian Warden Calamity Sovereign KAI VORR'], ['ui/data/terms.json', '{}']]));
-    const r2 = node('check-site-interim.mjs', ['--site', d2, '--config', cfgFile, '--root', goodRoot, '--record', recordFile, '--today', '2026-10-16']);
+    const r2 = node('check-site-interim.mjs', ['--site', d2, '--config', cfgFile, '--root', goodRoot, '--record', recordFile, '--today', '2026-10-16', '--ui-excuse', NO_EXCUSE]);
     check('a pack whose hits are all on the allowlist passes', r2.status === 0, (r2.stderr || r2.stdout).slice(0, 300));
   }
 
