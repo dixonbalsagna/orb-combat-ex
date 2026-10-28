@@ -132,12 +132,14 @@ static func _size(f) -> void:
 
 
 static func gi(f, k: int) -> int:
-	_size(f)
+	if f.act.dirI.size() < N:
+		_size(f)
 	return f.act.dirI[k]
 
 
 static func si(f, k: int, v: int) -> void:
-	_size(f)
+	if f.act.dirI.size() < N:
+		_size(f)
 	f.act.dirI[k] = v
 
 
@@ -215,8 +217,6 @@ static func _window(f, cls: String, heavy: bool) -> float:
 static func _windowBeat(S: SimState, ex, f):
 	if ex == null:
 		return null
-	var tm: Dictionary = data().timing
-	var k: float = float(tm.assistFactor) if SimAct.assisted(f, "perfectBlockAssist") else 1.0
 	if ex.kind == "sig":
 		if f != ex.D or ex.branch != "" or not DirData.beamAtFire():
 			return null
@@ -225,13 +225,16 @@ static func _windowBeat(S: SimState, ex, f):
 				var left: float = (b.t - ex.t) * DirData.TICKS_PER_SEC
 				return b if left <= _window(f, "beam" if DirBeamPlay.on() else "heavy", true) + 0.5 and not b.args.get("perfect", false) else null
 		return null
-	if not DirData.allows(ex, "perfect_block"):
-		return null
 	var role: String = "A" if f == ex.A else "D"
+	var allowed: bool = false
 	# (the classes with a window are the keys of interrupts.json perfectBlock.windows)
 	for b in ex.beats:
 		if b.done or b.op != "strike" or b.args.d != role or b.args.o == null or b.args.get("sure", false):
 			continue   # (a riposte and a reversal's heavy can't be blocked: melee-press-feel.md section 9f)
+		if not allowed:
+			if not DirData.allows(ex, "perfect_block"):
+				return null   # (asked once there is a strike to ask it for: with none, the answer is null either way)
+			allowed = true
 		var cls: String = String(b.args.o.get("class", ""))
 		var w: float = _window(f, cls, ex.kind == "heavy")
 		if w < 0.0 or b.args.o.get("perfect", false):

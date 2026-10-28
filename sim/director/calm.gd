@@ -83,7 +83,12 @@ static func onSetPieceEnd(S: SimState, ex) -> void:
 
 
 static func _base() -> int:
-	return DirRecoil._base() + DirRecoil.RC_N   # after the recoil flips' (the chain's front holds the mash run's and the press wait's)
+	if _baseAt < 0:
+		_baseAt = DirRecoil._base() + DirRecoil.RC_N   # after the recoil flips' (the chain's front holds the mash run's and the press wait's)
+	return _baseAt   # a constant: the chain is walked once
+
+
+static var _baseAt: int = -1
 
 
 static func _g(f, k: int) -> int:
@@ -92,10 +97,12 @@ static func _g(f, k: int) -> int:
 
 
 static func _s(f, k: int, v: int) -> void:
-	DirGrapple._size(f)
-	if f.act.dirI.size() < _base() + CM_N:
-		f.act.dirI.resize(_base() + CM_N)
-	f.act.dirI[_base() + k] = v
+	var b: int = _base()
+	if f.act.dirI.size() < b + CM_N:   # sized: every part before this one is (it follows DirGrapple.END)
+		DirGrapple._size(f)
+		if f.act.dirI.size() < b + CM_N:
+			f.act.dirI.resize(b + CM_N)
+	f.act.dirI[b + k] = v
 
 
 ## Once a live tick (DirExchange.dirUpdate), while the calm turn is on: the tick each fighter comes to rest (Game Design's

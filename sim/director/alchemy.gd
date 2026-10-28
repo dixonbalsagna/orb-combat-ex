@@ -60,6 +60,8 @@ const TIMINGS: Array = ["none", "good", "perfect"]
 
 
 static func _size(f) -> void:
+	if f.act.dirI.size() >= SIZE:   # sized (SIZE is past DirInterrupt.N)
+		return
 	DirInterrupt.gi(f, 0)   # DirInterrupt sizes and seeds its own part first
 	if f.act.dirI.size() < SIZE:
 		f.act.dirI.resize(SIZE)
@@ -243,6 +245,7 @@ const FLOW_LIFE: int = 90   # ticks without a press after which it lapses
 ## Once a live tick: a button let go closes its press, Controls' aim latch takes the stick, a fighter's flow lapses
 ## FLOW_LIFE ticks after his last press, and the live tick is noted for the next freeze.
 static func tick(S: SimState) -> void:
+	var dz: float = SimInputData.tf(["aim", "deadZone"], float(SimAim.DEFAULTS["deadZone"]))   # SimAim.params()'s dead zone, read once for both
 	for f in S.fighters:
 		_size(f)
 		var i: SimIntent = f.input
@@ -255,10 +258,10 @@ static func tick(S: SimState) -> void:
 		if (was & 4) != 0 and (now & 4) == 0:
 			_release(S, f, SimPressRead.SIG)
 		f.act.dirI[HELD_WAS] = now
-		var latch: Dictionary = {"sector": f.act.dirI[AIM_S] - 1, "tick": f.act.dirI[AIM_T]}
-		SimAim.update(latch, i.mx, i.my, S.tick)
-		f.act.dirI[AIM_S] = int(latch.sector) + 1
-		f.act.dirI[AIM_T] = int(latch.tick)
+		var sec: int = SimAim.sector(i.mx, i.my, dz)   # Controls' latch (SimAim.update): a stick out of the dead zone takes it
+		if sec != SimAim.NONE:
+			f.act.dirI[AIM_S] = sec + 1
+			f.act.dirI[AIM_T] = S.tick
 		if f.act.flow > 0:
 			var n: int = f.act.dirI[COUNT]
 			if n == 0 or S.tick - f.act.dirI[T0 + (n - 1) % RING] > int(DirRecipe.cfg().get("flow", {}).get("lapseTicks", FLOW_LIFE)):
@@ -314,8 +317,30 @@ static func entryOf(f, kind: int) -> Dictionary:
 
 
 ## Controls' read of his log now (SimPressRead.classify): style, timing, streak, steady, release, the two mixes.
+## A press reads it twice (log, then the recipe's row as its blow is thrown), some 170 us each: the last answer is kept,
+## and given again while the sim, the tick and every bit of the log logOf reads are the same. The read is a pure
+## function of those and Controls' data, which nothing changes inside a step. Not state.
 static func read(S: SimState, f) -> Dictionary:
-	return SimPressRead.classify(logOf(f), S.tick, {})
+	_size(f)
+	var key: PackedInt32Array = f.act.dirI.slice(P0, FLASH0 + RING)   # the packed presses, their ticks, the count, up, beat, flash
+	key.append_array(f.act.dirI.slice(LDOWN0, SIZE))   # ... and the live ticks down and up
+	for k in range(RING):
+		key[k] &= LOG_BITS   # (a packed press's rhythm, intent, entry and tilt are not in the log)
+	if S.get_instance_id() == _rdS and S.tick == _rdTick and key == _rdKey:
+		return _rdOut.duplicate(true)
+	var out: Dictionary = SimPressRead.classify(logOf(f), S.tick, {})
+	_rdS = S.get_instance_id()   # (its id, not the sim: the memo must not keep a finished sim alive)
+	_rdTick = S.tick
+	_rdKey = key
+	_rdOut = out.duplicate(true)
+	return out
+
+
+const LOG_BITS: int = 1 | 2 | BIG | (15 << FREEZE_SHIFT) | (15 << STANCE_SHIFT)   # the bits of a packed press logOf reads
+static var _rdS: int = 0
+static var _rdTick: int = -1
+static var _rdKey := PackedInt32Array()
+static var _rdOut: Dictionary = {}
 
 
 ## The stick's launch direction (Controls' SimAim): the latched sector if it is fresh, else SimAim.NONE.

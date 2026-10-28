@@ -164,7 +164,15 @@ static var _inTick: bool = false
 
 
 static func cfg() -> Dictionary:
-	return DirInterrupt.data().get("brawl", {})
+	var d: Dictionary = DirInterrupt.data()
+	if not is_same(d, _cfgOf):
+		_cfg = d.get("brawl", {})   # the same block every time for the same data (tools edit it in place)
+		_cfgOf = d
+	return _cfg
+
+
+static var _cfg: Dictionary = {}
+static var _cfgOf = null
 
 
 static func on() -> bool:
@@ -172,6 +180,8 @@ static func on() -> bool:
 
 
 static func _size(f) -> void:
+	if f.act.dirI.size() >= END:
+		return
 	DirAlchemy._size(f)
 	if f.act.dirI.size() < END:
 		f.act.dirI.resize(END)
@@ -183,7 +193,8 @@ static func _g(f, k: int) -> int:
 
 
 static func _s(f, k: int, v: int) -> void:
-	_size(f)
+	if f.act.dirI.size() < END:   # sized: every part below END is (END is past DirAlchemy.SIZE and DirInterrupt.N)
+		_size(f)
 	f.act.dirI[k] = v
 
 
@@ -1740,9 +1751,11 @@ static func paySend(o, p: float) -> void:
 ## Game Design's 10c: each live tick (DirExchange.dirUpdate), the tick each fighter came down from a launch (left
 ## "launched"), which opens his wary window in _safety.
 static func laTick(S: SimState) -> void:
-	if popOn():
+	if not anywhere():
+		return   # (popOn() is anywhere() and the pop's switch)
+	if bool(popCfg().get("enabled", false)):
 		_popTick(S)
-	if not anywhere() or int(la().get("waryTicks", 0)) <= 0:
+	if int(la().get("waryTicks", 0)) <= 0:
 		return
 	for f in S.fighters:
 		var was: int = _lg(f, LA_WAS)
@@ -1928,7 +1941,12 @@ static func anywhere() -> bool:
 ## Where launch anywhere's integers start: after the mash run's and the press wait's, which a player writes with every
 ## switch off, so a slot added here never moves his.
 static func _laBase() -> int:
-	return DirPress._base() + DirPress.PR_N
+	if _laBaseAt < 0:
+		_laBaseAt = DirPress._base() + DirPress.PR_N
+	return _laBaseAt   # a constant: the chain is walked once
+
+
+static var _laBaseAt: int = -1
 
 
 static func _lg(f, k: int) -> int:
@@ -1937,10 +1955,12 @@ static func _lg(f, k: int) -> int:
 
 
 static func _ls(f, k: int, v: int) -> void:
-	DirGrapple._size(f)
-	if f.act.dirI.size() < _laBase() + LA_N:
-		f.act.dirI.resize(_laBase() + LA_N)
-	f.act.dirI[_laBase() + k] = v
+	var b: int = _laBase()
+	if f.act.dirI.size() < b + LA_N:   # sized: every part before this one is (it follows DirGrapple.END)
+		DirGrapple._size(f)
+		if f.act.dirI.size() < b + LA_N:
+			f.act.dirI.resize(b + LA_N)
+	f.act.dirI[b + k] = v
 
 
 ## Game Design's 5a (rulings-2026-10-19.md): only a real flurry stops an answerable launcher. True when a light landing now
@@ -2732,6 +2752,7 @@ static func _move(S: SimState, ex) -> void:
 	var top: float = 0.0
 	var ownX: PackedFloat64Array = PackedFloat64Array([0.0, 0.0])   # each one's own nudge, A then D
 	var ownY: PackedFloat64Array = PackedFloat64Array([0.0, 0.0])
+	var np: Dictionary = {}   # Controls' nudge numbers (SimAim.params), read once for the pair and only for a stick that is held
 	for f in [A, D]:
 		var rx: int = 0
 		var ry: int = 0
@@ -2744,8 +2765,10 @@ static func _move(S: SimState, ex) -> void:
 			# stick, so it is read as he holds it (Simulation's record, blank for a launched or dropped fighter).
 			rx = SimAim.nudge_units(f.heldMx * float(c.nudge.stagger))
 			ry = SimAim.nudge_units(f.heldMy * float(c.nudge.stagger))
-		var nx: int = SimAim.nudge_ramp(_g(f, NUDGE_X), rx)
-		var ny: int = SimAim.nudge_ramp(_g(f, NUDGE_Y), ry)
+		if (rx != 0 or ry != 0) and np.is_empty():
+			np = SimAim.params()
+		var nx: int = SimAim.nudge_ramp(_g(f, NUDGE_X), rx, np)
+		var ny: int = SimAim.nudge_ramp(_g(f, NUDGE_Y), ry, np)
 		_s(f, NUDGE_X, nx)
 		_s(f, NUDGE_Y, ny)
 		var sp: float = float(c.nudgeMul) * _flySpeed(S, f)
@@ -2807,7 +2830,7 @@ static func _move(S: SimState, ex) -> void:
 		var m: PackedFloat64Array = _mid(ex)
 		var cl: float = float(c.nudge.clearBh) * DirInterrupt.BH
 		var sl: float = SimDetMath.hypot(wx, wy)
-		if not _walled(S, m[0], m[1]) and _walled(S, SimWrap.wrap(m[0] + wx * dt + wx / sl * cl), m[1] + wy * dt + wy / sl * cl):
+		if _walled(S, SimWrap.wrap(m[0] + wx * dt + wx / sl * cl), m[1] + wy * dt + wy / sl * cl) and not _walled(S, m[0], m[1]):   # (both are reads: the face ahead first, as it is mostly clear)
 			var okx: bool = wx != 0.0 and not _walled(S, SimWrap.wrap(m[0] + wx * dt + SimMathx.jsign(wx) * cl), m[1])
 			var oky: bool = wy != 0.0 and not _walled(S, m[0], m[1] + wy * dt + SimMathx.jsign(wy) * cl)
 			if okx and (not oky or absf(wx) >= absf(wy)):
@@ -3425,6 +3448,11 @@ static var holding: bool = false
 ## or taunt of his own going, presses as a tap does, floorGap apart. Out of reach that tap is an approach, so a held
 ## X closes the gap again after a brawl has ended. The blow it arrives with is the floor's: no new burst.
 static func holdTick(S: SimState) -> void:
+	var player: bool = false
+	for f in S.fighters:
+		player = player or f.ai == null
+	if not player:
+		return   # the AI carries no hold
 	if not on() or not carries() or S.game.ko != null:
 		return
 	for f in S.fighters:
@@ -3842,8 +3870,6 @@ static func aiInput(S: SimState, f) -> void:
 				var pace: int = _g(o, TAP_GAP)
 				_s(f, AI_NEXT, S.tick + (pace if pace > 0 else gap))
 			return
-	# Against a shooter (ruling 5) its guard share is its level's vsShooter number.
-	var vs: Dictionary = lv.get("vsShooter", {}) if shooter(S, f, o) else {}
 	var flurried: bool = _g(o, TAP_GAP) > 0 and S.tick - _g(o, LAST_TAP) <= int(c.flurry.maxGap) and o.stunTicks <= 0 and o.stance != 1.0
 	# Section 9c: it answers a string by its answerBy-th landed blow, and doesn't stand and take the next: after its
 	# reaction time it drops what it was doing and guards for guardMaxTicks, then it must attack. A flurry is not a
@@ -3899,6 +3925,9 @@ static func aiInput(S: SimState, f) -> void:
 		_aiPress(S, f, i, 2, bl)   # a heavy into his flurry of lights: its armour takes them
 		_aiNudge(S, ex, f, true)
 		return
+	# Against a shooter (ruling 5) its guard share is its level's vsShooter number. (Read here, where it is used: a
+	# brawl's fighters are sized, so shooter() reads and writes nothing.)
+	var vs: Dictionary = lv.get("vsShooter", {}) if shooter(S, f, o) else {}
 	if left == 0 and S.rng.next() < float(vs.get("guardShare", bl.get("guardShare", 0.3))):
 		var g: Array = bl.get("guardTicks", [20, 60])
 		_s(f, AI_GUARD, S.tick + int(S.rng.range_(float(g[0]), float(g[1]) + 0.999)))

@@ -70,6 +70,8 @@ static func on() -> bool:
 
 
 static func _size(f) -> void:
+	if f.act.dirI.size() >= END:
+		return
 	DirBrawl._size(f)
 	if f.act.dirI.size() < END:
 		f.act.dirI.resize(END)

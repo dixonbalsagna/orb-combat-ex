@@ -22,7 +22,12 @@ static func on() -> bool:
 
 
 static func _base() -> int:
-	return DirMash._base() + DirMash.MS_N
+	if _baseAt < 0:
+		_baseAt = DirMash._base() + DirMash.MS_N
+	return _baseAt   # a constant: the chain is walked once
+
+
+static var _baseAt: int = -1
 
 
 static func _g(f, k: int) -> int:
@@ -31,10 +36,12 @@ static func _g(f, k: int) -> int:
 
 
 static func _s(f, k: int, v: int) -> void:
-	DirGrapple._size(f)
-	if f.act.dirI.size() < _base() + PR_N:
-		f.act.dirI.resize(_base() + PR_N)
-	f.act.dirI[_base() + k] = v
+	var b: int = _base()
+	if f.act.dirI.size() < b + PR_N:   # sized: every part before this one is (it follows DirGrapple.END)
+		DirGrapple._size(f)
+		if f.act.dirI.size() < b + PR_N:
+			f.act.dirI.resize(b + PR_N)
+	f.act.dirI[b + k] = v
 
 
 ## The cooldown's ticks still to run, as the step counts them.

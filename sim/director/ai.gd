@@ -51,14 +51,6 @@ static func aiInput(S: SimState, f) -> void:
 	var o = SimRoster.opp(S, f)
 	var i: SimIntent = f.input
 	var a = f.ai
-	# The stance numbers are data (ai.json stance); the constants below stand in when the block is missing.
-	var stn: Dictionary = skill().get("stance", {})
-	var cir: Dictionary = stn.get("circle", {})
-	var circleR: float = float(cir.get("r", CIRCLE_R))
-	var circleX: float = float(cir.get("x", CIRCLE_X))
-	var circleY: float = float(cir.get("y", CIRCLE_Y))
-	var circleRate: float = float(cir.get("rate", CIRCLE_RATE))
-	var swayRate: float = float(stn.get("swayRate", SWAY_RATE))
 	# I2b: the AI writes the v2 record. Its stance choice lives in a.st, and the held states below stand for it, so the
 	# director reads the AI's stance through the same path as a player's (SimAct.stance). A ready form is taken at once,
 	# unless it holds one on purpose (forms: _formHold).
@@ -72,6 +64,14 @@ static func aiInput(S: SimState, f) -> void:
 	if DirZip.zipping(f):
 		DirZip.aiZipping(S, f, i)   # its own zip: LT stays down, and the stick is its exit
 		return
+	# The stance numbers are data (ai.json stance); the constants below stand in when the block is missing.
+	var stn: Dictionary = skill().get("stance", {})
+	var cir: Dictionary = stn.get("circle", {})
+	var circleR: float = float(cir.get("r", CIRCLE_R))
+	var circleX: float = float(cir.get("x", CIRCLE_X))
+	var circleY: float = float(cir.get("y", CIRCLE_Y))
+	var circleRate: float = float(cir.get("rate", CIRCLE_RATE))
+	var swayRate: float = float(stn.get("swayRate", SWAY_RATE))
 	var d: float = SimWrap.sdx(f.x, o.x)
 	var dist: float = absf(d)
 	# Since S2 the AI reads its wounds, not an HP bar: 1 fresh, 0 on the brink (SimWounds.vitality).

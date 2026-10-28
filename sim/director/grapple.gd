@@ -53,7 +53,15 @@ const END: int = BASE + 15
 
 
 static func cfg() -> Dictionary:
-	return DirInterrupt.data().get("grapple", {})
+	var d: Dictionary = DirInterrupt.data()
+	if not is_same(d, _cfgOf):
+		_cfg = d.get("grapple", {})   # the same block every time for the same data (tools edit it in place)
+		_cfgOf = d
+	return _cfg
+
+
+static var _cfg: Dictionary = {}
+static var _cfgOf = null
 
 
 static func on() -> bool:
@@ -61,6 +69,8 @@ static func on() -> bool:
 
 
 static func _size(f) -> void:
+	if f.act.dirI.size() >= END:
+		return
 	DirZip._size(f)
 	if f.act.dirI.size() < END:
 		f.act.dirI.resize(END)

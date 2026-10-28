@@ -42,7 +42,12 @@ static func on() -> bool:
 
 
 static func _base() -> int:
-	return DirBrawl._laBase() + DirBrawl.LA_N
+	if _baseAt < 0:
+		_baseAt = DirBrawl._laBase() + DirBrawl.LA_N
+	return _baseAt   # a constant: the chain is walked once
+
+
+static var _baseAt: int = -1
 
 
 static func _g(f, k: int) -> int:
@@ -51,10 +56,12 @@ static func _g(f, k: int) -> int:
 
 
 static func _s(f, k: int, v: int) -> void:
-	DirGrapple._size(f)
-	if f.act.dirI.size() < _base() + RC_N:
-		f.act.dirI.resize(_base() + RC_N)
-	f.act.dirI[_base() + k] = v
+	var b: int = _base()
+	if f.act.dirI.size() < b + RC_N:   # sized: every part before this one is (it follows DirGrapple.END)
+		DirGrapple._size(f)
+		if f.act.dirI.size() < b + RC_N:
+			f.act.dirI.resize(b + RC_N)
+	f.act.dirI[b + k] = v
 
 
 ## The AI level's shares (data/director/ai.json brawl.recoil).

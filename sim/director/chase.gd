@@ -36,7 +36,12 @@ static func on() -> bool:
 
 
 static func _base() -> int:
-	return DirWallKick._base() + DirWallKick.WK_N
+	if _baseAt < 0:
+		_baseAt = DirWallKick._base() + DirWallKick.WK_N
+	return _baseAt   # a constant: the chain is walked once
+
+
+static var _baseAt: int = -1
 
 
 static func _g(f, k: int) -> int:
@@ -45,10 +50,12 @@ static func _g(f, k: int) -> int:
 
 
 static func _s(f, k: int, v: int) -> void:
-	DirGrapple._size(f)
-	if f.act.dirI.size() < _base() + CH_N:
-		f.act.dirI.resize(_base() + CH_N)
-	f.act.dirI[_base() + k] = v
+	var b: int = _base()
+	if f.act.dirI.size() < b + CH_N:   # sized: every part before this one is (it follows DirGrapple.END)
+		DirGrapple._size(f)
+		if f.act.dirI.size() < b + CH_N:
+			f.act.dirI.resize(b + CH_N)
+	f.act.dirI[b + k] = v
 
 
 ## True while f is chasing.

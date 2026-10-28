@@ -42,7 +42,12 @@ static func on() -> bool:
 
 
 static func _base() -> int:
-	return DirCalm._base() + DirCalm.CM_N   # after the calm turn's rest record (7b), which follows the press wait's and the mash run's
+	if _baseAt < 0:
+		_baseAt = DirCalm._base() + DirCalm.CM_N   # after the calm turn's rest record (7b), which follows the press wait's and the mash run's
+	return _baseAt   # a constant: the chain is walked once
+
+
+static var _baseAt: int = -1
 
 
 static func _g(f, k: int) -> int:
@@ -51,10 +56,12 @@ static func _g(f, k: int) -> int:
 
 
 static func _s(f, k: int, v: int) -> void:
-	DirGrapple._size(f)
-	if f.act.dirI.size() < _base() + WK_N:
-		f.act.dirI.resize(_base() + WK_N)
-	f.act.dirI[_base() + k] = v
+	var b: int = _base()
+	if f.act.dirI.size() < b + WK_N:   # sized: every part before this one is (it follows DirGrapple.END)
+		DirGrapple._size(f)
+		if f.act.dirI.size() < b + WK_N:
+			f.act.dirI.resize(b + WK_N)
+	f.act.dirI[b + k] = v
 
 
 ## Once a live tick (DirExchange.dirUpdate): a sent body aimed at a building that holds, within beforeTicks of its face,

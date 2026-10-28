@@ -23,7 +23,12 @@ static func on(S: SimState) -> bool:
 
 
 static func _base() -> int:
-	return DirChase._base() + DirChase.CH_N
+	if _baseAt < 0:
+		_baseAt = DirChase._base() + DirChase.CH_N
+	return _baseAt   # a constant: the chain is walked once
+
+
+static var _baseAt: int = -1
 
 
 static func _g(f, k: int) -> int:
@@ -32,10 +37,12 @@ static func _g(f, k: int) -> int:
 
 
 static func _s(f, k: int, v: int) -> void:
-	DirGrapple._size(f)
-	if f.act.dirI.size() < _base() + WT_N:
-		f.act.dirI.resize(_base() + WT_N)
-	f.act.dirI[_base() + k] = v
+	var b: int = _base()
+	if f.act.dirI.size() < b + WT_N:   # sized: every part before this one is (it follows DirGrapple.END)
+		DirGrapple._size(f)
+		if f.act.dirI.size() < b + WT_N:
+			f.act.dirI.resize(b + WT_N)
+	f.act.dirI[b + k] = v
 
 
 ## The water's surface at x (World's), or DRY where there is none or it is waded.
@@ -63,6 +70,8 @@ static func tick(S: SimState) -> void:
 				_landed(S, f)   # he is at the surface
 			continue
 		var wi: int = _g(f, WT_IN)
+		if wi == 0 and f.state != "dropped":
+			continue   # in no drop, and not dropping: the water is not read
 		var w: float = top(S, f.x)
 		var below: bool = w > DRY and f.y < w
 		if wi == 0:

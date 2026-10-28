@@ -70,7 +70,15 @@ const OWN: Array = ["palm_turn", "plate_chase"]   # the fighters' own links this
 
 
 static func cfg() -> Dictionary:
-	return DirInterrupt.data().get("rally", {})
+	var d: Dictionary = DirInterrupt.data()
+	if not is_same(d, _cfgOf):
+		_cfg = d.get("rally", {})   # the same block every time for the same data (tools edit it in place)
+		_cfgOf = d
+	return _cfg
+
+
+static var _cfg: Dictionary = {}
+static var _cfgOf = null
 
 
 const SCORING_PATH: String = "res://data/director/rally.json"
@@ -100,7 +108,12 @@ static func kinds() -> Array:
 
 
 static func _base() -> int:
-	return DirWater._base() + DirWater.WT_N
+	if _baseAt < 0:
+		_baseAt = DirWater._base() + DirWater.WT_N
+	return _baseAt   # a constant: the chain is walked once
+
+
+static var _baseAt: int = -1
 
 
 static func _g(f, k: int) -> int:
@@ -109,10 +122,12 @@ static func _g(f, k: int) -> int:
 
 
 static func _s(f, k: int, v: int) -> void:
-	DirGrapple._size(f)
-	if f.act.dirI.size() < _base() + RL_N:
-		f.act.dirI.resize(_base() + RL_N)
-	f.act.dirI[_base() + k] = v
+	var b: int = _base()
+	if f.act.dirI.size() < b + RL_N:   # sized: every part before this one is (it follows DirGrapple.END)
+		DirGrapple._size(f)
+		if f.act.dirI.size() < b + RL_N:
+			f.act.dirI.resize(b + RL_N)
+	f.act.dirI[b + k] = v
 
 
 static func _ai() -> Dictionary:

@@ -187,6 +187,8 @@ static func tick(S: SimState) -> void:
 	var c: Dictionary = data()
 	for f in S.fighters:
 		var was: int = DirInterrupt.gi(f, DirInterrupt.BURY_WAS)
+		if was == 0 and not buried(f):
+			continue   # not buried, and not on his way up: nothing to do (his record already reads 0)
 		var now: int = 1 if buried(f) else (RISING if (was != 0 and f.state == "down" and f.embedT <= 0) else 0)
 		var o = SimRoster.opp(S, f)
 		if now == 1 and was != 1:

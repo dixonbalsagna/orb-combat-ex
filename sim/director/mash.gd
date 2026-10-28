@@ -25,10 +25,12 @@ static func _g(f, k: int) -> int:
 
 
 static func _s(f, k: int, v: int) -> void:
-	DirGrapple._size(f)
-	if f.act.dirI.size() < _base() + MS_N:
-		f.act.dirI.resize(_base() + MS_N)
-	f.act.dirI[_base() + k] = v
+	var b: int = _base()
+	if f.act.dirI.size() < b + MS_N:   # sized: every part before this one is (it follows DirGrapple.END)
+		DirGrapple._size(f)
+		if f.act.dirI.size() < b + MS_N:
+			f.act.dirI.resize(b + MS_N)
+	f.act.dirI[b + k] = v
 
 
 ## The weight a brawl blow of f's names (DirBrawl's strike, after weightOf): a mash's later blow light_flow, else w as it

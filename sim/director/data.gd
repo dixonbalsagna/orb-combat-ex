@@ -710,8 +710,18 @@ static func parryBlock() -> Dictionary:
 
 ## Step 3: the active profile's perfect-block numbers (Combat's: staggerTicks, riposteTicks). Empty in the old profiles.
 static func perfectBlock() -> Dictionary:
+	if _tpl != null and is_same(_pbTpl, _tpl) and _pbProf == templatesProfile:
+		return _pb   # the tick asks some twenty times: the block of the same data and profile as last time
 	_ensure()
-	return _prof().get("perfectBlock", {})
+	_pb = _prof().get("perfectBlock", {})
+	_pbTpl = _tpl
+	_pbProf = templatesProfile
+	return _pb
+
+
+static var _pb: Dictionary = {}   # perfectBlock's last answer, for the data (_tpl) and the forced profile it was read from
+static var _pbTpl = null
+static var _pbProf: String = ""
 
 
 ## An interrupt's block (templates.json interrupts).
