@@ -35,10 +35,10 @@ Three rows for Combat's PROP SMASH, sizes World's own, marked `provisional` for 
 | Biome | Kind | per 1,000 units | Size | Gap |
 | :--- | :--- | ---: | :--- | :--- |
 | sea ice | `berg` | 0.25 | 0.6 to 2.9 of a fighter height (45 to 215 units, as planet-ice.md's bergs) | |
-| savanna | `lone_tree` | 0.4 | 0.9 to 1.5 | 120 to 300 |
-| beach | `lone_tree` | 0.2 | 0.8 to 1.3 | 160 to 400 |
+| savanna | `lone_tree` | 0.4 | 0.9 to 1.5 | 40 to 100 (W5; was 120 to 300) |
+| beach | `lone_tree` | 0.2 | 0.8 to 1.3 | 50 to 120 (W5; was 160 to 400) |
 
-`gap` is the clear ground a lone tree keeps from any other tree, in feature units; propsIn does not read it yet (W5's placement).
+`gap` is the clear ground a lone tree keeps from any other tree, in feature units. W5 places them (`docs/world/props-w5.md`): the gap rule, the bergs on the planet's own cells, and `propsNear` for PROP SMASH.
 
 ## Not done here
 

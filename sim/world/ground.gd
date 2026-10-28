@@ -26,6 +26,11 @@ static var _look := PackedByteArray()
 static var _trees: Array = []    # per fine biome: [p per column, h0, h1] in units, or null
 static var _cover: Array = []    # per fine biome: {"kind", "low"} (low in units) or null
 static var _minGround: float = 6.0
+static var _gapRows := PackedInt32Array()   # per fine biome: the index of its props row with a gap (W5's lone trees), or -1
+static var _gapMax: float = 0.0                  # the widest gap of those rows, in units
+static var _berg: Dictionary = {}               # W5: the berg row {k, per, s0, s1, prov} with planet.json's bergH0 (a cell's least height) and bergCell (the pack's reach into open water); {} for none
+const BH: float = 75.0                           # a fighter's height in units (constants.gd: the world is grown against fighters about 75 units tall)
+const SMASH: Array = ["lone_tree", "outcrop", "boulder", "berg"]   # PROP SMASH's targets (docs/combat/biomes.md section 3)
 static var K_PROVISIONAL: bool = false   # provisionalProps: lay the props rows World marked provisional (W4's bergs and lone trees) for Art; off by default
 
 
@@ -111,6 +116,19 @@ static func _load() -> void:
 	_look.resize(n)
 	_trees = []
 	_cover = []
+	_gapRows.resize(n)
+	_gapRows.fill(-1)
+	_gapMax = 0.0
+	_berg = {}
+	for k in range(n):
+		var gp: Array = j.grounds[k].props
+		for r in range(gp.size()):
+			if gp[r].has("gap") and int(_gapRows[k]) < 0:
+				_gapRows[k] = r
+				_gapMax = maxf(_gapMax, float(gp[r].gap[1]) * WS)
+			if String(gp[r].kind) == "berg" and _berg.is_empty():
+				var pc: Dictionary = WorldPlanet.cfg()
+				_berg = {"k": r, "per": float(gp[r].per), "s0": float(gp[r].size[0]), "s1": float(gp[r].size[1]), "prov": bool(gp[r].get("provisional", false)), "h0": float(pc.get("bergH0", 45.0)), "band": float(pc.get("bergCell", 1100.0))}
 	for k in range(n):
 		var g: Dictionary = j.grounds[k]
 		_grip[k] = float(g.grip)
@@ -246,23 +264,188 @@ static func _fnv(id: String) -> int:
 ## The set dressing of columns i0 up to (not including) i1 for the renderer: [{"x", "kind", "size", "col"}] by a keyed draw per column and prop, on dry ground and never on a town's or a city's. A pure
 ## function of the columns, the ground and the seed; the sim never reads it. A row marked provisional (World's sizes until Art's) is laid only with provisionalProps on; each row keeps its own keyed draw, so
 ## the other rows lay the same either way.
-static func propsIn(fine: PackedByteArray, stored: PackedByteArray, base: PackedFloat32Array, seed: int, i0: int, i1: int) -> Array:
+## W5 (docs/world/props-w5.md), the provisional rows' placement:
+##  - a row with a gap (the lone trees) keeps it: a drawn tree stands only where no tree of `trees` (the ring's, S.trees) is within its keyed gap and no lake of `lakes` holds its column, and where two drawn
+##    trees are closer than the larger of their gaps the one with the higher keyed priority stands. Every test reads the columns about it (across the seam), never the range, so any split of the ring lays the
+##    same trees;
+##  - the berg row: one berg on each of the planet's own berg cells in the ring (a run of sea ice columns at least planet.json's bergH0 high: no floe stands that high), at the cell's peak, sized by its height;
+##    and by the row's keyed draw on the floes and in open water within one berg cell (planet.json bergCell) of the pack's ice, clear of a cell. A berg is laid on the sea and the ice, not on dry ground only.
+static func propsIn(fine: PackedByteArray, stored: PackedByteArray, base: PackedFloat32Array, seed: int, i0: int, i1: int, trees: Array = [], lakes: Array = []) -> Array:
 	if not _loaded:
 		_load()
 	var out: Array = []
 	var COL: float = SimConst.COL
 	var n: int = fine.size()
+	var bergs: bool = not _berg.is_empty() and (K_PROVISIONAL or not bool(_berg.prov))
 	for i in range(maxi(i0, 0), mini(i1, n)):
 		var f: int = fine[i]
-		if f >= _d.grounds.size() or int(stored[i]) >= 7 or base[i] < _minGround:
+		if f >= _d.grounds.size() or int(stored[i]) >= 7:
 			continue
-		var props: Array = _d.grounds[f].props
-		for k in range(props.size()):
-			var p: Dictionary = props[k]
-			if not K_PROVISIONAL and bool(p.get("provisional", false)):
-				continue
-			if SimRng.keyed(seed, "ground.prop.%d" % k, i) >= minf(1.0, float(p.per) * COL / 1000.0):
-				continue
-			var u: float = SimRng.keyed(seed, "ground.prop.s%d" % k, i)
-			out.append({"x": (float(i) + SimRng.keyed(seed, "ground.prop.x%d" % k, i)) * COL, "kind": String(p.kind), "size": float(p.size[0]) + (float(p.size[1]) - float(p.size[0])) * u, "col": i})
+		if base[i] >= _minGround:
+			var props: Array = _d.grounds[f].props
+			for k in range(props.size()):
+				var p: Dictionary = props[k]
+				var prov: bool = bool(p.get("provisional", false))
+				if not K_PROVISIONAL and prov:
+					continue
+				if String(p.kind) == "berg":
+					continue   # the berg pass below lays it
+				if SimRng.keyed(seed, "ground.prop.%d" % k, i) >= minf(1.0, float(p.per) * COL / 1000.0):
+					continue
+				if p.has("gap") and not _loneStands(fine, stored, base, seed, i, k, trees, lakes):
+					continue
+				var u: float = SimRng.keyed(seed, "ground.prop.s%d" % k, i)
+				out.append({"x": (float(i) + SimRng.keyed(seed, "ground.prop.x%d" % k, i)) * COL, "kind": String(p.kind), "size": float(p.size[0]) + (float(p.size[1]) - float(p.size[0])) * u, "col": i})
+		if bergs:
+			var b = _bergAt(fine, stored, base, seed, i)
+			if b != null:
+				out.append(b)
 	return out
+
+
+## PROP SMASH's targets (docs/combat/biomes.md section 3: a lone tree, an outcrop, a boulder or a berg) within reachBh fighter heights of x, by shortest arc: [{"x", "kind", "size", "col", "d"}], d the
+## signed shortest-arc offset from x, nearest first. The ring's props as propsIn lays them, keyed by the planet's seed (not the ring's slice hash), so the columns a turn keeps keep their props with no state
+## carried. [] on a world with no fine ground (gen 1, the hand-made world) and while provisionalProps is off: the targets wait on Art's sizes. A pure function of the match's columns, trees and lakes; nothing
+## in the sim calls it until the director's PROP SMASH switch.
+static func propsNear(S: SimState, x: float, reachBh: float) -> Array:
+	if not _loaded:
+		_load()
+	if not K_PROVISIONAL or not live() or not S.planetRing.has("seed") or S.base.size() != WorldBiomes.fineCols.size():
+		return []
+	var fc: PackedByteArray = WorldBiomes.fineCols
+	var pc: PackedByteArray = WorldBiomes.planetCols
+	var n: int = fc.size()
+	var COL: float = SimConst.COL
+	var reach: float = maxf(reachBh, 0.0) * BH
+	var lakes: Array = S.planetRing.get("lakes", [])
+	var seed: int = int(S.planetRing.seed)
+	var c0: int = int(floor(SimWrap.wrap(x) / COL)) % n
+	var span: int = int(ceil(reach / COL)) + 1
+	var laid: Array = []
+	if 2 * span + 1 >= n:
+		laid = propsIn(fc, pc, S.base, seed, 0, n, S.trees, lakes)
+	else:
+		var a: int = c0 - span
+		var b: int = c0 + span + 1
+		if a < 0:
+			laid = propsIn(fc, pc, S.base, seed, a + n, n, S.trees, lakes) + propsIn(fc, pc, S.base, seed, 0, b, S.trees, lakes)
+		elif b > n:
+			laid = propsIn(fc, pc, S.base, seed, a, n, S.trees, lakes) + propsIn(fc, pc, S.base, seed, 0, b - n, S.trees, lakes)
+		else:
+			laid = propsIn(fc, pc, S.base, seed, a, b, S.trees, lakes)
+	var out: Array = []
+	for p in laid:
+		if not SMASH.has(String(p.kind)):
+			continue
+		var d: float = SimWrap.sdx(x, float(p.x))
+		if absf(d) <= reach:
+			p["d"] = d
+			out.append(p)
+	out.sort_custom(func(a, b): return absf(float(a.d)) < absf(float(b.d)) or (absf(float(a.d)) == absf(float(b.d)) and int(a.col) < int(b.col)))
+	return out
+
+
+## The distance between two places on a ring of n columns, by shortest arc.
+static func _arc(a: float, b: float, n: int) -> float:
+	var L: float = float(n) * SimConst.COL
+	var d: float = fmod(absf(a - b), L)
+	return minf(d, L - d)
+
+
+## The gap row (a row with a gap, laid now) of column j's ground, -1 for none; and whether j can hold it (dry, not a town's or a city's).
+static func _gapRow(fine: PackedByteArray, stored: PackedByteArray, base: PackedFloat32Array, j: int) -> int:
+	var f: int = fine[j]
+	if f >= _gapRows.size() or int(stored[j]) >= 7 or base[j] < _minGround:
+		return -1
+	var k: int = int(_gapRows[f])
+	if k < 0 or (not K_PROVISIONAL and bool(_d.grounds[f].props[k].get("provisional", false))):
+		return -1
+	return k
+
+
+## A drawn lone tree at column j of row k: its place and its gap in units, or [] when it is not drawn or a ring tree or a lake takes its ground.
+static func _loneCand(fine: PackedByteArray, seed: int, j: int, k: int, trees: Array, lakes: Array) -> Array:
+	var p: Dictionary = _d.grounds[int(fine[j])].props[k]
+	var COL: float = SimConst.COL
+	if SimRng.keyed(seed, "ground.prop.%d" % k, j) >= minf(1.0, float(p.per) * COL / 1000.0):
+		return []
+	var n: int = fine.size()
+	if not lakes.is_empty() and WorldLakes.inLake(lakes, j, n):
+		return []
+	var x: float = (float(j) + SimRng.keyed(seed, "ground.prop.x%d" % k, j)) * COL
+	var g: float = (float(p.gap[0]) + (float(p.gap[1]) - float(p.gap[0])) * SimRng.keyed(seed, "ground.prop.g%d" % k, j)) * SimConst.WS
+	for t in trees:
+		if _arc(x, float(t.x), n) < g:
+			return []
+	return [x, g, SimRng.keyed(seed, "ground.prop.p", j)]
+
+
+## Does the lone tree drawn at column i (row k) stand: clear of the ring's trees and lakes, and the first by priority among the drawn trees closer than the larger of their gaps?
+static func _loneStands(fine: PackedByteArray, stored: PackedByteArray, base: PackedFloat32Array, seed: int, i: int, k: int, trees: Array, lakes: Array) -> bool:
+	var me: Array = _loneCand(fine, seed, i, k, trees, lakes)
+	if me.is_empty():
+		return false
+	var n: int = fine.size()
+	var span: int = mini(int(ceil(_gapMax / SimConst.COL)) + 1, n / 2)
+	for dd in range(1, span + 1):
+		for j in [(i - dd + n) % n, (i + dd) % n]:
+			var kj: int = _gapRow(fine, stored, base, j)
+			if kj < 0:
+				continue
+			var o: Array = _loneCand(fine, seed, j, kj, trees, lakes)
+			if o.is_empty() or _arc(float(me[0]), float(o[0]), n) >= maxf(float(me[1]), float(o[1])):
+				continue
+			if float(o[2]) > float(me[2]) or (float(o[2]) == float(me[2]) and j > i):
+				return false
+	return true
+
+
+## Is column j one of the planet's own berg cells: sea ice at least bergH0 high, not a town's or a city's?
+static func _cell(fine: PackedByteArray, stored: PackedByteArray, base: PackedFloat32Array, j: int) -> bool:
+	return int(fine[j]) == WorldClimate.F_SEA_ICE and int(stored[j]) < 7 and base[j] >= float(_berg.h0)
+
+
+## The berg column i holds, or null: a cell's at its peak (the highest column of the run, the first from the run's west end on a tie), else the row's keyed draw on a floe or in open water near the pack.
+static func _bergAt(fine: PackedByteArray, stored: PackedByteArray, base: PackedFloat32Array, seed: int, i: int):
+	var n: int = fine.size()
+	var COL: float = SimConst.COL
+	var f: int = fine[i]
+	var s0: float = float(_berg.s0)
+	var s1: float = float(_berg.s1)
+	if _cell(fine, stored, base, i):
+		var lo: int = i
+		var steps: int = 0
+		while steps < n - 1 and _cell(fine, stored, base, (lo - 1 + n) % n):
+			lo = (lo - 1 + n) % n
+			steps += 1
+		var best: int = lo
+		var j: int = lo
+		for _s in range(n):
+			if not _cell(fine, stored, base, j):
+				break
+			if base[j] > base[best]:
+				best = j
+			j = (j + 1) % n
+			if j == lo:
+				break
+		if best != i:
+			return null
+		return {"x": (float(i) + 0.5) * COL, "kind": "berg", "size": clampf(base[i] / BH, s0, s1), "col": i, "cell": true}
+	var k: int = int(_berg.k)
+	if f != WorldClimate.F_SEA_ICE and not (f == WorldClimate.F_OCEAN and base[i] < 0.0):
+		return null
+	if SimRng.keyed(seed, "ground.prop.%d" % k, i) >= minf(1.0, float(_berg.per) * COL / 1000.0):
+		return null
+	var near: bool = f == WorldClimate.F_SEA_ICE
+	var reach: int = int(ceil(float(_berg.band) / COL))
+	var clear: int = int(ceil(s1 * BH / COL))
+	for dd in range(1, mini(maxi(reach, clear), n / 2) + 1):
+		for j in [(i - dd + n) % n, (i + dd) % n]:
+			if dd <= clear and _cell(fine, stored, base, j):
+				return null   # a drawn berg keeps clear of a cell's
+			if dd <= reach and int(fine[j]) == WorldClimate.F_SEA_ICE:
+				near = true
+	if not near:
+		return null
+	var u: float = SimRng.keyed(seed, "ground.prop.s%d" % k, i)
+	return {"x": (float(i) + SimRng.keyed(seed, "ground.prop.x%d" % k, i)) * COL, "kind": "berg", "size": s0 + (s1 - s0) * u, "col": i}
