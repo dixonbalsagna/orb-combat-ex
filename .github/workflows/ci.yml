@@ -155,6 +155,11 @@ jobs:
         run: node sim/core/tools/web_parity.mjs --self-test
       - name: The sim's load split (the core's load compiles none of the director)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/load_split.gd'
+      # The rollback core (docs/net/rollback.md section 6): two peers over the loopback must match a straight run's gameplay hash at every confirmed tick; about a minute.
+      - name: Rollback check (two peers over the loopback match the straight run, LAN and two lossy profiles)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --seeds=1 --ticks=300 --profiles=lan,p80j,p200'
+      - name: Rollback check, negative control (two deliberate breaks must be caught)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --seeds=1 --ticks=240 --profiles=lan,p80j,p200 --negative-control'
       - name: Render determinism (gameplay hashes match with the scene running)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/determinism.gd'
       - name: Render seam sweep

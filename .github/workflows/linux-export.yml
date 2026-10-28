@@ -1,0 +1,63 @@
+# Linux export for the Steam Deck and desktop Linux (docs/tools/steam-deck.md; the cloud report docs/tools/cloud-reports/2026-10-28-ci-linux.md).
+# Exports the project's "Linux" preset (release, Compatibility, x86_64, pck embedded) headless with the pinned Godot and template from setup-godot, sets the
+# executable bit, then plays the game's own bench headless twice, from the project and from the exported binary, and fails unless both print the same gameplay
+# hash at the same tick (the binary boots, loads its pck and plays the same match). Uploads the binary as a workflow artifact. By hand only. Nothing binary is committed.
+name: Linux export
+
+on:
+  workflow_dispatch:
+    inputs:
+      frames:
+        description: 'Frames (= ticks at --fixed-fps 60) the bench plays before it prints the gameplay hash'
+        required: false
+        default: '2400'
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    name: Linux export (x86_64), headless boot and hash check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      FRAMES: ${{ inputs.frames }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+      - uses: ./.github/actions/setup-godot
+        with:
+          linux-templates: 'true'
+      - name: Import project
+        run: '"$GODOT" --headless --path . --import'
+      # build_info.json (commit and commit date) for the feedback report; git-ignored, packed by the preset's include_filter.
+      - name: Write build_info.json
+        run: node tools/write-build-info.mjs --commit "${GITHUB_SHA}"
+      - name: Export Linux (release, Compatibility, x86_64)
+        run: |
+          mkdir -p "${RUNNER_TEMP}/linux"
+          "$GODOT" --headless --path . --export-release "Linux" "${RUNNER_TEMP}/linux/orb-combat-ex.x86_64"
+          chmod +x "${RUNNER_TEMP}/linux/orb-combat-ex.x86_64"
+          ls -l "${RUNNER_TEMP}/linux"
+      - name: The project's bench (the reference hash)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --fixed-fps 60 -- --seed=4 --frames="${FRAMES}" --bench | tee "${RUNNER_TEMP}/bench-project.txt"'
+      - name: The exported binary's bench (it boots headless and plays)
+        working-directory: ${{ runner.temp }}/linux
+        run: 'node "${GITHUB_WORKSPACE}/tools/gate.mjs" -- ./orb-combat-ex.x86_64 --headless --fixed-fps 60 -- --seed=4 --frames="${FRAMES}" --bench | tee "${RUNNER_TEMP}/bench-linux.txt"'
+      - name: The two gameplay hashes match
+        run: |
+          a=$(grep -m1 "^gameplay hash at tick" "${RUNNER_TEMP}/bench-project.txt" || true)
+          b=$(grep -m1 "^gameplay hash at tick" "${RUNNER_TEMP}/bench-linux.txt" || true)
+          echo "project:  ${a:-none}"
+          echo "exported: ${b:-none}"
+          if [ -z "$a" ] || [ "$a" != "$b" ]; then echo "the exported Linux build does not play the same match"; exit 1; fi
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: orb-combat-ex-linux-x86_64-${{ github.sha }}
+          path: ${{ runner.temp }}/linux/orb-combat-ex.x86_64
+          if-no-files-found: error
+          retention-days: 14
