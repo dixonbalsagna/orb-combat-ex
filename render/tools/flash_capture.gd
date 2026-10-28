@@ -44,6 +44,9 @@ var _frames: int = 0
 var _ready_told: bool = false
 var VARIANT: int = 0                # a different run of a fixed scene: the pair set down VARIANT x 450 units further along the world (the page's start option)
 var _shown_due: bool = false     # a tick was drawn last frame: its step() resolves now
+const LOAD_LIMIT_MS: int = 240000   # a gen 2 planet loads in pieces after start_match: the most the hook waits for it before it reports the error
+var _pend: Dictionary = {}       # begin()'s arguments while the planet loads: what _finish_begin() sets up once it is made
+var _load_since: int = 0         # when the wait began (Time.get_ticks_msec)
 
 
 func _init(m: Node) -> void:
@@ -72,6 +75,14 @@ func poll() -> void:
 		return
 	if st.get("req") is Dictionary:
 		begin(str(st.req.get("scenario", "")), bool(st.req.get("reduced", false)), int(st.req.get("seed", 0)), int(st.req.get("skip", 0)), int(st.req.get("variant", 0)), Array(st.req.get("slots", [])))
+	if not _pend.is_empty():   # a gen 2 planet is loading in pieces: no tick runs until it is made, so no step is taken and the scene is not set up (a step then ran 0 ticks and every capture waited for ever)
+		if _loading():
+			if Time.get_ticks_msec() - _load_since > LOAD_LIMIT_MS:
+				_load_failed()
+			else:
+				main.frame(SimConst.DT)   # a slice of the load (main.frame steps it and returns; the match is built the frame its planet is made)
+			return
+		_finish_begin()
 	if int(st.get("pending", 0)) > 0:
 		step()
 
@@ -92,6 +103,34 @@ func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0, variant: int
 	for i in range(2, slots.size()):
 		ai_set["p%d" % (i + 1)] = sc == "ring"   # the ring's bodies past the pair fight; any other scene's stand
 	main.start_match(seed if seed != 0 else SEED, ai_set, {} if slots.size() < 2 else {"slots": slots})   # its own setup: no intro, not filed
+	_pend = {"sc": sc, "reduced": reduced, "skip": skip, "err": err, "ai": ai}
+	_load_since = Time.get_ticks_msec()
+	if not _loading():   # a gen 1 world is made whole by start_match: set up at once, as it always was
+		_finish_begin()
+
+
+## Whether the match is still being made: the sim's planet load and the panes' pieces (main.frame steps both and runs no tick meanwhile).
+func _loading() -> bool:
+	return main.host.loading() or not main._build_queue.is_empty()
+
+
+## The wait for the planet ran out: report it as the page's error and resolve the step that waits, so capture-web.mjs stops with the message instead of waiting for ever.
+func _load_failed() -> void:
+	var host: SimHost = main.host
+	var msg: String = "the planet did not finish loading in %d s (phase %s, %d%%)" % [LOAD_LIMIT_MS / 1000, host.load_phase(), int(host.load_progress() * 100.0)]
+	_pend = {}
+	JavaScriptBridge.eval("window.__flashcap.error = %s; window.__flashcap._shown(%d, 0);" % [JSON.stringify(msg), host.ticks], true)
+
+
+## The rest of begin(), once the match is built: the scene's switches, the players, the skipped ticks.
+func _finish_begin() -> void:
+	var sc: String = _pend["sc"]
+	var reduced: bool = _pend["reduced"]
+	var skip: int = _pend["skip"]
+	var err: String = _pend["err"]
+	var ai: Array = _pend["ai"]
+	var host: SimHost = main.host
+	_pend = {}
 	# Camera's travel budget (off by default): the page's `budget=1`, set by tools/flash/run-pixels.mjs --budget, so a run with and without it is the same sim
 	# the clip's mode is UI's Reduce flashing as well as VFX's force_reduced: main.frame copies the option into the register and the look (the calm ground), and the option defaults to ON, so without
 	# this a "normal" clip was the calm look too and read pixel-identical to a reduced one (2026-10-17). Reported in `switches`; capture-web.mjs refuses a clip whose mode did not take.
