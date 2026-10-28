@@ -64,10 +64,11 @@ class Link:
 		return got.map(func(e): return e[1])
 
 
-## A peer: its session, its bot, and what the other side has acknowledged of its inputs.
+## A peer: its session, its player (a NetBot, or a NetAiDriver: anything whose next() gives the packed intent for the
+## next tick), and what the other side has acknowledged of its inputs.
 class Peer:
 	var session: NetSession
-	var bot: NetBot
+	var bot   # NetBot or NetAiDriver
 	var transport: NetTransport   # a NetLinkTransport over links[k] out and the other's link in
 	var acked: int = 0   # the other peer holds every one of our inputs below this tick
 
@@ -101,14 +102,15 @@ var relayPredicted: bool = false   # tests only (the spectator check's negative 
 
 ## Two peers on fresh sims of the same match. profile is a PROFILES entry; seed seeds the links; bots answer for each
 ## slot from botSeed.
-## With `wire`, every packet goes through NetTransport's bytes on its way.
-static func make(matchSeed: int, setup: Dictionary, profile: Dictionary, delay: int, botSeed: int, linkSeed: int, wire: bool = false) -> NetLoopback:
+## With `wire`, every packet goes through NetTransport's bytes on its way. `ai` is newMatch's: a slot the sim's own AI
+## plays ignores its inputs (the AI runs inside each tick, and is run again by a rollback).
+static func make(matchSeed: int, setup: Dictionary, profile: Dictionary, delay: int, botSeed: int, linkSeed: int, wire: bool = false, ai: Dictionary = {"p1": false, "p2": false}) -> NetLoopback:
 	var L := NetLoopback.new()
 	var skew: float = float(profile.get("skew", 0.5))
 	var ping: float = float(profile.ping)
 	for k in range(2):
 		var S := SimCore.createSim()
-		SimCore.newMatch(S, matchSeed, {"p1": false, "p2": false}, setup)
+		SimCore.newMatch(S, matchSeed, ai, setup)
 		var p := Peer.new()
 		p.session = NetSession.new(S, k, delay)
 		p.bot = NetBot.new(botSeed, k)   # its first answer is for tick `delay`: the ticks below are neutral
@@ -238,6 +240,8 @@ func run(ticks: int) -> bool:
 
 func close() -> void:
 	for p in peers:
+		if p.bot is NetAiDriver:
+			p.bot.close()
 		p.session.close()
 		SimCore.dispose(p.session.S)
 	if spectator != null:

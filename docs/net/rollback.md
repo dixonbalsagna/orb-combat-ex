@@ -109,7 +109,7 @@ Profiles (`NetLoopback.PROFILES`; ping is the round trip, and each way is half):
 
 `--sparse=K` runs the sessions as a game would (a save only before a predicted tick, at most every K ticks). `--negative-control` breaks the session on purpose, once with a restore that leaves one RNG bit wrong and once with late inputs that never roll back. It passes only if the check catches both. Results are in the cloud report (`docs/net/cloud-reports/2026-10-28-rollback-core.md`).
 
-Not covered yet: no bot match reached a KO (the bots are not fighters), so the KO and its slow motion have not run under rollback. Depth (`"depth": true`) is not in the features setup either.
+Setups (`--setup=`): `default`, `features`, `planet` (gen 1), `calm` (the calm turn), `depth` (fight lanes physical), `planet2` (a gen 2 ring of 2,400 columns, as QA plays them) and `planet2depth`. The bots never reach a KO; `--ai` (section 12) plays the fighter AI to one.
 
 ## 7. Desync detection and reports
 
@@ -204,7 +204,7 @@ Code: `net/delay.gd` (`NetDelay.choose`). It is a pure function, with no clock a
 - **Holding presses through a freeze (Controls).** `step()` consumes no input during hit-stop and pausing set pieces; the host keeps its presses for the next tick, with `waited`. Online, the local host decides this from its own predicted state. That stays deterministic (whatever it sends is the input), but a press can be held for a freeze that a rollback then removes. Moving that buffer into the sim (into `ActState`) would make it part of the rolled-back state.
 - **Platforms not proven bit-identical.** Native x64 and the web are proven (`docs/architecture/web-parity.md`). macOS on ARM, Linux on ARM, Android and iOS are not, and an ARM compiler may contract `a*b+c` into an FMA. The parity gate must run on each before cross-play between them.
 - **More than two players.** The session takes any number of slots. One-versus-many bodies past the pair are AI-driven, so they need no input. Co-op online (after versus, per Orb) is two input slots plus AI bodies, which this core already covers.
-- **Planet matches and the calm turn.** Those caches are statics keyed by world id (`WorldEpoch._plans`, `_jobs`). They should be pure caches, but no planet setup is in the check yet.
+- **Planet matches and the calm turn.** Those caches are statics keyed by world id (`WorldEpoch._plans`, `_jobs`). The `planet`, `calm` and `planet2` setups are in the check now (section 12) and hold. A calm turn has not happened inside an AI match yet.
 
 ## 11. Transport, handshake and time sync
 
@@ -252,3 +252,32 @@ NetTransport          send(now, packet) / receive(now) / isOpen() / close(), unr
 
   It is clumsy but costs nothing. On a LAN, host candidates connect with no STUN. Over the internet, a STUN server is needed and sometimes TURN too. Both are outside services, so they are left for a ruling (NEEDS FROM EP in the report).
 - **Tests when built.** The same `transport_check` parts run on any transport. A two-tab browser test of the web export, with the offer and answer passed through the page, has to run locally, because browser captures do not run in the cloud. `impair()` would wrap the channel as it wraps ENet.
+
+
+## 12. Fighter AIs to a KO, and depth
+
+Code: `net/ai_driver.gd` (`NetAiDriver`) and `--ai` in `net/tools/rollback_check.gd`.
+
+- **The AI as a network player.** Each peer runs the sim's own opponent AI (`DirAI.aiInput`) for its own slot, reading that peer's present state. That state includes predictions, as a player's screen does. The packed intent is the slot's input for tick `frame + delay`, and it is sent and confirmed like a pad's. The driver first calls `session.sync()`, so the AI sees the inputs that arrived this frame.
+- **`DirAI.aiInput` is not a pure function of the state.** On the state it is given, it:
+  - draws from `S.rng` (stance picks, timers, attack beats);
+  - counts down its timers in `f.ai`;
+  - writes its held charge into `f.act.dirI[AI_HOLD]`;
+  - sets `f.act.v2` and `f.input`;
+  - can emit a `searching` fx.
+
+  Run on a peer's live state, those writes would land in one peer's sim only. The driver therefore runs it on a copy (`NetSnapshot.take`, pooled; about 1.4 ms) and drops the copy. What the AI keeps from tick to tick (its `AiState`, its own random stream, its held charge) belongs to the driver, outside the sim, like a player's memory. A rollback never touches it, and nothing needs restoring, because an input once sent is final.
+- **What a networked AI does not do.** The director's own AI hooks (`DirAI.react` and the other `f.ai != null` branches, about 130 of them) only run for a fighter that is the sim's AI. A driven slot is a player to the sim, so it plays only through its inputs. Its slot must be v2 (`--ai` sets `"v2": [true, true]`), because the AI states its stance through held fields.
+- **The other model: `--ai=sim`.** Here P2 is the sim's own AI (`newMatch`'s ai flag). It runs inside every tick on the peer's state, predictions included, and every rollback runs it again. That is rollback-safe only if the snapshot restores everything it reads and writes, and the check tests exactly that. P1 is driven, so inputs still arrive late. It is the model for one-versus-many bodies and co-op AI.
+- **What the check compares.** Each peer's inputs depend on what that peer saw, so the straight run cannot invent them. It replays the inputs both peers confirmed (they must agree tick for tick), and both peers must match it:
+  - every confirmed tick: the feed and fx digest, and the state's `NetDesync.digest`;
+  - every 60th tick and the last: the full `SimHash`. It costs 15 to 35 ms a state, and a match is 25,000 to 60,000 ticks. `--hash-every=1` hashes every tick.
+  - the KO tick and both final states;
+  - the replay verifies, and the state graph shares no containers.
+
+  On a profile where no prediction was wrong (lan always), every state the AIs read was the straight run's. So the AI is also run straight from the straight state, and its inputs must equal the peers' tick for tick. This is the purity test: an AI that read anything the snapshot does not carry (a static the sim writes, a field the copy misses) would differ here.
+- **Negative controls** (`--ai --negative-control`), each of which must be caught:
+  - `restore` and `norollback`, as in section 6;
+  - `impure`: peer 0's AI runs on its live state, which is caught within the AI's first random draw (tick 30 or 31).
+- **Matches are long.** A driven AI match reaches its KO in 25,000 to 57,000 ticks (7 to 16 minutes). The sim's own AI takes about 30,000 (seeds 1 and 2), because it also plays the director's hooks. So a session to a KO takes 10 to 40 minutes in the check. The short runs (600 ticks, with the negative controls) suit CI; the runs to a KO are a batch (`docs/net/cloud-reports/2026-10-28-ai-depth.md`).
+
