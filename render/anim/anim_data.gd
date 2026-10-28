@@ -42,13 +42,16 @@ static var _pend_order: Array = []         # the ids in the order they are baked
 static var _pend_head: int = 0
 static var _work: Array = []               # the fighters' wave loads and pick-list builds not yet done, in order: {k: wave, wn} and {k: lists, key, names}
 static var _queued: Dictionary = {}        # fighter key -> true once his work is queued
-static var bake_drains: int = 0            # times something asked for a pose that was not there while waves were still queued, and the queue was run to the end
+static var bake_drains: int = 0            # times the fighters' queued work was run to the end for a missing pose (none since the missing-pose lookup: it loads only the wave that holds it)
+static var _wave_text: Dictionary = {}     # queued wave -> its poses file's text, read once to find a pose without parsing the file; handed to the wave's load, so it is read once either way
+static var _absent: Dictionary = {}        # ids no queued wave holds (asked for and looked up); cleared when more work is queued
 static var bake_slice_us: int = 4000       # data/anim/pair_live.json bake.slice_us: the most a drawn frame spends baking while the intro plays
 static var bake_play_us: int = 1500        # bake.play_us: the same once the intro is over (the fight is on screen)
 static var bake_over_ms: int = 20          # bake.over_ms: a frame longer than this (since the last slice) is over budget
 static var bake_over_us: int = 500         # bake.over_us: the most a slice spends when the frame is over budget (one piece at least)
 static var bake_deferred: int = 0          # poses the incremental bake queued in this run
 static var bake_demand: int = 0            # of them baked on the spot because something asked first
+static var bake_early: int = 0            # queued waves loaded ahead of their turn because a pose of theirs was asked for (the missing-pose lookup loads only the wave that holds it)
 static var bake_worst_us: int = 0          # the longest single slice or on-demand bake
 static var flight: Dictionary = {}       # data/anim/flight.json: the flight lead, a launched body turned head first along its velocity (docs 9.23)
 static var agency: Dictionary = {}       # data/anim/agency.json: how the agency slice's events (knockback, embed, taunt, charges) map to poses
@@ -82,9 +85,9 @@ static var read_n: int = 0
 static var read_biggest: Dictionary = {}
 
 
-static func _read(name: String) -> Dictionary:
+static func _read(name: String, have: String = "") -> Dictionary:
 	var t0: int = Time.get_ticks_usec()
-	var txt: String = FileAccess.get_file_as_string(DIR + name)
+	var txt: String = have if have != "" else FileAccess.get_file_as_string(DIR + name)
 	if txt == "":
 		push_error("AnimData: cannot read " + DIR + name)
 		return {}
@@ -311,7 +314,8 @@ static func _fixed(id: String, sk: Dictionary) -> Dictionary:
 
 static func _load_wave(wn: String) -> void:
 	_waves_done[wn] = true
-	var wp: Dictionary = _read("waves/" + wn + ".poses.json").get("poses", {})
+	var wp: Dictionary = _read("waves/" + wn + ".poses.json", String(_wave_text.get(wn, ""))).get("poses", {})
+	_wave_text.erase(wn)
 	for id in wp:
 		var wsk: Dictionary = _fixed(id, wp[id])
 		raw[id] = wsk
@@ -399,6 +403,7 @@ static func ensure_fighter(roster_id: String) -> String:
 		for wn in names:
 			_work.append({"k": "wave", "wn": String(wn)})
 		_work.append({"k": "lists", "key": key, "names": names})
+		_absent.clear()
 		return key
 	var t0: int = Time.get_ticks_usec()
 	var npose: int = poses.size()
@@ -472,21 +477,39 @@ static func resolve_entry(key: String, id: String) -> String:
 static func pose_exists(id: String) -> bool:
 	if poses.has(id) or _pend.has(id):
 		return true
-	if not _work.is_empty():
-		bake_drains += 1   # it may be a pose of a wave not loaded yet: load them all, then ask again
-		_drain_work()
-		return poses.has(id) or _pend.has(id)
+	return _find_queued(id)
+
+
+## A pose asked for that is neither baked nor queued while fighters' waves are still queued: it may be in one of them. Each queued wave's poses file is searched as text for the id
+## (no parse); only a wave that holds it is loaded, ahead of its turn, and its other poses stay queued. The waves hold no id in common (anim_check guards that), so a wave loaded
+## early registers exactly what it would have in its turn, and its turn then does nothing. An id no queued wave holds is remembered until more work is queued.
+static func _find_queued(id: String) -> bool:
+	if _work.is_empty() or _absent.has(id):
+		return false
+	var key: String = "\"" + id + "\": {"
+	for w in _work:
+		if String(w.k) != "wave":
+			continue
+		var wn: String = String(w.wn)
+		if _waves_done.has(wn) or not FileAccess.file_exists(DIR + "waves/" + wn + ".poses.json"):
+			continue
+		if not _wave_text.has(wn):
+			_wave_text[wn] = FileAccess.get_file_as_string(DIR + "waves/" + wn + ".poses.json")
+		if String(_wave_text[wn]).contains(key):
+			bake_early += 1
+			_load_wave(wn)
+			if poses.has(id) or _pend.has(id):
+				return true
+	_absent[id] = true
 	return false
 
 
 static func pose(id: String, mirror: bool = false) -> AnimPose:
+	if not poses.has(id) and not _pend.has(id):
+		_find_queued(id)
 	if _pend.has(id):
 		bake_demand += 1
 		_bake_one(id)
-	elif not poses.has(id) and not _work.is_empty():
-		_drain_work()
-		if _pend.has(id):
-			_bake_one(id)
 	var p = poses.get(id)
 	if p == null:
 		push_error("AnimData: unknown pose " + id)

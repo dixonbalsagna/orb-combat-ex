@@ -3020,6 +3020,89 @@ func _test_incremental_bake() -> void:
 	print("incremental bake: the queue holds, orders and drains; the eager and lazy poses are identical; %d pieces queued for one fighter" % queued)
 
 
+## The missing-pose lookup (docs/animation/cloud-reports/2026-10-28-pose-drain.md): a pose asked for while fighters' waves are queued loads only the wave that holds it, and an id no
+## queued wave holds loads none. That is the same data as the in-order load only because no two waves (nor a wave and the base files) share an id, checked here for every kind a
+## wave registers; and the lookup finds a pose by its key in the file's text, so every wave pose's key must be written `"id": {`.
+func _test_pose_lookup() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var held: Dictionary = {}   # kind -> id -> the file that first held it
+	var base_p: Dictionary = AnimData._read("poses.json").get("poses", {})
+	var base_k: Dictionary = AnimData._read("keysets.json").get("keysets", {})
+	held["poses"] = {}
+	held["keysets"] = {}
+	held["entries"] = {}
+	held["cues"] = {}
+	for id in base_p:
+		held.poses[id] = "poses.json"
+	for id in base_k:
+		held.keysets[id] = "keysets.json"
+	var da := DirAccess.open(AnimData.DIR + "waves")
+	var names: Array = []
+	for fn in da.get_files():
+		if fn.ends_with(".poses.json"):
+			names.append(fn.trim_suffix(".poses.json"))
+	names.sort()
+	for wn in names:
+		var txt: String = FileAccess.get_file_as_string(AnimData.DIR + "waves/" + wn + ".poses.json")
+		var wp: Dictionary = JSON.parse_string(txt).get("poses", {})
+		for id in wp:
+			if not txt.contains("\"" + id + "\": {"):
+				bad.append("%s: pose %s not written as its key" % [wn, id])
+		var sets: Array = [["poses", wp]]
+		for pair in [["keysets", "keysets", "keysets"], ["sequences", "sequences", "entries"], ["entries", "entries", "entries"], ["cues", "cues", "cues"]]:
+			var fp: String = AnimData.DIR + "waves/" + wn + "." + pair[0] + ".json"
+			if FileAccess.file_exists(fp):
+				sets.append([pair[2], JSON.parse_string(FileAccess.get_file_as_string(fp)).get(pair[1], {})])
+		for st in sets:
+			for id in st[1]:
+				if held[st[0]].has(id):
+					bad.append("%s %s in both %s and %s" % [st[0], id, held[st[0]][id], wn])
+				held[st[0]][id] = wn
+	# the lookup itself, on two real waves put back in the queue: the later one asked for loads alone; an unknown id loads nothing
+	var wa: String = "depth1"
+	var wb: String = "beam1"
+	var idb: String = ""
+	for id in AnimData.wave_of:
+		if AnimData.wave_of[id] == wb:
+			idb = id
+			break
+	if idb == "" or not AnimData._waves_done.has(wa):
+		bad.append("the lookup's test waves %s and %s are not in the data" % [wa, wb])
+	else:
+		var want: AnimPose = AnimData.poses[idb]
+		var was: bool = AnimData.lazy
+		AnimData.lazy = true
+		for wn in [wa, wb]:
+			AnimData._waves_done.erase(wn)
+			for id in AnimData.wave_of.keys():
+				if AnimData.wave_of[id] == wn:
+					AnimData.poses.erase(id)
+					AnimData.mirrors.erase(id)
+			AnimData._work.append({"k": "wave", "wn": wn})
+		AnimData._absent.clear()
+		var d0: int = AnimData.bake_drains
+		var e0: int = AnimData.bake_early
+		if not AnimData.pose_exists(idb) or AnimData._waves_done.has(wa) or not AnimData._waves_done.has(wb) or AnimData.bake_early != e0 + 1:
+			bad.append("a pose of the second queued wave loads that wave alone")
+		if AnimData.pose_exists("zz.lookup.none") or AnimData._waves_done.has(wa) or not AnimData._absent.has("zz.lookup.none"):
+			bad.append("an id no queued wave holds loads none and is remembered")
+		if AnimData.bake_drains != d0 or AnimData._work.size() < 2:
+			bad.append("the lookup ran the queue")
+		AnimData.lazy = was
+		AnimData.bake_all()
+		var got: AnimPose = AnimData.poses.get(idb)
+		if got == null or not AnimData._waves_done.has(wa) or not AnimData._wave_text.is_empty():
+			bad.append("the queue's own turn loads the rest and hands back every file's text")
+		else:
+			for i in range(AnimRig.N):
+				if not got.q[i].is_equal_approx(want.q[i]):
+					bad.append("the pose loaded early differs from the in-order one")
+					break
+	_expect(bad.is_empty(), "missing-pose lookup: no id is shared between waves, every wave pose is found by its key, and a lookup loads only the wave that holds it: %s" % str(bad.slice(0, 8)))
+	print("missing-pose lookup: %d waves, no shared ids; the lookup loaded one wave of two and none for an unknown id" % names.size())
+
+
 ## The mid-band lunge's wind-up crouch (docs/animation/lunge-crouch.md). From the lunge cue on its own tick the body deepens into the cell's pose over the cue's ticks (light 6, heavy 10, the return's 10), and hands over to the travel
 ## with no snap: the pose is let go over its exit ramp when the rush begins, and the body is exactly the stand again after. A wind-up of 3 to 5 ticks is drawn over 6; under 3 nothing. Nothing may be NaN or past a limit.
 func _lunge_probe(who: String, weight: String, wind: int, ticks: int, off: bool) -> Dictionary:
@@ -6574,6 +6657,7 @@ func _run() -> void:
 	_test_grip_throw()
 	_test_shake()
 	_test_incremental_bake()
+	_test_pose_lookup()
 	_test_tick_fast()
 	_test_pulled()
 	_test_bends()

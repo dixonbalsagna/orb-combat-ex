@@ -525,7 +525,7 @@ static func _log_pair_bake(S: SimState) -> void:
 	bake_done_tick = S.tick
 	print("pair bake: %d ms, %d poses" % [int(round(float(AnimData.pair_bake_usec) / 1000.0)), AnimData.pair_bake_poses])
 	if AnimData.lazy:
-		print("pair bake incremental: %d poses queued, %d baked on demand, %d queue runs, longest piece %.1f ms, %d slices (%d over budget), drained at tick %d" % [AnimData.bake_deferred, AnimData.bake_demand, AnimData.bake_drains, float(AnimData.bake_worst_us) / 1000.0, bake_slices, bake_over_slices, S.tick])
+		print("pair bake incremental: %d poses queued, %d baked on demand, %d waves loaded early for a pose, %d queue runs, longest piece %.1f ms, %d slices (%d over budget), drained at tick %d" % [AnimData.bake_deferred, AnimData.bake_demand, AnimData.bake_early, AnimData.bake_drains, float(AnimData.bake_worst_us) / 1000.0, bake_slices, bake_over_slices, S.tick])
 
 
 ## What a far taunt's pick needs to know of the moment: whether he is in the air (the bounce is ground only) and whether any blow has landed yet this match (the nod opens a stand-off).
