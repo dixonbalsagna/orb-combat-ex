@@ -74,8 +74,6 @@ const SCORCH_D0: float = 3.0 * WS         # groove target depth = (D0 + D_P * P)
 const SCORCH_D_P: float = 2.2 * WS
 const SCORCH_INT0: float = 0.35       # burn intensity = clamp(INT0 + INT_P * P, 0, 1)
 const SCORCH_INT_P: float = 0.15
-## Per beam variant: [depth factor, width factor]. Ridge bore drills, glass trench fuses a wide shallow strip.
-const SCORCH_VARIANT: Dictionary = {"RIDGE BORE": [1.6, 0.8], "GLASS TRENCH": [0.8, 1.3], "FIRESTORM": [1.0, 1.1], "BOULEVARD RAZE": [0.8, 1.0], "FIELD SCAR": [1.0, 1.0], "HORIZON CLEAVE": [1.0, 1.0]}
 
 
 ## The beam-power scalar: charge and tier in one number. power runs 0 to 100 and the tier is 1 + floor(power / 25),
@@ -387,22 +385,23 @@ static func deepen(S: SimState, x: float, cause, k: float, z: float = NAN) -> fl
 
 ## A beam sample within reach of the ground: carve the groove toward its target depth (never deeper than that however
 ## many samples cross it), raise the permanent burn mark, and emit the scorch event. Half width and depth grow with P.
-static func scorch(S: SimState, x: float, P: float, variant: String, cause, z: float = NAN) -> void:
+## vk is the variant's [depth factor, width factor]: its row's scorch in data/combat/sigvariants.json, which the
+## director passes; [1, 1] is the plain groove. variant is the name the scorch event carries.
+static func scorch(S: SimState, x: float, P: float, variant: String, cause, z: float = NAN, vk: Array = [1.0, 1.0]) -> void:
 	if not S.depthOn:
-		_scorch(S, x, P, variant, cause)
+		_scorch(S, x, P, variant, cause, vk)
 		return
 	var zz: float = z
 	if is_nan(zz):
 		zz = float(cause.z) if (cause != null and "z" in cause) else 0.0
 	var k: int = WorldTerrain.enterRow(S, WorldTerrain.rowOfZ(zz))
-	_scorch(S, x, P, variant, cause)
+	_scorch(S, x, P, variant, cause, vk)
 	WorldTerrain.leaveRow(S, k)
 
 
-static func _scorch(S: SimState, x: float, P: float, variant: String, cause) -> void:
+static func _scorch(S: SimState, x: float, P: float, variant: String, cause, vk: Array) -> void:
 	var NC: int = SimConst.NC
 	var COL: float = SimConst.COL
-	var vk: Array = SCORCH_VARIANT.get(variant, [1.0, 1.0])
 	var hw: float = (SCORCH_HW0 + SCORCH_HW_P * P) * vk[1]
 	var depth: float = (SCORCH_D0 + SCORCH_D_P * P) * vk[0]
 	var inten: float = clampf(SCORCH_INT0 + SCORCH_INT_P * P, 0.0, 1.0)

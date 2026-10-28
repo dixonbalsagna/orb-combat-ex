@@ -887,7 +887,6 @@
         "id",
         "trigger",
         "spacedTiming",
-        "variants",
         "tagFormat",
         "outcome",
         "parity"
@@ -910,25 +909,6 @@
             "changes",
             "identical"
           ]
-        },
-        "variants": {
-          "type": "object",
-          "required": [
-            "ocean",
-            "city",
-            "village",
-            "forest",
-            "mountains",
-            "desert",
-            "plains"
-          ],
-          "additionalProperties": {
-            "type": "string",
-            "minLength": 1
-          },
-          "patternProperties": {
-            "^_": true
-          }
         },
         "tagFormat": {
           "type": "string",

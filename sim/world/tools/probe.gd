@@ -232,7 +232,7 @@ func _init() -> void:
 				WorldCrater.dig(S9, x, rg.range_(0.5, 30.0), null, "impact", rg.range_(-1.0, 1.0) * 0.7, 0.7)
 			else:
 				for k in range(int(rg.range_(5.0, 40.0))):
-					WorldCrater.scorch(S9, x + 30.0 * float(k), rg.range_(0.5, 4.5), "GLASS TRENCH", null)
+					WorldCrater.scorch(S9, x + 30.0 * float(k), rg.range_(0.5, 4.5), "GLASS TRENCH", null, NAN, [0.8, 1.3])
 			if i % 5 == 0:
 				for k in range(3):
 					checked_step(S9)

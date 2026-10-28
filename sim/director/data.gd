@@ -8,14 +8,19 @@ class_name DirData
 
 const TEMPLATES_PATH: String = "res://data/combat/templates.json"
 const FINISHERS_PATH: String = "res://data/combat/finishers.json"
+const SIGVARIANTS_PATH: String = "res://data/combat/sigvariants.json"
 const TICKS_PER_SEC: float = 60.0
 
 static var _tpl = null           # parsed templates.json (never written after load)
 static var _fin = null           # parsed finishers.json
+static var _sig = null           # parsed sigvariants.json (the signature's variant by biome)
+static var _sigByName: Dictionary = {}   # a variant's name to its row: a beam carries the name (b.variant)
 static var _hash: String = ""
 ## Tools and tests only: force a profile ("" keeps the files' own profile field).
 static var templatesProfile: String = ""
 static var finishersProfile: String = ""
+## Tools and tests only: force sigvariants.json's fineOn (1 on, 0 off; -1 keeps the file's).
+static var sigFine: int = -1
 
 
 static func _ensure() -> void:
@@ -27,6 +32,12 @@ static func _ensure() -> void:
 	_fin = JSON.parse_string(ft)
 	if _tpl == null or _fin == null:
 		push_error("DirData: could not parse data/combat/templates.json or finishers.json")
+	var st: String = FileAccess.get_file_as_string(SIGVARIANTS_PATH)
+	_sig = JSON.parse_string(st)
+	if _sig == null:
+		push_error("DirData: could not parse data/combat/sigvariants.json")
+	else:
+		_indexSig()
 	var h := SimHash.Hasher.new()
 	h.text(tt)
 	h.text(ft)
@@ -37,7 +48,26 @@ static func _ensure() -> void:
 	h.text(DirRecipe.dataText())   # data/director/alchemy.json and Combat's data/combat/recipes.json
 	if FileAccess.file_exists("res://data/combat/enders.json"):
 		h.text(FileAccess.get_file_as_string("res://data/combat/enders.json"))   # Combat's launch enders (launch anywhere's pick), once they land
+	h.text(st)   # Combat's data/combat/sigvariants.json: what the signature carves by biome (biomes W1)
 	_hash = h.hex()
+
+
+## The rows by name, as a beam carries it. Rows that share a name must play the same (the city and the village share
+## BOULEVARD RAZE until LANE SWEEP is adopted); a second row of the name that plays otherwise is an error, and the
+## first is kept.
+static func _indexSig() -> void:
+	_sigByName = {}
+	for k in _sig.variants:
+		var row: Dictionary = _sig.variants[k]
+		var nm: String = String(row.name)
+		if not _sigByName.has(nm):
+			_sigByName[nm] = row
+		elif _playOf(_sigByName[nm]) != _playOf(row):
+			push_error("DirData: sigvariants.json has two rows named %s that play differently" % nm)
+
+
+static func _playOf(row: Dictionary) -> String:
+	return JSON.stringify([row.get("scorch"), row.get("structMul"), row.get("areaMul", 1.0), row.get("trees"), row.get("fx")])
 
 
 ## Tools only: parse a data file, and swap the parsed data in (returns the previous [templates, finishers]).
@@ -508,8 +538,8 @@ static func planBeam(S: SimState, ex) -> String:
 	var D = ex.D
 	var dist: float = absf(SimWrap.sdx(A.x, D.x))
 	var defState: String = "CHARGING" if (D.dPrev != null and D.dPrev == "charging") else DirExchange.STN[int(D.stance)]
-	var bio: String = WorldBiomes.biomeAt(D.x)
-	var variant: String = bm.variants[bio]
+	var bio: String = sigKeyAt(D.x)   # the biome under the defender picks the variant, for the whole beam
+	var variant: String = String(sigRow(bio).name)
 	var ctx := {"S": S, "A": A, "D": D, "heavy": false, "dist": dist}
 	_penalties(ctx, D)
 	defLabel = defState
@@ -549,6 +579,29 @@ static func planBeam(S: SimState, ex) -> String:
 	ctx.variant = variant
 	_scheduleList(ex, bm.parity, ctx, 0.0, "")
 	return out
+
+
+## The signature's variant for the biome at x (data/combat/sigvariants.json; docs/combat/biomes.md section 2): the
+## key of its row. WorldBiomes.biomeAt's seven names, or fineNameAt's with the file's fineOn, so that a gen 2 planet
+## reads its fine biome's row while gen 1 and the hand-made world read the same seven. A name the file has no row
+## for reads biomeAt's.
+static func sigKeyAt(x: float) -> String:
+	_ensure()
+	var fine: bool = bool(_sig.fineOn) if sigFine < 0 else sigFine == 1
+	var k: String = WorldBiomes.fineNameAt(x) if fine else WorldBiomes.biomeAt(x)
+	return k if _sig.variants.has(k) else WorldBiomes.biomeAt(x)
+
+
+static func sigRow(key: String) -> Dictionary:
+	_ensure()
+	return _sig.variants[key]
+
+
+## A variant's row by its name, as a beam carries it: {} for a name the file has none for (a tool's own beam), which
+## plays the plain groove, grey dust and no sparks or fire.
+static func sigByName(name: String) -> Dictionary:
+	_ensure()
+	return _sigByName.get(name, {})
 
 
 ## True when the active profile decides a beam's outcome at the fire beat (beam.outcomeByProfile, decideAt "fire").

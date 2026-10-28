@@ -1,8 +1,6 @@
 class_name DirBeam
 ## Signature beams: the twin of beam.js (planBeam and its beat ops, startClash, fireBeam, sampleBeam, beamStep).
 
-const VARIANT: Dictionary = {"ocean": "HORIZON CLEAVE", "city": "BOULEVARD RAZE", "village": "BOULEVARD RAZE", "forest": "FIRESTORM", "mountains": "RIDGE BORE", "desert": "GLASS TRENCH", "plains": "FIELD SCAR"}
-
 
 ## Plans a signature from Combat's data (DirData).
 static func planBeam(S: SimState, ex) -> void:
@@ -256,8 +254,9 @@ static func fireBeam(S: SimState, A, ox: float, oy: float, ux: float, uy: float,
 	b.p = 0.0; b.t = 0.0; b.life = 0.95; b.w = 24.0 + A.tier * 9.0; b.variant = variant; b.col = A.aura
 	b.pw = WorldCrater.beamPower(A)
 	# The tier gate (balance-targets.md §15), fixed at fire time from the firer's ladder: how hard the beam bites
-	# structures, and how many buildings it may level (a share of all of them, at least one).
-	b.sf = float(A.ld.beamStructure[_tierIx(A)])
+	# structures, and how many buildings it may level (a share of all of them, at least one). The bite is times the
+	# variant's structMul (data/combat/sigvariants.json), for the whole beam.
+	b.sf = float(A.ld.beamStructure[_tierIx(A)]) * float(DirData.sigByName(variant).get("structMul", 1.0))
 	b.cap = maxi(1, int(SimMathx.jround(float(A.ld.beamLevelCapShare[_tierIx(A)]) * S.buildings.size())))
 	S.beams.append(b)
 	if DirInterrupt.on():
@@ -271,19 +270,23 @@ static func sampleBeam(S: SimState, b, s: float) -> void:
 	var x: float = SimWrap.wrap(b.ox + b.ux * s)
 	var y: float = b.oy + b.uy * s
 	var g: float = WorldTerrain.groundY(S, x)
+	# The variant's row (data/combat/sigvariants.json): its groove factors, structure radius and looks. Its trees are
+	# read as area (today's damageArea) whatever the row says, until World builds burn, fell, snap and none.
+	var vr: Dictionary = DirData.sigByName(b.variant)
+	var fx: Dictionary = vr.get("fx", {})
 	if y < g + WorldCrater.beamReach(P):
 		# Scorch: a groove carved to a target depth along the ground, not a crater per sample (sim quirk 7 is gone).
-		WorldCrater.scorch(S, x, P, b.variant, A)
+		WorldCrater.scorch(S, x, P, b.variant, A, NAN, vr.get("scorch", [1.0, 1.0]))
 		if not b.struck and b.uy <= -WorldCrater.BEAM_STRIKE_SLOPE:
 			b.struck = true   # a steep beam digs one strike crater where it first meets the ground
 			WorldCrater.dig(S, x, WorldCrater.beamStrikeEnergy(P), A, "beam", 0.0, 1.0, true)
-		SimFx.dust(S, x, g + 8.0, 1, "#e6c47a" if b.variant == "GLASS TRENCH" else "#9b8f7e")
-		if b.variant == "GLASS TRENCH":
-			SimFx.spark(S, x, g + 6.0, 2, "#ffd98a", 300.0)
-	b.levelled += WorldStructures.damageArea(S, x, y, (26.0 + P * 8.0) * SimConst.WS, (110.0 + P * 75.0) * b.sf, A, false, 0.0, maxi(0, b.cap - b.levelled), BEAM_KEEP, 1.0)
+		SimFx.dust(S, x, g + 8.0, 1, String(fx.get("dust", "#9b8f7e")))
+		if fx.has("sparks"):
+			SimFx.spark(S, x, g + 6.0, int(fx.sparks.n), String(fx.sparks.col), float(fx.sparks.speed))
+	b.levelled += WorldStructures.damageArea(S, x, y, (26.0 + P * 8.0) * SimConst.WS * float(vr.get("areaMul", 1.0)), (110.0 + P * 75.0) * b.sf, A, false, 0.0, maxi(0, b.cap - b.levelled), BEAM_KEEP, 1.0)
 	if y < WorldWater.seaTop(S, x) + 30.0:
 		SimFx.beamSplash(S, x)   # the consumer rolls the prototype's 60% splash
-	if b.variant == "FIRESTORM" and y < g + 140.0 * SimConst.WS:
+	if fx.has("fire") and y < g + float(fx.fire.withinAbove) * SimConst.WS:
 		SimFx.fire(S, x, g, 1)
 
 
