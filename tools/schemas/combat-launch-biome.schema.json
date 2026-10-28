@@ -1,0 +1,234 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/combat-launch-biome",
+  "title": "combat.launch_biome/1",
+  "description": "data/combat/launch_biome.json (Combat's; docs/combat/biomes.md section 3; read by sim/director/launch.gd): the launch planner's eight biome candidates, the surface terms on the landing and the two biome tables, behind biome.enabled. From Combat's draft fragment docs/combat/pending/biomes/director-launch-biome.fragment.json, as its own file instead of a block of launch.json (Encounter, biomes W3). Policy: closed except keys starting with an underscore; each candidate is open past its common keys, since each names its own probe. Cross-references (proposed for Tools' xref): every name in biome.sends is a key of biome.candidates and each candidate's sends matches the list it is in",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "combat.launch_biome/1"
+    },
+    "biome": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "touchBuilt": {
+          "type": "boolean"
+        },
+        "rules": {
+          "type": "object",
+          "patternProperties": {
+            "^_": {},
+            "^[a-zA-Z]+$": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "qa": {
+          "type": "object",
+          "properties": {
+            "takenWhereOffered": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "maxInOwnBiome": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "seaLandingsFall": {
+              "type": "boolean"
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false
+        },
+        "downBonus": {
+          "type": "object",
+          "patternProperties": {
+            "^_": {},
+            "^[a-z][a-z_]*$": {
+              "type": "number",
+              "minimum": -200,
+              "maximum": 200
+            }
+          },
+          "additionalProperties": false
+        },
+        "distMul": {
+          "type": "object",
+          "patternProperties": {
+            "^_": {},
+            "^[a-z][a-z_]*$": {
+              "type": "number",
+              "minimum": 0.2,
+              "maximum": 3
+            }
+          },
+          "additionalProperties": false
+        },
+        "surfaceLand": {
+          "type": "object",
+          "patternProperties": {
+            "^_": {},
+            "^[a-z][a-z_]*$": {
+              "type": "object",
+              "properties": {
+                "across": {
+                  "type": "number",
+                  "minimum": -200,
+                  "maximum": 200
+                },
+                "down": {
+                  "type": "number",
+                  "minimum": -200,
+                  "maximum": 200
+                },
+                "up": {
+                  "type": "number",
+                  "minimum": -200,
+                  "maximum": 200
+                },
+                "soft": {
+                  "type": "number",
+                  "minimum": 0.2,
+                  "maximum": 1
+                }
+              },
+              "patternProperties": {
+                "^_": {}
+              },
+              "additionalProperties": false,
+              "required": [
+                "across",
+                "down",
+                "up"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "candidates": {
+          "type": "object",
+          "patternProperties": {
+            "^_": {},
+            "^[A-Z][A-Z ]{2,23}$": {
+              "type": "object",
+              "required": [
+                "sends",
+                "score"
+              ],
+              "properties": {
+                "sends": {
+                  "enum": [
+                    "across",
+                    "down",
+                    "up"
+                  ]
+                },
+                "score": {
+                  "type": "number",
+                  "minimum": -200,
+                  "maximum": 200
+                },
+                "hero": {
+                  "type": "number",
+                  "minimum": -200,
+                  "maximum": 200
+                },
+                "villain": {
+                  "type": "number",
+                  "minimum": -200,
+                  "maximum": 200
+                },
+                "where": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "ux": {
+                  "type": "number",
+                  "minimum": -2,
+                  "maximum": 2
+                },
+                "uy": {
+                  "type": "number",
+                  "minimum": -2,
+                  "maximum": 2
+                },
+                "force": {
+                  "type": "number",
+                  "minimum": 0.05,
+                  "maximum": 4
+                }
+              },
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "sends": {
+          "type": "object",
+          "properties": {
+            "across": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Z][A-Z ]{2,23}$"
+              },
+              "uniqueItems": true
+            },
+            "down": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Z][A-Z ]{2,23}$"
+              },
+              "uniqueItems": true
+            },
+            "up": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Z][A-Z ]{2,23}$"
+              },
+              "uniqueItems": true
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false
+        }
+      },
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "candidates",
+        "sends"
+      ]
+    }
+  },
+  "patternProperties": {
+    "^_": {}
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "biome"
+  ]
+}

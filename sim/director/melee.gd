@@ -441,6 +441,14 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 	var parts: PackedStringArray = []
 	for k in r.top:
 		parts.append(k.name + " " + SimMathx.jstr(SimMathx.jround(k.s)))
+	if DirLaunch.biomeOn():
+		# Biomes W3: every biome candidate offered prints its score with the top three, on the same line.
+		var bp: PackedStringArray = []
+		for k in r.all:
+			if k.get("bio", false) and not r.top.has(k):
+				bp.append(k.name + " " + SimMathx.jstr(SimMathx.jround(k.s)))
+		if not bp.is_empty():
+			parts.append("biome: " + ", ".join(bp))
 	var all: PackedStringArray = []
 	for k in r.all:
 		all.append(k.name + ("#" + str(k.brunt.b) if k.has("brunt") else "") + " " + SimMathx.jstr(SimMathx.jround(k.s)))   # B2: which building

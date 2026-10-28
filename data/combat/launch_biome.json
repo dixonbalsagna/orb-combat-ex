@@ -1,7 +1,7 @@
 {
-  "schema": "director.launch/1",
-  "_target": "data/director/launch.json, as a new block 'biome' (tools/schemas/director-launch.schema.json gains it: the schema is closed, so Tools adds the property; draft fragment director-launch-biome.fragment.json)",
-  "_about": "PARKED (Combat, 2026-10-23; docs/combat/biomes.md section 3). RULED by Game Design (docs/design/rulings-2026-10-23b.md item 1): the values accepted as a set, with the rules below. Launch-planner terms by biome and surface for sim/director/launch.gd chooseLaunch: eight scored candidates that use the ground (a cliff, ice to skid on, a marsh that swallows a slam, trees to smash through, a skim ashore, a slope, a vent, a big prop), terms on the landing's surface, and two biome tables that replace hard-coded numbers. Every score is in the planner's points and is a first value for Game Design. The planner's shared terms (noise, care at the landing, distance, new biome, water, repeats, launch anywhere's freshness) apply to every new candidate as to SMASH ACROSS; a new candidate is never offered when its feature is missing, so a biome without it plays exactly as today. A candidate's hero and villain are added by personality as interiorAim's score is (the care's sign, or the role at care 0). Lengths are in body heights (75 units). With enabled false nothing is offered or added. The block rides launch.json, which DirLaunch.dataText() already folds into the replay's data hash.",
+  "schema": "combat.launch_biome/1",
+  "_target": "its own file (Encounter, biomes W3): it was drafted as a block 'biome' of data/director/launch.json, and is moved here from docs/combat/pending/biomes/launch.biome.json with its schema tools/schemas/combat-launch-biome.schema.json (from the draft fragment director-launch-biome.fragment.json). DirData.dataHash() folds this file's text into the replay's data hash, as it does launch.json's",
+  "_about": "Combat's (2026-10-23; built by Encounter in biomes W3; docs/combat/biomes.md section 3). RULED by Game Design (docs/design/rulings-2026-10-23b.md item 1): the values accepted as a set, with the rules below. Launch-planner terms by biome and surface for sim/director/launch.gd chooseLaunch: eight scored candidates that use the ground (a cliff, ice to skid on, a marsh that swallows a slam, trees to smash through, a skim ashore, a slope, a vent, a big prop), terms on the landing's surface, and two biome tables that replace hard-coded numbers. Every score is in the planner's points and is a first value for Game Design. The planner's shared terms (noise, care at the landing, distance, new biome, water, repeats, launch anywhere's freshness) apply to every new candidate as to SMASH ACROSS; a new candidate is never offered when its feature is missing, so a biome without it plays exactly as today. A candidate's hero and villain are added by personality as interiorAim's score is (the care's sign, or the role at care 0). Lengths are in body heights (75 units). With enabled false nothing is offered or added. The block rides launch.json, which DirLaunch.dataText() already folds into the replay's data hash.",
   "biome": {
     "enabled": false,
     "rules": {
@@ -81,7 +81,8 @@
       },
       "VENT LIFT": {
         "_about": "an uppercut over a vent: the vent's blast carries him higher. Offered when a vent prop (World's) is within withinBh of the target. The launch's up force is times liftMul",
-        "sends": "up", "withinBh": 2.0, "liftMul": 1.25, "score": 12.0,
+        "sends": "up", "withinBh": 2.0, "liftMul": 1.25, "score": 12.0, "onUppercut": true,
+        "_onUppercut": "Encounter, biomes W3: the score is the vent's on top of UPPERCUT's own there (10, and 12 more under 120 units up), since VENT LIFT is an uppercut over a vent. Alone, 12 never beat the plain uppercut beside it (0 of 16 launches in the W3 probe). For Game Design to confirm",
         "hero": 0.0, "villain": 2.0,
         "where": "volcanic"
       },

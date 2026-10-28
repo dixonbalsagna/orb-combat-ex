@@ -2028,9 +2028,9 @@ static func kindOfSend(k: Dictionary) -> int:
 	var nm: String = String(k.get("name", ""))
 	if k.has("brunt") or nm == "BUILDING SMASH" or (k.has("p") and k.p is Dictionary and bool(k.p.get("building", false))):
 		return 4
-	if nm == "UPPERCUT":
+	if nm == "UPPERCUT" or nm == "VENT LIFT":
 		return 0
-	if nm == "DRIVE DOWN" or nm == "CRATER SLAM":
+	if nm == "DRIVE DOWN" or nm == "CRATER SLAM" or nm == "MARSH SWALLOW":   # biomes W3: VENT LIFT is up, MARSH SWALLOW down
 		return 2
 	if nm == "SMASH BEHIND":
 		return 3

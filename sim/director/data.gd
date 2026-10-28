@@ -49,6 +49,7 @@ static func _ensure() -> void:
 	if FileAccess.file_exists("res://data/combat/enders.json"):
 		h.text(FileAccess.get_file_as_string("res://data/combat/enders.json"))   # Combat's launch enders (launch anywhere's pick), once they land
 	h.text(st)   # Combat's data/combat/sigvariants.json: what the signature carves by biome (biomes W1)
+	h.text(DirLaunch.biomeText())   # Combat's data/combat/launch_biome.json: the launch planner's biome candidates (biomes W3)
 	_hash = h.hex()
 
 

@@ -32,6 +32,10 @@
       "schema": "combat-sigvariants.schema.json"
     },
     {
+      "match": "data/combat/launch_biome.json",
+      "schema": "combat-launch-biome.schema.json"
+    },
+    {
       "match": "data/art/flashes.json",
       "schema": "art-flashes.schema.json"
     },

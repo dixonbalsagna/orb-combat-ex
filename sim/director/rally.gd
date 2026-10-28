@@ -334,14 +334,14 @@ static func dest(S: SimState, k: Dictionary, kind: String) -> String:
 	var nm: String = String(k.get("name", ""))
 	if k.has("brunt") or nm == "BUILDING SMASH":
 		return "building"
-	if nm == "MOUNTAINSIDE":
+	if nm == "MOUNTAINSIDE" or nm == "CLIFFSIDE":   # biomes W3: CLIFFSIDE is MOUNTAINSIDE for any biome
 		return "cliff"
 	if kind == "overtake":
 		return "back_along"
 	var p = k.get("p", null)
 	if p is Dictionary and bool(p.get("water", false)):
 		return "water"
-	if nm == "DRIVE DOWN" or nm == "CRATER SLAM" or kind == "spike":
+	if nm == "DRIVE DOWN" or nm == "CRATER SLAM" or nm == "MARSH SWALLOW" or kind == "spike":
 		return "ground"
 	return "open_air"
 

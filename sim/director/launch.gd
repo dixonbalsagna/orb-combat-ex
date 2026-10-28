@@ -59,6 +59,12 @@ const BH: float = 75.0              # a body height, in units
 const DATA_PATH: String = "res://data/director/launch.json"
 static var _data = null
 static var _dataText: String = ""
+## Combat's data/combat/launch_biome.json (docs/combat/biomes.md section 3; biomes W3): the eight candidates that use the
+## ground, the terms on the landing's surface and the two biome tables, all behind biome.enabled (off by default).
+const BIOME_PATH: String = "res://data/combat/launch_biome.json"
+static var _bio = null
+static var _bioText: String = ""
+static var forceBiome: int = -1   # tools only: 1 on, 0 off, -1 the file's biome.enabled
 
 
 ## data/director/launch.json: the drive's angle rule and the CRATER SLAM's gates and score.
@@ -76,6 +82,28 @@ static func data() -> Dictionary:
 static func dataText() -> String:
 	data()
 	return _dataText
+
+
+## The biome block of data/combat/launch_biome.json ({} when the file is missing).
+static func biome() -> Dictionary:
+	if _bio == null:
+		_bioText = FileAccess.get_file_as_string(BIOME_PATH) if FileAccess.file_exists(BIOME_PATH) else ""
+		var j = JSON.parse_string(_bioText) if _bioText != "" else null
+		if _bioText != "" and not (j is Dictionary):
+			push_error("DirLaunch: could not parse " + BIOME_PATH)
+		_bio = j.get("biome", {}) if j is Dictionary else {}
+	return _bio
+
+
+## The biome file's text, for DirData.dataHash() (the replay header).
+static func biomeText() -> String:
+	biome()
+	return _bioText
+
+
+## Whether the biome block plays: its enabled, or a tool's forceBiome.
+static func biomeOn() -> bool:
+	return forceBiome == 1 if forceBiome >= 0 else bool(biome().get("enabled", false))
 
 
 ## DRIVE DOWN's direction for a target alt units above the ground: [along the facing, up]. No draw.
@@ -123,13 +151,15 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 	var f: float = A.face
 	var town: Dictionary = data().get("town", {})   # buildings.md section 3: staying in town, and aiming for a building
 	var inTown: bool = (town.get("biomes", []) as Array).has(bio)
+	var bon: bool = biomeOn()   # biomes W3: the eight candidates that use the ground, and the surface terms
 	var c: Array = []
 	if not longOnly:
 		var up: Dictionary = data().uppercut   # the slam lever: more forward carry, so the fall lands under 70 degrees
 		c.append({"name": "UPPERCUT", "ux": float(up.ux) * f, "uy": float(up.uy), "s": 10.0 + (12.0 if alt < 120.0 else 0.0)})
 	if not longOnly:
 		var dv: Array = driveDir(alt)
-		c.append({"name": "DRIVE DOWN", "ux": dv[0] * f, "uy": dv[1], "s": (18.0 if alt > 140.0 else 0.0) + A.tier * 4.0 + (8.0 if bio == "forest" else 0.0)})
+		var dB: float = float(biome().get("downBonus", {}).get(WorldBiomes.fineNameAt(D.x), 0.0)) if bon else (8.0 if bio == "forest" else 0.0)   # biome on: the downBonus table (forest keeps its 8)
+		c.append({"name": "DRIVE DOWN", "ux": dv[0] * f, "uy": dv[1], "s": (18.0 if alt > 140.0 else 0.0) + A.tier * 4.0 + dB})
 		if craterOffered(S, A, D):
 			var cs: Dictionary = data().craterSlam
 			c.append({"name": "CRATER SLAM", "ux": float(cs.ux) * f, "uy": float(cs.uy), "s": float(cs.score.base) + float(cs.score.perTier) * A.tier + (float(cs.score.high) if alt > float(cs.score.highAlt) else 0.0)})
@@ -168,11 +198,13 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 				c.append({"name": "MOUNTAINSIDE", "ux": sign, "uy": 0.05, "s": 24.0, "land": D.x + sign * md})
 				break
 			md += MOUNTAIN_STEP
+	if bon:
+		_biomeCands(S, A, D, c, longOnly, fwdOnly, force * (DirBrawl.freshMul(S, D, 1) if fresh else 1.0) * tierF)
 	if not longOnly and not noKnock:
 		c.append({"name": "KNOCK BACK", "ux": 0.0, "uy": 0.0, "s": float(data().knockBack.score)})   # "no launch": a scored outcome (it was NONE)
 	if sends != "":
 		# Combat's hook (alchemist-content.md): a piece that names where it sends the rival keeps only those candidates.
-		var keep: Array = SENDS.get(sends, [])
+		var keep: Array = SENDS.get(sends, []) + ((biome().get("sends", {}).get(sends, []) as Array) if bon else [])   # biome on: its candidates join their kind
 		c = c.filter(func(k): return k.name == "KNOCK BACK" or keep.has(k.name))
 	if tilt > 0:
 		# The stick's tilt (1 up, then clockwise by eighths): only candidates within TILT_CONE of it compete. A tilt back
@@ -241,12 +273,14 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 		k.s += (-A.care) * CARE_W * popL
 		# Distance and new ground only count when the landing is open ground: long hauls carry the fight to empty land.
 		if popL <= OPEN_POP:
-			k.s += DIST_W * SimMathx.jmin(k.travel, DIST_CAP) / DIST_UNIT * (float(town.get("distMul", 1.0)) if inTown else 1.0)   # from a settlement the haul out is worth less
+			k.s += DIST_W * SimMathx.jmin(k.travel, DIST_CAP) / DIST_UNIT * (float(town.get("distMul", 1.0)) if inTown else 1.0) * (float(biome().get("distMul", {}).get(WorldBiomes.fineNameAt(lx), 1.0)) if bon else 1.0)   # from a settlement the haul out is worth less; biome on: open country more, closed less
 		var lb: String = WorldBiomes.biomeAt(lx)
 		if lb != bio and lb != "ocean" and popL <= OPEN_POP and _newBiomeDue(S, town):
 			k.s += NEW_BIOME_W
 			k.newBiome = true
-		if p.water and not k.has("land"):
+		if bon:
+			k.s += _landTerms(S, k, lx, p)
+		if p.water and not k.has("land") and not k.get("wetOk", false):
 			k.s -= WATER_W
 		if k.name == S.dirS.lastLaunch:
 			k.s -= REPEAT_1
@@ -276,6 +310,226 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 	return {"best": c[0], "top": c.slice(0, 3), "all": c}
 
 
+## Biomes W3 (docs/combat/biomes.md section 3; data/combat/launch_biome.json): the eight candidates that use the ground,
+## each offered only where its feature is, appended to c in a fixed order (the noise draws keep it). CLIFFSIDE is a long
+## haul like MOUNTAINSIDE and is offered to a break or finisher launch too; the other seven are not. pf is the force the
+## flight would get (the template's, the tier's and an across send's freshness), for SKIM ASHORE's skim prediction.
+static func _biomeCands(S: SimState, A, D, c: Array, longOnly: bool, fwdOnly: bool, pf: float) -> void:
+	var cd: Dictionary = biome().get("candidates", {})
+	var pers: String = _persOf(A)
+	var f: float = A.face
+	var g: float = WorldTerrain.groundY(S, D.x)
+	var alt: float = D.y - g
+	var q: Dictionary = cd.get("CLIFFSIDE", {})
+	if not q.is_empty():
+		for sign in [-1.0, 1.0]:
+			if fwdOnly and sign * f < 0.0:
+				continue
+			var face = _cliff(S, D.x, sign, q.probe)
+			if face != null and WorldBiomes.biomeAt(face.x) != "mountains":   # a face inside the mountains is MOUNTAINSIDE's
+				c.append(_bc(q, "CLIFFSIDE", sign, float(q.uy), pers, minf(face.rise / BH * float(q.perRiseBh), float(q.riseCap)), {"land": face.x, "rise": face.rise}))
+	if longOnly:
+		return
+	var sea: bool = WorldTerrain.seaAt(S, D.x)
+	var look: String = WorldContact.lookAt(S, D.x)
+	q = cd.get("ICE SKID", {})
+	if not q.is_empty() and not sea and look == "ice" and alt <= float(q.onIceBh) * BH:
+		c.append(_bc(q, "ICE SKID", f, float(q.uy), pers, 0.0, {"fm": float(q.force)}))
+	q = cd.get("MARSH SWALLOW", {})
+	if not q.is_empty() and not sea and look == "mud" and alt <= float(q.maxAltBh) * BH:
+		c.append(_bc(q, "MARSH SWALLOW", float(q.ux) * f, float(q.uy), pers, 0.0, {"embed": float(q.embedMul)}))
+	q = cd.get("TREE LINE", {})
+	if not q.is_empty():
+		var n: int = 0
+		var reach: float = float(q.reachBh) * BH
+		for t in S.trees:
+			var d: float = SimWrap.sdx(D.x, t.x) * f
+			if t.alive and d >= 0.0 and d <= reach and D.y - WorldTerrain.groundY(S, t.x) < t.h:   # a standing trunk the low line passes through
+				n += 1
+		if n >= int(q.minTrees):
+			n = mini(n, int(q.maxTrees))
+			c.append(_bc(q, "TREE LINE", f, float(q.uy), pers, float(q.perTree) * float(n), {"trees": n, "treeBrake": float(q.brakePerTree)}))
+	q = cd.get("SKIM ASHORE", {})
+	if not q.is_empty() and sea:
+		var sk = _skimAshore(S, D.x, D.y, WorldSlide.launchVX(f, float(q.uy), pf), float(q.uy) * pf, int(q.maxSkims), float(q.landBh) * BH)
+		if sk != null:
+			c.append(_bc(q, "SKIM ASHORE", f, float(q.uy), pers, 0.0, {"land": sk.x, "skims": sk.n}))
+	q = cd.get("DOWNHILL", {})
+	if not q.is_empty() and not sea:
+		var lowX: float = D.x
+		var low: float = g
+		var run: float = float(q.dropRunBh) * BH
+		var d: float = SimConst.COL
+		while d <= run:
+			var gy: float = WorldTerrain.groundY(S, D.x + f * d)
+			if gy < low:
+				low = gy
+				lowX = D.x + f * d
+			d += SimConst.COL
+		var drop: float = g - low
+		if drop >= float(q.minDropBh) * BH and not WorldTerrain.seaAt(S, lowX) and (q.surfaces as Array).has(WorldContact.lookAt(S, D.x + f * 0.5 * absf(SimWrap.sdx(D.x, lowX)))):
+			c.append(_bc(q, "DOWNHILL", f, float(q.uy), pers, minf(drop / BH * float(q.perDropBh), float(q.dropCap)), {"drop": drop}))
+	var vq: Dictionary = cd.get("VENT LIFT", {})
+	var pq: Dictionary = cd.get("PROP SMASH", {})
+	if (vq.is_empty() and pq.is_empty()) or not WorldGround.live():
+		return
+	var preach: float = float(pq.get("reachBh", 0.0)) * BH
+	var near: Array = _propsNear(S, D.x - maxf(float(vq.get("withinBh", 0.0)) * BH, preach), D.x + maxf(float(vq.get("withinBh", 0.0)) * BH, preach))
+	if not vq.is_empty():
+		for p in near:
+			if String(p.kind) == "vent" and absf(SimWrap.sdx(D.x, p.x)) <= float(vq.withinBh) * BH:
+				var up: Dictionary = data().uppercut
+				var onUp: float = (10.0 + (12.0 if alt < 120.0 else 0.0)) if bool(vq.get("onUppercut", false)) else 0.0   # UPPERCUT's own score there, the vent's on top
+				c.append(_bc(vq, "VENT LIFT", float(up.ux) * f, float(up.uy) * float(vq.liftMul), pers, onUp, {"vent": p.x}))
+
+				break
+	if not pq.is_empty():
+		var best = null
+		for p in near:
+			var d: float = SimWrap.sdx(D.x, p.x) * f
+			if (pq.props as Array).has(String(p.kind)) and d >= 0.0 and d <= preach and D.y - WorldTerrain.groundY(S, p.x) < float(p.size) * BH and (best == null or d < best.d):
+				best = {"d": d, "x": p.x, "kind": String(p.kind)}   # the nearest big prop the low line meets (its height: size x a body height)
+		if best != null:
+			c.append(_bc(pq, "PROP SMASH", f, float(pq.uy), pers, 0.0, {"land": best.x, "prop": best.kind}))
+
+
+## A biome candidate: its name, direction and score (the row's score, its personality's flavour and extra), plus fields.
+static func _bc(q: Dictionary, nm: String, ux: float, uy: float, pers: String, extra: float, more: Dictionary) -> Dictionary:
+	var k: Dictionary = {"name": nm, "ux": ux, "uy": uy, "s": float(q.score) + extra + (float(q.get(pers, 0.0)) if pers != "" else 0.0), "bio": true}
+	k.merge(more, true)
+	return k
+
+
+## CLIFFSIDE's probe: walking from x0 along sign in strides of stepBh out to reachBh, the first stride whose ground rises
+## minRiseBh is searched column by column for a face: a run of columns steeper than minTan rising minRiseBh or more in all.
+## Returns {"x": the face's foot, "rise": its height} or null. Found from the heights, never from a biome name.
+static func _cliff(S: SimState, x0: float, sign: float, pr: Dictionary):
+	var step: float = float(pr.stepBh) * BH
+	var reach: float = float(pr.reachBh) * BH
+	var minRise: float = float(pr.minRiseBh) * BH
+	var tn: float = float(pr.minTan) * SimConst.COL
+	var d: float = 0.0
+	var g0: float = WorldTerrain.groundY(S, x0)
+	while d < reach:
+		var d1: float = minf(d + step, reach)
+		var g1: float = WorldTerrain.groundY(S, x0 + sign * d1)
+		if g1 - g0 >= minRise:
+			var e: float = d
+			var gp: float = WorldTerrain.groundY(S, x0 + sign * e)
+			var foot: float = -1.0
+			var rise: float = 0.0
+			while e < d1 + step:
+				var gn: float = WorldTerrain.groundY(S, x0 + sign * (e + SimConst.COL))
+				if gn - gp >= tn:
+					if foot < 0.0:
+						foot = e
+					rise += gn - gp
+				else:
+					if foot >= 0.0 and rise >= minRise:
+						break
+					foot = -1.0
+					rise = 0.0
+				gp = gn
+				e += SimConst.COL
+			if foot >= 0.0 and rise >= minRise and not WorldTerrain.seaAt(S, x0 + sign * foot):
+				return {"x": SimWrap.wrap(x0 + sign * foot), "rise": rise}
+		g0 = g1
+		d = d1
+	return null
+
+
+## SKIM ASHORE's prediction: the free flight of predictFlight with contact.json's water skim (WorldContact.moveAir's rule:
+## a fast, flat entry bounces off the sea's top, lifted and slowed). Returns {"x": where he first touches dry ground,
+## "n": the skims} when that is within reach of x0 after at most maxSk skims, else null (he goes in, or never lands).
+static func _skimAshore(S: SimState, x0: float, y0: float, vx0: float, vy0: float, maxSk: int, reach: float):
+	var w: Dictionary = WorldContact.data().get("water", {})
+	var dt: float = SimConst.DT
+	var kAir: float = SimDetMath.pow(0.55, dt)
+	var x: float = x0
+	var y: float = y0
+	var vx: float = vx0
+	var vy: float = vy0
+	var travel: float = 0.0
+	var n: int = 0
+	var wet: bool = y < WorldWater.seaTop(S, x)
+	for i in range(PREDICT_STEPS):
+		vy -= 1000.0 * dt
+		vx *= kAir
+		x = SimWrap.wrap(x + vx * dt)
+		travel += absf(vx * dt)
+		y += vy * dt
+		if travel > reach:
+			return null
+		var top: float = WorldWater.seaTop(S, x)
+		if y < top and not wet:
+			var sp: float = SimDetMath.hypot(vx, vy)
+			if vy < 0.0 and sp > float(w.get("skimMinSpeed", 500.0)) and -vy < absf(vx) * float(w.get("skimMaxTan", 0.6)) and n < maxSk:
+				n += 1
+				y = top
+				vy = -vy * float(w.get("skimLift", 0.65))
+				vx *= float(w.get("skimKeep", 0.85))
+			else:
+				return null   # he goes in
+		wet = y < top
+		if y <= WorldTerrain.groundY(S, x) and not WorldTerrain.seaAt(S, x):
+			return {"x": x, "n": n}
+	return null
+
+
+## World's set dressing between x0 and x1 on a gen 2 planet (WorldGround.propsIn, the same pure draw the renderer's
+## strips use), keyed by the match's fine biome map: [{"x", "kind", "size", "col"}]. Empty on any other world.
+static func _propsNear(S: SimState, x0: float, x1: float) -> Array:
+	var fc: PackedByteArray = WorldBiomes.fineCols
+	var NC: int = fc.size()
+	if NC == 0 or S.base.size() != NC:
+		return []
+	var i0: int = int(floor(x0 / SimConst.COL))
+	var i1: int = int(floor(x1 / SimConst.COL)) + 1
+	var seed: int = _propSeed()
+	var parts: Array = [[0, NC]]   # the span in column ranges, split at the seam
+	if i1 - i0 < NC:
+		var a: int = posmod(i0, NC)
+		var b: int = posmod(i1, NC)
+		parts = [[a, b]] if a < b else [[a, NC], [0, b]]
+	var out: Array = []
+	for part in parts:
+		out.append_array(WorldGround.propsIn(fc, WorldBiomes.planetCols, S.base, seed, part[0], part[1]))
+	return out
+
+
+## The props' seed: an FNV-1a hash of the match's fine biome map (no prop seed is kept on the state; NEEDS FROM EP).
+static func _propSeed() -> int:
+	var h: int = 0x811c9dc5
+	for b in WorldBiomes.fineCols:
+		h = SimRng.imul((h ^ int(b)) & SimRng.MASK, 0x01000193)
+	return h & SimRng.MASK
+
+
+## The landing's biome terms on a candidate k landing at lx (p its predicted flight): the surface's row by the kind of
+## send (sand and rubble only with touchBuilt), its soft factor on the plan, and ICE SKID's end bonus (a lead of water,
+## where the water penalty is waived, or a berg).
+static func _landTerms(S: SimState, k: Dictionary, lx: float, p: Dictionary) -> float:
+	var b: Dictionary = biome()
+	var s: float = 0.0
+	var look: String = WorldContact.lookAt(S, lx)
+	var row = b.get("surfaceLand", {}).get(look, null)
+	if row is Dictionary and (bool(b.get("touchBuilt", false)) or (look != "sand" and look != "rubble")):
+		s += float(row.get(sendKind(String(k.name)), 0.0))
+		if row.has("soft"):
+			k.soft = float(row.soft)
+	if String(k.name) == "ICE SKID":
+		var eb: Dictionary = b.candidates["ICE SKID"].get("endBonus", {})
+		if bool(p.get("water", false)):
+			s += float(eb.get("water", 0.0))
+			k.wetOk = true
+		elif WorldGround.live():
+			for pr in _propsNear(S, float(p.x) - BH, float(p.x) + BH):
+				if String(pr.kind) == "berg":
+					s += float(eb.get("berg", 0.0))
+					break
+	return s
+
+
 ## The score of a BUILDING SMASH candidate (docs/world/b2-plan.md section 4): a base, the launcher's tier, personality (who
 ## is in the building and, for a fighter who feeds on collateral, how tall it is), drama on top (capped: personality decides
 ## which building, drama decides among near equals), the pity counter, a repeat penalty, and a penalty for a chain that would
@@ -299,12 +553,17 @@ static func _insideAim(S: SimState, A, D, b, force: float, tierF: float, special
 ## villain or rival), as the AI's launcher aim reads it. The Anti-hero seeks the chain; the hero avoids it.
 static func _insideScore(A) -> float:
 	var sc: Dictionary = data().get("interiorAim", {}).get("score", {})
+	return float(sc.get(_persOf(A), 0.0))
+
+
+## His personality for a flavour score: by his care's sign, or his role at care 0 (hero; villain or rival); "" for none.
+static func _persOf(A) -> String:
 	var pers: String = "hero" if A.care > 0.0 else ("villain" if A.care < 0.0 else "")
 	if pers == "":
 		var dd = FighterData.def(A.id)
 		var role: String = String(dd.get("role", "")) if dd is Dictionary else ""
 		pers = "hero" if role == "hero" else ("villain" if (role == "villain" or role == "rival") else "")
-	return float(sc.get(pers, 0.0))
+	return pers
 
 
 static func bruntScore(S: SimState, A, plan: Dictionary) -> float:
@@ -419,7 +678,15 @@ const SENDS: Dictionary = {
 	"across": ["SMASH ACROSS", "MOUNTAINSIDE", "BUILDING SMASH"],
 	"up": ["UPPERCUT"],
 	"down": ["DRIVE DOWN", "CRATER SLAM"],
-}
+}   # with the biome block on, its sends lists join these (launch_biome.json biome.sends)
+
+
+## A candidate's kind of send for the surface terms: up, down or across (the biome's sends lists, then SENDS; across else).
+static func sendKind(nm: String) -> String:
+	for kd in ["up", "down"]:
+		if (SENDS[kd] as Array).has(nm) or (biome().get("sends", {}).get(kd, []) as Array).has(nm):
+			return kd
+	return "across"
 
 
 ## Whether att has earned a launch on tgt at this launch beat (agency-pass.md section 3; launch.json earned): Orb's four.

@@ -288578,6 +288578,70 @@
       }
     },
     {
+      "id": "launch-biome-version",
+      "schema": "combat-launch-biome.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/launch_biome.json",
+          "set": {
+            "/schema": "combat.launch_biome/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "launch-biome-bad-send",
+      "schema": "combat-launch-biome.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/launch_biome.json",
+          "set": {
+            "/biome/candidates/ICE SKID/sends": "sideways"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/biome/candidates/ICE SKID/sends"
+      }
+    },
+    {
+      "id": "launch-biome-no-enabled",
+      "schema": "combat-launch-biome.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/launch_biome.json",
+          "del": [
+            "/biome/enabled"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/biome"
+      }
+    },
+    {
+      "id": "launch-biome-soft-over-one",
+      "schema": "combat-launch-biome.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/launch_biome.json",
+          "set": {
+            "/biome/surfaceLand/snow/soft": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/biome/surfaceLand/snow/soft"
+      }
+    },
+    {
       "id": "collateral-schema-version",
       "schema": "biomes-collateral.schema.json",
       "mutate": [
