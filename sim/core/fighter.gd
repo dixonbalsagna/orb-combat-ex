@@ -495,8 +495,8 @@ static func formBreak(S: SimState, f) -> void:
 	tierUp(S, f)
 	if tierByPower(f) > f.tier:
 		f.act.formReady = true
-		SimFx.transformReady(S, f, f.tier + 1.0, DirExchange.transformSource(f))
-	DirExchange.formBreak(S, f)   # the rival in reach is pushed back at the break
+		SimFx.transformReady(S, f, f.tier + 1.0, SimDir.transformSource(f))
+	SimDir.formBreak(S, f)   # the rival in reach is pushed back at the break
 
 
 ## The speed f flies at in free flight now, in units a second: his own speed and tier, his legs, his stance, the dash
@@ -558,7 +558,7 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 		SimForms.readyTick(S, f, dt)   # his ready steps, banked while he waits; the coil
 	elif nt > f.tier and f.act.breakIn < 0:   # (not while a taken step waits for its break)
 		if f.ld.manualTierUp:
-			if not f.act.formReady: SimFx.transformReady(S, f, f.tier + 1.0, DirExchange.transformSource(f))   # I2b: the rising edge
+			if not f.act.formReady: SimFx.transformReady(S, f, f.tier + 1.0, SimDir.transformSource(f))   # I2b: the rising edge
 			f.act.formReady = true   # I2a: the tier waits for the transform (transform())
 		else:
 			f.tier = nt

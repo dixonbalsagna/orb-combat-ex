@@ -242,7 +242,7 @@ static func blastCloud(S: SimState, f, x: float, y: float, amount: float, n: int
 static func transformReady(S: SimState, f, tier: float, source: String) -> void:
 	var e := _ev(S, "transform_ready")
 	e.actor = float(S.fighters.find(f)); e.tier = tier; e.source = source
-	DirCalm.atReady(S, f)   # the ready tell begins a calm turn's warm on a gen 2 planet (Game Design's rulings-2026-10-26 item 28)
+	SimDir.calmAtReady(S, f)   # the ready tell begins a calm turn's warm on a gen 2 planet (Game Design's rulings-2026-10-26 item 28)
 
 
 ## actor took the transform: tier is its new tier, source the input that took it, dur the hold in seconds. The tier_up

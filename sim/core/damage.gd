@@ -148,7 +148,7 @@ static func ko(S: SimState, D, A) -> void:
 	SimFx.ko(S, A, D)
 	SimEvents.feed(S, "K.O. — " + A.name + " wins", "Casualties " + SimMathx.jstr(SimMathx.jround(S.world.casualties)) + ", structures lost " + SimMathx.jstr(S.world.structuresLost))
 	if S.dirS.ex != null:
-		DirExchange.endEx(S, S.dirS.ex)
+		SimDir.endEx(S, S.dirS.ex)
 	A.state = "free" if A.state == "locked" else A.state
 	if D.state != "launched":
-		DirLaunch.doLaunch(S, A, D, {"ux": A.face * 0.9, "uy": 0.5}, 1800.0)
+		SimDir.doLaunch(S, A, D, {"ux": A.face * 0.9, "uy": 0.5}, 1800.0)

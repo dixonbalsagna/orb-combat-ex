@@ -177,7 +177,7 @@ static func readyTick(S: SimState, f, dt: float) -> void:
 	if n > 0:
 		fs.ready = n
 		if not f.act.formReady:
-			SimFx.transformReady(S, f, nextTier(S, f), DirExchange.transformSource(f))   # the rising edge, as today
+			SimFx.transformReady(S, f, nextTier(S, f), SimDir.transformSource(f))   # the rising edge, as today
 		f.act.formReady = true
 		if not fs.coiling and canTake(S, f):
 			fs.coiling = true
@@ -202,7 +202,7 @@ static func traded(S: SimState, f, by, amt: float) -> void:
 ## True when a ready form could be taken now: between exchanges, before a KO, with no approach running, and he is free
 ## or charging. It is the director's own rule for taking a transform (DirExchange._transforms), and must stay so.
 static func canTake(S: SimState, f) -> bool:
-	return S.dirS.ex == null and S.game.ko == null and DirBands.who(S) < 0 and (f.state == "free" or f.state == "charging")
+	return S.dirS.ex == null and S.game.ko == null and SimDir.bandsWho(S) < 0 and (f.state == "free" or f.state == "charging")
 
 
 static func _behind(S: SimState, f) -> float:
@@ -283,8 +283,8 @@ static func rise(S: SimState, f) -> void:
 	if more > 0:
 		fs.ready = more
 		f.act.formReady = true
-		SimFx.transformReady(S, f, nextTier(S, f), DirExchange.transformSource(f))
-	DirExchange.formBreak(S, f)   # the rival in reach is pushed back at the break, as at every step
+		SimFx.transformReady(S, f, nextTier(S, f), SimDir.transformSource(f))
+	SimDir.formBreak(S, f)   # the rival in reach is pushed back at the break, as at every step
 
 
 ## True when the next step is a live one (SimPause.request: a live release never pauses the fight).

@@ -752,8 +752,8 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 	# --- the fighter ---
 	# The wall kick (Encounter's DirWallKick; rulings-2026-10-22 2b): an armed kick takes a face that holds. Its slam
 	# is damageMul of a slam; no hold, rebound or stagger; his journey ends here.
-	var kicked: bool = not passes and not inside and DirWallKick.atWall(S, f, b, edge, dir, spN)
-	var km: float = DirWallKick.damageMul() if kicked else 1.0
+	var kicked: bool = not passes and not inside and SimDir.wallKickAt(S, f, b, edge, dir, spN)
+	var km: float = SimDir.wallKickMul() if kicked else 1.0
 	SimDamage.hurt(S, f, spN * FIGHTER_DMG * km, by)
 	SimFx.debris(S, f.x, y + 20.0, 6, "#77808f", 500.0)
 	if not inside:

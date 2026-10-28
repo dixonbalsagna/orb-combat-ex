@@ -1,0 +1,325 @@
+diff --git a/sim/core/damage.gd b/sim/core/damage.gd
+index 6553b91..3759d4e 100644
+--- a/sim/core/damage.gd
++++ b/sim/core/damage.gd
+@@ -148,7 +148,7 @@ static func ko(S: SimState, D, A) -> void:
+ 	SimFx.ko(S, A, D)
+ 	SimEvents.feed(S, "K.O. — " + A.name + " wins", "Casualties " + SimMathx.jstr(SimMathx.jround(S.world.casualties)) + ", structures lost " + SimMathx.jstr(S.world.structuresLost))
+ 	if S.dirS.ex != null:
+-		DirExchange.endEx(S, S.dirS.ex)
++		SimDir.endEx(S, S.dirS.ex)
+ 	A.state = "free" if A.state == "locked" else A.state
+ 	if D.state != "launched":
+-		DirLaunch.doLaunch(S, A, D, {"ux": A.face * 0.9, "uy": 0.5}, 1800.0)
++		SimDir.doLaunch(S, A, D, {"ux": A.face * 0.9, "uy": 0.5}, 1800.0)
+diff --git b/sim/core/dir.gd b/sim/core/dir.gd
+new file mode 100644
+index 0000000..d8aa19b
+--- /dev/null
++++ b/sim/core/dir.gd
+@@ -0,0 +1,75 @@
++class_name SimDir
++## The director's functions that the core's and the world's scripts call (docs/architecture/load-split.md). They are
++## reached by the director script's path, not its class name, so that loading the core and the world does not compile
++## the director: Rendering's boot entry loads the director's scripts in a frame of their own (2026-10-27). Each is the
++## director's own function, called with the same arguments. A script is loaded the first time it is called and kept;
++## in a match it is loaded already, since SimCore's step names the director's classes (the step, the intro, the replay
++## and the controls are outside the core's graph and still name them). A new call from the core or the world into the
++## director goes here: tools/load_split.gd fails if the core's load compiles any of the director, and checks that every
++## function named here is in its script.
++
++const _DIR: String = "res://sim/director/"
++static var _got: Dictionary = {}   # a director script's file: the script, loaded once
++
++
++static func _d(file: String):
++	var s = _got.get(file)
++	if s == null:
++		s = load(_DIR + file)
++		_got[file] = s
++	return s
++
++
++## DirExchange.endEx: the running exchange ends (a K.O. inside one).
++static func endEx(S: SimState, ex) -> void:
++	_d("exchange.gd").endEx(S, ex)
++
++
++## DirExchange.transformSource: what a form's ready tell names as its source.
++static func transformSource(f) -> String:
++	return _d("exchange.gd").transformSource(f)
++
++
++## DirExchange.formBreak: the rival in reach is pushed back at a form's break.
++static func formBreak(S: SimState, f) -> void:
++	_d("exchange.gd").formBreak(S, f)
++
++
++## DirLaunch.doLaunch: a launch (the K.O.'s).
++static func doLaunch(S: SimState, att, tgt, plan: Dictionary, force: float, special: bool = false) -> void:
++	_d("launch.gd").doLaunch(S, att, tgt, plan, force, special)
++
++
++## DirBands.who: the fighter a band holds, or -1.
++static func bandsWho(S: SimState) -> int:
++	return _d("bands.gd").who(S)
++
++
++## DirBlast.rules: the director's blast rules are on.
++static func blastRules(S: SimState) -> bool:
++	return _d("blast.gd").rules(S)
++
++
++## DirBlast.hit: a shot meets a fighter under the director's blast rules.
++static func blastHit(S: SimState, sh, f) -> bool:
++	return _d("blast.gd").hit(S, sh, f)
++
++
++## DirCalm.atReady: a form's ready tell, for the calm turn's warm.
++static func calmAtReady(S: SimState, f) -> void:
++	_d("calm.gd").atReady(S, f)
++
++
++## DirBrawl.payMul: what a launcher's send pays in a wall or ground contact.
++static func brawlPayMul(f) -> float:
++	return _d("brawl.gd").payMul(f)
++
++
++## DirWallKick.atWall: an armed wall kick takes the face.
++static func wallKickAt(S: SimState, f, b, edge: float, dir: float, spN: float) -> bool:
++	return _d("wallkick.gd").atWall(S, f, b, edge, dir, spN)
++
++
++## DirWallKick.damageMul: a wall kick's slam, as a share of a slam.
++static func wallKickMul() -> float:
++	return _d("wallkick.gd").damageMul()
+diff --git b/sim/core/dir.gd.uid b/sim/core/dir.gd.uid
+new file mode 100644
+index 0000000..56d8e49
+--- /dev/null
++++ b/sim/core/dir.gd.uid
+@@ -0,0 +1 @@
++uid://bruplbr7wxafi
+diff --git a/sim/core/fighter.gd b/sim/core/fighter.gd
+index 803ceb2..6a288c3 100644
+--- a/sim/core/fighter.gd
++++ b/sim/core/fighter.gd
+@@ -495,8 +495,8 @@ static func formBreak(S: SimState, f) -> void:
+ 	tierUp(S, f)
+ 	if tierByPower(f) > f.tier:
+ 		f.act.formReady = true
+-		SimFx.transformReady(S, f, f.tier + 1.0, DirExchange.transformSource(f))
+-	DirExchange.formBreak(S, f)   # the rival in reach is pushed back at the break
++		SimFx.transformReady(S, f, f.tier + 1.0, SimDir.transformSource(f))
++	SimDir.formBreak(S, f)   # the rival in reach is pushed back at the break
+ 
+ 
+ ## The speed f flies at in free flight now, in units a second: his own speed and tier, his legs, his stance, the dash
+@@ -558,7 +558,7 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
+ 		SimForms.readyTick(S, f, dt)   # his ready steps, banked while he waits; the coil
+ 	elif nt > f.tier and f.act.breakIn < 0:   # (not while a taken step waits for its break)
+ 		if f.ld.manualTierUp:
+-			if not f.act.formReady: SimFx.transformReady(S, f, f.tier + 1.0, DirExchange.transformSource(f))   # I2b: the rising edge
++			if not f.act.formReady: SimFx.transformReady(S, f, f.tier + 1.0, SimDir.transformSource(f))   # I2b: the rising edge
+ 			f.act.formReady = true   # I2a: the tier waits for the transform (transform())
+ 		else:
+ 			f.tier = nt
+diff --git a/sim/core/forms.gd b/sim/core/forms.gd
+index 0b25c55..9ddfc9f 100644
+--- a/sim/core/forms.gd
++++ b/sim/core/forms.gd
+@@ -177,7 +177,7 @@ static func readyTick(S: SimState, f, dt: float) -> void:
+ 	if n > 0:
+ 		fs.ready = n
+ 		if not f.act.formReady:
+-			SimFx.transformReady(S, f, nextTier(S, f), DirExchange.transformSource(f))   # the rising edge, as today
++			SimFx.transformReady(S, f, nextTier(S, f), SimDir.transformSource(f))   # the rising edge, as today
+ 		f.act.formReady = true
+ 		if not fs.coiling and canTake(S, f):
+ 			fs.coiling = true
+@@ -202,7 +202,7 @@ static func traded(S: SimState, f, by, amt: float) -> void:
+ ## True when a ready form could be taken now: between exchanges, before a KO, with no approach running, and he is free
+ ## or charging. It is the director's own rule for taking a transform (DirExchange._transforms), and must stay so.
+ static func canTake(S: SimState, f) -> bool:
+-	return S.dirS.ex == null and S.game.ko == null and DirBands.who(S) < 0 and (f.state == "free" or f.state == "charging")
++	return S.dirS.ex == null and S.game.ko == null and SimDir.bandsWho(S) < 0 and (f.state == "free" or f.state == "charging")
+ 
+ 
+ static func _behind(S: SimState, f) -> float:
+@@ -283,8 +283,8 @@ static func rise(S: SimState, f) -> void:
+ 	if more > 0:
+ 		fs.ready = more
+ 		f.act.formReady = true
+-		SimFx.transformReady(S, f, nextTier(S, f), DirExchange.transformSource(f))
+-	DirExchange.formBreak(S, f)   # the rival in reach is pushed back at the break, as at every step
++		SimFx.transformReady(S, f, nextTier(S, f), SimDir.transformSource(f))
++	SimDir.formBreak(S, f)   # the rival in reach is pushed back at the break, as at every step
+ 
+ 
+ ## True when the next step is a live one (SimPause.request: a live release never pauses the fight).
+diff --git a/sim/core/fx.gd b/sim/core/fx.gd
+index d5e0264..6a50f51 100644
+--- a/sim/core/fx.gd
++++ b/sim/core/fx.gd
+@@ -242,7 +242,7 @@ static func blastCloud(S: SimState, f, x: float, y: float, amount: float, n: int
+ static func transformReady(S: SimState, f, tier: float, source: String) -> void:
+ 	var e := _ev(S, "transform_ready")
+ 	e.actor = float(S.fighters.find(f)); e.tier = tier; e.source = source
+-	DirCalm.atReady(S, f)   # the ready tell begins a calm turn's warm on a gen 2 planet (Game Design's rulings-2026-10-26 item 28)
++	SimDir.calmAtReady(S, f)   # the ready tell begins a calm turn's warm on a gen 2 planet (Game Design's rulings-2026-10-26 item 28)
+ 
+ 
+ ## actor took the transform: tier is its new tier, source the input that took it, dur the hold in seconds. The tier_up
+diff --git a/sim/core/shots.gd b/sim/core/shots.gd
+index 2dcab69..b1eb3ca 100644
+--- a/sim/core/shots.gd
++++ b/sim/core/shots.gd
+@@ -352,8 +352,8 @@ static func end(S: SimState, sh, cause: String) -> void:
+ ## f may be the shot's own owner (his wild shot, or his own mine's blast): that case takes the plain rule here and is not
+ ## handed to the director, whose rule reads the owner as the attacker (a knock-back, a barrage, a finisher).
+ static func hitFighter(S: SimState, sh, f) -> bool:
+-	if DirBlast.rules(S) and f != S.fighters[sh.owner]:
+-		return DirBlast.hit(S, sh, f)   # the director's blast rules: the dodge, the perfect block's deflect, the guard, a charge
++	if SimDir.blastRules(S) and f != S.fighters[sh.owner]:
++		return SimDir.blastHit(S, sh, f)   # the director's blast rules: the dodge, the perfect block's deflect, the guard, a charge
+ 	var dmg: float = sh.dmg
+ 	if sh.mode == MINE and f == S.fighters[sh.owner]:
+ 		dmg *= kinds[sh.kind].mine.ownShare
+diff --git b/sim/core/tools/load_split.gd b/sim/core/tools/load_split.gd
+new file mode 100644
+index 0000000..334716e
+--- /dev/null
++++ b/sim/core/tools/load_split.gd
+@@ -0,0 +1,97 @@
++extends SceneTree
++## The sim's script loads, in the order Rendering's boot entry makes them (docs/architecture/load-split.md). In a fresh
++## process each step's load() compiles its script graph less what the steps before it loaded. This prints each step's
++## time and how many of the director's scripts are loaded after it, and fails if the first step (the core and the
++## world) loads any of them: a director class named in a script the core's graph reaches pulls the whole director back
++## into that load. It also checks that every director function SimDir (sim/core/dir.gd) calls is in its script, since
++## those calls are found by name only when they run. This script names no sim class, so it compiles nothing itself.
++##   godot --headless --path . --script res://sim/core/tools/load_split.gd [-- --steps=res://a.gd,res://b.gd]
++
++## The load order for the boot entry (render/core/boot_entry.gd), one load a frame.
++const STEPS: Array = [
++	"res://sim/core/act.gd",           # the core and the world
++	"res://sim/core/shots.gd",         # the shots (the director's, not the core's)
++	"res://sim/input/press_read.gd",   # the input's reading (the director's AI and presses)
++	"res://sim/input/aim.gd",
++	"res://sim/director/exchange.gd",  # the director, on its own
++	"res://sim/core/campaign.gd",      # SimCore's step, the campaign, the run, the intro and the replay
++	"res://sim/input/hub.gd",          # the input layer
++]
++
++
++func _init() -> void:
++	var steps: Array = STEPS
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--steps="):
++			steps = Array(a.substr(8).split(","))
++	var dir: Array = _scripts("res://sim/director/")
++	var sim: Array = []
++	for d in ["res://sim/core/", "res://sim/world/", "res://sim/director/", "res://sim/input/"]:
++		sim.append_array(_scripts(d))
++	var bad: bool = false
++	var total: float = 0.0
++	for i in range(steps.size()):
++		var t0: int = Time.get_ticks_usec()
++		var s = load(steps[i])
++		var ms: float = float(Time.get_ticks_usec() - t0) / 1000.0
++		total += ms
++		var nd: int = _cached(dir)
++		print("%-34s %8.1f ms   sim scripts loaded %3d of %d, the director's %2d of %d%s" % [steps[i], ms, _cached(sim), sim.size(), nd, dir.size(), "" if s != null else "   (NOT LOADED)"])
++		if s == null:
++			bad = true
++		if i == 0 and nd > 0:
++			print("FAIL: the core's load compiles the director")
++			bad = true
++	print("total %.1f ms" % total)
++	if not _calls():
++		bad = true
++	print("FAIL" if bad else "ok: the director is a load of its own, and SimDir's calls are all in their scripts")
++	quit(1 if bad else 0)
++
++
++## Every `_d("file").name(` in SimDir's source names a function of that director script that takes that many arguments.
++func _calls() -> bool:
++	var src: String = FileAccess.get_file_as_string("res://sim/core/dir.gd")
++	var re := RegEx.new()
++	re.compile("_d\\(\"([\\w.]+)\"\\)\\.(\\w+)\\(([^)]*)\\)")
++	var ok: bool = true
++	var n: int = 0
++	for m in re.search_all(src):
++		var s = load("res://sim/director/" + m.get_string(1))
++		var argc: int = 0 if m.get_string(3).strip_edges() == "" else m.get_string(3).split(",").size()
++		var found: bool = false
++		if s != null:
++			for f in s.get_script_method_list():
++				if f.name == m.get_string(2):
++					var na: int = f.args.size()
++					var nd: int = f.default_args.size()
++					found = argc <= na and argc >= na - nd and (f.flags & METHOD_FLAG_STATIC) != 0
++		n += 1
++		if not found:
++			print("FAIL: SimDir calls %s in %s with %d arguments, which is not a static function of it that takes them" % [m.get_string(2), m.get_string(1), argc])
++			ok = false
++	print("SimDir's calls: %d, %s" % [n, "all found" if ok else "not all found"])
++	return ok and n > 0
++
++
++## The .gd scripts under a folder, not its tools/ and test/ (which the game never loads).
++func _scripts(root: String) -> Array:
++	var out: Array = []
++	var d := DirAccess.open(root)
++	if d == null:
++		return out
++	for f in d.get_files():
++		if f.ends_with(".gd"):
++			out.append(root + f)
++	for sub in d.get_directories():
++		if sub != "tools" and sub != "test":
++			out.append_array(_scripts(root + sub + "/"))
++	return out
++
++
++func _cached(paths: Array) -> int:
++	var n: int = 0
++	for p in paths:
++		if ResourceLoader.has_cached(p):
++			n += 1
++	return n
+diff --git b/sim/core/tools/load_split.gd.uid b/sim/core/tools/load_split.gd.uid
+new file mode 100644
+index 0000000..b3bfd02
+--- /dev/null
++++ b/sim/core/tools/load_split.gd.uid
+@@ -0,0 +1 @@
++uid://dmysj4ptbp15l
+diff --git a/sim/world/brunt.gd b/sim/world/brunt.gd
+index b0adeaf..3fbd140 100644
+--- a/sim/world/brunt.gd
++++ b/sim/world/brunt.gd
+@@ -752,8 +752,8 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
+ 	# --- the fighter ---
+ 	# The wall kick (Encounter's DirWallKick; rulings-2026-10-22 2b): an armed kick takes a face that holds. Its slam
+ 	# is damageMul of a slam; no hold, rebound or stagger; his journey ends here.
+-	var kicked: bool = not passes and not inside and DirWallKick.atWall(S, f, b, edge, dir, spN)
+-	var km: float = DirWallKick.damageMul() if kicked else 1.0
++	var kicked: bool = not passes and not inside and SimDir.wallKickAt(S, f, b, edge, dir, spN)
++	var km: float = SimDir.wallKickMul() if kicked else 1.0
+ 	SimDamage.hurt(S, f, spN * FIGHTER_DMG * km, by)
+ 	SimFx.debris(S, f.x, y + 20.0, 6, "#77808f", 500.0)
+ 	if not inside:
+diff --git a/sim/world/contact.gd b/sim/world/contact.gd
+index 2af2080..f766868 100644
+--- a/sim/world/contact.gd
++++ b/sim/world/contact.gd
+@@ -959,7 +959,7 @@ static func _pay(S: SimState, f, by, amount: float) -> void:
+ 		return
+ 	if f.slideFeet:
+ 		amount *= K_WFEET   # a knock-back skid hurts half as much as a launch's impact (agency-pass.md section 13, rule 4)
+-	var pay: float = DirBrawl.payMul(f)   # Game Design's 9a: a launcher's send pays x (1 + power), its cap with it (1 off launch anywhere)
++	var pay: float = SimDir.brawlPayMul(f)   # Game Design's 9a: a launcher's send pays x (1 + power), its cap with it (1 off launch anywhere)
+ 	amount *= pay
+ 	var a: float = minf(amount, maxf(f.jV0 * 0.018 * K_WCAP * pay - f.slideDmg, 0.0))
+ 	if a > 0.0:

@@ -352,8 +352,8 @@ static func end(S: SimState, sh, cause: String) -> void:
 ## f may be the shot's own owner (his wild shot, or his own mine's blast): that case takes the plain rule here and is not
 ## handed to the director, whose rule reads the owner as the attacker (a knock-back, a barrage, a finisher).
 static func hitFighter(S: SimState, sh, f) -> bool:
-	if DirBlast.rules(S) and f != S.fighters[sh.owner]:
-		return DirBlast.hit(S, sh, f)   # the director's blast rules: the dodge, the perfect block's deflect, the guard, a charge
+	if SimDir.blastRules(S) and f != S.fighters[sh.owner]:
+		return SimDir.blastHit(S, sh, f)   # the director's blast rules: the dodge, the perfect block's deflect, the guard, a charge
 	var dmg: float = sh.dmg
 	if sh.mode == MINE and f == S.fighters[sh.owner]:
 		dmg *= kinds[sh.kind].mine.ownShare
