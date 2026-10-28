@@ -1,0 +1,254 @@
+{
+  "schema": 1,
+  "note": "The Settings screen (docs/ui/hud-spec.md section 26): its sections, which options each lists and in what order, the words for each choice, and the screen's own words. The controls themselves (default, range, step, choices, label, help) come from options.json: a toggle for a boolean, a slider for a number with min and max, a choice for a list. An item may also be an action button. needs: a feature flag in features.json; until it is on the row is dimmed and marked Soon, and the screen skips it. remap: the Remap controls screen (docs/ui/hud-spec.md section 27): its words, with {action}, {control}, {other} and {layout} filled in. hidden: options that stay in options.json (and the HUD's options) but not on this screen.",
+  "title": "[ŠÉÉŢŢÎÑĜŠ]",
+  "close": "[ÇĹÖŠÉ]",
+  "hint_keys": "[ÜÜp ááñď Ďööŵñ: çĥööööšéé.  Ĺééfţ ááñď Ŕííĝĥţ: çĥááñĝéé.  ÉÉñţééŕ: šŵííţçĥ.  ÉÉšç: çĺööšéé. ~~~~~~~~~~]",
+  "hint_pad": "[Ď-pááď: çĥööööšéé ááñď çĥááñĝéé.  ÅÅ: šŵííţçĥ.  B: çĺööšéé. ~~~~~]",
+  "on": "[Öñ]",
+  "off": "[Öff]",
+  "soon": "[Šööñ]",
+  "sections": [
+    {
+      "id": "controls",
+      "title": "[Çööñţŕöĺš]",
+      "items": [
+        "pad_preset",
+        "pad_preset_p2",
+        "touch_preset",
+        "left_handed",
+        "hotseat_alt_layout",
+        "control_hints",
+        "show_prompts",
+        "energy_style",
+        "energy_style_p2",
+        "latch_charge",
+        "latch_charge_p2",
+        "charges_off",
+        "charges_off_p2",
+        "show_recipe",
+        "beat_ring",
+        "join_prompt",
+        {
+          "action": "remap",
+          "label": "[Ŕéémááp çööñţŕööĺš]",
+          "value": "[Öpéñ]",
+          "help": "[Çĥááñĝéé ŵĥííçĥ büüţţööñ ööŕ ķééýý ďööééš ŵĥááţ, fööŕ ţĥéé ĺááýýööüüţ ýýööüü ááŕéé üüšííñĝ. ]",
+          "needs": "remap"
+        },
+        {
+          "action": "remap_two",
+          "label": "[Ŕéémááp pĺááýýééŕ 2'š çööñţŕööĺš ]",
+          "value": "[Öpéñ]",
+          "help": "[Çĥááñĝéé ŵĥííçĥ büüţţööñ ööŕ ķééýý ďööééš ŵĥááţ fööŕ pĺááýýééŕ ţŵöö, ŵĥééñ ţŵöö pééööpĺéé pĺááýý. ~~~~]",
+          "needs": "remap"
+        }
+      ]
+    },
+    {
+      "id": "camera",
+      "title": "[Çáméŕá]",
+      "items": [
+        "camera_zoom",
+        "camera_shake",
+        "camera_launch_follow",
+        "camera_panels",
+        "split_solo"
+      ]
+    },
+    {
+      "id": "display",
+      "title": "[Ďííšpĺáý]",
+      "items": [
+        "vfx_quality",
+        "hud_sides",
+        "you_marker",
+        "info_flashes",
+        "brink_cue",
+        "silhouette",
+        "region_label"
+      ]
+    },
+    {
+      "id": "access",
+      "title": "[ÅÅççéššííbíĺííţý]",
+      "items": [
+        "colour_vision",
+        "reduced_motion",
+        "reduce_flashing",
+        {
+          "action": "photo_notice",
+          "label": "Flashing effects notice",
+          "value": "[Ŕéáď]",
+          "help": "[Ţĥéé ñööţííçéé šĥööŵñ ŵĥééñ ţĥéé ĝááméé šţááŕţš: ííţ çööñţááííñš fĺáášĥííñĝ ééffééçţš, ŵĥááţ Ŕééďüüçééď mööţííööñ ďööééš ááñď ďööééš ñööţ çĥááñĝéé, ááñď ţĥááţ ñöö ííñďéépééñďééñţ pĥööţööšééñšííţíívííţýý ááñááĺýýžééŕ ĥááš bééééñ ŕüüñ. ~~~~~~~~~~~~~]"
+        },
+        "captions",
+        "edge_captions",
+        "crown_always",
+        "thickness",
+        "hitstop_scale",
+        "keep_hints",
+        "haptics"
+      ]
+    },
+    {
+      "id": "cosmetics",
+      "title": "[Çööšmééţíçš]",
+      "items": [
+        "unlock_all"
+      ]
+    }
+  ],
+  "needs": {
+    "touch_preset": "touch_full"
+  },
+  "hidden": [
+    "glyph_style"
+  ],
+  "hidden_note": "glyph_style has one choice.",
+  "labels": {
+    "pad_preset": {
+      "arena": "[Åŕéñá]",
+      "simple-pad": "[Šímpĺé]"
+    },
+    "energy_style": {
+      "hold": "[Ĥöĺď]",
+      "toggle": "[Ţöĝĝĺé]"
+    },
+    "energy_style_p2": {
+      "hold": "[Ĥöĺď]",
+      "toggle": "[Ţöĝĝĺé]"
+    },
+    "pad_preset_p2": {
+      "arena": "[Åŕéñá]",
+      "simple-pad": "[Šímpĺé]"
+    },
+    "touch_preset": {
+      "touch-simple": "[Šímpĺé]",
+      "touch-full": "[Füĺĺ]"
+    },
+    "vfx_quality": {
+      "auto": "[Åüţö]",
+      "high": "[Ĥíĝĥ]",
+      "medium": "[Méďíüm]",
+      "low": "[Ĺöŵ]"
+    },
+    "control_hints": {
+      "auto": "[Åüţö]",
+      "always": "[Åĺŵáýš]",
+      "off": "[Öff]"
+    },
+    "colour_vision": {
+      "off": "[Öff]",
+      "protan": "[Pŕööţáñööpíá]",
+      "deutan": "[Ďééüţééŕáñööpíá]",
+      "tritan": "[Ţŕííţáñööpíá]"
+    },
+    "you_marker": {
+      "always": "[Åĺŵáýš]",
+      "intro": "[Îñţŕö]",
+      "off": "[Öff]"
+    },
+    "hud_sides": {
+      "fixed": "[Fíxéď]",
+      "follow": "[Föĺĺöŵ]"
+    },
+    "camera_launch_follow": {
+      "auto": "[Åüţö]",
+      "chase": "[Çĥášé]",
+      "split": "[Špĺíţ]",
+      "hold": "[Ĥöĺď]"
+    },
+    "camera_panels": {
+      "full": "[Füĺĺ]",
+      "still": "[Šţíĺĺ]",
+      "off": "[Öff]"
+    },
+    "thickness": {
+      "0.75": "[Ţĥíñ]",
+      "1.0": "[Ñöŕmáĺ]",
+      "1.5": "[Ţĥíçķ]"
+    }
+  },
+  "remap": {
+    "title": "[ŔÉÉMÅÅP ÇÖÖÑŢŔÖÖĹŠ]",
+    "layout": "[Ĺáýöüţ]",
+    "layout_help": "[Pííçķ ţĥéé ĺááýýööüüţ ţöö çĥááñĝéé. ÉÉááçĥ ĺááýýööüüţ ķéééépš ííţš ööŵñ ķééýýš ööŕ büüţţööñš. ~]",
+    "reset": "[Ŕééšééţ ţĥííš ĺáýýööüţ]",
+    "reset_button": "[Ŕéšéţ]",
+    "reset_help": "[Püüţ éévééŕýý ķééýý ööŕ büüţţööñ ööf ţĥííš ĺááýýööüüţ bááçķ ţĥéé ŵááýý ííţ çááméé.]",
+    "hint_keys": "[ÜÜp ááñď Ďööŵñ: çĥööööšéé.  ÉÉñţééŕ: çĥááñĝéé.  Ĺééfţ ááñď Ŕííĝĥţ: ööţĥééŕ ĺááýýööüüţ.  ÉÉšç: bááçķ. ~~~~~~~~]",
+    "hint_pad": "[Ď-pááď: çĥööööšéé.  ÅÅ: çĥááñĝéé.  Ĺééfţ ááñď ŕííĝĥţ: ööţĥééŕ ĺááýýööüüţ.  B: bááçķ. ~~~~~~~]",
+    "capture_key": "[Pŕééšš ţĥéé ķééýý fööŕ {action}.  ÉÉšç çááñçééĺš. ~~]",
+    "capture_pad": "[Pŕééšš ţĥéé büüţţööñ fööŕ {action}.  Šţááŕţ çááñçééĺš. ~~~~]",
+    "capture_word": "[Pŕééšš...]",
+    "conflict": "[{control} ííš ááĺŕééááďýý {other}. Šŵááp ţĥéém? ]",
+    "reserved": "[{control} ííš ķéépţ fööŕ ţĥéé ĝááméé. Pííçķ ááñööţĥééŕ. ~]",
+    "pair": "[{control} bééĺööñĝš ţöö ţĥéé ööţĥééŕ pĺááýýééŕ'š ķééýýš. Pííçķ ááñööţĥééŕ. ~~]",
+    "taken": "[{control} ííš ááĺŕééááďýý {other}. Pííçķ ááñööţĥééŕ.]",
+    "twice": "[Pííçķ fööüüŕ ďííffééŕééñţ ķééýýš.]",
+    "wrong_device_kb": "[Ţĥááţ ŵááš ñööţ áá ķééýý. Pŕééšš áá ķééýý. ]",
+    "wrong_device_pad": "[Ţĥááţ ŵááš ñööţ áá çööñţŕööĺĺééŕ büüţţööñ. Pŕééšš áá büüţţööñ. ~~~~]",
+    "done": "[{action} ííš ñööŵ {control}.]",
+    "same": "[{action} ááĺŕééáďýý üüšéš {control}.]",
+    "cancelled": "[Çááñçééĺĺéď.]",
+    "reset_done": "[{layout} ííš bááçķ ţöö ííţš ďééfááüüĺţš. ]",
+    "move_steps": {
+      "up": "[üp]",
+      "left": "[ĺéfţ]",
+      "down": "[ďöŵñ]",
+      "right": "[ŕíĝĥţ]"
+    },
+    "swap": "[ŠŴÅP]",
+    "cancel": "[ÇÅÑÇÉĹ]",
+    "layouts": {
+      "arena": "[ÅÅŕééñáá (çööñţŕööĺĺéŕ)]",
+      "simple-pad": "[Šíímpĺéé (çööñţŕööĺĺééŕ) ]",
+      "kb-solo": "[Ķééýböáŕď]",
+      "kb-shared-p1": "[Ķééýýbööáŕď, pĺááýýéŕ 1]",
+      "kb-shared-p2": "[Ķééýýbööáŕď, pĺááýýéŕ 2]"
+    },
+    "actions": {
+      "move": "Fly",
+      "light": "Light",
+      "heavy": "Heavy",
+      "signature": "Signature",
+      "guard": "Guard",
+      "dodge": "Dodge",
+      "power": "Power",
+      "mode": "Energy",
+      "context": "Action",
+      "escape": "Escape",
+      "transform": "Transform"
+    },
+    "helps": {
+      "move": "[Ţĥéé fööüüŕ ķééýýš ţĥááţ fĺýý ýýööüü. Pŕééšš ţĥéém ííñ ööŕďééŕ: üüp, ĺééfţ, ďööŵñ, ŕííĝĥţ. ~~~~~~]",
+      "light": "[ÅÅ qüüííçķ bĺööŵ. ÅÅĺšöö ţĥéé fííŕšţ špééçííááĺ ŵĥííĺéé Pööŵééŕ ííš ĥééĺď. ~~~]",
+      "heavy": "[ÅÅ šĺööŵ, ĥááŕď bĺööŵ. ÅÅĺšöö ţĥéé šééçööñď špééçííááĺ ŵĥííĺéé Pööŵééŕ ííš ĥééĺď. ~~~~]",
+      "signature": "[ÝÝööüüŕ šííĝñááţüüŕéé möövéé, ŵĥééñ ýýööüü ĥáávéé ţĥéé Çĥááŕĝéé fööŕ íţ.]",
+      "guard": "[Ĥööĺď ţöö ĝüüááŕď.]",
+      "dodge": "[Ţááp ţöö ďööďĝéé, ĥööĺď ţöö špŕííñţ. ~~]",
+      "power": "[Ĥööĺď ţöö çĥááŕĝéé. Ĥééĺď ŵííţĥ áá fááçéé büüţţööñ ííţ çááĺĺš áá špééçííááĺ. ~~~~]",
+      "mode": "[Ĥööĺď fööŕ ééñééŕĝýý ááţţááçķš: bĺáášţš ííñšţééááď ööf bĺööŵš. Ĺééţ ĝöö fööŕ pĥýýšííçááĺ. Šééţţííñĝš çááñ mááķéé ííţ áá ţööĝĝĺéé. ~~~~~~~~~]",
+      "context": "[Ţĥéé möövéé ţĥááţ fííţš ţĥéé möömééñţ, šüüçĥ ááš áá ĝŕááb. Ţĥéé ţĥííŕď špééçííááĺ ŵĥííĺéé Pööŵééŕ ííš ĥééĺď. ~~~~~~~~]",
+      "escape": "[ÅÅ ŵááýý öüüţ ööf áá fíĝĥţ.]",
+      "transform": "[Ţááķééš áá fööŕm ţĥááţ ííš ŕééááďýý: ĥööĺď ííţ fööŕ ĥááĺf áá šééçööñď. ~~~]"
+    },
+    "controls": {
+      "west": "[ţĥéé ŵééšţ büüţţööñ]",
+      "north": "[ţĥéé ñööŕţĥ büüţţööñ]",
+      "east": "[ţĥéé ééáášţ büüţţöñ]",
+      "south": "[ţĥéé šööüüţĥ büüţţöñ]",
+      "lb": "[ĹB]",
+      "rb": "[ŔB]",
+      "lt": "[ĹŢ]",
+      "rt": "[ŔŢ]",
+      "l3": "[Ĺ3]",
+      "r3": "[Ŕ3]",
+      "dpad_up": "[Ď-pááď üp]",
+      "dpad_down": "[Ď-pááď ďööŵñ]",
+      "dpad_left": "[Ď-pááď ĺééfţ]",
+      "dpad_right": "[Ď-pááď ŕííĝĥţ]"
+    }
+  }
+}

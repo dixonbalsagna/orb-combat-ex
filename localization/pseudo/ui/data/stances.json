@@ -1,0 +1,135 @@
+{
+  "schema": 1,
+  "note": "The five stances and what the four face buttons do in each (docs/design/melee-press-feel.md section 10; Orb's stance layout in docs/ep/vision.md). The stance is what the player holds: nothing is martial arts, LB defensive, RB energy arts, RT charging, LT manoeuvre (the intent's stanceMask: LB 1, RB 2, RT 4, LT 8). `name` is the word on the plate's badge, `title` the full name, `cells` the face buttons X (quick), Y (strong), A (context) and B (signature), each as a short name. `_legend` is the legend's word for the button that holds the stance, `_legend_toggle` the energy button's word for a player who set toggle (underscore keys until Tools promotes them). `_live` says whether the four cell names are true on the live build: a stance with `_live` false keeps the legend's old words for its face buttons and its stance button (and the charging stance not being live keeps the Specials row); flipping one to true is this data change only (underscore key until Tools promotes it). Set on HEAD 2026-10-05: only the energy stance is live (bolts, the charged shot, a mine and the signature beam all exist; martial arts has no grab and throw on A, defensive has no check, push or counter, charging has no ultimate on B, manoeuvre has no zip). `_blurb` is the one-line description (the stances page's narrow tab, shown only for a live stance), `_howto` the controls page's row for the button that holds the stance, `_remap` and `_remap_help` the Remap screen's row and its help; the last three are used only while the stance is live (a stance that is not live keeps the old words: Guard, Power, Dodge). The words are a first draft for Narrative to edit; the player is the fighter, so they name what you do. Hybrids (LT+RB, LB+RB, LT+LB) are reserved and not in this file: a held pair reads as its newer button. Costs are not here: they are Game Design's data (the zip strike is 20 ki, by Orb's ruling).",
+  "order": [
+    "martial",
+    "defensive",
+    "energy",
+    "charging",
+    "manoeuvre"
+  ],
+  "_windup_ticks": {
+    "x": 6,
+    "y": 12,
+    "a": 12,
+    "b": 28
+  },
+  "_armed_word": "[ÑÉÉXŢ BĹÖÖŴ]",
+  "_armed_short": "[ÑÉXŢ]",
+  "_armed_note": "An armed stance (Full touch: a tap on guard, power or dodge arms that stance for the next blow, lapsing after 90 ticks; Controls, docs/controls/stance-key-help.md) is not held and is not latched: the badge says NEXT BLOW with a ring that runs down, and the touch button says NEXT with the same ring. Energy's latch is steady, not draining.",
+  "_counters": {
+    "launch": {
+      "kind": "defensive",
+      "word": "[ţĥéé ďééfééñšíívéé šţááñçé]"
+    },
+    "melee": {
+      "kind": "manoeuvre",
+      "word": "[ţĥéé mááñööéüüvŕéé šţááñçé]"
+    },
+    "beam": {
+      "kind": "signature",
+      "word": "[ţĥéé šííĝñáţüüŕé]"
+    }
+  },
+  "_counters_note": "What answers each finisher kind (Game Design, docs/design/melee-press-feel.md sections 10 and 11): a launch the defensive stance, a melee the manoeuvre stance, a beam the Signature press (B) from the martial, energy or charging stance. The finisher telegraph chip reads this for its icon and words. The sim still reads the old answers (reads.json finisher_counter) until Encounter builds the rule; the words say the stance, never a timing, so they hold for both.",
+  "stances": {
+    "martial": {
+      "mask": 0,
+      "name": "[MÅÅŔŢÎÅĹ]",
+      "title": "[Mááŕţííááĺ áŕţš]",
+      "_blurb": "[ÝÝööüüŕ ööŵñ šţýýĺéé: šţŕííķééš, ţĥŕööŵš ááñď ýýööüüŕ šííĝñááţüüŕéé. ]",
+      "_live": false,
+      "_works": {
+        "a": false
+      },
+      "enter": "[Ĥööĺď ñööţĥííñĝ]",
+      "cells": {
+        "x": "[Ĺííĝĥţ šţŕííķééš]",
+        "y": "[Ĥééáávý šţŕííķéš]",
+        "a": "[Ĝŕááb ááñď ţĥŕööŵ ]",
+        "b": "[Šííĝñáţüüŕé]"
+      }
+    },
+    "defensive": {
+      "mask": 1,
+      "name": "[ĎÉÉFÉÑŠÎÎVÉ]",
+      "title": "[Ďééféñšíívé]",
+      "_blurb": "[Ĝüüááŕď, ááñšŵééŕ ĥííš bĺööŵš ááñď püüšĥ ĥíím bááçķ. ~~~~]",
+      "_howto": "[Ďééfééñšíívéé šţááñçéé (ĥööĺď)]",
+      "_remap": "[Ďééfééñšíívéé šţááñçéé (ĥööĺď)]",
+      "_remap_help": "[Ĥööĺď fööŕ ţĥéé ďééfééñšíívéé šţááñçéé: ĝüüááŕď, ááñď ţĥéé fááçéé büüţţööñš çĥééçķ, püüšĥ, ŕéévééŕšéé ááñď çööüüñţééŕ. ~~~~~~~~]",
+      "_live": false,
+      "_legend": "[Ďééfééñšíívéé (ĥöĺď)]",
+      "enter": "[Ĥööĺď ţĥéé ĝüüááŕď büüţţööñ]",
+      "cells": {
+        "x": "[Çĥéçķ]",
+        "y": "[Püšĥ]",
+        "a": "[Ŕéévéŕšáĺ]",
+        "b": "[Çööüñţéŕ]"
+      }
+    },
+    "energy": {
+      "mask": 2,
+      "name": "[ÉÑÉŔĜÝ]",
+      "title": "[ÉÉñéŕĝýý áŕţš]",
+      "_blurb": "[Bĺáášţš ííñšţééááď ööf bĺööŵš: bööĺţš, çĥááŕĝééď šĥööţš, mííñééš ááñď ýýööüüŕ bééáám. ~~~~~~]",
+      "_howto": "[ÉÉñééŕĝýý šţááñçéé (ĥööĺď; Šééţţííñĝš çááñ mááķéé ííţ áá ţööĝĝĺéé) ~~]",
+      "_remap": "[ÉÉñééŕĝýý šţááñçéé (ĥööĺď)]",
+      "_remap_help": "[Ĥööĺď fööŕ ééñééŕĝýý ááţţááçķš: bĺáášţš ííñšţééááď ööf bĺööŵš. Ĺééţ ĝöö fööŕ mááŕţííááĺ ááŕţš. Šééţţííñĝš çááñ mááķéé ííţ áá ţööĝĝĺéé. ~~~~~~~~~~]",
+      "_live": true,
+      "_legend": "[ÉÉñééŕĝýý (ĥöĺď)]",
+      "_legend_toggle": "[ÉÉñééŕĝýý (ţööĝĝĺé)]",
+      "enter": "[Ĥööĺď ţĥéé ééñééŕĝýý büüţţööñ]",
+      "cells": {
+        "x": "[Böĺţš]",
+        "y": "[Çĥááŕĝééď šĥööţ]",
+        "a": "[Míñé]",
+        "b": "[Béám]"
+      }
+    },
+    "charging": {
+      "mask": 4,
+      "name": "[ÇĤÅÅŔĜÎÑĜ]",
+      "title": "[Çĥááŕĝíñĝ]",
+      "_blurb": "[Ĝááţĥééŕ pööŵééŕ fööŕ ýýööüüŕ špééçííááĺš ááñď ýýööüüŕ üüĺţíímááţé.]",
+      "_howto": "[Çĥááŕĝííñĝ šţááñçéé (ĥööĺď ţöö çĥááŕĝéé) ~~]",
+      "_remap": "[Çĥááŕĝííñĝ šţááñçéé (ĥööĺď) ~]",
+      "_remap_help": "[Ĥööĺď ţöö çĥááŕĝéé. Ĥééĺď ŵííţĥ áá fááçéé büüţţööñ ííţ ţĥŕööŵš áá špééçííááĺ. ~~~~]",
+      "_live": false,
+      "_legend": "[Çĥááŕĝííñĝ (ĥööĺď) ]",
+      "_works": {
+        "x": false,
+        "y": false,
+        "a": false
+      },
+      "enter": "[Ĥööĺď ţĥéé pööŵééŕ büüţţööñ]",
+      "cells": {
+        "x": "[Qüüííçķ špéçííáĺ]",
+        "y": "[Šţŕööñĝ špééçííááĺ]",
+        "a": "[ÜÜţííĺíţýý špéçííáĺ]",
+        "b": "[ÜÜĺţíímááţéé (ĥöĺď)]"
+      }
+    },
+    "manoeuvre": {
+      "mask": 8,
+      "name": "[MÅÅÑÖÉÉÜVŔÉ]",
+      "title": "[Mááñöééüvŕé]",
+      "_blurb": "[Ďööďĝéé, bööööšţ ááñď žííp ííñ ááñď ööüüţ. ]",
+      "_howto": "[Mááñööééüüvŕéé šţááñçéé (ĥööĺď), ďööďĝéé (ţááp) ]",
+      "_remap": "[Ďööďĝéé (ţááp), mááñööééüüvŕéé šţááñçéé (ĥööĺď) ]",
+      "_remap_help": "[Ţááp ţöö ďööďĝéé. Ĥööĺď fööŕ ţĥéé mááñööééüüvŕéé šţááñçéé: bööööšţ, ááñď ţĥéé fááçéé büüţţööñš žííp ííñ ááñď ööüüţ. ~~~~~]",
+      "_live": false,
+      "_legend": "[Mááñööéüüvŕéé (ĥöĺď)]",
+      "_works": {
+        "a": false
+      },
+      "enter": "[Ĥööĺď ţĥéé ďööďĝéé büüţţööñ]",
+      "cells": {
+        "x": "[Žííp šţŕííķé]",
+        "y": "[Žííp ĥéáávý]",
+        "a": "[Žííp ţááçķĺé]",
+        "b": "[Ţééŕŕáííñ áŕţ]"
+      }
+    }
+  }
+}

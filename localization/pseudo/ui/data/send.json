@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "note": "The feedback panel's Send step (docs/ui/hud-spec.md section 20). SEND opens a review of exactly what will go out, and the open button hands it to the player's browser or email app; nothing is sent until the player submits it there. WHERE it goes is `_target`: none (the default: SEND is hidden and only COPY REPORT shows), mailto (a private email to `_targets.mailto.to`), form (a private form at `_targets.form.url`, with {title} and {body} where the text goes) or github (a PUBLIC issue on issue.repo, the review says so). The EP gives the address when Orb picks it. Each target carries its own words (open, review, opened) and its own link limit (browsers and proxies cut long ones); a report too long for it is copied to the clipboard instead and the link opens with a short body that asks to paste it. The github target's words are the top-level buttons.open, review and opened below. Keys starting with an underscore are UI's own (the schema ignores them).",
+  "_target": "none",
+  "_targets": {
+    "mailto": {
+      "to": "",
+      "limit": 1800,
+      "short_body": "[Pĺááýýţééšţ ŕéépööŕţ çööpííééď ţöö ţĥéé çĺíípbööááŕď. Páášţéé ííţ ĥééŕéé: ~]",
+      "open": "[ÖÖPÉÑ ÉÉMÅÎĹ]",
+      "review": "[ÖÖPÉÉÑ ÉÉMÅÅÎÎĹ ööpééñš ýýööüüŕ éémááííĺ áápp ŵííţĥ ţĥéé ţééxţ bééĺööŵ, ááďďŕééššééď ţöö ţĥéé ţééáám. ÖÖñĺýý ţĥéé ţééáám šééééš ííţ. Ñööţĥííñĝ ííš šééñţ üüñţííĺ ýýööüü pŕééšš šééñď ţĥééŕéé. Pĺééáášéé ĺééáávéé ööüüţ ááñýýţĥííñĝ pééŕšööñááĺ. ~~~~~~~]",
+      "opened": "[ÝÝööüüŕ éémááííĺ áápp ööpééñééď. Ţĥéé ŕéépööŕţ ííš ááĺšöö çööpííééď: páášţéé ííţ ííf ţĥéé mééššááĝéé ííš éémpţýý. ]"
+    },
+    "form": {
+      "url": "",
+      "limit": 3000,
+      "short_body": "[Pĺááýýţééšţ ŕéépööŕţ çööpííééď ţöö ţĥéé çĺíípbööááŕď. Páášţéé ííţ ĥééŕéé: ~]",
+      "open": "[ÖÖPÉÉÑ FÖŔM]",
+      "review": "[ÖÖPÉÉÑ FÖÖŔM ööpééñš áá pŕíívááţéé fééééďbááçķ fööŕm ŵííţĥ ţĥéé ţééxţ bééĺööŵ. ÖÖñĺýý ţĥéé ţééáám šééééš ííţ. Ñööţĥííñĝ ííš šééñţ üüñţííĺ ýýööüü šüübmííţ ţĥéé fööŕm. Pĺééáášéé ĺééáávéé ööüüţ ááñýýţĥííñĝ pééŕšööñááĺ. ~~~~~~~~~]",
+      "opened": "[Ţĥéé fööŕm ööpééñééď ííñ áá ñééŵ ţááb. Ţĥéé ŕéépööŕţ ííš ááĺšöö çööpííééď: páášţéé ííţ ííf ţĥéé fööŕm ííš éémpţýý. ~~~~~]"
+    }
+  },
+  "issue": {
+    "repo": "https://github.com/dixonbalsagna/orb-combat-ex",
+    "limit": 3000,
+    "title_prefix": "[Pĺááýţéšţ]",
+    "title_none": "feedback",
+    "short_body": "[Pĺááýýţééšţ ŕéépööŕţ çööpííééď ţöö ţĥéé çĺíípbööááŕď. Páášţéé ííţ ĥééŕéé: ~]"
+  },
+  "buttons": {
+    "send": "[ŠÉÑĎ]",
+    "open": "[ÖÖPÉÑ ÎÎŠŠÜÉ]"
+  },
+  "review_title": "[Ŕéévííééŵ béfööŕéé šééñďíñĝ]",
+  "review": "[ÖÖPÉÉÑ ÎÎŠŠÜÜÉÉ ööpééñš áá püübĺííç ĜííţĤüüb ííššüüéé ŵííţĥ ţĥéé ţééxţ bééĺööŵ. Ñööţĥííñĝ ííš šééñţ üüñţííĺ ýýööüü šüübmííţ ííţ ţĥééŕéé. Pĺééáášéé ĺééáávéé ööüüţ ááñýýţĥííñĝ pééŕšööñááĺ. ~~~~]",
+  "opened": "[ĜííţĤüüb ööpééñééď ííñ áá ñééŵ ţááb. Ţĥéé ŕéépööŕţ ííš ááĺšöö çööpííééď: páášţéé ííţ ííf ţĥéé pááĝéé ííš éémpţýý. ~~~]",
+  "too_long": "[Ţĥííš ŕéépööŕţ ííš ţöööö ĺööñĝ fööŕ áá ĺííñķ, šöö ííţ ííš çööpííééď. Páášţéé ííţ ííñţöö ţĥéé pááĝéé ţĥááţ ööpééñš. ~~~~~]"
+}

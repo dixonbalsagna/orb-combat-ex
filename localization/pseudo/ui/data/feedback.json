@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "note": "The feedback panel's words (docs/ui/hud-spec.md section 20): every word it shows and the report's labels, as data. The panel copies a plain-text report to the clipboard for a friend to paste to Orb. Nothing is sent anywhere and nothing personal is collected: the report holds the build, the match seed and setup, the match time, the platform and browser family, the settings, the tags and what the player typed.",
+  "title": "[ŠÉÉÑĎ FÉÉÉÉĎBÅÇĶ]",
+  "hint": "[Ţééĺĺ ÖÖŕb ŵĥááţ ýýööüü fööüüñď. Pĺééáášéé ĺééáávéé ööüüţ ááñýýţĥííñĝ pééŕšööñááĺ.]",
+  "placeholder": "[Ŵĥááţ ĥááppééñééď? Ŵĥááţ ďííď ýýööüü ééxpééçţ? ]",
+  "tags": [
+    {
+      "id": "bug",
+      "label": "[Büĝ]"
+    },
+    {
+      "id": "unfair",
+      "label": "[Fééĺţ üñfááíŕ]"
+    },
+    {
+      "id": "confusing",
+      "label": "[Çööñfüüšíñĝ]"
+    },
+    {
+      "id": "loved",
+      "label": "[Ĺöövéď íţ]"
+    }
+  ],
+  "buttons": {
+    "copy": "[ÇÖÖPÝ ŔÉÉPÖŔŢ]",
+    "copy_again": "[ÇÖÖPÝ ÅÅĜÅÎÑ]",
+    "back": "[BÅÇĶ]",
+    "close": "[ÇĹÖŠÉ]",
+    "match_end": "[ŠÉÉÑĎ FÉÉÉÉĎBÅÇĶ]"
+  },
+  "copied": "[Çööpííééď. Páášţéé ííţ ţöö ÖÖŕb.]",
+  "copied_fallback": "[ÎÎf ñööţĥííñĝ ŵááš çööpííééď, šééĺééçţ ţĥéé ţééxţ bééĺööŵ ááñď çööpýý ííţ. ~~~]",
+  "report": {
+    "title": "[ÖÖŔB ÇÖÖMBÅÅŢ ÉÉX - PĹÅÅÝÝŢÉÉŠŢ FÉÉÉÉĎBÅÅÇĶ ]",
+    "build": "[Büíĺď]",
+    "seed": "[Šééď]",
+    "setup": "[Šéţüp]",
+    "time": "[Mááţçĥ ţíímé]",
+    "screen": "[Šçŕééñ]",
+    "platform": "[Pĺááţföŕm]",
+    "engine": "[Éñĝíñé]",
+    "settings": "[Šééţţíñĝš]",
+    "tags": "[Ţáĝš]",
+    "notes": "Notes",
+    "unknown": "[üüñķñöŵñ]",
+    "in_progress": "[ííñ pŕööĝŕéšš]",
+    "ended": "[éñďéď]",
+    "none": "[ñöñé]",
+    "you": "[pĺáýéŕ]",
+    "ai": "[çöömpüţéŕ]"
+  }
+}
