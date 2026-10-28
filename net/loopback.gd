@@ -3,7 +3,10 @@ extends RefCounted
 ## Two peers in one process, joined by simulated links with latency, jitter and loss (no sockets). Both run a NetSession
 ## at 60 frames a second of simulated wall time; every frame each peer sends one packet with all its inputs the other has
 ## not acknowledged, so a lost packet costs a frame, not an input. Packets can arrive out of order (jitter).
-## Used by net/tools/rollback_check.gd (determinism) and rollback_bench.gd (cost).
+## Each packet also carries the peer's newest confirmed checkpoint digests (NetSession.chkOut, desync detection). An
+## optional spectator (addSpectator) hangs off one peer, the relay, over a link of its own: it receives only the
+## confirmed inputs of every slot and the relay's digests, and acknowledges what it holds.
+## Used by net/tools/rollback_check.gd (determinism), desync_check.gd, spectator_check.gd and rollback_bench.gd (cost).
 
 const FRAME_MS: float = 1000.0 / 60.0
 
@@ -68,7 +71,8 @@ class Peer:
 
 	func packet() -> Dictionary:
 		var since: Array = session.localSince(acked)
-		return {"from": session.local, "frame": session.frame, "ack": session.contig[1 - session.local], "first": since[0], "inputs": since[1]}
+		return {"from": session.local, "frame": session.frame, "ack": session.contig[1 - session.local], "first": since[0], "inputs": since[1],
+			"chk": session.chkOut.duplicate(true)}
 
 	func take(pk: Dictionary) -> void:
 		acked = maxi(acked, int(pk.ack))
@@ -76,6 +80,8 @@ class Peer:
 		for p in pk.inputs:
 			session.addInput(int(pk.from), t, p)
 			t += 1
+		for c in pk.chk:
+			session.addRemoteCheck(int(c[0]), c[1])
 
 
 var peers: Array = []
@@ -84,6 +90,11 @@ var now: float = 0.0
 var frames: int = 0
 var clock: Callable      # () -> int microseconds: with it, each peer's frame (receive and advance) is timed into frameUs
 var frameUs: Array = [PackedInt32Array(), PackedInt32Array()]
+var spectator: NetSpectator = null
+var relay: int = 0            # the peer that relays to the spectator
+var specLinks: Array = []     # [relay -> spectator, spectator -> relay]
+var specAcked: int = 0        # the spectator holds every tick below this
+var relayPredicted: bool = false   # tests only (the spectator check's negative control): relay the inputs ticks ran with, guesses included
 
 
 ## Two peers on fresh sims of the same match. profile is a PROFILES entry; seed seeds the links; bots answer for each
@@ -104,6 +115,33 @@ static func make(matchSeed: int, setup: Dictionary, profile: Dictionary, delay: 
 	return L
 
 
+## A spectator on a fresh sim of the same match, fed by peer `relay_` over links like the relay's own (the same
+## latency, jitter and loss each way, other seeds).
+func addSpectator(matchSeed: int, setup: Dictionary, profile: Dictionary, lag: int, relay_: int, linkSeed: int) -> NetSpectator:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, matchSeed, {"p1": false, "p2": false}, setup)
+	spectator = NetSpectator.new(S, 2, lag)
+	relay = relay_
+	var oneWay: float = links[relay].oneWay
+	for k in range(2):
+		specLinks.append(Link.new(oneWay, float(profile.jitter), float(profile.loss), (linkSeed * 6151 + k * 92821 + 17) & 0xFFFFFFFF))
+	return spectator
+
+
+func _relayPacket() -> Dictionary:
+	var sess: NetSession = peers[relay].session
+	var got: Array = sess.confirmedSince(specAcked)
+	if relayPredicted:   # the bug the negative control plants: the ticks this peer has run, with the inputs they used
+		var per: Array = []
+		for k in range(2):
+			var a := PackedInt64Array()
+			for t in range(specAcked, mini(sess.frame, specAcked + 64)):
+				a.append(sess.inputs[k][t] if sess.inputs[k].has(t) else int(sess.used[k].get(t, sess.inputFor(k, t))))
+			per.append(a)
+		got = [specAcked, per]
+	return {"first": got[0], "per": got[1], "chk": sess.chkOut.duplicate(true)}
+
+
 ## One frame of wall time: deliver what has arrived, advance each peer that is below `until` ticks, send.
 func step(until: int) -> void:
 	for k in range(2):
@@ -121,8 +159,20 @@ func step(until: int) -> void:
 			p.session.sync()
 		if clock.is_valid() and playing:
 			frameUs[k].append(clock.call() - t0)
+	if spectator != null:
+		for pk in specLinks[0].receive(now):
+			spectator.take(int(pk.first), pk.per)
+			for c in pk.chk:
+				spectator.addCheck(int(c[0]), c[1])
+		for pk in specLinks[1].receive(now):
+			specAcked = maxi(specAcked, int(pk.ack))
+		if spectator.frame < until:
+			spectator.advance(until)
 	for k in range(2):
 		links[k].send(now, peers[k].packet())
+	if spectator != null:
+		specLinks[0].send(now, _relayPacket())
+		specLinks[1].send(now, {"ack": spectator.have})
 	now += FRAME_MS
 	frames += 1
 
@@ -136,7 +186,11 @@ func run(ticks: int) -> bool:
 		for p in peers:
 			if p.session.frame < ticks or p.session.finalTo < ticks:
 				done = false
+		if spectator != null and spectator.have < ticks:
+			done = false
 		if done:
+			if spectator != null:
+				spectator.flush(ticks)
 			return true
 	return false
 
@@ -145,3 +199,5 @@ func close() -> void:
 	for p in peers:
 		p.session.close()
 		SimCore.dispose(p.session.S)
+	if spectator != null:
+		spectator.close()

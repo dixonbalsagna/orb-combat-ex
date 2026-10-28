@@ -5,7 +5,8 @@ extends SceneTree
 ## (exit 0) only if, at every confirmed tick of both peers:
 ##   - SimHash.stateHash's gameplay hash equals the straight run's at that tick (every --hash-every ticks; 1 by default),
 ##   - the tick's feed lines and fx events (the director's decisions as the host sees them) equal the straight run's,
-## and both peers' confirmed input logs and final states equal the straight run's. It also checks the state graph has no
+## and both peers' confirmed input logs and final states equal the straight run's, and neither peer's desync detection
+## (NetSession.checkEvery, on at its default) fired. It also checks the state graph has no
 ## shared plain containers (NetSnapshot.aliasAudit) and that sessions free their objects.
 ##   godot --headless --path . --script res://net/tools/rollback_check.gd -- [--seeds=1,2,3] [--ticks=1200]
 ##     [--profiles=lan,p80j,...|all] [--setup=default|features|planet|calm] [--delay=2] [--hash-every=1] [--sparse=K]
@@ -84,6 +85,9 @@ func _init() -> void:
 	print("objects alive before %d, after %d" % [objects0, objects1])
 	if objects1 > objects0 + 50:
 		print("FAIL  sessions leak objects (%d more)" % (objects1 - objects0))
+		failures += 1
+	if sessions == 0:
+		print("FAIL  no session ran")
 		failures += 1
 	print("%s  %d sessions, %d confirmed-tick hash comparisons, %d failure(s)" % ["PASS" if failures == 0 else "FAIL", sessions, hashed, failures])
 	quit(0 if failures == 0 else 1)
@@ -188,6 +192,8 @@ func _session(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery: i
 		res.stalls += sess.stalls
 		res.lost += L.links[k].lost
 		res.sent += L.links[k].sent
+		if res.err == "" and not sess.desync.is_empty() and sabotage == "":
+			res.err = "peer %d: desync detection fired at checkpoint %d" % [k, sess.desync.tick]
 		if res.err == "":
 			if SimHash.stateHash(sess.S).gameplay != ref.final:
 				res.err = "peer %d: final state differs from the straight run" % k

@@ -1,6 +1,6 @@
 # Rollback netcode: the core
 
-Owner: Netcode and Online. 2026-10-28, cloud brief `docs/ep/cloud-briefs/netcode-rollback.md`. Code: `net/`. No transport yet: two peers run in one process over simulated links.
+Owner: Netcode and Online. 2026-10-28, cloud briefs `docs/ep/cloud-briefs/netcode-rollback.md` (sections 1 to 6) and `netcode-desync-spectate.md` (sections 7 to 9). Code: `net/`. No transport yet: two peers run in one process over simulated links.
 
 ## 1. The model
 
@@ -21,7 +21,7 @@ The sim is not touched. `NetSession` drives `SimCore.step(S, inputs)` exactly as
 
 The existing determinism rules (`docs/architecture/determinism.md`) stay in force, and the parity gate and the web parity check enforce them: seeded `SimRng` only, our own trig, binary64, no clock, fixed step. Rollback adds the following.
 
-1. **The state is closed.** Everything a later tick reads lives in the object graph reachable from `S`, as script variables. A static that gameplay writes during a tick would survive a restore and break rollback. The per-match statics that `step()` rebinds from `S` (`SimConst` arena, `WorldBiomes` columns, `WorldClimate.curGen`) are derived from `S`, so they are safe. Planet-match caches (`WorldEpoch._plans`, `_jobs`) are untested here (section 7).
+1. **The state is closed.** Everything a later tick reads lives in the object graph reachable from `S`, as script variables. A static that gameplay writes during a tick would survive a restore and break rollback. The per-match statics that `step()` rebinds from `S` (`SimConst` arena, `WorldBiomes` columns, `WorldClimate.curGen`) are derived from `S`, so they are safe. Planet-match caches (`WorldEpoch._plans`, `_jobs`) are untested here (section 10).
 2. **`step(S, inputs)` is a pure function of `S` and `inputs`.** `S.out` is write-only output.
 3. **References stay inside the graph.** An object field points at an object of the same state (a fighter, an exchange, a clash), or at immutable data: `FighterData`'s `WoundsDef`, `MetersDef` and `LadderDef`, and `SimForms.FormsDef`, which a snapshot shares instead of copying.
 4. **No container is reachable by two paths.** An `Array`, a `Dictionary` or a packed array held in two fields is one value live but two values after a copy. In Godot 4, a packed array assigned to a second field is the same buffer, not a copy. `NetSnapshot.aliasAudit` checks this, and the check runs it at the start, middle and end of every straight run. It finds no sharing today.
@@ -111,14 +111,94 @@ Profiles (`NetLoopback.PROFILES`; ping is the round trip, and each way is half):
 
 Not covered yet: no bot match reached a KO (the bots are not fighters), so the KO and its slow motion have not run under rollback. Depth (`"depth": true`) is not in the features setup either.
 
-## 7. Open questions
+## 7. Desync detection and reports
+
+Code: `net/desync.gd` (`NetDesync`) and the checkpoint half of `net/session.gd`. Still no transport: the checkpoints ride in the loopback's input packets.
+
+- **What is hashed, and when.** Every `checkEvery` ticks (60, one second; 0 turns it off) each peer takes a digest of the state before that tick, `NetDesync.digest(S)`, and a snapshot of it. A re-run of the tick by a rollback replaces both, so what is kept is always the last run. Once the tick is confirmed, the digest is final and goes into every packet with the three before it (`chkOut`), so a lost packet costs nothing.
+- **The cheap digest.** `SimHash.stateHash` costs about 25 ms. The digest is MD5 (the engine's `HashingContext`, which the web build has too) over one `PackedFloat64Array` of the fields a divergence reaches first, plus the terrain's packed arrays read as blocks. Those fields are the clock, the RNG, every fighter's hashed fields, the director's counters, the mood and the pause, each building's and tree's damage, and the shots. It costs about 0.8 ms, against 24 to 35 ms for `stateHash` (about 30 times cheaper), plus a pooled snapshot take (1.6 ms) once a second. That is under 0.05 ms a tick on average. A divergence in a field outside the digest is caught once it reaches one inside, which in this sim is a tick or two later: most state feeds the fighters or the RNG. It is not a security hash and does not need to be, since a peer that lies can lie about anything.
+- **On a mismatch.** The first confirmed checkpoint whose digests differ sets `NetSession.desync` (and calls `onDesync`) on both peers. Each peer keeps:
+  - the tick, both digests and the last agreed checkpoint;
+  - the replay of its confirmed inputs up to that tick (`NetDesync.replayOf`, SimReplay format v4, with the data hash);
+  - its snapshot at that tick, and the one at the last agreed checkpoint.
+
+  Detection then stops, and later checkpoints keep no snapshots.
+- **The report.** `NetDesync.report(session, peerSnapshot)` returns a JSON-able record, and `writeReport` writes it. It holds the tick, both digests, the last agreed tick, the replay, and two field walks:
+  - `vsReplay` walks this peer's snapshot against the state its own replay re-simulates. If they differ, this peer drifted from its own inputs (a sim bug, a static that a restore did not cover, memory gone bad). If they agree, the other peer or the platform did.
+  - `vsPeer` walks it against the other peer's snapshot of the same tick, when that is at hand. The loopback always has it; online it needs the other side's snapshot in a crash-report upload (section 10).
+- **The field walk.** `NetDesync.firstDiffs(a, b)` goes breadth first in property-list order, so an object is named by its shortest path (the second fighter is `S.fighters[1]`, not `S.fighters[0].launchBy`). It compares floats by their bits, and lists up to 8 paths with both values, for example `S.fighters[1].x (89067.3017581505 (bits 40f5beb4d4005ab9) vs … ab8)` or `S.deform[1600]`. It skips `S.out` and `worldId`, which is a per-process counter.
+
+**The check** (`net/tools/desync_check.gd`) runs as a game would (not in verify mode):
+- **Clean runs, every profile.** It passes only if no desync is raised, every confirmed checkpoint equals the straight run's digest, and the peers agreed on all of them.
+- **Injected divergence.** Peer 1's state is changed after every run of one tick that is not a checkpoint (tick 307 of 900). The injections are one RNG bit, one ulp of a fighter's x, 1 hp off a building, 0.001 on a terrain column, the mood's casualty count, and 1e-6 on the director's cool-down. Every one must be reported by both peers at the next checkpoint (360), with 300 as the last agreed checkpoint. The two digests must cross, and the field walk must find the difference against the other peer and against the divergent peer's own replay, and find none on the clean peer's replay. An injection the sim erases before the checkpoint counts as healed, not missed. That happened to the 1-ulp x on seed 2, where the sim overwrote x before the checkpoint: the divergent peer's full `SimHash` at the checkpoint equals the straight run's. Each injection must still be detected in at least one run.
+- **Negative control (`--negative-control`).** A blind detector, which exchanges digests and never compares them, must miss the injections. A stale detector, which keeps a checkpoint's first run (a guess) instead of its last, must raise a false alarm on a clean run that re-ran a checkpoint. Both breaks must be caught.
+
+`rollback_check.gd` now also fails if detection fires on any of its sessions, because `checkEvery` is on at its default there.
+
+## 8. Spectators
+
+Code: `net/spectator.gd` (`NetSpectator`), `NetSession.confirmedSince`, and the spectator half of `net/loopback.gd`.
+
+- **The stream.** A spectator has no input slot. A relay (one player's session today, a server later) sends it every slot's confirmed inputs: only ticks below the relay's confirmed frontier, at most 64 a packet, from the spectator's acknowledgement on. It also forwards the relay's checkpoint digests. The spectator acknowledges what it holds, so a lost packet is resent. It never predicts and never rolls back, so every tick it runs is final.
+- **The jitter buffer.** It starts once it holds `lag` ticks (6, 100 ms), then plays one tick a frame. If the buffer runs dry it stops, raises `lag` by 2 (at most 60) and fills up again. If the buffer holds more than twice `lag`, it catches up by up to 3 ticks a frame.
+- **It checks itself.** It takes the same digests at the same ticks as the players and compares them with the forwarded ones. So a spectator that drifted, or a relay that sent anything other than the confirmed stream, shows up as a spectator desync.
+- **How far behind.** The spectator runs about the relay's confirmation lag plus the buffer behind the players: about 5 ticks (83 ms) on a LAN, 11 (180 ms) at a 120 ms ping, 15 to 19 (250 to 310 ms) at 200 ms, and 26 to 28 (440 to 470 ms) at 400 ms. The buffer never ran dry up to a 200 ms ping with 10% loss. On asym and far it ran dry once, and grew from 6 ticks to 8. A broadcast would add seconds of delay on purpose, which is just a larger `lag`.
+- **Cost to the relay.** Its packet holds two 8-byte inputs a tick and its last four digests: about 1 KB/s at 60 packets a second. A relay serving many spectators should be a server, not a player (section 10).
+
+**The check** (`net/tools/spectator_check.gd`). Two players play over the loopback as a game would, and a spectator hangs off peer 0 over a link with the same profile. It passes only if all of these hold:
+- the spectator's `SimHash` equals the straight run's every 10 ticks and at the end;
+- every tick's feed and fx digest equals the straight run's;
+- every checkpoint it compared agreed with the relay's;
+- it ran every tick, and the players saw no desync.
+
+The negative control breaks the relay in two ways. One relay forwards the inputs its ticks ran with, guesses included (the obvious bug). The other stream throws one slot's stick the other way for 12 ticks. Each break must show as a state that differs from the straight run's and as a spectator desync.
+
+## 9. Adaptive input delay
+
+Code: `net/delay.gd` (`NetDelay.choose`). It is a pure function, with no clock and no state, so both peers and a test get the same answer from the same numbers. Each peer chooses for itself from its measured round trips, and the session takes the larger of the two in the handshake.
+
+- **The rule.** Choose the smallest delay whose usual worst rollback frame fits the device's budget.
+  - **The link.** The 75th percentile of the round-trip samples, so one spike does not set the delay. Negative, NaN and infinite samples are ignored. A rollback reaches back about (one-way ticks − delay) ticks.
+  - **The device.** The cost of a tick, a snapshot take and a restore on it. `NetDelay.device(k)` scales the reference device's (0.60, 1.57 and 2.45 ms, section 5) by a slowdown k. A rollback frame of depth D costs restore + (D + 1) × (tick + save).
+  - **The budget.** 75% of a 60 Hz frame (12.5 ms). The rest goes to drawing and the host.
+  - **The limits.** The delay is never below 2 ticks (the tested default), never above 8 (133 ms, past which the stick feels late), and never above the delay that removes rollback on that link. If even that does not fit, the answer is the most it may be, with `fits = false`, so the host can warn or keep the match out of ranked play.
+- **What it picks** for the loopback's profiles (`delay_check.gd` prints this table; * means it does not fit):
+
+| profile | ping | jitter (round trip) | reference | x2 | x4 |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| lan | 0 | 0 | 2 | 2 | 2 |
+| p40 | 40 | ±8 | 2 | 2 | 2 |
+| p80j | 80 | ±24 | 2 | 3 | 3 |
+| p120 | 120 | ±40 | 2 | 5 | 5 |
+| p160 | 160 | ±50 | 3 | 6 | 6 |
+| p200 | 200 | ±60 | 4 | 7 | 7 |
+| p200c | 200 | 0 | 3 | 6 | 6 |
+| asym | 140 | ±80 | 3 | 6 | 6 |
+| far | 400 | ±80 | 8* | 8* | 8* |
+
+  On a desktop it keeps the tested 2 ticks up to a 120 ms ping, and takes 3 or 4 at 160 to 200 ms, where the bench's p99 frames ran over. On a device four times slower it asks for about the one-way time, as section 5 said it must. At a 400 ms ping nothing fits: 8 ticks is the cap.
+- **The tests** (`net/tools/delay_check.gd`):
+  - the floor and the cap;
+  - the delay that removes rollback;
+  - it is monotone in ping and in device slowness;
+  - a x4 device takes more delay than the reference;
+  - a delay that fits stays within the budget, and one tick less would not;
+  - outliers, junk and empty input;
+  - the samples' order does not matter, and the same input gives the same answer;
+  - the options;
+  - a NaN speed.
+
+  The negative control runs the same tests against a chooser that ignores the device and one that reads only the first sample, and both must fail.
+- **Not yet.** It runs once, at match start. Changing the delay mid-match, between exchanges with hysteresis, needs both peers to agree on the tick it changes at, which is a transport-protocol item. The round-trip samples come from the transport's pings (section 10).
+
+## 10. Open questions
 
 - **Transport.** Browser peers need WebRTC data channels (unordered, unreliable), and native builds can use ENet or Steam networking. NAT traversal needs a STUN server (free public ones exist) and, for the share of players behind symmetric NATs, a TURN relay, which costs money (ADR 0005: zero budget). One session layer over two transports keeps native and browser players able to meet.
 - **Matchmaking.** At zero budget: lobby codes over a small signalling service (free tier), or Steam lobbies on Steam. Ranked play is out of scope until there are players.
 - **Time sync.** The loopback runs both peers on one clock. Real peers drift: the peer that is ahead must slow down (skip a frame now and then) by the frame advantage the packets report. Packets already carry the sender's frame for this.
-- **Adaptive input delay.** Choose the delay at match start from the measured ping and the device's speed. A slow device should take more delay and roll back less (section 5).
-- **Spectators.** A spectator needs only the confirmed inputs, relayed by a player or a server, played with a few seconds of delay and no rollback. A replay file is already that stream (`SimReplay`).
-- **Desync reporting.** `SimHash.stateHash` costs about 25 ms, too much to run every tick. Proposal: both peers hash a confirmed tick every few seconds, spread over frames or hashing a cheaper digest, and exchange the hashes. On a mismatch both keep the replay (seed, setup, data hash, inputs) and the last confirmed snapshot for a report. Replays already verify across machines.
+- **Desync reports online.** The `vsPeer` walk needs the other peer's snapshot of the mismatched tick. Online, that is an upload of the snapshot (about 160 KB) beside the replay, to a crash-report bucket or straight to the other peer after the match. That needs a transport and somewhere to put the reports, at zero budget. Until then `vsReplay` runs on one side only.
+- **A spectator relay server.** One player relaying to one spectator costs about 1 KB/s. Many spectators need a relay that is not a player. That can be a free-tier server, or a spectator relaying to further spectators: the stream is the same, and every spectator checks the digests.
+- **Changing the delay mid-match.** `NetDelay` chooses once, at match start. Changing the delay between exchanges needs both peers to agree on the tick the change lands at, with hysteresis. That is a transport-protocol item.
 - **Presentation under rollback (Rendering, Audio, Encounter).** Which events wait for confirmation, and how a rolled-back effect is hidden (section 4).
 - **Holding presses through a freeze (Controls).** `step()` consumes no input during hit-stop and pausing set pieces; the host keeps its presses for the next tick, with `waited`. Online, the local host decides this from its own predicted state. That stays deterministic (whatever it sends is the input), but a press can be held for a freeze that a rollback then removes. Moving that buffer into the sim (into `ActState`) would make it part of the rolled-back state.
 - **Platforms not proven bit-identical.** Native x64 and the web are proven (`docs/architecture/web-parity.md`). macOS on ARM, Linux on ARM, Android and iOS are not, and an ARM compiler may contract `a*b+c` into an FMA. The parity gate must run on each before cross-play between them.

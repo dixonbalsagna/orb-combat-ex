@@ -31,6 +31,25 @@ var onConfirmed: Callable     # (tick: int, state: SimState or null, out: String
 var clock: Callable           # () -> int microseconds, for profiling only; unset in a game
 var afterRestore: Callable    # tests only (the check's negative control): (S) -> void, called after every restore
 var rollbackOn: bool = true   # tests only: false ignores late inputs that contradict a prediction (the negative control)
+var perturb: Callable         # tests only (the desync check): (S, t) -> void, called after every run of tick t (a divergent peer)
+
+# desync detection (NetDesync): a digest of the confirmed state every checkEvery ticks, exchanged with the other peers
+var checkEvery: int = 60      # ticks between checkpoints; 0 turns detection off
+var matchInfo: Dictionary = {}   # {seed, setup, ai}: the match, for a desync report's replay
+var onDesync: Callable        # (session) -> void: called once, at the first mismatch; `desync` then holds it
+var onCheck: Callable         # (boundary: int, digest: String) -> void: each checkpoint as it becomes final (tests, a log)
+var chkCompare: bool = true   # tests only: false never compares (the desync check's negative control, a blind detector)
+var chkStale: bool = false    # tests only: true keeps a checkpoint's first run, not its last (a detector that hashes guesses)
+var chkPend: Dictionary = {}  # boundary -> [digest, NetSnapshot]: the state before the checkpoint tick, from its last run
+var chkMine: Dictionary = {}  # boundary -> digest: confirmed here, not yet matched with every other peer's
+var chkRemote: Dictionary = {}   # boundary -> digest: received, not yet matched
+var chkSnaps: Dictionary = {} # boundary -> NetSnapshot: confirmed checkpoints since the last agreed one (included)
+var chkOut: Array = []        # the newest confirmed [boundary, digest] pairs, for packets
+var agreedTo: int = 0         # the newest checkpoint both sides agreed on (0: the start)
+var checksMatched: int = 0
+var chkReruns: int = 0        # checkpoint ticks run again by a rollback before they were final
+var chkStaleWrong: int = 0    # tests only: with chkStale, re-runs whose state differed from the kept first run
+var desync: Dictionary = {}   # the first mismatch: {tick, local, remote, lastAgreed, frame, replay, snap, agreedSnap}
 
 var frame: int = 0            # ticks run so far: the next tick to run
 var finalTo: int = 0          # the state after this many ticks is final and reported
@@ -160,6 +179,13 @@ func _run(t: int) -> void:
 			predicted = true
 		used[k][t] = p
 		ins.append(SimIntent.unpack(p))
+	if checkEvery > 0 and t > 0 and t % checkEvery == 0 and t > finalTo:
+		if chkPend.has(t):
+			chkReruns += 1
+			if chkStale and NetDesync.digest(S) != chkPend[t][0]:
+				chkStaleWrong += 1
+		if not (chkStale and chkPend.has(t)):
+			_checkpoint(t)
 	if verify or (predicted and (lastSaved < 0 or t - lastSaved >= saveEvery)):
 		if not snaps.has(t):
 			_save(t)
@@ -170,6 +196,8 @@ func _run(t: int) -> void:
 	if clock.is_valid():
 		usStep += clock.call() - t0
 		usSteps += 1
+	if perturb.is_valid():
+		perturb.call(S, t)
 	if onConfirmed.is_valid():
 		outLog[t] = outDigest(S)
 	S.out.feed.clear()
@@ -228,6 +256,8 @@ func _confirm() -> void:
 		for k in range(players):
 			used[k].erase(b - 1)
 		finalTo = b
+		if checkEvery > 0 and b % checkEvery == 0:
+			_confirmCheck(b)
 	var keep: int = -1
 	for b in snaps:
 		if b <= c and b > keep:
@@ -236,6 +266,86 @@ func _confirm() -> void:
 		if b < keep:
 			pool.put(snaps[b])
 			snaps.erase(b)
+
+
+## The state before tick t (after t ticks) as a checkpoint candidate: its digest and a snapshot, replaced by a re-run.
+func _checkpoint(t: int) -> void:
+	if chkPend.has(t):
+		pool.put(chkPend[t][1])
+	chkPend[t] = [NetDesync.digest(S), NetSnapshot.take(S, pool)]
+
+
+## Checkpoint b has become final: its last run's digest is this peer's, to send and to compare.
+func _confirmCheck(b: int) -> void:
+	if b == frame and not chkPend.has(b):
+		_checkpoint(b)   # the present: tick b has not run yet
+	if not chkPend.has(b):
+		push_error("NetSession: checkpoint %d has no state" % b)
+		return
+	var e: Array = chkPend[b]
+	chkPend.erase(b)
+	for t in chkPend.keys():   # older candidates can no longer be needed
+		if t < b:
+			pool.put(chkPend[t][1])
+			chkPend.erase(t)
+	chkMine[b] = e[0]
+	if onCheck.is_valid():
+		onCheck.call(b, e[0])
+	if desync.is_empty():
+		chkSnaps[b] = e[1]
+	else:
+		pool.put(e[1])   # after a desync only its two snapshots are kept
+	chkOut.append([b, e[0]])
+	if chkOut.size() > 4:
+		chkOut.pop_front()
+	_compareChecks()
+
+
+## A digest another peer confirmed for boundary t.
+func addRemoteCheck(t: int, d: String) -> void:
+	if t <= agreedTo or chkRemote.has(t):
+		return
+	chkRemote[t] = d
+	_compareChecks()
+
+
+func _compareChecks() -> void:
+	if not chkCompare or not desync.is_empty():
+		return
+	var ts: Array = chkMine.keys()
+	ts.sort()
+	for t in ts:
+		if not chkRemote.has(t):
+			continue
+		if chkRemote[t] != chkMine[t]:
+			desync = {"tick": t, "local": chkMine[t], "remote": chkRemote[t], "lastAgreed": agreedTo, "frame": frame,
+				"replay": NetDesync.replayOf(self, matchInfo, t), "snap": chkSnaps[t], "agreedSnap": chkSnaps.get(agreedTo)}
+			if onDesync.is_valid():
+				onDesync.call(self)
+			return
+		checksMatched += 1
+		agreedTo = t
+		for o in chkMine.keys():   # an older one whose digest never arrived is passed: this one vouches for the state
+			if o <= t:
+				chkMine.erase(o)
+		chkRemote.erase(t)
+		for b in chkSnaps.keys():   # keep only the newest agreed snapshot and the ones after it
+			if b < t:
+				pool.put(chkSnaps[b])
+				chkSnaps.erase(b)
+
+
+## Every slot's confirmed inputs from tick `since` up to the confirmed frontier (at most `cap` ticks), for a spectator:
+## [first tick, [PackedInt64Array per slot]].
+func confirmedSince(since: int, cap: int = 64) -> Array:
+	var upto: int = mini(confirmedFrontier(), since + cap)
+	var per: Array = []
+	for k in range(players):
+		var a := PackedInt64Array()
+		for t in range(since, upto):
+			a.append(inputs[k][t])
+		per.append(a)
+	return [since, per]
 
 
 ## The session's confirmed inputs as a SimReplay-style input list: [tick, slot, packed], only where a slot's input
@@ -257,6 +367,13 @@ func close() -> void:
 	for b in snaps:
 		pool.put(snaps[b])
 	snaps.clear()
+	for t in chkPend:
+		pool.put(chkPend[t][1])
+	chkPend.clear()
+	for b in chkSnaps:
+		pool.put(chkSnaps[b])
+	chkSnaps.clear()
+	desync.clear()
 	pool.clear()
 
 
