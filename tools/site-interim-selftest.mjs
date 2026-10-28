@@ -232,7 +232,7 @@ try {
     check('the plain interim site and the switch-on site both set no cookie (the checker passes both with their own root)', verify(good, cfg()).status === 0 && verify(sc, on, rootOn).status === 0);
   }
   const playHtml = readFileSync(join(good, 'play/index.html'), 'utf8');
-  check('the gate is first in the body, "Not now" goes to ../ and the page is noindex', /<body>\n<div id="gate"/.test(playHtml) && /<a id="gate-notnow" href="\.\.\/"/.test(playHtml) && playHtml.includes('<meta name="robots" content="noindex">'));
+  check('the gate is next in the body after the phone note, which is hidden in the markup, "Not now" goes to ../ and the page is noindex', /<body>\n<div id="phone-note"[^>]*\shidden[\s\S]*?<\/div>\n<\/div>\n<div id="gate"/.test(playHtml) && /<a id="gate-notnow" href="\.\.\/"/.test(playHtml) && playHtml.includes('<meta name="robots" content="noindex">'));
   check('/, /bench/, /band/ and /404.html are the one holding page and hold no script or game file', ['index.html', 'bench/index.html', 'band/index.html', '404.html'].every((p) => readFileSync(join(good, p), 'utf8') === readFileSync(join(good, 'index.html'), 'utf8') && !/<script/i.test(readFileSync(join(good, p), 'utf8'))) && !existsSync(join(good, 'bench/index.pck')));
 
   // the build's own refusals
@@ -259,6 +259,28 @@ try {
   fail("the check fails when the gate's button does not start the game through the handler", (d) => edit(d, 'play/index.html', (t) => t.replace("if (typeof window.__startGame === 'function') window.__startGame();", '')));
   fail('the check fails when "Not now" does not go to the holding page', (d) => edit(d, 'play/index.html', (t) => t.replace('id="gate-notnow" href="../"', 'id="gate-notnow" href="./"')));
   fail('the check fails when "Not now" is missing', (d) => edit(d, 'play/index.html', (t) => t.replace(/<a id="gate-notnow"[^>]*>[^<]*<\/a>/, '')));
+  // the phone note (Legal's RL-201, ADR 0011): Legal's three lines word for word (written out here on purpose), before the notice, never in its place
+  const NOTE_H = 'Best on a computer', NOTE_B = 'This demo is made for a computer with a keyboard or a controller. It may not run well on a phone.', NOTE_BTN = 'Continue anyway';
+  check("the page carries Legal's RL-201 note word for word: heading, body, button", playHtml.includes('<h1 id="phone-note-title" style="font-size:1.5rem;line-height:1.25;margin:1rem 0 1.5rem">' + NOTE_H + '</h1>') && playHtml.includes('<p>' + NOTE_B + '</p>') && />Continue anyway<\/button>/.test(playHtml) && playHtml.indexOf('id="phone-note"') < playHtml.indexOf('id="gate"') && /<div id="phone-note"[^>]*\shidden/.test(playHtml));
+  check('the flashing notice and the lock line are untouched in the gate under the note (the gate markup holds no trace of the note)', (() => { const g = playHtml.slice(playHtml.indexOf('id="gate"'), playHtml.indexOf('id="gate-start"') + 1200); return !g.includes('phone-note') && g.includes('This game contains flashing effects') && g.includes('Reduce flashing is on'); })());
+  const noteEdit = (name, fn) => fail(name, (d) => edit(d, 'play/index.html', fn));
+  const NOTE_BLOCK = /<div id="phone-note"[\s\S]*?<\/div>\n<\/div>\n/;
+  noteEdit('the check fails when the phone note is missing', (x) => x.replace(NOTE_BLOCK, ''));
+  noteEdit('the check fails when the note heading changes by one word', (x) => x.replace(NOTE_H + '</h1>', 'Better on a computer</h1>'));
+  noteEdit('the check fails when the note body changes by one word', (x) => x.replace('may not run well', 'might not run well'));
+  noteEdit('the check fails when the note button changes', (x) => x.replace('>Continue anyway<', '>Continue<'));
+  noteEdit('the check fails when the note carries a word more (a promise about another platform or date)', (x) => x.replace('<p>' + NOTE_B + '</p>', '<p>' + NOTE_B + ' A phone version is coming soon.</p>'));
+  noteEdit('the check fails when the note comes AFTER the gate', (x) => { const m = NOTE_BLOCK.exec(x)[0]; return x.replace(m, '').replace(/(<div id="gate"[\s\S]*?<\/div>\n<\/div>\n)/, '$1' + m); });
+  noteEdit('the check fails when the note is not hidden in the markup (a computer would see it)', (x) => x.replace('aria-labelledby="phone-note-title" hidden', 'aria-labelledby="phone-note-title"'));
+  noteEdit('the check fails when the note script starts the game (the note skips the notice)', (x) => x.replace("go.addEventListener('click', function () {", "go.addEventListener('click', function () {\n    window.__startGame();"));
+  noteEdit('the check fails when the note script clicks the gate button (the note skips the notice)', (x) => x.replace('if (start) start.focus();', 'if (start) start.click();'));
+  noteEdit('the check fails when the note script removes the gate (the note replaces the notice)', (x) => x.replace("if (gate) gate.removeAttribute('inert');", "if (gate) gate.remove();"));
+  noteEdit('the check fails when the note script hides the gate (the note replaces the notice)', (x) => x.replace("if (gate) gate.removeAttribute('inert');", "if (gate) gate.style.display = 'none';"));
+  noteEdit('the check fails when the note script leaves the page', (x) => x.replace("go.addEventListener('click', function () {", "go.addEventListener('click', function () {\n    location.href = '../';"));
+  noteEdit('the check fails when the note script is for every device (no phone test: a computer would see the note)', (x) => x.replace("window.matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) <= 500", 'true'));
+  noteEdit('the check fails when the note script has no markers (its button would do nothing)', (x) => x.replace('/* phone note */', '').replace('/* end phone note */', ''));
+  noteEdit('the check fails when the note holds a link to the game (a skip)', (x) => x.replace('<p>' + NOTE_B + '</p>', '<p>' + NOTE_B + '</p><a href="./?go=1">go</a>'));
+  noteEdit('the check fails when the note takes over the gate button id', (x) => x.replace('id="phone-note-continue"', 'id="gate-start"'));
   fail('the check fails when /play/ is not noindex', (d) => edit(d, 'play/index.html', (t) => t.replace('<meta name="robots" content="noindex">', '')));
   fail('the check fails when /play/ carries a social card', (d) => edit(d, 'play/index.html', (t) => t.replace('<title>', '<meta property="og:title" content="x"><title>')));
   fail('the check fails when the gate lacks the AI line', (d) => edit(d, 'play/index.html', (t) => t.replace('Nothing in the game is generated by AI while you play', 'Nothing')));

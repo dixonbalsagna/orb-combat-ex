@@ -74,10 +74,29 @@ export function aboutPage(text, lic, links) {
   return page(text.title, parts.join('\n'));
 }
 
+/** The phone note's words, Legal's RL-201 (docs/legal/page-fixed-lines.md, 2026-10-28; ADR 0011): exact public words, a change to any word is a new ruling. tools/check-site-interim.mjs holds a copy of its own. */
+export const PHONE_NOTE = {
+  heading: 'Best on a computer',
+  body: 'This demo is made for a computer with a keyboard or a controller. It may not run well on a phone.',
+  button: 'Continue anyway',
+};
+
+/** The phone note's overlay: before the gate in the page and above it (z-index), `hidden` until the script finds a phone. Its button only takes the note away; the gate under it, with the flashing notice, the lock line and its own button, is untouched. */
+export function phoneNoteOverlay() {
+  return `<div id="phone-note" role="dialog" aria-modal="true" aria-labelledby="phone-note-title" hidden style="position:fixed;left:0;top:0;right:0;bottom:0;z-index:100001;overflow:auto;background:#0e1015;color:#e6e9ef;font:18px/1.55 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+<div style="max-width:36rem;margin:0 auto;padding:1.5rem 1.25rem 3rem">
+<h1 id="phone-note-title" style="font-size:1.5rem;line-height:1.25;margin:1rem 0 1.5rem">${esc(PHONE_NOTE.heading)}</h1>
+<p>${esc(PHONE_NOTE.body)}</p>
+<p style="margin:1.25rem 0 .5rem"><button id="phone-note-continue" type="button" style="font:inherit;font-weight:600;padding:.7rem 1.1rem;color:#0e1015;background:#e6e9ef;border:0;border-radius:6px;cursor:pointer">${esc(PHONE_NOTE.button)}</button></p>
+</div>
+</div>
+`;
+}
+
 /** The overlay of /play/: the click-through. The engine starts only from its button (see the gate wrapping in tools/build-site.mjs). "Not now" goes to the holding page. */
 export function gateOverlay(text, hrefs, opts = {}) {
   const small = 'font-size:.85rem;color:#aab1be';
-  return `<div id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title" style="position:fixed;left:0;top:0;right:0;bottom:0;z-index:100000;overflow:auto;background:#0e1015;color:#e6e9ef;font:18px/1.55 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+  return `${phoneNoteOverlay()}<div id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title" style="position:fixed;left:0;top:0;right:0;bottom:0;z-index:100000;overflow:auto;background:#0e1015;color:#e6e9ef;font:18px/1.55 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
 <div style="max-width:36rem;margin:0 auto;padding:1.5rem 1.25rem 3rem">
 <h1 id="gate-title" style="font-size:1.5rem;line-height:1.25;margin:1rem 0 1.5rem">${esc(text.gate.heading)}</h1>
 ${blocksHtml(text.gate.blocks)}
@@ -104,4 +123,26 @@ export const GATE_SCRIPT = `<script>
   });
   button.focus();
 }());
+/* phone note */
+(function () {
+  // A PHONE is a device whose main pointer is coarse (a finger) and whose smaller screen side is 500 CSS pixels or less. A tablet (smaller side 600 or more), a touch laptop (its main pointer is fine)
+  // and a desktop window of any size are not phones and never see the note. The note's button takes the note away and nothing else: the gate under it, with the flashing notice, is untouched.
+  var note = document.getElementById('phone-note');
+  var go = document.getElementById('phone-note-continue');
+  var gate = document.getElementById('gate');
+  if (!note || !go) return;
+  var phone = false;
+  try { phone = window.matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) <= 500; } catch (e) { phone = false; }
+  if (!phone) { note.parentNode.removeChild(note); return; }
+  note.hidden = false;
+  if (gate) gate.setAttribute('inert', '');
+  go.addEventListener('click', function () {
+    note.parentNode.removeChild(note);
+    if (gate) gate.removeAttribute('inert');
+    var start = document.getElementById('gate-start');
+    if (start) start.focus();
+  });
+  go.focus();
+}());
+/* end phone note */
 </script>`;

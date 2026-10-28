@@ -133,6 +133,8 @@ jobs:
         run: node tools/flash/clip-id-selftest.mjs --require-browser
       - name: "Site hook check self-test (the exported public build, on a public hostname: no window.__flashcap; stand-in pages)"
         run: node tools/check-site-hook-selftest.mjs --require-browser
+      - name: "Phone note self-test (a phone sees Legal's RL-201 note before the flashing notice and its button starts nothing; a computer, a tablet and a touch laptop see none)"
+        run: node tools/site-phone-note-selftest.mjs --require-browser
       - uses: ./.github/actions/setup-godot
       - name: Import project
         run: '"$GODOT" --headless --path . --import'
