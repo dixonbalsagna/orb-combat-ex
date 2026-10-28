@@ -151,6 +151,8 @@ jobs:
         run: '"$GODOT" --headless --path . --import'
       - name: GDScript parity
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/parity.gd'
+      - name: Web parity's compare self-test (a custom build of the same version passes, anything else fails)
+        run: node sim/core/tools/web_parity.mjs --self-test
       - name: The sim's load split (the core's load compiles none of the director)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/load_split.gd'
       - name: Render determinism (gameplay hashes match with the scene running)

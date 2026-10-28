@@ -1,6 +1,7 @@
 // Web parity (docs/architecture/web-parity.md): is the sim bit-identical between the native build and the web (wasm)
 // build? One command, for a PC or CI:
 //   node sim/core/tools/web_parity.mjs [--godot <exe>] [--work <dir>] [--time-limit 3000] [--session <name>] [--keep]
+//   node sim/core/tools/web_parity.mjs --self-test   (the comparison on made-up results: no Godot, no browser)
 // 1. A copy of the project: `git archive HEAD` when run in a repository, else the folder (no .godot, build, .git).
 // 2. In the copy, the main scene becomes res://sim/core/tools/web_parity.tscn (the probe: SimGolden.build()'s keys one
 //    a frame, then extras for what ships switched off).
@@ -9,6 +10,8 @@
 //    priority, a CPU cap, a session-named profile), the probe's results read over the DevTools protocol: web.json.
 // 5. Native and web against sim/core/test/golden.json key by key (the first checkpoint that differs, and which of its
 //    state, view and camera hashes), and the extras native against web. Exit 1 on any difference or failure.
+//    The engine's string ("godot") is compared by its version only: a build of the same version under another label (a
+//    custom web template's "(custom_build)") passes, and the labels are printed. Any other version is a difference.
 // Godot: --godot, else $GODOT, else Godot on the PATH. Node 24 built-ins only.
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -123,6 +126,10 @@ function why(key, got, exp, every) {
   return `${JSON.stringify(got).slice(0, 100)} vs ${JSON.stringify(exp).slice(0, 100)}`;
 }
 
+// Engine.get_version_info().string is the version, then the build's label in brackets: "4.7.2-stable (official)".
+const engineOf = (s) => { const m = /^(.*\S)\s+\(([^()]*)\)$/.exec(String(s)); return m ? { version: m[1], label: m[2] } : { version: String(s), label: '' }; };
+const sameEngine = (x, y) => typeof x === 'string' && typeof y === 'string' && engineOf(x).version === engineOf(y).version;
+
 function compare(g, nat, web) {
   const want = (key) => { const [a, b] = key.split('.'); return b === undefined ? g[a] : g[a] === undefined ? undefined : (a === 'matches' || a === 'replays') ? g[a][Number(b)] : g[a][b]; };
   const every = g.checkEvery;
@@ -132,14 +139,54 @@ function compare(g, nat, web) {
     const exp = key.startsWith('x.') ? undefined : want(key);
     if (exp !== undefined) {
       golden++;
-      for (const [side, r] of [['native', nat], ['web', web]]) if (!same(r[key], exp)) { bad++; lines.push(`DIFF ${side} ${key} against golden.json: ${why(key, r[key], exp, every)}`); }
+      const ok = (got) => key === 'godot' ? sameEngine(got, exp) : same(got, exp);   // the engine by its version, not its build's label
+      for (const [side, r] of [['native', nat], ['web', web]]) if (!ok(r[key])) { bad++; lines.push(`DIFF ${side} ${key} against golden.json: ${why(key, r[key], exp, every)}`); }
     } else if (key.startsWith('x.')) {
       extras++;
       if (!same(web[key], nat[key])) { bad++; lines.push(`DIFF web ${key} against native: ${why(key, web[key], nat[key], every)}`); }
     } else { bad++; lines.push(`DIFF ${key}: not in golden.json`); }
   }
-  return { golden, extras, bad, lines };
+  const labels = [g.godot, nat.godot, web.godot].map((s) => engineOf(s).label);
+  const engine = `engine: golden.json ${g.godot}, native ${nat.godot}, web ${web.godot}` +
+    (sameEngine(nat.godot, g.godot) && sameEngine(web.godot, g.godot) && new Set(labels).size > 1 ? ' (the same version under another build label: not a difference)' : '');
+  return { golden, extras, bad, lines, engine };
 }
+
+// The comparison on made-up results: [what, native, web, the differences it must find].
+function selfTest() {
+  const OFF = '4.7.2-stable (official)', CUS = '4.7.2-stable (custom_build)';
+  const rec = { arm: 'ai', seed: 1, cap: 60, ticks: 120, light: 'a1', final: 'b2', checkpoints: ['1:2:3', '4:5:6', '7:8:9'] };
+  const g = { checkEvery: 60, godot: OFF, constants: { w: 9600 }, matches: [rec] };
+  const res = (godot, o = {}) => ({ godot, constants: { w: 9600 }, 'matches.0': rec, 'x.calm': [7, 7], ...o });
+  const cases = [
+    ['the same version and label', res(OFF), res(OFF), 0],
+    ['a custom build of the same version on the web', res(OFF), res(CUS), 0],
+    ['a custom build of the same version on both', res(CUS), res(CUS), 0],
+    ['another version on the web, a custom build', res(OFF), res('4.7.3-stable (custom_build)'), 1],
+    ['another version natively, an official build', res('4.7.2-rc1 (official)'), res(OFF), 1],
+    ['another version on both', res('4.8-stable (official)'), res('4.8-stable (official)'), 2],
+    ['no engine string on the web', res(OFF), res(undefined), 1],
+    ['a custom build and a key that differs', res(OFF), res(CUS, { constants: { w: 9601 } }), 1],
+    ['a custom build and a checkpoint that differs', res(OFF), res(CUS, { 'matches.0': { ...rec, checkpoints: ['1:2:3', '4:5:7', '7:8:9'] } }), 1],
+    ['a custom build and an extra that differs', res(OFF), res(CUS, { 'x.calm': [7, 8] }), 1],
+    ['a custom build and a key golden.json lacks', res(OFF, { stray: 1 }), res(CUS, { stray: 1 }), 1],
+  ];
+  let fails = 0;
+  for (const [what, nat, web, want] of cases) {
+    const c = compare(g, nat, web);
+    const ok = c.bad === want;
+    if (!ok) fails++;
+    console.log(`${ok ? 'ok  ' : 'FAIL'} ${what}: ${c.bad} difference(s), want ${want}${c.lines.length ? ' (' + c.lines.join('; ').slice(0, 160) + ')' : ''}`);
+  }
+  const c = compare(g, res(OFF), res(CUS));
+  const shown = c.engine.includes('(official)') && c.engine.includes('(custom_build)') && c.engine.includes('not a difference');
+  if (!shown) fails++;
+  console.log(`${shown ? 'ok  ' : 'FAIL'} the labels are printed: ${c.engine}`);
+  console.log(fails ? `web parity self-test FAILED: ${fails} of ${cases.length + 1}` : `web parity self-test ok: ${cases.length + 1} checks`);
+  return fails ? 1 : 0;
+}
+
+if (process.argv.includes('--self-test')) process.exit(selfTest());
 
 let code = 0;
 try {
@@ -154,6 +201,7 @@ try {
   const nat = JSON.parse(readFileSync(join(WORK, 'native.json'), 'utf8'));
   const g = JSON.parse(readFileSync(join(ROOT, 'sim/core/test/golden.json'), 'utf8'));
   const c = compare(g, nat, web);
+  log(c.engine);
   for (const l of c.lines) console.log(l);
   console.log(c.bad ? `web parity FAILED: ${c.bad} difference(s)` : `web parity passed: ${c.golden} golden keys identical to golden.json natively and on the web, ${c.extras} extras identical native and web`);
   code = c.bad ? 1 : 0;
