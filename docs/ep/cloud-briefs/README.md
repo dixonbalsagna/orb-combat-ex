@@ -36,3 +36,6 @@ Wave 3 runs as routines, which bill the Max plan rather than the credit, so it c
 | 9 | narrative-live-barks.md | Narrative & Fighter Identity | cloud/narrative-identity/live-barks | for Orb to start (credit); look gate local |
 | 9 | rendering-pane-sweep.md | Rendering & Technical Art | cloud/rendering-techart/pane-sweep | for Orb to start (credit); look gate local |
 | 9 | encounter-prop-reach.md | Encounter Systems | cloud/encounter-systems/prop-reach | for Orb to start (credit); ready (tick-skip landed) |
+| 10 | netcode-ai-takeover.md | Netcode & Online | cloud/netcode-online/ai-takeover | for Orb to start (credit) |
+| 10 | simulation-forwards-warmup.md | Simulation & Engine | cloud/simulation-engine/forwards-warmup | for Orb to start (credit) |
+| 10 | rendering-broken-props.md | Rendering & Technical Art | cloud/rendering-techart/broken-props | for Orb to start (credit); after pane-sweep if both run; look gate local |
