@@ -1,0 +1,15 @@
+--- a/drivers/gles3/shader_gles3.cpp
++++ b/drivers/gles3/shader_gles3.cpp
+@@ -708,10 +708,9 @@
+ 	}
+ 	p_version->variants.reserve(variant_count);
+ 	for (int i = 0; i < variant_count; i++) {
++		// Compile nothing here: each pass's specialization is compiled when it is first bound
++		// (_version_bind_shader), so passes and specializations that are never drawn cost nothing.
+ 		p_version->variants.push_back(AHashMap<uint64_t, Version::Specialization>());
+-		Version::Specialization spec;
+-		_compile_specialization(spec, i, p_version, specialization_default_mask);
+-		p_version->variants[i].insert(specialization_default_mask, spec);
+ 	}
+ 	if (use_cache) {
+ 		_save_to_cache(p_version);
