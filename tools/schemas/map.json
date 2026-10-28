@@ -464,6 +464,10 @@
       "schema": "biomes-after.schema.json"
     },
     {
+      "match": "data/biomes/craters.json",
+      "schema": "biomes-craters.schema.json"
+    },
+    {
       "match": "data/biomes/rivers.json",
       "schema": "biomes-rivers.schema.json"
     },

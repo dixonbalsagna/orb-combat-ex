@@ -292887,6 +292887,70 @@
       }
     },
     {
+      "id": "craters-enabled-not-boolean",
+      "schema": "biomes-craters.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/craters.json",
+          "set": {
+            "/enabled": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "craters-steep-huge",
+      "schema": "biomes-craters.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/craters.json",
+          "set": {
+            "/classes/ice/steep": 9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/classes/ice/steep"
+      }
+    },
+    {
+      "id": "craters-fill-unknown",
+      "schema": "biomes-craters.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/craters.json",
+          "set": {
+            "/classes/mud/fill": "lava"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/classes/mud/fill"
+      }
+    },
+    {
+      "id": "craters-row-missing-depth",
+      "schema": "biomes-craters.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/craters.json",
+          "del": [
+            "/classes/sand/depth"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/classes/sand"
+      }
+    },
+    {
       "id": "water-enabled-not-boolean",
       "schema": "biomes-water.schema.json",
       "mutate": [

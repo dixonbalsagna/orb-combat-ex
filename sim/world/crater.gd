@@ -117,10 +117,11 @@ static func radiusOf(energy: float, uncapped: bool = false) -> float:
 ## Height change at distance u (in R) from a crater centre for bowl depth d and rim height hr: a smooth bowl inside
 ## the lip, a rim rising from RIM_IN inside it to a crest at the lip, and an apron falling to nothing at RIM_OUT beyond.
 ## Polynomials only, so it is exact and cheap. The renderer uses this same function for the z = 0 slice of a bowl.
-static func profile(u: float, d: float, hr: float) -> float:
+## steep: the bowl wall's shape by material (craters.json, WorldCraters; 1 is today's bowl, exactly): above 1 a flatter floor and steeper walls, below 1 a slacker bowl.
+static func profile(u: float, d: float, hr: float, steep: float = 1.0) -> float:
 	var h: float = 0.0
 	if u < 1.0:
-		var t: float = 1.0 - u * u
+		var t: float = bowlT(u, steep)
 		h = -d * t * t
 		var lo: float = 1.0 - RIM_IN
 		if u > lo:
@@ -135,7 +136,7 @@ static func profile(u: float, d: float, hr: float) -> float:
 ## Repeats escalate (Orb, homework 30; buildings.md section 6.1): an impact on ground already cratered by an impact deepens and widens that crater instead of digging a
 ## new one beside it. The dig moves to the old crater's centre and its energy rises so the bowl is repeatCraterGrow times the last one's radius (the depth cap, a share of the
 ## radius less the relief already there, then lets it go deeper). After repeatMarks repeats it grows no more. Returns [x, energy]. Behind brunt.json repeatMarks.
-static func _repeat(S: SimState, x: float, energy: float, special: bool) -> Array:
+static func _repeat(S: SimState, x: float, energy: float, special: bool, rmul: float = 1.0) -> Array:
 	var last = null
 	for i in range(S.craters.size() - 1, -1, -1):
 		var c = S.craters[i]
@@ -150,7 +151,7 @@ static func _repeat(S: SimState, x: float, energy: float, special: bool) -> Arra
 			m += 1
 	var cf: Dictionary = WorldBrunt.cfg()
 	var grow: float = float(cf.repeatCraterGrow) if m <= int(cf.repeatMarks) else 1.0
-	var need: float = last.r * grow / R_BASE
+	var need: float = last.r * grow / (R_BASE * rmul)   # rmul: the material's radius factor (craters.json), which _dig applies again
 	need = need * need / (SPECIAL_E_MULT if special else 1.0)
 	return [last.x, maxf(energy, need)]
 
@@ -170,29 +171,35 @@ static func _col(x: float) -> int:
 ## big marks: a signature, a finisher, a break launch, a beam clash; its energy is multiplied by SPECIAL_E_MULT (bowl radius
 ## times its square root) and its radius may reach R_MAX, where an ordinary blow is held to ORD_R_MAX (a power-up is its
 ## own ladder and is held only by R_MAX). dirx is the impact velocity's signed horizontal share (vx / speed) and vert its
-## vertical share (|vy| / speed); both only matter for impacts. Returns the record, or null when the spot was already too
+## vertical share (|vy| / speed); both only matter for impacts. shape: the material's bowl (WorldCraters.shapeAt: radius, depth, rim
+## and steep factors on today's bowl; empty for today's bowl, exactly). Returns the record, or null when the spot was already too
 ## dented to take a crater of this size.
-static func dig(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, z: float = NAN):
+static func dig(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, z: float = NAN, shape: PackedFloat64Array = PackedFloat64Array()):
 	if kind == "impact" and int(WorldBrunt.cfg().repeatMarks) > 0:
-		var rp: Array = _repeat(S, x, energy, special)
+		var rp: Array = _repeat(S, x, energy, special, shape[WorldCraters.S_R] if shape.size() > 0 else 1.0)
 		x = rp[0]
 		energy = rp[1]
 	if not S.depthOn:
-		return _dig(S, x, energy, cause, kind, dirx, vert, special)
+		return _dig(S, x, energy, cause, kind, dirx, vert, special, shape)
 	var zz: float = z
 	if is_nan(zz):
 		zz = float(cause.z) if (cause != null and "z" in cause) else 0.0
 	var k: int = WorldTerrain.enterRow(S, WorldTerrain.rowOfZ(zz))
-	var rec = _dig(S, x, energy, cause, kind, dirx, vert, special)
+	var rec = _dig(S, x, energy, cause, kind, dirx, vert, special, shape)
 	WorldTerrain.leaveRow(S, k)
 	if rec != null and k >= 0:
-		_digNeighbours(S, rec, k)
+		_digNeighbours(S, rec, k, shape[WorldCraters.S_STEEP] if shape.size() > 0 else 1.0)
 	return rec
+
+
+## The bowl's shape at u (in R) inside the lip is t * t, 1 at the centre and 0 at the lip, for t = 1 - u^2 today; steep (craters.json) changes the power of u.
+static func bowlT(u: float, steep: float = 1.0) -> float:
+	return 1.0 - (u * u if steep == 1.0 else SimDetMath.pow(u, 2.0 * steep))
 
 
 ## The bowl on the other rows inside its plan radius: the same bowl and rim, the distance taken in plan (so a row 300 units from the
 ## centre sees a shallower, narrower slice), written row by row with the same footing rule and relaxation.
-static func _digNeighbours(S: SimState, rec, kc: int) -> void:
+static func _digNeighbours(S: SimState, rec, kc: int, steep: float = 1.0) -> void:
 	var NC: int = SimConst.NC
 	var COL: float = SimConst.COL
 	var R: float = rec.r
@@ -216,7 +223,7 @@ static func _digNeighbours(S: SimState, rec, kc: int) -> void:
 			var dxq: float = SimWrap.sdx(rec.x, float(i) * COL)
 			var u: float = sqrt(dxq * dxq + dz * dz) / R
 			var old: float = S.deform[i]
-			var h: float = profile(u, rec.depth, rec.rim)
+			var h: float = profile(u, rec.depth, rec.rim, steep)
 			if h > 0.0 and pinD[q + n] == 1:
 				h = 0.0
 			var v: float = maxf(old, h) if (h > 0.0 and old > 0.0) else old + h
@@ -231,26 +238,36 @@ static func _digNeighbours(S: SimState, rec, kc: int) -> void:
 		WorldWater.touched(S, c0, n + REPOSE_PAD, minG)
 
 
-static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false):
+static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, shape: PackedFloat64Array = PackedFloat64Array()):
 	if energy <= 0.0:
 		return null
 	var E: float = energy * (SPECIAL_E_MULT if special else 1.0)
 	var NC: int = SimConst.NC
 	var COL: float = SimConst.COL
 	var R: float = radiusOf(E, special or kind == "powerup")
+	var R0: float = R        # today's radius: the depth, its cap and the rim are today's bowl's times the material's factors
+	var sD: float = 1.0      # the material's depth, rim and wall (craters.json); 1, 1, 1 is today's bowl exactly
+	var sRim: float = 1.0
+	var steep: float = 1.0
+	if shape.size() > 0:
+		R = minf(R_MAX if (special or kind == "powerup") else ORD_R_MAX, R_BASE * sqrt(E) * shape[WorldCraters.S_R])
+		sD = shape[WorldCraters.S_D]
+		sRim = shape[WorldCraters.S_RIM]
+		steep = shape[WorldCraters.S_STEEP]
 	var xw: float = SimWrap.wrap(x)
 	var c0: int = _col(xw)
 	var y0: float = WorldTerrain.groundY(S, xw)
 	var nr: int = int(round(RING_K * R / COL))
 	var ring: float = (S.deform[(c0 - nr + NC) % NC] + S.deform[(c0 + nr) % NC]) * 0.5
 	var relief: float = ring - S.deform[c0]
-	var dRaw: float = R * DEPTH_RATIO * (GRAZE_MIN + (1.0 - GRAZE_MIN) * clampf(vert, 0.0, 1.0))
-	var d: float = minf(dRaw, RELIEF_MAX_RATIO * R - relief)
+	var dRaw: float = R0 * DEPTH_RATIO * sD * (GRAZE_MIN + (1.0 - GRAZE_MIN) * clampf(vert, 0.0, 1.0))
+	var d: float = minf(dRaw, RELIEF_MAX_RATIO * R0 * sD - relief)
 	if d < MIN_DEPTH:
 		return null
 	var rt: float = clampf((E - RIM_E_LOW) / (RIM_E_HIGH - RIM_E_LOW), 0.0, 1.0)
 	var volFrac: float = RIM_VOL_LOW + (RIM_VOL_HIGH - RIM_VOL_LOW) * rt * rt * (3.0 - 2.0 * rt)
-	var hr: float = minf(d * volFrac * RIM_H_PER_VOL, RIM_DEPTH_MAX * d)
+	var dt: float = d / sD   # the depth today's bowl would have had, for today's rim
+	var hr: float = minf(dt * volFrac * RIM_H_PER_VOL, RIM_DEPTH_MAX * dt) * sRim
 	var n: int = int(ceil(R * (1.0 + RIM_OUT) / COL)) + 1
 	var minG: float = 1e9
 	var pre := PackedFloat32Array()   # the deform before this crater, for the furrow's target
@@ -262,7 +279,7 @@ static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx
 		var u: float = absf(SimWrap.sdx(xw, float(i) * COL)) / R
 		var old: float = S.deform[i]
 		pre[k + n] = old
-		var h: float = profile(u, d, hr)
+		var h: float = profile(u, d, hr, steep)
 		if h > 0.0 and pinD[k + n] == 1:
 			h = 0.0
 		# A rim that lands on ground that is already raised merges with it (the higher of the two) instead of stacking.
@@ -310,6 +327,8 @@ static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx
 	if S.craters.size() > LIST_MAX:
 		S.craters.remove_at(0)
 	SimFx.crater(S, rec)
+	if shape.size() > 0:
+		S.out.fx[S.out.fx.size() - 1].surface = WorldCraters.lookName(shape)   # the material, for the director's crater_shape (WorldCraters.eventFor); not a hashed field of the crater event
 	var cols: int = n + int(ceil(absf(skid) / COL)) + REPOSE_PAD
 	minG = minf(minG, relax(S, c0, cols))
 	WorldTerrain.lowRefresh(S, c0, cols)

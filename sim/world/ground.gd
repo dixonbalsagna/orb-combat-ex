@@ -26,6 +26,7 @@ static var _look := PackedByteArray()
 static var _trees: Array = []    # per fine biome: [p per column, h0, h1] in units, or null
 static var _cover: Array = []    # per fine biome: {"kind", "low"} (low in units) or null
 static var _minGround: float = 6.0
+static var K_PROVISIONAL: bool = false   # provisionalProps: lay the props rows World marked provisional (W4's bergs and lone trees) for Art; off by default
 
 
 static func data() -> Dictionary:
@@ -91,6 +92,8 @@ static func _load() -> void:
 		for p in g.props:
 			if float(p.per) <= 0.0 or p.size.size() != 2 or float(p.size[0]) > float(p.size[1]):
 				_errors.append("ground.json: %s: prop %s needs per above 0 and size as [low, high]" % [g.name, p.kind])
+			if p.has("gap") and (p.gap.size() != 2 or float(p.gap[0]) <= 0.0 or float(p.gap[0]) > float(p.gap[1])):
+				_errors.append("ground.json: %s: prop %s's gap is [low, high], both above 0" % [g.name, p.kind])
 	if not _errors.is_empty():
 		return
 	_d = j
@@ -98,6 +101,7 @@ static func _load() -> void:
 	var WS: float = SimConst.WS
 	var COL: float = SimConst.COL
 	_minGround = float(j.trees.minGround)
+	K_PROVISIONAL = bool(j.get("provisionalProps", false))
 	var n: int = j.grounds.size()
 	_grip.resize(n)
 	_absorb.resize(n)
@@ -240,7 +244,8 @@ static func _fnv(id: String) -> int:
 
 
 ## The set dressing of columns i0 up to (not including) i1 for the renderer: [{"x", "kind", "size", "col"}] by a keyed draw per column and prop, on dry ground and never on a town's or a city's. A pure
-## function of the columns, the ground and the seed; the sim never reads it.
+## function of the columns, the ground and the seed; the sim never reads it. A row marked provisional (World's sizes until Art's) is laid only with provisionalProps on; each row keeps its own keyed draw, so
+## the other rows lay the same either way.
 static func propsIn(fine: PackedByteArray, stored: PackedByteArray, base: PackedFloat32Array, seed: int, i0: int, i1: int) -> Array:
 	if not _loaded:
 		_load()
@@ -254,6 +259,8 @@ static func propsIn(fine: PackedByteArray, stored: PackedByteArray, base: Packed
 		var props: Array = _d.grounds[f].props
 		for k in range(props.size()):
 			var p: Dictionary = props[k]
+			if not K_PROVISIONAL and bool(p.get("provisional", false)):
+				continue
 			if SimRng.keyed(seed, "ground.prop.%d" % k, i) >= minf(1.0, float(p.per) * COL / 1000.0):
 				continue
 			var u: float = SimRng.keyed(seed, "ground.prop.s%d" % k, i)

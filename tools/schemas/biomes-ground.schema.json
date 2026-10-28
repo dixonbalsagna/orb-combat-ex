@@ -7,6 +7,7 @@
   "required": [
     "schema",
     "trees",
+    "provisionalProps",
     "grounds",
     "_about"
   ],
@@ -32,6 +33,10 @@
           "description": "Trees stand only where the ground is at least this high, in units (sea level is 0)."
         }
       }
+    },
+    "provisionalProps": {
+      "type": "boolean",
+      "description": "Lay the props rows marked provisional (World's sizes until Art sets them). Off by default: propsIn lays what it laid before."
     },
     "grounds": {
       "type": "array",
@@ -214,7 +219,24 @@
                     "exclusiveMinimum": 0
                   },
                   "description": "Size, [low, high], as multiples of the prop's own size."
+                },
+                "gap": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "description": "A lone tree's clear ground from any other tree, [low, high], in feature units (WS); for W5's placement."
+                },
+                "provisional": {
+                  "type": "boolean",
+                  "description": "World's own row until Art sets its sizes: laid only with provisionalProps on."
                 }
+              },
+              "patternProperties": {
+                "^_": {}
               }
             }
           }

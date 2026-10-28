@@ -144,6 +144,9 @@ static func dataHash() -> String:
 	if skateOn():
 		h.text("biomes.skate")
 		FighterData._canon(h, _skateParsed)   # the parsed data without the "_" notes, like contact.json: a changed note keeps old replays
+	if WorldCraters.on():
+		h.text("biomes.craters")
+		FighterData._canon(h, WorldCraters.parsed())   # a slam's crater by material, on: a replay must know
 	return h.hex()
 
 
@@ -1050,13 +1053,16 @@ static func _contact(S: SimState, f, by, b: Body, e: Dictionary) -> void:
 	if k == "slam":
 		var vert: float = float(e.get("vert", absf(f.vy) / maxf(SimDetMath.hypot(f.vx, f.vy), 0.000001)))
 		if bool(e.get("dig", true)):
-			var rc = WorldCrater.dig(S, f.x, E, by, "impact", f.vx / f.launchT / maxf(sp, 0.000001), vert, f.launchSpecial, f.z)
-			if rc != null and first and S.T - f.embedCool >= K_EMB_COOL:
+			var sh: PackedFloat64Array = WorldCraters.shapeAt(S, f.x)   # the material's bowl (craters.json, off: empty, today's bowl); read before the dig changes the ground
+			var rc = WorldCrater.dig(S, f.x, E, by, "impact", f.vx / f.launchT / maxf(sp, 0.000001), vert, f.launchSpecial, f.z, sh)
+			var broke: bool = WorldCraters.after(S, rc, sh, f.z) if sh.size() > 0 else false   # a floe broken through is water, not a bowl to sit in
+			if rc != null and first and not broke and S.T - f.embedCool >= K_EMB_COOL:
 				var dbh: float = rc.depth / 75.0
-				if dbh >= K_EMB_MIN or (f.launchSpecial and dbh >= K_EMB_SPECIAL):
+				var thr: float = WorldCraters.threshold(sh)   # the threshold scales with the material's depth: today's embed rate on every surface (ruling 3)
+				if dbh >= K_EMB_MIN * thr or (f.launchSpecial and dbh >= K_EMB_SPECIAL * thr):
 					f.embedT = K_EMB_TICKS   # driven into the bowl: the down state holds him for these ticks (the guard and the burst out are the director's)
 					f.embedCool = S.T
-					SimFx.embed(S, f, f.x, rc.y - rc.depth, rc.depth, rc.r, rc.energy, float(K_EMB_TICKS), _launchN(f))
+					SimFx.embed(S, f, f.x, rc.y - rc.depth, rc.depth * WorldCraters.sink(sh), rc.r, rc.energy, float(K_EMB_TICKS), _launchN(f))
 	if sea:
 		SimFx.splash(S, f.x, f.y + 10.0, 14, f.z)
 	else:

@@ -38,6 +38,7 @@ const J_EMBER: int = 4
 const J_SNOW: int = 5
 const J_SCREE: int = 6
 const J_PART: int = 7
+const J_REFILL: int = 8   # a material's crater filling back (craters.gd, craters.json refill)
 const I_T0: int = 5       # job layout: [c0, half, 0, age, kind, t0, z, ...]
 const I_Z: int = 6
 const I_P: int = 7        # the first of the kind's numbers
@@ -189,6 +190,13 @@ static func surfaceAt(S: SimState, x: float) -> String:
 		GLAZE, EMBER, CRUST:
 			return "rock"
 	return ""
+
+
+## How far below the sea a floe's slot is cut (after.json splitDepth), for the slot both a split and a slam's breakThrough cut.
+static func splitDepth() -> float:
+	if not _loaded:
+		_load()
+	return K_SPLIT_DEPTH
 
 
 ## The grip contact's brake takes on a glazed strip: the ice profile's grip times its roughness (ground.json), in place of the column's own.
@@ -362,12 +370,7 @@ static func _split(S: SimState, cols: PackedInt32Array, gapBh: float, defX: floa
 		var mid: int = int(fl[fl.size() / 2])
 		if dc >= 0 and fl.has(dc):
 			mid = dc   # the floe he stands on breaks under him
-		for q in range(wcols):
-			var i2: int = posmod(mid - (wcols - 1) / 2 + q, NC)
-			S.deform[i2] = minf(S.deform[i2], -(S.base[i2] + K_SPLIT_DEPTH))
-			S.rubble[i2] = 0.0
-			S.water[i2] = maxf(S.water[i2], -(S.base[i2] + S.deform[i2]) + WorldWater.SEA_LEVEL)
-			_put(S, i2, SPLIT, 0)
+		WorldCraters.breakThrough(S, mid, wcols)   # the same cut as a slam's breakThrough through a floe
 	var c0: int = int(cols[0])
 	_refresh(S, c0, WorldWater.colDelta(c0, int(cols[cols.size() - 1])) + 1)
 
@@ -378,6 +381,12 @@ static func _level(S: SimState, j: int) -> float:
 	if S.water[j] >= WorldWater.MIN_DEPTH:
 		return S.base[j] + WorldTerrain.lowD(S)[j] + S.water[j]
 	return WorldFill.NONE
+
+
+## The flood kind's rule on any columns (a material's crater uses it for its fill, craters.gd): source "waterTable" or "sea".
+static func flood(S: SimState, cols: PackedInt32Array, source: String, seaCols: int) -> void:
+	_ensure(S)
+	_flood(S, cols, source, seaCols)
 
 
 static func _flood(S: SimState, cols: PackedInt32Array, source: String, seaCols: int) -> void:
@@ -504,6 +513,8 @@ static func _stepJob(S: SimState, w: Array) -> bool:
 			done = _stepScree(S, w)
 		J_PART:
 			done = _stepPart(S, w)
+		J_REFILL:
+			done = WorldCraters.stepRefill(S, w)
 		_:
 			done = true
 	w[3] = int(w[3]) + 1

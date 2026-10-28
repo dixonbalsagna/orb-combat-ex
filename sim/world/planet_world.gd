@@ -172,7 +172,7 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
 	S.scorch = PackedFloat32Array()
 	S.scorch.resize(NC)
 	S.scorch.fill(0.0)
-	if WorldAfter.on():   # a beam's aftermath (after.gd): sized only with the switch on
+	if WorldAfter.on() or WorldCraters.on():   # a beam's aftermath (after.gd) and a material crater's jobs and strips (craters.gd): sized only with a switch on
 		WorldAfter.size(S)
 	S.craters.clear()
 	S.crack = PackedFloat32Array()

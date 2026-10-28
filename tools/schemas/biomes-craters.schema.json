@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-craters",
+  "title": "biomes.craters/1",
+  "description": "data/biomes/craters.json: a slam's crater by material (docs/world/craters-by-material.md; WorldCraters), Combat's numbers from docs/combat/biomes.md section 4.3. Version field: schema. Policy: every top-level key required, objects closed except keys starting with an underscore; in a class row radius, depth, rim, steep, cracks and ejecta are required and the rest optional (absent: no refill, no embed factor, no water, no break). Cross-checks (each class is one of WorldGround.LOOKS; refill and refillTicks come together; seaCols only with fill waterNearSea) are WorldCraters' own load and craters_check.",
+  "type": "object",
+  "required": [
+    "schema",
+    "_about",
+    "enabled",
+    "touchBuilt",
+    "embedThresholdScales",
+    "classes"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": {}
+  },
+  "properties": {
+    "schema": {
+      "const": "biomes.craters/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "The whole module: contact.gd's slam digs the material's bowl. Off by default."
+    },
+    "touchBuilt": {
+      "type": "boolean",
+      "description": "The rows of the five built classes (paving, rock, soil, sand, rubble) apply only with this on."
+    },
+    "embedThresholdScales": {
+      "type": "boolean",
+      "description": "An embed's threshold is multiplied by the row's depth, so the embed rate is today's on every surface (Game Design, rulings 2026-10-23b item 3)."
+    },
+    "classes": {
+      "type": "object",
+      "description": "One row per look class (WorldGround.LOOKS); a class without a row digs today's bowl.",
+      "additionalProperties": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "factor": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 4
+    },
+    "row": {
+      "type": "object",
+      "required": [
+        "radius",
+        "depth",
+        "rim",
+        "steep",
+        "cracks",
+        "ejecta"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": {}
+      },
+      "properties": {
+        "radius": {
+          "$ref": "#/$defs/factor",
+          "description": "Times today's bowl radius."
+        },
+        "depth": {
+          "$ref": "#/$defs/factor",
+          "description": "Times today's bowl depth (and its relief cap)."
+        },
+        "rim": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 4,
+          "description": "Times today's rim crest."
+        },
+        "steep": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4,
+          "description": "The bowl wall's shape: 1 is today's; above 1 a flatter floor and steeper walls, below 1 a slacker bowl."
+        },
+        "refill": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 0.95,
+          "description": "The share of the bowl's depth that fills back."
+        },
+        "refillTicks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 36000,
+          "description": "Over this many ticks (60 a second)."
+        },
+        "embedMul": {
+          "$ref": "#/$defs/factor",
+          "description": "How deep an embedded body sits, times the bowl's depth: a look, not a rate."
+        },
+        "fill": {
+          "enum": [
+            "water",
+            "waterNearSea"
+          ],
+          "description": "Water stands in the bowl: to the biome's water table (water), or to the sea where open water is within seaCols (waterNearSea)."
+        },
+        "seaCols": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 400,
+          "description": "waterNearSea's reach, in columns."
+        },
+        "breakThrough": {
+          "type": "boolean",
+          "description": "On sea ice, a bowl whose floor reaches below the sea breaks the floe and opens water under him."
+        },
+        "cracks": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Rendering's crack decal (the event only)."
+        },
+        "ejecta": {
+          "type": "string",
+          "minLength": 1,
+          "description": "VFX's ejecta (the event only)."
+        },
+        "rimKind": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the rim is made of, for the look (the event only)."
+        },
+        "treesLean": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 10,
+          "description": "Trees within this many radii lean outward (the event only)."
+        },
+        "glowTicks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 36000,
+          "description": "How long the bowl glows (the event only)."
+        }
+      }
+    }
+  }
+}

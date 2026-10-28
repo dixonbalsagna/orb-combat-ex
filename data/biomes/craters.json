@@ -1,0 +1,23 @@
+{
+  "schema": "biomes.craters/1",
+  "_about": "A slam's crater by material (docs/world/craters-by-material.md; read by sim/world/craters.gd). Combat's numbers, copied from docs/combat/biomes.md section 4.3 and its park's ground_atoms.json craters (Combat and Choreography, 2026-10-23; ruled by Game Design, rulings 2026-10-23b item 3). enabled: the whole module (off: contact.gd's slam digs today's bowl and the state is as it was, the golden and every replay byte for byte). touchBuilt: the rows of the five built classes (paving, rock, soil, sand, rubble) apply only with it on (biomes.md section 1 rule 2), so a gen 1 or hand-made world plays as today even with the module on. embedThresholdScales: an embed's threshold (contact.json embed) is multiplied by the row's depth, so the embed rate is today's on every surface (ruling 3). A row is keyed by the look class the slam lands on (WorldContact.lookAt, the beam strips included); a class without a row digs today's bowl. radius, depth, rim: multipliers on today's bowl radius, depth and rim crest; steep: the bowl wall's shape (1 today; above 1 a flatter floor and steeper walls, below 1 a slacker bowl). refill and refillTicks: the share of the depth that fills back, over that many ticks (an aftermath job, after.gd). embedMul: how deep an embedded body sits, times the bowl's depth (a look, not a rate). fill: water stands in the bowl, to the biome's water table (water) or, within seaCols of open water, to the sea (waterNearSea). breakThrough: on sea ice, a bowl whose floor reaches below the sea breaks the floe and opens water under him (the same cut as the FLOE SPLIT aftermath). cracks (Rendering's decal), ejecta (VFX's), rimKind, treesLean and glowTicks are carried for the crater_shape event only; the sim never reads them.",
+  "enabled": false,
+  "touchBuilt": false,
+  "embedThresholdScales": true,
+  "classes": {
+    "paving": { "radius": 1.0, "depth": 1.0, "rim": 1.0, "steep": 1.0, "cracks": "slabs_tilted", "ejecta": "slab_chunks" },
+    "rock": { "radius": 0.9, "depth": 0.8, "rim": 0.6, "steep": 1.4, "cracks": "star", "ejecta": "blocks" },
+    "soil": { "radius": 1.0, "depth": 1.0, "rim": 1.0, "steep": 1.0, "cracks": "none", "ejecta": "clods" },
+    "sand": { "radius": 1.3, "depth": 0.7, "rim": 0.8, "steep": 0.6, "refill": 0.3, "refillTicks": 180, "embedMul": 1.2, "cracks": "none", "ejecta": "sand_fan" },
+    "rubble": { "radius": 1.0, "depth": 1.0, "rim": 1.2, "steep": 0.9, "cracks": "none", "ejecta": "debris" },
+    "ice": { "radius": 1.0, "depth": 0.6, "rim": 0.4, "steep": 1.5, "breakThrough": true, "cracks": "radial_rings", "ejecta": "shards" },
+    "snow": { "radius": 0.9, "depth": 1.4, "rim": 0.5, "steep": 1.3, "refill": 0.2, "refillTicks": 1200, "embedMul": 1.5, "cracks": "none", "ejecta": "powder_ring" },
+    "frost": { "radius": 1.0, "depth": 0.8, "rim": 1.6, "steep": 1.2, "rimKind": "plates", "cracks": "polygons", "ejecta": "frozen_clods" },
+    "mud": { "radius": 0.8, "depth": 1.2, "rim": 0.2, "steep": 0.8, "refill": 0.6, "refillTicks": 240, "embedMul": 1.8, "fill": "water", "cracks": "none", "ejecta": "mud_splash" },
+    "turf": { "radius": 1.0, "depth": 1.0, "rim": 1.1, "steep": 1.0, "rimKind": "peeled_turf", "cracks": "none", "ejecta": "turf_flaps" },
+    "litter": { "radius": 1.0, "depth": 1.0, "rim": 1.0, "steep": 1.0, "treesLean": 1.5, "cracks": "roots", "ejecta": "leaves_clods" },
+    "ash": { "radius": 1.2, "depth": 0.8, "rim": 0.7, "steep": 0.7, "refill": 0.2, "refillTicks": 180, "embedMul": 1.2, "cracks": "none", "ejecta": "ash_plume" },
+    "crust": { "radius": 0.9, "depth": 0.9, "rim": 0.8, "steep": 1.3, "glowTicks": 480, "cracks": "star_glowing", "ejecta": "crust_plates" },
+    "shingle": { "radius": 1.1, "depth": 0.8, "rim": 0.9, "steep": 0.7, "refill": 0.3, "refillTicks": 120, "fill": "waterNearSea", "seaCols": 30, "cracks": "none", "ejecta": "pebble_spray" }
+  }
+}
