@@ -58,3 +58,17 @@ Conditions:
 2. Tools' word-for-word check covers the in-game strings as well as the page, and its British-spelling scan runs over `ui/data/*.json`.
 3. This is a words change in the live build, so it lands with the boot park and before the pin moves, and the nightly runs on the new commit (pin rule).
 4. No other word changes; no "safe", "tested" or "compliant".
+
+## Addendum (2026-10-28, RL-201): the phone note (shown to a phone before the flashing notice; ADR 0011)
+Exact public words; Tools' check holds them word for word. American spelling, no promise about any other platform or date.
+
+- **Heading:** Best on a computer
+- **Body** (one string):
+  > This demo is made for a computer with a keyboard or a controller. It may not run well on a phone.
+- **Button label:** Continue anyway
+
+Conditions:
+1. **The note comes before the flashing notice and never replaces, shortens or skips it.** After the button the visitor sees the notice and the lock line in their cleared words, exactly as on a computer. The note's button is not the notice's button and does not count as seeing the notice.
+2. No other words: no "coming soon", "later", "mobile version", "supported", "optimized", "tested", "free" or any price or date. A change to any word is a new ruling.
+3. The note appears on a phone only; computers see no note. It is not a take-down and not a block: the button always continues.
+4. The pin rule applies: this is a page change, so the nightly runs on the new commit before the site pin moves.
