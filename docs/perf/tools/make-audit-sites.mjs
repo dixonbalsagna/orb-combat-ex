@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Builds the scratch web exports the audit measures, from HEAD, without touching the working tree. Node 24 built-ins plus git, tar and the Godot 4.7.2 console exe. Owner: Performance and Platform.
 //
-//   node docs/perf/tools/make-audit-sites.mjs --out <folder> [--only base,vfx,anim,both,anim8,baseprof,bothprof,depthprof,layerprof,lowprof] [--rev <commit>] [--godot <exe>] [--no-export]
+//   node docs/perf/tools/make-audit-sites.mjs --out <folder> [--only base,vfx,anim,both,anim8,baseprof,bothprof,depthprof,layerprof,lowprof] [--rev <commit>] [--template <zip>] [--godot <exe>] [--no-export]
 //
 // For each variant: git archive HEAD into <out>/<name>, apply the scratch hooks (docs/perf/tools/scratch-hooks/: they only add measuring code to render/tools/flash_capture.gd, and in
 // the "prof" variants a few timers to render/core/main.gd and pane_world.gd), apply the parked patches that variant stands for, then `--headless --import` and `--export-release Web`
@@ -55,6 +55,7 @@ if (!OUT) { console.error('usage: node docs/perf/tools/make-audit-sites.mjs --ou
 const only = opt('--only') ? opt('--only').split(',') : ['base', 'vfx', 'anim', 'both', 'baseprof', 'bothprof', 'depthprof', 'layerprof', 'lowprof', 'anim8'];
 const GODOT = opt('--godot', 'C:\\Users\\itsha\\AppData\\Local\\Programs\\Godot\\4.7.2\\Godot_v4.7.2-stable_win64_console.exe');
 const NOEXP = argv.includes('--no-export');
+const TEMPLATE = opt('--template');   // a custom web template zip for the Web preset, written into the scratch copy's export_presets.cfg only (never the repo's)
 const REV = opt('--rev', 'HEAD');   // any commit: the audit of two builds (for example a build Orb played and the one after it) builds each into its own --out folder
 const out = resolve(OUT);
 mkdirSync(out, { recursive: true });
@@ -141,6 +142,11 @@ for (const name of only) {
   if (existsSync(join(dir, 'build', 'site', 'play', 'index.html'))) { console.log(`${name}: already built, skipped`); continue; }
   console.log(`${name}: copy, hooks, patches`);
   cpSync(pristine, dir, { recursive: true });
+  if (TEMPLATE) {
+    const ep = join(dir, 'export_presets.cfg'), t = readFileSync(ep, 'utf8');
+    if (!t.includes('custom_template/release=""')) throw new Error('the preset already names a release template');
+    writeFileSync(ep, t.replace('custom_template/release=""', 'custom_template/release="' + resolve(TEMPLATE).split(String.fromCharCode(92)).join('/') + '"'));   // the first one is the Web preset's
+  }
   try {
     for (const p of spec.patches) apply(dir, p);
     for (const h of spec.hooks) hook(HOOK[h][0], dir, ...HOOK[h].slice(1));
