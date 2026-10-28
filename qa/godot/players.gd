@@ -26,6 +26,7 @@ extends SceneTree
 ## Add :off=7 to a masher: its first tap waits a seeded 0 to 7 ticks (the mirror's second player, so two identical scripts do not tie on every press).
 ## Player A takes slot 0 on odd seeds and slot 1 on even ones, so spawn side and slot cancel. Prints one JSON line.
 ## Read-only with respect to sim/: it only calls the sim's public functions.
+const QaPlanet = preload("res://qa/godot/qa_planet.gd")   # QA_PLANET: a planet ring (qa_planet.gd)
 
 class Pl:
 	static var brawl = null     # the DirBrawl script when the build has one (loaded dynamically: an older export has none), for its reads beatAt, busy and inBrawl
@@ -931,7 +932,7 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 	by_slot[slots[1]] = pl[1]
 	var S: SimState = SimCore.createSim()
 	var ai: Dictionary = {"p1": not by_slot[0].scripted(), "p2": not by_slot[1].scripted()}
-	SimCore.newMatch(S, seed, ai, {"v2": [by_slot[0].scripted(), by_slot[1].scripted()]})
+	SimCore.newMatch(S, seed, ai, QaPlanet.setup(seed, {"v2": [by_slot[0].scripted(), by_slot[1].scripted()]}))
 	var lt: int = 0
 	if not g.is_empty():
 		g.lastMissTick = -1000   # a miss read from the last match is not this match's

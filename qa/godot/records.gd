@@ -6,6 +6,7 @@ extends SceneTree
 ##   godot --headless --path . --script res://qa/godot/records.gd -- <matches> <baseSeed> --arm=default --out=<abs path> [--capsec=900] [--cap=<tick safety>]
 ## Match i uses seed baseSeed+i. Arms are the sim's own (SimGolden.applyArm): default, swap, mirror-villain, mirror-hero, each with -flip.
 
+const QaPlanet = preload("res://qa/godot/qa_planet.gd")
 const STANCES: Array = ["AGGRESSIVE", "DEFENSIVE", "EVASIVE", "ESCAPE"]
 ## fx event types that carry game meaning rather than decoration: kept in order with their fields (wounds-plan.md, living destruction).
 const KEEP_PREFIXES: Array = ["region_", "brink_", "finisher_", "rally", "ko", "hazard", "fire_", "landslide", "quake", "rift", "lava", "cloud", "front_", "wound", "tier_up", "hide_start", "found", "blitz", "volley", "decisive", "searching", "lock_lost", "launch_plan", "struggle_press", "limb_break", "mood_band", "act_change", "style_label", "building_hit"]
@@ -73,7 +74,7 @@ func _init() -> void:
 
 func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 300000, start_mode: String = "") -> Dictionary:
 	var S := SimCore.createSim()
-	SimCore.newMatch(S, seed, {}, ({"start": start_mode} if start_mode == "crossing" else {}))
+	SimCore.newMatch(S, seed, {}, QaPlanet.setup(seed, ({"start": start_mode} if start_mode == "crossing" else {})))   # QA_PLANET: a planet ring (qa_planet.gd); unset, the hand-made world
 	if start_mode == "city":   # both fighters start in a city (Encounter's wall kick probe does the same): the seed picks the spot, so wall slams are common
 		var cxs := []
 		var cx := 0.0
@@ -86,6 +87,14 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 			S.fighters[0].x = cx0
 			S.fighters[1].x = SimWrap.wrap(cx0 + 300.0)
 	SimGolden.applyArm(arm, S.fighters)
+	var ring: Dictionary = {}
+	if OS.get_environment("QA_PLANET") != "":   # the ring a planet match is fought on (qa_planet.gd): its planet, touch, generation, columns and sea share at the start
+		var su: Dictionary = QaPlanet.setup(seed)
+		var sea: int = 0
+		for c in range(S.arenaCols):
+			if WorldTerrain.seaAt(S, (float(c) + 0.5) * SimConst.COL):
+				sea += 1
+		ring = {"planet": su.planet, "touch": su.touch, "gen": su.planetGen, "cols": S.arenaCols, "sea": snappedf(float(sea) / float(max(S.arenaCols, 1)), 0.001)}
 	var fs: Array = S.fighters
 	var slot := {}
 	for i in range(fs.size()):
@@ -637,6 +646,8 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 		rec.koAt = S.T
 	rec.civPct = S.world.casualties / S.world.pop0 * 100.0
 	rec.pop0 = S.world.pop0
+	if not ring.is_empty():
+		rec.ring = ring
 	rec.structs = S.world.structuresLost
 	rec.nStructs = S.buildings.size()
 	var rows := {}

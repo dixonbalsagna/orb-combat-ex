@@ -4,6 +4,7 @@ extends SceneTree
 ## slot) and prints one JSON line: how many the masher won, lost, timed out, and the median match length.
 ##   godot --headless --path . --script res://qa/godot/masher.gd -- <matches> <baseSeed> --level=easy|medium|hard [--gap=8] [--clock=tick|live] [--capsec=900]
 ## The masher takes slot 0 in odd seeds and slot 1 in even ones, so the spawn side and the slot cancel. Read-only with respect to sim/.
+const QaPlanet = preload("res://qa/godot/qa_planet.gd")   # QA_PLANET: a planet ring (qa_planet.gd)
 
 func _init() -> void:
 	var pos: Array = []
@@ -66,7 +67,7 @@ func _init() -> void:
 		var seed: int = base + i
 		var slot: int = fixed_slot if fixed_slot >= 0 else (0 if seed % 2 == 1 else 1)
 		var S: SimState = SimCore.createSim()
-		SimCore.newMatch(S, seed, {"p1": slot != 0, "p2": slot != 1}, {"v2": [slot == 0, slot == 1]})
+		SimCore.newMatch(S, seed, {"p1": slot != 0, "p2": slot != 1}, QaPlanet.setup(seed, {"v2": [slot == 0, slot == 1]}))
 		var ticks: int = 0
 		var live: int = 0
 		var pending: bool = false
