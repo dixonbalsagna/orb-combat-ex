@@ -1,6 +1,6 @@
 # The sim's load split
 
-Owner: Simulation and Engine. 2026-10-27, on the EP's brief from Rendering's boot entry (`render/core/boot_entry.gd`, a5777f00; `docs/rendering/boot.md`). The entry loads the game's script graphs one per drawn frame. At x4 on the web the sim was its longest load, 2.8 s, because the sim's scripts compiled together. The build is parked at `pending/load-split/`.
+Owner: Simulation and Engine. 2026-10-27, on the EP's brief from Rendering's boot entry (`render/core/boot_entry.gd`, a5777f00; `docs/rendering/boot.md`). The entry loads the game's script graphs one per drawn frame. At x4 on the web the sim was its longest load, 2.8 s, because the sim's scripts compiled together. Applied in 8ce4be37 with World's lines; the CI step runs the check (§3).
 
 ## 1. Why the sim compiled as one
 
@@ -40,7 +40,7 @@ Owner: Simulation and Engine. 2026-10-27, on the EP's brief from Rendering's boo
 - It names no sim class itself, so it compiles nothing before its steps.
 - `-- --steps=res://a.gd,res://b.gd` times another order.
 - On HEAD it fails (29 of 30), as it should. With a SimDir call renamed it fails.
-- **For CI (Tools):** one step after the GDScript parity in `.github/workflows/ci.yml`, run with `tools/gate.mjs`.
+- **In CI:** a step after the GDScript parity in `.github/workflows/ci.yml`, run with `tools/gate.mjs`.
 
 ## 4. The load order for the boot entry
 
