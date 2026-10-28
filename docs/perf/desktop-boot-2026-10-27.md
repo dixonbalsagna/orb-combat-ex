@@ -1,6 +1,6 @@
 # Desktop start-up for Steam: the Windows export of d7647634, the web side, platform notes (2026-10-27)
 
-Owner: Performance and Platform, for the EP and Orb. **Status: the Windows export is built and the web side is measured. The native launches (cold, warm, bench) are NOT run yet: they need a real Godot window and a move of two shader-cache folders, which Orb has to answer first (the EP put both to Orb on 2026-10-27).** The native rows below say so; nothing in them is an estimate.
+Owner: Performance and Platform, for the EP and Orb. **Status: the Windows export is built, the web side is measured and the native launches (cold, warm, bench) are measured on the RTX (Orb approved the windowed runs and the cache move through the EP on 2026-10-27).**
 
 ## What is built
 
@@ -28,10 +28,25 @@ Scratch web export of d7647634; the game's bench (AI match, seed 4, fixed 60 fps
 - **Gameplay hash: `d4f6342a1009bdbc` at tick 2,400 in all four x1 runs** (and `2b6a55ae88b58c30` at 1,200 in both x4 runs): the same match every time, on both GPUs. The native `--bench` prints the same hash line at the same frame count, so the native run doubles as a native-against-web match check on this commit.
 - Boot (web, commit 3d276d57, from `boot-start-block-2026-10-27.md`): start block (page start to first frame) **4.4 s at x1, 15.5 s at x4**; playable **22.6 to 23.5 s at x1, 40.7 to 41.1 s at x4**; the last four shader programs compile as frames of 3.7, 2.9, 1.9 and 1.0 s at x1 (the driver, not scaled by the CPU throttle). The page is served from this PC, so there is no download time in them.
 
-| Native, Windows export | cold launch | warm launch | steady frames |
+| Native, Windows export, RTX 5070 Ti, d7647634 | cold launch (2 runs) | warm launch (2 runs) | steady frames (`--bench`, 2 runs) |
 |---|---|---|---|
-| start block, longest block, time to playable, first-frame compile | not run (waiting for Orb) | not run | |
-| frame p50 / p95 / p99 (`--bench`) | | | not run |
+| engine up to the first autoload (engine start) | 1.4, 1.2 s | 0.6, 0.6 s | |
+| script load (first autoload to main scene loaded, the longest single block) | 2.6, 2.5 s | 2.5, 2.5 s | |
+| start block (launch to first frame) | 4.2, 3.8 s | 3.3, 3.3 s | |
+| longest boot frame (the shader compile steps) | 1.38, 2.16 s | 0.13, 0.11 s | |
+| **time to playable (boot done)** | **15.2, 14.5 s** | **5.1, 5.1 s** | |
+| frame p50 / p95 / p99 / max, ms | | | 3.29, 3.25 / 4.97, 4.92 / 9.2, 9.4 / 16.6, 14.2 |
+| view update p50, sim tick p50, ms | | | 1.54, 1.53 / 0.32, 0.32 |
+| draw calls p50 / p99 | | | 114 / 167 |
+| gameplay hash at tick 2,400 | | | `d4f6342a1009bdbc` in both runs |
+
+Times are engine milliseconds since the process started (`Time.get_ticks_msec`), read from the `BP` marks of the console build; the cold launches had the game's own shader cache and NVIDIA's GLCache moved aside (renamed, put back afterwards) and the fresh caches of the first cold launch moved away before the second; the warm launches ran straight after each. Each launch was stopped 3 s after boot done by its own process id. Taken in a window the quiet check passed (whole machine 31 to 39% busy during the launches, 45% is the limit), windowed off-screen at below-normal priority, one at a time. The smoke launch before them (not counted) was taken under load. The  runs end by themselves after 2,400 frames (about 14 s of wall clock).
+
+- **The native hash equals the web hash: `d4f6342a1009bdbc` at tick 2,400**, on the RTX, native Windows against the web build on both GPUs: the same match.
+- **A cold first launch is about 15 s to playable; a second launch about 5 s.** Everything the cache can save is in the shader programs: the script load and start block are the same cold and warm (a second apart), while the boot's compile steps go from 0.1 s frames (warm) to frames of 1.0 to 2.2 s (cold), and boot done moves from 5.1 to 14.5 to 15.2 s. A Steam first launch is the cold case; Steam does not ship Godot's cache, and the NVIDIA driver cache is per machine. (Whether the game's own shader_cache folder or the driver's GLCache carries the saving was not separated: both were moved together.)
+- **Against the web build on the same PC at x1 (22.6 to 23.5 s to playable, start block 4.4 s, measured on 3d276d57, a commit earlier): native is about 1.5 to 4.5 times quicker, and the start block is about the same.** The web number includes the wasm compile and the page's own work; native does not. The 2.5 s script load is the same work in both and is the floor for a native start.
+- **Steady frames:** p50 3.3 ms against 6.4 ms on the web (the browser adds its share), p95 5.0 against 13.8 ms. The slowest frame, 14 to 17 ms, is the opening, inside one 60 Hz frame. The scene is CPU-side (render GPU time 0.05 ms measured, view update 1.5 ms plus tick 0.3 ms), so on this PC native has ample room; a Deck or an old laptop is not measured.
+- Not separated: the Radeon (not selectable natively without changing a Windows per-app graphics setting, which was not done) and any other machine.
 
 ## Platform notes for Steam
 
@@ -51,7 +66,7 @@ Scratch web export of d7647634; the game's bench (AI match, seed 4, fixed 60 fps
 
 ## Not covered
 
-Any native launch or native frame time (waiting for Orb); a Linux or Deck run; the Radeon natively; a real old laptop; the Steam depot and the executable-bit question; the icon and signing steps.
+The Radeon natively and any other PC; a Linux or Deck run; a real old laptop; the Steam depot and the executable-bit question; the icon and signing steps.
 
 ## Files
 
