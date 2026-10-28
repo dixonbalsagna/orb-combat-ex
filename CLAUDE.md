@@ -123,7 +123,7 @@ Orb answered the first scope-and-vision questionnaire on 2026-09-28 (docs/ep/vis
 - Matches of five minutes or more.
 - Procedural planets.
 - Online play after launch.
-- Platforms: Windows, Linux, macOS, browser, Steam Deck and mobile, down to old laptops.
+- Platforms: Windows, Linux, macOS, browser and Steam Deck, down to old laptops. Mobile is parked until after the PC launch (Orb, 2026-10-28; ADR 0011): no new phone-specific work.
 - Licence as Legal recommends.
 - Zero budget (ADR 0005).
 

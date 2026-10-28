@@ -36,7 +36,7 @@ More characters must be addable after launch (see the Modding and Extensibility 
 | Art style | Cel-shaded and low-poly; Art to pitch |
 | Asset creation | Procedural; AI-generated assets allowed |
 | Music | Audio to pitch |
-| Platforms | Windows, Linux, macOS, browser, Steam Deck, mobile |
+| Platforms | Windows, Linux, macOS, browser, Steam Deck. Mobile is parked until after the PC launch (Orb, 2026-10-28; ADR 0011) |
 | Minimum hardware | Old laptops |
 | Input | Keyboard and gamepad equally |
 | Distribution | itch.io, Steam (free), GitHub releases |
