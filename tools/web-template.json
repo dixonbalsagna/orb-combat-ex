@@ -1,5 +1,5 @@
 {
-  "_why": "The pin of the custom Web export template (tools/site-template.mjs, docs/tools/site-template.md). tools/site.json \"template\": \"custom\" is refused until this record is complete: a release asset URL, the SHA-512 of the zip and of the godot.wasm in it, and the build pinned (flags, source, Emscripten, patches: any change is a new flip, Legal RL-199), and the readings measured on the CUSTOM export, each taken on this zip (parity, the signature and collapse clips in both modes, a nightly on the pinned commit, and the frame comparison standard against custom: a frame beyond noise needs the full set in measured.full). It is NOT published and NOT pinned yet: nothing in it is a pass.",
+  "_why": "The pin of the custom Web export template (tools/site-template.mjs, docs/tools/site-template.md). tools/site.json \"template\": \"custom\" is refused until this record is complete: a release asset URL, the SHA-512 of the zip and of the godot.wasm in it, and the build pinned (flags, source, Emscripten, patches: any change is a new flip, Legal RL-199), and the readings measured on the CUSTOM export, each taken on this zip (parity, the signature and collapse clips in both modes, a nightly on the pinned commit, and the frame comparison standard against custom: a frame beyond noise needs the full set in measured.full). The zip is published (GitHub Release web-template-4.7.2-lazy-1, Orb's yes to option (b), 2026-10-28) and pinned below by SHA-512; the readings are still to be taken, and until signature, collapse, nightly and frames are filled in \"template\": \"custom\" in tools/site.json is refused. Nothing in it is a pass yet.",
   "version": "4.7.2-stable",
   "built_by": ".github/workflows/web-template.yml (run 40624057612, the lazy-specialization patch, no trims)",
   "build": {
@@ -10,16 +10,17 @@
       "4.7.2-lazy-specializations": "149d4969c2f24421826c7b3ba5d3ae0450c9ee3f0888d1fb775bf290be137a71"
     }
   },
-  "url": null,
-  "sha512": null,
-  "wasmSha512": null,
-  "bytes": null,
-  "_measured_prefix": "The zip Performance measured (docs/perf/web-template-2026-10-28.md) is 9,861,157 bytes with SHA-512 starting f0b7b0805ef3d63e; its full hash is in that run's log, not here.",
+  "url": "https://github.com/dixonbalsagna/orb-combat-ex/releases/download/web-template-4.7.2-lazy-1/web_nothreads_release.zip",
+  "sha512": "f0b7b0805ef3d63e966b34cc3e200031734a7f878c536860b6cc8c69229eb68bf5d1264ab9ebf7c6f431cbeac002da83857aafe352bcacf1188456e9503a0b19",
+  "wasmSha512": "ae2abcc2f5e84ee18a54b0f9f2719077866028aa82d9f945883befc19718ff36ceb72f9d3cb7400a47f743c44909e0a4017e068153150eaeaaa0abf00ae703fb",
+  "bytes": 9861157,
+  "_measured_prefix": "The release asset is the zip of run 40624057612, the one Performance measured (docs/perf/web-template-2026-10-28.md): 9,861,157 bytes, SHA-512 starting f0b7b0805ef3d63e, the same as the release asset's; so Performance's parity reading carries over to it, and no other reading does.",
   "measured": {
     "parity": {
       "keys": 51,
       "match": 51,
-      "by": "Performance, 2026-10-28, on main 9631fc75 (the engine label differs by design)"
+      "by": "Performance, 2026-10-28, on main 9631fc75 (the engine label differs by design)",
+      "template": "f0b7b0805ef3d63e966b34cc3e200031734a7f878c536860b6cc8c69229eb68bf5d1264ab9ebf7c6f431cbeac002da83857aafe352bcacf1188456e9503a0b19"
     },
     "signature": null,
     "collapse": null,

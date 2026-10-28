@@ -8,6 +8,9 @@
 //        commit with nothing over the limit). With --site it also reads the built site's play/index.wasm: custom, it must be the pinned wasm; standard, it must not be.
 //   node tools/site-template.mjs --fetch <dir> [--config ...] [--record ...]
 //        custom: downloads the pinned zip into <dir> (curl, as .github/actions/setup-godot does), checks its size and SHA-512 and prints its path; standard: prints nothing.
+//   node tools/site-template.mjs --download <dir> [--record ...]
+//        the same download and the same checks (release URL, size, SHA-512 of the zip, SHA-512 of the godot.wasm inside it), whatever tools/site.json says and whether or not the readings are in: the way to
+//        get the pinned zip to take those readings on it (parity, the clips, the nightly, the frames). Prints the path; the file is removed on a mismatch.
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -160,7 +163,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   try { rec = JSON.parse(readFileSync(resolve(opt('--record') || RECORD_FILE), 'utf8')); } catch { /* reported when custom */ }
   let t;
   try { t = templateOf(config); } catch (e) { console.error(`site template: ${e.message}`); process.exit(1); }
-  if (args.includes('--fetch')) {
+  if (args.includes('--download')) {
+    try { console.log(fetchTemplate(rec, resolve(opt('--download')))); } catch (e) { console.error(`site template: ${e.message}`); process.exit(1); }
+  } else if (args.includes('--fetch')) {
     if (t === 'standard') process.exit(0);
     try { console.log(templateFor(config, rec, resolve(opt('--fetch')))); } catch (e) { console.error(`site template: ${e.message}`); process.exit(1); }
   } else {

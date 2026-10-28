@@ -12,6 +12,7 @@ import { templateOf, recordProblems, readZipEntry, fetchTemplate, templateFor, s
 import { setWebCustomTemplate, webPresetChanged } from './flash/web-preset.mjs';
 import { exportPinned } from './site-pin.mjs';
 
+const SHA_HEX = /^[0-9a-f]{128}$/;
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
 const sha512 = (b) => createHash('sha512').update(b).digest('hex');
@@ -67,7 +68,13 @@ check('any other value is an error, not a silent standard', (() => { for (const 
 
 // the record
 check('a complete record (URL, both hashes, size, parity, signature both modes, collapse both modes, a nightly on the pin) has no problem', recordProblems(good(), cfg(), CTX).length === 0, JSON.stringify(recordProblems(good(), cfg(), CTX)));
-check('the record in the tree is not complete, so "custom" is refused today', recordProblems(JSON.parse(readFileSync(join(here, 'web-template.json'), 'utf8')), cfg()).length >= 5);
+// the zip is published and pinned (Orb's yes to option (b), 2026-10-28): what the tree's record still lacks is readings, never the pin itself (URL, hashes, size, build)
+{
+  const real = JSON.parse(readFileSync(join(here, 'web-template.json'), 'utf8'));
+  const left = recordProblems(real, cfg());
+  check('the record in the tree pins the published zip (release URL, both SHA-512, size, build) and what "custom" is still refused for is a reading', /^https:\/\/github\.com\/[^/]+\/[^/]+\/releases\/download\/[^/]+\/web_nothreads_release\.zip$/.test(real.url) && SHA_HEX.test(real.sha512) && SHA_HEX.test(real.wasmSha512) && real.bytes === 9861157 && left.every((m) => /^measured\./.test(m)), JSON.stringify(left));
+  check('the parity reading of the tree is the pinned zip own (it carries the SHA-512 of the zip); the other readings are not there yet or carry it too', real.measured.parity.template === real.sha512 && ['signature', 'collapse', 'nightly', 'frames'].every((k) => real.measured[k] === null || (real.measured[k] && real.measured[k].template === real.sha512)));
+}
 const bad = (what, rec, re, ctx = CTX) => { const p = recordProblems(rec, cfg(), ctx); check(`custom is refused when ${what}`, p.length > 0 && (!re || p.some((m) => re.test(m))), JSON.stringify(p)); };
 bad('there is no record', null, /missing or unreadable/);
 bad('the template is not published (no URL)', good({ url: null }), /not published/);
@@ -198,6 +205,8 @@ try {
   check('--check --site: custom with the pinned engine passes', run(['--check', '--config', cf(cfg({ template: 'custom' })), '--record', rf(good()), '--site', site(WASM)]).status === 0);
   check('--check --site: an offline site (no game, no wasm) is not compared', run(['--check', '--config', cf({ offline: true }), '--record', rf({ url: null }), '--site', site(null)]).status === 0);
   check('--fetch: standard prints nothing and exits 0', (() => { const r = run(['--fetch', join(tmp, 'f1'), '--config', cf(cfg()), '--record', rf(good())]); return r.status === 0 && r.stdout.trim() === ''; })());
+  check('--download: a record with no release URL fails whatever the site says', run(['--download', join(tmp, 'dl1'), '--config', cf(cfg()), '--record', rf({ url: null })]).status === 1);
+  check('--download: a URL that is not a github.com release asset is refused before anything is fetched', (() => { const r = run(['--download', join(tmp, 'dl2'), '--record', rf(good({ url: 'http://evil.example/x.zip' }))]); return r.status === 1 && /no release asset URL/.test(r.stderr) && !existsSync(join(tmp, 'dl2')); })());
   check('--fetch: custom with an incomplete record fails', run(['--fetch', join(tmp, 'f2'), '--config', cf(cfg({ template: 'custom' })), '--record', rf({ url: null })]).status === 1);
 } finally {
   srv.kill();
