@@ -185,11 +185,12 @@ Data files are owned by their directors; the validator reports problems and neve
 | `sim` | `npm test --prefix sim` (Node 24.19.0) | about 1.5 min |
 | `data` | `node tools/validate.js --self-test`, then `node tools/validate.js` (Node 24.19.0): schemas and cross-references | about 15 seconds (the self-test took 4.5 minutes until 2026-10-06; see below) |
 | `godot-parity` | Godot 4.7.2 headless: import, GDScript parity, render determinism, render seam sweep | about 1 min |
+| `net` | Godot 4.7.2 headless, Netcode's checks (docs/net/rollback.md): desync detection, spectator, delay chooser, transport and the two-process ENet proof (a host and a joiner on 127.0.0.1, UDP ports 47100 and 47102), each with its negative control. Never run on Orb's PC (a socket there could raise a Windows Firewall prompt); a job of its own because together they take about 7 min. Gates the deploy | about 8 min |
 | `flash` | the photosensitivity check, half 1 (docs/tools/flash-check.md): the analysers' and the headless-Chrome pipeline's self-tests, then the worst cases played headless in normal and reduced-flashing mode and the flash register's log recounted (more than 3 flashes in 60 ticks, 1 under reduced flashing, fails), then a negative control that must fail. Gates the deploy (it ran green on a real runner twice, then joined `deploy.needs`) | about 3 min |
 | `site` | Godot Web export, then assembles the Pages site (`tools/build-site.mjs`) | about 2 to 3 min (the 1.28 GB templates download dominates) |
-| `deploy` | Publishes the site to GitHub Pages. Only on push (or manual run) on `main`, and only after the six jobs above pass | seconds |
+| `deploy` | Publishes the site to GitHub Pages. Only on push (or manual run) on `main`, and only after the seven jobs above pass | seconds |
 
-The first five run in parallel (the `flash` job too: three of them use Godot, `godot-parity`, `flash` and `site`; the cap is six). There are no npm install steps because the suites use Node built-ins only; CI runs without `@napi-rs/canvas` and the golden hashes match with and without it (the runner never calls `render()`). Add `npm ci` (with a lockfile) the day a suite grows a dependency.
+The seven jobs run in parallel (four of them use Godot: `godot-parity`, `net`, `flash` and `site`; the cap is six). There are no npm install steps because the suites use Node built-ins only; CI runs without `@napi-rs/canvas` and the golden hashes match with and without it (the runner never calls `render()`). Add `npm ci` (with a lockfile) the day a suite grows a dependency.
 
 Settings: `permissions: contents: read` (only `deploy` adds `pages: write` and `id-token: write`, the built-in Pages token permissions), no secrets, `persist-credentials: false` on checkout, a timeout on every job. A newer push cancels an older run of the same branch, except on `main`, where every run finishes so a deploy is never cut off.
 

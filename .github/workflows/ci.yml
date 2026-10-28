@@ -178,6 +178,41 @@ jobs:
       - name: Render seam sweep
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/seam_sweep.gd -- --size=1280x720'
 
+  # The network checks (docs/net/rollback.md sections 7 to 11), in a job of their own: together they take about 7 minutes (the two-process ENet proof about 1 minute each way), so they run beside the other jobs instead of lengthening godot-parity.
+  # enet_check starts two more Godot processes (a host and a joiner) on 127.0.0.1, UDP ports 47100 and 47102, with no outside service. It is run here and never on Orb's PC (a socket there could raise a Windows Firewall prompt).
+  # Each check's last Godot line is its verdict (PASS or FAIL); tools/gate.mjs then adds its own line about SCRIPT ERROR lines.
+  net:
+    name: Network checks (desync, spectator, delay, transport, two-process ENet)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-godot
+      - name: Import project
+        run: '"$GODOT" --headless --path . --import'
+      - name: Desync detection (injected divergences are caught at a checkpoint, LAN and p120)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/desync_check.gd -- --seeds=1 --ticks=600 --profiles=lan,p120'
+      - name: Desync detection, negative control (a blind detector and a lazy one must be caught)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/desync_check.gd -- --seeds=1 --ticks=600 --profiles=lan,p120 --negative-control'
+      - name: Spectator check (a spectator's hashes match the players', LAN, p120 and far)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/spectator_check.gd -- --seeds=1 --ticks=600 --profiles=lan,p120,far'
+      - name: Spectator check, negative control (deliberate breaks must be caught)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/spectator_check.gd -- --seeds=1 --ticks=600 --profiles=lan,p120,far --negative-control'
+      - name: Delay chooser check (the input delay follows the device and the round trip)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/delay_check.gd'
+      - name: Delay chooser check, negative control (two broken choosers must be caught)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/delay_check.gd -- --negative-control'
+      - name: Transport check (the codec, the handshake on every profile and device pair, two hosts through the codec)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/transport_check.gd'
+      - name: Transport check, negative control (a smaller-proposal handshake and no time sync must be caught)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/transport_check.gd -- --negative-control'
+      - name: Two-process ENet match on 127.0.0.1 (both processes match each other and the straight run, LAN and p200)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/enet_check.gd -- --ticks=1800 --profiles=lan,p200'
+      - name: Two-process ENet match, negative control (a perturbed joiner must be caught)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/enet_check.gd -- --ticks=1800 --profiles=lan,p200 --negative-control'
+
   # Builds the Pages site on every run, so a broken export shows up on pull requests
   # and branches too. Only pushes to main (and manual runs on main) upload it.
   site:
@@ -262,7 +297,7 @@ jobs:
 
   deploy:
     name: Deploy to GitHub Pages
-    needs: [qa, sim, data, flash, godot-parity, site]
+    needs: [qa, sim, data, flash, godot-parity, net, site]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
