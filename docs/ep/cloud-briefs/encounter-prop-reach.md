@@ -19,11 +19,13 @@ Godot: `$GODOT` if set, else install the pinned Linux build as cloud-workflow.md
 
    The candidate's pick share must stay inside QA's band. Re-read it with `launchbiome_batch.gd --on`.
 2. **The zip.price lead.** QA's gen 2 records show one zip priced off the table: seed 105, gen 2 planet 17, touch 2, a light paid 21.77. Re-run that match with the director line and find out whether it's a real price bug or a same-tick ki change. If it's real, fix it; if not, say so.
+3. **If time allows: a cheaper `logOf`.** After Controls' params cache (on main), `logOf` (`sim/director/alchemy.gd`) is most of the roughly 220 us a press that is left. It builds up to 20 nine-key dictionaries a call and repeats `k % RING` and `f.act.dirI` in every field. Hoist those, or build only the changed slots. Measure with `dir_prof` before and after (AI match seed 1, 3,600 ticks, 3 runs each, alternated), keep tick_hash byte-identical, and run rollback_check.
 
 **Acceptance criteria:**
 - the golden is byte-identical with `biome.enabled` off;
 - determinism passes plain and with `--intro`, with the switch off and on;
 - `flighthooks_probe`'s prop line reads every launch that reached the prop as stopping at it, with none short and none over;
-- `launchbiome_probe`, `sigafter_probe`, all World checks and the standard gate set pass, each one's last line in the report.
+- `launchbiome_probe`, `sigafter_probe`, all World checks and the standard gate set pass, each one's last line in the report;
+- if item 3 is done: tick_hash identical over 43,200 ticks, and the press line's before and after are in the report.
 
 **Report** as `docs/director/cloud-reports/2026-10-28-prop-reach.md` with these sections: SUMMARY, CHANGES, DECISIONS, NEEDS FROM EP, RISKS, NEXT. Push and end your turn. Stay in the session while long runs finish.
