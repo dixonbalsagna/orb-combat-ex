@@ -18,7 +18,7 @@ Controls, 2026-10-22. Nothing in CI or a runner lists the input tests, so this i
 | `join_test.gd` | 53 | joining and leaving |
 | `layout_test.gd` | 128 | the layouts |
 | `mode_test.gd` | 55 | the manoeuvre mode |
-| `hold_toggle_test.gd` | 76 | the hold or toggle styles of Guard, Dodge, Power and Transform: held and toggled sequences give the same packed intent tick by tick and the same state hash (keyboard and Arena pad), two negative controls, auto-repeat, player 2's own style, the style going back to hold, a new match, the cancel, the ring, `let_go_toggles` |
+| `hold_toggle_test.gd` | 88 | the hold or toggle styles of Guard, Dodge, Power and Transform: held and toggled sequences give the same packed intent tick by tick and the same state hash (keyboard and Arena pad), two negative controls, auto-repeat, player 2's own style, the style going back to hold, a new match, the cancel, the ring, `let_go_toggles`, and the KO rule (`on_events`: a KO puts both players' toggles away, a launch keeps them, with a negative control) |
 | `params_cache_test.gd` | 36 | the kept `params()` of the press reader and the aim helper: one read-only copy, equal to a fresh build, and never outliving a data load, a replaced section or `invalidate()` |
 | `press_read_test.gd` | 439 | wind-ups, bursts, pairs, struggle and grapple reads |
 | `remap_test.gd` | 138 | rebinding |

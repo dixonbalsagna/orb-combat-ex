@@ -499,8 +499,18 @@ func set_hold_style(action: String, style: String, slot: int = -1) -> void:
 			hold_style_pref[s][action] = "toggle" if style == "toggle" else "hold"
 
 
-## Let go of a slot's toggled holds and cancel a toggled transform that is counting. Nothing in the input layer calls it: it is for a host that
-## wants a KO or a launch to end them (a held finger is not let go by either, so by default neither does a toggle).
+## The host's word of the tick's sim events (S.out.fx, before it is cleared). Game Design's ruling (2026-10-28): a KO puts both players' toggled
+## holds away, and a launch keeps them (the sim already gates the held states while a fighter is sent). Nothing else here reads an event.
+func on_events(events: Array) -> void:
+	for e in events:
+		if str(e.type) == "ko":
+			for s in range(2):
+				let_go_toggles(s)
+			return
+
+
+## Let go of a slot's toggled holds and cancel a toggled transform that is counting. The input layer does not call it itself; on_events() does,
+## for a KO (a launch leaves the toggles on, as it leaves a held finger down).
 func let_go_toggles(slot: int) -> void:
 	match slot_device[slot]:
 		"pad":

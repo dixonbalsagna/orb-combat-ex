@@ -464,6 +464,7 @@ func tick(vw: float, vh: float) -> void:
 	flashes_due.emit(S.out.fx)
 	_ask_beams()
 	_ask_hits()
+	hub.on_events(S.out.fx)   # a KO puts both players' toggled holds away (Game Design, 2026-10-28); a launch keeps them
 	S.out.fx.clear()
 	if fxv.shake > 0.5:
 		jitter = Vector2((cam_rng.next() - 0.5) * fxv.shake, (cam_rng.next() - 0.5) * fxv.shake)

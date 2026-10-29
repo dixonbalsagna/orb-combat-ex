@@ -39,10 +39,11 @@ Only these, and each matches what a held button does:
 | the style set back to hold | ends it at once (a finger still on the control keeps it until it lifts) | the player turned it off |
 | Transform sent | ends the chord's toggled dodge and power | the stances were only the chord's fingers |
 | **a hit taken** | **nothing** | a held finger is not lifted by a hit either: the sim gates the held states for the stun ticks (`wounds.gd`: guard, power and dodge read false while `stunTicks > 0`) and they resume after, for a latch exactly as for a finger. Ending guard on a hit would end the guard that was just used |
-| **a launch, a KO** | **nothing in the input layer** | the layout is never told (the host does not call `set_sent` in the live build), and a finger is not lifted by them either. The sim already ignores the held states while the fighter is launched or stunned. A host that wants a KO or a launch to put the toggles away calls `hub.let_go_toggles(slot)` (built, tested, not called by anyone) |
+| **a launch** | **nothing** | Game Design's ruling (2026-10-28): a launch keeps the toggles, as it leaves a held finger down. The sim already ignores the held states while the fighter is launched or stunned |
+| **a KO** | **both players' toggles go away** | Game Design's ruling (2026-10-28). The host hands the tick's events to `hub.on_events(S.out.fx)`; a `"ko"` event calls `let_go_toggles` for both slots (guard, dodge and power put away, a counting transform cancelled). The host line is parked (`docs/controls/pending/ko-toggles/`) until Rendering's file takes it; until then nothing ends a toggle at a KO |
 | another stance button pressed | the newer stance wins, as with two fingers; the older toggle is still on underneath and comes back when the newer is toggled off | `SimStance` is exclusive and newest-wins; the toggle does not change that rule |
 
-One open call for the EP: after a knock-down the toggled guard rises again at once if nobody pressed stop. That is what a held finger does too, and it is in the design as shipped; `let_go_toggles` is the switch if Game Design wants a launch or a KO to end it.
+After a knock-down (a launch) the toggled guard rises again at once if nobody pressed stop. That is what a held finger does too, and Game Design kept it. A KO ends the match, so a toggle left on would carry into the next fight's first tick; the new match's `release_all` already clears it, and `on_events` clears it at the KO itself so the result screen and any rematch prompt start with no stance on.
 
 ## The options and the host
 
@@ -52,13 +53,13 @@ One open call for the EP: after a knock-down the toggled guard rises again at on
 
 ## The check
 
-`sim/input/test/hold_toggle_test.gd`, 76 checks:
+`sim/input/test/hold_toggle_test.gd`, 88 checks (the last 12 are the KO rule: a toggled guard for both players on a real match, then the sim's own `SimFx.launch` event, which leaves both on, then `SimFx.ko`, which puts both away and leaves them away, a fresh press after it toggling guard on again; the negative control runs the same with the host never calling `on_events` and both guards stay on; other events and an empty feed change nothing; mutated to ignore the KO, or to end on a launch too, it fails 2 of the 88 each):
 - for guard, dodge, power, the transform chord (sent, and cancelled) and the transform key (sent, and cancelled), on the keyboard and the Arena pad where both exist: held and toggled sequences give the same packed intent on all 160 ticks and the same state hash after the run, and the run has the thing in it (so an empty comparison cannot pass);
 - the transform chord with dodge and power toggled too: one transform, the same as holding, and no stance left on after it;
 - two negative controls: the toggled stream with the style left at hold is **not** the held one, and with the stop press missing the guard is still on at the end;
 - the auto-repeat of a held key, player 2's own style while player 1 holds, the style going back to hold (at once, and with a finger still down), `release_all`, the ring and the cancel, `let_go_toggles`.
 
-A mutation run (`_tog_on` made to return false) fails 24 of the 76.
+A mutation run (`_tog_on` made to return false) fails 24 of the original 76. The test calls `hub.on_events` itself; the one host line that calls it in the game is covered by the render determinism gates (they run `SimHost.tick`), not by this test.
 
 ## Left alone
 

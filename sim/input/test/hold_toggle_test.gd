@@ -34,6 +34,7 @@ func _init() -> void:
 	_back_to_hold()
 	_cancel_and_ring()
 	_let_go()
+	_ko_toggles()
 	print("hold_toggle_test: %d checks, %d failed" % [checks, fails])
 	quit(1 if fails > 0 else 0)
 
@@ -395,3 +396,93 @@ func _let_go() -> void:
 		hub.consumed()
 		sent = sent or i.transform
 	ok(not i.guard and not sent and hub.transform_hold(0) == 0.0, "let go: let_go_toggles(slot) puts them both away, and the transform is not sent")
+
+
+## Game Design's ruling (2026-10-28): a KO puts both players' toggles away, a launch keeps them. The events are the sim's own (SimFx.ko and
+## SimFx.launch into S.out.fx of a real match), read the way the host reads them: hub.on_events(S.out.fx) before the feed is cleared.
+func _ko_toggles() -> void:
+	for host_calls in [true, false]:
+		var hub := SimInputHub.new()
+		hub.set_humans(true, true)
+		hub.set_hold_style("guard", "toggle")
+		var su: Dictionary = hub.setup()
+		su["intro"] = false
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 5, {"p1": false, "p2": false}, su)
+		S.fighters[1].x = SimWrap.wrap(S.fighters[0].x + 200.0)
+		S.fighters[1].y = S.fighters[0].y
+		hub.intent(0)                 # the styles are applied on an intent(), before the first press
+		hub.intent(1)
+		hub.consumed()
+		hub.key("Shift", true)        # P1's guard
+		hub.key("Semicolon", true)    # P2's guard
+		hub.key("Shift", false)
+		hub.key("Semicolon", false)
+		var g: Array = []
+		for t in range(8):
+			var a: SimIntent = hub.intent(0)
+			var b: SimIntent = hub.intent(1)
+			SimCore.step(S, [a, b])
+			hub.consumed()
+			g = [a.guard, b.guard]
+			S.out.fx.clear()
+		var tag: String = "host calls on_events" if host_calls else "host never calls it"
+		ok(g[0] and g[1], "ko [%s]: both toggled guards are on before anything happens" % tag)
+		# A launch: the toggles stay on.
+		S.fighters[0].launchT = 0.5
+		S.fighters[0].vx = 300.0
+		S.fighters[0].vy = 100.0
+		SimFx.launch(S, S.fighters[0], S.fighters[1], 600.0, 1.0)
+		ok(_has_event(S.out.fx, "launch") and not _has_event(S.out.fx, "ko"), "ko [%s]: the launch event is in the feed (and no KO)" % tag)
+		if host_calls:
+			hub.on_events(S.out.fx)
+		S.out.fx.clear()
+		var a2: SimIntent = hub.intent(0)
+		var b2: SimIntent = hub.intent(1)
+		hub.consumed()
+		ok(a2.guard and b2.guard, "ko [%s]: after a launch both toggled guards are still on" % tag)
+		# A KO: the host's call puts both away, and they stay away.
+		SimFx.ko(S, S.fighters[1], S.fighters[0])
+		ok(_has_event(S.out.fx, "ko"), "ko [%s]: the KO event is in the feed" % tag)
+		if host_calls:
+			hub.on_events(S.out.fx)
+		S.out.fx.clear()
+		var off: bool = true
+		var on: bool = true
+		for t in range(10):
+			var a3: SimIntent = hub.intent(0)
+			var b3: SimIntent = hub.intent(1)
+			hub.consumed()
+			off = off and not a3.guard and not b3.guard
+			on = on and a3.guard and b3.guard
+		if host_calls:
+			ok(off, "ko [%s]: after a KO both toggled guards are off, and stay off" % tag)
+			# And the next press starts a guard again (the toggle was put away, not broken).
+			hub.key("Shift", true)
+			hub.key("Shift", false)
+			var a4: SimIntent = hub.intent(0)
+			hub.consumed()
+			ok(a4.guard, "ko [%s]: a fresh press after the KO toggles guard on again" % tag)
+		else:
+			ok(on, "ko [negative control, %s]: without the call the KO leaves both guards on (so the check above bites)" % tag)
+		SimCore.dispose(S)
+	# Events of other kinds, and an empty feed, change nothing.
+	var hub2 := SimInputHub.new()
+	hub2.set_humans(true, false)
+	hub2.set_hold_style("guard", "toggle", 0)
+	hub2.intent(0)
+	hub2.consumed()
+	hub2.key("Shift", true)
+	hub2.key("Shift", false)
+	hub2.on_events([])
+	hub2.on_events([{"type": "damage"}, {"type": "launch"}, {"type": "land"}])
+	var i2: SimIntent = hub2.intent(0)
+	hub2.consumed()
+	ok(i2.guard, "ko: other events and an empty feed leave a toggled guard on")
+
+
+func _has_event(events: Array, type: String) -> bool:
+	for e in events:
+		if str(e.type) == type:
+			return true
+	return false
