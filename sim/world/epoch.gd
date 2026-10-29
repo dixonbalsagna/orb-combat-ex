@@ -325,7 +325,9 @@ static func _prep(S: SimState, E: Dictionary) -> void:
 		var key: String = _jkey(S, float(w.deg))
 		var job = _jobs.get(key)
 		if job == null:
-			continue
+			if int(w.ptk) < 0 or int(w.ptk) >= pt:
+				continue
+			job = _jobFor(S, E, w)   # read and preparing, its job gone (a rollback to before the swap, a state carried into another process): made again, read up to the count at once
 		var ep = pl.e.get(key)
 		if ep == null:
 			ep = _entry()
