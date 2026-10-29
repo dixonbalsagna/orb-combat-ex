@@ -68,6 +68,9 @@ func _init() -> void:
 		var slot: int = fixed_slot if fixed_slot >= 0 else (0 if seed % 2 == 1 else 1)
 		var S: SimState = SimCore.createSim()
 		SimCore.newMatch(S, seed, {"p1": slot != 0, "p2": slot != 1}, QaPlanet.setup(seed, {"v2": [slot == 0, slot == 1]}))
+		if QaPlanet.fellBack(S, seed):   # the slice failed: stop, never play the hand-made world as a ring
+			quit(3)
+			return
 		var ticks: int = 0
 		var live: int = 0
 		var pending: bool = false

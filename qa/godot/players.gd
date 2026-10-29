@@ -793,6 +793,9 @@ func _init() -> void:
 		var seed: int = base + i
 		var slot_a: int = 0 if seed % 2 == 1 else 1
 		var res: Dictionary = _match(seed, [spec_a, spec_b], [slot_a, 1 - slot_a], capsec, sums, int(wall * 1000.0), g)
+		if res.get("fellBack", false):
+			quit(3)
+			return
 		n_done += 1
 		if res.get("wall", false):
 			wall_capped += 1
@@ -933,6 +936,8 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 	var S: SimState = SimCore.createSim()
 	var ai: Dictionary = {"p1": not by_slot[0].scripted(), "p2": not by_slot[1].scripted()}
 	SimCore.newMatch(S, seed, ai, QaPlanet.setup(seed, {"v2": [by_slot[0].scripted(), by_slot[1].scripted()]}))
+	if QaPlanet.fellBack(S, seed):   # the slice failed: stop, never play the hand-made world as a ring
+		return {"fellBack": true, "t": 0.0, "brink": -1.0, "winner": -1}
 	var lt: int = 0
 	if not g.is_empty():
 		g.lastMissTick = -1000   # a miss read from the last match is not this match's

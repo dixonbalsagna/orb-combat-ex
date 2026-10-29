@@ -66,6 +66,9 @@ func _init() -> void:
 			print("records: time budget of %d s used after %d of %d matches" % [int(budget), i, n])
 			break
 		recs.append(run_match(base + i, arm, cap, capsec, int(wall * 1000.0), start_mode))
+		if QaPlanet.failed != "":
+			quit(3)
+			return
 	var f := FileAccess.open(out, FileAccess.WRITE)
 	f.store_string(JSON.stringify(recs))
 	f.close()
@@ -75,6 +78,8 @@ func _init() -> void:
 func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 300000, start_mode: String = "") -> Dictionary:
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, seed, {}, QaPlanet.setup(seed, ({"start": start_mode} if start_mode == "crossing" else {})))   # QA_PLANET: a planet ring (qa_planet.gd); unset, the hand-made world
+	if QaPlanet.fellBack(S, seed):   # the slice failed and the match is the hand-made world: stop, never play it as a ring
+		return {}
 	if start_mode == "city":   # both fighters start in a city (Encounter's wall kick probe does the same): the seed picks the spot, so wall slams are common
 		var cxs := []
 		var cx := 0.0
