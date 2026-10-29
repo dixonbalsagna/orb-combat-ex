@@ -180,6 +180,10 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/two_states_check.gd'
       - name: Two states in one process, negative control (three deliberate breaks must be caught)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/two_states_check.gd -- --negative-control'
+      - name: Replays across processes (each level's replay plays in a fresh process, whatever the recording process ran first)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/replay_xproc_check.gd'
+      - name: Replays across processes, negative control (four deliberate breaks must be caught)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/replay_xproc_check.gd -- --negative-control'
       # The rollback core (docs/net/rollback.md section 6): two peers over the loopback must match a straight run's gameplay hash at every confirmed tick; about a minute.
       - name: Rollback check (two peers over the loopback match the straight run, LAN and two lossy profiles)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --seeds=1 --ticks=300 --profiles=lan,p80j,p200'

@@ -132,3 +132,38 @@ These are projections from a desktop, not measurements on old hardware, and the 
 ## 9. Netcode requests
 
 Pending. The EP will forward Netcode's `simulation-port-requests.md`. Declined requests will be recorded here with the reason.
+
+## 10. Replays across processes (2026-10-29)
+
+A replay's header (`SimReplay.dataHash(setup)`) has to come out the same in the process that records the replay and in a fresh process that plays it, whatever the recording process ran before.
+
+The director's data hash (`DirData.dataHash()`) is made once a process. Until 2026-10-29 the computer's level reached the header through it (`DirAI.skillText()`), so a header held the level of the process's first match. A Hard or Easy replay recorded as a process's first match was refused in a fresh process. The level now comes from the setup (`DirAI.levelOf`, folded in by `SimReplay.dataHash`), and Medium, the data's own level, adds nothing, so no earlier hash moved.
+
+**The check: `sim/core/tools/replay_xproc_check.gd`**, in CI with its negative control.
+
+```
+godot --headless --path . --script res://sim/core/tools/replay_xproc_check.gd -- [--ticks=600] [--negative-control]
+```
+
+It runs two recording processes, each a fresh Godot started by the check. Each records three AI-versus-AI matches on one seed:
+- Hard first, then Easy, then a setup with no level;
+- Easy first, then Hard, then Medium.
+
+Each of the six replays is then played in a fresh process of its own. The check passes only if:
+- every replay with a level plays;
+- the replay with no level plays or is refused as other data, but never fails at a checkpoint;
+- Hard's header and final hash are the same from both recording processes, and so are Easy's;
+- the three levels' headers all differ, and so do their final hashes (the level reaches the match);
+- Medium's header equals a fresh process's hash for a setup with no level.
+
+It takes about 40 s on this PC. The children's script errors are printed in its output, so `tools/gate.mjs` counts them.
+
+**Negative control.** Each of these four breaks must fail the check. It stops at each break's first failure.
+- The header leaves the level out.
+- The header takes the level of the process's first match (the fault before the fix).
+- The playback drops the level.
+- The match runs at Medium under its setup's header.
+
+On 51d8cc44 without the fix, the plain check fails nine ways.
+
+**Left as it is.** A setup with no `aiLevel` keeps the level of the process's last match that had one. QA's probes set `DirAI.level` directly and rely on that. The header names that level, so such a replay is refused in a fresh process as other data rather than failing at a checkpoint. QA decides whether to change this when its probes next change.
