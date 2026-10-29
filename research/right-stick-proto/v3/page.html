@@ -17,18 +17,19 @@ kbd{border:1px solid var(--border);border-radius:4px;padding:0 4px;font-size:12p
 </style>
 </head>
 <body>
-<p>Right hand attacks, v3 (Research, 2026-10-28): the left hand survives, the right hand hurts (<code>docs/ep/right-hand-attacks-pitch.md</code>). The left stick moves; LT, LB or both plus a left flick slip, brace or vanish; LB alone guards. The face buttons are the quick moves; the right stick is the big move: a strike (flick it, or hold it through the wind-up to charge), and with RB held a beam. The pitch switch below changes how a stick strike is costed and where the signature lives. The right thumb keeps Controls' rule: a button after a stick move waits 6 ticks, a stick move after a button waits 8, so a claw grip is never faster. Numbers are the pitch's first guesses.</p>
+<p>Right hand attacks, v3 (Research, 2026-10-28), built to Controls' spec (<code>docs/controls/right-hand-attacks.md</code>) and Game Design's rulings (<code>docs/design/right-hand-attacks-rulings.md</code>): the left hand survives, the right hand hurts. The left stick moves. LT starts the dodge and a left flick in the next 6 ticks makes it a slip that way; LB guards, and a quick left flick from rest with LB down sets a brace; LB and LT within 6 ticks and a direction is the vanish. The face buttons are the quick moves. The right stick is a fifth button with a direction: back within 12 ticks it is the quick strike; held, a charge, thrown when you let go. With RB held it is the beam; with RT held in 4c, the signature. While the stick is held the face buttons are inert, so a claw grip is never faster. Numbers are the rulings' first values.</p>
 <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;margin:0 0 12px">
   <span class="lab">Clip</span><div id="rowC" class="row"></div>
   <span class="lab">Mode</span><div id="rowM" class="row"></div>
   <span class="lab">Pitch</span><div id="rowP" class="row"></div>
+  <span class="lab">D-pad</span><div id="rowD" class="row"></div>
   <label for="spd" class="lab">Playback speed</label>
   <div style="display:flex;gap:10px;align-items:center"><input id="spd" type="range" min="10" max="100" step="5" value="100" style="width:180px"><span id="spdo" class="lab">100%</span><span id="pad" class="lab"></span></div>
 </div>
 <canvas id="cv" width="1020" height="340" style="width:100%;border:0.5px solid var(--border);border-radius:12px;background:var(--surface-1)"></canvas>
 <ol id="steps"></ol>
-<p class="lab">The pitches. <b>4a</b>: stick strikes are their own class, quick, they stun, with their own pace. <b>4b</b>: the stick is the heavy's direction, with the heavy's wind-up and pace and no stun. <b>4c</b>: quick strikes that stun, but costed like the heavy (6 ki, the heavy's pace), and the signature moves to RT and the stick. The clips each name their pitch on the panel; in Play the switch takes effect at once (keys <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd>).</p>
-<p class="lab">Play: a gamepad works as it is (the standard mapping: both sticks, LT, LB, RT, RB, A, B, X, Y and the D-pad). Keyboard: <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> the left stick, <kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&rarr;</kbd> <kbd>&darr;</kbd> the right stick (tap to strike, hold to charge), <kbd>Shift</kbd> is LT, <kbd>Q</kbd> is LB, <kbd>E</kbd> holds RB, <kbd>R</kbd> holds RT, <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>I</kbd> are X, Y, B and A, <kbd>T</kbd> <kbd>F</kbd> <kbd>G</kbd> <kbd>H</kbd> the D-pad (the right stick's mirror). A left-hand move: hold Shift, Q or both, then tap W A S D. The Rival closes in and throws a blow, a high one, a heavy, a low one, a flurry and a grab in turn, with a shot from range; he is a training dummy and his health refills.</p>
+<p class="lab">The pitches. <b>4c</b> (the default, Game Design's split by gesture): the quick strike is its own class (wind-up 12, a 20-tick stun, a medium's worth); held, it is the charged heavy aimed by the stick (B held's numbers: armoured against lights, levels at 12, 30 and 50); the signature is on RT and the stick, hold and release. <b>4a</b>: own class all the way, with its own ladder (12, 30, 54; placeholder numbers). <b>4b</b>: the stick is B with a direction. In 4a and 4b the signature stays on RT and B. The switch takes effect at once in Play (keys <kbd>1</kbd> 4a, <kbd>2</kbd> 4b, <kbd>3</kbd> 4c).</p>
+<p class="lab">Play: a gamepad works as it is (the standard mapping: both sticks, LT, LB, RT, RB, A, B, X, Y; the D-pad when its mirror is on). Keyboard (Controls' solo layout): <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> the left stick, the arrow keys the right stick (tap for the quick strike, hold to charge, let go to throw), <kbd>Space</kbd> LT, <kbd>Shift</kbd> LB, <kbd>Q</kbd> RB, <kbd>E</kbd> RT, <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>I</kbd> X, Y, B and A, <kbd>C</kbd> the vanish chord in one key. A slip: Space, then tap a direction. A brace: Shift held, tap a direction (a held direction walks guarded). The vanish: Shift and Space together (or C), then tap a direction. The Rival is a training dummy: he closes in and throws a light, a medium at three heights, a heavy, a flurry and a grab in turn, guards for a while, and shoots from range; his health refills.</p>
 <script>
 /*SIM*/
 (function () {
@@ -36,44 +37,65 @@ var cv = document.getElementById('cv'), c = cv.getContext('2d');
 var R = { clear: function (col) { c.fillStyle = col; c.fillRect(0, 0, S.W, S.H); },
   poly: function (p, col) { if (p.length < 6) return; c.fillStyle = col; c.beginPath(); c.moveTo(p[0], p[1]); for (var i = 2; i < p.length; i += 2) c.lineTo(p[i], p[i + 1]); c.closePath(); c.fill(); },
   text: function (x, y, s, size, col) { c.fillStyle = col; c.font = 'bold ' + size + 'px monospace'; c.textBaseline = 'top'; c.fillText(String(s).toUpperCase(), x, y); } };
-var PITCHES = ['4a', '4b', '4c'];
-var st = { ci: 0, mode: 'demo', pitch: '4c' }, run = null, keys = {}, spd = 1, acc = 0, last = 0, shown = -1, ac = null;
-function reset() { run = S.newRun(st.ci, st.mode, st.pitch); shown = -1; renderSteps(); }
+var PITCHES = S.PITCHES;
+var st = { ci: 0, mode: 'demo', pitch: '4c', mirror: false }, run = null, keys = {}, latch = {}, arrows = [], spd = 1, acc = 0, last = 0, shown = -1, ac = null;
+// a key pressed and let go between two sim steps is kept until a step has read it, so no tap is lost at any playback speed
+var AV = { rl: [-1, 0], rr: [1, 0], ru: [0, -1], rd: [0, 1] }, ARROW_JOIN = 3, stepN = 0, leftSrc = 'keys';
+function reset() { run = S.newRun(st.ci, st.mode, st.pitch, st.mirror); shown = -1; renderSteps(); }
 function buttons(el, items, get, set, keep) { el.innerHTML = ''; items.forEach(function (it, i) { var b = document.createElement('button'); b.type = 'button'; b.textContent = it; b.addEventListener('click', function () { set(i); paint(); if (!keep) reset(); b.blur(); audio(); }); el.appendChild(b); }); el._get = get; }
 function paintRow(el) { Array.prototype.forEach.call(el.children, function (b, i) { var on = el._get() === i; b.style.background = on ? 'var(--bg-accent)' : 'transparent'; b.style.color = on ? 'var(--text-accent)' : ''; }); }
-var rowC = document.getElementById('rowC'), rowM = document.getElementById('rowM'), rowP = document.getElementById('rowP');
-function paint() { [rowC, rowM, rowP].forEach(paintRow); }
-function setPitch(i) { st.pitch = PITCHES[i]; if (run && st.mode === 'play') run.w.pitch = st.pitch; paint(); }
+var rowC = document.getElementById('rowC'), rowM = document.getElementById('rowM'), rowP = document.getElementById('rowP'), rowD = document.getElementById('rowD');
+function paint() { [rowC, rowM, rowP, rowD].forEach(paintRow); }
+function setPitch(i) { st.pitch = PITCHES[i]; if (run && st.mode === 'play') run.w.pitch = st.pitch; paint(); renderSteps(); }
+function setMirror(i) { st.mirror = !!i; if (run && st.mode === 'play') run.w.mirror = st.mirror; paint(); }
 buttons(rowC, S.CLIPS.map(function (cl) { return cl.n + ' ' + cl.name; }), function () { return st.mode === 'demo' ? st.ci : -1; }, function (i) { st.ci = i; st.mode = 'demo'; });
 buttons(rowM, ['Watch the clip', 'Play'], function () { return st.mode === 'demo' ? 0 : 1; }, function (i) { st.mode = i ? 'play' : 'demo'; });
-buttons(rowP, PITCHES.map(function (p) { return S.PITCH[p].tag + ' ' + S.PITCH[p].name.toLowerCase(); }), function () { return PITCHES.indexOf(st.pitch); }, setPitch, true);
+buttons(rowP, PITCHES.map(function (p, i) { return (i + 1) + ': ' + S.PITCH[p].tag + ' ' + S.PITCH[p].name.toLowerCase(); }), function () { return PITCHES.indexOf(st.pitch); }, setPitch, true);
+buttons(rowD, ['Mirror off (default)', 'Mirror on: the D-pad is the right stick'], function () { return st.mirror ? 1 : 0; }, setMirror, true);
 paint();
 var sl = document.getElementById('spd'); sl.addEventListener('input', function () { spd = sl.value / 100; document.getElementById('spdo').textContent = Math.round(sl.value) + '%'; });
-var MAP = { ArrowLeft: 'rl', ArrowRight: 'rr', ArrowUp: 'ru', ArrowDown: 'rd', KeyW: 'lu', KeyA: 'll', KeyS: 'ld', KeyD: 'lr', ShiftLeft: 'LT', ShiftRight: 'LT', KeyQ: 'LB', KeyE: 'RB', KeyR: 'RT',
-  KeyJ: 'X', KeyK: 'Y', KeyL: 'B', KeyI: 'A', KeyT: 'du', KeyF: 'dl', KeyG: 'dd', KeyH: 'dr' };
+var MAP = { ArrowLeft: 'rl', ArrowRight: 'rr', ArrowUp: 'ru', ArrowDown: 'rd', KeyW: 'lu', KeyA: 'll', KeyS: 'ld', KeyD: 'lr', Space: 'LT', ShiftLeft: 'LB', ShiftRight: 'LB', KeyQ: 'RB', KeyE: 'RT',
+  KeyJ: 'X', KeyK: 'Y', KeyL: 'B', KeyI: 'A', KeyC: 'VAN' };
 function toPlay() { if (st.mode !== 'play') { st.mode = 'play'; paint(); reset(); } }
 window.addEventListener('keydown', function (e) {
   if (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3') { setPitch(+e.code.slice(5) - 1); e.preventDefault(); return; }
-  if (MAP[e.code]) { audio(); toPlay(); keys[MAP[e.code]] = true; e.preventDefault(); } });
-window.addEventListener('keyup', function (e) { if (MAP[e.code]) { keys[MAP[e.code]] = false; e.preventDefault(); } });
-window.addEventListener('blur', function () { keys = {}; });
+  var k = MAP[e.code]; if (!k) return;
+  audio(); toPlay(); e.preventDefault(); if (e.repeat) return;
+  keys[k] = true; latch[k] = true;
+  if (AV[k] && !arrows.some(function (a) { return a.k === k && !a.up; })) arrows.push({ k: k, n: stepN, up: false });
+});
+window.addEventListener('keyup', function (e) { var k = MAP[e.code]; if (!k) return; keys[k] = false; arrows.forEach(function (a) { if (a.k === k) a.up = true; }); e.preventDefault(); });
+window.addEventListener('blur', function () { keys = {}; latch = {}; arrows = []; });
+// the arrows as the right stick (Controls 5.1): the first arrow pressed is the strike's direction (two before the same sim
+// tick are a tie, and a tie goes to the vertical); a second arrow joins only after 3 ticks, past the settle, so it can aim or
+// steer a beam eight ways but never changes a strike's direction
+function arrowStick() {
+  var live = arrows.filter(function (a) { return !a.up || !a.read; }); if (!live.length) return [0, 0];
+  var first = live[0];
+  if (live.length > 1 && live[1].n === first.n && AV[first.k][1] === 0 && AV[live[1].k][1] !== 0) first = live[1];
+  var x = AV[first.k][0], y = AV[first.k][1];
+  live.forEach(function (a) { if (a !== first && stepN - first.n >= ARROW_JOIN && AV[a.k][0] !== x && AV[a.k][1] !== y) { x += AV[a.k][0]; y += AV[a.k][1]; } });
+  var l = Math.sqrt(x * x + y * y) || 1; return [x / l, y / l];
+}
 // the standard mapping: left stick axes 0 and 1, right 2 and 3; A 0, B 1, X 2, Y 3, LB 4, RB 5, LT 6, RT 7, the D-pad 12 to 15
 function pad() { var ps = navigator.getGamepads ? navigator.getGamepads() : [], g = null; for (var i = 0; i < ps.length; i++) if (ps[i] && ps[i].connected) { g = ps[i]; break; } return g; }
 var padSeen = false;
 function input() {
-  var g = pad(), o = { LT: !!keys.LT, LB: !!keys.LB, RB: !!keys.RB, RT: !!keys.RT, X: !!keys.X, Y: !!keys.Y, B: !!keys.B, A: !!keys.A, du: !!keys.du, dd: !!keys.dd, dl: !!keys.dl, dr: !!keys.dr };
-  var kx = (keys.rr ? 1 : 0) - (keys.rl ? 1 : 0), ky = (keys.rd ? 1 : 0) - (keys.ru ? 1 : 0), kl = Math.sqrt(kx * kx + ky * ky) || 1;
-  var jx = (keys.lr ? 1 : 0) - (keys.ll ? 1 : 0), jy = (keys.ld ? 1 : 0) - (keys.lu ? 1 : 0), jl = Math.sqrt(jx * jx + jy * jy) || 1;
-  o.rx = kx / kl; o.ry = ky / kl; o.lx = jx / jl; o.ly = jy / jl;
+  var K = function (k) { return !!keys[k] || !!latch[k]; };
+  var g = pad(), o = { LT: K('LT') || K('VAN'), LB: K('LB') || K('VAN'), RB: K('RB'), RT: K('RT'), X: K('X'), Y: K('Y'), B: K('B'), A: K('A'), du: false, dd: false, dl: false, dr: false };
+  var ar = arrowStick(), jx = (K('lr') ? 1 : 0) - (K('ll') ? 1 : 0), jy = (K('ld') ? 1 : 0) - (K('lu') ? 1 : 0), jl = Math.sqrt(jx * jx + jy * jy) || 1;
+  o.rx = ar[0]; o.ry = ar[1]; o.lx = jx / jl; o.ly = jy / jl; if (jx || jy) leftSrc = 'keys';
   if (g) {
-    if (!padSeen) { padSeen = true; document.getElementById('pad').textContent = 'Gamepad: ' + g.id.slice(0, 40); }
+    if (!padSeen) { padSeen = true; document.getElementById('pad').textContent = 'Gamepad: ' + g.id.slice(0, 40); if (g.axes.length < 4 && !st.mirror) setMirror(1); }
     var ax = g.axes, bt = function (i) { return !!(g.buttons[i] && (g.buttons[i].pressed || g.buttons[i].value > 0.5)); };
-    if (Math.abs(ax[2]) > 0.02 || Math.abs(ax[3]) > 0.02) { o.rx = ax[2]; o.ry = ax[3]; }
-    if (Math.abs(ax[0]) > 0.02 || Math.abs(ax[1]) > 0.02) { o.lx = ax[0]; o.ly = ax[1]; }
+    // a pad stick takes over from the keys only past the dead zone, so a stick's rest drift never does
+    if (ax.length >= 4 && Math.sqrt(ax[2] * ax[2] + ax[3] * ax[3]) > S.RS.deadZone) { o.rx = ax[2]; o.ry = ax[3]; }
+    if (Math.sqrt(ax[0] * ax[0] + ax[1] * ax[1]) > S.RS.deadZone) { o.lx = ax[0]; o.ly = ax[1]; leftSrc = 'pad'; }
     o.A = o.A || bt(0); o.B = o.B || bt(1); o.X = o.X || bt(2); o.Y = o.Y || bt(3); o.LB = o.LB || bt(4); o.RB = o.RB || bt(5); o.LT = o.LT || bt(6); o.RT = o.RT || bt(7);
-    o.du = o.du || bt(12); o.dd = o.dd || bt(13); o.dl = o.dl || bt(14); o.dr = o.dr || bt(15);
-    if (st.mode !== 'play' && (Math.abs(ax[0]) > 0.5 || Math.abs(ax[1]) > 0.5 || Math.abs(ax[2]) > 0.5 || Math.abs(ax[3]) > 0.5 || bt(0) || bt(2))) toPlay();
+    o.du = bt(12); o.dd = bt(13); o.dl = bt(14); o.dr = bt(15);
+    if (st.mode !== 'play' && (Math.abs(ax[0]) > 0.5 || Math.abs(ax[1]) > 0.5 || (ax.length >= 4 && (Math.abs(ax[2]) > 0.5 || Math.abs(ax[3]) > 0.5)) || bt(0) || bt(2))) toPlay();
   }
+  o.lkeys = leftSrc === 'keys';
   return o;
 }
 function renderSteps() {
@@ -88,7 +110,7 @@ var SOUNDS = { nack: function () { tone(260, 200, 0.06, 0.03); }, click: functio
 function frame(ts) {
   if (!last) last = ts; var dt = Math.min(50, ts - last); last = ts; acc += dt / 16.667 * spd * (run.clip && run.clip.takes[run.take].slow ? 1 / run.clip.takes[run.take].slow : 1);     // side-by-side takes play at half speed
   var inp = input();
-  while (acc >= 1) { acc -= 1; S.stepRun(run, inp); run.w.sound.forEach(function (k) { if (SOUNDS[k]) SOUNDS[k](); }); }
+  while (acc >= 1) { acc -= 1; S.stepRun(run, inp); stepN++; latch = {}; arrows.forEach(function (a) { a.read = true; }); arrows = arrows.filter(function (a) { return !a.up; }); inp = input(); run.w.sound.forEach(function (k) { if (SOUNDS[k]) SOUNDS[k](); }); }
   S.draw(run, R);
   if (st.mode === 'demo') { var k = S.stepOf(run.clip, run.t); if (k !== shown) { shown = k; Array.prototype.forEach.call(document.getElementById('steps').children, function (li, i) { li.className = i === k ? 'on' : ''; }); } }
   requestAnimationFrame(frame);

@@ -129,13 +129,13 @@ function mergeReadme(path, block) {
 
 const STEM = { L1: 'L1-slips', L2: 'L2-guard-and-braces', L3: 'L3-vanish', R1: 'R1-stick-strikes', R2: 'R2-energy-stick', P1: 'P1-three-pitches', C1: 'C1-claw-side-by-side' };
 const CAP = {
-  L1: 'LT alone is the plain dodge; LT with a left flick slips that way: a back-step, a slip in, a sway over a low blow, a duck under a high one.',
-  L2: 'LB held is the guard; LB with a left flick braces for his next move (3 ki, 90 ticks), shown in the stance: his heavy, his flurry, his grab, his shot.',
-  L3: 'LB, LT and a left flick: the vanish, a blink that way for 12 ki. Away is the escape; toward blinks through to his back.',
-  R1: 'The right stick hurts: a flick strikes that way (a body blow that stuns, a rising strike, a spike or a sweep, a turning blow); held through the wind-up it charges. Pitch 4a.',
-  R2: 'With RB held the right stick is the beam: a flick is a snap-beam where the stick points; held, it channels, follows the stick and grows. The face buttons are the blasts.',
-  P1: 'One input, three pitches: 4a strikes are their own class; 4b the stick is the heavy; 4c quick strikes costed like the heavy, with the signature on RT and the stick.',
-  C1: 'The claw against one thumb on one clock: a stick move then a button, and a button then a stick move, start on the same tick in both lanes.',
+  L1: 'LT starts the dodge on its press tick; a left flick in the next 6 ticks makes it a slip that way: a back-step, a slip in, a sway over a low blow, a duck under a high one. The third of one direction in 3 s loses its frames.',
+  L2: 'LB held is the guard (his heavy breaks it). LB and a quick left flick from rest set a brace on the flick\'s return (3 ki, 90 ticks), shown in the stance: his heavy, his flurry, his grab, his shot. A slow lean walks guarded and sets none.',
+  L3: 'LB and LT within 6 ticks and a direction: the dodge becomes the vanish at its tick 6, an instant cut with after-images (20 ki, x1.5 again inside 3 s). Away is the escape, toward blinks to his back, up and down go over and under. LB held longer, then LT, is the plain dodge.',
+  R1: 'Pitch 4c. A quick flick (back before tick 12) is the quick strike: a body blow, a rising blow, a sweep or spike, a turning blow, each a 20-tick stun. Held, it is the charged heavy aimed by the stick: armoured, levels at 12, 30, 50. The third of one direction in 3 s doesn\'t stun; a light ends a quick strike.',
+  R2: 'With RB held the stick is the beam: quick, the snap-beam; held, it charges (12, 30, 54) and fires on release along the aim latched at the settle, then steers. The face buttons are the blasts, always at him. The kite: blasts on the move; a charged beam plants him.',
+  P1: 'One input, three pitches: 4c (GD\'s split, the default), pure 4a (its own class and ladder), 4b (B with a direction). Then the signature: on RT and the stick in 4c, hold and release; on RT and B in 4a and 4b.',
+  C1: 'The claw against one thumb on one clock: a strike then X, X and the stick together, and X pressed during a charge (inert while the stick is held). Each starts on the same tick in both lanes.',
 };
 
 // every note the panel showed, in order (a split take's lanes marked A: and B:), and each lane's I/F/X/B ticks per take
