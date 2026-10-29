@@ -132,8 +132,11 @@ static func blurb(kind: int) -> String:
 
 
 ## The controls page's row for the button that holds the stance (stances.json `_howto`), only while it is live; "" keeps the data's own words.
-static func howto_word(kind: int) -> String:
-	return str(_row(kind).get("_howto", "")) if live(kind) else ""
+static func howto_word(kind: int, toggle: bool = false) -> String:
+	var row: Dictionary = _row(kind)
+	if not live(kind):
+		return ""
+	return str(row.get("_howto_toggle", row.get("_howto", ""))) if toggle else str(row.get("_howto", ""))
 
 
 ## The Remap screen's {label, help} for the action that holds a stance (guard, mode, power, dodge), only while that stance is live; {} keeps the old words.

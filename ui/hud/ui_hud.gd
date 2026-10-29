@@ -1122,7 +1122,8 @@ func _howto_held() -> int:
 
 ## What the stances page needs beyond the layout: the held stance, the tab chosen, and whether the touch controls are the Full ones.
 func _howto_extra() -> Dictionary:
-	return {"held": _howto_held(), "tab": _howto_tab, "full_touch": bool(opts["touch_ui"]) and str(opts["touch_preset"]) == "touch-full", "scroll": _howto_scroll, "first_run": _howto_first}
+	return {"held": _howto_held(), "tab": _howto_tab, "full_touch": bool(opts["touch_ui"]) and str(opts["touch_preset"]) == "touch-full", "scroll": _howto_scroll, "first_run": _howto_first,
+		"styles": UiHints.styles(hub.model(_howto_slot()), _o())}   # the page's player's hold-or-toggle words
 
 
 ## The glyph family and slot of the first human fighter, for the controls page ("kbd" and slot 0 if none is set).

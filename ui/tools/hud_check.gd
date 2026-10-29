@@ -1464,6 +1464,19 @@ func _howto_rules() -> void:
 	var rt_simple: Array = row_texts.call(UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 1, "xbox", 0, "simple-pad"))
 	_ok(rt_solo.has("Heavy") and rt_solo.has("Energy (hold; Settings can make it a toggle)") and rt_solo.has("Specials") and not rt_simple.has("Heavy") and not rt_simple.has("Energy (hold; Settings can make it a toggle)") and not rt_simple.has("Specials") and rt_simple.has("Guard (hold)"), "howto: the controls page lists the actions the layout binds (Simple has no heavy, mode or specials row)")
 	_ok(rt_solo.size() >= 10 and rt_simple.size() >= 6, "howto: the controls page keeps its rows (%d keyboard, %d Simple)" % [rt_solo.size(), rt_simple.size()])
+	# Hold or toggle: the page says toggle for the player who chose it (what it draws is the record's lines, not the item's own text).
+	var drawn := func(pl: Dictionary) -> String:
+		var out := ""
+		for rec in pl["items"]:
+			if rec["kind"] == "action":
+				out += " | " + " ".join(rec["lines"])
+		return out
+	var d_hold: String = drawn.call(UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 1, "kbd", 0, "kb-solo"))
+	var d_tog: String = drawn.call(UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 1, "kbd", 0, "kb-solo", "neutral", {"styles": {"guard": "toggle", "dodge": "toggle", "power": "toggle", "mode": "toggle"}}))
+	var d_one: String = drawn.call(UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 1, "kbd", 0, "kb-solo", "neutral", {"styles": {"guard": "toggle"}}))
+	_ok(d_hold.contains("Guard (hold)") and d_hold.contains("sprint (hold)") and d_hold.contains("Power (hold to charge)") and d_hold.contains("Energy stance (hold;"), "howto toggle control: with every style on hold the page says hold, as it did")
+	_ok(d_tog.contains("Guard (toggle)") and d_tog.contains("sprint (toggle)") and d_tog.contains("Power (toggle to charge)") and d_tog.contains("Energy stance (toggle;") and not d_tog.contains("(hold"), "howto toggle: for a player who chose toggle the controls page says toggle, and no (hold) is left on it")
+	_ok(d_one.contains("Guard (toggle)") and d_one.contains("Power (hold to charge)") and d_one.contains("sprint (hold)"), "howto toggle: each action follows its own style")
 	# The flow in the HUD.
 	UiPrefs.path = "user://ui_prefs_test.json"
 	if FileAccess.file_exists(UiPrefs.path):

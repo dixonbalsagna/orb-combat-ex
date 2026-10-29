@@ -40,3 +40,7 @@ Fix, parked: `docs/ui/pending/ai-level-hash/` (README, `ai-level-hash.patch`, 41
 
 ## NEXT
 Idle on these files until you confirm the commit.
+
+## ADDENDUM: How to play (the EP's follow-up, after 85e71fd2)
+The controls page now says toggle for the first human's slot when that player chose it: `text_toggle` on the Energy, Guard, Dodge and Power rows of `ui/data/howto.json`, `_howto_toggle` on the four stances in `stances.json` (a live stance's row), `UiStance.howto_word(kind, toggle)`, the page's player styles in `UiHud._howto_extra()` (read from the options, never written), the schema's `text_toggle`. `hud_check` +3 ("howto toggle control", "howto toggle", each action on its own style). The touch page and the stances page's general lines stay as they were (one text for everyone). strings.md and the pseudo copies (howto, stances) regenerated; `terms.json` of the pseudo copies is left at HEAD as before.
+Gates for it (scratch HEAD 85e84452 + files): `hud_check` "hud_check: 5870 checks, 0 failed"; `text_size_check` "2390 checks, 0 failed"; `pseudo_switch_check` passed plain and with `-- --pseudo-locale`; `validate.js` "280 files checked, 0 errors, 0 warnings"; `pseudo.mjs --check` current; determinism plain and `--intro` "determinism passed".

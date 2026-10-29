@@ -44,6 +44,7 @@
       "properties": {
         "col": { "enum": [0, 1] },
         "text": { "type": "string" },
+        "text_toggle": { "type": "string", "minLength": 1 },
         "heading": { "type": "string", "minLength": 1 },
         "note": { "enum": ["kbd_p2", "reopen"] },
         "icon": { "type": "string", "minLength": 1 },
