@@ -386,10 +386,19 @@ static func lv() -> Dictionary:
 	return sk.levels[level if level != "" else sk.level]
 
 
-## The data file's text, for DirData.dataHash() (the replay header).
+## The data file's text, for DirData.dataHash() (the replay header). Not the level: DirData hashes once per process, so a level in it would be whichever the process's first match ran at; the
+## level goes into SimReplay.dataHash(setup) by levelOf().
 static func skillText() -> String:
 	skill()
-	return _skillText + level
+	return _skillText
+
+
+## The level a match with this setup runs at, as the replay header names it: the setup's `aiLevel`, else the level a host or a tool set (`level`); "" for the data's own level (a Medium match
+## is the match of no level at all) and for a level the data lacks.
+static func levelOf(setup: Dictionary) -> String:
+	var lvl: String = String(setup.aiLevel) if setup.has("aiLevel") else level
+	var sk: Dictionary = skill()
+	return "" if (lvl == String(sk.level) or not (sk.levels as Dictionary).has(lvl)) else lvl
 
 
 const HEAVY_SHARE: float = 0.375                # of the other attacks, the share that are heavies (it was 0.3 of all)

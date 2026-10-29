@@ -183,6 +183,10 @@ static func dataHash(setup: Dictionary = {}) -> String:
 	if setup.has("wear"):   # a campaign stage's place state: World lays it by data/biomes/campaign.json's bands (campaign-core.md)
 		h.text(WorldCampaign.dataHash())
 	h.text(WorldBrunt.dataHash())          # World's brunt ladder and lodge: data/biomes/brunt.json
+	var lvl: String = DirAI.levelOf(setup)   # the computer's level, a setup key (the start menu's Easy or Hard); nothing for the data's own level, so no earlier replay's hash moves
+	if lvl != "":
+		h.text("aiLevel")
+		h.text(lvl)
 	# the fighters in its slots, one hash each (FighterData.hashOf): a change to a fighter who is not in the match, the
 	# training dummy's say, leaves the replay alone. The default pairing is the roster's first two.
 	for id in setup.get("slots", FighterData.order().slice(0, 2)):
