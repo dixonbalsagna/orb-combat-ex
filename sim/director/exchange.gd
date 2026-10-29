@@ -343,6 +343,7 @@ static func _start(S: SimState, A, kind: String) -> int:
 		if A.ambush:
 			SimFx.ambush(S, A, D)
 			SimFx.danger(S, D, "ambush", 0.0)
+		planDefStance = -1   # cleared as the plan's path clears it: it is read only inside _start, so none is carried out of it
 		return STARTED
 	if kind != "sig" and DirData.hasNeutral() and opn == 0 and not fu and planDefStance < 0:
 		DirAI.react(S, D, dState)   # step 2b: the AI defender's press, before the plan reads defQueued (dState: its state before the lock)

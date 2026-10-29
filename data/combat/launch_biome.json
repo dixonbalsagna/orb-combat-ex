@@ -91,6 +91,7 @@
         "_about": "a send into one big prop on the line: a lone tree, a boulder, a berg or one of World's rocks (lichen_rock, lava_rock), the way BUILDING SMASH takes a building but with no people and no chain. Offered when such a prop stands on the predicted line within reachBh. The prop breaks (World) and the body stops at it",
         "sends": "across", "uy": 0.05,
         "props": ["lone_tree", "boulder", "berg", "lichen_rock", "lava_rock"], "reachBh": 40.0,
+        "aimFm": [1.0, 1.25, 1.6, 2.0, 2.5, 3.0], "_aimFm": "Encounter, prop-reach: the forces the planner tries in turn, times the launch's own, until World's flight breaks a prop on the line ahead (the first that does is the plan's, and the candidate is offered only then); 3.0 is the long haul's cap (launch.gd HAUL_FM_MAX). A launch anywhere's send keeps its own force",
         "_props": "Game Design, rulings-2026-10-28 item 3: outcrop matched no World kind, so World's own rocks take its place (data/biomes/ground.json: lichen_rock in tundra, lava_rock in volcanic). The score stays 10 until PROP SMASH can find its props; read again before biome.enabled goes on",
         "score": 10.0, "hero": 2.0, "villain": 2.0,
         "where": "savanna, highland, tundra, volcanic, sea ice; any biome where World places such props"

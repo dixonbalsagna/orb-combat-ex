@@ -294,14 +294,17 @@ static func flash(f, weight: int, tick: int) -> void:
 ## The log as Controls' classifier reads it: oldest first, {kind, mode, down, up, beat, flash}.
 static func logOf(f) -> Array:
 	_size(f)
+	var di: PackedInt32Array = f.act.dirI   # read once (nothing here writes it, so it is not copied)
 	var out: Array = []
-	var n: int = f.act.dirI[COUNT]
+	var n: int = di[COUNT]
 	for k in range(maxi(0, n - RING), n):
-		var p: int = f.act.dirI[P0 + k % RING]
-		var e: Dictionary = {"kind": kindOf(p), "mode": (p >> 1) & 1, "down": f.act.dirI[T0 + k % RING] - ((p >> FREEZE_SHIFT) & 15), "up": f.act.dirI[UP0 + k % RING], "beat": f.act.dirI[BEAT0 + k % RING], "flash": f.act.dirI[FLASH0 + k % RING],
-			"stance": (p >> STANCE_SHIFT) & 15, "ldown": f.act.dirI[LDOWN0 + k % RING]}
-		if f.act.dirI[UP0 + k % RING] >= 0:
-			e["lup"] = f.act.dirI[LUP0 + k % RING]
+		var j: int = k % RING
+		var p: int = di[P0 + j]
+		var up: int = di[UP0 + j]
+		var e: Dictionary = {"kind": SimPressRead.SIG if (p & BIG) != 0 else (p & 1), "mode": (p >> 1) & 1, "down": di[T0 + j] - ((p >> FREEZE_SHIFT) & 15), "up": up, "beat": di[BEAT0 + j], "flash": di[FLASH0 + j],
+			"stance": (p >> STANCE_SHIFT) & 15, "ldown": di[LDOWN0 + j]}   # (kind: kindOf, inline)
+		if up >= 0:
+			e["lup"] = di[LUP0 + j]
 		out.append(e)
 	return out
 

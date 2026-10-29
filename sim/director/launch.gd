@@ -199,7 +199,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 				break
 			md += MOUNTAIN_STEP
 	if bon:
-		_biomeCands(S, A, D, c, longOnly, fwdOnly, force * (DirBrawl.freshMul(S, D, 1) if fresh else 1.0) * tierF)
+		_biomeCands(S, A, D, c, longOnly, fwdOnly, force * (DirBrawl.freshMul(S, D, 1) if fresh else 1.0) * tierF, fresh)
 	if not longOnly and not noKnock:
 		c.append({"name": "KNOCK BACK", "ux": 0.0, "uy": 0.0, "s": float(data().knockBack.score)})   # "no launch": a scored outcome (it was NONE)
 	if sends != "":
@@ -313,8 +313,9 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 ## Biomes W3 (docs/combat/biomes.md section 3; data/combat/launch_biome.json): the eight candidates that use the ground,
 ## each offered only where its feature is, appended to c in a fixed order (the noise draws keep it). CLIFFSIDE is a long
 ## haul like MOUNTAINSIDE and is offered to a break or finisher launch too; the other seven are not. pf is the force the
-## flight would get (the template's, the tier's and an across send's freshness), for SKIM ASHORE's skim prediction.
-static func _biomeCands(S: SimState, A, D, c: Array, longOnly: bool, fwdOnly: bool, pf: float) -> void:
+## flight would get (the template's, the tier's and an across send's freshness), for SKIM ASHORE's skim prediction and
+## PROP SMASH's aim; fresh marks a launch anywhere's send, which PROP SMASH does not aim.
+static func _biomeCands(S: SimState, A, D, c: Array, longOnly: bool, fwdOnly: bool, pf: float, fresh: bool = false) -> void:
 	var cd: Dictionary = biome().get("candidates", {})
 	var pers: String = _persOf(A)
 	var f: float = A.face
@@ -384,13 +385,90 @@ static func _biomeCands(S: SimState, A, D, c: Array, longOnly: bool, fwdOnly: bo
 
 				break
 	if not pq.is_empty():
-		var best = null
-		for p in near:
-			var d: float = SimWrap.sdx(D.x, p.x) * f
-			if (pq.props as Array).has(String(p.kind)) and d >= 0.0 and d <= preach and D.y - WorldTerrain.groundY(S, p.x) < float(p.size) * BH and (best == null or d < best.d):
-				best = {"d": d, "x": p.x, "kind": String(p.kind)}   # the nearest big prop the low line meets (its height: size x a body height)
-		if best != null:
-			c.append(_bc(pq, "PROP SMASH", f, float(pq.uy), pers, 0.0, {"land": best.x, "prop": best.kind}))
+		# PROP SMASH is aimed as BUILDING SMASH is (World's W6 finding: a plan whose flight stopped short of its prop, or
+		# passed over a low one): the first force of the row's aimFm, the row's own first, whose flight breaks a prop on
+		# the line ahead. A launch anywhere's send keeps its own force (its length is its power's, as with the long haul).
+		var props: Array = _propTargets(S, D, near, pq.props, f, preach)
+		if not props.is_empty():
+			for fm in ([1.0] if fresh else pq.get("aimFm", [1.0])):
+				var hit: int = _propFlight(S, A, D, f, float(pq.uy), pf * float(fm), props)
+				if hit >= 0:
+					c.append(_bc(pq, "PROP SMASH", f, float(pq.uy), pers, 0.0, {"land": props[hit].x, "prop": props[hit].kind, "fm": float(fm)}))
+					break
+
+
+## PROP SMASH's targets on the line ahead of D (direction f) within reach: [{"d", "x", "col", "kind", "top"}], nearest
+## first, one a column. A column's target is the prop WorldContact._smashProp breaks there (WorldGround.smashIn of the
+## column's props), and top is its height above the ground; a column whose props World does not smash has none.
+static func _propTargets(S: SimState, D, near: Array, kinds: Array, f: float, reach: float) -> Array:
+	var out: Array = []
+	var broken: PackedInt32Array = brokenProps(S)
+	for p in near:
+		var d: float = SimWrap.sdx(D.x, p.x) * f
+		if not kinds.has(String(p.kind)) or d < 0.0 or d > reach or out.any(func(q): return int(q.col) == int(p.col)):
+			continue
+		var here: Array = []
+		for q in WorldGround.matchProps(S, float(p.x) - SimConst.COL, float(p.x) + SimConst.COL, broken):
+			if int(q.col) == int(p.col):
+				here.append(q)
+		var pick: int = WorldGround.smashIn(here)
+		if pick < 0:
+			continue
+		var t: Dictionary = {"d": d, "x": float(p.x), "col": int(p.col), "kind": String(p.kind), "top": float(here[pick].size) * WorldGround.BH}
+		var i: int = out.size()
+		while i > 0 and float(out[i - 1].d) > d:
+			i -= 1
+		out.insert(i, t)
+	return out
+
+
+## The prop a send of (ux, uy) at force F breaks, as World's flight would play it: an index into props
+## (_propTargets), or -1 when the journey ends first. The body is the one doLaunch and WorldContact.toBody make, and
+## each tick is the runtime's (WorldContact.stepFighter): moveAir, the path's prop test, groundPhase in the air;
+## stepContact, then the test, in a skid or tumble. The test is _smashProp's: the prop within PROP_STOP of the tick's
+## path ahead, and he lower than its top (over it, it stands, and a later tick may still meet it). Reads only. Like
+## WorldContact.journey it reads the ground as it is now, not as the flight changes it (a landing's crater, a skid's
+## trench, the rubble of what it breaks). rec (tools only): when an Array, it gets his [x, y] at the end of each tick.
+static func _propFlight(S: SimState, A, D, ux: float, uy: float, F: float, props: Array, rec = null) -> int:
+	var tv: float = WorldSlide.launchTravel(ux, uy)
+	var b: WorldContact.Body = WorldContact.launchBody(D.x, D.y, ux * F * tv, uy * F, tv, A.tier, D.y < WorldWater.seaTop(S, D.x), D.z)
+	b.dir = 1.0 if ux >= 0.0 else -1.0
+	b.wetT = int(D.wetT)
+	b.slideD = float(D.slideD)
+	b.embedOK = S.T - D.embedCool >= WorldContact.K_EMB_COOL
+	var ev: Array = []
+	for t in range(WorldContact.TICK_CAP):
+		var x0: float = b.x
+		var hit: int = -1
+		if b.mode == WorldContact.AIR:
+			WorldContact.moveAir(S, b, SimConst.DT, ev)
+			if not b.done:
+				hit = _propOnPath(S, b, x0, 1.0 if b.vx >= 0.0 else -1.0, props)
+				if hit < 0:
+					WorldContact.groundPhase(S, b, ev)
+		else:
+			WorldContact.stepContact(S, b, SimConst.DT, ev)
+			if b.dxStep != 0.0:
+				hit = _propOnPath(S, b, x0, b.dir, props)
+		if rec != null:
+			rec.append([b.x, b.y])
+		if hit >= 0 or b.done:
+			return hit
+		ev.clear()
+	return -1
+
+
+## The first of props on a tick's path from x0 to b.x (direction dir) that _smashProp would break: within PROP_STOP
+## ahead of where the tick leaves him, and he lower than its top. -1 when none.
+static func _propOnPath(S: SimState, b: WorldContact.Body, x0: float, dir: float, props: Array) -> int:
+	var run: float = SimWrap.sdx(x0, b.x) * dir
+	if run <= 0.0:
+		return -1
+	for i in range(props.size()):
+		var d: float = SimWrap.sdx(x0, float(props[i].x)) * dir
+		if d >= 0.0 and d <= run + WorldContact.PROP_STOP and b.y - WorldTerrain.groundY(S, float(props[i].x)) < float(props[i].top):
+			return i
+	return -1
 
 
 ## A biome candidate: its name, direction and score (the row's score, its personality's flavour and extra), plus fields.
