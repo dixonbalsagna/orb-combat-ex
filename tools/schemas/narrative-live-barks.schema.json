@@ -1,0 +1,305 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/narrative-live-barks",
+  "title": "narrative.live_barks/1",
+  "description": "data/narrative/live_barks.json: the lines a fighter says in a match, at the beats the sim already emits as fx events (docs/ep/cloud-briefs/narrative-live-barks.md). Presentation only: the emitter reads the sim's events and never writes the sim. Off by default (`enabled`). Version field: schema. Policy: closed except keys starting with an underscore. Every line has a unique id (the same id in two beats is a data error the narrative line-lint reads), a source from the closed list below, at least one cue, and its line-lint result. Beats with no approved line are kept under `unmapped`, lines waiting on a swap or an event under `excluded_lines`; both are for Orb to read, not for the emitter.",
+  "type": "object",
+  "required": [
+    "schema",
+    "enabled",
+    "lines_policy",
+    "seed_salt",
+    "limits",
+    "display",
+    "beats"
+  ],
+  "properties": {
+    "schema": {
+      "const": "narrative.live_barks/1"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "lines_policy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seed_salt": {
+      "type": "integer"
+    },
+    "limits": {
+      "type": "object",
+      "required": [
+        "per_fighter_gap_s",
+        "global_gap_s",
+        "line_cooldown_s",
+        "beat_cooldown_s",
+        "max_per_fighter_per_minute",
+        "after_ko_hush"
+      ],
+      "properties": {
+        "per_fighter_gap_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "global_gap_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "line_cooldown_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "beat_cooldown_s": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max_per_fighter_per_minute": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "after_ko_hush": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "display": {
+      "type": "object",
+      "required": [
+        "style",
+        "min_dur_s",
+        "max_dur_s",
+        "per_char_s",
+        "base_s"
+      ],
+      "properties": {
+        "style": {
+          "type": "string",
+          "minLength": 1
+        },
+        "min_dur_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "max_dur_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "per_char_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "base_s": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "beats": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/beat"
+      },
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "excluded_lines": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "unmapped": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "lint_note": {
+      "type": "string"
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  },
+  "$defs": {
+    "beat": {
+      "type": "object",
+      "required": [
+        "on",
+        "when",
+        "speaker",
+        "priority",
+        "chance",
+        "lines"
+      ],
+      "properties": {
+        "on": {
+          "type": "string",
+          "minLength": 1
+        },
+        "when": {
+          "type": "string",
+          "minLength": 1
+        },
+        "speaker": {
+          "enum": [
+            "attacker",
+            "victim",
+            "actor",
+            "launcher"
+          ]
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "once_per_match": {
+          "type": "boolean"
+        },
+        "chance": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "lines": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "enum": [
+              "PROTAGONIST",
+              "RIVAL",
+              "EMPRESS",
+              "CYBORG"
+            ]
+          },
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/line"
+            }
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "line": {
+      "type": "object",
+      "required": [
+        "id",
+        "text",
+        "source",
+        "hw",
+        "cues",
+        "lint_exempt_orb_own",
+        "lint"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_.]+$"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "enum": [
+            "orb_own_words_hw1",
+            "claude_kept_by_orb_hw11",
+            "ai01_gemini_rewrite_at_orb_direction_hw11"
+          ]
+        },
+        "hw": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cues": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "at",
+              "gesture",
+              "intensity"
+            ],
+            "properties": {
+              "at": {
+                "type": "number",
+                "minimum": 0
+              },
+              "gesture": {
+                "type": "string",
+                "pattern": "^[a-z]+(\\.[a-z]+)?$"
+              },
+              "intensity": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          }
+        },
+        "lint_exempt_orb_own": {
+          "type": "boolean"
+        },
+        "lint": {
+          "type": "object",
+          "required": [
+            "hard",
+            "check"
+          ],
+          "properties": {
+            "hard": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "check": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  }
+}

@@ -568,6 +568,10 @@
       "schema": "narrative-opponent-grounds.schema.json"
     },
     {
+      "match": "data/narrative/live_barks.json",
+      "schema": "narrative-live-barks.schema.json"
+    },
+    {
       "match": "data/art/polar.json",
       "schema": "art-polar.schema.json"
     },

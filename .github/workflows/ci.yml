@@ -118,6 +118,8 @@ jobs:
         run: node tools/site-interim-selftest.mjs
       - name: Pinned deploy self-test (a later game commit leaves the published /play/ byte-identical)
         run: node tools/site-pin-selftest.mjs
+      - name: HEAD export self-test (the clean copy check-clip --head runs on, and the reason when it cannot be made)
+        run: node tools/flash/head-export-selftest.mjs
       - name: Site template self-test (the switch, the pin record, the download checks, the Web preset of the scratch tree)
         run: node tools/site-template-selftest.mjs
       - name: 'Frame comparison self-test (standard template against custom: identical, within noise, beyond noise)'

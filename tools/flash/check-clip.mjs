@@ -14,6 +14,7 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:
 import { tmpdir, platform } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { exportRevision } from './head-export.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..', '..');
@@ -42,9 +43,8 @@ if (!site) {
   let project = root;
   if (argv.includes('--head')) {
     project = mkdtempSync(join(OUT, 'head-'));
-    const ar = spawnSync('git', ['archive', 'HEAD'], { cwd: root, maxBuffer: 1 << 30 });
-    const tar = spawnSync('tar', ['-x', '-C', project], { input: ar.stdout });
-    if (ar.status !== 0 || tar.status !== 0) { console.error('git archive HEAD failed'); process.exit(1); }
+    const ex = exportRevision(root, project, 'HEAD');   // through a tar file, with the reason when it fails (the old pipe through a buffer said only "git archive HEAD failed")
+    if (!ex.ok) { console.error(ex.message); process.exit(1); }
   }
   console.log(`[check-clip] exporting the web build of ${argv.includes('--head') ? 'HEAD' : 'the working tree'} (${secs()})`);
   for (const args of [['--headless', '--path', project, '--import'], ['--headless', '--path', project, '--export-release', 'Web', join(OUT, 'site', 'index.html')]]) {

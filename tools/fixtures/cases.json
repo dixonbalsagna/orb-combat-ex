@@ -297460,6 +297460,254 @@
       }
     },
     {
+      "id": "narrative-live-barks-valid",
+      "schema": "narrative-live-barks.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/live_barks.json",
+          "set": {
+            "/schema": "narrative.live_barks/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "narrative-live-barks-underscore-key-ok",
+      "schema": "narrative-live-barks.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/live_barks.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "narrative-live-barks-version",
+      "schema": "narrative-live-barks.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/live_barks.json",
+          "set": {
+            "/schema": "narrative.live_barks/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "narrative-live-barks-key-required-beats",
+      "schema": "narrative-live-barks.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/live_barks.json",
+          "del": [
+            "/beats"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "narrative-live-barks-unknown-top-key",
+      "schema": "narrative-live-barks.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/live_barks.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties"
+      }
+    },
+    {
+      "id": "narrative-live-barks-enabled-not-boolean",
+      "schema": "narrative-live-barks.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/live_barks.json",
+          "set": {
+            "/enabled": "false"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "narrative-live-barks-limit-zero-gap",
+      "schema": "narrative-live-barks.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/live_barks.json",
+          "set": {
+            "/limits/global_gap_s": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/limits/global_gap_s"
+      }
+    },
+    {
+      "id": "narrative-live-barks-limit-unknown-key",
+      "schema": "narrative-live-barks.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/live_barks.json",
+          "set": {
+            "/limits/per_fighter_gap": 8
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties"
+      }
+    },
+    {
+      "id": "narrative-live-barks-beat-speaker-unknown",
+      "schema": "narrative-live-barks.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/live_barks.json",
+          "set": {
+            "/beats/first_blow/speaker": "bystander"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/beats/first_blow/speaker"
+      }
+    },
+    {
+      "id": "narrative-live-barks-beat-chance-over-one",
+      "schema": "narrative-live-barks.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/live_barks.json",
+          "set": {
+            "/beats/first_blow/chance": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/beats/first_blow/chance"
+      }
+    },
+    {
+      "id": "narrative-live-barks-fighter-unknown",
+      "schema": "narrative-live-barks.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/live_barks.json",
+          "set": {
+            "/beats/first_blow/lines/GHOST": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/beats/first_blow/lines/GHOST"
+      }
+    },
+    {
+      "id": "narrative-live-barks-line-source-unknown",
+      "schema": "narrative-live-barks.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/live_barks.json",
+          "set": {
+            "/beats/first_blow/lines/PROTAGONIST/0/source": "invented_by_a_model"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/beats/first_blow/lines/PROTAGONIST/0/source"
+      }
+    },
+    {
+      "id": "narrative-live-barks-line-id-bad",
+      "schema": "narrative-live-barks.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/live_barks.json",
+          "set": {
+            "/beats/first_blow/lines/PROTAGONIST/0/id": "HW 11 / 01"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/beats/first_blow/lines/PROTAGONIST/0/id"
+      }
+    },
+    {
+      "id": "narrative-live-barks-line-no-cues",
+      "schema": "narrative-live-barks.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/live_barks.json",
+          "set": {
+            "/beats/first_blow/lines/PROTAGONIST/0/cues": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/beats/first_blow/lines/PROTAGONIST/0/cues"
+      }
+    },
+    {
+      "id": "narrative-live-barks-line-text-empty",
+      "schema": "narrative-live-barks.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/live_barks.json",
+          "set": {
+            "/beats/first_blow/lines/PROTAGONIST/0/text": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/beats/first_blow/lines/PROTAGONIST/0/text"
+      }
+    },
+    {
+      "id": "narrative-live-barks-line-lint-missing",
+      "schema": "narrative-live-barks.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/live_barks.json",
+          "del": [
+            "/beats/first_blow/lines/PROTAGONIST/0/lint"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/beats/first_blow/lines/PROTAGONIST/0"
+      }
+    },
+    {
       "id": "fight-hitstop-ticks-missing-ko",
       "schema": "fight-hitstop.schema.json",
       "mutate": [
