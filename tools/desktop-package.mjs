@@ -183,6 +183,8 @@ export function routeProblems(root, o = {}) {
   const got = words ? [...words[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]) : null;
   if (!got) out.push('ui/hud/ui_hud.gd: BYPASS_WORDS could not be read (the six words that start a run with no notice are not where the check looks for them)');
   else if (got.join(',') !== SIX_WORDS.join(',')) out.push(`ui/hud/ui_hud.gd BYPASS_WORDS is [${got.join(', ')}], the reviewed six are [${SIX_WORDS.join(', ')}]: a changed word is a new review (RL-203)`);
+  //    and a locked build without the capture hook refuses all of them, on a desktop too (RL-206): bypass_allowed() must open with the lock test and `return false`
+  if (hud && !/static func bypass_allowed\(\) -> bool:\r?\n[ \t]*if UiData\.rf_locked\(\) and not UiData\.feature\("capture_hook"\):\r?\n[ \t]*return false\r?\n/.test(hud)) out.push('ui/hud/ui_hud.gd: bypass_allowed() does not begin `if UiData.rf_locked() and not UiData.feature("capture_hook"):` then `return false`: on a desktop the six words would skip the flashing notice in a locked build (RL-206)');
   // 4. the capture hook can never attach off the web, and the six words and every other argument reach no write of the lock, the option, the register or the debug key:
   //    the only statement that reads an argument and also names a flash word is the hook's own guarded line
   const files = packedScripts(root, o);

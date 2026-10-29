@@ -217,6 +217,12 @@ try {
     check('routes: the capture hook on in features.json is found', R({ files: { 'ui/data/features.json': lockedFeatures.replace('"capture_hook": false', '"capture_hook": true') } }).some((m) => /capture_hook is not false/.test(m)));
     check('routes: a seventh bypass word is found', R({ files: { 'ui/hud/ui_hud.gd': hud.replace('"flashcap", "study"]', '"flashcap", "study", "nolock"]') } }).some((m) => /BYPASS_WORDS is \[.*nolock/.test(m)));
     check('routes: a bypass word removed is found', R({ files: { 'ui/hud/ui_hud.gd': hud.replace('"nonotice", ', '') } }).some((m) => /BYPASS_WORDS is/.test(m)));
+    const GUARD2 = /(static func bypass_allowed\(\) -> bool:\r?\n)[ \t]*if UiData\.rf_locked\(\) and not UiData\.feature\("capture_hook"\):\r?\n[ \t]*return false\r?\n/;
+    check('routes: the live ui_hud.gd opens bypass_allowed() with the RL-206 lock test (the control below is meaningful)', GUARD2.test(hud));
+    const noGuard = hud.replace(GUARD2, '$1');
+    check('routes: bypass_allowed() without the two RL-206 lines is found', noGuard !== hud && R({ files: { 'ui/hud/ui_hud.gd': noGuard } }).some((m) => /bypass_allowed\(\) does not begin/.test(m)));
+    check('routes: bypass_allowed() with the test but no `return false` is found', R({ files: { 'ui/hud/ui_hud.gd': hud.replace(GUARD2, '$1\tif UiData.rf_locked() and not UiData.feature("capture_hook"):\n\t\tpass\n') } }).some((m) => /bypass_allowed\(\) does not begin/.test(m)));
+    check('routes: the guard moved below the web test (not first) is found', R({ files: { 'ui/hud/ui_hud.gd': hud.replace(GUARD2, '$1\tif not OS.has_feature("web"):\n\t\treturn true\n\tif UiData.rf_locked() and not UiData.feature("capture_hook"):\n\t\treturn false\n') } }).some((m) => /bypass_allowed\(\) does not begin/.test(m)));
     const lift = `${NL}func _evil() -> void:${NL}\tif args.has("normal"):${NL}\t\tUiData.set_feature("lock_reduce_flashing", false)${NL}`;
     const lifted = R({ files: { 'render/core/main.gd': main + lift } });
     check('routes: a flag that switches the lock off is found by the argument check (the route scan reads the disk, not this override; it has its own tests)', lifted.some((m) => /a flag could reach normal mode/.test(m)) && lifted.some((m) => /switches the lock off/.test(m)), JSON.stringify(lifted));
