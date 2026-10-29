@@ -20,9 +20,9 @@ extends SceneTree
 ##   godot --headless --path . --script res://sim/core/tools/two_states_check.gd -- [--seeds=1,2] [--ticks=600]
 ##     [--setups=default,planet,calm,turn] [--negative-control]
 ## The setup "turn" is "calm" with a turn decided at tick 30, so every run crosses the swap at tick 73 and A's rollbacks
-## restore into the turn's preparation. It is not in the default list yet: on HEAD a rollback into that window waits for
-## ever, because the swap dropped the ring jobs the preparation needs (World's WorldEpoch._prep; the fix is parked with
-## this check, docs/architecture/pending/packed-structures/).
+## restore into the turn's preparation. It is in the default list since World's fix (e14757c5): before it, a rollback
+## into that window waited for ever, because the swap dropped the ring jobs the preparation needs (WorldEpoch._prep now
+## makes such a job again).
 ## --negative-control breaks it three ways and passes only if each is caught: a snapshot read through its records (as
 ## NetDesync.digest read one until 2026-10-28), a restore that leaves the records on the arrays they had (no
 ## afterRestore), and a snapshot restored into another state that keeps the first state's records (no _rebuildRecords).
@@ -53,7 +53,7 @@ var sabotage: String = ""   # the negative control's current break, a key of BRE
 func _init() -> void:
 	var seeds: Array = [1, 2]
 	var ticks: int = 600
-	var setups: Array = ["default", "planet", "calm"]
+	var setups: Array = ["default", "planet", "calm", "turn"]
 	var negative: bool = false
 	for a in OS.get_cmdline_user_args():
 		var kv: PackedStringArray = a.trim_prefix("--").split("=", true, 1)
