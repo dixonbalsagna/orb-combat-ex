@@ -230,7 +230,9 @@ function cancelOwn(w, f, why) {
 var SLIP = { neutral: 'THE DODGE', away: 'A BACK-STEP', toward: 'A SLIP IN', up: 'A SWAY UP', down: 'A DUCK' };
 function startDodge(w, f) {
   if (f.dodge || f.dodgeT > 0 || w.t < f.slipC) return nack(w, f, 'DODGE: NOT READY');
-  if (f.beam && !f.beam.end && f.beam.root) return nack(w, f, 'BEAM: ROOTED');
+  // GD (E48): with his own rooted beam out, the LT tap cuts it early and does nothing else (the dodge needs a fresh LT, and
+  // the vanish chord only cuts it too)
+  if (f.beam && !f.beam.end && f.beam.root) { f.beam.end = 1; f.commit = Math.max(f.commit, LAW.L); note(w, 'LT: THE BEAM IS CUT'); return false; }
   if (f.held > 0) return nack(w, f, 'HOLDING: NO DODGE');
   var rush = rushing(f);
   cancelOwn(w, f, 'DODGE');
