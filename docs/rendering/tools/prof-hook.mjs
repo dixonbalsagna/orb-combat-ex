@@ -22,6 +22,10 @@
 //   the drain:         dr_split_rig_step (Camera), dr_planet_consume, dr_camera_roll, dr_anim_consume (Animation),
 //                      dr_ui_consume, dr_haptics, dr_ui_feed
 //   Animation's tick:  an_bake (AnimData.bake_pending, the incremental bake's slice), an_on_tick (the fighters' tick)
+//   the sweep by view: pv_see (a pane's view handed to the sweep, and a second pane's swept), pv_swept (the buildings the
+//                      refresh visited a frame: a count, read its mean x 1000; part of pane_pre too)
+// It also lets the page set the view update's A/B switches, ?noviewfast=1 and ?nopanesweep=1 (main's URL_ARGS, in the
+// scratch copy only: the shipped page takes neither).
 // The timers add about a tenth to the view. Time.get_ticks_usec on the web steps in 0.1 ms or finer, so read the means. A tick's
 // part is summed over the frame's ticks (at x4 a frame often runs two or three). Node 24 built-ins only. No Godot, no browser.
 // Owner: Rendering and Technical Art.
@@ -122,6 +126,18 @@ wrap(MAIN, 'dr_ui_feed', '\tUiSimBridge.feed(ui_hud, lines)');
 // Animation's tick: the incremental bake's slice and the fighters' tick.
 edit(RA, 'an_bake', '\t\t\t\tif AnimData.bake_pending() == 0:', '\t\t\t\tvar _qab: int = Time.get_ticks_usec()\n\t\t\t\tvar _bp: int = AnimData.bake_pending()\n\t\t\t\tPaneWorld._pt("an_bake", _qab)\n\t\t\t\tif _bp == 0:');
 edit(RA, 'an_on_tick', '\t\t\t\tfor f in S.fighters:\n\t\t\t\t\tfighter(S, f).on_tick(float(e.dt), bool(e.frozen), S, f)\n', '\t\t\t\tvar _qat: int = Time.get_ticks_usec()\n\t\t\t\tfor f in S.fighters:\n\t\t\t\t\tfighter(S, f).on_tick(float(e.dt), bool(e.frozen), S, f)\n\t\t\t\tPaneWorld._pt("an_on_tick", _qat)\n');
+
+// The building sweep by view (2026-10-29): a pane's view handed to the sweep (and a second pane's swept), timed as
+// pv_see, and the buildings the refresh visited, counted as pv_swept. Both anchors or neither.
+{
+  const a = '\tif PlanetView.pane_sweep:\n\t\t# The building sweep by view', b = '\t\t\tsrc.see_more(S, sp)\n';
+  const s = get(PW);
+  if (once(s, a) && once(s, b)) {
+    files[PW] = s.replace(a, () => '\tvar _qsee: int = Time.get_ticks_usec()\n' + a).replace(b, () => b + '\t_pt("pv_see", _qsee)\n\tif planet.source == null:\n\t\tPT_SUM["pv_swept"] = int(PT_SUM.get("pv_swept", 0)) + planet.swept\n');
+    applied.push('pv_see, pv_swept');
+  } else skipped.push('pv_see, pv_swept');
+}
+edit(MAIN, 'page words', 'const URL_ARGS: Array = ["nointro",', 'const URL_ARGS: Array = ["noviewfast", "nopanesweep", "nointro",');
 
 for (const [f, s] of Object.entries(files)) writeFileSync(join(root, f), s);
 console.log(`prof-hook: ${applied.length} parts applied to ${root}`);

@@ -199,6 +199,15 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 		planet.blow_windows(S, host.vfx.react.blowouts)   # the facades' windows go out with VFX's glass
 	if source == null:
 		host.vfx.forestfire.kind_of = planet.trees.kind_at   # a burning tree's fire follows its crown (VFX, forest_fire.gd)
+	if PlanetView.pane_sweep:
+		# The building sweep by view: this pane's camera is placed for the frame, so its view is known. The first pane
+		# hands it to its refresh; a second pane's is swept now (its source refreshed first: main draws pane 0 first).
+		var src: PlanetView = planet if planet.source == null else planet.source
+		var sp: PackedFloat64Array = src.view_span(cam_rig, cam_x, planet)
+		if planet.source == null:
+			planet.see(sp)
+		else:
+			src.see_more(S, sp)
 	planet.update(S, cam_x, host.impact.heat, host.impact.heat_changed)
 	planet.cull_to(cam_rig, vis_plane)   # the split's culling: chunks wholly on this pane's hidden side are not drawn
 	for i in range(fighter_views.size()):

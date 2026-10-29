@@ -34,6 +34,7 @@ const STREET_STRIPS := 16     # the ground shader's array sizes (ground.gdshader
 const STREET_SPANS := 16
 const STREET_AVENUES := 24
 const BUILDING_TOP: float = 2600.0   # the buildings' culling box reaches this high, in WS (the tallest tower of the re-laid city is under 2,300)
+const FRUSTUM_EDGES: Array = [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]]   # view_span's corners: near face, far face, sides
 static var row_haze: bool = true     # the rows' haze (building.gdshader); a tool may switch it off to compare
 
 static var streets: bool = true   # paint the lane table's streets on the ground (main's --nostreets, for A/B)
@@ -59,6 +60,31 @@ var _cull: Array = []                  # per copy: [copy, its chunks' union box,
 ## last set, and the culling over a copy whose chunks are all already on the side the copy is. The look is the same;
 ## main's --noviewfast turns them off (the A/B).
 static var view_fast: bool = true
+## The building sweep by view (2026-10-29; docs/rendering/view-update.md): the source's refresh visits every frame
+## only the buildings a pane can show (see, see_more), the ones something this frame touched (an event naming one or
+## throwing debris at it, its ground, the district flight, people on the way) and a slice of the rest. Nothing a pane
+## can show waits; main's --nopanesweep turns it off (the A/B).
+static var pane_sweep: bool = RenderLook.PANE_SWEEP_ON
+static var record_writes: bool = false   # tools only (sweep_check): keep each building instance's last transform and colour
+static var ctl_slice_only: bool = false  # tools only (sweep_check's failing control): the sweep visits its slice alone
+var writes: Dictionary = {}              # ... in `writes`, Vector2i(row 0 or not, instance) -> [transform, colour]
+var _xs := PackedFloat64Array()        # the buildings' x (wrapped), in order along the planet: the sweep's index
+var _xs_i := PackedInt32Array()        # ... and which building each is
+var _reach: float = 0.0                # the farthest a building's parts or figures stand from its x, and SWEEP_PAD
+var _wmax: float = 0.0                 # the widest building
+var _zspan := Vector2.ZERO             # the props' depths, back and front (z), and SWEEP_PAD
+var _span := PackedFloat64Array()      # this frame's own view (see): a start x and a length, wrapped
+var _see_all: bool = false             # this frame's view could not be placed: the refresh visits everything
+var _visit_at := PackedInt32Array()    # per building: the frame it was last visited
+var _frame: int = 0                    # the refreshes so far: the frame a visit is stamped with
+var _all_at: int = -1                  # the last frame that visited every building
+var _slice_at: int = 0                 # where the slice of the rest goes on
+var _touched: Dictionary = {}          # buildings this frame's events named or threw debris at (consume)
+var _owed: Dictionary = {}             # buildings still owed figures at their last visit (people on their way to it)
+var _zone_last: Array = []             # the district flight's [x, shelter] at the last refresh, or []
+var _unseen: bool = false              # the state changed without its events (unseen): the next refresh visits everything
+var swept: int = 0                     # the buildings this frame's sweep visited (for tools and the bench)
+var views: Array = []                  # this frame's views as the sweep took them (for tools)
 var culled: int = 0                    # the chunks this pane left out of its last frame (for the checks and the bench)
 var _town_mat: ShaderMaterial = null   # the distant towns' (far_town.gdshader): the ground's uniforms, for the far land they stand on
 var _cover_mat: ShaderMaterial = null  # the biomes' cover (cover.gdshader): the ground's uniforms, for the ground it stands on
@@ -529,6 +555,8 @@ func _send_spread(S: SimState, src: PlanetView) -> void:
 func consume(events: Array, T: float = 0.0) -> void:
 	flight.consume(events)
 	for e in events:
+		if pane_sweep:
+			_touch(e)
 		if fill_on and (e.type == "water_fill" or e.type == "water_wave"):
 			_water_cues.append([e, T])   # World's water v2 cues: drawn from the next update, with the ground
 		elif e.type == "crater" or e.type == "scorch" or e.type == "debris":
@@ -542,6 +570,26 @@ func consume(events: Array, T: float = 0.0) -> void:
 				_fold = [float(e.cx), T]
 		elif e.type == "lodge" or e.type == "building_hit" or e.type == "floor_hit" or e.type == "building_stage":
 			_note_hit(e)
+
+
+## The buildings an event changed, for the sweep: the next refresh visits them wherever they stand. The sim's damage
+## throws debris from the building's own x (WorldStructures.damageBuilding); its floors, falls, stages and lodges name
+## the building; people who flee name theirs and the one they shelter in (WorldCollateral.kill).
+func _touch(e) -> void:
+	var t: String = String(e.type)
+	if t == "debris":
+		var near := PackedInt32Array()
+		_along(float(e.x), 1.0, near)
+		for bi in near:
+			_touched[bi] = true
+	elif t == "building_hit" or t == "floor_hit" or t == "floors_fall" or t == "lodge" or t == "building_stage" or t == "building_fall":
+		if int(e.b) >= 0:
+			_touched[int(e.b)] = true
+	elif t == "evacuate":
+		if int(e.b) >= 0:
+			_touched[int(e.b)] = true
+		if "dest" in e and int(e.dest) >= 0:
+			_touched[int(e.dest)] = true
 
 
 ## Where one of this frame's events hit a building: a stage spreads from there, and a mark is on the side a held blow
@@ -760,60 +808,34 @@ func refresh(S: SimState, force: bool) -> void:
 	var dirty: PackedByteArray = ground.dirty
 	var dchg: bool = force or ground.any_dirty
 	_grow.clear()
-	if int(S.tick) < _last_tick:
+	var back: bool = int(S.tick) < _last_tick
+	if back:
 		_settle(S)
 	_last_tick = int(S.tick)
 	_share_n = 1
-	for bi in range(S.buildings.size()):
-		var b: SimState.Building = S.buildings[bi]
-		var seen: Array = _bld_seen[bi]
-		var moved: bool = dchg and (force or _foot_dirty(dirty, b))
-		# The figures at home: the people it has, as many as it has figures. Fewer go now (they run or are gone, and the
-		# runners may head for a building this loop has passed); more wait for the second pass below.
-		var have: int = clampi(int(b.popAlive), 0, _crowd_first[bi + 1] - _crowd_first[bi])
-		var show: int = have if _shown[bi] < 0 else mini(have, _shown[bi])
-		if have > show:
-			_grow.append(bi)
-		# A building as it was last set: standing or fallen as before, the same floors and (standing) the same hit points,
-		# not sinking, its ground unchanged. Its height is what it was (WorldStructures.curH reads only these and what was
-		# fixed at generation), so it is not set again; only its people can have changed. Most buildings, most frames.
-		if view_fast and not moved and b.alive == seen[1] and b.fmask == seen[2] and (not b.alive or b.hp == seen[3]) and not _falls.has(bi) and not _drops.has(bi):
-			if show != _shown[bi]:
-				_set_crowd(S, bi, b, show)
-			continue
-		var h: float = WorldStructures.curH(b)
-		if b.alive != seen[1] and not b.alive and seen[1] == true:
-			# Levelled: an implode sinks from the height it last stood at (a folded one from its distance to the blast).
-			if _falls.has(bi):
-				_falls[bi][1] = seen[0]
-			elif not _fold.is_empty() and absf(float(_fold[1]) - S.T) < 0.5:
-				var delay: float = clampf(absf(SimWrap.sdx(float(_fold[0]), b.x)) / WorldStructures.IMPLODE_SPEED, 0.0, WorldStructures.IMPLODE_MAX_DELAY)
-				_falls[bi] = [float(_fold[1]) + delay, seen[0]]
-		if moved or force:
-			_foot[bi] = _footing(S, b)
-		# A fallen building is set once, when it falls (and while it sinks): its height is not compared, so the fallen
-		# ones cost nothing a frame. A standing one is set again when its height, floors or hit points change (a cut
-		# tower's stage moves with its hit points alone).
-		if moved or (b.alive and (h != seen[0] or b.hp != seen[3])) or b.alive != seen[1] or b.fmask != seen[2] or _falls.has(bi) or _drops.has(bi):
-			var st: int = _set_building(S, bi, b, h)
-			_bld_seen[bi] = [h if b.alive else seen[0], b.alive, b.fmask, b.hp, st]
-		if moved or show != _shown[bi]:
-			_set_crowd(S, bi, b, show)
-	# People sheltering in a building (World's RELOCATE) are shown there as their runners arrive: one figure for each
-	# arrival (CrowdFlight.arrived), and all it is owed once no one is on the way. A figure that is still running (it
-	# left this building a moment ago) is not put back until its run is over.
-	for bi in _grow:
-		var b = S.buildings[bi]
-		var have: int = clampi(int(b.popAlive), 0, _crowd_first[bi + 1] - _crowd_first[bi])
-		var want: int = have - _shown[bi]
-		if flight.incoming[bi] > 0:
-			want = mini(want, flight.arrived[bi])
-		var add: int = 0
-		while add < want and not flight.running(_crowd_first[bi] + _shown[bi] + add):
-			add += 1
-		if add > 0:
-			flight.arrived[bi] = maxi(0, flight.arrived[bi] - add)
-			_set_crowd(S, bi, b, _shown[bi] + add)
+	_frame += 1
+	var n: int = S.buildings.size()
+	var all: bool = force or back or not pane_sweep or _unseen or _see_all or _span.is_empty() or _visit_at.size() != n
+	if force or _visit_at.size() != n:
+		_sweep_index(S)
+	all = all or _xs.size() != n
+	if all:
+		_all_at = _frame
+		swept = n
+		for bi in range(n):
+			_visit(S, bi, dirty, dchg, force)
+	else:
+		# The sweep by view: what this pane can show, what this frame touched, and a slice of the rest. A second pane's
+		# view is swept when it draws (see_more).
+		var list: PackedInt32Array = _visit_list(S, dirty, dchg)
+		swept = list.size()
+		for bi in list:
+			_visit(S, bi, dirty, dchg, false)
+	_span = PackedFloat64Array()
+	_see_all = false
+	_unseen = false
+	_touched.clear()
+	_grow_pass(S)
 	trees.update(S)   # the fellable trees' states (tree_view.gd); the shader reads the ground under each foot
 	# A wave is over: what it has not reached changes now. A second wave inside it goes on alone; with none, the
 	# building is as it stands, its marks whole.
@@ -844,13 +866,307 @@ func refresh(S: SimState, force: bool) -> void:
 		_hit_last[bi] = [hp.x, hp.y, float(S.tick)]
 	_hit_at.clear()
 	_blasts.clear()
+	_upload_cuts()
+	if dchg:
+		ground.dirty.fill(0)
+		ground.any_dirty = false
+
+
+## One building in the sweep, brought to the sim's state: its look when anything it is drawn from changed, its figures
+## at home when its people did (refresh, see_more).
+func _visit(S: SimState, bi: int, dirty: PackedByteArray, dchg: bool, force: bool) -> void:
+	_visit_at[bi] = _frame
+	_owed.erase(bi)
+	var b: SimState.Building = S.buildings[bi]
+	var seen: Array = _bld_seen[bi]
+	var moved: bool = dchg and (force or _foot_dirty(dirty, b))
+	# The figures at home: the people it has, as many as it has figures. Fewer go now (they run or are gone, and the
+	# runners may head for a building the sweep has passed); more wait for the second pass (_grow_pass).
+	var have: int = clampi(int(b.popAlive), 0, _crowd_first[bi + 1] - _crowd_first[bi])
+	var show: int = have if _shown[bi] < 0 else mini(have, _shown[bi])
+	if have > show:
+		_grow.append(bi)
+	# A building as it was last set: standing or fallen as before, the same floors and (standing) the same hit points,
+	# not sinking, its ground unchanged. Its height is what it was (WorldStructures.curH reads only these and what was
+	# fixed at generation), so it is not set again; only its people can have changed. Most buildings, most frames.
+	if view_fast and not moved and b.alive == seen[1] and b.fmask == seen[2] and (not b.alive or b.hp == seen[3]) and not _falls.has(bi) and not _drops.has(bi):
+		if show != _shown[bi]:
+			_set_crowd(S, bi, b, show)
+		return
+	var h: float = WorldStructures.curH(b)
+	if b.alive != seen[1] and not b.alive and seen[1] == true:
+		# Levelled: an implode sinks from the height it last stood at (a folded one from its distance to the blast).
+		if _falls.has(bi):
+			_falls[bi][1] = seen[0]
+		elif not _fold.is_empty() and absf(float(_fold[1]) - S.T) < 0.5:
+			var delay: float = clampf(absf(SimWrap.sdx(float(_fold[0]), b.x)) / WorldStructures.IMPLODE_SPEED, 0.0, WorldStructures.IMPLODE_MAX_DELAY)
+			_falls[bi] = [float(_fold[1]) + delay, seen[0]]
+	if moved or force:
+		_foot[bi] = _footing(S, b)
+	# A fallen building is set once, when it falls (and while it sinks): its height is not compared, so the fallen
+	# ones cost nothing a frame. A standing one is set again when its height, floors or hit points change (a cut
+	# tower's stage moves with its hit points alone).
+	if moved or (b.alive and (h != seen[0] or b.hp != seen[3])) or b.alive != seen[1] or b.fmask != seen[2] or _falls.has(bi) or _drops.has(bi):
+		var st: int = _set_building(S, bi, b, h)
+		_bld_seen[bi] = [h if b.alive else seen[0], b.alive, b.fmask, b.hp, st]
+	if moved or show != _shown[bi]:
+		_set_crowd(S, bi, b, show)
+
+
+## People sheltering in a building (World's RELOCATE) are shown there as their runners arrive: one figure for each
+## arrival (CrowdFlight.arrived), and all it is owed once no one is on the way. A figure that is still running (it
+## left this building a moment ago) is not put back until its run is over. A building still owed figures is visited
+## again next frame wherever it stands (_owed), as the whole sweep would.
+func _grow_pass(S: SimState) -> void:
+	for bi in _grow:
+		var b = S.buildings[bi]
+		var have: int = clampi(int(b.popAlive), 0, _crowd_first[bi + 1] - _crowd_first[bi])
+		var want: int = have - _shown[bi]
+		if flight.incoming[bi] > 0:
+			want = mini(want, flight.arrived[bi])
+		var add: int = 0
+		while add < want and not flight.running(_crowd_first[bi] + _shown[bi] + add):
+			add += 1
+		if add > 0:
+			flight.arrived[bi] = maxi(0, flight.arrived[bi] - add)
+			_set_crowd(S, bi, b, _shown[bi] + add)
+		if have > _shown[bi]:
+			_owed[bi] = true
+
+
+## The cut floors' and the windows' textures, uploaded once a frame when the sweep changed them.
+func _upload_cuts() -> void:
 	for ct in [_cut, _cut0, _win, _win0]:
 		if ct[2]:
 			(ct[1] as ImageTexture).update(ct[0])
 			ct[2] = false
+
+
+## The sweep's index (on a build, or when the sim's buildings are not the ones it was made for): the buildings in order
+## along the planet; how far any of them reaches from its x (its parts as it stands whole, its figures' spots, and
+## SWEEP_PAD for a figure's own size at the crowd's largest boost); and the depths its parts and figures stand at.
+func _sweep_index(S: SimState) -> void:
+	var n: int = S.buildings.size()
+	_visit_at.resize(n)
+	_visit_at.fill(-1)
+	_slice_at = 0
+	_owed.clear()
+	_touched.clear()
+	_zone_last = []
+	if _parts.size() != n or _crowd_first.size() != n + 1:
+		_xs = PackedFloat64Array()
+		_xs_i = PackedInt32Array()
+		return
+	var xs := PackedFloat64Array()
+	xs.resize(n)
+	for bi in range(n):
+		xs[bi] = SimWrap.wrap(S.buildings[bi].x)
+	var order: Array = range(n)
+	order.sort_custom(func(a, c): return xs[a] < xs[c] or (xs[a] == xs[c] and a < c))
+	_xs_i = PackedInt32Array(order)
+	_xs.resize(n)
+	var reach: float = 0.0
+	var wmax: float = 0.0
+	var zlo: float = INF
+	var zhi: float = -INF
+	for j in range(n):
+		var bi: int = _xs_i[j]
+		_xs[j] = xs[bi]
+		var b: SimState.Building = S.buildings[bi]
+		var zc: float = _depth(b).x
+		wmax = maxf(wmax, b.w)
+		for p in _parts[bi]:
+			reach = maxf(reach, absf(float(p[RenderShapes.X])) + 0.5 * float(p[RenderShapes.W]))
+			zlo = minf(zlo, zc + float(p[RenderShapes.Z]) - 0.5 * float(p[RenderShapes.D]))
+			zhi = maxf(zhi, zc + float(p[RenderShapes.Z]) + 0.5 * float(p[RenderShapes.D]))
+		for ci in range(_crowd_first[bi], _crowd_first[bi + 1]):
+			reach = maxf(reach, absf(SimWrap.sdx(b.x, _crowd_x[ci])))
+			zlo = minf(zlo, _crowd_z[ci])
+			zhi = maxf(zhi, _crowd_z[ci])
+	_reach = reach + RenderLook.SWEEP_PAD
+	_wmax = wmax
+	_zspan = Vector2(zlo - RenderLook.SWEEP_PAD, zhi + RenderLook.SWEEP_PAD) if n > 0 else Vector2.ZERO
+
+
+## This frame's buildings to visit, in index order as the whole sweep goes, each once: those within the view (a
+## building's parts and figures reach _reach from its x), those this frame's events touched (_touched), those a hit,
+## a sink or a drop is under way on, those owed figures, the district flight's while it runs (its buildings and its
+## shelter, this frame's and the last's: WorldCollateral.tick moves their people every tick, without an event for
+## each), those on ground that changed, and SWEEP_SLICE of the rest in turn.
+func _visit_list(S: SimState, dirty: PackedByteArray, dchg: bool) -> PackedInt32Array:
+	var c := PackedInt32Array()
+	if ctl_slice_only:
+		_span = PackedFloat64Array([0.0, -1.0])
+		_touched.clear()
+		_hit_at.clear()
+		dchg = false
+	if _span.size() == 2 and _span[1] >= 0.0:
+		_along_span(_span[0], _span[1], c)
+	for d in [_touched, _hit_at, _falls, _drops, _owed]:
+		for bi in d:
+			c.append(int(bi))
+	var zone: Array = []
+	var w: SimState.World = S.world
+	if w.heavyX >= 0.0 and S.T - w.heavyT <= WorldCollateral.EVAC_ACTIVE_S and not ctl_slice_only:
+		zone = [w.heavyX, WorldCollateral.shelter(S, w.heavyX, 1.0)]
+	for z in [zone, _zone_last]:
+		if not z.is_empty():
+			_along(float(z[0]), WorldCollateral.EVAC_R + 0.5 * _wmax, c)
+			if int(z[1]) >= 0:
+				c.append(int(z[1]))
+	_zone_last = zone
 	if dchg:
-		ground.dirty.fill(0)
-		ground.any_dirty = false
+		_dirty_feet(dirty, c)
+	var n: int = S.buildings.size()
+	var k: int = mini(RenderLook.SWEEP_SLICE, n)
+	for j in range(k):
+		c.append((_slice_at + j) % n)
+	_slice_at = (_slice_at + k) % n if n > 0 else 0
+	var out := PackedInt32Array()
+	for bi in c:
+		if bi >= 0 and bi < n and _visit_at[bi] != _frame:
+			_visit_at[bi] = _frame
+			out.append(bi)
+	out.sort()
+	return out
+
+
+## The buildings that may stand on ground that changed this frame: along each run of dirty columns, as far as the
+## widest building's half and two columns (the exact test is _foot_dirty's, in the visit).
+func _dirty_feet(dirty: PackedByteArray, out: PackedInt32Array) -> void:
+	var nc: int = dirty.size()
+	var col: float = SimConst.COL
+	for c0 in range(0, nc, 64):
+		var c1: int = mini(c0 + 64, nc)
+		var part: PackedByteArray = dirty.slice(c0, c1)
+		var first: int = part.find(1)
+		if first < 0:
+			continue
+		var last: int = part.rfind(1)
+		var x0: float = float(c0 + first) * col
+		var x1: float = float(c0 + last + 1) * col
+		_along(0.5 * (x0 + x1), 0.5 * (x1 - x0) + 0.5 * _wmax + 2.0 * col, out)
+
+
+## The buildings whose x lies within r of x, round the planet (the sweep's index).
+func _along(x: float, r: float, out: PackedInt32Array) -> void:
+	_along_x(x - r, 2.0 * r, out)
+
+
+## The buildings that can draw within [x0, x0 + len] of the planet: those whose x is within _reach of it.
+func _along_span(x0: float, len: float, out: PackedInt32Array) -> void:
+	_along_x(x0 - _reach, len + 2.0 * _reach, out)
+
+
+## The buildings whose x lies in [x0, x0 + len], round the planet.
+func _along_x(x0: float, len: float, out: PackedInt32Array) -> void:
+	if _xs.is_empty():
+		return
+	var W: float = SimConst.W
+	if len >= W:
+		out.append_array(_xs_i)
+		return
+	var a: float = SimWrap.wrap(x0)
+	_index_range(a, minf(a + len, W), out)
+	if a + len > W:
+		_index_range(0.0, a + len - W, out)
+
+
+func _index_range(a: float, b: float, out: PackedInt32Array) -> void:
+	var i: int = _xs.bsearch(a)
+	while i < _xs.size() and _xs[i] <= b:
+		out.append(_xs_i[i])
+		i += 1
+
+
+## A pane's view for the sweep, before its source's refresh this frame (PaneWorld.render): view_span's answer.
+func see(span: PackedFloat64Array) -> void:
+	views = [span]
+	if span.is_empty():
+		_see_all = true
+	else:
+		_span = span
+
+
+## A second pane's view (PaneWorld.render, after the first pane's refresh this frame): the buildings it can show that
+## the refresh did not visit are visited now, before anything is drawn. [] (a view that cannot be placed) visits all.
+func see_more(S: SimState, span: PackedFloat64Array) -> void:
+	views.append(span)
+	var n: int = S.buildings.size()
+	if not pane_sweep or _all_at == _frame or _visit_at.size() != n:
+		return   # this frame's refresh visited every building
+	var c := PackedInt32Array()
+	if span.is_empty():
+		c = _xs_i
+	elif span[1] >= 0.0:
+		_along_span(span[0], span[1], c)
+	var list := PackedInt32Array()
+	for bi in c:
+		if _visit_at[bi] != _frame:
+			_visit_at[bi] = _frame
+			list.append(bi)
+	if list.is_empty():
+		return
+	list.sort()
+	swept += list.size()
+	_grow.clear()
+	var runs: int = flight.started
+	for bi in list:
+		_visit(S, bi, ground.dirty, false, false)   # the refresh visited every building on ground that changed
+	_grow_pass(S)
+	_upload_cuts()
+	if flight.started != runs:
+		flight.step(S, _crowd)   # runners that started here are placed with the others this frame
+
+
+## The state changed without its events reaching consume (a restore and a re-run whose events were not drained here):
+## the next refresh visits every building.
+func unseen() -> void:
+	_unseen = true
+
+
+## Where a pane's camera can show the props: its frustum cut to the props' depths (_zspan), at any height, so a
+## building or a figure that reaches no further than _reach from its x outside it cannot draw a pixel. [its start x on
+## the planet (wrapped), its length]; a length under 0 when the frustum misses the props' depths; [] when it cannot be
+## placed or reaches round the planet (everything is visited). node: the pane's own planet, whose copies stand at
+## k * W - cam_x (so a point at x in its space is on the planet at cam_x + x).
+func view_span(cam: Camera3D, cam_x: float, node: Node3D) -> PackedFloat64Array:
+	if _xs.is_empty() or not cam.is_inside_tree() or not node.is_inside_tree():
+		return PackedFloat64Array()
+	var vs: Vector2 = cam.get_viewport().get_visible_rect().size
+	var inv: Transform3D = node.global_transform.affine_inverse()
+	var pts: Array = []   # the frustum's corners in the planet's space: the near face, then the far
+	for d in [cam.near, cam.far]:
+		for s in [Vector2.ZERO, Vector2(vs.x, 0.0), Vector2(vs.x, vs.y), Vector2(0.0, vs.y)]:
+			pts.append(inv * cam.project_position(s, d))
+	var lo: float = INF
+	var hi: float = -INF
+	for e in FRUSTUM_EDGES:
+		var a: Vector3 = pts[e[0]]
+		var b: Vector3 = pts[e[1]]
+		# The part of the edge between the props' depths.
+		var t0: float = 0.0
+		var t1: float = 1.0
+		var dz: float = b.z - a.z
+		if absf(dz) < 1.0e-9:
+			if a.z < _zspan.x or a.z > _zspan.y:
+				continue
+		else:
+			var u0: float = (_zspan.x - a.z) / dz
+			var u1: float = (_zspan.y - a.z) / dz
+			t0 = maxf(t0, minf(u0, u1))
+			t1 = minf(t1, maxf(u0, u1))
+			if t0 > t1:
+				continue
+		for t in [t0, t1]:
+			var x: float = lerpf(a.x, b.x, t)
+			lo = minf(lo, x)
+			hi = maxf(hi, x)
+	if lo > hi:
+		return PackedFloat64Array([SimWrap.wrap(cam_x), -1.0])
+	if hi - lo + 2.0 * _reach >= SimConst.W:
+		return PackedFloat64Array()
+	return PackedFloat64Array([SimWrap.wrap(cam_x + lo), hi - lo])
 
 
 static func _col(x: float) -> int:
@@ -965,13 +1281,31 @@ func _set_building(S: SimState, bi: int, b, h: float) -> int:
 			ct[2] = true
 		if sp.is_empty():
 			mm.set_instance_transform(k, _hidden(b.x))
+			if record_writes:
+				_record(front, k, _hidden(b.x), null)
 			continue
 		var top: float = base + float(sp[1]) - sink
 		var bottom: float = (minf(foot.x, base) if float(sp[0]) <= 0.0 else base + float(sp[0])) - sink
-		mm.set_instance_transform(k, Transform3D(Basis.from_scale(Vector3(float(p[RenderShapes.W]), top - bottom, float(p[RenderShapes.D]))), Vector3(b.x + float(p[RenderShapes.X]), (top + bottom) * 0.5, zc + float(p[RenderShapes.Z]))))
-		mm.set_instance_color(k, Color(p[RenderShapes.COL] as Color, 0.0 if (int(p[RenderShapes.FLAGS]) & RenderShapes.ROOF) != 0 else 1.0))   # alpha 0: a roof (building.gdshader)
+		var t := Transform3D(Basis.from_scale(Vector3(float(p[RenderShapes.W]), top - bottom, float(p[RenderShapes.D]))), Vector3(b.x + float(p[RenderShapes.X]), (top + bottom) * 0.5, zc + float(p[RenderShapes.Z])))
+		var col := Color(p[RenderShapes.COL] as Color, 0.0 if (int(p[RenderShapes.FLAGS]) & RenderShapes.ROOF) != 0 else 1.0)   # alpha 0: a roof (building.gdshader)
+		mm.set_instance_transform(k, t)
+		mm.set_instance_color(k, col)
+		if record_writes:
+			_record(front, k, t, col)
 	_write_windows(S, bi, b, sink, spans)
 	return stage
+
+
+## Tools only (record_writes): an instance's last transform and colour as written (null: left as it was). A headless
+## run keeps no MultiMesh data to read back.
+func _record(front: bool, k: int, t, c) -> void:
+	var key := Vector2i(1 if front else 0, k)
+	var w: Array = writes.get(key, [null, null])
+	if t != null:
+		w[0] = t
+	if c != null:
+		w[1] = c
+	writes[key] = w
 
 
 ## Building bi's crowd: `alive` of its figures stand at home, on the ground as drawn.

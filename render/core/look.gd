@@ -530,6 +530,14 @@ const SLOW_DRIFT_ON: bool = false
 ## wholly on the hidden side of its visible half-plane (Camera's SplitFrame.visible_half_plane). Nothing that can show
 ## is lost, so it is on; main's --nocull (?nocull=1) turns it off.
 const SPLIT_CULL_ON: bool = true
+## The building sweep by view (planet_view.gd refresh; docs/rendering/view-update.md): each frame the buildings a pane
+## can show, the ones something this frame touched and SWEEP_SLICE of the rest are brought to the sim's state, not
+## every building on the planet. Nothing a pane can show waits, so it is on; main's --nopanesweep (?nopanesweep=1)
+## turns it off. SWEEP_PAD: how far past a building's parts and its figures' spots the view looks (a figure's own size
+## at the crowd's largest boost, CROWD_BOOST_MAX, and room to spare).
+const PANE_SWEEP_ON: bool = true
+const SWEEP_SLICE: int = 16
+const SWEEP_PAD: float = 200.0
 const DRIFT_DEG_PER_MIN: float = 3.0
 const DRIFT_MAX_DEG: float = 30.0
 ## The planet's own far land (World's WorldFarMap; render/core/far_land.gd): on a planet match that may turn, the far

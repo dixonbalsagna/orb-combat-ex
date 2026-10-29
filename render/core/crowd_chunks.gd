@@ -18,6 +18,8 @@ var _x0 := PackedFloat32Array()         # each chunk's box along x (planet x, 0 
 var _x1 := PackedFloat32Array()
 var _box: AABB                          # the y and z of every chunk's box
 var _pad: float = 0.0
+static var record: bool = false         # tools only (sweep_check): keep each figure's last transform and colour in `rec`
+var rec: Dictionary = {}                # ... ci -> [transform, colour] (a headless run keeps no MultiMesh data to read back)
 
 
 ## The crowd's chunks for spots xs (planet x per crowd index, in index order): a new chunk starts where the next spot
@@ -74,6 +76,8 @@ func count() -> int:
 func set_instance_transform(ci: int, t: Transform3D) -> void:
 	var k: int = chunk_of[ci]
 	(chunks[k] as MultiMesh).set_instance_transform(ci - firsts[k], t)
+	if record:
+		rec[ci] = [t, (rec[ci] as Array)[1] if rec.has(ci) else null]
 	# A figure drawn outside its chunk's box widens the box (a hidden one, scaled to nothing, does not).
 	var x: float = t.origin.x
 	if t.basis.get_scale().x > 0.0 and (x - _pad < _x0[k] or x + _pad > _x1[k]):
@@ -85,6 +89,8 @@ func set_instance_transform(ci: int, t: Transform3D) -> void:
 func set_instance_color(ci: int, c: Color) -> void:
 	var k: int = chunk_of[ci]
 	(chunks[k] as MultiMesh).set_instance_color(ci - firsts[k], c)
+	if record:
+		rec[ci] = [(rec[ci] as Array)[0] if rec.has(ci) else null, c]
 
 
 func set_instance_custom_data(ci: int, d: Color) -> void:
