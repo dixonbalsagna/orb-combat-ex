@@ -21,6 +21,7 @@ var flip: Callable            # tests only (the negative control): (t, slot, pac
 var frame: int = 0            # ticks run: the next tick to run
 var have: int = 0             # every tick below it has every slot's input
 var inputs: Array = []        # per slot: PackedInt64Array by tick
+var aiFrom: Dictionary = {}   # slot -> the tick the sim's AI plays it from (the relay forwards the takeovers, section 13)
 var chkMine: Dictionary = {}  # boundary -> digest
 var chkRelay: Dictionary = {} # boundary -> digest the relay forwarded
 var checksMatched: int = 0
@@ -55,6 +56,16 @@ func take(first: int, per: Array) -> void:
 				p = flip.call(first + i, k, p)
 			inputs[k].append(p)
 	have = first + n
+
+
+## A takeover the relay forwarded: slot k is the sim's AI from tick t (the earliest wins, as in NetSession). The relay
+## knows it before it confirms tick t, and every relay packet carries it, so it is here before tick t runs.
+func takeover(k: int, t: int) -> void:
+	if aiFrom.has(k) and int(aiFrom[k]) <= t:
+		return
+	if t < frame:
+		push_error("NetSpectator: a takeover of slot %d at tick %d, after it ran (%d)" % [k, t, frame])
+	aiFrom[k] = t
 
 
 ## A checkpoint digest a player confirmed (forwarded by the relay).
@@ -101,6 +112,9 @@ func _run() -> void:
 	var ins: Array = []
 	for k in range(players):
 		ins.append(SimIntent.unpack(inputs[k][t]))
+	for k in aiFrom:
+		if t == int(aiFrom[k]) and S.fighters[k].ai == null:
+			SimCore.toggleAI(S, k)
 	SimCore.step(S, ins)
 	frame += 1
 	if onTick.is_valid():

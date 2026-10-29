@@ -1,6 +1,6 @@
 # Rollback netcode: the core
 
-Owner: Netcode and Online. 2026-10-28, cloud briefs `docs/ep/cloud-briefs/netcode-rollback.md` (sections 1 to 6), `netcode-desync-spectate.md` (sections 7 to 9) and `netcode-transport.md` (section 11). Code: `net/`. The session runs over a transport interface: simulated links in one process (the loopback), or ENet between two processes. WebRTC for the browser is designed, not built (section 11).
+Owner: Netcode and Online. 2026-10-28, cloud briefs `docs/ep/cloud-briefs/netcode-rollback.md` (sections 1 to 6), `netcode-desync-spectate.md` (sections 7 to 9), `netcode-transport.md` (section 11), `netcode-ai-depth.md` (section 12) and, 2026-10-29, `netcode-ai-takeover.md` (section 13). Code: `net/`. The session runs over a transport interface: simulated links in one process (the loopback), or ENet between two processes. WebRTC for the browser is designed, not built (section 11).
 
 ## 1. The model
 
@@ -21,7 +21,7 @@ The sim is not touched. `NetSession` drives `SimCore.step(S, inputs)` exactly as
 
 The existing determinism rules (`docs/architecture/determinism.md`) stay in force, and the parity gate and the web parity check enforce them: seeded `SimRng` only, our own trig, binary64, no clock, fixed step. Rollback adds the following.
 
-1. **The state is closed.** Everything a later tick reads lives in the object graph reachable from `S`, as script variables. A static that gameplay writes during a tick would survive a restore and break rollback. The per-match statics that `step()` rebinds from `S` (`SimConst` arena, `WorldBiomes` columns, `WorldClimate.curGen`) are derived from `S`, so they are safe. Planet-match caches (`WorldEpoch._plans`, `_jobs`) are untested here (section 10).
+1. **The state is closed.** Everything a later tick reads lives in the object graph reachable from `S`, as script variables. A static that gameplay writes during a tick would survive a restore and break rollback. The per-match statics that `step()` rebinds from `S` (`SimConst` arena, `WorldBiomes` columns, `WorldClimate.curGen`) are derived from `S`, so they are safe. The calm turn's caches (`WorldEpoch._plans`, `_jobs`) are derived data outside the state too. A re-run warm tick or swap gives the same gameplay state; section 13 has the evidence and the two exceptions.
 2. **`step(S, inputs)` is a pure function of `S` and `inputs`.** `S.out` is write-only output.
 3. **References stay inside the graph.** An object field points at an object of the same state (a fighter, an exchange, a clash), or at immutable data: `FighterData`'s `WoundsDef`, `MetersDef` and `LadderDef`, and `SimForms.FormsDef`, which a snapshot shares instead of copying.
 4. **No container is reachable by two paths.** An `Array`, a `Dictionary` or a packed array held in two fields is one value live but two values after a copy. In Godot 4, a packed array assigned to a second field is the same buffer, not a copy. `NetSnapshot.aliasAudit` checks this, and the check runs it at the start, middle and end of every straight run. It finds no sharing today.
@@ -29,6 +29,8 @@ The existing determinism rules (`docs/architecture/determinism.md`) stay in forc
 6. **New fields need nothing from netcode.** The snapshot copies every script variable of every class it meets. The typed copier is generated from the classes' property lists at run time (section 3), so a field the sim adds is copied with no change in `net/`.
 7. **Inputs are canonical.** A peer steps with `SimIntent.unpack(packed)`, as the replay recorder does, so the bits a peer runs on are the bits it sends.
 8. **The data match.** Both peers must run the same data: `SimReplay.dataHash(setup)` belongs in the handshake, and a mismatch refuses the match.
+9. **A past snapshot read in place sees its own records.** A confirmed state is often a snapshot's root, read after the live state has moved on (a hash, a digest, a field walk, a desync report). The building and tree records are shared, and a later copy-on-write can replace a record's generation fields (the calm turn renumbers districts). Anything that reads a past root must read those fields through the root's own `S.bG` and `S.tG`. `NetDesync.digest` and the field walk do. `SimHash.stateHash` does not yet (section 13; the parked patch fixes it).
+10. **A takeover is a toggle before an agreed tick** (section 13). It never touches the state outside `SimCore.toggleAI`, and every run of that tick makes it.
 
 ## 3. Snapshot and restore
 
@@ -110,6 +112,11 @@ Profiles (`NetLoopback.PROFILES`; ping is the round trip, and each way is half):
 `--sparse=K` runs the sessions as a game would (a save only before a predicted tick, at most every K ticks). `--negative-control` breaks the session on purpose, once with a restore that leaves one RNG bit wrong and once with late inputs that never roll back. It passes only if the check catches both. Results are in the cloud report (`docs/net/cloud-reports/2026-10-28-rollback-core.md`).
 
 Setups (`--setup=`): `default`, `features`, `planet` (gen 1), `calm` (the calm turn), `depth` (fight lanes physical), `planet2` (a gen 2 ring of 2,400 columns, as QA plays them) and `planet2depth`. The bots never reach a KO; `--ai` (section 12) plays the fighter AI to one.
+
+Section 13 adds these options:
+- `--takeover=T` and `--drop=F`: a slot handed to the AI, or a peer that vanishes;
+- `--turn-at=N` and `--calm-director`: a calm turn crossed under rollback;
+- `--walk-at=B`: a field walk of the confirmed state at tick B, a diagnosis tool.
 
 ## 7. Desync detection and reports
 
@@ -204,7 +211,8 @@ Code: `net/delay.gd` (`NetDelay.choose`). It is a pure function, with no clock a
 - **Holding presses through a freeze (Controls).** `step()` consumes no input during hit-stop and pausing set pieces; the host keeps its presses for the next tick, with `waited`. Online, the local host decides this from its own predicted state. That stays deterministic (whatever it sends is the input), but a press can be held for a freeze that a rollback then removes. Moving that buffer into the sim (into `ActState`) would make it part of the rolled-back state.
 - **Platforms not proven bit-identical.** Native x64 and the web are proven (`docs/architecture/web-parity.md`). macOS on ARM, Linux on ARM, Android and iOS are not, and an ARM compiler may contract `a*b+c` into an FMA. The parity gate must run on each before cross-play between them.
 - **More than two players.** The session takes any number of slots. One-versus-many bodies past the pair are AI-driven, so they need no input. Co-op online (after versus, per Orb) is two input slots plus AI bodies, which this core already covers.
-- **Planet matches and the calm turn.** Those caches are statics keyed by world id (`WorldEpoch._plans`, `_jobs`). The `planet`, `calm` and `planet2` setups are in the check now (section 12) and hold. A calm turn has not happened inside an AI match yet.
+- **Planet matches and the calm turn.** Crossed under rollback with the bots and both AI modes (section 13). The gameplay state holds. Two open items: World's cold re-run of a swap, and SimHash's reading of past snapshots.
+- **A player who reconnects.** A dropped slot stays the AI's. Rejoining needs the survivor's state sent to the returning peer, and an agreed tick to hand the slot back (section 13).
 
 ## 11. Transport, handshake and time sync
 
@@ -280,4 +288,74 @@ Code: `net/ai_driver.gd` (`NetAiDriver`) and `--ai` in `net/tools/rollback_check
   - `restore` and `norollback`, as in section 6;
   - `impure`: peer 0's AI runs on its live state, which is caught within the AI's first random draw (tick 30 or 31).
 - **Matches are long.** A driven AI match reaches its KO in 25,000 to 57,000 ticks (7 to 16 minutes). The sim's own AI takes about 30,000 (seeds 1 and 2), because it also plays the director's hooks. So a session to a KO takes 10 to 40 minutes in the check. The short runs (600 ticks, with the negative controls) suit CI; the runs to a KO are a batch (`docs/net/cloud-reports/2026-10-28-ai-depth.md`).
+- **The online model for an AI opponent is the sim's own AI (Encounter's ruling, 2026-10-28).** The director decides about 100 `f.ai` branches mid-tick on that tick's plan: reacting, timed presses, a held charge. As fixed inputs they would land a tick late or never. The in-sim AI also costs no bandwidth, because nothing about it crosses the wire. The driven AI (`NetAiDriver`) stays as the harness's stream of human-like inputs. A dropped player's slot switches to the in-sim AI at an agreed tick, rather than one peer driving its inputs (section 13).
+- **The mutable director statics are safe across a restore (Encounter's audit, 2026-10-28, by reading the code).** The ai-depth report listed these statics as a risk: `DirBrawl._frOn` and the other `_fr*`, `_inTick`, `_enderStep`, `holding`, `DirExchange.planEntry` and `DirRally._noDown`. Each is written before it is read in every tick, so none can carry a value from before a restore into the re-run. A new static that gameplay reads before writing would break that. The `--ai` runs' purity test and every rollback session would show it.
 
+
+## 13. The AI takes over a slot, and the calm turn under rollback
+
+Code: `NetSession.takeover`, `proposeTakeover`, `dropSlot` and `_switch` (`net/session.gd`); the packet field in `net/loopback.gd`, `net/host.gd` and `net/transport.gd`; `NetSpectator.takeover`; `NetDesync.togglesOf`; `--takeover`, `--drop` and the calm-turn tracking in `net/tools/rollback_check.gd`. The sim is not touched: the switch is `SimCore.toggleAI`, the same one newMatch's `ai` flags set and a replay's `toggles` play.
+
+### The takeover
+
+- **The record.** `[slot, T]`: from tick T, the slot is the sim's own AI. Every packet carries the peer's takeovers once there are any (6 bytes for one on the wire), and receiving one is idempotent. If two proposals for the same slot differ, the earliest T wins, so peers that heard both converge.
+- **The rule that makes it safe.** The proposer chooses T = its frame + delay. That is the first tick whose input it has not sent yet. The record travels in every packet from then on, so it reaches the other peer with or before the proposer's input for tick T. No peer can confirm tick T without that input, so no peer can have confirmed T without knowing the takeover. A takeover that arrives after a peer has already run tick T is therefore handled exactly like a late input: the peer rolls back to T and runs again. On p120 and far that happened at one of the two peers in every run.
+- **What changes at T.** On every run of tick T, the first and every re-run, `_switch` calls `SimCore.toggleAI(S, slot)`. It does so after the save and the checkpoint, so the state before tick T is the same in every run and in a straight run that toggles before tick T. From T on, the slot's input is neutral and confirmed. Its peer stops sending it, and inputs it sent anyway for ticks from T on are dropped. A restore to a save before T takes the AI back off with the rest of the state, and the re-run switches it on again.
+- **Who proposes.** Either the slot's own peer, when the player leaves cleanly or hands the pad to the computer, or the other peer, when its host learns that the player left. Both are tested.
+- **Replays and spectators.** A desync report's replay (`NetDesync.replayOf`) writes the takeover as a `toggles` entry, the format `SimReplay.play` already reads. The spectator relay forwards the takeovers with the confirmed inputs. The spectator switches the slot before tick T, and the relay knows of the takeover before it confirms T.
+- **The protocol version** is now 2 (`NetHandshake.PROTO`), because a game packet may carry the new field. A packet without takeovers is byte for byte what it was.
+
+### A peer that is gone
+
+`dropSlot(k)` is the takeover for a peer that has vanished, decided by the host's timeout. The test uses 30 frames without a packet; a game would wait seconds. T is again frame + delay. The slot's missing inputs below T are the ones those ticks ran with, the predictions, so the survivor rolls nothing back and its screen does not jump. The survivor's confirmed inputs then include that fill, and its spectators and its replay get the fill too.
+
+- **Two peers only.** With more peers, the fill would have to travel with the record so that every survivor uses the same inputs. That is not built.
+- **No way back.** A vanished peer cannot rejoin the same timeline. It may have confirmed ticks with inputs of its own that the survivor never received and filled differently. A return needs the survivor's state sent to it (a snapshot of about 160 KB) and a rejoin tick, and that is not built.
+- **Handing the slot back to a human** at an agreed tick is not built either. The same record with an "off" tick would carry it, with the owner's inputs resuming at that tick. A player who never left could take the slot back that way; a player who reconnects needs the state first.
+
+### How the takeover is tested
+
+`rollback_check.gd --takeover=T`: the proposer's player calls `proposeTakeover` when its frame is T - delay, so the takeover lands at T.
+- **Bots.** The straight run is independent of the network: the bots' inputs, the slot toggled before tick T, and its inputs neutral from T. Every confirmed tick of both peers must equal it by full SimHash, feed and fx. Bot mode runs each profile twice, once with the slot's own peer proposing and once with the other peer.
+- **AI modes.** With `--ai` and `--ai=sim`, the straight run replays the confirmed inputs with the toggle. Every confirmed tick for 60 ticks after T is compared by full SimHash, because SimHash holds the AI's timers and the desync digest does not.
+- **`--drop=F`.** Peer 1 vanishes at frame F, and peer 0 drops the slot after 30 frames with no packet. Peer 0's confirmed ticks must equal the straight replay of its own confirmed inputs, with the toggle at its drop tick.
+
+Results (clean HEAD export plus `net/`, 2026-10-29; the report has the gate lines):
+
+| run | sessions | result |
+| :--- | ---: | :--- |
+| bots, T = 600, seeds 1 to 3, lan, p120 and far, both proposers | 18 | pass, 43,200 full-SimHash comparisons |
+| the same, saving as a game does (`--sparse=2`) | 18 | pass |
+| `--ai`, T = 900, 1,800 ticks, seeds 1 to 3 | 9 | pass |
+| `--ai=sim` (P1 handed over), the same | 9 | pass |
+| bots, `--drop=600`, seeds 1 to 3 | 9 | pass; the survivor dropped at tick 624 in all 9 |
+| `--ai --drop=900`, seeds 1 and 2 | 6 | pass |
+
+On p120 and far, the takeover arrived at one peer after it had run tick T, and its rollback made it exact.
+
+**Negative controls.**
+- **late:** the peer that did not propose switches at T + 1. Caught at the first tick after T wherever tick T is live. On a frozen tick (hit-stop, a pausing set piece) no control runs, so a switch a tick later gives the same state; that case is reported as not applicable.
+- **once:** the proposer switches on tick T's first run only, not when a rollback runs it again. Caught wherever a rollback ran tick T again.
+- **fill:** the drop's missing inputs are filled neutral instead of with what the ticks ran with, and nothing rolls back. Caught in all 9 runs.
+
+**Why AI mode hashes after T.** A sim AI switched on one tick late starts with its timers one tick behind. That can converge back to the same state within 60 ticks, between two of AI mode's SimHash samples. Adding the AI's timers to the desync digest would catch it on every tick (NEXT).
+
+### The calm turn under rollback
+
+`WorldEpoch._plans` and `_jobs` (`sim/world/epoch.gd:21-22`) are derived caches outside the state: the decided turn's ring reads and the swap's preparation, made by the warm ticks. A rollback restores the state but not these caches. So a re-run warm tick finds the caches ahead of the restored state, and a re-run swap finds them gone, because the first run's swap dropped them.
+
+**How it was crossed.** The director's part of the turn is off in the data (`interrupts.json` `calmTurn.enabled: false`), so no match turns by itself. The check crosses a turn two ways:
+- `--turn-at=N` decides a turn before tick N on every run, as Simulation's `two_states_check` does, and World's own calm decides the swap.
+- `--calm-director` switches the director's turn on for the check's process only, in memory. The director then asks World inside the tick, and its hold decides the swap.
+
+In both, every confirmed tick from the decision to 60 ticks after the swap is compared by its full SimHash. 60 ticks after the swap, the whole state is walked field by field against the straight run's. The line counts the rollbacks that restored a state inside the warm window and those that ran the swap again.
+
+**What holds.** A re-run warm tick or swap gives the same gameplay state.
+- **Bots:** seeds 1 to 3, on lan, p120 and far, with a turn decided at tick 300 and swapped at 343 or 362. All 9 sessions pass, with 16,200 full-SimHash comparisons, one at every confirmed tick. Each session on p120 or far had 17 to 34 rollbacks that restored a state inside the warm window, and up to 6 that ran the swap again.
+- **AI, forced turn.** `--ai` and `--ai=sim`, `--turn-at=600`, seeds 1 and 2, on lan, p120 and far, 1,500 ticks: 12 sessions pass. 10 of them swapped, at ticks 643 to 782. With the driven AI on far, the turn stayed decided and waiting for calm to the end, so those two crossed only warm ticks. Every field walk after a swap is clean.
+- **AI, the director's own turn.** With `--calm-director`, the sim's own AI (seed 1, 7,200 ticks) had the director decide at tick 4923 and swap at 6350 on all three profiles. The state waited for the director's hold for 1,427 ticks, and 208 to 259 rollbacks a session restored a state inside that window. With the driven AI (seed 1, 9,300 ticks), lan swapped at 8783, while on p120 and far the fight went otherwise and no turn was decided. All 6 sessions pass, with the field walks clean.
+- **Rollbacks that ran the swap again** happened only in the bot runs, up to 6 a session. The AI's swaps came at calm moments that no late input contradicted.
+
+**What does not, and why.**
+- **The re-run swap is cold (World).** A rollback that runs the swap again finds no ring job and no preparation, because `swap()` dropped them (`_dropJobs`). It reads the ring and makes the preparation on the swap tick, the work the warm ticks exist to spread. The gameplay result is the same, but two unhashed counters in the state, `S.epoch.cold` and `S.epoch.unprep`, end at 1 where a straight run has 0. That is the only difference the field walk finds after a re-run swap. The rollback frame also pays the whole read. World's own notes (`epoch.gd`, the preparation) put the swap tick at 8.7 ms natively, and 38 to 46 ms at x4, before the preparation was spread over the warm ticks.
+- **A past snapshot hashed in place misreads its districts (Simulation).** The swap renumbers the kept buildings' districts. A building's generation fields are shared and copy-on-write, so the swap gives the live record a new copy, and every earlier snapshot keeps the old one in its own `S.bG`. A restore is right, because `afterRestore` puts the old copies back. But `SimHash.stateHash` of a past root, taken after the swap, read districts through the shared record and saw the new numbers. On p120 and far, the check flagged the last few ticks before the swap, the ones confirmed after it, while the digest and the field walk of those same states agreed. The parked two-line patch, `docs/net/pending/simhash-past-roots.patch`, reads them through `S.bG` and `S.tG`. With it, every SimHash matches. The field walk had the same blind spot and now compares generation records by value.

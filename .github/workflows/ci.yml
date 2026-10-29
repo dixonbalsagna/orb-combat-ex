@@ -245,6 +245,16 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=planet2 --seeds=1 --ticks=300 --profiles=lan,p120,far'
       - name: Rollback check, planet2 setup, negative control (a wrong restore and a missed rollback must be caught)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=planet2 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control'
+      - name: Rollback check, AI takeover at an agreed tick (either peer hands a slot to the sim's AI)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --takeover=150 --seeds=1 --ticks=300 --profiles=lan,p120,far'
+      - name: Rollback check, AI takeover, negative control (a peer switching a tick late must be caught)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --takeover=150 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control'
+      - name: Rollback check, a dropped peer (its slot dropped at an agreed tick)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --drop=150 --seeds=1 --ticks=300 --profiles=lan,p120,far'
+      - name: Rollback check, a dropped peer, negative control
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --drop=150 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control'
+      - name: Rollback check, the calm turn under rollback (rollbacks across the swap)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=calm --turn-at=300 --seeds=1 --ticks=600 --profiles=lan,p120,far'
       - name: Two-process ENet match on 127.0.0.1 (both processes match each other and the straight run, LAN and p200)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/enet_check.gd -- --ticks=1800 --profiles=lan,p200'
       - name: Two-process ENet match, negative control (a perturbed joiner must be caught)

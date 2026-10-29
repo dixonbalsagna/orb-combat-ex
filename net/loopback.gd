@@ -4,7 +4,8 @@ extends RefCounted
 ## links wrapped as its NetTransport (NetLinkTransport). Both run a NetSession
 ## at 60 frames a second of simulated wall time; every frame each peer sends one packet with all its inputs the other has
 ## not acknowledged, so a lost packet costs a frame, not an input. Packets can arrive out of order (jitter).
-## Each packet also carries the peer's newest confirmed checkpoint digests (NetSession.chkOut, desync detection). An
+## Each packet also carries the peer's newest confirmed checkpoint digests (NetSession.chkOut, desync detection), and
+## once a slot has been handed to the AI its takeovers (NetSession.takeoverList, rollback.md section 13). An
 ## optional spectator (addSpectator) hangs off one peer, the relay, over a link of its own: it receives only the
 ## confirmed inputs of every slot and the relay's digests, and acknowledges what it holds.
 ## Used by net/tools/rollback_check.gd (determinism), desync_check.gd, spectator_check.gd and rollback_bench.gd (cost).
@@ -74,10 +75,15 @@ class Peer:
 
 	func packet() -> Dictionary:
 		var since: Array = session.localSince(acked)
-		return {"from": session.local, "frame": session.frame, "ack": session.contig[1 - session.local], "first": since[0], "inputs": since[1],
+		var pk := {"from": session.local, "frame": session.frame, "ack": session.ackOf(1 - session.local), "first": since[0], "inputs": since[1],
 			"chk": session.chkOut.duplicate(true)}
+		if not session.aiFrom.is_empty():
+			pk["ai"] = session.takeoverList()
+		return pk
 
 	func take(pk: Dictionary) -> void:
+		for e in pk.get("ai", []):   # first: a takeover supersedes the inputs at its tick and after
+			session.takeover(int(e[0]), int(e[1]))
 		acked = maxi(acked, int(pk.ack))
 		var t: int = int(pk.first)
 		for p in pk.inputs:
@@ -98,6 +104,8 @@ var relay: int = 0            # the peer that relays to the spectator
 var specLinks: Array = []     # [relay -> spectator, spectator -> relay]
 var specAcked: int = 0        # the spectator holds every tick below this
 var relayPredicted: bool = false   # tests only (the spectator check's negative control): relay the inputs ticks ran with, guesses included
+var gone: Array = [false, false]   # tests only: a peer that has vanished (its process ended): it runs, sends and receives nothing
+var heard: Array = [0, 0]          # the last frame each peer received a packet on (a host's timeout reads it)
 
 
 ## Two peers on fresh sims of the same match. profile is a PROFILES entry; seed seeds the links; bots answer for each
@@ -179,20 +187,23 @@ func _relayPacket() -> Dictionary:
 		for k in range(2):
 			var a := PackedInt64Array()
 			for t in range(specAcked, mini(sess.frame, specAcked + 64)):
-				a.append(sess.inputs[k][t] if sess.inputs[k].has(t) else int(sess.used[k].get(t, sess.inputFor(k, t))))
+				a.append(sess.confirmedInput(k, t) if sess.hasInput(k, t) else int(sess.used[k].get(t, sess.inputFor(k, t))))
 			per.append(a)
 		got = [specAcked, per]
-	return {"first": got[0], "per": got[1], "chk": sess.chkOut.duplicate(true)}
+	return {"first": got[0], "per": got[1], "chk": sess.chkOut.duplicate(true), "ai": sess.takeoverList()}
 
 
 ## One frame of wall time: deliver what has arrived, advance each peer that is below `until` ticks, send.
 func step(until: int) -> void:
 	for k in range(2):
 		var p: Peer = peers[k]
+		if gone[k]:
+			continue
 		var t0: int = clock.call() if clock.is_valid() else 0
 		var playing: bool = p.session.frame < until   # timed: the frames of play, not the flush after the last tick
 		for pk in p.transport.receive(now):
 			p.take(pk)
+			heard[k] = frames
 		if p.session.frame < until:
 			if p.session.canAdvance():
 				p.session.advance(p.bot.next())
@@ -204,6 +215,8 @@ func step(until: int) -> void:
 			frameUs[k].append(clock.call() - t0)
 	if spectator != null:
 		for pk in specLinks[0].receive(now):
+			for e in pk.get("ai", []):
+				spectator.takeover(int(e[0]), int(e[1]))
 			spectator.take(int(pk.first), pk.per)
 			for c in pk.chk:
 				spectator.addCheck(int(c[0]), c[1])
@@ -212,7 +225,8 @@ func step(until: int) -> void:
 		if spectator.frame < until:
 			spectator.advance(until)
 	for k in range(2):
-		peers[k].transport.send(now, peers[k].packet())
+		if not gone[k]:
+			peers[k].transport.send(now, peers[k].packet())
 	if spectator != null:
 		specLinks[0].send(now, _relayPacket())
 		specLinks[1].send(now, {"ack": spectator.have})
@@ -226,8 +240,8 @@ func run(ticks: int) -> bool:
 	while frames < cap:
 		step(ticks)
 		var done: bool = true
-		for p in peers:
-			if p.session.frame < ticks or p.session.finalTo < ticks:
+		for k in range(2):
+			if not gone[k] and (peers[k].session.frame < ticks or peers[k].session.finalTo < ticks):
 				done = false
 		if spectator != null and spectator.have < ticks:
 			done = false
@@ -240,7 +254,7 @@ func run(ticks: int) -> bool:
 
 func close() -> void:
 	for p in peers:
-		if p.bot is NetAiDriver:
+		if p.bot != null and p.bot.has_method("close"):   # a NetAiDriver's pool, or a test player around one
 			p.bot.close()
 		p.session.close()
 		SimCore.dispose(p.session.S)

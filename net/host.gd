@@ -4,8 +4,8 @@ extends RefCounted
 ## the agreed delay, with time sync and ping measurement, all on whatever NetTransport it is given. Call frame() once a
 ## frame with the host's clock. The game packets are the loopback's (NetLoopback.Peer.packet) plus four fields:
 ## ts (the sender's clock), echo and age (the newest ts it received and how long it has held it, for the round trip),
-## and adv (its frame advantage, for time sync). A packet from a peer that has not started yet is dropped: everything
-## in it comes again.
+## and adv (its frame advantage, for time sync), and, once a slot has been handed to the AI, ai (the takeovers). A packet
+## from a peer that has not started yet is dropped: everything in it comes again.
 
 var tr: NetTransport
 var S: SimState
@@ -80,9 +80,12 @@ func _start() -> void:
 
 func _packet(now: float) -> Dictionary:
 	var since: Array = session.localSince(acked)
-	return {"from": local, "frame": session.frame, "ack": session.contig[1 - local], "first": since[0], "inputs": since[1],
+	var pk := {"from": local, "frame": session.frame, "ack": session.ackOf(1 - local), "first": since[0], "inputs": since[1],
 		"chk": session.chkOut.duplicate(true), "ts": now, "echo": _echo, "age": now - _echoAt if _echo >= 0.0 else 0.0,
 		"adv": sync.current}
+	if not session.aiFrom.is_empty():
+		pk["ai"] = session.takeoverList()   # the AI's takeovers (rollback.md section 13), until the match ends
+	return pk
 
 
 func _take(now: float, pk: Dictionary) -> void:
@@ -101,6 +104,8 @@ func _take(now: float, pk: Dictionary) -> void:
 		rttAll += 1
 		if rtt.size() > 64:
 			rtt.remove_at(0)
+	for tk in pk.get("ai", []):   # before the inputs: a takeover supersedes the slot's inputs at its tick and after
+		session.takeover(int(tk[0]), int(tk[1]))
 	acked = maxi(acked, int(pk.get("ack", 0)))
 	var t: int = int(pk.get("first", 0))
 	for p in pk.get("inputs", PackedInt64Array()):

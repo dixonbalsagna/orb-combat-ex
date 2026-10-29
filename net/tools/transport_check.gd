@@ -85,6 +85,12 @@ func _codec() -> void:
 	empty["inputs"] = PackedInt64Array()
 	empty["chk"] = []
 	_expect(str(NetTransport.decode(NetTransport.encode(empty))) == str(empty), "codec: an empty game packet comes back equal")
+	var withAi := pk.duplicate(true)   # the AI's takeovers (rollback.md section 13): a count, then slot u8 and tick u32 each
+	withAi["ai"] = [[1, 5000], [0, 123456]]
+	var bAi := NetTransport.encode(withAi)
+	_expect(str(NetTransport.decode(bAi)) == str(withAi), "codec: a game packet with takeovers comes back equal (%s)" % str(NetTransport.decode(bAi)))
+	_expect(bAi.size() == b.size() + 1 + 2 * 5, "codec: two takeovers add %d bytes" % (bAi.size() - b.size()))
+	_expect(NetTransport.decode(bAi.slice(0, bAi.size() - 2)) == null, "codec: a truncated takeover is refused")
 	var hs := {"hs": "hello", "v": NetHandshake.PROTO, "match": "1|{}|{}", "delay": 3, "got": true}
 	_expect(str(NetTransport.decode(NetTransport.encode(hs))) == str(hs), "codec: a handshake packet comes back equal")
 	_expect(NetTransport.decode(PackedByteArray()) == null, "codec: empty bytes are refused")

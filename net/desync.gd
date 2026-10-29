@@ -107,7 +107,19 @@ static func replayOf(sess: NetSession, info: Dictionary, upto: int) -> Dictionar
 	log.sort_custom(func(a, b): return a[0] < b[0] or (a[0] == b[0] and a[1] < b[1]))
 	for e in log:
 		rp.inputs.append([e[0], e[1]] + SimReplay.split(e[2]))
+	rp.toggles = togglesOf(sess.aiFrom, rp.ai, upto)
 	return rp
+
+
+## A session's takeovers as a replay's toggles ([tick, slot], toggleAI before that tick, in tick order): the ones below
+## `upto`, for slots that did not start as the AI (`ai` is newMatch's flags).
+static func togglesOf(aiFrom: Dictionary, ai: Dictionary, upto: int) -> Array:
+	var out: Array = []
+	for k in aiFrom:
+		if int(aiFrom[k]) < upto and not bool(ai.get("p%d" % (int(k) + 1), false)):
+			out.append([int(aiFrom[k]), int(k)])
+	out.sort_custom(func(a, b): return a[0] < b[0] or (a[0] == b[0] and a[1] < b[1]))
+	return out
 
 
 ## The state after `ticks` ticks of a replay (the caller disposes it with SimCore.dispose), or null if it does not run
@@ -120,7 +132,12 @@ static func replayState(rp: Dictionary, ticks: int) -> SimState:
 	var cur: Array = []
 	cur.resize(S.fighters.size())
 	var ii: int = 0
+	var ti: int = 0
+	var toggles: Array = rp.get("toggles", [])
 	for t in range(ticks):
+		while ti < toggles.size() and int(toggles[ti][0]) == t:   # toggleAI before that tick, as SimReplay.play
+			SimCore.toggleAI(S, int(toggles[ti][1]))
+			ti += 1
 		while ii < rp.inputs.size() and int(rp.inputs[ii][0]) == t:
 			var p: int = SimReplay.join(rp.inputs[ii][2], rp.inputs[ii][3])
 			cur[int(rp.inputs[ii][1])] = SimIntent.unpack(p) if p >= 0 else null
@@ -194,7 +211,18 @@ static func _compare(x, y, path: String, found: Array, limit: int) -> bool:
 			if x.get_script() != y.get_script():
 				found.append({"path": path, "a": str(x.get_script()), "b": str(y.get_script())})
 				return false
-			return not (NetSnapshot.shared(x) or NetSnapshot.shared(y))
+			if NetSnapshot.shared(x) or NetSnapshot.shared(y):
+				# A shared record is not walked into. A generation record (BuildingGen, TreeGen: a FIELDS list) is
+				# compared by its values, so the walk sees a building's district or a tree's x; read through the state's
+				# own S.bG and S.tG, it is the one the state had (a past snapshot's, not a later copy on write).
+				if x != y:
+					var fields = x.get_script().get_script_constant_map().get("FIELDS")
+					if fields is Array:
+						for f in fields:
+							if found.size() < limit:
+								_compare(x.get(f), y.get(f), path + "." + String(f), found, limit)
+				return false
+			return true
 		TYPE_ARRAY:
 			if x.size() != y.size():
 				found.append({"path": path + ".size()", "a": str(x.size()), "b": str(y.size())})

@@ -13,12 +13,20 @@ extends RefCounted
 ##   - an input that arrives for a tick already run, and differs from what that tick used, rolls the state back to the
 ##     newest save at or before it and runs every tick again up to the present (re-simulation);
 ##   - a tick whose inputs are all confirmed, after ticks that all were, is final: onConfirmed reports it.
+## The AI's takeover (docs/net/rollback.md section 13): a slot can be handed to the sim's own AI from an agreed tick T
+## (takeover). Before tick T, on its first run and on every re-run, the session calls SimCore.toggleAI for the slot (the
+## switch newMatch's ai flags set, and the replay format's toggle); from T on the slot needs no input (its input is
+## neutral and confirmed). A takeover is proposed at least the input delay ahead (proposeTakeover: T = frame + delay, the
+## first tick whose input the proposer has not sent), carried in every packet and idempotent, and the earliest T wins;
+## one that arrives for a tick already run rolls back to it, exactly as a late input does. dropSlot is the same when the
+## slot's peer is gone: its missing inputs below T become the ones the ticks ran with.
 ## The session reads no clock (the determinism lint's rule for sim code holds here too); a profiling host sets `clock`.
 
 const NEUTRAL: int = 127 | (127 << 8)   # SimIntent.pack of a cleared intent: the stick centred, every flag off
 ## The edge fields of a packed intent (SimIntent.pack's layout): upgrade, special, guardPress, dodge, powerPress, powerTap,
 ## light, heavy, sig, context, transform, the legacy pressed stance, escape and waited. A prediction clears them.
 const EDGE_MASK: int = (3 << 18) | (7 << 20) | (1 << 24) | (1 << 25) | (1 << 28) | (1 << 29) | (1 << 30) | (1 << 31) | (1 << 32) | (1 << 33) | (1 << 34) | (7 << 35) | (1 << 42) | (15 << 43)
+const NEVER: int = 0x3FFFFFFF   # a slot's contig once the AI plays it: it needs no more inputs (contig is 32-bit)
 
 var S: SimState
 var players: int = 2
@@ -32,6 +40,19 @@ var clock: Callable           # () -> int microseconds, for profiling only; unse
 var afterRestore: Callable    # tests only (the check's negative control): (S) -> void, called after every restore
 var rollbackOn: bool = true   # tests only: false ignores late inputs that contradict a prediction (the negative control)
 var perturb: Callable         # tests only (the desync check): (S, t) -> void, called after every run of tick t (a divergent peer)
+var onRollback: Callable      # tests only: (restored boundary, frame) -> void, at every rollback (which ticks a re-run covers)
+var beforeTick: Callable      # tests only: (S, t) -> void, before every run of tick t, after the save and any takeover (a test's
+                              # own deterministic write, as a straight run makes it before the same tick)
+
+# the AI's takeover (section 13)
+var aiFrom: Dictionary = {}   # slot -> the tick from which the sim's own AI plays it (agreed: carried in every packet)
+var dropped: Array = []       # slots this peer took from a peer that was gone (dropSlot), for a host's notice
+var aiLate: int = 0           # tests only (the takeover check's negative control): this peer switches this many ticks late
+var aiOnce: bool = false      # tests only: switch on a tick's first run only, not when a rollback runs it again
+var _aiDone: Dictionary = {}  # with aiOnce: slots already switched once
+var fillWrong: bool = false   # tests only: dropSlot fills with neutral inputs instead of the ones the ticks ran with
+var fillDiff: int = 0         # dropSlot's filled ticks whose fill differs from what they ran with (0 unless fillWrong)
+var takeoverLate: int = 0     # takeovers that arrived for a tick already run (each rolled back to it)
 
 # desync detection (NetDesync): a digest of the confirmed state every checkEvery ticks, exchanged with the other peers
 var checkEvery: int = 60      # ticks between checkpoints; 0 turns detection off
@@ -131,11 +152,10 @@ func advance(localPacked: int) -> bool:
 ## it ran with marks a rollback, which sync() (or the next advance()) performs.
 func addInput(k: int, t: int, p: int) -> void:
 	var d: Dictionary = inputs[k]
-	if d.has(t):
+	if d.has(t) or (aiFrom.has(k) and t >= int(aiFrom[k])):   # a duplicate, or a tick the AI plays (a takeover supersedes it)
 		return
 	d[t] = p
-	while d.has(contig[k]):
-		contig[k] += 1
+	_walk(k, contig[k])
 	if t < frame and int(used[k].get(t, -1)) != p:
 		mispredicted += 1
 		if rollbackOn and (_rollTo < 0 or t < _rollTo):
@@ -161,13 +181,99 @@ func localSince(since: int, cap: int = 64) -> Array:
 	return [since, out]
 
 
-## The packed intent a slot's tick runs with now: the confirmed one, or the prediction.
+## The packed intent a slot's tick runs with now: the confirmed one, or the prediction (neutral where the AI plays it).
 func inputFor(k: int, t: int) -> int:
 	var d: Dictionary = inputs[k]
 	if d.has(t):
 		return d[t]
+	if aiFrom.has(k) and t >= int(aiFrom[k]):
+		return NEUTRAL
 	var last: int = contig[k] - 1
 	return (int(d[last]) if last >= 0 else NEUTRAL) & ~EDGE_MASK
+
+
+## True when (slot, tick)'s input is confirmed: received or local, or a tick the AI plays.
+func hasInput(k: int, t: int) -> bool:
+	return inputs[k].has(t) or (aiFrom.has(k) and t >= int(aiFrom[k]))
+
+
+## A confirmed input (hasInput true): the packed intent, neutral on a tick the AI plays.
+func confirmedInput(k: int, t: int) -> int:
+	return int(inputs[k][t]) if inputs[k].has(t) else NEUTRAL
+
+
+## What a packet acknowledges of slot k: every tick below it is held (contig, or the takeover's tick once every input
+## below it is in: the slot's peer has nothing more to send).
+func ackOf(k: int) -> int:
+	return contig[k] if contig[k] < NEVER else int(aiFrom.get(k, contig[k]))
+
+
+## contig[k] from `from` (every tick below it has its input): past the last contiguous input, or NEVER once that reaches
+## the slot's takeover.
+func _walk(k: int, from: int) -> void:
+	if from >= NEVER:
+		return
+	var d: Dictionary = inputs[k]
+	var c: int = from
+	var end: int = int(aiFrom[k]) if aiFrom.has(k) else NEVER
+	while c < end and d.has(c):
+		c += 1
+	contig[k] = NEVER if c >= end else c
+
+
+## Slot k is the sim's own AI from tick t on (a takeover, local or received). The earliest tick wins, so peers that heard
+## two converge; inputs for the slot at t or later are dropped (superseded). One for a tick already run marks a rollback
+## to it, as a late input does: with t at least the proposer's frame + delay, the proposer's own input for t travels with
+## the record or after it, so no peer can have confirmed tick t without knowing it.
+func takeover(k: int, t: int) -> void:
+	if aiFrom.has(k) and int(aiFrom[k]) <= t:
+		return
+	aiFrom[k] = t
+	var d: Dictionary = inputs[k]
+	for u in d.keys():
+		if u >= t:
+			d.erase(u)
+	_walk(k, mini(contig[k], t))
+	if t < finalTo:
+		push_error("NetSession: a takeover of slot %d at tick %d, which is already final (%d)" % [k, t, finalTo])
+	if t < frame:
+		takeoverLate += 1
+		if _rollTo < 0 or t < _rollTo:
+			_rollTo = t
+
+
+## The takeovers as a packet's `ai` field: [[slot, tick], ...]. Sent in every packet once there is one (a few bytes).
+func takeoverList() -> Array:
+	var out: Array = []
+	for k in aiFrom:
+		out.append([int(k), int(aiFrom[k])])
+	return out
+
+
+## This peer proposes that slot k becomes the sim's AI: at frame + delay, the first tick whose input it has not sent (a
+## player who leaves, or hands the pad to the computer; a host told the slot's player left). Returns the tick.
+func proposeTakeover(k: int) -> int:
+	var t: int = frame + delay
+	takeover(k, t)
+	return int(aiFrom[k])
+
+
+## The slot's peer is gone (a host's timeout): the slot becomes the AI's at frame + delay, and its missing inputs below that
+## are the ones those ticks ran with (the predictions; neutral-edged guesses for the ticks not run yet), so this peer rolls
+## nothing back. Returns the tick. Only this peer carries on with the slot's peer; a later return would need a state.
+func dropSlot(k: int) -> int:
+	var t: int = frame + delay
+	if aiFrom.has(k) and int(aiFrom[k]) <= t:
+		return int(aiFrom[k])
+	var d: Dictionary = inputs[k]
+	for u in range(mini(contig[k], t), t):
+		if not d.has(u):
+			var ran: int = int(used[k].get(u, inputFor(k, u)))
+			d[u] = NEUTRAL if fillWrong else ran
+			fillDiff += 1 if int(d[u]) != ran and u < frame else 0
+	dropped.append(k)
+	takeover(k, t)
+	return t
 
 
 func _run(t: int) -> void:
@@ -175,7 +281,7 @@ func _run(t: int) -> void:
 	var predicted: bool = false
 	for k in range(players):
 		var p: int = inputFor(k, t)
-		if not inputs[k].has(t):
+		if not hasInput(k, t):
 			predicted = true
 		used[k][t] = p
 		ins.append(SimIntent.unpack(p))
@@ -191,6 +297,9 @@ func _run(t: int) -> void:
 			_save(t)
 	if predicted:
 		predictedTicks += 1
+	_switch(t)
+	if beforeTick.is_valid():
+		beforeTick.call(S, t)
 	var t0: int = clock.call() if clock.is_valid() else 0
 	SimCore.step(S, ins)
 	if clock.is_valid():
@@ -202,6 +311,15 @@ func _run(t: int) -> void:
 		outLog[t] = outDigest(S)
 	S.out.feed.clear()
 	S.out.fx.clear()
+
+
+## Before tick t, on every run of it: a slot whose takeover is at t becomes the sim's AI (after the save and the checkpoint,
+## so the state before tick t is the same in every run and in a straight run that toggles before tick t).
+func _switch(t: int) -> void:
+	for k in aiFrom:
+		if t == int(aiFrom[k]) + aiLate and S.fighters[k].ai == null and not (aiOnce and _aiDone.has(k)):
+			SimCore.toggleAI(S, k)
+			_aiDone[k] = true
 
 
 func _save(t: int) -> void:
@@ -233,6 +351,8 @@ func _rollback(r: int) -> void:
 	if afterRestore.is_valid():
 		afterRestore.call(S)
 	restores += 1
+	if onRollback.is_valid():
+		onRollback.call(s, frame)
 	var depth: int = frame - s
 	rollbacks += 1
 	resimTicks += depth
@@ -343,7 +463,7 @@ func confirmedSince(since: int, cap: int = 64) -> Array:
 	for k in range(players):
 		var a := PackedInt64Array()
 		for t in range(since, upto):
-			a.append(inputs[k][t])
+			a.append(confirmedInput(k, t))
 		per.append(a)
 	return [since, per]
 
@@ -355,7 +475,7 @@ func confirmedLog(upto: int) -> Array:
 	for k in range(players):
 		var last: int = -1
 		for t in range(upto):
-			var p: int = inputs[k][t]
+			var p: int = confirmedInput(k, t)
 			if p != last:
 				out.append([t, k, p])
 				last = p

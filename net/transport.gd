@@ -12,7 +12,9 @@ extends RefCounted
 ## Bytes on the wire. A game packet (the session's: from, frame, ack, first, inputs, chk, and the host's ts, echo, age
 ## and adv) has a fixed binary layout, little-endian: kind byte 1, from u8, frame u32, ack u32, first u32, input count
 ## u8 and the packed intents as i64, checkpoint count u8 and each as boundary u32 plus its 16-byte digest, ts f64,
-## echo f64, age f32, adv f32: 40 bytes, plus 8 per unacknowledged input and 20 per checkpoint digest. Anything
+## echo f64, age f32, adv f32: 40 bytes, plus 8 per unacknowledged input and 20 per checkpoint digest. A packet that
+## carries the AI's takeovers (its optional `ai` field, rollback.md section 13) adds a count u8 (at least 1) and each as
+## slot u8 plus tick u32: 6 bytes for one. Anything
 ## else (the handshake's packets, a few a second for a moment) is kind byte 2 and Godot's Variant encoding, which never
 ## decodes objects (bytes_to_var, not bytes_to_var_with_objects), so a hostile packet cannot instantiate anything.
 const GAME_KEYS: Array = ["from", "frame", "ack", "first", "inputs", "chk", "ts", "echo", "age", "adv"]
@@ -43,6 +45,12 @@ static func encode(pk: Dictionary) -> PackedByteArray:
 	b.put_double(float(pk.echo))
 	b.put_float(float(pk.age))
 	b.put_float(float(pk.adv))
+	var ai: Array = pk.get("ai", [])
+	if not ai.is_empty():
+		b.put_u8(ai.size())
+		for e in ai:
+			b.put_u8(int(e[0]))
+			b.put_u32(int(e[1]))
 	return b.data_array
 
 
@@ -70,7 +78,8 @@ static func decode(b: PackedByteArray) -> Variant:
 		ins.append(r.get_64())
 	pk["inputs"] = ins
 	var m: int = r.get_u8()
-	if r.get_available_bytes() != m * 20 + 24:
+	var tail: int = r.get_available_bytes() - (m * 20 + 24)   # past the digests and the clock fields: the takeovers, if any
+	if tail < 0 or (tail > 0 and (tail - 1) % 5 != 0) or tail == 1:
 		return null
 	var chk: Array = []
 	for i in range(m):
@@ -82,16 +91,32 @@ static func decode(b: PackedByteArray) -> Variant:
 	pk["echo"] = r.get_double()
 	pk["age"] = r.get_float()
 	pk["adv"] = r.get_float()
+	if tail > 0:
+		var na: int = r.get_u8()
+		if na < 1 or tail != 1 + na * 5:
+			return null
+		var ai: Array = []
+		for i in range(na):
+			var slot: int = r.get_u8()
+			ai.append([slot, r.get_u32()])
+		pk["ai"] = ai
 	return pk
 
 
 ## A packet with exactly the game packet's fields, each in range for the binary layout.
 static func _isGame(pk: Dictionary) -> bool:
-	if pk.size() != GAME_KEYS.size():
+	var extra: int = 1 if pk.has("ai") else 0
+	if pk.size() != GAME_KEYS.size() + extra:
 		return false
 	for k in GAME_KEYS:
 		if not pk.has(k):
 			return false
+	if extra == 1:
+		if not (pk.ai is Array) or pk.ai.size() > 255:
+			return false
+		for e in pk.ai:
+			if not (e is Array) or e.size() != 2 or int(e[0]) < 0 or int(e[0]) > 255 or int(e[1]) < 0 or int(e[1]) > 0xFFFFFFFF:
+				return false
 	if not (pk.inputs is PackedInt64Array) or pk.inputs.size() > 255 or not (pk.chk is Array) or pk.chk.size() > 255:
 		return false
 	for c in pk.chk:

@@ -16,7 +16,7 @@ extends RefCounted
 ##      the match.
 ## A version or match mismatch fails the handshake (`failed` says why) on both sides.
 
-const PROTO: int = 1
+const PROTO: int = 2   # 2: game packets may carry the AI's takeovers (rollback.md section 13)
 
 var matchKey: String = ""
 var device: Dictionary = {}
