@@ -437,7 +437,7 @@ const LEGAL_FILE = 'docs/legal/page-fixed-lines.md';
 // line, the privacy and licence lines).
 export function legalLines(md) {
   const out = new Set();
-  for (const ln of md.split('\n')) {
+  for (const ln of md.split(/\r?\n/)) {
     const m = ln.match(/^\s*>\s?(.*)$/);
     if (m && m[1].trim().length > 0) out.add(m[1].trim());
     for (const q of ln.matchAll(/"([^"]{4,})"/g)) out.add(q[1].trim());
@@ -525,6 +525,8 @@ function selfTest() {
   ok(lit('foo.draw_string(f, p, "not ours")').length === 0, 'draw_string on another object is not a sink');
   ok(isText('Hold Guard') && !isText('touch-simple') && !isText('#5aaaff') && !isText('res://x') && !isText('42'), 'the data filter');
   ok(!glyphIsText('LB') && glyphIsText('Space'), 'button letters stay, key names are text');
+  const crlf = legalLines('> Cleared line one.\r\nPlain.\r\n> Cleared line two.\r\n');
+  ok(crlf.includes('Cleared line one.') && crlf.includes('Cleared line two.'), 'block quotes are found in a file with CRLF endings');
   const legal = legalLines('> This game contains flashing effects. It flashes.\nButtons: **"I understand, start"** and **"Not now"**.');
   ok(isLegal('This game contains flashing effects.', legal), 'a cleared sentence inside a cleared line');
   ok(isLegal('Not now', legal) && !isLegal('Not', legal), 'a cleared button is whole-string only');
