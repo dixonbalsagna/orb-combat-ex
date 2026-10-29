@@ -83,7 +83,7 @@
       "VENT LIFT": {
         "_about": "an uppercut over a vent: the vent's blast carries him higher. Offered when a vent prop (World's) is within withinBh of the target. The launch's up force is times liftMul",
         "sends": "up", "withinBh": 2.0, "liftMul": 1.25, "score": 12.0, "onUppercut": true,
-        "_onUppercut": "Encounter, biomes W3: the score is the vent's on top of UPPERCUT's own there (10, and 12 more under 120 units up), since VENT LIFT is an uppercut over a vent. Alone, 12 never beat the plain uppercut beside it (0 of 16 launches in the W3 probe). For Game Design to confirm",
+        "_onUppercut": "Encounter, biomes W3: the score is the vent's on top of UPPERCUT's own there (10, and 12 more under 120 units up), since VENT LIFT is an uppercut over a vent. Alone, 12 never beat the plain uppercut beside it (0 of 16 launches in the W3 probe). Confirmed by Game Design, rulings-2026-10-28 item 2",
         "hero": 0.0, "villain": 2.0,
         "where": "volcanic"
       },
@@ -92,8 +92,8 @@
         "sends": "across", "uy": 0.05,
         "props": ["lone_tree", "boulder", "berg", "lichen_rock", "lava_rock"], "reachBh": 40.0,
         "aimFm": [1.0, 1.25, 1.6, 2.0, 2.5, 3.0], "_aimFm": "Encounter, prop-reach: the forces the planner tries in turn, times the launch's own, until World's flight breaks a prop on the line ahead (the first that does is the plan's, and the candidate is offered only then); 3.0 is the long haul's cap (launch.gd HAUL_FM_MAX). A launch anywhere's send keeps its own force",
-        "_props": "Game Design, rulings-2026-10-28 item 3: outcrop matched no World kind, so World's own rocks take its place (data/biomes/ground.json: lichen_rock in tundra, lava_rock in volcanic). The score stays 10 until PROP SMASH can find its props; read again before biome.enabled goes on",
-        "score": 10.0, "hero": 2.0, "villain": 2.0,
+        "_props": "Game Design, rulings-2026-10-28 item 3: outcrop matched no World kind, so World's own rocks take its place (data/biomes/ground.json: lichen_rock in tundra, lava_rock in volcanic). Score 16 (Combat, 2026-10-29, once prop-reach let it find its props): in launchbiome_batch --on (seeds 1 to 32, 6 matches each) it is taken in 8 of 61 launches where offered (13.1%; 10 gave 3.4%, 14 8.2%, 20 22.4%), inside QA's 5 to 30% and below CLIFFSIDE's 26.5%, one prop being a smaller set piece than a cliff face",
+        "score": 16.0, "hero": 2.0, "villain": 2.0,
         "where": "savanna, highland, tundra, volcanic, sea ice; any biome where World places such props"
       }
     },
