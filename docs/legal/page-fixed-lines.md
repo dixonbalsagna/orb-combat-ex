@@ -72,3 +72,20 @@ Conditions:
 2. No other words: no "coming soon", "later", "mobile version", "supported", "optimized", "tested", "free" or any price or date. A change to any word is a new ruling.
 3. The note appears on a phone only; computers see no note. It is not a take-down and not a block: the button always continues.
 4. The pin rule applies: this is a page change, so the nightly runs on the new commit before the site pin moves.
+
+## Addendum (2026-10-28, RL-204): desktop package README.txt (Tools' desktop-builds, docs/tools/pending/desktop-builds/)
+The notice and the AI line stay word for word from the site's active notice file (cleared above). These are the edits and the one new line.
+
+- **Windows run step, replace the second sentence.** Delete "Your antivirus may also ask; the files are exactly what the project built, and the commit is named at the top of this file." (an assurance we cannot give). Use:
+  > Windows or your antivirus may warn you because the file is not signed with a publisher certificate. If you do not trust the file, do not run it. The commit it was built from is named at the top of this file.
+- **macOS steps 1 to 3 and the Linux steps: cleared as written.** Step 4 (`xattr`) is cleared with a lead-in: "Or, from Terminal, remove the download flag from this app only:". The closing line "You only do this once per download. If you do not trust the file, do not run it..." is cleared.
+- **Spelling:** the heading "LICENCES" becomes "LICENSES", and "the licence and copyright text" becomes "the license and copyright text" (public strings are American).
+- **New privacy section, after HOW THIS GAME WAS MADE:**
+  > PRIVACY
+  > This game has no accounts and does not collect or send any personal data. It saves your settings on your computer. Your operating system or antivirus may check the file on its own.
+- No "safe", "tested", "verified", "virus-free" or "compliant" anywhere in the package.
+
+Conditions:
+1. The privacy line is true only while the desktop build makes no network connection. Tools confirms the packaged build has online play off and unreachable (no host, join or spectate path); if that changes, the line is a new ruling.
+2. The word-for-word check covers the new privacy section and the Windows sentence; the check's "no assurance words" list gets the five words above.
+3. If a build carries Steam features later, the privacy text names them (steam-readiness.md E2).
