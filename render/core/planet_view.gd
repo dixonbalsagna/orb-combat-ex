@@ -98,6 +98,7 @@ static var ladder_on: bool = RenderLook.FAR_LADDER_ON   # biome rendering window
 var _town_nodes: Array = []            # each prop copy's FarTowns (set_far gives them the far land's towns)
 var _bld: MultiMesh                  # every part of every building that is not in row 0: the bodies by building index, then the other parts
 var trees := RenderTrees.new()       # the fellable trees in Art's silhouettes (tree_view.gd); a second pane draws its source's
+var props := RenderProps.new()       # the match's props, with Combat's biome block on (prop_view.gd); a second pane draws its source's
 var _tree_mat: ShaderMaterial        # this pane's trees (the cover's shader, their own material, so the world's light tints them alone)
 var _wl: Array = []                  # the world's light (SkyDrive.world_at), kept for materials made later
 var _wl_win: float = RenderLook.WINDOW_LIT_SHARE
@@ -264,6 +265,7 @@ func _bs_share(S: SimState) -> bool:
 		_n_inst = source._n_inst
 		_n_inst0 = source._n_inst0
 		trees = source.trees
+		props = source.props
 		_crowd = source._crowd
 		_bld0 = source._bld0
 		_row0 = source._row0
@@ -335,6 +337,8 @@ func _bs_copies() -> bool:
 			_mm_child(n, "Buildings0", _bld0, _front_mat)
 			for tm in trees.meshes:
 				_mm_child(n, tm[0], tm[1], _tree_mat)
+			for pm in props.meshes:
+				_mm_child(n, pm[0], pm[1], _cover_mat)
 			for c in range(_crowd.chunks.size()):
 				_mm_child(n, "Crowd%d" % c, _crowd.chunks[c], _crowd_mats[c])
 			_mm_child(n, "FarTowns", null, _town_mat)
@@ -512,7 +516,7 @@ func update(S: SimState, cam_x: float, heat: PackedFloat32Array = PackedFloat32A
 		c.position.x = float(c.get_meta("k")) * SimConst.W - cam_x
 	if _towns_on:
 		_town_mat.set_shader_parameter("town_cam_x", cam_x)   # where the copies stand, for the far land under each block
-	if _cover_mat != null and not cover.meshes.is_empty():
+	if _cover_mat != null and (not cover.meshes.is_empty() or not props.meshes.is_empty()):
 		_cover_mat.set_shader_parameter("cover_cam_x", cam_x)   # where the copies stand, for the ground under each shape
 	if _tree_mat != null and not trees.meshes.is_empty():
 		_tree_mat.set_shader_parameter("cover_cam_x", cam_x)    # ... and under each tree
@@ -837,6 +841,7 @@ func refresh(S: SimState, force: bool) -> void:
 	_touched.clear()
 	_grow_pass(S)
 	trees.update(S)   # the fellable trees' states (tree_view.gd); the shader reads the ground under each foot
+	props.update(S)   # a prop a launch broke is gone this frame (prop_view.gd)
 	# A wave is over: what it has not reached changes now. A second wave inside it goes on alone; with none, the
 	# building is as it stands, its marks whole.
 	if not _busy.is_empty():
@@ -2548,6 +2553,7 @@ func _make_props(S: SimState) -> void:
 		_tree_z[ti] = tr.range_(RenderLook.Z_TREE_MIN, RenderLook.Z_TREE_MAX)
 		tr.next()   # (the cone's colour once: the depths stay as they were)
 	trees.build(S, ground, _tree_z)
+	props.build(S, ground)
 	var cr := SimRng.new(SimRng.deriveSeed(4242, "render.crowd"))
 	_crowd_first.resize(nb + 1)
 	_crowd_x.clear()

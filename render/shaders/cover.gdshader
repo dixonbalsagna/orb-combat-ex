@@ -1,7 +1,7 @@
 // The biomes' cover (biome rendering window 2; render/core/cover_view.gd, render/core/cover_meshes.gd): Art's flat
 // silhouettes standing in the strip's plane on the band's ground. Each instance's foot reads the ground under it as the
 // terrain draws it (ground4: craters, grooves and all), so a shape rises and falls with the ground, and a shape inside a
-// crater is gone (Art: the cover inside a crater is removed). What floats (a whitecap, a floe) sits at the water's level.
+// crater is gone (Art: the cover inside a crater is removed; a match's prop, render/core/prop_view.gd, stands). What floats (a whitecap, a floe) sits at the water's level.
 // A vertex's colour is its palette slot (COLOR.r) and tone step (COLOR.g) in the palette of the biome it grows in
 // (INSTANCE_CUSTOM.r: RenderBiomeLook's column; the cover's rows from COVER_ROW), lit, mid and shade as Art drew it;
 // hazed into the sky as the ground is. A fellable tree (render/core/tree_view.gd) is drawn by this shader too: while it
@@ -40,7 +40,7 @@ void vertex() {
 	vec4 g = ground4(i, xm, z, false, 0.0);
 	float foot = INSTANCE_CUSTOM.g > 0.5 ? max(g.x, 0.0) : g.x;
 	VERTEX.y += foot / length(MODEL_MATRIX[1].xyz);
-	VERTEX = g.w < -dent_min ? vec3(0.0) : VERTEX;   // inside a crater: gone (all its corners meet)
+	VERTEX = g.w < -dent_min && INSTANCE_CUSTOM.a < 0.5 ? vec3(0.0) : VERTEX;   // inside a crater: gone (all its corners meet); a match's prop (INSTANCE_CUSTOM.a 1, prop_view.gd) stands, as it does in the sim
 	int b = int(INSTANCE_CUSTOM.r * 32.0);
 	int slot = int(COLOR.r * 16.0);
 	float tone = (COLOR.g - 0.5) * 2.0;
