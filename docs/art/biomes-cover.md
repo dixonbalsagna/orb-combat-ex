@@ -9,7 +9,7 @@ Owner: Art Director. 2026-10-24. **Generated** by `art/concepts/biomes/covers.mj
 | tree | plains, forest, wetland | 130 to 340 | 149 to 390 | 17 | 14 |
 | tuft | plains, forest, savanna, tundra, taiga, highland | 10 to 50 | 11 to 57 | 7 | 7 |
 | boulder | plains, forest, desert, mountains, jungle, savanna, tundra, taiga, beach, highland, volcanic | 22 to 110 | 25 to 126 | 5 | 5 |
-| shrub | plains, forest, tundra, taiga, volcanic | 20 to 60 | 23 to 69 | 7 | 7 |
+| shrub | plains, forest, tundra, taiga | 20 to 60 | 23 to 69 | 7 | 7 |
 | fir | forest, mountains | 160 to 380 | 183 to 436 | 12 | 16 |
 | cactus | desert | 90 to 170 | 103 to 195 | 16 | 2 |
 | scrub | desert | 24 to 50 | 28 to 57 | 7 | 7 |

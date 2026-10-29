@@ -463,7 +463,7 @@ Black basalt, grey ash slopes, a cone with a rim, a few cooled lava flows; World
 
 Subsoil (what a crater shows) #1e1c22; secondary cover #6a666e; trunk #3a2c24; water shallow #497b89, deep #3f6578; accent #dc6a26; sky at noon #4a78a8 (top) to #d8c8b0 (horizon); far land #9f9489, #887f79, #6f6867; from orbit #525361.
 
-**Ground profile:** cones, amplitude 120 units over about 520; far land: cones. **Cover:** basaltcol (3 per 1,200 units, 80 to 170 units tall); boulder (5 per 1,200 units, 30 to 100 units tall); vent (2 per 1,200 units, 40 to 70 units tall); shrub (3 per 1,200 units, 26 to 50 units tall); lavaflow (1 per 1,200 units, 10 to 14 units tall).
+**Ground profile:** cones, amplitude 120 units over about 520; far land: cones. **Cover:** basaltcol (3 per 1,200 units, 80 to 170 units tall); boulder (5 per 1,200 units, 30 to 100 units tall); vent (2 per 1,200 units, 40 to 70 units tall); lavaflow (1 per 1,200 units, 10 to 14 units tall).
 
 **Scorched:** a pale-grey fused streak on black rock, the edge faintly warm-orange in a thin static line (never flickering).
 
