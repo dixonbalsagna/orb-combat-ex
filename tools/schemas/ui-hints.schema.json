@@ -86,6 +86,11 @@
                   "type": "string",
                   "minLength": 1
                 },
+                "label_toggle": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The word for a player whose style for this action is toggle (Settings: Guard, Manoeuvre stance and Charging stance, hold or toggle)."
+                },
                 "only_when_avail": {
                   "type": "boolean"
                 }

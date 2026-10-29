@@ -2236,6 +2236,27 @@ func _energy_rules() -> void:
 	for preset in ["arena", "kb-solo", "kb-shared-p1", "kb-shared-p2"]:
 		all_hold = all_hold and lab.call(preset, "hold") == "Energy (hold)" and lab.call(preset, "toggle") == "Energy (toggle)"
 	_ok(all_hold and lab.call("simple-pad", "hold") == "", "energy: the legend says Energy (hold) on Arena and every keyboard layout, (toggle) for a player who set it, and Simple (the game picks) has no energy row")
+	# Hold or toggle for guard, the manoeuvre stance and charging (Controls' hold_style): the legend says toggle for the player who chose it, and only for them.
+	var rlab := func(preset: String, act: String, sty: Dictionary) -> String:
+		for r in UiHints.rows(m, preset, "hold", sty):
+			if str(r["acts"][0]) == act:
+				return str(r["label"])
+		return ""
+	var tog_ok := true
+	for preset in ["arena", "kb-solo", "kb-shared-p1", "kb-shared-p2"]:
+		tog_ok = tog_ok and rlab.call(preset, "guard", {}) == "Guard (hold)" and rlab.call(preset, "guard", {"guard": "hold"}) == "Guard (hold)" and rlab.call(preset, "guard", {"guard": "toggle"}) == "Guard (toggle)"
+		tog_ok = tog_ok and rlab.call(preset, "power", {"power": "toggle"}) == "Power (toggle)" and rlab.call(preset, "power", {"guard": "toggle"}) == "Power (hold)"
+		tog_ok = tog_ok and rlab.call(preset, "dodge", {}) == "Dodge, sprint" and rlab.call(preset, "dodge", {"dodge": "toggle"}) == "Dodge, sprint (toggle)"
+	_ok(tog_ok, "hold or toggle: the legend says Guard, Power and Dodge (toggle) for a player who chose it, (hold) or the old word otherwise, on Arena and every keyboard layout")
+	_ok(rlab.call("simple-pad", "guard", {"guard": "toggle"}) == "Guard (toggle)" and rlab.call("simple-pad", "power", {"power": "toggle"}) == "Power (toggle)", "hold or toggle: and on Simple")
+	var sp := {"guard_style": "hold", "guard_style_p2": "toggle", "manoeuvre_style_p2": "toggle", "charge_style": "toggle", "transform_style_p2": "toggle", "energy_style": "toggle"}
+	var m_p2 := UiFighterModel.new()
+	m_p2.slot = 1
+	var s1: Dictionary = UiHints.styles(m, sp)
+	var s2: Dictionary = UiHints.styles(m_p2, sp)
+	_ok(s1["guard"] == "hold" and s1["power"] == "toggle" and s1["dodge"] == "hold" and s1["mode"] == "toggle" and s2["guard"] == "toggle" and s2["dodge"] == "toggle" and s2["power"] == "hold" and s2["transform"] == "toggle", "hold or toggle: each player's own options pick their words (player two reads the _p2 ones)")
+	_ok(UiHints.sig(m, 1.0, "arena", "hold", false, false, {"guard": "hold"}) != UiHints.sig(m, 1.0, "arena", "hold", false, false, {"guard": "toggle"}), "hold or toggle: the legend redraws when the style changes")
+	_ok(UiStance.legend(1, true) == "Defensive (toggle)" and UiStance.legend(3, true) == "Charging (toggle)" and UiStance.legend(4, true) == "Manoeuvre (toggle)" and UiStance.legend(2, true) == "Energy (toggle)" and UiStance.legend(1, false) == "Defensive (hold)", "hold or toggle: the stance legend has its toggle words too")
 	var po := {"energy_style": "hold", "energy_style_p2": "toggle"}
 	var m1 := UiFighterModel.new()
 	m1.slot = 1
@@ -3156,6 +3177,28 @@ func _stances_page_rules() -> void:
 	_ok(str(row_of.call("guard")["label"]) == "Defensive stance (hold)" and str(row_of.call("guard")["help"]).begins_with("Hold for the defensive stance") and str(row_of.call("power")["label"]) == "Power", "remap: flipping the defensive stance live renames its row and help (data only)")
 	set_live.call(head_flags)
 	_ok(str(row_of.call("guard")["label"]) == "Guard", "remap: and back")
+	# Hold or toggle: the words follow the style of the player whose layout the screen edits (read from the options, never written).
+	var ht: Dictionary = UiData.settings()["remap"]["helps_toggle"]
+	var hh: Dictionary = UiData.settings()["remap"]["helps"]
+	_ok(str(row_of.call("guard")["help"]) == str(hh["guard"]) and str(row_of.call("power")["help"]) == str(hh["power"]) and str(row_of.call("dodge")["help"]) == str(hh["dodge"]) and str(row_of.call("mode")["help"]) == str(UiStance.remap_words("mode", false)["help"]) and str(UiStance.remap_words("mode", false)["help"]).begins_with("Hold for energy"), "remap toggle control: with every style on hold the helps are the old ones (the energy stance is live, so its own words)")
+	hud.set_option("guard_style", "toggle")
+	hud.set_option("charge_style", "toggle")
+	hud.set_option("manoeuvre_style", "toggle")
+	hud.set_option("energy_style", "toggle")
+	_ok(str(row_of.call("guard")["help"]) == str(ht["guard"]) and str(row_of.call("power")["help"]) == str(ht["power"]) and str(row_of.call("dodge")["help"]) == str(ht["dodge"]) and str(row_of.call("mode")["help"]) == str(UiStance.remap_words("mode", true)["help"]) and str(row_of.call("mode")["help"]).begins_with("Press for energy") and str(ht["guard"]).begins_with("Press"), "remap toggle: a player whose guard, power, manoeuvre and energy are toggles reads Press, not Hold, in their helps")
+	_ok(not str(row_of.call("guard")["help"]).contains("Hold") and not str(row_of.call("power")["help"]).contains("Hold"), "remap toggle: and no Hold word is left in the guard and power helps")
+	hud._rm_slot = 1
+	_ok(str(row_of.call("guard")["help"]) == str(hh["guard"]), "remap toggle: player two's screen reads player two's style (hold), not player one's")
+	hud.set_option("guard_style_p2", "toggle")
+	_ok(str(row_of.call("guard")["help"]) == str(ht["guard"]), "remap toggle: and their toggle when they choose it")
+	hud.set_option("guard_style_p2", "hold")
+	hud._rm_slot = 0
+	set_live.call([false, true, true, false, false])
+	_ok(str(row_of.call("guard")["label"]) == "Defensive stance (toggle)" and str(row_of.call("guard")["help"]).begins_with("Press once for the defensive stance"), "remap toggle: the live stance's words say toggle and press")
+	set_live.call(head_flags)
+	for k in ["guard_style", "charge_style", "manoeuvre_style", "energy_style"]:
+		hud.set_option(k, "hold")
+	_ok(str(row_of.call("guard")["help"]) == str(hh["guard"]), "remap toggle: and back to hold")
 	hud.hide_remap()
 	hud.queue_free()
 	await process_frame
@@ -7229,6 +7272,17 @@ func _gate_bypass_rules() -> void:
 	var public_ok: bool = not UiHud.page_is_local("example.com", "https:") and not UiHud.page_is_local("localhost.example.com", "https:") and not UiHud.page_is_local("evil-localhost", "https:") and not UiHud.page_is_local("127.0.0.1.example.com", "https:") and not UiHud.page_is_local("itch.io", "https:") and not UiHud.page_is_local("", "https:")
 	_ok(local_ok and public_ok, "gate bypass: localhost, 127.0.0.1, [::1] and a file URL are local; no other host is, whatever its name looks like")
 	_ok(UiHud.bypass_allowed(), "gate bypass: off the web (this run) the bypass stays allowed, so every tool and test keeps working")
+	# RL-206: a build with the Reduce flashing lock on refuses every word that skips the notice, on a desktop too; the measurement export (capture_hook on) keeps them.
+	for w in UiHud.BYPASS_WORDS:
+		UiData.set_feature("lock_reduce_flashing", false)
+		UiData.set_feature("capture_hook", false)
+		_ok(not UiHud.notice_auto_allowed("Windows", "--" + str(w) + "=1", UiHud.bypass_allowed()), "RL-206 control: with the lock off the word '%s' skips the notice (the check can see it)" % str(w))
+		UiData.set_feature("lock_reduce_flashing", true)
+		_ok(not UiHud.bypass_allowed() and UiHud.notice_auto_allowed("Windows", "--" + str(w) + "=1", UiHud.bypass_allowed()), "RL-206: with the lock on the word '%s' no longer skips the notice, on a desktop" % str(w))
+		UiData.set_feature("capture_hook", true)
+		_ok(UiHud.bypass_allowed() and not UiHud.notice_auto_allowed("Windows", "--" + str(w) + "=1", UiHud.bypass_allowed()), "RL-206: the measurement export (lock on, capture_hook on) keeps the word '%s'" % str(w))
+	UiData.set_feature("lock_reduce_flashing", null)
+	UiData.set_feature("capture_hook", null)
 	UiHud.notice_seen_session = was_seen
 	UiHud.notice_auto = was_auto
 

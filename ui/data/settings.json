@@ -134,6 +134,13 @@
       "escape": "A way out of a fight.",
       "transform": "Takes a form that is ready: hold it for half a second."
     },
+    "helps_toggle": {
+      "guard": "Press to guard, press again to stop.",
+      "dodge": "Tap to dodge. Press once for the manoeuvre stance and its sprint, press again to stop.",
+      "power": "Press to start charging, press again to stop. Pressed with a face button it calls a special.",
+      "mode": "Press for energy attacks: blasts instead of blows. Press again for physical.",
+      "transform": "Takes a form that is ready: press the controls together once and let go, and it comes half a second later."
+    },
     "controls": {
       "west": "the west button",
       "north": "the north button",

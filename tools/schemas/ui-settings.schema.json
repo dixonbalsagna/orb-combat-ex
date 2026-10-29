@@ -392,6 +392,17 @@
             "minLength": 1
           }
         },
+        "helps_toggle": {
+          "type": "object",
+          "description": "The help of an action for a player whose style for it is toggle (Settings: hold or toggle), where it differs from `helps`.",
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9_-]*$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
         "controls": {
           "type": "object",
           "minProperties": 1,

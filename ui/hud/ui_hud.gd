@@ -675,6 +675,14 @@ func _o(plate_alpha: float = 1.0) -> Dictionary:
 		"pad_preset_p2": str(opts["pad_preset_p2"]),
 		"energy_style": str(opts["energy_style"]),
 		"energy_style_p2": str(opts["energy_style_p2"]),
+		"guard_style": str(opts["guard_style"]),
+		"guard_style_p2": str(opts["guard_style_p2"]),
+		"manoeuvre_style": str(opts["manoeuvre_style"]),
+		"manoeuvre_style_p2": str(opts["manoeuvre_style_p2"]),
+		"charge_style": str(opts["charge_style"]),
+		"charge_style_p2": str(opts["charge_style_p2"]),
+		"transform_style": str(opts["transform_style"]),
+		"transform_style_p2": str(opts["transform_style_p2"]),
 	}
 
 
@@ -840,7 +848,7 @@ func _update_layers() -> void:
 				var ea: Dictionary = UiHints.edge_arrow(an, layout.safe, layout.s)
 				if not (ea.is_empty() and UiData.feature("minimal_hud")):   # the label over the head is cut under minimal_hud; the arrow at the screen's edge (the fighter is off screen) is not
 					you_sig.append([m.slot, m.you_label, int(ap.x * 0.5), int(ap.y * 0.5), int(float(an.get("h", 0.0)) * 0.5), int(float(yk["a"]) * 10.0), bool(an.get("visible", true)), bool(yk["compact"]), m.aura.to_html(false), int((ea.get("pos", Vector2.ZERO) as Vector2).x * 0.5), int((ea.get("pos", Vector2.ZERO) as Vector2).y * 0.5)])
-			_l_hints[m.slot].update_sig(UiHints.sig(m, ha, UiHints.preset_id(m, _o()), UiHints.energy_style(m, _o()), bool(opts["reduced_motion"]), _legend_compact(m)) if (ha > 0.01 and layout.hints[m.slot].size.y > 0.0) else null)
+			_l_hints[m.slot].update_sig(UiHints.sig(m, ha, UiHints.preset_id(m, _o()), UiHints.energy_style(m, _o()), bool(opts["reduced_motion"]), _legend_compact(m), UiHints.styles(m, _o())) if (ha > 0.01 and layout.hints[m.slot].size.y > 0.0) else null)
 	_l_you.update_sig(you_sig if not you_sig.is_empty() else null)
 	_join_step(hub.t_now - _join_prev_t, _dt)
 	_join_prev_t = hub.t_now
@@ -1301,7 +1309,11 @@ static func page_is_local(hostname: String, protocol: String) -> bool:
 
 ## Whether the bypass words are honoured in this run: always off the web (a desktop command line is ours), and on the web only on a local host. The capture hook and the study routes
 ## in render/core/main.gd ask this too, so that on a public page they never start without the gate.
+## A build with the Reduce flashing lock on (features.json lock_reduce_flashing: every build players get) honours none of them, desktop or web, local host or not (RL-206, RL-196); only the
+## measurement export (capture_hook on, never packed or dispatched) keeps the words.
 static func bypass_allowed() -> bool:
+	if UiData.rf_locked() and not UiData.feature("capture_hook"):
+		return false
 	if not OS.has_feature("web"):
 		return true
 	var hp = JavaScriptBridge.eval("location.hostname + '|' + location.protocol", true)
@@ -2529,9 +2541,16 @@ func _rm_control_word(control: String) -> String:
 	return str((_rm_words().get("controls", {}) as Dictionary).get(name, name))
 
 
+## Whether the player the Remap screen is editing has chosen toggle for this action's button (Settings, hold or toggle): read from the options, never written.
+func _rm_toggle(action: String) -> bool:
+	if not UiHints.STYLE_OPTION.has(action):
+		return false
+	return str(opts.get(str(UiHints.STYLE_OPTION[action]) + ("_p2" if _rm_slot == 1 else ""), "hold")) == "toggle"
+
+
 func _rm_action_word(id: String) -> String:
 	var a: String = id.get_slice("#", 0)
-	var sw: Dictionary = UiStance.remap_words(a)   # a stance button is named for its stance once the stance is live
+	var sw: Dictionary = UiStance.remap_words(a, _rm_toggle(a))   # a stance button is named for its stance once the stance is live
 	if sw.has("label"):
 		return str(sw["label"])
 	if UiStance.three() and ["heavy", "signature"].has(a):
@@ -2558,7 +2577,7 @@ func _rm_rows() -> Array:
 			if not specs.is_empty() and str(e["action"]) != "move":
 				specs.append({"kind": "plus", "label": "+"})
 			specs.append(UiGlyphs.spec_control(str(c), fam, style))
-		out.append({"kind": UiSettings.BIND, "key": str(e["id"]), "label": _rm_action_word(str(e["action"])), "help": str(UiStance.remap_words(str(e["action"])).get("help", (w.get("helps", {}) as Dictionary).get(str(e["action"]), ""))),
+		out.append({"kind": UiSettings.BIND, "key": str(e["id"]), "label": _rm_action_word(str(e["action"])), "help": str(UiStance.remap_words(str(e["action"]), _rm_toggle(str(e["action"]))).get("help", (w.get("helps_toggle", {}) as Dictionary).get(str(e["action"]), (w.get("helps", {}) as Dictionary).get(str(e["action"]), "")) if _rm_toggle(str(e["action"])) else (w.get("helps", {}) as Dictionary).get(str(e["action"]), ""))),
 			"enabled": not bool(e["fixed"]), "specs": specs})
 	out.append({"kind": UiSettings.BUTTON, "key": "", "action": "reset", "label": str(w.get("reset", "Reset")), "value": str(w.get("reset_button", "Reset")),
 		"help": str(w.get("reset_help", "")), "enabled": true})

@@ -197,7 +197,19 @@ static func compact_rows(m: UiFighterModel, all_rows: Array) -> Array:
 	return out
 
 
-static func rows(m: UiFighterModel, scheme: String, energy: String = "hold") -> Array:
+## The hold-or-toggle options (Controls' hold_style, and energy_style) by the action they set; player two's carry `_p2`. UI reads them as the player chose them and never writes them.
+const STYLE_OPTION := {"guard": "guard_style", "dodge": "manoeuvre_style", "power": "charge_style", "transform": "transform_style", "mode": "energy_style"}
+
+
+## One player's style for each action: {"guard": "hold" or "toggle", ...}, from the options `o`.
+static func styles(m: UiFighterModel, o: Dictionary) -> Dictionary:
+	var out := {}
+	for a in STYLE_OPTION:
+		out[a] = str(o.get(str(STYLE_OPTION[a]) + ("_p2" if m.slot == 1 else ""), "hold"))
+	return out
+
+
+static func rows(m: UiFighterModel, scheme: String, energy: String = "hold", styles: Dictionary = {}) -> Array:
 	var schemes: Dictionary = data().get("schemes", {})
 	var sc: Dictionary = schemes.get(scheme, schemes.get("today", {}))
 	var out: Array = []
@@ -213,6 +225,8 @@ static func rows(m: UiFighterModel, scheme: String, energy: String = "hold") -> 
 			if a == "transform" and m.form_shown:
 				continue   # the form-ready chip above the legend already says it
 		var label: String = str(r.get("label", ""))
+		if r.has("label_toggle") and r.has("action") and str(styles.get(str(r["action"]), "hold")) == "toggle":
+			label = str(r["label_toggle"])   # this player's guard, power or manoeuvre is a toggle: the word says so
 		var held := false
 		var dim := false
 		var row_cell := ""
@@ -236,7 +250,7 @@ static func rows(m: UiFighterModel, scheme: String, energy: String = "hold") -> 
 		elif by_stance and r.has("action") and HOLD_STANCES.has(aid):
 			var kind: int = int(HOLD_STANCES[aid])
 			if UiStance.live(kind):
-				label = UiStance.legend(kind, kind == UiStance.ENERGY and energy == "toggle")   # Defensive (hold), Energy (hold or toggle), ...
+				label = UiStance.legend(kind, (energy == "toggle") if kind == UiStance.ENERGY else str(styles.get(aid, "hold")) == "toggle")   # Defensive (hold), Energy (hold or toggle), ...
 			elif kind == UiStance.ENERGY:
 				label = UiData.t("prompt.mode_toggle" if energy == "toggle" else "prompt.mode_hold")
 			held = m.stance_kind == kind
@@ -304,7 +318,7 @@ static func plan(m: UiFighterModel, rect: Rect2, s: float, o: Dictionary) -> Dic
 	var row_h: float = maxf(gh, float(fs) * 1.4) + 4.0 * s
 	var pad: float = maxf(8.0 * s, 5.0)
 	var cap: int = int(floor((rect.size.y - pad * 2.0) / row_h))
-	var all: Array = rows(m, preset, energy_style(m, o))
+	var all: Array = rows(m, preset, energy_style(m, o), styles(m, o))
 	if bool(o.get("legend_compact", false)):
 		all = compact_rows(m, all)
 	# A larger Text size steps the words down, never below what Normal draws, until the legend's rows all fit its column, so a bigger setting hides as few controls as it can (Normal is as it was).
@@ -355,11 +369,11 @@ static func lit_b(m: UiFighterModel) -> bool:
 	return m.launcher_open or (UiStance.launch_marks() and m.gauge_full)
 
 
-static func sig(m: UiFighterModel, alpha: float, preset: String, energy: String = "hold", reduced: bool = false, compact: bool = false) -> Array:
+static func sig(m: UiFighterModel, alpha: float, preset: String, energy: String = "hold", reduced: bool = false, compact: bool = false, styles: Dictionary = {}) -> Array:
 	var ack_step: int = 0 if m.press_ack_kind == "" or m.press_ack_t >= ACK_SECONDS else (1 if reduced else 1 + int(m.press_ack_t / ACK_SECONDS * 6.0))
 	var cf: float = charge_frac(m, reduced)
 	return [m.device, m.slot, int(alpha * 10.0), preset, m.avail["transform"], m.left_side, m.form_shown, energy, m.stance_kind, m.press_ack_kind, m.press_ack_cell, ack_step,
-		int(cf * 8.0) if cf >= 0.0 else -1, m.charge_cell if m.charge_on else "", lit_b(m), UiStance.three(), m.punish_left > 0.0, m.flurry_dots, UiStance.launch_marks() and m.gauge_full, compact]
+		int(cf * 8.0) if cf >= 0.0 else -1, m.charge_cell if m.charge_on else "", lit_b(m), UiStance.three(), m.punish_left > 0.0, m.flurry_dots, UiStance.launch_marks() and m.gauge_full, compact, str(styles.get("guard", "hold")) + str(styles.get("dodge", "hold")) + str(styles.get("power", "hold"))]
 
 
 static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Dictionary, alpha: float) -> void:

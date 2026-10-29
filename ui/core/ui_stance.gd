@@ -137,7 +137,7 @@ static func howto_word(kind: int) -> String:
 
 
 ## The Remap screen's {label, help} for the action that holds a stance (guard, mode, power, dodge), only while that stance is live; {} keeps the old words.
-static func remap_words(action: String) -> Dictionary:
+static func remap_words(action: String, toggle: bool = false) -> Dictionary:
 	if not UiHints.HOLD_STANCES.has(action):
 		return {}
 	var kind: int = int(UiHints.HOLD_STANCES[action])
@@ -146,6 +146,8 @@ static func remap_words(action: String) -> Dictionary:
 	var row: Dictionary = _row(kind)
 	if not row.has("_remap"):
 		return {}
+	if toggle and row.has("_remap_toggle"):   # a player whose style for the button is toggle (Settings): the words say press, not hold
+		return {"label": str(row["_remap_toggle"]), "help": str(row.get("_remap_help_toggle", row.get("_remap_help", "")))}
 	return {"label": str(row["_remap"]), "help": str(row.get("_remap_help", ""))}
 
 
