@@ -120,8 +120,7 @@
         "plains",
         "forest",
         "tundra",
-        "taiga",
-        "volcanic"
+        "taiga"
       ],
       "height_range_u": [
         20,
@@ -3115,14 +3114,6 @@
           "h": [
             40,
             70
-          ]
-        },
-        {
-          "k": "shrub",
-          "n": 3,
-          "h": [
-            26,
-            50
           ]
         },
         {

@@ -91,7 +91,7 @@ const RAW = {
     name: 'Volcanic ground', order: 15, line: 'black basalt, grey ash slopes, a cone with a rim, a few cooled lava flows; World\'s volcanic biome (the weathered rock highland is its own biome)',
     pal: { g: ['#5e5a64', '#43404a', '#2a2830'], sub: '#1e1c22', r: ['#6a666e', '#4a464e', '#2e2c32'], v: ['#6a8a48', '#4a6a38', '#34502a'], v2: ['#8a868e', '#6a666e', '#4a464e'], t: '#3a2c24', w: ['#497b89', '#3f6578'], acc: '#dc6a26', sky: ['#4a78a8', '#d8c8b0'] },
     profile: { kind: 'cones', amp: 120, wave: 520 }, far: { kind: 'cones', amp: 230 },
-    cover: [{ k: 'basaltcol', n: 3, h: [80, 170] }, { k: 'boulder', n: 5, h: [30, 100] }, { k: 'vent', n: 2, h: [40, 70] }, { k: 'shrub', n: 3, h: [26, 50] }, { k: 'lavaflow', n: 1, h: [10, 14] }],
+    cover: [{ k: 'basaltcol', n: 3, h: [80, 170] }, { k: 'boulder', n: 5, h: [30, 100] }, { k: 'vent', n: 2, h: [40, 70] }, { k: 'lavaflow', n: 1, h: [10, 14] }],
     plume: { kind: 'ash', cols: ['#8a868e', '#4a464e', '#22202a'], ej: ['#dc6a26', '#3a363e'], h: 400, w: 220, embers: true },
     damage: { scorch: 'a pale-grey fused streak on black rock, the edge faintly warm-orange in a thin static line (never flickering)', crater: 'a bowl in ash and clinker, the inside a lighter grey with a raised ring of black blocks', burned: 'the few shrubs black; a fresh thin orange crust of cooling rock where the fight went on (a static colour, never pulsing)' },
     destruction: 'Ash and clinker: a dark grey column that rises slowly and spreads, black blocks on arcs, a few steady orange ember chips.',
