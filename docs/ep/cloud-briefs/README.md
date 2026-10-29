@@ -23,7 +23,7 @@ Wave 3 runs as routines, which bill the Max plan rather than the credit, so it c
 | 4 | netcode-desync-spectate.md | Netcode & Online | cloud/netcode-online/desync-spectate | routine (plan) |
 | 4 | animation-pose-drain.md | Animation | cloud/animation/pose-drain | routine (plan) |
 | 5 | world-w5-props.md | World & Environment | cloud/world-environment/biomes-w5 | landed 70c1ab3e |
-| 5 | simulation-packed-structures.md | Simulation & Engine | cloud/simulation-engine/packed-structures | held: transport_check fails; local Simulation fix pending |
+| 5 | simulation-packed-structures.md | Simulation & Engine | cloud/simulation-engine/packed-structures | landed 5a2c58c2 |
 | 5 | netcode-transport.md | Netcode & Online | cloud/netcode-online/transport | landed 2afeda13 |
 | 5 | animation-pair-ready.md | Animation | cloud/animation/pair-ready | landed b7fd2250 |
 | 5 | ui-settings-access.md | UI/UX | cloud/ui-ux/settings-access | landed 9979146a (foot re-cut locally) |
@@ -31,13 +31,13 @@ Wave 3 runs as routines, which bill the Max plan rather than the credit, so it c
 | 7 | world-w6-flight-hooks.md | World & Environment | cloud/world-environment/biomes-w6 | landed ede6490b |
 | 7 | encounter-tick-skip.md | Encounter Systems | cloud/encounter-systems/tick-skip | landed fa078e1c |
 | 7 | netcode-ai-depth.md | Netcode & Online | cloud/netcode-online/ai-depth | landed 8cddcd0f |
-| 8 | world-w7-ring-buildings.md | World & Environment | cloud/world-environment/biomes-w7 | local, wave B |
-| 9 | tools-desktop-builds.md | Tools & Pipeline | cloud/tools-pipeline/desktop-builds | local |
-| 9 | ui-difficulty-textsize.md | UI/UX | cloud/ui-ux/difficulty-textsize | local; look gate local |
-| 9 | controls-hold-toggles.md | Controls & Game Feel | cloud/controls-feel/hold-toggles | local |
-| 9 | narrative-live-barks.md | Narrative & Fighter Identity | cloud/narrative-identity/live-barks | local; look gate local |
-| 9 | rendering-pane-sweep.md | Rendering & Technical Art | cloud/rendering-techart/pane-sweep | local, wave B; look gate local |
-| 9 | encounter-prop-reach.md | Encounter Systems | cloud/encounter-systems/prop-reach | local |
-| 10 | netcode-ai-takeover.md | Netcode & Online | cloud/netcode-online/ai-takeover | local, wave B |
-| 10 | simulation-forwards-warmup.md | Simulation & Engine | cloud/simulation-engine/forwards-warmup | local, after packed-structures |
+| 8 | world-w7-ring-buildings.md | World & Environment | cloud/world-environment/biomes-w7 | local, wave B sent 2026-10-29 |
+| 9 | tools-desktop-builds.md | Tools & Pipeline | cloud/tools-pipeline/desktop-builds | landed e8a0ed75 |
+| 9 | ui-difficulty-textsize.md | UI/UX | cloud/ui-ux/difficulty-textsize | landed b6df7059 |
+| 9 | controls-hold-toggles.md | Controls & Game Feel | cloud/controls-feel/hold-toggles | landed 5d26c626 |
+| 9 | narrative-live-barks.md | Narrative & Fighter Identity | cloud/narrative-identity/live-barks | landed e4be0c65 (switch off) |
+| 9 | rendering-pane-sweep.md | Rendering & Technical Art | cloud/rendering-techart/pane-sweep | local, wave B sent 2026-10-29; look gate local |
+| 9 | encounter-prop-reach.md | Encounter Systems | cloud/encounter-systems/prop-reach | landed f250cf02 |
+| 10 | netcode-ai-takeover.md | Netcode & Online | cloud/netcode-online/ai-takeover | local, wave B sent 2026-10-29 |
+| 10 | simulation-forwards-warmup.md | Simulation & Engine | cloud/simulation-engine/forwards-warmup | landed 39f6bc3f |
 | 10 | rendering-broken-props.md | Rendering & Technical Art | cloud/rendering-techart/broken-props | local, after pane-sweep; look gate local |
