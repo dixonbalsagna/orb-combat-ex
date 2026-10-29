@@ -55,3 +55,30 @@ node research/right-stick-proto/gif.mjs                                   # S1 t
 node research/right-stick-proto/gif.mjs <scratch folder> R             # the step-1 set
 node research/right-stick-proto/gif.mjs --frames S1 76,82 out.png
 ```
+
+## v3: right hand attacks (2026-10-28)
+
+`docs/ep/prototypes/right-hand-v3.html` plays the EP's pitch `docs/ep/right-hand-attacks-pitch.md` (Orb's direction: the left hand survives, the right hand hurts), with its pitches 4a, 4b and 4c on a switch. It is built from v2's reader and thumb law, with the pitch's numbers and `right-thumb.md`'s L = 6, R = 8 and flickSettle = 2 until Controls and Game Design report. v2 above is untouched.
+
+| File | What |
+| :--- | :--- |
+| `v3/sim-core.js` | The readers, the thumb law, the left hand (slips, guard, braces, the vanish), the right hand (the face queue, stick strikes, beams, the signature), the dummy Rival |
+| `v3/sim-draw.js` | The arena, the fighters, the input panel (pitch, layer, both sticks, shoulders and buttons, the two waits) and the side-by-side lanes |
+| `v3/sim-clips.js` | The clips L1 to L3, R1, R2, P1 and C1, and the run API (`S.CLIPS`, `S.newRun`, `S.stepRun`, `S.draw`) |
+| `v3/page.html`, `v3/build.mjs` | The page (pad, keyboard, the pitch switch, keys 1 to 3) and the build into one file between "HAND SIM" and "PAGE" markers |
+| `v3/gif.mjs` | The clips into `homework/combat-and-controls/NOW - right hand attacks/` (its README block between the markers); `--check`, `--frames` as v2's |
+| `v3/claw-sweep.mjs` | Every pitch, every stick move against every press in both orders, the claw at gaps 0 to 10 against one thumb's best play: zero claw gain is the bar (exits 1 on a breach; a copy with R = 2 and L = 0 gives 72) |
+
+**Rules the pitch left open, as built:**
+
+- A stick strike reads at the crossing + 2 (ruling 15); still out when its wind-up ends, it charges (levels at 22 and 44 ticks, 80 at most).
+- Every beam starts as a snap-beam; still held 8 ticks in, it channels. The gesture decides, not when the release falls against the act, so the claw and one thumb get the same beam. The signature runs its length and is steered while held.
+- A stick input waits out a press's R, a move still running, and any press queued before it: the older input starts first.
+- Down is a spike on him in the air, a sweep on the ground. RT + B in 4c is held for a 4th special (it flickers).
+
+```
+node research/right-stick-proto/v3/build.mjs
+node research/right-stick-proto/v3/gif.mjs --check            # every clip's notes and the claw lanes' ticks
+node research/right-stick-proto/v3/gif.mjs                    # every clip into the NOW folder, about 15 s
+node research/right-stick-proto/v3/claw-sweep.mjs             # 1254 links, under a second
+```
