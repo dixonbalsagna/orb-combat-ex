@@ -37,6 +37,10 @@ try {
   const older = exportRevision(repo, join(tmp, 'out', 'prev'), 'HEAD~1');
   check('another revision can be asked for', older.ok && text(join(tmp, 'out', 'prev', 'a.txt')) === 'first\n');
 
+  // a destination whose path has a backslash followed by digits (Windows: ...\60bff52c\head), which GNU tar read as an escape in -C
+  const odd = exportRevision(repo, join(tmp, 'out', '60bff52c', '1head'));
+  check('a destination folder named like an escape (a backslash and digits in the path) unpacks', odd.ok === true && text(join(tmp, 'out', '60bff52c', '1head', 'a.txt')) === 'second, committed\n', JSON.stringify(odd));
+
   const notRepo = join(tmp, 'plain'); mkdirSync(notRepo);
   const bad = exportRevision(notRepo, join(tmp, 'out', 'bad'));
   check('a folder that is not a git repository fails and says so, with the hint', bad.ok === false && /git archive HEAD failed/.test(bad.message) && /not a git repository/i.test(bad.message) && /git checkout/.test(bad.message), bad.message);

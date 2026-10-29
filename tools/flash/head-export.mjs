@@ -18,8 +18,8 @@ export function exportRevision(root, dest, rev = 'HEAD') {
   try {
     const ar = spawnSync('git', ['archive', '--format=tar', '-o', tarFile, rev], { cwd: repo, encoding: 'utf8' });
     if (ar.status !== 0 || ar.error) return { ok: false, message: `git archive ${rev} failed in ${repo}: ${why('git', ar)}${/not a git repository/i.test(String(ar.stderr)) ? ' (run it from a git checkout of the project, not a copy without .git)' : ''}` };
-    // a relative file name with the tar's own working directory: GNU tar reads a "C:" in -f as a remote host
-    const tar = spawnSync('tar', ['-xf', tarName, '-C', out], { cwd: dirname(out), encoding: 'utf8' });
+    // relative names with the tar's own working directory: GNU tar reads a "C:" in -f as a remote host, and reads a backslash in -C as an escape (0bff52c in a scratchpad path became a character)
+    const tar = spawnSync('tar', ['-xf', tarName, '-C', basename(out)], { cwd: dirname(out), encoding: 'utf8' });
     if (tar.status !== 0 || tar.error) return { ok: false, message: `unpacking the archive of ${rev} into ${out} failed: ${why('tar', tar)}` };
     return { ok: true };
   } finally {
