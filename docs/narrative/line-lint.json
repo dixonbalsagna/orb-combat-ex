@@ -337,5 +337,19 @@
       "lost_n",
       "count"
     ]
+  },
+  "orb_own_exemption": {
+    "ruling": "EP 2026-10-28: Orb's own words win. A line whose `source` is Orb's own is exempt from R1 (length) and R8 (the ellipsis rule, in a line and in a batch). Every other rule stays strict for it, and the lint stays strict for every other line.",
+    "keyed_on": "the line's `source` field (data), never a list of strings",
+    "sources": [
+      "orb_own_words_hw1",
+      "orb"
+    ],
+    "exempt_rules": [
+      "R1",
+      "R8"
+    ],
+    "not_exempt": "Orb's marks on lines others wrote (hw11: claude_kept_by_orb_hw11, ai01_gemini_rewrite_at_orb_direction_hw11) are not Orb's own words, so they stay strict. A line Orb writes carries source `orb`.",
+    "applies_to": "python docs/narrative/line-lint.py --live FILE.json (a data file whose beats hold lines with a source, such as data/narrative/live_barks.json). Markdown batches carry no source and are always strict."
   }
 }

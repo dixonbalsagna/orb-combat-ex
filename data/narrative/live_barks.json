@@ -1,0 +1,812 @@
+{
+  "schema": "narrative.live_barks/1",
+  "_about": "Live barks (docs/ep/cloud-briefs/narrative-live-barks.md): the lines a fighter says in a match, at the beats the sim already emits as fx events. PRESENTATION ONLY: the emitter (NarrativeBarks, parked in docs/narrative/pending/live-barks/) reads the sim's events and never writes the sim, with its own seeded stream, so the golden is untouched. OFF BY DEFAULT: `enabled` is false. EVERY LINE here is an approved line: Orb's own words from homework 1, or Orb's marks on homework 11 (the 4 kept lines and the 26 rewrites that came from Gemini at Orb's direction, recorded under ai01). No line is invented for this file. The beats with no approved line are listed under `unmapped`, for Orb. Lines marked excluded wait on a swap or an event.",
+  "enabled": false,
+  "lines_policy": "approved",
+  "seed_salt": 7301,
+  "limits": {
+    "per_fighter_gap_s": 8.0,
+    "global_gap_s": 3.0,
+    "line_cooldown_s": 180.0,
+    "beat_cooldown_s": 12.0,
+    "max_per_fighter_per_minute": 4,
+    "after_ko_hush": true,
+    "_about": "A fighter talks at most once every per_fighter_gap_s and at most max_per_fighter_per_minute a minute; any two barks are global_gap_s apart; no line repeats inside line_cooldown_s (a match is under 10 minutes, so a line plays once until the others are used); the same beat is held off for beat_cooldown_s. Silence is a feature (line-system.md)."
+  },
+  "display": {
+    "style": "caption",
+    "min_dur_s": 1.6,
+    "max_dur_s": 2.6,
+    "per_char_s": 0.035,
+    "base_s": 0.9
+  },
+  "beats": {
+    "first_blow": {
+      "on": "damage",
+      "when": "the first landed blow of the match (number shown, attacker known, weight light/medium/heavy)",
+      "speaker": "attacker",
+      "priority": 2,
+      "once_per_match": true,
+      "chance": 1.0,
+      "lines": {
+        "PROTAGONIST": [
+          {
+            "id": "hw11.01",
+            "text": "First hit's mine! Show me what you've got!",
+            "source": "claude_kept_by_orb_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "effort.light",
+                "intensity": 1
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": []
+            }
+          }
+        ],
+        "RIVAL": [
+          {
+            "id": "hw1.rival_lands",
+            "text": "This is the fight you wanted, right?",
+            "source": "orb_own_words_hw1",
+            "hw": 1,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "sneer",
+                "intensity": 1
+              }
+            ],
+            "lint_exempt_orb_own": true,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R2 no contraction"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "heavy_landed": {
+      "on": "damage",
+      "when": "a heavy blow lands (kind heavy, not a guard); the attacker speaks",
+      "speaker": "attacker",
+      "priority": 2,
+      "chance": 0.45,
+      "lines": {
+        "PROTAGONIST": [
+          {
+            "id": "hw1.p_clean_hit",
+            "text": "I didn't mean to hit you that hard...",
+            "source": "orb_own_words_hw1",
+            "hw": 1,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "effort.heavy",
+                "intensity": 1
+              }
+            ],
+            "lint_exempt_orb_own": true,
+            "lint": {
+              "hard": [],
+              "check": []
+            }
+          }
+        ],
+        "RIVAL": [
+          {
+            "id": "hw11.09",
+            "text": "Still grinning? Get up and try again.",
+            "source": "claude_kept_by_orb_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "scoff",
+                "intensity": 1
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R2 no contraction",
+                "R6 not said to the opponent"
+              ]
+            }
+          }
+        ],
+        "EMPRESS": [
+          {
+            "id": "hw11.17",
+            "text": "Hahaha! Look at you bleed—what a gorgeous mess!",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "laugh.long",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R2 no contraction"
+              ]
+            }
+          }
+        ],
+        "CYBORG": [
+          {
+            "id": "hw11.24",
+            "text": "Gotcha! My sensors say you're packed with protein!",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "growl",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": []
+            }
+          }
+        ]
+      }
+    },
+    "heavy_taken": {
+      "on": "damage",
+      "when": "a heavy blow lands on a fighter (kind heavy, not a guard); the victim speaks",
+      "speaker": "victim",
+      "priority": 2,
+      "chance": 0.7,
+      "lines": {
+        "PROTAGONIST": [
+          {
+            "id": "hw11.02",
+            "text": "Ooh, felt that in my back teeth! Nice shot!",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "wince",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R2 no contraction",
+                "R6 not said to the opponent"
+              ]
+            }
+          },
+          {
+            "id": "hw1.p_takes_hit",
+            "text": "You're really strong!",
+            "source": "orb_own_words_hw1",
+            "hw": 1,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "effort.light",
+                "intensity": 1
+              }
+            ],
+            "lint_exempt_orb_own": true,
+            "lint": {
+              "hard": [],
+              "check": []
+            }
+          }
+        ],
+        "RIVAL": [
+          {
+            "id": "hw11.12",
+            "text": "That's your heavy hitter? Strictly third-rate.",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "scoff",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": []
+            }
+          },
+          {
+            "id": "hw1.rival_takes_hit",
+            "text": "You're not holding back, are you?",
+            "source": "orb_own_words_hw1",
+            "hw": 1,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "sneer",
+                "intensity": 1
+              }
+            ],
+            "lint_exempt_orb_own": true,
+            "lint": {
+              "hard": [],
+              "check": []
+            }
+          }
+        ],
+        "EMPRESS": [
+          {
+            "id": "hw11.18",
+            "text": "Oh, you dirtied the silk? That'll cost you a limb.",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "cackle",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": []
+            }
+          }
+        ],
+        "CYBORG": [
+          {
+            "id": "hw11.25",
+            "text": "Hey, that's the steel arm! Bite the meaty one!",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "growl",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R6 not said to the opponent"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "guard_caught": {
+      "on": "cue perfect_block",
+      "when": "a perfect block (the cue's actor is the blocker)",
+      "speaker": "actor",
+      "priority": 2,
+      "chance": 0.8,
+      "lines": {
+        "PROTAGONIST": [
+          {
+            "id": "hw11.04",
+            "text": "Whoa, that one had real weight behind it!",
+            "source": "claude_kept_by_orb_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "effort.heavy",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R2 no contraction",
+                "R6 not said to the opponent"
+              ]
+            }
+          },
+          {
+            "id": "hw1.p_perfect_block",
+            "text": "Try not to rotate your shoulder like that...",
+            "source": "orb_own_words_hw1",
+            "hw": 1,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "laugh.short",
+                "intensity": 1
+              }
+            ],
+            "lint_exempt_orb_own": true,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R2 no contraction"
+              ]
+            }
+          }
+        ],
+        "RIVAL": [
+          {
+            "id": "hw1.rival_perfect_block",
+            "text": "I'm not impressed.",
+            "source": "orb_own_words_hw1",
+            "hw": 1,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "sneer",
+                "intensity": 1
+              }
+            ],
+            "lint_exempt_orb_own": true,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R6 not said to the opponent"
+              ]
+            }
+          }
+        ],
+        "EMPRESS": [
+          {
+            "id": "hw11.20",
+            "text": "All that grunting just to wrinkle our cape? Tragic!",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "cackle",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R2 no contraction",
+                "R6 not said to the opponent"
+              ]
+            }
+          }
+        ],
+        "CYBORG": [
+          {
+            "id": "hw11.28",
+            "text": "Titanium plating, snack! Though your knuckles look real crunchy...",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "growl",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R2 no contraction"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "missed": {
+      "on": "cue miss",
+      "when": "a blow that finds only air (the cue's actor is the one who missed)",
+      "speaker": "actor",
+      "priority": 1,
+      "chance": 0.25,
+      "lines": {
+        "PROTAGONIST": [
+          {
+            "id": "hw1.p_miss",
+            "text": "Hey, you're fast!",
+            "source": "orb_own_words_hw1",
+            "hw": 1,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "laugh.short",
+                "intensity": 1
+              }
+            ],
+            "lint_exempt_orb_own": true,
+            "lint": {
+              "hard": [],
+              "check": []
+            }
+          },
+          {
+            "id": "hw11.03",
+            "text": "Clean slip! You read my shoulder, didn't you?",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "laugh.short",
+                "intensity": 1
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": []
+            }
+          }
+        ],
+        "RIVAL": [
+          {
+            "id": "hw1.rival_miss",
+            "text": "You're agile, I'll give you that.",
+            "source": "orb_own_words_hw1",
+            "hw": 1,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "scoff",
+                "intensity": 1
+              }
+            ],
+            "lint_exempt_orb_own": true,
+            "lint": {
+              "hard": [],
+              "check": []
+            }
+          },
+          {
+            "id": "hw11.11",
+            "text": "Quit hopping around like a flea and trade with me!",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "scoff",
+                "intensity": 1
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R2 no contraction",
+                "R6 not said to the opponent"
+              ]
+            }
+          }
+        ],
+        "CYBORG": [
+          {
+            "id": "hw11.27",
+            "text": "Quit dodging! I'm burning more calories than you're worth!",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "growl",
+                "intensity": 1
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": []
+            }
+          }
+        ]
+      }
+    },
+    "launch_given": {
+      "on": "launch",
+      "when": "a launch (the launch event's target is the launcher, its actor the fighter sent)",
+      "speaker": "launcher",
+      "priority": 2,
+      "chance": 0.8,
+      "lines": {
+        "PROTAGONIST": [
+          {
+            "id": "hw11.05",
+            "text": "Don't tell me that's enough to keep you down!",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "effort.heavy",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": []
+            }
+          },
+          {
+            "id": "hw1.p_launch",
+            "text": "I want to see your new technique...",
+            "source": "orb_own_words_hw1",
+            "hw": 1,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "effort.light",
+                "intensity": 1
+              }
+            ],
+            "lint_exempt_orb_own": true,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R2 no contraction"
+              ]
+            }
+          }
+        ],
+        "RIVAL": [
+          {
+            "id": "hw1.rival_launch",
+            "text": "Are we here to play games?",
+            "source": "orb_own_words_hw1",
+            "hw": 1,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "scoff",
+                "intensity": 1
+              }
+            ],
+            "lint_exempt_orb_own": true,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R2 no contraction",
+                "R6 not said to the opponent"
+              ]
+            }
+          },
+          {
+            "id": "hw11.13",
+            "text": "Stay buried in the rubble where you belong!",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "roar",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R2 no contraction"
+              ]
+            }
+          }
+        ],
+        "EMPRESS": [
+          {
+            "id": "hw11.21",
+            "text": "Petition denied! Crawl back if your legs still work!",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "laugh.long",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R2 no contraction"
+              ]
+            }
+          }
+        ],
+        "CYBORG": [
+          {
+            "id": "hw11.29",
+            "text": "Gotta tenderize the tough ones! Don't crawl too far, lunch!",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "growl",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R6 not said to the opponent"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "stuck": {
+      "on": "lodge",
+      "when": "a fighter is lodged in a building (the lodged fighter speaks)",
+      "speaker": "actor",
+      "priority": 2,
+      "chance": 1.0,
+      "lines": {
+        "PROTAGONIST": [
+          {
+            "id": "hw11.07",
+            "text": "Hang on, the bricks got me! ...Alright, I'm loose!",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "effort.heavy",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R6 not said to the opponent"
+              ]
+            }
+          }
+        ],
+        "RIVAL": [
+          {
+            "id": "hw11.15",
+            "text": "Wipe that smirk off your face or you die first!",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "growl",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R2 no contraction"
+              ]
+            }
+          }
+        ],
+        "CYBORG": [
+          {
+            "id": "hw11.30",
+            "text": "Stupid wide chassis! Knew I shouldn't have eaten that tank!",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "growl",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": [
+                "R6 not said to the opponent"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "flurry_taken": {
+      "on": "cue stagger flurry",
+      "when": "a fighter staggered by a long flurry (the cue's actor is the staggered one)",
+      "speaker": "actor",
+      "priority": 2,
+      "chance": 0.8,
+      "lines": {
+        "PROTAGONIST": [
+          {
+            "id": "hw11.08",
+            "text": "Faster! I'm just starting to see your timing!",
+            "source": "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "effort.light",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": []
+            }
+          }
+        ],
+        "RIVAL": [
+          {
+            "id": "hw11.16",
+            "text": "You're holding back, aren't you? Hit harder!",
+            "source": "claude_kept_by_orb_hw11",
+            "hw": 11,
+            "cues": [
+              {
+                "at": 0,
+                "gesture": "snort",
+                "intensity": 2
+              }
+            ],
+            "lint_exempt_orb_own": false,
+            "lint": {
+              "hard": [],
+              "check": []
+            }
+          }
+        ]
+      }
+    }
+  },
+  "excluded_lines": {
+    "hw11.19": "Empress, 'Dance, little rat! We'll just glass the whole street!': 'dance' is on Orb's banned list and 'glass' is review-tier; waits for Orb's swap (burn or flatten).",
+    "hw11.23": "Empress, 'Nobody sees the Empress like this! Level this whole block!': fires only on a chimney trigger and never after a civilian toll (Legal); the sim has no chimney event.",
+    "hw11.06": "Protagonist, a rival through a shop wall: needs a building-hit event the bark director does not read yet (see NEEDS).",
+    "hw11.14": "Rival, slammed through a wall: the same.",
+    "hw11.22": "Empress, thrown through a wall: the same.",
+    "hw11.10": "Rival, struck in the face and his glasses slip: needs the glasses' damage state event."
+  },
+  "unmapped": {
+    "taunt_start": "The sim emits cue taunt_start. combat_barks.json has taunt drafts for all four, but none is Orb-approved and the Cyborg's, Empress's and Rival's use retired voice (sir, menu, table, 'Petitioner, you are boring us', 'Fifth. Behind the goons'). Orb to approve, or to pick from the re-cut lines.",
+    "signature_start": "Shouts are move names ('Keeper's Lance!'), still placeholders; Orb has not named the signatures.",
+    "last_stand_ready": "The sim emits last_stand_ready. combat_barks.json has one draft line a fighter; none is approved.",
+    "absorb_signature": "The Rival's bravado line ('Was that supposed to hurt?') is Legal-cleared but not Orb-approved.",
+    "finisher_landed": "Authored finishers carry this bark trigger; no line exists.",
+    "finisher_survived": "Authored finishers carry this bark trigger; no line exists.",
+    "ko_winner_loser": "No approved line for a win or a loss at the KO; homework 15's win and loss lines wait for Orb's marks.",
+    "empress_and_cyborg_first_blow_and_misses": "The Empress and the Cyborg have no approved line for a first blow; the Empress has none for a miss."
+  },
+  "lint_note": "Each line carries its line-lint result (hard: rules it fails; check: items for a human). `python docs/narrative/line-lint.py --live data/narrative/live_barks.json` lints the file: lines whose source is Orb's own words (line-lint.json orb_own_exemption, EP ruling 2026-10-28) are exempt from R1 and R8 and do not count in the ellipsis rate; every other line is strict. Orb's marks on lines others wrote (hw11) are not exempt. The emitter ignores this field.",
+  "provenance": {
+    "record": "ai01 (docs/narrative/pending/provenance_hw11.json)",
+    "orb_own_words": "source orb_own_words_hw1: the lines Orb wrote in homework 1",
+    "orb_marks_hw11": "claude_kept_by_orb_hw11 (4 lines Claude wrote and Orb kept) and ai01_gemini_rewrite_at_orb_direction_hw11 (26 rewrites generated by Google Gemini at Orb's direction; AI-disclosure rule)"
+  }
+}

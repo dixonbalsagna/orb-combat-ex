@@ -2,6 +2,7 @@
 """Lint forward-facing lines against Orb's rules (docs/narrative/line-lint.json).
 
 Usage: python docs/narrative/line-lint.py FILE.md [FILE.md ...]
+       python docs/narrative/line-lint.py --live data/narrative/live_barks.json   (lines carry a source; Orb's own words are exempt from R1 and R8, EP 2026-10-28)
        python docs/narrative/line-lint.py --names docs/narrative/pending/place_names_table.json
 Legal c10 (2026-10-16): the block tier always fails (whole-word); the review tier prints CHECK for a human.
 
@@ -75,7 +76,8 @@ def cyborg_people(line):
     return hard, soft
 
 
-def check(line, heading=""):
+def check(line, heading="", exempt=False):
+    """exempt: the line's source is Orb's own words (line-lint.json orb_own_exemption): R1 and R8 do not apply to it."""
     hard, soft = [], []
     who = speaker_of(heading)
     if who:
@@ -106,6 +108,8 @@ def check(line, heading=""):
         hard.append("tell: a word said three times")
     if len(ELL.findall(line)) > 1:
         hard.append("R8 more than one ellipsis in a line")
+    if exempt:
+        hard = [h for h in hard if not (h.startswith("R1 length") or h.startswith("R8 "))]
     if not re.search(r"\w'\w", line):
         soft.append("R2 no contraction")
     if not re.search(r"\b(you|your|you're|you've|you'll|yours)\b", line, re.I):
@@ -154,6 +158,46 @@ def main(paths):
     return 1 if failed else 0
 
 
+HEAD_OF = {"PROTAGONIST": "## The Protagonist", "RIVAL": "## The rival (the Anti-hero)", "EMPRESS": "## The Empress", "CYBORG": "## The Cyborg"}
+OWN = LINT.get("orb_own_exemption", {}).get("sources", [])
+
+
+def live(path):
+    """Lint a data file whose beats hold lines with a source (data/narrative/live_barks.json). A line whose source is in
+    orb_own_exemption.sources is exempt from R1 and R8 (and does not count in the ellipsis rate); all else is strict."""
+    d = json.load(open(path, encoding="utf-8"))
+    failed, total, exempt = 0, 0, 0
+    blocks = {}
+    for bk, b in d.get("beats", {}).items():
+        for fid, ls in b.get("lines", {}).items():
+            for l in ls:
+                total += 1
+                own = l.get("source", "") in OWN
+                exempt += 1 if own else 0
+                head = HEAD_OF.get(fid, "")
+                hard, soft = check(l["text"], head, own)
+                blk = blocks.setdefault(head, {"n": 0, "ell": []})
+                if not own:
+                    blk["n"] += 1
+                    if ELL.search(l["text"]):
+                        blk["ell"].append(l["text"])
+                if ELL.search(l["text"]):
+                    print(f"{path}: CHECK ellipsis{' (Orb own words, exempt)' if own else ''} [{bk}/{fid}] {l['text']}")
+                for s in soft:
+                    if s.startswith(("c10 REVIEW", "ln05 REVIEW")):
+                        print(f"{path}: CHECK {s} [{bk}/{fid}] {l['text']}")
+                if hard:
+                    failed += 1
+                    print(f"{path}: FAIL {hard} [{bk}/{fid}] {l['text']}")
+    for head, b in blocks.items():
+        cap = max(1, b["n"] // 10)
+        if len(b["ell"]) > cap:
+            failed += 1
+            print(f"{path}: FAIL R8 ellipsis rate in '{head}': {len(b['ell'])} of {b['n']} non-exempt lines (cap {cap})")
+    print(f"{path}: {total} lines, {exempt} exempt as Orb's own words, {failed} failing")
+    return 1 if failed else 0
+
+
 def names(path):
     """Check a place-name table (JSON {kind: [names]}) against the blocklist and the c10 tiers."""
     table = json.load(open(path, encoding="utf-8"))
@@ -171,6 +215,8 @@ def names(path):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 2 and sys.argv[1] == "--live":
+        sys.exit(live(sys.argv[2]))
     if len(sys.argv) > 2 and sys.argv[1] == "--names":
         sys.exit(names(sys.argv[2]))
     sys.exit(main(sys.argv[1:]))

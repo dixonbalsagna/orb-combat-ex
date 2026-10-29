@@ -109,6 +109,7 @@ var _last_usec: int = 0
 var _bench_two := PackedFloat64Array()     # wall-clock frame ms while two full panes are drawn
 var _bench_other := PackedFloat64Array()   # ... and otherwise
 var ui_hud: UiHud                 # UI's HUD
+var barks: NarrativeBarks = null   # Narrative's live barks: null while data/narrative/live_barks.json has "enabled": false
 var _overlay_resume: bool = false  # the pause state the How to play card, the feedback panel or the Settings screen found when it opened
 var _touch_last: bool = false     # touch was the last input device (UI's touch_ui option)
 var audio: AudioVoices            # Audio's voice pool
@@ -340,6 +341,7 @@ func _mb_begin() -> bool:
 		far_land.begin(host.S, _far_now)   # a match's start is a cut: the planet's far land shows from here if its map is whole
 	var fl: Array = UiSimBridge.fighters(host.S)
 	ui_hud.setup(fl[0], fl[1])
+	barks = NarrativeBarks.make(host.S, host.setup_used)
 	return true
 
 
@@ -855,6 +857,8 @@ func _on_drained(events: Array, lines: Array) -> void:
 		camera_roll.consume(host.S, events, split_rig if compositor != null else null)   # the rig's story, once it has read the tick
 	RenderAnim.consume(host.S, events)
 	ui_hud.consume_all(events)
+	if barks != null:
+		ui_hud.consume_all(barks.step(host.S, events))
 	_haptics_from_events(events)
 	UiSimBridge.feed(ui_hud, lines)
 
