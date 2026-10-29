@@ -121,9 +121,10 @@ export function noticesText(lic) {
   return out.join('\n');
 }
 
-/** Whether `lock` may edit `root`: an error message, or null. This repository's own tree only on a CI checkout. */
+/** Whether `lock` and `astc` may edit `root`: an error message, or null. A git checkout (a `.git` in it, a folder or a worktree's file) only on a CI checkout; an export without .git (git archive HEAD, a copy of it, even one run
+ *  with its own copy of this script) is a scratch tree anywhere. The test is the tree it is given, not where this script lives. */
 export function lockGuard(root, env = process.env) {
-  return resolve(root) === REPO && env.GITHUB_ACTIONS !== 'true' ? "refusing to edit this repository's own ui/data/features.json outside CI: pass a scratch export as --root" : null;
+  return existsSync(join(resolve(root), '.git')) && env.GITHUB_ACTIONS !== 'true' ? `refusing to edit ${resolve(root)}: it has a .git, so it is a working checkout, and these commands edit the tree they are given (outside CI, pass an export without .git, such as git archive HEAD, as --root)` : null;
 }
 
 /** Sets lock_reduce_flashing true in <root>/ui/data/features.json. Returns true when it changed the file, false when it was already true. */

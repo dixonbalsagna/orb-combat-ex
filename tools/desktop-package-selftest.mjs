@@ -53,14 +53,24 @@ try {
     check('lock: a second run changes nothing', lockReduceFlashing(root) === false);
     writeFileSync(f, '{ "capture_hook": false }');
     check('lock: a tree with no lock_reduce_flashing is refused', (() => { try { lockReduceFlashing(root); return false; } catch (e) { return /no lock_reduce_flashing/.test(e.message); } })());
-    const repo = resolve(here, '..');
-    check('lock: this repository\'s own tree is refused outside CI and allowed on a CI checkout; a scratch tree is always allowed', lockGuard(repo, {}) !== null && lockGuard(repo, { GITHUB_ACTIONS: 'true' }) === null && lockGuard(root, {}) === null);
-    // the command refuses the repository itself without touching it: only run when the guard would refuse (no CI variable), and read features.json before and after
-    const before = readFileSync(join(repo, 'ui', 'data', 'features.json'), 'utf8');
+    // the guard looks at the tree it is given: a .git means a working checkout; an export without .git is scratch, wherever this script is run from
+    const NLg = String.fromCharCode(10);
+    const mkTree = (withGit) => { const d = mkdtempSync(join(tmp, 'tree-')); mkdirSync(join(d, 'ui', 'data'), { recursive: true }); writeFileSync(join(d, 'ui', 'data', 'features.json'), '{"features": {"lock_reduce_flashing": false}}' + NLg); writeFileSync(join(d, 'project.godot'), '[rendering]' + NLg + 'renderer/x=1' + NLg); if (withGit) mkdirSync(join(d, '.git')); return d; };
+    const gitTree = mkTree(true), plain = mkTree(false);
+    check('guard: a tree with a .git is refused outside CI and allowed on a CI checkout; a tree without one is allowed anywhere', lockGuard(gitTree, {}) !== null && lockGuard(gitTree, { GITHUB_ACTIONS: 'true' }) === null && lockGuard(plain, {}) === null && lockGuard(plain, { GITHUB_ACTIONS: 'true' }) === null);
+    check('guard: a linked worktree .git (a file, not a folder) counts as a checkout too', (() => { const d = mkTree(false); writeFileSync(join(d, '.git'), 'gitdir: /elsewhere'); return lockGuard(d, {}) !== null; })());
     const env = { ...process.env }; delete env.GITHUB_ACTIONS;
-    // only when the guard has just been shown to refuse: a broken guard must not be allowed to edit the real file by being tested
-    const r = lockGuard(repo, {}) === null ? { status: 0, stderr: 'guard broken: the command was not run' } : spawnSync(process.execPath, [join(here, 'desktop-package.mjs'), 'lock', '--root', repo], { encoding: 'utf8', env });
-    check('lock: the command refuses this repository outside CI and leaves its features.json as it was', r.status === 1 && /refusing/.test(r.stderr) && readFileSync(join(repo, 'ui', 'data', 'features.json'), 'utf8') === before, r.stderr);
+    const feat = (d) => readFileSync(join(d, 'ui', 'data', 'features.json'), 'utf8');
+    const before = feat(gitTree);
+    const r = spawnSync(process.execPath, [join(here, 'desktop-package.mjs'), 'lock', '--root', gitTree], { encoding: 'utf8', env });
+    check('lock: the command refuses a checkout with a .git outside CI and leaves its features.json as it was', r.status === 1 && /refusing/.test(r.stderr) && feat(gitTree) === before, r.stderr);
+    const ok = spawnSync(process.execPath, [join(here, 'desktop-package.mjs'), 'lock', '--root', plain], { encoding: 'utf8', env });
+    check('lock: the command locks an export without .git', ok.status === 0 && /"lock_reduce_flashing": true/.test(feat(plain)), ok.stderr);
+    // the EP's case: an export that runs its OWN copy of the script on itself (its tools folder is in it)
+    const own = mkTree(false); mkdirSync(join(own, 'tools'), { recursive: true });
+    for (const n of ['desktop-package.mjs', 'site-routes.mjs']) writeFileSync(join(own, 'tools', n), readFileSync(join(here, n)));
+    const self = spawnSync(process.execPath, [join(own, 'tools', 'desktop-package.mjs'), 'lock', '--root', own], { encoding: 'utf8', env });
+    check('lock: an export running its own copy of the script on itself is a scratch tree, not refused', self.status === 0 && /"lock_reduce_flashing": true/.test(feat(own)), self.stderr);
   }
 
   // the ETC2/ASTC import setting (a universal macOS export needs it; set on the CI checkout, never in the repository's project.godot)
@@ -85,11 +95,13 @@ try {
     const after = split(readFileSync(f, 'utf8')), before = split(real);
     const added = after.filter((l) => !before.includes(l));
     check('astc: on the repository\'s project.godot exactly one line is added, and it is that key', added.length === 1 && added[0] === `${K}=true` && after.length === before.length + 1, JSON.stringify(added));
-    const env = { ...process.env }; delete env.GITHUB_ACTIONS;
-    const repo = resolve(here, '..'), pg = readFileSync(join(repo, 'project.godot'), 'utf8');
-    // only when the guard has just been shown to refuse, as for the lock
-    const r = lockGuard(repo, {}) === null ? { status: 0, stderr: 'guard broken: the command was not run' } : spawnSync(process.execPath, [join(here, 'desktop-package.mjs'), 'astc', '--root', repo], { encoding: 'utf8', env });
-    check('astc: the command refuses this repository outside CI and leaves project.godot as it was', r.status === 1 && /refusing/.test(r.stderr) && readFileSync(join(repo, 'project.godot'), 'utf8') === pg, r.stderr);
+    const env2 = { ...process.env }; delete env2.GITHUB_ACTIONS;
+    const gitProj = mkdtempSync(join(tmp, 'proj-git-')); mkdirSync(join(gitProj, '.git')); writeFileSync(join(gitProj, 'project.godot'), real);
+    const r = spawnSync(process.execPath, [join(here, 'desktop-package.mjs'), 'astc', '--root', gitProj], { encoding: 'utf8', env: env2 });
+    check('astc: the command refuses a checkout with a .git outside CI and leaves project.godot as it was', r.status === 1 && /refusing/.test(r.stderr) && readFileSync(join(gitProj, 'project.godot'), 'utf8') === real, r.stderr);
+    const plainProj = mkdtempSync(join(tmp, 'proj-plain-')); writeFileSync(join(plainProj, 'project.godot'), real);
+    const r2 = spawnSync(process.execPath, [join(here, 'desktop-package.mjs'), 'astc', '--root', plainProj], { encoding: 'utf8', env: env2 });
+    check('astc: the command sets the key in an export without .git', r2.status === 0 && readFileSync(join(plainProj, 'project.godot'), 'utf8').includes(K + '=true'), r2.stderr);
   }
 
   // the package check, on synthetic packages

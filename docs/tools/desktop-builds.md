@@ -74,3 +74,7 @@ The Windows exe has Godot's default icon and no file-version fields (`modify_res
 - Orb's yes, in one sentence naming desktop test builds (RL-203); then the EP dispatches with `orbs_yes`.
 - A Windows PC and a Mac that did not build it: open each, get past the warning with the README's steps, reach the first screen. Until then those two builds are structure-checked only.
 - Legal: the bundle id and app name stay placeholders until the formal title search (RL-205).
+
+## Running the tree-editing commands by hand
+
+`desktop-package.mjs lock`, `astc` and the text commands edit the tree they are given, so `lock` and `astc` refuse a **working checkout** (a `.git` in the root, a folder or a linked worktree's file) outside CI. An export without `.git` (`git archive HEAD | tar -x -C <dir>`) is a scratch tree wherever the script is run from, even with its own copy of the script inside it: `node <dir>/tools/desktop-package.mjs lock --root <dir>`. Before 2026-10-28 evening the guard compared the root with the folder the script lives in, which refused exactly that case.
