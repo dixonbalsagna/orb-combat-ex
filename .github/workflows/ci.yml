@@ -124,6 +124,8 @@ jobs:
         run: node tools/site-template-selftest.mjs
       - name: 'Frame comparison self-test (standard template against custom: identical, within noise, beyond noise)'
         run: node tools/flash/compare-frames-selftest.mjs
+      - name: Desktop package self-test (the README and notices of a download, the Reduce flashing lock edit, the package check)
+        run: node tools/desktop-package-selftest.mjs
       - name: Nightly seed run self-test (new seeds, never repeated; the take-down trigger)
         run: node tools/flash/nightly-selftest.mjs
       - name: Gate wrapper self-test (a Godot gate whose log has SCRIPT ERROR lines fails, whatever its exit code)

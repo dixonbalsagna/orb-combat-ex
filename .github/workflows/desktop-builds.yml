@@ -1,0 +1,166 @@
+# Desktop builds for Windows, Linux and macOS (docs/tools/desktop-builds.md). By hand only (workflow_dispatch): exports the three desktop presets of a commit headless with the pinned Godot
+# and templates from setup-godot, packs each as a folder with README.txt, NOTICES.txt and build_info.json, proves what a Linux runner can prove, and uploads three artifacts.
+#   - DESKTOP TEST BUILDS ONLY (Legal RL-203, RL-204): a run waits for Orb's yes naming desktop test builds (the input below is that sentence's date; the first step refuses without it), keeps its
+#     files ONE day, and the EP deletes the run once the testers have them. No link, post or mention anywhere. Nothing from a run is a release, a Legal pass or a store build.
+#   - Reduce flashing is always LOCKED ON in these builds (the same one-word edit the site's export makes, Legal RL-156); there is no input to turn it off. The run refuses unless the lock is true, the
+#     capture hook is off, the route scan is clean and no command-line flag can reach normal mode (tools/desktop-package.mjs routes), and unless online play is out of the package.
+#   - Linux is also played: the exported binary runs the game's bench headless and must print the project's own gameplay hash. Windows and macOS cannot be started on a Linux runner,
+#     so they are read, not run: files, magic bytes, the embedded pck, the lock, the notices (tools/desktop-package.mjs verify).
+#   - Nothing is signed or notarized (no Apple account, no certificate: zero budget). The macOS app carries Godot's ad-hoc signature only.
+name: Desktop builds
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Commit, branch or tag to build (empty: the commit this workflow was started on)'
+        required: false
+        default: ''
+      frames:
+        description: 'Frames (= ticks at --fixed-fps 60) the Linux bench plays before it prints the gameplay hash'
+        required: false
+        default: '2400'
+      orbs_yes:
+        description: 'Date (YYYY-MM-DD) of Orb saying yes to desktop test builds, in one sentence naming them (Legal RL-203). The run refuses without it.'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    name: Desktop builds (Windows, Linux, macOS), export, pack and check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      FRAMES: ${{ inputs.frames }}
+      ORBS_YES: ${{ inputs.orbs_yes }}
+    steps:
+      - name: Refuse without Orb's yes (Legal RL-203)
+        run: |
+          if ! printf '%s' "${ORBS_YES}" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+            echo "no run without Orb's yes: pass the date of the sentence naming desktop test builds as orbs_yes (Legal RL-203)"
+            exit 1
+          fi
+          echo "Orb's yes of ${ORBS_YES}"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+      - uses: ./.github/actions/setup-godot
+        with:
+          desktop-templates: 'true'
+      - name: The commit being built
+        id: commit
+        run: |
+          sha=$(git rev-parse HEAD)
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+          echo "building ${sha}, Reduce flashing locked on, Orb's yes of ${ORBS_YES}"
+      # The interim's terms hold for a download too: one word in this checkout's ui/data/features.json, before the import and every export below.
+      - name: Lock Reduce flashing on
+        run: node tools/desktop-package.mjs lock --root "${GITHUB_WORKSPACE}"
+      # Refuses unless the lock is true and the capture hook false, the route scan (Legal RL-195/196) is clean, the six bypass words are the reviewed ones and nothing a flag can set reaches the lock,
+      # the option, the register or the debug key, no network class is packed, and net/ is excluded from the three desktop presets (online play is out: the README's privacy line depends on it).
+      - name: Refuse unless the lock holds and no flag reaches normal mode (RL-203, RL-204)
+        run: node tools/desktop-package.mjs routes --root "${GITHUB_WORKSPACE}"
+      # Godot refuses a universal (Intel and Apple silicon) macOS export unless ETC2/ASTC import is on. The game imports no textures, so it changes nothing else; it is set on this checkout only
+      # (project.godot in the repository stays as it is: a change to it is a full flash set, RL-128).
+      - name: Enable ETC2/ASTC import for the universal macOS export
+        run: node tools/desktop-package.mjs astc --root "${GITHUB_WORKSPACE}"
+      - name: Import project
+        run: '"$GODOT" --headless --path . --import'
+      # build_info.json (commit and commit date), git-ignored, packed into each export by the presets' include_filter and copied beside the game too.
+      - name: Write build_info.json
+        run: node tools/write-build-info.mjs --commit "${{ steps.commit.outputs.sha }}"
+      - name: Export Windows (release, Compatibility, x86_64, pck embedded)
+        run: |
+          mkdir -p "${RUNNER_TEMP}/export/windows"
+          "$GODOT" --headless --path . --export-release "Windows Desktop" "${RUNNER_TEMP}/export/windows/orb-combat-ex.exe"
+          ls -l "${RUNNER_TEMP}/export/windows"
+      - name: Export Linux (release, Compatibility, x86_64, pck embedded)
+        run: |
+          mkdir -p "${RUNNER_TEMP}/export/linux"
+          "$GODOT" --headless --path . --export-release "Linux" "${RUNNER_TEMP}/export/linux/orb-combat-ex.x86_64"
+          chmod +x "${RUNNER_TEMP}/export/linux/orb-combat-ex.x86_64"
+          ls -l "${RUNNER_TEMP}/export/linux"
+      - name: Export macOS (release, universal, ad-hoc signature only)
+        run: |
+          mkdir -p "${RUNNER_TEMP}/export/macos"
+          "$GODOT" --headless --path . --export-release "macOS" "${RUNNER_TEMP}/export/macos/orb-combat-ex.zip"
+          ls -l "${RUNNER_TEMP}/export/macos"
+      - name: The project's bench (the reference hash)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --fixed-fps 60 -- --seed=4 --frames="${FRAMES}" --bench | tee "${RUNNER_TEMP}/bench-project.txt"'
+      - name: The exported Linux binary's bench (it boots headless and plays)
+        working-directory: ${{ runner.temp }}/export/linux
+        run: 'node "${GITHUB_WORKSPACE}/tools/gate.mjs" -- ./orb-combat-ex.x86_64 --headless --fixed-fps 60 -- --seed=4 --frames="${FRAMES}" --bench | tee "${RUNNER_TEMP}/bench-linux.txt"'
+      - name: The two gameplay hashes match
+        run: |
+          a=$(grep -m1 "^gameplay hash at tick" "${RUNNER_TEMP}/bench-project.txt" || true)
+          b=$(grep -m1 "^gameplay hash at tick" "${RUNNER_TEMP}/bench-linux.txt" || true)
+          echo "project:  ${a:-none}"
+          echo "exported: ${b:-none}"
+          if [ -z "$a" ] || [ "$a" != "$b" ]; then echo "the exported Linux build does not play the same match"; exit 1; fi
+      # One folder per platform: the game, README.txt, NOTICES.txt, build_info.json. Windows and macOS as .zip, Linux as .tar.gz (the tar keeps the executable bit; an artifact zip does not).
+      - name: Pack the three folders
+        run: |
+          set -euo pipefail
+          pkg="${RUNNER_TEMP}/pkg"; dist="${RUNNER_TEMP}/dist"; exp="${RUNNER_TEMP}/export"
+          mkdir -p "${pkg}" "${dist}"
+          declare -A dir=( [windows]=orb-combat-ex-windows-x86_64 [linux]=orb-combat-ex-linux-x86_64 [macos]=orb-combat-ex-macos-universal )
+          for p in windows linux macos; do
+            mkdir -p "${pkg}/${dir[$p]}"
+            node tools/desktop-package.mjs text --platform "${p}" --out "${pkg}/${dir[$p]}" --build-info build_info.json
+          done
+          cp "${exp}/windows/orb-combat-ex.exe" "${pkg}/${dir[windows]}/"
+          cp "${exp}/linux/orb-combat-ex.x86_64" "${pkg}/${dir[linux]}/"
+          chmod +x "${pkg}/${dir[linux]}/orb-combat-ex.x86_64"
+          unzip -q "${exp}/macos/orb-combat-ex.zip" -d "${pkg}/${dir[macos]}"
+          cd "${pkg}"
+          zip -q -r -X "${dist}/orb-combat-ex-windows-x86_64.zip" orb-combat-ex-windows-x86_64
+          zip -q -r -y -X "${dist}/orb-combat-ex-macos-universal.zip" orb-combat-ex-macos-universal
+          tar -czf "${dist}/orb-combat-ex-linux-x86_64.tar.gz" orb-combat-ex-linux-x86_64
+          cd "${dist}"
+          sha256sum ./* | tee SHA256SUMS.txt
+          ls -l "${dist}"
+      # What a player does first: unpack each archive somewhere new and read what came out.
+      - name: Unpack each archive and check the folder (files, magic bytes, pck, notices, lock)
+        run: |
+          set -euo pipefail
+          dist="${RUNNER_TEMP}/dist"; chk="${RUNNER_TEMP}/check"
+          mkdir -p "${chk}/windows" "${chk}/linux" "${chk}/macos"
+          unzip -q "${dist}/orb-combat-ex-windows-x86_64.zip" -d "${chk}/windows"
+          tar -xzf "${dist}/orb-combat-ex-linux-x86_64.tar.gz" -C "${chk}/linux"
+          unzip -q "${dist}/orb-combat-ex-macos-universal.zip" -d "${chk}/macos"
+          flag="--locked"
+          sha="${{ steps.commit.outputs.sha }}"
+          node tools/desktop-package.mjs verify --platform windows --dir "${chk}/windows/orb-combat-ex-windows-x86_64" --commit "${sha}" "${flag}"
+          node tools/desktop-package.mjs verify --platform linux --dir "${chk}/linux/orb-combat-ex-linux-x86_64" --commit "${sha}" "${flag}"
+          node tools/desktop-package.mjs verify --platform macos --dir "${chk}/macos/orb-combat-ex-macos-universal" --commit "${sha}" "${flag}"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: orb-combat-ex-windows-x86_64-${{ steps.commit.outputs.sha }}
+          path: |
+            ${{ runner.temp }}/dist/orb-combat-ex-windows-x86_64.zip
+            ${{ runner.temp }}/dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 1
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: orb-combat-ex-linux-x86_64-${{ steps.commit.outputs.sha }}
+          path: |
+            ${{ runner.temp }}/dist/orb-combat-ex-linux-x86_64.tar.gz
+            ${{ runner.temp }}/dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 1
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: orb-combat-ex-macos-universal-${{ steps.commit.outputs.sha }}
+          path: |
+            ${{ runner.temp }}/dist/orb-combat-ex-macos-universal.zip
+            ${{ runner.temp }}/dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 1

@@ -211,6 +211,10 @@ Both Godot jobs use the local action `.github/actions/setup-godot`, so the pin l
 
 `godot-parity` runs, from the repo root (`project.godot` is there): `--import` (registers the `class_name` scripts on a fresh clone), then `sim/core/tools/parity.gd`, `render/tools/determinism.gd` and `render/tools/seam_sweep.gd -- --size=1280x720`. Each exits 0 on pass. The `.godot/` import cache is created on the runner only (it is in `.gitignore`). The `sim` job does not set `GODOT`, so `npm test --prefix sim` skips its own godot stage there and the parity check runs once.
 
+### Desktop test builds (by hand, and only with Orb's yes)
+
+`.github/workflows/desktop-builds.yml` (workflow_dispatch only; Legal RL-203 to RL-205) builds Windows x86_64, Linux x86_64 and macOS (universal, unsigned) from a commit and uploads three artifacts for one day, each a folder with the game, README.txt, NOTICES.txt and build_info.json. It refuses without `orbs_yes` (the date of Orb's yes) and unless Reduce flashing is locked, the capture hook is off, the route scan is clean, no command-line flag can reach normal mode and online play is out of the package (`node tools/desktop-package.mjs routes`). `setup-godot`'s `desktop-templates: 'true'` unpacks the three release templates from the same pinned .tpz; `tools/desktop-package.mjs` writes the texts, edits the CI checkout (lock, ETC2/ASTC import) and checks each unpacked folder (self-test in the data job). The Linux binary is played against the project's own gameplay hash; Windows and macOS can only be read on a Linux runner. How to start it, what is in each artifact, what it refuses and the unsigned-macOS steps: `docs/tools/desktop-builds.md`.
+
 ### Web export and the Pages site
 
 `export_presets.cfg` (repo root) holds two presets:
