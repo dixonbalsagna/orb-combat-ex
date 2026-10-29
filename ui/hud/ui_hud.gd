@@ -58,6 +58,7 @@ var opts: Dictionary = {
 	"captions": true,          # bracketed gesture tags on barks
 	"edge_captions": false,    # a short line at the bottom edge names a cue as it happens (accessibility, off by default)
 	"thickness": 1.0,          # crown arc thickness multiplier (an accessibility option)
+	"text_size": 1.0,          # the text-size multiplier (Normal 1.0, Large 1.25, Larger 1.5): UiText.size_mult, set in set_option
 	"region_label": false,     # the place name under the planet strip's camera box
 	"show_feed": false,        # the director feed (debug toggle)
 	"show_clear_zone": false,  # draw the fighter-clear zone (debug)
@@ -278,6 +279,7 @@ func _ready() -> void:
 	UiData.ensure()
 	opts.merge(UiData.option_defaults(), true)   # the options' defaults live in ui/data/options.json
 	UiLook.set_vision(str(opts["colour_vision"]))   # the preset is a per-process setting: a new HUD starts from its own option
+	UiText.size_mult = float(opts["text_size"])   # so is the text size
 	_l_letter = _layer(_paint_letterbox)
 	_l_strip_base = _layer(_paint_strip_base)
 	_div_dark = _bar()
@@ -591,6 +593,9 @@ func set_option(key: String, value) -> void:
 				l.force = bool(value)
 	if key == "colour_vision":
 		_apply_vision()
+	if key == "text_size":
+		UiText.size_mult = float(value)   # every size goes through UiText.px: the layouts are planned again below, and every layer redraws
+		_last_size = Vector2.ZERO
 	if VOLUME_GROUPS.has(key):
 		AudioVoices.set_user_volume(str(VOLUME_GROUPS[key]), float(value))   # Godot's buses (audio/audio_voices.gd); nothing in the sim
 	elif key == "mono_audio":
@@ -1387,6 +1392,7 @@ func _menu_load() -> void:
 		"shake": bool(s["shake"]) if s.has("shake") else float(opts["camera_shake"]) > 0.0,
 		"captions": bool(s["captions"]) if s.has("captions") else bool(opts["captions"]),
 		"guide": bool(s["guide"]) if s.has("guide") else str(opts["control_hints"]) != "off",
+		"ai_level": UiMenu.level_of(s.get("ai_level", UiMenu.DEFAULT_LEVEL)),
 	}
 	for k in ["p1", "p2"]:
 		if not ["kb", "pad"].has(str(_menu_cfg[k])):
@@ -1464,6 +1470,8 @@ func menu_action(act: String) -> void:
 				_menu_cfg["players"] = 1 if d < 0 else 2
 			elif row == "p1" or row == "p2":
 				_menu_cfg[row] = "kb" if d < 0 else "pad"
+			elif row == "ai":
+				_menu_cfg["ai_level"] = UiMenu.level_step(str(_menu_cfg.get("ai_level", UiMenu.DEFAULT_LEVEL)), d, false)
 			elif UiMenu.CHECKS.has(row):
 				_menu_cfg[row] = not bool(_menu_cfg.get(row, true))
 		"accept":
@@ -1471,6 +1479,8 @@ func menu_action(act: String) -> void:
 				_menu_cfg["players"] = 2 if int(_menu_cfg.get("players", 1)) == 1 else 1
 			elif row == "p1" or row == "p2":
 				_menu_cfg[row] = "pad" if str(_menu_cfg.get(row, "kb")) == "kb" else "kb"
+			elif row == "ai":
+				_menu_cfg["ai_level"] = UiMenu.level_step(str(_menu_cfg.get("ai_level", UiMenu.DEFAULT_LEVEL)), 1, true)
 			elif UiMenu.CHECKS.has(row):
 				_menu_cfg[row] = not bool(_menu_cfg.get(row, true))
 			elif row == "start":
@@ -1495,6 +1505,8 @@ func _menu_press(h: Dictionary) -> void:
 		"radio":
 			if row == "players":
 				_menu_cfg["players"] = int(h["value"])
+			elif row == "ai":
+				_menu_cfg["ai_level"] = UiMenu.level_of(str(h["value"]))
 			else:
 				_menu_cfg[row] = str(h["value"])
 		"check":

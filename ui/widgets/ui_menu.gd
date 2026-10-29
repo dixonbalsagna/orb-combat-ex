@@ -5,8 +5,42 @@ extends RefCounted
 ## hud_check proves every control is a 48 dp target inside the card at every size), `hit` says what a point is on, `draw` paints from a plan. Every word is in terms.json
 ## (prompt.menu_*). Nothing here touches the sim: the HUD hands the choices to the host when Start is pressed.
 
-const ROW_IDS: Array = ["players", "p1", "p2", "intros", "reduce_flashing", "shake", "captions", "guide", "start", "not_now", "back"]
+const ROW_IDS: Array = ["players", "p1", "p2", "ai", "intros", "reduce_flashing", "shake", "captions", "guide", "start", "not_now", "back"]
 const CHECKS: Array = ["intros", "reduce_flashing", "shake", "captions", "guide"]
+## The computer's level: the choices are the levels of data/director/ai.json (Encounter's), the default is the level that file runs a match at. Saved with the menu choices as `ai_level`;
+## the host passes it to the sim in the match setup (`aiLevel`) and the sim applies it. The row is shown only when the computer plays a side (one player).
+const DEFAULT_LEVEL := "medium"
+const AI_PATH := "res://data/director/ai.json"
+static var _levels: Array = []
+static var _default_level: String = ""
+
+
+static func levels() -> Array:
+	if _levels.is_empty():
+		var j = JSON.parse_string(FileAccess.get_file_as_string(AI_PATH))
+		if j is Dictionary and (j as Dictionary).get("levels") is Dictionary:
+			for k in (j["levels"] as Dictionary).keys():
+				if not str(k).begins_with("_"):
+					_levels.append(str(k))
+			_default_level = str(j.get("level", DEFAULT_LEVEL))
+		if _levels.is_empty():
+			_levels = ["easy", "medium", "hard"]
+		if not _levels.has(_default_level):
+			_default_level = DEFAULT_LEVEL if _levels.has(DEFAULT_LEVEL) else str(_levels[0])
+	return _levels
+
+
+## A saved or pressed value as a level the data has, else the default.
+static func level_of(v) -> String:
+	var lv: Array = levels()
+	return str(v) if lv.has(str(v)) else _default_level
+
+
+## The level after a step of d along the levels: held at the ends, or wrapping (Enter on the row).
+static func level_step(cur: String, d: int, wrap: bool) -> String:
+	var lv: Array = levels()
+	var i: int = maxi(lv.find(level_of(cur)), 0) + d
+	return str(lv[posmod(i, lv.size()) if wrap else clampi(i, 0, lv.size() - 1)])
 
 
 static func word(key: String) -> String:
@@ -41,6 +75,8 @@ static func rows(cfg: Dictionary, mid_match: bool, not_now: bool = false) -> Arr
 	var out: Array = ["players", "p1"]
 	if int(cfg.get("players", 1)) == 2:
 		out.append("p2")
+	else:
+		out.append("ai")   # the computer plays player two: its level is a choice
 	out.append_array(checks())
 	out.append("start")
 	if not_now:
@@ -90,7 +126,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 			var colw: float = (inner_w - gap * 2.0) * 0.5
 			# A narrow card (a phone upright): if a radio row's two options cannot sit side by side in half the card, the boxes go under the radios and the radios have the full width.
 			var need_w: float = 0.0
-			for id0 in ["players", "p1", "p2"]:
+			for id0 in ["players", "p1", "p2", "ai"]:
 				if not list.has(id0):
 					continue
 				var ow: float = 0.0
@@ -103,7 +139,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 			# Left column: the radio rows, one line each: the label, then its options side by side; a row that does not fit inline puts its options under the label.
 			var left_h: float = 0.0
 			var radio_rows: Array = []
-			for id in ["players", "p1", "p2"]:
+			for id in ["players", "p1", "p2", "ai"]:
 				if not list.has(id):
 					continue
 				var opts: Array = _options(id)
@@ -241,6 +277,11 @@ static func _options(id: String) -> Array:
 	match id:
 		"players":
 			return [["1", word("one")], ["2", word("two")]]
+		"ai":
+			var out: Array = []
+			for lv in levels():
+				out.append([str(lv), word("ai_" + str(lv))])
+			return out
 		_:
 			return [["kb", word("kb")], ["pad", word("pad")]]
 
@@ -261,7 +302,7 @@ static func moved(focus: int, d: int, count: int) -> int:
 static func sig(p: Dictionary) -> Array:
 	var c: Rect2 = p["card"]
 	var cfg: Dictionary = p["cfg"]
-	return [int(c.size.x), int(c.size.y), int(c.position.x), int(c.position.y), int(p["focus"]), int(p["fs"]), int(cfg.get("players", 1)), str(cfg.get("p1", "")), str(cfg.get("p2", "")),
+	return [int(c.size.x), int(c.size.y), int(c.position.x), int(c.position.y), int(p["focus"]), int(p["fs"]), int(cfg.get("players", 1)), str(cfg.get("p1", "")), str(cfg.get("p2", "")), str(cfg.get("ai_level", "")),
 		bool(cfg.get("intros", true)), bool(cfg.get("reduce_flashing", true)), bool(cfg.get("shake", true)), bool(cfg.get("captions", true)), bool(cfg.get("guide", true)), str(p["note_text"]), bool(p["touch"])]
 
 
@@ -304,7 +345,7 @@ static func draw(ci: CanvasItem, p: Dictionary) -> void:
 		UiText.draw(ci, str(rr["label"]), Vector2(box.position.x, lab_y), fs, dim, -1)
 		if focus_id == id:
 			UiIcons.rrect(ci, box.grow(2.0), 10.0 * cs, Color(0, 0, 0, 0), Color(ink, 0.9), 2.5)
-	var chosen := {"players": str(int(cfg.get("players", 1))), "p1": str(cfg.get("p1", "kb")), "p2": str(cfg.get("p2", "kb"))}
+	var chosen := {"players": str(int(cfg.get("players", 1))), "p1": str(cfg.get("p1", "kb")), "p2": str(cfg.get("p2", "kb")), "ai": level_of(cfg.get("ai_level", DEFAULT_LEVEL))}
 	for it in p["items"]:
 		var r: Rect2 = it["rect"]
 		var kind: String = it["kind"]

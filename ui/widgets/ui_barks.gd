@@ -205,6 +205,13 @@ static func _setpiece(ci: CanvasItem, hub: UiEventHub, b: UiEventHub.Bark, lay: 
 	var lines: PackedStringArray = UiText.wrap(b.text, fs, band.size.x)
 	var fade: float = minf(clampf(b.age / 0.2, 0.0, 1.0), clampf((b.reveal_time + b.dur - b.age) / 0.3, 0.0, 1.0))
 	var total: float = float(tfs) + 4.0 + float(lines.size()) * (float(fs) + 4.0)
+	# The band is the letterbox (a ninth of the screen, down to the screen's edge): a larger Text size steps the lines down until the text fits it, but never below what Normal draws (Normal is as it was).
+	var fs_normal: int = maxi(int(round(34.0 * s)), int(UiLook.text_floor))
+	while UiText.size_mult > 1.0 and total + 2.0 * (UiText.height(fs) - UiText.ascent(fs)) > band.size.y and fs > fs_normal:   # the block is centred, and its last line's tail hangs below it
+		fs -= 1
+		tfs = maxi(int(round(float(fs) * 20.0 / 34.0)), int(UiLook.text_floor))
+		lines = UiText.wrap(b.text, fs, band.size.x)
+		total = float(tfs) + 4.0 + float(lines.size()) * (float(fs) + 4.0)
 	var y: float = band.position.y + (band.size.y - total) * 0.5 + UiText.ascent(tfs)
 	UiText.draw(ci, m.name if m != null else "", Vector2(band.get_center().x, y), tfs, Color(m.aura if m != null else Color.WHITE, fade), 0, 1.5)
 	var yy: float = y + 4.0 + float(fs)

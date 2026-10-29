@@ -5622,7 +5622,7 @@ func _rf_lock_rules() -> void:
 		keys2.append(str(r2["key"]))
 	_ok(not keys2.has("reduce_flashing") and keys2.has("reduced_motion"), "rf lock: locked, Settings lists no Reduce flashing row (Reduced motion stays)")
 	var rows_l: Array = UiMenu.rows({"players": 1}, false)
-	_ok(not rows_l.has("reduce_flashing") and UiMenu.checks().size() == 4 and rows_l == ["players", "p1", "intros", "shake", "captions", "guide", "start"], "rf lock: locked, the start menu has four boxes and no Reduce flashing %s" % str(rows_l))
+	_ok(not rows_l.has("reduce_flashing") and UiMenu.checks().size() == 4 and rows_l == ["players", "p1", "ai", "intros", "shake", "captions", "guide", "start"], "rf lock: locked, the start menu has four boxes and no Reduce flashing %s" % str(rows_l))
 	_ok(UiMenu.rf_line({"reduce_flashing": false}) == UiMenu.word("rf_locked") and not UiMenu.rf_line({}).contains("Turning it off") and UiMenu.rf_line({}) == "Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes.", "rf lock: locked, the small line is Legal's RL-192 lock line alone, whatever the box said")
 	var bad := PackedStringArray()
 	for cs in [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 768), 1.0], [Vector2(2532, 1170), 3.0], [Vector2(844, 390), 1.0], [Vector2(667, 375), 1.0], [Vector2(390, 844), 1.0], [Vector2(414, 896), 1.0]]:
@@ -5758,13 +5758,38 @@ func _menu_rules() -> void:
 	_ok(not hud.is_pause_menu_open() and hud.is_start_menu_open(), "menu: no pause menu opens over it, and Esc does nothing at the start")
 	# Keyboard: Down to Player 1, Right chooses Controller; Up to Players, Right chooses 2 players, which brings Player 2's row.
 	var rows0: Array = UiMenu.rows(hud.menu_config(), false)
-	_ok(rows0 == ["players", "p1", "intros", "reduce_flashing", "shake", "captions", "guide", "start"], "menu: the rows are Players, Player 1, the five boxes and Start %s" % str(rows0))
+	_ok(rows0 == ["players", "p1", "ai", "intros", "reduce_flashing", "shake", "captions", "guide", "start"], "menu: the rows are Players, Player 1, the computer's level, the five boxes and Start %s" % str(rows0))
 	hud.menu_action("down")
 	hud.menu_action("right")
 	_ok(str(hud.menu_config()["p1"]) == "pad", "menu: Down then Right sets Player 1 to Controller")
+	# The computer's level: shown with one player (the computer plays a side), Medium to begin with; Right and Left move along Easy, Medium, Hard and hold at the ends; Enter wraps.
+	_ok(str(hud.menu_config()["ai_level"]) == "medium", "menu: the computer's level starts at Medium")
+	hud.menu_action("down")
+	_ok(UiMenu.rows(hud.menu_config(), false)[hud._menu_focus] == "ai", "menu: Down from Player 1 reaches the computer's level")
+	hud.menu_action("right")
+	hud.menu_action("right")
+	_ok(str(hud.menu_config()["ai_level"]) == "hard", "menu: Right twice sets Hard and holds at the end")
+	hud.menu_action("accept")
+	_ok(str(hud.menu_config()["ai_level"]) == "easy", "menu: Enter on Hard wraps to Easy")
+	hud.menu_action("left")
+	_ok(str(hud.menu_config()["ai_level"]) == "easy", "menu: Left holds at Easy")
+	hud.menu_action("right")
+	_ok(str(hud.menu_config()["ai_level"]) == "medium", "menu: Right from Easy is Medium")
+	var tap_hard: Rect2 = Rect2()
+	for it in hud.menu_plan()["items"]:
+		if it["row"] == "ai" and it["value"] == "hard":
+			tap_hard = it["rect"]
+	var evh := InputEventMouseButton.new()
+	evh.button_index = MOUSE_BUTTON_LEFT
+	evh.pressed = true
+	evh.position = tap_hard.get_center()
+	hud._unhandled_input(evh)
+	_ok(tap_hard.size.x > 0.0 and str(hud.menu_config()["ai_level"]) == "hard", "menu: a tap on Hard chooses it")
+	hud._menu_cfg["ai_level"] = "medium"
+	hud._menu_focus = 1
 	hud.menu_action("up")
 	hud.menu_action("right")
-	_ok(int(hud.menu_config()["players"]) == 2 and UiMenu.rows(hud.menu_config(), false).has("p2"), "menu: Right on Players chooses 2 players and Player 2's row appears")
+	_ok(int(hud.menu_config()["players"]) == 2 and UiMenu.rows(hud.menu_config(), false).has("p2") and not UiMenu.rows(hud.menu_config(), false).has("ai"), "menu: Right on Players chooses 2 players, Player 2's row appears and the computer's level goes (no computer plays)")
 	hud.menu_action("down")
 	hud.menu_action("down")
 	hud.menu_action("left")
@@ -5810,6 +5835,7 @@ func _menu_rules() -> void:
 	hud._menu_cfg["players"] = 2
 	hud._menu_cfg["p1"] = "pad"
 	hud._menu_cfg["p2"] = "kb"
+	hud._menu_cfg["ai_level"] = "hard"
 	var pre_start: int = (held["started"] as Array).size()
 	var start_it: Rect2 = Rect2()
 	for it in hud.menu_plan()["items"]:
@@ -5823,11 +5849,13 @@ func _menu_rules() -> void:
 	_ok(bool(hud.opts["reduce_flashing"]) and float(hud.opts["camera_shake"]) == 0.0 and not bool(hud.opts["captions"]) and str(hud.opts["control_hints"]) == "off", "menu: the boxes took effect (Reduce flashing on, Screen shake off, Captions off, the guide off)")
 	var saved = UiPrefs.get_value("menu", {})
 	_ok(saved is Dictionary and int((saved as Dictionary).get("players", 0)) == 2 and str((saved as Dictionary).get("p1", "")) == "pad", "menu: the choices are remembered in the prefs")
+	_ok(str(sent.get("ai_level", "")) == "hard" and str((saved as Dictionary).get("ai_level", "")) == "hard", "menu: Start sends the computer's level to the host and the prefs keep it")
 	# Reopen mid-match from the pause menu: Back returns to the match; the choices are the saved ones.
 	hud.show_pause_menu()
 	_ok(UiPause.ids(false, false).has("menu"), "menu: the pause menu has a Main menu entry")
 	hud.pause_menu_choose("menu")
 	_ok(hud.is_start_menu_open() and int(hud.menu_config()["players"]) == 2 and UiMenu.rows(hud.menu_config(), true).has("back"), "menu: Main menu opens it with the saved choices and a Back button")
+	_ok(str(hud.menu_config()["ai_level"]) == "hard", "menu: and the saved computer's level (the setting round-trips through save and load)")
 	var closed0: int = int(held["closed"])
 	hud.menu_action("back")
 	_ok(not hud.is_notice_open() and int(held["closed"]) == closed0 + 1 and (held["started"] as Array).size() == pre_start + 1, "menu: Esc goes back to the match without starting another")

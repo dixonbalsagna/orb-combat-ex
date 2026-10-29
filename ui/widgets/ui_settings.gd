@@ -211,7 +211,10 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary, 
 		help_need = UiText.wrap(status, fs_small, inner.size.x).size()
 	elif focus_i >= 0 and focus_i < rws.size():
 		help_need = UiText.wrap(str(rws[focus_i]["help"]), fs_small, inner.size.x).size()
-	var hint_n: int = 1 if hint_text != "" else 0
+	var hint_lines: PackedStringArray = PackedStringArray()   # the keys line: one line as written (its double spaces kept) while it fits, wrapped like the help when it does not (a larger text size, a narrow card)
+	if hint_text != "":
+		hint_lines = PackedStringArray([hint_text]) if UiText.width(hint_text, fs_small) <= inner.size.x else UiText.wrap(hint_text, fs_small, inner.size.x)
+	var hint_n: int = hint_lines.size()
 	var room: float = inner.size.y - header_h - gap * 2.0 - tm * HELP_BODY_ROWS - conf_h - 2.0
 	var help_cap: int = maxi(base_lines, int(floor(room / lh_small)) - hint_n)
 	var help_lines: int = clampi(help_need, base_lines, help_cap)
@@ -333,7 +336,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary, 
 			bad += 1
 	var out := {"card": card, "inner": inner, "close": close, "cs": cs, "pad": pad, "tm": tm, "title": title, "title_pos": Vector2(inner.position.x, inner.position.y + UiText.ascent(fs_title)),
 		"fs_title": fs_title, "fs_body": fs_body, "fs_small": fs_small, "lh": lh, "lh_small": lh_small, "body": body, "footer": footer, "rows": placed, "content_h": content_h,
-		"max_scroll": max_scroll, "scroll": scroll, "stack": stack, "hint": hint_text, "help_lines": help_lines, "help_base": base_lines, "help_need": help_need, "help_scroll": int(st.get("help_scroll", 0)), "sbw": sbw, "bad": bad, "gap": gap, "focus": int(st.get("focus", -1)),
+		"max_scroll": max_scroll, "scroll": scroll, "stack": stack, "hint": hint_text, "hint_lines": hint_lines, "help_lines": help_lines, "help_base": base_lines, "help_need": help_need, "help_scroll": int(st.get("help_scroll", 0)), "sbw": sbw, "bad": bad, "gap": gap, "focus": int(st.get("focus", -1)),
 		"status": status, "confirm": conf_rects, "confirm_labels": confirm}
 	for cr2 in conf_rects:
 		if not card.encloses(cr2):
@@ -498,8 +501,9 @@ static func draw(ci: CanvasItem, p: Dictionary, opts: Dictionary) -> void:
 		ci.draw_rect(hb, Color(edge, 0.18))
 		var hth: float = hb.size.y * float(nl) / float(hl.size())
 		ci.draw_rect(Rect2(hb.position.x, hb.position.y + (hb.size.y - hth) * float(h0) / float(hw["max"]), hb.size.x, hth), Color(ink, 0.6))
-	if str(p["hint"]) != "":
-		UiText.draw(ci, str(p["hint"]), Vector2(foot.position.x, fy), fs_small, dim, -1)
+	for hln in p["hint_lines"]:
+		UiText.draw(ci, str(hln), Vector2(foot.position.x, fy), fs_small, dim, -1)
+		fy += float(p["lh_small"])
 	var cl: Array = p["confirm_labels"]
 	for k in range(cl.size()):
 		var cr3: Rect2 = p["confirm"][k]

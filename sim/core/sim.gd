@@ -141,6 +141,9 @@ class MatchJob extends RefCounted:
 static func _mHead(J: MatchJob) -> void:
 	var S: SimState = J.S
 	var setup: Dictionary = J.setup
+	if setup.has("aiLevel"):   # the computer's level for this match, the start menu's choice (UI): a level of data/director/ai.json. The file's own level is "" (as a match with no key runs), so a match at it is the same as ever; the level is hashed with the data (DirAI.skillText)
+		var lvl: String = String(setup.aiLevel)
+		DirAI.level = "" if (lvl == String(DirAI.skill().level) or not (DirAI.skill().levels as Dictionary).has(lvl)) else lvl
 	S.game.seed = float(J.seed & 0xFFFFFFFF)
 	S.rng = SimRng.new(J.seed & 0xFFFFFFFF)
 	S.arenaCols = _arenaCols(setup)   # the arena's length in columns (World: a ring of the planet's; needs a planet), else the planet's 4,800

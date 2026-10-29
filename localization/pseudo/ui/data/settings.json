@@ -92,6 +92,7 @@
       "title": "[ÅÅççéššííbíĺííţý]",
       "items": [
         "colour_vision",
+        "text_size",
         "reduced_motion",
         "reduce_flashing",
         {
@@ -193,6 +194,11 @@
       "protan": "[Pŕööţáñööpíá]",
       "deutan": "[Ďééüţééŕáñööpíá]",
       "tritan": "[Ţŕííţáñööpíá]"
+    },
+    "text_size": {
+      "1.0": "[Ñöŕmáĺ]",
+      "1.25": "[Ĺáŕĝé]",
+      "1.5": "[Ĺáŕĝéŕ]"
     },
     "you_marker": {
       "always": "[Åĺŵáýš]",

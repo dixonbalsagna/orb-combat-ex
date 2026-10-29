@@ -390,7 +390,17 @@ func _match_setup(seed: int = 0) -> Dictionary:
 		return _planet_next.duplicate()
 	var su: Dictionary = {"intro": host.intro_record(seed)}
 	su.merge(_planet_next)
+	su.merge(_ai_part())
 	return su
+
+
+## The computer's level, from the start menu's choice (UI: the menu config's ai_level). It is part of every match's setup after the menu has run ("aiLevel", read by SimCore), so New match
+## and Play again keep it; "" until then, when the setup carries none and the match runs at the data's own level.
+var _ai_level: String = ""
+
+
+func _ai_part() -> Dictionary:
+	return {"aiLevel": _ai_level} if _ai_level != "" else {}
 
 
 ## The planet a menu's choices name, as the match's setup keys (planet, planetGen, touch, arena); {} while they name none (the menu has no such choice yet: the campaign's and the planet picker's
@@ -1235,10 +1245,13 @@ func _on_menu_started(cfg: Dictionary) -> void:
 	var ai := {"p1": false, "p2": not two}
 	var sd: int = fresh_seed()
 	_planet_next = planet_part(cfg)
+	_ai_level = str(cfg.get("ai_level", ""))
 	if bool(cfg.get("intros", true)):
 		start_match(sd, ai)
 	else:
-		start_match(sd, ai, _planet_next.duplicate())
+		var su: Dictionary = _planet_next.duplicate()
+		su.merge(_ai_part())
+		start_match(sd, ai, su)
 	_planet_next = {}
 	var pads: Array = Input.get_connected_joypads()
 	var next_pad := 0

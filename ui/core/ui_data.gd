@@ -325,6 +325,13 @@ static func clamp_option(key: String, value):
 		var v: float = clampf(float(value), float(o["min"]), float(o["max"]))
 		v = float(o["min"]) + roundf((v - float(o["min"])) / step) * step
 		return v
+	if (value is int or value is float) and not o.has("min") and o.has("choices") and not (o["choices"] as Array).is_empty() and (o["choices"] as Array)[0] is float:
+		# A numeric choice (thickness, text size): a saved value the data does not list (an old file, a hand edit) is the nearest one it does.
+		var best = (o["choices"] as Array)[0]
+		for c in o["choices"]:
+			if absf(float(c) - float(value)) < absf(float(best) - float(value)):
+				best = c
+		return best
 	if value is String and o.has("choices") and not (o["choices"] as Array).has(value):
 		# A choice the data no longer offers (a saved "brawler" layout, retired in favour of the stance layout): the nearest one it replaced, else the default.
 		var legacy := {"brawler": "arena"}

@@ -307,6 +307,12 @@ static func plan(m: UiFighterModel, rect: Rect2, s: float, o: Dictionary) -> Dic
 	var all: Array = rows(m, preset, energy_style(m, o))
 	if bool(o.get("legend_compact", false)):
 		all = compact_rows(m, all)
+	# A larger Text size steps the words down, never below what Normal draws, until the legend's rows all fit its column, so a bigger setting hides as few controls as it can (Normal is as it was).
+	var fs_normal: int = maxi(int(round(18.0 * s)), int(UiLook.text_floor))
+	while UiText.size_mult > 1.0 and cap < all.size() and fs > fs_normal:
+		fs -= 1
+		row_h = maxf(gh, float(fs) * 1.4) + 4.0 * s
+		cap = int(floor((rect.size.y - pad * 2.0) / row_h))
 	var shown: Array = all.slice(0, maxi(cap, 0))
 	if shown.is_empty():
 		return out

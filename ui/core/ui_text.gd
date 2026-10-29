@@ -19,6 +19,14 @@ static var defer: bool = false
 static var _queue: Array = []
 static var tracing := false          # a test switch: every line drawn is kept in `trace` (hud_check's "no roster name on screen")
 static var trace: Array = []
+static var boxing := false           # a test switch (text_size_check): the rectangle of every line drawn is kept in `boxes`, where its text is
+static var boxes: Array = []
+
+
+## Who drew the line (the caller's file and line, for the tests' messages).
+static func _where() -> String:
+	var st: Array = get_stack()
+	return "%s:%d" % [str(st[2]["source"]).get_file(), int(st[2]["line"])] if st.size() > 2 else ""
 
 
 static func flush(ci: CanvasItem) -> void:
@@ -34,9 +42,14 @@ static func f() -> Font:
 	return ThemeDB.fallback_font
 
 
-## A design size at scale s, never below the floor (real pixels).
+## The Text size option (Settings): 1.0 Normal, 1.25 Large, 1.5 Larger. It scales the size a text asks for, and the floor of that ask; a line that does not fit its room still steps down
+## toward UiLook.text_floor, which it does not scale (the smallest text there is), so a bigger setting never cuts a line that Normal shows whole.
+static var size_mult: float = 1.0
+
+
+## A design size at scale s, times the text-size setting, never below the floor (real pixels; the floor scales with the setting).
 static func px(design: float, s: float, floor_px: float = -1.0) -> int:
-	return int(round(maxf(design * s, floor_px if floor_px >= 0.0 else UiLook.text_floor)))
+	return int(round(maxf(design * s * size_mult, (floor_px if floor_px >= 0.0 else UiLook.text_floor) * size_mult)))
 
 
 ## Replace glyphs the font lacks with ASCII. "→" is left in place: draw() and width() handle it as a vector arrow.
@@ -84,6 +97,9 @@ static func height(fs: int) -> float:
 static func draw(ci: CanvasItem, text: String, pos: Vector2, fs: int, color: Color, align: int = -1, outline: float = 0.0) -> float:
 	if tracing:
 		trace.append(text)
+	if boxing:
+		var bw: float = width(text, fs)
+		boxes.append({"text": text, "rect": Rect2(pos.x - (bw * 0.5 if align == 0 else (bw if align == 1 else 0.0)), pos.y - ascent(fs), bw, height(fs)), "fs": fs, "at": _where()})
 	if defer:
 		_queue.append([text, pos, fs, color, align, outline])
 		return width(text, fs)

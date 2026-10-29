@@ -88,6 +88,8 @@ func _ready() -> void:
 			hud.consume({"type": "cue", "actor": 0, "kind": "blow", "text": "light", "k": 1})
 	if args.has("cvd"):
 		hud.set_option("colour_vision", str(args["cvd"]))   # protan, deutan or tritan
+	if args.has("textsize"):
+		hud.set_option("text_size", float(args["textsize"]) if str(args["textsize"]) != "1" else 1.25)   # 1.0 Normal, 1.25 Large, 1.5 Larger
 	if args.has("youmark"):
 		hud.set_option("you_marker", str(args["youmark"]))   # always, intro or off
 	if args.has("sides"):
@@ -213,6 +215,11 @@ func _ready() -> void:
 			hud._rm_focus = hud._rm_row_index(str(args["rfocus"]))
 	if args.has("howto"):
 		hud.show_howto(args.has("firstrun"), int(args["howto"]) if str(args["howto"]).is_valid_int() else 0)
+	if args.has("menu"):
+		hud.show_start_menu(false)   # the start menu (--menu=2 with two players)
+		if str(args["menu"]) == "2":
+			hud._menu_cfg["players"] = 2
+			hud._menu_invalidate()
 
 
 func _parse_args() -> Dictionary:
