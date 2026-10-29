@@ -13,8 +13,10 @@ extends SceneTree
 ##   - after every tick, NetDesync.digest of A (and of C once it runs) equals R's, and a live state's records read the
 ##     same values as its arrays;
 ##   - every snapshot of A read 12 ticks after it was taken, as a peer reads a confirmed tick (NetSession.onConfirmed):
-##     its NetDesync.digest equals R's at that tick, and every 30 ticks so do its SimHash.stateHash and the field walk
-##     (NetDesync.firstDiffs) against R's snapshot of that tick;
+##     its NetDesync.digest equals R's at that tick; every 30 ticks so do its SimHash.stateHash and the field walk
+##     (NetDesync.firstDiffs) against R's snapshot of that tick, and so does its SimHash at every tick while a turn is
+##     decided and not yet made, so the snapshots taken just before the swap are hashed after it (a past state's
+##     generation fields are its own bG and tG, not its records' later copies: the swap renumbers the districts);
 ##   - C starts as R did (its digest and SimHash at tick 0);
 ##   - at the end the three full SimHash agree.
 ##   godot --headless --path . --script res://sim/core/tools/two_states_check.gd -- [--seeds=1,2] [--ticks=600]
@@ -106,6 +108,7 @@ func _run(name: String, seed: int, ticks: int) -> void:
 	var err: String = ""
 	var rollbacks: int = 0
 	var reads: int = 0
+	var hashed: int = 0   # of them, the SimHash compares
 	var cFrom: int = -1
 	var cAt: int = ticks / 2
 	var swapAt: int = -1
@@ -119,6 +122,8 @@ func _run(name: String, seed: int, ticks: int) -> void:
 		if b % HASH_EVERY == 0:
 			refH[b] = SimHash.stateHash(R).gameplay
 			snapR[b] = NetSnapshot.take(R, rPool)
+		elif R.epoch != null and R.epoch.next != null:   # a turn decided and not yet made: R's SimHash every tick, for the snapshots read after the swap
+			refH[b] = SimHash.stateHash(R).gameplay
 		# A, with a rollback every EVERY ticks
 		snapA[t] = NetSnapshot.take(A, pool)
 		_tick(A, t, ins[t], turn)
@@ -148,9 +153,11 @@ func _run(name: String, seed: int, ticks: int) -> void:
 					err = "A's snapshot of tick %d read through its records at tick %d differs from R's" % [r, b]
 			elif err == "" and NetDesync.digest(root) != refD[r]:
 				err = "A's snapshot of tick %d, read at tick %d: its digest differs from R's" % [r, b]
-			if snapR.has(r):
+			if refH.has(r):
+				hashed += 1
 				if err == "" and SimHash.stateHash(root).gameplay != refH[r]:
 					err = "A's snapshot of tick %d, read at tick %d: its SimHash differs from R's" % [r, b]
+			if snapR.has(r):
 				var diffs: Array = NetDesync.firstDiffs(root, snapR[r].root, 4)
 				if err == "" and not diffs.is_empty():
 					err = "A's snapshot of tick %d against R's: the field walk finds %s" % [r, str(diffs)]
@@ -194,8 +201,8 @@ func _run(name: String, seed: int, ticks: int) -> void:
 		failures += 1
 	if not quiet:
 		var turns: String = "   the turn swapped at tick %d" % swapAt if turn else ""
-		print("%-8s seed %d  %s  %d ticks  %d rollbacks  %d snapshots read late  C from tick %d at %d  %d buildings %d trees%s%s" % [name, seed,
-			"ok  " if err == "" else "FAIL", ticks, rollbacks, reads, cFrom, cAt + 1, R.buildings.size(), R.trees.size(), turns,
+		print("%-8s seed %d  %s  %d ticks  %d rollbacks  %d snapshots read late (%d hashed)  C from tick %d at %d  %d buildings %d trees%s%s" % [name, seed,
+			"ok  " if err == "" else "FAIL", ticks, rollbacks, reads, hashed, cFrom, cAt + 1, R.buildings.size(), R.trees.size(), turns,
 			"" if err == "" else "\n  FAIL  " + err])
 	for k in snapA:
 		pool.put(snapA[k])

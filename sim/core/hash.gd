@@ -220,7 +220,7 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 					"fled": out.append(S.bFled[i])
 					"fmask": out.append(S.bFmask[i])
 					"wear": out.append(S.bWear[i])
-					_: out.append(b.get(k))
+					_: out.append(S.bG[i].get(k))   # the generation fields from the state's own record (a past snapshot's, not a later copy on write: the calm turn renumbers districts)
 		else:
 			_obj(out, b, BUILDING)
 		var fd: PackedFloat32Array = S.bFdmg[i] if bound else b.fdmg
@@ -242,7 +242,7 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 	for i in range(S.trees.size()):
 		var t = S.trees[i]
 		if bound:
-			out.append(t.x); out.append(t.h); out.append(S.tAlive[i] != 0); out.append(S.tBurn[i])   # TREE's order
+			out.append(S.tG[i].x); out.append(S.tG[i].h); out.append(S.tAlive[i] != 0); out.append(S.tBurn[i])   # TREE's order; x and h from the state's own generation record
 		else:
 			_obj(out, t, TREE)
 	out.append(float(S.shotSeq)); out.append(float(S.shots.size()))   # shots in flight (sim/core/shots.gd)
