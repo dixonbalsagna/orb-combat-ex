@@ -132,7 +132,7 @@ The reads are Controls' (`right-hand-attacks.md` §2). The game needs only three
 
 ## 5. Pillar 2 and the generator
 
-**Pillar 2 survives, reworded.** Proposed for `pillars.md`, to apply on the EP's word: "Intent, not combos. The left hand chooses intent (guard, evade, brace: the old stances). The right hand chooses weight and direction. The director owns which blow lands, the string, the links and the staging. No input is a combo: a press is a blow, a flick is a blow, and there are no motion inputs."
+**Pillar 2 survives, reworded.** Proposed wording, **Orb's creative call** (the EP asks Orb after the prototype; `pillars.md` stays as it is until then): "Intent, not combos. The left hand chooses intent (guard, evade, brace: the old stances). The right hand chooses weight and direction. The director owns which blow lands, the string, the links and the staging. No input is a combo: a press is a blow, a flick is a blow, and there are no motion inputs."
 - That last clause keeps the right stick's five patterns (§2) parked: **a strike is a flick or a hold, never a pattern.**
 - The brace is the stance's modern form (R36), now where the stances always belonged, on the hand that survives.
 
@@ -164,6 +164,8 @@ The reads are Controls' (`right-hand-attacks.md` §2). The game needs only three
   - R10.
 
 ## 7. Owners and reads
+
+**Held until Orb has played the prototype** (EP, 2026-10-28): none of this routing goes out before then.
 
 | What | Owner |
 | :--- | :--- |
