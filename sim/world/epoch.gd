@@ -673,6 +673,7 @@ static func swap(S: SimState) -> void:
 		S.trees = WorldLakes.dryTrees(kept, ep.lakes, NC)
 		WorldBiomes.fineCols = ep.fcols
 		S.fineCols = ep.fcols
+	S.bindStructures(true)   # Simulation (packed structures): new records for the new arrays, so earlier snapshots' and the plan's keep theirs
 	# --- the derived and per-building state
 	S.lanes = WorldLanes.build(S, ep.dlist)
 	WorldStructures.buildIndex(S)

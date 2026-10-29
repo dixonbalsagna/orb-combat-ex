@@ -259,6 +259,7 @@ static func _mEnd(J: MatchJob) -> void:
 	S.out.fx.clear()
 	S.tick = 0
 	S.dt = 0.0
+	S.bindStructures()   # the world's buildings and trees: their per-tick fields into the state's arrays (snapshots share the records)
 	J.done = true
 
 
@@ -281,6 +282,7 @@ static func _arenaCols(setup: Dictionary) -> int:
 ## false during hit-stop (no input consumed; the host keeps its key presses for the next tick), true otherwise.
 static func step(S: SimState, inputs = null) -> bool:
 	var live: bool = _step(S, inputs)
+	S.bindCheck()   # a tick that replaced the buildings or the trees (a world's tool) binds them again; the calm turn binds its own
 	SimState.sealFresh()   # the generation records this tick made (the calm turn's) are sealed before a snapshot can share them
 	return live
 

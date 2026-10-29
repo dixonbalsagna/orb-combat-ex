@@ -208,13 +208,28 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 	for v in S.world.cbBuckets:
 		out.append(v)
 	out.append(float(S.buildings.size()))
-	for b in S.buildings:
-		_obj(out, b, BUILDING)
-		out.append(float(b.fdmg.size()))   # floor damage: empty for a building never hit locally
-		for v in b.fdmg:
+	var bound: bool = S.bound()   # the per-tick fields from the state's arrays (a snapshot's records read the live state's), in the same order
+	for i in range(S.buildings.size()):
+		var b = S.buildings[i]
+		if bound:
+			for k in BUILDING:
+				match k:
+					"hp": out.append(S.bHp[i])
+					"alive": out.append(S.bAlive[i] != 0)
+					"popAlive": out.append(S.bPopAlive[i])
+					"fled": out.append(S.bFled[i])
+					"fmask": out.append(S.bFmask[i])
+					"wear": out.append(S.bWear[i])
+					_: out.append(b.get(k))
+		else:
+			_obj(out, b, BUILDING)
+		var fd: PackedFloat32Array = S.bFdmg[i] if bound else b.fdmg
+		out.append(float(fd.size()))   # floor damage: empty for a building never hit locally
+		for v in fd:
 			out.append(v)
-		if b.marks != 0:
-			out.append(float(b.marks))   # World: repeats escalate (only with brunt.json repeatMarks above 0)
+		var mk: int = S.bMarks[i] if bound else b.marks
+		if mk != 0:
+			out.append(float(mk))   # World: repeats escalate (only with brunt.json repeatMarks above 0)
 	out.append(1.0 if S.contactOn else 0.0)   # World's ground contact (G2)
 	if S.epoch != null:   # World's calm-moment turn: only a match that can turn hashes it, so a match without it hashes as before. The count, the last turn's time, the drift, whether a turn is decided
 		out.append(float(S.epoch.n)); out.append(S.epoch.lastT); out.append(S.epoch.drift)   # (and its bearing and pivot column), and the hash of the ring's slice: the world the match is on
@@ -224,8 +239,12 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 			out.append(float(S.epoch.next.k)); out.append(S.epoch.next.fb)   # and how it is warmed (the columns a tick, the second ring's bearing)
 		out.append(float(S.epoch.sh))
 	out.append(float(S.trees.size()))
-	for t in S.trees:
-		_obj(out, t, TREE)
+	for i in range(S.trees.size()):
+		var t = S.trees[i]
+		if bound:
+			out.append(t.x); out.append(t.h); out.append(S.tAlive[i] != 0); out.append(S.tBurn[i])   # TREE's order
+		else:
+			_obj(out, t, TREE)
 	out.append(float(S.shotSeq)); out.append(float(S.shots.size()))   # shots in flight (sim/core/shots.gd)
 	for sh in S.shots:
 		_obj(out, sh, SHOT)

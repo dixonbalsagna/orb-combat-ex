@@ -41,8 +41,26 @@ var crack := PackedFloat32Array()     # pavement crack intensity per terrain col
 var slides: Array = []                # Slide records, oldest first, capped at WorldSlide.LIST_MAX
 var waterWin: Array = []              # active water-flow windows [centre column, half width, quiet steps, age steps]
 var waterTick: float = 0.0            # unfrozen ticks since the match started; paces the water step
-var buildings: Array = []
-var trees: Array = []
+var buildings: Array = []           # Building records; once bound (bindStructures) their per-tick fields live in the arrays below
+var trees: Array = []               # TreeState records, the same
+# The buildings' and trees' per-tick fields, by index in S.buildings and S.trees (bindStructures; docs/architecture/packed-structures.md).
+# A bound record reads and writes them through its Hold; a snapshot copies these arrays and shares the records. Not hashed
+# as arrays: hash.gd reads them per record, in the records' order and field order, as before.
+var bHp := PackedFloat64Array()
+var bAlive := PackedByteArray()
+var bFmask := PackedInt64Array()
+var bFdmg: Array = []               # PackedFloat32Array per building: copied shallow, so one is written in place only in the tick that made it (World's floor writes copy it first)
+var bMarks := PackedInt64Array()
+var bFled := PackedFloat64Array()
+var bPopAlive := PackedFloat64Array()
+var bWear := PackedFloat64Array()
+var bG: Array = []                  # each building's BuildingGen: copied shallow (the records are sealed, copy on write); the restore hook puts them back on the records
+var tAlive := PackedByteArray()
+var tBurn := PackedFloat64Array()
+var tG: Array = []                  # each tree's TreeGen, as bG
+var hold = null                     # the Hold the records are bound to (shared by snapshots), null before the first bind
+var bBound: Array = []              # the S.buildings and S.trees arrays the hold was bound for (shared), so a replaced array is bound again
+var tBound: Array = []
 var beams: Array = []
 var shots: Array = []                 # Shot records in flight, in the order they were fired (sim/core/shots.gd), at most SimShots.cap
 var shotSeq: int = 0                  # the last shot id given this match
@@ -64,7 +82,10 @@ var out := Out.new()
 ## before the match starts, and replaced whole (never written in place) by the calm turn, so a snapshot's reference
 ## keeps its world's. A packed array is shared by reference, not copied on write: a write in place to either would be a
 ## desync, which rollback_check finds. A building's and a tree's generation fields are shared through their `g`.
-const SNAPSHOT: Dictionary = {"share": ["base", "bIdx"]}
+## The records in S.buildings and S.trees are shared too (their classes' SNAPSHOT says so), with the arrays that hold them:
+## a snapshot copies their per-tick fields as the packed arrays above (bFdmg, bG and tG shallow), and afterRestore()
+## points the records at the restored arrays. Neither array is changed in place during play: the calm turn replaces both.
+const SNAPSHOT: Dictionary = {"share": ["base", "bIdx", "buildings", "trees", "hold", "bBound", "tBound"], "shallow": ["bFdmg", "bG", "tG"]}
 
 static var _b0: BuildingGen = _seal(BuildingGen.new())   # the generation fields of a building not yet written (sealed)
 static var _t0: TreeGen = _seal(TreeGen.new())
@@ -84,6 +105,151 @@ static func sealFresh() -> void:
 	for gen in _fresh:
 		gen.sealed = true
 	_fresh.clear()
+
+
+## Bind the records in S.buildings and S.trees to a new Hold: their per-tick fields move into this state's arrays, at
+## their indices. A record bound to this state's hold is bound again in place (the calm turn's kept buildings stay the
+## same objects), and its old hold is marked `moved`, so restoring an earlier snapshot binds it back (afterRestore). A
+## record bound to another hold is copied first; with `fresh`, so is one not bound yet, so a record a cached plan holds
+## (the calm turn's prepared buildings and trees) keeps its values for a replay. The arrays are new (S.buildings and
+## S.trees too), so no snapshot's is changed. SimCore binds at the end of a match's start and of any tick that replaced
+## the arrays (bindCheck); the calm turn binds with `fresh` once it has swapped them.
+func bindStructures(fresh: bool = false) -> void:
+	var h := Hold.new()
+	h.owner = get_instance_id()
+	var n: int = buildings.size()
+	var bs: Array = []
+	bs.resize(n)
+	h.hp.resize(n); h.alive.resize(n); h.fmask.resize(n); h.fdmg.resize(n); h.marks.resize(n)
+	h.fled.resize(n); h.popAlive.resize(n); h.wear.resize(n); h.g.resize(n)
+	for i in range(n):
+		var b: Building = buildings[i]
+		var o: Building = b
+		if b._h != null and b._h == hold:
+			hold.moved = true
+		elif fresh or b._h != null:
+			o = Building.new()
+			o.g = b.g
+		h.hp[i] = b.hp; h.alive[i] = 1 if b.alive else 0; h.fmask[i] = b.fmask; h.fdmg[i] = b.fdmg; h.marks[i] = b.marks
+		h.fled[i] = b.fled; h.popAlive[i] = b.popAlive; h.wear[i] = b.wear; h.g[i] = b.g
+		o._h = h
+		o._i = i
+		bs[i] = o
+	var m: int = trees.size()
+	var ts: Array = []
+	ts.resize(m)
+	h.tAlive.resize(m); h.tBurn.resize(m); h.tG.resize(m)
+	for i in range(m):
+		var t: TreeState = trees[i]
+		var o: TreeState = t
+		if t._h != null and t._h == hold:
+			hold.moved = true
+		elif fresh or t._h != null:
+			o = TreeState.new()
+			o.g = t.g
+		h.tAlive[i] = 1 if t.alive else 0; h.tBurn[i] = t.burn; h.tG[i] = t.g
+		o._h = h
+		o._i = i
+		ts[i] = o
+	buildings = bs
+	trees = ts
+	bBound = bs
+	tBound = ts
+	hold = h
+	bHp = h.hp; bAlive = h.alive; bFmask = h.fmask; bFdmg = h.fdmg; bMarks = h.marks
+	bFled = h.fled; bPopAlive = h.popAlive; bWear = h.wear; bG = h.g
+	tAlive = h.tAlive; tBurn = h.tBurn; tG = h.tG
+
+
+## Bind again when S.buildings or S.trees is not the array last bound (a match's start, a world's tool): cheap otherwise.
+func bindCheck() -> void:
+	if hold == null or not is_same(buildings, bBound) or not is_same(trees, tBound):
+		bindStructures()
+
+
+## True when hash.gd and the like read the per-tick fields from this state's arrays (a snapshot's records are bound to
+## the live state's hold, so a snapshot is read this way); false for records not bound yet, read as records.
+func bound() -> bool:
+	return hold != null and is_same(buildings, bBound) and is_same(trees, tBound)
+
+
+## The restore hook (net/snapshot.gd restore): point the shared records at this state's restored arrays, and put back
+## the generation records of the restored tick when they differ from the ones the records hold. When a later bind moved
+## some of its records to another hold (the calm turn), every record is bound back, and that hold is marked moved in
+## turn (a snapshot taken after the turn binds them forward again). A hold another state owns
+## (a snapshot restored into a state it was not taken from) is not moved: this state gets records of its own.
+func afterRestore() -> void:
+	if hold == null:
+		return
+	if hold.owner != get_instance_id():
+		_rebuildRecords()
+		return
+	var h: Hold = hold
+	var gSame: bool = h.g == bG and h.tG == tG   # the records' g are the hold's (an engine compare of references)
+	h.hp = bHp; h.alive = bAlive; h.fmask = bFmask; h.fdmg = bFdmg; h.marks = bMarks
+	h.fled = bFled; h.popAlive = bPopAlive; h.wear = bWear; h.g = bG
+	h.tAlive = tAlive; h.tBurn = tBurn; h.tG = tG
+	if h.moved:
+		for i in range(buildings.size()):
+			var b: Building = buildings[i]
+			if b._h != h:
+				b._h.moved = true
+				b._h = h
+				b._i = i
+			b.g = bG[i]
+		for i in range(trees.size()):
+			var t: TreeState = trees[i]
+			if t._h != h:
+				t._h.moved = true
+				t._h = h
+				t._i = i
+			t.g = tG[i]
+		h.moved = false
+	elif not gSame:
+		for i in range(buildings.size()):
+			buildings[i].g = bG[i]
+		for i in range(trees.size()):
+			trees[i].g = tG[i]
+
+
+## New records for this state, from its arrays (afterRestore's rare case).
+func _rebuildRecords() -> void:
+	var bs: Array = []
+	for i in range(buildings.size()):
+		var o := Building.new()
+		o.g = bG[i]
+		o._hp = bHp[i]; o._alive = bAlive[i] != 0; o._fmask = bFmask[i]; o._fdmg = bFdmg[i]; o._marks = bMarks[i]
+		o._fled = bFled[i]; o._popAlive = bPopAlive[i]; o._wear = bWear[i]
+		bs.append(o)
+	var ts: Array = []
+	for i in range(trees.size()):
+		var o := TreeState.new()
+		o.g = tG[i]
+		o._alive = tAlive[i] != 0; o._burn = tBurn[i]
+		ts.append(o)
+	buildings = bs
+	trees = ts
+	bindStructures()
+
+
+## A state's buildings' and trees' per-tick fields and generation records (bindStructures): the arrays of the state it
+## was bound for, pointed at that state's restored arrays by afterRestore. Holds no record, so no reference cycle.
+class Hold:
+	const SNAPSHOT: Dictionary = {"shared": true}
+	var owner: int = 0            # the instance id of the state it was bound for
+	var moved: bool = false       # a later bind (or restore) bound some of its records to another hold
+	var hp := PackedFloat64Array()
+	var alive := PackedByteArray()
+	var fmask := PackedInt64Array()
+	var fdmg: Array = []
+	var marks := PackedInt64Array()
+	var fled := PackedFloat64Array()
+	var popAlive := PackedFloat64Array()
+	var wear := PackedFloat64Array()
+	var g: Array = []
+	var tAlive := PackedByteArray()
+	var tBurn := PackedFloat64Array()
+	var tG: Array = []
 
 
 class Game:
@@ -270,14 +436,27 @@ class Crater:
 	var sdepth: float = 0.0   # furrow depth at the bowl end
 
 
-## A building's per-tick state. Its generation fields (where it stands, its size and kind, its people at the start) are
-## constants of the world it was built in, so they live apart in its BuildingGen `g`, which every rollback snapshot shares
-## instead of copying (net/snapshot.gd reads SNAPSHOT). They read and write as fields of the building, as before; a write
-## to a sealed g (any g once the tick or match piece that made it is over) gives this building a fresh copy first, so a g a
-## snapshot holds never changes (the calm turn's renumbering of districts and indices writes this way).
+## A building. Its generation fields (where it stands, its size and kind, its people at the start) are constants of the
+## world it was built in, so they live apart in its BuildingGen `g`; a write to a sealed g (any g once the tick or match
+## piece that made it is over) gives this building a fresh copy first, so a g a snapshot holds never changes (the calm
+## turn's renumbering of districts and indices writes this way). Its per-tick fields, once SimState.bindStructures has
+## bound it, live in its state's packed arrays at its index `_i` (through the Hold `_h`); before that, in its own `_`
+## fields (a record a world's generation or a tool makes). Every field reads and writes as a field of the building, as
+## before. The record itself is shared by every rollback snapshot of the state (net/snapshot.gd reads SNAPSHOT).
 class Building:
-	const SNAPSHOT: Dictionary = {"share": ["g"], "skip": BuildingGen.FIELDS}
+	const TICK: Array = ["hp", "alive", "fmask", "fdmg", "marks", "fled", "popAlive", "wear"]
+	const SNAPSHOT: Dictionary = {"shared": true}
 	var g: BuildingGen = SimState._b0   # the generation fields (shared, copy on write)
+	var _h: Hold = null       # the hold it is bound to (null: not bound, its fields are its own)
+	var _i: int = 0           # its index in the hold's arrays
+	var _hp: float = 0.0
+	var _alive: bool = true
+	var _fmask: int = 1
+	var _fdmg := PackedFloat32Array()
+	var _marks: int = 0
+	var _fled: float = 0.0
+	var _popAlive: float = 0.0
+	var _wear: float = 0.0
 	var district: int:          # D1: the district it stands in (index over all settlements), set at generation
 		get: return g.district
 		set(v): _w().district = v
@@ -290,19 +469,35 @@ class Building:
 	var floors: int:            # floor count (world/brunt.gd floorCount), set at generation
 		get: return g.floors
 		set(v): _w().floors = v
-	var fmask: int = 1        # one bit per standing floor, bit 0 the ground floor
-	var fdmg := PackedFloat32Array()   # damage per floor, allocated on the first local hit (empty before)
+	var fmask: int:           # one bit per standing floor, bit 0 the ground floor
+		get: return _fmask if _h == null else _h.fmask[_i]
+		set(v):
+			if _h == null: _fmask = v
+			else: _h.fmask[_i] = v
+	var fdmg: PackedFloat32Array:   # damage per floor, allocated on the first local hit (empty before); bound, a snapshot shares it, so it is copied before a write in place (World's floor writes)
+		get: return _fdmg if _h == null else _h.fdmg[_i]
+		set(v):
+			if _h == null: _fdmg = v
+			else: _h.fdmg[_i] = v
 	var idx: int:             # index in S.buildings (set at generation and by the calm turn; not hashed)
 		get: return g.idx
 		set(v): _w().idx = v
 	var place: int:           # the place it stands in: its settlement index today, the planet's place id (set at generation; not hashed: the world hash covers it)
 		get: return g.place
 		set(v): _w().place = v
-	var marks: int = 0        # World: sends that have struck it (repeats escalate: each mark is one tier higher for the next send, at most two); counted only with brunt.json repeatMarks above 0; hashed when not 0
+	var marks: int:           # World: sends that have struck it (repeats escalate: each mark is one tier higher for the next send, at most two); counted only with brunt.json repeatMarks above 0; hashed when not 0
+		get: return _marks if _h == null else _h.marks[_i]
+		set(v):
+			if _h == null: _marks = v
+			else: _h.marks[_i] = v
 	var plan: int:            # its index in that place's plan (the plan is seeded, so the same building has the same index every time; not hashed)
 		get: return g.plan
 		set(v): _w().plan = v
-	var fled: float = 0.0     # people who left in the district flight so far (capped at WorldCollateral.FLIGHT_MAX of pop)
+	var fled: float:          # people who left in the district flight so far (capped at WorldCollateral.FLIGHT_MAX of pop)
+		get: return _fled if _h == null else _h.fled[_i]
+		set(v):
+			if _h == null: _fled = v
+			else: _h.fled[_i] = v
 	var z: float:             # depth of the building's centre from the fighter plane (negative: behind), world units
 		get: return g.z
 		set(v): _w().z = v
@@ -324,8 +519,16 @@ class Building:
 	var maxhp: float:
 		get: return g.maxhp
 		set(v): _w().maxhp = v
-	var hp: float = 0.0
-	var alive: bool = true
+	var hp: float:
+		get: return _hp if _h == null else _h.hp[_i]
+		set(v):
+			if _h == null: _hp = v
+			else: _h.hp[_i] = v
+	var alive: bool:
+		get: return _alive if _h == null else _h.alive[_i] != 0
+		set(v):
+			if _h == null: _alive = v
+			else: _h.alive[_i] = 1 if v else 0
 	var kind: String:
 		get: return g.kind
 		set(v): _w().kind = v
@@ -335,19 +538,30 @@ class Building:
 	var seed: float:
 		get: return g.seed
 		set(v): _w().seed = v
-	var popAlive: float = 0.0
-	var wear: float = 0.0      # the unshown wear a building has taken from shots (WorldBlast.shotBuilding): 0 or more while it only scorches, -1 once it has shown
+	var popAlive: float:
+		get: return _popAlive if _h == null else _h.popAlive[_i]
+		set(v):
+			if _h == null: _popAlive = v
+			else: _h.popAlive[_i] = v
+	var wear: float:           # the unshown wear a building has taken from shots (WorldBlast.shotBuilding): 0 or more while it only scorches, -1 once it has shown
+		get: return _wear if _h == null else _h.wear[_i]
+		set(v):
+			if _h == null: _wear = v
+			else: _h.wear[_i] = v
 
 	func _w() -> BuildingGen:
 		if g.sealed:
 			g = g.copy()
 			SimState._fresh.append(g)
+			if _h != null:   # bound: the state's array holds it too, and a snapshot's restore puts back the one it had
+				_h.g[_i] = g
 		return g
 
 
 ## A building's generation fields (Building.g): constants of the world it stands in, shared by every snapshot. Sealed
 ## (SimState.sealFresh) at the end of the tick or match piece that made it; Building copies it before a write after that.
 class BuildingGen:
+	const SNAPSHOT: Dictionary = {"shared": true}
 	const FIELDS: Array = ["district", "shape", "landmark", "floors", "idx", "place", "plan", "z", "d", "row", "x", "w", "h", "maxhp", "kind", "pop", "seed"]
 	var sealed: bool = false
 	var district: int = 0
@@ -376,27 +590,44 @@ class BuildingGen:
 		return c
 
 
-## A tree's per-tick state; its place and height are constants of its world, in its TreeGen `g` (as Building's).
+## A tree: its place and height are constants of its world, in its TreeGen `g`, and its per-tick fields live in its
+## state's arrays once bound, as a Building's.
 class TreeState:
-	const SNAPSHOT: Dictionary = {"share": ["g"], "skip": TreeGen.FIELDS}
+	const TICK: Array = ["alive", "burn"]
+	const SNAPSHOT: Dictionary = {"shared": true}
 	var g: TreeGen = SimState._t0
+	var _h: Hold = null
+	var _i: int = 0
+	var _alive: bool = true
+	var _burn: float = 0.0
 	var x: float:
 		get: return g.x
 		set(v): _w().x = v
 	var h: float:
 		get: return g.h
 		set(v): _w().h = v
-	var alive: bool = true
-	var burn: float = 0.0
+	var alive: bool:
+		get: return _alive if _h == null else _h.tAlive[_i] != 0
+		set(v):
+			if _h == null: _alive = v
+			else: _h.tAlive[_i] = 1 if v else 0
+	var burn: float:
+		get: return _burn if _h == null else _h.tBurn[_i]
+		set(v):
+			if _h == null: _burn = v
+			else: _h.tBurn[_i] = v
 
 	func _w() -> TreeGen:
 		if g.sealed:
 			g = g.copy()
 			SimState._fresh.append(g)
+			if _h != null:
+				_h.tG[_i] = g
 		return g
 
 
 class TreeGen:
+	const SNAPSHOT: Dictionary = {"shared": true}
 	const FIELDS: Array = ["x", "h"]
 	var sealed: bool = false
 	var x: float = 0.0

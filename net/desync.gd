@@ -60,11 +60,19 @@ static func digest(S: SimState) -> String:
 				_:
 					v.append(-2.0)   # an object or a container: its presence only (the field walk reads it)
 	v.append(S.buildings.size())
-	for b in S.buildings:
-		v.append(b.hp); v.append(b.fmask); v.append(b.popAlive); v.append(b.fled); v.append(b.wear); v.append(1.0 if b.alive else 0.0)
+	if S.bound():   # the per-tick fields from the state's arrays, as SimHash reads them: a snapshot's records read the live state's (docs/architecture/packed-structures.md)
+		for i in range(S.buildings.size()):
+			v.append(S.bHp[i]); v.append(S.bFmask[i]); v.append(S.bPopAlive[i]); v.append(S.bFled[i]); v.append(S.bWear[i]); v.append(float(S.bAlive[i]))
+	else:
+		for b in S.buildings:
+			v.append(b.hp); v.append(b.fmask); v.append(b.popAlive); v.append(b.fled); v.append(b.wear); v.append(1.0 if b.alive else 0.0)
 	v.append(S.trees.size())
-	for t in S.trees:
-		v.append(t.burn); v.append(1.0 if t.alive else 0.0)
+	if S.bound():
+		for i in range(S.trees.size()):
+			v.append(S.tBurn[i]); v.append(float(S.tAlive[i]))
+	else:
+		for t in S.trees:
+			v.append(t.burn); v.append(1.0 if t.alive else 0.0)
 	v.append(S.shots.size())
 	for s in S.shots:
 		v.append(s.x); v.append(s.y); v.append(s.left)

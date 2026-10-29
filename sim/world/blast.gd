@@ -158,6 +158,8 @@ static func _floors(S: SimState, b, oc: Dictionary, by, cx: float, y: float, slo
 		b.fdmg = PackedFloat32Array()
 		b.fdmg.resize(F)
 		b.fdmg.fill(0.0)
+	else:
+		b.fdmg = b.fdmg.duplicate()   # Simulation (packed structures): a snapshot shares the array, so it is copied before the writes in place below
 	var popF: float = WorldBrunt.floorPop(b)
 	var lowest: int = oc.k
 	if oc.outcome == "punch":

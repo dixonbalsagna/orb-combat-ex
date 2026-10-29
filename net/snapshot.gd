@@ -13,6 +13,10 @@ extends RefCounted
 ##     constant the copy points at, as the live state does (SimState's base and bIdx, a building's and a tree's generation
 ##     record `g`); a "skip" field is a view of another (a building's x reads its g.x) and is not a field of the copy at all.
 ##     Neither is counted by measure() or walked by aliasAudit(). The sim keeps a shared one unchanged (sim/core/state.gd).
+##     A "shallow" field (an Array of packed arrays or sealed records: SimState's bFdmg, bG, tG) is copied one level
+##     deep, its elements shared. A class whose SNAPSHOT says {"shared": true} (a building, a tree, their Hold and
+##     generation records) is shared wherever it is met, as a data definition is: a building's per-tick fields are
+##     SimState's packed arrays, which are copied, and restore() calls S.afterRestore() to point the records at them.
 ## Plain arrays and dictionaries are copied by value, so two fields that share one Array would come back as two arrays.
 ## aliasAudit() checks the live state has no such sharing (net/tools/rollback_check.gd runs it).
 ##
@@ -31,6 +35,7 @@ const SKIP_ROOT: Array = ["out"]   # SimState fields a snapshot leaves alone
 static var _props: Dictionary = {}   # Script -> PackedStringArray of its script variables
 static var _share: Dictionary = {}   # Script -> true: data definitions shared, never copied
 static var _rules: Dictionary = {}   # Script -> its SNAPSHOT rule's "share" names (PackedStringArray)
+static var _shallow: Dictionary = {} # Script -> its SNAPSHOT rule's "shallow" names (PackedStringArray)
 static var _gen = null               # the compiled copy script (GDScript), or false when it could not be built
 static var _genSrc: String = ""
 static var reflectOnly: bool = false # tests: force the reflective copy
@@ -66,6 +71,7 @@ static func restore(S: SimState, snap: NetSnapshot, pool: Pool = null) -> void:
 	c.pool = pool
 	c.map[snap.root] = S
 	c.fill(snap.root, S, true)
+	S.afterRestore()   # the shared buildings and trees read the restored arrays
 	S.out.feed.clear()
 	S.out.fx.clear()
 
@@ -129,6 +135,14 @@ static func shareOf(o: Object) -> PackedStringArray:
 	return _rules[s]
 
 
+## The fields of an object's class that a snapshot copies one level deep (its SNAPSHOT "shallow" names), cached per script.
+static func shallowOf(o: Object) -> PackedStringArray:
+	var s: Script = o.get_script()
+	if not _shallow.has(s):
+		_shallow[s] = PackedStringArray(_rule(s).get("shallow", []))
+	return _shallow[s]
+
+
 static func shared(o: Object) -> bool:
 	_shareInit()
 	return _share.has(o.get_script())
@@ -138,17 +152,21 @@ static func _shareInit() -> void:
 	if _share.is_empty():
 		for s in [FighterData.WoundsDef, FighterData.MetersDef, FighterData.LadderDef, SimForms.FormsDef]:
 			_share[s] = true
+		var m: Dictionary = SimState.new().get_script().get_script_constant_map()
+		for k in m:
+			if m[k] is GDScript and _rule(m[k]).get("shared", false):
+				_share[m[k]] = true
 
 
-## The classes the generated copier covers: SimState, its inner classes (building and tree first: most objects are
-## theirs), SimRng and SimIntent. [script, the expression that names it in GDScript].
+## The classes the generated copier covers: SimState, its inner classes but the shared ones (a building, a tree: never
+## copied), SimRng and SimIntent. [script, the expression that names it in GDScript].
 static func _classes() -> Array:
-	var out: Array = [[SimState.Building, "SimState.Building"], [SimState.TreeState, "SimState.TreeState"]]
+	var out: Array = []
 	var m: Dictionary = SimState.new().get_script().get_script_constant_map()
 	var keys: Array = m.keys()
 	keys.sort()
 	for k in keys:
-		if m[k] is GDScript and m[k] != SimState.Building and m[k] != SimState.TreeState:
+		if m[k] is GDScript and not _rule(m[k]).get("shared", false):
 			out.append([m[k], "SimState." + String(k)])
 	out.append([SimRng, "SimRng"])
 	out.append([SimIntent, "SimIntent"])
@@ -170,6 +188,7 @@ static func generatedSource() -> String:
 		var n: int = 0
 		var skip: Array = _rule(script).get("skip", [])
 		var share: Array = _rule(script).get("share", [])
+		var shallow: Array = _rule(script).get("shallow", [])
 		for p in probe.get_property_list():
 			if not (int(p.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE):
 				continue
@@ -179,7 +198,7 @@ static func generatedSource() -> String:
 			var t: int = int(p.type)
 			if SCALARS.has(t) or share.has(k):
 				body += "\td.%s = s.%s\n" % [k, k]
-			elif t >= TYPE_PACKED_BYTE_ARRAY:
+			elif t >= TYPE_PACKED_BYTE_ARRAY or shallow.has(k):
 				body += "\td.%s = s.%s.duplicate()\n" % [k, k]
 			else:
 				body += "\td.%s = m.value(s.%s)\n" % [k, k]
@@ -221,10 +240,16 @@ class Copier:
 		if gen != null and gen.fill(src, dst, self):
 			return
 		var sh: PackedStringArray = NetSnapshot.shareOf(src)
+		var sl: PackedStringArray = NetSnapshot.shallowOf(src)
 		for k in NetSnapshot.props(src):
 			if isRoot and NetSnapshot.SKIP_ROOT.has(k):
 				continue
-			dst.set(k, src.get(k) if sh.has(k) else value(src.get(k)))
+			if sh.has(k):
+				dst.set(k, src.get(k))
+			elif sl.has(k):
+				dst.set(k, src.get(k).duplicate())
+			else:
+				dst.set(k, value(src.get(k)))
 
 	func value(v):
 		match typeof(v):

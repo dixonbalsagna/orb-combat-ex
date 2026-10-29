@@ -888,6 +888,8 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
 		b.fdmg = PackedFloat32Array()
 		b.fdmg.resize(F)
 		b.fdmg.fill(0.0)
+	else:
+		b.fdmg = b.fdmg.duplicate()   # Simulation (packed structures): a snapshot shares the array, so it is copied before the writes in place below
 	var popF: float = floorPop(b)
 	var slot: float = float(S.fighters.find(f))
 	var lowest: int = oc.k
