@@ -164,6 +164,12 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     assert.strictEqual(badReach.find(r => r.id === 'zip.reach').status, 'FAIL', 'a strike in reach 9 ticks before its blow is off the table');
     const heldOk = evaluate({ default: Array.from({ length: 60 }, (_, j) => mkRec(j, { kind: 'light', tell: 6, dur: 33, price: 20, rinP: 4, routP: 6, rin: 8, rout: 6, reading: 2 })) });
     assert.strictEqual(heldOk.find(r => r.id === 'zip.reach').status, 'PASS', 'a held strike is in reach 8 ticks before its blow');
+    // the printed price: a set where every zip has it passes, a set where one ended in its first tick without it fails, and records without any feed line wait
+    const withFeed = (j, drop) => { const r = mkRec(j); r.zips.forEach((z, k) => { z.feedKi = z.price; if (drop && j === 0 && k === 0) { delete z.feedKi; z.endTicks = 1; } }); return r; };
+    const kept = evaluate({ default: Array.from({ length: 60 }, (_, j) => withFeed(j, false)) }), lost = evaluate({ default: Array.from({ length: 60 }, (_, j) => withFeed(j, true)) });
+    assert.strictEqual(kept.find(r => r.id === 'zip.price.kept').status, 'PASS');
+    assert.strictEqual(lost.find(r => r.id === 'zip.price.kept').status, 'FAIL', 'a zip that ended in its first tick without its printed price is reported');
+    assert.strictEqual(good.find(r => r.id === 'zip.price.kept').status, 'PENDING', 'records made without the director line wait');
     // few zips: the rates wait for 40
     const few = evaluate({ default: Array.from({ length: 5 }, (_, j) => mkRec(j)) });
     assert.strictEqual(few.find(r => r.id === 'zip.clean').status, 'PENDING');

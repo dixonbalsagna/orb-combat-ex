@@ -109,6 +109,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	var prev_ki: Array = [fs[0].ki, fs[1].ki]
 	var dpend: Array = []              # C1's double hits waiting for their landing and their slide (brawl-plan.md section 9.2: the double_hit cue, n the landing tick)
 	var zopen := {}                    # the zipper's index -> its open zip's index in rec.zips
+	var zclosed := {}                  # the zipper's index -> the zip that ended in this tick (zip_end is read before the feed, so the printed price needs it)
 	var wsb = load("res://sim/world/structures.gd")
 	var can_block: bool = false
 	if wsb != null:
@@ -518,6 +519,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 						var zq = rec.zips[zopen[ze]]
 						zq.end = str(e.get("text"))
 						zq.endTicks = S.tick - int(zq.t)
+						zclosed[ze] = zopen[ze]
 						zopen.erase(ze)
 				elif cq == "brawl_start":
 					var bst: String = str(e.get("text"))
@@ -622,10 +624,12 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 			var ft: String = str(l.tag)
 			if ft.ends_with(" ZIP STRIKE") or ft.ends_with(" ZIP HEAVY"):
 				var fa: int = 0 if ft.begins_with(str(fs[0].name)) else 1
-				if zopen.has(fa):
+				var fzi: int = int(zopen[fa]) if zopen.has(fa) else int(zclosed.get(fa, -1))   # a zip that ended in its first tick is already closed, and keeps its price
+				if fzi >= 0:
 					var fparts: PackedStringArray = str(l.sub).split(";")
 					if fparts.size() >= 2:
-						rec.zips[zopen[fa]]["feedKi"] = float(fparts[1].strip_edges().replace(" ki", ""))
+						rec.zips[fzi]["feedKi"] = float(fparts[1].strip_edges().replace(" ki", ""))
+		zclosed.clear()
 		S.out.feed.clear()
 		for dp in dpend:
 			if not bool(dp.done) and S.tick >= int(dp.land) + 30:
