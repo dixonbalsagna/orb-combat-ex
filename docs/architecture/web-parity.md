@@ -48,7 +48,7 @@ The four causes the EP listed, as the code stands:
 4. The export runs in headless Chrome through Tools' launcher (`tools/machine/browser.mjs`: a time limit, below-normal priority, a CPU cap, a session-named profile). The probe publishes each result in `window.__wp`, read over the DevTools protocol.
 5. Native and web are compared with `sim/core/test/golden.json` key by key, and the extras native against web. For a difference it reports the first checkpoint that differs and which hash. It exits 1 on any difference.
 
-**The engine's build label** (parked 2026-10-28 at `pending/web-parity-label/`):
+**The engine's build label** (on main since bb988c0e; CI runs the self-test):
 - The `godot` key, `Engine.get_version_info().string` (for example "4.7.2-stable (official)"), is compared by its version only.
 - A build of the same version under another label passes: Performance's custom web template, "(custom_build)", has the lazy-specialization patch.
 - The tool prints the three strings (golden.json, native, web) on every run.

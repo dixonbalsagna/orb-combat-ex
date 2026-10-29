@@ -1280,7 +1280,7 @@ static func bump(S: SimState, f, by, kind: String, spN: float) -> float:
 static func hookOf(S: SimState, f) -> Dictionary:
 	if int(f.launchN) == 0:
 		return _NO_HOOK
-	return SimDir._d("launch.gd").flightHook(S, f)
+	return SimDir.flightHook(S, f)
 
 
 ## The hooks on the path a tick moved b, from x0 to b.x (in the air, or along a skid or tumble): TREE LINE's trunks snap,
@@ -1334,7 +1334,7 @@ static func _smashProp(S: SimState, f, by, b: Body, x0: float, dir: float, run: 
 		return
 	var col: int = int(_hk.get("propCol", -1))
 	var here: Array = []
-	for p in WorldGround.matchProps(S, px - SimConst.COL, px + SimConst.COL, SimDir._d("launch.gd").brokenProps(S)):
+	for p in WorldGround.matchProps(S, px - SimConst.COL, px + SimConst.COL, SimDir.brokenProps(S)):
 		if int(p.col) == col:
 			here.append(p)
 	var pick: int = WorldGround.smashIn(here)   # the column's biggest smashable prop (a scrub or a snow drift beside it is not the target)
@@ -1347,7 +1347,7 @@ static func _smashProp(S: SimState, f, by, b: Body, x0: float, dir: float, run: 
 			hookLog.append({"k": "prop_over", "n": f.launchN, "x": px, "kind": String(prop.kind), "over": b.y - g - float(prop.size) * WorldGround.BH})
 		return   # over its top: it stands
 	var sp: float = SimDetMath.hypot(b.vx / b.launchT, b.vy) if b.mode == AIR else b.vN
-	SimDir._d("launch.gd").propBroke(S, f)
+	SimDir.propBroke(S, f)
 	b.x = SimWrap.wrap(px - dir * PROP_STOP)
 	if b.mode == AIR:
 		b.vx = 0.0

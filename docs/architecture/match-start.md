@@ -33,10 +33,16 @@ Measured natively on HEAD with timers in a scratch copy, cold boots (the first s
   3. the fighters;
   4. the setups, in three pieces;
   5. the intro;
-  6. the mood.
+  6. the director's data (`DirData.dataHash()`, 2026-10-29): parsed once a process, so the match's first live tick does not pay it in `DirInterrupt.on`. It changes no state, and in a process that has parsed it already the piece is empty;
+  7. the mood.
 - **Each piece binds the match's statics first** (the arena's length, a planet's biome columns, its generation). Another sim stepped between two pieces, such as a menu's demo, cannot change the match.
 - **A refused setup** (`SimPlanetLoad.strict`, a gen 2 planet not made) is a job done at once that touched nothing.
 - **Measured natively, cold:** 18 pieces for the boot's match. The longest is 6 to 8 ms (the fighters' piece, with the first loads of the fighter data). The ground's slices are 2.5 to 5.5 ms each.
+- **The director's data piece** (`tick_prof`, which now times the start by phase, 2026-10-29) makes it 19 pieces.
+  - That piece is 118 to 124 ms, natively and cold, and the longest of the start.
+  - It takes the first live tick from 120 to 145 ms down to 1.8 to 2.4 ms, on the hand-made world and on a gen 2 ring alike.
+  - On the web at 4x it is likely to be about half a second in one loading frame. It has not been measured there.
+  - If that is too long for a loading frame, it can be split by data file.
 - **Measured on the web at 4x** (Performance's freeze probe, a web export of 9490ac21 with the park): the longest piece is **32.7 ms** (the fighters'), under the brief's 50 ms. The world's pieces are 1 to 22 ms, the setups 2.5 to 6.3, the intro 9.7 and the mood 7.5. The head is 0.2 ms, and the host's `_started` is 6.3 ms.
 - **The boot at 4x:** before, `start_match` was 6.8 s inside one main-thread block of 46.1 s. After, it returns in 0.1 s, and the block is 18.3 s, then 0.7 s of loading frames, then 23.8 s. The two blocks left are the engine's start and first draw, and `_match_built` with the first match frame (section 4).
 

@@ -1,7 +1,9 @@
 extends SceneTree
 ## Where SimCore.step's time goes (natively, headless): the tick's own parts, timed one by one over a seeded match, with
 ## a twin sim stepped by SimCore.step itself and compared by SimHash at the end, so the timed copy of the step is proven
-## to be the step. Prints each part's mean per tick in microseconds and its share, and the tick's mean, p50 and p99.
+## to be the step. Prints each part's mean per tick in microseconds and its share, the tick's mean, p50 and p99, the
+## arena's columns the match ran on, the first live tick's time (the process's first, where a lazy load lands), and the
+## match's start (SimCore.beginMatch, a piece a loading frame) timed by MatchJob phase.
 ##   godot --headless --path . --script res://sim/core/tools/tick_prof.gd -- [--ticks=3600] [--seed=1] [--planet] [--gen2] [--bots]
 ## Default: AI against AI on the hand-made world. --planet: planet 7, touch-down 3; --gen2: a gen 2 planet (planet 7,
 ## touch-down 3, arena 2400); --bots: net/'s scripted players (the rollback bench's inputs) instead of the AI.
@@ -10,6 +12,7 @@ extends SceneTree
 const PARTS: Array = ["head", "control", "stepFighter", "dirUpdate", "beamStep", "shots", "water", "mood", "cata+forms", "collateral", "tickMark", "clash", "frozen"]
 
 var acc: Dictionary = {}
+var live: bool = false   # the last _step was a live tick (not the intro's, a pause's or hit-stop's)
 
 
 func _now() -> int:
@@ -25,6 +28,7 @@ func _add(k: String, t0: int) -> int:
 ## SimCore._step, part by part (keep it in step with sim/core/sim.gd: the twin's hash proves it is).
 func _step(S: SimState, inputs) -> void:
 	var t: int = _now()
+	live = false
 	if SimConst.NC != S.arenaCols or WorldBiomes.worldId != S.worldId:
 		SimConst.setArena(S.arenaCols)
 		WorldBiomes.planetCols = S.planetCols
@@ -55,6 +59,7 @@ func _step(S: SimState, inputs) -> void:
 		_add("frozen", t)
 		return
 	S.T += dt
+	live = true
 	if S.epoch != null:
 		WorldEpoch.tick(S, DirCalm.hold(S))
 	if S.hitstopOn:
@@ -119,15 +124,28 @@ func _init() -> void:
 		elif a == "--planet":
 			setup = {"planet": 7, "touch": 3}
 		elif a == "--gen2":
-			setup = {"planet": 7, "touch": 3, "arena": 2400, "planetGen": 2, "intro": false}
+			setup = {"planet": 7, "touch": 3, "arena": {"cols": 2400}, "planetGen": 2, "intro": false}
 		elif a == "--bots":
 			bots = true
 	var ai: Dictionary = {"p1": not bots, "p2": not bots}
 	var S := SimCore.createSim()
-	SimCore.newMatch(S, seed, ai, setup)
+	var job := SimCore.beginMatch(S, seed, ai, setup)   # newMatch's own job, a piece at a time (the loading screen's frames), each timed
+	var byPhase: Dictionary = {}   # MatchJob phase -> [pieces, us, the longest piece's us]
+	var startUs: int = 0
+	while true:
+		var ph: int = job.phase
+		var p0: int = _now()
+		var fin: bool = job.step()
+		var us: int = _now() - p0
+		startUs += us
+		var e: Array = byPhase.get(ph, [0, 0, 0])
+		byPhase[ph] = [e[0] + 1, e[1] + us, maxi(e[2], us)]
+		if fin:
+			break
 	var nb: Array = [NetBot.new(seed, 0), NetBot.new(seed, 1)]
 	var log: Array = []
 	var times := PackedInt32Array()
+	var firstLive: int = -1
 	for tk in range(ticks):
 		var ins = null
 		if bots:
@@ -137,8 +155,11 @@ func _init() -> void:
 		log.append(ins)
 		var t0: int = _now()
 		_step(S, ins)
+		S.bindCheck()   # as SimCore.step: a tick that replaced the buildings or the trees binds them again
 		SimState.sealFresh()
 		times.append(_now() - t0)
+		if firstLive < 0 and live:
+			firstLive = tk
 		S.out.feed.clear()
 		S.out.fx.clear()
 	var R := SimCore.createSim()   # the twin, after the timed run (two sims stepped in turn rebuild World's per-world caches)
@@ -155,6 +176,13 @@ func _init() -> void:
 		tot += float(v)
 	print("tick_prof   %s   seed %d   %d ticks   setup %s   inputs %s   twin hash %s" % [OS.get_processor_name(), seed, ticks, str(setup), "bots" if bots else "AI", "same" if same else "DIFFERENT"])
 	print("tick mean %.1f us  p50 %d  p99 %d  max %d" % [tot / ticks, sorted[ticks / 2], sorted[mini(ticks - 1, int(ticks * 0.99))], sorted[ticks - 1]])
+	print("arena %d columns (SimConst.NC %d)   first live tick: tick %d, %d us" % [S.arenaCols, SimConst.NC, firstLive + 1, times[firstLive] if firstLive >= 0 else -1])
+	var phases: Array = byPhase.keys()
+	phases.sort()
+	var pp := PackedStringArray()
+	for ph in phases:
+		pp.append("%d: %d x, %.1f ms, longest %.1f" % [ph, byPhase[ph][0], byPhase[ph][1] / 1000.0, byPhase[ph][2] / 1000.0])
+	print("start in pieces: %d pieces, %.1f ms; by phase  %s" % [job.pieces, startUs / 1000.0, "   ".join(pp)])
 	for k in PARTS:
 		var v: float = float(acc.get(k, 0))
 		print("  %-12s %7.1f us/tick  %5.1f%%" % [k, v / ticks, 100.0 * v / maxf(1.0, tot)])

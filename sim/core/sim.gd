@@ -76,7 +76,7 @@ static func beginMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Dicti
 
 
 class MatchJob extends RefCounted:
-	const AFTER_WORLD: int = 7   # the pieces after the world's (for progress)
+	const AFTER_WORLD: int = 8   # the pieces after the world's (for progress)
 	var S: SimState
 	var seed: int = 0
 	var ai: Dictionary = {}
@@ -119,6 +119,9 @@ class MatchJob extends RefCounted:
 				SimIntro.setup(S, setup) # the intro phase, when the setup asks for it
 				phase = 7
 			7:
+				DirData.dataHash()   # the director's data, parsed once a process in a piece of its own (else the first live tick pays it: DirInterrupt.on); it changes no state
+				phase = 8
+			8:
 				SimCore._mEnd(self)
 		SimState.sealFresh()   # the world's generation records, sealed piece by piece (snapshots share them)
 		planetCols = WorldBiomes.planetCols   # what this match's pieces have set, bound again at the next

@@ -11,7 +11,7 @@ Owner: Simulation and Engine. 2026-10-27, on the EP's brief from Rendering's boo
 
 ## 2. The cut: `SimDir`
 
-- **`SimDir` (`sim/core/dir.gd`) holds the 11 director functions the core and the world call.** Each is a one-line forward to the director's own function, with the same arguments, through the director script's path, not its class name.
+- **`SimDir` (`sim/core/dir.gd`) holds the 14 director functions the core and the world call.** Each is a one-line forward to the director's own function, with the same arguments, through the director script's path, not its class name.
   - A script is loaded the first time it is called and kept.
   - In a match it is loaded already, since SimCore's step names the director's classes.
 - **SimCore's step, the intro, the replay and the controls still name the director.** They are outside the core's graph and load after it.
@@ -25,11 +25,12 @@ Owner: Simulation and Engine. 2026-10-27, on the EP's brief from Rendering's boo
 | `sim/core/shots.gd` (a shot meets a fighter) | `DirBlast.rules`, `DirBlast.hit` | `SimDir.blastRules`, `SimDir.blastHit` |
 | `sim/world/brunt.gd` (World's, the wall kick) | `DirWallKick.atWall`, `DirWallKick.damageMul` | `SimDir.wallKickAt`, `SimDir.wallKickMul` |
 | `sim/world/contact.gd` (World's, the brawl's pay) | `DirBrawl.payMul` | `SimDir.brawlPayMul` |
+| `sim/world/contact.gd` (World's, the flight hooks and the prop smash; 2026-10-28) | `SimDir._d("launch.gd").flightHook`, `.brokenProps`, `.propBroke` | `SimDir.flightHook`, `SimDir.brokenProps`, `SimDir.propBroke` |
 
 - **No behaviour changes:** the same functions, called with the same arguments in the same order. The golden is byte-identical.
 - **The cost:** a dictionary lookup and a call by name. These calls are rare: a K.O., a form's tell and break, a shot meeting a fighter, a wall or ground contact.
 - **The trade:** a director function renamed or removed is no longer caught when the core compiles, only when the call runs. The check (§3) lists every SimDir call against its script.
-- **The rule from here:** a new call from the core or the world into the director goes through `SimDir`, never by the director's class name.
+- **The rule from here:** a new call from the core or the world into the director goes through a named forward in `SimDir`, never by the director's class name and never by `SimDir._d` itself. The check (§3) fails either.
 
 ## 3. The check: `sim/core/tools/load_split.gd`
 
@@ -37,6 +38,8 @@ Owner: Simulation and Engine. 2026-10-27, on the EP's brief from Rendering's boo
 
 - In a fresh process it loads the sim's scripts in the entry's order (§4). For each step it prints the time and how many of the director's scripts are loaded.
 - **It fails if the first load (the core and the world) loads any director script.** It also fails if a function SimDir names is not a static function of its script that takes those arguments.
+- **It reads the core's, the world's and the input's scripts** (not their tools and tests) for every `SimDir.name(` call, comments and strings left out. It fails on a name SimDir does not define, and on `SimDir._d(`. It prints the forwards called.
+- **`-- --negative-control`:** three breaks on copies of the sources in memory (no file changes), each of which must be caught. They are a forward naming a function its director script lacks, a forward the world calls that SimDir no longer defines, and a world call by `SimDir._d`.
 - It names no sim class itself, so it compiles nothing before its steps.
 - `-- --steps=res://a.gd,res://b.gd` times another order.
 - On HEAD it fails (29 of 30), as it should. With a SimDir call renamed it fails.

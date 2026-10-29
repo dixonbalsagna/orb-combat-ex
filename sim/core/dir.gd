@@ -40,6 +40,21 @@ static func doLaunch(S: SimState, att, tgt, plan: Dictionary, force: float, spec
 	_d("launch.gd").doLaunch(S, att, tgt, plan, force, special)
 
 
+## DirLaunch.flightHook: World's read of f's launch plan for the flight hooks ({} when f's launch carries none).
+static func flightHook(S: SimState, f) -> Dictionary:
+	return _d("launch.gd").flightHook(S, f)
+
+
+## DirLaunch.brokenProps: the columns of the props broken in this match, for World's prop query.
+static func brokenProps(S: SimState) -> PackedInt32Array:
+	return _d("launch.gd").brokenProps(S)
+
+
+## DirLaunch.propBroke: World's flight broke f's PROP SMASH prop (the director keeps it broken).
+static func propBroke(S: SimState, f) -> void:
+	_d("launch.gd").propBroke(S, f)
+
+
 ## DirBands.who: the fighter a band holds, or -1.
 static func bandsWho(S: SimState) -> int:
 	return _d("bands.gd").who(S)
