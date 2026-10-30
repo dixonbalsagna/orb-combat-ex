@@ -195,6 +195,8 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/determinism.gd'
       - name: Render seam sweep
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/seam_sweep.gd -- --size=1280x720'
+      - name: Bark reads (the three event reads the live lines need; barks stay off)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/director/tools/bark_reads_check.gd'
       - name: Render pane sweep (every in-view building drawn the same as a full sweep, frame by frame)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/sweep_check.gd'
       - name: Render props (the sim's props drawn behind biome.enabled; a broken prop gone on its frame)

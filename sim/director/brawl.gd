@@ -452,6 +452,7 @@ static func over(S: SimState, ex, why: String) -> void:
 				f.vy = 0.0
 	if said:
 		var e = _ev(S, ex.A, "brawl_end", why)
+		e.target = float(S.fighters.find(ex.D))   # for the barks; a cue's hash doesn't read it
 		e.n = ex.n
 		e.amount = float(int(round(ex.t * DirData.TICKS_PER_SEC)))
 		e.x = float(_g(ex.A, BLOWS))

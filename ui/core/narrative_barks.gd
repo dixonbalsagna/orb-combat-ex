@@ -32,6 +32,9 @@ var _line_at: Dictionary = {}     # "<id>|<line id>" -> tick it was last said
 var _beat_at: Dictionary = {}     # beat -> tick it last fired
 var _done_once: Dictionary = {}
 var _hushed: bool = false
+var _reads: Dictionary = {}       # data/narrative/live_barks.json `reads`: the numbers of the three reads (docs/director/bark-reads.md)
+var _core_stage: Dictionary = {}  # slot -> the stage of the region low_health_swing reads, from region_stage events
+var _chain_at: Dictionary = {}    # slot -> tick of his chain_end, until his next landed blow
 var log: Array = []               # what was said: {tick, slot, id, beat, line, text}; the test reads it
 
 
@@ -48,6 +51,7 @@ static func make(S, setup: Dictionary = {}, over: Dictionary = {}) -> NarrativeB
 	nb._display = d.get("display", {})
 	nb._beats = d.get("beats", {})
 	nb._salt = int(d.get("seed_salt", 0))
+	nb._reads = d.get("reads", {})
 	nb._seed = int(S.game.seed)
 	for f in S.fighters:
 		nb._ids.append(str(f.id))
@@ -68,18 +72,23 @@ func step(S, events: Array) -> Array:
 	if _hushed:
 		return out
 	var i: int = -1
+	var at: int = -1
 	for e in events:
-		i += 1
-		# The event's own tick, so a frame that drains several ticks (or a replay that drains them all at once) says the same
-		# lines at the same ticks.
+		# The event's own tick and its place in that tick, so a frame that drains several ticks (or a replay that drains them
+		# all at once) says the same lines at the same ticks.
 		var tick: int = int(e.tick) if int(e.tick) > 0 else int(S.tick)
+		if tick != at:
+			at = tick
+			i = -1
+		i += 1
 		var t: String = str(e.type)
 		if t == "ko":
 			if bool(_limits.get("after_ko_hush", true)):
 				_hushed = true
 				return out
 			continue
-		var cands: Array = _candidates(t, e)
+		_note(t, e, tick)
+		var cands: Array = _candidates(t, e, tick)
 		if cands.is_empty():
 			continue
 		# One bark an event: when two fighters could speak (the one who hit, the one who was hit) the hash picks.
@@ -91,8 +100,26 @@ func step(S, events: Array) -> Array:
 	return out
 
 
+## What the three reads remember, from the events alone: a bark stays a function of (seed, tick, events), however many ticks
+## a frame drains, so none of them reads S.
+func _note(t: String, e, tick: int) -> void:
+	if t == "region_stage":
+		if str(e.region) == str(_reads.get("low_health_swing", {}).get("region", "core")):
+			_core_stage[int(e.actor)] = int(e.stage)
+	elif t == "chain_end":
+		_chain_at[int(e.actor)] = tick
+
+
+## A beat only joins the pick where its speaker has a line, so a beat with no marked lines changes nothing that is said.
+func _offer(c: Array, beat: String, slot: int) -> void:
+	if slot < 0 or slot >= _ids.size():
+		return
+	if not _beats.get(beat, {}).get("lines", {}).get(_ids[slot], []).is_empty():
+		c.append([beat, slot])
+
+
 ## [[beat, slot], ...] the event could start.
-func _candidates(t: String, e) -> Array:
+func _candidates(t: String, e, tick: int) -> Array:
 	var c: Array = []
 	if t == "damage":
 		var kind: String = str(e.kind)
@@ -108,6 +135,13 @@ func _candidates(t: String, e) -> Array:
 				c.append(["heavy_landed", a])
 			if v >= 0:
 				c.append(["heavy_taken", v])
+		if a >= 0:
+			if int(_core_stage.get(a, 0)) >= int(_reads.get("low_health_swing", {}).get("min_stage", 99)):
+				_offer(c, "low_health_swing", a)
+			if _chain_at.has(a):
+				if tick - int(_chain_at[a]) <= int(_reads.get("after_chain", {}).get("within_ticks", -1)):
+					_offer(c, "after_chain", a)
+				_chain_at.erase(a)
 	elif t == "cue":
 		var k: String = str(e.kind)
 		if k == "perfect_block":
@@ -116,6 +150,11 @@ func _candidates(t: String, e) -> Array:
 			c.append(["missed", int(e.actor)])
 		elif k == "stagger" and str(e.text) == "flurry":
 			c.append(["flurry_taken", int(e.actor)])
+		elif k == "brawl_end":
+			var rd: Dictionary = _reads.get("exchange_break", {})
+			if rd.get("whys", []).has(str(e.text)) and int(e.amount) >= int(rd.get("min_ticks", 0)):
+				_offer(c, "exchange_break", int(e.actor))
+				_offer(c, "exchange_break", int(e.target))
 	elif t == "launch":
 		c.append(["launch_given", int(e.target)])   # actor is the body sent, target the launcher
 	elif t == "lodge":

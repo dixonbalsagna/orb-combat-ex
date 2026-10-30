@@ -793,6 +793,12 @@
     "hw11.22": "Empress, thrown through a wall: the same.",
     "hw11.10": "Rival, struck in the face and his glasses slip: needs the glasses' damage state event."
   },
+  "reads": {
+    "_about": "The numbers of the three reads that have no marked lines yet (docs/director/bark-reads.md). Each is read from the sim's events alone. low_health_swing: a blow lands from a fighter whose region is at min_stage or worse (2 is battered; hp isn't health since the wounds, and it sits under 20% for most of a match). exchange_break: a brawl ends for one of whys after at least min_ticks; either fighter may speak. after_chain: a fighter's next landed blow within within_ticks of his chain_end.",
+    "low_health_swing": { "region": "core", "min_stage": 2 },
+    "exchange_break": { "whys": ["idle", "break", "apart", "walk"], "min_ticks": 300 },
+    "after_chain": { "within_ticks": 180 }
+  },
   "unmapped": {
     "taunt_start": "The sim emits cue taunt_start. combat_barks.json has taunt drafts for all four, but none is Orb-approved and the Cyborg's, Empress's and Rival's use retired voice (sir, menu, table, 'Petitioner, you are boring us', 'Fifth. Behind the goons'). Orb to approve, or to pick from the re-cut lines.",
     "signature_start": "Shouts are move names ('Keeper's Lance!'), still placeholders; Orb has not named the signatures.",

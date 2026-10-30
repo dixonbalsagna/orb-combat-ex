@@ -27,6 +27,77 @@
     "seed_salt": {
       "type": "integer"
     },
+    "reads": {
+      "type": "object",
+      "required": [
+        "low_health_swing",
+        "exchange_break",
+        "after_chain"
+      ],
+      "properties": {
+        "_about": {
+          "type": "string"
+        },
+        "low_health_swing": {
+          "type": "object",
+          "required": [
+            "region",
+            "min_stage"
+          ],
+          "properties": {
+            "region": {
+              "enum": [
+                "head",
+                "core",
+                "arms",
+                "legs"
+              ]
+            },
+            "min_stage": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3
+            }
+          },
+          "additionalProperties": false
+        },
+        "exchange_break": {
+          "type": "object",
+          "required": [
+            "whys",
+            "min_ticks"
+          ],
+          "properties": {
+            "whys": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "min_ticks": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "after_chain": {
+          "type": "object",
+          "required": [
+            "within_ticks"
+          ],
+          "properties": {
+            "within_ticks": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
     "limits": {
       "type": "object",
       "required": [
