@@ -69,15 +69,111 @@ static func surfaceAt(S: SimState, x: float) -> float:
 const NO_SEA: float = -1.0e18   # seaTop where there is no sea-like water: nothing is below it
 
 
+## The depth at which a lake is sea to every rule that asks (seaAt, seaTop): HIDE_MIN_DEPTH, hiding's leftover; with the floor on, the one line for a lake, wade.below (Game Design rulings 2026-10-30 row 4).
+static func seaMin() -> float:
+	return WorldFill.wadeBelow() if WorldFill.floorOn() else HIDE_MIN_DEPTH
+
+
 ## The surface the sea's rules measure from at x: the sea level over the sea, a gen 2 lake deep enough to hide in: its own surface (Game Design 23b row 13: lakes follow the sea's rules), and NO_SEA where there
 ## is neither. On any world without a lake it is 0 over the sea and NO_SEA elsewhere, which is `y < 0 and seaAt` as the rules were written.
 static func seaTop(S: SimState, x: float) -> float:
 	var i: int = int(floor(SimWrap.wrap(x) / SimConst.COL)) % SimConst.NC
 	if S.base[i] < RESERVOIR_BASE:
 		return SEA_LEVEL
-	if S.water[i] >= HIDE_MIN_DEPTH and WorldGround.live():
+	if S.water[i] >= seaMin() and WorldGround.live():
 		return S.base[i] + WorldTerrain.lowD(S)[i] + S.water[i]
 	return NO_SEA
+
+
+const NO_LEVEL: float = -1.0e9   # nativeLevel where the column's water is not the ring's own
+const SHEET_SNAP: float = 0.001  # on the sheet the floor is seaTop's value to the bit when the interpolated level is within this of it (float32 columns of one flat lake differ by a few 1e-4)
+
+
+## The ring's own water at column i, as a level: ground plus depth, where the column is the sea or its shallows (the original ground under SHORE_WET) or a planned lake or river, and stands at least MIN_DEPTH.
+## NO_LEVEL for dry ground, and for water a fight dug (a fill, a flow into a hole): the floor never lifts or holds a fighter in that (rulings 2026-10-30 row 5).
+static func nativeLevel(S: SimState, i: int) -> float:
+	var d: float = S.water[i]
+	if d < MIN_DEPTH:
+		return NO_LEVEL
+	if S.base[i] >= SHORE_WET:
+		var lakes: Array = S.planetRing.get("lakes", [])
+		if lakes.is_empty() or not WorldLakes.inLake(lakes, i, SimConst.NC):
+			return NO_LEVEL
+	return S.base[i] + WorldTerrain.lowD(S)[i] + d
+
+
+## The ring's own water level at x (the two nearest columns' levels, a dry one counting as its ground, so it is continuous), or NO_LEVEL where there is none.
+static func floorLevel(S: SimState, x: float) -> float:
+	var NC: int = SimConst.NC
+	var c: float = SimWrap.wrap(x) / SimConst.COL
+	var fi: float = floor(c)
+	var i: int = int(fi) % NC
+	var j: int = (i + 1) % NC
+	var li: float = nativeLevel(S, i)
+	var lj: float = nativeLevel(S, j)
+	if li == NO_LEVEL and lj == NO_LEVEL:
+		return NO_LEVEL
+	var low: PackedFloat32Array = WorldTerrain.lowD(S)
+	if li == NO_LEVEL:
+		li = S.base[i] + low[i]
+	if lj == NO_LEVEL:
+		lj = S.base[j] + low[j]
+	return li + (lj - li) * (c - fi)
+
+
+## The ring's original ground at x (the two nearest columns' base): what the floor measures depth from, so a crater a fight dug in a lake's bed is not water he can stand in or fall through (the lake refills level over the hole).
+static func undugAt(S: SimState, x: float) -> float:
+	var c: float = SimWrap.wrap(x) / SimConst.COL
+	var fi: float = floor(c)
+	var i: int = int(fi) % SimConst.NC
+	var j: int = (i + 1) % SimConst.NC
+	return S.base[i] + (S.base[j] - S.base[i]) * (c - fi)
+
+
+## The depth of the ring's own water at x, from the undug bed: its level there less the original ground. 0 where there is none. (z: kept for the callers that name a depth; the original ground is the same on every row.)
+static func floorDepth(S: SimState, x: float, z: float = 0.0) -> float:
+	var L: float = floorLevel(S, x)
+	if L == NO_LEVEL:
+		return 0.0
+	return maxf(0.0, L - undugAt(S, x))
+
+
+## How much of a fighter is under the water he stands in: all of him to half of wade.below, then less as the bottom falls away, none from wade.below down (rulings 2026-10-30 row 1: one curve, no step).
+static func feet(d: float) -> float:
+	return maxf(0.0, minf(d, WorldFill.wadeBelow() - d))
+
+
+## The most a waded body under his floor rises in a tick: wade.below over the surfacing's riseTicks (Encounter's interrupts.json water.riseTicks, read through SimDir.waterRiseTicks), the surfacing's own rate over its
+## full depth; so the deepest lift (to the sheet from the bed at wade.below) takes riseTicks ticks (Game Design rulings 2026-10-30 row 9).
+static func riseMax(riseTicks: int) -> float:
+	return WorldFill.wadeBelow() / float(maxi(1, riseTicks))
+
+
+## Can a burial start at x? With the floor on it needs water under half of wade.below at his column, measured from the undug bed (Game Design rulings 2026-10-30 row 11: on the bed, not on the sheet): deeper, no embed (an ordinary one or a MARSH SWALLOW's) and no follow-up; an impact there still digs the bed and he comes up by the surfacing. Always true with the floor off.
+static func burialOK(S: SimState, x: float) -> bool:
+	return not WorldFill.floorOn() or floorDepth(S, x) < WorldFill.wadeBelow() * 0.5
+
+
+## The floor of a fighter under his own control at x, depth z: the ground, and in the ring's own water its surface less his feet. With the floor off, exactly the ground. On the sheet it is seaTop's value to the bit, so a fighter on
+## it is never "below" the surface that rules ask (y < seaTop) by the rounding of a float32 column.
+static func floorAt(S: SimState, x: float, z: float = 0.0) -> float:
+	var g: float = WorldTerrain.groundY(S, x, z)
+	if not WorldFill.floorOn():
+		return g
+	var L: float = floorLevel(S, x)
+	if L == NO_LEVEL:
+		return g
+	var u: float = undugAt(S, x)   # depth from the undug bed (rulings 2026-10-30 row 5's rule for fills, for a crater a fight dug in a lake); never under the actual ground: a berm lifts the floor
+	if L <= u:
+		return g
+	var d: float = L - u
+	var fe: float = feet(d)
+	if fe >= d:
+		return maxf(g, u)
+	if fe <= 0.0:
+		var top: float = seaTop(S, x)
+		return maxf(g, top if top != NO_SEA and absf(top - L) < SHEET_SNAP else L)
+	return maxf(g, L - fe)
 
 
 ## Start of a match: reservoir columns full to sea level, and the shallows connected to them (an unbroken run of ground

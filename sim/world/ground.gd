@@ -282,7 +282,7 @@ static func propsIn(fine: PackedByteArray, stored: PackedByteArray, base: Packed
 		var f: int = fine[i]
 		if f >= _d.grounds.size() or int(stored[i]) >= 7:
 			continue
-		if base[i] >= _minGround:
+		if base[i] >= _minGround and not (not lakes.is_empty() and WorldLakes.flooded(lakes, base, i, n)):   # not in a lake's water or on the strip the sheet is drawn over (Rendering's finding, 2026-10-30)
 			var props: Array = _d.grounds[f].props
 			for k in range(props.size()):
 				var p: Dictionary = props[k]
@@ -420,13 +420,13 @@ static func _gapRow(fine: PackedByteArray, stored: PackedByteArray, base: Packed
 
 
 ## A drawn lone tree at column j of row k: its place and its gap in units, or [] when it is not drawn or a ring tree or a lake takes its ground.
-static func _loneCand(fine: PackedByteArray, seed: int, j: int, k: int, trees: Array, lakes: Array) -> Array:
+static func _loneCand(fine: PackedByteArray, base: PackedFloat32Array, seed: int, j: int, k: int, trees: Array, lakes: Array) -> Array:
 	var p: Dictionary = _d.grounds[int(fine[j])].props[k]
 	var COL: float = SimConst.COL
 	if SimRng.keyed(seed, "ground.prop.%d" % k, j) >= minf(1.0, float(p.per) * COL / 1000.0):
 		return []
 	var n: int = fine.size()
-	if not lakes.is_empty() and WorldLakes.inLake(lakes, j, n):
+	if not lakes.is_empty() and WorldLakes.flooded(lakes, base, j, n):
 		return []
 	var x: float = (float(j) + SimRng.keyed(seed, "ground.prop.x%d" % k, j)) * COL
 	var g: float = (float(p.gap[0]) + (float(p.gap[1]) - float(p.gap[0])) * SimRng.keyed(seed, "ground.prop.g%d" % k, j)) * SimConst.WS
@@ -438,7 +438,7 @@ static func _loneCand(fine: PackedByteArray, seed: int, j: int, k: int, trees: A
 
 ## Does the lone tree drawn at column i (row k) stand: clear of the ring's trees and lakes, and the first by priority among the drawn trees closer than the larger of their gaps?
 static func _loneStands(fine: PackedByteArray, stored: PackedByteArray, base: PackedFloat32Array, seed: int, i: int, k: int, trees: Array, lakes: Array) -> bool:
-	var me: Array = _loneCand(fine, seed, i, k, trees, lakes)
+	var me: Array = _loneCand(fine, base, seed, i, k, trees, lakes)
 	if me.is_empty():
 		return false
 	var n: int = fine.size()
@@ -448,7 +448,7 @@ static func _loneStands(fine: PackedByteArray, stored: PackedByteArray, base: Pa
 			var kj: int = _gapRow(fine, stored, base, j)
 			if kj < 0:
 				continue
-			var o: Array = _loneCand(fine, seed, j, kj, trees, lakes)
+			var o: Array = _loneCand(fine, base, seed, j, kj, trees, lakes)
 			if o.is_empty() or _arc(float(me[0]), float(o[0]), n) >= maxf(float(me[1]), float(o[1])):
 				continue
 			if float(o[2]) > float(me[2]) or (float(o[2]) == float(me[2]) and j > i):

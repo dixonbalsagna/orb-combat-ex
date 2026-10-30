@@ -168,6 +168,26 @@ static func _overlap(lo: int, hi: int, c0: int, c1: int, n: int) -> bool:
 	return false
 
 
+const SHORE_COLS: int = 16       # the water shader keeps dry land within this many columns of water at the water's level ... (Rendering's RenderLook.SHORE_COLS; props_wet_check holds them equal)
+const SHORE_FLOOD: float = 24.0  # ... and draws it under the sheet when the land is at most this far under the level (RenderLook.SHORE_FLOOD)
+
+
+## Is column c under the sheet of a planned lake or river, as the water shader draws it (GroundField.flooded)? In the lake, or dry land at most SHORE_FLOOD under its level within SHORE_COLS columns of it.
+## A prop stands on neither (propsIn). `base` is the ring's ground, whose original height is what a prop is laid on.
+static func flooded(lakes: Array, base: PackedFloat32Array, c: int, n: int) -> bool:
+	for lk in lakes:
+		var cnt: int = int(lk[3])
+		var off: int = posmod(c - int(lk[0]), n)
+		if off < cnt:
+			return true
+		var d: int = mini(off - cnt + 1, n - off)   # columns from the lake's nearest end
+		if d <= SHORE_COLS:
+			var below: float = float(lk[2]) - base[c]
+			if below > 0.0 and below <= SHORE_FLOOD:
+				return true
+	return false
+
+
 ## Is column c under the water of a planned lake?
 static func inLake(lakes: Array, c: int, n: int) -> bool:
 	for lk in lakes:

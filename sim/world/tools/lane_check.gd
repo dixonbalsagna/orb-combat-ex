@@ -55,4 +55,6 @@ func _init() -> void:
 					bad += 1
 	print("LANES Bellgate: %d avenues, buildings of row 1 or 2 across an avenue: %d" % [nav, bad])
 	SimCore.dispose(S)
-	quit(0)
+	var fails: int = (1 if out_of_lane > 0 else 0) + (1 if street_hits > 0 else 0) + (1 if overlap > 0 else 0) + (1 if bad > 0 else 0)   # the four counts the report prints are checks: each must be 0
+	print("LANES: %d check(s) failed" % fails)
+	quit(1 if fails > 0 else 0)

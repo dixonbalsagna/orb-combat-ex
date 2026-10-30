@@ -124,7 +124,11 @@ func _init() -> void:
 	for p in off0:
 		if p.kind == "berg" or p.kind == "lone_tree":
 			newKinds = true
-	ok(not newKinds and str(off0) == str(off1), "off: no berg and no lone tree, and the trees and lakes change nothing (%d props)" % off0.size())
+	var dry0: Array = []   # what the lakes leave: the props of columns the sheet is not drawn over (WorldLakes.flooded)
+	for p in off0:
+		if not WorldLakes.flooded(lakes, base, int(p.col), N):
+			dry0.append(p)
+	ok(not newKinds and str(dry0) == str(off1) and dry0.size() < off0.size(), "off: no berg and no lone tree, the ring's trees change nothing, and the lakes take only the props of columns under their sheet or on its flood strip (%d props, %d with the lake)" % [off0.size(), off1.size()])
 
 	# --- on: each kind over SEEDS seeds
 	WorldGround.K_PROVISIONAL = true
@@ -261,7 +265,12 @@ func _init() -> void:
 			if p.kind != "berg" and p.kind != "lone_tree":
 				rest.append(p)
 		WorldGround.K_PROVISIONAL = false
-		if str(rest) != str(WorldGround.propsIn(fine, stored, base, seed, 0, N)):
+		var offAll: Array = WorldGround.propsIn(fine, stored, base, seed, 0, N)
+		var offDry: Array = []
+		for p in offAll:
+			if not WorldLakes.flooded(lakes, base, int(p.col), N):
+				offDry.append(p)
+		if str(rest) != str(offDry):
 			restSame = false
 		WorldGround.K_PROVISIONAL = true
 	ok(cellRight and cellBergs == 2 * SEEDS, "berg cells: one berg on each, at its peak (column 1 across the seam; the tie at 102 and 103 goes west), sized by its height (%d)" % cellBergs)

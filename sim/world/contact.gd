@@ -142,6 +142,10 @@ static func dataHash() -> String:
 	if WorldFill.surfaceOn():
 		h.text("biomes.surface")
 		FighterData._canon(h, WorldFill.data().surface)   # the surfacing rule, on: a replay must know
+	if WorldFill.floorOn():
+		h.text("biomes.floor")
+		FighterData._canon(h, WorldFill.data().floor)   # the floor of a lake or the sea, on: a replay must know (and wade.below, which it reads)
+		FighterData._canon(h, WorldFill.data().wade)
 	if WorldFire.on():
 		h.text("biomes.fire")
 		FighterData._canon(h, WorldFire.data())   # the fires in the forests, on: a replay must know
@@ -493,8 +497,11 @@ static func moveAir(S: SimState, b: Body, dt: float, ev: Array) -> void:
 		if WorldFill.surfaceOn():   # Game Design 2026-10-23b item 7: he surfaces set within the data's ticks, with no down state, and counts as landed there
 			b.wetT += 1
 			var left: int = WorldFill.surfaceTicks() - b.wetT
+			var rise: float = wsurf   # where he comes up to: the surface, or with the floor on, the floor of his column (never above him: it only moves him up, once the surfacing ends)
+			if WorldFill.floorOn():
+				rise = maxf(b.y, minf(wsurf, WorldWater.floorAt(S, b.x, b.z)))
 			if left <= 0:
-				b.y = wsurf
+				b.y = rise
 				b.vx = 0.0
 				b.vy = 0.0
 				b.wetT = 0
@@ -502,7 +509,7 @@ static func moveAir(S: SimState, b: Body, dt: float, ev: Array) -> void:
 				b.end = "water"
 				ev.append({"k": "sink", "x": b.x, "y": b.y})
 			else:
-				b.vy = maxf(b.vy, (wsurf - b.y) / (float(left) * dt))   # rise so as to arrive on the last tick
+				b.vy = maxf(b.vy, (rise - b.y) / (float(left) * dt))   # rise so as to arrive on the last tick
 		elif SimDetMath.hypot(b.vx, b.vy) < K_SINK and b.age > 0.3:
 			b.done = true
 			b.end = "water"
@@ -1076,9 +1083,10 @@ static func _contact(S: SimState, f, by, b: Body, e: Dictionary) -> void:
 			var rc = WorldCrater.dig(S, f.x, E, by, "impact", f.vx / f.launchT / maxf(sp, 0.000001), vert, f.launchSpecial, f.z, sh)
 			var broke: bool = WorldCraters.after(S, rc, sh, f.z) if sh.size() > 0 else false   # a floe broken through is water, not a bowl to sit in
 			var swallow: float = float(_hk.get("embed", 0.0)) if String(_hk.get("kind", "")) == "MARSH SWALLOW" else 0.0
-			if rc != null and first and not broke and swallow > 0.0:
+			var buriable: bool = WorldWater.burialOK(S, f.x)   # rulings 2026-10-30 row 11: a burial needs water under half of wade.below at his column; deeper, no embed (this one's included) and he comes up by the surfacing
+			if rc != null and first and not broke and buriable and swallow > 0.0:
 				_swallow(S, f, rc, sh, swallow)   # biomes W6: the marsh always embeds, the body that much deeper
-			elif rc != null and first and not broke and S.T - f.embedCool >= K_EMB_COOL:
+			elif rc != null and first and not broke and buriable and S.T - f.embedCool >= K_EMB_COOL:
 				var dbh: float = rc.depth / 75.0
 				var thr: float = WorldCraters.threshold(sh)   # the threshold scales with the material's depth: today's embed rate on every surface (ruling 3)
 				if dbh >= K_EMB_MIN * thr or (f.launchSpecial and dbh >= K_EMB_SPECIAL * thr):

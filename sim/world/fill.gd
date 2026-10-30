@@ -36,6 +36,7 @@ static var K_WAVE_STEPS: int = 6
 static var K_DOUSE: float = 0.3
 static var K_SURF_ON: bool = false
 static var K_SURF_TICKS: int = 30
+static var K_FLOOR_ON: bool = false
 
 
 static func data() -> Dictionary:
@@ -67,6 +68,51 @@ static func surfaceTicks() -> int:
 	if not _loaded:
 		_load()
 	return K_SURF_TICKS
+
+
+## The floor of a lake or the sea (Game Design rulings 2026-10-30; docs/world/lake-floor.md): on, and wade.below read as the one line for a lake. Independent of the fill's switch.
+static func floorOn() -> bool:
+	if not _loaded:
+		_load()
+	return K_FLOOR_ON
+
+
+## What is wrong with water.json's floor, or "": it is {enabled}, and with it on it needs both halves of the surfacing rule (Game Design rulings 2026-10-30 rows 3 and 10): surface.enabled here (a launched body is
+## brought up) and water.enabled in data/director/interrupts.json (a drop is brought up and counts as landed). dropOn: the second.
+static func floorProblem(j: Dictionary, dropOn: bool) -> String:
+	if not j.has("floor"):
+		return ""
+	if not (j.floor is Dictionary):
+		return "water.json: floor is {enabled}"
+	if not bool(j.floor.get("enabled", false)):
+		return ""
+	var surf: bool = j.has("surface") and j.surface is Dictionary and bool(j.surface.get("enabled", false))
+	if surf and dropOn:
+		return ""
+	return "water.json: the floor needs both halves of the surfacing rule, surface.enabled in water.json (a launched body is brought up) and water.enabled in data/director/interrupts.json (a drop is brought up and counts as landed); %s is off" % ("both are" if not surf and not dropOn else ("surface.enabled" if not surf else "interrupts.json water.enabled"))
+
+
+## data/director/interrupts.json water.enabled, read straight from the file (the floor's load check; the director's data is not loaded yet when this is).
+static func _dropWaterOn() -> bool:
+	var f := FileAccess.open("res://data/director/interrupts.json", FileAccess.READ)
+	if f == null:
+		return false
+	var j = JSON.parse_string(f.get_as_text())
+	return j is Dictionary and j.get("water") is Dictionary and bool(j.water.get("enabled", false))
+
+
+## wade.below: water shallower than this is waded, and a fighter's floor in it is the bed to half of it.
+static func wadeBelow() -> float:
+	if not _loaded:
+		_load()
+	return K_WADE
+
+
+## For tools and checks: the floor's switch for this process (the file is not touched).
+static func setFloor(on: bool) -> void:
+	if not _loaded:
+		_load()
+	K_FLOOR_ON = on
 
 
 ## For tools and checks: the surfacing rule's switch for this process (the file is not touched).
@@ -111,6 +157,9 @@ static func _load() -> void:
 			_errors.append("water.json: table names %s, which climate.json does not have" % String(k))
 	if j.has("surface") and (not (j.surface is Dictionary) or int(j.surface.ticks) < 2):
 		_errors.append("water.json: surface is {enabled, ticks} with ticks at least 2")
+	var fp: String = floorProblem(j, _dropWaterOn() if j.has("floor") and j.floor is Dictionary and bool(j.floor.get("enabled", false)) else true)
+	if fp != "":
+		_errors.append(fp)
 	if int(j.fill.halfMax) < 4 or int(j.fill.maxWindows) < 1 or float(j.fill.rate) <= 0.0 or int(j.near.reach) < 1 or float(j.near.front) <= 0.0:
 		_errors.append("water.json: fill.halfMax at least 4, maxWindows at least 1, rate above 0, near.reach at least 1, near.front above 0")
 	if not _errors.is_empty():
@@ -140,11 +189,12 @@ static func _load() -> void:
 	K_DOUSE = float(j.douse.scorchMin)
 	K_SURF_ON = bool(j.surface.enabled) if j.has("surface") else false
 	K_SURF_TICKS = int(j.surface.ticks) if j.has("surface") else 30
+	K_FLOOR_ON = bool(j.floor.enabled) if j.has("floor") else false
 
 
-## Water shallower than this at x is waded: a body passing through it is not dragged or sunk (it still skims). Always false with the switch off.
+## Water shallower than this at x is waded: a body passing through it is not dragged or sunk (it still skims). False with water v2 off, unless the floor is on: wade.below is the floor's line too (rulings 2026-10-30 row 4).
 static func wading(S: SimState, x: float) -> bool:
-	if not on():
+	if not (on() or K_FLOOR_ON):
 		return false
 	var d: float = S.water[int(floor(SimWrap.wrap(x) / SimConst.COL)) % SimConst.NC]
 	return d < K_WADE
