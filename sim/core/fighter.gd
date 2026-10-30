@@ -9,6 +9,21 @@ const WATER_BUOY: float = 1000.0
 const DROP_GRAV: float = 1000.0   # a dropped fighter's fall, units a second squared (a flight's own gravity)
 
 
+## The floor f stands on at (x, z): the ground, or with the floor of a lake or the sea on (data/biomes/water.json floor) the surface less his feet (WorldWater.floorAt; docs/world/lake-floor.md). Never while he is dropped,
+## and never while the water has him under after a drop (SimDir.waterUnder): the floor does not snap a body up, it applies once the surfacing ends (Game Design rulings 2026-10-30 row 3).
+## A body below it rises toward it at most WorldWater.riseMax a tick (wade.below over the surfacing's riseTicks: 7.5), from `from` (the height his tick began at, his own when not given), whatever he presses: a drop's end or
+## a get-up in water 37.5 to 75 deep lifts him over ticks, not in one (rulings 2026-10-30 row 9). His height is the state; nothing is kept.
+static func floorFor(S: SimState, f, x: float, z: float, from: float = NAN) -> float:
+	var g: float = WorldTerrain.groundY(S, x, z)
+	if WorldFill.floorOn() and f.state != "dropped" and f.state != "launched" and not SimDir.waterUnder(f):
+		var fl: float = WorldWater.floorAt(S, x, z)
+		var y0: float = f.y if is_nan(from) else from
+		if y0 >= fl:
+			return fl
+		return maxf(g, minf(fl, y0 + WorldWater.riseMax(SimDir.waterRiseTicks())))
+	return g
+
+
 static func tierUp(S: SimState, f) -> void:
 	S.world.maxTier = maxf(S.world.maxTier, f.tier)
 	SimMood.onForm(S, f)   # a form step may raise the act, and it adds the mood's form impulse
@@ -204,7 +219,7 @@ static func rushAt(S: SimState, f, u: float) -> PackedFloat64Array:
 		else:
 			y += bow
 		x = SimWrap.wrap(x)
-		y = SimMathx.jclamp(y, WorldTerrain.groundY(S, x, f.z), SimConst.CEILING)
+		y = SimMathx.jclamp(y, floorFor(S, f, x, f.z), SimConst.CEILING)
 	return PackedFloat64Array([SimWrap.wrap(x), y])
 
 
@@ -229,13 +244,13 @@ static func stepRush(S: SimState, f, dt: float) -> void:
 	var tz: float = (r.tgt.z + r.offZ) if r.tgt != null else r.pz   # L2: the rush's depth (used only when S.depthOn); offZ puts him a little to one side of his target
 	if rem <= dt:
 		f.x = SimWrap.wrap(tx)
-		f.y = SimMathx.jmax(ty, WorldTerrain.groundY(S, tx))
+		f.y = SimMathx.jmax(ty, floorFor(S, f, tx, 0.0))
 		if S.depthOn:
 			f.z = clampf(tz, SimDepth.zBack, SimDepth.zFront)
 			f.zT = f.z   # he stays where the rush took him
 			f.vz = 0.0
 			f.vzX = 0.0
-			f.y = SimMathx.jmax(ty, WorldTerrain.groundY(S, tx, f.z))   # on the ground at his depth
+			f.y = SimMathx.jmax(ty, floorFor(S, f, tx, f.z))   # on the ground at his depth
 		f.rush = null
 		f.vx = 0.0
 		f.vy = 0.0
@@ -386,7 +401,7 @@ static func stepTo(S: SimState, f, x: float, y: float, z: float) -> bool:
 	var wz: float = clampf(z, SimDepth.zBack, SimDepth.zFront)
 	f.x = wx
 	f.z = wz
-	f.y = SimMathx.jmax(y, WorldTerrain.groundY(S, wx, wz))
+	f.y = SimMathx.jmax(y, floorFor(S, f, wx, wz))
 	contact(S, f, x0, y0, z0)
 	f.zT = f.z
 	return f.x == wx and f.z == wz
@@ -518,7 +533,7 @@ static func flightSpeed(S: SimState, f, dash: bool) -> float:
 		# 15 s); close in, it is the melee dash it always was.
 		var sep: float = absf(SimWrap.sdx(f.x, SimRoster.opp(S, f).x))
 		sp *= 1.0 + (SimConst.TRAV_FREE - 1.0) * SimMathx.jclamp((sep - SimConst.BOOST_NEAR) / (SimConst.BOOST_FAR - SimConst.BOOST_NEAR), 0.0, 1.0)
-	if f.y < WorldWater.seaTop(S, f.x):   # in the sea or a deep lake: below its surface
+	if f.y < WorldWater.seaTop(S, f.x) and not WorldFill.floorOn():   # in the sea or a deep lake: below its surface (with the floor on a fighter under his own control is never below it: rulings 2026-10-30 row 2)
 		sp *= 0.55
 	return sp
 
@@ -625,7 +640,7 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 				f.vzX += (0.0 - f.vzX) * k
 			f.x = SimWrap.wrap(f.x + f.vx * dt)
 			f.y += f.vy * dt
-			var g: float = WorldTerrain.groundY(S, f.x, f.z)   # at his depth (the plane's when depth is off)
+			var g: float = floorFor(S, f, f.x, f.z, y0)   # at his depth (the plane's when depth is off); with the floor on, the floor of the water he is over
 			if f.y < g:
 				f.y = g
 				if f.vy < 0.0:
@@ -695,12 +710,12 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 			f.vz *= keep
 			f.vzX *= keep
 		f.x = SimWrap.wrap(f.x + f.vx * dt)
-		f.y = SimMathx.jmax(WorldTerrain.groundY(S, f.x, f.z), f.y + f.vy * dt)
+		f.y = SimMathx.jmax(floorFor(S, f, f.x, f.z, y0), f.y + f.vy * dt)
 	if S.depthOn:
 		stepDepth(S, f, dt)   # his depth: the director's velocity, his home, the band
 		if not rushed and f.state != "launched" and f.state != "down":
 			contact(S, f, x0, y0, z0)   # and the buildings: he stops at a face, and the rest of his step slides
-			var gz: float = WorldTerrain.groundY(S, f.x, f.z)   # the ground at the depth he has come to
+			var gz: float = floorFor(S, f, f.x, f.z, y0)   # the floor at the depth he has come to
 			if f.y < gz:
 				f.y = gz
 	if S.game.ko == null:

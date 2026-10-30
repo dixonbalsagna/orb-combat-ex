@@ -50,6 +50,16 @@ static func brokenProps(S: SimState) -> PackedInt32Array:
 	return _d("launch.gd").brokenProps(S)
 
 
+## DirWater.under: f went under water in a drop and is not back up yet (the floor of a lake or the sea waits for him: SimFighter.floorFor).
+static func waterUnder(f) -> bool:
+	return _d("water.gd").under(f)
+
+
+## DirWater.riseTicks: the surfacing's rise time (the floor's rate for a body under it: wade.below over this).
+static func waterRiseTicks() -> int:
+	return _d("water.gd").riseTicks()
+
+
 ## DirLaunch.propBroke: World's flight broke f's PROP SMASH prop (the director keeps it broken).
 static func propBroke(S: SimState, f) -> void:
 	_d("launch.gd").propBroke(S, f)

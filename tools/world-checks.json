@@ -6,7 +6,8 @@
     "control_check", "craters_check", "deepencheck", "demostart_check", "density_check", "depthreads_check", "directcheck", "epoch_check", "far_check", "farmap_check",
     "farsites_check", "fill_check", "fire_check", "gen2_state_check", "ground_check", "ground_props_check", "host_check", "interior_check", "isect_check", "lakes_check",
     "land_check", "minecheck", "noise_check", "planet_check", "planet_world_check", "props_check", "repeat_check", "ringpick_check", "rivers_check", "sea_rules_check",
-    "sites_check", "skate_check", "stagecheck", "step_check", "surface_check", "switchon_check", "wall_check", "wrecks_check"
+    "sites_check", "skate_check", "stagecheck", "step_check", "surface_check", "switchon_check", "wall_check", "wrecks_check",
+    "floor_walk_probe"
   ],
   "leaveOut": {
     "b_heights": "measurement: prints percentiles of dry land on B plates, no verdict",

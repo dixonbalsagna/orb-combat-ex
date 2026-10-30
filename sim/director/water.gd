@@ -53,6 +53,11 @@ static func top(S: SimState, x: float) -> float:
 	return w
 
 
+## The surfacing's rise time in ticks (water.riseTicks, at least 1): the floor's rate for a waded body under it is wade.below over this (WorldWater.riseMax).
+static func riseTicks() -> int:
+	return maxi(1, int(cfg().get("riseTicks", 10)))
+
+
 ## True while f is under after a drop, or rising from it: not landed yet.
 static func under(f) -> bool:
 	return _g(f, WT_IN) > 0 or _g(f, WT_UP) == 1
