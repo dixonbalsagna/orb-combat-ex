@@ -293411,6 +293411,22 @@
       }
     },
     {
+      "id": "water-floor-enabled-not-boolean",
+      "schema": "biomes-water.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/water.json",
+          "set": {
+            "/floor/enabled": "on"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/floor/enabled"
+      }
+    },
+    {
       "id": "after-enabled-not-boolean",
       "schema": "biomes-after.schema.json",
       "mutate": [

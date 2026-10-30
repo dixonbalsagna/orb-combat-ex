@@ -14,7 +14,8 @@
     "wade",
     "wave",
     "douse",
-    "surface"
+    "surface",
+    "floor"
   ],
   "additionalProperties": false,
   "properties": {
@@ -242,6 +243,20 @@
           "minimum": 2,
           "maximum": 600,
           "description": "How many ticks."
+        }
+      }
+    },
+    "floor": {
+      "type": "object",
+      "required": [
+        "enabled"
+      ],
+      "additionalProperties": false,
+      "description": "The floor of a lake or the sea (Game Design rulings 2026-10-30).",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "A free fighter's floor in the ring's own water is its surface less his feet (by depth, on wade.below); a lake as deep as wade.below is sea. Off: the ground, and a lake is sea from 100 deep (hiding's leftover). Needs surface.enabled."
         }
       }
     }

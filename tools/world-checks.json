@@ -1,6 +1,7 @@
 {
   "_why": "Which scripts in sim/world/tools/ CI runs (the world job in .github/workflows/ci.yml, through tools/world-checks.mjs and tools/gate.mjs --verdict) and which it leaves out, and why. Every .gd file there must be in one list or the other: tools/world-checks.mjs --verify fails on an unclassified script, so a new check cannot be forgotten and a new probe has to say it is one. A check is a script that prints a verdict line 'NAME: N check(s) failed' (or 'NAME: N failed') and ends; most quit with a plain quit() (exit 0) whatever they found, so the verdict line is the result (tools/gate.mjs --verdict). Measured 2026-10-30 on HEAD, three at a time at below-normal priority: all 48 pass, 169 s wall, 472 s added up one after another.",
   "run": [
+    "burial_check", "floor_check", "lane_check", "props_wet_check",
     "after_check", "arena_check", "b_check", "blastcheck", "blockcheck", "brunt_check", "calm_read_check", "campaign_check", "climate_check", "collateral_check",
     "control_check", "craters_check", "deepencheck", "demostart_check", "density_check", "depthreads_check", "directcheck", "epoch_check", "far_check", "farmap_check",
     "farsites_check", "fill_check", "fire_check", "gen2_state_check", "ground_check", "ground_props_check", "host_check", "interior_check", "isect_check", "lakes_check",
@@ -19,7 +20,6 @@
     "gen_cost": "measurement: the cost of generating a planet, no verdict",
     "ground_strip": "report: draws a strip of ground for a look, no verdict",
     "job_prof": "profile (timing), no verdict",
-    "lane_check": "report: prints the lane layout's counts and ends with quit(0); it has no verdict line and cannot fail",
     "planet_digest": "digest: prints hashes for a before and after comparison, no verdict",
     "planet_map": "report: draws the planet map for a look, no verdict",
     "planet_measure": "measurement of the planet's shape, no verdict",
