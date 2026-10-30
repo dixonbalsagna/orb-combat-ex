@@ -293475,6 +293475,70 @@
       }
     },
     {
+      "id": "density-enabled-not-boolean",
+      "schema": "biomes-density.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/density.json",
+          "set": {
+            "/enabled": "on"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "density-city-gap-zero",
+      "schema": "biomes-density.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/density.json",
+          "set": {
+            "/city/gapMul": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/city/gapMul"
+      }
+    },
+    {
+      "id": "density-town-width-big",
+      "schema": "biomes-density.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/density.json",
+          "set": {
+            "/town/widthMul": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/town/widthMul"
+      }
+    },
+    {
+      "id": "density-town-rows-empty",
+      "schema": "biomes-density.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/density.json",
+          "set": {
+            "/town/rows": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/town/rows"
+      }
+    },
+    {
       "id": "ground-smash-not-array",
       "schema": "biomes-ground.schema.json",
       "mutate": [

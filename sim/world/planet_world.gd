@@ -81,6 +81,7 @@ static func settle(S: SimState, P: WorldPlanet.Planet, chords: Array, wsum: floa
 	for ch in chords:
 		si += 1
 		var sd: Dictionary = (arch[ARCH_CITY] if ch[1] == WorldPlanet.KIND_CITY else arch[ARCH_TOWN]).duplicate(true)
+		WorldDensity.apply(sd, "city" if ch[1] == WorldPlanet.KIND_CITY else "town")   # a gen 2 ring's places are built denser (density.json); gen 1 is laid as the archetype says
 		sd.id = "p%d" % ch[0]
 		sd.span = [float(ch[2]) * COL / PS, float(ch[3]) * COL / PS]
 		sd.pop_share = float(P.people[ch[0]]) / maxf(wsum, 1.0)

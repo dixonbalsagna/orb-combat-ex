@@ -500,6 +500,10 @@
       "schema": "biomes-rings.schema.json"
     },
     {
+      "match": "data/biomes/density.json",
+      "schema": "biomes-density.schema.json"
+    },
+    {
       "match": "data/biomes/props.json",
       "schema": "biomes-props.schema.json"
     },

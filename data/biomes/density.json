@@ -1,0 +1,15 @@
+{
+  "schema": "biomes.density/1",
+  "_about": "How densely a gen 2 planet ring's places are built (docs/world/density.md; read by sim/world/density.gd; Game Design rulings-2026-10-28 item 1: a Half ring stands at least 60 structures, aiming for 80, by denser settlements and not more sites). enabled: the whole module (off, a ring's places are laid as the settlement archetypes say, which stands about 38 structures on a Half ring). It applies only to a gen 2 ring (WorldClimate.genNow() 2 or more): gen 1, gen 1 planet rings and the hand-made world never read it. For each kind of place, city (Bellgate's archetype) and town (the outskirts village's): gapMul multiplies every district's gap_bh (the space between neighbours in a row), widthMul every district's and kind's width_bh (a house or a shop is a little narrower), rows are the lane rows every district of the kind builds in (the foreground row 0 stays empty; a village that built rows 1 and 2 builds row 3 as well, the back street of a suburb).",
+  "enabled": true,
+  "city": {
+    "gapMul": 0.4,
+    "widthMul": 0.8,
+    "rows": [1, 2, 3]
+  },
+  "town": {
+    "gapMul": 0.3,
+    "widthMul": 0.6,
+    "rows": [1, 2, 3]
+  }
+}
