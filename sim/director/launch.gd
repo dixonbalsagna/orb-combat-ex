@@ -337,7 +337,7 @@ static func _biomeCands(S: SimState, A, D, c: Array, longOnly: bool, fwdOnly: bo
 	if not q.is_empty() and not sea and look == "ice" and alt <= float(q.onIceBh) * BH:
 		c.append(_bc(q, "ICE SKID", f, float(q.uy), pers, 0.0, {"fm": float(q.force)}))
 	q = cd.get("MARSH SWALLOW", {})
-	if not q.is_empty() and not sea and look == "mud" and alt <= float(q.maxAltBh) * BH:
+	if not q.is_empty() and not sea and look == "mud" and alt <= float(q.maxAltBh) * BH and WorldWater.burialOK(S, D.x):   # Game Design rulings 2026-10-30 row 12: not where he can't be swallowed
 		c.append(_bc(q, "MARSH SWALLOW", float(q.ux) * f, float(q.uy), pers, 0.0, {"embed": float(q.embedMul)}))
 	q = cd.get("TREE LINE", {})
 	if not q.is_empty():
@@ -913,7 +913,7 @@ static func knock(S: SimState, att, tgt, mul: float = 1.0, ox: float = NAN) -> v
 	var kb: Dictionary = data().knockBack
 	var ti: int = clampi(int(att.tier) - 1, 0, 3)
 	var s: float = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(att.x if is_nan(ox) else ox, tgt.x)), att.face)   # ox: away from that point (a mine's blast), not from the attacker
-	var g: float = WorldTerrain.groundY(S, tgt.x)
+	var g: float = WorldWater.floorAt(S, tgt.x)
 	var dist: float = float(kb.distBh[ti]) * BH * mul
 	var ground: bool = String(kb.groundMode) == "skid" and tgt.y - g <= float(kb.groundWithinBh) * BH and not WorldTerrain.seaAt(S, tgt.x)
 	if ground:
@@ -929,7 +929,7 @@ static func knock(S: SimState, att, tgt, mul: float = 1.0, ox: float = NAN) -> v
 		return
 	var r := SimState.Rush.new()
 	r.px = SimWrap.wrap(tgt.x + s * dist)
-	var g2: float = WorldTerrain.groundY(S, r.px)
+	var g2: float = SimFighter.floorFor(S, tgt, r.px, 0.0)
 	var slide: bool = ground and not WorldTerrain.seaAt(S, r.px)   # the upright slide ends on the ground; a drift keeps its height
 	r.py = g2 if slide else SimMathx.jmax(tgt.y, g2)
 	var ticks: float = float(kb.slideTicks if slide else kb.driftTicks)
@@ -945,7 +945,7 @@ static func knock(S: SimState, att, tgt, mul: float = 1.0, ox: float = NAN) -> v
 			ticks = maxf(1.0, round(ticks * d2 / maxf(dist, 1.0)))   # the same speed, a shorter way
 			dist = d2
 			r.px = SimWrap.wrap(tgt.x + s * dist)
-			r.py = WorldTerrain.groundY(S, r.px)
+			r.py = SimFighter.floorFor(S, tgt, r.px, 0.0)
 			bumpKind = maxi(1, BUMP_KINDS.find(String(ob.get("kind", "wall"))))
 			DirInterrupt.si(tgt, DirInterrupt.BUMP_AT, S.tick + int(ticks))
 			DirInterrupt.si(tgt, DirInterrupt.BUMP_REQ, bumpKind | (int(dist / (ticks * SimConst.DT)) << 4))

@@ -262,7 +262,7 @@ static func layMine(S: SimState, f) -> void:
 		if f.ai == null:
 			SimFx.banner(S, "NEED " + SimMathx.jstr(float(m.ki)) + " KI", "#9fb4ff", 0.6)
 		return
-	var grounded: bool = f.y - WorldTerrain.groundY(S, f.x) <= float(m.groundWithinBh) * DirInterrupt.BH
+	var grounded: bool = f.y - WorldWater.floorAt(S, f.x) <= float(m.groundWithinBh) * DirInterrupt.BH
 	var sh = SimShots.fire(S, S.fighters.find(f), String(m.kind), {"ground": grounded})
 	if sh == null:
 		SimFx.cue(S, f, "mine_refused", "", "")   # the cap on live shots, or too near another mine: the press is spent

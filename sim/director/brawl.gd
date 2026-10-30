@@ -1808,7 +1808,7 @@ static func _pop(S: SimState, ex, f, o, p: float) -> void:
 	var base: float = o.rush.py if again else o.y
 	var r := SimState.Rush.new()
 	r.px = o.x
-	r.py = maxf(base, WorldTerrain.groundY(S, o.x))
+	r.py = maxf(base, SimFighter.floorFor(S, o, o.x, 0.0))
 	r.pz = o.z
 	var ticks: int = int(pc.get("fallTicks", 6)) if again else int(pc.get("ticks", 30))
 	var h: float = 0.0
@@ -1856,7 +1856,7 @@ static func _spike(S: SimState, ex, f, o) -> void:
 	_drop(S, ex, o)
 	var r := SimState.Rush.new()
 	r.px = o.x
-	r.py = WorldTerrain.groundY(S, o.x)
+	r.py = SimFighter.floorFor(S, o, o.x, 0.0)
 	r.pz = o.z
 	r.end = S.T + float(fall) * SimConst.DT
 	o.rush = r
@@ -2482,7 +2482,7 @@ static func _giveStep(S: SimState, ex, g) -> void:
 		var k: float = 1.0
 		for _i in range(8):
 			nx = SimWrap.wrap(f.x + ux * step * k)
-			ny = maxf(WorldTerrain.groundY(S, nx, _gz()), f.y + uy * step * k)
+			ny = DirWater.held(S, f, maxf(SimFighter.floorFor(S, f, nx, _gz()), f.y + uy * step * k), _gz())
 			d1 = SimDetMath.hypot(SimWrap.sdx(o.x, nx), ny - o.y)
 			if want == 0.0:
 				# Where his stick points: the ground turns the step along itself, and it is no longer than a step.
@@ -2507,7 +2507,7 @@ static func _giveStep(S: SimState, ex, g) -> void:
 			if d1 <= 0.001:
 				continue
 			nx = SimWrap.wrap(o.x + SimWrap.sdx(o.x, nx) / d1 * lim)
-			ny = maxf(WorldTerrain.groundY(S, nx, _gz()), o.y + (ny - o.y) / d1 * lim)
+			ny = DirWater.held(S, f, maxf(SimFighter.floorFor(S, f, nx, _gz()), o.y + (ny - o.y) / d1 * lim), _gz())
 		if _walled(S, nx, ny) and not _walled(S, f.x, f.y):
 			# A building's face: he goes up it by the same step (flight goes over anything, and nobody is cornered).
 			nx = f.x
@@ -2557,7 +2557,7 @@ static func _stepIn(S: SimState, ex, f, o, ticks: int) -> void:
 	var ct: Dictionary = DirData.contact()
 	var s: float = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(o.x, f.x)), -f.face)   # his side of the rival
 	var gx: float = SimWrap.sdx(f.x, SimWrap.wrap(o.x + s * float(ct.offset)))
-	var gy: float = maxf(o.y, WorldTerrain.groundY(S, f.x, _gz())) - f.y
+	var gy: float = maxf(o.y, SimFighter.floorFor(S, f, f.x, _gz())) - f.y
 	var gl: float = SimDetMath.hypot(gx, gy)
 	if gl <= 0.5:
 		return
@@ -2570,7 +2570,7 @@ static func _stepIn(S: SimState, ex, f, o, ticks: int) -> void:
 	var went: float = 0.0
 	for _k in range(6):
 		nx = SimWrap.wrap(f.x + gx / gl * step)
-		ny = maxf(WorldTerrain.groundY(S, nx, _gz()), f.y + gy / gl * step)
+		ny = DirWater.held(S, f, maxf(SimFighter.floorFor(S, f, nx, _gz()), f.y + gy / gl * step), _gz())
 		went = SimDetMath.hypot(SimWrap.sdx(f.x, nx), ny - f.y)
 		if went <= room:
 			break
@@ -2857,7 +2857,7 @@ static func _move(S: SimState, ex) -> void:
 		for _k in range(5):
 			var lift: float = 0.0
 			for f in [A, D]:
-				lift = maxf(lift, WorldTerrain.groundY(S, SimWrap.wrap(f.x + wx * dt), _gz()) - (f.y + wy * dt))
+				lift = maxf(lift, SimFighter.floorFor(S, f, SimWrap.wrap(f.x + wx * dt), _gz()) - (f.y + wy * dt))
 			if lift <= 0.0 or SimDetMath.hypot(wx * dt, wy * dt + lift) <= cap * dt:
 				fit = true
 				break
@@ -3003,8 +3003,8 @@ static func _thrownApart(S: SimState, ex) -> void:
 	for f in [ex.A, ex.D]:
 		var r := SimState.Rush.new()
 		r.px = SimWrap.wrap(m[0] + (sA if f == ex.A else -sA) * dist)
-		var g: float = WorldTerrain.groundY(S, r.px, _gz())
-		var ground: bool = f.y - WorldTerrain.groundY(S, f.x, _gz()) <= within and not WorldTerrain.seaAt(S, r.px)
+		var g: float = SimFighter.floorFor(S, f, r.px, _gz())
+		var ground: bool = f.y - WorldWater.floorAt(S, f.x, _gz()) <= within and not WorldTerrain.seaAt(S, r.px)
 		r.py = g if ground else maxf(f.y, g)
 		r.end = S.T + float(ticks) * SimConst.DT
 		f.rush = r
@@ -3714,14 +3714,14 @@ static func tick(S: SimState, ex) -> void:
 			ex.D.x = SimWrap.wrap(ex.D.x - SimMathx.jsign(d) * px)
 		var dy: float = ex.D.y - ex.A.y
 		var hi = ex.D if dy > 0.0 else ex.A
-		if absf(dy) > 1.0 and hi.y <= WorldTerrain.groundY(S, hi.x, _gz()) + 0.5:
+		if absf(dy) > 1.0 and hi.y <= WorldWater.floorAt(S, hi.x, _gz()) + 0.5:
 			# The higher one stands on the ground and can't come down (a slope the pair is on): the other comes up to him.
 			var lo = ex.A if dy > 0.0 else ex.D
-			lo.y = minf(hi.y, lo.y + float(c.maxStepBh) * DirInterrupt.BH)
+			lo.y = minf(hi.y, DirWater.held(S, lo, lo.y + float(c.maxStepBh) * DirInterrupt.BH, _gz()))
 		elif absf(dy) > 1.0:
 			var py: float = minf(absf(dy) * 0.5, pull)
-			ex.A.y = maxf(WorldTerrain.groundY(S, ex.A.x, _gz()), ex.A.y + SimMathx.jsign(dy) * py)
-			ex.D.y = maxf(WorldTerrain.groundY(S, ex.D.x, _gz()), ex.D.y - SimMathx.jsign(dy) * py)
+			ex.A.y = DirWater.held(S, ex.A, maxf(SimFighter.floorFor(S, ex.A, ex.A.x, _gz()), ex.A.y + SimMathx.jsign(dy) * py), _gz())
+			ex.D.y = DirWater.held(S, ex.D, maxf(SimFighter.floorFor(S, ex.D, ex.D.x, _gz()), ex.D.y - SimMathx.jsign(dy) * py), _gz())
 		_own(ex.A, SimDetMath.hypot(SimWrap.sdx(float(was[0]), ex.A.x), ex.A.y - float(was[1])))
 		_own(ex.D, SimDetMath.hypot(SimWrap.sdx(float(was[2]), ex.D.x), ex.D.y - float(was[3])))
 	if S.tick - maxi(_g(ex.A, LAST_AT), _g(ex.D, LAST_AT)) > int(c.idleTicks) and _g(ex.A, LINE) == 0 and _g(ex.D, LINE) == 0:
@@ -4091,7 +4091,7 @@ static func tellTick(S: SimState, ex) -> void:
 	if step <= 0.0:
 		return
 	var nx: float = SimWrap.wrap(f.x + ux / ul * step)
-	var ny: float = maxf(WorldTerrain.groundY(S, nx, _gz()), f.y + uy / ul * step)
+	var ny: float = DirWater.held(S, f, maxf(SimFighter.floorFor(S, f, nx, _gz()), f.y + uy / ul * step), _gz())
 	if _walled(S, nx, ny) and not _walled(S, f.x, f.y):
 		return
 	_s(f, TELL_MV, _g(f, TELL_MV) + int(ceil(SimDetMath.hypot(SimWrap.sdx(f.x, nx), ny - f.y) * 16.0)))

@@ -155,7 +155,7 @@ static func _contact(S: SimState, a, d) -> void:
 		return
 	var s: float = SimDamage.jor(SimMathx.jsign(dx), -a.face)
 	a.x = SimWrap.wrap(d.x + s * float(ct.offset))
-	a.y = SimMathx.jmax(d.y, WorldTerrain.groundY(S, a.x))
+	a.y = DirWater.held(S, a, SimMathx.jmax(d.y, SimFighter.floorFor(S, a, a.x, 0.0)))
 	a.rush = null
 	a.vx = 0.0
 	a.vy = 0.0
@@ -173,7 +173,7 @@ static func opDodge(S: SimState, ex, _args) -> void:
 		var far: float = -SimDamage.jor(SimMathx.jsign(SimWrap.sdx(A.x, D.x)), A.face)   # the side D ends on, from A
 		var leg: float = float(_args.dur) * 0.5
 		var rise: float = float(_args.rise)
-		var over: bool = A.y + rise <= SimConst.CEILING or A.y - rise < WorldTerrain.groundY(S, A.x) + BODY_H
+		var over: bool = A.y + rise <= SimConst.CEILING or A.y - rise < WorldWater.floorAt(S, A.x) + BODY_H
 		var r := SimState.Rush.new()
 		r.px = SimWrap.wrap(A.x + far * DODGE_PAST)
 		r.py = A.y + (rise if over else -rise)
@@ -185,7 +185,7 @@ static func opDodge(S: SimState, ex, _args) -> void:
 		SimFx.rush(S, D, A, S.tick + int(leg * 2.0 / SimConst.DT))
 		return
 	D.x = SimWrap.wrap(A.x - A.face * DODGE_OFF)
-	D.y = SimMathx.jmax(WorldTerrain.groundY(S, D.x), A.y + S.rng.range_(-30.0, 70.0))
+	D.y = DirWater.held(S, D, SimMathx.jmax(SimFighter.floorFor(S, D, D.x, 0.0), A.y + S.rng.range_(-30.0, 70.0)))
 	D.vx = 0.0
 	D.vy = 0.0
 	SimFx.ring(S, D.x, D.y + 34.0, 500.0, "#9fe0ff", 0.3, 8.0)
@@ -204,7 +204,7 @@ static func approachOver(S: SimState, ex, a) -> bool:
 		return false
 	var far: float = -SimDamage.jor(SimMathx.jsign(SimWrap.sdx(D.x, A.x)), -A.face)   # the far side of the rival, from where he is now
 	var rise: float = float(ar.riseBh) * BODY_H
-	var over: bool = A.input.my > 0.0 or D.y - rise < WorldTerrain.groundY(S, D.x) + BODY_H
+	var over: bool = A.input.my > 0.0 or D.y - rise < WorldWater.floorAt(S, D.x) + BODY_H
 	var leg: float = float(a.dur) * float(ar.overShare)
 	var r := SimState.Rush.new()
 	r.px = SimWrap.wrap(D.x + far * DODGE_PAST)

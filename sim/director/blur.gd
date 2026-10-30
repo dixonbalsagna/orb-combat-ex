@@ -54,7 +54,7 @@ static func _open(S: SimState, ex, pat: String, toward: bool) -> bool:
 		return false
 	if g.get("ground", false):
 		for f in [ex.A, ex.D]:
-			if f.y - WorldTerrain.groundY(S, f.x) > 0.5 * DirInterrupt.BH:
+			if f.y - WorldWater.floorAt(S, f.x) > 0.5 * DirInterrupt.BH:
 				return false
 	if g.has("fighters") and not (g.fighters as Array).has(DirRecipe.poolKey(ex.A)):
 		return false

@@ -183,7 +183,7 @@ static func _endOff(S: SimState, D, side: float) -> float:
 	var off: float = eng
 	for k in SLOPE_STEPS:
 		off = maxf(eng * float(k), minS)
-		var rise: float = maxf(0.0, WorldTerrain.groundY(S, SimWrap.wrap(D.x + side * off)) - D.y)
+		var rise: float = maxf(0.0, WorldWater.floorAt(S, SimWrap.wrap(D.x + side * off)) - D.y)
 		if SimDetMath.hypot(off, rise) <= float(c.closeBh) * BH:
 			break
 	return side * off
@@ -299,7 +299,7 @@ static func meet(S: SimState, R, T, weight: int, entry: int, pressTick: int) -> 
 		var f = R if k == 0 else T
 		var r := SimState.Rush.new()
 		r.px = SimWrap.wrap(mx + (s if k == 0 else -s) * half)
-		r.py = SimMathx.jmax(my, WorldTerrain.groundY(S, r.px))
+		r.py = SimMathx.jmax(my, SimFighter.floorFor(S, f, r.px, 0.0))
 		r.end = S.T + float(n) * SimConst.DT
 		f.rush = r
 		f.state = "free"

@@ -144,7 +144,7 @@ static func heavyRecoil(S: SimState, ex, f, o) -> bool:
 	var dist: float = float(h.get("bh", 1.5)) * BH
 	var ticks: int = int(h.get("ticks", 8))
 	var dir: float = _away(f, o)
-	var g: float = WorldTerrain.groundY(S, o.x)
+	var g: float = WorldWater.floorAt(S, o.x)
 	var ground: bool = o.y - g <= float(DirLaunch.data().knockBack.groundWithinBh) * BH and not WorldTerrain.seaAt(S, o.x)
 	var so := Callable(WorldContact, "slideObstacle")
 	if ground and so.is_valid():
@@ -154,7 +154,7 @@ static func heavyRecoil(S: SimState, ex, f, o) -> bool:
 	DirBrawl._drop(S, ex, o)
 	var r := SimState.Rush.new()
 	r.px = SimWrap.wrap(o.x + dir * dist)
-	var g2: float = WorldTerrain.groundY(S, r.px)
+	var g2: float = SimFighter.floorFor(S, o, r.px, 0.0)
 	r.py = g2 if ground else maxf(o.y, g2)
 	r.pz = o.z
 	r.end = S.T + float(ticks) * SimConst.DT
@@ -184,7 +184,7 @@ static func popFlip(S: SimState, f, o) -> bool:
 			travel = maxf(0.0, float(ob.d) - DirLaunch.BUMP_SHORT)
 	var r := SimState.Rush.new()
 	r.px = SimWrap.wrap(f.x + dir * travel)
-	r.py = maxf(base, WorldTerrain.groundY(S, r.px))
+	r.py = maxf(base, SimFighter.floorFor(S, f, r.px, 0.0))
 	r.pz = f.z
 	r.end = S.T + float(ticks) * SimConst.DT
 	r.arc = float(c.arcBh) * BH * dir
@@ -258,7 +258,7 @@ static func _flip(S: SimState, f) -> void:
 		DirInterrupt.si(f, DirInterrupt.BUMP_AT, 0)   # the slide ends here, short of the obstacle it was to bump
 	_s(f, RC_LEFT, 0)
 	_s(f, RC_AI, 0)
-	var g: float = WorldTerrain.groundY(S, f.x)
+	var g: float = WorldWater.floorAt(S, f.x)
 	var ground: bool = kind != 3 and f.y - g <= float(DirLaunch.data().knockBack.groundWithinBh) * BH and not WorldTerrain.seaAt(S, f.x)
 	var travel: float = float(c.flipBh) * BH
 	var so := Callable(WorldContact, "slideObstacle")
@@ -269,7 +269,7 @@ static func _flip(S: SimState, f) -> void:
 	var ticks: int = int(c.flipTicks)
 	var r := SimState.Rush.new()
 	r.px = SimWrap.wrap(f.x + dir * travel)
-	var g2: float = WorldTerrain.groundY(S, r.px)
+	var g2: float = SimFighter.floorFor(S, f, r.px, 0.0)
 	r.py = g2 if ground else maxf(f.y, g2)
 	r.pz = f.z
 	r.end = S.T + float(ticks) * SimConst.DT

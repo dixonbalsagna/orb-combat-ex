@@ -146,7 +146,7 @@ static func _atWall(S: SimState, f, b, edge: float, dir: float, spN: float) -> b
 	var T: float = float(n) * SimConst.DT
 	var r := SimState.Rush.new()
 	r.px = SimWrap.wrap(f.x + ux * sp * T)
-	r.py = maxf(f.y + uy * sp * T, WorldTerrain.groundY(S, r.px))
+	r.py = maxf(f.y + uy * sp * T, SimFighter.floorFor(S, f, r.px, 0.0))
 	r.pz = f.z
 	r.end = S.T + T
 	f.rush = r

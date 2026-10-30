@@ -616,7 +616,7 @@ static func _pickExit(S: SimState, f, o) -> void:
 			ex = x0
 			ey = y0
 	if kind == 1:
-		ey = maxf(ey, WorldTerrain.groundY(S, ex))   # where he started may have been filled in since: he ends on it
+		ey = maxf(ey, SimFighter.floorFor(S, f, ex, 0.0))   # where he started may have been filled in since: he ends on it
 	_s(f, EXIT, kind)
 	_s(f, EX_X, roundi(ex * FX))
 	_s(f, EX_Y, roundi(ey * FX))

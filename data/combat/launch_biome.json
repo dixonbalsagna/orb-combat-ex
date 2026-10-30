@@ -50,7 +50,7 @@
         "where": "sea ice, ice sheet glaze (ICEFIELD THAW's strip), frozen lakes if World adds them"
       },
       "MARSH SWALLOW": {
-        "_about": "a slam straight down into mud: the marsh swallows him. Offered when the target is over mud within maxAltBh. It always embeds: the one deliberate embed (23b item 3), bounded by how often it is chosen. The body sits embedMul times as deep (World's embed, its 60-tick down state unchanged), the crater refills (ground_atoms.json craters.mud), and little is destroyed, so the carer likes it",
+        "_about": "a slam straight down into mud: the marsh swallows him. Offered when the target is over mud within maxAltBh and, with the floor on, not where WorldWater.burialOK is false, read at the same column as the mud test (Game Design, rulings-2026-10-30 row 12: a slam that doesn't swallow is a plain slam under a name that lies); with the floor off the offer is unchanged. It always embeds: the one deliberate embed (23b item 3), bounded by how often it is chosen. The body sits embedMul times as deep (World's embed, its 60-tick down state unchanged), the crater refills (ground_atoms.json craters.mud), and little is destroyed, so the carer likes it",
         "sends": "down", "ux": 0.1, "uy": -1.2,
         "maxAltBh": 12.0, "score": 16.0, "embedMul": 1.8, "alwaysEmbeds": true,
         "hero": 6.0, "villain": -2.0,

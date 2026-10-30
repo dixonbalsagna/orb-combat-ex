@@ -448,14 +448,16 @@ static func _throw(S: SimState, ex, f, o, q: int, how: String) -> void:
 		return   # the throw's blow ended the exchange (a KO, a broken region's set piece)
 	var bh: float = DirInterrupt.BH
 	if q == 3 or q == 1:
-		var gy: float = WorldTerrain.groundY(S, o.x, DirBrawl._gz())
+		var gy: float = WorldWater.floorAt(S, o.x, DirBrawl._gz())   # Game Design rulings 2026-10-30 row 11: the floor, for the height test and the placement
 		var ticks: int = int(tc.upOpen)
 		var text: String = "thrown_up"
 		if q == 3:
 			text = "thrown_down"
 			if o.y - gy <= float(tc.upBh) * bh:
-				o.y = gy   # slammed into the ground: the bury
+				o.y = DirWater.held(S, o, SimFighter.floorFor(S, o, o.x, DirBrawl._gz()), DirBrawl._gz())   # slammed into the ground: the bury; on the floor of a lake or the sea, flat on it for the same opening
 				ticks = int(tc.bury)
+				if WorldFill.floorOn() and WorldWater.floorDepth(S, o.x) > 0.0:
+					SimFx.splash(S, o.x, o.y, 14, o.z)   # a splash, no crater (the throw digs none)
 			else:
 				o.y -= float(tc.upBh) * bh   # high in the air: thrown down, open in the air
 		else:

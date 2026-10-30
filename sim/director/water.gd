@@ -58,6 +58,14 @@ static func riseTicks() -> int:
 	return maxi(1, int(cfg().get("riseTicks", 10)))
 
 
+## The height a director line may set f at this tick: y; but with f still below his floor, no higher than he is. The core has already brought him up by the floor's whole rate this tick (Game Design rulings 2026-10-30 row 9; the
+## director runs after the fighters), so a step or a placement adds no more to it. With the floor off, y.
+static func held(S: SimState, f, y: float, z: float = 0.0) -> float:
+	if not WorldFill.floorOn() or f.y >= WorldWater.floorAt(S, f.x, z):
+		return y
+	return minf(y, f.y)
+
+
 ## True while f is under after a drop, or rising from it: not landed yet.
 static func under(f) -> bool:
 	return _g(f, WT_IN) > 0 or _g(f, WT_UP) == 1

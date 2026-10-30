@@ -657,7 +657,7 @@ static func counterLive(S: SimState, f, o) -> bool:
 static func turn(S: SimState, ex, f, o, a) -> bool:
 	if not counterLive(S, f, o):
 		return false
-	var g: float = WorldTerrain.groundY(S, o.x)
+	var g: float = WorldWater.floorAt(S, o.x)
 	if o.y - g <= float(cfg().get("airBh", 1.0)) * DirInterrupt.BH:
 		return false   # the chaser is down: a plain blow
 	_s(f, RL_CRUSH, 0)
