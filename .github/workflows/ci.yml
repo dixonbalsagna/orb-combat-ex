@@ -264,6 +264,25 @@ jobs:
       - name: Two-process ENet match, negative control (a perturbed joiner must be caught)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/enet_check.gd -- --ticks=1800 --profiles=lan,p200 --negative-control'
 
+  # World's checks (sim/world/tools): the 48 scripts that print a verdict line, listed in tools/world-checks.json (the probes, profiles, benches and soaks beside them are left out there, each with its reason).
+  # Most of them end on a plain quit() (exit 0) whatever they found, so tools/gate.mjs --verdict reads the "NAME: N check(s) failed" line as the result and fails on a nonzero N, on no such line (a script that quit early) and on a SCRIPT ERROR.
+  # They run one after another in one step that keeps going after a failure and names every failing script; measured locally 472 s added up (169 s three at a time), so about 10 minutes with the import. It gates the deploy.
+  world:
+    name: World checks (sim/world/tools, verdict lines)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-godot
+      - name: Import project
+        run: '"$GODOT" --headless --path . --import'
+      - name: Every script in sim/world/tools is a listed check or a left-out probe, with a reason
+        run: node tools/world-checks.mjs --verify
+      - name: World checks (each through tools/gate.mjs --verdict)
+        run: node tools/world-checks.mjs --run
+
   # Builds the Pages site on every run, so a broken export shows up on pull requests
   # and branches too. Only pushes to main (and manual runs on main) upload it.
   site:
@@ -348,7 +367,7 @@ jobs:
 
   deploy:
     name: Deploy to GitHub Pages
-    needs: [qa, sim, data, flash, godot-parity, net, site]
+    needs: [qa, sim, data, flash, godot-parity, net, world, site]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
