@@ -141,7 +141,11 @@ The director's data hash (`DirData.dataHash()`) is made once a process. Until 20
 
 A planet setup's header also names its world's data (2026-10-30), by the generation the setup plays (`WorldClimate.genFor(setup)`: its `planetGen`, else `climate.json`'s `gen`), because a header is made before the match and `genNow()` is whatever a tool or the last match left:
 - every planet setup: `WorldPlanet.dataHash(gen)`. For gen 1 that is `planet.json`; for gen 2 it adds `climate.json`, `land.json`, `sites.json` and, when switched on, `rivers.json`;
-- a gen 2 setup with `density.json` switched on: `WorldDensity.dataHash()`, without the file's `_` notes.
+- a gen 2 setup with `density.json` switched on: `WorldDensity.dataHash()`, without the file's `_` notes;
+- every gen 2 setup: `WorldLakes.dataHash()` and `WorldGround.dataHash()`, the whole files, so an edit to a note in either refuses too;
+- a planet setup with the turn on (`WorldEpoch.enabled(setup)`), on either generation: the canonical hash of `rings.json`'s `turn` block, without its `_` notes. The rest of that file picks a run's ring before the setup exists, and the setup records the arena it chose.
+
+`WorldWrecks` and `WorldProps` are not in the header: nothing in the sim reads them yet (World's table, `docs/world/lake-floor.md`). The wrecks' data joins with Combat's when Encounter's pick and burst are wired.
 
 A setup without a planet reads none of it, so its header and the golden did not move. A planet replay made before this date is refused as other data; none was stored. An edited file is now refused up front as `data`, where it used to fail at the first checkpoint it changed. `parity.gd` holds the rule ("the replay header covers a planet's data").
 

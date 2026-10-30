@@ -189,6 +189,12 @@ static func dataHash(setup: Dictionary = {}) -> String:
 		h.text(WorldPlanet.dataHash(gen))
 		if gen >= 2 and WorldDensity.enabled():   # a gen 2 ring's buildings follow data/biomes/density.json while its switch is on
 			h.text(WorldDensity.dataHash())
+		if gen >= 2:   # a gen 2 ring's water, trees and landings: which valleys hold lakes, and the ground's table (World's answer: docs/world/lake-floor.md)
+			h.text(WorldLakes.dataHash())
+			h.text(WorldGround.dataHash())
+		if WorldEpoch.enabled(setup):   # when and how the ring turns, on either generation: only rings.json's turn block, for the rest picks a run's ring before the setup exists
+			h.text("rings.turn")
+			FighterData._canon(h, WorldRingPick.cfg().turn)
 	var lvl: String = DirAI.levelOf(setup)   # the computer's level, a setup key (the start menu's Easy or Hard); nothing for the data's own level, so no earlier replay's hash moves
 	if lvl != "":
 		h.text("aiLevel")

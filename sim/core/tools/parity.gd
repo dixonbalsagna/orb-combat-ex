@@ -5522,6 +5522,48 @@ func _planetHeader() -> String:
 	WorldPlanet._cHash = ph
 	if err == "" and m != [false, true, true]:
 		err = "planet.json edited: no planet, gen 1, gen 2 moved %s, not both generations" % str(m)
+	var lh: String = WorldLakes.dataHash()
+	WorldLakes._hash = lh + "x"
+	m = moved.call()
+	WorldLakes._hash = lh
+	if err == "" and m != [false, false, true]:
+		err = "lakes.json edited: no planet, gen 1, gen 2 moved %s, not only gen 2" % str(m)
+	var gh: String = WorldGround.dataHash()
+	WorldGround._hash = gh + "x"
+	m = moved.call()
+	WorldGround._hash = gh
+	if err == "" and m != [false, false, true]:
+		err = "ground.json edited: no planet, gen 1, gen 2 moved %s, not only gen 2" % str(m)
+	# the turn's block, for a setup that turns (either generation); the rest of rings.json picks a run's ring before the setup exists
+	var turnSetups: Array = [g1.merged({"arena": {"turn": true}}), g2.merged({"arena": {"turn": true}})]
+	var calmSetups: Array = [g1.merged({"arena": {"turn": false}}), g2.merged({"arena": {"turn": false}})]
+	var turnH: Array = turnSetups.map(func(s): return SimReplay.dataHash(s))
+	var calmH: Array = calmSetups.map(func(s): return SimReplay.dataHash(s))
+	if err == "" and (turnH[0] == calmH[0] or turnH[1] == calmH[1]):
+		err = "a setup with the turn on has the header of one with it off"
+	var read := func(setups: Array, was: Array) -> Array:
+		return [SimReplay.dataHash(setups[0]) != was[0], SimReplay.dataHash(setups[1]) != was[1]]
+	var turn: Dictionary = WorldRingPick.cfg().turn
+	var gap = turn.gapSeconds
+	turn.gapSeconds = float(gap) + 1.0
+	var mt: Array = read.call(turnSetups, turnH)
+	var mc: Array = read.call(calmSetups, calmH)
+	var mn: Array = moved.call()
+	turn.gapSeconds = gap
+	if err == "" and (mt != [true, true] or mc != [false, false] or mn != [false, false, false]):
+		err = "rings.json's turn edited: turn on %s, off %s, no planet, gen 1, gen 2 %s; only the turn's setups should move" % [str(mt), str(mc), str(mn)]
+	turn["_note"] = "a note"
+	mt = read.call(turnSetups, turnH)
+	turn.erase("_note")
+	if err == "" and mt != [false, false]:
+		err = "a note in rings.json's turn moved the header"
+	var rp: Dictionary = WorldRingPick.cfg()
+	var stride = rp.stride
+	rp.stride = int(stride) + 1
+	mt = read.call(turnSetups, turnH)
+	rp.stride = stride
+	if err == "" and mt != [false, false]:
+		err = "rings.json outside its turn moved the header"
 	if err == "" and (SimReplay.dataHash() != none or SimReplay.dataHash(g1) != h1 or SimReplay.dataHash(g2) != h2):
 		err = "the check left its edits in"
 	return err
