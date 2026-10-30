@@ -76,11 +76,24 @@ toggle) for validate, parity, determinism off and on, every input test, loader_c
    not safe.
 
 ## TICK NUMBERS
-**Invalid as a measurement: the machine was loaded** (23 to 52% CPU from other sessions' jobs, 6 other Godot processes
-at every run). They are given only as a reading, not a result.
+**Valid, re-run 2026-10-30 in the EP's quiet window** (0 to 6% CPU before and after every run, no other Godot process).
+`dir_prof` (AI match, hand-made world, seed 1, 3,600 ticks), alternated, five runs each: main fbe18b14 with this work,
+and the same tree with this work's lines in `launch.gd`, `alchemy.gd` and `exchange.gd` reversed. Below-normal priority.
+"Twin hash same" in every run. Both trees play the same match by the call counts (388 presses, 2,493 exchange ticks).
 
-`dir_prof` (AI match, hand-made world, seed 1, 3,600 ticks), main 782aeef4 and this tree run alternately, three each.
-"Twin hash same" in every run.
+| five runs, mean (range) | without this work | with this work |
+| :--- | ---: | ---: |
+| control.request, µs a call | 173.8 (170.9 to 176.8) | 155.1 (153.8 to 157.3) |
+| tick mean, µs | 242.4 (240.5 to 243.4) | 239.9 (238.6 to 241.4) |
+| tick p50, µs | 256 (255 to 257) | 256 (254 to 257) |
+| tick p99, µs | 693 (638 to 729) | 654 (630 to 680) |
+
+- A press is about 19 µs cheaper (11%), and the two ranges don't overlap. Over the match that's about 2 µs a tick, which
+  is what the tick mean moved by. The p50 doesn't move, and the p99's ranges overlap, so that difference isn't shown.
+- `biome.enabled` is off, so this doesn't measure the planner's cost with the switch on (RISKS 2).
+
+**Superseded: the first reading, invalid because the machine was loaded** (23 to 52% CPU from other sessions' jobs, 6
+other Godot processes at every run). Kept for the record. Main 782aeef4 and this tree, alternated, three each.
 
 | run | main: tick mean / p50 / p99 (µs) | this tree | main: control.request a call | this tree |
 | :--- | :--- | :--- | ---: | ---: |
@@ -90,8 +103,8 @@ at every run). They are given only as a reading, not a result.
 
 - The press line (control.request, 388 presses) reads about 7% cheaper in runs 2 and 3, about 13 µs a press. Run 1 is
   slower on every line, so that run's machine was busier.
-- The micro-bench (42 to 21 µs a `logOf` call, alternated, the same output) is the cleaner reading.
-- A quiet-window re-run of these six runs would make the numbers valid. The script is ready (one command, about 1 min).
+- The micro-bench (42 to 21 µs a `logOf` call, alternated, the same output) is a separate reading from before the
+  re-run.
 
 ## Gates
 Each gate's last line, then its exit code. Every Godot gate ran through `tools/gate.mjs` ("no SCRIPT ERROR lines").
