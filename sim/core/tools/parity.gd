@@ -88,6 +88,7 @@ func _init() -> void:
 	check("the launch's curve", _flight())
 	check("hit-stop by weight", _hitstop())
 	check("the ricochet's glance", _ricochet())
+	check("the replay header covers a planet's data", _planetHeader())
 	check("the run's ground", _runGround())
 	check("the run's state and carry", _runState())
 	check("the campaign's arc and episode", _campaign())
@@ -5474,6 +5475,56 @@ func _piTau() -> String:
 	if SimMathx.PI != PI or SimMathx.TAU != TAU:
 		return "the engine's PI or TAU is another double on this build: the swaps would move a result"
 	return ""
+
+
+## SimReplay.dataHash(setup) names a planet's data by the generation the setup plays and not the one in force, and a
+## setup without a planet reads none of it (determinism.md section 10). An edited file is stood for by its cached hash.
+func _planetHeader() -> String:
+	var none: String = SimReplay.dataHash()
+	var g1: Dictionary = {"planet": 7, "touch": 3, "planetGen": 1}
+	var g2: Dictionary = {"planet": 7, "touch": 3, "planetGen": 2}
+	var h1: String = SimReplay.dataHash(g1)
+	var h2: String = SimReplay.dataHash(g2)
+	if h1 == none or h2 == none or h1 == h2:
+		return "a planet setup's header does not carry its planet's data, by generation"
+	var cur: int = WorldClimate.curGen
+	var err: String = ""
+	for g in [1, 2]:   # a tool's generation in force, or the last match's
+		WorldClimate.curGen = g
+		if err == "" and (SimReplay.dataHash(g1) != h1 or SimReplay.dataHash(g2) != h2 or SimReplay.dataHash() != none):
+			err = "the header moves with the generation in force (%d)" % g
+	WorldClimate.curGen = cur
+	if err == "" and SimReplay.dataHash({"planet": 7, "touch": 3}) != (h2 if int(WorldClimate.data().gen) >= 2 else h1):
+		err = "a setup with no planetGen is not at the data's generation"
+	var moved := func() -> Array:
+		return [SimReplay.dataHash() != none, SimReplay.dataHash(g1) != h1, SimReplay.dataHash(g2) != h2]
+	var dh: String = WorldDensity._hash
+	WorldDensity._hash = dh + "x"
+	var m: Array = moved.call()
+	WorldDensity._hash = dh
+	if err == "" and m != [false, false, true]:
+		err = "density.json edited: no planet, gen 1, gen 2 moved %s, not only gen 2" % str(m)
+	var on = WorldDensity.data().enabled
+	WorldDensity._d.enabled = not bool(on)
+	m = moved.call()
+	WorldDensity._d.enabled = on
+	if err == "" and m != [false, false, true]:
+		err = "density.json's switch flipped: no planet, gen 1, gen 2 moved %s, not only gen 2" % str(m)
+	var ch: String = WorldClimate.dataHash()
+	WorldClimate._hash = ch + "x"
+	m = moved.call()
+	WorldClimate._hash = ch
+	if err == "" and m != [false, false, true]:
+		err = "climate.json edited: no planet, gen 1, gen 2 moved %s, not only gen 2" % str(m)
+	var ph: String = WorldPlanet._cHash
+	WorldPlanet._cHash = ph + "x"
+	m = moved.call()
+	WorldPlanet._cHash = ph
+	if err == "" and m != [false, true, true]:
+		err = "planet.json edited: no planet, gen 1, gen 2 moved %s, not both generations" % str(m)
+	if err == "" and (SimReplay.dataHash() != none or SimReplay.dataHash(g1) != h1 or SimReplay.dataHash(g2) != h2):
+		err = "the check left its edits in"
+	return err
 
 
 func _boons() -> String:

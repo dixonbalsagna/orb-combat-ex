@@ -154,7 +154,8 @@ static func play(rp: Dictionary) -> Dictionary:
 
 ## The data a replay depends on: Combat's data (DirData), the roster (FighterData) and the fight's mood and style data
 ## (SimMood, M1), one hash.
-## setup is the match's: the fighters its slots name are folded in, one hash each, and nobody else.
+## setup is the match's: the fighters its slots name are folded in, one hash each, and nobody else; its planet's data,
+## when it names a planet.
 static func dataHash(setup: Dictionary = {}) -> String:
 	var h := SimHash.Hasher.new()
 	h.text(DirData.dataHash())
@@ -183,6 +184,11 @@ static func dataHash(setup: Dictionary = {}) -> String:
 	if setup.has("wear"):   # a campaign stage's place state: World lays it by data/biomes/campaign.json's bands (campaign-core.md)
 		h.text(WorldCampaign.dataHash())
 	h.text(WorldBrunt.dataHash())          # World's brunt ladder and lodge: data/biomes/brunt.json
+	if setup.has("planet"):   # a planet's world: World's planet data, by the generation this setup plays (WorldClimate.genFor: never the one in force, for a header is made before a match)
+		var gen: int = WorldClimate.genFor(setup)
+		h.text(WorldPlanet.dataHash(gen))
+		if gen >= 2 and WorldDensity.enabled():   # a gen 2 ring's buildings follow data/biomes/density.json while its switch is on
+			h.text(WorldDensity.dataHash())
 	var lvl: String = DirAI.levelOf(setup)   # the computer's level, a setup key (the start menu's Easy or Hard); nothing for the data's own level, so no earlier replay's hash moves
 	if lvl != "":
 		h.text("aiLevel")

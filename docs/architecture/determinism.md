@@ -139,6 +139,12 @@ A replay's header (`SimReplay.dataHash(setup)`) has to come out the same in the 
 
 The director's data hash (`DirData.dataHash()`) is made once a process. Until 2026-10-29 the computer's level reached the header through it (`DirAI.skillText()`), so a header held the level of the process's first match. A Hard or Easy replay recorded as a process's first match was refused in a fresh process. The level now comes from the setup (`DirAI.levelOf`, folded in by `SimReplay.dataHash`), and Medium, the data's own level, adds nothing, so no earlier hash moved.
 
+A planet setup's header also names its world's data (2026-10-30), by the generation the setup plays (`WorldClimate.genFor(setup)`: its `planetGen`, else `climate.json`'s `gen`), because a header is made before the match and `genNow()` is whatever a tool or the last match left:
+- every planet setup: `WorldPlanet.dataHash(gen)`. For gen 1 that is `planet.json`; for gen 2 it adds `climate.json`, `land.json`, `sites.json` and, when switched on, `rivers.json`;
+- a gen 2 setup with `density.json` switched on: `WorldDensity.dataHash()`, without the file's `_` notes.
+
+A setup without a planet reads none of it, so its header and the golden did not move. A planet replay made before this date is refused as other data; none was stored. An edited file is now refused up front as `data`, where it used to fail at the first checkpoint it changed. `parity.gd` holds the rule ("the replay header covers a planet's data").
+
 **The check: `sim/core/tools/replay_xproc_check.gd`**, in CI with its negative control.
 
 ```
