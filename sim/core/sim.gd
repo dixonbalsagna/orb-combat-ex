@@ -31,7 +31,7 @@ static func dispose(S: SimState, keepWorld: bool = false) -> void:
 	S.dirS.ex = null
 	S.beams.clear()
 	if not keepWorld:
-		WorldEpoch.release(S)   # World's derived data for this sim (the calm turn's ring jobs and preparations, and the worlds it left) lives in static dictionaries; a restored state keeps its own (NetSnapshot.restore)
+		WorldEpoch.release(S)   # World's derived data for this sim (the calm turn's ring jobs and preparations, and the worlds it left) lives in static dictionaries; a restored state keeps its own (a rollback restore)
 
 
 ## ai is {"p1": bool, "p2": bool}; a missing entry keeps the previous fighter's setting, or true with no fighters yet.

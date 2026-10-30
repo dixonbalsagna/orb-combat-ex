@@ -24,7 +24,7 @@ static var _owners: Dictionary = {}   # worldId -> the instance id of the sim th
 static var _retired: Array = []   # [[worldId, owner (the sim's instance id), the S.tick the world's jobs and preparation go at]]: a swap leaves the world it turned away from in _plans and _jobs for KEEP_TICKS (see swap)
 static var coldCount: int = 0     # process diagnostics, not state (a rolled-back re-run of a swap must leave the state as a straight run does): swaps that read their ring on the swap tick
 static var unprepCount: int = 0   # ... and swaps that made their preparation on the swap tick
-const KEEP_TICKS: int = 21        # NetSession's maxAhead 20 + 1: a rollback can run a swap again at most this many ticks after it
+const KEEP_TICKS: int = 21        # the rollback window of 20 + 1: a rollback can run a swap again at most this many ticks after it
 
 
 static func data() -> Dictionary:
