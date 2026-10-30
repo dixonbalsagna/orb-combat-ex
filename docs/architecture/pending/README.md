@@ -2,9 +2,9 @@
 
 Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator, the sim or Godot (`docs/` is hidden from Godot). It holds slices that are built and proven in a scratch copy and wait for the sim slot.
 
-**Parked:** `density-hash/` puts a planet's data into the replay header (every planet setup, by the generation it plays; `density.json` for gen 2 with it on). It stands on World's `docs/world/pending/w8/`, and its README has the proof and my answer on W8's grant in `sim.gd`.
+Nothing is parked.
 
-The computer's level in the replay header from the match's setup (`ai-level-hash/`, UI's patch with one line of mine in `sim.gd`) was applied in 0ba71199 with Encounter's review, the cross-process replay check (`replay-xproc/`, `../determinism.md` section 10) in bed20962 with Tools' CI steps, and Netcode's two lines for a past snapshot's hash (`simhash-past-roots/`) in 8591e30a; their folders are deleted.
+The computer's level in the replay header from the match's setup (`ai-level-hash/`, UI's patch with one line of mine in `sim.gd`) was applied in 0ba71199 with Encounter's review, the cross-process replay check (`replay-xproc/`, `../determinism.md` section 10) in bed20962 with Tools' CI steps, Netcode's two lines for a past snapshot's hash (`simhash-past-roots/`) in 8591e30a, a planet's data in the header (`density-hash/`) in 6a993bd8, and the rest of it (`planet-header/`: `lakes.json` and `ground.json` for gen 2, `rings.json`'s `turn` while the turn is on) in 43c4d272 with World's lake-floor; their folders are deleted.
 
 Packed structures (the buildings and trees as packed arrays, the desync digest's fix and `two_states_check.gd`, page `../packed-structures.md`) was applied in 5a2c58c2 and World's turn fix in e14757c5; their folder is deleted. The director's named forwards for World's calls and the data warm-up as a match-start piece (pages `../load-split.md` and `../match-start.md`) were applied in 39f6bc3f with Tools' CI step for load_split's negative control, and the calm turn in `two_states_check`'s default setups in 112b0e6c.
 
