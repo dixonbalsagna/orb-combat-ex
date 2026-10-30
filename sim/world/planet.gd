@@ -48,11 +48,11 @@ static func dataErrors() -> Array:
 	return _cErrors
 
 
-## Folded into the replay's data hash when a planet is used.
-static func dataHash() -> String:
+## Folded into the replay's data hash when a planet is used. gen: the generation the planet is made by (WorldClimate.genFor(setup)); 0 is the one in force (genNow).
+static func dataHash(gen: int = 0) -> String:
 	if not _cLoaded:
 		_cLoad()
-	if WorldClimate.genNow() >= 2:
+	if (gen if gen > 0 else WorldClimate.genNow()) >= 2:
 		return _cHash + "/g2/" + WorldClimate.dataHash() + "/" + WorldLand.dataHash() + "/" + WorldSites.dataHash() + ("/r" + WorldRivers.dataHash() if WorldRivers.enabled() else "")   # a gen 2 planet's slices are not a gen 1 planet's, and follow climate.json and land.json
 	return _cHash
 

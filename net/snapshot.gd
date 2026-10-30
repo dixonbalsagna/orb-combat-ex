@@ -66,7 +66,7 @@ static func take(S: SimState, pool: Pool = null) -> NetSnapshot:
 ## objects are dropped: SimCore.dispose breaks their reference cycles first, so they are freed. With a pool, the
 ## restored objects are the pool's.
 static func restore(S: SimState, snap: NetSnapshot, pool: Pool = null) -> void:
-	SimCore.dispose(S)
+	SimCore.dispose(S, true)   # the state plays on: World's kept jobs and preparation stay (a rollback that runs a swap again finds them)
 	var c := Copier.new()
 	c.pool = pool
 	c.map[snap.root] = S

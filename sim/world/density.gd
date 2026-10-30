@@ -10,6 +10,7 @@ const SCHEMA := "biomes.density/1"
 static var _d: Dictionary = {}
 static var _loaded: bool = false
 static var _errors: Array = []
+static var _hash: String = ""
 
 
 static func data() -> Dictionary:
@@ -46,11 +47,27 @@ static func _load() -> void:
 			_errors.append("density.json: %s needs gapMul, widthMul and rows" % k)
 			return
 	_d = j
+	var h := SimHash.Hasher.new()
+	h.text("biomes.density")
+	FighterData._canon(h, j)
+	_hash = h.hex()
+
+
+## The module's switch (a gen 2 ring reads the file only when it is on).
+static func enabled() -> bool:
+	return bool(data().get("enabled", false))
+
+
+## A hash of the parsed data without the "_" notes, made once, for the replay header (a gen 2 replay's buildings follow this file). "" when the file did not load.
+static func dataHash() -> String:
+	if not _loaded:
+		_load()
+	return _hash
 
 
 ## True for a gen 2 ring with the module on.
 static func on() -> bool:
-	return bool(data().get("enabled", false)) and WorldClimate.genNow() >= 2
+	return enabled() and WorldClimate.genNow() >= 2
 
 
 ## Makes settlement `sd` (an archetype's copy, which the caller owns) denser: kind "city" or "town".

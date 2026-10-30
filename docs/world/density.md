@@ -35,3 +35,7 @@ The archetypes already pack a downtown (gaps of 0.4 to 1.4 fighter heights), so 
 
 - A ring with few places stands few: the mean follows the planet's places, and 2 of QA's 40 rings have none (planet 11 touch 3 and planet 23 touch 1). Density cannot fill a ring that has no place; a ring picker's minimum (1 city, 2 towns on a Half ring) does.
 - One of QA's rings (planet 29, touch 2) plays the hand-made world, not a planet ring: the planet function gives no slice for it, `WorldPlanetWorld.gen` returns false and the match falls back. It stands the hand-made world's 120 structures, which lifts the mean by about 1 whatever density does. Not a density matter; noted for QA.
+
+## The replay header
+
+`WorldDensity.enabled()` is the switch and `WorldDensity.dataHash()` the hash of the parsed data without the `_` notes, made once. A gen 2 replay's buildings follow `density.json`, so Simulation folds the hash in for a gen 2 setup (`WorldClimate.genFor(setup)`: the setup's `planetGen`, else climate.json's `gen`, never `genNow()`, which is a tool's choice or the last match's). `WorldPlanet.dataHash(gen)` takes that generation (0, the default, is the one in force, as every caller so far).

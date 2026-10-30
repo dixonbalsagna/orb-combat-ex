@@ -22,7 +22,7 @@ static func createSim(opts: Dictionary = {}) -> SimState:
 ## Break the references between a match's objects so GDScript's reference counting can free them. Fighters can point at
 ## each other (launchBy, rush.tgt), which is a cycle that JS's garbage collector frees and RefCounted never does.
 ## newMatch calls this on the outgoing match; a host that drops a sim calls it too.
-static func dispose(S: SimState) -> void:
+static func dispose(S: SimState, keepWorld: bool = false) -> void:
 	for f in S.fighters:
 		f.launchBy = null
 		f.rush = null
@@ -30,6 +30,8 @@ static func dispose(S: SimState) -> void:
 	S.game.clash = null
 	S.dirS.ex = null
 	S.beams.clear()
+	if not keepWorld:
+		WorldEpoch.release(S)   # World's derived data for this sim (the calm turn's ring jobs and preparations, and the worlds it left) lives in static dictionaries; a restored state keeps its own (NetSnapshot.restore)
 
 
 ## ai is {"p1": bool, "p2": bool}; a missing entry keeps the previous fighter's setting, or true with no fighters yet.

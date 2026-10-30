@@ -1,6 +1,6 @@
 # The gen 2 ring read and the planet's load in steps (World, window 20, 2026-10-26)
 
-Parked in `docs/world/pending/gen2-read-speed/`. Everything here gives the same planet, the same ring and the same match as before, to the last bit, and runs behind no switch: the golden does not move.
+On main (landed with its grant; the later add-on, the B plates in steps and the calm turn's read, too). Everything here gives the same planet, the same ring and the same match as before, to the last bit, and runs behind no switch: the golden does not move.
 
 ## 1. The ring read (Performance: gen 2 130 us a column at x1, gen 1 about 50; target under 60)
 

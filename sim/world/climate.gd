@@ -185,6 +185,12 @@ static func useGen(g: int) -> void:
 	curGen = g
 
 
+## The generation a setup's planet is made by: its planetGen, else the data's (WorldPlanetWorld.gen's rule). Never genNow(), which is a tool's choice in force or the last match's: a replay header is made before the match.
+static func genFor(setup: Dictionary) -> int:
+	var g: int = int(setup.get("planetGen", 0))
+	return g if g > 0 else int(data().get("gen", 1))
+
+
 ## The stored biome (WorldPlanet.BIO_*) a fine biome reads as for a consumer that knows only those.
 static func aliasOf(fine: int) -> int:
 	if not _loaded:

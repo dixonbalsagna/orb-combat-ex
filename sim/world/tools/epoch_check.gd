@@ -24,6 +24,8 @@ func mid(S: SimState) -> float:
 
 ## A match, run a little, with a crater and a hurt building near the pair, ready to turn.
 func ready(cols: int, seed: int = 1) -> SimState:
+	WorldEpoch.coldCount = 0   # the counters are the process's: each run counts from its own start
+	WorldEpoch.unprepCount = 0
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, seed, {}, setup(cols))
 	for t in range(30):
@@ -57,7 +59,7 @@ func playRun(sd: int, mode: int, fb: float = 2.5) -> Dictionary:
 			hs = str(SimHash.stateHash(S).gameplay)
 		if swapTick < 0 and S.epoch.n == 1:
 			swapTick = t
-	return {"tick": swapTick, "hash": str(SimHash.stateHash(S).gameplay), "cold": S.epoch.cold, "unprep": S.epoch.unprep, "waited": S.epoch.waited, "refused": S.epoch.refused}
+	return {"tick": swapTick, "hash": str(SimHash.stateHash(S).gameplay), "cold": WorldEpoch.coldCount, "unprep": WorldEpoch.unprepCount, "waited": S.epoch.waited, "refused": S.epoch.refused}
 
 
 func nearest(S: SimState, x: float):
@@ -149,7 +151,7 @@ func _init() -> void:
 	WorldEpoch.choose(S, 1)
 	ok(WorldEpoch.warmAngles(S).is_empty() and S.epoch.warm.size() == 2, "a decided turn has two rings to warm (the chosen bearing and the smallest candidate) and none is warm yet")
 	WorldEpoch.tick(S, true)
-	ok(S.epoch.n == 0 and S.epoch.cold == 0, "no ring is read on the tick: a decided turn on calm ground with no warm ring does not swap")
+	ok(S.epoch.n == 0 and WorldEpoch.coldCount == 0, "no ring is read on the tick: a decided turn on calm ground with no warm ring does not swap")
 	warmAll(S)
 	ok(WorldEpoch.warmAngles(S).size() == 2 and absf(WorldEpoch.warmAngles(S).min()) == 2.5 and absf(WorldEpoch.warmAngles(S).max()) == 5.0, "warmAngles says which bearings are read (5 and 2.5)")
 	# calm: not while a fighter is in flight; a hold of false does nothing
@@ -292,7 +294,7 @@ func _init() -> void:
 			var a1: Array = WorldPlanet.columnPoint(P4, ringG, colf)
 			var b1: Array = WorldPlanet.columnPoint(P4, nrG, colf)
 			move = maxf(move, sqrt(pow(a1[0] - b1[0], 2) + pow(a1[1] - b1[1], 2) + pow(a1[2] - b1[2], 2)) * P4.R)
-		var good: bool = Sg.epoch.cold == 0
+		var good: bool = WorldEpoch.coldCount == 0
 		if kind == "refuse":
 			good = good and Sg.epoch.n == 0 and Sg.epoch.next == null and Sg.epoch.refused == 1 and WorldEpoch.warmAngles(Sg).is_empty() and not WorldEpoch.ask(Sg, "again", pxg, 1, 0).is_empty()
 		elif kind == "wait":
@@ -301,7 +303,7 @@ func _init() -> void:
 			for f in Sg.fighters:
 				f.x = float(Sg.epoch.next.pc) * SimConst.COL
 			WorldEpoch.tick(Sg, true)
-			good = good and Sg.epoch.n == 1 and Sg.epoch.cold == 0
+			good = good and Sg.epoch.n == 1 and WorldEpoch.coldCount == 0
 			for e in Sg.out.fx:
 				if e.type == "arena_turn":
 					used = e.amount
@@ -354,7 +356,7 @@ func _init() -> void:
 		for t in range(ticks):
 			SimCore.step(Sx)
 		hashes.append("%d/%s" % [Sx.epoch.n, str(SimHash.stateHash(Sx).gameplay)])
-		colds.append(Sx.epoch.cold)
+		colds.append(WorldEpoch.coldCount)
 	ok(hashes[0] == hashes[1] and hashes[1] == hashes[2] and hashes[0].begins_with("1/") and colds == [0, 0, 1], "a Half match turned at 100 s plays %d ticks on to the same hash however the rings were warmed (100 or 640 columns a call, or read cold: the cold read is counted, %s) (%s)" % [ticks, str(colds), hashes[0].substr(0, 14)])
 	var runs: Array = []
 	for r in range(2):
@@ -449,7 +451,7 @@ func _init() -> void:
 		for t in range(120):
 			SimCore.step(Sp)
 		ph.append("%d/%s" % [Sp.epoch.n, str(SimHash.stateHash(Sp).gameplay)])
-		pun.append(int(Sp.epoch.unprep))
+		pun.append(int(WorldEpoch.unprepCount))
 	ok(ph[0] == ph[1] and ph[0].begins_with("1/") and pun == [0, 1], "a swap on the preparation the warm ticks made (%.1f ms) is the swap that makes it itself (%.1f ms): the same state hash after 120 ticks (%s); unprep counts [%s]" % [ptime[0], ptime[1], ph[0].substr(0, 14), ",".join(PackedStringArray(pun.map(func(v): return str(v))))])
 	# WorldWater.init is the water it was: the original laps, written out here, over a hand-made world and planet rings with and without sea
 	var waterOk: bool = true
@@ -517,8 +519,50 @@ func _init() -> void:
 				WorldEpoch._plans.clear()   # the rings were read at tick 150: two ticks into the preparation
 			WorldEpoch.tick(Sq, true)
 		firstTick.append(tt)
-		swapUnprep.append(int(Sq.epoch.unprep))
+		swapUnprep.append(int(WorldEpoch.unprepCount))
 	var readTicks: int = 2400 / 16
 	ok(firstTick[0] == readTicks + pt - 1 and firstTick[1] == 2400 / 32 + pt - 1 and firstTick[2] == firstTick[0] and swapUnprep[0] == 0 and swapUnprep[1] == 0, "a landing pick (k 16, two rings) swaps on tick %d = the ticks to read (%d) + prepTicks - 1, a pause's pick (k 32, one ring) on %d, both with the preparation done (unprep %d, %d); with the preparation lost two ticks in the swap comes on the same tick (%d)" % [firstTick[0], readTicks, firstTick[1], swapUnprep[0], swapUnprep[1], firstTick[2]])
+	# --- the swap leaves the world it turned away from its ring jobs and preparation for KEEP_TICKS ticks (a rollback that runs the swap again finds them); a disposed sim leaves none
+	for variant in range(2):
+		var Sk := ready(2400)
+		WorldEpoch.ask(Sk, "keep", mid(Sk), 1, 0)
+		WorldEpoch.choose(Sk, 2, 64, 2.5)
+		var oldWid: int = Sk.worldId
+		var g3: int = 0
+		while Sk.epoch.n == 0 and g3 < 1800:
+			g3 += 1
+			SimCore.step(Sk)
+		var jobsLeft: int = _jobsOf(oldWid)
+		var kept: bool = Sk.epoch.n == 1 and Sk.worldId != oldWid and WorldEpoch._plans.has(oldWid) and jobsLeft > 0 and _retiredOf(Sk) == 1
+		if variant == 0:
+			ok(kept, "after the swap the world it left keeps its ring job(s) and preparation (%d job(s), the retirement noted)" % jobsLeft)
+			for t in range(WorldEpoch.KEEP_TICKS - 2):
+				SimCore.step(Sk)
+			var stillThere: bool = WorldEpoch._plans.has(oldWid) and _jobsOf(oldWid) > 0
+			for t in range(4):
+				SimCore.step(Sk)
+			ok(stillThere and not WorldEpoch._plans.has(oldWid) and _jobsOf(oldWid) == 0 and _retiredOf(Sk) == 0, "... and drops them %d ticks after the swap, not before" % WorldEpoch.KEEP_TICKS)
+		else:
+			SimCore.dispose(Sk)
+			ok(kept and not WorldEpoch._plans.has(oldWid) and _jobsOf(oldWid) == 0 and _retiredOf(Sk) == 0 and not WorldEpoch._owners.has(oldWid), "a sim disposed inside the term leaves no job, preparation, retirement or owner behind")
 	print("EPOCH: %d check(s) failed" % fails)
 	quit()
+
+
+## The retirements World still holds for sim S.
+func _retiredOf(S: SimState) -> int:
+	var n: int = 0
+	for r in WorldEpoch._retired:
+		if int(r[1]) == S.get_instance_id():
+			n += 1
+	return n
+
+
+## The ring jobs World still holds for world `wid`.
+func _jobsOf(wid: int) -> int:
+	var n: int = 0
+	var pre: String = "%d/" % wid
+	for k in WorldEpoch._jobs.keys():
+		if String(k).begins_with(pre):
+			n += 1
+	return n

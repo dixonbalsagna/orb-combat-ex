@@ -20,6 +20,11 @@ const HASH_STEP: int = 3000   # bytes of a ring's slice hash made a warm tick
 const HELD_TICKS: int = 2     # of the preparation's prepTicks, the first ones are the ring's blend and held places (the rest are the preparation proper)
 static var _plans: Dictionary = {}   # worldId -> the swap's preparation: {wt, wtN, e: {ring key -> entry}}: derived data outside the state, made by the warm ticks from what the swap does not change
 static var _jobs: Dictionary = {}   # "worldId/bearing" -> RingJob (the warm read of a candidate ring, kept whole until the swap): derived data outside the state; the state keeps how many columns it was asked for
+static var _owners: Dictionary = {}   # worldId -> the instance id of the sim that made the entries (release drops what a disposed sim made, whichever world id it has by then)
+static var _retired: Array = []   # [[worldId, owner (the sim's instance id), the S.tick the world's jobs and preparation go at]]: a swap leaves the world it turned away from in _plans and _jobs for KEEP_TICKS (see swap)
+static var coldCount: int = 0     # process diagnostics, not state (a rolled-back re-run of a swap must leave the state as a straight run does): swaps that read their ring on the swap tick
+static var unprepCount: int = 0   # ... and swaps that made their preparation on the swap tick
+const KEEP_TICKS: int = 21        # NetSession's maxAhead 20 + 1: a rollback can run a swap again at most this many ticks after it
 
 
 static func data() -> Dictionary:
@@ -39,7 +44,7 @@ static func enabled(setup: Dictionary) -> bool:
 ## The epoch of a new planet match (WorldPlanetWorld.gen, after the world is built): the ring it plays on, the turn counters, the settlements' chords and districts (for the carry). A
 ## Dictionary, hashed only through n, lastT and drift.
 static func begin(S: SimState, seed: int, ring: Dictionary, spec: Dictionary, chords: Array, dlist: Array, sliceHash: int) -> Dictionary:
-	return {"seed": seed, "sh": sliceHash, "n": 0, "lastT": 0.0, "drift": 0.0, "c0": spec.c, "ring": spec, "ask": null, "next": null, "warm": [], "refused": 0, "waited": 0, "cold": 0, "unprep": 0, "chords": chords, "dlist": dlist}
+	return {"seed": seed, "sh": sliceHash, "n": 0, "lastT": 0.0, "drift": 0.0, "c0": spec.c, "ring": spec, "ask": null, "next": null, "warm": [], "refused": 0, "waited": 0, "chords": chords, "dlist": dlist}
 
 
 # ===================================================================== the geometry
@@ -193,11 +198,55 @@ static func _jkey(S: SimState, deg: float) -> String:
 
 
 static func _dropJobs(S: SimState) -> void:
-	_plans.erase(S.worldId)
-	var pre: String = "%d/" % S.worldId
+	_dropWorld(S.worldId)
+
+
+static func _dropWorld(wid: int) -> void:
+	_owners.erase(wid)
+	_plans.erase(wid)
+	var pre: String = "%d/" % wid
 	for k in _jobs.keys():
 		if String(k).begins_with(pre):
 			_jobs.erase(k)
+
+
+## The swap leaves its world's ring jobs and preparation in place for KEEP_TICKS, keyed by the world it turned away from (the new world has its own id): a rollback that restores a state of that world and
+## runs the swap again finds them, and the re-run is the swap it was (no ring read on the tick, no preparation made on it) instead of the cold one. A swap run again renews the term.
+static func _retire(S: SimState) -> void:
+	var me: int = S.get_instance_id()
+	for r in _retired:
+		if int(r[0]) == S.worldId and int(r[1]) == me:
+			r[2] = S.tick + KEEP_TICKS
+			return
+	_retired.append([S.worldId, me, S.tick + KEEP_TICKS])
+
+
+## Drops what has aged out, for this sim's retired worlds: called each tick, free when nothing is retired.
+static func _sweep(S: SimState) -> void:
+	var me: int = S.get_instance_id()
+	var keep: Array = []
+	for r in _retired:
+		if int(r[1]) == me and S.tick >= int(r[2]):
+			_dropWorld(int(r[0]))
+		else:
+			keep.append(r)
+	_retired = keep
+
+
+## A sim is disposed (SimCore.dispose): its world's jobs and preparation and every world it retired go with it. They are derived data in static dictionaries, so nothing else would drop them.
+static func release(S: SimState) -> void:
+	var me: int = S.get_instance_id()
+	var keep: Array = []
+	for r in _retired:
+		if int(r[1]) == me:
+			_dropWorld(int(r[0]))
+		else:
+			keep.append(r)
+	_retired = keep
+	for wid in _owners.keys():
+		if int(_owners[wid]) == me:
+			_dropWorld(int(wid))
+	_dropWorld(S.worldId)
 
 
 ## The sim reads the decided turn's rings, k columns of each a sim tick, from tick() (a Whole ring is 4,800 columns, so k = 64 reads both in 75 ticks, 1.25 s). How far a ring is read is counted in the
@@ -244,6 +293,7 @@ static func _jobFor(S: SimState, E: Dictionary, w: Dictionary):
 		if int(w.cols) > 0:
 			job.readTo(int(w.cols))   # the catch-up of a carried state
 		_jobs[key] = job
+		_owners[S.worldId] = S.get_instance_id()
 	return job
 
 
@@ -298,6 +348,7 @@ static func _plan(S: SimState) -> Dictionary:
 		wt.resize(SimConst.NC)
 		pl = {"wt": wt, "wtN": 0, "e": {}}
 		_plans[S.worldId] = pl
+		_owners[S.worldId] = S.get_instance_id()
 	return pl
 
 
@@ -564,6 +615,8 @@ static func _reach(S: SimState, pc: int) -> float:
 ## asks again at its next send. The moveMax rule wins over "never under 2 degrees".
 static func tick(S: SimState, hold: bool = true) -> void:
 	var E = S.epoch
+	if not _retired.is_empty():
+		_sweep(S)
 	if E == null or E.next == null:
 		return
 	_warm(S)
@@ -623,7 +676,7 @@ static func swap(S: SimState) -> void:
 	if job != null and job.i >= SimConst.NC and not job.slice.pending:   # read whole (a lazy job's `done` is set by its preparation's ticks: a lost preparation finds the slice whole all the same)
 		sl = job.slice
 	else:
-		E.cold = int(E.cold) + 1   # a ring read on the swap tick: only for a state carried into a process that never warmed it (the same slice, and a hitch). tick() swaps only on a ring the state counts as read, so this stays 0
+		coldCount += 1   # a ring read on the swap tick: only for a state carried into a process that never warmed it (the same slice, and a hitch). tick() swaps only on a ring the state counts as read, so this stays 0
 		sl = WorldPlanet.sliceRing(seed, ring)
 	# the preparation the warm ticks made (or, for what is not ready, the same made now)
 	var pl: Dictionary = _plan(S)
@@ -632,9 +685,9 @@ static func swap(S: SimState) -> void:
 		ep = _entry()
 		pl.e[key] = ep
 	if not (bool(ep.ready) and int(ep.sh) >= 0 and int(pl.wtN) >= SimConst.NC):
-		E.unprep = int(E.unprep) + 1   # a preparation lost (a state carried into another process): made now, on the same tick, with the same functions
+		unprepCount += 1   # a preparation lost (a state carried into another process): made now, on the same tick, with the same functions
 		_prepTo(S, E, pl, ep, sl, int(data().prepTicks) - 1, int(data().prepTicks))
-	_dropJobs(S)
+	_retire(S)   # kept for KEEP_TICKS, under this world's id (the swap gives the sim a new one below)
 	var NC: int = SimConst.NC
 	var COL: float = SimConst.COL
 	var px: float = float(nx.pc) * COL
