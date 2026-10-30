@@ -588,6 +588,29 @@ try {
     check('a pack whose hits are all on the allowlist passes', r2.status === 0, (r2.stderr || r2.stdout).slice(0, 300));
   }
 
+  // a name between unrelated bytes of compiled script (compressed bytecode: three letters can meet by chance; "KAI" in ui_hud.gdc, 2026-10-30) is a hit only when the script's source has the word
+  {
+    const BYTES = 'q\u0001ÛKAIø\u0002q';
+    const srcOf = (map) => (p) => (p in map ? map[p] : null);
+    const gdc = pack([['ui/hud/ui_hud.gdc', BYTES]]);
+    const noSrc = scanPack(gdc, { source: srcOf({ 'ui/hud/ui_hud.gd': 'var x = 1\n' }) });
+    check('a name in compiled bytecode whose source has no such word is a chance match, not a hit', noSrc.hits.length === 0 && noSrc.chance.length === 1 && noSrc.chance[0].word === 'KAI' && noSrc.chance[0].path === 'ui/hud/ui_hud.gdc');
+    check('a name in compiled bytecode whose source has the word is a hit', scanPack(gdc, { source: srcOf({ 'ui/hud/ui_hud.gd': 'var who = "KAI"\n' }) }).hits.length === 1);
+    check('a word that is only part of a longer one in the source is not the name (KAIROS)', scanPack(gdc, { source: srcOf({ 'ui/hud/ui_hud.gd': 'var who = "KAIROS"\n' }) }).hits.length === 0);
+    check('with no tree to read, the same hit stays a hit (the old behaviour)', scanPack(gdc).hits.length === 1 && scanPack(gdc, {}).chance.length === 0);
+    check('with a tree but no source for the script, it stays a hit', scanPack(gdc, { source: srcOf({}) }).hits.length === 1);
+    check('only compiled scripts get the benefit: the same bytes in a data file stay a hit', scanPack(pack([['data/x.json', BYTES]]), { source: srcOf({ 'data/x.json': 'nothing' }) }).hits.length === 1);
+    // inside the checker: the exported tree is trusted only when its build_info.json names the pin
+    const PIN = 'a'.repeat(40);
+    const mkRoot = (commit, src) => { const r = fresh2(goodRoot); mkdirSync(join(r, 'ui', 'hud'), { recursive: true }); writeFileSync(join(r, 'ui', 'hud', 'ui_hud.gd'), src); if (commit) writeFileSync(join(r, 'build_info.json'), JSON.stringify({ commit, date: '2026-10-30' })); return r; };
+    const runPack = (root) => { const d = fresh(); writeFileSync(join(d, 'play/index.pck'), gdc); writeCfg({ ...cfg(), pin: PIN }); return node('check-site-interim.mjs', ['--site', d, '--config', cfgFile, '--root', root, '--record', recordFile, '--today', '2026-10-16', '--ui-excuse', NO_EXCUSE]); };
+    const rOk = runPack(mkRoot(PIN.slice(0, 7), 'var x = 1\n'));
+    check('the checker lets a chance match through when the tree is the pin\'s and says so', !/placeholder-name scan/.test(rOk.stderr) && /1 placeholder-name hit in compiled scripts \(KAI in ui\/hud\/ui_hud\.gdc\) are chance matches/.test(rOk.stdout), (rOk.stderr + rOk.stdout).slice(0, 400));
+    check('the checker fails it when the source has the word', /placeholder-name scan: "KAI" is in ui\/hud\/ui_hud\.gdc/.test(runPack(mkRoot(PIN.slice(0, 7), 'var who = "KAI"\n')).stderr));
+    check('the checker fails it when the tree is another commit (its source proves nothing about the pack)', /placeholder-name scan: "KAI" is in ui\/hud\/ui_hud\.gdc/.test(runPack(mkRoot('b'.repeat(7), 'var x = 1\n')).stderr));
+    check('the checker fails it when the tree has no build_info.json at all', /placeholder-name scan: "KAI" is in ui\/hud\/ui_hud\.gdc/.test(runPack(mkRoot(null, 'var x = 1\n')).stderr));
+  }
+
   // the kill switch, once for real: one command takes an interim config offline, and the next build is the holding page and passes the offline check
   {
     const f = join(tmp, 'kill.json');

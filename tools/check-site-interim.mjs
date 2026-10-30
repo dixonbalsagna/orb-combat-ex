@@ -334,7 +334,12 @@ for (const p of htmls) { const m = BRITISH.exec(visibleText(read(p))); if (m) ba
 if (!args.includes('--no-pack-scan') && files.includes('play/index.pck')) {
   try {
     const allow = JSON.parse(readFileSync(join(here, 'site-name-scan.json'), 'utf8'));
-    const r = scanPack(readFileSync(join(siteRoot, 'play/index.pck')));
+    // the exported tree is the pack's own commit only when its build_info.json names the pin: then a name found in compressed bytecode counts only when the script's source holds it too
+    let treeCommit = '';
+    try { treeCommit = String(JSON.parse(readFileSync(join(root, 'build_info.json'), 'utf8')).commit || ''); } catch { /* not an exported tree */ }
+    const treeIsPin = treeCommit.length >= 7 && /^[0-9a-f]{40}$/.test(String(config.pin)) && config.pin.startsWith(treeCommit);
+    const r = scanPack(readFileSync(join(siteRoot, 'play/index.pck')), treeIsPin ? { source: (p) => { const f = join(root, p.replace(/^res:\/\//, '')); return existsSync(f) ? readFileSync(f, 'utf8') : null; } } : {});
+    if (r.chance.length) console.log(`interim site check note: ${r.chance.length} placeholder-name hit${r.chance.length === 1 ? '' : 's'} in compiled scripts (${r.chance.map((h) => `${h.word} in ${h.path}`).join(', ')}) are chance matches in compressed bytecode: the scripts' own source has no such word`);
     for (const h of unallowed(r.hits, allow)) bad(`the placeholder-name scan: "${h.word}" is in ${h.path} of the game's pack, which is not on the allowlist (tools/site-name-scan.json)`);
   } catch (e) { bad(`the game's pack could not be scanned: ${e.message}`); }
 }
