@@ -2,6 +2,8 @@
 
 Orb (docs/ep/vision.md, 92f860b9): "instead of thinning out, when the losing beam is being pushed closer the beam should bulge and quiver like its buckling under energetic pressure."
 
+Re-checked 2026-10-30 on HEAD b7b7693c: both patches still apply clean, in order; `effects_check` passes with them, `validate` 282/0/0, and all render gates pass (same list as the sheet-splash park's). **Waiting on Encounter's beam-struggle park** (`docs/director/pending/beam-struggle/`), the thing that writes `Clash.mid`: no game code writes it yet, so nothing buckles until it lands. Replaces the old `beam-struggle/grant-rendering-ui.patch`, which no longer applies.
+
 Status: **parked, not applied.** Two patches; `git apply --check` is clean in order on a fresh HEAD export.
 1. `apply.patch` (VFX's files only): `render/vfx/beam_struggle.gd`, `render/vfx/shaders/beam_core.gdshaderinc`, `data/vfx/energy.json`, `tools/schemas/vfx-energy.schema.json`, `render/vfx/tools/effects_check.gd`, `docs/vfx/beam-struggle.md`. Safe alone: with no struggle (Clash.mid -1, as on main today) nothing changes.
 2. `grant-rendering-ui.patch`: **NEEDS THE EP'S GRANT** (Rendering's `render/core/beam_view.gd`: the clash beams' two calls and `_beam`'s two optional parameters, one line after `set_layer`; VFX's charter keeps `render/vfx/transform_view.gd` out of reach: three lines for the loser's aura flare). It is the old `pending/beam-struggle/grant-rendering-ui.patch` re-cut, because that one no longer applies to Rendering's current `beam_view.gd`; this one replaces it.

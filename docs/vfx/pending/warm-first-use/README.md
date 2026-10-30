@@ -2,7 +2,7 @@
 
 Performance's brief (docs/perf/inset-hitches-aura-2026-10-22.md): the first hit (tick 131, about 93 ms) and the match's first crater (tick 238, about 163 ms) hitch on a cold cache, and the aura's first draw (50 to 110 ms) does too.
 
-Status: **parked, not applied.** `apply.patch` on HEAD 14d10d94 (`git apply --check` clean in a scratch export). Apply it **before** `docs/vfx/pending/aura3d/` (that park's `warmup.gd` hunk and its `WarmBody` node sit on this one).
+Status: **parked, not applied.** `apply.patch` on HEAD 14d10d94 (`git apply --check` clean in a scratch export); re-checked 2026-10-30 on HEAD b7b7693c: still applies clean, and `effects_check` passes with it and with the aura3d re-cut stacked on it. Waiting on the EP's grant for Rendering's `render/core/warmup.gd` (below) and on Performance's re-run of the cold repro on the old-laptop path. Apply it **before** `docs/vfx/pending/aura3d/` (that park's `warmup.gd` hunk and its `WarmBody` node sit on this one).
 
 ## What was wrong
 

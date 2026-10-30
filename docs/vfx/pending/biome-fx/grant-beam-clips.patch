@@ -1,0 +1,147 @@
+diff --git a/render/tools/flash_capture.gd b/render/tools/flash_capture.gd
+index 308d5ea..df10456 100644
+--- a/render/tools/flash_capture.gd
++++ b/render/tools/flash_capture.gd
+@@ -30,11 +30,11 @@ extends RefCounted
+ ## The scenarios' rules are a copy of tools/flash/flash_worst.gd's (tools/ is not in an export). Tools' drift check
+ ## fails when the two differ (docs/tools/flash-check.md): change them together.
+ 
+-const SCENARIOS: Array = ["mash", "mashcity", "clash", "signature", "signaturecity", "rushcity", "transform", "collapse", "mashdummy", "ring", "launchai", "clashcity", "signaturedummy", "blastdummy", "plumedesert", "plumeice", "plumevolc", "ai"]
++const SCENARIOS: Array = ["mash", "mashcity", "clash", "signature", "signaturecity", "rushcity", "transform", "collapse", "mashdummy", "ring", "launchai", "clashcity", "signaturedummy", "blastdummy", "plumedesert", "plumeice", "plumevolc", "beamdesert", "beamice", "beamvolc", "ai"]
+ const SEED: int = 12345
+ const FORM_TICKS: Array = [300, 1500]
+ ## Which slots are the AI's (true) in each scenario.
+-const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true], "plumedesert": [false, false], "plumeice": [false, false], "plumevolc": [false, false], "mashdummy": [false, true], "ring": [false, true], "launchai": [false, true], "clashcity": [false, false], "signaturedummy": [false, true], "blastdummy": [false, true]}
++const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true], "plumedesert": [false, false], "plumeice": [false, false], "plumevolc": [false, false], "beamdesert": [false, true], "beamice": [false, true], "beamvolc": [false, true], "mashdummy": [false, true], "ring": [false, true], "launchai": [false, true], "clashcity": [false, false], "signaturedummy": [false, true], "blastdummy": [false, true]}
+ 
+ var main: Node
+ var scenario: String = ""
+@@ -274,6 +274,12 @@ func drive(sc: String, t: int, S: SimState) -> void:
+ 			_plume(t, S, "ice_sheet")
+ 		"plumevolc":      # a volcanic impact's plume, with its steady ember chips
+ 			_plume(t, S, "volcanic")
++		"beamdesert":     # a signature beam over sand: its scorch (glints, dark glass chips) and the plume where it lands (VFX window 3)
++			_beam_ground(t, S, "desert")
++		"beamice":        # the same over an ice sheet (melt steam, slate chips)
++			_beam_ground(t, S, "ice_sheet")
++		"beamvolc":       # the same over volcanic ground (pale flakes, steady orange chips)
++			_beam_ground(t, S, "volcanic")
+ 		"ai":           # the real AI match, forms readied at 300 and 1500, a tier raised at 900
+ 			_ready_forms(S, t, FORM_TICKS)
+ 			if t == 900:
+@@ -378,6 +384,22 @@ func _plume(t: int, S: SimState, biome: String) -> void:
+ 		DirLaunch.doLaunch(S, S.fighters[0], tg, {"ux": 0.25, "uy": -0.97, "name": "SLAM DOWN"}, 2600.0, false)
+ 
+ 
++## A signature beam over one ground (the beam clips, Legal's follow-up to the plume clips): the pair is set down on the plains between the harbour village and the city, clear of every building (nothing falls), and the biome is forced for the run (the default world has no ice or lava)
++## (VfxBiome.override_biome), so the beam's ground scorch throws what that ground is made of and a plume rises where it lands; player one fires the signature on a cycle at the AI
++## (the `signature` scene). The same in tools/flash/flash_worst.gd and render/tools/flash_capture.gd (the drift check).
++func _beam_ground(t: int, S: SimState, biome: String) -> void:
++	if t == 0:
++		VfxBiome.override_biome = biome
++		for i in range(2):
++			var f = S.fighters[i]
++			f.x = SimWrap.wrap(2062.5 * SimConst.PS + (-110.0 if i == 0 else 110.0))
++			f.y = WorldTerrain.groundY(S, f.x) + 10.0
++			f.vx = 0.0
++			f.vy = 0.0
++			f.tier = 3.0
++	_signature(t, S)
++
++
+ func _apply_variant(S: SimState, variant: int) -> void:
+ 	for f in S.fighters:
+ 		f.x = SimWrap.wrap(f.x + 450.0 * float(variant))
+diff --git a/tools/flash/flash_worst.gd b/tools/flash/flash_worst.gd
+index bab8d95..e5dec62 100644
+--- a/tools/flash/flash_worst.gd
++++ b/tools/flash/flash_worst.gd
+@@ -24,7 +24,7 @@ const FORM_TICKS: Array = [300, 1500]
+ ## The scenarios, their lengths and the AI-match set (seeds and pairings) are tools/flash/sources.json's, so the headless runs, check-log.js and run-pixels.mjs read one list.
+ const SOURCES: String = "res://tools/flash/sources.json"
+ ## Which slots are AI (true) in each scenario.
+-const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true], "plumedesert": [false, false], "plumeice": [false, false], "plumevolc": [false, false], "mashdummy": [false, true], "ring": [false, true], "launchai": [false, true], "clashcity": [false, false], "signaturedummy": [false, true], "blastdummy": [false, true]}
++const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true], "plumedesert": [false, false], "plumeice": [false, false], "plumevolc": [false, false], "beamdesert": [false, true], "beamice": [false, true], "beamvolc": [false, true], "mashdummy": [false, true], "ring": [false, true], "launchai": [false, true], "clashcity": [false, false], "signaturedummy": [false, true], "blastdummy": [false, true]}
+ 
+ var main: Node
+ var out_dir: String = "build/flash"
+@@ -350,6 +350,12 @@ func _drive(sc: String, t: int, S: SimState) -> void:
+ 			_plume(t, S, "ice_sheet")
+ 		"plumevolc":      # a volcanic impact's plume, with its steady ember chips
+ 			_plume(t, S, "volcanic")
++		"beamdesert":     # a signature beam over sand: its scorch (glints, dark glass chips) and the plume where it lands (VFX window 3)
++			_beam_ground(t, S, "desert")
++		"beamice":        # the same over an ice sheet (melt steam, slate chips)
++			_beam_ground(t, S, "ice_sheet")
++		"beamvolc":       # the same over volcanic ground (pale flakes, steady orange chips)
++			_beam_ground(t, S, "volcanic")
+ 		"ai":
+ 			_ready_forms(S, t, FORM_TICKS)
+ 			if t == 900:
+@@ -445,6 +451,22 @@ func _plume(t: int, S: SimState, biome: String) -> void:
+ 		DirLaunch.doLaunch(S, S.fighters[0], tg, {"ux": 0.25, "uy": -0.97, "name": "SLAM DOWN"}, 2600.0, false)
+ 
+ 
++## A signature beam over one ground (the beam clips, Legal's follow-up to the plume clips): the pair is set down on the plains between the harbour village and the city, clear of every building (nothing falls), and the biome is forced for the run (the default world has no ice or lava)
++## (VfxBiome.override_biome), so the beam's ground scorch throws what that ground is made of and a plume rises where it lands; player one fires the signature on a cycle at the AI
++## (the `signature` scene). The same in tools/flash/flash_worst.gd and render/tools/flash_capture.gd (the drift check).
++func _beam_ground(t: int, S: SimState, biome: String) -> void:
++	if t == 0:
++		VfxBiome.override_biome = biome
++		for i in range(2):
++			var f = S.fighters[i]
++			f.x = SimWrap.wrap(2062.5 * SimConst.PS + (-110.0 if i == 0 else 110.0))
++			f.y = WorldTerrain.groundY(S, f.x) + 10.0
++			f.vx = 0.0
++			f.vy = 0.0
++			f.tier = 3.0
++	_signature(t, S)
++
++
+ func _apply_variant(S: SimState, variant: int) -> void:
+ 	for f in S.fighters:
+ 		f.x = SimWrap.wrap(f.x + 450.0 * float(variant))
+diff --git a/tools/flash/sources.json b/tools/flash/sources.json
+index 3428af1..26e18c2 100644
+--- a/tools/flash/sources.json
++++ b/tools/flash/sources.json
+@@ -267,6 +267,39 @@
+         12345
+       ]
+     },
++    {
++      "id": "beamdesert",
++      "minTicks": 1200,
++      "minEvents": {
++        "beam_outcome": 1
++      },
++      "ticks": 1500,
++      "seeds": [
++        12345
++      ]
++    },
++    {
++      "id": "beamice",
++      "minTicks": 1200,
++      "minEvents": {
++        "beam_outcome": 1
++      },
++      "ticks": 1500,
++      "seeds": [
++        12345
++      ]
++    },
++    {
++      "id": "beamvolc",
++      "minTicks": 1200,
++      "minEvents": {
++        "beam_outcome": 1
++      },
++      "ticks": 1500,
++      "seeds": [
++        12345
++      ]
++    },
+     {
+       "id": "ai",
+       "minTicks": 1200,

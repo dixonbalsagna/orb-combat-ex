@@ -1,3 +1,5 @@
+diff --git a/data/vfx/aura.json b/data/vfx/aura.json
+index d13db94..e99c4de 100644
 --- a/data/vfx/aura.json
 +++ b/data/vfx/aura.json
 @@ -2,7 +2,17 @@
@@ -20,432 +22,9 @@
 +    "burst_gap": 240
    }
  }
---- a/docs/vfx/README.md
-+++ b/docs/vfx/README.md
-@@ -10,6 +10,7 @@
- | :--- | :--- | :--- |
- | Motion trails: a tapered ribbon behind a fast fighter, and world-fixed wind marks the camera flies past | **Live** (trails are on by default) | `trail_state.gd`, `trail_view.gd`, `shaders/trail.gdshader` |
- | The catastrophe tier's blast cloud: a stateless stem-and-cap cloud of up to 400 sprites with one fireball light event on the `blast_cloud` cue (no cue exists yet) | Built, parked (`docs/vfx/blast-cloud.md`); `catastrophe_enabled` | `blast_cloud.gd`, `cloud_view.gd`, `shaders/cloud*.gdshader`, `data/vfx/catastrophe.json` |
-+| Orb's 3D auras: a shader-driven shell per fighter, the Protagonist's boil and the Anti-hero's facets as inversions | Built, parked, **off** (`docs/vfx/aura3d.md`); `hub.set_aura3d(true)` | `aura3d.gd`, `aura3d_view.gd`, `shaders/aura3d.gdshader`, `data/vfx/aura3d.json` |
- | The catastrophe tier's tremor: low dust curtains and a patter of rubble on the `tremor` cue (no cue exists yet) | Built, parked (`docs/vfx/tremor-dust.md`); `catastrophe_enabled` | `tremor.gd`, `dust_view.gd`, `shaders/dust.gdshader`, `data/vfx/catastrophe.json` |
- | Ground cracks and fissures from `S.craters` and `S.slides` | Built, **off** (`VfxLook.CRACKS_DEFAULT`) | `crack_gen.gd`, `crack_mesh.gd`, `crack_view.gd`, `shaders/crack.gdshader` |
- 
---- a/render/core/warmup.gd
-+++ b/render/core/warmup.gd
-@@ -27,6 +27,7 @@
- 	["res://render/vfx/shaders/beam_scar.gdshader", "multimesh"],  # VFX: the scar a beam leaves in the air (scar_view.gd)
- 	["res://render/vfx/shaders/cloud.gdshader", "multimesh"],    # VFX: the blast cloud's body (docs/vfx/blast-cloud.md)
- 	["res://render/vfx/shaders/cloud_core.gdshader", "multimesh"], # VFX: the blast cloud's fireball (additive)
-+	["res://render/vfx/shaders/aura3d.gdshader", "mesh"],         # VFX: the 3D auras (docs/vfx/aura3d.md)
- 	["res://render/shaders/particle.gdshader", "multimesh"],     # Rendering: particles
- 	["res://render/shaders/flash.gdshader", "multimesh"],        # Rendering: hit flashes
- 	["res://render/shaders/glow.gdshader", "mesh"],              # Rendering: glows
---- a/render/vfx/aura.gd
-+++ b/render/vfx/aura.gd
-@@ -10,7 +10,8 @@
- ## Presentation only: reads the sim, writes nothing, draws no randomness.
- 
- const DEFAULTS: Dictionary = {
--	"standing": {"ease_in_ticks": 8, "ease_out_ticks": 24, "hold_ticks": 18, "alpha": 0.4, "fill_scale": 0.5, "pulse": 0.03, "pulse_ticks": 50, "min_tier": 1},
-+	"standing": {"ease_in_ticks": 8, "ease_out_ticks": 24, "hold_ticks": 18, "alpha": 0.4, "fill_scale": 0.5, "pulse": 0.03, "pulse_ticks": 50, "min_tier": 1,
-+		"burst_rise": 18, "burst_hold": 54, "burst_fall": 48, "burst_gap": 240},
- }
- 
- static var _data: Dictionary = {}
-@@ -21,6 +22,16 @@
- var _hold := PackedInt32Array([0, 0])          # ticks since the fighter was last charging or attacking
- var clock: int = 0                             # unfrozen ticks, for the breathing pulse
- var started: int = 0                           # times a slot's level rose from zero (for the tests)
-+## The 3D aura's transient envelope (Legal fx06: "conveys emotion briefly, then disappears", never a constant standing glow): when a fighter starts charging or attacking (the standing aura's rising edge) and the
-+## last burst ended at least `burst_gap` ticks ago, one burst runs: up over `burst_rise`, held for `burst_hold`, down over `burst_fall`, whatever he is doing meanwhile; the next one waits for a new rising edge
-+## after the gap. 0 to 1 per slot, with last tick's value for drawing between ticks. The flat standing aura above is unchanged.
-+var burst := PackedFloat32Array([0.0, 0.0])
-+var burst_prev := PackedFloat32Array([0.0, 0.0])
-+var bursts_made: int = 0
-+var _bphase := PackedInt32Array([0, 0])        # 0 idle, 1 rising, 2 holding, 3 falling
-+var _bt := PackedInt32Array([0, 0])            # ticks in the phase
-+var _bgap := PackedInt32Array([100000, 100000])  # ticks since the last burst ended
-+var _bon := PackedInt32Array([0, 0])           # the standing aura's `on` last tick
- 
- 
- static func warm() -> void:
-@@ -52,6 +63,13 @@
- 	mark_prev = PackedFloat32Array([0.0, 0.0])
- 	mark_burst = PackedInt32Array([0, 0])
- 	marks_made = 0
-+	burst = PackedFloat32Array([0.0, 0.0])
-+	burst_prev = PackedFloat32Array([0.0, 0.0])
-+	bursts_made = 0
-+	_bphase = PackedInt32Array([0, 0])
-+	_bt = PackedInt32Array([0, 0])
-+	_bgap = PackedInt32Array([100000, 100000])
-+	_bon = PackedInt32Array([0, 0])
- 	clock = 0
- 	started = 0
- 	warm()
-@@ -83,6 +101,7 @@
- 		if fm.slot >= 0 and fm.slot < 2:
- 			in_form[fm.slot] = true
- 	for i in range(n):
-+		burst_prev[i] = burst[i]
- 		prev[i] = level[i]
- 		if in_form[i]:
- 			level[i] = 0.0     # the transformation draws its own aura, and the standing one starts again after it
-@@ -96,6 +115,7 @@
- 			continue
- 		var f = S.fighters[i]
- 		var on: bool = is_active(S, f) and f.tier >= p("standing", "min_tier")
-+		_step_burst(i, on)
- 		if on:
- 			_hold[i] = 0
- 		else:
-@@ -108,6 +128,40 @@
- 			level[i] = maxf(level[i] - 1.0 / maxf(p("standing", "ease_out_ticks"), 1.0), 0.0)
- 
- 
-+func _step_burst(i: int, on: bool) -> void:
-+	var rise: int = maxi(int(p("standing", "burst_rise")), 1)
-+	var hold: int = int(p("standing", "burst_hold"))
-+	var fall: int = maxi(int(p("standing", "burst_fall")), 1)
-+	var edge: bool = on and _bon[i] == 0
-+	_bon[i] = 1 if on else 0
-+	if _bphase[i] == 0:
-+		_bgap[i] = mini(_bgap[i] + 1, 100000)
-+		if edge and _bgap[i] >= int(p("standing", "burst_gap")):
-+			_bphase[i] = 1
-+			_bt[i] = 0
-+			bursts_made += 1
-+	else:
-+		_bt[i] += 1
-+		if _bphase[i] == 1 and _bt[i] >= rise:
-+			_bphase[i] = 2
-+			_bt[i] = 0
-+		elif _bphase[i] == 2 and _bt[i] >= hold:
-+			_bphase[i] = 3
-+			_bt[i] = 0
-+		elif _bphase[i] == 3 and _bt[i] >= fall:
-+			_bphase[i] = 0
-+			_bgap[i] = 0
-+	match _bphase[i]:
-+		0:
-+			burst[i] = 0.0
-+		1:
-+			burst[i] = smoothstep(0.0, 1.0, float(_bt[i]) / float(rise))
-+		2:
-+			burst[i] = 1.0
-+		3:
-+			burst[i] = 1.0 - smoothstep(0.0, 1.0, float(_bt[i]) / float(fall))
-+
-+
- ## The colour an aura, a transformation's ring and its flash are drawn in: the fighter's own `aura` colour, except that
- ## Legal's screen (docs/legal/rule-of-cool-screen.md) rules out gold, white and red for them. A colour in the fire range
- ## (red, orange, gold) or close to white is swapped for Art's Anti-hero accent (data/art/flashes.json, accents.A.mid), the
---- a/render/vfx/tools/effects_check.gd
-+++ b/render/vfx/tools/effects_check.gd
-@@ -217,6 +217,7 @@
- 	_cat_class()
- 	_tremor()
- 	_blast_cloud()
-+	_aura3d()
- 	_stage_stagger()
- 	_depth()
- 	_panes()
-@@ -4960,6 +4961,174 @@
- 	# The shader's text holds the rules: the pattern is hue-told, its brightness is `pat_k`, the ring and the cell are tinted from the two same-luminance tints.
- 	var src: String = FileAccess.get_file_as_string("res://render/vfx/shaders/beam_core.gdshaderinc")
- 	_check(src.contains("pat_ring") and src.contains("pat_cell") and src.contains("mix(tint_a.rgb, tint_b.rgb") and src.contains("pat_tex = 1.0 + pat_k * feat"), "the shader tells the pattern apart by the second tint and moves the brightness only by pat_k")
-+## Orb's 3D auras (docs/vfx/aura3d.md): the data against the defaults, that the two themes are INVERSIONS of one another and not recolours, every rate under 2 Hz in both forms, the alpha cap, the
-+## colours (the lane colour, a lighter tint and a dark shade: never white, gold or red), the calm form, the tier's sizes, purity, and that nothing changes until the switch is on.
-+class AuraHostStub:
-+	var S
-+
-+
-+func _aura_host_stub(S) -> AuraHostStub:
-+	var hs := AuraHostStub.new()
-+	hs.S = S
-+	return hs
-+
-+
-+func _aura_burst() -> void:
-+	# Legal fx06: the 3D aura is transient, never a constant standing glow: one burst when a fighter starts charging or attacking, then nothing until a new start after the gap.
-+	var S := SimCore.createSim()
-+	SimCore.newMatch(S, 4)
-+	var au := VfxAura.new()
-+	au.reset()
-+	var f = S.fighters[0]
-+	f.tier = 2.0
-+	f.state = "charging"
-+	var rise: int = int(VfxAura.p("standing", "burst_rise"))
-+	var hold: int = int(VfxAura.p("standing", "burst_hold"))
-+	var fall: int = int(VfxAura.p("standing", "burst_fall"))
-+	var gap: int = int(VfxAura.p("standing", "burst_gap"))
-+	var peak: float = 0.0
-+	var at_one: int = 0
-+	var max_step: float = 0.0
-+	var prev: float = 0.0
-+	var standing_at_end: float = 0.0
-+	var after: float = 0.0
-+	for k in range(rise + hold + fall + 120):
-+		au.step(S, false, [])
-+		peak = maxf(peak, au.burst[0])
-+		if au.burst[0] >= 0.999:
-+			at_one += 1
-+		max_step = maxf(max_step, absf(au.burst[0] - prev))
-+		prev = au.burst[0]
-+		standing_at_end = au.level[0]
-+		after = au.burst[0]
-+	_check(peak >= 0.999 and at_one >= hold - 1, "a burst rises to full and holds for %d ticks (held %d)" % [hold, at_one])
-+	_check(after == 0.0 and standing_at_end > 0.9 and au.bursts_made == 1, "then it is gone although the fighter is still charging (the flat standing aura's level is still %.2f): one burst, not a standing glow (%d made)" % [standing_at_end, au.bursts_made])
-+	_check(max_step < 0.2, "it never jumps: the largest step in a tick is %.3f" % max_step)
-+	# a new start before the gap makes no burst; after it, one
-+	f.state = "free"
-+	for k in range(10):
-+		au.step(S, false, [])
-+	f.state = "charging"
-+	for k in range(5):
-+		au.step(S, false, [])
-+	_check(au.bursts_made == 1, "a new start soon after the last burst makes none (the gap is %d ticks)" % gap)
-+	f.state = "free"
-+	for k in range(gap):
-+		au.step(S, false, [])
-+	f.state = "charging"
-+	for k in range(5):
-+		au.step(S, false, [])
-+	_check(au.bursts_made == 2 and au.burst[0] > 0.0, "a start after the gap makes the next")
-+
-+
-+func _aura3d() -> void:
-+	print("the 3D auras")
-+	var jd = JSON.parse_string(FileAccess.get_file_as_string("res://data/vfx/aura3d.json"))
-+	var same: bool = jd is Dictionary and jd.get("common") is Dictionary and jd.get("themes") is Dictionary
-+	if same:
-+		for k in VfxAura3D.DEFAULTS["common"].keys():
-+			if not _same_value(jd["common"].get(k), VfxAura3D.DEFAULTS["common"][k]):
-+				same = false
-+				print("    differs: common ", k)
-+		for th in VfxAura3D.DEFAULTS["themes"].keys():
-+			for k in VfxAura3D.DEFAULTS["themes"][th].keys():
-+				if not _same_value(jd["themes"].get(th, {}).get(k), VfxAura3D.DEFAULTS["themes"][th][k]):
-+					same = false
-+					print("    differs: ", th, " ", k)
-+	_check(same, "data/vfx/aura3d.json and the built-in defaults agree")
-+	# The inversion: the Protagonist's boil and the Anti-hero's facets differ in motion, polarity, rhythm, size and edge, each the other's opposite.
-+	var pb: Dictionary = VfxAura3D.theme_block("protagonist")
-+	var rb: Dictionary = VfxAura3D.theme_block("rival")
-+	var inv: Array = [
-+		float(pb["theme"]) == 0.0 and float(rb["theme"]) == 1.0,                                              # round bubbles (bright rings on a clear skin) against facets (bright cells between dark seams)
-+		float(pb["pulse_dir"]) > 0.0 and float(rb["pulse_dir"]) < 0.0,                                        # swells outward / draws inward
-+		float(pb["flow"][1]) > 0.0 and float(rb["flow"][1]) < 0.0,                                            # the skin drifts up / settles down
-+		float(pb["scale"]) > 1.0 and float(rb["scale"]) < 1.0,                                                # spent outward / held in tight
-+		float(pb["cell_rate"]) > 2.0 * float(rb["cell_rate"]),                                                # a restless boil / a lattice that hardly moves
-+		float(pb["rim_k"]) < float(rb["rim_k"]),                                                              # a soft rim / a crisp one
-+		float(pb["disp"]) > 2.0 * float(rb["disp"]),                                                          # undulating / smooth crystal
-+		float(pb["froth"][3]) > 0.5 and float(rb["froth"][3]) == 0.0,                                         # froth grows with the tier / no froth
-+	]
-+	var inv_n: int = 0
-+	for b in inv:
-+		if bool(b):
-+			inv_n += 1
-+	_check(inv_n == inv.size(), "the Protagonist's and the Anti-hero's auras are inversions on all %d axes (shape, pulse direction, drift, size, restlessness, rim, undulation, froth), not recolours" % inv.size())
-+	# Rates: under 2 Hz in both forms, the calm form slower. The alpha cap.
-+	var rates_ok: bool = true
-+	var worst_hz: float = 0.0
-+	for id in ["protagonist", "rival", "default"]:
-+		var rn: float = VfxAura3D.max_rate_hz(id, false)
-+		var rc: float = VfxAura3D.max_rate_hz(id, true)
-+		worst_hz = maxf(worst_hz, rn)
-+		if rn > float(VfxAura3D.common("max_hz")) or rc > rn + 1e-9:
-+			rates_ok = false
-+	_check(rates_ok and float(VfxAura3D.common("max_hz")) <= 2.0 and float(VfxAura3D.common("alpha_max")) <= 0.5, "every rate is at most %.2f Hz (the cap is 2), the calm form is slower, and the drawn alpha is capped at %.2f" % [worst_hz, float(VfxAura3D.common("alpha_max"))])
-+	# Colours: the lane colour with a lighter tint and a dark shade; never white, gold or red.
-+	var col_ok: bool = true
-+	var worst_share: float = 0.0
-+	for hex in ["#8fd6ff", "#9a80d8", "#3fa7d6", "#b07fd0", "#ff4020", "#ffd040", "#ffffff"]:
-+		var lane: Color = VfxAura.lane_color(hex)
-+		for c in [lane, VfxAura3D.tint(lane), VfxAura3D.shade(lane)]:
-+			var lc: Color = c.srgb_to_linear()
-+			var sh: float = c.r / maxf(c.r + c.g + c.b, 1e-6)
-+			var lsh: float = lc.r / maxf(lc.r + lc.g + lc.b, 1e-6)
-+			worst_share = maxf(worst_share, maxf(sh, lsh))
-+			if VfxFlashRegistry.is_red(c) or sh >= 0.8 or lsh >= 0.8:
-+				col_ok = false
-+		var t: Color = VfxAura3D.tint(lane)
-+		if t.s < 0.29 or t.v > 0.94:
-+			col_ok = false            # a near-white tint
-+		if VfxAura3D.shade(lane).v > lane.v * 0.34:
-+			col_ok = false
-+	_check(col_ok and worst_share < 0.8, "the lane colour's tint and shade are never white or red for the two lane colours, a fire colour and white as inputs (largest red share %.2f)" % worst_share)
-+	# Params: pure, the tier grows the shell, the Protagonist's shell is the larger, the calm form is slower and stiller.
-+	var lane_p: Color = VfxAura.lane_color("#8fd6ff")
-+	var p1: Dictionary = VfxAura3D.params("protagonist", 1, 1.0, false, 3.0, lane_p, 0.0)
-+	var p1b: Dictionary = VfxAura3D.params("protagonist", 1, 1.0, false, 3.0, lane_p, 0.0)
-+	var p4: Dictionary = VfxAura3D.params("protagonist", 4, 1.0, false, 3.0, lane_p, 0.0)
-+	var r4: Dictionary = VfxAura3D.params("rival", 4, 1.0, false, 3.0, lane_p, 0.0)
-+	var c4: Dictionary = VfxAura3D.params("protagonist", 4, 1.0, true, 3.0, lane_p, 0.0)
-+	_check(str(p1) == str(p1b) and is_equal_approx(float(p4["hull_bh"]), float(p1["hull_bh"])) and float(p4["hull_bh"]) > float(r4["hull_bh"]), "the aura band is a pure function of its inputs, stands off the body by the same small distance at every tier (%.3f of his height: it does not grow into a silhouette with the tier), and the Protagonist's stands a little further off than the Anti-hero's (%.3f against %.3f)" % [float(p4["hull_bh"]), float(p4["hull_bh"]), float(r4["hull_bh"])])
-+	_check(float(c4["calm"]) == 1.0 and float(c4["pulse_amp"]) < float(p4["pulse_amp"]) and float(c4["pulse_hz"]) < float(p4["pulse_hz"]) and float(c4["cell_rate"]) < float(p4["cell_rate"]) and float(c4["band"]) < float(p4["band"]), "the calm form pulses smaller and slower, the froth turns slower, the band is fainter, and nothing pops")
-+	_check(float(VfxAura3D.params("protagonist", 9, 1.0, false, 0.0, lane_p, 0.0)["tier"]) == 4.0 and float(VfxAura3D.params("protagonist", 0, 1.0, false, 0.0, lane_p, 0.0)["tier"]) == 1.0 and VfxAura3D.theme_block("nobody")["theme"] == VfxAura3D.theme_block("default")["theme"], "a tier outside 1 to 4 is clamped and an unknown fighter takes the default theme")
-+	# Inert until the switch: off by default, and turning it on switches the old standing aura off (one aura, not two); the standing aura's eased level still runs.
-+	var S := SimCore.createSim()
-+	SimCore.newMatch(S, 4)
-+	var h := VfxHub.new()
-+	h.reset(S, 4)
-+	var off_default: bool = not h.aura3d_enabled and not h.aura3d_demo
-+	var standing_before: bool = h.standing_aura_enabled
-+	h.set_aura3d(true)
-+	var on_ok: bool = h.aura3d_enabled and not h.standing_aura_enabled
-+	h.set_aura3d(false)
-+	_check(off_default and on_ok and h.standing_aura_enabled == standing_before, "the 3D auras are off by default; turning them on turns the flat standing aura off and turning them off puts it back")
-+	h.set_aura3d(true)
-+	S.fighters[0].tier = 2.0
-+	S.fighters[0].state = "charging"
-+	for k in range(20):
-+		_tick(S, h, [])
-+	_check(h.aura.level[0] > 0.5, "with the 3D auras on the standing aura's ease still runs while a fighter charges (level %.2f)" % h.aura.level[0])
-+	var mh: ShaderMaterial = VfxAura3D.hull_material(S.fighters[0])
-+	_check(mh == VfxAura3D.hull_material(S.fighters[0]) and mh != VfxAura3D.hull_material(S.fighters[1]) and float(mh.get_shader_parameter("level")) == 0.0, "each fighter has his own hull material, the same one every time, drawing nothing until the aura is up")
-+	var v := VfxAura3DView.new()
-+	root.add_child(v)
-+	h.aura3d_demo = true
-+	v.update(h, _aura_host_stub(S), 0.0, 0.0, 400.0)
-+	_check(float(mh.get_shader_parameter("level")) > 0.99 and v.shown == 2, "in the showcase both hulls are up at full level (shown %d)" % v.shown)
-+	h.set_aura3d(false)
-+	v.update(h, _aura_host_stub(S), 0.0, 0.0, 400.0)
-+	_check(float(mh.get_shader_parameter("level")) == 0.0 and v.shown == 0, "with the switch off the hull is down again")
-+	var other := SimCore.createSim()
-+	SimCore.newMatch(other, 5)
-+	var kept: ShaderMaterial = VfxAura3D.hull_material(S.fighters[0])
-+	VfxAura3D.hull_material(other.fighters[0])
-+	VfxAura3D.prune(S.fighters)
-+	_check(VfxAura3D.hull_material(S.fighters[0]) == kept and VfxAura3D._hulls.size() == 1 + (1 if VfxAura3D._hulls.has(S.fighters[1].get_instance_id()) else 0), "a new match prunes the hulls of fighters that are gone (%d kept)" % VfxAura3D._hulls.size())
-+	_check(kept.render_priority < 0, "the hull is drawn before the water (priority %d), so a submerged fighter's band takes the water's tint like his body" % kept.render_priority)
-+	VfxAura3D.clear_hulls()
-+	v.free()
-+	_aura_burst()
- 
- 
- ## The catastrophe light class (docs/vfx/catastrophe-plan.md section 1; Legal c01 to c05): the gap, the floors, the calm form, the ash, one answer per event, no red, and a hammer of random asks.
---- a/render/vfx/trail_view.gd
-+++ b/render/vfx/trail_view.gd
-@@ -15,6 +15,7 @@
- var shots_view := VfxShotsView.new()   # the energy blasts (shots_view.gd): a child, updated with this view, so it needs nothing of the layer
- var dust_view := VfxDustView.new()   # the tremor's dust curtains (dust_view.gd), a child like the shots view
- var cloud_view := VfxCloudView.new()   # the blast cloud (cloud_view.gd), a child like the dust view
-+var aura3d_view := VfxAura3DView.new()   # Orb's 3D auras (aura3d_view.gd), a child like the dust view
- var scar_view := VfxScarView.new()   # the scar a beam leaves in the air (scar_view.gd), a child like the dust view
- var cam_dist: float = 3000.0   # the pane camera's distance to the fighter plane (set by the layer), for the perspective scale at depth
- 
-@@ -43,6 +44,8 @@
- 	add_child(dust_view)
- 	cloud_view.name = "Cloud"
- 	add_child(cloud_view)
-+	aura3d_view.name = "Aura3D"
-+	add_child(aura3d_view)
- 	scar_view.name = "Scar"
- 	add_child(scar_view)
- 
-@@ -59,6 +62,9 @@
- 	cloud_view.visible = hub.catastrophe_enabled
- 	if hub.catastrophe_enabled:
- 		cloud_view.update(hub, host, cam_x)
-+	aura3d_view.visible = hub.aura3d_enabled
-+	if hub.aura3d_enabled:
-+		aura3d_view.update(hub, host, a, cam_x, half_w)
- 	shots_view.visible = hub.shots_enabled or hub.beamplay_enabled or hub.glare_enabled or hub.press_enabled
- 	if hub.shots_enabled or hub.beamplay_enabled or hub.glare_enabled or hub.press_enabled:
- 		shots_view.update(hub, host, a, cam_x, zoom, half_w)
---- a/render/vfx/vfx_hub.gd
-+++ b/render/vfx/vfx_hub.gd
-@@ -50,6 +50,8 @@
- var transform_enabled: bool = VfxLook.TRANSFORM_DEFAULT   # the transformation: gather, break ring, aura swap, settle
- var xform := VfxTransform.new()
- var standing_aura_enabled: bool = VfxLook.STANDING_AURA_DEFAULT   # the aura while charging or attacking (needs transform_enabled)
-+var aura3d_enabled: bool = false                    # Orb's 3D auras (aura3d.gd, aura3d_view.gd): a shell per fighter with his own inverted theme. Off: nothing changes. Use set_aura3d()
-+var aura3d_demo: bool = false                       # the showcase and the capture: the shells at full level whatever the fighters are doing
- var aura := VfxAura.new()
- var react_enabled: bool = VfxLook.REACT_DEFAULT      # from tier 3 the world answers: rubble, standing cracks, windows blowing out (docs/vfx/react-plan.md)
- var flicker_enabled: bool = VfxLook.FLICKER_DEFAULT  # the aura flickers when the fighter is worn
-@@ -129,6 +131,7 @@
- 
- 
- func reset(S: SimState, p_seed: int) -> void:
-+	VfxAura3D.prune(S.fighters)       # the 3D aura's per-fighter hull materials of an earlier match
- 	seed = p_seed & 0xFFFFFFFF
- 	ticks = 0
- 	_rng_trail = SimRng.new(SimRng.deriveSeed(seed, "vfx.trail"))
-@@ -207,6 +210,12 @@
- 
- 
- ## One tick's fx events, in order, plus the state after the tick.
-+## Turn the 3D auras on or off. On, the old standing aura (transform_view.gd's, a flat outline) is switched off so there is one aura, not two; off puts it back as the look file has it.
-+func set_aura3d(on: bool) -> void:
-+	aura3d_enabled = on
-+	standing_aura_enabled = (not on) and VfxLook.STANDING_AURA_DEFAULT
-+
-+
- func consume(S: SimState, events: Array) -> void:
- 	if not enabled:
- 		return
-@@ -285,7 +294,7 @@
- 				if not f.flash_ok:
- 					gate = 0.0
- 		VfxTransform.flash_scale = gate
--	if transform_enabled and standing_aura_enabled:
-+	if transform_enabled and (standing_aura_enabled or aura3d_enabled):
- 		aura.step(S, frozen, xform.forms)
- 	for e in events:
- 		if e.type == "land" or e.type == "bounce" or e.type == "journey_end":
-@@ -308,7 +317,7 @@
- 				_speed_heavy(S, e)
- 	debris.now = fx_now(S)
- 	earth.entrance_now = false
--	if transform_enabled and standing_aura_enabled:
-+	if transform_enabled and (standing_aura_enabled or aura3d_enabled):
- 		aura.step_mark(frozen)
- 		for e in events:
- 			if e.type == "last_stand_ready":
---- a/tools/schemas/map.json
-+++ b/tools/schemas/map.json
-@@ -488,6 +488,10 @@
-       "schema": "vfx-catastrophe.schema.json"
-     },
-     {
-+      "match": "data/vfx/aura3d.json",
-+      "schema": "vfx-aura3d.schema.json"
-+    },
-+    {
-       "match": "data/narrative/combat_barks.json",
-       "schema": "narrative-barks.schema.json"
-     },
---- a/tools/schemas/vfx-aura.schema.json
-+++ b/tools/schemas/vfx-aura.schema.json
-@@ -57,6 +57,26 @@
-           "minimum": 1,
-           "maximum": 4,
-           "description": "The lowest power tier that shows it."
-+        },
-+        "burst_rise": {
-+          "type": "integer",
-+          "minimum": 1,
-+          "description": "The 3D aura's transient envelope (Legal fx06): ticks to rise."
-+        },
-+        "burst_hold": {
-+          "type": "integer",
-+          "minimum": 0,
-+          "maximum": 180,
-+          "description": "Ticks it is held at full strength: at most three seconds."
-+        },
-+        "burst_fall": {
-+          "type": "integer",
-+          "minimum": 1
-+        },
-+        "burst_gap": {
-+          "type": "integer",
-+          "minimum": 60,
-+          "description": "Ticks after a burst ends before the next may start (at least a second): never a constant standing glow."
-         }
-       },
-       "additionalProperties": false,
+diff --git a/data/vfx/aura3d.json b/data/vfx/aura3d.json
+new file mode 100644
+index 0000000..c62fa16
 --- /dev/null
 +++ b/data/vfx/aura3d.json
 @@ -0,0 +1,108 @@
@@ -557,6 +136,21 @@
 +    }
 +  }
 +}
+diff --git a/docs/vfx/README.md b/docs/vfx/README.md
+index 05f221a..4312205 100644
+--- a/docs/vfx/README.md
++++ b/docs/vfx/README.md
+@@ -10,6 +10,7 @@ Presentation only. VFX reads the sim's state and fx events and draws; it never w
+ | :--- | :--- | :--- |
+ | Motion trails: a tapered ribbon behind a fast fighter, and world-fixed wind marks the camera flies past | **Live** (trails are on by default) | `trail_state.gd`, `trail_view.gd`, `shaders/trail.gdshader` |
+ | The catastrophe tier's blast cloud: a stateless stem-and-cap cloud of up to 400 sprites with one fireball light event on the `blast_cloud` cue (no cue exists yet) | Built, parked (`docs/vfx/blast-cloud.md`); `catastrophe_enabled` | `blast_cloud.gd`, `cloud_view.gd`, `shaders/cloud*.gdshader`, `data/vfx/catastrophe.json` |
++| Orb's 3D auras: a shader-driven shell per fighter, the Protagonist's boil and the Anti-hero's facets as inversions | Built, parked, **off** (`docs/vfx/aura3d.md`); `hub.set_aura3d(true)` | `aura3d.gd`, `aura3d_view.gd`, `shaders/aura3d.gdshader`, `data/vfx/aura3d.json` |
+ | The catastrophe tier's tremor: low dust curtains and a patter of rubble on the `tremor` cue (no cue exists yet) | Built, parked (`docs/vfx/tremor-dust.md`); `catastrophe_enabled` | `tremor.gd`, `dust_view.gd`, `shaders/dust.gdshader`, `data/vfx/catastrophe.json` |
+ | Ground cracks and fissures from `S.craters` and `S.slides` | Built, **off** (`VfxLook.CRACKS_DEFAULT`) | `crack_gen.gd`, `crack_mesh.gd`, `crack_view.gd`, `shaders/crack.gdshader` |
+ 
+diff --git a/docs/vfx/aura3d.md b/docs/vfx/aura3d.md
+new file mode 100644
+index 0000000..5dc9e5f
 --- /dev/null
 +++ b/docs/vfx/aura3d.md
 @@ -0,0 +1,67 @@
@@ -627,6 +221,123 @@
 +
 +## The first draw (Performance, 2026-10-22)
 +A hitch of 50 to 110 ms at the first tick the aura draws appeared although the shader is in the boot warm-up's table: the pipeline is the shader on the SKINNED fighter mesh with the depth read, in the REAL pane's viewport (the driver sets pipelines up per viewport, so the warm-up's own 64 pixel viewport did not warm it). `VfxAura3D.warm_node()` is a real fighter body (AnimBody as FighterView builds it) with a hull chained after its outline, which VFX's `warm.gd` hands to the boot warm-up (park `warm-first-use`) to stand in the pane's view for its three frames behind the notice. Measured on Performance's cold repro (the city beam scene with the aura held up): the tick-6 hitch (75 to 111 ms) is gone.
+diff --git a/render/core/warmup.gd b/render/core/warmup.gd
+index ffc05f4..d75406b 100644
+--- a/render/core/warmup.gd
++++ b/render/core/warmup.gd
+@@ -27,6 +27,7 @@ const SHADERS: Array = [
+ 	["res://render/vfx/shaders/beam_scar.gdshader", "multimesh"],  # VFX: the scar a beam leaves in the air (scar_view.gd)
+ 	["res://render/vfx/shaders/cloud.gdshader", "multimesh"],    # VFX: the blast cloud's body (docs/vfx/blast-cloud.md)
+ 	["res://render/vfx/shaders/cloud_core.gdshader", "multimesh"], # VFX: the blast cloud's fireball (additive)
++	["res://render/vfx/shaders/aura3d.gdshader", "mesh"],         # VFX: the 3D auras (docs/vfx/aura3d.md)
+ 	["res://render/shaders/particle.gdshader", "multimesh"],     # Rendering: particles
+ 	["res://render/shaders/flash.gdshader", "multimesh"],        # Rendering: hit flashes
+ 	["res://render/shaders/glow.gdshader", "mesh"],              # Rendering: glows
+diff --git a/render/vfx/aura.gd b/render/vfx/aura.gd
+index d018f90..e27ef7a 100644
+--- a/render/vfx/aura.gd
++++ b/render/vfx/aura.gd
+@@ -10,7 +10,8 @@ extends RefCounted
+ ## Presentation only: reads the sim, writes nothing, draws no randomness.
+ 
+ const DEFAULTS: Dictionary = {
+-	"standing": {"ease_in_ticks": 8, "ease_out_ticks": 24, "hold_ticks": 18, "alpha": 0.4, "fill_scale": 0.5, "pulse": 0.03, "pulse_ticks": 50, "min_tier": 1},
++	"standing": {"ease_in_ticks": 8, "ease_out_ticks": 24, "hold_ticks": 18, "alpha": 0.4, "fill_scale": 0.5, "pulse": 0.03, "pulse_ticks": 50, "min_tier": 1,
++		"burst_rise": 18, "burst_hold": 54, "burst_fall": 48, "burst_gap": 240},
+ }
+ 
+ static var _data: Dictionary = {}
+@@ -21,6 +22,16 @@ var prev := PackedFloat32Array([0.0, 0.0])     # ... and the tick before, for dr
+ var _hold := PackedInt32Array([0, 0])          # ticks since the fighter was last charging or attacking
+ var clock: int = 0                             # unfrozen ticks, for the breathing pulse
+ var started: int = 0                           # times a slot's level rose from zero (for the tests)
++## The 3D aura's transient envelope (Legal fx06: "conveys emotion briefly, then disappears", never a constant standing glow): when a fighter starts charging or attacking (the standing aura's rising edge) and the
++## last burst ended at least `burst_gap` ticks ago, one burst runs: up over `burst_rise`, held for `burst_hold`, down over `burst_fall`, whatever he is doing meanwhile; the next one waits for a new rising edge
++## after the gap. 0 to 1 per slot, with last tick's value for drawing between ticks. The flat standing aura above is unchanged.
++var burst := PackedFloat32Array([0.0, 0.0])
++var burst_prev := PackedFloat32Array([0.0, 0.0])
++var bursts_made: int = 0
++var _bphase := PackedInt32Array([0, 0])        # 0 idle, 1 rising, 2 holding, 3 falling
++var _bt := PackedInt32Array([0, 0])            # ticks in the phase
++var _bgap := PackedInt32Array([100000, 100000])  # ticks since the last burst ended
++var _bon := PackedInt32Array([0, 0])           # the standing aura's `on` last tick
+ 
+ 
+ static func warm() -> void:
+@@ -52,6 +63,13 @@ func reset() -> void:
+ 	mark_prev = PackedFloat32Array([0.0, 0.0])
+ 	mark_burst = PackedInt32Array([0, 0])
+ 	marks_made = 0
++	burst = PackedFloat32Array([0.0, 0.0])
++	burst_prev = PackedFloat32Array([0.0, 0.0])
++	bursts_made = 0
++	_bphase = PackedInt32Array([0, 0])
++	_bt = PackedInt32Array([0, 0])
++	_bgap = PackedInt32Array([100000, 100000])
++	_bon = PackedInt32Array([0, 0])
+ 	clock = 0
+ 	started = 0
+ 	warm()
+@@ -83,6 +101,7 @@ func step(S: SimState, frozen: bool, forms: Array) -> void:
+ 		if fm.slot >= 0 and fm.slot < 2:
+ 			in_form[fm.slot] = true
+ 	for i in range(n):
++		burst_prev[i] = burst[i]
+ 		prev[i] = level[i]
+ 		if in_form[i]:
+ 			level[i] = 0.0     # the transformation draws its own aura, and the standing one starts again after it
+@@ -96,6 +115,7 @@ func step(S: SimState, frozen: bool, forms: Array) -> void:
+ 			continue
+ 		var f = S.fighters[i]
+ 		var on: bool = is_active(S, f) and f.tier >= p("standing", "min_tier")
++		_step_burst(i, on)
+ 		if on:
+ 			_hold[i] = 0
+ 		else:
+@@ -108,6 +128,40 @@ func step(S: SimState, frozen: bool, forms: Array) -> void:
+ 			level[i] = maxf(level[i] - 1.0 / maxf(p("standing", "ease_out_ticks"), 1.0), 0.0)
+ 
+ 
++func _step_burst(i: int, on: bool) -> void:
++	var rise: int = maxi(int(p("standing", "burst_rise")), 1)
++	var hold: int = int(p("standing", "burst_hold"))
++	var fall: int = maxi(int(p("standing", "burst_fall")), 1)
++	var edge: bool = on and _bon[i] == 0
++	_bon[i] = 1 if on else 0
++	if _bphase[i] == 0:
++		_bgap[i] = mini(_bgap[i] + 1, 100000)
++		if edge and _bgap[i] >= int(p("standing", "burst_gap")):
++			_bphase[i] = 1
++			_bt[i] = 0
++			bursts_made += 1
++	else:
++		_bt[i] += 1
++		if _bphase[i] == 1 and _bt[i] >= rise:
++			_bphase[i] = 2
++			_bt[i] = 0
++		elif _bphase[i] == 2 and _bt[i] >= hold:
++			_bphase[i] = 3
++			_bt[i] = 0
++		elif _bphase[i] == 3 and _bt[i] >= fall:
++			_bphase[i] = 0
++			_bgap[i] = 0
++	match _bphase[i]:
++		0:
++			burst[i] = 0.0
++		1:
++			burst[i] = smoothstep(0.0, 1.0, float(_bt[i]) / float(rise))
++		2:
++			burst[i] = 1.0
++		3:
++			burst[i] = 1.0 - smoothstep(0.0, 1.0, float(_bt[i]) / float(fall))
++
++
+ ## The colour an aura, a transformation's ring and its flash are drawn in: the fighter's own `aura` colour, except that
+ ## Legal's screen (docs/legal/rule-of-cool-screen.md) rules out gold, white and red for them. A colour in the fire range
+ ## (red, orange, gold) or close to white is swapped for Art's Anti-hero accent (data/art/flashes.json, accents.A.mid), the
+diff --git a/render/vfx/aura3d.gd b/render/vfx/aura3d.gd
+new file mode 100644
+index 0000000..f74a6d0
 --- /dev/null
 +++ b/render/vfx/aura3d.gd
 @@ -0,0 +1,176 @@
@@ -806,10 +517,16 @@
 +	var sh: float = float(common("calm_shimmer")) if calm else 1.0
 +	var pulse: float = float(th["pulse_hz"]) * (0.6 if calm else 1.0)
 +	return maxf(pulse, maxf(float(th["cell_rate"]) * sh, 0.85 * sh / TAU))
+diff --git a/render/vfx/aura3d.gd.uid b/render/vfx/aura3d.gd.uid
+new file mode 100644
+index 0000000..82532db
 --- /dev/null
 +++ b/render/vfx/aura3d.gd.uid
 @@ -0,0 +1 @@
 +uid://cix257ebb78ch
+diff --git a/render/vfx/aura3d_view.gd b/render/vfx/aura3d_view.gd
+new file mode 100644
+index 0000000..3fc32c5
 --- /dev/null
 +++ b/render/vfx/aura3d_view.gd
 @@ -0,0 +1,37 @@
@@ -850,10 +567,16 @@
 +		for k in pr.keys():
 +			m.set_shader_parameter(k, pr[k])
 +		shown += 1
+diff --git a/render/vfx/aura3d_view.gd.uid b/render/vfx/aura3d_view.gd.uid
+new file mode 100644
+index 0000000..7837a2e
 --- /dev/null
 +++ b/render/vfx/aura3d_view.gd.uid
 @@ -0,0 +1 @@
 +uid://xqpuk8ya5as
+diff --git a/render/vfx/shaders/aura3d.gdshader b/render/vfx/shaders/aura3d.gdshader
+new file mode 100644
+index 0000000..f9380e6
 --- /dev/null
 +++ b/render/vfx/shaders/aura3d.gdshader
 @@ -0,0 +1,171 @@
@@ -1028,10 +751,332 @@
 +	ALPHA = clamp(level * a * fringe, 0.0, alpha_max);
 +	ALBEDO = col;
 +}
+diff --git a/render/vfx/shaders/aura3d.gdshader.uid b/render/vfx/shaders/aura3d.gdshader.uid
+new file mode 100644
+index 0000000..cea4032
 --- /dev/null
 +++ b/render/vfx/shaders/aura3d.gdshader.uid
 @@ -0,0 +1 @@
 +uid://jor4cgcakftg
+diff --git a/render/vfx/tools/effects_check.gd b/render/vfx/tools/effects_check.gd
+index 4ca814e..1f06e5a 100644
+--- a/render/vfx/tools/effects_check.gd
++++ b/render/vfx/tools/effects_check.gd
+@@ -235,6 +235,7 @@ func _run() -> void:
+ 	_cat_class()
+ 	_tremor()
+ 	_blast_cloud()
++	_aura3d()
+ 	_stage_stagger()
+ 	_depth()
+ 	_panes()
+@@ -5726,6 +5727,174 @@ func _beam_pattern() -> void:
+ 	# The shader's text holds the rules: the pattern is hue-told, its brightness is `pat_k`, the ring and the cell are tinted from the two same-luminance tints.
+ 	var src: String = FileAccess.get_file_as_string("res://render/vfx/shaders/beam_core.gdshaderinc")
+ 	_check(src.contains("pat_ring") and src.contains("pat_cell") and src.contains("mix(tint_a.rgb, tint_b.rgb") and src.contains("pat_tex = 1.0 + pat_k * feat"), "the shader tells the pattern apart by the second tint and moves the brightness only by pat_k")
++## Orb's 3D auras (docs/vfx/aura3d.md): the data against the defaults, that the two themes are INVERSIONS of one another and not recolours, every rate under 2 Hz in both forms, the alpha cap, the
++## colours (the lane colour, a lighter tint and a dark shade: never white, gold or red), the calm form, the tier's sizes, purity, and that nothing changes until the switch is on.
++class AuraHostStub:
++	var S
++
++
++func _aura_host_stub(S) -> AuraHostStub:
++	var hs := AuraHostStub.new()
++	hs.S = S
++	return hs
++
++
++func _aura_burst() -> void:
++	# Legal fx06: the 3D aura is transient, never a constant standing glow: one burst when a fighter starts charging or attacking, then nothing until a new start after the gap.
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 4)
++	var au := VfxAura.new()
++	au.reset()
++	var f = S.fighters[0]
++	f.tier = 2.0
++	f.state = "charging"
++	var rise: int = int(VfxAura.p("standing", "burst_rise"))
++	var hold: int = int(VfxAura.p("standing", "burst_hold"))
++	var fall: int = int(VfxAura.p("standing", "burst_fall"))
++	var gap: int = int(VfxAura.p("standing", "burst_gap"))
++	var peak: float = 0.0
++	var at_one: int = 0
++	var max_step: float = 0.0
++	var prev: float = 0.0
++	var standing_at_end: float = 0.0
++	var after: float = 0.0
++	for k in range(rise + hold + fall + 120):
++		au.step(S, false, [])
++		peak = maxf(peak, au.burst[0])
++		if au.burst[0] >= 0.999:
++			at_one += 1
++		max_step = maxf(max_step, absf(au.burst[0] - prev))
++		prev = au.burst[0]
++		standing_at_end = au.level[0]
++		after = au.burst[0]
++	_check(peak >= 0.999 and at_one >= hold - 1, "a burst rises to full and holds for %d ticks (held %d)" % [hold, at_one])
++	_check(after == 0.0 and standing_at_end > 0.9 and au.bursts_made == 1, "then it is gone although the fighter is still charging (the flat standing aura's level is still %.2f): one burst, not a standing glow (%d made)" % [standing_at_end, au.bursts_made])
++	_check(max_step < 0.2, "it never jumps: the largest step in a tick is %.3f" % max_step)
++	# a new start before the gap makes no burst; after it, one
++	f.state = "free"
++	for k in range(10):
++		au.step(S, false, [])
++	f.state = "charging"
++	for k in range(5):
++		au.step(S, false, [])
++	_check(au.bursts_made == 1, "a new start soon after the last burst makes none (the gap is %d ticks)" % gap)
++	f.state = "free"
++	for k in range(gap):
++		au.step(S, false, [])
++	f.state = "charging"
++	for k in range(5):
++		au.step(S, false, [])
++	_check(au.bursts_made == 2 and au.burst[0] > 0.0, "a start after the gap makes the next")
++
++
++func _aura3d() -> void:
++	print("the 3D auras")
++	var jd = JSON.parse_string(FileAccess.get_file_as_string("res://data/vfx/aura3d.json"))
++	var same: bool = jd is Dictionary and jd.get("common") is Dictionary and jd.get("themes") is Dictionary
++	if same:
++		for k in VfxAura3D.DEFAULTS["common"].keys():
++			if not _same_value(jd["common"].get(k), VfxAura3D.DEFAULTS["common"][k]):
++				same = false
++				print("    differs: common ", k)
++		for th in VfxAura3D.DEFAULTS["themes"].keys():
++			for k in VfxAura3D.DEFAULTS["themes"][th].keys():
++				if not _same_value(jd["themes"].get(th, {}).get(k), VfxAura3D.DEFAULTS["themes"][th][k]):
++					same = false
++					print("    differs: ", th, " ", k)
++	_check(same, "data/vfx/aura3d.json and the built-in defaults agree")
++	# The inversion: the Protagonist's boil and the Anti-hero's facets differ in motion, polarity, rhythm, size and edge, each the other's opposite.
++	var pb: Dictionary = VfxAura3D.theme_block("protagonist")
++	var rb: Dictionary = VfxAura3D.theme_block("rival")
++	var inv: Array = [
++		float(pb["theme"]) == 0.0 and float(rb["theme"]) == 1.0,                                              # round bubbles (bright rings on a clear skin) against facets (bright cells between dark seams)
++		float(pb["pulse_dir"]) > 0.0 and float(rb["pulse_dir"]) < 0.0,                                        # swells outward / draws inward
++		float(pb["flow"][1]) > 0.0 and float(rb["flow"][1]) < 0.0,                                            # the skin drifts up / settles down
++		float(pb["scale"]) > 1.0 and float(rb["scale"]) < 1.0,                                                # spent outward / held in tight
++		float(pb["cell_rate"]) > 2.0 * float(rb["cell_rate"]),                                                # a restless boil / a lattice that hardly moves
++		float(pb["rim_k"]) < float(rb["rim_k"]),                                                              # a soft rim / a crisp one
++		float(pb["disp"]) > 2.0 * float(rb["disp"]),                                                          # undulating / smooth crystal
++		float(pb["froth"][3]) > 0.5 and float(rb["froth"][3]) == 0.0,                                         # froth grows with the tier / no froth
++	]
++	var inv_n: int = 0
++	for b in inv:
++		if bool(b):
++			inv_n += 1
++	_check(inv_n == inv.size(), "the Protagonist's and the Anti-hero's auras are inversions on all %d axes (shape, pulse direction, drift, size, restlessness, rim, undulation, froth), not recolours" % inv.size())
++	# Rates: under 2 Hz in both forms, the calm form slower. The alpha cap.
++	var rates_ok: bool = true
++	var worst_hz: float = 0.0
++	for id in ["protagonist", "rival", "default"]:
++		var rn: float = VfxAura3D.max_rate_hz(id, false)
++		var rc: float = VfxAura3D.max_rate_hz(id, true)
++		worst_hz = maxf(worst_hz, rn)
++		if rn > float(VfxAura3D.common("max_hz")) or rc > rn + 1e-9:
++			rates_ok = false
++	_check(rates_ok and float(VfxAura3D.common("max_hz")) <= 2.0 and float(VfxAura3D.common("alpha_max")) <= 0.5, "every rate is at most %.2f Hz (the cap is 2), the calm form is slower, and the drawn alpha is capped at %.2f" % [worst_hz, float(VfxAura3D.common("alpha_max"))])
++	# Colours: the lane colour with a lighter tint and a dark shade; never white, gold or red.
++	var col_ok: bool = true
++	var worst_share: float = 0.0
++	for hex in ["#8fd6ff", "#9a80d8", "#3fa7d6", "#b07fd0", "#ff4020", "#ffd040", "#ffffff"]:
++		var lane: Color = VfxAura.lane_color(hex)
++		for c in [lane, VfxAura3D.tint(lane), VfxAura3D.shade(lane)]:
++			var lc: Color = c.srgb_to_linear()
++			var sh: float = c.r / maxf(c.r + c.g + c.b, 1e-6)
++			var lsh: float = lc.r / maxf(lc.r + lc.g + lc.b, 1e-6)
++			worst_share = maxf(worst_share, maxf(sh, lsh))
++			if VfxFlashRegistry.is_red(c) or sh >= 0.8 or lsh >= 0.8:
++				col_ok = false
++		var t: Color = VfxAura3D.tint(lane)
++		if t.s < 0.29 or t.v > 0.94:
++			col_ok = false            # a near-white tint
++		if VfxAura3D.shade(lane).v > lane.v * 0.34:
++			col_ok = false
++	_check(col_ok and worst_share < 0.8, "the lane colour's tint and shade are never white or red for the two lane colours, a fire colour and white as inputs (largest red share %.2f)" % worst_share)
++	# Params: pure, the tier grows the shell, the Protagonist's shell is the larger, the calm form is slower and stiller.
++	var lane_p: Color = VfxAura.lane_color("#8fd6ff")
++	var p1: Dictionary = VfxAura3D.params("protagonist", 1, 1.0, false, 3.0, lane_p, 0.0)
++	var p1b: Dictionary = VfxAura3D.params("protagonist", 1, 1.0, false, 3.0, lane_p, 0.0)
++	var p4: Dictionary = VfxAura3D.params("protagonist", 4, 1.0, false, 3.0, lane_p, 0.0)
++	var r4: Dictionary = VfxAura3D.params("rival", 4, 1.0, false, 3.0, lane_p, 0.0)
++	var c4: Dictionary = VfxAura3D.params("protagonist", 4, 1.0, true, 3.0, lane_p, 0.0)
++	_check(str(p1) == str(p1b) and is_equal_approx(float(p4["hull_bh"]), float(p1["hull_bh"])) and float(p4["hull_bh"]) > float(r4["hull_bh"]), "the aura band is a pure function of its inputs, stands off the body by the same small distance at every tier (%.3f of his height: it does not grow into a silhouette with the tier), and the Protagonist's stands a little further off than the Anti-hero's (%.3f against %.3f)" % [float(p4["hull_bh"]), float(p4["hull_bh"]), float(r4["hull_bh"])])
++	_check(float(c4["calm"]) == 1.0 and float(c4["pulse_amp"]) < float(p4["pulse_amp"]) and float(c4["pulse_hz"]) < float(p4["pulse_hz"]) and float(c4["cell_rate"]) < float(p4["cell_rate"]) and float(c4["band"]) < float(p4["band"]), "the calm form pulses smaller and slower, the froth turns slower, the band is fainter, and nothing pops")
++	_check(float(VfxAura3D.params("protagonist", 9, 1.0, false, 0.0, lane_p, 0.0)["tier"]) == 4.0 and float(VfxAura3D.params("protagonist", 0, 1.0, false, 0.0, lane_p, 0.0)["tier"]) == 1.0 and VfxAura3D.theme_block("nobody")["theme"] == VfxAura3D.theme_block("default")["theme"], "a tier outside 1 to 4 is clamped and an unknown fighter takes the default theme")
++	# Inert until the switch: off by default, and turning it on switches the old standing aura off (one aura, not two); the standing aura's eased level still runs.
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 4)
++	var h := VfxHub.new()
++	h.reset(S, 4)
++	var off_default: bool = not h.aura3d_enabled and not h.aura3d_demo
++	var standing_before: bool = h.standing_aura_enabled
++	h.set_aura3d(true)
++	var on_ok: bool = h.aura3d_enabled and not h.standing_aura_enabled
++	h.set_aura3d(false)
++	_check(off_default and on_ok and h.standing_aura_enabled == standing_before, "the 3D auras are off by default; turning them on turns the flat standing aura off and turning them off puts it back")
++	h.set_aura3d(true)
++	S.fighters[0].tier = 2.0
++	S.fighters[0].state = "charging"
++	for k in range(20):
++		_tick(S, h, [])
++	_check(h.aura.level[0] > 0.5, "with the 3D auras on the standing aura's ease still runs while a fighter charges (level %.2f)" % h.aura.level[0])
++	var mh: ShaderMaterial = VfxAura3D.hull_material(S.fighters[0])
++	_check(mh == VfxAura3D.hull_material(S.fighters[0]) and mh != VfxAura3D.hull_material(S.fighters[1]) and float(mh.get_shader_parameter("level")) == 0.0, "each fighter has his own hull material, the same one every time, drawing nothing until the aura is up")
++	var v := VfxAura3DView.new()
++	root.add_child(v)
++	h.aura3d_demo = true
++	v.update(h, _aura_host_stub(S), 0.0, 0.0, 400.0)
++	_check(float(mh.get_shader_parameter("level")) > 0.99 and v.shown == 2, "in the showcase both hulls are up at full level (shown %d)" % v.shown)
++	h.set_aura3d(false)
++	v.update(h, _aura_host_stub(S), 0.0, 0.0, 400.0)
++	_check(float(mh.get_shader_parameter("level")) == 0.0 and v.shown == 0, "with the switch off the hull is down again")
++	var other := SimCore.createSim()
++	SimCore.newMatch(other, 5)
++	var kept: ShaderMaterial = VfxAura3D.hull_material(S.fighters[0])
++	VfxAura3D.hull_material(other.fighters[0])
++	VfxAura3D.prune(S.fighters)
++	_check(VfxAura3D.hull_material(S.fighters[0]) == kept and VfxAura3D._hulls.size() == 1 + (1 if VfxAura3D._hulls.has(S.fighters[1].get_instance_id()) else 0), "a new match prunes the hulls of fighters that are gone (%d kept)" % VfxAura3D._hulls.size())
++	_check(kept.render_priority < 0, "the hull is drawn before the water (priority %d), so a submerged fighter's band takes the water's tint like his body" % kept.render_priority)
++	VfxAura3D.clear_hulls()
++	v.free()
++	_aura_burst()
+ 
+ 
+ ## The catastrophe light class (docs/vfx/catastrophe-plan.md section 1; Legal c01 to c05): the gap, the floors, the calm form, the ash, one answer per event, no red, and a hammer of random asks.
+diff --git a/render/vfx/trail_view.gd b/render/vfx/trail_view.gd
+index 9f36db2..fe4cedc 100644
+--- a/render/vfx/trail_view.gd
++++ b/render/vfx/trail_view.gd
+@@ -15,6 +15,7 @@ var mark_count: int = 0   # ... and marks
+ var shots_view := VfxShotsView.new()   # the energy blasts (shots_view.gd): a child, updated with this view, so it needs nothing of the layer
+ var dust_view := VfxDustView.new()   # the tremor's dust curtains (dust_view.gd), a child like the shots view
+ var cloud_view := VfxCloudView.new()   # the blast cloud (cloud_view.gd), a child like the dust view
++var aura3d_view := VfxAura3DView.new()   # Orb's 3D auras (aura3d_view.gd), a child like the dust view
+ var scar_view := VfxScarView.new()   # the scar a beam leaves in the air (scar_view.gd), a child like the dust view
+ var cam_dist: float = 3000.0   # the pane camera's distance to the fighter plane (set by the layer), for the perspective scale at depth
+ 
+@@ -43,6 +44,8 @@ func _ready() -> void:
+ 	add_child(dust_view)
+ 	cloud_view.name = "Cloud"
+ 	add_child(cloud_view)
++	aura3d_view.name = "Aura3D"
++	add_child(aura3d_view)
+ 	scar_view.name = "Scar"
+ 	add_child(scar_view)
+ 
+@@ -59,6 +62,9 @@ func update(hub: VfxHub, host: SimHost, a: float, cam_x: float, zoom: float, hal
+ 	cloud_view.visible = hub.catastrophe_enabled
+ 	if hub.catastrophe_enabled:
+ 		cloud_view.update(hub, host, cam_x)
++	aura3d_view.visible = hub.aura3d_enabled
++	if hub.aura3d_enabled:
++		aura3d_view.update(hub, host, a, cam_x, half_w)
+ 	shots_view.visible = hub.shots_enabled or hub.beamplay_enabled or hub.glare_enabled or hub.press_enabled
+ 	if hub.shots_enabled or hub.beamplay_enabled or hub.glare_enabled or hub.press_enabled:
+ 		shots_view.update(hub, host, a, cam_x, zoom, half_w)
+diff --git a/render/vfx/vfx_hub.gd b/render/vfx/vfx_hub.gd
+index debdc4d..99f0407 100644
+--- a/render/vfx/vfx_hub.gd
++++ b/render/vfx/vfx_hub.gd
+@@ -52,6 +52,8 @@ var water_enabled: bool = VfxLook.WATER_DEFAULT      # dramatic water: skip spra
+ var transform_enabled: bool = VfxLook.TRANSFORM_DEFAULT   # the transformation: gather, break ring, aura swap, settle
+ var xform := VfxTransform.new()
+ var standing_aura_enabled: bool = VfxLook.STANDING_AURA_DEFAULT   # the aura while charging or attacking (needs transform_enabled)
++var aura3d_enabled: bool = false                    # Orb's 3D auras (aura3d.gd, aura3d_view.gd): a shell per fighter with his own inverted theme. Off: nothing changes. Use set_aura3d()
++var aura3d_demo: bool = false                       # the showcase and the capture: the shells at full level whatever the fighters are doing
+ var aura := VfxAura.new()
+ var react_enabled: bool = VfxLook.REACT_DEFAULT      # from tier 3 the world answers: rubble, standing cracks, windows blowing out (docs/vfx/react-plan.md)
+ var flicker_enabled: bool = VfxLook.FLICKER_DEFAULT  # the aura flickers when the fighter is worn
+@@ -139,6 +141,7 @@ const AUTO_HOLD_S: float = 20.0
+ 
+ 
+ func reset(S: SimState, p_seed: int) -> void:
++	VfxAura3D.prune(S.fighters)       # the 3D aura's per-fighter hull materials of an earlier match
+ 	seed = p_seed & 0xFFFFFFFF
+ 	ticks = 0
+ 	_rng_trail = SimRng.new(SimRng.deriveSeed(seed, "vfx.trail"))
+@@ -224,6 +227,12 @@ func note_frame(delta: float) -> void:
+ 
+ 
+ ## One tick's fx events, in order, plus the state after the tick.
++## Turn the 3D auras on or off. On, the old standing aura (transform_view.gd's, a flat outline) is switched off so there is one aura, not two; off puts it back as the look file has it.
++func set_aura3d(on: bool) -> void:
++	aura3d_enabled = on
++	standing_aura_enabled = (not on) and VfxLook.STANDING_AURA_DEFAULT
++
++
+ func consume(S: SimState, events: Array) -> void:
+ 	if not enabled:
+ 		return
+@@ -305,7 +314,7 @@ func _consume(S: SimState, events: Array) -> void:
+ 				if not f.flash_ok:
+ 					gate = 0.0
+ 		VfxTransform.flash_scale = gate
+-	if transform_enabled and standing_aura_enabled:
++	if transform_enabled and (standing_aura_enabled or aura3d_enabled):
+ 		aura.step(S, frozen, xform.forms)
+ 	for e in events:
+ 		if e.type == "land" or e.type == "bounce" or e.type == "journey_end":
+@@ -329,7 +338,7 @@ func _consume(S: SimState, events: Array) -> void:
+ 	debris.now = fx_now(S)
+ 	earth.entrance_now = false
+ 	earth.biomefx = biomefx if biomefx_enabled else null
+-	if transform_enabled and standing_aura_enabled:
++	if transform_enabled and (standing_aura_enabled or aura3d_enabled):
+ 		aura.step_mark(frozen)
+ 		for e in events:
+ 			if e.type == "last_stand_ready":
+diff --git a/tools/schemas/map.json b/tools/schemas/map.json
+index 79a0a9d..1fdbaf2 100644
+--- a/tools/schemas/map.json
++++ b/tools/schemas/map.json
+@@ -563,6 +563,10 @@
+       "match": "data/vfx/catastrophe.json",
+       "schema": "vfx-catastrophe.schema.json"
+     },
++    {
++      "match": "data/vfx/aura3d.json",
++      "schema": "vfx-aura3d.schema.json"
++    },
+     {
+       "match": "data/narrative/combat_barks.json",
+       "schema": "narrative-barks.schema.json"
+diff --git a/tools/schemas/vfx-aura.schema.json b/tools/schemas/vfx-aura.schema.json
+index 3301da7..cd3c326 100644
+--- a/tools/schemas/vfx-aura.schema.json
++++ b/tools/schemas/vfx-aura.schema.json
+@@ -57,6 +57,26 @@
+           "minimum": 1,
+           "maximum": 4,
+           "description": "The lowest power tier that shows it."
++        },
++        "burst_rise": {
++          "type": "integer",
++          "minimum": 1,
++          "description": "The 3D aura's transient envelope (Legal fx06): ticks to rise."
++        },
++        "burst_hold": {
++          "type": "integer",
++          "minimum": 0,
++          "maximum": 180,
++          "description": "Ticks it is held at full strength: at most three seconds."
++        },
++        "burst_fall": {
++          "type": "integer",
++          "minimum": 1
++        },
++        "burst_gap": {
++          "type": "integer",
++          "minimum": 60,
++          "description": "Ticks after a burst ends before the next may start (at least a second): never a constant standing glow."
+         }
+       },
+       "additionalProperties": false,
+diff --git a/tools/schemas/vfx-aura3d.schema.json b/tools/schemas/vfx-aura3d.schema.json
+new file mode 100644
+index 0000000..4818e71
 --- /dev/null
 +++ b/tools/schemas/vfx-aura3d.schema.json
 @@ -0,0 +1,165 @@
