@@ -1,3 +1,3 @@
-The takeover's divider (docs/camera/pending/director-16-takeover-divider.patch): left the divider sweeping at one speed, right eased in step with the panes; the real web build, Reduce flashing on, every tick, frames from Tools' launcher (session camera-whip).
+The takeover's divider (docs/camera/director.md section 11, on main in e2cbcc49): left the divider sweeping at one speed, right eased in step with the panes; the real web build, Reduce flashing on, every tick, frames from Tools' launcher (session camera-whip).
 - ai 7 at ticks 302-334 (a transformation takes the screen from the split), then ai 4 at ticks 1855-1874 (a pane gives the screen back). The divider now starts and lands gently, with the fighters' framing that already eased, instead of crossing at one speed.
 - A small change by design: about half a second, a few pixels' difference at the ends of the move.

@@ -468,14 +468,14 @@ So an eased `sep` only reshaped a curve that already started and landed at rest.
 
 What does move the divider at one speed is the expansion `e` (a pane taking the screen for a shot, or giving it back) and the slam's door. Those are the follow-ups below.
 
-**The takeover's divider, eased (2026-10-23, follow-up 1; parked: docs/camera/pending/director-16-takeover-divider.patch, after the half-plane patch).** When a pane takes the screen for a shot from the split, or gives it back (the expansion `e`), the divider's centre moved by `e` times the half extent: one speed from the first tick to the last. Meanwhile the panes' anchors moved by `smoothstep(e)` (`_anchor`), so line and framing were out of step mid-sweep. The divider now sweeps by `smoothstep(e)` too, in step with the anchors. The slam's door keeps its own shape (follow-up 2).
+**The takeover's divider, eased (2026-10-23, follow-up 1; on main in e2cbcc49).** When a pane takes the screen for a shot from the split, or gives it back (the expansion `e`), the divider's centre moved by `e` times the half extent: one speed from the first tick to the last. Meanwhile the panes' anchors moved by `smoothstep(e)` (`_anchor`), so line and framing were out of step mid-sweep. The divider now sweeps by `smoothstep(e)` too, in step with the anchors. The slam's door keeps its own shape (follow-up 2).
 - In play the sweep happens a few times a match: ai 4 at ticks 1866, 2218 and 2537; ai 7 at 309 (a transformation) and 1904; signaturecity at 484.
 - The cameras do not change: the digests' camera hashes, STATS, SIZE, LAUNCHED and the mass probe are identical to main's in six scenes.
 - New split_sweep row, `takeover divider eased`: a transformation takes the screen from the split and gives it back. First step 10 px a tick, largest 36, against the linear 24 every tick.
 
 Before/after: docs/camera/img/takeover-divider/takeover-divider-before-after.gif. Gates: as director-17's. The flash collapse clip reads the same as main's in both modes.
 
-**The slam's door as a crisp whip (2026-10-23, follow-up 2; parked: docs/camera/pending/director-17-slam-whip.patch, after director-16).** The door is the rusher's pane taking the screen as he closes on the other fighter. It took 0.14 s (8 frames) with the takeover as p cubed: a slow start and all its speed at the stop. Its last frame moved the divider 202 px (at 1024 wide), the largest single step the split makes. It is now Research's crisp whip:
+**The slam's door as a crisp whip (2026-10-23, follow-up 2; on main in e2cbcc49).** The door is the rusher's pane taking the screen as he closes on the other fighter. It took 0.14 s (8 frames) with the takeover as p cubed: a slow start and all its speed at the stop. Its last frame moved the divider 202 px (at 1024 wide), the largest single step the split makes. It is now Research's crisp whip:
 - 12 frames (`SLAM_TIME` 0.2), the takeover and the separation by smootherstep (a hard ease at both ends), landing on the contact.
 - No blur, no feather beyond the compositor's own.
 - The reason it is a whip and not a cut: the rusher crosses a gap a move would only smear, on the action (the contact). Reduced motion keeps its near-cut (`SLAM_TIME_REDUCED`).
@@ -495,7 +495,7 @@ The whip's longer sweep counts one more change at the lower area threshold in no
 
 Before/after: docs/camera/img/slam-whip/slam-whip-before-after.gif.
 
-**The rally's camera (2026-10-25; parked: docs/camera/pending/rally/, the design and director-18-rally-framing.patch, after director-17).** Game Design's rulings 23d and Combat's rally kits. The design, the cue contract asked of Encounter, the numbers and the proof are in docs/camera/pending/rally/README.md. In short:
+**The rally's camera (2026-10-25; on main; the design is docs/camera/rally-framing.md).** Game Design's rulings 23d and Combat's rally kits. The design, the cue contract asked of Encounter, the numbers and the proof are in docs/camera/pending/rally/README.md. In short:
 - the sell pushed in and held through the sold blows, with an eased punch on each;
 - the launch shot persisting from link to link, taking in the chaser when both fit at 43 px or more;
 - the anchor on a critically damped spring for the overtake and the spike;

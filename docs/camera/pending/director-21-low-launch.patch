@@ -1,0 +1,89 @@
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -366,6 +366,7 @@
+ const HIT_PUSH: float = 0.06           # zoom push on the first building hit; later links push less
+ const HIT_PUSH_LATER: float = 0.03
+ const LOW_AIR_DEAD: float = 112.0       # a launched body this near the ground (1.5 body heights) is not followed up; 0 turns it off
++const LOW_GROUND_TAU: float = 0.25      # SplitRig.launch_ground_ease: the ground height a low chase frames on is eased with this time constant
+ const LAST_STAND_DUR: float = 0.7        # the last stand's cut-in on the fighter at the brink (one view), in seconds
+ const BOUNCE_PUSH: float = 0.03        # a ground bounce: a small impact push on the pane that has him ...
+ const BOUNCE_HOLD: float = 0.05        # ... held this long
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -151,6 +151,12 @@
+ var _lg_f: Array = [0.0, 0.0, 0.0, 0.0]  # the box as the camera follows it: centre x (from _lg_mid), width, centre y, height (eased, so the merged camera's velocity lead sees a motion and not a step)
+ var _nopin_until: Array = [-1.0e9, -1.0e9]   # a lunge or a charge by this fighter is not a one-way rush: no cut ahead
+ var _lead: Array = [0.0, 0.0]   # the lead room a chased launch gets: world units the focus is ahead of him, signed
++var launch_ground_ease: bool = true   # a low chase frames on the ground under him eased (LOW_GROUND_TAU), not on each dune it crosses
++var launch_low_gov: bool = true       # the scroll governor on a launched body while he is low over the ground (the near ground streams past), floor LAUNCH_FLOOR
++var _gnd_e: Array = [NAN, NAN]   # the eased ground height under each pane's launched body (NAN: none yet)
++var _rally_live: bool = false   # a rally is live by Encounter's cues (rally_link to rally_end, or RALLY_GAP after the landing), whatever rally_framing says
++var _rally_live_t: float = -1.0e9
++var _low_w: Array = [1.0, 1.0]   # this tick's weight of the body's own height in the low chase (0 on the ground, 1 above LOW_AIR_DEAD x 1.5)
+ var _rush_pin_t: Array = [-1.0e9, -1.0e9]   # the last time each pane was pinned (the tests give the arrival a moment)    # the pane is pinned on a rush's arrival point until the rush ends
+ var last_stand_shots: int = 0              # last-stand shots started (counted for the tests)
+ var intro_cuts: int = 0                  # the intro's hard cuts (counted for the tests)
+@@ -428,6 +434,8 @@
+ 	_rally_on = false
+ 	_rally_body = -1
+ 	_rally_last_t = -1.0e9
++	_rally_live = false
++	_rally_live_t = -1.0e9
+ 	_rally_kind = ""
+ 	_rally_r_hold = -1.0
+ 	_la_v = Vector2.ZERO
+@@ -1250,6 +1258,11 @@
+ 				_rally_turn(S, int(_ef(ev, "target", -1)))
+ 			elif mk == "rally_end":
+ 				_rally_on = false
++			if mk == "rally_link":
++				_rally_live = true
++				_rally_live_t = time
++			elif mk == "rally_end":
++				_rally_live = false
+ 			elif mk == "cam_intent" and intent_feed:
+ 				_read_intent(S, ev)
+ 			if mk == "lunge_light" or mk == "lunge_heavy" or mk == "charge_light" or mk == "charge_heavy" or mk == "zip_light" or mk == "zip_heavy":
+@@ -1638,6 +1651,10 @@
+ 				elif solo_kind == "":
+ 					_begin_solo("launch", i, 2, 0.0, S)
+ 	_launch_evt = [false, false]
++	if _rally_live and (S.fighters[0].state == "launched" or S.fighters[1].state == "launched"):
++		_rally_live_t = time
++	elif _rally_live and time - _rally_live_t > CamParams.RALLY_GAP:
++		_rally_live = false
+ 	if _rally_on and (S.fighters[0].state == "launched" or S.fighters[1].state == "launched"):
+ 		_rally_last_t = time
+ 	elif _rally_on and time - _rally_last_t > CamParams.RALLY_GAP:
+@@ -2911,7 +2928,7 @@
+ 		var gv: float = _scroll_gov(maxf(maxf(float(_vsm[i]), _gov_armed()), _body_speed(f)), z * pz)
+ 		_gov_bind[i] = gv < 0.999
+ 		z = maxf(z * gv, minf(z, zfl))
+-	elif f.state == "launched" and not reduced_motion and launch_governor:
++	elif f.state == "launched" and not reduced_motion and (launch_governor or (launch_low_gov and not _rally_live and float(_low_w[i]) < 1.0)):
+ 		# A launched body is followed at his size, but the scenery behind a launch at 6,000 units a second crosses a pane at
+ 		# 0.06 of the width a tick, and a cliff face against sunlit sand swept 23,000 pixels twice in 14 ticks at ai seed
+ 		# 4 (Tools: 3 flashes, the pair 6 and 5% over the area threshold). The same governor as any pursuit (the scenery no
+@@ -3471,6 +3488,9 @@
+ 		# (the chase otherwise follows each rise and the bounce nearly vanishes: 5 to 20 px for 1 to 2 body heights).
+ 		var fy_ref: float = f.y + CamParams.CHEST
+ 		var lead_w: float = 1.0
++		if f.state != "launched":
++			_gnd_e[i] = NAN
++			_low_w[i] = 1.0
+ 		if solo_kind == "intro" and _in_phase == "fall" and solo_slot == i and not reduced_motion:
+ 			# The camera falls a little slower than he does, so he drops through the frame (INTRO_FALL_DROP units from the
+ 			# top at the start to the anchor at the touchdown) and the ground comes up: pinned on him, the sky shows no fall.
+@@ -3481,6 +3501,12 @@
+ 		elif f.state == "launched" and not stiff and CamParams.LOW_AIR_DEAD > 0.0:
+ 			var gnd: float = WorldTerrain.groundY(S, f.x)
+ 			lead_w = smoothstep(CamParams.LOW_AIR_DEAD * 0.5, CamParams.LOW_AIR_DEAD * 1.5, f.y - gnd)
++			_low_w[i] = lead_w
++			if launch_ground_ease and not _rally_live:
++				var ge: float = float(_gnd_e[i])
++				ge = gnd if is_nan(ge) else ge + (gnd - ge) * (1.0 - exp(-DT / CamParams.LOW_GROUND_TAU))
++				_gnd_e[i] = ge
++				gnd = minf(ge, f.y)   # never framed on ground above him
+ 			fy_ref = lerpf(gnd + CamParams.CHEST, f.y + CamParams.CHEST, lead_w)
+ 		if int(_rush_wait[i]) > 0 and not _rush_pin[i]:
+ 			freeze = true   # a rush's pane waits RUSH_COMMIT_TICKS before its cut ahead: still, not following him (the whip of a pane chasing 18,000 units a second was 63 more rush jolts in the sweep)

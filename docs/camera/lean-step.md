@@ -1,8 +1,8 @@
-# director-20: a leaner SplitRig.step (parked)
+# A leaner SplitRig.step (director-20, on main in d235af1c)
 
 Camera, 2026-10-27, from the EP's phone frame-time brief. Rendering's gen 2 coast profile put `split_rig.step` at 1.1 ms a tick at x4. The goal is to cut it with the camera's output unchanged.
 
-`director-20-lean-step.patch` applies to 3d0c0860 (render/camera/split_rig.gd and split_frame.gd only). Everything sits behind one switch, `SplitRig.lean_step` (default true). False is the old path, kept for timing on one build.
+It touches render/camera/split_rig.gd and split_frame.gd only. Everything sits behind one switch, `SplitRig.lean_step` (default true). False is the old path, kept for timing on one build.
 
 ## What it skips
 
@@ -20,7 +20,7 @@ Camera, 2026-10-27, from the EP's phone frame-time brief. Rendering's gen 2 coas
   - the pane cameras in one view, about 6.
 
   That is roughly 12% of step in a fight. On a gen 2 planet, with more buildings, the scan is a larger share.
-- **Web timings:** Rendering's prof-hook (dr_split_rig_step) on the pb coast scene, lean on and off on one build at x1 and x4. They are queued for a quiet machine; when they ran, they are in the report.
+- **Web timings:** none valid. The four runs (Rendering's prof-hook, pb coast scene, lean on and off at x1 and x4) were on a saturated machine and marked invalid, and the bench did not record whether the switch took.
 
 ## What it does not touch
 

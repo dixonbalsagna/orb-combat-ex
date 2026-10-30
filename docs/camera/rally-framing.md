@@ -1,14 +1,14 @@
-# The rally's camera (parked)
+# The rally's camera (on main, behind Encounter's rally.enabled)
 
-Camera, 2026-10-25. **The frame is Game Design's** rulings 23d (`docs/design/rulings-2026-10-23d.md`): a daze, the sell, a rally of links that bounce the body around the planet, and the turn. **Combat's kits** (`docs/combat/pending/rally/`) give each fighter's own links. Encounter is building the rally behind `rally.enabled`. This is the camera's part: built, parked, and inert until Encounter's cues come.
+Camera, 2026-10-25. **The frame is Game Design's** rulings 23d (`docs/design/rulings-2026-10-23d.md`): a daze, the sell, a rally of links that bounce the body around the planet, and the turn. **Combat's kits** (`docs/combat/pending/rally/`) give each fighter's own links. Encounter is building the rally behind `rally.enabled`. This is the camera's part: inert until Encounter's cues come.
 
 **Orb's rules that bind every move here:**
 - Every camera move is eased. A cut needs a cinematography reason, written in director.md §11.
 - Nothing is drawn over the fighters: no fades, dissolves, blur or markers (ADR 0010).
 
-The patch, `director-18-rally-framing.patch`, applies after director-17 (on bf34d1d4 with the half-plane patch, 16 and 17). The numbers are its data: `CamParams.SELL_*` and `CamParams.RALLY_*`.
+The numbers are its data: `CamParams.SELL_*` and `CamParams.RALLY_*`.
 
-## 1. What the camera reads (Encounter's cues: please confirm or rename)
+## 1. What the camera reads (Encounter's cues)
 
 All four are `cue` events, Encounter's channel:
 
@@ -25,7 +25,7 @@ Without the cues nothing changes. The camera digests of six scenes are byte-iden
 - `sell` has text `medium` and amount 1. Only mediums are sold, so the camera's heavy weight is unused.
 - `rally_link` has text `send` at n 0 (the opening, or the turn's send), otherwise the base kind. Source carries the own link.
 - `rally_tech` (Encounter's own) is not read by the camera.
-- The base kinds are `chase`, `overtake`, `spike`, `bank`, `energy_lob`, `energy_beam`, `energy_grab` and `world`. A grab in flight is `energy_grab`, which the size hold also reads (item 19, landed with rally-tune). Combat's own grabs, when built, should report that base kind too.
+- The base kinds are `chase`, `overtake`, `spike`, `bank`, `energy_lob`, `energy_beam`, `energy_grab` and `world`. A grab in flight is `energy_grab`, which the size hold also reads (landed with rally-tune). Combat's own grabs, when built, should report that base kind too.
 
 ## 2. The shots, beat by beat
 
@@ -58,9 +58,4 @@ New split_sweep rows:
 
 Also run: the 18 headless render checks, determinism plain and --intro, and the digests (identical: the cues don't exist yet).
 
-**No GIF yet:** there is no rally in the sim to capture. When Encounter's rally runs behind `rally.enabled`, the clips are a daze, the sell and a four-link rally with a turn (23d's prototype clip).
-
-## 4. Asks
-
-- **Encounter:** emit the four cues in §1, or tell Camera its names. Give `rally_link` the base kind in `text`, so grabs hold the size.
-- **Animation:** the sell's larger reactions are yours. The camera's push is sized to sit under them, not to replace them.
+**The GIF:** `docs/camera/img/rally/rally-full-beat.gif`.

@@ -33,7 +33,10 @@ The reduced mode is calmer on the same camera only because its calm ground has n
 
 The dissolve and the feathering do nothing in the ordinary mode (the changes are the camera's travel, not its cuts or its divider). The one lever that moves all four is the budget: it limits what a pane's picture does in a tick, including the punch's zoom (the budget counts half the zoom's change), so the punch keeps its shape but is eased where it spends the most pixels, and the chase's 0.2 a tick becomes a bounded sweep with a cut after TRAVEL_WAIT where it cannot keep up. At 0.045 the four read 2.5 on the primary; at 0.035 they also read under 3 on the area-15% reading, which the combined rule asks.
 
-## 3. The change (parked: docs/camera/pending/travel-ordinary.patch, applies to c3f305b2)
+## 3. The change (dead, 2026-10-30: never landed; the patch is in git at 39c5f404, docs/camera/pending/travel-ordinary.patch)
+
+It is dead because it held the ordinary mode's chase to a budget and cut when the budget lost the fighter. Orb's later calls rule that out: the launched body chased at fight size with the background carrying the speed (2026-10-19), and cuts only with a cinematography reason (2026-10-22). The numbers below are kept as a record.
+
 
 Three small things, all in the ordinary mode only (the reduced mode's camera is identical tick for tick, checked by digest over ai 36, 9, 1019, 1022, collapse, rushcity and signature):
 
