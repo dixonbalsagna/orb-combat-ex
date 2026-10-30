@@ -244,6 +244,166 @@
       "patternProperties": {
         "^_": true
       }
+    },
+    "fill": {
+      "type": "object",
+      "description": "A filling hole (water v2, `water_fill`): the front's foam lip and spray, the rim and bore bursts, a seep's bubbles.",
+      "properties": {
+        "lip_every": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "lip_streaks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "lip_foam_min": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000
+        },
+        "lip_foam_max": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000
+        },
+        "start_streaks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "rim_streaks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "rim_foams": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "rim_reach": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000
+        },
+        "bore_streaks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "bore_foams": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "seep_foams": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "max_fronts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "wave": {
+      "type": "object",
+      "description": "The ring wave of a slam into standing water (`water_wave`): a pulse of spray and foam a step, a bigger burst at a crater's rim.",
+      "properties": {
+        "streaks_per_pulse": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "foam_per_pulse": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "rim_streaks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "rim_foams": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "max_waves": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "douse": {
+      "type": "object",
+      "description": "Thin steam where a fill reaches scorched ground (`water_douse`).",
+      "properties": {
+        "puffs_max": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "per_columns": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000
+        },
+        "size_min": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000
+        },
+        "size_max": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000
+        },
+        "grow": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000
+        },
+        "life_min": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000
+        },
+        "life_max": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000
+        },
+        "rise_min": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000
+        },
+        "rise_max": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
     }
   },
   "additionalProperties": false,

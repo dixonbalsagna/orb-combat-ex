@@ -190,6 +190,7 @@ func _run() -> void:
 		f.x += minf(float(k) * 12.0, 130.0 * VfxLook.BH * SimConst.DT)
 		t.step(S, f, SimConst.DT, rng, VfxLook.Q_HIGH, false)
 	_check(t.rings == 1, "one break ring on reaching full speed (%d)" % t.rings)
+	_water_v2()
 	_water(S)
 	_transform(S)
 	_aura()
@@ -249,6 +250,102 @@ func _run() -> void:
 
 
 ## Water effects (docs/vfx/water-plan.md): skip, plunge, beam strike and wake, their scaling, their budgets and the data fallback.
+## Water v2 (World's fill cues): the fronts' foam lips and spray, the rim and bore bursts, the ring wave, the douse's steam.
+func _water_v2() -> void:
+	print("water v2: fills, waves and douse")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var x0: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var A = S.fighters[1]
+	var rec = WorldCrater.dig(S, x0 + 400.0, 14.0, A, "impact", 0.3, 1.0)
+	S.out.fx.clear()
+	_check(rec != null, "a crater to fill was dug")
+	var fill := func(x: float, spd: float, r: float, dur: float): return VfxMock.ev("water_fill", {"x": x, "y": 0.0, "n": 40, "r": r, "spd": spd, "k": 9.0, "amount": 60.0, "dur": dur, "cause": "sea", "z": 0.0})
+	var mk := func(reduced: bool) -> VfxHub:
+		var h := VfxHub.new()
+		h.reset(S, 6)
+		h.px_per_unit = 0.3
+		h.reduced_motion = reduced
+		return h
+	var hf: VfxHub = mk.call(false)
+	_tick(S, hf, [fill.call(x0, 300.0, 900.0, 3.0)])
+	_check(hf.water.fronts.size() == 1 and hf.water.fills == 1, "a fill with a front speed opens a running front")
+	for k in range(60):
+		_tick(S, hf, [])
+	_check(hf.water.lips >= 40 and hf.debris._spray_alive > 0, "the front throws a foam lip and spray at each end as it runs (%d lips, %d streaks alive)" % [hf.water.lips, hf.debris._spray_alive])
+	for k in range(120):
+		_tick(S, hf, [])
+	_check(hf.water.rim_bursts >= 1, "pouring over a crater's rim is a burst, once (%d)" % hf.water.rim_bursts)
+	var rims1: int = hf.water.rim_bursts
+	for k in range(60):
+		_tick(S, hf, [])
+	_check(hf.water.fronts.is_empty() and hf.water.rim_bursts == rims1, "the front ends at its extent or its duration, and a rim bursts only once (%d)" % hf.water.rim_bursts)
+	# two fronts toward each other meet in a bore splash
+	var hb: VfxHub = mk.call(false)
+	_tick(S, hb, [fill.call(SimWrap.wrap(x0 - 600.0), 300.0, 1200.0, 4.0), fill.call(SimWrap.wrap(x0 + 600.0), 300.0, 1200.0, 4.0)])
+	for k in range(200):
+		_tick(S, hb, [])
+	_check(hb.water.bores == 1, "two fronts that meet make one bore splash (%d)" % hb.water.bores)
+	# a table seep is all at once: a few bubbles, no front
+	var hs: VfxHub = mk.call(false)
+	_tick(S, hs, [fill.call(x0, 0.0, 300.0, 2.0)])
+	_check(hs.water.fronts.is_empty() and hs.water.seeps == 1 and hs.debris.bits.size() >= 1, "a table seep (front speed 0) is a few bubbles of foam and no front (%d bits)" % hs.debris.bits.size())
+	# the ring wave: n pulses over its duration, a bigger burst at a rim
+	var wave := func(x: float): return VfxMock.ev("water_wave", {"x": x, "y": 0.0, "n": 6, "r": 600.0, "spd": 1000.0, "amount": 75.0, "dur": 1.2, "z": 0.0})
+	var hw: VfxHub = mk.call(false)
+	_tick(S, hw, [wave.call(SimWrap.wrap(x0 + 200.0))])
+	for k in range(100):
+		_tick(S, hw, [])
+	_check(hw.water.pulses == 6 and hw.water.waves.is_empty(), "the wave sends its six pulses and is done (%d)" % hw.water.pulses)
+	_check(hw.water.rim_bursts >= 1, "the wave's crossing of the crater's rim is a burst (%d)" % hw.water.rim_bursts)
+	# douse: thin steam, a few small puffs, never a bank
+	var douse := func(n: int): return VfxMock.ev("water_douse", {"x": x0, "w": 300.0, "n": n, "z": 0.0})
+	var hd: VfxHub = mk.call(false)
+	_tick(S, hd, [douse.call(40)])
+	var steam: int = hd.debris.bits.filter(func(b): return b.kind == VfxDebris.PUFF).size()
+	_check(hd.water.steam_puffs >= 1 and hd.water.steam_puffs <= int(VfxWater.p("douse", "puffs_max")) and steam <= 5, "a douse is a few small pale puffs of steam, never a bank (%d)" % hd.water.steam_puffs)
+	# reduced motion, the pool's caps, hold, determinism
+	var hr: VfxHub = mk.call(true)
+	_tick(S, hr, [fill.call(x0, 300.0, 900.0, 3.0)])
+	for k in range(60):
+		_tick(S, hr, [])
+	_check(hr.debris._spray_alive < hf.debris._spray_alive or hr.water.lips <= hf.water.lips, "reduced motion throws fewer")
+	var hl := VfxHub.new()
+	hl.reset(S, 6)
+	hl.px_per_unit = 0.3
+	var evs: Array = []
+	for k in range(4):
+		evs.append(fill.call(SimWrap.wrap(x0 + float(k) * 300.0), 400.0, 1500.0, 4.0))
+		evs.append(wave.call(SimWrap.wrap(x0 + float(k) * 300.0)))
+	_tick(S, hl, evs)
+	for k in range(240):
+		_tick(S, hl, [])
+	_check(hl.water.fronts.size() <= int(VfxWater.p("fill", "max_fronts")) and hl.debris._spray_alive <= int(VfxWater.p("caps", "spray_alive")) and hl.debris.bits.size() <= VfxLook.DEBRIS_CAP, "a flood of cues stays inside the fronts' cap, the spray cap and the pool (%d fronts, %d streaks, %d bits)" % [hl.water.fronts.size(), hl.debris._spray_alive, hl.debris.bits.size()])
+	var hh: VfxHub = mk.call(false)
+	_tick(S, hh, [fill.call(x0, 300.0, 900.0, 3.0)])
+	var age0: float = hh.water.fronts[0].age
+	for k in range(30):
+		var tk := SimState.FxEvent.new()
+		tk.type = "tick"
+		tk.dt = SimConst.DT
+		tk.frozen = true
+		S.T += SimConst.DT
+		S.tick += 1
+		hh.consume(S, [tk])
+	_check(hh.water.fronts.size() == 1 and is_equal_approx(hh.water.fronts[0].age, age0), "a held sim (hit-stop, a pause) holds the front")
+	var h1: VfxHub = mk.call(false)
+	var h2: VfxHub = mk.call(false)
+	for h in [h1, h2]:
+		_tick(S, h, [fill.call(x0, 300.0, 900.0, 3.0)])
+		for k in range(90):
+			_tick(S, h, [])
+	var same: bool = h1.debris.bits.size() == h2.debris.bits.size() and h1.debris.bits.size() > 0
+	if same:
+		for i in range(h1.debris.bits.size()):
+			same = same and h1.debris.bits[i].x == h2.debris.bits[i].x and h1.debris.bits[i].y == h2.debris.bits[i].y
+	_check(same, "the same cues give the same bits")
+
+
 func _water(S: SimState) -> void:
 	print("water")
 	var sx: float = 0.0

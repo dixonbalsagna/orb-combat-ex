@@ -490,8 +490,25 @@ func _consume(S: SimState, events: Array) -> void:
 						debris.z_shift = float(_g(e, "z", 0.0))
 						_on_beam_splash(S, float(e.x))
 						debris.z_shift = 0.0
+				"water_fill":
+					if water_enabled:
+						debris.z_shift = float(_g(e, "z", 0.0))
+						water.on_fill(S, float(e.x), float(e.y), float(e.r), float(e.spd), float(e.dur), float(_g(e, "z", 0.0)))
+						debris.z_shift = 0.0
+				"water_wave":
+					if water_enabled:
+						debris.z_shift = float(_g(e, "z", 0.0))
+						water.on_wave(S, float(e.x), float(e.y), float(e.r), int(e.n), float(e.dur), float(_g(e, "z", 0.0)))
+						debris.z_shift = 0.0
+				"water_douse":
+					if water_enabled:
+						debris.z_shift = float(_g(e, "z", 0.0))
+						water.on_douse(S, float(e.x), float(e.w), int(e.n), float(_g(e, "z", 0.0)))
+						debris.z_shift = 0.0
 		if water_enabled and not frozen:
 			water.wake(S)
+		if water_enabled and not frozen:
+			water.step_fills(S)
 		# Bits fly on sim time: a tenth of a step in hit-stop, like the reference consumer's particles.
 		debris.step(S, dt * 0.1 if frozen else dt)
 	if frozen:

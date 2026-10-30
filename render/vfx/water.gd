@@ -13,11 +13,52 @@ const DEFAULTS: Dictionary = {
 	"beam": {"throw_chance": 0.3, "throws_per_tick": 4, "streaks_per_throw": 4, "power_gain": 0.35, "puff_every": 2, "forward_deg_min": 20.0, "forward_deg_max": 60.0},
 	"wake": {"min_speed": 2200.0, "max_height": 160.0, "streaks_per_tick": 2, "puff_every": 4},
 	"caps": {"spray_alive": 260, "per_tick": 60},
+	"fill": {"lip_every": 2, "lip_streaks": 2, "lip_foam_min": 50.0, "lip_foam_max": 110.0, "start_streaks": 4, "rim_streaks": 8, "rim_foams": 3, "rim_reach": 70.0, "bore_streaks": 12, "bore_foams": 4, "seep_foams": 4, "max_fronts": 4},
+	"wave": {"streaks_per_pulse": 3, "foam_per_pulse": 1, "rim_streaks": 10, "rim_foams": 3, "max_waves": 3},
+	"douse": {"puffs_max": 5, "per_columns": 4, "size_min": 36.0, "size_max": 64.0, "grow": 1.8, "life_min": 1.3, "life_max": 2.0, "rise_min": 40.0, "rise_max": 90.0},
 }
 
 static var _data: Dictionary = {}
 static var _loaded: bool = false
 
+class Front:
+	var id: int = 0
+	var x0: float = 0.0
+	var y: float = 0.0
+	var r: float = 0.0
+	var spd: float = 0.0
+	var age: float = 0.0           # seconds since the cue
+	var dur: float = 1.0
+	var z: float = 0.0
+	var rims: Dictionary = {}      # crater rims the front has crossed (rounded x)
+	var ends: Array = [0.0, 0.0]   # the front's two ends now (wrapped x)
+	var bored: Dictionary = {}     # fronts it has met
+
+
+class Wave:
+	var x: float = 0.0
+	var y: float = 0.0
+	var r: float = 600.0
+	var n: int = 6
+	var dur: float = 1.0
+	var age: float = 0.0
+	var z: float = 0.0
+	var done: int = 0              # pulses sent
+	var rims: Dictionary = {}
+
+
+var fronts: Array = []           # the fills that are running (water_fill with a front speed)
+var waves: Array = []            # the ring waves that are running (water_wave)
+var fills: int = 0               # counters for the tests
+var seeps: int = 0
+var lips: int = 0
+var rim_bursts: int = 0
+var bores: int = 0
+var wave_events: int = 0
+var pulses: int = 0
+var douses: int = 0
+var steam_puffs: int = 0
+var _front_id: int = 0
 var debris: VfxDebris
 var skims: int = 0               # counters for the tests
 var plunges: int = 0
@@ -60,6 +101,18 @@ func reset() -> void:
 	_beam_tick = -1
 	_beam_n = 0
 	_beam_throws = 0
+	fronts.clear()
+	waves.clear()
+	fills = 0
+	seeps = 0
+	lips = 0
+	rim_bursts = 0
+	bores = 0
+	wave_events = 0
+	pulses = 0
+	douses = 0
+	steam_puffs = 0
+	_front_id = 0
 
 
 ## Called once per tick before the events: the spawn budget starts again.
@@ -225,6 +278,206 @@ func wake(S: SimState) -> void:
 			var kp2: float = debris._rd.next()
 			if kp2 < q:
 				_foam(f.x, surf + 10.0, back * debris._rd.range_(100.0, 400.0), debris._rd.range_(200.0, 600.0), debris._rd.range_(90.0, 200.0) * (0.5 + 0.5 * s), debris._rd.range_(0.8, 1.3))
+
+
+# ------------------------------------------------------------------------------------------------------------ water v2: fills, waves, douse
+
+## The sim's `water_fill` (World's water v2: a hole the fight dug fills with water from the sea, a lake or the water table): x the front's start, y the target surface, r the half extent, spd the front's
+## speed in units a second (0: a table seep, all at once), dur the seconds it runs. The fronts are drawn as they run (`step_fills`): a foam lip and spray at each end of the filling water, a burst where it
+## pours over a crater's rim, a bore splash where two fronts meet. A seep is a few bubbles of foam along the window. Faceted spray and foam in Art's water colours: no haze, no blur.
+func on_fill(S: SimState, x: float, y: float, r: float, spd: float, dur: float, z: float = 0.0) -> void:
+	fills += 1
+	var q: float = _q()
+	var rd: SimRng = debris._rd
+	if spd <= 0.0:
+		seeps += 1
+		var n: int = int(round(p("fill", "seep_foams") * q))
+		for i in range(maxi(n, 1)):
+			var px: float = SimWrap.wrap(x + rd.range_(-r, r))
+			_foam(px, WorldTerrain.groundY(S, px) + 8.0, rd.range_(-20.0, 20.0), rd.range_(40.0, 120.0), rd.range_(40.0, 80.0), rd.range_(0.9, 1.4))
+		return
+	while fronts.size() >= int(p("fill", "max_fronts")):
+		fronts.pop_front()
+	var f := Front.new()
+	_front_id += 1
+	f.id = _front_id
+	f.x0 = x
+	f.y = y
+	f.r = maxf(r, 1.0)
+	f.spd = spd
+	f.dur = maxf(dur, 0.1)
+	f.z = z
+	f.ends = [x, x]
+	fronts.append(f)
+	var gy: float = WorldTerrain.groundY(S, x) + 6.0
+	for i in range(int(round(p("fill", "start_streaks") * q))):
+		_streak(x, gy, rd.range_(-120.0, 120.0), rd.range_(260.0, 560.0), rd.range_(30.0, 70.0), rd.range_(0.5, 1.0), gy)
+
+
+## Once per unfrozen tick: move the running fronts, throw their lips, find the rims they cross and the fronts that meet.
+func step_fills(S: SimState) -> void:
+	var dt: float = SimConst.DT
+	var every: int = maxi(int(p("fill", "lip_every")), 1)
+	var i: int = 0
+	while i < fronts.size():
+		var f: Front = fronts[i]
+		f.age += dt
+		var ext: float = minf(f.spd * f.age, f.r)
+		var tick_i: int = int(round(f.age / dt))
+		for side in [-1.0, 1.0]:
+			var xf: float = SimWrap.wrap(f.x0 + side * ext)
+			f.ends[0 if side < 0.0 else 1] = xf
+			if ext < f.r and tick_i % every == 0:
+				_lip(S, xf, side)
+			_rims(S, f, xf, side)
+		_bores(S, f)
+		if f.age >= f.dur or ext >= f.r:
+			fronts.remove_at(i)
+		else:
+			i += 1
+	_step_waves(S, dt)
+
+
+func _lip(S: SimState, xf: float, side: float) -> void:
+	lips += 1
+	var q: float = _q()
+	var rd: SimRng = debris._rd
+	var y: float = WorldTerrain.groundY(S, xf) + 6.0
+	for k in range(int(p("fill", "lip_streaks"))):
+		var kp: float = rd.next()
+		var vx: float = side * rd.range_(60.0, 200.0)
+		var vy: float = rd.range_(220.0, 520.0)
+		var ln: float = rd.range_(30.0, 70.0)
+		var lf: float = rd.range_(0.5, 1.0)
+		if kp < q:
+			_streak(xf, y, vx, vy, ln, lf, y)
+	var kp2: float = rd.next()
+	var fx: float = side * rd.range_(30.0, 120.0)
+	var fy: float = rd.range_(40.0, 120.0)
+	var fs: float = rd.range_(p("fill", "lip_foam_min"), p("fill", "lip_foam_max"))
+	var fl: float = rd.range_(0.8, 1.4)
+	if kp2 < q:
+		_foam(xf, y + 6.0, fx, fy, fs, fl)
+
+
+## Where a front crosses the rim of a crater: the water pours over it, a burst of spray and foam, once a rim.
+func _rims(S: SimState, f: Front, xf: float, side: float) -> void:
+	var reach: float = p("fill", "rim_reach")
+	for c in S.craters:
+		if absf(SimWrap.sdx(f.x0, c.x)) > f.r + float(c.r) + 200.0:
+			continue
+		for rs in [-1.0, 1.0]:
+			var rx: float = SimWrap.wrap(c.x + rs * float(c.r))
+			var key: int = int(round(rx))
+			if f.rims.has(key) or absf(SimWrap.sdx(xf, rx)) > reach:
+				continue
+			f.rims[key] = true
+			rim_bursts += 1
+			_burst(S, rx, side, int(p("fill", "rim_streaks")), int(p("fill", "rim_foams")))
+
+
+## Where two fronts meet (one from each side of a basin): a bore splash, once for the pair.
+func _bores(S: SimState, f: Front) -> void:
+	if f.age < 0.2:
+		return
+	for o in fronts:
+		if o.id <= f.id or f.bored.has(o.id):
+			continue
+		for a in range(2):
+			for b in range(2):
+				if absf(SimWrap.sdx(f.ends[a], o.ends[b])) < 60.0:
+					f.bored[o.id] = true
+					bores += 1
+					_burst(S, SimWrap.wrap(f.ends[a] + SimWrap.sdx(f.ends[a], o.ends[b]) * 0.5), 0.0, int(p("fill", "bore_streaks")), int(p("fill", "bore_foams")))
+					return
+
+
+## A burst of spray thrown up (and a little the way the water was going) and foam rising from the ground at x.
+func _burst(S: SimState, x: float, way: float, streaks: int, foams: int) -> void:
+	var q: float = _q()
+	var rd: SimRng = debris._rd
+	var y: float = WorldTerrain.groundY(S, x) + 8.0
+	for k in range(streaks):
+		var kp: float = rd.next()
+		var a: float = deg_to_rad(rd.range_(55.0, 125.0))
+		var sp: float = rd.range_(500.0, 1100.0)
+		var ln: float = rd.range_(50.0, 120.0)
+		var lf: float = rd.range_(0.7, 1.3)
+		if kp < q:
+			_streak(x + rd.range_(-30.0, 30.0), y, cos(a) * sp + way * 120.0, sin(a) * sp, ln, lf, y)
+	for k in range(foams):
+		var kp2: float = rd.next()
+		var fx: float = rd.range_(-120.0, 120.0) + way * 80.0
+		var fy: float = rd.range_(200.0, 520.0)
+		var fs: float = rd.range_(100.0, 220.0)
+		var fl: float = rd.range_(0.9, 1.5)
+		if kp2 < q:
+			_foam(x + rd.range_(-40.0, 40.0), y + 10.0, fx, fy, fs, fl)
+
+
+## The sim's `water_wave` (a slam into standing water at least 40 deep): a ring wave of radius r over dur seconds in n steps. A pulse of spray and foam at each step at both ends of the wave, a bigger
+## burst where it passes a crater's rim.
+func on_wave(S: SimState, x: float, y: float, r: float, n: int, dur: float, z: float = 0.0) -> void:
+	wave_events += 1
+	while waves.size() >= int(p("wave", "max_waves")):
+		waves.pop_front()
+	var w := Wave.new()
+	w.x = x
+	w.y = y
+	w.r = maxf(r, 1.0)
+	w.n = maxi(n, 1)
+	w.dur = maxf(dur, 0.1)
+	w.z = z
+	waves.append(w)
+	debris._ring(x, y + 20.0, RenderLook.Z_BEAMS + 6.0, 40.0, 600.0, 0.4)
+
+
+func _step_waves(S: SimState, dt: float) -> void:
+	var i: int = 0
+	while i < waves.size():
+		var w: Wave = waves[i]
+		w.age += dt
+		var want: int = mini(int(floor(w.age / w.dur * float(w.n))) + 1, w.n)
+		while w.done < want:
+			w.done += 1
+			pulses += 1
+			var rad: float = w.r * float(w.done) / float(w.n)
+			for side in [-1.0, 1.0]:
+				var xp: float = SimWrap.wrap(w.x + side * rad)
+				_burst(S, xp, side, int(p("wave", "streaks_per_pulse")), int(p("wave", "foam_per_pulse")))
+				for c in S.craters:
+					if absf(SimWrap.sdx(w.x, c.x)) > w.r + float(c.r):
+						continue
+					for rs in [-1.0, 1.0]:
+						var rx: float = SimWrap.wrap(c.x + rs * float(c.r))
+						var key: int = int(round(rx))
+						if w.rims.has(key) or absf(SimWrap.sdx(xp, rx)) > w.r / float(w.n):
+							continue
+						w.rims[key] = true
+						rim_bursts += 1
+						_burst(S, rx, side, int(p("wave", "rim_streaks")), int(p("wave", "rim_foams")))
+		if w.age >= w.dur:
+			waves.remove_at(i)
+		else:
+			i += 1
+
+
+## The sim's `water_douse` (a fill reached a scorched line): thin steam along the doused ground, a few small pale faceted puffs rising and spreading, never a bank: it must not hide a tell.
+func on_douse(S: SimState, x: float, w: float, n: int, z: float = 0.0) -> void:
+	douses += 1
+	var q: float = _q()
+	var cnt: int = clampi(int(ceil(float(n) / maxf(p("douse", "per_columns"), 1.0))), 1, int(p("douse", "puffs_max")))
+	var rd: SimRng = debris._rd
+	for k in range(cnt):
+		var px: float = SimWrap.wrap(x + rd.range_(-w, w))
+		var s0: float = rd.range_(p("douse", "size_min"), p("douse", "size_max"))
+		var lf: float = rd.range_(p("douse", "life_min"), p("douse", "life_max"))
+		var vy: float = rd.range_(p("douse", "rise_min"), p("douse", "rise_max"))
+		var keep: float = rd.next()
+		if keep >= q:
+			continue
+		steam_puffs += 1
+		debris.dust_puff("ocean", px, WorldTerrain.groundY(S, px) + 8.0, 0.0, rd.range_(-14.0, 14.0), vy, s0, s0 * p("douse", "grow"), lf, 0, Color("#cdd6d8"))
 
 
 # ------------------------------------------------------------------------------------------------------------ pieces
