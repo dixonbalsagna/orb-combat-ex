@@ -77,3 +77,30 @@ Everything here is a download, so none was started:
 ## 6. Files
 
 `tools/wasm/usage-scan.mjs` (the class-usage scan: nothing downloaded; it needs the engine's own `--dump-extension-api`). Scratch measurements: the compile probes (`WebAssembly.compile` at three throttles through `tools/machine/browser.mjs`; Node's V8 with one compile thread) are in my scratch folder and are easy to re-run; the figures above are theirs.
+
+## 7. The build, step by step, on a local machine (Tools, 2026-10-27, reworded 2026-10-30)
+
+Orb said yes to the downloads (2026-10-27, through the EP: the Godot 4.7.2-stable source and emsdk with its toolchain; SCons from PyPI too, the EP's call on Orb's delegation). This is the recipe for building the template by hand on a PC, for example to try a module trim before the workflow does. The shipped template (`web-template-4.7.2-lazy-1`) was not built this way: `.github/workflows/web-template.yml` built it on a GitHub runner from the same source and flags, with the lazy-specialization patch and no trims, and `tools/web-template.json` pins the result (flags, source hash, Emscripten, patch hash, zip and wasm SHA-512). A hand build is only ever used by publishing it and pinning the published zip. The steps were read from the source and the fetch, verify and install parts were done in a scratch folder (never committed). A local build is a long run: start it at below-normal priority on a quiet machine, one scons job at a time, with no other long run beside it.
+
+**1. The engine source** (47.7 MB), from the official release page, checksum checked:
+- `https://github.com/godotengine/godot/releases/download/4.7.2-stable/godot-4.7.2-stable.tar.xz` and `.../SHA512-SUMS.txt` (the same release's sums file; it also lists the two hashes `.github/actions/setup-godot` pins for the editor zip and the templates, which is how the sums file itself was checked).
+- SHA-512 of the tarball: `15e23f8423003f5d32da07c34a8651e43af23b050cc0dea2d4fba6944ca445d079edb52b66fdf82b6d5739bba1fe707b9e27b8836b19f09f64f313966160f8fc` (`sha512sum -c` said OK). Unpack with `tar -xf` into a SHORT path (Windows: deep paths break emscripten and SCons).
+
+**2. Emscripten 4.0.11.** The engine's own CI pins it (`EM_VERSION: 4.0.11` in `.github/workflows/web_builds.yml`); `platform/web/detect.py` only requires 4.0.0 or newer. (The standard 4.7.2 template that the game ships today reports `Emscripten 4.0.20, single-threaded, no GDExtension support` in the browser console: the custom build uses the engine CI's version, so the toolchain is not what differs.)
+- `git clone https://github.com/emscripten-core/emsdk.git`, then `git checkout 4.0.11` (commit `d49219d03a41cd12f95a33ba84273c20d41fd350`, "Release 4.0.11").
+- `python emsdk.py install 4.0.11` (Linux: `./emsdk install 4.0.11`), then `python emsdk.py activate 4.0.11` and `source ./emsdk_env.sh` (Windows: `emsdk_env.bat`). It fetches, from the official Emscripten storage (`storage.googleapis.com/webassembly/emscripten-releases-builds/`), the LLVM and Binaryen build for releases tag `7033fec38817ec01909b044ea0193ddd5057255c` (`wasm-binaries.zip`, 622 MB on Windows) and Node from nodejs.org; on Windows it also takes its own Python 3.13.3 (30 MB, same storage), which is a usable interpreter for SCons.
+- Check with `emcc -v` (it must say 4.0.11).
+
+**3. SCons 4.4 or newer** (`EnsureSConsVersion(4, 4)` in the SConstruct; Python 3.9 or newer): `pip install scons` (PyPI; the workflow pins the version). The system Python on the project PC is 3.14.7, which has not been tried with SCons: the emsdk Python 3.13.3 is the fallback.
+
+**4. Step 1, the plain build, no module removed** (from the unpacked source folder, with emsdk activated):
+```
+scons platform=web target=template_release threads=no arch=wasm32 dlink_enabled=no optimize=size production=yes lto=none debug_symbols=no
+```
+- `threads=no`, `arch=wasm32`, `dlink_enabled=no` match the export preset (`thread_support=false`, no GDExtension). `optimize=size` is one of the SConstruct's enum values (`auto none custom debug speed speed_trace size size_extra`). `production=yes` sets the production defaults; its `lto=auto` is overridden by the explicit `lto=none` (full LTO makes the link very slow; a later step may try `lto=thin` or `full`). No closure compiler (`use_closure_compiler=no`, the default: it would be one more npm download).
+- Add `-j 8` (or the machine's cores minus a few); one scons job at a time. About 30 to 60 minutes on 16 cores and 8 to 10 GB of disk (the estimate of section 5, still unmeasured).
+- The result is `bin/godot.web.template_release.wasm32.nothreads.zip`; the template's name for the export preset is `web_nothreads_release.zip` (rename it), pointed at by `custom_template/release` in a SCRATCH copy of `export_presets.cfg` only; nothing binary is committed (section 5: a manual workflow publishes the zip with a pinned SHA-512).
+
+**5. Step 2, Rendering's change** (an engine change in a scene pass's default specializations: compile only when drawn; see `docs/rendering/boot.md`, "Where the rest of the compile goes", and its tools in `docs/rendering/tools/`). Rendering writes the shader-side part, Tools applies and builds it. **Step 3**, module trims one at a time (the table of section 4), each with the frame bench.
+
+**6. Proof before the demo uses a template** (the list the EP set): parity, determinism, the 19 render gates, the web parity check (same sim bits as the standard template), the side-by-side against the standard template, both collapse modes, the frame bench, and the freeze probe at x1 and x4. A template build never runs on the same machine as a long QA run, and below normal priority.
