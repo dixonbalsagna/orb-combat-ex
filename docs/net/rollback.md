@@ -1,6 +1,6 @@
 # Rollback netcode: the core
 
-Owner: Netcode and Online. 2026-10-28, cloud briefs `docs/ep/cloud-briefs/netcode-rollback.md` (sections 1 to 6), `netcode-desync-spectate.md` (sections 7 to 9), `netcode-transport.md` (section 11), `netcode-ai-depth.md` (section 12) and, 2026-10-29, `netcode-ai-takeover.md` (section 13). Code: `net/`. The session runs over a transport interface: simulated links in one process (the loopback), or ENet between two processes. WebRTC for the browser is designed, not built (section 11).
+Owner: Netcode and Online. 2026-10-28, cloud briefs `docs/ep/cloud-briefs/netcode-rollback.md` (sections 1 to 6), `netcode-desync-spectate.md` (sections 7 to 9), `netcode-transport.md` (section 11), `netcode-ai-depth.md` (section 12) and, 2026-10-29, `netcode-ai-takeover.md` (section 13); the EP's brief of 2026-10-30 (the AI's timers in the digest, the level in the match key). Code: `net/`. The session runs over a transport interface: simulated links in one process (the loopback), or ENet between two processes. WebRTC for the browser is designed, not built (section 11).
 
 ## 1. The model
 
@@ -28,7 +28,7 @@ The existing determinism rules (`docs/architecture/determinism.md`) stay in forc
 5. **No Callables, Nodes or Resources in the state.** A copy would share them.
 6. **New fields need nothing from netcode.** The snapshot copies every script variable of every class it meets. The typed copier is generated from the classes' property lists at run time (section 3), so a field the sim adds is copied with no change in `net/`.
 7. **Inputs are canonical.** A peer steps with `SimIntent.unpack(packed)`, as the replay recorder does, so the bits a peer runs on are the bits it sends.
-8. **The data match.** Both peers must run the same data: `SimReplay.dataHash(setup)` belongs in the handshake, and a mismatch refuses the match.
+8. **The data match.** Both peers must run the same data: `SimReplay.dataHash(setup)` is part of the handshake's match key, and a mismatch refuses the match.
 9. **A past snapshot read in place sees its own records.** A confirmed state is often a snapshot's root, read after the live state has moved on (a hash, a digest, a field walk, a desync report). The building and tree records are shared, and a later copy-on-write can replace a record's generation fields (the calm turn renumbers districts). Anything that reads a past root must read those fields through the root's own `S.bG` and `S.tG`. `NetDesync.digest` and the field walk do. `SimHash.stateHash` does not yet (section 13; the parked patch fixes it).
 10. **A takeover is a toggle before an agreed tick** (section 13). It never touches the state outside `SimCore.toggleAI`, and every run of that tick makes it.
 
@@ -116,6 +116,7 @@ Setups (`--setup=`): `default`, `features`, `planet` (gen 1), `calm` (the calm t
 Section 13 adds these options:
 - `--takeover=T` and `--drop=F`: a slot handed to the AI, or a peer that vanishes;
 - `--turn-at=N` and `--calm-director`: a calm turn crossed under rollback;
+- `--ai-level=easy|medium|hard`: the computer's level in the match setup, as the start menu puts it;
 - `--walk-at=B`: a field walk of the confirmed state at tick B, a diagnosis tool.
 
 ## 7. Desync detection and reports
@@ -123,7 +124,7 @@ Section 13 adds these options:
 Code: `net/desync.gd` (`NetDesync`) and the checkpoint half of `net/session.gd`. Still no transport: the checkpoints ride in the loopback's input packets.
 
 - **What is hashed, and when.** Every `checkEvery` ticks (60, one second; 0 turns it off) each peer takes a digest of the state before that tick, `NetDesync.digest(S)`, and a snapshot of it. A re-run of the tick by a rollback replaces both, so what is kept is always the last run. Once the tick is confirmed, the digest is final and goes into every packet with the three before it (`chkOut`), so a lost packet costs nothing.
-- **The cheap digest.** `SimHash.stateHash` costs about 25 ms. The digest is MD5 (the engine's `HashingContext`, which the web build has too) over one `PackedFloat64Array` of the fields a divergence reaches first, plus the terrain's packed arrays read as blocks. Those fields are the clock, the RNG, every fighter's hashed fields, the director's counters, the mood and the pause, each building's and tree's damage, and the shots. It costs about 0.8 ms, against 24 to 35 ms for `stateHash` (about 30 times cheaper), plus a pooled snapshot take (1.6 ms) once a second. That is under 0.05 ms a tick on average. A divergence in a field outside the digest is caught once it reaches one inside, which in this sim is a tick or two later: most state feeds the fighters or the RNG. It is not a security hash and does not need to be, since a peer that lies can lie about anything.
+- **The cheap digest.** `SimHash.stateHash` costs about 25 ms. The digest is MD5 (the engine's `HashingContext`, which the web build has too) over one `PackedFloat64Array` of the fields a divergence reaches first, plus the terrain's packed arrays read as blocks. Those fields are the clock, the RNG, every fighter's hashed fields and the AI's timers, the director's counters, the mood and the pause, each building's and tree's damage, and the shots. It costs about 0.8 ms, against 24 to 35 ms for `stateHash` (about 30 times cheaper), plus a pooled snapshot take (1.6 ms) once a second. That is under 0.05 ms a tick on average. A divergence in a field outside the digest is caught once it reaches one inside, which in this sim is a tick or two later: most state feeds the fighters or the RNG. It is not a security hash and does not need to be, since a peer that lies can lie about anything.
 - **On a mismatch.** The first confirmed checkpoint whose digests differ sets `NetSession.desync` (and calls `onDesync`) on both peers. Each peer keeps:
   - the tick, both digests and the last agreed checkpoint;
   - the replay of its confirmed inputs up to that tick (`NetDesync.replayOf`, SimReplay format v4, with the data hash);
@@ -138,6 +139,7 @@ Code: `net/desync.gd` (`NetDesync`) and the checkpoint half of `net/session.gd`.
 **The check** (`net/tools/desync_check.gd`) runs as a game would (not in verify mode):
 - **Clean runs, every profile.** It passes only if no desync is raised, every confirmed checkpoint equals the straight run's digest, and the peers agreed on all of them.
 - **Injected divergence.** Peer 1's state is changed after every run of one tick that is not a checkpoint (tick 307 of 900). The injections are one RNG bit, one ulp of a fighter's x, 1 hp off a building, 0.001 on a terrain column, the mood's casualty count, and 1e-6 on the director's cool-down. Every one must be reported by both peers at the next checkpoint (360), with 300 as the last agreed checkpoint. The two digests must cross, and the field walk must find the difference against the other peer and against the divergent peer's own replay, and find none on the clean peer's replay. An injection the sim erases before the checkpoint counts as healed, not missed. That happened to the 1-ulp x on seed 2, where the sim overwrote x before the checkpoint: the divergent peer's full `SimHash` at the checkpoint equals the straight run's. Each injection must still be detected in at least one run.
+- **The AI's timers (`--ai-timers`).** P2 is the sim's own AI, and each of its five timers (`t`, `atk`, `sT`, `sOff`, `st`) is changed on the tick before a checkpoint, so nothing else can differ yet. Both peers must report the desync at that checkpoint, and the field walk must name the timer. With `--negative-control` the digest leaves the timers out (`NetDesync.aiBlind`, the digest as it was until 2026-10-30), and every injection must be missed there. Without the timers, the four 1e-6 changes were never reported in the rest of the 600-tick run, and the stance change only at the next checkpoint. So a difference in a timer does not always reach the fields the digest read within a tick or two.
 - **Negative control (`--negative-control`).** A blind detector, which exchanges digests and never compares them, must miss the injections. A stale detector, which keeps a checkpoint's first run (a guess) instead of its last, must raise a false alarm on a clean run that re-ran a checkpoint. Both breaks must be caught.
 
 `rollback_check.gd` now also fails if detection fires on any of its sessions, because `checkEvery` is on at its default there.
@@ -235,7 +237,7 @@ NetTransport          send(now, packet) / receive(now) / isOpen() / close(), unr
 - **The handshake** (`NetHandshake`, on any transport):
   1. **Ping.** Each peer sends `{hs: ping, ts}` every frame until it has 16 round trips, or 3 s have passed. The other side answers each ping at once, during the match too. Only pings sent after the other peer was first heard from count. In a first version, pings that waited for the other process to start set the delay to 8 on a LAN.
   2. **Propose.** Each peer proposes `NetDelay.choose(its round trips, its own device)`.
-  3. **Hello.** Each peer sends `{hs: hello, v, match, delay, got}` every frame. `v` is the protocol version and `match` is the match key (seed, AI flags and setup), and a mismatch in either fails the handshake. The delay is the larger of the two proposals. A peer that has finished answers any hello still marked `got = false`, so a lost last hello costs a frame.
+  3. **Hello.** Each peer sends `{hs: hello, v, match, delay, got}` every frame. `v` is the protocol version and `match` is the match key (seed, AI flags, setup and `SimReplay.dataHash(setup)`), and a mismatch in either fails the handshake. Make the key after `newMatch`, because a setup with no level runs at the one the process last held (section 13). The delay is the larger of the two proposals. A peer that has finished answers any hello still marked `got = false`, so a lost last hello costs a frame.
 
   Packets from a peer that has started playing are dropped until this one has started too. Everything in them comes again.
 - **Ping during play.** Each game packet carries `ts`, `echo` (the newest `ts` received) and `age` (how long it was held). The round trip is now − echo − age, on the sender's own clock, so the two clocks never have to agree. `NetHost.rttMs()` is the median of the last 64 samples. Time sync uses it now, and a mid-match delay change could use it later.
@@ -303,7 +305,7 @@ Code: `NetSession.takeover`, `proposeTakeover`, `dropSlot` and `_switch` (`net/s
 - **What changes at T.** On every run of tick T, the first and every re-run, `_switch` calls `SimCore.toggleAI(S, slot)`. It does so after the save and the checkpoint, so the state before tick T is the same in every run and in a straight run that toggles before tick T. From T on, the slot's input is neutral and confirmed. Its peer stops sending it, and inputs it sent anyway for ticks from T on are dropped. A restore to a save before T takes the AI back off with the rest of the state, and the re-run switches it on again.
 - **Who proposes.** Either the slot's own peer, when the player leaves cleanly or hands the pad to the computer, or the other peer, when its host learns that the player left. Both are tested.
 - **Replays and spectators.** A desync report's replay (`NetDesync.replayOf`) writes the takeover as a `toggles` entry, the format `SimReplay.play` already reads. The spectator relay forwards the takeovers with the confirmed inputs. The spectator switches the slot before tick T, and the relay knows of the takeover before it confirms T.
-- **The protocol version** is now 2 (`NetHandshake.PROTO`), because a game packet may carry the new field. A packet without takeovers is byte for byte what it was.
+- **The protocol version** went to 2 (`NetHandshake.PROTO`) because a game packet may carry the new field. A packet without takeovers is byte for byte what it was. It is 3 since 2026-10-30, because the digest reads the AI's timers and the match key holds the data hash: a peer on an older build would raise false desyncs, so it is refused at the handshake.
 
 ### A peer that is gone
 
@@ -317,7 +319,7 @@ Code: `NetSession.takeover`, `proposeTakeover`, `dropSlot` and `_switch` (`net/s
 
 `rollback_check.gd --takeover=T`: the proposer's player calls `proposeTakeover` when its frame is T - delay, so the takeover lands at T.
 - **Bots.** The straight run is independent of the network: the bots' inputs, the slot toggled before tick T, and its inputs neutral from T. Every confirmed tick of both peers must equal it by full SimHash, feed and fx. Bot mode runs each profile twice, once with the slot's own peer proposing and once with the other peer.
-- **AI modes.** With `--ai` and `--ai=sim`, the straight run replays the confirmed inputs with the toggle. Every confirmed tick for 60 ticks after T is compared by full SimHash, because SimHash holds the AI's timers and the desync digest does not.
+- **AI modes.** With `--ai` and `--ai=sim`, the straight run replays the confirmed inputs with the toggle. Every confirmed tick is compared by the desync digest, which holds the AI's timers. Every confirmed tick for 60 ticks after T is also compared by full SimHash, which holds more than the digest does.
 - **`--drop=F`.** Peer 1 vanishes at frame F, and peer 0 drops the slot after 30 frames with no packet. Peer 0's confirmed ticks must equal the straight replay of its own confirmed inputs, with the toggle at its drop tick.
 
 Results (clean HEAD export plus `net/`, 2026-10-29; the report has the gate lines):
@@ -338,7 +340,14 @@ On p120 and far, the takeover arrived at one peer after it had run tick T, and i
 - **once:** the proposer switches on tick T's first run only, not when a rollback runs it again. Caught wherever a rollback ran tick T again.
 - **fill:** the drop's missing inputs are filled neutral instead of with what the ticks ran with, and nothing rolls back. Caught in all 9 runs.
 
-**Why AI mode hashes after T.** A sim AI switched on one tick late starts with its timers one tick behind. That can converge back to the same state within 60 ticks, between two of AI mode's SimHash samples. Adding the AI's timers to the desync digest would catch it on every tick (NEXT).
+**Why AI mode hashes after T.** A sim AI switched on one tick late starts with its timers one tick behind. That can converge back to the same state within 60 ticks, between two of AI mode's SimHash samples. The desync digest now holds the timers (section 7), so it catches this on every confirmed tick as well, and in a real match at the next checkpoint.
+
+### The computer's level online
+**Does the online setup carry `aiLevel`? It does when the host passes it, and from 2026-10-30 a peer on another level is refused.**
+- **No game code starts an online match yet.** `NetHost` is only built by `net/tools/`, so no online menu chooses a setup. Each peer calls `newMatch` itself. The setup never goes over the wire: the handshake only compares keys, so both peers must already hold it.
+- **A setup that names the level.** `SimCore` applies `aiLevel` on each peer, the match key holds the setup's JSON, and a desync report's replay copies the setup. `rollback_check --ai=sim --ai-level=hard --takeover=900` passes on lan, p120 and far, and so does Easy.
+- **The gap, now closed.** A setup with no `aiLevel` keeps the level the process last held (`DirAI.level` is a static, `sim/core/sim.gd` `_mHead`). A peer that had just played Hard offline and a fresh peer would have had the same key, and then played different AIs from the first takeover on. The key now ends with `SimReplay.dataHash(setup)`, which names the level the match runs at (`DirAI.levelOf`) and the data files, so that pair is refused. This also answers UI's question: the handshake now compares the data hash (contract point 8).
+- **For the future online host.** Pass the host's `_match_setup` (`render/core/main.gd`) to both peers, so the level is always named, and send the setup in the lobby, because the handshake does not carry it. Setups must be equal: an explicit Medium against no key runs the same match on two fresh processes, but its key differs and it is refused, which is the safe way round. A spectator has no handshake, so it needs the same setup from its relay (section 8).
 
 ### The calm turn under rollback
 

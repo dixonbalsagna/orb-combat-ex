@@ -11,11 +11,15 @@ extends SceneTree
 ##     replay. The reports are written to --out. An injection the sim itself erases before the checkpoint (a fighter's
 ##     x that a landing or a snap overwrites: the divergent peer's full SimHash there equals the straight run's) has
 ##     nothing to detect and counts as healed; each injection must be detected in at least one run.
+## --ai-timers plays P2 as the sim's own AI and instead injects a change to each of its timers on the tick before a
+## checkpoint, so nothing else can differ yet: both peers must report a desync at that checkpoint, with the same report.
+## With --negative-control the digest leaves out the timers (NetDesync.aiBlind) and every injection must be missed there.
 ## --negative-control breaks the detector twice and passes only if the check catches both: a blind detector (digests
 ## exchanged but never compared) must miss the injections, and a stale one (a checkpoint keeps its first run's digest,
 ## a guess, rather than its last) must raise a false alarm on every clean run where a re-run changed a checkpoint's state.
 ##   godot --headless --path . --script res://net/tools/desync_check.gd -- [--seeds=1,2] [--ticks=900] [--every=60]
 ##     [--profiles=lan,p80j,...|all] [--setup=default|features|planet] [--delay=2] [--out=user://desync] [--negative-control]
+##     [--ai-timers]
 
 const SETUPS: Dictionary = {
 	"default": {},
@@ -33,8 +37,18 @@ var INJECT: Dictionary = {
 	"director": func(S: SimState) -> void: S.dirS.cool += 1e-6,
 }
 
+## name -> the change to P2's AI, for --ai-timers (the timers NetDesync.digest reads).
+var AI_INJECT: Dictionary = {
+	"ai_t": func(S: SimState) -> void: S.fighters[1].ai.t += 1e-6,
+	"ai_atk": func(S: SimState) -> void: S.fighters[1].ai.atk += 1e-6,
+	"ai_sT": func(S: SimState) -> void: S.fighters[1].ai.sT += 1e-6,
+	"ai_sOff": func(S: SimState) -> void: S.fighters[1].ai.sOff += 1e-6,
+	"ai_st": func(S: SimState) -> void: S.fighters[1].ai.st = float((int(S.fighters[1].ai.st) + 1) % 3),
+}
+
 var failures: int = 0
 var outDir: String = "user://desync"
+var aiFlags: Dictionary = {"p1": false, "p2": false}
 
 
 static func _firstAlive(S: SimState):
@@ -52,6 +66,7 @@ func _init() -> void:
 	var setupName: String = "default"
 	var delay: int = 2
 	var negative: bool = false
+	var aiTimers: bool = false
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--seeds="):
 			seeds = Array(a.substr(8).split(",")).map(func(s): return int(s))
@@ -69,9 +84,14 @@ func _init() -> void:
 			outDir = a.substr(6)
 		elif a == "--negative-control":
 			negative = true
+		elif a == "--ai-timers":
+			aiTimers = true
 	DirAccess.make_dir_recursive_absolute(outDir)
 	var setup: Dictionary = SETUPS[setupName]
 	print("Orb Combat EX desync check   Godot %s   setup %s   %d ticks   checkpoint every %d   delay %d" % [Engine.get_version_info().string, setupName, ticks, every, delay])
+	if aiTimers:
+		_aiTimers(seeds, ticks, every, delay, profiles, negative)
+		return
 	if negative:
 		_negative(seeds, setup, ticks, every, delay, profiles)
 		return
@@ -142,11 +162,43 @@ func _negative(seeds: Array, setup: Dictionary, ticks: int, every: int, delay: i
 	quit(0 if missed == 0 and caught > 0 else 1)
 
 
+## --ai-timers: P2 is the sim's AI, and each of its timers changes on the tick before a checkpoint.
+func _aiTimers(seeds: Array, ticks: int, every: int, delay: int, profiles: Array, negative: bool) -> void:
+	aiFlags = {"p1": false, "p2": true}
+	var setup: Dictionary = {"v2": [true, true]}
+	var x: int = (ticks / 3 / every) * every + every - 1
+	NetDesync.aiBlind = negative
+	var caught: int = 0
+	var missed: int = 0
+	for seed in seeds:
+		var ref := _straight(seed, setup, ticks, every, delay)
+		for pname in profiles:
+			if not negative:
+				var clean := _run(seed, setup, ticks, every, delay, pname, ref, "", -1, "")
+				print("  %s clean         %-6s  checkpoints matched %3d  rollbacks %4d  %s" % ["ok  " if clean.err == "" else "FAIL", pname, clean.matched, clean.rollbacks, clean.err])
+				failures += 1 if clean.err != "" else 0
+			for inj in AI_INJECT:
+				var res := _run(seed, setup, ticks, every, delay, pname, ref, inj, x, "")
+				if negative:
+					caught += 1 if res.err != "" else 0
+					missed += 0 if res.err != "" else 1
+					print("  %s blind %-7s %-6s  %s" % ["caught" if res.err != "" else "MISSED", inj, pname, res.err])
+				else:
+					failures += 0 if res.err == "" and not res.healed else 1
+					print("  %s %-13s %-6s  %s" % ["ok  " if res.err == "" and not res.healed else "FAIL", inj, pname, res.err if res.err != "" else res.note])
+	if negative:
+		print("%s  AI timers negative control: %d break(s) caught, %d missed" % ["PASS" if missed == 0 and caught > 0 else "FAIL", caught, missed])
+		quit(0 if missed == 0 and caught > 0 else 1)
+		return
+	print("%s  AI timers: %d failure(s)" % ["PASS" if failures == 0 else "FAIL", failures])
+	quit(0 if failures == 0 else 1)
+
+
 ## The straight run: the bots' inputs with no network, the digest at every checkpoint. {digest: tick -> digest, usDigest,
 ## usFull}.
 func _straight(seed: int, setup: Dictionary, ticks: int, every: int, delay: int) -> Dictionary:
 	var S := SimCore.createSim()
-	SimCore.newMatch(S, seed, {"p1": false, "p2": false}, setup)
+	SimCore.newMatch(S, seed, aiFlags, setup)
 	var bots: Array = [NetBot.new(seed, 0), NetBot.new(seed, 1)]
 	var dig: Dictionary = {}
 	var full: Dictionary = {}
@@ -175,9 +227,9 @@ func _straight(seed: int, setup: Dictionary, ticks: int, every: int, delay: int)
 ## One loopback run. inj: an INJECT name (peer 1 diverges after tick x) or "". brk: "", "blind" or "stale".
 func _run(seed: int, setup: Dictionary, ticks: int, every: int, delay: int, pname: String, ref: Dictionary, inj: String, x: int, brk: String) -> Dictionary:
 	var profile: Dictionary = NetLoopback.PROFILES[pname]
-	var L := NetLoopback.make(seed, setup, profile, delay, seed, seed * 37 + int(profile.ping) + 3)
+	var L := NetLoopback.make(seed, setup, profile, delay, seed, seed * 37 + int(profile.ping) + 3, false, aiFlags)
 	var res := {"err": "", "note": "", "matched": 0, "rollbacks": 0, "crossed": 0, "healed": false}
-	var info := {"seed": seed, "setup": setup, "ai": {"p1": false, "p2": false}}
+	var info := {"seed": seed, "setup": setup, "ai": aiFlags}
 	for k in range(2):
 		var sess: NetSession = L.peers[k].session
 		sess.checkEvery = every
@@ -190,7 +242,7 @@ func _run(seed: int, setup: Dictionary, ticks: int, every: int, delay: int, pnam
 	var at: Dictionary = {}   # the divergent peer's full SimHash at the checkpoint after the injection, from its last run
 	var want: int = (x / every + 1) * every
 	if inj != "":
-		var f: Callable = INJECT[inj]
+		var f: Callable = INJECT[inj] if INJECT.has(inj) else AI_INJECT[inj]
 		L.peers[1].session.perturb = func(S_: SimState, t: int) -> void:
 			if t == x:
 				f.call(S_)

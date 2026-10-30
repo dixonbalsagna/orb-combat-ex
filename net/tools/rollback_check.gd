@@ -12,6 +12,7 @@ extends SceneTree
 ##     [--profiles=lan,p80j,...|all] [--setup=default|features|planet|calm] [--delay=2|auto] [--devices=1,1]
 ##     [--hash-every=1] [--sparse=K] [--negative-control]
 ##     [--takeover=T [--slot=K] [--by=owner|other|both]] [--drop=F [--slot=K] [--timeout=N]]
+##     [--ai-level=easy|medium|hard]
 ## --delay=auto runs each profile at the delay its handshake agrees (NetLoopback.agree: both peers ping over links of
 ## that profile, propose NetDelay.choose for their own device, --devices' slowdowns, and the larger wins), against a
 ## straight run with that delay.
@@ -88,6 +89,7 @@ var refs: Dictionary = {}   # [seed, delay, takeAt] -> the straight run
 var aiMode: bool = false    # --ai: the fighter AI drives every slot, to a KO
 var aiSim: bool = false     # --ai=sim: P2 is the sim's own AI (inside the tick, re-run by rollbacks); P1 the driver's
 var aiFlags: Dictionary = {"p1": false, "p2": false}
+var aiLevel: String = ""     # --ai-level: the computer's level, in the match setup as the start menu puts it
 var tail: int = 120         # --ai: ticks played on after the KO
 var takeAt: int = -1        # --takeover=T: the slot becomes the sim's AI at tick T
 var takeSlot: int = -1      # --slot=K
@@ -172,6 +174,8 @@ func _init() -> void:
 		elif a.begins_with("--walk-at="):
 			for w in a.substr(10).split(","):
 				walkTicks[int(w)] = true
+		elif a.begins_with("--ai-level="):
+			aiLevel = a.substr(11)
 		elif a == "--calm-director":
 			DirInterrupt.data().calmTurn.enabled = true   # this process only: the data file says false
 	if ticks < 0:
@@ -183,6 +187,9 @@ func _init() -> void:
 	if by == "":
 		by = "owner" if aiMode else "both"
 	var setup: Dictionary = SETUPS[setupName]
+	if aiLevel != "":
+		setup = setup.duplicate()
+		setup["aiLevel"] = aiLevel
 	if aiMode:
 		setup = setup.duplicate(true)
 		setup["v2"] = [true, true]

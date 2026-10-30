@@ -216,6 +216,10 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/desync_check.gd -- --seeds=1 --ticks=600 --profiles=lan,p120'
       - name: Desync detection, negative control (a blind detector and a lazy one must be caught)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/desync_check.gd -- --seeds=1 --ticks=600 --profiles=lan,p120 --negative-control'
+      - name: Desync detection, the AI's timers (a changed timer is reported at the next checkpoint)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/desync_check.gd -- --ai-timers --seeds=1 --ticks=600 --profiles=lan,p120'
+      - name: Desync detection, the AI's timers, negative control
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/desync_check.gd -- --ai-timers --seeds=1 --ticks=600 --profiles=lan,p120 --negative-control'
       - name: Spectator check (a spectator's hashes match the players', LAN, p120 and far)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/spectator_check.gd -- --seeds=1 --ticks=600 --profiles=lan,p120,far'
       - name: Spectator check, negative control (deliberate breaks must be caught)

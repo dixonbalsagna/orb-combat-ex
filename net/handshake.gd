@@ -10,13 +10,15 @@ extends RefCounted
 ##      from count: an earlier one waited for the other peer to start, not for the link.
 ##   2. Propose. NetDelay.choose(round trips, this device): this peer's delay.
 ##   3. Hello. Every frame it sends {hs: "hello", v, match, delay, got}: the protocol version, the match key (seed,
-##      setup and roster: both peers must play the same match), its proposal, and whether it holds the other's hello.
+##      setup, roster and data: both peers must play the same match), its proposal, and whether it holds the other's hello.
 ##      Once it holds the other's hello, the delay is the larger of the two proposals, and the handshake is done. A done
 ##      peer stops sending hellos but answers any hello whose `got` is false, so a lost last hello costs a frame, not
 ##      the match.
 ## A version or match mismatch fails the handshake (`failed` says why) on both sides.
 
-const PROTO: int = 2   # 2: game packets may carry the AI's takeovers (rollback.md section 13)
+const PROTO: int = 3   # 2: game packets may carry the AI's takeovers (rollback.md section 13). 3: the digest reads the AI's timers, the match key holds the data hash
+
+static var keyPlain: bool = false   # tests only: the match key leaves out the data hash (transport_check's negative control)
 
 var matchKey: String = ""
 var device: Dictionary = {}
@@ -96,6 +98,9 @@ func _hello() -> Dictionary:
 	return {"hs": "hello", "v": PROTO, "match": matchKey, "delay": int(mine.delay), "got": theirs >= 0}
 
 
-## The match key both peers must share: seed, AI flags and setup.
+## The match key both peers must share: seed, AI flags, setup and the data hash. The hash (SimReplay.dataHash) covers
+## the data files and the computer's level the match runs at, so call this after newMatch: a setup with no aiLevel runs
+## at the level the process last held (DirAI.levelOf), and a peer left on another level is refused here.
 static func keyOf(seed: int, ai: Dictionary, setup: Dictionary) -> String:
-	return "%d|%s|%s" % [seed, JSON.stringify(ai, "", true), JSON.stringify(setup, "", true)]
+	var key: String = "%d|%s|%s" % [seed, JSON.stringify(ai, "", true), JSON.stringify(setup, "", true)]
+	return key if keyPlain else key + "|" + SimReplay.dataHash(setup)

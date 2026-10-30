@@ -5,7 +5,7 @@ extends RefCounted
 ## report (writeReport): the tick, both digests, and the first differing fields a field walk finds.
 ##
 ## digest(S) is the cheap hash: the fields a divergence reaches first (the clock, the RNG, every fighter's hashed
-## fields, the director's counters, the mood and the pause, each building's and tree's damage, the shots) and the
+## fields and the AI's timers, the director's counters, the mood and the pause, each building's and tree's damage, the shots) and the
 ## terrain's per-column arrays (deform, water, scorch, rubble, crack, aftermath), through the engine's MD5, which reads
 ## a packed array as one block. A divergence in a field outside it is caught once it reaches
 ## one inside, which in this sim is the next tick or two (most state feeds the fighters or the RNG). SimHash.stateHash
@@ -25,6 +25,8 @@ const TERRAIN: Array = ["deform", "water", "scorch", "rubble", "crack", "afterma
 ## SimState fields the walk skips: S.out (output), and worldId, which names the world this process built (a process
 ## counter, the same on both peers only by chance; not hashed).
 const WALK_SKIP: Array = ["out", "worldId"]
+
+static var aiBlind: bool = false   # tests only: the digest leaves out the AI's timers (desync_check's negative control)
 
 
 ## The cheap confirmed-state digest (32 hex digits): every value goes into one PackedFloat64Array, strings into the
@@ -59,6 +61,12 @@ static func digest(S: SimState) -> String:
 					v.append(-1.0)
 				_:
 					v.append(-2.0)   # an object or a container: its presence only (the field walk reads it)
+		if not aiBlind:
+			var ai = f.ai   # the AI's timers, as SimHash reads them: a slot's AI switched on a tick late differs here first
+			if ai == null:
+				v.append(-1.0)
+			else:
+				v.append(ai.t); v.append(ai.atk); v.append(ai.sT); v.append(ai.sOff); v.append(ai.st)
 	v.append(S.buildings.size())
 	if S.bound():   # the per-tick fields from the state's arrays, as SimHash reads them: a snapshot's records read the live state's (docs/architecture/packed-structures.md)
 		for i in range(S.buildings.size()):

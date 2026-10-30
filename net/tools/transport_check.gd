@@ -6,15 +6,16 @@ extends SceneTree
 ##   2. the handshake (NetHandshake via NetLoopback.agree) on every profile and on pairs of devices: both peers finish,
 ##      agree, and the delay is the larger of the two proposals, each NetDelay.choose of that peer's own round trips on
 ##      its own device; the measured round trip is near the profile's ping; a peer in another match, or speaking
-##      another protocol version, is refused;
+##      another protocol version, is refused; a peer at another computer level is refused, whether the setups name
+##      different levels or a setup with no level finds another one left in the process;
 ##   3. two NetHosts over link transports through the codec, with the second peer's clock 2% fast, a late start and a
 ##      40-frame freeze of the first: every confirmed tick's state digest and feed and fx equal the straight run's at
 ##      the agreed delay, no desync fires, and time sync keeps the peers within --max-lead frames of each other over
 ##      the last third of the match (the freeze is at the first third).
 ##   godot --headless --path . --script res://net/tools/transport_check.gd -- [--seed=1] [--ticks=900]
 ##     [--profiles=lan,p120,p200] [--max-lead=4] [--negative-control]
-## --negative-control runs parts 2 and 3 against a handshake that takes the smaller proposal and against time sync
-## turned off, and passes only if both are caught.
+## --negative-control runs parts 2 and 3 against a handshake that takes the smaller proposal, a match key without the
+## data hash and time sync turned off, and passes only if all three are caught.
 
 const FRAME_MS: float = 1000.0 / 60.0
 const DEVICE_PAIRS: Array = [[1.0, 1.0], [1.0, 4.0], [4.0, 1.0], [2.0, 1.0]]
@@ -49,17 +50,24 @@ func _init() -> void:
 		print("  %s  a handshake that takes the smaller proposal: %d failing case(s)" % ["caught" if failures > 0 else "MISSED", failures])
 		caught += 1 if failures > 0 else 0
 		pickLarger = true
+		NetHandshake.keyPlain = true
+		failures = 0
+		_levelKeys(seed)
+		print("  %s  a match key without the data hash: %d failing case(s)" % ["caught" if failures > 0 else "MISSED", failures])
+		caught += 1 if failures > 0 else 0
+		NetHandshake.keyPlain = false
 		syncOn = false
 		failures = 0
 		for pname in profiles:
 			_hosts(seed, ticks, pname, maxLead)
 		print("  %s  time sync turned off: %d failing case(s)" % ["caught" if failures > 0 else "MISSED", failures])
 		caught += 1 if failures > 0 else 0
-		print("%s  negative control: %d of 2 breaks caught" % ["PASS" if caught == 2 else "FAIL", caught])
-		quit(0 if caught == 2 else 1)
+		print("%s  negative control: %d of 3 breaks caught" % ["PASS" if caught == 3 else "FAIL", caught])
+		quit(0 if caught == 3 else 1)
 		return
 	_codec()
 	_handshakes(seed)
+	_levelKeys(seed)
 	for pname in profiles:
 		_hosts(seed, ticks, pname, maxLead)
 	print("%s  %d failure(s)" % ["PASS" if failures == 0 else "FAIL", failures])
@@ -106,6 +114,24 @@ func _codec() -> void:
 	_expect(NetTransport.decode(notDict) == null, "codec: a Variant that is not a Dictionary is refused")
 	if not quiet:
 		print("codec: a game packet is %d bytes with 3 inputs and 2 digests, %d with none" % [b.size(), NetTransport.encode(empty).size()])
+
+
+## The computer's level in the match key: the setups name it, or a setup with none finds what the process last held.
+func _levelKeys(seed: int) -> void:
+	var ai := {"p1": false, "p2": false}
+	var pair: Array = [NetDelay.device(1.0), NetDelay.device(1.0)]
+	var prof: Dictionary = NetLoopback.PROFILES["p80j"]
+	var hard: String = NetHandshake.keyOf(seed, ai, {"aiLevel": "hard"})
+	var easy: String = NetHandshake.keyOf(seed, ai, {"aiLevel": "easy"})
+	_expect(_agree(hard, prof, pair, 5, [hard, hard]).failed == "", "handshake: two peers at Hard agree")
+	_expect(_agree(hard, prof, pair, 5, [hard, easy]).failed.contains("another match"), "handshake: Hard and Easy are refused")
+	var keep: String = DirAI.level
+	DirAI.level = "hard"
+	var stale: String = NetHandshake.keyOf(seed, ai, {})
+	DirAI.level = ""
+	var fresh: String = NetHandshake.keyOf(seed, ai, {})
+	DirAI.level = keep
+	_expect(_agree(fresh, prof, pair, 5, [fresh, stale]).failed.contains("another match"), "handshake: a setup with no level, one peer's process left at Hard, is refused")
 
 
 func _handshakes(seed: int) -> void:
