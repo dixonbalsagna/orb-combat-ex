@@ -24,8 +24,11 @@ A sample (`surfAt` plus the biome, as `planet_map.gd` times it) on this busy mac
 
 Seeds 7, 11 and 42 (the map tool's `--b`, stills in the scratch folder): the continents, seas, island chains, offset rifts and mountain belts are Research's B column's, place for place. Differences you will see: the poles (ours are the stored pack sea and ice sheet, Research's the sunk north and lifted south), and the biomes: gen 2's climate was tuned on window 3's ground and reads drier on B (more savanna and desert, fewer forest greens than Research's own climate gives its B). That is `climate.json`'s to retune once B is the choice; nothing in B itself needs it.
 
+## Window 13 (on main; behind `land.json` `b.enabled`, as the plates are)
+
+B's volcanic score now makes the volcanic fields, and `climate.json`'s `b` block moves the mountain and highland lines up for B's taller ground (mountains plus highland from 15% to 4.5 to 8% of the non-ice land, Research's own climate giving about 6%). Stills: `docs/world/stills/gen2-b-vs-w3-maps.png`.
+
 ## Not in this window
 
-- The volcanic fields (`State.volc`, 0 to 1 per point, a side output of each ground read) are not yet a biome: gen 2's volcanic fine biome still comes from the climate's own noise. Wiring it is one call in `WorldClimate.plain` (read `WorldPlateB` volc at the same point) and a decision on how it replaces the noise.
 - Research's round-2 C (erosion, rivers) is not touched.
 - The turn's calm swap and the lakes read the ground as before; the 12-match soak with B on (turns included) is clean and reproducible.
