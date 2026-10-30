@@ -17,15 +17,18 @@ extends RefCounted
 ## when the broken list changes, and only that column's: a fighter's ring holds four, so a fifth break lets the oldest
 ## stand again. Nothing else is done a frame. Render only: it reads the sim and writes nothing back.
 
-## World's prop kinds as Art's cover kinds (Art's rulings, docs/art/props-review.md). A kind not named here is not drawn
-## (a shell: Art has no shape for it yet). A lone tree is drawn as the tree Art's cover gives its biome.
+## World's prop kinds as Art's cover kinds (Art's rulings, docs/art/props-review.md; the shell, docs/art/shell-cover.md).
+## A kind not named here is not drawn. A lone tree is drawn as the tree Art's cover gives its biome.
 const KINDS: Dictionary = {
 	"grass": "tuft", "tall_grass": "tuft", "fern": "fern", "vine": "fern", "reeds": "reed", "scrub": "scrub",
 	"boulder": "boulder", "lichen_rock": "boulder", "lava_rock": "boulder", "log": "driftwood", "driftwood": "driftwood",
 	"cactus": "cactus", "termite_mound": "termite", "ice_spire": "icespire", "snow_drift": "snowpatch", "puddle": "pool",
-	"vent": "vent", "berg": "berg",
+	"vent": "vent", "berg": "berg", "shell": "shell",
 }
 const LONE_TREE: String = "lone_tree"
+const NO_FLIP: Array = ["shell"]   # World's kinds never mirrored (Art: a mirror only moves the shell's lit face to the right)
+## Cover kinds drawn in variants, one picked by the prop's seed (Art: one shell lean along a beach row reads as a pattern).
+const VARIANTS: Dictionary = {"shell": ["shell_l8", "shell_r2", "shell_r12"]}
 const Z: float = -8.0 * RenderLook.WS   # the props' depth: just behind the fighter plane, where a launch meets them (Art's call)
 ## Art's caps (ruling 3), in fighter heights: the small dense kinds are drawn at the cover's height, not the sim's. A
 ## World kind drawn as one of these is scaled so that its largest size in ground.json draws at the cap, and its smaller
@@ -90,10 +93,12 @@ func build(S: SimState, g: GroundField) -> void:
 		rng.seed = hash([col, String(p.kind), x])
 		var pid: int = int(za[col]) if za.size() == nc else 0
 		var ck: String = RenderTrees._pick(RenderBiomeLook.name_of(pid), rng) if String(p.kind) == LONE_TREE else String(KINDS.get(String(p.kind), ""))
+		if VARIANTS.has(ck):
+			ck = String(VARIANTS[ck][rng.randi_range(0, VARIANTS[ck].size() - 1)])
 		if ck == "" or not known.has(ck):
 			continue
 		var s: float = drawn_scale(String(p.kind), ck, float(p.size))
-		var flip: float = -1.0 if rng.randf() < 0.5 else 1.0
+		var flip: float = -1.0 if rng.randf() < 0.5 and not NO_FLIP.has(String(p.kind)) else 1.0
 		var xf := Transform3D(Basis.from_scale(Vector3(s * flip, s, s)), Vector3(x, -RenderCoverMeshes.ground_line(ck) * s, Z))
 		var a: float = 1.0 + foot_half(ck) * s   # a: above 0.5 it stands in a crater; less 1, its foot's half-width in units
 		var custom := Color((float(pid) + 0.5) / 32.0, 1.0 if CoverView.FLOAT_KINDS.has(ck) else 0.0, 0.0, a)

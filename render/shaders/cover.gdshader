@@ -3,7 +3,8 @@
 // terrain draws it (ground4: craters, grooves and all), so a shape rises and falls with the ground, and a shape inside a
 // crater is gone (Art: the cover inside a crater is removed; a match's prop, render/core/prop_view.gd, stands, and on a slope its foot sinks a little, prop_sink). What floats (a whitecap, a floe) sits at the water's level.
 // A vertex's colour is its palette slot (COLOR.r) and tone step (COLOR.g) in the palette of the biome it grows in
-// (INSTANCE_CUSTOM.r: RenderBiomeLook's column; the cover's rows from COVER_ROW), lit, mid and shade as Art drew it;
+// (INSTANCE_CUSTOM.r: RenderBiomeLook's column; the cover's rows from COVER_ROW), lit, mid and shade as Art drew it, or,
+// where COLOR.b is 1, one of the fixed tones from fixed_row, the same in every biome (Art's shell);
 // hazed into the sky as the ground is. A fellable tree (render/core/tree_view.gd) is drawn by this shader too: while it
 // burns (INSTANCE_CUSTOM.b, its burn in hard steps) its crown is char from the top down to that share of its height.
 shader_type spatial;
@@ -19,6 +20,7 @@ uniform vec3 wl_add = vec3(0.0);
 uniform float fog_far = 12000.0;
 uniform float cover_cam_x = 0.0;   // this pane's camera x: a copy stands at k x the arena's length less it (planet_view.gd)
 uniform int cover_row = 12;        // RenderBiomeLook.COVER_ROW
+uniform int fixed_row = 31;        // RenderBiomeLook.FIXED_ROW: the fixed tones (a vertex's COLOR.b 1: Art's shell), the same in every biome
 uniform vec4 tone_light : source_color = vec4(1.0, 0.965, 0.878, 1.0);   // RenderCoverMeshes.TONE_LIGHT and TONE_DARK (Art's lite() and dark())
 uniform vec4 tone_dark : source_color = vec4(0.047, 0.039, 0.078, 1.0);
 uniform vec4 char_col : source_color = vec4(0.173, 0.149, 0.133, 1.0);   // RenderCoverMeshes.CHAR_COLOUR: a burning crown
@@ -55,7 +57,7 @@ void vertex() {
 	int b = int(INSTANCE_CUSTOM.r * 32.0);
 	int slot = int(COLOR.r * 16.0);
 	float tone = (COLOR.g - 0.5) * 2.0;
-	vec3 c = texelFetch(biome_pal, ivec2(b, cover_row + slot), 0).rgb;
+	vec3 c = texelFetch(biome_pal, ivec2(b, (COLOR.b > 0.5 ? fixed_row : cover_row) + slot), 0).rgb;
 	v_col = tone >= 0.0 ? mix(c, tone_light.rgb, tone) : mix(c, tone_dark.rgb, -tone);
 	vec4 bw = bent_world(MODEL_MATRIX, VERTEX);
 	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;

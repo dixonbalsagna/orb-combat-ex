@@ -46,7 +46,7 @@ World's props are the sim's own: boulders, lone trees, bergs, ferns and the rest
 | vent | vent |
 | berg | berg |
 | lone_tree | the biome's tree (acacia on savanna, palm on the beach) |
-| shell | not drawn: no Art shape yet |
+| shell | Art's scallop in its three fixed tones (`docs/art/shell-cover.md`), in three leans (-8, 2 and 12 degrees, the cover kinds `shell_l8`, `shell_r2`, `shell_r12`) picked by the prop's seed; never mirrored, so its lit face stays on the left; decoration, not a PROP SMASH target |
 
 ## For Art: what to look at before `biome.enabled` turns on
 

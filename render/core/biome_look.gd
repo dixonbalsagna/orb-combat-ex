@@ -13,7 +13,8 @@ extends RefCounted
 ## palette slots for the biome (RenderCoverMeshes: vegetation, secondary and rock, each lit, mid and shade; trunk;
 ## accent; char; ash; shallow water; the ground's lit and shade, the whites and slates of the ices). Window 3: rows
 ## LADDER_ROW to LADDER_ROW + 2 hold the far land's three ridges (Art's far_ladder), nearest first: Art's rule is that
-## each further ridge is lighter, so the three are ordered by value (the data names them both ways round).
+## each further ridge is lighter, so the three are ordered by value (the data names them both ways round). Rows
+## FIXED_ROW to FIXED_ROW + 2 hold the cover's fixed tones, the same in every biome (Art's shell: lit, mid, shade).
 
 const DATA_PATH := "res://data/art/biomes.json"
 const FINE: Array = ["ocean", "plains", "forest", "desert", "mountains", "ice_sheet", "sea_ice", "jungle", "savanna", "tundra", "taiga", "wetland", "beach", "highland", "volcanic"]
@@ -30,7 +31,8 @@ const ROW_SCAR: int = 9      # the band, then its edge
 const ROW_STRATA: int = 11   # red 1: the rock carries strata lines; green: ROCK_ABOVE / 10,000
 const COVER_ROW: int = 12  # the cover's slots (RenderCoverMeshes.SLOTS of them)
 const LADDER_ROW: int = 28 # the far land's three ridges, nearest (darkest) to farthest (lightest)
-const ROWS: int = 31
+const FIXED_ROW: int = 31  # the cover's fixed tones (RenderCoverMeshes.FIXED_TONES: Art's shell), the same in every biome
+const ROWS: int = 34
 const CITY_GREY := "#8c9098"   # a city's far ridges: the plains' ladder half toward this grey
 const LITE := "#fff6e0"      # Art's lite() and dark() (art/concepts/biomes/draw.mjs)
 const DARK := "#0c0a14"
@@ -97,6 +99,8 @@ static func texture() -> ImageTexture:
 			var lad: Array = ladder(k)
 			for r in range(3):
 				img.set_pixel(k, LADDER_ROW + r, lad[r])
+			for r in range(RenderCoverMeshes.FIXED_TONES.size()):
+				img.set_pixel(k, FIXED_ROW + r, Color(String(RenderCoverMeshes.FIXED_TONES[r])))
 		_tex = ImageTexture.create_from_image(img)
 	return _tex
 

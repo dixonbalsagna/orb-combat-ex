@@ -1522,6 +1522,7 @@ func _make_materials() -> void:
 	_cover_mat.shader = COVER_SHADER
 	_cover_mat.set_shader_parameter("biome_pal", RenderBiomeLook.texture())
 	_cover_mat.set_shader_parameter("cover_row", RenderBiomeLook.COVER_ROW)
+	_cover_mat.set_shader_parameter("fixed_row", RenderBiomeLook.FIXED_ROW)
 	_cover_mat.set_shader_parameter("tone_light", RenderCoverMeshes.TONE_LIGHT)
 	_cover_mat.set_shader_parameter("tone_dark", RenderCoverMeshes.TONE_DARK)
 	_cover_mat.set_shader_parameter("prop_sink", RenderProps.FOOT_SINK)

@@ -1,10 +1,11 @@
 class_name RenderCoverMeshes
 extends RefCounted
-## Art's 33 biome cover silhouettes (docs/art/biomes-cover.md) as flat meshes the renderer can instance. Each shape is
-## ported from its cover function in art/concepts/biomes/draw.mjs: a few flat polygons, faceted fans and thin lines in
-## the XY plane, x across and y up, with no RGB in it. A vertex's COLOR holds a palette slot (r) and a tone step (g), and
+## Art's 33 biome cover silhouettes (docs/art/biomes-cover.md) and the beach shell (docs/art/shell-cover.md), as flat
+## meshes the renderer can instance. Each shape is ported from its cover function in art/concepts/biomes/draw.mjs (the
+## shell's from shell.mjs): a few flat polygons, faceted fans and thin lines in the XY plane, x across and y up, with no
+## RGB in it. A vertex's COLOR holds a palette slot (r) and a tone step (g), and
 ## the renderer looks the slot up in the palette of the biome the shape stands in (data/art/biomes.json), so one mesh
-## serves every biome a kind grows in. Render only.
+## serves every biome a kind grows in; a vertex with COLOR.b 1 takes a fixed tone instead (the shell's). Render only.
 ##
 ## A kind is drawn as Art's sheet draws it (art/concepts/biomes/covers.mjs): at the middle of its height range
 ## (DRAW_H), with draw.mjs's own generator seeded SEED, so the shapes and their triangle counts are the sheet's. Then
@@ -41,6 +42,15 @@ const WATER: int = 13        # shallow water: palette.water.shallow (a pool; a c
 const SNOW: int = 14         # the ground's lit face: palette.ground[0], the warm white of the ices (spires, floes, bergs)
 const ICE: int = 15          # the ground's shade face: palette.ground[2], the slate of the ices
 const SLOTS: int = 16
+# Fixed tones, the same in every biome (paints from SLOTS up): a vertex's COLOR.b is 1 and COLOR.r its tone's place,
+# read from RenderBiomeLook.FIXED_ROW; the slots' own encoding is unchanged. Art's shell (shell.mjs: lit, mid, shade).
+const SHELL_LIT: int = SLOTS
+const SHELL_MID: int = SLOTS + 1
+const SHELL_SHADE: int = SLOTS + 2
+const FIXED_TONES: Array = ["#e4bcc4", "#cc90a0", "#94626e"]
+# The shell in Art's three leans (degrees to the right), each its own kind: one lean along a beach row reads as a
+# pattern, so a prop picks one by its seed (RenderProps.VARIANTS). Props never mirror a shell (RenderProps.NO_FLIP).
+const SHELL_LEANS: Dictionary = {"shell_l8": -8.0, "shell_r2": 2.0, "shell_r12": 12.0}
 
 const CHAR_COLOUR := Color("#2c2622")   # draw.mjs's CHAR[1]
 const ASH_COLOUR := Color("#5a554f")    # draw.mjs's stubs' ash
@@ -93,7 +103,7 @@ const DRAW_H := {
 	"jungletree": 315.0, "fern": 80.0, "flower": 40.0, "reed": 90.0, "mangrove": 160.0, "pool": 7.0,
 	"cactus": 130.0, "scrub": 37.0, "mesa": 200.0, "scree": 35.0, "snowpatch": 12.0, "basaltcol": 125.0,
 	"vent": 55.0, "lavaflow": 12.0, "spruce": 250.0, "krummholz": 45.0, "icespire": 110.0, "crevasse": 12.0,
-	"nunatak": 160.0, "berg": 155.0, "floeblock": 22.0,
+	"nunatak": 160.0, "berg": 155.0, "floeblock": 22.0, "shell_l8": 48.0, "shell_r2": 48.0, "shell_r12": 48.0,
 }
 
 static var _meshes: Dictionary = {}   # kind -> [clean, charred] ArrayMesh (the same mesh twice when burning changes nothing)
@@ -101,7 +111,7 @@ static var _tris: Dictionary = {}     # kind -> Vector2i(clean, charred) triangl
 static var _fit: Dictionary = {}      # kind -> Vector2(height_scale, ground_line)
 
 
-## The 33 kinds, in the order of Art's table.
+## The 36 kinds, in the order of Art's table (the shell's three leans last).
 static func kinds() -> PackedStringArray:
 	return PackedStringArray(DRAW_H.keys())
 
@@ -236,7 +246,8 @@ static func _finish(b: _Build, lo: float, e: float) -> ArrayMesh:
 		var k: Vector2 = b.paints[i]
 		verts[i] = Vector3(p.x / e, (p.y - lo) / e, p.z * LAYER_Z)
 		nrms[i] = Vector3(0.0, 0.0, 1.0)
-		cols[i] = Color((k.x + 0.5) / float(SLOTS), 0.5 + 0.5 * clampf(k.y, -1.0, 1.0), 0.0, 1.0)
+		var fixed: bool = k.x >= float(SLOTS)
+		cols[i] = Color((k.x - (float(SLOTS) if fixed else 0.0) + 0.5) / float(SLOTS), 0.5 + 0.5 * clampf(k.y, -1.0, 1.0), 1.0 if fixed else 0.0, 1.0)
 	var arrays: Array = []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = verts
@@ -404,6 +415,7 @@ static func _shape(b: _Build, kind: String, h: float, charred: bool) -> void:
 		"nunatak": _nunatak(b, h)
 		"berg": _berg(b, h)
 		"floeblock": _floeblock(b, h)
+		"shell_l8", "shell_r2", "shell_r12": _shell(b, h, SHELL_LEANS[kind])
 
 
 ## A burned tree (draw.mjs's charredTree): a black trunk with a lit side, and bare branches.
@@ -751,6 +763,28 @@ static func _floeblock(b: _Build, h: float) -> void:
 	var w: float = h * 1.1
 	_poly(b, _pts([-w, 0.0, -w, h, w * 0.6, h, w * 0.6, 0.0]), _k(SNOW))
 	_poly(b, _pts([w * 0.6, 0.0, w * 0.6, h, w, h * 0.7, w, 0.0]), _k(ICE))
+
+
+## Art's beach shell (art/concepts/biomes/shell.mjs): a scallop standing on its hinge, h its fan's radius, leaning
+## lean_deg to the right. A fan over 126 degrees from the hinge: eight lobe tips at h and seven notches at 0.93 h between, one
+## wedge to each pair of neighbours (14), lit, mid and shade by thirds from the left; the ear below the hinge in shade.
+## Art's three fixed tones, not the biome's slots. The ribs and the growth line are keyline strokes, not geometry.
+static func _shell(b: _Build, h: float, lean_deg: float) -> void:
+	var lean: float = deg_to_rad(lean_deg)
+	var hy: float = h * 0.1
+	var span: float = deg_to_rad(126.0)
+	var ribs: int = 7
+	var edge := PackedVector2Array()
+	for i in range(ribs + 1):
+		var a0: float = -span / 2.0 + span * float(i) / float(ribs)
+		if i > 0:
+			var an: float = a0 - span / float(ribs) / 2.0 + lean
+			edge.append(Vector2(sin(an) * h * 0.93, hy + cos(an) * h * 0.93))
+		edge.append(Vector2(sin(a0 + lean) * h, hy + cos(a0 + lean) * h))
+	_poly(b, _pts([-h * 0.2, 0.0, h * 0.2, 0.0, h * 0.12, hy + h * 0.06, -h * 0.12, hy + h * 0.06]), _k(SHELL_SHADE))
+	for i in range(edge.size() - 1):
+		var t: float = float(i) / float(edge.size() - 2)
+		_poly(b, PackedVector2Array([Vector2(0.0, hy), edge[i], edge[i + 1]]), _k(SHELL_LIT if t < 0.34 else (SHELL_MID if t < 0.7 else SHELL_SHADE)))
 
 
 static func _termite(b: _Build, h: float) -> void:
