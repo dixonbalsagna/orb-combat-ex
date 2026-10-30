@@ -15,6 +15,8 @@
 // most shore_flood, as World's sea edge leaves a strip of up to 0.25 bh) is drawn flooded at that level, so the
 // waterline is where the land rises through it and the drop at the sea's last column stays under water; deeper low
 // land beside water stays dry, as the sim has it.
+// A lake (lake_on, a ring with lakes: planet_view.gd; a level that isn't the sea's): water draws across its whole
+// interior, not only where the ground was dug, and hides the bed by depth in hard bands like the shallow band's.
 // The waterline (Art's flat facets, the water window): in the near water a foam line water_line.x pixels wide where the
 // land rises through the surface, and a shallow band to water_shallow.x deep, so a new pool and the coast read as water
 // with an edge. The fill's drama (render/core/water_fill.gd, from World's water_fill and water_wave cues): a crest that
@@ -49,6 +51,9 @@ uniform vec4 ww_a[2];      // x, y (the surface), t0, the radius it runs out to
 uniform vec4 ww_b[2];      // its lift, the time it runs
 uniform vec4 fill_t = vec4(0.22, 0.55, 0.3, 1.6);   // RenderLook.WATER_FILL_T, WATER_PILE: the crest's length behind the front (s), the slosh's period and settle time (s), the pile at a wall
 uniform vec2 foam_band = vec2(14.0, 50.0);   // RenderLook.WATER_FOAM_BAND: the foam line's width on a front, a pile or a ring (units); the ring's width
+uniform float lake_on = 0.0;                 // 1 on a ring with lakes (PlanetView.update)
+uniform vec3 lake_bands = vec3(37.5, 75.0, 240.0);   // RenderLook.LAKE_BANDS: the depths where a lake's sheet takes its next step
+uniform float lake_tone = 0.3;               // RenderLook.LAKE_TONE: each step's share toward the water's own colour
 
 varying float v_wet;
 varying float v_depth;
@@ -58,6 +63,7 @@ varying vec3 v_view;
 varying float v_wz;
 varying vec2 v_px;
 varying float v_near;
+varying float v_lake;   // a lake's depth here before the foreground rule moves it, so the bands stay put across the fighter plane; below 0 elsewhere
 
 // The fill's drama at band x and depth z: x the surface's lift, y the foam (0 to 1 on a crest or a ring).
 vec2 water_drama(float x, float z) {
@@ -121,13 +127,15 @@ void vertex() {
 		v_wet = wd >= wet_min ? 1.0 : 0.0;
 		surf = b + d0 + wd;
 		float lv = gf(i, 20);
+		bool lake = lake_on > 0.5 && lv > -1.0e8 && abs(lv) >= wet_min;
 		float off = d0;
 		if ((v_wet > 0.5 || lv > -1.0e8) && UV2.y < 0.5) {
 			off = ground_offset(i, xw, z);
 		}
 		ground = b + off;
 		// The sea is wherever the sim's water stands at sea level (World's edge follows S.water, not the base rule).
-		v_ok = (b < sea_base || off < -wet_min || abs(surf) < wet_min) ? 1.0 : 0.0;
+		v_lake = lake ? lv - ground : -1.0;
+		v_ok = (b < sea_base || off < -wet_min || abs(surf) < wet_min || (lake && v_wet > 0.5)) ? 1.0 : 0.0;
 		if (lv > -1.0e8 && ground >= lv) {
 			shore = true;
 			surf = lv;
@@ -144,6 +152,7 @@ void vertex() {
 		v_near = 1.0;
 	} else {
 		v_near = 0.0;
+		v_lake = -1.0;
 		bool wet;
 		vec4 f = far4(xw, z, s, false, wet);
 		ground = mix(b, f.x, s);
@@ -196,6 +205,11 @@ void fragment() {
 		} else if (v_depth < water_shallow.x) {
 			c = mix(c, foam.rgb, water_shallow.y);
 			a = mix(a, foam.a, water_shallow.y);
+		} else if (v_lake > 0.0) {
+			// A lake's depth: darker a step at a time, and from the second step the bed is gone.
+			float k = step(lake_bands.x, v_lake) + step(lake_bands.y, v_lake) + step(lake_bands.z, v_lake);
+			c = mix(c, water.rgb, k * lake_tone);
+			a = mix(a, 1.0, min(k, 2.0) * 0.5);
 		}
 		if (v_near > 0.5 && wf_n + ww_n > 0 && water_drama(v_px.x, v_px.y).y > 0.5) {
 			c = foam.rgb;   // the crest's and the ring's foam

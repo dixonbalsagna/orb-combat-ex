@@ -54,6 +54,7 @@ var _water_drawn: int = -1              # the ground's water_version this pane l
 var _crowd_mat: ShaderMaterial
 var _terrain_mat: ShaderMaterial
 var _water_mat: ShaderMaterial
+var _lake_sent: float = 0.0   # the water material's lake_on
 static var cull_on: bool = RenderLook.SPLIT_CULL_ON   # the split's culling (cull_to); main's --nocull turns it off
 var _cull: Array = []                  # per copy: [copy, its chunks' union box, [[chunk node, box, left out]...]] (cull_to)
 ## The view update's short cuts (the coast's profile, 2026-10-27): the building sweep passes over a building as it was
@@ -512,6 +513,11 @@ func update(S: SimState, cam_x: float, heat: PackedFloat32Array = PackedFloat32A
 		_crater_now = S.T
 		_terrain_mat.set_shader_parameter("crater_now", S.T)
 		_water_mat.set_shader_parameter("crater_now", S.T)
+	if _water_mat != null:
+		var lake_on: float = 1.0 if S.planetRing is Dictionary and not S.planetRing.get("lakes", []).is_empty() else 0.0
+		if lake_on != _lake_sent:
+			_lake_sent = lake_on
+			_water_mat.set_shader_parameter("lake_on", lake_on)
 	for c in _copies:
 		c.position.x = float(c.get_meta("k")) * SimConst.W - cam_x
 	if _towns_on:
@@ -1618,6 +1624,10 @@ func _make_materials() -> void:
 	_water_mat.set_shader_parameter("water_shallow", RenderLook.WATER_SHALLOW)
 	_water_mat.set_shader_parameter("fill_t", Vector4(RenderLook.WATER_FILL_T.x, RenderLook.WATER_FILL_T.y, RenderLook.WATER_FILL_T.z, RenderLook.WATER_PILE))
 	_water_mat.set_shader_parameter("foam_band", RenderLook.WATER_FOAM_BAND)
+	_water_mat.set_shader_parameter("lake_bands", RenderLook.LAKE_BANDS)
+	_water_mat.set_shader_parameter("lake_tone", RenderLook.LAKE_TONE)
+	_water_mat.set_shader_parameter("lake_on", 0.0)
+	_lake_sent = 0.0
 	_wf_sent = -1   # a new material takes the live fills
 
 
