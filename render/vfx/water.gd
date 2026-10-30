@@ -15,6 +15,7 @@ const DEFAULTS: Dictionary = {
 	"caps": {"spray_alive": 260, "per_tick": 60},
 	"fill": {"lip_every": 2, "lip_streaks": 2, "lip_foam_min": 50.0, "lip_foam_max": 110.0, "start_streaks": 4, "rim_streaks": 8, "rim_foams": 3, "rim_reach": 70.0, "bore_streaks": 12, "bore_foams": 4, "seep_foams": 4, "max_fronts": 4},
 	"wave": {"streaks_per_pulse": 3, "foam_per_pulse": 1, "rim_streaks": 10, "rim_foams": 3, "max_waves": 3},
+	"slap": {"speed_min": 900.0, "throw_speed": 2800.0, "height_per_speed": 0.12, "height_min": 140.0, "height_max": 900.0, "streaks_base": 14, "streaks_per_scale": 12, "fan_min_deg": 8.0, "fan_max_deg": 50.0, "centre_streaks": 5, "centre_share": 0.3, "foam_base": 8, "foam_per_scale": 6, "run_min": 140.0, "run_max": 560.0, "ring_r": 50.0, "ring_rate": 800.0, "ring_life": 0.5, "throw_gain": 1.3},
 	"douse": {"puffs_max": 5, "per_columns": 4, "size_min": 36.0, "size_max": 64.0, "grow": 1.8, "life_min": 1.3, "life_max": 2.0, "rise_min": 40.0, "rise_max": 90.0},
 }
 
@@ -62,6 +63,8 @@ var _front_id: int = 0
 var debris: VfxDebris
 var skims: int = 0               # counters for the tests
 var plunges: int = 0
+var slaps: int = 0               # a body met the sheet with the floor on (slap)
+var _spd: Array = []             # each fighter's speed at the end of the last tick: a splash arrives after the sim has already slowed the body
 var beam_hits: int = 0
 var wakes: int = 0
 var _tick_n: int = 0             # spray spawned this tick (budget caps.per_tick)
@@ -94,6 +97,8 @@ static func p(group: String, key: String) -> float:
 func reset() -> void:
 	skims = 0
 	plunges = 0
+	slaps = 0
+	_spd.clear()
 	beam_hits = 0
 	wakes = 0
 	_tick_n = 0
@@ -205,6 +210,80 @@ func rebound(a: Dictionary) -> void:
 	_column(a.x, a.y, a.s * 0.7, a.H, _q(), 0.7)
 
 
+# ------------------------------------------------------------------------------------------------------------ the sheet
+
+## With World's floor on (Game Design rulings 2026-10-30) a body that meets the sea's or a lake's surface does not go under: he lands on the sheet, or is slammed flat on it. A low wide splash, not a plunge's tall column: spray
+## thrown out both ways in a flat fan, a short jet where he hit, foam running out along the surface and two flat rings spreading on it. Cut from the speed he had at the end of the last tick (the sim has already slowed him
+## when the splash event arrives) or, for the grapple's down throw (thrown: the thrower's index), from `slap.throw_speed` and bigger by `throw_gain`. The same streak and foam pools and caps as the plunge.
+func slap(S: SimState, x: float, y: float, thrown: int = -1) -> void:
+	slaps += 1
+	var f = nearest_fighter(S, x)
+	var tier: float = f.tier if f != null else 1.0
+	var speed: float = p("slap", "speed_min")
+	var gain: float = 1.0
+	if thrown >= 0:
+		speed = p("slap", "throw_speed")
+		gain = p("slap", "throw_gain")
+		if thrown < S.fighters.size():
+			tier = S.fighters[thrown].tier
+	elif f != null:
+		var i: int = S.fighters.find(f)
+		if i >= 0 and i < _spd.size():
+			speed = maxf(float(_spd[i]), speed)
+	var s: float = scale_of(speed, tier)
+	var q: float = _q()
+	var H: float = clampf(speed * p("slap", "height_per_speed") * (0.7 + 0.3 * s), p("slap", "height_min"), p("slap", "height_max"))
+	var vmax: float = sqrt(2.0 * 1200.0 * H)
+	# The flat fan, one side then the other.
+	var cnt: int = int(round((p("slap", "streaks_base") + p("slap", "streaks_per_scale") * s) * q * gain))
+	var lo: float = deg_to_rad(p("slap", "fan_min_deg"))
+	var hi: float = deg_to_rad(p("slap", "fan_max_deg"))
+	for k in range(cnt):
+		var side: float = 1.0 if k % 2 == 0 else -1.0
+		var a: float = debris._rd.range_(lo, hi)
+		var sp: float = vmax * debris._rd.range_(0.55, 1.0)
+		var off: float = debris._rd.range_(0.0, 90.0) * s
+		var len: float = debris._rd.range_(50.0, 120.0) * (0.6 + 0.5 * s)
+		var life: float = debris._rd.range_(0.8, 1.5)
+		_streak(x + side * off, y, side * cos(a) * sp * 1.4, sin(a) * sp, len, life, y)
+	# The short jet where he hit.
+	var jn: int = int(round(float(p("slap", "centre_streaks")) * q * gain))
+	for k in range(jn):
+		var a2: float = deg_to_rad(90.0) + debris._rd.range_(-0.2, 0.2)
+		var sp2: float = vmax * p("slap", "centre_share") * debris._rd.range_(0.6, 1.0) * 1.6
+		var off2: float = debris._rd.range_(-40.0, 40.0) * s
+		var len2: float = debris._rd.range_(60.0, 130.0) * (0.6 + 0.5 * s)
+		var life2: float = debris._rd.range_(0.9, 1.5)
+		_streak(x + off2, y, cos(a2) * sp2, sin(a2) * sp2, len2, life2, y)
+	# Foam running out along the surface, both ways.
+	var np: int = int(round((p("slap", "foam_base") + p("slap", "foam_per_scale") * s) * q * gain))
+	for k in range(np):
+		var side2: float = 1.0 if k % 2 == 0 else -1.0
+		var run: float = debris._rd.range_(p("slap", "run_min"), p("slap", "run_max")) * s
+		var rise: float = debris._rd.range_(30.0, 160.0)
+		var sz: float = debris._rd.range_(120.0, 300.0) * (0.5 + 0.5 * s)
+		var fl: float = debris._rd.range_(1.0, 1.9)
+		var ox: float = debris._rd.range_(0.0, 70.0) * s
+		_foam(x + side2 * ox, y + 12.0, side2 * run, rise, sz, fl)
+	# Two flat rings spreading on the sheet (one under reduced motion).
+	var r0: float = p("slap", "ring_r") * s
+	var rate: float = p("slap", "ring_rate") * s
+	var rl: float = p("slap", "ring_life")
+	debris._ring(x, y + 6.0, RenderLook.Z_BEAMS + 6.0, r0, rate, rl, true)
+	if not debris.reduced:
+		debris._ring(x, y + 6.0, RenderLook.Z_BEAMS + 7.0, r0 * 0.5, rate * 0.65, rl * 1.3, true)
+
+
+## The grapple's down throw: a `cue` grapple_end "thrown_down" in this tick's events whose target (the body thrown) stands at x. The thrower's index, else -1.
+static func thrown_at(S: SimState, events: Array, x: float) -> int:
+	for e in events:
+		if e.type == "cue" and String(e.kind) == "grapple_end" and String(e.text) == "thrown_down":
+			var ti: int = int(float(e.target)) if e.get("target") != null else -1
+			if ti >= 0 and ti < S.fighters.size() and absf(SimWrap.sdx(S.fighters[ti].x, x)) < 300.0:
+				return int(float(e.actor))
+	return -1
+
+
 ## A column of spray streaks in a cone and foam puffs rising to height H.
 func _column(x: float, y: float, s: float, H: float, q: float, share: float) -> void:
 	var cnt: int = int(round((p("plunge", "streaks_base") + p("plunge", "streaks_per_scale") * s) * q * share))
@@ -255,6 +334,10 @@ func beam(S: SimState, x: float, power: float, dir: float, tick: int) -> void:
 ## then. Scaled by speed. Free flight and launches alike.
 func wake(S: SimState) -> void:
 	_wake_t += 1
+	_spd.resize(S.fighters.size())
+	for i in range(S.fighters.size()):
+		var fi = S.fighters[i]
+		_spd[i] = Vector2(fi.vx, fi.vy).length()
 	for f in S.fighters:
 		if f.hidden:
 			continue

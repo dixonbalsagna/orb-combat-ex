@@ -404,6 +404,96 @@
       "patternProperties": {
         "^_": true
       }
+    },
+    "slap": {
+      "type": "object",
+      "description": "A body meeting the sea's or a lake's surface with World's floor on: the low wide splash of a landing on the sheet, and of the grapple's down throw (water.gd slap).",
+      "properties": {
+        "speed_min": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "throw_speed": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height_per_speed": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height_min": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height_max": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "streaks_base": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "streaks_per_scale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fan_min_deg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 90
+        },
+        "fan_max_deg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 90
+        },
+        "centre_streaks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "centre_share": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "foam_base": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "foam_per_scale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "run_min": {
+          "type": "number",
+          "minimum": 0
+        },
+        "run_max": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ring_r": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "ring_rate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ring_life": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "throw_gain": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 2
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
     }
   },
   "additionalProperties": false,

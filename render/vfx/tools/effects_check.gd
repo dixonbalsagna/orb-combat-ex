@@ -445,6 +445,82 @@ func _water(S: SimState) -> void:
 	ho.reset(S, 4)
 	_tick(S, ho, [skim_ev.call(1, 5000.0), VfxMock.ev("splash", {"x": sx, "y": 0.0, "n": 12})])
 	_check(ho.debris.spawned == 0, "water_enabled off throws nothing")
+	# The sheet (Game Design rulings 2026-10-30; docs/vfx/water-plan.md): with World's floor on a body that meets the water lands on it, a low wide splash and no plunge; the grapple's down throw is bigger; off, nothing changes.
+	var peak := func(h: VfxHub, ticks: int) -> float:
+		var top: float = 0.0
+		for k in range(ticks):
+			_tick(S, h, [])
+			for b in h.debris.bits:
+				if b.kind == VfxDebris.SPRAY:
+					top = maxf(top, b.y)
+		return top
+	var thrown_ev := VfxMock.ev("cue", {"kind": "grapple_end", "text": "thrown_down", "actor": 0.0, "target": 1.0})
+	var sp_ev := func(n: int) -> Variant: return VfxMock.ev("splash", {"x": sx, "y": 0.0, "n": n})
+	var f1 = S.fighters[1]
+	f1.x = sx
+	f0.vx = 0.0
+	f0.vy = 0.0
+	f0.y = 600.0
+	var hoff := VfxHub.new()
+	hoff.reset(S, 4)
+	_tick(S, hoff, [sp_ev.call(14)])
+	_check(hoff.water.plunges == 1 and hoff.water.slaps == 0, "with the floor off a splash on the sea is the plunge, as it was")
+	var floor_was: bool = WorldFill.floorOn()
+	WorldFill.setFloor(true)
+	var hon := VfxHub.new()
+	hon.reset(S, 4)
+	_tick(S, hon, [sp_ev.call(14)])
+	_check(hon.water.slaps == 1 and hon.water.plunges == 0, "with the floor on the same splash is a landing on the sheet (a slap), not a plunge")
+	_check(hon.debris.spawned > 20 and hon.debris.jobs.size() == 0, "the slap throws spray, foam and flat rings and schedules no rebound (%d bits)" % hon.debris.spawned)
+	var hplunge := VfxHub.new()
+	hplunge.reset(S, 4)
+	WorldFill.setFloor(false)
+	_tick(S, hplunge, [sp_ev.call(14)])
+	WorldFill.setFloor(true)
+	var top_slap: float = peak.call(hon, 40)
+	var top_plunge: float = peak.call(hplunge, 40)
+	_check(top_slap > 0.0 and top_slap < top_plunge, "the sheet's spray stays lower than a plunge's column (%.0f against %.0f units)" % [top_slap, top_plunge])
+	var hth := VfxHub.new()
+	hth.reset(S, 4)
+	_tick(S, hth, [sp_ev.call(14), thrown_ev])
+	_check(hth.water.slaps == 1 and hth.debris.spawned > hon.debris.spawned, "the grapple's down throw splashes bigger than a landing (%d against %d bits)" % [hth.debris.spawned, hon.debris.spawned])
+	var hfar := VfxHub.new()
+	hfar.reset(S, 4)
+	f1.x = SimWrap.wrap(sx + 2000.0)
+	_tick(S, hfar, [sp_ev.call(14), thrown_ev])
+	f1.x = sx
+	_check(hfar.debris.spawned == hon.debris.spawned, "a throw's cue far from the splash is not its (%d bits, as a landing's)" % hfar.debris.spawned)
+	var hrm := VfxHub.new()
+	hrm.reduced_motion = true
+	hrm.reset(S, 4)
+	hrm.debris.reduced = true
+	_tick(S, hrm, [sp_ev.call(14)])
+	_check(hrm.debris.spawned < hon.debris.spawned, "reduced motion draws fewer (%d against %d) and one ring" % [hrm.debris.spawned, hon.debris.spawned])
+	var hq := VfxHub.new()
+	hq.quality = VfxLook.Q_LOW
+	hq.reset(S, 4)
+	hq.quality = VfxLook.Q_LOW
+	_tick(S, hq, [sp_ev.call(14)])
+	_check(hq.debris.spawned < hon.debris.spawned, "low quality draws fewer (%d against %d)" % [hq.debris.spawned, hon.debris.spawned])
+	var hs1 := VfxHub.new()
+	var hs2b := VfxHub.new()
+	hs1.reset(S, 4)
+	hs2b.reset(S, 4)
+	_tick(S, hs1, [sp_ev.call(14), thrown_ev])
+	_tick(S, hs2b, [sp_ev.call(14), thrown_ev])
+	var xs1: Array = hs1.debris.bits.map(func(b): return snappedf(b.x, 0.001))
+	var xs2: Array = hs2b.debris.bits.map(func(b): return snappedf(b.x, 0.001))
+	_check(xs1.size() > 0 and xs1 == xs2, "the same splash draws the same bits twice (%d)" % xs1.size())
+	var hsw := VfxHub.new()
+	hsw.sheet_splash_enabled = false
+	hsw.reset(S, 4)
+	_tick(S, hsw, [sp_ev.call(14)])
+	_check(hsw.water.plunges == 1 and hsw.water.slaps == 0, "the switch (sheet_splash_enabled) puts the plunge back with the floor on")
+	var hsm := VfxHub.new()
+	hsm.reset(S, 4)
+	_tick(S, hsm, [sp_ev.call(8)])
+	_check(hsm.water.slaps == 0 and hsm.debris.spawned == 0, "a splash of 8 (a skip's own) is not a slap either")
+	WorldFill.setFloor(floor_was)
 	# The data file is optional: with it gone every number falls back to the same default.
 	var saved: Dictionary = VfxWater._data
 	VfxWater._data = {}

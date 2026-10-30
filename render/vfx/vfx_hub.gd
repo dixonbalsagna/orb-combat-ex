@@ -48,6 +48,7 @@ var reduced_motion: bool = false:   # the player's option (main sets it every fr
 var cracks_enabled: bool = VfxLook.CRACKS_DEFAULT   # ground cracks: off in the live build until they are approved
 var destruction_enabled: bool = VfxLook.DESTRUCTION_DEFAULT   # shrapnel, collapse dust and holes: off in the live build until approved
 var embers_enabled: bool = VfxLook.EMBERS_DEFAULT   # scorch embers by beam variant: off until Rendering stops drawing its own
+var sheet_splash_enabled: bool = true               # with World's floor on a body meeting the water is drawn as a landing on the sheet (water.slap), not a plunge; with the floor off nothing changes
 var water_enabled: bool = VfxLook.WATER_DEFAULT      # dramatic water: skip spray, plunge column, beam spray, wake
 var transform_enabled: bool = VfxLook.TRANSFORM_DEFAULT   # the transformation: gather, break ring, aura swap, settle
 var xform := VfxTransform.new()
@@ -456,7 +457,10 @@ func _consume(S: SimState, events: Array) -> void:
 				"splash":
 					if water_enabled and int(e.n) >= 10:
 						debris.z_shift = float(_g(e, "z", 0.0))
-						water.plunge(S, float(e.x), float(e.y), int(e.n))
+						if sheet_splash_enabled and WorldFill.floorOn():   # the floor on: he lands on the sheet, not under it
+							water.slap(S, float(e.x), float(e.y), VfxWater.thrown_at(S, events, float(e.x)))
+						else:
+							water.plunge(S, float(e.x), float(e.y), int(e.n))
 						debris.z_shift = 0.0
 				"skim":
 					if water_enabled:

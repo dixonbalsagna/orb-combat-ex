@@ -14,6 +14,7 @@
   "beam": { "throw_chance": 0.3, "throws_per_tick": 4, "streaks_per_throw": 4, "power_gain": 0.35, "puff_every": 2, "forward_deg_min": 20, "forward_deg_max": 60 },
   "wake": { "min_speed": 2200, "max_height": 160, "streaks_per_tick": 2, "puff_every": 4 },
   "caps": { "spray_alive": 260, "per_tick": 60 },
+  "slap": { "speed_min": 900, "throw_speed": 2800, "height_per_speed": 0.12, "height_min": 140, "height_max": 900, "streaks_base": 14, "streaks_per_scale": 12, "fan_min_deg": 8, "fan_max_deg": 50, "centre_streaks": 5, "centre_share": 0.3, "foam_base": 8, "foam_per_scale": 6, "run_min": 140, "run_max": 560, "ring_r": 50, "ring_rate": 800, "ring_life": 0.5, "throw_gain": 1.3 },
   "fill": { "lip_every": 2, "lip_streaks": 2, "lip_foam_min": 50, "lip_foam_max": 110, "start_streaks": 4, "rim_streaks": 8, "rim_foams": 3, "rim_reach": 70, "bore_streaks": 12, "bore_foams": 4, "seep_foams": 4, "max_fronts": 4 },
   "wave": { "streaks_per_pulse": 3, "foam_per_pulse": 1, "rim_streaks": 10, "rim_foams": 3, "max_waves": 3 },
   "douse": { "puffs_max": 5, "per_columns": 4, "size_min": 36, "size_max": 64, "grow": 1.8, "life_min": 1.3, "life_max": 2.0, "rise_min": 40, "rise_max": 90 }
