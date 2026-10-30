@@ -174,6 +174,19 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     const few = evaluate({ default: Array.from({ length: 5 }, (_, j) => mkRec(j)) });
     assert.strictEqual(few.find(r => r.id === 'zip.clean').status, 'PENDING');
   });
+  await t('5b.propSmash: PENDING while PROP SMASH is never offered; counted as Encounter counts it (the plan names it with a trailing space, KNOCK BACK and STAY do not count); 5 to 30% of offers passes', async () => {
+    const plan = (text, chosen) => ({ type: 'launch_plan', actor: 0, target: 1, text, chosen });
+    const mk = (j, evs) => withEvents(rec({ koAt: 360, launches: { UPPERCUT: 20, 'SMASH ACROSS': 10 } }), evs);
+    const off = { default: Array.from({ length: 60 }, (_, j) => mk(j, [plan('UPPERCUT 1.2|SMASH ACROSS 0.9', 'UPPERCUT')])) };
+    assert.strictEqual(evaluate(off).find(r => r.id === '5b.propSmash').status, 'PENDING', 'never offered: the biome switch is off');
+    // 20 plans a match name PROP SMASH: 3 pick it (15%); one more names it but ends KNOCK BACK, one STAY: neither is an offer
+    const on = { default: Array.from({ length: 60 }, (_, j) => mk(j, [...Array.from({ length: 20 }, (_, k) => plan('UPPERCUT 1.2|PROP SMASH 0.9', k < 3 ? 'PROP SMASH' : 'UPPERCUT')), plan('UPPERCUT 1|PROP SMASH 0.9', 'KNOCK BACK'), plan('UPPERCUT 1|PROP SMASH 0.9', 'STAY'), plan('PROP SMASHER 1', 'UPPERCUT')])) };
+    const row = evaluate(on).find(r => r.id === '5b.propSmash');
+    assert.strictEqual(row.status, 'PASS', row.value);
+    assert.ok(row.note.includes('180 picked of 1200'), row.note);
+    const low = { default: Array.from({ length: 60 }, (_, j) => mk(j, Array.from({ length: 20 }, (_, k) => plan('UPPERCUT 1.2|PROP SMASH 0.9', 'UPPERCUT')))) };
+    assert.strictEqual(evaluate(low).find(r => r.id === '5b.propSmash').status, 'FAIL', 'offered and never picked is under the 5% floor');
+  });
   await t('double hit rows: PENDING without double hits; a good set judges 0.5 to 2 a match, 40 to 70% of matches, at most 4, both hit; a bad set fails the hard tests', async () => {
     assert.strictEqual(evaluate({ default: [rec()] }).find(r => r.id === 'double').status, 'PENDING');
     const dbl = (j, n, over = {}) => rec({ seed: j, koAt: 300, doubleHits: n, brawl: { ends: { double: n, knockback: 5 }, blows: {}, staggers: {}, tradeBreaks: 0, lens: [], nblows: [] }, doubles: Array.from({ length: n }, () => ({ t: 1, dur: 240, land: 9, dmgA: 12, dmgB: 12, sep0: 1, sep30: 11, ...over })) });

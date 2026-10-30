@@ -201,6 +201,13 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
         const pc = D.flatMap(r => (r.events || []).filter(e => e.type === 'launch_plan' && /BUILDING|BRUNT/.test(e.text || '') && careOf(r, e.actor) > 0)), pk = pc.filter(e => /BUILDING|BRUNT/.test(e.chosen || '')).length;
         R.info('5b.reach.cares', '§5b', 'A building in reach is taken by a fighter who cares (under 35% while people are inside; the people inside are not in the event, so this is all plans, reported)', pc.length ? fmt.pct(pk / pc.length) : 'no plan', `${pc.length} plans by a fighter with care above 0`);
       } else R.pending('5b.reach.cares', '§5b', 'A building in reach is taken by a fighter who cares, while people are inside (under 35%)', 'not read: both cares are 0 on this build (data/fighters care 0.0)');
+      // Encounter's count, as launchbiome_batch makes it: a launch_plan whose candidate list names PROP SMASH and whose chosen is a launch (not KNOCK BACK or STAY). Game Design's band is the pick share where it is offered.
+      const offeredPS = r => (r.events || []).filter(e => e.type === 'launch_plan' && (e.text || '').includes('PROP SMASH ') && e.chosen && e.chosen !== 'KNOCK BACK' && e.chosen !== 'STAY');
+      const nOff = sum(D.map(r => offeredPS(r).length)), nPick = sum(D.map(r => offeredPS(r).filter(e => e.chosen === 'PROP SMASH').length));
+      if (nOff) {
+        const ps = S.clusterShare(D, r => offeredPS(r).filter(e => e.chosen === 'PROP SMASH').length, r => offeredPS(r).length);
+        R.rate('5b.propSmash', '§5b', 'PROP SMASH is picked when it is offered (5 to 30%; Game Design, Encounter\'s count)', { v: ps.p, ci: ps.ci, lo: 0.05, hi: 0.30, note: `${nPick} picked of ${nOff} launch plans that offered it, in ${D.filter(r => offeredPS(r).length).length} of ${D.length} matches` });
+      } else R.pending('5b.propSmash', '§5b', 'PROP SMASH is picked when it is offered (5 to 30%)', 'never offered: launch_biome.json biome.enabled is false on main');
     } else R.pending('5b.reach', '§5b', 'Launches that pick a building, out of those with a candidate in reach (35 to 60%)', 'needs launch_plan events');
     R.pending('5b.chains', '§5b', 'Chains among brunts, chain lengths, the per-tier casualty budget for one chain (hard test), the launcher tier cap (hard test)', 'needs brunt-chain events (World, buildings-in-depth §4b); skeleton in qa/godot/pending-tests.js');
   }
