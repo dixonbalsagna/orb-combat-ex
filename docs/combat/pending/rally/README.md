@@ -12,7 +12,7 @@ Paper and parked data; nothing is built. The names are working labels for Narrat
 | :--- | :--- |
 | `protagonist.md`, `rival.md`, `empress.md`, `cyborg.md` | One page per fighter: his own links and his sell |
 | `rally.<fighter>.json` | The same as data, `combat.rally/1` (target `data/combat/rally/<fighter>.json`), with its draft schema `combat-rally.schema.json` |
-| `rally.scoring.json` | The choreographer's variety scoring, `director.rally/1` (target `data/director/rally.json`, Encounter's), with its draft schema `director-rally.schema.json` |
+| Live as `data/director/rally.json` (this park deleted 2026-10-30) | The choreographer's variety scoring, `director.rally/1` (Encounter's), with its schema `director-rally.schema.json` |
 
 ## 2. Each fighter's own links
 
