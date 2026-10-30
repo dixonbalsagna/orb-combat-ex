@@ -295,3 +295,7 @@ Never start Chrome from your own script (CLAUDE.md, machine discipline). Use `no
 - **Side-by-side:** `node tools/flash/side-by-side.mjs --left <frames> --right <frames> --out <dir>` (stills and a GIF; the look gate, ADR 0010).
 - **Parked grants, run in their parks' commits:** `docs/tools/pending/apply-combat-enders.cjs`, `apply-anim-clinch.cjs` and `apply-aura-fixtures.cjs` (each refuses until its data file is in the tree); Simulation's `grant_tools.py` of ricochet and hitstop2 and `grant_tools_fight.py` for boons, proved together on a scratch export.
 - **Landed:** the schema, map rule, xref and 18 cases for `data/narrative/opponent_grounds.json` (Narrative's draft; the schema keeps the feature grammar, the xref reads the vocabulary from ringpick.gd); the blast_cloud fixtures.
+
+## The private preview (2026-10-30)
+
+`node tools/preview/preview.mjs` builds main with the new planet's switches on in a scratch copy, checks that it boots and plays, and serves it on 127.0.0.1 for Orb's own browser; `--off <switch>` per switch to compare. Never published; the tree, `tools/site.json` and the live pin are untouched. [preview.md](preview.md).
