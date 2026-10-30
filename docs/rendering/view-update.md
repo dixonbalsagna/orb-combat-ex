@@ -31,7 +31,7 @@ The EP routed the other owners' parts to them.
 - **The culling** (`cull_to`). A copy wholly on one side of the pane's line, whose chunks are all already on that side, is passed over.
 - **Typed records.** The trees' and the buildings' records are read typed (`SimState.TreeState`, `SimState.Building`).
 
-**Measured** on the coast at x4. Both runs were marked invalid by the frame bench: the machine was saturated by other sessions, at 59 to 77% load. They are upper bounds, read side by side:
+**Measured** on the coast at x4. Both runs were marked invalid by the frame bench: the machine was saturated by other sessions, at 59 to 77% load. They are upper bounds, read side by side (the numbers to quote are the quiet-window re-bench, at the end of the pane sweep's section):
 
 | | Without | With |
 | :--- | :--- | :--- |
@@ -96,4 +96,21 @@ The check also tests the views with geometry of its own: a building whose parts 
 | x4: the view hand-off (`pv_see`: the frustum's span) | | | 0.21 |
 | x4: the view (p50) | 15.5 | 13.0 | 11.8 |
 
-The sweep's cost now follows what is in view and what changed, not the planet: 22 visits a frame (16 of them the slice) against 122. Re-bench in a quiet window for numbers to quote.
+The sweep's cost now follows what is in view and what changed, not the planet: 22 visits a frame (16 of them the slice) against 122.
+
+**The numbers to quote: the quiet-window re-bench,** 2026-10-30 at 3f20b487, same scene and flags, one export, one run a mode at below-normal priority. The frame bench marked every run valid (machine load 4 to 6% before each run, 13% during, 11 to 20% after). The ring's buildings have landed since the table above, so more are visited. Means, ms a frame, except the p50 and p95 rows:
+
+| | old (`noviewfast`, `nopanesweep`) | 27l (`nopanesweep`) | the sweep by view |
+| :--- | :--- | :--- | :--- |
+| buildings visited a frame | 234 | 234 | 36 |
+| x1: the planet's update | 0.76 | 0.48 | 0.18 |
+| x1: the building sweep (the refresh less the trees) | 0.67 | 0.38 | 0.08 |
+| x1: the view (p50) | 1.9 | 1.6 | 1.3 |
+| x1: the frame (p50 / p95) | 11.1 / 25.2 | 11.2 / 25.4 | 11.3 / 25.3 |
+| x4: the planet's update | 3.24 | 2.08 | 0.83 |
+| x4: the building sweep | 2.79 | 1.64 | 0.39 |
+| x4: the view hand-off (`pv_see`) | 0.01 | 0.00 | 0.11 |
+| x4: the view (p50) | 8.6 | 7.3 | 6.1 |
+| x4: the frame (p50 / p95) | 24.6 / 55.7 | 24.3 / 56.0 | 24.1 / 56.3 |
+
+The view's own cost falls by 2.5 ms at x4 (p50), and the building sweep by 2.4 ms of its 2.8. The whole frame hardly moves: its p50 falls by 0.5 ms at x4 and rises by 0.2 ms at x1, and its p95 doesn't fall. One run a mode can't separate that from noise, and why a 2.5 ms saving in the view doesn't reach the frame isn't traced.
