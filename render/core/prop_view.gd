@@ -6,28 +6,43 @@ extends RefCounted
 ## only on a world with fine ground (gen 2: matchProps is [] elsewhere).
 ##
 ## The ring's props are laid once for a world (the whole ring: about 400 on a gen 2 planet), each at its x, at its data
-## height (size x WorldGround.BH), in the strip's plane at Z (just behind the fighter plane), as the kind KINDS names,
-## drawn by the cover's shader: its foot on the ground as drawn, and, unlike the cover, standing in a crater too (it
-## still stands in the sim). One MultiMesh for each kind in each of RenderLook.COVER_CHUNKS spans of the planet, as the
-## cover's, so the frustum leaves out the spans off the screen.
+## height (size x WorldGround.BH; Art's caps for the small kinds, CAPS, and a flat kind's size as its width, FLAT), in
+## the strip's plane at Z (just behind the fighter plane), as the kind KINDS names, drawn by the cover's shader: its
+## foot on the ground as drawn (on a slope a little lower, FOOT_SINK), and, unlike the cover, standing in a crater too
+## (it still stands in the sim). One MultiMesh for each kind in each of RenderLook.COVER_CHUNKS spans of the planet, as
+## the cover's, so the frustum leaves out the spans off the screen.
 ##
 ## A prop a launch breaks (SimDir.brokenProps: the columns the director keeps broken) is gone on the frame its column
 ## is broken: a hard cut, the debris and dust doing the work (no fade, ADR 0010). A column's props are asked again only
 ## when the broken list changes, and only that column's: a fighter's ring holds four, so a fifth break lets the oldest
 ## stand again. Nothing else is done a frame. Render only: it reads the sim and writes nothing back.
 
-## World's prop kinds as Art's cover kinds (provisional: Art's call, docs/rendering/props.md). A kind not named here is
-## not drawn (a shell: Art has no shape for it yet). A lone tree is drawn as the tree Art's cover gives its biome.
+## World's prop kinds as Art's cover kinds (Art's rulings, docs/art/props-review.md). A kind not named here is not drawn
+## (a shell: Art has no shape for it yet). A lone tree is drawn as the tree Art's cover gives its biome.
 const KINDS: Dictionary = {
-	"grass": "tuft", "tall_grass": "dunegrass", "fern": "fern", "vine": "fern", "reeds": "reed", "scrub": "scrub",
+	"grass": "tuft", "tall_grass": "tuft", "fern": "fern", "vine": "fern", "reeds": "reed", "scrub": "scrub",
 	"boulder": "boulder", "lichen_rock": "boulder", "lava_rock": "boulder", "log": "driftwood", "driftwood": "driftwood",
 	"cactus": "cactus", "termite_mound": "termite", "ice_spire": "icespire", "snow_drift": "snowpatch", "puddle": "pool",
 	"vent": "vent", "berg": "berg",
 }
 const LONE_TREE: String = "lone_tree"
 const Z: float = -8.0 * RenderLook.WS   # the props' depth: just behind the fighter plane, where a launch meets them (Art's call)
+## Art's caps (ruling 3), in fighter heights: the small dense kinds are drawn at the cover's height, not the sim's. A
+## World kind drawn as one of these is scaled so that its largest size in ground.json draws at the cap, and its smaller
+## ones in proportion. Fern and reed already draw at the cover's heights.
+const CAPS: Dictionary = {"tuft": 0.45, "dunegrass": 0.45, "scrub": 0.7}
+## The flat kinds (Art's ruling 1, "any flat kind"): the sim size is the width, not the height. Driftwood is one: a log
+## lying on the ground, 17 units tall on Art's sheet; by its height a log was 6 to 13 fighter heights long.
+const FLAT: Array = ["snowpatch", "pool", "lavaflow", "driftwood"]
+## On a slope a prop's foot goes down to the lowest ground under it, by at most this share of its height (Art's call,
+## 2026-10-29: 0.35 if the boulders that still hang show in play; the cover shader's prop_sink), so it does not hang
+## over a crater's lip or a dune's fall.
+const FOOT_SINK: float = 0.25
+const FOOT_BAND: float = 0.04   # a shape's foot: its outline within this share of its height of the ground line
 
 static var ctl_frozen: bool = false     # tools only (props_check's failing control): the update does nothing
+static var _capk: Dictionary = {}       # World kind -> its cap's scale on the drawn height (CAPS)
+static var _foot: Dictionary = {}       # cover kind -> its foot's half-width in the mesh's frame
 var meshes: Array = []                  # [name, MultiMesh] for the planet copies (planet_view.gd)
 var count: int = 0                      # the props laid
 var shown := PackedByteArray()          # per prop: 1 drawn, 0 broken (for tools)
@@ -77,10 +92,11 @@ func build(S: SimState, g: GroundField) -> void:
 		var ck: String = RenderTrees._pick(RenderBiomeLook.name_of(pid), rng) if String(p.kind) == LONE_TREE else String(KINDS.get(String(p.kind), ""))
 		if ck == "" or not known.has(ck):
 			continue
-		var s: float = float(p.size) * WorldGround.BH * RenderCoverMeshes.height_scale(ck)
+		var s: float = drawn_scale(String(p.kind), ck, float(p.size))
 		var flip: float = -1.0 if rng.randf() < 0.5 else 1.0
 		var xf := Transform3D(Basis.from_scale(Vector3(s * flip, s, s)), Vector3(x, -RenderCoverMeshes.ground_line(ck) * s, Z))
-		var custom := Color((float(pid) + 0.5) / 32.0, 1.0 if CoverView.FLOAT_KINDS.has(ck) else 0.0, 0.0, 1.0)   # a: stands in a crater
+		var a: float = 1.0 + foot_half(ck) * s   # a: above 0.5 it stands in a crater; less 1, its foot's half-width in units
+		var custom := Color((float(pid) + 0.5) / 32.0, 1.0 if CoverView.FLOAT_KINDS.has(ck) else 0.0, 0.0, a)
 		var ch: int = clampi(int(x / w * float(RenderLook.COVER_CHUNKS)), 0, RenderLook.COVER_CHUNKS - 1)
 		if not per.has(ck):
 			per[ck] = []
@@ -159,6 +175,43 @@ func update(S: SimState) -> void:
 			var xf: Transform3D = _xf[i] if up == 1 else Transform3D(Basis.from_scale(Vector3.ZERO), Vector3(_x[i], 0.0, Z))
 			(_mm[i] as MultiMesh).set_instance_transform(_slot[i], xf)
 			placed[i] = xf
+
+
+## The scale of a World kind's prop of this size drawn as cover kind ck (its mesh's 1.0 in units): its data height,
+## under Art's cap for the small kinds; a flat kind's size is its width.
+static func drawn_scale(kind: String, ck: String, size: float) -> float:
+	if FLAT.has(ck):
+		return size * WorldGround.BH / maxf(RenderCoverMeshes.mesh(ck, false).get_aabb().size.x, 0.001)
+	return size * WorldGround.BH * RenderCoverMeshes.height_scale(ck) * cap_scale(kind, ck)
+
+
+## A World kind's cap's scale on its drawn height as cover kind ck: so that the kind's largest size in ground.json
+## draws at CAPS[ck] fighter heights (1 for a kind with no cap, or one already under it).
+static func cap_scale(kind: String, ck: String) -> float:
+	if not CAPS.has(ck):
+		return 1.0
+	if not _capk.has(kind):
+		var big: float = 0.0
+		for g in WorldGround.data().get("grounds", []):
+			for p in g.props:
+				if String(p.kind) == kind:
+					big = maxf(big, float(p.size[1]))
+		_capk[kind] = minf(1.0, float(CAPS[ck]) / big) if big > 0.0 else 1.0
+	return float(_capk[kind])
+
+
+## The half-width of cover kind ck's foot (the shape where it meets its ground line) in its mesh's frame.
+static func foot_half(ck: String) -> float:
+	if not _foot.has(ck):
+		var gl: float = RenderCoverMeshes.ground_line(ck)
+		var hw: float = 0.0
+		var m: ArrayMesh = RenderCoverMeshes.mesh(ck, false)
+		if m.get_surface_count() > 0:
+			for v: Vector3 in m.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+				if v.y <= gl + FOOT_BAND:
+					hw = maxf(hw, absf(v.x))
+		_foot[ck] = hw
+	return float(_foot[ck])
 
 
 ## The props in column c that are drawn now, as [x, World's kind] (for tools).

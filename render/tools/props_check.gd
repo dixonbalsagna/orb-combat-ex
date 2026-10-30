@@ -4,7 +4,8 @@ extends SceneTree
 ## 1. off: with the biome block off (as on main) a gen 2 match lays no props and its copies carry none, through a match
 ##    of AI play: nothing is added to the picture. With it on, the hand-made world (no fine ground) lays none either.
 ## 2. laid: with it on, a gen 2 match lays every prop matchProps gives the ring that has an Art shape (the others listed),
-##    each at its x and standing, and every prop copy carries them.
+##    each at its x and standing, and every prop copy carries them; sized as Art ruled (a flat kind by its width, the
+##    small kinds under their caps, the rest at World's size).
 ## 3. broken: PROP SMASH launches, staged as World's flighthooks_probe stages them (a gen 2 spot where the planner offers
 ##    it; the launch beat when it picks it, else the planner's own plan), played through the game's own frames. On the
 ##    frame the director's broken columns change, the prop the launch broke is gone from the view and the column draws
@@ -116,6 +117,49 @@ func _laid() -> void:
 			placed_ok = placed_ok and P.shown[i] == 1 and P.placed[i] == P._xf[i]
 		var np: int = PlanetView.prop_copies_each_side() * 2 + 1
 		ok(P.count == want and placed_ok and _copies_with_props() == np, "laid: gen 2 planet %d lays %d props of the ring's %d (%s not drawn: no Art shape), all standing, in all %d prop copies" % [sd, P.count, raw.size(), str(left), np])
+		_sized(P, raw, sd)
+
+
+## Art's sizes (docs/art/props-review.md): a flat kind's drawn width is World's size, a capped kind's drawn height is
+## at most its cap and in proportion to World's size (one ratio a World kind), any other kind's height is World's size.
+func _sized(P: RenderProps, raw: Array, sd: int) -> void:
+	var size: Dictionary = {}
+	for p in raw:
+		size[[float(p.x), String(p.kind)]] = float(p.size)
+	var by_mesh: Dictionary = {}
+	for k in RenderCoverMeshes.kinds():
+		by_mesh[RenderCoverMeshes.mesh(k, false)] = k
+	var bad: Array = []
+	var ratio: Dictionary = {}    # World kind -> drawn height over World's, for the capped kinds
+	var tall: Dictionary = {}     # capped cover kind -> the tallest drawn, in fighter heights
+	var n: Dictionary = {"flat": 0, "capped": 0, "other": 0}
+	for i in range(P.count):
+		var ck: String = String(by_mesh.get((P._mm[i] as MultiMesh).mesh, ""))
+		var want: float = float(size.get([P._x[i], P._kind[i]], -1.0)) * WorldGround.BH
+		var s: float = (P._xf[i] as Transform3D).basis.y.length()
+		var h: float = s / RenderCoverMeshes.height_scale(ck)
+		var err: String = ""
+		if ck == "" or want < 0.0:
+			err = "no kind or size"
+		elif RenderProps.FLAT.has(ck):
+			n.flat += 1
+			var w: float = RenderCoverMeshes.mesh(ck, false).get_aabb().size.x * s
+			if absf(w - want) > 0.01:
+				err = "flat %s %s wide, World's %s" % [ck, str(w), str(want)]
+		elif RenderProps.CAPS.has(ck):
+			n.capped += 1
+			var r: float = h / want
+			if h > float(RenderProps.CAPS[ck]) * WorldGround.BH + 0.01 or absf(r - float(ratio.get(P._kind[i], r))) > 0.000001:
+				err = "capped %s %s tall (ratio %s)" % [ck, str(h), str(r)]
+			ratio[P._kind[i]] = r
+			tall[ck] = maxf(float(tall.get(ck, 0.0)), h / WorldGround.BH)
+		else:
+			n.other += 1
+			if absf(h - want) > 0.01:
+				err = "%s %s tall, World's %s" % [ck, str(h), str(want)]
+		if err != "":
+			bad.append("%s at %s: %s" % [P._kind[i], str(P._x[i]), err])
+	ok(bad.is_empty() and n.flat + n.capped + n.other == P.count, "sized: planet %d's %d flat props as wide as World's size, %d capped props in proportion under their caps (tallest %s heights), %d others as tall as World's size%s" % [sd, n.flat, n.capped, str(tall), n.other, "" if bad.is_empty() else "; %d wrong, first: %s" % [bad.size(), bad[0]]])
 
 
 ## PROP SMASH's spots, as the probe finds them (at most PER_WORLD a ring): [planet, touch, x, side].

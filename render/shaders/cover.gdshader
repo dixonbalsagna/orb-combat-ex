@@ -1,7 +1,7 @@
 // The biomes' cover (biome rendering window 2; render/core/cover_view.gd, render/core/cover_meshes.gd): Art's flat
 // silhouettes standing in the strip's plane on the band's ground. Each instance's foot reads the ground under it as the
 // terrain draws it (ground4: craters, grooves and all), so a shape rises and falls with the ground, and a shape inside a
-// crater is gone (Art: the cover inside a crater is removed; a match's prop, render/core/prop_view.gd, stands). What floats (a whitecap, a floe) sits at the water's level.
+// crater is gone (Art: the cover inside a crater is removed; a match's prop, render/core/prop_view.gd, stands, and on a slope its foot sinks a little, prop_sink). What floats (a whitecap, a floe) sits at the water's level.
 // A vertex's colour is its palette slot (COLOR.r) and tone step (COLOR.g) in the palette of the biome it grows in
 // (INSTANCE_CUSTOM.r: RenderBiomeLook's column; the cover's rows from COVER_ROW), lit, mid and shade as Art drew it;
 // hazed into the sky as the ground is. A fellable tree (render/core/tree_view.gd) is drawn by this shader too: while it
@@ -22,6 +22,7 @@ uniform int cover_row = 12;        // RenderBiomeLook.COVER_ROW
 uniform vec4 tone_light : source_color = vec4(1.0, 0.965, 0.878, 1.0);   // RenderCoverMeshes.TONE_LIGHT and TONE_DARK (Art's lite() and dark())
 uniform vec4 tone_dark : source_color = vec4(0.047, 0.039, 0.078, 1.0);
 uniform vec4 char_col : source_color = vec4(0.173, 0.149, 0.133, 1.0);   // RenderCoverMeshes.CHAR_COLOUR: a burning crown
+uniform float prop_sink = 0.0;     // RenderProps.FOOT_SINK: how far a prop's foot may sink on a slope, a share of its height
 
 varying vec3 v_col;
 varying vec3 v_view;
@@ -39,6 +40,16 @@ void vertex() {
 	int i = int(xm / col_w) % nc;
 	vec4 g = ground4(i, xm, z, false, 0.0);
 	float foot = INSTANCE_CUSTOM.g > 0.5 ? max(g.x, 0.0) : g.x;
+	if (INSTANCE_CUSTOM.a > 1.5 && INSTANCE_CUSTOM.g < 0.5) {
+		// a match's prop on a slope: its foot (a less 1 each side, in units) goes down to the lowest ground under it, by at most prop_sink of its height
+		float hw = INSTANCE_CUSTOM.a - 1.0;
+		float xl = xm - hw;
+		xl -= world_w * floor(xl / world_w);
+		float xr = xm + hw;
+		xr -= world_w * floor(xr / world_w);
+		float lo = min(ground4(int(xl / col_w) % nc, xl, z, false, 0.0).x, ground4(int(xr / col_w) % nc, xr, z, false, 0.0).x);
+		foot = max(min(foot, lo), foot - prop_sink * length(MODEL_MATRIX[1].xyz));
+	}
 	VERTEX.y += foot / length(MODEL_MATRIX[1].xyz);
 	VERTEX = g.w < -dent_min && INSTANCE_CUSTOM.a < 0.5 ? vec3(0.0) : VERTEX;   // inside a crater: gone (all its corners meet); a match's prop (INSTANCE_CUSTOM.a 1, prop_view.gd) stands, as it does in the sim
 	int b = int(INSTANCE_CUSTOM.r * 32.0);

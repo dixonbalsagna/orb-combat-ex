@@ -1524,6 +1524,7 @@ func _make_materials() -> void:
 	_cover_mat.set_shader_parameter("cover_row", RenderBiomeLook.COVER_ROW)
 	_cover_mat.set_shader_parameter("tone_light", RenderCoverMeshes.TONE_LIGHT)
 	_cover_mat.set_shader_parameter("tone_dark", RenderCoverMeshes.TONE_DARK)
+	_cover_mat.set_shader_parameter("prop_sink", RenderProps.FOOT_SINK)
 	_tree_mat = ShaderMaterial.new()   # the fellable trees: the cover's shader (tree_view.gd)
 	_tree_mat.shader = COVER_SHADER
 	_tree_mat.set_shader_parameter("biome_pal", RenderBiomeLook.texture())

@@ -10,10 +10,13 @@ World's props are the sim's own: boulders, lone trees, bergs, ferns and the rest
 
 ## How it draws
 
-- **The whole ring, once a world.** Each prop stands at its x, at its data height (`size` x `WorldGround.BH`, 75 units a fighter height).
+- **The whole ring, once a world.** Each prop stands at its x, at its data height (`size` x `WorldGround.BH`, 75 units a fighter height), with Art's two exceptions (`docs/art/props-review.md`):
+  - **The small dense kinds are capped** (`RenderProps.CAPS`): tuft and dune grass at 0.45 fighter heights, scrub at 0.7. A World kind drawn as one of these is scaled so its largest size in `ground.json` draws at the cap, the smaller ones in proportion. Grass draws 0.23 to 0.45 heights, tall grass 0.24 to 0.45, scrub 0.35 to 0.7 (the sim's are two to three times that). Fern and reed already draw at the cover's heights.
+  - **The flat kinds take the size as their width** (`RenderProps.FLAT`): snow patch, pool, lava flow and driftwood. A snow drift is 0.6 to 1.8 heights wide, not tall. Driftwood, a log lying down, is one too: by its height a log drew 6 to 13 fighter heights long.
 - **Its depth** is `RenderProps.Z`: just behind the fighter plane, where a launch meets it.
 - **Its shape** is Art's cover silhouette for its kind (`RenderProps.KINDS`). A lone tree is the tree Art's cover gives its biome. Bergs that are cells are not drawn: the terrain stands there as the berg.
 - **The cover's shader** draws it, with its biome's palette, its foot on the ground as drawn. Unlike the cover, a prop stands in a crater too: it still stands in the sim.
+- **On a slope its foot goes down** to the lowest ground under it (read at the ends of its foot, the shape's outline at its ground line), by at most `RenderProps.FOOT_SINK` of its height (the shader's `prop_sink`). A prop's custom `a` is 1 plus its foot's half-width in units; the cover and the trees write 0 and are drawn as before.
 - **One MultiMesh a kind in each of `RenderLook.COVER_CHUNKS` spans,** as the cover's, so the frustum leaves out the spans off the screen.
 - **Cost:** at the build, the ring's query (about 25 ms natively on a gen 2 ring of 4,800 columns). A frame reads the director's broken columns (two fighters, four each) and compares them with the last; nothing else.
 
@@ -24,22 +27,22 @@ World's props are the sim's own: boulders, lone trees, bergs, ferns and the rest
 - A fighter's ring holds four. A fifth break lets the oldest stand again, and it is drawn again.
 - It is drawn again on a rebuild (a new match, World's turn) only if the sim has it standing.
 
-## The kinds (provisional: Art's call)
+## The kinds (Art's rulings, `docs/art/props-review.md`)
 
 | World's kind | Art's cover kind |
 | :--- | :--- |
 | grass | tuft |
-| tall_grass | dunegrass |
+| tall_grass | tuft (the savanna's gold grass) |
 | fern, vine | fern |
 | reeds | reed |
 | scrub | scrub |
 | boulder, lichen_rock, lava_rock | boulder |
-| log, driftwood | driftwood |
+| log, driftwood | driftwood (flat: the size is its length) |
 | cactus | cactus |
 | termite_mound | termite |
 | ice_spire | icespire |
-| snow_drift | snowpatch |
-| puddle | pool |
+| snow_drift | snowpatch (flat) |
+| puddle | pool (flat) |
 | vent | vent |
 | berg | berg |
 | lone_tree | the biome's tree (acacia on savanna, palm on the beach) |
@@ -54,12 +57,13 @@ The scenes, with the switch on (`docs/rendering/tools/props-hook.mjs` makes a sc
 3. **A prop in a crater:** a slam beside a boulder. The prop stands in the bowl, as the sim has it.
 4. **Split screen:** a prop in the second pane's view.
 
-The kind map, `RenderProps.Z`, and whether the densest small kinds (grass, tall grass, ferns, reeds) belong on the fighter plane at all, are Art's to set.
+Art ruled on the kind map, `RenderProps.Z` and the small kinds on the fighter plane in `docs/art/props-review.md` (2026-10-29); the sizes above follow it.
 
 ## The check
 
 `render/tools/props_check.gd`:
 - **off:** with the switch off, gen 2 lays nothing through a match of AI play. With it on, the hand-made world lays nothing.
 - **laid:** with it on, the ring's props are laid, standing, in every prop copy.
+- **sized:** a flat kind's drawn width is World's size, a capped kind's drawn height is at most its cap and in one proportion to World's size for each World kind, and every other kind's height is World's size.
 - **broken:** PROP SMASH launches staged as World's `flighthooks_probe` stages them, played through the game's own frames. On the frame the director's broken columns change, the broken prop is gone and the column draws what `matchProps` says stands there. Every other prop is as it was laid.
 - **control:** with the update switched off, the broken props stay drawn, so the check must fail.
