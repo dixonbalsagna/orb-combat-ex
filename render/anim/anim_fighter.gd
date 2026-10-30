@@ -721,7 +721,7 @@ func _loco_layer(S: SimState, f, dt: float) -> void:
 		q[ix["spine_2"]] = q[ix["spine_2"]] * Quaternion(Vector3(0, 0, 1), -absf(roll) * float(B.get("lean_in", 0.35)))
 	# the hover breathes: the chest and the shoulders rise and settle, the head eases against them, the hips float, at his own rate and depth
 	var H: Dictionary = L.hover
-	var g: float = WorldTerrain.groundY(S, f.x, f.z)
+	var g: float = WorldWater.floorAt(S, f.x, f.z)
 	var airborne: float = smoothstep(float(H.get("off_ground", 8.0)) * 0.5, float(H.get("off_ground", 8.0)) * 2.0, f.y - g)
 	var still: float = 1.0 - smoothstep(float(H.get("still_speed", 140.0)) * 0.5, float(H.get("still_speed", 140.0)), speed)
 	var hv: float = still * airborne * a
@@ -848,7 +848,7 @@ func _air_recover_layer(S: SimState, f, dt: float) -> void:
 	var st: String = String(f.state)
 	var T: float = S.T
 	if not Rc.is_empty() and RenderAnim.air_recover and st == "free" and (_ar_prev == "launched" or _ar_prev == "dropped") and f.rush == null:
-		var g: float = WorldTerrain.groundY(S, f.x, f.z)
+		var g: float = WorldWater.floorAt(S, f.x, f.z)
 		var spd: float = Vector2(f.vx, f.vy).length()
 		spd = maxf(spd, _ar_speed)
 		if f.y - g > float(Rc.get("min_air", 40.0)) and spd > float(Rc.get("min_speed", 250.0)):
@@ -901,7 +901,7 @@ func _ground_layer(S: SimState, f, dt: float) -> void:
 	var ex = S.dirS.ex
 	var busy: bool = f.state != "free" or f.rush != null or (ex != null and (ex.A == f or ex.D == f)) or f.beamCharge != null or not _gr.is_empty() or not _rc.is_empty() or not _ack.is_empty()
 	_gl_act = move_toward(_gl_act, 0.0 if busy else 1.0, dt * 60.0 / maxf(float(G.get("enter_ticks", 8)), 6.0))
-	var g: float = WorldTerrain.groundY(S, f.x, f.z)
+	var g: float = WorldWater.floorAt(S, f.x, f.z)
 	var grounded: bool = f.y - g < 6.0 and f.state == "free"
 	var vy: float = f.vy
 	var vf: float = f.vx * vface
@@ -1486,9 +1486,9 @@ func _pair_pick(S: SimState, f, ex, ordinal: int, heavy: bool, piece: String = "
 		var open: bool = false
 		match String(g.gate):
 			"both_ground":
-				open = f.y - WorldTerrain.groundY(S, f.x, f.z) < 8.0 and opp != null and opp.y - WorldTerrain.groundY(S, opp.x, opp.z) < 8.0
+				open = f.y - WorldWater.floorAt(S, f.x, f.z) < 8.0 and opp != null and opp.y - WorldWater.floorAt(S, opp.x, opp.z) < 8.0
 			"striker_air":
-				open = f.y - WorldTerrain.groundY(S, f.x, f.z) > 20.0
+				open = f.y - WorldWater.floorAt(S, f.x, f.z) > 20.0
 		if open:
 			cand.append(String(g.id))
 	var n: int = cand.size()
@@ -1579,7 +1579,7 @@ func on_blast_cue(kind: String, T: float, S: SimState, f) -> void:
 				_en_play_seq(String(_en_role("volley").seq), T)
 		"taunt_close":
 			var rt: Dictionary = _en_role("taunt_close")
-			if f.y - WorldTerrain.groundY(S, f.x, f.z) > 20.0 and _en_role("taunt_close_air").has("seq"):   # in the air its first phase needs the ground: his own start for it, in the same 60 ticks
+			if f.y - WorldWater.floorAt(S, f.x, f.z) > 20.0 and _en_role("taunt_close_air").has("seq"):   # in the air its first phase needs the ground: his own start for it, in the same 60 ticks
 				rt = _en_role("taunt_close_air")
 			if rt.has("seq"):
 				_en_play_seq(String(rt.seq), T)
@@ -2268,7 +2268,7 @@ func _depth_read(S: SimState, f, dt: float) -> void:
 ## crosses, then the far foot catches up), mixed by the footfall phase of the distance he has moved (a footfall every 36 units); the stepping side follows the direction (the mirrored pair for the other way).
 ## Only on the ground, and only when he is free: a blow, a cue or a reaction draws over it.
 func _depth_step_layer(S: SimState, f) -> void:
-	if not depth_on or f.state != "free" or absf(f.y - WorldTerrain.groundY(S, f.x, f.z)) > 8.0:
+	if not depth_on or f.state != "free" or absf(f.y - WorldWater.floorAt(S, f.x, f.z)) > 8.0:
 		return
 	var v: float = absf(depth_vz)
 	if v < 0.25:
@@ -2770,7 +2770,7 @@ func _target_base(S: SimState, f, T: float) -> void:
 		# the variants: hovering (feet off the ground), climbing, diving; on the ground a winded idle when the ki is spent and
 		# a relaxed one far from the opponent
 		if state == "free" and w1 < 0.05 and w2 < 0.05:
-			var air: float = smoothstep(30.0, 70.0, f.y - WorldTerrain.groundY(S, f.x, f.z))
+			var air: float = smoothstep(30.0, 70.0, f.y - WorldWater.floorAt(S, f.x, f.z))
 			if air > 0.0:
 				w4 = air
 				_air_w = air
@@ -2918,9 +2918,9 @@ func _live_pick(S: SimState, f, ex, ordinal: int, heavy: bool) -> String:
 		var open: bool = false
 		match String(g.gate):
 			"both_ground":
-				open = f.y - WorldTerrain.groundY(S, f.x, f.z) < 8.0 and opp != null and opp.y - WorldTerrain.groundY(S, opp.x, opp.z) < 8.0
+				open = f.y - WorldWater.floorAt(S, f.x, f.z) < 8.0 and opp != null and opp.y - WorldWater.floorAt(S, opp.x, opp.z) < 8.0
 			"striker_air":
-				open = f.y - WorldTerrain.groundY(S, f.x, f.z) > 20.0
+				open = f.y - WorldWater.floorAt(S, f.x, f.z) > 20.0
 		if open:
 			cand.append(String(g.keyset))
 	var n: int = cand.size()
@@ -4522,7 +4522,7 @@ func _rd_tick(S: SimState, f, dt: float) -> void:
 		flail = (1.0 - smoothstep(AnimRagdoll.flail_fade.x * fdur, AnimRagdoll.flail_fade.y * fdur, f.stateT)) * (1.0 - tuck)
 		flail *= 1.0 - _ab_w
 		if f.vy < -200.0 and f.aimB < 0:
-			var h: float = f.y - WorldTerrain.groundY(S, f.x, f.z)
+			var h: float = f.y - WorldWater.floorAt(S, f.x, f.z)
 			if h > 0.0:
 				var tc: float = (f.vy + sqrt(f.vy * f.vy + 2000.0 * h)) / 1000.0
 				brace = 1.0 - smoothstep(AnimRagdoll.brace_time.x, AnimRagdoll.brace_time.y, tc)

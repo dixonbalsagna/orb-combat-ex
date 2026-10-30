@@ -534,7 +534,7 @@ static func _taunt_ctx(S: SimState, f) -> Dictionary:
 	for fo in S.fighters:
 		if fighter(S, fo)._hit_n > 0:
 			traded = true
-	return {"air": f.y - WorldTerrain.groundY(S, f.x, f.z) > 20.0, "traded": traded}
+	return {"air": f.y - WorldWater.floorAt(S, f.x, f.z) > 20.0, "traded": traded}
 
 
 ## A field of an event that may not exist yet (World's ground-contact events arrive with their fields; until then the event is not sent).

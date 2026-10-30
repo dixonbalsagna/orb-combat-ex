@@ -2960,6 +2960,64 @@ func _tick_hash(fast: bool, ticks: int) -> Array:
 	return [h, launched]
 
 
+## Standing on the water (docs/animation/water-stance.md). With World's floor on a fighter in deep water stands on the sheet, far above the bed, and the render's "how high off the ground" reads used the bed: at 120 deep he read as
+## flying, dropped his guard stance and took the airborne idle. They read the floor now. The pair is set down on the ring's own water at several depths with the floor on: at every depth neither is held in the air (the
+## airborne idle weight is 0, the ground read says grounded), the same as on dry ground; with the floor off, the same pair on the bed reads the same.
+func _water_stance_probe(S: SimState, col: int, floor_on: bool) -> Dictionary:
+	WorldFill.setFloor(floor_on)
+	var res := {"air": 0.0, "grounded": 0, "h": 0.0}
+	for i in range(2):
+		var f = S.fighters[i]
+		f.x = SimWrap.wrap((float(col) + 0.5) * SimConst.COL + 60.0 * float(i))
+		f.y = WorldWater.floorAt(S, f.x)
+		f.vx = 0.0
+		f.vy = 0.0
+		f.state = "free"
+		f.rush = null
+	S.dirS.ex = null
+	for k in range(60):
+		main.frame(1.0 / 60.0)
+		for i in range(2):
+			var f = S.fighters[i]
+			f.y = WorldWater.floorAt(S, f.x)
+			f.vy = 0.0
+	for i in range(2):
+		var af: AnimFighter = RenderAnim.fighter(S, S.fighters[i])
+		res.air = maxf(res.air, af._air_w)
+		res.grounded += 1 if af._gl_grounded else 0
+		res.h = maxf(res.h, S.fighters[i].y - WorldWater.floorAt(S, S.fighters[i].x))
+	return res
+
+
+func _test_water_stance() -> void:
+	RenderAnim._fighters.clear()
+	main.start_match(7, {"p1": false, "p2": false})
+	for i in range(6):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var bad: Array = []
+	var seen: Array = []
+	for want in [20.0, 60.0, 120.0, 600.0]:
+		var best: int = -1
+		for i in range(SimConst.NC):
+			if S.water[i] >= WorldWater.MIN_DEPTH and (best < 0 or absf(S.water[i] - want) < absf(S.water[best] - want)):
+				best = i
+		if best < 0:
+			continue
+		var d: float = S.water[best]
+		if seen.has(snappedf(d, 1.0)):
+			continue
+		seen.append(snappedf(d, 1.0))
+		for on in [true, false]:
+			RenderAnim._fighters.clear()
+			var r: Dictionary = _water_stance_probe(S, best, on)
+			if r.air > 0.0 or r.grounded != 2 or r.h > 8.0:
+				bad.append("depth %.0f floor %s: airborne weight %.2f, grounded %d of 2, %.0f off the floor" % [d, str(on), r.air, r.grounded, r.h])
+	WorldFill.setFloor(false)
+	_expect(bad.is_empty() and seen.size() >= 1, "standing on the water: the pair at %s deep holds the ground stance with the floor on and off: %s" % [str(seen), str(bad)])
+	print("water stance: depths %s, no fighter read as airborne on the floor" % str(seen))
+
+
 func _test_tick_fast() -> void:
 	var fast: Array = _tick_hash(true, 1200)
 	var before: Array = _tick_hash(false, 1200)
@@ -6763,6 +6821,7 @@ func _run() -> void:
 	_test_gestures()
 	_test_joints()
 	_test_held()
+	_test_water_stance()   # last: it runs a match with the floor switched on, and what that leaves in the sim's statics is not undone
 	RenderAnim.enabled = true
 	RenderAnim.style_override = ""
 	RenderAnim.debug_checks = false
