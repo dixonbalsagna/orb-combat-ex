@@ -293747,6 +293747,54 @@
       }
     },
     {
+      "id": "fire-enabled-not-boolean",
+      "schema": "biomes-fire.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/fire.json",
+          "set": {
+            "/enabled": "on"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "fire-burn-ticks-one",
+      "schema": "biomes-fire.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/fire.json",
+          "set": {
+            "/burn/ticks": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/burn/ticks"
+      }
+    },
+    {
+      "id": "fire-chance-over-one",
+      "schema": "biomes-fire.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/fire.json",
+          "set": {
+            "/ignite/chance": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/ignite/chance"
+      }
+    },
+    {
       "id": "rings-turn-bearing-over-10",
       "schema": "biomes-rings.schema.json",
       "mutate": [

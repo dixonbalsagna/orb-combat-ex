@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-fire",
+  "title": "biomes.fire/1",
+  "description": "data/biomes/fire.json: fires in the forests (docs/world/forest-fire.md; WorldFire). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore. Order checks and biome names are WorldFire's own load and fire_check.",
+  "type": "object",
+  "required": [
+    "schema",
+    "_about",
+    "enabled",
+    "ignite",
+    "burn",
+    "flammable"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "biomes.fire/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "Fires in the forests on or off; off, nothing in WorldFire runs and the trees are as they were."
+    },
+    "ignite": {
+      "type": "object",
+      "required": [
+        "bandLo",
+        "bandHi",
+        "chance"
+      ],
+      "additionalProperties": false,
+      "description": "Where a blast lights trees.",
+      "properties": {
+        "bandLo": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0,
+          "description": "Trees from this share of a blast's radius out may catch (inside 0.7 they are felled)."
+        },
+        "bandHi": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10.0,
+          "description": "Up to this share (above bandLo: WorldFire's load)."
+        },
+        "chance": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "The chance, times the ground's flammability."
+        }
+      }
+    },
+    "burn": {
+      "type": "object",
+      "required": [
+        "ticks",
+        "spreadRadius",
+        "spread",
+        "every",
+        "maxBurning",
+        "quenchDepth"
+      ],
+      "additionalProperties": false,
+      "description": "A burning tree.",
+      "properties": {
+        "ticks": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 100000,
+          "description": "Ticks a tree burns before it is dead and charred."
+        },
+        "spreadRadius": {
+          "type": "number",
+          "exclusiveMinimum": 0.0,
+          "maximum": 100000.0,
+          "description": "A burning tree may light a tree within this many units."
+        },
+        "spread": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1000.0,
+          "description": "The chance a second at point-blank, falling with distance, times the flammability."
+        },
+        "every": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "Spread is tried every this many ticks."
+        },
+        "maxBurning": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000,
+          "description": "At most this many trees burn at once."
+        },
+        "quenchDepth": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10000.0,
+          "description": "Water deeper than this at a tree's column puts it out."
+        }
+      }
+    },
+    "flammable": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "description": "How readily the biome burns."
+      },
+      "description": "By biome name (the fine name on a gen 2 planet); a biome not listed does not burn. Names are checked by WorldFire's load."
+    }
+  }
+}

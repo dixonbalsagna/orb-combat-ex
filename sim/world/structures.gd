@@ -622,6 +622,8 @@ static func damageArea(S: SimState, x: float, y: float, r0: float, dmg: float, c
 				SimFx.debris(S, t.x, WorldTerrain.groundY(S, t.x) + t.h * 0.8, 6, "#6b4f2a", 320.0)
 			elif treeMode != "fell":
 				SimFx.fire(S, t.x, WorldTerrain.groundY(S, t.x), 2)
+	if WorldFire.on() and (treeMode == "area" or treeMode == "burn"):   # window 18: the trees just beyond the felled ring may catch (the modes that carry the fire cue)
+		WorldFire.ignite(S, x, y, r)
 	return levelled
 
 

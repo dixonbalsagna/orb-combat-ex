@@ -1,0 +1,26 @@
+{
+  "schema": "biomes.fire/1",
+  "_about": "Fires in the forests (docs/world/forest-fire.md; read by sim/world/fire.gd). enabled: off, nothing here runs and the trees are as they were. ignite: a blast or a beam's sample of radius r fells the trees inside 0.7 r; the trees from bandLo to bandHi of r that still stand may catch, with `chance` times the ground's flammability. burn: a burning tree burns for `ticks` ticks (a tree's burn runs from 0 to 1; at 1 it is dead and charred), every `every` ticks may light a tree within spreadRadius units with a chance `spread` a second at point-blank (falling with distance, times the flammability), at most maxBurning trees at once, and goes out in water deeper than quenchDepth. flammable: how readily each biome burns, 0 to 1, by the fine biome name on a gen 2 planet or the biome's name elsewhere (a biome not listed does not burn). A fire never hurts a fighter, a building or a person: it is a look.",
+  "enabled": false,
+  "ignite": {
+    "bandLo": 0.7,
+    "bandHi": 1.3,
+    "chance": 0.6
+  },
+  "burn": {
+    "ticks": 360,
+    "spreadRadius": 280.0,
+    "spread": 0.15,
+    "every": 6,
+    "maxBurning": 80,
+    "quenchDepth": 1.0
+  },
+  "flammable": {
+    "forest": 1.0,
+    "taiga": 0.8,
+    "savanna": 0.7,
+    "plains": 0.3,
+    "jungle": 0.3,
+    "highland": 0.1
+  }
+}

@@ -142,6 +142,9 @@ static func dataHash() -> String:
 	if WorldFill.surfaceOn():
 		h.text("biomes.surface")
 		FighterData._canon(h, WorldFill.data().surface)   # the surfacing rule, on: a replay must know
+	if WorldFire.on():
+		h.text("biomes.fire")
+		FighterData._canon(h, WorldFire.data())   # the fires in the forests, on: a replay must know
 	if skateOn():
 		h.text("biomes.skate")
 		FighterData._canon(h, _skateParsed)   # the parsed data without the "_" notes, like contact.json: a changed note keeps old replays

@@ -472,6 +472,10 @@
       "schema": "biomes-craters.schema.json"
     },
     {
+      "match": "data/biomes/fire.json",
+      "schema": "biomes-fire.schema.json"
+    },
+    {
       "match": "data/biomes/rivers.json",
       "schema": "biomes-rivers.schema.json"
     },

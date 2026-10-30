@@ -170,6 +170,8 @@ static func step(S: SimState) -> void:
 	S.waterTick += 1.0
 	if S.aftermathJobs.size() > 0:
 		WorldAfter.step(S)   # a beam's aftermath (after.gd): its timed jobs, every unfrozen tick
+	if WorldFire.on():   # window 18: the burning trees, a tick (nothing runs when none burns)
+		WorldFire.step(S)
 	if S.waterWin.is_empty() or int(S.waterTick) % STEP_TICKS != 0:
 		return
 	var NC: int = SimConst.NC
