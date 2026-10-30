@@ -293,6 +293,15 @@ func _shore_levels(S: SimState) -> void:
 				shore[i] = lv
 
 
+## Is column i drawn under standing water, as water.gdshaderinc has it? Water in the column, or dry land at most
+## RenderLook.SHORE_FLOOD under the level beside it (row 20). Deeper low land beside water stays dry.
+func flooded(S: SimState, i: int) -> bool:
+	if S.water[i] >= WorldWater.MIN_DEPTH:
+		return true
+	var below: float = shore[i] - (S.base[i] + S.deform[i])
+	return shore[i] > NO_SHORE * 0.5 and below > 0.0 and below <= RenderLook.SHORE_FLOOD
+
+
 ## The shore levels again within RenderLook.SHORE_COLS of the columns whose ground or water changed (the same answer
 ## as _shore_levels, for the few columns a tick touches).
 func _shore_near(S: SimState, moved: PackedInt32Array) -> void:

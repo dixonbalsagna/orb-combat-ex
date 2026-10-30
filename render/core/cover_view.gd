@@ -6,7 +6,8 @@ extends RefCounted
 ## strip, a height range): trees, tufts, boulders, cacti, reeds, firs and the rest, as Art's flat silhouettes
 ## (RenderCoverMeshes) standing in the strip's plane. Across a border's zone each shape takes the neighbour's cover by
 ## the zone's band share (Art: the cover mixes by probability), and the zone has its own ecotone covers (Art's pairs).
-## A water column carries only what floats or stands in the sea. No cover where the band's buildings stand, in the
+## A water column carries only what floats or stands in the sea, and where a river or a lake is drawn (a gen 2 ring's,
+## S.planetRing's lakes; GroundField.flooded) there is no land cover. No cover where the band's buildings stand, in the
 ## city or the village (their streets and houses are theirs), or in front of the fighter plane.
 ##
 ## Made once for a world (the band's biomes, the buildings), the same in every pane and every copy: one MultiMesh for
@@ -18,10 +19,15 @@ extends RefCounted
 const STRIP: float = 1200.0   # Art's window: the cover counts are per this much of the strip
 const WATER_KINDS: Array = ["whitecap", "floeblock", "berg", "stack", "foam"]   # what stands or floats in the sea
 const FLOAT_KINDS: Array = ["whitecap", "floeblock", "berg", "foam"]            # what floats at the water's level
+const NO_FLIP: Array = ["krummholz"]   # never mirrored: its lean is its shape (Art), and its lit face stays on the left
 const SAME: Dictionary = {"foam": "whitecap"}   # a kind Art's data names that is drawn as another (draw.mjs: foam is a small whitecap)
 
+static var record: bool = false         # tools only: laid collects what a build places (a headless run keeps no MultiMesh data)
+static var ctl_in_water: bool = false   # tools only (cover_water_check's failing control): land cover stands in rivers and lakes again
 var meshes: Array = []   # [kind, chunk, MultiMesh] for the planet copies (planet_view.gd)
 var count: int = 0       # the shapes placed
+var laid: Array = []     # tools only: [x, z, kind, flip], in the order placed
+var in_water: int = 0    # the land shapes a river or a lake kept out of this build
 
 
 ## Grow the cover for the world in S (its band's biomes, its buildings) on ground field g (the zone rows). seed: the
@@ -29,6 +35,8 @@ var count: int = 0       # the shapes placed
 func build(S: SimState, g: GroundField, seed: int) -> void:
 	meshes.clear()
 	count = 0
+	laid.clear()
+	in_water = 0
 	var nc: int = SimConst.NC
 	var w: float = SimConst.W
 	var bio: PackedFloat32Array = g.row_bytes(GroundField.ROW_BIOME).to_float32_array()
@@ -39,6 +47,7 @@ func build(S: SimState, g: GroundField, seed: int) -> void:
 	var per: Dictionary = {}   # kind -> [[Transform3D, palette id, floats], ...] by chunk
 	var strips: int = int(ceil(w / STRIP))
 	var near: Array = _buildings_by_strip(S, strips)
+	var lakes: Array = S.planetRing.get("lakes", []) if S.planetRing is Dictionary else []
 	var rng := RandomNumberGenerator.new()
 	for si in range(strips):
 		for li in range(RenderLook.COVER_LAYERS.size()):
@@ -80,7 +89,13 @@ func build(S: SimState, g: GroundField, seed: int) -> void:
 				var hr: Array = e.get("h", [RenderCoverMeshes.DRAW_H.get(kind, 50.0), RenderCoverMeshes.DRAW_H.get(kind, 50.0)])
 				var h: float = lerpf(float(hr[0]), float(hr[1]), rng.randf())
 				var s: float = h * RenderCoverMeshes.height_scale(kind)
-				var flip: float = -1.0 if rng.randf() < 0.5 else 1.0
+				var flip: float = -1.0 if rng.randf() < 0.5 and not NO_FLIP.has(kind) else 1.0
+				# After the shape's own draws, so the rest of its strip grows as it would: only this shape is gone.
+				if not wet and not lakes.is_empty() and not ctl_in_water and g.flooded(S, col) and _lake_level(lakes, g.shore[col]):
+					in_water += 1
+					continue
+				if record:
+					laid.append([x, z, kind, flip])
 				var xf := Transform3D(Basis.from_scale(Vector3(s * flip, s, s)), Vector3(x, -RenderCoverMeshes.ground_line(kind) * s, z))
 				var ch: int = mini(int(x / w * float(RenderLook.COVER_CHUNKS)), RenderLook.COVER_CHUNKS - 1)
 				if not per.has(kind):
@@ -153,6 +168,14 @@ static func _cover_pick(name: String, rng: RandomNumberGenerator) -> Dictionary:
 
 
 ## An ecotone cover of the pair (Art's "neighbours": the covers that appear only where the two meet), or "".
+## Is lv the level of one of this ring's rivers or lakes? (The sea's is another level, so its shallows keep their cover.)
+static func _lake_level(lakes: Array, lv: float) -> bool:
+	for lk in lakes:
+		if absf(float(lk[2]) - lv) < 1.0:
+			return true
+	return false
+
+
 static func _eco(a: String, b: String, rng: RandomNumberGenerator) -> String:
 	for pair in [[a, b], [b, a]]:
 		for nb in RenderBiomeLook.entry(pair[0]).get("neighbours", []):

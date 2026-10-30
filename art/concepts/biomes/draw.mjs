@@ -157,7 +157,14 @@ export const COVER = {
   shrub(c, x, y, h) { const { f, pal, state, rnd } = c; if (state === 'burned') return stubs(c, x, y, h, 5, 40); const v = col3(pal, 'v', state); fan(f, [x, y + h * 0.4], blob([x, y + h * 0.4], h * 0.7, h * 0.4, 7, rnd, 0.15), v); },
   tuft(c, x, y, h) { const { f, pal, state, rnd } = c; if (state === 'burned') return stubs(c, x, y, h, 5, 26); const v = col3(pal, 'v2', state); for (let i = 0; i < 7; i++) { const bx = x + (i - 3) * 3.2, lean = (i - 3) * h * 0.1 + (rnd() - 0.5) * 6; f.poly([[bx - 1.8, y], [bx + 1.8, y], [bx + lean, y + h * (0.7 + rnd() * 0.5)]], [v[0], v[1], v[2]][i % 3], { key: false }); } },
   dunegrass(c, x, y, h) { const { f, pal, state, rnd } = c; if (state === 'burned') return stubs(c, x, y, h, 5, 26); const v = col3(pal, 'v2', state); for (let i = 0; i < 6; i++) { const bx = x + (i - 3) * 3, lean = (i - 3) * h * 0.22; f.poly([[bx - 1.4, y], [bx + 1.4, y], [bx + lean, y + h * (0.8 + rnd() * 0.4)]], [v[0], v[1]][i % 2], { key: false }); } },
-  krummholz(c, x, y, h) { const { f, pal, state, rnd } = c; if (state === 'burned') return charredTree(c, x, y, h, 3); const v = col3(pal, 'v', state); f.poly([[x - 3, y], [x + 3, y], [x + 8, y + h * 0.45], [x + 3, y + h * 0.5]], pal.t); for (const dx of [0.4, 0.9, 1.3]) fan(f, [x + h * dx * 0.5, y + h * (0.5 + dx * 0.05)], blob([x + h * dx * 0.5, y + h * (0.5 + dx * 0.05)], h * 0.34, h * 0.2, 7, rnd, 0.14), v); f.poly([[x + h * 0.1, y + h * 0.66], [x + h * 0.55, y + h * 0.74], [x + h * 0.7, y + h * 0.64]], pal.acc, { key: false }); },
+  // a wind-bent scrub: a short root stock and eight thick branches from one root point, all leaning downwind (right), tallest at the windward side; the leaves are the branches' own faces, so nothing stands on a stalk
+  krummholz(c, x, y, h) {
+    const { f, pal, state } = c; if (state === 'burned') return charredTree(c, x, y, h, 3);
+    const v = col3(pal, 'v', state);
+    f.poly([[x - 7, y], [x + 7, y], [x + 4, y + h * 0.16], [x - 3, y + h * 0.18]], pal.t);
+    const B = [[-0.08, -0.16, 0.55, 8], [-0.04, -0.02, 0.8, 10], [0.0, 0.14, 0.9, 10], [0.04, 0.3, 0.78, 10], [0.08, 0.46, 0.66, 10], [0.12, 0.54, 0.5, 9], [0.14, 0.64, 0.36, 8], [0.16, 0.7, 0.24, 7]];
+    B.forEach(([bx, tx, ty, w], i) => f.poly([[x + bx * h - w, y + h * 0.08], [x + bx * h + w, y + h * 0.08], [x + tx * h, y + ty * h]], v[i < 3 ? 0 : i < 6 ? 1 : 2], { sw: 0.9 }));
+  },
   boulder(c, x, y, h) { const { f, pal, rnd } = c; const r = col3(pal, 'r', c.state === 'burned' ? 'scorched' : c.state); fan(f, [x, y + h * 0.4], [[x - h * 0.95, y], [x - h * 0.7, y + h * 0.7], [x - h * 0.1, y + h * 0.95], [x + h * 0.6, y + h * 0.75], [x + h * 0.95, y]], r); },
   tor(c, x, y, h) {
     const { f, pal, state } = c; const r = col3(pal, 'r', state === 'burned' ? 'scorched' : state), w = h * 0.34;

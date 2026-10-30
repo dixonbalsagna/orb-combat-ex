@@ -644,15 +644,20 @@ static func _dunegrass(b: _Build, h: float, charred: bool) -> void:
 		_poly(b, _pts([bx - 1.4, 0.0, bx + 1.4, 0.0, bx + lean, h * (0.8 + b.rnd() * 0.4)]), _k(SEC_LIT + i % 2))
 
 
+## A wind-bent scrub (draw.mjs's krummholz): a short root stock and eight thick branches from one root point, all
+## leaning downwind, tallest at the windward side. The branches are the leaves, so nothing stands on a stalk.
 static func _krummholz(b: _Build, h: float, charred: bool) -> void:
 	if charred:
 		_charred_tree(b, Vector2.ZERO, h, 3)
 		return
-	_poly(b, _pts([-3.0, 0.0, 3.0, 0.0, 8.0, h * 0.45, 3.0, h * 0.5]), _k(TRUNK))
-	for dx: float in [0.4, 0.9, 1.3]:
-		var c := Vector2(h * dx * 0.5, h * (0.5 + dx * 0.05))
-		_fan(b, c, _blob(b, c, h * 0.34, h * 0.2, 7, 0.14), _ramp(VEG_LIT))
-	_poly(b, _pts([h * 0.1, h * 0.66, h * 0.55, h * 0.74, h * 0.7, h * 0.64]), _k(ACCENT))
+	_poly(b, _pts([-7.0, 0.0, 7.0, 0.0, 4.0, h * 0.16, -3.0, h * 0.18]), _k(TRUNK))
+	var branches: Array = [[-0.08, -0.16, 0.55, 8.0], [-0.04, -0.02, 0.8, 10.0], [0.0, 0.14, 0.9, 10.0], [0.04, 0.3, 0.78, 10.0],
+			[0.08, 0.46, 0.66, 10.0], [0.12, 0.54, 0.5, 9.0], [0.14, 0.64, 0.36, 8.0], [0.16, 0.7, 0.24, 7.0]]
+	for i in range(branches.size()):
+		var br: Array = branches[i]
+		var bx: float = float(br[0]) * h
+		var w: float = float(br[3])
+		_poly(b, _pts([bx - w, h * 0.08, bx + w, h * 0.08, float(br[1]) * h, float(br[2]) * h]), _k(VEG_LIT + (0 if i < 3 else 1 if i < 6 else 2)))
 
 
 static func _boulder(b: _Build, h: float, charred: bool) -> void:

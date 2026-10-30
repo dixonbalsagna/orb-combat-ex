@@ -197,6 +197,8 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/sweep_check.gd'
       - name: Render props (the sim's props drawn behind biome.enabled; a broken prop gone on its frame)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/props_check.gd'
+      - name: Cover and water (no land cover where a river or lake is drawn; rule-off control)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/cover_water_check.gd'
 
   # The network checks (docs/net/rollback.md sections 7 to 11), in a job of their own: together they take about 7 minutes (the two-process ENet proof about 1 minute each way), so they run beside the other jobs instead of lengthening godot-parity.
   # enet_check starts two more Godot processes (a host and a joiner) on 127.0.0.1, UDP ports 47100 and 47102, with no outside service. It is run here and never on Orb's PC (a socket there could raise a Windows Firewall prompt).

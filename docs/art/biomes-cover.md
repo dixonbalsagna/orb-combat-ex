@@ -26,7 +26,7 @@ Owner: Art Director. 2026-10-24. **Generated** by `art/concepts/biomes/covers.mj
 | flower | jungle | 30 to 50 | 34 to 57 | 12 | 4 |
 | acacia | savanna | 120 to 200 | 138 to 229 | 13 | 12 |
 | termite | savanna | 50 to 90 | 57 to 103 | 6 | 6 |
-| krummholz | tundra, highland | 30 to 90 | 34 to 103 | 24 | 10 |
+| krummholz | tundra, highland | 30 to 90 | 34 to 103 | 10 | 10 |
 | spruce | taiga | 220 to 360 | 252 to 413 | 17 | 16 |
 | reed | wetland | 60 to 120 | 69 to 138 | 14 | 11 |
 | mangrove | wetland | 120 to 200 | 138 to 229 | 30 | 10 |
@@ -40,6 +40,6 @@ Owner: Art Director. 2026-10-24. **Generated** by `art/concepts/biomes/covers.mj
 | vent | volcanic | 40 to 70 | 46 to 80 | 25 | 25 |
 | lavaflow | volcanic | 10 to 14 | 11 to 16 | 4 | 4 |
 
-**Totals:** all 35 clean shapes 453 triangles, charred 347. A strip of 1,200 units carries about 30 shapes (the cover densities in the data), so about 388 triangles of cover per strip on average, before the ground. The heaviest: tor (44), jungletree (34), mangrove (30), basaltcol (25).
+**Totals:** all 35 clean shapes 439 triangles, charred 347. A strip of 1,200 units carries about 30 shapes (the cover densities in the data), so about 376 triangles of cover per strip on average, before the ground. The heaviest: tor (44), jungletree (34), mangrove (30), basaltcol (25).
 
 **What Rendering builds:** each shape as one flat mesh of a few facets with three face colours (lit, mid, shade) from the biome palette; the charred version as a second small mesh swapped in by the burn state; a tree's canopy is 8 fan triangles.

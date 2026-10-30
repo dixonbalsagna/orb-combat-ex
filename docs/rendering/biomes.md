@@ -66,7 +66,8 @@ Art's cover silhouettes (`docs/art/biomes-cover.md`) grow on the band's ground b
 - **Where they grow** (`render/core/cover_view.gd`, `CoverView`):
   - **Counts.** Each 1,200-unit strip carries, in each depth span of `COVER_LAYERS` (260 to 1,700 units behind the fighter plane), Art's count of each of its biome's covers, at Art's heights, mirrored at random.
   - **Borders.** Across a border's zone a shape takes the neighbour's cover by the zone's band share, and `COVER_ECO` (a quarter) of the zone's shapes are the pair's ecotone covers (Art's `neighbours`).
-  - **Water.** A water column carries only what stands or floats in the sea (stacks, whitecaps, floes, bergs).
+  - **Water.** A water column carries only what stands or floats in the sea (stacks, whitecaps, floes, bergs). Where the sheet of a river or a lake is drawn (a gen 2 ring's, `S.planetRing`'s lakes) there is no land cover: on a column with its water, and on dry land up to `RenderLook.SHORE_FLOOD` under the level beside it (`GroundField.flooded`, as the water shader draws it). The shape's draws are still made, so nothing else on the ring moves. The sea's shallows keep their cover.
+  - **Flip.** Each shape is mirrored by its seed, except a krummholz (`CoverView.NO_FLIP`; Art: its lean is its shape). The draw is still made, so nothing else moves.
   - **None** on a building's footprint (`COVER_BUILDING_PAD`), in the city or the village, or in front of the fighter plane.
   - **Made once a world,** seeded by the world: the hand-made world grows about 1,350 shapes in 7 ms, planet 7's ring about 800 in 3 ms.
   - **Drawing.** One MultiMesh per kind in each quarter of the arena's length (`COVER_CHUNKS`), so the frustum leaves out what is off the screen. A pane's copies draw them, a second pane its source's.
