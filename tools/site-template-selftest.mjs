@@ -156,10 +156,10 @@ check('RL-202: noWorseProblems is exported and equal numbers have none', noWorse
   // the tree's own files: the entry in signature-gate.json names the pin of site.json and the zip web-template.json pins, and (on a fixed date, so this never rots) the real record passes with the real data
   const gate = JSON.parse(readFileSync(join(here, 'flash', 'signature-gate.json'), 'utf8')), site = JSON.parse(readFileSync(join(here, 'site.json'), 'utf8')), real = JSON.parse(readFileSync(join(here, 'web-template.json'), 'utf8'));
   const e = gate.engineFlip;
-  check('the tree: the engineFlip entry names RL-202, the site pin, the pinned zip\'s tag and SHA-512, and ends on 2026-11-01', !!e && e.ruling === 'RL-202' && e.commit === site.pin && e.commit === gate.commit && e.until === '2026-11-01' && e.template.sha512 === real.sha512 && real.url.includes(`/releases/download/${e.template.tag}/`), JSON.stringify(e && e.template));
+  check('the tree: the engineFlip entry names RL-202, the site pin, the pinned zip\'s tag and SHA-512, and ends on 2026-11-15', !!e && e.ruling === 'RL-202' && e.commit === site.pin && e.commit === gate.commit && e.until === '2026-11-15' && e.template.sha512 === real.sha512 && real.url.includes(`/releases/download/${e.template.tag}/`), JSON.stringify(e && e.template));
   const ctx = loadCtx(join(here, '..'), '2026-10-29');
   check('the tree: with "custom", the real record passes the real check on 2026-10-29 (RL-202), and the real readings equal the standard build\'s on every number', recordProblems(real, { ...site, template: 'custom' }, ctx).length === 0 && noWorseProblems(real, site.pin).length === 0, JSON.stringify(recordProblems(real, { ...site, template: 'custom' }, ctx)));
-  check('the tree: the same record on 2026-11-02 is refused by RL-195 (the entry has ended)', recordProblems(real, { ...site, template: 'custom' }, loadCtx(join(here, '..'), '2026-11-02')).some((m) => /worse than 2\.5.*ended on 2026-11-01/.test(m)));
+  check('the tree: the same record on 2026-11-16 is refused by RL-195 (the entry has ended)', recordProblems(real, { ...site, template: 'custom' }, loadCtx(join(here, '..'), '2026-11-16')).some((m) => /worse than 2\.5.*ended on 2026-11-15/.test(m)));
   check('the tree: site.json says "custom" (the flip), and "standard" is the one-step rollback the check accepts', site.template === 'custom' && templateOf({ ...site, template: 'standard' }) === 'standard');
 }
 

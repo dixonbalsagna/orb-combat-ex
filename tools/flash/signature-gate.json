@@ -14,7 +14,7 @@
       "tag": "web-template-4.7.2-lazy-1",
       "sha512": "f0b7b0805ef3d63e966b34cc3e200031734a7f878c536860b6cc8c69229eb68bf5d1264ab9ebf7c6f431cbeac002da83857aafe352bcacf1188456e9503a0b19"
     },
-    "until": "2026-11-01",
+    "until": "2026-11-15",
     "_why": "Legal RL-202 (2026-10-28): the custom Web template may serve under THIS pin although its signature clip reduced reads 3 / 3 / 3 (over 2.5 / 3 / 2), because the standard build of the same commit reads the same and no number of any reading is worse (tools/site-template.mjs, measured.standard in tools/web-template.json). It names the pin and the one engine (tag and SHA-512 of the zip); any other engine or pin passes RL-195 in full. It ends at the next pin move (signature-gate.mjs --record rewrites this file without it) or on `until`, inclusive; tools/site-template.mjs --check fails on a stale entry whatever the template. Roll back with \"template\": \"standard\" in tools/site.json."
   }
 }

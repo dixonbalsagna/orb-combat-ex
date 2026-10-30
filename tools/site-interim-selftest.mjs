@@ -468,7 +468,7 @@ try {
         const rD8 = verifyPin(lockOff);
         check('RL-200: the excuse covers only the in-game string rules: an unlocked build on the same pin still fails', rD8.status === 1 && /lock_reduce_flashing is not true/.test(rD8.stderr), (rD8.stderr || rD8.stdout).slice(0, 300));
         const rPr = JSON.parse(readFileSync(new URL('./site-ui-excuse.json', import.meta.url), 'utf8'));
-        check('the real excuse file names one full commit, RL-200, the end date 2026-11-01 and the rule kinds', /^[0-9a-f]{40}$/.test(rPr.commit) && rPr.ruling === 'RL-200' && rPr.until === '2026-11-01' && Array.isArray(rPr.rules) && rPr.rules.every((k) => ['notice-lines', 'fix-promise', 'spelling'].includes(k)));
+        check('the real excuse file names one full commit, RL-200, the end date 2026-11-08 and the rule kinds', /^[0-9a-f]{40}$/.test(rPr.commit) && rPr.ruling === 'RL-200, kept by RL-207' && rPr.until === '2026-11-08' && Array.isArray(rPr.rules) && rPr.rules.every((k) => ['notice-lines', 'fix-promise', 'spelling'].includes(k)));
       }
     }
     // normal mode unreachable by any route (Legal's RL-195 condition (b); tools/site-routes.mjs): each test breaks one door of the smallest good tree
