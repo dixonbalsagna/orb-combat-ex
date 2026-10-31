@@ -197,14 +197,18 @@ static func inLake(lakes: Array, c: int, n: int) -> bool:
 	return false
 
 
-## The trees that do not stand in a lake: the same list without them.
-static func dryTrees(trees: Array, lakes: Array, n: int) -> Array:
+## The trees that do not stand in a lake: the same list without them. With the ring's ground (base), also not on the dry strip the sheet is drawn over (flooded): the props already stand out of it (WorldGround.propsIn).
+## Without base, only the lake's own columns, as before.
+static func dryTrees(trees: Array, lakes: Array, n: int, base: PackedFloat32Array = PackedFloat32Array()) -> Array:
 	if lakes.is_empty():
 		return trees
 	var out: Array = []
 	for t in trees:
 		var col: int = int(floor(SimWrap.wrap(t.x) / SimConst.COL)) % n
-		if not inLake(lakes, col, n):
+		if base.size() == n:
+			if not flooded(lakes, base, col, n):
+				out.append(t)
+		elif not inLake(lakes, col, n):
 			out.append(t)
 	return out
 

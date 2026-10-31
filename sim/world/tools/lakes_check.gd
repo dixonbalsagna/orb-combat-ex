@@ -64,6 +64,7 @@ func _init() -> void:
 	var rings: int = 0
 	var total: int = 0
 	var worst: String = ""
+	var strip: int = 0
 	var sample: SimState = null
 	var sampleLakes: int = 0
 	for sd in [7, 3, 11, 25, 42, 101]:
@@ -92,9 +93,15 @@ func _init() -> void:
 				var col: int = int(floor(SimWrap.wrap(t.x) / SimConst.COL)) % NC
 				if S.base[col] >= 5.0 and S.water[col] >= WorldWater.MIN_DEPTH:
 					worst = "a tree in the water at %d (seed %d touch %d)" % [col, sd, touch]
+			for t2 in S.trees:
+				var col2: int = int(floor(SimWrap.wrap(t2.x) / SimConst.COL)) % NC
+				if WorldLakes.flooded(S.planetRing.get("lakes", []), S.base, col2, NC):
+					strip += 1
+					if worst == "":
+						worst = "a tree on a lake's flood strip at %d (seed %d touch %d)" % [col2, sd, touch]
 			if wet > 0 and surfaces.size() > 12:
 				worst += " seed %d touch %d: %d surfaces" % [sd, touch, surfaces.size()]
-	ok(worst == "", "no tree stands in a lake, and a ring's lakes are few flat surfaces %s" % worst)
+	ok(worst == "", "no tree stands in a lake or on the dry strip the sheet is drawn over, and a ring's lakes are few flat surfaces (%d on a strip) %s" % [strip, worst])
 	ok(withLake >= 2 and withLake <= rings, "%d of %d rings hold a lake (%d wet columns in all)" % [withLake, rings, total])
 	# --- the match: determinism, the water module and cover
 	if sample != null:
@@ -140,7 +147,11 @@ func _init() -> void:
 		var col2: int = int(floor(SimWrap.wrap(t.x) / SimConst.COL)) % SimConst.NC
 		if T.base[col2] >= 5.0 and T.water[col2] >= WorldWater.MIN_DEPTH:
 			treesDry = false
-	ok(int(T.epoch.n) == 1 and treesDry, "after a turn the new ring's trees stand out of the water (epoch %d)" % int(T.epoch.n))
+	var turnStrip: int = 0
+	for t3 in T.trees:
+		if WorldLakes.flooded(T.planetRing.get("lakes", []), T.base, int(floor(SimWrap.wrap(t3.x) / SimConst.COL)) % SimConst.NC, SimConst.NC):
+			turnStrip += 1
+	ok(int(T.epoch.n) == 1 and treesDry and turnStrip == 0, "after a turn the new ring's trees stand out of the water and off the strip (epoch %d, %d on a strip)" % [int(T.epoch.n), turnStrip])
 	WorldClimate.useGen(0)
 	print("LAKES: %d check(s) failed" % fails)
 	quit()

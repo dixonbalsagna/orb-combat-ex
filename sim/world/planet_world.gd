@@ -154,7 +154,7 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
 				var rv: Array = WorldRivers.plan(P, rsp, S.base, chords, sl.fine, cols, lakes)
 				WorldRivers.carve(S.base, rv)
 				lakes = lakes + rv
-		S.trees = WorldLakes.dryTrees(S.trees, lakes, NC)
+		S.trees = WorldLakes.dryTrees(S.trees, lakes, NC, S.base)
 	# the settlements, by D1's generator
 	var wsum: float = 0.0
 	for ch in chords:

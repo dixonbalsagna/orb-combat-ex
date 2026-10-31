@@ -531,7 +531,7 @@ static func _geomStep(S: SimState, E: Dictionary, pl: Dictionary, ep: Dictionary
 					var rv: Array = WorldLakes.onlyNew(WorldRivers.plan(WorldPlanet.make(int(E.seed)), rsp, ep.base, ep.chordsAll, ep.fcols, ep.cols, ep.lakes), pl.wt)
 					WorldRivers.carve(ep.base, rv)
 					ep["lakes"] = ep.lakes + rv
-			ep["trees"] = WorldLakes.dryTrees(ep.trees, ep.lakes, NC)
+			ep["trees"] = WorldLakes.dryTrees(ep.trees, ep.lakes, NC, ep.base)
 			ep["ready"] = true
 		ep.si = int(ep.si) + 1
 		return
@@ -725,7 +725,7 @@ static func swap(S: SimState) -> void:
 		for t in ep.trees:
 			if wt[int(floor(SimWrap.wrap(t.x) / COL)) % NC] >= 0.5:
 				kept.append(t)
-		S.trees = WorldLakes.dryTrees(kept, ep.lakes, NC)
+		S.trees = WorldLakes.dryTrees(kept, ep.lakes, NC, S.base)
 		WorldBiomes.fineCols = ep.fcols
 		S.fineCols = ep.fcols
 	S.bindStructures(true)   # Simulation (packed structures): new records for the new arrays, so earlier snapshots' and the plan's keep theirs
