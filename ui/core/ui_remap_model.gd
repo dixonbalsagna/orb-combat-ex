@@ -13,7 +13,7 @@ extends RefCounted
 ## (Arena's LT + RT, a keyboard's two keys; its members are free to be bound as single controls) and the pad stick. Not listed: gesture bindings and
 ## the power layer (they follow their action), Pause and Hints.
 
-const ORDER: Array = ["move", "light", "heavy", "signature", "guard", "dodge", "power", "mode", "context", "escape", "transform"]
+const ORDER: Array = ["move", "light", "heavy", "signature", "guard", "dodge", "power", "mode", "context", "escape", "transform", "strike_key", "brace_key"]
 const MOVE_STEPS: Array = ["up", "left", "down", "right"]
 const FIXED: Array = ["pause", "hints"]
 const PAD_RESERVED: Array = ["pad:start", "pad:back"]
@@ -29,8 +29,8 @@ static func layouts() -> Array:
 	var out: Array = []
 	for id in SimInputData.presets:
 		var d: String = str((SimInputData.presets[id] as Dictionary).get("device", ""))
-		if d == "kb" or d == "pad":
-			out.append(str(id))
+		if (d == "kb" or d == "pad") and (UiData.feature("right_hand") or not str(id).ends_with("-swapped")):
+			out.append(str(id))   # a swapped layout is offered only while the right-hand attacks are on
 	return out
 
 

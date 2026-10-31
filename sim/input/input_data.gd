@@ -64,6 +64,7 @@ static func load_data(dir: String = DIR) -> bool:
 			presets[str(p["id"])] = p
 	else:
 		ok = false
+	_derive_swapped()
 	var st = _read(dir + "stances.json")
 	stances = st if st is Dictionary else {"schema": 1, "hybrids": []}
 	var a = _read(dir + "actions.json")
@@ -89,6 +90,10 @@ static func hybrids() -> Array:
 	var out: Array = []
 	for m in stances.get("hybrids", []):
 		out.append(int(m))
+	if right_stick_on():   # the right-hand attacks bring the lay (LB+RB 3) and the kite (LT+RB 10) with them; the terrain hybrid (9) stays off
+		for m in stances.get("withRightStick", [3, 10]):
+			if not out.has(int(m)):
+				out.append(int(m))
 	return out
 
 
@@ -140,20 +145,65 @@ static func tf(path: Array, fallback: float = 0.0) -> float:
 	return float(t(path, fallback))
 
 
+## The swapped layout of every shipped pad preset (Accessibility's `hand_layout`): `<id>-swapped`, the whole-pad mirror of SimSwap, tagged `hand: "swapped"` so the
+## layout takes the swapped thumb's lockouts. Not the default of anything. A user's remap of Arena is Arena's; the swapped preset has its own.
+static func _derive_swapped() -> void:
+	var ids: Array = presets.keys()
+	for id in ids:
+		var p: Dictionary = presets[id]
+		if str(p.get("device", "")) != "pad" or SimSwap.is_swapped_id(str(id)) or str(p.get("hand", "standard")) == "swapped":
+			continue
+		var q: Dictionary = SimSwap.mirror_preset(p)
+		q["id"] = SimSwap.swapped_id(str(id))
+		q["name"] = str(p.get("name", id)) + " (swapped)"
+		q["hand"] = "swapped"
+		q.erase("default")
+		if q.has("pair"):
+			q.erase("pair")
+		presets[q["id"]] = q
+
+
+## Whether the right-hand attacks are on (timing.json switches.rightStick, off): the strike stick, the left hand's brace and vanish, hybrids 3 and 10
+## and the freed R3. With it off nothing in the input layer reads any of it and every record is the one it always was.
+static func right_stick_on() -> bool:
+	return bool(t(["switches", "rightStick"], false))
+
+
+## A preset with its parked strike bindings (`strikeBindings`, the same shape as `bindings`) joined to its bindings while the right-hand switch is on, so the
+## layout, the remap screen and the checks see one list. With the switch off, or no strike bindings, the preset comes back as it is.
+static func _with_strike(p: Dictionary) -> Dictionary:
+	if p.is_empty() or not p.has("strikeBindings") or not right_stick_on():
+		return p
+	var q: Dictionary = p.duplicate(true)
+	for b in q["strikeBindings"]:
+		q["bindings"].append(b)
+	q.erase("strikeBindings")
+	if str(q.get("device", "")) == "pad" and bool(t(["strike", "freeR3"], true)):
+		# R3 (and L3, its swapped twin) is freed: a hard flick clicks the stick. The shipped Escape on it goes; the player may bind `escape` to any control in Remap.
+		var kept: Array = []
+		for b in q["bindings"]:
+			var c: Array = b["controls"]
+			if str(b["action"]) == "escape" and c.size() == 1 and (str(c[0]) == "pad:r3" or str(c[0]) == "pad:l3"):
+				continue
+			kept.append(b)
+		q["bindings"] = kept
+	return q
+
+
 ## A preset by id with the overrides of `slot`'s player applied (slot 0, player one, by default), or an empty dictionary.
 static func preset(id: String, slot: int = 0) -> Dictionary:
 	ensure()
 	if overrides[slot].has(id) and presets.has(id):
 		if not _merged[slot].has(id):
-			_merged[slot][id] = SimInputRemap.apply_overrides(presets[id], overrides[slot][id])
+			_merged[slot][id] = SimInputRemap.apply_overrides(_with_strike(presets[id]), overrides[slot][id])
 		return _merged[slot][id]
-	return presets.get(id, {})
+	return _with_strike(presets.get(id, {}))
 
 
 ## The shipped preset, without the player's changes (what Reset goes back to).
 static func original(id: String) -> Dictionary:
 	ensure()
-	return presets.get(id, {})
+	return _with_strike(presets.get(id, {}))
 
 
 ## Apply the player's overrides for a preset: the shipped bindings stay, the effective preset is those plus the overrides

@@ -167,10 +167,17 @@ const FACE_CELLS := {"light": "x", "heavy": "y", "context": "a", "signature": "b
 const HOLD_STANCES := {"guard": 1, "mode": 2, "power": 3, "dodge": 4}
 
 
+## The scheme (the rows) of a layout id. A swapped layout (`arena-swapped`) reads its standard layout's rows: the actions are the same, the glyphs are its own. Else "today".
+static func scheme_of(scheme: String) -> Dictionary:
+	var schemes: Dictionary = data().get("schemes", {})
+	if not schemes.has(scheme) and scheme.ends_with("-swapped"):
+		scheme = scheme.trim_suffix("-swapped")
+	return schemes.get(scheme, schemes.get("today", {}))
+
+
 ## The legend's own word for an action in a layout's scheme (hints.json): what the button does today, for a stance that is not live.
 static func old_label(scheme: String, action: String) -> String:
-	var schemes: Dictionary = data().get("schemes", {})
-	var sc: Dictionary = schemes.get(scheme, schemes.get("today", {}))
+	var sc: Dictionary = scheme_of(scheme)
 	for r in sc.get("rows", []):
 		if r.has("action") and str(r["action"]) == action:
 			return str(r.get("label", ""))
@@ -198,6 +205,7 @@ static func compact_rows(m: UiFighterModel, all_rows: Array) -> Array:
 
 
 ## The hold-or-toggle options (Controls' hold_style, and energy_style) by the action they set; player two's carry `_p2`. UI reads them as the player chose them and never writes them.
+const RIGHT_HAND_ACTIONS := ["strike", "strike_mirror", "strike_key", "brace_key"]   # rows and lines that exist only while Controls' right-hand attacks are on
 const STYLE_OPTION := {"guard": "guard_style", "dodge": "manoeuvre_style", "power": "charge_style", "transform": "transform_style", "mode": "energy_style"}
 
 
@@ -206,18 +214,28 @@ static func styles(m: UiFighterModel, o: Dictionary) -> Dictionary:
 	var out := {}
 	for a in STYLE_OPTION:
 		out[a] = str(o.get(str(STYLE_OPTION[a]) + ("_p2" if m.slot == 1 else ""), "hold"))
+	if UiData.feature("right_hand"):   # the right-hand attacks' styles, read only while Controls' switch is on: strike style, and whether this player strikes with the D-pad (dpad_mirror, or a pad with no second stick)
+		var sfx: String = "_p2" if m.slot == 1 else ""
+		out["strike"] = str(o.get("strike_style" + sfx, "hold"))
+		var mir: String = str(o.get("dpad_mirror" + sfx, "auto"))
+		var on_pad: bool = m.device != "" and m.device != "kbd"   # the D-pad mirror is for a controller
+		out["_mirror"] = "on" if on_pad and (mir == "on" or (mir == "auto" and not bool(o.get("pad_right_stick" + sfx, true)))) else "off"
 	return out
 
 
 static func rows(m: UiFighterModel, scheme: String, energy: String = "hold", styles: Dictionary = {}) -> Array:
-	var schemes: Dictionary = data().get("schemes", {})
-	var sc: Dictionary = schemes.get(scheme, schemes.get("today", {}))
+	var sc: Dictionary = scheme_of(scheme)
 	var out: Array = []
 	var by_stance: bool = stance_layout(scheme, m.slot)
+	var mirror_on: bool = str(styles.get("_mirror", "off")) == "on"
 	for r in sc.get("rows", []):
 		var acts: Array = r["actions"] if r.has("actions") else [r.get("action", "")]
+		if RIGHT_HAND_ACTIONS.has(str(acts[0])) and not UiData.feature("right_hand"):
+			continue
 		if not UiGlyphs.bound(scheme, str(acts[0]), m.slot):
 			continue
+		if (str(acts[0]) == "strike_mirror" and not mirror_on) or (str(acts[0]) == "strike" and mirror_on and UiGlyphs.bound(scheme, "strike_mirror", m.slot)):
+			continue   # the D-pad's strike row only while the D-pad strikes, the stick's only while the stick does
 		if bool(r.get("only_when_avail", false)):
 			var a: String = str(r.get("action", ""))
 			if not (m.avail.has(a) and bool(m.avail[a])):
@@ -225,7 +243,7 @@ static func rows(m: UiFighterModel, scheme: String, energy: String = "hold", sty
 			if a == "transform" and m.form_shown:
 				continue   # the form-ready chip above the legend already says it
 		var label: String = str(r.get("label", ""))
-		if r.has("label_toggle") and r.has("action") and str(styles.get(str(r["action"]), "hold")) == "toggle":
+		if r.has("label_toggle") and r.has("action") and str(styles.get("strike" if str(r["action"]).begins_with("strike") else str(r["action"]), "hold")) == "toggle":
 			label = str(r["label_toggle"])   # this player's guard, power or manoeuvre is a toggle: the word says so
 		var held := false
 		var dim := false
@@ -373,7 +391,7 @@ static func sig(m: UiFighterModel, alpha: float, preset: String, energy: String 
 	var ack_step: int = 0 if m.press_ack_kind == "" or m.press_ack_t >= ACK_SECONDS else (1 if reduced else 1 + int(m.press_ack_t / ACK_SECONDS * 6.0))
 	var cf: float = charge_frac(m, reduced)
 	return [m.device, m.slot, int(alpha * 10.0), preset, m.avail["transform"], m.left_side, m.form_shown, energy, m.stance_kind, m.press_ack_kind, m.press_ack_cell, ack_step,
-		int(cf * 8.0) if cf >= 0.0 else -1, m.charge_cell if m.charge_on else "", lit_b(m), UiStance.three(), m.punish_left > 0.0, m.flurry_dots, UiStance.launch_marks() and m.gauge_full, compact, str(styles.get("guard", "hold")) + str(styles.get("dodge", "hold")) + str(styles.get("power", "hold"))]
+		int(cf * 8.0) if cf >= 0.0 else -1, m.charge_cell if m.charge_on else "", lit_b(m), UiStance.three(), m.punish_left > 0.0, m.flurry_dots, UiStance.launch_marks() and m.gauge_full, compact, str(styles.get("guard", "hold")) + str(styles.get("dodge", "hold")) + str(styles.get("power", "hold")) + str(styles.get("strike", "")) + str(styles.get("_mirror", ""))]
 
 
 static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Dictionary, alpha: float) -> void:

@@ -963,6 +963,181 @@
         "grappleReads": {
           "type": "boolean",
           "description": "SimPressRead.a_read drops the shove and the clinch-by-mash; the grapple's catch_read and brace_read replace them (off)."
+        },
+        "rightStick": {
+          "type": "boolean",
+          "description": "The right-hand attacks (docs/controls/right-hand-attacks.md): the strike stick, the left hand's brace and vanish, hybrids 3 and 10 (stances.json withRightStick), R3 freed (off)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "strike": {
+      "type": "object",
+      "description": "The strike stick (switches.rightStick; docs/controls/right-hand-attacks.md section 1, sim/input/strike_read.gd and strike_law.gd). Optional: the code defaults are these values.",
+      "properties": {
+        "deadzone": {
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMaximum": 0.9,
+          "description": "The stick's dead zone (0.25)."
+        },
+        "quant": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 127,
+          "description": "The deflection is quantised to 1 / quant (16)."
+        },
+        "on": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "description": "A push past this rescaled deflection is a request (0.60)."
+        },
+        "off": {
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMaximum": 1,
+          "description": "A stick back under this is at rest (0.35); under `on`."
+        },
+        "settle": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ticks from the crossing to the request's start; the direction is taken then (2)."
+        },
+        "dwell": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "D: a stick back at rest before this many live ticks is the quick strike; still out, it is a charge (12)."
+        },
+        "levels": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "description": "Live ticks since the start at which a martial strike reaches level 1, 2 and 3 (12, 30, 50)."
+        },
+        "beamLevels": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "description": "The same for a beam or the signature (12, 30, 54)."
+        },
+        "lockout": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "L: a face press after a stick command waits this many ticks (6)."
+        },
+        "reverseLockout": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "R: a strike request after a face press waits this many ticks (8)."
+        },
+        "swapLockout": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "L for the left-handed swap, measured on the other thumb (6)."
+        },
+        "swapReverseLockout": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "R for the left-handed swap (8)."
+        },
+        "queueDepth": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Face presses kept while the stick is out (3)."
+        },
+        "queueTicks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "A queued face press older than this is gone (36)."
+        },
+        "style": {
+          "enum": [
+            "hold",
+            "toggle"
+          ],
+          "description": "The default strike style; the player's own setting wins (hold)."
+        },
+        "mirror": {
+          "enum": [
+            "auto",
+            "on",
+            "off"
+          ],
+          "description": "The D-pad mirror default: auto is on only for a pad the host says has no right stick (auto)."
+        },
+        "freeR3": {
+          "type": "boolean",
+          "description": "R3 (and L3) bind no Escape while the switch is on (true)."
+        },
+        "inertMasks": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 15
+          },
+          "description": "Stance masks on which the strike stick does nothing, and holds nothing: pure 4a leaves the power layer (4) and the lay (3) inert ([3, 4])."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "leftHand": {
+      "type": "object",
+      "description": "The left hand's reads (switches.rightStick; sim/input/left_hand.gd): LB and a left flick is a brace, LB and LT together are the vanish. Optional: the code defaults are these values.",
+      "properties": {
+        "braceStyle": {
+          "enum": [
+            "flick",
+            "press"
+          ],
+          "description": "The brace's assist default: flick reads a flick from rest with LB down (and a keyboard tap); press leaves only the brace button (flick)."
+        },
+        "braceRest": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Ticks the left stick sat at rest before a flick can set a read (10)."
+        },
+        "braceRise": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Ticks from leaving rest to the push past `on` for a flick; slower is a lean (3)."
+        },
+        "braceTap": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "A keyboard tap of a direction key down and up inside this is a brace with LB down (8)."
+        },
+        "restLevel": {
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMaximum": 1,
+          "description": "Raw deflection under which the left stick is at rest (0.2)."
+        },
+        "vanishWindow": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "LB and LT pressed within this many ticks (either order) are the vanish chord (6, = tapHold.chordWindow)."
+        },
+        "vanishSettle": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ticks after the later press at which the chord's direction is taken at the earliest (2)."
         }
       },
       "additionalProperties": false,

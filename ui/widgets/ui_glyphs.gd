@@ -90,6 +90,8 @@ static func spec_control(control: String, family: String, style: String = "neutr
 			return {"kind": "pad", "label": str(tbl.get(name.to_upper(), name.to_upper()))}
 		"l3":
 			return {"kind": "pad", "label": "L3"}
+		"dpad_up", "dpad_down", "dpad_left", "dpad_right":
+			return {"kind": "dpad", "dir": name.substr(5), "label": ""}   # the swapped layout puts the face buttons here
 		"ls", "rs":
 			return {"kind": "stick", "label": ""}
 		"start":
@@ -120,7 +122,11 @@ static func binding_specs(preset: Dictionary, action: String, family: String, st
 			var word := ""
 			for c in cs:
 				word += key_label(str(c).get_slice(":", 1))
+			if word == "ArrowUpArrowLeftArrowDownArrowRight":
+				word = "Arrows"   # the arrow cluster is one cap too (the strike keys of the solo keyboard)
 			return [{"kind": "key", "label": word}]
+		if b.has("axis") and str(cs[0]).begins_with("pad:dpad"):
+			return [{"kind": "dpad", "dir": "all", "label": ""}]   # the D-pad's four directions as one axis (the strike mirror): the whole cross, not a chord
 		if best.is_empty():
 			for i in range(cs.size()):
 				if i > 0:
@@ -244,7 +250,7 @@ static func draw_spec(ci: CanvasItem, sp: Dictionary, at: Vector2, h: float, alp
 			for k in dirs:
 				var d: Vector2 = dirs[k]
 				var p2: Vector2 = c2 + d * cell
-				ci.draw_rect(Rect2(p2 - Vector2(cell, cell) * 0.5, Vector2(cell, cell)), ink if (k == sp["dir"] and on) else dim)
+				ci.draw_rect(Rect2(p2 - Vector2(cell, cell) * 0.5, Vector2(cell, cell)), ink if ((k == sp["dir"] or sp["dir"] == "all") and on) else dim)
 		"stick":
 			var c3 := Vector2(at.x + h * 0.5, cy)
 			ci.draw_arc(c3, h * 0.42, 0.0, TAU, 20, edge, 1.5, true)

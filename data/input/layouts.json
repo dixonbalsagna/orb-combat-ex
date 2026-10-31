@@ -115,6 +115,24 @@
           ],
           "action": "escape"
         }
+      ],
+      "strikeBindings": [
+        {
+          "controls": [
+            "pad:rs"
+          ],
+          "action": "strike"
+        },
+        {
+          "controls": [
+            "pad:dpad_up",
+            "pad:dpad_left",
+            "pad:dpad_down",
+            "pad:dpad_right"
+          ],
+          "action": "strike_mirror",
+          "axis": ["up", "left", "down", "right"]
+        }
       ]
     },
     {
@@ -335,6 +353,166 @@
           ],
           "action": "escape"
         }
+      ],
+      "strikeBindings": [
+        {
+          "controls": [
+            "kb:ArrowUp",
+            "kb:ArrowLeft",
+            "kb:ArrowDown",
+            "kb:ArrowRight"
+          ],
+          "action": "strike",
+          "axis": ["up", "left", "down", "right"]
+        },
+        {
+          "controls": [
+            "kb:KeyX"
+          ],
+          "action": "brace_key"
+        }
+      ]
+    },
+    {
+      "id": "kb-solo-swapped",
+      "name": "Keyboard, one player, swapped",
+      "device": "kb",
+      "players": 1,
+      "hand": "swapped",
+      "bindings": [
+        {
+          "controls": [
+            "kb:ArrowUp",
+            "kb:ArrowLeft",
+            "kb:ArrowDown",
+            "kb:ArrowRight"
+          ],
+          "action": "move",
+          "axis": [
+            "up",
+            "left",
+            "down",
+            "right"
+          ]
+        },
+        {
+          "controls": [
+            "kb:Space"
+          ],
+          "action": "dodge"
+        },
+        {
+          "controls": [
+            "kb:Shift"
+          ],
+          "action": "guard"
+        },
+        {
+          "controls": [
+            "kb:KeyQ"
+          ],
+          "action": "mode"
+        },
+        {
+          "controls": [
+            "kb:KeyE"
+          ],
+          "action": "power"
+        },
+        {
+          "controls": [
+            "kb:KeyF"
+          ],
+          "action": "light"
+        },
+        {
+          "controls": [
+            "kb:KeyG"
+          ],
+          "action": "heavy"
+        },
+        {
+          "controls": [
+            "kb:KeyR"
+          ],
+          "action": "signature"
+        },
+        {
+          "controls": [
+            "kb:KeyV"
+          ],
+          "action": "context"
+        },
+        {
+          "controls": [
+            "kb:KeyF"
+          ],
+          "action": "special1",
+          "layer": "power"
+        },
+        {
+          "controls": [
+            "kb:KeyG"
+          ],
+          "action": "special2",
+          "layer": "power"
+        },
+        {
+          "controls": [
+            "kb:KeyV"
+          ],
+          "action": "special3",
+          "layer": "power"
+        },
+        {
+          "controls": [
+            "kb:KeyR"
+          ],
+          "action": "signature",
+          "layer": "power"
+        },
+        {
+          "controls": [
+            "kb:Space",
+            "kb:KeyE"
+          ],
+          "action": "transform"
+        },
+        {
+          "controls": [
+            "kb:KeyU"
+          ],
+          "action": "transform"
+        },
+        {
+          "controls": [
+            "kb:Quote"
+          ],
+          "action": "escape"
+        }
+      ],
+      "strikeBindings": [
+        {
+          "controls": [
+            "kb:KeyW",
+            "kb:KeyA",
+            "kb:KeyS",
+            "kb:KeyD"
+          ],
+          "action": "strike",
+          "axis": [
+            "up",
+            "left",
+            "down",
+            "right"
+          ]
+        },
+        {
+          "controls": [
+            "kb:Period"
+          ],
+          "action": "brace_key"
+        }
       ]
     },
     {
@@ -448,6 +626,20 @@
           ],
           "action": "escape"
         }
+      ],
+      "strikeBindings": [
+        {
+          "controls": [
+            "kb:KeyB"
+          ],
+          "action": "strike_key"
+        },
+        {
+          "controls": [
+            "kb:KeyZ"
+          ],
+          "action": "brace_key"
+        }
       ]
     },
     {
@@ -560,6 +752,20 @@
             "kb:Quote"
           ],
           "action": "escape"
+        }
+      ],
+      "strikeBindings": [
+        {
+          "controls": [
+            "kb:BracketLeft"
+          ],
+          "action": "strike_key"
+        },
+        {
+          "controls": [
+            "kb:BracketRight"
+          ],
+          "action": "brace_key"
         }
       ]
     },

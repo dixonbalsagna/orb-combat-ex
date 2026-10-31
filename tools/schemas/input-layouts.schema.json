@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "meridian/input-layouts",
   "title": "input layouts (schema 1)",
-  "description": "data/input/layouts.json: the layout presets (three pads, three or four keyboards, two touch) as control-to-action bindings (docs/controls/input-schema.md section 4, ADR 0008). A binding is {controls, action, layer?, gesture?, axis?}: one control for a normal binding, two or more for a chord, four plus an axis for a keyboard move. layer \"power\" makes it active only while `power` is held. Version field: schema. Policy: closed except keys starting with an underscore (also inside `slot`, which the proposal left without it). Cross-references (layout-action, layout-device, layout-required, layout-conflict, layout-layer, layout-pair, layout-reserved, layout-default, layout-axis, layout-id) are checked by tools/lib/xref-input.js.",
+  "description": "data/input/layouts.json: the layout presets (three pads, three or four keyboards, two touch) as control-to-action bindings (docs/controls/input-schema.md section 4, ADR 0008). A binding is {controls, action, layer?, gesture?, axis?}: one control for a normal binding, two or more for a chord, four plus an axis for a keyboard move. layer \"power\" makes it active only while `power` is held. Version field: schema. Policy: closed except keys starting with an underscore (also inside `slot`, which the proposal left without it). Cross-references (layout-action, layout-device, layout-required, layout-conflict, layout-layer, layout-pair, layout-reserved, layout-default, layout-axis, layout-id) are checked by tools/lib/xref-input.js. strikeBindings join bindings while switches.rightStick is on (not cross-checked by tools/lib/xref-input.js yet).",
   "type": "object",
   "required": [
     "schema",
@@ -48,6 +48,13 @@
           },
           "default": {
             "type": "boolean"
+          },
+          "hand": {
+            "enum": [
+              "standard",
+              "swapped"
+            ],
+            "description": "hand_layout: a swapped preset (the roles of the hands traded, sim/input/swap.gd); the layout takes the swapped thumb's lockouts (standard)."
           },
           "pair": {
             "type": "string",
@@ -128,6 +135,61 @@
                 "^_": true
               }
             }
+          },
+          "strikeBindings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "controls",
+                "action"
+              ],
+              "properties": {
+                "controls": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^(kb|pad|touch):[A-Za-z0-9_]+$"
+                  }
+                },
+                "action": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$"
+                },
+                "layer": {
+                  "enum": [
+                    "power"
+                  ]
+                },
+                "gesture": {
+                  "enum": [
+                    "hold",
+                    "swipe_up",
+                    "flick",
+                    "outer_ring_hold"
+                  ]
+                },
+                "axis": {
+                  "type": "array",
+                  "minItems": 4,
+                  "maxItems": 4,
+                  "items": {
+                    "enum": [
+                      "up",
+                      "left",
+                      "down",
+                      "right"
+                    ]
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "description": "Parked bindings of the right-hand attacks (strike, strike_mirror, strike_key): joined to `bindings` only while timing.json switches.rightStick is on (sim/input/input_data.gd)."
           }
         },
         "additionalProperties": false,

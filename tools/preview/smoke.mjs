@@ -24,6 +24,7 @@ export function expectations(on, { planet = true } = {}) {
     planetGen: set.has('gen2') ? 2 : 1,
     dataGen: set.has('gen2') ? 2 : 1,
     biome: set.has('biome'), water: set.has('water'), surface: set.has('surface'), floor: set.has('floor'), interrupts: set.has('interrupts'), turn: set.has('turn'),
+    ...(set.has('rightStick') ? { rightStick: true } : {}),   // the probe reports it only when the tree has the code that reads it, so it is asked only when the switch is on
   };
 }
 
@@ -34,7 +35,7 @@ export function probeProblems(probe, want) {
   for (const k of ['planetGen', 'dataGen']) if (probe[k] !== want[k]) out.push({ sw: 'gen2', text: `${k} reads ${probe[k]}, expected ${want[k]}` });
   if ((probe.fine > 0) !== (want.planetGen === 2)) out.push({ sw: 'gen2', text: `the planet has ${probe.fine} fine-biome columns, expected ${want.planetGen === 2 ? 'some (a gen 2 planet)' : 'none (the stored planet)'}` });
   if (probe.planet !== want.planet) out.push({ sw: 'gen2', text: `the match ${probe.planet ? 'is' : 'is not'} a generated planet, expected ${want.planet ? 'one' : 'the hand-made world'}` });
-  for (const k of ['biome', 'water', 'surface', 'floor', 'interrupts', 'turn']) if (probe[k] !== want[k]) out.push({ sw: k, text: `${k} reads ${probe[k]} in the running game, expected ${want[k]}` });
+  for (const k of ['biome', 'water', 'surface', 'floor', 'interrupts', 'turn', ...(want.rightStick ? ['rightStick'] : [])]) if (probe[k] !== want[k]) out.push({ sw: k, text: `${k} reads ${probe[k]} in the running game, expected ${want[k]}` });
   for (const e of probe.errors || []) out.push({ sw: errorSwitch(e) || 'water', text: `water loader: ${e}` });
   return out.map((p) => (typeof p === 'string' ? { sw: null, text: p } : p));
 }

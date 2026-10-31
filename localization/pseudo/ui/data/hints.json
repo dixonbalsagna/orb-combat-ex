@@ -99,6 +99,15 @@
           "label_toggle": "[Ĝüüááŕď (ţööĝĝĺéé)]"
         },
         {
+          "action": "strike",
+          "label": "[Šţŕííķéé (ĥööĺď ţöö çĥááŕĝéé) ]",
+          "label_toggle": "[Šţŕííķéé (ţööĝĝĺéé ţöö çĥááŕĝéé) ]"
+        },
+        {
+          "action": "brace_key",
+          "label": "[Bŕáçé]"
+        },
+        {
           "action": "mode",
           "label": "[ÉÉñééŕĝýý (ĥöĺď)]"
         },
@@ -158,6 +167,14 @@
           "action": "guard",
           "label": "[Ĝüüááŕď (ĥööĺď)]",
           "label_toggle": "[Ĝüüááŕď (ţööĝĝĺéé)]"
+        },
+        {
+          "action": "strike_key",
+          "label": "[Šţŕííķéé (ŵííţĥ áá ďííŕééçţííööñ)]"
+        },
+        {
+          "action": "brace_key",
+          "label": "[Bŕáçé]"
         },
         {
           "action": "mode",
@@ -221,6 +238,14 @@
           "label_toggle": "[Ĝüüááŕď (ţööĝĝĺéé)]"
         },
         {
+          "action": "strike_key",
+          "label": "[Šţŕííķéé (ŵííţĥ áá ďííŕééçţííööñ)]"
+        },
+        {
+          "action": "brace_key",
+          "label": "[Bŕáçé]"
+        },
+        {
           "action": "mode",
           "label": "[ÉÉñééŕĝýý (ĥöĺď)]"
         },
@@ -280,6 +305,16 @@
           "action": "guard",
           "label": "[Ĝüüááŕď (ĥööĺď)]",
           "label_toggle": "[Ĝüüááŕď (ţööĝĝĺéé)]"
+        },
+        {
+          "action": "strike",
+          "label": "[Šţŕííķéé (ĥööĺď ţöö çĥááŕĝéé) ]",
+          "label_toggle": "[Šţŕííķéé (ţööĝĝĺéé ţöö çĥááŕĝéé) ]"
+        },
+        {
+          "action": "strike_mirror",
+          "label": "[Šţŕííķéé (Ď-pááď) ]",
+          "label_toggle": "[Šţŕííķéé (Ď-pááď, ţööĝĝĺéé) ~]"
         },
         {
           "action": "mode",

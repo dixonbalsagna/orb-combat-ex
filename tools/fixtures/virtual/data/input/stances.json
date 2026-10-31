@@ -4,5 +4,8 @@
   "hybrids": [
     3,
     10
+  ],
+  "withRightStick": [
+    9
   ]
 }

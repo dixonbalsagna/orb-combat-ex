@@ -15,6 +15,14 @@ const USER_PATH: String = "user://input.json"
 ## Actions a preset must bind, by device (Tools' layout-required rule).
 const REQUIRED: Array = ["move", "light", "heavy", "signature", "guard", "dodge", "power", "context", "transform"]
 const REQUIRED_PAD_TOUCH: Array = ["pause"]
+## Actions that take a four-key axis on a keyboard: the movement and (switches.rightStick) the strike stick's arrow keys. On a pad both are a stick, which is fixed.
+const AXIS_ACTIONS: Array = ["move", "strike"]
+## Actions a player may bind although the shipped preset leaves them unbound, by device (switches.rightStick on): the pad has no free control to give them by default, and
+## a click of a stick is a hard-flick risk. `listing` shows each as a row with no controls, so the screen has a place to bind it: the strike BUTTON (the direction is the
+## left stick's, Accessibility's one-stick form), the brace button, and Escape (the single-control vanish).
+const OPTIONAL: Dictionary = {"pad": ["strike_key", "brace_key", "escape"]}
+## The strike D-pad mirror is part of the layout (four fixed controls): shown, never rebound.
+const FIXED_AXIS: Array = ["strike_mirror"]
 
 
 ## Everything a screen lists for a preset: one row per remappable binding, in preset order:
@@ -31,6 +39,14 @@ static func listing(preset: Dictionary) -> Array:
 		rows.append({"action": b["action"], "layer": layer, "index": 0 if fixed else idx, "controls": b["controls"].duplicate(), "fixed": fixed})
 		if not fixed:
 			seen[key] = idx + 1
+	if SimInputData.right_stick_on():
+		for a in OPTIONAL.get(str(preset.get("device", "")), []):
+			var bound: bool = false
+			for b in preset.get("bindings", []):
+				if str(b["action"]) == a and b.get("layer", null) == null:
+					bound = true
+			if not bound:
+				rows.append({"action": a, "layer": null, "index": 0, "controls": [], "fixed": false})
 	return rows
 
 
@@ -54,8 +70,8 @@ static func _remappable(b: Dictionary) -> bool:
 	if b.get("gesture", null) != null:
 		return false
 	if b.has("axis"):
-		return (b["controls"] as Array).size() == 4
-	return (b["controls"] as Array).size() == 1 and str(b["action"]) != "move"
+		return (b["controls"] as Array).size() == 4 and not FIXED_AXIS.has(str(b["action"]))
+	return (b["controls"] as Array).size() == 1 and not AXIS_ACTIONS.has(str(b["action"]))
 
 
 static func _same_group(b: Dictionary, action: String, layer) -> bool:
@@ -73,9 +89,9 @@ static func rebind(preset: Dictionary, action: String, layer, index: int, contro
 	for c in controls:
 		if not str(c).begins_with(prefix + ":"):
 			return {"ok": false, "preset": preset, "conflict": {}, "error": "%s is not a %s control" % [c, prefix]}
-	var is_move: bool = action == "move"
-	if is_move and not (controls.size() == 4 and preset_has_axis(p)):
-		return {"ok": false, "preset": preset, "conflict": {}, "error": "the move axis takes four keys"}
+	var is_move: bool = AXIS_ACTIONS.has(action)
+	if is_move and not (controls.size() == 4 and has_axis_for(p, action)):
+		return {"ok": false, "preset": preset, "conflict": {}, "error": "the %s axis takes four keys" % action}
 	if not is_move and controls.size() != 1:
 		return {"ok": false, "preset": preset, "conflict": {}, "error": "chords are fixed"}
 	if is_move:
@@ -114,6 +130,14 @@ static func preset_has_axis(p: Dictionary) -> bool:
 	return false
 
 
+## Whether a preset binds `action` as a four-key axis (the movement keys, or the strike stick's arrow keys).
+static func has_axis_for(p: Dictionary, action: String) -> bool:
+	for b in p.get("bindings", []):
+		if b.has("axis") and (b["controls"] as Array).size() == 4 and str(b["action"]) == action:
+			return true
+	return false
+
+
 ## The same, but a conflicting single control is handed over: the other action takes the control this one gave up (or
 ## loses the binding if this one had none).
 static func swap(preset: Dictionary, action: String, layer, index: int, control: String) -> Dictionary:
@@ -121,7 +145,7 @@ static func swap(preset: Dictionary, action: String, layer, index: int, control:
 	if first["ok"] or first["conflict"].is_empty():
 		return first
 	var other: String = first["conflict"]["action"]
-	if other == "move" or action == "move":
+	if AXIS_ACTIONS.has(other) or AXIS_ACTIONS.has(action):
 		return first   # a move key cannot be traded one at a time: the screen rebinds the whole row
 	var p: Dictionary = preset.duplicate(true)
 	var old: Array = []
@@ -275,9 +299,9 @@ static func apply_overrides(preset: Dictionary, overrides: Array) -> Dictionary:
 		if FIXED_ACTIONS.has(str(o["action"])) or layer != null:
 			continue   # a layered row follows its base action; it is never edited on its own
 		var n_ctl: int = (o["controls"] as Array).size()
-		if str(o["action"]) == "move":
-			if n_ctl != 4 or not preset_has_axis(preset):
-				continue   # the move axis takes four keys; the pad stick is fixed
+		if AXIS_ACTIONS.has(str(o["action"])):
+			if n_ctl != 4 or not has_axis_for(preset, str(o["action"])):
+				continue   # an axis takes four keys; the pad stick is fixed
 		elif n_ctl > 1:
 			continue   # chords are fixed
 		var key: String = str(o["action"])
@@ -301,7 +325,7 @@ static func apply_overrides(preset: Dictionary, overrides: Array) -> Dictionary:
 		var inserts: Array = []
 		for ctl in g["entries"]:
 			var nb: Dictionary = {"controls": ctl, "action": g["action"]}
-			if g["action"] == "move":
+			if AXIS_ACTIONS.has(str(g["action"])):
 				nb["axis"] = ["up", "left", "down", "right"]
 			inserts.append(nb)
 		var merged: Array = kept.slice(0, at)
@@ -324,7 +348,7 @@ static func apply_overrides(preset: Dictionary, overrides: Array) -> Dictionary:
 static func _partners(preset: Dictionary) -> Array:
 	var base_of: Dictionary = {}
 	for b in preset.get("bindings", []):
-		if b.get("layer", null) == null and b.get("gesture", null) == null and b["controls"].size() == 1 and str(b["action"]) != "move":
+		if b.get("layer", null) == null and b.get("gesture", null) == null and b["controls"].size() == 1 and not AXIS_ACTIONS.has(str(b["action"])):
 			base_of[b["controls"][0]] = b["action"]
 	var out: Array = []
 	for b in preset.get("bindings", []):

@@ -88,6 +88,8 @@ func _run() -> void:
 	_touch_full_rules()
 	await _remap_rules()
 	await _remap_every_layout()
+	await _right_hand_rules()
+	await _planet_map_rules()
 	await _pause_menu_rules()
 	await _faces_rules()
 	await _two_player_rules()
@@ -96,6 +98,207 @@ func _run() -> void:
 	await _sim_untouched_rules()
 	print("hud_check: %d checks, %d failed" % [checks, fails])
 	quit(1 if fails > 0 else 0)
+
+
+# --- The right-hand attacks (Controls' switches.rightStick): Settings rows, legend, How to play, Remap names -----------------------------------
+
+func _rh_switch(on: bool) -> void:
+	var sw: Dictionary = SimInputData.timing.get("switches", {})
+	sw["rightStick"] = on
+	SimInputData.timing["switches"] = sw
+	SimInputData.clear_overrides()
+	SimInputData.invalidate()
+	UiData.set_feature("right_hand", null)
+
+
+func _rh_keys(two: bool) -> PackedStringArray:
+	UiSettings.two_humans = two
+	var out := PackedStringArray()
+	for r in UiSettings.rows():
+		out.append(str(r["key"]))
+	UiSettings.two_humans = false
+	return out
+
+
+func _right_hand_rules() -> void:
+	var own: PackedStringArray = ["hand_layout", "dpad_mirror", "strike_style", "brace_style", "pad_right_stick"]
+	var hub := _hub()
+	var m: UiFighterModel = hub.model(0)
+	m.ai = false
+	m.device = "xbox"
+	m.slot = 0
+	var rh_acts := func(rows: Array) -> Array:
+		var out: Array = []
+		for r in rows:
+			out.append(str((r["acts"] as Array)[0]))
+		return out
+	# Off (as shipped): nothing of it shows anywhere.
+	_rh_switch(false)
+	var before_arena: Array = rh_acts.call(UiHints.rows(m, "arena"))
+	var before_kb: Array = rh_acts.call(UiHints.rows(m, "kb-solo"))
+	var k_off: PackedStringArray = _rh_keys(true)
+	var any_off := false
+	for k in own:
+		any_off = any_off or k_off.has(k) or k_off.has(k + "_p2")
+	_ok(not UiData.feature("right_hand") and not any_off, "right hand: with Controls' switch off Settings lists none of its rows (player two's neither)")
+	var no_swap := true
+	for id in UiRemapModel.layouts():
+		no_swap = no_swap and not str(id).ends_with("-swapped")
+	_ok(no_swap and not before_arena.has("strike") and not before_kb.has("strike") and not before_kb.has("brace_key") and UiHints.styles(m, {}).size() == 5, "right hand: off, Remap offers no swapped layout and the legend and its styles are as they were")
+	var pk_off: Dictionary = UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 1, "xbox", 0, "arena")
+	var seen_off := false
+	for rec in pk_off["items"]:
+		var it: Dictionary = rec["item"]
+		seen_off = seen_off or str(it.get("icon", "")).begins_with("rh_") or str(it.get("action", "")).begins_with("strike")
+	_ok(not seen_off, "right hand: off, How to play has none of its lines")
+	# On: the rows, the legend, the words.
+	_rh_switch(true)
+	var k_on: PackedStringArray = _rh_keys(false)
+	var k_on2: PackedStringArray = _rh_keys(true)
+	var all_one := true
+	var all_two := true
+	for k in own:
+		all_one = all_one and k_on.has(k) and not k_on.has(k + "_p2")
+		all_two = all_two and k_on2.has(k) and k_on2.has(k + "_p2")
+	_ok(UiData.feature("right_hand") and all_one and all_two, "right hand: on, Settings lists hand layout, D-pad mirror, strike style, brace style and the second stick (player two's only when two people play)")
+	var od: Dictionary = UiData.options()
+	var words_ok := true
+	for k in own:
+		for kk in [k, k + "_p2"]:
+			var hl: String = str(od[kk]["help"]).to_lower() if od.has(kk) else ""
+			words_ok = words_ok and hl != "" and not hl.contains(" left") and not hl.contains(" right")
+	_ok(words_ok and od["hand_layout"]["choices"] == ["standard", "swapped"] and od["dpad_mirror"]["default"] == "auto" and od["strike_style"]["default"] == "hold" and od["brace_style"]["default"] == "flick" and bool(od["pad_right_stick"]["default"]), "right hand: the options have words with role names, never a side, and defaults of Controls' data")
+	var a_rows: Array = rh_acts.call(UiHints.rows(m, "arena"))
+	var a_mir: Array = rh_acts.call(UiHints.rows(m, "arena", "hold", {"_mirror": "on", "strike": "hold"}))
+	var s_rows: Array = rh_acts.call(UiHints.rows(m, "arena-swapped"))
+	var kb_rows: Array = rh_acts.call(UiHints.rows(m, "kb-solo"))
+	m.device = ""
+	var kbs_rows: Array = rh_acts.call(UiHints.rows(m, "kb-shared-p1"))
+	m.device = "xbox"
+	_ok(a_rows.has("strike") and not a_rows.has("strike_mirror") and a_mir.has("strike_mirror") and not a_mir.has("strike"), "right hand: Arena's legend names the strike stick, or the D-pad's strike while the mirror is on")
+	_ok(kb_rows.has("strike") and kb_rows.has("brace_key") and kbs_rows.has("strike_key") and kbs_rows.has("brace_key"), "right hand: the keyboards' legends name the strike and the brace keys")
+	_ok(s_rows.has("strike") and s_rows.size() == a_rows.size() and s_rows.has("light"), "right hand: a swapped layout reads its layout's rows (the glyphs are its own)")
+	var st_on: Dictionary = UiHints.styles(m, {"strike_style": "toggle", "dpad_mirror": "auto", "pad_right_stick": false})
+	_ok(st_on["strike"] == "toggle" and st_on["_mirror"] == "on" and UiHints.styles(m, {"pad_right_stick": true})["_mirror"] == "off" and UiHints.styles(m, {"dpad_mirror": "on"})["_mirror"] == "on" and UiHints.styles(m, {"dpad_mirror": "off", "pad_right_stick": false})["_mirror"] == "off", "right hand: the D-pad mirror follows the setting, and auto follows a pad with no second stick")
+	var lab: String = ""
+	for r in UiHints.rows(m, "arena", "hold", {"strike": "toggle"}):
+		if (r["acts"] as Array)[0] == "strike":
+			lab = str(r["label"])
+	_ok(lab == "Strike (toggle to charge)", "right hand: the strike row says toggle for the player who chose it")
+	# Glyphs: the stick, the cross, the arrow keys, the swapped face buttons.
+	var arena: Dictionary = UiRemapModel.preset("arena", 0)
+	var g_str: Array = UiGlyphs.binding_specs(arena, "strike_mirror", "xbox")
+	var g_stk: Array = UiGlyphs.binding_specs(arena, "strike", "xbox")
+	var g_kb: Array = UiGlyphs.binding_specs(UiRemapModel.preset("kb-solo", 0), "strike", "kbd")
+	var g_sw: Array = UiGlyphs.binding_specs(UiRemapModel.preset("arena-swapped", 0), "light", "xbox")
+	_ok(g_str.size() == 1 and g_str[0]["kind"] == "dpad" and g_str[0]["dir"] == "all" and g_stk.size() == 1 and g_stk[0]["kind"] == "stick" and g_kb.size() == 1 and g_kb[0]["label"] == "Arrows" and g_sw.size() == 1 and g_sw[0]["kind"] == "dpad", "right hand: glyphs: the strike stick, the whole D-pad, the arrow keys as one cap, and the face buttons the swap moved to the D-pad")
+	# How to play: a controller sees the lines, a keyboard its own rows.
+	var texts := func(pl: Dictionary) -> Array:
+		var out: Array = []
+		for rec in pl["items"]:
+			out.append([str((rec["item"] as Dictionary).get("action", "")), str((rec["item"] as Dictionary).get("icon", ""))])
+		return out
+	var h_pad: Array = texts.call(UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 1, "xbox", 0, "arena"))
+	var h_mir: Array = texts.call(UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 1, "xbox", 0, "arena", "neutral", {"styles": {"_mirror": "on"}}))
+	var h_kb: Array = texts.call(UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 1, "kbd", 0, "kb-shared-p1"))
+	_ok(h_pad.has(["strike", ""]) and not h_pad.has(["strike_mirror", ""]) and h_pad.has(["", "rh_brace"]) and h_pad.has(["", "rh_vanish"]) and h_mir.has(["strike_mirror", ""]) and not h_mir.has(["strike", ""]), "right hand: How to play names the strike stick (or the D-pad), the brace and the vanish for a controller")
+	_ok(h_kb.has(["strike_key", ""]) and h_kb.has(["brace_key", ""]) and not h_kb.has(["", "rh_brace"]), "right hand: How to play names a keyboard's strike and brace keys, not the controller's lines")
+	# Remap: the swapped layouts are offered, named, and the new keys are rows.
+	var lays: Array = UiRemapModel.layouts()
+	_ok(lays.has("arena-swapped") and lays.has("kb-solo-swapped") and lays.has("simple-pad-swapped"), "right hand: Remap offers the swapped layouts")
+	var hud := UiHud.new()
+	root.add_child(hud)
+	await process_frame
+	_ok(hud._rm_layout_word("arena") == "Arena (controller)" and hud._rm_layout_word("kb-solo-swapped") == "Keyboard, swapped" and hud._rm_layout_word("arena-swapped") == "Arena (controller), swapped" and hud._rm_layout_word("simple-pad-swapped") == "Simple (controller), swapped", "right hand: Remap names the swapped layouts")
+	_ok(hud._rm_action_word("strike_key") == "Strike key" and hud._rm_action_word("brace_key") == "Brace" and hud._rm_term("brace_key", true) != "" and hud._rm_action_word("light") == "Light", "right hand: Remap names the strike key and the brace key, and keeps the rest")
+	var kb_p: Dictionary = UiRemapModel.preset("kb-shared-p1", 0)
+	var rm_acts: Array = []
+	for e in UiRemapModel.entries(kb_p):
+		rm_acts.append(str(e["action"]))
+	_ok(rm_acts.has("strike_key") and rm_acts.has("brace_key"), "right hand: Remap lists the strike key and the brace key as rows")
+	hud.queue_free()
+	await process_frame
+	_rh_switch(false)
+
+
+# --- The planet map (docs/ui/planet-map.md): a stand-in globe in the ring's slot, behind the feature planet_map ------------------------------
+
+func _planet_map_rules() -> void:
+	# The projection: the centre faces us, a quarter turn east is the edge, the far side is hidden.
+	var c0: Vector3 = UiPlanetMap.project(1.0, 0.3, 1.0, 0.3)
+	var e0: Vector3 = UiPlanetMap.project(1.0 + PI * 0.5, 0.0, 1.0, 0.0)
+	var b0: Vector3 = UiPlanetMap.project(1.0 + PI, 0.0, 1.0, 0.0)
+	_ok(absf(c0.x) < 0.0001 and absf(c0.y) < 0.0001 and c0.z > 0.999 and absf(e0.x - 1.0) < 0.0001 and absf(e0.z) < 0.0001 and b0.z < -0.99, "planet map: the centre faces the player, a quarter turn is the rim, the far side is hidden")
+	# The globe faces the pair's middle by the short way round, across the seam.
+	var seam: Array = UiPlanetMap.centre([{"lon": 0.1, "lat": 0.0}, {"lon": TAU - 0.1, "lat": 0.0}])
+	_ok(absf(wrapf(float(seam[0]), -PI, PI)) < 0.0001, "planet map: the globe faces the middle of the pair across the seam, not the far side of the planet")
+	var v3: Array = UiPlanetMap.lonlat(Vector3(0.0, 0.0, 1.0))
+	_ok(absf(float(v3[0])) < 0.0001 and absf(float(v3[1])) < 0.0001 and absf(float(UiPlanetMap.lonlat(Vector3(1.0, 0.0, 0.0))[0]) - PI * 0.5) < 0.0001, "planet map: a unit direction from the sim reads as a longitude and a latitude")
+	# The stand-in feed: the ring's x is a longitude on the equator.
+	var feed: Dictionary = UiPlanetMap.feed_from_strip({"W": 9600.0, "segs": [[0.0, 9600.0, "ocean"]], "fighters": [{"x": 2400.0}, {"x": 7200.0}]}, 0)
+	_ok(absf(float(feed["pair"][0]["lon"]) - PI * 0.5) < 0.0001 and absf(float(feed["pair"][1]["lon"]) - PI * 1.5) < 0.0001, "planet map: the stand-in reads each fighter's ring x as a longitude")
+	# The trail: a point every 15 ticks, cleared when the tick runs back, thinned and never cut when full.
+	var st := {}
+	var f1: Dictionary = {"pair": [{"lon": 0.5, "lat": 0.0}], "tick": 0}
+	UiPlanetMap.sample(st, f1)
+	f1["tick"] = 10
+	UiPlanetMap.sample(st, f1)
+	var n_early: int = (st["trail"] as PackedFloat32Array).size()
+	f1["tick"] = 15
+	UiPlanetMap.sample(st, f1)
+	var n_due: int = (st["trail"] as PackedFloat32Array).size()
+	f1["tick"] = 3
+	UiPlanetMap.sample(st, f1)
+	_ok(n_early == 2 and n_due == 4 and (st["trail"] as PackedFloat32Array).size() == 2, "planet map: the trail takes a point every 15 ticks and clears when the tick runs back (a new match)")
+	var st2 := {}
+	var f2: Dictionary = {"pair": [{"lon": 0.0, "lat": 0.0}], "tick": 0}
+	for i in range(3000):
+		f2["tick"] = i * UiPlanetMap.SAMPLE_TICKS
+		f2["pair"] = [{"lon": float(i) * 0.01, "lat": 0.0}]
+		UiPlanetMap.sample(st2, f2)
+	var tr2: PackedFloat32Array = st2["trail"]
+	_ok(tr2.size() <= UiPlanetMap.MAX_TRAIL * 2 and tr2.size() > UiPlanetMap.MAX_TRAIL and absf(tr2[0]) < 0.0001 and absf(tr2[tr2.size() - 2] - 29.99) < 0.02, "planet map: a full trail is thinned, and keeps the start and the latest point of the match")
+	# The layer: nothing with the feature off; with it on, a signature that holds still until the globe turns; drawn without error.
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	var fx := [100.0, 900.0]
+	hud.strip_fn = func(): return {"W": 9600.0, "segs": [[0.0, 4800.0, "ocean"], [4800.0, 9600.0, "city"]], "cam_x": 0.0, "cam_w": 2000.0, "dead": [], "fighters": [{"x": fx[0], "slot": 0, "hidden": false, "aura": Color.WHITE, "seen_x": fx[0]}, {"x": fx[1], "slot": 1, "hidden": false, "aura": Color.WHITE, "seen_x": fx[1]}]}
+	for i in range(3):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	_ok(hud._l_globe.sig == null, "planet map: with the feature off nothing is drawn")
+	UiData.set_feature("planet_map", true)
+	for i in range(3):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	_ok(hud._l_globe.sig != null and hud.layout.ring.size.y > 0.0, "planet map: with the feature on the globe draws in the ring's slot")
+	var r0: int = hud._l_globe.redraws
+	for i in range(10):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	var calm: int = hud._l_globe.redraws - r0
+	fx[0] = 2600.0
+	fx[1] = 3400.0
+	for i in range(3):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	_ok(calm <= 2 and hud._l_globe.redraws > r0 + calm and (hud._pm_state["trail"] as PackedFloat32Array).size() >= 2, "planet map: the globe redraws only when it turns (%d redraws at rest) and the trail is kept" % calm)
+	hud.set_option("planet_map", false)
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(hud._l_globe.sig == null, "planet map: the Planet map option hides it")
+	hud.set_option("planet_map", true)
+	hud.queue_free()
+	await process_frame
+	UiData.set_feature("planet_map", null)
+	var rows_off: PackedStringArray = _rh_keys(false)
+	UiData.set_feature("planet_map", true)
+	var rows_on: PackedStringArray = _rh_keys(false)
+	UiData.set_feature("planet_map", null)
+	_ok(not rows_off.has("planet_map") and rows_on.has("planet_map") and bool(UiData.options()["planet_map"]["default"]), "planet map: Settings lists the Planet map option only while the feature is on, on by default")
 
 
 # --- Terms ---------------------------------------------------------------------------------------------------------

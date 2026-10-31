@@ -397,8 +397,10 @@ static var _feature_memo: Dictionary = {}   # feature()'s answers: the HUD asks 
 static var _feature_override: Dictionary = {}
 
 
-## A feature flag from ui/data/features.json (off when missing). Tests may override with set_feature.
+## A feature flag from ui/data/features.json (off when missing). Tests may override with set_feature. `right_hand` is not in the file: it is Controls' switch.
 static func feature(key: String) -> bool:
+	if key == "right_hand" and not _feature_override.has(key):
+		return SimInputData.right_stick_on()   # the right-hand attacks' rows, legend and words follow Controls' switch (timing.json switches.rightStick); never memoed, the switch is data
 	if UiFast.on:
 		var seen = _feature_memo.get(key)
 		if seen != null:

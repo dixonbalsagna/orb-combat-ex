@@ -1,5 +1,6 @@
 {
   "schema": 1,
   "hybrids": [],
-  "_note": "Hybrid stance masks switched on (LT+RB 10, LB+RB 3, LT+LB 9). None ships yet: a held pair reads as its newer button (sim/input/stance.gd)."
+  "withRightStick": [3, 10],
+  "_note": "Hybrid stance masks switched on (LT+RB 10, LB+RB 3, LT+LB 9). None ships yet: a held pair reads as its newer button (sim/input/stance.gd). withRightStick lists the ones that come on with timing.json switches.rightStick (the lay 3 and the kite 10; the terrain hybrid 9 stays off)."
 }

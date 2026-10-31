@@ -7,8 +7,8 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { request } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { buildPreview, buildKey, serveLocal, checkTree } from './preview.mjs';
-import { SWITCHES, IDS, locate, flip, resolve, errorSwitch, patchMain } from './switches.mjs';
+import { buildPreview, buildKey, serveLocal, checkTree, plan, overlayPaths, overlayFiles, applyPatchText } from './preview.mjs';
+import { SWITCHES, IDS, locate, flip, resolve, errorSwitch, patchMain, tableWith, loadPending, planetFunc } from './switches.mjs';
 import { expectations, probeProblems } from './smoke.mjs';
 import { browserExe } from '../machine/browser.mjs';
 
@@ -59,7 +59,7 @@ check('--off floor turns off only the floor', R('floor').active.join() === IDS.f
 check('--off surface turns the floor off with it, and says why', R('surface').active.includes('floor') === false && R('surface').cascaded[0].id === 'floor' && R('surface').cascaded[0].because.join() === 'surface');
 check('--off interrupts turns the floor off with it', !R('interrupts').active.includes('floor') && R('interrupts').active.includes('surface'));
 check('--off gen2 turns nothing else off', R('gen2').cascaded.length === 0 && R('gen2').active.length === IDS.length - 1);
-check('--off with a comma list and --off all', R('water,biome').active.join() === 'gen2,surface,interrupts,floor,turn' && R('all').active.length === 0);
+check('--off with a comma list and --off all', R('water,biome').active.join() === 'gen2,surface,interrupts,floor,turn,rightStick' && R('all').active.length === 0);
 check('an unknown id is reported, not ignored', R('watr').unknown.join() === 'watr');
 
 // ---- error hints
@@ -77,7 +77,7 @@ check('an anchor that is gone fails, naming it', /the menu start without intros:
 check('an anchor that is there twice fails', /found it 2 times/.test(throws(() => patchMain(`${MAIN}\n${MAIN}`)) || ''));
 
 // ---- the probe against the expectations
-const okProbe = { tick: 900, fine: 4800, planetGen: 2, planet: true, dataGen: 2, biome: true, water: true, surface: true, floor: true, interrupts: true, turn: true, turns: 0, errors: [], hp: [90, 80] };
+const okProbe = { tick: 900, fine: 4800, planetGen: 2, planet: true, dataGen: 2, biome: true, water: true, surface: true, floor: true, interrupts: true, turn: true, turns: 0, rightStick: true, errors: [], hp: [90, 80] };
 check('a probe that matches passes', probeProblems(okProbe, expectations(IDS)).length === 0);
 check('a switch that reads off in the running game is named', probeProblems({ ...okProbe, water: false }, expectations(IDS)).map((p) => p.sw).join() === 'water');
 check('a gen 2 planet with no fine-biome columns is named',probeProblems({ ...okProbe, fine: 0 }, expectations(IDS)).some((p) => p.sw === 'gen2'));
@@ -106,7 +106,7 @@ try {
     "if (a.includes('--export-release')) {",
     "  const out = a[a.indexOf('--export-release') + 2];",
     "  const j = (f) => JSON.parse(readFileSync(join(tree, f), 'utf8'));",
-    "  const seen = { gen: j('data/biomes/climate.json').gen, water: j('data/biomes/water.json').enabled, floor: j('data/biomes/water.json').floor.enabled, surface: j('data/biomes/water.json').surface.enabled, biome: j('data/combat/launch_biome.json').biome.enabled, interrupts: j('data/director/interrupts.json').water.enabled, turn: j('data/biomes/rings.json').turn.on, patched: /_preview_probe/.test(readFileSync(join(tree, 'render/core/main.gd'), 'utf8')), buildInfo: j('build_info.json'), args: a };",
+    "  const seen = { gen: j('data/biomes/climate.json').gen, water: j('data/biomes/water.json').enabled, floor: j('data/biomes/water.json').floor.enabled, surface: j('data/biomes/water.json').surface.enabled, biome: j('data/combat/launch_biome.json').biome.enabled, interrupts: j('data/director/interrupts.json').water.enabled, turn: j('data/biomes/rings.json').turn.on, rs: (() => { try { return j('data/input/timing.json').switches.rightStick; } catch { return null; } })(), host: readFileSync(join(tree, 'render/core/main.gd'), 'utf8').includes('_pad_stick_right'), probeRs: readFileSync(join(tree, 'render/core/main.gd'), 'utf8').includes('SimInputData.right_stick_on()'), patched: /_preview_probe/.test(readFileSync(join(tree, 'render/core/main.gd'), 'utf8')), buildInfo: j('build_info.json'), args: a };",
     "  writeFileSync(out, '<html>stub</html>'); writeFileSync(join(dirname(out), 'seen.json'), JSON.stringify(seen));",
     "  if (process.env.STUB_FAIL) { console.log('SCRIPT ERROR: stub failure line'); process.exit(3); }",
     "} else { console.log('import ok'); }",
@@ -139,6 +139,88 @@ try {
   delete process.env.STUB_FAIL;
   check('a failed export says so and shows the end of the log', /Godot --export-release Web exited 3/.test(failMsg) && /stub failure line/.test(failMsg), failMsg);
   check('an unknown switch refuses before any work', /unknown switch watr/.test(await buildPreview({ ...opts, off: ['watr'] }).then(() => '', (e) => e.message)));
+
+  // ---- the right hand (the EP, 2026-10-31): a switch whose key is not in the tree WAITS; uncommitted work is overlaid; the host patch is applied; --check says what it did not check
+  {
+    const sha = git(repo, 'rev-parse', 'main').trim();
+    const pendingText = JSON.stringify({ rows: [{ id: 'gen3', owner: 'World', what: 'planet generation 3' }, { id: 'tiles', owner: 'Rendering', what: 'tiles', file: 'data/x.json', path: ['tiles', 'on'], from: false, to: true }] });
+    const pend = loadPending(pendingText);
+    check('the pending rows load; a row with a key joins the table and a row without one never does', pend.problems.length === 0 && tableWith(pend.rows).some((s) => s.id === 'tiles' && s.optional && s.needs.length === 0) && !tableWith(pend.rows).some((s) => s.id === 'gen3'), JSON.stringify(pend.problems));
+    const pbad = (rows) => loadPending(JSON.stringify({ rows })).problems.join(' | ');
+    check('a pending row needs an id, a line of what and who, a path with its file, and an id nobody uses', /needs an id/.test(pbad([{ what: 'x', owner: 'y' }])) && /needs "what" and "owner"/.test(pbad([{ id: 'a1' }])) && /needs path/.test(pbad([{ id: 'a1', what: 'x', owner: 'y', file: 'f.json' }])) && /already a switch/.test(pbad([{ id: 'water', what: 'x', owner: 'y' }])) && /not JSON/.test(loadPending('{').problems.join()));
+    const p0 = plan(repo, sha, { pending: pend.rows });
+    check('a switch whose key is not in the tree WAITS: not on, with the reason; the others stay on', !p0.active.includes('rightStick') && p0.waiting.some((w) => w.id === 'rightStick' && /not in this tree yet/.test(w.why)) && p0.waiting.some((w) => w.id === 'tiles') && p0.active.includes('turn') && p0.active.includes('floor'), JSON.stringify(p0.waiting));
+    check('--off still takes a waiting switch\'s id and a switch that waits is not "unknown"', plan(repo, sha, { off: ['rightStick'], pending: pend.rows }).unknown.length === 0);
+
+    // a working tree with Controls' work in it, not committed
+    const work = (p, text) => { mkdirSync(join(repo, p, '..'), { recursive: true }); writeFileSync(join(repo, p), text); };
+    const mainBase = readFileSync(join(repo, 'render/core/main.gd'), 'utf8');
+    writeFileSync(join(repo, 'render/core/main.gd'), mainBase.replace(/\s*$/, '\n') + 'var _pad_stick_right: Dictionary = {}\n');
+    const hostText = git(repo, 'diff', 'render/core/main.gd');
+    git(repo, 'checkout', 'render/core/main.gd');
+    work('data/input/timing.json', JSON.stringify({ switches: { rightStick: false, other: true } }, null, 2) + '\n');
+    work('sim/input/input_data.gd', 'static func right_stick_on() -> bool:\n\treturn false\n');
+    work('docs/controls/pending/right-hand/right-hand-host.patch', hostText);
+    const OV = ['data/input', 'sim/input', 'docs/controls/pending/right-hand'];
+    const p1 = plan(repo, sha, { overlay: OV, pending: pend.rows });
+    check('with the work overlaid the switch is on, needs the host patch (main.gd has not got it) and brings its probe field', p1.active.includes('rightStick') && p1.hostPatch === hostText && p1.probes.length === 1 && /right_stick_on/.test(p1.probes[0]) && !p1.waiting.some((w) => w.id === 'rightStick'), JSON.stringify(p1));
+    check('the overlay is read from the working tree and the commit is not: without it the same switch waits', !plan(repo, sha, { pending: pend.rows }).active.includes('rightStick'));
+    work('data/input/timing.json', JSON.stringify({ switches: { rightStick: false } }, null, 2) + '\n');
+    const noPatch = plan(repo, sha, { overlay: ['data/input', 'sim/input'], pending: pend.rows });
+    check('the pad\'s right stick unread and no host patch in the tree: the switch WAITS and says so, it is not turned on half-built', !noPatch.active.includes('rightStick') && noPatch.waiting.some((w) => w.id === 'rightStick' && /right-hand-host\.patch is not in it/.test(w.why)), JSON.stringify(noPatch.waiting));
+    writeFileSync(join(repo, 'render/core/main.gd'), mainBase.replace(/\s*$/, '\n') + 'var _pad_stick_right: Dictionary = {}\n');
+    const landed = plan(repo, sha, { overlay: ['data/input', 'sim/input', 'render/core/main.gd'], pending: pend.rows });
+    check('a main.gd that already reads the right stick needs no patch', landed.active.includes('rightStick') && landed.hostPatch === null);
+    git(repo, 'checkout', 'render/core/main.gd');
+    work('data/input/timing.json', JSON.stringify({ switches: { rightStick: 7 } }, null, 2) + '\n');
+    const stale = plan(repo, sha, { overlay: ['data/input', 'sim/input', 'docs/controls/pending/right-hand'], pending: pend.rows });
+    check('a key that holds neither the old nor the new value is stale: it waits and the problem is named', !stale.active.includes('rightStick') && stale.stale.some((s) => /switches\.rightStick is 7/.test(s)), JSON.stringify(stale.stale));
+    work('data/input/timing.json', JSON.stringify({ switches: { rightStick: false } }, null, 2) + '\n');
+
+    // the overlay itself
+    const bad = (x) => { try { overlayPaths(repo, [x]); return ''; } catch (e) { return e.message; } };
+    check('an overlay is a path inside the repository that exists: no .., no absolute path, no .git, nothing missing', /inside the repository/.test(bad('../x')) && /inside the repository/.test(bad('C:/x')) && /inside the repository/.test(bad('/etc')) && /inside the repository/.test(bad('.git')) && /not in the working tree/.test(bad('data/nothing')) && bad('data/input') === '');
+    const h1 = overlayFiles(repo, ['data/input']);
+    work('data/input/timing.json', JSON.stringify({ switches: { rightStick: false, extra: 1 } }, null, 2) + '\n');
+    check('the overlay lists its files and its hash follows the contents (the cache key)', h1.files.join() === 'data/input/timing.json' && h1.hash.length === 6 && overlayFiles(repo, ['data/input']).hash !== h1.hash);
+    work('data/input/timing.json', JSON.stringify({ switches: { rightStick: false } }, null, 2) + '\n');
+
+    // the host patch on a scratch tree
+    const tree1 = mkdtempSync(join(tmpdir(), 'preview-host-test-'));
+    mkdirSync(join(tree1, 'render/core'), { recursive: true });
+    writeFileSync(join(tree1, 'render/core/main.gd'), mainBase);
+    applyPatchText(tree1, hostText);
+    check('the host patch is applied to the scratch main.gd and leaves nothing behind', readFileSync(join(tree1, 'render/core/main.gd'), 'utf8').includes('_pad_stick_right') && !existsSync(join(tree1, '.preview-host.patch')));
+    writeFileSync(join(tree1, 'render/core/main.gd'), 'a different file\n');
+    check('a host patch that does not fit says so', (() => { try { applyPatchText(tree1, hostText); return false; } catch (e) { return /does not fit this tree/.test(e.message); } })());
+    rmSync(tree1, { recursive: true, force: true });
+
+    // the extra probe field
+    check('the probe gains a switch\'s field before the errors line, and only then', /"interrupts"[^\n]*\n\t\t"rightStick": SimInputData\.right_stick_on\(\),\n\t\t"errors"/.test(planetFunc(['"rightStick": SimInputData.right_stick_on()'])) && !/rightStick/.test(planetFunc()) && patchMain(MAIN, ['"rightStick": SimInputData.right_stick_on()']).includes('SimInputData.right_stick_on()') && patchMain(MAIN) === patchMain(MAIN, []));
+
+    // the whole build with the work overlaid
+    const ob = await buildPreview({ ...opts, overlay: OV, rebuild: true, pending: pend });
+    const so = JSON.parse(readFileSync(join(ob.web, 'seen.json'), 'utf8'));
+    check('the build copies the overlay over the scratch tree, turns the key on, applies the host patch and adds the probe field', ob.active.includes('rightStick') && ob.hostPatched === true && so.rs === true && so.host === true && so.probeRs === true && ob.overlay.length === 3 && ob.flips.some((x) => x.id === 'rightStick' && x.key === 'switches.rightStick'), JSON.stringify([so, ob.overlay]));
+    check('the cache key tells an overlaid build from the plain one and says the host patch rode', /-ov[0-9a-f]{6}/.test(ob.key) && /-host$/.test(ob.key) && ob.web !== b.web);
+    check('build_info.json lists the overlaid paths (a build of uncommitted work says so)', JSON.stringify(so.buildInfo.overlay) === JSON.stringify(OV), JSON.stringify(so.buildInfo));
+    check('the committed tree is still untouched by the build (only the working files the test made are new)', git(repo, 'status', '--porcelain', '--untracked-files=no').trim() === '', git(repo, 'status', '--porcelain'));
+    const ob2 = await buildPreview({ ...opts, overlay: OV, pending: pend });
+    check('the same overlaid command again is served from the cache', ob2.cached === true && ob2.web === ob.web);
+    const obOff = await buildPreview({ ...opts, overlay: OV, off: ['rightStick'], pending: pend });
+    check('--off rightStick leaves the data as the working tree has it, the host patch unapplied', obOff.active.includes('rightStick') === false && JSON.parse(readFileSync(join(obOff.web, 'seen.json'), 'utf8')).rs === false && JSON.parse(readFileSync(join(obOff.web, 'seen.json'), 'utf8')).host === false);
+
+    // --check: what it checked and what waits
+    const notes = [];
+    const probs = checkTree(repo, 'main', { overlay: OV, notes, pending: pend });
+    check('--check passes with the work overlaid, says the host patch fits and that the work is uncommitted, and lists what waits', probs.length === 0 && notes.some((n) => /host patch fits/.test(n)) && notes.some((n) => /overlay from the working tree \(uncommitted\)/.test(n)) && notes.some((n) => /waiting, no key yet: gen3/.test(n)) && notes.some((n) => /waiting, not on: tiles/.test(n)), JSON.stringify([probs, notes]));
+    const notes2 = [];
+    check('--check without the work lists the right stick as waiting and is not an error', checkTree(repo, 'main', { notes: notes2, pending: pend }).length === 0 && notes2.some((n) => /waiting, not on: rightStick/.test(n)));
+    work('data/input/timing.json', JSON.stringify({ switches: { rightStick: 7 } }, null, 2) + '\n');
+    check('--check fails on a key that is there with a value the table does not know', checkTree(repo, 'main', { overlay: OV, pending: pend }).some((p) => /switches\.rightStick is 7/.test(p)));
+    check('a missing or malformed pending file is reported by --check', checkTree(repo, 'main', { pending: loadPending('{"rows":[{"id":"gen3"}]}') }).some((p) => /switches-pending\.json/.test(p)));
+    for (const d of ['data/input', 'sim', 'docs']) rmSync(join(repo, d), { recursive: true, force: true });
+  }
   check('--check on the fixture repository finds every key and anchor', checkTree(repo, 'main').length === 0);
   check('--check says which file is out of date', checkTree(repo, 'main~0').length === 0 && (() => { writeFileSync(join(repo, 'data/biomes/water.json'), JSON.stringify({ enabled: false })); git(repo, 'commit', '-q', '-am', 'break'); return checkTree(repo, 'main').some((p) => /water\.json: no key surface\.enabled/.test(p)); })());
 
@@ -167,7 +249,7 @@ try {
     const { smoke } = await import('./smoke.mjs');
     const page = (probe) => `<!doctype html><html><body><canvas width="64" height="64"></canvas><script>var t=0;setInterval(function(){t+=20;window.__preview=Object.assign({tick:t},${JSON.stringify(probe)});},100);</script></body></html>`;
     const site = (name, probe) => { const d = join(tmp, name); mkdirSync(d, { recursive: true }); writeFileSync(join(d, 'index.html'), page(probe)); return d; };
-    const good = await smoke({ dir: site('good', { planetGen: 2, fine: 4800, dataGen: 2, planet: true, biome: true, water: true, surface: true, floor: true, interrupts: true, turn: true, turns: 0, errors: [], hp: [100, 100] }), on: IDS, timeoutS: 90, session: 'tools-preview-selftest', exe });
+    const good = await smoke({ dir: site('good', { planetGen: 2, fine: 4800, dataGen: 2, planet: true, biome: true, water: true, surface: true, floor: true, interrupts: true, turn: true, turns: 0, rightStick: true, errors: [], hp: [100, 100] }), on: IDS, timeoutS: 90, session: 'tools-preview-selftest', exe });
     check('the smoke check passes a page that reads as asked', good.ok === true, JSON.stringify(good.problems));
     const wrong = await smoke({ dir: site('wrong', { planetGen: 2, fine: 4800, dataGen: 2, planet: true, biome: true, water: false, surface: true, floor: true, interrupts: true, errors: [], hp: [100, 100] }), on: IDS, timeoutS: 90, session: 'tools-preview-selftest', exe });
     check('it fails a page whose water reads off, and names water', wrong.ok === false && wrong.problems.some((p) => p.sw === 'water'), JSON.stringify(wrong.problems));

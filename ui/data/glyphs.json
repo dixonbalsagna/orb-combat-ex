@@ -219,6 +219,37 @@
         ". + /"
       ]
     },
+    "strike": {
+      "kind": "stick",
+      "kbd": [
+        "Arrows",
+        "WASD"
+      ]
+    },
+    "strike_mirror": {
+      "kind": "dpad",
+      "dir": "all",
+      "kbd": [
+        "Arrows",
+        "Arrows"
+      ]
+    },
+    "strike_key": {
+      "kind": "text",
+      "pad": "Key",
+      "kbd": [
+        "B",
+        "["
+      ]
+    },
+    "brace_key": {
+      "kind": "text",
+      "pad": "Key",
+      "kbd": [
+        "X",
+        "]"
+      ]
+    },
     "pause": {
       "kind": "text",
       "pad": "Start",

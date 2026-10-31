@@ -24,9 +24,37 @@ export const SWITCHES = [
     what: 'the lake floor: a free fighter\'s floor in the ring\'s own water is its surface less his feet (needs both halves of surfacing)' },
   { id: 'turn', file: 'data/biomes/rings.json', path: ['turn', 'on'], from: 0, to: 1, needs: [],
     what: 'the arena\'s calm turn: at a calm moment after a launch has landed, the ring swaps for a new one turned a few degrees (at most 4 a match, 60 s apart)' },
+  { id: 'rightStick', file: 'data/input/timing.json', path: ['switches', 'rightStick'], from: false, to: true, needs: [], optional: true, host: 'right-hand-host',
+    probe: '"rightStick": SimInputData.right_stick_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func right_stick_on' },
+    what: 'the right-hand attacks (pitch 4a, Controls): the right stick throws directional-charge strikes, the left hand braces and slips; the pad\'s right stick is read. Waits until Controls\' code is in the tree you build (or overlaid)' },
 ];
 
 export const IDS = SWITCHES.map((s) => s.id);
+
+/** The switches of a build: the table above, and the rows of tools/preview/switches-pending.json that name a file and a key (a row without them is a name waiting for its key and is never a switch). */
+export function tableWith(pending = []) {
+  const known = new Set(SWITCHES.map((s) => s.id));
+  return [...SWITCHES, ...pending.filter((r) => r && r.file && Array.isArray(r.path) && !known.has(r.id)).map((r) => ({ needs: [], optional: true, ...r }))];
+}
+
+/** Checks the rows of switches-pending.json (text in). Returns { rows, problems }: every row needs an id and a line saying what it is and who lands it; a row with a file also needs a path, from and to. */
+export function loadPending(text) {
+  const problems = [];
+  let doc = null;
+  try { doc = JSON.parse(text); } catch (e) { return { rows: [], problems: [`switches-pending.json is not JSON: ${e.message}`] }; }
+  const rows = Array.isArray(doc.rows) ? doc.rows : [];
+  const seen = new Set(SWITCHES.map((s) => s.id));
+  rows.forEach((r, i) => {
+    const at = `row ${i}${r && r.id ? ` (${r.id})` : ''}`;
+    if (!r || typeof r.id !== 'string' || !/^[a-zA-Z][a-zA-Z0-9]*$/.test(r.id)) { problems.push(`${at}: needs an id of letters and digits`); return; }
+    if (seen.has(r.id)) problems.push(`${at}: the id is already a switch or a row`);
+    seen.add(r.id);
+    if (typeof r.what !== 'string' || !r.what.trim() || typeof r.owner !== 'string' || !r.owner.trim()) problems.push(`${at}: needs "what" and "owner"`);
+    if (r.file !== undefined && !(typeof r.file === 'string' && Array.isArray(r.path) && r.path.length && 'from' in r && 'to' in r)) problems.push(`${at}: a row with a file needs path (an array), from and to`);
+    if (r.needs !== undefined && !(Array.isArray(r.needs) && r.needs.every((n) => typeof n === 'string'))) problems.push(`${at}: needs is a list of ids`);
+  });
+  return { rows, problems };
+}
 
 /** Where a key's value is in a JSON text: { start, end } of the value, or null. Walks the text (strings, nesting) without parsing the whole file, so the edit keeps everything else as it was. */
 export function locate(text, path) {
@@ -89,14 +117,15 @@ export function flip(text, sw) {
 }
 
 /** Which switches are on, given the ids turned off ("all" turns every one off). Turning one off turns off what needs it. Returns { active, cascaded: [{ id, because }], unknown }. */
-export function resolve(off = []) {
+export function resolve(off = [], table = SWITCHES) {
+  const IDS = table.map((s) => s.id);
   const want = new Set(off.flatMap((o) => String(o).split(',')).map((s) => s.trim()).filter(Boolean));
   const unknown = [...want].filter((id) => id !== 'all' && !IDS.includes(id));
   const active = new Set(want.has('all') ? [] : IDS.filter((id) => !want.has(id)));
   const cascaded = [];
   for (let again = true; again;) {
     again = false;
-    for (const sw of SWITCHES) {
+    for (const sw of table) {
       if (!active.has(sw.id)) continue;
       const missing = sw.needs.filter((n) => !active.has(n));
       if (missing.length) { active.delete(sw.id); cascaded.push({ id: sw.id, because: missing }); again = true; }
@@ -113,6 +142,7 @@ export function errorSwitch(line) {
   if (/interrupts\.json|DirWater|DirInterrupt/i.test(t)) return 'interrupts';
   if (/water\.json|WorldFill|water v2/i.test(t)) return 'water';
   if (/rings\.json|WorldEpoch/i.test(t)) return 'turn';
+  if (/right_stick|rightStick|strike_read|SimStrike|left_hand/i.test(t)) return 'rightStick';
   if (/launch_biome|DirLaunch|biome\.enabled/i.test(t)) return 'biome';
   if (/climate\.json|WorldClimate|WorldPlanet|planet gen|lakes\.json|sites\.json/i.test(t)) return 'gen2';
   return null;
@@ -120,7 +150,7 @@ export function errorSwitch(line) {
 
 // ---- the scratch changes to render/core/main.gd ----
 
-/** The probe and the planet entry, as GDScript (tab-indented). */
+/** The probe and the planet entry, as GDScript (tab-indented). `planetFunc(extra)` adds probe fields (a switch's `probe` line) when the tree has what they read. */
 export const PLANET_FUNC = [
   '',
   '',
@@ -148,6 +178,12 @@ export const PLANET_FUNC = [
   '',
 ].join('\n');
 
+export function planetFunc(extra = []) {
+  const line = '\t\t"errors": WorldFill.dataErrors(), "hp": hp}';
+  if (!PLANET_FUNC.includes(line)) throw new Error('tools/preview/switches.mjs: the probe line moved (planetFunc is out of date)');
+  return extra.length ? PLANET_FUNC.replace(line, () => `\t\t${extra.join(', ')},\n${line}`) : PLANET_FUNC;
+}
+
 const EDITS = [
   { name: 'the match setup\'s planet part (no-intro and hook starts)', from: '\t\treturn _planet_next.duplicate()\n', to: '\t\treturn _preview_planet()\n' },
   { name: 'the match setup\'s planet part (the intro start)', from: '\tsu.merge(_planet_next)\n', to: '\tsu.merge(_preview_planet())\n' },
@@ -160,7 +196,7 @@ const EDITS = [
 export const EDITS_FINGERPRINT = createHash('sha1').update(JSON.stringify([EDITS, PLANET_FUNC, SWITCHES])).digest('hex').slice(0, 6);
 
 /** main.gd with the planet entry and the probe. Each anchor must be there exactly once, or this throws and says which (Rendering's main.gd changed: update EDITS). Keeps the file's line endings. */
-export function patchMain(text) {
+export function patchMain(text, extra = []) {
   const crlf = text.includes('\r\n');
   const nl = (s) => (crlf ? s.replace(/\n/g, '\r\n') : s);
   let out = text;
@@ -170,5 +206,5 @@ export function patchMain(text) {
     if (n !== 1) throw new Error(`render/core/main.gd: ${e.name}: expected the line once, found it ${n} times (tools/preview/switches.mjs EDITS is out of date)`);
     out = out.replace(from, () => nl(e.to));
   }
-  return out.replace(/\s*$/, '') + nl(PLANET_FUNC);
+  return out.replace(/\s*$/, '') + nl(planetFunc(extra));
 }

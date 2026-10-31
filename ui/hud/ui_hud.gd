@@ -46,6 +46,7 @@ var hub := UiEventHub.new()
 var layout := UiLayout.new()
 var anchor_fn: Callable = Callable()   # (slot: int) -> {pos: Vector2, h: float, visible: bool}
 var strip_fn: Callable = Callable()    # () -> Dictionary for UiStrip
+var planet_map_fn: Callable = Callable()   # () -> {"pair": [dir, dir], "tick": int, "segs": [...]} for UiPlanetMap (a stand-in reads the strip's data when this is not set); see docs/ui/planet-map.md
 var split_fn: Callable = Callable()    # () -> Dictionary: Camera's split record (see UiSplit); empty or invalid = one camera
 var opts: Dictionary = {
 	"silhouette": false,       # the body figure beside each plate: off by default; the host turns it on in training and as the accessibility default
@@ -253,6 +254,9 @@ var _div_key: Array = []
 var _l_ring_base: UiLayer
 var _l_chips: Array = []       # one small node per pane: an edge pointer chip, moved by position
 var _l_ring: UiLayer
+var _l_globe: UiLayer
+var _pm_state: Dictionary = {}     # the planet map's trail (UiPlanetMap.sample)
+var _pm_feed: Dictionary = {}
 var _l_tug: UiLayer           # the beam struggle's track, meeting point and beat (UiTug), only while one is on
 var _tug_plan: Dictionary = {}
 var _l_many: UiLayer          # the many-body markers (UiMany): one layer for all of them
@@ -314,6 +318,7 @@ func _ready() -> void:
 	_l_strip_marks = _layer(_paint_strip_marks)
 	_l_ring_base = _layer(_paint_ring_base)
 	_l_ring = _layer(_paint_ring)
+	_l_globe = _layer(_paint_globe)
 	_l_many = _layer(_paint_many)
 	_l_tug = _layer(_paint_tug)
 	_l_events = _layer(_paint_events)
@@ -394,7 +399,7 @@ func _chip_layer(slot: int) -> UiLayer:
 
 
 func _all_layers() -> Array:
-	return [_l_caption, _l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_many, _l_tug, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_loading, _l_notice, _l_gate_back]
+	return [_l_caption, _l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_globe, _l_many, _l_tug, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_loading, _l_notice, _l_gate_back]
 
 
 ## Total redraws of every layer so far, for the perf counters.
@@ -683,6 +688,12 @@ func _o(plate_alpha: float = 1.0) -> Dictionary:
 		"charge_style_p2": str(opts["charge_style_p2"]),
 		"transform_style": str(opts["transform_style"]),
 		"transform_style_p2": str(opts["transform_style_p2"]),
+		"strike_style": str(opts["strike_style"]),
+		"strike_style_p2": str(opts["strike_style_p2"]),
+		"dpad_mirror": str(opts["dpad_mirror"]),
+		"dpad_mirror_p2": str(opts["dpad_mirror_p2"]),
+		"pad_right_stick": bool(opts["pad_right_stick"]),
+		"pad_right_stick_p2": bool(opts["pad_right_stick_p2"]),
 	}
 
 
@@ -751,6 +762,7 @@ func _update_layers() -> void:
 	var ring_on: bool = UiData.feature("ring_map") and UiSplit.ring_active(_split) and layout.ring.size.y > 0.0 and _lb < 0.5   # ring_map is off: the planet strip says the same, and the grey circle sat between the fighters (Orb, 2026-10-18)
 	_l_ring_base.update_sig(1 if ring_on else null)
 	_l_ring.update_sig(UiSplit.ring_sig(_split) if ring_on else null)
+	_update_globe()
 	var chips: Array = []
 	if not _split.is_empty() and anchor_fn.is_valid() and _lb < 0.5:
 		for i in range(mini(2, hub.models.size())):
@@ -951,6 +963,27 @@ func _paint_sil(ci: CanvasItem, slot: int) -> void:
 
 func _paint_toll(ci: CanvasItem) -> void:
 	UiCenter.draw_toll(ci, hub, layout, layout.s, _o(0.45 if hub.mode == UiEventHub.Mode.CINEMATIC else 1.0))
+
+
+## The planet map (docs/ui/planet-map.md): behind the feature planet_map and the Planet map option, in the ring's slot. It samples the trail from the feed's tick and redraws only when the globe has turned.
+func _update_globe() -> void:
+	var on: bool = UiData.feature("planet_map") and bool(opts["planet_map"]) and layout.ring.size.y > 0.0 and _lb < 0.5 and not hub.models.is_empty()
+	if not on:
+		_l_globe.update_sig(null)
+		return
+	if planet_map_fn.is_valid():
+		_pm_feed = planet_map_fn.call()
+	elif strip_fn.is_valid():
+		_pm_feed = UiPlanetMap.feed_from_strip(strip_fn.call(), int(_t * 60.0))
+	else:
+		_l_globe.update_sig(null)
+		return
+	UiPlanetMap.sample(_pm_state, _pm_feed)
+	_l_globe.update_sig(UiPlanetMap.sig(_pm_state, _pm_feed))
+
+
+func _paint_globe(ci: CanvasItem) -> void:
+	UiPlanetMap.draw(ci, layout.ring, _pm_state, _pm_feed, layout.s, 1.0)
 
 
 func _paint_strip_base(ci: CanvasItem) -> void:
@@ -2556,7 +2589,33 @@ func _rm_action_word(id: String) -> String:
 		return str(sw["label"])
 	if UiStance.three() and ["heavy", "signature"].has(a):
 		return UiData.t("prompt.three_remap_" + a)   # Y reads Medium and B reads Heavy (the action ids stay)
-	return str((_rm_words().get("actions", {}) as Dictionary).get(a, a))
+	var named: String = str((_rm_words().get("actions", {}) as Dictionary).get(a, ""))
+	return named if named != "" else (_rm_term(a, false) if _rm_term(a, false) != "" else a)
+
+
+## A word of the Remap screen that is not in the action table (the right-hand attacks' strike key and brace key): terms.json prompt.remap_<action>, "" when there is none.
+func _rm_term(action: String, help: bool) -> String:
+	var key: String = "prompt.remap_" + action + ("_help" if help else "")
+	var v: String = UiData.t(key)
+	return "" if v == key else v
+
+
+## The name of a layout on the Remap screen. A swapped layout the data derives from a pad layout (`arena-swapped`) is its layout's name and the word swapped.
+func _rm_layout_word(id: String) -> String:
+	var lw: Dictionary = _rm_words().get("layouts", {})
+	if lw.has(id):
+		return str(lw[id])
+	if id.ends_with("-swapped"):
+		return UiData.t("prompt.remap_swapped").replace("{layout}", str(lw.get(id.trim_suffix("-swapped"), id.trim_suffix("-swapped"))))
+	return id
+
+
+## The layout chooser's words: the data's names, and a derived swapped layout named from its pad layout.
+func _rm_layout_words(ids: Array) -> Dictionary:
+	var out: Dictionary = (_rm_words().get("layouts", {}) as Dictionary).duplicate()
+	for id in ids:
+		out[str(id)] = _rm_layout_word(str(id))
+	return out
 
 
 ## The screen's rows: the layout chooser, a row per entry with the controls it has now, and Reset.
@@ -2565,7 +2624,7 @@ func _rm_rows() -> Array:
 	var ids: Array = UiRemapModel.layouts()
 	var out: Array = []
 	out.append({"kind": UiSettings.CHOICE, "key": "layout", "label": str(w.get("layout", "Layout")), "help": str(w.get("layout_help", "")), "enabled": true,
-		"o": {"choices": ids, "default": ids[0] if not ids.is_empty() else ""}, "words": w.get("layouts", {})})
+		"o": {"choices": ids, "default": ids[0] if not ids.is_empty() else ""}, "words": _rm_layout_words(ids)})
 	if _humans() >= 2:
 		out.append({"kind": UiSettings.CHOICE, "key": "slot", "label": UiData.t("prompt.remap_player"), "help": "", "enabled": true,
 			"o": {"choices": [0, 1], "default": 0}, "words": {"0": UiData.t("prompt.remap_p1"), "1": UiData.t("prompt.remap_p2")}})
@@ -2580,6 +2639,8 @@ func _rm_rows() -> Array:
 			specs.append(UiGlyphs.spec_control(str(c), fam, style))
 		out.append({"kind": UiSettings.BIND, "key": str(e["id"]), "label": _rm_action_word(str(e["action"])), "help": str(UiStance.remap_words(str(e["action"]), _rm_toggle(str(e["action"]))).get("help", (w.get("helps_toggle", {}) as Dictionary).get(str(e["action"]), (w.get("helps", {}) as Dictionary).get(str(e["action"]), "")) if _rm_toggle(str(e["action"])) else (w.get("helps", {}) as Dictionary).get(str(e["action"]), ""))),
 			"enabled": not bool(e["fixed"]), "specs": specs})
+		if str(out.back()["help"]) == "":
+			out.back()["help"] = _rm_term(str(e["action"]), true)
 	out.append({"kind": UiSettings.BUTTON, "key": "", "action": "reset", "label": str(w.get("reset", "Reset")), "value": str(w.get("reset_button", "Reset")),
 		"help": str(w.get("reset_help", "")), "enabled": true})
 	return out
@@ -2836,7 +2897,7 @@ func _rm_answer_swap() -> void:
 
 func _rm_reset() -> void:
 	_rm_commit([])
-	_rm_status = str(_rm_words().get("reset_done", "")).replace("{layout}", str((_rm_words().get("layouts", {}) as Dictionary).get(_rm_layout, _rm_layout)))
+	_rm_status = str(_rm_words().get("reset_done", "")).replace("{layout}", _rm_layout_word(_rm_layout))
 	_l_remap.invalidate()
 
 

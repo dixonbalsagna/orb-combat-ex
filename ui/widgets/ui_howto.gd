@@ -165,6 +165,14 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 			if not UiGlyphs.bound(preset, first, slot):
 				continue
 		var icon_name: String = str(it.get("icon", ""))
+		if icon_name.begins_with("rh_") and (not UiData.feature("right_hand") or device == "kbd" or touch):
+			continue   # a line about the controller's right-hand attacks: only while Controls' switch is on, and only for a controller
+		if it.has("action") and UiHints.RIGHT_HAND_ACTIONS.has(str(it["action"])) and not UiData.feature("right_hand"):
+			continue   # the right-hand attacks' lines are there only while Controls' switch is on, whatever the layout says
+		if it.has("action") and ["strike", "strike_mirror"].has(str(it["action"])):
+			var mir_on: bool = str((extra.get("styles", {}) as Dictionary).get("_mirror", "off")) == "on"
+			if (str(it["action"]) == "strike_mirror") != mir_on and UiGlyphs.bound(preset, "strike_mirror", slot):
+				continue   # the D-pad's strike line while the D-pad strikes, the stick's line while the stick does
 		if icon_name.begins_with("three_") and not UiStance.three():
 			continue   # a line that is true only under the three strengths (features.json)
 		if icon_name == "launch_info" and not UiStance.launch_marks():
@@ -178,7 +186,7 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 		var rec: Dictionary = {"item": it, "col": col, "fs": fs_body, "fs_small": fs_small}
 		var text: String = str(it.get("text", ""))
 		var styles: Dictionary = extra.get("styles", {})
-		var is_toggle: bool = it.has("action") and str(styles.get(str(it["action"]), "hold")) == "toggle"   # this player's guard, power, manoeuvre or energy is a toggle: the page says so
+		var is_toggle: bool = it.has("action") and str(styles.get("strike" if str(it["action"]).begins_with("strike") else str(it["action"]), "hold")) == "toggle"   # this player's guard, power, manoeuvre or energy is a toggle: the page says so
 		if is_toggle and it.has("text_toggle"):
 			text = str(it["text_toggle"])
 		if it.has("action") and UiStance.three() and ["heavy", "signature"].has(str(it["action"])):
@@ -681,6 +689,17 @@ static func _icon(ci: CanvasItem, name: String, c: Vector2, sz: float, cs: float
 			# Their stance and their weight: a stance chip over a heavy barbell.
 			UiIcons.stance(ci, 1, c + Vector2(0.0, -r * 0.5), sz * 0.55, UiLook.stance_col(1))
 			UiReads.weight_mark(ci, c + Vector2(0.0, r * 0.55), sz * 0.7, true, ink)
+		"rh_brace":
+			# A guard arc over a stick with a short flick: hold guard, flick toward the blow.
+			ci.draw_arc(c + Vector2(0.0, r * 0.15), r, PI * 1.1, PI * 1.9, 14, ink, w * 1.3, true)
+			ci.draw_circle(c + Vector2(-r * 0.25, r * 0.45), sz * 0.12, dim)
+			ci.draw_line(c + Vector2(-r * 0.25, r * 0.45), c + Vector2(r * 0.55, r * 0.45), ink, w)
+		"rh_vanish":
+			# Two marks joined by a plus, then an arrow's chevron: guard and dodge together, then a direction.
+			ci.draw_circle(c + Vector2(-r * 0.7, 0.0), sz * 0.11, ink)
+			ci.draw_circle(c + Vector2(-r * 0.05, 0.0), sz * 0.11, ink)
+			ci.draw_line(c + Vector2(-r * 0.55, 0.0), c + Vector2(-r * 0.2, 0.0), dim, w)
+			UiIcons.chevron(ci, c + Vector2(r * 0.7, 0.0), sz * 0.3, 1.0, w, ink)
 		"struggle":
 			ci.draw_arc(c, r * 0.45, 0.0, TAU, 20, ink, w, true)
 			ci.draw_arc(c, r * 0.75, 0.0, TAU, 24, dim, w, true)

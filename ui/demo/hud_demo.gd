@@ -4,7 +4,7 @@ extends Control
 ##
 ## Run:  godot --path . res://ui/demo/hud_demo.tscn
 ## Options after "--": --scenario=hero_vs_proud|empress_vs_cyborg|placeholders|stress|controls   --shot=file.png (save a frame)
-##   --at=SECONDS (fast-forward the feed to that time before the shot)   --frames=N   --portrait (start portrait-shaped)   --sil --crown --clear --nofeed --nolegend --reduced --split --flip --prompts --dp=2.6 --touch[=press|ready] --left --device=xbox --preset=arena|simple-pad|kb-solo|kb-shared-p2 --ready --stance=N --target=github|mailto|form --p2[=kbd] --joinnote=joined|left --pause[=N] [--pconfirm] --remap[=LAYOUT] [--rcapture=ACTION] [--rtry=kb:KeyK] [--rfocus=ACTION] --settings[=FOCUS_STEPS] [--pad] [--sscroll=PX] --howto[=PAGE] [--firstrun] [--notice] --ack=KIND[:CELL] --three --charge=CELL[:FRACTION] --launcher --launchready --rf --ko --feedback[=copied|review]
+##   --at=SECONDS (fast-forward the feed to that time before the shot)   --frames=N   --portrait (start portrait-shaped)   --sil --crown --clear --nofeed --nolegend --reduced --split --flip --prompts --dp=2.6 --touch[=press|ready] --left --device=xbox --preset=arena|simple-pad|kb-solo|kb-shared-p2 --ready --rh (the right-hand attacks) --pm (the planet map) --mirror --strike=toggle --stance=N --target=github|mailto|form --p2[=kbd] --joinnote=joined|left --pause[=N] [--pconfirm] --remap[=LAYOUT] [--rcapture=ACTION] [--rtry=kb:KeyK] [--rfocus=ACTION] --settings[=FOCUS_STEPS] [--pad] [--sscroll=PX] --howto[=PAGE] [--firstrun] [--notice] --ack=KIND[:CELL] --three --charge=CELL[:FRACTION] --launcher --launchready --rf --ko --feedback[=copied|review]
 ## Keys: Tab scenario | Space pause | R restart | S silhouette | F4 feed | C captions | M reduced motion | K crown always on | B brink ring | T arc thickness
 ##       Z clear zones | L region label | V viewport size | +/- fighter size | H hide this legend
 
@@ -33,6 +33,15 @@ func _ready() -> void:
 	UiHud.notice_auto = args.has("notice")
 	if args.has("three"):
 		UiData.set_feature("three_strengths", true)   # the three-strength HUD (--three)
+	if args.has("rh"):
+		SimInputData.ensure()
+		var sw: Dictionary = SimInputData.timing.get("switches", {})   # --rh: Controls' right-hand attacks on (timing.json switches.rightStick), for the legend, How to play, Settings and Remap
+		sw["rightStick"] = true
+		SimInputData.timing["switches"] = sw
+		SimInputData.clear_overrides()
+		SimInputData.invalidate()
+	if args.has("pm"):
+		UiData.set_feature("planet_map", true)   # --pm: the planet map's stand-in globe
 	if args.has("rf"):
 		UiData.set_feature("reduce_flashing", true)   # the demo shows the photosensitivity notice only when asked (--notice)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -121,6 +130,10 @@ func _ready() -> void:
 			hud.set_option("pad_preset", str(args["preset"]))
 		else:
 			hud.set_option("control_scheme", str(args["preset"]))
+	if args.has("mirror"):
+		hud.set_option("dpad_mirror", "on")   # --mirror: the D-pad strikes
+	if args.has("strike"):
+		hud.set_option("strike_style", str(args["strike"]))   # --strike=toggle
 	if args.has("ready"):
 		hud.consume({"type": "availability", "actor": 0, "action": "transform", "available": true})
 	if args.has("mask") or args.has("rmask"):

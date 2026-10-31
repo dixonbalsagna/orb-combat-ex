@@ -1052,6 +1052,14 @@ func _on_option_changed(key: String, value) -> void:
 		host.hub.set_mode_style(str(value), 1)
 	elif HOLD_STYLE_OPTIONS.has(key.trim_suffix("_p2")):   # hold or toggle for Guard, the manoeuvre and charging stances and Transform, per player
 		host.hub.set_hold_style(str(HOLD_STYLE_OPTIONS[key.trim_suffix("_p2")]), str(value), 1 if key.ends_with("_p2") else 0)
+	elif RIGHT_HAND_OPTIONS.has(key.trim_suffix("_p2")):   # the right-hand attacks' hand layout, D-pad mirror, strike style and brace style, per player
+		var rh_fn: String = str(RIGHT_HAND_OPTIONS[key.trim_suffix("_p2")])
+		if host.hub.has_method(rh_fn):
+			host.hub.call(rh_fn, str(value), 1 if key.ends_with("_p2") else 0)
+	elif key == "pad_right_stick" or key == "pad_right_stick_p2":   # "Controller has a second stick": the pad that player holds (Controls' set_pad_has_right_stick; the mirror's auto reads it)
+		var rh_dev: int = int(host.hub.slot_pad[1 if key.ends_with("_p2") else 0])
+		if rh_dev >= 0 and host.hub.has_method("set_pad_has_right_stick"):
+			host.hub.set_pad_has_right_stick(rh_dev, bool(value))
 	elif CHARGE_OPTIONS.has(key):   # three strengths: Latched charge and Charges off, per player (docs/controls/windup-read.md)
 		var fn: String = "set_latch_charge" if key.begins_with("latch_charge") else "set_charges_off"
 		if host.hub.has_method(fn):   # Controls' two functions are not in the hub yet; the guard goes when they land
@@ -1346,6 +1354,7 @@ func _touch_event(e: InputEvent) -> void:
 ## A gamepad, by position (docs/controls/input-scheme.md): buttons, the left stick and the analog triggers go to the
 ## input hub, which maps them through the pad preset. Start pauses, as P does. Overlays take the pad as they take keys.
 var _pad_stick: Dictionary = {}   # device -> the left stick, x right and y up
+var _pad_stick_right: Dictionary = {}   # device -> the right stick (the strike stick; timing.json switches.rightStick), x right and y up
 
 
 func _pad_event(e: InputEvent) -> void:
@@ -1376,6 +1385,17 @@ func _pad_event(e: InputEvent) -> void:
 				if absf(e.axis_value) > 0.5:
 					take_over(false)
 				host.hub.pad_stick(e.device, st.x, st.y)
+			JOY_AXIS_RIGHT_X, JOY_AXIS_RIGHT_Y:
+				if SimInputData.right_stick_on():   # off: the right stick is nothing, as it was
+					var rs: Vector2 = _pad_stick_right.get(e.device, Vector2.ZERO)
+					if e.axis == JOY_AXIS_RIGHT_X:
+						rs.x = e.axis_value
+					else:
+						rs.y = -e.axis_value
+					_pad_stick_right[e.device] = rs
+					if absf(e.axis_value) > 0.5:
+						take_over(false)
+					host.hub.pad_stick_right(e.device, rs.x, rs.y)
 			JOY_AXIS_TRIGGER_LEFT:
 				if e.axis_value > 0.5:
 					take_over(false)
@@ -1390,6 +1410,7 @@ func _pad_event(e: InputEvent) -> void:
 func _on_joy_connection(device: int, connected: bool) -> void:
 	if not connected:
 		_pad_stick.erase(device)
+		_pad_stick_right.erase(device)
 		host.hub.pad_disconnected(device)
 
 
@@ -1525,6 +1546,8 @@ func _notification(what: int) -> void:
 
 ## UI's options for Controls' two charge settings: slot 0's, and with _p2 slot 1's.
 const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off", "charges_off_p2"]
+## UI's options for Controls' right-hand attacks (SimInputHub): each is slot 0's, and with _p2 slot 1's. They are listed in Settings only while timing.json switches.rightStick is on.
+const RIGHT_HAND_OPTIONS := {"hand_layout": "set_hand_layout", "dpad_mirror": "set_mirror", "strike_style": "set_strike_style", "brace_style": "set_brace_style"}
 ## The hold-or-toggle options and the action each is for (Controls' SimInputHub.set_hold_style; docs/controls/hold-toggles.md); each has a _p2.
 const HOLD_STYLE_OPTIONS := {"guard_style": "guard", "manoeuvre_style": "dodge", "charge_style": "power", "transform_style": "transform"}
 ## The options a web page's URL may set (parse_args): off unless the URL names them. Those in LOCAL_ONLY_ARGS start

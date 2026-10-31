@@ -49,3 +49,6 @@ The worst case, the disc's bounding square at 1280x720, is 1.24%. **That is unde
 - **The route.** If the arena stays a one-dimensional ring, a globe adds nothing the existing ring map does not, and UI turns the ring map (coded, off) into this with the trail: same slot, same option. The globe pays only if the ring can swing.
 - **From Rendering and World** (host glue, as `strip_fn` is today): a `planet_map_fn` giving the land texture, city positions, and the pair's position as a planet direction; UI owns the node, the shader and the trail in `ui/`.
 - **Pages to update when built:** `hud-spec.md` section 10 and the strip rows of its tables, `minimal-hud.md` section 3, `strings.md` and the pseudo copy for the option, the `hud_check` rect lists (strip and ring become map), and a look-gate side-by-side over real fighters (Orb should see it).
+
+## 7. The stand-in (2026-10-31)
+Built behind the feature `planet_map` (off) as `UiPlanetMap`, in the ring map's slot, reading `planet_map_fn` (the sim's planet direction when its API is out) or, until then, the planet strip's data: docs/ui/hud-spec.md section 71. The bigger `map` rect, the sphere shader, the cities and the ring map's retirement wait on the arena route.

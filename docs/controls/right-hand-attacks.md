@@ -1,304 +1,238 @@
-# Right-hand attacks: one pad paradigm, "the left hand survives, the right hand hurts" (paper)
+# Right-hand attacks: "the left hand survives, the right hand hurts" (pitch 4a, built behind a switch)
 
-Controls, 2026-10-28, overnight workshop, for the EP's pitch (`docs/ep/right-hand-attacks-pitch.md`, Orb's words at its top). **Paper and one pure-arithmetic model** (`right-hand-attacks-model.mjs`, run with `node`); no sim code. Every tick count below is a first value for data, 60 Hz. Thumb timings are the **modelled** ones of `right-thumb.md` section 3 until the capture tool measures real thumbs.
+Controls. First written 2026-10-28 for the EP's workshop, which recommended 4c+; **re-cut 2026-10-30 for Orb's pick of pure 4a** (`docs/ep/vision.md`, last section): the stick's strikes are their own class of moves. Game Design's numbers (`docs/design/right-hand-attacks-rulings.md`) are being amended for 4a; every number below is **data** (`data/input/timing.json`, blocks `strike` and `leftHand`), so a change of numbers is a data edit. The reader, the law, the left-hand upgrade, the hybrids, the swap and the gate are **built and parked behind `switches.rightStick`, which is off** (section 9). The arithmetic model of the first version stays in `right-hand-attacks-model.mjs`.
 
 Name used throughout: **directional-charge strikes** (a strike chosen by the stick's direction, quick on a flick, charged by holding).
 
 ## 0. Short answer
 
-- **Recommend 4c+ (section 8): the stick is always "the big move of the current mode", and its strikes are their own class on screen but costed as heavy.** Martial: four strikes (up, down, toward, away). Energy (RB): beams. Power (RT): the signature, held and released. Buttons are quick, the stick is big, the shoulders pick which.
-- **One reader for everything.** The stick is a fifth "button" with a direction, read by the same grammar as the face buttons (tap = quick, mash = capped repeats, hold = charge, release = throw; `energy-input.md` E13). Quick strike = charge level 0 of the same ladder. No flick-speed test is needed (the stick has no other job in play), which removes the flick-versus-hold misread of `right-stick.md` section 4.
-- **The left hand does all defence, with no right-hand input in any of it:** LT + a flick = slip, LB + a flick = brace (v2's "read", moved), LB + LT together + a flick = vanish (replaces R3 Escape).
-- **Zero claw advantage holds, and the law is lighter than before.** The model (section 6.3): with the lockouts off a claw gains 2 to 5 blows in ten seconds of alternating stick and face blows and 2 to 9 free blows during a charge; with them on it gains **none, in every pitch**. Almost all of the lockout is hidden inside the blows' own commitment; the real hole is the **charge**, closed by one rule (face presses are inert while the stick is held).
-- Shoulders: 16 states listed in section 3. **Keep 9, reject 7.** Two hybrids come on by data (LB+RB lay, LT+RB kite); the rest stay exclusive.
-- **Brawler is retired** (`input-scheme.md` amendment 2026-10-04); its map is given for completeness (section 4.2).
+- **Orb's picks.** (1) 4a: stick strikes are their own class, not pooled with B and not costed as the heavy. (2) Accessibility and customisable controls are assumed, **including left-handed players who swap the pad around**: so the left and right roles swap *as a whole* (section 8), the D-pad mirror is a setting, and remap covers the strike controls.
+- **Martial: four strikes (up, down, toward, away) of the stick's own class.** A push is a request; a stick back at rest before `dwell` (12 live ticks) is the **quick strike** (level 0); a stick still out is a **charge** through three levels (12, 30, 50 first values) and the return to rest throws it. Levels 1 to 3 are the class's own, with their own numbers when Game Design sets them: the input side carries only "level 0 to 3" and the direction.
+- **Energy (RB held): the stick is the beam** (snap on a quick, charge on a hold, steer while out), with blasts on the face buttons. **Power (RT held) and the lay (LB + RB): the stick is inert** (pure 4a: no stick signature, no fourth special; the signature stays RT + B). Both are data (`strike.inertMasks`), so 4c's stick signature is one data line if Orb ever wants it.
+- **One reader for everything.** The stick is a fifth "button" with a direction. No flick-speed test is needed (the stick has nothing else to do), which removes the flick-versus-hold misread of `right-stick.md` section 4.
+- **The left hand does all defence, with no right-hand input in any of it:** LT + a flick is the slip, LB + a flick is the brace (v2's read, moved), LB + LT together is the vanish (an upgrade of the dodge that sends `escape`). R3 is freed.
+- **Zero claw advantage holds** by the law of section 6 (K1 to K7), proven on the real layout by a gate (262 checks), on a pad, on a keyboard, on the swapped pad and keyboard presets and through the D-pad mirror and the strike button.
+- **Swap (`hand_layout`).** A swapped layout is a **preset**: `<pad preset>-swapped` for every pad preset (the whole-pad mirror of `SimSwap`: sticks, shoulders, face buttons with the D-pad) and `kb-solo-swapped` for the keyboard. The default left-handed layout is the **full mirror** (Research's check agrees: it keeps the one-thumb structure, where a sticks-only swap would put movement and defence flicks on the face-button thumb). The law is written on actions, so a swapped layout gives the **identical intent stream** to the standard one for the same hands, with the swapped thumb's own lockouts in data (`swapLockout`, `swapReverseLockout`, default equal to the unswapped, never faster). The whole gate runs on both presets.
+- **Accessibility's routes** (`docs/accessibility/right-hand-controls.md`): a **strike button** on the pad whose direction is the left stick's (one-stick play), a **brace button** (timing-free; `brace_style` flick or press), the **single-control vanish** (Escape bindable to any control), `strike_style`, and Remap rows for all of them.
 
-## 1. The strike read (the same for every pitch)
+## 1. The strike read (built: `sim/input/strike_read.gd`)
 
-Where it lives: the layout layer, before the intent, integers only, as `right-stick.md` section 3. Reuses its dead zone 0.25, quantise 1/16, `on` 0.60 and `off` 0.35 (rescaled), `flickSettle` 2. New data block `strike` (all first values).
+Where it lives: the layout layer, before the intent. Pure and engine-agnostic. Data block `strike` (all first values).
 
 | Stage | Rule | Why |
 | :--- | :--- | :--- |
-| **Start** | the stick crosses `on` -> a strike request at crossing + 2 ticks. **Any speed of push counts** | the right stick does nothing else in play, so there is no flick/hold ambiguity to resolve; slow pushes are strikes too |
-| **Layer** | the stance mask **at the crossing tick** (shoulders sampled before the stick), locked until the stick rests | martial / energy / power / lay; `right-stick.md` family lock (R23) |
-| **Direction** | four-way relative to him (up, down, toward, away), 45 degrees each, a tie goes to the vertical; **locked at the settle** | four-way reads right 99% even for a casual thumb, eight-way 76%. A thumb wandering during a charge cannot change the strike |
-| **Quick** | the stick is back under `off` before `D` = 12 ticks after the crossing -> the quick strike (level 0), thrown at its own wind-up end | the thumb's flick-and-return is 4 to 8 ticks (p90 about 10) |
-| **Charge** | still deflected at `D` -> a charge; stages at D, D+18, D+42 (12, 30, 54), one cue per stage (`charge_stage`, as energy-input section 7); 3 levels for beams and strikes | one ladder, one HUD, one rumble |
-| **Release** | the stick back under `off` -> thrown at that tick, at the level reached, in the locked direction; a true-tick edge even inside a hit-stop | as E13 |
-| **Mash** | each new crossing is its own request, capped per strike like a face blow's mash cap | `SimPressRead` already does this |
-| **No auto-fire, no free feint** | nothing throws by timer; returning to rest always throws (quick or charged). The only exits are the left hand's guard or dodge (section 8 Q4) | a stick wiggle must not be a free feint; a thumb that cannot time a release stays at full |
-| **Accessibility** | `strike_style` hold or toggle, exactly `hold-toggles.md`'s mechanism: toggle = a deflection starts the charge, the **next** deflection throws | one-thumb and tremor |
-| **R3 guard** | an R3 click is ignored while the stick is past 0.9 or within 6 ticks of it (kept; with R3 freed, section 7, the click does nothing anyway) | hard flicks click the stick |
+| **Start** | the stick crosses `on` (0.60 of the rescaled, quantised deflection; dead zone 0.25, 1/16 steps) -> a request that **starts `settle` = 2 ticks later**. Any speed of push counts | the right stick does nothing else in play, so there is no flick/hold ambiguity; slow pushes are strikes too |
+| **Layer** | the stance mask **of the build in which the stick crossed**, locked until the stick rests (shoulders are sampled first, whatever order the events came in) | one layer per push; a tie resolves the same for every grip |
+| **Direction** | four-way in **screen terms** (up, down, left, right), 45 degrees each, a tie to the vertical; **taken at the settle** (the stick as it is then, or its peak if it already came back) and locked. The director turns left/right into toward/away with the fighter's facing at the throw | a thumb wandering during a charge cannot change the strike; the input layer needs no world state |
+| **Quick** | the stick is back under `off` (0.35) before `dwell` live ticks -> the quick strike, level 0, thrown at the start (a flick shorter than the settle starts and throws together) | the thumb's flick-and-return is 4 to 8 ticks |
+| **Charge** | still out at `dwell` -> a charge; levels at `strike.levels` live ticks since the start (12, 30, 50; beams and the signature `beamLevels` 12, 30, 54). **Live ticks**: a hit freeze does not charge | one ladder; a held stick and a held B flash on the same step |
+| **Release** | the stick back under `off` -> thrown at the level reached, in the locked direction; the edge keeps until a step takes it and carries its lag | true-tick throw inside a hit-stop |
+| **Cancel** | only the left hand's: a guard press or a dodge ends a started charge with no throw (`rsCancel`); the stick must rest before the next request | a wiggle is never a free feint; a kept charge would make the left hand a free shield |
+| **Struggle** | the host says each tick (`hub.set_struggle(slot, on)`) that the fighter is in a struggle (a beam clash, the finisher's contest): a started strike is cancelled (an edge, no throw), the stick is ignored until it rests, the faces are free at once and nothing queued comes out as a surge (Game Design: in a struggle the stick does nothing, and a sweep beside the surges would pair the stick and a button in one beat) | the surges are face presses on a pulse; K3 must never eat one |
+| **Inert layers** | on a mask in `strike.inertMasks` (pure 4a: RT held 4, the lay 3) the push is ignored until the stick rests, and the faces stay free | 4a has no stick on those layers |
+| **Toggle style** | `strike_style` "toggle" (accessibility, `hold-toggles.md`'s mechanism): a push starts the charge, the stick may rest, the **next** push throws it | one-thumb and tremor |
+| **Strike key** | a key with no stick (the shared keyboard): a full push with whatever movement keys are held; none held is a request with direction 0, which the director reads as "toward him" | section 5 |
+| **After a pause** | a stick still out fires nothing until it has rested | nothing pressed during a pause fires |
 
-**Beams and the signature on the stick.** Energy layer: the same read; the direction is the **aim** (relative to him: toward = at him, up and down = 45 degrees, away = behind), latched at the settle for a snap or charged beam. During his own beam the stick **steers the sweep** 32-way (R25, kept; he is rooted, so both thumbs are free). Power layer: the signature is **hold-and-release only**; a flick that returns before `D` fires nothing, costs nothing and shows a "hold to cast" cue, so a grazed stick never spends 45 ki. An unfunded hold is refused at once (`input-scheme.md` 4.5).
+**The intent's second word** (built: `SimIntent.pack2`, 26 bits, `BITS2`; `pack()` is untouched, so a replay recorded with the switch off is the same integer): `rsHeld`, `rsStart`, `rsRelease`, `rsCancel` (bits 0 to 3), `rsDir` (0 to 4), `rsLevel` (0 to 3), `rsMask` (the layer, 4 bits), `rsAim` (the stick's 32-way sector now: the beam's sweep), `rsLag` (0 to 15 ticks an edge waited through a freeze), and the left hand's `brace` + `braceDir`. All neutral while the switch is off. **Simulation and Tools own wiring it into the hash and the packed replay** (`sim/core/hash.gd` INTENT list, `tools`), under `switches.rightStick`.
 
-**Cost in the intent.** Intent v5's second word (already planned: `rsHold`, `rsEvent`, `rsLag`): active 1 bit, locked direction 2 bits (4-way) or 5 bits (the beam's 32-way sweep), start and release edges with lag. About 12 bits. The level is the sim's, counted from ticks. Simulation and Tools own the word; the hash includes it only under `switches.rightStick`.
+## 2. The left hand: slip, brace, vanish (built: `sim/input/left_hand.gd`)
 
-## 2. The left hand: slip, brace, vanish
+The left thumb was never on the buttons, so no claw question arises. A flick only adds a direction: LT alone is the dodge, LB alone is the guard.
 
-The left thumb was never on the buttons, so no claw question arises. All three keep today's rule that **a flick only adds a direction**: LT alone is the dodge, LB alone is the guard.
+| Input | Read (as built) | What it makes |
+| :--- | :--- | :--- |
+| **LT tap + a left flick** | nothing new: the dodge edge on the press tick, the stick over the next 6 ticks (R34) | the slip: up sways over a low blow, down ducks, toward slips in, away backs off |
+| **LT held** | sprint, as today | |
+| **LB + a left flick from rest** | the stick sat at rest `braceRest` = 10 ticks, rose past `on` within `braceRise` = 3 of leaving rest (a lean is slower), LB down; the direction is taken `settle` = 2 after the crossing and the read goes out then; one at a time (the stick must rest before the next) | `brace` edge with `braceDir` (up his heavy, down his flurry, the two sides his grab or his shot, by facing); 3 ki and 90 ticks are Game Design's and the sim's |
+| **Keyboard** | a **tap** of a direction key (down and up inside `braceTap` = 8 ticks) with Shift down; walking guarded is a hold, not a tap | the same edge |
+| **Brace button** (`brace_key`; keyboard default X, X and Period on the other layouts; unbound on a pad, a Remap row) | pressed, it takes the direction held on the left stick or the movement keys over `settle` = 2 ticks (the strongest push) and sets the read then; with no direction held the read is set with direction 0 and the director picks. No LB, no flick speed, no second press. **`brace_style` "press"** (hub `set_brace_style`) turns the flick and tap reads off and leaves only the button | the same `brace` edge; cost and time are Game Design's and the sim's (3 ki, 90 ticks) |
+| **LB + LT within `vanishWindow` = 6 ticks, either order, both still down** | resolves at the later of (first press + 6) and (second press + 2) with the strongest direction of the gather (a flick that began before the second press counts) | an `escape` edge with the stick vector (a neutral stick sends zero, which the sim reads as away). **The dodge's press-tick start is untouched** (T1): the vanish is an upgrade, not a replacement |
+| LT pressed more than 6 after LB | not a chord | the ordinary dodge out of guard |
+| LB or LT let go before it resolves | no vanish | a dodge and a guard |
+| **Single-control vanish** | `escape` is a bindable action: bound to any control (the pad leaves it unbound; the keyboards have C, X, Quote), one press sends `escape` on its own tick with the stick's direction at the press. A toggled guard plus LT is a plain dodge, so a toggle user reaches the vanish by this button | Accessibility's row 7 |
+| **R3 and L3** | the shipped Escape on them is dropped while the switch is on (`strike.freeR3`); the player may still bind Escape to either | row R: R3 never produces an escape by default |
 
-| Input | Read | What it makes | Cost |
-| :--- | :--- | :--- | :--- |
-| **LT tap + a left flick** (inside the 6-tick decision window) | R34 unchanged: the dodge starts on the press tick, the direction resolves over the next 6 ticks (95% practised, 81% casual, `claw-bot-gate.md` section 6) | up: sway over a low blow. down: duck under a high one. toward: slip in past the fist (dodge and counter). away: back-step off the line | the dodge's |
-| **LT held** | sprint, as today (a deflection after tick 12 is steering) | | |
-| **LB + a left flick from rest** | a quick onset (rise 3) from a stick at rest 10+ ticks while LB is down, **not** a held lean | the v2 read: up = his heavy, down = his flurry, toward = his grab, away = his shot; lasts 90 ticks or its first fire; one at a time | 3 ki when set |
-| **LB + LT, down within 6 ticks (either order), then a flick or lean inside the same 6-tick window** | the vanish **upgrades the dodge**: the first 6 ticks are the common gather, so the dodge's press-tick start (T1) is untouched; at tick 6 the direction picks the blink | blink up, down, through to his back (toward), away (the escape). Sends the existing `escape` edge with the direction; `mx`, `my` already carry the rest | GD |
-| LT pressed while LB has been held **more than 6 ticks** | not a chord | the ordinary dodge out of guard, as today | |
-
-Guard walking is the misfire risk of the brace: a guarded player who pushes the stick quickly sets a read for 3 ki. Mitigation, in the read and not in a rule: a held lean never sets one (the guard's `nudge.guard` lean stays), and the rise setting 2 to 5 applies. If real play shows it bites, the fallback is a double flick (GD's "pump"). **Keyboard form:** a *tap* of a direction key (down and up inside 8 ticks) with Shift down; walking guarded is a hold.
+The keyboard's single-key Escape mirrors (C; X and Quote on the shared halves) stay: a one-key vanish with a neutral direction.
 
 ## 3. Every shoulder combination
 
-Four shoulders, 15 non-empty sets plus none. LB and LT are the left index finger, RB and RT the right. The stance mask is `LB 1, RB 2, RT 4, LT 8`; **RT always dominates** (`stance.gd`). "Right-hand never part of a defence" is the rule that rejects most of the unkept rows.
+Four shoulders, 15 non-empty sets plus none. LB and LT are the left index finger, RB and RT the right. The stance mask is `LB 1, RB 2, RT 4, LT 8`; RT always dominates (`stance.gd`). **Keep 9, reject 7.**
 
-| Held | Mask | Meaning | + left stick | + right stick | Verdict and reason |
+| Held | Mask | Meaning | + left stick | + right stick (4a) | Verdict and reason |
 | :--- | ---: | :--- | :--- | :--- | :--- |
-| none | 0 | martial | move | strikes (4 directions) | **Keep.** Today's base |
-| LB | 1 | guard, tap = perfect block | brace (flick), guard lean (hold) | a strike thrown from guard carries the guard stance, as a face press does | **Keep** |
-| LT | 8 | dodge tap, sprint hold | slip (tap + flick), steer (hold) | a strike from the manoeuvre stance (GD: lane in the director) | **Keep** |
-| RB | 2 | energy, momentary | move | beams (snap, charge, sweep) | **Keep** (E11) |
-| RT | 4 | power: burst tap, channel hold | move | **4c: the signature, held and released**; 4a, 4b: inert | **Keep** |
-| LB + LT | 9 | not held as a stance (hybrid 9 "terrain" stays off); a **chord event** within 6 ticks | vanish | | **Keep as a chord, reject as a hold.** The only deliberate two-trigger left-hand input |
-| LB + RB | 3 | the **lay**: mines and traps (E70), guard persists | | 4c+: the stick places it (toward = ahead, away = behind, up, down; charge = farther, E71) | **Keep, hybrid 3 on** |
-| LT + RB | 10 | **kite**: sprint persists while energy is on, so blasts and beams fire while strafing | | beams while sprinting | **Keep, hybrid 10 on (GD).** It is the paradigm in one state: the left hand survives while the right hurts. Today RB's press ends the sprint |
-| LT + RT | | the transform chord, 0.5 s | | | **Keep unchanged.** Pressed more than 6 apart it is a sprint with a channel, as today |
-| LB + RT | 5 | guard + power | | | **Reject.** A guarded charge is a turtle, and RT dominates anyway; charging inside a defence breaks the pillar |
-| RB + RT | | energy + power | | | **Reject.** One index finger on two triggers; RT dominates, so it would be a second way to say power |
-| LB + LT + RB | | vanish chord with energy held | | | **Reject as a state.** The right shoulder passes through; a right-hand input is never part of a defence |
-| LB + LT + RT | | | | | **Reject.** Three triggers, and LT+RT is the transform chord |
-| LB + RB + RT | | | | | **Reject.** RT dominates; same as power |
-| LT + RB + RT | | | | | **Reject.** Transform chord with a third trigger: ambiguous |
-| all four | | | | | **Reject** |
+| none | 0 | martial | move | **strikes (4 directions, own class)** | **Keep.** Today's base |
+| LB | 1 | guard, tap = perfect block | brace (flick), guard lean (hold) | a strike thrown from guard carries the guard stance, as a face press does (the layer is `rsMask`) | **Keep** |
+| LT | 8 | dodge tap, sprint hold | slip (tap + flick), steer (hold) | a strike on the move (the manoeuvre stance) | **Keep** |
+| RB | 2 | energy, momentary | move | **beams** (snap, charge, sweep) | **Keep** (E11) |
+| RT | 4 | power: burst tap, channel hold | move | **inert** (4a); the signature stays RT + B | **Keep** |
+| LB + LT | 9 | a chord event within 6 ticks, not a stance (hybrid 9 stays off) | vanish | | **Keep as a chord, reject as a hold.** The one deliberate two-trigger left-hand input |
+| LB + RB | 3 | the **lay** (E70): mines and traps, guard persists | | **inert** (4a; 4c would place the lay) | **Keep, hybrid 3 on** |
+| LT + RB | 10 | the **kite**: sprint persists while energy is on, so blasts and snap-beams fire on the move | | beams while sprinting | **Keep, hybrid 10 on.** The paradigm in one state |
+| LT + RT | | the transform chord, 0.5 s | | | **Keep unchanged** |
+| LB + RT | 5 | guard + power | | | **Reject.** A guarded charge is a turtle, and RT dominates |
+| RB + RT | | energy + power | | | **Reject.** One index finger, two triggers |
+| LB + LT + RB | | vanish chord with energy held | | | **Reject as a state.** A right-hand input is never part of a defence |
+| LB + LT + RT, LB + RB + RT, LT + RB + RT, all four | | | | | **Reject.** Three triggers; RT dominates or collides with the transform chord |
 
-## 4. The maps
+Hybrids 3 and 10 come on **with the switch** (`stances.json` `withRightStick`); 9 does not.
 
-Rows marked "all" are identical in 4a, 4b and 4c. The three pitches differ in what the stick means (4a own class, 4b pooled with heavy B, 4c mode-symmetric, my recommendation 4c+).
+## 4. The maps (pitch 4a)
 
 ### 4.1 Arena (the default)
 
-| Control | Today | All pitches | 4a | 4b | 4c / 4c+ |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| Left stick | move | move; with LT, LB or both, a defence flick (section 2) | | | |
-| LT | dodge tap, sprint hold | **evade**: tap = dodge, tap + flick = slip, hold = sprint | | | |
-| LB | guard, tap = perfect block | **guard**; + flick = brace | | | |
-| LB + LT (chord) | none | **vanish** (sends `escape`) | | | |
-| RB | energy, momentary | unchanged (hold or toggle setting) | | | |
-| RT | burst tap, power hold | unchanged | | | |
-| X, Y | light, medium (energy: bolt, lob) | unchanged | | | |
-| **B** | heavy (energy: heavy blast, hold = beam) | martial heavy unchanged | energy: heavy blast; hold = a bigger blast (GD, Q5); **beam leaves B** | energy: unchanged (tap blast, hold charges the beam); the stick is the **aimed** beam: same family | energy: as 4a |
-| A | grab (energy: his grab) | unchanged | | | |
-| RT + X, Y, A | specials 1 to 3 | unchanged | | | |
-| **RT + B** | signature | | signature | signature | **4th special** (the signature moves to the stick) |
-| **Right stick, martial** | none | | four own-class strikes: own recovery and stun rules, own charge ladder | four **directional heavies**: B's request with a direction; B's wind-up, recovery, ki and ladder | four strikes drawing on the heavy's **budget, recovery and ki**; own class on screen |
-| **Right stick, RB held** | none | **beams**: snap on a quick, charge on a hold, aim locked at the settle, steer while out | | one family with B's beam | |
-| **Right stick, RT held** | none | | inert | inert | **signature**, hold and release |
-| LB + RB + a face button | lay (E70) | unchanged | | | |
-| LB + RB + right stick | | | inert | inert | **4c+: the stick places the lay** |
-| LT + RB | exclusive | **kite on (hybrid 10)**: sprint persists | | | |
-| R3 | Escape | **freed** (target swap, or nothing); the vanish replaces it | | | |
-| L3 | none | none | | | |
-| D-pad | reserved | the **mirror** (section 5.3), setting | | | |
-| LT + RT, 0.5 s | transform | unchanged | | | |
-| Start, View | pause, hints | unchanged | | | |
+| Control | Today | 4a |
+| :--- | :--- | :--- |
+| Left stick | move | move; with LT, LB or both, a defence flick (section 2) |
+| LT | dodge tap, sprint hold | **evade**: tap = dodge, tap + flick = slip, hold = sprint |
+| LB | guard, tap = perfect block | **guard**; + flick = brace |
+| LB + LT (chord) | none | **vanish** (sends `escape`) |
+| RB | energy, momentary | unchanged (hold or toggle) |
+| RT | burst tap, power hold | unchanged |
+| X, Y, A | light, medium, grab (energy: bolt, lob, his grab) | unchanged |
+| B | heavy (energy: heavy blast, hold = beam) | martial heavy unchanged; **energy: heavy blast, hold = a bigger blast; the beam leaves B** (Game Design Q5) |
+| RT + X, Y, A / RT + B | specials 1 to 3 / signature | unchanged |
+| **Right stick, martial** | none | **four own-class strikes** |
+| **Right stick, RB held** | none | **beams**: snap on a quick, charge on a hold, aim = the locked direction, steer (`rsAim`) while out |
+| Right stick, RT held / LB + RB | none | **inert** |
+| LT + RB | exclusive | **kite on** (hybrid 10) |
+| R3 | Escape | **freed** (a target swap, or nothing); the vanish replaces it |
+| D-pad | reserved | the **mirror** of the right stick (section 5.3), a setting |
+| LT + RT, 0.5 s | transform | unchanged |
+| Start, View | pause, hints | unchanged |
 
-### 4.2 Brawler (retired; if Orb brings it back)
+### 4.2 Brawler (retired)
 
-Attacks on the shoulders, so the shoulders cannot also be the stance mask. Left hand as Arena: **LT evade, LB guard, LB + LT vanish, left flicks as section 2**. **RB light, RT heavy**, X mode (energy), Y power (hold) / burst (tap), B signature, A context, Y held + RB / RT / X = specials, Y held + B = signature. **Right stick: as Arena** in all three pitches, with the layer chosen by X (mode) and Y held (power) instead of RB / RT. The lay and the kite need a stance mask, which this layout does not have: **no hybrids on Brawler**. The right-thumb problem is worse here (X and Y are also thumb buttons, and the shoulders are attacks), so Brawler would need the law and nothing else. Recommend leaving it retired.
+Attacks on the shoulders, so the shoulders cannot also be the stance mask. If Orb brings it back: left hand as Arena (LT evade, LB guard, LB + LT vanish), RB light, RT heavy, X mode, Y power; the right stick as Arena with the layer chosen by X and Y held; no hybrids. The thumb problem is worse there (X and Y are also thumb buttons). Recommendation unchanged: leave it retired.
 
 ### 4.3 Simple (six buttons)
 
-Today Simple's defence is on the **right thumb** (B guard, A dodge). A thumb that is charging a stick strike cannot react on A or B, which is exactly the problem the left-hand defence solves. So:
+Simple's defence is on the **right thumb** today (B guard, A dodge), which a thumb charging a stick strike cannot reach. So stick strikes are **off by default** on Simple, and **Simple-S** (strikes on) moves defence to LT and LB. The Simple presets carry no strike binding (built: no `strikeBindings`, so `rs_on` is false there); Simple-S is a later preset. The match header records it with the other assist flags (`autoMode`, `autoBurst`).
 
-| Control | Today | Stick strikes off (default) | **Stick strikes on (Simple-S)** |
+| Control | Today | Strikes off (default) | **Simple-S (later)** |
 | :--- | :--- | :--- | :--- |
-| Left stick | move | move | move; + LT or LB a defence flick |
 | X, Y | attack (tap light, hold heavy), signature | unchanged | unchanged |
-| B | guard | guard | **context** (grab and the rest) |
-| A | dodge | dodge | unbound |
-| LT | none | none | **dodge / sprint; + flick = slip** |
-| LB | context | context | **guard, tap = perfect block; + flick = brace** (the director also sets reads at a modest rate) |
-| RT | power | power | power |
-| RB held 0.5 s | transform | transform | transform |
-| Right stick | none | none | **one big move, the director picks its flavour** (4c's autoMode rule): close = a strike by direction, at range = a beam; hold = charge; signature stays on Y |
-| LB + LT | | | vanish |
-
-Simple-S is Arena without the mode and the burst. The match header records it with the other assist flags (`autoMode`, `autoBurst`). 4a / 4b / 4c change only what the close-range strike is.
+| B / A | guard / dodge | unchanged | **context / unbound** |
+| LT / LB | none / context | unchanged | **dodge, sprint, slip / guard, brace** |
+| Right stick | none | none | **one big move, the director picks the flavour** |
 
 ## 5. Keyboard and the D-pad mirror
 
-### 5.1 Solo keyboard (one human, two hands)
+### 5.1 Solo keyboard (built)
 
-| Pad | Key | Note |
-| :--- | :--- | :--- |
-| Left stick | W A S D | |
-| LT / LB / RB / RT | Space / Shift / Q / E | unchanged |
-| Slip | Space + a **tap** of W, A, S or D | the direction read is the same 6-tick window |
-| Brace | Shift + a tap of W, A, S or D (down and up in 8 ticks) | walking guarded is a hold, not a tap |
-| Vanish | Shift + Space (within 6 ticks) + a tap | the single-key forms C, X and Quote (today's Escape) stay as **mirrors** of the chord; neutral = away. Same tick as the chord |
-| X, Y, B, A | J K L I | |
-| **Right stick** | the **arrow keys** | tap = quick, hold = charge, release = throw; two arrows give the 8-way beam aim; four-way strikes take the first pressed, a tie goes to the vertical |
-| Beam | Q + arrows | |
-| Signature (4c) | E + arrows, hold and release | |
-| Assist: strike toward the movement keys | an unbound key (suggest U) | one-handed or no-arrow-cluster players: the direction is the WASD held at the press. Capability is lower (movement and strike direction are coupled), so it is an option and not the default |
-
-The right hand moves between J K L I and the arrows, which is a transfer like a thumb's. The law lives in the sim, so the keyboard is **held to the same lockouts** and stays equal. Rebinding the arrows next to the attack keys is a Remap matter.
-
-### 5.2 Shared keyboard, two players (one hand each)
-
-No free cluster for two. The **strike key + the player's own movement keys** is the default here (the assist form of 5.1), and a second hand is not needed.
-
-| Action | P1 (left hand) | P2 (right hand) |
-| :--- | :--- | :--- |
-| Strike (key + movement keys held) | **T** | **Quote** (confirm in `RenderKeys`; else BracketLeft) |
-| Beam | E (mode) + T | O (mode) + Quote |
-| Signature (4c) | Q (power) + T, hold and release | Slash (power) + Quote |
-| Slip / brace / vanish | Space / Shift / both + a tap of WASD | Period / Semicolon / both + a tap of IJKL |
-| Escape mirrors | C | the P2 key already bound to Escape |
-
-A strike key with no direction held strikes **toward** him. Capability is lower than a pad's (the direction is the movement key), which matches the shared layout being a fallback. The recommended local pairing stays one keyboard plus one pad, or two pads.
-
-### 5.3 The D-pad mirror (pad), per pitch
-
-The D-pad is under the **left** thumb. The mirror is for a player who cannot use the right stick, so leaving the left stick costs movement; that is the price of the accessibility form and it is never faster than the stick.
-
-| Stick command | D-pad form | Same tick |
-| :--- | :--- | :--- |
-| Strike (any layer) | a D-pad direction: tap = quick, hold = charge, release = throw. Two directions pressed: the first wins, a tie goes to the vertical | the D-pad waits the same 2 ticks of settle the stick does |
-| Beam aim | the D-pad's 8 ways, stepped | |
-| Signature (4c) | RT + D-pad hold | |
-| Lay placement (4c+) | LB + RB + D-pad | |
-| Slip / brace / vanish | LT, LB or both + a D-pad direction | the lateral part starts at tick 6 in every form (the common gather) |
-
-Applies to 4a, 4b and 4c equally; only the table's right column differs (what the command does). **The mirror ships as a setting, default off** (a brush of the thumb against the D-pad while moving would throw an unwanted charged strike, which costs ki and position; the downside is asymmetric). It is on automatically on a pad that reports no right stick, and the controls screen offers it first thing.
-
-## 6. The no-claw law, rerun
-
-### 6.1 The law, restated for strikes
-
-`right-thumb.md` rules 1 and 2 were written for a stick that **set a state**. The stick now **throws blows**, so rule 3 (commitment and lockout) carries the load and two rules are new. `L` = 6, `R` = 8, `W` = 36 as before.
-
-| # | Rule |
+| Pad | Key |
 | :--- | :--- |
-| K1 | **No pairing in a beat** (kept). No command needs stick and face button together; a button never changes a strike in flight, a stick never changes a blow in flight. A same-tick pair: the face press wins, the strike starts R later |
-| K2 | **Symmetric commitment** (kept). A face press after a stick command waits `L`; a stick command after a face press waits `R`; both act on the tick the wait ends; at most one waits; newest wins with a lapsed ack |
-| K3 | **A stick hold makes the face buttons inert** (new in force). A face press during a charge queues; it starts at release + `L` or expires (queue 3 deep, 36 ticks). Nothing about a charge can be changed by a face button |
-| K4 | **The strike is committed from its settle** (new). Direction locked, no free cancel by wiggling; the only cancels are the left hand's (guard, dodge) |
-| K5 | **Defence purity** (new). No right-hand input (face, stick, RB, RT) is part of a defence or alters its result |
-| K6 | **Layer by the mask at the crossing tick; shoulders before the stick.** Shoulders are index fingers, so they are not a transfer, but a tie must resolve the same for every grip |
-| K7 | **Mirrors act on the stick's tick** (kept) |
+| Left stick | W A S D |
+| LT / LB / RB / RT | Space / Shift / Q / E |
+| X, Y, B, A | J K L I |
+| **Right stick** | the **arrow keys** (`kb-solo` `strike` binding, a remappable four-key row): tap = quick, hold = charge, release = throw; two arrows take the vertical |
+| Brace | Shift + a **tap** of a direction key (down and up inside 8 ticks) |
+| Vanish | Shift + Space inside 6 ticks, a direction key tapped inside the gather; C is the single-key mirror (neutral = away) |
+| Beam | Q + arrows |
 
-### 6.2 Every link, with L and R
+### 5.2 Shared keyboard, two players (built)
 
-| Link | Claw gain, law off | Law on | Rule |
-| :--- | :--- | :--- | :--- |
-| quick strike -> X, Y, B, A | 0 if the strike commits 6 or more (all do) | 0 | K2 |
-| charged strike thrown -> face | 0 (the recovery is far over 6) | 0 | K2, K3 |
-| **stick held -> face press during the charge** | **+2 to +9 blows** | **0 (inert)** | **K3** |
-| face -> stick: **X (commits 6)** | **2 ticks per link** (+2 to +5 blows in ten seconds) | 0 | K2 (R = 8) |
-| face -> stick: Y (12), B (24), RT + face special | 0 | 0 | K2 |
-| same tick, face and stick | strike 8 ticks early | strike at R | K1 |
-| stick -> stick | none (same device, same settle) | none | |
-| beam sweep -> face | none: he is rooted, attacks are locked | none | rooted |
-| RB, RT -> stick | none: index finger; mask read at the crossing | none | K6 |
-| LB, LT -> any right-hand input | none: left hand; the guard or dodge may cancel a charge by GD's ruling | none | K5 |
-| Simple: A or B defence while charging | the thumb is busy: a *standard* thumb loses the defence | fixed by Simple-S: defence on LT and LB | section 4.3 |
+No free cluster for two. A **strike key + the player's own movement keys** is the form here: the direction is the movement key held at the press; none held strikes toward him. **T is a system key (new match, `RESERVED_KEYS`), so the keys are not the ones the overnight draft named:**
 
-### 6.3 The model run
+| Action | P1 | P2 |
+| :--- | :--- | :--- |
+| Strike key (`strike_key`, remappable) | **B** | **BracketLeft** (`[`; Quote is P2's single-key Escape) |
+| Beam | E (mode) + B | O (mode) + `[` |
+| Brace key (`brace_key`, remappable) | **Z** | **BracketRight** |
+| Brace, vanish chord | Shift / Space / both + a tap of WASD | Semicolon / Period / both + a tap of IJKL |
 
-`docs/controls/right-hand-attacks-model.mjs` (arithmetic over the lockouts; the strike commitments are assumptions: 4a 14, 4b 28, 4c 20 ticks; face blows commit at their mash caps X 6, Y 12, B 24). Last line: "every claw check holds with the law ON".
+Capability is lower than a pad's (the direction is the movement key); the recommended pairing stays one keyboard plus one pad, or two pads. Section 6 holds on the keyboard exactly as on a pad (row P).
 
-| Pitch, alternating strike and face blow | Blows in 600 ticks, law off: claw / fast / p50 / slow | Law on | Claw gain over fast (off, on) |
-| :--- | :--- | :--- | :--- |
-| 4a with X | 60 / 55 / 50 / 42 | 55 / 55 / 50 / 42 | +5, +0 |
-| 4b with X | 35 / 33 / 32 / 28 | 33 / 33 / 32 / 28 | +2, +0 |
-| 4c with X | 47 / 43 / 40 / 35 | 43 / 43 / 40 / 35 | +4, +0 |
-| any pitch with Y or B | no gain | no gain | +0, +0 |
+### 5.3 The D-pad mirror (built: `strike_mirror`, a pad binding of the four D-pad buttons)
 
-What it shows:
-1. **The lockout bites only on X-then-stick** (X commits 6, `R` is 8). Every other single link is hidden inside the blow's own commitment. 4b (a 28-tick directional heavy) is claw-safe almost by itself; 4a, the quickest, depends on the law most.
-2. **The charge is the big hole**: a charge of 54 ticks with X at its cap is 9 free blows for a claw. K3 closes it completely.
-3. A slow standard thumb loses 15 to 25% of the blows against fast. That is the standard grip's own cost, not a claw advantage; the bar is claw against the **fast** standard thumb.
-4. Mirror parity and the same-tick rule pass in the model.
+The mirror is for a player who cannot use the right stick: tap = quick, hold = charge, release = throw, on the D-pad under the **left** thumb. It leaves the left stick for movement, which is the price of the accessibility form and never faster than the stick. **A setting** (`hub.set_mirror("auto" | "on" | "off")`, default "auto"): auto is on only for a pad the host says has no right stick (`hub.set_pad_has_right_stick(dev, false)`). The controls screen should offer it first thing. The mirror's four buttons are fixed rows in the remap screen. Under the swap the mirror sits on the face buttons (section 8).
 
-### 6.4 What the real gate must add
+**The strike button (Accessibility's one-stick form, `strike_key` on a pad).** A player who must keep the left stick for movement binds one free control (L3 is the natural one; the pad has no free control by default, so it ships unbound and is a Remap row) as a strike button: held, it is the push, and the direction is the left stick's at the settle, none held being toward him. It reaches the same reader on the same tick as the stick (row V), costs the same, and the law applies unchanged. It is the pad's twin of the shared keyboard's strike key. Game Design rules the equal tick through the EP.
 
-`claw-bot-gate.md` assertions A to I stay. New rows once the strikes exist in the sim (the model is a prototype of them):
+## 6. The no-claw law (built: `sim/input/strike_law.gd`, proved by `strike_gate_test.gd`)
 
-| # | Assertion |
-| :--- | :--- |
-| J | Strike then face, face then strike, for X, Y, B, A and RT + face, at `g` in 0..36, claw / fast / slow: the second starts on `max(g, L)` or `max(g + 2, R)` and the result is identical |
-| K | **Charge**: any face press during a stick hold starts no earlier than release + `L`, whenever in the hold; a press the hold outlasts expires; the claw's blows in a charge window equal fast's (zero) |
-| L | Direction lock: a stick that wanders after the settle throws in the locked direction; one deflection past `off` and back is one strike |
-| M | Same tick: face wins, strike at `R` |
-| N | Layer: RB / RT pressed on the crossing tick, a tick before and a tick after, give the same layer for claw, fast and slow orders |
-| O | Defence purity: any right-hand noise (face presses, stick, RB, RT) during a slip, brace or vanish leaves its outcome and tick unchanged |
-| P | Mirror: D-pad, arrow and key forms act on the stick's tick and cost the same, for strikes, beams, signature and lay |
-| Q | Vanish: LB + LT within 6 ticks (either order) upgrades the dodge; 7 apart gives a dodge and a guard; LT after LB held more than 6 ticks is a plain dodge; the dodge still starts on its press tick |
-| R | R3 never produces an `escape` once freed |
+`right-thumb.md` rules 1 and 2 were written for a stick that **set a state**. The stick now **throws blows**, so rule 3 (commitment and lockout) carries the load and K3 to K6 are new. `L` = 6, `R` = 8 (data `strike.lockout`, `strike.reverseLockout`). The law is applied **to the intent, on actions, never on device names**.
 
-About 700 more short runs, still seconds of headless sim.
+| # | Rule | As built |
+| :--- | :--- | :--- |
+| K1 | **No pairing in a beat.** Same tick: the face press wins, the strike starts R later | the law filters the faces by what the strike was *before* this build's step, so a press on the crossing tick (or before the start) goes through and sets the strike's floor |
+| K2 | **Symmetric commitment.** A face press after a stick command waits `L`; a stick command after a face press waits `R`; at most one waits; newest wins | `stick_until` = the tick the thumb left the stick + L; the reader's `floor_tick` = the last face press + R |
+| K3 | **A stick hold makes the face buttons inert.** A press queues (3 deep, 36 ticks) and goes out in its order, one a build, the first tick the stick is quiet. Held levels are off too | from the strike's start until the stick rests + L, whether it was thrown or cancelled |
+| K4 | **The strike is committed from its settle.** Direction locked, no free cancel | only a guard or dodge press cancels (K5's other side) |
+| K5 | **Defence purity.** No right-hand input is part of a defence or alters its result | the left-hand reads look at no right-hand field; row O proves it |
+| K6 | **Layer by the mask of the crossing build; shoulders before the stick** | row N |
+| K7 | **Mirrors act on the stick's tick** | the arrows, the D-pad and the strike key feed the same reader (row P) |
+
+### 6.1 The gate (rows J to S), on the real layout
+
+`sim/input/test/strike_gate_test.gd` drives the pad (and the keyboards) with scripted thumbs and asserts on the intent stream. **The whole pad battery runs twice, on `arena` and on `arena-swapped`** (Accessibility's rule 8), and the keyboards' battery on `kb-solo`, `kb-shared-p1` and `kb-solo-swapped`: 262 checks. With the switch on:
+
+| Row | Assertion | Result |
+| :--- | :--- | :--- |
+| J | strike then X, Y, B, A and face then strike, at every gap 0 to 40 (30): the second never overlaps the first; the claw's best equals the fast thumb's (21 after a 10-tick start for a face after a strike; 18 for a strike after a face), and the law does not slow the fast thumb | pass |
+| K | a claw tapping X every 6 ticks through charges of 12, 30 and 54: no face edge and no held level while the strike is in the sim's hands, none before the throw + L, at most the queue's 3 afterwards; an old press expires | pass |
+| L | a stick that wanders after the settle throws in the locked direction; one deflection is one strike | pass |
+| M | same tick, both orders of events: the face goes at the tick, the strike starts at +R | pass |
+| N | the layer for RB a tick before, on, and a tick after the crossing, in both event orders, for LB held, and nothing | pass |
+| O | noise on the right hand (face presses, the strike stick, RB) leaves a slip's dodge tick, a brace's tick and direction, and a vanish's tick and vector where they were | pass |
+| P | the arrow keys, the D-pad mirror and the strike key start on the stick's tick with the stick's direction and throw on its tick; mirror off = the D-pad is nothing; a face key on the keyboard waits for the throw + L | pass |
+| Q | the vanish: LB then LT, LT then LB, same tick, 6 apart (resolves 2 after the second), 7 apart (a dodge out of guard), let go early (none), neutral (zero vector), one escape per chord; the dodge still starts on LT's press tick; the keyboard form | pass |
+| R | R3 and L3 produce no escape once freed; the keyboard's C still does; with the switch off R3 is Escape as before | pass |
+| S | the swap: eight random 600-tick scripts give the **identical** intent stream (both words) on a mirrored pad; the mirror is its own inverse; Start and the keyboard are left alone; through the hub the physical right stick moves and the left strikes | pass |
+| T | switch off: the intents equal the layout without the strike bindings on five random scripts, the second word is 0, the arrows strike nothing | pass |
+| U | switch on: hybrids 3 and 10 come on and 9 does not; off, none | pass |
+| inert | RT held and the lay: no strike, faces free, a push under RT that outlasts it fires nothing until it rests; RB, the kite and LT do strike with their layer | pass |
+| V, W, X | the strike button on a pad starts on the stick's tick in the stick's direction and the law applies to it; the brace button sets the read 2 ticks after the press with the held direction (none: direction 0), once per press, unchanged by right-hand noise, and `brace_style` press turns the flick off; the single-control vanish sends `escape` on its press tick with the stick's direction, and is reachable with a toggled guard | pass |
+| struggle | `set_struggle(true)`: a started strike is cancelled on that tick with no throw; a push inside it starts nothing; the surges go on their own press ticks with the stick out; a press queued before it does not come out inside it as a surge | pass |
+| cancel, toggle, pause | a guard or dodge press cancels with an edge and the faces wait for the stick's rest + L; the toggle style; a pause | pass |
+
+### 6.2 The model
+
+`right-hand-attacks-model.mjs` (arithmetic) is unchanged in method; its strike commitments were placeholders (4a 14). With Game Design's 16 for the quick strike the lockout is still hidden inside the blow for every face button except X-then-stick (X commits 6, `R` is 8): the one link where a naive claw gains 2 ticks, closed by K2. The **charge** was the real hole (+2 to +9 free blows), closed by K3.
 
 ## 7. What happens to what exists
 
 | Item | Becomes |
 | :--- | :--- |
-| **v2's reads** (LB + right flick, 90 ticks, 3 ki) | **Moved to the left thumb**: LB + a left flick (section 2). Same costs and effects; the persistence and gap-invariance machinery is no longer needed for claw reasons (a left thumb is not a claw issue) but the *prediction* design stays Game Design's |
-| v2's **Aim latch** (RB flick sets the aim line for the face buttons) | **Retired.** RB + stick is the beam itself. Blasts fire toward him; an optional arc from the **left** stick's lean at the press is GD's Q11 |
-| v2's **lay aim** (LB + RB flick) | Becomes the lay placement on the stick (4c+), or inert in 4a and 4b |
-| v2's step commands (flick = step, hold = dash, orbit, skim) | **Dropped.** The right stick is attack-only. The dash, orbit and skim remain the left stick and LT's (flight already has them); nothing is lost that the left hand did not own |
-| The law (`right-thumb.md`) | Restated in 6.1: rules 3 and 4 carry it, plus K3 to K6 |
-| **R3 Escape** | **Freed.** Hard flicks click the stick, and with the right stick now the main attack input an accidental Escape mid-fight is a real harm; the R3 guard rule stays only as insurance. Escape becomes the **vanish chord**, which sends the same `escape` edge with a direction. R3 may be a target swap, or nothing. C, X and Quote on the keyboards stay as the single-key mirror |
-| The **stance radial** (RB + right flick picks a stance) | **Retired**: RB + stick is beams. It was off by default and "dropped first on collision" |
-| **E11** (RB = energy, momentary, hold or toggle) | Unchanged |
-| **E12** (X, Y, B, A = the four weights) | Unchanged. B's energy hold-beam moves to the stick in 4a and 4c (4b keeps both) |
-| **E13** (tap, mash, hold, release) | Unchanged, and now the stick's grammar too: one reader, the stick as a fifth button with a direction |
-| E70 to E72 (the lay, hybrid 3) | Hybrid 3 on; the lay can be placed by the stick |
-| `hold_style` (hold or toggle) | Gains `strike_style`; the same mechanism |
+| **v2's reads** (LB + right flick, 90 ticks, 3 ki) | **Moved to the left thumb** (section 2). The persistence and gap-invariance machinery is no longer needed for claw reasons |
+| v2's **aim latch** (RB flick sets the aim line for the face buttons) | **Retired.** RB + stick is the beam itself. Blasts fire toward him |
+| v2's **lay aim** (LB + RB flick) | Inert in 4a; 4c would place the lay by the stick |
+| v2's **step commands** (flick = step, hold = dash, orbit, skim) | **Dropped.** The right stick is attack-only; flight and LT own those moves |
+| **R3 Escape** | **Freed**; the vanish chord replaces it. C, X and Quote stay as single-key mirrors |
+| The **stance radial** | **Retired** (RB + stick is the beam) |
+| **E11** (RB = energy, hold or toggle), **E12** (the four weights), **E13** (tap, mash, hold, release) | Unchanged; E13 is now the stick's grammar too |
+| E70 to E72 (the lay, hybrid 3) | Hybrid 3 on; the lay is placed by the face buttons as today |
+| `hold_style` | Gains `strike_style` (hub `set_strike_style`) |
 
-## 8. Recommendation: 4c+
+## 8. Customisation: hand_layout, the swap as presets, and remap
 
-**Choose 4c, with these settings** (the "+"):
-1. **One ladder.** The quick strike is level 0 of the charge ladder, read by the existing press grammar. No second reader.
-2. **Direction locks at the settle**; returning to rest always throws; the cancel is the left hand's.
-3. **K3**: the face buttons are inert while the stick is held.
-4. **Signature on RT + stick, hold-and-release only**, with B free in the power layer for a fourth special.
-5. **Hybrids 3 (lay) and 10 (kite) on by data; 9 stays off.** The vanish is a chord event, not a stance.
-6. **R3 freed, the radial retired, the aim latch retired.**
-7. **Simple-S** (stick strikes on) moves defence to LT and LB.
+Orb, 2026-10-30: accessibility settings and customizable controls are assumed, including left-handed players who swap their pad. The design rule: **roles are bound to actions, never to a hand**, so a swap is a renaming of controls and nothing else (Accessibility's rule 1: every string says defence hand and attack hand, or names the control).
 
-**Why 4c over 4a and 4b**
-- **4a (own class)** matches Orb's lean and is the quickest, but it is the one that leans hardest on the law (the model: +5 blows without it), adds a balance axis, and costs the most authoring (four moves a stance, outside light, medium and heavy).
-- **4b (pooled with B)** is claw-safe almost for free and is the cheapest, but a directional heavy's wind-up (28 ticks) is not "a quick stunning blow", the stick and B do near-duplicate jobs, and "powerful" becomes a shared read. It loses the thing Orb asked for.
-- **4c** keeps 4a's identity (a quick own-class blow chosen by direction) and 4b's economy (costed as heavy, so one balance axis), and is the only pitch where each layer's stick means the same thing ("the big move of the mode"), which is the one sentence Orb asked for. It also gives the beam its home on the stick and frees B.
+**`hand_layout` is a preset choice** (Accessibility's rule 3, the EP's decision: as presets, keyboard included). Per player, `hub.set_hand_layout("standard" | "swapped", slot)`:
+- **Pad:** `SimInputData` derives `<id>-swapped` for every pad preset from the shipped one (`SimSwap.mirror_preset`: left stick with right, LB with RB, LT with RT, L3 with R3, the four face buttons with the D-pad positionally; Start, Back untouched), tagged `hand: "swapped"`. It is **the full mirror**, the default left-handed layout: the hand that holds the stick that moves is the other one, and each thumb keeps the one-thumb structure of its stick plus its buttons. (A sticks-only swap would put movement and the defence flicks on the face-button thumb, a cost the sim does not model; Research's `claw-4a-swap.mjs` agrees.) It has its own remap, and Reset goes back to the mirror.
+- **Keyboard:** `kb-solo-swapped` is shipped data in `layouts.json`: the arrows move, WASD is the strike stick, F G R V are the faces (V context), Q and E stay mode and power, Space and Shift stay dodge and guard (both are bilateral keys), Space + E or U transforms, Quote is Escape, Period is the brace key. The right hand moves and defends, the left hand attacks. The shared keyboard's halves have no swapped preset (remap them); touch is parked.
+- **What changes in the sim: nothing.** The swapped preset is a layout; the stance mask, the strike reader, the law, the left-hand reads and the intent are the same code and the same numbers, and `SimLayout` takes the swapped thumb's lockouts from the preset's `hand` tag.
 
-**Variants found.** (V1) the kite hybrid (LT + RB), the cleanest use of "the left hand survives while the right hurts"; (V2) the vanish as an *upgrade of the dodge* rather than a separate action, so T1 is untouched; (V3) a stick that places the lay; (V4) `strike_style` toggle; (V5) the shared-keyboard strike key; (V6) Simple-S. None is required by 4c.
+**The no-claw timing under a swap.** The law is written on actions, so it is the same law; the gate runs every row on the swapped preset and the swapped keyboard (section 6.1), and row S proves a mirrored pad gives the identical intents. The one thing that depends on the hand is how fast a thumb crosses between its stick and its face buttons (`L`, `R`, `W`) and the strike dwell `D`: the left thumb between the left stick and the D-pad is a different transfer from the right thumb between the right stick and the face buttons. So the law takes **its own numbers for a swapped layout** (`strike.swapLockout`, `strike.swapReverseLockout`), defaulting to the unswapped ones so a swapped layout is never faster. **QA's capture page needs a second measurement of the same protocol, run left-handed and on the D-pad** (Accessibility's row 2); until then the bar is the conservative one. Research's run on placeholder numbers shows zero claw gain with the swap.
 
-**Reasons in one line each.** Zero claw advantage by the model; one reader and one ladder (small build); no right-hand input in any defence; B and the face buttons stay exactly what every player already knows; keyboard parity without a new recogniser.
+**Remap (built: `sim/input/remap.gd`).** Every new control is a row: a keyboard's arrows (`strike`, a four-key row like `move`), the shared keyboards' strike keys and all three keyboards' brace keys (single-key rows), the swapped presets like any preset. The pad's right stick and D-pad mirror are fixed; the pad's strike button, brace button and Escape are **optional rows** (`SimInputRemap.OPTIONAL`: a row with no control while the switch is on, so the screen has somewhere to bind them). Conflicts, the diff to the player's file, overrides and the `layout-pair` rule cover all of it (checked: the shared halves share nothing).
 
-## 9. Questions for Game Design (with my recommendation)
+**Settings the controls screen should offer** (UI): hand layout (standard or swapped, per player), the D-pad mirror (auto, on, off), the strike style (hold or toggle), the brace style (flick or press). Hub calls: `set_hand_layout`, `set_mirror`, `set_strike_style`, `set_brace_style`, `set_pad_has_right_stick`. **What the second push does in each strike style:** hold: the stick coming back throws it (quick under 12 live ticks, a charge after); toggle: the first push starts it and the **next** push throws it, with the stick free to rest between (a beam throws as the beam, a martial charge as the strike at the level reached). In both a guard or dodge press cancels a started charge with nothing thrown. Persisting the choices is the settings file's job (UI).
 
-1. 4a, 4b or 4c. **4c+.**
-2. The stun and recovery of a quick strike; does it stun on hit or only on a clean one?
-3. The charge ladder: 3 levels and 12 / 30 / 54, or fewer?
-4. Does a guard or a dodge press cancel a charge, and is the charge kept or lost? **Cancel, lose it; the dodge pays its ki.** A kept charge would make the left hand a free shield for the right.
-5. With the beam on the stick, what is B in the energy layer, tap and hold? **A heavy blast; hold = a bigger two-level blast.**
-6. The signature on RT + stick, hold-and-release only, and a fourth special on RT + B. **Yes.**
-7. The vanish: ki cost, cooldown, what it does inside a brawl or a clinch, and does it replace R3 Escape. **Replace; the dodge-with-stick-away brawl exit stays.**
-8. Is the brace available while stunned, and is a wrongly set read still a 3 ki loss?
-9. Hybrids 3 and 10 on, 9 off.
-10. The stance lane of a strike thrown from guard or from the manoeuvre stance: the director's stance table gets the mask at the crossing tick, as a face press does.
-11. Blast aim: toward him always, or an arc from the left stick's lean at the press?
-12. Simple: stick strikes default off; on, defence moves to the shoulders.
+**Not built, and why.** A keyboard mirror by rule (there is no symmetric key layout; the swapped preset is authored); widened chord or slip windows as assists (they change outcomes, so they are gameplay assists recorded in the match settings and replay header: Game Design and Orb decide, ranked and online use included, through the EP); touch (ADR 0011).
 
-**For Orb after the workshop** (EP's list): 4a, 4b or 4c; the vanish replacing R3 Escape (**yes**); the D-pad mirror (**a setting, default off**, automatic on a pad with no right stick).
+## 9. What is built, behind what, and what it needs
 
-## 10. What it costs and next
+- **Switch:** `data/input/timing.json` `switches.rightStick`, **false**. With it off no input path changes: the existing 24 input tests pass untouched, and a gate row (T) proves the intents are bit-identical to the layout without the strike bindings.
+- **New files (`sim/input/`):** `strike_read.gd` (SimStrikeRead), `strike_law.gd` (SimStrikeLaw), `left_hand.gd` (SimLeftHand), `swap.gd` (SimSwap). **Changed:** `intent.gd` (the second word), `layout.gd`, `hub.gd` (`pad_stick_right`, the settings, `set_hand_layout`, `set_struggle`), `input_data.gd` (`right_stick_on`, `strikeBindings`, the derived swapped pad presets, hybrids), `remap.gd`.
+- **Data:** `timing.json` (`switches.rightStick`, blocks `strike` and `leftHand`), `layouts.json` (`strikeBindings` on Arena, `kb-solo`, the swapped solo keyboard and the two shared halves; the preset `kb-solo-swapped`), `stances.json` (`withRightStick`).
+- **Tests:** `strike_read_test.gd`, `left_hand_test.gd`, `strike_gate_test.gd` (262), `strike_hub_test.gd` (57) (listed in `input-gates.md`).
+- **Needs from others (parked as patches in `docs/controls/pending/right-hand/`):** **one more host line that cannot be a patch yet:** `hub.set_struggle(slot, <the fighter is in a struggle>)` each tick, like `set_sent` (Simulation or Encounter names the flag; without it K3 can queue a surge while the stick is out). **UI's `ui/data/settings.json`** needs a name for the new keyboard preset (`remap.layouts`: `"kb-solo-swapped"`), or `validate` warns ("has no name in layouts") and the Remap screen cannot list it; the swapped pad presets (`arena-swapped`, `simple-pad-swapped`) are derived in code and need names there too. The schemas (Tools' `tools/schemas/input-timing`, `input-stances`, `input-layouts`: the data fails `validate` without them) and one host feed (`render/core/main.gd`: the right stick's axes to `hub.pad_stick_right`). **Simulation** reads the second word (hash, replay, the director's use of `rsStart`/`rsRelease`/`rsLevel`/`rsDir`/`rsMask`, `brace`/`braceDir`, the vanish on `escape`). **Combat and Encounter** author the strikes and beams. **UI** the legend, the settings rows and the how-to-play.
 
-- **Controls:** the strike reader (pure, in `sim/input/`), the left-hand upgrade rules, the hybrids' data lines and the extended gate (J to R). About as large as step 1 was.
-- **Simulation and Tools:** intent v5's second word, data and schema (`strike`, `switches.rightStick`).
-- **Encounter and Combat:** strikes as a generator class (4c: costed as heavy), the beam as the energy stick's family, the vanish as an upgrade of the dodge; Animation: up to four directional strikes and a charge pose per fighter.
-- **UI:** legend, how-to-play, glyphs, `strike_style` row.
-- **Research:** a prototype with the three pitches switchable can use this page's section 1 as the reader.
-- **Tools / QA:** the capture page's "transfer" block still decides `L`, `R` and `W`; the strike dwell (flick-and-return) is a second measurement for `D`.
-- **No code until Game Design rules and Orb picks.**
+## 10. Open items
+
+1. **Game Design's amended numbers** (the ladder, the quick strike's stun, the strike levels' own numbers): data, no code.
+2. **Real-thumb numbers** for `L`, `R`, `W` (right thumb) and the swap side's, and `D` (the strike dwell, flick-and-return): the capture page (Tools).
+3. **Accessibility** (via the EP): the list in `docs/accessibility/right-hand-controls.md` is built except rows 2 (the swapped thumb's capture: QA), 9 and 11 (UI), 12 (Accessibility). Open for Game Design / Orb: the widened-window assists and whether they may be used in ranked and online play; the equal tick of the strike button.
+4. **Pure 4a leaves the power layer's stick and the lay's inert.** If Game Design wants the signature on the stick or the lay placed by it, that is `strike.inertMasks` and a sim read.
+5. **xref-input** does not check `strikeBindings` yet (Tools).

@@ -5,8 +5,19 @@
 const ACTIONS = 'data/input/actions.json';
 const LAYOUTS = 'data/input/layouts.json';
 const TIMING = 'data/input/timing.json';
+const STANCES = 'data/input/stances.json';
 
 const KB_RESERVED = new Set(['kb:KeyN', 'kb:KeyT', 'kb:KeyY', 'kb:KeyP', 'kb:Escape']);
+// The strike actions a preset's parked strikeBindings may use (sim/input/layout.gd reads these four) and how many controls each takes: the strike stick is one pad control or four keys with an axis, its
+// D-pad mirror four controls with an axis, the single-key strike and the keyboard brace one control.
+const STRIKE_ACTIONS = { strike: 'one control, or four with an axis of four directions', strike_mirror: 'four controls with an axis of four directions', strike_key: 'one control', brace_key: 'one control' };
+const strikeShapeOk = (action, b) => {
+  const n = Array.isArray(b.controls) ? b.controls.length : 0;
+  const four = n === 4 && Array.isArray(b.axis) && b.axis.length === 4;
+  if (action === 'strike') return four || (n === 1 && b.axis === undefined);
+  if (action === 'strike_mirror') return four;
+  return n === 1 && b.axis === undefined;
+};
 const LAYERABLE = /^(special[0-9]+|special_auto|signature|upgrade_[a-z]+)$/;
 // Actions every preset must bind for its device. Two documented relaxations (see docs/tools/README.md):
 // the Simple presets reach the heavy and the signature through the upgrade gestures, and a keyboard preset has no
@@ -34,7 +45,7 @@ function xrefInput({ get, err, esc, isObj }) {
   if (isObj(layoutsDoc) && Array.isArray(layoutsDoc.presets)) {
     const presets = layoutsDoc.presets.filter(isObj);
     const byId = new Map(presets.map((p) => [p.id, p]));
-    const controlsOf = (p) => new Set((Array.isArray(p.bindings) ? p.bindings : []).flatMap((b) => (isObj(b) && Array.isArray(b.controls) ? b.controls : [])));
+    const controlsOf = (p) => new Set([...(Array.isArray(p.bindings) ? p.bindings : []), ...(Array.isArray(p.strikeBindings) ? p.strikeBindings : [])].flatMap((b) => (isObj(b) && Array.isArray(b.controls) ? b.controls : [])));
 
     layoutsDoc.presets.forEach((p, pi) => {
       if (!isObj(p) || !Array.isArray(p.bindings)) return;
@@ -106,6 +117,34 @@ function xrefInput({ get, err, esc, isObj }) {
           });
         });
       }
+      // layout-strike: the right-hand attacks' parked bindings (joined to `bindings` only while timing.json switches.rightStick is on): a known action, once each, of the right shape, on this preset's device,
+      // on no control the preset already binds (nor reserved for the system), each control once
+      if (Array.isArray(p.strikeBindings)) {
+        const baseControls = new Set(bindings.flatMap((b) => (Array.isArray(b.controls) ? b.controls : [])));
+        const seenAction = new Map(), seenControl = new Map();
+        p.strikeBindings.forEach((b, bi) => {
+          if (!isObj(b)) return;
+          const at2 = `${at}/strikeBindings/${bi}`;
+          if (typeof b.action === 'string') {
+            if (!Object.prototype.hasOwnProperty.call(STRIKE_ACTIONS, b.action)) err(LAYOUTS, `${at2}/action`, 'layout-strike-action', `"${b.action}" is not a strike action (${Object.keys(STRIKE_ACTIONS).join(', ')})`);
+            else {
+              if (seenAction.has(b.action)) err(LAYOUTS, `${at2}/action`, 'layout-strike-action', `"${b.action}" is bound twice in strikeBindings (first at ${seenAction.get(b.action)})`);
+              else seenAction.set(b.action, at2);
+              if (!strikeShapeOk(b.action, b)) err(LAYOUTS, at2, 'layout-strike-shape', `"${b.action}" takes ${STRIKE_ACTIONS[b.action]}`);
+            }
+          }
+          if (!Array.isArray(b.controls)) return;
+          b.controls.forEach((c, ci) => {
+            if (typeof c !== 'string') return;
+            const cat = `${at2}/controls/${ci}`;
+            if (c.split(':')[0] !== p.device) err(LAYOUTS, cat, 'layout-device', `control "${c}" does not belong to a ${p.device} preset`);
+            if (p.device === 'kb' && (KB_RESERVED.has(c) || /^kb:F[0-9]+$/.test(c))) err(LAYOUTS, cat, 'layout-reserved', `"${c}" is reserved for the system (N, T, Y, P, Escape and the F-keys)`);
+            if (baseControls.has(c)) err(LAYOUTS, cat, 'layout-strike-conflict', `control "${c}" is already bound in preset "${p.id}"'s bindings, so the right-hand attacks could not have it`);
+            else if (seenControl.has(c)) err(LAYOUTS, cat, 'layout-strike-conflict', `control "${c}" is bound twice in strikeBindings (first at ${seenControl.get(c)})`);
+            else seenControl.set(c, cat);
+          });
+        });
+      }
       // layout-axis
       p.bindings.forEach((b, bi) => {
         if (isObj(b) && p.device === 'kb' && b.action === 'move' && !(Array.isArray(b.axis) && b.axis.length === 4 && Array.isArray(b.controls) && b.controls.length === 4)) {
@@ -129,6 +168,13 @@ function xrefInput({ get, err, esc, isObj }) {
     });
   }
 
+  // stances-right-stick: the hybrid masks that come on with the right-hand switch are besides `hybrids`, never also in it
+  const stancesDoc = get(STANCES);
+  if (isObj(stancesDoc) && Array.isArray(stancesDoc.withRightStick)) {
+    const on = new Set(Array.isArray(stancesDoc.hybrids) ? stancesDoc.hybrids : []);
+    stancesDoc.withRightStick.forEach((m, i) => { if (on.has(m)) err(STANCES, `/withRightStick/${i}`, 'stances-right-stick', `mask ${m} is already in hybrids: withRightStick lists the ones that come on besides it`, 'warning'); });
+  }
+
   if (isObj(timing)) {
     const th = isObj(timing.tapHold) ? timing.tapHold : {};
     const pb = isObj(timing.perfectBlock) ? timing.perfectBlock : {};
@@ -145,6 +191,12 @@ function xrefInput({ get, err, esc, isObj }) {
         const b = hs[chain[i + 1]];
         if (Number.isInteger(a) && Number.isInteger(b) && a > b) err(TIMING, `/hitstopTicks/${chain[i]}`, 'timing-hitstop-order', `${chain[i]} (${a}) should not exceed ${chain[i + 1]} (${b}); the impact hierarchy is ${label}`, 'warning');
       }
+    }
+    const sk = isObj(timing.strike) ? timing.strike : {};
+    if (typeof sk.on === 'number' && typeof sk.off === 'number' && !(sk.off < sk.on)) err(TIMING, '/strike/off', 'timing-strike-order', `off ${sk.off} must be below on ${sk.on}: a stick back under off is at rest, a push past on is a request`);
+    for (const k of ['levels', 'beamLevels']) {
+      const v = sk[k];
+      if (Array.isArray(v) && v.every(Number.isInteger) && v.some((x, i) => i > 0 && !(v[i - 1] < x))) err(TIMING, `/strike/${k}`, 'timing-strike-levels', `${k} ${JSON.stringify(v)} must rise: each level is reached later than the one before`);
     }
     const am = isObj(timing.aim) ? timing.aim : {};
     if (Number.isInteger(am.dwellTicks) && Number.isInteger(am.exitWindow) && am.dwellTicks > am.exitWindow) err(TIMING, '/aim/dwellTicks', 'timing-aim', `dwellTicks ${am.dwellTicks} is above exitWindow ${am.exitWindow}: a direction cannot be held for more ticks than the exit read looks back over`);

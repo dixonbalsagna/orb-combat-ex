@@ -15,6 +15,8 @@ extends RefCounted
 const VERSION: int = 4
 ## pack(): bit widths, least significant first.
 const BITS: int = 53
+## pack2(): the second word's width.
+const BITS2: int = 26
 
 var mx: float = 0.0          # the stick, -1 to 1; canonical values are k / 127 (canon())
 var my: float = 0.0
@@ -47,6 +49,21 @@ var waited: int = 0
 var stanceMask: int = 0
 var contextHeld: bool = false   # held: a Context button is down (A's hold: the martial channel, the zip tackle). Bit 51
 var sigHeld: bool = false       # held: a Signature button is down, on any layer (B's held reading). Bit 52
+## The second word (switches.rightStick, off): the right stick's strike and the left hand's brace (docs/controls/right-hand-attacks.md section 1,
+## sim/input/strike_read.gd). All neutral while the switch is off, and pack() does not carry them: pack2() does, in 26 bits of its own, so a
+## replay recorded with the switch off is the same integer it always was. Directions are SCREEN directions (1 up, 2 down, 3 left, 4 right); the
+## director turns them into toward and away with the fighter's facing at the throw.
+var rsHeld: bool = false     # held: a strike is in the sim's hands (from its start until it is thrown or cancelled)
+var rsStart: bool = false    # edge: the strike request began (the settle after the crossing)
+var rsRelease: bool = false  # edge: the strike was thrown, at rsLevel
+var rsCancel: bool = false   # edge: the left hand's guard or dodge ended the charge; nothing is thrown
+var rsDir: int = 0           # the locked direction, 0 to 4
+var rsLevel: int = 0         # 0 the quick strike, 1 to 3 the charge ladder (the level reached while held; the level thrown on the release tick)
+var rsMask: int = 0          # the stance mask at the crossing tick: the layer (martial, energy, power, the guard or manoeuvre stance)
+var rsAim: int = 0           # the stick's sector now, 0 to 31 (the beam's sweep)
+var rsLag: int = 0           # 0 to 15: ticks the oldest strike edge waited, because the sim was frozen
+var brace: bool = false      # edge: LB and a left flick set a read (the old v2 read, on the left thumb)
+var braceDir: int = 0        # which read: 1 up (his heavy), 2 down (his flurry), 3 and 4 the two sides (his grab / his shot, by facing)
 # Today's fields, until I3:
 var dash: bool = false
 var charge: bool = false
@@ -82,6 +99,22 @@ static func clearIntent(i: SimIntent) -> void:
 	i.dash = false
 	i.charge = false
 	i.stance = -1.0
+	clear2(i)
+
+
+## The second word's fields to neutral.
+static func clear2(i: SimIntent) -> void:
+	i.rsHeld = false
+	i.rsStart = false
+	i.rsRelease = false
+	i.rsCancel = false
+	i.rsDir = 0
+	i.rsLevel = 0
+	i.rsMask = 0
+	i.rsAim = 0
+	i.rsLag = 0
+	i.brace = false
+	i.braceDir = 0
 
 
 ## Overwrite every field of dst from src, as humanInput overwrote f.in for a human fighter.
@@ -113,6 +146,17 @@ static func applyIntent(dst: SimIntent, src: SimIntent) -> void:
 	dst.dash = src.dash
 	dst.charge = src.charge
 	dst.stance = src.stance
+	dst.rsHeld = src.rsHeld
+	dst.rsStart = src.rsStart
+	dst.rsRelease = src.rsRelease
+	dst.rsCancel = src.rsCancel
+	dst.rsDir = src.rsDir
+	dst.rsLevel = src.rsLevel
+	dst.rsMask = src.rsMask
+	dst.rsAim = src.rsAim
+	dst.rsLag = src.rsLag
+	dst.brace = src.brace
+	dst.braceDir = src.braceDir
 
 
 ## The whole record as one integer (53 bits; the sim keeps it as one integer and only the replay's JSON splits it): mx and my as 8 bits each (k + 127 for k / 127), mode + 1 in
@@ -195,7 +239,57 @@ static func unpack(p: int) -> SimIntent:
 	return i
 
 
+## The second word as one integer (26 bits): rsHeld, rsStart, rsRelease, rsCancel in bits 0 to 3, rsDir in 4 to 6, rsLevel in 7 and 8, rsMask in
+## 9 to 12, rsAim in 13 to 17, rsLag in 18 to 21, brace in 22, braceDir in 23 to 25. 0 for a record with none of it, which is every record while
+## switches.rightStick is off.
+static func pack2(i: SimIntent) -> int:
+	var p: int = 0
+	if i.rsHeld:
+		p |= 1
+	if i.rsStart:
+		p |= 2
+	if i.rsRelease:
+		p |= 4
+	if i.rsCancel:
+		p |= 8
+	p |= clampi(i.rsDir, 0, 4) << 4
+	p |= clampi(i.rsLevel, 0, 3) << 7
+	p |= (i.rsMask & 15) << 9
+	p |= clampi(i.rsAim, 0, 31) << 13
+	p |= clampi(i.rsLag, 0, 15) << 18
+	if i.brace:
+		p |= 1 << 22
+	p |= clampi(i.braceDir, 0, 4) << 23
+	return p
+
+
+## Read a second word into i. False (and i untouched) if p is not a valid second word.
+static func unpack2(p: int, i: SimIntent) -> bool:
+	if p < 0 or (p >> BITS2) != 0:
+		return false
+	var d: int = (p >> 4) & 7
+	var bd: int = (p >> 23) & 7
+	if d > 4 or bd > 4:
+		return false
+	i.rsHeld = (p & 1) != 0
+	i.rsStart = (p & 2) != 0
+	i.rsRelease = (p & 4) != 0
+	i.rsCancel = (p & 8) != 0
+	i.rsDir = d
+	i.rsLevel = (p >> 7) & 3
+	i.rsMask = (p >> 9) & 15
+	i.rsAim = (p >> 13) & 31
+	i.rsLag = (p >> 18) & 15
+	i.brace = ((p >> 22) & 1) != 0
+	i.braceDir = bd
+	return true
+
+
 ## The canonical form of an intent: what a replay or a peer would reproduce (the stick on its 1 / 127 grid). The host or
-## the recorder passes this to the sim, so a recorded match and a live one read the same bits.
+## the recorder passes this to the sim, so a recorded match and a live one read the same bits. The second word goes through pack2 the same way.
 static func canon(i: SimIntent) -> SimIntent:
-	return unpack(pack(i))
+	var c: SimIntent = unpack(pack(i))
+	var p2: int = pack2(i)
+	if p2 != 0:
+		unpack2(p2, c)
+	return c

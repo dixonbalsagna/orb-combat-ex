@@ -17,6 +17,7 @@
     "tug_rings": false,
     "start_menu": true,
     "launch_marks": true,
-    "civilian_bar": true
+    "civilian_bar": true,
+    "planet_map": false
   }
 }

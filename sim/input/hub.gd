@@ -50,6 +50,14 @@ var _was: Array = [false, false]
 ## "hold" (the default) or "toggle". Energy has its own, `mode_styles`.
 const HOLD_ACTIONS: Array = ["guard", "dodge", "power", "transform"]
 var hold_style_pref: Array = [{}, {}]
+## The right-hand attacks' settings (switches.rightStick, off; docs/controls/right-hand-attacks.md). Per player: the left-handed swap of a pad (SimSwap), the strike
+## stick's style ("" the data default, "hold" or "toggle"), and the D-pad mirror ("auto": on for a pad the host says has no right stick; "on"; "off").
+var hand_pref: Array = ["standard", "standard"]   # hand_layout: "standard" or "swapped" (Accessibility's rule 3): the swapped preset of the pad or the keyboard
+var brace_style_pref: Array = ["", ""]            # the brace's assist: "" the data default (flick), "flick" or "press" (the button alone)
+var strike_style_pref: Array = ["", ""]
+var mirror_pref: Array = ["auto", "auto"]
+var struggle_pref: Array = [false, false]   # the host's word each tick that the slot's fighter is in a struggle (set_struggle)
+var _pad_no_right_stick: Dictionary = {}   # device id -> true: the host says this pad has no right stick
 
 
 func _init() -> void:
@@ -61,6 +69,9 @@ func _init() -> void:
 	layouts["solo2"] = SimLayout.new(SimInputData.preset("kb-solo", 1))   # the same layout under player two's own remap
 	layouts["p1"] = SimLayout.new(SimInputData.preset("kb-shared-p1", 0))
 	layouts["p2"] = SimLayout.new(SimInputData.preset("kb-shared-p2", 1))
+	if not SimInputData.preset("kb-solo-swapped", 0).is_empty():   # the left-handed keyboard (hand_layout "swapped")
+		layouts["solo_sw"] = SimLayout.new(SimInputData.preset("kb-solo-swapped", 0))
+		layouts["solo2_sw"] = SimLayout.new(SimInputData.preset("kb-solo-swapped", 1))
 
 
 ## Who is human this tick (the host reads f.ai == null). A slot that stopped being human is no longer driven.
@@ -88,6 +99,13 @@ func pad_preset_of(slot: int) -> String:
 	return p if p != "" else pad_preset
 
 
+## The preset id a pad plays: the chosen one, or its swapped twin (`<id>-swapped`, derived by SimInputData) under hand_layout "swapped".
+func _hand_preset(id: String, slot: int) -> String:
+	if str(hand_pref[slot]) == "swapped" and not SimSwap.is_swapped_id(id) and not SimInputData.preset(SimSwap.swapped_id(id), slot).is_empty():
+		return SimSwap.swapped_id(id)
+	return id
+
+
 func _kb_shared() -> bool:
 	return _taken(0) and _taken(1) and slot_device[0] == "kb" and slot_device[1] == "kb"
 
@@ -95,7 +113,15 @@ func _kb_shared() -> bool:
 func _kb_layout(slot: int) -> SimLayout:
 	if _kb_shared():
 		return layouts["p1"] if slot == 0 else layouts["p2"]
-	return layouts["solo"] if slot == 0 else layouts["solo2"]
+	return layouts[_solo_id(slot)]
+
+
+## The solo keyboard layout a slot plays: the standard one, or the swapped one when its hand_layout is swapped (and the preset exists).
+func _solo_id(slot: int) -> String:
+	var base: String = "solo" if slot == 0 else "solo2"
+	if str(hand_pref[slot]) == "swapped" and layouts.has(base + "_sw"):
+		return base + "_sw"
+	return base
 
 
 ## Whatever the slot's previous device held is let go, so nothing sticks.
@@ -188,7 +214,13 @@ func leave(slot: int) -> bool:
 func key(code: String, down: bool) -> bool:
 	var c: String = "kb:" + code
 	var used: bool = false
-	for l in layouts.values():
+	var live_solo: Array = [_solo_id(0), _solo_id(1)]
+	for name in layouts:
+		var l: SimLayout = layouts[name]
+		if str(name).begins_with("solo") and not live_solo.has(name):
+			if not down:
+				l.release(c)   # a layout nobody plays still lets go of what it held
+			continue
 		if down:
 			if l.press(c):
 				used = true
@@ -219,7 +251,7 @@ func _kb_input(c: String) -> void:
 
 func _pad(dev: int, slot: int) -> SimLayout:
 	if not pads.has(dev):
-		pads[dev] = SimLayout.new(SimInputData.preset(pad_preset_of(slot), slot))
+		pads[dev] = SimLayout.new(SimInputData.preset(_hand_preset(pad_preset_of(slot), slot), slot))
 	return pads[dev]
 
 
@@ -254,6 +286,16 @@ func pad_disconnected(dev: int) -> void:
 			else:
 				_free(0)
 			slot_pad[s] = -1
+
+
+## The right stick, x right and y up (the strike stick; with the left-handed swap it is the one that moves). Like the left stick, it does not join on its own.
+func pad_stick_right(dev: int, x: float, y: float) -> void:
+	for s in range(2):
+		if slot_pad[s] == dev and claimed[s]:
+			_pad(dev, s).axis("pad:rs", x, y)
+			if absf(x) > 0.5 or absf(y) > 0.5:
+				_claim(s, "pad")
+			return
 
 
 ## A pad button by position name: south, east, west, north, lb, rb, l3, r3, start, back, dpad_up, ... Any button joins.
@@ -328,6 +370,10 @@ func intent(slot: int) -> SimIntent:
 				pads[d].set_sent(bool(sent_pref[slot]))
 				pads[d].set_latch_charge(bool(latch_charge_pref[slot]))
 				pads[d].set_charges_off(bool(charges_off_pref[slot]))
+				pads[d].set_strike_style(strike_style_of(slot))
+				pads[d].set_struggle(bool(struggle_pref[slot]))
+				pads[d].set_brace_flick(brace_style_of(slot) == "flick")
+				pads[d].set_mirror_dpad(mirror_on(slot))
 				_apply_hold_styles(pads[d], slot)
 				if float(trigger_pref[slot]) > 0.0:
 					pads[d].set_trigger_threshold(float(trigger_pref[slot]))
@@ -348,6 +394,9 @@ func intent(slot: int) -> SimIntent:
 			kl.set_sent(bool(sent_pref[slot]))
 			kl.set_latch_charge(bool(latch_charge_pref[slot]))
 			kl.set_charges_off(bool(charges_off_pref[slot]))
+			kl.set_strike_style(strike_style_of(slot))
+			kl.set_struggle(bool(struggle_pref[slot]))
+			kl.set_brace_flick(brace_style_of(slot) == "flick")
 			_apply_hold_styles(kl, slot)
 			i = kl.build()
 	return SimIntent.canon(i)
@@ -527,6 +576,91 @@ func _apply_hold_styles(l: SimLayout, slot: int) -> void:
 		l.set_hold_style(a, hold_style_of(a, slot))
 
 
+## The strike stick's style for a slot, "hold" or "toggle" (the data default when the player has not chosen).
+func strike_style_of(slot: int) -> String:
+	var st: String = str(strike_style_pref[slot])
+	if st == "":
+		st = str(SimInputData.t(["strike", "style"], "hold"))
+	return "toggle" if st == "toggle" else "hold"
+
+
+## The player's choice for the strike stick, "hold" or "toggle" ("" for the default): a push starts the charge and the next push throws it (the
+## accessibility form, as hold-toggles.md). -1 is both players. Takes effect on the next tick.
+func set_strike_style(style: String, slot: int = -1) -> void:
+	for s in range(2):
+		if slot < 0 or s == slot:
+			strike_style_pref[s] = style
+
+
+## The D-pad mirror for a slot: "auto" (on only for a pad the host says has no right stick), "on" or "off". -1 is both players.
+func set_mirror(setting: String, slot: int = -1) -> void:
+	for s in range(2):
+		if slot < 0 or s == slot:
+			mirror_pref[s] = setting if (setting == "on" or setting == "off") else "auto"
+
+
+## The host's word that a pad has no right stick (a handheld's half pad, a one-stick controller): the mirror is then on, unless the player turned it off.
+func set_pad_has_right_stick(dev: int, has: bool) -> void:
+	if has:
+		_pad_no_right_stick.erase(dev)
+	else:
+		_pad_no_right_stick[dev] = true
+
+
+## The host's word that a slot's fighter is in a struggle (a beam clash, the finisher's contest): the strike stick does nothing and the faces are free
+## (Game Design's ruling, 2026-10-28). Call it each tick, like set_sent.
+func set_struggle(slot: int, on: bool) -> void:
+	struggle_pref[slot] = on
+
+
+func mirror_on(slot: int) -> bool:
+	match str(mirror_pref[slot]):
+		"on": return true
+		"off": return false
+	return bool(_pad_no_right_stick.get(slot_pad[slot], false))
+
+
+## The left-handed swap (Orb, 2026-10-30): the pad's roles are mirrored as a whole (SimSwap), so the left stick strikes, the right moves, the shoulders and the
+## face buttons / D-pad trade sides. Per player; -1 is both. The pad layout is rebuilt on its next input, with its holds let go (as a preset change).
+func set_swap(on: bool, slot: int = -1) -> void:
+	set_hand_layout("swapped" if on else "standard", slot)
+
+
+## hand_layout, per player (-1 both): "standard" or "swapped". The slot plays the swapped preset of its pad layout (`arena-swapped`) or of the solo keyboard
+## (`kb-solo-swapped`); what it held is let go, as a preset change. The shared keyboard's halves have no swapped preset (remap them).
+func set_hand_layout(layout: String, slot: int = -1) -> void:
+	for s in range(2):
+		if (slot < 0 or s == slot) and str(hand_pref[s]) != layout:
+			hand_pref[s] = "swapped" if layout == "swapped" else "standard"
+			if pads.has(slot_pad[s]):
+				pads[slot_pad[s]].release_all()
+				pads.erase(slot_pad[s])
+			for l in layouts.values():
+				l.release_all()
+
+
+func hand_layout_of(slot: int) -> String:
+	return str(hand_pref[slot])
+
+
+func swap_of(slot: int) -> bool:
+	return str(hand_pref[slot]) == "swapped"
+
+
+## The brace's assist for a slot: "flick" (a flick from rest with LB down sets the read; the default) or "press" (only the brace button does). -1 is both.
+func set_brace_style(style: String, slot: int = -1) -> void:
+	for s in range(2):
+		if slot < 0 or s == slot:
+			brace_style_pref[s] = style
+
+
+func brace_style_of(slot: int) -> String:
+	var st: String = str(brace_style_pref[slot])
+	if st == "":
+		st = str(SimInputData.t(["leftHand", "braceStyle"], "flick"))
+	return "press" if st == "press" else "flick"
+
+
 ## The trigger sensitivity (the on threshold, 0.2 to 0.6; 0 for the data default). -1 is both players.
 func set_trigger_threshold(on: float, slot: int = -1) -> void:
 	for s in range(2):
@@ -584,6 +718,9 @@ func reload_layouts() -> void:
 	layouts["solo2"].set_preset(SimInputData.preset("kb-solo", 1))
 	layouts["p1"].set_preset(SimInputData.preset("kb-shared-p1", 0))
 	layouts["p2"].set_preset(SimInputData.preset("kb-shared-p2", 1))
+	if layouts.has("solo_sw"):
+		layouts["solo_sw"].set_preset(SimInputData.preset("kb-solo-swapped", 0))
+		layouts["solo2_sw"].set_preset(SimInputData.preset("kb-solo-swapped", 1))
 	pads.clear()
 	touch.set_preset(touch_preset)
 

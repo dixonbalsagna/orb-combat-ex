@@ -23,7 +23,7 @@ const FACE = { X: 6, Y: 12, B: 24 };   // a face blow's commitment: the mash cap
 // The stick strike's commitment (ticks from its start until the fighter can start the next request), by pitch. These
 // are ASSUMPTIONS for Game Design to replace: 4a a quick own-class blow, 4b the heavy's wind-up (martial B is 28), 4c
 // an own-class blow that draws on the heavy's budget.
-const PITCHES = { "4a": 14, "4b": 28, "4c": 20 };
+const PITCHES = { "4a": 16, "4b": 28, "4c": 20 };   // 4a: Game Design's 12-tick wind-up plus 4 of recovery (rulings 2026-10-28); Orb picked 4a on 2026-10-30
 
 // Ticks from the start of one blow to the earliest start of the next, for a link.
 function interval(prev, commit, next, grip, law) {

@@ -32,9 +32,15 @@ static func data() -> Dictionary:
 ## The screen's rows in order: {kind, key, label, help, enabled, ...}. A section is a heading row then its items. `needs` is a feature
 ## flag; without it the row is listed but disabled. An id with no option in options.json is skipped.
 ## Options whose rows are listed only once their feature flag is on (features.json): the three-strength charge settings, and Reduce flashing until Legal approves its words.
-const HIDE_UNTIL := {"latch_charge": "three_strengths", "latch_charge_p2": "three_strengths", "charges_off": "three_strengths", "charges_off_p2": "three_strengths", "reduce_flashing": "reduce_flashing"}
+const HIDE_UNTIL := {"latch_charge": "three_strengths", "latch_charge_p2": "three_strengths", "charges_off": "three_strengths", "charges_off_p2": "three_strengths", "reduce_flashing": "reduce_flashing", "planet_map": "planet_map"}
+## The right-hand attacks' settings (Controls' hand_layout, D-pad mirror, strike style, brace style and the pad's second stick): listed only while Controls' switch is on (the feature "right_hand"). Each has a player-two row.
+const RIGHT_HAND := ["hand_layout", "dpad_mirror", "strike_style", "brace_style", "pad_right_stick"]
 ## Player two's hold-or-toggle rows (Controls' hold_style: guard, manoeuvre, charging, transform): listed only while two people play, like energy_style_p2.
 const HOLD_STYLE_P2 := ["guard_style_p2", "manoeuvre_style_p2", "charge_style_p2", "transform_style_p2"]
+
+
+static func _right_hand_key(key: String) -> bool:
+	return RIGHT_HAND.has(key) or (key.ends_with("_p2") and RIGHT_HAND.has(key.trim_suffix("_p2")))
 
 
 static func rows() -> Array:
@@ -54,8 +60,10 @@ static func rows() -> Array:
 				continue
 			var key: String = str(it)
 			var o: Dictionary = od.get(key, {})
-			if o.is_empty() or ((key == "pad_preset_p2" or key == "energy_style_p2" or key == "latch_charge_p2" or key == "charges_off_p2" or HOLD_STYLE_P2.has(key)) and not two_humans):
+			if o.is_empty() or ((key == "pad_preset_p2" or key == "energy_style_p2" or key == "latch_charge_p2" or key == "charges_off_p2" or HOLD_STYLE_P2.has(key) or (key.ends_with("_p2") and _right_hand_key(key))) and not two_humans):
 				continue
+			if _right_hand_key(key) and not UiData.feature("right_hand"):
+				continue   # the right-hand attacks are off: no row for them
 			if HIDE_UNTIL.has(key) and not UiData.feature(str(HIDE_UNTIL[key])):
 				continue   # a row for something that is not live yet is not listed
 			if key == "reduce_flashing" and UiData.rf_locked():

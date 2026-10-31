@@ -15,6 +15,16 @@
       "items": [
         "pad_preset",
         "pad_preset_p2",
+        "hand_layout",
+        "hand_layout_p2",
+        "pad_right_stick",
+        "pad_right_stick_p2",
+        "dpad_mirror",
+        "dpad_mirror_p2",
+        "strike_style",
+        "strike_style_p2",
+        "brace_style",
+        "brace_style_p2",
         "touch_preset",
         "left_handed",
         "hotseat_alt_layout",
@@ -74,6 +84,7 @@
         "info_flashes",
         "brink_cue",
         "silhouette",
+        "planet_map",
         "region_label"
       ]
     },
@@ -174,6 +185,40 @@
       "arena": "[Åŕéñá]",
       "simple-pad": "[Šímpĺé]"
     },
+    "hand_layout": {
+      "standard": "[Šţááñďáŕď]",
+      "swapped": "[Šŵááppéď]"
+    },
+    "hand_layout_p2": {
+      "standard": "[Šţááñďáŕď]",
+      "swapped": "[Šŵááppéď]"
+    },
+    "dpad_mirror": {
+      "auto": "[Åüţö]",
+      "on": "[Öñ]",
+      "off": "[Öff]"
+    },
+    "dpad_mirror_p2": {
+      "auto": "[Åüţö]",
+      "on": "[Öñ]",
+      "off": "[Öff]"
+    },
+    "strike_style": {
+      "hold": "[Ĥöĺď]",
+      "toggle": "[Ţöĝĝĺé]"
+    },
+    "strike_style_p2": {
+      "hold": "[Ĥöĺď]",
+      "toggle": "[Ţöĝĝĺé]"
+    },
+    "brace_style": {
+      "flick": "[Fĺíçķ]",
+      "press": "[Büüţţöñ ööñĺý]"
+    },
+    "brace_style_p2": {
+      "flick": "[Fĺíçķ]",
+      "press": "[Büüţţöñ ööñĺý]"
+    },
     "touch_preset": {
       "touch-simple": "[Šímpĺé]",
       "touch-full": "[Füĺĺ]"
@@ -262,7 +307,8 @@
       "simple-pad": "[Šíímpĺéé (çööñţŕööĺĺééŕ) ]",
       "kb-solo": "[Ķééýböáŕď]",
       "kb-shared-p1": "[Ķééýýbööáŕď, pĺááýýéŕ 1]",
-      "kb-shared-p2": "[Ķééýýbööáŕď, pĺááýýéŕ 2]"
+      "kb-shared-p2": "[Ķééýýbööáŕď, pĺááýýéŕ 2]",
+      "kb-solo-swapped": "[Ķééýýbööááŕď, šŵááppéď]"
     },
     "actions": {
       "move": "Fly",

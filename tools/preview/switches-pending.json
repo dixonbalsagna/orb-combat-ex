@@ -1,0 +1,8 @@
+{
+  "_about": "Switches that are not in the tree YET (the EP, 2026-10-31, Orb's night order). A row with no `file` is a name waiting for its key: tools/preview/preview.mjs lists it as WAITING in --list, --check and every build, and never counts it as passed. When its owner lands the key, add `file`, `path` (an array of keys), `from` and `to` (the value without and with it) and optionally `needs` (ids) and `what`; the row then behaves as a switch: on by default, `--off <id>`, checked by --check (a key that holds neither value is an error), and read back by the smoke check only if you also give it a `probe` line (see the table in switches.mjs). A row whose file is in the tree but whose key is not stays waiting. Nothing here is a guess about a key: no file, no flip.",
+  "rows": [
+    { "id": "gen3", "owner": "World", "what": "planet generation 3 (named by the EP, 2026-10-31); the key lands with World's code" },
+    { "id": "tiles", "owner": "Rendering", "what": "the ground tiles (named by the EP, 2026-10-31); the key lands with Rendering's code" },
+    { "id": "swing", "owner": "World, Rendering", "what": "the swing (named by the EP, 2026-10-31); the key lands with its code" }
+  ]
+}

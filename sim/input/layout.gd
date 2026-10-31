@@ -44,6 +44,11 @@ extends RefCounted
 ##    layout feeds its own press and release to the same code a held button reaches, at the tick of each press, so the intent is the held one
 ##    (the sim reads no new input). Transform's toggle starts the half-second count on one press and sends when it is up; a second press before
 ##    that cancels it (and does nothing else);
+##  - the RIGHT-HAND ATTACKS (switches.rightStick, off; docs/controls/right-hand-attacks.md): a preset that carries a `strike` binding (the pad's right
+##    stick, the keyboard's arrow keys, a strike key, a D-pad mirror) gets the strike reader (SimStrikeRead), the no-claw law (SimStrikeLaw) and the
+##    left hand's brace and vanish (SimLeftHand), all in the intent's second word. The stance mask this build is the strike's layer; the guard or the
+##    dodge press cancels a charge; the face buttons are inert while the stick is out; LB and LT together are the vanish (an `escape` edge). All of it is
+##    written on ACTIONS, so it is the same for a swapped pad (SimSwap) and for every device;
 ##  - the slow buttons (Y, B, A) have two accessibility settings, layout only: a LATCHED CHARGE (a press starts the wind-up and its level
 ##    stays on; the next press of that button lets it go and sends no edge) and CHARGES OFF (the slow buttons report held only on the
 ##    press tick, so every press is a tap). Neither applies to the Simple layouts, whose holds are weights.
@@ -94,6 +99,30 @@ var _stance_on: int = 0             # the stance bits that were on at the last b
 var _stance_press_t: Dictionary = {}   # stance bit -> tick of its press (a tap arms a one-shot)
 var _armed: Dictionary = {}         # stance bit -> tick it was armed (the one-shot)
 var _last_mask: int = 0
+## The right-hand attacks (switches.rightStick, off). `rs_on` is true only for a preset that carries a strike control while the switch is on.
+var rs_on: bool = false
+var swapped: bool = false           # the left-handed swap (SimSwap): the preset was mirrored; the law takes the swapped side's lockouts
+var strike_style: String = "hold"   # "hold" or "toggle" (accessibility): a push starts the charge, the NEXT push throws it
+var mirror_dpad: bool = false       # the D-pad mirror of the strike stick (a setting; the hub turns it on for a pad with no right stick)
+var _strike: SimStrikeRead
+var _law: SimStrikeLaw
+var _left: SimLeftHand
+var _strike_control: String = ""    # the pad's strike stick
+var _strike_keys: Array = []        # four controls, up left down right: the keyboard's arrow keys
+var _mirror_keys: Array = []        # four controls, up left down right: the pad's D-pad mirror
+var _strike_key: String = ""        # one control: strike toward the direction held on the movement keys or the left stick (the shared keyboard; a pad's L3 if the player binds it)
+var _brace_key: String = ""         # one control: a brace read in the direction held at the press (timing-free; Accessibility's rule 5)
+var brace_flick: bool = true        # the flick read of the brace (assist brace_style "press" turns it off, leaving the button)
+var _brace_t0: int = -1000          # tick of the brace button's press, while its direction is still being taken
+var _brace_was: bool = false
+var _brace_peak: Vector2 = Vector2.ZERO
+var _brace_pending: bool = false    # a brace read (from the flick or the button) waits for a step to take it
+var _rs: Vector2 = Vector2.ZERO     # the pad's strike stick, x right and y up
+var in_struggle: bool = false       # the host says this slot's fighter is in a struggle (a beam clash, a finisher): the stick does nothing and the faces are free
+var _inert_masks: Array = []        # the stance masks on which the strike stick does nothing (pure 4a: the power layer, and the lay), from data
+var _brace_dir: int = 0             # a brace read waiting for a step to take it
+var _vanish_pending: bool = false   # the vanish resolved and waits for a step to take it
+var _vanish_vec: Vector2 = Vector2.ZERO
 ## One-shot (accessibility, and touch Full by default): a TAP on a stance button arms that stance for the next blow, which clears it
 ## (or oneshot_ticks without one); a hold is momentary as usual; a tap on an armed button cancels it.
 var stance_oneshot: bool = false
@@ -171,6 +200,12 @@ func set_preset(p: Dictionary) -> void:
 	_hold_attack.clear()
 	_transform_single.clear()
 	_tog_action.clear()
+	_strike_control = ""
+	_strike_keys = []
+	_mirror_keys = []
+	_strike_key = ""
+	_brace_key = ""
+	swapped = str(p.get("hand", "standard")) == "swapped"   # a swapped preset takes the swapped thumb's lockouts (SimSwap, strike.swapLockout)
 	var own: Dictionary = {}   # control -> the actions it carries (any layer, any gesture)
 	for b in p.get("bindings", []):
 		if b["controls"].size() == 1:
@@ -197,6 +232,21 @@ func set_preset(p: Dictionary) -> void:
 			continue
 		if action == "pause" or action == "hints":
 			continue   # the host's, not the sim's
+		if action == "strike":
+			if b.has("axis") and controls.size() == 4:
+				_strike_keys = controls.duplicate()
+			elif controls.size() == 1:
+				_strike_control = str(controls[0])
+			continue
+		if action == "strike_mirror":
+			_mirror_keys = controls.duplicate()
+			continue
+		if action == "strike_key":
+			_strike_key = str(controls[0])
+			continue
+		if action == "brace_key":
+			_brace_key = str(controls[0])
+			continue
 		if controls.size() > 1:
 			_chords.append({"controls": controls.duplicate(), "action": action, "active": false, "since": 0, "sent": false, "latch": false})
 			continue
@@ -208,11 +258,14 @@ func set_preset(p: Dictionary) -> void:
 			_hold_attack[c] = true
 		if action == "transform" and layer == null:
 			_transform_single[c] = true
+	_build_right_hand()
 
 
 ## Whether a control is bound in this preset (the hub uses it to see which device is talking).
 func has_control(c: String) -> bool:
 	if _single.has(c) or c == _stick_control or _keys_move.has(c):
+		return true
+	if rs_on and (c == _strike_control or c == _strike_key or c == _brace_key or _strike_keys.has(c) or _mirror_keys.has(c)):
 		return true
 	for ch in _chords:
 		if ch["controls"].has(c):
@@ -229,6 +282,7 @@ func release_all() -> void:
 	_aedge.clear()
 	_special_edge = 0
 	_stick = Vector2.ZERO
+	_rs = Vector2.ZERO
 	_analog_down.clear()
 	_power_voided = false
 	_chorded.clear()
@@ -257,6 +311,7 @@ func release_all() -> void:
 	_mode_latch = 0
 	if not _auto_mode:
 		_mode = 0
+	_right_hand_reset()
 	for ch in _chords:
 		ch["active"] = false
 		ch["sent"] = false
@@ -507,6 +562,8 @@ func analog(c: String, v: float) -> void:
 func axis(c: String, x: float, y: float) -> void:
 	if c == _stick_control:
 		_stick = Vector2(x, y)
+	elif rs_on and c == _strike_control:
+		_rs = Vector2(x, y)
 
 
 func _layer_press(action: String, c: String) -> void:
@@ -871,6 +928,8 @@ func build() -> SimIntent:
 	i.stanceMask = SimStance.air_brake_mask(mask, sent, _auto_mode)   # a Simple slot's Guard held while sent is the brake's bit (switch, off)
 	if not _auto_mode:
 		i.mode = 1 if ((mode_on or _armed.has(SimStance.ENERGY)) and (mask & SimStance.ENERGY) != 0) else 0   # an armed one-shot energy stance makes the next blow energy
+	if rs_on:
+		_right_hand(i, mask)
 	if not _armed.is_empty() and (i.light or i.heavy or i.sig or i.context or i.special != 0):
 		_armed.clear()
 	_last_mask = mask
@@ -884,6 +943,178 @@ func build() -> SimIntent:
 	i.charge = channel
 	i.stance = -1.0
 	return i
+
+
+## Make the readers the preset asks for. The right-hand attacks need the switch AND a strike control in the preset (a Simple preset has none, so Simple
+## keeps its own grammar). Called by set_preset.
+func _build_right_hand() -> void:
+	rs_on = SimInputData.right_stick_on() and (_strike_control != "" or not _strike_keys.is_empty() or _strike_key != "" or _brace_key != "")
+	if rs_on:
+		_strike = SimStrikeRead.new()
+		_strike.toggle = (strike_style == "toggle")
+		_law = SimStrikeLaw.new(swapped)
+		_left = SimLeftHand.new()
+		_inert_masks = []
+		for m in SimInputData.t(["strike", "inertMasks"], [SimStance.HYBRID_WARD, SimStance.CHARGING]):
+			_inert_masks.append(int(m))
+	else:
+		_strike = null
+		_law = null
+		_left = null
+	_brace_dir = 0
+	_brace_pending = false
+	_vanish_pending = false
+	brace_flick = true
+
+
+## The left-handed swap (SimSwap) was turned on or off for this pad: the law takes that side's lockouts. The preset itself is swapped by the hub.
+func set_swapped(on: bool) -> void:
+	if on == swapped:
+		return
+	swapped = on
+	if rs_on:
+		_law = SimStrikeLaw.new(swapped)
+
+
+func set_strike_style(style: String) -> void:
+	if style == strike_style:
+		return
+	strike_style = style
+	if _strike != null:
+		_strike.toggle = (style == "toggle")
+
+
+func set_mirror_dpad(on: bool) -> void:
+	mirror_dpad = on
+
+
+## The brace's assist (hub `set_brace_style`): "flick" (the default) reads a flick from rest with LB down, "press" turns that read off and leaves the brace
+## BUTTON (timing-free: the direction is the one held at the press). A tremor thumb then never sets a read by accident.
+func set_brace_flick(on: bool) -> void:
+	brace_flick = on
+	if _left != null:
+		_left.flick_on = on
+
+
+## The host's word each tick that this slot's fighter is in a struggle (a beam clash, the finisher's contest). GD's ruling: in a struggle the stick does
+## nothing (the surges are face presses on a pulse, and a sweep alongside them would pair the stick and a button in one beat). The layout makes it so:
+## a started strike is cancelled, the stick is ignored until it rests, and the faces are free at once (no wait, no queue). Only a preset with a strike control reads it.
+func set_struggle(on: bool) -> void:
+	in_struggle = on
+
+
+func _right_hand_reset() -> void:
+	_rs = Vector2.ZERO
+	in_struggle = false
+	_brace_pending = false
+	_brace_t0 = -1000
+	_brace_was = false
+	_brace_dir = 0
+	_vanish_pending = false
+	if _strike != null:
+		_strike.reset()
+	if _law != null:
+		_law.reset()
+	if _left != null:
+		_left.reset()
+
+
+## The brace BUTTON (timing-free): pressed, it takes the direction held on the left stick or the movement keys over `settle` ticks (the strongest push in the window)
+## and sets the read then; with no direction held it sets the read with direction 0 (the director picks). No LB, no flick speed, no second press.
+func _brace_button(lv: Vector2, tick: int) -> void:
+	if _brace_key == "":
+		return
+	var d: bool = _down.get(_brace_key, false)
+	if d and not _brace_was:
+		_brace_t0 = tick
+		_brace_peak = lv
+	_brace_was = d
+	if _brace_t0 < 0:
+		return
+	if lv.length() > _brace_peak.length():
+		_brace_peak = lv
+	if tick >= _brace_t0 + _left.settle:
+		_brace_pending = true
+		_brace_dir = SimStrikeRead.quadrant(_brace_peak.x, _brace_peak.y) if _brace_peak.length() >= _left.off_at else 0
+		_brace_t0 = -1000
+
+
+## A digital direction from four controls (up, left, down, right) as held.
+func _dir_of(keys: Array) -> Vector2:
+	if keys.size() != 4:
+		return Vector2.ZERO
+	return Vector2((1.0 if _down.get(keys[3], false) else 0.0) - (1.0 if _down.get(keys[1], false) else 0.0), (1.0 if _down.get(keys[0], false) else 0.0) - (1.0 if _down.get(keys[2], false) else 0.0))
+
+
+## The strike stick this build: a vector (x right, y up) and whether a strike KEY is down (a press with no push). The pad's stick wins; then the D-pad
+## mirror (when it is on), the arrow keys, and the strike key with the movement keys it is held with.
+func _strike_vector() -> Array:
+	var v: Vector2 = Vector2.ZERO
+	var pressed: bool = false
+	if _strike_control != "":
+		v = _rs
+	if _strike.deflection(v.x, v.y) <= 0.0 and mirror_dpad and not _mirror_keys.is_empty():
+		v = _dir_of(_mirror_keys)
+	if _strike.deflection(v.x, v.y) <= 0.0 and not _strike_keys.is_empty():
+		v = _dir_of(_strike_keys)
+	if _strike_key != "" and _down.get(_strike_key, false):
+		pressed = true
+		if _keys_move.size() == 4:
+			v = _dir_of(_keys_move)
+		elif _stick_control != "":
+			v = _stick   # a pad: the strike button takes its direction from the left stick (Accessibility's one-stick form)
+	return [v, pressed]
+
+
+## The right hand and the left hand's upgrades for one build (switches.rightStick). The order matters, and is the law: the left hand's guard or dodge
+## cancels a charge first; the faces are filtered by what the strike was BEFORE this build's step (so a face press on the crossing tick wins, K1); then
+## the strike steps with the law's floor (R after a face press) and the layer is this build's stance mask (K6).
+func _right_hand(i: SimIntent, mask: int) -> void:
+	var digital: bool = (_stick_control == "")
+	var lv: Vector2 = Vector2(i.mx, i.my) if digital else _stick
+	if in_struggle:
+		if _strike.phase == SimStrikeRead.ACTIVE:
+			_strike.cancel_now(tick)
+		if _strike.phase == SimStrikeRead.SPENT or _strike.phase == SimStrikeRead.CROSSED:
+			_strike.phase = SimStrikeRead.IGNORED if _strike.down else SimStrikeRead.IDLE
+		_law.free_faces()
+	if _aedge.has("guardPress") or _aedge.has("dodge"):
+		if _strike.cancel_now(tick):
+			_law.note_stick_end(tick)
+	_left.step(lv.x, lv.y, digital, _is_down("guard"), _is_down("dodge"), _aedge.has("guardPress"), _aedge.has("dodge"), tick)
+	if _left.brace:
+		_brace_pending = true
+		_brace_dir = _left.brace_dir
+	_brace_button(lv, tick)
+	if _left.vanish:
+		_vanish_pending = true
+		_vanish_vec = _left.vanish_vec
+	var busy: bool = _strike.phase == SimStrikeRead.ACTIVE or (_strike.phase == SimStrikeRead.SPENT and _strike.down)
+	_law.filter(i, tick, busy)
+	var was_down: bool = _strike.down
+	var sv: Array = _strike_vector()
+	_strike.step(sv[0].x, sv[0].y, mask, tick, live, _law.floor_tick(), sv[1], in_struggle or _inert_masks.has(mask))
+	if was_down and not _strike.down:
+		_law.note_stick_end(tick)   # the thumb left the stick: the faces are free L later (a throw, a cancel or a toggled charge's rest alike)
+	if _strike.is_active():
+		_law.strip_levels(i)   # nothing about a charge is changed by a face button, from the tick it starts
+	if _strike.is_active() or _strike.has_edges():
+		i.rsHeld = _strike.is_active()
+		i.rsStart = _strike.start
+		i.rsRelease = _strike.release
+		i.rsCancel = _strike.cancel
+		i.rsDir = _strike.dir
+		i.rsLevel = _strike.level
+		i.rsMask = _strike.layer
+		i.rsAim = _strike.aim
+		i.rsLag = _strike.pending_lag(tick)
+	if _brace_pending:
+		i.brace = true
+		i.braceDir = _brace_dir
+	if _vanish_pending:
+		i.escape = true
+		i.mx = signf(_vanish_vec.x) if digital else _axis_value(_vanish_vec.x)
+		i.my = signf(_vanish_vec.y) if digital else _axis_value(_vanish_vec.y)
 
 
 ## The transform's hold progress, 0 to 1: the chord counted from when both triggers went down, or a single transform
@@ -903,6 +1134,12 @@ func transform_hold() -> float:
 ## ends) so a pile of presses is not released at once.
 func drop_edges() -> void:
 	_clear_edges()
+	if rs_on:
+		_law.reset()
+		if _strike.phase != SimStrikeRead.IDLE:
+			_strike.reset()
+			_strike.down = true
+			_strike.phase = SimStrikeRead.SPENT   # a stick still out after a pause fires nothing: it must rest first
 
 
 ## The pause ended: edges are dropped and every hold is read again as if it began now, so a sprint, a channel or the
@@ -931,6 +1168,11 @@ func consumed() -> void:
 
 ## The edges are spent (a step took them, or a pause dropped them). Only a step that was taken advances `live`.
 func _clear_edges() -> void:
+	_brace_dir = 0
+	_brace_pending = false
+	_vanish_pending = false
+	if _strike != null:
+		_strike.clear_edges()
 	_wound.clear()
 	_aedge.clear()
 	_special_edge = 0

@@ -311966,6 +311966,426 @@
         "rule": "type",
         "pointer": "/weights"
       }
+    },
+    {
+      "id": "input-timing-right-stick-not-boolean",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/switches/rightStick": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/switches/rightStick"
+      }
+    },
+    {
+      "id": "input-timing-strike-deadzone-too-wide",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/strike/deadzone": 0.95
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMaximum",
+        "pointer": "/strike/deadzone"
+      }
+    },
+    {
+      "id": "input-timing-strike-unknown-key",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/strike/turbo": true
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/strike/turbo"
+      }
+    },
+    {
+      "id": "input-timing-strike-level-zero",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/strike/levels/0": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/strike/levels/0"
+      }
+    },
+    {
+      "id": "input-timing-strike-style-unknown",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/strike/style": "tap"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/strike/style"
+      }
+    },
+    {
+      "id": "input-timing-left-hand-brace-style-unknown",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/leftHand/braceStyle": "kick"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/leftHand/braceStyle"
+      }
+    },
+    {
+      "id": "input-timing-left-hand-unknown-key",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/leftHand/dash": 3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/leftHand/dash"
+      }
+    },
+    {
+      "id": "input-timing-strike-off-above-on",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/strike/off": 0.7
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:timing-strike-order",
+        "pointer": "/strike/off"
+      }
+    },
+    {
+      "id": "input-timing-strike-levels-fall",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/strike/levels": [
+              30,
+              12,
+              50
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:timing-strike-levels",
+        "pointer": "/strike/levels"
+      }
+    },
+    {
+      "id": "input-timing-strike-beam-levels-equal",
+      "schema": "input-timing.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/timing.json",
+          "set": {
+            "/strike/beamLevels": [
+              12,
+              30,
+              30
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:timing-strike-levels",
+        "pointer": "/strike/beamLevels"
+      }
+    },
+    {
+      "id": "input-layouts-hand-unknown",
+      "schema": "input-layouts.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/layouts.json",
+          "set": {
+            "/presets/2/hand": "left"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/presets/2/hand"
+      }
+    },
+    {
+      "id": "input-layouts-strike-action-pattern",
+      "schema": "input-layouts.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/layouts.json",
+          "set": {
+            "/presets/2/strikeBindings/0/action": "Strike!"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/presets/2/strikeBindings/0/action"
+      }
+    },
+    {
+      "id": "input-layouts-strike-axis-short",
+      "schema": "input-layouts.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/layouts.json",
+          "set": {
+            "/presets/2/strikeBindings/0/axis": [
+              "up",
+              "left",
+              "down"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/presets/2/strikeBindings/0/axis"
+      }
+    },
+    {
+      "id": "input-layouts-strike-controls-empty",
+      "schema": "input-layouts.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/layouts.json",
+          "set": {
+            "/presets/2/strikeBindings/1/controls": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/presets/2/strikeBindings/1/controls"
+      }
+    },
+    {
+      "id": "input-layouts-strike-action-unknown",
+      "schema": "input-layouts.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/layouts.json",
+          "set": {
+            "/presets/2/strikeBindings/1/action": "brace_wild"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:layout-strike-action",
+        "pointer": "/presets/2/strikeBindings/1/action"
+      }
+    },
+    {
+      "id": "input-layouts-strike-action-twice",
+      "schema": "input-layouts.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/layouts.json",
+          "set": {
+            "/presets/2/strikeBindings/1/action": "strike"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:layout-strike-action",
+        "pointer": "/presets/2/strikeBindings/1/action"
+      }
+    },
+    {
+      "id": "input-layouts-strike-shape",
+      "schema": "input-layouts.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/layouts.json",
+          "set": {
+            "/presets/2/strikeBindings/0/controls": [
+              "kb:ArrowUp",
+              "kb:ArrowLeft"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:layout-strike-shape",
+        "pointer": "/presets/2/strikeBindings/0"
+      }
+    },
+    {
+      "id": "input-layouts-strike-control-already-bound",
+      "schema": "input-layouts.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/layouts.json",
+          "set": {
+            "/presets/2/strikeBindings/0/controls/0": "kb:Space"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:layout-strike-conflict",
+        "pointer": "/presets/2/strikeBindings/0/controls/0"
+      }
+    },
+    {
+      "id": "input-layouts-strike-control-wrong-device",
+      "schema": "input-layouts.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/layouts.json",
+          "set": {
+            "/presets/2/strikeBindings/1/controls/0": "pad:rs"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:layout-device",
+        "pointer": "/presets/2/strikeBindings/1/controls/0"
+      }
+    },
+    {
+      "id": "input-layouts-strike-control-reserved",
+      "schema": "input-layouts.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/layouts.json",
+          "set": {
+            "/presets/3/strikeBindings/0/controls/0": "kb:KeyP"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:layout-reserved",
+        "pointer": "/presets/3/strikeBindings/0/controls/0"
+      }
+    },
+    {
+      "id": "input-layouts-strike-pair-shares-key",
+      "schema": "input-layouts.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/layouts.json",
+          "set": {
+            "/presets/4/strikeBindings/0/controls/0": "kb:KeyB"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:layout-pair",
+        "pointer": "/presets/3/pair"
+      }
+    },
+    {
+      "id": "input-stances-right-stick-mask-unknown",
+      "schema": "input-stances.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/stances.json",
+          "set": {
+            "/withRightStick/0": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/withRightStick/0"
+      }
+    },
+    {
+      "id": "input-stances-right-stick-masks-repeat",
+      "schema": "input-stances.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/stances.json",
+          "set": {
+            "/withRightStick": [
+              9,
+              9
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "uniqueItems",
+        "pointer": "/withRightStick/1"
+      }
+    },
+    {
+      "id": "input-stances-right-stick-not-a-list",
+      "schema": "input-stances.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/stances.json",
+          "set": {
+            "/withRightStick": "3"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/withRightStick"
+      }
+    },
+    {
+      "id": "input-stances-right-stick-mask-already-a-hybrid",
+      "schema": "input-stances.schema.json",
+      "mutate": [
+        {
+          "file": "data/input/stances.json",
+          "set": {
+            "/hybrids": [
+              9
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:stances-right-stick",
+        "pointer": "/withRightStick/0"
+      }
     }
   ],
   "text": [

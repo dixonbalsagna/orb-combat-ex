@@ -108,5 +108,52 @@
     "exitWindow": 12,
     "nudgeStart": 0.4,
     "nudgeTicks": 12
+  },
+  "switches": {
+    "airBrakeGuard": false,
+    "grappleReads": false,
+    "rightStick": false
+  },
+  "strike": {
+    "_note": "Pitch 4a (Orb, 2026-10-30): directional-charge strikes on the right stick, their own class. Read only while switches.rightStick is on (docs/controls/right-hand-attacks.md). Every value is a first value; the ladder and the lockouts are Game Design's and the capture tool's to move.",
+    "deadzone": 0.25,
+    "quant": 16,
+    "on": 0.6,
+    "off": 0.35,
+    "settle": 2,
+    "dwell": 12,
+    "levels": [
+      12,
+      30,
+      50
+    ],
+    "beamLevels": [
+      12,
+      30,
+      54
+    ],
+    "lockout": 6,
+    "reverseLockout": 8,
+    "swapLockout": 6,
+    "swapReverseLockout": 8,
+    "queueDepth": 3,
+    "queueTicks": 36,
+    "style": "hold",
+    "mirror": "auto",
+    "freeR3": true,
+    "inertMasks": [
+      3,
+      4
+    ]
+  },
+  "leftHand": {
+    "_note": "The left hand's reads while switches.rightStick is on: LB and a left flick is a brace, LB and LT within vanishWindow ticks (either order) and a direction is the vanish (sends escape).",
+    "braceStyle": "flick",
+    "braceRest": 10,
+    "braceRise": 3,
+    "braceTap": 8,
+    "restLevel": 0.2,
+    "vanishWindow": 6,
+    "vanishSettle": 2
   }
 }
