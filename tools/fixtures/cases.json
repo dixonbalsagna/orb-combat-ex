@@ -311918,6 +311918,54 @@
         }
       ],
       "expect": null
+    },
+    {
+      "id": "anim-lead-in-bad-schema",
+      "schema": "anim-lead-in.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/lead_in.json",
+          "set": {
+            "/schema": "anim.lead_in/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-lead-in-extra-key",
+      "schema": "anim-lead-in.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/lead_in.json",
+          "set": {
+            "/stray": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/stray"
+      }
+    },
+    {
+      "id": "anim-lead-in-weights-not-array",
+      "schema": "anim-lead-in.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/lead_in.json",
+          "set": {
+            "/weights": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/weights"
+      }
     }
   ],
   "text": [

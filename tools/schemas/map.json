@@ -248,6 +248,10 @@
       "schema": "anim-reach.schema.json"
     },
     {
+      "match": "data/anim/lead_in.json",
+      "schema": "anim-lead-in.schema.json"
+    },
+    {
       "match": "data/anim/forms.json",
       "schema": "anim-forms.schema.json"
     },
