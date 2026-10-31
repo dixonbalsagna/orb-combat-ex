@@ -1,0 +1,73 @@
+extends SceneTree
+## SCRATCH (Research): the whole stack on one tree, through the real scene: an AI match on gen 3, a stand-in asking for a launch-sized swing every 300 ticks. Counts only, no timings.
+##   godot --headless --path <tree> --script res://tools/preview/swing_smoke.gd -- [--ticks=900] [--gen=3] [--no-ask]
+const DT: float = 1.0 / 60.0
+var ticks_wanted: int = 900
+var gen: int = 3
+var ask: bool = true
+var main
+
+
+func _init() -> void:
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--ticks="):
+			ticks_wanted = int(a.substr(8))
+		elif a.begins_with("--gen="):
+			gen = int(a.substr(6))
+		elif a == "--no-ask":
+			ask = false
+	var vpn := SubViewport.new()
+	vpn.size = Vector2i(320, 180)
+	root.add_child(vpn)
+	main = load("res://render/main.tscn").instantiate()
+	main.manual = true
+	vpn.add_child(main)
+	_run.call_deferred()
+
+
+func _run() -> void:
+	await process_frame
+	var sv := SplitView.new()
+	main.split_view = sv
+	main.add_child(sv)
+	main._sync_split_options()
+	sv.attach(main)
+	main._planet_next = {"planet": 7, "touch": 3, "planetGen": gen}
+	main.start_match(12345, {"p1": true, "p2": true}, null)
+	var host: SimHost = main.host
+	var frames: int = 0
+	var limit: int = ticks_wanted * 6 + 8000
+	var asked: int = 0
+	var refused: int = 0
+	var last: int = -1
+	var way: float = 1.0
+	var gap_max: float = 0.0
+	var gap_sum: float = 0.0
+	var gap_n: int = 0
+	while host.ticks < ticks_wanted and frames < limit:
+		main.frame(DT)
+		frames += 1
+		var S: SimState = host.S
+		if S == null or S.frame == null:
+			continue
+		if ask and host.ticks != last and host.ticks % 300 == 150:
+			if SimSwing.ask(S, {"deg": 30.0 * way, "cause": "launch"}):
+				asked += 1
+				way = -way
+			else:
+				refused += 1
+		if host.ticks != last and S.swing.n > 0:
+			# what the old renderer would get wrong: the sim's ground under a fighter against the strip it still draws
+			for f in S.fighters:
+				var i: int = posmod(int(f.x / SimConst.COL), SimConst.NC)
+				var g: float = absf(WorldTerrain.groundY(S, f.x, f.z) - S.base[i])
+				gap_max = maxf(gap_max, g)
+				gap_sum += g
+				gap_n += 1
+		last = host.ticks
+	var E: SimState = host.S
+	var ok: bool = host.ticks >= ticks_wanted
+	print("SWINGSMOKE %s gen=%d ticks=%d frames=%d frame=%s" % ["ok" if ok else "SHORT", gen, host.ticks, frames, str(E.frame != null)])
+	if E.frame != null:
+		print("SWINGSMOKE asked=%d refused=%d swings=%d clamps=%d feet-vs-drawn-strip mean=%.1f worst=%.1f hash=%s" % [asked, refused, E.swing.n, E.swing.clamps, gap_sum / maxf(1.0, float(gap_n)), gap_max, str(SimHash.stateHash(E))])
+	quit(0 if ok else 1)

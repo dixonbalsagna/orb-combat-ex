@@ -8,7 +8,7 @@ Research & Prototyping, for the EP. Revised 2026-10-31 for Orb's pick ("the turn
 
 - **Measured by others, in GDScript or on a GPU:** Simulation's and Performance's timings, and World's gen 2 errors. Each is credited where it's used.
 - **Counted by me in JS, on gen 1 ground:** reads, which don't depend on machine load. Milliseconds of mine are counts times World's cost of a read.
-- **Never run:** nothing here has swung in the real sim or on the target laptop's GPU, and no human has reported on v2.
+- **Run since this was written:** the real sim has swung, in scratch, with a stand-in asking (T6), and Orb has played v2. Nothing has run on the target laptop's GPU, and no human has played a swing in the game.
 
 # Part 1: the turntable
 
@@ -246,43 +246,97 @@ The view never turns faster than the swing's peak: a correction waits if the sim
 
 ## T6. The route
 
-Each stage ships behind a switch, with the golden byte-identical while it's off. **Shared** means the ribbon needs it too. **★ marks what must exist before Orb can see a swing with real ground.** Sizes are my rough guess.
+**Updated 2026-10-31 against the parks, on HEAD 5c2dd0de.** Stage numbers stay as they were, because other papers cite them.
 
-| # | Stage | Holds | Useful alone because | Owners | Shared? |
-| ---: | :--- | :--- | :--- | :--- | :--- |
-| **0** | **Measure.** ★ Rendering's scratch scene (running). A run on a machine of the old laptop's class, if one can be had. Orb's answers from v2, on the real gen 2 ground | | The cheapest test that can kill the route | Rendering, Performance, Orb | Partly |
-| **1** | ★ **Clear the ground.** Option A lands first. `hill_chapel` out and the bell tower renamed with the first swing data change (RL-214) | Game Design's and Encounter's first step | The plane is honest today | Encounter, Simulation, World | **Shared** |
-| **2** | **The far land reads a planet frame.** `FAR_MAP_ON`; horizon at `v/R` | | **The crossing feel, soon, with no swing.** It may carry much of what Orb wants | Rendering, World | **Shared** |
-| **3** | ★ **The field defines the ground (a new generation, behind a switch).** Simulation's option A: one canonical spacing as a data value, baked in 4 ms slices behind the intro, the menu and select, finished before tick 0 (`mayStart`), immutable and outside the state; its hash joins the match key; zero noise reads in play; the sim reads triangles of the same nodes. **Coast and ice-edge records** laid on the field; **lakes, platforms and sites planned on its heights; trees keyed by planet cell** (no re-rolls). Nothing noise-based in what the sim reads | Fill cost, trees, lakes' plan, coast records | Far readers and far land get right ground at any bearing. **Orb judges smoothing at the look gate here** | World, Simulation | Shared in part |
-| **4** | ★ **The new ground renderer** (Rendering's C), tiles, `world_place()`, foreground rule, softening | Rendering's section | Drops ring copies and their churn. A dig touches a few layers, not 460 KB | Rendering, Art | Turntable only |
-| **5** | ★ **The sim's read-through.** The frame in the state, `groundY` through it, poses and index near the fighters, the far-reader audit (69 lines), `frameAt(n)` | Encounter's `frameAt` | The sim stands on the turned ground | Simulation, Encounter | Turntable only |
-| **6** | ★ **`DirSwing`, launches only, over open ground** with craters only, using today's swap's frozen places out of its way | Game Design's smallest version | **Orb sees a real swing here.** Camera's clips, flash reading, Legal's first look | Encounter, Game Design, Camera, Netcode, Legal | Turntable only |
-| **7** | **Every mark a record** (the planet store): slides, beams, heaps, fills, flows; **broken props by planet point**, not by column | World's marks, Encounter's props | The world remembers across a swing, and across today's turn | World, Simulation | **Shared** |
-| **8** | **Water as planet records:** lakes as 2D basins, rivers as polylines with a planet gap rule | World's rivers and lakes | No blinking lakes or rivers | World | **Shared** |
-| **9** | **Towns by plan, then cities** (a city frozen on its chord holds only to about 10° of swing), with stable slots and street frames | World's cities | Swings go into places. Arrivals (Encounter's stage 5) | World, Simulation, Art, Encounter | **Shared** |
-| **10** | **Walls:** rest on a street, then the collision path (T4) | Game Design's §8 | Fights in places stay honest with the line tilted | World, Encounter, Combat, QA | Turntable only |
-| **11** | **More swings:** the small class first, at 60 (jolts, corrections, line-ups), then chases and form pauses, the slow brawl swing last if Orb wants it. Past 60 only on the flash reading | Game Design's plan and §10 | 10 to 15% of fight time, and the irregular path Orb enjoyed flying | Game Design, Performance, QA, Legal | Turntable only |
+**The parks fit. What stops Orb playing is three pieces nobody has parked yet: Encounter's stick hook, Encounter's `DirSwing`, and Rendering's tiles in the game.** Every posted park applies on one tree with no conflict, the tree imports clean, and a swing runs through the real game scene. The right hand is the shorter road and doesn't have to wait for the swing.
 
-**What Orb can see at stage 6, and what it lacks.** Open ground with real terrain, craters, and trees that stay put. Rivers and lakes are off or left out of a swing's path, and swings steer round places. So it's the swing and the crossing without the cities. Orb likes buildings most, so stage 9 is when it becomes the full picture. **World's point stands:** height was never the blocker. Rivers and lakes are at stage 8, and without them a swing over real water would blink.
+### What I ran
 
-**Why this order.**
+Tools' stack from a scratch copy, writing only to scratch, then by hand the three parks its list leaves out (`field-frame`, `proto4-word`, `proto5-swing`) on the same tree. One Godot at a time, below normal. Counts only, no timings. Two later commits, a1b8bfd8 and 8b7ccf49, change docs and tools only.
 
-- Stage 0's scene can kill the route for one window of work.
-- Stages 1 and 2 pay off whatever survives.
-- Stage 3 is where Orb judges the smoother ground, before anything rests on it.
-- Stages 4 and 5 are the big ones. Stage 4 has no byte-identical oracle, because true 2D relief changes the look on purpose; only the plane row can be held to the strip.
+| Run | Result |
+| :--- | :--- |
+| Stack: 17 ready parks | All apply, first conflict none. Validate 287 files, 0 errors, 0 warnings |
+| The same plus `field-frame`, `proto4-word`, `proto5-swing` | All apply, import 0 script errors |
+| AI match, gen 2, 900 ticks | Plays to the end, 0 script errors |
+| AI match, gen 3, whole ring, 900 ticks | Plays to the end, frame present, 0 script errors |
+| The same, 1,500 ticks, a stand-in asking 30° every 300 ticks (`research/ring-any-angle/swing_smoke.gd.txt`) | 5 asked, 5 run, 0 refused, 0 script errors |
+| `frame_check` | 118 checks, 0 failed |
+| `swing_check --right-stick` | 107 checks, **1 failed:** its own list of the swing's fields is out of date. It was tested on an earlier cut, and the guard caught that as Netcode said it would. A one-line fix, then re-run all of Netcode's gates |
 
-**The fallback.** If stage 0 or Orb's look gate fails, stages 1, 2, 7, 8 and 9 already serve the ribbon, and stage 3's bake can feed its far ring. The ribbon's streaming stage is the only new work from there.
+**What this doesn't show.** The AI doesn't press the right stick, and nothing reads the stick yet, so no strike ran. The stand-in asks between ticks; it isn't a director. None of this is a look: the renderer doesn't turn yet.
+
+**Feet against today's renderer, after the first swing: mean 225 units off the strip it draws, worst 546.** A fighter is about 75 tall. So there's no shortcut through today's renderer: a swing without tiles would be worse than no swing.
+
+### The stages now
+
+★ is on the road to Orb's first private swing.
+
+| # | Stage | Now | Owners |
+| ---: | :--- | :--- | :--- |
+| **0** | Measure | **Mostly answered.** Rendering's real frame: cost no worse than today on the Radeon, seams closed. A 360° at 60°/s is over the flash gate; small swings pass; **a launch-sized swing is unread.** Still no machine of the old laptop's class | Rendering, Performance |
+| **1** | Clear the ground | **Half done.** The plane's ease is on main (a90ab581). `hill_chapel` and the bell tower (RL-214) aren't, but that binds main going public, not a private build. **Off the road** | World, Encounter |
+| **2** | Far land reads a planet frame | **Not started,** `FAR_MAP_ON` false. **Off the road:** tiles draw the far land in a swing | Rendering, World |
+| **3** ★ | The field defines the ground | **Parked, `gen3-field`, gates still running.** Changed since this table was first written: one sim ground at 128 read on demand, the 512 bake only for forecasts (cb9fab67), and edges by refining creased cells at 32 units, not polylines. Nothing waits before tick 0 but the bake | World |
+| **5** ★ | The sim's read-through | **Parked, `field-frame`, gates still running.** Now before stage 4, because the tiles read `S.frame`. Worst tick 25 reads. **The swing tick is over budget** (Performance: 0.18 to 0.73 ms against 0.2); a benched fix for the building index brings it to 0.10 to 0.26. Limits it names: craters, trees and lakes stay at their strip column | Simulation |
+| **4** ★ | The new ground renderer | **Scratch only, no park.** `SwingDrive` turns the world on its own clock over two baked places. In the game it must follow `S.frame`, read the whole planet's field, and carry craters, cracks and real water. The body offset is decided (`rendering.md` section 8). **The largest piece left, and I can't size it** | Rendering |
+| **6** ★ | `DirSwing`, launches only | **Not started; nothing in the tree or the parks.** Everything round it is early: Camera's four parks, Netcode's two, Legal's record of the first readings, Accessibility's review | Encounter |
+| **7 to 11** | Marks, water, towns, walls, more swings | As they were, except that the crater half of stage 7 is now on the road (below) | As they were |
+| **R** ★ | **New: the right hand** (not in the first table) | **Input, words, settings and content parked; nothing throws a strike.** Nothing outside `sim/input` reads the second word | Controls, Simulation, UI, Combat, Tools, **Encounter** |
+
+### The shortest path
+
+**First deliverable: the right hand, on today's world.**
+
+1. **Land as one batch, in the stack's order:** Controls' right hand, `right-word`, Tools' checks, UI's settings, Combat's stick. They still owe `anim_check` in the land gate and `l10n/pseudo.mjs --write`.
+2. **Encounter's stick hook.** The smallest useful version is the martial lane: quick and charged in four directions, the stun, and level 3 making the next B a full launch. Combat's README gives the call and the table. It needs Tools' strike data file and schema (rulings §7), which no park holds. Guard, travel and beam lanes and the AI's use come after.
+3. **Orb plays it** with `preview.mjs --open`.
+
+**Second deliverable: the swing, added to that build.** Steps 4 to 6 can start today against a scratch stack (the recipe above) rather than waiting for steps 1 to 3 to land.
+
+4. **Land `gen3-field`, then `field-frame`,** when their gates finish, with Performance's index fix, and with a reversal eased through zero rather than flipped on one tick (Netcode's finding, which is also a visible snap offline).
+5. **World routes craters into the store.** `WorldStore.add` has no caller outside tools, so today a crater slides with the line during a swing.
+6. **Rendering's tiles behind a key, and Encounter's `DirSwing` at `launchBeat`,** side by side. **My recommendation for the first cut of the tiles: draw from the 512 bake.** It's already in memory after load and costs no extra reads, and Orb has said "the coarse mode looked fine". It will look like the Performance level, not like the page Orb liked best, so 128 near the fighters comes straight after. Rendering's call.
+7. **Camera's four parks** land any time, since they're off with no caller. Then the three wiring items below, and check one sign: Camera assumes `S.swing.left` turns as `CamPlaces.turned` does.
+8. **Orb plays it.** Private build only: Legal requires a swing to pass the clips before any public pin.
+
+**The two roads meet in one place, so no extra hook is needed.** A stick strike never sends (rulings §2); only B does, through `launchBeat`, where `DirSwing` asks. So a stick stun, then B, then a swing is the path Orb would play. Level 3's set-up is the only rule joining them.
+
+**Off this path:** Netcode's `PROTO` 4 and 5 (offline play doesn't need them; they land off), Accessibility's motion setting (before it ships, not before Orb), stages 1, 2, 7 to 11, and the flash reading at launch size, which comes with step 8.
+
+### Stages nobody owns
+
+1. **The switch nobody flips.** `SplitView.set_swing_view` and `set_peak_launch` have no caller anywhere. It's a line or two in Rendering's `main.gd` for Camera's switches, and no one has been asked.
+2. **The keys that let Orb in.** The preview's `swing` row names World and Rendering, but the switch belongs to `DirSwing`, which has no key. `gen3` has no key either: a planet is gen 3 only by `setup.planetGen`, and `climate.json`'s schema refuses `gen: 3`, so the preview needs a page word or a schema change. Tools' by path, but it depends on three other owners' choices.
+3. **The stack can't see the swing.** `stack.json` omits `field-frame`, `proto4-word` and `proto5-swing`. It never runs an apply script, and `field-frame` ships as one. Its smoke match is gen 2 with no swing. So its "no conflict" says nothing about the arena until Tools and Simulation agree a form; a patch cut from `install.py`, and a gen 3 smoke, would do it.
+4. **Crater routing (step 5) has an owner by path but no order.** Simulation's README names it World's; World's lists it nowhere.
+
+**Not unowned, though the parks say it is:** Simulation's README asks who reads the second word. Game Design's rulings §7 already say Encounter.
+
+### What Orb sees at step 8, and what it lacks
+
+Real ground turning under a real fight, with the right hand, craters and buildings that stay put. Not there yet: trees and lakes stay at their strip column (stages 8, 9), a city holds to about 10° of swing (stage 9), and only launches swing. Orb likes buildings most, so stage 9 is still when it becomes the full picture.
+
+### Risks in this path
+
+- **Encounter holds two of the three missing pieces,** and the stack also lists its beam-struggle golden. It's the bottleneck.
+- **Nobody has run tiles, the frame and `DirSwing` together.** The stack proves they load, not that they agree. Camera's sign is the one known unknown.
+- **A whole ring only.** A Half ring can't swing (Simulation's decision 1), so any mode that names an arena plays without one.
+- **`field-frame` re-cuts itself by rule,** so a newer tree can change it without a conflict showing. Its gates have to run on the cut that lands.
+
+### The fallback
+
+If Orb's look gate fails, stages 1, 2, 7, 8 and 9 already serve the ribbon, and the 512 bake can feed its far ring. The ribbon's streaming stage is the only new work from there. The right hand doesn't depend on either route.
 
 ## T7. What's still open
 
 | From | What | Why |
 | :--- | :--- | :--- |
 | **Orb** | The swing as pictured; jolts, slow swings or neither up close; what reads as crossing; and whether real gen 2 at 512 units is enough | Each decides cost |
-| **Rendering** | The scratch scene, running now | It's the go or no-go |
+| **Rendering** | The tiles in the game, on the sim's frame (T6) | The largest piece left. The scratch scene's go or no-go came back: cost fine, flash open |
 | **Performance** | One run on an old-laptop-class machine, or a GPU-limited emulation; the project has neither | The p95 figure is an estimate from the parts |
 | **World** | A height-only read's cost; L3's state with depth off; 2D error (11.1 is along the ring, a floor) | 256's fit and T4's cost |
-| **Simulation** | A read-through actually run, with a swing | 0.1 to 0.15 ms is a sum, not a run |
+| **Simulation** | Gates on the cut of `field-frame` that lands | It has run with swings; Performance's bench puts the tick over budget until the index fix |
 | **Combat, Game Design** | The plough or over-the-top rule | T4 |
 
 **Risks I can name:**
