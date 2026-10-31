@@ -1216,6 +1216,40 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor, root }) {
     }
   }
 
+  // ---- combat enders: the fighters, the strikes and the steps they name exist
+  {
+    const en = get('data/combat/enders.json');
+    const rc = get('data/combat/recipes.json');
+    if (isObj(en) && isObj(en.fighters) && isObj(rc) && isObj(rc.pools)) {
+      const EN = 'data/combat/enders.json';
+      const hasLower = isObj(rc.launcher) && isObj(rc.launcher.bySendLower);
+      const lower = hasLower ? rc.launcher.bySendLower : {};
+      const stepNames = isObj(en.steps) ? Object.keys(en.steps) : [];
+      if (isObj(en.rechamber) && typeof en.rechamber.fromStep === 'number' && stepNames.length && !stepNames.includes(String(en.rechamber.fromStep))) err(EN, '/rechamber/fromStep', 'enders-step', `rechamber.fromStep ${en.rechamber.fromStep} is not a step of steps (${stepNames.join(', ')})`);
+      for (const [fk, fv] of Object.entries(en.fighters)) {
+        if (fk.startsWith('_') || !isObj(fv)) continue;
+        const pool = rc.pools[fk];
+        if (!isObj(pool)) { err(EN, `/fighters/${esc(fk)}`, 'enders-fighter', `"${fk}" is not a pool of data/combat/recipes.json (${Object.keys(rc.pools).join(', ')})`); continue; }
+        const launcher = new Set((Array.isArray(pool['brawl.launcher']) ? pool['brawl.launcher'] : []).map((p) => p && p.id));
+        const low = isObj(lower[fk]) ? lower[fk] : {};
+        if (isObj(fv.enders)) for (const [cell, sends] of Object.entries(fv.enders)) {
+          if (!isObj(sends)) continue;
+          for (const [send, arr] of Object.entries(sends)) {
+            if (!Array.isArray(arr)) continue;
+            arr.forEach((it, i) => {
+              if (!isObj(it) || typeof it.strike !== 'string' || typeof it.step !== 'number') return;
+              const at = `/fighters/${esc(fk)}/enders/${esc(cell)}/${send}/${i}`;
+              if (it.step <= 4 && launcher.size && !launcher.has(it.strike)) err(EN, `${at}/strike`, 'enders-strike', `step ${it.step} strike "${it.strike}" is not a piece of ${fk}'s brawl.launcher pool`);
+              if (it.step === 5 && hasLower && !(Array.isArray(low[send]) && low[send].includes(it.strike))) err(EN, `${at}/strike`, 'enders-strike', `step 5 strike "${it.strike}" is not one of ${fk}'s launcher.bySendLower pieces for the send "${send}"`);
+              if (stepNames.length && !stepNames.includes(String(it.step))) err(EN, `${at}/step`, 'enders-step', `step ${it.step} is not a step of steps (${stepNames.join(', ')})`);
+            });
+          }
+        }
+        if (isObj(fv.launchPieces)) for (const pk of Object.keys(fv.launchPieces)) if (!pk.startsWith('_') && launcher.size && hasLower && !launcher.has(pk) && !Object.values(low).some((a) => Array.isArray(a) && a.includes(pk))) err(EN, `/fighters/${esc(fk)}/launchPieces/${esc(pk)}`, 'enders-piece', `"${pk}" is not a piece of ${fk}'s brawl.launcher pool nor of his bySendLower`);
+      }
+    }
+  }
+
   // ---- fight shots: a lobbed kind has both its numbers; a kind that trades with more power does not do less damage ----
   const shotsD = get('data/fight/shots.json');
   if (isObj(shotsD) && isObj(shotsD.kinds)) {

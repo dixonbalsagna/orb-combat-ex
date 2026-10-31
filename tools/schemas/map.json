@@ -24,6 +24,10 @@
       "schema": "combat-recipes.schema.json"
     },
     {
+      "match": "data/combat/enders.json",
+      "schema": "combat-enders.schema.json"
+    },
+    {
       "match": "data/combat/depth.json",
       "schema": "combat-depth.schema.json"
     },
