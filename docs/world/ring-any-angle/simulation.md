@@ -433,6 +433,69 @@ A view 53,000 wide is about 30,000 tall, so a send near 12,000 fills it. The sim
 
 **Rollback barely notices.** No new state, so no bigger snapshot: `x`, `y` and the velocities are already there. A re-run reads no nodes. The launch's hit-stop (12 to 14 ticks) outlasts a 200 ms ping's one-way time of about 6 ticks, so the blow is usually confirmed before he moves. A flipped launch further out corrects a body moving up to about 300 u/tick, or 515 at a 12,000 send: 1,800 to 3,100 units at a depth of 6, which is 3 to 6% of a 53,000 view. That's visible only if the camera is already wide, and it's Netcode's and Camera's to judge. The camera zoom, the trail and the globe are the view's and change nothing here.
 
+## 11. The API for tonight's build (Simulation, 2026-10-31; first version, names are firm, details may move)
+
+Stage 5 on section 9's ground, behind `setup.planetGen: 3`. **With any other generation nothing below exists:** `S.frame` and `S.swing` are null, and the golden is byte-identical. Everything here is float64 and three plain numbers, never a `Vector3`, which is float32.
+
+### What World gives me (agree through the EP)
+
+| Call | Contract |
+| :--- | :--- |
+| `WorldField.height(P, x, y, z) -> float` | The ground at a unit direction, in units. **A pure function of the planet and the direction:** same bits in any order, after anything, in any process. No per-line state, and it isn't allowed to read a cache that changes its answer. I store it as float32, as the bake is |
+| `WorldField.biome(P, x, y, z) -> int` | The stored biome at that direction, `WorldPlanet.BIO_*`, same rule. `WorldField.fine(...)`, the fine biome, if World wants them apart |
+| `WorldField.dataHash() -> String` | Whatever the two read, so a replay on another field is refused |
+| **In `WorldPlanetWorld.gen`, gen 3's branch** | World's: lakes, platforms, sites and trees planned on those heights. It calls `SimField.begin(S, p, t, x0)` first, with the line it wants as a great circle: `p` a unit point, `t` the unit heading at it, `x0` the strip `x` standing at `p`. Then it may read the ground as any reader does. It doesn't write `S.base` |
+
+Until `WorldField` lands, my scratch stands in with today's `surfAt` plus detail, the height function I've been measuring. Gen 3 needs nothing else from World to run, on bare ground with no places.
+
+### The read (mine), for everyone
+
+| Call | What it does |
+| :--- | :--- |
+| `WorldTerrain.groundY(S, x, z)`, `floorAt`, `surfaceAt`, `seaAt`, `seaTop` | **As today, and they read through the frame on gen 3.** The 77 sites don't change |
+| `WorldTerrain.baseAt(S, i)` | Replaces every direct `S.base[i]` read: the untouched ground at a strip column. Same value as `S.base[i]` off gen 3. On gen 3 **`S.base` is no longer the ground**, so nobody reads it |
+| `SimField.far(): ... SimField.near()` | **The reader's rule.** Inside this scope every read takes the 512 bake, helpers included. A planner or forecast wraps itself once. Outside it, reads take the 128 ground, computing a missing node on the spot. What's ready never changes which one |
+| `WorldWater.depthOf(S, i)` | The water at a column. On gen 3 the sea is derived from the ground, and `S.water` holds only what a fight made |
+
+### The frame (mine), for the view and the planners
+
+| Call | Returns |
+| :--- | :--- |
+| `S.frame` | `SimState.Frame`: `px, py, pz` the point at `x0`, `tx, ty, tz` the heading, `x0`. Null off gen 3. **Rendering reads it each frame and never writes it** |
+| `SimField.pointAt(S, x)` | Sets `SimField.ox, oy, oz`, the planet direction of strip `x` on the line. `SimField.placeAt(S, x, z)` adds depth, and `SimField.strip(S, qx, qy, qz)` is the inverse, setting `SimField.sx, sz` |
+| `SimField.heightOf(seed, gen, level, x, y, z)` | The ground at a direction by level (0 the bake, 1 the 128 ground), on the triangles a mesh draws. Pure, no frame. Rendering's CPU twin |
+| `SimField.bakeOf(seed, gen)` | The bake, immutable: `.heights` (PackedFloat32Array) and `.biomes` (PackedByteArray), indexed `f * side * side + i * side + j`, `side = N + 1`, `N = 75`. Directions by `SimField.dirOf(f, i, j, N)` |
+| `SimField.nodeOf(seed, gen, f, i, j)` | One 128 node (`N = 300`, nested in the bake at every fourth). Pure; it may compute one, and a view asking changes no sim value |
+| `SimSwing.frameAt(S, n)` | **Encounter's:** a new `Frame`, where the running swing's asked curve puts the line `n` ticks ahead. Writes nothing. Read through it with `SimField.groundIn(fr, x, seed, gen)`, always the bake |
+
+### The swing (mine runs it, Encounter asks)
+
+| Call | What it does |
+| :--- | :--- |
+| `SimSwing.ask(S, {"deg": signed degrees, "rate": cause's peak in deg/s, "cause": "launch"/"chase"/"form"/"brawl", "pivotX": optional strip x held as one planet point until rest, "restBy": optional ticks from now}) -> bool` | Starts or replaces the swing. False if it can't run now (a beam, off gen 3). No score, no planning, no draws: that's `DirSwing` |
+| `SimSwing.rest(S, ticks)` | Eases to rest in that many ticks |
+| `SimSwing.clamp(S)` | Rate law now, no ease: the moment a fighter becomes standing (Game Design 11). The core calls it itself; it's public for a director's own landing |
+| `S.swing` | `SimState.Swing`: `rate` (deg/s now), `left` (deg to go, signed), `cause`, `n` (swings so far), `restT`, `active`. Camera, UI and Audio read it and never write it |
+| Events | `SimFx` `swing_start` and `swing_rest`, with `kind` the cause, `amount` the degrees, `dur`, for the view |
+
+**The law runs in `SimSwing.tick`, on live ticks only** (nothing moves in a hit-stop, a pause or the intro): `min(cause, size ceiling, sweep limit / distance, 60 flash governor)`, the pivot by Game Design's rule, an eased change, rest in a beam, and the rise backstop of section 4. Numbers in `data/fight/swing.json`, with Orb's airborne 10,000 and a `limitOff` switch.
+
+### Buildings and state
+
+| | |
+| :--- | :--- |
+| **Poses** | `S.bX`, `S.bZ`, bound arrays, only on gen 3. **`b.x` and `b.z` read them through the record, so the 36 files don't change.** `BuildingGen.x, z` stay the plan's pose in the first frame. A swing moves poses near the fighters, and everything once at rest. Slots never change in a swing |
+| **Hash** | One block beside the epoch's, only on gen 3: the frame's numbers and the swing's fields. Poses aren't hashed: they derive from the frame and the plan. **The planet store's length and running hash join it at stage 7** |
+| **Match key** | `SimReplay.dataHash` on a gen 3 setup folds `WorldField.dataHash()`, the bake's hash and a hash of 64 seeded 128 nodes, so a build that computes any differently is refused at the handshake |
+| **Load** | `SimPlanetLoad.Job` gains a `bake` phase in 4 ms slices, and `mayStart` waits for it. **Rendering: a boot that uses the job gets this free.** No caller may start a gen 3 match before it |
+
+### Known limits of this cut
+
+- **Marks stay on the strip until stage 7.** A crater dug at rest stays at its `x` on the line, so it moves with the line in a swing. Stage 6's "craters only" needs at least craters as planet records. That's the first thing I'd ask of the planet store.
+- **Trees stay at their strip `x`** until World keys them by planet cell.
+- **A fighter farther than half the strip from the frame's `x0`** crosses a seam in the ground. `x0` follows the pair, so only a gap over half the arena meets it. The meteor launch needs a Whole ring anyway (section 10).
+- **Netcode owes:** the frame and swing in `NetDesync.digest`, `PROTO` 4.
+
 ## What the sim keeps from the page of 2026-10-30
 
 The rest of this page is the earlier report. The columns as a ring buffer, the statics, wrap math, trig and rounding results all still apply, and a field world's line uses that buffer. Its option table and "build first" do not.

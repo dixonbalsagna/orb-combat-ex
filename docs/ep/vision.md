@@ -1518,6 +1518,10 @@ In chat the same day: "the right stick homework really made me think. I couldn't
 
 **Character models (in chat):** "I'd also like to consult on the best method moving forward as far as character models. Would a Blender workflow suit our purposes, or can we more reliably generate character 3d models the way we've been doing? I want higher quality character models than what we've been using, but I also want responsive, latency-free gameplay."
 
+**Campaign direction, under consideration (Orb, 2026-10-31):** "I'm considering the direction of the campaign, here's what I came up with 1) the solo / coop campaign can only be played with a custom fighter, the save file is per custom fighter. 2) an alternate solo / coop arcade mode, where any fighter on the entire roster can be picked. the branching story elements are simplified in this way, but a custom character creator becomes necessary."
+
+**Orb on custom fighters (2026-10-31):** "yes, custom fighters can be used in arcade and versus. voice features should at least have some sliders for pitch and other qualities. how many knobs can a player turn to get unique but not annoying voice patterns with our mumble system?"
+
 **Campaign, filler (in chat, later the same day):** "just to clarify, filler episodes, filler arcs could be considered separate categories in the game, but not all missions will be filler episodes."
 
 ## The first four names (Orb, 2026-10-30)
@@ -1563,5 +1567,13 @@ Orb locked the canonical names from a naming session run through Gemini: **Grist
 **Orb on the flee nudge, to Research (2026-10-31):** "it was fairly imperceptible i think". (About a minute flat out at 3 degrees a second, 34.4 degrees turned in the flight.)
 
 **Orb on anguish and menace (2026-10-31):** "maybe the stats like "anguish" and "menace" should just track as background stats that the fighters use to determine their voice lines, instead of meters for a fighter to fill. maybe each fighter has a different mechanic tied to each of the background stats"
+
+**Orb brainstorming the Cyborg's motive, not yet canon (2026-10-31):** "Bolus' motive is to consume enough scrap, industrial technology, research technology to achive his final form, defeat the world's strongest ki users and use their power to (offscreen, does not happen during a fight) open his demon portal to a realm ready to invade this world."
+
+**Orb developing the Cyborg, brainstorm, not yet canon (2026-10-31):** "lets go along with "He doesn't need their power, he needs their contact" and help me brainstorm it further. his transformations should work as a molting process, he uses the scrap he's collected to create a stronger limiter-suit, so his demon mass grows bulkier. it should be unclear if Bolus is an artificial intelligence wrestling with controlling a demon, or a demon under advanced hypnotherapy by a quantum computer. help me realize his end goals"
+
+**The Cyborg brainstorm, continued (2026-10-31):** Orb pasted a critique, apparently from a Gemini session, rejecting the quiet, cryptic version and asking for a loud, gluttonous heavyweight who fights to win: a molt that welds a bigger suit over a swelling demon mass, contact read at full power, and the AI-or-demon question played as loud comedy. Story direction only, not canon, and its gameplay details are not signed off (Orb's Gemini rule).
+
+**Orb's order for the night (2026-10-31):** "put high priority on the arena work, the controller work. I'm excited to play a working version with the 3d world and our new controller mapping folded in. I'm going to sleep now. take full control of the computer and make sure we get the ball rolling on these new features."
 
 **Orb on the goal (same night):** "I'm eager to know if fighting across a full planet is achievable. the strict definition of flying a full 360 degree loop around the equator of the planet isn't the end-all goal, but to effectively communicate to the player the experience of speed and power that comes with being a martial artist who is capable of making such a trip through the sheer power of will."
