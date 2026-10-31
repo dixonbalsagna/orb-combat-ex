@@ -1,166 +1,219 @@
-reads a tick. Budget: 0.2 ms = 3.7 native, 1.5 web. Spike 8 ms = 148 native, 62 web. Laptop ms = reads x 0.8.
+reads a tick. Budget: 0.2 ms = 3.7 native, 1.5 web (the laptop target). Spike 8 ms = 148 native, 62 web. Laptop ms = reads x 0.8.
 
 == any
-field                                               load   mean    p99   max  forced backlog late | native ms laptop p99
-E 128 u, r 12,000 (at once)                          24015  44.04   348   438   0.00      0     0 |     2.38    278.1
-E2 512 u, r 12,000 (at once)                          1597   2.88    59    95   0.00      0     0 |     0.16     47.5
-E spread, K 4                                        24015   3.89     4     5   0.00 336716  6869 |     0.21      3.2
-E2 spread, K 4                                        1597   2.82     4     5   0.00    832  1037 |     0.15      3.2
-E2 spread, K 1.5 (web)                                1597   1.46     2     2   0.00  13330  4800 |     0.08      1.6
-Rings 128 to 1,500, 256 to 4,000, 512 to 12,000       2408  13.00   126   177   0.00      0     0 |     0.70    101.1
-Same, K 4                                             2408   3.89     4     5   0.00  81405  5082 |     0.21      3.2
-Rings 128 to 3,000, 512 to 12,000 (World)             3015  17.14   133   188   0.00      0     0 |     0.93    106.4
-Same, K 4                                             3015   3.89     4     5   0.00 117180  5668 |     0.21      3.2
-512 to 6,000, 1,024 to 12,000                          728   2.17    48    80   0.00      0     0 |     0.12     38.1
-Same, K 4                                              728   2.13     5     5   0.00    761   684 |     0.12      3.7
-1,024 only to 12,000                                   428   0.76    26    55   0.00      0     0 |     0.04     20.8
-Same, K 4                                              428   0.76     5     5   0.00     13    77 |     0.04      4.0
-E2 half disc, r 8,300 (Camera)                         430   1.71    25    48   0.00      0     0 |     0.09     20.3
-Same, K 4                                              430   1.70     5     5   0.00    275   239 |     0.09      4.0
-E2 whole disc, r 8,300                                 755   2.35    46    85   0.00      0     0 |     0.13     36.5
+field                                             load    mean    p99   max  laptop p99 | at 3.7: backlog late | at 1.5: backlog late
+E: 128 u to 12,000                                24015   44.04   348   438     278.1   |        338816  6875  |        354214  6930
+E2: 512 u to 12,000                                1597    2.88    59    95      47.5   |          1035  1186  |         13330  4800
+Rings: 128 to 1,500, 256 to 4,000, 512 to 12,000   2408   13.00   126   177     101.1   |         83505  5104  |         98903  6786
+Rings (World): 128 to 3,000, 512 to 12,000         3015   17.14   133   188     106.4   |        119280  6185  |        134678  6832
+512 to 6,000, 1,024 to 12,000                       728    2.17    48    80      38.1   |           808   764  |          7787  3026
+1,024 to 12,000                                     428    0.76    26    55      20.8   |            14   105  |           153   662
+E2, half disc, B 8,300 (Camera, 16:9, close)        430    1.71    25    48      20.3   |           321   282  |          3843  1815
+E2, half disc, B 10,800 (Camera, any setting)       726    2.11    32    59      25.3   |           361   441  |          7096  2723
+E2, whole disc, r 8,300                             755    2.35    46    85      36.5   |           834   863  |          9378  3448
+1,024, half disc, B 10,800                          205    0.58    14    31      10.9   |             2    11  |            33   198
 
 == hard
-field                                               load   mean    p99   max  forced backlog late | native ms laptop p99
-E 128 u, r 12,000 (at once)                          24015  44.96   325   441   0.00      0     0 |     2.43    259.7
-E2 512 u, r 12,000 (at once)                          1597   2.93    56   106   0.00      0     0 |     0.16     44.8
-E spread, K 4                                        24015   3.89     4     5   0.00 313149  6874 |     0.21      3.2
-E2 spread, K 4                                        1597   2.93     4     5   0.00    172  1378 |     0.16      3.2
-E2 spread, K 1.5 (web)                                1597   1.44     2     2   0.00  12081  5251 |     0.08      1.6
-Rings 128 to 1,500, 256 to 4,000, 512 to 12,000       2408  13.64   117   177   0.00      0     0 |     0.74     93.6
-Same, K 4                                             2408   3.88     4     5   0.00  73732  5565 |     0.21      3.2
-Rings 128 to 3,000, 512 to 12,000 (World)             3015  17.79   128   187   0.00      0     0 |     0.96    102.4
-Same, K 4                                             3015   3.89     4     5   0.00 104119  6084 |     0.21      3.2
-512 to 6,000, 1,024 to 12,000                          728   2.21    47    76   0.00      0     0 |     0.12     37.6
-Same, K 4                                              728   2.21     5     5   0.00     71   796 |     0.12      4.0
-1,024 only to 12,000                                   428   0.77    26    56   0.00      0     0 |     0.04     20.8
-Same, K 4                                              428   0.77     5     5   0.00      0    50 |     0.04      4.0
-E2 half disc, r 8,300 (Camera)                         430   1.99    25    60   0.00      0     0 |     0.11     20.0
-Same, K 4                                              430   1.99     5     5   0.00      0   366 |     0.11      4.0
-E2 whole disc, r 8,300                                 755   2.42    45    78   0.00      0     0 |     0.13     36.0
+field                                             load    mean    p99   max  laptop p99 | at 3.7: backlog late | at 1.5: backlog late
+E: 128 u to 12,000                                24015   44.96   325   441     259.7   |        315249  6887  |        330647  6953
+E2: 512 u to 12,000                                1597    2.93    56   106      44.8   |           287  1633  |         12081  5251
+Rings: 128 to 1,500, 256 to 4,000, 512 to 12,000   2408   13.64   117   177      93.6   |         75832  5776  |         91230  6784
+Rings (World): 128 to 3,000, 512 to 12,000         3015   17.79   128   187     102.4   |        106219  6421  |        121617  6849
+512 to 6,000, 1,024 to 12,000                       728    2.21    47    76      37.6   |            85   923  |          6932  3976
+1,024 to 12,000                                     428    0.77    26    56      20.8   |             0    66  |             0   784
+E2, half disc, B 8,300 (Camera, 16:9, close)        430    1.99    25    60      20.0   |             0   458  |          5112  3288
+E2, half disc, B 10,800 (Camera, any setting)       726    2.47    30    72      24.3   |           282   802  |          8405  4192
+E2, whole disc, r 8,300                             755    2.42    45    78      36.0   |           156  1103  |          8673  4186
+1,024, half disc, B 10,800                          205    0.66    14    32      11.2   |             0    13  |             0   315
 
-== flat
-field                                               load   mean    p99   max  forced backlog late | native ms laptop p99
-E 128 u, r 12,000 (at once)                          24878 155.53   354   391   0.00      0     0 |     8.40    283.2
-E2 512 u, r 12,000 (at once)                          1652  10.14    65    88   0.00      0     0 |     0.55     52.0
-E spread, K 4                                        24878   4.00     4     4   0.00 272759  1753 |     0.22      3.2
-E2 spread, K 4                                        1652   3.99     4     5   0.00  11072  1338 |     0.22      3.2
-E2 spread, K 1.5 (web)                                1652   1.50     2     2   0.00  15562  1633 |     0.08      1.6
-Rings 128 to 1,500, 256 to 4,000, 512 to 12,000       2496  50.56   133   149   0.00      0     0 |     2.73    106.4
-Same, K 4                                             2496   4.00     4     4   0.00  83811  1663 |     0.22      3.2
-Rings 128 to 3,000, 512 to 12,000 (World)             3113  67.25   147   160   0.00      0     0 |     3.63    117.6
-Same, K 4                                             3113   4.00     4     4   0.00 113846  1683 |     0.22      3.2
-512 to 6,000, 1,024 to 12,000                          761   7.93    60    70   0.00      0     0 |     0.43     48.0
-Same, K 4                                              761   3.99     4     5   0.00   7087  1148 |     0.22      3.2
-1,024 only to 12,000                                   443   2.68    33    52   0.00      0     0 |     0.14     26.4
-Same, K 4                                              443   2.68     5     5   0.00      0    87 |     0.14      4.0
-E2 half disc, r 8,300 (Camera)                         440   5.65    34    50   0.00      0     0 |     0.31     27.2
-Same, K 4                                              440   3.99     4     5   0.00   2983   693 |     0.22      3.2
-E2 whole disc, r 8,300                                 785   8.39    52    64   0.00      0     0 |     0.45     41.6
+== flat out, 60 deg/s
+field                                             load    mean    p99   max  laptop p99 | at 3.7: backlog late | at 1.5: backlog late
+E: 128 u to 12,000                                24878  155.53   354   391     283.2   |        273299  1756  |        277257  1780
+E2: 512 u to 12,000                                1652   10.14    65    88      52.0   |         11611  1359  |         15562  1633
+Rings: 128 to 1,500, 256 to 4,000, 512 to 12,000   2496   50.56   133   149     106.4   |         84351  1669  |         88309  1730
+Rings (World): 128 to 3,000, 512 to 12,000         3113   67.25   147   160     117.6   |        114386  1689  |        118344  1743
+512 to 6,000, 1,024 to 12,000                       761    7.93    60    70      48.0   |          7626  1190  |         11577  1546
+1,024 to 12,000                                     443    2.68    33    52      26.4   |             0   148  |          2133  1171
+E2, half disc, B 8,300 (Camera, 16:9, close)        440    5.65    34    50      27.2   |          3522   759  |          7473  1371
+E2, half disc, B 10,800 (Camera, any setting)       753    6.74    41    67      32.8   |          5478  1052  |          9431  1497
+E2, whole disc, r 8,300                             785    8.39    52    64      41.6   |          8450  1232  |         12401  1564
+1,024, half disc, B 10,800                          204    1.84    19    33      15.2   |             0    13  |           624   572
 
-== flat150
-field                                               load   mean    p99   max  forced backlog late | native ms laptop p99
-E 128 u, r 12,000 (at once)                          24873 179.89   391   425   0.00      0     0 |     9.71    312.8
-E2 512 u, r 12,000 (at once)                          1659  11.82    74    98   0.00      0     0 |     0.64     59.2
-E spread, K 4                                        24873   4.00     4     4   0.00 316598  1762 |     0.22      3.2
-E2 spread, K 4                                        1659   3.99     4     5   0.00  14091  1253 |     0.22      3.2
-E2 spread, K 1.5 (web)                                1659   1.50     2     2   0.00  18581  1591 |     0.08      1.6
-Rings 128 to 1,500, 256 to 4,000, 512 to 12,000       2502  50.02   131   144   0.00      0     0 |     2.70    104.8
-Same, K 4                                             2502   4.00     4     4   0.00  82832  1672 |     0.22      3.2
-Rings 128 to 3,000, 512 to 12,000 (World)             3122  65.86   145   156   0.00      0     0 |     3.56    116.0
-Same, K 4                                             3122   4.00     4     4   0.00 111357  1700 |     0.22      3.2
-512 to 6,000, 1,024 to 12,000                          760   8.73    61    83   0.00      0     0 |     0.47     48.8
-Same, K 4                                              760   3.99     4     5   0.00   8529  1026 |     0.22      3.2
-1,024 only to 12,000                                   445   3.15    37    59   0.00      0     0 |     0.17     29.6
-Same, K 4                                              445   3.15     5     5   0.00      0    42 |     0.17      4.0
-E2 half disc, r 8,300 (Camera)                         434   6.09    34    58   0.00      0     0 |     0.33     27.2
-Same, K 4                                              434   4.00     4     5   0.00   3768   587 |     0.22      3.2
-E2 whole disc, r 8,300                                 785   9.34    58    77   0.00      0     0 |     0.50     46.4
+== flat out, 98 deg/s (the ceiling)
+field                                             load    mean    p99   max  laptop p99 | at 3.7: backlog late | at 1.5: backlog late
+E: 128 u to 12,000                                24872  160.86   350   369     280.0   |        282895  1760  |        286853  1780
+E2: 512 u to 12,000                                1647   10.47    64    81      51.2   |         12200  1350  |         16151  1633
+Rings: 128 to 1,500, 256 to 4,000, 512 to 12,000   2488   51.27   139   173     111.2   |         85638  1674  |         89596  1735
+Rings (World): 128 to 3,000, 512 to 12,000         3109   68.35   150   171     120.0   |        116372  1693  |        120330  1747
+512 to 6,000, 1,024 to 12,000                       758    8.31    57    76      45.6   |          8307  1182  |         12258  1546
+1,024 to 12,000                                     442    2.77    34    45      27.2   |             0   132  |          2303  1159
+E2, half disc, B 8,300 (Camera, 16:9, close)        436    5.92    35    46      28.0   |          4006   778  |          7959  1356
+E2, half disc, B 10,800 (Camera, any setting)       745    7.08    41    58      32.8   |          6095  1034  |         10050  1491
+E2, whole disc, r 8,300                             789    8.79    52    67      41.6   |          9173  1223  |         13124  1562
+1,024, half disc, B 10,800                          202    1.95    20    30      16.0   |             0    18  |           816   618
 
-== spin
-field                                               load   mean    p99   max  forced backlog late | native ms laptop p99
-E 128 u, r 12,000 (at once)                          25094   0.00     0     0   0.00      0     0 |     0.00      0.0
-E2 512 u, r 12,000 (at once)                          1673   0.00     0     0   0.00      0     0 |     0.00      0.0
-E spread, K 4                                        25094   0.00     0     0   0.00      0     0 |     0.00      0.0
-E2 spread, K 4                                        1673   0.00     0     0   0.00      0     0 |     0.00      0.0
-E2 spread, K 1.5 (web)                                1673   0.00     0     0   0.00      0     0 |     0.00      0.0
-Rings 128 to 1,500, 256 to 4,000, 512 to 12,000       2521   0.00     0     0   0.00      0     0 |     0.00      0.0
-Same, K 4                                             2521   0.00     0     0   0.00      0     0 |     0.00      0.0
-Rings 128 to 3,000, 512 to 12,000 (World)             3155   0.00     0     0   0.00      0     0 |     0.00      0.0
-Same, K 4                                             3155   0.00     0     0   0.00      0     0 |     0.00      0.0
-512 to 6,000, 1,024 to 12,000                          764   0.00     0     0   0.00      0     0 |     0.00      0.0
-Same, K 4                                              764   0.00     0     0   0.00      0     0 |     0.00      0.0
-1,024 only to 12,000                                   448   0.00     0     0   0.00      0     0 |     0.00      0.0
-Same, K 4                                              448   0.00     0     0   0.00      0     0 |     0.00      0.0
-E2 half disc, r 8,300 (Camera)                         442   3.33    19    24   0.00      0     0 |     0.18     15.2
-Same, K 4                                              442   3.33     4     5   0.00      0    51 |     0.18      3.2
-E2 whole disc, r 8,300                                 795   0.00     0     0   0.00      0     0 |     0.00      0.0
+== launch speed, 60 deg/s
+field                                             load    mean    p99   max  laptop p99 | at 3.7: backlog late | at 1.5: backlog late
+E: 128 u to 12,000                                24967  131.84   387   404     309.6   |        230668  1733  |        234623  1768
+E2: 512 u to 12,000                                1651    8.75    69    87      55.2   |          9112  1058  |         13058  1526
+Rings: 128 to 1,500, 256 to 4,000, 512 to 12,000   2488   35.56   138   166     110.4   |         57357  1586  |         61312  1691
+Rings (World): 128 to 3,000, 512 to 12,000         3133   47.08   151   182     120.8   |         78095  1619  |         82050  1711
+512 to 6,000, 1,024 to 12,000                       763    6.37    61    79      48.8   |          4836   774  |          8782  1420
+1,024 to 12,000                                     444    2.36    34    45      27.2   |             0    11  |          1565   744
+E2, half disc, B 8,300 (Camera, 16:9, close)        437    4.21    31    72      24.8   |           935   223  |          4886  1148
+E2, half disc, B 10,800 (Camera, any setting)       751    5.40    39    51      31.2   |          3067   602  |          7020  1304
+E2, whole disc, r 8,300                             786    6.95    55    68      44.0   |          5867   844  |          9813  1450
+1,024, half disc, B 10,800                          208    1.50    19    28      15.2   |             0     7  |            10    87
 
-== a resident whole-planet map (gen 1 ground; gen 2 not measured)
-N      spacing   RMS    p99  p99.9    max  MB(h+c)  reads     build native / web / laptop s   JS ms
-192       451   12.5   42.4  193.6   433    0.4    36864  2.0 / 4.8 / 29                19
-256       338   10.1   26.4  174.9   389    0.7    65536  3.5 / 8.5 / 52                32
-384       225    7.7   11.0  125.4   399    1.5   147456  8.0 / 19.2 / 118              71
-512       169    6.6    5.9  105.1   324    2.7   262144  14.2 / 34.1 / 210            122
-1024       85    4.2    1.2   41.2   241   10.7  1048576  56.6 / 136.3 / 839           469
+== a walk (700 u/s), brawl 10 deg/s
+field                                             load    mean    p99   max  laptop p99 | at 3.7: backlog late | at 1.5: backlog late
+E: 128 u to 12,000                                25074   17.28   289   333     231.2   |         24482  1273  |         28418  1547
+E2: 512 u to 12,000                                1673    1.18    50    92      40.0   |            58    24  |           163    92
+Rings: 128 to 1,500, 256 to 4,000, 512 to 12,000   2524    3.31    82   143      65.6   |           315    65  |          3281   901
+Rings (World): 128 to 3,000, 512 to 12,000         3145    4.22    81   144      64.8   |          1070   179  |          4906  1076
+512 to 6,000, 1,024 to 12,000                       768    0.68    33    77      26.4   |             6    20  |            28    48
+1,024 to 12,000                                     450    0.32    21    53      16.8   |             0    14  |             0    34
+E2, half disc, B 8,300 (Camera, 16:9, close)        441    0.63    17    41      13.6   |            22     8  |            33    21
+E2, half disc, B 10,800 (Camera, any setting)       743    0.92    25    45      20.0   |             7    11  |            18    31
+E2, whole disc, r 8,300                             785    0.73    30    69      24.0   |            50    14  |            61    35
+1,024, half disc, B 10,800                          207    0.25    10    26       8.0   |             0     6  |             0    16
 
-== re-lay on a turning tick (look-up 0.007 us in JS; ms below at 5.4 us (Godot far map) and 2.5 us (World's low figure))
+== in place, 60 deg/s
+field                                             load    mean    p99   max  laptop p99 | at 3.7: backlog late | at 1.5: backlog late
+E: 128 u to 12,000                                25076    0.00     0     0       0.0   |             0     0  |             0     0
+E2: 512 u to 12,000                                1675    0.00     0     0       0.0   |             0     0  |             0     0
+Rings: 128 to 1,500, 256 to 4,000, 512 to 12,000   2523    0.00     0     0       0.0   |             0     0  |             0     0
+Rings (World): 128 to 3,000, 512 to 12,000         3147    0.00     0     0       0.0   |             0     0  |             0     0
+512 to 6,000, 1,024 to 12,000                       766    0.00     0     0       0.0   |             0     0  |             0     0
+1,024 to 12,000                                     447    0.00     0     0       0.0   |             0     0  |             0     0
+E2, half disc, B 8,300 (Camera, 16:9, close)        442    1.32    14    20      11.2   |             0     5  |             0   144
+E2, half disc, B 10,800 (Camera, any setting)       747    2.21    19    22      15.2   |             0    46  |           261   255
+E2, whole disc, r 8,300                             790    0.00     0     0       0.0   |             0     0  |             0     0
+1,024, half disc, B 10,800                          206    0.62    10    18       8.0   |             0     4  |             0    15
+
+== in place, 98 deg/s
+field                                             load    mean    p99   max  laptop p99 | at 3.7: backlog late | at 1.5: backlog late
+E: 128 u to 12,000                                25085    0.00     0     0       0.0   |             0     0  |             0     0
+E2: 512 u to 12,000                                1670    0.00     0     0       0.0   |             0     0  |             0     0
+Rings: 128 to 1,500, 256 to 4,000, 512 to 12,000   2518    0.00     0     0       0.0   |             0     0  |             0     0
+Rings (World): 128 to 3,000, 512 to 12,000         3154    0.00     0     0       0.0   |             0     0  |             0     0
+512 to 6,000, 1,024 to 12,000                       763    0.00     0     0       0.0   |             0     0  |             0     0
+1,024 to 12,000                                     445    0.00     0     0       0.0   |             0     0  |             0     0
+E2, half disc, B 8,300 (Camera, 16:9, close)        439    2.17    15    22      12.0   |             0    26  |           152   152
+E2, half disc, B 10,800 (Camera, any setting)       744    3.60    22    27      17.6   |             0   108  |           466   185
+E2, whole disc, r 8,300                             793    0.00     0     0       0.0   |             0     0  |             0     0
+1,024, half disc, B 10,800                          202    1.04    11    19       8.8   |             0     4  |             0    52
+
+== the canonical field, read only under the sim strip as it flies: new nodes a tick, mean / p99 / max (budget 1.5 web, 3.7 native)
+moving        spacing  feet only            +-18 columns round each
+lone flier        64   3.27 / 4 / 4        4.34 / 9 / 71
+lone flier       128   1.87 / 4 / 4        2.13 / 5 / 36
+lone flier       256   0.96 / 3 / 4        1.03 / 3 / 20
+lone flier       512   0.46 / 3 / 4        0.48 / 3 / 12
+lone flier      1024   0.20 / 2 / 4        0.21 / 2 / 10
+launch            64   5.27 / 8 / 8        18.84 / 82 / 108
+launch           128   3.04 / 7 / 8        6.38 / 27 / 36
+launch           256   1.57 / 5 / 7        2.38 / 10 / 20
+launch           512   0.77 / 4 / 7        0.93 / 5 / 12
+launch          1024   0.35 / 4 / 6        0.38 / 4 / 10
+chase             64   5.13 / 8 / 8        13.93 / 75 / 100
+chase            128   3.26 / 7 / 8        5.36 / 28 / 40
+chase            256   1.63 / 4 / 7        2.10 / 9 / 22
+chase            512   0.75 / 4 / 6        0.84 / 4 / 12
+chase           1024   0.32 / 3 / 6        0.33 / 3 / 8
+chase apart       64   3.93 / 4 / 8        7.26 / 14 / 112
+chase apart      128   2.91 / 4 / 8        3.54 / 8 / 61
+chase apart      256   1.56 / 3 / 8        1.69 / 4 / 36
+chase apart      512   0.74 / 3 / 8        0.76 / 3 / 20
+chase apart     1024   0.32 / 3 / 8        0.32 / 3 / 16
+brawl             64   0.14 / 2 / 8        0.55 / 3 / 67
+brawl            128   0.06 / 2 / 8        0.19 / 2 / 35
+brawl            256   0.03 / 1 / 7        0.08 / 2 / 20
+brawl            512   0.02 / 0 / 6        0.03 / 1 / 12
+brawl           1024   0.01 / 0 / 6        0.02 / 0 / 10
+
+== a whole-planet bake, at World's cost of a read
+spacing   nodes     native s   web s   laptop s   laptop s if height-only is half
+128       458366      24.8     59.6       367         183
+256       114592       6.2     14.9        92          46
+384        50930       2.8      6.6        41          20
+512        28648       1.5      3.7        23          11
+1024        7162       0.4      0.9         6           3
+
+== sharpening a disc at rest
+disc            nodes    s at 1.5 a tick   s at 3.7
+128 to 1500       431           4.8         1.9
+128 to 3000      1726          19.2         7.8
+128 to 6000      6903          76.7        31.1
+256 to 3000       431           4.8         1.9
+256 to 6000      1726          19.2         7.8
+
+== a map of the whole planet, gen 1 ground; gen 2 is 3 to 7 times these (world.md 11.1)
+N      spacing   RMS    p99  p99.9    max  MB(h+c)  reads
+192       451   12.5   42.4  193.6   433    0.4    36864
+256       338   10.1   26.4  174.9   389    0.7    65536
+384       225    7.7   11.0  125.4   399    1.5   147456
+512       169    6.6    5.9  105.1   324    2.7   262144
+1024       85    4.2    1.2   41.2   241   10.7  1048576
+
+== a window of columns re-laid on a turning tick. ms at 3.6 us (Simulation, a re-laid column in GDScript, native) and 0.4 us (Performance, a bare sample on the web)
 
 10 deg/s, gap 300
-tiers                                                   cols  ms@5.4 ms@2.5 | feet rms max  reach max  all rms max
-Every column of the view, every tick (today's E)         669    3.61   1.67 |    0.00   0.0     0.0     0.00    0.0
-+-75 round each fighter, every tick (Netcode's top)      161    0.87   0.40 |    0.00   0.0     0.0     0.00    0.0
-+-40 round each, every tick (World's window)              91    0.49   0.23 |    0.00   0.0     0.0     0.00    0.0
-+-18 round each, every tick                               47    0.25   0.12 |    0.00   0.0     0.0     0.00    0.0
-+-16 every tick, +-40 every 4, +-75 every 8               64    0.34   0.16 |    0.00   0.0     0.0     4.71   67.7
-+-8 every tick, +-40 every 4                              43    0.23   0.11 |    0.00   0.0     7.2     1.41   18.9
-+-8 every 2, +-40 every 8                                 22    0.12   0.05 |    0.10   0.7    16.6     3.16   44.0
+tiers                                                   cols  ms@3.6 ms@0.4 | feet rms max  reach max  all rms max
+Every column of the view, every tick (today's E)         669    2.41  0.268 |    0.00   0.0     0.0     0.00    0.0
++-75 round each fighter, every tick (Netcode's top)      161    0.58  0.064 |    0.00   0.0     0.0     0.00    0.0
++-40 round each, every tick (World's window)              91    0.33  0.036 |    0.00   0.0     0.0     0.00    0.0
++-18 round each, every tick                               47    0.17  0.019 |    0.00   0.0     0.0     0.00    0.0
++-16 every tick, +-40 every 4, +-75 every 8               64    0.23  0.026 |    0.00   0.0     0.0     4.71   67.7
++-8 every tick, +-40 every 4                              43    0.15  0.017 |    0.00   0.0     7.2     1.41   18.9
++-8 every 2, +-40 every 8                                 22    0.08  0.009 |    0.10   0.7    16.6     3.16   44.0
 
 29 deg/s, gap 300
-tiers                                                   cols  ms@5.4 ms@2.5 | feet rms max  reach max  all rms max
-Every column of the view, every tick (today's E)         669    3.61   1.67 |    0.00   0.0     0.0     0.00    0.0
-+-75 round each fighter, every tick (Netcode's top)      161    0.87   0.40 |    0.00   0.0     0.0     0.00    0.0
-+-40 round each, every tick (World's window)              91    0.49   0.23 |    0.00   0.0     0.0     0.00    0.0
-+-18 round each, every tick                               47    0.25   0.12 |    0.00   0.0     0.0     0.00    0.0
-+-16 every tick, +-40 every 4, +-75 every 8               64    0.34   0.16 |    0.00   0.0     0.0    13.55  191.5
-+-8 every tick, +-40 every 4                              43    0.23   0.11 |    0.00   0.0    20.7     4.08   54.6
-+-8 every 2, +-40 every 8                                 21    0.12   0.05 |    0.28   2.0    46.8     9.08  126.1
+tiers                                                   cols  ms@3.6 ms@0.4 | feet rms max  reach max  all rms max
+Every column of the view, every tick (today's E)         669    2.41  0.268 |    0.00   0.0     0.0     0.00    0.0
++-75 round each fighter, every tick (Netcode's top)      161    0.58  0.064 |    0.00   0.0     0.0     0.00    0.0
++-40 round each, every tick (World's window)              91    0.33  0.036 |    0.00   0.0     0.0     0.00    0.0
++-18 round each, every tick                               47    0.17  0.019 |    0.00   0.0     0.0     0.00    0.0
++-16 every tick, +-40 every 4, +-75 every 8               64    0.23  0.025 |    0.00   0.0     0.0    13.55  191.5
++-8 every tick, +-40 every 4                              43    0.15  0.017 |    0.00   0.0    20.7     4.08   54.6
++-8 every 2, +-40 every 8                                 21    0.08  0.009 |    0.28   2.0    46.8     9.08  126.1
 
 60 deg/s, gap 300
-tiers                                                   cols  ms@5.4 ms@2.5 | feet rms max  reach max  all rms max
-Every column of the view, every tick (today's E)         669    3.61   1.67 |    0.00   0.0     0.0     0.00    0.0
-+-75 round each fighter, every tick (Netcode's top)      161    0.87   0.40 |    0.00   0.0     0.0     0.00    0.0
-+-40 round each, every tick (World's window)              91    0.49   0.23 |    0.00   0.0     0.0     0.00    0.0
-+-18 round each, every tick                               47    0.25   0.12 |    0.00   0.0     0.0     0.00    0.0
-+-16 every tick, +-40 every 4, +-75 every 8               64    0.34   0.16 |    0.00   0.0     0.0    27.59  384.5
-+-8 every tick, +-40 every 4                              43    0.23   0.11 |    0.00   0.0    42.5     8.46  112.1
-+-8 every 2, +-40 every 8                                 22    0.12   0.05 |    0.59   4.1    92.1    18.54  255.9
+tiers                                                   cols  ms@3.6 ms@0.4 | feet rms max  reach max  all rms max
+Every column of the view, every tick (today's E)         669    2.41  0.268 |    0.00   0.0     0.0     0.00    0.0
++-75 round each fighter, every tick (Netcode's top)      161    0.58  0.064 |    0.00   0.0     0.0     0.00    0.0
++-40 round each, every tick (World's window)              91    0.33  0.036 |    0.00   0.0     0.0     0.00    0.0
++-18 round each, every tick                               47    0.17  0.019 |    0.00   0.0     0.0     0.00    0.0
++-16 every tick, +-40 every 4, +-75 every 8               64    0.23  0.025 |    0.00   0.0     0.0    27.59  384.5
++-8 every tick, +-40 every 4                              43    0.15  0.017 |    0.00   0.0    42.5     8.46  112.1
++-8 every 2, +-40 every 8                                 22    0.08  0.009 |    0.59   4.1    92.1    18.54  255.9
 
 60 deg/s, gap 2400
-tiers                                                   cols  ms@5.4 ms@2.5 | feet rms max  reach max  all rms max
-Every column of the view, every tick (today's E)         669    3.61   1.67 |    0.00   0.0     0.0     0.00    0.0
-+-75 round each fighter, every tick (Netcode's top)      227    1.23   0.57 |    0.00   0.0     0.0     0.00    0.0
-+-40 round each, every tick (World's window)             157    0.85   0.39 |    0.00   0.0     0.0     0.00    0.0
-+-18 round each, every tick                               74    0.40   0.18 |    0.00   0.0     0.0    36.87  471.4
-+-16 every tick, +-40 every 4, +-75 every 8               97    0.53   0.24 |    0.00   0.0     0.0    33.27  459.6
-+-8 every tick, +-40 every 4                              65    0.35   0.16 |    0.00   0.0   116.7    11.76  165.0
-+-8 every 2, +-40 every 8                                 32    0.17   0.08 |    4.53  32.3   253.3    25.85  374.6
+tiers                                                   cols  ms@3.6 ms@0.4 | feet rms max  reach max  all rms max
+Every column of the view, every tick (today's E)         669    2.41  0.268 |    0.00   0.0     0.0     0.00    0.0
++-75 round each fighter, every tick (Netcode's top)      227    0.82  0.091 |    0.00   0.0     0.0     0.00    0.0
++-40 round each, every tick (World's window)             157    0.57  0.063 |    0.00   0.0     0.0     0.00    0.0
++-18 round each, every tick                               74    0.27  0.030 |    0.00   0.0     0.0    36.87  471.4
++-16 every tick, +-40 every 4, +-75 every 8               97    0.35  0.039 |    0.00   0.0     0.0    33.27  459.6
++-8 every tick, +-40 every 4                              65    0.23  0.026 |    0.00   0.0   116.7    11.76  165.0
++-8 every 2, +-40 every 8                                 32    0.12  0.013 |    4.53  32.3   253.3    25.85  374.6
 
 60 deg/s, gap 19200
-tiers                                                   cols  ms@5.4 ms@2.5 | feet rms max  reach max  all rms max
-Every column of the view, every tick (today's E)         669    3.61   1.67 |    0.00   0.0     0.0     0.00    0.0
-+-75 round each fighter, every tick (Netcode's top)      220    1.19   0.55 |    0.00   0.0     0.0   422.45 4235.6
-+-40 round each, every tick (World's window)             150    0.81   0.38 |    0.00   0.0     0.0   516.02 5083.7
-+-18 round each, every tick                               74    0.40   0.18 |    0.00   0.0     0.0   583.76 5274.6
-+-16 every tick, +-40 every 4, +-75 every 8               96    0.52   0.24 |    0.00   0.0     0.0   425.93 4235.6
-+-8 every tick, +-40 every 4                              63    0.34   0.16 |    0.00   0.0   950.1   517.04 5083.7
-+-8 every 2, +-40 every 8                                 31    0.17   0.08 |   29.77 315.1  2142.7   520.75 5083.7
+tiers                                                   cols  ms@3.6 ms@0.4 | feet rms max  reach max  all rms max
+Every column of the view, every tick (today's E)         669    2.41  0.268 |    0.00   0.0     0.0     0.00    0.0
++-75 round each fighter, every tick (Netcode's top)      220    0.79  0.088 |    0.00   0.0     0.0   422.45 4235.6
++-40 round each, every tick (World's window)             150    0.54  0.060 |    0.00   0.0     0.0   516.02 5083.7
++-18 round each, every tick                               74    0.27  0.030 |    0.00   0.0     0.0   583.76 5274.6
++-16 every tick, +-40 every 4, +-75 every 8               96    0.34  0.038 |    0.00   0.0     0.0   425.93 4235.6
++-8 every tick, +-40 every 4                              63    0.23  0.025 |    0.00   0.0   950.1   517.04 5083.7
++-8 every 2, +-40 every 8                                 31    0.11  0.013 |   29.77 315.1  2142.7   520.75 5083.7
 
-150 deg/s, gap 300
-tiers                                                   cols  ms@5.4 ms@2.5 | feet rms max  reach max  all rms max
-Every column of the view, every tick (today's E)         669    3.61   1.67 |    0.00   0.0     0.0     0.00    0.0
-+-75 round each fighter, every tick (Netcode's top)      161    0.87   0.40 |    0.00   0.0     0.0     0.00    0.0
-+-40 round each, every tick (World's window)              91    0.49   0.23 |    0.00   0.0     0.0     0.00    0.0
-+-18 round each, every tick                               47    0.25   0.12 |    0.00   0.0     0.0     0.00    0.0
-+-16 every tick, +-40 every 4, +-75 every 8               64    0.34   0.16 |    0.00   0.0     0.0    68.96  826.5
-+-8 every tick, +-40 every 4                              43    0.23   0.11 |    0.00   0.0   103.6    21.03  273.4
-+-8 every 2, +-40 every 8                                 22    0.12   0.05 |    1.47  10.2   192.5    46.70  574.8
+98 deg/s, gap 300
+tiers                                                   cols  ms@3.6 ms@0.4 | feet rms max  reach max  all rms max
+Every column of the view, every tick (today's E)         669    2.41  0.268 |    0.00   0.0     0.0     0.00    0.0
++-75 round each fighter, every tick (Netcode's top)      161    0.58  0.064 |    0.00   0.0     0.0     0.00    0.0
++-40 round each, every tick (World's window)              91    0.33  0.036 |    0.00   0.0     0.0     0.00    0.0
++-18 round each, every tick                               47    0.17  0.019 |    0.00   0.0     0.0     0.00    0.0
++-16 every tick, +-40 every 4, +-75 every 8               64    0.23  0.025 |    0.00   0.0     0.0    44.33  592.6
++-8 every tick, +-40 every 4                              43    0.15  0.017 |    0.00   0.0    68.7    13.67  181.2
++-8 every 2, +-40 every 8                                 21    0.08  0.009 |    0.97   6.7   140.1    29.92  399.8

@@ -21,10 +21,10 @@ p{max-width:1280px;margin:6px auto;padding:0 12px;font-size:13px;color:#b9b6ab;l
 </head>
 <body>
 <div id="wrap"><canvas id="cv" width="1280" height="720"></canvas>
-<div id="inputs"><div id="dial"><div id="dot"></div></div><span class="c" id="iFly">FLY</span><span class="c" id="iSend">SEND</span><span class="c" id="iDig">DIG</span><span class="c" id="iL">SWING &lt;</span><span class="c" id="iR">SWING &gt;</span><span class="c" id="iAim">AIM</span></div>
+<div id="inputs"><div id="dial"><div id="dot"></div></div><span class="c" id="iFly">FLY</span><span class="c" id="iSend">SEND</span><span class="c" id="iDig">DIG</span><span class="c" id="iL">SWING &lt;</span><span class="c" id="iR">SWING &gt;</span><span class="c" id="iAim">AIM</span><span class="c" id="iForm">FORM</span><span class="c" id="iBeam">BEAM</span><span class="c" id="iHeavy">HEAVY</span></div>
 <div id="hud"></div></div>
 <div id="ctl"></div>
-<p><b>The turntable arena</b> (Research, spike v2; paper: <code>docs/world/ring-any-angle/research.md</code>). A true sphere, 153,600 units round, with the world swinging round two bars. Everything you see is one planet map already on the graphics card and one rotation: nothing is rebuilt when it swings. No character art: fighters are bars. Move: <kbd>A</kbd> <kbd>D</kbd> or the left stick. Flat out: hold <kbd>Shift</kbd> or RT. Send (a launch): <kbd>Space</kbd> or pad X. Swing: <kbd>Q</kbd> <kbd>E</kbd> or LB RB. Aim the line at a landmark: <kbd>G</kbd> or pad Y. Dig a crater: <kbd>C</kbd> or pad A. Start again: <kbd>R</kbd>. It plays itself until you touch something.</p>
+<p><b>The turntable arena</b> (Research, spike v2; paper: <code>docs/world/ring-any-angle/research.md</code>). A true sphere, 153,600 units round, with the world swinging round two bars. The ground is tiles keyed to the planet, drawn from one map already on the graphics card, and turned by one matrix: nothing is rebuilt when it swings. No character art: fighters are bars. Move: <kbd>A</kbd> <kbd>D</kbd> or the left stick. Flat out: hold <kbd>Shift</kbd> or RT. Launch: <kbd>Space</kbd> or pad X. Swing by hand: <kbd>Q</kbd> <kbd>E</kbd> or LB RB. Aim the line at a landmark: <kbd>G</kbd> or pad Y. Form's pause: <kbd>F</kbd> or LT. Beam (hold; the world comes to rest): <kbd>B</kbd> or pad B. A heavy blow (the world jolts): <kbd>H</kbd> or the right stick's click. Dig a crater: <kbd>C</kbd> or pad A. Start again: <kbd>R</kbd>. It plays itself until you touch something.</p>
 <script>
 var __math = (function () {
 
@@ -409,19 +409,27 @@ var floatLinear = !!gl.getExtension('OES_texture_float_linear');
 var CIRC = 153600, RP = CIRC / (2 * Math.PI), SEED = 7, FLAT = 10240, T_FOV = Math.tan(15 * Math.PI / 180);
 function $(id) { return document.getElementById(id); }
 // ---- controls: every one a slider or a list, read each tick ----
-var P = { mapN: 512, rate: 45, angle: 60, every: 6, fires: 'send', speed: 100, width: 7000, wide: 2.2, pitch: 7, curve: 100, relief: 100, detail: 1, towers: 1, clouds: 1, globe: 1, sun: 1 };
-var CTL = [['fires', 'Swing fires', ['manual', 'on every send', 'every N seconds', 'only in flight', 'to a landmark'], ['manual', 'send', 'every', 'flight', 'mark']],
-  ['rate', 'Swing rate (deg/s)', 5, 240, 5], ['angle', 'Swing size (deg)', 5, 180, 5], ['every', 'N seconds', 1, 20, 1], ['speed', 'Flat-out speed (%)', 25, 300, 5], ['width', 'View width (units)', 1500, 24000, 250], ['wide', 'Pull wide in flight (x)', 1, 4, 0.1],
-  ['pitch', 'Camera pitch (deg)', 0, 40, 1], ['curve', 'Curvature (% of true)', 5, 100, 5], ['relief', 'Relief (%)', 10, 150, 10], ['mapN', 'Planet map (256 is the game\'s)', [ '256', '512', '1024' ], [256, 512, 1024]],
-  ['detail', 'Ground detail', 'c'], ['towers', 'Towers and landmarks', 'c'], ['clouds', 'Clouds', 'c'], ['globe', 'Globe', 'c'], ['sun', 'Sun fixed to the planet', 'c']];
-function fmt(k, v) { return k === 'fires' ? '' : String(v); }
+var GD_RATES = { rLaunch: 60, rChase: 45, rForm: 30, rBrawl: 10, rSmall: 60 };
+var P = { mapN: 1024, fires: 'gd', rLaunch: 60, rChase: 45, rForm: 30, rBrawl: 10, jolts: 1, rSmall: 60, smallEvery: 12, ceil: 1, brawl: 0, quiet: 12, angle: 60, sendS: 2.2, law: 1, reduced: 0, flip: 'off', flipDepth: 6, fore: 1, soft: 1, rest: 128, sharpen: 4.8, every: 6, speed: 100, width: 7000, wide: 2.2, pitch: 7, curve: 100, relief: 100, detail: 1, towers: 1, clouds: 1, globe: 1, sun: 1 };
+var CTL = [['fires', 'Swing fires', ['by the rules (Game Design)', 'launches only', 'by hand only', 'every N seconds'], ['gd', 'send', 'manual', 'every']],
+  ['jolts', 'Small swings: a jolt on a heavy blow, a correction in flight', 'c'], ['rSmall', 'Small swing rate, deg/s (builds 60, up to 240)', 10, 240, 5], ['smallEvery', 'A small swing every N s (game: 10 to 20)', 2, 30, 1], ['brawl', 'Slow swing up close (brawl, 10 deg/s)', 'c'], ['quiet', 'Slow swing after N s quiet (game: 45)', 3, 45, 1],
+  ['rLaunch', 'Launch rate, deg/s (60; past 98 is over the limit)', 10, 240, 1], ['rChase', 'Chase rate, deg/s', 5, 60, 1], ['rForm', 'Form pause rate, deg/s', 5, 60, 1], ['rBrawl', 'Brawl rate, deg/s', 2, 30, 1],
+  ['angle', 'Swing size (deg)', 5, 180, 5], ['sendS', 'Launch flight (s)', 1, 6, 0.2], ['every', 'N seconds', 1, 20, 1], ['law', 'Sweep limit (75 u/s standing, 10,000 airborne)', 'c'], ['ceil', 'Size ceiling (240 x root(15 / size))', 'c'], ['reduced', 'Reduced motion (every peak 30)', 'c'],
+  ['flip', 'Forced flip (a late online correction)', ['off', 'a swing taken back', 'a swing the wrong way', 'a rate jump at the peak (worst case)'], ['off', 'back', 'wrong', 'jump']], ['flipDepth', 'Flip depth, ticks (6 is 200 ms ping, 13 far)', 3, 20, 1],
+  ['soft', 'Ground softens in flight', 'c'], ['rest', 'Ground at rest, spacing', ['128 u', '256 u', '512 u'], [128, 256, 512]], ['sharpen', 'Sharpens after a flight in', ['0.5 s', '4.8 s (1.5 reads a tick, r 1,500)', '19 s (1.5 reads a tick, r 3,000)'], [0.5, 4.8, 19]],
+  ['speed', 'Flat-out speed (%)', 25, 300, 5], ['width', 'View width (units)', 1500, 24000, 250], ['wide', 'Pull wide in flight (x)', 1, 4, 0.1],
+  ['pitch', 'Camera pitch (deg)', 0, 40, 1], ['curve', 'Curvature (% of true)', 5, 100, 5], ['relief', 'Relief (%)', 10, 150, 10], ['mapN', 'Planet map', ['256', '512', '1024'], [256, 512, 1024]],
+  ['fore', 'Land in front sinks below the sight line', 'c'], ['detail', 'Ground detail', 'c'], ['towers', 'Towers and landmarks', 'c'], ['clouds', 'Clouds', 'c'], ['globe', 'Globe', 'c'], ['sun', 'Sun fixed to the planet', 'c']];
+var SETTERS = {};
 CTL.forEach(function (c) {
   var l = document.createElement('label'); l.textContent = c[1]; var k = c[0];
   if (c[2] === 'c') { var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!P[k]; cb.onchange = function () { P[k] = cb.checked ? 1 : 0; cb.blur(); }; l.appendChild(cb); }
   else if (Array.isArray(c[2])) { var s = document.createElement('select'); c[2].forEach(function (n, i) { var o = document.createElement('option'); o.textContent = n; o.value = i; if (c[3][i] === P[k]) o.selected = true; s.appendChild(o); }); s.onchange = function () { P[k] = c[3][+s.value]; s.blur(); if (k === 'mapN') buildMap(); }; l.appendChild(s); }
-  else { var r = document.createElement('input'), b = document.createElement('b'); r.type = 'range'; r.min = c[2]; r.max = c[3]; r.step = c[4]; r.value = P[k]; b.textContent = P[k]; r.oninput = function () { P[k] = +r.value; b.textContent = r.value; }; var w = document.createElement('span'); w.style.cssText = 'display:flex;gap:6px;align-items:center'; w.appendChild(r); w.appendChild(b); l.appendChild(w); }
+  else { var r = document.createElement('input'), b = document.createElement('b'); r.type = 'range'; r.min = c[2]; r.max = c[3]; r.step = c[4]; r.value = P[k]; b.textContent = P[k]; if (k === 'rLaunch') r.setAttribute('list', 'marks'); var paint = function () { b.textContent = P[k]; b.style.color = k === 'rLaunch' && P[k] > 98 ? '#ff6a55' : ''; }; r.oninput = function () { P[k] = +r.value; paint(); }; SETTERS[k] = function (v) { P[k] = v; r.value = v; paint(); }; var w = document.createElement('span'); w.style.cssText = 'display:flex;gap:6px;align-items:center'; w.appendChild(r); w.appendChild(b); l.appendChild(w); }
   $('ctl').appendChild(l);
 });
+(function () { var d = document.createElement('datalist'); d.id = 'marks'; [60, 65, 98].forEach(function (v) { var o = document.createElement('option'); o.value = v; d.appendChild(o); }); $('ctl').appendChild(d);
+  var b = document.createElement('button'); b.textContent = 'Game Design\'s rates: launch 60, chase 45, form 30, brawl 10, small 60'; b.onclick = function () { Object.keys(GD_RATES).forEach(function (k) { SETTERS[k](GD_RATES[k]); }); b.blur(); }; $('ctl').appendChild(b); })();
 // ---- the sphere's small maths ----
 function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
 function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
@@ -438,30 +446,35 @@ function buildMap() {
     var d = octDec((i + 0.5) / N, (j + 0.5) / N), s = surf(SEED, d[0], d[1], d[2]), o = j * N + i, p = PAL[s[1]] || PAL[1], k = o * 4; h[o] = s[0];
     var sh = s[0] < 0 ? Math.max(0.55, 1 + s[0] / 2600) : 1; c[k] = p[0] * sh; c[k + 1] = p[1] * sh; c[k + 2] = p[2] * sh; c[k + 3] = 255;
   }
-  MAP = { N: N, h: h, ms: performance.now() - t0, reads: N * N };
+  MAP = { N: N, h: h, ms: performance.now() - t0, reads: N * N, mips: [h] };
   gl.bindTexture(gl.TEXTURE_2D, texH); var lv = h, n = N, L = 0, IF = floatLinear ? gl.R32F : gl.R16F;
-  for (;;) { gl.texImage2D(gl.TEXTURE_2D, L, IF, n, n, 0, gl.RED, gl.FLOAT, lv); if (n === 1) break; var m = n >> 1, nx = new Float32Array(m * m); for (var y = 0; y < m; y++) for (var x = 0; x < m; x++) nx[y * m + x] = (lv[y * 2 * n + x * 2] + lv[y * 2 * n + x * 2 + 1] + lv[(y * 2 + 1) * n + x * 2] + lv[(y * 2 + 1) * n + x * 2 + 1]) / 4; lv = nx; n = m; L++; }
+  for (;;) { gl.texImage2D(gl.TEXTURE_2D, L, IF, n, n, 0, gl.RED, gl.FLOAT, lv); if (n === 1) break; var m = n >> 1, nx = new Float32Array(m * m); for (var y = 0; y < m; y++) for (var x = 0; x < m; x++) nx[y * m + x] = (lv[y * 2 * n + x * 2] + lv[y * 2 * n + x * 2 + 1] + lv[(y * 2 + 1) * n + x * 2] + lv[(y * 2 + 1) * n + x * 2 + 1]) / 4; lv = nx; n = m; L++; MAP.mips.push(nx); }
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.bindTexture(gl.TEXTURE_2D, texC); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, N, N, 0, gl.RGBA, gl.UNSIGNED_BYTE, c); gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 }
 // what the sim stands on: one bilinear read of the same map; these are all the ground reads a tick here
 var lookups = 0;
-function heightAt(d) { lookups++; var N = MAP.N, e = octEnc(d), fx = e[0] * N - 0.5, fy = e[1] * N - 0.5, i = Math.max(0, Math.min(N - 2, Math.floor(fx))), j = Math.max(0, Math.min(N - 2, Math.floor(fy))), a = Math.min(1, Math.max(0, fx - i)), b = Math.min(1, Math.max(0, fy - j)), h = MAP.h, o = j * N + i; return (h[o] * (1 - a) + h[o + 1] * a) * (1 - b) + (h[o + N] * (1 - a) + h[o + N + 1] * a) * b; }
+function heightAt(d, lod) { lookups++; var e = octEnc(d), l0 = Math.max(0, Math.min(MAP.mips.length - 2, Math.floor(lod || 0))), k = Math.max(0, Math.min(1, (lod || 0) - l0)); function rd(l) { var N = MAP.N >> l, h = MAP.mips[l], fx = e[0] * N - 0.5, fy = e[1] * N - 0.5, i = Math.max(0, Math.min(N - 2, Math.floor(fx))), j = Math.max(0, Math.min(N - 2, Math.floor(fy))), a = Math.min(1, Math.max(0, fx - i)), b = Math.min(1, Math.max(0, fy - j)), o = j * N + i; return (h[o] * (1 - a) + h[o + 1] * a) * (1 - b) + (h[o + N] * (1 - a) + h[o + N + 1] * a) * b; } return k ? rd(l0) * (1 - k) + rd(l0 + 1) * k : rd(l0); }
 // ---- shaders ----
 var COMMON = '#version 300 es\nprecision highp float;\nvec2 oct(vec3 d){d/=abs(d.x)+abs(d.y)+abs(d.z);vec2 p=d.xy;if(d.z<0.)p=(1.-abs(d.yx))*vec2(d.x>=0.?1.:-1.,d.y>=0.?1.:-1.);return p*.5+.5;}\n';
 var VS_G = COMMON + 'in vec2 aG;uniform mat3 uF;uniform mat4 uVP;uniform sampler2D uH;uniform float uR,uRr,uRel,uTex,uAlt;uniform vec4 uCr[16];uniform float uCrD[16];uniform int uCrN;uniform float uStep;\n' +
  'out vec3 vDir;out vec3 vW;out float vH;void main(){float r=aG.x,th=aG.y,a=r/uR;vec3 dir=uF*vec3(sin(a)*cos(th),sin(a)*sin(th),cos(a));float fp=max(r*uStep,r*.03);float h=textureLod(uH,oct(dir),log2(max(1.,fp/uTex))).r;for(int i=0;i<uCrN;i++){vec3 dv=dir-uCr[i].xyz;float q=dot(dv,dv)*uR*uR/(uCr[i].w*uCr[i].w);if(q<1.){float u=1.-q;h-=uCrD[i]*u*u;}}vH=h;vDir=dir;float ar=r/uRr,rad=uRr+(uAlt>0.?uAlt:h*uRel);vec3 w=vec3(rad*sin(ar)*cos(th),rad*cos(ar)-uRr,rad*sin(ar)*sin(th));vW=w;gl_Position=uVP*vec4(w,1.);}';
-var FS_G = COMMON + 'in vec3 vDir;in vec3 vW;in float vH;out vec4 o;uniform sampler2D uC;uniform vec3 uSun,uCam,uSky;uniform float uR,uRr,uDet,uHaze,uAmb;\n' +
+var FS_G = COMMON + 'in vec3 vDir;in vec3 vW;in float vH;out vec4 o;uniform sampler2D uC;uniform vec3 uSun,uCam,uSky;uniform float uR,uRr,uDet,uHaze,uAmb,uG;\n' +
  'float hsh(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}float vn(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(mix(hsh(i),hsh(i+vec3(1,0,0)),f.x),mix(hsh(i+vec3(0,1,0)),hsh(i+vec3(1,1,0)),f.x),f.y),mix(mix(hsh(i+vec3(0,0,1)),hsh(i+vec3(1,0,1)),f.x),mix(hsh(i+vec3(0,1,1)),hsh(i+vec3(1,1,1)),f.x),f.y),f.z);}\n' +
  'void main(){vec3 d=normalize(vDir),up=normalize(vW+vec3(0,uRr,0)),n=normalize(cross(dFdx(vW),dFdy(vW)));if(dot(n,up)<0.)n=-n;vec3 c=texture(uC,oct(d)).rgb;float dist=length(vW-uCam);\n' +
- 'if(uDet>0.){float a=vn(d*uR/2600.),b=vn(d*uR/620.),e=vn(d*uR/170.),f=vn(d*uR/60.);float k=(a-.5)*.30+(b-.5)*.42*clamp(60000./dist-1.,0.,1.)+(e-.5)*.44*clamp(16000./dist-1.,0.,1.)+(f-.5)*.34*clamp(5500./dist-1.,0.,1.);c*=1.+k;}\n' +
+ 'if(uDet>0.){float a=vn(d*uR/2600.),b=vn(d*uR/620.),e=vn(d*uR/170.),f=vn(d*uR/60.);float fd=clamp(128./max(uG,1.),0.,1.);float k=(a-.5)*.30+(b-.5)*.42*sqrt(fd)*clamp(60000./dist-1.,0.,1.)+(e-.5)*.44*fd*clamp(16000./dist-1.,0.,1.)+(f-.5)*.34*fd*fd*clamp(5500./dist-1.,0.,1.);c*=1.+k;}\n' +
  'if(vH>6000.)c=mix(c,vec3(.95),clamp((vH-6000.)/2400.,0.,1.));if(vH<0.)n=up;float l=max(dot(n,uSun),0.);c*=uAmb+(1.-uAmb)*l*1.25;float hz=1.-exp(-dist*uHaze);o=vec4(mix(c,uSky,hz*.85),1.);}';
 var FS_C = COMMON + 'in vec3 vDir;in vec3 vW;in float vH;out vec4 o;uniform vec3 uSun;uniform float uAmb,uT;\n' +
  'float hsh(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}float vn(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(mix(hsh(i),hsh(i+vec3(1,0,0)),f.x),mix(hsh(i+vec3(0,1,0)),hsh(i+vec3(1,1,0)),f.x),f.y),mix(mix(hsh(i+vec3(0,0,1)),hsh(i+vec3(1,0,1)),f.x),mix(hsh(i+vec3(0,1,1)),hsh(i+vec3(1,1,1)),f.x),f.y),f.z);}\n' +
  'void main(){if(vW.z>-1200.)discard;vec3 d=normalize(vDir);float v=vn(d*7.)*.55+vn(d*19.)*.3+vn(d*53.)*.15;if(v<.56)discard;float l=max(dot(d,uSun),0.);o=vec4(vec3(.93)*(uAmb+(1.-uAmb)*.9),.92);}';
-var VS_B = COMMON + 'in vec3 aP;in vec3 aN;in vec3 iD;in vec3 iE;in vec3 iS;in vec4 iC;uniform mat3 uF;uniform mat4 uVP;uniform float uR,uRr,uRel;out vec3 vC;out vec3 vN;out vec3 vW;\n' +
- 'void main(){vec3 v=transpose(uF)*iD;float a=acos(clamp(v.z,-1.,1.));if(a>2.0){gl_Position=vec4(2.,2.,2.,1.);vC=vec3(0.);vN=vec3(0.);vW=vec3(0.);return;}float th=atan(v.y,v.x),ar=a*uR/uRr,rad=uRr+iC.w*uRel;vec3 b=vec3(rad*sin(ar)*cos(th),rad*cos(ar)-uRr,rad*sin(ar)*sin(th));vec3 up=normalize(b+vec3(0,uRr,0)),e=transpose(uF)*iE;e=vec3(e.x,e.z,e.y);e=normalize(e-up*dot(e,up));vec3 nn=cross(up,e);float sk=1.-smoothstep(300.,1500.,b.z);if(sk<.04){gl_Position=vec4(2.,2.,2.,1.);vC=vec3(0.);vN=vec3(0.);vW=vec3(0.);return;}vec3 w=b+e*aP.x*iS.x+up*aP.y*iS.y*sk+nn*aP.z*iS.z;vC=iC.rgb;vN=e*aN.x+up*aN.y+nn*aN.z;vW=w;gl_Position=uVP*vec4(w,1.);}';
+var VS_B = COMMON + 'in vec3 aP;in vec3 aN;in vec3 iD;in vec3 iE;in vec3 iS;in vec4 iC;uniform mat3 uF;uniform mat4 uVP;uniform sampler2D uH;uniform float uR,uRr,uRel,uTex,uG;out vec3 vC;out vec3 vN;out vec3 vW;\n' +
+ 'void main(){vec3 v=transpose(uF)*iD;float a=acos(clamp(v.z,-1.,1.));if(a>2.0){gl_Position=vec4(2.,2.,2.,1.);vC=vec3(0.);vN=vec3(0.);vW=vec3(0.);return;}float rr=a*uR,sp=max(mix(uG,max(uG,512.),smoothstep(6000.,9000.,rr)),rr*.03),bh=textureLod(uH,oct(iD),log2(max(1.,sp/uTex))).r;float th=atan(v.y,v.x),ar=a*uR/uRr,rad=uRr+(bh+iC.w)*uRel;vec3 b=vec3(rad*sin(ar)*cos(th),rad*cos(ar)-uRr,rad*sin(ar)*sin(th));vec3 up=normalize(b+vec3(0,uRr,0)),e=transpose(uF)*iE;e=vec3(e.x,e.z,e.y);e=normalize(e-up*dot(e,up));vec3 nn=cross(up,e);float sk=1.-smoothstep(300.,1500.,b.z);if(sk<.04){gl_Position=vec4(2.,2.,2.,1.);vC=vec3(0.);vN=vec3(0.);vW=vec3(0.);return;}vec3 w=b+e*aP.x*iS.x+up*aP.y*iS.y*sk+nn*aP.z*iS.z;vC=iC.rgb;vN=e*aN.x+up*aN.y+nn*aN.z;vW=w;gl_Position=uVP*vec4(w,1.);}';
 var FS_B = COMMON + 'in vec3 vC;in vec3 vN;in vec3 vW;out vec4 o;uniform vec3 uSun,uCam,uSky;uniform float uHaze,uAmb;void main(){float l=max(dot(normalize(vN),uSun),0.);vec3 c=vC*(uAmb+(1.-uAmb)*l*1.2);float hz=1.-exp(-length(vW-uCam)*uHaze);o=vec4(mix(c,uSky,hz*.85),1.);}';
+var VS_T = COMMON + 'in vec2 aU;in vec4 iT;in vec2 iM;uniform mat3 uF;uniform mat4 uVP;uniform sampler2D uH;uniform float uR,uRr,uRel,uTex,uG,uFore,uTy;uniform vec3 uF1,uF2,uCam;uniform vec4 uCr[16];uniform float uCrD[16];uniform int uCrN;out vec3 vDir;out vec3 vW;out float vH;\n' +
+ 'vec3 cube(float f,vec2 w){if(f<.5)return vec3(1.,w);if(f<1.5)return vec3(-1.,w);if(f<2.5)return vec3(w.x,1.,w.y);if(f<3.5)return vec3(w.x,-1.,w.y);if(f<4.5)return vec3(w,1.);return vec3(w,-1.);}\n' +
+ 'vec3 at(vec2 a){vec2 uv=iT.yz+a*iT.w;return normalize(cube(iT.x,tan(uv*.78539816)));}float ang(vec3 a,vec3 b){return atan(length(cross(a,b)),dot(a,b));}\n' +
+ 'void main(){vec3 d0=at(aU);float r0=min(ang(d0,uF1),ang(d0,uF2))*uR,m=clamp((r0-iM.x)/(iM.y-iM.x),0.,1.);vec2 g=aU*32.,fr=fract(g*.5)*2.;vec3 dir=at((g-fr*m)/32.),v=transpose(uF)*dir;float a=atan(length(v.xy),v.z),th=atan(v.y,v.x),rr=a*uR;\n' +
+ 'float sp=max(mix(uG,max(uG,512.),smoothstep(6000.,9000.,rr)),rr*.03),h=textureLod(uH,oct(dir),log2(max(1.,sp/uTex))).r;for(int i=0;i<uCrN;i++){vec3 dv=dir-uCr[i].xyz;float q=dot(dv,dv)*uR*uR/(uCr[i].w*uCr[i].w);if(q<1.){float u=1.-q;h-=uCrD[i]*u*u;}}vH=h;vDir=dir;float ar=rr/uRr,rad=uRr+h*uRel;vec3 w=vec3(rad*sin(ar)*cos(th),rad*cos(ar)-uRr,rad*sin(ar)*sin(th));if(uFore>0.&&w.z>0.){float ln=uTy+(uCam.y-uTy)*min(w.z/uCam.z,1.)-60.;w.y=mix(w.y,min(w.y,ln),smoothstep(0.,900.,w.z));}vW=w;gl_Position=uVP*vec4(w,1.);}';
 var VS_F = COMMON + 'in vec3 aP;in vec3 aN;uniform mat4 uVP;uniform vec3 uPos,uSz;out vec3 vN;void main(){vN=aN;gl_Position=uVP*vec4(uPos+aP*uSz,1.);}';
 var FS_F = COMMON + 'in vec3 vN;out vec4 o;uniform vec3 uCol;void main(){o=vec4(uCol*(.65+.35*max(dot(vN,normalize(vec3(.3,.7,.6))),0.)),1.);}';
 var VS_S = '#version 300 es\nout vec2 v;void main(){vec2 p=vec2(gl_VertexID==1?3.:-1.,gl_VertexID==2?3.:-1.);v=p*.5+.5;gl_Position=vec4(p,1.,1.);}';
@@ -470,14 +483,38 @@ var VS_L = COMMON + 'in vec3 aD;uniform mat3 uF;uniform mat4 uVP;uniform float u
 var FS_L = COMMON + 'out vec4 o;uniform vec3 uCol;void main(){o=vec4(uCol,1.);}';
 function sh(t, s) { var x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x) + '\n' + s.slice(0, 200)); return x; }
 function prog(v, f) { var p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, v)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, f)); gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p)); var u = {}, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS); for (var i = 0; i < n; i++) { var a = gl.getActiveUniform(p, i).name.replace('[0]', ''); u[a] = gl.getUniformLocation(p, a); } return { p: p, u: u, a: function (x) { return gl.getAttribLocation(p, x); } }; }
-var pG = prog(VS_G, FS_G), pC = prog(VS_G, FS_C), pB = prog(VS_B, FS_B), pF = prog(VS_F, FS_F), pS = prog(VS_S, FS_S), pL = prog(VS_L, FS_L);
-// ---- the ground mesh: rings round the pair, dense at the pair, out past the horizon; it never changes, the map slides under it ----
+var pT = prog(VS_T, FS_G), pG = prog(VS_G, FS_G), pC = prog(VS_G, FS_C), pB = prog(VS_B, FS_B), pF = prog(VS_F, FS_F), pS = prog(VS_S, FS_S), pL = prog(VS_L, FS_L);
+// ---- a polar mesh for the clouds and the globe; the ground itself is tiles, below ----
 var NR = 170, NT = 300, RMIN = 25, RMAX = RP * Math.PI * 0.82, meshV = new Float32Array((NR + 1) * NT * 2), meshI = [], thStep = 2 * Math.PI / NT;
 for (var ir = 0; ir <= NR; ir++) for (var it = 0; it < NT; it++) { var rr = ir === 0 ? 0 : RMIN * Math.pow(RMAX / RMIN, (ir - 1) / (NR - 1)); meshV[(ir * NT + it) * 2] = rr; meshV[(ir * NT + it) * 2 + 1] = it * thStep; }
 for (ir = 0; ir < NR; ir++) for (it = 0; it < NT; it++) { var a0 = ir * NT + it, a1 = ir * NT + (it + 1) % NT, b0 = a0 + NT, b1 = a1 + NT; meshI.push(a0, b0, a1, a1, b0, b1); }
 var vaoG = gl.createVertexArray(); gl.bindVertexArray(vaoG); var bG = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bG); gl.bufferData(gl.ARRAY_BUFFER, meshV, gl.STATIC_DRAW); var ibG = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibG); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(meshI), gl.STATIC_DRAW);
 gl.enableVertexAttribArray(pG.a('aG')); gl.vertexAttribPointer(pG.a('aG'), 2, gl.FLOAT, false, 0, 0);
 var meshN = meshI.length;
+// ---- the ground: tiles keyed to the planet (a cube-sphere quadtree), one small mesh drawn instanced. A vertex belongs to a planet node, so nothing swims in flight and a swing is one matrix. Levels meet by a radial morph ----
+var TN = 32, TILE_K = 1.25, TILE_MAX = 4, FACE_ARC = Math.PI / 2 * RP, tileV = new Float32Array((TN + 1) * (TN + 1) * 2), tileI = new Uint16Array(TN * TN * 6);
+for (var tj = 0; tj <= TN; tj++) for (var ti = 0; ti <= TN; ti++) { tileV[(tj * (TN + 1) + ti) * 2] = ti / TN; tileV[(tj * (TN + 1) + ti) * 2 + 1] = tj / TN; }
+for (tj = 0; tj < TN; tj++) for (ti = 0; ti < TN; ti++) { var t00 = tj * (TN + 1) + ti, tk = (tj * TN + ti) * 6; tileI.set([t00, t00 + 1, t00 + TN + 1, t00 + 1, t00 + TN + 2, t00 + TN + 1], tk); }
+var vaoTile = gl.createVertexArray(); gl.bindVertexArray(vaoTile); var bTV = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bTV); gl.bufferData(gl.ARRAY_BUFFER, tileV, gl.STATIC_DRAW); var ibT = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibT); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, tileI, gl.STATIC_DRAW);
+gl.enableVertexAttribArray(pT.a('aU')); gl.vertexAttribPointer(pT.a('aU'), 2, gl.FLOAT, false, 0, 0);
+var TILE_MAXN = 2048, tileData = new Float32Array(TILE_MAXN * 6), bTI = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bTI); gl.bufferData(gl.ARRAY_BUFFER, tileData.byteLength, gl.DYNAMIC_DRAW);
+gl.enableVertexAttribArray(pT.a('iT')); gl.vertexAttribPointer(pT.a('iT'), 4, gl.FLOAT, false, 24, 0); gl.vertexAttribDivisor(pT.a('iT'), 1); gl.enableVertexAttribArray(pT.a('iM')); gl.vertexAttribPointer(pT.a('iM'), 2, gl.FLOAT, false, 24, 16); gl.vertexAttribDivisor(pT.a('iM'), 1);
+function cubeDir(f, u, v) { var a = Math.tan(u * Math.PI / 4), b = Math.tan(v * Math.PI / 4); return norm(f === 0 ? [1, a, b] : f === 1 ? [-1, a, b] : f === 2 ? [a, 1, b] : f === 3 ? [a, -1, b] : f === 4 ? [a, b, 1] : [a, b, -1]); }
+function arcOf(a, b) { var c = cross(a, b); return Math.atan2(Math.sqrt(dot(c, c)), dot(a, b)); }
+var tileN = 0;
+function selectTiles(f1, f2, arcMax, lensLocal, lineT, tanH, flat) {
+  tileN = 0;
+  function visit(f, u0, v0, size, level) {
+    var arc = size / 2 * FACE_ARC, bound = arc * 0.8, c = cubeDir(f, u0 + size / 2, v0 + size / 2), d1 = arcOf(c, f1) * RP, d2 = arcOf(c, f2) * RP;
+    if (d2 - bound > arcMax && d1 - bound > arcMax) return;
+    var zw = dot(c, lensLocal[0]) * RP; if (zw - bound > lensLocal[1]) return;       // wholly behind the lens
+    if (flat && Math.abs(dot(c, lineT)) * RP - bound * 1.5 > (lensLocal[1] - zw + bound * 1.5) * tanH * 1.15) return;   // past the view's sides
+    if (level < TILE_MAX && Math.min(d1, d2) - bound < TILE_K * arc) { var h = size / 2; visit(f, u0, v0, h, level + 1); visit(f, u0 + h, v0, h, level + 1); visit(f, u0, v0 + h, h, level + 1); visit(f, u0 + h, v0 + h, h, level + 1); return; }
+    if (tileN >= TILE_MAXN) return; var o = tileN * 6, end = level ? TILE_K * arc * 2 : 1e9; tileData[o] = f; tileData[o + 1] = u0; tileData[o + 2] = v0; tileData[o + 3] = size; tileData[o + 4] = level ? end * 0.6 : 1e9; tileData[o + 5] = level ? end : 2e9; tileN++;
+  }
+  for (var f = 0; f < 6; f++) visit(f, -1, -1, 2, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, bTI); gl.bufferSubData(gl.ARRAY_BUFFER, 0, tileData.subarray(0, tileN * 6));
+}
 // a box, for towers (instanced, each with its own planet direction) and the two bars
 var BOX = []; [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]].forEach(function (n) { var u = n[1] ? [1, 0, 0] : [0, 1, 0], v = cross(n, u); function pt(s, t) { var x = n[0] * 0.5 + u[0] * s * 0.5 + v[0] * t * 0.5, y = n[1] * 0.5 + u[1] * s * 0.5 + v[1] * t * 0.5 + 0.5, z = n[2] * 0.5 + u[2] * s * 0.5 + v[2] * t * 0.5; BOX.push(x, y, z, n[0], n[1], n[2]); } pt(-1, -1); pt(1, -1); pt(1, 1); pt(-1, -1); pt(1, 1); pt(-1, 1); });
 var bBox = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bBox); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(BOX), gl.STATIC_DRAW);
@@ -489,9 +526,9 @@ function buildTowers() {
   function east(q) { return norm(cross([0.12, 1, 0.07], q)); }
   for (var c = 0; c < 90; c++) { var q = norm([r() - 0.5, r() - 0.5, r() - 0.5]), s0 = surf(SEED, q[0], q[1], q[2])[0]; if (s0 < 40) continue; var e = east(q), n = cross(q, e);
     for (var b = 0; b < 34; b++) { var dx = (r() - 0.5) * 5600, dz = (r() - 0.5) * 5600, d = norm(add(add(q, e, dx / RP), n, dz / RP)), g = r(); TW.push({ d: d, e: e, w: 70 + g * 170, h: 110 + g * g * 900, g: surf(SEED, d[0], d[1], d[2])[0], col: g > 0.6 ? [0.62, 0.64, 0.68] : [0.72, 0.68, 0.6] }); } }
-  for (var m = 0; m < 26; m++) { var q2 = norm([r() - 0.5, r() - 0.5, r() - 0.5]), s2 = surf(SEED, q2[0], q2[1], q2[2])[0]; if (s2 < 0) continue; var e2 = east(q2); MARKS.push(q2); TW.push({ d: q2, e: e2, w: 420, h: 6500, g: s2, col: [0.86, 0.26, 0.2], big: 1 }); TW.push({ d: q2, e: e2, w: 900, h: 700, g: s2 + 2600, col: [0.95, 0.9, 0.82] }); }
+  for (var m = 0; m < 26; m++) { var q2 = norm([r() - 0.5, r() - 0.5, r() - 0.5]), s2 = surf(SEED, q2[0], q2[1], q2[2])[0]; if (s2 < 0) continue; var e2 = east(q2); MARKS.push(q2); TW.push({ d: q2, e: e2, w: 420, h: 6500, g: s2, col: [0.86, 0.26, 0.2], big: 1 }); TW.push({ d: q2, e: e2, w: 900, h: 700, g: s2 + 2600, off: 2600, col: [0.95, 0.9, 0.82] }); }
   twN = TW.length; twData = new Float32Array(twN * 13);
-  TW.forEach(function (t, i) { var o = i * 13; twData.set(t.d, o); twData.set(t.e, o + 3); twData.set([t.w, t.h, t.w], o + 6); twData.set(t.col, o + 9); twData[o + 12] = t.g; });
+  TW.forEach(function (t, i) { var o = i * 13; twData.set(t.d, o); twData.set(t.e, o + 3); twData.set([t.w, t.h, t.w], o + 6); twData.set(t.col, o + 9); twData[o + 12] = t.off || 0; });
   vaoT = gl.createVertexArray(); gl.bindVertexArray(vaoT); gl.bindBuffer(gl.ARRAY_BUFFER, bBox); var aP = pB.a('aP'), aN = pB.a('aN'); gl.enableVertexAttribArray(aP); gl.vertexAttribPointer(aP, 3, gl.FLOAT, false, 24, 0); gl.enableVertexAttribArray(aN); gl.vertexAttribPointer(aN, 3, gl.FLOAT, false, 24, 12);
   bT = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bT); gl.bufferData(gl.ARRAY_BUFFER, twData, gl.DYNAMIC_DRAW);
   [['iD', 3, 0], ['iE', 3, 12], ['iS', 3, 24], ['iC', 4, 36]].forEach(function (x) { var l = pB.a(x[0]); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, x[1], gl.FLOAT, false, 52, x[2]); gl.vertexAttribDivisor(l, 1); });
@@ -501,48 +538,123 @@ var vaoL = gl.createVertexArray(), bL = gl.createBuffer(); gl.bindVertexArray(va
 var vaoS = gl.createVertexArray();
 // ---- the state: all of it. The world is two unit vectors: where the pair is on the planet, and which way their line runs ----
 var S, rnd;
-function reset() { var p = norm([0.42, 0.33, 0.84]); S = { p: p, t: norm(cross([0, 1, 0], p)), gap: 250, v: 0, y: 0, alt: 0, rem: 0, w: 0, send: 0, sdir: 1, flown: 0, swung: 0, lapT: 0, crater: [], nextFire: P.every, tick: 0, trail: [], wid: P.width, sendV: 0, aim: null, autoT: 0, last: null }; S.y = heightAt(S.p); rnd = lcg(991); }
-function ground(x) { var a = x / RP, c = Math.cos(a), s = Math.sin(a); return heightAt([S.p[0] * c + S.t[0] * s, S.p[1] * c + S.t[1] * s, S.p[2] * c + S.t[2] * s]) + craterAt(x); }
-function craterAt(x) { var a = x / RP, c = Math.cos(a), s = Math.sin(a), d = [S.p[0] * c + S.t[0] * s, S.p[1] * c + S.t[1] * s, S.p[2] * c + S.t[2] * s], v = 0; S.crater.forEach(function (m) { var dv = [d[0] - m.d[0], d[1] - m.d[1], d[2] - m.d[2]], q = dot(dv, dv) * RP * RP / (m.r * m.r); if (q < 1) { var u = 1 - q; v -= m.dep * u * u; } }); return v; }
-function dig(x, r0, dep) { var a = x / RP, c = Math.cos(a), s = Math.sin(a), d = norm([S.p[0] * c + S.t[0] * s, S.p[1] * c + S.t[1] * s, S.p[2] * c + S.t[2] * s]); S.crater.push({ d: d, r: r0, dep: dep }); if (S.crater.length > 16) S.crater.shift(); }
-function fire(dirSign) { var a = P.angle * Math.PI / 180 * dirSign; if (P.fires === 'mark') return aimMark(); S.aim = null; S.rem += a; }
-function aimMark() { var best = null, bd = 1e9, off = rnd() * 9000; MARKS.forEach(function (q) { var c = cross(S.p, q), a = Math.atan2(Math.sqrt(dot(c, c)), dot(S.p, q)) * RP; if (a > 6000 + off && a < bd) { bd = a; best = q; } }); if (!best) return; S.aim = best; }
-function bearingTo(q) { var d = dot(S.p, q), v = [q[0] - S.p[0] * d, q[1] - S.p[1] * d, q[2] - S.p[2] * d], l = cross(S.p, S.t); return Math.atan2(dot(v, l), dot(v, S.t)); }
+function reset() { var p = norm([0.42, 0.33, 0.84]), t = norm(cross([0, 1, 0], p)); S = { p: p, t: t, dt: t, off: 0, offPeak: 60, gap: 250, v: 0, y: 0, alt: 0, altL: 0, altR: 0, airL: false, airR: false, w: 0, send: 0, stop: 0, hold: 0, sdir: 1, closing: 0, flown: 0, swung: 0, crater: [], nextFire: P.every, quiet: 0, lastSwing: -9999, tick: 0, trail: [], wid: P.width, sw: null, form: false, beam: false, softG: P.rest, lim: '', autoT: 0, rate: 0, pivot: '', jolt: 0, nextSmall: P.smallEvery }; S.y = heightAt(S.p, 0); rnd = lcg(991); }
+function lineDir(x, t) { var a = x / RP, c = Math.cos(a), s = Math.sin(a), T = t || S.dt; return [S.p[0] * c + T[0] * s, S.p[1] * c + T[1] * s, S.p[2] * c + T[2] * s]; }
+function smooth(a, b, x) { var u = Math.max(0, Math.min(1, (x - a) / (b - a))); return u * u * (3 - 2 * u); }
+// the same spacing the shader reads, so a bar stands on the ground that's drawn: a function of the place and the softening only
+function lodAt(r) { var g = S.softG, sp = Math.max(g + (Math.max(g, 512) - g) * smooth(6000, 9000, r), r * 0.03); return Math.log2(Math.max(1, sp / (3.54 * RP / MAP.N))); }
+function ground(x) { return heightAt(lineDir(x), lodAt(Math.abs(x))) + craterAt(x); }
+function craterAt(x) { var d = lineDir(x), v = 0; S.crater.forEach(function (m) { var dv = [d[0] - m.d[0], d[1] - m.d[1], d[2] - m.d[2]], q = dot(dv, dv) * RP * RP / (m.r * m.r); if (q < 1) { var u = 1 - q; v -= m.dep * u * u; } }); return v; }
+function dig(x, r0, dep) { S.crater.push({ d: norm(lineDir(x)), r: r0, dep: dep }); if (S.crater.length > 16) S.crater.shift(); }
+function rotAbout(v, k, a) { var c = Math.cos(a), s = Math.sin(a), x = cross(k, v), d = dot(k, v) * (1 - c); return [v[0] * c + x[0] * s + k[0] * d, v[1] * c + x[1] * s + k[1] * d, v[2] * c + x[2] * s + k[2] * d]; }
+function ortho2() { S.p = norm(S.p); S.t = norm(add(S.t, S.p, -dot(S.t, S.p))); }
+var RAD = Math.PI / 180;
+function peakFor(c) { var r = c === 'chase' ? P.rChase : c === 'form' ? P.rForm : c === 'brawl' ? P.rBrawl : P.rLaunch; return P.reduced ? Math.min(r, 30) : r; }
+// Game Design's law: peak = min(the cause's rate, the size ceiling, sweep limit / distance). 240 x min(1, sqrt(15 / size)) is its first guess at the ceiling
+function sizeCeil(deg) { return P.ceil ? 240 * Math.min(1, Math.sqrt(15 / Math.max(deg, 0.1))) : 1e9; }
+// one swing at a time. A big swing is Camera's ramps, 20 ticks in and 10 out; a launch's pivot is the launcher's planet point until it rests
+function startSwing(cause, deg, sg, q) {
+  if (S.sw || S.beam || S.stop) return false; deg = Math.abs(deg); var th = deg * RAD; if (th < 0.002) return false;
+  var peak = Math.min(peakFor(cause), sizeCeil(deg)) * RAD / 60; if (th < 15 * peak) peak = th / 15;
+  S.sw = { cause: cause, th: th, sg: sg, a: 0, k: 0, j: 0, out: false, outW: 0, wNow: 0, peak: peak, q: q || null, rf: 1, rfStep: 0, vr: null, flipped: false, small: false }; S.offPeak = peak * 60 / RAD; S.lastSwing = S.tick; S.quiet = 0; return true;
+}
+// the small class, 2 to 15 degrees: with a blow it starts fast and lands soft, 8 ticks at least; without one it's a smootherstep, 12 ticks at least.
+// Its sweep allowance is in all, not a speed: r x size at most 30 units standing, 600 airborne, so a far one gets smaller and on the ground it may not fire
+function startSmall(cause, deg, sg, blow) {
+  if (S.sw || S.beam || S.stop || S.tick - S.lastSwing < 60) return false;
+  var th = Math.min(15, deg) * RAD, xL = -S.gap / 2, xR = S.gap / 2; if (P.law) [[xL, S.airL], [xR, S.airR]].forEach(function (f) { var r = Math.abs(f[0]); if (r > 1) th = Math.min(th, (f[1] ? 600 : 30) / r); });
+  if (th < 2 * RAD) return false; var rate = Math.min(P.rSmall, P.reduced ? 30 : 1e9) * RAD / 60, T = Math.max(blow ? 8 : 12, (blow ? 3 : 1.875) * th / rate);
+  S.sw = { cause: cause, th: th, sg: sg, a: 0, k: 0, T: T, blow: blow, peak: rate, q: null, rf: 1, rfStep: 0, flipped: true, small: true }; S.offPeak = rate * 60 / RAD; S.lastSwing = S.tick; return true;
+}
+function fire(sg) { return startSwing('hand', P.angle, sg); }
+function aimMark() { var best = null, bd = 1e9, off = rnd() * 9000; MARKS.forEach(function (q) { var c = cross(S.p, q), a = Math.atan2(Math.sqrt(dot(c, c)), dot(S.p, q)) * RP; if (a > 6000 + off && a < bd) { bd = a; best = q; } }); if (!best) return; var d = dot(S.p, best), v = [best[0] - S.p[0] * d, best[1] - S.p[1] * d, best[2] - S.p[2] * d], l = cross(S.p, S.t), b = Math.atan2(dot(v, l), dot(v, S.t)); startSwing('hand', b / RAD, b < 0 ? -1 : 1); }
+function stepSwing() {
+  var sw = S.sw; S.w = 0; if (!sw) { S.rate = 0; S.lim = ''; return; }
+  var w, lim = 'its cause';
+  if (sw.small) {
+    sw.k++; var u = Math.min(1, sw.k / sw.T), v = sw.blow ? 1 - (1 - u) * (1 - u) * (1 - u) : u * u * u * (u * (u * 6 - 15) + 10), a = sw.th * v; w = (a - sw.a) * sw.sg; sw.a = a; S.pivot = 'the midpoint'; lim = 'its size';
+    S.t = rotAbout(S.t, S.p, w); ortho2(); S.swung += Math.abs(w); S.w = w; S.rate = Math.abs(w) * 60 / RAD; S.lim = lim;
+    if (u >= 1) { S.sw = null; S.w = 0; }
+    return;
+  }
+  var rate = sw.peak, xL = -S.gap / 2, xR = S.gap / 2, xq = sw.q ? Math.atan2(dot(sw.q, S.t), dot(sw.q, S.p)) * RP : 0;
+  S.pivot = sw.q ? 'the standing fighter' : 'the midpoint';
+  if (P.law) { [[xL, S.airL], [xR, S.airR]].forEach(function (f) { var r = Math.abs(f[0] - xq); if (r > 1) { var l = (f[1] ? 10000 : 75) / 60 / r; if (l < rate) { rate = l; lim = f[1] ? 'the airborne sweep limit' : 'the standing sweep limit'; } } }); if (lim !== 'its cause' && rate < 2 * RAD / 60) { rate = 0; lim = 'holding still, under 2 deg/s'; } }
+  sw.vr = sw.vr === null ? rate : sw.vr + (rate - sw.vr) * 0.08; if (sw.rfStep) sw.rf = Math.max(0, sw.rf - sw.rfStep);
+  sw.k++; var x = Math.min(1, sw.k / 20), rem = sw.th - sw.a; w = sw.vr * x * x * (3 - 2 * x) * sw.rf;
+  if (!sw.out && rem <= w * 4.5) { sw.out = true; sw.outW = Math.max(w, rem / 4.5); sw.j = 0; }
+  if (sw.out) { sw.j++; var y = sw.j / 10; w = sw.j >= 10 ? rem : Math.min(rem, sw.outW * (1 - y * y * (3 - 2 * y))); }
+  w = Math.max(0, w); sw.a += w; var sw_ = w * sw.sg, ax = sw.q || S.p; S.t = rotAbout(S.t, ax, sw_); if (sw.q) S.p = rotAbout(S.p, ax, sw_); ortho2(); S.swung += w; S.w = sw_; S.rate = w * 60 / RAD; S.lim = lim;
+  // a forced flip: the sim's heading corrects at once, the view keeps its own and eases back, no faster than the cause's peak. One number
+  if (P.flip !== 'off' && !sw.flipped) {
+    var err = 0, trig = P.flip === 'jump' ? sw.a >= sw.th / 2 : sw.k === P.flipDepth;
+    if (trig) { sw.flipped = true; err = P.flip === 'back' ? sw.a * sw.sg : P.flip === 'wrong' ? 2 * sw.a * sw.sg : sw.peak * P.flipDepth * sw.sg; S.t = rotAbout(S.t, S.p, -err); S.off += err; ortho2(); sw.q = null; if (P.flip === 'wrong') sw.sg = -sw.sg; if (P.flip === 'back') { S.sw = null; S.w = 0; return; } }
+  }
+  if ((sw.out && sw.j >= 10) || sw.rf <= 0) { S.sw = null; S.w = 0; S.quiet = 0; if (sw.cause === 'form') S.form = false; }
+}
 // one tick at 60 Hz
-var inp = { x: 0, fly: false, send: false, dig: false, l: false, r: false, aim: false }, prev = {}, keys = {}, human = false;
+var inp = { x: 0, fly: false, send: false, dig: false, l: false, r: false, aim: false, form: false, beam: false, heavy: false }, prev = {}, keys = {}, human = false;
 function readInput() {
-  var o = { x: (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0), fly: !!(keys.ShiftLeft || keys.ShiftRight), send: !!keys.Space, dig: !!keys.KeyC, l: !!keys.KeyQ, r: !!keys.KeyE, aim: !!keys.KeyG };
+  var o = { x: (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0), fly: !!(keys.ShiftLeft || keys.ShiftRight), send: !!keys.Space, dig: !!keys.KeyC, l: !!keys.KeyQ, r: !!keys.KeyE, aim: !!keys.KeyG, form: !!keys.KeyF, beam: !!keys.KeyB, heavy: !!keys.KeyH };
   var ps = navigator.getGamepads ? navigator.getGamepads() : [], g = null; for (var i = 0; i < ps.length; i++) if (ps[i] && ps[i].connected) { g = ps[i]; break; }
-  if (g) { var bt = function (k) { return !!(g.buttons[k] && (g.buttons[k].pressed || g.buttons[k].value > 0.5)); }; if (Math.abs(g.axes[0]) > 0.25) o.x = g.axes[0]; o.fly = o.fly || bt(7); o.send = o.send || bt(2); o.dig = o.dig || bt(0); o.l = o.l || bt(4); o.r = o.r || bt(5); o.aim = o.aim || bt(3); }
-  if (o.x || o.fly || o.send || o.dig || o.l || o.r || o.aim) human = true;
+  if (g) { var bt = function (k) { return !!(g.buttons[k] && (g.buttons[k].pressed || g.buttons[k].value > 0.5)); }; if (Math.abs(g.axes[0]) > 0.25) o.x = g.axes[0]; o.fly = o.fly || bt(7); o.send = o.send || bt(2); o.dig = o.dig || bt(0); o.l = o.l || bt(4); o.r = o.r || bt(5); o.aim = o.aim || bt(3); o.form = o.form || bt(6); o.beam = o.beam || bt(1); o.heavy = o.heavy || bt(11); }
+  if (o.x || o.fly || o.send || o.dig || o.l || o.r || o.aim || o.form || o.beam || o.heavy) human = true;
   return o;
 }
-function autoInput() {     // until someone touches it: a brawl, a send, a long flight, a swing in flight, another brawl
-  var t = S.autoT++ % 1500, o = { x: 0, fly: false, send: false, dig: false, l: false, r: false, aim: false };
-  if (t < 120) o.x = Math.sin(t * 0.05) * 0.6; else if (t === 130) o.send = true; else if (t >= 260 && t < 900) { o.x = 1; o.fly = true; if (t === 520) o.r = true; if (t === 760) o.l = true; } else if (t === 1000) o.send = true; else if (t >= 1120 && t < 1380) { o.x = -1; o.fly = true; }
+function autoInput() {     // until someone touches it: a brawl, a launch, a long flight, a brawl, a launch, a flight back
+  var t = S.autoT++ % 2400, o = { x: 0, fly: false, send: false, dig: false, l: false, r: false, aim: false, form: false, beam: false, heavy: false };
+  if (t < 240) o.x = Math.sin(t * 0.05) * 0.6; else if (t === 250) o.send = true; else if (t >= 470 && t < 1100) { o.x = 1; o.fly = true; } else if (t === 1250) o.send = true; else if (t >= 1470 && t < 1950) { o.x = -1; o.fly = true; }
   return o;
 }
+var SOFT_V = [0, 1000, 3000, 6000, 10000], SOFT_G = [128, 224, 387, 548, 707];
+function softTarget(v) { if (!P.soft) return P.rest; v = Math.abs(v); var g = SOFT_G[4]; for (var k = 1; k < 5; k++) if (v <= SOFT_V[k]) { g = SOFT_G[k - 1] + (SOFT_G[k] - SOFT_G[k - 1]) * (v - SOFT_V[k - 1]) / (SOFT_V[k] - SOFT_V[k - 1]); break; } return Math.max(P.rest, g); }
 function step() {
   lookups = 0; var i = human ? readInput() : (readInput(), human ? readInput() : autoInput()), pr = function (k) { return i[k] && !prev[k]; }; inp = i;
+  var flying = Math.abs(S.v) > 2500, rs = function () { return rnd() < 0.5 ? -1 : 1; };
   if (pr('l')) fire(-1); if (pr('r')) fire(1); if (pr('aim')) aimMark();
   if (pr('dig')) dig(0, 500, 220);
-  if (pr('send') && !S.send) { S.send = 90; S.sdir = i.x < 0 ? -1 : 1; if (P.fires === 'send' || P.fires === 'mark') { if (P.fires === 'mark') aimMark(); else fire(rnd() < 0.5 ? -1 : 1); } }
-  if (P.fires === 'every' && (S.nextFire -= 1 / 60) <= 0) { S.nextFire = P.every; fire(rnd() < 0.5 ? -1 : 1); }
-  if (P.fires === 'flight' && i.fly) { if ((S.nextFire -= 1 / 60) <= 0) { S.nextFire = P.every; fire(rnd() < 0.5 ? -1 : 1); } }
-  // the swing: eased up to its rate and down onto its angle, about the pair, never a cut
-  if (S.aim) { S.rem = bearingTo(S.aim); if (Math.abs(S.rem) < 0.004) { S.aim = null; S.rem = 0; } }
-  var cap = P.rate * Math.PI / 180 / 60, acc = cap / 24, want = Math.sign(S.rem) * Math.min(cap, Math.sqrt(2 * acc * Math.abs(S.rem)));
-  S.w += Math.max(-acc, Math.min(acc, want - S.w)); if (Math.abs(S.rem) < 1e-4 && Math.abs(S.w) < acc) { S.w = 0; S.rem = 0; }
-  if (S.w) { S.t = norm(add(add(S.t, [0, 0, 0], Math.cos(S.w)), cross(S.p, S.t), Math.sin(S.w))); S.rem -= S.w; S.swung += Math.abs(S.w); }
+  if (pr('send') && !S.send && !S.stop) { S.stop = 14; S.sdir = i.x < 0 ? -1 : 1; if (S.sw) S.sw.rf = S.sw.rf; }
+  if (pr('heavy') && !S.send && !S.stop) { S.stop = 8; S.jolt = 3 + rnd() * 5; }
+  if (pr('form') && !S.send && !S.stop && startSwing('form', Math.min(P.angle, 90), rs())) S.form = true;
+  S.beam = i.beam; if (S.beam && S.sw && !S.sw.rfStep) S.sw.rfStep = 1 / 33;
+  if (P.fires === 'every' && (S.nextFire -= 1 / 60) <= 0) { S.nextFire = P.every; fire(rs()); }
+  if (P.fires === 'gd') {
+    if (i.fly && !prev.fly && S.tick - S.lastSwing > 360) startSwing('chase', P.angle, rs());
+    if (P.jolts && !S.send && !S.stop && !S.sw && !S.form && !S.beam && (S.nextSmall -= 1 / 60) <= 0) { S.nextSmall = P.smallEvery * (0.75 + rnd() * 0.5); if (flying) startSmall('correction', 5 + rnd() * 10, rs(), false); else { S.stop = 8; S.jolt = 3 + rnd() * 5; } }
+    if (P.brawl && !flying && !S.send && !S.stop && !S.sw && !S.form) { S.quiet += 1 / 60; if (S.quiet >= P.quiet) startSwing('brawl', Math.min(P.angle, 60), rs()); }
+  }
+  if (S.sw) {
+    if (S.sw.cause === 'brawl' && !P.brawl && !S.sw.rfStep) S.sw.rfStep = 1 / 24;
+    if (S.sw.cause === 'chase' && !flying && !i.fly && !S.send) { if (P.brawl && P.fires === 'gd') { S.sw.cause = 'brawl'; S.sw.peak = peakFor('brawl'); } else if (!S.sw.rfStep) S.sw.rfStep = 1 / 24; }
+    if (S.sw.cause === 'launch' && S.send > 0 && S.send <= 31 && !S.sw.rfStep) S.sw.rfStep = 1 / 10;   // at rest 21 ticks (0.35 s) before contact
+  }
+  // the hit-stop: the world is dead still, and the launch's swing starts on the first live tick
+  if (S.stop > 0) {
+    S.stop--; S.v = 0; S.w = 0; S.rate = 0;
+    if (S.stop === 0 && S.jolt) { startSmall('jolt', S.jolt, rs(), true); S.jolt = 0; } else if (S.stop === 0) { S.send = Math.round(P.sendS * 60); S.hold = 40;
+      if (P.fires === 'gd' || P.fires === 'send') { var fit = Math.min(peakFor('launch'), sizeCeil(P.angle)) * (S.send - 21 - 15) / 60, launcher = lineDir(-S.sdir * S.gap / 2, S.t); startSwing('launch', Math.min(P.angle, fit), rs(), norm(launcher)); } }
+  } else stepSwing();
   // the pair along their line: the planet turns under them
-  var flat = FLAT * P.speed / 100, tv = i.fly ? i.x * flat : i.x * 700;
-  if (S.send) { S.send--; tv = 6000 * S.sdir * (0.45 + S.send / 160); S.gap = Math.min(2600, S.gap + 34); if (!S.send) dig(S.sdir * S.gap / 2, 620, 260); }
-  else S.gap = Math.max(250, S.gap - 26);
-  S.v += (tv - S.v) * (i.fly || S.send ? 0.16 : 0.22);
-  var da = S.v / 60 / RP; if (da) { var c = Math.cos(da), s = Math.sin(da), p = S.p, t = S.t; S.p = norm([p[0] * c + t[0] * s, p[1] * c + t[1] * s, p[2] * c + t[2] * s]); S.t = norm([t[0] * c - p[0] * s, t[1] * c - p[1] * s, t[2] * c - p[2] * s]); S.flown += Math.abs(S.v) / 60; S.t = norm(add(S.t, S.p, -dot(S.t, S.p))); }
+  var flat = FLAT * P.speed / 100, tv = S.form ? 0 : i.fly ? i.x * flat : i.x * 700, frozen = S.stop > 0;
+  if (S.send) {
+    S.send--; var vB = 6000 * S.sdir * (S.send < 20 ? 0.3 + 0.7 * S.send / 20 : 1), vA = S.hold > 0 ? 0 : 5400 * S.sdir; if (S.hold > 0) S.hold--;
+    S.gap = Math.max(250, S.gap + (vB - vA) * S.sdir / 60); S.v = (vA + vB) / 2; S.airL = S.sdir > 0 ? vA !== 0 : true; S.airR = S.sdir > 0 ? true : vA !== 0;
+    if (!S.send) { dig(S.sdir * S.gap / 2, 620, 260); S.closing = S.sdir; }
+  } else if (!frozen) {
+    S.v += (tv - S.v) * (i.fly ? 0.16 : 0.22); S.airL = S.airR = Math.abs(S.v) > 2500;
+    if (S.gap > 250) S.gap = Math.max(250, S.gap - 40); else S.closing = 0;
+  }
+  var mv = frozen ? 0 : S.v / 60 + (S.closing && S.gap > 250 ? -S.closing * 20 : 0), da = mv / RP;
+  if (da) { var c = Math.cos(da), s = Math.sin(da), p = S.p, t = S.t; S.p = [p[0] * c + t[0] * s, p[1] * c + t[1] * s, p[2] * c + t[2] * s]; S.t = [t[0] * c - p[0] * s, t[1] * c - p[1] * s, t[2] * c - p[2] * s]; S.flown += Math.abs(mv); ortho2(); }
+  // the view's heading: the sim's, plus what's left of a correction
+  if (S.off) { var off = Math.abs(S.off), st = Math.min(off, Math.min(S.offPeak * RAD / 60, Math.max(off * 0.12, 0.0005))); var pk = S.offPeak * RAD / 60, dOff = -(S.off > 0 ? 1 : -1) * st, wv = Math.max(-pk, Math.min(pk, S.w + dOff)); S.off += wv - S.w; if (Math.abs(S.off) < 1e-6) S.off = 0; }
+  S.dt = S.off ? norm(rotAbout(S.t, S.p, S.off)) : S.t;
+  // the ground softens at once with speed, and sharpens as fast as the reads allow
+  var tg = softTarget(S.send || S.airL || S.airR ? Math.max(Math.abs(S.v), S.send ? 6000 : 0) : S.v);
+  if (tg > S.softG) S.softG += (tg - S.softG) * 0.15; else if (tg < S.softG) S.softG = Math.max(tg, S.softG * Math.exp(-Math.log(548 / 128) / (P.sharpen * 60)));
   // the ground the sim needs: under each bar, and the camera's rest height
-  var ax = -S.gap / 2, bx = S.gap / 2, ga = ground(ax), gb = ground(bx), g0 = ground(0), air = (Math.abs(S.v) > 2500 || S.send) ? 1 : 0;
-  S.alt += ((air ? 420 : 0) - S.alt) * 0.08; S.ga = ga; S.gb = gb; S.gm = Math.max(ga, gb); S.y += ((Math.max(g0, S.gm) + S.alt) - S.y) * 0.12;
+  var ga = ground(-S.gap / 2), gb = ground(S.gap / 2), g0 = ground(0);
+  S.altL += ((S.airL ? 420 : 0) - S.altL) * 0.08; S.altR += ((S.airR ? 420 : 0) - S.altR) * 0.08; S.alt = Math.max(S.altL, S.altR); S.ga = ga; S.gb = gb; S.gm = Math.max(ga, gb); S.y += ((Math.max(g0, S.gm) + S.alt) - S.y) * 0.12;
   S.wid += ((P.width * (Math.abs(S.v) > 2500 ? P.wide : 1) + S.gap * 1.3) - S.wid) * 0.05;
   if (S.tick % 8 === 0) { S.trail.push(S.p.slice()); if (S.trail.length > 1200) S.trail.shift(); }
   prev = i; S.tick++; S.lookups = lookups;
@@ -559,18 +671,21 @@ function setGround(p, F, vp, Rr, cam, alt) {
   var cr = new Float32Array(64), cd = new Float32Array(16); S.crater.forEach(function (m, i) { cr.set([m.d[0], m.d[1], m.d[2], m.r], i * 4); cd[i] = m.dep; }); gl.uniform4fv(p.u.uCr, cr); gl.uniform1fv(p.u.uCrD, cd); gl.uniform1i(p.u.uCrN, S.crater.length);
 }
 function draw() {
-  var W = cv.width, H = cv.height, asp = W / H, K = 100 / P.curve, Rr = RP * K; gl.viewport(0, 0, W, H); gl.disable(gl.SCISSOR_TEST); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  gl.disable(gl.DEPTH_TEST); gl.useProgram(pS.p); gl.uniform3fv(pS.u.uSky, SKY); gl.uniform3fv(pS.u.uTop, TOP); gl.bindVertexArray(vaoS); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.enable(gl.DEPTH_TEST);
+  var W = cv.width, H = cv.height, asp = W / H, K = 100 / P.curve, Rr = RP * K; gl.viewport(0, 0, W, H); gl.disable(gl.SCISSOR_TEST); gl.clearColor(P.dbgHoles ? 1 : 0, 0, P.dbgHoles ? 1 : 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  if (!P.dbgHoles) { gl.disable(gl.DEPTH_TEST); gl.useProgram(pS.p); gl.uniform3fv(pS.u.uSky, SKY); gl.uniform3fv(pS.u.uTop, TOP); gl.bindVertexArray(vaoS); gl.drawArrays(gl.TRIANGLES, 0, 3); } gl.enable(gl.DEPTH_TEST);
   // the frame: its columns are the line, across it, and up. Flight and swing change this matrix and nothing else
-  var Z = cross(S.t, S.p), F = [S.t[0], S.t[1], S.t[2], Z[0], Z[1], Z[2], S.p[0], S.p[1], S.p[2]];
+  var T = S.dt, Z = cross(T, S.p), F = [T[0], T[1], T[2], Z[0], Z[1], Z[2], S.p[0], S.p[1], S.p[2]];
   var dist = S.wid / (2 * T_FOV * asp), pit = P.pitch * Math.PI / 180, ty = S.y * P.relief / 100 + 60, cam = [0, ty + dist * Math.sin(pit), dist * Math.cos(pit)], view = look(cam, [0, ty, 0], [0, 1, 0]), vp = mul(persp(T_FOV, asp, 30, 400000), view);
-  var sunP = P.sun ? [0.35, 0.8, 0.48] : null, sun = sunP ? (function () { var v = [dot(S.t, sunP), dot(Z, sunP), dot(S.p, sunP)]; return norm([v[0], v[2], v[1]]); })() : norm([0.3, 0.8, 0.5]), amb = 0.58, haze = 2.4e-5;
-  setGround(pG, F, vp, Rr, cam, 0); gl.uniform3fv(pG.u.uSun, sun); gl.uniform3fv(pG.u.uCam, cam); gl.uniform3fv(pG.u.uSky, SKY); gl.uniform1f(pG.u.uDet, P.detail); gl.uniform1f(pG.u.uHaze, haze); gl.uniform1f(pG.u.uAmb, amb);
-  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texC); gl.uniform1i(pG.u.uC, 1); gl.bindVertexArray(vaoG); gl.drawElements(gl.TRIANGLES, meshN, gl.UNSIGNED_INT, 0);
-  if (P.towers) { gl.useProgram(pB.p); gl.uniformMatrix3fv(pB.u.uF, false, F); gl.uniformMatrix4fv(pB.u.uVP, false, vp); gl.uniform1f(pB.u.uR, RP); gl.uniform1f(pB.u.uRr, Rr); gl.uniform1f(pB.u.uRel, P.relief / 100); gl.uniform3fv(pB.u.uSun, sun); gl.uniform3fv(pB.u.uCam, cam); gl.uniform3fv(pB.u.uSky, SKY); gl.uniform1f(pB.u.uHaze, haze); gl.uniform1f(pB.u.uAmb, amb); gl.bindVertexArray(vaoT); gl.drawArraysInstanced(gl.TRIANGLES, 0, 36, twN); }
+  var sunP = P.sun ? [0.35, 0.8, 0.48] : null, sun = sunP ? (function () { var v = [dot(T, sunP), dot(Z, sunP), dot(S.p, sunP)]; return norm([v[0], v[2], v[1]]); })() : norm([0.3, 0.8, 0.5]), amb = 0.58, haze = 2.4e-5;
+  var camA = dist * Math.cos(pit) / RP, foot = norm([S.p[0] * Math.cos(camA) + Z[0] * Math.sin(camA), S.p[1] * Math.cos(camA) + Z[1] * Math.sin(camA), S.p[2] * Math.cos(camA) + Z[2] * Math.sin(camA)]), camH = Math.max(100, cam[1]), arcMax = Math.sqrt(2 * Rr * camH) + Math.sqrt(2 * Rr * 9000) * (P.relief / 100 + 0.01);
+  selectTiles(S.p, foot, arcMax, [Z, cam[2]], T, T_FOV * asp, P.curve === 100);
+  setGround(pT, F, vp, Rr, cam, 0); gl.uniform3fv(pT.u.uF1, S.p); gl.uniform3fv(pT.u.uF2, foot); gl.uniform1f(pT.u.uG, S.softG); gl.uniform1f(pT.u.uFore, P.fore); gl.uniform1f(pT.u.uTy, ty); gl.uniform3fv(pT.u.uSun, sun); gl.uniform3fv(pT.u.uCam, cam); gl.uniform3fv(pT.u.uSky, SKY); gl.uniform1f(pT.u.uDet, P.detail); gl.uniform1f(pT.u.uHaze, haze); gl.uniform1f(pT.u.uAmb, amb);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texC); gl.uniform1i(pT.u.uC, 1); gl.bindVertexArray(vaoTile); gl.drawElementsInstanced(gl.TRIANGLES, TN * TN * 6, gl.UNSIGNED_SHORT, 0, tileN); gl.activeTexture(gl.TEXTURE0);
+  if (P.towers) { gl.useProgram(pB.p); gl.uniformMatrix3fv(pB.u.uF, false, F); gl.uniformMatrix4fv(pB.u.uVP, false, vp); gl.uniform1f(pB.u.uR, RP); gl.uniform1f(pB.u.uRr, Rr); gl.uniform1f(pB.u.uRel, P.relief / 100); gl.uniform1i(pB.u.uH, 0); gl.uniform1f(pB.u.uTex, 3.54 * RP / MAP.N); gl.uniform1f(pB.u.uG, S.softG); gl.uniform3fv(pB.u.uSun, sun); gl.uniform3fv(pB.u.uCam, cam); gl.uniform3fv(pB.u.uSky, SKY); gl.uniform1f(pB.u.uHaze, haze); gl.uniform1f(pB.u.uAmb, amb); gl.bindVertexArray(vaoT); gl.drawArraysInstanced(gl.TRIANGLES, 0, 36, twN); }
   // the two bars, on one relative band, always
   var bh = Math.max(75, S.wid * 0.024), bw = bh * 0.26; gl.useProgram(pF.p); gl.uniformMatrix4fv(pF.u.uVP, false, vp); gl.bindVertexArray(vaoF);
-  [[-S.gap / 2, S.ga, [0.12, 0.42, 0.40]], [S.gap / 2, S.gb, [0.30, 0.20, 0.55]]].forEach(function (b) { var ar = b[0] / Rr, rad = Rr + (b[1] * P.relief / 100) + S.alt; gl.uniform3f(pF.u.uPos, rad * Math.sin(ar), rad * Math.cos(ar) - Rr, 0); gl.uniform3f(pF.u.uSz, bw, bh, bw); gl.uniform3fv(pF.u.uCol, b[2]); gl.drawArrays(gl.TRIANGLES, 0, 36); });
+  [[-S.gap / 2, S.ga, [0.12, 0.42, 0.40], S.altL], [S.gap / 2, S.gb, [0.30, 0.20, 0.55], S.altR]].forEach(function (b) { if (P.dbgHoles) return; var ar = b[0] / Rr, rad = Rr + (b[1] * P.relief / 100) + b[3]; gl.uniform3f(pF.u.uPos, rad * Math.sin(ar), rad * Math.cos(ar) - Rr, 0); gl.uniform3f(pF.u.uSz, bw, bh, bw); gl.uniform3fv(pF.u.uCol, b[2]); gl.drawArrays(gl.TRIANGLES, 0, 36); });
+  if (S.beam) { var by = Rr + S.gm * P.relief / 100 + S.alt + bh * 0.5; gl.uniform3f(pF.u.uPos, 0, by * 1 - Rr, 0); gl.uniform3f(pF.u.uSz, S.gap, bh * 0.12, bh * 0.12); gl.uniform3f(pF.u.uCol, 1.0, 0.72, 0.25); gl.drawArrays(gl.TRIANGLES, 0, 36); }
   if (P.clouds) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); setGround(pC, F, vp, Rr, cam, 6200); gl.uniform3fv(pC.u.uSun, sun); gl.uniform1f(pC.u.uAmb, amb + 0.25); gl.bindVertexArray(vaoG); gl.drawElements(gl.TRIANGLES, meshN, gl.UNSIGNED_INT, 0); gl.depthMask(true); gl.disable(gl.BLEND); }
   // the globe: the same mesh and map from above the pair, the line across it and where the pair have been
   if (P.globe) {
@@ -578,25 +693,27 @@ function draw() {
     var vg = mul(ortho(RP * 1.08, 1, 1, RP * 6), look([0, RP * 2, 0], [0, 0, 0], [0, 0, -1]));
     gl.useProgram(pG.p); setGround(pG, F, vg, RP, [0, RP * 2, 0], 0); gl.uniform1f(pG.u.uRel, 0.0); gl.uniform1f(pG.u.uDet, 0); gl.uniform1f(pG.u.uHaze, 0); gl.uniform3fv(pG.u.uCam, [0, RP * 2, 0]); gl.uniform3fv(pG.u.uSun, [0, 1, 0]); gl.uniform1f(pG.u.uAmb, 0.9); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texC); gl.uniform1i(pG.u.uC, 1); gl.bindVertexArray(vaoG); gl.drawElements(gl.TRIANGLES, meshN, gl.UNSIGNED_INT, 0);
     gl.disable(gl.DEPTH_TEST); gl.useProgram(pL.p); gl.uniformMatrix3fv(pL.u.uF, false, F); gl.uniformMatrix4fv(pL.u.uVP, false, vg); gl.uniform1f(pL.u.uRr, RP); gl.bindVertexArray(vaoL); gl.bindBuffer(gl.ARRAY_BUFFER, bL);
-    var line = []; for (var k = -40; k <= 40; k++) { var aa = k / 40 * 1.5, cc = Math.cos(aa), ss = Math.sin(aa); line.push(S.p[0] * cc + S.t[0] * ss, S.p[1] * cc + S.t[1] * ss, S.p[2] * cc + S.t[2] * ss); } gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(line)); gl.uniform3f(pL.u.uCol, 1, 1, 1); gl.drawArrays(gl.LINE_STRIP, 0, 81);
+    var line = []; for (var k = -40; k <= 40; k++) { var aa = k / 40 * 1.5, cc = Math.cos(aa), ss = Math.sin(aa); line.push(S.p[0] * cc + T[0] * ss, S.p[1] * cc + T[1] * ss, S.p[2] * cc + T[2] * ss); } gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(line)); gl.uniform3f(pL.u.uCol, 1, 1, 1); gl.drawArrays(gl.LINE_STRIP, 0, 81);
     if (S.trail.length > 1) { var tr = new Float32Array(S.trail.length * 3); S.trail.forEach(function (d, i) { tr.set(d, i * 3); }); gl.bufferSubData(gl.ARRAY_BUFFER, 0, tr); gl.uniform3f(pL.u.uCol, 0.95, 0.72, 0.2); gl.drawArrays(gl.LINE_STRIP, 0, S.trail.length); }
     gl.enable(gl.DEPTH_TEST); gl.disable(gl.SCISSOR_TEST); gl.viewport(0, 0, W, H);
   }
 }
 var fdt = 16, frames = 0, lastHud = 0;
 function paintHud(now) {
-  if (now - lastHud < 120) return; lastHud = now; var deg = S.flown / CIRC * 360, slide = Math.abs(S.w) * 60 * 180 / Math.PI;
-  hud.innerHTML = Math.round(Math.abs(S.v)).toLocaleString() + ' u/s &nbsp; ' + (Math.abs(S.v) / CIRC * 60).toFixed(1) + ' s... a lap in ' + (Math.abs(S.v) > 100 ? (CIRC / Math.abs(S.v)).toFixed(1) + ' s' : '-') + '<br>flown ' + deg.toFixed(0) + '&deg; of the planet &nbsp; swung ' + (S.swung * 180 / Math.PI).toFixed(0) + '&deg;<br>swing ' + slide.toFixed(0) + '&deg;/s &nbsp; ground under a bar moves ' + Math.round(Math.abs(S.w) * S.gap / 2 * RP / RP).toLocaleString() + ' u/tick<br>this tick: 0 noise reads, ' + (S.lookups||0) + ' map reads, 1 rotation<br>map ' + MAP.N + '&sup2;, ' + MAP.reads.toLocaleString() + ' reads, built in ' + MAP.ms.toFixed(0) + ' ms (JS)<br>frame ' + fdt.toFixed(1) + ' ms';
-  hud.innerHTML = hud.innerHTML.replace(/ \d+\.\d s\.\.\. /, ' ');
-  $('dot').style.left = (12 + inp.x * 11) + 'px'; [['iFly', 'fly'], ['iSend', 'send'], ['iDig', 'dig'], ['iL', 'l'], ['iR', 'r'], ['iAim', 'aim']].forEach(function (c) { $(c[0]).className = inp[c[1]] ? 'c on' : 'c'; });
+  if (now - lastHud < 120) return; lastHud = now; var deg = S.flown / CIRC * 360, sw = S.sw, horizon = Math.abs(S.v) / RP / RAD, total = S.rate + horizon, tot = TN * TN * 2 * tileN;
+  var cause = S.stop ? 'hit-stop: dead still' : sw ? sw.cause + ' swing, ' + S.rate.toFixed(0) + '&deg;/s of ' + (sw.peak * 60 / RAD).toFixed(0) + ', ' + (sw.th / RAD).toFixed(0) + '&deg;, set by ' + S.lim + ', about ' + S.pivot : S.beam ? 'beam: the world holds' : 'no swing';
+  hud.innerHTML = Math.round(Math.abs(S.v)).toLocaleString() + ' u/s &nbsp; a lap in ' + (Math.abs(S.v) > 100 ? (CIRC / Math.abs(S.v)).toFixed(1) + ' s' : '-') + '<br>flown ' + deg.toFixed(0) + '&deg; of the planet &nbsp; swung ' + (S.swung / RAD).toFixed(0) + '&deg;<br>' + cause +
+    '<br>far land: ' + horizon.toFixed(0) + '&deg;/s from flight (v/R) + ' + S.rate.toFixed(0) + ' = <span style="color:' + (total > 98 ? '#ff6a55' : 'inherit') + '">' + total.toFixed(0) + '</span>, limit 98' + (S.off ? '<br><span style="color:#e8b23a">correction: view ' + (Math.abs(S.off) / RAD).toFixed(1) + '&deg; off the sim, easing back</span>' : '') +
+    '<br>ground spacing near the pair: ' + Math.round(S.softG) + ' u<br>this tick: 0 noise reads, ' + (S.lookups || 0) + ' map reads, 1 rotation<br>' + tileN + ' tiles, ' + Math.round(tot / 1000) + 'k triangles<br>map ' + MAP.N + '&sup2;, ' + MAP.reads.toLocaleString() + ' reads, built in ' + MAP.ms.toFixed(0) + ' ms (JS, gen 1)<br>frame ' + fdt.toFixed(1) + ' ms';
+  $('dot').style.left = (12 + inp.x * 11) + 'px'; [['iFly', 'fly'], ['iSend', 'send'], ['iDig', 'dig'], ['iL', 'l'], ['iR', 'r'], ['iAim', 'aim'], ['iForm', 'form'], ['iBeam', 'beam'], ['iHeavy', 'heavy']].forEach(function (c) { $(c[0]).className = inp[c[1]] ? 'c on' : 'c'; });
 }
-window.addEventListener('keydown', function (e) { if (e.code === 'KeyR') { human = true; reset(); return; } if (/^(Key[ADQECG]|Shift(Left|Right)|Space)$/.test(e.code)) { keys[e.code] = true; e.preventDefault(); } });
+window.addEventListener('keydown', function (e) { if (e.code === 'KeyR') { human = true; reset(); return; } if (/^(Key[ADQECGFBH]|Shift(Left|Right)|Space)$/.test(e.code)) { keys[e.code] = true; human = true; e.preventDefault(); } });
 window.addEventListener('keyup', function (e) { keys[e.code] = false; }); window.addEventListener('blur', function () { keys = {}; });
 var acc = 0, last = 0;
 function frame(ts) { if (!last) last = ts; var dt = Math.min(80, ts - last); last = ts; fdt += (dt - fdt) * 0.1; acc += dt / 16.667; var n = 0; while (acc >= 1 && n < 6) { acc -= 1; step(); n++; } if (n === 6) acc = 0; draw(); paintHud(ts); if (!window.__hold) requestAnimationFrame(frame); }
 buildMap(); buildTowers(); reset();
 // a hook for tools: step the world by ticks, draw, read it
-window.RT = { P: P, S: function () { return S; }, step: function (n) { for (var i = 0; i < n; i++) step(); }, draw: draw, buildMap: buildMap, human: function (v) { human = v; }, keys: keys, hud: function () { lastHud = 0; paintHud(performance.now() + 1000); return hud.textContent; }, reset: reset, gl: gl, fire: fire, floatLinear: floatLinear };
+window.RT = { P: P, S: function () { return S; }, step: function (n) { for (var i = 0; i < n; i++) step(); }, draw: draw, buildMap: buildMap, human: function (v) { human = v; }, keys: keys, hud: function () { lastHud = 0; paintHud(performance.now() + 1000); return hud.textContent; }, reset: reset, gl: gl, fire: fire, floatLinear: floatLinear, startSwing: startSwing, small: function (d, b) { return startSmall('jolt', d, 1, b); }, tiles: function () { return tileN; }, SETTERS: SETTERS };
 window.__ok = 1; requestAnimationFrame(frame);
 })();
 </script>

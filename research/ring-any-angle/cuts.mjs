@@ -1,6 +1,8 @@
 // The cost cuts for the turntable, against 0.2 ms a tick of reads and the 8 ms spike. Paths come from archField's own fights (or
 // a flat-out crossing with swings); every read is counted on a cube-sphere of nested grids, without running the noise except where
 // an error is measured. Counts are deterministic; ms are counts x World's cost a read and my look-up figures, not timings.
+// Revised 2026-10-31 for Game Design's rates (launch 60, ceiling 98; chase 45, form 30, brawl 10), Camera's half disc of radius B, the 1.5 reads a tick of
+// the web laptop target, and the question of what canonical spacing a narrow sim strip can read as it flies.
 //   node research/ring-any-angle/cuts.mjs [--seeds=3] [--ticks=7200]
 import { readFileSync, writeFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
@@ -88,36 +90,67 @@ function model(path, o) {
   const arr = Array.from(reads);
   return { load, mean: mean(arr), p99: pct(arr, 0.99), max: Math.max(...arr), forced: forcedN / path.length, backlogMax, backlogEnd: queue.length - qHead, lateMax };
 }
-function row(name, path, o, into) {
-  const r = model(path, o);
-  into[name] = { ...r, nativeMeanMs: r.mean * READ.native, webMeanMs: r.mean * READ.web, laptopP99Ms: r.p99 * READ.laptop, laptopMaxMs: r.max * READ.laptop, loadNativeMs: r.load * READ.native, loadLaptopS: r.load * READ.laptop / 1000 };
-}
 const E = [{ G: 128, r: 12000 }], E2 = [{ G: 512, r: 12000 }];
-const LOD3 = [{ G: 128, r: 1500 }, { G: 256, r: 4000 }, { G: 512, r: 12000 }], LOD2 = [{ G: 128, r: 3000 }, { G: 512, r: 12000 }];
-const COARSE = [{ G: 512, r: 6000 }, { G: 1024, r: 12000 }], LOD1K = [{ G: 1024, r: 12000 }];
-const B85 = 8300;   // Camera's bound at the back row, close quarters
-
+const FIELDS = [
+  ['E: 128 u to 12,000', { rings: E }], ['E2: 512 u to 12,000', { rings: E2 }],
+  ['Rings: 128 to 1,500, 256 to 4,000, 512 to 12,000', { rings: [{ G: 128, r: 1500 }, { G: 256, r: 4000 }, { G: 512, r: 12000 }] }],
+  ['Rings (World): 128 to 3,000, 512 to 12,000', { rings: [{ G: 128, r: 3000 }, { G: 512, r: 12000 }] }],
+  ['512 to 6,000, 1,024 to 12,000', { rings: [{ G: 512, r: 6000 }, { G: 1024, r: 12000 }] }],
+  ['1,024 to 12,000', { rings: [{ G: 1024, r: 12000 }] }],
+  ['E2, half disc, B 8,300 (Camera, 16:9, close)', { rings: [{ G: 512, r: 8300 }], half: true }],
+  ['E2, half disc, B 10,800 (Camera, any setting)', { rings: [{ G: 512, r: 10800 }], half: true }],
+  ['E2, whole disc, r 8,300', { rings: [{ G: 512, r: 8300 }] }],
+  ['1,024, half disc, B 10,800', { rings: [{ G: 1024, r: 10800 }], half: true }] ];
 const scens = {};
-for (const s of ['any', 'hard']) { scens[s] = []; for (let seed = 1; seed <= SEEDS; seed++) scens[s].push(pathOfFight(seed, s)); }
-scens.flat = [pathOfFlight(170, 60, 240, 60, 1800)];        // 30 s, so the memo of a revisit does not flatter it: flat out (10,200 u/s), a 60-degree swing at GD's launch rate every 4 s
-scens.flat150 = [pathOfFlight(170, 150, 240, 90, 1800)];    // the same at Camera's look: 150 degrees a second
-scens.spin = [pathOfFlight(0.0001, 150, 144, 360, 144)];    // standing, swinging only: nothing should be uncovered by a whole disc
+for (const sc of ['any', 'hard']) { scens[sc] = []; for (let seed = 1; seed <= SEEDS; seed++) scens[sc].push(pathOfFight(seed, sc)); }
+// 30 s first crossings, so the memo of a revisit does not flatter them, with a swing of 60 degrees every 4 s
+scens['flat out, 60 deg/s'] = [pathOfFlight(170, 60, 240, 60, 1800)];
+scens['flat out, 98 deg/s (the ceiling)'] = [pathOfFlight(170, 98, 240, 60, 1800)];
+scens['launch speed, 60 deg/s'] = [pathOfFlight(100, 60, 240, 60, 1800)];
+scens['a walk (700 u/s), brawl 10 deg/s'] = [pathOfFlight(11.7, 10, 700, 60, 1800)];
+// a whole turn in place, one way, once: what a swing itself reads
+scens['in place, 60 deg/s'] = [pathOfFlight(0.0001, 60, 360, 360, 360)];
+scens['in place, 98 deg/s'] = [pathOfFlight(0.0001, 98, 221, 360, 221)];
+const avgBy = (each, k) => (k === 'max' || k === 'lateMax' || k === 'backlogEnd' ? Math.max(...each.map((x) => x[k])) : mean(each.map((x) => x[k])));
+out.fields = {};
+for (const key of Object.keys(scens)) {
+  out.fields[key] = {};
+  for (const [n, o] of FIELDS) {
+    const run = (extra) => { const each = scens[key].map((p) => model(p, { ...o, ...extra })), r = {}; for (const k of Object.keys(each[0])) r[k] = avgBy(each, k); return r; };
+    const at = run({}), k4 = run({ K: 3.7 }), k15 = run({ K: 1.5 });
+    out.fields[key][n] = { load: at.load, mean: at.mean, p99: at.p99, max: at.max, laptopP99Ms: at.p99 * READ.laptop, webP99Ms: at.p99 * READ.web, backlog37: k4.backlogEnd, late37: k4.lateMax, backlog15: k15.backlogEnd, late15: k15.lateMax };
+  }
+}
 
-const rowsFor = (key) => {
-  const paths = scens[key], acc = {};
-  const defs = [
-    ['E 128 u, r 12,000 (at once)', { rings: E }], ['E2 512 u, r 12,000 (at once)', { rings: E2 }],
-    ['E spread, K 4', { rings: E, K: 4 }], ['E2 spread, K 4', { rings: E2, K: 4 }], ['E2 spread, K 1.5 (web)', { rings: E2, K: 1.5 }],
-    ['Rings 128 to 1,500, 256 to 4,000, 512 to 12,000', { rings: LOD3 }], ['Same, K 4', { rings: LOD3, K: 4 }],
-    ['Rings 128 to 3,000, 512 to 12,000 (World)', { rings: LOD2 }], ['Same, K 4 ', { rings: LOD2, K: 4 }],
-    ['512 to 6,000, 1,024 to 12,000', { rings: COARSE }], ['Same, K 4  ', { rings: COARSE, K: 4 }],
-    ['1,024 only to 12,000', { rings: LOD1K }], ['Same, K 4   ', { rings: LOD1K, K: 4 }],
-    ['E2 half disc, r 8,300 (Camera)', { rings: [{ G: 512, r: B85 }], half: true }], ['Same, K 4    ', { rings: [{ G: 512, r: B85 }], half: true, K: 4 }],
-    ['E2 whole disc, r 8,300', { rings: [{ G: 512, r: B85 }] }] ];
-  for (const [n, o] of defs) { const each = paths.map((p) => { const a = {}; row(n, p, o, a); return a[n]; }); const r = {}; for (const k of Object.keys(each[0])) r[k] = k === 'max' || k === 'backlogMax' || k === 'lateMax' || k === 'backlogEnd' ? Math.max(...each.map((x) => x[k])) : mean(each.map((x) => x[k])); acc[n] = r; }
-  return acc;
-};
-out.fields = {}; for (const key of Object.keys(scens)) out.fields[key] = rowsFor(key);
+// ---- the canonical field: what a narrow sim strip reads as it flies, if nothing's baked at that spacing ----
+// Two bodies on one line, a launch: the sent body at 100 u/tick, the launcher holds 40 ticks then follows at 90; a swing about the launcher's point on
+// a near-constant rate, its speed capped by the 10,000 u/s sweep limit. Reads are new nodes under the columns the sim asks for: the feet only, or a window round each.
+function stripReads(G, kind, win) {
+  const seen = new Set(), step = 1 << Math.round(Math.log2(G / FINE)), counts = [];
+  const want = (q) => { const fx = faceOf(q), i = Math.floor(fx[1] / step) * step, j = Math.floor(fx[2] / step) * step; let n = 0; for (let a = 0; a <= step; a += step) for (let b = 0; b <= step; b += step) { const key = fx[0] * 4294967296 + (i + a) * 65536 + (j + b); if (!seen.has(key)) { seen.add(key); n++; } } return n; };
+  const along = (p, t, x) => { const a = x / RP, c = Math.cos(a), n = Math.sin(a); return norm([p[0] * c + t[0] * n, p[1] * c + t[1] * n, p[2] * c + t[2] * n]); };
+  const rot = (v, k, a) => { const c = Math.cos(a), n = Math.sin(a), x = cross(k, v), d = dot(k, v) * (1 - c); return [v[0] * c + x[0] * n + k[0] * d, v[1] * c + x[1] * n + k[1] * d, v[2] * c + x[2] * n + k[2] * d]; };
+  for (let g = 0; g < 24; g++) {
+    let p = norm([Math.cos(g * 2.399) * Math.sin(1 + g * 0.05), Math.sin(g * 1.7) * 0.75, Math.sin(g * 2.399) * Math.cos(1 + g * 0.05)]), t = norm(cross(p, [0.3, 1, 0.1])), xA = 0, xB = 150;
+    const q = p, T = kind === 'launch' ? 216 : 600, sg = g % 2 ? 1 : -1, th = 60 * Math.PI / 180, rateCap = kind === 'launch' ? 60 : kind === 'chase' ? 45 : kind === 'brawl' ? 10 : 0; let u = 0, a = 0;
+    for (let k = 0; k < T; k++) {
+      let vA = 0, vB = 0;
+      if (kind === 'launch') { vB = 100; vA = k < 40 ? 0 : 90; } else if (kind === 'chase') { vA = vB = 170; } else if (kind === 'chase apart') { vA = vB = 170; xB = 3000; } else if (kind === 'lone flier') { vB = 100; } else if (kind === 'brawl') { vA = vB = Math.sin(k * 0.05) * 11; }
+      xA += vA; xB += vB;
+      let n = 0;
+      if (rateCap && u < 1) { const r = Math.max(1, Math.abs(xB)), lim = kind === 'brawl' ? 75 / 60 / Math.max(xB - xA, 1) * 2 : (10000 / 60) / r, cap = rateCap * Math.PI / 180 / 60, ds = 30 * u * u * (u - 1) * (u - 1), base = cap / (1.875 * th), du = Math.min(base, ds > 1e-4 ? Math.min(cap, lim) / (th * ds) : base); u = Math.min(1, u + du); const na = th * u * u * u * (u * (u * 6 - 15) + 10), w = (na - a) * sg; a = na; t = norm(rot(t, q, w)); p = norm(rot(p, q, w)); }
+      for (const [x, moving] of [[xA, vA !== 0], [xB, vB !== 0 || kind === 'launch']]) { if (win === 0 && !moving && !rateCap) continue; for (let c = -win; c <= win; c += Math.max(1, Math.round(G / COL / 2))) n += want(along(p, t, x + c * COL)); }
+      counts.push(n);
+    }
+  }
+  return { mean: mean(counts), p99: pct(counts, 0.99), max: Math.max(...counts) };
+}
+out.strip = {};
+for (const kind of ['lone flier', 'launch', 'chase', 'chase apart', 'brawl']) { out.strip[kind] = {}; for (const G of [64, 128, 256, 512, 1024]) { out.strip[kind][G] = { feet: stripReads(G, kind, 0), win18: stripReads(G, kind, 18) }; } }
+// a bake of the whole planet at a spacing: the sphere's area over the spacing squared
+out.bake = {}; for (const G of [128, 256, 384, 512, 1024]) { const n = 4 * Math.PI * RP * RP / (G * G); out.bake[G] = { nodes: n, native: n * READ.native / 1000, web: n * READ.web / 1000, laptop: n * READ.laptop / 1000, heightOnlyLaptop: n * READ.laptop / 2000 }; }
+// sharpening a disc at rest, at the read budget
+out.sharpen = {}; for (const [G, r] of [[128, 1500], [128, 3000], [128, 6000], [256, 3000], [256, 6000]]) { const n = Math.PI * r * r / (G * G); out.sharpen[G + ' to ' + r] = { nodes: n, s15: n / 1.5 / 60, s37: n / 3.7 / 60 }; }
 
 // ---- how fine a whole-planet map holds, against the exact ground: error, memory and what its build costs ----
 function octUV(q) { const s = Math.abs(q[0]) + Math.abs(q[1]) + Math.abs(q[2]); let a = q[0] / s, b = q[2] / s; if (q[1] < 0) { const ta = (1 - Math.abs(b)) * (a >= 0 ? 1 : -1), tb = (1 - Math.abs(a)) * (b >= 0 ? 1 : -1); a = ta; b = tb; } return [(a + 1) / 2, (b + 1) / 2]; }
@@ -168,7 +201,7 @@ const TIERS = {
   '+-8 every tick, +-40 every 4': [{ to: 8, every: 1 }, { to: 40, every: 4 }],
   '+-8 every 2, +-40 every 8': [{ to: 8, every: 2 }, { to: 40, every: 8 }] };
 out.relay = {};
-for (const [rate, gap] of [[10, 300], [29, 300], [60, 300], [60, 2400], [60, 19200], [150, 300]]) { const key = rate + ' deg/s, gap ' + gap; out.relay[key] = {}; for (const [n, t] of Object.entries(TIERS)) out.relay[key][n] = relayBench(rate, gap, t); }
+for (const [rate, gap] of [[10, 300], [29, 300], [60, 300], [60, 2400], [60, 19200], [98, 300]]) { const key = rate + ' deg/s, gap ' + gap; out.relay[key] = {}; for (const [n, t] of Object.entries(TIERS)) out.relay[key][n] = relayBench(rate, gap, t); }
 
 // a look-up, timed in JS, with the same steps the sim would run: one rotation step along the line, the map's encode, four fetches
 { const N = 512, H = new Float64Array(N * N).map((_, i) => (i * 7) % 113); const look = (q) => { const uv = octUV(q), x = uv[0] * N - 0.5, y = uv[1] * N - 0.5, i = Math.max(0, Math.min(N - 2, Math.floor(x))), j = Math.max(0, Math.min(N - 2, Math.floor(y))), a = x - i, b = y - j; return (H[j * N + i] * (1 - a) + H[j * N + i + 1] * a) * (1 - b) + (H[(j + 1) * N + i] * (1 - a) + H[(j + 1) * N + i + 1] * a) * b; };
@@ -177,12 +210,18 @@ for (const [rate, gap] of [[10, 300], [29, 300], [60, 300], [60, 2400], [60, 192
 
 writeFileSync(new URL('./cuts.json', import.meta.url), JSON.stringify(out, null, 1));
 
-// ---- the table ----
+// ---- the tables ----
 const f = (x, d = 1) => (x === undefined ? '-' : x.toFixed(d)), L = [];
-L.push('reads a tick. Budget: 0.2 ms = ' + f(BUDGET / READ.native) + ' native, ' + f(BUDGET / READ.web) + ' web. Spike 8 ms = ' + f(SPIKE / READ.native, 0) + ' native, ' + f(SPIKE / READ.web, 0) + ' web. Laptop ms = reads x 0.8.');
-for (const key of Object.keys(out.fields)) { L.push('\n== ' + key + '\n' + 'field'.padEnd(52) + 'load   mean    p99   max  forced backlog late | native ms laptop p99'); for (const [n, r] of Object.entries(out.fields[key])) L.push(n.padEnd(52) + String(Math.round(r.load)).padStart(6) + f(r.mean, 2).padStart(7) + f(r.p99, 0).padStart(6) + f(r.max, 0).padStart(6) + f(r.forced, 2).padStart(7) + String(r.backlogEnd).padStart(7) + String(r.lateMax).padStart(6) + ' | ' + f(r.nativeMeanMs, 2).padStart(8) + f(r.laptopP99Ms, 1).padStart(9)); }
-L.push('\n== a resident whole-planet map (gen 1 ground; gen 2 not measured)\nN      spacing   RMS    p99  p99.9    max  MB(h+c)  reads     build native / web / laptop s   JS ms');
-for (const [N, m] of Object.entries(out.maps)) L.push(String(N).padEnd(7) + f(m.spacingU, 0).padStart(6) + f(m.rmsU, 1).padStart(7) + f(m.p99U, 1).padStart(7) + f(m.p999U, 1).padStart(7) + f(m.maxU, 0).padStart(6) + f(m.heightMB + m.colourMB, 1).padStart(7) + String(m.reads).padStart(9) + ('  ' + f(m.buildNativeS, 1) + ' / ' + f(m.buildWebS, 1) + ' / ' + f(m.buildLaptopS, 0)).padEnd(28) + f(m.jsMs, 0).padStart(6));
-L.push('\n== re-lay on a turning tick (look-up ' + f(out.lookupUsJs, 3) + ' us in JS; ms below at 5.4 us (Godot far map) and 2.5 us (World\'s low figure))');
-for (const key of Object.keys(out.relay)) { L.push('\n' + key + '\n' + 'tiers'.padEnd(56) + 'cols  ms@5.4 ms@2.5 | feet rms max  reach max  all rms max'); for (const [n, r] of Object.entries(out.relay[key])) L.push(n.padEnd(56) + f(r.colsTick, 0).padStart(4) + f(r.colsTick * 0.0054, 2).padStart(8) + f(r.colsTick * 0.0025, 2).padStart(7) + ' | ' + f(r.feetRmsU, 2).padStart(7) + f(r.feetMaxU, 1).padStart(6) + f(r.reachMaxU, 1).padStart(8) + f(r.allRmsU, 2).padStart(9) + f(r.allMaxU, 1).padStart(7)); }
+L.push('reads a tick. Budget: 0.2 ms = ' + f(BUDGET / READ.native) + ' native, ' + f(BUDGET / READ.web) + ' web (the laptop target). Spike 8 ms = ' + f(SPIKE / READ.native, 0) + ' native, ' + f(SPIKE / READ.web, 0) + ' web. Laptop ms = reads x 0.8.');
+for (const key of Object.keys(out.fields)) { L.push('\n== ' + key + '\n' + 'field'.padEnd(50) + 'load    mean    p99   max  laptop p99 | at 3.7: backlog late | at 1.5: backlog late'); for (const [n, r] of Object.entries(out.fields[key])) L.push(n.padEnd(50) + String(Math.round(r.load)).padStart(5) + f(r.mean, 2).padStart(8) + f(r.p99, 0).padStart(6) + f(r.max, 0).padStart(6) + f(r.laptopP99Ms, 1).padStart(10) + '   |' + String(r.backlog37).padStart(14) + String(r.late37).padStart(6) + '  |' + String(r.backlog15).padStart(14) + String(r.late15).padStart(6)); }
+L.push('\n== the canonical field, read only under the sim strip as it flies: new nodes a tick, mean / p99 / max (budget 1.5 web, 3.7 native)\n' + 'moving'.padEnd(14) + 'spacing  feet only            +-18 columns round each');
+for (const kind of Object.keys(out.strip)) for (const G of Object.keys(out.strip[kind])) { const a = out.strip[kind][G].feet, b = out.strip[kind][G].win18; L.push(kind.padEnd(14) + String(G).padStart(6) + '   ' + (f(a.mean, 2) + ' / ' + f(a.p99, 0) + ' / ' + f(a.max, 0)).padEnd(20) + f(b.mean, 2) + ' / ' + f(b.p99, 0) + ' / ' + f(b.max, 0)); }
+L.push('\n== a whole-planet bake, at World\'s cost of a read\nspacing   nodes     native s   web s   laptop s   laptop s if height-only is half');
+for (const [G, b] of Object.entries(out.bake)) L.push(String(G).padEnd(9) + String(Math.round(b.nodes)).padStart(7) + f(b.native, 1).padStart(10) + f(b.web, 1).padStart(9) + f(b.laptop, 0).padStart(10) + f(b.heightOnlyLaptop, 0).padStart(12));
+L.push('\n== sharpening a disc at rest\ndisc            nodes    s at 1.5 a tick   s at 3.7');
+for (const [k, b] of Object.entries(out.sharpen)) L.push(k.padEnd(14) + String(Math.round(b.nodes)).padStart(7) + f(b.s15, 1).padStart(14) + f(b.s37, 1).padStart(12));
+L.push('\n== a map of the whole planet, gen 1 ground; gen 2 is 3 to 7 times these (world.md 11.1)\nN      spacing   RMS    p99  p99.9    max  MB(h+c)  reads');
+for (const [N, m] of Object.entries(out.maps)) L.push(String(N).padEnd(7) + f(m.spacingU, 0).padStart(6) + f(m.rmsU, 1).padStart(7) + f(m.p99U, 1).padStart(7) + f(m.p999U, 1).padStart(7) + f(m.maxU, 0).padStart(6) + f(m.heightMB + m.colourMB, 1).padStart(7) + String(m.reads).padStart(9));
+L.push('\n== a window of columns re-laid on a turning tick. ms at 3.6 us (Simulation, a re-laid column in GDScript, native) and 0.4 us (Performance, a bare sample on the web)');
+for (const key of Object.keys(out.relay)) { L.push('\n' + key + '\n' + 'tiers'.padEnd(56) + 'cols  ms@3.6 ms@0.4 | feet rms max  reach max  all rms max'); for (const [n, r] of Object.entries(out.relay[key])) L.push(n.padEnd(56) + f(r.colsTick, 0).padStart(4) + f(r.colsTick * 0.0036, 2).padStart(8) + f(r.colsTick * 0.0004, 3).padStart(7) + ' | ' + f(r.feetRmsU, 2).padStart(7) + f(r.feetMaxU, 1).padStart(6) + f(r.reachMaxU, 1).padStart(8) + f(r.allRmsU, 2).padStart(9) + f(r.allMaxU, 1).padStart(7)); }
 const txt = L.join('\n') + '\n'; writeFileSync(new URL('./cuts.txt', import.meta.url), txt); process.stdout.write(txt);
