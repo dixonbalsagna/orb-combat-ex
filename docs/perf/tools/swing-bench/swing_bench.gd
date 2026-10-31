@@ -27,6 +27,7 @@ func run(ask, air: bool) -> Dictionary:
 			f.y = 3000.0
 	if ask != null:
 		SimSwing.ask(S, ask)
+	SimSwing.rlKey = -1
 	var r := {"step": [], "own": [], "reads": [], "active": []}
 	SimSwing.tpo = 0; SimSwing.npo = 0; SimSwing.nidx = 0; SimSwing.tidx = 0; SimSwing.tlim = 0; SimSwing.trise = 0
 	for t in range(W):
@@ -41,6 +42,8 @@ func run(ask, air: bool) -> Dictionary:
 		r.active.append(1 if S.swing != null and S.swing.active else 0)
 		if SimSwing.incr:
 			checkIdx(S)
+			if S.swing != null and S.swing.active:
+				stale(S)
 		S.out.fx.clear()
 		S.out.feed.clear()
 	r["parts"] = [SimSwing.tpo, SimSwing.npo, SimSwing.nidx, SimSwing.tidx, SimSwing.tlim, SimSwing.trise]
@@ -49,6 +52,20 @@ func run(ask, air: bool) -> Dictionary:
 
 
 var idxBad: int = 0
+var bandMax := [0.0, 0.0, 0.0, 0.0, 0.0]   # the worst stale pose (units, x and z) of a building within 1000, 2000, 4000, 8000, beyond 8000 of the fighters' midpoint
+var bandEdge := [1000.0, 2000.0, 4000.0, 8000.0, 1e9]
+
+
+func stale(S: SimState) -> void:
+	var mid: float = SimWrap.wrap(S.fighters[0].x + SimWrap.sdx(S.fighters[0].x, S.fighters[1].x) * 0.5)
+	for i in range(S.bX.size()):
+		SimField.strip(S, S.bQ[i * 3], S.bQ[i * 3 + 1], S.bQ[i * 3 + 2])
+		var e: float = absf(SimWrap.sdx(SimField.sx, S.bX[i])) + absf(SimField.sz - S.bZ[i])
+		var d: float = sqrt(pow(SimWrap.sdx(mid, SimField.sx), 2.0) + SimField.sz * SimField.sz)   # on the fight plane, z is about 0: the ground's distance counts depth
+		for q in range(5):
+			if d < bandEdge[q]:
+				bandMax[q] = maxf(bandMax[q], e)
+				break
 var idxChecked: int = 0
 
 
@@ -70,6 +87,10 @@ func _init() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--planet="):
 			planet = int(a.substr(9))
+		elif a.begins_with("--reach="):
+			SimSwing.POSE_REACH = float(a.substr(8))
+		elif a == "--planet-reach":
+			SimSwing.planetMode = true
 		elif a == "--incr":
 			SimSwing.incr = true
 		elif a.begins_with("--reps="):
@@ -139,5 +160,6 @@ func _init() -> void:
 		for v in b.step:
 			s += v
 		print("baseline %-12s step mean %.0f us, reads/tick %.2f" % [k, s / W, float(b.reads.reduce(func(a, x): return a + x, 0)) / W])
+	print("reach %.0f: worst stale pose (units) by distance of the building from the fighters: <1000 %.1f, <2000 %.1f, <4000 %.1f, <8000 %.1f, beyond %.1f" % [SimSwing.POSE_REACH, bandMax[0], bandMax[1], bandMax[2], bandMax[3], bandMax[4]])
 	print("index equals a full rebuild: %d of %d ticks differ" % [idxBad, idxChecked] if SimSwing.incr else "(incremental off)")
 	quit(0)

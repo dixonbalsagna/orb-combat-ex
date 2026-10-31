@@ -65,17 +65,30 @@ static func _rebucket(S: SimState, i: int, k0: int, k1: int) -> void:
 
 A bucket stays in ascending index order, as `buildIndex` makes it, so `near()` returns the same list in the same order. `hook-4-incremental-index.py` is this edit exactly as benched (it keeps a switch, `SimSwing.incr`, for the A/B; drop the switch to land it). **The bench's check compared the index with a full rebuild after every tick: 0 of 11,550 differ.** It has not been through `frame_check`, `two_states`, `rollback_check` or the golden: those are Simulation's gates and the rollback one matters here (shared buckets), so the park should run them on the cut.
 
-## Second cut, smaller: the pose reach
+## Second cut: the pose reach, benched (added the same evening)
 
-`POSE_REACH` is 15,000 units on a ring 38,400 around, so a swing tick poses **20 to 28 buildings on planets 7 and 1 and 56 to 61 on planet 3** at 3.6 to 4.4 µs each: 0.11 ms on planet 7, 0.26 ms on planet 3. That is most of what the fix leaves. A reach of the camera's view plus the fight's (a few thousand units) would cut it by half or more. **It changes what is posed when, not the result at rest (everything is posed again at rest), but whether a mid-swing pose past the reach is ever read (a beam, a launch's sweep) is Simulation's and Encounter's to say.** Not tried here.
+`POSE_REACH` is 15,000 units on a ring 38,400 around, so a swing tick poses 20 to 28 buildings on planets 7 and 1 and 56 to 61 on planet 3, at 3.6 to 4.4 µs each. With the index fix on, I benched narrower reaches two ways: the strip test the park uses (`WorldStructures.near(S, px, reach)`) and a **planet-distance test** (buildings within `reach` of the pivot by great-circle distance, from their planet points; a turn about the pivot keeps that distance, so the set is the same all swing long and is laid again each 500 units the pivot moves, one pass over the 246 buildings). Own time of a 30 degree launch swing, standing fighters, best of 5 (planet 3) or 3 (planets 7, 1), mean / p95 in ms:
+
+| Reach | Planet 3, strip test | Planet 3, planet-distance | Planet 7, strip / planet-distance | Planet 1, planet-distance |
+|---|---|---|---|---|
+| 15,000 (now) | 0.30 / 0.55 | | 0.17 / 0.19 | 0.12 / 0.22 |
+| 8,000 | 0.26 / 0.44 | 0.23 / 0.38 | | |
+| 6,000 | | 0.17 / 0.29 | 0.06 / 0.07 | 0.05 / 0.07 |
+| 4,000 | 0.14 / 0.24 | 0.11 / 0.18 | 0.06 / 0.07 | 0.05 / 0.07 |
+
+A swing frame's total add on planet 3 (mean / p95): 0.42 / 1.10 at 15,000, then with the planet-distance test 0.34 / 0.77 at 8,000, 0.28 / 0.70 at 6,000, **0.22 / 0.52 at 4,000**. **A reach of 6,000 by planet distance passes the 0.2 ms own-time budget on all three planets (0.05 to 0.17); 4,000 passes with room.**
+
+**What a narrow reach leaves wrong.** A building outside the reach keeps its old pose until the swing rests. The bench measured, every swing tick, the worst error of any building by its true distance from the fighters' midpoint (depth counted, since the fight is on the plane): **at reaches of 4,000, 6,000 and 8,000 (either test) every building within 4,000 of the fighters was exact on every tick, and at 8,000 and 15,000 every building within 8,000.** Beyond the reach the poses are stale by up to 10,300 units on planet 3 (8,850 on planet 7, none on planet 1) between 4,000 and 8,000 out, and up to 29,600 to 32,700 far round the planet. So the reach has to be **the largest distance at which anything reads a pose during a swing: the camera's view half-width (buildings drawn from `S.bX`/`S.bZ` would visibly lag), a launch's sweep, a beam (a beam rests the swing, so likely none).** That figure is Camera's and Rendering's to name; I did not measure it. (An earlier version of this check left depth out and showed large errors at 4,000; those were buildings in the background that the fight never touches, and I discarded them.)
+
+**Recommendation.** If the view's half-width plus the fighters' drift in a swing is under about 5,000, a planet-distance reach of 6,000 is safe on the AI matches benched and cuts the tick to 0.05 to 0.17 ms; the park's constant stays a number in `data/fight/swing.json`. Simulation and Encounter decide. Not tried: the effect on the golden (the poses of buildings out of reach differ mid-swing, so any hash that reads them moves).
 
 ## What this does to the budget
 
-Performance's swing allowance is **1 ms added to each frame at x1** (quality-range.md section 3). The script side reads about 1.4 to 1.7 times native on the web, and the x4 stand-in about 6.5 times the web's (quality-range.md 2.3b). So, by those ratios (estimates, not run): **before the fix a swing frame's p95 of 1.1 to 2.2 ms native is 1.5 to 3.7 ms on the web at x1, over the allowance, and 10 to 24 ms at x4, up to 60% of the 40 ms p95 budget, for every frame of a swing.** After the fix: 0.3 to 1.0 native, 0.4 to 1.8 web, 3 to 11 at x4. The mean is inside the allowance everywhere (0.14 to 0.38 native); **planet 3's p95 (0.7 to 1.0 native, about 1.2 to 1.8 on the web) still tests it**, which is what the second cut is for.
+Performance's swing allowance is **1 ms added to each frame at x1** (quality-range.md section 3). The script side reads about 1.4 to 1.7 times native on the web, and the x4 stand-in about 6.5 times the web's (quality-range.md 2.3b). So, by those ratios (estimates, not run): **before the fix a swing frame's p95 of 1.1 to 2.2 ms native is 1.5 to 3.7 ms on the web at x1, over the allowance, and 10 to 24 ms at x4, up to 60% of the 40 ms p95 budget, for every frame of a swing.** After the fix: 0.3 to 1.0 native, 0.4 to 1.8 web, 3 to 11 at x4. The mean is inside the allowance everywhere (0.14 to 0.38 native); **planet 3's p95 (0.7 to 1.0 native, about 1.2 to 1.8 on the web) still tests it**, which is what the reach cut below is for.
 
 ## Files
 
-`docs/perf/tools/swing-bench/`: `swing_bench.gd` (the bench; goes in `sim/core/tools/` of a scratch tree), `hook-1-timers.py`, `hook-2-parts.py`, `hook-4-incremental-index.py` (patch the scratch tree, in that order, after `install.py`), `gdrun.mjs` (runs a Godot script at below-normal priority with a time limit and writes the PID beside the output). Run: `node gdrun.mjs <tree> <out.txt> 900 res://sim/core/tools/swing_bench.gd --planet=7 --reps=5 [--incr]`.
+`docs/perf/tools/swing-bench/`: `swing_bench.gd` (the bench; goes in `sim/core/tools/` of a scratch tree), `hook-1-timers.py`, `hook-2-parts.py`, `hook-4-incremental-index.py`, `hook-5-reach.py`, `hook-6-planet-reach.py` (patch the scratch tree, in that order, after `install.py`), `gdrun.mjs` (runs a Godot script at below-normal priority with a time limit and writes the PID beside the output). Run: `node gdrun.mjs <tree> <out.txt> 900 res://sim/core/tools/swing_bench.gd --planet=7 --reps=5 [--incr] [--reach=N] [--planet-reach]`.
 
 ## Limits
 
