@@ -8,14 +8,13 @@ Orb (docs/ep/vision.md, "Orb on zoom, power and the meteor launch", 2026-10-31):
 
 The fighter's **own burn**: the body in the air at speed, heating the air it passes through and leaving a hot, cooling line of it behind. It is a ribbon along his real path, starting at his body and ending where it has cooled out. It is not a marker (no ring, arrow, icon or halo drawn round him; the fighter sits inside the head of the ribbon, which is widest just behind him), and it does not depend on the camera: the camera zooms out by its own rules (Camera's), and the trail only reads the zoom to know how many pixels a unit is.
 
-**It is the existing trail taken up the power scale.** Today's trail (README, "Trails") is nothing below 40 bh/s and full at 110 (bh = 75 units). The burn is a continuous function of the **launch's speed** and the air, with no gate of its own:
+**It is the existing trail taken up the power scale.** Today's trail (README, "Trails") is nothing below 40 bh/s and full at 110 (bh = 75 units). **Orb's ruling (2026-10-31, docs/ep/vision.md): "the entire burnup should be determined by the altitude, the speed, and the rule-of-cool. At high levels of power, maybe fighters should be able to leave a trail when they fly at max speed."** So there is no launch gate; any body burns by:
 
-`burn = launched × smoothstep(burn_from, burn_full, speed) × air(altitude)`
+`burn = air(altitude) × smoothstep(burn_from, burn_full, speed) × cool`
 
-- **`launched`** is 1 while the body is a *sent* body (the launch event's `actor`, from the event until he lands or the launch's speed has gone), 0 for a flier. So ordinary flight (about 6,100 u/s) and bounces (about 5,000 u/s) can never burn, whatever their speed.
-- **`burn_from` and `burn_full` are data, in units a second** (`data/vfx/meteor.json`), tied to the launch's real speed, not to my earlier 370 bh/s (that was the top of the old trail doc, not the game's launch). **Corrected 2026-10-31 after the EP's note:** Simulation's launch is about 12,000 u/s (simulation.md section 10), so the placeholders are **7,500 and 11,000 u/s** (100 and 147 bh/s): full burn at the launch's real speed, off for flight. When Game Design rules the launch's speed `V`, the two numbers become `0.62 V` and `0.92 V` (one edit to the data row), and if the launch event carries a peak or charge flag the trail reads that instead of the speed ramp (`burn = flag × air`). The doc's examples below that said 27,750 u/s are therefore the stand-in's longest case, not the game's.
-
-At a tier-1 exchange no body is sent fast enough, so ordinary fights never show it (Orb: "the camera would never zoom out this far"). Nothing is keyed to "a peak launch" by name; the launch's speed or flag is the power.
+- **`speed`** is the body's own speed, a launch's or a flier's. `burn_from` and `burn_full` are data in units a second (`data/vfx/meteor.json`): placeholders **3,500 and 10,000 u/s**, so a fighter's own max-speed flight (about 6,100 u/s) reads at about 0.35 and Simulation's launch of about 12,000 u/s (simulation.md section 10) at full. When Game Design rules the launch speed V, `burn_full` becomes `0.92 V`.
+- **`cool`** (the rule of cool) is a data term, 0 to 1, summed and clamped: `tier` (tier 1 and 2: 0, tier 3: 0.3, tier 4: 0.6, tier 5: 0.8), `form` (+0.1 a form step taken, to 0.3), `charge` (+0.4 for a fully charged launch, from the launch event if Combat gives one). It is a `cool` block on the fighter's row, with `situations` as in section 5. At tier 1 or 2 it is 0, so ordinary fights never show a burn (Orb: "the camera would never zoom out this far"); a tier-4 flier at max speed leaves a faint trail (0.35 × 0.6); a fully charged launch at high power is 1.
+- Nothing is keyed by name to "a peak launch"; the numbers are the power. If Combat gives a `peak` flag, a `situations` row can set `cool` to 1.
 
 **Whose burn.** The launch event's `actor` is the **sent** body (Combat's convention, memory note "launch event: actor is the sent body"), so the trail follows `actor` and is composed from **his** look. One option for the first half second only: the strike's colour (the launcher's accent) as the *ignition* tint at the launch point, so the trail starts as the blow's colour and turns into his. Default off (`ignite_from: "self"`); an Orb call, section 8.
 
@@ -70,7 +69,7 @@ Air density is data, `air(alt) = exp(-alt / H)` with a floor, `H` and the thin e
 | Low, dense | Lit air round the ribbon: the sheath is **tinted by the sky behind it** (a mix toward the sky's lower band by `air`), widest, shed embers, a **bow wave** at the head: a short soft cone, 1.5 body lengths long, hugging the body's wake (a part of the ribbon, never a ring round him) | Full heat ramp, 100% width, the texture of his form clear |
 | Mid | The sheath narrows with `air`; heat shifts from the hot tint toward his lane colour | 40–70% width; texture merges into tone |
 | Edge of space | The sheath is a faint ionised line a few pixels wide | Core only, held at its pixel floor |
-| Above | Nothing to heat. **A floor of 25% brightness remains**: his own energy leaving a thin wake of lane colour, so the cue Orb asked for survives even where a real object would show none | Core only, no sheath, no embers |
+| Above | Nothing to heat. **A floor remains** (Orb: "enough to look cool when the camera dynamically zooms"; Research found 25% weak): `air_eff = max(air, 0.6)` for the core and body, so the core keeps **60% of its brightness and 100% of its pixel floor**, and the sheath keeps **0.4 of its width** (at least 10 px at 1,280), still scaled by `speed` and `cool`. His own energy leaving a clear wake of lane colour, with a hot head, where a real object would show none | Core, body and a narrow sheath, no embers |
 
 The glow is local to the ribbon. No sky colour moves, no light is cast on the planet from the trail, and no screen-read shader is used at any level (the clash look's distortion needs one; this does not).
 
@@ -103,6 +102,7 @@ Presentation only: it reads the fighter's pose and velocity, writes nothing of t
 - **No full-screen flare, no screen tint, no blur, no screen read.** The largest area it covers is the sheath: at most a 160-px band about 1,900 px long at the closest zoom, which is about 15% of the frame and falls to under 3% by 20,000 wide.
 - **A pixel sees a single slow cooling, never an alternation.** Brightness is a function of a point's **age**, monotone: the head passes (one rise), then the ramp cools over seconds. There is no pulsing in time. Travelling features (the boil rings, pulses of the lances) are slower than 0.9 Hz at any point, the clash look's number (Legal: 2 Hz, 1.5 Hz calm).
 - **Lifetime floors.** No trail lives under 4 s (2 s under Reduce flashing, with the taper longer), so no pixel can rise and fall inside a second.
+- **A flier near the threshold must not flicker.** With no launch gate the burn can cross `burn_from` on and off with his speed. It is smoothed in sim time (rise 0.3 s, fall 1.0 s) and a segment's width and heat are fixed when its point is laid, so a speed dip leaves a thinner stretch of ribbon, not a strobe. The ramp is a width and heat, never an on-off.
 - **Launch's own flash is not the trail's.** The impact that sends him is already granted by the flash registry (`docs/vfx/flash-registry.md`); the trail asks for no weight because it begins steady.
 - **Reduce flashing:** brightness cap 0.82 of normal, half the linger, ember sparkle off (embers steady and dimmer), the ring and pulse rates at 0.55 Hz. **Reduced motion:** no travelling features (the pattern is fixed to the ribbon and moves only as the fighter moves), embers off, no filament sway. Both still draw the full ribbon in his colour.
 - **Legal:** under RL-119 and RL-120, the gate is at most 2.5 on the analyser, and no sensitivity run over 3. I claim nothing until there is a clip: the check is a scripted launch, a camera pull to 53,000 and back, **both modes, both sizes** (1,024 × 768 and 1,280 × 720), and the look gate's side-by-side (ADR 0010). Not a Legal clearance.
@@ -156,10 +156,10 @@ A polyline of the fighter's recent path in world coordinates with a point every 
 
 ## 11. Open, and what I need
 
-- **Orb:** whose colours ignite the trail: his own (default) or the launcher's strike colour for the first half second (section 1)? And how much of the 25% floor above the sky they want, a single dim line or a clear one.
+- **Orb:** whose colours ignite the trail: his own (default) or the launcher's strike colour for the first half second (section 1)? The above-the-air floor is now 60% core and 0.4 sheath, up from 25% (`air_floor`, data); say if it should be brighter.
 - **World:** the atmosphere's depth and a density curve on the planet record, and the wind direction for the vapour band.
 - **Camera:** the zoom is theirs; the trail needs `px_per_unit` each frame (from the view's zoom and render scale), nothing else.
-- **Combat:** a launch `charge` (full or not) and a `peak` flag if they want the trail forced at a threshold; the sent body's speed already comes from the sim.
+- **Combat:** a launch `charge` (full or not) for the `cool` term, and a `peak` flag if they want the trail forced; the body's speed already comes from the sim.
 - **Art:** the heat ramps' hot and cool tints for each lane (the L* 86 cap on the core), and the Empress and Cyborg gold and slag choices.
 - **Rendering:** the node's place in the view, `px_per_unit`, and the ladder level in the hub.
 - **Performance:** a bench on the Radeon iGPU for the closest-zoom case at Standard.
