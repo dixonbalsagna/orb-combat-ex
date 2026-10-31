@@ -83,3 +83,11 @@ node research/right-stick-proto/v3/gif.mjs --check            # every clip's not
 node research/right-stick-proto/v3/gif.mjs                    # every clip into the NOW folder, about 15 s
 node research/right-stick-proto/v3/claw-sweep.mjs             # 2726 links, about a second
 ```
+
+## Pure 4a and the left-right swap (2026-10-30)
+
+`claw-4a-swap.mjs` holds Orb's pick, pure 4a, to Controls' bar on the built v3 page, which it does not change: 75,030 links (gaps 0 to 36, holds around D and up the ladder, stick and D-pad, every shoulder lane), the 600-tick chains and a 900,000-tick fuzz. The sim reads logical inputs, so a layout is only a transfer time between the attack stick and the face buttons: a full mirror or a turned-round pad keeps them on one thumb, and swapped sticks put them on two, which is the claw's lane for every player. `--law-off` and `--k3-off` are its negative controls. No layout is built on the page yet, and the left thumb's timings are modelled, not measured.
+
+```
+node research/right-stick-proto/claw-4a-swap.mjs              # about 30 s
+```
