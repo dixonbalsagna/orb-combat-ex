@@ -404,6 +404,35 @@ A fighter is 75 tall. Feet can't simply sit there: the typical gap is ankle heig
 - **Whether Orb can see 128 against 256 at the look gate.** That decides the second choice, not the cost.
 - **Nothing here timed the node on a real laptop,** and the helper fix isn't built. The run has the limits section 8 lists: ground only, AI fights.
 
+## 10. The meteor launch, on paper
+
+Orb's picture: at peak power a launch sends a body diagonally skyward through the atmosphere, seen from about 53,000 wide. **The sim nearly allows it today, and it's a cheap case for the ground.** Nothing was run; arcs are arithmetic from `stepLaunched`'s gravity (1,000 u/s²) and drag (0.55 a second).
+
+**What the sim allows today.** A body's height is clamped at `SimConst.CEILING`, 24,000, about one planet radius, and `vy` is zeroed there. There's no speed cap; the data's hardest send is 7,000 u/s (`brake.json`), and the horizontal part gets `launchTravel` on top (3.5 at 45°).
+
+| Send | Apex | In the air | Lands, along the line | Round the planet |
+| :--- | ---: | ---: | ---: | ---: |
+| 5,000 at 45° | 6,250 | 7.1 s | 20,400 | 48° |
+| 7,000 at 45° | 12,250 | 9.9 s | 28,900 | 68° |
+| 7,000 at 60° | 18,375 | 12.1 s | 16,500 | 39° |
+| 12,000 at 45° | 36,000 (over the clamp) | 17 s | 49,700 | 116° |
+
+A view 53,000 wide is about 30,000 tall, so a send near 12,000 fills it. The sim's world is flat along the line: `y` is height above the ground under him, gravity doesn't change with height, and the planet's curve is the view's.
+
+**What it would take:**
+
+1. **A launch's own ceiling, in data.** `CEILING` also sets the camera's clamps and the sky's darkening (`look.gd`), so raising it moves today's look. Only `stepLaunched`'s clamp needs a higher number. With the switch off, the golden holds.
+2. **A longer forecast.** `predictFlight` stops at `PREDICT_STEPS`, 240 ticks (4 s), so it can't see this landing, or even a full 5,000 send's. It needs about 720 to 1,020 steps on the bake: about 2.6 to 3.7 ms natively a candidate, four times that on the slowest level, so this launch should plan few candidates, or step coarsely up high.
+3. **A shorter wait.** 17 s in the air is long for a fight. `SimFlight`'s curve (off today) can pace it up to 3 times along the same path, and the landing doesn't move.
+4. **The ring.** Past `HALF` the shortest arc flips: a Half ring (38,400) takes the 28,900 arc but not the 49,700. A field world on a **Whole ring** is a true great circle with no seam, good to 76,800, halfway round. It costs no extra reads on a read-through; the snapshot is 141 KB against 82 until the column arrays leave it. Game Design's "a launch carries at most a sixth of the loop" (3d) would have to give way for this launch.
+5. **The landing's crater** at about 8,500 u/s straight down is a collateral question for Game Design, by tier.
+
+**The ground is cheap here.** Drag kills the sideways speed, so he lands almost straight down: a handful of nodes at the landing, not a sweep. The whole 28,900 arc on the 128 ground is about 560 nodes over 594 ticks, about 1 a tick, under the slowest level's 4. A body more than a margin above the bake can't touch the ground, so he could read the bake up there and almost nothing at all, as long as that rule comes from the state (it does: his height and the bake are both pure). The margin has to cover the worst gap to the bake, measured so far at 268.
+
+**The shared band holds.** He stays on the one line, at an `x` along one great circle, however far; depth is relative to that line and never changes in flight. The launcher stays on it too. A swing in the arc slows by the gap, by Game Design's rule: at 10,000 u/s airborne, 20°/s at 28,900 and 12°/s at 49,700. Each degree moves the landing a long way, so the plan must read the line the swing ends on (Encounter's `frameAt`), and at 10 to 17 s the swing has plenty of time to rest before he lands.
+
+**Rollback barely notices.** No new state, so no bigger snapshot: `x`, `y` and the velocities are already there. A re-run reads no nodes. The launch's hit-stop (12 to 14 ticks) outlasts a 200 ms ping's one-way time of about 6 ticks, so the blow is usually confirmed before he moves. A flipped launch further out corrects a body moving up to about 300 u/tick, or 515 at a 12,000 send: 1,800 to 3,100 units at a depth of 6, which is 3 to 6% of a 53,000 view. That's visible only if the camera is already wide, and it's Netcode's and Camera's to judge. The camera zoom, the trail and the globe are the view's and change nothing here.
+
 ## What the sim keeps from the page of 2026-10-30
 
 The rest of this page is the earlier report. The columns as a ring buffer, the statics, wrap math, trig and rounding results all still apply, and a field world's line uses that buffer. Its option table and "build first" do not.
