@@ -11,6 +11,7 @@ Orb picked the turntable, E and E2: the world visibly swings round the fighters.
 5. **A standing fighter just rides the ground.** The most it rose in the probe was 3.8 units a tick at Game Design's 75 u/s, under the 7.5 cap on every sample.
 6. **A whole-planet bake at load is safe for determinism on every build we can test.** It's a pure function: same bits in any order, after any match, in two processes, native and web (section 7). Which level a read uses must never depend on what's ready; with one spacing that holds by itself.
 7. **The read-through ran with a swing, on the bake alone** (section 8): no noise reads, no cost I could separate from noise, deterministic across rollbacks, processes and native against web. A swing must be at rest before a landing.
+8. **Under ADR 0012, one sim ground at 128 units on every setting, with forecasts on the 512 bake** (section 9). It fits the slowest level, and it replaces option A as my recommendation; a performance view at 512 keeps feet down with a body offset.
 
 ## 1. Who needs ground beyond the pair's reach
 
@@ -334,6 +335,74 @@ My driver doesn't plan arrivals. When a launched fighter landed mid-swing at 60�
 | Bake afterwards against the whole make | Same bits | Same bits |
 
 So nothing is over 50 ms and it costs no more in total. For Performance's 4 ms on the web, take about 75 units (its 1.2 to 1.5 times, arithmetic). The core has no work to do here: what's missing is a host calling it behind the intro. The bake's own step form isn't built; it's a loop over nodes in any order, about 85 a frame by Performance's figure.
+
+## 9. One sim ground across a range of settings (ADR 0012)
+
+**Recommendation: the sim's one ground is the field at 128 units, on every setting, with the 38 forecast lines reading the 512 bake.** It fits the slowest level with room. The sim's cost doesn't change with the setting, so a setting changes only what's drawn, as ADR 0012 requires. Below, option A's reason for the bake alone no longer holds: on a line, a finer sim ground is cheap.
+
+Same run as section 8: real AI fights, 4 planets, 14,400 ticks, swings on about a third of them, and the nodes cold at each match. Counts don't depend on load. **Slowest level:** a node at about 200 µs (50 µs on the web, x4), so 0.8 ms a tick is 4 nodes, and a spike allowance of 33 ms is 165 nodes.
+
+| Sim ground, forecasts on the bake | Nodes a tick, mean | Swing ticks | Launched ticks | p99 | p999 | Worst tick | Slowest level: launched, p999, worst |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: | :--- |
+| The bake (512) | 0 | 0 | 0 | 0 | 0 | 0 | none |
+| 256 | 0.127 | 0.19 | 0.49 | 2 | 11 | 258 | 0.1, 2.2, 52 ms |
+| **128** | **0.302** | **0.52** | **1.14** | **3** | **23** | **582** | **0.23, 4.6, 116 ms** |
+| 64 | 0.611 | 1.0 | 2.36 | 6 | 52 | 980 | 0.47, 10, 196 ms |
+| Exact gen 2 columns | 1.84 | 5.1 | 5.9 | 9 | 93 | 613 | A ring column, at 520 µs: 3.1, 48, 319 ms |
+
+**Three things to read from it:**
+
+- **My 0.058 a tick was low by about five.** That count had no swing, one row of nodes and near reads alone. These are the real figures.
+- **The worst ticks are one fixable thing.** All four ticks over 300 are a launch plan reading through `WorldWater.seaTop` and `baseY`, helpers that don't know their caller, so this run charged them to the fine level. Given a level to read at, as the reader's rule asks, the worst tick at 128 is a dig of 115 nodes: 23 ms on the slowest level, inside the allowance. The same fix takes the mean to about 0.17. That's arithmetic from the tick log; I didn't re-run it with the helpers changed.
+- **Forecasts must stay on the bake.** With every reader at 128 the mean is 1.26, not 0.30, and `location.gd` alone is most of it. So the reader's rule is back in force, and the far-reader audit returns to 69 lines: 38 at the bake, 31 exact writers.
+
+**Swing speed hardly matters on a line.** At 240°/s with the limit off, which Orb liked, 128 reads a mean of 0.41 and 2.4 on launched ticks, p99 7.
+
+**Determinism at 128, with forecasts on the bake:** the same state in two processes, native and web the same bits with all 45 golden keys, and 28 rollbacks of 21 ticks inside swings the same, with 0 node reads on any re-run.
+
+### Why not the others
+
+| Ground | Why not |
+| :--- | :--- |
+| **The bake alone (A)** | The cheapest, but it sets everyone's ground to the slowest machine's. It rounds mountains by up to 4 fighter heights and blurs lakes (World's 11.1), which is what ADR 0012 rules out. It stays the floor |
+| **256** | Half 128's cost, and both fit. 128 keeps the shoreline to about a column where 256 is 2 to 4 (World), and the top setting can then draw the sim's own nodes. Second choice |
+| **64** | Fits on average. p99 is 1.2 ms on the slowest level, over 0.8, and its worst dig would be about twice 128's, past the allowance. World finds it only sharper at the shore |
+| **Exact gen 2** | **Refused.** A swing makes every column a new point, so it has no memo: 5 ring-column reads a swing tick, 2.6 ms on the slowest level, 3 times the budget. A rollback reads them all again. No mesh can draw it, and its lakes and rivers are planned on one line |
+
+**Load doesn't change:** the bake stays at 512, and finer nodes come on demand. A launch's landing can be read ahead in idle ticks, as Research suggests, to take the edge off. Performance's load figures stand. Nodes kept: about 1,100 a fight at 128, outside the state.
+
+**The match key covers only the bake.** A build that computes a 128 node differently wouldn't show at the handshake, only as a desync. A seeded sample of, say, 64 fine nodes in the key would close that, about 3 ms natively.
+
+### A performance view at 512: keeping the feet put
+
+The sim doesn't change for this. The view reads the sim's ground (a pure read, which can't write it) and draws what it can.
+
+**The gap, at grounded feet on land in these fights:**
+
+| Sim ground | Samples | RMS | p50 | p90 | p99 | Worst |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 256 | 173 | 16.7 | 12 | 27 | 35 | 61 |
+| 128 | 320 | 39.2 | 11 | 73 | 165 | 167 |
+| Unbiased land lines, 256 | 5,467 | 17.7 | 5.6 | 23 | 75 | 183 |
+
+A fighter is 75 tall. Feet can't simply sit there: the typical gap is ankle height, and at 128 one sample in ten is about a fighter's height. The samples are few, and the 128 row may be one fight on one step, but a view needs to handle it either way. Two ways, both Rendering's to choose:
+
+| | **A body offset** | **A contact ribbon** |
+| :--- | :--- | :--- |
+| What it does | Draws him at `y + (view ground - sim ground)`, fading out over about a body height of altitude so flight stays true | Lifts the 512 mesh to the sim's heights along the plane, fading out within a short depth |
+| Reads | 2 a frame. The node at his feet is one the sim has read | About 94 columns (1,500 either side) a frame in a swing, about 0.7 ms natively and 2.6 ms on the slowest level; new nodes about 2.4 a tick at 60°/s at 128 (arithmetic) |
+| Feet | On the drawn ground by construction | Right, and the drawn ground is the sim's on the plane |
+| Costs | Everything at his feet takes the same offset: dust, craters, shadows, a blow's sparks. A rival on other ground offsets differently, so at a large gap they'd look a little higher or lower than the sim has them. Rendering's foot test passes by construction, so it needs a stricter wording | Fits Performance's 4 ms on that level, only just, and only in a swing. A step shows as a ridge along the plane |
+
+**My call for the sim's part: the offset first.** It's 2 reads, it's the view's alone, and nothing about the sim or the replay changes. The ribbon can replace it where a setting can afford it. And **neither gets to change what the sim computes**, so a performance-mode player and a maximum-graphics player stay in the same match, by ADR 0012's rule: both run these same node reads.
+
+**The top of the range is the easy end:** a view at 128 near the feet draws the sim's own nodes, and any finer look on top must keep the plane row on the sim's ground.
+
+### What this doesn't settle
+
+- **Steps show more on finer ground.** Under feet in a swing the worst was 34.7 units a tick at 128 with 13 of 1,247 samples over 7.5, against 2.6 and 0 on the bake. The fights differ and my driver doesn't plan arrivals, so I can't split the two causes. The rate slowing by forecast from section 4 has to handle them.
+- **Whether Orb can see 128 against 256 at the look gate.** That decides the second choice, not the cost.
+- **Nothing here timed the node on a real laptop,** and the helper fix isn't built. The run has the limits section 8 lists: ground only, AI fights.
 
 ## What the sim keeps from the page of 2026-10-30
 
