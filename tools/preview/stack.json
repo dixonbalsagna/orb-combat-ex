@@ -1,0 +1,162 @@
+{
+  "_about": "The parks of the stack, in the order they must land (tools/preview/stack.mjs, docs/tools/preview.md). Tools keeps this file from each park's README: add a park here when its folder appears, move it when its order changes, set \"ready\": false while its owner says it is unfinished (it is left out unless --include-unready). Steps: patch (git apply of a file in the working tree), copy ({from, to}, \"replace\": true to take the park's file), overlay (working-tree folders an owner has not committed yet, laid over the commit; a folder that already equals the commit counts as landed), manual (a note; an apply script is never run). needs: {park}, {file}, {grep: {in, text}}, {note, owner} (a known gap that is not in the tree: it stays listed as missing until it is taken out of this file). switches: rows {id, file, path, from, to, needs, what} for flags a park adds that the stack should turn on.",
+  "parks": [
+    {
+      "id": "simulation-right-word", "owner": "simulation-engine", "notes": "The intent's second word (SimIntent.pack2) in the hash and the replay, SimDir.inStruggle and two lines of Rendering's sim_host.gd (a grant), all behind switches.rightStick.",
+      "steps": [ { "patch": "docs/architecture/pending/right-word/right-word.patch" } ],
+      "needs": [
+        { "note": "Netcode: net/session.gd and net/desync.gd pack and unpack the first word only, so an online match drops the second word (both peers alike: no desync); it needs the wire format, PROTO 4", "owner": "netcode-online" },
+        { "note": "anim_check did not finish on Simulation's loaded machine: it runs in the land gate", "owner": "simulation-engine" }
+      ]
+    },
+    {
+      "id": "combat-stick", "owner": "combat-choreography", "notes": "The right stick's content: martial.stick, energy.stick, the guard and travel lanes' draws.",
+      "steps": [
+        { "copy": [ { "from": "docs/combat/pending/stick/stick.json", "to": "data/combat/stick.json" }, { "from": "docs/combat/pending/stick/combat-stick.schema.json", "to": "tools/schemas/combat-stick.schema.json" } ] },
+        { "patch": "docs/combat/pending/stick/tools-map.patch" }
+      ],
+      "needs": [
+        { "grep": { "in": "sim/input/input_data.gd", "text": "func right_stick_on" }, "owner": "controls-feel" },
+        { "park": "encounter-stick" }
+      ]
+    },
+    {
+      "id": "encounter-beam-struggle", "owner": "encounter-systems", "notes": "The beam struggle on the pulse, switch ON (struggle.diff and test-scenes.diff; switch-off.diff is the off variant and is not applied).",
+      "steps": [
+        { "patch": "docs/director/pending/beam-struggle/struggle.diff" },
+        { "patch": "docs/director/pending/beam-struggle/test-scenes.diff" }
+      ],
+      "needs": [ { "note": "the golden is regenerated when the switch is on (README: 'regenerate the golden')", "owner": "encounter-systems" } ]
+    },
+    {
+      "id": "encounter-sure-reach", "owner": "encounter-systems", "notes": "A sure blow keeps to contact.reach.",
+      "steps": [ { "patch": "docs/director/pending/sure-reach/sure-reach.diff" } ]
+    },
+    {
+      "id": "camera-swing-1-places", "owner": "camera-cinematography", "notes": "The swing's camera, park 1 of 4 (Camera's README: stacked in this order; all off with no caller): cam_places.gd and the rig, frame and view changes.",
+      "steps": [ { "patch": "docs/camera/pending/swing/swing-1-places.patch" } ]
+    },
+    {
+      "id": "camera-swing-2-shot", "owner": "camera-cinematography", "notes": "The swing's camera, park 2 of 4: the shot (split_rig.gd, camera_params.gd).",
+      "steps": [ { "patch": "docs/camera/pending/swing/swing-2-shot.patch" } ],
+      "needs": [ { "park": "camera-swing-1-places" } ]
+    },
+    {
+      "id": "camera-swing-3-peak", "owner": "camera-cinematography", "notes": "The swing's camera, park 3 of 4: the peak (split_rig.gd, split_view.gd, camera_params.gd).",
+      "steps": [ { "patch": "docs/camera/pending/swing/swing-3-peak.patch" } ],
+      "needs": [ { "park": "camera-swing-2-shot" } ]
+    },
+    {
+      "id": "camera-swing-4-sim", "owner": "camera-cinematography", "ready": false, "notes": "LEFT OUT while Encounter's swing is in the stack: both create data/director/swing.json and tools/schemas/director-swing.schema.json (Encounter's README: 'a clash'; it drops swing_curve.gd and folds the read into its own file, so this park is superseded or must be re-cut on Encounter's). The swing's camera, park 4 of 4: the sim's read (sim/director/swing_read.gd, swing_curve.gd, data/director/swing.json, a schema and map.json). The EP granted the read; the curve and the data paths were Camera's call (Camera's README asks for a check).",
+      "steps": [ { "patch": "docs/camera/pending/swing/swing-4-sim.patch" } ],
+      "needs": [ { "park": "camera-swing-3-peak" }, { "note": "the director's call to the swing read: all four parks are off with no caller (docs/camera/swing-view.md)", "owner": "encounter-systems" } ]
+    },
+    {
+      "id": "world-gen3-field", "owner": "world-environment", "notes": "Planet generation 3, the field: early and partial on purpose (World's README).",
+      "steps": [
+        { "patch": "docs/world/pending/gen3-field/01-field.diff" },
+        { "patch": "docs/world/pending/gen3-field/02-trees-by-cell.diff" },
+        { "patch": "docs/world/pending/gen3-field/03-records-store.diff" },
+        { "patch": "docs/world/pending/gen3-field/04-plans.diff" },
+        { "patch": "docs/world/pending/gen3-field/05-landmarks-rl214.diff" },
+        { "patch": "docs/world/pending/gen3-field/06-craters-to-store.diff" }
+      ],
+      "needs": [
+        { "note": "diffs 5 and 6: World's README says their gate lists are not finished, do not land them before it says so (the install script of field-frame needs 06)", "owner": "world-environment" },
+        { "note": "Rendering: render/core/shapes.gd:440 mark == \"bell_tower\" to \"clock_tower\" (diff 5 renames the key)", "owner": "rendering-techart" },
+        { "note": "Encounter: the director's candidates and arrival scores skip a building whose WorldSettle.noTarget(landmark) is true (RL-214, before main goes public)", "owner": "encounter-systems" }
+      ]
+    },
+    {
+      "id": "world-gen3-rendering-grant", "owner": "rendering-techart", "notes": "One line of Rendering's: gen2_ring tests == 2, so a gen 3 match would draw as not gen 2.",
+      "steps": [ { "patch": "docs/world/pending/gen3-field/grant-rendering.patch" } ],
+      "needs": [ { "park": "world-gen3-field" } ]
+    },
+    {
+      "id": "architecture-field-frame", "owner": "simulation-engine", "notes": "A field world's line and the turntable (Simulation's track B): a whole ring on planetGen 3 only; nothing runs on any other setup. Installed by its own script, run on the scratch tree only, and only while the script is the file Tools reviewed (stdlib only, edits inside the tree it is given).",
+      "steps": [
+        { "script": "docs/architecture/pending/field-frame/install.py", "sha1": "b297628d6c9202658b2a9647f1a2a5cb6b3bdc3e" },
+        { "fixup": [ { "file": "sim/core/view/fx.gd", "from": "\"form_hold\", \"form_release\", \"form_step\",", "to": "\"swing_start\", \"swing_rest\", \"form_hold\", \"form_release\", \"form_step\"," } ],
+          "why": "field-frame adds the swing_start and swing_rest events (SimFx.swingEvent) but not their case in SimFxView.consume, so every swing logs 'consume: unknown event swing_start'. Simulation adds them to the pass list" }
+      ],
+      "needs": [
+        { "park": "simulation-right-word" },
+        { "park": "world-gen3-field" },
+        { "park": "encounter-swing" },
+        { "note": "NetDesync.digest: Netcode's PROTO 4", "owner": "netcode-online" },
+        { "note": "Rendering's tiles read S.frame; the old renderer draws S.base and does not turn", "owner": "rendering-techart" },
+        { "note": "the README's gate table says 'don't land before it says so' (its gates were still running when it was parked)", "owner": "simulation-engine" }
+      ]
+    },
+    {
+      "id": "rendering-tile-ground", "owner": "rendering-techart", "notes": "Rendering's tile ground in the real game (stage 4 of the ring-at-any-angle work), behind its switch (--tiles, ?tiles=1 on a local page): planet-keyed tiles on a true globe through Simulation's frame. Stacks on field-frame (needs SimField and WorldField). The stack's `tiles` switch is the page word.",
+      "steps": [ { "patch": "docs/rendering/pending/2026-10-31a-tile-ground/tile.diff", "exclude": [ "render/core/shapes.gd" ], "why": "World's grant-rendering.patch (08:46) already renames bell_tower to clock_tower in shapes.gd, the same hunk tile.diff carries; one of them drops it" } ],
+      "needs": [ { "park": "simulation-right-word" }, { "park": "world-gen3-field" }, { "park": "world-gen3-rendering-grant" }, { "park": "architecture-field-frame" } ]
+    },
+    {
+      "id": "encounter-swing", "owner": "encounter-systems", "notes": "DirSwing: the choreographer's swing (data/director/swing.json `enabled`, off byte-identical; on a field world only). Switch: `swing`. Not re-cut on World's 04 to 06 (its README).",
+      "steps": [
+        { "patch": "docs/director/pending/swing/swing.diff" },
+        { "fixup": [
+            { "file": "sim/director/swing.gd", "from": "SimSwing._poses(S, SimWrap.wrap(fr.x0), true)", "to": "SimSwing._poses(S, true)" },
+            { "file": "sim/director/swing.gd", "from": "SimSwing._poses(S, SimWrap.wrap(S.frame.x0), true)", "to": "SimSwing._poses(S, true)" }
+          ],
+          "why": "Encounter's swing.diff calls SimSwing._poses(S, x, true); Simulation's re-cut field-frame (08:00) has _poses(S, all). Encounter re-cuts, or calls poseAll" }
+      ],
+      "needs": [ { "park": "simulation-right-word" }, { "park": "world-gen3-field" }, { "park": "architecture-field-frame" }, { "note": "the swing's gate table says the full switch-off and switch-on gates were still running; QA's batch is the verdict on the read (fight time swinging misses its band)", "owner": "encounter-systems" } ]
+    },
+    {
+      "id": "encounter-stick", "owner": "encounter-systems", "notes": "The right stick's strike in the director (data/director/stick.json, switches.rightStick). Takes recipe.gd's overlay from its own diff, not from Combat's folder (the EP, 2026-10-31).",
+      "steps": [ { "patch": "docs/director/pending/stick/stick.diff" } ],
+      "needs": [ { "park": "encounter-swing" }, { "park": "combat-stick" } ]
+    },
+    {
+      "id": "net-proto4-word", "owner": "netcode-online", "notes": "The intent's second word on the net (PROTO 4): SimIntent.pack2 in packets, digest and prediction. Off with switches.rightStick off: every packet and digest as it was.",
+      "steps": [ { "patch": "docs/net/pending/proto4-word/proto4-word.patch" } ],
+      "needs": [ { "park": "simulation-right-word" }, { "park": "encounter-stick" }, { "note": "Netcode's word_check and rollback_check --right-stick used a stand-in reader: to re-run now that Encounter's stick hook reads the word", "owner": "netcode-online" } ]
+    },
+    {
+      "id": "net-proto5-swing", "owner": "netcode-online", "notes": "A swing in the digest and the forced-flip test (PROTO 5): S.frame and S.swing hashed, the store restored on rollback. Only changes a digest on planetGen 3.",
+      "steps": [ { "patch": "docs/net/pending/proto5-swing/proto5-swing.patch" } ],
+      "needs": [ { "park": "net-proto4-word" }, { "park": "world-gen3-field" }, { "park": "architecture-field-frame" }, { "note": "Netcode re-runs its gates when the arena parks land (its README); an ask that reverses a running swing flips it on one tick (Simulation's SimSwing.ask)", "owner": "simulation-engine" } ]
+    },
+    {
+      "id": "animation-pieces23", "owner": "animation", "notes": "Animation's pieces23 (2026-10-31, on HEAD, independent of its other four parked patches, which are not in the stack): protag7 and rival4 added to their fighters' waves, all 23 strikes named; the 23 pieces the sim throws now draw as themselves.",
+      "steps": [ { "patch": "docs/animation/pending/pieces23.patch" } ]
+    },
+    {
+      "id": "vfx-meteor-trail", "owner": "vfx", "notes": "VFX's meteor trail behind its own switch (VfxHub.meteor_enabled, VfxLook.METEOR_DEFAULT: off by default and byte-identical off); the stack turns it on (the `meteor` switch). 15 files, one patch.",
+      "steps": [ { "patch": "docs/vfx/pending/meteor-trail/apply.patch" } ],
+      "needs": [ { "note": "the old white trail blade still draws beside the burn: Orb may want it off when the meteor is on (VFX's README)", "owner": "vfx" } ]
+    },
+    {
+      "id": "tools-nightly-rl212", "owner": "tools-pipeline", "notes": "Tools only: RL-212 tripwires and the clash clip in the nightly.",
+      "steps": [ { "patch": "docs/tools/pending/nightly-rl212/nightly-rl212.patch" } ]
+    },
+    {
+      "id": "tools-pin-child-readings", "owner": "tools-pipeline", "notes": "Tools only: the words-only child, the four readings, the load findings.",
+      "steps": [ { "patch": "docs/tools/pending/pin-child-readings/pin-child-readings.patch" } ]
+    },
+    {
+      "id": "tools-preview-stack", "owner": "tools-pipeline", "notes": "This tool.",
+      "steps": [ { "patch": "docs/tools/pending/preview-stack/preview-stack.patch" } ]
+    },
+    {
+      "id": "camera-damage-inset", "owner": "camera-cinematography", "ready": false, "notes": "Parked off, not ready for Orb's look (Camera's README).",
+      "steps": [ { "patch": "docs/camera/pending/damage-inset/director-22-damage-inset.patch" } ]
+    },
+    {
+      "id": "rendering-2026-10-30i-crowd-bend", "owner": "rendering-techart", "ready": false, "notes": "Unfinished: do not land yet (Rendering's README).",
+      "steps": [ { "patch": "docs/rendering/pending/2026-10-30i/bend.diff" } ]
+    },
+    {
+      "id": "rendering-2026-10-30j-crowd-clock", "owner": "rendering-techart", "ready": false, "notes": "Unfinished, on top of 2026-10-30i: the crowd's cycles read the sim's tick (the wall-clock leak Tools found).",
+      "steps": [ { "patch": "docs/rendering/pending/2026-10-30j/clock.diff" } ],
+      "needs": [ { "park": "rendering-2026-10-30i-crowd-bend" } ]
+    },
+    {
+      "id": "encounter-plan-cost", "owner": "encounter-systems", "ready": false, "notes": "Unfinished: the gates have not run (Encounter's README).",
+      "steps": [ { "patch": "docs/director/pending/plan-cost/plan-cost.diff" } ]
+    }
+  ]
+}

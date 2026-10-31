@@ -22,11 +22,22 @@ export const SWITCHES = [
     what: 'surfacing, the director half: a drop (the zip\'s knock-down) under water is brought up and counts as landed' },
   { id: 'floor', file: 'data/biomes/water.json', path: ['floor', 'enabled'], from: false, to: true, needs: ['surface', 'interrupts'],
     what: 'the lake floor: a free fighter\'s floor in the ring\'s own water is its surface less his feet (needs both halves of surfacing)' },
-  { id: 'turn', file: 'data/biomes/rings.json', path: ['turn', 'on'], from: 0, to: 1, needs: [],
-    what: 'the arena\'s calm turn: at a calm moment after a launch has landed, the ring swaps for a new one turned a few degrees (at most 4 a match, 60 s apart)' },
+  { id: 'calmTurn', file: 'data/director/interrupts.json', path: ['calmTurn', 'enabled'], from: false, to: true, needs: [],
+    what: 'the calm turn, the director\'s half (DirCalm.on): without it the director never asks and the turn never happens, whatever rings.json says. Found by QA, 2026-10-31: `turn` alone gave 0 turns in 200 matches' },
+  { id: 'turn', file: 'data/biomes/rings.json', path: ['turn', 'on'], from: 0, to: 1, needs: ['calmTurn'],
+    what: 'the arena\'s calm turn (World\'s half, rings.json turn.on; it needs calmTurn, the director\'s half): at a calm moment after a launch has landed, the ring swaps for a new one turned a few degrees (at most 4 a match, 60 s apart)' },
   { id: 'rightStick', file: 'data/input/timing.json', path: ['switches', 'rightStick'], from: false, to: true, needs: [], optional: true, host: 'right-hand-host',
     probe: '"rightStick": SimInputData.right_stick_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func right_stick_on' },
     what: 'the right-hand attacks (pitch 4a, Controls): the right stick throws directional-charge strikes, the left hand braces and slips; the pad\'s right stick is read. Waits until Controls\' code is in the tree you build (or overlaid)' },
+  { id: 'gen3', setup: { planetGen: 3 }, presentIf: { file: 'sim/world/field.gd' }, needs: [], optional: true,
+    what: 'planet generation 3 (World\'s field world): the match\'s setup says planetGen 3 on a whole ring (no arena key), not a data flag. Waits until the tree has World\'s code (sim/world/field.gd)' },
+  { id: 'meteor', file: 'render/vfx/vfx_look.gd', replace: { from: 'const METEOR_DEFAULT: bool = false', to: 'const METEOR_DEFAULT: bool = true' }, needs: [], optional: true,
+    probe: '"meteor": host.vfx.meteor_enabled', probeIf: { file: 'render/vfx/vfx_hub.gd', text: 'meteor_enabled' },
+    what: 'VFX\'s meteor trail: a fighter\'s own burn laid along his path and cooling in the world (VfxLook.METEOR_DEFAULT, the hub\'s meteor_enabled); off by default and byte-identical off. A constant in a GDScript file, flipped by its text. Waits until the tree has VFX\'s code' },
+  { id: 'tiles', url: 'tiles=1', cmd: '--tiles', presentIf: { file: 'render/core/tile_ground.gd' }, needs: ['gen3'], optional: true,
+    what: 'Rendering\'s tile ground (stage 4 of the ring-at-any-angle work): the fight on planet-keyed tiles on a true globe, through Simulation\'s frame. A page word for now (?tiles=1, local pages only): the printed address carries it. Needs gen3 and waits until the tree has render/core/tile_ground.gd' },
+  { id: 'swing', file: 'data/director/swing.json', path: ['enabled'], from: false, to: true, needs: ['gen3'], optional: true,
+    what: 'DirSwing (Encounter): the choreographer\'s swing: a launch, a chase, a form\'s pause, an AI\'s flight and a brawl each offer the line a turn, which the core\'s SimSwing runs. data/director/swing.json `enabled`; it does nothing but on a field world, so it needs gen3 (setup planet, touch, planetGen 3). Waits until the tree has Encounter\'s code' },
 ];
 
 export const IDS = SWITCHES.map((s) => s.id);
@@ -102,8 +113,21 @@ export function locate(text, path) {
   return walk(0);
 }
 
+/** Whether a switch's key is in a file's text: its path in JSON, or (a switch that is a constant in a script) its text, as it is off or on. */
+export function present(text, sw) {
+  if (sw.replace) return text.includes(sw.replace.from) || text.includes(sw.replace.to);
+  return !!locate(text, sw.path);
+}
+
 /** The text with a switch turned on. Returns { text, was }: was is the old literal. Throws, naming the file and key, when the key is not there or holds neither the old nor the new value (the table is stale). */
 export function flip(text, sw) {
+  if (sw.replace) {   // a constant in a script: its text appears exactly once, off or on
+    const { from, to } = sw.replace;
+    const nFrom = text.split(from).length - 1, nTo = text.split(to).length - 1;
+    if (nFrom === 1 && nTo === 0) return { text: text.replace(from, () => to), was: from };
+    if (nTo === 1 && nFrom === 0) return { text, was: to };
+    throw new Error(`${sw.file}: the text "${from}" is there ${nFrom} times and "${to}" ${nTo} (exactly one of them once was expected: the switch table in tools/preview/switches.mjs is out of date)`);
+  }
   const loc = locate(text, sw.path);
   if (!loc) throw new Error(`${sw.file}: no key ${sw.path.join('.')} (the switch table in tools/preview/switches.mjs is out of date)`);
   const was = text.slice(loc.start, loc.end);
@@ -143,6 +167,8 @@ export function errorSwitch(line) {
   if (/water\.json|WorldFill|water v2/i.test(t)) return 'water';
   if (/rings\.json|WorldEpoch/i.test(t)) return 'turn';
   if (/right_stick|rightStick|strike_read|SimStrike|left_hand/i.test(t)) return 'rightStick';
+  if (/meteor/i.test(t)) return 'meteor';
+  if (/WorldField|SimField|field world|planetGen 3/i.test(t)) return 'gen3';
   if (/launch_biome|DirLaunch|biome\.enabled/i.test(t)) return 'biome';
   if (/climate\.json|WorldClimate|WorldPlanet|planet gen|lakes\.json|sites\.json/i.test(t)) return 'gen2';
   return null;
@@ -172,23 +198,30 @@ export const PLANET_FUNC = [
   '\tfor f in st.fighters:',
   '\t\thp.append(snappedf(f.hp, 0.1))',
   '\tvar probe: Dictionary = {"tick": host.ticks, "planetGen": WorldClimate.genNow(), "fine": st.fineCols.size(), "planet": not st.planetRing.is_empty(), "dataGen": int(WorldClimate.data().get("gen", 1)),',
-  '\t\t"biome": DirLaunch.biomeOn(), "water": WorldFill.on(), "surface": WorldFill.surfaceOn(), "floor": WorldFill.floorOn(), "interrupts": DirWater.on(st), "turn": WorldEpoch.enabled({}), "turns": (st.epoch.n if st.epoch != null else -1),',
+  '\t\t"biome": DirLaunch.biomeOn(), "water": WorldFill.on(), "surface": WorldFill.surfaceOn(), "floor": WorldFill.floorOn(), "interrupts": DirWater.on(st), "turn": (WorldEpoch.enabled({}) and bool(DirCalm.cfg().get("enabled", false))), "turns": (st.epoch.n if st.epoch != null else -1),',
   '\t\t"errors": WorldFill.dataErrors(), "hp": hp}',
   '\tJavaScriptBridge.eval("window.__preview = %s;" % JSON.stringify(probe), true)',
   '',
 ].join('\n');
 
-export function planetFunc(extra = []) {
+export function planetFunc(extra = [], setup = {}) {
   const line = '\t\t"errors": WorldFill.dataErrors(), "hp": hp}';
   if (!PLANET_FUNC.includes(line)) throw new Error('tools/preview/switches.mjs: the probe line moved (planetFunc is out of date)');
-  return extra.length ? PLANET_FUNC.replace(line, () => `\t\t${extra.join(', ')},\n${line}`) : PLANET_FUNC;
+  let out = extra.length ? PLANET_FUNC.replace(line, () => `\t\t${extra.join(', ')},\n${line}`) : PLANET_FUNC;
+  const keys = Object.entries(setup);
+  if (keys.length) {
+    const ret = '\t\treturn {"planet": int(args["planet"]), "touch": int(args.get("touch", 3))}';
+    if (!out.includes(ret)) throw new Error('tools/preview/switches.mjs: the planet entry moved (planetFunc is out of date)');
+    out = out.replace(ret, () => ret.replace('}', () => `${keys.map(([k, v]) => `, "${k}": ${JSON.stringify(v)}`).join('')}}`));
+  }
+  return out;
 }
 
 const EDITS = [
   { name: 'the match setup\'s planet part (no-intro and hook starts)', from: '\t\treturn _planet_next.duplicate()\n', to: '\t\treturn _preview_planet()\n' },
   { name: 'the match setup\'s planet part (the intro start)', from: '\tsu.merge(_planet_next)\n', to: '\tsu.merge(_preview_planet())\n' },
   { name: 'the menu start without intros', from: '\t\tvar su: Dictionary = _planet_next.duplicate()\n', to: '\t\tvar su: Dictionary = _preview_planet()\n' },
-  { name: 'the options the URL may set', from: 'const URL_ARGS: Array = ["nointro", ', to: 'const URL_ARGS: Array = ["planet", "touch", "preview", "nointro", ' },
+  { name: 'the options the URL may set', from: 'const URL_ARGS: Array = [', to: 'const URL_ARGS: Array = ["planet", "touch", "preview", ' },
   { name: 'the per-frame hook', from: '\tvar n: int = host.advance(delta, vp.x, vp.y)\n', to: '\tvar n: int = host.advance(delta, vp.x, vp.y)\n\tif args.has("preview"):\n\t\t_preview_probe()\n' },
 ];
 
@@ -196,7 +229,7 @@ const EDITS = [
 export const EDITS_FINGERPRINT = createHash('sha1').update(JSON.stringify([EDITS, PLANET_FUNC, SWITCHES])).digest('hex').slice(0, 6);
 
 /** main.gd with the planet entry and the probe. Each anchor must be there exactly once, or this throws and says which (Rendering's main.gd changed: update EDITS). Keeps the file's line endings. */
-export function patchMain(text, extra = []) {
+export function patchMain(text, extra = [], setup = {}) {
   const crlf = text.includes('\r\n');
   const nl = (s) => (crlf ? s.replace(/\n/g, '\r\n') : s);
   let out = text;
@@ -206,5 +239,5 @@ export function patchMain(text, extra = []) {
     if (n !== 1) throw new Error(`render/core/main.gd: ${e.name}: expected the line once, found it ${n} times (tools/preview/switches.mjs EDITS is out of date)`);
     out = out.replace(from, () => nl(e.to));
   }
-  return out.replace(/\s*$/, '') + nl(planetFunc(extra));
+  return out.replace(/\s*$/, '') + nl(planetFunc(extra, setup));
 }

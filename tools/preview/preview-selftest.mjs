@@ -8,7 +8,7 @@ import { request } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { buildPreview, buildKey, serveLocal, checkTree, plan, overlayPaths, overlayFiles, applyPatchText } from './preview.mjs';
-import { SWITCHES, IDS, locate, flip, resolve, errorSwitch, patchMain, tableWith, loadPending, planetFunc } from './switches.mjs';
+import { SWITCHES, IDS, locate, flip, resolve, errorSwitch, patchMain, tableWith, loadPending, planetFunc, present } from './switches.mjs';
 import { expectations, probeProblems } from './smoke.mjs';
 import { browserExe } from '../machine/browser.mjs';
 
@@ -23,7 +23,7 @@ const WATER = JSON.stringify({ schema: 'biomes.water/1', _about: 'enabled: the w
 const CLIMATE = JSON.stringify({ schema: 'biomes.climate/1', gen: 1, grid: { w: 192, h: 96 }, fine: [{ gen: 1 }] }, null, 2);
 const BIOME = JSON.stringify({ schema: 'combat.launch_biome/1', _about: 'biome.enabled is behind it', biome: { enabled: false, rules: { a: 1 } }, other: { enabled: true } }, null, 2);
 const RINGS = JSON.stringify({ schema: 'biomes.rings/1', sizes: { half: 76800 }, turn: { on: 0, maxTurns: 4, gapSeconds: 60.0, driftDeg: 40.0, _note: 'turn.on 0 is off' } }, null, 2);
-const INTERRUPTS = JSON.stringify({ enabled: true, a: { enabled: true }, water: { enabled: false, surfaceTicks: 30, _note: 'water.enabled false' }, rally: { enabled: false } }, null, 2);
+const INTERRUPTS = JSON.stringify({ enabled: true, a: { enabled: true }, water: { enabled: false, surfaceTicks: 30, _note: 'water.enabled false' }, rally: { enabled: false }, calmTurn: { enabled: false, landedTicks: 45 } }, null, 2);
 const MAIN = [
   'extends Node', 'const URL_ARGS: Array = ["nointro", "skyreact"]', 'var args: Dictionary = {}', 'var _planet_next: Dictionary = {}', 'var frames: int = 0', '',
   'func _match_setup(seed: int = 0) -> Dictionary:', '\tif manual or args.has("nointro"):', '\t\treturn _planet_next.duplicate()', '\tvar su: Dictionary = {"intro": 1}', '\tsu.merge(_planet_next)', '\treturn su', '',
@@ -43,7 +43,7 @@ for (const [name, text, id] of [['water.json enabled (the first key of that name
   check(`flip ${name}: only that value changes`, r.text === text.slice(0, loc.start) + JSON.stringify(s.to) + text.slice(loc.end));
 }
 check('flip leaves the other enabled keys alone (water.json)', JSON.parse(flip(WATER, sw('water')).text).surface.enabled === false && JSON.parse(flip(WATER, sw('surface')).text).enabled === false);
-check('flip leaves the other enabled keys alone (interrupts.json)', (() => { const j = JSON.parse(flip(INTERRUPTS, sw('interrupts')).text); return j.enabled === true && j.a.enabled === true && j.rally.enabled === false && j.water.enabled === true; })());
+check('flip leaves the other enabled keys alone (interrupts.json)', (() => { const j = JSON.parse(flip(INTERRUPTS, sw('interrupts')).text); return j.enabled === true && j.a.enabled === true && j.rally.enabled === false && j.water.enabled === true && j.calmTurn.enabled === false; })());
 check('a string that looks like a key is not mistaken for it', JSON.parse(flip(BIOME, sw('biome')).text).biome.enabled === true && JSON.parse(flip(BIOME, sw('biome')).text).other.enabled === true);
 check('CRLF files keep their line endings', flip(WATER.split('\n').join(CR + '\n'), sw('water')).text.split(CR + '\n').length === WATER.split('\n').length);
 check('a byte order mark is kept and read past', flip(String.fromCharCode(0xfeff) + CLIMATE, sw('gen2')).text.charCodeAt(0) === 0xfeff);
@@ -59,7 +59,8 @@ check('--off floor turns off only the floor', R('floor').active.join() === IDS.f
 check('--off surface turns the floor off with it, and says why', R('surface').active.includes('floor') === false && R('surface').cascaded[0].id === 'floor' && R('surface').cascaded[0].because.join() === 'surface');
 check('--off interrupts turns the floor off with it', !R('interrupts').active.includes('floor') && R('interrupts').active.includes('surface'));
 check('--off gen2 turns nothing else off', R('gen2').cascaded.length === 0 && R('gen2').active.length === IDS.length - 1);
-check('--off with a comma list and --off all', R('water,biome').active.join() === 'gen2,surface,interrupts,floor,turn,rightStick' && R('all').active.length === 0);
+check('swing (DirSwing) is a data flag of data/director/swing.json `enabled`, waits for the file and needs gen3; the top-level key is the one flipped, not the nested ones', (() => { const s = SWITCHES.find((x) => x.id === 'swing'); if (!s || s.file !== 'data/director/swing.json' || s.path.join() !== 'enabled' || !s.optional || s.needs.join() !== 'gen3') return false; const T = '{\n  "enabled": false,\n  "kinds": {\n    "launch": {\n      "enabled": true\n    }\n  },\n  "other": {\n    "enabled": false\n  }\n}\n'; const f = flip(T, s); return f.text === T.replace('"enabled": false,\n  "kinds"', '"enabled": true,\n  "kinds"'); })());
+check('--off with a comma list and --off all', R('water,biome').active.join() === 'gen2,surface,interrupts,floor,calmTurn,turn,rightStick,gen3,meteor,tiles,swing' && R('all').active.length === 0);
 check('an unknown id is reported, not ignored', R('watr').unknown.join() === 'watr');
 
 // ---- error hints
@@ -77,12 +78,13 @@ check('an anchor that is gone fails, naming it', /the menu start without intros:
 check('an anchor that is there twice fails', /found it 2 times/.test(throws(() => patchMain(`${MAIN}\n${MAIN}`)) || ''));
 
 // ---- the probe against the expectations
-const okProbe = { tick: 900, fine: 4800, planetGen: 2, planet: true, dataGen: 2, biome: true, water: true, surface: true, floor: true, interrupts: true, turn: true, turns: 0, rightStick: true, errors: [], hp: [90, 80] };
+const okProbe = { tick: 900, fine: 4800, planetGen: 2, planet: true, dataGen: 2, biome: true, water: true, surface: true, floor: true, interrupts: true, turn: true, turns: 0, rightStick: true, meteor: true, errors: [], hp: [90, 80] };
 check('a probe that matches passes', probeProblems(okProbe, expectations(IDS)).length === 0);
 check('a switch that reads off in the running game is named', probeProblems({ ...okProbe, water: false }, expectations(IDS)).map((p) => p.sw).join() === 'water');
-check('a gen 2 planet with no fine-biome columns is named',probeProblems({ ...okProbe, fine: 0 }, expectations(IDS)).some((p) => p.sw === 'gen2'));
+check('a gen 2 planet with no fine-biome columns is named',probeProblems({ ...okProbe, fine: 0 }, expectations(IDS.filter((i) => i !== 'gen3'))).some((p) => p.sw === 'gen2'));
 check('gen 2 not in force is named', probeProblems({ ...okProbe, planetGen: 1 }, expectations(IDS)).some((p) => p.sw === 'gen2'));
 check('with a switch off the probe must read it off', probeProblems({ ...okProbe, floor: true }, expectations(IDS.filter((i) => i !== 'floor'))).map((p) => p.sw).join() === 'floor');
+check('the calm turn needs both halves (QA, 2026-10-31): calmTurn is interrupts.json calmTurn.enabled, turn needs it, and --off calmTurn turns turn off with it', sw('calmTurn').file === 'data/director/interrupts.json' && sw('calmTurn').path.join('.') === 'calmTurn.enabled' && sw('turn').needs.join() === 'calmTurn' && !R('calmTurn').active.includes('turn') && R('calmTurn').cascaded.some((c) => c.id === 'turn') && R('turn').active.includes('calmTurn'));
 check('the calm turn is a switch: off by one flag, named when the running game reads it off', sw('turn').path.join('.') === 'turn.on' && sw('turn').from === 0 && sw('turn').to === 1 && probeProblems({ ...okProbe, turn: false }, expectations(IDS)).map((p) => p.sw).join() === 'turn' && probeProblems({ ...okProbe, turn: false }, expectations(IDS.filter((i) => i !== 'turn'))).length === 0 && errorSwitch('rings.json: bad bearing') === 'turn');
 check('the water loader\'s own errors are failures that name a switch', probeProblems({ ...okProbe, errors: ['water.json: the floor needs both halves of the surfacing rule'] }, expectations(IDS)).some((p) => p.sw === 'floor'));
 check('no probe at all is a failure', probeProblems(null, expectations(IDS)).length === 1);
@@ -106,7 +108,7 @@ try {
     "if (a.includes('--export-release')) {",
     "  const out = a[a.indexOf('--export-release') + 2];",
     "  const j = (f) => JSON.parse(readFileSync(join(tree, f), 'utf8'));",
-    "  const seen = { gen: j('data/biomes/climate.json').gen, water: j('data/biomes/water.json').enabled, floor: j('data/biomes/water.json').floor.enabled, surface: j('data/biomes/water.json').surface.enabled, biome: j('data/combat/launch_biome.json').biome.enabled, interrupts: j('data/director/interrupts.json').water.enabled, turn: j('data/biomes/rings.json').turn.on, rs: (() => { try { return j('data/input/timing.json').switches.rightStick; } catch { return null; } })(), host: readFileSync(join(tree, 'render/core/main.gd'), 'utf8').includes('_pad_stick_right'), probeRs: readFileSync(join(tree, 'render/core/main.gd'), 'utf8').includes('SimInputData.right_stick_on()'), patched: /_preview_probe/.test(readFileSync(join(tree, 'render/core/main.gd'), 'utf8')), buildInfo: j('build_info.json'), args: a };",
+    "  const seen = { gen: j('data/biomes/climate.json').gen, water: j('data/biomes/water.json').enabled, floor: j('data/biomes/water.json').floor.enabled, surface: j('data/biomes/water.json').surface.enabled, biome: j('data/combat/launch_biome.json').biome.enabled, interrupts: j('data/director/interrupts.json').water.enabled, turn: j('data/biomes/rings.json').turn.on, rs: (() => { try { return j('data/input/timing.json').switches.rightStick; } catch { return null; } })(), host: readFileSync(join(tree, 'render/core/main.gd'), 'utf8').includes('_pad_stick_right'), probeRs: readFileSync(join(tree, 'render/core/main.gd'), 'utf8').includes('SimInputData.right_stick_on()'), pg3: readFileSync(join(tree, 'render/core/main.gd'), 'utf8').includes('\"planetGen\": 3'), patched: /_preview_probe/.test(readFileSync(join(tree, 'render/core/main.gd'), 'utf8')), buildInfo: j('build_info.json'), args: a };",
     "  writeFileSync(out, '<html>stub</html>'); writeFileSync(join(dirname(out), 'seen.json'), JSON.stringify(seen));",
     "  if (process.env.STUB_FAIL) { console.log('SCRIPT ERROR: stub failure line'); process.exit(3); }",
     "} else { console.log('import ok'); }",
@@ -119,7 +121,7 @@ try {
   check('in the scratch tree every switch was on and main.gd patched', seen.gen === 2 && seen.water && seen.floor && seen.surface && seen.biome && seen.interrupts && seen.turn === 1 && seen.patched, JSON.stringify(seen));
   check('the export is the standard one: no template argument was passed', !seen.args.some((x) => /template/i.test(x)));
   check('build_info.json names the commit', seen.buildInfo.commit === git(repo, 'rev-parse', '--short=7', 'main').trim());
-  check('it recorded the seven flips', b.flips.length === 7 && b.flips.every((f) => !f.alreadyOn));
+  check('it recorded the eight flips', b.flips.length === 8 && b.flips.every((f) => !f.alreadyOn));
   check('THE REPOSITORY IS UNTOUCHED: every file as committed and nothing new', git(repo, 'status', '--porcelain').trim() === '', git(repo, 'status', '--porcelain'));
   check('tools/site.json is byte for byte as it was', readFileSync(join(repo, 'tools/site.json'), 'utf8') === files['tools/site.json']);
   check('the scratch tree is removed after the export', !existsSync(join(b.dir, 'tree')));
@@ -143,13 +145,13 @@ try {
   // ---- the right hand (the EP, 2026-10-31): a switch whose key is not in the tree WAITS; uncommitted work is overlaid; the host patch is applied; --check says what it did not check
   {
     const sha = git(repo, 'rev-parse', 'main').trim();
-    const pendingText = JSON.stringify({ rows: [{ id: 'gen3', owner: 'World', what: 'planet generation 3' }, { id: 'tiles', owner: 'Rendering', what: 'tiles', file: 'data/x.json', path: ['tiles', 'on'], from: false, to: true }] });
+    const pendingText = JSON.stringify({ rows: [{ id: 'gen9', owner: 'World', what: 'planet generation 3' }, { id: 'tilx', owner: 'Rendering', what: 'tiles', file: 'data/x.json', path: ['tiles', 'on'], from: false, to: true }] });
     const pend = loadPending(pendingText);
-    check('the pending rows load; a row with a key joins the table and a row without one never does', pend.problems.length === 0 && tableWith(pend.rows).some((s) => s.id === 'tiles' && s.optional && s.needs.length === 0) && !tableWith(pend.rows).some((s) => s.id === 'gen3'), JSON.stringify(pend.problems));
+    check('the pending rows load; a row with a key joins the table and a row without one never does', pend.problems.length === 0 && tableWith(pend.rows).some((s) => s.id === 'tilx' && s.optional && s.needs.length === 0) && !tableWith(pend.rows).some((s) => s.id === 'gen9'), JSON.stringify(pend.problems));
     const pbad = (rows) => loadPending(JSON.stringify({ rows })).problems.join(' | ');
     check('a pending row needs an id, a line of what and who, a path with its file, and an id nobody uses', /needs an id/.test(pbad([{ what: 'x', owner: 'y' }])) && /needs "what" and "owner"/.test(pbad([{ id: 'a1' }])) && /needs path/.test(pbad([{ id: 'a1', what: 'x', owner: 'y', file: 'f.json' }])) && /already a switch/.test(pbad([{ id: 'water', what: 'x', owner: 'y' }])) && /not JSON/.test(loadPending('{').problems.join()));
     const p0 = plan(repo, sha, { pending: pend.rows });
-    check('a switch whose key is not in the tree WAITS: not on, with the reason; the others stay on', !p0.active.includes('rightStick') && p0.waiting.some((w) => w.id === 'rightStick' && /not in this tree yet/.test(w.why)) && p0.waiting.some((w) => w.id === 'tiles') && p0.active.includes('turn') && p0.active.includes('floor'), JSON.stringify(p0.waiting));
+    check('a switch whose key is not in the tree WAITS: not on, with the reason; the others stay on', !p0.active.includes('rightStick') && p0.waiting.some((w) => w.id === 'rightStick' && /not in this tree yet/.test(w.why)) && p0.waiting.some((w) => w.id === 'tilx') && p0.active.includes('turn') && p0.active.includes('floor'), JSON.stringify(p0.waiting));
     check('--off still takes a waiting switch\'s id and a switch that waits is not "unknown"', plan(repo, sha, { off: ['rightStick'], pending: pend.rows }).unknown.length === 0);
 
     // a working tree with Controls' work in it, not committed
@@ -177,6 +179,60 @@ try {
     check('a key that holds neither the old nor the new value is stale: it waits and the problem is named', !stale.active.includes('rightStick') && stale.stale.some((s) => /switches\.rightStick is 7/.test(s)), JSON.stringify(stale.stale));
     work('data/input/timing.json', JSON.stringify({ switches: { rightStick: false } }, null, 2) + '\n');
 
+    // gen3: a key of the match's setup (planetGen 3, a whole ring), present when World's code is in the tree
+    check('gen3 is a setup switch, not a data flag: no file, a setup, the file it waits for', sw('gen3').setup.planetGen === 3 && sw('gen3').file === undefined && sw('gen3').presentIf.file === 'sim/world/field.gd' && sw('gen3').optional === true);
+    const g0 = plan(repo, sha, { pending: pend.rows });
+    check('without World\'s code the gen3 switch WAITS and says so; nothing is added to the setup', !g0.active.includes('gen3') && g0.waiting.some((w) => w.id === 'gen3' && /sim\/world\/field\.gd is not in this tree yet/.test(w.why)) && Object.keys(g0.setup).length === 0, JSON.stringify(g0.waiting));
+    work('sim/world/field.gd', 'extends RefCounted\n');
+    const g1 = plan(repo, sha, { overlay: ['sim/world'], pending: pend.rows });
+    check('with the file in the tree it is on, and the setup carries planetGen 3', g1.active.includes('gen3') && g1.setup.planetGen === 3 && !g1.waiting.some((w) => w.id === 'gen3'), JSON.stringify(g1));
+    check('--off gen3 leaves the setup alone', plan(repo, sha, { overlay: ['sim/world'], off: ['gen3'], pending: pend.rows }).setup.planetGen === undefined);
+    check('the scratch main.gd\'s planet entry carries the setup (planetGen 3), and not otherwise', /return \{"planet": int\(args\["planet"\]\), "touch": int\(args\.get\("touch", 3\)\), "planetGen": 3\}/.test(planetFunc([], { planetGen: 3 })) && !/"touch", 3\)\), "planetGen"/.test(planetFunc()) && patchMain(MAIN, [], { planetGen: 3 }).includes('"planetGen": 3') && patchMain(MAIN) === patchMain(MAIN, [], {}));
+    check('a gen 3 probe reads 3 or the data\'s 2, and a field world may have no fine-biome columns: asked for, neither is a failure', probeProblems({ ...okProbe, planetGen: 3, fine: 0 }, expectations(IDS)).length === 0 && probeProblems({ ...okProbe, planetGen: 1, fine: 0 }, expectations(IDS)).some((p) => /planetGen reads 1, expected at least 2/.test(p.text)));
+    const gb = await buildPreview({ ...opts, overlay: ['sim/world'], rebuild: true, pending: pend });
+    const gs = JSON.parse(readFileSync(join(gb.web, 'seen.json'), 'utf8'));
+    check('a build with World\'s code overlaid puts planetGen 3 in the scratch planet entry, and flips no file for it', gb.active.includes('gen3') && gs.pg3 === true && !gb.flips.some((x) => x.id === 'gen3'), JSON.stringify([gb.active, gs.pg3]));
+    const gn = await buildPreview({ ...opts, rebuild: true, pending: pend });
+    check('without it the entry has no setup key', JSON.parse(readFileSync(join(gn.web, 'seen.json'), 'utf8')).pg3 === false);
+
+    // meteor: a constant in a script, flipped by its text
+    const LOOK = 'const METEOR_DEFAULT: bool = false          # the meteor trail: off until Orb has seen it\nconst OTHER: bool = false\n';
+    check('meteor is a constant switch: a text to replace, the file it waits for, a probe field', sw('meteor').replace.from === 'const METEOR_DEFAULT: bool = false' && sw('meteor').replace.to === 'const METEOR_DEFAULT: bool = true' && sw('meteor').file === 'render/vfx/vfx_look.gd' && sw('meteor').optional === true && /meteor_enabled/.test(sw('meteor').probe));
+    const mf = flip(LOOK, sw('meteor'));
+    check('its text is replaced once, the comment and the rest of the file untouched; on already is no change', mf.text === LOOK.replace('bool = false          #', 'bool = true          #') && mf.was === 'const METEOR_DEFAULT: bool = false' && flip(mf.text, sw('meteor')).text === mf.text && present(LOOK, sw('meteor')) && present(mf.text, sw('meteor')) && !present('nothing here', sw('meteor')));
+    const mbad = (s) => { try { flip(s, sw('meteor')); return ''; } catch (e) { return e.message; } };
+    check('the text twice, or neither, is refused and says the table is out of date', /there 2 times/.test(mbad(LOOK + LOOK)) && /there 0 times/.test(mbad('nothing')));
+    const m0 = plan(repo, sha, { pending: pend.rows });
+    check('without VFX\'s code the meteor switch WAITS and says so', !m0.active.includes('meteor') && m0.waiting.some((w) => w.id === 'meteor' && /not in this tree yet/.test(w.why)), JSON.stringify(m0.waiting));
+    work('render/vfx/vfx_look.gd', LOOK);
+    work('render/vfx/vfx_hub.gd', 'var meteor_enabled: bool = VfxLook.METEOR_DEFAULT\n');
+    const m1 = plan(repo, sha, { overlay: ['render/vfx'], pending: pend.rows });
+    check('with the files in the tree it is on, and its probe field comes with it (the hub has the field)', m1.active.includes('meteor') && m1.probes.some((p) => /meteor_enabled/.test(p)), JSON.stringify(m1));
+    work('render/vfx/vfx_hub.gd', 'nothing about the meteor here\n');
+    check('the probe field is added only when the hub has the field it reads', !plan(repo, sha, { overlay: ['render/vfx'], pending: pend.rows }).probes.some((p) => /meteor_enabled/.test(p)));
+    work('render/vfx/vfx_hub.gd', 'var meteor_enabled: bool = VfxLook.METEOR_DEFAULT\n');
+    check('a meteor expectation reads the probe: asked on, off in the game is named', probeProblems({ ...okProbe, meteor: false }, expectations(IDS)).some((p) => p.sw === 'meteor') && probeProblems({ ...okProbe, meteor: true }, expectations(IDS)).length === 0 && errorSwitch('meteor.gd:12 bad') === 'meteor');
+    const mb = await buildPreview({ ...opts, overlay: ['render/vfx'], rebuild: true, pending: pend });
+    check('a build with VFX\'s code overlaid flips the constant in the scratch copy and records it as a flip of text', mb.active.includes('meteor') && mb.flips.some((x) => x.id === 'meteor' && x.key === 'text' && /bool = true/.test(x.now)), JSON.stringify(mb.flips.filter((x) => x.id === 'meteor')));
+
+    // tiles: a page word, present when Rendering's tile ground is in the tree, needs gen3
+    check('tiles is a page word, not a data flag: no file, the word, the command-line form, the file it waits for, and it needs gen3', sw('tiles').url === 'tiles=1' && sw('tiles').cmd === '--tiles' && sw('tiles').file === undefined && sw('tiles').presentIf.file === 'render/core/tile_ground.gd' && sw('tiles').needs.join() === 'gen3' && sw('tiles').optional === true);
+    work('render/core/tile_ground.gd', 'extends RefCounted\n');
+    const t0 = plan(repo, sha, { overlay: ['render/core'], pending: pend.rows });
+    check('the tile ground in the tree without World\'s code: tiles WAITS because gen3 does (what waits turns off what needs it), and no word is printed', !t0.active.includes('tiles') && t0.waiting.some((w) => w.id === 'tiles' && /needs gen3/.test(w.why)) && t0.urlWords.length === 0, JSON.stringify(t0.waiting));
+    const t1 = plan(repo, sha, { overlay: ['render/core', 'sim/world'], pending: pend.rows });
+    check('with both in the tree tiles is on and the word is carried on the address', t1.active.includes('tiles') && t1.urlWords.join() === 'tiles=1' && t1.setup.planetGen === 3, JSON.stringify(t1));
+    check('--off tiles leaves no word', plan(repo, sha, { overlay: ['render/core', 'sim/world'], off: ['tiles'], pending: pend.rows }).urlWords.length === 0);
+    check('the scratch main.gd\'s URL list is edited at the START of the list, so the tile park\'s own words first do not break the anchor', (() => { const m = MAIN.replace('const URL_ARGS: Array = ["nointro", ', 'const URL_ARGS: Array = ["tiles", "tilerate", "nointro", '); return patchMain(m).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "tiles", "tilerate", "nointro", ') && patchMain(MAIN).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "nointro", '); })());
+    const tb = await buildPreview({ ...opts, overlay: ['render/core', 'sim/world'], rebuild: true, pending: pend });
+    check('a build with both overlaid reports the word and flips no file for it', tb.active.includes('tiles') && tb.urlWords.join() === 'tiles=1' && !tb.flips.some((x) => x.id === 'tiles'), JSON.stringify([tb.active, tb.urlWords]));
+
+    check('plan reads a tree that is not a commit (the stack\'s) through `read`: swing and gen3 are on when the files are there, swing waits and says so when gen3\'s code is not', (() => {
+      const files = { 'sim/world/field.gd': 'x', 'data/director/swing.json': '{\n  "enabled": false\n}\n' };
+      const on = plan(repo, sha, { read: (p) => (p in files ? files[p] : null) });
+      const noField = plan(repo, sha, { read: (p) => (p === 'data/director/swing.json' ? files[p] : null) });
+      return on.active.includes('swing') && on.active.includes('gen3') && on.setup.planetGen === 3 && !noField.active.includes('swing') && noField.waiting.some((w) => w.id === 'swing');
+    })());
     // the overlay itself
     const bad = (x) => { try { overlayPaths(repo, [x]); return ''; } catch (e) { return e.message; } };
     check('an overlay is a path inside the repository that exists: no .., no absolute path, no .git, nothing missing', /inside the repository/.test(bad('../x')) && /inside the repository/.test(bad('C:/x')) && /inside the repository/.test(bad('/etc')) && /inside the repository/.test(bad('.git')) && /not in the working tree/.test(bad('data/nothing')) && bad('data/input') === '');
@@ -213,12 +269,12 @@ try {
     // --check: what it checked and what waits
     const notes = [];
     const probs = checkTree(repo, 'main', { overlay: OV, notes, pending: pend });
-    check('--check passes with the work overlaid, says the host patch fits and that the work is uncommitted, and lists what waits', probs.length === 0 && notes.some((n) => /host patch fits/.test(n)) && notes.some((n) => /overlay from the working tree \(uncommitted\)/.test(n)) && notes.some((n) => /waiting, no key yet: gen3/.test(n)) && notes.some((n) => /waiting, not on: tiles/.test(n)), JSON.stringify([probs, notes]));
+    check('--check passes with the work overlaid, says the host patch fits and that the work is uncommitted, and lists what waits', probs.length === 0 && notes.some((n) => /host patch fits/.test(n)) && notes.some((n) => /overlay from the working tree \(uncommitted\)/.test(n)) && notes.some((n) => /waiting, no key yet: gen9/.test(n)) && notes.some((n) => /waiting, not on: tilx/.test(n)), JSON.stringify([probs, notes]));
     const notes2 = [];
     check('--check without the work lists the right stick as waiting and is not an error', checkTree(repo, 'main', { notes: notes2, pending: pend }).length === 0 && notes2.some((n) => /waiting, not on: rightStick/.test(n)));
     work('data/input/timing.json', JSON.stringify({ switches: { rightStick: 7 } }, null, 2) + '\n');
     check('--check fails on a key that is there with a value the table does not know', checkTree(repo, 'main', { overlay: OV, pending: pend }).some((p) => /switches\.rightStick is 7/.test(p)));
-    check('a missing or malformed pending file is reported by --check', checkTree(repo, 'main', { pending: loadPending('{"rows":[{"id":"gen3"}]}') }).some((p) => /switches-pending\.json/.test(p)));
+    check('a missing or malformed pending file is reported by --check', checkTree(repo, 'main', { pending: loadPending('{"rows":[{"id":"gen9"}]}') }).some((p) => /switches-pending\.json/.test(p)));
     for (const d of ['data/input', 'sim', 'docs']) rmSync(join(repo, d), { recursive: true, force: true });
   }
   check('--check on the fixture repository finds every key and anchor', checkTree(repo, 'main').length === 0);
@@ -249,7 +305,7 @@ try {
     const { smoke } = await import('./smoke.mjs');
     const page = (probe) => `<!doctype html><html><body><canvas width="64" height="64"></canvas><script>var t=0;setInterval(function(){t+=20;window.__preview=Object.assign({tick:t},${JSON.stringify(probe)});},100);</script></body></html>`;
     const site = (name, probe) => { const d = join(tmp, name); mkdirSync(d, { recursive: true }); writeFileSync(join(d, 'index.html'), page(probe)); return d; };
-    const good = await smoke({ dir: site('good', { planetGen: 2, fine: 4800, dataGen: 2, planet: true, biome: true, water: true, surface: true, floor: true, interrupts: true, turn: true, turns: 0, rightStick: true, errors: [], hp: [100, 100] }), on: IDS, timeoutS: 90, session: 'tools-preview-selftest', exe });
+    const good = await smoke({ dir: site('good', { planetGen: 2, fine: 4800, dataGen: 2, planet: true, biome: true, water: true, surface: true, floor: true, interrupts: true, turn: true, turns: 0, rightStick: true, meteor: true, errors: [], hp: [100, 100] }), on: IDS, timeoutS: 90, session: 'tools-preview-selftest', exe });
     check('the smoke check passes a page that reads as asked', good.ok === true, JSON.stringify(good.problems));
     const wrong = await smoke({ dir: site('wrong', { planetGen: 2, fine: 4800, dataGen: 2, planet: true, biome: true, water: false, surface: true, floor: true, interrupts: true, errors: [], hp: [100, 100] }), on: IDS, timeoutS: 90, session: 'tools-preview-selftest', exe });
     check('it fails a page whose water reads off, and names water', wrong.ok === false && wrong.problems.some((p) => p.sw === 'water'), JSON.stringify(wrong.problems));

@@ -133,6 +133,8 @@ jobs:
       # Headless Chrome (preinstalled on the runner) plays a page that flashes on purpose through the capture driver and the frame analyser.
       - name: "Private preview self-test (docs/tools/preview.md: the switch edits, the cascade, the scratch patch, a build that leaves the repository untouched, the local server, the smoke check on stand-in pages)"
         run: node tools/preview/preview-selftest.mjs --require-browser
+      - name: Stack self-test (HEAD plus parks in order in a scratch tree, the first conflict by file and owner, what is missing; no Godot, no browser)
+        run: node tools/preview/stack-selftest.mjs
       - name: Pixel pipeline self-test (headless Chrome, mock page)
         run: node tools/flash/pixel-selftest.mjs --require-browser
       - name: Clip identity self-test (a clip records its seed and pairing; two different matches are not shown side by side)

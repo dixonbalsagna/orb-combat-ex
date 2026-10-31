@@ -21,7 +21,7 @@ import { extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { exportRevision } from '../flash/head-export.mjs';
 import { scriptErrors } from '../gate.mjs';
-import { IDS, SWITCHES, EDITS_FINGERPRINT, flip, locate, patchMain, resolve as resolveSwitches, tableWith, loadPending } from './switches.mjs';
+import { IDS, SWITCHES, EDITS_FINGERPRINT, flip, locate, present, patchMain, resolve as resolveSwitches, tableWith, loadPending } from './switches.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const REPO = resolve(HERE, '..', '..');
@@ -42,7 +42,7 @@ export function godotExe(given) {
 }
 
 /** Runs one Godot (or the self-test's node stub) to the end, output to a log file, at below-normal priority and under a time limit. Resolves the exit code. */
-function runGodot(o, args, logFile, limitMs) {
+export function runGodot(o, args, logFile, limitMs) {
   return new Promise((ok) => {
     const fd = openSync(logFile, 'w');
     const cmd = o.godotNode ? process.execPath : o.godot;
@@ -103,17 +103,22 @@ export function readAt(repo, sha, overlay, path) {
  * What a build of `sha` (with `overlay`) will have: the switches that can be on, those that WAIT (their key is not in the tree, or what they need to be played is missing) and the extra probe fields.
  * `pending`: the rows of switches-pending.json. Returns { table, active, cascaded, waiting: [{ id, why }], stale: [problem], probes, hostPatch }.
  */
-export function plan(repo, sha, { off = [], overlay = [], pending = [] } = {}) {
+export function plan(repo, sha, { off = [], overlay = [], pending = [], read: readFrom = null } = {}) {
   const table = tableWith(pending);
   const r = resolveSwitches(off, table);
-  const read = (p) => readAt(repo, sha, overlay, p);
+  const read = readFrom || ((p) => readAt(repo, sha, overlay, p));   // readFrom: a tree that is not a commit (the stack's scratch tree)
   const waiting = [], stale = [];
   let active = [...r.active];
   const wait = (id, why) => { active = active.filter((x) => x !== id); waiting.push({ id, why }); };
+  const setup = {}, urlWords = [];
   for (const sw of table) {
     if (!active.includes(sw.id) || !sw.optional) continue;
+    if (sw.setup || sw.url) {   // a key of the match's setup, or a page word: not a data flag; present when the tree has the code it needs
+      if (read(sw.presentIf.file) === null) wait(sw.id, `${sw.presentIf.file} is not in this tree yet`);
+      continue;   // the setup and the page words are collected below, after what waits has turned off what needs it
+    }
     const text = read(sw.file);
-    if (text === null || !locate(text, sw.path)) wait(sw.id, `${sw.file} ${sw.path.join('.')} is not in this tree yet`);
+    if (text === null || !present(text, sw)) wait(sw.id, `${sw.file} ${sw.replace ? sw.replace.from : sw.path.join('.')} is not in this tree yet`);
     else { try { flip(text, sw); } catch (e) { stale.push(e.message); wait(sw.id, 'its key holds neither the old nor the new value'); } }
   }
   let hostPatch = null;
@@ -129,8 +134,9 @@ export function plan(repo, sha, { off = [], overlay = [], pending = [] } = {}) {
     again = false;
     for (const sw of table) if (active.includes(sw.id) && sw.needs.some((n) => !active.includes(n))) { wait(sw.id, `it needs ${sw.needs.filter((n) => !active.includes(n)).join(' + ')}, which is not on`); again = true; }
   }
+  for (const sw of table) if (active.includes(sw.id)) { if (sw.setup) Object.assign(setup, sw.setup); if (sw.url) urlWords.push(sw.url); }
   const probes = table.filter((s) => active.includes(s.id) && s.probe && s.probeIf && read(s.probeIf.file) !== null && read(s.probeIf.file).includes(s.probeIf.text)).map((s) => s.probe);
-  return { table, active: table.map((s) => s.id).filter((id) => active.includes(id)), cascaded: r.cascaded, waiting, stale, probes, hostPatch, unknown: r.unknown };
+  return { table, active: table.map((s) => s.id).filter((id) => active.includes(id)), cascaded: r.cascaded, waiting, stale, probes, hostPatch, unknown: r.unknown, setup, urlWords };
 }
 
 /** Applies a git patch to a scratch tree (git apply, whitespace-tolerant: a CRLF checkout must not refuse it). Throws with git's first line when it does not fit. */
@@ -160,7 +166,7 @@ export async function buildPreview(o) {
   const key = `${buildKey(sha, r.active)}${ov.hash ? `-ov${ov.hash}` : ''}${pl.hostPatch ? '-host' : ''}`;
   const base = resolve(o.out || join(tmpdir(), 'meridian-preview'));
   const dir = join(base, key), web = join(dir, 'web'), tree = join(dir, 'tree'), metaFile = join(dir, 'preview.json');
-  const out = { web, dir, key, sha, subject, active: r.active, cascaded: r.cascaded, waiting: pl.waiting, table: pl.table, overlay: ov.files, hostPatched: !!pl.hostPatch, cached: false, seconds: 0, flips: [], meta: null };
+  const out = { web, dir, key, sha, subject, active: r.active, cascaded: r.cascaded, waiting: pl.waiting, table: pl.table, urlWords: pl.urlWords, overlay: ov.files, hostPatched: !!pl.hostPatch, cached: false, seconds: 0, flips: [], meta: null };
   if (!o.rebuild && existsSync(join(web, 'index.html')) && existsSync(metaFile)) {
     out.cached = true; out.meta = JSON.parse(readFileSync(metaFile, 'utf8')); out.flips = out.meta.flips || [];
     return out;
@@ -179,15 +185,16 @@ export async function buildPreview(o) {
   }
   writeFileSync(join(tree, 'build_info.json'), `${JSON.stringify({ commit: sha.slice(0, 7), date, overlay: ov.files.length ? overlay : undefined })}\n`);
   for (const sw of pl.table) {
-    if (!r.active.includes(sw.id)) continue;
+    if (!r.active.includes(sw.id) || sw.setup || sw.url) continue;
     const f = join(tree, ...sw.file.split('/'));
     const res = flip(readFileSync(f, 'utf8'), sw);
     if (res.text !== readFileSync(f, 'utf8')) writeFileSync(f, res.text);
-    out.flips.push({ id: sw.id, file: sw.file, key: sw.path.join('.'), was: res.was, now: JSON.stringify(sw.to), alreadyOn: res.was === JSON.stringify(sw.to) });
+    const nowText = sw.replace ? sw.replace.to : JSON.stringify(sw.to);
+    out.flips.push({ id: sw.id, file: sw.file, key: sw.replace ? 'text' : sw.path.join('.'), was: res.was, now: nowText, alreadyOn: res.was === nowText });
   }
   const mainFile = join(tree, 'render', 'core', 'main.gd');
   if (pl.hostPatch) { applyPatchText(tree, pl.hostPatch); log('applied the right-hand host patch to the scratch main.gd (the pad\'s right stick)'); }
-  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes));
+  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup));
   const godot = o.godotNode ? null : godotExe(o.godot);
   const g = { godot, godotNode: o.godotNode };
   log('importing the project (Godot, below-normal priority)');
@@ -236,7 +243,7 @@ export function serveLocal(root, port, { strict = false, quiet = true } = {}) {
 }
 
 function listSwitches(table = SWITCHES) {
-  for (const sw of table) console.log(`  ${sw.id.padEnd(11)} ${sw.file} ${sw.path.join('.')}: ${JSON.stringify(sw.from)} -> ${JSON.stringify(sw.to)}${sw.needs.length ? `   (needs ${sw.needs.join(' + ')})` : ''}\n              ${sw.what}`);
+  for (const sw of table) if (sw.url) console.log(`  ${sw.id.padEnd(11)} the page word ?${sw.url}${sw.cmd ? ` (or ${sw.cmd})` : ''}${sw.optional ? ` (waits for ${sw.presentIf.file})` : ''}\n              ${sw.what}`); else if (sw.setup) console.log(`  ${sw.id.padEnd(11)} the match's setup: ${JSON.stringify(sw.setup)}${sw.optional ? ` (waits for ${sw.presentIf.file})` : ''}\n              ${sw.what}`); else if (sw.replace) console.log(`  ${sw.id.padEnd(11)} ${sw.file}: ${sw.replace.from} -> ${sw.replace.to}${sw.optional ? ' (waits for the file)' : ''}\n              ${sw.what}`); else console.log(`  ${sw.id.padEnd(11)} ${sw.file} ${sw.path.join('.')}: ${JSON.stringify(sw.from)} -> ${JSON.stringify(sw.to)}${sw.needs.length ? `   (needs ${sw.needs.join(' + ')})` : ''}\n              ${sw.what}`);
 }
 
 /** --check: does every switch's key sit where the table says, and does the scratch patch fit main.gd, in the committed tree of `rev`? Returns the problems. */
@@ -247,9 +254,10 @@ export function checkTree(repo, rev, { overlay = [], pending = readPending(), no
   const read = (p) => readAt(repo, sha, ov, p);
   const pl = plan(repo, sha, { overlay: ov, pending: pending.rows });
   for (const sw of pl.table) {
+    if (sw.setup || sw.url) continue;   // a key of the setup or a page word: nothing in a file to check (its presence is in the notes of the plan)
     const text = read(sw.file);
     if (text === null) { if (!sw.optional) problems.push(`${sw.file}: not in ${rev}`); continue; }
-    if (sw.optional && !locate(text, sw.path)) continue;   // waiting (listed in the notes), not an error
+    if (sw.optional && !present(text, sw)) continue;   // waiting (listed in the notes), not an error
     try { flip(text, sw); } catch (e) { problems.push(e.message); }
   }
   for (const w of pl.waiting) notes.push(`waiting, not on: ${w.id} (${w.why})`);
@@ -315,7 +323,7 @@ async function main() {
     const { smoke, describe } = await import('./smoke.mjs');
     console.log('  smoke check: booting the build in the guarded browser and playing it ...');
     try {
-      const r = await smoke({ dir: b.web, on: b.active, planet, shot: join(b.dir, 'smoke.png'), exe: opt('--browser-path'), log: () => {} });
+      const r = await smoke({ dir: b.web, on: b.active, planet, extraQuery: (b.urlWords || []).join('&'), shot: join(b.dir, 'smoke.png'), exe: opt('--browser-path'), log: () => {} });
       saveSmoke(b, r);
       for (const l of describe(r)) console.log(l);
       failed = !r.ok;
@@ -326,7 +334,7 @@ async function main() {
   if (has('--no-serve')) { process.exit(failed ? 1 : 0); }
   const want = opt('--port');
   const server = await serveLocal(b.web, want ? Number(want) : 8765, { strict: !!want });
-  const url = `http://127.0.0.1:${server.address().port}/index.html?planet=${planet}`;
+  const url = `http://127.0.0.1:${server.address().port}/index.html?planet=${planet}${b.urlWords && b.urlWords.length ? `&${b.urlWords.join('&')}` : ''}`;
   console.log(`\nOpen this in Opera:\n\n    ${url}\n`);
   if (has('--open')) { try { spawn(process.platform === 'win32' ? 'cmd' : process.platform === 'darwin' ? 'open' : 'xdg-open', process.platform === 'win32' ? ['/c', 'start', '', url] : [url], { stdio: 'ignore', detached: true, windowsHide: true }).unref(); console.log('  (opened in your default browser)'); } catch { console.log('  (could not open it: open the address above)'); } }
   console.log('  localhost only (127.0.0.1); nothing is published, uploaded or dispatched. Ctrl-C stops it.');
