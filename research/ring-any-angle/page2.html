@@ -7,7 +7,7 @@
 <style>
 :root{--tx:#1f1f1c;--tx2:#5f5e5a;--bd:#d3d1c7;--acc:#0c447c}
 body{font-family:sans-serif;margin:0;background:#14171c;color:#e8e6df}
-#wrap{position:relative;width:100%;max-width:1280px;margin:0 auto}
+#wrap{position:relative;width:100%;max-width:1280px;margin:0 auto}#levels{position:absolute;right:12px;bottom:12px;display:flex;gap:4px}.lv{font:bold 12px monospace;background:#000a;color:#ddd;border:1px solid #666;border-radius:6px;padding:5px 8px;cursor:pointer}.lv.on{background:#e8b23a;color:#111;border-color:#e8b23a}#ctl h4{grid-column:1/-1;margin:8px 0 0;color:#e8b23a;font-size:13px}
 canvas{display:block;width:100%;aspect-ratio:16/9;background:#000}
 #inputs{position:absolute;left:12px;bottom:12px;font:bold 12px monospace;display:flex;gap:4px;align-items:center;background:#0009;padding:6px 8px;border-radius:8px}
 .c{padding:3px 6px;border-radius:4px;background:#333;color:#999}.c.on{background:#e8b23a;color:#111}
@@ -22,12 +22,12 @@ p{max-width:1280px;margin:6px auto;padding:0 12px;font-size:13px;color:#b9b6ab;l
 <body>
 <div id="wrap"><canvas id="cv" width="1280" height="720"></canvas>
 <div id="inputs"><div id="dial"><div id="dot"></div></div><span class="c" id="iFly">FLY</span><span class="c" id="iSend">SEND</span><span class="c" id="iDig">DIG</span><span class="c" id="iL">SWING &lt;</span><span class="c" id="iR">SWING &gt;</span><span class="c" id="iAim">AIM</span><span class="c" id="iForm">FORM</span><span class="c" id="iBeam">BEAM</span><span class="c" id="iHeavy">HEAVY</span></div>
-<div id="hud"></div></div>
+<div id="hud"></div><div id="levels"></div></div>
 <div id="ctl"></div>
-<p><b>The turntable arena</b> (Research, spike v2; paper: <code>docs/world/ring-any-angle/research.md</code>). A true sphere, 153,600 units round, with the world swinging round two bars. The ground is tiles keyed to the planet, drawn from one map already on the graphics card, and turned by one matrix: nothing is rebuilt when it swings. No character art: fighters are bars. Move: <kbd>A</kbd> <kbd>D</kbd> or the left stick. Flat out: hold <kbd>Shift</kbd> or RT. Launch: <kbd>Space</kbd> or pad X. Swing by hand: <kbd>Q</kbd> <kbd>E</kbd> or LB RB. Aim the line at a landmark: <kbd>G</kbd> or pad Y. Form's pause: <kbd>F</kbd> or LT. Beam (hold; the world comes to rest): <kbd>B</kbd> or pad B. A heavy blow (the world jolts): <kbd>H</kbd> or the right stick's click. Dig a crater: <kbd>C</kbd> or pad A. Start again: <kbd>R</kbd>. It plays itself until you touch something.</p>
+<p><b>The turntable arena</b> (Research, spike v2; paper: <code>docs/world/ring-any-angle/research.md</code>). A true sphere, 153,600 units round, with the world swinging round two bars, on real gen 2 ground. <b>Press 1 to 5 for the five levels:</b> each changes only what's drawn; the sim's ground stays the same. Every setting a level uses is below it, to change one at a time. Stand-ins only: no character art, and towers, trees and debris are placeholders. No character art: fighters are bars. Move: <kbd>A</kbd> <kbd>D</kbd> or the left stick. Flat out: hold <kbd>Shift</kbd> or RT. Launch: <kbd>Space</kbd> or pad X. Swing by hand: <kbd>Q</kbd> <kbd>E</kbd> or LB RB. Aim the line at a landmark: <kbd>G</kbd> or pad Y. Form's pause: <kbd>F</kbd> or LT. Beam (hold; the world comes to rest): <kbd>B</kbd> or pad B. A heavy blow (the world jolts): <kbd>H</kbd> or the right stick's click. Dig a crater: <kbd>C</kbd> or pad A. Start again: <kbd>R</kbd>. It plays itself until you touch something.</p>
 <script>
 /*BUNDLE*/
-(function () {
+(async function () {
 'use strict';
 var cv = document.getElementById('cv'), gl = cv.getContext('webgl2', { antialias: true }), hud = document.getElementById('hud');
 if (!gl) { hud.textContent = 'This needs WebGL2.'; return; }
@@ -36,26 +36,47 @@ var CIRC = 153600, RP = CIRC / (2 * Math.PI), SEED = 7, FLAT = 10240, T_FOV = Ma
 function $(id) { return document.getElementById(id); }
 // ---- controls: every one a slider or a list, read each tick ----
 var GD_RATES = { rLaunch: 60, rChase: 45, rForm: 30, rBrawl: 10, rSmall: 60 };
-var P = { mapN: 1024, fires: 'gd', rLaunch: 60, rChase: 45, rForm: 30, rBrawl: 10, jolts: 1, rSmall: 60, smallEvery: 12, ceil: 1, brawl: 0, quiet: 12, angle: 60, sendS: 2.2, law: 1, reduced: 0, flip: 'off', flipDepth: 6, dterm: 0, fps30: 0, fore: 1, soft: 1, rest: 128, sharpen: 4.8, every: 6, speed: 100, width: 7000, wide: 2.2, pitch: 7, curve: 100, relief: 100, detail: 1, towers: 1, clouds: 1, globe: 1, sun: 1 };
-var CTL = [['fires', 'Swing fires', ['by the rules (Game Design)', 'launches only', 'by hand only', 'every N seconds'], ['gd', 'send', 'manual', 'every']],
+// the range: a level sets only what's drawn. The sim's ground, and everything below "the fight", is the same at every level
+var LEVELS = [
+  { name: 'Performance', view: 512, far: 512, lodK: 0.04, tmax: 3, gen: 0, detail: 0, soft: 0, towers: 8, windows: 0, trees: 0, treeR: 0, clouds: 0, cshadow: 0, tshadow: 0, sea: 0, debris: 15, scale: 0.75, fps30: 1 },
+  { name: 'Low', view: 256, far: 512, lodK: 0.03, tmax: 3, gen: 0, detail: 1, soft: 1, towers: 16, windows: 0, trees: 0, treeR: 0, clouds: 1, cshadow: 0, tshadow: 0, sea: 0, debris: 40, scale: 1, fps30: 0 },
+  { name: 'Standard', view: 128, far: 512, lodK: 0.03, tmax: 4, gen: 0, detail: 1, soft: 1, towers: 34, windows: 1, trees: 24, treeR: 12000, clouds: 1, cshadow: 1, tshadow: 0, sea: 1, debris: 150, scale: 1, fps30: 0 },
+  { name: 'High', view: 64, far: 256, lodK: 0.02, tmax: 5, gen: 1, detail: 1, soft: 0, towers: 50, windows: 1, trees: 96, treeR: 16000, clouds: 1, cshadow: 1, tshadow: 8, sea: 1, debris: 500, scale: 1.5, fps30: 0 },
+  { name: 'Maximum', view: 64, far: 128, lodK: 0.012, tmax: 6, gen: 2, detail: 1, soft: 0, towers: 64, windows: 1, trees: 320, treeR: 22000, clouds: 1, cshadow: 1, tshadow: 16, sea: 1, debris: 2000, scale: 2, fps30: 0 }];
+var P = { level: 2, custom: false, simG: 128, foot: 1, fires: 'gd', rLaunch: 60, rChase: 45, rForm: 30, rBrawl: 10, jolts: 1, rSmall: 60, smallEvery: 12, ceil: 1, brawl: 0, quiet: 12, angle: 60, sendS: 2.2, law: 1, reduced: 0, flip: 'off', flipDepth: 6, curveZoom: 1, reveal: 0, fore: 1, sharpen: 4.8, every: 6, speed: 100, width: 7000, wide: 2.2, pitch: 7, curve: 100, relief: 100, globe: 1, sun: 1 };
+for (var lk in LEVELS[2]) if (lk !== 'name') P[lk] = LEVELS[2][lk];
+var CTL = [['#', 'The fight: the same for every player, at every level'],
+  ['simG', 'Sim ground, spacing', ['128 u', '512 u (the bake)'], [128, 512]], ['foot', 'Keep height above the drawn ground (off shows the gap)', 'c'],
+  ['#', 'Drawn ground'],
+  ['view', 'Near ground, spacing', ['512 u, the bake', '256 u', '128 u', '64 u'], [512, 256, 128, 64]], ['far', 'Far land, spacing', ['512 u', '256 u', '128 u'], [512, 256, 128]], ['tmax', 'Near mesh, vertex every', ['150 u', '75 u', '37 u', '19 u'], [3, 4, 5, 6]], ['gen', 'Generated relief (drawn only)', ['off', 'on', 'finer'], [0, 1, 2]], ['detail', 'Ground paint', 'c'], ['soft', 'Softens in flight', 'c'], ['sharpen', 'Sharpens after a flight in', ['0.5 s', '4.8 s', '19 s'], [0.5, 4.8, 19]],
+  ['#', 'World and light'],
+  ['towers', 'Towers a city', 0, 64, 2], ['windows', 'Lit windows', 'c'], ['trees', 'Trees a 4,800 u tile', 0, 400, 8], ['treeR', 'Trees out to (u)', 0, 30000, 1000], ['clouds', 'Clouds', 'c'], ['cshadow', 'Cloud shadows', 'c'], ['tshadow', 'Terrain shadow steps', 0, 24, 2], ['sea', 'Sea with waves and glint', 'c'], ['debris', 'Debris a crater', 0, 3000, 5],
+  ['#', 'Screen'],
+  ['scale', 'Render scale', 0.5, 2, 0.25], ['fps30', 'Cap at 30 fps', 'c'],
+  ['#', 'The swing'],
+  ['fires', 'Swing fires', ['by the rules (Game Design)', 'launches only', 'by hand only', 'every N seconds'], ['gd', 'send', 'manual', 'every']],
   ['jolts', 'Small swings: a jolt on a heavy blow, a correction in flight', 'c'], ['rSmall', 'Small swing rate, deg/s (builds 60)', 10, 240, 1], ['smallEvery', 'A small swing every N s (game: 10 to 20)', 2, 30, 1], ['brawl', 'Slow swing up close (brawl, 10 deg/s)', 'c'], ['quiet', 'Slow swing after N s quiet (game: 45)', 3, 45, 1],
   ['rLaunch', 'Launch rate, deg/s (red past the 98 limit)', 10, 240, 1], ['rChase', 'Chase rate, deg/s', 5, 240, 1], ['rForm', 'Form pause rate, deg/s', 5, 240, 1], ['rBrawl', 'Slow swing rate, deg/s', 2, 240, 1],
   ['angle', 'Swing size (deg)', 5, 180, 5], ['sendS', 'Launch flight (s)', 1, 6, 0.2], ['every', 'N seconds', 1, 20, 1], ['law', 'Sweep limit (75 u/s standing, 10,000 airborne)', 'c'], ['ceil', 'Size ceiling (240 x root(15 / size))', 'c'], ['reduced', 'Reduced motion (every peak 30)', 'c'],
   ['flip', 'Forced flip (a late online correction)', ['off', 'a swing taken back', 'a swing the wrong way', 'a rate jump at the peak (worst case)'], ['off', 'back', 'wrong', 'jump']], ['flipDepth', 'Flip depth, ticks (6 is 200 ms ping, 13 far)', 3, 20, 1],
-  ['soft', 'Ground softens in flight', 'c'], ['rest', 'Ground at rest, spacing', ['128 u', '256 u', '512 u'], [128, 256, 512]], ['sharpen', 'Sharpens after a flight in', ['0.5 s', '4.8 s (1.5 reads a tick, r 1,500)', '19 s (1.5 reads a tick, r 3,000)'], [0.5, 4.8, 19]],
-  ['speed', 'Flat-out speed (%)', 25, 300, 5], ['width', 'View width (units)', 1500, 24000, 250], ['wide', 'Pull wide in flight (x)', 1, 4, 0.1],
-  ['pitch', 'Camera pitch (deg)', 0, 40, 1], ['curve', 'Curvature (% of true)', 5, 100, 5], ['relief', 'Relief (%)', 10, 150, 10], ['mapN', 'Planet map (ground spacing)', ['gen 1, 85 u: no budget reaches this', 'gen 1, 169 u', 'gen 1, 256 u', 'gen 1, 512 u', 'REAL gen 2, 256 u', 'REAL gen 2, 512 u: the budget ground'], [1024, 512, 340, 170, 'g340', 'g170']],
-  ['fore', 'Land in front sinks below the sight line', 'c'], ['detail', 'Ground paint', 'c'], ['dterm', 'Detail term (drawn only; the sim never reads it)', 'c'], ['towers', 'Towers and landmarks', 'c'], ['clouds', 'Clouds', 'c'], ['fps30', 'Cap at 30 fps (the laptop)', 'c'], ['globe', 'Globe', 'c'], ['sun', 'Sun fixed to the planet', 'c']];
+  ['#', 'The view'],
+  ['fore', 'Land in front sinks below the sight line', 'c'], ['speed', 'Flat-out speed (%)', 25, 300, 5], ['width', 'View width (units)', 1500, 24000, 250], ['wide', 'Pull wide in flight (x)', 1, 4, 0.1],
+  ['curveZoom', 'Curvature follows zoom (Camera)', 'c'], ['reveal', 'Zoom-out reveal in a long flight (true-size fighters)', ['off', 'to 4,200 wide: 23 px, the floor', 'to 8,000 wide: 12 px, under the floor'], [0, 4200, 8000]], ['pitch', 'Camera pitch (deg)', 0, 40, 1], ['curve', 'Curvature (% of true)', 5, 100, 5], ['relief', 'Relief (%)', 10, 150, 10], ['globe', 'Globe', 'c'], ['sun', 'Sun fixed to the planet', 'c']];
 var SETTERS = {};
+function changed(k) { if (k === 'view' || k === 'simG') buildMap(); if (LEVELS[0][k] !== undefined) { P.custom = true; paintLevels(); } }
 CTL.forEach(function (c) {
+  if (c[0] === '#') { var h = document.createElement('h4'); h.textContent = c[1]; $('ctl').appendChild(h); return; }
   var l = document.createElement('label'); l.textContent = c[1]; var k = c[0];
-  if (c[2] === 'c') { var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!P[k]; cb.onchange = function () { P[k] = cb.checked ? 1 : 0; cb.blur(); }; l.appendChild(cb); }
-  else if (Array.isArray(c[2])) { var s = document.createElement('select'); c[2].forEach(function (n, i) { var o = document.createElement('option'); o.textContent = n; o.value = i; if (c[3][i] === P[k]) o.selected = true; s.appendChild(o); }); s.onchange = function () { P[k] = c[3][+s.value]; s.blur(); if (k === 'mapN') buildMap(); }; l.appendChild(s); }
-  else { var r = document.createElement('input'), b = document.createElement('b'); r.type = 'range'; r.min = c[2]; r.max = c[3]; r.step = c[4]; r.value = P[k]; b.textContent = P[k]; var isRate = /^r[A-Z]/.test(k); if (isRate) r.setAttribute('list', 'marks'); var paint = function () { b.textContent = P[k]; b.style.color = isRate && P[k] > 98 ? '#ff6a55' : ''; }; paint(); r.oninput = function () { P[k] = +r.value; paint(); }; SETTERS[k] = function (v) { P[k] = v; r.value = v; paint(); }; var w = document.createElement('span'); w.style.cssText = 'display:flex;gap:6px;align-items:center'; w.appendChild(r); w.appendChild(b); l.appendChild(w); }
+  if (c[2] === 'c') { var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!P[k]; cb.onchange = function () { P[k] = cb.checked ? 1 : 0; cb.blur(); changed(k); }; SETTERS[k] = function (v) { P[k] = v; cb.checked = !!v; }; l.appendChild(cb); }
+  else if (Array.isArray(c[2])) { var s = document.createElement('select'); c[2].forEach(function (n, i) { var o = document.createElement('option'); o.textContent = n; o.value = i; if (c[3][i] === P[k]) o.selected = true; s.appendChild(o); }); s.onchange = function () { P[k] = c[3][+s.value]; s.blur(); changed(k); }; SETTERS[k] = function (v) { P[k] = v; s.value = c[3].indexOf(v); }; l.appendChild(s); }
+  else { var r = document.createElement('input'), b = document.createElement('b'); r.type = 'range'; r.min = c[2]; r.max = c[3]; r.step = c[4]; r.value = P[k]; b.textContent = P[k]; var isRate = /^r[A-Z]/.test(k); if (isRate) r.setAttribute('list', 'marks'); var paint = function () { b.textContent = P[k]; b.style.color = isRate && P[k] > 98 ? '#ff6a55' : ''; }; paint(); r.oninput = function () { P[k] = +r.value; paint(); changed(k); }; SETTERS[k] = function (v) { P[k] = v; r.value = v; paint(); }; var w = document.createElement('span'); w.style.cssText = 'display:flex;gap:6px;align-items:center'; w.appendChild(r); w.appendChild(b); l.appendChild(w); }
   $('ctl').appendChild(l);
 });
 (function () { var d = document.createElement('datalist'); d.id = 'marks'; [60, 98, 240].forEach(function (v) { var o = document.createElement('option'); o.value = v; d.appendChild(o); }); $('ctl').appendChild(d);
   var b = document.createElement('button'); b.textContent = 'Game Design\'s rates: launch 60, chase 45, form 30, brawl 10, small 60'; b.onclick = function () { Object.keys(GD_RATES).forEach(function (k) { SETTERS[k](GD_RATES[k]); }); b.blur(); }; $('ctl').appendChild(b); })();
+function paintLevels() { LEVELS.forEach(function (L, i) { var e = $('lv' + i); if (e) e.className = 'lv' + (i === P.level && !P.custom ? ' on' : ''); }); }
+function setLevel(i) { var L = LEVELS[i]; P.level = i; P.custom = false; for (var k in L) if (k !== 'name') { if (SETTERS[k]) SETTERS[k](L[k]); else P[k] = L[k]; } buildMap(); if (S) { S.softG = P.view; } paintLevels(); }
+LEVELS.forEach(function (L, i) { var b = document.createElement('button'); b.id = 'lv' + i; b.textContent = (i + 1) + ' ' + L.name; b.onclick = function () { setLevel(i); b.blur(); }; $('levels').appendChild(b); });
 // ---- the sphere's small maths ----
 function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
 function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
@@ -64,51 +85,85 @@ function add(a, b, s) { return [a[0] + b[0] * s, a[1] + b[1] * s, a[2] + b[2] * 
 function octDec(u, v) { var x = u * 2 - 1, y = v * 2 - 1, z = 1 - Math.abs(x) - Math.abs(y), t = Math.max(-z, 0); x += x >= 0 ? -t : t; y += y >= 0 ? -t : t; return norm([x, y, z]); }
 function octEnc(d) { var s = Math.abs(d[0]) + Math.abs(d[1]) + Math.abs(d[2]), x = d[0] / s, y = d[1] / s; if (d[2] < 0) { var ox = (1 - Math.abs(y)) * (x >= 0 ? 1 : -1), oy = (1 - Math.abs(x)) * (y >= 0 ? 1 : -1); x = ox; y = oy; } return [x * 0.5 + 0.5, y * 0.5 + 0.5]; }
 // ---- the planet map: built once, then read: by the graphics card to draw, by the sim to stand on ----
-var MAP = null, texH = gl.createTexture(), texC = gl.createTexture();
+var MAP = null, texH = null, texC = null;
 var PAL = { 0: [46, 92, 138], 1: [122, 158, 92], 2: [66, 112, 70], 3: [205, 178, 118], 4: [130, 122, 110], 5: [232, 238, 242], 6: [196, 216, 228] };
-function unb64(t) { var b = atob(t), o = new Uint8Array(b.length); for (var k = 0; k < b.length; k++) o[k] = b.charCodeAt(k); return o; }
-function paintTexel(c, k, bio, y) { var p = PAL[bio] || PAL[1], sh = y < 0 ? Math.max(0.55, 1 + y / 2600) : 1; c[k] = p[0] * sh; c[k + 1] = p[1] * sh; c[k + 2] = p[2] * sh; c[k + 3] = 255; }
-var lastGen2 = null;
-function buildMap() {
-  var g2 = String(P.mapN).charAt(0) === 'g', N = g2 ? +String(P.mapN).slice(1) : P.mapN, Nc = g2 ? 340 : Math.max(N, 340), h = new Float32Array(N * N), c = new Uint8Array(Nc * Nc * 4), t0 = performance.now(), o, y, s, d;
-  if (g2) {   // gen 2's real ground, read in Godot (gen2_dump.gd.txt): heights at this spacing; biomes, like the game's, at their own finer grid
-    var raw = unb64(GEN2[N]), hv = new DataView(raw.buffer); for (o = 0; o < N * N; o++) h[o] = hv.getInt16(o * 2, true);
-    var rc = unb64(GEN2[340]), cv = new DataView(rc.buffer); for (o = 0; o < 340 * 340; o++) paintTexel(c, o * 4, rc[340 * 340 * 2 + o], cv.getInt16(o * 2, true));
-  } else {
-    for (var j = 0; j < N; j++) for (var i = 0; i < N; i++) { d = octDec((i + 0.5) / N, (j + 0.5) / N); s = surf(SEED, d[0], d[1], d[2]); o = j * N + i; h[o] = s[0]; if (Nc === N) paintTexel(c, o * 4, s[1], s[0]); }
-    if (Nc !== N) for (j = 0; j < Nc; j++) for (i = 0; i < Nc; i++) { d = octDec((i + 0.5) / Nc, (j + 0.5) / Nc); s = surf(SEED, d[0], d[1], d[2]); paintTexel(c, (j * Nc + i) * 4, s[1], s[0]); }
-  }
-  MAP = { N: N, h: h, ms: performance.now() - t0, reads: N * N, mips: [h], gen2: g2 };
-  gl.bindTexture(gl.TEXTURE_2D, texH); var lv = h, n = N, L = 0, IF = floatLinear ? gl.R32F : gl.R16F;
-  for (;;) { gl.texImage2D(gl.TEXTURE_2D, L, IF, n, n, 0, gl.RED, gl.FLOAT, lv); if (n === 1) break; var m = n >> 1, nx = new Float32Array(m * m); for (var y = 0; y < m; y++) for (var x = 0; x < m; x++) nx[y * m + x] = (lv[y * 2 * n + x * 2] + lv[y * 2 * n + x * 2 + 1] + lv[(y * 2 + 1) * n + x * 2] + lv[(y * 2 + 1) * n + x * 2 + 1]) / 4; lv = nx; n = m; L++; MAP.mips.push(nx); }
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.bindTexture(gl.TEXTURE_2D, texC); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, Nc, Nc, 0, gl.RGBA, gl.UNSIGNED_BYTE, c); gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  if (lastGen2 !== null && lastGen2 !== g2) buildTowers(); lastGen2 = g2;
+// ---- the planet: real gen 2 ground, read in Godot at 64 units (gen2_dump.gd.txt) and resampled, as point samples, to each spacing. Every level draws the same planet ----
+var N0 = 1352, H0 = null, B0 = null, MAPS = {}, COLOURS = {}, NS = { 64: 1352, 128: 676, 256: 338, 512: 169 };
+async function unpack() {
+  var b = atob(GEN2PACK), o = new Uint8Array(b.length); for (var k = 0; k < b.length; k++) o[k] = b.charCodeAt(k);
+  var st = new Blob([o]).stream().pipeThrough(new DecompressionStream('gzip')), raw = new Uint8Array(await new Response(st).arrayBuffer()), n = N0 * N0;
+  H0 = new Float32Array(n); B0 = raw.subarray(n * 2); for (var i = 0, v = 0; i < n; i++) { var d = (raw[i] | (raw[n + i] << 8)); if (d >= 32768) d -= 65536; v = i % N0 === 0 ? d : v + d; H0[i] = v; }
 }
-// what the sim stands on: one bilinear read of the same map; these are all the ground reads a tick here
+function paintTexel(c, k, bio, y) { var p = PAL[bio] || PAL[1], sh = y < 0 ? Math.max(0.55, 1 + y / 2600) : 1; c[k] = p[0] * sh; c[k + 1] = p[1] * sh; c[k + 2] = p[2] * sh; c[k + 3] = 255; }
+function bilOn(H, N, e) { var fx = e[0] * N - 0.5, fy = e[1] * N - 0.5, i = Math.max(0, Math.min(N - 2, Math.floor(fx))), j = Math.max(0, Math.min(N - 2, Math.floor(fy))), a = Math.min(1, Math.max(0, fx - i)), b = Math.min(1, Math.max(0, fy - j)), o = j * N + i; return (H[o] * (1 - a) + H[o + 1] * a) * (1 - b) + (H[o + N] * (1 - a) + H[o + N + 1] * a) * b; }
+function getMap(g) {
+  if (MAPS[g]) return MAPS[g];
+  var N = NS[g], h = new Float32Array(N * N), t0 = performance.now();
+  if (N === N0) h = H0; else for (var j = 0; j < N; j++) for (var i = 0; i < N; i++) h[j * N + i] = bilOn(H0, N0, octEnc(octDec((i + 0.5) / N, (j + 0.5) / N)));
+  var m = { g: g, N: N, h: h, mips: [h], ms: performance.now() - t0, reads: N * N }, tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex); var lv = h, n = N, L = 0, IF = floatLinear ? gl.R32F : gl.R16F;
+  for (;;) { gl.texImage2D(gl.TEXTURE_2D, L, IF, n, n, 0, gl.RED, gl.FLOAT, lv); if (n === 1) break; var q = n >> 1, nx = new Float32Array(q * q); for (var y = 0; y < q; y++) for (var x = 0; x < q; x++) nx[y * q + x] = (lv[y * 2 * n + x * 2] + lv[y * 2 * n + x * 2 + 1] + lv[(y * 2 + 1) * n + x * 2] + lv[(y * 2 + 1) * n + x * 2 + 1]) / 4; lv = nx; n = q; L++; m.mips.push(nx); }
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  m.tex = tex; MAPS[g] = m; return m;
+}
+function getColour(N) {   // biomes keep a finer grid than heights, as they do in the game
+  if (COLOURS[N]) return COLOURS[N];
+  var c = new Uint8Array(N * N * 4), st = N0 / N; for (var j = 0; j < N; j++) for (var i = 0; i < N; i++) { var J = Math.min(N0 - 1, Math.floor((j + 0.5) * st)), I = Math.min(N0 - 1, Math.floor((i + 0.5) * st)), o = J * N0 + I; paintTexel(c, (j * N + i) * 4, B0[o], H0[o]); }
+  var t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, N, N, 0, gl.RGBA, gl.UNSIGNED_BYTE, c); gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  COLOURS[N] = t; return t;
+}
+var SIM = null;
+function buildMap() { MAP = getMap(P.view); SIM = getMap(P.simG); texH = MAP.tex; texC = getColour(P.view >= 256 ? 338 : P.view === 128 ? 676 : 1352); }
+// what the sim stands on: one bilinear read of its own map, the same at every level
 var lookups = 0;
-function heightAt(d, lod) { lookups++; var e = octEnc(d), l0 = Math.max(0, Math.min(MAP.mips.length - 2, Math.floor(lod || 0))), k = Math.max(0, Math.min(1, (lod || 0) - l0)); function rd(l) { var N = MAP.N >> l, h = MAP.mips[l], fx = e[0] * N - 0.5, fy = e[1] * N - 0.5, i = Math.max(0, Math.min(N - 2, Math.floor(fx))), j = Math.max(0, Math.min(N - 2, Math.floor(fy))), a = Math.min(1, Math.max(0, fx - i)), b = Math.min(1, Math.max(0, fy - j)), o = j * N + i; return (h[o] * (1 - a) + h[o + 1] * a) * (1 - b) + (h[o + N] * (1 - a) + h[o + N + 1] * a) * b; } return k ? rd(l0) * (1 - k) + rd(l0 + 1) * k : rd(l0); }
+function simHeight(d) { lookups++; return bilOn(SIM.h, SIM.N, octEnc(d)); }
+// what's drawn: the view's map at the lod the shader reads, plus the generated relief, float32 like the shader so a foot stands on what's drawn
+function heightAt(d, lod) { lookups++; var e = octEnc(d), l0 = Math.max(0, Math.min(MAP.mips.length - 2, Math.floor(lod || 0))), k = Math.max(0, Math.min(1, (lod || 0) - l0)); var a = bilOn(MAP.mips[l0], MAP.N >> l0, e); return k ? a * (1 - k) + bilOn(MAP.mips[l0 + 1], MAP.N >> (l0 + 1), e) * k : a; }
+var fr = Math.fround;
+function fx(x) { return fr(x - Math.floor(x)); }
+function hshF(x, y, z) { x = fx(fr(fr(x * fr(0.3183099)) + fr(0.1))); y = fx(fr(fr(y * fr(0.3183099)) + fr(0.1))); z = fx(fr(fr(z * fr(0.3183099)) + fr(0.1))); x = fr(x * 17); y = fr(y * 17); z = fr(z * 17); return fx(fr(fr(fr(x * y) * z) * fr(fr(x + y) + z))); }
+function vnF(x, y, z) { var i = Math.floor(x), j = Math.floor(y), k = Math.floor(z), f = x - i, g = y - j, h = z - k; f = f * f * (3 - 2 * f); g = g * g * (3 - 2 * g); h = h * h * (3 - 2 * h); function m(a, b, t) { return a + (b - a) * t; } return m(m(m(hshF(i, j, k), hshF(i + 1, j, k), f), m(hshF(i, j + 1, k), hshF(i + 1, j + 1, k), f), g), m(m(hshF(i, j, k + 1), hshF(i + 1, j, k + 1), f), m(hshF(i, j + 1, k + 1), hshF(i + 1, j + 1, k + 1), f), g), h); }
+function ss(a, b, x) { var u = Math.max(0, Math.min(1, (x - a) / (b - a))); return u * u * (3 - 2 * u); }
+function genTerm(d, h, rr) {
+  if (!P.gen) return 0; var fade = 1 - ss(22000, 40000, rr); if (fade <= 0) return 0;
+  var land = ss(20, 120, h), mtn = ss(350, 1600, h), v = function (s) { return vnF(d[0] * RP / s, d[1] * RP / s, d[2] * RP / s); }, r = function (s) { return 1 - Math.abs(2 * v(s) - 1); };
+  var t = land * (v(420) - 0.5) * 30 + mtn * (r(1100) * 170 - 85 + r(380) * 70 - 35); if (P.gen > 1) t += land * (v(120) - 0.5) * 9 + mtn * (r(130) * 26 - 13); return t * fade;
+}
 // ---- shaders ----
-var COMMON = '#version 300 es\nprecision highp float;\nvec2 oct(vec3 d){d/=abs(d.x)+abs(d.y)+abs(d.z);vec2 p=d.xy;if(d.z<0.)p=(1.-abs(d.yx))*vec2(d.x>=0.?1.:-1.,d.y>=0.?1.:-1.);return p*.5+.5;}\n';
+var COMMON = '#version 300 es\nprecision highp float;precision highp sampler2D;\nvec2 oct(vec3 d){d/=abs(d.x)+abs(d.y)+abs(d.z);vec2 p=d.xy;if(d.z<0.)p=(1.-abs(d.yx))*vec2(d.x>=0.?1.:-1.,d.y>=0.?1.:-1.);return p*.5+.5;}\n';
 var VS_G = COMMON + 'in vec2 aG;uniform mat3 uF;uniform mat4 uVP;uniform sampler2D uH;uniform float uR,uRr,uRel,uTex,uAlt;uniform vec4 uCr[16];uniform float uCrD[16];uniform int uCrN;uniform float uStep;\n' +
  'out vec3 vDir;out vec3 vW;out float vH;void main(){float r=aG.x,th=aG.y,a=r/uR;vec3 dir=uF*vec3(sin(a)*cos(th),sin(a)*sin(th),cos(a));float fp=max(r*uStep,r*.03);float h=textureLod(uH,oct(dir),log2(max(1.,fp/uTex))).r;for(int i=0;i<uCrN;i++){vec3 dv=dir-uCr[i].xyz;float q=dot(dv,dv)*uR*uR/(uCr[i].w*uCr[i].w);if(q<1.){float u=1.-q;h-=uCrD[i]*u*u;}}vH=h;vDir=dir;float ar=r/uRr,rad=uRr+(uAlt>0.?uAlt:h*uRel);vec3 w=vec3(rad*sin(ar)*cos(th),rad*cos(ar)-uRr,rad*sin(ar)*sin(th));vW=w;gl_Position=uVP*vec4(w,1.);}';
-var FS_G = COMMON + 'in vec3 vDir;in vec3 vW;in float vH;out vec4 o;uniform sampler2D uC;uniform vec3 uSun,uCam,uSky;uniform float uR,uRr,uDet,uHaze,uAmb,uG,uDT;\n' +
+var FS_G = COMMON + 'in vec3 vDir;in vec3 vW;in float vH;out vec4 o;uniform sampler2D uC;uniform sampler2D uH;uniform vec3 uSun,uCam,uSky,uSunP;uniform float uR,uRr,uDet,uHaze,uAmb,uG,uDT,uShad,uCS,uSea,uTime;\n' +
  'float hsh(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}float vn(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(mix(hsh(i),hsh(i+vec3(1,0,0)),f.x),mix(hsh(i+vec3(0,1,0)),hsh(i+vec3(1,1,0)),f.x),f.y),mix(mix(hsh(i+vec3(0,0,1)),hsh(i+vec3(1,0,1)),f.x),mix(hsh(i+vec3(0,1,1)),hsh(i+vec3(1,1,1)),f.x),f.y),f.z);}\n' +
  'void main(){vec3 d=normalize(vDir),up=normalize(vW+vec3(0,uRr,0)),n=normalize(cross(dFdx(vW),dFdy(vW)));if(dot(n,up)<0.)n=-n;vec3 c=texture(uC,oct(d)).rgb;float dist=length(vW-uCam);\n' +
  'if(uDet>0.){float a=vn(d*uR/2600.),b=vn(d*uR/620.),e=vn(d*uR/170.),f=vn(d*uR/60.);float fd=uDT>0.?1.:clamp(128./max(uG,1.),0.,1.);float k=(a-.5)*.30+(b-.5)*.42*sqrt(fd)*clamp(60000./dist-1.,0.,1.)+(e-.5)*.44*fd*clamp(16000./dist-1.,0.,1.)+(f-.5)*.34*fd*fd*clamp(5500./dist-1.,0.,1.);c*=1.+k;}\n' +
- 'if(vH>6000.)c=mix(c,vec3(.95),clamp((vH-6000.)/2400.,0.,1.));if(vH<0.)n=up;float l=max(dot(n,uSun),0.);c*=uAmb+(1.-uAmb)*l*1.25;float hz=1.-exp(-dist*uHaze);o=vec4(mix(c,uSky,hz*.85),1.);}';
+ 'if(vH>6000.)c=mix(c,vec3(.95),clamp((vH-6000.)/2400.,0.,1.));float sg=0.;if(vH<0.){n=up;if(uSea>0.&&dist<60000.){vec3 W=d*uR;float t=uTime*.6;vec3 wn=vec3(vn(W/70.+vec3(t,0.,t))-.5,0.,vn(W/70.+vec3(-t,4.,t))-.5)+vec3(vn(W/24.+vec3(0.,t*2.,0.))-.5,0.,vn(W/24.+vec3(t*2.,9.,0.))-.5)*.5;n=normalize(up+wn*.28*clamp(30000./dist-.4,0.,1.));vec3 rd=normalize(uCam-vW);sg=pow(max(dot(reflect(-uSun,n),rd),0.),60.)*.8;}}float l=max(dot(n,uSun),0.),shade=1.;\n' +
+ 'if(uShad>.5&&vH>=0.){float cs=dot(d,uSunP);vec3 st=uSunP-d*cs;float sl=length(st);if(sl>.001&&cs>0.){st/=sl;float tn=cs/sl;for(int i=1;i<=int(uShad);i++){float a=float(i)*float(i)*(uShad>10.?24.:96.);float hh=textureLod(uH,oct(normalize(d+st*a/uR)),max(0.,log2(a/400.+1.))).r;if(hh>vH+a*tn+24.){shade=.5;break;}}}}\n' +
+ 'if(uCS>.5&&vW.y>-9000.){float v=vn(d*7.)*.55+vn(d*19.)*.3+vn(d*53.)*.15;shade*=1.-.24*smoothstep(.54,.60,v);}\n' +
+ 'c*=(uAmb+(1.-uAmb)*l*1.25)*(.45+.55*shade);c+=vec3(sg);float hz=1.-exp(-dist*uHaze);o=vec4(mix(c,uSky,hz*.85),1.);}';
 var FS_C = COMMON + 'in vec3 vDir;in vec3 vW;in float vH;out vec4 o;uniform vec3 uSun;uniform float uAmb,uT;\n' +
  'float hsh(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}float vn(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(mix(hsh(i),hsh(i+vec3(1,0,0)),f.x),mix(hsh(i+vec3(0,1,0)),hsh(i+vec3(1,1,0)),f.x),f.y),mix(mix(hsh(i+vec3(0,0,1)),hsh(i+vec3(1,0,1)),f.x),mix(hsh(i+vec3(0,1,1)),hsh(i+vec3(1,1,1)),f.x),f.y),f.z);}\n' +
  'void main(){if(vW.z>-1200.)discard;vec3 d=normalize(vDir);float v=vn(d*7.)*.55+vn(d*19.)*.3+vn(d*53.)*.15;if(v<.56)discard;float l=max(dot(d,uSun),0.);o=vec4(vec3(.93)*(uAmb+(1.-uAmb)*.9),.92);}';
-var VS_B = COMMON + 'in vec3 aP;in vec3 aN;in vec3 iD;in vec3 iE;in vec3 iS;in vec4 iC;uniform mat3 uF;uniform mat4 uVP;uniform sampler2D uH;uniform float uR,uRr,uRel,uTex,uG;out vec3 vC;out vec3 vN;out vec3 vW;\n' +
- 'void main(){vec3 v=transpose(uF)*iD;float a=acos(clamp(v.z,-1.,1.));if(a>2.0){gl_Position=vec4(2.,2.,2.,1.);vC=vec3(0.);vN=vec3(0.);vW=vec3(0.);return;}float rr=a*uR,sp=max(mix(uG,max(uG,512.),smoothstep(6000.,9000.,rr)),rr*.03),bh=textureLod(uH,oct(iD),log2(max(1.,sp/uTex))).r;float th=atan(v.y,v.x),ar=a*uR/uRr,rad=uRr+(bh+iC.w)*uRel;vec3 b=vec3(rad*sin(ar)*cos(th),rad*cos(ar)-uRr,rad*sin(ar)*sin(th));vec3 up=normalize(b+vec3(0,uRr,0)),e=transpose(uF)*iE;e=vec3(e.x,e.z,e.y);e=normalize(e-up*dot(e,up));vec3 nn=cross(up,e);float sk=1.-smoothstep(300.,1500.,b.z);if(sk<.04){gl_Position=vec4(2.,2.,2.,1.);vC=vec3(0.);vN=vec3(0.);vW=vec3(0.);return;}vec3 w=b+e*aP.x*iS.x+up*aP.y*iS.y*sk+nn*aP.z*iS.z;vC=iC.rgb;vN=e*aN.x+up*aN.y+nn*aN.z;vW=w;gl_Position=uVP*vec4(w,1.);}';
-var FS_B = COMMON + 'in vec3 vC;in vec3 vN;in vec3 vW;out vec4 o;uniform vec3 uSun,uCam,uSky;uniform float uHaze,uAmb;void main(){float l=max(dot(normalize(vN),uSun),0.);vec3 c=vC*(uAmb+(1.-uAmb)*l*1.2);float hz=1.-exp(-length(vW-uCam)*uHaze);o=vec4(mix(c,uSky,hz*.85),1.);}';
-var VS_T = COMMON + 'in vec2 aU;in vec4 iT;in vec2 iM;uniform mat3 uF;uniform mat4 uVP;uniform sampler2D uH;uniform float uR,uRr,uRel,uTex,uG,uFore,uTy,uDT;uniform vec3 uF1,uF2,uCam;uniform vec4 uCr[16];uniform float uCrD[16];uniform int uCrN;out vec3 vDir;out vec3 vW;out float vH;\n' +
+var NOISE = 'float hsh(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}float vn(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(mix(hsh(i),hsh(i+vec3(1,0,0)),f.x),mix(hsh(i+vec3(0,1,0)),hsh(i+vec3(1,1,0)),f.x),f.y),mix(mix(hsh(i+vec3(0,0,1)),hsh(i+vec3(1,0,1)),f.x),mix(hsh(i+vec3(0,1,1)),hsh(i+vec3(1,1,1)),f.x),f.y),f.z);}\n';
+// the drawn ground at a place: a function of the place and the level only, so tiles meet, a tower stands on it and a whole turn returns the same picture
+var GROUND = NOISE + 'uniform sampler2D uH;uniform float uTex,uG,uFarS,uLodK,uGen;uniform vec4 uCr[16];uniform float uCrD[16];uniform int uCrN;\n' +
+ 'float rdg(vec3 x){return 1.-abs(2.*vn(x)-1.);}\n' +
+ 'float baseH(vec3 dir,float rr){float sp=max(mix(uG,max(uG,uFarS),smoothstep(6000.,9000.,rr)),rr*uLodK);return textureLod(uH,oct(dir),log2(max(1.,sp/uTex))).r;}\n' +
+ 'float genT(vec3 d,float h,float rr,float R){if(uGen<.5)return 0.;float fade=1.-smoothstep(22000.,40000.,rr);if(fade<=0.)return 0.;float land=smoothstep(20.,120.,h),mtn=smoothstep(350.,1600.,h);vec3 D=d*R;float t=land*(vn(D/420.)-.5)*30.+mtn*(rdg(D/1100.)*170.-85.+rdg(D/380.)*70.-35.);if(uGen>1.5)t+=land*(vn(D/120.)-.5)*9.+mtn*(rdg(D/130.)*26.-13.);return t*fade;}\n' +
+ 'float craterH(vec3 dir,float R){float c=0.;for(int i=0;i<uCrN;i++){vec3 dv=dir-uCr[i].xyz;float q=dot(dv,dv)*R*R/(uCr[i].w*uCr[i].w);if(q<1.){float u=1.-q;c-=uCrD[i]*u*u;}}return c;}\n';
+var VS_T = COMMON + GROUND + 'in vec2 aU;in vec4 iT;in vec2 iM;uniform mat3 uF;uniform mat4 uVP;uniform float uR,uRr,uRel,uFore,uTy;uniform vec3 uF1,uF2,uCam;out vec3 vDir;out vec3 vW;out float vH;\n' +
  'vec3 cube(float f,vec2 w){if(f<.5)return vec3(1.,w);if(f<1.5)return vec3(-1.,w);if(f<2.5)return vec3(w.x,1.,w.y);if(f<3.5)return vec3(w.x,-1.,w.y);if(f<4.5)return vec3(w,1.);return vec3(w,-1.);}\n' +
- 'float hsh(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}float vn(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(mix(hsh(i),hsh(i+vec3(1,0,0)),f.x),mix(hsh(i+vec3(0,1,0)),hsh(i+vec3(1,1,0)),f.x),f.y),mix(mix(hsh(i+vec3(0,0,1)),hsh(i+vec3(1,0,1)),f.x),mix(hsh(i+vec3(0,1,1)),hsh(i+vec3(1,1,1)),f.x),f.y),f.z);}\n' +
  'vec3 at(vec2 a){vec2 uv=iT.yz+a*iT.w;return normalize(cube(iT.x,tan(uv*.78539816)));}float ang(vec3 a,vec3 b){return atan(length(cross(a,b)),dot(a,b));}\n' +
  'void main(){vec3 d0=at(aU);float r0=min(ang(d0,uF1),ang(d0,uF2))*uR,m=clamp((r0-iM.x)/(iM.y-iM.x),0.,1.);vec2 g=aU*32.,fr=fract(g*.5)*2.;vec3 dir=at((g-fr*m)/32.),v=transpose(uF)*dir;float a=atan(length(v.xy),v.z),th=atan(v.y,v.x),rr=a*uR;\n' +
- 'float sp=max(mix(uG,max(uG,512.),smoothstep(6000.,9000.,rr)),rr*.03),h=textureLod(uH,oct(dir),log2(max(1.,sp/uTex))).r;for(int i=0;i<uCrN;i++){vec3 dv=dir-uCr[i].xyz;float q=dot(dv,dv)*uR*uR/(uCr[i].w*uCr[i].w);if(q<1.){float u=1.-q;h-=uCrD[i]*u*u;}}vH=h;vDir=dir;if(uDT>0.&&rr<20000.){h+=smoothstep(20.,120.,h)*(1.-smoothstep(9000.,20000.,rr))*((vn(dir*uR/380.)-.5)*52.+(vn(dir*uR/130.)-.5)*18.);}float ar=rr/uRr,rad=uRr+h*uRel;vec3 w=vec3(rad*sin(ar)*cos(th),rad*cos(ar)-uRr,rad*sin(ar)*sin(th));if(uFore>0.&&w.z>0.){float ln=uTy+(uCam.y-uTy)*min(w.z/uCam.z,1.)-60.;w.y=mix(w.y,min(w.y,ln),smoothstep(0.,900.,w.z));}vW=w;gl_Position=uVP*vec4(w,1.);}';
+ 'float h=baseH(dir,rr)+craterH(dir,uR);vH=h;vDir=dir;h+=genT(dir,h,rr,uR);float ar=rr/uRr,rad=uRr+max(h,0.)*uRel;vec3 w=vec3(rad*sin(ar)*cos(th),rad*cos(ar)-uRr,rad*sin(ar)*sin(th));if(uFore>0.&&w.z>0.){float ln=uTy+(uCam.y-uTy)*min(w.z/uCam.z,1.)-60.;w.y=mix(w.y,min(w.y,ln),smoothstep(0.,260.,w.z));}vW=w;gl_Position=uVP*vec4(w,1.);}';
+// towers, landmarks and debris: a planet direction and a height above the drawn ground
+var VS_B = COMMON + GROUND + 'in vec3 aP;in vec3 aN;in vec3 iD;in vec3 iE;in vec3 iS;in vec4 iC;uniform mat3 uF;uniform mat4 uVP;uniform float uR,uRr,uRel;out vec3 vC;out vec3 vN;out vec3 vW;out vec3 vL;out vec3 vA;\n' +
+ 'void main(){vec3 v=transpose(uF)*iD;float a=acos(clamp(v.z,-1.,1.));if(a>2.0){gl_Position=vec4(2.,2.,2.,1.);vC=vec3(0.);vN=vec3(0.);vW=vec3(0.);vL=vec3(0.);vA=vec3(0.);return;}float rr=a*uR,bh=baseH(iD,rr);bh=max(bh+genT(iD,bh,rr,uR),0.);float th=atan(v.y,v.x),ar=a*uR/uRr,rad=uRr+(bh+iC.w)*uRel;vec3 b=vec3(rad*sin(ar)*cos(th),rad*cos(ar)-uRr,rad*sin(ar)*sin(th));vec3 up=normalize(b+vec3(0,uRr,0)),e=transpose(uF)*iE;e=vec3(e.x,e.z,e.y);e=normalize(e-up*dot(e,up));vec3 nn=cross(up,e);float sk=1.-smoothstep(300.,1500.,b.z);if(sk<.04){gl_Position=vec4(2.,2.,2.,1.);vC=vec3(0.);vN=vec3(0.);vW=vec3(0.);vL=vec3(0.);vA=vec3(0.);return;}vec3 w=b+e*aP.x*iS.x+up*aP.y*iS.y*sk+nn*aP.z*iS.z;vC=iC.rgb;vN=e*aN.x+up*aN.y+nn*aN.z;vW=w;vL=aP*iS;vA=aN;gl_Position=uVP*vec4(w,1.);}';
+var FS_B = COMMON + NOISE + 'in vec3 vC;in vec3 vN;in vec3 vW;in vec3 vL;in vec3 vA;out vec4 o;uniform vec3 uSun,uCam,uSky;uniform float uHaze,uAmb,uWin;void main(){float l=max(dot(normalize(vN),uSun),0.);vec3 c=vC*(uAmb+(1.-uAmb)*l*1.2);if(uWin>0.&&abs(vA.y)<.5){float u=abs(vA.x)>.5?vL.z:vL.x;vec2 g=vec2(u/30.,vL.y/42.),fg=fract(g),ig=floor(g);float fw=max(max(abs(dFdx(g.x)),abs(dFdy(g.x))),max(abs(dFdx(g.y)),abs(dFdy(g.y))));if(fw<.45&&fg.x>.25&&fg.x<.8&&fg.y>.3&&fg.y<.8){float s=hsh(vec3(ig,vC.r*91.));c=s>.72?vec3(1.,.86,.55):c*.55;}}float hz=1.-exp(-length(vW-uCam)*uHaze);o=vec4(mix(c,uSky,hz*.85),1.);}';
+// trees: generated, keyed to the planet by tile and instance, so a tree is the same tree at any bearing; only where the planet's biome says forest
+var VS_R = COMMON + GROUND + 'in vec3 aP;in vec3 aN;in vec4 iT;uniform sampler2D uC;uniform mat3 uF;uniform mat4 uVP;uniform float uR,uRr,uRel,uTreeR;uniform int uM;out vec3 vC;out vec3 vN;out vec3 vW;out vec3 vL;out vec3 vA;\n' +
+ 'vec3 cube(float f,vec2 w){if(f<.5)return vec3(1.,w);if(f<1.5)return vec3(-1.,w);if(f<2.5)return vec3(w.x,1.,w.y);if(f<3.5)return vec3(w.x,-1.,w.y);if(f<4.5)return vec3(w,1.);return vec3(w,-1.);}\n' +
+ 'void off(){gl_Position=vec4(2.,2.,2.,1.);vC=vec3(0.);vN=vec3(0.);vW=vec3(0.);vL=vec3(0.);vA=vec3(0.);}\n' +
+ 'void main(){int id=gl_InstanceID%uM;vec3 k=vec3(float(id),iT.y*97.+iT.z*53.+iT.x*7.,1.);vec2 q=vec2(hsh(k),hsh(k+vec3(0.,11.,3.)));vec2 uv=iT.yz+q*iT.w;vec3 dir=normalize(cube(iT.x,tan(uv*.78539816))),v=transpose(uF)*dir;float a=atan(length(v.xy),v.z),rr=a*uR;if(rr>uTreeR){off();return;}vec3 c=textureLod(uC,oct(dir),0.).rgb;float fo=length(c-vec3(.259,.439,.275));if(fo>.11){off();return;}float bh=baseH(dir,rr)+craterH(dir,uR);if(bh<4.||craterH(dir,uR)<-1.){off();return;}bh+=genT(dir,bh,rr,uR);float th=atan(v.y,v.x),ar=rr/uRr,rad=uRr+bh*uRel;vec3 b=vec3(rad*sin(ar)*cos(th),rad*cos(ar)-uRr,rad*sin(ar)*sin(th));float sk=1.-smoothstep(300.,1500.,b.z);float grow=(1.-smoothstep(uTreeR*.8,uTreeR,rr))*sk;if(grow<.04){off();return;}float s=hsh(k+vec3(5.,0.,9.)),ht=(70.+s*150.)*grow,wd=(26.+s*30.)*grow;vec3 up=normalize(b+vec3(0,uRr,0)),e=normalize(cross(up,vec3(.13,.2,1.))),nn=cross(up,e);vec3 w=b+e*aP.x*wd+up*aP.y*ht+nn*aP.z*wd;vC=mix(vec3(.13,.27,.14),vec3(.24,.37,.18),s);vN=normalize(e*aN.x+up*aN.y+nn*aN.z);vW=w;vL=vec3(0.);vA=vec3(0.,1.,0.);gl_Position=uVP*vec4(w,1.);}';
 var VS_F = COMMON + 'in vec3 aP;in vec3 aN;uniform mat4 uVP;uniform vec3 uPos,uSz;out vec3 vN;void main(){vN=aN;gl_Position=uVP*vec4(uPos+aP*uSz,1.);}';
 var FS_F = COMMON + 'in vec3 vN;out vec4 o;uniform vec3 uCol;void main(){o=vec4(uCol*(.65+.35*max(dot(vN,normalize(vec3(.3,.7,.6))),0.)),1.);}';
 var VS_S = '#version 300 es\nout vec2 v;void main(){vec2 p=vec2(gl_VertexID==1?3.:-1.,gl_VertexID==2?3.:-1.);v=p*.5+.5;gl_Position=vec4(p,1.,1.);}';
@@ -117,7 +172,7 @@ var VS_L = COMMON + 'in vec3 aD;uniform mat3 uF;uniform mat4 uVP;uniform float u
 var FS_L = COMMON + 'out vec4 o;uniform vec3 uCol;void main(){o=vec4(uCol,1.);}';
 function sh(t, s) { var x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x) + '\n' + s.slice(0, 200)); return x; }
 function prog(v, f) { var p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, v)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, f)); gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p)); var u = {}, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS); for (var i = 0; i < n; i++) { var a = gl.getActiveUniform(p, i).name.replace('[0]', ''); u[a] = gl.getUniformLocation(p, a); } return { p: p, u: u, a: function (x) { return gl.getAttribLocation(p, x); } }; }
-var pT = prog(VS_T, FS_G), pG = prog(VS_G, FS_G), pC = prog(VS_G, FS_C), pB = prog(VS_B, FS_B), pF = prog(VS_F, FS_F), pS = prog(VS_S, FS_S), pL = prog(VS_L, FS_L);
+var pR = prog(VS_R, FS_B), pT = prog(VS_T, FS_G), pG = prog(VS_G, FS_G), pC = prog(VS_G, FS_C), pB = prog(VS_B, FS_B), pF = prog(VS_F, FS_F), pS = prog(VS_S, FS_S), pL = prog(VS_L, FS_L);
 // ---- a polar mesh for the clouds and the globe; the ground itself is tiles, below ----
 var NR = 170, NT = 300, RMIN = 25, RMAX = RP * Math.PI * 0.82, meshV = new Float32Array((NR + 1) * NT * 2), meshI = [], thStep = 2 * Math.PI / NT;
 for (var ir = 0; ir <= NR; ir++) for (var it = 0; it < NT; it++) { var rr = ir === 0 ? 0 : RMIN * Math.pow(RMAX / RMIN, (ir - 1) / (NR - 1)); meshV[(ir * NT + it) * 2] = rr; meshV[(ir * NT + it) * 2 + 1] = it * thStep; }
@@ -126,7 +181,7 @@ var vaoG = gl.createVertexArray(); gl.bindVertexArray(vaoG); var bG = gl.createB
 gl.enableVertexAttribArray(pG.a('aG')); gl.vertexAttribPointer(pG.a('aG'), 2, gl.FLOAT, false, 0, 0);
 var meshN = meshI.length;
 // ---- the ground: tiles keyed to the planet (a cube-sphere quadtree), one small mesh drawn instanced. A vertex belongs to a planet node, so nothing swims in flight and a swing is one matrix. Levels meet by a radial morph ----
-var TN = 32, TILE_K = 1.25, TILE_MAX = 4, FACE_ARC = Math.PI / 2 * RP, tileV = new Float32Array((TN + 1) * (TN + 1) * 2), tileI = new Uint16Array(TN * TN * 6);
+var TN = 32, TILE_K = 1.25, FACE_ARC = Math.PI / 2 * RP, tileV = new Float32Array((TN + 1) * (TN + 1) * 2), tileI = new Uint16Array(TN * TN * 6);
 for (var tj = 0; tj <= TN; tj++) for (var ti = 0; ti <= TN; ti++) { tileV[(tj * (TN + 1) + ti) * 2] = ti / TN; tileV[(tj * (TN + 1) + ti) * 2 + 1] = tj / TN; }
 for (tj = 0; tj < TN; tj++) for (ti = 0; ti < TN; ti++) { var t00 = tj * (TN + 1) + ti, tk = (tj * TN + ti) * 6; tileI.set([t00, t00 + 1, t00 + TN + 1, t00 + 1, t00 + TN + 2, t00 + TN + 1], tk); }
 var vaoTile = gl.createVertexArray(); gl.bindVertexArray(vaoTile); var bTV = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bTV); gl.bufferData(gl.ARRAY_BUFFER, tileV, gl.STATIC_DRAW); var ibT = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibT); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, tileI, gl.STATIC_DRAW);
@@ -135,6 +190,12 @@ var TILE_MAXN = 2048, tileData = new Float32Array(TILE_MAXN * 6), bTI = gl.creat
 gl.enableVertexAttribArray(pT.a('iT')); gl.vertexAttribPointer(pT.a('iT'), 4, gl.FLOAT, false, 24, 0); gl.vertexAttribDivisor(pT.a('iT'), 1); gl.enableVertexAttribArray(pT.a('iM')); gl.vertexAttribPointer(pT.a('iM'), 2, gl.FLOAT, false, 24, 16); gl.vertexAttribDivisor(pT.a('iM'), 1);
 function cubeDir(f, u, v) { var a = Math.tan(u * Math.PI / 4), b = Math.tan(v * Math.PI / 4); return norm(f === 0 ? [1, a, b] : f === 1 ? [-1, a, b] : f === 2 ? [a, 1, b] : f === 3 ? [a, -1, b] : f === 4 ? [a, b, 1] : [a, b, -1]); }
 function arcOf(a, b) { var c = cross(a, b); return Math.atan2(Math.sqrt(dot(c, c)), dot(a, b)); }
+// a cone, for trees; drawn for every instance of a fixed-size tile near the pair, so a tree belongs to the planet, not the mesh
+var CONE = []; (function () { var n = 6, ring = function (y, r, t) { var v = []; for (var i = 0; i < n; i++) { var a = (i + t) / n * 2 * Math.PI; v.push([Math.cos(a) * r, y, Math.sin(a) * r]); } return v; }; [[0.18, 0.5, 0.62], [0.5, 0.36, 1]].forEach(function (x) { var b = ring(x[0], x[1], 0); for (var i = 0; i < n; i++) { var a = b[i], c = b[(i + 1) % n], tip = [0, x[2], 0], u = [c[0] - a[0], c[1] - a[1], c[2] - a[2]], w = [tip[0] - a[0], tip[1] - a[1], tip[2] - a[2]], m = norm(cross(w, u)); [a, c, tip].forEach(function (p) { CONE.push(p[0], p[1], p[2], m[0], m[1], m[2]); }); } }); })();
+var coneN = CONE.length / 6, vaoR = gl.createVertexArray(); gl.bindVertexArray(vaoR); var bR = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bR); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(CONE), gl.STATIC_DRAW); gl.enableVertexAttribArray(pR.a('aP')); gl.vertexAttribPointer(pR.a('aP'), 3, gl.FLOAT, false, 24, 0); gl.enableVertexAttribArray(pR.a('aN')); gl.vertexAttribPointer(pR.a('aN'), 3, gl.FLOAT, false, 24, 12);
+var treeData = new Float32Array(1024 * 4), bRI = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bRI); gl.bufferData(gl.ARRAY_BUFFER, treeData.byteLength, gl.DYNAMIC_DRAW); gl.enableVertexAttribArray(pR.a('iT')); gl.vertexAttribPointer(pR.a('iT'), 4, gl.FLOAT, false, 0, 0);
+var treeTiles = 0;
+function selectTrees(f1, r) { treeTiles = 0; (function go(f, u0, v0, size, level) { var arc = size / 2 * FACE_ARC, c = cubeDir(f, u0 + size / 2, v0 + size / 2); if (arcOf(c, f1) * RP - arc * 0.8 > r) return; if (level < 3) { var h = size / 2; go(f, u0, v0, h, level + 1); go(f, u0 + h, v0, h, level + 1); go(f, u0, v0 + h, h, level + 1); go(f, u0 + h, v0 + h, h, level + 1); return; } if (treeTiles < 1024) { treeData.set([f, u0, v0, size], treeTiles * 4); treeTiles++; } }); for (var f = 0; f < 6; f++) (function g(ff, u0, v0, size, level) { var arc = size / 2 * FACE_ARC, c = cubeDir(ff, u0 + size / 2, v0 + size / 2); if (arcOf(c, f1) * RP - arc * 0.8 > r) return; if (level < 3) { var h = size / 2; g(ff, u0, v0, h, level + 1); g(ff, u0 + h, v0, h, level + 1); g(ff, u0, v0 + h, h, level + 1); g(ff, u0 + h, v0 + h, h, level + 1); return; } if (treeTiles < 1024) { treeData.set([ff, u0, v0, size], treeTiles * 4); treeTiles++; } })(f, -1, -1, 2, 0); gl.bindBuffer(gl.ARRAY_BUFFER, bRI); gl.bufferSubData(gl.ARRAY_BUFFER, 0, treeData.subarray(0, treeTiles * 4)); }
 var tileN = 0;
 function selectTiles(f1, f2, arcMax, lensLocal, lineT, tanH, flat) {
   tileN = 0;
@@ -143,7 +204,7 @@ function selectTiles(f1, f2, arcMax, lensLocal, lineT, tanH, flat) {
     if (d2 - bound > arcMax && d1 - bound > arcMax) return;
     var zw = dot(c, lensLocal[0]) * RP; if (zw - bound > lensLocal[1]) return;       // wholly behind the lens
     if (flat && Math.abs(dot(c, lineT)) * RP - bound * 1.5 > (lensLocal[1] - zw + bound * 1.5) * tanH * 1.15) return;   // past the view's sides
-    if (level < TILE_MAX && Math.min(d1, d2) - bound < TILE_K * arc) { var h = size / 2; visit(f, u0, v0, h, level + 1); visit(f, u0 + h, v0, h, level + 1); visit(f, u0, v0 + h, h, level + 1); visit(f, u0 + h, v0 + h, h, level + 1); return; }
+    if (level < P.tmax && Math.min(d1, d2) - bound < TILE_K * arc) { var h = size / 2; visit(f, u0, v0, h, level + 1); visit(f, u0 + h, v0, h, level + 1); visit(f, u0, v0 + h, h, level + 1); visit(f, u0 + h, v0 + h, h, level + 1); return; }
     if (tileN >= TILE_MAXN) return; var o = tileN * 6, end = level ? TILE_K * arc * 2 : 1e9; tileData[o] = f; tileData[o + 1] = u0; tileData[o + 2] = v0; tileData[o + 3] = size; tileData[o + 4] = level ? end * 0.6 : 1e9; tileData[o + 5] = level ? end : 2e9; tileN++;
   }
   for (var f = 0; f < 6; f++) visit(f, -1, -1, 2, 0);
@@ -154,34 +215,40 @@ var BOX = []; [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -
 var bBox = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bBox); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(BOX), gl.STATIC_DRAW);
 // towers and landmarks: keyed to the planet, so every one is the same one at any bearing
 function lcg(s) { var x = s >>> 0; return function () { x = (Math.imul(x, 1664525) + 1013904223) >>> 0; return x / 4294967296; }; }
-var TW = [], MARKS = [], twData, twN = 0, vaoT, bT;
-function landH(q) { return MAP.gen2 ? heightAt(q, 0) : surf(SEED, q[0], q[1], q[2])[0]; }
+var TW = [], MARKS = [], twData, twN = 0, twCount = [], vaoT, bT;
+function landH(q) { return bilOn(H0, N0, octEnc(q)); }
 function buildTowers() {
   var r = lcg(4242); TW = []; MARKS = [];
   function east(q) { return norm(cross([0.12, 1, 0.07], q)); }
   for (var c = 0; c < 90; c++) { var q = norm([r() - 0.5, r() - 0.5, r() - 0.5]), s0 = landH(q); if (s0 < 40) continue; var e = east(q), n = cross(q, e);
-    for (var b = 0; b < 34; b++) { var dx = (r() - 0.5) * 5600, dz = (r() - 0.5) * 5600, d = norm(add(add(q, e, dx / RP), n, dz / RP)), g = r(); TW.push({ d: d, e: e, w: 70 + g * 170, h: 110 + g * g * 900, col: g > 0.6 ? [0.62, 0.64, 0.68] : [0.72, 0.68, 0.6] }); } }
-  for (var m = 0; m < 26; m++) { var q2 = norm([r() - 0.5, r() - 0.5, r() - 0.5]), s2 = landH(q2); if (s2 < 0) continue; var e2 = east(q2); MARKS.push(q2); TW.push({ d: q2, e: e2, w: 420, h: 6500, g: s2, col: [0.86, 0.26, 0.2], big: 1 }); TW.push({ d: q2, e: e2, w: 900, h: 700, g: s2 + 2600, off: 2600, col: [0.95, 0.9, 0.82] }); }
-  twN = TW.length; twData = new Float32Array(twN * 13);
+    for (var b = 0; b < 64; b++) { var dx = (r() - 0.5) * 5600, dz = (r() - 0.5) * 5600, d = norm(add(add(q, e, dx / RP), n, dz / RP)), g = r(); TW.push({ ord: b, d: d, e: e, w: 70 + g * 170, h: 110 + g * g * 900, col: g > 0.6 ? [0.62, 0.64, 0.68] : [0.72, 0.68, 0.6] }); } }
+  for (var m = 0; m < 26; m++) { var q2 = norm([r() - 0.5, r() - 0.5, r() - 0.5]), s2 = landH(q2); if (s2 < 0) continue; var e2 = east(q2); MARKS.push(q2); TW.push({ ord: -1, d: q2, e: e2, w: 420, h: 6500, g: s2, col: [0.86, 0.26, 0.2], big: 1 }); TW.push({ ord: -1, d: q2, e: e2, w: 900, h: 700, g: s2 + 2600, off: 2600, col: [0.95, 0.9, 0.82] }); }
+  TW.sort(function (a, b) { return a.ord - b.ord; }); twN = TW.length; twCount = []; for (var oi = 0; oi <= 64; oi++) twCount[oi] = 0; TW.forEach(function (t) { for (var o2 = t.ord + 1; o2 <= 64; o2++) twCount[o2]++; }); twData = new Float32Array(twN * 13);
   TW.forEach(function (t, i) { var o = i * 13; twData.set(t.d, o); twData.set(t.e, o + 3); twData.set([t.w, t.h, t.w], o + 6); twData.set(t.col, o + 9); twData[o + 12] = t.off || 0; });
   vaoT = gl.createVertexArray(); gl.bindVertexArray(vaoT); gl.bindBuffer(gl.ARRAY_BUFFER, bBox); var aP = pB.a('aP'), aN = pB.a('aN'); gl.enableVertexAttribArray(aP); gl.vertexAttribPointer(aP, 3, gl.FLOAT, false, 24, 0); gl.enableVertexAttribArray(aN); gl.vertexAttribPointer(aN, 3, gl.FLOAT, false, 24, 12);
   bT = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bT); gl.bufferData(gl.ARRAY_BUFFER, twData, gl.DYNAMIC_DRAW);
   [['iD', 3, 0], ['iE', 3, 12], ['iS', 3, 24], ['iC', 4, 36]].forEach(function (x) { var l = pB.a(x[0]); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, x[1], gl.FLOAT, false, 52, x[2]); gl.vertexAttribDivisor(l, 1); });
 }
+var DEBRIS = [], debData = new Float32Array(3000 * 13), vaoD = gl.createVertexArray(), bD = gl.createBuffer(); gl.bindVertexArray(vaoD); gl.bindBuffer(gl.ARRAY_BUFFER, bBox); gl.enableVertexAttribArray(pB.a('aP')); gl.vertexAttribPointer(pB.a('aP'), 3, gl.FLOAT, false, 24, 0); gl.enableVertexAttribArray(pB.a('aN')); gl.vertexAttribPointer(pB.a('aN'), 3, gl.FLOAT, false, 24, 12); gl.bindBuffer(gl.ARRAY_BUFFER, bD); gl.bufferData(gl.ARRAY_BUFFER, debData.byteLength, gl.DYNAMIC_DRAW); [['iD', 3, 0], ['iE', 3, 12], ['iS', 3, 24], ['iC', 4, 36]].forEach(function (x) { var l = pB.a(x[0]); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, x[1], gl.FLOAT, false, 52, x[2]); gl.vertexAttribDivisor(l, 1); });
+var dRnd = lcg(77);
+function spawnDebris(d, rad, frac) { var n = Math.round(P.debris * frac), e = norm(cross([0.12, 1, 0.07], d)), f = cross(d, e); for (var i = 0; i < n && DEBRIS.length < 3000; i++) { var a = dRnd() * 6.283, r = dRnd() * rad, sp = 4 + dRnd() * 26; DEBRIS.push({ d: norm(add(add(d, e, Math.cos(a) * r / RP), f, Math.sin(a) * r / RP)), e: e, ve: Math.cos(a) * sp, vf: Math.sin(a) * sp, f: f, y: 4, vy: 8 + dRnd() * 34, s: 6 + dRnd() * dRnd() * 46, c: 0.32 + dRnd() * 0.25, life: 70 + dRnd() * 90 }); } }
+function stepDebris() { for (var i = DEBRIS.length - 1; i >= 0; i--) { var p = DEBRIS[i]; p.life--; p.vy -= 0.75; p.y += p.vy; if (p.y < 0) { p.y = 0; p.vy *= -0.3; p.ve *= 0.6; p.vf *= 0.6; } p.d = norm(add(add(p.d, p.e, p.ve / RP), p.f, p.vf / RP)); if (p.life <= 0) { DEBRIS[i] = DEBRIS[DEBRIS.length - 1]; DEBRIS.pop(); } } }
 var vaoF = gl.createVertexArray(); gl.bindVertexArray(vaoF); gl.bindBuffer(gl.ARRAY_BUFFER, bBox); gl.enableVertexAttribArray(pF.a('aP')); gl.vertexAttribPointer(pF.a('aP'), 3, gl.FLOAT, false, 24, 0); gl.enableVertexAttribArray(pF.a('aN')); gl.vertexAttribPointer(pF.a('aN'), 3, gl.FLOAT, false, 24, 12);
 var vaoL = gl.createVertexArray(), bL = gl.createBuffer(); gl.bindVertexArray(vaoL); gl.bindBuffer(gl.ARRAY_BUFFER, bL); gl.bufferData(gl.ARRAY_BUFFER, 3 * 4 * 1200, gl.DYNAMIC_DRAW); gl.enableVertexAttribArray(pL.a('aD')); gl.vertexAttribPointer(pL.a('aD'), 3, gl.FLOAT, false, 0, 0);
 var vaoS = gl.createVertexArray();
 // ---- the state: all of it. The world is two unit vectors: where the pair is on the planet, and which way their line runs ----
 var S, rnd;
-function reset() { var p = norm([0.42, 0.33, 0.84]), t = norm(cross([0, 1, 0], p)); S = { p: p, t: t, dt: t, off: 0, offPeak: 60, gap: 250, v: 0, y: 0, alt: 0, altL: 0, altR: 0, airL: false, airR: false, w: 0, send: 0, stop: 0, hold: 0, sdir: 1, closing: 0, flown: 0, swung: 0, crater: [], nextFire: P.every, quiet: 0, lastSwing: -9999, tick: 0, trail: [], wid: P.width, sw: null, form: false, beam: false, softG: P.rest, lim: '', autoT: 0, rate: 0, pivot: '', jolt: 0, nextSmall: P.smallEvery }; S.y = heightAt(S.p, 0); rnd = lcg(991); }
+function reset() { var p = norm([0.42, 0.33, 0.84]), t = norm(cross([0, 1, 0], p)); S = { p: p, t: t, dt: t, off: 0, offPeak: 60, gap: 250, v: 0, y: 0, alt: 0, altL: 0, altR: 0, airL: false, airR: false, w: 0, send: 0, stop: 0, hold: 0, sdir: 1, closing: 0, flown: 0, swung: 0, crater: [], nextFire: P.every, quiet: 0, lastSwing: -9999, tick: 0, trail: [], wid: P.width, sw: null, form: false, beam: false, softG: P.view, lim: '', autoT: 0, rate: 0, pivot: '', jolt: 0, nextSmall: P.smallEvery }; S.y = 0; S.dFeet = 0; DEBRIS.length = 0; S.y = Math.max(heightAt(S.p, 0), 0); rnd = lcg(991); }
 function lineDir(x, t) { var a = x / RP, c = Math.cos(a), s = Math.sin(a), T = t || S.dt; return [S.p[0] * c + T[0] * s, S.p[1] * c + T[1] * s, S.p[2] * c + T[2] * s]; }
 function smooth(a, b, x) { var u = Math.max(0, Math.min(1, (x - a) / (b - a))); return u * u * (3 - 2 * u); }
 // the same spacing the shader reads, so a bar stands on the ground that's drawn: a function of the place and the softening only
 function spacing() { return Math.max(S.softG, 3.54 * RP / MAP.N); }
-function lodAt(r) { var g = S.softG, sp = Math.max(g + (Math.max(g, 512) - g) * smooth(6000, 9000, r), r * 0.03); return Math.log2(Math.max(1, sp / (3.54 * RP / MAP.N))); }
-function ground(x) { return heightAt(lineDir(x), lodAt(Math.abs(x))) + craterAt(x); }
+function lodAt(r) { var g = spacing(), sp = Math.max(g + (Math.max(g, P.far) - g) * smooth(6000, 9000, r), r * P.lodK); return Math.log2(Math.max(1, sp / (3.54 * RP / MAP.N))); }
+function drawnH(x) { var d = lineDir(x), r = Math.abs(x), h = heightAt(d, lodAt(r)) + craterAt(x); return Math.max(h + genTerm(d, h, r), 0); }
+function simH(x) { return Math.max(simHeight(lineDir(x)) + craterAt(x), 0); }
+function ground(x) { return P.foot ? drawnH(x) : simH(x); }
 function craterAt(x) { var d = lineDir(x), v = 0; S.crater.forEach(function (m) { var dv = [d[0] - m.d[0], d[1] - m.d[1], d[2] - m.d[2]], q = dot(dv, dv) * RP * RP / (m.r * m.r); if (q < 1) { var u = 1 - q; v -= m.dep * u * u; } }); return v; }
-function dig(x, r0, dep) { S.crater.push({ d: norm(lineDir(x)), r: r0, dep: dep }); if (S.crater.length > 16) S.crater.shift(); }
+function dig(x, r0, dep) { spawnDebris(norm(lineDir(x)), r0 * 0.7, 1); S.crater.push({ d: norm(lineDir(x)), r: r0, dep: dep }); if (S.crater.length > 16) S.crater.shift(); }
 function rotAbout(v, k, a) { var c = Math.cos(a), s = Math.sin(a), x = cross(k, v), d = dot(k, v) * (1 - c); return [v[0] * c + x[0] * s + k[0] * d, v[1] * c + x[1] * s + k[1] * d, v[2] * c + x[2] * s + k[2] * d]; }
 function ortho2() { S.p = norm(S.p); S.t = norm(add(S.t, S.p, -dot(S.t, S.p))); }
 var RAD = Math.PI / 180;
@@ -243,7 +310,7 @@ function autoInput() {     // until someone touches it: a brawl, a launch, a lon
   return o;
 }
 var SOFT_V = [0, 1000, 3000, 6000, 10000], SOFT_G = [128, 224, 387, 548, 707];
-function softTarget(v) { if (!P.soft) return P.rest; v = Math.abs(v); var g = SOFT_G[4]; for (var k = 1; k < 5; k++) if (v <= SOFT_V[k]) { g = SOFT_G[k - 1] + (SOFT_G[k] - SOFT_G[k - 1]) * (v - SOFT_V[k - 1]) / (SOFT_V[k] - SOFT_V[k - 1]); break; } return Math.max(P.rest, g); }
+function softTarget(v) { if (!P.soft) return P.view; v = Math.abs(v); var g = SOFT_G[4]; for (var k = 1; k < 5; k++) if (v <= SOFT_V[k]) { g = SOFT_G[k - 1] + (SOFT_G[k] - SOFT_G[k - 1]) * (v - SOFT_V[k - 1]) / (SOFT_V[k] - SOFT_V[k - 1]); break; } return Math.max(P.view, g); }
 function step() {
   lookups = 0; var i = human ? readInput() : (readInput(), human ? readInput() : autoInput()), pr = function (k) { return i[k] && !prev[k]; }; inp = i;
   var flying = Math.abs(S.v) > 2500, rs = function () { return rnd() < 0.5 ? -1 : 1; };
@@ -267,7 +334,7 @@ function step() {
   // the hit-stop: the world is dead still, and the launch's swing starts on the first live tick
   if (S.stop > 0) {
     S.stop--; S.v = 0; S.w = 0; S.rate = 0;
-    if (S.stop === 0 && S.jolt) { startSmall('jolt', S.jolt, rs(), true); S.jolt = 0; } else if (S.stop === 0) { S.send = Math.round(P.sendS * 60); S.hold = 40;
+    if (S.stop === 0 && S.jolt) { spawnDebris(norm(lineDir(0, S.t)), 160, 0.2); startSmall('jolt', S.jolt, rs(), true); S.jolt = 0; } else if (S.stop === 0) { S.send = Math.round(P.sendS * 60); S.hold = 40;
       if (P.fires === 'gd' || P.fires === 'send') { var fit = Math.min(peakFor('launch'), sizeCeil(P.angle)) * (S.send - 21 - 15) / 60, launcher = lineDir(-S.sdir * S.gap / 2, S.t); startSwing('launch', Math.min(P.angle, fit), rs(), norm(launcher)); } }
   } else stepSwing();
   // the pair along their line: the planet turns under them
@@ -289,9 +356,10 @@ function step() {
   var tg = softTarget(S.send || S.airL || S.airR ? Math.max(Math.abs(S.v), S.send ? 6000 : 0) : S.v);
   if (tg > S.softG) S.softG += (tg - S.softG) * 0.15; else if (tg < S.softG) S.softG = Math.max(tg, S.softG * Math.exp(-Math.log(548 / 128) / (P.sharpen * 60)));
   // the ground the sim needs: under each bar, and the camera's rest height
-  var ga = ground(-S.gap / 2), gb = ground(S.gap / 2), g0 = ground(0);
+  var ga = ground(-S.gap / 2), gb = ground(S.gap / 2), g0 = ground(0); S.dFeet = Math.max(Math.abs(drawnH(-S.gap / 2) - simH(-S.gap / 2)), Math.abs(drawnH(S.gap / 2) - simH(S.gap / 2)));
+  if (S.tick % 20 === 0 && P.debris && (S.airL || S.airR) && Math.abs(S.v) > 2500 && ga < 30 && false) spawnDebris(S.p, 200, 0.1); stepDebris();
   S.altL += ((S.airL ? 420 : 0) - S.altL) * 0.08; S.altR += ((S.airR ? 420 : 0) - S.altR) * 0.08; S.alt = Math.max(S.altL, S.altR); S.ga = ga; S.gb = gb; S.gm = Math.max(ga, gb); S.y += ((Math.max(g0, S.gm) + S.alt) - S.y) * 0.12;
-  S.wid += ((P.width * (Math.abs(S.v) > 2500 ? P.wide : 1) + S.gap * 1.3) - S.wid) * 0.05;
+  var fast = Math.abs(S.v) > 2500, tw = P.width * (fast ? P.wide : 1) + S.gap * 1.3, wr = 0.05; if (P.reveal) { if (fast) { S.flyT = (S.flyT || 0) + 1; var rt = S.flyT - 90; tw = (rt >= 0 && rt < 90 ? P.reveal : 2700) + S.gap * 0.2; wr = 0.075; } else S.flyT = 0; } S.wid += (tw - S.wid) * wr;
   if (S.tick % 8 === 0) { S.trail.push(S.p.slice()); if (S.trail.length > 1200) S.trail.shift(); }
   prev = i; S.tick++; S.lookups = lookups;
 }
@@ -306,20 +374,26 @@ function setGround(p, F, vp, Rr, cam, alt) {
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texH); gl.uniform1i(p.u.uH, 0);
   var cr = new Float32Array(64), cd = new Float32Array(16); S.crater.forEach(function (m, i) { cr.set([m.d[0], m.d[1], m.d[2], m.r], i * 4); cd[i] = m.dep; }); gl.uniform4fv(p.u.uCr, cr); gl.uniform1fv(p.u.uCrD, cd); gl.uniform1i(p.u.uCrN, S.crater.length);
 }
+var CURVE_W = [950, 2700, 4200, 8000, 12000], CURVE_S = [0.4, 0.55, 0.7, 0.9, 1];
+function curveShare(w) { var c = P.curve / 100; if (!P.curveZoom) return c; if (w <= CURVE_W[0]) return CURVE_S[0] * c; for (var i = 1; i < 5; i++) if (w <= CURVE_W[i]) { var t = Math.log(w / CURVE_W[i - 1]) / Math.log(CURVE_W[i] / CURVE_W[i - 1]); return (CURVE_S[i - 1] + (CURVE_S[i] - CURVE_S[i - 1]) * t) * c; } return c; }
 function draw() {
-  var W = cv.width, H = cv.height, asp = W / H, K = 100 / P.curve, Rr = RP * K; gl.viewport(0, 0, W, H); gl.disable(gl.SCISSOR_TEST); gl.clearColor(P.dbgHoles ? 1 : 0, 0, P.dbgHoles ? 1 : 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  var cw = Math.round(1280 * P.scale), ch = Math.round(720 * P.scale); if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; }
+  var W = cv.width, H = cv.height, asp = W / H, share = curveShare(S.wid), K = 1 / share, Rr = RP * K; gl.viewport(0, 0, W, H); gl.disable(gl.SCISSOR_TEST); gl.clearColor(P.dbgHoles ? 1 : 0, 0, P.dbgHoles ? 1 : 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   if (!P.dbgHoles) { gl.disable(gl.DEPTH_TEST); gl.useProgram(pS.p); gl.uniform3fv(pS.u.uSky, SKY); gl.uniform3fv(pS.u.uTop, TOP); gl.bindVertexArray(vaoS); gl.drawArrays(gl.TRIANGLES, 0, 3); } gl.enable(gl.DEPTH_TEST);
   // the frame: its columns are the line, across it, and up. Flight and swing change this matrix and nothing else
   var T = S.dt, Z = cross(T, S.p), F = [T[0], T[1], T[2], Z[0], Z[1], Z[2], S.p[0], S.p[1], S.p[2]];
   var dist = S.wid / (2 * T_FOV * asp), pit = P.pitch * Math.PI / 180, ty = S.y * P.relief / 100 + 60, cam = [0, ty + dist * Math.sin(pit), dist * Math.cos(pit)], view = look(cam, [0, ty, 0], [0, 1, 0]), vp = mul(persp(T_FOV, asp, 30, 400000), view);
   var sunP = P.sun ? [0.35, 0.8, 0.48] : null, sun = sunP ? (function () { var v = [dot(T, sunP), dot(Z, sunP), dot(S.p, sunP)]; return norm([v[0], v[2], v[1]]); })() : norm([0.3, 0.8, 0.5]), amb = 0.58, haze = 2.4e-5;
   var camA = dist * Math.cos(pit) / RP, foot = norm([S.p[0] * Math.cos(camA) + Z[0] * Math.sin(camA), S.p[1] * Math.cos(camA) + Z[1] * Math.sin(camA), S.p[2] * Math.cos(camA) + Z[2] * Math.sin(camA)]), camH = Math.max(100, cam[1]), arcMax = Math.sqrt(2 * Rr * camH) + Math.sqrt(2 * Rr * 9000) * (P.relief / 100 + 0.01);
-  selectTiles(S.p, foot, arcMax, [Z, cam[2]], T, T_FOV * asp, P.curve === 100);
-  setGround(pT, F, vp, Rr, cam, 0); gl.uniform3fv(pT.u.uF1, S.p); gl.uniform3fv(pT.u.uF2, foot); gl.uniform1f(pT.u.uG, spacing()); gl.uniform1f(pT.u.uDT, P.dterm); gl.uniform1f(pT.u.uFore, P.fore); gl.uniform1f(pT.u.uTy, ty); gl.uniform3fv(pT.u.uSun, sun); gl.uniform3fv(pT.u.uCam, cam); gl.uniform3fv(pT.u.uSky, SKY); gl.uniform1f(pT.u.uDet, P.detail); gl.uniform1f(pT.u.uHaze, haze); gl.uniform1f(pT.u.uAmb, amb);
+  selectTiles(S.p, foot, arcMax, [Z, cam[2]], T, T_FOV * asp, share > 0.999); var sunPl = [0.35, 0.8, 0.48]; (function () { var l = Math.sqrt(dot(sunPl, sunPl)); sunPl = [sunPl[0] / l, sunPl[1] / l, sunPl[2] / l]; })();
+  setGround(pT, F, vp, Rr, cam, 0); gl.uniform3fv(pT.u.uF1, S.p); gl.uniform3fv(pT.u.uF2, foot); gl.uniform1f(pT.u.uG, spacing()); gl.uniform1f(pT.u.uFarS, P.far); gl.uniform1f(pT.u.uLodK, P.lodK); gl.uniform1f(pT.u.uGen, P.gen); gl.uniform1f(pT.u.uDT, 0); gl.uniform1f(pT.u.uShad, P.tshadow); gl.uniform1f(pT.u.uCS, P.clouds && P.cshadow ? 1 : 0); gl.uniform1f(pT.u.uSea, P.sea); gl.uniform1f(pT.u.uTime, S.tick / 60); gl.uniform3fv(pT.u.uSunP, sunPl); gl.uniform1f(pT.u.uFore, P.fore); gl.uniform1f(pT.u.uTy, ty); gl.uniform3fv(pT.u.uSun, sun); gl.uniform3fv(pT.u.uCam, cam); gl.uniform3fv(pT.u.uSky, SKY); gl.uniform1f(pT.u.uDet, P.detail); gl.uniform1f(pT.u.uHaze, haze); gl.uniform1f(pT.u.uAmb, amb);
   gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texC); gl.uniform1i(pT.u.uC, 1); gl.bindVertexArray(vaoTile); gl.drawElementsInstanced(gl.TRIANGLES, TN * TN * 6, gl.UNSIGNED_SHORT, 0, tileN); gl.activeTexture(gl.TEXTURE0);
-  if (P.towers) { gl.useProgram(pB.p); gl.uniformMatrix3fv(pB.u.uF, false, F); gl.uniformMatrix4fv(pB.u.uVP, false, vp); gl.uniform1f(pB.u.uR, RP); gl.uniform1f(pB.u.uRr, Rr); gl.uniform1f(pB.u.uRel, P.relief / 100); gl.uniform1i(pB.u.uH, 0); gl.uniform1f(pB.u.uTex, 3.54 * RP / MAP.N); gl.uniform1f(pB.u.uG, S.softG); gl.uniform3fv(pB.u.uSun, sun); gl.uniform3fv(pB.u.uCam, cam); gl.uniform3fv(pB.u.uSky, SKY); gl.uniform1f(pB.u.uHaze, haze); gl.uniform1f(pB.u.uAmb, amb); gl.bindVertexArray(vaoT); gl.drawArraysInstanced(gl.TRIANGLES, 0, 36, twN); }
+  if (P.towers) { gl.useProgram(pB.p); gl.uniformMatrix3fv(pB.u.uF, false, F); gl.uniformMatrix4fv(pB.u.uVP, false, vp); gl.uniform1f(pB.u.uR, RP); gl.uniform1f(pB.u.uRr, Rr); gl.uniform1f(pB.u.uRel, P.relief / 100); gl.uniform1i(pB.u.uH, 0); gl.uniform1f(pB.u.uTex, 3.54 * RP / MAP.N); gl.uniform1f(pB.u.uG, spacing()); gl.uniform1f(pB.u.uFarS, P.far); gl.uniform1f(pB.u.uLodK, P.lodK); gl.uniform1f(pB.u.uGen, P.gen); gl.uniform1f(pB.u.uWin, P.windows); gl.uniform3fv(pB.u.uSun, sun); gl.uniform3fv(pB.u.uCam, cam); gl.uniform3fv(pB.u.uSky, SKY); gl.uniform1f(pB.u.uHaze, haze); gl.uniform1f(pB.u.uAmb, amb); gl.bindVertexArray(vaoT); gl.drawArraysInstanced(gl.TRIANGLES, 0, 36, twCount[Math.min(64, P.towers)]);
+    if (DEBRIS.length) { gl.uniform1f(pB.u.uWin, 0); DEBRIS.forEach(function (p, i) { var o = i * 13; debData[o] = p.d[0]; debData[o + 1] = p.d[1]; debData[o + 2] = p.d[2]; debData[o + 3] = p.e[0]; debData[o + 4] = p.e[1]; debData[o + 5] = p.e[2]; debData[o + 6] = p.s; debData[o + 7] = p.s; debData[o + 8] = p.s; debData[o + 9] = p.c * 1.1; debData[o + 10] = p.c; debData[o + 11] = p.c * 0.8; debData[o + 12] = p.y; }); gl.bindBuffer(gl.ARRAY_BUFFER, bD); gl.bufferSubData(gl.ARRAY_BUFFER, 0, debData.subarray(0, DEBRIS.length * 13)); gl.bindVertexArray(vaoD); gl.drawArraysInstanced(gl.TRIANGLES, 0, 36, DEBRIS.length); }
+    if (P.trees && P.treeR > 0) { selectTrees(S.p, P.treeR); if (treeTiles) { setGround(pR, F, vp, Rr, cam, 0); gl.uniform1f(pR.u.uG, spacing()); gl.uniform1f(pR.u.uFarS, P.far); gl.uniform1f(pR.u.uLodK, P.lodK); gl.uniform1f(pR.u.uGen, P.gen); gl.uniform1f(pR.u.uTreeR, P.treeR); gl.uniform1i(pR.u.uM, P.trees); gl.uniform3fv(pR.u.uSun, sun); gl.uniform3fv(pR.u.uCam, cam); gl.uniform3fv(pR.u.uSky, SKY); gl.uniform1f(pR.u.uHaze, haze); gl.uniform1f(pR.u.uAmb, amb); gl.uniform1f(pR.u.uWin, 0); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texC); gl.uniform1i(pR.u.uC, 1); gl.activeTexture(gl.TEXTURE0); gl.bindVertexArray(vaoR); gl.bindBuffer(gl.ARRAY_BUFFER, bRI); gl.vertexAttribPointer(pR.a('iT'), 4, gl.FLOAT, false, 0, 0); gl.vertexAttribDivisor(pR.a('iT'), P.trees); gl.drawArraysInstanced(gl.TRIANGLES, 0, coneN, treeTiles * P.trees); } }
+  }
   // the two bars, on one relative band, always
-  var bh = Math.max(75, S.wid * 0.024), bw = bh * 0.26; gl.useProgram(pF.p); gl.uniformMatrix4fv(pF.u.uVP, false, vp); gl.bindVertexArray(vaoF);
+  var bh = P.reveal ? 75 : Math.max(75, S.wid * 0.024), bw = bh * 0.26; gl.useProgram(pF.p); gl.uniformMatrix4fv(pF.u.uVP, false, vp); gl.bindVertexArray(vaoF);
   [[-S.gap / 2, S.ga, [0.12, 0.42, 0.40], S.altL], [S.gap / 2, S.gb, [0.30, 0.20, 0.55], S.altR]].forEach(function (b) { if (P.dbgHoles) return; var ar = b[0] / Rr, rad = Rr + (b[1] * P.relief / 100) + b[3]; gl.uniform3f(pF.u.uPos, rad * Math.sin(ar), rad * Math.cos(ar) - Rr, 0); gl.uniform3f(pF.u.uSz, bw, bh, bw); gl.uniform3fv(pF.u.uCol, b[2]); gl.drawArrays(gl.TRIANGLES, 0, 36); });
   if (S.beam) { var by = Rr + S.gm * P.relief / 100 + S.alt + bh * 0.5; gl.uniform3f(pF.u.uPos, 0, by * 1 - Rr, 0); gl.uniform3f(pF.u.uSz, S.gap, bh * 0.12, bh * 0.12); gl.uniform3f(pF.u.uCol, 1.0, 0.72, 0.25); gl.drawArrays(gl.TRIANGLES, 0, 36); }
   if (P.clouds) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); setGround(pC, F, vp, Rr, cam, 6200); gl.uniform3fv(pC.u.uSun, sun); gl.uniform1f(pC.u.uAmb, amb + 0.25); gl.bindVertexArray(vaoG); gl.drawElements(gl.TRIANGLES, meshN, gl.UNSIGNED_INT, 0); gl.depthMask(true); gl.disable(gl.BLEND); }
@@ -340,18 +414,19 @@ function paintHud(now) {
   var cause = S.stop ? 'hit-stop: dead still' : sw ? sw.cause + ' swing, ' + S.rate.toFixed(0) + '&deg;/s of ' + (sw.peak * 60 / RAD).toFixed(0) + ', ' + (sw.th / RAD).toFixed(0) + '&deg;, set by ' + S.lim + ', about ' + S.pivot : S.beam ? 'beam: the world holds' : 'no swing';
   hud.innerHTML = Math.round(Math.abs(S.v)).toLocaleString() + ' u/s &nbsp; a lap in ' + (Math.abs(S.v) > 100 ? (CIRC / Math.abs(S.v)).toFixed(1) + ' s' : '-') + '<br>flown ' + deg.toFixed(0) + '&deg; of the planet &nbsp; swung ' + (S.swung / RAD).toFixed(0) + '&deg;<br>' + cause +
     '<br>far land: ' + horizon.toFixed(0) + '&deg;/s from flight (v/R) + ' + S.rate.toFixed(0) + ' = <span style="color:' + (total > 98 ? '#ff6a55' : 'inherit') + '">' + total.toFixed(0) + '</span>, limit 98' + (S.off ? '<br><span style="color:#e8b23a">correction: view ' + (Math.abs(S.off) / RAD).toFixed(1) + '&deg; off the sim, easing back</span>' : '') +
-    '<br>sweep limit ' + (P.law ? 'ON, 75 standing, 10,000 airborne' : 'OFF') + ' &nbsp; size ceiling ' + (P.ceil ? 'ON' : 'OFF') + '<br>ground spacing near the pair: ' + Math.round(spacing()) + ' u' + (P.dterm ? ' + detail term' : '') + '<br>this tick: 0 noise reads, ' + (S.lookups || 0) + ' map reads, 1 rotation<br>' + tileN + ' tiles, ' + Math.round(tot / 1000) + 'k triangles<br>map ' + MAP.N + '&sup2;, ' + MAP.reads.toLocaleString() + ' reads, ' + (MAP.gen2 ? 'gen 2, baked in Godot' : 'built in ' + MAP.ms.toFixed(0) + ' ms (JS, gen 1)') + '<br>frame ' + fdt.toFixed(1) + ' ms' + (P.fps30 ? ', drawn at 30 fps' : '');
+    '<br><b>' + LEVELS[P.level].name + (P.custom ? ', customised' : '') + '</b>: drawn near ' + Math.round(spacing()) + ' u, sim ' + P.simG + ' u (the same for every player)<br>drawn minus sim at the feet: ' + Math.round(S.dFeet) + ' u' + (P.foot ? ', hidden: height above the drawn ground is kept' : ', <span style="color:#ff6a55">showing: foot rule off</span>') + '<br>width ' + Math.round(S.wid).toLocaleString() + ', curve ' + Math.round(curveShare(S.wid) * 100) + '% of true' + (P.reveal ? ', fighters <span style="color:' + (75 / S.wid * 1280 < 23 ? '#ff6a55' : 'inherit') + '">' + Math.round(75 / S.wid * 1280) + ' px</span> (floor 23)' : '') + '<br>sweep limit ' + (P.law ? 'ON, 75 standing, 10,000 airborne' : 'OFF') + ' &nbsp; size ceiling ' + (P.ceil ? 'ON' : 'OFF') + '<br>this tick: 0 noise reads, ' + (S.lookups || 0) + ' map reads, 1 rotation<br>' + tileN + ' tiles, ' + Math.round(tot / 1000) + 'k ground triangles' + (P.trees && treeTiles ? ', ' + Math.round(treeTiles * P.trees / 1000 * 10) / 10 + 'k tree slots' : '') + '<br>map ' + MAP.N + '&sup2;, ' + MAP.reads.toLocaleString() + ' nodes, real gen 2, render ' + cv.width + 'x' + cv.height + '<br>frame ' + fdt.toFixed(1) + ' ms' + (P.fps30 ? ', drawn at 30 fps' : '');
   $('dot').style.left = (12 + inp.x * 11) + 'px'; [['iFly', 'fly'], ['iSend', 'send'], ['iDig', 'dig'], ['iL', 'l'], ['iR', 'r'], ['iAim', 'aim'], ['iForm', 'form'], ['iBeam', 'beam'], ['iHeavy', 'heavy']].forEach(function (c) { $(c[0]).className = inp[c[1]] ? 'c on' : 'c'; });
 }
-window.addEventListener('keydown', function (e) { if (e.code === 'KeyR') { human = true; reset(); return; } if (/^(Key[ADQECGFBH]|Shift(Left|Right)|Space)$/.test(e.code)) { keys[e.code] = true; human = true; e.preventDefault(); } });
+window.addEventListener('keydown', function (e) { if (e.code === 'KeyR') { human = true; reset(); return; } if (/^Digit[1-5]$/.test(e.code)) { setLevel(+e.code.charAt(5) - 1); return; } if (/^(Key[ADQECGFBH]|Shift(Left|Right)|Space)$/.test(e.code)) { keys[e.code] = true; human = true; e.preventDefault(); } });
 window.addEventListener('keyup', function (e) { keys[e.code] = false; }); window.addEventListener('blur', function () { keys = {}; });
 var acc = 0, last = 0, lastDraw = 0;
 function frame(ts) { if (!last) last = ts; var dt = Math.min(80, ts - last); last = ts; fdt += (dt - fdt) * 0.1; acc += dt / 16.667; var n = 0; while (acc >= 1 && n < 6) { acc -= 1; step(); n++; } if (n === 6) acc = 0; if (!P.fps30 || ts - lastDraw >= 32) { draw(); lastDraw = ts; } paintHud(ts); if (!window.__hold) requestAnimationFrame(frame); }
-buildMap(); buildTowers(); reset();
+if (typeof DecompressionStream === 'undefined') { hud.textContent = 'This needs a current browser (DecompressionStream).'; return; }
+await unpack(); buildMap(); buildTowers(); reset(); paintLevels();
 // a hook for tools: step the world by ticks, draw, read it
-window.RT = { P: P, S: function () { return S; }, step: function (n) { for (var i = 0; i < n; i++) step(); }, draw: draw, buildMap: buildMap, human: function (v) { human = v; }, keys: keys, hud: function () { lastHud = 0; paintHud(performance.now() + 1000); return hud.textContent; }, reset: reset, gl: gl, fire: fire, floatLinear: floatLinear, startSwing: startSwing, small: function (d, b) { return startSmall('jolt', d, 1, b); }, tiles: function () { return tileN; }, SETTERS: SETTERS };
+window.RT = { P: P, S: function () { return S; }, step: function (n) { for (var i = 0; i < n; i++) step(); }, draw: draw, buildMap: buildMap, human: function (v) { human = v; }, keys: keys, hud: function () { lastHud = 0; paintHud(performance.now() + 1000); return hud.textContent; }, reset: reset, gl: gl, fire: fire, floatLinear: floatLinear, setLevel: setLevel, LEVELS: LEVELS, simH: simH, drawnH: drawnH, trees: function () { return treeTiles; }, curveShare: curveShare, startSwing: startSwing, small: function (d, b) { return startSmall('jolt', d, 1, b); }, tiles: function () { return tileN; }, SETTERS: SETTERS };
 window.__ok = 1; requestAnimationFrame(frame);
-})();
+})().catch(function (e) { window.__err = String(e && e.stack || e); window.__ok = 2; var h = document.getElementById('hud'); if (h) h.textContent = 'Start-up failed: ' + e; });
 </script>
 </body>
 </html>

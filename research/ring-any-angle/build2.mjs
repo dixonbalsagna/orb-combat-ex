@@ -1,19 +1,7 @@
-// Builds research/ring-any-angle/proto-v2.html: the turntable spike, one file, raw WebGL2, the planet's noise bundled in.
+// Builds research/ring-any-angle/proto-v2.html: the turntable spike, one file, raw WebGL2, planet 7's real gen 2 ground inlined (gen2-p7.pack, from levels.mjs).
 //   node research/ring-any-angle/build2.mjs
 import { readFileSync, writeFileSync } from 'node:fs';
-const D = 'research/ring-any-angle/', rd = (p) => readFileSync(p, 'utf8');
-function mod(path, names, deps = '', sub = (s) => s) {
-  const body = sub(rd(path)).replace(/^import .*$/gm, '').replace(/^export \{[^}]*\};?$/gm, '').replace(/^export /gm, '');
-  return `(function () {\n${deps}\n${body}\nreturn { ${names.join(', ')} };\n})()`;
-}
-const planet = JSON.stringify(JSON.parse(rd('data/biomes/planet.json')));
-const bundle = [
-  `var __math = ${mod('sim/core/detmath.js', ['sin', 'cos', 'pow'])};`,
-  `var __rng = ${mod('sim/core/rng.js', ['createRng', 'next'])};`,
-  `var __det = ${mod('research/planet-gen/lib/det.mjs', ['R', 'fbm', 'ss', 'lat'], 'var sin = __math.sin, cos = __math.cos, pow = __math.pow, createRng = __rng.createRng, next = __rng.next;')};`,
-  `var __base = ${mod('research/planet-gen/gen/base.mjs', ['surf'], 'var R = __det.R, fbm = __det.fbm, ss = __det.ss, lat = __det.lat, pow = __math.pow;', (s) => s.replace(/const C = JSON\.parse\([^\n]*\n/, `const C = ${planet};\n`))};`,
-  'var surf = __base.surf;',
-  `var GEN2 = { 340: '${readFileSync(D + 'gen2-p7-340.bin').toString('base64')}', 170: '${readFileSync(D + 'gen2-p7-170.bin').toString('base64')}' };`].join('\n');
-const page = rd(D + 'page2.html'); if (!page.includes('/*BUNDLE*/')) throw new Error('no slot');
-writeFileSync(D + 'proto-v2.html', page.replace('/*BUNDLE*/', () => bundle));
-console.log(D + 'proto-v2.html built, ' + Math.round(rd(D + 'proto-v2.html').length / 1024) + ' KB');
+const D = 'research/ring-any-angle/', page = readFileSync(D + 'page2.html', 'utf8');
+if (!page.includes('/*BUNDLE*/')) throw new Error('no slot');
+writeFileSync(D + 'proto-v2.html', page.replace('/*BUNDLE*/', () => "var GEN2PACK = '" + readFileSync(D + 'gen2-p7.pack').toString('base64') + "';"));
+console.log(D + 'proto-v2.html built, ' + Math.round(readFileSync(D + 'proto-v2.html').length / 1024) + ' KB');
