@@ -508,3 +508,43 @@ The sim can sharpen its ground back to today's exact columns where it matters. *
 3. The coast and cliff totals from a real flood of the bake, to replace the line-crossing estimates (8,000 and 1,100 vertices).
 4. Planet-wide error, not only rings that cross land (the sea is smooth, so the planet-wide figure should be better than the rings').
 5. The exact-window sharpening on a swing's rest, with the raise rule.
+
+## 15. The Cyborg's labs: how few, where, and how they sit under the swing (World, 2026-10-31; paper only, nothing built, nothing measured; arithmetic from the planet's radius 24,446 and circumference 153,600)
+
+Orb's idea (vision.md, 2026-10-31): the Cyborg's fuel is tech components from ruined skyscrapers, and richer ones from secret labs scattered round the world, "including the antarctic lab". Skyscrapers already come with every city (11 a planet). The question here is the rare, rich source.
+
+### 15.1 How few
+
+A lab is a trip, not a pit stop, so it must be rare enough that the Cyborg leaves the fight to get one and common enough that a trip is never hopeless. A lab inside a given range of a fight is the cap-area fraction `(1 - cos(R/24,446))/2` per lab: **1.7% of the planet for a 6,400 reach (Close), 3.8% for 9,600 (a full launch), 6.7% for 12,800 (Half), 25% for 25,600 (Whole).**
+
+| Labs a planet | Lab within Close / full launch / Half / Whole of a random point | Farthest any point can be, if evenly spread |
+| ---: | :--- | :--- |
+| 3 | 5% / 11% / 19% / 58% | 90 degrees from a lab at best: 38,400 u |
+| **6** | **10% / 21% / 34% / 82%** | **54.7 degrees: 23,400 u** (3.9 s at launch speed 6,000 u/s; 23 s flat out at 1,032) |
+| 10 | 16% / 32% / 50% / 94% | about 42 degrees: 18,000 u |
+
+**Recommendation: six a planet, the antarctic one plus five.** Evenly spread, six is the octahedron: no point of the planet is more than 23,400 units from one, inside a Whole launch (25,600) and inside the 24,446 that any Half ring through the fight can reach (a Half ring is a circle of angular radius 0.5, and any point within 1.0 radian of the fight lies on one). So a lab is always reachable by one long flight and never by accident: about one fight in five has one within a full launch. The count is a data number (Orb: "balance it and see in the game"); fewer than 4 leaves tropical fights with a flight of 30,000+ units, more than 8 turns labs into towns.
+
+### 15.2 Where
+
+**The far south, always: yes.** The south sheet is part of every planet's function (a cap of about 14% of the surface, 24 degrees across), so a pinned site always has ground. Place it **about 7 degrees (3,000 u) from the pole**, on the dome, about 7,250 u inland of the coast, 1,900 to 2,500 u up. Not on the pole itself: a point on the pole has no north to orient a layout by (the swing and the street frame need one), and the dome there is a summit. It is the richest lab and the only one a player can learn the place of. From the equator it is 38,400 u away, beyond a Whole launch: the Cyborg needs two hops or a long flight, which is the point. A fight is within one Whole launch of it from about 22 degrees south poleward.
+
+**The other five are found by a keyed pass, not pinned:** land only, at least 8,000 u from any city and 3,000 u from any town (secret means not in the Close view of a city), at least 24,000 u from another lab (best-candidate spacing), and a bias to remote ground: mountains, desert, forest fringe, small islands, the deepest inland. Outposts keep their own rule (polar, shelf, high and floe). The pass runs after cities, towns and outposts, so it moves nothing already placed. **I have not counted how many planets have five such sites**; the rule falls back to fewer labs (never to a city's edge), so the count is a maximum. A probe over eight planets would give it (a candidate scan of the kind the outposts dump did).
+
+### 15.3 How they relate to outposts
+
+An outpost is a public research station with people (three polar kinds, 700 u disc, lab block in its plan). A lab is **a role a place can carry, not a fourth kind**: the same disc, the same building plan family (the 700 x 520 lab block as anchor, tanks, mast, hall), the same ledger and wear rules, plus a fuel yield on its objects. The antarctic lab **is the high station promoted** (Rimewatch's rule, moved to the pole's dome and made certain); the shelf and floe stations stay plain outposts. One consequence: the five land labs sit in arenas that are not half ice, so they do not count toward the picker's relaxed minimum, and the antarctic one does (it is polar). For Legal: the Cyborg's meter takes objects only (RL-216); a lab's yield should be its objects (equipment, stores, the lab block's contents), with the staff evacuating as an outpost's people do. That is Legal's and Game Design's to confirm, not mine.
+
+### 15.4 How they sit as planet-fixed places under the swing
+
+- **Stored as a place record in the planet's places list:** id, role, a point on the sphere, a radius, a plan seed and a yaw fixed to the planet's north (not to the ring). Six records a planet (8.4's 48 bytes a mark order). The places list is part of the planet header, so adding labs changes a planet's header and its golden: new planets only if Orb wants old planets untouched.
+- **On the strip they are bound pose arrays** (9.4): 6 to 9 buildings, indices fixed, positions re-laid from the planet frame at the current bearing. A swing keeps them; only the turn that swaps the ring re-lays them, as for any place.
+- **A lab is small enough that the chord does not matter.** It spans about 2,500 u; the sphere's bend across that is a sagitta of 32 u (half a body height). Unlike a city (8.3), no re-plan is needed when the view swings: its layout is planet-frame, rotated rigidly. The one visible effect is that a swing turns the lab with the world: its depth rows (z) change, so a hall that stood on the fight's plane may stand behind it afterwards. Break that by planning the anchor and the tanks on the lab's long axis, and by the fight's bearing choosing the plane through the lab block when the pair are sent there.
+- **The swing route can head for one.** A lab becomes a destination only if the route aims at it: the pair needs the lab within the carried zone (12,000 u) or one hop away. The data stops the angle (10 degrees a swing, 4 a fight, 40 drift; campaign 60), so a trip to a lab is mostly flight, and the swing's job is to bring the lab onto the ring in the last stretch. Nothing in the world blocks that; the choreographer's.
+- **Ground:** the lab's site is planned on the ground the sim has (the field, under the provisional route), so it stands on the same ground at every view level. On ice the walls are the one place the smoother ground loses (12): the antarctic site should be on the dome, away from the sheet's edge, which it is.
+
+### 15.5 What I would measure (nothing built)
+
+1. A candidate scan on eight planets: how many land sites meet the rule for the five, and where the spacing fails.
+2. The real cap geometry: the dome's height and flatness within 3,000 u of the 7-degree site, on gen 2, to confirm a lab block fits.
+3. The distance from each fight start the picker would choose to the nearest lab, over a batch, to compare with the 21% (full launch) arithmetic above.
