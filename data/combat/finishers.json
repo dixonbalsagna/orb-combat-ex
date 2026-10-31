@@ -189,7 +189,8 @@
       "bends": {
         "_status": "documented, not active in S3b",
         "noSettlementInReach": "'lift_and_display' turns toward the largest structure instead",
-        "submerged": "the slam becomes a drive into the seabed with a geyser cue"
+        "submerged": "the slam becomes a drive into the seabed with a geyser cue",
+        "_submerged": "Its key (Game Design, rulings-2026-10-30 row 8: a blow can still send a body in, and nobody fights under). With the floor on (data/biomes/water.json floor.enabled), read on L at the final blow: he is a sent body, in a launch or the surfacing and under the surface; or the water under him is deep, WorldWater.burialOK false at his column (row 11's line, so no new number; in shallower water the slam buries him on the bed as it does on ground). It never reads him simply being under. With the floor off, the switch keeps the old key: L in styles.json's submerged band"
       }
     }
   ],
