@@ -4,8 +4,8 @@ extends SceneTree
 ## 1. rivers and lakes: on gen 2 planets, no land shape the cover places stands where the sheet of a lake or a river is
 ##    drawn: on a column with its water, or on dry land up to RenderLook.SHORE_FLOOD below the level beside it (the same
 ##    row the water shader reads). At least one world keeps some out.
-## 2. Art's shape: planet 21's krummholz at column 2440 (a dry column, 5.5 units under the lake's level beside it) stands
-##    with the rule off and is gone with it on.
+## 2. Art's shape: planet 21's krummholz at column 2440 (a dry hollow behind the lake's lip, 5.5 units under its level)
+##    stood under the sheet. The lip draws no sheet there now, so it stands, on dry land, with the rule on and off.
 ## 3. nothing else moves: with the rule off (CoverView.ctl_in_water) the same world places the same shapes, in the same
 ##    order at the same places, plus those it kept out. So the control sees shapes in the water (check 1 can fail).
 ## 4. gen 1 and the hand-made world: no lakes, nothing kept out, the same shapes with the rule on and off.
@@ -59,7 +59,7 @@ func _run() -> void:
 		in_control += int(r.control_bad)
 		ok(int(r.bad) == 0 and int(r.control_bad) == int(r.in_water) and bool(r.rest_same), "gen 2 planet %d: %d lakes and rivers; of %d shapes %d stand in their water with the rule off (%d of them on dry columns under the sheet), none with it on; every other shape is where it was" % [pl, int(r.lakes), int(r.control_count), int(r.control_bad), int(r.control_dry)])
 		if pl == ART_PLANET:
-			ok(int(r.art_off) > 0 and int(r.art_on) == 0, "Art's shape: planet %d's krummholz on column %d, %d with the rule off, %d with it on" % [pl, ART_COL, int(r.art_off), int(r.art_on)])
+			ok(int(r.art_off) > 0 and int(r.art_on) == int(r.art_off) and bool(r.art_dry), "Art's shape: planet %d's krummholz on column %d, behind the lake's lip: no sheet over it, %d with the rule off, %d with it on" % [pl, ART_COL, int(r.art_off), int(r.art_on)])
 	ok(kept > 0 and in_control == kept, "rivers and lakes: %d land shapes kept out across %d gen 2 worlds; the control sees them all (%d)" % [kept, GEN2.size(), in_control])
 	ok(krummholz > 0 and mirrored == 0 and others_mirrored > 0, "no flip: of %d krummholz across the gen 2 worlds %d are mirrored; %d shapes of other kinds are" % [krummholz, mirrored, others_mirrored])
 	for pl in GEN1:
@@ -82,6 +82,7 @@ func _both(seed: int, setup: Dictionary) -> Dictionary:
 	var lakes: Array = S.planetRing.get("lakes", []) if S.planetRing is Dictionary else []
 	var bad: int = _in_lakes(S, on, lakes)
 	var art_on: int = _art(on)
+	var art_dry: bool = not main.planet.ground.flooded(S, ART_COL)
 	CoverView.ctl_in_water = true
 	var S2: SimState = _start(seed, setup)
 	var off: Array = main.planet.cover.laid.duplicate()
@@ -94,7 +95,7 @@ func _both(seed: int, setup: Dictionary) -> Dictionary:
 			rest.append(e)
 		elif S2.water[_col(e)] < WorldWater.MIN_DEPTH:
 			dry += 1
-	return {"lakes": lakes.size(), "in_water": in_water, "bad": bad, "control_bad": control_bad, "control_dry": dry, "control_count": off.size(), "rest_same": rest == on, "same": on == off, "art_on": art_on, "art_off": _art(off)}
+	return {"lakes": lakes.size(), "in_water": in_water, "bad": bad, "control_bad": control_bad, "control_dry": dry, "control_count": off.size(), "rest_same": rest == on, "same": on == off, "art_on": art_on, "art_off": _art(off), "art_dry": art_dry}
 
 
 func _start(seed: int, setup: Dictionary) -> SimState:

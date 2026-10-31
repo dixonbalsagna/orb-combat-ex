@@ -4,6 +4,8 @@ extends SceneTree
 ## 1. gen 2: the water material's lake_on is 1, and the interior the old test left undrawn (a wet
 ##    column off the sea, not dug, not at sea level) is there. Planet 7's tundra column, the reported picture, is one.
 ## 2. gen 1 and the hand-made world: no lakes and lake_on 0, so the shader's new paths are shut.
+## 2b. A lake's lip: on gen 2, no column past a lake's first land at its level has that level unless the land stands above
+##    it, on the two sweeps and on the one-column answer alike, which agree everywhere. Gen 1 floods on as ever.
 ## 3. The bands read the ruling: LAKE_BANDS.y is data/biomes/water.json's wade.below and .x half of it.
 ##   godot --headless --path . --script res://render/tools/lake_water_check.gd
 ## (A headless run draws nothing: the picture itself is the look gate's stills, docs/rendering/tools/lake-hook.mjs.)
@@ -41,6 +43,7 @@ func _run() -> void:
 		var lakes: Array = S.planetRing.get("lakes", [])
 		var undrawn: int = _old_test_left(S)
 		ok(_lake_on() == 1.0 and (lakes.is_empty() or undrawn > 0), "gen 2 planet %d: %d lakes and rivers, lake_on %d, %d interior columns the old test left undrawn" % [pl, lakes.size(), int(_lake_on()), undrawn])
+		_lips(S, pl)
 		if pl == REPORTED_PLANET:
 			var c: int = _fine_centre("tundra")
 			ok(c >= 0 and S.water[c] >= WorldWater.MIN_DEPTH and S.base[c] >= WorldWater.RESERVOIR_BASE, "the reported picture: planet %d's tundra column %d is wet off the sea, %.1f deep" % [pl, c, S.water[c] if c >= 0 else 0.0])
@@ -68,6 +71,34 @@ func _start(seed: int, setup: Dictionary) -> SimState:
 func _lake_on() -> float:
 	var v = main.planet._water_mat.get_shader_parameter("lake_on")
 	return 0.0 if v == null else float(v)
+
+
+## The lip: the sweeps' and the one-column answer agree, and low land past a lip has no lake level.
+func _lips(S: SimState, pl: int) -> void:
+	var f: GroundField = main.planet.ground
+	var differ: int = 0
+	var wrong: int = 0
+	for i in range(SimConst.NC):
+		if absf(f.shore[i] - f._shore_at(S, i)) > 0.001:
+			differ += 1
+		if S.water[i] >= WorldWater.MIN_DEPTH:
+			continue
+		var g: float = S.base[i] + S.deform[i]
+		var lv: float = f.shore[i]
+		if lv > GroundField.NO_SHORE * 0.5 and absf(lv) >= WorldWater.MIN_DEPTH and g < lv:
+			# Low land under a lake's level: it must be on the lake's side of every lip, on the side it took the level from.
+			var open: bool = false
+			for dir in [1, -1]:
+				for d in range(1, RenderLook.SHORE_COLS + 1):
+					var j: int = posmod(i + dir * d, SimConst.NC)
+					if S.water[j] >= WorldWater.MIN_DEPTH:
+						open = open or absf(S.base[j] + S.deform[j] + S.water[j] - lv) < 0.001
+						break
+					if S.base[j] + S.deform[j] >= lv:
+						break
+			if not open:
+				wrong += 1
+	ok(differ == 0 and wrong == 0, "gen 2 planet %d's lips: the sweeps and the one-column answer differ on %d columns, %d low columns hold a level past a lip" % [pl, differ, wrong])
 
 
 ## The columns the shader's old test failed: wet, off the sea, not dug, not at sea level.

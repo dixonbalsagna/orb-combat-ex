@@ -278,8 +278,12 @@ static func gen2_ring(S: SimState) -> bool:
 ## column within RenderLook.SHORE_COLS either side (the nearer; the higher on a tie), or NO_SHORE. The water shader
 ## keeps a land vertex beside water at that level when the land stands above it, so the sheet stays flat and the
 ## shoreline is where the land rises through it. Two sweeps, run only when the water or the ground changed.
+## On a gen 2 ring low land past a lake's lip (the first land that reaches its level) is dry and has no level, however
+## little under it it lies. Only the sea floods on (the white lines on gen 2's lakes were the foam on a lip with water drawn
+## on both sides).
 func _shore_levels(S: SimState) -> void:
 	var nc: int = SimConst.NC
+	var lips: bool = gen2_ring(S)
 	var k: int = RenderLook.SHORE_COLS
 	var dist := PackedInt32Array()
 	dist.resize(nc)
@@ -288,6 +292,7 @@ func _shore_levels(S: SimState) -> void:
 	for dir in [1, -1]:
 		var lv: float = NO_SHORE
 		var d: int = k + 1
+		var past: bool = false
 		for n in range(-k, nc):
 			var i: int = posmod(n if dir == 1 else nc - 1 - n, nc)
 			if S.water[i] >= WorldWater.MIN_DEPTH:
@@ -295,7 +300,15 @@ func _shore_levels(S: SimState) -> void:
 				d = 0
 			else:
 				d += 1
-			if d <= k and n >= 0 and (d < dist[i] or (d == dist[i] and lv > shore[i])):
+			if d == 0:
+				past = false
+			var low: bool = false
+			if lips and d >= 1 and d <= k and absf(lv) >= WorldWater.MIN_DEPTH:
+				if S.base[i] + S.deform[i] >= lv:
+					past = true
+				else:
+					low = past
+			if not low and d <= k and n >= 0 and (d < dist[i] or (d == dist[i] and lv > shore[i])):
 				dist[i] = d
 				shore[i] = lv
 
@@ -332,13 +345,28 @@ func _shore_at(S: SimState, i: int) -> float:
 	var m: float = WorldWater.MIN_DEPTH
 	if S.water[i] >= m:
 		return S.base[i] + S.deform[i] + S.water[i]
+	var lips: bool = gen2_ring(S)
+	var g: float = S.base[i] + S.deform[i]
+	var top_a: float = -INF   # the highest land between i and the column looked at, on each side
+	var top_b: float = -INF
+	var open_a: bool = true
+	var open_b: bool = true
 	for d in range(1, RenderLook.SHORE_COLS + 1):
 		var a: int = posmod(i + d, nc)
 		var b: int = posmod(i - d, nc)
-		var la: float = S.base[a] + S.deform[a] + S.water[a] if S.water[a] >= m else NO_SHORE
-		var lb: float = S.base[b] + S.deform[b] + S.water[b] if S.water[b] >= m else NO_SHORE
+		var la: float = S.base[a] + S.deform[a] + S.water[a] if S.water[a] >= m and open_a else NO_SHORE
+		var lb: float = S.base[b] + S.deform[b] + S.water[b] if S.water[b] >= m and open_b else NO_SHORE
+		if lips:
+			if la > NO_SHORE and absf(la) >= m and top_a >= la and g < la:
+				la = NO_SHORE
+				open_a = false
+			if lb > NO_SHORE and absf(lb) >= m and top_b >= lb and g < lb:
+				lb = NO_SHORE
+				open_b = false
 		if la > NO_SHORE or lb > NO_SHORE:
 			return maxf(la, lb)
+		top_a = maxf(top_a, S.base[a] + S.deform[a])
+		top_b = maxf(top_b, S.base[b] + S.deform[b])
 	return NO_SHORE
 
 
