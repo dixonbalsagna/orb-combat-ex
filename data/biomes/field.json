@@ -1,6 +1,6 @@
 {
   "schema": "biomes.field/1",
-  "_about": "Planet generation 3's ground (docs/world/ring-any-angle/research.md T6 stage 3; read by sim/world/field.gd). A gen 3 planet (a setup's planetGen 3) is a field of nodes on a cube-sphere: gen 2's own surface read at each node, and the ground between nodes the two triangles of its cell. cells: cells along a face's edge (a face edge is 38,400 units, so 300 cells is 128 units a cell, the canonical ground every near reader stands on). bakeStride: the bake is every bakeStride-th node (4: 512 units, 75 cells a face), nested in the canonical lattice, read whole before a match (the forecasts and the far land read it). cells must be a multiple of bakeStride. refine: the records of the field's edges. A cell whose corners step by more than `step` units (an ice wall, a cliff) or whose corner heights span the shoreline height (SHORE_WET), widened by `shoreBand` units each side, is read again at `sub` times the resolution (32 units at 4), exactly as the planet's function gives it; a cell beside a refined one carries the difference along their shared edge, fading across the cell, so the ground has no crack. The rule is a function of the cell's own corners, so every machine refines the same cells whatever it has read. Cells on a face's rim are never refined. enabled false: the plain triangles everywhere. plans: a place laid by plan (sim/world/plan.gd): yawSteps the street axis's possible yaws a half turn, align whether a place's plan is turned to the ring it is first laid on, bandsCity and bandsTown how many bands of the street each side of the middle one a plan lays, pitchBH their spacing in fighter heights, minBuildings the fewest a place may stand on a ring before it falls back to the chord layout. Gen 1 and gen 2 never read this file.",
+  "_about": "Planet generation 3's ground (docs/world/ring-any-angle/research.md T6 stage 3; read by sim/world/field.gd). A gen 3 planet (a setup's planetGen 3) is a field of nodes on a cube-sphere: gen 2's own surface read at each node, and the ground between nodes the two triangles of its cell. cells: cells along a face's edge (a face edge is 38,400 units, so 300 cells is 128 units a cell, the canonical ground every near reader stands on). bakeStride: the bake is every bakeStride-th node (4: 512 units, 75 cells a face), nested in the canonical lattice, read whole before a match (the forecasts and the far land read it). cells must be a multiple of bakeStride. refine: the records of the field's edges. A cell whose corners step by more than `step` units (an ice wall, a cliff) or whose corner heights span the shoreline height (SHORE_WET), widened by `shoreBand` units each side, is read again at `sub` times the resolution (32 units at 4), exactly as the planet's function gives it; a cell beside a refined one carries the difference along their shared edge, fading across the cell, so the ground has no crack. The rule is a function of the cell's own corners, so every machine refines the same cells whatever it has read. Cells on a face's rim are never refined. enabled false: the plain triangles everywhere. cache: whether the bake is kept in user://field-cache/ between visits (sim/world/field_cache.gd) and how many files; plans: a place laid by plan (sim/world/plan.gd): yawSteps the street axis's possible yaws a half turn, align whether a place's plan is turned to the ring it is first laid on, bandsCity and bandsTown how many bands of the street each side of the middle one a plan lays, pitchBH their spacing in fighter heights, minBuildings the fewest a place may stand on a ring before it falls back to the chord layout. Gen 1 and gen 2 never read this file.",
   "cells": 300,
   "bakeStride": 4,
   "plans": {
@@ -11,6 +11,17 @@
     "bandsCity": 2,
     "bandsTown": 1,
     "pitchBH": 32
+  },
+  "cache": {
+    "enabled": true,
+    "keep": 24,
+    "planet": true,
+    "pool": true
+  },
+  "lots": {
+    "sidewalk": 15,
+    "gap": 300,
+    "blendMax": 180
   },
   "refine": {
     "enabled": true,

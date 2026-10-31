@@ -17,6 +17,12 @@ func _init() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--planet="):
 			planet = int(a.substr(9))
+	WorldFieldCache.dirOverride = "user://field-cache-load-check/"   # a folder of its own, emptied first: the first load below is cold, the last reads the cache
+	WorldFieldCache.enabledOverride = 1
+	DirAccess.make_dir_recursive_absolute(WorldFieldCache.dir())
+	for fn in DirAccess.get_files_at(WorldFieldCache.dir()):
+		if fn.ends_with(".wfc"):
+			DirAccess.remove_absolute(WorldFieldCache.dir() + fn)
 	WorldPlanet.forget()
 	var setup := {"intro": false, "planet": planet, "planetGen": 3, "arena": {"cols": 2400}}
 	ok(not SimPlanetLoad.mayStart(setup), "a cold gen 3 planet may not start a match")
@@ -64,6 +70,25 @@ func _init() -> void:
 	WorldClimate.useGen(3)
 	ok(WorldField.of(WorldPlanet.make(planet)).bakeHash == hash1, "the bake's hash is the same (%s)" % hash1)
 	ok(h1 == h2, "the stepped load and the whole load start the same state (%s)" % h1)
+	# a third load, on a warm cache: the bake is read back, the planet and the start are the same
+	WorldPlanet.forget()
+	WorldClimate.useGen(3)
+	var job3: SimPlanetLoad.Job = SimPlanetLoad.beginFor(setup)
+	var steps3: int = 0
+	while not job3.step(250):
+		steps3 += 1
+	var F3: WorldField.Field = WorldField.of(WorldPlanet.make(planet))
+	ok(F3.fromCache and F3.bakeHash == hash1, "a warm load reads the bake from the cache and has the same bake hash (%d steps)" % steps3)
+	ok(F3.reads == 0 and F3.subReads == 0, "and reads no node of the planet's function at all: the planet, the bake and the ring's nodes all came from the cache (%d nodes and %d sub-nodes pooled)" % [F3.extra.size(), F3.extraSub.size()])
+	var S3 := SimCore.createSim()
+	SimCore.newMatch(S3, 1, {}, setup)
+	ok(str(SimHash.stateHash(S3).gameplay) == h1, "and starts the same state as the cold load did")
+	for fn in DirAccess.get_files_at(WorldFieldCache.dir()):
+		if fn.ends_with(".wfc"):
+			DirAccess.remove_absolute(WorldFieldCache.dir() + fn)
+	DirAccess.remove_absolute(WorldFieldCache.dir())
+	WorldFieldCache.dirOverride = ""
+	WorldFieldCache.enabledOverride = -1
 	SimPlanetLoad.strict = was_strict
 	print("FIELDLOAD: %d check(s) failed" % fails)
 	quit(0 if fails == 0 else 1)

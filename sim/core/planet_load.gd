@@ -74,6 +74,8 @@ class Job extends RefCounted:
 	var _cells: int = 0
 	var _flow: int = 0
 	var _bake: int = 0             # gen 3: the bake's units (0: none, or it is read already)
+	var _cacheTried: bool = false  # the bake cache was asked (once a load)
+	var _poolStored: bool = false
 	var _places: int = 0
 	var _setup: Dictionary = {}
 	var _cols: int = 0             # the match's arena, in columns (0: no ring to read)
@@ -134,9 +136,16 @@ class Job extends RefCounted:
 				spent += u   # World's job goes on where it left off (a try, a row of the carry, a few cells of the flow field): a step spends the slice
 			elif _flow > 0 and P.flow == null:   # a planet made whole elsewhere, without its flow field
 				WorldRivers.flowOf(P)
-			elif _bake > 0:   # gen 3: the bake (the planet is whole, so its climate grid is made)
-				if WorldField.bakeStep(WorldField.of(P), u):
+			elif _bake > 0:   # gen 3: the bake (the planet is whole, so its climate grid is made); a repeat visit reads it back from the cache (WorldFieldCache) and copies it in a slice at a time, a miss bakes and then writes it
+				var bf: WorldField.Field = WorldField.of(P)
+				if not _cacheTried:
+					_cacheTried = true
+					WorldFieldCache.load(bf)
+				if WorldField.bakeStep(bf, u):
 					_bake = 0
+					if not bf.fromCache:
+						WorldFieldCache.store(bf)
+					WorldFieldPool.load(bf)   # the nodes earlier rings read on this planet (the ring read below finds them)
 				spent += u
 			elif not _ringDone:
 				_readRing(u)
@@ -178,6 +187,9 @@ class Job extends RefCounted:
 		done = planetDone and _ringDone
 		if done:
 			phase = "done"
+			if gen >= 3 and not _poolStored:   # this load may have read nodes the pool lacks: write them for the next ring and the next visit
+				_poolStored = true
+				WorldFieldPool.store(WorldField.of(P))
 			spent = total
 		elif phase == "plates":
 			return

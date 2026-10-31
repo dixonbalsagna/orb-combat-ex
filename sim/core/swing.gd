@@ -14,7 +14,7 @@ extends RefCounted
 ## The rate never jumps: an ask on a running swing starts its ramp from the rate it's at, and a reversal, or a small swing, first eases the running one to rest and waits there (next*).
 ## A match's motion (setup.swing, "full", "slow" or "off"; Accessibility's swing-motion.md): slow caps every peak at slowRate; off refuses every ask. A setup value, so it's in the match key and the replay; a lobby crosses two players' by strongest().
 
-const HASHED: Array = ["active", "rate", "left", "way", "cause", "n", "restT", "pivotHeld", "pivotX", "age", "clamps", "kind", "deg", "ticks", "rampIn", "rampOut", "ptick", "r0", "cruise", "tau", "motion", "nextDeg", "nextCause", "nextRate", "nextBlow", "nextHeld", "nextX", "nextRest"]
+const HASHED: Array = ["layK", "layC", "active", "rate", "left", "way", "cause", "n", "restT", "pivotHeld", "pivotX", "age", "clamps", "kind", "deg", "ticks", "rampIn", "rampOut", "ptick", "r0", "cruise", "tau", "motion", "nextDeg", "nextCause", "nextRate", "nextBlow", "nextHeld", "nextX", "nextRest"]
 const RAMPED: int = 0
 const BLOW: int = 1
 const SMOOTH: int = 2
@@ -158,6 +158,11 @@ static func at(sw, t: float) -> float:
 	return sw.deg - sw.ptick * sw.rampOut * w * w * w * (1.0 - 0.5 * w)
 
 
+## Is the world turning this tick? `S.swing` holds its numbers through a hit-stop, a pause and the intro, when the sim is frozen: rate and left are then stale, and this is false.
+static func movingNow(S: SimState) -> bool:
+	return S.swing != null and S.swing.active and S.pause.left <= 0 and S.dirS.stop <= 0.0
+
+
 ## Ease to rest in `ticks_` ticks from the rate it is at now: a ramp with no rise. The angle to go becomes what that ease covers.
 static func rest(S: SimState, ticks_: int) -> void:
 	var sw = S.swing
@@ -190,8 +195,9 @@ static func clampNow(S: SimState) -> void:
 		sw.clamps += 1
 
 
+## On the ground, or on the water's floor (Game Design's table: the floor counts).
 static func _standing(S: SimState, f) -> bool:
-	return f.state != "launched" and f.y <= WorldTerrain.groundY(S, f.x, f.z) + 1.0
+	return f.state != "launched" and f.y <= SimFighter.floorFor(S, f, f.x, f.z) + 1.0
 
 
 ## Game Design's pivot: a standing fighter if exactly one stands, the midpoint if both or neither; a swing with an arrival keeps its point until it rests.
@@ -231,7 +237,10 @@ static func tick(S: SimState) -> void:
 		return
 	if not sw.active:
 		_anchorAtRest(S)
+		if sw.layK >= 0:
+			_layMarks(S)
 		return
+	sw.layK = -1   # a swing again: the line is moving, and its rest lays them from the start
 	ticks += 1
 	sw.age += 1
 	if S.beams.size() > 0 and (sw.rampIn > 0.0 or sw.kind != RAMPED):   # a beam: to rest, on a launch's way out (a rest already running has no ramp in)
@@ -250,11 +259,25 @@ static func tick(S: SimState) -> void:
 	k = _riseBackstop(S, px, deg1, k)
 	var nt: float = sw.tau + k
 	var deg: float = at(sw, nt) - at(sw, sw.tau)
+	var limTick: float = lim / 60.0
+	if deg > limTick:   # on a falling curve a shorter step has a steeper mean than the plan's next tick: bring it down to the law
+		for it in range(3):
+			k *= limTick / deg
+			nt = sw.tau + k
+			deg = at(sw, nt) - at(sw, sw.tau)
+			if deg <= limTick:
+				break
 	sw.tau = nt
 	sw.rate = deg * 60.0
 	sw.left = sw.way * (sw.deg - at(sw, nt))
 	if deg != 0.0:
+		var sa: bool = _standing(S, S.fighters[0])
+		var sb: bool = _standing(S, S.fighters[1])
 		_applyTurn(S.frame, px, deg * sw.way)
+		if sa:   # standing, he stays on the ground as it moves under him, down as well as up: a free fighter has no gravity, so ground turned out from under him would leave him hanging, airborne by the law, and the swing would run at full speed that way only
+			S.fighters[0].y = SimFighter.floorFor(S, S.fighters[0], S.fighters[0].x, S.fighters[0].z)
+		if sb:
+			S.fighters[1].y = SimFighter.floorFor(S, S.fighters[1], S.fighters[1].x, S.fighters[1].z)
 	if sw.tau >= sw.ticks:
 		_stop(S)
 		return
@@ -301,6 +324,7 @@ static func _stop(S: SimState) -> void:
 	sw.restT = -1
 	SimFx.swingEvent(S, "swing_rest", sw.cause, 0.0, sw.age)
 	_poses(S, true)
+	_layBegin(S)
 	if sw.nextDeg != 0.0:   # what waited for this rest
 		var a: Dictionary = {"deg": sw.nextDeg, "cause": sw.nextCause, "rate": sw.nextRate, "blow": sw.nextBlow}
 		if sw.nextHeld:
@@ -309,6 +333,43 @@ static func _stop(S: SimState) -> void:
 			a["restBy"] = maxi(1, sw.nextRest - S.tick)
 		sw.nextDeg = 0.0
 		ask(S, a)
+
+
+## The strip's cracks and scorch, from the planet's records, under the line where it came to rest (World's layCracks and layScorch, a slice a tick: 4,800 columns of look-ups are more than a tick has). Outward from the pair, so what's in view is right first: layPerTick columns a tick. Only when the store holds any. S.crack and S.scorch are hashed, and this writes them on the same tick on every peer; layK and layC are in the hash and the snapshot.
+static func _layBegin(S: SimState) -> void:
+	var sw = S.swing
+	sw.layK = -1
+	for i in range(S.storeN):
+		var kind: int = int(S.store[i * WorldStore.STRIDE])
+		if kind == WorldStore.KIND_CRACK or kind == WorldStore.KIND_SCORCH:
+			sw.layK = 0
+			var a = S.fighters[0]
+			sw.layC = int(floor(SimWrap.wrap(a.x + SimWrap.sdx(a.x, S.fighters[1].x) * 0.5) / SimConst.COL))
+			return
+
+
+static func _layMarks(S: SimState) -> void:
+	var sw = S.swing
+	var nc: int = SimConst.NC
+	var half: int = nc / 2
+	var n: int = int(data().layPerTick)
+	var k: int = sw.layK
+	var end: int = mini(k + (n + 1) / 2, half + 1)
+	while k < end:
+		_layCol(S, posmod(sw.layC + k, nc))
+		if k > 0 and k < half:
+			_layCol(S, posmod(sw.layC - k, nc))
+		k += 1
+	sw.layK = k if k <= half else -1
+
+
+static func _layCol(S: SimState, c: int) -> void:
+	SimField.pointIn(S.frame, (float(c) + 0.5) * SimConst.COL)
+	var qx: float = SimField.ox
+	var qy: float = SimField.oy
+	var qz: float = SimField.oz
+	S.crack[c] = WorldStore.crackAt(S, qx, qy, qz)
+	S.scorch[c] = WorldStore.scorchAt(S, qx, qy, qz)[0]
 
 
 ## Section 4's backstop: a standing fighter's ground rises at most riseMax a tick: read the ground one tick ahead under him and slow the clock. Two reads a standing body.
@@ -362,10 +423,13 @@ static func _poses(S: SimState, all: bool) -> void:
 	var n: int = S.bX.size()
 	if n == 0 or S.bDir.size() != n * 3:
 		return
+	_poseThese(S, range(n) if all else _poseList(S))
+
+
+static func _poseThese(S: SimState, list) -> void:
 	var buckets: int = WorldStructures.BUCKETS
 	var bw: float = SimConst.W / 128.0
 	var moved: bool = false
-	var list = range(n) if all else _poseList(S)
 	for i in list:
 		var x0: float = S.bX[i]
 		SimField.strip(S, S.bDir[i * 3], S.bDir[i * 3 + 1], S.bDir[i * 3 + 2])
@@ -429,10 +493,28 @@ static func _centre(fr, x: float, reach: float, cx: PackedFloat64Array, cc: Pack
 	cc.append(SimDetMath.cos(reach / SimField.R))
 
 
-## Every pose, now: for a plan that looks far during a swing. About 1 ms at 250 buildings, at a launch's start only.
-static func poseAll(S: SimState) -> void:
-	if S.frame != null and S.swing != null and S.swing.active:
-		_poses(S, true)
+## A plan's narrower pass: the buildings within posePlan of strip x by planet distance, posed in S.frame as it is now. It returns them, so a plan that swaps S.frame for frameAt's can put the same ones back with posesOf when it swaps back. Everything past the reach keeps its pose, and a rest poses them all (DirSwing's _planOn and _planOff; a launch plan's candidates).
+static func posesNear(S: SimState, x: float) -> PackedInt32Array:
+	var out := PackedInt32Array()
+	var n: int = S.bX.size()
+	if n == 0 or S.bDir.size() != n * 3:
+		return out
+	SimField.pointIn(S.frame, x)
+	var qx: float = SimField.ox
+	var qy: float = SimField.oy
+	var qz: float = SimField.oz
+	var c: float = SimDetMath.cos(float(data().posePlan) / SimField.R)
+	var q: PackedFloat64Array = S.bDir
+	for i in range(n):
+		if q[i * 3] * qx + q[i * 3 + 1] * qy + q[i * 3 + 2] * qz >= c:
+			out.append(i)
+	posesOf(S, out)
+	return out
+
+
+## These buildings, posed in S.frame as it is now.
+static func posesOf(S: SimState, list: PackedInt32Array) -> void:
+	_poseThese(S, list)
 
 
 ## A building that crossed from bucket k0 to k1: both copied, then written. A bucket stays in ascending index order, as buildIndex makes it, so near() returns the same list in the same order.

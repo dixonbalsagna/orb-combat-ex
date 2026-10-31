@@ -95,7 +95,7 @@ func _init() -> void:
 				for bb in sets[b2].buildings:
 					if by.has(int(bb.pi)):
 						var o: Dictionary = by[int(bb.pi)]
-						if o.dir == bb.dir and o.w == bb.w and o.h == bb.h and o.kind == bb.kind and o.seed == bb.seed:
+						if o.pdir == bb.pdir and o.w == bb.w and o.h == bb.h and o.kind == bb.kind and o.seed == bb.seed:
 							same += 1
 						else:
 							differ += 1

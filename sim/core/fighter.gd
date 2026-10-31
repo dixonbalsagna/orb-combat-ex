@@ -272,6 +272,8 @@ static func stepRush(S: SimState, f, dt: float) -> void:
 		f.y += (ty - f.y) * k
 	if S.depthOn:
 		f.z = clampf(f.z + (tz - f.z) * k, SimDepth.zBack, SimDepth.zFront)
+	if S.frame != null:   # a field world: a rush's line rides up over what's between (its ground is rougher than a ring's, and pads stand proud): 107 fighter ticks under the ground against gen 2's 14, up to 150 units. No other world changes
+		f.y = maxf(f.y, floorFor(S, f, f.x, f.z if S.depthOn else 0.0))
 
 
 ## A fighter's depth, only when S.depthOn (docs/architecture/depth-core.md). No stick steers it.

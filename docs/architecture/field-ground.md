@@ -8,7 +8,7 @@ Simulation & Engine. Stage 5 of `docs/world/ring-any-angle/research.md` T6, on `
 - **`sim/core/swing.gd`, `SimSwing`:** Game Design's rate law. Camera's curve, a closed form with a clock the law can slow, turns the line about a pivot on it. Fighters, gaps and velocities don't change; only the ground under them moves. The director asks; this runs. No score, no draws.
 - **`WorldTerrain.groundY`, `baseAt`** and the water's `depthOf` read through the frame. `S.base` is laid once, for the world's builders and the old renderer at rest; the sim doesn't read it. Every direct read of `S.base` outside the builders goes through `baseAt`.
 - **The order of a read:** the field by the reader's level, World's records (`applyRecords`), the planet store (`heightDelta`), and the strip's `S.deform` on top.
-- **Poses:** `S.bX`, `S.bZ`, bound arrays, read through `Building.x` and `.z`, so no reader changes. `bDir` holds each building's planet point, from where it was laid in the first frame, so a building stands at rest exactly where World laid it.
+- **Poses:** `S.bX`, `S.bZ`, bound arrays, read through `Building.x` and `.z`, so no reader changes. `bDir` holds each building's planet point, World's, where it was laid. A building's base is the ground at that point, not the line under its `x`.
 - **A whole ring only.** A Half ring is a small circle, so it has no frame, and a gen 3 Half ring plays as World built it, on `S.base`, with no swing.
 
 ## The determinism rules
@@ -27,6 +27,10 @@ Simulation & Engine. Stage 5 of `docs/world/ring-any-angle/research.md` T6, on `
 ## The forecasts' scopes
 
 `roam`, `_search`, `predictFlight`, `_biomeCands`, `_cliff`, `_propOnPath`, `_skimAshore`, `flightTo`, `_flightToSwept`, `_landY`, `_building`, `_floor`, `lineOfSight`, `_swat`, `ignite`: each wraps itself in `far()`, so its helpers (`seaTop`, `baseY`) follow without a level argument. That's the fix for section 9's worst ticks. `SimCore.step` closes any scope a tick left open.
+
+## After a rest
+
+`SimSwing._layMarks` lays the strip's `S.crack` and `S.scorch` from the store, the same values World's `layCracks` and `layScorch` give, `layPerTick` columns a tick, outward from the pair. Those arrays are hashed, so every peer writes them on the same tick. It only runs if the store holds a crack or a scorch. During a swing those marks ride with the line, and they snap to their true place outward from the pair over the 7 to 48 ticks after the rest.
 
 ## What it doesn't do yet
 

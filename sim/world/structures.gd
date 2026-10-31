@@ -191,6 +191,8 @@ static func curH(b) -> float:
 static func baseY(S: SimState, b) -> float:
 	var NC: int = SimConst.NC
 	var COL: float = SimConst.COL
+	var own: bool = S.frame != null and b._h != null and S.bDir.size() == S.buildings.size() * 3   # a field world: the ground at its own planet point, its pad's; the strip's marks over its footprint on top
+	var fg: float = SimField.buildingGround(S, b._i) if own else 0.0
 	if S.depthOn and not S.deformZ.is_empty():   # T: the highest ground over the footprint in x and in depth (the rows inside its interval)
 		var m2: float = -1.0e9
 		var ca: int = int(floor((b.x - b.w * 0.5) / COL))
@@ -203,20 +205,20 @@ static func baseY(S: SimState, b) -> float:
 				var ar: PackedFloat32Array = WorldTerrain.rowArr(S, k)
 				for c in range(ca, cb + 1):
 					var ic: int = posmod(c, NC)
-					m2 = maxf(m2, WorldTerrain.baseAt(S, ic) + ar[ic])
+					m2 = maxf(m2, (fg if own else WorldTerrain.baseAt(S, ic)) + ar[ic])
 		if any:
 			return m2
 		var ar2: PackedFloat32Array = WorldTerrain.rowArr(S, WorldTerrain.rowOfZ(b.z))
 		for c in range(ca, cb + 1):
 			var ic2: int = posmod(c, NC)
-			m2 = maxf(m2, WorldTerrain.baseAt(S, ic2) + ar2[ic2])
+			m2 = maxf(m2, (fg if own else WorldTerrain.baseAt(S, ic2)) + ar2[ic2])
 		return m2
 	var c0: int = int(floor((b.x - b.w * 0.5) / COL))
 	var c1: int = int(floor((b.x + b.w * 0.5) / COL)) + 1
 	var m: float = -1.0e9
 	for c in range(c0, c1 + 1):
 		var i: int = posmod(c, NC)
-		m = maxf(m, WorldTerrain.baseAt(S, i) + S.deform[i])
+		m = maxf(m, (fg if own else WorldTerrain.baseAt(S, i)) + S.deform[i])
 	return m
 
 

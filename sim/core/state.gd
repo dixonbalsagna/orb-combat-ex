@@ -64,7 +64,7 @@ var bPopAlive := PackedFloat64Array()
 var bWear := PackedFloat64Array()
 var bX := PackedFloat64Array()      # a field world's poses, by index (SimSwing): empty on every other world, where a building's x and z are its record's. Derived from the frame and the plan: not hashed
 var bZ := PackedFloat64Array()
-var bDir := PackedFloat64Array()    # ... and each building's planet point, three numbers, where it was laid in the first frame (shared by snapshots: never written once bound)
+var bDir := PackedFloat64Array()    # ... and each building's planet point, three numbers: World's, where it was laid (shared by snapshots: never written once bound)
 var bList := PackedInt32Array()     # ... and which of them a swing tick poses (SimSwing._poseList): in the state, so a rollback restores it. Derived: not hashed
 var bListKey: int = -1
 var bListN: int = -1
@@ -179,17 +179,20 @@ func bindStructures(fresh: bool = false) -> void:
 
 ## A field world's poses: the plan's in the first frame, as planet points, and the poses from the frame as it is now.
 func _bindPoses(h: Hold, n: int) -> void:
-	if bX.size() != n:   # the point each building was laid at, in the first frame (a place's lanes snap its z after its plan's point, so the plan's own point isn't where it stands), and its pose in the frame as it is now
-		bDir = PackedFloat64Array()
-		bDir.resize(n * 3)
+	if bX.size() != n:   # each building's planet point, World's (S.bDir, where it was laid), or from its record in the first frame for one World didn't lay; and its pose in the frame as it is now
+		var laid: bool = bDir.size() == n * 3
+		if not laid:
+			bDir = PackedFloat64Array()
+			bDir.resize(n * 3)
 		bX = PackedFloat64Array()
 		bZ = PackedFloat64Array()
 		bX.resize(n)
 		bZ.resize(n)
 		for i in range(n):
-			var g0: BuildingGen = buildings[i].g
-			SimField.placeIn(frame0, g0.x, g0.z)
-			bDir[i * 3] = SimField.ox; bDir[i * 3 + 1] = SimField.oy; bDir[i * 3 + 2] = SimField.oz
+			if not laid:
+				var g0: BuildingGen = buildings[i].g
+				SimField.placeIn(frame0, g0.x, g0.z)
+				bDir[i * 3] = SimField.ox; bDir[i * 3 + 1] = SimField.oy; bDir[i * 3 + 2] = SimField.oz
 			SimField.strip(self, bDir[i * 3], bDir[i * 3 + 1], bDir[i * 3 + 2])
 			bX[i] = SimField.sx
 			bZ[i] = SimField.sz
@@ -428,6 +431,8 @@ class Swing:
 	var cruise: float = 0.0
 	var tau: float = 0.0
 	var motion: String = "full"
+	var layK: int = -1          # the marks' lay after a rest (SimSwing._layMarks): how far out from layC it has come, -1 none
+	var layC: int = 0
 	var nextDeg: float = 0.0
 	var nextCause: String = ""
 	var nextRate: float = 0.0

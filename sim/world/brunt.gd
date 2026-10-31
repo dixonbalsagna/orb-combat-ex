@@ -526,7 +526,8 @@ static func candidates(S: SimState, D) -> Array:
 
 
 static func _candidatesRead(S: SimState, D) -> Array:
-	SimSwing.poseAll(S)   # a field world mid-swing: this plan looks past the pair's reach
+	if S.frame != null and S.swing.active:
+		SimSwing.posesNear(S, D.x)   # a field world mid-swing: this plan looks past the pair's reach
 	var popCap: float = WorldStructures.buildingPopRef(S)
 	var sides: Array = [[], []]
 	for bi in WorldStructures.near(S, D.x, BR_MAX):

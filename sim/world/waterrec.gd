@@ -228,7 +228,7 @@ static func riverBed(P: WorldPlanet.Planet, rec: Dictionary, qx: float, qy: floa
 static func _index(S) -> Dictionary:
 	var id: int = S.get_instance_id()
 	var ent: Dictionary = _ix.get(id, {})
-	if ent.is_empty() or not is_same(ent.recs, S.fieldRecs):
+	if ent.is_empty() or not is_same(ent.recs, S.fieldRecs) or int(ent.n) != S.fieldRecs.size():   # the records grow while a match is planned (pads after platforms): the index follows the array
 		var grid: Dictionary = {}
 		var big: Array = []
 		var R: float = _R()
@@ -251,7 +251,7 @@ static func _index(S) -> Dictionary:
 						var lst: PackedInt32Array = grid.get(key, PackedInt32Array())
 						lst.append(k)
 						grid[key] = lst
-		ent = {"recs": S.fieldRecs, "grid": grid, "big": big}
+		ent = {"recs": S.fieldRecs, "n": S.fieldRecs.size(), "grid": grid, "big": big}
 		if _ix.size() > 16:
 			_ix.clear()
 		_ix[id] = ent
@@ -264,12 +264,15 @@ static func near(S, qx: float, qy: float, qz: float) -> Array:
 		return []
 	var ent: Dictionary = _index(S)
 	var R: float = _R()
-	var out: Array = []
 	var key: int = _key(_box(qx * R), _box(qy * R), _box(qz * R))
+	var ids := PackedInt32Array()
 	if ent.grid.has(key):
-		for k in ent.grid[key]:
-			out.append(S.fieldRecs[k])
-	for k in ent.big:
+		ids.append_array(ent.grid[key])
+	ids.append_array(PackedInt32Array(ent.big))
+	if ent.big.size() > 0:
+		ids.sort()   # the records apply in the order they were planned (a platform before the pads on it), whichever list holds them
+	var out: Array = []
+	for k in ids:
 		out.append(S.fieldRecs[k])
 	return out
 

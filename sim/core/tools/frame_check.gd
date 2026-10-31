@@ -51,6 +51,10 @@ func _init() -> void:
 	_rollback()
 	_poses()
 	_store()
+	_bases()
+	_ceilAndRush()
+	_lay()
+	_bothWays()
 	_key()
 	print("frame_check: %d checks, %d failed" % [checks, fails])
 	print("PASS" if fails == 0 else "FAILED")
@@ -185,6 +189,16 @@ func _swing() -> void:
 	ok(absf(acos(clampf(cosT, -1.0, 1.0)) * 180.0 / 3.14159265 - 30.0) < 1e-6, "swing: exactly the bearing asked")
 	var gap: float = absf(ahead.tx - S.frame.tx) + absf(ahead.ty - S.frame.ty) + absf(ahead.tz - S.frame.tz)
 	ok(gap < 1e-9, "frameAt: the asked curve's end is where a free swing ends (gap %.12f)" % gap)
+	# frozen, it isn't turning, whatever its numbers say
+	var S9 := start3()
+	for f in S9.fighters:
+		f.y = 3000.0
+	SimSwing.ask(S9, {"deg": 30.0, "cause": "launch"})
+	ok(SimSwing.movingNow(S9), "movingNow: running")
+	S9.dirS.stop = 0.5
+	ok(not SimSwing.movingNow(S9), "movingNow: not in a hit-stop")
+	S9.dirS.stop = 0.0
+	SimCore.dispose(S9)
 	# the sign: above 0 turns the heading toward the camera, heading x point
 	var S0 := start3()
 	var f1a = S0.frame.copy()
@@ -466,6 +480,224 @@ func _poses() -> void:
 	SimCore.dispose(S)
 
 
+## A building's base is its own point's ground, its pad's, and a swing doesn't move it.
+func _bases() -> void:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 77, {"p1": true, "p2": true}, {"planet": 7, "touch": 2, "planetGen": 3, "intro": false})
+	var worst: float = 0.0
+	var off: int = 0
+	var n: int = mini(S.buildings.size(), 200)
+	var b0: Array = []
+	for i in range(n):
+		b0.append(WorldStructures.baseY(S, S.buildings[i]))
+	var lineOff: int = 0
+	for i in range(n):
+		var line: float = -1.0e9
+		var b = S.buildings[i]
+		line = WorldTerrain.groundY(S, b.x)
+		if absf(line - float(b0[i])) > 50.0:
+			lineOff += 1
+	print("bases: %d of %d buildings stand more than 50 units from the line's ground under them" % [lineOff, n])
+	for f in S.fighters:
+		f.y = 6000.0
+	SimSwing.ask(S, {"deg": 30.0, "cause": "launch"})
+	var t: int = 0
+	while S.swing.active and t < 400:
+		SimSwing.tick(S)
+		S.tick += 1
+		t += 1
+	for i in range(n):
+		var d: float = absf(WorldStructures.baseY(S, S.buildings[i]) - float(b0[i]))
+		worst = maxf(worst, d)
+		if d > 0.001:
+			off += 1
+	ok(off == 0, "bases: a swing doesn't move a building's base (%d off, worst %.3f)" % [off, worst])
+	var snap: NetSnapshot = NetSnapshot.take(S)
+	var i0: int = n / 2
+	var b1 = S.buildings[i0]
+	var before: float = WorldStructures.baseY(S, b1)
+	SimField.placeAt(S, b1.x, b1.z)
+	ok(WorldStore.add(S, S.bDir[i0 * 3], S.bDir[i0 * 3 + 1], S.bDir[i0 * 3 + 2], 300.0, 60.0, 0.0, 1.0, 0, 0, 0.0, 0) >= 0, "bases: a crater at its foot")
+	ok(WorldStructures.baseY(S, b1) < before - 10.0, "bases: a crater under a building lowers its base (%.1f to %.1f)" % [before, WorldStructures.baseY(S, b1)])
+	NetSnapshot.restore(S, snap)
+	ok(WorldStructures.baseY(S, b1) == before, "bases: and a restore brings it back")
+	SimCore.dispose(S)
+
+
+## A rush rides over the ground, and the stretch's ceiling holds over a real fight's every column, ground and sea.
+func _ceilAndRush() -> void:
+	var off := SimCore.createSim()
+	SimCore.newMatch(off, 5, {"p1": true, "p2": true})
+	ok(SimField.groundCeilAt(off, 100) == INF, "ceil: infinity off a field world")
+	SimCore.dispose(off)
+	for row in [[3, 2, 22], [7, 2, 11]]:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, row[2], {"p1": true, "p2": true}, {"planet": row[0], "touch": row[1], "planetGen": 3, "intro": false})
+		var under: int = 0
+		var bad: int = 0
+		var margin: float = 1.0e18
+		var n: int = int(SimField.data().ceilCols)
+		var t0: int = Time.get_ticks_usec()
+		SimField.groundCeilAt(S, 1000)
+		var us: int = Time.get_ticks_usec() - t0
+		for t in range(3600):
+			SimCore.step(S)
+			S.out.fx.clear()
+			S.out.feed.clear()
+			for f in S.fighters:
+				if f.rush != null and f.y < WorldTerrain.groundY(S, f.x, f.z) - 1.0:
+					under += 1
+			if t % 400 == 399:
+				var c0: int = 0
+				while c0 < SimConst.NC:
+					var c: float = SimField.groundCeilAt(S, c0 + 17)
+					SimField.far()
+					for k in range(0, n, 3):
+						var x: float = float(c0 + k) * SimConst.COL + 11.0
+						var g: float = WorldTerrain.groundY(S, x)
+						var sea: float = WorldWater.seaTop(S, x)
+						var flo: float = WorldWater.floorAt(S, x)
+						var top: float = maxf(maxf(g, flo), sea if sea != WorldWater.NO_SEA else g)
+						margin = minf(margin, c - top)
+						if top > c:
+							bad += 1
+					SimField.near()
+					c0 += n * 3
+			if S.game.ko != null:
+				break
+		print("ceil: planet %d, about %d us a call; the closest a read came under it: %.2f" % [row[0], us, margin])
+		ok(bad == 0, "ceil: no far ground, floor or sea over its stretch's bound (%d, closest %.2f)" % [bad, margin])
+		ok(under == 0, "rush: never under the ground on a field world (%d ticks)" % under)
+		SimCore.dispose(S)
+	# a plan's pass: a building near is posed in the plan's frame and put back after; a building far keeps its pose
+	var P := start3()
+	for f in P.fighters:
+		f.y = 3000.0
+	var bs: Array = []
+	var fx0: float = P.fighters[0].x
+	for dx in [900.0, 30000.0]:
+		var b := SimState.Building.new()
+		b.x = SimWrap.wrap(fx0 + dx)
+		b.z = -300.0
+		b.w = 100.0; b.d = 100.0; b.h = 200.0; b.maxhp = 100.0; b.hp = 100.0; b.floors = 3; b.fmask = 7; b.kind = "tower"; b.alive = true
+		bs.append(b)
+	P.buildings = bs
+	P.bX = PackedFloat64Array()
+	WorldStructures.buildIndex(P)
+	P.bindStructures()
+	var nearB = P.buildings[0]
+	var farB = P.buildings[1]
+	var x0: float = nearB.z
+	var xf: float = farB.z
+	SimSwing.ask(P, {"deg": 30.0, "cause": "launch", "pivotX": fx0})
+	var was = P.frame
+	P.frame = SimSwing.frameAt(P, 1000)
+	var list: PackedInt32Array = SimSwing.posesNear(P, fx0)
+	ok(list.size() == 1 and list[0] == 0, "plan: the near building, not the far (%d)" % list.size())
+	ok(nearB.z != x0 and farB.z == xf, "plan: it's posed in the plan's frame, and the far one keeps its pose")
+	P.frame = was
+	SimSwing.posesOf(P, list)
+	ok(absf(nearB.z - x0) < 1e-6, "plan: and it's put back when the frame comes back (%.6f)" % (nearB.z - x0))
+	SimCore.dispose(P)
+
+
+## Camera's case: the same swing each way on the same ground takes the same ticks, a standing fighter stays on his floor down as well as up, and the rate holds to the law on the way out.
+func _bothWays() -> void:
+	var ticks_: Array = []
+	for way in [40.0, -40.0, 40.0, -40.0]:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 77, {"p1": false, "p2": false}, {"planet": 7, "touch": 1, "planetGen": 3, "intro": false})
+		for t in range(5):
+			SimCore.step(S)
+			S.out.fx.clear()
+			S.out.feed.clear()
+		var a = S.fighters[0]
+		var b = S.fighters[1]
+		SimSwing.ask(S, {"deg": way, "cause": "launch"})
+		var n: int = 0
+		var off: float = 0.0
+		var over: float = 0.0
+		while S.swing.active and n < 3000:
+			var lim: float = SimSwing._limit(S, SimSwing._pivot(S))
+			SimCore.step(S)
+			S.out.fx.clear()
+			S.out.feed.clear()
+			n += 1
+			off = maxf(off, absf(a.y - SimFighter.floorFor(S, a, a.x, a.z)))
+			off = maxf(off, absf(b.y - SimFighter.floorFor(S, b, b.x, b.z)))
+			over = maxf(over, S.swing.rate - lim)
+		ticks_.append(n)
+		ok(off <= 1.0, "both ways: %+d: standing, he stays on his floor (%.2f off)" % [int(way), off])
+		ok(over <= 0.01, "both ways: %+d: the rate holds to the law at each tick (%.4f deg/s over at most)" % [int(way), over])
+		SimCore.dispose(S)
+	print("both ways: %s ticks" % str(ticks_))
+	ok(ticks_[0] == ticks_[1] and ticks_[1] == ticks_[2] and ticks_[2] == ticks_[3], "both ways: the same ticks each way (%s)" % str(ticks_))
+
+
+## After a rest the strip's marks come from the store, a slice a tick, to exactly what World's lay functions give; a snapshot in the middle comes out the same.
+func _lay() -> void:
+	var S := start3()
+	for f in S.fighters:
+		f.y = 3000.0
+	var x: float = S.fighters[0].x - 400.0   # through the pivot, so some of it is still on the line after the turn
+	SimField.pointAt(S, x)
+	var ax: float = SimField.ox
+	var ay: float = SimField.oy
+	var az: float = SimField.oz
+	SimField.pointAt(S, x + 800.0)
+	ok(WorldStore.addCrack(S, [ax, ay, az], [SimField.ox, SimField.oy, SimField.oz], 0.9, 40.0, 0.0, 0) >= 0, "lay: a crack in the store")
+	ok(S.swing.layK == -1, "lay: nothing running before a rest")
+	SimSwing.ask(S, {"deg": 30.0, "cause": "launch", "pivotX": S.fighters[0].x})
+	var t: int = 0
+	while S.swing.active and t < 400:
+		SimSwing.tick(S)
+		S.tick += 1
+		t += 1
+	ok(S.swing.layK == 0, "lay: a rest starts it (%d)" % S.swing.layK)
+	for k in range(5):
+		SimSwing.tick(S)
+		S.tick += 1
+	var snap: NetSnapshot = NetSnapshot.take(S)
+	var h0: String = SimHash.stateHash(S).gameplay
+	var slices: int = 5
+	var t0: int = Time.get_ticks_usec()
+	var worst: int = 0
+	while S.swing.layK >= 0 and slices < 200:
+		var t1: int = Time.get_ticks_usec()
+		SimSwing.tick(S)
+		worst = maxi(worst, Time.get_ticks_usec() - t1)
+		S.tick += 1
+		slices += 1
+	print("lay: %d ticks to the whole ring; worst slice %d us" % [slices, worst])
+	ok(slices <= 49, "lay: done in the ticks the data says (%d)" % slices)
+	var ours: PackedFloat32Array = S.crack.duplicate()
+	var oursS: PackedFloat32Array = S.scorch.duplicate()
+	var h1: String = SimHash.stateHash(S).gameplay
+	var fr = S.frame
+	var pointOf := func(xx: float) -> Array:
+		SimField.pointIn(fr, xx)
+		return [SimField.ox, SimField.oy, SimField.oz]
+	t0 = Time.get_ticks_usec()
+	WorldStore.layCracks(S, pointOf)
+	WorldStore.layScorch(S, pointOf)
+	print("lay: World's whole lay in one tick, for the record: %d us" % (Time.get_ticks_usec() - t0))
+	ok(S.crack == ours and S.scorch == oursS, "lay: the same as World's lay functions, every column")
+	var nz: int = 0
+	for v in ours:
+		if v > 0.0:
+			nz += 1
+	ok(nz > 0, "lay: the crack is on the strip somewhere (%d columns)" % nz)
+	NetSnapshot.restore(S, snap)
+	ok(SimHash.stateHash(S).gameplay == h0 and S.swing.layK > 0, "lay: a snapshot in the middle comes back")
+	var g: int = 0
+	while S.swing.layK >= 0 and g < 200:
+		SimSwing.tick(S)
+		S.tick += 1
+		g += 1
+	ok(S.crack == ours and S.scorch == oursS, "lay: and finishes the same")
+	SimCore.dispose(S)
+
+
 func _store() -> void:
 	var S := start3()
 	var x: float = S.fighters[0].x + 500.0
@@ -488,7 +720,7 @@ func _store() -> void:
 	var g3: float = WorldTerrain.groundY(S, x2)
 	ok(g3 < g2 - 1.0, "store: a dig lowers the ground it was dug on (%.1f to %.1f)" % [g2, g3])
 	SimField.pointAt(S, x2)
-	ok(absf(S.store[11] - SimField.ox) < 1e-9 and absf(S.store[12] - SimField.oy) < 1e-9, "store: at the line's point through the frame")
+	ok(absf(S.store[WorldStore.STRIDE + 1] - SimField.ox) < 1e-9 and absf(S.store[WorldStore.STRIDE + 2] - SimField.oy) < 1e-9, "store: at the line's point through the frame")
 	var n2: int = S.storeN
 	WorldCrater.deepen(S, x2, S.fighters[0], 1.5)
 	var g4: float = WorldTerrain.groundY(S, x2)
@@ -513,6 +745,38 @@ func _store() -> void:
 
 func _key() -> void:
 	ok(SimField.keyHash(7) == SimField.keyHash(7) and SimField.keyHash(7) != SimField.keyHash(3), "key: stable, and differs by planet")
+	# a node this machine holds wrong: a stale cache's. The key must see it
+	var k0: String = SimField.keyHash(7)
+	var P = WorldPlanet.make(7)
+	var F = WorldField.of(P)
+	var hit: Array = []
+	for n in range(8):
+		var f: int = int(SimRng.keyed(7, "field-f", n) * 6.0)
+		var i: int = int(SimRng.keyed(7, "field-i", n) * float(WorldField.cells()))
+		var j: int = int(SimRng.keyed(7, "field-j", n) * float(WorldField.cells()))
+		if i % WorldField.bakeStride() == 0 and j % WorldField.bakeStride() == 0:
+			i += 1
+		var idx: int = WorldField.ensure(F, f, i, j)
+		hit.append([idx, F.h[idx]])
+		F.h[idx] = F.h[idx] + 1.0
+	SimField._keyOf.clear()
+	ok(SimField.keyHash(7) != k0, "key: a held node that isn't the function's changes it")
+	for e in hit:
+		F.h[e[0]] = e[1]
+	SimField._keyOf.clear()
+	ok(SimField.keyHash(7) == k0, "key: and back")
+	# a far read on the stride: exact on it, between its neighbours off it, and a plan's line reads an eighth of the columns
+	var S := start3()
+	var far0: Array = []
+	SimField.far()
+	var c8: float = SimField.col(S, 800)
+	var c16: float = SimField.col(S, 808)
+	var c4: float = SimField.col(S, 804)
+	var w: float = WorldField.heightBake(P, 0.0, 0.0, 1.0)
+	SimField.near()
+	ok(absf(c4 - 0.5 * (c8 + c16)) < 1e-9, "far: between two stride columns, their line")
+	ok(is_finite(w), "far: the bake reads")
+	SimCore.dispose(S)
 
 
 ## Each break must be caught: the checks above can see it.

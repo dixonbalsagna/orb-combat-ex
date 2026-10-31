@@ -194,6 +194,8 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
 			bd.append(q[1])
 			bd.append(q[2])
 		S.bDir = bd
+	if P.gen >= 3 and "fieldRecs" in S and not gen.dirs.is_empty():   # gen 3: each building's pad, a flat of its own ground height round its footprint (world/field.gd padRecords), after the platforms
+		S.fieldRecs.append_array(WorldField.lotRecords(P, S, gen.buildings, gen.dirs, sl.circ))
 	var dlist: Array = gen.dlist
 	S.lanes = WorldLanes.build(S, dlist)
 	S.world = SimState.World.new()

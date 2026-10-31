@@ -331,9 +331,14 @@ static func make(seed: int) -> Planet:
 	if _planets.has(key):
 		return _planets[key]
 	var P: Planet = _newPlanet(seed, gn)
+	if gn >= 3 and WorldPlanetCache.load(P):   # a repeat visit: the made planet from the cache (grid and places), world/planet_cache.gd
+		_memoPlanet(key, P)
+		return P
 	if gn >= 2:
 		WorldClimate.gridOf(P)   # the climate grid before the places are scored
 	_placeAll(P)
+	if gn >= 3:
+		WorldPlanetCache.store(P)
 	_memoPlanet(key, P)
 	return P
 
@@ -382,6 +387,10 @@ class PlanetJob extends RefCounted:
 			done = true
 			return
 		P = WorldPlanet._newPlanet(sd, gn)
+		if gn >= 3 and WorldPlanetCache.load(P):   # a repeat visit: the made planet from the cache, no grid or places to build
+			WorldPlanet._memoPlanet(key, P)
+			done = true
+			return
 		if gn >= 2:
 			_grid = WorldClimate.Grid.new(P)
 		_st = WorldPlanet._placeBegin(P)
@@ -422,6 +431,8 @@ class PlanetJob extends RefCounted:
 			var fin2: bool = WorldPlanet._placeStep(P, _st, maxi(1, left))
 			left -= maxi(1, int(_st.spent))
 			if fin2:
+				if P.gen >= 3:
+					WorldPlanetCache.store(P)
 				WorldPlanet._memoPlanet(key, P)
 				done = true
 				return true

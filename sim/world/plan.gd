@@ -231,7 +231,8 @@ static func lay(S: SimState, P: WorldPlanet.Planet, id: int, circ: Dictionary, p
 		b["row"] = row
 		b["d"] = dd
 		b["z"] = zc
-		b["dir"] = q
+		b["pdir"] = q   # the plan's own point (identity across rings); dir is where the building is laid, after the lane snap: what the pad, the pose arrays and the tiles use
+		b["dir"] = pointAtX(P, circ, cx, zc)
 		kept.append(b)
 		if not byRow.has(row):
 			byRow[row] = []

@@ -7,7 +7,7 @@ var fails: int = 0
 
 ## A great circle through the store's first point: Simulation's frame, as a match on a whole ring has one.
 func _realFrame(S: SimState) -> void:
-	var p: Array = [S.store[0], S.store[1], S.store[2]]
+	var p: Array = [S.store[1], S.store[2], S.store[3]]   # [kind, px, py, pz, ...]
 	var e: Array = [1.0, 0.0, 0.0] if absf(p[0]) < 0.7 else [0.0, 1.0, 0.0]
 	var d: float = e[0] * p[0] + e[1] * p[1] + e[2] * p[2]
 	var t: Array = [e[0] - d * p[0], e[1] - d * p[1], e[2] - d * p[2]]
@@ -55,7 +55,7 @@ func _init() -> void:
 	var pr = S.planetRing
 	var P := WorldPlanet.make(planet)
 	var circ: Dictionary = WorldRingPick.ringFrom(pr.c, int(pr.cols), pr.t)
-	var q: Array = [S.store[0], S.store[1], S.store[2]]
+	var q: Array = [S.store[1], S.store[2], S.store[3]]   # [kind, px, py, pz, ...]
 	var xs: float = WorldPlan.stripX(P, circ, q)
 	ok(absf(WorldPlan.sdx(xs, x, float(SimConst.NC) * SimConst.COL)) < 1.0, "its planet point is the strip x again (%.2f units out)" % absf(WorldPlan.sdx(xs, x, float(SimConst.NC) * SimConst.COL)))
 	ok(absf(WorldStore.heightDelta(S, q[0], q[1], q[2]) + rec.depth) < 1.0e-6, "the store reads the bowl's depth at its centre (%.3f)" % WorldStore.heightDelta(S, q[0], q[1], q[2]))

@@ -57,6 +57,19 @@ class Field extends RefCounted:
 	var bakeN: int = 0            # the bake's nodes in all
 	var bakeDone: bool = false
 	var bakeHash: String = ""
+	var fromCache: bool = false    # the bake was read back from the cache (WorldFieldCache), not computed
+	var pend: bool = false         # a cache hit being copied into the arrays and hashed, a slice at a time (bakeStep)
+	var pH := PackedFloat32Array()
+	var pB := PackedByteArray()
+	var pF := PackedByteArray()
+	var cbytes := PackedByteArray()    # a staged cache load: the file, how far its checksum has run, the stage (0 none, 1 checksum, 2 witnesses)
+	var cpos: int = 0
+	var csha = null
+	var cstage: int = 0
+	var hasher = null
+	var extra := PackedInt32Array()      # canonical nodes beyond the bake that are held (read, or loaded from the pool): what WorldFieldPool writes
+	var extraSub := PackedInt64Array()   # the same for sub-nodes
+	var poolLoaded: int = 0              # nodes the pool file holds now
 	var oh: float = 0.0           # the last sample's height, stored biome and fine biome
 	var ob: int = 0
 	var ofine: int = 0
@@ -246,6 +259,8 @@ static func ensure(F: Field, face: int, i: int, j: int) -> int:
 	F.f[idx] = _vf
 	F.b[idx] = _vb
 	F.reads += 1
+	if (i % F.stride != 0 or j % F.stride != 0) and F.extra.size() < WorldFieldPool.CAP:
+		F.extra.append(idx)
 	return idx
 
 
@@ -265,6 +280,8 @@ static func _subKey(F: Field, face: int, i4: int, j4: int) -> int:
 		F.sh[key] = float(PackedFloat32Array([_vh])[0])   # as a column stores it
 		F.sb[key] = _vb | (_vf << 8)
 		F.subReads += 1
+		if F.extraSub.size() < WorldFieldPool.CAP:
+			F.extraSub.append(key)
 	return key
 
 
@@ -457,6 +474,30 @@ static func bakeStep(F: Field, units: int) -> bool:
 	if F.bakeDone:
 		return true
 	var left: int = maxi(1, units / NODE_UNITS)
+	if F.cstage > 0:   # a staged cache load (WorldFieldCache.load): a slice of its checks; if one fails the load is given up and the bake below runs as it always did
+		if WorldFieldCache.advance(F):
+			return false
+	if F.pend:   # a cache hit: copy the nodes in and fold them into the bake hash, in bake order (the same hash _hashBake gives), eight times as many a slice as a bake computes
+		var hit: int = mini(left * 8, F.bakeN - F.bakeK)
+		for q in range(hit):
+			var k2: int = F.bakeK + q
+			var ix: int = bakeIdxOf(F, k2)
+			F.h[ix] = F.pH[k2]
+			F.b[ix] = F.pB[k2]
+			F.f[ix] = F.pF[k2]
+			F.hasher.num(F.h[ix])
+			F.hasher.u(F.b[ix] | (F.f[ix] << 8))
+		F.bakeK += hit
+		if F.bakeK >= F.bakeN:
+			F.bakeHash = F.hasher.hex()
+			F.bakeDone = true
+			F.fromCache = true
+			F.pend = false
+			F.pH = PackedFloat32Array()
+			F.pB = PackedByteArray()
+			F.pF = PackedByteArray()
+			F.hasher = null
+		return F.bakeDone
 	var bs: int = F.N / F.stride + 1
 	while left > 0 and F.bakeK < F.bakeN:
 		var k: int = F.bakeK
@@ -464,11 +505,16 @@ static func bakeStep(F: Field, units: int) -> bool:
 		var r: int = k - face * bs * bs
 		var j: int = r / bs
 		var i: int = r - j * bs
-		ensure(F, face, i * F.stride, j * F.stride)
+		var ixb: int = ensure(F, face, i * F.stride, j * F.stride)
+		if F.hasher == null:
+			F.hasher = _newHasher(F)
+		F.hasher.num(F.h[ixb])
+		F.hasher.u(F.b[ixb] | (F.f[ixb] << 8))
 		F.bakeK += 1
 		left -= 1
 	if F.bakeK >= F.bakeN:
-		F.bakeHash = _hashBake(F)
+		F.bakeHash = F.hasher.hex()
+		F.hasher = null
 		F.bakeDone = true
 	return F.bakeDone
 
@@ -556,12 +602,14 @@ static func recordsOf(P: WorldPlanet.Planet, ids: Array) -> Array:
 
 ## The ground at a unit direction after the records: `h` is the field's height there (and the store's craters, if the caller added them first); a platform lifts it toward its floor, a river's channel cuts it to the bed.
 ## Pure in (S.fieldRecs, q, h). The records near a point come from WorldWaterRec's index.
-static func applyRecords(S, qx: float, qy: float, qz: float, h: float) -> float:
+static func applyRecords(S, qx: float, qy: float, qz: float, h: float, planet = null) -> float:
 	if S.fieldRecs.is_empty():
 		return h
 	var R: float = SimConst.PLANET_NC * SimConst.COL / (2.0 * SimMathx.PI)
 	var out: float = h
-	var P = null
+	var P = planet   # given by a caller that has it (the lots, while the match is being planned and S.planetRing is not set yet), else the match's own planet
+	var padW: float = 0.0    # the pads reaching the point: their weights and the weighted heights; applied together after the loop, so overlapping pads agree whatever the order
+	var padWH: float = 0.0
 	for rec in WorldWaterRec.near(S, qx, qy, qz):
 		var kind: String = rec.k
 		if kind == "platform":
@@ -577,23 +625,48 @@ static func applyRecords(S, qx: float, qy: float, qz: float, h: float) -> float:
 			var w: float = clampf((rec.r + b - d) / (2.0 * b), 0.0, 1.0)
 			w = w * w * (3.0 - 2.0 * w)
 			out += (rec.floor - out) * w if out < rec.floor else 0.0
+		elif kind == "pad":
+			var pdx: float = (qx - rec.c[0]) * R
+			var pdy: float = (qy - rec.c[1]) * R
+			var pdz: float = (qz - rec.c[2]) * R
+			var pd: float = sqrt(pdx * pdx + pdy * pdy + pdz * pdz)
+			var pr: float = rec.r
+			if pd < pr + rec.blend:
+				var pw: float = 1.0 if pd <= pr else clampf((pr + rec.blend - pd) / rec.blend, 0.0, 1.0)
+				pw = pw * pw * (3.0 - 2.0 * pw)
+				padW += pw
+				padWH += pw * float(rec.h)
+		elif kind == "lot":
+			var lx: float = (qx - rec.c[0]) * R
+			var ly: float = (qy - rec.c[1]) * R
+			var lz: float = (qz - rec.c[2]) * R
+			var la: float = absf(lx * rec.t[0] + ly * rec.t[1] + lz * rec.t[2]) - rec.hl
+			var lb: float = absf(lx * rec.s[0] + ly * rec.s[1] + lz * rec.s[2]) - rec.hd
+			var ld: float = sqrt(maxf(la, 0.0) * maxf(la, 0.0) + maxf(lb, 0.0) * maxf(lb, 0.0))
+			if ld < rec.blend:
+				var lw: float = 1.0 if ld <= 0.0 else clampf((rec.blend - ld) / rec.blend, 0.0, 1.0)
+				lw = lw * lw * (3.0 - 2.0 * lw)
+				padW += lw
+				padWH += lw * float(rec.h)
 		elif kind == "river":
 			if P == null:
 				P = WorldPlanet.make(int(S.planetRing.seed))
 			var bl: Array = WorldWaterRec.riverBed(P, rec, qx, qy, qz)
 			if not bl.is_empty() and float(bl[0]) < out:
 				out = float(bl[0])
+	if padW > 0.0:   # the pads: toward their weighted mean height, by the smaller of one and the total weight (one pad: its height inside its footprint exactly; two overlapping: their weighted mean, smooth, whatever the order)
+		out += (padWH / padW - out) * minf(1.0, padW)
 	return out
 
 
 ## The water the records hold at a unit direction whose ground (after applyRecords) is `h`: the deepest of the lakes and rivers there, in units; 0 for none. The sea is not a record: it is derived from the ground.
-static func recordWater(S, qx: float, qy: float, qz: float, h: float) -> float:
+static func recordWater(S, qx: float, qy: float, qz: float, h: float, planet = null) -> float:
 	if S.fieldRecs.is_empty():
 		return 0.0
 	var best: float = 0.0
 	var lakeBest: float = 0.0
 	var lakeLevel: float = 1.0e30
-	var P = null
+	var P = planet
 	for rec in WorldWaterRec.near(S, qx, qy, qz):
 		var kind: String = rec.k
 		if kind == "lake":
@@ -610,3 +683,145 @@ static func recordWater(S, qx: float, qy: float, qz: float, h: float) -> float:
 			if not bl.is_empty():
 				best = maxf(best, float(bl[1]) - h)
 	return maxf(best, lakeBest)
+
+
+## The bake hash's hasher at its start (the text _hashBake begins with): the bake folds each node in as it comes, in bake order, so the hash is ready the moment the last node is, with no call of its own.
+static func _newHasher(F: Field):
+	var h := SimHash.Hasher.new()
+	h.text("field/%d/%d/%d" % [F.seed, F.N, F.stride])
+	return h
+
+
+## A node read FRESH from the planet's function: [height (as a column stores it, float32), stored biome, fine biome]. It never looks at the nodes held, the bake, the pool or the cache, so a match key that samples
+## some nodes through it stays an independent check of every cached piece (Simulation's SimField.keyHash).
+static func nodeFresh(P: WorldPlanet.Planet, face: int, i: int, j: int) -> Array:
+	var F: Field = of(P)
+	_read(F, dirOf(face, i, j, F.N))
+	return [float(PackedFloat32Array([_vh])[0]), _vb, _vf]
+
+
+## ===================================================================== pads: a building's ground
+## A building stands on a flat pad at one height, whatever the terrain beside it: the ground at its own planet point (the field, with the platform under the place), flat across its footprint and blended into the
+## field over `blend` units. The pad is a planet record, so the sim (groundY through the frame), the tiles and the building's base all read the same height at any bearing; the buried and floating buildings
+## of a plan whose base was the line's ground, not its own, are gone. {"k": "pad", "c": [x, y, z], "r": footprint radius, "blend": width, "h": the height}. Applied after the platforms (plan order).
+static func padRecords(P: WorldPlanet.Planet, S, buildings: Array, dirs: Array) -> Array:
+	var out: Array = []
+	for i in range(mini(buildings.size(), dirs.size())):
+		var b = buildings[i]
+		var q: Array = dirs[i]
+		var h0: float = height(P, q[0], q[1], q[2])
+		var h: float = applyRecords(S, q[0], q[1], q[2], h0)   # the platform (and anything planned before) under it
+		var r: float = 0.5 * sqrt(float(b.w) * float(b.w) + float(b.d) * float(b.d))
+		out.append({"k": "pad", "id": i, "c": q, "r": r, "blend": maxf(40.0, 0.35 * r), "h": h})
+	# the blend of a pad may not reach into a neighbour's footprint: half the gap to the nearest other pad's edge (so two pads meet in the gap between their buildings and each footprint is flat), at least 2 units, at most 0.35 of the radius over 40
+	var R: float = P.R
+	for i in range(out.size()):
+		var a: Dictionary = out[i]
+		var gap: float = 1.0e9
+		for j in range(out.size()):
+			if j == i:
+				continue
+			var b: Dictionary = out[j]
+			var dx: float = (a.c[0] - b.c[0]) * R
+			if absf(dx) > 3000.0:
+				continue
+			var dy: float = (a.c[1] - b.c[1]) * R
+			var dz: float = (a.c[2] - b.c[2]) * R
+			gap = minf(gap, sqrt(dx * dx + dy * dy + dz * dz) - float(a.r) - float(b.r))
+		a["blend"] = clampf(0.5 * gap, 2.0, maxf(40.0, 0.35 * float(a.r)))
+	return out
+
+
+## The canonical index of the k-th bake node (face, then j, then i).
+static func bakeIdxOf(F: Field, k: int) -> int:
+	var bs: int = F.N / F.stride + 1
+	var face: int = k / (bs * bs)
+	var r: int = k - face * bs * bs
+	var j: int = r / bs
+	return face * F.side * F.side + j * F.stride * F.side + (r - j * bs) * F.stride
+
+
+## ===================================================================== lots: one flat per street block (Art, docs/art/tile-ground-look.md; the EP's order of 2026-11-01)
+## Buildings of one row of one place that stand within `lots.gap` units of each other (no avenue between them) share a LOT: one flat at one height, its edge the footprints plus `lots.sidewalk`, an oriented box along
+## the ring's tangent where the lot was laid. A town on a pad each reads as toy blocks; a block on a lot reads as a block. The height is the mean of the ground at the members' own laid points (the field with the
+## platform); a building's base is the ground read at its centre through applyRecords, so every building of a lot stands at the lot's height. A building that stands alone is a lone lot (`lone`): its ground is
+## flat all the same (no building is buried), but Rendering draws no pad look for it, only a contact shadow. Lots reach beyond their edge by `blend`, at most half the gap to the nearest other lot, so a blend
+## never reaches into a neighbour's footprint. {"k": "lot", "id", "c", "t", "s", "hl", "hd", "r", "blend", "h", "n", "lone"}; applied with the pads, by weighted mean.
+static func lotRecords(P: WorldPlanet.Planet, S, buildings: Array, dirs: Array, circ: Dictionary) -> Array:
+	var cfg: Dictionary = data().get("lots", {})
+	var side: float = float(cfg.get("sidewalk", 15.0))
+	var gap_max: float = float(cfg.get("gap", 60.0))
+	var groups: Dictionary = {}
+	for i in range(mini(buildings.size(), dirs.size())):
+		var b = buildings[i]
+		var key: String = "%08d/%d" % [int(b.place), int(b.row)]
+		if not groups.has(key):
+			groups[key] = []
+		groups[key].append(i)
+	var keys: Array = groups.keys()
+	keys.sort()
+	var out: Array = []
+	for key in keys:
+		var idxs: Array = groups[key]
+		idxs.sort_custom(func(a, c): return float(buildings[a].x) < float(buildings[c].x) or (float(buildings[a].x) == float(buildings[c].x) and a < c))
+		var run: Array = []
+		var right: float = -1.0e30
+		for ii in idxs:
+			var bb = buildings[ii]
+			var left: float = float(bb.x) - float(bb.w) * 0.5
+			if not run.is_empty() and left - right > gap_max:
+				out.append(_lot(P, S, buildings, dirs, circ, run, side, out.size()))
+				run = []
+				right = -1.0e30
+			run.append(ii)
+			right = maxf(right, float(bb.x) + float(bb.w) * 0.5)
+		if not run.is_empty():
+			out.append(_lot(P, S, buildings, dirs, circ, run, side, out.size()))
+	# a lot's blend: half the gap to the nearest other lot's edge along the line between them
+	var R: float = P.R
+	for i in range(out.size()):
+		var a: Dictionary = out[i]
+		var best: float = 1.0e9
+		for j in range(out.size()):
+			if j == i:
+				continue
+			var o: Dictionary = out[j]
+			var dx: float = (o.c[0] - a.c[0]) * R
+			if absf(dx) > 4000.0:
+				continue
+			var dy: float = (o.c[1] - a.c[1]) * R
+			var dz: float = (o.c[2] - a.c[2]) * R
+			var dist: float = sqrt(dx * dx + dy * dy + dz * dz)
+			if dist < 1.0e-6:
+				continue
+			var ux: float = dx / dist
+			var uy: float = dy / dist
+			var uz: float = dz / dist
+			var sa: float = absf(ux * a.t[0] + uy * a.t[1] + uz * a.t[2]) * float(a.hl) + absf(ux * a.s[0] + uy * a.s[1] + uz * a.s[2]) * float(a.hd)
+			var so: float = absf(ux * o.t[0] + uy * o.t[1] + uz * o.t[2]) * float(o.hl) + absf(ux * o.s[0] + uy * o.s[1] + uz * o.s[2]) * float(o.hd)
+			best = minf(best, dist - sa - so)
+		a["blend"] = clampf(0.5 * best, 2.0, float(cfg.get("blendMax", 180.0)))
+	return out
+
+
+static func _lot(P: WorldPlanet.Planet, S, buildings: Array, dirs: Array, circ: Dictionary, run: Array, side: float, id: int) -> Dictionary:
+	var xl: float = 1.0e30
+	var xr: float = -1.0e30
+	var zsum: float = 0.0
+	var dmax: float = 0.0
+	var hsum: float = 0.0
+	for m in run:
+		var b = buildings[m]
+		xl = minf(xl, float(b.x) - float(b.w) * 0.5)
+		xr = maxf(xr, float(b.x) + float(b.w) * 0.5)
+		zsum += float(b.z)
+		dmax = maxf(dmax, float(b.d))
+		var q: Array = dirs[m]
+		hsum += applyRecords(S, q[0], q[1], q[2], height(P, q[0], q[1], q[2]), P)
+	var xc: float = 0.5 * (xl + xr)
+	var c: Array = WorldPlan.pointAtX(P, circ, xc, zsum / float(run.size()))
+	var t: Array = WorldPlan.ringTangent(circ, c)
+	var s: Array = WorldPlanet._unit(WorldPlanet._cross(c, t))
+	var hl: float = 0.5 * (xr - xl) + side
+	var hd: float = 0.5 * dmax + side
+	return {"k": "lot", "id": id, "c": c, "t": t, "s": s, "hl": hl, "hd": hd, "r": sqrt(hl * hl + hd * hd), "blend": 20.0, "h": hsum / float(run.size()), "n": run.size(), "lone": run.size() == 1}

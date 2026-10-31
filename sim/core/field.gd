@@ -6,6 +6,7 @@ extends RefCounted
 ##
 ## The reader's rule: which level a read takes is fixed by the reader, never by what is ready. Inside far() ... near() (a forecast, a planner) reads take the 512 bake; outside, the 128 ground, computing a
 ## missing node on the spot. Two machines read the same bits whatever each has computed already. All of it float64 arithmetic on three plain numbers; never a Vector3, which is float32.
+## A far read takes every farStride-th column and interpolates: the bake's nodes are 16 columns apart, so a plan's line costs about an eighth of the field reads and loses nothing a forecast can use (Performance: a launch's plan read 710 cold columns, 20 ms).
 
 const FILE: String = "res://data/fight/swing.json"
 
@@ -32,6 +33,9 @@ static var _serial: int = 0
 static var _nc: int = 0
 static var _F = null                        # the frame's field
 static var _stride: int = 4
+static var _st: int = 8                     # farStride, the data's
+static var _bKey: int = 0                   # buildingGround's memo (outside the state): a building's ground, by index and level, for one state's points and store
+static var _bHave: Dictionary = {}
 static var _m0 := PackedFloat64Array()
 static var _m1 := PackedFloat64Array()
 static var _s0 := PackedInt32Array()
@@ -65,7 +69,7 @@ static func _planet(seed: int, gen: int):
 	return P
 
 
-## The hash a gen 3 setup adds to the replay's data and so to the match key: the bake's, and keySample seeded canonical nodes', so a build that computes either differently is refused at the handshake. Finishes the bake if it isn't yet (a replay's header, a tool's); a host's load has done it.
+## The hash a gen 3 setup adds to the replay's data and so to the match key: the bake's, and keySample seeded canonical nodes', each read fresh from the planet's function and as this machine holds it, so a build that computes the field differently, or a cache that stale, is refused at the handshake. Finishes the bake if it isn't yet (a replay's header, a tool's); a host's load has done it.
 static func keyHash(seed: int, gen: int = 3) -> String:
 	var k: int = seed * 4 + gen
 	var c = _keyOf.get(k)
@@ -84,6 +88,10 @@ static func keyHash(seed: int, gen: int = 3) -> String:
 		var j: int = int(SimRng.keyed(seed, "field-j", n) * float(N))
 		if i % st == 0 and j % st == 0:
 			i += 1   # a bake node would add nothing
+		var fresh: Array = WorldField.nodeFresh(P, f, i, j)
+		h.num(fresh[0])
+		h.u(int(fresh[1]))
+		h.u(int(fresh[2]))
 		h.num(WorldField.nodeH(P, f, i, j))
 	c = h.hex()
 	_keyOf[k] = c
@@ -183,6 +191,7 @@ static func _bind(S: SimState) -> void:
 	_serial += 1
 	_F = WorldField.of(_planet(fr.seed, fr.gen))
 	_stride = WorldField.bakeStride()
+	_st = int(data().get("farStride", 8))
 	if _nc != SimConst.NC:
 		_nc = SimConst.NC
 		_m0.resize(_nc)
@@ -219,13 +228,11 @@ static func col(S: SimState, i: int) -> float:
 	if i < 0 or i >= _nc:
 		i = posmod(i, _nc)
 	if _far > 0:
-		if _s0[i] == _serial:
-			return _m0[i]
-		pointIn(S.frame, float(i) * SimConst.COL)
-		var h0: float = _ground(S, _stride)
-		_m0[i] = h0
-		_s0[i] = _serial
-		return h0
+		var r: int = i % _st
+		var a: float = _coarse(S, i - r)
+		if r == 0:
+			return a
+		return a + (_coarse(S, (i - r + _st) % _nc) - a) * float(r) / float(_st)
 	if _s1[i] == _serial:
 		return _m1[i]
 	pointIn(S.frame, float(i) * SimConst.COL)
@@ -233,6 +240,17 @@ static func col(S: SimState, i: int) -> float:
 	_m1[i] = h1
 	_s1[i] = _serial
 	return h1
+
+
+## A far read's column, on the stride: read once a frame.
+static func _coarse(S: SimState, c: int) -> float:
+	if _s0[c] == _serial:
+		return _m0[c]
+	pointIn(S.frame, float(c) * SimConst.COL)
+	var h: float = _ground(S, _stride)
+	_m0[c] = h
+	_s0[c] = _serial
+	return h
 
 
 ## The water the world itself holds at strip column i, at the reader's level, above the ground as it is now (`low`: the column's strip marks): the sea, derived from the ground, and World's lake and river records. A fight's own water isn't in it (S.water).
@@ -244,11 +262,13 @@ static func nativeDepth(S: SimState, i: int, low: float) -> float:
 	if S.fieldRecs.is_empty():
 		w = 0.0
 	elif _far > 0:
-		if _t0[i] != _serial:
-			pointIn(S.frame, float(i) * SimConst.COL)
-			_w0[i] = WorldField.recordWater(S, ox, oy, oz, h)
-			_t0[i] = _serial
-		w = _w0[i]
+		var c0: int = i - i % _st
+		if _t0[c0] != _serial:
+			var hc: float = _coarse(S, c0)
+			pointIn(S.frame, float(c0) * SimConst.COL)
+			_w0[c0] = WorldField.recordWater(S, ox, oy, oz, hc)
+			_t0[c0] = _serial
+		w = _w0[c0]
 	else:
 		if _t1[i] != _serial:
 			pointIn(S.frame, float(i) * SimConst.COL)
@@ -272,6 +292,60 @@ static func groundIn(S: SimState, fr, x: float, bake: bool = true) -> float:
 	_fresh(S)
 	pointIn(fr, x)
 	return _ground(S, _stride if bake or _far > 0 else 1)
+
+
+## The ground a building stands on at its own planet point, at the reader's level: the field, World's records (its pad) and the planet store. The same at any bearing; the line's ground under its x isn't (World: on planet 7, 91 of 173 buildings over 50 units off). Read once a store and a level.
+static func buildingGround(S: SimState, i: int) -> float:
+	_fresh(S)
+	var key: int = S.storeHash ^ (S.get_instance_id() << 8) ^ S.bDir.size()
+	if key != _bKey:
+		_bKey = key
+		_bHave.clear()
+	var k: int = i * 2 + (1 if _far > 0 else 0)
+	var v = _bHave.get(k)
+	if v != null:
+		return v
+	ox = S.bDir[i * 3]
+	oy = S.bDir[i * 3 + 1]
+	oz = S.bDir[i * 3 + 2]
+	var h: float = _ground(S, _stride if _far > 0 else 1)
+	_bHave[k] = h
+	return h
+
+
+## The highest a far read's ground, or the water on it, can be over the stretch of ceilCols columns that holds column col: on the stride's samples, with World's records and the store, the record water there, the strip's marks and a fight's water. A forecast above it over its stretch needn't read the ground or the sea at all: skipping those reads changes nothing it would compute (Combat: 98% and 93% of predictFlight's reads, where a planet-wide ceiling skipped 70% and 0%). A far level's bound, for this tick and this frame: it reads the strip, about 30 us. Infinity off a field world, or with depth on, whose rows it doesn't bound.
+static func groundCeilAt(S: SimState, col_: int) -> float:
+	if S.frame == null or S.depthOn:
+		return INF
+	_fresh(S)
+	var n: int = int(data().ceilCols)
+	var c0: int = posmod(col_, _nc)
+	c0 -= c0 % n
+	_far += 1
+	var hi: float = -1.0e18
+	var wet: float = 0.0
+	var c: int = c0
+	while c <= c0 + n:
+		var cw: int = c % _nc
+		hi = maxf(hi, _coarse(S, cw))
+		if not S.fieldRecs.is_empty() and c < c0 + n:
+			if _t0[cw] != _serial:
+				var hc: float = _coarse(S, cw)
+				pointIn(S.frame, float(cw) * SimConst.COL)
+				_w0[cw] = WorldField.recordWater(S, ox, oy, oz, hc)
+				_t0[cw] = _serial
+			wet = maxf(wet, _w0[cw])
+		c += _st
+	_far -= 1
+	var low: PackedFloat32Array = WorldTerrain.lowD(S)
+	var mark: float = 0.0
+	var made: float = 0.0
+	for k in range(c0, c0 + n + 1):
+		var cw2: int = k % _nc
+		mark = maxf(mark, S.deform[cw2])
+		mark = maxf(mark, low[cw2])
+		made = maxf(made, S.water[cw2])
+	return maxf(hi + wet + mark + made, WorldWater.SEA_LEVEL)
 
 
 ## The ground at a direction by level, 0 the bake, 1 the 128 ground: pure, no frame, no records, no store (Rendering's CPU twin, Camera's tall land).

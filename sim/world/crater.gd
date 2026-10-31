@@ -460,6 +460,12 @@ static func _scorch(S: SimState, x: float, P: float, variant: String, cause, vk:
 	var depth: float = (SCORCH_D0 + SCORCH_D_P * P) * vk[0]
 	var inten: float = clampf(SCORCH_INT0 + SCORCH_INT_P * P, 0.0, 1.0)
 	var y0: float = WorldTerrain.groundY(S, x)
+	var stored: bool = false
+	if S.planetGen >= 3 and "store" in S:   # gen 3: the sample is also a record at a planet point (burn and groove); S.scorch below is written as ever and laid again from the store after a swing (WorldStore.layScorch); with a frame the groove is the store's, not S.deform's
+		var qs: Array = _pointOf(S, SimWrap.wrap(x))
+		if not qs.is_empty():
+			stored = WorldStore.addScorch(S, qs, hw, depth, inten, S.T, int(_slot(S, cause))) >= 0
+	var live: bool = stored and ("frame" in S) and S.frame != null
 	var c0: int = _col(x)
 	var n: int = int(ceil(hw / COL))
 	var minG: float = 1e9
@@ -475,7 +481,7 @@ static func _scorch(S: SimState, x: float, P: float, variant: String, cause, vk:
 		var i: int = (c0 + k + NC) % NC
 		var t: float = 1.0 - u * u
 		var target: float = maxf(-depth * t * t, DEFORM_FLOOR)
-		if target < dfm[i]:
+		if target < dfm[i] and not live:
 			if S.rubble[i] > 0.0:
 				S.rubble[i] = maxf(0.0, S.rubble[i] - (dfm[i] - target))
 			dfm[i] = target
@@ -487,7 +493,7 @@ static func _scorch(S: SimState, x: float, P: float, variant: String, cause, vk:
 	S.deform = dfm
 	S.scorch = scm
 	SimFx.scorchEvent(S, x, y0, hw * 2.0, P, variant, _slot(S, cause))
-	if carved:
+	if carved and not live:
 		minG = minf(minG, relax(S, c0, n + REPOSE_PAD))
 	WorldTerrain.lowRefresh(S, c0, n + REPOSE_PAD)
 	WorldWater.touched(S, c0, n + REPOSE_PAD, minG)
@@ -593,6 +599,17 @@ static func _carveSegment(S: SimState, xa: float, xb: float, depth: float, paved
 	var n: int = posmod((cb - ca) * dir, NC)
 	if n == 0:
 		return
+	if paved and crack > 0.0 and S.planetGen >= 3 and "store" in S:   # gen 3: the crack is also a segment of the planet in the store, so it stays where it was made when the line turns (S.crack, the strip's column values, is written below as ever and laid again from the store after a swing: WorldStore.layCracks)
+		var qa: Array = _pointOf(S, SimWrap.wrap(xa))
+		var qb: Array = _pointOf(S, SimWrap.wrap(xb))
+		if not qa.is_empty() and not qb.is_empty():
+			WorldStore.addCrack(S, qa, qb, crack, WorldStore.CRACK_WIDTH, S.T, -1)
+	var tlive: bool = false
+	if S.planetGen >= 3 and "store" in S and depth > 0.0:   # gen 3: the trench is also a record (the groove of a slide); with a frame the strip's groove is not dug (the store's is the ground)
+		var ta: Array = _pointOf(S, SimWrap.wrap(xa))
+		var tb: Array = _pointOf(S, SimWrap.wrap(xb))
+		if not ta.is_empty() and not tb.is_empty():
+			tlive = WorldStore.addTrench(S, ta, tb, depth, SimConst.COL, S.T, -1) >= 0 and ("frame" in S) and S.frame != null
 	var base: PackedFloat32Array = S.base
 	var dfm: PackedFloat32Array = S.deform
 	var crk: PackedFloat32Array = S.crack
@@ -604,7 +621,7 @@ static func _carveSegment(S: SimState, xa: float, xb: float, depth: float, paved
 		if paved and crack > crk[i]:
 			crk[i] = crack
 		# A slide rides over a heap of rubble: it cracks it but never cuts a slot through it (T3).
-		if S.rubble[i] <= 0.0 and target < dfm[i]:
+		if S.rubble[i] <= 0.0 and target < dfm[i] and not tlive:
 			dfm[i] = target
 			carved = true
 		minG = minf(minG, WorldTerrain.baseAt(S, i) + dfm[i])

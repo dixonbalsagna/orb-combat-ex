@@ -21,7 +21,11 @@
     "poseShot",
     "poseBody",
     "poseStep",
-    "poseEvery"
+    "poseEvery",
+    "farStride",
+    "ceilCols",
+    "posePlan",
+    "layPerTick"
   ],
   "properties": {
     "schema": {
@@ -278,6 +282,37 @@
       "minimum": 1,
       "maximum": 600,
       "description": "and every this many swing ticks"
+    },
+    "farStride": {
+      "enum": [
+        1,
+        2,
+        4,
+        8
+      ],
+      "description": "columns: a far read takes every this many and interpolates"
+    },
+    "ceilCols": {
+      "enum": [
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "description": "columns: the stretch SimField.groundCeilAt bounds"
+    },
+    "posePlan": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 200000,
+      "description": "units from the fighter a plan looks from, within which a plan's pose pass moves a building"
+    },
+    "layPerTick": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 4800,
+      "description": "columns a tick of the strip's cracks and scorch laid from the store after a rest"
     }
   },
   "additionalProperties": false,
