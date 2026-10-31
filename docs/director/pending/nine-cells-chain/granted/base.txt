@@ -1,2 +1,0 @@
-991c8c01dcc37500d9fe96044d987133f42fb40e data/fight/wounds.json
-9f866cdd11f24832f3a9171d78173c8b71928276 data/fight/ladder.json

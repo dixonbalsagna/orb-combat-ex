@@ -1,6 +1,0 @@
-7c2c132cd07407428dd6b61b764c889f0560d136 sim/director/brawl.gd
-51d4c5e6f02ad17b7a80c2fba08b65cab94cbd8b data/director/interrupts.json
-dcd05eaad9ea0765e71a94f58abd3c0b55440a1f data/director/ai.json
-17e8fb312e5ab738bf9ab6886b12eae2774a5877 data/fighters/PROTAGONIST/wounds.json
-17e8fb312e5ab738bf9ab6886b12eae2774a5877 data/fighters/RIVAL/wounds.json
-2d55d7d68159aa739add22decb91e467f1ab8c62 docs/director/brawl-c2.md
