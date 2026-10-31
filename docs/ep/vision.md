@@ -1560,4 +1560,8 @@ Orb locked the canonical names from a naming session run through Gemini: **Grist
 
 **Orb on the Cyborg's fuel (2026-10-31):** "I was thinking of how to make Bolus compliant. He should be gather tech components from ruined skyscrapers, and possibly high quality tech components from secret labs scattered around the world, including the antarctic lab. he would be seeking desctruction and still be a real threat."
 
+**Orb on the flee nudge, to Research (2026-10-31):** "it was fairly imperceptible i think". (About a minute flat out at 3 degrees a second, 34.4 degrees turned in the flight.)
+
+**Orb on anguish and menace (2026-10-31):** "maybe the stats like "anguish" and "menace" should just track as background stats that the fighters use to determine their voice lines, instead of meters for a fighter to fill. maybe each fighter has a different mechanic tied to each of the background stats"
+
 **Orb on the goal (same night):** "I'm eager to know if fighting across a full planet is achievable. the strict definition of flying a full 360 degree loop around the equator of the planet isn't the end-all goal, but to effectively communicate to the player the experience of speed and power that comes with being a martial artist who is capable of making such a trip through the sheer power of will."
