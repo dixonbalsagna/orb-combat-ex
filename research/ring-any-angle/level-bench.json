@@ -1,0 +1,377 @@
+{
+ "rtx": {
+  "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 5070 Ti (0x00002C05) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "levels": [
+   {
+    "name": "Performance",
+    "rest": 0.38,
+    "tiles": 75,
+    "trees": 0,
+    "flat": 0.38,
+    "tilesFlat": 94,
+    "stepUs": 3.3,
+    "w": 960,
+    "h": 540
+   },
+   {
+    "name": "Low",
+    "rest": 0.42,
+    "tiles": 74,
+    "trees": 0,
+    "flat": 0.47,
+    "tilesFlat": 94,
+    "stepUs": 2.2,
+    "w": 1280,
+    "h": 720
+   },
+   {
+    "name": "Standard",
+    "rest": 0.57,
+    "tiles": 126,
+    "trees": 984,
+    "flat": 0.65,
+    "tilesFlat": 158,
+    "stepUs": 1.8,
+    "w": 1280,
+    "h": 720
+   },
+   {
+    "name": "High",
+    "rest": 0.75,
+    "tiles": 192,
+    "trees": 5760,
+    "flat": 0.68,
+    "tilesFlat": 230,
+    "stepUs": 3.8,
+    "w": 1920,
+    "h": 1080
+   },
+   {
+    "name": "Maximum",
+    "rest": 1.27,
+    "tiles": 273,
+    "trees": 30720,
+    "flat": 1.02,
+    "tilesFlat": 315,
+    "stepUs": 3.7,
+    "w": 2560,
+    "h": 1440
+   }
+  ],
+  "features": {
+   "base": 0.52,
+   "noPaint": 0.47,
+   "noTrees": 0.45,
+   "noWindows": 0.5,
+   "noClouds": 0.45,
+   "noCloudShadow": 0.48,
+   "noSea": 0.48,
+   "near64": 0.53,
+   "near256": 0.5,
+   "near512": 0.48,
+   "mesh150": 0.45,
+   "mesh37": 0.52,
+   "mesh19": 0.53,
+   "far128": 0.48,
+   "relief1": 0.52,
+   "relief2": 0.48,
+   "relief2mesh19": 0.58,
+   "shadow8": 0.5,
+   "shadow16": 0.5,
+   "trees96": 0.53,
+   "trees320": 0.75,
+   "scale075": 0.47,
+   "scale15": 0.58,
+   "scale2": 0.75
+  },
+  "err": 0
+ },
+ "igpu": {
+  "gpu": "ANGLE (AMD, AMD Radeon(TM) Graphics (0x000013C0) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "levels": [
+   {
+    "name": "Performance",
+    "rest": 5.78,
+    "tiles": 75,
+    "trees": 0,
+    "flat": 5.75,
+    "tilesFlat": 94,
+    "stepUs": 2.7,
+    "w": 960,
+    "h": 540
+   },
+   {
+    "name": "Low",
+    "rest": 8.95,
+    "tiles": 74,
+    "trees": 0,
+    "flat": 8.48,
+    "tilesFlat": 94,
+    "stepUs": 3,
+    "w": 1280,
+    "h": 720
+   },
+   {
+    "name": "Standard",
+    "rest": 16.25,
+    "tiles": 126,
+    "trees": 984,
+    "flat": 14.35,
+    "tilesFlat": 158,
+    "stepUs": 3.3,
+    "w": 1280,
+    "h": 720
+   },
+   {
+    "name": "High",
+    "rest": 35.08,
+    "tiles": 192,
+    "trees": 5760,
+    "flat": 21.22,
+    "tilesFlat": 230,
+    "stepUs": 5,
+    "w": 1920,
+    "h": 1080
+   },
+   {
+    "name": "Maximum",
+    "rest": 64.1,
+    "tiles": 273,
+    "trees": 30720,
+    "flat": 37.07,
+    "tilesFlat": 315,
+    "stepUs": 4,
+    "w": 2560,
+    "h": 1440
+   }
+  ],
+  "features": {
+   "base": 17.23,
+   "noPaint": 15.6,
+   "noTrees": 19.67,
+   "noWindows": 17.15,
+   "noClouds": 21.45,
+   "noCloudShadow": 19.82,
+   "noSea": 16.4,
+   "near64": 16.93,
+   "near256": 16.63,
+   "near512": 16.25,
+   "mesh150": 15.23,
+   "mesh37": 17.13,
+   "mesh19": 16.6,
+   "far128": 15.88,
+   "relief1": 16.67,
+   "relief2": 17.1,
+   "relief2mesh19": 19.08,
+   "shadow8": 17.68,
+   "shadow16": 19.45,
+   "trees96": 16.07,
+   "trees320": 17.42,
+   "scale075": 13.13,
+   "scale15": 23.67,
+   "scale2": 31.38
+  },
+  "err": 0
+ },
+ "igpuInterleaved": {
+  "gpu": "ANGLE (AMD, AMD Radeon(TM) Graphics (0x000013C0) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "levels": [
+   {
+    "name": "Performance",
+    "rest": 1.98,
+    "tiles": 75,
+    "trees": 0,
+    "flat": 1.92,
+    "tilesFlat": 94,
+    "stepUs": 4.3,
+    "w": 960,
+    "h": 540
+   },
+   {
+    "name": "Low",
+    "rest": 5.13,
+    "tiles": 74,
+    "trees": 0,
+    "flat": 4.73,
+    "tilesFlat": 94,
+    "stepUs": 2.5,
+    "w": 1280,
+    "h": 720
+   },
+   {
+    "name": "Standard",
+    "rest": 8.33,
+    "tiles": 126,
+    "trees": 984,
+    "flat": 7.05,
+    "tilesFlat": 158,
+    "stepUs": 2.8,
+    "w": 1280,
+    "h": 720
+   },
+   {
+    "name": "High",
+    "rest": 21.7,
+    "tiles": 192,
+    "trees": 5760,
+    "flat": 14.28,
+    "tilesFlat": 230,
+    "stepUs": 5.5,
+    "w": 1920,
+    "h": 1080
+   },
+   {
+    "name": "Maximum",
+    "rest": 44.35,
+    "tiles": 273,
+    "trees": 30720,
+    "flat": 24.42,
+    "tilesFlat": 315,
+    "stepUs": 4.8,
+    "w": 2560,
+    "h": 1440
+   }
+  ],
+  "features": {
+   "noPaint": {
+    "ms": 5.95,
+    "base": 8.35,
+    "delta": -2.35,
+    "spread": 0.14
+   },
+   "noTrees": {
+    "ms": 8.2,
+    "base": 8.31,
+    "delta": -0.09,
+    "spread": 0.1
+   },
+   "noWindows": {
+    "ms": 11.8,
+    "base": 11.85,
+    "delta": -0.29,
+    "spread": 1.81
+   },
+   "noClouds": {
+    "ms": 8.13,
+    "base": 11.88,
+    "delta": -3.75,
+    "spread": 1.83
+   },
+   "noCloudShadow": {
+    "ms": 8.77,
+    "base": 11.33,
+    "delta": -3.05,
+    "spread": 3.64
+   },
+   "noSea": {
+    "ms": 11.22,
+    "base": 10.06,
+    "delta": 0.9,
+    "spread": 1.79
+   },
+   "near64": {
+    "ms": 11.2,
+    "base": 11.68,
+    "delta": 1.21,
+    "spread": 1.83
+   },
+   "near256": {
+    "ms": 11.88,
+    "base": 12.15,
+    "delta": 0.08,
+    "spread": 0.78
+   },
+   "near512": {
+    "ms": 12.72,
+    "base": 12.45,
+    "delta": 0.27,
+    "spread": 0.63
+   },
+   "mesh150": {
+    "ms": 10.82,
+    "base": 11.54,
+    "delta": -0.72,
+    "spread": 0.38
+   },
+   "mesh37": {
+    "ms": 12.75,
+    "base": 11.63,
+    "delta": 1.1,
+    "spread": 0.84
+   },
+   "mesh19": {
+    "ms": 13.48,
+    "base": 11.18,
+    "delta": 2.29,
+    "spread": 2.28
+   },
+   "far128": {
+    "ms": 11.58,
+    "base": 11.37,
+    "delta": 0.48,
+    "spread": 0.34
+   },
+   "relief1": {
+    "ms": 12.4,
+    "base": 11.68,
+    "delta": 0.67,
+    "spread": 1.01
+   },
+   "relief2": {
+    "ms": 13.2,
+    "base": 11.8,
+    "delta": 1.4,
+    "spread": 4.35
+   },
+   "relief2mesh19": {
+    "ms": 18.95,
+    "base": 11.81,
+    "delta": 7.46,
+    "spread": 1.34
+   },
+   "shadow8": {
+    "ms": 13.95,
+    "base": 11.56,
+    "delta": 3,
+    "spread": 1.5
+   },
+   "shadow16": {
+    "ms": 17.58,
+    "base": 10.94,
+    "delta": 6,
+    "spread": 6.7
+   },
+   "trees96": {
+    "ms": 8.63,
+    "base": 8.31,
+    "delta": 0.31,
+    "spread": 0.04
+   },
+   "trees320": {
+    "ms": 10.35,
+    "base": 8.28,
+    "delta": 2.07,
+    "spread": 0.2
+   },
+   "scale075": {
+    "ms": 6,
+    "base": 8.29,
+    "delta": -2.28,
+    "spread": 0.11
+   },
+   "scale15": {
+    "ms": 14.65,
+    "base": 8.36,
+    "delta": 6.25,
+    "spread": 0.16
+   },
+   "scale2": {
+    "ms": 22.7,
+    "base": 8.3,
+    "delta": 14.38,
+    "spread": 0.29
+   }
+  },
+  "err": 0
+ }
+}

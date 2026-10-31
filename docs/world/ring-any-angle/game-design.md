@@ -229,12 +229,23 @@ Orb: "there should definitely be variety, the dynamic elements of the fight shou
 | What it reads | Terms |
 | :--- | :--- |
 | **The moment** | How good a beat this is: a launch's release, a chase's start, a form's pause, a set piece's end, a lull after a knock-back, a heavy landing |
-| **The fight's state** | Encounter's cheap list: what's running, the brawl's run and pace, the press read, who's winning (a comeback, a first brink), tier and power, altitude and speed, how long since anything big happened. **Nothing fed by the toll, for now (below)** |
+| **The fight's state** | Encounter's cheap list: what's running, the brawl's run and pace, the press read, who's winning (a comeback, a first brink), tier and power, altitude and speed, how long since anything big happened. **And for timing only, `f.anguish`, `f.menace` and `S.mood` (below)** |
 | **The place** | Encounter's arrival, personality (standing buildings and wear, **never people**: RL-213), lean, street, behind the plane (§9), and tall land in front |
 | **What fits** | The flight's time, the gap, who's standing, by the rate law |
 | **Variety** | Below |
 
-**What's fed by the toll.** `S.mood`, `crowd`, `f.menace` and `f.anguish` take in casualties, so **the first cut reads none of them.** Legal's RL-215 sets the terms for adding them, and it stays open until QA's batch: **timing** may read `f.anguish`, `f.menace` and `S.mood`, moving a swing earlier or later and never raising the total; **direction** may read `f.anguish` only, leading the hero toward emptier ground; **`crowd` is barred from both.** A rising toll must never yield more, longer or better swings or steer toward people. I want those three for timing once it clears, because a hero's anguish and a villain's menace are what the fight is about (pillar 5), and the score is thinner without them.
+**What's fed by the toll (Legal's RL-215).** `S.mood`, `crowd`, `f.menace` and `f.anguish` take in casualties, so they carry conditions:
+
+| | `f.anguish` | `f.menace` | `S.mood` | `S.crowd` |
+| :--- | ---: | ---: | ---: | ---: |
+| **Timing:** whether, when, how fast | Yes | Yes | Yes | **Never** |
+| **Direction:** where | Yes: it leads the hero toward emptier ground, measured in standing buildings and wear | **Never** | **Never** | **Never** |
+
+- **Timing moves a swing earlier or later and never raises the total.** The budget stays 6 to 12 swings and 10 to 15% of fight time. So these terms change a moment's weight and pay for it in recency, rather than adding score overall. This is why the fight's tension can inform when the world turns (pillar 5).
+- **The villain's direction reads buildings and wear only.** A rising toll must not feed a loop that takes the fight toward more lives lost.
+- **The one-way rule:** no input makes a rising toll yield more, longer or better swings, or steer toward people.
+- **QA's batch checks it:** no positive association between the civilian toll and a match's swing count or swing time, and a run with the civilians removed swings the same number of times, within one. **RL-215 stays open until that batch passes,** so these terms go behind their own switch, on for the batch and off by default until it clears.
+- **Encounter's lint changes to match:** it names `crowd`, `popAlive`, `popNear`, `popHist`, `pop_mult` and the toll, and lists the allowed scalars by name, in place of barring `S.mood`, `menace` and `anguish` outright.
 
 **Shared with Camera, in one direction.** The sim decides and never reads the camera (§9). So the two share a table of moments and a feed: the moment terms are data that Camera helps set, its comfort needs go in as terms the sim can read (the gap, tall land, both grounded), and the decision goes out through `DirCamIntent` with the cause and the planned rest, so Camera shoots it rather than guessing. Camera can't veto a swing, and it can ask for a moment's weight to change. Every ask prints its feed line, taken or not, so any swing can be explained.
 
@@ -267,3 +278,5 @@ Orb: "the minimap with the trail showing the path around the planet was a nice d
 | **After the fight** | **The whole trail on the results screen,** at full size. It's the payoff for the sense of crossing: the route this fight took round the planet |
 
 **One player's word on bars,** as with everything else here, and on the prototype's map: Orb should see it over real fighters. UI builds it, and it goes through the look gate.
+
+**The weight of Camera's `read(S)` in §11's score (`camera.md` §5): 6, a first value.** So its -1 to +1 is worth up to 6 either way, on Encounter's scale where the best place kind scores 5 and a full arrival about 16: a good or bad moment can decide between places or put a modest swing off, but can't stop a strong arrival or start a swing to nothing. It's the shared moment term §11 describes.

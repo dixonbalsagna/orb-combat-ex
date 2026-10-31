@@ -12,6 +12,8 @@ Research & Prototyping, for the EP. Revised 2026-10-31 for Orb's pick ("the turn
 
 # Part 1: the turntable
 
+**Reopened by ADR 0012, 2026-10-31:** old laptops are now the bottom of a range. `quality-range.md` replaces T1's answer on the ground: one sim ground at 128 units read on demand, with the 512 bake for forecasts and the lowest view. The rest of Part 1 stands.
+
 ## T1. The two answers
 
 ### Is it affordable at Game Design's rates?

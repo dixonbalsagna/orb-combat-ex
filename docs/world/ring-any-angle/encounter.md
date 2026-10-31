@@ -32,7 +32,7 @@ Today's plans read column `x` on a line that can't move. How fast a place on the
 
 **The fix common to all: plans read the line the swing will end on, and flights read it on the swing's own curve.** The curve is fixed once asked (bearing, rate, eases), so a planner can ask for the frame `n` ticks ahead: `WorldSwing.frameAt(S, n)`. `predictFlight` and `_propFlight` then make the same number of ground reads as now. Each read costs a field look-up, and that price is World's and Performance's to measure.
 
-**A swing must rest before a landing** (`simulation.md` section 8: mid-swing, the 20-tick ease can't bring the rate down to a grounded fighter's limit in time). So `DirSwing` starts the ease about 20 ticks before the planned landing, from `predictFlight`'s `t`, and the feed's "rests by" is that tick. A landing that comes early, on a collision say, is Game Design's to rule.
+**A swing must rest before a landing** (`simulation.md` section 8: mid-swing, the 20-tick ease can't bring the rate down to a grounded fighter's limit in time). So `DirSwing` starts the ease about 20 ticks before the planned landing, from `predictFlight`'s `t`, and the feed's "rests by" is that tick. A landing that comes early, on a collision say, clamps the rate at once to the rate law as he becomes standing (Game Design's ruling).
 
 **A launch with no arrival.** A slow brawl swing may be running at the send (10°/s, 17 units a tick at 6,000). It eases to rest, as for a beam, and the plan reads the line where it will rest.
 
@@ -68,17 +68,18 @@ Today's plans read column `x` on a line that can't move. How fast a place on the
 
 **Decided first, then planned on one line.** `DirSwing` picks a line from the list, then `chooseLaunch` runs once on that line, and its candidates are today's, with today's names. A candidate per line would cost a plan per line: at my `plan-cost` figures of 1.9 ms median and 4.4 ms p99 native, three lines are about 6 and 13 ms, and by Performance's ×4 about 23 and 53 ms on the laptop, against the 8 ms it asked for. The price is that the launch can't pick the bearing whose PROP SMASH happens to be best. That's acceptable, as the bearing is chosen for the place. If the picked line's best launch is poor, the swing still runs and he's sent somewhere ordinary.
 
-**Legal's conditions (RL-213) bind this score.** "Toward towns" and "arrives at something" mean buildings, terrain, a place's wear or a fighter. No term reads civilian count, density or the toll, including to avoid them, so the hero's care reads buildings too. No school, hospital or place of worship is a target or an arrival. The 12 to 30% band is a test result, not a target, and a run over 30% fails the tuning.
+**Legal's conditions (RL-213, refined by RL-215) bind this score.** "Toward towns" and "arrives at something" mean buildings, terrain, a place's wear or a fighter. No direction term reads civilian count, density or the toll, including to avoid them, so the hero's care reads buildings too. No school, hospital or place of worship is a target or an arrival. The 12 to 30% band is a test result, not a target, and a run over 30% fails the tuning.
 
 **The test, `swing_legal_check`, in CI with the code:**
 
 | Row | How | Fails if |
 | :--- | :--- | :--- |
-| Blind to people | `swing.gd`'s score, each ask scored twice from one state, with `popAlive`, `S.popHist` and the toll zeroed in one and doubled in the other, across gen 2 planets | Any candidate, score or pick differs by a bit. Negative control: a scratch term reading `popAlive` must make it fail |
-| Source | A lint over `swing.gd` and the place list's fields | It names `popAlive`, `popNear`, `popHist`, `pop_mult`, a casualty read, `S.mood`, `menace` or `anguish` |
+| Blind to people | `swing.gd`'s direction score, each ask scored twice from one state, with `popAlive`, `S.popHist` and the toll zeroed in one and doubled in the other, across gen 2 planets. `f.anguish` is held fixed, as it's a permitted input measured in buildings and wear | Any candidate, score or pick differs by a bit. Negative control: a scratch term reading `popAlive` must make it fail |
+| Source | A lint over `swing.gd` and the place list's fields | Anywhere: it names `crowd`, `popAlive`, `popNear`, `popHist`, `pop_mult` or a casualty read. In the direction function: it names `S.mood` or `menace` (RL-215) |
 | Excluded places | Every place on many planets, every pick, and `WorldBrunt.candidates`, against a `noTarget` list in the data | A listed kind is a candidate, a target or an arrival |
 | Words | The feed line and cue text at every ask | They name people, or say a swing brings the fight to them |
 | The band | QA's arms with swings on | Civilians lost at the KO over 30% |
+| The one-way rule (QA, RL-215) | A batch with swings on: the toll against each match's swing count and swing time; and the same seeds with the civilians removed | Any positive association; or a match with civilians removed swings more than one time differently |
 
 **What the test doesn't cover (RL-214).** The old people terms in `chooseLaunch`, `bruntScore` and `DirLocation` stay, swings on or off, and a swing may take an arrival the old planner picks. RL-213 binds swing terms and anything added from now on, so the lint and the blind-to-people row read `swing.gd`'s own score only. Replacing the old terms with standing buildings and wear comes later, when QA can measure the band.
 
@@ -98,7 +99,16 @@ Today's plans read column `x` on a line that can't move. How fast a place on the
 
 Not cheap: the place list (a small query, World's) and any ground read on the final line.
 
-**What it must not read (RL-213): anything fed by the toll.** That's more than the obvious fields. `S.mood`'s value, band and `crowd` take casualties in (`mood.gd`: `casGiven`), and `f.menace` and `f.anguish` feed on them. Both look like fight state. So the lint's list grows by `S.mood`, `menace`, `anguish`, `hasMenace` as a value and `casSeen`. **Legal should confirm:** a villain's menace in a swing's timing is a term fed by the toll, so I've left it out.
+**What it may read of what's fed by the toll (RL-215, which refines RL-213).**
+
+| | Timing (when to swing) | Direction (where to) |
+| :--- | :--- | :--- |
+| `f.anguish` | Yes, as a named scalar | Yes, and it's measured in buildings and wear |
+| `f.menace` | Yes, as a named scalar | No: the villain's direction reads buildings and wear |
+| `S.mood` | Yes, as a named scalar | No |
+| `S.mood.crowd`, `popAlive`, `popNear`, `popHist`, `pop_mult`, the toll | **Never** | **Never** |
+
+So `swing.gd` has two score functions, one for each column, and the lint can tell them apart, with the allowed scalars listed by name. **The one-way rule:** these scalars may move a swing earlier or later, never raise the total, and no input makes a rising toll yield more, longer or better swings or steer toward people. Game Design's §11 has the shared score these feed.
 
 **Conflicts.** One swing runs at a time. A new ask replaces it only if it scores above what's left of the running one's score, less a reversal term that grows with how far it would turn back. State rules aren't scores: the beam's rest, and the states below, always win.
 
