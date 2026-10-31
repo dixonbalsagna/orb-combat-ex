@@ -274,6 +274,19 @@ static func gen2_ring(S: SimState) -> bool:
 	return (S.planetGen if S.planetGen > 0 else int(WorldClimate.data().get("gen", 1))) == 2
 
 
+## The level of the water over a body at x, height y on a gen 2 ring, where the sheet would hide him (from the first depth
+## step, RenderLook.LAKE_BANDS.x); NO_SHORE where it wouldn't. AnimBody.set_under draws him over the water then. Reads the
+## sim's columns and writes nothing.
+static func under_level(S: SimState, x: float, y: float) -> float:
+	if not gen2_ring(S):
+		return NO_SHORE
+	var c: int = int(SimWrap.wrap(x) / SimConst.COL) % SimConst.NC
+	if S.water[c] < RenderLook.LAKE_BANDS.x:
+		return NO_SHORE
+	var lv: float = S.base[c] + S.deform[c] + S.water[c]
+	return lv if y < lv else NO_SHORE
+
+
 ## Each column's shore level: the standing level (ground plus water) of the water in it, or else of the nearest wet
 ## column within RenderLook.SHORE_COLS either side (the nearer; the higher on a tie), or NO_SHORE. The water shader
 ## keeps a land vertex beside water at that level when the land stands above it, so the sheet stays flat and the

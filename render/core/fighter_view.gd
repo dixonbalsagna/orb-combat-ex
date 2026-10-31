@@ -518,6 +518,8 @@ func update(S: SimState, f, pose: Vector3, vx: float, z: float) -> void:
 	var anchor: Vector3 = pivot.global_position
 	if anim_body != null:
 		anim_body.set_anchor(anchor)
+		var under: float = GroundField.under_level(S, f.x, pose.y)
+		anim_body.set_under(under > GroundField.NO_SHORE * 0.5, under)
 	for p in solid:
 		p[3].set_shader_parameter("anchor", anchor)
 		p[4].set_shader_parameter("anchor", anchor)

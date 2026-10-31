@@ -31,6 +31,8 @@ const SHADERS: Array = [
 	["res://render/shaders/flash.gdshader", "multimesh"],        # Rendering: hit flashes
 	["res://render/shaders/glow.gdshader", "mesh"],              # Rendering: glows
 	["res://render/shaders/guard.gdshader", "mesh"],             # Rendering: the guard's look
+	["res://render/shaders/fighter_under.gdshader", "mesh"],     # Rendering: a fighter under deep water
+	["res://render/shaders/fighter_hull_under.gdshader", "mesh"],
 	["res://render/camera/panel_mask.gdshader", "canvas"],       # Camera: the inset panel (ring tick 279)
 	["res://render/camera/split_mask.gdshader", "canvas"],       # Camera: the split
 ]

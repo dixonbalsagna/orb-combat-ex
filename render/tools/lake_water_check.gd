@@ -6,6 +6,8 @@ extends SceneTree
 ## 2. gen 1 and the hand-made world: no lakes and lake_on 0, so the shader's new paths are shut.
 ## 2b. A lake's lip: on gen 2, no column past a lake's first land at its level has that level unless the land stands above
 ##    it, on the two sweeps and on the one-column answer alike, which agree everywhere. Gen 1 floods on as ever.
+## 2c. A fighter under deep water: GroundField.under_level gives the level only on gen 2, in water from the first step, below
+##    the level; AnimBody attaches his passes there and takes them off again; both are in the warm-up's list.
 ## 3. The bands read the ruling: LAKE_BANDS.y is data/biomes/water.json's wade.below and .x half of it.
 ##   godot --headless --path . --script res://render/tools/lake_water_check.gd
 ## (A headless run draws nothing: the picture itself is the look gate's stills, docs/rendering/tools/lake-hook.mjs.)
@@ -45,14 +47,15 @@ func _run() -> void:
 		ok(_lake_on() == 1.0 and (lakes.is_empty() or undrawn > 0), "gen 2 planet %d: %d lakes and rivers, lake_on %d, %d interior columns the old test left undrawn" % [pl, lakes.size(), int(_lake_on()), undrawn])
 		_lips(S, pl)
 		if pl == REPORTED_PLANET:
+			_under(S)
 			var c: int = _fine_centre("tundra")
 			ok(c >= 0 and S.water[c] >= WorldWater.MIN_DEPTH and S.base[c] >= WorldWater.RESERVOIR_BASE, "the reported picture: planet %d's tundra column %d is wet off the sea, %.1f deep" % [pl, c, S.water[c] if c >= 0 else 0.0])
 	for pl in GEN1:
 		var S: SimState = _start(1, {"planet": pl, "touch": 3, "intro": false})
-		ok(_lake_on() == 0.0 and S.planetRing.get("lakes", []).is_empty(), "gen 1 planet %d: no lakes, lake_on 0" % pl)
+		ok(_lake_on() == 0.0 and S.planetRing.get("lakes", []).is_empty() and GroundField.under_level(S, S.fighters[0].x, -1.0e6) == GroundField.NO_SHORE, "gen 1 planet %d: no lakes, lake_on 0, and no one is under" % pl)
 	for sd in HAND:
-		_start(sd, {"intro": false})
-		ok(_lake_on() == 0.0, "the hand-made world, match seed %d: lake_on 0" % sd)
+		var Sh: SimState = _start(sd, {"intro": false})
+		ok(_lake_on() == 0.0 and GroundField.under_level(Sh, Sh.fighters[0].x, -1.0e6) == GroundField.NO_SHORE, "the hand-made world, match seed %d: lake_on 0, and no one is under" % sd)
 	var w = JSON.parse_string(FileAccess.get_file_as_string("res://data/biomes/water.json"))
 	var below: float = float(w.wade.below)
 	ok(RenderLook.LAKE_BANDS.y == below and RenderLook.LAKE_BANDS.x == below * 0.5, "the bands read the ruling: the bed hides from %.1f, opaque from %.1f (wade.below %.1f)" % [RenderLook.LAKE_BANDS.x, RenderLook.LAKE_BANDS.y, below])
@@ -71,6 +74,35 @@ func _start(seed: int, setup: Dictionary) -> SimState:
 func _lake_on() -> float:
 	var v = main.planet._water_mat.get_shader_parameter("lake_on")
 	return 0.0 if v == null else float(v)
+
+
+## A body at a deep column, under its level and over it; a shallow column; his passes on and off.
+func _under(S: SimState) -> void:
+	var deep: int = -1
+	var thin: int = -1
+	for i in range(SimConst.NC):
+		if S.water[i] >= RenderLook.LAKE_BANDS.y and deep < 0:
+			deep = i
+		if S.water[i] >= WorldWater.MIN_DEPTH and S.water[i] < RenderLook.LAKE_BANDS.x and thin < 0:
+			thin = i
+	var x: float = (float(deep) + 0.5) * SimConst.COL
+	var lv: float = S.base[deep] + S.deform[deep] + S.water[deep]
+	ok(GroundField.under_level(S, x, lv - 10.0) == lv and GroundField.under_level(S, x, lv + 10.0) == GroundField.NO_SHORE, "under_level: column %d, %.1f deep: the level below it, none above it" % [deep, S.water[deep]])
+	ok(thin < 0 or GroundField.under_level(S, (float(thin) + 0.5) * SimConst.COL, -1.0e6) == GroundField.NO_SHORE, "under_level: none in water under the first step")
+	var b := AnimBody.new()
+	root.add_child(b)
+	var c := Color(0.5, 0.5, 0.5)
+	b.build({"body": c, "legs": c, "arms": c, "skin": c, "gear": c, "accent": c, "hair": c})
+	b.set_under(true, lv)
+	var on: bool = b._hull.next_pass != null and float(b._hull.next_pass.get_shader_parameter("under_level")) == lv and b._hull.next_pass.render_priority == 1 and b._hull.next_pass.next_pass != null
+	b.set_under(false, 0.0)
+	ok(on and b._hull.next_pass == null, "AnimBody.set_under: his two passes after the water go on with the level and come off")
+	b.free()
+	var listed: int = 0
+	for e in RenderWarmup.SHADERS:
+		if str(e[0]).ends_with("fighter_under.gdshader") or str(e[0]).ends_with("fighter_hull_under.gdshader"):
+			listed += 1
+	ok(listed == 2, "both passes are in the boot's warm-up")
 
 
 ## The lip: the sweeps' and the one-column answer agree, and low land past a lip has no lake level.

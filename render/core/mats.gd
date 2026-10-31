@@ -103,6 +103,21 @@ static func fighter_hull(px: float = RenderLook.OUTLINE_PX) -> ShaderMaterial:
 	return m
 
 
+## A fighter's two passes over the water, while he's under it (AnimBody.set_under): the body, whose next pass is the outline.
+## Render priority 1: after the water, before the ripples (particle_view.gd).
+static func fighter_under() -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = preload("res://render/shaders/fighter_under.gdshader")
+	m.render_priority = 1
+	var h := ShaderMaterial.new()
+	h.shader = preload("res://render/shaders/fighter_hull_under.gdshader")
+	h.render_priority = 1
+	m.next_pass = h
+	for x in [m, h]:
+		x.set_shader_parameter("under_sheet", RenderLook.WATER_SURFACE)
+	return m
+
+
 ## A new additive glow material; the owner animates it with set_glow().
 static func glow(c: Color, alpha: float = 1.0, soft: float = 1.5) -> ShaderMaterial:
 	var m := ShaderMaterial.new()

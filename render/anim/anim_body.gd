@@ -8,6 +8,7 @@ var skel: Skeleton3D
 var mi: MeshInstance3D
 var _mat: ShaderMaterial      # the body (RenderMats.fighter_body); its next_pass is the outline (fighter_hull)
 var _hull: ShaderMaterial
+var _under: ShaderMaterial    # while he's under deep water, the outline's next pass (RenderMats.fighter_under); null until then
 var _fingers_l: int
 var _fingers_r: int
 var _flash: float = 0.0
@@ -58,6 +59,30 @@ func set_yaw(y: float) -> void:
 func set_anchor(a: Vector3) -> void:
 	_mat.set_shader_parameter("anchor", a)
 	_hull.set_shader_parameter("anchor", a)
+
+
+## Under deep water (GroundField.under_level): his two passes after the water, drawn below level. Off, the outline has no
+## next pass and the body draws as it always has. On, their uniforms are the body's and the outline's, copied each frame.
+func set_under(on: bool, level: float) -> void:
+	if not on:
+		if _hull.next_pass != null:
+			_hull.next_pass = null
+		return
+	if _under == null:
+		_under = RenderMats.fighter_under()
+	_copy_uniforms(_mat, _under)
+	_copy_uniforms(_hull, _under.next_pass as ShaderMaterial)
+	_under.set_shader_parameter("under_level", level)
+	(_under.next_pass as ShaderMaterial).set_shader_parameter("under_level", level)
+	if _hull.next_pass != _under:
+		_hull.next_pass = _under
+
+
+static func _copy_uniforms(from: ShaderMaterial, to: ShaderMaterial) -> void:
+	for u in from.shader.get_shader_uniform_list():
+		var n: String = u.name
+		if from.get_shader_parameter(n) != null:
+			to.set_shader_parameter(n, from.get_shader_parameter(n))
 
 
 ## The world's light on the body: one multiply colour (white, the default, changes nothing: the shader's `tint`, which is white unless set, multiplies the body's own colour). The lane colour's parts (the forearms

@@ -11,6 +11,9 @@
 //
 // Page words it adds (the pb scene's, in the scratch copy only):
 //   pbiome=<fine biome>   the stretch search also takes World's fine biomes (tundra, highland, ...)
+//   lakesea=<d>           the same on the sea
+//   lakelaunch=<tick>     player two is slammed straight down at that tick (a real launch)
+//   lakeunder=<d>        player two is held d under the water each tick (it writes the scratch sim: stills only)
 //   lakedepth=<d>         the pair is set down on the ring's lake column nearest d deep, on WorldWater.floorAt: the floor
 //                         with --floor, the bed without it
 // Node 24 built-ins only. No Godot, no browser. Owner: Rendering and Technical Art.
@@ -25,7 +28,7 @@ if (!s.includes('func _lake_place(')) {
   const edits = [
     ['for tgt in ["desert", "forest", "city", "coast"]:', 'for tgt in ["desert", "forest", "city", "coast", "tundra", "highland"]:'],
     ['ok = str(names[pc[i]]) == tgt', 'ok = (str(names[pc[i]]) == tgt) if tgt in ["desert", "forest", "city"] else WorldBiomes.fineNameAt((float(i) + 0.5) * SimConst.COL) == tgt'],
-    ['\t\t"pb":\n\t\t\tif t == 0:\n\t\t\t\t_pb_place(S)\n', '\t\t"pb":\n\t\t\tif t == 0:\n\t\t\t\t_pb_place(S)\n\t\t\t\t_lake_place(S)\n'],
+    ['\t\t"pb":\n\t\t\tif t == 0:\n\t\t\t\t_pb_place(S)\n', '\t\t"pb":\n\t\t\tif t == 0:\n\t\t\t\t_pb_place(S)\n\t\t\t\t_lake_place(S)\n\t\t\t_lake_launch(t, S)\n\t\t\t_lake_under(S)\n'],
   ];
   for (const [a, b] of edits) {
     if (s.split(a).length !== 2) { console.error(`lake-hook: the anchor is missing or not once (apply the pb hooks first): ${a.slice(0, 60)}`); process.exit(1); }
@@ -33,14 +36,32 @@ if (!s.includes('func _lake_place(')) {
   }
   s += `
 
+## SCRATCH (docs/rendering/tools/lake-hook.mjs): lakelaunch=<tick> slams player two straight down at that tick.
+func _lake_launch(t: int, S: SimState) -> void:
+	if _page_kv("lakelaunch") != "" and t == int(_page_kv("lakelaunch")):
+		DirLaunch.doLaunch(S, S.fighters[0], S.fighters[1], {"name": "SLAM DOWN", "ux": 0.0, "uy": -1.0}, 900.0)
+
+
+## SCRATCH (docs/rendering/tools/lake-hook.mjs): lakeunder=<d> holds player two d under the water.
+func _lake_under(S: SimState) -> void:
+	if _page_kv("lakeunder") == "":
+		return
+	var f = S.fighters[1]
+	var c: int = int(SimWrap.wrap(f.x) / SimConst.COL) % SimConst.NC
+	f.y = S.base[c] + S.deform[c] + S.water[c] - float(_page_kv("lakeunder"))
+	f.vx = 0.0
+	f.vy = 0.0
+
+
 ## SCRATCH (docs/rendering/tools/lake-hook.mjs): lakedepth=<d> sets the pair down on the ring's lake column nearest d deep.
 func _lake_place(S: SimState) -> void:
-	if _page_kv("lakedepth") == "":
+	var sea: bool = _page_kv("lakesea") != ""
+	if _page_kv("lakedepth") == "" and not sea:
 		return
-	var want: float = float(_page_kv("lakedepth"))
+	var want: float = float(_page_kv("lakesea") if sea else _page_kv("lakedepth"))
 	var best: int = -1
 	for i in range(SimConst.NC):
-		if S.water[i] >= WorldWater.MIN_DEPTH and absf(S.base[i] + S.deform[i] + S.water[i]) >= 1.0 and (best < 0 or absf(S.water[i] - want) < absf(S.water[best] - want)):
+		if S.water[i] >= WorldWater.MIN_DEPTH and (absf(S.base[i] + S.deform[i] + S.water[i]) < 1.0) == sea and (best < 0 or absf(S.water[i] - want) < absf(S.water[best] - want)):
 			best = i
 	if best < 0:
 		return
