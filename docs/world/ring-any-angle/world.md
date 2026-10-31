@@ -420,3 +420,26 @@ So **steps are rare** (at most 0.5% of a ring's columns, 0.14% on average). **Th
 - **Or accept the smoother ground** and let the director not choose ice edges as places to fight. Ice is the one biome where the loss is large and the walls were the point.
 
 Nothing here changes if the generation is not built: today's ground is unchanged.
+
+## 13. Can a cheap pure detail term restore what a 512 ground loses? (World, 2026-10-31, measured: `detail_probe.gd.txt`)
+
+The EP's question: at about 1 to 2 cheap operations a sample, how much of 512-unit ground does a detail term restore near a fighter, and how honest is the coastline. Eight rings (planets 7, 3, 11, 25 at touch 1; 9, 7, 1, 5 at touch 3), nodes every 16th column, candidates against the exact column. RMS in units; shoreline = crossings of `SHORE_WET`, 52 in all.
+
+| Candidate | All RMS | Mountain RMS | Shoreline displacement RMS / max | Spurious extra shores |
+| :--- | ---: | ---: | :--- | ---: |
+| V0 the line between the nodes (a 512 bake) | 23.9 | 21.9 | 203 / 736 | 0 |
+| V1 plus the exact surface detail (3 octaves of noise) | 23.6 | 21.7 | 187 / 736 | 0 |
+| V1x as V1 with the exact land/sea gate at each column | 23.5 | 21.7 | **105 / 384** | 0 |
+| V2 plus 2 octaves of the detail | 25.1 | 23.2 | 188 / 736 | 0 |
+| V3 a cubic through four nodes | 22.5 | 19.0 | 152 / 576 | 0 |
+| V4 plus a one-op hash noise of matching amplitude | 33.7 | 32.4 | 98 / 384 | 2 |
+
+**The answer is no, for relief.**
+1. **The surface detail is not what a 512 bake loses.** Adding the exact 3-octave noise (a few microseconds, about 100 operations, not 1 to 2) moves the error from 23.9 to 23.6. The loss is in `WorldLand.shape`: the ridged ranges (`abs` creases), the shoreline noise band, the plateau terraces (`floor` steps) and the canyons (`abs`), each of which acts on the running height. None has a closed-form residual a cheap term can add.
+2. **A cubic helps a little** (22.5, mountains 21.9 to 19.0, 13%) at four nodes a sample, about 12 operations. It cannot make a crease or a terrace.
+3. **A one-op hash noise makes the error worse** (23.9 to 33.7, as added uncorrelated variance must): it can give the ground texture, not truth, and it invents two shorelines that are not there. If the aim is only that smoothed ground not look smoothed, that is a Rendering look; the sim should not read it.
+4. **The only term that does restore the creases is `shape()` itself** run per sample on a baked smooth height: the plate terms plus about five lattice noises, roughly half of a gen 2 column read (25 microseconds of 51 native, so about 60 on the web). Too dear per sample for a 162-column re-lay on re-simulated ticks (about 10 ms a tick on the web).
+
+**Honest coastline: the gate is what matters, not noise.** The shoreline moves 203 units RMS (worst 736, 23 columns) on a bare 512 bake in these eight rings (ice rings included; the four plain rings were within 59 RMS, 128 max, in section 11). **Giving each column its exact land or sea answer (V1x) halves it: 105 RMS, worst 384.** So a land/sea mask at the column or 128-unit scale does more for the coast than any noise term. The honest answer is to store the **crossings** themselves: a coast is a line, and a field with a planet record per coast segment (like a crater, as section 12 suggested for ice edges) puts the shore exactly where today's is. About 3 to 6 crossings a ring, so a few records.
+
+**What this means for the bake.** Bake cells of 326 to 652 units are the 256 and 512 rows of section 11: all-column RMS about 11 to 23, mountain crests up to 2.5 fighter heights off, shores about 100 to 200 units off without a mask. Near a fighter that is the look of a smoothed planet, which the EP's decision accepts; the three things worth adding are (a) a coast and ice-edge record layer (exact shores and walls, few records), (b) optionally a cubic reconstruction in place of the line (6% and 13% on mountains, free for the view, 12 operations for the sim), and (c) nothing noise-based in anything the sim reads.

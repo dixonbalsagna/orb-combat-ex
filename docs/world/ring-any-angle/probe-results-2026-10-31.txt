@@ -56,3 +56,11 @@ planet 11 touch 1: 0 of 2400 columns step over 75, 0 over 150, largest 67; by bi
 planet 11 touch 3: 11 of 2400 columns step over 75, 0 over 150, largest 97; by biome of the high side: { "mountains": 11 }
 planet 25 touch 1: 5 of 2400 columns step over 75, 2 over 150, largest 378; by biome of the high side: { "ice sheet": 4, "desert": 1 }
 planet 25 touch 3: 1 of 2400 columns step over 75, 0 over 150, largest 113; by biome of the high side: { "desert": 1 }
+
+# detail_probe.gd (512-unit nodes plus candidate detail terms, 8 rings), HEAD 93102d14
+V0 bilinear              all RMS 23.9 (max 371) | mountain RMS 21.9 | shore columns RMS 32.7 | shoreline: 52 crossings, displacement RMS 203 max 736, 0 lost, 0 spurious extra
+V1 +detail 3 oct         all RMS 23.6 (max 371) | mountain RMS 21.7 | shore columns RMS 33.8 | shoreline: 52 crossings, displacement RMS 187 max 736, 0 lost, 0 spurious extra
+V1x +detail exact gate   all RMS 23.5 (max 371) | mountain RMS 21.7 | shore columns RMS 30.4 | shoreline: 52 crossings, displacement RMS 105 max 384, 0 lost, 0 spurious extra
+V2 +detail 2 oct         all RMS 25.1 (max 371) | mountain RMS 23.2 | shore columns RMS 34.8 | shoreline: 52 crossings, displacement RMS 188 max 736, 0 lost, 0 spurious extra
+V3 cubic                 all RMS 22.5 (max 408) | mountain RMS 19.0 | shore columns RMS 33.0 | shoreline: 52 crossings, displacement RMS 152 max 576, 0 lost, 0 spurious extra
+V4 +hash noise           all RMS 33.7 (max 383) | mountain RMS 32.4 | shore columns RMS 40.3 | shoreline: 52 crossings, displacement RMS 98 max 384, 0 lost, 2 spurious extra
