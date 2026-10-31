@@ -2,7 +2,7 @@
 
 Owner: Camera & Cinematography, by the EP's brief. Research page, 2026-10-31, paper and scratch only: no game code. Orb picked the turntable, E and E2: the world visibly swings round the fighters (`docs/ep/vision.md`, "The fight's bearing"), and the goal is "the experience of speed and power", not a strict lap.
 
-**How far to trust the numbers.** Section 4's bound is **measured**, on 28 AI matches in a scratch tree of e8a95e35. Everything else is **arithmetic from constants in the repo, plus first values I chose**. Nobody has seen any of this rendered, and the prototype draws bars on a 2D side view with no depth rows, so it can't answer the look. Rendering hasn't written its section; what I need from it is marked.
+**How far to trust the numbers.** Section 4's bound is **measured**, on 28 AI matches in a scratch tree of e8a95e35. Everything else is **arithmetic from constants in the repo, plus first values I chose**. Nobody has seen any of this rendered, and the prototype draws bars on a 2D side view with no depth rows, so it can't answer the look. Revised the same day against Game Design's rulings, Rendering's section and Legal's RL-213: where they settled something, this page now follows them, and section 5 answers what they asked.
 
 ## The plain answer
 
@@ -11,9 +11,9 @@ Owner: Camera & Cinematography, by the EP's brief. Research page, 2026-10-31, pa
 1. **A blow causes it.** The world is dead still through the hit-stop, then starts to turn on the release.
 2. **The fighters don't drift.** The frame around them holds, so the only thing moving is the world. Drifting fighters are what reads as the camera losing its place.
 3. **It arrives.** The swing ends before the landing, with the destination in frame, then holds still.
-4. **The far land carries it.** Up to 150°/s at the peak, which is about 0.05 of the screen's width a tick, the same limit the camera already keeps in a transition.
+4. **The far land carries it,** at Game Design's 60°/s, which is under half the camera's travel budget.
 
-**The biggest conflict, for the EP:** the look wants up to 150°/s, and Research tested E at 30°/s, where it's already over budget (E2: 46 ms p99 on the laptop). At 30°/s a 90° swing takes 5.6 s. Section 4 finds a possible way out: the field may need about a quarter of the area the prototype reads. That's arithmetic; Research would have to run it.
+**The conflict I raised is smaller now.** I asked for up to 150°/s against Research's budget at 30°/s. Game Design ruled 60°/s, and Rendering's plan makes a turn one uniform a frame with no new reads, so the view's cost no longer grows with the rate. **The sim's own re-lay is still open** (Research's 1.7 to 3 ms a tick, an estimate). None of this has been run.
 
 ## 1. Orbit, ground turning, or a mix
 
@@ -49,26 +49,21 @@ Turning the world brings things on one side forward: what stood behind the fight
 
 **The shape:** smootherstep, like the rest of the camera's moves, so the peak rate is `1.875 × θ / T`.
 
-**The rate limits come from the camera's existing comfort limits.** A point on the far land moves `1.05 × ω` screen widths a second at 16:9, with ω in radians a second (`vh × K_FACTOR` over the width).
+**The rate limits.** The lens is 30° vertically, which is 50.9° across at 16:9 and 39.3° at 4:3. Section 5 has the table. **Game Design's 60°/s is the ruling, and 100°/s, far land and flight's horizon together, is the most any screen shape takes inside the travel budget.** I withdraw my 150°/s: it came from `ANCHOR_STEP_TRANS` (0.05), over the 0.045 budget, and I hadn't looked at the budget.
 
-| Limit in `camera_params.gd` | Share of the width a tick | Largest ω |
-| :--- | ---: | ---: |
-| `ANCHOR_STEP`, ordinary | 0.02 | **60°/s** |
-| `ANCHOR_STEP_TRANS`, in a transition | 0.05 | **150°/s** |
+**The curve.** Game Design's "90° in 1.8 s" is a near-constant rate, not a smootherstep, whose peak would be 94°/s. So ramps at the ends: **20 ticks in, on a launch, so the whip stays clean, and 10 out, as ruled.** The camera's own limit on acceleration (`MASS_ACC`, 0.006 of the width a tick each tick) allows it: 60°/s is 0.018 of the width, reached over 10 ticks at 0.0018 a tick.
 
-So **150°/s peak with a launch behind it, 60°/s for anything else.** These are the project's own numbers carried over. Nobody has tested them on a swing, and they don't come from any comfort study.
+| Swing, at 60°/s with those ramps | T | Flight at 6,100 u/s |
+| ---: | ---: | ---: |
+| 10° | 0.5 s, peaking at 40°/s | 3,050 u |
+| 45° | 1.0 s | 6,100 u |
+| 90° | 1.75 s | 10,700 u |
+| 135° | 2.5 s | 15,300 u |
+| 180° | 3.25 s | 19,800 u |
 
-| Swing | T, launch (150°/s) | Flight at 6,100 u/s | T, otherwise (60°/s) |
-| ---: | ---: | ---: | ---: |
-| 10° | 0.6 s (floor) | 3,700 u | 0.6 s |
-| 45° | 0.6 s (floor, peak 140°/s) | 3,700 u | 1.4 s |
-| 90° | 1.13 s | 6,900 u | 2.8 s |
-| 135° | 1.69 s | 10,300 u | 4.2 s |
-| 180° | 2.25 s | 13,700 u | 5.6 s |
+**A swing can't outlast its flight,** as Game Design rules: it rests by the arrival. So the largest swing is about **60° per second of flight, less 15°.** A 1 s flight gets about 45°; 90° wants 1.75 s, matching Game Design's 1.8 s and Research's "destination launches fly further".
 
-**A swing can't outlast its flight.** It has to end before the landing, so **the largest swing is about 80° per second of flight.** Game Design's 6,000-unit launch flies for about 1 s, which allows about 80°. Anything larger needs a longer flight, which agrees with Research's "destination launches fly further". This limit belongs in the sim's data: the sim sets the schedule and the camera only reads it.
-
-**The peak's arc radius:** `v / ω` = 6,100 ÷ 2.62 rad/s = 2,330 units, close to the prototype's tightest arc (2,400).
+**The arc's radius** at 6,100 u/s and 60°/s is 5,800 units, well clear of the prototype's tightest (2,400).
 
 **The launch, beat by beat:**
 
@@ -76,19 +71,19 @@ So **150°/s peak with a launch behind it, 60°/s for anything else.** These are
 | :--- | :--- | :--- | :--- |
 | Wind-up | Anticipation push, launch weight 0.3 | Nothing. No counter-turn: it would read as hesitation | |
 | Hit-stop, 12 to 16 ticks | Blow push rises over 7 frames (0.020) | **Dead still.** The stillness is what the swing is measured against | |
-| Release, then 0.2 s | Whip: 12 frames, up to 3 widths | Starts here. At 0.2 of a 90° swing it has only turned 3.8° and is at 51°/s, so the whip stays as crisp as it is now | |
+| Release, then 0.2 s | Whip: 12 frames, up to 3 widths | Starts here, on a 20-tick ramp. By the whip's end it has turned about 4°, so the whip stays as crisp as it is now | |
 | Flight | Launch shot, trail 0.35 of the width, floor 0.05 | Peak. Far land sweeps; the fighter's place in the frame holds | Low angle, lean and bank go in |
-| Last of the swing | | Eases out and **ends at least 0.35 s before contact** (`LAND_HOLD`), so the world is still when he hits it | Destination in frame |
+| Last of the swing | | Eases out over 10 ticks and **is at rest by contact**, as Game Design rules, so the world is still when he hits it. (I'd asked for 0.35 s of stillness first and cited `LAND_HOLD`, which is a hold *after* landing. Clip 1 can test more) | Destination in frame |
 | Landing | Land hold and push (0.08) | Done | Gestures ease out together after it |
 
 **Stacking rules:**
 
 - **Speeds add on the ground, and that's fine.** The whip's translation already goes far past the comfort limit, as an approved crisp move, and it hardly moves far land. The swing hardly moves near ground at the pivot. Each shows where the other doesn't.
 - **No zoom-in during a swing,** and no zoom reversals. One change only: an eased pull out, never below the launch floor. Legal e12 (never zoom in on a fighter held in the air) applies anyway.
-- **One thing at a time.** No swing while a strip or the damage inset is up, and neither opens during one: their camera stands on a building's `x`, which is moving. The landscape shot and angle shots stand down too.
-- **Never twice in a row.** A second swing doesn't start within 6 s of the last ending (first value). It should come from Game Design's falling score, not a cap.
+- **Other shots.** A fighter's strip stays: its camera is in the view frame, and Game Design's swings run at up to 10°/s through the fights strips come from. The damage inset (parked, off) can't credit a beam in a swing, and its camera stands on a building that moves, so it doesn't open in one. The landscape and angle shots stand down: the swing is already the shot.
+- **How often** is Game Design's falling score, 6 to 12 a match. I withdraw my 6 s gap.
 
-**Where the pivot goes.** Game Design and World use the midpoint, so the ground under each fighter slips by `s × sin(θ/2)`. **I'd pivot on the fighter who's on the ground, when one is:** his feet don't slide, and the airborne one has nothing under him to notice. With both grounded, the far one's slip rate is `s × ω`: at 300 units, 120 u/s means 23°/s at most. So a swing with both grounded is slow, and there's no reason to take one with a big gap. **Both in the air: the midpoint.**
+**The pivot** is Game Design's rule, checked in section 5.
 
 **Which way it turns.** A destination **behind** the fighter plane can be seen coming: its silhouette is on the far land, then it swings round to meet him. One **in front** is on the near side, where nothing is drawn, so it arrives from the frame's edge late in the swing. **Ask for Encounter:** weigh destinations behind the plane higher. This is what makes "it arrives" work.
 
@@ -96,7 +91,7 @@ So **150°/s peak with a launch behind it, 60°/s for anything else.** These are
 
 - **One bearing, both panes, same rate.** The far land sweeps the same way in each, so the two skies agree. The divider reads `x` and doesn't change.
 - **Each pane's ground moves differently.** With the pivot on the fighter in pane A, pane B's ground slides at `s × ω`. If B's fighter is flying, that's just more speed. If he's grounded, the limit above applies.
-- **First value:** a swing with both grounded in a split doesn't happen. With a launch, the launched body's pane carries it.
+- **Far apart,** see section 5's last table.
 
 ## 3. Crossing a planet
 
@@ -104,9 +99,9 @@ So **150°/s peak with a launch behind it, 60°/s for anything else.** These are
 
 | Need | First value | Why, and the check |
 | :--- | :--- | :--- |
-| **The horizon must move** | Far land and sky turn at the true rate `v / R` while he flies: 23°/s on the full ring, 47°/s on the Half ring, flat out | **This is the read of crossing a planet.** Ground flow says fast anywhere; only a moving horizon says the world is round and he's going round it. Below the 60°/s limit by itself; with a swing on top, the total keeps to 150°/s. **For Rendering and World: this needs the far land reading a planet frame (Research's stage 1).** If the sky has a sun, it should move too: about 100° over a 4 s flight on the full ring, which I haven't checked is possible |
+| **The horizon must move** | Far land and sky turn at the true rate `v / R` while he flies: 23°/s on the full ring, 47°/s on the Half ring, flat out | **This is the read of crossing a planet.** Ground flow says fast anywhere; only a moving horizon says the world is round and he's going round it. Fits the budget by itself; with a swing on top, see section 5. **For Rendering and World: this needs the far land reading a planet frame (Research's stage 1).** If the sky has a sun, it should move too: about 100° over a 4 s flight on the full ring, which I haven't checked is possible |
 | **Curvature** | Add 0.05 to the curve at the screen's edge, eased in from 4,000 to 10,000 u/s | At sizes the camera allows, curve sits at `CURVE_NEAR` 0.035. The true sag at the floor size is close to it on a full ring (89 u, 3.8% of the height) and double on a Half ring (7.6%). So 0.085 is about true on a Half ring and about twice true on a full one. A planet that looks small is the point. **Render only** |
-| **Near ground for speed** | At the flight's start and end, no more than 0.6 of the height above ground (about 1,400 units at the floor size) | Speed reads from parallax, and parallax needs something close. At the launch floor, ground crosses at 0.0625 of the width a tick, right at the crisp edge; rows behind are slower, and that gradient *is* the speed |
+| **Near ground for speed** | At the flight's start and end, no more than 0.6 of the height above ground (about 1,400 units at the floor size) | Speed reads from parallax, and parallax needs something close. Flat out, the scroll governor (`SCROLL_MAX`, 0.045 of the width a tick) sets the size, about 0.036 of the height. Rows behind are slower, and that gradient *is* the speed |
 | **A reveal in the middle** | Flights of 3 s or more: crane up, the body down to about 0.8 of the height in the frame, pitch -6°, size no lower than the floor, over about 1 s at the flight's middle | Low, high, low is the shape: fast, then the planet, then arriving. **The climb itself is the sim's:** the camera can only crane within what his altitude allows |
 | **Framing** | Keep the launch shot: trail 0.35 of the width, so 0.65 of the frame is ahead | Already built. Adds nothing to the mass rule |
 | **Arrival** | The destination's silhouette over the curve by about 1.5 s before contact | Needs Encounter's pick and the far land together. **Biome changes under him** should pass in view rather than wait for a calm landscape shot |
@@ -114,9 +109,9 @@ So **150°/s peak with a launch behind it, 60°/s for anything else.** These are
 
 **A chase across a planet** is two panes in the same flight: the same far land at the same rate, and the chaser's pane sits at the same trail. No new rule.
 
-**Comfort.** The peak total is about 3 widths a second of far land, for at most 2.25 s, and only after a blow the player saw coming. What I can't tell from here: whether the sweep of a whole background is more tiring than the same speed on a follow.
+**Comfort.** The peak total is about 1.1 widths a second of far land, or about 2 with a flat-out flight's horizon on a Half ring, and a launch's swing follows a blow the player saw coming; a brawl's slow one doesn't. What I can't tell from here: whether the sweep of a whole background is more tiring than the same speed on a follow.
 
-**Under reduced motion,** a swing is a real problem: the sim's schedule is the same for every player online, and rendering can't change it. My first answer is a near-cut at the whip, as the slam does (`SLAM_TIME_REDUCED`), showing the new bearing's ground at once, with a cinematography reason: a cut on action. It depends on whether the field can show the end bearing early. **Open for Rendering.** A player who's turned it on shouldn't get 150°/s.
+**Under a motion setting,** see section 5: each shot degrades to a cut or a still.
 
 **Flashing.** A swing moves the whole background, so it should be read on Tools' clips. Flash work is paused, so report the reading and don't chase it.
 
@@ -164,10 +159,10 @@ D3 needed it as the line nothing crosses. **Under the turntable it's the field's
 
 - **Only the far half is drawn.** Near ground is a flat cap. That halves the area.
 - **Radius.** At close quarters, `B` at the back row is about 8,300 (default zoom), against the prototype's 12,000 all round. **The area is about a quarter:** 1.1 × 10⁸ against 4.5 × 10⁸ square units.
-- **Swept nodes a tick:** half a disc of radius 8,300 sweeps `½ r² dθ`. At 150°/s (0.044 rad a tick) that's 1.5 × 10⁶ square units a tick, or **about 6 nodes of 512 units a tick**, or about 90 of 128 units. Research's read budget is 6 a tick, so **E2 might fit at the peak.** Its 512-unit relief error (4.7 RMS, 60 max on gen 1, gen 2 unmeasured) is the price, and the area right round the pair would need finer ground.
+- **Swept nodes a tick:** half a disc of radius 8,300 sweeps `½ r² dθ`. At Game Design's 60°/s (0.017 rad a tick) that's about 6 × 10⁵ square units a tick, or **about 2.3 nodes of 512 units a tick,** or about 36 of 128 units, against Research's budget of 6 and Rendering's of 4. These are the sim's or the store's reads: Rendering's own drawing of a turn reads nothing, and only flight uncovers ground.
 - **The known end bearing.** A launch tells the sim where the swing is going, so the sweep can be read in order, ahead of it.
 
-**Research should re-run E2 with the half disc, radius `B`, and 150°/s.** That decides whether the look's rate is possible at all.
+**Research should re-run E2 with the half disc, radius `B`, and 60°/s.**
 
 ## What a clip has to show
 
@@ -176,16 +171,106 @@ Research's bars can't show any of this, so this needs a scratch render on the re
 | # | Clip | What it must show | Fails if |
 | :--- | :--- | :--- | :--- |
 | 1 | 90° launch, 2 s flight, into a city behind the plane | Still through the hit-stop, whip as crisp as today, far land sweeping, city swings round to meet him, still before contact | The fighter drifts in the frame, the whip smears, or it reads as a camera move |
-| 2 | Same at 30, 60, 150°/s | Which reads as power and which as a glitch. **This one settles the conflict with the budget** | |
-| 3 | A tower reaching the near line | How a building leaves, on sink and on a hard clip | Anything crosses a fighter, or anything fades |
+| 2 | Same at 30, 60, 100°/s | Which reads as power and which as a glitch | |
+| 3 | A tower, then a mountain, reaching the near line, at a launch's 60°/s and a brawl's 10°/s, low angle on and off | How they leave (section 5) | Anything crosses a fighter, or anything fades |
 | 4 | 180° | The rival on the same side, held stick unchanged, a player can say where the city went | They can't |
 | 5 | Split, launched body against a grounded chaser | Same sky in both panes; the grounded one's feet don't slide | |
 | 6 | A flat-out 5 s flight on a full ring | Horizon moving, curve at 0.085, low, reveal, low, arrival over the curve | It reads as fast but not as far |
 | 7 | Bank on and off; low angle on and off | Whether each gesture earns its place | |
-| 8 | Collapse and a swing, both flash modes | Readings only, flash work being paused | |
+| 8 | Collapse, signature and a swing through a city, both flash modes, at 16:9 and 1024 by 768 | Readings only, flash work being paused. RL-213 and RL-208 make reduced mode the one that counts | |
+| 9 | Each shot under the motion setting | Section 5's table | A cut with no action to hide on, or a fighter's feet off the ground |
 
 **Orb judges 1, 2, 3, 4 and 6.**
 
 ## What this costs Camera, if it's built
 
-Rough, for planning. The rig reads `b.x` along the ring for the landmark list (the lean step's cached list), the inset, landmarks and the ground-shows test, and under E those places move every tick. The swing's own beats are small: they reuse the push, pitch and lean machinery. **One to two windows, after the field exists.** Today's director-20 and director-21 stay parked and don't bear on it.
+Rough, for planning. **Rendering's plan leaves the rig's framing as it is:** cameras and fighters stay in the view frame. What changes is what reads a building's place: the landmark list, the inset, the ground-shows test and the rig's six ground reads (Rendering's count). The swing's own beats reuse the push, pitch and lean machinery. **About one window, after the field exists,** down from my first guess of two. Today's director-20 and director-21 stay parked and don't bear on it.
+
+## 5. Answers to Game Design, Rendering and Legal
+
+### The field of view, and 60°/s against the travel budget
+
+**The lens is 30° vertically (`TAN_HALF_FOV`). Across, that's 50.9° at 16:9, 64° at 21:9 and 39.3° at 4:3,** so Game Design's "near 40°" is the 4:3 case, as Rendering also found. Arithmetic: `ω / (2 tan(h/2))` widths a second at the screen's centre, and `1 + tan²(h/2)` times that at its edge.
+
+| Far land, share of the width a tick | 21:9 | 16:9 | 4:3 | Budget |
+| :--- | ---: | ---: | ---: | ---: |
+| 60°/s, centre | 0.014 | **0.018** | 0.024 | 0.045; 0.03 under Reduce flashing |
+| 60°/s, edge | 0.019 | **0.023** | 0.028 | |
+| Most inside 0.045, at the edge | 139°/s | 120°/s | **98°/s** | |
+| Most inside 0.03, at the edge | 93°/s | 80°/s | **65°/s** | |
+
+- **60°/s fits both budgets at every screen shape, but with less to spare than Game Design wrote under Reduce flashing:** 0.028 at the edge at 4:3.
+- **A flight's horizon adds to it.** Flat out, `v / R` is 23°/s on the full ring and 47°/s on a Half ring. **60 + 47 = 107°/s is over both ceilings at 4:3 and over the Reduce flashing one at 16:9.** So either the horizon's turn gives way during a swing on a Half ring, or the swing slows to about 65° less what the horizon takes, under Reduce flashing. I'd ease the horizon's turn off during a swing: the swing is already saying it.
+- **The budget is a yardstick today.** `travel_budget` ships off, by Orb's calls of 10-19 and 10-22, so nothing enforces it, and the flash analyser is the real test.
+- **Near things aren't covered.** Rendering's `z / (D − z)` is right. The flat near ground is what keeps it from mattering, and it's why nothing may stand there.
+
+### The pivot: agreed
+
+The standing fighter, else the midpoint, eased over 20 ticks. It's what I'd proposed, and I checked three things:
+
+- **The ease is enough.** A change of pivot changes the ground's velocity by `ω × distance moved`. Game Design's sweep limit keeps that to 6,000 u/s at most. At the sizes the camera holds that's about 0.025 to 0.0375 of the width a tick, over 20 ticks: at most 0.0019 a tick each tick, under `MASS_ACC` (0.006). **On a launch's start the gap is small, so it's nothing.**
+- **It moves in depth, not across.** The pivot lies on the line, so the change shows as ground flowing toward or away from the lens. It doesn't shift the fighters in frame.
+- **One word, two things.** Rendering's panes each centre their frame on their own fighter; Game Design's pivot says how the ground moves. Both must hold: a pane's frame travels with its fighter, and the ground under it moves by the ruled `r × rate`. **Rendering should confirm its pane frames come out that way.**
+
+**No swing during a beam, a hit-stop or a finisher: agreed,** and a KO, the intro and a grab's set piece too. The beam's 33-tick ease to rest is plenty: 60°/s to nothing is well within the camera's limit.
+
+### Rendering's plan against question 1: agreed
+
+Rendering keeps the camera, fighters and beams in the view frame and turns the world. That's my answer. Its finding that a tower can pass through the lens is what section 1 raised, and its stateless near rule for buildings is the right kind of answer, since speed doesn't matter to it.
+
+### Framing a mountain in the foreground
+
+**This is a framing answer, untested. Only the clip decides it.** Four facts from the geometry:
+
+- **What crosses in frame is small.** A point at radius `r` crosses the fighter plane on the line, so it's only inside the frame if `r` is under the half-width: 476 to 2,083 units on the plane.
+- **What then comes into view has `r` under `D`,** the camera's distance. Past that it passes beside the lens, off frame. `D` is 1,000 at the closest, 2,800 at the launch floor and 4,376 at the smallest size.
+- **So a tight camera sees less sinking.** Pulling wide to show a turn is the wrong way round when land is near.
+- **Speed helps.** At 60°/s, land 1,000 units out moves 1,000 u/s and leaves in about a second. **At a brawl's 10°/s it's 175 u/s, slow enough to watch. The slow swing is the worst case.**
+
+**So I'd frame it like this:**
+
+| Rule | First value | Does what |
+| :--- | :--- | :--- |
+| **Low angle during every swing** | Pitch -4°, -6° with land taller than the frame's height within `D` | Moves the fighter plane from 0.7 to about 0.83 to 0.9 of the height. Everything in front is then a thin strip at the bottom, so the sinking happens **under the fighters' feet**, not at eye level. It also raises the far land's share of the picture, which is what's carrying the swing |
+| **No pull out with land near** | Hold the size from the swing's start, with tall land inside `D` | Keeps `D` small. A launch's pull comes only over open ground |
+| **Don't choose the swing that does it** | **For Encounter:** a falling score for a swing that brings land above about 1,500 units into the side turning forward, within 4,400 units of the pivot | A fixed radius, so the sim never reads the camera. It's a score, in keeping with Game Design's "it never refuses". Height only, nothing about people |
+| **No slow swing into it** | **For Game Design:** a brawl's 10°/s swing eases to rest rather than bring tall land round in front | That's the worst case, and a brawl has no need of it |
+
+**What I wouldn't do:** cover it with dust, fade it, or cut. If the clip still reads as the ground swallowing a mountain, the honest levers are Rendering's: cap how far land rises in front, or limit how far a swing turns near mountains.
+
+### About 24,000 apart at 30°/s
+
+**The rate doesn't match Game Design's limit unless both are in the air and the pivot's the midpoint.** There `r` is 12,000, so the 6,000 u/s limit gives 29°/s. **With one standing, `r` is 24,000 and the limit gives 14°/s;** with both standing it holds still.
+
+**The framing is fine and needs no new rule, with one thing to watch:**
+
+| | At 24,000 apart, both airborne, 29°/s |
+| :--- | :--- |
+| **Panes** | A split, each pane on its fighter at its own size, the rig unchanged |
+| **Far land** | The same way in both panes, 0.009 of the width a tick. The skies agree |
+| **Ground at each fighter** | Flows **in depth**, at 100 units a tick: toward the lens in one pane and away in the other. That reads as a chase camera's flow, so I expect it to read as speed, not as an error. Across the frame it's about 0.011 of the width a tick at the plane, reaching the 0.045 budget within about 1,100 units of the lens, where the ground is flat anyway |
+| **To watch** | In the pane where ground flows **away**, land comes out from the near line and rises as it goes. It's the sinking run backwards, and it's as untested. Clip 5 should include it |
+
+Legal e12 still applies: no zoom in on a fighter held in the air.
+
+### Legal's RL-213
+
+**(4): the camera never turns to or holds on civilians or bodies, and a swing is not a zoom on a victim.** What I build to:
+
+- **Nothing in a swing's shot reads people.** The lean follows the bearing, the low angle the land, the end of the swing the structure or terrain the planner chose. A swing has no aim of its own.
+- **It holds on the fighters.** Whatever a swing brings past, the frame stays on them, and the swing ends on the landing's usual shot. A swing adds no zoom in.
+- **The reveal and the arrival frame structure, terrain or a fighter,** per (2), and never linger: they're fixed lengths from the flight, not from what's in frame.
+- **What I can't promise:** a crowd may be in frame, because it's on the street he lands on. That's framing past them, which today's camera does too. **The camera's `_ground_shows` looks for craters, buildings and scorch, not people:** I'd keep it that way, and it needs a check that no body counts.
+
+**(7): a setting turns a swing into a cut or a still.** Rendering's heading is a view-side value, so the shown heading can differ from the sim's. That answers what I left open: **a player's setting doesn't touch the sim, so online is no problem, and it needs no setup value for this.** The catch is that the sim's plane must equal the drawn plane under anyone standing, so holding a heading only works where nobody's feet depend on it.
+
+| Shot | Under the motion setting | Reason it's allowed | Holds if |
+| :--- | :--- | :--- | :--- |
+| **Launch swing** | **Cut,** at the whip: the shown heading goes to the end bearing at once, then holds. The whip stays a near-cut (`SLAM_TIME_REDUCED`) | A cut on action, on the blow. He's in the air, so nothing's at his feet | The launcher's standing: shown heading is wrong for his ground until the swing's over, unless he's the pivot, which he is. Rendering to confirm |
+| **Chase swing** | **Cut,** when the chase starts, same way | A cut on the chase's start | Both in the air. If one lands first, see the last row |
+| **Form's pause** | **Still:** the pause plays with the world held, and the new bearing comes in **a cut at its end** | Nothing moves in a pause, and the gather is the change of scene | Nobody's feet move in a pause |
+| **Brawl or rally, at 10°/s** | **Still:** the shown heading holds and **catches up at the next launch's cut** | Nothing's asked of the player, and the far land simply doesn't turn | Fighters close together. **It can't hold for long: a standing fighter away from the pivot gets his feet off the drawn ground** as the angle grows, about `r × sin(Δ) × slope`. So it's only while `r` stays within reach |
+| **Crossing flight's far land** | **Still:** no horizon turn; curvature stays | Only ever a cue | Always |
+| **Anything held too long** (a standing fighter's ground has parted from the shown ground) | **A cut at the next hit-stop's start,** or the slower setup rate Game Design proposes if there isn't one | | **The open one. It needs Rendering's and Simulation's answer:** how far shown and sim may part |
+
+**Game Design's half rate is then a second choice, not the setting:** it's still a whole-view move, and online it'd slow the other player. RL-213 asks for a cut or a still, and this is how each shot gets one. **Accessibility reviews it before it ships, and a cut is a large change of picture, so it counts in the flash register:** at 2 to 5 launches a match that's small, but it has to be read, with the two settings together. A cut under Reduce flashing cross-dissolves today (`CUT_DISSOLVE_S`), which Orb rejected for play: **the setting must be a plain cut.**
