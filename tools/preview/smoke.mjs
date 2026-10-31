@@ -23,7 +23,7 @@ export function expectations(on, { planet = true } = {}) {
     planet,
     planetGen: set.has('gen2') ? 2 : 1,
     dataGen: set.has('gen2') ? 2 : 1,
-    biome: set.has('biome'), water: set.has('water'), surface: set.has('surface'), floor: set.has('floor'), interrupts: set.has('interrupts'),
+    biome: set.has('biome'), water: set.has('water'), surface: set.has('surface'), floor: set.has('floor'), interrupts: set.has('interrupts'), turn: set.has('turn'),
   };
 }
 
@@ -34,7 +34,7 @@ export function probeProblems(probe, want) {
   for (const k of ['planetGen', 'dataGen']) if (probe[k] !== want[k]) out.push({ sw: 'gen2', text: `${k} reads ${probe[k]}, expected ${want[k]}` });
   if ((probe.fine > 0) !== (want.planetGen === 2)) out.push({ sw: 'gen2', text: `the planet has ${probe.fine} fine-biome columns, expected ${want.planetGen === 2 ? 'some (a gen 2 planet)' : 'none (the stored planet)'}` });
   if (probe.planet !== want.planet) out.push({ sw: 'gen2', text: `the match ${probe.planet ? 'is' : 'is not'} a generated planet, expected ${want.planet ? 'one' : 'the hand-made world'}` });
-  for (const k of ['biome', 'water', 'surface', 'floor', 'interrupts']) if (probe[k] !== want[k]) out.push({ sw: k, text: `${k} reads ${probe[k]} in the running game, expected ${want[k]}` });
+  for (const k of ['biome', 'water', 'surface', 'floor', 'interrupts', 'turn']) if (probe[k] !== want[k]) out.push({ sw: k, text: `${k} reads ${probe[k]} in the running game, expected ${want[k]}` });
   for (const e of probe.errors || []) out.push({ sw: errorSwitch(e) || 'water', text: `water loader: ${e}` });
   return out.map((p) => (typeof p === 'string' ? { sw: null, text: p } : p));
 }
@@ -99,7 +99,7 @@ export async function smoke({ dir, on = IDS, planet = 7, timeoutS = 240, shot, s
       const playUntil = Math.min(deadline, Date.now() + 20000);
       for (let i = 0; Date.now() < playUntil; i++) { await press(KEYS[i % KEYS.length], 250); await sleep(150); }
       p = (await read()) || p;
-      notes.push(`after play: tick ${p.tick} (${p.tick - t1} more in the keys' 20 s), hp ${JSON.stringify(p.hp)}`);
+      notes.push(`after play: tick ${p.tick} (${p.tick - t1} more in the keys' 20 s), hp ${JSON.stringify(p.hp)}, ring turns so far ${p.turns} (a turn needs a planet match, 60 s of match time since the last one and a calm moment after a launch has landed: not within this 20 s)`);
       if (p.tick - t1 < 120) add(null, `the match did not play on: ${p.tick - t1} ticks in about 20 s of keys (it was at tick ${t1}; the How to play card or the start menu may still be up)`);
       probe = p;
       for (const x of probeProblems(p, want)) add(x.sw, x.text);

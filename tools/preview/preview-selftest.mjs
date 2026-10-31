@@ -22,6 +22,7 @@ const sw = (id) => SWITCHES.find((s) => s.id === id);
 const WATER = JSON.stringify({ schema: 'biomes.water/1', _about: 'enabled: the whole model. surface: {"enabled": true} is a story.', enabled: false, table: { wetland: { depth: 6.0, near: false } }, near: { reach: 36 }, surface: { enabled: false, ticks: 30 }, floor: { enabled: false } }, null, 2);
 const CLIMATE = JSON.stringify({ schema: 'biomes.climate/1', gen: 1, grid: { w: 192, h: 96 }, fine: [{ gen: 1 }] }, null, 2);
 const BIOME = JSON.stringify({ schema: 'combat.launch_biome/1', _about: 'biome.enabled is behind it', biome: { enabled: false, rules: { a: 1 } }, other: { enabled: true } }, null, 2);
+const RINGS = JSON.stringify({ schema: 'biomes.rings/1', sizes: { half: 76800 }, turn: { on: 0, maxTurns: 4, gapSeconds: 60.0, driftDeg: 40.0, _note: 'turn.on 0 is off' } }, null, 2);
 const INTERRUPTS = JSON.stringify({ enabled: true, a: { enabled: true }, water: { enabled: false, surfaceTicks: 30, _note: 'water.enabled false' }, rally: { enabled: false } }, null, 2);
 const MAIN = [
   'extends Node', 'const URL_ARGS: Array = ["nointro", "skyreact"]', 'var args: Dictionary = {}', 'var _planet_next: Dictionary = {}', 'var frames: int = 0', '',
@@ -58,7 +59,7 @@ check('--off floor turns off only the floor', R('floor').active.join() === IDS.f
 check('--off surface turns the floor off with it, and says why', R('surface').active.includes('floor') === false && R('surface').cascaded[0].id === 'floor' && R('surface').cascaded[0].because.join() === 'surface');
 check('--off interrupts turns the floor off with it', !R('interrupts').active.includes('floor') && R('interrupts').active.includes('surface'));
 check('--off gen2 turns nothing else off', R('gen2').cascaded.length === 0 && R('gen2').active.length === IDS.length - 1);
-check('--off with a comma list and --off all', R('water,biome').active.join() === 'gen2,surface,interrupts,floor' && R('all').active.length === 0);
+check('--off with a comma list and --off all', R('water,biome').active.join() === 'gen2,surface,interrupts,floor,turn' && R('all').active.length === 0);
 check('an unknown id is reported, not ignored', R('watr').unknown.join() === 'watr');
 
 // ---- error hints
@@ -76,12 +77,13 @@ check('an anchor that is gone fails, naming it', /the menu start without intros:
 check('an anchor that is there twice fails', /found it 2 times/.test(throws(() => patchMain(`${MAIN}\n${MAIN}`)) || ''));
 
 // ---- the probe against the expectations
-const okProbe = { tick: 900, fine: 4800, planetGen: 2, planet: true, dataGen: 2, biome: true, water: true, surface: true, floor: true, interrupts: true, errors: [], hp: [90, 80] };
+const okProbe = { tick: 900, fine: 4800, planetGen: 2, planet: true, dataGen: 2, biome: true, water: true, surface: true, floor: true, interrupts: true, turn: true, turns: 0, errors: [], hp: [90, 80] };
 check('a probe that matches passes', probeProblems(okProbe, expectations(IDS)).length === 0);
 check('a switch that reads off in the running game is named', probeProblems({ ...okProbe, water: false }, expectations(IDS)).map((p) => p.sw).join() === 'water');
 check('a gen 2 planet with no fine-biome columns is named',probeProblems({ ...okProbe, fine: 0 }, expectations(IDS)).some((p) => p.sw === 'gen2'));
 check('gen 2 not in force is named', probeProblems({ ...okProbe, planetGen: 1 }, expectations(IDS)).some((p) => p.sw === 'gen2'));
 check('with a switch off the probe must read it off', probeProblems({ ...okProbe, floor: true }, expectations(IDS.filter((i) => i !== 'floor'))).map((p) => p.sw).join() === 'floor');
+check('the calm turn is a switch: off by one flag, named when the running game reads it off', sw('turn').path.join('.') === 'turn.on' && sw('turn').from === 0 && sw('turn').to === 1 && probeProblems({ ...okProbe, turn: false }, expectations(IDS)).map((p) => p.sw).join() === 'turn' && probeProblems({ ...okProbe, turn: false }, expectations(IDS.filter((i) => i !== 'turn'))).length === 0 && errorSwitch('rings.json: bad bearing') === 'turn');
 check('the water loader\'s own errors are failures that name a switch', probeProblems({ ...okProbe, errors: ['water.json: the floor needs both halves of the surfacing rule'] }, expectations(IDS)).some((p) => p.sw === 'floor'));
 check('no probe at all is a failure', probeProblems(null, expectations(IDS)).length === 1);
 
@@ -91,7 +93,7 @@ const git = (cwd, ...a) => execFileSync('git', ['-c', 'user.name=t', '-c', 'user
 try {
   const repo = join(tmp, 'repo');
   for (const d of ['data/biomes', 'data/combat', 'data/director', 'render/core', 'tools']) mkdirSync(join(repo, d), { recursive: true });
-  const files = { 'data/biomes/climate.json': CLIMATE, 'data/biomes/water.json': WATER, 'data/combat/launch_biome.json': BIOME, 'data/director/interrupts.json': INTERRUPTS, 'render/core/main.gd': MAIN, 'tools/site.json': '{"offline": false, "template": "custom"}\n' };
+  const files = { 'data/biomes/climate.json': CLIMATE, 'data/biomes/water.json': WATER, 'data/combat/launch_biome.json': BIOME, 'data/director/interrupts.json': INTERRUPTS, 'data/biomes/rings.json': RINGS, 'render/core/main.gd': MAIN, 'tools/site.json': '{"offline": false, "template": "custom"}\n' };
   git(repo, 'init', '-q', '-b', 'main');
   git(repo, 'config', 'core.autocrlf', 'false');
   for (const [f, t] of Object.entries(files)) writeFileSync(join(repo, f), t);
@@ -104,7 +106,7 @@ try {
     "if (a.includes('--export-release')) {",
     "  const out = a[a.indexOf('--export-release') + 2];",
     "  const j = (f) => JSON.parse(readFileSync(join(tree, f), 'utf8'));",
-    "  const seen = { gen: j('data/biomes/climate.json').gen, water: j('data/biomes/water.json').enabled, floor: j('data/biomes/water.json').floor.enabled, surface: j('data/biomes/water.json').surface.enabled, biome: j('data/combat/launch_biome.json').biome.enabled, interrupts: j('data/director/interrupts.json').water.enabled, patched: /_preview_probe/.test(readFileSync(join(tree, 'render/core/main.gd'), 'utf8')), buildInfo: j('build_info.json'), args: a };",
+    "  const seen = { gen: j('data/biomes/climate.json').gen, water: j('data/biomes/water.json').enabled, floor: j('data/biomes/water.json').floor.enabled, surface: j('data/biomes/water.json').surface.enabled, biome: j('data/combat/launch_biome.json').biome.enabled, interrupts: j('data/director/interrupts.json').water.enabled, turn: j('data/biomes/rings.json').turn.on, patched: /_preview_probe/.test(readFileSync(join(tree, 'render/core/main.gd'), 'utf8')), buildInfo: j('build_info.json'), args: a };",
     "  writeFileSync(out, '<html>stub</html>'); writeFileSync(join(dirname(out), 'seen.json'), JSON.stringify(seen));",
     "  if (process.env.STUB_FAIL) { console.log('SCRIPT ERROR: stub failure line'); process.exit(3); }",
     "} else { console.log('import ok'); }",
@@ -114,10 +116,10 @@ try {
   const b = await buildPreview(opts);
   const seen = JSON.parse(readFileSync(join(b.web, 'seen.json'), 'utf8'));
   check('the build ends in index.html under the output folder', existsSync(join(b.web, 'index.html')) && b.web.startsWith(out));
-  check('in the scratch tree every switch was on and main.gd patched', seen.gen === 2 && seen.water && seen.floor && seen.surface && seen.biome && seen.interrupts && seen.patched, JSON.stringify(seen));
+  check('in the scratch tree every switch was on and main.gd patched', seen.gen === 2 && seen.water && seen.floor && seen.surface && seen.biome && seen.interrupts && seen.turn === 1 && seen.patched, JSON.stringify(seen));
   check('the export is the standard one: no template argument was passed', !seen.args.some((x) => /template/i.test(x)));
   check('build_info.json names the commit', seen.buildInfo.commit === git(repo, 'rev-parse', '--short=7', 'main').trim());
-  check('it recorded the six flips', b.flips.length === 6 && b.flips.every((f) => !f.alreadyOn));
+  check('it recorded the seven flips', b.flips.length === 7 && b.flips.every((f) => !f.alreadyOn));
   check('THE REPOSITORY IS UNTOUCHED: every file as committed and nothing new', git(repo, 'status', '--porcelain').trim() === '', git(repo, 'status', '--porcelain'));
   check('tools/site.json is byte for byte as it was', readFileSync(join(repo, 'tools/site.json'), 'utf8') === files['tools/site.json']);
   check('the scratch tree is removed after the export', !existsSync(join(b.dir, 'tree')));
@@ -165,11 +167,11 @@ try {
     const { smoke } = await import('./smoke.mjs');
     const page = (probe) => `<!doctype html><html><body><canvas width="64" height="64"></canvas><script>var t=0;setInterval(function(){t+=20;window.__preview=Object.assign({tick:t},${JSON.stringify(probe)});},100);</script></body></html>`;
     const site = (name, probe) => { const d = join(tmp, name); mkdirSync(d, { recursive: true }); writeFileSync(join(d, 'index.html'), page(probe)); return d; };
-    const good = await smoke({ dir: site('good', { planetGen: 2, fine: 4800, dataGen: 2, planet: true, biome: true, water: true, surface: true, floor: true, interrupts: true, errors: [], hp: [100, 100] }), on: IDS, timeoutS: 90, session: 'tools-preview-selftest', exe });
+    const good = await smoke({ dir: site('good', { planetGen: 2, fine: 4800, dataGen: 2, planet: true, biome: true, water: true, surface: true, floor: true, interrupts: true, turn: true, turns: 0, errors: [], hp: [100, 100] }), on: IDS, timeoutS: 90, session: 'tools-preview-selftest', exe });
     check('the smoke check passes a page that reads as asked', good.ok === true, JSON.stringify(good.problems));
     const wrong = await smoke({ dir: site('wrong', { planetGen: 2, fine: 4800, dataGen: 2, planet: true, biome: true, water: false, surface: true, floor: true, interrupts: true, errors: [], hp: [100, 100] }), on: IDS, timeoutS: 90, session: 'tools-preview-selftest', exe });
     check('it fails a page whose water reads off, and names water', wrong.ok === false && wrong.problems.some((p) => p.sw === 'water'), JSON.stringify(wrong.problems));
-    const offOk = await smoke({ dir: site('off', { planetGen: 1, fine: 0, dataGen: 1, planet: true, biome: false, water: false, surface: false, floor: false, interrupts: false, errors: [], hp: [100, 100] }), on: [], timeoutS: 90, session: 'tools-preview-selftest', exe });
+    const offOk = await smoke({ dir: site('off', { planetGen: 1, fine: 0, dataGen: 1, planet: true, biome: false, water: false, surface: false, floor: false, interrupts: false, turn: false, turns: -1, errors: [], hp: [100, 100] }), on: [], timeoutS: 90, session: 'tools-preview-selftest', exe });
     check('it passes a plain build\'s page when everything is asked off', offOk.ok === true, JSON.stringify(offOk.problems));
     const noProbe = await smoke({ dir: (() => { const d = join(tmp, 'blank'); mkdirSync(d, { recursive: true }); writeFileSync(join(d, 'index.html'), '<html><body><canvas></canvas></body></html>'); return d; })(), on: IDS, timeoutS: 8, session: 'tools-preview-selftest', exe });
     check('it fails a page that never publishes its state', noProbe.ok === false && /did not boot/.test(noProbe.problems[0].text), JSON.stringify(noProbe.problems));

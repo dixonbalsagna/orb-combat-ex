@@ -22,6 +22,8 @@ export const SWITCHES = [
     what: 'surfacing, the director half: a drop (the zip\'s knock-down) under water is brought up and counts as landed' },
   { id: 'floor', file: 'data/biomes/water.json', path: ['floor', 'enabled'], from: false, to: true, needs: ['surface', 'interrupts'],
     what: 'the lake floor: a free fighter\'s floor in the ring\'s own water is its surface less his feet (needs both halves of surfacing)' },
+  { id: 'turn', file: 'data/biomes/rings.json', path: ['turn', 'on'], from: 0, to: 1, needs: [],
+    what: 'the arena\'s calm turn: at a calm moment after a launch has landed, the ring swaps for a new one turned a few degrees (at most 4 a match, 60 s apart)' },
 ];
 
 export const IDS = SWITCHES.map((s) => s.id);
@@ -110,6 +112,7 @@ export function errorSwitch(line) {
   if (/water\.json[^\n]*surface|surfacing/i.test(t)) return 'surface';
   if (/interrupts\.json|DirWater|DirInterrupt/i.test(t)) return 'interrupts';
   if (/water\.json|WorldFill|water v2/i.test(t)) return 'water';
+  if (/rings\.json|WorldEpoch/i.test(t)) return 'turn';
   if (/launch_biome|DirLaunch|biome\.enabled/i.test(t)) return 'biome';
   if (/climate\.json|WorldClimate|WorldPlanet|planet gen|lakes\.json|sites\.json/i.test(t)) return 'gen2';
   return null;
@@ -139,7 +142,7 @@ export const PLANET_FUNC = [
   '\tfor f in st.fighters:',
   '\t\thp.append(snappedf(f.hp, 0.1))',
   '\tvar probe: Dictionary = {"tick": host.ticks, "planetGen": WorldClimate.genNow(), "fine": st.fineCols.size(), "planet": not st.planetRing.is_empty(), "dataGen": int(WorldClimate.data().get("gen", 1)),',
-  '\t\t"biome": DirLaunch.biomeOn(), "water": WorldFill.on(), "surface": WorldFill.surfaceOn(), "floor": WorldFill.floorOn(), "interrupts": DirWater.on(st),',
+  '\t\t"biome": DirLaunch.biomeOn(), "water": WorldFill.on(), "surface": WorldFill.surfaceOn(), "floor": WorldFill.floorOn(), "interrupts": DirWater.on(st), "turn": WorldEpoch.enabled({}), "turns": (st.epoch.n if st.epoch != null else -1),',
   '\t\t"errors": WorldFill.dataErrors(), "hp": hp}',
   '\tJavaScriptBridge.eval("window.__preview = %s;" % JSON.stringify(probe), true)',
   '',
