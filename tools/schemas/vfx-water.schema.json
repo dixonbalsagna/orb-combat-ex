@@ -488,6 +488,16 @@
           "type": "number",
           "minimum": 1,
           "maximum": 2
+        },
+        "entrance_gain": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "entrance_life": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
         }
       },
       "additionalProperties": false,

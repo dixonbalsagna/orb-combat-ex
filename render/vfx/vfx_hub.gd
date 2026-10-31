@@ -343,13 +343,18 @@ func _consume(S: SimState, events: Array) -> void:
 			var fa: int = int(e.actor)
 			if fa >= 0 and fa < 2:
 				_fell[fa] = true
-		elif e.type == "entrance_land" and earth_enabled:
+		elif e.type == "entrance_land":
 			var la: int = int(e.actor)
 			if la >= 0 and la < 2 and _fell[la]:
 				debris.quality = quality
 				debris.reduced = reduced_motion
-				earth.entrance_now = true
-				earth.on_entrance_land(S, e)
+				if sheet_splash_enabled and water_enabled and WorldFill.floorOn() and float(_g(e, "r", 0.0)) < 1.0 and not WorldWater.burialOK(S, float(e.x)):   # he came down onto the sheet and dug nothing (rulings 2026-10-30 row 13): a splash, not clods and dust
+					debris.z_shift = float(_g(e, "z", 0.0))
+					water.slap(S, float(e.x), float(e.y), -1, maxf(float(e.y1) - float(e.y), 1.0))
+					debris.z_shift = 0.0
+				elif earth_enabled:
+					earth.entrance_now = true
+					earth.on_entrance_land(S, e)
 	for e in events:
 		if e.type == "cue" and String(e.kind) == "duel" and int(float(_g(e, "k", 0.0))) >= int(VfxReach.pm("wave_min_level")):
 			_duel_wave(S, e)

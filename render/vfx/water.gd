@@ -15,7 +15,7 @@ const DEFAULTS: Dictionary = {
 	"caps": {"spray_alive": 260, "per_tick": 60},
 	"fill": {"lip_every": 2, "lip_streaks": 2, "lip_foam_min": 50.0, "lip_foam_max": 110.0, "start_streaks": 4, "rim_streaks": 8, "rim_foams": 3, "rim_reach": 70.0, "bore_streaks": 12, "bore_foams": 4, "seep_foams": 4, "max_fronts": 4},
 	"wave": {"streaks_per_pulse": 3, "foam_per_pulse": 1, "rim_streaks": 10, "rim_foams": 3, "max_waves": 3},
-	"slap": {"speed_min": 900.0, "throw_speed": 2800.0, "height_per_speed": 0.12, "height_min": 140.0, "height_max": 900.0, "streaks_base": 14, "streaks_per_scale": 12, "fan_min_deg": 8.0, "fan_max_deg": 50.0, "centre_streaks": 5, "centre_share": 0.3, "foam_base": 8, "foam_per_scale": 6, "run_min": 140.0, "run_max": 560.0, "ring_r": 50.0, "ring_rate": 800.0, "ring_life": 0.5, "throw_gain": 1.3},
+	"slap": {"speed_min": 900.0, "throw_speed": 2800.0, "height_per_speed": 0.12, "height_min": 140.0, "height_max": 900.0, "streaks_base": 14, "streaks_per_scale": 12, "fan_min_deg": 8.0, "fan_max_deg": 50.0, "centre_streaks": 5, "centre_share": 0.3, "foam_base": 8, "foam_per_scale": 6, "run_min": 140.0, "run_max": 560.0, "ring_r": 50.0, "ring_rate": 800.0, "ring_life": 0.5, "throw_gain": 1.3, "entrance_gain": 0.7, "entrance_life": 0.75},
 	"douse": {"puffs_max": 5, "per_columns": 4, "size_min": 36.0, "size_max": 64.0, "grow": 1.8, "life_min": 1.3, "life_max": 2.0, "rise_min": 40.0, "rise_max": 90.0},
 }
 
@@ -215,17 +215,24 @@ func rebound(a: Dictionary) -> void:
 ## With World's floor on (Game Design rulings 2026-10-30) a body that meets the sea's or a lake's surface does not go under: he lands on the sheet, or is slammed flat on it. A low wide splash, not a plunge's tall column: spray
 ## thrown out both ways in a flat fan, a short jet where he hit, foam running out along the surface and two flat rings spreading on it. Cut from the speed he had at the end of the last tick (the sim has already slowed him
 ## when the splash event arrives) or, for the grapple's down throw (thrown: the thrower's index), from `slap.throw_speed` and bigger by `throw_gain`. The same streak and foam pools and caps as the plunge.
-func slap(S: SimState, x: float, y: float, thrown: int = -1) -> void:
+## An entrance landing on the sheet (drop: the height he fell from, no crater dug; rulings 2026-10-30 row 13) is cut from the speed that fall gives him and is smaller by `entrance_gain` and shorter by `entrance_life`, so
+## the spray and foam have cleared by the staredown as the landing's dust does.
+func slap(S: SimState, x: float, y: float, thrown: int = -1, drop: float = 0.0) -> void:
 	slaps += 1
 	var f = nearest_fighter(S, x)
 	var tier: float = f.tier if f != null else 1.0
 	var speed: float = p("slap", "speed_min")
 	var gain: float = 1.0
+	var lk: float = 1.0
 	if thrown >= 0:
 		speed = p("slap", "throw_speed")
 		gain = p("slap", "throw_gain")
 		if thrown < S.fighters.size():
 			tier = S.fighters[thrown].tier
+	elif drop > 0.0:
+		speed = clampf(sqrt(2.0 * 1200.0 * drop), speed, p("slap", "throw_speed"))
+		gain = p("slap", "entrance_gain")
+		lk = p("slap", "entrance_life")
 	elif f != null:
 		var i: int = S.fighters.find(f)
 		if i >= 0 and i < _spd.size():
@@ -244,7 +251,7 @@ func slap(S: SimState, x: float, y: float, thrown: int = -1) -> void:
 		var sp: float = vmax * debris._rd.range_(0.55, 1.0)
 		var off: float = debris._rd.range_(0.0, 90.0) * s
 		var len: float = debris._rd.range_(50.0, 120.0) * (0.6 + 0.5 * s)
-		var life: float = debris._rd.range_(0.8, 1.5)
+		var life: float = debris._rd.range_(0.8, 1.5) * lk
 		_streak(x + side * off, y, side * cos(a) * sp * 1.4, sin(a) * sp, len, life, y)
 	# The short jet where he hit.
 	var jn: int = int(round(float(p("slap", "centre_streaks")) * q * gain))
@@ -253,7 +260,7 @@ func slap(S: SimState, x: float, y: float, thrown: int = -1) -> void:
 		var sp2: float = vmax * p("slap", "centre_share") * debris._rd.range_(0.6, 1.0) * 1.6
 		var off2: float = debris._rd.range_(-40.0, 40.0) * s
 		var len2: float = debris._rd.range_(60.0, 130.0) * (0.6 + 0.5 * s)
-		var life2: float = debris._rd.range_(0.9, 1.5)
+		var life2: float = debris._rd.range_(0.9, 1.5) * lk
 		_streak(x + off2, y, cos(a2) * sp2, sin(a2) * sp2, len2, life2, y)
 	# Foam running out along the surface, both ways.
 	var np: int = int(round((p("slap", "foam_base") + p("slap", "foam_per_scale") * s) * q * gain))
@@ -262,13 +269,13 @@ func slap(S: SimState, x: float, y: float, thrown: int = -1) -> void:
 		var run: float = debris._rd.range_(p("slap", "run_min"), p("slap", "run_max")) * s
 		var rise: float = debris._rd.range_(30.0, 160.0)
 		var sz: float = debris._rd.range_(120.0, 300.0) * (0.5 + 0.5 * s)
-		var fl: float = debris._rd.range_(1.0, 1.9)
+		var fl: float = debris._rd.range_(1.0, 1.9) * lk
 		var ox: float = debris._rd.range_(0.0, 70.0) * s
 		_foam(x + side2 * ox, y + 12.0, side2 * run, rise, sz, fl)
 	# Two flat rings spreading on the sheet (one under reduced motion).
 	var r0: float = p("slap", "ring_r") * s
 	var rate: float = p("slap", "ring_rate") * s
-	var rl: float = p("slap", "ring_life")
+	var rl: float = p("slap", "ring_life") * lk
 	debris._ring(x, y + 6.0, RenderLook.Z_BEAMS + 6.0, r0, rate, rl, true)
 	if not debris.reduced:
 		debris._ring(x, y + 6.0, RenderLook.Z_BEAMS + 7.0, r0 * 0.5, rate * 0.65, rl * 1.3, true)

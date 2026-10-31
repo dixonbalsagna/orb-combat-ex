@@ -2227,6 +2227,64 @@ func _intro() -> void:
 		if gone_by < 0 and hq.debris.bits.filter(func(b): return b.kind == VfxDebris.PUFF or b.kind == VfxDebris.CHUNK).is_empty():
 			gone_by = k
 	_check(gone_by >= 0 and gone_by < 100, "every puff and chunk of the landing has cleared within 100 ticks (%d)" % gone_by)
+	# Rulings 2026-10-30 row 13: with the floor on, an entrance landing in deep water digs nothing (the cue arrives at the sheet with r 0): a splash on the sheet, short, and no clods or dust. Dry land and shallows keep the landing.
+	var floor_ent: bool = WorldFill.floorOn()
+	WorldFill.setFloor(true)
+	var deep_x: float = NAN
+	for c in range(SimConst.NC):
+		var xc: float = (float(c) + 0.5) * SimConst.COL
+		if not WorldWater.burialOK(S, xc) and WorldWater.floorDepth(S, xc) > 0.0:
+			deep_x = xc
+			break
+	if not is_nan(deep_x):
+		var sheet_y: float = WorldWater.floorAt(S, deep_x)
+		var wland := func(r: float): return VfxMock.ev("entrance_land", {"actor": 0.0, "x": deep_x, "y": sheet_y, "z": 0.0, "y1": sheet_y + 6000.0, "r": r})
+		var wfall := VfxMock.ev("entrance_fall", {"actor": 0.0, "x": deep_x, "y": 0.0, "z": 0.0, "y1": 6000.0, "dur": 0.6})
+		var hw := VfxHub.new()
+		hw.reset(S, 6)
+		_tick(S, hw, [wfall])
+		_tick(S, hw, [wland.call(0.0)])
+		var wchunks: int = hw.debris.bits.filter(func(b): return b.kind == VfxDebris.CHUNK).size()
+		_check(hw.water.slaps == 1 and hw.debris.spawned > 20 and wchunks == 0, "with the floor on an entrance landing in deep water (r 0) is a splash on the sheet, no clods (%d bits, %d chunks)" % [hw.debris.spawned, wchunks])
+		var wlong: float = 0.0
+		for b in hw.debris.bits:
+			wlong = maxf(wlong, b.life)
+		_check(wlong <= 1.5, "the entrance splash lives at most %.2f s (limit 1.5), cleared by the staredown" % wlong)
+		var hl := VfxHub.new()
+		hl.reset(S, 6)
+		_tick(S, hl, [VfxMock.ev("splash", {"x": deep_x, "y": sheet_y, "n": 14})])
+		_check(hw.debris.spawned < hl.debris.spawned, "the entrance splash is smaller than a landing's (%d against %d bits)" % [hw.debris.spawned, hl.debris.spawned])
+		var hwc := VfxHub.new()
+		hwc.reset(S, 6)
+		_tick(S, hwc, [wfall])
+		_tick(S, hwc, [wland.call(196.0)])
+		_check(hwc.water.slaps == 0 and hwc.earth.contact_events == 1, "a crater dug (r 196): the earth's landing as before, no splash")
+		var hws := VfxHub.new()
+		hws.reset(S, 6)
+		_tick(S, hws, [wland.call(0.0)])
+		_check(hws.water.slaps == 0 and hws.debris.bits.size() == 0, "a landing with no fall before it (the skipped intro) throws no splash either")
+		var hwr := VfxHub.new()
+		hwr.reduced_motion = true
+		hwr.reset(S, 6)
+		hwr.reduced_motion = true
+		_tick(S, hwr, [wfall])
+		_tick(S, hwr, [wland.call(0.0)])
+		_check(hwr.water.slaps == 1 and hwr.debris.spawned < hw.debris.spawned, "reduced motion: fewer pieces (%d against %d)" % [hwr.debris.spawned, hw.debris.spawned])
+		var hwsw := VfxHub.new()
+		hwsw.sheet_splash_enabled = false
+		hwsw.reset(S, 6)
+		_tick(S, hwsw, [wfall])
+		_tick(S, hwsw, [wland.call(0.0)])
+		_check(hwsw.water.slaps == 0 and hwsw.earth.contact_events == 1, "the switch off: the landing as before")
+		WorldFill.setFloor(false)
+		var hwo := VfxHub.new()
+		hwo.reset(S, 6)
+		_tick(S, hwo, [wfall])
+		_tick(S, hwo, [wland.call(0.0)])
+		_check(hwo.water.slaps == 0 and hwo.earth.contact_events == 1, "with the floor off the landing is the earth's, as it was")
+	else:
+		_check(false, "no deep-water column found for the entrance splash check")
+	WorldFill.setFloor(floor_ent)
 	# The entrance craters have no crack set, played or skipped.
 	var hc := VfxHub.new()
 	hc.cracks_enabled = true
