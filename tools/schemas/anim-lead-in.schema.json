@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-lead-in",
+  "title": "anim.lead_in/1",
+  "description": "data/anim/lead_in.json: the blows whose body leads the contact (docs/animation/lead-in.md; AnimFighter._lead_in). For each key set listed under `pieces`, over the last ticks before the contact the hips, spine, legs and free arm ease toward the contact key by `weights` (index 0 is the tick before the contact), while the striking limb keeps its chamber and lands on the contact tick. `arm` is the free arm's own list. A row may carry its own lists; an empty row takes the file's. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore. Cross-reference to add in tools/lib/xref-fight.js (anim-lead-in-keyset: every key under pieces is a key set of a wave's keysets file).",
+  "type": "object",
+  "required": ["schema", "weights", "pieces"],
+  "patternProperties": {
+    "^_": {}
+  },
+  "properties": {
+    "schema": {
+      "const": "anim.lead_in/1"
+    },
+    "weights": {
+      "$ref": "#/$defs/weights"
+    },
+    "arm": {
+      "$ref": "#/$defs/weights"
+    },
+    "pieces": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": {
+        "type": "object",
+        "patternProperties": {
+          "^_": {}
+        },
+        "properties": {
+          "weights": {
+            "$ref": "#/$defs/weights"
+          },
+          "arm": {
+            "$ref": "#/$defs/weights"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "weights": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 6,
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "description": "How far toward the contact key, 0 to 1, on each tick before the contact: the tick before it first."
+    }
+  }
+}

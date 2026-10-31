@@ -3234,6 +3234,8 @@ func _exchange_layers(S: SimState, f, ex, T: float) -> void:
 		hips = pf.hips.lerp(_base_hips, w4)
 		curl = pf.curl.lerp(_base_curl, w4)
 		hw = 1.0 - w4
+	if dtc < 0.0 and pstyle != "" and RenderAnim.lead_in:
+		_lead_in(ksid, pk, lb, side, dtc)
 	var gamp: float = _gap_amp(prow, float(gaps[best]))
 	if gamp < 0.999 and _base.size() == AnimRig.N:
 		AnimPose.mix(q, _base, 1.0 - gamp)   # a burst: the closer the blows, the shorter each one (the pose stays nearer the guard it came from)
@@ -3827,6 +3829,40 @@ func _press_slerp(i: int, to: Quaternion, w: float) -> void:
 		q[i] = AnimJoints.slerp_limb(qa, to, w)
 	else:
 		q[i] = qa.slerp(to, w)
+
+
+## The body's lead-in to a listed blow (docs/animation/lead-in.md; data/anim/lead_in.json): over the last ticks before the contact the hips, the spine, the legs and the free arm ease toward the contact
+## key by the row's weights (the tick before the contact first), and the striking limb stays on its chamber, so the fist or the foot still lands on the contact tick with the body already behind it.
+## Without it every bone takes the contact key on that one tick: a pelvis 10 to 40 units ahead and both upper arms turned 50 to 170 degrees in a single frame.
+func _lead_in(ksid: String, pk: AnimPose, lb: String, side: bool, dtc: float) -> void:
+	var rows: Dictionary = AnimData.lead_in.get("pieces", {})
+	if not rows.has(ksid):
+		return
+	var row: Dictionary = rows[ksid]
+	var ws: Array = row.get("weights", AnimData.lead_in.get("weights", []))
+	var n: int = roundi(-dtc / DT)   # ticks to the contact
+	if n < 1 or n > ws.size():
+		return
+	var w: float = float(ws[n - 1])
+	var wa: Array = row.get("arm", AnimData.lead_in.get("arm", ws))   # the free arm's own weights: it moves nothing else, so it can lead further than the hips
+	var w_arm: float = float(wa[n - 1]) if n <= wa.size() else 0.0
+	var sfx: String = "_l" if side else "_r"
+	var legs: bool = lb.begins_with("foot") or lb.begins_with("knee") or lb.begins_with("shin")
+	var head: bool = lb.begins_with("head")
+	for i in range(AnimRig.N):
+		var bn: String = String(AnimRig.BONES[i][0])
+		var arm: bool = bn.begins_with("clavicle") or bn.begins_with("upper_arm") or bn.begins_with("forearm") or bn.begins_with("hand") or bn.begins_with("fingers")
+		if head:
+			if bn == "neck" or bn == "head":
+				continue
+		elif bn.ends_with(sfx):
+			if legs:
+				if bn.begins_with("thigh") or bn.begins_with("shin") or bn.begins_with("foot"):
+					continue
+			elif arm:
+				continue
+		_press_slerp(i, pk.q[i], w_arm if arm else w)
+	hips = hips.lerp(pk.hips, w)
 
 
 ## Combat's rule for a medium thrown on Y's 12-tick wind-up (data/anim/medium_wind.json): the rule's numbers for this key set, or {} when the blow is not a medium, plays a long wind-up (a held Y, 15 ticks or more:

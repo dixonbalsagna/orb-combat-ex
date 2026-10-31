@@ -70,6 +70,7 @@ static var pop: Dictionary = {}            # data/anim/pop.json: the phases of t
 static var secondary: Dictionary = {}      # data/anim/secondary.json: follow-through of the head, upper back and forearms
 static var ground_motion: Dictionary = {}  # data/anim/ground_motion.json: ground locomotion (the gait, the kick-off, the landing by surface)
 static var locomotion: Dictionary = {}    # data/anim/locomotion.json: flight locomotion (the lean spring, the braking flare, the dash's coil, the bank, the hover's breath)
+static var lead_in: Dictionary = {}      # data/anim/lead_in.json: the blows whose body leads the contact over the last ticks (docs/animation/lead-in.md)
 static var press_ack: Dictionary = {}    # data/anim/press_ack.json: the anticipation of a press that has to wait (Encounter's press_ack queued)
 static var recoil: Dictionary = {}       # data/anim/recoil.json: recoil exits and ricochets (docs/combat/choreography-feel.md)
 static var chain: Dictionary = {}        # data/anim/chain.json: the chain inside a tower (docs/animation/ragdoll-physics-paper.md section 4)
@@ -206,6 +207,7 @@ static func load_all() -> void:
 	clinch = _read("clinch.json")
 	recoil = _read("recoil.json")
 	press_ack = _read("press_ack.json")
+	lead_in = _read("lead_in.json")
 	locomotion = _read("locomotion.json")
 	ground_motion = _read("ground_motion.json")
 	secondary = _read("secondary.json")

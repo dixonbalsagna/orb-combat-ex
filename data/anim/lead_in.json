@@ -1,0 +1,12 @@
+{
+ "schema": "anim.lead_in/1",
+ "_about": "The body's lead-in to a blow (docs/animation/lead-in.md; AnimFighter._lead_in): for the key sets listed here, over the last ticks before the contact the hips, spine, legs and free arm ease toward the contact key, while the striking limb keeps its chamber and lands on the contact tick. `weights` is how far the body is toward the contact key on each tick before it (the tick before the contact first); `arm` is the free arm's own (it moves nothing else, so it can lead further than the hips). A row may carry its own lists. Without a row a blow takes its contact key on the one tick, the whole body at once. Render only, outside the sim's data hash.",
+ "weights": [0.7, 0.4, 0.15],
+ "arm": [0.85, 0.55, 0.25],
+ "pieces": {
+  "w1.stomp": {},
+  "pr.stomp": {},
+  "ru.su_ram": {"weights": [0.45, 0.3, 0.15, 0.05], "arm": [0.8, 0.55, 0.3, 0.1]},
+  "pu.su_drive": {"weights": [0.38, 0.25, 0.12, 0.04], "arm": [0.8, 0.55, 0.3, 0.1]}
+ }
+}

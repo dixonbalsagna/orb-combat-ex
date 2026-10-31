@@ -1708,6 +1708,82 @@ func _test_bends() -> void:
 	print("bends: nine cells x two fighters at 60 Hz, %s" % str(c))
 
 
+## The body's lead-in (docs/animation/lead-in.md): a listed blow's body (hips, spine, legs, free arm) eases into the contact key over the last ticks instead of taking it on the one tick, and the contact
+## tick itself is the same. Three blows are listed (the stomp of both fighters, the Anti-hero's ram, the Protagonist's drive); every other blow plays the same with and without it.
+func _lead_run(S: SimState, who: String, style: String, piece: String, contacts: Array, extra: Dictionary, on: bool) -> Array:
+	RenderAnim.lead_in = on
+	_bn_rows.clear()
+	_bn_tag = piece
+	_tier_scene(S, who, style, [piece], contacts, extra, "heavy")
+	return _bn_rows.duplicate()
+
+
+func _test_lead_in() -> void:
+	AnimData.load_every_wave()
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var press_was: bool = RenderAnim.press_styles
+	var ground_was: bool = RenderAnim.ground_feet
+	var on_was: bool = RenderAnim.lead_in
+	RenderAnim.press_styles = true
+	RenderAnim.ground_feet = false
+	_tier_damage = true
+	_bn_on = true
+	var cases := [
+		["antihero", "medium", "stomp", [34, 48, 62], 48],
+		["protagonist", "medium", "stomp", [34, 48, 62], 48],
+		["antihero", "super", "su_ram", [44, 72, 100], 72],
+		["protagonist", "super", "su_drive", [44, 72, 100], 72],
+	]
+	var worst_end: float = 0.0
+	var line: Array = []
+	for cs in cases:
+		var off: Array = _lead_run(S, cs[0], cs[1], cs[2], cs[3], {}, false)
+		var on: Array = _lead_run(S, cs[0], cs[1], cs[2], cs[3], {}, true)
+		var c: int = int(cs[4])
+		var by_off := {}
+		var by_on := {}
+		for r in off:
+			by_off[int(r.k)] = r
+		for r in on:
+			by_on[int(r.k)] = r
+		var step_off: float = float(by_off[c].pel.x) - float(by_off[c - 1].pel.x)
+		var step_on: float = float(by_on[c].pel.x) - float(by_on[c - 1].pel.x)
+		var free: String = "l" if String(by_on[c].strike) == "r" else "r"
+		var ua := func(by: Dictionary) -> float:
+			var a: Quaternion = by[c][free].ua_q
+			var b: Quaternion = by[c - 1][free].ua_q
+			return rad_to_deg(2.0 * acos(clampf(absf(a.dot(b)), 0.0, 1.0)))
+		var turn_off: float = ua.call(by_off)
+		var turn_on: float = ua.call(by_on)
+		# the contact tick is the key it always was: the pelvis and both hands within half a unit of where they were
+		var end: float = (by_on[c].pel - by_off[c].pel).length()
+		for side in ["r", "l"]:
+			end = maxf(end, (by_on[c][side].wr - by_off[c][side].wr).length())
+		worst_end = maxf(worst_end, end)
+		_expect(step_on <= 0.6 * step_off and turn_on <= 0.5 * turn_off, "lead-in: %s %s: the pelvis steps %.1f on the contact tick (%.1f without) and the free upper arm turns %.0f degrees (%.0f without); at most 0.6 and 0.5 of the before" % [cs[0], cs[2], step_on, step_off, turn_on, turn_off])
+		_expect(end <= 0.5, "lead-in: %s %s: the contact tick moved by %.2f units (0.5 allowed)" % [cs[0], cs[2], end])
+		line.append("%s %.1f/%.1f %.0f/%.0f" % [cs[2], step_on, step_off, turn_on, turn_off])
+	# a blow that is not listed plays the same with it as without
+	var same: float = 0.0
+	for pc in [["antihero", "medium", "roundhouse"], ["protagonist", "super", "su_turn"], ["antihero", "super", "su_heel"]]:
+		var off2: Array = _lead_run(S, pc[0], pc[1], pc[2], [34, 48, 62], {}, false)
+		var on2: Array = _lead_run(S, pc[0], pc[1], pc[2], [34, 48, 62], {}, true)
+		_expect(off2.size() == on2.size() and off2.size() > 0, "lead-in: %s %s was sampled both ways" % [pc[0], pc[2]])
+		for i in range(mini(off2.size(), on2.size())):
+			same = maxf(same, (off2[i].pel - on2[i].pel).length())
+			for side in ["r", "l"]:
+				same = maxf(same, (off2[i][side].wr - on2[i][side].wr).length())
+	_expect(same == 0.0, "lead-in: a blow that is not listed differs by %.4f units with the lead-in on (0 allowed)" % same)
+	RenderAnim.lead_in = on_was
+	_bn_on = false
+	RenderAnim.press_styles = press_was
+	RenderAnim.ground_feet = ground_was
+	print("lead-in: pelvis step and free upper-arm turn on the contact tick, with and without: %s; contact tick off by at most %.2f units; unlisted blows identical (%.4f)" % [", ".join(PackedStringArray(line)), worst_end, same])
+
+
 ## The pulled frames (homework 4b): every key set of both fighters, at the study's 60 units and at its own striking range, none of them with a frame of the last pass pulling over 30 degrees,
 ## at most two over 20.
 ## The contact-key pass (docs/animation/guard-pass.md): the free hand of every strike's contact key is within its goal of the stance guard (20 units for a hand blow, 30 for a kick, in the chest's frame).
@@ -6798,6 +6874,7 @@ func _run() -> void:
 	_test_pair_ready()
 	_test_tick_fast()
 	_test_pulled()
+	_test_lead_in()
 	_test_bends()
 	_test_styles()
 	_test_medium_wind()
