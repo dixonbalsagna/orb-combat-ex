@@ -11,7 +11,9 @@ extends SceneTree
 ## Usage: godot --headless --path . --script res://render/tools/bark_check.gd -- --seeds=12345,777,31337 --ticks=7200 [--slots=EMPRESS,CYBORG]
 ## Last line: "BARK CHECK: PASS|FAIL ...".
 
-const APPROVED := ["orb_own_words_hw1", "claude_kept_by_orb_hw11", "ai01_gemini_rewrite_at_orb_direction_hw11"]
+const APPROVED := ["orb_own_words_hw1", "claude_kept_by_orb_hw11", "ai01_gemini_rewrite_at_orb_direction_hw11", "claude_kept_by_orb_mc", "ai01_gemini_rewrite_orb_reviewed_mc"]
+## Beats whose lines are loaded but which the emitter has no read for yet (a presentation-side grant); they cannot be made to speak.
+const UNREAD := ["taunt_start", "last_stand_ready", "absorb_signature", "finisher_landed", "finisher_survived"]
 var fails: int = 0
 
 
@@ -161,6 +163,9 @@ func _synthetic(d: Dictionary) -> void:
 	var bad: int = 0
 	for bk in d.beats:
 		var bd: Dictionary = d.beats[bk]
+		if UNREAD.has(bk):
+			print("  note: ", bk, " holds ", bd.lines.size(), " fighters' lines and the emitter has no read for it yet")
+			continue
 		for fid in bd.lines:
 			for slot_other in [0, 1]:
 				var nb := NarrativeBarks.make(S, {}, {"enabled": true})
@@ -186,6 +191,15 @@ func _synthetic(d: Dictionary) -> void:
 						e.type = "lodge"; e.actor = 0.0
 					"flurry_taken":
 						e.type = "cue"; e.kind = "stagger"; e.text = "flurry"; e.actor = 0.0
+					"low_health_swing":
+						e.type = "damage"; e.kind = "light"; e.attacker = 0.0; e.victim = -1.0
+						nb._done_once["first_blow"] = true
+						nb._core_stage[0] = 2
+					"exchange_break":
+						e.type = "cue"; e.kind = "brawl_end"; e.text = "idle"; e.amount = 600.0; e.actor = 0.0; e.target = -1.0
+					"after_chain":
+						e.type = "damage"; e.kind = "light"; e.attacker = 0.0; e.victim = -1.0
+						nb._done_once["first_blow"] = true
 				S.tick = 10000 + slot_other * 20000
 				var evs: Array = [e]
 				# heavy blows give the hash two speakers; try a few ticks until the picked one is ours
@@ -193,6 +207,8 @@ func _synthetic(d: Dictionary) -> void:
 				for k in range(40):
 					S.tick += 700
 					e.tick = S.tick
+					if bk == "after_chain":
+						nb._chain_at[0] = S.tick - 10   # his chain_end, a moment ago (the read erases it at his next blow)
 					got = nb.step(S, evs)
 					if not got.is_empty():
 						break

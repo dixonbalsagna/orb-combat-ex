@@ -10,10 +10,13 @@ A line is any markdown line of the form  > "the line"  (the homework format).
 A speaker block starts at a "## " heading. Standard library only.
 Exit code 1 if any line fails a hard rule.
 
-Hard rules: R1 length (4 to 12 words), R3 banned words, a word said three times,
-            R8 the ellipsis rate (more than one line in ten per fighter in a batch, or two in one line).
+Hard rules: R1 length (4 to 15 words, Orb 2026-10-30), R3 banned words, a word said three times,
+            R8 the ellipsis rate (more than one line in ten per fighter in a batch, or two in one line),
+            R10 (--live only) a rotation keyword (ribs, shoulder, rhythm, calories) said by one fighter in two neighbouring beats.
 Reported for a human to check (not failing): every ellipsis (is it hesitation, regret or
-            performative exhaustion?), R2 no contraction, R6 not said to the opponent.
+            performative exhaustion?), R2 no contraction, R6 not said to the opponent (Orb's 1v1 aim rule),
+            a line under 6 words (a complete clause is preferred to a telegram).
+--live: an Orb-approved line may be waived by id for the exact rule it breaks (line-lint.json orb_approved_waivers).
 """
 import json, math, os, re, sys
 
@@ -110,6 +113,8 @@ def check(line, heading="", exempt=False):
         hard.append("R8 more than one ellipsis in a line")
     if exempt:
         hard = [h for h in hard if not (h.startswith("R1 length") or h.startswith("R8 "))]
+    if n < LINT["rules"]["R1_length"].get("telegram_check_below_words", 0):
+        soft.append(f"R1 telegram: {n} words (a complete clause is preferred)")
     if not re.search(r"\w'\w", line):
         soft.append("R2 no contraction")
     if not re.search(r"\b(you|your|you're|you've|you'll|yours)\b", line, re.I):
@@ -160,14 +165,18 @@ def main(paths):
 
 HEAD_OF = {"PROTAGONIST": "## The Protagonist", "RIVAL": "## The rival (the Anti-hero)", "EMPRESS": "## The Empress", "CYBORG": "## The Cyborg"}
 OWN = LINT.get("orb_own_exemption", {}).get("sources", [])
+WAIVERS = LINT.get("orb_approved_waivers", {}).get("ids", {})
+ROT = LINT["rules"].get("R10_rotation", {}).get("keywords", [])
 
 
 def live(path):
     """Lint a data file whose beats hold lines with a source (data/narrative/live_barks.json). A line whose source is in
     orb_own_exemption.sources is exempt from R1 and R8 (and does not count in the ellipsis rate); all else is strict."""
     d = json.load(open(path, encoding="utf-8"))
-    failed, total, exempt = 0, 0, 0
+    failed, total, exempt, nwaived = 0, 0, 0, 0
     blocks = {}
+    seen_ids = set()
+    names = list(d.get("beats", {}))
     for bk, b in d.get("beats", {}).items():
         for fid, ls in b.get("lines", {}).items():
             for l in ls:
@@ -176,6 +185,15 @@ def live(path):
                 exempt += 1 if own else 0
                 head = HEAD_OF.get(fid, "")
                 hard, soft = check(l["text"], head, own)
+                if l["id"] in seen_ids:
+                    hard.append(f"duplicate line id {l['id']}")
+                seen_ids.add(l["id"])
+                waived = [h for h in hard if h in WAIVERS.get(l["id"], [])]
+                hard = [h for h in hard if h not in WAIVERS.get(l["id"], [])]
+                nwaived += len(waived)
+                for s in soft:
+                    if s.startswith("R1 telegram"):
+                        print(f"{path}: CHECK {s} [{bk}/{fid}] {l['text']}")
                 blk = blocks.setdefault(head, {"n": 0, "ell": []})
                 if not own:
                     blk["n"] += 1
@@ -194,7 +212,16 @@ def live(path):
         if len(b["ell"]) > cap:
             failed += 1
             print(f"{path}: FAIL R8 ellipsis rate in '{head}': {len(b['ell'])} of {b['n']} non-exempt lines (cap {cap})")
-    print(f"{path}: {total} lines, {exempt} exempt as Orb's own words, {failed} failing")
+    # R10: a rotation keyword said by one fighter in two neighbouring beats (the file's beat order)
+    for fid in HEAD_OF:
+        for kw in ROT:
+            hit = [i for i, bk in enumerate(names)
+                   if any(re.search(r"\b" + kw + r"\b", l["text"], re.I) for l in d["beats"][bk].get("lines", {}).get(fid, []) if l.get("source", "") not in OWN)]
+            for a, c in zip(hit, hit[1:]):
+                if c - a == 1:
+                    failed += 1
+                    print(f"{path}: FAIL R10 rotation: {fid} says '{kw}' in back-to-back beats {names[a]} and {names[c]}")
+    print(f"{path}: {total} lines, {exempt} exempt as Orb's own words, {nwaived} rule breaks waived by id, {failed} failing")
     return 1 if failed else 0
 
 

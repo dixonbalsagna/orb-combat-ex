@@ -4,7 +4,7 @@ Owner: Narrative and Fighter Identity. Version 1, 2026-10-01. For Orb to confirm
 
 These are the patterns Orb has called out, plus ones we noticed ourselves in our own drafts. Every example is a real line from the files in this folder, so you can search for it. **Mark each as: tell (ban it), fine (we can keep it sparingly), or not a tell.** Add your own at the bottom. This sheet is the seed of the lint check.
 
-Counts are in the current drafts (`protagonist.csv`, `anti_hero.csv`, `empress.csv`, `cyborg.csv`, `kai.csv`, `vorr.csv`).
+Rows 19 to 22 were added on 2026-10-30 from Orb's rules and the audit of the mid-combat master (`voice-lab/mid-combat-lines.md`, review notes). Counts are in the current drafts (`protagonist.csv`, `anti_hero.csv`, `empress.csv`, `cyborg.csv`, `kai.csv`, `vorr.csv`).
 
 | # | Tell | Example | Where it shows up |
 |---|---|---|---|
@@ -26,6 +26,10 @@ Counts are in the current drafts (`protagonist.csv`, `anti_hero.csv`, `empress.c
 | 16 | **A compliment before the kill**, in the same shape each time | "You were so brave behind that." / "It was a fine face to look at." | VORR, Anti-hero |
 | 17 | **Quiet stillness**: "...Hm." as a reaction | "...Hm." / "Hm. A fine touch." | Anti-hero, VORR |
 | 18 | **Everything wraps up neatly**: the last line of a section tidies the emotion | "Okay. Nobody's hurt. ...Everybody's okay." | Protagonist, KAI |
+| 19 | **The caveman telegram** (Orb, 2026-10-30): a line chopped into fragments just to stay short, with no verb to carry it. A complete clause is preferred; the limit is now 4 to 15 words | "Blocked. Throw something worth blocking." / "Land hard. You earned that." | Rival, Protagonist |
+| 20 | **The repeated body word** (Orb, 2026-10-30): "ribs", "shoulder", "rhythm" or "calories" in back-to-back beats. Rotate the anatomy (jaw, collarbone, spine, solar plexus, shins, knuckles, lungs, temples, wrists) | "Right on the shoulder!" in one beat and "Shoulder's open!" in the next | Protagonist, Cyborg |
+| 21 | **A line aimed at nothing** (Orb, 2026-10-30): in a 1v1 a line said to a wall, a building, the planet or the speaker's own servos instead of the opponent | "How dare this cheap brickwork get in our way?" | Empress, Cyborg, Protagonist |
+| 22 | **The same laugh opener** on about half an Empress's lines | "Hahaha!" / "Gahaha!" (26 of 54 in the master) | Empress |
 
 ## What we are asking you
 

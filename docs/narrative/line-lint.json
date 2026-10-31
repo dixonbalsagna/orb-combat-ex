@@ -4,8 +4,9 @@
   "rules": {
     "R1_length": {
       "min_words": 4,
-      "max_words": 12,
-      "why": "Orb's directive: Mid-Punch Brevity; marks 3 and 10"
+      "max_words": 15,
+      "why": "Orb's directive: Mid-Punch Brevity; marks 3 and 10. Orb, 2026-10-30: 4 to 15 words, complete clauses preferred over caveman telegrams (the limit was 12). A line under 6 words prints a CHECK.",
+      "telegram_check_below_words": 6
     },
     "R2_contractions": {
       "expect": true,
@@ -54,6 +55,30 @@
       },
       "exclamation": "natural for the Protagonist",
       "why": "Orb's rewrites 1, 4, 5 and Orb's note of 2026-10-15"
+    },
+    "R10_rotation": {
+      "keywords": [
+        "ribs",
+        "shoulder",
+        "rhythm",
+        "calories",
+        "calorie"
+      ],
+      "anatomy_to_rotate": [
+        "jaw",
+        "collarbone",
+        "spine",
+        "solar plexus",
+        "shins",
+        "knuckles",
+        "lungs",
+        "temples",
+        "wrists"
+      ],
+      "why": "Orb, 2026-10-30: never repeat ribs, shoulder, rhythm or calories across back-to-back beats; rotate the physical nouns across the whole body. In a data file the lint fails a keyword that one fighter says in two neighbouring beats (the file's beat order)."
+    },
+    "R11_aim": {
+      "why": "Orb, 2026-10-30: in a 1v1 every line is aimed at the opponent, never at an object or an off-screen helper. A machine cannot judge aim, so R6 (no second person) stays a CHECK for a human; the Empress and Cyborg bans already fail the worst cases."
     },
     "R9_reference_lines": {
       "reuse": false,
@@ -338,8 +363,23 @@
       "count"
     ]
   },
+  "orb_approved_waivers": {
+    "ruling": "Orb approved the mid-combat master on 2026-10-30 (relayed by the EP). Eight approved lines break a rule; each is waived by its line id (data), for exactly the rule listed, until Orb or the EP rules. Delete an entry to make the lint fail the line again.",
+    "keyed_on": "the line's `id` in a --live data file",
+    "ids": {
+      "mc.196": ["R1 length 17"],
+      "mc.228": ["R1 length 16"],
+      "mc.234": ["R1 length 17"],
+      "mc.235": ["R1 length 16"],
+      "mc.239": ["R1 length 16"],
+      "mc.259": ["R1 length 16"],
+      "mc.223": ["Gemini bible: 'menu' is banned for cyborg"],
+      "mc.240": ["Gemini bible: 'appetizer' is banned for cyborg"]
+    },
+    "open_question": "Six lines run 16 or 17 words: either the limit moves to 17 or Orb trims them. Two Cyborg lines use waiter words Orb banned earlier."
+  },
   "orb_own_exemption": {
-    "ruling": "EP 2026-10-28: Orb's own words win. A line whose `source` is Orb's own is exempt from R1 (length) and R8 (the ellipsis rule, in a line and in a batch). Every other rule stays strict for it, and the lint stays strict for every other line.",
+    "ruling": "EP 2026-10-28: Orb's own words win. A line whose `source` is Orb's own is exempt from R1 (length), R8 (the ellipsis rule, in a line and in a batch) and, since 2026-10-30, R10 (rotation). Every other rule stays strict for it, and the lint stays strict for every other line.",
     "keyed_on": "the line's `source` field (data), never a list of strings",
     "sources": [
       "orb_own_words_hw1",
@@ -347,7 +387,8 @@
     ],
     "exempt_rules": [
       "R1",
-      "R8"
+      "R8",
+      "R10"
     ],
     "not_exempt": "Orb's marks on lines others wrote (hw11: claude_kept_by_orb_hw11, ai01_gemini_rewrite_at_orb_direction_hw11) are not Orb's own words, so they stay strict. A line Orb writes carries source `orb`.",
     "applies_to": "python docs/narrative/line-lint.py --live FILE.json (a data file whose beats hold lines with a source, such as data/narrative/live_barks.json). Markdown batches carry no source and are always strict."

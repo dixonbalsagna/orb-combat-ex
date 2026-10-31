@@ -301,7 +301,9 @@
           "enum": [
             "orb_own_words_hw1",
             "claude_kept_by_orb_hw11",
-            "ai01_gemini_rewrite_at_orb_direction_hw11"
+            "ai01_gemini_rewrite_at_orb_direction_hw11",
+            "claude_kept_by_orb_mc",
+            "ai01_gemini_rewrite_orb_reviewed_mc"
           ]
         },
         "hw": {

@@ -1,14 +1,14 @@
 # The four voice bibles, after the Gemini review
 
-Owner: Narrative and Fighter Identity. Version 2, 2026-10-16 (night; adds Orb's ruling on flag a and Legal's conditions, RL-153 to RL-155). Orb ran homework 11 through Google's Gemini and called the result "very successful"; the marks are Orb's direction (`docs/ep/vision.md`, "Orb's homework 11 ... reviewed through Gemini"; the marked file is `homework/done/11-lines-the-brawl.md`). **Provenance:** the archetypes, the table below and the 26 rewritten lines are Gemini's, at Orb's direction, and are recorded as such (`pending/provenance_hw11.json`). Everything I wrote from them (the re-cuts, the lint, this page) is Claude's. All lines remain drafts until Orb marks them.
+Owner: Narrative and Fighter Identity. Version 3, 2026-10-30 (adds Orb's new line rules, section 11; version 2, 2026-10-16 night, added Orb's ruling on flag a and Legal's conditions, RL-153 to RL-155). Orb ran homework 11 through Google's Gemini and called the result "very successful"; the marks are Orb's direction (`docs/ep/vision.md`, "Orb's homework 11 ... reviewed through Gemini"; the marked file is `homework/done/11-lines-the-brawl.md`). **Provenance:** the archetypes, the table below and the 26 rewritten lines are Gemini's, at Orb's direction, and are recorded as such (`pending/provenance_hw11.json`). Everything I wrote from them (the re-cuts, the lint, this page) is Claude's. All lines remain drafts until Orb marks them.
 
 Where this page disagrees with `voices/*.md`, **this page wins**. The old bibles are kept for their lists of reactions and situations; their lines are not to be used.
 
 ## 1. The three global rules
 
-1. **Single breath: 4 to 12 words.** Fragments, imperatives, contractions. (Unchanged: `writing-quality.md` section 0.)
-2. **Strict direct address.** In a 1v1 every line is aimed at the opponent's throat. Never at an object ("Sorry, shop!"), a building, or an off-screen minion ("Guard, write that down"). *The Protagonist's concern for people still shows, but as something he says to the opponent* ("That tower's full of people! Fight me over here!"). Catching or shouting at a civilian who is on screen is allowed and kept rare.
-3. **Visceral, tactile words.** Prefer the body and the material over filler: ribs, teeth, knuckles, frame, silk, rubble, dirt, marrow, steel, pulse, shoulder, elbows, bone, bricks. Cut "okay", "I barely felt that", "I'm stuck".
+1. **Natural dub breath: 4 to 15 words** (Orb, 2026-10-30; it was 4 to 12). Contractions and imperatives stay, but a **complete clause is preferred to a caveman telegram**: let a taunt, a signature or a counter stretch to 8 to 15 words so a voice actor has grammatical momentum. (`writing-quality.md` section 0, as amended.)
+2. **Strict direct address.** In a 1v1 every line is aimed at the opponent's throat (Orb, 2026-10-30, again: "every line is aimed at the opponent, never at an object or an off-screen helper"). Never at an object ("Sorry, shop!"), a building, or an off-screen minion ("Guard, write that down"). *The Protagonist's concern for people still shows, but as something he says to the opponent* ("That tower's full of people! Fight me over here!"). Catching or shouting at a civilian who is on screen is allowed and kept rare.
+3. **Visceral, tactile words, rotated.** Prefer the body and the material over filler: ribs, teeth, knuckles, frame, silk, rubble, dirt, marrow, steel, pulse, shoulder, elbows, bone, bricks. Cut "okay", "I barely felt that", "I'm stuck". **Rotate them (Orb, 2026-10-30):** never repeat "ribs", "shoulder", "rhythm" or "calories" in back-to-back beats; spread the physical nouns over the whole body (jaw, collarbone, spine, solar plexus, shins, knuckles, lungs, temples, wrists).
 
 ## 2. Sharper insults
 
@@ -72,3 +72,16 @@ The Empress's guard is a 3v1 character. In a 1v1 she is alone and talks only to 
 1. (Ruled.) The after-the-bell apology stands.
 2. Should the Cyborg's **hunger for fighters** stay (Legal may soften it), or should he be hungry for *anything* and have the humour come from his chassis?
 3. Do you want the **Empress to laugh** in most lines, or in about one in three?
+
+## 11. Orb's line rules of 2026-10-30 (the mid-combat master)
+
+Orb approved the mid-combat master (`voice-lab/mid-combat-lines.md`, 322 lines, Gemini-made and reviewed by Orb) and wrote these rules into it. They are now the rules of this page.
+
+1. **Natural dub breath, 4 to 15 words, complete clauses preferred** over telegrams (section 1, rule 1). Older pages that say "4 to 12 words" (beat-templates, energy-names, filler-templates, planet-and-homes, rally-names, taunt-system) now read 4 to 15; the lint is the gate.
+2. **Anatomical and keyword variety:** never repeat "ribs", "shoulder", "rhythm" or "calories" across back-to-back beats; rotate jaw, collarbone, spine, solar plexus, shins, knuckles, lungs, temples, wrists.
+3. **In a 1v1 every line is aimed at the opponent,** never at an object or an off-screen helper.
+4. **Banned LLM thesaurus words:** commence, futile, demise, symphony, dance, crescendo, reckon, mere, behold, destiny, abyss, limit, surpass, eternal, indeed, shall, hence, thus, whom, regalia, splendid, sovereign, endure, adequate, dignity, courtesy, permit, allowed. (The lint already carried exactly this list: 14 from Orb's first ruling, 14 proposed by Narrative that Orb has now adopted.)
+
+**In the lint** (`docs/narrative/line-lint.py`, `line-lint.json`): R1 is now 4 to 15 words, with a CHECK under 6 words; R10 (new, in `--live` mode) fails a rotation keyword said by one fighter in two neighbouring beats; R6 (no second person) stays a CHECK for a human, since a machine cannot judge aim; the banned list is unchanged. Eight Orb-approved lines that break a rule are waived by line id (`orb_approved_waivers`): six run 16 or 17 words (either the limit moves to 17 or Orb trims them) and two Cyborg lines use waiter words Orb banned earlier ("menu", "appetizer"); the question is open with the EP.
+
+**Provenance of the master:** drafted by Claude, rewritten and tightened by Google Gemini, reviewed and approved by Orb on 2026-10-30; recorded per line in `pending/provenance_mc.json` (ai01; disclosed under Orb's AI rule).

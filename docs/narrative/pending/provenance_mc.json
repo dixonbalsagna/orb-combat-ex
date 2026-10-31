@@ -1,0 +1,1947 @@
+{
+ "schema": "narrative.provenance/1",
+ "_about": "Per-line provenance for Orb's approved mid-combat sheet (docs/narrative/voice-lab/mid-combat-lines.md), 2026-10-30. Legal condition ai01: AI-made text is recorded as such.",
+ "ai_tool": "Google Gemini (rewrote and tightened the sheet)",
+ "drafted_by": "Claude (Anthropic): the 322 original lines and alternates, 2026-10-30",
+ "human_part": "Orb reviewed every line and approved the master on 2026-10-30; the marks (x, alt, or a quoted rewrite) are the sheet's mark column",
+ "counts": {
+  "rewrite_by_gemini": 242,
+  "claude_draft_kept_x": 75,
+  "claude_draft_kept_alt": 5
+ },
+ "disclosure": "Orb's AI rule: disclose AI-made content wherever the game is shown or sold. Public statement names categories (text and dialogue), not vendors.",
+ "lines": [
+  {
+   "id": "mc.001",
+   "sheet_id": "MC-001",
+   "mark": "alt",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.002",
+   "sheet_id": "MC-002",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.003",
+   "sheet_id": "MC-003",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.004",
+   "sheet_id": "MC-004",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.005",
+   "sheet_id": "MC-005",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.006",
+   "sheet_id": "MC-006",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.007",
+   "sheet_id": "MC-007",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.008",
+   "sheet_id": "MC-008",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.009",
+   "sheet_id": "MC-009",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.010",
+   "sheet_id": "MC-010",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.011",
+   "sheet_id": "MC-011",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.012",
+   "sheet_id": "MC-012",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.013",
+   "sheet_id": "MC-013",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.014",
+   "sheet_id": "MC-014",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.015",
+   "sheet_id": "MC-015",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.016",
+   "sheet_id": "MC-016",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.017",
+   "sheet_id": "MC-017",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.018",
+   "sheet_id": "MC-018",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.019",
+   "sheet_id": "MC-019",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.020",
+   "sheet_id": "MC-020",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.021",
+   "sheet_id": "MC-021",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.022",
+   "sheet_id": "MC-022",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.023",
+   "sheet_id": "MC-023",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.024",
+   "sheet_id": "MC-024",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.025",
+   "sheet_id": "MC-025",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.026",
+   "sheet_id": "MC-026",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.027",
+   "sheet_id": "MC-027",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.028",
+   "sheet_id": "MC-028",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.029",
+   "sheet_id": "MC-029",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.030",
+   "sheet_id": "MC-030",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.031",
+   "sheet_id": "MC-031",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.032",
+   "sheet_id": "MC-032",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.033",
+   "sheet_id": "MC-033",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.034",
+   "sheet_id": "MC-034",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.035",
+   "sheet_id": "MC-035",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.036",
+   "sheet_id": "MC-036",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.037",
+   "sheet_id": "MC-037",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.038",
+   "sheet_id": "MC-038",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.039",
+   "sheet_id": "MC-039",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.040",
+   "sheet_id": "MC-040",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.041",
+   "sheet_id": "MC-041",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.042",
+   "sheet_id": "MC-042",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.043",
+   "sheet_id": "MC-043",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.044",
+   "sheet_id": "MC-044",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.045",
+   "sheet_id": "MC-045",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.046",
+   "sheet_id": "MC-046",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.047",
+   "sheet_id": "MC-047",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.048",
+   "sheet_id": "MC-048",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.049",
+   "sheet_id": "MC-049",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.050",
+   "sheet_id": "MC-050",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.051",
+   "sheet_id": "MC-051",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.052",
+   "sheet_id": "MC-052",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.053",
+   "sheet_id": "MC-053",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.054",
+   "sheet_id": "MC-054",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.055",
+   "sheet_id": "MC-055",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.056",
+   "sheet_id": "MC-056",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.057",
+   "sheet_id": "MC-057",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.058",
+   "sheet_id": "MC-058",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.059",
+   "sheet_id": "MC-059",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.060",
+   "sheet_id": "MC-060",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.061",
+   "sheet_id": "MC-061",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.062",
+   "sheet_id": "MC-062",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.063",
+   "sheet_id": "MC-063",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.064",
+   "sheet_id": "MC-064",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.065",
+   "sheet_id": "MC-065",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.066",
+   "sheet_id": "MC-066",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.067",
+   "sheet_id": "MC-067",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.068",
+   "sheet_id": "MC-068",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.069",
+   "sheet_id": "MC-069",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.070",
+   "sheet_id": "MC-070",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.071",
+   "sheet_id": "MC-071",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.072",
+   "sheet_id": "MC-072",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.073",
+   "sheet_id": "MC-073",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.074",
+   "sheet_id": "MC-074",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.075",
+   "sheet_id": "MC-075",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.076",
+   "sheet_id": "MC-076",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.077",
+   "sheet_id": "MC-077",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.078",
+   "sheet_id": "MC-078",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.079",
+   "sheet_id": "MC-079",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.080",
+   "sheet_id": "MC-080",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.081",
+   "sheet_id": "MC-081",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.082",
+   "sheet_id": "MC-082",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.083",
+   "sheet_id": "MC-083",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.084",
+   "sheet_id": "MC-084",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.085",
+   "sheet_id": "MC-085",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.086",
+   "sheet_id": "MC-086",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.087",
+   "sheet_id": "MC-087",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.088",
+   "sheet_id": "MC-088",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.089",
+   "sheet_id": "MC-089",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.090",
+   "sheet_id": "MC-090",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.091",
+   "sheet_id": "MC-091",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.092",
+   "sheet_id": "MC-092",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.093",
+   "sheet_id": "MC-093",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.094",
+   "sheet_id": "MC-094",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.095",
+   "sheet_id": "MC-095",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.096",
+   "sheet_id": "MC-096",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.097",
+   "sheet_id": "MC-097",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.098",
+   "sheet_id": "MC-098",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.099",
+   "sheet_id": "MC-099",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.100",
+   "sheet_id": "MC-100",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.101",
+   "sheet_id": "MC-101",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.102",
+   "sheet_id": "MC-102",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.103",
+   "sheet_id": "MC-103",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.104",
+   "sheet_id": "MC-104",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.105",
+   "sheet_id": "MC-105",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.106",
+   "sheet_id": "MC-106",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.107",
+   "sheet_id": "MC-107",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.108",
+   "sheet_id": "MC-108",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.109",
+   "sheet_id": "MC-109",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.110",
+   "sheet_id": "MC-110",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.111",
+   "sheet_id": "MC-111",
+   "mark": "alt",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.112",
+   "sheet_id": "MC-112",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.113",
+   "sheet_id": "MC-113",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.114",
+   "sheet_id": "MC-114",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.115",
+   "sheet_id": "MC-115",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.116",
+   "sheet_id": "MC-116",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.117",
+   "sheet_id": "MC-117",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.118",
+   "sheet_id": "MC-118",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.119",
+   "sheet_id": "MC-119",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.120",
+   "sheet_id": "MC-120",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.121",
+   "sheet_id": "MC-121",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.122",
+   "sheet_id": "MC-122",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.123",
+   "sheet_id": "MC-123",
+   "mark": "alt",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.124",
+   "sheet_id": "MC-124",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.125",
+   "sheet_id": "MC-125",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.126",
+   "sheet_id": "MC-126",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.127",
+   "sheet_id": "MC-127",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.128",
+   "sheet_id": "MC-128",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.129",
+   "sheet_id": "MC-129",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.130",
+   "sheet_id": "MC-130",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.131",
+   "sheet_id": "MC-131",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.132",
+   "sheet_id": "MC-132",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.133",
+   "sheet_id": "MC-133",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.134",
+   "sheet_id": "MC-134",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.135",
+   "sheet_id": "MC-135",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.136",
+   "sheet_id": "MC-136",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.137",
+   "sheet_id": "MC-137",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.138",
+   "sheet_id": "MC-138",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.139",
+   "sheet_id": "MC-139",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.140",
+   "sheet_id": "MC-140",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.141",
+   "sheet_id": "MC-141",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.142",
+   "sheet_id": "MC-142",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.143",
+   "sheet_id": "MC-143",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.144",
+   "sheet_id": "MC-144",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.145",
+   "sheet_id": "MC-145",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.146",
+   "sheet_id": "MC-146",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.147",
+   "sheet_id": "MC-147",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.148",
+   "sheet_id": "MC-148",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.149",
+   "sheet_id": "MC-149",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.150",
+   "sheet_id": "MC-150",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.151",
+   "sheet_id": "MC-151",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.152",
+   "sheet_id": "MC-152",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.153",
+   "sheet_id": "MC-153",
+   "mark": "alt",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.154",
+   "sheet_id": "MC-154",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.155",
+   "sheet_id": "MC-155",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.156",
+   "sheet_id": "MC-156",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.157",
+   "sheet_id": "MC-157",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.158",
+   "sheet_id": "MC-158",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.159",
+   "sheet_id": "MC-159",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.160",
+   "sheet_id": "MC-160",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.161",
+   "sheet_id": "MC-161",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.162",
+   "sheet_id": "MC-162",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.163",
+   "sheet_id": "MC-163",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.164",
+   "sheet_id": "MC-164",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.165",
+   "sheet_id": "MC-165",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.166",
+   "sheet_id": "MC-166",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.167",
+   "sheet_id": "MC-167",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.168",
+   "sheet_id": "MC-168",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.169",
+   "sheet_id": "MC-169",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.170",
+   "sheet_id": "MC-170",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.171",
+   "sheet_id": "MC-171",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.172",
+   "sheet_id": "MC-172",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.173",
+   "sheet_id": "MC-173",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.174",
+   "sheet_id": "MC-174",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.175",
+   "sheet_id": "MC-175",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.176",
+   "sheet_id": "MC-176",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.177",
+   "sheet_id": "MC-177",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.178",
+   "sheet_id": "MC-178",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.179",
+   "sheet_id": "MC-179",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.180",
+   "sheet_id": "MC-180",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.181",
+   "sheet_id": "MC-181",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.182",
+   "sheet_id": "MC-182",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.183",
+   "sheet_id": "MC-183",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.184",
+   "sheet_id": "MC-184",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.185",
+   "sheet_id": "MC-185",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.186",
+   "sheet_id": "MC-186",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.187",
+   "sheet_id": "MC-187",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.188",
+   "sheet_id": "MC-188",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.189",
+   "sheet_id": "MC-189",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.190",
+   "sheet_id": "MC-190",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.191",
+   "sheet_id": "MC-191",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.192",
+   "sheet_id": "MC-192",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.193",
+   "sheet_id": "MC-193",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.194",
+   "sheet_id": "MC-194",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.195",
+   "sheet_id": "MC-195",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.196",
+   "sheet_id": "MC-196",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.197",
+   "sheet_id": "MC-197",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.198",
+   "sheet_id": "MC-198",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.199",
+   "sheet_id": "MC-199",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.200",
+   "sheet_id": "MC-200",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.201",
+   "sheet_id": "MC-201",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.202",
+   "sheet_id": "MC-202",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.203",
+   "sheet_id": "MC-203",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.204",
+   "sheet_id": "MC-204",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.205",
+   "sheet_id": "MC-205",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.206",
+   "sheet_id": "MC-206",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.207",
+   "sheet_id": "MC-207",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.208",
+   "sheet_id": "MC-208",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.209",
+   "sheet_id": "MC-209",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.210",
+   "sheet_id": "MC-210",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.211",
+   "sheet_id": "MC-211",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.212",
+   "sheet_id": "MC-212",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.213",
+   "sheet_id": "MC-213",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.214",
+   "sheet_id": "MC-214",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.215",
+   "sheet_id": "MC-215",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.216",
+   "sheet_id": "MC-216",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.217",
+   "sheet_id": "MC-217",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.218",
+   "sheet_id": "MC-218",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.219",
+   "sheet_id": "MC-219",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.220",
+   "sheet_id": "MC-220",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.221",
+   "sheet_id": "MC-221",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.222",
+   "sheet_id": "MC-222",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.223",
+   "sheet_id": "MC-223",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.224",
+   "sheet_id": "MC-224",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.225",
+   "sheet_id": "MC-225",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.226",
+   "sheet_id": "MC-226",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.227",
+   "sheet_id": "MC-227",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.228",
+   "sheet_id": "MC-228",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.229",
+   "sheet_id": "MC-229",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.230",
+   "sheet_id": "MC-230",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.231",
+   "sheet_id": "MC-231",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.232",
+   "sheet_id": "MC-232",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.233",
+   "sheet_id": "MC-233",
+   "mark": "alt",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.234",
+   "sheet_id": "MC-234",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.235",
+   "sheet_id": "MC-235",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.236",
+   "sheet_id": "MC-236",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.237",
+   "sheet_id": "MC-237",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.238",
+   "sheet_id": "MC-238",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.239",
+   "sheet_id": "MC-239",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.240",
+   "sheet_id": "MC-240",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.241",
+   "sheet_id": "MC-241",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.242",
+   "sheet_id": "MC-242",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.243",
+   "sheet_id": "MC-243",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.244",
+   "sheet_id": "MC-244",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.245",
+   "sheet_id": "MC-245",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.246",
+   "sheet_id": "MC-246",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.247",
+   "sheet_id": "MC-247",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.248",
+   "sheet_id": "MC-248",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.249",
+   "sheet_id": "MC-249",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.250",
+   "sheet_id": "MC-250",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.251",
+   "sheet_id": "MC-251",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.252",
+   "sheet_id": "MC-252",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.253",
+   "sheet_id": "MC-253",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.254",
+   "sheet_id": "MC-254",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.255",
+   "sheet_id": "MC-255",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.256",
+   "sheet_id": "MC-256",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.257",
+   "sheet_id": "MC-257",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.258",
+   "sheet_id": "MC-258",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.259",
+   "sheet_id": "MC-259",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.260",
+   "sheet_id": "MC-260",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.261",
+   "sheet_id": "MC-261",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.262",
+   "sheet_id": "MC-262",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.263",
+   "sheet_id": "MC-263",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.264",
+   "sheet_id": "MC-264",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.265",
+   "sheet_id": "MC-265",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.266",
+   "sheet_id": "MC-266",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.267",
+   "sheet_id": "MC-267",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.268",
+   "sheet_id": "MC-268",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.269",
+   "sheet_id": "MC-269",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.270",
+   "sheet_id": "MC-270",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.271",
+   "sheet_id": "MC-271",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.272",
+   "sheet_id": "MC-272",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.273",
+   "sheet_id": "MC-273",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.274",
+   "sheet_id": "MC-274",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.275",
+   "sheet_id": "MC-275",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.276",
+   "sheet_id": "MC-276",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.277",
+   "sheet_id": "MC-277",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.278",
+   "sheet_id": "MC-278",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.279",
+   "sheet_id": "MC-279",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.280",
+   "sheet_id": "MC-280",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.281",
+   "sheet_id": "MC-281",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.282",
+   "sheet_id": "MC-282",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.283",
+   "sheet_id": "MC-283",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.284",
+   "sheet_id": "MC-284",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.285",
+   "sheet_id": "MC-285",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.286",
+   "sheet_id": "MC-286",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.287",
+   "sheet_id": "MC-287",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.288",
+   "sheet_id": "MC-288",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.289",
+   "sheet_id": "MC-289",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.290",
+   "sheet_id": "MC-290",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.291",
+   "sheet_id": "MC-291",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.292",
+   "sheet_id": "MC-292",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.293",
+   "sheet_id": "MC-293",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.294",
+   "sheet_id": "MC-294",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.295",
+   "sheet_id": "MC-295",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.296",
+   "sheet_id": "MC-296",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.297",
+   "sheet_id": "MC-297",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.298",
+   "sheet_id": "MC-298",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.299",
+   "sheet_id": "MC-299",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.300",
+   "sheet_id": "MC-300",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.301",
+   "sheet_id": "MC-301",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.302",
+   "sheet_id": "MC-302",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.303",
+   "sheet_id": "MC-303",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.304",
+   "sheet_id": "MC-304",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.305",
+   "sheet_id": "MC-305",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.306",
+   "sheet_id": "MC-306",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.307",
+   "sheet_id": "MC-307",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.308",
+   "sheet_id": "MC-308",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.309",
+   "sheet_id": "MC-309",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.310",
+   "sheet_id": "MC-310",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.311",
+   "sheet_id": "MC-311",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.312",
+   "sheet_id": "MC-312",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.313",
+   "sheet_id": "MC-313",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.314",
+   "sheet_id": "MC-314",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.315",
+   "sheet_id": "MC-315",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.316",
+   "sheet_id": "MC-316",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.317",
+   "sheet_id": "MC-317",
+   "mark": "x",
+   "source": "claude_kept_by_orb_mc"
+  },
+  {
+   "id": "mc.318",
+   "sheet_id": "MC-318",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.319",
+   "sheet_id": "MC-319",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.320",
+   "sheet_id": "MC-320",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.321",
+   "sheet_id": "MC-321",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  },
+  {
+   "id": "mc.322",
+   "sheet_id": "MC-322",
+   "mark": "rewrite",
+   "source": "ai01_gemini_rewrite_orb_reviewed_mc"
+  }
+ ]
+}

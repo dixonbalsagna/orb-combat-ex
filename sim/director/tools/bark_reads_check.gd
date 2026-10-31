@@ -37,6 +37,16 @@ func _over(reads: Dictionary) -> Dictionary:
 	return {"enabled": true, "beats": beats, "reads": reads}
 
 
+## The data file with the three reads' beats left out, so "no lines for the three beats" still holds now that Orb's lines are there.
+func _bare(reads: Dictionary) -> Dictionary:
+	var d: Dictionary = NarrativeBarks._load().duplicate(true)
+	var beats: Dictionary = {}
+	for k in d.get("beats", {}):
+		if not READS.has(k):
+			beats[k] = d.beats[k]
+	return {"enabled": true, "beats": beats, "reads": reads}
+
+
 func _run(seed_: int, ticks: int, over, chunk: int, watch: bool = false) -> Dictionary:
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, seed_, {}, {})
@@ -156,8 +166,8 @@ func _initialize() -> void:
 	var total: Dictionary = {}
 	for sd in seeds:
 		var plain: Dictionary = _run(sd, ticks, null, 1)
-		var off: Dictionary = _run(sd, ticks, {"enabled": true}, 1)
-		var noReads: Dictionary = _run(sd, ticks, {"enabled": true, "reads": {}}, 1)
+		var off: Dictionary = _run(sd, ticks, _bare(reads), 1)
+		var noReads: Dictionary = _run(sd, ticks, _bare({}), 1)
 		_ok(off.log.map(_line) == noReads.log.map(_line), "seed %d: with no lines for the three beats the reads change nothing said" % sd)
 		var on: Dictionary = _run(sd, ticks, _over(reads), 1, true)
 		_ok(on.hash == plain.hash and off.hash == plain.hash, "seed %d: the gameplay hash is the same with the emitter on" % sd)
