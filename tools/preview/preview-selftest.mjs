@@ -195,25 +195,21 @@ try {
     const gn = await buildPreview({ ...opts, rebuild: true, pending: pend });
     check('without it the entry has no setup key', JSON.parse(readFileSync(join(gn.web, 'seen.json'), 'utf8')).pg3 === false);
 
-    // meteor: a constant in a script, flipped by its text
-    const LOOK = 'const METEOR_DEFAULT: bool = false          # the meteor trail: off until Orb has seen it\nconst OTHER: bool = false\n';
-    check('meteor is a constant switch: a text to replace, the file it waits for, a probe field', sw('meteor').replace.from === 'const METEOR_DEFAULT: bool = false' && sw('meteor').replace.to === 'const METEOR_DEFAULT: bool = true' && sw('meteor').file === 'render/vfx/vfx_look.gd' && sw('meteor').optional === true && /meteor_enabled/.test(sw('meteor').probe));
-    const mf = flip(LOOK, sw('meteor'));
-    check('its text is replaced once, the comment and the rest of the file untouched; on already is no change', mf.text === LOOK.replace('bool = false          #', 'bool = true          #') && mf.was === 'const METEOR_DEFAULT: bool = false' && flip(mf.text, sw('meteor')).text === mf.text && present(LOOK, sw('meteor')) && present(mf.text, sw('meteor')) && !present('nothing here', sw('meteor')));
-    const mbad = (s) => { try { flip(s, sw('meteor')); return ''; } catch (e) { return e.message; } };
-    check('the text twice, or neither, is refused and says the table is out of date', /there 2 times/.test(mbad(LOOK + LOOK)) && /there 0 times/.test(mbad('nothing')));
+    // meteor: a page word (?meteor=loud by default, ?meteor=quiet beside it), present when VFX's data is in the tree
+    check('meteor is a page word, not a data flag: the loud word by default, the quiet one as its alternative, the file it waits for, a probe field', sw('meteor').url === 'meteor=loud' && sw('meteor').alt.word === 'meteor=quiet' && sw('meteor').file === undefined && sw('meteor').presentIf.file === 'data/vfx/meteor.json' && sw('meteor').optional === true && /meteor_enabled/.test(sw('meteor').probe));
     const m0 = plan(repo, sha, { pending: pend.rows });
-    check('without VFX\'s code the meteor switch WAITS and says so', !m0.active.includes('meteor') && m0.waiting.some((w) => w.id === 'meteor' && /not in this tree yet/.test(w.why)), JSON.stringify(m0.waiting));
-    work('render/vfx/vfx_look.gd', LOOK);
+    check('without VFX\'s data the meteor switch WAITS and says so, and prints no word', !m0.active.includes('meteor') && m0.waiting.some((w) => w.id === 'meteor' && /not in this tree yet/.test(w.why)) && !m0.urlWords.includes('meteor=loud'), JSON.stringify(m0.waiting));
+    work('data/vfx/meteor.json', '{}\n');
     work('render/vfx/vfx_hub.gd', 'var meteor_enabled: bool = VfxLook.METEOR_DEFAULT\n');
-    const m1 = plan(repo, sha, { overlay: ['render/vfx'], pending: pend.rows });
-    check('with the files in the tree it is on, and its probe field comes with it (the hub has the field)', m1.active.includes('meteor') && m1.probes.some((p) => /meteor_enabled/.test(p)), JSON.stringify(m1));
+    const m1 = plan(repo, sha, { overlay: ['data/vfx', 'render/vfx'], pending: pend.rows });
+    check('with its data in the tree it is on: the loud word is on the address, the quiet one is its alternative, and the probe field comes with it', m1.active.includes('meteor') && m1.urlWords.includes('meteor=loud') && m1.alts.length === 1 && m1.alts[0].to === 'meteor=quiet' && m1.probes.some((p) => /meteor_enabled/.test(p)), JSON.stringify(m1));
+    check('--off meteor leaves no word and no alternative', (() => { const o = plan(repo, sha, { overlay: ['data/vfx', 'render/vfx'], off: ['meteor'], pending: pend.rows }); return !o.urlWords.includes('meteor=loud') && o.alts.length === 0; })());
     work('render/vfx/vfx_hub.gd', 'nothing about the meteor here\n');
-    check('the probe field is added only when the hub has the field it reads', !plan(repo, sha, { overlay: ['render/vfx'], pending: pend.rows }).probes.some((p) => /meteor_enabled/.test(p)));
+    check('the probe field is added only when the hub has the field it reads', !plan(repo, sha, { overlay: ['data/vfx', 'render/vfx'], pending: pend.rows }).probes.some((p) => /meteor_enabled/.test(p)));
     work('render/vfx/vfx_hub.gd', 'var meteor_enabled: bool = VfxLook.METEOR_DEFAULT\n');
     check('a meteor expectation reads the probe: asked on, off in the game is named', probeProblems({ ...okProbe, meteor: false }, expectations(IDS)).some((p) => p.sw === 'meteor') && probeProblems({ ...okProbe, meteor: true }, expectations(IDS)).length === 0 && errorSwitch('meteor.gd:12 bad') === 'meteor');
-    const mb = await buildPreview({ ...opts, overlay: ['render/vfx'], rebuild: true, pending: pend });
-    check('a build with VFX\'s code overlaid flips the constant in the scratch copy and records it as a flip of text', mb.active.includes('meteor') && mb.flips.some((x) => x.id === 'meteor' && x.key === 'text' && /bool = true/.test(x.now)), JSON.stringify(mb.flips.filter((x) => x.id === 'meteor')));
+    const mb = await buildPreview({ ...opts, overlay: ['data/vfx', 'render/vfx'], rebuild: true, pending: pend });
+    check('a build with VFX\'s data overlaid reports the word and flips no file for it', mb.active.includes('meteor') && mb.urlWords.includes('meteor=loud') && !mb.flips.some((x) => x.id === 'meteor'), JSON.stringify([mb.active, mb.urlWords, mb.flips.filter((x) => x.id === 'meteor')]));
 
     // tiles: a page word, present when Rendering's tile ground is in the tree, needs gen3
     check('tiles is a page word, not a data flag: no file, the word, the command-line form, the file it waits for, and it needs gen3', sw('tiles').url === 'tiles=1' && sw('tiles').cmd === '--tiles' && sw('tiles').file === undefined && sw('tiles').presentIf.file === 'render/core/tile_ground.gd' && sw('tiles').needs.join() === 'gen3' && sw('tiles').optional === true);

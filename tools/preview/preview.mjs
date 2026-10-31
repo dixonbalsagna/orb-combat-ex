@@ -135,8 +135,9 @@ export function plan(repo, sha, { off = [], overlay = [], pending = [], read: re
     for (const sw of table) if (active.includes(sw.id) && sw.needs.some((n) => !active.includes(n))) { wait(sw.id, `it needs ${sw.needs.filter((n) => !active.includes(n)).join(' + ')}, which is not on`); again = true; }
   }
   for (const sw of table) if (active.includes(sw.id)) { if (sw.setup) Object.assign(setup, sw.setup); if (sw.url) urlWords.push(sw.url); }
+  const alts = table.filter((s) => active.includes(s.id) && s.url && s.alt).map((s) => ({ id: s.id, word: s.url, to: s.alt.word, label: s.alt.label }));
   const probes = table.filter((s) => active.includes(s.id) && s.probe && s.probeIf && read(s.probeIf.file) !== null && read(s.probeIf.file).includes(s.probeIf.text)).map((s) => s.probe);
-  return { table, active: table.map((s) => s.id).filter((id) => active.includes(id)), cascaded: r.cascaded, waiting, stale, probes, hostPatch, unknown: r.unknown, setup, urlWords };
+  return { table, active: table.map((s) => s.id).filter((id) => active.includes(id)), cascaded: r.cascaded, waiting, stale, probes, hostPatch, unknown: r.unknown, setup, urlWords, alts };
 }
 
 /** Applies a git patch to a scratch tree (git apply, whitespace-tolerant: a CRLF checkout must not refuse it). Throws with git's first line when it does not fit. */

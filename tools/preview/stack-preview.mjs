@@ -1,6 +1,6 @@
 // A PRIVATE, LOCAL, playable web build of the STACK (the EP, 2026-10-31): HEAD plus every ready park of tools/preview/stack.json, every switch on, for Orb's own browser. Never published, uploaded or dispatched.
 //
-//   node tools/preview/stack-preview.mjs [--planet 7] [--port 8765] [--off tiles,meteor] [--skip park,park] [--only park,park] [--rebuild] [--no-smoke] [--no-serve] [--open] [--watch [--every 120]] [--repo <dir>] [--manifest <file>] [--godot <exe>]
+//   node tools/preview/stack-preview.mjs [--planet 7] [--port 8765] [--off tiles,meteor] [--skip park,park] [--only park,park] [--rebuild] [--no-smoke] [--no-serve] [--open] [--watch [--every 120] [--min-gap 1800] [--max-load 90]] [--repo <dir>] [--manifest <file>] [--godot <exe>]
 //
 // What it does: tools/preview/stack.mjs unpacks HEAD into a scratch tree, applies the parks in order and turns their switches on (the tree it keeps is the stack's, not the repository's); then, as preview.mjs does for a
 // commit, the scratch copy's render/core/main.gd gets a ?planet=N entry and a state probe (and Controls' host patch when the tree has not got the pad's right stick), the project is imported and the Web build exported
@@ -9,7 +9,7 @@
 import { spawn } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { tmpdir } from 'node:os';
+import { cpus, tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { scriptErrors } from '../gate.mjs';
@@ -19,6 +19,15 @@ import { patchMain } from './switches.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const REPO = resolve(HERE, '..', '..');
+
+/** The machine's CPU use over `ms` milliseconds, 0 to 100 (all cores, every process). */
+export async function cpuLoad(ms = 1000) {
+  const snap = () => cpus().reduce((a, c) => { const t = Object.values(c.times).reduce((x, y) => x + y, 0); return { idle: a.idle + c.times.idle, total: a.total + t }; }, { idle: 0, total: 0 });
+  const a = snap();
+  await new Promise((r) => setTimeout(r, ms));
+  const b = snap();
+  return b.total === a.total ? 0 : Math.round(100 * (1 - (b.idle - a.idle) / (b.total - a.total)));
+}
 
 const tail = (f, n = 1500) => { try { return readFileSync(f, 'utf8').slice(-n); } catch { return ''; } };
 
@@ -40,7 +49,7 @@ export async function buildStackPreview(o) {
     return null;
   };
   const pl = plan(repo, r.commit, { off: o.off || [], pending: pend.rows, read });
-  const out = { sha: r.commit, subject: r.subject, report: r, stackLines: describeReport(r), active: pl.active, waiting: pl.waiting, cascaded: pl.cascaded, urlWords: pl.urlWords, table: pl.table, unknown: pl.unknown, hostPatched: !!pl.hostPatch, cached: false, seconds: 0, dir: null, web: null, meta: null, scriptErrors: [] };
+  const out = { sha: r.commit, subject: r.subject, report: r, stackLines: describeReport(r), active: pl.active, waiting: pl.waiting, cascaded: pl.cascaded, urlWords: pl.urlWords, alts: pl.alts, table: pl.table, unknown: pl.unknown, hostPatched: !!pl.hostPatch, cached: false, seconds: 0, dir: null, web: null, meta: null, scriptErrors: [] };
   if (pl.unknown.length) throw new Error(`unknown switch ${pl.unknown.join(', ')}`);
   const parksIn = r.parks.filter((p) => p.status === 'applied').map((p) => p.id);
   const key = `${r.key}-${pl.active.join('+')}${pl.hostPatch ? '-host' : ''}`.replace(/[^A-Za-z0-9+._-]/g, '_').slice(0, 120);
@@ -78,7 +87,7 @@ export async function buildStackPreview(o) {
 
 async function main() {
   const a = process.argv.slice(2);
-  const known = new Set(['--watch', '--every', '--planet', '--port', '--off', '--skip', '--only', '--rebuild', '--no-smoke', '--no-serve', '--open', '--repo', '--manifest', '--godot', '--godot-node', '--browser-path', '--out', '--keep-tree', '--help']);
+  const known = new Set(['--watch', '--every', '--min-gap', '--max-load', '--planet', '--port', '--off', '--skip', '--only', '--rebuild', '--no-smoke', '--no-serve', '--open', '--repo', '--manifest', '--godot', '--godot-node', '--browser-path', '--out', '--keep-tree', '--help']);
   for (const x of a) if (x.startsWith('--') && !known.has(x)) { console.error(`unknown option ${x}; node tools/preview/stack-preview.mjs --help`); process.exit(2); }
   const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
   const has = (n) => a.includes(n);
@@ -125,6 +134,7 @@ async function main() {
   const server = await serveLocal(live, want ? Number(want) : 8765, { strict: !!want });
   const url = `http://127.0.0.1:${server.address().port}/index.html?planet=${planet}${b.urlWords && b.urlWords.length ? `&${b.urlWords.join('&')}` : ''}`;
   console.log(`\nOpen this in Opera:\n\n    ${url}\n`);
+  for (const a of b.alts || []) console.log(`  ${a.label}: ${url.replace(a.word, a.to)}\n`);
   if (has('--open')) { try { spawn(process.platform === 'win32' ? 'cmd' : process.platform === 'darwin' ? 'open' : 'xdg-open', process.platform === 'win32' ? ['/c', 'start', '', url] : [url], { stdio: 'ignore', detached: true, windowsHide: true }).unref(); console.log('  (opened in the default browser)'); } catch { /* not worth failing for */ } }
   console.log('  localhost only (127.0.0.1); nothing is published, uploaded or dispatched. Ctrl-C stops it.');
   if (watching) {
@@ -136,13 +146,18 @@ async function main() {
       const only = new Set(o.only), skip = new Set(o.skip);
       return stackKey(repo, sha, man.parks.filter((p) => (!only.size || only.has(p.id)) && !skip.has(p.id) && p.ready !== false));
     };
-    let last = keyNow(), busy = false;
-    console.log(`  WATCHING: every ${every / 1000} s the stack's key is read; a re-cut of any park file, the manifest or main rebuilds the page under this address.`);
+    const minGap = Math.max(0, Number(opt('--min-gap', 1800))) * 1000, maxLoad = Number(opt('--max-load', 90));
+    let last = keyNow(), busy = false, lastEnd = Date.now(), noted = '';
+    const note = (key, why) => { if (noted !== key + why) { noted = key + why; console.log(`[${stamp()}] a change is waiting: ${why}`); } };
+    console.log(`  WATCHING: every ${every / 1000} s the stack's key is read; a re-cut of any park file, the manifest or main rebuilds the page under this address, at most one rebuild per ${minGap / 60000} minutes and none while the CPU is above ${maxLoad}%.`);
     setInterval(async () => {
       if (busy) return;
       let now;
       try { now = keyNow(); } catch (e) { console.log(`[${stamp()}] watch: could not read the stack key: ${e.message}`); return; }
       if (now === last) return;
+      if (Date.now() - lastEnd < minGap) { note(now, `the last build was ${Math.round((Date.now() - lastEnd) / 60000)} min ago (the gap is ${minGap / 60000})`); return; }
+      const ld = await cpuLoad();
+      if (ld > maxLoad) { note(now, `the machine is at ${ld}% CPU (the limit is ${maxLoad}%)`); return; }
       busy = true;
       console.log(`[${stamp()}] a park or main changed: rebuilding`);
       try {
@@ -159,8 +174,8 @@ async function main() {
           cpSync(live + '.next', live, { recursive: true, force: true }); rmSync(live + '.next', { recursive: true, force: true });
           console.log(`[${stamp()}] swapped in: parks ${nb.report.parks.filter((p) => p.status === 'applied').length} applied, smoke check passed`);
         } else console.log(`[${stamp()}] the new build FAILED its smoke check (${why}); the page stays as it was`);
-        last = now;
-      } catch (e) { console.log(`[${stamp()}] rebuild failed: ${e.message.split('\n')[0]}; the page stays as it was`); last = now; }
+        last = now; lastEnd = Date.now();
+      } catch (e) { console.log(`[${stamp()}] rebuild failed: ${e.message.split('\n')[0]}; the page stays as it was`); last = now; lastEnd = Date.now(); }
       busy = false;
     }, every);
   }

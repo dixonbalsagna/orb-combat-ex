@@ -89,7 +89,7 @@
     },
     {
       "id": "rendering-tile-ground", "owner": "rendering-techart", "notes": "Rendering's tile ground in the real game (stage 4 of the ring-at-any-angle work), behind its switch (--tiles, ?tiles=1 on a local page): planet-keyed tiles on a true globe through Simulation's frame. Stacks on field-frame (needs SimField and WorldField). The stack's `tiles` switch is the page word.",
-      "steps": [ { "patch": "docs/rendering/pending/2026-10-31a-tile-ground/tile.diff", "exclude": [ "render/core/shapes.gd" ], "why": "World's grant-rendering.patch (08:46) already renames bell_tower to clock_tower in shapes.gd, the same hunk tile.diff carries; one of them drops it" } ],
+      "steps": [ { "patch": "docs/rendering/pending/2026-10-31a-tile-ground/tile.diff" } ],
       "needs": [ { "park": "simulation-right-word" }, { "park": "world-gen3-field" }, { "park": "world-gen3-rendering-grant" }, { "park": "architecture-field-frame" } ]
     },
     {
@@ -117,7 +117,7 @@
       "steps": [ { "patch": "docs/animation/pending/pieces23.patch" } ]
     },
     {
-      "id": "vfx-meteor-trail", "owner": "vfx", "notes": "VFX's meteor trail behind its own switch (VfxHub.meteor_enabled, VfxLook.METEOR_DEFAULT: off by default and byte-identical off); the stack turns it on (the `meteor` switch). 15 files, one patch.",
+      "id": "vfx-meteor-trail", "owner": "vfx", "notes": "VFX's meteor trail behind its own switch (VfxHub.meteor_enabled: off by default and byte-identical off, on by the page word ?meteor=quiet or ?meteor=loud on a local page); the stack's page carries the loud word and prints the quiet address beside it (the `meteor` switch). 15 files, one patch.",
       "steps": [ { "patch": "docs/vfx/pending/meteor-trail/apply.patch" } ],
       "needs": [ { "note": "the old white trail blade still draws beside the burn: Orb may want it off when the meteor is on (VFX's README)", "owner": "vfx" } ]
     },
