@@ -359,7 +359,7 @@ Legal e12 still applies: no zoom in on a fighter held in the air.
 
 **Orb's picture:** at the start of a match the camera stays close. With both at peak, a fully charged launch on a stunned or weakened foe knocks him diagonally up at high speed, the camera zooms out, and he leaves a burning trail, "even if the fighter is only a few pixels". Orb's still is 53,070 wide.
 
-**That width isn't arbitrary.** A foe at the 24,000 ceiling, framed like today's vertical fit (`0.8` of the height), needs `1.778 × 24,000 / 0.8` = **53,300.** So the shot is the camera simply keeping both fighters in one frame, and the width follows his height. All first values; nothing's been seen with fighters. His flight is the sim's, and I assume 10,000 u/s at 60° above the ground: flatter puts his ground over the horizon from the launcher (at 45°, 56° round a full ring).
+**That width isn't arbitrary.** Both fighters in one frame needs `1.778 × height / (launcher's place in the frame − 0.05)`. So the width follows his height. At the hang, with the launcher at 0.6 of the frame's height (below), 53,000 fits him at **about 16,400 high, under the 24,000 ceiling.** All first values; nothing's been seen with fighters. His flight is the sim's, and I assume 10,000 u/s at 60° above the ground: flatter puts his ground over the horizon from the launcher (at 45° and 24,000 units along, 56° round a full ring).
 
 **1. The shot, for the top of the ladder: about 8 s, no cut, no whip.**
 
@@ -368,27 +368,27 @@ Legal e12 still applies: no zoom in on a fighter held in the air.
 | Before | Wind-up and blow | 950 to 2,700 | As today: tight, so the contrast is all there. Blow push 0.020 |
 | Hit-stop | Held, the longest (16 ticks) | Same | Dead still |
 | 0 s | **Release** | Starts | **No whip:** a whip chases, and this shot lets him go. The width starts over 6 ticks |
-| 0 to 0.3 s | He leaves | To about 5,000 | Width eases to `2.2 × his height + 2,700`, at up to 3 e-folds a second (`SLAM_ZOOM_RATE`). He may touch the top of the frame: that's the violence of it, and it's only a few ticks |
-| 0.3 to 3 s | **The climb** | To 53,000 | The launcher eases down to 0.85 of the height. The rate falls by itself, to about 0.6 e-folds a second by 30,000. The trail draws out behind him |
-| 3 to 4.2 s | **The widest: the show of power** | Holds | Eases to rest over 0.5 s, and he hangs. The planet's curve fills the frame, true globe |
-| 4.2 to 6.2 s | **The descent** | Down to 8,000 | Width follows him down, at about 1 e-fold a second (inside `ZOOM_RATE` 1.2), with his trail still in frame |
-| 6.2 s | **Impact** | 8,000 | The camera **doesn't race him to the ground.** At 8,000 the blast and crater read whole. Usual shake |
-| 6.2 to 6.7 s | Hold | 8,000 | Still, for the weight |
+| 0 to 0.3 s | He leaves | To about 5,000 | Width eases to `2.2 × his height + 2,700`, at up to 3 e-folds a second (`SLAM_ZOOM_RATE`). By this arithmetic he's above the top of the frame until about 0.5 s, up to 30 ticks, not the few ticks I first wrote. His trail stays in frame, and it's the violence of the blow. Clip 10 judges it |
+| 0.3 to 3 s | **The climb** | To 53,000 | The launcher eases down to 0.85 of the height, for headroom. **The last second is a slow crane down: the launcher rises to 0.6 as he slows into his apex, so the planet comes up and fills the frame.** He stays near the top. The trail draws out behind him |
+| 3 to 4.2 s | **The widest: the show of power** | Holds | Launcher at 0.6, so at 53,000 the planet's limb spans about 79% of the width and fills the lower 40% (at 0.85: 53% and 15%, the low band Research saw). Eases to rest over 0.5 s, and he hangs |
+| 4.2 to 6.2 s | **The descent** | Down to about 9,150 | **Ruled, on Research's test: the width follows him, up to 3 e-folds a second,** as the climb does. Measured in proto v2 at full tier 4: in frame on 93% of descent ticks, against 34% at my first 1 e-fold a second. His trail stays in frame |
+| 6.2 s | **Impact** | About 9,150 | The blast and crater read whole. Usual shake |
+| 6.2 to 6.7 s | Hold | Eases to 8,000 | No dead stop: the zoom runs out through the hold, 0.13 of an e-fold, slowing to rest. It reads as the landing's push |
 | 6.7 to 8 s | **Return** | To the fight's own | Point 3 below |
 
 **No swing during this shot,** first value: a turn at this width spins the whole planet, and the width is already the show. A running swing rests by the climb's start. Clip 10 can try one.
 
 **2. The ladder.** The width is capped by the **lower** of the two fighters' tiers, because Orb's picture is both at peak. A launch that isn't fully charged takes one step less. Widths in data. Foe's height comes from the sim, and these assume he gets near it.
 
-| Lower tier | Most width | Height it fits | Fighter at 720p | Sag at the edge, full ring |
+| Lower tier | Most width | Height it fits at the hang | Fighter at 720p | Sag at the edge, full ring |
 | :--- | ---: | ---: | ---: | ---: |
 | 1 | 4,200, today's floor | 700 | 23 px | 27 px |
-| 2 | 8,000 | 2,400 | 12 px | 52 px |
-| 3 | 16,000 | 6,000 | 6 px | 105 px |
-| 4, launch not full | 32,000 | 13,000 | 3 px | **Past the small-angle sum:** the curve is the picture |
-| **4, full, foe stunned or weak** | **53,000** | **23,000** | **2 px** | The whole planet's width, about 1.08 diameters |
+| 2 | 8,000 | 2,500 | 12 px | 52 px |
+| 3 | 16,000 | 5,000 | 6 px | 105 px |
+| 4, launch not full | 32,000 | 9,900 | 3 px | **Past the small-angle sum:** the curve is the picture |
+| **4, full, foe stunned or weak** | **53,000** | **16,400** | **2 px** | The whole planet's width, about 1.08 diameters |
 
-On a Half ring the planet is half the size, so **width and height both scale with the ring**: the top is 26,500 and about 12,000 high. Orb's "never this far at base power" is tier 1's row. **`R_FLOOR` and `LAUNCH_FLOOR` lift only in this shot;** ordinary launches keep them. A shot this size should be rare by nature: it needs both at peak and a full charge. Game Design should say how often.
+On a Half ring the planet is half the size, so **width and height both scale with the ring**: the top is 26,500 and about 8,200 high. Orb's "never this far at base power" is tier 1's row. **`R_FLOOR` and `LAUNCH_FLOOR` lift only in this shot;** ordinary launches keep them. A shot this size should be rare by nature: it needs both at peak and a full charge. Game Design should say how often.
 
 **Staying readable: one frame, never a split.** A split would give two slices of sky with a pixel in each, and the point is the two of them and the planet together. The split rule stands down for the shot, and panels stay blocked.
 
@@ -415,6 +415,6 @@ On a Half ring the planet is half the size, so **width and height both scale wit
 
 **What I need:**
 
-- **Game Design and Encounter:** the launch that does this: its rule, angle (I assume 60°), height by tier, speed, how often, and whether he can recover.
+- **Game Design and Encounter:** the launch that does this: its rule, angle (I assume 60°), speed, how often, and whether he can recover. **Its height by tier is now a framing number: the top of his arc about 16,400 at the top of the ladder, not the ceiling.** If he must reach 24,000, then the planet stays a low band or the width goes past Orb's still (77,600 at 0.6).
 - **VFX:** the trail and the aura's least sizes.
 - **Rendering:** a planet this wide on the Radeon, whose p95 is already 26 ms in today's wide opening, and how the far level holds up at 53,000, which Orb has called a little exaggerated in the still.
