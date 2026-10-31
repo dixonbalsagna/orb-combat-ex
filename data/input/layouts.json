@@ -132,6 +132,12 @@
           ],
           "action": "strike_mirror",
           "axis": ["up", "left", "down", "right"]
+        },
+        {
+          "controls": [
+            "pad:l3"
+          ],
+          "action": "brace_key"
         }
       ]
     },

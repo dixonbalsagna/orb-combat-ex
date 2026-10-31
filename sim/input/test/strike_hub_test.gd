@@ -200,15 +200,24 @@ func _presets() -> void:
 	var ks: Dictionary = SimInputData.preset("kb-solo-swapped")
 	ok(not ks.is_empty() and str(ks["hand"]) == "swapped" and ks["device"] == "kb", "presets: kb-solo-swapped is shipped, for the keyboard")
 	ok(SimInputData.default_preset("pad") == "arena" and SimInputData.default_preset("kb") == "kb-solo", "presets: the defaults are still Arena and the solo keyboard")
-	# Remap: the optional rows (the pad leaves the strike button, the brace button and Escape unbound), and binding one.
+	# Remap: the optional rows (the pad leaves the strike button and Escape unbound; the brace button is L3 by default, so a player who picks "button only" is not stranded), and binding one.
 	var rows: Array = SimInputRemap.listing(a)
 	var opt: Dictionary = {}
 	for r in rows:
 		if (r["controls"] as Array).is_empty():
 			opt[str(r["action"])] = r
-	ok(opt.has("strike_key") and opt.has("brace_key") and opt.has("escape"), "remap: the pad lists the strike button, the brace button and Escape as rows with no control: %s" % str(opt.keys()))
-	var res: Dictionary = SimInputRemap.rebind(a, "strike_key", null, 0, ["pad:l3"])
-	ok(bool(res["ok"]), "remap: the strike button binds to L3: %s" % str(res["error"]))
+	ok(opt.has("strike_key") and opt.has("escape") and not opt.has("brace_key"), "remap: the pad lists the strike button and Escape as rows with no control, and the brace button as L3: %s" % str(opt.keys()))
+	var brace_l3: bool = false
+	for r in rows:
+		if str(r["action"]) == "brace_key" and r["controls"] == ["pad:l3"]:
+			brace_l3 = true
+	ok(brace_l3, "remap: Arena's brace button is L3 by default (the assist 'button only' needs a control)")
+	var res: Dictionary = SimInputRemap.rebind(a, "strike_key", null, 0, ["pad:back"])
+	ok(not bool(res["ok"]) and str(res["conflict"].get("action", "")) == "hints", "remap: a taken control (Back, the hints) is a conflict")
+	res = SimInputRemap.rebind(a, "strike_key", null, 0, ["pad:l3"])
+	ok(not bool(res["ok"]) and str(res["conflict"].get("action", "")) == "brace_key", "remap: L3 is the brace button's, a conflict named")
+	res = SimInputRemap.rebind(SimInputRemap.rebind(a, "brace_key", null, 0, ["pad:r3"])["preset"], "strike_key", null, 0, ["pad:l3"])
+	ok(bool(res["ok"]), "remap: the strike button binds to L3 once the brace button moves to R3: %s" % str(res.get("error", "")))
 	var res2: Dictionary = SimInputRemap.rebind(a, "escape", null, 0, ["pad:r3"])
 	ok(bool(res2["ok"]), "remap: Escape (the single-control vanish) binds to any control, R3 included, by the player's choice")
 	var res3: Dictionary = SimInputRemap.rebind(a, "brace_key", null, 0, ["pad:west"])
