@@ -162,7 +162,7 @@ Terrain, buildings and civilians are damaged by fights, and damage escalates wit
 
 ## 5. Characters are personalities
 
-The hero and the villain do different things to the world. The hero is pressured by collateral damage (anguish). The villain feeds on it (menace).
+The hero and the villain do different things to the world. The villain feeds on destruction, terror, and combat trauma (shattered structures, wreckage, mass evacuation, and breaking the opposing fighter), never on civilian deaths; the hero is pressured by collateral devastation and failing to protect the city.
 
 **For the roster.** Each of Orb's four fighters has its own relationship to the world and its own visible ego meter (`economy.md` §4.2):
 - The Protagonist wrecks through fixation, then moves the fight somewhere empty.

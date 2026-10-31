@@ -21,7 +21,7 @@ Own what the game is and why it is fun: the stance system, the fight economy, pr
 - Keep the design pillars honest: every feature is judged against them.
 - Design and tune the stance matrix (aggressive, defensive, evasive, escape) so every stance has a real counter and a real cost.
 - Design the resource economy: HP, ki, power tiers, menace and anguish, hiding and recovery, ambush.
-- Define escalation: how tier growth scales collateral damage, and how the hero is pressured by it while the villain feeds on it.
+- Define escalation: how tier growth scales collateral damage, and how the hero is pressured by it while the villain feeds on destruction and terror, never on civilian deaths.
 - Specify each fighter's rules-level identity with Narrative and Combat (what they can do that the others cannot).
 - Write one-page design specs before any system is built, and acceptance tests after.
 

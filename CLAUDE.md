@@ -41,7 +41,7 @@ Return: the standard report format (SUMMARY, CHANGES, DECISIONS, NEEDS FROM EP, 
 2. **Stances, not combos.** The player owns macro strategy, pacing and positioning, and chooses intent (aggressive, defensive, evasive, escape). The procedural director owns combos, tactics, blitzing and voice lines, and choreographs the exchange that results.
 3. **Never out of range.** Distance never blocks drama. Attacks always close the gap, and the escape stance is a real gamble rather than a range check.
 4. **Power has weight.** Terrain, buildings and civilians are damaged by fights, and damage escalates with power tier.
-5. **Characters are personalities.** The hero and the villain do different things to the world. The hero is pressured by collateral damage (anguish). The villain feeds on it (menace).
+5. **Characters are personalities.** The hero and the villain do different things to the world. The villain feeds on destruction, terror, and combat trauma (shattered structures, wreckage, mass evacuation, and breaking the opposing fighter), never on civilian deaths; the hero is pressured by collateral devastation and failing to protect the city.
 6. **Fights tell stories.** Comebacks, chains, clashes, set pieces and a landscape that answers back emerge from systems, not scripts. (Hiding and ambush are held for a future stealth fighter.)
 7. **Signatures adapt.** One signature move plays out differently by biome, altitude and the defender's stance.
 
