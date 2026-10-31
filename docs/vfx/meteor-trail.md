@@ -8,11 +8,14 @@ Orb (docs/ep/vision.md, "Orb on zoom, power and the meteor launch", 2026-10-31):
 
 The fighter's **own burn**: the body in the air at speed, heating the air it passes through and leaving a hot, cooling line of it behind. It is a ribbon along his real path, starting at his body and ending where it has cooled out. It is not a marker (no ring, arrow, icon or halo drawn round him; the fighter sits inside the head of the ribbon, which is widest just behind him), and it does not depend on the camera: the camera zooms out by its own rules (Camera's), and the trail only reads the zoom to know how many pixels a unit is.
 
-**It is the existing trail taken up the power scale.** Today's trail (README, "Trails") is nothing below 40 bh/s and full at 110 (bh = 75 units). Launches top out near 370 bh/s, about 27,750 units a second. So the burn is a continuous function of speed and air, not a separate effect with a gate:
+**It is the existing trail taken up the power scale.** Today's trail (README, "Trails") is nothing below 40 bh/s and full at 110 (bh = 75 units). The burn is a continuous function of the **launch's speed** and the air, with no gate of its own:
 
-`burn = smoothstep(150, 330 bh/s, speed) × air(altitude)`
+`burn = launched × smoothstep(burn_from, burn_full, speed) × air(altitude)`
 
-At a tier-1 exchange nothing gets near 150 bh/s, so ordinary fights never show it (Orb: "the camera would never zoom out this far"). A fully charged launch reaches it in the first ticks. Nothing is keyed to "a peak launch" by name; the speed is the power. (Combat may add a `peak` flag for the cases it wants to force; the data row can read it, section 5.)
+- **`launched`** is 1 while the body is a *sent* body (the launch event's `actor`, from the event until he lands or the launch's speed has gone), 0 for a flier. So ordinary flight (about 6,100 u/s) and bounces (about 5,000 u/s) can never burn, whatever their speed.
+- **`burn_from` and `burn_full` are data, in units a second** (`data/vfx/meteor.json`), tied to the launch's real speed, not to my earlier 370 bh/s (that was the top of the old trail doc, not the game's launch). **Corrected 2026-10-31 after the EP's note:** Simulation's launch is about 12,000 u/s (simulation.md section 10), so the placeholders are **7,500 and 11,000 u/s** (100 and 147 bh/s): full burn at the launch's real speed, off for flight. When Game Design rules the launch's speed `V`, the two numbers become `0.62 V` and `0.92 V` (one edit to the data row), and if the launch event carries a peak or charge flag the trail reads that instead of the speed ramp (`burn = flag × air`). The doc's examples below that said 27,750 u/s are therefore the stand-in's longest case, not the game's.
+
+At a tier-1 exchange no body is sent fast enough, so ordinary fights never show it (Orb: "the camera would never zoom out this far"). Nothing is keyed to "a peak launch" by name; the launch's speed or flag is the power.
 
 **Whose burn.** The launch event's `actor` is the **sent** body (Combat's convention, memory note "launch event: actor is the sent body"), so the trail follows `actor` and is composed from **his** look. One option for the first half second only: the strike's colour (the launcher's accent) as the *ignition* tint at the launch point, so the trail starts as the blow's colour and turns into his. Default off (`ignite_from: "self"`); an Orb call, section 8.
 
@@ -34,11 +37,29 @@ At 1,280 px and 53,000 wide the fighter is 1.8 px. The line is what Orb's "visua
 Thickness is a function of **pixels**, not units, with the world width as its starting point:
 
 - `w_px = clamp(w_world × px_per_unit, w_min, w_max)` per layer.
-- Floors: core **3 px**, body 5 px, sheath **10 px** (at 1,920; scaled by render scale and by width, so a 1,280 window gets 2/3.3/6.7). Ceilings: sheath **160 px** (about 8% of the screen's width), body 80, core 40. The ceiling is what bounds the fill at close zoom (section 7) and the flash area (section 6).
+- Floors: core **3 px**, body 5 px, sheath **10 px**, **defined at a 1,280-px-wide screen and growing with width** (1.5 times at 1,920, so 4.5/7.5/15 there), never below that for a window narrower than 1,280. (Corrected 2026-10-31: I had them at 1,920, which left a 1,280 window at 2 px; the least sizes are in section 3b.) Ceilings: sheath **160 px at 1,920** (about 8% of the screen's width), body 80, core 40. The ceiling is what bounds the fill at close zoom (section 7) and the flash area (section 6).
 - **Below the floor it stops getting thinner and gets only slightly dimmer**: `alpha × (w_world_px / w_min)^0.5`, never below 0.6. So at 53,000 the trail keeps nearly its brightness per pixel, as a thin hot wire does.
 - **Brightness is luminance-capped, not stacked.** The core is the lane colour lightened by a tenth at most (Art's rule: the core at most L* 86, never white). The sheath is mixed over the scene (capped by `glow_cap` 0.92, as the clash look found), never added: added over a bright sky it went white. No bloom, no tint of the sky.
 - The whole thing is **one ribbon**: it does not swap to a different effect as the camera pulls out. Embers, filaments and gaps are geometry or shader detail that go sub-pixel and merge into the ribbon's tone as they would in life. Nothing cross-fades between zoom bands. (Orb rejected dissolves as transitions.)
 - Altitude scale: the ribbon's **world width** shrinks with the fighter's speed ratio (a slow trail is narrower) and with **air**, so the plume is fat low down and a wire up high. The floors above keep the far view readable.
+
+## 3b. Least sizes, 4,200 to 53,000 wide (for Camera's shot, 2026-10-31)
+
+Camera's rule: at the widest the foe is about 2 px, found by the trail at least 3 px wide, and the launcher by where the trail starts, plus his aura and crater. Pixels at a **1,280-wide** screen (the smallest I design for; ×1.5 at 1,920). "True" is the size with no floor: foe 75 u tall, trail core 86 u (a peak launch: 0.9 × 60 × 1.6), sheath 344 u, aura about 120 u tall by 80 wide (the aura-plan's oval at tier 3 to 4; it grows a little with the form step).
+
+| View width | px/unit | Foe (true) | Trail core (true → drawn) | Trail sheath (true → drawn) | Aura height (true → drawn) |
+| ---: | ---: | ---: | :--- | :--- | :--- |
+| 4,200 | 0.305 | 23 | 26 → 26 | 105 → 105 (ceiling) | 37 → 37 |
+| 10,000 | 0.128 | 9.6 | 11 → 11 | 44 → 44 | 15 → 15 |
+| 20,000 | 0.064 | 4.8 | 5.5 → 5.5 | 22 → 22 | 7.7 → 8 |
+| 30,000 | 0.043 | 3.2 | 3.7 → 3.7 | 15 → 15 | 5.1 → **8** |
+| 53,000 | 0.024 | 1.8 | 2.1 → **3** | 8.3 → **10** | 2.9 → **8** |
+
+**The least sizes I will hold, at every width in the range:**
+- **Trail core 3 px, body 5 px, sheath 10 px** (1,280 screen), at least 70% brightness per pixel for the core (the sqrt rule, floor 0.6 for the sheath). The core is the 3 px Camera is counting on.
+- **Aura 8 px tall by 5 wide, his aura's own oval** (the tier's shape, scaled), lane colour at **0.30 alpha, mixed, never added**, behind the body. Under 20,000 wide it is true size, so the floor only works past 20,000. It is steady and shaped like him, a soft shoulder-and-crest oval, not a ring, disc or marker; it never goes under 0.30 alpha, never over his body's own colours.
+- **Where the trail starts** is read from the ribbon itself: its tail end at the launch point is as bright and wide as its body (the tail narrows only at the end of its life, never at the start). The start is hot (the ignition tint, section 1) for the first 0.5 s of its age, so on a 53,000 wide the launch point still has a brighter 1.5-times-wider knot.
+- **The crater** is the ground effect's (Earth's, the exchange's), not the trail's; it is drawn at its true size. At 53,000 on a 1,280 screen a bowl of radius 170 u is 8 px across, so only a launch that digs a tier-3 or bigger bowl will register at the widest; the launch point is more reliably read by the trail's start and his aura than by the crater. I have not measured the bowl's size at a launch.
 
 ## 4. How it glows through the atmosphere
 
