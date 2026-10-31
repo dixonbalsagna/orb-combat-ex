@@ -1529,3 +1529,9 @@ Orb locked the canonical names from a naming session run through Gemini: **Grist
 ## The beam struggle's look (Orb, 2026-10-30)
 
 "ideally I'd like to see that solid white glowing flare replaced with visually distinctive procedural shaders, the air should look like its rippling and glowing with pressure and energy, dynamic distortions and color changes and patterns should erupt out based on the composition and power behind each of the beams of each fighter, composition should be determined by the fighter's energy fighting style, their current form, any other unique situations future fighters may possess or cause when we increase the roster"
+
+## Right hand attacks: Orb's picks (2026-10-30)
+
+1. **Pitch 4a:** stick strikes are their own class of moves, not the team's recommended 4c.
+2. **Pillar 2's wording is reopened entirely.** Orb doesn't want to alienate players who like predetermined combos in mainstream fighting games, and does want to appeal to fans of platform brawlers and of generative, procedural content. Orb's own question, in Orb's words: "why don't fighting games take this approach to the combos that their fighters use during a match?", meaning the way procedural-universe games generate vast numbers of plants, animals and landscapes.
+3. **"accessibility settings and customizable controls should be assumed, including left-handed folks who may want to swap their controller around".**
