@@ -25,11 +25,11 @@ Owner: Game Design, by the EP's brief. Rulings for the turntable, 2026-10-31; no
 
 ## 2. What fires it, how fast, how far, how often
 
-Rates are at the peak, with 20 ticks of easing in and 20 out. The prototype's 30°/s is a starting number; a launch needs more.
+Rates are at the peak, on Camera's smootherstep (§9). The prototype's 30°/s is a starting number; a launch needs more.
 
 | Moment | Runs? | Fires on | Peak rate | How far | How often in a 6 to 8 minute match |
 | :--- | :--- | :--- | ---: | :--- | ---: |
-| **A launch** | **Yes, the main use** | The kick, once the hit-stop ends, when the planner's arrival is off to one side. **It eases to rest by the arrival** (the curve's last 10 ticks), so he meets a still world and the planner's aim holds | **60°/s** | Up to 180°, as far as his flight has time for: about 55° in a 1.6 s full launch at 45°/s, or 90° in 1.8 s at 60°/s | 2 to 5 |
+| **A launch** | **Yes, the main use** | The kick, once the hit-stop ends, when the planner's arrival is off to one side. **It rests at least 0.35 s before contact** (Camera's `LAND_HOLD`), so he meets a still world and the planner's aim holds | **100°/s, waiting on Orb's slider (§9)** | Up to 180°, as far as his flight has time for: about 53° per second of flight at 100°/s | 2 to 5 |
 | **A chase, a flee, a zip away** | **Yes** | The chase's or the flee's start. The hero leads toward interesting empty ground, the villain hunts toward towns. Later small corrections are fine, as both are in the air | 45°/s | Any | 1 to 3 |
 | **A form's pause** | **Yes** | The pause, as the camera's orbit. Nothing moves, so it's the easiest place | 30°/s | Up to 90° | 1 to 3 |
 | **A brawl, a rally, a knock-back** | **Yes, slowly** | Nothing else has fired for about 45 s and something worth seeing lies within 60°. A swing running when a chase catches up eases down to this rate rather than stopping | **10°/s** | Up to 60° | 2 to 4 |
@@ -39,8 +39,8 @@ Rates are at the peak, with 20 ticks of easing in and 20 out. The prototype's 30
 
 - **How often, in total: 6 to 12 swings a match, about 10 to 15% of fight time.** This comes from a score that falls with how recent the last swing was, not a cap, and Orb's "bigger or more often" after seeing it moves the score. **If Performance's budget can't carry that, the order to cut is brawls first, then form pauses, then chases.** A launch's swing is the last to go.
 - **Every launch or chase swing arrives at something:** the planner scores the arrival. A brawl's swing brings something into view. A swing to nothing isn't taken.
-- **The ceiling is Camera's travel budget:** 0.045 of the width a tick, 0.03 under Reduce flashing. Far scenery pans at the swing's own angle rate, so at a field of view near 40° (my guess, for Camera to give) 60°/s is about 0.025. It fits both, and it's a look-gate and flash reading rather than a taste call.
-- **Reduced motion:** a swing is a whole-view move, so it needs a slower setting. The rate is in the sim, so it's a setup value: half the rates, the lower of two players' settings online. Orb's rule that accessibility is assumed makes this a requirement.
+- **The ceilings are Camera's (§9):** 150°/s with a launch, 60°/s otherwise.
+- **Reduced motion:** a setup flag, closed in §9.
 - **Long trips are its best home.** A swing during a long flight is also the cheapest answer I have to Orb's "experience of speed and power": the far land wheeling past as he crosses it.
 
 **The pivot.** A standing fighter if exactly one is standing: his ground sweeps nothing. The midpoint if both or neither are. A change of pivot leaves everything where it is and only changes how it moves next, so it eases over 20 ticks and never pops. **A swing with an arrival keeps its pivot on one planet point until it rests (§8).**
@@ -52,15 +52,15 @@ A fighter at distance `r` from the pivot sees ground move at `r × rate` (over a
 | | Sweep limit | Why |
 | :--- | ---: | :--- |
 | **Standing:** on the ground, on the water's floor, down, buried, skidding | **75 units a second (1 bh a second)** | About what a fighter's feet can hide. Faster reads as him skating sideways |
-| **Airborne** | **6,000 units a second (80 bh a second)** | About launch speed: he already crosses ground this fast, so the world adds no new speed to the picture |
+| **Airborne** | **10,000 units a second (133 bh a second)** | Flat out, the fastest a fighter is ever seen to cross ground, so the world adds no new speed to the picture. Raised from 6,000 for §9: at launch speed it would have cut the swing just as it peaks |
 
 **So what gap allows a swing? Any. It just slows:**
 
 | Both standing, gap | Fastest rate | | One standing, gap to the other | Fastest rate |
 | ---: | ---: | | ---: | ---: |
-| 150 | 57°/s | | up to 5,700 | 60°/s |
-| 300 | 29°/s | | 15,000 | 23°/s |
-| 1,000 | 8.6°/s | | 30,000 | 11°/s |
+| 150 | 57°/s | | up to 5,700 | 100°/s |
+| 300 | 29°/s | | 15,000 | 38°/s |
+| 1,000 | 8.6°/s | | 30,000 | 19°/s |
 | 3,000 | 2.9°/s | | | |
 | 6,000 | 1.4°/s | | | |
 
@@ -126,3 +126,14 @@ This costs collateral, which the existing bands bound, and a real collision path
 | 3 | **A street-alignment score inside places** | **Yes, and weighted to usually win inside a place.** It's the cheapest way to keep the plane clear, and a city approached along its own streets looks directed. It applies only inside a place, and it's a score, so a great arrival can still beat it. It needs World's street query | Encounter, World |
 | 4 | **Brawl drift into a wall** | **It stops, as `depth.md` §2 already says:** the part of the motion running into the face stops, the rest slides on, and in a corner the pair go up and over. It does no damage, and gives no bonus or pin. Passing through is what Orb objected to | Encounter, Simulation |
 | 5 | **Is distance from the pivot along the line, or in three axes?** | **On the ground plan: along the line and in depth, never altitude.** The turn is about a vertical axis, so height changes nothing about how fast the ground moves under him. With Option A landed, depth is near 0 and this is nearly the same as along the line. Option A remains first: a fighter left 1,200 off the line is exactly the 3.6°/s case Encounter found | World |
+
+## 9. Addendum: Camera's section (`camera.md`), 2026-10-31
+
+| # | The conflict | The ruling | Owner |
+| :--- | :--- | :--- | :--- |
+| 1 | **Rate: Camera's 150°/s with a launch, against my 60** | **My 60 is withdrawn. 150°/s is the ceiling, and the launch's peak waits for Orb's answer on the slider** (`proto-v2`, which offers 15, 45 and 120). **Until then, builds use 100°/s.** My 60 rested on a guessed lens, and Camera has the real one: far land moves 1.05 widths a second per radian a second. So 100°/s is about 0.03 of the width a tick, which is the limit the camera keeps under Reduce flashing. That matters because **the rate is the sim's and shared, so a Reduce flashing player can't be given a slower one.** Anything over about 100 needs a flash reading for them, reported rather than chased while flash work is paused. Anything else stays at my rates, under Camera's ceiling of 60. **Also adopted from Camera:** smootherstep as the shape, so the peak is `1.875 × θ / T`; dead still through the hit-stop; rest at least 0.35 s before contact. **"A swing can't outlast its flight" stands,** as I'd ruled: about 53° per second of flight at 100°/s, 80° at 150. **My airborne sweep limit rises to 10,000 units a second (§3),** or it would cap the swing just as it peaks: with the launcher as pivot, a body at 3,400 units is already over 100°/s at 6,000. Research's re-run of E2 at these rates decides whether any of it is affordable | Encounter, World, Camera, Research |
+| 2 | **Both grounded in a split; strips and insets; a 6 s gap** | **Both grounded in a split: adopted, as no swing.** My sweep limit nearly gives this anyway, and a plain rule is easier to read. **It doesn't touch brawls,** which are close and in one pane, so a brawl's 10°/s stands. **Strips and insets: one at a time, but the swing wins and it isn't the sim's rule.** The sim must not read the camera, so a swing can't wait for a strip. Instead the camera closes a strip or inset with its usual wipe when a swing starts, and opens neither during one. The inset's rate has to be read again with this. **The 6 s: a score, not a cap, as Camera itself asks.** The recency term is set so that within about 6 s only a launch with a strong arrival can beat "stay", and a brawl's swing never can, since it still wants 45 s of quiet. QA reads the gap between swings. It's a band, not a rule | Camera, Encounter, QA |
+| 3 | **Reduced motion** | **Closed.** A setup flag, `swingReduced`, yes or no. On, every peak is capped at 30°/s, the number in data, which replaces my "half the rates": a half of a rate that's still moving is no promise. So launches swing less, and some arrivals won't fit. **Online:** each player's setting crosses in the lobby before the match key is made, and it's on if either has it on. It's fixed for the match and read fresh at `newMatch` (Netcode's conditions). **Disclosure:** the other player sees slower swings and isn't told why or who, and I don't count that as disclosing anything. Orb can overrule. **Spectators and replays play at the recorded rate, so they need a render-side answer,** and this flag can't provide one. Camera's near-cut at the whip (a cut on action) is the candidate, opt-in for that viewer, if the field can show the end bearing early. **Owner Rendering and Camera, due before a replay viewer or spectator mode ships** | Netcode, Rendering, Camera |
+| 4 | **Weigh destinations behind the fighter plane higher?** | **Yes.** It's what lets a player see it coming, and Camera's "it arrives" depends on it. A place on the near side arrives late from the frame's edge. It's one score term, smaller than the story terms, so a rival's home on the near side can still win | Encounter |
+
+**One thing §8 and Camera must settle together.** Camera wants nothing standing in front of the fighter plane, and §8 makes walls real on a tilted line. So a building that stops a fighter must be drawn where it stops him, even if part of it stands in front of the plane, or he'd be stopped by nothing. Camera and Rendering should treat this as part of clip 3.
