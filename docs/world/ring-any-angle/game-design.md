@@ -25,11 +25,11 @@ Owner: Game Design, by the EP's brief. Rulings for the turntable, 2026-10-31; no
 
 ## 2. What fires it, how fast, how far, how often
 
-Rates are at the peak, on Camera's smootherstep (§9). The prototype's 30°/s is a starting number; a launch needs more.
+Rates are at the peak, on Camera's ramps (§9). The prototype's 30°/s is a starting number; a launch needs more.
 
 | Moment | Runs? | Fires on | Peak rate | How far | How often in a 6 to 8 minute match |
 | :--- | :--- | :--- | ---: | :--- | ---: |
-| **A launch** | **Yes, the main use** | The kick, once the hit-stop ends, when the planner's arrival is off to one side. **It rests at least 0.35 s before contact** (Camera's `LAND_HOLD`), so he meets a still world and the planner's aim holds | **60°/s (§9)** | Up to 180°, as far as his flight has time for: about 32° per second of flight on the smootherstep, so 50° in a 1.6 s full launch and 90° in about 3 s | 2 to 5 |
+| **A launch** | **Yes, the main use** | The kick, once the hit-stop ends, when the planner's arrival is off to one side. **It rests at least 0.35 s before contact** (Camera's `LAND_HOLD`), so he meets a still world and the planner's aim holds | **60°/s (§9)** | Up to 180°, as far as his flight has time for: about 60° per second of flight less 15° (Camera), so 45° in a 1 s launch and 90° in about 1.75 s | 2 to 5 |
 | **A chase, a flee, a zip away** | **Yes** | The chase's or the flee's start. The hero leads toward interesting empty ground, the villain hunts toward towns. Later small corrections are fine, as both are in the air | 45°/s | Any | 1 to 3 |
 | **A form's pause** | **Yes** | The pause, as the camera's orbit. Nothing moves, so it's the easiest place | 30°/s | Up to 90° | 1 to 3 |
 | **A brawl, a rally, a knock-back** | **Yes, slowly** | Nothing else has fired for about 45 s and something worth seeing lies within 60°. A swing running when a chase catches up eases down to this rate rather than stopping. **It eases to rest rather than bring tall land round in front (§9)** | **10°/s** | Up to 60° | 2 to 4 |
@@ -131,7 +131,7 @@ This costs collateral, which the existing bands bound, and a real collision path
 
 | # | The conflict | The ruling | Owner |
 | :--- | :--- | :--- | :--- |
-| 1 | **Rate** (re-ruled with the EP's call: Camera checked the lens and withdrew 150, `camera.md` §5) | **Builds use 60°/s for a launch. The ceiling is 98°/s, the worst screen shape (4:3) inside 0.045 of the width at the screen's edge. Over 65°/s needs a Reduce flashing answer, because the rate is the sim's and shared, and 65 is the worst shape inside 0.03.** Orb's slider and the flash reading may move it. `travel_budget` ships off, so these are a yardstick and the analyser is the real test. My earlier 100°/s used too wide a lens for Reduce flashing, and is withdrawn. Others stay at my rates. **Adopted from Camera:** smootherstep as the shape, so the peak is `1.875 × θ / T`; dead still through the hit-stop; rest at least 0.35 s before contact. **"A swing can't outlast its flight" stands,** and at 60°/s it matters: about 32° per second of flight, so a 1-second launch gets about 30° and 90° needs about 3 s of flight (about 18,000 units at launch speed). **So big swings belong to long flights,** and QA should read the long-journey row (at most 20%) with swings on. **The airborne sweep limit goes back to 6,000 units a second (§3).** At 60°/s it holds the full rate out to 5,700 units, which covers a swing up to about 60° on its own shape. Larger ones slow a little as he gets further out, by my arithmetic not much: 90° still finishes in about 3 s. If Orb's slider moves the rate up, this comes back with it | Encounter, World, Camera, Research |
+| 1 | **Rate** (re-ruled with the EP's call: Camera checked the lens and withdrew 150, `camera.md` §5) | **Builds use 60°/s for a launch. The ceiling is 98°/s, the worst screen shape (4:3) inside 0.045 of the width at the screen's edge. Over 65°/s needs a Reduce flashing answer, because the rate is the sim's and shared, and 65 is the worst shape inside 0.03.** Orb's slider and the flash reading may move it. `travel_budget` ships off, so these are a yardstick and the analyser is the real test. My earlier 100°/s used too wide a lens for Reduce flashing, and is withdrawn. Others stay at my rates. **Adopted from Camera:** ramps of 20 ticks in, so the whip stays clean, and 10 out; dead still through the hit-stop; rest at least 0.35 s before contact. **"A swing can't outlast its flight" stands,** and at 60°/s it matters: about 60° per second of flight less 15°, so a 1-second launch gets about 45° and 90° needs about 1.75 s of flight (about 10,700 units at launch speed). **So big swings belong to long flights,** and QA should read the long-journey row (at most 20%) with swings on. **The airborne sweep limit goes back to 6,000 units a second (§3).** At 60°/s it holds the full rate out to 5,700 units, which covers about the first 45°. Past that the rate falls as he gets further out, so by my arithmetic 90° takes about 2 s rather than 1.75. If Orb's slider moves the rate up, this comes back with it | Encounter, World, Camera, Research |
 | 2 | **Both grounded in a split; strips and insets; a 6 s gap** | **Both grounded in a split: adopted, as no swing.** My sweep limit nearly gives this anyway, and a plain rule is easier to read. **It doesn't touch brawls,** which are close and in one pane, so a brawl's 10°/s stands. **Strips and insets: one at a time, but the swing wins and it isn't the sim's rule.** The sim must not read the camera, so a swing can't wait for a strip. Instead the camera closes a strip or inset with its usual wipe when a swing starts, and opens neither during one. The inset's rate has to be read again with this. **The 6 s: a score, not a cap, as Camera itself asks.** The recency term is set so that within about 6 s only a launch with a strong arrival can beat "stay", and a brawl's swing never can, since it still wants 45 s of quiet. QA reads the gap between swings. It's a band, not a rule | Camera, Encounter, QA |
 | 3 | **Reduced motion** | **Closed.** A setup flag, `swingReduced`, yes or no. On, every peak is capped at 30°/s, the number in data, which replaces my "half the rates": a half of a rate that's still moving is no promise. So launches swing less, and some arrivals won't fit. **Online:** each player's setting crosses in the lobby before the match key is made, and it's on if either has it on. It's fixed for the match and read fresh at `newMatch` (Netcode's conditions). **Disclosure:** the other player sees slower swings and isn't told why or who, and I don't count that as disclosing anything. Orb can overrule. **Spectators and replays play at the recorded rate, so they need a render-side answer,** and this flag can't provide one. Camera's near-cut at the whip (a cut on action) is the candidate, opt-in for that viewer, if the field can show the end bearing early. **Owner Rendering and Camera, due before a replay viewer or spectator mode ships.** **Since then (Camera §5, Legal's RL-213):** a view-side cut or still, per shot, is the first answer for players too, because it never touches the sim or the other player. **So `swingReduced` becomes the backstop,** for where shown and sim ground would part under a standing fighter. How far they may part is Rendering's and Simulation's to say, and Accessibility reviews both | Netcode, Rendering, Camera |
 | 4 | **Weigh destinations behind the fighter plane higher?** | **Yes.** It's what lets a player see it coming, and Camera's "it arrives" depends on it. A place on the near side arrives late from the frame's edge. It's one score term, smaller than the story terms, so a rival's home on the near side can still win | Encounter |
@@ -164,14 +164,14 @@ Orb, after playing proto v2: "comfortable at every speed up to 240", "a little t
 
 | Size | Ceiling | Time at the ceiling | Time in builds (60°/s) |
 | ---: | ---: | ---: | ---: |
-| 5° | 240 | 0.10 s (the floor) | 0.16 s |
-| 15° | 240 | 0.12 s | 0.47 s |
-| 30° | 170°/s | 0.33 s | 0.94 s |
-| 60° | 120°/s | 0.94 s | 1.9 s |
-| 90° | 98°/s | 1.7 s | 2.8 s |
-| 180° | 69°/s | 4.9 s | 5.6 s |
+| 5° | 240, reaching 112 with a blow and 47 without, inside the floors | 8 or 12 ticks | 0.25 s with a blow, 12 ticks without |
+| 15° | 240 with a blow, 141 without | 11 or 12 ticks | 0.75 s with a blow, 0.47 s without |
+| 30° | 170°/s | 0.43 s | 0.75 s |
+| 60° | 120°/s | 0.75 s | 1.25 s |
+| 90° | 98°/s | 1.2 s | 1.75 s |
+| 180° | 69°/s | 2.9 s | 3.25 s |
 
-**The floor: no swing takes less than 6 ticks,** so it's always eased and never a jump. The flash governor is 60°/s today. Over 65°/s needs the Reduce flashing answer in §9, because the rate is shared. **Even at 60, a small swing is already quick,** which is why this class doesn't have to wait for the reading.
+**The floors are Camera's (below),** so a swing is always eased and never a jump. The flash governor is 60°/s today. Over 65°/s needs the Reduce flashing answer in §9, because the rate is shared. **Even at 60, a small swing is already quick,** which is why this class doesn't have to wait for the reading.
 
 ### The small class: 2° to 15°, usually 3° to 8°
 
@@ -181,15 +181,15 @@ Orb, after playing proto v2: "comfortable at every speed up to 240", "a little t
 | **A flight's correction:** a launch or a chase with an arrival, until the rest before contact | Whatever closes the bearing, up to 15° | Keeps an arrival honest (§8) without a big swing, and it can retarget a swing already running |
 | **Lining up with a street:** entering a place, or as a swing rests within 15° of a street's bearing | Up to 15° | Puts the plane back on the clear street, which is the cheapest answer to §8's walls |
 
-- **How often: about 20 to 40 a match, one every 10 to 20 s,** on its own falling score, separate from the big swings' score and the brawl's 45 s of quiet. **Rarely closer than about 2 s,** a score rather than a cap, because the flash limit counts changes per second. Together they take under 2% of fight time.
+- **How often: about 20 to 40 a match, one every 10 to 20 s,** on its own falling score, separate from the big swings' score and the brawl's 45 s of quiet. **Never closer than 1 s (Camera's value), and that one is a rule rather than a score:** it protects the flash limit, which counts changes per second, and it isn't a cost on the player. The score keeps them further apart than that. Together they take under 2% of fight time.
 - **They add up, and that's the idea.** The sign of each is the choreographer's, chosen by the swing's score, so twenty 5° jolts can lean a fight 100° toward a town or away from one, with no big swing at all. That's the irregular path Orb enjoyed flying on the map, and it could be most of how a fight wanders.
 - **Never from a press.** A jolt comes from a blow that landed, and the gap isn't touched, so it's no dodge (test 4). One swing at a time: a small swing doesn't start during a big one, except a correction retargeting it.
 - **Same stops as §2:** none in a beam or its tell, a struggle, a hit-stop (it starts on the release), a finisher, a KO, the intro or a grab's set piece, or with both grounded in a split.
 - **Reduced motion:** under Camera's view-side setting the shown heading holds and catches up at the next cut.
 
-### The standing limit, for a small swing
+### The sweep limits, for a small swing
 
-The 75 units a second limits a sustained slide, and at 57°/s for a pair 150 apart it would cut every jolt. A small swing is over too fast for feet to slide visibly. **So the limit for a small swing is how far the ground moves in total: `r × θ` at most 30 units (0.4 bh).** That allows 23° at 75 units from the pivot, 11° at 150, 5.7° at 300 and 2.9° at 600; further out, it doesn't fire. The airborne limit stands: at 6,000 units a second, a body 3,000 out allows 115°/s. A swing still eases to rest short of a face.
+The 75 units a second limits a sustained slide, and at 57°/s for a pair 150 apart it would cut every jolt. A small swing is over too fast for feet to slide visibly. **So the limit for a small swing is how far the ground moves in total: `r × θ` at most 30 units (0.4 bh).** That allows 23° at 75 units from the pivot, 11° at 150, 5.7° at 300 and 2.9° at 600; further out, it doesn't fire. A swing still eases to rest short of a face.
 
 ### What it changes in §2
 
@@ -200,3 +200,18 @@ The 75 units a second limits a sustained slide, and at 57°/s for a pair 150 apa
 1. **Flash:** a city clip with the small class firing at 60 and at 240, both modes, at 16:9 and 4:3. A burst is about 0.11 of the width a tick at the screen's edge at 4:3 and 240°/s, over twice the yardstick, but it lasts only a few ticks, so only the analyser can say. Reduced counts most (RL-208).
 2. **Orb, with real fighters:** do jolts help or get in the way of following a fight?
 3. **QA:** jolts a match, and the shortest gap between swings.
+
+### Camera's check on §10 (`camera.md` §5), 2026-10-31
+
+**Small swings get their own sweep allowance, on the ground and in the air.** Camera is right that the speed limits would cap them: 240°/s fits only within 1,430 units of the pivot in the air and 18 on the ground, and two standing fighters would stay at 57°/s at any size. But those limits are about a sustained slide, and a small swing is over before one can show.
+
+| | A big swing | A small swing (2° to 15°) |
+| :--- | :--- | :--- |
+| **Standing** | 75 units a second | **`r × θ` at most 30 units** in all (already ruled above) |
+| **Airborne** | 6,000 units a second | **`r × θ` at most 600 units** in all: 15° out to 2,300 units, 5.7° at 6,000, 2.9° at 12,000. So a far correction gets smaller rather than refused |
+
+**Why this can't be abused.** With small swings at least 1 s apart, the most they can add is 30 units a second on the ground and 600 in the air, well inside the sustained limits. A launch's jolt fits anyway: the launcher is the pivot, and the body is still inside the allowance when an 8 to 11-tick jolt ends.
+
+**Camera's floors stand, and they replace my 6 ticks:** 8 ticks with a blow, on the fast-start, soft-landing shape of the camera's impact push, and 12 without, on a smootherstep. Orb saw 240°/s make 5° last 2.3 ticks on a 240 Hz display, and on the laptop at 30 fps that's about one frame: a jump, against Orb's own rule that every move eases. **So only a blow's swing reaches 240, from about 11° up,** and a correction in flight tops out at 141°/s. If Orb wants corrections faster, that floor is the number to move. **Camera's 1 s apart stands too** (above). All of this is past the 60°/s that builds use, except the floors, and it applies once the flash reading allows.
+
+**The sweep limit is ticked by default in proto v2** (`law: 1`). Unless Orb unticked it, the world was often turning slower than the slider said, near the ground and far from the pivot, so their "comfortable at 240" may cover less than it sounds. Worth one word from Orb.
