@@ -2,6 +2,8 @@
 
 Research & Prototyping, 2026-10-30, for the EP on Orb's words: "push this idea to the limit, the angle the fighters fight along the surface of the planet should be ready to dynamically adjust and change determined by the fight choreographer and any other necessary game system." Orb's rule: fighters always on the same relative band.
 
+**Status: UNFINISHED (paused for quiet time, 2026-10-30).** Saved as it stands: section 7 still waits on Rendering, Camera, Encounter and Simulation, and no owner has reviewed it.
+
 **Play it:** open `research/ring-any-angle/proto.html` (one file, no install). Press the world buttons to compare. Reproduce the numbers: `node research/ring-any-angle/bench.mjs` (about 30 s; `results.json`, `results.txt`).
 
 This reads the answers from World, Game Design, Netcode and Performance in this folder. **Rendering, Camera, Encounter and Simulation had not answered when this was written**, so what the route asks of them is marked as an assumption (section 7).

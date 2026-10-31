@@ -1,5 +1,7 @@
 # Result: the fight at any angle
 
+**Status: UNFINISHED (paused for quiet time, 2026-10-30).** The paper still waits on four directors' answers.
+
 **Question.** How can the angle the fighters fight along the planet change at any moment, chosen by the choreographer? (Orb, 2026-10-30.)
 
 **Recommendation.** The ribbon (D3): the fight's line is a curve steered at a frontier just past what the camera can see, on the same wrapped columns, over marks kept in planet coordinates. Any angle at any tick, with no swap, no pops and a peak of 6 to 7 noise reads a tick. The paper, with the route in stages: [docs/world/ring-any-angle/research.md](../../docs/world/ring-any-angle/research.md).
