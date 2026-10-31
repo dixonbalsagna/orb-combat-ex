@@ -126,7 +126,7 @@ Places the new ring holds within 12,000 units of the pivot: 0 to 3 at every angl
 
 ## 8. The 2D field (the turntable, E and E2): what it costs and needs on real planet ground (World, 2026-10-31, no Godot run)
 
-Orb picked the turntable: a planet-keyed field of ground round the pair, the strip re-laid from it, the world swinging round the fighters. Research's archField (`research/ring-any-angle/sim.js`) holds a cube-sphere grid of nodes at spacing G inside 12,000 units of the pair, bilinear look-ups, and the planet store. This section reads it against the gen 2 code. **Nothing here is measured on gen 2**: the EP's no-Godot rule stands. Where a number is derived I say from what. A probe that measures item 8.1 on the first quiet window is written and unrun, uncompiled: `docs/world/ring-any-angle/field_probe.gd.txt` (copy it to the project root as `field_probe.gd` to run).
+Orb picked the turntable: a planet-keyed field of ground round the pair, the strip re-laid from it, the world swinging round the fighters. Research's archField (`research/ring-any-angle/sim.js`) holds a cube-sphere grid of nodes at spacing G inside 12,000 units of the pair, bilinear look-ups, and the planet store. This section reads it against the gen 2 code. **The numbers in 8.1 were derived, before the probe; section 11 has the measured gen 2 figures and supersedes them where they differ (gen 2 error is 3 to 7 times gen 1's).** Where a number is derived I say from what. A probe that measures item 8.1 on the first quiet window is written and unrun, uncompiled: `docs/world/ring-any-angle/field_probe.gd.txt` (copy it to the project root as `field_probe.gd` to run).
 
 ### 8.1 Relief error by node spacing, and the shore
 
@@ -291,3 +291,103 @@ Game Design's launch is at most a sixth of the loop (3d): Close 6,400, Half 12,8
 - The far-reader audit (639 sites).
 - Whether Rendering can draw ground rows off the line from the field (test 7).
 - Whether a bounding-circle footprint is acceptable to Combat for the building contacts.
+
+## 10. Rendering's questions (`rendering.md` section 5) and Game Design's street query (`game-design.md` section 8) (World, 2026-10-31, no Godot run)
+
+(This is the "short section 9" the EP asked for; the number 9 was already taken by the swing and strip answers above.)
+
+### 10.1 Gen 2 reads in 2D at about 4 a tick, and sparse-read error: waiting on the probe
+
+**What I can say now.** A node read is the same `surfAt` as a ring column's: 51 microseconds native on a quiet machine (window 20: 54 typical), of which 25 are the 28 octaves of noise and the rest the plate pairs, trig and the climate and biome arithmetic. A ring column also pays about 3 of bookkeeping the node does not, so **a node is 48 to 54 microseconds, and 4 a tick is 0.19 to 0.22 ms: Rendering's 0.2 ms a tick holds at x1, and the laptop (x4) sees 0.8 ms.** A tile of 289 nodes is 14 to 16 ms of CPU, 72 ticks at 4 a tick, as Rendering has it. These are window 20's numbers re-applied; I have not timed a node read.
+
+Two things may make a read cheaper and I will measure them rather than claim them:
+1. **Height only.** A tile's relief needs the continent, relief and surface-detail octaves, about half of the 28; the biome and climate half could come from the far map's 400-unit texels. A height-only node may be 25 to 30 microseconds, which would make the budget 7 or 8 a tick. Unmeasured.
+2. **Neighbours share noise cells.** Nodes 128 apart sit in the same 375-unit cell of the finest octave, so the corner memo (99% hits on the ring already) should do at least as well in 2D. Already in the 51.
+
+**Sparse-read error** is section 8.1's table: derived from gen 1's measured figures and the gen 2 constants, with the shoreline off about 14 units at 128, 32 at 256 and 94 at 512. At 128 the surface detail (finest cell 375) needs no extra detail term; platforms, river channels and crater rims are exact marks, not noise, and are layered on the tile anyway. **The measured gen 2 numbers come from `field_probe.gd.txt` when the EP lifts the no-Godot rule**, and I will replace the table then.
+
+### 10.2 2D lakes and rivers, and places by plan: answered above
+
+- Lakes and rivers: **8.1**. In short, a lake is a planet-keyed basin (a 2D flood at a coarse grid, level and extent cached per basin), and a node's water is `max(0, level - height)`; a river is a planet polyline with a width and a carve depth, and a node's depth is a profile of its distance to the polyline. Per-node depth and level, as Rendering asks, fall out of those two records and the heights. The one-in-3,000 river rule has to go or become a planet rule.
+- Places by plan: **9.2**. Towns first (the small case), a pose per building from the frame, a bounding circle for the sim; cities frozen until they have plans.
+
+### 10.3 The street query (Game Design's question 3: a street-alignment score inside places)
+
+What the score needs: for a place and an arrival point, the bearings of its streets and how far the arrival lies from the nearest street centre line. Today a city's streets are three lanes behind the laying chord (`lanes.json`: the front street centred on the fighter plane, 375 wide; the mid street 1,012.5 behind it; the back street 2,025 behind it) and avenues across. Planned places will have one grid.
+
+**The interface (World's, a pure function of the place's frame; no state):**
+
+| Call | Returns |
+| :--- | :--- |
+| `WorldStreets.frame(P, place)` | The place's street grid: centre, `a0` (the bearing of the along-street axis in the planet frame, our own atan2), `pitch` 1,012.5, `width` 375, `phase` (the lateral offset of the street nearest the centre) |
+| `WorldStreets.bearings(P, place)` | The offered bearings: `a0`, `a0 + 90°`, `a0 + 180°`, `a0 + 270°` |
+| `WorldStreets.align(P, place, q, bearing)` | `d_angle` (0 to 45°, the line's angle to the nearer axis) and `off` (0 to 506: the distance from the planet point `q` to the nearest street centre line along that axis) |
+| `WorldStreets.rest(P, place, q, bearing)` | The signed lateral shift that puts a line at `bearing` through `q` onto the nearest street centre line (what Option A's ease needs to know) |
+
+**Cost:** a few dozen operations a call, no scan; finding which place holds `q` is a loop over the planet's 56 places (`P.px/py/pz`, `P.rad`), or the ring's held list. Encounter's score can use `align` as `max(0, 1 - d_angle / 22.5°) x (1 - off / 506)`.
+
+**Until places have plans (honest limit):** for a place laid on a chord, `a0` is the bearing of the chord it was laid on, which the code does not keep (`E.chords` stores columns only); World would record it with the chord (not hashed). Its three streets then lie behind that line at the pitches above, so a city is a **strip 2,400 deep, not a disc**: a line at 40° crosses the rows and clips the strip's ends, and `rest` is meaningful only within a few degrees of `a0`. For frozen cities the query answers "no street" for a line more than about 10° off the laying bearing. For towns on plans it answers fully at any bearing.
+
+**What it needs from others:** Encounter's score and Game Design's weight; Simulation for a place's `a0` in the plan data once towns have plans; nothing in the state hash (derived).
+
+## 11. The probes, run (World, 2026-10-31, HEAD 93102d14; raw output in `probe-results-2026-10-31.txt`)
+
+Both probes compiled (`--check-only`) and ran in a scratch copy of HEAD at below-normal priority, two Godot jobs, no timing taken. **This section supersedes the derived numbers in 8.1 and 9.5 where they differ.**
+
+### 11.1 Gen 2 relief error by node spacing (answers Rendering's sparse-read question)
+
+Method: four planets (7, 3, 11, 25), a Half ring each (2,400 columns), the raw column height (`farColumn`, z = 0) against a straight line between every k-th column. This is interpolation **along the ring**; a 2D bilinear field at the same spacing is the same in kind and somewhat worse on the diagonal, so treat these as a floor. RMS pooled over the four planets, units:
+
+| Node spacing | All columns RMS (per planet) | Max | Mountain RMS | Lake RMS | Shoreline displacement RMS / max | Crossings lost |
+| ---: | :--- | ---: | ---: | ---: | :--- | ---: |
+| 64 | **3.3** (1.2, 2.9, 1.1, 5.8) | 189 | 1.0 | 0.6 | 17 / 32 | 0 |
+| 128 | **5.1** (3.9, 4.2, 3.9, 7.4) | 189 | 3.5 | 2.0 | 40 / 128 | 0 |
+| 256 | **11.0** (10.9, 6.7, 10.6, 14.5) | 273 | 10.1 | 6.1 | 81 / 192 | 0 |
+| 512 | **22.8** (18.1, 16.3, 24.7, 29.6) | 319 | 21.6 | 20.8 | 59 / 128 | 0 |
+| 1,024 | **48.2** (38.6, 42.1, 54.2, 55.7) | 353 | 51.0 | 75.8 | 167 / 448 | 2 of 12 |
+
+- **Gen 2 is 3 to 7 times gen 1's error at the same spacing** (gen 1 RMS, Research: 0.7 at 128, 4.7 at 512, 16 at 1,024; gen 2 is 5.1, 22.8 and 48.2). My 8.1 estimate used gen 1 as a floor and was too kind by that factor.
+- **It scales about linearly with the spacing, not as its square** (128 to 1,024, 8 times the spacing, 9.5 times the RMS). That is the signature of creases (ranges, rifts, canyons) and steps rather than smooth relief, which is what I guessed gen 2 would add and could not size.
+- **Maximum errors of 125 to 189 units at a spacing of only 64** (planets 3 and 25) mean gen 2 has near-vertical steps that no spacing of 64 or more reproduces. Planet 25's RMS is 5.8 at 64 while its mountain RMS is 0.7, so the steps are outside the mountains; I have not found which landform. At 512 the worst column is 4 body heights off (319).
+- **The shoreline** (14 crossings in all, so a thin sample): within one column at 64 (max 32); at 128 usually within a column but once 4 (128); 256 and 512 are 2 to 4 columns; **1,024 is 5 columns RMS and loses a crossing in 2 of 12.** My 8.1 table said 14 units at 128 and 94 at 512. The probe says the 128 figure was optimistic and the 512 one a little pessimistic; both inside a factor of three.
+- **Lakes** need 256 or finer to keep their basin: lake RMS 6 at 256, 21 at 512 (a lake is about 40 deep), 76 at 1,024.
+- **The post-pass** (platforms, lake carve; rivers off) added at most 13 to 18 units on two of four planets and nothing on the others, so on these rings the exact-mark layer is small.
+
+**What it means.**
+1. **If the field defines the ground** (the sim, the render and the places all read it), the error is not an error: nothing else is compared with the exact planet. Cliffs and creases are smoothed, and the ground is a new, smoother planet. Everything planned on the exact heights (lakes, platforms, sites, the golden) must be planned on the field instead.
+2. **If the field must match the exact planet** (so the golden, the far map and the old ring agree), it needs 64 near the pair to keep a shoreline to one column, and nothing under 64 fixes the steps.
+3. **A near level of 128 is within 5 units RMS but not within a column of the shore on every planet; 512 is 23 RMS, which a player sees as ground that is slightly off, and 4 body heights at a step.** Rendering's "128 near, 512 far" is usable as a look and not as a shore; the shoreline would want a deterministic detail term (a shoreline snap to the threshold on the strip) rather than a finer grid.
+
+### 11.2 A place worth arriving at: measured
+
+Eight real planets, 2,000 evenly spread points each, the nearest city and town less their reach (`cityReach` x radius and `townReach` x radius), fraction of points with one inside the range (all points; land points differ by 1 to 8 points):
+
+| Range | Any place | A city | A town |
+| ---: | :--- | :--- | :--- |
+| 6,400 (Close) | **81 to 89%** | 43 to 50% | 60 to 69% |
+| 9,600 (a full launch) | **92 to 96%** | 64 to 73% | 78 to 89% |
+| 12,800 (Half) | **97 to 99%** | 79 to 89% | 88 to 96% |
+| 25,600 (Whole) | 100% | 99 to 100% | 100% |
+
+My 9.5 arithmetic gave 82, 96 and 99% for any place and 41, 59 and 74% for a city; the real planets are a little richer in cities (places sit on land, where the fights are) and a little poorer in towns. **The answer stands: on a Half ring a place worth arriving at is in range at any bearing 97 to 99% of the time; on a Close ring 81 to 89% (about 5 times in 6); a town is the usual one (a city is a coin toss at Close, three times in four at a full launch).** The worst planet at a full launch is 92% (planets 7, 9 and 11). No planet is below 81% at the Close range.
+
+### 11.3 The web build's budget: 130 us a column, so about 1.5 reads a tick
+
+Performance's change: on the web a read is 130 us, so a tick's read budget is about 1.5 nodes, not 4. What that does to the two-ring field while flying (arithmetic; a node read taken as a column read):
+
+| Flight speed | Two-ring field needs (128 within 3,000, 512 out to 12,000) | Outer ring alone (512) | Budget |
+| ---: | ---: | ---: | ---: |
+| 1,032 u/s (a flat-out run) | 7.9 nodes a tick (5 times the budget) | 1.6 | 1.5 |
+| 3,000 | 22.9 | 4.6 | 1.5 |
+| 6,000 (a launch) | 45.8 (30 times) | 9.2 | 1.5 |
+| 10,000 | 76.3 | 15.3 | 1.5 |
+
+The spacing that 1.5 a tick can hold, for a disc of radius r in flight at v: at r 12,000 it is 525 units at 1,032 u/s, 894 at 3,000 and **1,265 at 6,000**; at r 6,000, 371, 632 and 894. At 1,024 the probe's error is 48 RMS with max 353 and lost shorelines, so **the field cannot be read as it is flown at launch speed on the web**.
+
+**What does work:**
+1. **Bake the planet once at a coarse spacing and read it for flight.** The whole sphere at 512 is 28,650 nodes (area 7.51e9 / 512 squared): 3.7 s on the web and about 1.5 s native, a loading-screen cost, then flight costs no reads. At 1,024 it is 7,160 nodes, 0.9 s. (Rendering's far map is already resident at 400-unit texels: this is the same idea with the sim's heights.) The error is the table's 512 row: 23 RMS.
+2. **Refine only where the pair stands still.** The inner 128 ring is 1,727 nodes: **19 seconds at 1.5 a tick**. Too slow after a landing. A radius of 1,500 at 128 is 432 nodes, 4.8 s; at 256 inside 3,000 the same count. So the sharpening Rendering describes needs to start before the landing (a launch is planned: 96 ticks of flight reach 144 nodes) and cannot be a full disc on the web.
+3. **A height-only node** (no climate) may be half the cost, taking 1.5 to 3 a tick. Unmeasured.
+4. **The native build and the laptop are not the web build**: at 54 us 4 a tick holds there, and the table above is for the web only.
+
+So on the web the turntable is a coarse-then-sharpen ground with a baked planet underneath; the two-ring field as I described it in 8.1 is a native design.

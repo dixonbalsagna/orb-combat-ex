@@ -1,0 +1,40 @@
+# field_probe.gd (relief error along the ring, gen 2, touch 1, Half ring, spacing = 32 x k), HEAD 93102d14, 2026-10-31
+
+planet 7: post-pass (S.base - raw): 2400 cols, rms 0.6, max 13
+  node spacing   64: all 2400 cols, rms 1.2, max 30 | shore 24 cols, rms 6.1, max 30 | mountain 1420 cols, rms 1.3, max 15 | lake 237 cols, rms 0.9, max 12 | shoreline: 4 cols, rms 16.0, max 32 units displaced, 0 crossings lost
+  node spacing  128: all 2400 cols, rms 3.9, max 37 | shore 24 cols, rms 7.7, max 32 | mountain 1420 cols, rms 4.8, max 37 | lake 237 cols, rms 2.5, max 21 | shoreline: 4 cols, rms 0.0, max 0 units displaced, 0 crossings lost
+  node spacing  256: all 2400 cols, rms 10.9, max 84 | shore 24 cols, rms 11.1, max 34 | mountain 1420 cols, rms 13.7, max 84 | lake 237 cols, rms 6.5, max 26 | shoreline: 4 cols, rms 115.4, max 192 units displaced, 0 crossings lost
+  node spacing  512: all 2400 cols, rms 18.1, max 106 | shore 24 cols, rms 16.9, max 39 | mountain 1420 cols, rms 21.2, max 106 | lake 237 cols, rms 16.6, max 58 | shoreline: 4 cols, rms 73.3, max 128 units displaced, 0 crossings lost
+  node spacing 1024: all 2400 cols, rms 38.6, max 202 | shore 24 cols, rms 29.9, max 53 | mountain 1420 cols, rms 45.6, max 202 | lake 237 cols, rms 39.9, max 172 | shoreline: 4 cols, rms 106.1, max 192 units displaced, 0 crossings lost
+planet 3: post-pass (S.base - raw): 2400 cols, rms 1.2, max 18
+  node spacing   64: all 2400 cols, rms 2.9, max 125 | shore 40 cols, rms 0.6, max 4 | mountain 1097 cols, rms 0.3, max 3 | lake 52 cols, rms 0.5, max 2 | shoreline: 4 cols, rms 16.0, max 32 units displaced, 0 crossings lost
+  node spacing  128: all 2400 cols, rms 4.2, max 131 | shore 40 cols, rms 6.2, max 34 | mountain 1097 cols, rms 1.2, max 8 | lake 52 cols, rms 1.9, max 5 | shoreline: 4 cols, rms 16.0, max 32 units displaced, 0 crossings lost
+  node spacing  256: all 2400 cols, rms 6.7, max 148 | shore 40 cols, rms 6.7, max 26 | mountain 1097 cols, rms 4.1, max 21 | lake 52 cols, rms 6.6, max 16 | shoreline: 4 cols, rms 64.0, max 128 units displaced, 0 crossings lost
+  node spacing  512: all 2400 cols, rms 16.3, max 182 | shore 40 cols, rms 5.9, max 18 | mountain 1097 cols, rms 16.0, max 79 | lake 52 cols, rms 28.7, max 79 | shoreline: 4 cols, rms 27.7, max 32 units displaced, 0 crossings lost
+  node spacing 1024: all 2400 cols, rms 42.1, max 245 | shore 40 cols, rms 29.5, max 71 | mountain 1097 cols, rms 46.4, max 218 | lake 52 cols, rms 117.5, max 218 | shoreline: 2 cols, rms 160.0, max 224 units displaced, 2 crossings lost
+planet 11: post-pass (S.base - raw): 2400 cols, rms 0.0, max 0
+  node spacing   64: all 2400 cols, rms 1.1, max 18 | shore 16 cols, rms 0.1, max 0 | mountain 1887 cols, rms 1.2, max 18 | lake 603 cols, rms 0.3, max 3 | shoreline: none units displaced, 0 crossings lost
+  node spacing  128: all 2400 cols, rms 3.9, max 36 | shore 16 cols, rms 0.3, max 1 | mountain 1887 cols, rms 4.2, max 36 | lake 603 cols, rms 1.3, max 12 | shoreline: none units displaced, 0 crossings lost
+  node spacing  256: all 2400 cols, rms 10.6, max 74 | shore 16 cols, rms 1.4, max 2 | mountain 1887 cols, rms 11.3, max 74 | lake 603 cols, rms 5.2, max 28 | shoreline: none units displaced, 0 crossings lost
+  node spacing  512: all 2400 cols, rms 24.7, max 192 | shore 16 cols, rms 4.7, max 6 | mountain 1887 cols, rms 24.5, max 192 | lake 603 cols, rms 14.0, max 57 | shoreline: none units displaced, 0 crossings lost
+  node spacing 1024: all 2400 cols, rms 54.2, max 353 | shore 16 cols, rms 20.3, max 27 | mountain 1887 cols, rms 54.7, max 353 | lake 603 cols, rms 42.8, max 217 | shoreline: none units displaced, 0 crossings lost
+planet 25: post-pass (S.base - raw): 2400 cols, rms 0.0, max 0
+  node spacing   64: all 2400 cols, rms 5.8, max 189 | shore 16 cols, rms 10.3, max 34 | mountain 1307 cols, rms 0.7, max 13 | lake none | shoreline: 6 cols, rms 18.5, max 32 units displaced, 0 crossings lost
+  node spacing  128: all 2400 cols, rms 7.4, max 189 | shore 16 cols, rms 11.7, max 35 | mountain 1307 cols, rms 2.4, max 25 | lake none | shoreline: 6 cols, rms 66.6, max 128 units displaced, 0 crossings lost
+  node spacing  256: all 2400 cols, rms 14.5, max 273 | shore 16 cols, rms 10.5, max 26 | mountain 1307 cols, rms 8.8, max 54 | lake none | shoreline: 6 cols, rms 48.9, max 96 units displaced, 0 crossings lost
+  node spacing  512: all 2400 cols, rms 29.6, max 319 | shore 16 cols, rms 27.3, max 41 | mountain 1307 cols, rms 23.6, max 112 | lake none | shoreline: 6 cols, rms 66.6, max 128 units displaced, 0 crossings lost
+  node spacing 1024: all 2400 cols, rms 55.7, max 344 | shore 16 cols, rms 25.2, max 46 | mountain 1307 cols, rms 56.3, max 240 | lake none | shoreline: 6 cols, rms 216.6, max 448 units displaced, 0 crossings lost
+rc=0
+
+# place_reach_probe.gd (share of 2,000 spread points with a place inside range + reach), same commit
+
+planet 1 (53 places, 66% of points on land):  range 6400: any 85% (land 90%), city 49% (land 52%), town 64% (land 70%) |  range 9600: any 96% (land 96%), city 73% (land 74%), town 83% (land 86%) |  range 12800: any 99% (land 99%), city 89% (land 87%), town 94% (land 94%) |  range 25600: any 100% (land 100%), city 100% (land 100%), town 100% (land 100%) |
+planet 2 (55 places, 82% of points on land):  range 6400: any 89% (land 92%), city 50% (land 50%), town 69% (land 72%) |  range 9600: any 96% (land 97%), city 72% (land 72%), town 89% (land 92%) |  range 12800: any 99% (land 99%), city 84% (land 83%), town 96% (land 97%) |  range 25600: any 100% (land 100%), city 100% (land 100%), town 100% (land 100%) |
+planet 3 (54 places, 74% of points on land):  range 6400: any 87% (land 90%), city 48% (land 47%), town 65% (land 69%) |  range 9600: any 96% (land 97%), city 72% (land 70%), town 86% (land 88%) |  range 12800: any 99% (land 99%), city 89% (land 87%), town 95% (land 96%) |  range 25600: any 100% (land 100%), city 100% (land 100%), town 100% (land 100%) |
+planet 5 (55 places, 77% of points on land):  range 6400: any 86% (land 89%), city 43% (land 42%), town 65% (land 70%) |  range 9600: any 95% (land 96%), city 64% (land 61%), town 85% (land 89%) |  range 12800: any 98% (land 99%), city 79% (land 76%), town 96% (land 97%) |  range 25600: any 100% (land 100%), city 99% (land 99%), town 100% (land 100%) |
+planet 7 (54 places, 67% of points on land):  range 6400: any 81% (land 88%), city 46% (land 53%), town 65% (land 70%) |  range 9600: any 92% (land 95%), city 69% (land 76%), town 85% (land 89%) |  range 12800: any 97% (land 98%), city 86% (land 92%), town 96% (land 98%) |  range 25600: any 100% (land 100%), city 100% (land 100%), town 100% (land 100%) |
+planet 9 (54 places, 79% of points on land):  range 6400: any 85% (land 86%), city 49% (land 50%), town 63% (land 64%) |  range 9600: any 92% (land 93%), city 70% (land 72%), town 83% (land 84%) |  range 12800: any 97% (land 98%), city 86% (land 87%), town 93% (land 93%) |  range 25600: any 100% (land 100%), city 100% (land 100%), town 100% (land 100%) |
+planet 11 (54 places, 85% of points on land):  range 6400: any 81% (land 84%), city 46% (land 47%), town 60% (land 63%) |  range 9600: any 92% (land 95%), city 70% (land 72%), town 78% (land 81%) |  range 12800: any 98% (land 99%), city 89% (land 91%), town 88% (land 90%) |  range 25600: any 100% (land 100%), city 100% (land 100%), town 100% (land 100%) |
+planet 25 (55 places, 82% of points on land):  range 6400: any 85% (land 86%), city 49% (land 46%), town 67% (land 70%) |  range 9600: any 94% (land 95%), city 69% (land 66%), town 88% (land 90%) |  range 12800: any 98% (land 98%), city 82% (land 81%), town 96% (land 97%) |  range 25600: any 100% (land 100%), city 100% (land 100%), town 100% (land 100%) |
+   at: cleanup (core/object/object.cpp:2536)
+rc=0

@@ -1,0 +1,52 @@
+extends SceneTree
+# UNRUN, NOT COMPILED (the EP's no-Godot rule, 2026-10-31). Is there a place worth arriving at within launch range, at any bearing? For 2,000 evenly spread points on each of eight planets (a pair standing there), the
+# distance to the nearest city and to the nearest town, less the place's reach (cityReach x radius, townReach x radius: a line through the pair that passes within the reach holds the place, as WorldEpoch._held does), and the
+# share of points with one inside a launch's range. Land points (ground over 0) are told apart from all points. Launch ranges: Close 6,400, a full launch 9,600, Half 12,800, Whole 25,600 (a sixth of the loop; Game Design 3d).
+#   godot --headless --path . --script res://place_reach_probe.gd     (copy this file to the project root as place_reach_probe.gd; gen 2)
+func _init() -> void:
+	WorldClimate.useGen(2)
+	var ranges: Array = [6400.0, 9600.0, 12800.0, 25600.0]
+	for seed in [1, 2, 3, 5, 7, 9, 11, 25]:
+		var P := WorldPlanet.make(seed)
+		var N: int = 2000
+		var cnt: Dictionary = {}
+		var landN: int = 0
+		var golden: float = PI * (3.0 - sqrt(5.0))
+		for k in ["all", "land"]:
+			for r in ranges:
+				cnt["%s%d/any" % [k, int(r)]] = 0
+				cnt["%s%d/city" % [k, int(r)]] = 0
+				cnt["%s%d/town" % [k, int(r)]] = 0
+		for i in range(N):
+			var y: float = 1.0 - 2.0 * (float(i) + 0.5) / float(N)
+			var rr: float = sqrt(1.0 - y * y)
+			var th: float = golden * float(i)
+			var q := [rr * cos(th), y, rr * sin(th)]
+			WorldPlanet.surfAt(P, q[0], q[1], q[2])
+			var land: bool = P.outH > 0.0
+			if land:
+				landN += 1
+			var dc: float = 1.0e18
+			var dt: float = 1.0e18
+			for j in range(P.n):
+				var dot: float = q[0] * P.px[j] + q[1] * P.py[j] + q[2] * P.pz[j]
+				var arc: float = acos(clampf(dot, -1.0, 1.0)) * P.R
+				if P.kind[j] == WorldPlanet.KIND_CITY:
+					dc = minf(dc, arc - P.c.cityReach * P.rad[j])
+				else:
+					dt = minf(dt, arc - P.c.townReach * P.rad[j])
+			for r in ranges:
+				for k in ["all", "land"]:
+					if k == "land" and not land:
+						continue
+					if dc <= r:
+						cnt["%s%d/city" % [k, int(r)]] += 1
+					if dt <= r:
+						cnt["%s%d/town" % [k, int(r)]] += 1
+					if minf(dc, dt) <= r:
+						cnt["%s%d/any" % [k, int(r)]] += 1
+		var line: String = "planet %d (%d places, %d%% of points on land):" % [seed, P.n, 100 * landN / N]
+		for r in ranges:
+			line += "  range %d: any %d%% (land %d%%), city %d%% (land %d%%), town %d%% (land %d%%) |" % [int(r), 100 * cnt["all%d/any" % int(r)] / N, 100 * cnt["land%d/any" % int(r)] / maxi(1, landN), 100 * cnt["all%d/city" % int(r)] / N, 100 * cnt["land%d/city" % int(r)] / maxi(1, landN), 100 * cnt["all%d/town" % int(r)] / N, 100 * cnt["land%d/town" % int(r)] / maxi(1, landN)]
+		print(line)
+	quit()
