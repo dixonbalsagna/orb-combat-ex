@@ -638,6 +638,7 @@ static func dirUpdate(S: SimState, dt: float) -> void:
 	DirBrawl.laTick(S)   # 10c: launch anywhere notes when each fighter came down from a launch
 	DirWater.tick(S)   # a drop into the water surfaces within water.surfaceTicks (rulings-2026-10-26 row 6)
 	DirRally.tick(S)   # 23d: the daze, and each rally's end
+	DirPlane.tick(S, dt)   # with depth off, a fighter eases back to the plane after a flight (rulings-2026-10-30f row 9)
 
 
 static func _update(S: SimState, dt: float) -> void:

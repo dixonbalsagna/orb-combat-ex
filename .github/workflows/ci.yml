@@ -292,6 +292,8 @@ jobs:
         run: node tools/world-checks.mjs --run
       - name: A body under the lake and sea floor rises at most 7.5 a tick (floor on)
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/floorlift_check.gd'
+      - name: A fighter comes home to the plane after a flight, with depth off
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/director/tools/plane_check.gd'
 
   # Builds the Pages site on every run, so a broken export shows up on pull requests
   # and branches too. Only pushes to main (and manual runs on main) upload it.

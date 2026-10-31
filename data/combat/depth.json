@@ -5,6 +5,8 @@
   "_enabled": "the one switch. SimCore.newMatch copies it into S.depthOn unless the match's setup has its own \"depth\". Off until the director's depth window: with it off nothing below is read by a match, and this file is not in a replay's data hash",
   "maxBhPerSec": 1.2,
   "_maxBhPerSec": "the cap: the most a drift in depth moves a fighter, outside a flight or a rush. It holds the capped velocity (Fighter.vz) and a free fighter's ease to his home depth (depth.md section 3)",
+  "planeEasePerTick": 20,
+  "_planeEasePerTick": "read with depth OFF, unlike the rest of this file (Game Design's rulings-2026-10-30f.md row 9; sim/director/plane.gd): a fighter left off the plane by a flight eases back at this many units a tick on average, eased in and out. 0 is off",
   "faceMarginBh": 0.5,
   "_faceMarginBh": "a fighter outside a flight keeps his centre this far from a standing building's face, and so from a kerb line where a block stands. The body's own half extents (lanes.json body) are the least it can be",
   "capExempt": ["shove", "sidestep"],

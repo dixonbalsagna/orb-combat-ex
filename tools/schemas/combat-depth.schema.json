@@ -23,6 +23,11 @@
       "exclusiveMinimum": 0,
       "description": "The cap: the most a drift in depth moves a fighter, in body heights a second, outside a flight or a rush."
     },
+    "planeEasePerTick": {
+      "type": "number",
+      "minimum": 0,
+      "description": "With depth off, a fighter left off the plane by a flight eases back at this many units a tick on average, eased in and out. 0 is off."
+    },
     "faceMarginBh": {
       "type": "number",
       "minimum": 0,
