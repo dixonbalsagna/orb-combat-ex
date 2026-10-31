@@ -1,0 +1,40 @@
+{
+  "_why": "The switches the nightly watches (Legal RL-208, 2026-10-30). Legal's open rows RL-177, RL-179, RL-180 and RL-183 (the energy kits, rapid fire, snares and mines, grab call-outs, rally links) apply only to content that is ON in the exported build: for any that is ON, the row's own clips join the batch (flash register, three white bursts a second, the rally cap); for any that is OFF the row stays open and reopens on the day it is switched on. tools/flash/nightly-seeds.mjs reads each rule in the PINNED commit's own exported tree, prints the state in the night's build info line and fails the night (exit 5) when a switch is not as it was reviewed. A rule is { flag: { file, path } } (a boolean in a data file: true is on, false is off, missing is absent), { files: [globs] } (a file of that name in the tree means the content landed: on; none: absent), { any: [rules] } or { none: why } (no switch exists in this tree yet: absent). 'absent' counts as off. 'expected' is the state Legal reviewed. A new hook is one edit here, made when Combat or Narrative lands it; until then a switch with no hook is only watched by its files.",
+  "switches": [
+    {
+      "name": "kits",
+      "row": "RL-177, RL-179",
+      "expected": "off",
+      "why": "Combat's four energy kits (energy.<fighter>.json, combat.energy/1): drafted in docs/combat/pending/energy and not in the build",
+      "rule": { "files": ["data/combat/energy.*.json", "data/combat/energy/*.json", "data/fighters/*/energy.json"] }
+    },
+    {
+      "name": "rapidFire",
+      "row": "RL-177",
+      "expected": "off",
+      "why": "the rapid-fire (barrage) flash register of the energy overhaul: a kit feature, so it lands with the kits; no switch of its own exists yet",
+      "rule": { "none": "Combat names the switch when rapid fire lands; today it is part of the kits' data" }
+    },
+    {
+      "name": "snareMine",
+      "row": "RL-179",
+      "expected": "off",
+      "why": "the kits' snares and mines (Narrative's twelve names). NOT the first slice's mine, interrupts.json blast.mine.enabled, which is on and predates the rows",
+      "rule": { "files": ["data/combat/snares.json", "data/combat/snare.*.json", "data/fight/snares.json"] }
+    },
+    {
+      "name": "grabCallouts",
+      "row": "RL-180",
+      "expected": "off",
+      "why": "Narrative's grab call-out lines, once per grab (ln06)",
+      "rule": { "files": ["data/narrative/grab_callouts.json", "data/narrative/callouts.*.json"] }
+    },
+    {
+      "name": "rally",
+      "row": "RL-183",
+      "expected": "off",
+      "why": "Combat's rally links, sells and variety scoring: the director's switch (interrupts.json rally.enabled) or a fighter's rally file",
+      "rule": { "any": [{ "flag": { "file": "data/director/interrupts.json", "path": ["rally", "enabled"] } }, { "files": ["data/combat/rally.*.json", "data/combat/rally/*.json"] }] }
+    }
+  ]
+}

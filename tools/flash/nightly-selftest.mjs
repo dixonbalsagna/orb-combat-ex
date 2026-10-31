@@ -1,8 +1,8 @@
 // Self-test of tools/flash/nightly-seeds.mjs: the night's seeds (new, never repeated, none from the recorded set), what a run says and the take-down trigger. No browser. CI runs it.
 //   node tools/flash/nightly-selftest.mjs
-import { nextSeeds, readRun, reportLine, signatureOf, signatureText, TAKE_DOWN_ABOVE, TAKE_DOWN_ABOVE_OWNER, limitFor, limitFromRecord } from './nightly-seeds.mjs';
+import { nextSeeds, readRun, reportLine, signatureOf, signatureText, TAKE_DOWN_ABOVE, TAKE_DOWN_ABOVE_OWNER, limitFor, limitFromRecord, modeOf, verdictOf, EXIT, ruleState, switchStates, switchFlips, buildInfoLine, loadSwitchTable, routeCheck } from './nightly-seeds.mjs';
 import { readSignature, worseThan, gateProblems, REDUCED_MAX } from './signature-gate.mjs';
-import { readFileSync, writeFileSync, mkdtempSync, rmSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
@@ -31,7 +31,8 @@ check('a clip over 3 on the primary reading is the trigger and is named', hot.ov
 const miss = readRun([row(1000, 'normal', 2), { id: 'ai-1000-reduced', error: 'capture failed' }, row(1001, 'normal', 1), row(1001, 'reduced', 1)], seeds);
 check('a clip that was not read is reported as missing (it is not a pass)', miss.missing.join() === 'ai-1000-reduced' && miss.read === 3);
 check('the report line of a clean night names the commit, the seeds and the largest reading', /pinned d3f1ca0e: seeds 1000,1001 x 2 modes, 4 of 4 clips read; largest primary 3 \(ai-1001-reduced\); none over 3/.test(reportLine('2026-10-16', 'd3f1ca0e22f39110d69feceb4913ff799d11db5d', seeds, a)));
-check('the report line of a hot night says TAKE DOWN and the clip', /TAKE DOWN: ai-1000-normal reads 3\.5/.test(reportLine('2026-10-16', 'd3f1ca0e22f39110d69feceb4913ff799d11db5d', seeds, hot)));
+check('the report line of a night with a REDUCED clip over the limit says TAKE DOWN and the clip', /TAKE DOWN: ai-1000-reduced reads 3\.5/.test(reportLine('2026-10-16', 'd3f1ca0e22f39110d69feceb4913ff799d11db5d', seeds, readRun([row(1000, 'reduced', 3.5), ...clean.filter((c) => c.id !== 'ai-1000-reduced')], seeds))));
+check('a NORMAL clip over the limit alone is a FINDING in the report line, not a take-down (Legal RL-208)', (() => { const l = reportLine('2026-10-16', 'd3f1ca0e22f39110d69feceb4913ff799d11db5d', seeds, hot); return /FINDING \(normal mode.*ai-1000-normal reads 3\.5/.test(l) && !/TAKE DOWN/.test(l); })());
 check('the report line of an incomplete night says so', /NOT COMPLETE: ai-1000-reduced/.test(reportLine('2026-10-16', 'd3f1ca0e22f39110d69feceb4913ff799d11db5d', seeds, miss)));
 
 // the signature clip, both modes, every night, and the pin's gate on reduced (Legal RL-195 condition (a))
@@ -74,6 +75,104 @@ check('the real record in the tree is for the live pin', (() => { const r = JSON
     writeFileSync(sum, JSON.stringify([sigOk[0]]));
     const r4 = run(['--record', sum, '--commit', PIN, '--file', file2]);
     check('--record refuses a run with a missing clip', r4.status === 1 && r4.stderr.includes('signature-reduced not read'));
+  } finally { rmSync(d, { recursive: true, force: true }); }
+}
+
+
+// ---- Legal RL-208: the exit codes, the route check and the watched switches
+check('a clip id names its mode', modeOf('ai-1000-reduced') === 'reduced' && modeOf('ai-7-normal') === 'normal' && modeOf('signature') === null);
+check('readRun splits what is over the limit by mode', (() => { const x = readRun([row(1, 'normal', 4), row(1, 'reduced', 4), row(2, 'normal', 1), row(2, 'reduced', 1)], [1, 2], 3.5); return x.over.length === 2 && x.overReduced.map((o) => o.id).join() === 'ai-1-reduced' && x.overNormal.map((o) => o.id).join() === 'ai-1-normal'; })());
+const rr = (over) => readRun([row(1, 'normal', over === 'n' || over === 'b' ? 4 : 1), row(1, 'reduced', over === 'r' || over === 'b' ? 4 : 1)], [1], 3.5);
+const okSig = { missing: [], worse: [] };
+const PASS = { status: 'passed', problems: [] }, FAIL = { status: 'failed', problems: ['normal mode is reachable: F8'] }, NORUN = { status: 'not run', problems: [] };
+const flip1 = [{ name: 'rally', state: 'on', expected: 'off', row: 'RL-183' }];
+const V = (o) => verdictOf({ sig: okSig, routes: PASS, flips: [], ...o });
+check('a clean night exits 0', V({ r: rr('') }).code === EXIT.clean && EXIT.clean === 0);
+check('a REDUCED clip over the limit is the take-down (exit 1), route check or not', V({ r: rr('r') }).code === 1 && V({ r: rr('r'), routes: NORUN }).code === 1);
+check('a NORMAL clip over the limit with the route check passed is a finding (exit 4), not a take-down', V({ r: rr('n') }).code === 4 && V({ r: rr('n') }).label === 'FINDING');
+check('a NORMAL clip over the limit with the route check FAILED is a take-down on its own (addendum 12(c)), and says why', (() => { const v = V({ r: rr('n'), routes: FAIL }); return v.code === 1 && /route check FAILED/.test(v.lines.join(' ')) && /F8/.test(v.lines.join(' ')); })());
+check('a NORMAL clip over the limit with the route check not run is a take-down: not run is never a pass', (() => { const v = V({ r: rr('n'), routes: NORUN }); return v.code === 1 && /did not run/.test(v.lines.join(' ')); })());
+check('a failed route check is a take-down even with nothing over the limit (the lock may be reachable)', V({ r: rr(''), routes: FAIL }).code === 1);
+check('a route check that did not run, with nothing over, is not itself a failure', V({ r: rr(''), routes: NORUN }).code === 0);
+check('a clip not read is exit 2, whatever else is over', V({ r: { ...rr('r'), missing: ['ai-1-normal'] } }).code === 2 && V({ r: rr(''), sig: { missing: ['signature-reduced'], worse: [] } }).code === 2);
+check('a watched switch that is ON when reviewed OFF is exit 5 and names its row and the batch it joins', (() => { const v = V({ r: rr(''), flips: flip1 }); return v.code === 5 && /rally is on, reviewed as off \(RL-183\).*clips join the batch/.test(v.lines[0]); })());
+check('a take-down outranks a flipped switch, and a flipped switch outranks the signature and a finding', V({ r: rr('r'), flips: flip1 }).code === 1 && V({ r: rr(''), flips: flip1, sig: { missing: [], worse: ['x'] } }).code === 5 && V({ r: rr('n'), flips: flip1 }).code === 5);
+check('the signature clip reading worse is exit 3, ahead of a finding', V({ r: rr(''), sig: { missing: [], worse: ['reduced primary 3 over 2.5'] } }).code === 3 && V({ r: rr('n'), sig: { missing: [], worse: ['x'] } }).code === 3);
+check('the pixel run itself failing, with every clip read, is exit 2', V({ r: rr(''), runOk: false }).code === 2);
+check('the six exit codes are distinct', new Set(Object.values(EXIT)).size === 6);
+
+// the watched switches, on a fixture tree
+{
+  const d = mkdtempSync(join(tmpdir(), 'nightly-sw-'));
+  try {
+    const put = (p, text) => { const f = join(d, ...p.split('/')); mkdirSync(join(f, '..'), { recursive: true }); writeFileSync(f, text); };
+    put('data/director/interrupts.json', JSON.stringify({ rally: { enabled: false }, water: { enabled: true } }));
+    put('data/combat/rally.empress.json', '{}');
+    put('data/combat/other.json', '{}');
+    put('data/bad.json', '{ not json');
+    const flag = (file, ...path) => ({ flag: { file, path } });
+    check('a flag that is false reads off and one that is true reads on', ruleState(d, flag('data/director/interrupts.json', 'rally', 'enabled')) === 'off' && ruleState(d, flag('data/director/interrupts.json', 'water', 'enabled')) === 'on');
+    check('a flag whose key, file or JSON is missing reads absent', ruleState(d, flag('data/director/interrupts.json', 'nope')) === 'absent' && ruleState(d, flag('data/none.json', 'x')) === 'absent' && ruleState(d, flag('data/bad.json', 'x')) === 'absent');
+    check('a file glob that matches means the content landed (on); none means absent', ruleState(d, { files: ['data/combat/rally.*.json'] }) === 'on' && ruleState(d, { files: ['data/combat/energy.*.json', 'data/combat/energy/*.json'] }) === 'absent');
+    check('a glob matches the whole name only (rally.* does not match other.json) and only files', ruleState(d, { files: ['data/combat/rally.*.json'] }) === 'on' && ruleState(d, { files: ['data/combat/ally.*.json'] }) === 'absent');
+    check('any: on if any is on, else off if any is off, else absent', ruleState(d, { any: [flag('data/director/interrupts.json', 'rally', 'enabled'), { files: ['data/combat/rally.*.json'] }] }) === 'on' && ruleState(d, { any: [flag('data/director/interrupts.json', 'rally', 'enabled'), { files: ['data/combat/zzz*.json'] }] }) === 'off' && ruleState(d, { any: [{ files: ['data/q*.json'] }, { none: 'x' }] }) === 'absent');
+    check('a rule with no hook is absent', ruleState(d, { none: 'no switch yet' }) === 'absent');
+    const table = { switches: [{ name: 'kits', row: 'RL-179', expected: 'off', rule: { files: ['data/combat/energy.*.json'] } }, { name: 'rally', row: 'RL-183', expected: 'off', rule: { any: [flag('data/director/interrupts.json', 'rally', 'enabled'), { files: ['data/combat/rally.*.json'] }] } }, { name: 'water', row: 'RL-x', expected: 'on', rule: flag('data/director/interrupts.json', 'water', 'enabled') }] };
+    const st = switchStates(d, table);
+    check('every watched switch gets a state', JSON.stringify(st) === JSON.stringify({ kits: 'absent', rally: 'on', water: 'on' }), JSON.stringify(st));
+    check('a switch ON that was reviewed OFF is a flip, named with its row; absent counts as off', JSON.stringify(switchFlips(st, table)) === JSON.stringify([{ name: 'rally', state: 'on', expected: 'off', row: 'RL-183' }]));
+    check('a switch reviewed ON that is off or gone is a flip too', switchFlips({ kits: 'absent', rally: 'off', water: 'off' }, table).map((x) => x.name).join() === 'water' && switchFlips({ kits: 'absent', rally: 'off', water: 'on' }, table).length === 0);
+    check('the build info line names the commit, the date and every switch', buildInfoLine({ commit: '257a766', date: '2026-10-19' }, st) === 'build info: commit 257a766, 2026-10-19; switches kits absent, rally on, water on' && /unknown/.test(buildInfoLine(null, {})));
+    writeFileSync(join(d, 'bad-table.json'), JSON.stringify({ switches: [{ name: 'x', row: 'RL-1', expected: 'maybe', rule: {} }] }));
+    check('a switch table with an odd entry is refused', (() => { try { loadSwitchTable(join(d, 'bad-table.json')); return false; } catch (e) { return /expected on or off/.test(e.message); } })());
+  } finally { rmSync(d, { recursive: true, force: true }); }
+}
+{
+  const real = loadSwitchTable();
+  check('the real switch table names the five watched rows, each expected off', real.switches.map((s) => s.name).join() === 'kits,rapidFire,snareMine,grabCallouts,rally' && real.switches.every((s) => s.expected === 'off' && /^RL-\d+/.test(s.row)));
+  const root = join(import.meta.dirname, '..', '..');
+  const ralRule = real.switches.find((s) => s.name === 'rally').rule.any[0];
+  check('the rally flag the table reads is really in the data (a rename would turn the watch blind): data/director/interrupts.json rally.enabled is a boolean', ['on', 'off'].includes(ruleState(root, ralRule)));
+}
+check('a skipped route check is "not run", never a pass', await routeCheck({ skip: true }).then((x) => x.status === 'not run' && x.notes.length === 1));
+
+// the whole nightly, end to end, against a stand-in for the browser runs: the exit code, the build info, the switches and the history row (Legal RL-208)
+{
+  const d = mkdtempSync(join(tmpdir(), 'nightly-cli-'));
+  try {
+    const PIN = 'abcdef0'.padEnd(40, '1');
+    const work = join(d, 'work'), pinDir = join(work, PIN.slice(0, 7));
+    const put = (p, text) => { const f = join(pinDir, ...p.split('/')); mkdirSync(join(f, '..'), { recursive: true }); writeFileSync(f, text); };
+    put('web/index.html', '<html></html>');
+    put('tree/build_info.json', JSON.stringify({ commit: PIN.slice(0, 7), date: '2026-10-30' }));
+    const setRally = (on) => put('tree/data/director/interrupts.json', JSON.stringify({ rally: { enabled: on } }));
+    const stub = join(d, 'run-pixels-stub.mjs');
+    writeFileSync(stub, [
+      "import { mkdirSync, writeFileSync } from 'node:fs';",
+      "import { join } from 'node:path';",
+      "const a = process.argv.slice(2); const o = (n) => a[a.indexOf(n) + 1]; const out = o('--out'); mkdirSync(out, { recursive: true });",
+      "const e = process.env;",
+      "const row = (id, p, lower, two) => ({ id, result: { general: { flashes: p }, combined: { lower: lower ?? p }, cross: { general: { flashes: two ?? p } } } });",
+      "let rows;",
+      "if (a.includes('--clip')) rows = [row('signature-normal', 3.5, 5, 3), row('signature-reduced', 2.5, 3, 2)];",
+      "else rows = o('--seeds').split(',').flatMap((s) => [row('ai-' + s + '-normal', Number(e.STUB_NORMAL || 2)), row('ai-' + s + '-reduced', Number(e.STUB_REDUCED || 2))]);",
+      "writeFileSync(join(out, 'summary.json'), JSON.stringify(rows));",
+    ].join('\n'));
+    const hist = join(d, 'history.json');
+    const run = (env) => { rmSync(hist, { force: true }); return spawnSync(process.execPath, [join(import.meta.dirname, 'nightly-seeds.mjs'), '--pin', PIN, '--no-export', '--no-route-check', '--count', '1', '--base', '9000', '--work', work, '--history', hist, '--run-pixels', stub], { encoding: 'utf8', env: { ...process.env, ...env } }); };
+    setRally(false);
+    const clean = run({});
+    check('a clean night through the whole CLI exits 0 and prints the build info, the route check, the switches and the verdict', clean.status === 0 && /build info: commit abcdef0, 2026-10-30; switches kits absent, rapidFire absent, snareMine absent, grabCallouts absent, rally off/.test(clean.stdout) && /route check: not run/.test(clean.stdout) && /switches: .*; as reviewed/.test(clean.stdout) && /verdict: CLEAN \(exit 0\)/.test(clean.stdout), clean.stdout + clean.stderr);
+    const row0 = JSON.parse(readFileSync(hist, 'utf8')).runs[0];
+    check('the history row carries the switches, the route check and the verdict', row0.switches.rally === 'off' && row0.routes.status === 'not run' && row0.verdict.code === 0 && row0.verdict.label === 'CLEAN', JSON.stringify(row0));
+    const red = run({ STUB_REDUCED: '4' });
+    check('a reduced clip over 3.5 exits 1 (take-down)', red.status === 1 && /verdict: TAKE DOWN \(exit 1\)/.test(red.stdout), red.stdout);
+    const nor = run({ STUB_NORMAL: '4' });
+    check('a normal clip over 3.5 with the route check not run exits 1 too: not run is never a pass', nor.status === 1 && /did not run/.test(nor.stdout), nor.stdout);
+    setRally(true);
+    const fl = run({});
+    check('a watched switch that is on (rally) exits 5, is named with its row, and shows in the build info', fl.status === 5 && /rally on/.test(fl.stdout) && /NOT AS REVIEWED: rally \(RL-183\)/.test(fl.stdout) && /verdict: SWITCH FLIPPED \(exit 5\)/.test(fl.stdout), fl.stdout);
+    check('the flipped switch is in the history row', JSON.parse(readFileSync(hist, 'utf8')).runs[0].switches.rally === 'on');
   } finally { rmSync(d, { recursive: true, force: true }); }
 }
 
