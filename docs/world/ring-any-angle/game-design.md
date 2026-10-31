@@ -217,3 +217,51 @@ The 75 units a second limits a sustained slide, and at 57°/s for a pair 150 apa
 **The sweep limit is ticked by default in proto v2** (`law: 1`). Unless Orb unticked it, the world was often turning slower than the slider said, near the ground and far from the pivot, so their "comfortable at 240" may cover less than it sounds. Worth one word from Orb.
 
 **Orb on the sweep limit, 2026-10-31:** "the swings look fine, I tried them with the limit off". Read narrowly: bars, no fighters to track, and no word on which version or sizes. **So the limit stays in the law as a first value, marked: not felt as a problem by Orb on bars; re-judge with real fighters.** Feet skating and flights outrun can only show with real fighters. **The airborne value relaxes to 10,000 units a second, replacing §3's 6,000 and its table.** Research finds 6,000 holds a 180° ask to about 100° over a 6 s flight, peaking at 40°/s, which is the limit working against an arrival for a reason Orb didn't feel. 10,000 is flat out, the fastest a fighter is ever seen to cross ground, so "no new speed in the picture" still holds. By my arithmetic it brings that ask to about 165°, not run: Research to confirm. **The standing 75 units a second, and the small swing's allowances, don't change.**
+
+## 11. One score, a landing's rest, and the map (2026-10-31)
+
+Orb: "there should definitely be variety, the dynamic elements of the fight should all collectively be used to inform the combat choreographer and the camera control to decide the best time for the swing to occur."
+
+### One score, reading the whole fight
+
+**There's one decision and one score, `DirSwing`'s (`encounter.md` §2), and every kind of swing competes in it,** against "stay", which scores 0. The brawl's slow swing is back on as a candidate, with jolts ahead of it as §10 rules: if a heavy has just landed, the jolt is the brawl's swing. **§2's fixed triggers become where a candidate is offered, and its 45 s of quiet becomes part of the recency term rather than a gate.**
+
+| What it reads | Terms |
+| :--- | :--- |
+| **The moment** | How good a beat this is: a launch's release, a chase's start, a form's pause, a set piece's end, a lull after a knock-back, a heavy landing |
+| **The fight's state** | Tier and power, the mood and act, a first brink or a comeback, who's ahead, altitude and speed, how long since anything big happened |
+| **The place** | Encounter's arrival, personality, lean, street, behind the plane (§9), and tall land in front |
+| **What fits** | The flight's time, the gap, who's standing, by the rate law |
+| **Variety** | Below |
+
+**Shared with Camera, in one direction.** The sim decides and never reads the camera (§9). So the two share a table of moments and a feed: the moment terms are data that Camera helps set, its comfort needs go in as terms the sim can read (the gap, tall land, both grounded), and the decision goes out through `DirCamIntent` with the cause and the planned rest, so Camera shoots it rather than guessing. Camera can't veto a swing, and it can ask for a moment's weight to change. Every ask prints its feed line, taken or not, so any swing can be explained.
+
+**Variety is a goal, as a term and a read.** The score marks down what was just done: the same cause, size, direction or biome, as soft costs with no quotas. **QA's rows, first values:**
+- no cause over 50% of big swings in a match, and at least three causes in most matches;
+- sizes spread, not bunched: no more than half of big swings within any one 30° of size;
+- biomes seen in a match clearly above the same seeds with swings off;
+- the same planet and fighters on different seeds taking visibly different paths, from the map's trail.
+
+The 6 to 12 big swings, 10 to 15% of fight time and 20 to 40 jolts stand as bands the score has to land in. Simulation's run reached 29% of fight time on all causes, but on its own driver, not this score.
+
+### At rest before a landing (`simulation.md` §8)
+
+- **A planned landing:** the swing rests at least 0.35 s (21 ticks) before contact, §9's rule, so the ease starts earlier still: about 31 ticks ahead on Camera's 10-tick ramp out. That more than covers Simulation's 20, and planners use the predicted contact. **Simulation's run shows this isn't optional:** 26.8 units a tick under a grounded fighter, against a 7.5 limit.
+- **An early landing, on a collision: an instant stop, not a brief overspeed.** Overspeed is exactly the skating the limit exists to prevent, at 87 units a tick for a body 5,000 out, and he'd snap up. **The rule is general: the moment a fighter becomes standing, the rate is clamped at once to the rate law, without easing.** So a landing near the pivot may hardly slow it, and a far one stops it.
+- **This is the one exception to test 5's "no instant change".** It has the reason Orb's camera rule asks for: it's on the impact, a cut on action, covered by the landing's push and shake. A glance or a ricochet that leaves him in the air changes nothing. QA counts these, and they should be rare, since most contacts are planned.
+
+### The map, an exception to `minimal-hud.md`
+
+Orb: "the minimap with the trail showing the path around the planet was a nice detail and definitely helped with the sense of crossing the planet." It earns its place because no part of the fight can carry this: only a map shows where you've been. **It's allowed because it's at the edge, not because the rule has loosened.**
+
+| | The fight's version |
+| :--- | :--- |
+| **What it shows** | A small globe with the planet's own land, the fight's trail for the whole match, and where the pair are now (one point when together, two when apart). Cities as faint specks, because they're what a player reads a route by |
+| **What it doesn't show** | Where a swing is going, or any destination: the arrival is the fight's to reveal. No numbers, no labels, no pointer, no icons. No hint of when to act |
+| **Where** | A corner at the edge, clear of the plates and the legend, and never on, over or between the fighters. If a fighter's box reaches it, it gives way, as the inset does. One per screen in a split, not crossing the divider. UI chooses the corner |
+| **How it moves** | The globe turns to keep the pair in view, so the near side always shows the present. **Small enough that its whole area stays under the flash analyser's threshold (2.8% of the frame at 1,024 by 768),** so it can't count however fast it turns. No flashing, pulsing or fades |
+| **The planet strip** | **It replaces it.** A strip assumes one loop, which stops being true once the line swings. **The toll's tint doesn't move across yet:** a map coloured by lives lost is a new picture, so that goes to Legal first |
+| **Settings** | On by default, with an off switch. Render-only: it reads the sim's frame and never writes to it. It isn't drawn during an intro, a finisher or a KO |
+| **After the fight** | **The whole trail on the results screen,** at full size. It's the payoff for the sense of crossing: the route this fight took round the planet |
+
+**One player's word on bars,** as with everything else here, and on the prototype's map: Orb should see it over real fighters. UI builds it, and it goes through the look gate.

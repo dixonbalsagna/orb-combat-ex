@@ -31,7 +31,7 @@ Owner: Game Design. Date: 2026-10-18. **Paper only.** Orb's ruling is in `docs/e
 - **The button legend,** at the bottom edge: the B lit LAUNCH while a B would launch.
 - **The one-line hint,** at the bottom edge, once per lesson, and only with Control hints on.
 - **The rival pointer** at the screen's edge while he is off it (`docs/ui/hud-spec.md` §60).
-- **The planet strip,** with the toll as its tint and no number (Research row 11).
+- **The planet strip,** with the toll as its tint and no number (Research row 11). **Once the line swings, the fight's map replaces it** (Orb, 2026-10-31; the rules are `docs/world/ring-any-angle/game-design.md` §11): at the edge, trail and position only, with the toll's tint waiting on Legal.
 - **An optional, off-by-default edge meter for the beam struggle,** for accessibility, never between the fighters.
 - **Nothing else during play.** Pause, results, the run's screens and training may show more, since nobody is fighting then.
 
