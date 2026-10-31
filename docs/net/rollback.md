@@ -392,6 +392,8 @@ The turntable's decisions are state derived from inputs, so nothing new goes ove
 
 **The test.** `net/tools/swing_check.gd`. A stand-in plays the director, on every run of a tick: a Context press asks for a swing, the first fighter one way and the second the other, and a Signature press digs a crater into the store. Bots press these often, and a prediction drops a press, so a late one flips a swing on or off, reverses it or restarts it. It runs denser than a fight: 13 swings in 600 ticks, one running on about 70% of ticks.
 
+**Reduced motion.** `setup.swing` (`full`, `slow`, `off`) is in the setup, so the match key holds it. The same check shows peers on different values are refused at the handshake, and two players' settings crossed by `SimSwing.strongest` give both peers one key. A match naming no value reads the data's, and the data's hash covers a build on other data. Matches on `slow` and `off` keep step with their straight runs under rollback: `slow` stays under its cap on every re-run, `off` never turns. Its controls put a slow peer past the handshake, which must be reported as a desync, and lift the cap, which must show. No lobby exists yet to agree the value.
+
 **What the correction looks like.** How far the line moved at the newest tick when a rollback ended, over 600 ticks, with `--right-stick` on:
 
 | Profile, deepest rollback | Moved / rollbacks | p99 | Worst | Worst with every ask the same way (`--one-way`, no right stick) |

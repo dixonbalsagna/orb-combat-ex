@@ -102,9 +102,9 @@ The stop then works as a free partial lead. A frozen tick moves nothing and take
 
 Nothing depends on this: a stop shorter than the rollback only means a small eased correction. That matters because `data/fight/hitstop.json` has `enabled: false`, so these stops apply only with hit-stop by weight switched on. The swing must also freeze on frozen ticks, which Game Design already rules.
 
-**Reduced motion as a setup value: confirmed, with these conditions.** A fixed value in the setup needs nothing per tick, adds nothing to the state or the digest, lowers the error bound above, and is written into every replay. The match key holds the setup, so peers on different values are refused rather than desynced.
+**Reduced motion as a setup value: confirmed, with these conditions.** A fixed value in the setup needs nothing per tick, adds one hashed word to the swing's state, lowers the error bound above, and is written into every replay. The match key holds the setup, so peers on different values are refused rather than desynced (`net/tools/swing_check.gd` tests this; the value is `setup.swing`, `full`, `slow` or `off`).
 1. **Agree it before the key is made.** The setup doesn't go over the wire and the handshake only compares keys, so each player's setting must cross in the lobby and both must build the same setup from it. No game code starts an online match yet, so this goes on the list for the future online host, beside `aiLevel`.
-2. **Always name it, as a yes or no.** Use a flag such as `"swingReduced": true`, with the multiplier in data, so no float formatting reaches the key. The setup without it means full rates, which keeps the golden. Always read it fresh at `newMatch`: `aiLevel` shows the trap, a static applied only when the key is present keeps the last match's value.
+2. **Name it as a word.** `setup.swing` holds a word, with the rate in data, so no float formatting reaches the key. A setup without it reads the data's, which keeps the golden. A lobby should always name it: a peer that names `full` and one that leaves it out are refused, because their keys differ. It's read fresh at `newMatch`, so a match doesn't keep the last match's value.
 3. **It is fixed for the match.** A player who changes the setting mid-match gets it next match, because the sim's rate can't change on one peer. A setting that only affects the renderer, like Reduce flashing, stays each player's own.
 
 **Two limits to know about:**
@@ -145,9 +145,9 @@ A test sits beside `transport_check`'s level keys: two peers with different valu
 - The strip's exact width is World's call, within the column limit above.
 
 ## What I'd build, when briefed
-- **Parked (`docs/net/pending/proto5-swing/`):** the digest lines and `PROTO` bump, and the forced-flip test on lan, p120 and far with its negative control. The stand-in asks by fighter and press rather than from a hash of recent inputs, which gives both flips and reversals.
+- **On main:** the digest lines and `PROTO` bump, and the forced-flip test on lan, p120 and far with its negative control. The stand-in asks by fighter and press rather than from a hash of recent inputs, which gives both flips and reversals.
 - **Not needed for now:** the AI driver's copy. The store is a plain array that a snapshot copies, not a shared log, and `--ai=sim --setup=field` passes. The driven `--ai` hasn't run on a field world.
-- **Still to build:** the reduced-motion key test.
+- **Reduced-motion key test:** in `swing_check`. The lobby that agrees the value doesn't exist yet.
 
 ## Carried over from 2026-10-30
 - **Read off the sim's clock: yes.** With a pure field it is simpler than before: a node has one value whenever it is read. If the sim needs a node not yet read, it reads it on that tick: a hitch, never a desync. The web build has no threads, so it reads in leftover frame time, and a rollback frame has none. That is why the disc must already be resident.

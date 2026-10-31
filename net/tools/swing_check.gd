@@ -11,9 +11,11 @@ extends SceneTree
 ##   - the digest: each of the line's and the swing's hashed fields, and the store's length and hash, changes the digest when changed one step; a swing changed on one peer before a checkpoint is reported
 ##     there and named by the walk.
 ##   - the rate rule (netcode.md section 3): data's flash governor x maxAhead is at most 20 degrees, and no rollback moved the line at the newest tick by more than twice that (one timeline turning each way).
+##   - reduced motion (setup.swing): peers on different values are refused at the handshake, two players' settings cross to one key, a match reads its value fresh; a match on slow or off keeps step with its
+##     straight run under rollback, slow under its cap on every run of a tick, off never turning.
 ## Prints each profile's correction: how far the line moved at the newest tick when a rollback ended, in degrees.
 ## --negative-control breaks it, and each must be caught: the swing's state or the line not restored by a rollback (the timeline being replaced is kept), the store not restored, late inputs ignored, a
-## digest that leaves all of it out, and the rate cap lifted, which must break the bound.
+## digest that leaves all of it out, the rate cap lifted, which must break the bound, a full peer and a slow peer past the handshake, and slow's cap lifted.
 
 const SETUP: Dictionary = {"planet": 7, "touch": 1, "planetGen": 3, "intro": false}
 const SEED: int = 77
@@ -28,6 +30,7 @@ var profiles: Array = ["lan", "p120", "far"]
 static var askRate: float = 60.0
 static var askDeg: float = 40.0
 static var oneWay: bool = false   # --one-way: both fighters ask the same way, so no ask reverses a running swing
+var setup: Dictionary = SETUP   # the match's: SETUP, or SETUP on a motion
 
 
 func ok(c: bool, s: String) -> void:
@@ -61,7 +64,7 @@ static func between(a: Array, b: Array) -> float:
 
 func straight() -> Dictionary:
 	var S := SimCore.createSim()
-	SimCore.newMatch(S, SEED, {"p1": false, "p2": false}, SETUP)
+	SimCore.newMatch(S, SEED, {"p1": false, "p2": false}, setup)
 	var bots: Array = [NetBot.new(SEED, 0), NetBot.new(SEED, 1)]
 	var hashes: Dictionary = {}
 	var digests: Dictionary = {}
@@ -124,11 +127,11 @@ func fieldRows(S: SimState) -> void:
 
 ## Two peers, in verify mode. brk: "" or "swing", "frame", "store", "norollback". {bad, first, ...}
 func session(pname: String, ref: Dictionary, brk: String = "") -> Dictionary:
-	var L := NetLoopback.make(SEED, SETUP, NetLoopback.PROFILES[pname], DELAY, SEED, 3, true)
-	var res := {"bad": 0, "first": -1, "ran": false, "flips": 0, "onoff": 0, "reversed": 0, "corr": PackedFloat64Array(), "digBad": 0}
+	var L := NetLoopback.make(SEED, setup, NetLoopback.PROFILES[pname], DELAY, SEED, 3, true)
+	var res := {"bad": 0, "first": -1, "ran": false, "flips": 0, "onoff": 0, "reversed": 0, "corr": PackedFloat64Array(), "digBad": 0, "maxRate": 0.0}
 	for k in range(2):
 		var sess: NetSession = L.peers[k].session
-		sess.matchInfo = {"seed": SEED, "setup": SETUP, "ai": {"p1": false, "p2": false}}
+		sess.matchInfo = {"seed": SEED, "setup": setup, "ai": {"p1": false, "p2": false}}
 		sess.verify = true
 		sess.beforeTick = asker
 		sess.rollbackOn = brk != "norollback"
@@ -137,6 +140,7 @@ func session(pname: String, ref: Dictionary, brk: String = "") -> Dictionary:
 		sess.perturb = func(S: SimState, t: int) -> void:
 			var n: Array = normal(S.frame)
 			var sw = S.swing
+			res.maxRate = maxf(float(res.maxRate), sw.rate)
 			if seen.has(t):
 				var was: Array = seen[t]
 				var a: float = between(was[0], n)
@@ -214,6 +218,96 @@ func digestSession(pname: String, blind: bool) -> Dictionary:
 	return out
 
 
+## SETUP on one motion, as a lobby would agree it.
+static func motionSetup(m: String) -> Dictionary:
+	var s: Dictionary = SETUP.duplicate()
+	s.swing = m
+	return s
+
+
+static func digestOn(s: Dictionary) -> String:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, SEED, {"p1": false, "p2": false}, s)
+	var d: String = NetDesync.digest(S)
+	SimCore.dispose(S)
+	return d
+
+
+## Reduced motion's key (setup.swing, netcode.md section 3): peers on different values are refused at the handshake, two players' settings crossed give both the same key, and a match reads its value fresh.
+func motionKeyRows() -> void:
+	var ai := {"p1": false, "p2": false}
+	var lan: Dictionary = NetLoopback.PROFILES["lan"]
+	var devs: Array = [NetDelay.device(1.0), NetDelay.device(1.0)]
+	for pair in [["full", "slow"], ["full", "off"], ["slow", "off"]]:   # weaker first
+		var a: String = pair[0]
+		var b: String = pair[1]
+		var ka: String = NetHandshake.keyOf(SEED, ai, motionSetup(a))
+		var kb: String = NetHandshake.keyOf(SEED, ai, motionSetup(b))
+		var r: Dictionary = NetLoopback.agree("", lan, devs, 9, [ka, kb])
+		ok(String(r.failed).contains("another match"), "%s against %s is refused at the handshake: %s" % [a, b, r.failed])
+		r = NetLoopback.agree("", lan, devs, 9, [kb, kb])
+		ok(r.failed == "", "%s against %s passes: %s" % [b, b, r.failed])
+		ok(digestOn(motionSetup(a)) != digestOn(motionSetup(b)), "the digest tells %s from %s" % [a, b])
+		ok(SimSwing.strongest(a, b) == b and SimSwing.strongest(b, a) == b, "%s and %s cross to %s, whoever asks" % [a, b, b])
+	var d: Dictionary = SimSwing.data()
+	var was: String = d.motion
+	var k0: String = NetHandshake.keyOf(SEED, ai, SETUP)
+	d.motion = "slow"
+	var k1: String = NetHandshake.keyOf(SEED, ai, SETUP)
+	d.motion = was
+	ok(k0 != k1, "a setup naming no motion: a build on other data is refused")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, SEED, ai, motionSetup("off"))
+	ok(S.swing.motion == "off", "a match reads its setup's motion: %s" % S.swing.motion)
+	SimCore.newMatch(S, SEED, ai, SETUP)
+	ok(S.swing.motion == was, "the next match, naming none, reads the data's and not the last match's: %s" % S.swing.motion)
+	SimCore.dispose(S)
+
+
+## A match on one motion under rollback: in step with its straight run, slow under its cap on every run of a tick, off never turning.
+func motionRow(pname: String, m: String) -> void:
+	setup = motionSetup(m)
+	var ref := straight()
+	var r := session(pname, ref)
+	setup = SETUP
+	ok(r.ran and int(r.bad) == 0 and not r.desync and int(r.digBad) == 0 and int(r.matched) > 0, "%s on %s: %d hashes off the straight run, desync %s, digests off %d, matched %d" % [pname, m, r.bad, str(r.desync), r.digBad, r.matched])
+	ok(r.walk.is_empty() and r.walkRef.is_empty(), "%s on %s: the walks: %s %s" % [pname, m, str(r.walk), str(r.walkRef)])
+	var c: PackedFloat64Array = r.corr
+	c.sort()
+	var mx: float = c[c.size() - 1] if c.size() > 0 else 0.0
+	if m == "off":
+		ok(int(ref.asked) == 0 and int(ref.live) == 0 and float(r.maxRate) == 0.0 and mx == 0.0, "off: no swing ran (asked %d, ran %d ticks, rate %.1f, line moved %.3f)" % [ref.asked, ref.live, r.maxRate, mx])
+	else:
+		var cap: float = float(SimSwing.data().slowRate)
+		ok(int(ref.live) > 0 and float(r.maxRate) > 0.0 and float(r.maxRate) <= cap + 1e-9, "slow: a swing ran, at most at %.0f degrees a second (%.12f over)" % [cap, float(r.maxRate) - cap])   # the ramp's arithmetic lands a rounding off the cap
+		ok(mx <= cap * float(NetSession.new(SimCore.createSim(), 0).maxAhead) / 60.0 * 2.0, "slow: the worst correction is within its own bound (%.3f degrees)" % mx)
+	SimCore.dispose(ref.S)
+	print("  motion %-5s %-5s rollbacks %4d  deepest %2d   swings %d, top rate %.1f, worst correction %.3f degrees" % [m, pname, r.rollbacks, r.depth, ref.asked, r.maxRate, mx])
+
+
+## The control: one peer on slow with the refusal out of the way must desync, and a lifted slow cap must show.
+func motionControls(pname: String) -> void:
+	var L := NetLoopback.make(SEED, SETUP, NetLoopback.PROFILES[pname], DELAY, SEED, 5, true)
+	for k in range(2):
+		var sess: NetSession = L.peers[k].session
+		sess.matchInfo = {"seed": SEED, "setup": SETUP, "ai": {"p1": false, "p2": false}}
+		sess.beforeTick = asker
+	L.peers[1].session.S.swing.motion = "slow"
+	L.run(300)
+	ok(not L.peers[0].session.desync.is_empty(), "%s: a full peer and a slow peer past the handshake must be reported" % pname)
+	print("  control motion     %-5s peers on full and slow reported at tick %d" % [pname, int(L.peers[0].session.desync.get("tick", -1))])
+	L.close()
+	var d: Dictionary = SimSwing.data()
+	var cap: float = d.slowRate
+	d.slowRate = 2000.0
+	setup = motionSetup("slow")
+	var r := session(pname, {"digest": {}, "hash": {}, "S": null}, "uncapped")
+	setup = SETUP
+	d.slowRate = cap
+	ok(float(r.maxRate) > cap, "%s: slow's cap lifted must break its row (top rate %.1f against %.0f)" % [pname, r.maxRate, cap])
+	print("  control slow cap   %-5s top rate %.1f against %.0f" % [pname, r.maxRate, cap])
+
+
 func _init() -> void:
 	var negative: bool = false
 	for a in OS.get_cmdline_user_args():
@@ -245,6 +339,7 @@ func _init() -> void:
 				ok(int(r.bad) > 0, "%s: %s must be caught" % [pname, brk])
 				print("  control %-10s %-5s bad hashes %4d, first at %d, digests off the straight run %d" % [brk, pname, r.bad, r.first, r.digBad])
 		var pn: String = profiles[profiles.size() - 1]
+		motionControls(pn)
 		var b := digestSession(pn, true)
 		ok(b.tick < 0, "%s: a digest that leaves out the swing must miss the change (reported at %d)" % [pn, b.tick])
 		var d: Dictionary = SimSwing.data()
@@ -291,6 +386,9 @@ func _init() -> void:
 		var d := digestSession(pn, false)
 		ok(d.tick == 120 and d.tick1 == 120, "%s: a swing changed before a checkpoint is reported there by both peers (%d, %d)" % [pn, d.tick, d.tick1])
 		ok(d.paths.has("S.swing.left"), "%s: the walk names it: %s" % [pn, str(d.paths)])
+		motionKeyRows()
+		motionRow(pn, "slow")
+		motionRow(pn, "off")
 	SimCore.dispose(ref.S)
 	print("swing check %s: %d checks, %d failed" % ["passed" if fails == 0 else "FAILED", checks, fails])
 	quit(0 if fails == 0 else 1)
