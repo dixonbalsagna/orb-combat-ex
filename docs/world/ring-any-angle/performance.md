@@ -146,3 +146,61 @@ The baseline (0 fetches) has a fixed fill of the whole canvas, so read the diffe
 That is 0.18 us a sample native and 0.4 on the web, **five times under the estimate I first wrote (1 to 2 us)**. It leaves out what a real re-lay also does to each column (the crater store laid over it, biome and flags, the write into `S.base`), which is not measured and would add to it.
 
 **What this does and does not settle.** It settles that the rotation itself, on the CPU and on a current iGPU, fits the 0.5 to 1 ms allowance. It does not settle: the target laptop's iGPU (slower than this Radeon by an unmeasured factor; a model of it is needed), the cost of filling the field (5.2, the reads), or the layers' migration. Each of those is larger than anything measured here.
+
+## 6. First load: the whole-planet bake at 512 units, and a model of the old iGPU (2026-10-31, for research.md T1)
+
+### 6.1 The bake, measured
+
+The bake is not in the repo, so `hook-bake.mjs` reproduces its read: 6 cube faces of 76 x 76 nodes (75 cells a face, 34,656 nodes; 33,752 distinct) through `WorldPlanet.surfAt` (height and biome), planet 7, gen 2, on a planet already made. Three native runs (PC at 22 to 39% load) and three web runs (RTX; 11 to 29% load at the starts), no other work in the bake's frame.
+
+| | Native | Web (x1) | Laptop (x4 to x5.6, an estimate; the gen 2 bench note converted a planet make 5.6 times) |
+|---|---|---|---|
+| **The bake**, 34,656 nodes | **1.25 to 1.31 s** (38 us a node; Simulation measured 1.3) | **1.59 to 1.92 s** (46 to 55 us a node) | **6 to 11 s** |
+| Same, heights only (`WorldPlanet.ground`; a lower bound: the polar ice rules need `surfAt`) | 0.62 s (48%) | 0.90 to 1.03 s (57%) | 3.6 to 6 s |
+| A 500-node slice | 18 to 19 ms mean, 28 to 30 worst | 23 to 28 ms mean, 34 to 41 worst | |
+| A cold planet make (`WorldPlanet.make`, before any bake) | 1.32 s | 1.71 to 2.04 s | 7 to 11 s (the gen 2 bench said 10.5) |
+| **Cold planet, make + bake** | 2.6 s | **3.3 to 4.0 s** | **13 to 22 s** |
+| Baked data | 173,280 bytes (136 KB of float32 heights + 34 KB of biomes), **131,673 gzipped (24% off: floats do not compress)** | the same | |
+
+**The web figure is 1.6 s, not 4.4 s, and the laptop's is 6 to 11 s, not 18 to 27 s.** The 4.4 s took 130 us a node from the ring-column read (gen 2's `farColumn`, with its surface detail and post-pass); a bake node is a plain `surfAt`, 38 us native and only 1.2 to 1.5 times that on the web. The laptop figure is still arithmetic: no laptop has run it. By node count (4 times for each halving of the spacing): 384 units would be about 2.8 s on the web (11 to 16 s on the laptop), 256 about 6.4 s (26 to 36 s), 128 about 26 s (100 to 140 s).
+
+### 6.2 My ruling on the wait (a judgement about a player's patience: Orb's to overturn)
+
+1. **The bake may add up to 10 s on the laptop to a cold planet, and none of it as a frozen page.** 512 units fits (6 to 11 s, at the edge); 384 does not unless cached; 256 and 128 only with a cache or shipped data. This is the budget's own shape (`budgets.md`: first frame 12 s target, 30 s limit; the planet make already costs 7 to 11 s on the laptop, so make + bake is 13 to 22 s and cannot be a blank wait).
+2. **It runs in slices, behind screens the player can use** (the intro, the menu, character select), at no more than 4 ms of x1 in any frame (the budget's planet-slice rule). At 46 us a node that is about 85 nodes a frame: 400 frames, **6.8 s at 60 fps on the web and about 13 s on the laptop (33 ms frames)**, which fits behind a lobby but not behind a loading bar alone. The bake starts the moment the planet's seed is known. A match cannot start until it is done (`SimPlanetLoad.mayStart`); Simulation's rule that whether it is done is never a sim input holds.
+3. **A repeat visit costs at most 3 s** (a cache hit or a shipped file), so the 6 to 11 s is paid once per planet per machine.
+4. **No frame over 50 ms**, so a make or bake step is never longer than a 4 ms slice on the web (the make, 1.7 to 2.0 s in one call, needs its step form, as `SimRun.beginGround` already does).
+
+### 6.3 The ways to cut it
+
+| Way | Saves | Cost and traps |
+|---|---|---|
+| **Across frames behind the intro** (above) | the freeze, not the time: the total wall rises (13 s on the laptop against 6 to 11 s) | nothing new: `WorldFarMap.step(count)` already builds 65,000 texels this way. The seed must be known early; a menu that picks the planet late leaves a bar |
+| **Heights first, biomes later** | up to 43 to 52% of the bake before the match can start (heights only) | polar texels need `surfAt`; the sim reads biomes too, so the match still waits for both unless biomes are proved unneeded before tick 0. Simulation's call |
+| **A cache on disk** | everything on a repeat visit (a read of 132 to 173 KB and a check) | `user://` is one folder for every copy of the project on a PC (the clash that failed the parity fixtures), so the key must be the data hash + engine version + seed + gen + spacing, and the file checksummed and re-verified (the bake's hash joins the match key, so a bad cache is refused at the handshake, not left to desync). On the web `user://` is the page origin's IndexedDB: the demo and the preview share it if they share an origin, and a private window or eviction empties it. Simulation's rule 3 keeps it out of the first cut |
+| **Ship a few baked planets as data** | the whole first-time bill for those planets | **132 KB gzipped each**, 173 KB raw. The first-load pack is at 14.4 of its 15 MB limit (`budgets.md`), 0.6 MB of headroom: put them in separate files fetched when a planet is chosen, not in the pack. Any change to the data or the sim's reads changes every shipped file (a CI check on the bake hash). It does nothing for a random seed |
+| **A worker thread** | would take it off the frame entirely on native | the web export is built with `variant/thread_support=false` (GitHub Pages cannot send the cross-origin isolation headers threads need), so no |
+| **A lazy bake: compute a node the first time it is read** (Simulation's rule 2: the same value either way) | nearly all of the up-front bill | the cost moves to the ticks that read new nodes: Simulation counted 2,920 nodes in 7 fights, 8.6 ms at the worst tick on the web, about the 8 ms spike allowance. Needs prefetch in idle ticks around the pair |
+| **Fewer nodes** (384, 256) | no: each step up costs 2.6 to 4 times | the look, not the load, argues for them (research.md T1) |
+
+**What I would do:** build the sliced bake with the intro (the first cut), keep the cache for the cut after it, and treat shipped planets as a polish for the demo's default planet, in a separate file.
+
+### 6.4 A model of the old laptop's iGPU (an ESTIMATE, from my memory of the parts: not verified, no such machine has been run)
+
+The stand-in so far is this PC's `AMD Radeon Graphics` (device 0x13C0, which I recall as the Ryzen 7000 desktop iGPU: 2 RDNA2 compute units, 128 shader lanes at up to about 2.2 GHz, sharing DDR5) with the CPU throttled x4. `budgets.md`'s T2 is a 2015 dual-core ultrabook; its iGPU would be an Intel HD 5500 or 520 class (24 execution units at about 0.9 to 1.05 GHz, DDR3L or DDR4). From memory of the published figures:
+
+| | This Radeon | A 2015 ultrabook iGPU | Ratio, old / this |
+|---|---|---|---|
+| Shader compute | about 0.56 TFLOPS | about 0.35 to 0.4 | 0.6 to 0.7 |
+| Texture rate | about 17 Gtexel/s | about 6 to 8 | about 0.4 |
+| Memory bandwidth (shared with the CPU) | about 80 GB/s | about 25 to 30 | about 0.3 |
+
+So **vertex-fetch-bound work (the ground shader) runs about 2.5 times slower on the old iGPU, fill-bound work about 3 times, and 4 times is a safe worst case** once the browser's driver path is added (unmeasured). Applied to what I measured:
+
+| Quantity (this Radeon, measured) | Old iGPU at 2.5x | At 4x |
+|---|---|---|
+| A rotated ground field, 4 or 8 fetches a vertex, median frame (75k vertices) | +0.1 to 0.5 ms | +0.15 to 0.8 ms |
+| The same at p95 (200k vertices) and counting the water pass | up to +1 ms | up to +1.6 ms |
+| Rendering's Radeon scene at x1: p50 11.7, p95 26 ms (`coast-layer-cut-2026-10-27.md`) | would not fit 33 ms at p95 without the game's own step-down | |
+
+The 0.5 to 1 ms allowance holds at the median on the old iGPU and is gone at p95. A rotated field is no longer a free swing there; the choice is a lower vertex count for the near ground (stride 2 where it is now 1 halves the columns) or the step-down. **The first thing that would turn this model into a number is one run on a machine of that class (or a GPU-limited emulation), which the project does not have.** The cheapest proxy I can run here is the microbench with the vertex count scaled, which the 1.6 million-vertex row of 5.4 already is.
