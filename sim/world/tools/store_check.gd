@@ -99,5 +99,5 @@ func _init() -> void:
 		if WorldStore.add(big, p[0], p[1], p[2], 50.0, 5.0, 1.0, 1.0, 0, 0, float(k), 0) < 0:
 			refused += 1
 	ok(big.storeN == WorldStore.MAX and refused == 5, "the store holds %d and refuses the rest (%d refused)" % [WorldStore.MAX, refused])
-	print("store_check: %d check(s) failed" % fails)
+	print("STORE: %d check(s) failed" % fails)
 	quit(0 if fails == 0 else 1)

@@ -65,5 +65,5 @@ func _init() -> void:
 	ok(WorldField.of(WorldPlanet.make(planet)).bakeHash == hash1, "the bake's hash is the same (%s)" % hash1)
 	ok(h1 == h2, "the stepped load and the whole load start the same state (%s)" % h1)
 	SimPlanetLoad.strict = was_strict
-	print("field_load_check: %d check(s) failed" % fails)
+	print("FIELDLOAD: %d check(s) failed" % fails)
 	quit(0 if fails == 0 else 1)

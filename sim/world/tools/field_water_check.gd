@@ -38,7 +38,7 @@ func _init() -> void:
 			break
 	ok(S != null, "a gen 3 ring with lakes was found (planet %d touch %d)" % [pl, tc])
 	if S == null:
-		print("field_water_check: %d check(s) failed" % fails)
+		print("FIELDWATER: %d check(s) failed" % fails)
 		quit(1)
 		return
 	var P := WorldPlanet.make(pl)
@@ -159,5 +159,5 @@ func _init() -> void:
 	if not found:
 		print("  info no river segments near the rings tried: the river half is not exercised on these planets")
 	WorldRivers.setOn(false)
-	print("field_water_check: %d check(s) failed" % fails)
+	print("FIELDWATER: %d check(s) failed" % fails)
 	quit(0 if fails == 0 else 1)

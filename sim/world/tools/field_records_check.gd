@@ -168,5 +168,5 @@ func _init() -> void:
 	rv.reverse()
 	ok(fw == rv, "300 reads give the same ground in either order")
 	WorldField.refineOverride = -1
-	print("field_records_check: %d check(s) failed" % fails)
+	print("FIELDRECORDS: %d check(s) failed" % fails)
 	quit(0 if fails == 0 else 1)

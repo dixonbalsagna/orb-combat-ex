@@ -143,5 +143,5 @@ func _init() -> void:
 		counts.append(M.buildings.size())
 	ok(hashes[0] == hashes[1], "a gen 3 match with plans, 120 ticks, is one state twice (%s, %d buildings)" % [hashes[0], counts[0]])
 	WorldField.refineOverride = -1
-	print("field_plan_check: %d check(s) failed" % fails)
+	print("FIELDPLAN: %d check(s) failed" % fails)
 	quit(0 if fails == 0 else 1)

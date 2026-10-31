@@ -126,7 +126,7 @@ func _init() -> void:
 			edge = maxf(edge, absf(F.h[idx1] - F.h[idx2]))
 	ok(edge < 0.05, "an edge node read from its two faces differs by %.4f units at most" % edge)
 	if quick:
-		print("field_check: %d check(s) failed" % fails)
+		print("FIELD: %d check(s) failed" % fails)
 		quit(0 if fails == 0 else 1)
 		return
 	# the bake: whole, hashed, the same in any order and after other reads
@@ -235,5 +235,5 @@ func _init() -> void:
 	var hb: String = str(SimHash.stateHash(Sb).gameplay)
 	ok(ha == hb, "a gen 3 match played %d ticks twice has one state (%s)" % [ticks, ha])
 	ok(Sa.buildings.size() > 0 and Sa.world != null, "a gen 3 match stands %d buildings and %d trees" % [Sa.buildings.size(), Sa.trees.size()])
-	print("field_check: %d check(s) failed" % fails)
+	print("FIELD: %d check(s) failed" % fails)
 	quit(0 if fails == 0 else 1)

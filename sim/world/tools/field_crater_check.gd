@@ -86,5 +86,5 @@ func _init() -> void:
 	var gb: float = _deform_sum(G, gx, 500.0)
 	WorldCrater.dig(G, gx, 8.0, G.fighters[0], "impact")
 	ok(G.storeN == 0 and G.store.size() == 0 and _deform_sum(G, gx, 500.0) > gb + 1.0, "a gen 2 crater writes the strip and never the store")
-	print("field_crater_check: %d check(s) failed" % fails)
+	print("FIELDCRATER: %d check(s) failed" % fails)
 	quit(0 if fails == 0 else 1)
