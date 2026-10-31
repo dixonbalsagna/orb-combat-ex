@@ -149,6 +149,7 @@ B(gap, d) = 0.5 × gap + H + A × d      distance from the pair's midpoint
 - Every measured value in the table is inside `B`. The 3,679 at gap 300 is a rare moment: p99.9 is 2,402.
 - **It's a function of the gap only, so the sim never reads the camera.** It needs the worst setting any player may have, so it's the "any setting" row. Wider than 21:9 raises `H` and `A`; a 32:9 player would need its own check.
 - **It's AI matches only,** with no swing and no human. Whips and catch-ups are in the data. The rig's shake and the fighter leaving the picture aren't separately counted. **With swings, the fighters' places along the line don't change, so I expect no change, unmeasured.** Add Netcode's lead separately: 20 ticks at flat out is 3,300 units.
+- **The meteor launch below is outside this bound on purpose:** its width comes from sim state, and it draws only the far level, so it needs no near field.
 - **For a big gap, two windows are enough.** Past a split nothing between the panes is shown, so `H + A × d` round **each fighter** is enough. This is arithmetic from the same fit; I measured from the midpoint only.
 
 ### What the bound means for E
@@ -178,6 +179,7 @@ Research's bars can't show any of this, so this needs a scratch render on the re
 | 6 | A flat-out 5 s flight on a full ring | Horizon moving, true globe, low, reveal at both widths (section 5), low, arrival over the curve | It reads as fast but not as far |
 | 7 | Bank on and off; low angle on and off | Whether each gesture earns its place | |
 | 8 | Collapse, signature and a swing through a city, both flash modes, at 16:9 and 1024 by 768 | Readings only, flash work being paused. RL-213 and RL-208 make reduced mode the one that counts | |
+| 10 | The meteor launch, at the top of the ladder, on the real panes | The whole shot below, ending on a landing and on a catch | Either fighter can't be found, or the return reads as the camera losing its place |
 | 9 | Each shot under the motion setting | Section 5's table | A cut with no action to hide on, or a fighter's feet off the ground |
 
 **Orb judges 1, 2, 3, 4 and 6.**
@@ -316,7 +318,7 @@ Legal e12 still applies: no zoom in on a fighter held in the air.
 
 - **What's lost:** the extra growth I wanted from zooming out. Sag now grows with the width and no faster, so the reveal's scale comes from the width alone, and from climbing.
 - **Altitude still helps:** the higher he goes, the more of the bow shows.
-- **Still open for Orb:** may a brief reveal go below `R_FLOOR`? At 8,000 he's about 12 px tall, against the floor's 23. At the floor it's 27 px of sag, which I doubt sells it. Clip 6 shows both.
+- **Orb's answer on the size floor:** a reveal may go below it, at peak power, with a trail carrying the read. See "The meteor launch" below. Early in a match the camera stays close.
 
 ### What the camera offers the swing's score
 
@@ -352,3 +354,67 @@ Legal e12 still applies: no zoom in on a fighter held in the air.
 **Worked through, untested:** a heavy launch's release in flight room gets +0.6 and is likely to win. The same release just after a big swing gets the same read, because Game Design's falling score handles recency, not this. A slow brawl with nothing for 4 s gets 0, which is why brawl swings stay the second choice.
 
 **What it can't offer:** whether the current shot would look good, since that depends on what's actually in frame on each player's screen. So this says when the camera's free and the moment has a cause. The clip has to say whether the result feels directed.
+
+### The meteor launch
+
+**Orb's picture:** at the start of a match the camera stays close. With both at peak, a fully charged launch on a stunned or weakened foe knocks him diagonally up at high speed, the camera zooms out, and he leaves a burning trail, "even if the fighter is only a few pixels". Orb's still is 53,070 wide.
+
+**That width isn't arbitrary.** A foe at the 24,000 ceiling, framed like today's vertical fit (`0.8` of the height), needs `1.778 × 24,000 / 0.8` = **53,300.** So the shot is the camera simply keeping both fighters in one frame, and the width follows his height. All first values; nothing's been seen with fighters. His flight is the sim's, and I assume 10,000 u/s at 60° above the ground: flatter puts his ground over the horizon from the launcher (at 45°, 56° round a full ring).
+
+**1. The shot, for the top of the ladder: about 8 s, no cut, no whip.**
+
+| Time | Beat | Width | Camera |
+| ---: | :--- | ---: | :--- |
+| Before | Wind-up and blow | 950 to 2,700 | As today: tight, so the contrast is all there. Blow push 0.020 |
+| Hit-stop | Held, the longest (16 ticks) | Same | Dead still |
+| 0 s | **Release** | Starts | **No whip:** a whip chases, and this shot lets him go. The width starts over 6 ticks |
+| 0 to 0.3 s | He leaves | To about 5,000 | Width eases to `2.2 × his height + 2,700`, at up to 3 e-folds a second (`SLAM_ZOOM_RATE`). He may touch the top of the frame: that's the violence of it, and it's only a few ticks |
+| 0.3 to 3 s | **The climb** | To 53,000 | The launcher eases down to 0.85 of the height. The rate falls by itself, to about 0.6 e-folds a second by 30,000. The trail draws out behind him |
+| 3 to 4.2 s | **The widest: the show of power** | Holds | Eases to rest over 0.5 s, and he hangs. The planet's curve fills the frame, true globe |
+| 4.2 to 6.2 s | **The descent** | Down to 8,000 | Width follows him down, at about 1 e-fold a second (inside `ZOOM_RATE` 1.2), with his trail still in frame |
+| 6.2 s | **Impact** | 8,000 | The camera **doesn't race him to the ground.** At 8,000 the blast and crater read whole. Usual shake |
+| 6.2 to 6.7 s | Hold | 8,000 | Still, for the weight |
+| 6.7 to 8 s | **Return** | To the fight's own | Point 3 below |
+
+**No swing during this shot,** first value: a turn at this width spins the whole planet, and the width is already the show. A running swing rests by the climb's start. Clip 10 can try one.
+
+**2. The ladder.** The width is capped by the **lower** of the two fighters' tiers, because Orb's picture is both at peak. A launch that isn't fully charged takes one step less. Widths in data. Foe's height comes from the sim, and these assume he gets near it.
+
+| Lower tier | Most width | Height it fits | Fighter at 720p | Sag at the edge, full ring |
+| :--- | ---: | ---: | ---: | ---: |
+| 1 | 4,200, today's floor | 700 | 23 px | 27 px |
+| 2 | 8,000 | 2,400 | 12 px | 52 px |
+| 3 | 16,000 | 6,000 | 6 px | 105 px |
+| 4, launch not full | 32,000 | 13,000 | 3 px | **Past the small-angle sum:** the curve is the picture |
+| **4, full, foe stunned or weak** | **53,000** | **23,000** | **2 px** | The whole planet's width, about 1.08 diameters |
+
+On a Half ring the planet is half the size, so **width and height both scale with the ring**: the top is 26,500 and about 12,000 high. Orb's "never this far at base power" is tier 1's row. **`R_FLOOR` and `LAUNCH_FLOOR` lift only in this shot;** ordinary launches keep them. A shot this size should be rare by nature: it needs both at peak and a full charge. Game Design should say how often.
+
+**Staying readable: one frame, never a split.** A split would give two slices of sky with a pixel in each, and the point is the two of them and the planet together. The split rule stands down for the shot, and panels stay blocked.
+
+| | How he's found | Who owns it |
+| :--- | :--- | :--- |
+| **Foe** | **The trail.** At least 3 px wide at 720p however far out, burning for the whole climb, cooling and hanging in the sky, a second one on re-entry. It's behind him, not over him, so no marker rule is touched. It's a small, slow change, so I expect little flash, and it has to be read | VFX |
+| **Launcher** | **Where the trail starts.** The eye goes back down it to his aura and the crater he left. He sits low in frame and doesn't move unless the player moves him. The aura needs about 3 px too | VFX, Camera |
+| **Distance chips** | Off: both are in frame | UI |
+
+**The player keeps the launcher.** If he rushes after the foe, the gap shrinks, the width follows, and that's the shot's chase ending.
+
+**3. How it ends, always eased, in one of four ways:**
+
+| Ending | Return |
+| :--- | :--- |
+| **He lands, at 8,000** | After the hold, ease to the normal framing over about 1.3 s (`ln(8,000 / 2,700)` is 1.1 e-folds, at `ZOOM_RATE`). It frames the pair, not the crater, and hands over once the normal target is as wide as the current view. **If the launcher's far off, the normal split opens in that ease,** as usual, and the rule that returned stands |
+| **The launcher catches him in the air** | The width follows the shrinking gap, up to 3 e-folds a second, into the exchange's own framing |
+| **He recovers and brakes** | The shot ends where he stops: 1.5 s ease to the normal rule for the gap, usually a split. No impact, so no hold |
+| **It's a KO or a finisher** | The camera shot for that takes over at its start, as today, eased from wherever the width is |
+
+**Legal.** The zoom in returns to the fighters and doesn't aim at a crater or a town, so RL-213 (4) holds. Legal e12 is about a fighter held in the air; here he's flying free, and the return is a zoom out's ending, but Legal should see the clip, since it zooms in near a falling fighter.
+
+**Motion setting:** a cut to the widest at the release, on the blow; held still; a cut back at the impact. **Flash:** a whole-picture zoom at 3 e-folds a second is a new case for the analyser. Reduce flashing gets a reading before any promise.
+
+**What I need:**
+
+- **Game Design and Encounter:** the launch that does this: its rule, angle (I assume 60°), height by tier, speed, how often, and whether he can recover.
+- **VFX:** the trail and the aura's least sizes.
+- **Rendering:** a planet this wide on the Radeon, whose p95 is already 26 ms in today's wide opening, and how the far level holds up at 53,000, which Orb has called a little exaggerated in the still.
