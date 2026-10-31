@@ -74,13 +74,19 @@ static func seaMin() -> float:
 	return WorldFill.wadeBelow() if WorldFill.floorOn() else HIDE_MIN_DEPTH
 
 
+## Does a column of at least seaMin() deep water count as sea to the rules that ask? On a gen 2 world always (its lakes, and the shore slope of its sea); with the floor on, in every world, so that the sheet a fighter
+## stands on in the hand-made world's shore slope is the surface those rules ask about (Game Design rulings 2026-10-30 row 7: one switch, every world). Off, a gen 1 and the hand-made world are as they were.
+static func deepIsSea() -> bool:
+	return WorldFill.floorOn() or WorldGround.live()
+
+
 ## The surface the sea's rules measure from at x: the sea level over the sea, a gen 2 lake deep enough to hide in: its own surface (Game Design 23b row 13: lakes follow the sea's rules), and NO_SEA where there
 ## is neither. On any world without a lake it is 0 over the sea and NO_SEA elsewhere, which is `y < 0 and seaAt` as the rules were written.
 static func seaTop(S: SimState, x: float) -> float:
 	var i: int = int(floor(SimWrap.wrap(x) / SimConst.COL)) % SimConst.NC
 	if S.base[i] < RESERVOIR_BASE:
 		return SEA_LEVEL
-	if S.water[i] >= seaMin() and WorldGround.live():
+	if S.water[i] >= seaMin() and deepIsSea():
 		return S.base[i] + WorldTerrain.lowD(S)[i] + S.water[i]
 	return NO_SEA
 

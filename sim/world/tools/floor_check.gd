@@ -71,6 +71,76 @@ func scan(S: SimState, dx: float) -> Dictionary:
 	return {"excess": excess, "edge": edge, "below": below, "above": above, "wet": wetSamples, "bed": bed, "sheet": sheet, "first": firstBreak}
 
 
+## Over every column of the ring's own water: one at least wade.below deep is sea to seaAt and seaTop, and (where its neighbours are as deep and stand level with it) the floor on its sheet is seaTop's value to the bit; a shallower one is neither.
+func sea_rules(S: SimState) -> Dictionary:
+	var NC: int = SimConst.NC
+	var wade: float = WorldFill.wadeBelow()
+	var r: Dictionary = {"sheet": 0, "shallow": 0, "badSea": 0, "badTop": 0, "badLevel": 0, "badShallow": 0, "first": ""}
+	for i in range(NC):
+		var li: float = WorldWater.nativeLevel(S, i)
+		if li == WorldWater.NO_LEVEL:
+			continue
+		var x: float = (float(i) + 0.5) * SimConst.COL
+		var top: float = WorldWater.seaTop(S, x)
+		if S.water[i] >= wade:
+			r.sheet += 1
+			if not WorldTerrain.seaAt(S, x):
+				r.badSea += 1
+				if r.first == "":
+					r.first = "not seaAt: column %d water %.1f base %.1f" % [i, S.water[i], S.base[i]]
+			if top == WorldWater.NO_SEA:
+				r.badTop += 1
+			elif S.water[(i + 1) % NC] >= wade and S.water[(i + NC - 1) % NC] >= wade and absf(WorldWater.nativeLevel(S, (i + 1) % NC) - li) < 1.0e-4 and absf(WorldWater.nativeLevel(S, (i + NC - 1) % NC) - li) < 1.0e-4 and absf(WorldWater.floorAt(S, x) - top) > 1.0e-9:
+				r.badLevel += 1
+				if r.first == "":
+					r.first = "floor %.6f is not seaTop %.6f: column %d" % [WorldWater.floorAt(S, x), top, i]
+		else:
+			r.shallow += 1
+			if WorldTerrain.seaAt(S, x) or top != WorldWater.NO_SEA:
+				r.badShallow += 1
+				if r.first == "":
+					r.first = "shallow column %d (water %.1f) is sea" % [i, S.water[i]]
+	return r
+
+
+## A column i whose eight neighbours either side all hold the ring's own water, the water at i between lo and hi deep; -1 if none.
+func inner(S: SimState, lo: float, hi: float, openSea: bool) -> int:
+	var NC: int = SimConst.NC
+	for i in range(NC):
+		if S.water[i] < lo or S.water[i] > hi:
+			continue
+		if openSea != (S.base[i] < WorldWater.RESERVOIR_BASE):
+			continue
+		var all: bool = true
+		for k in range(-4, 5):
+			if WorldWater.nativeLevel(S, (i + k + NC) % NC) == WorldWater.NO_LEVEL or (openSea and S.base[(i + k + NC) % NC] >= WorldWater.RESERVOIR_BASE):
+				all = false
+				break
+		if all:
+			return i
+	return -1
+
+
+## A crater of 300 around column c, filled as the water module keeps the ring's water (the sea level over the hole): the floor at the column's middle before and after, and the ground there after. Everything is put back.
+func dig_floor(S: SimState, c: int) -> Array:
+	var NC: int = SimConst.NC
+	var x: float = (float(c) + 0.5) * SimConst.COL
+	var f0: float = WorldWater.floorAt(S, x)
+	var wat: Array = []
+	for k in range(-3, 4):
+		var i: int = (c + k + NC) % NC
+		wat.append(S.water[i])
+		S.deform[i] -= 300.0
+		S.water[i] = maxf(0.0, WorldWater.SEA_LEVEL - (S.base[i] + WorldTerrain.lowD(S)[i]))
+	var f1: float = WorldWater.floorAt(S, x)
+	var g1: float = WorldTerrain.groundY(S, x)
+	for k in range(-3, 4):
+		var i2: int = (c + k + NC) % NC
+		S.deform[i2] += 300.0
+		S.water[i2] = wat[k + 3]
+	return [f0, f1, g1]
+
+
 func _init() -> void:
 	ok(WorldFill.dataErrors().is_empty(), "water.json is clean (%s)" % str(WorldFill.dataErrors()))
 	ok(not WorldFill.floorOn() and WorldFill.wadeBelow() == 75.0, "the floor ships off, and wade.below is 75")
@@ -128,6 +198,88 @@ func _init() -> void:
 	# the rules measured from the ground stay measured from it: only the floor moves
 	ok(WorldTerrain.groundY(H, deep) < -400.0, "groundY is still the sea bed there (%.0f): a power-up's crater reads it" % WorldTerrain.groundY(H, deep))
 	WorldFill.setFloor(false)
+
+	# --- the sea's rules (row 7; row 4's line for every world): water 75 or more deep is sea to seaAt and seaTop, and the floor on it is the surface rules ask about; a shallower column is waded and neither
+	var openOnly: bool = true
+	for i in range(SimConst.NC):
+		if WorldTerrain.seaAt(H, (float(i) + 0.5) * SimConst.COL) != (H.base[i] < WorldWater.RESERVOIR_BASE):
+			openOnly = false
+			break
+	ok(openOnly, "the floor off: on the hand-made world only the open sea (the original ground under RESERVOIR_BASE) is sea to seaAt, as it always was")
+	WorldFill.setFloor(true)
+	var sr: Dictionary = sea_rules(H)
+	WorldFill.setFloor(false)
+	ok(int(sr.sheet) > 100 and int(sr.shallow) > 10, "the hand-made world has %d sea columns 75 or more deep and %d shallower to read" % [int(sr.sheet), int(sr.shallow)])
+	ok(int(sr.badSea) == 0 and int(sr.badTop) == 0 and int(sr.badLevel) == 0 and int(sr.badShallow) == 0, "the floor on, hand-made world: every column 75 or more deep is sea, its sheet is seaTop's value, and no shallower column is sea (%d, %d, %d, %d) %s" % [int(sr.badSea), int(sr.badTop), int(sr.badLevel), int(sr.badShallow), String(sr.first)])
+
+	# --- a crater a fight dug in the sea's bed: the floor measures from the undug bed, the open sea and the shallows alike (row 5, as in a lake); a bay dug on the coast is a fill, never the ring's water
+	WorldFill.setFloor(true)
+	var oc: int = inner(H, 300.0, 1200.0, true)
+	var sc: int = inner(H, 40.0, 70.0, false)
+	ok(oc >= 0 and sc >= 0, "an open-sea column (%d) and a column of the shallows 40 to 70 deep (%d) to dig in" % [oc, sc])
+	if oc >= 0 and sc >= 0:
+		var dg: Array = dig_floor(H, oc)
+		ok(absf(float(dg[0]) - float(dg[1])) < 1.0e-6 and float(dg[1]) >= float(dg[2]), "a 300-deep crater in the open sea's bed leaves his floor on the sheet: %.4f before, %.4f after, the bed there %.1f" % [float(dg[0]), float(dg[1]), float(dg[2])])
+		var ds: Array = dig_floor(H, sc)
+		ok(absf(float(ds[0]) - float(ds[1])) < 0.01 and float(ds[1]) >= float(ds[2]), "a 300-deep crater in the shallows (%.0f deep) leaves his floor where it was: %.3f before, %.3f after, the ground there %.1f" % [H.water[sc], float(ds[0]), float(ds[1]), float(ds[2])])
+	var bay: int = -1
+	for i in range(8, SimConst.NC - 8):
+		if H.base[i] < 0.0 or H.base[i + 1] < 0.0 or H.base[i + 2] < 0.0 or H.water[i] > 0.0 or H.water[i + 1] > 0.0 or H.water[i + 2] > 0.0:
+			continue
+		for k in range(-6, 10):
+			if H.water[i + k] >= WorldWater.MIN_DEPTH and H.base[i + k] < WorldWater.SHORE_WET:
+				bay = i + 1
+				break
+		if bay >= 0:
+			break
+	ok(bay >= 0, "a stretch of three dry coast columns within a few columns of the sea to dig a bay in (%d)" % bay)
+	if bay >= 0:
+		var xb: float = (float(bay) + 0.5) * SimConst.COL
+		var wb: Array = []
+		for k in range(-1, 2):
+			wb.append(H.water[bay + k])
+			H.deform[bay + k] -= 300.0
+			H.water[bay + k] = maxf(0.0, WorldWater.SEA_LEVEL - (H.base[bay + k] + H.deform[bay + k]))
+		var fb: float = WorldWater.floorAt(H, xb)
+		var gb: float = WorldTerrain.groundY(H, xb)
+		for k in range(-1, 2):
+			H.deform[bay + k] += 300.0
+			H.water[bay + k] = wb[k + 1]
+		ok(fb == gb and gb < -200.0, "a bay dug on the coast and filled by the sea is a fill, not the ring's water: the floor is its ground (%.1f, %.1f)" % [fb, gb])
+	WorldFill.setFloor(false)
+
+	# --- gen 2 rings with a sea, with a lake or none: the same floor (row 7: a gen 2 ring teaches one rule)
+	var seaRings: int = 0
+	var seaBad: int = 0
+	var seaEx: float = -1.0e9
+	var seaEdge: float = 0.0
+	var seaSheet: int = 0
+	var seaShallow: int = 0
+	var seaFirst: String = ""
+	for sd in [3, 7, 11, 13, 19, 21, 25, 29, 42, 47]:
+		for touch in [0, 1]:
+			var SS: SimState = gen2_match(sd, touch)
+			var open: int = 0
+			for i in range(SimConst.NC):
+				if SS.base[i] < WorldWater.RESERVOIR_BASE:
+					open += 1
+			if open < 100:
+				continue
+			seaRings += 1
+			WorldFill.setFloor(true)
+			var rs: Dictionary = scan(SS, 2.0)
+			var sq: Dictionary = sea_rules(SS)
+			WorldFill.setFloor(false)
+			seaEx = maxf(seaEx, float(rs.excess))
+			seaEdge = maxf(seaEdge, float(rs.edge))
+			seaBad += int(rs.below) + int(rs.above) + int(rs.bed) + int(rs.sheet) + int(sq.badSea) + int(sq.badTop) + int(sq.badLevel)
+			seaSheet += int(sq.sheet)
+			seaShallow += int(sq.shallow)
+			if seaFirst == "" and (String(rs.first) != "" or String(sq.first) != ""):
+				seaFirst = "%d/%d: %s %s" % [sd, touch, String(rs.first), String(sq.first)]
+	ok(seaRings >= 6 and seaSheet > 1000 and seaShallow > 50, "%d gen 2 rings with an open sea read: %d sea columns 75 or more deep, %d shallower" % [seaRings, seaSheet, seaShallow])
+	ok(seaBad == 0, "gen 2 seas: never under the ground or over the surface, on the bed to 37.5 and on the sheet from 75, every deep column sea and its sheet seaTop's value (%d breaks) %s" % [seaBad, seaFirst])
+	ok(seaEx <= 2.0e-3 and seaEdge < 0.01, "and the floor is continuous through them: no step (excess %.9f), %.4f across a column boundary" % [seaEx, seaEdge])
 
 	# --- a gen 2 ring with lakes (rows 1, 4, 5)
 	var withLake: int = 0

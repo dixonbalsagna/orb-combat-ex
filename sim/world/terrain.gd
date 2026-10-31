@@ -486,4 +486,4 @@ static func seaAt(S: SimState, x: float) -> bool:
 	if S.base[i] < WorldWater.RESERVOIR_BASE:
 		return true
 	# a gen 2 lake deep enough to hide in is sea to every rule that asks (a landing slams, a body skims or sinks): water is water (Game Design, rulings 2026-10-23b item 13)
-	return S.water[i] >= WorldWater.seaMin() and WorldGround.live()
+	return S.water[i] >= WorldWater.seaMin() and WorldWater.deepIsSea()

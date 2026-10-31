@@ -17,6 +17,62 @@ func gen2_match(sd: int, touch: int) -> SimState:
 	return S
 
 
+## A real slam on the hand-made world: a special launch straight down (3200) over x, the pair put on the floor there and the rival 400 off, followed 240 ticks of the full step. The most embedT he has, and where he ends.
+func slam(x: float, on: bool) -> Dictionary:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 1, {"p1": false, "p2": false}, {"intro": false, "v2": [true, true]})
+	WorldFill.setSurface(on)
+	WorldFill.setFloor(on)
+	DirInterrupt.data()["water"]["enabled"] = on
+	DirInterrupt.data()["water"]["riseTicks"] = 10
+	var A = S.fighters[0]
+	var D = S.fighters[1]
+	for f in S.fighters:
+		f.ai = null
+		f.rush = null
+		f.vx = 0.0
+		f.vy = 0.0
+		f.z = 0.0
+		f.zT = 0.0
+		f.state = "free"
+		f.stunTicks = 0
+	D.x = SimWrap.wrap(x)
+	D.y = WorldWater.floorAt(S, D.x) + 200.0
+	A.x = SimWrap.wrap(x + 400.0)
+	A.y = WorldWater.floorAt(S, A.x)
+	D.state = "locked"
+	S.dirS.ex = DirExchange.newEx(A, D, "probe")
+	DirLaunch.doLaunch(S, A, D, {"name": "SLAM DOWN", "ux": 0.0, "uy": -1.0}, 3200.0, true)
+	S.dirS.ex = null
+	var emb: int = 0
+	var low: float = 1.0e9
+	for t in range(240):
+		SimCore.step(S)
+		emb = maxi(emb, int(D.embedT))
+		low = minf(low, D.y)
+	var r: Dictionary = {"emb": emb, "low": low, "end": D.y, "floor": WorldWater.floorAt(S, x), "state": String(D.state)}
+	WorldFill.setSurface(false)
+	WorldFill.setFloor(false)
+	SimCore.dispose(S)
+	return r
+
+
+## The hand-made world's column whose water is nearest to depth (the sea's own, 5 either side), with the sea's open water on both sides if asked; NAN if none.
+func column(S: SimState, depth: float, openSea: bool) -> float:
+	var best: float = NAN
+	var off: float = 5.0
+	for c in range(SimConst.NC):
+		var x: float = (float(c) + 0.5) * SimConst.COL
+		var e: float = absf(WorldWater.floorDepth(S, x) - depth)
+		if e >= off:
+			continue
+		if openSea != (S.base[c] < WorldWater.RESERVOIR_BASE):
+			continue
+		off = e
+		best = x
+	return best
+
+
 func _init() -> void:
 	var half: float = WorldFill.wadeBelow() * 0.5
 	WorldFill.setFloor(false)
@@ -91,5 +147,44 @@ func _init() -> void:
 			L.water[lc + k] = ks[k + 1]
 		WorldFill.setFloor(false)
 		ok(seen == [true, true, true, false, false, false], "a lake column: a burial can start to 37 deep and not from 38 (%s)" % str(seen))
+	# --- the sea (rows 7 and 11): a burial needs the bed, so the beach to 37.5 deep and not the sea beyond
+	var H2 := SimCore.createSim()
+	SimCore.newMatch(H2, 1, {}, {"intro": false})
+	WorldFill.setFloor(true)
+	var openAll: bool = true
+	var openN: int = 0
+	var beachOk: int = 0
+	var beachNo: int = 0
+	var beachBad: int = 0
+	for i in range(SimConst.NC):
+		var xs: float = (float(i) + 0.5) * SimConst.COL
+		var ds: float = WorldWater.floorDepth(H2, xs)
+		if H2.base[i] < WorldWater.RESERVOIR_BASE:
+			openN += 1
+			if WorldWater.burialOK(H2, xs):
+				openAll = false
+		elif ds > 0.0:
+			if WorldWater.burialOK(H2, xs) == (ds < half):
+				beachOk += 1 if ds < half else 0
+				beachNo += 0 if ds < half else 1
+			else:
+				beachBad += 1
+	WorldFill.setFloor(false)
+	ok(openN > 100 and openAll, "the floor on: a burial can start in none of the hand-made world's %d open-sea columns" % openN)
+	ok(beachOk > 5 and beachNo > 5 and beachBad == 0, "and on its shores exactly where the water is under %.1f deep: %d columns where it can, %d where it can't, %d wrong" % [half, beachOk, beachNo, beachBad])
+	var xe: float = column(H2, 20.0, false)
+	var xm: float = column(H2, 50.0, false)
+	var xd: float = column(H2, 90.0, false)
+	var xo: float = column(H2, 600.0, true)
+	ok(not is_nan(xe) and not is_nan(xm) and not is_nan(xd) and not is_nan(xo), "shore columns about 20, 50 and 90 deep and an open-sea column to slam into (%s)" % str([xe, xm, xd, xo]))
+	if not (is_nan(xe) or is_nan(xm) or is_nan(xd) or is_nan(xo)):
+		for p in [["20 deep", xe, true], ["50 deep", xm, false], ["90 deep", xd, false], ["open sea", xo, false]]:
+			var offr: Dictionary = slam(float(p[1]), false)
+			var onr: Dictionary = slam(float(p[1]), true)
+			print("   %s: floor off embed %d, lowest %.1f, ends %.1f; floor on embed %d, lowest %.1f, ends %.1f (floor %.1f), %s" % [String(p[0]), int(offr.emb), float(offr.low), float(offr.end), int(onr.emb), float(onr.low), float(onr.end), float(onr.floor), String(onr.state)])
+			ok(int(offr.emb) > 0, "%s: the control, floor off: a special launch straight down embeds him (%d)" % [String(p[0]), int(offr.emb)])
+			ok((int(onr.emb) > 0) == bool(p[2]), "%s: with the floor on a burial %s" % [String(p[0]), "starts" if bool(p[2]) else "does not start (no embed, no follow-up)"])
+		var deepOn: Dictionary = slam(xo, true)
+		ok(absf(float(deepOn.end) - float(deepOn.floor)) < 1.0e-3 and String(deepOn.state) != "down", "slammed into the open sea he comes up to the sheet, standing (ends %.3f on the floor %.3f, %s)" % [float(deepOn.end), float(deepOn.floor), String(deepOn.state)])
 	print("BURIAL: %d check(s) failed" % fails)
 	quit(1 if fails > 0 else 0)

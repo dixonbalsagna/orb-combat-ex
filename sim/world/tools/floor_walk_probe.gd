@@ -60,6 +60,39 @@ func walk(sd: int, touch: int, c0: int, cols: int, floorOn: bool, ticks: int) ->
 	return out
 
 
+## The hand-made world's beach: a column c where the sea's water begins as dir walks (dry behind it, open sea 60 columns ahead), or -1.
+func beach(S: SimState, dir: int) -> int:
+	var NC: int = SimConst.NC
+	for c in range(70, NC - 70):
+		if S.water[c] >= WorldWater.MIN_DEPTH and S.water[c - dir] < WorldWater.MIN_DEPTH and S.base[c - dir] >= WorldWater.SHORE_WET and S.water[c + dir * 60] >= 100.0 and S.base[c + dir * 60] < WorldWater.RESERVOIR_BASE:
+			return c
+	return -1
+
+
+## Walk from 24 columns before the beach out over the sea, the stick one way and down: [x, y, floor, ground, depth, seaTop] a tick.
+func sea_walk(S: SimState, c: int, dir: int, floorOn: bool, ticks: int) -> Array:
+	WorldFill.setSurface(floorOn)
+	WorldFill.setFloor(floorOn)
+	DirInterrupt.data()["water"]["enabled"] = floorOn
+	var f = S.fighters[0]
+	f.x = (float(c - dir * 24) + 0.5) * SimConst.COL
+	f.y = WorldTerrain.groundY(S, f.x) + 10.0
+	f.state = "free"
+	f.vx = 0.0
+	f.vy = 0.0
+	f.z = 0.0
+	f.input.mx = float(dir)
+	f.input.my = -1.0
+	var out: Array = []
+	for t in range(ticks):
+		SimFighter.stepFighter(S, f, SimConst.DT)
+		S.tick += 1
+		out.append([f.x, f.y, WorldWater.floorAt(S, f.x, f.z), WorldTerrain.groundY(S, f.x, f.z), WorldWater.floorDepth(S, f.x, f.z), WorldWater.seaTop(S, f.x)])
+	WorldFill.setSurface(false)
+	WorldFill.setFloor(false)
+	return out
+
+
 ## A column of one of the ring's lakes 60 to 70 deep (a lift of 45 to 65 from the bed to the floor), or -1.
 func shoulder(S: SimState) -> int:
 	for lk in S.planetRing.get("lakes", []):
@@ -169,6 +202,48 @@ func _init() -> void:
 		var c: Dictionary = ctl.get(how, {})
 		ok(not r.is_empty() and float(r.maxDy) <= WorldWater.riseMax(10) + 1.0e-6 and int(r.ticks) >= 5 and absf(float(r.gap)) < 1.0e-6, "real %s: he rises at most %.2f a tick (limit %.1f) over %d ticks and ends on his floor (gap %.6f)" % [how, float(r.get("maxDy", -1.0)), WorldWater.riseMax(10), int(r.get("ticks", 0)), float(r.get("gap", 1.0))])
 		ok(not c.is_empty() and float(c.maxDy) >= 16.0, "control %s, riseTicks 1 (no limit): he is lifted %.1f in one tick, the bug Simulation measured" % [how, float(c.get("maxDy", 0.0))])
+	# --- the sea: a walk from the hand-made world's beach out over the open water (rulings 2026-10-30 row 7), the floor on and off
+	var coasts: int = 0
+	for dir in [1, -1]:
+		var H := SimCore.createSim()
+		SimCore.newMatch(H, 1, {"p1": false, "p2": false}, {"intro": false})
+		var bc: int = beach(H, dir)
+		if bc < 0:
+			continue
+		coasts += 1
+		var sticks: int = int((float(120) * SimConst.COL) / (430.0 / 60.0 * 0.8)) + 120
+		var son: Array = sea_walk(H, bc, dir, true, sticks)
+		var H2 := SimCore.createSim()
+		SimCore.newMatch(H2, 1, {"p1": false, "p2": false}, {"intro": false})
+		var soff: Array = sea_walk(H2, bc, dir, false, sticks)
+		var sbelow: int = 0
+		var slimit: int = 0
+		var smax: float = 0.0
+		var ssheet: int = 0
+		var swet: int = 0
+		var soffFloor: int = 0
+		for k in range(son.size()):
+			var q: Array = son[k]
+			if float(q[1]) < float(q[2]) - 1.0e-6:
+				var rose: float = float(q[1]) - float((son[k - 1] as Array)[1]) if k > 0 else 0.0
+				if absf(rose - WorldWater.riseMax(10)) < 1.0e-6:
+					slimit += 1   # the floor outruns him on a steep shore: he rises at the limit, as row 9 says
+				else:
+					sbelow += 1
+			if float(q[4]) > 0.0:
+				swet += 1
+			if float(q[5]) > -1.0e17 and float(q[1]) == float(q[5]):
+				ssheet += 1
+			if k > 0:
+				smax = maxf(smax, absf(float(q[1]) - float((son[k - 1] as Array)[1])))
+		for q2 in soff:
+			if float((q2 as Array)[4]) > 100.0 and float((q2 as Array)[1]) < float((q2 as Array)[5]) - 50.0 and float((q2 as Array)[5]) > -1.0e17:
+				soffFloor += 1
+		var sl: Array = son[son.size() - 1]
+		ok(swet > 40 and sbelow == 0, "%s from the beach: %d ticks in the sea's water, never under the floor except %d ticks the floor outruns the rise limit on a steep shore (%d otherwise)" % ["right" if dir > 0 else "left", swet, slimit, sbelow])
+		ok(smax <= WorldWater.riseMax(10) + 1.0e-6 and ssheet > 40 and float(sl[1]) == float(sl[5]), "no pop on the way out (the largest change of height in a tick %.2f, limit %.1f), and he ends on the sheet: %d ticks at exactly seaTop, ends at y %.3f (seaTop %.3f)" % [smax, WorldWater.riseMax(10), ssheet, float(sl[1]), float(sl[5])])
+		ok(soffFloor > 40, "control, floor off: he sinks to the sea bed (%d ticks more than 50 under the surface of water over 100 deep)" % soffFloor)
+	ok(coasts >= 1, "the hand-made world has a beach to walk out from (%d)" % coasts)
 	var lastOff: Array = off[off.size() - 1]
 	ok(true, "(floor off, end of the walk: x %.0f y %.1f ground %.1f)" % [float(lastOff[0]), float(lastOff[1]), float(lastOff[3])])
 	print("FLOORWALK: %d check(s) failed" % fails)

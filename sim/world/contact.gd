@@ -1080,10 +1080,10 @@ static func _contact(S: SimState, f, by, b: Body, e: Dictionary) -> void:
 		var vert: float = float(e.get("vert", absf(f.vy) / maxf(SimDetMath.hypot(f.vx, f.vy), 0.000001)))
 		if bool(e.get("dig", true)):
 			var sh: PackedFloat64Array = WorldCraters.shapeAt(S, f.x)   # the material's bowl (craters.json, off: empty, today's bowl); read before the dig changes the ground
+			var buriable: bool = WorldWater.burialOK(S, f.x)   # rulings 2026-10-30 row 11: a burial needs water under half of wade.below at his column; deeper, no embed (this one's included) and he comes up by the surfacing. Read before the dig: the hole is not yet refilled, so the water there reads as if the ground had not moved
 			var rc = WorldCrater.dig(S, f.x, E, by, "impact", f.vx / f.launchT / maxf(sp, 0.000001), vert, f.launchSpecial, f.z, sh)
 			var broke: bool = WorldCraters.after(S, rc, sh, f.z) if sh.size() > 0 else false   # a floe broken through is water, not a bowl to sit in
 			var swallow: float = float(_hk.get("embed", 0.0)) if String(_hk.get("kind", "")) == "MARSH SWALLOW" else 0.0
-			var buriable: bool = WorldWater.burialOK(S, f.x)   # rulings 2026-10-30 row 11: a burial needs water under half of wade.below at his column; deeper, no embed (this one's included) and he comes up by the surfacing
 			if rc != null and first and not broke and buriable and swallow > 0.0:
 				_swallow(S, f, rc, sh, swallow)   # biomes W6: the marsh always embeds, the body that much deeper
 			elif rc != null and first and not broke and buriable and S.T - f.embedCool >= K_EMB_COOL:
