@@ -1519,3 +1519,9 @@ In chat the same day: "the right stick homework really made me think. I couldn't
 **Character models (in chat):** "I'd also like to consult on the best method moving forward as far as character models. Would a Blender workflow suit our purposes, or can we more reliably generate character 3d models the way we've been doing? I want higher quality character models than what we've been using, but I also want responsive, latency-free gameplay."
 
 **Campaign, filler (in chat, later the same day):** "just to clarify, filler episodes, filler arcs could be considered separate categories in the game, but not all missions will be filler episodes."
+
+## The first four names (Orb, 2026-10-30)
+
+Orb locked the canonical names from a naming session run through Gemini: **Grist** (Protagonist), **Loupe** (Rival), **Empress Orza** (Empress), **Bolus** (Cyborg). Orb: "I prefer Empress Orza, wherever necessary a fighter's titles should be exempt from the limit, the limit should serve as a guideline rather than a strict hard-stop." Legal cleared them as in-game names (RL-211): proper nouns only, no line plays on a name's meaning, and none may become a title or product name without a formal search. Supporting cast and place names are still being workshopped.
+
+**Orb's rule on Gemini (same day):** Gemini is used for creative writing only. Its descriptions of gameplay, mechanics or systems are not Orb's sign-off unless Orb names the one they like. This applies retroactively.
