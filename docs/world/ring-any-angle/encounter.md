@@ -32,6 +32,8 @@ Today's plans read column `x` on a line that can't move. How fast a place on the
 
 **The fix common to all: plans read the line the swing will end on, and flights read it on the swing's own curve.** The curve is fixed once asked (bearing, rate, eases), so a planner can ask for the frame `n` ticks ahead: `WorldSwing.frameAt(S, n)`. `predictFlight` and `_propFlight` then make the same number of ground reads as now. Each read costs a field look-up, and that price is World's and Performance's to measure.
 
+**A swing must rest before a landing** (`simulation.md` section 8: mid-swing, the 20-tick ease can't bring the rate down to a grounded fighter's limit in time). So `DirSwing` starts the ease about 20 ticks before the planned landing, from `predictFlight`'s `t`, and the feed's "rests by" is that tick. A landing that comes early, on a collision say, is Game Design's to rule.
+
 **A launch with no arrival.** A slow brawl swing may be running at the send (10°/s, 17 units a tick at 6,000). It eases to rest, as for a beam, and the plan reads the line where it will rest.
 
 ## 2. Where the request sits
@@ -62,6 +64,7 @@ Today's plans read column `x` on a line that can't move. How fast a place on the
 | Fit | How much of the angle fits his flight's time; the part that doesn't is lateral miss at the place | `predictFlight`'s `t` |
 | Sweep | Buildings the turn would bring to a fighter or across the pair's line | New; needs World's query (section 4) |
 | Street | How close the bearing is to a street's, inside a place | New; needs World's plan (section 4) |
+| High ground ahead | Falls as a turn would bring land above about 1,500 units into the forward side within 4,400 of the pivot. Reads height only (Camera, `camera.md` section 5) | New; needs a height read on the final line |
 
 **Decided first, then planned on one line.** `DirSwing` picks a line from the list, then `chooseLaunch` runs once on that line, and its candidates are today's, with today's names. A candidate per line would cost a plan per line: at my `plan-cost` figures of 1.9 ms median and 4.4 ms p99 native, three lines are about 6 and 13 ms, and by Performance's ×4 about 23 and 53 ms on the laptop, against the 8 ms it asked for. The price is that the launch can't pick the bearing whose PROP SMASH happens to be best. That's acceptable, as the bearing is chosen for the place. If the picked line's best launch is poor, the swing still runs and he's sent somewhere ordinary.
 
@@ -71,15 +74,31 @@ Today's plans read column `x` on a line that can't move. How fast a place on the
 
 | Row | How | Fails if |
 | :--- | :--- | :--- |
-| Blind to people | Each ask scored twice from one state, with `popAlive`, `S.popHist` and the toll zeroed in one and doubled in the other, across gen 2 planets | Any candidate, score or pick differs by a bit. Negative control: a scratch term reading `popAlive` must make it fail |
-| Source | A lint over `swing.gd` and the place list's fields | It names `popAlive`, `popNear`, `popHist`, `pop_mult` or a casualty read |
-| Excluded places | Every place on many planets, and every pick, against a `noTarget` list in the data | A listed kind is a candidate or an arrival |
+| Blind to people | `swing.gd`'s score, each ask scored twice from one state, with `popAlive`, `S.popHist` and the toll zeroed in one and doubled in the other, across gen 2 planets | Any candidate, score or pick differs by a bit. Negative control: a scratch term reading `popAlive` must make it fail |
+| Source | A lint over `swing.gd` and the place list's fields | It names `popAlive`, `popNear`, `popHist`, `pop_mult`, a casualty read, `S.mood`, `menace` or `anguish` |
+| Excluded places | Every place on many planets, every pick, and `WorldBrunt.candidates`, against a `noTarget` list in the data | A listed kind is a candidate, a target or an arrival |
 | Words | The feed line and cue text at every ask | They name people, or say a swing brings the fight to them |
 | The band | QA's arms with swings on | Civilians lost at the KO over 30% |
 
-**Two lines on main already fall short of RL-213, and a swing would run through them. Neither is mine to settle alone:**
-- **`chooseLaunch` and `bruntScore` read people.** `k.s += -care × CARE_W × popNear(landing)` and the same over a building's `popAlive`, so a villain's landing scores up with people near it. `DirLocation` reads `S.popHist` the same way, and `popL <= OPEN_POP` gates the distance and new-ground terms. RL-213 is about swings, but its words are "no term in any score", so these may be covered too; **Legal should say.** Since `DirSwing` plans on one line through `chooseLaunch`, the swing's launch inherits them either way. Blind-to-people can't pass for the launch until they change, and replacing them moves the golden and QA's civilian bands.
-- **`hill_chapel` is a landmark in `settlements.json`,** a real building that `WorldBrunt.candidates` can aim at today and `calmTurn.score`'s landmark term would count as an arrival. It goes on `noTarget`, but that's a data line and a filter in `candidates`, on World's and my lines. `bell_tower` needs Legal's eye too: it may just be a tower. I found no school or hospital in that file.
+**What the test doesn't cover (RL-214).** The old people terms in `chooseLaunch`, `bruntScore` and `DirLocation` stay, swings on or off, and a swing may take an arrival the old planner picks. RL-213 binds swing terms and anything added from now on, so the lint and the blind-to-people row read `swing.gd`'s own score only. Replacing the old terms with standing buildings and wear comes later, when QA can measure the band.
+
+**What `DirSwing` can already read (Orb's word: all the fight's dynamic elements inform the timing; Game Design is writing the shared score).** All of these are field or slot reads, with no ground read, so from reading the code they should cost next to nothing an ask. None is timed.
+
+| Fight state | Where | Tells it |
+| :--- | :--- | :--- |
+| What's running | `S.dirS.ex`: `kind`, `tag`, `tpl`, `branch`; `DirBrawl.isBrawl`, `_setPiece`; `DirGrapple.holds`; `DirExchange.finisherPlanned` | Moment and rest rules |
+| Who's in the air, and how fast | `f.state`, `y`, `vx`, `vy`, `launchT`; `sdx` for the gap; `f.rush` | The rate law, the pivot |
+| A flight's time | `predictFlight`'s `t`, once per plan, already paid for | Fit, and when to rest |
+| The brawl's run and pace | `DirBrawl` slots: string length, last landed tick, a blow on its way | A lull against a flurry |
+| The press read | `DirAlchemy.read`, its flow count | A hot streak, a change-up |
+| Who's winning | `SimWounds.vitality`, `brinkProgress`, region stages | A comeback, the brink |
+| Power | `f.tier`, `f.ki`, `f.power`, a ready form (`SimForms`) | A form's pause, a big moment coming |
+| What just happened | `lastLaunch`, `lastLaunch2`, `S.dirS.biomeT`, the swing's own last tick; `S.T` | Variety, recency, pacing |
+| Rally, chase, zip, beam, recoil | `DirRally`, `DirChase`, `DirZip`, `DirBeam`, `DirRecoil` state | A chase's start, a beam's rest |
+
+Not cheap: the place list (a small query, World's) and any ground read on the final line.
+
+**What it must not read (RL-213): anything fed by the toll.** That's more than the obvious fields. `S.mood`'s value, band and `crowd` take casualties in (`mood.gd`: `casGiven`), and `f.menace` and `f.anguish` feed on them. Both look like fight state. So the lint's list grows by `S.mood`, `menace`, `anguish`, `hasMenace` as a value and `casSeen`. **Legal should confirm:** a villain's menace in a swing's timing is a term fed by the toll, so I've left it out.
 
 **Conflicts.** One swing runs at a time. A new ask replaces it only if it scores above what's left of the running one's score, less a reversal term that grows with how far it would turn back. State rules aren't scores: the beam's rest, and the states below, always win.
 
@@ -155,7 +174,20 @@ Game Design's row 9 makes "no standing face in the gap" a hard test, and its §3
 
 **Where it gets better.** An arrival can put a building on the line, so `aimZ1` is 0, with no depth move and no stale gap. Game Design asks for this. A launch on an unswung line still uses the waypoint, so Option A stays. I'd retire the waypoint only for swung launches, at first.
 
-## 5. What this doesn't know
+## 5. Stages
+
+In order. Each is behind the swing's switch unless it says otherwise.
+
+| # | Stage | Owner |
+| ---: | :--- | :--- |
+| 1 | **Option A** (`docs/director/pending/plane-ease`). It lands first, with no swing work needed | Encounter, Simulation, Tools for the schema line |
+| 2 | **With the first swing data change, before main goes public (RL-214):** `hill_chapel` out of `WorldBrunt.candidates` and every arrival score, by a `noTarget` line and a filter. `bell_tower` renamed `clock_tower`. The demo pin stays as it is | World, Encounter |
+| 3 | World's place list, places by plan, `frameAt`, buildings by planet point (section 3) | World, Simulation |
+| 4 | `DirSwing`, its score and `swing_legal_check`; plans read the final line; `DirCalm`'s ask and warm retire; the lure's job moves | Encounter |
+| 5 | Arrivals: the pivot rule, the depth waypoint retired for swung launches | Encounter, World |
+| 6 | Later, when QA can measure the band: the old people terms replaced with standing buildings and wear (RL-214) | Encounter, Combat, QA |
+
+## 6. What this doesn't know
 
 - **Nothing here has run.** Section 4's estimate is arithmetic on AI counts; only a prototype with real buildings or a scratch build would give a real number. Research's prototype has no collision or lanes.
 - **The field's read price at planner rates.** `predictFlight` alone is up to 240 reads a candidate.
