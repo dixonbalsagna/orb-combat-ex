@@ -9,7 +9,8 @@ Orb picked the turntable, E and E2: the world visibly swings round the fighters.
 3. **Readers can't keep the strip arrays rebuilt on each relay.** World asked; the numbers say no (below). The 77 `groundY` sites need no change anyway, because `groundY` is one function.
 4. **The sim's plane must read the same nodes and the same triangles as the drawn mesh.** Today's ring columns miss a 128-unit mesh by up to 232 units on gen 2.
 5. **A standing fighter just rides the ground.** The most it rose in the probe was 3.8 units a tick at Game Design's 75 u/s, under the 7.5 cap on every sample.
-6. **A whole-planet bake at load is safe for determinism on every build we can test.** It's a pure function: same bits in any order, after any match, in two processes, native and web (section 7). It needs one rule the EP's decision doesn't state yet: which level a read uses must never depend on what's ready.
+6. **A whole-planet bake at load is safe for determinism on every build we can test.** It's a pure function: same bits in any order, after any match, in two processes, native and web (section 7). Which level a read uses must never depend on what's ready; with one spacing that holds by itself.
+7. **The read-through ran with a swing, on the bake alone** (section 8): no noise reads, no cost I could separate from noise, deterministic across rollbacks, processes and native against web. A swing must be at rest before a landing.
 
 ## 1. Who needs ground beyond the pair's reach
 
@@ -220,7 +221,7 @@ All 45 golden keys passed in the same web run.
 
 **One control didn't do what I expected.** Leaving the generation unbound during the bake changed nothing, because a read follows the planet object it's given. The generation matters when the planet is made: `WorldPlanet.make` keys on the static `WorldClimate.curGen`. So the bake has to bind the generation before `make`, as the planet load's job already does.
 
-**Cost, measured natively:** 38 to 42 µs a node, 1.3 s a planet. **Memory:** 135 KB of float32 heights and 34 KB of biomes. Distinct nodes are 33,752 (World's 28,650 is by area). At Performance's 130 µs that's about 4.4 s on the web, and about four times that on the laptop by its x4 stand-in. Those two are arithmetic, and that load time is Performance's to rule on. Rendering's far map already spends 65,000 reads on the same job, so one bake serving both would be cheaper than today's far map.
+**Cost, measured natively:** 38 to 42 µs a node, 1.3 s a planet. **Memory:** 135 KB of float32 heights and 34 KB of biomes. Distinct nodes are 33,752 (World's 28,650 is by area). Performance has since measured it: 1.6 to 1.9 s on the web, 6 to 11 s on the laptop by estimate. My 4.4 s used a ring column's 130 µs, and a plain field node is about 50 µs. Rendering's far map already spends 65,000 reads on the same job, so one bake serving both would be cheaper than today's far map.
 
 **The rules that keep it safe:**
 
@@ -269,6 +270,70 @@ That's 2,920 nodes in all. The worst tick is 3.6 ms natively at 54 µs, or 8.6 m
 | **C. 128 canonical, a small tile forced at landing** | The same | Agree | About 256 nodes in one go is 33 ms on the web: 4 x the spike allowance. A launch's flight could read ahead, as World's 96 ticks and 144 nodes suggest, but that doesn't reach it |
 
 **My call for the sim: determinism is equally safe in all three, and A is by far the cheapest.** I'd build the sim's read so that the spacing is one data value, try A first, and let Orb judge the look, since B can be added later without changing the core's shape. The choice is the EP's and Orb's.
+
+**Decided for now: A, one canonical spacing, the bake** (the EP and Research, T1). If Orb finds 512 too soft, B or C at 128 is the second choice. At a field node's real 50 µs the web's budget is about 4 a tick, so 128 is within reach at launch speed, and C's 256-node tile is about 13 ms, not my 33. It's still over the 8 ms spike allowance, and rule 2 above still applies.
+
+## 8. The read-through, run with a swing
+
+**It holds: in real AI fights with real swings, it added no cost I could separate from run-to-run noise, read no noise at all, and stayed deterministic.** Option A, HEAD b2389109, scratch. Every sim ground read (`groundY`, `floorAt`, `surfaceAt`, `seaAt`, `S.base`) went through the swing's frame to the bake's triangles. Rates, the gap's limits, the eases and "never in a beam" are Game Design's. Planets 7, 3, 11 and 25, 3,600 ticks each.
+
+**With one spacing the reader's rule holds trivially:** every reader reads the same level. So the 38 coarse lines need no change for accuracy, and the far-reader audit shrinks to the 31 exact writers, plus Encounter's plans reading the frame ahead.
+
+| Run | Swing on, of 14,400 ticks | Noise reads | Distinct columns a swing tick: mean, p90, p99, worst | Ground calls a tick: mean, worst |
+| :--- | ---: | ---: | :--- | :--- |
+| No swing | 0 | 0 | | 19.8, 5,666 |
+| Launches only | 1,123 (7.8%) | 0 | 9.5, 27, 64, 134 | 18.5, 3,853 |
+| Launches, chases, brawls | 4,245 (29%, past Game Design's 15%) | 0 | 7.8, 25, 29, 508 | 20.5, 10,747 |
+
+| Tick, ms (load 22 to 35%, planets 7 and 11) | Mean | p99 | Worst |
+| :--- | ---: | ---: | ---: |
+| No field | 0.25 to 0.30 | 0.72 to 0.85 | 2.8 to 5.7 |
+| Field, no swing | 0.25 to 0.29 | 0.83 to 0.85 | 2.6 to 5.1 |
+| Field, swing ticks only, launches | 0.22 to 0.35 | 0.44 to 0.84 | 0.44 to 5.5 |
+| Field, swing ticks only, all causes | 0.27 to 0.33 | 0.67 to 0.85 | 0.78 to 4.2 |
+
+**So section 2's estimate of 0.1 to 0.15 ms was high:** the largest difference is 0.06 ms, inside the 0.2 ms budget. Every row runs through the same scratch wrappers, so the absolute ticks are a little high. Web and laptop weren't timed.
+
+| Determinism | Result |
+| :--- | :--- |
+| Two processes, 1,800 ticks of each kind | Same state |
+| Native against web, 1,200 ticks of each kind, with the 45 golden keys | Same bits |
+| 24 rollbacks of 21 ticks inside a swing | All the same state and digest; **0 noise reads** on any re-run |
+| Re-run of 21 ticks / restore / take | 8.2 ms p50, 20 worst / 0.35 ms / 0.28 ms |
+| Snapshot | 78.7 KB; the frame is a few floats |
+
+**One real finding: a swing has to be at rest before a landing.** The ground under a grounded fighter:
+
+| Run | Samples | p99, a tick | Worst | Over 7.5 |
+| :--- | ---: | ---: | ---: | ---: |
+| Launches, chases, brawls | 684 | 0.56 | 2.6 | 0 |
+| Launches only | 476 | 23.4 | **26.8** | **14** |
+
+My driver doesn't plan arrivals. When a launched fighter landed mid-swing at 60°/s, the 20-tick ease couldn't bring the rate down to the gap's limit in time. Game Design's rule already says a launch's swing eases to rest by the arrival; this is why that isn't optional. The ease has to start about 20 ticks before the planned landing, and a landing that comes early, on a collision say, needs a ruling: an instant stop, or a brief overspeed. He snaps up as he does today, so nothing breaks, but it's the skating Game Design wants to avoid. Where rates respect the limits, section 4's "the cap doesn't bind" holds on the bake too.
+
+**What the run is not:** buildings keep their `x`, marks stay in the strip, the water array doesn't follow a swing, there's no view, and the swing's driver is mine. The fights ran on a planet whose settlements weren't re-planned. So this proves the ground read, its cost and its determinism, not a playable swing.
+
+### Performance's two questions
+
+**Can biomes wait until after the match can start? For determinism yes, in one form; I wouldn't do it in the first cut.**
+
+- **The form:** a missing biome is computed on the spot and gets the same value, never a default. Rule 2 of section 7 applies.
+- **What tick 0 needs anyway:** `WorldContact._colSurf`, `DirLocation._bucketBiome` and the props read biomes along the whole line at match start. A Half line touches 160 nearest nodes (measured), about 5 ms natively. The view's disc wants biomes too, which is Rendering's.
+- **Those tables must become reads on demand in any case,** because they're keyed by world and a swing changes the line.
+- **`WorldPlanet.ground` isn't `surfAt`'s height.** They differ on **3,787 of 34,656 nodes (11%), by up to 4,045 units.** A heights-first bake through `ground` alone would be a different planet. Those nodes need `surfAt` (Performance expects the polar ice; I didn't check each). At 14 against 31 µs a node, the saving comes to about 44% if the differing nodes can be found cheaply, which is arithmetic.
+- **The cost:** the bake's hash in the match key would cover heights only, so a biome that differs between builds wouldn't show at the handshake. A second hash after the fill, or the digest, would have to carry it.
+- **My call:** bake both in slices first, as Performance's 6 to 11 s allows. Add this only if the wait proves too long; the read's contract doesn't change.
+
+**The planet make's step form already exists.** `SimPlanetLoad.begin(seed, gen)` and `Job.step(units)`. Native, cold planets (load 31 to 51%):
+
+| | Planet 7 | Planet 25 |
+| :--- | ---: | ---: |
+| Made whole | 986 ms | 1,268 ms |
+| 100 units a step: steps, in all, worst step | 613, 995 ms, **3.5 ms** | 743, 1,247 ms, **3.2 ms** |
+| 200 units a step: steps, in all, worst step | 311, 1,055 ms, 8.0 ms | 376, 1,292 ms, 6.0 ms |
+| Bake afterwards against the whole make | Same bits | Same bits |
+
+So nothing is over 50 ms and it costs no more in total. For Performance's 4 ms on the web, take about 75 units (its 1.2 to 1.5 times, arithmetic). The core has no work to do here: what's missing is a host calling it behind the intro. The bake's own step form isn't built; it's a loop over nodes in any order, about 85 a frame by Performance's figure.
 
 ## What the sim keeps from the page of 2026-10-30
 

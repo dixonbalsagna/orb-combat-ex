@@ -1546,4 +1546,10 @@ Orb locked the canonical names from a naming session run through Gemini: **Grist
 
 **Orb, retrying with the sweep limit off (2026-10-31):** "the swings look fine, I tried them with the limit off"
 
+**Orb's answers on proto v2 (2026-10-31):**
+
+- On the swing and performance: "you're overthinking this whole 30fps deal, it looks great. lets focus on making granular performance settings so folks with laptops can enjoy the game, but even at 30 fps there was gameplay, there was camera motion, it looked fine. i tried the 170 planet map, lets find other ways to solve this without tying the entire game down to old laptops. research methods to effectively scale this from a performance mode all the way up to a maximum graphics version."
+- On when it fires: "there should definitely be variety, the dynamic elements of the fight should all collectively be used to inform the combat choreographer and the camera control to decide the best time for the swing to occur."
+- On what makes the planet feel crossed: "all of the above. I would like to mention that subtle flattening looks good at closer zoom levels, zooming out while subtly returning to 100% globe could give an illusion of extra scale to the fighter's speed and altitude, just something I noticed while playing with the sliders. the minimap with the trail showing the path around the planet was a nice detail and definitely helped with the sense of crossing the planet."
+
 **Orb on the goal (same night):** "I'm eager to know if fighting across a full planet is achievable. the strict definition of flying a full 360 degree loop around the equator of the planet isn't the end-all goal, but to effectively communicate to the player the experience of speed and power that comes with being a martial artist who is capable of making such a trip through the sheer power of will."

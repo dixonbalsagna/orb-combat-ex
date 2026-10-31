@@ -1,6 +1,6 @@
 # ADR 0011: PC first. Mobile is parked until after the PC launch
 
-- Status: accepted (Orb, 2026-10-28)
+- Status: accepted (Orb, 2026-10-28). Item 3's budget rule is replaced by ADR 0012.
 - Context: the vision lists mobile among the launch platforms (docs/ep/vision.md). Every UI change has been checked at 14 screen sizes, phone portrait and landscape among them. Performance has budgeted against a phone four times slower than Orb's PC, and a friend's Android freeze was being chased. Touch controls for a fighting game remained an open worry: Orb raised the phone control scheme twice, and a friend's phone test found the controls hard to use. iOS needs a Mac and a yearly fee, which zero budget (ADR 0005) does not cover. Orb asked to focus on a tight PC build.
 
 ## Decision
