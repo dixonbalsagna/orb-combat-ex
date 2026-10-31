@@ -798,8 +798,8 @@
     },
     {
       "id": "ln02",
-      "rule": "the Cyborg's consumption: his hunger is aimed at fighters and wreckage, never civilians or children; no on-screen biting, chewing or swallowing of a living fighter, no eaten limbs, no chewing or swallowing sound and no gore from feeding until the rating decision (a clamp, a throw and feeding on wreckage are allowed); a depicted eating finisher takes the stomp treatment (rare, optional, never in public trailers or pages, distant, injury not depicted, no reward, questionnaires first); he never absorbs a defeated fighter to gain their power or form, never turns anyone into food or sweets, and has no belly-as-mouth gag or pink plump silhouette; 'Demon Cyborg' stays off public text",
-      "why": "RL-155: the nearest echoes are the genre's glutton and absorbing villains"
+      "rule": "the Cyborg's consumption (narrowed by RL-220, Orb's decision of 2026-10-31): his hunger is aimed at opposing fighters and wreckage, never civilians or children. CLEARED: a bite or clamp on an opposing fighter's torso, limbs or guard in a grab or finisher, as a brief cartoon impact with sparks or a bruise; the jaw or clamp is a machine part of his chassis (plates, hydraulics, teeth as machine parts); predator and metabolic dialogue at a fighter (ln07); implied, off-screen consumption of defeated heavyweight fighters at his yard as fuel for his portal (words, an empty arena, the portal's glow). RESTRICTED until the rating decision: chewing or swallowing shown or heard, exposed flesh, blood or gore from feeding, dismemberment or eaten limbs, a lingering close-up of a bite to a face or neck, and any shown or sounded act of consuming a defeated fighter (no body, silhouette or sound of it); a depicted eating finisher in those forms takes the stomp treatment (rare, optional, never in public trailers or pages, distant, injury not depicted, no reward, questionnaires first). STILL BARRED: he never gains a defeated fighter's moves, forms or looks and no absorption visual is drawn (the genre's absorbing villain); he never turns anyone into food or sweets; no belly-as-mouth gag, no maw in the torso and no pink plump silhouette; 'Demon Cyborg' stays off public text",
+      "why": "RL-155: the nearest echoes are the genre's glutton and absorbing villains; narrowed by RL-220"
     },
     {
       "id": "ln03",
@@ -823,8 +823,18 @@
     },
     {
       "id": "ln07",
-      "rule": "scope of ln02: it rules what is shown (no depicted biting, chewing or swallowing, no eaten limbs, no feeding gore or sound, no body or move drawn as a mouth, maw, teeth or jaw) and who the hunger is aimed at (fighters and wreckage, never civilians or children); it does not rule dialogue: 'snack', 'lunch', 'protein', 'crunchy' and 'tenderise' as the Cyborg's address for an opposing fighter are allowed in spoken lines; mouth words stay out of move names, flavour and any text an artist reads to draw a move; the address is never aimed at a bystander, civilian or child and is never played over an on-screen bite",
-      "why": "RL-181"
+      "rule": "scope of ln02 (RL-181, narrowed by RL-220): it rules what is shown (see ln02) and who the hunger is aimed at (fighters and wreckage, never civilians or children); it does not rule dialogue: 'snack', 'lunch', 'protein', 'marrow', 'calories', 'crunchy', 'tenderise' and 'tenderize' and the rest of the predator and metabolic vocabulary, as the Cyborg's address for an opposing fighter, are allowed in spoken lines; the address is never aimed at a bystander, civilian or child; grab call-outs keep ln06 (one per grab, first 10 ticks, no hold); move names for the cleared bite or clamp may use 'bite', 'clamp' or 'jaw' for the machine part, but not 'maw', 'devour', 'swallow', 'chew' or 'gnaw', and no text an artist reads describes a mouth in the torso",
+      "why": "RL-181; RL-220"
+    },
+    {
+      "id": "ln08",
+      "rule": "the Cyborg's lore lock (RL-220): his appetite is triggered by high-output fighters and by industrial or research hardware (for his molts); he has zero interest in civilians, who are empty calories to him. That is a fact of the data and the notes, never a spoken or printed line (no Cyborg line, caption or card says anything about civilians, people or the toll, ln05, ln01); he never reacts to civilian toll bands: no Cyborg line, meter, AI choice or picker reads toll_band, a count, popAlive, popNear, popHist, pop_mult or a casualty event (ln04, ln05, RL-217); his hunger meter takes fighters' output and objects only (RL-216); labs are staged unmanned",
+      "why": "RL-220; extends ln04, ln05, RL-216, RL-217"
+    },
+    {
+      "id": "ln09",
+      "rule": "Orb's creative rule for the Cyborg's voice (RL-220), not a legal finding: no service-industry vocabulary in any Bolus line, caption, gesture note or flavour text: sir, madam, menu, tip, chef, table, order, seconds, and waiter, restaurant, diner, serve, serving, server, service, reservation, bill, plate as a restaurant item, in the service sense. He is a ravenous bio-mechanical predator and industrial furnace, never a waiter. The lint scans every Bolus line whole-word; 'order', 'table', 'tip' and 'seconds' are common words, so a hit goes to a human to read the sense, and the unambiguous service words (sir, madam, menu, chef, waiter, restaurant, reservation) block",
+      "why": "Orb's decision of 2026-10-31; RL-220"
     }
   ],
   "mechanics": [
