@@ -1544,4 +1544,6 @@ Orb locked the canonical names from a naming session run through Gemini: **Grist
 
 **Orb after playing proto v2 (2026-10-31):** "I played with many tunings of the camera swing speed, the swing size, the zoom, and I felt pretty comfortable at every speed up to 240. of course it was a little too extreme when paired with the maximum swing angle size, but a swing speed of 240 could routinely be used for minimal swing adjustments without any disorientation. i set a small swing rate and a small swing size and just flew some circles around the planet for fun, you can see an irregular orbital pattern around the sphere on the minimap in the top left corner". (Their still shows 8 laps flown, on the 1024² map.)
 
+**Orb, retrying with the sweep limit off (2026-10-31):** "the swings look fine, I tried them with the limit off"
+
 **Orb on the goal (same night):** "I'm eager to know if fighting across a full planet is achievable. the strict definition of flying a full 360 degree loop around the equator of the planet isn't the end-all goal, but to effectively communicate to the player the experience of speed and power that comes with being a martial artist who is capable of making such a trip through the sheer power of will."
