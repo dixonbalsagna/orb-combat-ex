@@ -1,6 +1,6 @@
 {
   "schema": "narrative.live_barks/1",
-  "_about": "Live barks (docs/ep/cloud-briefs/narrative-live-barks.md): the lines a fighter says in a match, at the beats the sim already emits as fx events. PRESENTATION ONLY: the emitter (NarrativeBarks, parked in docs/narrative/pending/live-barks/) reads the sim's events and never writes the sim, with its own seeded stream, so the golden is untouched. OFF BY DEFAULT: `enabled` is false. EVERY LINE here is an approved line: Orb's own words from homework 1, Orb's marks on homework 11 (the 4 kept lines and the 26 rewrites that came from Gemini at Orb's direction, recorded under ai01), or Orb's approved mid-combat master of 2026-10-30 (322 lines under 16 beats: 242 Gemini rewrites that Orb reviewed and 80 Claude drafts Orb kept; docs/narrative/voice-lab/mid-combat-lines.md). No line is invented for this file. Beats with no approved line are under `unmapped`. Lines under excluded_lines wait on a swap or an event. Five beats (taunt_start, last_stand_ready, absorb_signature, finisher_landed, finisher_survived) hold lines but the emitter has no read for them yet.",
+  "_about": "Live barks (docs/ep/cloud-briefs/narrative-live-barks.md): the lines a fighter says in a match, at the beats the sim already emits as fx events. PRESENTATION ONLY: the emitter (NarrativeBarks, parked in docs/narrative/pending/live-barks/) reads the sim's events and never writes the sim, with its own seeded stream, so the golden is untouched. OFF BY DEFAULT: `enabled` is false. EVERY LINE here is an approved line: Orb's own words from homework 1, Orb's marks on homework 11 (the 4 kept lines and the 26 rewrites that came from Gemini at Orb's direction, recorded under ai01), or Orb's approved mid-combat master of 2026-10-30 (322 lines under 16 beats: 242 Gemini rewrites that Orb reviewed and 80 Claude drafts Orb kept; docs/narrative/voice-lab/mid-combat-lines.md). No line is invented for this file. Beats with no approved line are under `unmapped`. Lines under excluded_lines wait on a swap or an event. All 16 beats are read by the emitter (the last five since 2026-10-30).",
   "enabled": false,
   "lines_policy": "approved",
   "seed_salt": 7301,
@@ -4732,7 +4732,7 @@
       "speaker": "actor",
       "priority": 2,
       "chance": 1.0,
-      "_note": "The emitter does not read this event yet: the lines are loaded and wait for a read (EP grant).",
+      "_note": "the emitter reads cue taunt_start (the cue's actor speaks) since 2026-10-30",
       "lines": {
         "PROTAGONIST": [
           {
@@ -5124,7 +5124,7 @@
       "speaker": "actor",
       "priority": 2,
       "chance": 1.0,
-      "_note": "The emitter does not read this event yet: the lines are loaded and wait for a read (EP grant).",
+      "_note": "the emitter reads the last_stand_ready event (its actor speaks) since 2026-10-30",
       "lines": {
         "PROTAGONIST": [
           {
@@ -5470,12 +5470,12 @@
       }
     },
     "absorb_signature": {
-      "on": "absorb_signature",
-      "when": "a fighter takes a signature and stays up; the one who took it speaks",
+      "on": "beam_outcome HIT",
+      "when": "a signature lands (beam_outcome HIT); the defender, the one who took it, speaks",
       "speaker": "victim",
       "priority": 2,
       "chance": 0.9,
-      "_note": "The emitter does not read this trigger yet: the lines are loaded and wait for a read (EP grant).",
+      "_note": "the emitter reads beam_outcome HIT (the defender, the cue's target, speaks) since 2026-10-30; the sim has no absorb event yet, so a Rival absorb event would replace this read",
       "lines": {
         "PROTAGONIST": [
           {
@@ -5831,7 +5831,7 @@
       "speaker": "actor",
       "priority": 2,
       "chance": 1.0,
-      "_note": "The emitter does not read this trigger yet: the lines are loaded and wait for a read (EP grant).",
+      "_note": "the emitter reads a cue whose source is finisher_landed (its actor, the winner, speaks) since 2026-10-30",
       "lines": {
         "PROTAGONIST": [
           {
@@ -6185,7 +6185,7 @@
       "speaker": "actor",
       "priority": 2,
       "chance": 1.0,
-      "_note": "The emitter does not read this trigger yet: the lines are loaded and wait for a read (EP grant).",
+      "_note": "the emitter reads a cue whose source is finisher_survived (its actor, the one who held on, speaks) since 2026-10-30",
       "lines": {
         "PROTAGONIST": [
           {

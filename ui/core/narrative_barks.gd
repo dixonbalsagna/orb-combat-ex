@@ -144,7 +144,12 @@ func _candidates(t: String, e, tick: int) -> Array:
 				_chain_at.erase(a)
 	elif t == "cue":
 		var k: String = str(e.kind)
-		if k == "perfect_block":
+		var bark_trigger: String = str(e.source)   # a finisher's cue carries its line-system trigger here
+		if bark_trigger == "finisher_landed" or bark_trigger == "finisher_survived":
+			c.append([bark_trigger, int(e.actor)])   # landed: the winner; survived: the one who held on
+		elif k == "taunt_start":
+			c.append(["taunt_start", int(e.actor)])
+		elif k == "perfect_block":
 			c.append(["guard_caught", int(e.actor)])
 		elif k == "miss":
 			c.append(["missed", int(e.actor)])
@@ -155,6 +160,13 @@ func _candidates(t: String, e, tick: int) -> Array:
 			if rd.get("whys", []).has(str(e.text)) and int(e.amount) >= int(rd.get("min_ticks", 0)):
 				_offer(c, "exchange_break", int(e.actor))
 				_offer(c, "exchange_break", int(e.target))
+	elif t == "last_stand_ready":
+		c.append(["last_stand_ready", int(e.actor)])
+	elif t == "beam_outcome":
+		# A signature taken: the sim has no absorb event yet, so a signature that lands (HIT) makes the defender, if he
+		# has a line, say how he took it. His line is about standing up to it; the hush after a KO covers the rest.
+		if str(e.kind) == "HIT":
+			c.append(["absorb_signature", int(e.target)])
 	elif t == "launch":
 		c.append(["launch_given", int(e.target)])   # actor is the body sent, target the launcher
 	elif t == "lodge":

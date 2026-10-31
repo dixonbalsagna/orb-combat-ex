@@ -12,8 +12,8 @@ extends SceneTree
 ## Last line: "BARK CHECK: PASS|FAIL ...".
 
 const APPROVED := ["orb_own_words_hw1", "claude_kept_by_orb_hw11", "ai01_gemini_rewrite_at_orb_direction_hw11", "claude_kept_by_orb_mc", "ai01_gemini_rewrite_orb_reviewed_mc"]
-## Beats whose lines are loaded but which the emitter has no read for yet (a presentation-side grant); they cannot be made to speak.
-const UNREAD := ["taunt_start", "last_stand_ready", "absorb_signature", "finisher_landed", "finisher_survived"]
+## Beats whose lines are loaded but which the emitter has no read for (none today: the five that waited got their reads on 2026-10-30).
+const UNREAD := []
 var fails: int = 0
 
 
@@ -195,6 +195,16 @@ func _synthetic(d: Dictionary) -> void:
 						e.type = "damage"; e.kind = "light"; e.attacker = 0.0; e.victim = -1.0
 						nb._done_once["first_blow"] = true
 						nb._core_stage[0] = 2
+					"taunt_start":
+						e.type = "cue"; e.kind = "taunt_start"; e.actor = 0.0
+					"last_stand_ready":
+						e.type = "last_stand_ready"; e.actor = 0.0
+					"absorb_signature":
+						e.type = "beam_outcome"; e.kind = "HIT"; e.actor = 1.0; e.target = 0.0
+					"finisher_landed":
+						e.type = "cue"; e.kind = "last_look"; e.source = "finisher_landed"; e.actor = 0.0
+					"finisher_survived":
+						e.type = "cue"; e.kind = "holds_on"; e.source = "finisher_survived"; e.actor = 0.0
 					"exchange_break":
 						e.type = "cue"; e.kind = "brawl_end"; e.text = "idle"; e.amount = 600.0; e.actor = 0.0; e.target = -1.0
 					"after_chain":
