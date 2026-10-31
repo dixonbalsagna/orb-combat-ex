@@ -75,7 +75,7 @@
     {
       "id": "architecture-field-frame", "owner": "simulation-engine", "notes": "A field world's line and the turntable (Simulation's track B): a whole ring on planetGen 3 only; nothing runs on any other setup. Installed by its own script, run on the scratch tree only, and only while the script is the file Tools reviewed (stdlib only, edits inside the tree it is given).",
       "steps": [
-        { "script": "docs/architecture/pending/field-frame/install.py", "sha1": "75de1a0f47f82376eed21131c59bc8057c3544d6" },
+        { "script": "docs/architecture/pending/field-frame/install.py", "sha1": "a2e003bb87687ef034719c1edff903b650464200" },
         { "fixup": [ { "file": "sim/core/view/fx.gd", "from": "\"form_hold\", \"form_release\", \"form_step\",", "to": "\"swing_start\", \"swing_rest\", \"form_hold\", \"form_release\", \"form_step\"," } ],
           "why": "field-frame adds the swing_start and swing_rest events (SimFx.swingEvent) but not their case in SimFxView.consume, so every swing logs 'consume: unknown event swing_start'. Simulation adds them to the pass list" }
       ],

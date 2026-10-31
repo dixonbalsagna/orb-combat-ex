@@ -1,13 +1,14 @@
 // A PRIVATE, LOCAL, playable web build of the STACK (the EP, 2026-10-31): HEAD plus every ready park of tools/preview/stack.json, every switch on, for Orb's own browser. Never published, uploaded or dispatched.
 //
-//   node tools/preview/stack-preview.mjs [--planet 7] [--port 8765] [--off tiles,meteor] [--skip park,park] [--only park,park] [--rebuild] [--no-smoke] [--no-serve] [--open] [--watch [--every 120] [--min-gap 1800] [--max-load 90]] [--repo <dir>] [--manifest <file>] [--godot <exe>]
+//   node tools/preview/stack-preview.mjs [--planet 7] [--port 8765] [--off tiles,meteor] [--skip park,park] [--only park,park] [--rebuild] [--no-smoke] [--no-serve] [--open] [--template custom|standard|<zip>] [--watch [--every 120] [--min-gap 1800] [--max-load 90]] [--repo <dir>] [--manifest <file>] [--godot <exe>]
 //
 // What it does: tools/preview/stack.mjs unpacks HEAD into a scratch tree, applies the parks in order and turns their switches on (the tree it keeps is the stack's, not the repository's); then, as preview.mjs does for a
 // commit, the scratch copy's render/core/main.gd gets a ?planet=N entry and a state probe (and Controls' host patch when the tree has not got the pad's right stick), the project is imported and the Web build exported
 // with the STANDARD template at below-normal priority, the boot-and-play smoke check runs through Tools' guarded browser launcher, and the build is served on 127.0.0.1 only. A park that does not apply is left out and
 // named; the build is made without it. A build is cached by the stack's key (the commit and the bytes of every park file and manifest entry) and the switches.
 import { spawn } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, createReadStream, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { cpus, tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -16,6 +17,8 @@ import { scriptErrors } from '../gate.mjs';
 import { HOST_PATCH, applyPatchText, godotExe, plan, readPending, runGodot, saveSmoke, serveLocal } from './preview.mjs';
 import { describeReport, loadManifest, runStack, stackKey } from './stack.mjs';
 import { patchMain } from './switches.mjs';
+import { setWebCustomTemplate } from '../flash/web-preset.mjs';
+import { fetchTemplate } from '../site-template.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const REPO = resolve(HERE, '..', '..');
@@ -27,6 +30,19 @@ export async function cpuLoad(ms = 1000) {
   await new Promise((r) => setTimeout(r, ms));
   const b = snap();
   return b.total === a.total ? 0 : Math.round(100 * (1 - (b.idle - a.idle) / (b.total - a.total)));
+}
+
+/** The template zip for --template: null for the standard one; 'custom' is the pinned zip (a verified copy on disk, else downloaded and verified by tools/site-template.mjs); any other value is the path of a scratch zip, used as it is. */
+export function templateZip(spec, repo) {
+  if (!spec || spec === 'standard') return null;
+  if (spec !== 'custom') { const p = resolve(spec); if (!existsSync(p)) throw new Error(`--template: ${p} is not there`); return p; }
+  const rec = JSON.parse(readFileSync(join(repo, 'tools', 'web-template.json'), 'utf8'));
+  const dir = join(tmpdir(), 'site-web-template'), file = join(dir, 'web_nothreads_release.zip');
+  if (existsSync(file)) {
+    const buf = readFileSync(file);
+    if ((!Number.isInteger(rec.bytes) || buf.length === rec.bytes) && createHash('sha512').update(buf).digest('hex') === rec.sha512) return file;
+  }
+  return fetchTemplate(rec, dir);
 }
 
 const tail = (f, n = 1500) => { try { return readFileSync(f, 'utf8').slice(-n); } catch { return ''; } };
@@ -52,7 +68,9 @@ export async function buildStackPreview(o) {
   const out = { sha: r.commit, subject: r.subject, report: r, stackLines: describeReport(r), active: pl.active, waiting: pl.waiting, cascaded: pl.cascaded, urlWords: pl.urlWords, alts: pl.alts, table: pl.table, unknown: pl.unknown, hostPatched: !!pl.hostPatch, cached: false, seconds: 0, dir: null, web: null, meta: null, scriptErrors: [] };
   if (pl.unknown.length) throw new Error(`unknown switch ${pl.unknown.join(', ')}`);
   const parksIn = r.parks.filter((p) => p.status === 'applied').map((p) => p.id);
-  const key = `${r.key}-${pl.active.join('+')}${pl.hostPatch ? '-host' : ''}`.replace(/[^A-Za-z0-9+._-]/g, '_').slice(0, 120);
+  const tz = templateZip(o.template, repo);
+  const tzKey = tz ? `-t${createHash('sha1').update(readFileSync(tz)).digest('hex').slice(0, 8)}` : '';
+  const key = `${r.key}-${pl.active.join('+')}${pl.hostPatch ? '-host' : ''}${tzKey}`.replace(/[^A-Za-z0-9+._-]/g, '_').slice(0, 120);
   const dir = join(base, 'build', key), web = join(dir, 'web'), metaFile = join(dir, 'preview.json');
   Object.assign(out, { dir, web });
   if (!o.rebuild && existsSync(join(web, 'index.html')) && existsSync(metaFile)) {
@@ -68,13 +86,18 @@ export async function buildStackPreview(o) {
   const mainFile = join(tree, 'render', 'core', 'main.gd');
   if (pl.hostPatch) { applyPatchText(tree, pl.hostPatch); log('applied the right-hand host patch to the scratch main.gd (the pad\'s right stick)'); }
   writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup));
+  if (tz) {   // the scratch tree's copy of the Web preset only: the engine template this page is exported with
+    const pf = join(tree, 'export_presets.cfg');
+    writeFileSync(pf, setWebCustomTemplate(readFileSync(pf, 'utf8'), tz.split('\\').join('/')));
+    log(`exporting with the custom template ${tz}`);
+  }
   const godot = o.godotNode ? null : godotExe(o.godot);
   const g = { godot, godotNode: o.godotNode };
   const importLog = join(dir, 'import.log'), exportLog = join(dir, 'export.log');
   log('importing the project (Godot, below-normal priority)');
   let code = await runGodot(g, ['--headless', '--path', tree, '--import'], importLog, 25 * 60 * 1000);
   if (code !== 0) throw new Error(`Godot --import exited ${code}; the end of ${importLog}:\n${tail(importLog)}`);
-  log('exporting Web (standard template, single-threaded)');
+  log(`exporting Web (${tz ? 'custom' : 'standard'} template, single-threaded)`);
   code = await runGodot(g, ['--headless', '--path', tree, '--export-release', 'Web', join(web, 'index.html')], exportLog, 25 * 60 * 1000);
   if (code !== 0 || !existsSync(join(web, 'index.html'))) throw new Error(`Godot --export-release Web exited ${code}; the end of ${exportLog}:\n${tail(exportLog)}`);
   out.scriptErrors = scriptErrors(`${tail(importLog, 4000)}\n${tail(exportLog, 4000)}`).slice(0, 6);
@@ -87,7 +110,7 @@ export async function buildStackPreview(o) {
 
 async function main() {
   const a = process.argv.slice(2);
-  const known = new Set(['--watch', '--every', '--min-gap', '--max-load', '--planet', '--port', '--off', '--skip', '--only', '--rebuild', '--no-smoke', '--no-serve', '--open', '--repo', '--manifest', '--godot', '--godot-node', '--browser-path', '--out', '--keep-tree', '--help']);
+  const known = new Set(['--template', '--watch', '--every', '--min-gap', '--max-load', '--planet', '--port', '--off', '--skip', '--only', '--rebuild', '--no-smoke', '--no-serve', '--open', '--repo', '--manifest', '--godot', '--godot-node', '--browser-path', '--out', '--keep-tree', '--help']);
   for (const x of a) if (x.startsWith('--') && !known.has(x)) { console.error(`unknown option ${x}; node tools/preview/stack-preview.mjs --help`); process.exit(2); }
   const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
   const has = (n) => a.includes(n);
@@ -95,7 +118,7 @@ async function main() {
   if (has('--help')) { console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').filter((l) => l.startsWith('//')).slice(0, 10).map((l) => l.slice(3)).join('\n')); return; }
   const planet = Number(opt('--planet', 7));
   if (!Number.isInteger(planet) || planet < 1) { console.error('--planet is a positive whole number (the planet\'s seed)'); process.exit(2); }
-  const o = { repo: opt('--repo'), manifest: opt('--manifest'), planet, off: list('--off'), skip: list('--skip'), only: list('--only'), out: opt('--out'), godot: opt('--godot'), godotNode: opt('--godot-node'), rebuild: has('--rebuild'), keepTree: has('--keep-tree'), log: (m) => console.error(`[stack-preview] ${m}`) };
+  const o = { repo: opt('--repo'), manifest: opt('--manifest'), planet, off: list('--off'), skip: list('--skip'), only: list('--only'), out: opt('--out'), godot: opt('--godot'), godotNode: opt('--godot-node'), template: opt('--template', 'custom'), rebuild: has('--rebuild'), keepTree: has('--keep-tree'), log: (m) => console.error(`[stack-preview] ${m}`) };
   let b;
   try { b = await buildStackPreview(o); } catch (e) { console.error(`stack-preview: ${e.message}`); process.exit(1); }
   console.log(`\nOrb Combat EX private preview of the STACK on ${b.sha.slice(0, 8)}: ${b.subject}`);

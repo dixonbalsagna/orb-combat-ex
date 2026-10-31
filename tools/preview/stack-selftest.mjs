@@ -6,6 +6,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { templateZip } from './stack-preview.mjs';
 import { findPython, snapshotTree, loadManifest, patchFiles, ownerOfPath, readOwners, tryApply, applyStack, missingNeeds, flipAll, runValidate, attributeErrors, errorBlocks, stackKey, changesBetween, checkScratch, runStack, describeReport } from './stack.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -112,6 +113,11 @@ try {
     const ok = !plain.ok && cut.ok && cut.files.join() === 'sim/beta/b.gd' && readFileSync(join(d, 'sim/alpha/a.gd'), 'utf8').includes('two (beta)') && readFileSync(join(d, 'sim/beta/b.gd'), 'utf8').includes('b4 (beta)')
       && loadManifest(JSON.stringify({ parks: [{ id: 'q', owner: 'alpha', steps: [{ patch: 'x', exclude: ['a'] }] }] })).problems.some((p) => /says why/.test(p));
     rmSync(d, { recursive: true, force: true }); return ok;
+  })());
+
+  check('--template: standard is no custom zip, a path is the scratch zip as it is, a missing path is refused', (() => {
+    const z = join(tmp, 'scratch-template.zip'); writeFileSync(z, 'not a real zip');
+    return templateZip(undefined, repo) === null && templateZip('standard', repo) === null && templateZip(z, repo) === z && (() => { try { templateZip(join(tmp, 'nope.zip'), repo); return false; } catch (e) { return /is not there/.test(e.message); } })();
   })());
 
   const tree = join(tmp, 'tree'); mkdirSync(tree);
