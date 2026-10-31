@@ -6,9 +6,11 @@ uniform vec3 sd = vec3(0.0, 0.0, 1.0);    // toward the camera there
 uniform float planet_r = 24446.2;
 uniform vec3 cam = vec3(0.0, 300.0, 3000.0);
 uniform float plane_low = 0.0;            // the plane's lowest ground in view
+uniform sampler2D plane_tex : filter_nearest, repeat_disable;   // the line's own ground, 64 points
+uniform float plane_span = 3000.0;
 uniform float bend = 0.0;
 uniform float near_line = -80.0;          // where a tower leaves, in view depth
-uniform int near_mode = 0;                // 0 the rule, 1 sink, 2 hard clip
+uniform int near_mode = 0;                // 0 the rule, 1 sink, 2 hard clip, 3 rule and sink, 4 sink and clip
 
 vec2 ae(vec3 d) {
 	float x = dot(d, hd);
@@ -19,15 +21,23 @@ vec2 ae(vec3 d) {
 }
 
 // The foreground rule: nothing in front of the plane above the sight line to the plane's own lowest ground (or a head over it).
-float sight_cap(float z, float over) {
-	float t = min(z / cam.z, 1.0);
-	return mix(plane_low + over, cam.y, t) - 0.03 * z;
+float sight_cap(float x, float z, float over) {
+	float t = min(z / cam.z, 0.95);
+	float u = clamp((x / (1.0 - t) + plane_span) / (2.0 * plane_span), 0.0, 1.0) * 63.0;
+	int ua = int(u);
+	float pl = mix(texelFetch(plane_tex, ivec2(ua, 0), 0).r, texelFetch(plane_tex, ivec2(min(ua + 1, 63), 0), 0).r, u - float(ua));
+	return mix(pl + over, cam.y, t) - 0.03 * z;
 }
 
-float bent(float x, float y, float z) {
-	float back = max(-z, 0.0);
-	float k = clamp((back - 60.0) / 1200.0, 0.0, 1.0) * cam.z / (cam.z + back);
-	return y - bend * x * x * k;
+// The globe: radius from the pivot is the arc, height is along the normal, so walls lean as on a planet.
+vec3 globe(float x, float y, float z) {
+	float r = sqrt(x * x + z * z);
+	float ang = r / planet_r;
+	if (ang > 1.5) {
+		return vec3(x, y - 1.0e6, z);
+	}
+	float k = r > 0.01 ? (planet_r + y) * sin(ang) / r : 1.0;
+	return vec3(x * k, (planet_r + y) * cos(ang) - planet_r, z * k);
 }
 
 // An anchored thing's place: its anchor and the way its local x runs, in the view.

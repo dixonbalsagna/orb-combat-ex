@@ -35,9 +35,23 @@ void vertex() {
 	if (near_mode == 1 && !kept && c.y >= near_line) {
 		y = info.x - 200.0;   // wholly sunk: under the ground, and it stays there until it comes round again
 	}
+	if (near_mode == 3 && !kept) {
+		// The rule and sink together: the whole building goes down, its near side leading by half.
+		float sa = smoothstep(near_line - 300.0, near_line, c.y);
+		float sv = smoothstep(near_line - 500.0, near_line, p.y);
+		y = info.x - 30.0 + VERTEX.y * (size.z + 30.0) * (1.0 - mix(sa, sv, 0.5));
+		if (c.y >= near_line && p.y >= near_line - 200.0) {
+			y = info.x - 200.0;
+		}
+	}
+	if (near_mode == 4 && !kept) {
+		// Sink and clip: it sinks to a third as its near side comes to the line, and what's left is cut there, dark inside and low.
+		float front = c.y + 0.7 * max(size.x, size.y);
+		y = info.x - 30.0 + VERTEX.y * (size.z + 30.0) * (1.0 - 0.67 * smoothstep(near_line - 400.0, near_line, front));
+	}
 	if (near_mode == 0 && !kept && p.y > near_line - 500.0) {
 		// The rule: every vertex above the sight line to the plane's ground comes down to it, easing in over the 500 units before the line.
-		float cap = sight_cap(max(p.y, 0.0), 0.0);
+		float cap = sight_cap(p.x, max(p.y, 0.0), 0.0);
 		float over = y - cap;
 		float s = smoothstep(near_line - 500.0, near_line, p.y);
 		if (over > 0.0) {
@@ -54,8 +68,7 @@ void vertex() {
 	v_seed = info;
 	v_z = p.y;
 	v_dist = length(p - vec2(0.0, cam.z));
-	y = bent(p.x, y, p.y);
-	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * vec4(p.x, y, p.y, 1.0));
+	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * vec4(globe(p.x, y, p.y), 1.0));
 }
 
 float hash(vec2 p) {
@@ -63,7 +76,7 @@ float hash(vec2 p) {
 }
 
 void fragment() {
-	if (near_mode == 2 && v_kept < 0.5 && v_z > near_line) {
+	if ((near_mode == 2 || near_mode == 4) && v_kept < 0.5 && v_z > near_line) {
 		discard;
 	}
 	vec3 wall = mix(vec3(0.20, 0.25, 0.33), vec3(0.42, 0.33, 0.29), fract(v_seed.y * 7.0));

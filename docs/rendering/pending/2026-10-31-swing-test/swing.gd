@@ -59,6 +59,9 @@ var magenta: bool = false
 var nohud: bool = false
 var wall: bool = false
 var coarse: int = 0
+var prof := PackedFloat32Array()
+var prof_img: Image
+var prof_tex: ImageTexture
 var no_stream: bool = false
 var boxes: Array = []
 var q_angles := PackedFloat32Array()
@@ -116,14 +119,15 @@ func _ready() -> void:
 	var vs := PackedVector3Array()
 	var uv := PackedVector2Array()
 	var idx := PackedInt32Array()
-	for b in range(N):
-		for a in range(N):
+	var n2: int = N + 2
+	for b in range(n2):
+		for a in range(n2):
 			vs.append(Vector3(float(a), 0.0, float(b)))
-			uv.append(Vector2(float(a) / 32.0, float(b) / 32.0))
-	for b in range(N - 1):
-		for a in range(N - 1):
-			var q: int = b * N + a
-			idx.append_array([q, q + 1, q + N, q + N, q + 1, q + N + 1])
+			uv.append(Vector2(float(a - 1) / 32.0, float(b - 1) / 32.0))
+	for b in range(n2 - 1):
+		for a in range(n2 - 1):
+			var q: int = b * n2 + a
+			idx.append_array([q, q + 1, q + n2, q + n2, q + 1, q + n2 + 1])
 	var arr: Array = []
 	arr.resize(Mesh.ARRAY_MAX)
 	arr[Mesh.ARRAY_VERTEX] = vs
@@ -285,12 +289,12 @@ func begin(name_: String, red: bool) -> void:
 		near = 0
 		cam_d = 4400.0
 	else:
-		var m := RegEx.create_from_string("^s([0-9]+)(rule|sink|clip)$").search(name_)
+		var m := RegEx.create_from_string("^s([0-9]+)(rule|sink|clip|qw|we)$").search(name_)
 		if name_.begins_with("q"):
 			m = null
 		rate = float(m.get_string(1)) if m != null else 60.0
 		var nm: String = m.get_string(2) if m != null else "rule"
-		near = 0 if nm == "rule" else (1 if nm == "sink" else 2)
+		near = {"rule": 0, "sink": 1, "clip": 2, "qw": 3, "we": 4}[nm]
 		cam_d = 2600.0
 	if OS.has_feature("web"):
 		var mcd := RegEx.create_from_string("camd=([0-9]+)").search(str(JavaScriptBridge.eval("location.search", true)))
@@ -316,8 +320,7 @@ func begin(name_: String, red: bool) -> void:
 	for m2 in mats:
 		m2.set_shader_parameter("cam", cam_node.position)
 		m2.set_shader_parameter("bend", bend)
-	var hy: float = cam_node.unproject_position(Vector3(0.0, g0, -70000.0)).y
-	sky_mat.set_shader_parameter("horizon", 1.0 - hy / vp.y)
+	_sky_horizon()
 	if flight and not no_stream:
 		_stream_setup()
 	# The wall: the tallest building within 700 to 1,400 of the pivot, brought onto the line at 60 deg/s and held, drawn where it stands.
@@ -361,8 +364,15 @@ func _follow_ground() -> void:
 		m2.set_shader_parameter("cam", cam_node.position)
 	for b2 in boxes:
 		(b2 as MeshInstance3D).position.y = g0 + 37.5
+	_sky_horizon()
+
+
+## The sky's horizon: the globe's, from the camera's height.
+func _sky_horizon() -> void:
 	var vp: Vector2 = get_viewport().get_visible_rect().size
-	sky_mat.set_shader_parameter("horizon", 1.0 - cam_node.unproject_position(Vector3(0.0, g0, -70000.0)).y / vp.y)
+	var e: float = acos(R / (R + maxf(cam_node.position.y - g0 + g0, 1.0)))
+	var p: Vector3 = cam_node.position + Vector3(0.0, -sin(e), -cos(e)) * 1000.0
+	sky_mat.set_shader_parameter("horizon", 1.0 - cam_node.unproject_position(p).y / vp.y)
 
 
 ## Small fast swings: 15, 5, 10 degrees, turn about, each eased over 5 ticks at both ends, 24 ticks still between them.
@@ -497,20 +507,21 @@ func _apply() -> void:
 	var t0: int = Time.get_ticks_usec()
 	_select()
 	var t1: int = Time.get_ticks_usec()
-	var low: float = _plane_low()
+	_plane_profile()
 	var t2: int = Time.get_ticks_usec()
 	for m in mats:
 		m.set_shader_parameter("pv", pivot)
 		m.set_shader_parameter("hd", head)
 		m.set_shader_parameter("sd", side)
-		m.set_shader_parameter("plane_low", low)
+		m.set_shader_parameter("plane_tex", prof_tex)
+		m.set_shader_parameter("plane_span", 1.4 * 2.0 * cam_d * tan(deg_to_rad(15.0)) * 1.8)
 	sky_mat.set_shader_parameter("sky_turn", th + ang)
 	last_select_ms = float(t1 - t0) / 1000.0
 	last_low_ms = float(t2 - t1) / 1000.0
 	last_view_ms = float(Time.get_ticks_usec() - t0) / 1000.0
 	if not nohud and scene_name != "upload":
-		var nm: String = ["the rule", "sink", "hard clip"][near]
-		label.text = ("flight, %.1f reads a tick" % reads_budget) if flight else (("a wall brought onto the line and held") if wall else ("%d deg/s, near line: %s%s%s  (1 2 3 rate; 4 5 small at 240, 120, city; 6 7 open; Q W E near; F flight; T wall)" % [int(rate), nm, ", reduced" if reduced else "", ", small swings" if not q_angles.is_empty() else ""]))
+		var nm: String = ["Q the rule", "W sink", "E hard clip", "A = Q and W", "S = W and E"][near]
+		label.text = ("flight, %.1f reads a tick" % reads_budget) if flight else (("a wall brought onto the line and held") if wall else ("%d deg/s, near line: %s%s%s  (1 2 3 rate; 4 5 small at 240, 120, city; 6 7 open; Q W E A S near; F flight; T wall)" % [int(rate), nm, ", reduced" if reduced else "", ", small swings" if not q_angles.is_empty() else ""]))
 
 
 ## The tiles to draw: a quadtree from the faces, split by distance, a child only when it's been read. Instances go straight to the buffer.
@@ -538,6 +549,9 @@ func _walk(f: int, L: int, i: int, j: int, buf: PackedFloat32Array, tn: float) -
 	var reach: float = w * 0.8
 	var depth: float = cam_d - z
 	if depth < -reach or absf(x) - reach > (maxf(depth, 0.0) + reach) * tn:
+		return
+	# Past the globe's horizon nothing shows.
+	if d - reach > cam_d + R * (acos(R / (R + maxf(cam_node.position.y - minf(g0, 0.0), 1.0))) + acos(R / (R + 7200.0))):
 		return
 	var split: bool = L < 4 and maxf(d - w * 0.75, 0.0) < K * w
 	if split:
@@ -620,16 +634,18 @@ func _sharp(key: String) -> float:
 	return clampf(float(tick - int(sharp_from[key])) / 30.0, 0.0, 1.0)
 
 
-## The plane's lowest ground in view: 64 points along the line, from the tiles, as the foreground rule would need it.
-func _plane_low() -> float:
-	var low: float = INF
-	var half: float = 1.1 * cam_d * tan(deg_to_rad(15.0)) * 1.8
+## The plane's own ground in view: 64 points along the line, from the tiles, as the foreground rule needs it.
+func _plane_profile() -> void:
+	if prof_tex == null:
+		prof.resize(64)
+		prof_img = Image.create_from_data(64, 1, false, Image.FORMAT_RF, prof.to_byte_array())
+		prof_tex = ImageTexture.create_from_image(prof_img)
+	var half: float = 1.4 * 2.0 * cam_d * tan(deg_to_rad(15.0)) * 1.8
 	for k in range(64):
-		var x: float = lerpf(-half, half, float(k) / 63.0)
-		var a: float = x / R
-		var d: Vector3 = pivot * cos(a) + head * sin(a)
-		low = minf(low, maxf(_height(d), 0.0))
-	return low
+		var a: float = lerpf(-half, half, float(k) / 63.0) / R
+		prof[k] = maxf(_height(pivot * cos(a) + head * sin(a)), 0.0)
+	prof_img.set_data(64, 1, false, Image.FORMAT_RF, prof.to_byte_array())
+	prof_tex.update(prof_img)
 
 
 func _height(d: Vector3) -> float:
@@ -701,13 +717,16 @@ func _unhandled_input(e: InputEvent) -> void:
 	if hook or not (e is InputEventKey) or not e.pressed:
 		return
 	var parts: Dictionary = {KEY_1: 30, KEY_2: 60, KEY_3: 98}
+	if e.keycode == KEY_A or e.keycode == KEY_S:
+		begin("s%d%s" % [int(rate) if rate > 0.0 else 60, "qw" if e.keycode == KEY_A else "we"], false)
+		return
 	if e.keycode == KEY_4 or e.keycode == KEY_5:
 		begin("q%d%s" % [240 if e.keycode == KEY_4 else 120, "c"], false)
 		return
 	if e.keycode == KEY_6 or e.keycode == KEY_7:
 		begin("q%d%s" % [240 if e.keycode == KEY_6 else 120, "o"], false)
 		return
-	var nm: Array = ["rule", "sink", "clip"]
+	var nm: Array = ["rule", "sink", "clip", "qw", "we"]
 	match e.keycode:
 		KEY_1, KEY_2, KEY_3:
 			begin("s%d%s" % [parts[e.keycode], nm[near]], false)

@@ -305,10 +305,11 @@ The tiles scale by three numbers, all view-only: vertices a tile, how far each l
 | High | 37 u | 65 | 1.6 | about 700k | 512 |
 | Maximum | 19 u | 65, one more level | 2.0 | about 1.2M | 1,024 |
 
-**Feet on a view finer or coarser than the sim's ground.** The sim keeps its one canonical ground on every setting (ADR 0012, item 3). The rule is that **height at the feet is the sim's triangles, on every setting**:
+**Feet on a view finer or coarser than the sim's ground. Decided 2026-10-31: the body offset at every level; the fade and patch I first proposed here are withdrawn.** The sim keeps its one canonical ground on every setting (ADR 0012, item 3). What stands on the plane is drawn at `y + (view ground - sim ground)`, fading out over a body height of altitude.
 
-- **Finer:** detail height fades to zero within about 200 units of a fighter, or stays in the fragment.
-- **Coarser:** the mesh within a small patch of each fighter is always at the sim's spacing, as one extra instanced patch. Elsewhere a coarser mesh only moves things standing on far ground, and props take the drawn height.
+- **Why:** the ground is then a function of place alone, so it stays solid under test 7. The fade and patch changed the ground near a fighter as he moved, which is the fault Orb has already objected to.
+- **What it costs:** one table of lifts by column, read in the shared placement, so dust, shadows and sparks take the same lift without being told. A body's lift is one more read of that table. At Standard the lift is small but not 0, because World's `height()` reads steep cells and shores at 32 u.
+- **The risk it keeps:** at Performance two fighters on different ground are lifted differently, by up to the gap at 512 (RMS 39, worst 167 in Simulation's fights). Orb judges that at the look gate; a contact ribbon at about 2.6 ms stays the alternative.
 
 ## 9. Could desktop move past Compatibility?
 
@@ -321,7 +322,87 @@ This is from what I know of the engine, not a spike. I'd leave it as a later "ma
 
 ## 10. Curvature tied to the zoom
 
+**Settled by Orb, 2026-10-31: 100% true globe at every zoom; no curve tied to the zoom. This section stays as the reasoning.** Orb: "the flattening effect actually looks pretty weird". Section 11 has the one comparison they allowed, 95% at the closest zoom.
+
 - **View-only? Yes.** It's in the vertex shader. The sim never reads it, so online and replays are untouched.
 - **Does it hold test 7? Not as today's bend is written, and that's independent of the zoom.** `bent_world` sags by `x² × k(depth)`, which isn't symmetric round the pivot. So a point rises and falls as it swings, by up to the whole sag at the screen's edge: 25 px at today's closest. My 360° test passes only because it returns to its start. **A sag by radius, `r² / 2R_eff`, doesn't change in a turn, so it holds test 7 exactly,** and it's a true globe at `R_eff = R`. Camera's share of true curvature becomes `R_eff = R / share`, read from the displayed zoom, which is what Proto v2 does. Not built or tried yet.
 - **How do the feet stay put?** A fighter on the plane away from the pivot would now sag too. So fighters, beams and VFX take the same sag function as the ground, view-only. That's one more reason for the single `world_place()`. Height at the feet is still the sim's; the sag moves ground and body together. Today's "the fighter plane stays exactly flat" goes, which is Camera's and Orb's to see.
 - **A zoom change eases as Camera's zoom does,** so the ground doesn't morph on its own. Camera's warning stands: 25 px of sag at the closest down to 3 is a large change in close play, and it goes through the look gate. The formula is small, but it replaces every `bent_world` caller.
+
+## 11. The swing in the real game frame (2026-10-31)
+
+**Real terrain colours, real buildings, real fighters and HUD, in a scratch copy of the game, on planet 7's real gen 2 ground: the tile frame costs no more than today's on the Radeon, and the seams are closed. The flash reading is the open problem: a continuous 360° at 60°/s over a city or open ground fails or sits over our gate, in both modes. Small swings at 240 and 120 pass everywhere.** Sources are in `docs/rendering/pending/2026-10-31-swing-test/real-frame/`. Stills are `docs/rendering/img/lookgate/swing-real-*`.
+
+**How far to trust this.** One planet, one city, one forest, in the `pb` scene: two fighters at the middle of the longest stretch. Water is colour bands, not the real water. Cracks and craters aren't on the tiles in this test, and VFX don't sag. The first full run was void and isn't used: the game's split culling put today's ground back under the tiles when the panes merged, so it drew 3.0M triangles at 147 ms. A low flash count can also be the analyser's pooling, not a calmer picture.
+
+### Frame cost, valid by the load rule, ms
+
+| Machine | Today p50, p95 | Tiles p50, p95 | Tiles at 98°/s | Open ground |
+| :--- | ---: | ---: | ---: | ---: |
+| Radeon iGPU (two runs each) | 11.5, 25.1; 11.7, 25.7 | 8.3, 25.1; 9.0, 27.6 | 8.9, 28.2 | 9.3, 27.7 |
+| x4 CPU | 30.4, 76.0 | 30.9, 74.1 | | |
+| RTX, x1 | 6.4, 10.8 | 5.8, 11.4 | | |
+
+- **Triangles:** 178k against today's 170k, of which the tiles are about 116k.
+- **The real terrain fragment costs about 0.6 to 1.0 ms** on the Radeon at p50: the real fragment against the biome's colour alone (8.3 and 9.0 against 7.3 and 8.4). All the tiles together, against none, cost about 0.8 ms. These are small differences near the run-to-run noise. What's safe to say is that the fragment isn't a problem.
+- **View CPU:** 1.7 against 1.2 to 1.5 ms at x1, and 10.1 against 7.7 at x4 (p95 17.6 against 13.4). That's over the view's 0.5 to 1 ms allowance at x4, and the tile walk is the first thing to cut.
+- **A one-off hitch:** the worst single frame is 0.9 to 1.9 s against 0.5 s, in this test's loading of the tile files. Its own run has to be measured.
+- **This PC's Radeon isn't an old laptop.** No machine of that class has run it.
+
+### Flash, Tools' analyser, primary reading (area threshold 15% lower)
+
+Gate 2.5, limit 3. 600 ticks.
+
+| Clip | 960x540 normal | 960x540 reduced | 1024x768 normal | 1024x768 reduced |
+| :--- | ---: | ---: | ---: | ---: |
+| Today, the same scene | 1 (1) | 1 (1) | 2 (2) | 2 (2) |
+| **City, 360° at 60°/s** | **3.5 (3.5) FAIL** | **3.5 (3.5) FAIL** | **3 (3) over gate** | **3 (3) over gate** |
+| City, 360° at 98°/s | 2.5 (3) | | 2.5 (2.5) | |
+| City, 360° at 65°/s | | 2.5 (2.5) | | **3 (3) over gate** |
+| **Open ground, 360° at 60°/s** | **3 (4) FAIL** | | **3.5 (3.5) FAIL** | |
+| City, small swings at 240 | 1.5 (1.5) | 1.5 (1.5) | 1.5 (1.5) | 1.5 (1.5) |
+| City, small swings at 120 | 1.5 (2) | 1.5 (2) | 1.5 (1.5) | 1.5 (1.5) |
+| Open, small swings at 240 | 2 (3) | 2 (3) | 1 (1.5) | 1 (1.5) |
+| Open, small swings at 120 | 2 (3) | 2 (3) | 2 (2.5) | 2 (2.5) |
+| Collapse (a scene with blasts), today's ground turned at 60°/s, 1500 ticks | 2.5 (2.5) | 2.5 (2.5) | 2 (2.5) | 2 (2.5) |
+
+**What this says:**
+
+- **Over a city the buildings are the count.** The same turn with buildings left out reads 1.5.
+- **Two single ticks stand out in the city clip:** at ticks 100 and 318, 7 to 10% of the frame darkens at once. I think it's a tower going at the near line, but I haven't tested that. It's the first thing to try, because the eased hybrids may change it.
+- **Open ground fails with no buildings, and I don't know why yet.** Leaving trees out of a small swing moved it the wrong way (2 to 3), which is the pooling and says nothing about trees.
+- **Reduced flashing changes nothing in a swing.** Its levers aren't on this path. The levers left are the rate, the near tower and what's lit.
+- **98 reads lower than 60,** which I don't trust as a calmer picture. It doesn't mean faster is safer.
+- **A whole 360° is the hardest case,** and much longer than a launch's swing. No clip here has a swing of the size and rate Game Design rules for a launch. That reading comes with stage 6.
+
+### Seams
+
+**Skirts closed the pinholes:** 0 cracks in 127 stills at 60°/s and 81 at 98°/s, against pinholes in 28 of 127 before. Each tile has a ring of vertices outside it, dropped by 5% of its width. The cause was the cracks between levels at the horizon, as section 7 suspected.
+
+### True globe at the closest zoom
+
+- **Today's bend is about 4 times true at close zoom:** 25 px of sag at the screen's edge, against about 7 px at true R. So close play gets flatter at the edges than today, and the horizon is real: about 3,800 units from a camera 300 up, with only tall land past it. In a city the towers hide most of that. Over open ground it's the biggest change from today's long ladder of far ridges.
+- **95% at the closest zoom:** 348k of 922k pixels differ from 100% in one still, but they all differ by a small shift, and side by side I can't tell the two apart (`swing-real-100pc-t121.png`, `swing-real-95pc-t121.png`). I'd stay at 100%. It's Orb's to judge.
+
+### The foreground rule's table
+
+**Reading the line's own ground, in 64 points, took away the table with the hard edge in the stills I checked.** A mountain just in front of the plane keeps its slopes (`swing-hybrids-qw-we.png`, bottom row). The fault came from using one lowest value for the whole plane. I checked it by eye on a few stills, with no measure.
+
+### Near towers
+
+Both hybrids are on the playable page: A is Q+W, S is W+E.
+
+- **Q+W** turns a large tower's top into a sloped roof as its near side leads, which shows as a wedge on the real buildings.
+- **W+E** shows a black inside where it cuts at the frame's edge.
+
+Neither is a clear winner, so Orb picks. A is the default until then.
+
+### What isn't right yet, from the stills
+
+- **Trees are flat silhouettes,** so they go edge-on in a turn and read as thin strips (`swing-real-open-turn.png`).
+- **Biome borders are jagged at node size** where the old ones were stepped bands.
+- **A city's ground in depth is the strip's own heights,** extruded, for now: the plan World's places would give.
+
+### The same sag on everything: how hard
+
+**About one window, and the build is doing it.** Fighters, beams, shadows and cracks take it from `ortho_clip` and `bent_world`. Nine effect shaders each take one include and one line. Camera has to frame the far fighter: at a gap of 12,000, a fighter at x = 6,000 drops about 733 units. HUD markers still need a CPU twin.

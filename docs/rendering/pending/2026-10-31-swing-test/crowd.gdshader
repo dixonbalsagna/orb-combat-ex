@@ -27,7 +27,7 @@ void vertex() {
 		v += NORMAL * outline;
 	}
 	float k = figure_scale;
-	if (near_mode == 1) {
+	if (near_mode == 1 || near_mode == 3 || near_mode == 4) {
 		k *= 1.0 - smoothstep(near_line - 300.0, near_line, c.y);
 	}
 	if (near_mode == 0 && c.y > near_line) {
@@ -36,12 +36,11 @@ void vertex() {
 	vec2 p = c + (ex * v.x + ez * v.z) * k;
 	float y = foot + v.y * k;
 	v_z = p.y;
-	y = bent(p.x, y, p.y);
-	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * vec4(p.x, y, p.y, 1.0));
+	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * vec4(globe(p.x, y, p.y), 1.0));
 }
 
 void fragment() {
-	if (near_mode == 2 && v_z > near_line) {
+	if ((near_mode == 2 || near_mode == 4) && v_z > near_line) {
 		discard;
 	}
 	vec3 c = v_kind < 0.25 ? outline_col.rgb : (v_kind < 0.65 ? v_custom.rgb : (v_kind < 0.9 ? mix(skin_a.rgb, skin_b.rgb, v_custom.a) : legs.rgb));

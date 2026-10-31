@@ -18,9 +18,12 @@ void vertex() {
 	vec3 u = MODEL_MATRIX[1].xyz;
 	vec3 w = MODEL_MATRIX[2].xyz;
 	vec3 place = MODEL_MATRIX[3].xyz;
-	vec2 g = UV * 32.0;
+	// The ring outside 0 to 1 is the skirt: it hangs from the tile's edge, so a pinhole at a level's edge shows ground.
+	vec2 uvc = clamp(UV, vec2(0.0), vec2(1.0));
+	float skirt = (UV.x != uvc.x || UV.y != uvc.y) ? 1.0 : 0.0;
+	vec2 g = uvc * 32.0;
 	// How far this vertex has gone to the coarser level's lattice: by distance, or the tile's own sharpening.
-	vec2 st0 = place.xy + UV * place.z;
+	vec2 st0 = place.xy + uvc * place.z;
 	vec3 d0 = normalize(n + u * tan(st0.x * 0.7853982) + w * tan(st0.y * 0.7853982));
 	float dist = atan(length(cross(d0, pv)), dot(d0, pv)) * planet_r;
 	float mk = max(smoothstep(INSTANCE_CUSTOM.g * 1000.0, INSTANCE_CUSTOM.b * 1000.0, dist), 1.0 - INSTANCE_CUSTOM.a);
@@ -38,11 +41,11 @@ void vertex() {
 	vec2 p = ae(dir);
 	float y = max(h, 0.0);
 	if (p.y > 0.0) {
-		y = min(y, sight_cap(p.y, 0.0));
+		y = min(y, sight_cap(p.x, p.y, 0.0));
 	}
-	y = bent(p.x, y, p.y);
-	v_pos = vec3(p.x, y, p.y);
-	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * vec4(p.x, y, p.y, 1.0));
+	y -= skirt * place.z * 19200.0 * 0.05;
+	v_pos = globe(p.x, y, p.y);
+	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * vec4(v_pos, 1.0));
 }
 
 float vh(vec3 c) {
