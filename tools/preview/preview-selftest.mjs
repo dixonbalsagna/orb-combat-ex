@@ -211,6 +211,13 @@ try {
     const mb = await buildPreview({ ...opts, overlay: ['data/vfx', 'render/vfx'], rebuild: true, pending: pend });
     check('a build with VFX\'s data overlaid reports the word and flips no file for it', mb.active.includes('meteor') && mb.urlWords.includes('meteor=loud') && !mb.flips.some((x) => x.id === 'meteor'), JSON.stringify([mb.active, mb.urlWords, mb.flips.filter((x) => x.id === 'meteor')]));
 
+    // ?swings=off (Encounter's page word): in the scratch main.gd only when the tree has DirSwing.setForce
+    check('the scratch main.gd gets the swings=off hook only with the option: before the match starts, on a local page, DirSwing.setForce(0)', (() => { const on = patchMain(MAIN, [], {}, { swingsOff: true }), off = patchMain(MAIN); return /func _preview_swings_off\(\) -> void:/.test(on) && /location\.hostname === '127\.0\.0\.1'/.test(on) && /swings=off/.test(on) && /DirSwing\.setForce\(0\)/.test(on) && /func _preview_planet\(\) -> Dictionary:\n\t_preview_swings_off\(\)/.test(on) && !/_preview_swings_off|DirSwing/.test(off) && off === patchMain(MAIN, [], {}, {}); })());
+    work('sim/director/swing.gd', 'class_name DirSwing\n');
+    check('without setForce in the tree plan says no and lists no address', plan(repo, sha, { overlay: ['sim/director'], pending: pend.rows }).swingsOff === false);
+    work('sim/director/swing.gd', 'class_name DirSwing\nstatic func setForce(v: int) -> void:\n\tpass\n');
+    const swOffPlan = plan(repo, sha, { overlay: ['sim/director'], pending: pend.rows });
+    check('with setForce in the tree plan says yes and the address list gains the swings=off page word', swOffPlan.swingsOff === true && swOffPlan.alts.some((a) => a.add === 'swings=off'), JSON.stringify(swOffPlan.alts));
     // tiles: a page word, present when Rendering's tile ground is in the tree, needs gen3
     check('tiles is a page word, not a data flag: no file, the word, the command-line form, the file it waits for, and it needs gen3', sw('tiles').url === 'tiles=1' && sw('tiles').cmd === '--tiles' && sw('tiles').file === undefined && sw('tiles').presentIf.file === 'render/core/tile_ground.gd' && sw('tiles').needs.join() === 'gen3' && sw('tiles').optional === true);
     work('render/core/tile_ground.gd', 'extends RefCounted\n');
@@ -219,7 +226,7 @@ try {
     const t1 = plan(repo, sha, { overlay: ['render/core', 'sim/world'], pending: pend.rows });
     check('with both in the tree tiles is on and the word is carried on the address', t1.active.includes('tiles') && t1.urlWords.join() === 'tiles=1' && t1.setup.planetGen === 3, JSON.stringify(t1));
     check('--off tiles leaves no word', plan(repo, sha, { overlay: ['render/core', 'sim/world'], off: ['tiles'], pending: pend.rows }).urlWords.length === 0);
-    check('the scratch main.gd\'s URL list is edited at the START of the list, so the tile park\'s own words first do not break the anchor', (() => { const m = MAIN.replace('const URL_ARGS: Array = ["nointro", ', 'const URL_ARGS: Array = ["tiles", "tilerate", "nointro", '); return patchMain(m).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "tiles", "tilerate", "nointro", ') && patchMain(MAIN).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "nointro", '); })());
+    check('the scratch main.gd\'s URL list is edited at the START of the list, so the tile park\'s own words first do not break the anchor', (() => { const m = MAIN.replace('const URL_ARGS: Array = ["nointro", ', 'const URL_ARGS: Array = ["tiles", "tilerate", "nointro", '); return patchMain(m).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "tiles", "tilerate", "nointro", ') && patchMain(MAIN).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "nointro", '); })());
     const tb = await buildPreview({ ...opts, overlay: ['render/core', 'sim/world'], rebuild: true, pending: pend });
     check('a build with both overlaid reports the word and flips no file for it', tb.active.includes('tiles') && tb.urlWords.join() === 'tiles=1' && !tb.flips.some((x) => x.id === 'tiles'), JSON.stringify([tb.active, tb.urlWords]));
 

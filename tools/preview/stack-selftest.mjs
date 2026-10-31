@@ -45,6 +45,7 @@ try {
   put('sim/gamma/g.gd', 'gamma\n');
   put('sim/world/field.gd', 'extends RefCounted\n');
   put('sim/world/swing.gd', 'class_name SimSwing\nextends RefCounted\n');   // the class the probe needs
+  put('render/tools/tile_check.gd', 'extends SceneTree\n');   // Rendering\'s tile check (tile.diff adds it): run headless against the stacked tree
   put('research/ring-any-angle/swing_smoke.gd.txt', 'extends SceneTree\n');   // Research\'s stand-in probe: copied into the scratch tree only
   put('.gitattributes', '* text=auto eol=lf\n');   // as the real repository has: an archive must not turn the fixture's lines into CRLF
   git(repo, 'add', '-A'); git(repo, 'commit', '-q', '-m', 'the fixture');
@@ -176,6 +177,7 @@ try {
   const stub = join(tmp, 'godot-stub.mjs');
   writeFileSync(stub, [
     "const a = process.argv.slice(2);",
+    "if (a.some((x) => /tile_check/.test(x))) { console.log('ok   the tiles read the sim ground along the line, worst 4.2 units over 41 columns'); console.log('ok   every stored tile holds its nodes'); console.log('tile check ' + (process.env.STUB_TILE_FAIL ? 'FAILED' : 'passed')); process.exit(process.env.STUB_TILE_FAIL ? 1 : 0); }",
     "if (a.some((x) => /swing_smoke/.test(x))) { console.log('SWINGSMOKE ok gen=3 ticks=900 frames=900 frame=true'); console.log('SWINGSMOKE asked=3 refused=0 swings=3 clamps=0'); process.exit(0); }",
     "if (a.includes('--script')) { if (process.env.STUB_SMOKE_ERROR) console.log('SCRIPT ERROR: Parse Error: oops\\n   at: GDScript::reload (res://sim/beta/b.gd:3)'); console.log(process.env.STUB_SMOKE_SHORT ? 'SMOKE SHORT ticks=10 wanted=900' : 'SMOKE ok ticks=900 wanted=900 frames=900 gen=' + ((a.find((x) => x.startsWith('--planet-gen=')) || '=0').split('=')[1])); process.exit(process.env.STUB_SMOKE_SHORT ? 1 : 0); }",
     "console.log('import ok');",
@@ -191,6 +193,7 @@ try {
   const r3 = await runStack({ ...opts });
   check('World\'s code in the tree (sim/world/field.gd) adds a second match, asked for planetGen 3 on a whole ring, named apart', r3.report.smoke3 && r3.report.smoke3.ok === true && /gen=3/.test(r3.report.smoke3.line) && /gen=0/.test(r3.report.smoke.line) && r3.changes.some((c) => /gen 3 whole ring: not run -> ok/.test(c)) && /Smoke match, gen 3 whole ring: ok/.test(describeReport(r3.report).join('\n')), JSON.stringify(r3.report.smoke3));
   check('Research\'s swing probe plays when the tree has SimSwing and the repo has the probe: copied into the scratch tree only, its two lines kept, the change named', r3.report.smokeSwing && r3.report.smokeSwing.ok === true && /asked=3/.test(r3.report.smokeSwing.line) && r3.changes.some((c) => /swing probe: not run -> ok/.test(c)) && /Swing probe .*: ok/.test(describeReport(r3.report).join('\n')) && !existsSync(join(repo, 'tools', 'preview', 'swing_smoke.gd')), JSON.stringify(r3.report.smokeSwing));
+  check('Rendering\'s tile check runs headless when the tree has render/tools/tile_check.gd, keeps its lines, and the change is named', r3.report.tileCheck && r3.report.tileCheck.ok === true && /tile check passed/.test(r3.report.tileCheck.line) && r3.changes.some((c) => /tile check: not run -> ok/.test(c)) && /Tile check .*: ok/.test(describeReport(r3.report).join('\n')), JSON.stringify(r3.report.tileCheck));
   check('a run with the stand-in Godot imports clean and plays the smoke match', r3.report.import && r3.report.import.ok === true && r3.report.smoke && r3.report.smoke.ok === true && /SMOKE ok/.test(r3.report.smoke.line) && r3.changes.some((c) => /import: not run -> clean/.test(c)) && r3.changes.some((c) => /smoke match: not run -> ok/.test(c)), JSON.stringify([r3.report.import, r3.report.smoke, r3.changes]));
   process.env.STUB_SMOKE_ERROR = '1';
   const r4 = await runStack({ ...opts, force: true });

@@ -37,6 +37,8 @@ export const SWITCHES = [
   { id: 'tiles', url: 'tiles=1', cmd: '--tiles', presentIf: { file: 'render/core/tile_ground.gd' }, needs: ['gen3'], optional: true,
     what: 'Rendering\'s tile ground (stage 4 of the ring-at-any-angle work): the fight on planet-keyed tiles on a true globe, through Simulation\'s frame. A page word for now (?tiles=1, local pages only): the printed address carries it. Needs gen3 and waits until the tree has render/core/tile_ground.gd' },
   { id: 'swing', file: 'data/director/swing.json', path: ['enabled'], from: false, to: true, needs: ['gen3'], optional: true,
+    probe: '"swings": (st.swing.n if st.swing != null else -1), "swing": ({"on": st.swing.active, "rate": snappedf(st.swing.rate, 0.1), "left": snappedf(st.swing.left, 0.1), "cause": st.swing.cause, "kind": st.swing.kind} if st.swing != null else {}), "fst": [st.fighters[0].state, st.fighters[1].state], "ln": [st.fighters[0].launchN, st.fighters[1].launchN], "pz": [st.pause.left, snappedf(st.dirS.stop, 0.01)]',
+    probeMore: [{ line: '"mv": SimSwing.movingNow(st)', probeIf: { file: 'sim/core/swing.gd', text: 'func movingNow' } }], probeIf: { file: 'sim/core/state.gd', text: 'var swing = null' },
     what: 'DirSwing (Encounter): the choreographer\'s swing: a launch, a chase, a form\'s pause, an AI\'s flight and a brawl each offer the line a turn, which the core\'s SimSwing runs. data/director/swing.json `enabled`; it does nothing but on a field world, so it needs gen3 (setup planet, touch, planetGen 3). Waits until the tree has Encounter\'s code' },
 ];
 
@@ -189,9 +191,9 @@ export const PLANET_FUNC = [
   '\treturn {}',
   '',
   '',
-  '## Scratch (tools/preview): ?preview=1 publishes window.__preview twice a second, for the smoke check: the tick, the planet\'s generation, what each switch reads as in the running game, and the fighters\' hit points.',
+  '## Scratch (tools/preview): ?preview=1 publishes window.__preview twice a second (every frame with ?reel=1), for the smoke check: the tick, the planet\'s generation, what each switch reads as in the running game, and the fighters\' hit points.',
   'func _preview_probe() -> void:',
-  '\tif frames % 20 != 0:',
+  '\tif frames % 20 != 0 and not args.has("reel"):',
   '\t\treturn',
   '\tvar st = host.S',
   '\tvar hp: Array = []',
@@ -204,10 +206,23 @@ export const PLANET_FUNC = [
   '',
 ].join('\n');
 
-export function planetFunc(extra = [], setup = {}) {
+export function planetFunc(extra = [], setup = {}, opts = {}) {
   const line = '\t\t"errors": WorldFill.dataErrors(), "hp": hp}';
   if (!PLANET_FUNC.includes(line)) throw new Error('tools/preview/switches.mjs: the probe line moved (planetFunc is out of date)');
+  const swingsOff = [
+    '## Scratch (tools/preview): ?swings=off on a LOCAL page turns DirSwing off before a match starts (Encounter\'s page word; DirSwing.setForce(0)).',
+    'func _preview_swings_off() -> void:',
+    '\tif OS.has_feature("web") and bool(JavaScriptBridge.eval("(location.hostname === \'127.0.0.1\' || location.hostname === \'localhost\') && location.search.indexOf(\'swings=off\') >= 0", true)):',
+    '\t\tDirSwing.setForce(0)',
+    '',
+    '',
+  ].join('\n');
   let out = extra.length ? PLANET_FUNC.replace(line, () => `\t\t${extra.join(', ')},\n${line}`) : PLANET_FUNC;
+  if (opts.swingsOff) {
+    const head = "func _preview_planet() -> Dictionary:\n";
+    if (!out.includes(head)) throw new Error('tools/preview/switches.mjs: the planet entry moved (planetFunc is out of date)');
+    out = out.replace(head, () => swingsOff + head + '\t_preview_swings_off()\n');
+  }
   const keys = Object.entries(setup);
   if (keys.length) {
     const ret = '\t\treturn {"planet": int(args["planet"]), "touch": int(args.get("touch", 3))}';
@@ -221,7 +236,7 @@ const EDITS = [
   { name: 'the match setup\'s planet part (no-intro and hook starts)', from: '\t\treturn _planet_next.duplicate()\n', to: '\t\treturn _preview_planet()\n' },
   { name: 'the match setup\'s planet part (the intro start)', from: '\tsu.merge(_planet_next)\n', to: '\tsu.merge(_preview_planet())\n' },
   { name: 'the menu start without intros', from: '\t\tvar su: Dictionary = _planet_next.duplicate()\n', to: '\t\tvar su: Dictionary = _preview_planet()\n' },
-  { name: 'the options the URL may set', from: 'const URL_ARGS: Array = [', to: 'const URL_ARGS: Array = ["planet", "touch", "preview", ' },
+  { name: 'the options the URL may set', from: 'const URL_ARGS: Array = [', to: 'const URL_ARGS: Array = ["planet", "touch", "preview", "reel", ' },
   { name: 'the per-frame hook', from: '\tvar n: int = host.advance(delta, vp.x, vp.y)\n', to: '\tvar n: int = host.advance(delta, vp.x, vp.y)\n\tif args.has("preview"):\n\t\t_preview_probe()\n' },
 ];
 
@@ -229,7 +244,7 @@ const EDITS = [
 export const EDITS_FINGERPRINT = createHash('sha1').update(JSON.stringify([EDITS, PLANET_FUNC, SWITCHES])).digest('hex').slice(0, 6);
 
 /** main.gd with the planet entry and the probe. Each anchor must be there exactly once, or this throws and says which (Rendering's main.gd changed: update EDITS). Keeps the file's line endings. */
-export function patchMain(text, extra = [], setup = {}) {
+export function patchMain(text, extra = [], setup = {}, opts = {}) {
   const crlf = text.includes('\r\n');
   const nl = (s) => (crlf ? s.replace(/\n/g, '\r\n') : s);
   let out = text;
@@ -239,5 +254,5 @@ export function patchMain(text, extra = [], setup = {}) {
     if (n !== 1) throw new Error(`render/core/main.gd: ${e.name}: expected the line once, found it ${n} times (tools/preview/switches.mjs EDITS is out of date)`);
     out = out.replace(from, () => nl(e.to));
   }
-  return out.replace(/\s*$/, '') + nl(planetFunc(extra, setup));
+  return out.replace(/\s*$/, '') + nl(planetFunc(extra, setup, opts));
 }

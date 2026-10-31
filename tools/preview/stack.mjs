@@ -270,10 +270,11 @@ export function missingNeeds(parks, results, tree) {
 
 // ---------------------------------------------------------------------------------------------------- switches, validate, errors
 /** Turns on every switch of the preview table, of the pending rows and of the parks (`switches` rows of the manifest) whose key is in the tree. Returns { on: [id], waiting: [{id, why}], problems }. */
-export function flipAll(tree, extraRows = []) {
+export function flipAll(tree, extraRows = [], only = null) {
   const on = [], waiting = [], problems = [];
   const table = tableWith([...readPending().rows, ...extraRows]);
   for (const sw of table) {
+    if (only && !only.includes(sw.id)) { waiting.push({ id: sw.id, why: 'left off by the caller (the bisect\'s switch list)' }); continue; }
     if (sw.setup || sw.url) {   // a key of the match's setup (gen3) or a page word (tiles): on when the tree has the code; the smoke match asks for it
       if (existsSync(join(tree, ...sw.presentIf.file.split('/')))) on.push(sw.id); else waiting.push({ id: sw.id, why: `${sw.presentIf.file} is not in the tree` });
       continue;
@@ -377,6 +378,8 @@ export function changesBetween(prev, now) {
   if (sm3(prev) !== sm3(now)) out.push(`smoke match, gen 3 whole ring: ${sm3(prev)} -> ${sm3(now)}`);
   const smt = (r) => (r.smokeTiles ? (r.smokeTiles.ok ? 'ok' : `failed (${r.smokeTiles.why})`) : 'not run');
   if (smt(prev) !== smt(now)) out.push(`smoke match, tile ground: ${smt(prev)} -> ${smt(now)}`);
+  const tcs = (r) => (r.tileCheck ? (r.tileCheck.ok ? 'ok' : `failed (${r.tileCheck.why})`) : 'not run');
+  if (tcs(prev) !== tcs(now)) out.push(`tile check: ${tcs(prev)} -> ${tcs(now)}`);
   const sws = (r) => (r.smokeSwing ? (r.smokeSwing.ok ? 'ok' : `failed (${r.smokeSwing.why})`) : 'not run');
   if (sws(prev) !== sws(now)) out.push(`swing probe: ${sws(prev)} -> ${sws(now)}`);
   const mc = (r) => Object.values(r.missing || {}).reduce((n, v) => n + v.length, 0);
@@ -422,7 +425,7 @@ export async function runStack(o) {
   const t0 = Date.now();
   const applied = applyStack({ repo, tree, parks, owners });
   const extraRows = parks.flatMap((p) => p.switches || []);
-  const flips = flipAll(tree, extraRows);
+  const flips = flipAll(tree, extraRows, o.switches || null);
   const missing = missingNeeds(parks, applied, tree);
   const report = {
     at: new Date().toISOString().slice(0, 16), key, commit: sha, subject, left, firstConflict: applied.firstConflict,
@@ -474,6 +477,16 @@ export async function runStack(o) {
         const swl = (swt.match(/^SWINGSMOKE .*$/gm) || []).join(' | ');
         report.smokeSwing = { ok: swc === 0 && /^SWINGSMOKE ok/.test(swl) && swerrs.length === 0, code: swc, line: swl, errors: swerrs, why: swerrs.length ? `${swerrs.length} script errors` : !/SWINGSMOKE/.test(swl) ? `no SWINGSMOKE line (exit ${swc})` : !/^SWINGSMOKE ok/.test(swl) ? 'the match stopped short' : '' };
       }
+      // Rendering's tile check (headless, no picture): the tile field's heights against the sim's along the line, when the tree has the file
+      if (existsSync(join(tree, 'render', 'tools', 'tile_check.gd'))) {
+        log('running the tile check (render/tools/tile_check.gd, headless)');
+        const tcLog = join(dir, 'tile-check.log');
+        const tcc = await runGodot(g, ['--headless', '--path', tree, '--script', 'res://render/tools/tile_check.gd'], tcLog, 10 * 60 * 1000);
+        const tct = (() => { try { return readFileSync(tcLog, 'utf8'); } catch { return ''; } })();
+        const tcerrs = attributeErrors(errorBlocks(tct).slice(0, 40), applied.touched, owners);
+        const tcl = (tct.match(/^(?:ok  |FAIL|tile check) .*$/gm) || []).join(' | ');
+        report.tileCheck = { ok: tcc === 0 && /tile check passed/.test(tcl) && tcerrs.length === 0, code: tcc, line: tcl, errors: tcerrs, why: tcerrs.length ? `${tcerrs.length} script errors` : !/tile check/.test(tcl) ? `no result line (exit ${tcc})` : !/tile check passed/.test(tcl) ? 'the check failed' : '' };
+      }
     }
   } else report.partial = true;
   report.seconds = Math.round((Date.now() - t0) / 1000);
@@ -510,7 +523,7 @@ export function describeReport(r) {
     L.push(`Import: ${r.import.ok ? 'clean' : `${r.import.errors.length} script errors (exit ${r.import.code})`}`);
     for (const e of r.import.errors.slice(0, 8)) L.push(`  ${e.file || '?'}: ${e.park ? `park ${e.park}` : 'the commit'} (owner ${e.fileOwner || '?'}) ${e.line.slice(0, 120)}`);
   }
-  for (const [key, label] of [['smoke', 'Smoke match'], ['smoke3', 'Smoke match, gen 3 whole ring'], ['smokeTiles', 'Smoke match, tile ground (--tiles)'], ['smokeSwing', 'Swing probe (Research\'s stand-in, a 30 degree swing every 300 ticks)']]) {
+  for (const [key, label] of [['smoke', 'Smoke match'], ['smoke3', 'Smoke match, gen 3 whole ring'], ['smokeTiles', 'Smoke match, tile ground (--tiles)'], ['smokeSwing', 'Swing probe (Research\'s stand-in, a 30 degree swing every 300 ticks)'], ['tileCheck', 'Tile check (Rendering\'s render/tools/tile_check.gd)']]) {
     const sm = r[key];
     if (!sm) continue;
     L.push(`${label}: ${sm.ok ? 'ok' : `FAILED (${sm.why})`} ${sm.line || ''}`);
@@ -543,7 +556,7 @@ async function main() {
   for (const l of describeReport(res.report)) console.log(l);
   console.log(res.changes.length ? `\nCHANGED since the last run:\n${res.changes.map((c) => `  - ${c}`).join('\n')}` : '\nNo change since the last run.');
   const r = res.report;
-  const bad = r.firstConflict || r.parks.some((p) => p.status === 'missing' || p.status === 'unreviewed') || (r.validate && r.validate.summary && r.validate.summary.errors > 0) || (r.import && !r.import.ok) || (r.smoke && !r.smoke.ok) || (r.smoke3 && !r.smoke3.ok) || (r.smokeTiles && !r.smokeTiles.ok) || (r.smokeSwing && !r.smokeSwing.ok);
+  const bad = r.firstConflict || r.parks.some((p) => p.status === 'missing' || p.status === 'unreviewed') || (r.validate && r.validate.summary && r.validate.summary.errors > 0) || (r.import && !r.import.ok) || (r.smoke && !r.smoke.ok) || (r.smoke3 && !r.smoke3.ok) || (r.smokeTiles && !r.smokeTiles.ok) || (r.smokeSwing && !r.smokeSwing.ok) || (r.tileCheck && !r.tileCheck.ok);
   process.exit(bad ? 1 : 0);
 }
 

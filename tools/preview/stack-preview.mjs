@@ -85,7 +85,7 @@ export async function buildStackPreview(o) {
   writeFileSync(join(tree, 'build_info.json'), `${JSON.stringify({ commit: r.commit.slice(0, 7), stack: parksIn.length })}\n`);
   const mainFile = join(tree, 'render', 'core', 'main.gd');
   if (pl.hostPatch) { applyPatchText(tree, pl.hostPatch); log('applied the right-hand host patch to the scratch main.gd (the pad\'s right stick)'); }
-  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup));
+  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff }));
   if (tz) {   // the scratch tree's copy of the Web preset only: the engine template this page is exported with
     const pf = join(tree, 'export_presets.cfg');
     writeFileSync(pf, setWebCustomTemplate(readFileSync(pf, 'utf8'), tz.split('\\').join('/')));
@@ -157,7 +157,7 @@ async function main() {
   const server = await serveLocal(live, want ? Number(want) : 8765, { strict: !!want });
   const url = `http://127.0.0.1:${server.address().port}/index.html?planet=${planet}${b.urlWords && b.urlWords.length ? `&${b.urlWords.join('&')}` : ''}`;
   console.log(`\nOpen this in Opera:\n\n    ${url}\n`);
-  for (const a of b.alts || []) console.log(`  ${a.label}: ${url.replace(a.word, a.to)}\n`);
+  for (const a of b.alts || []) console.log(`  ${a.label}: ${a.add ? `${url}&${a.add}` : url.replace(a.word, a.to)}\n`);
   if (has('--open')) { try { spawn(process.platform === 'win32' ? 'cmd' : process.platform === 'darwin' ? 'open' : 'xdg-open', process.platform === 'win32' ? ['/c', 'start', '', url] : [url], { stdio: 'ignore', detached: true, windowsHide: true }).unref(); console.log('  (opened in the default browser)'); } catch { /* not worth failing for */ } }
   console.log('  localhost only (127.0.0.1); nothing is published, uploaded or dispatched. Ctrl-C stops it.');
   if (watching) {

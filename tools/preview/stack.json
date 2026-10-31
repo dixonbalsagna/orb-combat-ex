@@ -2,18 +2,23 @@
   "_about": "The parks of the stack, in the order they must land (tools/preview/stack.mjs, docs/tools/preview.md). Tools keeps this file from each park's README: add a park here when its folder appears, move it when its order changes, set \"ready\": false while its owner says it is unfinished (it is left out unless --include-unready). Steps: patch (git apply of a file in the working tree), copy ({from, to}, \"replace\": true to take the park's file), overlay (working-tree folders an owner has not committed yet, laid over the commit; a folder that already equals the commit counts as landed), manual (a note; an apply script is never run). needs: {park}, {file}, {grep: {in, text}}, {note, owner} (a known gap that is not in the tree: it stays listed as missing until it is taken out of this file). switches: rows {id, file, path, from, to, needs, what} for flags a park adds that the stack should turn on.",
   "parks": [
     {
-      "id": "simulation-right-word", "owner": "simulation-engine", "notes": "The intent's second word (SimIntent.pack2) in the hash and the replay, SimDir.inStruggle and two lines of Rendering's sim_host.gd (a grant), all behind switches.rightStick.",
-      "steps": [ { "patch": "docs/architecture/pending/right-word/right-word.patch" } ],
-      "needs": [
-        { "note": "Netcode: net/session.gd and net/desync.gd pack and unpack the first word only, so an online match drops the second word (both peers alike: no desync); it needs the wire format, PROTO 4", "owner": "netcode-online" },
-        { "note": "anim_check did not finish on Simulation's loaded machine: it runs in the land gate", "owner": "simulation-engine" }
+      "id": "animation-stick-class", "owner": "animation", "notes": "The right stick's class, Animation's side (waves protag13 and rival10: eighteen pieces, the charge stances, render/anim changes, anim_check's tests) and its schema patch. Before Combat's stick (its README: applies alone and on the whole stack).",
+      "steps": [
+        { "patch": "docs/animation/pending/stick-class.patch" },
+        { "patch": "docs/animation/pending/stick-class-schema.patch" }
       ]
+    },
+    {
+      "id": "tools-anim-hold-w-schema", "owner": "tools-pipeline", "notes": "Two validate cases for Animation's hold_w (a valid one and an over-one one): the schema property itself is now in Animation's stick-class-schema.patch (12:02), so Tools' schema grant was dropped.",
+      "steps": [ { "patch": "docs/tools/pending/anim-hold-w-schema/anim-hold-w-schema.patch" } ],
+      "needs": [ { "park": "animation-stick-class" } ]
     },
     {
       "id": "combat-stick", "owner": "combat-choreography", "notes": "The right stick's content: martial.stick, energy.stick, the guard and travel lanes' draws.",
       "steps": [
         { "copy": [ { "from": "docs/combat/pending/stick/stick.json", "to": "data/combat/stick.json" }, { "from": "docs/combat/pending/stick/combat-stick.schema.json", "to": "tools/schemas/combat-stick.schema.json" } ] },
-        { "patch": "docs/combat/pending/stick/tools-map.patch" }
+        { "patch": "docs/combat/pending/stick/tools-map.patch" },
+        { "patch": "docs/combat/pending/stick/tools-cases.patch" }
       ],
       "needs": [
         { "grep": { "in": "sim/input/input_data.gd", "text": "func right_stick_on" }, "owner": "controls-feel" },
@@ -47,20 +52,14 @@
       "needs": [ { "park": "camera-swing-2-shot" } ]
     },
     {
-      "id": "camera-swing-4-sim", "owner": "camera-cinematography", "ready": false, "notes": "LEFT OUT while Encounter's swing is in the stack: both create data/director/swing.json and tools/schemas/director-swing.schema.json (Encounter's README: 'a clash'; it drops swing_curve.gd and folds the read into its own file, so this park is superseded or must be re-cut on Encounter's). The swing's camera, park 4 of 4: the sim's read (sim/director/swing_read.gd, swing_curve.gd, data/director/swing.json, a schema and map.json). The EP granted the read; the curve and the data paths were Camera's call (Camera's README asks for a check).",
-      "steps": [ { "patch": "docs/camera/pending/swing/swing-4-sim.patch" } ],
-      "needs": [ { "park": "camera-swing-3-peak" }, { "note": "the director's call to the swing read: all four parks are off with no caller (docs/camera/swing-view.md)", "owner": "encounter-systems" } ]
-    },
-    {
       "id": "world-gen3-field", "owner": "world-environment", "notes": "Planet generation 3, the field: early and partial on purpose (World's README).",
       "steps": [
-        { "patch": "docs/world/pending/gen3-field/01-field.diff" },
-        { "patch": "docs/world/pending/gen3-field/02-trees-by-cell.diff" },
-        { "patch": "docs/world/pending/gen3-field/03-records-store.diff" },
-        { "patch": "docs/world/pending/gen3-field/04-plans.diff" },
-        { "patch": "docs/world/pending/gen3-field/05-landmarks-rl214.diff" },
-        { "patch": "docs/world/pending/gen3-field/06-craters-to-store.diff" },
-        { "patch": "docs/world/pending/gen3-field/07-water-records.diff" }
+        { "patch": "docs/world/pending/gen3-field/08-bake-cache.diff" },
+        { "patch": "docs/world/pending/gen3-field/09-planet-and-pool-cache.diff" },
+        { "patch": "docs/world/pending/gen3-field/10-node-fresh.diff" },
+        { "patch": "docs/world/pending/gen3-field/11-pads-and-staged-load.diff" },
+        { "patch": "docs/world/pending/gen3-field/12-crack-records.diff" },
+        { "patch": "docs/world/pending/gen3-field/13-scorch-records.diff" }
       ],
       "needs": [
         { "note": "diffs 5 and 6: World's README says their gate lists are not finished, do not land them before it says so (the install script of field-frame needs 06)", "owner": "world-environment" },
@@ -68,34 +67,53 @@
       ]
     },
     {
-      "id": "world-gen3-rendering-grant", "owner": "rendering-techart", "notes": "One line of Rendering's: gen2_ring tests == 2, so a gen 3 match would draw as not gen 2.",
-      "steps": [ { "patch": "docs/world/pending/gen3-field/grant-rendering.patch" } ],
+      "id": "world-gen3-field-b", "owner": "world-environment", "ready": false, "notes": "Diffs 14 (a slide's trench) and 15 (lots and the laid pose) of gen3-field. LEFT OUT: 14-trench-records.diff does not apply on main 59e671ed (sim/world/crater.gd at line 590: the landed field-frame changed it); World re-cuts 14 (15 follows it), then this goes back in (remove ready false).",
+      "steps": [
+        { "patch": "docs/world/pending/gen3-field/14-trench-records.diff" },
+        { "patch": "docs/world/pending/gen3-field/15-lots-and-laid-pose.diff" }
+      ],
       "needs": [ { "park": "world-gen3-field" } ]
     },
     {
-      "id": "architecture-field-frame", "owner": "simulation-engine", "notes": "A field world's line and the turntable (Simulation's track B): a whole ring on planetGen 3 only; nothing runs on any other setup. Installed by its own script, run on the scratch tree only, and only while the script is the file Tools reviewed (stdlib only, edits inside the tree it is given).",
+      "id": "simulation-swing-events-bridge", "owner": "simulation-engine", "notes": "A bridge, not a park: the landed field-frame adds the swing_start and swing_rest events but (as of 59e671ed) not their case in SimFxView.consume. The step says `already` when it does.",
       "steps": [
-        { "script": "docs/architecture/pending/field-frame/install.py", "sha1": "a2e003bb87687ef034719c1edff903b650464200" },
         { "fixup": [ { "file": "sim/core/view/fx.gd", "from": "\"form_hold\", \"form_release\", \"form_step\",", "to": "\"swing_start\", \"swing_rest\", \"form_hold\", \"form_release\", \"form_step\"," } ],
           "why": "field-frame adds the swing_start and swing_rest events (SimFx.swingEvent) but not their case in SimFxView.consume, so every swing logs 'consume: unknown event swing_start'. Simulation adds them to the pass list" }
-      ],
-      "needs": [
-        { "park": "simulation-right-word" },
-        { "park": "world-gen3-field" },
-        { "park": "encounter-swing" },
-        { "note": "NetDesync.digest: Netcode's PROTO 4", "owner": "netcode-online" },
-        { "note": "the README's gate table says 'don't land before it says so' (its gates were still running when it was parked)", "owner": "simulation-engine" }
       ]
+    },
+    {
+      "id": "architecture-field-frame-2", "owner": "simulation-engine", "notes": "A plan's far reads at a coarser stride (farStride 8, interpolated) and the match key's 64 sample nodes read fresh through WorldField.nodeFresh (World's diff 10). Only a field world reads any of it; off is byte-identical (its README).",
+      "steps": [ { "patch": "docs/architecture/pending/field-frame-2/field-frame-2.patch" } ],
+      "needs": [ { "park": "world-gen3-field" } ]
+    },
+    {
+      "id": "architecture-field-pads", "owner": "simulation-engine", "notes": "A building's base read at its own planet point (WorldStructures.baseY reads SimField.buildingGround: World's file, a grant): on planet 7 touch 2, 102 of 200 buildings stood over 50 units from the line's ground; now the same at any bearing. Only a field world reads it (its README). Its soak reached no buildings (0 building hits in four planets).",
+      "steps": [ { "patch": "docs/architecture/pending/field-pads/field-pads.patch" } ],
+      "needs": [ { "park": "architecture-field-frame-2" }, { "park": "world-gen3-field" }, { "note": "its fight soak reached no buildings (0 hits): fights against buildings need a staged test or an AI that goes to them", "owner": "simulation-engine" } ]
     },
     {
       "id": "rendering-tile-ground", "owner": "rendering-techart", "notes": "Rendering's tile ground in the real game (stage 4 of the ring-at-any-angle work), behind its switch (--tiles, ?tiles=1 on a local page): planet-keyed tiles on a true globe through Simulation's frame. Stacks on field-frame (needs SimField and WorldField). The stack's `tiles` switch is the page word.",
       "steps": [ { "patch": "docs/rendering/pending/2026-10-31a-tile-ground/tile.diff" } ],
-      "needs": [ { "park": "simulation-right-word" }, { "park": "world-gen3-field" }, { "park": "world-gen3-rendering-grant" }, { "park": "architecture-field-frame" } ]
+      "needs": [ { "park": "world-gen3-field" } ]
+    },
+    {
+      "id": "combat-propflight", "owner": "combat-choreography", "notes": "_propFlight's early exit (Performance's launch hitch): three lines in sim/director/launch.gd. A planned flight stops once he is in the air past the furthest prop plus PROP_STOP; 3,042 flights 0 differ, 13.7 times quicker (its README). Before Encounter's swing; applied after field-frame's install, which wraps launch.gd's forecasts.",
+      "steps": [ { "patch": "docs/combat/pending/propflight/propflight.patch" } ]
+    },
+    {
+      "id": "combat-launch-reads", "owner": "combat-choreography", "notes": "The launch planner's prop reads (two cuts in sim/director/launch.gd, on top of propflight, for the launch tick's 8 ms target): PROP SMASH fetches props only ahead of him, _propTargets reads the props it was given. Two of the three cuts of Encounter's plan-cost, which is withdrawn.",
+      "steps": [ { "patch": "docs/combat/pending/launch-reads/launch-reads.patch" } ],
+      "needs": [ { "park": "combat-propflight" } ]
     },
     {
       "id": "encounter-swing", "owner": "encounter-systems", "notes": "DirSwing: the choreographer's swing (data/director/swing.json `enabled`, off byte-identical; on a field world only). Switch: `swing`. Not re-cut on World's 04 to 06 (its README).",
       "steps": [ { "patch": "docs/director/pending/swing/swing.diff" } ],
-      "needs": [ { "park": "simulation-right-word" }, { "park": "world-gen3-field" }, { "park": "architecture-field-frame" }, { "note": "the swing's gate table says the full switch-off and switch-on gates were still running; QA's batch is the verdict on the read (fight time swinging misses its band)", "owner": "encounter-systems" } ]
+      "needs": [ { "park": "world-gen3-field" }, { "note": "the swing's gate table says the full switch-off and switch-on gates were still running; QA's batch is the verdict on the read (fight time swinging misses its band)", "owner": "encounter-systems" } ]
+    },
+    {
+      "id": "camera-swing-4-sim", "owner": "camera-cinematography", "ready": false, "notes": "LEFT OUT: the EP said it was re-cut on Encounter's swing (340a9f38), but the file is the 08:57 one and does not apply on Encounter's 11:17 swing.diff (295f228b): data/director/swing.json at line 153. Camera re-cuts, then this goes back in (remove ready false). The swing's camera, park 4 of 4: the sim's read (sim/director/swing_read.gd, swing_curve.gd, data/director/swing.json, a schema and map.json). The EP granted the read; the curve and the data paths were Camera's call (Camera's README asks for a check).",
+      "steps": [ { "patch": "docs/camera/pending/swing/swing-4-sim.patch" } ],
+      "needs": [ { "park": "camera-swing-3-peak" }, { "park": "encounter-swing" } ]
     },
     {
       "id": "encounter-stick", "owner": "encounter-systems", "notes": "The right stick's strike in the director (data/director/stick.json, switches.rightStick). Takes recipe.gd's overlay from its own diff, not from Combat's folder (the EP, 2026-10-31).",
@@ -103,18 +121,19 @@
       "needs": [ { "park": "encounter-swing" }, { "park": "combat-stick" } ]
     },
     {
+      "id": "rendering-load-pace", "owner": "simulation-engine", "notes": "A planet's load runs slices until 14 ms of a frame has gone (SimHost.load_step, RenderLook.LOAD_STEP_MS): Simulation's, in Rendering's files (render/core/sim_host.gd, look.gd), granted by the EP. Performance estimates about -2.5 to -3 s on a cold web load; not measured.",
+      "steps": [ { "patch": "docs/rendering/pending/load-pace/load-pace.patch" } ],
+      "needs": [ { "note": "the gain is not measured: a fresh load-probe on the page (Performance's tool) is owed", "owner": "performance-platform" } ]
+    },
+    {
       "id": "net-proto4-word", "owner": "netcode-online", "notes": "The intent's second word on the net (PROTO 4): SimIntent.pack2 in packets, digest and prediction. Off with switches.rightStick off: every packet and digest as it was.",
       "steps": [ { "patch": "docs/net/pending/proto4-word/proto4-word.patch" } ],
-      "needs": [ { "park": "simulation-right-word" }, { "park": "encounter-stick" }, { "note": "Netcode's word_check and rollback_check --right-stick used a stand-in reader: to re-run now that Encounter's stick hook reads the word", "owner": "netcode-online" } ]
+      "needs": [ { "park": "encounter-stick" }, { "note": "Netcode's word_check and rollback_check --right-stick used a stand-in reader: to re-run now that Encounter's stick hook reads the word", "owner": "netcode-online" } ]
     },
     {
       "id": "net-proto5-swing", "owner": "netcode-online", "notes": "A swing in the digest and the forced-flip test (PROTO 5): S.frame and S.swing hashed, the store restored on rollback. Only changes a digest on planetGen 3.",
       "steps": [ { "patch": "docs/net/pending/proto5-swing/proto5-swing.patch" } ],
-      "needs": [ { "park": "net-proto4-word" }, { "park": "world-gen3-field" }, { "park": "architecture-field-frame" }, { "note": "Netcode re-runs its gates when the arena parks land (its README); an ask that reverses a running swing flips it on one tick (Simulation's SimSwing.ask)", "owner": "simulation-engine" } ]
-    },
-    {
-      "id": "animation-pieces23", "owner": "animation", "notes": "Animation's pieces23 (2026-10-31, on HEAD, independent of its other four parked patches, which are not in the stack): protag7 and rival4 added to their fighters' waves, all 23 strikes named; the 23 pieces the sim throws now draw as themselves.",
-      "steps": [ { "patch": "docs/animation/pending/pieces23.patch" } ]
+      "needs": [ { "park": "net-proto4-word" }, { "park": "world-gen3-field" }, { "note": "Netcode re-runs its gates when the arena parks land (its README); an ask that reverses a running swing flips it on one tick (Simulation's SimSwing.ask)", "owner": "simulation-engine" } ]
     },
     {
       "id": "vfx-meteor-trail", "owner": "vfx", "notes": "VFX's meteor trail behind its own switch (VfxHub.meteor_enabled: off by default and byte-identical off, on by the page word ?meteor=quiet or ?meteor=loud on a local page); the stack's page carries the loud word and prints the quiet address beside it (the `meteor` switch). 15 files, one patch.",
@@ -141,10 +160,6 @@
       "id": "rendering-2026-10-30j-crowd-clock", "owner": "rendering-techart", "ready": false, "notes": "Unfinished, on top of 2026-10-30i: the crowd's cycles read the sim's tick (the wall-clock leak Tools found).",
       "steps": [ { "patch": "docs/rendering/pending/2026-10-30j/clock.diff" } ],
       "needs": [ { "park": "rendering-2026-10-30i-crowd-bend" } ]
-    },
-    {
-      "id": "encounter-plan-cost", "owner": "encounter-systems", "ready": false, "notes": "Unfinished: the gates have not run (Encounter's README).",
-      "steps": [ { "patch": "docs/director/pending/plan-cost/plan-cost.diff" } ]
     }
   ]
 }

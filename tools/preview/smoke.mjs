@@ -102,7 +102,7 @@ export async function smoke({ dir, on = IDS, planet = 7, timeoutS = 240, shot, s
       const playUntil = Math.min(deadline, Date.now() + 20000);
       for (let i = 0; Date.now() < playUntil; i++) { await press(KEYS[i % KEYS.length], 250); await sleep(150); }
       p = (await read()) || p;
-      notes.push(`after play: tick ${p.tick} (${p.tick - t1} more in the keys' 20 s), hp ${JSON.stringify(p.hp)}, ring turns so far ${p.turns} (a turn needs a planet match, 60 s of match time since the last one and a calm moment after a launch has landed: not within this 20 s)`);
+      notes.push(`after play: tick ${p.tick} (${p.tick - t1} more in the keys' 20 s), hp ${JSON.stringify(p.hp)}, ring turns so far ${p.turns}${p.swings !== undefined ? `, swings so far ${p.swings} (-1: no swing state, not a field world; DirSwing asks at a launch, a chase, a form's pause, an AI's flight or a brawl)` : ''} (a turn needs a planet match, 60 s of match time since the last one and a calm moment after a launch has landed: not within this 20 s)`);
       if (p.tick - t1 < 120) add(null, `the match did not play on: ${p.tick - t1} ticks in about 20 s of keys (it was at tick ${t1}; the How to play card or the start menu may still be up)`);
       probe = p;
       for (const x of probeProblems(p, want)) add(x.sw, x.text);
