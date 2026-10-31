@@ -49,7 +49,7 @@ Turning the world brings things on one side forward: what stood behind the fight
 
 **The shape:** smootherstep, like the rest of the camera's moves, so the peak rate is `1.875 × θ / T`.
 
-**The rate limits.** The lens is 30° vertically, which is 50.9° across at 16:9 and 39.3° at 4:3. Section 5 has the table. **Game Design's 60°/s is the ruling, and 100°/s, far land and flight's horizon together, is the most any screen shape takes inside the travel budget.** I withdraw my 150°/s: it came from `ANCHOR_STEP_TRANS` (0.05), over the 0.045 budget, and I hadn't looked at the budget.
+**The rate limits.** The lens is 30° vertically, which is 50.9° across at 16:9 and 39.3° at 4:3. Section 5 has the table. **Game Design's 60°/s is the ruling, and 100°/s, far land and flight's horizon together, is the most any screen shape takes inside the travel budget at a sustained rate. A short small swing is different: up to 240°/s, in section 5.** I withdraw my 150°/s: it came from `ANCHOR_STEP_TRANS` (0.05), over the 0.045 budget, and I hadn't looked at the budget.
 
 **The curve.** Game Design's "90° in 1.8 s" is a near-constant rate, not a smootherstep, whose peak would be 94°/s. So ramps at the ends: **20 ticks in, on a launch, so the whip stays clean, and 10 out, as ruled.** The camera's own limit on acceleration (`MASS_ACC`, 0.006 of the width a tick each tick) allows it: 60°/s is 0.018 of the width, reached over 10 ticks at 0.0018 a tick.
 
@@ -203,6 +203,32 @@ Rough, for planning. **Rendering's plan leaves the rig's framing as it is:** cam
 - **A flight's horizon adds to it.** Flat out, `v / R` is 23°/s on the full ring and 47°/s on a Half ring. **60 + 47 = 107°/s is over both ceilings at 4:3 and over the Reduce flashing one at 16:9.** So either the horizon's turn gives way during a swing on a Half ring, or the swing slows to about 65° less what the horizon takes, under Reduce flashing. I'd ease the horizon's turn off during a swing: the swing is already saying it.
 - **The budget is a yardstick today.** `travel_budget` ships off, by Orb's calls of 10-19 and 10-22, so nothing enforces it, and the flash analyser is the real test.
 - **Near things aren't covered.** Rendering's `z / (D − z)` is right. The flat near ground is what keeps it from mattering, and it's why nothing may stand there.
+
+### A short small swing: up to 240°/s
+
+Orb played proto v2: comfortable at every speed up to 240°/s, and 240 "could routinely be used for minimal swing adjustments", with only 240 at the largest size too extreme (`docs/ep/vision.md`).
+
+**A brief peak does change what the budget means. The 98°/s ceiling above is for a sustained rate; for a 5 to 15° swing the ceiling is 240°/s, on Orb's word.** No test here supports it beyond that.
+
+- **The budget limits how fast the picture travels for a while. It doesn't limit a short move.** The whip ships at 12 frames over up to 3 widths, a peak of 0.47 of the width a tick, ten times the budget. `SCROLL_CAP` already gives way after 20 ticks in one onset (`CAP_MAX`).
+- **A short move is better judged by how far it goes.** At 16:9, 15° is 0.275 of the width and 5° is 0.09, against the whip's 3 widths. At 240°/s the far land peaks at 0.073 of the width a tick at the centre and 0.09 at the edge, about a fifth of the whip's peak.
+- **So the budget doesn't decide this, and the analyser does.** `travel_budget` ships off, and nothing about this has been read. A whole-picture move through a lit city is the case to read, which I expect to be worse per tick than the 20 to 35% of the frame I found changing on a launch downtown, though over fewer ticks (not measured). **Reduce flashing keeps its 65°/s until that reading exists,** since RL-208 makes reduced mode the take-down trigger. The motion setting stays a cut or a still.
+- **Repeating them is what could fail.** One is a single change. Three a second is the thing the analyser exists to catch. **First value: small swings at least 1 s apart,** from Game Design's falling score.
+
+**Game Design's sweep limit still governs.** 240°/s (4.2 rad/s) only fits a fighter within 1,430 units of the pivot in the air, and 18 units on the ground. So it's for flight, or a launch's first ticks with the launcher as the pivot: a body at launch speed leaves that radius after about 14 ticks. **Two standing fighters still get at most 57°/s, at any size.** I don't know whether Orb's play had the limit ticked.
+
+**The easing.** Proto v2 uses a smootherstep at its chosen peak, so 240°/s makes 5° last 2.3 ticks and 15° last 7. **Orb saw that on a 240 Hz display. On the laptop at 30 fps, 5° would be about one frame: a jump, against Orb's rule that every move eases.** So a floor on time, and two shapes:
+
+| Swing | Shape | Floor | 5° | 10° | 15° |
+| :--- | :--- | ---: | ---: | ---: | ---: |
+| **With a blow** (a launch's release, a hit) | **Fast start, soft landing:** the camera's approved impact push (`BLOW_UP`). Rises over 2 ticks, then `1 − (1 − u)³`, so the peak is `3θ / T`. The blow hides the start | 8 ticks | 8 ticks, peak 112°/s | 8 ticks, 225°/s | **11 ticks, 240°/s** |
+| **With no blow** (a correction in flight) | **Smootherstep, as the whip.** A fast start with nothing to cause it would read as a jerk. Peak `1.875 θ / T` | 12 ticks | 12 ticks, 47°/s | 12 ticks, 94°/s | 12 ticks, 141°/s |
+
+- **So only a blow's swing reaches 240, from about 11° up.** Smaller ones can't reach it inside the floor, and that's the point of the floor. **Orb's "up to 240" holds as a cap.** If Orb wants the no-blow case faster, its floor is the number to move: at the 8-tick floor, 15° reaches 211°/s.
+- **The floors are first values,** taken from the blow push (7 frames) and the whip (12). 8 ticks is 4 frames at 30 fps, which I think is the least that can show an ease.
+- **Above 15°,** 240 at the largest size was too extreme, and Orb didn't say where it turns. **The clip needs Orb to move a size slider at 240 to find it.** Until then Game Design's 60°/s stands for anything larger.
+
+**For the proto:** the same two shapes and floors, on a laptop-speed frame rate, would tell Orb what these look like at the target. Also, real fighters and a city are the first things it can't show, so this stays first values until a clip on the real panes.
 
 ### The pivot: agreed
 
