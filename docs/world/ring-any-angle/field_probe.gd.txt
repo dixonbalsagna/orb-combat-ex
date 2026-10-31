@@ -1,0 +1,76 @@
+extends SceneTree
+# UNRUN, NOT EVEN COMPILED (the EP's no-Godot rule, 2026-10-31). Gen 2 relief error by node spacing: the ring's own column heights (WorldPlanet.farColumn, z = 0: the slice's column to the bit) against a straight line
+# between every k-th column (k 2, 4, 8, 16, 32 = node spacing 64, 128, 256, 512, 1,024 units), along the ring (the same statistic as research.md section 3, now on gen 2). Separate rows for the shore (within 40 of
+# SHORE_WET), mountains (over 800), a lake's columns, and the post-pass (S.base minus the raw column: platforms, river cuts, lakes), and the shoreline's displacement in units.
+#   godot --headless --path . --script res://field_probe.gd [-- --rivers]
+func stats(err: Array) -> String:
+	if err.is_empty():
+		return "none"
+	var sq: float = 0.0
+	var mx: float = 0.0
+	for e in err:
+		sq += e * e
+		mx = maxf(mx, absf(e))
+	return "%d cols, rms %.1f, max %.0f" % [err.size(), sqrt(sq / err.size()), mx]
+
+
+func _init() -> void:
+	WorldClimate.useGen(2)
+	if "--rivers" in OS.get_cmdline_user_args():
+		WorldRivers.setOn(true)
+	for seed in [7, 3, 11, 25]:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 1, {}, {"planet": seed, "touch": 1, "arena": {"cols": 2400}, "planetGen": 2, "intro": false})
+		var NC: int = SimConst.NC
+		var P := WorldPlanet.make(seed)
+		var pr: Dictionary = S.planetRing
+		var ring: Dictionary = WorldRingPick.ringFrom(pr.c, int(pr.cols), pr.t)
+		var raw := PackedFloat64Array()
+		raw.resize(NC)
+		for i in range(NC):
+			raw[i] = float(WorldPlanet.farColumn(P, ring, i, 0.0)[0])
+		var inLake := PackedByteArray()
+		inLake.resize(NC)
+		for lk in pr.get("lakes", []):
+			for q in range(int(lk[3])):
+				inLake[(int(lk[0]) + q) % NC] = 1
+		var post: Array = []
+		for i in range(NC):
+			post.append(float(S.base[i]) - raw[i])
+		print("planet %d: post-pass (S.base - raw): %s" % [seed, stats(post)])
+		for k in [2, 4, 8, 16, 32]:
+			var all: Array = []
+			var shore: Array = []
+			var mtn: Array = []
+			var lake: Array = []
+			var itp := PackedFloat64Array()
+			itp.resize(NC)
+			for i in range(NC):
+				var a: int = (i / k) * k
+				var t: float = float(i - a) / float(k)
+				itp[i] = raw[a % NC] * (1.0 - t) + raw[(a + k) % NC] * t
+				var e: float = itp[i] - raw[i]
+				all.append(e)
+				if absf(raw[i] - WorldWater.SHORE_WET) < 40.0:
+					shore.append(e)
+				if raw[i] > 800.0:
+					mtn.append(e)
+				if inLake[i] == 1:
+					lake.append(e)
+			# the shoreline: each crossing of SHORE_WET in the raw column, against the nearest crossing in the line-interpolated one (within 40 columns)
+			var disp: Array = []
+			var lost: int = 0
+			for i in range(NC - 1):
+				if (raw[i] - WorldWater.SHORE_WET) * (raw[i + 1] - WorldWater.SHORE_WET) < 0.0:
+					var best: float = 1.0e9
+					for d in range(-40, 41):
+						var j: int = posmod(i + d, NC)
+						var j2: int = posmod(i + d + 1, NC)
+						if (itp[j] - WorldWater.SHORE_WET) * (itp[j2] - WorldWater.SHORE_WET) < 0.0:
+							best = minf(best, absf(float(d)) * SimConst.COL)
+					if best > 1.0e8:
+						lost += 1
+					else:
+						disp.append(best)
+			print("  node spacing %4d: all %s | shore %s | mountain %s | lake %s | shoreline: %s units displaced, %d crossings lost" % [k * 32, stats(all), stats(shore), stats(mtn), stats(lake), stats(disp), lost])
+	quit()

@@ -123,3 +123,84 @@ Places the new ring holds within 12,000 units of the pivot: 0 to 3 at every angl
 - Whether an inland fill really is lost at a turn (read from `WorldWater.init`, not run).
 - How many old-ring places a large turn drops; how a 60 to 180 degree blend looks (heights and biome table measured, not drawn).
 - Anything about Camera, Rendering or the controls at a reversed heading.
+
+## 8. The 2D field (the turntable, E and E2): what it costs and needs on real planet ground (World, 2026-10-31, no Godot run)
+
+Orb picked the turntable: a planet-keyed field of ground round the pair, the strip re-laid from it, the world swinging round the fighters. Research's archField (`research/ring-any-angle/sim.js`) holds a cube-sphere grid of nodes at spacing G inside 12,000 units of the pair, bilinear look-ups, and the planet store. This section reads it against the gen 2 code. **Nothing here is measured on gen 2**: the EP's no-Godot rule stands. Where a number is derived I say from what. A probe that measures item 8.1 on the first quiet window is written and unrun, uncompiled: `docs/world/ring-any-angle/field_probe.gd.txt` (copy it to the project root as `field_probe.gd` to run).
+
+### 8.1 Relief error by node spacing, and the shore
+
+The gen 2 surface is the same lattice noise as gen 1 plus creased landforms. The finest smooth feature is the surface detail, scale 1,500 over 3 octaves: **375 units** a cell (`planet.json`); then rock 625, shelf 1,250, the ranges' ridges 1,600, canyons and rifts 6,000. Nothing smooth is finer than 375, so a node every 128 gives three nodes a cell.
+
+**The floor is gen 1's table** (Research, along one great circle, RMS / max): 64 u 0.5 / 11, 128 u 0.7 / 17, 256 u 1.6 / 27, 512 u 4.7 / 60, 1,024 u 16 / 184. Above 256 it follows RMS of about 1.5e-5 x G squared. Gen 2 can only add to it, at **creases**: the plate-edge ranges (amplitude up to 6,500), rifts (1,500), canyons and the polar edge are `abs`-type and threshold shapes, where linear interpolation misses by about (change of slope) x G / 4 at the kink. I did not measure how often or how steep, and the data holds only amplitudes, so any number I put on it would be a guess.
+
+**The shoreline is a threshold on height** (`SHORE_WET` -18.75, the sea at 0, the open sea below -240), so its position error is the height error over the beach slope. The beach is the shelf: noise amplitude 14 over 2,500 units, slopes of about 0.03 to 0.07. With the gen 1 RMS as the height error (a floor), the shoreline sits off by about:
+
+| Node spacing | Height RMS (floor) | Shore off at slope 0.05 | at 0.03 |
+| ---: | ---: | ---: | ---: |
+| 64 | 0.5 | 10 u | 17 u |
+| 128 | 0.7 | 14 u (under half a column) | 23 u |
+| 256 | 1.6 | 32 u (one column) | 53 u |
+| 512 | 4.7 | 94 u (3 columns) | 157 u |
+| 1,024 | 16 | 320 u (10 columns) | 530 u |
+
+**So the shoreline is honest near the pair (within one column, 32 units) at 128, or 256 on the steeper beaches; further out 512 holds it to about three columns (a fighter is 2.3 columns wide), which a camera 10 km away will not show.** A two-ring field does both: 128 within about 3,000 units of the pair, 512 out to 12,000. Nodes in a disc of 12,000: 110,447 at 64, **27,612 at 128**, 6,903 at 256, **1,726 at 512**, 431 at 1,024. The two-ring field is about 1,730 nodes at 128 (the inner 3,000) plus 1,700 at 512: **about 3,400 nodes, 190 ms to fill native** (54 us a node, my arithmetic from window 20's column cost; a bare surface read may be less).
+
+**Cost of moving it** (arithmetic): a node is read when a re-laid strip column first needs it, then kept. Flying 1,032 units/s uncovers `24,000 / G` nodes every `G` units: 1,512 nodes/s at 128 (82 ms/s native, 8% of a core, 33% on the laptop at x4), 94 nodes/s at 512 (5 ms/s). A 30 degree swing sweeps `r^2 x angle / 2` = 3.0e7 square units at r 10,688: 1,823 new nodes at 128 (98 ms, over the 1 s the turn takes at 30 degrees a second) and 114 at 512 (6 ms). That agrees with Research's E: 43 reads a tick on average, p99 337.
+
+**Rivers, shores and lakes, called out.**
+- **Rivers** are cut 4 to 24 columns wide (128 to 768 units), the channel snapped to the lowest ground within `reach` of a geometric crossing, and at most one crossing in 3,000 units kept (`rivers.json`, `WorldRivers`). That cannot live in the nodes: a 128-wide channel is one node at 128 spacing and nothing at 512. The flow lines are already planet-keyed (a 192 x 96 grid, about 800 units a cell), so a river stays where it is as the view swings, but **the carve and the "one in 3,000" rule are properties of the strip's line**. They must be redone on the strip each relay from the planet's flow lines, and the gap rule must become a planet rule or go; otherwise a river blinks in and out as the line swings across a comb of crossings.
+- **Lakes are planned on the ring's own height line** (`WorldLakes.plan`: a local minimum of `base` walled by a crest on each side along the line, flat at the lower crest, up to 480 columns). That is a 1D property. A valley walled on both sides along one bearing can be open along another, so a lake would appear and vanish as the world swings. A field world needs the lake as a 2D basin with one planet level (a priority flood, as the rivers already do on the 192 x 96 grid, but at node scale), planned once per basin and cached, the strip only reading it. Without that the turntable has flickering lakes.
+- **Shores** are the threshold above: honest at the spacings in the table.
+- **The common fix:** the field holds heights; water, rivers and lakes are planet-keyed records read through it, not things planned on whatever line is in view.
+
+### 8.2 What the field holds beyond height
+
+| Layer | Source today | In the field | Lazy? |
+| :--- | :--- | :--- | :--- |
+| Height | `surfAt` | Node value, bilinear | Yes: a node is read when a strip column first needs it |
+| Biome (stored) and fine biome | The same `surfAt` call and the climate | A byte a node, nearest node, never interpolated; a border is off by up to G/2 | Yes, read with the height at no extra noise |
+| Sea and shore water | `WorldWater.init`: the sea reservoir and its laps along the strip | Derived on the strip from the heights | Yes, each relay; needs a margin at the window's edge (the laps start at the sea) |
+| Lakes, rivers | Planned on the ring's line (8.1) | A planet-keyed 2D basin and flow-line record | Planned once per basin and cached, read lazily |
+| Lake floor | `WorldWater.floorAt`: surface less feet(depth), depth from the undug bed | The undug bed is exactly the field's value, so it gets simpler and truer | Yes |
+| Trees | `WorldGround.layTrees`: placed by column index and the slice's hash | **Not planet-keyed**: the same grove would re-roll when the line swings. Needs a hash keyed by planet cell (a new gen: every gen 2 world's trees move) | Yes once cell-keyed |
+| Props | `propsIn` from base, biomes, lanes, minus lake strips | Derived | Yes (render side) |
+| Lanes, platforms | From each settlement's chord and district list | A city's pad is a planet disc flattened in the field (the place's centre and radius exist: `P.px/py/pz`, `P.rad`); lanes come with the plan (8.3) | The pad yes; lanes wait for the plan |
+| Sites, outposts | Held places of the ring | Planet places by position, within the view | Yes: the place list is small and eager |
+| Fires, hurt trees | `TreeState.tBurn` | Part of the object store (8.4) | State, not derived |
+
+**State, not derived:** marks, fills and flows, buildings' hp and people, burning. The strip becomes a view; `S.base` changes on every relay, so the state hash folds the view frame and the store length instead (Research's E does this) and Simulation owns that line.
+
+### 8.3 Places: a city laid along one chord when the view swings across it
+
+Today a place's layout is generated from its chord (`WorldPlanetWorld.settle`) and a different chord makes a different layout: Bellgate came out as 12, 12, 8 and 16 buildings on four chords, with 15 of 32 per-index matches (`calm-turn-world.md`). The calm turn avoids this by carrying the zone's buildings as they stand and laying a place again only outside it, and the zone (12,000) is wider than the camera's half-view (10,667), so nothing the camera sees is re-laid. A turntable breaks that, because the view itself is what changes: the places that swing into view are new ones.
+
+- **Re-laying a visible city while the view turns** pops buildings in and out in front of the player. Out.
+- **Freezing it in strip coordinates** (what the swap does inside its zone) is stable and cheap, but the city then turns with the view instead of with the planet, and its pad does not follow the swing. A city of radius 6,500 has a chord half-length `sqrt(r^2 - d^2)` at lateral offset `d`: 6,500 at 0, 5,766 at 3,000, 4,153 at 5,000. A swing of `dtheta` moves the line's offset at a city `s` away by `s x dtheta`: **6 km away, 10 degrees is 1,040 units and 30 degrees 3,000.** So a frozen layout stays plausible to about 10 degrees; past that its buildings stand off the pad.
+- **Shortest honest answer short of plans:** (1) make the pad planet-keyed now (flatten the field in each place's disc, cheap and independent of any layout); (2) lay a city when it first reaches the margin between the camera's half-view and the zone (about 1,300 units, 42 columns, 1.3 s of flight), on the chord of that moment; (3) keep it frozen in strip coordinates while the swing since it was laid is under about 10 degrees; (4) beyond that, re-lay it only while it is out of view or hidden by a cut, or cap the swing rate so the 10 degrees never builds up in view. That is honest for a swing of up to 10 degrees a place, and a slow turn or Camera's cut can hide the rest; it is not honest for a continuous 30 degrees a second round a city in the middle of the view.
+- **The proper answer is stage 3's places by plan:** a city is a 2D plan (building positions in its own frame, planet-fixed) and the strip takes the buildings whose lateral offset falls inside the band, with `x` the arc and `z` the lane. Nothing is re-laid and nothing pops, and it gives the lanes too. It is the "generate a city from its own plan" that `calm-turn-world.md` already lists as owed.
+
+### 8.4 The planet store: marks in planet coordinates
+
+Research's store is a log of about 48 bytes a mark (a planet point, kind, radius, depth, id); the strip is re-laid from the field plus every mark within the view (`craterAt` of the arc distance). It works for craters. For the real ground every writer of a mark must become a record:
+
+| Mark | Writer today | A record would be |
+| :--- | :--- | :--- |
+| Crater (up to 400, `LIST_MAX`) | `WorldCrater.dig` (x, energy, cause, kind) | Already a record: add the planet point (3 float64) and keep the radial profile as a function of arc distance |
+| Slide (up to 200) | `WorldSlide` (x0, x1, profile) | A planet segment and a profile |
+| Beam scar and `aftermath` | `after.gd` strips and timed jobs, `S.aftermath*` arrays | A polyline with width and kind, plus its timer; jobs keep running in planet time |
+| Heaps | Rubble written per column when a building falls (`S.rubble`) | A record per fall: planet point, width, mass |
+| Scorch, cracks | Per-column floats, permanent | Part of the crater and beam records, not arrays |
+| Fills, flows | `S.water`, `waterWin` (calm-gated now) | A fill level on its crater record; flows as planet-cell state. **A turntable has no calm gate, so a flow in progress must survive a relay** |
+| Buildings | `S.buildings` (x, z, place, district) | (place, plan index, planet point), with hp and people as state keyed by the plan index |
+
+The readers are many: `S.craters` 15 files, `S.slides` 11, `S.deform` 14, `S.rubble` 10, `S.scorch` 10, `S.crack` 8, `S.aftermath` 7. They can keep reading the strip arrays if those are rebuilt from the store each relay (668 columns in view times the marks near each: thousands of evaluations a relay). Anything that writes an array directly (beams, slides, heaps) must write a record instead. The store itself is small (400 + 200 records is under 30 KB); a snapshot holds only its length and a rollback truncates it (Netcode's rule, in Research's E).
+
+**Is the parked `cancel-keep` fix still needed on this route? Not by the field itself; yes while the swap stays.** The field has no pick and no ring job: a node is a memo of a pure function, held outside the state, and a lookup that misses reads one node, never a ring. What carries over is Netcode's rule, not my code: the node cache must be content-keyed and never discarded inside the rollback window, or a rollback re-reads nodes on the rollback frame (a dropped cache of 1,727 nodes is about 93 ms). The calm-turn swap is what the preview runs, so `cancel-keep` stays parked and needed there until the field replaces it.
+
+### 8.5 What I could not measure, and what the next window should run
+
+1. `field_probe.gd`: gen 2 relief error by spacing 64 to 1,024 on four planets, with the shore, mountains, lakes and the post-pass told apart, and the shoreline's displacement. It replaces 8.1's derived table.
+2. Node read cost: a surface read per node (without the ring bookkeeping) against 54 us a column.
+3. How many creases the ranges and rifts give per 1,000 units (decides whether 128 holds mountains).
+4. Nothing on rivers, lakes or trees has been run with a swinging view; the claim that lakes flicker is from reading `WorldLakes.plan`, not from a run.

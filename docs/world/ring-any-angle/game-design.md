@@ -43,7 +43,7 @@ Rates are at the peak, with 20 ticks of easing in and 20 out. The prototype's 30
 - **Reduced motion:** a swing is a whole-view move, so it needs a slower setting. The rate is in the sim, so it's a setup value: half the rates, the lower of two players' settings online. Orb's rule that accessibility is assumed makes this a requirement.
 - **Long trips are its best home.** A swing during a long flight is also the cheapest answer I have to Orb's "experience of speed and power": the far land wheeling past as he crosses it.
 
-**The pivot.** A standing fighter if exactly one is standing: his ground sweeps nothing. The midpoint if both or neither are. A change of pivot leaves everything where it is and only changes how it moves next, so it eases over 20 ticks and never pops.
+**The pivot.** A standing fighter if exactly one is standing: his ground sweeps nothing. The midpoint if both or neither are. A change of pivot leaves everything where it is and only changes how it moves next, so it eases over 20 ticks and never pops. **A swing with an arrival keeps its pivot on one planet point until it rests (§8).**
 
 ## 3. A far fighter's ground
 
@@ -67,8 +67,8 @@ A fighter at distance `r` from the pivot sees ground move at `r × rate` (over a
 - **Under 2°/s it holds still,** since it wouldn't read as a swing: two standing fighters over about 4,300 apart. That's a held swing rather than a refused one, and it carries on once one takes off. It's also why a launch's swing has to finish before he lands.
 - **This withdraws the 300 and 450-unit ground rules:** those limited a jump, and nothing jumps now.
 - **Ground that rises under a standing fighter** is handled by the rule for a waded body (`rulings-2026-10-30.md` row 9): at most 7.5 units a tick, and he keeps the stick. At 75 units a second of sweep, that only bites on a cliff.
-- **A building's face and a standing fighter:** the swing eases to rest 0.5 bh short (`depth.md` §2's clearance). The director should pick a bearing that avoids it, and this is the backstop.
-- **A building's face and an airborne fighter:** it passes through him with no damage and no stop, shown with the existing see-through. **A sweep is never a contact, and only his own flight makes one.** At up to 6,000 units a second it would otherwise be a free slam from nobody's blow. QA counts these, because that's what would make this look wrong.
+- **A building's face and a standing fighter, or a locked pair in the air (§8):** the swing eases to rest 0.5 bh short (`depth.md` §2's clearance). The director should pick a bearing that avoids it, and this is the backstop.
+- **A building's face and an airborne fighter who isn't in an exchange:** it passes through him with no damage and no stop, shown with the existing see-through. **A sweep is never a contact, and only his own flight makes one.** At up to 6,000 units a second it would otherwise be a free slam from nobody's blow. QA counts these, because that's what would make this look wrong.
 
 ## 4. A held stick
 
@@ -107,3 +107,22 @@ A fighter at distance `r` from the pivot sees ground move at `r × rate` (over a
 - **Nobody has seen real fighters in a swing.** The prototype has bars in scripted fights.
 
 **For Orb, one question, once a swing can be seen with real fighters:** should the world swing while you're fighting up close, or only when the fight is flying? It decides the most cost: a pressing player's brawls are about half of fight time. My first value is slowly, at 10°/s, and it's the first thing I'd cut.
+
+## 8. Addendum: Encounter's questions (`encounter.md`), 2026-10-31
+
+**The largest finding: once the line tilts, walls have to be real.** No code stops a body at a building with depth off, which is safe only because World builds nothing on the plane. A tilted line reaches a block within 187 to 1,080 units, and Encounter's rough estimate is 10 to 26 strikes a match with a wall in the way, against 0 now. Orb has already objected to exactly that picture, and a villain hunting towns makes it worse on purpose. **So the rules I wrote for depth (`depth.md` §2 and §4) apply on any swung line, with depth on or off, in this order:**
+
+1. **Rest on a street where there's a street** (question 3), so that most of the time the plane is clear again.
+2. **What's left meets a wall as a wall.** Drift stops and slides (question 4). A flight makes contact, which is Encounter's `_checkHitSwept` on a swung line, and the planner reads it through the chain limits by tier.
+3. **An attack with a wall between still closes,** in its own time and never misses (`depth.md` §4). It ploughs through where the launch ladder says that fighter's power can, and otherwise goes over the top. A blow lands with both on the same side.
+4. **"No standing face in the gap" stays a hard test** for every blow, and QA's row now reads with swings on.
+
+This costs collateral, which the existing bands bound, and a real collision path with depth off, which is L3's work in scratch. It also gives the fight what Orb asked for from the streets: a brawl that has to work with the buildings it's among. **The fallback, if that cost can't be met at first:** inside a place, a swing must rest on a street's bearing, as a hard rule rather than a score, which keeps the wall count near 0 but limits how a city can be approached.
+
+| # | The question | The ruling | Owner |
+| :--- | :--- | :--- | :--- |
+| 1 | **Should an arrival's pivot stay on its planet point until the swing rests?** | **Yes,** for any swing with an arrival, whoever leaves that point. The arithmetic is decisive: 718 to 3,708 units off at 6,000 can't be corrected once the force is spent, and "the swing arrives at something" is the rule the page rests on. The point starts where §2 says: the standing fighter's feet, or the midpoint. **The sweep limits still win.** If someone standing ends up far from the pivot, the rate falls, the arrival is late, and he lands somewhere ordinary. Nothing pops to save an aim. A swing with no arrival keeps §2's easing pivot. Whether a launcher chasing away from a fixed pivot looks right is for the look gate | Encounter, World |
+| 2 | **Row 9's hard test against §3's pass-through, in an aired brawl** | **Encounter's fix: a locked pair counts as standing, for faces only.** Locked means they're exchanging blows: a brawl, a rally or a grab. The swing eases to rest 0.5 bh short of them. The sweep limit stays by whether they're on the ground, which at a brawl's radius makes little difference. The pass-through in §3 is now only for a body not in an exchange: a launched fighter, or a chaser who hasn't closed | Encounter, World |
+| 3 | **A street-alignment score inside places** | **Yes, and weighted to usually win inside a place.** It's the cheapest way to keep the plane clear, and a city approached along its own streets looks directed. It applies only inside a place, and it's a score, so a great arrival can still beat it. It needs World's street query | Encounter, World |
+| 4 | **Brawl drift into a wall** | **It stops, as `depth.md` §2 already says:** the part of the motion running into the face stops, the rest slides on, and in a corner the pair go up and over. It does no damage, and gives no bonus or pin. Passing through is what Orb objected to | Encounter, Simulation |
+| 5 | **Is distance from the pivot along the line, or in three axes?** | **On the ground plan: along the line and in depth, never altitude.** The turn is about a vertical axis, so height changes nothing about how fast the ground moves under him. With Option A landed, depth is near 0 and this is nearly the same as along the line. Option A remains first: a fighter left 1,200 off the line is exactly the 3.6°/s case Encounter found | World |
