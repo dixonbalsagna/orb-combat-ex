@@ -96,16 +96,16 @@ So "turned by the camera" and "turned by the world" are the same maths. I'd keep
 
 ### What flight costs
 
-A disc turns free, but moving it uncovers an edge. With 4 reads a tick, radius `r` and node spacing `g`, flight at `v` needs `(2r/g)(v/g)/60` reads a tick. So at `r` 6,000:
+A disc turns free, but moving it uncovers an edge. With radius `r` and node spacing `g`, flight at `v` needs `(2r/g)(v/g)/60` reads a tick. So at `r` 6,000, at Performance's two budgets:
 
-| Speed | Spacing the budget holds |
-| ---: | ---: |
-| 1,000 u/s | 224 u |
-| 3,000 u/s | 387 u |
-| 6,000 u/s (launch) | 548 u |
-| 10,000 u/s | 707 u |
+| Speed | Spacing at 4 reads a tick (native) | At 1.5 a tick (web, laptop) |
+| ---: | ---: | ---: |
+| 1,000 u/s | 224 u | 365 u |
+| 3,000 u/s | 387 u | 632 u |
+| 6,000 u/s (launch) | 548 u | 894 u |
+| 10,000 u/s | 707 u | 1,155 u |
 
-So the near ground is about 512 units while flying flat out and sharpens to about 128 at rest.
+So at 4 reads a tick the near ground is about 512 units while flying flat out and sharpens to about 128 at rest. **The EP's provisional call since then is one canonical spacing, with no sharpening at the feet, and section 7 shows that. The rest of this list is what I wrote before it.**
 
 - **Already resident:** the far map's finest texel is 400 units, at about 9 s to build a planet (`look.gd`).
 - **At rest:** a 128-unit disc of radius 6,000 is about 6,900 reads, 373 ms native, against 259 ms for today's whole ring. It's a match-start cost, or 29 s at 4 a tick.
@@ -223,3 +223,105 @@ Changes it needs either way:
 - **Game Design and Camera:** whether a fighter hidden about 8 ticks by a passing tower is acceptable with depth on, and how far a swing may turn.
 - **Art:** the look of true 2D near land, and of land and towers sinking in the foreground.
 - **Legal:** the first flash readings of a swing.
+
+## 7. The test's results (2026-10-31)
+
+**It ran.** A scratch scene on planet 7's real gen 2 ground: paged tiles, one frame uniform, boxes as buildings with lit windows, the real figure, boxes as fighters. It's web, Compatibility, driven through the same hook as the game. Sources are in `docs/rendering/pending/2026-10-31-swing-test/`. It has no sim, HUD, VFX, rigged fighters, real terrain colours, real building shader or water sheet, so **no number here is the whole game's frame**. Stills are in `docs/rendering/img/lookgate/swing-*.png`.
+
+| # | Question | Pass line | Result |
+| ---: | :--- | :--- | :--- |
+| 1 | Can the laptop draw it? | On the Radeon and at x4, p95 no worse than `pb` at the same triangles; under 1 ms more at x1 | **Pass, with the caveat above.** Table below |
+| 2 | Is an upload one layer? | One tile under 0.2 ms at x1, flat with array size | **Pass, nearly flat.** Time on the main thread per update: 1 to 2 µs at 33 by 33, at 8, 64 and 256 layers; at 65 by 65, 5, 7 and 40 µs. The GPU process's share isn't in that, and the flight's reruns that do include uploads were marked invalid by load |
+| 3 | Does anything leave the ground? | Foot to ground 0 px | **Pass near, 1 px far.** Inside 3,000 of the pivot, 0 (88 objects). To 12,000, at most 4.3 units, 1 px, where a coarser level is drawn (348 objects). Feet read the mesh's own nodes and triangles, 32-bit heights, as Simulation asked. This is the bake's CPU twin plus stills, not a pixel probe |
+| 4 | A seam or a pop? | No magenta pixel in any frame | **Fails as written.** Levels agree exactly: 0.0000 at every shared node, 463 parent and child pairs. But 28 of 127 stills at 60°/s have pinholes, mostly 1 or 2 pixels each, worst still 93 pixels of 921,600, in the rows at the horizon where I looked. Flight: none in 121. Cause not found. A real build wants a skirt on far tiles |
+| 5 | Solid (test 7)? | A full 360° returns a byte-identical frame | **Pass**, with the crater and damaged tower in view, after one turn and after two. **But see section 10:** today's bend isn't solid in mid-turn |
+| 6 | Does it flash? | A reading | **All pass, on this greybox.** Table below |
+| 7 | Does it look right? | Orb's call | **Waiting for Orb.** There's no video encoder here, so it's a page to play (below) |
+
+**Frame cost, 600 ticks, valid runs:**
+
+| Run | Primitives | p50 ms | p95 ms | Draws |
+| :--- | ---: | ---: | ---: | ---: |
+| Swing at 60°/s, Radeon | 180k | 3.2 | **3.6** | 8 |
+| Swing at 98°/s, Radeon | 176k | 3.1 | **3.6** | 8 |
+| With surface detail and the coast (`coarse=2`), Radeon | 205k | 4.0 | **4.3** | 8 |
+| Game's `pb` scene, a city on planet 7, Radeon | 177k | 18.2 | **25.0** | 252 |
+| Swing at 60°/s, x4 | 180k | 4.0 | **4.8** | 8 |
+| Game's `pb`, x4 | 181k | 30.7 | **63.4** | 252 |
+| Swing at 60°/s, x1 | 180k | 1.2 | **1.4** | 8 |
+| Game's `pb`, x1 | 170k | 6.3 | **10.2** | 240 |
+
+The game's frame also holds everything the test leaves out, so this is not a saving of 21 ms. **What it does show:** this ground's geometry, at today's triangles, costs a Radeon under 4 ms with simple colours. So there's room for real terrain colours, which the coast study names as the layer that costs. The view's script (the tile walk and the plane's 64 samples) is **0.6 ms at x1, 2.1 at x4**, inside the 0.5 to 1 ms limit but near its top. It runs every turning frame and could run less often. A flight's reruns came out at p95 2.7 Radeon and 4.5 x4 at 98k primitives, marked invalid by load, so they're upper bounds.
+
+**Flash, by `analyse-frames.js` at `--scale 1`, 600 ticks. Primary / area 15% lower / 2 s memory; red 0 and no dips in all:**
+
+| Scene | 1024 by 768 | 960 by 540 (16:9) |
+| :--- | :--- | :--- |
+| 60°/s, the build value, through the city | 1 / 1 / 1 | 1 / 1 / 1 |
+| 98°/s, city | 1 / 1 / 1 | 1 / 1 / 1 |
+| 65°/s, Reduce flashing | 1 / 1 / 1 | 1 / 1 / 1 |
+| 30°/s, Reduce flashing | 0.5 / 0.5 / 0.5 | 1 / 1 / 0.5 |
+| Small swings, 5 to 15°, 240°/s, city | 1 / 1 / 1 | 1 / 1 / 1 |
+| Small swings, 120°/s, city | 1 / 1 / 1 | 1 / 1 / 1 |
+| Small swings, 240°/s, open ground (rock) | 0.5 / 0.5 / 1 | 0.5 / 0.5 / 1 |
+| Small swings, 120°/s, open ground (rock) | 0.5 / 0.5 / 1 | 0.5 / 0.5 / 1 |
+
+**Read these narrowly.** The limit is 3, and collapse in the game reads 2 to 3.5, so the swing itself adds little on this evidence. But the city is my boxes, not the game's, with no VFX, and the two modes draw the same picture here: a normal and a reduced capture of one scene differ only in noise (41 of 600 frames, 2 pixels by 1 level, in the two frames I measured). So small swings' reduced mode was captured only once, on the 240°/s city. **This doesn't clear anything for Legal: the real reading needs real buildings.**
+
+**Repeat captures** also bear on the crowd clock's leftovers. This scene has no clock at all and still differs in 1 or 2 pixels by 1 level, on about 7% of the frames of that one pair. That's the size I measured on the one leftover frame in `2026-10-30j`, so it may be the renderer's noise. I haven't checked those frames.
+
+**Near-tower options** (`swing-near-options.png`: the rule, sink, hard clip, top to bottom). No fade in any of them.
+
+- **Hard clip:** black slabs as a tower crosses the line. Camera's fear is right, and I'd drop it.
+- **The rule, on buildings:** I proposed this, and I no longer recommend it. Near corners come down before far ones, so a tower turns into a blade with a sloping roof.
+- **Sink:** the cleanest in stills, the whole tower easing into the ground over 300 units. **My pick**, but stills can't say whether it reads as being swallowed. Orb has to watch it move.
+- **A wall that stops a fighter** stays where it stands under all three (`swing-wall.png`, key T).
+
+**Ground on one spacing** (`swing-ground-city.png`, `swing-ground-rock.png`; left today's detail, middle the coarse lattice with visual detail, right with the coast record; top camera at 1,000, bottom 2,600). The lattice here is 600 units at a face's middle, not 512. Height is the nodes only; the fragment's light alone carries detail, so no foot moves.
+
+- **On flat city ground it reads fine.** The green mottles softly and looks like camouflage at the closest camera, so it needs an artist.
+- **On rock it reads bare without the detail, and passable with it.** Big flat planes run from the feet to the skyline, and the small facets are gone. The detail breaks up the planes but gives no silhouette: a ridge's outline stays as coarse as the lattice.
+- **The coast record works** in the stills: the water follows today's shoreline to the mesh. It's stood in for by today's own data, not a real record.
+- **I skipped the cubic reconstruction.** It would move the ground away from the sim's triangles at the feet.
+- **The flight at 1.5 reads a tick** (`swing-flight-reads15.png`): the same bare look 16 s after landing, because one tile takes 726 ticks to read. So sharpening at that budget wouldn't have helped anyway.
+
+**Problems the pictures show, not fixed:** dark stripes on the ground just behind the plane on some bearings, where the foreground cap meets the ground, and towers lean and arc from today's bend at wide angles.
+
+**To play it:** `node serve.mjs` in the scratch site, then `http://127.0.0.1:8770/play/index.html`. Keys: 1 2 3 are 30, 60, 98°/s; 4 and 5 are small swings over the city at 240 and 120; 6 and 7 over open ground; Q W E are the rule, sink, clip; F flight; T wall. Add `?coarse=1` or `?coarse=2` for one spacing. It has no fighter inputs; the top edge says what's running. The site is 59 MB and in my scratchpad. Nobody has played it in a real browser yet: every run so far was headless.
+
+**Camera's two questions.**
+
+- **Do pane frames follow Game Design's ground rate? Yes,** by construction, though the test has no split. A pane's frame is the sim's heading and its own fighter's planet point, so the ground passes under it at the sim's rate.
+- **How far may the shown heading part from the sim's under a standing fighter?** About `10 / (r × slope)` radians at `r` from the pivot, taking 10 units of foot error as what shows (my figure). On a 1 in 2 slope: 15° at 75 units, 7.6° at 150, 2.3° at 500, 1.1° at 1,000. **So a reduced-motion hold works in a close brawl and fails at a gap,** unless feet follow the shown ground rather than the sim's.
+
+## 8. From performance to maximum (ADR 0012)
+
+The tiles scale by three numbers, all view-only: vertices a tile, how far each level reaches (`K`), and how fine the near tile is. Estimates, from the test's 180k at `K` 1.6 and 33 vertices. Only the middle row was run.
+
+| Setting | Near vertex spacing | Vertices a tile | `K` | Triangles | Tile layers |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| Performance | 150 u | 17 | 1.2 | about 30k | 128 |
+| Middle (the test) | 75 u | 33 | 1.6 | about 180k | 512 |
+| High | 37 u | 65 | 1.6 | about 700k | 512 |
+| Maximum | 19 u | 65, one more level | 2.0 | about 1.2M | 1,024 |
+
+**Feet on a view finer or coarser than the sim's ground.** The sim keeps its one canonical ground on every setting (ADR 0012, item 3). The rule is that **height at the feet is the sim's triangles, on every setting**:
+
+- **Finer:** detail height fades to zero within about 200 units of a fighter, or stays in the fragment.
+- **Coarser:** the mesh within a small patch of each fighter is always at the sim's spacing, as one extra instanced patch. Elsewhere a coarser mesh only moves things standing on far ground, and props take the drawn height.
+
+## 9. Could desktop move past Compatibility?
+
+Possible, and **the swing doesn't need it**: the test's numbers come from Compatibility.
+
+- **It would buy** real-time shadows, global light, screen-space effects, better antialiasing and compute for far-land work on the GPU. None of those can touch what the sim reads.
+- **It would cost** a second renderer for the life of the game. The web and old laptops stay on Compatibility, so every shader goes through the look gate twice and every flash reading doubles. Shader compile stutter comes back as a task, and clip-space assumptions differ.
+
+This is from what I know of the engine, not a spike. I'd leave it as a later "maximum look" decision for Orb and Art, with a spike first, and I wouldn't tie it to the swing.
+
+## 10. Curvature tied to the zoom
+
+- **View-only? Yes.** It's in the vertex shader. The sim never reads it, so online and replays are untouched.
+- **Does it hold test 7? Not as today's bend is written, and that's independent of the zoom.** `bent_world` sags by `x² × k(depth)`, which isn't symmetric round the pivot. So a point rises and falls as it swings, by up to the whole sag at the screen's edge: 25 px at today's closest. My 360° test passes only because it returns to its start. **A sag by radius, `r² / 2R_eff`, doesn't change in a turn, so it holds test 7 exactly,** and it's a true globe at `R_eff = R`. Camera's share of true curvature becomes `R_eff = R / share`, read from the displayed zoom, which is what Proto v2 does. Not built or tried yet.
+- **How do the feet stay put?** A fighter on the plane away from the pivot would now sag too. So fighters, beams and VFX take the same sag function as the ground, view-only. That's one more reason for the single `world_place()`. Height at the feet is still the sim's; the sag moves ground and body together. Today's "the fighter plane stays exactly flat" goes, which is Camera's and Orb's to see.
+- **A zoom change eases as Camera's zoom does,** so the ground doesn't morph on its own. Camera's warning stands: 25 px of sag at the closest down to 3 is a large change in close play, and it goes through the look gate. The formula is small, but it replaces every `bent_world` caller.
