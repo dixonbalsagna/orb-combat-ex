@@ -1,0 +1,166 @@
+reads a tick. Budget: 0.2 ms = 3.7 native, 1.5 web. Spike 8 ms = 148 native, 62 web. Laptop ms = reads x 0.8.
+
+== any
+field                                               load   mean    p99   max  forced backlog late | native ms laptop p99
+E 128 u, r 12,000 (at once)                          24015  44.04   348   438   0.00      0     0 |     2.38    278.1
+E2 512 u, r 12,000 (at once)                          1597   2.88    59    95   0.00      0     0 |     0.16     47.5
+E spread, K 4                                        24015   3.89     4     5   0.00 336716  6869 |     0.21      3.2
+E2 spread, K 4                                        1597   2.82     4     5   0.00    832  1037 |     0.15      3.2
+E2 spread, K 1.5 (web)                                1597   1.46     2     2   0.00  13330  4800 |     0.08      1.6
+Rings 128 to 1,500, 256 to 4,000, 512 to 12,000       2408  13.00   126   177   0.00      0     0 |     0.70    101.1
+Same, K 4                                             2408   3.89     4     5   0.00  81405  5082 |     0.21      3.2
+Rings 128 to 3,000, 512 to 12,000 (World)             3015  17.14   133   188   0.00      0     0 |     0.93    106.4
+Same, K 4                                             3015   3.89     4     5   0.00 117180  5668 |     0.21      3.2
+512 to 6,000, 1,024 to 12,000                          728   2.17    48    80   0.00      0     0 |     0.12     38.1
+Same, K 4                                              728   2.13     5     5   0.00    761   684 |     0.12      3.7
+1,024 only to 12,000                                   428   0.76    26    55   0.00      0     0 |     0.04     20.8
+Same, K 4                                              428   0.76     5     5   0.00     13    77 |     0.04      4.0
+E2 half disc, r 8,300 (Camera)                         430   1.71    25    48   0.00      0     0 |     0.09     20.3
+Same, K 4                                              430   1.70     5     5   0.00    275   239 |     0.09      4.0
+E2 whole disc, r 8,300                                 755   2.35    46    85   0.00      0     0 |     0.13     36.5
+
+== hard
+field                                               load   mean    p99   max  forced backlog late | native ms laptop p99
+E 128 u, r 12,000 (at once)                          24015  44.96   325   441   0.00      0     0 |     2.43    259.7
+E2 512 u, r 12,000 (at once)                          1597   2.93    56   106   0.00      0     0 |     0.16     44.8
+E spread, K 4                                        24015   3.89     4     5   0.00 313149  6874 |     0.21      3.2
+E2 spread, K 4                                        1597   2.93     4     5   0.00    172  1378 |     0.16      3.2
+E2 spread, K 1.5 (web)                                1597   1.44     2     2   0.00  12081  5251 |     0.08      1.6
+Rings 128 to 1,500, 256 to 4,000, 512 to 12,000       2408  13.64   117   177   0.00      0     0 |     0.74     93.6
+Same, K 4                                             2408   3.88     4     5   0.00  73732  5565 |     0.21      3.2
+Rings 128 to 3,000, 512 to 12,000 (World)             3015  17.79   128   187   0.00      0     0 |     0.96    102.4
+Same, K 4                                             3015   3.89     4     5   0.00 104119  6084 |     0.21      3.2
+512 to 6,000, 1,024 to 12,000                          728   2.21    47    76   0.00      0     0 |     0.12     37.6
+Same, K 4                                              728   2.21     5     5   0.00     71   796 |     0.12      4.0
+1,024 only to 12,000                                   428   0.77    26    56   0.00      0     0 |     0.04     20.8
+Same, K 4                                              428   0.77     5     5   0.00      0    50 |     0.04      4.0
+E2 half disc, r 8,300 (Camera)                         430   1.99    25    60   0.00      0     0 |     0.11     20.0
+Same, K 4                                              430   1.99     5     5   0.00      0   366 |     0.11      4.0
+E2 whole disc, r 8,300                                 755   2.42    45    78   0.00      0     0 |     0.13     36.0
+
+== flat
+field                                               load   mean    p99   max  forced backlog late | native ms laptop p99
+E 128 u, r 12,000 (at once)                          24878 155.53   354   391   0.00      0     0 |     8.40    283.2
+E2 512 u, r 12,000 (at once)                          1652  10.14    65    88   0.00      0     0 |     0.55     52.0
+E spread, K 4                                        24878   4.00     4     4   0.00 272759  1753 |     0.22      3.2
+E2 spread, K 4                                        1652   3.99     4     5   0.00  11072  1338 |     0.22      3.2
+E2 spread, K 1.5 (web)                                1652   1.50     2     2   0.00  15562  1633 |     0.08      1.6
+Rings 128 to 1,500, 256 to 4,000, 512 to 12,000       2496  50.56   133   149   0.00      0     0 |     2.73    106.4
+Same, K 4                                             2496   4.00     4     4   0.00  83811  1663 |     0.22      3.2
+Rings 128 to 3,000, 512 to 12,000 (World)             3113  67.25   147   160   0.00      0     0 |     3.63    117.6
+Same, K 4                                             3113   4.00     4     4   0.00 113846  1683 |     0.22      3.2
+512 to 6,000, 1,024 to 12,000                          761   7.93    60    70   0.00      0     0 |     0.43     48.0
+Same, K 4                                              761   3.99     4     5   0.00   7087  1148 |     0.22      3.2
+1,024 only to 12,000                                   443   2.68    33    52   0.00      0     0 |     0.14     26.4
+Same, K 4                                              443   2.68     5     5   0.00      0    87 |     0.14      4.0
+E2 half disc, r 8,300 (Camera)                         440   5.65    34    50   0.00      0     0 |     0.31     27.2
+Same, K 4                                              440   3.99     4     5   0.00   2983   693 |     0.22      3.2
+E2 whole disc, r 8,300                                 785   8.39    52    64   0.00      0     0 |     0.45     41.6
+
+== flat150
+field                                               load   mean    p99   max  forced backlog late | native ms laptop p99
+E 128 u, r 12,000 (at once)                          24873 179.89   391   425   0.00      0     0 |     9.71    312.8
+E2 512 u, r 12,000 (at once)                          1659  11.82    74    98   0.00      0     0 |     0.64     59.2
+E spread, K 4                                        24873   4.00     4     4   0.00 316598  1762 |     0.22      3.2
+E2 spread, K 4                                        1659   3.99     4     5   0.00  14091  1253 |     0.22      3.2
+E2 spread, K 1.5 (web)                                1659   1.50     2     2   0.00  18581  1591 |     0.08      1.6
+Rings 128 to 1,500, 256 to 4,000, 512 to 12,000       2502  50.02   131   144   0.00      0     0 |     2.70    104.8
+Same, K 4                                             2502   4.00     4     4   0.00  82832  1672 |     0.22      3.2
+Rings 128 to 3,000, 512 to 12,000 (World)             3122  65.86   145   156   0.00      0     0 |     3.56    116.0
+Same, K 4                                             3122   4.00     4     4   0.00 111357  1700 |     0.22      3.2
+512 to 6,000, 1,024 to 12,000                          760   8.73    61    83   0.00      0     0 |     0.47     48.8
+Same, K 4                                              760   3.99     4     5   0.00   8529  1026 |     0.22      3.2
+1,024 only to 12,000                                   445   3.15    37    59   0.00      0     0 |     0.17     29.6
+Same, K 4                                              445   3.15     5     5   0.00      0    42 |     0.17      4.0
+E2 half disc, r 8,300 (Camera)                         434   6.09    34    58   0.00      0     0 |     0.33     27.2
+Same, K 4                                              434   4.00     4     5   0.00   3768   587 |     0.22      3.2
+E2 whole disc, r 8,300                                 785   9.34    58    77   0.00      0     0 |     0.50     46.4
+
+== spin
+field                                               load   mean    p99   max  forced backlog late | native ms laptop p99
+E 128 u, r 12,000 (at once)                          25094   0.00     0     0   0.00      0     0 |     0.00      0.0
+E2 512 u, r 12,000 (at once)                          1673   0.00     0     0   0.00      0     0 |     0.00      0.0
+E spread, K 4                                        25094   0.00     0     0   0.00      0     0 |     0.00      0.0
+E2 spread, K 4                                        1673   0.00     0     0   0.00      0     0 |     0.00      0.0
+E2 spread, K 1.5 (web)                                1673   0.00     0     0   0.00      0     0 |     0.00      0.0
+Rings 128 to 1,500, 256 to 4,000, 512 to 12,000       2521   0.00     0     0   0.00      0     0 |     0.00      0.0
+Same, K 4                                             2521   0.00     0     0   0.00      0     0 |     0.00      0.0
+Rings 128 to 3,000, 512 to 12,000 (World)             3155   0.00     0     0   0.00      0     0 |     0.00      0.0
+Same, K 4                                             3155   0.00     0     0   0.00      0     0 |     0.00      0.0
+512 to 6,000, 1,024 to 12,000                          764   0.00     0     0   0.00      0     0 |     0.00      0.0
+Same, K 4                                              764   0.00     0     0   0.00      0     0 |     0.00      0.0
+1,024 only to 12,000                                   448   0.00     0     0   0.00      0     0 |     0.00      0.0
+Same, K 4                                              448   0.00     0     0   0.00      0     0 |     0.00      0.0
+E2 half disc, r 8,300 (Camera)                         442   3.33    19    24   0.00      0     0 |     0.18     15.2
+Same, K 4                                              442   3.33     4     5   0.00      0    51 |     0.18      3.2
+E2 whole disc, r 8,300                                 795   0.00     0     0   0.00      0     0 |     0.00      0.0
+
+== a resident whole-planet map (gen 1 ground; gen 2 not measured)
+N      spacing   RMS    p99  p99.9    max  MB(h+c)  reads     build native / web / laptop s   JS ms
+192       451   12.5   42.4  193.6   433    0.4    36864  2.0 / 4.8 / 29                19
+256       338   10.1   26.4  174.9   389    0.7    65536  3.5 / 8.5 / 52                32
+384       225    7.7   11.0  125.4   399    1.5   147456  8.0 / 19.2 / 118              71
+512       169    6.6    5.9  105.1   324    2.7   262144  14.2 / 34.1 / 210            122
+1024       85    4.2    1.2   41.2   241   10.7  1048576  56.6 / 136.3 / 839           469
+
+== re-lay on a turning tick (look-up 0.007 us in JS; ms below at 5.4 us (Godot far map) and 2.5 us (World's low figure))
+
+10 deg/s, gap 300
+tiers                                                   cols  ms@5.4 ms@2.5 | feet rms max  reach max  all rms max
+Every column of the view, every tick (today's E)         669    3.61   1.67 |    0.00   0.0     0.0     0.00    0.0
++-75 round each fighter, every tick (Netcode's top)      161    0.87   0.40 |    0.00   0.0     0.0     0.00    0.0
++-40 round each, every tick (World's window)              91    0.49   0.23 |    0.00   0.0     0.0     0.00    0.0
++-18 round each, every tick                               47    0.25   0.12 |    0.00   0.0     0.0     0.00    0.0
++-16 every tick, +-40 every 4, +-75 every 8               64    0.34   0.16 |    0.00   0.0     0.0     4.71   67.7
++-8 every tick, +-40 every 4                              43    0.23   0.11 |    0.00   0.0     7.2     1.41   18.9
++-8 every 2, +-40 every 8                                 22    0.12   0.05 |    0.10   0.7    16.6     3.16   44.0
+
+29 deg/s, gap 300
+tiers                                                   cols  ms@5.4 ms@2.5 | feet rms max  reach max  all rms max
+Every column of the view, every tick (today's E)         669    3.61   1.67 |    0.00   0.0     0.0     0.00    0.0
++-75 round each fighter, every tick (Netcode's top)      161    0.87   0.40 |    0.00   0.0     0.0     0.00    0.0
++-40 round each, every tick (World's window)              91    0.49   0.23 |    0.00   0.0     0.0     0.00    0.0
++-18 round each, every tick                               47    0.25   0.12 |    0.00   0.0     0.0     0.00    0.0
++-16 every tick, +-40 every 4, +-75 every 8               64    0.34   0.16 |    0.00   0.0     0.0    13.55  191.5
++-8 every tick, +-40 every 4                              43    0.23   0.11 |    0.00   0.0    20.7     4.08   54.6
++-8 every 2, +-40 every 8                                 21    0.12   0.05 |    0.28   2.0    46.8     9.08  126.1
+
+60 deg/s, gap 300
+tiers                                                   cols  ms@5.4 ms@2.5 | feet rms max  reach max  all rms max
+Every column of the view, every tick (today's E)         669    3.61   1.67 |    0.00   0.0     0.0     0.00    0.0
++-75 round each fighter, every tick (Netcode's top)      161    0.87   0.40 |    0.00   0.0     0.0     0.00    0.0
++-40 round each, every tick (World's window)              91    0.49   0.23 |    0.00   0.0     0.0     0.00    0.0
++-18 round each, every tick                               47    0.25   0.12 |    0.00   0.0     0.0     0.00    0.0
++-16 every tick, +-40 every 4, +-75 every 8               64    0.34   0.16 |    0.00   0.0     0.0    27.59  384.5
++-8 every tick, +-40 every 4                              43    0.23   0.11 |    0.00   0.0    42.5     8.46  112.1
++-8 every 2, +-40 every 8                                 22    0.12   0.05 |    0.59   4.1    92.1    18.54  255.9
+
+60 deg/s, gap 2400
+tiers                                                   cols  ms@5.4 ms@2.5 | feet rms max  reach max  all rms max
+Every column of the view, every tick (today's E)         669    3.61   1.67 |    0.00   0.0     0.0     0.00    0.0
++-75 round each fighter, every tick (Netcode's top)      227    1.23   0.57 |    0.00   0.0     0.0     0.00    0.0
++-40 round each, every tick (World's window)             157    0.85   0.39 |    0.00   0.0     0.0     0.00    0.0
++-18 round each, every tick                               74    0.40   0.18 |    0.00   0.0     0.0    36.87  471.4
++-16 every tick, +-40 every 4, +-75 every 8               97    0.53   0.24 |    0.00   0.0     0.0    33.27  459.6
++-8 every tick, +-40 every 4                              65    0.35   0.16 |    0.00   0.0   116.7    11.76  165.0
++-8 every 2, +-40 every 8                                 32    0.17   0.08 |    4.53  32.3   253.3    25.85  374.6
+
+60 deg/s, gap 19200
+tiers                                                   cols  ms@5.4 ms@2.5 | feet rms max  reach max  all rms max
+Every column of the view, every tick (today's E)         669    3.61   1.67 |    0.00   0.0     0.0     0.00    0.0
++-75 round each fighter, every tick (Netcode's top)      220    1.19   0.55 |    0.00   0.0     0.0   422.45 4235.6
++-40 round each, every tick (World's window)             150    0.81   0.38 |    0.00   0.0     0.0   516.02 5083.7
++-18 round each, every tick                               74    0.40   0.18 |    0.00   0.0     0.0   583.76 5274.6
++-16 every tick, +-40 every 4, +-75 every 8               96    0.52   0.24 |    0.00   0.0     0.0   425.93 4235.6
++-8 every tick, +-40 every 4                              63    0.34   0.16 |    0.00   0.0   950.1   517.04 5083.7
++-8 every 2, +-40 every 8                                 31    0.17   0.08 |   29.77 315.1  2142.7   520.75 5083.7
+
+150 deg/s, gap 300
+tiers                                                   cols  ms@5.4 ms@2.5 | feet rms max  reach max  all rms max
+Every column of the view, every tick (today's E)         669    3.61   1.67 |    0.00   0.0     0.0     0.00    0.0
++-75 round each fighter, every tick (Netcode's top)      161    0.87   0.40 |    0.00   0.0     0.0     0.00    0.0
++-40 round each, every tick (World's window)              91    0.49   0.23 |    0.00   0.0     0.0     0.00    0.0
++-18 round each, every tick                               47    0.25   0.12 |    0.00   0.0     0.0     0.00    0.0
++-16 every tick, +-40 every 4, +-75 every 8               64    0.34   0.16 |    0.00   0.0     0.0    68.96  826.5
++-8 every tick, +-40 every 4                              43    0.23   0.11 |    0.00   0.0   103.6    21.03  273.4
++-8 every 2, +-40 every 8                                 22    0.12   0.05 |    1.47  10.2   192.5    46.70  574.8

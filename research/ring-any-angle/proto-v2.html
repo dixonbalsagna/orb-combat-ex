@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turntable arena</title>
+<style>
+:root{--tx:#1f1f1c;--tx2:#5f5e5a;--bd:#d3d1c7;--acc:#0c447c}
+body{font-family:sans-serif;margin:0;background:#14171c;color:#e8e6df}
+#wrap{position:relative;width:100%;max-width:1280px;margin:0 auto}
+canvas{display:block;width:100%;aspect-ratio:16/9;background:#000}
+#inputs{position:absolute;left:12px;bottom:12px;font:bold 12px monospace;display:flex;gap:4px;align-items:center;background:#0009;padding:6px 8px;border-radius:8px}
+.c{padding:3px 6px;border-radius:4px;background:#333;color:#999}.c.on{background:#e8b23a;color:#111}
+#dial{width:34px;height:34px;border-radius:50%;background:#333;position:relative;margin-right:6px}#dot{width:10px;height:10px;border-radius:50%;background:#e8b23a;position:absolute;left:12px;top:12px}
+#hud{position:absolute;right:12px;top:12px;font:bold 13px monospace;text-align:right;background:#0009;padding:6px 8px;border-radius:8px;line-height:1.4}
+#ctl{max-width:1280px;margin:0 auto;padding:10px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:6px 18px;font-size:13px}
+#ctl label{display:flex;justify-content:space-between;gap:8px;align-items:center}#ctl input[type=range]{width:120px}#ctl b{color:#e8b23a;font-weight:normal;min-width:52px;text-align:right}
+select{background:#222;color:#eee;border:1px solid #555;border-radius:4px}
+p{max-width:1280px;margin:6px auto;padding:0 12px;font-size:13px;color:#b9b6ab;line-height:1.45}kbd{border:1px solid #666;border-radius:3px;padding:0 3px;font-size:12px}
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="cv" width="1280" height="720"></canvas>
+<div id="inputs"><div id="dial"><div id="dot"></div></div><span class="c" id="iFly">FLY</span><span class="c" id="iSend">SEND</span><span class="c" id="iDig">DIG</span><span class="c" id="iL">SWING &lt;</span><span class="c" id="iR">SWING &gt;</span><span class="c" id="iAim">AIM</span></div>
+<div id="hud"></div></div>
+<div id="ctl"></div>
+<p><b>The turntable arena</b> (Research, spike v2; paper: <code>docs/world/ring-any-angle/research.md</code>). A true sphere, 153,600 units round, with the world swinging round two bars. Everything you see is one planet map already on the graphics card and one rotation: nothing is rebuilt when it swings. No character art: fighters are bars. Move: <kbd>A</kbd> <kbd>D</kbd> or the left stick. Flat out: hold <kbd>Shift</kbd> or RT. Send (a launch): <kbd>Space</kbd> or pad X. Swing: <kbd>Q</kbd> <kbd>E</kbd> or LB RB. Aim the line at a landmark: <kbd>G</kbd> or pad Y. Dig a crater: <kbd>C</kbd> or pad A. Start again: <kbd>R</kbd>. It plays itself until you touch something.</p>
+<script>
+var __math = (function () {
+
+// Deterministic sin, cos, pow and hypot: the same bits on every platform and in every language (ADR 0001,
+// determinism.md). They use only + - * / sqrt floor on float64, and every constant is either a short decimal literal
+// or computed by IEEE division, so a port that evaluates the same expressions in the same order gets the same bits.
+// sim/core/detmath.gd is the GDScript twin; it builds PIO2_1, PIO2_1T, LN2_HI and LN2_LO from their bit patterns
+// (GDScript's literal parser is not correctly rounded for long literals), and the golden vectors check all constants.
+// Accuracy is a few ulp over the ranges the sim uses (|x| < 1e5 for sin and cos); determinism is the point.
+//
+// A sim picks its math with createSim({math}): 'native' (Math.*, the prototype's; parity with the prototype) or 'det'
+// (these; parity with the GDScript port).
+
+const PIO2_1 = 1.5707963267341256;        // the first 33 bits of pi/2: n*PIO2_1 is exact for |n| < 2^20
+const PIO2_1T = 6.077100506506192e-11;    // pi/2 - PIO2_1
+const INVPIO2 = 1 / (PIO2_1 + PIO2_1T);
+const LN2_HI = 0.6931471803691238;        // the first 32 bits of ln 2
+const LN2_LO = 1.9082149292705877e-10;    // ln 2 - LN2_HI
+const INVLN2 = 1 / (LN2_HI + LN2_LO);
+const SQRT2 = Math.sqrt(2), SQRT_HALF = SQRT2 / 2;
+
+// Series coefficients, built by exact-order IEEE division so every port reproduces them bit for bit.
+const SIN_C = [], COS_C = [], EXP_C = [], LOG_C = [];
+{
+  let s = 1, c = 1, e = 1;
+  for (let k = 1; k <= 11; k++) {
+    s = s / ((2 * k) * (2 * k + 1)); SIN_C.push(k % 2 ? -s : s);          // -1/3!, +1/5!, ...
+    c = c / ((2 * k - 1) * (2 * k)); COS_C.push(k % 2 ? -c : c);          // -1/2!, +1/4!, ...
+  }
+  for (let n = 1; n <= 18; n++) { e = e / n; EXP_C.push(e); }            // 1/1!, 1/2!, ... 1/18!
+  for (let k = 1; k <= 12; k++) LOG_C.push(1 / (2 * k + 1));            // 1/3, 1/5, ... 1/25
+}
+
+// sin and cos on |r| <= pi/4 (Horner, highest term first).
+function ksin(r) {
+  const z = r * r;
+  let p = SIN_C[10];
+  for (let k = 9; k >= 0; k--) p = SIN_C[k] + z * p;
+  return r + r * z * p;
+}
+function kcos(r) {
+  const z = r * r;
+  let p = COS_C[10];
+  for (let k = 9; k >= 0; k--) p = COS_C[k] + z * p;
+  return 1 + z * p;
+}
+// x = n*(pi/2) + r with |r| <= about pi/4; returns the quadrant n mod 4 and r.
+function reduce(x) {
+  const n = Math.floor(x * INVPIO2 + 0.5);
+  const r = (x - n * PIO2_1) - n * PIO2_1T;
+  return [n - 4 * Math.floor(n / 4), r];
+}
+
+function sin(x) {
+  const [q, r] = reduce(x);
+  return q === 0 ? ksin(r) : q === 1 ? kcos(r) : q === 2 ? -ksin(r) : -kcos(r);
+}
+function cos(x) {
+  const [q, r] = reduce(x);
+  return q === 0 ? kcos(r) : q === 1 ? -ksin(r) : q === 2 ? -kcos(r) : ksin(r);
+}
+
+// e^x for |x| up to about 700.
+function exp(x) {
+  const k = Math.floor(x * INVLN2 + 0.5);
+  const r = (x - k * LN2_HI) - k * LN2_LO;                  // |r| <= about 0.35
+  let p = EXP_C[17];
+  for (let i = 16; i >= 0; i--) p = EXP_C[i] + r * p;
+  let y = 1 + r * p;
+  for (let i = 0; i < k; i++) y = y * 2;                    // scaling by powers of two is exact
+  for (let i = 0; i > k; i--) y = y / 2;
+  return y;
+}
+
+// Natural log for finite x > 0.
+function log(x) {
+  let m = x, e = 0;
+  while (m >= SQRT2) { m = m / 2; e++; }
+  while (m < SQRT_HALF) { m = m * 2; e--; }
+  const s = (m - 1) / (m + 1), z = s * s;
+  let p = LOG_C[11];
+  for (let k = 10; k >= 0; k--) p = LOG_C[k] + z * p;
+  const lm = 2 * s + 2 * s * z * p;
+  return e * LN2_HI + (e * LN2_LO + lm);
+}
+
+// x^y for the sim's uses: a positive base to any power, or any base squared.
+function pow(x, y) {
+  if (y === 2) return x * x;
+  if (y === 0 || x === 1) return 1;
+  if (x === 0) return y > 0 ? 0 : Infinity;
+  if (x < 0) return NaN;
+  return exp(y * log(x));
+}
+
+function hypot(x, y) { return Math.sqrt(x * x + y * y); }
+
+// The two math tables a sim can use (S.m).
+const DET = { sin, cos, pow, hypot };
+const NATIVE = { sin: Math.sin, cos: Math.cos, pow: Math.pow, hypot: Math.hypot };
+const CONSTANTS = { PIO2_1, PIO2_1T, INVPIO2, LN2_HI, LN2_LO, INVLN2, SQRT2, SQRT_HALF, SIN_C, COS_C, EXP_C, LOG_C };
+
+return { sin, cos, pow };
+})();
+var __rng = (function () {
+
+// Seeded random streams: mulberry32, bit-identical to the prototype's, with the state held in a plain object {a}
+// so a stream can be serialised, copied and restored. Nothing in the simulation may use Math.random.
+function createRng(seed) { return { a: seed }; }
+
+// Next number in [0, 1). The body is the prototype's mulberry32 step with the closure variable moved into r.a.
+function next(r) {
+  let a = r.a | 0;
+  a = a + 0x6D2B79F5 | 0;
+  r.a = a;
+  let t = Math.imul(a ^ a >>> 15, 1 | a);
+  t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+  return ((t ^ t >>> 14) >>> 0) / 4294967296;
+}
+
+// Uniform in [a, b): the prototype's R(a, b), with the same arithmetic.
+function range(r, a, b) { return a + (b - a) * next(r); }
+
+// Seed of a cosmetic stream (the canonical RNG rule, overview.md section 3): fmix32(matchSeed ^ fnv1a32(id)), with
+// FNV-1a over the id's UTF-16 code units and fmix32 the MurmurHash3 finaliser. Integer ops only, so every language
+// derives the same seed. Ids: 'vfx.spark', 'vfx.debris', 'vfx.dust', 'vfx.splash', 'vfx.fire', 'vfx.charge',
+// 'vfx.water', 'camera', 'audio'.
+function deriveSeed(seed, id) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < id.length; i++) { h ^= id.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  let x = (seed ^ h) >>> 0;
+  x ^= x >>> 16; x = Math.imul(x, 0x85ebca6b); x ^= x >>> 13; x = Math.imul(x, 0xc2b2ae35); x ^= x >>> 16;
+  return x >>> 0;
+}
+
+return { createRng, next };
+})();
+var __det = (function () {
+var sin = __math.sin, cos = __math.cos, pow = __math.pow, createRng = __rng.createRng, next = __rng.next;
+// The deterministic toolkit every generator here uses: the planet module's integer lattice hash and value noise
+// (sim/world/planet.gd _fm, _lat, _vn, _fbm, the same expressions in the same order), keyed draws, sphere helpers.
+// Arithmetic is + - * / sqrt floor on float64, the sim's own sin cos pow (sim/core/detmath.js), and 32-bit integer
+// hashing, so World can port any of it to GDScript bit-exact (planet.gd shows the GDScript side of each primitive).
+
+
+
+
+const PI = Math.PI;                      // the same double as SimMathx.PI (built from its bits)
+const NC = 4800, COL = 32.0;             // SimConst.PLANET_NC, SimConst.COL
+const L = NC * COL;                      // 153,600 units round
+const R = L / (2.0 * PI);                // planet.gd make(): P.R = P.L / (2.0 * PI)
+
+// planet.gd _fm: the MurmurHash3 finaliser on 32 bits (GDScript writes the two products out in 16-bit halves).
+function fm(x) {
+  x >>>= 0;
+  x ^= x >>> 16; x = Math.imul(x, 0x85ebca6b) >>> 0;
+  x ^= x >>> 13; x = Math.imul(x, 0xc2b2ae35) >>> 0;
+  x ^= x >>> 16;
+  return x >>> 0;
+}
+
+// planet.gd _lat: the lattice value at an integer corner, in [0, 1).
+function lat(ix, iy, iz, s) {
+  return fm((fm((fm((s ^ ix) >>> 0) ^ iy) >>> 0) ^ iz) >>> 0) / 4294967296.0;
+}
+
+// A keyed draw in [0, 1) from integers only (seed, a stream number, an index): no state, so adding a draw never shifts another.
+function draw(seed, stream, n) {
+  return fm((fm((seed ^ Math.imul(stream, 0x9E3779B1)) >>> 0) ^ Math.imul(n, 0x85ebca6b)) >>> 0) / 4294967296.0;
+}
+
+// planet.gd _vn: trilinear value noise with a smoothstep fade. The corner cache of the GDScript is a memo only; this
+// recomputes the corners, which gives the same numbers.
+function vn(x, y, z, s) {
+  const fx = Math.floor(x), fy = Math.floor(y), fz = Math.floor(z);
+  const ix = fx | 0, iy = fy | 0, iz = fz | 0;
+  let tx = x - fx, ty = y - fy, tz = z - fz;
+  tx = tx * tx * (3.0 - 2.0 * tx);
+  ty = ty * ty * (3.0 - 2.0 * ty);
+  tz = tz * tz * (3.0 - 2.0 * tz);
+  const a0 = fm((s ^ ix) >>> 0), a1 = fm((s ^ (ix + 1)) >>> 0);
+  const b00 = fm((a0 ^ iy) >>> 0), b10 = fm((a1 ^ iy) >>> 0), b01 = fm((a0 ^ (iy + 1)) >>> 0), b11 = fm((a1 ^ (iy + 1)) >>> 0);
+  const c000 = fm((b00 ^ iz) >>> 0) / 4294967296.0, c100 = fm((b10 ^ iz) >>> 0) / 4294967296.0;
+  const c010 = fm((b01 ^ iz) >>> 0) / 4294967296.0, c110 = fm((b11 ^ iz) >>> 0) / 4294967296.0;
+  const c001 = fm((b00 ^ (iz + 1)) >>> 0) / 4294967296.0, c101 = fm((b10 ^ (iz + 1)) >>> 0) / 4294967296.0;
+  const c011 = fm((b01 ^ (iz + 1)) >>> 0) / 4294967296.0, c111 = fm((b11 ^ (iz + 1)) >>> 0) / 4294967296.0;
+  const a = c000 + (c100 - c000) * tx;
+  const b = c010 + (c110 - c010) * tx;
+  const c = c001 + (c101 - c001) * tx;
+  const d = c011 + (c111 - c011) * tx;
+  const e = a + (b - a) * ty;
+  const f = c + (d - c) * ty;
+  return e + (f - e) * tz;
+}
+
+// planet.gd _fbm: octaves of vn at the planet's scale, normalised to [0, 1). p is a unit vector.
+let OCT_COUNT = 0;                        // octaves evaluated, for the cost counts
+function fbm(px, py, pz, scale, oct, s) {
+  let sum = 0.0, amp = 0.5, tot = 0.0, k = R / scale;
+  for (let o = 0; o < oct; o++) {
+    sum += amp * vn(px * k, py * k, pz * k, s + o * 101);
+    tot += amp;
+    amp *= 0.5;
+    k *= 2.0;
+  }
+  OCT_COUNT += oct;
+  return sum / tot;
+}
+function resetOct() { OCT_COUNT = 0; }
+
+// planet.gd _ss: clamped smoothstep.
+function ss(a) {
+  let t = a;
+  if (t < 0.0) t = 0.0;
+  if (t > 1.0) t = 1.0;
+  return t * t * (3.0 - 2.0 * t);
+}
+function clamp01(a) { return a < 0.0 ? 0.0 : (a > 1.0 ? 1.0 : a); }
+function mix(a, b, t) { return a + (b - a) * t; }
+
+// planet.gd atanf, atan2f, asinf: the series with + - * / only.
+const TAN_PI_8 = Math.sqrt(2.0) - 1.0;
+function atanf(x) {
+  let a = Math.abs(x);
+  const inv = a > 1.0;
+  if (inv) a = 1.0 / a;
+  let off = 0.0;
+  if (a > TAN_PI_8) { a = (a - 1.0) / (a + 1.0); off = PI / 4.0; }
+  const a2 = a * a;
+  let s = a, t = a;
+  for (let k = 1; k < 12; k++) { t = -t * a2; s += t / (2 * k + 1); }
+  let r = off + s;
+  if (inv) r = PI / 2.0 - r;
+  return x < 0.0 ? -r : r;
+}
+function atan2f(y, x) {
+  if (x > 0.0) return atanf(y / x);
+  if (x < 0.0) return y >= 0.0 ? atanf(y / x) + PI : atanf(y / x) - PI;
+  if (y > 0.0) return PI / 2.0;
+  if (y < 0.0) return -PI / 2.0;
+  return 0.0;
+}
+function asinf(x) {
+  const c = x > 1.0 ? 1.0 : (x < -1.0 ? -1.0 : x);
+  return atan2f(c, Math.sqrt(1.0 - c * c));
+}
+
+// Sphere helpers. World's frame: y is up (the poles), east at a point is norm(Y x p) = norm(z, 0, -x) (planet-module.md section 5).
+function unit3(x, y, z) { const l = Math.sqrt(x * x + y * y + z * z); return [x / l, y / l, z / l]; }
+function east(px, py, pz) {
+  const l = Math.sqrt(pz * pz + px * px);
+  if (l < 1e-12) return [1.0, 0.0, 0.0];
+  return [pz / l, 0.0, -px / l];
+}
+// A seeded unit vector by rejection in the cube (sqrt only).
+function randUnit(seed, stream, n) {
+  for (let k = 0; k < 64; k++) {
+    const x = draw(seed, stream, n * 64 + k * 3) * 2 - 1, y = draw(seed, stream, n * 64 + k * 3 + 1) * 2 - 1, z = draw(seed, stream, n * 64 + k * 3 + 2) * 2 - 1;
+    const q = x * x + y * y + z * z;
+    if (q > 0.01 && q <= 1.0) { const l = Math.sqrt(q); return [x / l, y / l, z / l]; }
+  }
+  return [0.0, 1.0, 0.0];
+}
+// Lon and lat (radians) to a unit vector in World's frame (east is norm(Y x p)); for the renderer and the ring.
+function lonlat(lon, la) {
+  const c = cos(la);
+  return [c * cos(lon), sin(la), -c * sin(lon)];
+}
+
+return { R, fbm, ss, lat };
+})();
+var __base = (function () {
+var R = __det.R, fbm = __det.fbm, ss = __det.ss, lat = __det.lat, pow = __math.pow;
+// Today's planet (sim/world/planet.gd: ground, _plainBiome, surfAt with the ice), ported expression for expression so it
+// reads the same bits as WorldPlanet; check-base.mjs proves it against sim/world/tools/planet_vectors.json. It is the
+// reference every approach is compared with, and approach A reuses its ground().
+
+
+
+
+const C = {"schema":"biomes.planet/1","_about":"The stored procedural planet (docs/world/planet-slice.md, planet-ice.md, planet-module.md; WorldPlanet). Every number of the planet function, the places, the slice picker, the wear list and the offers; the function is a pure function of the planet seed and these numbers, in float64 scalars. \"story\" holds story planets by id (a fixed seed and a hand-placed list), empty for now.","contScale":30000,"contOct":4,"reliefScale":9000,"reliefOct":3,"seaShift":0.15,"hMul":1300,"rangeFrom":0.12,"rangeMul":16000,"reliefBase":0.35,"detailScale":1500,"detailOct":3,"detailAmp":300,"detailSheet":0.25,"mountainAbove":3200,"wetScale":20000,"wetOct":3,"tempScale":12000,"tempOct":2,"tempLat":0.8,"tempNoise":0.5,"desertWet":0.42,"desertTemp":0.45,"forestWet":0.55,"sRelief":5000,"sWet":9000,"sTemp":13000,"sDetail":777,"sPackEdge":31,"sSouthMask":37,"sSouthRelief":41,"sRock":43,"sShelf":47,"sSea":61,"sFloe":71,"sBerg":83,"polarY":0.72,"blend":0.1,"seaNorth":-380,"seaSouth":-330,"seaNoiseScale":7000,"seaNoiseOct":2,"seaNoiseAmp":60,"packEdgeY":0.88,"packWidth":0.1,"packNoiseScale":14000,"packNoiseOct":3,"packNoiseAmp":0.5,"packMin":-0.05,"floeCell":2200,"floePow":0.8,"floeCap":1.05,"floeR0":0.28,"floeR1":0.42,"floeH0":10,"floeH1":28,"floeThin0":0.4,"floeThin1":0.6,"bergCell":1100,"bergRate":0.12,"bergBandLo":-0.3,"bergBandHi":0.5,"bergBandMid":0.1,"bergBandSlope":1.6,"bergRadius":0.26,"bergH0":45,"bergH1":170,"southMaskY":0.91,"southWidth":0.07,"southMaskScale":9000,"southMaskOct":3,"southMaskAmp":1.4,"domeBase":180,"domeMul":1500,"domeMax":1.4,"domeReliefScale":6000,"domeReliefOct":3,"domeReliefAmp":900,"rockHeight":1500,"rockScale":2500,"rockOct":3,"rockNoise":0.62,"shelfFrom":-0.55,"shelfH":36,"shelfNoiseScale":2500,"shelfNoiseOct":2,"shelfNoiseAmp":14,"southBergFrom":-1.3,"southBergRate":0.07,"cities":12,"cityRadius":6500,"cityTries":80,"towns":44,"townRadius":2437.5,"townTries":40,"placeHMin":60,"placeHMax":1800,"placeYMax":0.8,"placeGap":400,"scoreGap":0.001,"scoreH0":300,"scoreHW":0.002,"placeSeedMul":31,"replaceTries":800,"minCities":2,"minTowns":3,"minBiomes":3,"biomeShare":0.08,"minLand":0.5,"cityReach":0.6,"townReach":0.7,"samples":96,"randomBearings":4,"nMinCity":0.15,"nMinRandom":0.3,"relaxCities":1,"relaxTowns":4,"relaxBiomes":3,"relaxLand":0.4,"touchLand":1,"touchTries":16,"craterCap":400,"foldDepthMax":4096,"damagedPermille":50,"fallenPermille":400,"slicePeople":1800,"bandUnits":2300,"offerCount":3,"offerTries":48,"offerMinSep":20000,"story":{}};
+const CFG = C;
+const BIO = { OCEAN: 0, PLAINS: 1, FOREST: 2, DESERT: 3, MOUNTAINS: 4, ICE_SHEET: 5, SEA_ICE: 6 };
+
+function ground(seed, px, py, pz, contOct = C.contOct, reliefOct = C.reliefOct) {
+  const e = (fbm(px, py, pz, C.contScale, contOct, seed) - 0.5) * 2.0;
+  let h = (e + C.seaShift) * C.hMul;
+  if (e > C.rangeFrom) {
+    const m = fbm(px, py, pz, C.reliefScale, reliefOct, seed + C.sRelief);
+    h += (e - C.rangeFrom) * C.rangeMul * (C.reliefBase + m);
+  }
+  return h;
+}
+
+function plainBiome(seed, px, py, pz, h) {
+  if (h < 0.0) return BIO.OCEAN;
+  if (h > C.mountainAbove) return BIO.MOUNTAINS;
+  const w = fbm(px, py, pz, C.wetScale, C.wetOct, seed + C.sWet);
+  const t = 1.0 - Math.abs(py) * C.tempLat + (fbm(px, py, pz, C.tempScale, C.tempOct, seed + C.sTemp) - 0.5) * C.tempNoise;
+  if (w < C.desertWet && t > C.desertTemp) return BIO.DESERT;
+  if (w > C.forestWet) return BIO.FOREST;
+  return BIO.PLAINS;
+}
+
+// planet.gd _worley (the cell cache there is a memo; this recomputes, the same numbers).
+function worley(px, py, pz, cell, s) {
+  const k = R / cell;
+  const qx = px * k, qy = py * k, qz = pz * k;
+  const ix = Math.floor(qx) | 0, iy = Math.floor(qy) | 0, iz = Math.floor(qz) | 0;
+  let best = 1.0e9, br = 0.0;
+  for (let dx = -1; dx < 2; dx++) for (let dy = -1; dy < 2; dy++) for (let dz = -1; dz < 2; dz++) {
+    const cx = ix + dx, cy = iy + dy, cz = iz + dz;
+    const f0 = cx + lat(cx, cy, cz, s), f1 = cy + lat(cx, cy, cz, s + 11), f2 = cz + lat(cx, cy, cz, s + 23), f3 = lat(cx, cy, cz, s + 37);
+    const d = Math.sqrt((f0 - qx) * (f0 - qx) + (f1 - qy) * (f1 - qy) + (f2 - qz) * (f2 - qz));
+    if (d < best) { best = d; br = f3; }
+  }
+  return [best, br];
+}
+
+// planet.gd surfAt: [height, biome] at a unit vector. groundFn (default today's ground) lets an approach keep the
+// canon poles (the north pack, the south sheet: planet-ice.md) over its own ground; plainFn picks the ordinary biomes.
+function surf(seed, px, py, pz, groundFn = ground, plainFn = plainBiome) {
+  const s = seed, y = py;
+  const base = groundFn(seed, px, py, pz);
+  if (Math.abs(y) < C.polarY) return [base, plainFn(seed, px, py, pz, base)];
+  if (y > 0.0) {
+    const wN = ss((y - C.polarY) / C.blend);
+    const sea = C.seaNorth + (fbm(px, py, pz, C.seaNoiseScale, C.seaNoiseOct, s + C.sSea) - 0.5) * C.seaNoiseAmp;
+    const conc = (y - C.packEdgeY) / C.packWidth + (fbm(px, py, pz, C.packNoiseScale, C.packNoiseOct, s + C.sPackEdge) - 0.5) * C.packNoiseAmp;
+    if (conc > C.packMin) {
+      const [wd, wr] = worley(px, py, pz, C.floeCell, s + C.sFloe);
+      let cc = conc;
+      if (cc < 0.0) cc = 0.0;
+      if (cc > 1.0) cc = 1.0;
+      if (wr < pow(cc, C.floePow) * C.floeCap && wd < C.floeR0 + C.floeR1 * cc)
+        return [(C.floeH0 + C.floeH1 * wr) * (C.floeThin0 + C.floeThin1 * cc), BIO.SEA_ICE];
+    }
+    if (conc > C.bergBandLo && conc < C.bergBandHi) {
+      const [wd, wr] = worley(px, py, pz, C.bergCell, s + C.sBerg);
+      let dm = Math.abs(conc - C.bergBandMid) * C.bergBandSlope;
+      if (dm > 1.0) dm = 1.0;
+      const rate = C.bergRate * (1.0 - dm);
+      if (wr < rate && wd < C.bergRadius) return [C.bergH0 + C.bergH1 * (wr / (rate > 0.001 ? rate : 0.001)), BIO.SEA_ICE];
+    }
+    const h = base + (sea - base) * wN;
+    return [h, wN >= 1.0 ? BIO.OCEAN : plainFn(seed, px, py, pz, h)];
+  }
+  const ys = -y;
+  const wS = ss((ys - C.polarY) / C.blend);
+  const seaS = C.seaSouth + (fbm(px, py, pz, C.seaNoiseScale, C.seaNoiseOct, s + C.sSea) - 0.5) * C.seaNoiseAmp;
+  const m = (ys - C.southMaskY) / C.southWidth + (fbm(px, py, pz, C.southMaskScale, C.southMaskOct, s + C.sSouthMask) - 0.5) * C.southMaskAmp;
+  if (m > 0.0) {
+    const mm = m < C.domeMax ? m : C.domeMax;
+    let h = C.domeBase + mm * C.domeMul + (fbm(px, py, pz, C.domeReliefScale, C.domeReliefOct, s + C.sSouthRelief) - 0.5) * C.domeReliefAmp;
+    if (h < C.shelfH) h = C.shelfH;
+    let b = BIO.ICE_SHEET;
+    if (h > C.rockHeight && fbm(px, py, pz, C.rockScale, C.rockOct, s + C.sRock) > C.rockNoise) b = BIO.MOUNTAINS;
+    return [h, b];
+  }
+  if (m > C.shelfFrom)
+    return [C.shelfH + (fbm(px, py, pz, C.shelfNoiseScale, C.shelfNoiseOct, s + C.sShelf) - 0.5) * C.shelfNoiseAmp, BIO.ICE_SHEET];
+  if (m > C.southBergFrom) {
+    const [wd, wr] = worley(px, py, pz, C.bergCell, s + C.sBerg);
+    if (wr < C.southBergRate && wd < C.bergRadius) return [C.bergH0 + C.bergH1 * (wr / C.southBergRate), BIO.SEA_ICE];
+  }
+  const h = base + (seaS - base) * wS;
+  return [h, wS >= 1.0 ? BIO.OCEAN : plainFn(seed, px, py, pz, h)];
+}
+
+// A low-pass ground for the climate's upwind march: the continents and the ranges' broad shape, no single peaks (a peak
+// sampled every 1,800 units would cast a thin shadow line along the wind).
+function groundCoarse(seed, px, py, pz) { return ground(seed, px, py, pz, 3, 1); }
+
+return { surf };
+})();
+var surf = __base.surf;
+(function () {
+'use strict';
+var cv = document.getElementById('cv'), gl = cv.getContext('webgl2', { antialias: true }), hud = document.getElementById('hud');
+if (!gl) { hud.textContent = 'This needs WebGL2.'; return; }
+var floatLinear = !!gl.getExtension('OES_texture_float_linear');
+var CIRC = 153600, RP = CIRC / (2 * Math.PI), SEED = 7, FLAT = 10240, T_FOV = Math.tan(15 * Math.PI / 180);
+function $(id) { return document.getElementById(id); }
+// ---- controls: every one a slider or a list, read each tick ----
+var P = { mapN: 512, rate: 45, angle: 60, every: 6, fires: 'send', speed: 100, width: 7000, wide: 2.2, pitch: 7, curve: 100, relief: 100, detail: 1, towers: 1, clouds: 1, globe: 1, sun: 1 };
+var CTL = [['fires', 'Swing fires', ['manual', 'on every send', 'every N seconds', 'only in flight', 'to a landmark'], ['manual', 'send', 'every', 'flight', 'mark']],
+  ['rate', 'Swing rate (deg/s)', 5, 240, 5], ['angle', 'Swing size (deg)', 5, 180, 5], ['every', 'N seconds', 1, 20, 1], ['speed', 'Flat-out speed (%)', 25, 300, 5], ['width', 'View width (units)', 1500, 24000, 250], ['wide', 'Pull wide in flight (x)', 1, 4, 0.1],
+  ['pitch', 'Camera pitch (deg)', 0, 40, 1], ['curve', 'Curvature (% of true)', 5, 100, 5], ['relief', 'Relief (%)', 10, 150, 10], ['mapN', 'Planet map (256 is the game\'s)', [ '256', '512', '1024' ], [256, 512, 1024]],
+  ['detail', 'Ground detail', 'c'], ['towers', 'Towers and landmarks', 'c'], ['clouds', 'Clouds', 'c'], ['globe', 'Globe', 'c'], ['sun', 'Sun fixed to the planet', 'c']];
+function fmt(k, v) { return k === 'fires' ? '' : String(v); }
+CTL.forEach(function (c) {
+  var l = document.createElement('label'); l.textContent = c[1]; var k = c[0];
+  if (c[2] === 'c') { var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!P[k]; cb.onchange = function () { P[k] = cb.checked ? 1 : 0; cb.blur(); }; l.appendChild(cb); }
+  else if (Array.isArray(c[2])) { var s = document.createElement('select'); c[2].forEach(function (n, i) { var o = document.createElement('option'); o.textContent = n; o.value = i; if (c[3][i] === P[k]) o.selected = true; s.appendChild(o); }); s.onchange = function () { P[k] = c[3][+s.value]; s.blur(); if (k === 'mapN') buildMap(); }; l.appendChild(s); }
+  else { var r = document.createElement('input'), b = document.createElement('b'); r.type = 'range'; r.min = c[2]; r.max = c[3]; r.step = c[4]; r.value = P[k]; b.textContent = P[k]; r.oninput = function () { P[k] = +r.value; b.textContent = r.value; }; var w = document.createElement('span'); w.style.cssText = 'display:flex;gap:6px;align-items:center'; w.appendChild(r); w.appendChild(b); l.appendChild(w); }
+  $('ctl').appendChild(l);
+});
+// ---- the sphere's small maths ----
+function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+function cross(a, b) { return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]; }
+function norm(a) { var l = Math.sqrt(dot(a, a)); return [a[0] / l, a[1] / l, a[2] / l]; }
+function add(a, b, s) { return [a[0] + b[0] * s, a[1] + b[1] * s, a[2] + b[2] * s]; }
+function octDec(u, v) { var x = u * 2 - 1, y = v * 2 - 1, z = 1 - Math.abs(x) - Math.abs(y), t = Math.max(-z, 0); x += x >= 0 ? -t : t; y += y >= 0 ? -t : t; return norm([x, y, z]); }
+function octEnc(d) { var s = Math.abs(d[0]) + Math.abs(d[1]) + Math.abs(d[2]), x = d[0] / s, y = d[1] / s; if (d[2] < 0) { var ox = (1 - Math.abs(y)) * (x >= 0 ? 1 : -1), oy = (1 - Math.abs(x)) * (y >= 0 ? 1 : -1); x = ox; y = oy; } return [x * 0.5 + 0.5, y * 0.5 + 0.5]; }
+// ---- the planet map: built once, then read: by the graphics card to draw, by the sim to stand on ----
+var MAP = null, texH = gl.createTexture(), texC = gl.createTexture();
+var PAL = { 0: [46, 92, 138], 1: [122, 158, 92], 2: [66, 112, 70], 3: [205, 178, 118], 4: [130, 122, 110], 5: [232, 238, 242], 6: [196, 216, 228] };
+function buildMap() {
+  var N = P.mapN, h = new Float32Array(N * N), c = new Uint8Array(N * N * 4), t0 = performance.now();
+  for (var j = 0; j < N; j++) for (var i = 0; i < N; i++) {
+    var d = octDec((i + 0.5) / N, (j + 0.5) / N), s = surf(SEED, d[0], d[1], d[2]), o = j * N + i, p = PAL[s[1]] || PAL[1], k = o * 4; h[o] = s[0];
+    var sh = s[0] < 0 ? Math.max(0.55, 1 + s[0] / 2600) : 1; c[k] = p[0] * sh; c[k + 1] = p[1] * sh; c[k + 2] = p[2] * sh; c[k + 3] = 255;
+  }
+  MAP = { N: N, h: h, ms: performance.now() - t0, reads: N * N };
+  gl.bindTexture(gl.TEXTURE_2D, texH); var lv = h, n = N, L = 0, IF = floatLinear ? gl.R32F : gl.R16F;
+  for (;;) { gl.texImage2D(gl.TEXTURE_2D, L, IF, n, n, 0, gl.RED, gl.FLOAT, lv); if (n === 1) break; var m = n >> 1, nx = new Float32Array(m * m); for (var y = 0; y < m; y++) for (var x = 0; x < m; x++) nx[y * m + x] = (lv[y * 2 * n + x * 2] + lv[y * 2 * n + x * 2 + 1] + lv[(y * 2 + 1) * n + x * 2] + lv[(y * 2 + 1) * n + x * 2 + 1]) / 4; lv = nx; n = m; L++; }
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.bindTexture(gl.TEXTURE_2D, texC); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, N, N, 0, gl.RGBA, gl.UNSIGNED_BYTE, c); gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+}
+// what the sim stands on: one bilinear read of the same map; these are all the ground reads a tick here
+var lookups = 0;
+function heightAt(d) { lookups++; var N = MAP.N, e = octEnc(d), fx = e[0] * N - 0.5, fy = e[1] * N - 0.5, i = Math.max(0, Math.min(N - 2, Math.floor(fx))), j = Math.max(0, Math.min(N - 2, Math.floor(fy))), a = Math.min(1, Math.max(0, fx - i)), b = Math.min(1, Math.max(0, fy - j)), h = MAP.h, o = j * N + i; return (h[o] * (1 - a) + h[o + 1] * a) * (1 - b) + (h[o + N] * (1 - a) + h[o + N + 1] * a) * b; }
+// ---- shaders ----
+var COMMON = '#version 300 es\nprecision highp float;\nvec2 oct(vec3 d){d/=abs(d.x)+abs(d.y)+abs(d.z);vec2 p=d.xy;if(d.z<0.)p=(1.-abs(d.yx))*vec2(d.x>=0.?1.:-1.,d.y>=0.?1.:-1.);return p*.5+.5;}\n';
+var VS_G = COMMON + 'in vec2 aG;uniform mat3 uF;uniform mat4 uVP;uniform sampler2D uH;uniform float uR,uRr,uRel,uTex,uAlt;uniform vec4 uCr[16];uniform float uCrD[16];uniform int uCrN;uniform float uStep;\n' +
+ 'out vec3 vDir;out vec3 vW;out float vH;void main(){float r=aG.x,th=aG.y,a=r/uR;vec3 dir=uF*vec3(sin(a)*cos(th),sin(a)*sin(th),cos(a));float fp=max(r*uStep,r*.03);float h=textureLod(uH,oct(dir),log2(max(1.,fp/uTex))).r;for(int i=0;i<uCrN;i++){vec3 dv=dir-uCr[i].xyz;float q=dot(dv,dv)*uR*uR/(uCr[i].w*uCr[i].w);if(q<1.){float u=1.-q;h-=uCrD[i]*u*u;}}vH=h;vDir=dir;float ar=r/uRr,rad=uRr+(uAlt>0.?uAlt:h*uRel);vec3 w=vec3(rad*sin(ar)*cos(th),rad*cos(ar)-uRr,rad*sin(ar)*sin(th));vW=w;gl_Position=uVP*vec4(w,1.);}';
+var FS_G = COMMON + 'in vec3 vDir;in vec3 vW;in float vH;out vec4 o;uniform sampler2D uC;uniform vec3 uSun,uCam,uSky;uniform float uR,uRr,uDet,uHaze,uAmb;\n' +
+ 'float hsh(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}float vn(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(mix(hsh(i),hsh(i+vec3(1,0,0)),f.x),mix(hsh(i+vec3(0,1,0)),hsh(i+vec3(1,1,0)),f.x),f.y),mix(mix(hsh(i+vec3(0,0,1)),hsh(i+vec3(1,0,1)),f.x),mix(hsh(i+vec3(0,1,1)),hsh(i+vec3(1,1,1)),f.x),f.y),f.z);}\n' +
+ 'void main(){vec3 d=normalize(vDir),up=normalize(vW+vec3(0,uRr,0)),n=normalize(cross(dFdx(vW),dFdy(vW)));if(dot(n,up)<0.)n=-n;vec3 c=texture(uC,oct(d)).rgb;float dist=length(vW-uCam);\n' +
+ 'if(uDet>0.){float a=vn(d*uR/2600.),b=vn(d*uR/620.),e=vn(d*uR/170.),f=vn(d*uR/60.);float k=(a-.5)*.30+(b-.5)*.42*clamp(60000./dist-1.,0.,1.)+(e-.5)*.44*clamp(16000./dist-1.,0.,1.)+(f-.5)*.34*clamp(5500./dist-1.,0.,1.);c*=1.+k;}\n' +
+ 'if(vH>6000.)c=mix(c,vec3(.95),clamp((vH-6000.)/2400.,0.,1.));if(vH<0.)n=up;float l=max(dot(n,uSun),0.);c*=uAmb+(1.-uAmb)*l*1.25;float hz=1.-exp(-dist*uHaze);o=vec4(mix(c,uSky,hz*.85),1.);}';
+var FS_C = COMMON + 'in vec3 vDir;in vec3 vW;in float vH;out vec4 o;uniform vec3 uSun;uniform float uAmb,uT;\n' +
+ 'float hsh(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}float vn(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(mix(hsh(i),hsh(i+vec3(1,0,0)),f.x),mix(hsh(i+vec3(0,1,0)),hsh(i+vec3(1,1,0)),f.x),f.y),mix(mix(hsh(i+vec3(0,0,1)),hsh(i+vec3(1,0,1)),f.x),mix(hsh(i+vec3(0,1,1)),hsh(i+vec3(1,1,1)),f.x),f.y),f.z);}\n' +
+ 'void main(){if(vW.z>-1200.)discard;vec3 d=normalize(vDir);float v=vn(d*7.)*.55+vn(d*19.)*.3+vn(d*53.)*.15;if(v<.56)discard;float l=max(dot(d,uSun),0.);o=vec4(vec3(.93)*(uAmb+(1.-uAmb)*.9),.92);}';
+var VS_B = COMMON + 'in vec3 aP;in vec3 aN;in vec3 iD;in vec3 iE;in vec3 iS;in vec4 iC;uniform mat3 uF;uniform mat4 uVP;uniform float uR,uRr,uRel;out vec3 vC;out vec3 vN;out vec3 vW;\n' +
+ 'void main(){vec3 v=transpose(uF)*iD;float a=acos(clamp(v.z,-1.,1.));if(a>2.0){gl_Position=vec4(2.,2.,2.,1.);vC=vec3(0.);vN=vec3(0.);vW=vec3(0.);return;}float th=atan(v.y,v.x),ar=a*uR/uRr,rad=uRr+iC.w*uRel;vec3 b=vec3(rad*sin(ar)*cos(th),rad*cos(ar)-uRr,rad*sin(ar)*sin(th));vec3 up=normalize(b+vec3(0,uRr,0)),e=transpose(uF)*iE;e=vec3(e.x,e.z,e.y);e=normalize(e-up*dot(e,up));vec3 nn=cross(up,e);float sk=1.-smoothstep(300.,1500.,b.z);if(sk<.04){gl_Position=vec4(2.,2.,2.,1.);vC=vec3(0.);vN=vec3(0.);vW=vec3(0.);return;}vec3 w=b+e*aP.x*iS.x+up*aP.y*iS.y*sk+nn*aP.z*iS.z;vC=iC.rgb;vN=e*aN.x+up*aN.y+nn*aN.z;vW=w;gl_Position=uVP*vec4(w,1.);}';
+var FS_B = COMMON + 'in vec3 vC;in vec3 vN;in vec3 vW;out vec4 o;uniform vec3 uSun,uCam,uSky;uniform float uHaze,uAmb;void main(){float l=max(dot(normalize(vN),uSun),0.);vec3 c=vC*(uAmb+(1.-uAmb)*l*1.2);float hz=1.-exp(-length(vW-uCam)*uHaze);o=vec4(mix(c,uSky,hz*.85),1.);}';
+var VS_F = COMMON + 'in vec3 aP;in vec3 aN;uniform mat4 uVP;uniform vec3 uPos,uSz;out vec3 vN;void main(){vN=aN;gl_Position=uVP*vec4(uPos+aP*uSz,1.);}';
+var FS_F = COMMON + 'in vec3 vN;out vec4 o;uniform vec3 uCol;void main(){o=vec4(uCol*(.65+.35*max(dot(vN,normalize(vec3(.3,.7,.6))),0.)),1.);}';
+var VS_S = '#version 300 es\nout vec2 v;void main(){vec2 p=vec2(gl_VertexID==1?3.:-1.,gl_VertexID==2?3.:-1.);v=p*.5+.5;gl_Position=vec4(p,1.,1.);}';
+var FS_S = '#version 300 es\nprecision highp float;in vec2 v;out vec4 o;uniform vec3 uSky,uTop;void main(){o=vec4(mix(uSky,uTop,smoothstep(.25,1.,v.y)),1.);}';
+var VS_L = COMMON + 'in vec3 aD;uniform mat3 uF;uniform mat4 uVP;uniform float uRr;void main(){vec3 v=transpose(uF)*aD;float a=acos(clamp(v.z,-1.,1.)),th=atan(v.y,v.x),rad=uRr*1.012;gl_Position=uVP*vec4(rad*sin(a)*cos(th),rad*cos(a)-uRr,rad*sin(a)*sin(th),1.);}';
+var FS_L = COMMON + 'out vec4 o;uniform vec3 uCol;void main(){o=vec4(uCol,1.);}';
+function sh(t, s) { var x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x) + '\n' + s.slice(0, 200)); return x; }
+function prog(v, f) { var p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, v)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, f)); gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p)); var u = {}, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS); for (var i = 0; i < n; i++) { var a = gl.getActiveUniform(p, i).name.replace('[0]', ''); u[a] = gl.getUniformLocation(p, a); } return { p: p, u: u, a: function (x) { return gl.getAttribLocation(p, x); } }; }
+var pG = prog(VS_G, FS_G), pC = prog(VS_G, FS_C), pB = prog(VS_B, FS_B), pF = prog(VS_F, FS_F), pS = prog(VS_S, FS_S), pL = prog(VS_L, FS_L);
+// ---- the ground mesh: rings round the pair, dense at the pair, out past the horizon; it never changes, the map slides under it ----
+var NR = 170, NT = 300, RMIN = 25, RMAX = RP * Math.PI * 0.82, meshV = new Float32Array((NR + 1) * NT * 2), meshI = [], thStep = 2 * Math.PI / NT;
+for (var ir = 0; ir <= NR; ir++) for (var it = 0; it < NT; it++) { var rr = ir === 0 ? 0 : RMIN * Math.pow(RMAX / RMIN, (ir - 1) / (NR - 1)); meshV[(ir * NT + it) * 2] = rr; meshV[(ir * NT + it) * 2 + 1] = it * thStep; }
+for (ir = 0; ir < NR; ir++) for (it = 0; it < NT; it++) { var a0 = ir * NT + it, a1 = ir * NT + (it + 1) % NT, b0 = a0 + NT, b1 = a1 + NT; meshI.push(a0, b0, a1, a1, b0, b1); }
+var vaoG = gl.createVertexArray(); gl.bindVertexArray(vaoG); var bG = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bG); gl.bufferData(gl.ARRAY_BUFFER, meshV, gl.STATIC_DRAW); var ibG = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibG); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(meshI), gl.STATIC_DRAW);
+gl.enableVertexAttribArray(pG.a('aG')); gl.vertexAttribPointer(pG.a('aG'), 2, gl.FLOAT, false, 0, 0);
+var meshN = meshI.length;
+// a box, for towers (instanced, each with its own planet direction) and the two bars
+var BOX = []; [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]].forEach(function (n) { var u = n[1] ? [1, 0, 0] : [0, 1, 0], v = cross(n, u); function pt(s, t) { var x = n[0] * 0.5 + u[0] * s * 0.5 + v[0] * t * 0.5, y = n[1] * 0.5 + u[1] * s * 0.5 + v[1] * t * 0.5 + 0.5, z = n[2] * 0.5 + u[2] * s * 0.5 + v[2] * t * 0.5; BOX.push(x, y, z, n[0], n[1], n[2]); } pt(-1, -1); pt(1, -1); pt(1, 1); pt(-1, -1); pt(1, 1); pt(-1, 1); });
+var bBox = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bBox); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(BOX), gl.STATIC_DRAW);
+// towers and landmarks: keyed to the planet, so every one is the same one at any bearing
+function lcg(s) { var x = s >>> 0; return function () { x = (Math.imul(x, 1664525) + 1013904223) >>> 0; return x / 4294967296; }; }
+var TW = [], MARKS = [], twData, twN = 0, vaoT, bT;
+function buildTowers() {
+  var r = lcg(4242); TW = []; MARKS = [];
+  function east(q) { return norm(cross([0.12, 1, 0.07], q)); }
+  for (var c = 0; c < 90; c++) { var q = norm([r() - 0.5, r() - 0.5, r() - 0.5]), s0 = surf(SEED, q[0], q[1], q[2])[0]; if (s0 < 40) continue; var e = east(q), n = cross(q, e);
+    for (var b = 0; b < 34; b++) { var dx = (r() - 0.5) * 5600, dz = (r() - 0.5) * 5600, d = norm(add(add(q, e, dx / RP), n, dz / RP)), g = r(); TW.push({ d: d, e: e, w: 70 + g * 170, h: 110 + g * g * 900, g: surf(SEED, d[0], d[1], d[2])[0], col: g > 0.6 ? [0.62, 0.64, 0.68] : [0.72, 0.68, 0.6] }); } }
+  for (var m = 0; m < 26; m++) { var q2 = norm([r() - 0.5, r() - 0.5, r() - 0.5]), s2 = surf(SEED, q2[0], q2[1], q2[2])[0]; if (s2 < 0) continue; var e2 = east(q2); MARKS.push(q2); TW.push({ d: q2, e: e2, w: 420, h: 6500, g: s2, col: [0.86, 0.26, 0.2], big: 1 }); TW.push({ d: q2, e: e2, w: 900, h: 700, g: s2 + 2600, col: [0.95, 0.9, 0.82] }); }
+  twN = TW.length; twData = new Float32Array(twN * 13);
+  TW.forEach(function (t, i) { var o = i * 13; twData.set(t.d, o); twData.set(t.e, o + 3); twData.set([t.w, t.h, t.w], o + 6); twData.set(t.col, o + 9); twData[o + 12] = t.g; });
+  vaoT = gl.createVertexArray(); gl.bindVertexArray(vaoT); gl.bindBuffer(gl.ARRAY_BUFFER, bBox); var aP = pB.a('aP'), aN = pB.a('aN'); gl.enableVertexAttribArray(aP); gl.vertexAttribPointer(aP, 3, gl.FLOAT, false, 24, 0); gl.enableVertexAttribArray(aN); gl.vertexAttribPointer(aN, 3, gl.FLOAT, false, 24, 12);
+  bT = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bT); gl.bufferData(gl.ARRAY_BUFFER, twData, gl.DYNAMIC_DRAW);
+  [['iD', 3, 0], ['iE', 3, 12], ['iS', 3, 24], ['iC', 4, 36]].forEach(function (x) { var l = pB.a(x[0]); gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, x[1], gl.FLOAT, false, 52, x[2]); gl.vertexAttribDivisor(l, 1); });
+}
+var vaoF = gl.createVertexArray(); gl.bindVertexArray(vaoF); gl.bindBuffer(gl.ARRAY_BUFFER, bBox); gl.enableVertexAttribArray(pF.a('aP')); gl.vertexAttribPointer(pF.a('aP'), 3, gl.FLOAT, false, 24, 0); gl.enableVertexAttribArray(pF.a('aN')); gl.vertexAttribPointer(pF.a('aN'), 3, gl.FLOAT, false, 24, 12);
+var vaoL = gl.createVertexArray(), bL = gl.createBuffer(); gl.bindVertexArray(vaoL); gl.bindBuffer(gl.ARRAY_BUFFER, bL); gl.bufferData(gl.ARRAY_BUFFER, 3 * 4 * 1200, gl.DYNAMIC_DRAW); gl.enableVertexAttribArray(pL.a('aD')); gl.vertexAttribPointer(pL.a('aD'), 3, gl.FLOAT, false, 0, 0);
+var vaoS = gl.createVertexArray();
+// ---- the state: all of it. The world is two unit vectors: where the pair is on the planet, and which way their line runs ----
+var S, rnd;
+function reset() { var p = norm([0.42, 0.33, 0.84]); S = { p: p, t: norm(cross([0, 1, 0], p)), gap: 250, v: 0, y: 0, alt: 0, rem: 0, w: 0, send: 0, sdir: 1, flown: 0, swung: 0, lapT: 0, crater: [], nextFire: P.every, tick: 0, trail: [], wid: P.width, sendV: 0, aim: null, autoT: 0, last: null }; S.y = heightAt(S.p); rnd = lcg(991); }
+function ground(x) { var a = x / RP, c = Math.cos(a), s = Math.sin(a); return heightAt([S.p[0] * c + S.t[0] * s, S.p[1] * c + S.t[1] * s, S.p[2] * c + S.t[2] * s]) + craterAt(x); }
+function craterAt(x) { var a = x / RP, c = Math.cos(a), s = Math.sin(a), d = [S.p[0] * c + S.t[0] * s, S.p[1] * c + S.t[1] * s, S.p[2] * c + S.t[2] * s], v = 0; S.crater.forEach(function (m) { var dv = [d[0] - m.d[0], d[1] - m.d[1], d[2] - m.d[2]], q = dot(dv, dv) * RP * RP / (m.r * m.r); if (q < 1) { var u = 1 - q; v -= m.dep * u * u; } }); return v; }
+function dig(x, r0, dep) { var a = x / RP, c = Math.cos(a), s = Math.sin(a), d = norm([S.p[0] * c + S.t[0] * s, S.p[1] * c + S.t[1] * s, S.p[2] * c + S.t[2] * s]); S.crater.push({ d: d, r: r0, dep: dep }); if (S.crater.length > 16) S.crater.shift(); }
+function fire(dirSign) { var a = P.angle * Math.PI / 180 * dirSign; if (P.fires === 'mark') return aimMark(); S.aim = null; S.rem += a; }
+function aimMark() { var best = null, bd = 1e9, off = rnd() * 9000; MARKS.forEach(function (q) { var c = cross(S.p, q), a = Math.atan2(Math.sqrt(dot(c, c)), dot(S.p, q)) * RP; if (a > 6000 + off && a < bd) { bd = a; best = q; } }); if (!best) return; S.aim = best; }
+function bearingTo(q) { var d = dot(S.p, q), v = [q[0] - S.p[0] * d, q[1] - S.p[1] * d, q[2] - S.p[2] * d], l = cross(S.p, S.t); return Math.atan2(dot(v, l), dot(v, S.t)); }
+// one tick at 60 Hz
+var inp = { x: 0, fly: false, send: false, dig: false, l: false, r: false, aim: false }, prev = {}, keys = {}, human = false;
+function readInput() {
+  var o = { x: (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0), fly: !!(keys.ShiftLeft || keys.ShiftRight), send: !!keys.Space, dig: !!keys.KeyC, l: !!keys.KeyQ, r: !!keys.KeyE, aim: !!keys.KeyG };
+  var ps = navigator.getGamepads ? navigator.getGamepads() : [], g = null; for (var i = 0; i < ps.length; i++) if (ps[i] && ps[i].connected) { g = ps[i]; break; }
+  if (g) { var bt = function (k) { return !!(g.buttons[k] && (g.buttons[k].pressed || g.buttons[k].value > 0.5)); }; if (Math.abs(g.axes[0]) > 0.25) o.x = g.axes[0]; o.fly = o.fly || bt(7); o.send = o.send || bt(2); o.dig = o.dig || bt(0); o.l = o.l || bt(4); o.r = o.r || bt(5); o.aim = o.aim || bt(3); }
+  if (o.x || o.fly || o.send || o.dig || o.l || o.r || o.aim) human = true;
+  return o;
+}
+function autoInput() {     // until someone touches it: a brawl, a send, a long flight, a swing in flight, another brawl
+  var t = S.autoT++ % 1500, o = { x: 0, fly: false, send: false, dig: false, l: false, r: false, aim: false };
+  if (t < 120) o.x = Math.sin(t * 0.05) * 0.6; else if (t === 130) o.send = true; else if (t >= 260 && t < 900) { o.x = 1; o.fly = true; if (t === 520) o.r = true; if (t === 760) o.l = true; } else if (t === 1000) o.send = true; else if (t >= 1120 && t < 1380) { o.x = -1; o.fly = true; }
+  return o;
+}
+function step() {
+  lookups = 0; var i = human ? readInput() : (readInput(), human ? readInput() : autoInput()), pr = function (k) { return i[k] && !prev[k]; }; inp = i;
+  if (pr('l')) fire(-1); if (pr('r')) fire(1); if (pr('aim')) aimMark();
+  if (pr('dig')) dig(0, 500, 220);
+  if (pr('send') && !S.send) { S.send = 90; S.sdir = i.x < 0 ? -1 : 1; if (P.fires === 'send' || P.fires === 'mark') { if (P.fires === 'mark') aimMark(); else fire(rnd() < 0.5 ? -1 : 1); } }
+  if (P.fires === 'every' && (S.nextFire -= 1 / 60) <= 0) { S.nextFire = P.every; fire(rnd() < 0.5 ? -1 : 1); }
+  if (P.fires === 'flight' && i.fly) { if ((S.nextFire -= 1 / 60) <= 0) { S.nextFire = P.every; fire(rnd() < 0.5 ? -1 : 1); } }
+  // the swing: eased up to its rate and down onto its angle, about the pair, never a cut
+  if (S.aim) { S.rem = bearingTo(S.aim); if (Math.abs(S.rem) < 0.004) { S.aim = null; S.rem = 0; } }
+  var cap = P.rate * Math.PI / 180 / 60, acc = cap / 24, want = Math.sign(S.rem) * Math.min(cap, Math.sqrt(2 * acc * Math.abs(S.rem)));
+  S.w += Math.max(-acc, Math.min(acc, want - S.w)); if (Math.abs(S.rem) < 1e-4 && Math.abs(S.w) < acc) { S.w = 0; S.rem = 0; }
+  if (S.w) { S.t = norm(add(add(S.t, [0, 0, 0], Math.cos(S.w)), cross(S.p, S.t), Math.sin(S.w))); S.rem -= S.w; S.swung += Math.abs(S.w); }
+  // the pair along their line: the planet turns under them
+  var flat = FLAT * P.speed / 100, tv = i.fly ? i.x * flat : i.x * 700;
+  if (S.send) { S.send--; tv = 6000 * S.sdir * (0.45 + S.send / 160); S.gap = Math.min(2600, S.gap + 34); if (!S.send) dig(S.sdir * S.gap / 2, 620, 260); }
+  else S.gap = Math.max(250, S.gap - 26);
+  S.v += (tv - S.v) * (i.fly || S.send ? 0.16 : 0.22);
+  var da = S.v / 60 / RP; if (da) { var c = Math.cos(da), s = Math.sin(da), p = S.p, t = S.t; S.p = norm([p[0] * c + t[0] * s, p[1] * c + t[1] * s, p[2] * c + t[2] * s]); S.t = norm([t[0] * c - p[0] * s, t[1] * c - p[1] * s, t[2] * c - p[2] * s]); S.flown += Math.abs(S.v) / 60; S.t = norm(add(S.t, S.p, -dot(S.t, S.p))); }
+  // the ground the sim needs: under each bar, and the camera's rest height
+  var ax = -S.gap / 2, bx = S.gap / 2, ga = ground(ax), gb = ground(bx), g0 = ground(0), air = (Math.abs(S.v) > 2500 || S.send) ? 1 : 0;
+  S.alt += ((air ? 420 : 0) - S.alt) * 0.08; S.ga = ga; S.gb = gb; S.gm = Math.max(ga, gb); S.y += ((Math.max(g0, S.gm) + S.alt) - S.y) * 0.12;
+  S.wid += ((P.width * (Math.abs(S.v) > 2500 ? P.wide : 1) + S.gap * 1.3) - S.wid) * 0.05;
+  if (S.tick % 8 === 0) { S.trail.push(S.p.slice()); if (S.trail.length > 1200) S.trail.shift(); }
+  prev = i; S.tick++; S.lookups = lookups;
+}
+// ---- camera and drawing ----
+function persp(fy, asp, n, f) { var t = 1 / fy; return [t / asp, 0, 0, 0, 0, t, 0, 0, 0, 0, (f + n) / (n - f), -1, 0, 0, 2 * f * n / (n - f), 0]; }
+function look(e, c, u) { var z = norm([e[0] - c[0], e[1] - c[1], e[2] - c[2]]), x = norm(cross(u, z)), y = cross(z, x); return [x[0], y[0], z[0], 0, x[1], y[1], z[1], 0, x[2], y[2], z[2], 0, -dot(x, e), -dot(y, e), -dot(z, e), 1]; }
+function mul(a, b) { var o = new Array(16); for (var c = 0; c < 4; c++) for (var r = 0; r < 4; r++) { var s = 0; for (var k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k]; o[c * 4 + r] = s; } return o; }
+function ortho(h, asp, n, f) { return [1 / (h * asp), 0, 0, 0, 0, 1 / h, 0, 0, 0, 0, -2 / (f - n), 0, 0, 0, -(f + n) / (f - n), 1]; }
+var SKY = [0.70, 0.80, 0.90], TOP = [0.25, 0.42, 0.68];
+function setGround(p, F, vp, Rr, cam, alt) {
+  gl.useProgram(p.p); gl.uniformMatrix3fv(p.u.uF, false, F); gl.uniformMatrix4fv(p.u.uVP, false, vp); gl.uniform1f(p.u.uR, RP); gl.uniform1f(p.u.uRr, Rr); gl.uniform1f(p.u.uRel, P.relief / 100); gl.uniform1f(p.u.uTex, 3.54 * RP / MAP.N); gl.uniform1f(p.u.uAlt, alt); gl.uniform1f(p.u.uStep, thStep);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texH); gl.uniform1i(p.u.uH, 0);
+  var cr = new Float32Array(64), cd = new Float32Array(16); S.crater.forEach(function (m, i) { cr.set([m.d[0], m.d[1], m.d[2], m.r], i * 4); cd[i] = m.dep; }); gl.uniform4fv(p.u.uCr, cr); gl.uniform1fv(p.u.uCrD, cd); gl.uniform1i(p.u.uCrN, S.crater.length);
+}
+function draw() {
+  var W = cv.width, H = cv.height, asp = W / H, K = 100 / P.curve, Rr = RP * K; gl.viewport(0, 0, W, H); gl.disable(gl.SCISSOR_TEST); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.disable(gl.DEPTH_TEST); gl.useProgram(pS.p); gl.uniform3fv(pS.u.uSky, SKY); gl.uniform3fv(pS.u.uTop, TOP); gl.bindVertexArray(vaoS); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.enable(gl.DEPTH_TEST);
+  // the frame: its columns are the line, across it, and up. Flight and swing change this matrix and nothing else
+  var Z = cross(S.t, S.p), F = [S.t[0], S.t[1], S.t[2], Z[0], Z[1], Z[2], S.p[0], S.p[1], S.p[2]];
+  var dist = S.wid / (2 * T_FOV * asp), pit = P.pitch * Math.PI / 180, ty = S.y * P.relief / 100 + 60, cam = [0, ty + dist * Math.sin(pit), dist * Math.cos(pit)], view = look(cam, [0, ty, 0], [0, 1, 0]), vp = mul(persp(T_FOV, asp, 30, 400000), view);
+  var sunP = P.sun ? [0.35, 0.8, 0.48] : null, sun = sunP ? (function () { var v = [dot(S.t, sunP), dot(Z, sunP), dot(S.p, sunP)]; return norm([v[0], v[2], v[1]]); })() : norm([0.3, 0.8, 0.5]), amb = 0.58, haze = 2.4e-5;
+  setGround(pG, F, vp, Rr, cam, 0); gl.uniform3fv(pG.u.uSun, sun); gl.uniform3fv(pG.u.uCam, cam); gl.uniform3fv(pG.u.uSky, SKY); gl.uniform1f(pG.u.uDet, P.detail); gl.uniform1f(pG.u.uHaze, haze); gl.uniform1f(pG.u.uAmb, amb);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texC); gl.uniform1i(pG.u.uC, 1); gl.bindVertexArray(vaoG); gl.drawElements(gl.TRIANGLES, meshN, gl.UNSIGNED_INT, 0);
+  if (P.towers) { gl.useProgram(pB.p); gl.uniformMatrix3fv(pB.u.uF, false, F); gl.uniformMatrix4fv(pB.u.uVP, false, vp); gl.uniform1f(pB.u.uR, RP); gl.uniform1f(pB.u.uRr, Rr); gl.uniform1f(pB.u.uRel, P.relief / 100); gl.uniform3fv(pB.u.uSun, sun); gl.uniform3fv(pB.u.uCam, cam); gl.uniform3fv(pB.u.uSky, SKY); gl.uniform1f(pB.u.uHaze, haze); gl.uniform1f(pB.u.uAmb, amb); gl.bindVertexArray(vaoT); gl.drawArraysInstanced(gl.TRIANGLES, 0, 36, twN); }
+  // the two bars, on one relative band, always
+  var bh = Math.max(75, S.wid * 0.024), bw = bh * 0.26; gl.useProgram(pF.p); gl.uniformMatrix4fv(pF.u.uVP, false, vp); gl.bindVertexArray(vaoF);
+  [[-S.gap / 2, S.ga, [0.12, 0.42, 0.40]], [S.gap / 2, S.gb, [0.30, 0.20, 0.55]]].forEach(function (b) { var ar = b[0] / Rr, rad = Rr + (b[1] * P.relief / 100) + S.alt; gl.uniform3f(pF.u.uPos, rad * Math.sin(ar), rad * Math.cos(ar) - Rr, 0); gl.uniform3f(pF.u.uSz, bw, bh, bw); gl.uniform3fv(pF.u.uCol, b[2]); gl.drawArrays(gl.TRIANGLES, 0, 36); });
+  if (P.clouds) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false); setGround(pC, F, vp, Rr, cam, 6200); gl.uniform3fv(pC.u.uSun, sun); gl.uniform1f(pC.u.uAmb, amb + 0.25); gl.bindVertexArray(vaoG); gl.drawElements(gl.TRIANGLES, meshN, gl.UNSIGNED_INT, 0); gl.depthMask(true); gl.disable(gl.BLEND); }
+  // the globe: the same mesh and map from above the pair, the line across it and where the pair have been
+  if (P.globe) {
+    var gs = Math.round(H * 0.26), gx = 10, gy = H - gs - 10; gl.enable(gl.SCISSOR_TEST); gl.scissor(gx, gy, gs, gs); gl.viewport(gx, gy, gs, gs); gl.clearColor(0.05, 0.06, 0.09, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    var vg = mul(ortho(RP * 1.08, 1, 1, RP * 6), look([0, RP * 2, 0], [0, 0, 0], [0, 0, -1]));
+    gl.useProgram(pG.p); setGround(pG, F, vg, RP, [0, RP * 2, 0], 0); gl.uniform1f(pG.u.uRel, 0.0); gl.uniform1f(pG.u.uDet, 0); gl.uniform1f(pG.u.uHaze, 0); gl.uniform3fv(pG.u.uCam, [0, RP * 2, 0]); gl.uniform3fv(pG.u.uSun, [0, 1, 0]); gl.uniform1f(pG.u.uAmb, 0.9); gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texC); gl.uniform1i(pG.u.uC, 1); gl.bindVertexArray(vaoG); gl.drawElements(gl.TRIANGLES, meshN, gl.UNSIGNED_INT, 0);
+    gl.disable(gl.DEPTH_TEST); gl.useProgram(pL.p); gl.uniformMatrix3fv(pL.u.uF, false, F); gl.uniformMatrix4fv(pL.u.uVP, false, vg); gl.uniform1f(pL.u.uRr, RP); gl.bindVertexArray(vaoL); gl.bindBuffer(gl.ARRAY_BUFFER, bL);
+    var line = []; for (var k = -40; k <= 40; k++) { var aa = k / 40 * 1.5, cc = Math.cos(aa), ss = Math.sin(aa); line.push(S.p[0] * cc + S.t[0] * ss, S.p[1] * cc + S.t[1] * ss, S.p[2] * cc + S.t[2] * ss); } gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(line)); gl.uniform3f(pL.u.uCol, 1, 1, 1); gl.drawArrays(gl.LINE_STRIP, 0, 81);
+    if (S.trail.length > 1) { var tr = new Float32Array(S.trail.length * 3); S.trail.forEach(function (d, i) { tr.set(d, i * 3); }); gl.bufferSubData(gl.ARRAY_BUFFER, 0, tr); gl.uniform3f(pL.u.uCol, 0.95, 0.72, 0.2); gl.drawArrays(gl.LINE_STRIP, 0, S.trail.length); }
+    gl.enable(gl.DEPTH_TEST); gl.disable(gl.SCISSOR_TEST); gl.viewport(0, 0, W, H);
+  }
+}
+var fdt = 16, frames = 0, lastHud = 0;
+function paintHud(now) {
+  if (now - lastHud < 120) return; lastHud = now; var deg = S.flown / CIRC * 360, slide = Math.abs(S.w) * 60 * 180 / Math.PI;
+  hud.innerHTML = Math.round(Math.abs(S.v)).toLocaleString() + ' u/s &nbsp; ' + (Math.abs(S.v) / CIRC * 60).toFixed(1) + ' s... a lap in ' + (Math.abs(S.v) > 100 ? (CIRC / Math.abs(S.v)).toFixed(1) + ' s' : '-') + '<br>flown ' + deg.toFixed(0) + '&deg; of the planet &nbsp; swung ' + (S.swung * 180 / Math.PI).toFixed(0) + '&deg;<br>swing ' + slide.toFixed(0) + '&deg;/s &nbsp; ground under a bar moves ' + Math.round(Math.abs(S.w) * S.gap / 2 * RP / RP).toLocaleString() + ' u/tick<br>this tick: 0 noise reads, ' + (S.lookups||0) + ' map reads, 1 rotation<br>map ' + MAP.N + '&sup2;, ' + MAP.reads.toLocaleString() + ' reads, built in ' + MAP.ms.toFixed(0) + ' ms (JS)<br>frame ' + fdt.toFixed(1) + ' ms';
+  hud.innerHTML = hud.innerHTML.replace(/ \d+\.\d s\.\.\. /, ' ');
+  $('dot').style.left = (12 + inp.x * 11) + 'px'; [['iFly', 'fly'], ['iSend', 'send'], ['iDig', 'dig'], ['iL', 'l'], ['iR', 'r'], ['iAim', 'aim']].forEach(function (c) { $(c[0]).className = inp[c[1]] ? 'c on' : 'c'; });
+}
+window.addEventListener('keydown', function (e) { if (e.code === 'KeyR') { human = true; reset(); return; } if (/^(Key[ADQECG]|Shift(Left|Right)|Space)$/.test(e.code)) { keys[e.code] = true; e.preventDefault(); } });
+window.addEventListener('keyup', function (e) { keys[e.code] = false; }); window.addEventListener('blur', function () { keys = {}; });
+var acc = 0, last = 0;
+function frame(ts) { if (!last) last = ts; var dt = Math.min(80, ts - last); last = ts; fdt += (dt - fdt) * 0.1; acc += dt / 16.667; var n = 0; while (acc >= 1 && n < 6) { acc -= 1; step(); n++; } if (n === 6) acc = 0; draw(); paintHud(ts); if (!window.__hold) requestAnimationFrame(frame); }
+buildMap(); buildTowers(); reset();
+// a hook for tools: step the world by ticks, draw, read it
+window.RT = { P: P, S: function () { return S; }, step: function (n) { for (var i = 0; i < n; i++) step(); }, draw: draw, buildMap: buildMap, human: function (v) { human = v; }, keys: keys, hud: function () { lastHud = 0; paintHud(performance.now() + 1000); return hud.textContent; }, reset: reset, gl: gl, fire: fire, floatLinear: floatLinear };
+window.__ok = 1; requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
