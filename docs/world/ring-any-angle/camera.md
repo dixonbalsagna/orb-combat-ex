@@ -100,7 +100,7 @@ Turning the world brings things on one side forward: what stood behind the fight
 | Need | First value | Why, and the check |
 | :--- | :--- | :--- |
 | **The horizon must move** | Far land and sky turn at the true rate `v / R` while he flies: 23°/s on the full ring, 47°/s on the Half ring, flat out | **This is the read of crossing a planet.** Ground flow says fast anywhere; only a moving horizon says the world is round and he's going round it. Fits the budget by itself; with a swing on top, see section 5. **For Rendering and World: this needs the far land reading a planet frame (Research's stage 1).** If the sky has a sun, it should move too: about 100° over a 4 s flight on the full ring, which I haven't checked is possible |
-| **Curvature** | Add 0.05 to the curve at the screen's edge, eased in from 4,000 to 10,000 u/s | At sizes the camera allows, curve sits at `CURVE_NEAR` 0.035. The true sag at the floor size is close to it on a full ring (89 u, 3.8% of the height) and double on a Half ring (7.6%). So 0.085 is about true on a Half ring and about twice true on a full one. A planet that looks small is the point. **Render only** |
+| **Curvature** | Follows the zoom: flatter close, 100% of the true globe when wide (section 5). No term for speed: I withdraw my +0.05 | Orb: "zooming out while subtly returning to 100% globe could give an illusion of extra scale to the fighter's speed and altitude" |
 | **Near ground for speed** | At the flight's start and end, no more than 0.6 of the height above ground (about 1,400 units at the floor size) | Speed reads from parallax, and parallax needs something close. Flat out, the scroll governor (`SCROLL_MAX`, 0.045 of the width a tick) sets the size, about 0.036 of the height. Rows behind are slower, and that gradient *is* the speed |
 | **A reveal in the middle** | Flights of 3 s or more: crane up, the body down to about 0.8 of the height in the frame, pitch -6°, size no lower than the floor, over about 1 s at the flight's middle | Low, high, low is the shape: fast, then the planet, then arriving. **The climb itself is the sim's:** the camera can only crane within what his altitude allows |
 | **Framing** | Keep the launch shot: trail 0.35 of the width, so 0.65 of the frame is ahead | Already built. Adds nothing to the mass rule |
@@ -175,7 +175,7 @@ Research's bars can't show any of this, so this needs a scratch render on the re
 | 3 | A tower, then a mountain, reaching the near line, at a launch's 60°/s and a brawl's 10°/s, low angle on and off | How they leave (section 5) | Anything crosses a fighter, or anything fades |
 | 4 | 180° | The rival on the same side, held stick unchanged, a player can say where the city went | They can't |
 | 5 | Split, launched body against a grounded chaser | Same sky in both panes; the grounded one's feet don't slide | |
-| 6 | A flat-out 5 s flight on a full ring | Horizon moving, curve at 0.085, low, reveal, low, arrival over the curve | It reads as fast but not as far |
+| 6 | A flat-out 5 s flight on a full ring | Horizon moving, the curve following the zoom, low, reveal at both widths (section 5), low, arrival over the curve | It reads as fast but not as far |
 | 7 | Bank on and off; low angle on and off | Whether each gesture earns its place | |
 | 8 | Collapse, signature and a swing through a city, both flash modes, at 16:9 and 1024 by 768 | Readings only, flash work being paused. RL-213 and RL-208 make reduced mode the one that counts | |
 | 9 | Each shot under the motion setting | Section 5's table | A cut with no action to hide on, or a fighter's feet off the ground |
@@ -217,18 +217,16 @@ Orb played proto v2: comfortable at every speed up to 240°/s, and 240 "could ro
 
 **Game Design's sweep limit still governs.** 240°/s (4.2 rad/s) only fits a fighter within 1,430 units of the pivot in the air, and 18 units on the ground. So it's for flight, or a launch's first ticks with the launcher as the pivot: a body at launch speed leaves that radius after about 14 ticks. **Two standing fighters still get at most 57°/s, at any size.** I don't know whether Orb's play had the limit ticked.
 
-**The easing.** Proto v2 uses a smootherstep at its chosen peak, so 240°/s makes 5° last 2.3 ticks and 15° last 7. **Orb saw that on a 240 Hz display. On the laptop at 30 fps, 5° would be about one frame: a jump, against Orb's rule that every move eases.** So a floor on time, and two shapes:
+**The easing.** Proto v2 uses a smootherstep at its chosen peak, so 240°/s makes 5° last 2.3 ticks and 15° last 7, and Orb was comfortable with that. I'd raised the laptop's 30 fps against it; **Orb says 30 fps looked fine, so I withdraw that, and the longer floors that came from it.** What stays is a floor of 4 ticks, the least that eases at all, and two shapes:
 
-| Swing | Shape | Floor | 5° | 10° | 15° |
-| :--- | :--- | ---: | ---: | ---: | ---: |
-| **With a blow** (a launch's release, a hit) | **Fast start, soft landing:** the camera's approved impact push (`BLOW_UP`). Rises over 2 ticks, then `1 − (1 − u)³`, so the peak is `3θ / T`. The blow hides the start | 8 ticks | 8 ticks, peak 112°/s | 8 ticks, 225°/s | **11 ticks, 240°/s** |
-| **With no blow** (a correction in flight) | **Smootherstep, as the whip.** A fast start with nothing to cause it would read as a jerk. Peak `1.875 θ / T` | 12 ticks | 12 ticks, 47°/s | 12 ticks, 94°/s | 12 ticks, 141°/s |
+| Swing | Shape | 5° | 10° | 15° |
+| :--- | :--- | ---: | ---: | ---: |
+| **With a blow** (Game Design's jolt, a launch's release) | **Fast start, soft landing:** the camera's approved impact push (`BLOW_UP`). `1 − (1 − u)³`, so the peak is `3θ / T`. The blow hides the start | 4 ticks, peak 225°/s | 7.5 ticks, 240°/s | 11 ticks, 240°/s |
+| **With no blow** (a correction, lining up with a street) | **Smootherstep,** as proto v2. A fast start with nothing to cause it would read as a jerk. Peak `1.875 θ / T` | 4 ticks, 141°/s | 4.7 ticks, 240°/s | 7 ticks, 240°/s |
 
-- **So only a blow's swing reaches 240, from about 11° up.** Smaller ones can't reach it inside the floor, and that's the point of the floor. **Orb's "up to 240" holds as a cap.** If Orb wants the no-blow case faster, its floor is the number to move: at the 8-tick floor, 15° reaches 211°/s.
-- **The floors are first values,** taken from the blow push (7 frames) and the whip (12). 8 ticks is 4 frames at 30 fps, which I think is the least that can show an ease.
 - **Above 15°,** 240 at the largest size was too extreme, and Orb didn't say where it turns. **The clip needs Orb to move a size slider at 240 to find it.** Until then Game Design's 60°/s stands for anything larger.
 
-**For the proto:** the same two shapes and floors, on a laptop-speed frame rate, would tell Orb what these look like at the target. Also, real fighters and a city are the first things it can't show, so this stays first values until a clip on the real panes.
+**For the proto:** the fast-start shape is the one Orb hasn't felt. Also, real fighters and a city are the first things it can't show, so this stays first values until a clip on the real panes.
 
 ### The pivot: agreed
 
@@ -300,3 +298,72 @@ Legal e12 still applies: no zoom in on a fighter held in the air.
 | **Anything held too long** (a standing fighter's ground has parted from the shown ground) | **A cut at the next hit-stop's start,** or the slower setup rate Game Design proposes if there isn't one | | **The open one. It needs Rendering's and Simulation's answer:** how far shown and sim may part |
 
 **Game Design's half rate is then a second choice, not the setting:** it's still a whole-view move, and online it'd slow the other player. RL-213 asks for a cut or a still, and this is how each shot gets one. **Accessibility reviews it before it ships, and a cut is a large change of picture, so it counts in the flash register:** at 2 to 5 launches a match that's small, but it has to be read, with the two settings together. A cut under Reduce flashing cross-dissolves today (`CUT_DISSOLVE_S`), which Orb rejected for play: **the setting must be a plain cut.**
+
+### The curve against zoom
+
+**Orb: "subtle flattening looks good at closer zoom levels, zooming out while subtly returning to 100% globe could give an illusion of extra scale to the fighter's speed and altitude."**
+
+**The curve is a share of the planet's true curvature, read from the view's width on the fighter plane. Log scale between the rows, 16:9, full ring (R 24,446). First values:**
+
+| View width | Where it's used | Share of true | Sag at the screen's edge, of the height | At 720p |
+| ---: | :--- | ---: | ---: | ---: |
+| 950 | Closest (`R_MAX`) | 40% | 0.36% | 3 px |
+| 2,700 | Launch floor (0.05) | 55% | 1.3% | 10 px |
+| 4,200 | The size floor (`R_FLOOR`) | 70% | 2.7% | 19 px |
+| 8,000 | The reveal, wide (below) | 90% | 6.5% | 47 px |
+| 12,000 and wider | | 100% | 10.9% and up | 78 px and up |
+
+True sag is `width × aspect / (8R)`. **So from 2,700 to 8,000 the view widens 3 times and the sag grows 4.9 times:** that gap is Orb's illusion, and 1.6 times is about as much as "subtly" allows, I think.
+
+- **It's a pure function of the displayed zoom,** with no timer of its own. It eases exactly as the zoom eases, it can't pump separately, and on a cut it moves with the cut. Each pane reads its own.
+- **Altitude.** The same share also rises toward 100% as the camera climbs, from 0.2 to 0.85 of the ceiling (`HIGH_FROM`, `HIGH_TO`), and the higher of the two wins. Never over 100%.
+- **Halved R on a Half ring** doubles every sag in the table. It's that planet's own true curve. I'd leave it.
+- **It's Rendering's constant and shader.** Proto v2 applies its slider as a larger radius (`K = 100 / curve`), and the tile plan could do the same with this as its input.
+
+**A warning about today's look.** Today's strip has `CURVE_NEAR` 0.035 at every size the fight uses. **At the closest that's about 4 times true, not flatter than it.** So the flattening Orb liked is a large change from what ships in close play: from 25 px of sag to 3. It only follows from playing proto v2. It goes through the look gate, and it should make the crowd's bend error smaller.
+
+**How flight framing uses it:**
+
+| Beat | Width | Share | What it adds |
+| :--- | ---: | ---: | :--- |
+| Launch, whip, low flight | 2,700 | 55% | Near flat: speed, from parallax |
+| Flat out, low | About 3,700 (the scroll governor) | About 65% | |
+| **The reveal,** flights of 3 s or more: 1 s out, 0.5 s held, 1 s back, at the current `ZOOM_RATE` | **To 8,000** | 90%, more if he's climbing | The horizon bows as the view opens. His speed on screen halves, but the world looks larger |
+| Arrival | Back to 2,700 | 55% | The curve flattens as he comes down: he's landing on a place |
+
+**One question for Orb.** At 8,000 he's about 12 px tall, under `R_FLOOR`'s 23 px, the rule that no fighter's smaller than that anywhere. **At the floor, 4,200, the curve is only 19 px, which I doubt sells it.** So clip 6 shows the reveal at both, and Orb says whether a brief reveal may break the floor. Proto v2's bars can't answer this: they don't get lost the way a fighter does. Nothing is drawn over him either way.
+
+### What the camera offers the swing's score
+
+**How it's squared: the camera offers a model of itself, and the sim never sees the camera.** It's the same answer as section 4's bound.
+
+- **I write `read(S)`:** a pure function of sim state and data, in the sim's own code, importing nothing from `render/`. It holds no state, so rollback and the digest see nothing new. It's evaluated when the score is asked, not every tick.
+- **It uses no rig state,** no zoom setting and no screen size, which differ between players. "Is this a split" becomes "is the gap over about 2,000", which is arithmetic from `R_SPLIT` and the margin at the default zoom.
+- **Game Design owns the score,** and decides how much this term weighs. It can't start a swing or stop one. The hard stops stay Game Design's state rules.
+- **What the sim can't know, the camera absorbs.** A strip that's up closes with its wipe when a swing starts (Game Design's ruling). Each rig places the gestures from the swing the sim chose. **Nothing goes back.**
+- **The model can go stale,** so a tool should check it: run matches through the real rig and report how often `read` agrees with what the rig was doing. Offline, one way, in the same family as `view_bound.gd`. If the camera changes and they part, that's a data change to the model.
+- **Every term prints its name and value in the debug feed,** as the Director layer's "explainable" rule asks. **No term reads people** (RL-213).
+
+**The read, from -1 to +1. Terms add, then clamp. First values:**
+
+| Good time | Term | Why |
+| :--- | ---: | :--- |
+| A launch's release | +0.6 | The camera's strongest moment: the blow has caused it, the whip's already moving |
+| A heavy blow's release (small swings) | +0.4 | A jolt with a cause |
+| Both airborne and in one pane, gap under 1,400 | +0.3 | Nothing to slide, any rate fits, and the fighters are big |
+| A flight with its time left at least the swing's length | +0.3 | It can land at rest |
+| A form's pause | +0.3 | Nothing moves; the camera's orbit already suits it |
+| No peak, launch or swing for 4 s | +0.2 | The picture has settled, so a swing stands out. This is where variety comes from: quiet raises it and a peak lowers it, whatever the cause |
+
+| Bad time | Term | Why |
+| :--- | ---: | :--- |
+| A heavy or launch's anticipation (the exchange's wind-up) | -0.6 | The view's tightening on the blow. A turn would pull the eye off it, and wait a few ticks and the release is better |
+| Under 0.5 s of flight left | -0.5 | It can't rest before contact. A big swing only; a correction is what small ones are for |
+| Just landed, for 0.35 s (`LAND_HOLD`) | -0.4 | The hold is what gives the landing its weight |
+| Tall land on the side turning forward (Game Design's fixed test, above 1,500 within 4,400) | -0.4 | Section 5's mountain. Height only |
+| The gap near the split, within 300 of 2,000, and changing | -0.3 | The divider's opening or closing, so two big moves at once. Fine once it's settled |
+| Both standing, one pane, over 300 apart | -0.2 | The camera's holding a brawl; only the slide limit's rate fits, and it barely shows |
+
+**Worked through, untested:** a heavy launch's release in flight room gets +0.6 and is likely to win. The same release just after a big swing gets the same read, because Game Design's falling score handles recency, not this. A slow brawl with nothing for 4 s gets 0, which is why brawl swings stay the second choice.
+
+**What it can't offer:** whether the current shot would look good, since that depends on what's actually in frame on each player's screen. So this says when the camera's free and the moment has a cause. The clip has to say whether the result feels directed.
