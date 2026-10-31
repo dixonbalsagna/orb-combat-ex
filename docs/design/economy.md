@@ -133,7 +133,7 @@ Every ego meter in the roster follows three rules:
 | Protagonist | **Respect** (Legal's suggested framing) | The opponent commits fully: transforms, fires a finisher, clashes at full ki, or keeps fighting below 25% HP | It is spent to unlock the next step on a transformation track | Advances his parallel tracks | He causes a lot of collateral through his fixation on the fight. His answer is to move the fight somewhere empty (keystone relocation) |
 | Anti-hero | **Pride** | He dominates: wins clashes, lands long barrages, finishes by hand | It drains when he is humbled (parried, guard-broken, or a region broken). Accepting Tandem help spends all of it | Damage and form triggers; forms raise it further | Indifferent. He wrecks things to make a point |
 | Tyrant | **Wrath** | His minions fall and he takes damage | Each stage change spends a share of it | Triggers his many-stage transformation chain | Indifferent, and cruel for show |
-| Cyborg | **Hunger** | He consumes civilians and collects sandwiches | Consuming is a vulnerable beat, like charging | Each civilian adds a small multiplicative bonus; thresholds trigger molts | He feeds on the population directly. This is menace made literal |
+| Cyborg | **Hunger** | He takes in wreckage and metal, by mass, and collects sandwiches | Consuming is a vulnerable beat, like charging | Mass taken in adds a small multiplicative bonus, the same whether a structure was occupied or empty; thresholds trigger molts | He feeds on the world's wreckage, never on people (Legal, RL-216) |
 
 Orb decides the exact triggers (`open-questions.md`). The rules above hold whatever the triggers are.
 

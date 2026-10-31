@@ -30,14 +30,14 @@ Rates are at the peak, on Camera's ramps (§9). The prototype's 30°/s is a star
 | Moment | Runs? | Fires on | Peak rate | How far | How often in a 6 to 8 minute match |
 | :--- | :--- | :--- | ---: | :--- | ---: |
 | **A launch** | **Yes, the main use** | The kick, once the hit-stop ends, when the planner's arrival is off to one side. **It rests at least 0.35 s before contact** (Camera's `LAND_HOLD`), so he meets a still world and the planner's aim holds | **60°/s (§9)** | Up to 180°, as far as his flight has time for: about 60° per second of flight less 15° (Camera), so 45° in a 1 s launch and 90° in about 1.75 s | 2 to 5 |
-| **A chase, a flee, a zip away** | **Yes** | The chase's or the flee's start. The hero leads toward interesting empty ground, the villain hunts toward towns. Later small corrections are fine, as both are in the air | 45°/s | Any | 1 to 3 |
-| **A form's pause** | **Yes** | The pause, as the camera's orbit. Nothing moves, so it's the easiest place | 30°/s | Up to 90° | 1 to 3 |
+| **A chase, a flee, a zip away** (a player flying flat out by choice gets only §13's nudge) | **Yes** | The chase's or the flee's start. The hero leads toward interesting empty ground, the villain hunts toward towns. Later small corrections are fine, as both are in the air | 45°/s | Any | 1 to 3 |
+| **A form's pause** | **Yes, as it ends** | The first live tick after the pause (§11's addendum). The pause itself turns nothing | 30°/s | Up to 90° | 1 to 3 |
 | **A brawl, a rally, a knock-back** | **Yes, slowly** | Nothing else has fired for about 45 s and something worth seeing lies within 60°. A swing running when a chase catches up eases down to this rate rather than stopping. **It eases to rest rather than bring tall land round in front (§9)** | **10°/s** | Up to 60° | 2 to 4 |
 | **A beam** | **No** | A swing eases to rest in the beam's tell (about 33 ticks, so the ease fits) and stays there until the beam is gone. Otherwise the groove curves, the blast misses what the plan aimed at, and the damage inset can't credit it. Shots and mines are unaffected | 0 | | |
 | **A beam struggle** | **Not at first** | It's an obvious set piece for a slow orbit, for Orb's look later. The rooted pair may stand far apart, so it would hardly turn anyway | 0 | | |
 | **The hit-stop, a finisher, a KO, the intro, a grab's set piece** | **No** | Frozen in a hit-stop (live ticks only), and the camera owns the others | 0 | | |
 
-- **How often, in total: 6 to 12 swings a match, about 10 to 15% of fight time.** This comes from a score that falls with how recent the last swing was, not a cap, and Orb's "bigger or more often" after seeing it moves the score. **If Performance's budget can't carry that, the order to cut is brawls first, then form pauses, then chases.** A launch's swing is the last to go.
+- **How often, in total: 6 to 12 swings a match, about 3 to 8% of fight time (§11's addendum).** This comes from a score that falls with how recent the last swing was, not a cap, and Orb's "bigger or more often" after seeing it moves the score. **If Performance's budget can't carry that, the order to cut is brawls first, then form pauses, then chases.** A launch's swing is the last to go.
 - **Every launch or chase swing arrives at something:** the planner scores the arrival. A brawl's swing brings something into view. A swing to nothing isn't taken.
 - **The ceiling is 98°/s at the worst screen shape, 65°/s under Reduce flashing (§9).**
 - **Reduced motion:** a setup flag, closed in §9.
@@ -101,7 +101,7 @@ A fighter at distance `r` from the pivot sees ground move at `r × rate` (over a
 
 ## 7. What this rests on
 
-- **The cost.** Research has the turntable an order of magnitude dearer than the ribbon, and over budget on the laptop while turning (E2's p99 is 46 ms against a 50 ms frame limit and a 0.2 ms read budget; E is 270 ms). My 10 to 15% of fight time assumes that gets solved. **If it can't, launches only, at about 12 s a match, is the smallest version that's still Orb's picture.**
+- **The cost.** Research has the turntable an order of magnitude dearer than the ribbon, and over budget on the laptop while turning (E2's p99 is 46 ms against a 50 ms frame limit and a 0.2 ms read budget; E is 270 ms). My share of fight time (3 to 8% by §11's addendum, 10 to 15% when this was written) assumes that gets solved. **If it can't, launches only, at about 12 s a match, is the smallest version that's still Orb's picture.**
 - **Places by plan.** A swing through a town needs buildings that stay themselves at any angle. Until then swings are honest only over open ground, and buildings are the thing Orb likes most.
 - **Netcode's lead.** Research's 20-tick lead makes a bend final before it's laid, and a launch's stop is only 12 to 16 ticks, so a swing's ask may have to come a few ticks before the blow lands. Netcode's to say.
 - **Nobody has seen real fighters in a swing.** The prototype has bars in scripted fights.
@@ -181,7 +181,7 @@ Orb, after playing proto v2: "comfortable at every speed up to 240", "a little t
 | **A flight's correction:** a launch or a chase with an arrival, until the rest before contact | Whatever closes the bearing, up to 15° | Keeps an arrival honest (§8) without a big swing, and it can retarget a swing already running |
 | **Lining up with a street:** entering a place, or as a swing rests within 15° of a street's bearing | Up to 15° | Puts the plane back on the clear street, which is the cheapest answer to §8's walls |
 
-- **How often: about 20 to 40 a match, one every 10 to 20 s,** on its own falling score, separate from the big swings' score and the brawl's 45 s of quiet. **Never closer than 1 s (Camera's value), and that one is a rule rather than a score:** it protects the flash limit, which counts changes per second, and it isn't a cost on the player. The score keeps them further apart than that. Together they take under 2% of fight time.
+- **How often: about 12 to 30 a match (§11's addendum), one every 15 to 35 s,** on its own falling score, separate from the big swings' score and the brawl's 45 s of quiet. **Never closer than 1 s (Camera's value), and that one is a rule rather than a score:** it protects the flash limit, which counts changes per second, and it isn't a cost on the player. The score keeps them further apart than that. Together they take under 2% of fight time.
 - **They add up, and that's the idea.** The sign of each is the choreographer's, chosen by the swing's score, so twenty 5° jolts can lean a fight 100° toward a town or away from one, with no big swing at all. That's the irregular path Orb enjoyed flying on the map, and it could be most of how a fight wanders.
 - **Never from a press.** A jolt comes from a blow that landed, and the gap isn't touched, so it's no dodge (test 4). One swing at a time: a small swing doesn't start during a big one, except a correction retargeting it.
 - **Same stops as §2:** none in a beam or its tell, a struggle, a hit-stop (it starts on the release), a finisher, a KO, the intro or a grab's set piece, or with both grounded in a split.
@@ -241,7 +241,7 @@ Orb: "there should definitely be variety, the dynamic elements of the fight shou
 | **Timing:** whether, when, how fast | Yes | Yes | Yes | **Never** |
 | **Direction:** where | Yes: it leads the hero toward emptier ground, measured in standing buildings and wear | **Never** | **Never** | **Never** |
 
-- **Timing moves a swing earlier or later and never raises the total.** The budget stays 6 to 12 swings and 10 to 15% of fight time. So these terms change a moment's weight and pay for it in recency, rather than adding score overall. This is why the fight's tension can inform when the world turns (pillar 5).
+- **Timing moves a swing earlier or later and never raises the total.** The budget stays 6 to 12 swings and 3 to 8% of fight time (addendum below). So these terms change a moment's weight and pay for it in recency, rather than adding score overall. This is why the fight's tension can inform when the world turns (pillar 5).
 - **The villain's direction reads buildings and wear only.** A rising toll must not feed a loop that takes the fight toward more lives lost.
 - **The one-way rule:** no input makes a rising toll yield more, longer or better swings, or steer toward people.
 - **QA's batch checks it:** no positive association between the civilian toll and a match's swing count or swing time, and a run with the civilians removed swings the same number of times, within one. **RL-215 stays open until that batch passes,** so these terms go behind their own switch, on for the batch and off by default until it clears.
@@ -250,12 +250,12 @@ Orb: "there should definitely be variety, the dynamic elements of the fight shou
 **Shared with Camera, in one direction.** The sim decides and never reads the camera (§9). So the two share a table of moments and a feed: the moment terms are data that Camera helps set, its comfort needs go in as terms the sim can read (the gap, tall land, both grounded), and the decision goes out through `DirCamIntent` with the cause and the planned rest, so Camera shoots it rather than guessing. Camera can't veto a swing, and it can ask for a moment's weight to change. Every ask prints its feed line, taken or not, so any swing can be explained.
 
 **Variety is a goal, as a term and a read.** The score marks down what was just done: the same cause, size, direction or biome, as soft costs with no quotas. **QA's rows, first values:**
-- no cause over 50% of big swings in a match, and at least three causes in most matches;
+- across a batch, launch at most 50% of big swings and any other cause at most 40% (addendum below), and at least three causes in most matches;
 - sizes spread, not bunched: no more than half of big swings within any one 30° of size;
 - biomes seen in a match clearly above the same seeds with swings off;
 - the same planet and fighters on different seeds taking visibly different paths, from the map's trail.
 
-The 6 to 12 big swings, 10 to 15% of fight time and 20 to 40 jolts stand as bands the score has to land in. Simulation's run reached 29% of fight time on all causes, but on its own driver, not this score.
+The 6 to 12 big swings stand as a band the score has to land in, with fight time read at 3 to 8% and jolts at 12 to 30 (addendum below). Simulation's run reached 29% of fight time on all causes, but on its own driver, not this score.
 
 ### At rest before a landing (`simulation.md` §8)
 
@@ -280,3 +280,230 @@ Orb: "the minimap with the trail showing the path around the planet was a nice d
 **One player's word on bars,** as with everything else here, and on the prototype's map: Orb should see it over real fighters. UI builds it, and it goes through the look gate.
 
 **The weight of Camera's `read(S)` in §11's score (`camera.md` §5): 6, a first value.** So its -1 to +1 is worth up to 6 either way, on Encounter's scale where the best place kind scores 5 and a full arrival about 16: a good or bad moment can decide between places or put a modest swing off, but can't stop a strong arrival or start a swing to nothing. It's the shared moment term §11 describes.
+
+### Addendum: the bands, against the real swings (2026-10-31)
+
+Encounter's reads of `DirSwing` (`docs/director/pending/swing`): 6 AI against AI matches, gen 3, capped at 7 minutes, read twice as its build changed. The second read is the one that counts here. It's small and has no player in it, so QA's batch is still the verdict. **These replace §2's and §11's figures where they differ.**
+
+| Band | Latest read | Ruling |
+| :--- | ---: | :--- |
+| **Big swings a match** | 7.67 | **6 to 12 stands.** It's the number a player feels |
+| **Share of fight time** | 4.17% | **3 to 8%, in place of 10 to 15%, read as a result and never a target.** My old band needed a mean swing over 5 s, which at a launch's 60°/s is past the 180° limit. It was my arithmetic, not anything Orb asked for. No swing is slowed or lengthened to reach it. 3% is about §7's smallest version (12.6 s of 7 minutes), and over 8% comes back to me and Performance |
+| **Share by cause** | Launch 43% | **Across a batch: launch at most 50%, any other cause at most 40%.** "At least three causes in most matches" stands. 50% holds, since the score now meets it, and my earlier 60% for the first read's 57% is withdrawn. It's read across a batch because a limit per match is noise at about 10 swings |
+| **By cause, a match** | Launch 3.3, flights 1.7, brawl 1.7, form 1 | **Launch 2 to 5, flights 1 to 3, brawl 1 to 4, form 0 to 3,** still inside the 6 to 12. Forms depend on how often anyone transforms, so a match can have none |
+| **A form's swing** | No world turn in the pause | **It starts on the first live tick after the pause,** at 30°/s and up to 90°, under the rate law. The pause stays still and the swing is its follow-through. §2's "nothing moves, so it's the easiest place" is withdrawn: both are free by then, so it competes like a flight and eases out for a beam or a rival closing. Any orbit during the pause is Camera's alone and turns no world |
+| **Jolts a match** | 15.83 (first read 18.5) | **12 to 30, in place of 20 to 40, read as a result.** A jolt has to come from a heavy landing, and none is forced to fill a count. The shortest gap is 5.9 s against the 1 s allowed, so the spacing rule isn't what holds them down. 20 to 40 was a first guess, and no player has asked for more. If Orb wants more after seeing them, the score moves |
+| **Sizes** | 24 of 46 at 30° or under (52%) | **The band stands, at no more than half within any 30°, and this read just misses it.** It's the one I won't move, because Orb's picture is a big turn. `data/fight/flight.json` is off at HEAD, and a short flight only has time for a small swing, so read it again with the pacing on before changing the score. Encounter's call 5 also needs a fix: a pick under `bigMin` that runs as a correction belongs to the small class, not the big count |
+| **Landings with the world moving** | 4: chase 2, form 2, none on a launch's swing | **Accepted, with no new rest rule.** These turns have no planned landing, so §11's clamp is the rule, and the worst standing sweep reads exactly 75 u/s. QA counts them, and whether the stop looks right is for the look gate |
+| **A standing pair at gap 900** | About 4.3 s for 40°, both ways, with Simulation's float fixed | **Not too slow, so the 75 u/s stands and Encounter may keep asking.** With the midpoint as pivot that's about 9.5°/s, which is §2's own 10°/s for a brawl. Nobody has felt it yet |
+| **Nudges a match** | 0.33, AI only | **§13's values stand on Orb's "fairly imperceptible".** The AI's count isn't a test of them. §13's 2 to 5 lines a match is a player's figure and waits for human or scripted flights |
+
+Share of fight time and jolts pass only because I changed the rule, not because the score improved. Launch share passes on its own, so sizes is the row to watch.
+
+## 12. Zoom earned by power, and the meteor launch (2026-10-31)
+
+Orb: at base power "the camera would never zoom out this far, it would stay close in and follow the combat up close". At the peak, "a fully charged launch attack landing on a stunned or weakened foe that knocks them diagonally up at high speed, the camera dynamically zooms out and the knocked back character leaves a burning trail through the atmosphere ... even if the fighter is only a few pixels at this zoom level". Their still is a view 53,070 wide. **It's one player's picture on bars, and every value below needs it on real fighters.** Reconciled with Camera's shot (`camera.md` §5) and Simulation's arcs (`simulation.md` §10). The arcs here are my arithmetic on Simulation's law, not a run.
+
+### The ladder: the widest view is earned
+
+**Camera's ladder stands: the lower of the two fighters' tiers,** because Orb's picture is both at peak. A strong fighter beating a weak one doesn't get the whole sky. **It applies only to an upward launch's shot. A brawl's framing doesn't change at any tier, and ordinary launches keep the floors.** The height is the launch's own, so the width follows from it. Half and Close rings scale height and width with the ring.
+
+| Lower tier | Widest view (16:9) | Fighter at 720p | Most height | Send at 60° |
+| :--- | ---: | ---: | ---: | ---: |
+| 1 | 4,200, today's floor | 23 px | 700 | about 1,400 u/s |
+| 2 | 8,000 | 12 px | 2,500 | about 2,600 u/s |
+| 3 | 16,000 | 6 px | 5,000 | about 3,700 u/s |
+| 4, not a meteor | 32,000 | 3 px | 9,900 | about 5,100 u/s |
+| **4, the meteor launch** | **53,000** | **about 2 px** | **16,400** | **about 6,600 u/s** |
+
+Below tier 3 nothing leaves the atmosphere (`rule-of-cool.md` rule 4), and 2,500 doesn't. **The heights are framing numbers:** they're set so the planet fills the frame at the hang, which is what Orb's still shows (`camera.md` §5). Research's exact projection agrees: at 53,000 wide with the launcher at 0.6 of the height, an apex of 16,400 stays in frame for the whole hang, and 20,000 and up for none of it.
+
+### The meteor launch
+
+**It's `rule-of-cool.md`'s feature 19, orbit and re-entry, in its top form, in the shared budget** of 3 planet-scale launches a match, with rule 2's 20 s between set pieces.
+
+| | The ruling |
+| :--- | :--- |
+| **What earns it** | All of: both fighters at tier 4, the top of their ladders, with at least two transformations each; **a fully charged B**, released at the flash; landing clean on a foe who's **stunned** (a stagger, a daze or a stick stun) **or weak** (past a first brink, or with a broken region). A guard or a perfect block stops it. Missing any part, it's an ordinary launch, and a full launch without the state takes the 32,000 row |
+| **How often** | **About one match in two or three, at most about 2 in one.** It's earned, not capped, inside the shared budget. QA first reads how often a match reaches both at tier 4. If it's almost never, the two-transformation gate is the number to move |
+| **The angle** | **60° above the ground, as Camera assumed.** Flatter puts his ground over the horizon from the launcher, and the one picture is the point. The stick nudges only which side, and the side with the better arrival is the default |
+| **Height and ceiling** | **Apex about 16,400, re-ruled for Camera's framing.** At 53,000 wide that keeps the planet filling the frame at the hang; a 24,000 apex would need a width of 77,600, past Orb's still, or leave the planet a low band. **Well inside today's ceiling,** so no launch-only ceiling is needed and the sky's look doesn't move. **The prototype's slider may move it on Orb's reaction** |
+| **Speed and time** | **About 6,600 u/s at the send,** inside today's hardest send of 7,000, not Camera's assumed 10,000. On Simulation's law that's about 11.5 s of arc, so **the flight's pace runs it at about 1.85×, along the same path,** to fit Camera's 6.2 s: about 3 s of climb, 1.2 s of hang at the top, 2 s of descent. So on screen he leaves at about 12,000 u/s. It needs the launch curve (`data/fight/flight.json`, off today) on for this launch at least |
+| **Where it lands** | **About 31° round a Whole ring, about 13,200 units, on Research's exact projection (my arithmetic gave 37°). No flatter launch for more carry, as a first value:** carry isn't this launch's job, it's Orb's "diagonally up", and flatter pushes his ground over the horizon from the launcher. Orb's reaction may move it. That's inside the sixth of a loop, so **ruling 3d stands and no Whole ring is required:** a Half ring scales to the same angle. He comes down almost straight. **No swing during the shot,** Camera's first value: a running one rests by the climb's start, and clip 10 can try one. It lands by §11's score on the chosen side, on buildings, terrain, water or a place's scars, and **never people (RL-213), replacing that feature's old "seeks people" line.** So the forecast is one or two candidates, one for each side |
+| **The crater** | **The biggest tier 4 allows, and no bigger.** The physical landing is about 5,700 u/s straight down, and on-screen speed doesn't count. **The crater's energy is capped at tier 4's largest impact × 1.5, a first value, rather than worked out from the speed,** so no faster send can dig more. Structures stay under tier 4's `levelCapShare`, and over water it's a splash, with no crater (`rulings-2026-10-30.md` row 11) |
+| **What it does to a match** | **One impact of wear and a new place to fight in. A chapter break, not a KO:** it can't end a match by itself, and a burial's free follow-up doesn't come with it. About 10 s from blow to next exchange, so it hardly touches match length. It carries no other reward |
+| **Can he recover?** | **Yes, from the end of the hang, at the brake's own price.** That's about 4 s with no control, which is the price of the peak launch and all I'd allow, given Orb's rule on recovering "in a reasonable amount of time". A brake means no impact, no crater and no wear, and the shot ends where he stops (Camera's third ending). **QA's row: at least 60% of them land,** or the window shortens, since a meteor that always brakes loses the picture |
+| **How the launcher follows** | **His choice, by input.** He can chase up the trail at the chase's ki price, and the shot follows the shrinking gap. Or he stays, watches, then closes on the landing in its own visible time (pillar 3). The safe ticks after a landing apply, so no cheap hit. **The director doesn't move him** |
+
+**Is this the planet crossing Orb asked about? I said a quarter to a third of the planet in my first draft, and I withdraw that.** It's a show of power into the sky, landing less than a tenth of the way round. **It can't also be the crossing:** by Simulation's arcs, a third of the way round means 45° and about 12,000 u/s, past the ceiling and over the horizon from the launcher, so the one picture Orb described is lost. **The crossing belongs to `rule-of-cool.md`'s feature 22, the round-the-world hit,** a flat launch above everything at tier 4, which is where Simulation's 116° arc, a launch-only ceiling, a Whole ring and a named exception to 3d would go. It isn't ruled here. Ordinary flights, swings, the horizon and the map carry the crossing in most matches.
+
+**Does it pay off pillar 4? Yes, its clearest payoff.** The whole ladder of power ends in something only earned power can do, and early in the match the same press does nothing like it.
+
+### Below the minimum fighter size
+
+**Camera's open question: yes, `R_FLOOR` and `LAUNCH_FLOOR` lift, in this shot only, with these limits.**
+
+- **Only with a trail on the body,** since the trail carries the read: a speed streak at tier 2, burning from tier 3.
+- **Only while no blow can land.** Hard test: no contact while a fighter involved is under `R_FLOOR`. The camera's above it at least 0.5 s before a catch, and on a landing it stops at Camera's 8,000 and comes in after the hold, which is under the floor for the impact and is allowed, because the blow has already landed.
+- **Eased all the way,** with no cut in the normal setting and no dissolve in any (Orb, 2026-10-18), and read on the flash clips.
+- **The trail has a size floor of its own:** at least 3 px wide at 720p, in that fighter's colour, so a player can tell whose it is. The launcher's aura needs the same.
+
+### Not losing track, with no markers
+
+1. **One picture, no split,** while the shot runs. The trail joins them, from where he was hit to where he is.
+2. **The trail is the world, not a marker.** It's behind him, in his colour, cooling and hanging in the sky. Nothing's drawn over him.
+3. **It's short, and it always comes back,** by one of Camera's four endings.
+4. **A player's own input wins the shot.** If the launcher moves or chases, the frame follows.
+5. **Sound and rumble carry it** when the picture's far: the roar, then the impact.
+6. **The edge HUD is off in the shot** (no chips, both are in frame). The rival pointer returns, and the map's trail (§11) stays.
+
+**What needs reading:** how often matches reach the peak; Camera's clip 10 on real panes, in both flash modes; the arc on Simulation's law, since mine is arithmetic; a burning trail's flash and cost; a planet this wide on the slower levels. **Legal should look at it:** the landing uses the score RL-213 binds, and Camera has asked for Legal to see the zoom back in near a falling fighter.
+
+**For Orb, one question:** the meteor goes up and lands less than a tenth of the way round, with both fighters in one picture. A launch that comes down a third of the way round can't keep that picture. Do you want a second launch for that, flatter and across the planet, or is the meteor enough for now?
+
+## 13. A player's own flight, and the nudge (2026-10-31)
+
+Orb: "a player holding a direction going the maximum speed should always feel like their fighter is reasonably going in the direction the controller input is sending them", with "no situation where they feel confused as to why their character just started turning on their own", but "some coordination happening behind the scenes that gently nudges the player towards interesting landmarks", since they may miss a city "by a few degrees". "Cases like these could often be justified with a voice line."
+
+**This amends §2.** A launch's flight and a chase are the director's and keep their swings. **A player flying flat out by choice is different: while one is, the only swing allowed is this nudge.** First values, none felt yet. It's a new class in §11's score, and a state rule rather than a weight, so nothing can outbid it.
+
+**When it applies.** He's flat out at traversal speed, with the stick held steady for at least 1 s, and his rival is out of reach. A launched body isn't flying by choice, so §12 is unaffected until he has control and holds a direction. A swing already running when he takes control eases out.
+
+### 1. What the player may see
+
+| | A launch's swing | **The nudge** |
+| :--- | ---: | ---: |
+| **Rate** | 60°/s | **3°/s at most,** eased |
+| **How far** | Up to 180° | **6° for one place, and 10° in any 10 s** |
+| **What the player sees** | The world visibly swings | **Nothing that reads as a turn:** the horizon drifts sideways about 0.05 of the screen's width a second, taking over 18 s to cross it, against ground flowing up to 2.7 widths a second |
+
+**The test is what the player notices, not the number.** Asked "did your fighter turn?", they should say no. If they'd notice it, the rate comes down. The fighter's place on screen, the stick and the speed don't change at all. If the other fighter is standing, he's the pivot as usual (§2), so his feet don't slide.
+
+**Orb played it (2026-10-31):** "it was fairly imperceptible i think", on about a minute flat out with 34.4° turned at 3°/s. One run, at top speed, on bars. **The values stand.** At half speed 3°/s is twice the share of the land's motion and untested, but the nudge only runs flat out, so half speed gets none. If that's ever extended, the rate scales with speed: 3°/s × speed / flat out.
+
+### 2. What it aims at, and when it gives up
+
+- **Aims at:** the best place within **6° of his heading, between 5,000 and 40,000 units ahead,** by the swing's score: a landmark, a settlement's buildings, terrain worth seeing, a place's wear, a biome he hasn't crossed. It has to be something he could already see on the far land, so the nudge is only ever toward what's in front of him.
+- **It gives up when:** the bearing passes 10°, the place is behind him or within 3,000 units, 6° has been spent on that place, his rival closes to reach, or he stops being flat out. Then it eases out and leaves the world where it is. It never turns him back.
+- **If nothing qualifies, nothing happens.** A player flying over empty land stays on his line.
+
+### 3. A held stick cancels it
+
+**Any change to what he's holding ends it on that tick:** reversing, changing the stick's direction past its dead zone, or letting go of the stick or the dash. At 3°/s that stop can't be seen, so it needs no ease. **The place he left is then off the list for this flight,** so a player who swerves away is never brought back to it. His choice stands.
+
+### 4. The voice line
+
+**A line may cover it, and is never needed for it (RL-216 allows it through the usual checks).** With voice off, in another language or with the line unplayed, the nudge has to pass §1's test on its own. If it needs explaining, it's too strong. A line can fire as a nudge starts with the place in view, or on arrival, at most once a flight, through the barks' own budget. It's a fighter noticing something ahead, and **it never mentions people or says a fight is being brought to them** (RL-213 (3), ln04). Narrative writes them, and the nudge never waits for one.
+
+**Narrative's questions (`docs/narrative/nudge-lines.md` §5). "No line, no big nudge" agrees with this because there's no big nudge: §1's limit rules one out, for every player, with voice on or off.** I don't take "the line is the licence": the nudge never depends on a line, or voice off would change where a fighter flies.
+
+| Question | Ruling |
+| :--- | :--- |
+| **The silent size, and the size that requires a line** | **Under 3° of planned correction it's silent. From 3° to the 6° limit a line may play. No size requires one.** Above 6° there's no nudge |
+| **How early** | **The bend starts 0.3 s (18 ticks) after the decision, always, line or no line,** and the line starts at the decision. At 3°/s nothing is lost by waiting. A held flight gets no longer lead |
+| **How many** | **About 2 to 5 lines a match,** Narrative's guess, as a soft count: a falling score through the barks' budget. If the budget holds a line back, the nudge goes ahead silently |
+| **Are AI fighters nudged?** | **Yes, the same pull** (RL-216). Its line is colour from the same budget. If two fighters are flying, either one's stick change cancels it, and the one heading for the place speaks |
+| **The classes the picker can report** | From World's place list: `home`, `tower`, `high`, `ridge`, `water`, `coast`, `open`, `wear` and `wreck`. `seawall`, `road`, `hulls` and `cranes` wait until World's list carries those structures. **The class picks the line and never the place.** A fighter with no line for a class stays silent, and his own ground gets no extra pull, so a `home` line plays only when the same score happens to pick it |
+
+### 5. The chase
+
+**The pursuer still reaches him, and nothing about the gap changes.** Both are on the one line, so the nudge carries the pursuer too, with no steering of his own, and attacks close as before (pillar 3). **It gives no help to either side:** no speed, no slowing, no shelter on arrival. The escape stays the gamble it was, and the nudge never starts from a press, so it's no dodge (test 4). When a human is chasing a fleeing AI, the chaser's stick is being held too, so the same limit applies. An AI flying by choice with no human holding a direction gets §2's rates.
+
+### 6. What it reads, and Bolus's meter (Legal's RL-216)
+
+- **It reads structures, terrain and wear only,** never `crowd`, `popAlive`, `popNear`, `popHist`, `pop_mult` or the toll, so a city counts by its buildings and not its people. Encounter's scorer has to use a structure count, not a settlement's population field, and it goes under `swing_legal_check`.
+- **It's the same pull for every fighter and mode.** No hero-away, villain-toward split, and no `f.anguish` or `f.menace`. **This takes back my by-fighter row.** Personality stays in §11's swings, and it isn't part of the nudge.
+- **It only corrects a near miss.** No pull when a direction is held away from the place, and no hidden steering to a place he wasn't heading for (§2). It never starts a fight, and it never steers a swing or a launch.
+- **QA's batch:** no association between the civilian toll and the nudge's strength or frequency, as for RL-215. RL-216 stays open until that passes.
+
+**Bolus's meter runs on wreckage and metal, by mass (`docs/combat/energy-movesets.md`), and never on people.** This settles the flag I raised.
+- **Fuel:** wreckage, rubble, debris, scrap, vehicles, machinery, buildings the fighters' blows bring down, power grids, substations, generators, pylons and cranes.
+- **Not fuel:** any person, a civilian or crowd count, a rate that rises where people stand, a bonus for emptying a populated block, or a school, hospital or place of worship.
+- **A structure gives the same value occupied or empty,** and an occupied one isn't preferred. An industrial or scrap district fills the meter as well as a downtown.
+- **The words in the game are "scrap" or "wreckage".** Feeding shows as the grille taking in scrap, with no biting, chewing or swallowing sound (ln02).
+- **Lines:** "there's wreckage that way" is fine, and one naming people as the draw isn't, for any fighter. **A neutral line for each fighter** should read as that fighter's own choice, through the usual checks.
+
+**For Orb:** their example of filling the meter in "a populated city" still works, because a city is full of metal and wreckage. But an empty scrapyard fills it just as well, and the people in a city add nothing. I've corrected the older pages that said otherwise (`economy.md`, `roster-twelve.md`, `moveset-rules.md`).
+
+## 14. The Cyborg's fuel: components, ruins and labs (2026-10-31)
+
+Orb: "He should be gather tech components from ruined skyscrapers, and possibly high quality tech components from secret labs scattered around the world, including the antarctic lab. he would be seeking desctruction and still be a real threat." **Paper only, for a fighter who isn't built, and every number is a first value.** RL-216 holds throughout: by material, the same occupied or empty, no school, hospital or place of worship as fuel, and the words are "components", "scrap" or "wreckage".
+
+**The meter's shape.** Hunger keeps its 0 to 100 and its existing steps (`moveset-rules.md`): Scavenger at 30, Kitchen at 60, Assembled at 100, and the drive for the final form. Taunts still add their small amount. Each step is irreversible, so he only ever gets more dangerous.
+
+| Source | Gives | How |
+| :--- | ---: | :--- |
+| **A ruined building,** brought down by either fighter's blows | By mass: a skyscraper about 12, a mid-rise 6, a house 2. Each ruin gives once, and its heap shrinks away | He has to go to it and press: the grille takes it in over about 1 s, exposed, like charging. A building that falls with no blow from a fighter gives nothing |
+| **A secret lab** | **About 40** (the Antarctic lab about 60), once a match each | The same press, over about 2 s, more exposed, at the lab |
+| **The drive** | The final form, as now | **It rests at the Antarctic lab, as a first value,** or the furthest lab the arena can reach. Docking takes 2 to 3 s, and Assembled comes first |
+
+**A lab, as a place.** Three to five on a planet, keyed by its seed, with the Antarctic one always there. **A lab is staged as automated, unmanned or evacuated, and nothing reads how many are inside (Legal, joining RL-216).** It's fuel as a structure only, and staff are never a target, fuel or reward, so no line, picture or score suggests otherwise. The meter's words stay "components", "scrap" or "wreckage". It's a structure, so **the nudge knows it as a landmark, with the same pull for every fighter** (a new class, `lab`). A lab that's brought down by blows before he's taken it gives a ruin's value and no more.
+
+**How that makes him a real threat.**
+- **Destruction works for him, whoever causes it.** Every tower either fighter brings down is food lying on the ground, so an opponent's own launch into a skyscraper can feed him. He wants to fight in cities and knock them down, and the opponent has to think about that with every send.
+- **He grows for good.** The steps never reverse, and what he took decides his weapons: tower steel, a vehicle yard or, from a lab, a rare one only a lab gives (`moveset-rules.md`). No two matches arm him the same.
+- **It never reads people.** A city feeds him because it's full of buildings, and an empty industrial district feeds him as well. The civilian bands still bind, and QA's check is that the toll has no association with Hunger.
+
+**The lab run: the planet-crossing payoff.** This is the first reason to cross the planet **in the middle of a fight, by choice.**
+
+- **It's his own command, and it's the exception to "no control steers a swing":** the nudge is too small to reach a lab off his line. A press in free flight, out of reach of his rival, starts it, on an input Controls and Combat choose. His line plays ("there's metal that way"), and the world swings at a chase's 45°/s, at his own request, so nothing about it can confuse him. Then he flies, and §13 applies. It doesn't change the gap, so it's no dodge.
+- **The cost:** about 30 ki, ×1.5 for each further run, plus the time. A lab a quarter of the way round a Whole ring is about 4 s flat out, and it can be 8 s or more. The 2 s at the lab is the most exposed he ever is.
+- **The reward:** about 40 of a 100 meter in one go, or more than one step, a rare weapon, and the map's trail right across the planet. **It's the best trade in his kit if it lands, and the worst if it's caught.** About 0 to 2 runs a match, a soft result of the cost.
+
+**What the opponent can do about it.**
+
+| Answer | What it does |
+| :--- | :--- |
+| **Chase him** | Attacks close (pillar 3). Catch him during the gather and it's lost, and he's far from home with nothing |
+| **Get there first** | Both are on one line, and **the run shows the lab on both players' maps, the one exception to §11's "no destination",** because he chose it and it's fair warning. Break the lab, and he gets a ruin's value |
+| **Use the time** | He's left the fight, so charge, transform or recover at leisure. A rival who ignores him and powers up is a real choice |
+| **Fight him out of town** | Open country has nothing to eat, or the proving ground (`moveset-rules.md`) |
+| **Don't feed him** | Send him into hills, not towers. Every skyscraper is a decision |
+| **Hit him at the heap** | The gather is exposed, and a heap in the open is a place he has to come to |
+
+**Against `docs/combat/energy-movesets.md` and `pending/energy/cyborg.md`.** The fuel agrees: "wreckage and metal, never on people", the grille as his mouth, no biting. **Three things don't, for their owners:**
+1. **`energy-movesets.md` line 128 says the villains' casualties "feed their menace or hunger".** That contradicts line 128's own last sentence and `cyborg.md` ("no death feeds his hunger"), and Hunger has to drop out of it. Combat's page.
+2. **Near occupied buildings his beam and burst widen to 1.3 (E113).** That's a damage shape rather than a meter, and it predates RL-213. It isn't changed here, but Legal should know it's the one thing in his kit that still reads occupancy.
+3. **`rulings-2026-10-19b.md` 2a keeps polar outposts for a later fighter.** The Antarctic lab is a lab rather than an outpost, so World should place it without using up that idea.
+
+I've corrected `spec-wounds.md`'s two older lines that had him feeding near civilians.
+
+**For Orb:** should the drive rest at the Antarctic lab, so that his final form always means a flight to the bottom of the world with the opponent trying to stop him? I think it's the best thing on this page, but it's my idea and not theirs.
+
+## 15. Bodies through buildings: the target, by tier, and what swings do for it (2026-10-31)
+
+Orb loves building destruction, and it's rare on every generation: about 0.6 bodies through a building per 2 minutes of AI fight, 5 of 67 to 70 launches, and 3 of 57 with swings on. Buildings falling read 19 on gen 2, 86 on gen 3 and 27 with swings, and 2 of 8 swung fights left town entirely. **First values, on AI fights. Encounter is measuring why so few launches pick a building, and these targets hold whatever it finds.**
+
+**The match: 4 to 8 sends into a building from a start in town stands (`buildings.md` §4), and it's still unmet.** **Corrected on Encounter's measure: real launches are about 1.7 a minute, not my 3.5,** since 60% of its beats are STAY or KNOCK BACK. So 40% of 7 minutes in town is about 5 launches, and the tier rows below give about 2. Knock-backs at the lever below give about 1 more, and throws and ploughs about 1, so about 4: **the bottom of the band, with no margin.** **New row: 6 to 12 buildings crossed a match,** since chains multiply a send. A chain counts as one send.
+
+| Sender's tier | Launches in town that take a building (in place of 15 to 30%) | Crossed per send, up to `balance-targets.md` §5b's cap | What it looks like |
+| :--- | ---: | ---: | :--- |
+| 1 | 15 to 25% | 1 (cap 2) | Low buildings and wall slams. Never through a tower (hard) |
+| 2 | 25 to 40% | 1 to 2 (cap 2) | Mid-rises, and a tower's wall |
+| 3 | 40 to 55% | 1 to 2 (cap 3) | Towers punched, chains begin |
+| 4 | 50 to 70% | 2 to 4 (cap 4) | Chains through a district, and towers coming down behind him |
+
+**The levers, in order.**
+1. **A knock-back aims at a wall: yes, first.** In town, 82 to 86% of plans with a building in reach already pick BUILDING SMASH, so the planner's preference isn't the problem. A knock-back is 15 of 70 beats on swung worlds and needs no new rule: it's a plain send on `buildings.md` §6.1's ladder, so a wall slam at tiers 1 and 2, into the tower at 3, and through one at 4. It reaches no further than its own distance and chooses only where a wall is inside it. **The stick wins for a player.** Otherwise the term reads standing buildings only, with care as a flat weight and never who is inside. Each slam also marks the building, so the next send meets it a tier higher (§6.1), which feeds falls as well. Combat checks the slam's stagger and first move on so short a send, and QA reads match length.
+2. **The swings, below,** since what's left is how often a building is in reach.
+3. **More launch beats: not yet.** 1.7 a minute is the fight's pace, and it shouldn't change for this. If the first two leave the band short, the next step is a STAY in town with a building in reach becoming a send, at a low rate, with match length read first.
+4. **`bruntPrefer` from tier 1 (my first lever): withdrawn as a lever,** unless Encounter's reads show tier 1 short on its own.
+5. **Hero's care is a restraint and stays one (RL-217), but it isn't a veto.** The stick still wins for a player. For the AI, the hero makes at least a quarter of a match's sends, and if he reads under that, the mark-down comes down. **That quarter waits on Legal,** since it could mean less care around occupied buildings. RL-214's old terms aren't extended, and nothing new reads who is inside.
+
+**What swings do for it.** With swings on, a launch's plan already reads the line it ends on, so this is the swing's best job in town. **My §8 street rule would work against it, once it's built:** a line resting on a street has no building on it. It isn't in Encounter's build yet, so it isn't why today's count is low.
+- **A launch's swing is exempt from the street score (§8, question 3).** In town it may rest with a building on the line, and that arrival outbids variety. The street score still applies to chases, brawls, forms and anything after the impact.
+- **A swing doesn't take a fight out of a town it hasn't used.** Leaving is marked down until the fight has made 2 sends into buildings there. It's a soft term, so a great arrival can still win. **Tightened for a launch's swing, since landing impacts are what swings lose (below):** in a town with fewer than 2 sends, an arrival away from its standing buildings is marked down far enough that "stay" usually beats it, so that launch lands in town. It stays a term rather than a ban, the same for every fighter, it reads standing buildings only, and a player's stick still decides the launch.
+- **A swing finds the next town.** After 90 s with no send into a building, a swing's term for standing buildings in reach rises. That's in the recency term, so it doesn't add swings.
+- **"At least 25% of fight time outside every settlement" stands.** The fight isn't pinned.
+
+**New rows for QA, on the same seeds with swings on and off:**
+
+| Row | Bound |
+| :--- | :--- |
+| Sends into a building a match, from a start in town | Swings on at least as many as off (3 of 57 against 5 of 67 to 70 today) |
+| Buildings falling | **Swings on at least two thirds of off: the row holds, and it fails today.** Encounter's falls by cause, 24 fights: 57 on against 127 off, 45%. Landing impacts are most of the gap at 23 against 76, and beams are level. That's all tier 1 at 2 minutes, and half of those fights felled nothing either way, so **the verdict is the 7-minute read at all tiers, with the launch swing tightened as above.** If it's still short then, it comes back to me. Swings stay on for Orb meanwhile |
+| Knock-backs in town that reach a wall | 25 to 50% |
+| Fights from a start in town that leave with no send into a building | At most 1 in 8 |
+| First send into a building, from a start in town | Inside 90 s in at least 80% of fights |
+
+**Guards.** Every new term reads standing buildings, floors, mass or wear, and RL-213's lint applies. All of `buildings.md`'s hard rows stand, and a drifting brawl still never damages a building. **The civilian band of 12 to 30% stays a test result, and if it rises, the casualty budget answers rather than these targets.** The front-row structures band (25 to 50% of 47) is a gen 2 number, so QA reads gen 3 before it limits anything.

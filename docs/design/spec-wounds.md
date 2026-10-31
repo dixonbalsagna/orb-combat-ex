@@ -179,7 +179,7 @@ Animation's battle-damage pass shows a broken arm hanging and the good arm strik
 | Protagonist | **Second Wind** | Survive the rival's finisher contest roll. His next track step is then free |
 | Anti-hero | **Spite** | Win a decisive exchange by hand (melee, no signature) with help refused. His arms mend first, and his next finisher must be by hand |
 | Empress | **Encore** (Orb's pick) | Her three fallen guard return once, fresh, for a short, harder brawl (§3). She withdraws out of reach while a 15 s mend gauge fills, which it does only while a guard member stands. If the opponent beats all three first, there is no mend. The Encore lasts at most 16.5 s, once per match |
-| Cyborg | **Reboot** | Dock the loose backup drive, or finish a Press within reach of civilians. It mends one chip stage, and regrowth doubles for 5 s |
+| Cyborg | **Reboot** | Dock the loose backup drive, or finish a Press on wreckage. It mends one chip stage, and regrowth doubles for 5 s |
 
 **How a Rally triggers.** There is no Rally button. Each Rally fires automatically when its condition completes:
 - Second Wind: on surviving the finisher contest.
@@ -206,7 +206,7 @@ The one exception is the Empress's **Encore**, which is a choice to spend. The p
    - Targets: timeouts at most 1% at the 15:00 cap, p10 at least 5:00, median 6:00 to 8:00. QA verifies them.
 
 **Why a finale still can't loop:**
-1. Each Rally spends something finite: a region's one Rally, a refit, the drive or nearby civilians, the rival's finisher attempt, or refused help.
+1. Each Rally spends something finite: a region's one Rally, a refit, the drive or a heap of wreckage, the rival's finisher attempt, or refused help.
 2. The mended region sits one hit from breaking again.
 3. The finisher contest tilts 10 points against the fighter for every Rally and every minute past 8:00. The tilt lowers survival but need not reach 0: at today's base of 23% with the stance and state bonuses, a fighter can still survive after a third Rally. **Survival is 0 only in the time-cap event from 11:00,** which the sim enforces (M1b ruling).
 

@@ -52,7 +52,7 @@ A fighter has a small pool of signatures. **Which one fires** follows this prior
 | :--- | :--- | :--- | :--- |
 | **Land** | Protagonist | Raises a ring of ridges around the fight: new sight blockers, mountainside launches, and a barrier that cuts lure routes. It pulls the fight away from towns | The rival uses the new cover to break lock, or leaves the ring (flight is unaffected) |
 | **Sky** | Anti-hero | A storm sky for the rest of the match: lock-on range falls by 30%, lock breaks come easier (any cloud counts), and lightning strikes as hazard wear (limbs capped at battered). His barrages gain +20% in the storm | The rival gets the same easier lock breaks, and the storm hurts both |
-| **Water** | Cyborg | Floods the lowlands through his portals. Low ground becomes sea, where movement is ×0.55 and launched fighters skim. Towns evacuate uphill within the collateral budgets, herding civilians toward him | The rival fights above the water line, or relocates (the fold) |
+| **Water** | Cyborg | Floods the lowlands through his portals. Low ground becomes sea, where movement is ×0.55 and launched fighters skim. Towns evacuate uphill within the collateral budgets | The rival fights above the water line, or relocates (the fold) |
 | **The planet itself** | Empress | By decree her fleet shifts the planet's gravity: launches travel ×1.3 and stay airborne ×1.5, and impact wear drops ×0.7. Her ranged work and her guard's volleys suit it | Everyone flies further, so the rival can use long launches to escape or chase |
 
 - **Collateral:** floods, ridges and lightning count toward the ramp and the ceiling, and can borrow at tier 3 and above (`balance-targets.md` §4b).
@@ -74,7 +74,7 @@ A fighter has a small pool of signatures. **Which one fires** follows this prior
 | **Empress** | **A ladder of forms** | 12 revisions: jokes 1 to 8, then real revisions 9 to 12 through the processing fill, with refits (`spec-wounds.md` §3) | Slow to peak and exposed while processing. Strong late, and heals a little on the way |
 | **Protagonist** | **A meter-fed state that drains** | The heat track: stoked, then Heated, Simmering and Boiling, cooling back down, with internal wear as the price. His final form in the fold is the capstone | Burst power now, paid in health later. A boil-over is the risk. The fold is the only place he can go all out |
 | **Anti-hero** | **Shedding power to go faster** | Drop the Act, plus shed regalia: each shed layer (his front, pieces of regalia, his guard) trades protection for speed and damage. It builds on Humbled and B1 as notes | Faster and harder-hitting but more fragile. His hidden wear shows and counts. There is no way back |
-| **Cyborg** | **Evolution by consumption** | Hunger-fed, irreversible molts: Press, then sandwiches, then docking the drive. His final form is the fastest in the game | Needs people: exposed while feeding, and countered by protecting civilians and by the fold |
+| **Cyborg** | **Evolution by consumption** | Hunger-fed, irreversible molts: Press, then sandwiches, then docking the drive. His final form is the fastest in the game | Needs wreckage: exposed while feeding, and countered by the fold (never people: Legal, RL-216) |
 
 Each is unique: a ladder, a drain, a shedding and an evolution. The universal rules still hold: a stoppable fill and a respected cinematic, the 15 s surge after a completed form (`balance-targets.md` §13), and forms that never heal (except the Empress's refit and Rallies).
 
