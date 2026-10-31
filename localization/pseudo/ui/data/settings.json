@@ -70,6 +70,7 @@
         "camera_zoom",
         "camera_shake",
         "camera_launch_follow",
+        "world_turning",
         "camera_panels",
         "split_solo"
       ]
@@ -253,6 +254,11 @@
     "hud_sides": {
       "fixed": "[Fíxéď]",
       "follow": "[Föĺĺöŵ]"
+    },
+    "world_turning": {
+      "auto": "[Åüţö]",
+      "full": "[Füĺĺ]",
+      "cut": "[Çüţ]"
     },
     "camera_launch_follow": {
       "auto": "[Åüţö]",

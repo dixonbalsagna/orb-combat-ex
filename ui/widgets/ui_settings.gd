@@ -32,7 +32,7 @@ static func data() -> Dictionary:
 ## The screen's rows in order: {kind, key, label, help, enabled, ...}. A section is a heading row then its items. `needs` is a feature
 ## flag; without it the row is listed but disabled. An id with no option in options.json is skipped.
 ## Options whose rows are listed only once their feature flag is on (features.json): the three-strength charge settings, and Reduce flashing until Legal approves its words.
-const HIDE_UNTIL := {"latch_charge": "three_strengths", "latch_charge_p2": "three_strengths", "charges_off": "three_strengths", "charges_off_p2": "three_strengths", "reduce_flashing": "reduce_flashing", "planet_map": "planet_map"}
+const HIDE_UNTIL := {"latch_charge": "three_strengths", "latch_charge_p2": "three_strengths", "charges_off": "three_strengths", "charges_off_p2": "three_strengths", "reduce_flashing": "reduce_flashing", "planet_map": "planet_map", "world_turning": "swing"}
 ## The right-hand attacks' settings (Controls' hand_layout, D-pad mirror, strike style, brace style and the pad's second stick): listed only while Controls' switch is on (the feature "right_hand"). Each has a player-two row.
 const RIGHT_HAND := ["hand_layout", "dpad_mirror", "strike_style", "brace_style", "pad_right_stick"]
 ## Player two's hold-or-toggle rows (Controls' hold_style: guard, manoeuvre, charging, transform): listed only while two people play, like energy_style_p2.

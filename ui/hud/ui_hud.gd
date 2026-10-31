@@ -773,6 +773,8 @@ func _update_layers() -> void:
 		chips = UiIncoming.held(chips, _inc_keep, _t)   # the warning of his coming back does not blink as the closing speed crosses its threshold
 		if _struggle_holds_chips():
 			chips = []   # a beam struggle holds both fighters in frame: no pointer says otherwise, nor for 0.3 s after
+		if bool(_split.get("peak_launch", false)):
+			chips = []   # the peak launch's shot (Camera's record key peak_launch): the fighters' distance is the picture, so no distance chip is drawn over it
 			_inc_keep = [null, null]
 		elif UiData.feature("minimal_hud"):
 			chips = UiSplit.chips_off_bodies(layout, chips, _anchors, _chip_big)   # nothing over a body, a launched one included

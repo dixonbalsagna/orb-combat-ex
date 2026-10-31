@@ -90,6 +90,7 @@ func _run() -> void:
 	await _remap_every_layout()
 	await _right_hand_rules()
 	await _planet_map_rules()
+	await _acc_rules()
 	await _pause_menu_rules()
 	await _faces_rules()
 	await _two_player_rules()
@@ -299,6 +300,54 @@ func _planet_map_rules() -> void:
 	var rows_on: PackedStringArray = _rh_keys(false)
 	UiData.set_feature("planet_map", null)
 	_ok(not rows_off.has("planet_map") and rows_on.has("planet_map") and bool(UiData.options()["planet_map"]["default"]), "planet map: Settings lists the Planet map option only while the feature is on, on by default")
+
+
+# --- Accessibility's swing review: the new words, the world_turning row, no chips in the peak shot --------------------------
+
+func _acc_rules() -> void:
+	var od: Dictionary = UiData.options()
+	var all_help: String = str(od["hand_layout"]["help"]) + str(od["dpad_mirror"]["help"]) + str(od["brace_style"]["help"]) + str(od["reduced_motion"]["help"]) + str(od["world_turning"]["help"])
+	_ok(str(od["hand_layout"]["help"]).contains("D-pad") and not str(od["hand_layout"]["help"]).contains("trade sides") and str(od["dpad_mirror"]["help"]).contains("off the move stick") and str(od["brace_style"]["help"]).contains("L3 on Arena (R3 if swapped)") and str(od["brace_style"]["help"]).contains("Remap"), "swing words: hand layout says the face buttons and the D-pad trade places, the D-pad mirror says that thumb is off the move stick, Button only names its button (L3 on Arena, R3 if swapped) and Remap")
+	_ok(not str(od["reduced_motion"]["help"]).contains("fade") and not str(od["reduced_motion"]["help"]).contains("swing") and str(od["world_turning"]["help"]).contains("swing round") and not all_help.contains("quick fade"), "swing words: Reduced motion has no fade and no swing (the split changes sides in one step); swing is the world turning, in the World turning row")
+	_ok(od["world_turning"]["choices"] == ["auto", "full", "cut"] and od["world_turning"]["default"] == "auto", "world turning: auto, full or cut, auto by default")
+	UiData.set_feature("swing", null)
+	var off_keys: PackedStringArray = _rh_keys(false)
+	UiData.set_feature("swing", true)
+	var on_keys: PackedStringArray = _rh_keys(false)
+	UiData.set_feature("swing", null)
+	_ok(not off_keys.has("world_turning") and on_keys.has("world_turning"), "world turning: the row is listed only while the swing switch (the feature swing) is on")
+	_rh_switch(true)
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	# The peak launch's shot: no distance chip is drawn.
+	var vp: Vector2 = hud.layout.vp
+	hud.anchor_fn = func(slot: int) -> Dictionary:
+		return {"pos": Vector2(vp.x * (0.3 if slot == 0 else 0.7), vp.y * 0.55), "h": vp.y * 0.12, "visible": true}
+	var peak := [false]
+	hud.split_fn = func():
+		return {"sep": 1.0, "c": Vector2(640.0, 360.0), "n": Vector2(0.95, -0.3), "gap": 3.0, "fade": 1.0, "sigma": 1.0, "pointer": "always", "peak_launch": peak[0],
+			"ring": {"angle_A": 1.0, "angle_B": 2.0, "sigma": 1.0, "arc_A": 0.3, "arc_B": 0.3, "swing": 0.0, "sep": 1.0}}
+	for i in range(5):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	var chips_before: bool = hud._l_chips[0].visible or hud._l_chips[1].visible
+	peak[0] = true
+	for i in range(5):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	var chips_peak: bool = hud._l_chips[0].visible or hud._l_chips[1].visible
+	peak[0] = false
+	for i in range(5):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	var chips_after: bool = hud._l_chips[0].visible or hud._l_chips[1].visible
+	_ok(chips_before and not chips_peak and chips_after, "peak launch: the distance chips are off while Camera's record says peak_launch, and come back after")
+	hud.queue_free()
+	await process_frame
+	_rh_switch(false)
 
 
 # --- Terms ---------------------------------------------------------------------------------------------------------
