@@ -8,7 +8,7 @@ Research & Prototyping, 2026-10-31, on ADR 0012 and Orb's words: "lets find othe
 
 ## 1. The crux: what is the one sim ground?
 
-**One ground at 128 units for every player, read on demand, with forecasts on a 512-unit bake. This replaces option A.** A was right while the laptop was the ceiling. It isn't any more.
+**One ground at 128 units for every player, read on demand, with forecasts on a 512-unit bake. This replaces option A,** and it's the EP's provisional call. A was right while the laptop was the ceiling. It isn't any more. **256 is the second choice,** if Orb can't tell the two apart: "Near ground" in v2 shows the difference at 128 and 256. It reads about half as many nodes and leaves shores 2 to 4 columns off, not about one (Simulation, World). Exact gen 2 is refused.
 
 **The sim's ground decides how far every level's picture sits from the fight.** Drawn minus sim, in units, on land, ice apart (a fighter is 75 tall):
 
@@ -35,7 +35,7 @@ Option A makes the slowest level exact and every other level wrong by up to a bo
 **Two parts of World's candidate I wouldn't take yet:**
 
 - **Fidelity as a match setting, in the match key.** With 128 fitting the slowest level there's nothing to negotiate. A setting would split lobbies and replays, and put one player's machine in charge of the other's ground. The spacing stays one data value in the data hash, so it can still change between versions.
-- **Sharpening to exact columns after a swing rests (14.3).** At 0.35 ms a tick on the web it's over the 0.2, it adds a third level, and it lifts a standing fighter. Records already hold the edges that exact columns would restore (below).
+- **Sharpening to exact columns after a swing rests (14.3).** World has since withdrawn this: always-128 supersedes it. Records hold the edges that exact columns would restore (below).
 
 **"128 or better"?** Not 64: Simulation has p99 at 1.2 ms on the slowest level, over its 0.8. Not exact columns: refused, 3x the budget in a swing, with no memo.
 
@@ -165,13 +165,15 @@ The stills are `img/quality/level-0.jpg` to `level-4.jpg`, one pose. **The look 
 
 | Level | What I see | Against today's reference |
 | :--- | :--- | :--- |
-| Performance | Bald: broad facets, no clouds, big plain boxes. It reads and it's clear, but **it's a long way under today's look.** Ground paint is its cheapest way back, at +2.4 ms | Worse by design; ADR 0012 allows it. Orb has already seen and disliked this ground as the only option |
+| Performance | Broad facets, no clouds, big plain boxes. It reads and it's clear, and it's well under today's look. Ground paint is its cheapest way back, at +2.4 ms | **Orb, on the coarse mode: "the coarse mode looked fine".** So the level's ground is cleared in principle, subject to real terrain, and this ladder relies on that. Its other rows haven't been judged |
 | Low | Facets gain a pattern, clouds return | Under |
 | Standard | Clouds, shadows, windows, some trees. Ground is soft close up | Can't compare: stand-ins |
 | High | The hills gain real shape, and forests read as forests | Above in ground; can't compare in buildings |
 | Maximum | Dense forest, ridged slopes, lit city | Above in ground |
 
-**A look fault at every level:** where a mountain stands just in front of the plane, the foreground rule flattens it into a table with a hard edge along the plane. It's visible in these stills as a straight band. It's the rule's look, Rendering's largest named risk, and it's Orb's to judge with the switch.
+**A look fault at every level:** where a mountain stands just in front of the plane, the foreground rule flattens it into a table with a hard edge along the plane. It's visible in these stills as a straight band. **Near towers are moving on:** Orb prefers a hybrid of the options Rendering showed them ("a hybrid between Q and W, maybe a hybrid of W and E", `docs/ep/vision.md`), and Rendering is building it. v2's towers still sink, as a stand-in, so judge near towers on Rendering's test, not here.
+
+**Curvature: 100% at every level.** Orb withdrew their flattening idea after the swing test: "the flattening effect actually looks pretty weird, especially around buildings". It stays a true globe, "unless we run another test with globe reduced to 95% at the closest zoom". v2 has that as one option under "Curvature", with Camera's table kept beside it for comparison. Neither is a level setting.
 
 **Each level needs its own flash reading (RL-208),** especially at Maximum, with more debris and windows. Reduced flashing and reduced motion stay separate from the level: they mustn't be tied to a graphics choice.
 
@@ -181,7 +183,7 @@ In `research.md` T6:
 
 - **Stage 3:** the sim's ground is 128 on demand, the bake is 512 for forecasts and the floor. Add World's records, and a seeded sample of about 64 fine nodes to the match key (Simulation), since a build that computes a 128 node differently wouldn't otherwise show at the handshake.
 - **Stage 4:** the renderer ships with the settings groups from the start, and `world_place()` carries the offset.
-- **Stage 5:** the audit is 69 lines: 38 forecasts on the bake, 31 exact writers becoming records.
+- **Stage 5:** the audit is 69 lines: 38 forecasts on the bake, 31 exact writers becoming records. **It also takes World's prefetch:** a launch reads its arrival window ahead, from the 512 forecast, about 84 nodes, 21 ticks at 4 a tick. A swing starting in a brawl and a chase with no planned arrival still read nodes not yet cached. That's the known on-demand cost, inside Simulation's figures.
 - **New, with Performance:** one budget set per level, and the measured probe.
 - **Nothing changes for the ribbon fallback:** the stages it shares are the same.
 
@@ -189,7 +191,7 @@ In `research.md` T6:
 
 | From | What |
 | :--- | :--- |
-| **Orb** | The range in v2. Whether Performance's look is acceptable for that machine. The curve and the reveal's size |
+| **Orb** | The range in v2; the 95% test at the closest zoom; the reveal's size |
 | **Rendering** | Body offset or feet on the sim's triangles. The ladder's rows against its table: v2's tiles are all 33 vertices, so its Performance draws about 150k triangles, not 30k |
 | **Simulation** | The two helpers given a level, re-run; the offset's fade |
 | **World** | A height-only read; records from a real flood (its 8,000 and 1,100 vertices are estimates); correct 14.1's laptop column |

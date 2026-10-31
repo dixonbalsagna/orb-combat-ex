@@ -43,10 +43,10 @@ var LEVELS = [
   { name: 'Standard', view: 128, far: 512, lodK: 0.03, tmax: 4, gen: 0, detail: 1, soft: 1, towers: 34, windows: 1, trees: 24, treeR: 12000, clouds: 1, cshadow: 1, tshadow: 0, sea: 1, debris: 150, scale: 1, fps30: 0 },
   { name: 'High', view: 64, far: 256, lodK: 0.02, tmax: 5, gen: 1, detail: 1, soft: 0, towers: 50, windows: 1, trees: 96, treeR: 16000, clouds: 1, cshadow: 1, tshadow: 8, sea: 1, debris: 500, scale: 1.5, fps30: 0 },
   { name: 'Maximum', view: 64, far: 128, lodK: 0.012, tmax: 6, gen: 2, detail: 1, soft: 0, towers: 64, windows: 1, trees: 320, treeR: 22000, clouds: 1, cshadow: 1, tshadow: 16, sea: 1, debris: 2000, scale: 2, fps30: 0 }];
-var P = { level: 2, custom: false, simG: 128, foot: 1, fires: 'gd', rLaunch: 60, rChase: 45, rForm: 30, rBrawl: 10, jolts: 1, rSmall: 60, smallEvery: 12, ceil: 1, brawl: 0, quiet: 12, angle: 60, sendS: 2.2, law: 1, reduced: 0, flip: 'off', flipDepth: 6, curveZoom: 1, reveal: 0, fore: 1, sharpen: 4.8, every: 6, speed: 100, width: 7000, wide: 2.2, pitch: 7, curve: 100, relief: 100, globe: 1, sun: 1 };
+var P = { level: 2, custom: false, simG: 128, foot: 1, fires: 'gd', rLaunch: 60, rChase: 45, rForm: 30, rBrawl: 10, jolts: 1, rSmall: 60, smallEvery: 12, ceil: 1, brawl: 0, quiet: 12, angle: 60, sendS: 2.2, law: 1, reduced: 0, flip: 'off', flipDepth: 6, curveZoom: 0, reveal: 0, fore: 1, sharpen: 4.8, every: 6, speed: 100, width: 7000, wide: 2.2, pitch: 7, curve: 100, relief: 100, globe: 1, sun: 1 };
 for (var lk in LEVELS[2]) if (lk !== 'name') P[lk] = LEVELS[2][lk];
 var CTL = [['#', 'The fight: the same for every player, at every level'],
-  ['simG', 'Sim ground, spacing', ['128 u', '512 u (the bake)'], [128, 512]], ['foot', 'Keep height above the drawn ground (off shows the gap)', 'c'],
+  ['simG', 'Sim ground, spacing', ['128 u', '256 u', '512 u (the bake)'], [128, 256, 512]], ['foot', 'Keep height above the drawn ground (off shows the gap)', 'c'],
   ['#', 'Drawn ground'],
   ['view', 'Near ground, spacing', ['512 u, the bake', '256 u', '128 u', '64 u'], [512, 256, 128, 64]], ['far', 'Far land, spacing', ['512 u', '256 u', '128 u'], [512, 256, 128]], ['tmax', 'Near mesh, vertex every', ['150 u', '75 u', '37 u', '19 u'], [3, 4, 5, 6]], ['gen', 'Generated relief (drawn only)', ['off', 'on', 'finer'], [0, 1, 2]], ['detail', 'Ground paint', 'c'], ['soft', 'Softens in flight', 'c'], ['sharpen', 'Sharpens after a flight in', ['0.5 s', '4.8 s', '19 s'], [0.5, 4.8, 19]],
   ['#', 'World and light'],
@@ -60,8 +60,8 @@ var CTL = [['#', 'The fight: the same for every player, at every level'],
   ['angle', 'Swing size (deg)', 5, 180, 5], ['sendS', 'Launch flight (s)', 1, 6, 0.2], ['every', 'N seconds', 1, 20, 1], ['law', 'Sweep limit (75 u/s standing, 10,000 airborne)', 'c'], ['ceil', 'Size ceiling (240 x root(15 / size))', 'c'], ['reduced', 'Reduced motion (every peak 30)', 'c'],
   ['flip', 'Forced flip (a late online correction)', ['off', 'a swing taken back', 'a swing the wrong way', 'a rate jump at the peak (worst case)'], ['off', 'back', 'wrong', 'jump']], ['flipDepth', 'Flip depth, ticks (6 is 200 ms ping, 13 far)', 3, 20, 1],
   ['#', 'The view'],
-  ['fore', 'Land in front sinks below the sight line', 'c'], ['speed', 'Flat-out speed (%)', 25, 300, 5], ['width', 'View width (units)', 1500, 24000, 250], ['wide', 'Pull wide in flight (x)', 1, 4, 0.1],
-  ['curveZoom', 'Curvature follows zoom (Camera)', 'c'], ['reveal', 'Zoom-out reveal in a long flight (true-size fighters)', ['off', 'to 4,200 wide: 23 px, the floor', 'to 8,000 wide: 12 px, under the floor'], [0, 4200, 8000]], ['pitch', 'Camera pitch (deg)', 0, 40, 1], ['curve', 'Curvature (% of true)', 5, 100, 5], ['relief', 'Relief (%)', 10, 150, 10], ['globe', 'Globe', 'c'], ['sun', 'Sun fixed to the planet', 'c']];
+  ['fore', 'Land in front sinks below the sight line', 'c'], ['speed', 'Flat-out speed (%)', 25, 300, 5], ['width', 'View width (units; closest 950)', 950, 24000, 50], ['wide', 'Pull wide in flight (x)', 1, 4, 0.1],
+  ['curveZoom', 'Curvature', ['100%, a true globe', '95% at the closest zoom, 100% from 4,200 wide', 'follows zoom (Camera\'s table)'], [0, 2, 1]], ['reveal', 'Zoom-out reveal in a long flight (true-size fighters)', ['off', 'to 4,200 wide: 23 px, the floor', 'to 8,000 wide: 12 px, under the floor'], [0, 4200, 8000]], ['pitch', 'Camera pitch (deg)', 0, 40, 1], ['curve', 'Curvature (% of true)', 5, 100, 5], ['relief', 'Relief (%)', 10, 150, 10], ['globe', 'Globe', 'c'], ['sun', 'Sun fixed to the planet', 'c']];
 var SETTERS = {};
 function changed(k) { if (k === 'view' || k === 'simG') buildMap(); if (LEVELS[0][k] !== undefined) { P.custom = true; paintLevels(); } }
 CTL.forEach(function (c) {
@@ -375,7 +375,7 @@ function setGround(p, F, vp, Rr, cam, alt) {
   var cr = new Float32Array(64), cd = new Float32Array(16); S.crater.forEach(function (m, i) { cr.set([m.d[0], m.d[1], m.d[2], m.r], i * 4); cd[i] = m.dep; }); gl.uniform4fv(p.u.uCr, cr); gl.uniform1fv(p.u.uCrD, cd); gl.uniform1i(p.u.uCrN, S.crater.length);
 }
 var CURVE_W = [950, 2700, 4200, 8000, 12000], CURVE_S = [0.4, 0.55, 0.7, 0.9, 1];
-function curveShare(w) { var c = P.curve / 100; if (!P.curveZoom) return c; if (w <= CURVE_W[0]) return CURVE_S[0] * c; for (var i = 1; i < 5; i++) if (w <= CURVE_W[i]) { var t = Math.log(w / CURVE_W[i - 1]) / Math.log(CURVE_W[i] / CURVE_W[i - 1]); return (CURVE_S[i - 1] + (CURVE_S[i] - CURVE_S[i - 1]) * t) * c; } return c; }
+function curveShare(w) { var c = P.curve / 100; if (!P.curveZoom) return c; if (P.curveZoom === 2) { if (w >= 4200) return c; if (w <= 950) return 0.95 * c; return (0.95 + 0.05 * Math.log(w / 950) / Math.log(4200 / 950)) * c; } if (w <= CURVE_W[0]) return CURVE_S[0] * c; for (var i = 1; i < 5; i++) if (w <= CURVE_W[i]) { var t = Math.log(w / CURVE_W[i - 1]) / Math.log(CURVE_W[i] / CURVE_W[i - 1]); return (CURVE_S[i - 1] + (CURVE_S[i] - CURVE_S[i - 1]) * t) * c; } return c; }
 function draw() {
   var cw = Math.round(1280 * P.scale), ch = Math.round(720 * P.scale); if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; }
   var W = cv.width, H = cv.height, asp = W / H, share = curveShare(S.wid), K = 1 / share, Rr = RP * K; gl.viewport(0, 0, W, H); gl.disable(gl.SCISSOR_TEST); gl.clearColor(P.dbgHoles ? 1 : 0, 0, P.dbgHoles ? 1 : 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
