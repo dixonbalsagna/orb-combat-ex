@@ -110,6 +110,43 @@
       "maxClip": "ai-1035-normal",
       "over": [],
       "missing": []
+    },
+    {
+      "date": "2026-10-30",
+      "commit": "257a766c26f8766fb09b063864c41c5d8ba64dc0",
+      "seeds": [
+        1048,
+        1049,
+        1050,
+        1051,
+        1052,
+        1053,
+        1054,
+        1055
+      ],
+      "read": 16,
+      "clips": 16,
+      "max": 3.5,
+      "maxClip": "ai-1049-normal",
+      "over": [],
+      "missing": [],
+      "signature": {
+        "normal": {
+          "primary": 2.5,
+          "area15": 2.5,
+          "twoSec": 3
+        },
+        "reduced": {
+          "primary": 3,
+          "area15": 3,
+          "twoSec": 3
+        },
+        "missing": [],
+        "worse": [
+          "primary 3 (over 2.5)",
+          "twoSec 3 (over 2)"
+        ]
+      }
     }
   ]
 }
