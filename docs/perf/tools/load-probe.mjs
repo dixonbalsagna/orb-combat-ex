@@ -48,7 +48,7 @@ const INJECT = `(() => {
   const ids = new WeakMap(); let nid = 0; const tags = new WeakMap(); const srcs = new WeakMap();
   const progInfo = new Map();   // id -> {tag, link_ms, calls, vlen, flen}
   const idOf = (p) => { if (!p) return 0; let i = ids.get(p); if (!i) { i = ++nid; ids.set(p, i); } return i; };
-  const tagOf = (src) => { const m = []; const re = /uniform\\s+(?:highp|mediump|lowp)?\\s*\\w+\\s+(\\w+)/g; let x; while ((x = re.exec(src)) && m.length < 400) m.push(x[1]); const user = m.filter((n) => !/^(scene_|canvas_|material_|instances|world_|screen_|lights|light_|projection|inv_|time|viewport|camera|directional|shadow|sdf|global_|tex_|sampler|draw_|ambient|fog|radiance|environment|roughness|positional|uv_|luminance|ss_|oit|multimask|cluster|scene)/.test(n)); return user.slice(0, 5).join(','); };
+  const tagOf = (src) => { const seen = []; const re = /\\bm_[A-Za-z0-9_]+/g; let x; while ((x = re.exec(src)) && seen.length < 8) if (!seen.includes(x[0])) seen.push(x[0]); const defs = []; const rd = /#define\\s+(USE_\\w+|MODE_\\w+|DISABLE_\\w+|RENDER_\\w+|SHADOW\\w*|USE_\\w+)/g; while ((x = rd.exec(src)) && defs.length < 6) if (!defs.includes(x[1])) defs.push(x[1]); return seen.join(',') + (defs.length ? ' | ' + defs.join(',') : ''); };
   let cur = 0;
   const addTo = (o, k, ms) => { const r = o[k] || (o[k] = { n: 0, ms: 0, max: 0 }); r.n++; r.ms += ms; if (ms > r.max) r.max = ms; };
   const wrap = (proto, name, kind) => {
@@ -78,7 +78,7 @@ const INJECT = `(() => {
     const lp = p.linkProgram; p.linkProgram = function (pr) {
       const t = performance.now(); const r = lp.call(this, pr); const d = performance.now() - t;
       const id = idOf(pr); const l = tags.get(pr) || []; let v = 0, fr = 0, src = '';
-      for (const sh of l) { const s = srcs.get(sh) || ''; if (/gl_Position/.test(s)) { v = s.length; src += s; } else fr = s.length; }
+      for (const sh of l) { const s = srcs.get(sh) || ''; if (/gl_Position/.test(s)) { v = s.length; src += s; } else { fr = s.length; src += s; } }
       const pi = progInfo.get(id) || { link_ms: 0, calls: 0 }; pi.vlen = v; pi.flen = fr; pi.tag = tagOf(src); pi.t = +(t - P.t0).toFixed(0); progInfo.set(id, pi);
       return r;
     };
