@@ -204,3 +204,90 @@ The readers are many: `S.craters` 15 files, `S.slides` 11, `S.deform` 14, `S.rub
 2. Node read cost: a surface read per node (without the ring bookkeeping) against 54 us a column.
 3. How many creases the ranges and rifts give per 1,000 units (decides whether 128 holds mountains).
 4. Nothing on rivers, lakes or trees has been run with a swinging view; the claim that lakes flicker is from reading `WorldLakes.plan`, not from a run.
+
+## 9. Against Game Design's swing rulings and Netcode's strip (World, 2026-10-31, no Godot run)
+
+Read: `game-design.md` (rulings for the turntable) and `netcode.md` (the narrow sim strip). Every number here is arithmetic, a count from the code, or a figure from the earlier probe in section 5 (which was measured, gen 2, three planets). Nothing was timed.
+
+### 9.1 Test 7: does the world turn as a solid thing?
+
+The part that is World's is which layers of the strip are continuous in the swing angle and which jump. The ground profile at z = 0 is the planet cut by a line, so as the line turns, a far column's height changes because a different bit of planet is under it, not because anything pops. How fast, measured: the section 5 probe gave the mean change of height at the same column between rings turned by 10 degrees: **114 units at 3 to 6 km from the pivot, 271 at 6 to 12 km**. Over small angles that is linear (a point 4,500 away moves 79 units sideways in one degree, less than the 375-unit cell of the finest noise), so one degree a tick (the peak 60 degrees a second) changes the ground **about 11 units a tick at 4.5 km and 27 at 9 km** (0.15 and 0.36 body heights a tick), and the brawl rate of 10 degrees a second one sixth of that (2 and 4.5 units). A fighter standing within 1,500 units of the pivot sees under 4 units a tick at the peak.
+
+| Layer | Continuous in the angle? | What to do |
+| :--- | :--- | :--- |
+| Height | **Yes**: bilinear in the nodes is continuous, and a mark is a function of distance. A crease (a ridge, a rift) is continuous but its slope jumps | Nothing |
+| Marks (craters, scars, heaps) | Yes, evaluated from planet distance | Nothing, if every mark is a record (8.4) |
+| Biome border | **No**: the nearest node's biome moves in steps of the node spacing (128 units, four columns) as the line sweeps | Take the biome of the heaviest bilinear weight and the border moves in smaller steps; or accept steps at the far spacing (512) where nobody looks |
+| Lakes, rivers | **No**, as built (8.1) | Planet-keyed (8.1) |
+| Trees, props | No, as built (a grove re-rolls, 8.2) | Planet-cell keyed |
+| Buildings | Only if they have planet poses (9.2) | Poses from a plan |
+| Water fills, flows | No: a column's water is lost when its column is re-laid | A record on the crater or a planet cell |
+
+A solid turn also needs the ground *beside* the line to exist, because a side-on strip is only a cut. The near strip alone looks like a profile that morphs, whatever the numbers; it looks like a turn only if Rendering draws the ground off the line as rows of the same field (the field has them: it is the 2D object). So **World can supply a 2D read of the field to the view** (`WorldPlanet.farField` already reads a block of depths beside a ring), and the sim keeps the cut. That is where Rendering and World share test 7. Whether it reads as solid is the look gate's, not mine.
+
+### 9.2 Towns: the shortest honest answer
+
+Why towns first: a **town is small and a city is not**. A town's radius is 2,437 units (a chord of at most 4,875, 152 columns, well inside the camera's 21,333-unit view and the carried zone), a city's 6,500 (chord to 13,000). Their layouts are chord-dependent today (`WorldPlanetWorld.settle`; Bellgate laid as 12, 12, 8 and 16 buildings on four chords).
+
+**Shortest honest answer: lay each town once from its own plan, planet-fixed, and give it a pose in the strip.**
+1. **A plan, not a chord.** The town's buildings are generated in the town's own frame: a handful of rows and columns about a centre and one street axis, a pure function of (planet seed, place id), some tens of buildings for a town (`calm-turn-world.md` compared 32 and 37 per-index matches for a city and a village). The same function the layout uses, run on a fixed axis instead of the chord. This is stage 3's "places by plan", kept to the small case.
+2. **A pose from the frame.** For a building at planet offset (u, v) in the town frame, the strip gives its arc `x` and its depth `z` by one rotation each (the line's direction and side at the town's centre). A building inside the band (z from -2,025 to +375) is in the sim; outside it, it is a Rendering object only, which is how the world stays solid at the band's back and front edge.
+3. **A footprint that does not turn.** The strip uses the building's bounding circle (radius half the larger of its width and depth) for every contact, so a swing never changes what the sim thinks it hits; Rendering draws the box turned. This is the one simplification that stays honest at any angle, and it is lossy at the corners.
+4. **No street lanes in a swing.** A turned street is not a lane. The lane table is rebuilt per layout today (`WorldLanes.build`, whole arrays); in a swing the clearance comes from the footprints instead (9.3).
+5. **Cities stay as in 8.3** (frozen in strip coordinates, honest to about 10 degrees, re-laid out of view) until they have a plan, and the director steers swings over towns and open ground, which is Game Design's own rule ("honest only over open ground until places are by plan"). A town on a plan is the first place the swing can go through.
+
+What this costs: a plan function for towns (a new generator, off in the data until built), a pose update for buildings in the strip each swing tick (9.4), and a data field on each building for the plan index (already `plan` in `BuildingGen`). The 44 towns of a planet are 44 small plans, computed lazily when first in view.
+
+### 9.3 Standing fighters sweep at most 75 u/s: the arithmetic, and the face
+
+**GD's table checks.** Rate = ground speed limit / distance from the pivot, in radians a second. Both standing, pivot the midpoint, so r is half the gap: gap 150 (r 75) gives 57.3 degrees a second, 300 gives 28.6, 1,000 gives 8.6, 3,000 gives 2.9, 6,000 gives 1.4. One standing, the pivot is that fighter and the other is airborne at the 6,000 limit: gap 5,700 gives 60.3 (capped 60), 15,000 gives 22.9, 30,000 gives 11.5. All as stated. **One slip:** the text says the chord over a whole turn is `s sin(theta/2)` for a pair turning about their midpoint; the chord is `2 s sin(theta/2)`, twice that. It does not touch the rates (an instantaneous speed is `r x omega`); it matters for how far the ground has moved in the whole turn (a 90-degree swing at r 150: 212 units, not 106).
+
+**Why the face is not a separate speed.** A building that covers a standing fighter's `x` is at the same arc distance from the pivot as he is, so its face approaches the fighter's plane at the same speed as the ground under him, at most 75 units a second. The limit that protects his feet protects against the face for the buildings in his own `x`.
+
+**Stopping 0.5 body heights short.** The clearance is 37.5 units. At 75 units a second the 20-tick ease takes `75 x (20/60) / 2` = 12.5 units, one tick 1.25. So the swing must be braking when the face is **about 50 units** from the clearance line, and a lookahead of a few ticks (about 5 units) beyond that.
+
+**Finding the face cheaply.** Each tick of a swing, for each standing fighter:
+1. Ask the spatial index (`S.bIdx`, buckets of W/128 = 600 units on a Half ring, built by `WorldStructures.buildIndex`) for the buildings whose centre is within the widest half-width of his `x`. That is one to five buildings.
+2. For each, the gap in depth to the nearer face on the side the ground is moving from: `gap = |z_b - z_F| - d_b/2 - bodyRadius` (or with the bounding circle, `|z_b - z_F| - radius_b - bodyRadius`).
+3. Cap the rate: `rate = min(rate, (gap - 37.5) / T_ease / r_F)` with `T_ease` 0.33 s. When `gap` is at most 37.5 the rate is 0 and the swing is at rest.
+That is one bucket scan and a handful of operations per standing fighter: **about 5 microseconds a tick**, run only while a swing runs. It is the same query as `depth.md` section 2's clearance and the same index as the contact tests, so nothing new is stored. It reads the building's pose for this tick, which the pose update (9.4) has just written. The director should still steer the bearing off a face; this is the backstop, as GD says.
+
+### 9.4 Netcode's 170 to 300 columns: does the sim strip fit, and how do buildings follow the frame?
+
+**Columns.** Netcode: about 170 to 300 columns (5,400 to 9,800 units) re-laid on re-simulated ticks at a 200 ms ping.
+- The sim reads ground at: each fighter's column, a melee's reach (hundreds of units), a flight's contact ground, a beam's carve path, the launch planner's candidates (up to a sixth of the loop each way: 400 columns on a Half ring) and the director's scans.
+- **A window of plus or minus 40 columns (1,280 units) round each fighter is 81 columns each; two windows are 162, under 170.** In a brawl (gap under 600 units, 19 columns) the two overlap and the union is 99 to 110 columns. A window of plus or minus 75 columns (2,400 units) is 151 each, 300 for two, the top of the range, and about 170 in a brawl.
+- **Fighters far apart** (a launch, a chase) are two separate windows that move; a window moving at 6,000 units a second takes in three new columns a tick, which is the existing conveyor and is not a re-lay.
+- **What does not fit and must take coarse ground:** the launch planner's 400-column scan and any beam longer than the window. These are Netcode's "far readers" (469 ground reads and 170 `S.base` reads, unaudited). From the code, the ones that matter for correctness (a landing, a contact, a beam's carve) are within the windows; the ones that only score or look ahead (the planner, the director's lure, `popHist`) can accept coarse ground. I have not audited the 639 sites, and I would not trust my reading of that many without a pass by Simulation.
+- A re-lay of a window is a bilinear look-up per column. Research's estimate is 1.7 to 3 ms for 669 columns, 2.5 to 4.5 microseconds a column, **unmeasured**. At that, 162 columns is 0.4 to 0.7 ms a tick.
+
+**Buildings, the unknown.** They are not in Netcode's numbers. How they follow:
+- A building needs its pose, `x` and `z`, from the frame: two rotations of its planet offset. In the sim that pose is now in `BuildingGen` (`x`, `z`, sealed records shared by snapshots). A frame-driven pose cannot live in sealed records rewritten each tick; it moves to **two bound arrays, `bX` and `bZ`**, written in place like `bHp`, with `BuildingGen` keeping the plan offset (u, v) instead. Readers of a building's `x` and `z`: 36 files read `S.buildings` and about 53 sites read a building's `x` or `z` in structures, collateral and brunt alone. That is the migration and it is Simulation's (a grant), not a small one.
+- While a swing runs, a building's `x` changes too, not only `z`: a building at lateral offset `l` slides along the line by `l x omega`. At 1,000 units of depth and the peak rate that is 17 units a tick. The index needs a bucket update only when a building crosses a 600-unit bucket, about once in 35 ticks at that offset; rebuilding the whole index (`buildIndex`, every building) each swing tick is the simple version and costs microseconds for the 20 to 150 buildings a window holds.
+- **Cost:** two rotations and two writes a building, about 2 microseconds in GDScript (an estimate, unmeasured). A window holds 10 to 40 buildings in open country or a town and 100 to 150 in a dense city stretch (about one building a 1,000 units on average per the W7 densities, four in a city). So **20 to 300 microseconds a swing tick, against 0.4 to 0.7 ms for the columns.** On Netcode's table that adds up to about 2 ms to the 7 re-simulated ticks of a 200 ms ping at the dense end: 10.2 to 12.6 ms becomes about 10.3 to 14.7. **So buildings fit at the low and middle of the estimates and break the 12.5 ms budget at the top, in a dense city only.** The fix for the dense case is the one already chosen for cities: buildings stay in strip coordinates inside a city and only towns have poses (9.2), which makes the dense case free.
+- **State and the hash:** a pose is derived from the frame and the plan, so only the frame and the plan index go in the hash; the arrays themselves are rebuilt on a restore. Hit points and people stay in the arrays they are in (`bHp`, `bPopAlive`), keyed by the building's index, which no longer moves because the list is not re-ordered by a swing (a swap re-indexed it; a swing does not).
+- **The index must not change in a swing.** The calm-turn swap rebuilt `S.buildings` (`keep + made`) and the index, which is why a tower chain and a wreck id needed calm. A swing that only moves poses keeps every index, so those readers survive it. A building that enters or leaves the window's band is a flag on the same record, not an insertion.
+
+### 9.5 Is there a place worth arriving at within launch range, at any bearing?
+
+Game Design's launch is at most a sixth of the loop (3d): Close 6,400, Half 12,800, Whole 25,600; a full launch (1.6 s at 6,000 units a second) is about 9,600. A place is "arrived at" when the launch's line passes within its reach (`cityReach` 0.6 x 6,500 = 3,900, `townReach` 0.7 x 2,437.5 = 1,706, the rule `WorldEpoch._held` uses), and the bearing is free, so a place counts if its centre lies within range plus reach of the pair, whichever side it is on. The planet has 12 cities and 44 towns (`planet.json`), so about one place to every 134 million square units, a mean spacing of 11,580.
+
+**Average over the sphere** (arithmetic, places treated as uniform; the real ones sit on land with height 60 to 1,800 and latitude under 0.8, so near land the density is higher and over the sea lower):
+
+| Range | A city within reach | A town | Any place |
+| ---: | ---: | ---: | ---: |
+| 6,400 (Close) | 41% (0.52 expected) | 70% (1.2) | **82%** (1.7) |
+| 9,600 (a full launch) | 59% (0.89) | 90% (2.3) | **96%** (3.2) |
+| 12,800 (Half) | 74% (1.4) | 98% (3.8) | **99%** (5.1) |
+| 25,600 (Whole) | 98% (3.9) | 100% (12) | 100% (16) |
+
+(The percentages are the chance of at least one, `1 - e^-expected`.) **So on average a place worth arriving at exists within a launch at any bearing about nine times in ten on a Half ring and four in five on a Close ring; a city is a coin toss at a full launch (59%) but a town is nearly always there.** That favours towns, which agrees with 9.2: the swing's usual destination is a town. Over open sea, a far pole or a lone continent it will be less, and I cannot say how much without the planet's actual places.
+
+`place_reach_probe.gd.txt` (this folder, unrun and uncompiled) measures it on eight real planets: the share of 2,000 spread points with a city, a town or either inside each range, all points and land points. It replaces the table above.
+
+### 9.6 What I could not check
+
+- Everything in 9.4 about cost is arithmetic from Research's unmeasured 1.7 to 3 ms and my 2-microsecond-an-operation guess. A 3x miss takes Netcode's limit to 60 to 100 columns.
+- The far-reader audit (639 sites).
+- Whether Rendering can draw ground rows off the line from the field (test 7).
+- Whether a bounding-circle footprint is acceptable to Combat for the building contacts.
