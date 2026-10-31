@@ -15,6 +15,8 @@ const RAA = new Function('surf', 'sin', 'cos', 'atan2f', 'R', code + '\nreturn R
 const SEEDS = arg('seeds', 3), TICKS = arg('ticks', 7200), COL = RAA.COL, RP = R, SEED = 7;
 // Ms a gen 2 read: 54 us native, 130 us web, 0.8 ms at the laptop's x4 (performance.md section 1). Budget 0.2 ms a tick at x1 and
 // a spike of 8 ms at x1, so reads a tick and a spike's reads depend on the build.
+// NOTE (Performance section 6): those are a ring column's costs. A field node is a plain surfAt, 38 us native and 46 to 55 us on the web, so the web's budget is about 4 nodes
+// a tick and a laptop read about 0.2 to 0.3 ms. The counts here stand; divide the printed laptop ms by about 3 and read the budget as about 4. See research.md T3.
 const READ = { native: 0.054, web: 0.13, laptop: 0.8 }, BUDGET = 0.2, SPIKE = 8;
 const out = { TICKS, SEEDS, READ, BUDGET, SPIKE };
 const norm = (a) => { const l = Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]); return [a[0] / l, a[1] / l, a[2] / l]; };

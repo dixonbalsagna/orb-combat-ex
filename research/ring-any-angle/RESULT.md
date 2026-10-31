@@ -4,7 +4,7 @@
 
 **Recommendation.** A narrow sim strip read through the frame, and a resident planet ground the renderer turns with one uniform: fork (b). The field defines the ground, a new, smoother generation behind a switch: one canonical spacing as a data value, baked before tick 0, with zero noise reads in play and coast and ice-edge records laid on it. A swing and a flight then cost no noise reads, and the swing's rate costs nothing in reads. The ribbon (D3) stays as the fallback. The paper, with the route in stages: [docs/world/ring-any-angle/research.md](../../docs/world/ring-any-angle/research.md).
 
-**The limit.** No live 2D field keeps up flat out at the laptop's 1.5 reads a tick, so the reads move to the load: at 512 units, 1.3 s native, 4.4 s on the web, 18 to 27 s on the laptop by conversion; four times that at 256. Drawing it measures +0.1 to 0.5 ms a frame on a current iGPU, not on ADR 0011's old laptop, and that is the go or no-go.
+**The limit.** No live 2D field at a usable spacing keeps up flat out at about 4 node reads a tick on the web, so the reads move to the load: at 512 units, 1.3 s native and 1.6 to 1.9 s on the web (measured), 6 to 11 s on the laptop by arithmetic; four times that at 256. Drawing it measures +0.1 to 0.5 ms a frame on a current iGPU. On ADR 0011's old laptop that's an estimate: the same at the median, up to +1 to 1.6 ms at p95, over the allowance. That machine is the go or no-go.
 
 **Run it.**
 

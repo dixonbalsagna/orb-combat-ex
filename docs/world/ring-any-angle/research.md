@@ -16,21 +16,28 @@ Research & Prototyping, for the EP. Revised 2026-10-31 for Orb's pick ("the turn
 
 ### Is it affordable at Game Design's rates?
 
-**Yes on reads and on the sim, if the ground is baked at load. On the laptop's GPU the margin is unproven. It isn't affordable as E or E2 ran it.**
+**Yes on reads and on the sim, if the ground is baked at load. On the old laptop's GPU it holds at the median and not at p95, by an estimate nobody has run. It isn't affordable as E or E2 ran it.**
 
 **The rate was never the cost. Flight is.** A swing in place reads nothing at any rate, and going from 60°/s to the 98°/s ceiling adds 3% to E2's reads in flight. So Game Design's rates can be set on look and flash alone. Orb has since played v2 and was comfortable at every speed up to 240°/s, too extreme only with the largest swing (`game-design.md` §10). That's one player on bars, not a clearance, and builds stay at 60 until the flash reading.
 
-| Against the budget (laptop target: 1.5 reads a tick, 0.2 ms, 8 ms spike) | E, E2 as they ran | The route | Verdict |
+| Against the budget (0.2 ms a tick, which is 1.5 ring-column reads on the web, or about 4 plain node reads; 8 ms spike) | E, E2 as they ran | The route | Verdict |
 | :--- | ---: | ---: | :--- |
 | Reads, a swing in place, 60 or 98°/s | 0 | 0 | Fits |
-| Reads, flat out with swings | E 156, E2 10.1 a tick | **0 once baked** | Fits; E2 is 7x over |
-| Read spike, laptop p99 | E 283 ms, E2 52 ms | None once baked | Fits |
+| Reads, flat out with swings | E 156, E2 10.1 nodes a tick | **0 once baked** | Fits; E2 is about 2.5x over (see the correction in T3) |
+| Read spike, web at x1, p99 | E 18 ms, E2 3 ms | None once baked | Fits; E was over the 8 ms |
 | Sim, a swing tick | 3.6 ms, 18x the budget (Simulation) | **0.1 to 0.15 ms mean,** read-through (Simulation's sum, not yet a run) | Fits |
 | Rollback frame at 200 ms ping, against 12.5 ms | 29 ms (Simulation) | 4.8 ms (Simulation) | Fits |
-| Drawing a swing, each frame, against 0.5 to 1 ms | 5.5 to 12 ms if re-laid (Performance) | **+0.1 to 0.5 ms on a current Radeon iGPU** (Performance, measured) | Fits there; **see the warning below** |
-| Loading the bake | None | **1.3 s native (measured), 4.4 s web, 18 to 27 s on the laptop** (estimates; reconciled below) | A new bill, and Performance has yet to rule on it |
+| Drawing a swing, each frame, against 0.5 to 1 ms | 5.5 to 12 ms if re-laid (Performance) | **+0.1 to 0.5 ms on a current Radeon iGPU** (measured); **on the old laptop, about the same at the median and up to +1 to 1.6 ms at p95** (estimate) | Fits at the median; **at p95 on the old laptop it doesn't** |
+| Loading the bake | None | **1.25 to 1.31 s native, 1.59 to 1.92 s web (both measured), about 6 to 11 s on the laptop (arithmetic)** | Fits Performance's ruling, at the edge (below) |
 
-**The warning.** Rendering's scratch scene is running now. Performance's Radeon is a current iGPU, not ADR 0011's old laptop. Its measure leaves a margin of between 1x and 10x, and nobody has a figure for how much slower the old laptop's vertex fetch is. If it's more than about 2x slower at the top of that range, the allowance is gone. Rendering's scratch scene plus a model of that GPU is the go or no-go.
+**The go or no-go is the old laptop's GPU, and the answer so far is an estimate.** Rendering's scratch scene is running now. Performance's measure is on a current Radeon iGPU, and its model of ADR 0011's 2015 ultrabook comes from its memory of the parts: no such machine has been run, and the project doesn't have one.
+
+| Rotated ground, 4 or 8 fetches a vertex (**estimate**, Performance 6.4) | Old iGPU at 2.5x | At 4x, a safe worst case |
+| :--- | ---: | ---: |
+| Median frame, 75k vertices | +0.1 to 0.5 ms | +0.15 to 0.8 ms |
+| p95, 200k vertices, counting the water pass | up to +1 ms | up to +1.6 ms |
+
+**So the 0.5 to 1 ms allowance holds at the median and is gone at p95.** There, the near ground needs fewer vertices (half the columns where it's now every one) or the game's step-down. That's a real cost on the target machine, though not a fatal one on this evidence. Rendering's existing scene is also over at p95 there without a step-down, so the swing isn't the only cause.
 
 **What it costs, by how much of Game Design's plan ships.** A 7-minute match is 25,200 ticks. The first two columns are from Simulation; the split by cause is my arithmetic from Game Design's table and Camera's ramps, at each cause's largest swing.
 
@@ -54,27 +61,30 @@ Research & Prototyping, for the EP. Revised 2026-10-31 for Orb's pick ("the turn
 
 **Option A's price, at each spacing.** Distinct nodes are Simulation's cube count, scaled from its 33,752 at the bake's size. RMS is against today's ground, along the ring, a floor (World 11.1).
 
-| Canonical spacing (one data value) | Nodes | Native | Web | Laptop (estimate) | Memory, heights + biomes | Gen 2 RMS / worst | What it loses |
+| Canonical spacing (one data value) | Nodes | Native | Web | Laptop (arithmetic) | Memory, heights + biomes | Gen 2 RMS / worst | What it loses |
 | ---: | ---: | ---: | ---: | ---: | ---: | :--- | :--- |
-| 1,024 | 8,400 | 0.3 s | 1.1 s | 4 to 7 s | 42 KB | 48 / 353 | Lost shorelines, lakes. Not usable |
-| **512 (the bake)** | **33,752** | **1.3 s, measured** | **4.4 s** | **18 to 27 s** | **169 KB** | **23 / 319** | Crests off by up to 2.5 fighter heights, lakes blur, ice walls become ramps |
-| 384 | 60,000 | 2.3 s | 7.8 s | 31 to 48 s | 300 KB | About 17 | |
-| **256** | **135,000** | **5.2 s** | **18 s** | **70 to 108 s** | **675 KB** | **11 / 273** | Basins kept. Crests off by about 1 fighter height |
-| 128 | 540,000 | 21 s | 70 s | 280 to 430 s | 2.7 MB | 5.1 / 189 | About half a fighter height. Only as a shipped or cached file |
+| 1,024 | 8,400 | 0.3 s | 0.4 s | 1.5 to 3 s | 42 KB | 48 / 353 | Lost shorelines, lakes. Not usable |
+| **512 (the bake)** | **33,752** | **1.3 s, measured** | **1.6 to 1.9 s, measured** | **6 to 11 s** | **173 KB (132 KB gzipped)** | **23 / 319** | Crests off by up to 2.5 fighter heights, lakes blur, ice walls become ramps |
+| 384 | 60,000 | 2.3 s | 2.8 s | 11 to 16 s | 300 KB | About 17 | Doesn't fit the ruling unless cached |
+| **256** | **135,000** | **5.2 s** | **6.4 s** | **26 to 36 s** | **690 KB** | **11 / 273** | Basins kept. Crests off by about 1 fighter height. Only with a cache or shipped data |
+| 128 | 540,000 | 21 s | 26 s | 100 to 140 s | 2.8 MB | 5.1 / 189 | About half a fighter height. Only with a cache or shipped data |
 
-- **Memory isn't the constraint; first load is.** Each halving of the spacing is 4x the wait, and the bake must finish before tick 0 (Simulation's rule: whether it's done is never a sim input). So a coarse-first bake can't help the sim.
-- **Levers on the load:** a height-only read, unmeasured, perhaps half (World). A cache on disk keyed by data hash and engine version, which leaves only the first play of each planet (Simulation's rule 3 keeps it out of the first cut). Shipping baked files for a fixed set of planets, which works against Orb's procedural planets.
-- **Budget:** Performance has yet to rule on load time. If Orb's eye wants more than 512, the honest ask is 256 with a cache, and that's a decision about a laptop's first load.
+- **Memory isn't the constraint; first load is.** Each halving of the spacing is 4x the wait, and the bake must finish before tick 0 (`SimPlanetLoad.mayStart`; whether it's done is never a sim input). So a coarse-first bake can't help the sim.
+- **Performance's ruling** (a judgement about patience, Orb's to overturn): up to 10 s added on the laptop to a cold planet, never as a frozen page. The bake runs in slices of at most 4 ms a frame, behind the intro, the menu and character select, which is about 13 s of wall time on the laptop. A cold planet's make plus bake is 13 to 22 s, so it can't be a blank wait. The bake needs the seed known early: a menu that picks the planet late leaves a bar.
+- **After that:** a disk cache in the next cut, keyed by data hash, engine version, seed, generation and spacing, so a repeat visit costs at most 3 s. Shipped planets only as polish for the demo's default, 132 KB gzipped each, in a separate file. It does nothing for a random seed.
+- **Levers that don't work or aren't ready:** no worker thread on the web. Heights first saves 43 to 52% only if biomes are proved unneeded before tick 0, which is Simulation's call.
+- **If Orb's eye wants more than 512,** the honest ask is 256 with a cache: 26 to 36 s on the first play of each planet, on the laptop.
 
 **Load time, reconciled.** Three figures were talking about three things:
 
 | Figure | What it was |
 | :--- | :--- |
 | World's 3.7 s on the web | 28,650 nodes by area x 130 µs |
-| Simulation's 4.4 s | 33,752 distinct nodes (faces share edges) x 130 µs. **This is the one to use;** its native 1.3 s is measured |
+| Simulation's 4.4 s | 33,752 distinct nodes x 130 µs, the ring column's cost. **Corrected:** a bake node is a plain `surfAt`, not a column |
+| **Performance's 1.59 to 1.92 s** | **34,656 nodes, measured on the web, 46 to 55 µs a node. This is the one to use;** native 1.25 to 1.31 s, the same as Simulation's measured 1.3 |
 | My earlier 15 s on the laptop | A different job: the far map's 65,000 cheaper reads without surface detail. **Withdrawn** |
 
-The laptop's 18 to 27 s is the same 4.4 s at two conversions: Simulation's x4 of the web, and Performance's 0.8 ms a read. Neither has been run on a laptop. Rendering's far map already spends 65,000 reads on a similar job, so one bake serving both may be cheaper than today's.
+The laptop's 6 to 11 s is Performance's x4 to x5.6 of that. My earlier 18 to 27 s inherited the 130 µs and is withdrawn. Nobody has run it on a laptop. Rendering's far map already spends 65,000 reads on a similar job, so one bake serving both may be cheaper than today's.
 
 **What can make 512 honest (World's section 13, measured).**
 
@@ -91,7 +101,7 @@ The laptop's 18 to 27 s is the same 4.4 s at two conversions: Simulation's x4 of
 1. **Coast and ice-edge records:** a few planet records a ring, laid on the field like craters. They put shores and walls exactly where they are today.
 2. **A drawn-only detail term** for texture, which the sim never reads. Feet differ from it only by its small amplitude, and it stays off near shores so it invents none. v2 has one, on a switch.
 
-**What the narrow strip could afford if Orb wants a finer ground without the load.** New nodes a tick, counted in JS under the columns the sim asks for, against 1.5:
+**What the narrow strip could afford if Orb wants a finer ground without the load.** New nodes a tick, counted in JS under the columns the sim asks for, against about 4 plain node reads a tick on the web:
 
 | Moving, and reading | 128 u | 256 u | 512 u | 1,024 u |
 | :--- | ---: | ---: | ---: | ---: |
@@ -101,7 +111,7 @@ The laptop's 18 to 27 s is the same 4.4 s at two conversions: Simulation's x4 of
 | A chase, both flat out, swing at 45°/s, feet only | 3.26 | 1.63 | 0.75 | 0.33 |
 | A chase, 3,000 apart, feet only | 2.91 | 1.56 | 0.74 | 0.32 |
 
-This is Simulation's option B or C, kept addable because the sim's read is one data value. **Option C works at 256 where it doesn't at 128:** a 2,048-unit tile at landing is 81 nodes at 256, about 10.5 ms on the web against 33 ms at 128, and a planned launch's 144 nodes of read-ahead covers it. An unplanned landing would still spike a little over the 8 ms.
+This is Simulation's option B or C, kept addable because the sim's read is one data value. **At about 4 reads a tick the strip affords even 128 at launch speed.** A tile at landing costs about 4 ms on the web at 256 (81 nodes), inside the 8 ms, and about 13 ms at 128 (256 nodes, Simulation's 33 ms at the old cost). So option B or C is more reachable than Simulation's section 7 assumed. They're still two levels, with the mismatch at the feet to handle, so option A stays first.
 
 **Can refining at rest stay deterministic, if it's added later? Yes, on Simulation's rule:** which level a read uses is fixed by the reader, never by what's ready. A missing node is read on the spot and gives the same value. What would break it is a sim that reads "the sharpest ground available".
 
@@ -134,6 +144,10 @@ The counting model reproduces `sim.js`'s own runs within 3%. Flying rows are 30 
 | E2, whole disc, r 8,300 | 755 | 2.4 / 46 | 8.4 / 52 | 7.0 | 42 ms | 5.6x |
 | 1,024, half disc of B, 10,800 | 204 | 0.6 / 14 | 1.8 / 19 | **1.5** | 15 ms | 1.2x |
 | **Baked at load** | Whole planet | **0** | **0** | **0** | **0** | **Fits** |
+
+**A correction to this table, from Performance's section 6.** The counts stand, but I priced them too high. A field node is a plain `surfAt`: 38 µs native and 46 to 55 µs on the web, not the ring column's 130 µs. So 0.2 ms buys about 4 node reads a tick on the web, not 1.5, and a laptop read is about 0.2 to 0.3 ms, not 0.8. Divide the laptop column by about 3 and read the last column against 4: E 39x over, World's rings 17x, E2 2.5x, **Camera's half disc at 8,300 about 1.4x, and about at budget at launch speed.** A height-only read, if it can be used, would bring that half disc inside the budget flat out.
+
+**The conclusion holds, by a smaller margin.** No field at a usable spacing fits flat out at about 4 a tick, and E's 278 ms is about 90 ms. The bake still wins: zero reads in play, one level, nothing to prefetch. But a lazy or half-disc field is no longer absurd, and Performance lists a lazy bake as a real way to cut the load, with its cost moved to the ticks that read new nodes (8.6 ms at worst on the web, by Simulation's count). I'd keep it in reserve for the load, not as the design.
 
 **Spreading bursts over ticks fixes the spike and nothing else.** Every row's spike falls under 8 ms, but the reads only move:
 
@@ -234,10 +248,10 @@ Each stage ships behind a switch, with the golden byte-identical while it's off.
 
 | # | Stage | Holds | Useful alone because | Owners | Shared? |
 | ---: | :--- | :--- | :--- | :--- | :--- |
-| **0** | **Measure.** ★ Rendering's scratch scene (running), with a model of the old laptop's GPU. Performance's ruling on load time. Orb's answers from v2, on the real gen 2 ground | | The cheapest test that can kill the route | Rendering, Performance, Orb | Partly |
+| **0** | **Measure.** ★ Rendering's scratch scene (running). A run on a machine of the old laptop's class, if one can be had. Orb's answers from v2, on the real gen 2 ground | | The cheapest test that can kill the route | Rendering, Performance, Orb | Partly |
 | **1** | ★ **Clear the ground.** Option A lands first. `hill_chapel` out and the bell tower renamed with the first swing data change (RL-214) | Game Design's and Encounter's first step | The plane is honest today | Encounter, Simulation, World | **Shared** |
 | **2** | **The far land reads a planet frame.** `FAR_MAP_ON`; horizon at `v/R` | | **The crossing feel, soon, with no swing.** It may carry much of what Orb wants | Rendering, World | **Shared** |
-| **3** | ★ **The field defines the ground (a new generation, behind a switch).** Simulation's option A: one canonical spacing as a data value, baked before tick 0, immutable and outside the state; its hash joins the match key; zero noise reads in play; the sim reads triangles of the same nodes. **Coast and ice-edge records** laid on the field; **lakes, platforms and sites planned on its heights; trees keyed by planet cell** (no re-rolls). Nothing noise-based in what the sim reads | Fill cost, trees, lakes' plan, coast records | Far readers and far land get right ground at any bearing. **Orb judges smoothing at the look gate here** | World, Simulation | Shared in part |
+| **3** | ★ **The field defines the ground (a new generation, behind a switch).** Simulation's option A: one canonical spacing as a data value, baked in 4 ms slices behind the intro, the menu and select, finished before tick 0 (`mayStart`), immutable and outside the state; its hash joins the match key; zero noise reads in play; the sim reads triangles of the same nodes. **Coast and ice-edge records** laid on the field; **lakes, platforms and sites planned on its heights; trees keyed by planet cell** (no re-rolls). Nothing noise-based in what the sim reads | Fill cost, trees, lakes' plan, coast records | Far readers and far land get right ground at any bearing. **Orb judges smoothing at the look gate here** | World, Simulation | Shared in part |
 | **4** | ★ **The new ground renderer** (Rendering's C), tiles, `world_place()`, foreground rule, softening | Rendering's section | Drops ring copies and their churn. A dig touches a few layers, not 460 KB | Rendering, Art | Turntable only |
 | **5** | ★ **The sim's read-through.** The frame in the state, `groundY` through it, poses and index near the fighters, the far-reader audit (69 lines), `frameAt(n)` | Encounter's `frameAt` | The sim stands on the turned ground | Simulation, Encounter | Turntable only |
 | **6** | ★ **`DirSwing`, launches only, over open ground** with craters only, using today's swap's frozen places out of its way | Game Design's smallest version | **Orb sees a real swing here.** Camera's clips, flash reading, Legal's first look | Encounter, Game Design, Camera, Netcode, Legal | Turntable only |
@@ -264,14 +278,14 @@ Each stage ships behind a switch, with the golden byte-identical while it's off.
 | :--- | :--- | :--- |
 | **Orb** | The swing as pictured; jolts, slow swings or neither up close; what reads as crossing; and whether real gen 2 at 512 units is enough | Each decides cost |
 | **Rendering** | The scratch scene, running now | It's the go or no-go |
-| **Performance** | A model of ADR 0011's old iGPU, and a ruling on load time | The measure was on a current one; 18 to 27 s is in no budget |
+| **Performance** | One run on an old-laptop-class machine, or a GPU-limited emulation; the project has neither | The p95 figure is an estimate from the parts |
 | **World** | A height-only read's cost; L3's state with depth off; 2D error (11.1 is along the ring, a floor) | 256's fit and T4's cost |
 | **Simulation** | A read-through actually run, with a swing | 0.1 to 0.15 ms is a sum, not a run |
 | **Combat, Game Design** | The plough or over-the-top rule | T4 |
 
 **Risks I can name:**
 
-- **Load time on the old laptop** may be the unwelcome part: 18 to 27 s at 512 by conversion, nobody has run it there, and 256 is four times that.
+- **Load time on the old laptop** is at the edge of Performance's ruling: 6 to 11 s at 512 by arithmetic, 13 to 22 s for a cold planet with its make, nobody has run it there, and 256 is four times the bake.
 - **A mountain or tower coming round in front** is Rendering's largest look risk. v2's rule makes land sink, and Orb will see it. Only Orb can judge it.
 - **Flash at 60°/s over a city** is unmeasured. The lever is a lower rate over tall places, and Legal sees the first readings.
 - **Orb may want more than 512 gives.** Their still was on 1,024², four times finer than 256. They've now been asked to judge real gen 2 at 512. If it's short, the choices are 256 with a cache, or Simulation's option B or C, each with its cost above.
