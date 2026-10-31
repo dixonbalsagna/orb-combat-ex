@@ -1,19 +1,20 @@
 // A PRIVATE, LOCAL, playable web build of the STACK (the EP, 2026-10-31): HEAD plus every ready park of tools/preview/stack.json, every switch on, for Orb's own browser. Never published, uploaded or dispatched.
 //
-//   node tools/preview/stack-preview.mjs [--planet 7] [--port 8765] [--off tiles,meteor] [--skip park,park] [--only park,park] [--rebuild] [--no-smoke] [--no-serve] [--open] [--repo <dir>] [--manifest <file>] [--godot <exe>]
+//   node tools/preview/stack-preview.mjs [--planet 7] [--port 8765] [--off tiles,meteor] [--skip park,park] [--only park,park] [--rebuild] [--no-smoke] [--no-serve] [--open] [--watch [--every 120]] [--repo <dir>] [--manifest <file>] [--godot <exe>]
 //
 // What it does: tools/preview/stack.mjs unpacks HEAD into a scratch tree, applies the parks in order and turns their switches on (the tree it keeps is the stack's, not the repository's); then, as preview.mjs does for a
 // commit, the scratch copy's render/core/main.gd gets a ?planet=N entry and a state probe (and Controls' host patch when the tree has not got the pad's right stick), the project is imported and the Web build exported
 // with the STANDARD template at below-normal priority, the boot-and-play smoke check runs through Tools' guarded browser launcher, and the build is served on 127.0.0.1 only. A park that does not apply is left out and
 // named; the build is made without it. A build is cached by the stack's key (the commit and the bytes of every park file and manifest entry) and the switches.
 import { spawn } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { scriptErrors } from '../gate.mjs';
 import { HOST_PATCH, applyPatchText, godotExe, plan, readPending, runGodot, saveSmoke, serveLocal } from './preview.mjs';
-import { describeReport, runStack } from './stack.mjs';
+import { describeReport, loadManifest, runStack, stackKey } from './stack.mjs';
 import { patchMain } from './switches.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
@@ -77,7 +78,7 @@ export async function buildStackPreview(o) {
 
 async function main() {
   const a = process.argv.slice(2);
-  const known = new Set(['--planet', '--port', '--off', '--skip', '--only', '--rebuild', '--no-smoke', '--no-serve', '--open', '--repo', '--manifest', '--godot', '--godot-node', '--browser-path', '--out', '--keep-tree', '--help']);
+  const known = new Set(['--watch', '--every', '--planet', '--port', '--off', '--skip', '--only', '--rebuild', '--no-smoke', '--no-serve', '--open', '--repo', '--manifest', '--godot', '--godot-node', '--browser-path', '--out', '--keep-tree', '--help']);
   for (const x of a) if (x.startsWith('--') && !known.has(x)) { console.error(`unknown option ${x}; node tools/preview/stack-preview.mjs --help`); process.exit(2); }
   const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
   const has = (n) => a.includes(n);
@@ -115,11 +116,54 @@ async function main() {
   if (failed && !has('--no-serve')) console.log('  NOTE: the smoke check failed (above); the build is served anyway so it can be looked at.');
   if (has('--no-serve')) process.exit(failed ? 1 : 0);
   const want = opt('--port');
-  const server = await serveLocal(b.web, want ? Number(want) : 8765, { strict: !!want });
+  const watching = has('--watch');
+  let live = b.web;
+  if (watching) {   // the page is served from a stable folder, so a new build can be swapped in under the same address
+    live = join(resolve(o.out || join(tmpdir(), 'meridian-stack-preview')), 'live');
+    rmSync(live, { recursive: true, force: true }); cpSync(b.web, live, { recursive: true });
+  }
+  const server = await serveLocal(live, want ? Number(want) : 8765, { strict: !!want });
   const url = `http://127.0.0.1:${server.address().port}/index.html?planet=${planet}${b.urlWords && b.urlWords.length ? `&${b.urlWords.join('&')}` : ''}`;
   console.log(`\nOpen this in Opera:\n\n    ${url}\n`);
   if (has('--open')) { try { spawn(process.platform === 'win32' ? 'cmd' : process.platform === 'darwin' ? 'open' : 'xdg-open', process.platform === 'win32' ? ['/c', 'start', '', url] : [url], { stdio: 'ignore', detached: true, windowsHide: true }).unref(); console.log('  (opened in the default browser)'); } catch { /* not worth failing for */ } }
   console.log('  localhost only (127.0.0.1); nothing is published, uploaded or dispatched. Ctrl-C stops it.');
+  if (watching) {
+    const every = Math.max(30, Number(opt('--every', 120))) * 1000;
+    const repo = resolve(o.repo || REPO), stamp = () => new Date().toISOString().slice(11, 19);
+    const keyNow = () => {
+      const sha = spawnSync('git', ['rev-parse', '--verify', 'main^{commit}'], { cwd: repo, encoding: 'utf8' }).stdout.trim();
+      const man = loadManifest(readFileSync(resolve(o.manifest || join(HERE, 'stack.json')), 'utf8'));
+      const only = new Set(o.only), skip = new Set(o.skip);
+      return stackKey(repo, sha, man.parks.filter((p) => (!only.size || only.has(p.id)) && !skip.has(p.id) && p.ready !== false));
+    };
+    let last = keyNow(), busy = false;
+    console.log(`  WATCHING: every ${every / 1000} s the stack's key is read; a re-cut of any park file, the manifest or main rebuilds the page under this address.`);
+    setInterval(async () => {
+      if (busy) return;
+      let now;
+      try { now = keyNow(); } catch (e) { console.log(`[${stamp()}] watch: could not read the stack key: ${e.message}`); return; }
+      if (now === last) return;
+      busy = true;
+      console.log(`[${stamp()}] a park or main changed: rebuilding`);
+      try {
+        const nb = await buildStackPreview({ ...o, rebuild: true, log: () => {} });
+        let ok = true, why = '';
+        if (!has('--no-smoke')) {
+          const { smoke } = await import('./smoke.mjs');
+          const r = await smoke({ dir: nb.web, on: nb.active, planet, extraQuery: (nb.urlWords || []).join('&'), shot: join(nb.dir, 'smoke.png'), exe: opt('--browser-path'), log: () => {} });
+          saveSmoke(nb, r); ok = r.ok; why = r.problems.map((p) => p.text).slice(0, 3).join(' | ');
+        }
+        if (nb.report.firstConflict) console.log(`[${stamp()}]   FIRST CONFLICT: park ${nb.report.firstConflict.park}, ${nb.report.firstConflict.file}`);
+        if (ok) {
+          rmSync(live + '.next', { recursive: true, force: true }); cpSync(nb.web, live + '.next', { recursive: true });
+          cpSync(live + '.next', live, { recursive: true, force: true }); rmSync(live + '.next', { recursive: true, force: true });
+          console.log(`[${stamp()}] swapped in: parks ${nb.report.parks.filter((p) => p.status === 'applied').length} applied, smoke check passed`);
+        } else console.log(`[${stamp()}] the new build FAILED its smoke check (${why}); the page stays as it was`);
+        last = now;
+      } catch (e) { console.log(`[${stamp()}] rebuild failed: ${e.message.split('\n')[0]}; the page stays as it was`); last = now; }
+      busy = false;
+    }, every);
+  }
   process.on('SIGINT', () => { server.close(); process.exit(0); });
 }
 

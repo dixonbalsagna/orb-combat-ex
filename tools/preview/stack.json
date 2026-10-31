@@ -59,12 +59,12 @@
         { "patch": "docs/world/pending/gen3-field/03-records-store.diff" },
         { "patch": "docs/world/pending/gen3-field/04-plans.diff" },
         { "patch": "docs/world/pending/gen3-field/05-landmarks-rl214.diff" },
-        { "patch": "docs/world/pending/gen3-field/06-craters-to-store.diff" }
+        { "patch": "docs/world/pending/gen3-field/06-craters-to-store.diff" },
+        { "patch": "docs/world/pending/gen3-field/07-water-records.diff" }
       ],
       "needs": [
         { "note": "diffs 5 and 6: World's README says their gate lists are not finished, do not land them before it says so (the install script of field-frame needs 06)", "owner": "world-environment" },
-        { "note": "Rendering: render/core/shapes.gd:440 mark == \"bell_tower\" to \"clock_tower\" (diff 5 renames the key)", "owner": "rendering-techart" },
-        { "note": "Encounter: the director's candidates and arrival scores skip a building whose WorldSettle.noTarget(landmark) is true (RL-214, before main goes public)", "owner": "encounter-systems" }
+        { "note": "Encounter: its swing.diff bars the kinds in candidates (brunt.gd); the arrival scores skip a building whose WorldSettle.noTarget(landmark) is true is not confirmed (RL-214, before main goes public)", "owner": "encounter-systems" }
       ]
     },
     {
@@ -75,7 +75,7 @@
     {
       "id": "architecture-field-frame", "owner": "simulation-engine", "notes": "A field world's line and the turntable (Simulation's track B): a whole ring on planetGen 3 only; nothing runs on any other setup. Installed by its own script, run on the scratch tree only, and only while the script is the file Tools reviewed (stdlib only, edits inside the tree it is given).",
       "steps": [
-        { "script": "docs/architecture/pending/field-frame/install.py", "sha1": "b297628d6c9202658b2a9647f1a2a5cb6b3bdc3e" },
+        { "script": "docs/architecture/pending/field-frame/install.py", "sha1": "75de1a0f47f82376eed21131c59bc8057c3544d6" },
         { "fixup": [ { "file": "sim/core/view/fx.gd", "from": "\"form_hold\", \"form_release\", \"form_step\",", "to": "\"swing_start\", \"swing_rest\", \"form_hold\", \"form_release\", \"form_step\"," } ],
           "why": "field-frame adds the swing_start and swing_rest events (SimFx.swingEvent) but not their case in SimFxView.consume, so every swing logs 'consume: unknown event swing_start'. Simulation adds them to the pass list" }
       ],
@@ -84,7 +84,6 @@
         { "park": "world-gen3-field" },
         { "park": "encounter-swing" },
         { "note": "NetDesync.digest: Netcode's PROTO 4", "owner": "netcode-online" },
-        { "note": "Rendering's tiles read S.frame; the old renderer draws S.base and does not turn", "owner": "rendering-techart" },
         { "note": "the README's gate table says 'don't land before it says so' (its gates were still running when it was parked)", "owner": "simulation-engine" }
       ]
     },
@@ -95,14 +94,7 @@
     },
     {
       "id": "encounter-swing", "owner": "encounter-systems", "notes": "DirSwing: the choreographer's swing (data/director/swing.json `enabled`, off byte-identical; on a field world only). Switch: `swing`. Not re-cut on World's 04 to 06 (its README).",
-      "steps": [
-        { "patch": "docs/director/pending/swing/swing.diff" },
-        { "fixup": [
-            { "file": "sim/director/swing.gd", "from": "SimSwing._poses(S, SimWrap.wrap(fr.x0), true)", "to": "SimSwing._poses(S, true)" },
-            { "file": "sim/director/swing.gd", "from": "SimSwing._poses(S, SimWrap.wrap(S.frame.x0), true)", "to": "SimSwing._poses(S, true)" }
-          ],
-          "why": "Encounter's swing.diff calls SimSwing._poses(S, x, true); Simulation's re-cut field-frame (08:00) has _poses(S, all). Encounter re-cuts, or calls poseAll" }
-      ],
+      "steps": [ { "patch": "docs/director/pending/swing/swing.diff" } ],
       "needs": [ { "park": "simulation-right-word" }, { "park": "world-gen3-field" }, { "park": "architecture-field-frame" }, { "note": "the swing's gate table says the full switch-off and switch-on gates were still running; QA's batch is the verdict on the read (fight time swinging misses its band)", "owner": "encounter-systems" } ]
     },
     {
@@ -136,10 +128,6 @@
     {
       "id": "tools-pin-child-readings", "owner": "tools-pipeline", "notes": "Tools only: the words-only child, the four readings, the load findings.",
       "steps": [ { "patch": "docs/tools/pending/pin-child-readings/pin-child-readings.patch" } ]
-    },
-    {
-      "id": "tools-preview-stack", "owner": "tools-pipeline", "notes": "This tool.",
-      "steps": [ { "patch": "docs/tools/pending/preview-stack/preview-stack.patch" } ]
     },
     {
       "id": "camera-damage-inset", "owner": "camera-cinematography", "ready": false, "notes": "Parked off, not ready for Orb's look (Camera's README).",
