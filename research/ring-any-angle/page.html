@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Any-angle fight</title>
+<style>
+:root{--text-primary:#1f1f1c;--text-secondary:#5f5e5a;--border:#d3d1c7;--bg-accent:#e6f1fb;--text-accent:#0c447c}
+body{font-family:sans-serif;margin:16px;max-width:1060px;color:var(--text-primary);background:#fff}
+button{padding:5px 10px;border:1px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;color:var(--text-primary)}
+.lab{font-size:13px;color:var(--text-secondary)}.row{display:flex;gap:6px;flex-wrap:wrap}
+kbd{border:1px solid var(--border);border-radius:4px;padding:0 4px;font-size:12px}
+</style>
+</head>
+<body>
+<p>The angle the fight runs along the planet, changed at any moment (Research, 2026-10-30; the paper is <code>docs/world/ring-any-angle/research.md</code>). One seeded fight over the planet's real ground, on each candidate architecture. The fight view is the ground as the sim reads it, unrolled straight; the globe shows where that really runs. A research spike, not the game: fighters are bars, and the far land and buildings are read straight from the planet.</p>
+<div style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;margin:0 0 12px">
+  <span class="lab">World</span><div id="rowA" class="row"></div>
+  <span class="lab">Mode</span><div id="rowM" class="row"></div>
+</div>
+<canvas id="cv" width="1020" height="440" style="width:100%;border:0.5px solid var(--border);border-radius:12px"></canvas>
+<p class="lab">Watch: the same scripted fight on every world, with the choreographer asking for a new angle every few seconds. Play, on the keyboard: <kbd>A</kbd> <kbd>D</kbd> move the pair, <kbd>Shift</kbd> fly flat out, <kbd>Space</kbd> a send that lands in a crater, <kbd>X</kbd> dig a crater here, <kbd>Q</kbd> <kbd>E</kbd> ask for 30 degrees either way, <kbd>G</kbd> aim the line at the last crater, <kbd>R</kbd> start again. On a pad: left stick moves, <kbd>RT</kbd> flat out, <kbd>LB</kbd> <kbd>RB</kbd> ask, <kbd>X</kbd> a send, <kbd>A</kbd> dig, <kbd>Y</kbd> aim. Try: dig, fly out, press <kbd>G</kbd> and come back over the crater from a new angle, on C and then on D.</p>
+<script>
+/*BUNDLE*/
+(function () {
+var cv = document.getElementById('cv'), c = cv.getContext('2d');
+var R2 = { clear: function (col) { c.fillStyle = col; c.fillRect(0, 0, RAD.W, RAD.H); },
+  poly: function (p, col) { if (p.length < 6) return; c.fillStyle = col; c.beginPath(); c.moveTo(p[0], p[1]); for (var i = 2; i < p.length; i += 2) c.lineTo(p[i], p[i + 1]); c.closePath(); c.fill(); },
+  text: function (x, y, s, size, col) { c.fillStyle = col; c.font = 'bold ' + (size + 2) + 'px monospace'; c.textBaseline = 'top'; c.fillText(String(s), x, y); } };
+var KEYS = Object.keys(RAA.ARCHS), st = { key: 'D3', mode: 'watch' }, run = null, script = null, ti = 0, keys = {}, prevK = {}, P = null, aim = null, acc = 0, last = 0;
+function reset() { RAA.clearMemo(); run = RAA.mkRun(st.key); ti = 0; script = RAA.genFight(1, 'any', 7200); P = { m: 0, gap: 3, send: 0, dir: 1 }; aim = null; }
+function buttons(el, items, get, set) { el.innerHTML = ''; items.forEach(function (it, i) { var b = document.createElement('button'); b.type = 'button'; b.textContent = it; b.addEventListener('click', function () { set(i); paint(); reset(); b.blur(); }); el.appendChild(b); }); el._get = get; }
+function paintRow(el) { Array.prototype.forEach.call(el.children, function (b, i) { var on = el._get() === i; b.style.background = on ? 'var(--bg-accent)' : 'transparent'; b.style.color = on ? 'var(--text-accent)' : ''; }); }
+var rowA = document.getElementById('rowA'), rowM = document.getElementById('rowM'); function paint() { paintRow(rowA); paintRow(rowM); }
+buttons(rowA, KEYS.map(function (k) { return RAA.ARCHS[k].name; }), function () { return KEYS.indexOf(st.key); }, function (i) { st.key = KEYS[i]; });
+buttons(rowM, ['Watch the scripted fight', 'Play'], function () { return st.mode === 'watch' ? 0 : 1; }, function (i) { st.mode = i ? 'play' : 'watch'; }); paint();
+var MAP = { KeyA: 'l', KeyD: 'r', ShiftLeft: 'fly', ShiftRight: 'fly', Space: 'send', KeyX: 'dig', KeyQ: 'q', KeyE: 'e', KeyG: 'g', KeyR: 'reset' };
+window.addEventListener('keydown', function (e) { if (MAP[e.code]) { keys[MAP[e.code]] = true; if (st.mode !== 'play') { st.mode = 'play'; paint(); reset(); } e.preventDefault(); } });
+window.addEventListener('keyup', function (e) { if (MAP[e.code]) { keys[MAP[e.code]] = false; e.preventDefault(); } });
+window.addEventListener('blur', function () { keys = {}; });
+function pad() { var ps = navigator.getGamepads ? navigator.getGamepads() : [], g = null; for (var i = 0; i < ps.length; i++) if (ps[i] && ps[i].connected) { g = ps[i]; break; } return g; }
+function inp() { var g = pad(), o = { x: (keys.r ? 1 : 0) - (keys.l ? 1 : 0), fly: !!keys.fly, send: !!keys.send, dig: !!keys.dig, q: !!keys.q, e: !!keys.e, g: !!keys.g, reset: !!keys.reset };
+  if (g) { var b = function (i) { return !!(g.buttons[i] && g.buttons[i].pressed); }; if (Math.abs(g.axes[0]) > 0.25) o.x = g.axes[0]; o.fly = o.fly || b(7); o.send = o.send || b(2); o.dig = o.dig || b(0); o.q = o.q || b(4); o.e = o.e || b(5); o.g = o.g || b(3); if (st.mode !== 'play' && (Math.abs(g.axes[0]) > 0.5 || b(0) || b(2))) { st.mode = 'play'; paint(); reset(); } }
+  return o; }
+function playTick() {
+  var i = inp(), pr = function (k) { return i[k] && !prevK[k]; }, v = i.x * (i.fly ? 5.33 : 0.35), w = { calm: Math.abs(v) < 0.1 && !P.send, dig: null, ask: null, peek: null };
+  if (pr('reset')) { reset(); prevK = i; return; }
+  if (pr('send') && !P.send) { P.send = 90; P.dir = i.x < 0 ? -1 : 1; }
+  if (P.send) { P.send--; v = 3.1 * P.dir * (0.4 + P.send / 150); P.gap = Math.min(300, P.gap + 3); if (!P.send) w.dig = { c: P.m + P.dir * P.gap / 2, r: 500, d: 200 }; } else P.gap = Math.max(3, P.gap - 3);
+  if (pr('dig')) w.dig = { c: P.m, r: 500, d: 200 };
+  if (pr('q')) w.ask = RAA.deg(-30); if (pr('e')) w.ask = RAA.deg(30);
+  if (pr('g') && run.marks.length) aim = run.marks[run.marks.length - 1].p;
+  P.m += v; w.m = P.m; w.a = P.m - P.gap / 2; w.b = P.m + P.gap / 2; w.aim = aim; if (aim && RAA.arcU(run.arch.axis(Math.round(P.m)).p, aim) < 300) aim = null;
+  run.tick(w); prevK = i;
+}
+function frame(ts) {
+  if (!last) last = ts; var dt = Math.min(50, ts - last); last = ts; acc += dt / 16.667;
+  while (acc >= 1) { acc -= 1; if (st.mode === 'play') playTick(); else { if (ti >= script.length) reset(); run.tick(script[ti++]); } }
+  RAD.draw(run, R2, st.mode === 'play' ? 'PLAY' : 'SCRIPTED FIGHT, SEED 1');
+  requestAnimationFrame(frame);
+}
+reset(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
