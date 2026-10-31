@@ -35,7 +35,9 @@
        "quota": {"type": "string", "minLength": 1},
        "burst": {"enum": ["fast", "mid", "slow"]},
        "also": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9]*$"},
-       "neverAs": {"enum": ["light", "medium", "heavy"]}
+       "neverAs": {"enum": ["light", "medium", "heavy"]},
+       "pinned": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9]*$"},
+       "lean": {"const": true}
       },
       "additionalProperties": false
      }

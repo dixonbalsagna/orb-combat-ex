@@ -10,10 +10,14 @@
   "burst.mid",
   "burst.slow",
   "brawl.medium",
+  "brawl.medium.stop",
+  "brawl.medium.grind",
   "brawl.medium.held",
   "brawl.reversal",
   "brawl.lift",
   "brawl.heavy",
+  "brawl.heavy.advance",
+  "brawl.heavy.held",
   "brawl.launcher",
   "brawl.heavy.lower",
   "brawl.launcher.lower",
@@ -256,19 +260,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.hook",
-     "status": "posed"
-    },
-    {
-     "id": "strike.jab",
-     "status": "posed"
-    },
-    {
      "id": "strike.palm_heel",
-     "status": "posed"
-    },
-    {
-     "id": "strike.back_chop",
      "status": "posed"
     },
     {
@@ -310,19 +302,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.hook",
-     "status": "posed"
-    },
-    {
-     "id": "strike.jab",
-     "status": "posed"
-    },
-    {
      "id": "strike.palm_heel",
-     "status": "posed"
-    },
-    {
-     "id": "strike.back_chop",
      "status": "posed"
     },
     {
@@ -486,7 +466,7 @@
      "status": "posed"
     }
    ],
-   "brawl.medium.held": [
+   "brawl.medium.stop": [
     {
      "id": "strike.rising_palm",
      "status": "posed"
@@ -500,6 +480,12 @@
      "status": "posed"
     },
     {
+     "id": "strike.palm_push",
+     "status": "posed"
+    }
+   ],
+   "brawl.medium.grind": [
+    {
      "id": "strike.overhand",
      "status": "posed"
     },
@@ -512,14 +498,6 @@
      "status": "posed"
     },
     {
-     "id": "strike.palm_push",
-     "status": "posed"
-    },
-    {
-     "id": "strike.drop_kick",
-     "status": "posed"
-    },
-    {
      "id": "strike.haymaker",
      "status": "posed"
     },
@@ -529,6 +507,12 @@
     },
     {
      "id": "strike.body_hook",
+     "status": "posed"
+    }
+   ],
+   "brawl.medium.held": [
+    {
+     "id": "strike.drop_kick",
      "status": "posed"
     },
     {
@@ -623,6 +607,58 @@
     },
     {
      "id": "strike.su_blade_fall",
+     "status": "posed"
+    }
+   ],
+   "brawl.heavy.advance": [
+    {
+     "id": "strike.su_drive",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_edge_step",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_blade_jaw",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_hammer_arm",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_palm_arm",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_blade_fall",
+     "status": "posed"
+    }
+   ],
+   "brawl.heavy.held": [
+    {
+     "id": "strike.su_turn",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_edge_unwind",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_palm_heave",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_ball_heave",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_knee_legs",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_elbow_jaw",
      "status": "posed"
     }
    ],
@@ -1044,15 +1080,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.backfist",
-     "status": "posed"
-    },
-    {
      "id": "strike.spear_hand",
-     "status": "posed"
-    },
-    {
-     "id": "strike.hook",
      "status": "posed"
     },
     {
@@ -1061,10 +1089,6 @@
     },
     {
      "id": "strike.cross",
-     "status": "posed"
-    },
-    {
-     "id": "strike.fist_sweep",
      "status": "posed"
     },
     {
@@ -1102,15 +1126,7 @@
      "status": "posed"
     },
     {
-     "id": "strike.backfist",
-     "status": "posed"
-    },
-    {
      "id": "strike.spear_hand",
-     "status": "posed"
-    },
-    {
-     "id": "strike.hook",
      "status": "posed"
     },
     {
@@ -1123,10 +1139,6 @@
     },
     {
      "id": "strike.knee_lift",
-     "status": "posed"
-    },
-    {
-     "id": "strike.fist_sweep",
      "status": "posed"
     },
     {
@@ -1314,7 +1326,7 @@
      "status": "posed"
     }
    ],
-   "brawl.medium.held": [
+   "brawl.medium.stop": [
     {
      "id": "strike.uppercut",
      "status": "posed"
@@ -1328,35 +1340,21 @@
      "status": "posed"
     },
     {
-     "id": "strike.double_hammer",
-     "status": "posed"
-    },
-    {
-     "id": "strike.dropping_elbow",
-     "status": "posed"
-    },
-    {
-     "id": "strike.stomp",
-     "status": "posed"
-    },
-    {
      "id": "strike.driving_knee",
      "status": "posed"
     },
     {
      "id": "strike.headbutt",
      "status": "posed"
-    },
+    }
+   ],
+   "brawl.medium.grind": [
     {
-     "id": "strike.spinning_elbow",
+     "id": "strike.dropping_elbow",
      "status": "posed"
     },
     {
-     "id": "strike.cross_arm_ram",
-     "status": "posed"
-    },
-    {
-     "id": "strike.drop_kick",
+     "id": "strike.stomp",
      "status": "posed"
     },
     {
@@ -1369,6 +1367,24 @@
     },
     {
      "id": "strike.roundhouse",
+     "status": "posed"
+    }
+   ],
+   "brawl.medium.held": [
+    {
+     "id": "strike.double_hammer",
+     "status": "posed"
+    },
+    {
+     "id": "strike.spinning_elbow",
+     "status": "posed"
+    },
+    {
+     "id": "strike.cross_arm_ram",
+     "status": "posed"
+    },
+    {
+     "id": "strike.drop_kick",
      "status": "posed"
     }
    ],
@@ -1447,6 +1463,58 @@
     },
     {
      "id": "strike.su_plate_arm",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_fist_unwind",
+     "status": "posed"
+    }
+   ],
+   "brawl.heavy.advance": [
+    {
+     "id": "strike.su_ram",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_heel",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_knee",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_hammer",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_edge_legs",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_plate_arm",
+     "status": "posed"
+    }
+   ],
+   "brawl.heavy.held": [
+    {
+     "id": "strike.su_ram",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_plate",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_hook",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_elbow_heave",
+     "status": "posed"
+    },
+    {
+     "id": "strike.su_fist_heave",
      "status": "posed"
     },
     {

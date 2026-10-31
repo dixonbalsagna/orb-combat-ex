@@ -1661,11 +1661,13 @@
    },
    "burst.fast": {
     "from": "martial.x",
-    "burst": "fast"
+    "burst": "fast",
+    "lean": true
    },
    "burst.mid": {
     "from": "martial.x",
-    "burst": "mid"
+    "burst": "mid",
+    "lean": true
    },
    "burst.slow": {
     "from": "martial.x",
@@ -1675,8 +1677,36 @@
     "from": "martial.y",
     "form": "quick"
    },
+   "brawl.medium.stop": {
+    "from": "martial.y",
+    "form": "quick",
+    "filter": {
+     "path": [
+      "line",
+      "rise"
+     ]
+    }
+   },
+   "brawl.medium.grind": {
+    "from": "martial.y",
+    "form": "quick",
+    "filter": {
+     "path": [
+      "drop",
+      "arc_in",
+      "arc_out"
+     ]
+    }
+   },
    "brawl.medium.held": {
-    "from": "martial.y"
+    "from": "martial.y",
+    "filter": {
+     "wind": [
+      "w1",
+      "w2",
+      "w3"
+     ]
+    }
    },
    "brawl.reversal": {
     "from": "martial.y",
@@ -1694,6 +1724,27 @@
    },
    "brawl.heavy": {
     "from": "martial.b"
+   },
+   "brawl.heavy.advance": {
+    "from": "martial.b",
+    "filter": {
+     "path": [
+      "line",
+      "drop"
+     ]
+    }
+   },
+   "brawl.heavy.held": {
+    "from": "martial.b",
+    "pinned": "chargedHeavy",
+    "filter": {
+     "path": [
+      "arc_in",
+      "arc_out",
+      "rise",
+      "spin"
+     ]
+    }
    },
    "brawl.launcher": {
     "from": "martial.b",

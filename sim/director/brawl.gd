@@ -936,6 +936,8 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 	var toward: bool = ((pp >> 2) & 3) == 2
 	var bolt: bool = energy and st == 0
 	var cell: String = "launcher" if lau else (("blast" if st == 1 else "bolt") if energy else ("heavy" if st == 2 else ("medium" if st == 1 else ("burstFloor" if floor else ("lightToward" if toward else ("flurry" if kind == FLURRY else "light"))))))
+	if inFl and wound and not energy and not lau:
+		cell = _mashCell(cell)   # a mashed medium or heavy: the grind or the advance, when Combat's recipes name it
 	var piece: String = _boltRun(S, f, args) if (bolt and _g(f, BOLT_N) >= 1) else ""
 	if piece == "":
 		piece = _piece(S, f, st, toward, cell, _sendOf(int(args.get("aim", 0))) if lau else "")
@@ -1044,6 +1046,14 @@ static func _piece(S: SimState, f, st: int, toward: bool, cell: String = "", wan
 	if cell != "" and named is Dictionary and named.has(cell):
 		return _cellPiece(S, f, cell, String(named[cell]), want)
 	return _cellPiece(S, f, "", pool, "")   # no cell (a zip's blow, the double hit's), or recipes with no brawl block: the pool of its strength, under the same rules
+
+
+## A mashed medium's or heavy's cell (docs/combat/split-and-pieces.md section 1): mediumMash or heavyMash when
+## Combat's recipes name it, else the tap's, so recipes with no mash key throw as they did.
+static func _mashCell(cell: String) -> String:
+	var named = DirRecipe.rec().get("brawl", {}) if DirRecipe.on() else {}
+	var m: String = cell + "Mash"
+	return m if (named is Dictionary and named.has(m)) else cell
 
 
 ## A cell's piece, by the recipes' fallback (docs/combat/brawl-hook.md parts 5 and 6). The steps, in order: a piece of

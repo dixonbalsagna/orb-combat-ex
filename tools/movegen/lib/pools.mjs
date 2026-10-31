@@ -24,8 +24,11 @@ export function buildPools(out, parts, cells, identity) {
       if (!cell) continue;
       const quota = r.quota ? get(cells.stances, r.from.split('.')[0], {})[r.from.split('.')[1]].quotas.find((q) => q.name === r.quota) : null;
       const also = r.also ? new Set(get(idn, r.also, []) || []) : new Set();
+      const pinned = r.pinned ? get(idn, r.pinned, null) : null;
+      const lean = r.lean ? get(get(idn, 'burst', {}), 'favour') : null;
       const keep = (m) => {
-        if (also.has(m.id)) return true;
+        if (also.has(m.id) || (pinned && pieceId(m) === pinned)) return true;
+        if (lean && m.limb === 'hand' && !match(lean.filter, m)) return false;
         if (r.form && !get(m, 'forms', []).includes(r.form)) return false;
         if (r.filter && !match(r.filter, m)) return false;
         if (quota && !match(has(quota, 'any') ? { any: quota.any } : quota.filter, m)) return false;
