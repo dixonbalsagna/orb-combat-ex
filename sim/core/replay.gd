@@ -11,7 +11,8 @@ extends RefCounted
 ##   inputs       [tick, slot, low, high], only where a slot's intent changed from its previous one: SimIntent.pack(), one
 ##                integer for the whole record, written as two numbers (split: its low 32 bits, and the bits above
 ##                them), because a JSON number is exact only below 2^53 and the record may grow past that. Both are null
-##                for no intent.
+##                for no intent. With switches.rightStick on, an entry whose second word is not 0 carries it as a fifth number
+##                (SimIntent.pack2, 26 bits), and the header's data says the switch was on. Off, no entry has one.
 ##   toggles      [tick, slot]: toggleAI before that tick
 ##   checkpoints  [tick, gameplay hash] every CHECK_EVERY ticks; final: the gameplay hash at the end
 ## Intents, not raw keys, are recorded, so a replay does not depend on the key mapping or the layout. The recorder steps
@@ -30,6 +31,7 @@ const CHECK_EVERY: int = 60
 var S: SimState
 var replay: Dictionary
 var _last: Array = []   # the last packed intent per slot; -1 for none (null)
+var _last2: Array = []  # the last second word per slot; always 0 with switches.rightStick off
 
 
 ## Start recording a match: runs newMatch(S, seed, ai). Use rec.step and rec.toggle instead of SimCore.step and toggleAI.
@@ -44,6 +46,7 @@ static func recorder(S_: SimState, seed: int, ai: Dictionary = {}, setup: Dictio
 		rec.replay.ai["p%d" % (k + 1)] = S_.fighters[k].ai != null
 	for k in range(S_.fighters.size()):
 		rec._last.append(-1)
+		rec._last2.append(0)
 	return rec
 
 
@@ -52,14 +55,22 @@ static func recorder(S_: SimState, seed: int, ai: Dictionary = {}, setup: Dictio
 func step(inputs = null) -> bool:
 	var cur: Array = []
 	cur.resize(S.fighters.size())
+	var word2: bool = SimInputData.right_stick_on()
 	for k in range(S.fighters.size()):
 		var i = inputs[k] if inputs != null and k < inputs.size() else null
 		var p: int = SimIntent.pack(i) if i != null else -1
+		var w: int = SimIntent.pack2(i) if word2 and i != null else 0
 		if i != null:
 			cur[k] = SimIntent.unpack(p)
-		if p != _last[k]:
+			if w != 0:
+				SimIntent.unpack2(w, cur[k])
+		if p != _last[k] or w != _last2[k]:
 			_last[k] = p
-			replay.inputs.append([replay.ticks, k] + split(p))
+			_last2[k] = w
+			var entry: Array = [replay.ticks, k] + split(p)
+			if w != 0:
+				entry.append(w)
+			replay.inputs.append(entry)
 	var r: bool = SimCore.step(S, cur if inputs != null else null)
 	replay.ticks += 1
 	if replay.ticks % CHECK_EVERY == 0:
@@ -106,14 +117,18 @@ static func play(rp: Dictionary) -> Dictionary:
 	if rp.get("format", "") != FORMAT or int(rp.get("v", 0)) != V or int(rp.get("intent", 0)) != SimIntent.VERSION:
 		return refuse
 	var packed: Array = []
+	var word2: bool = SimInputData.right_stick_on()
 	for inp in rp.get("inputs", []):
-		if not (inp is Array) or inp.size() != 4:
+		if not (inp is Array) or not (inp.size() == 4 or (word2 and inp.size() == 5)):
 			return refuse
 		var it = null
 		var p: int = join(inp[2], inp[3])
 		if p != -1:
 			it = SimIntent.unpack(p) if p >= 0 else null
 			if it == null:
+				return refuse
+		if inp.size() == 5:
+			if it == null or not (inp[4] is float or inp[4] is int) or float(inp[4]) != floor(float(inp[4])) or not SimIntent.unpack2(int(inp[4]), it):
 				return refuse
 		packed.append(it)
 	if rp.get("data", "") != dataHash(rp.get("setup", {})):
@@ -195,6 +210,8 @@ static func dataHash(setup: Dictionary = {}) -> String:
 		if WorldEpoch.enabled(setup):   # when and how the ring turns, on either generation: only rings.json's turn block, for the rest picks a run's ring before the setup exists
 			h.text("rings.turn")
 			FighterData._canon(h, WorldRingPick.cfg().turn)
+	if SimInputData.right_stick_on():   # the intent's second word is in the hash and the entries: a replay made with the switch on plays only with it on, and the other way round (a match with it off reads none of it)
+		h.text("rightStick")
 	var lvl: String = DirAI.levelOf(setup)   # the computer's level, a setup key (the start menu's Easy or Hard); nothing for the data's own level, so no earlier replay's hash moves
 	if lvl != "":
 		h.text("aiLevel")

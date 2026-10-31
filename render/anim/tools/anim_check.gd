@@ -6897,6 +6897,7 @@ func _run() -> void:
 	_test_zip_slice()
 	_test_gestures()
 	_test_joints()
+	_test_pieces23()
 	_test_held()
 	_test_water_stance()   # last: it runs a match with the floor switched on, and what that leaves in the sim's statics is not undone
 	RenderAnim.enabled = true
@@ -6916,3 +6917,81 @@ func _run() -> void:
 			print("FAIL  " + f)
 		print("\nanim check FAILED (%d)" % fails.size())
 	quit(0 if fails.is_empty() else 1)
+
+
+## The 23 pieces of protag7 and rival4 (docs/animation/pieces23.md): the sim throws them from live pools, and each now draws its own key set (`named`: findable by the beat's piece, in no pick list, so
+## no other blow's look changes). Legal's conditions (zip-screen.md, RL-079): fist_drop, plate_hammer and palm_heave lower at once and are never held, a tell, a victory or a taunt; the palm rises stay
+## open hands, feet down.
+const PIECES23 := {
+	"protagonist": ["knee_hook", "back_chop", "palm_rise", "palm_lift", "lift_kick", "edge_crescent", "fist_chop", "palm_heave"],
+	"antihero": ["elbow_drop", "forearm_drop", "fist_drop", "short_uppercut", "knee_lift", "arm_chop", "lift_kick", "fist_sweep", "plate_drop", "low_thrust", "gut_rise", "plate_hammer", "knee_hook", "fist_rise", "heel_backhand"],
+}
+
+
+func _test_pieces23() -> void:
+	AnimData.load_every_wave()
+	var unresolved: Array = []
+	var in_picks: Array = []
+	var count: int = 0
+	for who in PIECES23:
+		var key: String = String(AnimData.ensure_fighter("PROTAGONIST" if who == "protagonist" else "RIVAL"))
+		var pre: String = "pm." if who == "protagonist" else "rm."
+		for pc in PIECES23[who]:
+			count += 1
+			if AnimData.resolve_strike(key, "strike." + String(pc)) != pre + String(pc):
+				unresolved.append("%s %s" % [who, pc])
+			if AnimData.pair_lists[key].light.has(pre + String(pc)) or AnimData.pair_lists[key].heavy.has(pre + String(pc)):
+				in_picks.append("%s %s" % [who, pc])
+	_expect(count == 23 and unresolved.is_empty(), "pieces23: all 23 pieces resolve to their own key set (%d checked; not: %s)" % [count, str(unresolved.slice(0, 4))])
+	_expect(in_picks.is_empty(), "pieces23: none is in a fighter's pick list, so no other blow's look changes (%s)" % str(in_picks.slice(0, 4)))
+	# Legal: the three lower at once and are never held (a hand at 76 or lower by 6 ticks after the contact, 80 after), on the speed style and on a perfect tech press that holds the contact key
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var press_was: bool = RenderAnim.press_styles
+	var ground_was: bool = RenderAnim.ground_feet
+	RenderAnim.press_styles = true
+	RenderAnim.ground_feet = false
+	_tier_damage = true
+	var held: Array = []
+	var worst_hand: float = 0.0
+	for pw in [["antihero", "fist_drop"], ["antihero", "plate_hammer"], ["protagonist", "palm_heave"]]:
+		for sty in [["speed", {}], ["tech", {"grade": "perfect"}]]:
+			var r: Dictionary = _tier_scene(S, pw[0], sty[0], [pw[1]], [30], sty[1], "light")
+			_expect(int(r.frames) == 1 and int(r.nan) == 0 and int(r.screen) == 0, "pieces23: %s %s on the %s style: %d of 1 contacts, %d NaN, %d past a limit on screen" % [pw[0], pw[1], sty[0], int(r.frames), int(r.nan), int(r.screen)])
+			for tr in r.get("trace", []):
+				if int(tr.dt) >= 6:
+					for hk in ["abs_hand_r", "abs_hand_l"]:
+						var hy: float = float(tr[hk])
+						worst_hand = maxf(worst_hand, hy)
+						if hy > (76.0 if int(tr.dt) == 6 else 80.0):
+							held.append("%s %s (%s): a hand is at %.0f %d ticks after the contact" % [pw[0], pw[1], sty[0], hy, int(tr.dt)])
+	_expect(held.is_empty(), "pieces23: fist_drop, plate_hammer and palm_heave lower at once (76 or lower by 6 ticks, 80 after): %s" % str(held.slice(0, 3)))
+	RenderAnim.press_styles = press_was
+	RenderAnim.ground_feet = ground_was
+	S.dirS.ex = null
+	# the palm rises stay open hands, feet down, in every key of the three
+	var palms: Array = []
+	for pc in ["palm_rise", "palm_lift", "palm_heave"]:
+		for role in ["chamber", "contact", "follow"]:
+			var sk: Dictionary = AnimData.raw.get("pm.%s.%s" % [pc, role], {})
+			var hs: Dictionary = sk.get("hands", {})
+			var fr: Array = sk.get("foot_r", [0, 0, 0])
+			var fl: Array = sk.get("foot_l", [0, 0, 0])
+			if sk.is_empty() or String(hs.get("r", "open")) != "open" or String(hs.get("l", "open")) != "open" or float(fr[1]) > 4.0 or float(fl[1]) > 4.0:
+				palms.append("pm.%s.%s" % [pc, role])
+	_expect(palms.is_empty(), "pieces23: the palm rises are open hands with both feet down in every key (not: %s)" % str(palms.slice(0, 3)))
+	# never a tell, victory or taunt: no sequence, entry, moment, intro or last-stand data names one of the 23
+	var ids: Array = []
+	for who in PIECES23:
+		for pc in PIECES23[who]:
+			ids.append(("pm." if who == "protagonist" else "rm.") + String(pc))
+	var named_in: Array = []
+	for fn2 in ["moments.json", "intro.json", "laststand.json", "agency.json", "cues.json", "winner.json", "chain.json", "clinch.json", "personality.json", "zip.json", "flight.json", "ground.json", "forms.json"]:
+		var txt: String = FileAccess.get_file_as_string("res://data/anim/" + fn2)
+		for id in ids:
+			if txt.contains("\"" + String(id) + "."):
+				named_in.append("%s in %s" % [id, fn2])
+	_expect(named_in.is_empty(), "pieces23: no tell, victory, taunt, intro or moment names one of the 23 (%s)" % str(named_in.slice(0, 3)))
+	print("pieces23: 23 pieces resolve to their own key sets and are in no pick list; fist_drop, plate_hammer and palm_heave lower at once (highest hand %.0f from 6 ticks on, both styles); the palm rises are open hands with feet down; nothing names them as a tell or a taunt" % worst_hand)

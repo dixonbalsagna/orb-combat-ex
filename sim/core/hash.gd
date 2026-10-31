@@ -90,6 +90,7 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 	out.append(S.T)
 	out.append(float(S.tick))
 	out.append(float(S.rng.state_i32()))
+	var word2: bool = SimInputData.right_stick_on()   # the intent's second word: read only with switches.rightStick on, so a match without it hashes as before
 	var g := S.game
 	out.append(_idx(fs, g.ko))
 	_obj(out, g, ["koT", "ts", "seed", "timeCap"])
@@ -161,6 +162,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 		_obj(out, f.ai, ["t", "atk", "sT", "sOff", "st"])
 		_obj(out, f.lastSeen, ["x", "y"])
 		_obj(out, f.input, INTENT)
+		if word2:
+			out.append(float(SimIntent.pack2(f.input)))
 		for ri in range(4):
 			out.append(float(f.wear[ri]))
 		for ri in range(4):

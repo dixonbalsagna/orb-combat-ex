@@ -20,6 +20,18 @@ static func _d(file: String):
 	return s
 
 
+## Whether f is in a struggle: one of a live beam clash's two fighters (DirBeam.inClash), or the fighter on the brink while a finisher's contest takes his presses (DirExchange._contestBeat with its
+## struggle open). Read only. The host tells the input hub each tick while the right-hand attacks are on (hub.set_struggle, docs/controls/right-hand-attacks.md), from the sim's state before the intent is built.
+static func inStruggle(S: SimState, f) -> bool:
+	if _d("beam.gd").inClash(S, f):
+		return true
+	var ex = S.dirS.ex
+	if ex == null:
+		return false
+	var cb = _d("exchange.gd")._contestBeat(ex)
+	return cb != null and cb.args.has("sOpen") and f == (ex.D if cb.args.w == "A" else ex.A)
+
+
 ## DirExchange.endEx: the running exchange ends (a K.O. inside one).
 static func endEx(S: SimState, ex) -> void:
 	_d("exchange.gd").endEx(S, ex)

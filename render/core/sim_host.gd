@@ -414,6 +414,8 @@ func tick(vw: float, vh: float) -> void:
 	hub.set_humans(S.fighters[0].ai == null, S.fighters[1].ai == null)
 	for k in range(2):
 		if S.fighters[k].ai == null:
+			if SimInputData.right_stick_on():
+				hub.set_struggle(k, SimDir.inStruggle(S, S.fighters[k]))   # a beam clash or a finisher's contest: the stick does nothing there (Controls' K3)
 			inputs[k] = hub.intent(k)
 	var pausing: bool = S.pause.left > 0   # Q10: this tick is one of a pausing set piece's frozen ticks
 	var pre: bool = intro_running()        # the intro phase: this tick is a pre-clock tick

@@ -91,6 +91,8 @@ func _init() -> void:
 	check("hit-stop by weight", _hitstop())
 	check("the ricochet's glance", _ricochet())
 	check("the replay header covers a planet's data", _planetHeader())
+	check("the intent's second word in the hash and the replay", _rightWord())
+	check("a struggle, as the host reads it", _inStruggle())
 	check("a match starts on the floor of a lake or the sea", _floorStart())
 	check("the run's ground", _runGround())
 	check("the run's state and carry", _runState())
@@ -5590,6 +5592,129 @@ func _floorStart() -> String:
 	var plain := SimCore.createSim()
 	SimCore.newMatch(plain, 1, {}, {"intro": false})   # the process's arena and generation as the checks after this read them
 	SimCore.dispose(plain)
+	return err
+
+
+func _setRightStick(on: bool) -> void:
+	SimInputData.ensure()
+	var sw: Dictionary = SimInputData.timing.get("switches", {})
+	sw["rightStick"] = on
+	SimInputData.timing["switches"] = sw
+	SimInputData.invalidate()
+
+
+func _wordRun(word: int) -> Dictionary:
+	var S := SimCore.createSim()
+	var rec := SimReplay.recorder(S, 21, {"p1": false, "p2": true})
+	for t in range(240):
+		var i := SimIntent.new()
+		i.mx = 0.5 if t % 40 < 20 else -0.5
+		if word != 0 and t >= 30:
+			SimIntent.unpack2(word + (t / 60) * 2, i)
+		rec.step([i, null])
+	var rp: Dictionary = rec.finish()
+	var inp: int = SimIntent.pack2(S.fighters[0].input)
+	var snap: NetSnapshot = NetSnapshot.take(S)
+	var h: String = SimHash.stateHash(S).gameplay
+	SimCore.step(S, [SimIntent.new(), null])   # past the replay's end: the recording is finished
+	NetSnapshot.restore(S, snap)
+	var back: bool = SimIntent.pack2(S.fighters[0].input) == inp and SimHash.stateHash(S).gameplay == h
+	SimCore.dispose(S)
+	return {"rp": rp, "input": inp, "hash": h, "back": back}
+
+
+## Off: a word set on an intent reaches nothing: the same entries, the same hash, the same header as no word. On: it is in the hash, in a fifth number, and in the header; it plays back; a changed word is caught; a snapshot keeps it.
+func _rightWord() -> String:
+	var word: int = 1 | (3 << 4) | (2 << 7) | (5 << 13)
+	_setRightStick(false)
+	var plain: Dictionary = _wordRun(0)
+	var offW: Dictionary = _wordRun(word)
+	if offW.hash != plain.hash or offW.rp.final != plain.rp.final or offW.rp.data != plain.rp.data or JSON.stringify(offW.rp.inputs) != JSON.stringify(plain.rp.inputs):
+		return "off: a word on an intent changed the hash, the header or the entries"
+	if plain.input != 0 or offW.input != 0:
+		return "off: the word reached the fighter's input"
+	_setRightStick(true)
+	var on0: Dictionary = _wordRun(0)
+	var onW: Dictionary = _wordRun(word)
+	var err: String = ""
+	if on0.rp.data == plain.rp.data:
+		err = "on: the header does not say so"
+	elif onW.hash == on0.hash:
+		err = "on: the word is not in the hash"
+	elif onW.input == 0 or not onW.back:
+		err = "on: the word did not reach the input, or a snapshot lost it"
+	else:
+		var five: int = 0
+		for e in onW.rp.inputs:
+			if e.size() == 5:
+				five += 1
+		var four: bool = true
+		for e in on0.rp.inputs:
+			four = four and e.size() == 4
+		if five < 4 or not four:
+			err = "on: entries with a word %d, an entry without a word has none: %s" % [five, four]
+	if err == "":
+		var r: Dictionary = SimReplay.play(onW.rp)
+		var r2: Dictionary = SimReplay.play(JSON.parse_string(JSON.stringify(onW.rp)))
+		if not r.ok or not r2.ok:
+			err = "on: playback %s, JSON round trip %s" % [r.reason, r2.reason]
+	if err == "":
+		var bad: Dictionary = onW.rp.duplicate(true)
+		for e in bad.inputs:
+			if e.size() == 5:
+				e[4] = int(e[4]) ^ 1
+		if SimReplay.play(bad).ok:
+			err = "on: a changed word was not caught"
+		bad = onW.rp.duplicate(true)
+		for e in bad.inputs:
+			if e.size() == 5:
+				e[4] = 1 << SimIntent.BITS2
+				break
+		if SimReplay.play(bad).reason != "format":
+			err = "on: a word outside its bits was not refused"
+	_setRightStick(false)
+	if err == "":
+		if SimReplay.play(onW.rp).reason != "format":
+			err = "off: a replay with words was not refused"
+		elif SimReplay.play(on0.rp).reason != "data":
+			err = "off: a replay made with the switch on, with no word in it, was not refused as data"
+	return err
+
+
+## The fighters of a live clash, and only the fighter on the brink of a finisher's open contest.
+func _inStruggle() -> String:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 9, {"p1": true, "p2": true})
+	var a = S.fighters[0]
+	var b = S.fighters[1]
+	var err: String = ""
+	if SimDir.inStruggle(S, a) or SimDir.inStruggle(S, b):
+		err = "a match's start reads as a struggle"
+	var cl := SimState.Clash.new()
+	cl.A = a
+	cl.D = b
+	S.game.clash = cl
+	if err == "" and not (SimDir.inStruggle(S, a) and SimDir.inStruggle(S, b)):
+		err = "a clash's two fighters do not read as in one"
+	S.game.clash = null
+	var ex := SimState.Exchange.new()
+	ex.A = a
+	ex.D = b
+	var beat := SimState.Beat.new()
+	beat.op = "contest"
+	beat.args = {"w": "A"}
+	ex.beats.append(beat)
+	S.dirS.ex = ex
+	if err == "" and SimDir.inStruggle(S, b):
+		err = "a contest that takes no presses reads as a struggle"
+	beat.args["sOpen"] = 0.0
+	if err == "" and not (SimDir.inStruggle(S, b) and not SimDir.inStruggle(S, a)):
+		err = "the contest's open struggle: the fighter on the brink only"
+	beat.done = true
+	if err == "" and SimDir.inStruggle(S, b):
+		err = "a finished contest still reads as a struggle"
+	S.dirS.ex = null
+	SimCore.dispose(S)
 	return err
 
 
