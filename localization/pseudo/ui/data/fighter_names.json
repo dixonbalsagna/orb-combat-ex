@@ -1,16 +1,22 @@
 {
   "schema": 1,
-  "note": "Every word a player reads about a fighter, keyed by roster id in lower case: its name, its title and the name of its signature move. The sim keeps ids and keys only (the signature's key is <ID>.SIG; docs/architecture/pending/fighter-split.md sections 9 and 10), so Orb's real names are an edit to this file. A fighter with no row shows its own id; a row with no title or sigName has none. A bare string row is just the name.",
+  "note": "Every word a player reads about a fighter, keyed by roster id in lower case: its name, its title and the name of its signature move. The sim keeps ids and keys only (the signature's key is <ID>.SIG; docs/architecture/pending/fighter-split.md sections 9 and 10), so Orb's names (Grist, Loupe, Empress Orza, Bolus; RL-211) are rows here; the roster ids PROTAGONIST and RIVAL stay in the data. A fighter with no row shows its own id; a row with no title or sigName has none. A bare string row is just the name.",
   "names": {
     "protagonist": {
-      "name": "[PŔÖÖŢÅĜÖÖÑÎŠŢ]",
+      "name": "[Ĝŕíšţ]",
       "title": "[Mááŕţííááĺ ÅÅŕţíšţ]",
       "sigName": "[Ķéééépééŕ'š Ĺááñçé]"
     },
     "rival": {
-      "name": "[ŔÎVÅĹ]",
+      "name": "[Ĺöüpé]",
       "title": "[Çĥááĺĺééñĝéŕ]",
       "sigName": "[Ţĥéé Báŕŕááĝé]"
+    },
+    "empress": {
+      "name": "[ÉÉmpŕééšš ÖÖŕžá]"
+    },
+    "cyborg": {
+      "name": "[Böĺüš]"
     }
   }
 }

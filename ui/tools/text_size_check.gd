@@ -179,7 +179,7 @@ func _run() -> void:
 			var lp: Dictionary = UiLoading.plan(sz, lay.s, dpv, lay.safe, {"phase": "climate", "progress": 0.5})
 			_ok(lp.has("line"), "%s: the loading screen plans" % tag)
 			# The match HUD: no more lines off the screen and no more lines over lines than at Normal.
-			for scn in ["hero_vs_proud", "stress", "controls"]:
+			for scn in ["hero_vs_proud", "empress_vs_cyborg", "stress", "controls"]:
 				var ml: Dictionary = await _match_lines(Vector2i(sz), scn, 8.0, step)
 				if step == 1.0:
 					match_base[scn] = ml

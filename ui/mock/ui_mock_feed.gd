@@ -23,12 +23,12 @@ var _rng := RandomNumberGenerator.new()
 static func fighters(scn: String) -> Array:
 	match scn:
 		"empress_vs_cyborg":
-			return [["empress", "cyborg"], ["THE EMPRESS", "THE CYBORG"]]
+			return [["empress", "cyborg"], ["EMPRESS", "CYBORG"]]
 		"placeholders":
 			return [["stand_in_protagonist", "rival"], ["PROTAGONIST", "RIVAL"]]
 		"stress", "controls":
-			return [["protagonist", "anti_hero"], ["PROTAGONIST", "ANTI-HERO"]]
-	return [["protagonist", "anti_hero"], ["PROTAGONIST", "ANTI-HERO"]]
+			return [["protagonist", "anti_hero"], ["PROTAGONIST", "RIVAL"]]
+	return [["protagonist", "anti_hero"], ["PROTAGONIST", "RIVAL"]]
 
 
 func _init(p_scenario: String = "hero_vs_proud", p_seed: int = 7) -> void:

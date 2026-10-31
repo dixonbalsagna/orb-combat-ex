@@ -496,7 +496,7 @@ func _bridge() -> void:
 				saw_pop = true
 	events = int(hud.hub.stats["events"])
 	var m0: UiFighterModel = hud.hub.model(0)
-	_ok(m0.name == "PROTAGONIST" and m0.tier >= 1 and m0.charge >= 0.0, "bridge: reads name, tier and charge from the sim")
+	_ok(m0.name == "Grist" and m0.tier >= 1 and m0.charge >= 0.0, "bridge: reads name, tier and charge from the sim")
 	var sig_name0: String = UiData.display_text(str(host.S.fighters[0].sigName)).strip_edges().to_upper()   # the move's name, or from the rename on its key read as the name
 	_ok(sig_name0 != "" and hud.hub.move_names.has(sig_name0), "bridge: the fighters' signature names are known to the hub (a banner that is only a move name is dropped)")
 	_ok(hud.hub.toll["pop0"] > 0, "bridge: reads the world counters")
@@ -4729,8 +4729,8 @@ func _names_in(lines: Array) -> PackedStringArray:
 ## The roster ids are PROTAGONIST and RIVAL and every name a player sees is looked up from them (fighter_names.json, the id as the
 ## fallback). The words are looked up, so the later rename only changes the keys there. A tracer on UiText.draw collects every drawn line.
 func _display_name_rules() -> void:
-	_ok(UiData.display_name("PROTAGONIST") == "PROTAGONIST" and UiData.display_name("rival") == "RIVAL" and UiData.display_name("EMPRESS") == "EMPRESS" and UiData.display_name("") == "", "display names: the roster ids (any case) map to their names, any other name stays itself")
-	_ok(UiData.display_text("K.O.  PROTAGONIST WINS") == "K.O.  PROTAGONIST WINS" and UiData.display_text("RIVAL POWERS UP  TIER 2") == "RIVAL POWERS UP  TIER 2" and UiData.display_text("PROTAGONIST! PROTAGONISTS RIVAL's") == "PROTAGONIST! PROTAGONISTS RIVAL's" and UiData.display_text("my rival, protagonist") == "my rival, protagonist" and UiData.display_text("no names here") == "no names here", "display names: names inside a sentence change by whole word and in capitals only (the English word rival and a mixed-case Kai are left alone)")
+	_ok(UiData.display_name("PROTAGONIST") == "Grist" and UiData.display_name("rival") == "Loupe" and UiData.display_name("EMPRESS") == "Empress Orza" and UiData.display_name("cyborg") == "Bolus" and UiData.display_name("REFERENCE") == "REFERENCE" and UiData.display_name("") == "", "display names: the roster ids (any case) map to Orb's names (RL-211: Grist, Loupe, Empress Orza, Bolus), any other name stays itself")
+	_ok(UiData.display_text("K.O.  PROTAGONIST WINS") == "K.O.  GRIST WINS" and UiData.display_text("RIVAL POWERS UP  TIER 2") == "LOUPE POWERS UP  TIER 2" and UiData.display_text("EMPRESS TAKES CYBORG") == "EMPRESS ORZA TAKES BOLUS" and UiData.display_text("RIVAL goes to ground") == "Loupe goes to ground" and UiData.display_text("PROTAGONIST! PROTAGONISTS RIVAL's") == "Grist! PROTAGONISTS Loupe's" and UiData.display_text("my rival, protagonist") == "my rival, protagonist" and UiData.display_text("no names here") == "no names here", "display names: names inside a sentence change by whole word and in capitals only (the English word rival and a mixed-case Kai are left alone)")
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	hud.size = Vector2(1280, 720)
@@ -4741,7 +4741,7 @@ func _display_name_rules() -> void:
 	hud.hub.model(1).ai = true
 	hud.hub.patch(0, {"name": "PROTAGONIST"})
 	hud.hub.patch(1, {"name": "RIVAL"})
-	_ok(hud.hub.model(0).name == "PROTAGONIST" and hud.hub.model(1).name == "RIVAL" and hud.hub.model(0).id == "stand_in_protagonist", "display names: the models show the display names and keep the roster ids as their keys")
+	_ok(hud.hub.model(0).name == "Grist" and hud.hub.model(1).name == "Loupe" and hud.hub.model(0).id == "stand_in_protagonist", "display names: the models show the display names and keep the roster ids as their keys")
 	UiText.trace = []
 	UiText.tracing = true
 	# The match: sim-written banners and feed lines naming the roster names, a bark from each fighter, a KO.
@@ -4785,7 +4785,7 @@ func _display_name_rules() -> void:
 	UiText.trace = []
 	var bad: PackedStringArray = _names_in(seen)
 	_ok(seen.size() > 100 and bad.is_empty(), "display names: %d lines drawn across the plates, the banners, the barks, the KO, the feed, the pause menu, How to play (four pages), Settings, Remap (three layouts), the feedback panel and the join note: none says KAI or VORR %s" % [seen.size(), str(bad.slice(0, 3))])
-	_ok(_names_in([report]).is_empty() and report.contains("PROTAGONIST") and report.contains("RIVAL"), "display names: the feedback report's setup line names PROTAGONIST and RIVAL")
+	_ok(_names_in([report]).is_empty() and report.contains("Grist") and report.contains("Loupe"), "display names: the feedback report's setup line names Grist and Loupe")
 	# The computer opponent is never "AI" on screen (Legal: beside the statement that the game is built with AI tools it reads as generative AI).
 	var ai_re := RegEx.new()
 	ai_re.compile("\\bAI\\b")
@@ -4960,11 +4960,11 @@ func _rename_rules() -> void:
 	# The words: name, title and signature name by roster id, in either case.
 	var ok_words := true
 	for id in ["protagonist", "PROTAGONIST"]:
-		ok_words = ok_words and UiData.display_name(id) == "PROTAGONIST" and UiData.display_title(id) == "Martial Artist" and UiData.display_sig(id) == "Keeper's Lance"
+		ok_words = ok_words and UiData.display_name(id) == "Grist" and UiData.display_title(id) == "Martial Artist" and UiData.display_sig(id) == "Keeper's Lance"
 	for id in ["rival", "RIVAL"]:
-		ok_words = ok_words and UiData.display_name(id) == "RIVAL" and UiData.display_title(id) == "Challenger" and UiData.display_sig(id) == "The Barrage"
-	_ok(ok_words and UiData.display_title("EMPRESS") == "" and UiData.display_sig("EMPRESS") == "" and UiData.display_name("EMPRESS") == "EMPRESS", "rename: each roster id, in either case, gives its name, title and signature name; a fighter with no row shows its id and has no title")
-	_ok(UiData.display_text("PROTAGONIST.SIG FIRES") == "Keeper's Lance FIRES" and UiData.display_text("rival.sig and RIVAL.SIG") == "The Barrage and The Barrage" and UiData.display_text("PROTAGONIST.SIGNAL RIVAL") == "PROTAGONIST.SIGNAL RIVAL" and UiData.display_text("K.O.  PROTAGONIST WINS") == "K.O.  PROTAGONIST WINS", "rename: the signature's key (<ID>.SIG, any case) reads as the signature's name before the bare id, and a bare id in capitals as the name")
+		ok_words = ok_words and UiData.display_name(id) == "Loupe" and UiData.display_title(id) == "Challenger" and UiData.display_sig(id) == "The Barrage"
+	_ok(ok_words and UiData.display_title("EMPRESS") == "" and UiData.display_sig("EMPRESS") == "" and UiData.display_name("EMPRESS") == "Empress Orza" and UiData.display_name("BOLUS") == "BOLUS", "rename: each roster id, in either case, gives its name, title and signature name; the Empress and the Cyborg have a name and no title; a name with no row shows itself")
+	_ok(UiData.display_text("PROTAGONIST.SIG FIRES") == "Keeper's Lance FIRES" and UiData.display_text("rival.sig and RIVAL.SIG") == "The Barrage and The Barrage" and UiData.display_text("PROTAGONIST.SIGNAL RIVAL") == "GRIST.SIGNAL LOUPE" and UiData.display_text("K.O.  PROTAGONIST WINS") == "K.O.  GRIST WINS", "rename: the signature's key (<ID>.SIG, any case) reads as the signature's name before the bare id, and a bare id in capitals as the name")
 	# The readout profiles: a stand-in keeps reading as it does today (its meter is the sim's anguish), the real Protagonist's profile is not borrowed.
 	_ok(UiSimBridge.profile_id("PROTAGONIST") == "stand_in_protagonist" and UiSimBridge.profile_id("RIVAL") == "rival" and UiSimBridge.profile_id("EMPRESS") == "empress", "rename: the bridge maps the roster id to a readout profile (the stand-in Protagonist to its alias, the others by id)")
 	_ok(str(UiData.profile("stand_in_protagonist")["ego"]) == "anguish" and str(UiData.profile("rival")["ego"]) == "menace" and str(UiData.profile("protagonist")["ego"]) != "anguish", "rename: the stand-ins' aliases read anguish and menace as today; the real Protagonist profile is a different one")
@@ -4984,7 +4984,7 @@ func _rename_rules() -> void:
 		hud.hub.model(0).ai = false
 		hud.hub.model(1).ai = true
 		UiSimBridge.patch(hud, host.S)
-		_ok(hud.hub.model(0).name == "PROTAGONIST" and hud.hub.model(1).name == "RIVAL" and hud.hub.model(0).ego_name == "anguish" and hud.hub.model(1).ego_name == "menace", "%s: the plates say PROTAGONIST and RIVAL and read anguish and menace" % tag)
+		_ok(hud.hub.model(0).name == "Grist" and hud.hub.model(1).name == "Loupe" and hud.hub.model(0).ego_name == "anguish" and hud.hub.model(1).ego_name == "menace", "%s: the plates say Grist and Loupe and read anguish and menace" % tag)
 		_ok(hud.hub.move_names.has("KEEPER'S LANCE") and hud.hub.move_names.has("THE BARRAGE"), "%s: the signature names are known as names (a banner that is only a move name is dropped)" % tag)
 		UiText.trace = []
 		UiText.tracing = true
@@ -4997,7 +4997,7 @@ func _rename_rules() -> void:
 		hud.consume({"type": "banner", "text": "RIVAL.SIG", "col": "#ffffff", "dur": 1.4})
 		_ok(hud.hub.banner.is_empty() and int(hud.hub.stats.get("banners_move_name", 0)) - dropped0 == 4, "%s: the signature's banner is dropped whether it arrives as the key or as the name (4 of 4 dropped, none carded, none twice)" % tag)
 		hud.consume({"type": "banner", "text": "RIVAL POWERS UP  TIER 2", "col": "#ffffff", "dur": 1.4})
-		_ok(str(hud.hub.banner.get("text", "")) == "RIVAL POWERS UP  TIER 2", "%s: the sim's banner names the fighter by its display name, in capitals" % tag)
+		_ok(str(hud.hub.banner.get("text", "")) == "LOUPE POWERS UP  TIER 2", "%s: the sim's banner names the fighter by its display name, in capitals" % tag)
 		hud.consume({"type": "banner", "text": "PROTAGONIST.SIG scores", "col": "#ffffff", "dur": 1.4})
 		_ok(str(hud.hub.banner.get("text", "")) == "KEEPER'S LANCE SCORES", "%s: a banner with the signature's key reads as its name, in capitals (%s)" % [tag, str(hud.hub.banner.get("text", ""))])
 		hud.hub.feed_line(1.0, "PROTAGONIST.SIG FIRES", "it reaches RIVAL in 30 ticks")
@@ -5017,8 +5017,8 @@ func _rename_rules() -> void:
 				bad.append(str(l))
 		var feed_ok := false
 		for fe in hud.hub.feed:
-			feed_ok = feed_ok or (str(fe["tag"]) == "Keeper's Lance FIRES" and str(fe["sub"]) == "it reaches RIVAL in 30 ticks")
-		_ok(seen.size() > 30 and bad.is_empty() and seen.has("PROTAGONIST") and seen.has("RIVAL") and feed_ok, "%s: %d lines drawn, none shows KAI, VORR, a raw key or an alias id, and the feed reads the signature's name %s" % [tag, seen.size(), str(bad.slice(0, 3))])
+			feed_ok = feed_ok or (str(fe["tag"]) == "Keeper's Lance FIRES" and str(fe["sub"]) == "it reaches Loupe in 30 ticks")
+		_ok(seen.size() > 30 and bad.is_empty() and seen.has("Grist") and seen.has("Loupe") and feed_ok, "%s: %d lines drawn, none shows KAI, VORR, a raw key or an alias id, and the feed reads the signature's name %s" % [tag, seen.size(), str(bad.slice(0, 3))])
 		hud.queue_free()
 		await process_frame
 
@@ -7800,6 +7800,19 @@ func _plate_row1_rules() -> void:
 	_ok(str(p4["tag"]) == "" and float(p4["chip_w"]) > 0.0 and str(p4["name"]).length() >= 6, "plate row 1 with no room at all: the tag goes last, the badge stays, the name keeps five letters")
 	var p5: Dictionary = UiPlate.row1_plan(300.0, 1.0, lay2.pm, "RIVAL", "AI", false, "ENERGY", true)
 	_ok(int(p5["tier"]) == 0 and str(p5["word"]) == "ENERGY" and bool(p5["tag_pill"]) and not bool(p5["name_cut"]), "plate row 1 with room: nothing gives way")
+	# Orb's four names (RL-211) on the plate: the longest, Empress Orza, is whole on every PC and phone plate that fits PROTAGONIST today.
+	var cut_names := PackedStringArray()
+	for vp in [Vector2(844, 390), Vector2(1280, 720), Vector2(1920, 1080), Vector2(3840, 2160)]:
+		var lay3 := UiLayout.new()
+		lay3.dp = 1.0
+		lay3.compute(vp, false)
+		var inner3: float = lay3.plate[0].size.x - 2.0 * float(lay3.pm["pad"])
+		for nm in ["Grist", "Loupe", "Empress Orza", "Bolus"]:
+			for tg in ["YOU", "CPU"]:
+				var pn: Dictionary = UiPlate.row1_plan(inner3, lay3.s, lay3.pm, nm, tg, false, "ENERGY", true)
+				if bool(pn["name_cut"]) or str(pn["name"]) != nm:
+					cut_names.append("%s %s at %dx%d" % [nm, tg, int(vp.x), int(vp.y)])
+	_ok(cut_names.is_empty(), "plate row 1: Grist, Loupe, Empress Orza and Bolus are whole beside the badge, the word and the tag at 844x390 up to 4K %s" % str(cut_names.slice(0, 3)))
 
 
 # --- The Full touch layout, drawn from SimTouch.layout(..., full = true) (docs/ui/hud-spec.md section 24) --------------------------

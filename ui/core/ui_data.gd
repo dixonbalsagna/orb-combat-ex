@@ -198,8 +198,10 @@ static func display_text(text: String) -> String:
 	text = out + text.substr(at)
 	out = ""
 	at = 0
+	var caps: bool = text.to_upper() == text   # a banner in capitals (K.O.  PROTAGONIST WINS) keeps its capitals; a sentence gets the name as written
 	for mt in _names_re.search_all(text):
-		out += text.substr(at, mt.get_start() - at) + str(_names.get(mt.get_string(1), mt.get_string(1)))
+		var shown_name: String = str(_names.get(mt.get_string(1), mt.get_string(1)))
+		out += text.substr(at, mt.get_start() - at) + (shown_name.to_upper() if caps else shown_name)
 		at = mt.get_end()
 	var shown: String = out + text.substr(at)
 	if UiFast.on:
