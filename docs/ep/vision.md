@@ -1535,3 +1535,7 @@ Orb locked the canonical names from a naming session run through Gemini: **Grist
 1. **Pitch 4a:** stick strikes are their own class of moves, not the team's recommended 4c.
 2. **Pillar 2's wording is reopened entirely.** Orb doesn't want to alienate players who like predetermined combos in mainstream fighting games, and does want to appeal to fans of platform brawlers and of generative, procedural content. Orb's own question, in Orb's words: "why don't fighting games take this approach to the combos that their fighters use during a match?", meaning the way procedural-universe games generate vast numbers of plants, animals and landscapes.
 3. **"accessibility settings and customizable controls should be assumed, including left-handed folks who may want to swap their controller around".**
+
+## The fight's bearing on the planet (Orb, 2026-10-30)
+
+"with the intersection on the global region map changing throughout a fight the fighters should always be on the same relative band." Then: "push this idea to the limit, the angle the fighters fight along the surface of the planet should be ready to dynamically adjust and change determined by the fight choreographer and any other necessary game system. run a big research pass to determine a route to make this feasible."
