@@ -23,6 +23,8 @@ var rep0: bool = true
 func run(n: int, ask, air: bool) -> Dictionary:
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, 77, {"p1": true, "p2": true}, setup3(planet))
+	if SimField._F != null:
+		WorldField.bakeStep(SimField._F, 1 << 40)   # the host's load bakes the ring (planet_load.gd); a bare newMatch does not, and the first reads would build the bake on the spot
 	var r := {"step": [], "own": [], "active": [], "shots": [], "sent": [], "list": [], "lay": [], "tlist": [], "tpose": [], "trb": [], "nrb": [], "nb": S.bX.size(), "stale": [], "inlist_near": 0.0}
 	var bandMax := []
 	for i in range(EDGES.size()):
@@ -46,16 +48,20 @@ func run(n: int, ask, air: bool) -> Dictionary:
 		var tp0: int = SimSwing.tpose
 		var tr0: int = SimSwing.trb
 		var nr0: int = SimSwing.nrb
+		DirSwing.pm.clear()
+		var rd0: int = SimField._F.reads if SimField._F != null else 0
 		var a: int = Time.get_ticks_usec()
 		SimCore.step(S)
 		var b: int = Time.get_ticks_usec()
 		var act: bool = S.swing != null and S.swing.active
 		r.step.append(b - a)
+		if rep0 and DirSwing.pm.has("m_choose"):
+			print("LAUNCH tick %d step %d, new lattice nodes %d, choose %d biome %d brunt %d predict %d swing %s" % [t, b - a, (SimField._F.reads if SimField._F != null else 0) - rd0, DirSwing.pm.get("m_choose", 0), DirSwing.pm.get("L4_biome", 0), DirSwing.pm.get("L2_brunt", 0), DirSwing.pm.get("predict", 0), str(act)])
 		if b - a > 20000 and rep0:
 			var fl: Array = []
 			for e in S.out.feed:
 				fl.append(String(e.tag) + " " + String(e.sub).substr(0, 70))
-			print("HITCH tick %d %d us swing %s: %s" % [t, b - a, str(act), " | ".join(fl.slice(0, 5))])
+			print("HITCH tick %d %d us, new lattice nodes %d, swing %s marks %s: %s" % [t, b - a, (SimField._F.reads if SimField._F != null else 0) - rd0, str(act), str(DirSwing.pm), " | ".join(fl.slice(0, 3))])
 		r.own.append(SimSwing.tus)
 		r.active.append(1 if act else 0)
 		r.shots.append(S.shots.size())
