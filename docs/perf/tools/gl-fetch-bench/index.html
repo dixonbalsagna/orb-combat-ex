@@ -1,0 +1,98 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>vertex fetch bench</title></head>
+<body style="margin:0;background:#000">
+<canvas id="c" width="1280" height="720"></canvas>
+<script>
+// A WebGL2 microbench (Performance & Platform; scratch, never in the game): what the ground's vertex stage would pay if its one height fetch per vertex became a rotated 2D sample
+// (docs/world/ring-any-angle/performance.md, section 5.3). The game's Compatibility renderer is GLES3 / WebGL2 through ANGLE in the browser, so this is the same path. Run it with
+//   node docs/perf/tools/stage-web.mjs run --web docs/perf/tools/gl-fetch-bench --out <csv> [--igpu]
+// K = 0: no fetch (the baseline: vertex work and the fixed fragment fill); 1: one texelFetch (today's); 4: a hand bilinear; 8: two levels, each a hand bilinear, mixed.
+// A draw is an indexed triangle grid across a 1280 x 720 canvas, the vertex shader turning the grid by an angle and reading a 512 x 512 R32F field. Timing is wall clock for a batch of
+// draws ended by a one-pixel readPixels (which waits for the GPU), best and median of 7 batches; the fixed cost of submit and fill is the same for every K, so read the difference.
+(() => {
+  const gl = document.getElementById('c').getContext('webgl2', { antialias: false, preserveDrawingBuffer: false, powerPreference: 'default' });
+  const out = { rows: [], renderer: '' };
+  const ext = gl.getExtension('WEBGL_debug_renderer_info');
+  out.renderer = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : 'unknown';
+  const vsrc = (K) => `#version 300 es
+precision highp float; precision highp int;
+uniform sampler2D f0; uniform sampler2D f1;
+uniform ivec2 grid; uniform float ang; uniform float t;
+vec4 bil(sampler2D s, vec2 p) {
+  ivec2 i = ivec2(floor(p)); vec2 f = fract(p);
+  i = clamp(i, ivec2(0), ivec2(510));
+  float a = texelFetch(s, i, 0).r, b = texelFetch(s, i + ivec2(1, 0), 0).r;
+  float c = texelFetch(s, i + ivec2(0, 1), 0).r, d = texelFetch(s, i + ivec2(1, 1), 0).r;
+  return vec4(mix(mix(a, b, f.x), mix(c, d, f.x), f.y));
+}
+void main() {
+  int id = gl_VertexID; int ix = id % grid.x; int iy = id / grid.x;
+  vec2 g = vec2(float(ix), float(iy));
+  vec2 u = g / vec2(grid - 1);
+  vec2 c = (u - 0.5) * 340.0;
+  vec2 p = vec2(cos(ang) * c.x - sin(ang) * c.y, sin(ang) * c.x + cos(ang) * c.y) + 256.0;
+  float h = 0.0;
+  #if ${K} == 0
+    h = fract(sin(dot(g, vec2(12.9898, 78.233))) * 43758.5453) * 40.0;
+  #elif ${K} == 1
+    h = texelFetch(f0, clamp(ivec2(p), ivec2(0), ivec2(511)), 0).r;
+  #elif ${K} == 4
+    h = bil(f0, p).x;
+  #else
+    h = mix(bil(f0, p).x, bil(f1, p * 0.5 + 128.0).x, 0.5);
+  #endif
+  gl_Position = vec4(u.x * 2.0 - 1.0, u.y * 2.0 - 1.0 + h * 0.0004 + t * 0.0, 0.0, 1.0);
+}`;
+  const fsrc = `#version 300 es
+precision mediump float; out vec4 o; void main() { o = vec4(0.2, 0.5, 0.3, 1.0); }`;
+  const prog = (K) => {
+    const mk = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+    const p = gl.createProgram(); gl.attachShader(p, mk(gl.VERTEX_SHADER, vsrc(K))); gl.attachShader(p, mk(gl.FRAGMENT_SHADER, fsrc)); gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+    return p;
+  };
+  const tex = (unit) => {
+    const t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t);
+    const d = new Float32Array(512 * 512);
+    for (let i = 0; i < d.length; i++) d[i] = Math.sin((i % 512) * 0.05) * 40 + Math.cos(Math.floor(i / 512) * 0.031) * 25 + ((i * 7919) % 101) * 0.05;
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, 512, 512, 0, gl.RED, gl.FLOAT, d);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  };
+  tex(0); tex(1);
+  const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+  const sizes = [[200, 500], [400, 1000], [800, 2000]];
+  const px = new Uint8Array(4);
+  const run = async () => {
+    const res = [];
+    for (const [gx, gy] of sizes) {
+      const idx = new Uint32Array((gx - 1) * (gy - 1) * 6); let n = 0;
+      for (let y = 0; y < gy - 1; y++) for (let x = 0; x < gx - 1; x++) { const a = y * gx + x; idx[n++] = a; idx[n++] = a + 1; idx[n++] = a + gx; idx[n++] = a + 1; idx[n++] = a + gx + 1; idx[n++] = a + gx; }
+      const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
+      const verts = gx * gy;
+      for (const K of [0, 1, 4, 8]) {
+        const p = prog(K); gl.useProgram(p);
+        gl.uniform1i(gl.getUniformLocation(p, 'f0'), 0); gl.uniform1i(gl.getUniformLocation(p, 'f1'), 1);
+        gl.uniform2i(gl.getUniformLocation(p, 'grid'), gx, gy);
+        const ua = gl.getUniformLocation(p, 'ang'), ut = gl.getUniformLocation(p, 't');
+        gl.viewport(0, 0, 1280, 720);
+        const draws = verts > 1000000 ? 8 : 24;
+        const batch = () => {
+          const t0 = performance.now();
+          for (let i = 0; i < draws; i++) { gl.uniform1f(ua, i * 0.0087); gl.uniform1f(ut, i); gl.clear(gl.COLOR_BUFFER_BIT); gl.drawElements(gl.TRIANGLES, idx.length, gl.UNSIGNED_INT, 0); }
+          gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+          return (performance.now() - t0) / draws;
+        };
+        batch(); batch();
+        const v = []; for (let b = 0; b < 7; b++) v.push(batch());
+        v.sort((a, b) => a - b);
+        res.push([K, verts, v[0].toFixed(3), v[3].toFixed(3)]);
+        await new Promise((r) => setTimeout(r, 30));
+      }
+    }
+    out.rows = res;
+    window.__benchResult = { head: out.renderer };
+    window.__perfcsv = 'K,verts,best_ms,median_ms\n' + res.map((r) => r.join(',')).join('\n') + '\n';
+  };
+  run().catch((e) => { window.__perfcsv = 'error,' + String(e).replace(/[\n,]/g, ' ') + '\n'; });
+})();
+</script></body></html>

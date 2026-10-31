@@ -97,33 +97,52 @@ A swing that **re-lays the strip every tick** (new ground, props and footing for
 | Ground field data, rebuilt and sent (`ground.rebuild`; 403 KB texture) | **3.8 to 4.9 ms** | 4 to 10 times by itself |
 | Props, a 2,048 u window round the fighters (`matchProps`; 6 to 11 props; 4,096 u: 0.8 ms) | 0.55 ms | the allowance |
 | Buildings' footing, 35 to 54 in view (`p_visit`; the dig-frame mean per 35) | about 1.0 ms | the allowance |
-| Sim re-lay of about 256 columns from the resident field (**estimate**: 1 to 2 us a bilinear sample in GDScript; not measured) | 0.3 to 0.5 ms | half the allowance |
+| Sim re-lay of 256 columns from a resident 512 x 512 field (**measured**, 5.4: a hand bilinear each, float64) | **0.05 ms native, 0.1 ms web**; 0.9 / 1.9 ms if each of 21 depth rows a column were its own sample | a tenth of the allowance |
 | Far rows, only if the biomes under the far land change (3.2 to 5.5 ms whole; the far land already turns by a uniform) | 0 to 5.5 ms | |
-| **Sum** | **5.5 to 7 ms; 9 to 12 with far rows** | **6 to 12 times** |
+| **Sum** | **5.4 to 6.6 ms; 9 to 12 with far rows** | **6 to 12 times** |
 
-On the laptop (frame 6 ms x1 = 24 ms x4, plus 5.5 to 7 x4 = 22 to 28) that is a frame of **46 to 52 ms, about 20 fps, for the whole swing**; with the far rows it is over the 50 ms limit. Over 180 ticks the work is 1.0 to 1.3 s at x1: **ten to twenty swaps' worth in three seconds.** Re-laying every tick is out.
+On the laptop (frame 6 ms x1 = 24 ms x4, plus 5.4 to 6.6 x4 = 22 to 26) that is a frame of **46 to 50 ms, about 20 fps, for the whole swing**; with the far rows it is over the 50 ms limit. Over 180 ticks the work is 1.0 to 1.3 s at x1: **ten to twenty swaps' worth in three seconds.** Re-laying every tick is out.
 
-**What multiplies**: the ground data (it is 4 times a dig frame's 1.2 ms and every tick), the footing sweep (1 ms a tick against 8% of frames today) and the sim re-lay. The props window is cheap (it is not linear in the span: 0.2 ms for 512 u, 17 to 25 ms for the ring). **What does not**: VFX, camera speed and the launch plan, as in section 3.
+**What multiplies**: the ground data (it is 4 times a dig frame's 1.2 ms and every tick), and the footing sweep (1 ms a tick against 8% of frames today). The sim re-lay itself is cheap. The props window is cheap (it is not linear in the span: 0.2 ms for 512 u, 17 to 25 ms for the ring). **What does not**: VFX, camera speed and the launch plan, as in section 3.
 
 **Reads for the field are driven by flight, not by the swing.** The same ground lies round the pair at any bearing, so a swing in place reads nothing new. Reads a tick are (speed / spacing) x (field width / spacing): at 100 u a tick over an 8,192 u field, 512 u nodes give 3.1 (Research's E2 measured 2.8 mean, 58 at p99), 128 u nodes 50 (E: 43 mean, 337 at p99), and strip-grade 8 u nodes 12,800. At 130 us a column that is E2: 0.36 ms mean (1.8 times the 0.2 ms), 7.5 ms at p99 (46 ms at x4); E: 5.6 ms mean, 44 ms at p99. **Only a coarse field (512 u or more, detail added on the GPU) or a field read ahead in idle ticks fits.**
 
-### 5.3 A resident 2D height texture rotated by the camera (an ESTIMATE; no prototype exists)
+### 5.3 A resident 2D height texture rotated by the camera (no prototype of the game's own; the GPU and sim rows are measured on microbenches, 5.4)
 
 On the Compatibility renderer (GLES3, and WebGL2 in the browser):
 
-| Row | Estimate | Basis |
+| Row | Estimate or measure | Basis |
 |---|---|---|
 | Per tick of the swing, CPU | **about 0**: a rotation uniform and one transform. No rebuild, no upload, no footing sweep, no props query | the far land already turns by uniforms (`drift_tan`, `ring_c/u/v`, `far_map`); `r_cull` is 0.01 ms |
 | Memory | about 2 MB: a near level of 512 x 512 R32F at 8 u (+-2 km) and a mid level at 64 u (+-16 km), 1 MB each; `far_map` already resident | arithmetic |
 | A dig | the same as today: a sub-rectangle upload (`g_texupdate` 1 to 5 us, `g_setdata` 2 to 6 us measured) | measured, swap frame |
-| GPU, ground vertex stage | one `texelFetch` becomes about 4 a level (a hand bilinear: float32 linear filtering is optional in WebGL2; R16F filters in hardware at 11-bit precision), up to 8 where two levels blend; the crater loop (2 fetches a crater) is unchanged. **+0.2 to 1 ms on the laptop's iGPU, LOW confidence** | no vertex count or GPU timer exists: about 10 of the web frame's 21 ms mean is outside every timer |
+| GPU, ground vertex stage | one `texelFetch` becomes a hand bilinear (4 fetches) or two blended levels (8). **Measured on a bare vertex-bound grid: +0.04 ms (100k vertices), +0.08 (400k), +0.5 (1.6M) for 4 fetches and +0.05, +0.2, +1.05 for 8 on a current Radeon iGPU; nothing above noise (0.03 ms) on the RTX.** The frame draws 147k to 157k triangles at the median and 360k at p95 (all geometry), so the ground and water are under about 75k to 200k vertices: **+0.03 to 0.2 ms for 4 or 8 fetches, up to about 0.4 ms counting the water pass**. The target laptop's iGPU is slower than this Radeon by an unmeasured factor | microbench 5.4; `prims` gauge of the web build |
 | Filling it | the reads of 5.2, which dwarf the texture's own cost | formula above |
 
 What it does **not** remove: (1) every instanced layer (buildings, trees, props, cover, crowd, water, craters) is keyed on the strip's `x` and `S.base`, so it would have to live in planet coordinates (Research's "largest migration"; the footing and props costs are then paid once per object entering the disc, not per tick); (2) the sim's strip, still re-laid from the field each tick near the pair (the 0.3 to 0.5 ms above); (3) the band's depth rows, which exist only toward the camera: a rotated view needs near ground on every side.
 
-Net: **a swing by rotating resident fields could cost the 0.3 to 0.5 ms of sim plus 0.2 to 1 ms of GPU a frame, inside the 0.5 to 1 ms allowance only if the GPU lands at the low end**, against 5.5 to 12 ms a tick for re-laying. The swing is affordable only that way; the open costs are the field's reads and the layers' migration.
+Net: **a swing by rotating resident fields costs about 0.05 to 0.1 ms of sim plus 0.03 to 0.4 ms of GPU a frame on a current Radeon iGPU: 0.1 to 0.5 ms, inside the 0.5 to 1 ms allowance, with a margin of 2 to 5 times that the target laptop's slower iGPU may use up**, against 5.4 to 12 ms a tick for re-laying. The swing is affordable only that way; the open costs are the field's reads and the layers' migration.
 
-### 5.4 What I would measure next (not done; each about 15 minutes)
+### 5.4 The two measurements (2026-10-31)
 
-1. A vertex-fetch microbench in the web build on the Radeon and the RTX: the ground's vertex stage at 1, 4 and 8 fetches. This turns the GPU row from a guess into a number.
-2. A bilinear re-lay of 256 columns from a 512 x 512 field in GDScript, native and web, to replace the 0.3 to 0.5 ms estimate.
+**Vertex fetches** (`docs/perf/tools/gl-fetch-bench/index.html`, run with `stage-web.mjs run --web ... [--igpu]`): a WebGL2 indexed triangle grid across 1280 x 720, the vertex shader turning it and reading a 512 x 512 R32F field; wall clock for a batch of draws ended by a one-pixel readPixels, best of 7 batches. PC at 28% load (Radeon run 1), 51% (Radeon run 2) and 38 to 52% (RTX); the two Radeon runs agree within 1%.
+
+| Vertices | Radeon, ms a draw: 0 fetches / 1 / 4 / 8 | 4 minus 1 | 8 minus 1 | RTX, ms: 0 / 1 / 4 / 8 |
+|---|---|---|---|---|
+| 100,000 | 0.39 / 0.43 / 0.46 / 0.48 | +0.04 | +0.05 | 0.03 / 0.03 / 0.03 / 0.04 |
+| 400,000 | 1.09 / 1.68 / 1.75 / 1.88 | +0.07 | +0.20 | 0.09 / 0.06 / 0.06 / 0.06 |
+| 1,600,000 | 2.86 / 6.36 / 6.85 / 7.42 | +0.49 | +1.05 | 0.27 / 0.24 / 0.24 / 0.24 |
+
+The baseline (0 fetches) has a fixed fill of the whole canvas, so read the differences. The Radeon is vertex-fetch bound (the single fetch is already 0.6 ms at 400k); the RTX does not feel any of it. The bench is a bare shader: the game's ground shader keeps its crater loop and the rest, which add to every row alike. Rotated reads are as coherent as the strip's, so no extra cache misses are modelled. The web build's own `prims` gauge (planet 7, 420 frames): 147,221 to 156,347 triangles at the median, 360,258 at p95, 404,751 at most.
+
+**Re-lay from a field** (`hook-relay.mjs`, tick 200 of a `--ringcost` run; GDScript, float64 field, a hand bilinear per sample, the line turning 0.5° a tick, best of 5 batches of 60 ticks; native 3 runs at 22 to 25% load, web RTX 2 runs at 24%):
+
+| Samples a tick | Native | Web |
+|---|---|---|
+| 256 columns | **46 to 49 us** | **95 to 102 us** |
+| 512 columns | 92 to 94 us | 180 to 185 us |
+| 256 columns x 21 depth rows | 0.92 ms | 1.8 to 1.9 ms |
+
+That is 0.18 us a sample native and 0.4 on the web, **five times under the estimate I first wrote (1 to 2 us)**. It leaves out what a real re-lay also does to each column (the crater store laid over it, biome and flags, the write into `S.base`), which is not measured and would add to it.
+
+**What this does and does not settle.** It settles that the rotation itself, on the CPU and on a current iGPU, fits the 0.5 to 1 ms allowance. It does not settle: the target laptop's iGPU (slower than this Radeon by an unmeasured factor; a model of it is needed), the cost of filling the field (5.2, the reads), or the layers' migration. Each of those is larger than anything measured here.
