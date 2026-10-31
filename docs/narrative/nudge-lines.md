@@ -75,18 +75,18 @@ Mark **x** to keep, **alt** to ask for another (I will write one), or type your 
 | NL-23 | Empress | `own` | We choose the road, insect! Follow, if you dare! | |
 | NL-24 | Cyborg | `own` | Sensors say there's metal east. I'm heading that way! | |
 | NL-25 | Cyborg | `lab` | Sensors say there's a sealed lab that way! Prime parts! | |
-| NL-26 | Cyborg | `lab` | That frozen lab's got better parts than any wreck! | |
+| NL-26 | Cyborg | `lab` | The southern ice lab's got better parts than any wreck! | |
 | NL-27 | Cyborg | `lab` | Clean circuits, buried deep! I'm taking the long way. | |
-| NL-28 | Cyborg | `lab` | Hidden lab ahead! My chassis wants real components! | |
+| NL-28 | Cyborg | `lab` | Lab ahead! My chassis wants real components! | |
 
 **Trusted most:** NL-01, NL-07, NL-16. **Weakest:** NL-05 (the Protagonist's longest) and NL-15 (the beam tie is a stretch).
 **For Legal to read closely:** the Cyborg's NL-16 to NL-20 and NL-24 and the lab lines NL-25 to NL-28 (feeding on scrap and parts through the grille or chest, as Orb's city example is turned into wreckage), and "bleed on them" in NL-14.
 
 ## 7. The Cyborg's components (Orb, 2026-10-31; templates only)
 
-Orb: Bolus should gather tech components from ruined skyscrapers, and better ones from secret labs around the world, including an Antarctic one, so he stays a real threat while seeking destruction. Orb writes the universe, so this page only says what it does for the lines.
+Orb: Bolus should gather tech components from ruined skyscrapers, and better ones from labs around the world, including one in the far south, so he stays a real threat while seeking destruction. Orb writes the universe, so this page only says what it does for the lines.
 
 - **His vocabulary grows from "scrap" to "scrap and components".** Wreckage, hulls, cranes and broken steel stay (the `wreck`, `wear` and `cranes` classes). Ruined towers become parts: "components", "circuits", "parts", put into the grille or chest. This is a better fit than the old hunger lines because nothing in it has to be eaten, which is also what RL-216 asks.
-- **A new class, `lab`:** a sealed or hidden place with better parts, the pull that makes him leave the nearest wreck. Four drafts (NL-25 to NL-28). The lines name a place and parts only, never anyone inside it, and use no reward word.
+- **A new class, `lab`:** a sealed place with better parts, the pull that makes him leave the nearest wreck. Four drafts (NL-25 to NL-28). The lines name a place and parts only, never anyone inside it, and use no reward word. **Legal's conditions (via the EP):** no people as the draw; no real station, nation, company or conspiracy story (no hidden base, no expedition legend), so the far-south lab is only ever "the southern ice lab", an in-world name, and no line or note here names a real place.
 - **The line is still the licence** (section 1): a `lab` nudge needs its line, like any other.
-- **Two questions for Orb, not answered here:** (1) A lab in the far south would take a polar outpost, and `opponent-grounds.md` keeps the poles free for a later fighter; which wins? (2) Does a lab tie into where Bolus comes from (his working title in `identity.md` is a bio-mech experiment)? I have invented nothing: the lines say "a lab" and "better parts", not whose or why.
+- **Two questions for Orb, not answered here:** (1) The southern ice lab would take a polar outpost, and `opponent-grounds.md` keeps the poles free for a later fighter; which wins? (2) Does a lab tie into where Bolus comes from (his working title in `identity.md` is a bio-mech experiment)? I have invented nothing: the lines say "a lab" and "better parts", not whose or why.
