@@ -1,0 +1,58 @@
+extends SceneTree
+# Can the cells that need refining be picked from the 512 nodes alone? Predictor: the larger second difference of the heights at a cell's two end nodes. Truth: some column in the cell is off by more than 20 units
+# (or 40). For predictor thresholds T: the share of cells it flags, and the share of the truly bad cells it catches (recall).
+func _init() -> void:
+	WorldClimate.useGen(2)
+	var rings: Array = [[7, 1], [3, 1], [11, 1], [25, 1], [9, 3], [7, 3], [1, 3], [5, 3]]
+	var Ts: Array = [10.0, 20.0, 40.0, 80.0, 160.0]
+	var truth20: int = 0
+	var truth40: int = 0
+	var cells: int = 0
+	var flag: Dictionary = {}
+	var hit20: Dictionary = {}
+	var hit40: Dictionary = {}
+	for T in Ts:
+		flag[int(T)] = 0
+		hit20[int(T)] = 0
+		hit40[int(T)] = 0
+	for rg in rings:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 1, {}, {"planet": rg[0], "touch": rg[1], "arena": {"cols": 2400}, "planetGen": 2, "intro": false})
+		var NC: int = SimConst.NC
+		var P := WorldPlanet.make(rg[0])
+		var pr: Dictionary = S.planetRing
+		var ring: Dictionary = WorldRingPick.ringFrom(pr.c, int(pr.cols), pr.t)
+		var raw := PackedFloat64Array()
+		raw.resize(NC)
+		for i in range(NC):
+			raw[i] = float(WorldPlanet.farColumn(P, ring, i, 0.0)[0])
+		var k: int = 16
+		var nc: int = NC / k
+		var d2 := PackedFloat64Array()
+		d2.resize(nc)
+		for j in range(nc):
+			d2[j] = absf(raw[((j + nc - 1) % nc) * k] - 2.0 * raw[j * k] + raw[((j + 1) % nc) * k])
+		for c in range(nc):
+			var worst: float = 0.0
+			for j in range(k):
+				var t: float = float(j) / float(k)
+				worst = maxf(worst, absf(raw[c * k] * (1.0 - t) + raw[((c + 1) % nc) * k] * t - raw[c * k + j]))
+			var p: float = maxf(d2[c], d2[(c + 1) % nc])
+			cells += 1
+			var b20: bool = worst > 20.0
+			var b40: bool = worst > 40.0
+			if b20:
+				truth20 += 1
+			if b40:
+				truth40 += 1
+			for T in Ts:
+				if p > T:
+					flag[int(T)] += 1
+					if b20:
+						hit20[int(T)] += 1
+					if b40:
+						hit40[int(T)] += 1
+	print("cells %d; truly bad (over 20): %.1f%%, (over 40): %.1f%%" % [cells, 100.0 * truth20 / cells, 100.0 * truth40 / cells])
+	for T in Ts:
+		print("predictor over %d: flags %.1f%% of cells, catches %.0f%% of the over-20 cells and %.0f%% of the over-40 cells" % [int(T), 100.0 * flag[int(T)] / cells, 100.0 * hit20[int(T)] / maxi(1, truth20), 100.0 * hit40[int(T)] / maxi(1, truth40)])
+	quit()

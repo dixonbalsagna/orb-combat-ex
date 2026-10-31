@@ -373,6 +373,8 @@ My 9.5 arithmetic gave 82, 96 and 99% for any place and 41, 59 and 74% for a cit
 
 ### 11.3 The web build's budget: 130 us a column, so about 1.5 reads a tick
 
+**Correction (EP, 2026-10-31; `research.md` T3, `performance.md` 6): 130 us and 1.5 reads a tick are right for ring columns. A plain field node is about 50 us on the web, so about 4 a tick, and the figures below that count nodes at 1.5 a tick are too pessimistic by about 2.7 times (the two-ring field in flight needs 7.9 nodes a tick at 1,032 u/s and 45.8 at a launch against a budget of about 4; the 512 bake is 28,650 nodes, about 1.4 s on the web; the inner 128 ring of 1,727 nodes is about 7 s at 4 a tick). The conclusion stands: the field cannot be fed at the inner spacing in flight, and the bake carries it.** Left as written otherwise.
+
 Performance's change: on the web a read is 130 us, so a tick's read budget is about 1.5 nodes, not 4. What that does to the two-ring field while flying (arithmetic; a node read taken as a column read):
 
 | Flight speed | Two-ring field needs (128 within 3,000, 512 out to 12,000) | Outer ring alone (512) | Budget |
@@ -443,3 +445,66 @@ The EP's question: at about 1 to 2 cheap operations a sample, how much of 512-un
 **Honest coastline: the gate is what matters, not noise.** The shoreline moves 203 units RMS (worst 736, 23 columns) on a bare 512 bake in these eight rings (ice rings included; the four plain rings were within 59 RMS, 128 max, in section 11). **Giving each column its exact land or sea answer (V1x) halves it: 105 RMS, worst 384.** So a land/sea mask at the column or 128-unit scale does more for the coast than any noise term. The honest answer is to store the **crossings** themselves: a coast is a line, and a field with a planet record per coast segment (like a crater, as section 12 suggested for ice edges) puts the shore exactly where today's is. About 3 to 6 crossings a ring, so a few records.
 
 **What this means for the bake.** Bake cells of 326 to 652 units are the 256 and 512 rows of section 11: all-column RMS about 11 to 23, mountain crests up to 2.5 fighter heights off, shores about 100 to 200 units off without a mask. Near a fighter that is the look of a smoothed planet, which the EP's decision accepts; the three things worth adding are (a) a coast and ice-edge record layer (exact shores and walls, few records), (b) optionally a cubic reconstruction in place of the line (6% and 13% on mountains, free for the view, 12 operations for the sim), and (c) nothing noise-based in anything the sim reads.
+
+## 14. With no laptop ceiling: how near today's planet can the sim's one ground stay, and how do edges and detail scale (World, 2026-10-31; ADR 0012; measured where marked, HEAD 93102d14)
+
+ADR 0012 item 3 fixes the frame: **the sim is shared**, so every machine computes the same ground. The question is therefore not what a capable machine can afford per tick (that is the view's). It is what the shared ground may cost the oldest machine, and the answer moves a lot once you see where the cost sits.
+
+### 14.1 The cost of fidelity is loading time and memory, not per-tick work
+
+A bake is a pure function of the planet's seed, made once and read by lookup. A sim tick pays only the lookup (a bilinear read is about 12 operations, a cubic about 50). So **a finer bake costs the old laptop a longer load and a few megabytes, and nothing per tick.** The planet load is already a stepped job that gates the match start (`planet_load.gd`: 250 units a read, about 5 ms), so every machine finishes it before tick 0 and the result is identical whatever the speed.
+
+Whole-planet bake (5 bytes a node: a float32 height and a biome byte). Load times use the EP's 50 us a node on the web and my estimate of 2.4 times faster native (the ratio of 54 to 130 us a column); the old laptop is the web column or slower:
+
+| Spacing | Nodes | Memory | Load, web | Load, native (est.) | Sim ground vs today's exact (RMS along the ring; Simulation measured 8.5 in 2D at 128) |
+| ---: | ---: | ---: | ---: | ---: | :--- |
+| 512 | 28,650 | 143 KB | 1.4 s | 0.6 s | 23 (crests 2.5 fighter heights off) |
+| 256 | 114,600 | 573 KB | 5.7 s | 2.3 s | 11 |
+| **128** | 458,400 | 2.3 MB | **23 s** | 9 s | **5.1** (max 189 at steps) |
+| 64 | 1,833,600 | 9.2 MB | 92 s | 37 s | 3.3 |
+| 32 (today's ring columns) | 7.3 million | 37 MB | 6 min | 2.5 min | 0 |
+
+Reading it: **256 is a loading screen on any machine. 128 is a lobby-time background job** (the planet is chosen before the match; 23 s on the web, 9 native) and 2.3 MB. 64 and below is not a load. So the shared ground can sit at about **5 units RMS from today's exact planet** at the price of a 23-second planet load on the weakest machine; at 11 for a 6-second one.
+
+**Fidelity is then a match setting both players share** (like the arena's size: it goes in the match key and the replay header), not a per-player one. A performance mode that wants a 6-second load picks 256 for the planet; a maximum mode picks 128; a replay carries which. The view's quality stays a per-player setting.
+
+**Adaptive refinement.** Measured on eight rings, nodes at 512: **26% of the 512-unit cells hold a column more than 20 units off, 13% more than 40, 5% more than 75; at 128 only 1.9%, 0.6% and 0.4%.** The loss is concentrated. Refining only the bad cells to 128 would cost 148,000 nodes for the 20-unit rule (a third of a full 128 bake), 90,000 for the 40 rule and 52,000 for the 75 rule. **The catch: picking the cells.** I tried the cheapest predictor from the 512 nodes alone (the larger second difference at a cell's two ends): catching 85 to 90% of the bad cells flags 44% of all cells, so it saves only about a half, 229,000 nodes. A better flag should be available from the generator itself (the plate-edge weights, the shoreline band, the plateau and canyon masks of `WorldLand.shape` are cheap compared with a whole column and are what makes the creases), but I have not measured that.
+
+### 14.2 Keeping edges, by feature and view level
+
+The sim's ground gets its edges from **records laid on the bake**, which cost almost nothing per tick and are exact at every view level, plus a finer bake where the relief is creased.
+
+| Feature | What it is in gen 2 | How its edge is kept | Size |
+| :--- | :--- | :--- | :--- |
+| **Coast** | The crossing of `SHORE_WET` after the shoreline noise | A polyline of crossings, planet-keyed. Measured: halving the shore error needs the exact land/sea answer (section 13), and a record gives it exactly | About 1.0 million units of coast on the planet (from the 6.5 crossings a Half ring shows, by the line-crossing relation), so about **8,000 vertices at 128-unit spacing**, 64 KB; 2,000 at 512. The estimate may be off by 2 |
+| **Cliffs and ice edges** | `floor` terraces and the ice edge: 250 to 430 unit walls (section 12) | A polyline with a top and a bottom height | About 140,000 units, **1,100 vertices at 128** (same caveat) |
+| **Ranges and ridges** | `abs` creases of the ridged noise, riding on relief | **Not a threshold, so not a polyline.** Kept by refining the cell: mountain RMS is 3.5 at 128 against 21.6 at 512, and peaks by a record of the local maxima if wanted | Part of the adaptive nodes above |
+| **Lakes** | Today a 1D valley on the ring's line (it flickers in a swing, 8.1) | A planet 2D basin: a seed node, a level and an extent from a flood on the bake; the outline is the contour of the level, exact at any view density | One record per lake, tens of bytes. Planned once |
+| **Rivers** | Planet flow lines on a 192 x 96 grid (800 units a cell), carved on the ring | The same polylines as records with a width and carve depth, read through the bake; the one-in-3,000 rule becomes a planet rule | A few thousand vertices at most |
+| **Marks** | Craters, scars, heaps, slides | Records (8.4) | 48 bytes a mark |
+
+**By view level:** the **performance view** draws the sim's ground (bake plus records) and the records as lines; **middle levels** add off-plane ground from the bake with a cubic filter and, where the budget allows, exact reads; **maximum** adds exact reads in finer tiles. Every level draws the same edges from the same records, so a cliff or a coast is where it is at every level; what changes is only how smooth the ground between them is.
+
+### 14.3 The ground at rest can be exactly today's, near the pair
+
+The sim can sharpen its ground back to today's exact columns where it matters. **After a swing rests, read the exact columns for a window of plus and minus 40 columns round each fighter (162 columns) over the next 60 ticks**, as the calm turn's warm does: the count of columns read is in the state, so every machine agrees on it and a rollback replays it. That is 2.7 columns a tick: **0.15 ms a tick native, 0.35 ms on the web**, and the old laptop does it too. A fighter standing on ground that sharpens is raised at most 7.5 units a tick (row 9's rule for a waded body); a drop is a fall. While a swing runs, the window is re-laid from the bake by lookups (cheap), and when the swing starts the exact columns give way to the bake's. So **near the pair, at rest, the sim's ground is today's exact planet, and in motion it is within the table's error, with the records holding the cliffs and coasts so the change at a swing's start is small (a few units, not hundreds).** I have not run this; the rule is the calm turn's and the raise rule's.
+
+### 14.4 Drawing above today's detail while staying planet-true
+
+"Planet-true" has a limit: **the planet function has nothing finer than a 375-unit cell** of noise; its crisp parts are creases, which are exact at any sampling. So more detail means sampling the same function more densely, not inventing relief.
+
+1. **Denser exact samples, view-only.** Beside the plane the view can read the planet function (`WorldPlanet.farField`, the ring's own arithmetic) at 8 to 16 units instead of 32 near the pair, in tiles cached outside the sim. Creases come out as true cliffs. The budget is reads a tick: about 4 a tick at 50 us on the web, many more on a capable machine, and that number is the granular setting. It touches nothing the sim computes.
+2. **Feet agree by construction.** The drawn ground on the plane row is the sim's ground (the exact window at rest, 14.3). Off the plane the view may be exact; between them a band of about 2 body heights eases one into the other, so the ground a fighter stands on is the ground the sim has.
+3. **The filter.** A cubic reconstruction of the bake for in-between samples is free on the GPU and removes the straight-edge look at 128 (the probe's cubic gave 22.5 against 23.9 at 512; it is the cheap view-only gain, not a sim one).
+4. **Planet-keyed micro relief.** Anything finer than the planet's own detail is invention; it is honest only as a deterministic function of the planet position (a hash of the world point), small (a few units), zero on the plane band, and view-only, so it is the same on every machine and every replay without being in the sim. That is "consistent", not "true", and Art's to judge.
+5. **Records drawn at full density.** Coast foam, cliff faces, river and lake outlines come from the records at any vertex density, so the edges are sharper at maximum than at performance without a single extra read.
+
+**The rule that keeps this safe:** the sim reads the bake, the records and the exact window only; the view may read the planet function directly and may never write the sim. Both are pure functions of the same seed.
+
+### 14.5 What I would measure next (nothing built)
+
+1. The time of a 128 whole-planet bake as the stepped planet job, on this PC and at the laptop's x4: the table above uses the EP's 50 us a node and an estimate for native.
+2. A generator-mask predictor for the cells to refine (14.1), against the measured 26, 13 and 5% of bad cells.
+3. The coast and cliff totals from a real flood of the bake, to replace the line-crossing estimates (8,000 and 1,100 vertices).
+4. Planet-wide error, not only rings that cross land (the sea is smooth, so the planet-wide figure should be better than the rings').
+5. The exact-window sharpening on a swing's rest, with the raise rule.

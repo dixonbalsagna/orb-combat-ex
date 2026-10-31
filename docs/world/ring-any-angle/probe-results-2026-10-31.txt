@@ -64,3 +64,14 @@ V1x +detail exact gate   all RMS 23.5 (max 371) | mountain RMS 21.7 | shore colu
 V2 +detail 2 oct         all RMS 25.1 (max 371) | mountain RMS 23.2 | shore columns RMS 34.8 | shoreline: 52 crossings, displacement RMS 188 max 736, 0 lost, 0 spurious extra
 V3 cubic                 all RMS 22.5 (max 408) | mountain RMS 19.0 | shore columns RMS 33.0 | shoreline: 52 crossings, displacement RMS 152 max 576, 0 lost, 0 spurious extra
 V4 +hash noise           all RMS 33.7 (max 383) | mountain RMS 32.4 | shore columns RMS 40.3 | shoreline: 52 crossings, displacement RMS 98 max 384, 0 lost, 2 spurious extra
+
+# adapt_probe.gd and flag_probe.gd (how concentrated is the 512 loss; can second differences pick the cells), 8 rings
+spacing 512:  over 10: 27.9% of columns, 47.1% of cells | over 20: 13.7% of columns, 26.0% of cells | over 40: 5.5% of columns, 13.3% of cells | over 75: 1.7% of columns, 5.2% of cells |
+spacing 256:  over 10: 8.7% of columns, 14.2% of cells | over 20: 4.5% of columns, 8.3% of cells | over 40: 1.7% of columns, 4.0% of cells | over 75: 0.5% of columns, 1.1% of cells |
+spacing 128:  over 10: 2.1% of columns, 3.5% of cells | over 20: 1.0% of columns, 1.9% of cells | over 40: 0.3% of columns, 0.6% of cells | over 75: 0.2% of columns, 0.4% of cells |
+cells 1200; truly bad (over 20): 26.0%, (over 40): 13.3%
+predictor over 10: flags 90.5% of cells, catches 100% of the over-20 cells and 100% of the over-40 cells
+predictor over 20: flags 85.9% of cells, catches 100% of the over-20 cells and 100% of the over-40 cells
+predictor over 40: flags 70.1% of cells, catches 98% of the over-20 cells and 99% of the over-40 cells
+predictor over 80: flags 43.8% of cells, catches 85% of the over-20 cells and 90% of the over-40 cells
+predictor over 160: flags 21.8% of cells, catches 54% of the over-20 cells and 60% of the over-40 cells

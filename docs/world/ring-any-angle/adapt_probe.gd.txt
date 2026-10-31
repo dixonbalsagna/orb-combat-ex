@@ -1,0 +1,51 @@
+extends SceneTree
+# How concentrated is the loss? For nodes every 16 columns (512 u), every 8 (256) and every 4 (128): the share of columns whose line-interpolation error exceeds 10, 20, 40 and 75 units, and the share of node cells
+# (the span between two nodes) that hold at least one such column: those are the cells an adaptive bake would refine. Eight rings, gen 2.
+func _init() -> void:
+	WorldClimate.useGen(2)
+	var rings: Array = [[7, 1], [3, 1], [11, 1], [25, 1], [9, 3], [7, 3], [1, 3], [5, 3]]
+	var ths: Array = [10.0, 20.0, 40.0, 75.0]
+	var ks: Array = [16, 8, 4]
+	var colN: Dictionary = {}
+	var cellN: Dictionary = {}
+	var cellT: Dictionary = {}
+	var total: int = 0
+	for key in ks:
+		for th in ths:
+			colN["%d/%d" % [key, int(th)]] = 0
+			cellN["%d/%d" % [key, int(th)]] = 0
+		cellT[key] = 0
+	for rg in rings:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 1, {}, {"planet": rg[0], "touch": rg[1], "arena": {"cols": 2400}, "planetGen": 2, "intro": false})
+		var NC: int = SimConst.NC
+		var P := WorldPlanet.make(rg[0])
+		var pr: Dictionary = S.planetRing
+		var ring: Dictionary = WorldRingPick.ringFrom(pr.c, int(pr.cols), pr.t)
+		var raw := PackedFloat64Array()
+		raw.resize(NC)
+		for i in range(NC):
+			raw[i] = float(WorldPlanet.farColumn(P, ring, i, 0.0)[0])
+		total += NC
+		for key in ks:
+			var nc: int = NC / key
+			for c in range(nc):
+				var worst: float = 0.0
+				for j in range(key):
+					var i: int = c * key + j
+					var t: float = float(j) / float(key)
+					var e: float = absf(raw[c * key] * (1.0 - t) + raw[((c + 1) * key) % NC] * t - raw[i])
+					worst = maxf(worst, e)
+					for th in ths:
+						if e > th:
+							colN["%d/%d" % [key, int(th)]] += 1
+				for th in ths:
+					if worst > th:
+						cellN["%d/%d" % [key, int(th)]] += 1
+				cellT[key] += 1
+	for key in ks:
+		var line: String = "spacing %d: " % (key * 32)
+		for th in ths:
+			line += " over %d: %.1f%% of columns, %.1f%% of cells |" % [int(th), 100.0 * colN["%d/%d" % [key, int(th)]] / total, 100.0 * cellN["%d/%d" % [key, int(th)]] / cellT[key]]
+		print(line)
+	quit()
