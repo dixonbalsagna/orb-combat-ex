@@ -391,3 +391,32 @@ The spacing that 1.5 a tick can hold, for a disc of radius r in flight at v: at 
 4. **The native build and the laptop are not the web build**: at 54 us 4 a tick holds there, and the table above is for the web only.
 
 So on the web the turntable is a coarse-then-sharpen ground with a baked planet underneath; the two-ring field as I described it in 8.1 is a native design.
+
+## 12. What a smoother generation would lose on screen (World, 2026-10-31, for Orb's look gate; HEAD 93102d14)
+
+The EP's provisional decision: the field defines the ground, as a new, smoother generation, lakes, platforms and sites planned on its own heights, a whole-planet bake at 512 at load carrying flight. **No gen 3 is being built; this is what it would cost, in plain terms.** The picture is `img/field-profiles.svg` (three real places, drawn from the ring's own columns: black is today's ground, blue is the same ground read every 128 units, red every 512 units).
+
+### What is lost, in words
+
+1. **Cliffs on ice.** Today the edge of a polar ice sheet (and what looks like the edge of sea ice in open water) is a wall one column wide: **249 units in planet 3, 378 in planet 25, up to 433 elsewhere. That is 3 to 6 fighter heights**, a ledge a fighter can stand on the top of or be thrown off. Read every 128 units it becomes a steep slope of about 60 to 70 degrees over 128 units; read every 512 it becomes a ramp of about 25 to 35 degrees over 512 units, the same drop spread across about 16 columns. (Left and middle pictures.) They stop being walls.
+2. **Mountain tops get rounded.** Peaks, ridges and the notches between them are up to about 2.5 fighter heights off at worst on a 512 read (192 units on planet 11's 6,000-unit mountain), and about half a fighter height at 128 (37). A mountain keeps its shape and loses its sharpness: the right picture shows a 512 line cutting the ripples of a slope and flattening a peak. On the whole ground, the typical error is 5 units at 128 and 23 at 512 (a fighter is 75 tall).
+3. **Shorelines move** by 0 to 4 columns (0 to 128 units): within a column at 64, usually within a column at 128, up to 4 columns at 512. A beach is a little wider or narrower than today.
+4. **Lakes keep their basin** at 256 and finer and blur at 512 (the lake's depth is about 40, the error is 21).
+5. **What is not lost:** the broad shape of the land, the biomes (they are read, not interpolated), buildings, trees, marks (craters and the rest are laid on top at 32 units), and the sea. 
+
+### How often it matters: measured on 16 rings
+
+| | Columns with a step over 75 units | Over 150 | Largest |
+| :--- | ---: | ---: | ---: |
+| Per ring of 2,400 columns | 0 to 13 (mean 3.4, 6 of 16 rings have none) | 0 to 4 (15 in all, mean 0.9) | 433 |
+| Where | Mountain sides 39%, ice-sheet and sea-ice edges 30%, plains edges 24%, desert 9% | Almost all ice edges | |
+
+So **steps are rare** (at most 0.5% of a ring's columns, 0.14% on average). **The tall ones, over 150 units, are almost all ice edges; the 75 to 150 ones are mountain sides and plains edges.** A fight on a coast, a forest or a city meets none. A fight at the edge of an ice sheet meets one or two, 250 to 430 units tall, and loses them. Mountains are the common place the smoothing shows: they keep their height and lose their crispness.
+
+### What a generation could keep, if Orb wants the walls
+
+- **Ice edges as a mark.** The edge of an ice sheet or a floe is a threshold, like the coast. It could be stored as a planet cliff record (a line and a height) laid on the field like a crater, which keeps the wall at any spacing at the cost of one record per edge. About 3 a ring.
+- **A finer near ring only where the pair stands.** A 64 read keeps the ice walls to within 125 to 190 units of today's: not a fix.
+- **Or accept the smoother ground** and let the director not choose ice edges as places to fight. Ice is the one biome where the loss is large and the walls were the point.
+
+Nothing here changes if the generation is not built: today's ground is unchanged.

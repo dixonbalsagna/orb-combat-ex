@@ -38,3 +38,21 @@ planet 11 (54 places, 85% of points on land):  range 6400: any 81% (land 84%), c
 planet 25 (55 places, 82% of points on land):  range 6400: any 85% (land 86%), city 49% (land 46%), town 67% (land 70%) |  range 9600: any 94% (land 95%), city 69% (land 66%), town 88% (land 90%) |  range 12800: any 98% (land 98%), city 82% (land 81%), town 96% (land 97%) |  range 25600: any 100% (land 100%), city 100% (land 100%), town 100% (land 100%) |
    at: cleanup (core/object/object.cpp:2536)
 rc=0
+
+# steps_probe.gd (columns whose exact height changes by more than 75 or 150 units in one 32-unit column), 16 rings
+planet 1 touch 1: 0 of 2400 columns step over 75, 0 over 150, largest 50; by biome of the high side: {  }
+planet 1 touch 3: 5 of 2400 columns step over 75, 4 over 150, largest 433; by biome of the high side: { "desert": 1, "sea ice": 4 }
+planet 2 touch 1: 0 of 2400 columns step over 75, 0 over 150, largest 52; by biome of the high side: {  }
+planet 2 touch 3: 0 of 2400 columns step over 75, 0 over 150, largest 70; by biome of the high side: {  }
+planet 3 touch 1: 2 of 2400 columns step over 75, 1 over 150, largest 249; by biome of the high side: { "forest": 1, "ice sheet": 1 }
+planet 3 touch 3: 1 of 2400 columns step over 75, 0 over 150, largest 78; by biome of the high side: { "desert": 1 }
+planet 5 touch 1: 0 of 2400 columns step over 75, 0 over 150, largest 70; by biome of the high side: {  }
+planet 5 touch 3: 2 of 2400 columns step over 75, 2 over 150, largest 331; by biome of the high side: { "ice sheet": 2 }
+planet 7 touch 1: 0 of 2400 columns step over 75, 0 over 150, largest 58; by biome of the high side: {  }
+planet 7 touch 3: 4 of 2400 columns step over 75, 4 over 150, largest 378; by biome of the high side: { "plains": 1, "ice sheet": 3 }
+planet 9 touch 1: 13 of 2400 columns step over 75, 0 over 150, largest 149; by biome of the high side: { "plains": 10, "mountains": 3 }
+planet 9 touch 3: 10 of 2400 columns step over 75, 2 over 150, largest 374; by biome of the high side: { "ice sheet": 2, "mountains": 7, "plains": 1 }
+planet 11 touch 1: 0 of 2400 columns step over 75, 0 over 150, largest 67; by biome of the high side: {  }
+planet 11 touch 3: 11 of 2400 columns step over 75, 0 over 150, largest 97; by biome of the high side: { "mountains": 11 }
+planet 25 touch 1: 5 of 2400 columns step over 75, 2 over 150, largest 378; by biome of the high side: { "ice sheet": 4, "desert": 1 }
+planet 25 touch 3: 1 of 2400 columns step over 75, 0 over 150, largest 113; by biome of the high side: { "desert": 1 }

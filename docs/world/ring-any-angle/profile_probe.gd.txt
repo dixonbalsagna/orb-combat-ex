@@ -1,0 +1,47 @@
+extends SceneTree
+# Before-and-after profiles for the report on what a smoother generation loses: the ring's exact column heights against the line between every 4th column (128 units) and every 16th (512 units), around the column
+# where the 64-unit interpolation is worst (the steps) and, for a mountain, where the 512 one is worst. Prints a CSV block per cse.
+func _init() -> void:
+	WorldClimate.useGen(2)
+	for seed in [3, 25, 11, 7]:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 1, {}, {"planet": seed, "touch": 1, "arena": {"cols": 2400}, "planetGen": 2, "intro": false})
+		var NC: int = SimConst.NC
+		var P := WorldPlanet.make(seed)
+		var pr: Dictionary = S.planetRing
+		var ring: Dictionary = WorldRingPick.ringFrom(pr.c, int(pr.cols), pr.t)
+		var raw := PackedFloat64Array()
+		raw.resize(NC)
+		for i in range(NC):
+			raw[i] = float(WorldPlanet.farColumn(P, ring, i, 0.0)[0])
+		for cse in [[2, "steps at 64"], [16, "worst at 512"]]:
+			var k0: int = cse[0]
+			var worst: float = 0.0
+			var wi: int = 0
+			for i in range(NC):
+				var a: int = (i / k0) * k0
+				var t: float = float(i - a) / float(k0)
+				var e: float = absf(raw[a % NC] * (1.0 - t) + raw[(a + k0) % NC] * t - raw[i])
+				if e > worst:
+					worst = e
+					wi = i
+			var lo: int = wi - 60
+			var line1: String = ""
+			var line2: String = ""
+			var line3: String = ""
+			var steep: float = 0.0
+			for i in range(lo, lo + 121):
+				var c: int = posmod(i, NC)
+				var a4: int = (i / 4) * 4
+				var a16: int = (i / 16) * 16
+				var v4: float = raw[posmod(a4, NC)] * (1.0 - float(i - a4) / 4.0) + raw[posmod(a4 + 4, NC)] * (float(i - a4) / 4.0)
+				var v16: float = raw[posmod(a16, NC)] * (1.0 - float(i - a16) / 16.0) + raw[posmod(a16 + 16, NC)] * (float(i - a16) / 16.0)
+				line1 += "%.0f," % raw[c]
+				line2 += "%.0f," % v4
+				line3 += "%.0f," % v16
+				steep = maxf(steep, absf(raw[posmod(i + 1, NC)] - raw[c]))
+			print("CASE planet %d, %s: worst column %d, error %.0f, largest one-column step in the window %.0f, stored biome %d, fine biome %d" % [seed, cse[1], wi, worst, steep, S.planetCols[posmod(wi, NC)], S.planetRing.fine[posmod(wi, NC)] if S.planetRing.has("fine") else -1])
+			print("RAW," + line1)
+			print("G128," + line2)
+			print("G512," + line3)
+	quit()

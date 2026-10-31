@@ -1,0 +1,33 @@
+extends SceneTree
+# How common are steps: columns where the exact ground changes by more than 75 or 150 units in one 32-unit column, and in which biome (stored biome of the higher column).
+func _init() -> void:
+	WorldClimate.useGen(2)
+	var names: Array = ["ocean", "plains", "forest", "desert", "mountains", "ice sheet", "sea ice"]
+	for seed in [1, 2, 3, 5, 7, 9, 11, 25]:
+		for touch in [1, 3]:
+			var S := SimCore.createSim()
+			SimCore.newMatch(S, 1, {}, {"planet": seed, "touch": touch, "arena": {"cols": 2400}, "planetGen": 2, "intro": false})
+			var NC: int = SimConst.NC
+			var P := WorldPlanet.make(seed)
+			var pr: Dictionary = S.planetRing
+			var ring: Dictionary = WorldRingPick.ringFrom(pr.c, int(pr.cols), pr.t)
+			var n75: int = 0
+			var n150: int = 0
+			var mx: float = 0.0
+			var by: Dictionary = {}
+			var prev: float = float(WorldPlanet.farColumn(P, ring, 0, 0.0)[0])
+			var prevb: int = int(WorldPlanet.farColumn(P, ring, 0, 0.0)[1])
+			for i in range(1, NC):
+				var f: Array = WorldPlanet.farColumn(P, ring, i, 0.0)
+				var d: float = absf(float(f[0]) - prev)
+				if d > 75.0:
+					n75 += 1
+					var b: int = int(f[1]) if float(f[0]) > prev else prevb
+					by[names[b] if b < names.size() else str(b)] = int(by.get(names[b] if b < names.size() else str(b), 0)) + 1
+				if d > 150.0:
+					n150 += 1
+				mx = maxf(mx, d)
+				prev = float(f[0])
+				prevb = int(f[1])
+			print("planet %d touch %d: %d of %d columns step over 75, %d over 150, largest %.0f; by biome of the high side: %s" % [seed, touch, n75, NC, n150, mx, str(by)])
+	quit()
