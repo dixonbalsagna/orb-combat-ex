@@ -21,7 +21,7 @@ func _init() -> void:
 	_expect(S.fighters[0].z == -300.0, "the number at 0: he stays, as main does")
 	SimCore.dispose(S)
 	DirPlane.setRate(rate)
-	print("plane_check: %s" % ("passed" if failed == 0 else "FAILED (%d)" % failed))
+	print("PLANE: %d check(s) failed" % failed)
 	quit(1 if failed > 0 else 0)
 
 
