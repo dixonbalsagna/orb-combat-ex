@@ -16,6 +16,7 @@ A nudge is only fair if the fighter appears to choose it. So the line does one j
 |---|---|---|
 | **Notice** | Spots a feature ahead and invites or taunts the opponent toward it | `water`, `coast`, `open`, `high`, `ridge`, `tower`, `seawall`, `road`, `hulls`, `wear`, `cranes`, `wreck` |
 | **Pull** | His own ground calls (the claim in `opponent-grounds.md`), so the bend is a homeward lean | `home` |
+| **Own choice** | A neutral line naming no landmark: he simply decides where to go, for a small bend with nothing worth naming | `own` |
 
 Each fighter has lines for the classes his claim suits (water and open ground for the Protagonist, height for the Rival, plains for the Empress, wreckage for the Cyborg), plus a `tower` and a `home` line. A class is a tag on the landmark, never a place name, so a rename of any ground costs nothing here.
 
@@ -29,7 +30,7 @@ Each fighter has lines for the classes his claim suits (water and open ground fo
 
 ## 4. Legal's limits (RL-213 to RL-215), and where they bite
 
-- **No line says people are the goal** (RL-213 (3)). No line says a swing or a nudge brings the fighter to people. No line mentions people, a crowd or a toll. **Orb's own example** (Bolus nudged toward a city to fill his meter) is kept to steel: the Cyborg's lines name wreckage, hulls, cranes and broken steel, never a city or what is in it. His hunger is for wreckage and fighters only (`voice-bibles.md`, Legal condition 4).
+- **No line says people are the goal** (RL-213 (3)). No line says a swing or a nudge brings the fighter to people. No line mentions people, a crowd or a toll. **Orb's own example** (Bolus nudged toward a city to fill his meter) is kept to steel: the Cyborg's lines name wreckage, hulls, cranes and broken steel, never a city or what is in it. His hunger is for wreckage and fighters only (`voice-bibles.md`, Legal condition 4). **RL-216 (EP, 2026-10-31):** fine are lines like "Smells like scrap that way" and "Sensors say there's metal east", and neutral lines like "I'll take the long way"; not fine is anything naming people or a crowd as the draw ("dinner's in the city") or reward language. The Cyborg feeds by putting scrap into the grille or chest, with no biting, chewing or swallowing words, and so I took "free fuel", "refill" and "snack" out of his nudge lines.
 - **A landmark is a structure, terrain or a place's wear,** never a school, hospital or place of worship (RL-213 (2), RL-214). So there is no chapel and no bell tower class, only `tower`.
 - **A line never answers the toll** (RL-213 (5), RL-215). The class tag comes from the ground ahead; nothing in whether a line fires reads casualties, crowd or menace. The Cyborg's `wear` class means a place's wear state, not what happened in it.
 - **The hero leads toward empty ground** (RL-213 (5)): the Protagonist's lines go to water, open ground and shoreline, which is also his claim.
@@ -43,9 +44,9 @@ Each fighter has lines for the classes his claim suits (water and open ground fo
 4. **Who is nudged:** the player's fighter only, or an AI fighter too (an AI fighter's line is free colour).
 5. **Where the class comes from:** the landmark list the picker already scores (`encounter.md`), mapped to my tags, so I do not invent classes the game cannot report.
 
-## 6. Twenty drafts for Orb to mark (five a fighter)
+## 6. Twenty-four drafts for Orb to mark (six a fighter)
 
-Mark **x** to keep, **alt** to ask for another (I will write one), or type your own. Lint run: 20 lines, 0 failing, no repeats of any approved line.
+Mark **x** to keep, **alt** to ask for another (I will write one), or type your own. The last row for each fighter (`own`) is a neutral line that reads as his own choice, with no landmark named. Lint run: 24 lines, 0 failing, no repeats of any approved line.
 
 | id | Fighter | He sees (class) | Line | Mark |
 |---|---|---|---|---|
@@ -64,11 +65,15 @@ Mark **x** to keep, **alt** to ask for another (I will write one), or type your 
 | NL-13 | Empress | `road` | A straight road, insect! Run along it while we watch! | |
 | NL-14 | Empress | `home` | Our own plains are near! Come and bleed on them! | |
 | NL-15 | Empress | `coast` | That long straight coast is perfect for our beam, clown! Gahaha! | |
-| NL-16 | Cyborg | `wreck` | Wreckage ahead! That's free fuel for my furnace! | |
-| NL-17 | Cyborg | `hulls` | Smells like rusted hulls over there! Race me, snack! | |
-| NL-18 | Cyborg | `wear` | Look at that broken steel! My chassis is craving a refill! | |
+| NL-16 | Cyborg | `wreck` | Wreckage ahead! Scrap straight into the grille! | |
+| NL-17 | Cyborg | `hulls` | Smells like scrap that way! Race me to those hulls! | |
+| NL-18 | Cyborg | `wear` | Broken steel ahead! Straight into the chest furnace it goes! | |
 | NL-19 | Cyborg | `home` | My scrapyard's close! Plenty of rust to burn through! | |
 | NL-20 | Cyborg | `cranes` | Rusty cranes ahead! My chassis is already humming! | |
+| NL-21 | Protagonist | `own` | I'll take the long way round! Try to keep up! | |
+| NL-22 | Rival | `own` | I'll pick the ground this time. Follow me. | |
+| NL-23 | Empress | `own` | We choose the road, insect! Follow, if you dare! | |
+| NL-24 | Cyborg | `own` | Sensors say there's metal east. I'm heading that way! | |
 
 **Trusted most:** NL-01, NL-07, NL-16. **Weakest:** NL-05 (the Protagonist's longest) and NL-15 (the beam tie is a stretch).
-**For Legal to read closely:** the Cyborg's NL-16 to NL-20 (hunger aimed at steel, as Orb's city example is turned into wreckage), and "bleed on them" in NL-14.
+**For Legal to read closely:** the Cyborg's NL-16 to NL-20 and NL-24 (feeding on scrap through the grille or chest, as Orb's city example is turned into wreckage), and "bleed on them" in NL-14.
