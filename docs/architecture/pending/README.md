@@ -2,7 +2,7 @@
 
 Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator, the sim or Godot (`docs/` is hidden from Godot). It holds slices that are built and proven in a scratch copy and wait for the sim slot.
 
-Nothing is parked.
+**Parked:** `spawn-floor/` starts a fighter on the floor of a lake or the sea, by every door into a match; it stands on World's `docs/world/pending/sea-floor/`. `parity-fixtures/` moves parity's fixtures into a folder of the run's, so two runs at once don't share them. Each README has the proof.
 
 The computer's level in the replay header from the match's setup (`ai-level-hash/`, UI's patch with one line of mine in `sim.gd`) was applied in 0ba71199 with Encounter's review, the cross-process replay check (`replay-xproc/`, `../determinism.md` section 10) in bed20962 with Tools' CI steps, Netcode's two lines for a past snapshot's hash (`simhash-past-roots/`) in 8591e30a, a planet's data in the header (`density-hash/`) in 6a993bd8, and the rest of it (`planet-header/`: `lakes.json` and `ground.json` for gen 2, `rings.json`'s `turn` while the turn is on) in 43c4d272 with World's lake-floor; their folders are deleted.
 

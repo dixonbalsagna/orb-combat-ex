@@ -11,9 +11,11 @@ const DEFAULT_GOLDEN := "res://sim/core/test/golden.json"
 const LIT_RE := "(?<![\\w.])(\\d+\\.\\d+(?:e[+-]?\\d+)?|\\d+e[+-]?\\d+)(?![\\w.])"
 
 var failures: int = 0
+var fixtures: String = "user://parity_%d/" % OS.get_process_id()   # this run's edited copies of the data: user:// is one folder for every copy of the project on the PC, so two runs at once must not share one
 
 
 func _init() -> void:
+	_dropFixtures(fixtures)   # a killed run's, if this process has its number
 	var t0: int = Time.get_ticks_usec()
 	var path: String = DEFAULT_GOLDEN
 	var bench: bool = true
@@ -111,9 +113,21 @@ func _init() -> void:
 	print("      (matches and replays: %.1f s)" % ((Time.get_ticks_usec() - tm) / 1e6))
 	if bench:
 		_bench()
+	_dropFixtures(fixtures)
 	print("time  %.1f s" % ((Time.get_ticks_usec() - t0) / 1e6))
 	print("\ngolden check FAILED" if failures else "\ngolden check passed")
 	quit(1 if failures else 0)
+
+
+## A folder of fixtures and everything in it, gone.
+func _dropFixtures(dir: String) -> void:
+	if not DirAccess.dir_exists_absolute(dir):
+		return
+	for d in DirAccess.get_directories_at(dir):
+		_dropFixtures(dir + d + "/")
+	for f in DirAccess.get_files_at(dir):
+		DirAccess.remove_absolute(dir + f)
+	DirAccess.remove_absolute(dir)
 
 
 ## err is "" for a pass. Anything else fails, including null: a check that stops on a script error returns null, and must
@@ -452,7 +466,7 @@ func _actState() -> String:
 		return "the second transform: tier %s, ready %s" % [str(a.tier), str(a.act.formReady)]
 	SimCore.dispose(S)
 	# ... and off, from a copy of the data: the tier rises by itself
-	var dir := "user://i2a_gate/"
+	var dir: String = fixtures + "i2a_gate/"
 	for id in ["PROTAGONIST", "RIVAL"]:
 		DirAccess.make_dir_recursive_absolute(dir + id)
 		for fname in ["fighter.json", "wounds.json", "meters.json", "ladder.json"]:
@@ -3628,7 +3642,7 @@ func _sharedFiles() -> String:
 	var out: String = ""
 	FighterData.quiet = true
 	var mk := func(tag: String, files: Dictionary) -> String:
-		var dir: String = "user://shared_files/%s/" % tag
+		var dir: String = fixtures + "shared_files/%s/" % tag
 		for id in FighterData.order():
 			DirAccess.make_dir_recursive_absolute(dir + id)
 			for fname in ["fighter.json", "meters.json"]:
@@ -3752,7 +3766,7 @@ func _dummyFighter() -> String:
 		return "a replay of the dummy does not carry his data hash, or does not play back"
 	# his data change: the roster's hash and his own replays move; a replay of the other two does not
 	var h0: String = FighterData.dataHash()
-	var dir := "user://dummy_fixture/"
+	var dir: String = fixtures + "dummy_fixture/"
 	for id in FighterData.order():
 		DirAccess.make_dir_recursive_absolute(dir + id)
 		for fname in ["fighter.json", "meters.json"]:
@@ -4057,7 +4071,7 @@ func _rosterRejects() -> String:
 	var err: String = ""
 	FighterData.quiet = true
 	for c in cases:
-		var dir: String = "user://d1a_fixtures/%s/" % c[0]
+		var dir: String = fixtures + "d1a_fixtures/%s/" % c[0]
 		DirAccess.make_dir_recursive_absolute(dir + "PROTAGONIST")
 		var ros := FileAccess.open(dir + "roster.json", FileAccess.WRITE)
 		ros.store_string("[\"PROTAGONIST\", \"PROTAGONIST\"]" if c[0] == "dup" else "[\"PROTAGONIST\"]")
@@ -4086,7 +4100,7 @@ func _rosterRejects() -> String:
 		return err
 	var numberBlind: bool = hashes.note == hashes.number
 	# The note fixture is PROTAGONIST alone, so compare it with PROTAGONIST alone unedited: the dup-free base is the "number" case minus the edit.
-	var plain := "user://d1a_fixtures/plain/"
+	var plain: String = fixtures + "d1a_fixtures/plain/"
 	DirAccess.make_dir_recursive_absolute(plain + "PROTAGONIST")
 	var rp := FileAccess.open(plain + "roster.json", FileAccess.WRITE)
 	rp.store_string("[\"PROTAGONIST\"]")
@@ -4098,7 +4112,7 @@ func _rosterRejects() -> String:
 	FighterData.loadFrom(plain)
 	var hPlain: String = FighterData.dataHash()
 	# A third fighter from data alone (the stage-5 modding test in miniature): PROTAGONIST's files copied as TEST, no code change.
-	var third := "user://d1a_fixtures/third/"
+	var third: String = fixtures + "d1a_fixtures/third/"
 	for id in ["PROTAGONIST", "TEST"]:
 		DirAccess.make_dir_recursive_absolute(third + id)
 		for fname in base:
@@ -4208,7 +4222,7 @@ func _wiredNumbers() -> String:
 	FighterData.quiet = true
 	for i in range(WIRED.size()):
 		var c: Array = WIRED[i]
-		var dir: String = "user://d1b_wired/%d/" % i
+		var dir: String = fixtures + "d1b_wired/%d/" % i
 		for id in ["PROTAGONIST", "RIVAL"]:
 			DirAccess.make_dir_recursive_absolute(dir + id)
 		var rf := FileAccess.open(dir + "roster.json", FileAccess.WRITE)
