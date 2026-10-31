@@ -44,9 +44,9 @@ Each fighter has lines for the classes his claim suits (water and open ground fo
 4. **Who is nudged:** the player's fighter only, or an AI fighter too (an AI fighter's line is free colour).
 5. **Where the class comes from:** the landmark list the picker already scores (`encounter.md`), mapped to my tags, so I do not invent classes the game cannot report.
 
-## 6. Twenty-four drafts for Orb to mark (six a fighter)
+## 6. Twenty-eight drafts for Orb to mark (six a fighter, ten for the Cyborg)
 
-Mark **x** to keep, **alt** to ask for another (I will write one), or type your own. The last row for each fighter (`own`) is a neutral line that reads as his own choice, with no landmark named. Lint run: 24 lines, 0 failing, no repeats of any approved line.
+Mark **x** to keep, **alt** to ask for another (I will write one), or type your own. The last row for each fighter (`own`) is a neutral line that reads as his own choice, with no landmark named. Lint run: 28 lines, 0 failing, no repeats of any approved line.
 
 | id | Fighter | He sees (class) | Line | Mark |
 |---|---|---|---|---|
@@ -74,6 +74,19 @@ Mark **x** to keep, **alt** to ask for another (I will write one), or type your 
 | NL-22 | Rival | `own` | I'll pick the ground this time. Follow me. | |
 | NL-23 | Empress | `own` | We choose the road, insect! Follow, if you dare! | |
 | NL-24 | Cyborg | `own` | Sensors say there's metal east. I'm heading that way! | |
+| NL-25 | Cyborg | `lab` | Sensors say there's a sealed lab that way! Prime parts! | |
+| NL-26 | Cyborg | `lab` | That frozen lab's got better parts than any wreck! | |
+| NL-27 | Cyborg | `lab` | Clean circuits, buried deep! I'm taking the long way. | |
+| NL-28 | Cyborg | `lab` | Hidden lab ahead! My chassis wants real components! | |
 
 **Trusted most:** NL-01, NL-07, NL-16. **Weakest:** NL-05 (the Protagonist's longest) and NL-15 (the beam tie is a stretch).
-**For Legal to read closely:** the Cyborg's NL-16 to NL-20 and NL-24 (feeding on scrap through the grille or chest, as Orb's city example is turned into wreckage), and "bleed on them" in NL-14.
+**For Legal to read closely:** the Cyborg's NL-16 to NL-20 and NL-24 and the lab lines NL-25 to NL-28 (feeding on scrap and parts through the grille or chest, as Orb's city example is turned into wreckage), and "bleed on them" in NL-14.
+
+## 7. The Cyborg's components (Orb, 2026-10-31; templates only)
+
+Orb: Bolus should gather tech components from ruined skyscrapers, and better ones from secret labs around the world, including an Antarctic one, so he stays a real threat while seeking destruction. Orb writes the universe, so this page only says what it does for the lines.
+
+- **His vocabulary grows from "scrap" to "scrap and components".** Wreckage, hulls, cranes and broken steel stay (the `wreck`, `wear` and `cranes` classes). Ruined towers become parts: "components", "circuits", "parts", put into the grille or chest. This is a better fit than the old hunger lines because nothing in it has to be eaten, which is also what RL-216 asks.
+- **A new class, `lab`:** a sealed or hidden place with better parts, the pull that makes him leave the nearest wreck. Four drafts (NL-25 to NL-28). The lines name a place and parts only, never anyone inside it, and use no reward word.
+- **The line is still the licence** (section 1): a `lab` nudge needs its line, like any other.
+- **Two questions for Orb, not answered here:** (1) A lab in the far south would take a polar outpost, and `opponent-grounds.md` keeps the poles free for a later fighter; which wins? (2) Does a lab tie into where Bolus comes from (his working title in `identity.md` is a bio-mech experiment)? I have invented nothing: the lines say "a lab" and "better parts", not whose or why.
