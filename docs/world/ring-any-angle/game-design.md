@@ -1,92 +1,109 @@
-# The ring at any angle: what it should do for play
+# The ring at any angle: what a swing does in play
 
-Owner: Game Design, by the EP's brief. Research page, 2026-10-30. Nothing here is built or measured by me; rates are first values, and the geometry is my arithmetic for World to check. Orb: "push this idea to the limit, the angle the fighters fight along the surface of the planet should be ready to dynamically adjust and change determined by the fight choreographer and any other necessary game system." The relative band stays the same always.
+Owner: Game Design, by the EP's brief. Rulings for the turntable, 2026-10-31; nothing is built or measured by me. Every number is a first value, and the arithmetic is mine for World and Camera to check. Orb's words: "the angle the fighters fight along the surface of the planet should be ready to dynamically adjust and change determined by the fight choreographer and any other necessary game system", with the fighters "always on the same relative band". After trying the prototype: "the turntable approach in E and E2 seems to be closest to my vision." So **the world visibly swings round the fighters.**
 
-## The plain answer
+**This replaces my page of 2026-10-30,** which ruled a large step hidden at a launch and asked whether a visible swing was Orb's picture. It is. What stays from it: a launch is the best moment, every big move should arrive at something, and a player steers through the fight, never by a control.
 
-**No play goal I can find needs a ring that changes every tick. All of them need one thing today's turn can't do: a large step, at any angle up to 180°, while things are moving. Above all, at a launch's first tick.**
+## The rules in short
 
-- **Must build:** any angle, at a launch's stop, with beams and shots possibly in flight, about 2 to 5 times a match.
-- **Shouldn't build yet:** frequent small steps. A hunt can use one large step instead, and at today's cost (38 to 60 ms a swap, a quarter of a second on the old-laptop CPU: `docs/performance/arena-turn-2026-10-23.md`) frequent steps would break Orb's no-frame-drop rule. They come back only if Orb plays it and misses them.
-- **Orb's call:** if what Orb pictures is a flight visibly curving round the planet, that is a look rather than a play goal. It may be had from the far land's render-only drift (World's window 2) and never touch the sim. This is the one question that could change the answer, so it's worth asking.
+1. **A swing changes what the fight is in front of, and nothing in the fight.** Fighters, gaps, velocities and the stick all work along the line exactly as they do now. The world turns behind them.
+2. **It never refuses, it slows.** A swing's rate falls with the gap, so no gap needs a limit: `rate = min(rate for its cause, sweep limit / distance from the pivot)`.
+3. **The pivot is the fighter on the ground.** Only a standing fighter can feel the ground move, so he's the one kept still.
+4. **It runs in a launch, a chase, a form's pause and, slowly, a brawl. It stops for a beam.**
 
-## Why the launch's first tick
+## 1. The six hard tests, against a visible swing
 
-**My calm-moment rulings chose the worst moment for this.** A turn about the pair's midpoint moves the ground under each fighter by `s × sin(θ / 2)`, where `s` is the gap between them.
+| # | The test (2026-10-30) | Now | Why |
+| :--- | :--- | :--- | :--- |
+| 1 | The rival stays on the same side of the screen | **Kept** | It needs no effort: the order along the line is untouched at any angle. A swing past 180° doesn't flip anyone |
+| 2 | Everything in reach unchanged | **Amended: the rival and his reach are exact. The ground moves, at a walking pace at most, and a face never arrives.** | Written for an instant step, where the ground would jump. A swing can't keep the ground the same, because a turn is new ground, but it can make it slow. In numbers: a standing fighter's ground moves at most 75 units a second (1 bh a second, §3), and a swing eases to rest before a building's face reaches him |
+| 3 | Attacks close as before | **Kept** | The gap is along the line, and a swing doesn't touch it. Pillar 3 holds with no new rule |
+| 4 | A visible cause; never in a brawl | **Split. "A visible cause" is withdrawn, and "never in a brawl" becomes "slowly in a brawl".** | A swing is its own visible cause. The reason for the brawl ban was surroundings jumping under a pressing player, and a swing doesn't jump. What's left is distraction, which is a matter of rate (§2). **Kept from it: a swing never starts from a press, so it can't be used as a dodge** |
+| 5 | No marker, dissolve or fade; instant change justified | **Kept, and tightened: no instant change at all.** A swing eases in and out, per Orb's rule on the camera | The whole point is that it's seen |
+| 6 | The world remembers | **Kept, and it's now on screen.** The crater he just dug has to swing away with the ground, and a tower has to keep its damage as it goes | A mark that changes in view is a bug the player sees at once |
+| 7 | **New: the world turns as a solid thing** | **Added** | The prototype re-lays the ground from a field each tick, and its pop figure is large (356 units on E, 115 on E2). Ground that morphs instead of rotating fails this, whatever the numbers. The look gate decides, and Rendering and World own it |
 
-| Gap between them | When | Largest turn inside the 450-unit ground rule |
-| ---: | :--- | ---: |
-| 150 to 450 units | **In reach: a launch's stop** | **Any angle** |
-| 3,000 | Part-way through a chase | 17° |
-| 6,000 | **After a long launch has landed: the moment I ruled** | 8.6° |
+## 2. What fires it, how fast, how far, how often
 
-So I asked for turns when the pair is furthest apart and nothing is moving. Calm moments almost never come: six Half-ring matches gave 0 asks, and 2 asks and 0 turns with Encounter's parked fix. At a launch's stop the pair is together, the camera already owns the moment (push, then whip), and the hit-stop holds the picture still for 12 to 16 ticks, which is about as long as the swap's quarter-second hitch on the slow machine. The launch also explains the change: he was hit, and now he's flying somewhere new.
+Rates are at the peak, with 20 ticks of easing in and 20 out. The prototype's 30°/s is a starting number; a launch needs more.
 
-**The catch, for World and Performance:** the rings have to be read before the swap (75 to 140 ticks today), so the pick has to come about 2 s before the blow. The director would keep the likeliest destination warm during a brawl, which costs 5 to 8 ms a frame on the slow CPU. And the surroundings beside the pair change at the swap, so whether that reads as force or as a glitch is the look gate's question.
+| Moment | Runs? | Fires on | Peak rate | How far | How often in a 6 to 8 minute match |
+| :--- | :--- | :--- | ---: | :--- | ---: |
+| **A launch** | **Yes, the main use** | The kick, once the hit-stop ends, when the planner's arrival is off to one side. **It eases to rest by the arrival** (the curve's last 10 ticks), so he meets a still world and the planner's aim holds | **60°/s** | Up to 180°, as far as his flight has time for: about 55° in a 1.6 s full launch at 45°/s, or 90° in 1.8 s at 60°/s | 2 to 5 |
+| **A chase, a flee, a zip away** | **Yes** | The chase's or the flee's start. The hero leads toward interesting empty ground, the villain hunts toward towns. Later small corrections are fine, as both are in the air | 45°/s | Any | 1 to 3 |
+| **A form's pause** | **Yes** | The pause, as the camera's orbit. Nothing moves, so it's the easiest place | 30°/s | Up to 90° | 1 to 3 |
+| **A brawl, a rally, a knock-back** | **Yes, slowly** | Nothing else has fired for about 45 s and something worth seeing lies within 60°. A swing running when a chase catches up eases down to this rate rather than stopping | **10°/s** | Up to 60° | 2 to 4 |
+| **A beam** | **No** | A swing eases to rest in the beam's tell (about 33 ticks, so the ease fits) and stays there until the beam is gone. Otherwise the groove curves, the blast misses what the plan aimed at, and the damage inset can't credit it. Shots and mines are unaffected | 0 | | |
+| **A beam struggle** | **Not at first** | It's an obvious set piece for a slow orbit, for Orb's look later. The rooted pair may stand far apart, so it would hardly turn anyway | 0 | | |
+| **The hit-stop, a finisher, a KO, the intro, a grab's set piece** | **No** | Frozen in a hit-stop (live ticks only), and the camera owns the others | 0 | | |
 
-## What each use needs
+- **How often, in total: 6 to 12 swings a match, about 10 to 15% of fight time.** This comes from a score that falls with how recent the last swing was, not a cap, and Orb's "bigger or more often" after seeing it moves the score. **If Performance's budget can't carry that, the order to cut is brawls first, then form pauses, then chases.** A launch's swing is the last to go.
+- **Every launch or chase swing arrives at something:** the planner scores the arrival. A brawl's swing brings something into view. A swing to nothing isn't taken.
+- **The ceiling is Camera's travel budget:** 0.045 of the width a tick, 0.03 under Reduce flashing. Far scenery pans at the swing's own angle rate, so at a field of view near 40° (my guess, for Camera to give) 60°/s is about 0.025. It fits both, and it's a look-gate and flash reading rather than a taste call.
+- **Reduced motion:** a swing is a whole-view move, so it needs a slower setting. The rate is in the sim, so it's a setup value: half the rates, the lower of two players' settings online. Orb's rule that accessibility is assumed makes this a requirement.
+- **Long trips are its best home.** A swing during a long flight is also the cheapest answer I have to Orb's "experience of speed and power": the far land wheeling past as he crosses it.
 
-| Use | The step | When | How often (first values) | Needs any-tick change? |
-| :--- | :--- | :--- | ---: | :--- |
-| **Destination launch:** into a city, a landmark, a mountain | Any angle | The launch's stop | 1 to 3 a match, about one launch in four | **No:** large, while moving |
-| **The villain hunts toward towns** | Any angle | His launches; his chase's start | 0 to 2 a match | **No:** large, while moving |
-| **The hero flees or leads away** | Up to about 90° | His launches; the start of his zip away or escape | 0 to 2 a match | **No:** large, while moving |
-| **Home ground in a fight** | Any angle | A launch's stop, or a form step's pause | 0 to 1 a match | **No:** large, moving or calm |
-| **Story stages** | None: the ring is chosen at setup (`rulings-2026-10-19b.md` §2b) | Setup | Once | **No:** already designed |
-| **A set piece bringing a landmark into view** | Small | A set piece's end, as ruled | 0 to 2 a match | **No:** today's machinery |
-| **Mid-course correction on a long flight** | Small, frequent | During a flight | Not proposed | **No goal needs it.** Frequent small steps, if ever |
-| **Stealth, later** | None | | | **No.** Hiding needs each player to see differently, and a ring is shared, so it can't come from this |
+**The pivot.** A standing fighter if exactly one is standing: his ground sweeps nothing. The midpoint if both or neither are. A change of pivot leaves everything where it is and only changes how it moves next, so it eases over 20 ticks and never pops.
 
-**In all, 2 to 5 large steps a match.** This should come from a score that falls with how recent the last one was, not a cap, as Orb prefers soft costs.
+## 3. A far fighter's ground
 
-## What's fun, and at what rate
+A fighter at distance `r` from the pivot sees ground move at `r × rate` (over a whole turn, the chord `s sin(θ/2)` for a pair turning about their midpoint). **So I replace a limit on the angle with a limit on that speed:**
 
-- **Every step must arrive at something.** A step toward nothing isn't taken: the planner scores the arrival, as it scores a building today. This goes straight at what Orb liked (building destruction, biome variety) and at what QA found: 67 to 84% of avoided beams have no building in reach, and most long trips are unexamined (`rulings-2026-10-30f.md` row 6).
-- **Most launches stay ordinary.** If every launch finds a city, a city stops meaning anything, and cities run out.
-- **The hero steers toward interesting empty places, not just away.** Mountains, forest and ice, not the nearest ocean: his lure's old side effect was most fights ending over water, and that's the trap to avoid.
-- **The villain's steering is bounded by bands that already exist:** civilians lost at the KO 12 to 30%, structures levelled by tier, the budget ("the people got away"). No new reward for reaching people, which keeps Legal's c08 where it was. **It should still have a Legal read,** because the choreographer now takes a fight toward people on purpose.
-- **It never decides a match.** Steering carries no damage bonus. QA's win-rate rows hold.
+| | Sweep limit | Why |
+| :--- | ---: | :--- |
+| **Standing:** on the ground, on the water's floor, down, buried, skidding | **75 units a second (1 bh a second)** | About what a fighter's feet can hide. Faster reads as him skating sideways |
+| **Airborne** | **6,000 units a second (80 bh a second)** | About launch speed: he already crosses ground this fast, so the world adds no new speed to the picture |
 
-## What a player must always be able to read
+**So what gap allows a swing? Any. It just slows:**
 
-These are hard tests, not aims:
+| Both standing, gap | Fastest rate | | One standing, gap to the other | Fastest rate |
+| ---: | ---: | | ---: | ---: |
+| 150 | 57°/s | | up to 5,700 | 60°/s |
+| 300 | 29°/s | | 15,000 | 23°/s |
+| 1,000 | 8.6°/s | | 30,000 | 11°/s |
+| 3,000 | 2.9°/s | | | |
+| 6,000 | 1.4°/s | | | |
 
-1. **The rival stays on the same side of the screen across a step,** so a held stick still means what it meant. At 180° the ring's direction is flipped to keep this.
-2. **Everything in reach is unchanged:** the ground under him within the ground rule, the rival, the band and his place in it.
-3. **Attacks close as before.** The gap across a step is the gap before it, within the ground rule.
-4. **A step has a visible cause,** a launch or a set piece, and never happens in a brawl. A brawl's surroundings don't rearrange while he's pressing.
-5. **No marker, arrow or prompt** (`minimal-hud.md`), no dissolve, no fade (Orb, 2026-10-18), and the camera's move is the whip it already makes. Any instant change must be justified, per Orb's rule on the camera.
-6. **The world remembers.** A fallen tower is still fallen, on any ring that passes it.
+- **Under 2°/s it holds still,** since it wouldn't read as a swing: two standing fighters over about 4,300 apart. That's a held swing rather than a refused one, and it carries on once one takes off. It's also why a launch's swing has to finish before he lands.
+- **This withdraws the 300 and 450-unit ground rules:** those limited a jump, and nothing jumps now.
+- **Ground that rises under a standing fighter** is handled by the rule for a waded body (`rulings-2026-10-30.md` row 9): at most 7.5 units a tick, and he keeps the stick. At 75 units a second of sweep, that only bites on a cliff.
+- **A building's face and a standing fighter:** the swing eases to rest 0.5 bh short (`depth.md` §2's clearance). The director should pick a bearing that avoids it, and this is the backstop.
+- **A building's face and an airborne fighter:** it passes through him with no damage and no stop, shown with the existing see-through. **A sweep is never a contact, and only his own flight makes one.** At up to 6,000 units a second it would otherwise be a free slam from nobody's blow. QA counts these, because that's what would make this look wrong.
 
-**The destination should be readable before it arrives where possible:** the far land already shows the planet's own ground (`farColumn`), so a city on the horizon can be where he's then sent. This is only scenery and promises nothing.
+## 4. A held stick
 
-## May a player steer it?
+**It means exactly what it meant.** Stick right is screen right, along the line. **The rival stays on the same side of the screen,** always. A swing adds no velocity, no push and no drift, and his velocity along the line is untouched, so holding right through a swing carries him along a curve on the planet without his doing anything or feeling a tug. Altitude, the right stick and every aim read as before. **No control steers a swing:** the stick's kind still wins for a launch (`stickWins`), and where he drags or flees a fight still leans it.
 
-**Through the fight, yes. By a control, no.** The stick still picks a launch's kind (up, down, across), and a held stick still wins (`launch_biome.json` `stickWins`). The direction he drags a fight and flees still lean the side (`rulings-2026-10-19b.md` 1c). The bearing itself is the choreographer's, which fits "the player nudges, the director stages" and Orb's "rule of cool takes precedence". There's no spare control (ADR 0009, the right hand now full), and aiming at places a player can't see isn't a skill.
+## 5. The relative band, and the depth ruling
 
-**A fighter's own trait could change this later:** one who chooses their ground is good roster material. That's a fighter idea, not a base rule.
+**Option A stands** (`rulings-2026-10-30f.md` row 9), and **it should land before any of this.** With depth off, a fighter eases back to the plane after every flight at 20 units a tick, eased in and out, so 60 ticks for the largest gap of 1,200 and 15 for 300. Burials, holds and set pieces delay it. No snap: an attacker's close takes him to an off-plane target's depth. He passes through a face with no damage, with the existing see-through. QA's row: gaps over 30 under 0.5% of strikes, the largest at most 75, no standing face in the gap as a hard test, eases through faces reported.
 
-## The earlier limits this reopens
+**The relative band under a swing:** the line through the pair is the band's centre, and the band turns with it. A fighter's depth is relative to that line, so a swing never changes it, and the ease in row 9 runs through a swing unchanged.
 
-| Ruling | Today | Now |
-| :--- | :--- | :--- |
-| 1a, calm ticks only, nothing in flight | The only moments | **Reopened.** A launch's stop is added and comes first. What's in flight gets carried across. **Kept:** never in a brawl, never under a dissolve or wipe |
-| 1b, at most 10°, 4 a fight, 60 s apart, 40° of drift | Hard caps | **Withdrawn.** The ground rule and the falling score replace them |
-| 1c, leans the way the fight was pushed; no button | Stands | **Kept** |
-| 1d, off until built and played | Stands | **Kept** |
-| 1e, "a turn changes what is seen, not where the fight is" | The hero may bring a city into view | **Overturned:** a step now decides where the fight goes, so the hero's care counts against it in full |
-| 1f and 1h, the ground rule, 300 and 450 units | Applies to both fighters | **Kept, at 450, and only for a fighter on the ground.** One in flight has nothing at his feet to notice. World's measure |
-| 2d, prefers the opponent's ground | Stands | **Kept, and now it can actually happen** |
-| 3d, a launch carries at most a sixth of the loop | Stands | **Kept** |
+**What a swing later makes unnecessary.** The hits came from building-aimed flights moving a fighter 1,200 in depth. A swing can bring the building onto the line instead, with no depth move at all. Encounter should plan to retire those depth moves once swings are on. Option A stays as the safety net, and it's needed now.
 
-## Pillars 1 and 3
+## 6. Pillars, and what I withdraw
 
-**Pillar 1, the planet is the arena: this makes it truer.** Today a fight is a loop on a planet. With this, it's the planet. Every ring still wraps, with no walls or corners. **What changes:** flying on returns you to where you started only if no step happened in between. I accept that. A player's map becomes a planet rather than a loop, and "fly either way" stays true.
+**Pillar 1, the planet is the arena:** truer. It's now visibly a planet. Flying on returns you to where you started only if nothing swung in between, and I accept that. **Pillar 3, never out of range:** untouched, because the gap is along the line and the pair are always on one line. It must never become a dodge, hence test 4.
 
-**Pillar 3, never out of range: it holds because the ring is shared.** Both fighters are always on the one ring, and distance is always read along it, so no step can put the rival somewhere an attack can't reach, and the escape stays a gamble rather than a way off the map. **It must never become a dodge:** a step comes from a launch or set piece, and never from a press that would escape a blow.
+| `rulings-2026-10-19b.md` | Now |
+| :--- | :--- |
+| 1a, calm ticks only, never in a brawl, under a hard cut | **Withdrawn,** for swings. No cut at all. Never under a dissolve or wipe stays |
+| 1b, at most 10°, 4 a fight, 60 s apart, 40° of drift | **Withdrawn:** the falling score and §3's sweep limit replace them |
+| 1c, leans the way the fight was pushed; no button | **Kept** |
+| 1d, off until built and played | **Kept** |
+| 1e, the hero may bring a city into view | **Overturned:** a swing decides where the fight goes, so his care counts in full |
+| 1f, 1h, the ground rules | **Withdrawn** (§3) |
+| 2d, prefers the opponent's ground | **Kept** |
+| 3d, a launch carries at most a sixth of the loop | **Kept** |
 
-## What I need measured before these numbers mean anything
+**Still bounded by bands that exist:** civilians lost at the KO 12 to 30%, and structures levelled by tier. No reward for reaching people. **Legal still owes a read,** because the choreographer takes a fight toward people on purpose.
 
-1. **World:** for each launch in a match, is there a place worth arriving at within launch range (6,000 units) at any bearing, against on the ring as it is? This is what sets the payoff and the 1 to 3 a match, and it's cheap to read from planet data. Also check the geometry above.
-2. **World and Performance:** the swap's cost at a launch's stop with things in flight, and whether a hit-stop can hide it on the laptop budget. If it can't, the rate above comes down.
-3. **Orb, once it can be seen:** does a large step at a launch read as force, or as the world jumping? Nothing else on this page matters if it's the second.
+## 7. What this rests on
+
+- **The cost.** Research has the turntable an order of magnitude dearer than the ribbon, and over budget on the laptop while turning (E2's p99 is 46 ms against a 50 ms frame limit and a 0.2 ms read budget; E is 270 ms). My 10 to 15% of fight time assumes that gets solved. **If it can't, launches only, at about 12 s a match, is the smallest version that's still Orb's picture.**
+- **Places by plan.** A swing through a town needs buildings that stay themselves at any angle. Until then swings are honest only over open ground, and buildings are the thing Orb likes most.
+- **Netcode's lead.** Research's 20-tick lead makes a bend final before it's laid, and a launch's stop is only 12 to 16 ticks, so a swing's ask may have to come a few ticks before the blow lands. Netcode's to say.
+- **Nobody has seen real fighters in a swing.** The prototype has bars in scripted fights.
+
+**For Orb, one question, once a swing can be seen with real fighters:** should the world swing while you're fighting up close, or only when the fight is flying? It decides the most cost: a pressing player's brawls are about half of fight time. My first value is slowly, at 10°/s, and it's the first thing I'd cut.

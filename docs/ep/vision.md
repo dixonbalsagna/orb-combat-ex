@@ -1540,4 +1540,6 @@ Orb locked the canonical names from a naming session run through Gemini: **Grist
 
 "with the intersection on the global region map changing throughout a fight the fighters should always be on the same relative band." Then: "push this idea to the limit, the angle the fighters fight along the surface of the planet should be ready to dynamically adjust and change determined by the fight choreographer and any other necessary game system. run a big research pass to determine a route to make this feasible."
 
+**Orb's pick after trying the prototype (2026-10-31):** "I tried the prototype here and as far as I can tell the turntable approach in E and E2 seems to be closest to my vision. Lets work exclusively on this arena situation for now." So the world visibly swings round the fighters, rather than the fight heading somewhere new past the camera's edge.
+
 **Orb on the goal (same night):** "I'm eager to know if fighting across a full planet is achievable. the strict definition of flying a full 360 degree loop around the equator of the planet isn't the end-all goal, but to effectively communicate to the player the experience of speed and power that comes with being a martial artist who is capable of making such a trip through the sheer power of will."
