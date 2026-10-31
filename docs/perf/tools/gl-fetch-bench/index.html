@@ -93,6 +93,41 @@ precision mediump float; out vec4 o; void main() { o = vec4(0.2, 0.5, 0.3, 1.0);
     window.__benchResult = { head: out.renderer };
     window.__perfcsv = 'K,verts,best_ms,median_ms\n' + res.map((r) => r.join(',')).join('\n') + '\n';
   };
+  // ?extra=fill (stage-web.mjs run --extra fill): a fill-bound bench instead, for the question of why an iGPU's frame time moves when the CPU is busy. A full-screen triangle drawn 8 times
+  // (overdraw) at 1280 x 720: 'alu' is arithmetic only, 'texNear' reads a 2048 x 2048 RGBA8 texture coherently, 'texFar' reads it at a hashed place per layer (cache-unfriendly, memory-bound).
+  // 40 batches of 10 draws each; the CSV gives min, median and max over the batches, so the spread is visible.
+  const fillBench = async () => {
+    const vs = `#version 300 es
+void main() { vec2 p = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2); gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0); }`;
+    const fsrc2 = (body) => `#version 300 es
+precision highp float; uniform sampler2D t; uniform float k; out vec4 o;
+void main() { vec2 uv = gl_FragCoord.xy / vec2(1280.0, 720.0); vec4 a = vec4(0.0);
+${body}
+o = a * 0.01; }`;
+    const bodies = {
+      alu: 'for (int i = 0; i < 96; i++) { a += sin(uv.xyxy * float(i) + k) * cos(a.zwxy + float(i)); }',
+      texNear: 'for (int i = 0; i < 8; i++) { a += texture(t, uv + vec2(float(i) * 0.0001, k * 0.0)); }',
+      texFar: 'for (int i = 0; i < 8; i++) { vec2 h = fract(sin(uv * 91.7 + float(i) * 13.1 + k) * 43758.5453); a += texture(t, h); }',
+    };
+    const t2 = gl.createTexture(); gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, t2);
+    const d = new Uint8Array(2048 * 2048 * 4); for (let i = 0; i < d.length; i++) d[i] = (i * 2654435761) >>> 24;
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 2048, 2048, 0, gl.RGBA, gl.UNSIGNED_BYTE, d);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    const rows = [];
+    for (const [name, body] of Object.entries(bodies)) {
+      const mk = (type, src) => { const sh = gl.createShader(type); gl.shaderSource(sh, src); gl.compileShader(sh); if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh)); return sh; };
+      const p = gl.createProgram(); gl.attachShader(p, mk(gl.VERTEX_SHADER, vs)); gl.attachShader(p, mk(gl.FRAGMENT_SHADER, fsrc2(body))); gl.linkProgram(p); gl.useProgram(p);
+      gl.uniform1i(gl.getUniformLocation(p, 't'), 2); const uk = gl.getUniformLocation(p, 'k'); gl.viewport(0, 0, 1280, 720);
+      const batch = () => { const t0 = performance.now(); for (let i = 0; i < 10; i++) { gl.uniform1f(uk, i); gl.drawArrays(gl.TRIANGLES, 0, 3); } gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); return (performance.now() - t0) / 10; };
+      batch(); batch();
+      const v = []; for (let b = 0; b < 40; b++) { v.push(batch()); if (b % 8 === 7) await new Promise((r) => setTimeout(r, 20)); }
+      v.sort((a, b) => a - b);
+      rows.push([name, v[0].toFixed(3), v[20].toFixed(3), v[39].toFixed(3)]);
+    }
+    window.__benchResult = { head: out.renderer };
+    window.__perfcsv = ['variant,min_ms,median_ms,max_ms', ...rows.map((r) => r.join(','))].join(String.fromCharCode(10)) + String.fromCharCode(10);
+  };
+  if ((new URLSearchParams(location.search).get('extra') || '').includes('fill')) { fillBench().catch((e) => { window.__perfcsv = 'error,' + String(e).split(String.fromCharCode(10)).join(' ').split(',').join(' ') + String.fromCharCode(10); }); return; }
   run().catch((e) => { window.__perfcsv = 'error,' + String(e).replace(/[\n,]/g, ' ') + '\n'; });
 })();
 </script></body></html>

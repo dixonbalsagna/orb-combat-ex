@@ -36,6 +36,7 @@ function benchArgs() {
   if (q.get('stress')) a.push('--stress=' + q.get('stress'));
   if (q.get('arenacols')) a.push('--arenacols=' + q.get('arenacols'));
   if (q.get('ringcost')) a.push('--ringcost=1');
+  if (q.get('extra')) q.get('extra').split(',').forEach((x) => a.push('--' + x));
   if (q.get('turn')) a.push('--turn=1', '--turnk=' + (q.get('turnk') || '32'), '--turnfb=' + (q.get('turnfb') || '2.5'));
   return a;
 }
@@ -52,7 +53,7 @@ if (cmd === 'run') {
   const igpu = argv.includes('--igpu'), throttle = Number(opt('--throttle', 1)), timeoutS = Number(opt('--timeout', 900));
   const W = Number(opt('--width', 1280)), H = Number(opt('--height', 720));
   const server = await serve(web);
-  const url = `http://127.0.0.1:${server.address().port}/index.html?frames=${frames}&seed=${seed}&w=${W}&h=${H}${planet ? `&planet=${planet}` : ''}${opt('--stress', '') ? `&stress=${opt('--stress')}` : ''}${opt('--arenacols', '') ? `&arenacols=${opt('--arenacols')}` : ''}${argv.includes('--ringcost') ? '&ringcost=1' : ''}${argv.includes('--turn') ? `&turn=1&turnk=${opt('--turnk', 32)}&turnfb=${opt('--turnfb', 2.5)}` : ''}`;
+  const url = `http://127.0.0.1:${server.address().port}/index.html?frames=${frames}&seed=${seed}&w=${W}&h=${H}${planet ? `&planet=${planet}` : ''}${opt('--stress', '') ? `&stress=${opt('--stress')}` : ''}${opt('--arenacols', '') ? `&arenacols=${opt('--arenacols')}` : ''}${argv.includes('--ringcost') ? '&ringcost=1' : ''}${opt('--extra', '') ? `&extra=${encodeURIComponent(opt('--extra'))}` : ''}${argv.includes('--turn') ? `&turn=1&turnk=${opt('--turnk', 32)}&turnfb=${opt('--turnfb', 2.5)}` : ''}`;
   let b, page; const meta = { out, seed, frames, planet, igpu, throttle, size: `${W}x${H}` };
   try {
     b = await launchBrowser({

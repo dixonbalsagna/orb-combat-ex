@@ -22,6 +22,7 @@ if (planet) args.push(`--planet=${planet}`);
 if (a.includes('--script')) args.push('--script=1');
 if (opt('--stress', '')) args.push(`--stress=${opt('--stress')}`);
 if (opt('--arenacols', '')) args.push(`--arenacols=${opt('--arenacols')}`);   // a planet arena of N columns (hook-turn2.mjs)
+if (opt('--extra', '')) for (const x of opt('--extra').split(',')) args.push(`--${x}`);   // the game's own switches, e.g. --extra vfx-quality=0,noclouds
 if (a.includes('--ringcost')) args.push('--ringcost=1');   // the whole-ring probe (hook-ringcost.mjs)
 if (a.includes('--turn')) args.push('--turn=1', `--turnk=${opt('--turnk', 32)}`, `--turnfb=${opt('--turnfb', 2.5)}`);   // World's calm-moment turn, staged at tick 10 (hook-turn2.mjs)   // a ground-level power-up every N frames (hook-script.mjs)   // the scripted first player (hook-script.mjs)
 const logFile = `${out}.log`;
