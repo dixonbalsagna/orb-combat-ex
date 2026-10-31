@@ -1,0 +1,46 @@
+extends SceneTree
+# Throwaway: gen 2 ground of a planet at the texels of proto v2's octahedral map (the page's octDec), height (int16) then biome (byte), for N 340 and 170.
+func _dec(u: float, v: float) -> Array:
+	var x: float = u * 2.0 - 1.0
+	var y: float = v * 2.0 - 1.0
+	var z: float = 1.0 - absf(x) - absf(y)
+	var t: float = maxf(-z, 0.0)
+	x += -t if x >= 0.0 else t
+	y += -t if y >= 0.0 else t
+	var l: float = sqrt(x * x + y * y + z * z)
+	return [x / l, y / l, z / l]
+
+func _init() -> void:
+	WorldClimate.useGen(2)
+	var P := WorldPlanet.make(7)
+	var c: Dictionary = P.c
+	print("gen ", P.gen, " R ", P.R)
+	for N in [340, 170]:
+		var t0 := Time.get_ticks_msec()
+		var h := PackedInt32Array()
+		h.resize(N * N)
+		var b := PackedByteArray()
+		b.resize(N * N)
+		var lo := 1e9
+		var hi := -1e9
+		for j in range(N):
+			for i in range(N):
+				var d: Array = _dec((i + 0.5) / N, (j + 0.5) / N)
+				WorldPlanet.surfAt(P, d[0], d[1], d[2])
+				var y: float = P.outH
+				var o: int = P.outB
+				if o >= WorldPlanet.BIO_PLAINS and o <= WorldPlanet.BIO_MOUNTAINS:
+					y += (WorldPlanet._fbm(P.R, d[0], d[1], d[2], c.detailScale, int(c.detailOct), P.seed + int(c.sDetail)) - 0.5) * c.detailAmp
+				elif o == WorldPlanet.BIO_ICE_SHEET and y > 100.0:
+					y += (WorldPlanet._fbm(P.R, d[0], d[1], d[2], c.detailScale, int(c.detailOct), P.seed + int(c.sDetail)) - 0.5) * c.detailAmp * c.detailSheet
+				lo = minf(lo, y)
+				hi = maxf(hi, y)
+				h[j * N + i] = clampi(roundi(y), -32000, 32000)
+				b[j * N + i] = o
+		var f := FileAccess.open("res://gen2-p7-%d.bin" % N, FileAccess.WRITE)
+		for k in range(N * N):
+			f.store_16(h[k] & 0xFFFF)
+		f.store_buffer(b)
+		f.close()
+		print("N ", N, " ms ", Time.get_ticks_msec() - t0, " height ", lo, " to ", hi)
+	quit()

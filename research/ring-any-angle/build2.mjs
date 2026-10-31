@@ -12,7 +12,8 @@ const bundle = [
   `var __rng = ${mod('sim/core/rng.js', ['createRng', 'next'])};`,
   `var __det = ${mod('research/planet-gen/lib/det.mjs', ['R', 'fbm', 'ss', 'lat'], 'var sin = __math.sin, cos = __math.cos, pow = __math.pow, createRng = __rng.createRng, next = __rng.next;')};`,
   `var __base = ${mod('research/planet-gen/gen/base.mjs', ['surf'], 'var R = __det.R, fbm = __det.fbm, ss = __det.ss, lat = __det.lat, pow = __math.pow;', (s) => s.replace(/const C = JSON\.parse\([^\n]*\n/, `const C = ${planet};\n`))};`,
-  'var surf = __base.surf;'].join('\n');
+  'var surf = __base.surf;',
+  `var GEN2 = { 340: '${readFileSync(D + 'gen2-p7-340.bin').toString('base64')}', 170: '${readFileSync(D + 'gen2-p7-170.bin').toString('base64')}' };`].join('\n');
 const page = rd(D + 'page2.html'); if (!page.includes('/*BUNDLE*/')) throw new Error('no slot');
 writeFileSync(D + 'proto-v2.html', page.replace('/*BUNDLE*/', () => bundle));
 console.log(D + 'proto-v2.html built, ' + Math.round(rd(D + 'proto-v2.html').length / 1024) + ' KB');

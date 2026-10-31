@@ -36,25 +36,25 @@ var CIRC = 153600, RP = CIRC / (2 * Math.PI), SEED = 7, FLAT = 10240, T_FOV = Ma
 function $(id) { return document.getElementById(id); }
 // ---- controls: every one a slider or a list, read each tick ----
 var GD_RATES = { rLaunch: 60, rChase: 45, rForm: 30, rBrawl: 10, rSmall: 60 };
-var P = { mapN: 1024, fires: 'gd', rLaunch: 60, rChase: 45, rForm: 30, rBrawl: 10, jolts: 1, rSmall: 60, smallEvery: 12, ceil: 1, brawl: 0, quiet: 12, angle: 60, sendS: 2.2, law: 1, reduced: 0, flip: 'off', flipDepth: 6, fore: 1, soft: 1, rest: 128, sharpen: 4.8, every: 6, speed: 100, width: 7000, wide: 2.2, pitch: 7, curve: 100, relief: 100, detail: 1, towers: 1, clouds: 1, globe: 1, sun: 1 };
+var P = { mapN: 1024, fires: 'gd', rLaunch: 60, rChase: 45, rForm: 30, rBrawl: 10, jolts: 1, rSmall: 60, smallEvery: 12, ceil: 1, brawl: 0, quiet: 12, angle: 60, sendS: 2.2, law: 1, reduced: 0, flip: 'off', flipDepth: 6, dterm: 0, fps30: 0, fore: 1, soft: 1, rest: 128, sharpen: 4.8, every: 6, speed: 100, width: 7000, wide: 2.2, pitch: 7, curve: 100, relief: 100, detail: 1, towers: 1, clouds: 1, globe: 1, sun: 1 };
 var CTL = [['fires', 'Swing fires', ['by the rules (Game Design)', 'launches only', 'by hand only', 'every N seconds'], ['gd', 'send', 'manual', 'every']],
-  ['jolts', 'Small swings: a jolt on a heavy blow, a correction in flight', 'c'], ['rSmall', 'Small swing rate, deg/s (builds 60, up to 240)', 10, 240, 5], ['smallEvery', 'A small swing every N s (game: 10 to 20)', 2, 30, 1], ['brawl', 'Slow swing up close (brawl, 10 deg/s)', 'c'], ['quiet', 'Slow swing after N s quiet (game: 45)', 3, 45, 1],
-  ['rLaunch', 'Launch rate, deg/s (60; past 98 is over the limit)', 10, 240, 1], ['rChase', 'Chase rate, deg/s', 5, 60, 1], ['rForm', 'Form pause rate, deg/s', 5, 60, 1], ['rBrawl', 'Brawl rate, deg/s', 2, 30, 1],
+  ['jolts', 'Small swings: a jolt on a heavy blow, a correction in flight', 'c'], ['rSmall', 'Small swing rate, deg/s (builds 60)', 10, 240, 1], ['smallEvery', 'A small swing every N s (game: 10 to 20)', 2, 30, 1], ['brawl', 'Slow swing up close (brawl, 10 deg/s)', 'c'], ['quiet', 'Slow swing after N s quiet (game: 45)', 3, 45, 1],
+  ['rLaunch', 'Launch rate, deg/s (red past the 98 limit)', 10, 240, 1], ['rChase', 'Chase rate, deg/s', 5, 240, 1], ['rForm', 'Form pause rate, deg/s', 5, 240, 1], ['rBrawl', 'Slow swing rate, deg/s', 2, 240, 1],
   ['angle', 'Swing size (deg)', 5, 180, 5], ['sendS', 'Launch flight (s)', 1, 6, 0.2], ['every', 'N seconds', 1, 20, 1], ['law', 'Sweep limit (75 u/s standing, 10,000 airborne)', 'c'], ['ceil', 'Size ceiling (240 x root(15 / size))', 'c'], ['reduced', 'Reduced motion (every peak 30)', 'c'],
   ['flip', 'Forced flip (a late online correction)', ['off', 'a swing taken back', 'a swing the wrong way', 'a rate jump at the peak (worst case)'], ['off', 'back', 'wrong', 'jump']], ['flipDepth', 'Flip depth, ticks (6 is 200 ms ping, 13 far)', 3, 20, 1],
   ['soft', 'Ground softens in flight', 'c'], ['rest', 'Ground at rest, spacing', ['128 u', '256 u', '512 u'], [128, 256, 512]], ['sharpen', 'Sharpens after a flight in', ['0.5 s', '4.8 s (1.5 reads a tick, r 1,500)', '19 s (1.5 reads a tick, r 3,000)'], [0.5, 4.8, 19]],
   ['speed', 'Flat-out speed (%)', 25, 300, 5], ['width', 'View width (units)', 1500, 24000, 250], ['wide', 'Pull wide in flight (x)', 1, 4, 0.1],
-  ['pitch', 'Camera pitch (deg)', 0, 40, 1], ['curve', 'Curvature (% of true)', 5, 100, 5], ['relief', 'Relief (%)', 10, 150, 10], ['mapN', 'Planet map', ['256', '512', '1024'], [256, 512, 1024]],
-  ['fore', 'Land in front sinks below the sight line', 'c'], ['detail', 'Ground detail', 'c'], ['towers', 'Towers and landmarks', 'c'], ['clouds', 'Clouds', 'c'], ['globe', 'Globe', 'c'], ['sun', 'Sun fixed to the planet', 'c']];
+  ['pitch', 'Camera pitch (deg)', 0, 40, 1], ['curve', 'Curvature (% of true)', 5, 100, 5], ['relief', 'Relief (%)', 10, 150, 10], ['mapN', 'Planet map (ground spacing)', ['gen 1, 85 u: no budget reaches this', 'gen 1, 169 u', 'gen 1, 256 u', 'gen 1, 512 u', 'REAL gen 2, 256 u', 'REAL gen 2, 512 u: the budget ground'], [1024, 512, 340, 170, 'g340', 'g170']],
+  ['fore', 'Land in front sinks below the sight line', 'c'], ['detail', 'Ground paint', 'c'], ['dterm', 'Detail term (drawn only; the sim never reads it)', 'c'], ['towers', 'Towers and landmarks', 'c'], ['clouds', 'Clouds', 'c'], ['fps30', 'Cap at 30 fps (the laptop)', 'c'], ['globe', 'Globe', 'c'], ['sun', 'Sun fixed to the planet', 'c']];
 var SETTERS = {};
 CTL.forEach(function (c) {
   var l = document.createElement('label'); l.textContent = c[1]; var k = c[0];
   if (c[2] === 'c') { var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!P[k]; cb.onchange = function () { P[k] = cb.checked ? 1 : 0; cb.blur(); }; l.appendChild(cb); }
   else if (Array.isArray(c[2])) { var s = document.createElement('select'); c[2].forEach(function (n, i) { var o = document.createElement('option'); o.textContent = n; o.value = i; if (c[3][i] === P[k]) o.selected = true; s.appendChild(o); }); s.onchange = function () { P[k] = c[3][+s.value]; s.blur(); if (k === 'mapN') buildMap(); }; l.appendChild(s); }
-  else { var r = document.createElement('input'), b = document.createElement('b'); r.type = 'range'; r.min = c[2]; r.max = c[3]; r.step = c[4]; r.value = P[k]; b.textContent = P[k]; if (k === 'rLaunch') r.setAttribute('list', 'marks'); var paint = function () { b.textContent = P[k]; b.style.color = k === 'rLaunch' && P[k] > 98 ? '#ff6a55' : ''; }; r.oninput = function () { P[k] = +r.value; paint(); }; SETTERS[k] = function (v) { P[k] = v; r.value = v; paint(); }; var w = document.createElement('span'); w.style.cssText = 'display:flex;gap:6px;align-items:center'; w.appendChild(r); w.appendChild(b); l.appendChild(w); }
+  else { var r = document.createElement('input'), b = document.createElement('b'); r.type = 'range'; r.min = c[2]; r.max = c[3]; r.step = c[4]; r.value = P[k]; b.textContent = P[k]; var isRate = /^r[A-Z]/.test(k); if (isRate) r.setAttribute('list', 'marks'); var paint = function () { b.textContent = P[k]; b.style.color = isRate && P[k] > 98 ? '#ff6a55' : ''; }; paint(); r.oninput = function () { P[k] = +r.value; paint(); }; SETTERS[k] = function (v) { P[k] = v; r.value = v; paint(); }; var w = document.createElement('span'); w.style.cssText = 'display:flex;gap:6px;align-items:center'; w.appendChild(r); w.appendChild(b); l.appendChild(w); }
   $('ctl').appendChild(l);
 });
-(function () { var d = document.createElement('datalist'); d.id = 'marks'; [60, 65, 98].forEach(function (v) { var o = document.createElement('option'); o.value = v; d.appendChild(o); }); $('ctl').appendChild(d);
+(function () { var d = document.createElement('datalist'); d.id = 'marks'; [60, 98, 240].forEach(function (v) { var o = document.createElement('option'); o.value = v; d.appendChild(o); }); $('ctl').appendChild(d);
   var b = document.createElement('button'); b.textContent = 'Game Design\'s rates: launch 60, chase 45, form 30, brawl 10, small 60'; b.onclick = function () { Object.keys(GD_RATES).forEach(function (k) { SETTERS[k](GD_RATES[k]); }); b.blur(); }; $('ctl').appendChild(b); })();
 // ---- the sphere's small maths ----
 function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
@@ -66,17 +66,24 @@ function octEnc(d) { var s = Math.abs(d[0]) + Math.abs(d[1]) + Math.abs(d[2]), x
 // ---- the planet map: built once, then read: by the graphics card to draw, by the sim to stand on ----
 var MAP = null, texH = gl.createTexture(), texC = gl.createTexture();
 var PAL = { 0: [46, 92, 138], 1: [122, 158, 92], 2: [66, 112, 70], 3: [205, 178, 118], 4: [130, 122, 110], 5: [232, 238, 242], 6: [196, 216, 228] };
+function unb64(t) { var b = atob(t), o = new Uint8Array(b.length); for (var k = 0; k < b.length; k++) o[k] = b.charCodeAt(k); return o; }
+function paintTexel(c, k, bio, y) { var p = PAL[bio] || PAL[1], sh = y < 0 ? Math.max(0.55, 1 + y / 2600) : 1; c[k] = p[0] * sh; c[k + 1] = p[1] * sh; c[k + 2] = p[2] * sh; c[k + 3] = 255; }
+var lastGen2 = null;
 function buildMap() {
-  var N = P.mapN, h = new Float32Array(N * N), c = new Uint8Array(N * N * 4), t0 = performance.now();
-  for (var j = 0; j < N; j++) for (var i = 0; i < N; i++) {
-    var d = octDec((i + 0.5) / N, (j + 0.5) / N), s = surf(SEED, d[0], d[1], d[2]), o = j * N + i, p = PAL[s[1]] || PAL[1], k = o * 4; h[o] = s[0];
-    var sh = s[0] < 0 ? Math.max(0.55, 1 + s[0] / 2600) : 1; c[k] = p[0] * sh; c[k + 1] = p[1] * sh; c[k + 2] = p[2] * sh; c[k + 3] = 255;
+  var g2 = String(P.mapN).charAt(0) === 'g', N = g2 ? +String(P.mapN).slice(1) : P.mapN, Nc = g2 ? 340 : Math.max(N, 340), h = new Float32Array(N * N), c = new Uint8Array(Nc * Nc * 4), t0 = performance.now(), o, y, s, d;
+  if (g2) {   // gen 2's real ground, read in Godot (gen2_dump.gd.txt): heights at this spacing; biomes, like the game's, at their own finer grid
+    var raw = unb64(GEN2[N]), hv = new DataView(raw.buffer); for (o = 0; o < N * N; o++) h[o] = hv.getInt16(o * 2, true);
+    var rc = unb64(GEN2[340]), cv = new DataView(rc.buffer); for (o = 0; o < 340 * 340; o++) paintTexel(c, o * 4, rc[340 * 340 * 2 + o], cv.getInt16(o * 2, true));
+  } else {
+    for (var j = 0; j < N; j++) for (var i = 0; i < N; i++) { d = octDec((i + 0.5) / N, (j + 0.5) / N); s = surf(SEED, d[0], d[1], d[2]); o = j * N + i; h[o] = s[0]; if (Nc === N) paintTexel(c, o * 4, s[1], s[0]); }
+    if (Nc !== N) for (j = 0; j < Nc; j++) for (i = 0; i < Nc; i++) { d = octDec((i + 0.5) / Nc, (j + 0.5) / Nc); s = surf(SEED, d[0], d[1], d[2]); paintTexel(c, (j * Nc + i) * 4, s[1], s[0]); }
   }
-  MAP = { N: N, h: h, ms: performance.now() - t0, reads: N * N, mips: [h] };
+  MAP = { N: N, h: h, ms: performance.now() - t0, reads: N * N, mips: [h], gen2: g2 };
   gl.bindTexture(gl.TEXTURE_2D, texH); var lv = h, n = N, L = 0, IF = floatLinear ? gl.R32F : gl.R16F;
   for (;;) { gl.texImage2D(gl.TEXTURE_2D, L, IF, n, n, 0, gl.RED, gl.FLOAT, lv); if (n === 1) break; var m = n >> 1, nx = new Float32Array(m * m); for (var y = 0; y < m; y++) for (var x = 0; x < m; x++) nx[y * m + x] = (lv[y * 2 * n + x * 2] + lv[y * 2 * n + x * 2 + 1] + lv[(y * 2 + 1) * n + x * 2] + lv[(y * 2 + 1) * n + x * 2 + 1]) / 4; lv = nx; n = m; L++; MAP.mips.push(nx); }
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.bindTexture(gl.TEXTURE_2D, texC); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, N, N, 0, gl.RGBA, gl.UNSIGNED_BYTE, c); gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.bindTexture(gl.TEXTURE_2D, texC); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, Nc, Nc, 0, gl.RGBA, gl.UNSIGNED_BYTE, c); gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  if (lastGen2 !== null && lastGen2 !== g2) buildTowers(); lastGen2 = g2;
 }
 // what the sim stands on: one bilinear read of the same map; these are all the ground reads a tick here
 var lookups = 0;
@@ -85,10 +92,10 @@ function heightAt(d, lod) { lookups++; var e = octEnc(d), l0 = Math.max(0, Math.
 var COMMON = '#version 300 es\nprecision highp float;\nvec2 oct(vec3 d){d/=abs(d.x)+abs(d.y)+abs(d.z);vec2 p=d.xy;if(d.z<0.)p=(1.-abs(d.yx))*vec2(d.x>=0.?1.:-1.,d.y>=0.?1.:-1.);return p*.5+.5;}\n';
 var VS_G = COMMON + 'in vec2 aG;uniform mat3 uF;uniform mat4 uVP;uniform sampler2D uH;uniform float uR,uRr,uRel,uTex,uAlt;uniform vec4 uCr[16];uniform float uCrD[16];uniform int uCrN;uniform float uStep;\n' +
  'out vec3 vDir;out vec3 vW;out float vH;void main(){float r=aG.x,th=aG.y,a=r/uR;vec3 dir=uF*vec3(sin(a)*cos(th),sin(a)*sin(th),cos(a));float fp=max(r*uStep,r*.03);float h=textureLod(uH,oct(dir),log2(max(1.,fp/uTex))).r;for(int i=0;i<uCrN;i++){vec3 dv=dir-uCr[i].xyz;float q=dot(dv,dv)*uR*uR/(uCr[i].w*uCr[i].w);if(q<1.){float u=1.-q;h-=uCrD[i]*u*u;}}vH=h;vDir=dir;float ar=r/uRr,rad=uRr+(uAlt>0.?uAlt:h*uRel);vec3 w=vec3(rad*sin(ar)*cos(th),rad*cos(ar)-uRr,rad*sin(ar)*sin(th));vW=w;gl_Position=uVP*vec4(w,1.);}';
-var FS_G = COMMON + 'in vec3 vDir;in vec3 vW;in float vH;out vec4 o;uniform sampler2D uC;uniform vec3 uSun,uCam,uSky;uniform float uR,uRr,uDet,uHaze,uAmb,uG;\n' +
+var FS_G = COMMON + 'in vec3 vDir;in vec3 vW;in float vH;out vec4 o;uniform sampler2D uC;uniform vec3 uSun,uCam,uSky;uniform float uR,uRr,uDet,uHaze,uAmb,uG,uDT;\n' +
  'float hsh(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}float vn(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(mix(hsh(i),hsh(i+vec3(1,0,0)),f.x),mix(hsh(i+vec3(0,1,0)),hsh(i+vec3(1,1,0)),f.x),f.y),mix(mix(hsh(i+vec3(0,0,1)),hsh(i+vec3(1,0,1)),f.x),mix(hsh(i+vec3(0,1,1)),hsh(i+vec3(1,1,1)),f.x),f.y),f.z);}\n' +
  'void main(){vec3 d=normalize(vDir),up=normalize(vW+vec3(0,uRr,0)),n=normalize(cross(dFdx(vW),dFdy(vW)));if(dot(n,up)<0.)n=-n;vec3 c=texture(uC,oct(d)).rgb;float dist=length(vW-uCam);\n' +
- 'if(uDet>0.){float a=vn(d*uR/2600.),b=vn(d*uR/620.),e=vn(d*uR/170.),f=vn(d*uR/60.);float fd=clamp(128./max(uG,1.),0.,1.);float k=(a-.5)*.30+(b-.5)*.42*sqrt(fd)*clamp(60000./dist-1.,0.,1.)+(e-.5)*.44*fd*clamp(16000./dist-1.,0.,1.)+(f-.5)*.34*fd*fd*clamp(5500./dist-1.,0.,1.);c*=1.+k;}\n' +
+ 'if(uDet>0.){float a=vn(d*uR/2600.),b=vn(d*uR/620.),e=vn(d*uR/170.),f=vn(d*uR/60.);float fd=uDT>0.?1.:clamp(128./max(uG,1.),0.,1.);float k=(a-.5)*.30+(b-.5)*.42*sqrt(fd)*clamp(60000./dist-1.,0.,1.)+(e-.5)*.44*fd*clamp(16000./dist-1.,0.,1.)+(f-.5)*.34*fd*fd*clamp(5500./dist-1.,0.,1.);c*=1.+k;}\n' +
  'if(vH>6000.)c=mix(c,vec3(.95),clamp((vH-6000.)/2400.,0.,1.));if(vH<0.)n=up;float l=max(dot(n,uSun),0.);c*=uAmb+(1.-uAmb)*l*1.25;float hz=1.-exp(-dist*uHaze);o=vec4(mix(c,uSky,hz*.85),1.);}';
 var FS_C = COMMON + 'in vec3 vDir;in vec3 vW;in float vH;out vec4 o;uniform vec3 uSun;uniform float uAmb,uT;\n' +
  'float hsh(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}float vn(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(mix(hsh(i),hsh(i+vec3(1,0,0)),f.x),mix(hsh(i+vec3(0,1,0)),hsh(i+vec3(1,1,0)),f.x),f.y),mix(mix(hsh(i+vec3(0,0,1)),hsh(i+vec3(1,0,1)),f.x),mix(hsh(i+vec3(0,1,1)),hsh(i+vec3(1,1,1)),f.x),f.y),f.z);}\n' +
@@ -96,11 +103,12 @@ var FS_C = COMMON + 'in vec3 vDir;in vec3 vW;in float vH;out vec4 o;uniform vec3
 var VS_B = COMMON + 'in vec3 aP;in vec3 aN;in vec3 iD;in vec3 iE;in vec3 iS;in vec4 iC;uniform mat3 uF;uniform mat4 uVP;uniform sampler2D uH;uniform float uR,uRr,uRel,uTex,uG;out vec3 vC;out vec3 vN;out vec3 vW;\n' +
  'void main(){vec3 v=transpose(uF)*iD;float a=acos(clamp(v.z,-1.,1.));if(a>2.0){gl_Position=vec4(2.,2.,2.,1.);vC=vec3(0.);vN=vec3(0.);vW=vec3(0.);return;}float rr=a*uR,sp=max(mix(uG,max(uG,512.),smoothstep(6000.,9000.,rr)),rr*.03),bh=textureLod(uH,oct(iD),log2(max(1.,sp/uTex))).r;float th=atan(v.y,v.x),ar=a*uR/uRr,rad=uRr+(bh+iC.w)*uRel;vec3 b=vec3(rad*sin(ar)*cos(th),rad*cos(ar)-uRr,rad*sin(ar)*sin(th));vec3 up=normalize(b+vec3(0,uRr,0)),e=transpose(uF)*iE;e=vec3(e.x,e.z,e.y);e=normalize(e-up*dot(e,up));vec3 nn=cross(up,e);float sk=1.-smoothstep(300.,1500.,b.z);if(sk<.04){gl_Position=vec4(2.,2.,2.,1.);vC=vec3(0.);vN=vec3(0.);vW=vec3(0.);return;}vec3 w=b+e*aP.x*iS.x+up*aP.y*iS.y*sk+nn*aP.z*iS.z;vC=iC.rgb;vN=e*aN.x+up*aN.y+nn*aN.z;vW=w;gl_Position=uVP*vec4(w,1.);}';
 var FS_B = COMMON + 'in vec3 vC;in vec3 vN;in vec3 vW;out vec4 o;uniform vec3 uSun,uCam,uSky;uniform float uHaze,uAmb;void main(){float l=max(dot(normalize(vN),uSun),0.);vec3 c=vC*(uAmb+(1.-uAmb)*l*1.2);float hz=1.-exp(-length(vW-uCam)*uHaze);o=vec4(mix(c,uSky,hz*.85),1.);}';
-var VS_T = COMMON + 'in vec2 aU;in vec4 iT;in vec2 iM;uniform mat3 uF;uniform mat4 uVP;uniform sampler2D uH;uniform float uR,uRr,uRel,uTex,uG,uFore,uTy;uniform vec3 uF1,uF2,uCam;uniform vec4 uCr[16];uniform float uCrD[16];uniform int uCrN;out vec3 vDir;out vec3 vW;out float vH;\n' +
+var VS_T = COMMON + 'in vec2 aU;in vec4 iT;in vec2 iM;uniform mat3 uF;uniform mat4 uVP;uniform sampler2D uH;uniform float uR,uRr,uRel,uTex,uG,uFore,uTy,uDT;uniform vec3 uF1,uF2,uCam;uniform vec4 uCr[16];uniform float uCrD[16];uniform int uCrN;out vec3 vDir;out vec3 vW;out float vH;\n' +
  'vec3 cube(float f,vec2 w){if(f<.5)return vec3(1.,w);if(f<1.5)return vec3(-1.,w);if(f<2.5)return vec3(w.x,1.,w.y);if(f<3.5)return vec3(w.x,-1.,w.y);if(f<4.5)return vec3(w,1.);return vec3(w,-1.);}\n' +
+ 'float hsh(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}float vn(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(mix(hsh(i),hsh(i+vec3(1,0,0)),f.x),mix(hsh(i+vec3(0,1,0)),hsh(i+vec3(1,1,0)),f.x),f.y),mix(mix(hsh(i+vec3(0,0,1)),hsh(i+vec3(1,0,1)),f.x),mix(hsh(i+vec3(0,1,1)),hsh(i+vec3(1,1,1)),f.x),f.y),f.z);}\n' +
  'vec3 at(vec2 a){vec2 uv=iT.yz+a*iT.w;return normalize(cube(iT.x,tan(uv*.78539816)));}float ang(vec3 a,vec3 b){return atan(length(cross(a,b)),dot(a,b));}\n' +
  'void main(){vec3 d0=at(aU);float r0=min(ang(d0,uF1),ang(d0,uF2))*uR,m=clamp((r0-iM.x)/(iM.y-iM.x),0.,1.);vec2 g=aU*32.,fr=fract(g*.5)*2.;vec3 dir=at((g-fr*m)/32.),v=transpose(uF)*dir;float a=atan(length(v.xy),v.z),th=atan(v.y,v.x),rr=a*uR;\n' +
- 'float sp=max(mix(uG,max(uG,512.),smoothstep(6000.,9000.,rr)),rr*.03),h=textureLod(uH,oct(dir),log2(max(1.,sp/uTex))).r;for(int i=0;i<uCrN;i++){vec3 dv=dir-uCr[i].xyz;float q=dot(dv,dv)*uR*uR/(uCr[i].w*uCr[i].w);if(q<1.){float u=1.-q;h-=uCrD[i]*u*u;}}vH=h;vDir=dir;float ar=rr/uRr,rad=uRr+h*uRel;vec3 w=vec3(rad*sin(ar)*cos(th),rad*cos(ar)-uRr,rad*sin(ar)*sin(th));if(uFore>0.&&w.z>0.){float ln=uTy+(uCam.y-uTy)*min(w.z/uCam.z,1.)-60.;w.y=mix(w.y,min(w.y,ln),smoothstep(0.,900.,w.z));}vW=w;gl_Position=uVP*vec4(w,1.);}';
+ 'float sp=max(mix(uG,max(uG,512.),smoothstep(6000.,9000.,rr)),rr*.03),h=textureLod(uH,oct(dir),log2(max(1.,sp/uTex))).r;for(int i=0;i<uCrN;i++){vec3 dv=dir-uCr[i].xyz;float q=dot(dv,dv)*uR*uR/(uCr[i].w*uCr[i].w);if(q<1.){float u=1.-q;h-=uCrD[i]*u*u;}}vH=h;vDir=dir;if(uDT>0.&&rr<20000.){h+=smoothstep(20.,120.,h)*(1.-smoothstep(9000.,20000.,rr))*((vn(dir*uR/380.)-.5)*52.+(vn(dir*uR/130.)-.5)*18.);}float ar=rr/uRr,rad=uRr+h*uRel;vec3 w=vec3(rad*sin(ar)*cos(th),rad*cos(ar)-uRr,rad*sin(ar)*sin(th));if(uFore>0.&&w.z>0.){float ln=uTy+(uCam.y-uTy)*min(w.z/uCam.z,1.)-60.;w.y=mix(w.y,min(w.y,ln),smoothstep(0.,900.,w.z));}vW=w;gl_Position=uVP*vec4(w,1.);}';
 var VS_F = COMMON + 'in vec3 aP;in vec3 aN;uniform mat4 uVP;uniform vec3 uPos,uSz;out vec3 vN;void main(){vN=aN;gl_Position=uVP*vec4(uPos+aP*uSz,1.);}';
 var FS_F = COMMON + 'in vec3 vN;out vec4 o;uniform vec3 uCol;void main(){o=vec4(uCol*(.65+.35*max(dot(vN,normalize(vec3(.3,.7,.6))),0.)),1.);}';
 var VS_S = '#version 300 es\nout vec2 v;void main(){vec2 p=vec2(gl_VertexID==1?3.:-1.,gl_VertexID==2?3.:-1.);v=p*.5+.5;gl_Position=vec4(p,1.,1.);}';
@@ -147,12 +155,13 @@ var bBox = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bBox); gl.bufferDat
 // towers and landmarks: keyed to the planet, so every one is the same one at any bearing
 function lcg(s) { var x = s >>> 0; return function () { x = (Math.imul(x, 1664525) + 1013904223) >>> 0; return x / 4294967296; }; }
 var TW = [], MARKS = [], twData, twN = 0, vaoT, bT;
+function landH(q) { return MAP.gen2 ? heightAt(q, 0) : surf(SEED, q[0], q[1], q[2])[0]; }
 function buildTowers() {
   var r = lcg(4242); TW = []; MARKS = [];
   function east(q) { return norm(cross([0.12, 1, 0.07], q)); }
-  for (var c = 0; c < 90; c++) { var q = norm([r() - 0.5, r() - 0.5, r() - 0.5]), s0 = surf(SEED, q[0], q[1], q[2])[0]; if (s0 < 40) continue; var e = east(q), n = cross(q, e);
-    for (var b = 0; b < 34; b++) { var dx = (r() - 0.5) * 5600, dz = (r() - 0.5) * 5600, d = norm(add(add(q, e, dx / RP), n, dz / RP)), g = r(); TW.push({ d: d, e: e, w: 70 + g * 170, h: 110 + g * g * 900, g: surf(SEED, d[0], d[1], d[2])[0], col: g > 0.6 ? [0.62, 0.64, 0.68] : [0.72, 0.68, 0.6] }); } }
-  for (var m = 0; m < 26; m++) { var q2 = norm([r() - 0.5, r() - 0.5, r() - 0.5]), s2 = surf(SEED, q2[0], q2[1], q2[2])[0]; if (s2 < 0) continue; var e2 = east(q2); MARKS.push(q2); TW.push({ d: q2, e: e2, w: 420, h: 6500, g: s2, col: [0.86, 0.26, 0.2], big: 1 }); TW.push({ d: q2, e: e2, w: 900, h: 700, g: s2 + 2600, off: 2600, col: [0.95, 0.9, 0.82] }); }
+  for (var c = 0; c < 90; c++) { var q = norm([r() - 0.5, r() - 0.5, r() - 0.5]), s0 = landH(q); if (s0 < 40) continue; var e = east(q), n = cross(q, e);
+    for (var b = 0; b < 34; b++) { var dx = (r() - 0.5) * 5600, dz = (r() - 0.5) * 5600, d = norm(add(add(q, e, dx / RP), n, dz / RP)), g = r(); TW.push({ d: d, e: e, w: 70 + g * 170, h: 110 + g * g * 900, col: g > 0.6 ? [0.62, 0.64, 0.68] : [0.72, 0.68, 0.6] }); } }
+  for (var m = 0; m < 26; m++) { var q2 = norm([r() - 0.5, r() - 0.5, r() - 0.5]), s2 = landH(q2); if (s2 < 0) continue; var e2 = east(q2); MARKS.push(q2); TW.push({ d: q2, e: e2, w: 420, h: 6500, g: s2, col: [0.86, 0.26, 0.2], big: 1 }); TW.push({ d: q2, e: e2, w: 900, h: 700, g: s2 + 2600, off: 2600, col: [0.95, 0.9, 0.82] }); }
   twN = TW.length; twData = new Float32Array(twN * 13);
   TW.forEach(function (t, i) { var o = i * 13; twData.set(t.d, o); twData.set(t.e, o + 3); twData.set([t.w, t.h, t.w], o + 6); twData.set(t.col, o + 9); twData[o + 12] = t.off || 0; });
   vaoT = gl.createVertexArray(); gl.bindVertexArray(vaoT); gl.bindBuffer(gl.ARRAY_BUFFER, bBox); var aP = pB.a('aP'), aN = pB.a('aN'); gl.enableVertexAttribArray(aP); gl.vertexAttribPointer(aP, 3, gl.FLOAT, false, 24, 0); gl.enableVertexAttribArray(aN); gl.vertexAttribPointer(aN, 3, gl.FLOAT, false, 24, 12);
@@ -168,6 +177,7 @@ function reset() { var p = norm([0.42, 0.33, 0.84]), t = norm(cross([0, 1, 0], p
 function lineDir(x, t) { var a = x / RP, c = Math.cos(a), s = Math.sin(a), T = t || S.dt; return [S.p[0] * c + T[0] * s, S.p[1] * c + T[1] * s, S.p[2] * c + T[2] * s]; }
 function smooth(a, b, x) { var u = Math.max(0, Math.min(1, (x - a) / (b - a))); return u * u * (3 - 2 * u); }
 // the same spacing the shader reads, so a bar stands on the ground that's drawn: a function of the place and the softening only
+function spacing() { return Math.max(S.softG, 3.54 * RP / MAP.N); }
 function lodAt(r) { var g = S.softG, sp = Math.max(g + (Math.max(g, 512) - g) * smooth(6000, 9000, r), r * 0.03); return Math.log2(Math.max(1, sp / (3.54 * RP / MAP.N))); }
 function ground(x) { return heightAt(lineDir(x), lodAt(Math.abs(x))) + craterAt(x); }
 function craterAt(x) { var d = lineDir(x), v = 0; S.crater.forEach(function (m) { var dv = [d[0] - m.d[0], d[1] - m.d[1], d[2] - m.d[2]], q = dot(dv, dv) * RP * RP / (m.r * m.r); if (q < 1) { var u = 1 - q; v -= m.dep * u * u; } }); return v; }
@@ -181,8 +191,8 @@ function sizeCeil(deg) { return P.ceil ? 240 * Math.min(1, Math.sqrt(15 / Math.m
 // one swing at a time. A big swing is Camera's ramps, 20 ticks in and 10 out; a launch's pivot is the launcher's planet point until it rests
 function startSwing(cause, deg, sg, q) {
   if (S.sw || S.beam || S.stop) return false; deg = Math.abs(deg); var th = deg * RAD; if (th < 0.002) return false;
-  var peak = Math.min(peakFor(cause), sizeCeil(deg)) * RAD / 60; if (th < 15 * peak) peak = th / 15;
-  S.sw = { cause: cause, th: th, sg: sg, a: 0, k: 0, j: 0, out: false, outW: 0, wNow: 0, peak: peak, q: q || null, rf: 1, rfStep: 0, vr: null, flipped: false, small: false }; S.offPeak = peak * 60 / RAD; S.lastSwing = S.tick; S.quiet = 0; return true;
+  var peak = Math.min(peakFor(cause), sizeCeil(deg)) * RAD / 60, capBy = sizeCeil(deg) < peakFor(cause) ? 'the size ceiling' : 'its cause'; if (th < 15 * peak) { peak = th / 15; capBy = 'its size'; }
+  S.sw = { cause: cause, th: th, sg: sg, a: 0, k: 0, j: 0, out: false, outW: 0, wNow: 0, peak: peak, q: q || null, rf: 1, rfStep: 0, vr: null, flipped: false, small: false, capBy: capBy }; S.offPeak = peak * 60 / RAD; S.lastSwing = S.tick; S.quiet = 0; return true;
 }
 // the small class, 2 to 15 degrees: with a blow it starts fast and lands soft, 8 ticks at least; without one it's a smootherstep, 12 ticks at least.
 // Its sweep allowance is in all, not a speed: r x size at most 30 units standing, 600 airborne, so a far one gets smaller and on the ground it may not fire
@@ -203,9 +213,9 @@ function stepSwing() {
     if (u >= 1) { S.sw = null; S.w = 0; }
     return;
   }
-  var rate = sw.peak, xL = -S.gap / 2, xR = S.gap / 2, xq = sw.q ? Math.atan2(dot(sw.q, S.t), dot(sw.q, S.p)) * RP : 0;
+  var rate = sw.peak; lim = sw.capBy; var xL = -S.gap / 2, xR = S.gap / 2, xq = sw.q ? Math.atan2(dot(sw.q, S.t), dot(sw.q, S.p)) * RP : 0;
   S.pivot = sw.q ? 'the standing fighter' : 'the midpoint';
-  if (P.law) { [[xL, S.airL], [xR, S.airR]].forEach(function (f) { var r = Math.abs(f[0] - xq); if (r > 1) { var l = (f[1] ? 10000 : 75) / 60 / r; if (l < rate) { rate = l; lim = f[1] ? 'the airborne sweep limit' : 'the standing sweep limit'; } } }); if (lim !== 'its cause' && rate < 2 * RAD / 60) { rate = 0; lim = 'holding still, under 2 deg/s'; } }
+  if (P.law) { [[xL, S.airL], [xR, S.airR]].forEach(function (f) { var r = Math.abs(f[0] - xq); if (r > 1) { var l = (f[1] ? 10000 : 75) / 60 / r; if (l < rate) { rate = l; lim = f[1] ? 'the airborne sweep limit' : 'the standing sweep limit'; } } }); if (/sweep/.test(lim) && rate < 2 * RAD / 60) { rate = 0; lim = 'holding still, under 2 deg/s'; } }
   sw.vr = sw.vr === null ? rate : sw.vr + (rate - sw.vr) * 0.08; if (sw.rfStep) sw.rf = Math.max(0, sw.rf - sw.rfStep);
   sw.k++; var x = Math.min(1, sw.k / 20), rem = sw.th - sw.a; w = sw.vr * x * x * (3 - 2 * x) * sw.rf;
   if (!sw.out && rem <= w * 4.5) { sw.out = true; sw.outW = Math.max(w, rem / 4.5); sw.j = 0; }
@@ -305,7 +315,7 @@ function draw() {
   var sunP = P.sun ? [0.35, 0.8, 0.48] : null, sun = sunP ? (function () { var v = [dot(T, sunP), dot(Z, sunP), dot(S.p, sunP)]; return norm([v[0], v[2], v[1]]); })() : norm([0.3, 0.8, 0.5]), amb = 0.58, haze = 2.4e-5;
   var camA = dist * Math.cos(pit) / RP, foot = norm([S.p[0] * Math.cos(camA) + Z[0] * Math.sin(camA), S.p[1] * Math.cos(camA) + Z[1] * Math.sin(camA), S.p[2] * Math.cos(camA) + Z[2] * Math.sin(camA)]), camH = Math.max(100, cam[1]), arcMax = Math.sqrt(2 * Rr * camH) + Math.sqrt(2 * Rr * 9000) * (P.relief / 100 + 0.01);
   selectTiles(S.p, foot, arcMax, [Z, cam[2]], T, T_FOV * asp, P.curve === 100);
-  setGround(pT, F, vp, Rr, cam, 0); gl.uniform3fv(pT.u.uF1, S.p); gl.uniform3fv(pT.u.uF2, foot); gl.uniform1f(pT.u.uG, S.softG); gl.uniform1f(pT.u.uFore, P.fore); gl.uniform1f(pT.u.uTy, ty); gl.uniform3fv(pT.u.uSun, sun); gl.uniform3fv(pT.u.uCam, cam); gl.uniform3fv(pT.u.uSky, SKY); gl.uniform1f(pT.u.uDet, P.detail); gl.uniform1f(pT.u.uHaze, haze); gl.uniform1f(pT.u.uAmb, amb);
+  setGround(pT, F, vp, Rr, cam, 0); gl.uniform3fv(pT.u.uF1, S.p); gl.uniform3fv(pT.u.uF2, foot); gl.uniform1f(pT.u.uG, spacing()); gl.uniform1f(pT.u.uDT, P.dterm); gl.uniform1f(pT.u.uFore, P.fore); gl.uniform1f(pT.u.uTy, ty); gl.uniform3fv(pT.u.uSun, sun); gl.uniform3fv(pT.u.uCam, cam); gl.uniform3fv(pT.u.uSky, SKY); gl.uniform1f(pT.u.uDet, P.detail); gl.uniform1f(pT.u.uHaze, haze); gl.uniform1f(pT.u.uAmb, amb);
   gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texC); gl.uniform1i(pT.u.uC, 1); gl.bindVertexArray(vaoTile); gl.drawElementsInstanced(gl.TRIANGLES, TN * TN * 6, gl.UNSIGNED_SHORT, 0, tileN); gl.activeTexture(gl.TEXTURE0);
   if (P.towers) { gl.useProgram(pB.p); gl.uniformMatrix3fv(pB.u.uF, false, F); gl.uniformMatrix4fv(pB.u.uVP, false, vp); gl.uniform1f(pB.u.uR, RP); gl.uniform1f(pB.u.uRr, Rr); gl.uniform1f(pB.u.uRel, P.relief / 100); gl.uniform1i(pB.u.uH, 0); gl.uniform1f(pB.u.uTex, 3.54 * RP / MAP.N); gl.uniform1f(pB.u.uG, S.softG); gl.uniform3fv(pB.u.uSun, sun); gl.uniform3fv(pB.u.uCam, cam); gl.uniform3fv(pB.u.uSky, SKY); gl.uniform1f(pB.u.uHaze, haze); gl.uniform1f(pB.u.uAmb, amb); gl.bindVertexArray(vaoT); gl.drawArraysInstanced(gl.TRIANGLES, 0, 36, twN); }
   // the two bars, on one relative band, always
@@ -330,13 +340,13 @@ function paintHud(now) {
   var cause = S.stop ? 'hit-stop: dead still' : sw ? sw.cause + ' swing, ' + S.rate.toFixed(0) + '&deg;/s of ' + (sw.peak * 60 / RAD).toFixed(0) + ', ' + (sw.th / RAD).toFixed(0) + '&deg;, set by ' + S.lim + ', about ' + S.pivot : S.beam ? 'beam: the world holds' : 'no swing';
   hud.innerHTML = Math.round(Math.abs(S.v)).toLocaleString() + ' u/s &nbsp; a lap in ' + (Math.abs(S.v) > 100 ? (CIRC / Math.abs(S.v)).toFixed(1) + ' s' : '-') + '<br>flown ' + deg.toFixed(0) + '&deg; of the planet &nbsp; swung ' + (S.swung / RAD).toFixed(0) + '&deg;<br>' + cause +
     '<br>far land: ' + horizon.toFixed(0) + '&deg;/s from flight (v/R) + ' + S.rate.toFixed(0) + ' = <span style="color:' + (total > 98 ? '#ff6a55' : 'inherit') + '">' + total.toFixed(0) + '</span>, limit 98' + (S.off ? '<br><span style="color:#e8b23a">correction: view ' + (Math.abs(S.off) / RAD).toFixed(1) + '&deg; off the sim, easing back</span>' : '') +
-    '<br>ground spacing near the pair: ' + Math.round(S.softG) + ' u<br>this tick: 0 noise reads, ' + (S.lookups || 0) + ' map reads, 1 rotation<br>' + tileN + ' tiles, ' + Math.round(tot / 1000) + 'k triangles<br>map ' + MAP.N + '&sup2;, ' + MAP.reads.toLocaleString() + ' reads, built in ' + MAP.ms.toFixed(0) + ' ms (JS, gen 1)<br>frame ' + fdt.toFixed(1) + ' ms';
+    '<br>sweep limit ' + (P.law ? 'ON, 75 standing, 10,000 airborne' : 'OFF') + ' &nbsp; size ceiling ' + (P.ceil ? 'ON' : 'OFF') + '<br>ground spacing near the pair: ' + Math.round(spacing()) + ' u' + (P.dterm ? ' + detail term' : '') + '<br>this tick: 0 noise reads, ' + (S.lookups || 0) + ' map reads, 1 rotation<br>' + tileN + ' tiles, ' + Math.round(tot / 1000) + 'k triangles<br>map ' + MAP.N + '&sup2;, ' + MAP.reads.toLocaleString() + ' reads, ' + (MAP.gen2 ? 'gen 2, baked in Godot' : 'built in ' + MAP.ms.toFixed(0) + ' ms (JS, gen 1)') + '<br>frame ' + fdt.toFixed(1) + ' ms' + (P.fps30 ? ', drawn at 30 fps' : '');
   $('dot').style.left = (12 + inp.x * 11) + 'px'; [['iFly', 'fly'], ['iSend', 'send'], ['iDig', 'dig'], ['iL', 'l'], ['iR', 'r'], ['iAim', 'aim'], ['iForm', 'form'], ['iBeam', 'beam'], ['iHeavy', 'heavy']].forEach(function (c) { $(c[0]).className = inp[c[1]] ? 'c on' : 'c'; });
 }
 window.addEventListener('keydown', function (e) { if (e.code === 'KeyR') { human = true; reset(); return; } if (/^(Key[ADQECGFBH]|Shift(Left|Right)|Space)$/.test(e.code)) { keys[e.code] = true; human = true; e.preventDefault(); } });
 window.addEventListener('keyup', function (e) { keys[e.code] = false; }); window.addEventListener('blur', function () { keys = {}; });
-var acc = 0, last = 0;
-function frame(ts) { if (!last) last = ts; var dt = Math.min(80, ts - last); last = ts; fdt += (dt - fdt) * 0.1; acc += dt / 16.667; var n = 0; while (acc >= 1 && n < 6) { acc -= 1; step(); n++; } if (n === 6) acc = 0; draw(); paintHud(ts); if (!window.__hold) requestAnimationFrame(frame); }
+var acc = 0, last = 0, lastDraw = 0;
+function frame(ts) { if (!last) last = ts; var dt = Math.min(80, ts - last); last = ts; fdt += (dt - fdt) * 0.1; acc += dt / 16.667; var n = 0; while (acc >= 1 && n < 6) { acc -= 1; step(); n++; } if (n === 6) acc = 0; if (!P.fps30 || ts - lastDraw >= 32) { draw(); lastDraw = ts; } paintHud(ts); if (!window.__hold) requestAnimationFrame(frame); }
 buildMap(); buildTowers(); reset();
 // a hook for tools: step the world by ticks, draw, read it
 window.RT = { P: P, S: function () { return S; }, step: function (n) { for (var i = 0; i < n; i++) step(); }, draw: draw, buildMap: buildMap, human: function (v) { human = v; }, keys: keys, hud: function () { lastHud = 0; paintHud(performance.now() + 1000); return hud.textContent; }, reset: reset, gl: gl, fire: fire, floatLinear: floatLinear, startSwing: startSwing, small: function (d, b) { return startSmall('jolt', d, 1, b); }, tiles: function () { return tileN; }, SETTERS: SETTERS };
