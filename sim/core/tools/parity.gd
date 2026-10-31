@@ -54,6 +54,7 @@ func _init() -> void:
 	check("keyed draws", _keyedDraws(g))
 	check("arm setups", _armSetups())
 	check("intent pack", _intentPack())
+	check("exp past its scaling's reach", _expGuard())
 	check("a stun ends the held states", _stunGate())
 	check("action state", _actState())
 	check("pausing set pieces", _pause())
@@ -272,6 +273,49 @@ func _stunGate() -> String:
 
 ## I1 (intent v2) to version 4: pack and unpack are inverse on every field's range, canon() puts the stick on its 1 / 127
 ## grid, unpack refuses integers that are not packed intents, and a replay's two-number entry carries the whole record.
+## SimDetMath.exp, with its guards, against the same arithmetic with none, on both sides of them and at the ends of the range; and the guard's whole point, that a very negative x comes back at once.
+func _expGuard() -> String:
+	var pts: Array = []
+	for i in range(-1200, 1201, 3):
+		pts.append(float(i) * (SimDetMath.LN2_HI + SimDetMath.LN2_LO))
+		pts.append(float(i) * (SimDetMath.LN2_HI + SimDetMath.LN2_LO) + 0.25)
+	pts.append(-2000.0)
+	pts.append(2000.0)
+	pts.append(0.0)
+	pts.append(-745.2)
+	pts.append(709.8)
+	for x in pts:
+		var got: float = SimDetMath.exp(x)
+		var want: float = _expPlain(x)
+		if SimMathx.bits(got) != SimMathx.bits(want):
+			return "exp(%s): %s, without the guards %s" % [str(x), SimMathx.bits(got), SimMathx.bits(want)]
+	var t0: int = Time.get_ticks_usec()
+	var far: float = SimDetMath.exp(-1.0e9) + SimDetMath.exp(-1.0e300)
+	if far != 0.0 or Time.get_ticks_usec() - t0 > 100000:
+		return "a very negative x: %s in %d us" % [str(far), Time.get_ticks_usec() - t0]
+	if SimDetMath.exp(1.0e9) != INF:
+		return "a very large x isn't infinity"
+	return ""
+
+
+func _expPlain(x: float) -> float:
+	var k: float = floor(x * SimDetMath.INVLN2 + 0.5)
+	var r: float = (x - k * SimDetMath.LN2_HI) - k * SimDetMath.LN2_LO
+	var p: float = SimDetMath.EXP_C[17]
+	for i in range(16, -1, -1):
+		p = SimDetMath.EXP_C[i] + r * p
+	var y: float = 1.0 + r * p
+	var j: float = 0.0
+	while j < k:
+		y = y * 2.0
+		j += 1.0
+	j = 0.0
+	while j > k:
+		y = y / 2.0
+		j -= 1.0
+	return y
+
+
 func _intentPack() -> String:
 	var bools: Array = ["guard", "guardPress", "dodge", "sprint", "power", "powerPress", "powerTap", "light", "heavy", "sig", "context", "transform", "dash", "charge", "lightHeld", "heavyHeld", "escape", "contextHeld", "sigHeld"]
 	var fields: Array = ["mx", "my", "mode", "upgrade", "special", "stance", "waited", "stanceMask"] + bools

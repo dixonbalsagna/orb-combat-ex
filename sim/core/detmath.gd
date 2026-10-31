@@ -86,6 +86,10 @@ static func cos(x: float) -> float:
 
 static func exp(x: float) -> float:
 	var k: float = floor(x * INVLN2 + 0.5)
+	if k < -1100.0:
+		return 0.0   # the scaling below reaches +0 by here, a halving at a time: a very negative x would loop for seconds (Performance, 2026-10-31)
+	if k > 1100.0:
+		return INF   # and +infinity by here
 	var r: float = (x - k * LN2_HI) - k * LN2_LO
 	var p: float = EXP_C[17]
 	for i in range(16, -1, -1):

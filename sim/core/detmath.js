@@ -60,6 +60,8 @@ export function cos(x) {
 // e^x for |x| up to about 700.
 export function exp(x) {
   const k = Math.floor(x * INVLN2 + 0.5);
+  if (k < -1100) return 0;                                  // the scaling below reaches +0 by here, a halving at a time
+  if (k > 1100) return Infinity;                            // and +infinity by here
   const r = (x - k * LN2_HI) - k * LN2_LO;                  // |r| <= about 0.35
   let p = EXP_C[17];
   for (let i = 16; i >= 0; i--) p = EXP_C[i] + r * p;
