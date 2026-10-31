@@ -241,6 +241,10 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 			out.append(S.epoch.next.bearing); out.append(float(S.epoch.next.pc)); out.append(float(WorldEpoch.warmAngles(S).size()))   # and how many of its rings are read: when a swap may happen
 			out.append(float(S.epoch.next.k)); out.append(S.epoch.next.fb)   # and how it is warmed (the columns a tick, the second ring's bearing)
 		out.append(float(S.epoch.sh))
+	if S.frame != null:   # a field world's line and swing (sim/core/swing.gd): only on one, so any other match hashes as before. Poses aren't here: they derive from the frame and the plan
+		_obj(out, S.frame, SimState.Frame.HASHED)
+		_obj(out, S.swing, SimSwing.HASHED)
+		out.append(float(S.storeN)); out.append(float(S.storeHash >> 32)); out.append(float(S.storeHash & 0xFFFFFFFF))   # World's planet store: its length and running hash (two lanes: a float64 holds neither whole)
 	out.append(float(S.trees.size()))
 	for i in range(S.trees.size()):
 		var t = S.trees[i]
@@ -384,7 +388,7 @@ const FX_FIELDS: Dictionary = {
 	"land": ["actor", "x", "y", "z", "spd", "n", "kind", "sina", "slope", "surface", "vn", "vt", "contacts", "dur"], "tumble_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "dur"],
 	"journey_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "lips", "nb", "dur"],
 	"arena_turn": ["n", "x", "amount", "k"], "water_fill": ["x", "y", "n", "r", "spd", "k", "amount", "dur", "cause"], "water_wave": ["x", "y", "n", "r", "spd", "amount", "dur"], "water_douse": ["x", "w", "n"], "interior_contact": ["actor", "x", "y", "z", "spd", "n", "b", "floor", "kind", "nx", "ny", "vn", "vt", "keep", "punch", "k", "stop"], "interior_end": ["actor", "x", "y", "z", "spd", "n", "b", "end", "contacts", "t"],
-	"cue": ["actor", "kind", "text", "source"], "struggle_press": ["actor", "kind", "n"],
+	"swing_start": ["kind", "amount", "dur"], "swing_rest": ["kind", "dur"], "cue": ["actor", "kind", "text", "source"], "struggle_press": ["actor", "kind", "n"],
 }
 
 

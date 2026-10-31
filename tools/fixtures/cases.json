@@ -3870,7 +3870,7 @@
         {
           "file": "data/biomes/settlements.json",
           "set": {
-            "/landmarks/1/key": "bell_tower"
+            "/landmarks/1/key": "clock_tower"
           }
         }
       ],
@@ -293491,6 +293491,86 @@
       }
     },
     {
+      "id": "field-cells-small",
+      "schema": "biomes-field.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/field.json",
+          "set": {
+            "/cells": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/cells"
+      }
+    },
+    {
+      "id": "field-bake-stride-big",
+      "schema": "biomes-field.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/field.json",
+          "set": {
+            "/bakeStride": 99
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/bakeStride"
+      }
+    },
+    {
+      "id": "field-schema-version",
+      "schema": "biomes-field.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/field.json",
+          "set": {
+            "/schema": "biomes.field/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "field-refine-enabled-not-boolean",
+      "schema": "biomes-field.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/field.json",
+          "set": {
+            "/refine/enabled": "on"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/refine/enabled"
+      }
+    },
+    {
+      "id": "field-refine-sub-one",
+      "schema": "biomes-field.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/field.json",
+          "set": {
+            "/refine/sub": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/refine/sub"
+      }
+    },
+    {
       "id": "density-enabled-not-boolean",
       "schema": "biomes-density.schema.json",
       "mutate": [
@@ -298224,6 +298304,67 @@
       "expect": {
         "rule": "minimum",
         "pointer": "/crossBack/to"
+      }
+    },
+    {
+      "id": "fight-swing-valid",
+      "schema": "fight-swing.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/swing.json",
+          "set": {
+            "/schema": "fight.swing/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-swing-required-schema",
+      "schema": "fight-swing.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/swing.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-swing-extra-key",
+      "schema": "fight-swing.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/swing.json",
+          "set": {
+            "/bounce": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/bounce"
+      }
+    },
+    {
+      "id": "fight-swing-limit-off-not-bool",
+      "schema": "fight-swing.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/swing.json",
+          "set": {
+            "/limitOff": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/limitOff"
       }
     },
     {

@@ -53,7 +53,7 @@ static func dataHash(gen: int = 0) -> String:
 	if not _cLoaded:
 		_cLoad()
 	if (gen if gen > 0 else WorldClimate.genNow()) >= 2:
-		return _cHash + "/g2/" + WorldClimate.dataHash() + "/" + WorldLand.dataHash() + "/" + WorldSites.dataHash() + ("/r" + WorldRivers.dataHash() if WorldRivers.enabled() else "")   # a gen 2 planet's slices are not a gen 1 planet's, and follow climate.json and land.json
+		return _cHash + "/g2/" + WorldClimate.dataHash() + "/" + WorldLand.dataHash() + "/" + WorldSites.dataHash() + ("/r" + WorldRivers.dataHash() if WorldRivers.enabled() else "") + ("/f" + WorldField.dataHash() if (gen if gen > 0 else WorldClimate.genNow()) >= 3 else "")   # a gen 2 planet's slices are not a gen 1 planet's, and follow climate.json and land.json; a gen 3 planet's follow field.json as well
 	return _cHash
 
 
@@ -443,6 +443,7 @@ static func makeJob(seed: int) -> PlanetJob:
 static func forget() -> void:
 	_planets.clear()
 	_slices.clear()
+	WorldField.forget()
 
 
 ## ===================================================================== the surface at a point
@@ -975,7 +976,8 @@ class Slice extends RefCounted:
 	var heights := PackedFloat32Array()       # stored as S.base is: float32
 	var biomes := PackedByteArray()
 	var fine := PackedByteArray()             # gen 2: the fine biome of each column (WorldClimate.F_*); empty for gen 1
-	var held: Array = []                      # {id, kind, col, d, half, r}: the places the line passes (d: signed lateral offset, units, left of the line positive)
+	var cell := PackedInt32Array()            # gen 3: the planet cell of each column (WorldField.cellKey), what a keyed draw uses in place of the column's index; empty before gen 3
+	var held: Array = []                    # {id, kind, col, d, half, r}: the places the line passes (d: signed lateral offset, units, left of the line positive)
 	var circ: Dictionary = {}
 	var T: Array = []
 	var seed: int = 0
@@ -1003,7 +1005,19 @@ static func readBegin(P: Planet, circ: Dictionary, T: Array) -> Slice:
 	S.biomes.resize(nc)
 	if P.gen >= 2:
 		S.fine.resize(nc)
+	if P.gen >= 3:
+		S.cell.resize(nc)
 	return S
+
+
+## The seed a ring's trees are keyed by: a gen 3 planet's own (its cells are the planet's, so the same ground has the same trees at any bearing), else the ring's slice hash as always.
+static func treeSeed(P: Planet, sliceHashV: int) -> int:
+	return SimRng.deriveSeed(P.seed, "field.trees") if P.gen >= 3 else sliceHashV
+
+
+## The per-column keys a ring's keyed draws use: the planet cells of a gen 3 slice, none before.
+static func treeKeys(S: Slice) -> PackedInt32Array:
+	return S.cell if S.cell.size() == S.heights.size() else PackedInt32Array()
 
 
 ## Columns i0 up to i1 (exclusive) of the slice. The planet's numbers are read once a call, and a gen 2 planet on the stored continents takes surfAt's ordinary-ground path (the continents, the plates' shape, the
@@ -1019,7 +1033,9 @@ static func readColumns(P: Planet, S: Slice, i0: int, i1: int) -> void:
 	var ca: Array = circ.get("c", u)
 	var tc: int = touchCol()
 	var fine2: bool = P.gen >= 2
-	var fast: bool = fine2 and not WorldLand.plateB()
+	var field: bool = P.gen >= 3   # gen 3: a column is the field's ground at its point (WorldField), not a read of the planet's function
+	var FF = WorldField.of(P) if field else null
+	var fast: bool = fine2 and not field and not WorldLand.plateB()
 	var R: float = P.R
 	var sd0: int = P.seed
 	var u0: float = u[0]
@@ -1059,6 +1075,13 @@ static func readColumns(P: Planet, S: Slice, i0: int, i1: int) -> void:
 			qx = ca0 * ct + stf * qx
 			qy = ca1 * ct + stf * qy
 			qz = ca2 * ct + stf * qz
+		if field:
+			WorldField.sample(FF, qx, qy, qz)
+			S.heights[i] = FF.oh
+			S.biomes[i] = FF.ob
+			S.fine[i] = FF.ofine
+			S.cell[i] = WorldField.cellKey(FF)
+			continue
 		var done: bool = false
 		if fast:
 			var e: float = (_fbm(R, qx, qy, qz, contScale, contOct, sd0) - 0.5) * 2.0
@@ -1293,6 +1316,10 @@ static func farColumn(P: Planet, ring: Dictionary, i: int, z: float) -> Array:
 		qx = p[0] * co + t[0] * si
 		qy = p[1] * co + t[1] * si
 		qz = p[2] * co + t[2] * si
+	if P.gen >= 3:   # gen 3: the field's ground (a ring column's own, and the same at any offset)
+		var FF = WorldField.of(P)
+		WorldField.sample(FF, qx, qy, qz)
+		return [FF.oh, FF.ob]
 	surfAt(P, qx, qy, qz)
 	var h: float = P.outH
 	var b: int = P.outB
@@ -1339,6 +1366,8 @@ static func farField(P: Planet, ring: Dictionary, c0: int, ncols: int, stride: i
 	hs.resize(ncols * depths.size())
 	bs.resize(ncols * depths.size())
 	var detSeed: int = P.seed + int(c.sDetail)
+	var field: bool = P.gen >= 3
+	var FF = WorldField.of(P) if field else null
 	for di in range(depths.size()):
 		var z: float = depths[di]
 		var co: float = 1.0
@@ -1357,6 +1386,11 @@ static func farField(P: Planet, ring: Dictionary, c0: int, ncols: int, stride: i
 				qx = px[ci] * co + tx[ci] * si
 				qy = py[ci] * co + ty[ci] * si
 				qz = pz[ci] * co + tz[ci] * si
+			if field:   # gen 3: the canonical nodes where the detail is read, the bake's past coarseFrom
+				WorldField.sample(FF, qx, qy, qz, 1 if detail else WorldField.bakeStride())
+				hs[di * ncols + ci] = FF.oh
+				bs[di * ncols + ci] = FF.ob
+				continue
 			surfAt(P, qx, qy, qz)
 			var h: float = P.outH
 			var b: int = P.outB

@@ -4,7 +4,7 @@
     "burial_check", "floor_check", "lane_check", "props_wet_check",
     "after_check", "arena_check", "b_check", "blastcheck", "blockcheck", "brunt_check", "calm_read_check", "campaign_check", "climate_check", "collateral_check",
     "control_check", "craters_check", "deepencheck", "demostart_check", "density_check", "depthreads_check", "directcheck", "epoch_check", "far_check", "farmap_check",
-    "farsites_check", "fill_check", "fire_check", "gen2_state_check", "ground_check", "ground_props_check", "host_check", "interior_check", "isect_check", "lakes_check",
+    "farsites_check", "field_check", "field_plan_check", "field_crater_check", "field_water_check", "field_load_check", "field_records_check", "fill_check", "store_check", "fire_check", "gen2_state_check", "ground_check", "ground_props_check", "host_check", "interior_check", "isect_check", "lakes_check",
     "land_check", "minecheck", "noise_check", "planet_check", "planet_world_check", "props_check", "repeat_check", "ringpick_check", "rivers_check", "sea_rules_check",
     "sites_check", "skate_check", "stagecheck", "step_check", "surface_check", "switchon_check", "wall_check", "wrecks_check",
     "floor_walk_probe"

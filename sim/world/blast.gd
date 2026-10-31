@@ -57,6 +57,13 @@ static func _load() -> void:
 ## A shot of the given kind, fired by slot, ended at (x, y, z) moving at (vx, vy) units a second, against the ground (cause "ground") or the
 ## water (cause "water"). Returns {"crater": the record or null, "levelled": buildings levelled}.
 static func shotHit(S: SimState, slot: int, kind: String, x: float, y: float, z: float, vx: float, vy: float, cause: String, charge: float = 1.0, capLeft: int = 1) -> Dictionary:
+	SimField.far()
+	var r: Dictionary = _shotHitRead(S, slot, kind, x, y, z, vx, vy, cause, charge, capLeft)
+	SimField.near()
+	return r
+
+
+static func _shotHitRead(S: SimState, slot: int, kind: String, x: float, y: float, z: float, vx: float, vy: float, cause: String, charge: float = 1.0, capLeft: int = 1) -> Dictionary:
 	var res := {"crater": null, "levelled": 0}
 	var D: Dictionary = data()
 	if D.is_empty() or not D.kinds.has(kind) or slot < 0 or slot >= S.fighters.size():

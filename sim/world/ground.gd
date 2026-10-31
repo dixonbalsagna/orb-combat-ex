@@ -228,12 +228,13 @@ static func coverName(x: float) -> String:
 
 ## The trees of a ring: a tree in a treed column by its chance (COL over the mean gap), at a keyed place in the column, a keyed height. Dry ground only (`base`, the ground after the platforms), never on
 ## a town's or a city's. `seed`: the ring's slice hash. A pure function of its inputs; the trees come in column order.
-static func layTrees(fine: PackedByteArray, stored: PackedByteArray, base: PackedFloat32Array, seed: int, wt: PackedFloat32Array = PackedFloat32Array()) -> Array:
+static func layTrees(fine: PackedByteArray, stored: PackedByteArray, base: PackedFloat32Array, seed: int, wt: PackedFloat32Array = PackedFloat32Array(), keys: PackedInt32Array = PackedInt32Array()) -> Array:
 	if not _loaded:
 		_load()
 	var out: Array = []
 	var COL: float = SimConst.COL
 	var useW: bool = wt.size() == fine.size()   # a turn lays only the columns it takes from the new ring (weight at least 0.5): the rest it would throw away
+	var useK: bool = keys.size() == fine.size()   # gen 3: a column's draws are keyed by its planet cell, not its index in the ring (`seed` is then the planet's)
 	# SimRng.keyed(seed, key, n) is _fmix(x ^ imul(n, 0x9E3779B1)) with x = _fmix(seed ^ fnv(key)): the first half once a key
 	var xa: int = SimRng._fmix((seed ^ _fnv("ground.tree")) & SimRng.MASK)
 	var xb: int = SimRng._fmix((seed ^ _fnv("ground.tree.x")) & SimRng.MASK)
@@ -245,7 +246,7 @@ static func layTrees(fine: PackedByteArray, stored: PackedByteArray, base: Packe
 		if useW and wt[i] < 0.5:
 			continue
 		var t: Array = _trees[f]
-		var m: int = SimRng.imul(i & SimRng.MASK, 0x9E3779B1)
+		var m: int = SimRng.imul((keys[i] if useK else i) & SimRng.MASK, 0x9E3779B1)
 		if float(SimRng._fmix(xa ^ m)) / 4294967296.0 >= float(t[0]):
 			continue
 		var tr := SimState.TreeState.new()

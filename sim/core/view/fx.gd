@@ -152,6 +152,12 @@ func _fire(x: float, y: float, n: int, r: SimRng, z: float = 0.0) -> void:
 const DOUSE_PUFFS: int = 8
 
 func _waterFill(S: SimState, e, z: float) -> void:
+	SimField.far()
+	_waterFillRead(S, e, z)
+	SimField.near()
+
+
+func _waterFillRead(S: SimState, e, z: float) -> void:
 	var r: SimRng = rng["vfx.splash"]
 	_splash(e.x, e.y, mini(6, 2 + int(e.amount / 40.0)), r, z)
 	if e.spd <= 0.0:
@@ -190,6 +196,12 @@ func _waterWave(e, z: float) -> void:
 
 
 func _waterDouse(S: SimState, e, z: float) -> void:
+	SimField.far()
+	_waterDouseRead(S, e, z)
+	SimField.near()
+
+
+func _waterDouseRead(S: SimState, e, z: float) -> void:
 	var nc: int = SimConst.NC
 	var c0: int = int(floor(SimWrap.wrap(e.x - e.w) / SimConst.COL)) % nc   # x is the fill's source, w its window's width: either way
 	var span: int = mini(nc, int(ceil(2.0 * e.w / SimConst.COL)) + 1)
@@ -208,6 +220,12 @@ func _waterDouse(S: SimState, e, z: float) -> void:
 
 ## Particles (swap-remove when expired), then the damage numbers.
 func _stepParts(S: SimState, dt: float) -> void:
+	SimField.far()
+	_stepPartsRead(S, dt)
+	SimField.near()
+
+
+func _stepPartsRead(S: SimState, dt: float) -> void:
 	for i in range(parts.size() - 1, -1, -1):
 		var p = parts[i]
 		p.age += dt
@@ -305,7 +323,7 @@ func consume(S: SimState, events: Array) -> void:
 				_stepParts(S, dt * 0.1 if frozen else dt)
 			"region_stage", "region_broken", "brink_enter", "brink_exit", "brink_open", "brink_close", "tier_up", "transform_ready", "transform", "beam_outcome", "pause_start", "pause_end", "knockback", "exchange_end", "flow", "embed", "shot_fire", "shot_hit", "shot_clash", "shot_end", "shot_deflect", "mine_trip", "last_stand_ready", "last_stand_end", "intro_start", "intro_beat", "intro_line", "intro_gesture", "entrance_fall", "entrance_land", "staredown_start", "clock_start", "hide_start", "found", "ko":
 				pass   # wound readouts are the renderer's and UI's (crown, cards); nothing to spawn here
-			"form_hold", "form_release", "form_step", "drop_start", "drop_land", "drop_end", "decisive", "ricochet", "blast_cloud", "flight", "interior_contact", "interior_end", "air_brake", "finisher_start", "finisher_contest", "attack", "parry", "chain_end", "ambush", "lock_lost", "launch_plan", "window_open", "clash_draw", "hazard_telegraph", "searching", "danger", "launch", "rush", "cue", "struggle_press", "rally", "limb_break", "mood_band", "act_change", "style_label", "crowd_state", "building_hit", "arena_turn":
+			"swing_start", "swing_rest", "form_hold", "form_release", "form_step", "drop_start", "drop_land", "drop_end", "decisive", "ricochet", "blast_cloud", "flight", "interior_contact", "interior_end", "air_brake", "finisher_start", "finisher_contest", "attack", "parry", "chain_end", "ambush", "lock_lost", "launch_plan", "window_open", "clash_draw", "hazard_telegraph", "searching", "danger", "launch", "rush", "cue", "struggle_press", "rally", "limb_break", "mood_band", "act_change", "style_label", "crowd_state", "building_hit", "arena_turn":
 				pass   # director and Rally readouts are the HUD's, Camera's and Audio's; nothing to spawn here
 			_:
 				push_error("consume: unknown event " + e.type)

@@ -1,0 +1,287 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/fight-swing",
+  "title": "fight-swing (schema \"fight.swing/1\")",
+  "description": "data/fight/swing.json: the turntable's rate law and the match key's sample (docs/architecture/field-ground.md; Game Design's ring-any-angle/game-design.md). Read only on a field world. Policy: closed except keys starting with _.",
+  "type": "object",
+  "required": [
+    "schema",
+    "keySample",
+    "standingLimit",
+    "airborneLimit",
+    "limitOff",
+    "flashRate",
+    "smallSize",
+    "riseMax",
+    "causes",
+    "small",
+    "motion",
+    "slowRate",
+    "poseReach",
+    "poseShot",
+    "poseBody",
+    "poseStep",
+    "poseEvery"
+  ],
+  "properties": {
+    "schema": {
+      "const": "fight.swing/1"
+    },
+    "standingLimit": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100000,
+      "description": "units a second a standing body's ground may sweep"
+    },
+    "airborneLimit": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1000000,
+      "description": "units a second for a body in the air"
+    },
+    "limitOff": {
+      "type": "boolean",
+      "description": "the sweep limits and the rise backstop off"
+    },
+    "flashRate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 720,
+      "description": "degrees a second: the flash governor"
+    },
+    "smallSize": {
+      "type": "number",
+      "minimum": 0.1,
+      "maximum": 180,
+      "description": "the size ceiling's size, degrees"
+    },
+    "riseMax": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1000,
+      "description": "the most a standing fighter's ground rises a tick under a swing"
+    },
+    "keySample": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4096,
+      "description": "seeded canonical nodes in the match key"
+    },
+    "causes": {
+      "type": "object",
+      "required": [
+        "launch",
+        "chase",
+        "form",
+        "brawl"
+      ],
+      "properties": {
+        "launch": {
+          "type": "object",
+          "required": [
+            "peak",
+            "in",
+            "out"
+          ],
+          "properties": {
+            "peak": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 720
+            },
+            "in": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 600
+            },
+            "out": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 600
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "chase": {
+          "type": "object",
+          "required": [
+            "peak",
+            "in",
+            "out"
+          ],
+          "properties": {
+            "peak": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 720
+            },
+            "in": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 600
+            },
+            "out": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 600
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "form": {
+          "type": "object",
+          "required": [
+            "peak",
+            "in",
+            "out"
+          ],
+          "properties": {
+            "peak": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 720
+            },
+            "in": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 600
+            },
+            "out": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 600
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "brawl": {
+          "type": "object",
+          "required": [
+            "peak",
+            "in",
+            "out"
+          ],
+          "properties": {
+            "peak": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 720
+            },
+            "in": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 600
+            },
+            "out": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 600
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "each cause's peak and ramps"
+    },
+    "small": {
+      "type": "object",
+      "required": [
+        "peak",
+        "floorTicks",
+        "blowShape",
+        "smoothShape"
+      ],
+      "properties": {
+        "peak": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 720
+        },
+        "floorTicks": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 600
+        },
+        "blowShape": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "smoothShape": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "a small swing's size ceiling and curves"
+    },
+    "motion": {
+      "enum": [
+        "full",
+        "slow",
+        "off"
+      ],
+      "description": "a match's motion unless its setup names one"
+    },
+    "slowRate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 720,
+      "description": "degrees a second: slow's cap"
+    },
+    "poseReach": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 200000,
+      "description": "units by planet distance from the pivot a swing tick poses"
+    },
+    "poseShot": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 200000,
+      "description": "units from a shot in flight, the same"
+    },
+    "poseBody": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 200000,
+      "description": "the same from each of the pair"
+    },
+    "poseStep": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 200000,
+      "description": "the list is laid again when the pivot crosses this many units"
+    },
+    "poseEvery": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 600,
+      "description": "and every this many swing ticks"
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

@@ -271,7 +271,7 @@ static func heap(z: float, lo: float, hi: float) -> float:
 static func gen2_ring(S: SimState) -> bool:
 	if not (S.planetRing is Dictionary) or S.planetRing.is_empty():
 		return false
-	return (S.planetGen if S.planetGen > 0 else int(WorldClimate.data().get("gen", 1))) == 2
+	return (S.planetGen if S.planetGen > 0 else int(WorldClimate.data().get("gen", 1))) >= 2
 
 
 ## The level of the water over a body at x, height y on a gen 2 ring, where the sheet would hide him (from the first depth

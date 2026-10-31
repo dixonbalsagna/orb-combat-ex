@@ -203,20 +203,20 @@ static func baseY(S: SimState, b) -> float:
 				var ar: PackedFloat32Array = WorldTerrain.rowArr(S, k)
 				for c in range(ca, cb + 1):
 					var ic: int = posmod(c, NC)
-					m2 = maxf(m2, S.base[ic] + ar[ic])
+					m2 = maxf(m2, WorldTerrain.baseAt(S, ic) + ar[ic])
 		if any:
 			return m2
 		var ar2: PackedFloat32Array = WorldTerrain.rowArr(S, WorldTerrain.rowOfZ(b.z))
 		for c in range(ca, cb + 1):
 			var ic2: int = posmod(c, NC)
-			m2 = maxf(m2, S.base[ic2] + ar2[ic2])
+			m2 = maxf(m2, WorldTerrain.baseAt(S, ic2) + ar2[ic2])
 		return m2
 	var c0: int = int(floor((b.x - b.w * 0.5) / COL))
 	var c1: int = int(floor((b.x + b.w * 0.5) / COL)) + 1
 	var m: float = -1.0e9
 	for c in range(c0, c1 + 1):
 		var i: int = posmod(c, NC)
-		m = maxf(m, S.base[i] + S.deform[i])
+		m = maxf(m, WorldTerrain.baseAt(S, i) + S.deform[i])
 	return m
 
 
@@ -564,6 +564,13 @@ static func _heapRow(S: SimState, b, anyRow: bool) -> float:
 ## treeMode (the signature variant row's `trees`, docs/combat/biomes.md section 2): what the trees the area reaches become. "area" (the default) is what it always was: felled, with the fire cue. "burn": felled and charred
 ## (burn 1: the tree view draws a charred stump), with the fire cue. "fell": felled, no fire. "snap": felled with the crowns dropping (a debris cue at the crown), no fire. "none": the trees stand.
 static func damageArea(S: SimState, x: float, y: float, r0: float, dmg: float, cause, beam: bool = false, evt: float = 0.0, capLeft: int = -1, keep: float = 0.0, reachMul: float = -1.0, treeMode: String = "area") -> int:
+	SimField.far()
+	var r: int = _damageAreaRead(S, x, y, r0, dmg, cause, beam, evt, capLeft, keep, reachMul, treeMode)
+	SimField.near()
+	return r
+
+
+static func _damageAreaRead(S: SimState, x: float, y: float, r0: float, dmg: float, cause, beam: bool = false, evt: float = 0.0, capLeft: int = -1, keep: float = 0.0, reachMul: float = -1.0, treeMode: String = "area") -> int:
 	var levelled: int = 0
 	S.world.fallTick = -1.0
 	var tf: float = 1.0

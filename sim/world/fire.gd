@@ -112,6 +112,12 @@ static func flammability(x: float) -> float:
 ## A blast or a beam's sample at (x, y) of radius r has felled the trees inside 0.7 r (WorldStructures.damageArea): the trees from bandLo to bandHi of r that are still standing may catch, by chance x the ground's
 ## flammability, from a keyed draw. Only while fewer than maxBurning trees burn.
 static func ignite(S: SimState, x: float, y: float, r: float) -> void:
+	SimField.far()
+	_igniteRead(S, x, y, r)
+	SimField.near()
+
+
+static func _igniteRead(S: SimState, x: float, y: float, r: float) -> void:
 	var burning: int = 0
 	for t in S.trees:
 		if t.alive and t.burn > 0.0:
@@ -136,6 +142,12 @@ static func ignite(S: SimState, x: float, y: float, r: float) -> void:
 ## One tick (WorldWater.step calls it): each burning tree burns a little more, burns out at 1 (dead, burn 1, a small flame), goes out in water, and, every `every` ticks, may light a flammable tree within
 ## spreadRadius (a chance a second, falling with the distance and the ground's flammability). Nothing runs when no tree burns.
 static func step(S: SimState) -> void:
+	SimField.far()
+	_stepRead(S)
+	SimField.near()
+
+
+static func _stepRead(S: SimState) -> void:
 	var burning: Array = []
 	for i in range(S.trees.size()):
 		var t = S.trees[i]

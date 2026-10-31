@@ -521,7 +521,7 @@ static func _geomStep(S: SimState, E: Dictionary, pl: Dictionary, ep: Dictionary
 		return
 	if ep.has("g2"):   # a gen 2 ring's last two steps: its trees (only where the ring is taken), then its lakes
 		if int(ep.g2) == 0:
-			ep["trees"] = WorldGround.layTrees(ep.fcols, ep.cols, ep.base, int(ep.sh), pl.wt)
+			ep["trees"] = WorldGround.layTrees(ep.fcols, ep.cols, ep.base, WorldPlanet.treeSeed(P, int(ep.sh)), pl.wt, WorldPlanet.treeKeys(sl))
 			ep["g2"] = 1
 		else:
 			ep["lakes"] = WorldLakes.onlyNew(WorldLakes.plan(ep.base, ep.chordsAll, ep.fcols, ep.cols), pl.wt)

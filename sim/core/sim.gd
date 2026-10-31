@@ -23,6 +23,8 @@ static func createSim(opts: Dictionary = {}) -> SimState:
 ## each other (launchBy, rush.tgt), which is a cycle that JS's garbage collector frees and RefCounted never does.
 ## newMatch calls this on the outgoing match; a host that drops a sim calls it too.
 static func dispose(S: SimState, keepWorld: bool = false) -> void:
+	if SimField.cur == S:
+		SimField.cur = null   # the field match's reference (a static) doesn't keep a disposed state alive
 	for f in S.fighters:
 		f.launchBy = null
 		f.rush = null
@@ -154,6 +156,20 @@ static func _mHead(J: MatchJob) -> void:
 	WorldClimate.useGen(0)   # the data's generation unless the setup names one (WorldPlanetWorld.gen)
 	S.planetRing = {}   # World: the planet match's ring (planet_world.gd sets it)
 	S.epoch = null   # World's calm-moment turn (world/epoch.gd): a planet match with it on sets it
+	S.frame = null   # a field world's line and swing (sim/core/field.gd): a gen 3 setup sets them
+	S.frame0 = null
+	S.swing = null
+	S.bX = PackedFloat64Array()
+	S.bZ = PackedFloat64Array()
+	S.bDir = PackedFloat64Array()
+	S.bList = PackedInt32Array()
+	S.bListKey = -1
+	S.bListN = -1
+	S.fieldRecs = []
+	S.store = PackedFloat64Array()
+	S.storeN = 0
+	S.storeHash = 0
+	SimField.cur = null
 	J.phase = 2
 	if not (setup.has("planet") and WorldPlanetWorld.gen(S, setup)):   # a setup with a planet reads its world from the slice; without one, today's world
 		J.gj = WorldTerrain.genBegin(S)   # in pieces (WorldTerrain.genStep): genWorld's work in genWorld's order
@@ -253,6 +269,8 @@ static func _mSetupsC(J: MatchJob) -> void:
 	S.hitstopOn = setup.get("hitstop", SimHitstop.enabled()) == true   # hit-stop by weight: the data's switch (data/fight/hitstop.json), or the setup's own
 	SimHitstop.setup(S)   # the freeze budget while it is on
 	S.ricOn = setup.get("ricochet", SimRicochet.enabled()) == true   # the ricochet's glance: the data's switch (data/fight/ricochet.json), or the setup's own
+	if S.swing != null:   # a field world's motion (full, slow, off): a setup value, the data's otherwise (sim/core/swing.gd)
+		S.swing.motion = SimSwing.motionOf(setup)
 	WorldTerrain.initRows(S)   # T: the depth rows exist only when depth is on
 	if WorldFill.floorOn():   # a flat start stands on the floor of a lake or the sea, not under it (docs/world/lake-floor.md). Read here, not with the 60 above: the water's level reads this match's depth switch and rows, a reused state still holds the last match's until now
 		for f in S.fighters:
@@ -304,6 +322,7 @@ static func _step(S: SimState, inputs) -> bool:
 		WorldBiomes.fineCols = S.fineCols
 		WorldClimate.curGen = S.planetGen
 		WorldBiomes.worldId = S.worldId
+	SimField.bindStep(S)   # a field world's read: this match is the one reading, and no far scope is open
 	var dtReal: float = SimConst.DT
 	var dt: float = dtReal * S.game.ts
 	S.dt = dt
@@ -325,6 +344,8 @@ static func _step(S: SimState, inputs) -> bool:
 		SimFx.tickMark(S, dt, true)
 		return false
 	S.T += dt
+	if S.frame != null:
+		SimSwing.tick(S)   # the turntable: the line turns before anyone reads it this tick
 	if S.epoch != null:
 		WorldEpoch.tick(S, DirCalm.hold(S))   # the calm-moment turn: swap when decided, held (Encounter's DirCalm.hold) and calm
 	if S.hitstopOn:

@@ -202,10 +202,10 @@ static func wading(S: SimState, x: float) -> bool:
 
 static func _openLevel(S: SimState, i: int) -> float:
 	var NC: int = SimConst.NC
-	if S.base[i] < WorldWater.RESERVOIR_BASE:
+	if WorldTerrain.baseAt(S, i) < WorldWater.RESERVOIR_BASE:
 		return WorldWater.SEA_LEVEL
 	if S.water[i] >= WorldWater.MIN_DEPTH:
-		return S.base[i] + WorldTerrain.lowD(S)[i] + S.water[i]
+		return WorldTerrain.baseAt(S, i) + WorldTerrain.lowD(S)[i] + S.water[i]
 	return NONE
 
 
@@ -254,7 +254,7 @@ static func open(S: SimState, c0: int, cols: int) -> void:
 			for sgn in [1, -1]:
 				var j: int = posmod(e + sgn * d, NC)
 				var lv: float = _openLevel(S, j)
-				if lv != NONE and S.base[deepC] <= lv + K_RISE:
+				if lv != NONE and WorldTerrain.baseAt(S, deepC) <= lv + K_RISE:
 					srcCol = j
 					nearLevel = lv
 					break
@@ -275,7 +275,7 @@ static func _cue(S: SimState, w: Array, dug: float) -> void:
 	var stepS: float = float(WorldWater.STEP_TICKS) * SimConst.DT
 	var start: int = int(w[6])
 	e.x = (float(start) + 0.5) * COL
-	e.y = float(w[7]) if float(w[7]) != NONE else S.base[start] - float(w[8])
+	e.y = float(w[7]) if float(w[7]) != NONE else WorldTerrain.baseAt(S, start) - float(w[8])
 	e.n = int(w[1]) * 2 + 1
 	e.r = float(w[1]) * COL
 	e.spd = K_FRONT * COL / stepS if int(w[9]) >= 0 else 0.0   # a seeping table has no front
@@ -314,12 +314,12 @@ static func stepWindow(S: SimState, w: Array) -> bool:
 			var below: bool = false
 			if j <= hi:
 				var ii: int = posmod(j, NC)
-				below = base[ii] >= WorldWater.RESERVOIR_BASE and base[ii] + dfm[ii] < near
+				below = WorldTerrain.baseAt(S, ii) >= WorldWater.RESERVOIR_BASE and WorldTerrain.baseAt(S, ii) + dfm[ii] < near
 			if below:
 				if runStart < 0:
 					runStart = j
 					runIn = false
-				if absi(WorldWater.colDelta(nearCol, posmod(j, NC))) <= K_REACH and base[posmod(j, NC)] <= near + K_RISE:
+				if absi(WorldWater.colDelta(nearCol, posmod(j, NC))) <= K_REACH and WorldTerrain.baseAt(S, posmod(j, NC)) <= near + K_RISE:
 					runIn = true
 			elif runStart >= 0:
 				if runIn:
@@ -328,9 +328,9 @@ static func stepWindow(S: SimState, w: Array) -> bool:
 				runStart = -1
 	for j in range(lo, hi + 1):
 		var i: int = posmod(j, NC)
-		if base[i] < WorldWater.RESERVOIR_BASE:
+		if WorldTerrain.baseAt(S, i) < WorldWater.RESERVOIR_BASE:
 			continue
-		var g: float = base[i] + dfm[i]
+		var g: float = WorldTerrain.baseAt(S, i) + dfm[i]
 		var tl: float = NONE
 		if near != NONE and elig[j - lo] == 1:
 			tl = near
@@ -338,7 +338,7 @@ static func stepWindow(S: SimState, w: Array) -> bool:
 				pending = true   # the front has not got here yet: the window stays open for it
 				continue
 		if td != NONE:
-			tl = maxf(tl, base[i] - td)
+			tl = maxf(tl, WorldTerrain.baseAt(S, i) - td)
 		if tl == NONE or tl <= g:
 			continue
 		var want: float = tl - g
@@ -379,7 +379,7 @@ static func slam(S: SimState, x: float, E: float) -> void:
 	for w in S.waterWin:
 		if w.size() > 4 and int(w[4]) == 2 and absi(WorldWater.colDelta(c, int(w[0]))) < 4:
 			return   # a wave is already running here
-	var surface: float = S.base[c] + WorldTerrain.lowD(S)[c] + depth
+	var surface: float = WorldTerrain.baseAt(S, c) + WorldTerrain.lowD(S)[c] + depth
 	S.waterWin.append([c, int(ceil(K_WAVE_R / SimConst.COL)), 0, 0, 2, S.tick, SimWrap.wrap(x), K_WAVE_PUSH, K_WAVE_STEPS, surface, 0])
 	var e := SimFx._ev(S, "water_wave")
 	e.x = SimWrap.wrap(x)

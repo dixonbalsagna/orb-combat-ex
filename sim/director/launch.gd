@@ -316,6 +316,12 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 ## flight would get (the template's, the tier's and an across send's freshness), for SKIM ASHORE's skim prediction and
 ## PROP SMASH's aim; fresh marks a launch anywhere's send, which PROP SMASH does not aim.
 static func _biomeCands(S: SimState, A, D, c: Array, longOnly: bool, fwdOnly: bool, pf: float, fresh: bool = false) -> void:
+	SimField.far()
+	_biomeCandsRead(S, A, D, c, longOnly, fwdOnly, pf, fresh)
+	SimField.near()
+
+
+static func _biomeCandsRead(S: SimState, A, D, c: Array, longOnly: bool, fwdOnly: bool, pf: float, fresh: bool = false) -> void:
 	var cd: Dictionary = biome().get("candidates", {})
 	var pers: String = _persOf(A)
 	var f: float = A.face
@@ -461,6 +467,13 @@ static func _propFlight(S: SimState, A, D, ux: float, uy: float, F: float, props
 ## The first of props on a tick's path from x0 to b.x (direction dir) that _smashProp would break: within PROP_STOP
 ## ahead of where the tick leaves him, and he lower than its top. -1 when none.
 static func _propOnPath(S: SimState, b: WorldContact.Body, x0: float, dir: float, props: Array) -> int:
+	SimField.far()
+	var r: int = _propOnPathRead(S, b, x0, dir, props)
+	SimField.near()
+	return r
+
+
+static func _propOnPathRead(S: SimState, b: WorldContact.Body, x0: float, dir: float, props: Array) -> int:
 	var run: float = SimWrap.sdx(x0, b.x) * dir
 	if run <= 0.0:
 		return -1
@@ -482,6 +495,13 @@ static func _bc(q: Dictionary, nm: String, ux: float, uy: float, pers: String, e
 ## minRiseBh is searched column by column for a face: a run of columns steeper than minTan rising minRiseBh or more in all.
 ## Returns {"x": the face's foot, "rise": its height} or null. Found from the heights, never from a biome name.
 static func _cliff(S: SimState, x0: float, sign: float, pr: Dictionary):
+	SimField.far()
+	var r = _cliffRead(S, x0, sign, pr)
+	SimField.near()
+	return r
+
+
+static func _cliffRead(S: SimState, x0: float, sign: float, pr: Dictionary):
 	var step: float = float(pr.stepBh) * BH
 	var reach: float = float(pr.reachBh) * BH
 	var minRise: float = float(pr.minRiseBh) * BH
@@ -520,6 +540,13 @@ static func _cliff(S: SimState, x0: float, sign: float, pr: Dictionary):
 ## a fast, flat entry bounces off the sea's top, lifted and slowed). Returns {"x": where he first touches dry ground,
 ## "n": the skims} when that is within reach of x0 after at most maxSk skims, else null (he goes in, or never lands).
 static func _skimAshore(S: SimState, x0: float, y0: float, vx0: float, vy0: float, maxSk: int, reach: float):
+	SimField.far()
+	var r = _skimAshoreRead(S, x0, y0, vx0, vy0, maxSk, reach)
+	SimField.near()
+	return r
+
+
+static func _skimAshoreRead(S: SimState, x0: float, y0: float, vx0: float, vy0: float, maxSk: int, reach: float):
 	var w: Dictionary = WorldContact.data().get("water", {})
 	var dt: float = SimConst.DT
 	var kAir: float = SimDetMath.pow(0.55, dt)
@@ -654,6 +681,13 @@ static func bruntScore(S: SimState, A, plan: Dictionary) -> float:
 ## and never writes state. Returns {"x": landing x, "travel": horizontal distance, "water": ends in the sea}, with "t"
 ## the time to the first touchdown, "land" its x and "slide" what a knock-back slide adds after it (the camera-intent feed).
 static func predictFlight(S: SimState, x0: float, y0: float, vx0: float, vy0: float, trav: float = 1.0) -> Dictionary:
+	SimField.far()
+	var r: Dictionary = _predictFlightRead(S, x0, y0, vx0, vy0, trav)
+	SimField.near()
+	return r
+
+
+static func _predictFlightRead(S: SimState, x0: float, y0: float, vx0: float, vy0: float, trav: float = 1.0) -> Dictionary:
 	var dt: float = SimConst.DT
 	var kAir: float = SimDetMath.pow(0.55, dt)
 	var kWx: float = SimDetMath.pow(0.05, dt)

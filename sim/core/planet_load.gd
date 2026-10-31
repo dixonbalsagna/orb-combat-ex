@@ -9,6 +9,7 @@ extends RefCounted
 ##   climate  World's PlanetJob: the climate grid, a slice of cells a step, then the wind's carry;
 ##   rivers   the flow field when rivers are on (World's job makes it as a step of its own);
 ##   places   the cities and towns, a try-set a step;
+##   bake     gen 3 only: the field's bake (WorldField), a node a step of WorldField.NODE_UNITS units, after the planet is whole;
 ##   ring     a match's ring read (beginFor only): World's RingJob (an arena that names its ring) or SliceJob (a
 ##            touch-down's), a slice of columns a step, memoised where the match finds it.
 ## The planet and the ring are the same however they are stepped (make(seed) is World's job run to the end). Behind
@@ -35,6 +36,8 @@ static func ready(seed: int, gen: int) -> bool:
 	var ok: bool = WorldPlanet.isMade(seed)
 	if ok and gen >= 2 and WorldRivers.enabled():
 		ok = WorldPlanet.make(seed).flow != null
+	if ok and gen >= 3:   # a gen 3 planet's bake is read whole before a match (docs/world/ring-any-angle/research.md T6 stage 3)
+		ok = WorldField.bakeReady(seed)
 	WorldClimate.useGen(was)
 	return ok
 
@@ -70,6 +73,7 @@ class Job extends RefCounted:
 	var done: bool = false
 	var _cells: int = 0
 	var _flow: int = 0
+	var _bake: int = 0             # gen 3: the bake's units (0: none, or it is read already)
 	var _places: int = 0
 	var _setup: Dictionary = {}
 	var _cols: int = 0             # the match's arena, in columns (0: no ring to read)
@@ -90,6 +94,8 @@ class Job extends RefCounted:
 			_cells = int(gd.w) * int(gd.h)
 			_flow = WorldRivers.FLOW_COST if WorldRivers.enabled() else 0
 		_places = (int(P.c.cities) + int(P.c.towns) + 1) * WorldPlanet.PlanetJob.PLACE_COST
+		if g >= 3 and not WorldField.bakeReady(sd):
+			_bake = WorldField.bakeUnits(WorldField.of(P))
 		if setup.has("planet"):
 			_setup = setup
 			_cols = SimCore._arenaCols(setup)
@@ -99,7 +105,7 @@ class Job extends RefCounted:
 			SimConst.setArena(_cols)   # the ring's memo is keyed by the arena's columns, as the match reads it
 			_ringDone = not _ring.is_empty() and WorldPlanet.ringRead(sd, _ring)
 			SimConst.setArena(nc)
-		total = maxi(1, _cells + _flow + _places + (_cols * COLUMN_UNITS if _cols > 0 else 0))
+		total = maxi(1, _cells + _flow + _places + _bake + (_cols * COLUMN_UNITS if _cols > 0 else 0))
 		if g < 2 or pj.done:   # gen 1 has no grid or plates; a planet made already may want only its flow field or ring
 			phase = "places"
 		_settle()
@@ -128,6 +134,10 @@ class Job extends RefCounted:
 				spent += u   # World's job goes on where it left off (a try, a row of the carry, a few cells of the flow field): a step spends the slice
 			elif _flow > 0 and P.flow == null:   # a planet made whole elsewhere, without its flow field
 				WorldRivers.flowOf(P)
+			elif _bake > 0:   # gen 3: the bake (the planet is whole, so its climate grid is made)
+				if WorldField.bakeStep(WorldField.of(P), u):
+					_bake = 0
+				spent += u
 			elif not _ringDone:
 				_readRing(u)
 			_settle()
@@ -164,7 +174,7 @@ class Job extends RefCounted:
 		SimConst.setArena(nc)
 
 	func _settle() -> void:
-		var planetDone: bool = pj.done and (_flow == 0 or P.flow != null)
+		var planetDone: bool = pj.done and (_flow == 0 or P.flow != null) and _bake == 0
 		done = planetDone and _ringDone
 		if done:
 			phase = "done"

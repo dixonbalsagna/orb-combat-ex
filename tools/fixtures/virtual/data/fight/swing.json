@@ -1,0 +1,62 @@
+{
+  "_note": "The turntable and the field world (Game Design's docs/world/ring-any-angle/game-design.md sections 2, 10, 11; docs/architecture/field-ground.md; sim/core/field.gd, sim/core/swing.gd). Read only by a match on setup.planetGen 3: with any other generation nothing here is read. Every number is a first value.",
+  "schema": "fight.swing/1",
+  "causes": {
+    "_note": "Peak in degrees a second; in and out in ticks: the rate rises over in, holds, falls over out. Game Design's rates, Camera's ramps (camera.md section 5). A launch's 20 keeps the whip clean; 10 out is ruled.",
+    "launch": {
+      "peak": 60.0,
+      "in": 20.0,
+      "out": 10.0
+    },
+    "chase": {
+      "peak": 45.0,
+      "in": 20.0,
+      "out": 10.0
+    },
+    "form": {
+      "peak": 30.0,
+      "in": 20.0,
+      "out": 10.0
+    },
+    "brawl": {
+      "peak": 10.0,
+      "in": 20.0,
+      "out": 10.0
+    }
+  },
+  "small": {
+    "_note": "2 to 15 degrees. peak is the size ceiling's rate: peak x min(1, sqrt(smallSize / degrees)). floorTicks is the least that eases at all. The shapes are each curve's peak over its mean, so the peak is what the rate law allows.",
+    "peak": 240.0,
+    "floorTicks": 4.0,
+    "blowShape": 3.0,
+    "smoothShape": 1.875
+  },
+  "keySample": 64,
+  "_keySample": "seeded canonical nodes in the match key (sim/core/field.gd keyHash)",
+  "standingLimit": 75.0,
+  "_standingLimit": "units a second a standing body's ground may sweep (Game Design section 2)",
+  "airborneLimit": 10000.0,
+  "_airborneLimit": "units a second for a body in the air (Orb's word, 2026-10-31)",
+  "limitOff": false,
+  "_limitOff": "Orb's retry: the sweep limits and the rise backstop off; the rate is only the flash governor and the size ceiling",
+  "flashRate": 60.0,
+  "_flashRate": "degrees a second: the flash governor, the most any swing runs at today (Game Design section 10)",
+  "motion": "full",
+  "_motion": "a match's motion unless its setup names one (setup.swing): full, slow (every peak capped at slowRate), or off (no swing runs). Accessibility's swing-motion.md rule 2",
+  "slowRate": 30.0,
+  "_slowRate": "degrees a second: slow's cap (Game Design section 9's 30, swingReduced)",
+  "poseReach": 6000.0,
+  "_poseReach": "units by planet distance from the pivot within which a swing tick moves a building's pose (Performance's bench; the EP's ruling). Everything is posed again at rest and at a launch plan's start. Past the list, in a swing, only the crowd's shelter and evacuation read a pose, and they count people, not places",
+  "poseBody": 4000.0,
+  "_poseBody": "the same from each of the pair: a sent body flies far from the pivot, and its contacts read the buildings it meets",
+  "poseShot": 1000.0,
+  "_poseShot": "the same from a shot in flight",
+  "poseStep": 500.0,
+  "_poseStep": "the list is laid again when the pivot crosses this many units",
+  "poseEvery": 8,
+  "_poseEvery": "and every this many swing ticks, since a far body's point moves with the turn",
+  "smallSize": 15.0,
+  "riseMax": 7.5,
+  "_riseMax": "the most a standing fighter's ground rises a tick under a swing (the rate slows; rulings-2026-10-30 row 9)",
+  "_smallSize": "degrees: the size ceiling is small.peak up to here, then falls as the root of the size (Game Design section 10)"
+}

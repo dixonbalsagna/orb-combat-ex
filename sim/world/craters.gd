@@ -214,7 +214,7 @@ static func _floe(S: SimState, rec) -> bool:
 	var low: PackedFloat32Array = WorldTerrain.lowD(S)
 	var n: int = 0
 	for i in _bowlCols(rec):
-		if int(fc[i]) == sid and S.base[i] > WorldWater.SEA_LEVEL and S.base[i] + low[i] < WorldWater.SEA_LEVEL:
+		if int(fc[i]) == sid and WorldTerrain.baseAt(S, i) > WorldWater.SEA_LEVEL and WorldTerrain.baseAt(S, i) + low[i] < WorldWater.SEA_LEVEL:
 			n += 1
 	if n == 0:
 		return false
@@ -229,9 +229,9 @@ static func breakThrough(S: SimState, mid: int, wcols: int) -> void:
 	var dep: float = WorldAfter.splitDepth()
 	for q in range(wcols):
 		var i2: int = posmod(mid - (wcols - 1) / 2 + q, NC)
-		S.deform[i2] = minf(S.deform[i2], -(S.base[i2] + dep))
+		S.deform[i2] = minf(S.deform[i2], -(WorldTerrain.baseAt(S, i2) + dep))
 		S.rubble[i2] = 0.0
-		S.water[i2] = maxf(S.water[i2], -(S.base[i2] + S.deform[i2]) + WorldWater.SEA_LEVEL)
+		S.water[i2] = maxf(S.water[i2], -(WorldTerrain.baseAt(S, i2) + S.deform[i2]) + WorldWater.SEA_LEVEL)
 		WorldAfter._put(S, i2, WorldAfter.SPLIT, 0)
 
 

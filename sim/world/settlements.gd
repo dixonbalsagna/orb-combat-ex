@@ -263,6 +263,29 @@ static func span(S: SimState, s: Dictionary) -> Array:
 	return [float(i0) * COL, float(i1) * COL]
 
 
+## People: whole, by largest remainder, weighted by footprint x density x height to a data power (pop_height_exp); the place's share of pop0 is `popShare`. Sets `pop` on each building of `out`. (generate's own
+## step, taken out so a plan laid on a ring (WorldPlan) can share out a place's people among the buildings that stand on it.)
+static func assignPeople(out: Array, popShare: float) -> void:
+	var pop: float = float(int(round(popShare * float(data().pop0))))
+	var wts: Array = []
+	var wsum: float = 0.0
+	for b in out:
+		var wt: float = (b.w / BH) * (b.d / BH) * b.dens * SimDetMath.pow(b.h / BH, float(data().pop_height_exp)) * b.pop_mult
+		wts.append(wt)
+		wsum += wt
+	var shares: Array = []
+	var given: int = 0
+	for i in range(out.size()):
+		var exact: float = pop * wts[i] / maxf(wsum, 0.000001)
+		out[i].pop = int(floor(exact))
+		given += int(out[i].pop)
+		shares.append([exact - floor(exact), i])
+	shares.sort_custom(func(p, q): return p[0] > q[0] or (p[0] == q[0] and p[1] < q[1]))
+	var left: int = int(pop) - given
+	for k in range(mini(maxi(left, 0), shares.size())):
+		out[shares[k][1]].pop += 1
+
+
 ## Generate settlement s (an entry of data().settlements). Returns {"buildings": Array of Dictionary, "span": [a, b],
 ## "districts": Array of {name, look, a, b, avenues: [[x0, x1], ...]}, "rejected": int}. A building is {x, w, d, h, kind,
 ## shape, row, z, district, landmark, seed, floors, maxhp, pop}. It changes nothing in S.
@@ -424,28 +447,18 @@ static func generate(S: SimState, s: Dictionary) -> Dictionary:
 						if i < best:
 							best -= 1
 		di += 1
-	# people: whole, by largest remainder, weighted by footprint x density x height to a data power (pop_height_exp)
-	var pop: float = float(int(round(float(s.pop_share) * float(data().pop0))))
-	var wts: Array = []
-	var wsum: float = 0.0
-	for b in out:
-		var wt: float = (b.w / BH) * (b.d / BH) * b.dens * SimDetMath.pow(b.h / BH, float(data().pop_height_exp)) * b.pop_mult
-		wts.append(wt)
-		wsum += wt
-	var shares: Array = []
-	var given: int = 0
-	for i in range(out.size()):
-		var exact: float = pop * wts[i] / maxf(wsum, 0.000001)
-		out[i].pop = int(floor(exact))
-		given += int(out[i].pop)
-		shares.append([exact - floor(exact), i])
-	shares.sort_custom(func(p, q): return p[0] > q[0] or (p[0] == q[0] and p[1] < q[1]))
-	var left: int = int(pop) - given
-	for k in range(mini(maxi(left, 0), shares.size())):
-		out[shares[k][1]].pop += 1
+	assignPeople(out, float(s.pop_share))
 	for b in out:
 		b.floors = WorldBrunt.floorCount(b.h)
 		var h0: float = b.h / WS
 		b.maxhp = h0 * (6.0 if b.kind == "tower" else 3.0) * b.hp_mult
 	out.sort_custom(func(p, q): return p.x < q.x or (p.x == q.x and p.row < q.row))
 	return {"buildings": out, "span": sp, "districts": dinfo, "rejected": rejected}
+
+
+## RL-214: whether landmark `index` (1-based, as a building's `landmark`; 0 is none) is never a target for a launch or an arrival (its data line `noTarget`). The director's candidate lists and arrival scores skip it.
+static func noTarget(index: int) -> bool:
+	var lms: Array = data().get("landmarks", [])
+	if index < 1 or index > lms.size():
+		return false
+	return bool(lms[index - 1].get("noTarget", false))

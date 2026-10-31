@@ -67,8 +67,9 @@ static func platform(base: PackedFloat32Array, chords: Array) -> void:
 ## The settlements of `chords`, by D1's generator: {buildings, dlist, pop}. wsum: the people weight the places' shares are of. planTag: 0 at the match's start; a turn's number after
 ## (a building's plan index is its index in its settlement plus 1,000 a turn, so a place's plan indices stay unique across layouts). distOffset and setOffset: where the districts and
 ## settlements number from (a turn lays places beside kept ones).
-static func settle(S: SimState, P: WorldPlanet.Planet, chords: Array, wsum: float, planTag: int, distOffset: int, setOffset: int) -> Dictionary:
+static func settle(S: SimState, P: WorldPlanet.Planet, chords: Array, wsum: float, planTag: int, distOffset: int, setOffset: int, circ: Dictionary = {}) -> Dictionary:
 	var COL: float = SimConst.COL
+	var dirs: Array = []   # gen 3 with a ring: each building's planet direction, aligned with the buildings returned
 	var PS: float = SimConst.PS
 	var arch: Dictionary = {}
 	for sd in WorldSettle.data().settlements:
@@ -80,12 +81,16 @@ static func settle(S: SimState, P: WorldPlanet.Planet, chords: Array, wsum: floa
 	var dlist: Array = []
 	for ch in chords:
 		si += 1
-		var sd: Dictionary = (arch[ARCH_CITY] if ch[1] == WorldPlanet.KIND_CITY else arch[ARCH_TOWN]).duplicate(true)
-		WorldDensity.apply(sd, "city" if ch[1] == WorldPlanet.KIND_CITY else "town")   # a gen 2 ring's places are built denser (density.json); gen 1 is laid as the archetype says
-		sd.id = "p%d" % ch[0]
-		sd.span = [float(ch[2]) * COL / PS, float(ch[3]) * COL / PS]
-		sd.pop_share = float(P.people[ch[0]]) / maxf(wsum, 1.0)
-		var g: Dictionary = WorldSettle.generate(S, sd)
+		var g: Dictionary = {}
+		if P.gen >= 3 and not circ.is_empty() and WorldPlan.enabled():   # gen 3: the place by plan, the same town at any bearing (world/plan.gd); the chord's layout when too little of it stands
+			g = WorldPlan.lay(S, P, ch[0], circ, float(P.people[ch[0]]) / maxf(wsum, 1.0))
+		if g.is_empty():
+			var sd: Dictionary = (arch[ARCH_CITY] if ch[1] == WorldPlanet.KIND_CITY else arch[ARCH_TOWN]).duplicate(true)
+			WorldDensity.apply(sd, "city" if ch[1] == WorldPlanet.KIND_CITY else "town")   # a gen 2 ring's places are built denser (density.json); gen 1 is laid as the archetype says
+			sd.id = "p%d" % ch[0]
+			sd.span = [float(ch[2]) * COL / PS, float(ch[3]) * COL / PS]
+			sd.pop_share = float(P.people[ch[0]]) / maxf(wsum, 1.0)
+			g = WorldSettle.generate(S, sd)
 		for dd in g.districts:
 			dd["settlement"] = si
 			dlist.append(dd)
@@ -93,7 +98,9 @@ static func settle(S: SimState, P: WorldPlanet.Planet, chords: Array, wsum: floa
 			var e = g.buildings[ei]
 			var nb := SimState.Building.new()
 			nb.place = ch[0]
-			nb.plan = ei + 1000 * planTag
+			nb.plan = int(e.get("pi", ei)) + 1000 * planTag
+			if P.gen >= 3 and not circ.is_empty():
+				dirs.append(e["dir"] if e.has("dir") else WorldPlan.dirAtStrip(P, circ, float(e.x), float(e.z)))
 			nb.x = e.x; nb.w = e.w; nb.d = e.d; nb.h = e.h; nb.kind = e.kind; nb.row = float(e.row); nb.z = e.z; nb.seed = e.seed
 			nb.district = dOff + int(e.district); nb.shape = String(e.shape); nb.landmark = int(e.landmark)
 			nb.floors = e.floors
@@ -103,7 +110,7 @@ static func settle(S: SimState, P: WorldPlanet.Planet, chords: Array, wsum: floa
 			newPop += nb.pop
 			buildings.append(nb)
 		dOff += g.districts.size()
-	return {"buildings": buildings, "dlist": dlist, "pop": newPop}
+	return {"buildings": buildings, "dlist": dlist, "pop": newPop, "dirs": dirs}
 
 
 ## The ring a slice was read on, as the epoch carries it (an axis, the columns and a touch-down): from a ring the picker or a setup named, or a great circle. {} when it is not one the turn
@@ -142,11 +149,16 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
 	settleBiomes(cols, S.base, chords)
 	WorldBiomes.planetCols = cols
 	platform(S.base, chords)
+	if P.gen >= 3 and "fieldRecs" in S:   # gen 3: the platforms as planet records, for the sim's read through the frame (Simulation adds S.fieldRecs; until it does S.base above is the ground)
+		var pids: Array = []
+		for ch in chords:
+			pids.append(ch[0])
+		S.fieldRecs = WorldField.recordsOf(P, pids)
 	var sh: int = WorldPlanet.sliceHash(sl)
 	var lakes: Array = []
 	if sl.fine.size() == NC:   # a gen 2 planet: the fine biomes, and the trees they grow (data/biomes/ground.json)
 		WorldBiomes.fineCols = sl.fine
-		S.trees = WorldGround.layTrees(sl.fine, cols, S.base, sh)
+		S.trees = WorldGround.layTrees(sl.fine, cols, S.base, WorldPlanet.treeSeed(P, sh), PackedFloat32Array(), WorldPlanet.treeKeys(sl))
 		lakes = WorldLakes.plan(S.base, chords, sl.fine, cols)   # window 5: the valleys of the ring that hold water; trees do not grow in them
 		if WorldRivers.enabled():   # window 14: where the ring crosses a river it is cut into the ground and planted as a narrow shallow lake
 			var rsp: Dictionary = specOf(sl.circ)
@@ -155,13 +167,33 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
 				WorldRivers.carve(S.base, rv)
 				lakes = lakes + rv
 		S.trees = WorldLakes.dryTrees(S.trees, lakes, NC, S.base)
+		if P.gen >= 3 and "fieldRecs" in S:   # gen 3: the lakes the ring's plan found, flooded in two dimensions, and the drainage near the ring, as planet records (world/waterrec.gd)
+			var wf: WorldField.Field = WorldField.of(P)
+			var sorted: Array = []
+			for lk in lakes:
+				if lk.size() == 4:
+					sorted.append(lk)
+			sorted.sort_custom(func(a, b): return float(a[2]) < float(b[2]) or (float(a[2]) == float(b[2]) and int(a[0]) < int(b[0])))
+			var claimed: Dictionary = {}
+			var nl: int = 0
+			for lk in sorted:
+				S.fieldRecs.append(WorldWaterRec.lakeOf(P, wf, sl.circ, lk, S.base, nl, claimed))
+				nl += 1
+			S.fieldRecs.append_array(WorldWaterRec.riversNear(P, sl.circ))
 	# the settlements, by D1's generator
 	var wsum: float = 0.0
 	for ch in chords:
 		wsum += float(P.people[ch[0]])
-	var gen: Dictionary = settle(S, P, chords, wsum, 0, 0, 0)
+	var gen: Dictionary = settle(S, P, chords, wsum, 0, 0, 0, sl.circ)
 	for nb in gen.buildings:
 		S.buildings.append(nb)
+	if P.gen >= 3 and "bDir" in S:   # gen 3: each building's planet direction, three numbers each in building order (Simulation's bound pose arrays are laid from these)
+		var bd := PackedFloat64Array()
+		for q in gen.dirs:
+			bd.append(q[0])
+			bd.append(q[1])
+			bd.append(q[2])
+		S.bDir = bd
 	var dlist: Array = gen.dlist
 	S.lanes = WorldLanes.build(S, dlist)
 	S.world = SimState.World.new()
@@ -182,8 +214,12 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
 	S.slides.clear()
 	if setup.has("wear"):   # the campaign's place state (the setup is the switch: the campaign's host gives it wear only while data/fight/campaign.json is on): a worn place's buildings are already fallen or weakened (window 14; place state only, never a count of people)
 		WorldCampaign.applyWear(S, setup.wear)
+	if P.gen >= 3 and not sl.circ.has("st"):   # a field world on a whole ring: from here on the sim reads the ground through this great circle (sim/core/field.gd); S.base stays for the builders above and the old renderer at rest
+		S.planetRing = {"seed": seed}   # World's records read the planet by it from the first read; the whole of it is set below
+		SimField.begin(S, seed, sl.circ.u, sl.circ.v, float(WorldPlanet.touchCol()) * SimConst.COL)
 	WorldWater.init(S)
-	WorldLakes.apply(S, lakes)
+	if S.frame == null:   # on a field world the lakes are records, read through the line
+		WorldLakes.apply(S, lakes)
 	WorldCollateral.init(S)
 	var spec: Dictionary = specOf(sl.circ)
 	if not spec.is_empty():
@@ -191,7 +227,7 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
 		if sl.fine.size() == NC:
 			S.planetRing["fine"] = sl.fine   # a gen 2 ring's fine biomes: the turn blends them like planetCols
 			S.planetRing["lakes"] = lakes    # and its lakes: the water module keeps them level, the turn carries them
-	if WorldEpoch.enabled(setup):   # the calm-moment turn (docs/world/calm-turn-world.md): the epoch starts on the ring this match plays on
+	if WorldEpoch.enabled(setup) and S.frame == null:   # the calm-moment turn (docs/world/calm-turn-world.md): the epoch starts on the ring this match plays on
 		if not spec.is_empty():
 			S.epoch = WorldEpoch.begin(S, seed, sl.circ, spec, chords, dlist, sh)
 	return true

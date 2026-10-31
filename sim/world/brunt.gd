@@ -252,6 +252,13 @@ static func crossFrac(ox: float, x: float, edge: float, dir: float) -> float:
 ## or {"ok": true, "t", "x" (the near edge), "y", "vx", "vy", "spN" (the normalised speed there), "dir"}. The flight must
 ## enter b's footprint from the near edge at a height between the ground and b's current top, before it lands.
 static func flightTo(S: SimState, x0: float, y0: float, vx0: float, vy0: float, trav: float, b, z0: float = 0.0) -> Dictionary:
+	SimField.far()
+	var r: Dictionary = _flightToRead(S, x0, y0, vx0, vy0, trav, b, z0)
+	SimField.near()
+	return r
+
+
+static func _flightToRead(S: SimState, x0: float, y0: float, vx0: float, vy0: float, trav: float, b, z0: float = 0.0) -> Dictionary:
 	var dt: float = SimConst.DT
 	var kAir: float = SimDetMath.pow(0.55, dt)
 	var dir: float = -1.0 if vx0 < 0.0 else 1.0
@@ -296,6 +303,13 @@ static func flightTo(S: SimState, x0: float, y0: float, vx0: float, vy0: float, 
 ## L3: the same flight with the body's real extent, in depth: z follows the waypoint to the target's face exactly as stepZ does (from the
 ## position at the start of each step), and the first building the swept body meets must be the target, or the flight is not a plan.
 static func _flightToSwept(S: SimState, x0: float, y0: float, vx0: float, vy0: float, trav: float, b, z0: float, dir: float, edge: float, ahead: float) -> Dictionary:
+	SimField.far()
+	var r: Dictionary = _flightToSweptRead(S, x0, y0, vx0, vy0, trav, b, z0, dir, edge, ahead)
+	SimField.near()
+	return r
+
+
+static func _flightToSweptRead(S: SimState, x0: float, y0: float, vx0: float, vy0: float, trav: float, b, z0: float, dir: float, edge: float, ahead: float) -> Dictionary:
 	var dt: float = SimConst.DT
 	var kAir: float = SimDetMath.pow(0.55, dt)
 	var body: Array = WorldLanes.body()
@@ -505,6 +519,14 @@ static func _cheap(b, popCap: float) -> float:
 ## the top above D's height minus 40, the best BR_PRESELECT per side by the cheap score. Ordered by side (-1 then 1) and
 ## score, then index, so the order is fixed.
 static func candidates(S: SimState, D) -> Array:
+	SimField.far()
+	var r: Array = _candidatesRead(S, D)
+	SimField.near()
+	return r
+
+
+static func _candidatesRead(S: SimState, D) -> Array:
+	SimSwing.poseAll(S)   # a field world mid-swing: this plan looks past the pair's reach
 	var popCap: float = WorldStructures.buildingPopRef(S)
 	var sides: Array = [[], []]
 	for bi in WorldStructures.near(S, D.x, BR_MAX):

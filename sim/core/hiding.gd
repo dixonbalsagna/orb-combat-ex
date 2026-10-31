@@ -82,6 +82,13 @@ static func regainLock(S: SimState, f) -> void:
 ## True when the hunter can see the target: not under unburnt canopy, and no terrain between their chests (a heightfield
 ## line test). Clouds and rubble heaps join with World's living destruction (LD1) and buildings in depth (B1).
 static func lineOfSight(S: SimState, hunter, target) -> bool:
+	SimField.far()
+	var r: bool = _lineOfSightRead(S, hunter, target)
+	SimField.near()
+	return r
+
+
+static func _lineOfSightRead(S: SimState, hunter, target) -> bool:
 	if WorldCover.coverAt(S, target) == "canopy":
 		return false
 	var dx: float = SimWrap.sdx(hunter.x, target.x)

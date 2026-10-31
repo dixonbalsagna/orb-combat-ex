@@ -24,6 +24,10 @@ static func claim() -> int:
 ## other world the biome's own name (biomeAt); a town's or a city's ground reads "village" or "city" (its settlement), never a fine id: the stored codes 7 and 8 are not the fine ids 7 and 8.
 static func fineNameAt(x: float) -> String:
 	var xw: float = SimWrap.wrap(x)
+	if SimField.swung():   # a field world, once the line has swung: what's under it now (a place's own ground isn't named until World's places by plan)
+		return WorldClimate.fineName(SimField.fineAt(SimField.cur, xw))
+	if SimField.cur != null:
+		return biomeAt(xw)
 	if fineCols.size() > 0 and fineCols.size() == planetCols.size():
 		var i: int = mini(int(xw / SimConst.COL), planetCols.size() - 1)
 		var st: int = planetCols[i]
@@ -35,6 +39,10 @@ static func fineNameAt(x: float) -> String:
 
 static func biomeAt(x: float) -> String:
 	x = SimWrap.wrap(x)
+	if SimField.swung():
+		return WorldPlanetWorld.BIOME_NAME[SimField.biomeAt(SimField.cur, x)]
+	if SimField.cur != null:   # a field world: the biome under the line now
+		return WorldPlanetWorld.BIOME_NAME[SimField.biomeAt(SimField.cur, x)]
 	if planetCols.size() > 0:
 		return WorldPlanetWorld.BIOME_NAME[planetCols[mini(int(x / SimConst.COL), planetCols.size() - 1)]]
 	for s in SEG:

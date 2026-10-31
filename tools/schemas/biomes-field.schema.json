@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-field",
+  "title": "biomes.field/1",
+  "description": "data/biomes/field.json: planet generation 3's ground, a field of nodes on a cube-sphere (docs/world/ring-any-angle/research.md T6 stage 3; WorldField). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore.",
+  "type": "object",
+  "required": ["schema", "_about", "cells", "bakeStride", "plans", "refine"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "biomes.field/1" },
+    "_about": { "type": "string" },
+    "cells": { "type": "integer", "minimum": 4, "maximum": 1200, "description": "Cells along a face's edge: the canonical lattice (38,400 / cells units a cell). A multiple of bakeStride." },
+    "bakeStride": { "type": "integer", "minimum": 1, "maximum": 16, "description": "The bake is every bakeStride-th node of the canonical lattice." },
+    "plans": {
+      "type": "object",
+      "required": ["enabled", "yawSteps", "minBuildings", "align", "bandsCity", "bandsTown", "pitchBH"],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean", "description": "Off, a gen 3 place is laid from the chord as gen 2's is." },
+        "yawSteps": { "type": "integer", "minimum": 1, "maximum": 180, "description": "A place's street axis is one of this many yaws in a half turn, keyed by the planet and the place." },
+        "align": { "type": "boolean", "description": "Turn a place's plan to the ring it is first laid on, so its street runs along the line and a band lies on the lanes (as dense as the chord layout). Off, the street's yaw is keyed by the planet and the place." },
+        "bandsCity": { "type": "integer", "minimum": 0, "maximum": 6, "description": "A city's plan is the street's strip laid this many times each side of the middle one, a lane-band (pitchBH) apart, so a ring at any bearing crosses several." },
+        "bandsTown": { "type": "integer", "minimum": 0, "maximum": 6, "description": "The same for a town." },
+        "pitchBH": { "type": "number", "minimum": 8, "maximum": 80, "description": "The distance between bands, in fighter heights (the depth of the fight lanes' band, 32)." },
+        "minBuildings": { "type": "integer", "minimum": 1, "maximum": 100, "description": "A place that would stand fewer buildings than this on a ring falls back to the chord layout." }
+      }
+    },
+    "refine": {
+      "type": "object",
+      "required": ["enabled", "sub", "step", "shoreBand"],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean", "description": "Off, the plain triangles everywhere." },
+        "sub": { "type": "integer", "minimum": 2, "maximum": 8, "description": "A refined cell is read at this many times the resolution (4: 32 units, a ring column)." },
+        "step": { "type": "number", "minimum": 10, "maximum": 1000, "description": "A cell whose corners differ by more than this many units is refined (a wall, a cliff)." },
+        "shoreBand": { "type": "number", "minimum": 0, "maximum": 400, "description": "A cell whose corner heights span the shoreline height (WorldWater.SHORE_WET), widened by this many units each side, is refined." }
+      }
+    }
+  }
+}

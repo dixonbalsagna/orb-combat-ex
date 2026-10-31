@@ -514,6 +514,12 @@ static func hitWorld(S: SimState, sh, cause: String) -> void:
 ## shot that hits a mine sets it off, and each shot is tested against the fighters, the buildings, the ground and the
 ## water, in the order they were fired. A mine's timers run, a rival near an armed one sets it off, and it blows.
 static func step(S: SimState, dt: float) -> void:
+	SimField.far()
+	_stepRead(S, dt)
+	SimField.near()
+
+
+static func _stepRead(S: SimState, dt: float) -> void:
 	if S.shots.is_empty():
 		return
 	var n: int = S.shots.size()

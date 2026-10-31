@@ -286,6 +286,13 @@ static func toFloor(S: SimState, x0: float, y0: float, vx: float, vy: float, sho
 
 
 static func _floor(S: SimState, x: float) -> float:
+	SimField.far()
+	var r: float = _floorRead(S, x)
+	SimField.near()
+	return r
+
+
+static func _floorRead(S: SimState, x: float) -> float:
 	return SimMathx.jmax(WorldTerrain.groundY(S, x), WorldWater.surfaceAt(S, x))
 
 

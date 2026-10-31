@@ -256,7 +256,7 @@ static func refill(S: SimState, c0: int, cols: int) -> void:
 			var c: int = (c0 + k + n) % n
 			var off: int = (c - int(lk[0]) + n) % n
 			if off < int(lk[3]):
-				S.water[c] = maxf(0.0, float(lk[2]) - (S.base[c] + dfm[c]))
+				S.water[c] = maxf(0.0, float(lk[2]) - (WorldTerrain.baseAt(S, c) + dfm[c]))
 
 
 ## Put the water in S.water (after WorldWater.init has sized it): the depth from the valley floor to the lake's level. The surface (ground plus depth) is the flat level.
@@ -265,6 +265,6 @@ static func apply(S: SimState, lakes: Array) -> void:
 	for lk in lakes:
 		for k in range(int(lk[3])):
 			var c: int = (int(lk[0]) + k) % n
-			var d: float = float(lk[2]) - S.base[c]
+			var d: float = float(lk[2]) - WorldTerrain.baseAt(S, c)
 			if d > 0.0:
 				S.water[c] = d

@@ -110,6 +110,10 @@
           "pop_mult"
         ],
         "properties": {
+          "noTarget": {
+            "type": "boolean",
+            "description": "RL-214: a landmark with this set is never a target the director aims a launch or an arrival at (WorldSettle.noTarget). Absent is false."
+          },
           "key": {
             "type": "string",
             "pattern": "^[a-z][a-z0-9_]*$"

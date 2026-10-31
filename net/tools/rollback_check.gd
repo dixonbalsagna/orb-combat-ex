@@ -67,6 +67,7 @@ const SETUPS: Dictionary = {
 	"depth": {"depth": true},   # fight lanes: depth physical (data/combat/depth.json's switch, on for this match)
 	"planet2": {"planet": 7, "touch": 3, "arena": {"cols": 2400}, "planetGen": 2, "intro": false},   # a gen 2 ring, as QA plays them (qa/godot/qa_planet.gd)
 	"planet2depth": {"planet": 7, "touch": 3, "arena": {"cols": 2400}, "planetGen": 2, "intro": false, "depth": true},
+	"field": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false},   # a field world (sim/core/field.gd): its line and store, in the hash
 }
 
 ## Containers the state reaches by two paths that are only read, never written in place (checked by reading the code,

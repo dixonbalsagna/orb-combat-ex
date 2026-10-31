@@ -33,7 +33,7 @@
   ],
   "landmarks": [
     {
-      "key": "bell_tower",
+      "key": "clock_tower",
       "width_bh": 9,
       "shape": "spire",
       "height_bh": 65,
@@ -70,7 +70,8 @@
       "shape": "chapel",
       "height_bh": 10,
       "hp_mult": 1.5,
-      "pop_mult": 1.5
+      "pop_mult": 1.5,
+      "noTarget": true
     },
     {
       "key": "crown_tower",
@@ -526,7 +527,7 @@
           "pop_density": 1.0,
           "landmarks": [
             {
-              "key": "bell_tower",
+              "key": "clock_tower",
               "count": 1,
               "place": "centre",
               "row": 1

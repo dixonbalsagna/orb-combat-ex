@@ -82,6 +82,13 @@ static func record(S: SimState, dt: float) -> void:
 ## Where f leads the fight: +1 or -1, or 0 for no move. The role comes from the roster data: a menace meter makes the
 ## villain, an anguish meter the hero; a fighter with neither does not roam.
 static func roam(S: SimState, f) -> float:
+	SimField.far()
+	var r: float = _roamRead(S, f)
+	SimField.near()
+	return r
+
+
+static func _roamRead(S: SimState, f) -> float:
 	_ensure()
 	var hero: bool = f.hasAnguish and not f.hasMenace
 	if not hero and not f.hasMenace:
@@ -121,6 +128,13 @@ static func roam(S: SimState, f) -> float:
 ## biomes (clear of towns when it is leaving a crowd, and another biome when it is only moving on); the villain takes the
 ## nearest bucket with people in each direction.
 static func _search(S: SimState, f, hist: PackedFloat32Array, i0: int, cur: int, bt: PackedFloat64Array, total: float, dest: Array, hero: bool, crowded: bool) -> float:
+	SimField.far()
+	var r: float = _searchRead(S, f, hist, i0, cur, bt, total, dest, hero, crowded)
+	SimField.near()
+	return r
+
+
+static func _searchRead(S: SimState, f, hist: PackedFloat32Array, i0: int, cur: int, bt: PackedFloat64Array, total: float, dest: Array, hero: bool, crowded: bool) -> float:
 	var ref: float = WorldStructures.popNearRef(S)
 	var popW: float = float(_d.popW) * f.care
 	var varW: float = float(_d.varietyW)
@@ -145,7 +159,7 @@ static func _search(S: SimState, f, hist: PackedFloat32Array, i0: int, cur: int,
 				ok = own <= EMPTY and (win <= EMPTY or not crowded) and (crowded or bi != cur)
 				if ok and BIOMES[bi] != "ocean":
 					var x: float = idx * STEP + STEP / 2.0
-					ok = not S.base[int(x / SimConst.COL)] < WorldWater.RESERVOIR_BASE   # land, not a crater lake
+					ok = not WorldTerrain.baseAt(S, int(x / SimConst.COL)) < WorldWater.RESERVOIR_BASE   # land, not a crater lake
 			elif ok:
 				ok = minf(hist[idx] / ref, 1.0) > EMPTY
 			if ok:

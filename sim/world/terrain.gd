@@ -232,13 +232,13 @@ static func _platforms(S: SimState) -> Array:
 	for st in SETTLEMENTS:
 		var i0: int = int(st.x0 * PS / COL)
 		var i1: int = int(st.x1 * PS / COL)
-		while i0 < i1 and S.base[i0 % NC] < TRIM_G:
+		while i0 < i1 and WorldTerrain.baseAt(S, i0 % NC) < TRIM_G:
 			i0 += 1
-		while i1 > i0 and S.base[i1 % NC] < TRIM_G:
+		while i1 > i0 and WorldTerrain.baseAt(S, i1 % NC) < TRIM_G:
 			i1 -= 1
 		for i in range(i0 - PLATFORM_BLEND, i1 + PLATFORM_BLEND + 1):
 			var j: int = (i + NC) % NC
-			var g: float = S.base[j]
+			var g: float = WorldTerrain.baseAt(S, j)
 			if g >= SETTLE_FLOOR or g < TRIM_G:
 				continue
 			var w: float = 1.0
@@ -261,7 +261,7 @@ static func _footOk(S: SimState, cx: float, w: float) -> bool:
 	var lo: float = 1.0e9
 	var hi: float = -1.0e9
 	for c in range(c0, c1 + 1):
-		var g: float = S.base[posmod(c, NC)]
+		var g: float = WorldTerrain.baseAt(S, posmod(c, NC))
 		lo = minf(lo, g)
 		hi = maxf(hi, g)
 	return lo >= BUILD_MIN_GROUND and hi - lo <= BUILD_MAX_SLOPE * w
@@ -455,9 +455,17 @@ static func groundY(S: SimState, x: float, z: float = 0.0) -> float:
 	var f: float = c - fi
 	var i: int = int(fi)
 	var j: int = (i + 1) % SimConst.NC
-	var a: float = S.base[i] + S.deform[i]
-	var b: float = S.base[j] + S.deform[j]
+	if S.frame != null:   # a field world: through the line (sim/core/field.gd), the marks still the strip's
+		var fa: float = SimField.col(S, i) + S.deform[i]
+		return fa + (SimField.col(S, j) + S.deform[j] - fa) * f
+	var a: float = WorldTerrain.baseAt(S, i) + S.deform[i]
+	var b: float = WorldTerrain.baseAt(S, j) + S.deform[j]
 	return a + (b - a) * f
+
+
+## The untouched ground at strip column i: S.base, and through the line on a field world.
+static func baseAt(S: SimState, i: int) -> float:
+	return S.base[i] if S.frame == null else SimField.col(S, i)
 
 
 static func _groundZ(S: SimState, x: float, z: float) -> float:
@@ -471,11 +479,17 @@ static func _groundZ(S: SimState, x: float, z: float) -> float:
 	var i: int = int(fi)
 	var j: int = (i + 1) % SimConst.NC
 	var a0: PackedFloat32Array = rowArr(S, k0)
-	var g0: float = (S.base[i] + a0[i]) + ((S.base[j] + a0[j]) - (S.base[i] + a0[i])) * f
+	if S.frame != null:   # a field world: the true ground at this depth, with the rows' marks on top
+		var d0: float = a0[i] + (a0[j] - a0[i]) * f
+		if fz != 0.0 and k1 != k0:
+			var a1f: PackedFloat32Array = rowArr(S, k1)
+			d0 += (a1f[i] + (a1f[j] - a1f[i]) * f - d0) * fz
+		return SimField.atDepth(S, x, z) + d0
+	var g0: float = (WorldTerrain.baseAt(S, i) + a0[i]) + ((WorldTerrain.baseAt(S, j) + a0[j]) - (WorldTerrain.baseAt(S, i) + a0[i])) * f
 	if fz == 0.0 or k1 == k0:
 		return g0
 	var a1: PackedFloat32Array = rowArr(S, k1)
-	var g1: float = (S.base[i] + a1[i]) + ((S.base[j] + a1[j]) - (S.base[i] + a1[i])) * f
+	var g1: float = (WorldTerrain.baseAt(S, i) + a1[i]) + ((WorldTerrain.baseAt(S, j) + a1[j]) - (WorldTerrain.baseAt(S, i) + a1[i])) * f
 	return g0 + (g1 - g0) * fz
 
 
@@ -483,7 +497,7 @@ static func _groundZ(S: SimState, x: float, z: float) -> float:
 ## fill with water are WorldWater's business (S.water); this rule is what the AI, launch planner and fighter speed use.
 static func seaAt(S: SimState, x: float) -> bool:
 	var i: int = int(floor(SimWrap.wrap(x) / SimConst.COL))
-	if S.base[i] < WorldWater.RESERVOIR_BASE:
+	if WorldTerrain.baseAt(S, i) < WorldWater.RESERVOIR_BASE:
 		return true
 	# a gen 2 lake deep enough to hide in is sea to every rule that asks (a landing slams, a body skims or sinks): water is water (Game Design, rulings 2026-10-23b item 13)
-	return S.water[i] >= WorldWater.seaMin() and WorldWater.deepIsSea()
+	return WorldWater.depthOf(S, i) >= WorldWater.seaMin() and WorldWater.deepIsSea()

@@ -354,7 +354,7 @@ static func _split(S: SimState, cols: PackedInt32Array, gapBh: float, defX: floa
 	var run: Array = []   # the floe columns of the groove, in order; a break in the run, or ground that is not above the water, ends a floe
 	var floes: Array = []
 	for i in cols:
-		var above: bool = S.base[i] + low[i] > WorldWater.SEA_LEVEL and S.water[i] < WorldWater.MIN_DEPTH
+		var above: bool = WorldTerrain.baseAt(S, i) + low[i] > WorldWater.SEA_LEVEL and S.water[i] < WorldWater.MIN_DEPTH
 		if above and (run.is_empty() or posmod(int(i) - int(run[run.size() - 1]), NC) == 1):
 			run.append(int(i))
 			continue
@@ -376,10 +376,10 @@ static func _split(S: SimState, cols: PackedInt32Array, gapBh: float, defX: floa
 
 
 static func _level(S: SimState, j: int) -> float:
-	if S.base[j] < WorldWater.RESERVOIR_BASE:
+	if WorldTerrain.baseAt(S, j) < WorldWater.RESERVOIR_BASE:
 		return WorldWater.SEA_LEVEL
 	if S.water[j] >= WorldWater.MIN_DEPTH:
-		return S.base[j] + WorldTerrain.lowD(S)[j] + S.water[j]
+		return WorldTerrain.baseAt(S, j) + WorldTerrain.lowD(S)[j] + S.water[j]
 	return WorldFill.NONE
 
 
@@ -393,7 +393,7 @@ static func _flood(S: SimState, cols: PackedInt32Array, source: String, seaCols:
 	var NC: int = SimConst.NC
 	var low: PackedFloat32Array = WorldTerrain.lowD(S)
 	for i in cols:
-		var g: float = S.base[i] + low[i]
+		var g: float = WorldTerrain.baseAt(S, i) + low[i]
 		var level: float = WorldFill.NONE
 		if source == "sea":
 			if g >= WorldWater.SEA_LEVEL:
@@ -408,7 +408,7 @@ static func _flood(S: SimState, cols: PackedInt32Array, source: String, seaCols:
 		else:
 			var td: float = WorldFill.tableDepth(WorldBiomes.fineNameAt((float(i) + 0.5) * SimConst.COL))
 			if td != WorldFill.NONE:
-				level = S.base[i] - td   # the biome's water table: below the original ground
+				level = WorldTerrain.baseAt(S, i) - td   # the biome's water table: below the original ground
 		if level != WorldFill.NONE and level > g:
 			S.water[i] = maxf(S.water[i], level - g)
 			_put(S, i, FLOODED, 0)
@@ -451,7 +451,7 @@ static func _slope(S: SimState, i: int) -> float:
 	var low: PackedFloat32Array = WorldTerrain.lowD(S)
 	var a: int = posmod(i + 1, NC)
 	var b: int = posmod(i - 1, NC)
-	return (S.base[a] + low[a] - S.base[b] - low[b]) / (2.0 * SimConst.COL)
+	return (WorldTerrain.baseAt(S, a) + low[a] - WorldTerrain.baseAt(S, b) - low[b]) / (2.0 * SimConst.COL)
 
 
 ## How many columns past the last source (at `last`, going `dir`) the run goes before the slope flattens below minSlope or turns the other way: at most `reach`.
@@ -468,7 +468,7 @@ static func _part(S: SimState, cols: PackedInt32Array, cL: int, span: int, z: fl
 	var NC: int = SimConst.NC
 	var any: bool = false
 	for i in cols:
-		if S.base[i] < WorldWater.RESERVOIR_BASE:
+		if WorldTerrain.baseAt(S, i) < WorldWater.RESERVOIR_BASE:
 			any = true
 			break
 	if not any:
@@ -479,7 +479,7 @@ static func _part(S: SimState, cols: PackedInt32Array, cL: int, span: int, z: fl
 	S.aftermathJobs.append([posmod(cL + span / 2, NC), span / 2 + int(a.get("shoreCols", 40)), 0, 0, J_PART, now, z, cL, span, open, float(a.get("pushBh", 2.0)) * K_BH, int(a.get("shoreCols", 40)), 1 if dx >= 0.0 else -1, 0, 0, 0])
 	for q in range(span):
 		var i2: int = posmod(cL + q, NC)
-		if S.base[i2] < WorldWater.RESERVOIR_BASE:
+		if WorldTerrain.baseAt(S, i2) < WorldWater.RESERVOIR_BASE:
 			_put(S, i2, OPEN, now + open)
 	return true
 
@@ -639,7 +639,7 @@ static func _stepPart(S: SimState, w: Array) -> bool:
 		if clock < open:   # the trench stands: the sea's columns on the path held at no water
 			for q in range(span):
 				var i: int = posmod(cL + q, NC)
-				if S.base[i] < WorldWater.RESERVOIR_BASE:
+				if WorldTerrain.baseAt(S, i) < WorldWater.RESERVOIR_BASE:
 					S.water[i] = 0.0
 			return false
 		for q1 in range(span):   # the sea rushes back: the water model refills its reservoir columns, and the wave runs
@@ -650,7 +650,7 @@ static func _stepPart(S: SimState, w: Array) -> bool:
 		var low: PackedFloat32Array = WorldTerrain.lowD(S)
 		for q2 in range(span):
 			var i2: int = posmod(cL + q2, NC)
-			minG = minf(minG, S.base[i2] + low[i2])
+			minG = minf(minG, WorldTerrain.baseAt(S, i2) + low[i2])
 		WorldWater.touched(S, posmod(cL + span / 2, NC), span / 2 + 4, minG)
 		var e := SimFx._ev(S, "water_wave")
 		e.x = SimWrap.wrap((float(cL) + float(span) * 0.5) * COL)
@@ -696,7 +696,7 @@ static func _runUp(S: SimState, cL: int, span: int, shore: int, wetEnd: int) -> 
 		var hit: int = -1
 		for d in range(0, shore):
 			var i: int = posmod(start + side * d, NC)
-			if S.base[i] >= WorldWater.RESERVOIR_BASE and S.water[i] < WorldWater.MIN_DEPTH:
+			if WorldTerrain.baseAt(S, i) >= WorldWater.RESERVOIR_BASE and S.water[i] < WorldWater.MIN_DEPTH:
 				hit = d
 				break
 		if hit < 0:

@@ -516,6 +516,10 @@
       "schema": "biomes-density.schema.json"
     },
     {
+      "match": "data/biomes/field.json",
+      "schema": "biomes-field.schema.json"
+    },
+    {
       "match": "data/biomes/props.json",
       "schema": "biomes-props.schema.json"
     },
@@ -718,6 +722,10 @@
     {
       "match": "data/fight/ricochet.json",
       "schema": "fight-ricochet.schema.json"
+    },
+    {
+      "match": "data/fight/swing.json",
+      "schema": "fight-swing.schema.json"
     }
   ]
 }

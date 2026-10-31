@@ -282,6 +282,12 @@ static func fireBeam(S: SimState, A, ox: float, oy: float, ux: float, uy: float,
 
 
 static func sampleBeam(S: SimState, b, s: float) -> void:
+	SimField.far()
+	_sampleBeamRead(S, b, s)
+	SimField.near()
+
+
+static func _sampleBeamRead(S: SimState, b, s: float) -> void:
 	var A = b.A
 	var P: float = b.pw   # the beam-power scalar (world/crater.gd): tier and charge; it equals the tier mid-band
 	var x: float = SimWrap.wrap(b.ox + b.ux * s)

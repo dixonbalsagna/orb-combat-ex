@@ -17,6 +17,14 @@ var planetGen: int = 0               # World: the generation this match's planet
 var fineCols := PackedByteArray()    # World: this match's gen 2 fine biome by column (WorldBiomes.fineCols), kept for the same reason; empty on a gen 1 or hand-made world. Not hashed
 var worldId: int = 0                 # World: which world this match built (WorldBiomes.claim); step compares it with the last built. Not hashed
 var planetRing = {}                  # World: the ring this match's planet world plays on ({seed, c, t, cols}: the axis, the touch-down point and the columns, as WorldRingPick.ringFrom takes them), for a planet match with the calm-moment turn on or off, kept up to date at a turn; {} for the hand-made world. A renderer's far land reads it. Not hashed
+var frame = null                      # a field world's line (setup.planetGen 3; sim/core/field.gd): a Frame, null on every other world. Hashed only while set
+var frame0 = null                     # its first numbers: the plan the buildings' planet points were taken in (shared by snapshots: never written)
+var swing = null                      # the turntable's state (sim/core/swing.gd): a Swing while frame is set. Hashed only while set
+var fieldSeed: int = 0                # the planet a field world reads. Not hashed: the frame's own seed is
+var fieldRecs: Array = []             # World's records on a field world: platforms and basins in planet terms (WorldField.applyRecords), constant for a match, shared by snapshots
+var store := PackedFloat64Array()     # World's planet store on a field world: its flat records, append-only (sim/world/store.gd); a snapshot's copy is how a rollback truncates it
+var storeN: int = 0                   # ... its records, and its running hash. Hashed only on a field world
+var storeHash: int = 0
 var epoch = null                      # World: the calm-moment turn's state (world/epoch.gd), a Dictionary while the arena may turn, else null. Hashed (hash.gd) only while set: the turns made (n), the last turn's time, the drift, the ring's slice hash, and for a decided turn its bearing, pivot column, how many of its rings are read, k and the fallback bearing
 var contactOn: bool = false           # ground contact on (World, G2: a copy of data/biomes/contact.json enabled, taken by newMatch)
 var dirS := DirS.new()
@@ -54,6 +62,12 @@ var bMarks := PackedInt64Array()
 var bFled := PackedFloat64Array()
 var bPopAlive := PackedFloat64Array()
 var bWear := PackedFloat64Array()
+var bX := PackedFloat64Array()      # a field world's poses, by index (SimSwing): empty on every other world, where a building's x and z are its record's. Derived from the frame and the plan: not hashed
+var bZ := PackedFloat64Array()
+var bDir := PackedFloat64Array()    # ... and each building's planet point, three numbers, where it was laid in the first frame (shared by snapshots: never written once bound)
+var bList := PackedInt32Array()     # ... and which of them a swing tick poses (SimSwing._poseList): in the state, so a rollback restores it. Derived: not hashed
+var bListKey: int = -1
+var bListN: int = -1
 var bG: Array = []                  # each building's BuildingGen: copied shallow (the records are sealed, copy on write); the restore hook puts them back on the records
 var tAlive := PackedByteArray()
 var tBurn := PackedFloat64Array()
@@ -85,7 +99,7 @@ var out := Out.new()
 ## The records in S.buildings and S.trees are shared too (their classes' SNAPSHOT says so), with the arrays that hold them:
 ## a snapshot copies their per-tick fields as the packed arrays above (bFdmg, bG and tG shallow), and afterRestore()
 ## points the records at the restored arrays. Neither array is changed in place during play: the calm turn replaces both.
-const SNAPSHOT: Dictionary = {"share": ["base", "bIdx", "buildings", "trees", "hold", "bBound", "tBound"], "shallow": ["bFdmg", "bG", "tG"]}
+const SNAPSHOT: Dictionary = {"share": ["base", "bIdx", "buildings", "trees", "hold", "bBound", "tBound", "frame0", "bDir", "fieldRecs"], "shallow": ["bFdmg", "bG", "tG"]}
 
 static var _b0: BuildingGen = _seal(BuildingGen.new())   # the generation fields of a building not yet written (sealed)
 static var _t0: TreeGen = _seal(TreeGen.new())
@@ -139,6 +153,8 @@ func bindStructures(fresh: bool = false) -> void:
 	var ts: Array = []
 	ts.resize(m)
 	h.tAlive.resize(m); h.tBurn.resize(m); h.tG.resize(m)
+	if frame != null:
+		_bindPoses(h, n)
 	for i in range(m):
 		var t: TreeState = trees[i]
 		var o: TreeState = t
@@ -159,6 +175,26 @@ func bindStructures(fresh: bool = false) -> void:
 	bHp = h.hp; bAlive = h.alive; bFmask = h.fmask; bFdmg = h.fdmg; bMarks = h.marks
 	bFled = h.fled; bPopAlive = h.popAlive; bWear = h.wear; bG = h.g
 	tAlive = h.tAlive; tBurn = h.tBurn; tG = h.tG
+
+
+## A field world's poses: the plan's in the first frame, as planet points, and the poses from the frame as it is now.
+func _bindPoses(h: Hold, n: int) -> void:
+	if bX.size() != n:   # the point each building was laid at, in the first frame (a place's lanes snap its z after its plan's point, so the plan's own point isn't where it stands), and its pose in the frame as it is now
+		bDir = PackedFloat64Array()
+		bDir.resize(n * 3)
+		bX = PackedFloat64Array()
+		bZ = PackedFloat64Array()
+		bX.resize(n)
+		bZ.resize(n)
+		for i in range(n):
+			var g0: BuildingGen = buildings[i].g
+			SimField.placeIn(frame0, g0.x, g0.z)
+			bDir[i * 3] = SimField.ox; bDir[i * 3 + 1] = SimField.oy; bDir[i * 3 + 2] = SimField.oz
+			SimField.strip(self, bDir[i * 3], bDir[i * 3 + 1], bDir[i * 3 + 2])
+			bX[i] = SimField.sx
+			bZ[i] = SimField.sz
+	h.bX = bX
+	h.bZ = bZ
 
 
 ## Bind again when S.buildings or S.trees is not the array last bound (a match's start, a world's tool): cheap otherwise.
@@ -189,6 +225,7 @@ func afterRestore() -> void:
 	h.hp = bHp; h.alive = bAlive; h.fmask = bFmask; h.fdmg = bFdmg; h.marks = bMarks
 	h.fled = bFled; h.popAlive = bPopAlive; h.wear = bWear; h.g = bG
 	h.tAlive = tAlive; h.tBurn = tBurn; h.tG = tG
+	h.bX = bX; h.bZ = bZ
 	if h.moved:
 		for i in range(buildings.size()):
 			var b: Building = buildings[i]
@@ -236,6 +273,8 @@ func _rebuildRecords() -> void:
 ## was bound for, pointed at that state's restored arrays by afterRestore. Holds no record, so no reference cycle.
 class Hold:
 	const SNAPSHOT: Dictionary = {"shared": true}
+	var bX := PackedFloat64Array()   # a field world's poses (empty on any other: the record's own x and z)
+	var bZ := PackedFloat64Array()
 	var owner: int = 0            # the instance id of the state it was bound for
 	var moved: bool = false       # a later bind (or restore) bound some of its records to another hold
 	var hp := PackedFloat64Array()
@@ -345,6 +384,57 @@ class StyleState:
 	var runLen: int = 0
 	var runMax: int = 0       # ... and the match's longest
 	var sigLanded: int = 0    # signatures that landed (match-long)
+
+
+## A field world's line (sim/core/field.gd): a great circle, the point at strip x0 and the heading there. seed and gen name the field.
+class Frame:
+	const HASHED: Array = ["px", "py", "pz", "tx", "ty", "tz", "x0"]
+	var px: float = 0.0
+	var py: float = 0.0
+	var pz: float = 0.0
+	var tx: float = 0.0
+	var ty: float = 0.0
+	var tz: float = 0.0
+	var x0: float = 0.0
+	var seed: int = 0
+	var gen: int = 3
+
+	func copy():
+		var c = get_script().new()
+		c.px = px; c.py = py; c.pz = pz; c.tx = tx; c.ty = ty; c.tz = tz; c.x0 = x0; c.seed = seed; c.gen = gen
+		return c
+
+
+## The turntable's state (sim/core/swing.gd): rate deg/s now, left degrees to go (signed: above 0 the heading turns toward the camera), way its sign, n swings so far, restT the tick it must rest by or -1; the plan (kind, deg its size, ticks, the ramps, ptick degrees a tick at the peak, cruise) and its clock tau.
+class Swing:
+	var active: bool = false
+	var rate: float = 0.0
+	var left: float = 0.0
+	var way: float = 1.0
+	var cause: String = ""
+	var n: int = 0
+	var restT: int = -1
+	var pivotHeld: bool = false
+	var pivotX: float = 0.0
+	var age: int = 0
+	var clamps: int = 0
+	var kind: int = 0
+	var deg: float = 0.0
+	var ticks: float = 0.0
+	var rampIn: float = 0.0
+	var rampOut: float = 0.0
+	var ptick: float = 0.0
+	var r0: float = 0.0
+	var cruise: float = 0.0
+	var tau: float = 0.0
+	var motion: String = "full"
+	var nextDeg: float = 0.0
+	var nextCause: String = ""
+	var nextRate: float = 0.0
+	var nextBlow: bool = false
+	var nextHeld: bool = false
+	var nextX: float = 0.0
+	var nextRest: int = -1
 
 
 class Clash:
@@ -499,7 +589,7 @@ class Building:
 			if _h == null: _fled = v
 			else: _h.fled[_i] = v
 	var z: float:             # depth of the building's centre from the fighter plane (negative: behind), world units
-		get: return g.z
+		get: return g.z if _h == null or _h.bZ.is_empty() else _h.bZ[_i]
 		set(v): _w().z = v
 	var d: float:             # footprint depth
 		get: return g.d
@@ -508,7 +598,7 @@ class Building:
 		get: return g.row
 		set(v): _w().row = v
 	var x: float:
-		get: return g.x
+		get: return g.x if _h == null or _h.bX.is_empty() else _h.bX[_i]
 		set(v): _w().x = v
 	var w: float:
 		get: return g.w

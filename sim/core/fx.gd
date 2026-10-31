@@ -639,6 +639,14 @@ static func searching(S: SimState, f, target, x: float, kind: String = "lock") -
 
 ## A render-only cue from Combat's templates (the cue op): cue name in kind, actor the named fighter (-1 for both), text
 ## the camera hint, source the bark trigger ("true" for a bark pause with no trigger yet).
+## The turntable's start and rest (sim/core/swing.gd): for the view; kind the cause, amount the degrees asked, dur its ticks (at rest, how long it ran).
+static func swingEvent(S: SimState, type: String, cause: String, deg: float, dur: int) -> void:
+	var e := _ev(S, type)
+	e.kind = cause
+	e.amount = deg
+	e.dur = float(dur)
+
+
 static func cue(S: SimState, f, name: String, cam: String, bark: String) -> void:
 	var e := _ev(S, "cue")
 	e.actor = float(S.fighters.find(f)) if f != null else -1.0; e.kind = name; e.text = cam; e.source = bark

@@ -105,7 +105,7 @@ static func look_names() -> Array:
 	return _names
 
 
-## Building b's landmark key in the data ("bell_tower", "ledger_hall", ...), or "" for none.
+## Building b's landmark key in the data ("clock_tower", "ledger_hall", ...), or "" for none.
 static func landmark_key(b) -> String:
 	var k: int = int(b.landmark)
 	if k <= 0:
@@ -437,7 +437,7 @@ static func parts(b, lk: Dictionary, depth: float = -1.0) -> Array:
 				out.append(_p(0.0, 0.0, w * 0.86, d * 0.86, h, h + orn * 0.6, _c(tones[1]), PLAIN | CAP | ORN, 0.55, 0.55))
 		"spire":
 			# A shaft the whole height of the box, and the spire above it: never a needle (no taller than 15 percent).
-			if mark == "bell_tower":
+			if mark == "clock_tower":
 				# The Gatebell (Art, Legal RL-040): a stone shaft, an open belfry, a spire, one stair bump; no clock face.
 				var bel: float = clampf(0.5 * w, fh, 0.08 * h)
 				out.append(_p(0.0, 0.0, w, d, 0.0, h - bel, _c(tones[0]), 0, 1.0, 1.0, 0.0, STONE))

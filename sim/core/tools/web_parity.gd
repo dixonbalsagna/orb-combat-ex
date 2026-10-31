@@ -55,6 +55,8 @@ func _ready() -> void:
 	for sd in [3, 5]:
 		_add("x.switches." + str(sd), func(): return SimGolden.goldenRun("default", sd, null, 6000, on.duplicate(true)))
 	_add("x.calmTurn", func(): return SimGolden.goldenRun("default", 1, null, 6000, {"planet": 7, "touch": 3, "arena": {"cols": 2400, "turn": true}}))
+	_add("x.field.key", func(): return SimField.keyHash(7))
+	_add("x.field.match", func(): return _fieldRun())
 	for rs in ["00c0ffee0badf00d", "5eed0000decade42", "0123456789abcdef"]:
 		_add("x.runGround." + rs, func(): return _runGround(rs))
 	if only != "":
@@ -64,6 +66,23 @@ func _ready() -> void:
 
 
 ## A sample run's grounds (SimRun, on main since 07876704): each stage's setup and a short match on it.
+## A field world with swings: the state's hash, tick by tick, joined.
+func _fieldRun() -> String:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 77, {"p1": true, "p2": true}, {"planet": 7, "touch": 1, "planetGen": 3, "intro": false})
+	var out: String = ""
+	for t in range(1200):
+		if t % 300 == 120:
+			SimSwing.ask(S, {"deg": 40.0 if (t / 300) % 2 == 0 else -40.0, "rate": 60.0, "cause": "launch"})
+		SimCore.step(S)
+		S.out.feed.clear()
+		S.out.fx.clear()
+		if t % 120 == 0:
+			out += str(SimHash.stateHash(S).gameplay)
+	SimCore.dispose(S)
+	return out
+
+
 func _runGround(run: String) -> Array:
 	var outv: Array = []
 	var used: Array = []

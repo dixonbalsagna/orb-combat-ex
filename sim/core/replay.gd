@@ -201,6 +201,9 @@ static func dataHash(setup: Dictionary = {}) -> String:
 	h.text(WorldBrunt.dataHash())          # World's brunt ladder and lodge: data/biomes/brunt.json
 	if setup.has("planet"):   # a planet's world: World's planet data, by the generation this setup plays (WorldClimate.genFor: never the one in force, for a header is made before a match)
 		var gen: int = WorldClimate.genFor(setup)
+		if gen >= 3:   # a field world: the swing's data, the bake's hash and 64 seeded canonical nodes, so a build that computes them differently is refused at the handshake
+			h.text(SimField.dataHash())
+			h.text(SimField.keyHash(int(setup.planet), gen))
 		h.text(WorldPlanet.dataHash(gen))
 		if gen >= 2 and WorldDensity.enabled():   # a gen 2 ring's buildings follow data/biomes/density.json while its switch is on
 			h.text(WorldDensity.dataHash())

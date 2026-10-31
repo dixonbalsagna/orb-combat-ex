@@ -173,6 +173,13 @@ static func _col(x: float) -> int:
 ## and steep factors on today's bowl; empty for today's bowl, exactly). Returns the record, or null when the spot was already too
 ## dented to take a crater of this size.
 static func dig(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, z: float = NAN, shape: PackedFloat64Array = PackedFloat64Array()):
+	SimField.far()
+	var r = _digRead(S, x, energy, cause, kind, dirx, vert, special, z, shape)
+	SimField.near()
+	return r
+
+
+static func _digRead(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, z: float = NAN, shape: PackedFloat64Array = PackedFloat64Array()):
 	if kind == "impact" and int(WorldBrunt.cfg().repeatMarks) > 0:
 		var rp: Array = _repeat(S, x, energy, special, shape[WorldCraters.S_R] if shape.size() > 0 else 1.0)
 		x = rp[0]
@@ -185,9 +192,41 @@ static func dig(S: SimState, x: float, energy: float, cause, kind: String, dirx:
 	var k: int = WorldTerrain.enterRow(S, WorldTerrain.rowOfZ(zz))
 	var rec = _dig(S, x, energy, cause, kind, dirx, vert, special, shape)
 	WorldTerrain.leaveRow(S, k)
-	if rec != null and k >= 0:
+	if rec != null and k >= 0 and not _lastLive:   # a crater held in the planet store has no strip rows to dig: its bowl is radial about its planet point
 		_digNeighbours(S, rec, k, shape[WorldCraters.S_STEEP] if shape.size() > 0 else 1.0)
 	return rec
+
+
+## Gen 3: a crater is also a record at a PLANET POINT in the state's store (WorldStore), so it stays where it was dug when the line through the fighters turns. `pointHook` is Simulation's map from a strip x
+## (and depth z) to the planet direction on the line now (SimField sets it: func(S, x, z) -> [x, y, z]); without it the match's own ring is used. The record is the crater's own numbers; the strip's S.deform is written
+## as ever UNTIL the state has a frame (S.frame, Simulation's read-through): then the ground is the field plus the store, and the deform write stops so the bowl is not counted twice (`_lastLive`, read by dig).
+static var pointHook: Callable = Callable()
+static var _lastLive: bool = false
+
+
+static func _pointOf(S: SimState, x: float) -> Array:
+	if pointHook.is_valid():
+		return pointHook.call(S, x, 0.0)
+	if S.frame != null:   # the line through the frame now
+		SimField.pointIn(S.frame, x)
+		return [SimField.ox, SimField.oy, SimField.oz]
+	var pr = S.planetRing
+	if not (pr is Dictionary) or pr.is_empty() or not pr.has("seed"):
+		return []
+	var P: WorldPlanet.Planet = WorldPlanet.make(int(pr.seed))
+	var circ: Dictionary = WorldRingPick.ringFrom(pr.c, int(pr.cols), pr.t)
+	return WorldPlan.pointAtX(P, circ, x, 0.0)
+
+
+## Adds the crater to the store; true when it is held there. Nothing happens off gen 3 or on a state without the store's fields.
+static func _record(S: SimState, xw: float, R: float, d: float, hr: float, E: float, kind: String, cause, special: bool) -> bool:
+	if S.planetGen < 3 or not ("store" in S):
+		return false
+	var q: Array = _pointOf(S, xw)
+	if q.is_empty():
+		return false
+	var ci: int = 0 if kind == "impact" else (1 if kind == "beam" else (2 if kind == "powerup" else 3))
+	return WorldStore.add(S, q[0], q[1], q[2], R, d, hr, E, ci, int(_slot(S, cause)), S.T, 1 if special else 0) >= 0
 
 
 ## The bowl's shape at u (in R) inside the lip is t * t, 1 at the centre and 0 at the lip, for t = 1 - u^2 today; steep (craters.json) changes the power of u.
@@ -229,7 +268,7 @@ static func _digNeighbours(S: SimState, rec, kc: int, steep: float = 1.0) -> voi
 			if nv < old and S.rubble[i] > 0.0:
 				S.rubble[i] = maxf(0.0, S.rubble[i] - (old - nv))
 			S.deform[i] = nv
-			minG = minf(minG, S.base[i] + S.deform[i])
+			minG = minf(minG, WorldTerrain.baseAt(S, i) + S.deform[i])
 		minG = minf(minG, relax(S, c0, n + REPOSE_PAD))
 		WorldTerrain.lowRefresh(S, c0, n + REPOSE_PAD)
 		WorldTerrain.leaveRow(S, kk)
@@ -268,10 +307,15 @@ static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx
 	var hr: float = minf(dt * volFrac * RIM_H_PER_VOL, RIM_DEPTH_MAX * dt) * sRim
 	var n: int = int(ceil(R * (1.0 + RIM_OUT) / COL)) + 1
 	var minG: float = 1e9
+	var stored: bool = _record(S, xw, R, d, hr, E, kind, cause, special)
+	var live: bool = stored and ("frame" in S) and S.frame != null   # the read-through reads the store: no strip bowl
+	_lastLive = live
+	if live:
+		minG = y0 - d
 	var pre := PackedFloat32Array()   # the deform before this crater, for the furrow's target
 	pre.resize(2 * n + 1)
 	var pinD: PackedByteArray = WorldStructures.pinned(S, c0, n)   # the rim and apron skip footings (T4 extended)
-	for k in range(-n, n + 1):
+	for k in (range(-n, n + 1) if not live else []):
 		var i: int = (c0 + k + NC) % NC
 		# u from the true distance to the centre, so the profile is centred on x and not on its column
 		var u: float = absf(SimWrap.sdx(xw, float(i) * COL)) / R
@@ -286,10 +330,10 @@ static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx
 		if nv < old and S.rubble[i] > 0.0:
 			S.rubble[i] = maxf(0.0, S.rubble[i] - (old - nv))   # a dig removes the heap first
 		S.deform[i] = nv
-		minG = minf(minG, S.base[i] + S.deform[i])
+		minG = minf(minG, WorldTerrain.baseAt(S, i) + S.deform[i])
 	var skid: float = 0.0
 	var sdepth: float = 0.0
-	if kind == "impact":
+	if kind == "impact" and not live:
 		var ax: float = absf(dirx)
 		if ax > SKID_DIRX_MIN:
 			var kk: float = minf(1.0, (ax - SKID_DIRX_MIN) / (SKID_DIRX_FULL - SKID_DIRX_MIN))
@@ -328,7 +372,8 @@ static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx
 	if shape.size() > 0:
 		S.out.fx[S.out.fx.size() - 1].surface = WorldCraters.lookName(shape)   # the material, for the director's crater_shape (WorldCraters.eventFor); not a hashed field of the crater event
 	var cols: int = n + int(ceil(absf(skid) / COL)) + REPOSE_PAD
-	minG = minf(minG, relax(S, c0, cols))
+	if not live:
+		minG = minf(minG, relax(S, c0, cols))
 	WorldTerrain.lowRefresh(S, c0, cols)
 	if kind == "impact":
 		WorldFill.slam(S, xw, E)   # a slam into water already standing throws the wave (before the fill reacts to this hole)
@@ -359,6 +404,9 @@ static func deepen(S: SimState, x: float, cause, k: float, z: float = NAN) -> fl
 	var COL: float = SimConst.COL
 	var extra: float = rec.depth * (k - 1.0)
 	var R: float = rec.r
+	if S.frame != null and _record(S, SimWrap.wrap(rec.x), R, extra, 0.0, 0.0, "impact", cause, false):   # a field world: the follow-up joins the crater as a record of its own, at the line's point; the strip isn't written. At the store's cap it digs the strip, as ever
+		rec.depth += extra
+		return extra
 	var c0: int = _col(rec.x)
 	var n: int = int(ceil(R / COL)) + 1
 	var minG: float = 1e9
@@ -373,7 +421,7 @@ static func deepen(S: SimState, x: float, cause, k: float, z: float = NAN) -> fl
 		if nv < old and S.rubble[i2] > 0.0:
 			S.rubble[i2] = maxf(0.0, S.rubble[i2] - (old - nv))
 		S.deform[i2] = nv
-		minG = minf(minG, S.base[i2] + nv)
+		minG = minf(minG, WorldTerrain.baseAt(S, i2) + nv)
 	minG = minf(minG, relax(S, c0, n + REPOSE_PAD))
 	WorldTerrain.lowRefresh(S, c0, n + REPOSE_PAD)
 	WorldTerrain.leaveRow(S, kr)
@@ -388,6 +436,12 @@ static func deepen(S: SimState, x: float, cause, k: float, z: float = NAN) -> fl
 ## vk is the variant's [depth factor, width factor]: its row's scorch in data/combat/sigvariants.json, which the
 ## director passes; [1, 1] is the plain groove. variant is the name the scorch event carries.
 static func scorch(S: SimState, x: float, P: float, variant: String, cause, z: float = NAN, vk: Array = [1.0, 1.0]) -> void:
+	SimField.far()
+	_scorchRead(S, x, P, variant, cause, z, vk)
+	SimField.near()
+
+
+static func _scorchRead(S: SimState, x: float, P: float, variant: String, cause, z: float = NAN, vk: Array = [1.0, 1.0]) -> void:
 	if not S.depthOn:
 		_scorch(S, x, P, variant, cause, vk)
 		return
@@ -429,7 +483,7 @@ static func _scorch(S: SimState, x: float, P: float, variant: String, cause, vk:
 		var sc: float = inten * t
 		if sc > scm[i]:
 			scm[i] = sc
-		minG = minf(minG, base[i] + dfm[i])
+		minG = minf(minG, WorldTerrain.baseAt(S, i) + dfm[i])
 	S.deform = dfm
 	S.scorch = scm
 	SimFx.scorchEvent(S, x, y0, hw * 2.0, P, variant, _slot(S, cause))
@@ -457,15 +511,15 @@ static func relax(S: SimState, c0: int, half: int, freezeFrom: int = 0, freezeDi
 	for k in range(cnt - 1):
 		var i0: int = posmod(lo + k, NC)
 		var j0: int = posmod(lo + k + 1, NC)
-		var d0: float = (base[j0] + dfm[j0]) - (base[i0] + dfm[i0])
-		if absf(d0) - maxf(limit, absf(base[j0] - base[i0])) > REPOSE_EPS:
+		var d0: float = (WorldTerrain.baseAt(S, j0) + dfm[j0]) - (WorldTerrain.baseAt(S, i0) + dfm[i0])
+		if absf(d0) - maxf(limit, absf(WorldTerrain.baseAt(S, j0) - WorldTerrain.baseAt(S, i0))) > REPOSE_EPS:
 			need = true
 			break
 	if not need:
 		var m0: float = 1.0e9
 		for k in range(cnt):
 			var c0m: int = posmod(lo + k, NC)
-			m0 = minf(m0, base[c0m] + dfm[c0m])
+			m0 = minf(m0, WorldTerrain.baseAt(S, c0m) + dfm[c0m])
 		return m0
 	var pin: PackedByteArray = WorldStructures.pinned(S, c0, half)   # a standing building's footing is never moved
 	if freezeDir != 0:   # columns from freezeFrom on, in this direction, are not touched at all (value 2)
@@ -480,8 +534,8 @@ static func relax(S: SimState, c0: int, half: int, freezeFrom: int = 0, freezeDi
 				var kk: int = k if sweep == 0 else cnt - 2 - k
 				var i: int = posmod(lo + kk, NC)
 				var j: int = posmod(lo + kk + 1, NC)
-				var d: float = (base[j] + dfm[j]) - (base[i] + dfm[i])
-				var ex: float = absf(d) - maxf(limit, absf(base[j] - base[i]))
+				var d: float = (WorldTerrain.baseAt(S, j) + dfm[j]) - (WorldTerrain.baseAt(S, i) + dfm[i])
+				var ex: float = absf(d) - maxf(limit, absf(WorldTerrain.baseAt(S, j) - WorldTerrain.baseAt(S, i)))
 				if ex <= REPOSE_EPS:
 					continue
 				var e: float = ex * 0.5
@@ -505,7 +559,7 @@ static func relax(S: SimState, c0: int, half: int, freezeFrom: int = 0, freezeDi
 	var minG: float = 1.0e9
 	for k in range(cnt):
 		var c: int = posmod(lo + k, NC)
-		minG = minf(minG, base[c] + dfm[c])
+		minG = minf(minG, WorldTerrain.baseAt(S, c) + dfm[c])
 	return minG
 
 
@@ -514,6 +568,12 @@ static func relax(S: SimState, c0: int, half: int, freezeFrom: int = 0, freezeDi
 ## the fighter is untouched, so he rides the undug surface and the trench opens behind and under his feet. paved raises
 ## S.crack over the same columns by the given intensity. Used by the knockback slide.
 static func carveSegment(S: SimState, xa: float, xb: float, depth: float, paved: bool, crack: float, z: float = 0.0) -> void:
+	SimField.far()
+	_carveSegmentRead(S, xa, xb, depth, paved, crack, z)
+	SimField.near()
+
+
+static func _carveSegmentRead(S: SimState, xa: float, xb: float, depth: float, paved: bool, crack: float, z: float = 0.0) -> void:
 	if not S.depthOn:
 		_carveSegment(S, xa, xb, depth, paved, crack)
 		return
@@ -547,7 +607,7 @@ static func _carveSegment(S: SimState, xa: float, xb: float, depth: float, paved
 		if S.rubble[i] <= 0.0 and target < dfm[i]:
 			dfm[i] = target
 			carved = true
-		minG = minf(minG, base[i] + dfm[i])
+		minG = minf(minG, WorldTerrain.baseAt(S, i) + dfm[i])
 	S.deform = dfm
 	S.crack = crk
 	var mid: int = posmod(ca + dir * (n / 2), NC)

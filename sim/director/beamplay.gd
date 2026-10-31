@@ -254,6 +254,12 @@ static func _split(S: SimState, b, A, D, args) -> void:
 ## else, or with no building near, into the ground beyond him. It is the swatter's: it counts against the beam's own cap
 ## and what it does is credited to him.
 static func _swat(S: SimState, b, A, D) -> void:
+	SimField.far()
+	_swatRead(S, b, A, D)
+	SimField.near()
+
+
+static func _swatRead(S: SimState, b, A, D) -> void:
 	var c: Dictionary = data().swat
 	var len: float = float(c.lenBh) * DirInterrupt.BH
 	var away: float = -SimDamage.jor(SimMathx.jsign(SimWrap.sdx(D.x, A.x)), D.face)

@@ -50,20 +50,27 @@ const SKIM_MAX: float = 6.0
 
 
 static func isReservoir(S: SimState, i: int) -> bool:
-	return S.base[i] < RESERVOIR_BASE
+	return WorldTerrain.baseAt(S, i) < RESERVOIR_BASE
 
 
 ## Depth of the water at x (the column it falls in), 0 when dry.
 static func depthAt(S: SimState, x: float) -> float:
-	var d: float = S.water[int(floor(SimWrap.wrap(x) / SimConst.COL))]
+	var d: float = depthOf(S, int(floor(SimWrap.wrap(x) / SimConst.COL)))
 	return d if d >= MIN_DEPTH else 0.0
+
+
+## The water at a column: S.water, and on a field world the sea and World's lake and river records through the line as well (S.water then holds only what a fight made: a swing moves the world's water under it).
+static func depthOf(S: SimState, i: int) -> float:
+	if S.frame == null:
+		return S.water[i]
+	return maxf(S.water[i], SimField.nativeDepth(S, i, WorldTerrain.lowD(S)[i]))
 
 
 ## Height of the water surface at x, or DRY.
 static func surfaceAt(S: SimState, x: float) -> float:
 	var i: int = int(floor(SimWrap.wrap(x) / SimConst.COL))
-	var d: float = S.water[i]
-	return S.base[i] + WorldTerrain.lowD(S)[i] + d if d >= MIN_DEPTH else DRY
+	var d: float = depthOf(S, i)
+	return WorldTerrain.baseAt(S, i) + WorldTerrain.lowD(S)[i] + d if d >= MIN_DEPTH else DRY
 
 
 const NO_SEA: float = -1.0e18   # seaTop where there is no sea-like water: nothing is below it
@@ -84,10 +91,10 @@ static func deepIsSea() -> bool:
 ## is neither. On any world without a lake it is 0 over the sea and NO_SEA elsewhere, which is `y < 0 and seaAt` as the rules were written.
 static func seaTop(S: SimState, x: float) -> float:
 	var i: int = int(floor(SimWrap.wrap(x) / SimConst.COL)) % SimConst.NC
-	if S.base[i] < RESERVOIR_BASE:
+	if WorldTerrain.baseAt(S, i) < RESERVOIR_BASE:
 		return SEA_LEVEL
-	if S.water[i] >= seaMin() and deepIsSea():
-		return S.base[i] + WorldTerrain.lowD(S)[i] + S.water[i]
+	if depthOf(S, i) >= seaMin() and deepIsSea():
+		return WorldTerrain.baseAt(S, i) + WorldTerrain.lowD(S)[i] + depthOf(S, i)
 	return NO_SEA
 
 
@@ -98,14 +105,18 @@ const SHEET_SNAP: float = 0.001  # on the sheet the floor is seaTop's value to t
 ## The ring's own water at column i, as a level: ground plus depth, where the column is the sea or its shallows (the original ground under SHORE_WET) or a planned lake or river, and stands at least MIN_DEPTH.
 ## NO_LEVEL for dry ground, and for water a fight dug (a fill, a flow into a hole): the floor never lifts or holds a fighter in that (rulings 2026-10-30 row 5).
 static func nativeLevel(S: SimState, i: int) -> float:
+	if S.frame != null:   # a field world: its own water is the sea and the records, never a fight's
+		var low: float = WorldTerrain.lowD(S)[i]
+		var nd: float = SimField.nativeDepth(S, i, low)
+		return WorldTerrain.baseAt(S, i) + low + nd if nd >= MIN_DEPTH else NO_LEVEL
 	var d: float = S.water[i]
 	if d < MIN_DEPTH:
 		return NO_LEVEL
-	if S.base[i] >= SHORE_WET:
+	if WorldTerrain.baseAt(S, i) >= SHORE_WET:
 		var lakes: Array = S.planetRing.get("lakes", [])
 		if lakes.is_empty() or not WorldLakes.inLake(lakes, i, SimConst.NC):
 			return NO_LEVEL
-	return S.base[i] + WorldTerrain.lowD(S)[i] + d
+	return WorldTerrain.baseAt(S, i) + WorldTerrain.lowD(S)[i] + d
 
 
 ## The ring's own water level at x (the two nearest columns' levels, a dry one counting as its ground, so it is continuous), or NO_LEVEL where there is none.
@@ -121,9 +132,9 @@ static func floorLevel(S: SimState, x: float) -> float:
 		return NO_LEVEL
 	var low: PackedFloat32Array = WorldTerrain.lowD(S)
 	if li == NO_LEVEL:
-		li = S.base[i] + low[i]
+		li = WorldTerrain.baseAt(S, i) + low[i]
 	if lj == NO_LEVEL:
-		lj = S.base[j] + low[j]
+		lj = WorldTerrain.baseAt(S, j) + low[j]
 	return li + (lj - li) * (c - fi)
 
 
@@ -133,7 +144,7 @@ static func undugAt(S: SimState, x: float) -> float:
 	var fi: float = floor(c)
 	var i: int = int(fi) % SimConst.NC
 	var j: int = (i + 1) % SimConst.NC
-	return S.base[i] + (S.base[j] - S.base[i]) * (c - fi)
+	return WorldTerrain.baseAt(S, i) + (WorldTerrain.baseAt(S, j) - WorldTerrain.baseAt(S, i)) * (c - fi)
 
 
 ## The depth of the ring's own water at x, from the undug bed: its level there less the original ground. 0 where there is none. (z: kept for the callers that name a depth; the original ground is the same on every row.)
@@ -194,20 +205,22 @@ static func init(S: SimState) -> void:
 	var base: PackedFloat32Array = S.base
 	var low: PackedFloat32Array = WorldTerrain.lowD(S)
 	var any: bool = false
+	if S.frame != null:   # a field world: the sea is read from the ground (depthOf); only a fight's water is kept
+		return
 	for i in range(NC):
-		if base[i] < RESERVOIR_BASE:
+		if WorldTerrain.baseAt(S, i) < RESERVOIR_BASE:
 			any = true
-			S.water[i] = maxf(0.0, SEA_LEVEL - (base[i] + low[i]))
+			S.water[i] = maxf(0.0, SEA_LEVEL - (WorldTerrain.baseAt(S, i) + low[i]))
 	if not any:
 		return   # no sea on this ring: nothing for the laps to carry
 	for dir in [1, -1]:
 		var wet: bool = false
 		for lap in range(2 * NC):   # two laps carry the fill across the seam
 			var i2: int = lap % NC if dir == 1 else NC - 1 - (lap % NC)
-			if base[i2] < RESERVOIR_BASE:
+			if WorldTerrain.baseAt(S, i2) < RESERVOIR_BASE:
 				wet = true
 			elif wet:
-				var g: float = base[i2] + low[i2]
+				var g: float = WorldTerrain.baseAt(S, i2) + low[i2]
 				if g < SHORE_WET:
 					S.water[i2] = SEA_LEVEL - g
 				else:
@@ -223,11 +236,11 @@ static func touched(S: SimState, c0: int, cols: int, minG: float) -> void:
 	if S.depthOn:   # the lowest ground over all the rows, in the window
 		for k in range(-cols, cols + 1):
 			var ic: int = (c0 + k + NC) % NC
-			minG = minf(minG, base[ic] + dfm[ic])
+			minG = minf(minG, WorldTerrain.baseAt(S, ic) + dfm[ic])
 	for k in range(-cols, cols + 1):
 		var i: int = (c0 + k + NC) % NC
-		if base[i] < RESERVOIR_BASE:
-			S.water[i] = maxf(0.0, SEA_LEVEL - (base[i] + dfm[i]))
+		if WorldTerrain.baseAt(S, i) < RESERVOIR_BASE:
+			S.water[i] = maxf(0.0, SEA_LEVEL - (WorldTerrain.baseAt(S, i) + dfm[i]))
 	if not S.planetRing.is_empty():
 		WorldLakes.refill(S, c0, cols)   # a gen 2 ring's lakes stand flat when their bed is dug
 	if WorldFill.on():
@@ -243,7 +256,7 @@ static func touched(S: SimState, c0: int, cols: int, minG: float) -> void:
 		var i2: int = (c0 + k + NC) % NC
 		if S.water[i2] >= MIN_DEPTH:
 			near = true
-		if base[i2] >= RESERVOIR_BASE and base[i2] + dfm[i2] < WET_GROUND:
+		if WorldTerrain.baseAt(S, i2) >= RESERVOIR_BASE and WorldTerrain.baseAt(S, i2) + dfm[i2] < WET_GROUND:
 			hole = true
 	if not (near and hole):
 		return
@@ -294,8 +307,8 @@ static func step(S: SimState) -> void:
 		var flux := PackedFloat32Array()
 		flux.resize(hi - lo + 1)   # flux[j - lo]: depth moving from column j to column j + 1 (negative: the other way)
 		var b: int = posmod(lo, NC)
-		var gb: float = base[b] + dfm[b]
-		var rb: bool = base[b] < RESERVOIR_BASE
+		var gb: float = WorldTerrain.baseAt(S, b) + dfm[b]
+		var rb: bool = WorldTerrain.baseAt(S, b) < RESERVOIR_BASE
 		var sb: float = SEA_LEVEL if rb and gb < SEA_LEVEL else gb + wat[b]
 		for j in range(lo, hi):
 			var a: int = b
@@ -303,8 +316,8 @@ static func step(S: SimState) -> void:
 			var ra: bool = rb
 			var sa: float = sb
 			b = posmod(j + 1, NC)
-			gb = base[b] + dfm[b]
-			rb = base[b] < RESERVOIR_BASE
+			gb = WorldTerrain.baseAt(S, b) + dfm[b]
+			rb = WorldTerrain.baseAt(S, b) < RESERVOIR_BASE
 			sb = SEA_LEVEL if rb and gb < SEA_LEVEL else gb + wat[b]
 			if ra and rb:
 				continue
@@ -328,7 +341,7 @@ static func step(S: SimState) -> void:
 		var moved: float = 0.0
 		for j in range(lo, hi + 1):
 			var i: int = posmod(j, NC)
-			if base[i] < RESERVOIR_BASE:
+			if WorldTerrain.baseAt(S, i) < RESERVOIR_BASE:
 				continue
 			var inflow: float = 0.0
 			if j > lo:
