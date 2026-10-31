@@ -21,7 +21,7 @@
 //                      fx_flashes_due, fx_ask_beams, fx_ask_hits
 //   the drain:         dr_split_rig_step (Camera), dr_planet_consume, dr_camera_roll, dr_anim_consume (Animation),
 //                      dr_ui_consume, dr_haptics, dr_ui_feed
-//   Animation's tick:  an_bake (AnimData.bake_pending, the incremental bake's slice), an_on_tick (the fighters' tick)
+//   Animation's tick:  an_bake (RenderAnim._bake_tick, the incremental bake's slice), an_on_tick (the fighters' tick)
 //   the sweep by view: pv_see (a pane's view handed to the sweep, and a second pane's swept), pv_swept (the buildings the
 //                      refresh visited a frame: a count, read its mean x 1000; part of pane_pre too)
 // It also lets the page set the view update's A/B switches, ?noviewfast=1 and ?nopanesweep=1 (main's URL_ARGS, in the
@@ -124,7 +124,7 @@ wrap(MAIN, 'dr_haptics', '\t_haptics_from_events(events)');
 wrap(MAIN, 'dr_ui_feed', '\tUiSimBridge.feed(ui_hud, lines)');
 
 // Animation's tick: the incremental bake's slice and the fighters' tick.
-edit(RA, 'an_bake', '\t\t\t\tif AnimData.bake_pending() == 0:', '\t\t\t\tvar _qab: int = Time.get_ticks_usec()\n\t\t\t\tvar _bp: int = AnimData.bake_pending()\n\t\t\t\tPaneWorld._pt("an_bake", _qab)\n\t\t\t\tif _bp == 0:');
+edit(RA, 'an_bake', '\t\t\t\tif _bake_tick(S):', '\t\t\t\tvar _qab: int = Time.get_ticks_usec()\n\t\t\t\tvar _bp: bool = _bake_tick(S)\n\t\t\t\tPaneWorld._pt("an_bake", _qab)\n\t\t\t\tif _bp:');
 edit(RA, 'an_on_tick', '\t\t\t\tfor f in S.fighters:\n\t\t\t\t\tfighter(S, f).on_tick(float(e.dt), bool(e.frozen), S, f)\n', '\t\t\t\tvar _qat: int = Time.get_ticks_usec()\n\t\t\t\tfor f in S.fighters:\n\t\t\t\t\tfighter(S, f).on_tick(float(e.dt), bool(e.frozen), S, f)\n\t\t\t\tPaneWorld._pt("an_on_tick", _qat)\n');
 
 // The building sweep by view (2026-10-29): a pane's view handed to the sweep (and a second pane's swept), timed as
