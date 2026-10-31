@@ -1,86 +1,127 @@
-# The fight's bearing changed at any time: what it does online (Netcode and Online, 2026-10-30)
+# A visible swing online: what the turntable does to rollback (Netcode and Online, 2026-10-31)
 
-For the EP, on Orb's ask. Research only: nothing here is built or prototyped.
+For the EP, on Orb's pick of the turntable (E and E2). Paper only: nothing was built or run. This replaces my page of 2026-10-30, which assumed a change nobody sees. What still holds from it is in "Carried over".
 
 ## The answer
-- **Any angle at any moment is fine online, if the ground is ready when the change lands.** Today's warmed swap already works that way, and removing the 10 degree cap adds no rollback problem.
-- **Continuous change can't be a whole-ring swap.** One swap a tick overruns the frame from about a 120 ms ping, and one wrong prediction can freeze the game for a tenth of a second or more.
-- **Continuous change needs a streamed ground:** the director decides now, the bearing takes effect 20 ticks later, and only a short stretch of columns is read each tick. That would make rollback's cost almost nil.
+- **A rollback across a swing can stay under budget.** The condition is that a re-simulated tick re-lays only the ground the sim reads, about 170 columns at most. Drawing the view is then done once per rendered frame, however deep the rollback.
+- **A gradual swing doesn't need the 20-tick lead.** Its turn rate limits how wrong a prediction can get. A late correction looks like the world slowing or easing back a little, not a pop. Hard steps and cuts keep the lead.
+- **I prefer the narrow sim strip with coarse far ground.** Re-laying the whole view fails the budget at a 200 ms ping, and a true 2D sim is far more work than a swing needs.
 
-## How a change reaches rollback
-Rollback predicts inputs, not decisions. A "predicted change" is a tick where the director, running on a guessed input, picked a bearing that the real input may not give. So:
-- nothing extra goes over the wire, and replays still hold, as long as the bearing stays a director decision inside the sim;
-- the only question is how much work a re-run throws away or repeats.
+## 1. What a swing's state is
+**Ten numbers, about 80 bytes, kept as one packed block:**
 
-## Snapshot size
-Measured on HEAD f19a3523, gen 2, planet 7:
-
-| Ring | Snapshot | Of that, `S.epoch` | `S.base` (shared, not in the snapshot) |
-| :--- | ---: | ---: | ---: |
-| Half, 2,400 columns | 80 to 82 KB | 1.6 to 1.9 KB | 9.6 KB |
-| Whole, 4,800 columns | 141 to 142 KB | 1.9 to 2.6 KB | 19.2 KB |
-
-- **How often the bearing changes does not grow the snapshot.** A swap replaces `S.base` with a new array, and snapshots keep a reference to it.
-- **What would grow:**
-  - **A pending queue:** at most 20 entries, about 1.1 KB as one packed array.
-  - **A streamed `S.base`:** it could no longer be shared, because writing a shared array in place is a desync. That adds one 9.6 or 19.2 KB block to each snapshot.
-- **Never keep a bearing history in the state.** At one change a tick, a five-minute match is 18,000 entries, copied into every snapshot.
-- **The memory that does grow is outside the snapshot.** Each swap keeps its ring and preparation for 21 ticks, at least 48 KB (Half) or 96 KB (Whole). At one swap a tick that is 1 to 2 MB, plus 123 to 167 new building records per swap.
-
-## Resimulation cost
-A rollback frame costs restore + (depth + 1) x (tick + save + change), against a 12.5 ms budget. These are estimates from published numbers (restore 0.3, save 0.2, planet tick 0.78, re-run swap 2 ms), with depths from the bots' p99 in `docs/net/rollback.md` section 5. The 2 ms is World's figure for a gen 1 Half ring, so the swap column is a floor.
-
-| Ping (p99 depth) | No change: native, x4 | A swap every tick: native, x4 |
-| :--- | ---: | ---: |
-| 120 ms (3) | 4.2, 17 ms | 12.2, 49 ms |
-| 200 ms (6) | 7.2, 29 ms | 21.2, 85 ms |
-| far (13) | 14.0, 56 ms | 42.0, 168 ms |
-
-Rollbacks come 14 to 19 times a second from an 80 ms ping up, so at one change a tick nearly every rollback crosses changes.
-
-## Predicted, then rolled back
-- **The same bearing again:** cheap, because the kept ring and preparation are found. Bots crossed this with the swap re-run up to 6 times a session, with the same gameplay state (section 13).
-- **A different bearing, ring not yet read:** the read lands on the rollback frame. For gen 2 that is 122 to 137 ms for Half and 245 to 274 ms for Whole, before the preparation, and about four times that on an old laptop. **This is the case to design out.**
-- **The picture:** Rendering's rebuild was 30.5 ms at x1 and about 150 ms at x4 (Performance, 2026-10-23). A flipped change would rebuild twice and could show the wrong ground for a few frames.
-- **Pre-reading likely bearings can't fix a flip.** A ring depends on the pivot column as well as the bearing, and the pivot moves with the pair.
-
-## Can heavy reads run off the sim's clock?
-Yes. `WorldEpoch.readAhead` already does it between ticks, and the same state comes out whatever a host does. These rules must hold:
-1. **The read is a pure function** of the planet seed and the ring.
-2. **The state counts progress, and only the count decides when a ring is used.** "The read has finished" must never affect the sim, because peers finish at different times.
-3. **If a read is behind when the sim needs it, the sim does the rest on that tick.** That costs a hitch, never a desync.
-4. **Rollback never discards a read.** Key the cache by what was read (seed and ring). Today's key is `worldId/str(deg)`: the world id changes with each swap, and text from a float is a poor key for arbitrary angles.
-
-**The limit is time, not safety.** The web build has no threads (`thread_support=false`), and on the current path online play in a browser would get only leftover frame time, which a rollback frame doesn't have. Native could use a worker thread, but `WorldPlanet`'s static caches aren't thread-safe, so a worker must own its job until hand-off. At the sim's own gen 2 rate of 12 columns a tick (about 0.65 ms), a new ring takes 3.3 s (Half) or 6.7 s (Whole). That is the top rate for whole-ring changes, unless reads get cheaper.
-
-## What must be decided on confirmed input only
-The sim can't ask "is this confirmed?", because peers have different answers at the same tick. **A fixed lead gives the same result.** `NetSession` never runs tick T until inputs through T - 20 are confirmed (`maxAhead`). So a change decided on tick D and taking effect on D + 20 or later is final before it first runs: re-runs always reach the same bearing, and the player never sees it flip. The cost is a third of a second between decision and ground.
-
-| Must be final when it takes effect (use the lead) | Free to run on prediction |
+| Numbers | What |
 | :--- | :--- |
-| The bearing taking effect, and the ring it reads | The director's exchanges, beats and camera intent |
-| Fresh places, and the people they hold | The pending queue itself (a few bytes, and a re-run replaces it) |
-| The ground rebuild, far land and `arena_turn` presentation | Reading ahead, since a wasted read costs only time |
+| 6 | The frame: the pair's point on the planet and the heading |
+| 2 | The swing: the angle left to turn, and how far through its ease it is |
+| 2 | The planet store of marks: its length and a running hash |
 
-- **A warmed swap already has the lead.** Warming outlasts 20 ticks, so the ring is final. Only the swap's tick can flip, through calm and hold. Fix that tick at the decision and that flip goes too.
-- **The lead must follow `maxAhead`.** Put it in the match setup, which the match key already compares, and have the host refuse a setup whose lead is below its `maxAhead`.
-- **Never use as a decision input:** frontiers, ping, read progress or anything from the renderer.
+**In the snapshot**
+- **The swing's cost in size is nil.** These numbers replace the epoch's ring, and a swing never grows them. No history is kept.
+- **The ground drops out of the state.** It becomes a pure function of the frame and the store, drawn from a node cache outside the state. `S.base` no longer has to be copied or shared.
+- **The snapshot could shrink.** On a Whole ring it is 141 to 142 KB today (measured at f19a3523), and `deform`, `rubble`, `scorch` and `crack` are 76.8 KB of that. If those become store records, as Research proposes, a snapshot holds only the log's length and a rollback truncates the log.
+- **Anything that changes every tick stays in the state.** A log only works for records that never change after they are written. `S.water`, and any mark that fades or burns, stay as they are unless World finds another way.
 
-## What each option needs
-| Option | Rate | Netcode's work |
+**In the digest**
+- `NetDesync.digest` adds the ten numbers, plus the ground height under each fighter, read through the same cache the sim uses. That second part catches a wrong node on one peer at the next checkpoint. It needs a `PROTO` bump when built.
+- `S.base` can't be hashed once it is derived. Simulation's running hash of what is read doesn't work either, because peers read nodes at different times. So a test sweep samples columns through the field instead.
+
+**Three traps**
+- **The log is shared by snapshots.** The AI driver runs on a snapshot copy, so a write there mustn't reach the live log. Two sims in one process each need their own.
+- **Node values must never depend on the bearing,** which the cube-sphere key already gives. That is what makes the cache safe across a rollback: Research's 90 rollbacks re-read nothing (JS only).
+- **Eviction from the cache must only cost time.** A node read again gives the same value.
+
+## 2. Can a rollback across a swing stay under budget?
+**Yes, if view and sim are separated.** There are two kinds of derived work, and only one is paid per re-simulated tick:
+
+| Work | Paid | Depends on rollback depth? |
 | :--- | :--- | :--- |
-| **Any angle, warmed swap** | One per 3.3 to 6.7 s | The ring in the desync digest (`NetDesync.digest` doesn't read `S.epoch` today), then `PROTO` 4 |
-| **Streamed ground with the lead** | Up to every tick | The same, plus: `S.base` out of `SNAPSHOT.share`; the lead in the setup; a test with a forced flip |
-| **Whole-ring swap every tick** | Every tick | Refused: it fails the budget above |
+| The ground the sim reads | Each tick, including re-runs | **Yes** |
+| The ground the view draws | Once a rendered frame | **No** |
+| First reads of nodes | Once ever, until evicted | No, they are cached |
 
-- **The test:** a tests-only choreographer picks its bearing from a hash of recent inputs, so every misprediction flips it. It must pass `rollback_check` on lan, p120 and far, with a negative control where the bearing takes effect with no lead.
-- **World owns the streamed design.** I've only said what rollback needs from it. `WorldLanes.build`, `buildIndex` and `bindStructures` work on whole arrays today, so they would have to become incremental as well.
+A re-run can't skip the first kind, because it must see the same ground as the straight run. So the number of columns the sim re-lays per tick decides everything.
 
-## A bug to fix first (World's, read in the code, not run)
-`WorldEpoch.cancel` drops the ring job at once. A rollback to before a cancel restores a state that counts the ring as read, and `_jobFor` then re-reads all of it on the rollback frame: up to 274 ms for a gen 2 Whole ring. W8 fixed this for the swap but not for cancel, and `choose` drops jobs the same way. The turn is off in the data, so nothing live is hit, but frequent changes would hit it often.
+A rollback frame costs restore + (depth + 1) x (tick + save + re-lay), against 12.5 ms. The inputs are published figures (restore 0.3, save 0.2, planet tick 0.78). Re-lay is Research's estimate of 1.7 to 3 ms for the view's 669 columns, which they mark as unmeasured.
+
+| Ping (p99 depth) | No swing | Sim re-lays the view, 669 columns | Sim re-lays 170 columns |
+| :--- | ---: | ---: | ---: |
+| 120 ms (3) | 4.2 ms | 11.0 to 16.2 ms | 5.9 to 7.3 ms |
+| 200 ms (6) | 7.2 ms | **19.1 to 28.2 ms** | 10.2 to 12.6 ms |
+| far (13) | 14.0 ms | **37.8 to 56.0 ms** | 20.0 to 24.8 ms |
+
+- **The limit is about 170 to 300 columns** (5,400 to 9,800 units) at a 200 ms ping. If re-lay costs three times the estimate, it falls to about 60 to 100.
+- **The far profile is already over budget with no swing,** so the swing doesn't change the answer there: input delay does.
+- **An old laptop costs about four times these.** As today, it needs an input delay near the one-way time, which makes rollbacks shallower.
+- **Buildings aren't in these numbers.** Their `x` and index must follow the frame while it turns. The prototype doesn't model them, so this is the largest unknown in the re-lay cost.
+- **The view's cost is Performance's limit, not rollback's.** Its limit is 0.5 to 1 ms a frame, and 1.7 to 3 ms of re-lay misses that. If the view's near ground is a 2D height texture and the heading is a shader value, a turn uploads nothing and a correction is one number. Rendering would need to confirm that on the Compatibility renderer.
+
+## 3. Is the 20-tick lead still needed?
+**Not for a gradual swing.** The lead existed for two reasons, and a field removes both:
+- **Cost:** a flip used to land a whole ring read on the rollback frame. Nodes don't depend on the bearing, so with the disc round the pair read ahead, a flip needs no reads.
+- **The picture:** a flip used to rebuild the world. A swing's error is capped by its rate, and it corrects like any other motion.
+
+Keeping the lead would also delay every swing by a third of a second, for no gain.
+
+**What a late correction looks like.** At the prototype's 30° a second (0.5° a tick), a wrong prediction leaves the heading off by the amounts below. Ground shift is sideways on the planet, not on the screen. The view's edge is 10,688 units out.
+
+| Depth | Off, mid-swing | Shift at 1,000 u, at the edge | Off, with a 20-tick ease-in | Shift at 1,000 u, at the edge |
+| :--- | ---: | ---: | ---: | ---: |
+| 3 | 1.5° | 26 u, 280 u | 0.11° | 2 u, 21 u |
+| 6 | 3° | 52 u, 559 u | 0.45° | 8 u, 84 u |
+| 13 | 6.5° | 113 u, 1,210 u | 2.1° | 37 u, 393 u |
+| 20 (`maxAhead`, the worst possible) | 10° | 174 u, 1,856 u | 5° | 87 u, 932 u |
+
+A prediction that swung the opposite way doubles these.
+
+- **How to show it.** The renderer keeps its own displayed heading and moves it toward the sim's, no faster than the swing's rate. It only reads the sim. A 1.5° correction then takes 3 ticks and reads as the world hesitating or easing back. There's no dissolve or fade, and it follows Orb's rule of easing camera moves.
+- **Build in the ease-in.** A swing's start is the likeliest thing to flip, and the ease-in makes its first ticks almost nothing. It costs nothing on screen, because the swing is visibly under way within about a third of a second.
+- **Feet.** The view near the pair should draw the sim's own nodes and heading, or fighters will float. A 512-unit node is up to 60 units off on gen 1 ground, and a fighter is about 75 tall. Gen 2 may be worse.
+- **The worst case.** A reversal at far depth is 13° and will be visible, as the world swinging back for about half a second. It should be rare, and only that profile reaches it.
+
+**What keeps the lead**
+- A hard step or a cut at a whip: anything instant has no rate to bound it.
+- Any world change that can't be derived and undone by a re-run, if World adds one.
+
+**What stays as it is**
+- One-shot presentation (voice, a shake, a banner) still waits for its tick to be confirmed (`docs/net/rollback.md` section 4).
+- Nothing in the sim may read frontiers, ping, read progress or the renderer.
+- The swing stays a director decision, so nothing new goes over the wire and replays hold.
+
+**A rule to enforce.** Turn rate x `maxAhead` is the largest error possible. Keep that rate in data, which the match key already covers, and have a data test check that the product stays within a limit. 10° is today's product, and Orb and Game Design can judge it in the prototype.
+
+## 4. Which shape
+| | Strip re-laid | **Narrow sim strip, coarse far ground** | True 2D sim |
+| :--- | :--- | :--- | :--- |
+| **Rollback** | Fails at 200 ms if it covers the view | **Fits at 200 ms** | Fits: point reads only |
+| **Snapshot** | About +19 KB (`S.base` copied) | Can shrink | Can shrink most |
+| **Bearing flip** | Re-lays again, no reads | No reads | No reads |
+| **Far readers** | Stale outside the view | Get coarse ground, audit needed | Rewritten |
+| **Wrap math, `x`** | Kept | **Kept** | All 1,335 sites go |
+| **Risk to determinism gates** | Low | Medium: a far-reader audit | High: golden, parity and every net check start again |
+| **Fighters** | On the band | **On the band** | Off the line unless constrained |
+
+**My preference is the narrow strip, for three reasons:**
+1. **It is the only strip that fits the budget.** A strip that re-lays only what the sim reads, and leaves drawing to the view, is this shape. The first shape can't get there by skipping work on re-runs.
+2. **It keeps what the fight relies on.** `x`, `sdx`, the shared band and attacks closing the gap all stay.
+3. **It leaves the door open.** The frame, the store and the node cache are what a 2D sim would need too. Orb asked for the world to swing round the fighters, not for fighters to leave the line.
+
+**Its cost:**
+- Every far reader must accept coarse ground that a later swing may change (469 ground reads and 170 `S.base` reads, unaudited). That audit is the real work, and it belongs to Simulation, World and Encounter.
+- The strip's exact width is World's call, within the column limit above.
+
+## What I'd build, when briefed
+- The ten numbers and the two heights in the digest, then `PROTO` bump.
+- The AI driver's copy made safe with the shared log.
+- A forced-flip test: a tests-only choreographer picks its direction from a hash of recent inputs. It runs on lan, p120 and far, and the heading's largest error must stay within the rate rule. The negative control lifts the rate cap and must break the bound.
+
+## Carried over from 2026-10-30
+- **Read off the sim's clock: yes.** With a pure field it is simpler than before: a node has one value whenever it is read. If the sim needs a node not yet read, it reads it on that tick: a hitch, never a desync. The web build has no threads, so it reads in leftover frame time, and a rollback frame has none. That is why the disc must already be resident.
+- **The job-cache bug in `WorldEpoch`:** `cancel` and `choose` drop ring jobs that a rollback then needs. Simulation measured 130 ms on a Half ring. It only matters if the swap stays in use, as a fallback or for campaign turns.
+- **The ribbon (D3), if it comes back as the fallback,** keeps the lead, since its bends must be final before columns are laid.
 
 ## What this rests on
-- **Sizes** are measured.
-- **Frame costs** are arithmetic. The machine was at 100% load throughout, so I took no timings.
-- **Mixed machines:** the tick figure is from the cloud Xeon, the column and swap figures from Orb's PC.
-- **No network run:** no ENet, and no run with a changing bearing.
+- **Measured:** the snapshot sizes, at f19a3523.
+- **Arithmetic:** every frame cost, from figures taken on mixed machines. The re-lay cost is the weak one: it comes from Research's estimate, whose speed factor was measured on noise code, not arrays.
+- **Not run:** no swing has run under rollback in GDScript, and no ENet run was made. Research's 90 rollbacks are JS, in a keep, run, restore loop.
+- **A judgement, not a test:** whether a correction reads as easing back. It should be tried in the prototype with forced flips.
