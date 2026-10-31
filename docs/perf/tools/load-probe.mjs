@@ -22,7 +22,7 @@ const argv = process.argv.slice(2);
 const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
 const SITE = opt('--site'), QUERY = opt('--query', ''), LABEL = opt('--label', 'run'), OUT = opt('--out');
 const W = Number(opt('--width', 1920)), H = Number(opt('--height', 1080)), SECONDS = Number(opt('--seconds', 150)), CAP = Number(opt('--cap', 0));
-const RELOAD = !argv.includes('--no-reload');
+const LOADS = argv.includes('--no-reload') ? 1 : Number(opt('--loads', 2));   // load 1 is cold (fresh profile); every later load is a reload in the same browser
 const SESSION = opt('--session', process.env.MERIDIAN_SESSION || 'meridian-performance-platform');
 if (!SITE) { console.error('usage: node docs/perf/tools/load-probe.mjs --site <built folder> --query "planet=7" --label x --out run.json'); process.exit(2); }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -95,7 +95,7 @@ const exe = opt('--browser-path') || browserExe('chrome');
 const result = { label: LABEL, query: QUERY, size: `${W}x${H}`, session: SESSION, node: process.version, cap: CAP, loads: [] };
 let b, page, br, timer;
 try {
-  b = await launchBrowser({ exe, session: SESSION, purpose: 'load', timeoutS: SECONDS * (RELOAD ? 2 : 1) + 120, log: () => {}, cpuPercent: CAP, priority: 'belownormal', flags: [`--window-size=${W},${H}`] });
+  b = await launchBrowser({ exe, session: SESSION, purpose: 'load', timeoutS: SECONDS * LOADS + 120, log: () => {}, cpuPercent: CAP, priority: 'belownormal', flags: [`--window-size=${W},${H}`] });
   page = await Cdp.open(b.target.webSocketDebuggerUrl);
   const ver = await (await fetch(`http://127.0.0.1:${b.port}/json/version`)).json();
   br = await Cdp.open(ver.webSocketDebuggerUrl);
@@ -112,7 +112,7 @@ try {
       sample.t.push(Date.now()); sample.pi.push(r.processInfo.map((p) => [p.type, p.id, +p.cpuTime.toFixed(3)])); sample.load.push(+(100 * busy).toFixed(0));
     } catch { /* browser busy or gone */ }
   }, 250);
-  for (let load = 1; load <= (RELOAD ? 2 : 1); load++) {
+  for (let load = 1; load <= LOADS; load++) {
     const k0 = sample.t.length;
     const wall0 = Date.now();
     await page.send('Page.navigate', { url: base });
@@ -127,6 +127,8 @@ try {
     const L = { n: load, wall0, k0, k1: sample.t.length, reachedStage: doneAt !== null };
     L.bpd = await page.eval('JSON.stringify(window.__bpd || null)').then(JSON.parse).catch(() => null);   // main.gd's per-step totals (hook-loadmarks.mjs)
     L.bp = await page.eval('JSON.stringify(window.__bp || null)').then(JSON.parse).catch(() => null);
+    // what the page has put in the browser's own storage: every IndexedDB (Godot's user:// is /userfs, store FILE_DATA), and the size of each entry whose path holds "cache"
+    L.idb = await page.eval(`(async () => { try { const dbs = await indexedDB.databases(); const out = []; for (const d of dbs) { const db = await new Promise((ok, no) => { const r = indexedDB.open(d.name); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); }); for (const s of Array.from(db.objectStoreNames)) { const st = db.transaction(s, 'readonly').objectStore(s); const keys = await new Promise((ok) => { const r = st.getAllKeys(); r.onsuccess = () => ok(r.result); }); const rows = []; for (const k of keys) { if (!/cache/i.test(String(k))) continue; const v = await new Promise((ok) => { const r = st.get(k); r.onsuccess = () => ok(r.result); }); rows.push([String(k), v && v.contents ? v.contents.length : (v && v.length) || 0]); } out.push([d.name, s, keys.length, rows]); } db.close(); } return JSON.stringify(out); } catch (e) { return 'ERR ' + e; } })()`, true).then((x) => { try { return JSON.parse(x); } catch { return x; } }).catch((e) => 'ERR ' + e);
     L.origin = await page.eval('window.__lp ? window.__lp.origin : null').catch(() => null);
     const raw = await page.eval('JSON.stringify(Object.assign({}, window.__lp, { dump: window.__lp.dump() }))').catch((e) => null);
     L.p = raw ? JSON.parse(raw) : null;
