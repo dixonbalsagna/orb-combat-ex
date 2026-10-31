@@ -147,3 +147,56 @@ This costs collateral, which the existing bands bound, and a real collision path
 
 - **A brawl's swing eases to rest rather than bring tall land round in front: yes, as a state rule, not a score.** A slow swing is the worst case for it (at 10°/s, land 1,000 units out moves slowly enough to watch it sink), and a brawl has no need of it. "Tall land" is Camera's fixed test, so the sim never reads the camera: land above about 1,500 units, on the side turning forward, within 4,400 units of the pivot. For other swings it stays Camera's falling score for Encounter, by height only.
 - **The horizon during a swing in a flat-out flight: the horizon gives way, and only as far as it must.** The swing is the sim's and shared, and the horizon is render-only, so it's the one that can differ by screen and flash mode. **The horizon turns at `min(v / R, that screen's ceiling less the swing)`,** eased, and comes back eased when the swing rests. So at 60°/s on a Half ring (47°/s), it keeps about 38°/s at 4:3 and all of it at 16:9, and under Reduce flashing it's nearly off at 4:3, with 5°/s left. On a full ring (23°/s) it keeps all of it outside Reduce flashing. I'm not taking Camera's simpler "ease it off during a swing" because the moving horizon is the read of crossing a planet, which is Orb's goal, and most of it fits.
+
+## 10. Rate and size together, and small fast swings (2026-10-31)
+
+Orb, after playing proto v2: "comfortable at every speed up to 240", "a little too extreme when paired with the maximum swing angle size", and "a swing speed of 240 could routinely be used for minimal swing adjustments without any disorientation". They also flew laps for fun on small, gentle swings.
+
+**How far this evidence goes.** One player, on bars and boxes, with no fighters to track. It's evidence that the idea is comfortable, not a safety clearance, and **the flash reading still governs. Builds stay at 60°/s until that reading,** for every class below.
+
+**What I withdraw.** My first page ruled out small frequent swings for cost, but with the resident map a swing reads nothing (`RESULT.md`), so that reason has gone.
+
+### The law
+
+`peak = min(the cause's rate, size ceiling(θ), sweep limit / distance, a place's rate, the flash governor)`
+
+**The size ceiling:** `240 × min(1, sqrt(15 / θ))`, so one rate and one size in data, `smallRate` 240 and `smallSize` 15°. **The shape is a first guess fitted to two points:** fine at small sizes at 240, too much at 180° at 240. I've drawn it cautiously between them, since Orb had no fighters to watch. It does meet Camera's yardstick at 90°.
+
+| Size | Ceiling | Time at the ceiling | Time in builds (60°/s) |
+| ---: | ---: | ---: | ---: |
+| 5° | 240 | 0.10 s (the floor) | 0.16 s |
+| 15° | 240 | 0.12 s | 0.47 s |
+| 30° | 170°/s | 0.33 s | 0.94 s |
+| 60° | 120°/s | 0.94 s | 1.9 s |
+| 90° | 98°/s | 1.7 s | 2.8 s |
+| 180° | 69°/s | 4.9 s | 5.6 s |
+
+**The floor: no swing takes less than 6 ticks,** so it's always eased and never a jump. The flash governor is 60°/s today. Over 65°/s needs the Reduce flashing answer in §9, because the rate is shared. **Even at 60, a small swing is already quick,** which is why this class doesn't have to wait for the reading.
+
+### The small class: 2° to 15°, usually 3° to 8°
+
+| Fires on | Size | What it's for |
+| :--- | :--- | :--- |
+| **A heavy landing:** a charged blow, a launcher, a knock-back. Never a light or a medium, or it stops meaning anything | 3° to 8° by the blow's weight, from the hit-stop's release | The world jolts round the blow. Pillar 4's weight in the one thing that moves the whole picture |
+| **A flight's correction:** a launch or a chase with an arrival, until the rest before contact | Whatever closes the bearing, up to 15° | Keeps an arrival honest (§8) without a big swing, and it can retarget a swing already running |
+| **Lining up with a street:** entering a place, or as a swing rests within 15° of a street's bearing | Up to 15° | Puts the plane back on the clear street, which is the cheapest answer to §8's walls |
+
+- **How often: about 20 to 40 a match, one every 10 to 20 s,** on its own falling score, separate from the big swings' score and the brawl's 45 s of quiet. **Rarely closer than about 2 s,** a score rather than a cap, because the flash limit counts changes per second. Together they take under 2% of fight time.
+- **They add up, and that's the idea.** The sign of each is the choreographer's, chosen by the swing's score, so twenty 5° jolts can lean a fight 100° toward a town or away from one, with no big swing at all. That's the irregular path Orb enjoyed flying on the map, and it could be most of how a fight wanders.
+- **Never from a press.** A jolt comes from a blow that landed, and the gap isn't touched, so it's no dodge (test 4). One swing at a time: a small swing doesn't start during a big one, except a correction retargeting it.
+- **Same stops as §2:** none in a beam or its tell, a struggle, a hit-stop (it starts on the release), a finisher, a KO, the intro or a grab's set piece, or with both grounded in a split.
+- **Reduced motion:** under Camera's view-side setting the shown heading holds and catches up at the next cut.
+
+### The standing limit, for a small swing
+
+The 75 units a second limits a sustained slide, and at 57°/s for a pair 150 apart it would cut every jolt. A small swing is over too fast for feet to slide visibly. **So the limit for a small swing is how far the ground moves in total: `r × θ` at most 30 units (0.4 bh).** That allows 23° at 75 units from the pivot, 11° at 150, 5.7° at 300 and 2.9° at 600; further out, it doesn't fire. The airborne limit stands: at 6,000 units a second, a body 3,000 out allows 115°/s. A swing still eases to rest short of a face.
+
+### What it changes in §2
+
+**The brawl's slow 10°/s swing is now the second choice in a brawl.** Camera has already found slow to be the worst case for land coming round in front, and a jolt does the job in a fraction of the time. Jolts come first, and the slow swing stays behind a switch until Orb has answered proto v2's question 2 (when should it fire?) and seen real fighters.
+
+### What has to be read before any of this goes past 60
+
+1. **Flash:** a city clip with the small class firing at 60 and at 240, both modes, at 16:9 and 4:3. A burst is about 0.11 of the width a tick at the screen's edge at 4:3 and 240°/s, over twice the yardstick, but it lasts only a few ticks, so only the analyser can say. Reduced counts most (RL-208).
+2. **Orb, with real fighters:** do jolts help or get in the way of following a fight?
+3. **QA:** jolts a match, and the shortest gap between swings.
