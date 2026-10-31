@@ -330,9 +330,9 @@ static func setup(S: SimState, su: Dictionary) -> void:
 			f.state = "intro"
 			f.vx = 0.0
 			f.vy = 0.0
-			f.y = WorldTerrain.groundY(S, f.x) + fallHeight
+			f.y = WorldWater.floorAt(S, f.x) + fallHeight
 		for k in range(2, S.fighters.size()):
-			S.fighters[k].y = WorldTerrain.groundY(S, S.fighters[k].x)
+			S.fighters[k].y = WorldWater.floorAt(S, S.fighters[k].x)
 	elif mode is String and mode == "skip":
 		for k in _order(S):
 			_land(S, k)
@@ -370,7 +370,7 @@ static func tick(S: SimState, inputs) -> bool:
 			continue
 		var k: int = slotOf(S, b.role)
 		if b.kind == "fall":
-			var g: float = WorldTerrain.groundY(S, S.fighters[k].x)
+			var g: float = WorldWater.floorAt(S, S.fighters[k].x)
 			SimFx.entranceFall(S, S.fighters[k], g, g + fallHeight, float(tl.land[b.role] - b.t) / float(TPS), b.mode)
 		elif b.kind == "wait":
 			if (it.landed & (1 << k)) != 0:
@@ -398,7 +398,7 @@ static func tick(S: SimState, inputs) -> bool:
 			_land(S, k)
 		elif t >= tl.fall[r]:
 			var p: float = float(t - tl.fall[r] + 1) / float(tl.land[r] - tl.fall[r])
-			f.y = WorldTerrain.groundY(S, f.x) + fallHeight * (1.0 - p * p)   # he accelerates down: a closed-form fall, no flight physics
+			f.y = WorldWater.floorAt(S, f.x) + fallHeight * (1.0 - p * p)   # he accelerates down: a closed-form fall, no flight physics
 	it.t += 1
 	it.left -= 1
 	if it.left == 0:
@@ -477,9 +477,9 @@ static func leftSlot(S: SimState) -> int:
 static func _land(S: SimState, k: int) -> void:
 	var f = S.fighters[k]
 	var it = S.intro
-	var top: float = WorldTerrain.groundY(S, f.x) + fallHeight
+	var top: float = WorldWater.floorAt(S, f.x) + fallHeight
 	var r: float = 0.0
-	if craterE > 0.0:
+	if craterE > 0.0 and WorldWater.burialOK(S, f.x):   # with the floor on, water 37.5 deep or more holds him above the bed: nothing is dug and the cue's radius is 0 (Game Design's rulings 2026-10-30 row 13)
 		var rec = WorldCrater.dig(S, f.x, craterE, null, "impact", 0.0, 1.0)
 		if rec != null:
 			r = rec.r
@@ -488,7 +488,7 @@ static func _land(S: SimState, k: int) -> void:
 				S.craters[n - 1] = S.craters[n - 2]
 				S.craters[n - 2] = rec
 			it.dug |= 1 << k
-	f.y = WorldTerrain.groundY(S, f.x)
+	f.y = WorldWater.floorAt(S, f.x)   # the ground, or with the floor of a lake or the sea on the floor, which a crater in the bed leaves where it was
 	it.landed |= 1 << k
 	SimFx.entranceLand(S, f, top, r)
 
@@ -499,7 +499,7 @@ static func _stand(S: SimState) -> void:
 		f.state = "free"
 		f.vx = 0.0
 		f.vy = 0.0
-		f.y = WorldTerrain.groundY(S, f.x)
+		f.y = WorldWater.floorAt(S, f.x)
 
 
 ## The pair's slots in the order of the start spots: the left one, then the other. The bodies past the pair (one versus

@@ -408,3 +408,13 @@ From these the sim works out the numbers a `when` may test: `meetings`, `lead` (
 **Check** (`sim/core/tools/parity.gd`): "the intro's default facts and the take". It plays every template with no facts, with an empty set and as the classic opening, compares the gestures and tags sent, skips each with a press, and draws six takes on 200 seeds.
 
 **Next: step 2,** the resolver that reads a pair's plot (sections 13 and 15). The default facts stand in until then.
+
+## 17. Starting on the floor of a lake or the sea (2026-10-30)
+
+With the floor on (`data/biomes/water.json` `floor`, `docs/world/lake-floor.md`), every way into a match stands a fighter on it. A planet's touch-down can be in a lake: planet 3 touch 0 is 173 deep there.
+
+- **The intro:** the fall, the landing, the end state and a body past the pair read `WorldWater.floorAt`, which is exactly `groundY` with the floor off. "skip" is what a match that doesn't name an intro plays, so this door matters more than the flat start's: it stood him on the bed, or in the crater it dug.
+- **The flat start** (`"intro": false`): `max(60, floorAt)`, read after `WorldTerrain.initRows`, not with the 60 in `_mFighters`. The water's level reads the depth switch and `S.low`, and until then a reused state holds the last match's.
+- **The entrance crater** (Game Design's rulings 2026-10-30 row 13): none where he lands above the bed, in water 37.5 deep or more (`WorldWater.burialOK` false). The `entrance_land` cue stays at the sheet with `r` 0; a splash there is VFX's. In shallower water he lands on the bed and the crater stays.
+
+**Check** (`sim/core/tools/parity.gd`): "a match starts on the floor of a lake or the sea": the three doors off and on, 12 free ticks never under his floor, a state reused after a depth match with a crater where he starts, and row 13: no crater and a cue of radius 0 on the sheet, a crater in the shallows, a crater in the same lake with the floor off.

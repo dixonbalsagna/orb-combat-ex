@@ -254,6 +254,9 @@ static func _mSetupsC(J: MatchJob) -> void:
 	SimHitstop.setup(S)   # the freeze budget while it is on
 	S.ricOn = setup.get("ricochet", SimRicochet.enabled()) == true   # the ricochet's glance: the data's switch (data/fight/ricochet.json), or the setup's own
 	WorldTerrain.initRows(S)   # T: the depth rows exist only when depth is on
+	if WorldFill.floorOn():   # a flat start stands on the floor of a lake or the sea, not under it (docs/world/lake-floor.md). Read here, not with the 60 above: the water's level reads this match's depth switch and rows, a reused state still holds the last match's until now
+		for f in S.fighters:
+			f.y = maxf(60.0, WorldWater.floorAt(S, f.x))
 	SimPause.reset(S)        # Q10: the pause bank
 	SimShots.reset(S)        # no shots in flight
 	J.phase = 6

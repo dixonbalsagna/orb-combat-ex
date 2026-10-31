@@ -91,6 +91,7 @@ func _init() -> void:
 	check("hit-stop by weight", _hitstop())
 	check("the ricochet's glance", _ricochet())
 	check("the replay header covers a planet's data", _planetHeader())
+	check("a match starts on the floor of a lake or the sea", _floorStart())
 	check("the run's ground", _runGround())
 	check("the run's state and carry", _runState())
 	check("the campaign's arc and episode", _campaign())
@@ -5493,6 +5494,105 @@ func _piTau() -> String:
 
 ## SimReplay.dataHash(setup) names a planet's data by the generation the setup plays and not the one in force, and a
 ## setup without a planet reads none of it (determinism.md section 10). An edited file is stood for by its cached hash.
+## With the floor on, every way into a match stands him on it (a flat start, the intro's end state, a played intro's fall over it) and none leaves him under it for his first ticks; with it off, the flat start's 60 and the ground, as ever.
+## The read is this match's: a state reused after a match with depth on and a crater where he starts begins as a new one does.
+## Landing above the bed digs nothing, and the cue stays at the sheet with a radius of 0; on the bed the crater stays; with the floor off it digs as ever (Game Design's rulings 2026-10-30 row 13).
+func _floorStart() -> String:
+	var lake: Dictionary = {"planet": 3, "touch": 0, "arena": {"cols": 2400}, "planetGen": 2}   # its touch-down is in a lake
+	var fresh := func(mode) -> SimState:
+		var N := SimCore.createSim()
+		SimCore.newMatch(N, 1, {}, lake.merged({"intro": mode}))
+		return N
+	var err: String = ""
+	var S: SimState = fresh.call(false)
+	if S.fighters[0].y != 60.0 or S.fighters[1].y != 60.0:
+		err = "the floor off: a flat start is at %.3f and %.3f, not 60" % [S.fighters[0].y, S.fighters[1].y]
+	SimCore.dispose(S)
+	S = fresh.call("skip")
+	for f in S.fighters:
+		if err == "" and f.y != WorldTerrain.groundY(S, f.x):
+			err = "the floor off: the intro's end state is at %.3f, not on the ground %.3f" % [f.y, WorldTerrain.groundY(S, f.x)]
+	if err == "" and S.craters.size() != 2:
+		err = "the floor off: the intro's end state dug %d craters in the lake, not 2" % S.craters.size()
+	SimCore.dispose(S)
+	var surf: bool = WorldFill.surfaceOn()
+	var water: Dictionary = DirInterrupt.data()["water"]
+	var drop = water["enabled"]
+	WorldFill.setSurface(true)
+	WorldFill.setFloor(true)
+	water["enabled"] = true
+	var wet: int = 0
+	for mode in [false, "skip", true]:
+		S = fresh.call(mode)
+		for f in S.fighters:
+			var fl: float = WorldWater.floorAt(S, f.x)
+			var want: float = maxf(60.0, fl) if mode is bool and not mode else (fl + SimIntro.fallHeight if mode is bool else fl)
+			if err == "" and f.y != want:
+				err = "the floor on, intro %s: he starts at %.3f, not %.3f" % [str(mode), f.y, want]
+			if fl > WorldTerrain.groundY(S, f.x):
+				wet += 1
+		if not (mode is bool and mode):
+			for t in range(12):
+				SimCore.step(S)
+				S.out.fx.clear()
+				S.out.feed.clear()
+				for f in S.fighters:
+					if err == "" and f.state == "free" and f.y < WorldWater.floorAt(S, f.x, f.z) - 1.0e-3:
+						err = "the floor on, intro %s, tick %d: he is %.3f under his floor" % [str(mode), t, WorldWater.floorAt(S, f.x, f.z) - f.y]
+		SimCore.dispose(S)
+	if err == "" and wet < 3:
+		err = "the planet's touch-down is not in water (%d of 6 starts): the check reads nothing" % wet
+	S = fresh.call("skip")
+	if err == "" and not S.craters.is_empty():
+		err = "the floor on: landing on the sheet dug %d craters" % S.craters.size()
+	var sh: int = -1   # a column of the ring's water he stands on the bed of
+	for c in range(SimConst.NC):
+		if WorldWater.floorDepth(S, (float(c) + 0.5) * SimConst.COL) > 5.0 and WorldWater.burialOK(S, (float(c) + 0.5) * SimConst.COL):
+			sh = c
+			break
+	if err == "" and sh < 0:
+		err = "the planet's ring has no shallows: the check reads nothing"
+	elif err == "":
+		S.fighters[0].x = (float(sh) + 0.5) * SimConst.COL
+		SimIntro._land(S, 0)
+		if S.craters.size() != 1 or S.fighters[0].y != WorldWater.floorAt(S, S.fighters[0].x):
+			err = "the floor on: landing in the shallows dug %d craters, and he is at %.3f, his floor %.3f" % [S.craters.size(), S.fighters[0].y, WorldWater.floorAt(S, S.fighters[0].x)]
+	SimCore.dispose(S)
+	S = fresh.call(true)
+	var cues: int = 0
+	for t in range(900):
+		SimCore.step(S)
+		for e in S.out.fx:
+			if e.type == "entrance_land":
+				cues += 1
+				if err == "" and (e.r != 0.0 or e.y != WorldWater.floorAt(S, e.x)):
+					err = "the floor on: a landing's cue on the sheet has radius %.3f at %.3f, his floor %.3f" % [e.r, e.y, WorldWater.floorAt(S, e.x)]
+		S.out.fx.clear()
+		S.out.feed.clear()
+		if cues == 2:
+			break
+	if err == "" and (cues != 2 or not S.craters.is_empty()):
+		err = "the floor on: a played intro sent %d landing cues and dug %d craters" % [cues, S.craters.size()]
+	SimCore.dispose(S)
+	S = fresh.call(false)
+	var want0: float = S.fighters[0].y
+	SimCore.dispose(S)
+	var R := SimCore.createSim()
+	SimCore.newMatch(R, 1, {}, lake.merged({"intro": false, "depth": true}))
+	WorldCrater.dig(R, R.fighters[0].x, 300.0, null, "impact", 0.0, 1.0)
+	SimCore.newMatch(R, 1, {}, lake.merged({"intro": false, "depth": false}))
+	if err == "" and R.fighters[0].y != want0:
+		err = "the floor on: a state reused after a match with depth on starts him at %.3f, a new one at %.3f" % [R.fighters[0].y, want0]
+	SimCore.dispose(R)
+	water["enabled"] = drop
+	WorldFill.setFloor(false)
+	WorldFill.setSurface(surf)
+	var plain := SimCore.createSim()
+	SimCore.newMatch(plain, 1, {}, {"intro": false})   # the process's arena and generation as the checks after this read them
+	SimCore.dispose(plain)
+	return err
+
+
 func _planetHeader() -> String:
 	var none: String = SimReplay.dataHash()
 	var g1: Dictionary = {"planet": 7, "touch": 3, "planetGen": 1}
