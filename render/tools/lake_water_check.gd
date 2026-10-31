@@ -1,7 +1,7 @@
 extends SceneTree
 ## Lake water check: water draws across a lake's whole interior, and only on a ring with lakes
 ## (render/shaders/water.gdshaderinc, PlanetView's lake_on; docs/rendering/biomes.md).
-## 1. gen 2: the water material's lake_on is 1 on a planet with lakes, and the interior the old test left undrawn (a wet
+## 1. gen 2: the water material's lake_on is 1, and the interior the old test left undrawn (a wet
 ##    column off the sea, not dug, not at sea level) is there. Planet 7's tundra column, the reported picture, is one.
 ## 2. gen 1 and the hand-made world: no lakes and lake_on 0, so the shader's new paths are shut.
 ## 3. The bands read the ruling: LAKE_BANDS.y is data/biomes/water.json's wade.below and .x half of it.
@@ -40,7 +40,7 @@ func _run() -> void:
 		var S: SimState = _start(1, {"planet": pl, "touch": 3, "planetGen": 2, "intro": false})
 		var lakes: Array = S.planetRing.get("lakes", [])
 		var undrawn: int = _old_test_left(S)
-		ok(_lake_on() == (0.0 if lakes.is_empty() else 1.0) and (lakes.is_empty() or undrawn > 0), "gen 2 planet %d: %d lakes and rivers, lake_on %d, %d interior columns the old test left undrawn" % [pl, lakes.size(), int(_lake_on()), undrawn])
+		ok(_lake_on() == 1.0 and (lakes.is_empty() or undrawn > 0), "gen 2 planet %d: %d lakes and rivers, lake_on %d, %d interior columns the old test left undrawn" % [pl, lakes.size(), int(_lake_on()), undrawn])
 		if pl == REPORTED_PLANET:
 			var c: int = _fine_centre("tundra")
 			ok(c >= 0 and S.water[c] >= WorldWater.MIN_DEPTH and S.base[c] >= WorldWater.RESERVOIR_BASE, "the reported picture: planet %d's tundra column %d is wet off the sea, %.1f deep" % [pl, c, S.water[c] if c >= 0 else 0.0])

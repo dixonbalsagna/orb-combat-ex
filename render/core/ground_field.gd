@@ -267,6 +267,13 @@ static func heap(z: float, lo: float, hi: float) -> float:
 	return 1.0 - u * u * (3.0 - 2.0 * u)
 
 
+## Is this match's ring a gen 2 planet's? (The hand-made world has no ring; 0 is the data's generation.)
+static func gen2_ring(S: SimState) -> bool:
+	if not (S.planetRing is Dictionary) or S.planetRing.is_empty():
+		return false
+	return (S.planetGen if S.planetGen > 0 else int(WorldClimate.data().get("gen", 1))) == 2
+
+
 ## Each column's shore level: the standing level (ground plus water) of the water in it, or else of the nearest wet
 ## column within RenderLook.SHORE_COLS either side (the nearer; the higher on a tie), or NO_SHORE. The water shader
 ## keeps a land vertex beside water at that level when the land stands above it, so the sheet stays flat and the

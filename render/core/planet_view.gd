@@ -514,7 +514,7 @@ func update(S: SimState, cam_x: float, heat: PackedFloat32Array = PackedFloat32A
 		_terrain_mat.set_shader_parameter("crater_now", S.T)
 		_water_mat.set_shader_parameter("crater_now", S.T)
 	if _water_mat != null:
-		var lake_on: float = 1.0 if S.planetRing is Dictionary and not S.planetRing.get("lakes", []).is_empty() else 0.0
+		var lake_on: float = 1.0 if GroundField.gen2_ring(S) else 0.0
 		if lake_on != _lake_sent:
 			_lake_sent = lake_on
 			_water_mat.set_shader_parameter("lake_on", lake_on)

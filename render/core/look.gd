@@ -489,7 +489,7 @@ const OUTLINE := "#0a0d14"               # fighter outline colour
 const SHORE_FLOOD: float = 24.0          # dry land at most this far below the water beside it is drawn under that water (World's shore step is at most 0.25 bh)
 const WATER := Color(30.0 / 255.0, 110.0 / 255.0, 175.0 / 255.0)
 const WATER_SURFACE := Color(0.42, 0.68, 0.9, 0.55)
-## A lake's depth, so a deep lake never reads as a shallow one (docs/design/rulings-2026-10-30.md row 6): hard steps at
+## The water's depth on a gen 2 ring, lake and sea alike, so deep water never reads as shallow (docs/design/rulings-2026-10-30.md rows 6 and 7): hard steps at
 ## these depths, each LAKE_TONE further toward WATER. Under .x the plain sheet, the bed clear, as deep as a fighter
 ## stands on it; to .y half hidden; from .y (wade.below, where he stands on the sheet) the bed is gone. .z: deep water.
 const LAKE_BANDS := Vector3(37.5, 75.0, 240.0)
