@@ -9,6 +9,7 @@ Orb picked the turntable, E and E2: the world visibly swings round the fighters.
 3. **Readers can't keep the strip arrays rebuilt on each relay.** World asked; the numbers say no (below). The 77 `groundY` sites need no change anyway, because `groundY` is one function.
 4. **The sim's plane must read the same nodes and the same triangles as the drawn mesh.** Today's ring columns miss a 128-unit mesh by up to 232 units on gen 2.
 5. **A standing fighter just rides the ground.** The most it rose in the probe was 3.8 units a tick at Game Design's 75 u/s, under the 7.5 cap on every sample.
+6. **A whole-planet bake at load is safe for determinism on every build we can test.** It's a pure function: same bits in any order, after any match, in two processes, native and web (section 7). It needs one rule the EP's decision doesn't state yet: which level a read uses must never depend on what's ready.
 
 ## 1. Who needs ground beyond the pair's reach
 
@@ -193,9 +194,81 @@ The array work is 3.4 to 3.8 µs a column at either spacing; the ms column is at
 
 - **Nothing here has run a swing in the real sim.** The read counts come from fights without one, and a read-through isn't built.
 - **Water in a swing.** The 31 exact lines become records only with World's 8.4. Until then water beyond a window has no honest answer, and `WorldWater.init` can't run per relay.
-- **Web parity on the field.** Node read and triangle are plain arithmetic on the proven math, but this run didn't put them through the web check.
+- **Web parity on the field's read.** The bake passed (section 7). The triangle read at `x` is plain arithmetic on proven math, but it hasn't been through the web check.
 - **Laptop figures are x4 of native,** Performance's stand-in, not a measured laptop.
 - **Human fights** may read differently from AI ones.
+
+## 7. The EP's provisional route: the field defines the ground, with a bake at load
+
+The decision: the field is the ground, a pure function of the planet at a fixed canonical spacing that the sim and the renderer both read, with a whole-planet bake at 512 carrying flight. The probes ran on a scratch copy of HEAD 2bb581ab at below-normal priority, so the times are a rough guide.
+
+### Is a bake at load safe across machines?
+
+**Yes on x64 native and x64 web, and the bake makes any other build's difference show up before the first tick.**
+
+| Test, planet 7 unless stated, 34,656 nodes | Result |
+| :--- | :--- |
+| Baked twice, and in a second process | Same hash |
+| In reverse order | Same |
+| Another planet read between the nodes, generation flipped and bound back | Same |
+| After a gen 1 match on another planet | Same |
+| Native against web (Chrome 156): planets 7 and 3 at 75 cells a face, 25 at 150 | Same bits |
+| The 904 nodes that face edges hold twice or more | 0 differ, so the ground is continuous across faces |
+| **Controls:** one node one float32 step off; gen 1 asked for by name | Both change the hash |
+
+All 45 golden keys passed in the same web run.
+
+**One control didn't do what I expected.** Leaving the generation unbound during the bake changed nothing, because a read follows the planet object it's given. The generation matters when the planet is made: `WorldPlanet.make` keys on the static `WorldClimate.curGen`. So the bake has to bind the generation before `make`, as the planet load's job already does.
+
+**Cost, measured natively:** 38 to 42 µs a node, 1.3 s a planet. **Memory:** 135 KB of float32 heights and 34 KB of biomes. Distinct nodes are 33,752 (World's 28,650 is by area). At Performance's 130 µs that's about 4.4 s on the web, and about four times that on the laptop by its x4 stand-in. Those two are arithmetic, and that load time is Performance's to rule on. Rendering's far map already spends 65,000 reads on the same job, so one bake serving both would be cheaper than today's far map.
+
+**The rules that keep it safe:**
+
+1. **Whether the bake is done is never a sim input.** It finishes before tick 0, through `SimPlanetLoad.mayStart`. Peers wait at the handshake, and a slow machine waits longer but gets the same bits.
+2. **Which level a read uses is fixed by the reader, never by what's ready.** A read that takes the finer level when its node happens to be there, and the bake otherwise, gives two machines two grounds, and that's a desync. So: near readers always read canonical, computing a missing node on the spot. The 38 coarse lines always read the bake.
+3. **No bake on disk in the first cut.** `user://` is shared by every copy on the PC, which is the clash that made parity's fixtures fail. A later cache must be keyed by the data hash and the engine version, and checked.
+4. **One thread.** The web has no threads, and `P.outH` and the `_vc*` noise caches aren't safe to share. A native worker would need a `Planet` of its own. Slicing is safe: order doesn't matter, as tested.
+5. **The bake is immutable and outside the state,** keyed by seed and generation. Snapshots never touch it, and two sims can share it. The view reads it and can't write it.
+
+**Not proven:** ARM (macOS on Apple silicon is a target), Firefox, Safari. This is the same gap as the rest of the sim, and the match key below gives it an early check.
+
+### What it does
+
+| | With the switch off | With it on |
+| :--- | :--- | :--- |
+| **Strip** | Unchanged | A view of the field, not a source. `W`, `NC`, `x` and the wrap math stay, as a ring buffer of a great circle. No ring read at match start, and no swap: a whole strip laid from the field is 8.5 ms with no noise. The 33 builder lines go or move: platforms, lakes and rivers become planet-keyed (World's 8.1), because they plan on one line today |
+| **`S.base`** | Shared, as now | Not state. `groundY` reads the field through the frame. The 6 coarse lines read the bake, and the 31 exact lines become records |
+| **Digest** | Unchanged | `NetDesync.digest` folds the frame, the swing, and the store's length and running hash. The bake isn't in it. Netcode's `PROTO` 4 |
+| **Match key** | Unchanged | **The bake's hash joins the match key.** Two builds that bake differently are refused at the handshake, not left to desync minutes later |
+| **Golden** | **Byte-identical, to be proved by regenerating** | New keys: each of 3 planets' bake hash, tick-0 states, one AI match. About 4 s more to generate. Gen 1, hand-made and gen 2 keys don't move |
+| **Replay** | Unchanged | No format change. Spacing, face count and field version join `WorldPlanet.dataHash`, so a replay on another field is refused |
+| **Parity** | Unchanged | A new check: the bake's hash, order against reverse, a field match same twice, near and coarse reads each from their own level. `web_parity` gets the bake keys, as this run did. `replay_xproc` and `two_states` then cover a bake in a fresh process and one shared by two sims. No fixtures are written |
+
+**Make it gen 3.** `setup.planetGen`, `genFor` and `dataHash(gen)` already separate generations, so a field world is `planetGen: 3`, and gen 2 and its replays keep working beside it. `make`'s key is `seed * 4 + gen`, so 3 fits and 4 wouldn't.
+
+**The field's error against today's ground stops being an error,** as World says: nothing compares the field with the old planet any more. Its creases and steps get smoothed into a new, smoother planet, and that's a look for Orb.
+
+### Does the sim starve at 1.5 reads a tick?
+
+**No. The sim reads a line, and World's starving field is a disc for the view.** Near reads taking 128-unit nodes along the line, far reads taking the bake, over the same 7 AI fights, 50,400 ticks:
+
+| New 128-unit nodes a tick | Mean | p90 | p99 | Worst |
+| :--- | ---: | ---: | ---: | ---: |
+| The sim's own near reads | **0.058** | 0 | 2 | 66 |
+
+That's 2,920 nodes in all. The worst tick is 3.6 ms natively at 54 µs, or 8.6 ms on the web, about the 8 ms spike allowance. **No swing ran in this count.** Arithmetic for one: a standing fighter's line moves 1.25 u/tick, so a new cell about every 100 ticks. A flying one 6,000 units from the pivot at 60°/s moves 105 u/tick sideways, about 1.6 nodes a tick at 128 (just over, before his own flight's 2.7) and 0.4 at 512. A flying body has nothing at his feet until he lands, so he can read the bake until he's within reach of the ground, if that rule is the same on both peers.
+
+### The one conflict left
+
+**"Both read it" and "the view sharpens later" can't both hold at a fighter's feet.** World's 11.3 has the view's disc refining over seconds after a landing. If the sim reads 128 at his feet while the view still draws 512, the two differ by World's 512 row, RMS 23 and up to 319 units. Three ways out:
+
+| Option | The sim | The feet | Cost |
+| :--- | :--- | :--- | :--- |
+| **A. One canonical spacing, the bake** | Reads only the bake. Zero noise reads in play, and the simplest route by far | Always agree | Ground as smooth as 512 everywhere, unless a pure detail term runs on both sides. A look for Orb |
+| **B. 128 canonical, view offsets the feet** | Reads 128 near, as counted above | The view draws him on its own ground until it sharpens: a cosmetic offset, and rendering still writes nothing | Effects at his feet need the same offset. Rendering's foot test would pass by construction, so it needs a tighter wording |
+| **C. 128 canonical, a small tile forced at landing** | The same | Agree | About 256 nodes in one go is 33 ms on the web: 4 x the spike allowance. A launch's flight could read ahead, as World's 96 ticks and 144 nodes suggest, but that doesn't reach it |
+
+**My call for the sim: determinism is equally safe in all three, and A is by far the cheapest.** I'd build the sim's read so that the spacing is one data value, try A first, and let Orb judge the look, since B can be added later without changing the core's shape. The choice is the EP's and Orb's.
 
 ## What the sim keeps from the page of 2026-10-30
 
