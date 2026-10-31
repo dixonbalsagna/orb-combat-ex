@@ -628,6 +628,8 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
     R.point('11.bleed', '§11', 'Low-tier bleed with every living-destruction source included (same measure as §4)', { v: sum(D.map(r => r.lowCas / r.pop0)) / (sum(D.map(r => r.lowSec)) / 60) * 100, hi: scale === 'game' ? 4 : 40, unit: 'num', note: '% of population per minute' });
     for (const [id, what] of [['fires', 'Spreading fires: 0.5 to 3 in matches with 5% of fight time in forest or villages'], ['forest', 'Forest burnt at the end among tier-3 matches: 15 to 60% of trees'], ['clouds', 'Cover-capable clouds 3 to 10'], ['slides', 'Real slides 0.5 to 2; at most 1 peak collapse'], ['quakes', 'Quakes in 30 to 70% of tier-4 matches, at most 2; rifts at most 1'], ['lava', 'Lava events 1 to 3 in tier-4 matches'], ['wear', 'Hazard share of all wear at most 15%']]) R.pending(`11.${id}`, '§11', what, LD);
   }
+  // ---- the turntable: swings, jolts, the nudge and their association with the toll (game-design.md of ring-any-angle sections 10, 11, 13; RL-213 to RL-217)
+  if (D) require('./swing-rows').rows(R, D, A, { fmt, wl });
   return R.rows;
 }
 

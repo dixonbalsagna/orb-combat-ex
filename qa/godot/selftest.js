@@ -187,6 +187,35 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     const low = { default: Array.from({ length: 60 }, (_, j) => mk(j, Array.from({ length: 20 }, (_, k) => plan('UPPERCUT 1.2|PROP SMASH 0.9', 'UPPERCUT')))) };
     assert.strictEqual(evaluate(low).find(r => r.id === '5b.propSmash').status, 'FAIL', 'offered and never picked is under the 5% floor');
   });
+  await t('swing rows: PENDING without swing events; a good set passes the share, counts, variety and nudge rows; one cause, a toll that raises the count and a nudge over its limits fail them', async () => {
+    const sw = (t, cause, deg, dur) => ({ type: 'swing_start', t, kind: cause, src: cause, text: '', amount: deg, dur, actor: 0 });
+    const mkS = (j, over = {}) => {
+      const causes = ['launch', 'chase', 'form'], sws = [];
+      for (let k = 0; k < 7 + ((j * 5) % 3); k++) sws.push(sw(600 + k * 2400, over.cause || causes[k % 3], over.deg || 40 + k * 20, 200));
+      for (let k = 0; k < 25; k++) sws.push(sw(300 + k * 800, 'jolt', 5, 40));
+      const nudges = Array.from({ length: 2 + ((j * 2) % 3) }, (_, k) => k).map(k => ({ type: 'nudge_start', t: 3000 + k * 2400, kind: 'nudge', src: 'tower', text: '', amount: over.nudge || 4, dur: over.nudgeDur || 80, actor: 0 })), lines = [0, 1, 2].map(k => ({ type: 'nudge_line', t: 3000 + k * 2400, kind: 'nudge', src: '', text: '', amount: 0, dur: 0, actor: 0 }));
+      return rec({ koAt: 360, civPct: over.civ !== undefined ? over.civ : (j * 7) % 13, swings: [...sws, ...nudges, ...lines] });
+    };
+    const none = evaluate({ default: Array.from({ length: 60 }, () => rec({ koAt: 360, civPct: 20 })) }), nrow = (R, k) => R.find(r => r.id === k);
+    for (const k of ['swing.share', 'swing.big', 'swing.jolts', 'swing.cause.max', 'swing.toll.assoc', 'nudge.turn.place', 'nudge.lines', 'hunger.toll.assoc']) assert.strictEqual(nrow(none, k).status, 'PENDING', k);
+    const good = evaluate({ default: Array.from({ length: 60 }, (_, j) => mkS(j)) });
+    for (const k of ['swing.share', 'swing.big', 'swing.jolts', 'swing.cause.max', 'swing.causes3', 'swing.size.bin', 'swing.toll.assoc', 'nudge.turn.place', 'nudge.turn.10s', 'nudge.rate', 'nudge.lines', 'nudge.toll.assoc']) assert.strictEqual(nrow(good, k).status, 'PASS', k + ' ' + nrow(good, k).value);
+    assert.strictEqual(nrow(good, 'swing.biomes').status, 'PENDING', 'needs the swings-off arm');
+    assert.strictEqual(nrow(good, 'swing.civless').status, 'PENDING', 'needs the civilians-removed arm');
+    const one = evaluate({ default: Array.from({ length: 60 }, (_, j) => mkS(j, { cause: 'launch' })) });
+    assert.strictEqual(nrow(one, 'swing.cause.max').status, 'FAIL', 'one cause is all of the big swings');
+    assert.strictEqual(nrow(one, 'swing.causes3').status, 'FAIL');
+    const rising = evaluate({ default: Array.from({ length: 60 }, (_, j) => { const r = mkS(j, { civ: j }); let kept = 0; r.swings = r.swings.filter(e => e.type !== 'swing_start' || e.amount <= 15 || kept++ < 4 + Math.floor(j / 8)); return r; }) });
+    assert.strictEqual(nrow(rising, 'swing.toll.assoc').status, 'FAIL', 'more swings in the matches with the higher toll');
+    const hard = evaluate({ default: Array.from({ length: 60 }, (_, j) => mkS(j, { nudge: 11, nudgeDur: 80 })) });
+    for (const k of ['nudge.turn.place', 'nudge.turn.10s', 'nudge.rate']) assert.strictEqual(nrow(hard, k).status, 'FAIL', k);
+    const withArms = evaluate({ default: Array.from({ length: 60 }, (_, j) => mkS(j)), nocivs: Array.from({ length: 60 }, (_, j) => mkS(j)), swingsoff: Array.from({ length: 60 }, (_, j) => ({ ...rec({ koAt: 360, civPct: 20 }), seed: j, fightSec: { plains: 100 } })) });
+    assert.strictEqual(nrow(withArms, 'swing.civless').status, 'PASS');
+    const turns = gap => evaluate({ default: Array.from({ length: 60 }, () => rec({ koAt: 360, civPct: 20, swings: [0, 1, 2].map(k => ({ type: 'arena_turn', t: 600 + k * gap, kind: '', src: '', text: '', amount: 5, dur: 0, actor: -1 })) })) });
+    assert.strictEqual(nrow(turns(3900), 'arena.turns.gap').status, 'PASS', '65 s apart');
+    assert.strictEqual(nrow(turns(3000), 'arena.turns.gap').status, 'FAIL', '50 s apart is under the 60 s gap');
+    assert.strictEqual(nrow(turns(3900), 'arena.turns.max').status, 'PASS');
+  });
   await t('double hit rows: PENDING without double hits; a good set judges 0.5 to 2 a match, 40 to 70% of matches, at most 4, both hit; a bad set fails the hard tests', async () => {
     assert.strictEqual(evaluate({ default: [rec()] }).find(r => r.id === 'double').status, 'PENDING');
     const dbl = (j, n, over = {}) => rec({ seed: j, koAt: 300, doubleHits: n, brawl: { ends: { double: n, knockback: 5 }, blows: {}, staggers: {}, tradeBreaks: 0, lens: [], nblows: [] }, doubles: Array.from({ length: n }, () => ({ t: 1, dur: 240, land: 9, dmgA: 12, dmgB: 12, sep0: 1, sep30: 11, ...over })) });
