@@ -12,7 +12,7 @@ I recommend paged 2D tiles keyed to the planet. Each pane gets one frame uniform
 
 - **A turn is then one uniform a frame.** No mesh is rebuilt, no texture is rewritten and no new height is read.
 - **Flight is what costs.** It uncovers ground the pair hasn't seen, so the read budget sets how sharp the near ground can be while flying.
-- **My estimate is that the frame gets no heavier than today's.** The GPU's real headroom on the laptop is unknown, so section 5's test comes before anything else.
+- **My estimate is that the frame gets no heavier than today's.** The GPU's real headroom on the laptop is unknown, so section 6's test comes before anything else.
 
 The largest risk moves from "can the GPU draw it" to two other things. One is how much of the view's code reads columns. The other is whether World can give 2D ground at a budget near 4 reads a tick.
 
@@ -74,7 +74,7 @@ From `performance.md`. The laptop is a 30 fps machine, stood in for by the dev P
 - Each instance carries the tile's four corner directions on the planet and its layer in a `Texture2DArray`.
 - There are no ring copies, because nothing wraps. The 30 to 45 ms of node churn in the swap goes with them.
 
-**Partial uploads by layer.** The renderer's public update call replaces a whole texture, which is why today any dirty column sets 460 KB. `RenderingServer.texture_2d_update(tex, image, layer)` replaces one layer. A near layer is 65 by 65 texels, so marks can be 32 units apart, at about 17 KB each for height, marks and colour data: 51 KB a tile. A tile's 289 nodes at 128 units take about 72 ticks at 4 reads a tick, which is the upload rate in the table above. **The call is from the API as I remember it. I haven't read the Compatibility path, and section 5 tests it.**
+**Partial uploads by layer.** The renderer's public update call replaces a whole texture, which is why today any dirty column sets 460 KB. `RenderingServer.texture_2d_update(tex, image, layer)` replaces one layer. A near layer is 65 by 65 texels, so marks can be 32 units apart, at about 17 KB each for height, marks and colour data: 51 KB a tile. A tile's 289 nodes at 128 units take about 72 ticks at 4 reads a tick, which is the upload rate in the table above. **The call is from the API as I remember it. I haven't read the Compatibility path, and section 6 tests it.**
 
 **The frame uniform.** Each pane sends its pivot and heading on the sphere. The vertex shader maps a planet direction to the view by an azimuthal equidistant projection about the pivot. This fits for three reasons:
 
@@ -110,17 +110,17 @@ So the near ground is about 512 units while flying flat out and sharpens to abou
 - **Already resident:** the far map's finest texel is 400 units, at about 9 s to build a planet (`look.gd`).
 - **At rest:** a 128-unit disc of radius 6,000 is about 6,900 reads, 373 ms native, against 259 ms for today's whole ring. It's a match-start cost, or 29 s at 4 a tick.
 - **Error against the true column on gen 1:** 128 u, RMS 0.7, max 17; 512 u, RMS 4.7, max 60 (measured, Research). **Gen 2's rivers and shores may do worse.** World hasn't measured it.
-- **Sharpening** is a height morph over about 30 ticks, ahead of the pair first. If it reads as ground settling, that's a look gate failure, and it's why this is in the test.
+- **Sharpening is the one thing here that can fail Game Design's test 7.** It's a height morph, and ground changing shape in view is what that test forbids. So tiles sharpen out of view first, ahead of the pair. A launch's arrival is known at its start, so its disc can be read during the flight: about 96 ticks at 4 reads a tick is 384 reads, which only covers a disc of radius about 1,400 at 128 units. Anything else sharpens in view, and the test will say whether that shows.
 
 Tiles at 128 units are coarser than today's 32-unit columns. The rest would be a deterministic detail term, in the sim and the shader alike. That's World's and Simulation's call, because **the sim's plane must equal the drawn plane** or feet leave the ground.
 
-Prototype E's "pop" column (2,347 ticks, largest 356 units) counts a column's height changing when re-laid. In a rigid drawing that isn't a pop: the ground moves smoothly under a fighter, at most `r × ω × slope`, about 4 units a tick at `r` 1,000 on a 1 in 2 slope at 30°/s. What it does do is lift a standing fighter, which is Simulation's.
+Prototype E's "pop" column (2,347 ticks, largest 356 units) counts a column's height changing when re-laid. In a rigid drawing that isn't a pop: the ground moves smoothly under a fighter. Under Game Design's sweep limit it moves at most 75 units a second under a standing fighter, so on a 1 in 2 slope he rises about 0.6 units a tick. Lifting him is Simulation's, by Game Design's rule for a waded body.
 
 ### Split screen
 
 Panes keep their own frames, each pivoted on its own fighter, with the line's heading carried along the great circle. The tiles and textures are shared, each pane gets its own MultiMesh, and a split means two discs of tiles. Both panes stay on one line, so Orb's rule holds.
 
-The problem is the speed, not the drawing. A turn about the pair's midpoint moves the ground under each fighter at `gap/2 × ω`: at 24,000 apart and 30°/s, **6,283 u/s, launch speed**, with no one having launched. **I suggest capping `ω` by the gap**, so ground speed under a fighter stays under an agreed figure. That's for Game Design and Camera.
+Speed under a far fighter is settled: Game Design's rate falls with distance from the pivot, to a sweep limit of 75 u/s standing and 6,000 u/s airborne.
 
 ## 4. Keeping buildings, props and citizens attached
 
@@ -148,7 +148,50 @@ The problem is the speed, not the drawing. A turn about the pair's midpoint move
 
 Park 2026-10-30i fixes the first only. It stays parked as you said, and its README still carries my wrong sentence about the stills. It's frozen, so I've left it: please read this section as the correction.
 
-## 5. Recommendation and the smallest test
+## 5. Game Design's rulings and Netcode's question
+
+None of this is measured. It's read from the code and worked out by hand.
+
+**Netcode: can the near view's ground be a 2D height texture with the heading as a shader value? Yes. That is option C.**
+
+- The view never re-lays columns, so the 1.7 to 3 ms doesn't arise in the view.
+- It's drawn once per rendered frame, however deep the rollback, from the heading and pivot at that frame.
+- A correction shows as the shown heading easing toward the sim's, no faster than the swing: a view-side value, with no extra draw work.
+- **One condition for marks:** a crater must stay live, unbaked, until it's older than the deepest rollback, so a rolled-back crater never has to be unbaked from a tile.
+- **One cost my summary left out:** a turn is one uniform only if the foreground rule doesn't need the plane's profile. That rule reads the plane across the whole view, wider than the sim's strip of about 170 columns. Sampling about 64 points from the tiles is my estimate of 0.2 ms a frame native, inside the 0.5 to 1 ms but not free. It's in the test.
+
+**Test 7, the world turns as a solid thing: C passes by construction, with one exception.** Heights are keyed to the planet, and a turn changes only the frame, so no vertex's height changes. The radial morph doesn't change either, because radius is constant in a turn about a fixed pivot. A moving pivot is still rigid on the sphere. The exception is sharpening, in section 3. A re-laid view (A) would fail it, and that's another reason to rule A out.
+
+**Test 6, a crater and a damaged tower swing away unchanged: yes for the crater, expected for the tower.** A crater is in a tile layer or the live list, in planet terms. A tower's damage is read by instance index (`cut_tex`, `stub_tex`, windows), which a turn doesn't touch. **I haven't audited whether any of it stores a world position**, such as where a stage's spread or a wall slam's dent starts. Any that does must become local to the building. The test pins this by comparison.
+
+**An airborne fighter passing through a building face at up to 6,000 u/s: it holds with depth off, and not fully with depth on.**
+
+At his place on the line, the world moves across the line, so to him and his camera a face arrives **in depth**, at up to 100 units a tick. A wall 300 to 800 units across passes in 3 to 8 ticks.
+
+| | What happens | Holds? |
+| :--- | :--- | :--- |
+| **Depth off** (`S.depthOn`, the default today) | The hole is worked out every frame from his chest and has no easing. It cuts what's nearer than his chest less 30 units, so a face is cut from the tick it crosses him | **Yes** |
+| **Depth on** | The hole is the patch. A tower takes it by a share that fades over at least 0.3 s (18 ticks) inside an area budget of 16,000 pixels a tick | **No, for towers.** It passes before it opens: he's hidden for up to about 8 ticks (0.13 s). I'd accept that as passing behind it, since it's brief. That's Orb's and Game Design's call. Raising the budget is a flash risk |
+
+Changes it needs either way:
+
+- `occluders` and the near list test boxes square to the strip, by `b.w`, `b.d` and `SimWrap.sdx`. They need the building's own frame and a 2D query.
+- The building he's aimed at stays whole by the existing rule. If a sweep carries that one over him, he's inside a whole building. Game Design's ease to rest before arrival should prevent it.
+
+**A larger problem than the fighter: the camera.** A building at about the camera's distance from the pivot passes through the lens. Nothing has to hit the fighter for that to happen, and at launch-speed sweep it arrives 10 to 30 ticks after it passes him. The near-tower rule (a lobby inside 600 units of the lens) fades over 0.3 s, and stubs sink over 0.2 s; at 100 units a tick both are too late.
+
+**I'd give buildings the foreground rule:** every vertex above the sight-line cap is lowered to it, as a stub is, using the one value `fore_low` and no column reads. It has no state, so speed doesn't matter. The look risk is the one in section 4: towers would be seen sinking as they come round.
+
+**Flash at the peak of 60°/s: a concern, unmeasured.**
+
+- **Far scenery is inside Camera's bound.** The lens is 30° vertically, so far scenery moves 0.018 of the width a tick at 16:9 and 0.024 at 4:3, against 0.045 and 0.03 reduced. Game Design's 0.025 assumed 40°, which is the 4:3 case.
+- **Near things are not.** A point at `z` in front of the pivot, with the camera `D` from it, moves `z / (D − z)` times the far rate, the other way. At 60°/s anything within 29% of `D` from the lens passes 0.045 at 16:9, and 35% at 4:3. Reduced mode's half rate is within 23% and 29% against 0.03. The sight-line cap above lowers most of this, not all.
+- **The bound doesn't protect a city.** Camera's own note on a launch across downtown: 20 to 35% of the frame changing every tick at 0.041 to 0.052 of the width. A swing's far pan is under half that travel, but it's the whole picture moving, near towers included.
+- **Pan haze won't help.** It reads the camera's x, which a swing doesn't move, and it ships off along with the whip. Orb rejected that kind of look (ADR 0010), so I wouldn't lean on it.
+- **The aspect ratio matters.** Collapse reads FAIL in normal at 960 by 540 and PASS at the standard 1024 by 768, so a swing has to be read at 16:9 as well. Reduced is the take-down trigger under RL-208, so that mode counts most.
+- **If a city clip fails,** the honest lever is a lower peak rate over tall places, as a sim-side rate from data, since rates are in the sim. That's Game Design's, and Legal should see the first readings.
+
+## 6. Recommendation and the smallest test
 
 **Build C behind a switch, but only after this test passes.** It's a new ground renderer, several windows of work, and it replaces most of `ground.gdshaderinc`, `terrain` and `water`. Today's strip stays the default until it's flipped. There's no byte-identical oracle, because true 2D relief changes the look on purpose. Only the plane row can be held to the strip.
 
@@ -157,7 +200,8 @@ Park 2026-10-30i fixes the first only. It stays parked as you said, and its READ
 - Planet 7's nodes baked to a scratch file at 128 units (radius 6,000) and 512 beyond, with the far map.
 - Tiles, the `Texture2DArray` and the frame uniform; the real terrain colours if they come easily.
 - Two boxes as fighters, boxes as buildings, and the real crowd and cover shaders on `world_place()`.
-- A scripted swing at 30°/s for 60 s, with a flight at 6,000 u/s in the middle.
+- A scripted swing at 60°/s, a full turn each way, then a flight at 6,000 u/s.
+- A crater and a damaged tower in view, and one place of tall boxes with lit windows for the flash reading.
 - Web export, through `frame-bench.mjs` and Tools' capture launcher, at below-normal priority.
 
 | # | Question | Pass line |
@@ -166,13 +210,16 @@ Park 2026-10-30i fixes the first only. It stays parked as you said, and its READ
 | 2 | Is an upload really one layer? | One tile under 0.2 ms at x1, and the same with 8 or 256 layers. **If it scales with the array, the plan needs separate textures or an engine patch** |
 | 3 | Does anything leave the ground? | A foot-to-ground probe reads 0 px for every object; stills at three radii |
 | 4 | Is there a seam or a pop? | A magenta clear colour: no magenta pixel in any frame. Heights continuous across a level's edge on a CPU twin |
-| 5 | Does it look right? | **Orb's call:** a clip of the swing, with a mountain coming into the foreground and the ground sharpening after the flight. Then the collapse clip's flash check in both modes, on the swing clip |
+| 5 | Is it solid (test 7)? | With the pivot fixed, a full 360° returns a frame **byte-identical** to the first, with the crater and tower unchanged (test 6) |
+| 6 | Does it flash? | The flash analyser on the swing clip, through the city, in both modes, at 1024 by 768 and at 16:9. A failure there is a finding, not the end of the test |
+| 7 | Does it look right? | **Orb's call:** a clip of the swing, with a mountain and a tower coming into the foreground, and the ground sharpening after the flight |
 
-**If it fails:** on 1, fewer levels or fewer vertices a tile; on 2, separate small textures, at more draw calls; on 5's mountain, cap how far land rises in front, or Orb reconsiders how far a swing may turn.
+**If it fails:** on 1, fewer levels or fewer vertices a tile; on 2, separate small textures, at more draw calls; on 6, a lower peak rate over tall places; on 7's mountain, cap how far land rises in front, or Orb reconsiders how far a swing may turn.
 
 **What others would need to answer before building:**
 
 - **World:** gen 2 reads in 2D at about 4 a tick, sparse-read error, 2D lakes and rivers, and places by plan.
-- **Simulation:** the plane's agreement with the drawn plane, and a standing fighter on rising ground. Research estimates E's re-lay at 1.7 to 3 ms a tick, over the sim's budget, and that's an estimate from another language.
-- **Game Design and Camera:** the cap on turning with a gap, and how far a swing may turn.
-- **Art:** the look of true 2D near land, and of land sinking in the foreground.
+- **Simulation:** the plane's agreement with the drawn plane. Research estimates E's re-lay at 1.7 to 3 ms a tick, over the sim's budget, and that's an estimate from another language; Netcode prefers about 170 columns.
+- **Game Design and Camera:** whether a fighter hidden about 8 ticks by a passing tower is acceptable with depth on, and how far a swing may turn.
+- **Art:** the look of true 2D near land, and of land and towers sinking in the foreground.
+- **Legal:** the first flash readings of a swing.
