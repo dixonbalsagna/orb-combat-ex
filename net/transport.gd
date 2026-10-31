@@ -14,7 +14,8 @@ extends RefCounted
 ## u8 and the packed intents as i64, checkpoint count u8 and each as boundary u32 plus its 16-byte digest, ts f64,
 ## echo f64, age f32, adv f32: 40 bytes, plus 8 per unacknowledged input and 20 per checkpoint digest. A packet that
 ## carries the AI's takeovers (its optional `ai` field, rollback.md section 13) adds a count u8 (at least 1) and each as
-## slot u8 plus tick u32: 6 bytes for one. Anything
+## slot u8 plus tick u32: 6 bytes for one. A packet with any second word that is not 0 (its optional `words` field, rollback.md
+## section 14) is kind byte 3, with one u32 per input right after the inputs, so a packet without one is the bytes it always was. Anything
 ## else (the handshake's packets, a few a second for a moment) is kind byte 2 and Godot's Variant encoding, which never
 ## decodes objects (bytes_to_var, not bytes_to_var_with_objects), so a hostile packet cannot instantiate anything.
 const GAME_KEYS: Array = ["from", "frame", "ack", "first", "inputs", "chk", "ts", "echo", "age", "adv"]
@@ -27,7 +28,7 @@ static func encode(pk: Dictionary) -> PackedByteArray:
 		return v
 	var b := StreamPeerBuffer.new()
 	b.big_endian = false
-	b.put_u8(1)
+	b.put_u8(3 if pk.has("words") else 1)
 	b.put_u8(int(pk.from))
 	b.put_u32(int(pk.frame))
 	b.put_u32(int(pk.ack))
@@ -36,6 +37,9 @@ static func encode(pk: Dictionary) -> PackedByteArray:
 	b.put_u8(ins.size())
 	for p in ins:
 		b.put_64(p)
+	if pk.has("words"):
+		for w in pk.words:
+			b.put_u32(w)
 	var chk: Array = pk.chk
 	b.put_u8(chk.size())
 	for c in chk:
@@ -63,7 +67,7 @@ static func decode(b: PackedByteArray) -> Variant:
 			return null
 		var v: Variant = bytes_to_var(b.slice(1))
 		return v if v is Dictionary else null
-	if b[0] != 1 or b.size() < 16:
+	if (b[0] != 1 and b[0] != 3) or b.size() < 16:
 		return null
 	var r := StreamPeerBuffer.new()
 	r.big_endian = false
@@ -71,12 +75,20 @@ static func decode(b: PackedByteArray) -> Variant:
 	r.seek(1)
 	var pk := {"from": r.get_u8(), "frame": r.get_u32(), "ack": r.get_u32(), "first": r.get_u32()}
 	var n: int = r.get_u8()
-	if r.get_available_bytes() < n * 8 + 1:
+	if r.get_available_bytes() < n * (12 if b[0] == 3 else 8) + 1:
 		return null
 	var ins := PackedInt64Array()
 	for i in range(n):
 		ins.append(r.get_64())
 	pk["inputs"] = ins
+	if b[0] == 3:
+		var ws := PackedInt32Array()
+		for i in range(n):
+			var w: int = r.get_u32()
+			if (w >> SimIntent.BITS2) != 0:
+				return null
+			ws.append(w)
+		pk["words"] = ws
 	var m: int = r.get_u8()
 	var tail: int = r.get_available_bytes() - (m * 20 + 24)   # past the digests and the clock fields: the takeovers, if any
 	if tail < 0 or (tail > 0 and (tail - 1) % 5 != 0) or tail == 1:
@@ -105,13 +117,19 @@ static func decode(b: PackedByteArray) -> Variant:
 
 ## A packet with exactly the game packet's fields, each in range for the binary layout.
 static func _isGame(pk: Dictionary) -> bool:
-	var extra: int = 1 if pk.has("ai") else 0
+	var extra: int = (1 if pk.has("ai") else 0) + (1 if pk.has("words") else 0)
 	if pk.size() != GAME_KEYS.size() + extra:
 		return false
 	for k in GAME_KEYS:
 		if not pk.has(k):
 			return false
-	if extra == 1:
+	if pk.has("words"):
+		if not (pk.words is PackedInt32Array) or not (pk.inputs is PackedInt64Array) or pk.words.size() != pk.inputs.size():
+			return false
+		for w in pk.words:
+			if w < 0 or (w >> SimIntent.BITS2) != 0:
+				return false
+	if pk.has("ai"):
 		if not (pk.ai is Array) or pk.ai.size() > 255:
 			return false
 		for e in pk.ai:

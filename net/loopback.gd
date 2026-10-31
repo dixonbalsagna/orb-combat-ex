@@ -77,6 +77,8 @@ class Peer:
 		var since: Array = session.localSince(acked)
 		var pk := {"from": session.local, "frame": session.frame, "ack": session.ackOf(1 - session.local), "first": since[0], "inputs": since[1],
 			"chk": session.chkOut.duplicate(true)}
+		if since[2].size() > 0:
+			pk["words"] = since[2]
 		if not session.aiFrom.is_empty():
 			pk["ai"] = session.takeoverList()
 		return pk
@@ -86,9 +88,12 @@ class Peer:
 			session.takeover(int(e[0]), int(e[1]))
 		acked = maxi(acked, int(pk.ack))
 		var t: int = int(pk.first)
+		var ws: PackedInt32Array = pk.get("words", PackedInt32Array())
+		var n: int = 0
 		for p in pk.inputs:
-			session.addInput(int(pk.from), t, p)
+			session.addInput(int(pk.from), t, p, ws[n] if n < ws.size() else 0)
 			t += 1
+			n += 1
 		for c in pk.chk:
 			session.addRemoteCheck(int(c[0]), c[1])
 
@@ -189,8 +194,8 @@ func _relayPacket() -> Dictionary:
 			for t in range(specAcked, mini(sess.frame, specAcked + 64)):
 				a.append(sess.confirmedInput(k, t) if sess.hasInput(k, t) else int(sess.used[k].get(t, sess.inputFor(k, t))))
 			per.append(a)
-		got = [specAcked, per]
-	return {"first": got[0], "per": got[1], "chk": sess.chkOut.duplicate(true), "ai": sess.takeoverList()}
+		got = [specAcked, per, []]
+	return {"first": got[0], "per": got[1], "words": got[2], "chk": sess.chkOut.duplicate(true), "ai": sess.takeoverList()}
 
 
 ## One frame of wall time: deliver what has arrived, advance each peer that is below `until` ticks, send.
@@ -206,7 +211,9 @@ func step(until: int) -> void:
 			heard[k] = frames
 		if p.session.frame < until:
 			if p.session.canAdvance():
-				p.session.advance(p.bot.next())
+				var pi: int = p.bot.next()   # first: it sets the bot's word
+				var pw = p.bot.get("word")
+				p.session.advance(pi, int(pw) if pw != null else 0)
 			else:
 				p.session.advance(0)   # waits (takes nothing)
 		else:
@@ -217,7 +224,7 @@ func step(until: int) -> void:
 		for pk in specLinks[0].receive(now):
 			for e in pk.get("ai", []):
 				spectator.takeover(int(e[0]), int(e[1]))
-			spectator.take(int(pk.first), pk.per)
+			spectator.take(int(pk.first), pk.per, pk.get("words", []))
 			for c in pk.chk:
 				spectator.addCheck(int(c[0]), c[1])
 		for pk in specLinks[1].receive(now):

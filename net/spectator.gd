@@ -21,6 +21,7 @@ var flip: Callable            # tests only (the negative control): (t, slot, pac
 var frame: int = 0            # ticks run: the next tick to run
 var have: int = 0             # every tick below it has every slot's input
 var inputs: Array = []        # per slot: PackedInt64Array by tick
+var words: Array = []         # per slot: tick -> the second word, only where it is not 0
 var aiFrom: Dictionary = {}   # slot -> the tick the sim's AI plays it from (the relay forwards the takeovers, section 13)
 var chkMine: Dictionary = {}  # boundary -> digest
 var chkRelay: Dictionary = {} # boundary -> digest the relay forwarded
@@ -40,21 +41,25 @@ func _init(S_: SimState, players_: int = 2, lag_: int = 6) -> void:
 	lag = lag_
 	for k in range(players):
 		inputs.append(PackedInt64Array())
+		words.append({})
 
 
-## A relay packet's inputs: [first tick, [PackedInt64Array per slot]] (NetSession.confirmedSince). Out-of-order and
+## A relay packet's inputs: [first tick, [PackedInt64Array per slot], second words per slot] (NetSession.confirmedSince). Out-of-order and
 ## repeated packets are fine: only the ticks it does not hold yet are taken, and only contiguously.
-func take(first: int, per: Array) -> void:
+func take(first: int, per: Array, perW: Array = []) -> void:
 	var n: int = (per[0] as PackedInt64Array).size()
 	if first > have or first + n <= have:
 		return
 	for k in range(players):
 		var a: PackedInt64Array = per[k]
+		var ws: PackedInt32Array = perW[k] if k < perW.size() else PackedInt32Array()
 		for i in range(have - first, n):
 			var p: int = a[i]
 			if flip.is_valid():
 				p = flip.call(first + i, k, p)
 			inputs[k].append(p)
+			if i < ws.size() and ws[i] != 0:
+				words[k][first + i] = ws[i]
 	have = first + n
 
 
@@ -111,7 +116,7 @@ func _run() -> void:
 		_compare()
 	var ins: Array = []
 	for k in range(players):
-		ins.append(SimIntent.unpack(inputs[k][t]))
+		ins.append(NetSession.intentOf(inputs[k][t], int(words[k].get(t, 0))))
 	for k in aiFrom:
 		if t == int(aiFrom[k]) and S.fighters[k].ai == null:
 			SimCore.toggleAI(S, k)

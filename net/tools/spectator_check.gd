@@ -107,7 +107,7 @@ func _straight(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery: 
 	for t in range(ticks):
 		var ins: Array = []
 		for k in range(2):
-			ins.append(SimIntent.unpack(NetSession.NEUTRAL if t < delay else bots[k].next()))
+			ins.append(SimIntent.unpack(NetSession.NEUTRAL) if t < delay else NetSession.intentOf(bots[k].next(), bots[k].word))
 		SimCore.step(S, ins)
 		outs.append(NetSession.outDigest(S))
 		S.out.feed.clear()

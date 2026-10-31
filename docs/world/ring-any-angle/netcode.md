@@ -1,6 +1,6 @@
 # A visible swing online: what the turntable does to rollback (Netcode and Online, 2026-10-31)
 
-For the EP, on Orb's pick of the turntable (E and E2). Paper only: nothing was built or run. This replaces my page of 2026-10-30, which assumed a change nobody sees. What still holds from it is in "Carried over".
+For the EP, on Orb's pick of the turntable (E and E2). Written on paper; the digest and forced-flip test have since been built and parked on main (section 1, section 3, "What I'd build"). This replaces my page of 2026-10-30, which assumed a change nobody sees. What still holds from it is in "Carried over".
 
 ## The answer
 - **A rollback across a swing can stay under budget.** The condition is that a re-simulated tick re-lays only the ground the sim reads, about 170 columns at most. Drawing the view is then done once per rendered frame, however deep the rollback.
@@ -30,7 +30,8 @@ The rate actually turned each tick comes from these and the fighters' positions 
 - **Anything that changes every tick stays in the state.** A log only works for records that never change after they are written. `S.water`, and any mark that fades or burns, stay as they are unless World finds another way.
 
 **In the digest**
-- `NetDesync.digest` adds the thirteen numbers, plus the ground height under each fighter, read through the same cache the sim uses. That second part catches a wrong node on one peer at the next checkpoint. It needs a `PROTO` bump when built.
+- **As built in scratch (`docs/net/pending/proto5-swing/`), `NetDesync.digest` reads what `SimHash` reads:** Simulation's frame and swing fields (`SimState.Frame.HASHED`, `SimSwing.HASHED`), plus the store's length and hash, more than the table above and all of them small. `PROTO` 5.
+- **The ground height under each fighter isn't in it,** though I first proposed that. A standing fighter's `y` is the ground's and is already there, and the match key samples the field's nodes.
 - `S.base` can't be hashed once it is derived. Simulation's running hash of what is read doesn't work either, because peers read nodes at different times. So a test sweep samples columns through the field instead.
 
 **Three traps**
@@ -80,6 +81,8 @@ Keeping the lead would also delay every swing by a third of a second, for no gai
 | 20 (`maxAhead`, the worst possible) | 10° | 174 u, 1,856 u | 20° | 342 u, 3,655 u |
 
 A prediction that swung the opposite way doubles the eased column. A brawl's 10° a second is a sixth of these, and reduced motion halves them.
+
+**Measured on 2026-10-31,** with the swing on main, a stand-in for the director and asks denser than a fight (`net/tools/swing_check.gd`, `docs/net/rollback.md` section 15). Worst move of the line at a rollback's end: 0.40° at depth 4 and 5.0° at depth 13, close to the eased columns, including asks that replace or reverse a running swing. Earlier cuts without that easing reached 19°, so the eased columns depend on `SimSwing.ask` never making the rate jump.
 
 - **How to show it.** The renderer keeps its own displayed heading and moves it toward the sim's, no faster than the cause's peak rate. It only reads the sim. A 3° correction then takes 3 ticks and reads as the world hesitating or easing back. There's no dissolve or fade, and it follows Orb's rule of easing camera moves.
 - **Keep the ease-in.** A swing's start is the likeliest thing to flip, and the ease makes its first ticks almost nothing. It costs nothing on screen, because the swing is visibly under way within about a third of a second.
@@ -142,10 +145,9 @@ A test sits beside `transport_check`'s level keys: two peers with different valu
 - The strip's exact width is World's call, within the column limit above.
 
 ## What I'd build, when briefed
-- The thirteen numbers and the two heights in the digest, then `PROTO` bump.
-- The reduced-motion key test.
-- The AI driver's copy made safe with the shared log.
-- A forced-flip test: a tests-only choreographer picks its direction from a hash of recent inputs. It runs on lan, p120 and far, and the heading's largest error must stay within the rate rule. The negative control lifts the rate cap and must break the bound.
+- **Parked (`docs/net/pending/proto5-swing/`):** the digest lines and `PROTO` bump, and the forced-flip test on lan, p120 and far with its negative control. The stand-in asks by fighter and press rather than from a hash of recent inputs, which gives both flips and reversals.
+- **Not needed for now:** the AI driver's copy. The store is a plain array that a snapshot copies, not a shared log, and `--ai=sim --setup=field` passes. The driven `--ai` hasn't run on a field world.
+- **Still to build:** the reduced-motion key test.
 
 ## Carried over from 2026-10-30
 - **Read off the sim's clock: yes.** With a pure field it is simpler than before: a node has one value whenever it is read. If the sim needs a node not yet read, it reads it on that tick: a hitch, never a desync. The web build has no threads, so it reads in leftover frame time, and a rollback frame has none. That is why the disc must already be resident.

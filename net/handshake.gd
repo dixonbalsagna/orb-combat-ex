@@ -16,7 +16,7 @@ extends RefCounted
 ##      the match.
 ## A version or match mismatch fails the handshake (`failed` says why) on both sides.
 
-const PROTO: int = 3   # 2: game packets may carry the AI's takeovers (rollback.md section 13). 3: the digest reads the AI's timers, the match key holds the data hash
+const PROTO: int = 5   # 2: game packets may carry the AI's takeovers (rollback.md section 13). 3: the digest reads the AI's timers, the match key holds the data hash. 4: game packets may carry the second word (section 14), and the digest reads it. 5: the digest reads a field world's line, swing and store (section 15)
 
 static var keyPlain: bool = false   # tests only: the match key leaves out the data hash (transport_check's negative control)
 

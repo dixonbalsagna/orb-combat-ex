@@ -63,7 +63,9 @@ func frame(now: float, until: int) -> void:
 			waits += 1
 			session.sync()
 		elif session.canAdvance():
-			session.advance(bot.next())
+			var pi: int = bot.next()   # first: it sets the bot's word
+			var pw = bot.get("word")
+			session.advance(pi, int(pw) if pw != null else 0)
 		else:
 			session.advance(0)   # waits (takes nothing)
 	else:
@@ -83,6 +85,8 @@ func _packet(now: float) -> Dictionary:
 	var pk := {"from": local, "frame": session.frame, "ack": session.ackOf(1 - local), "first": since[0], "inputs": since[1],
 		"chk": session.chkOut.duplicate(true), "ts": now, "echo": _echo, "age": now - _echoAt if _echo >= 0.0 else 0.0,
 		"adv": sync.current}
+	if since[2].size() > 0:
+		pk["words"] = since[2]   # the second words (rollback.md section 14), only when there is one
 	if not session.aiFrom.is_empty():
 		pk["ai"] = session.takeoverList()   # the AI's takeovers (rollback.md section 13), until the match ends
 	return pk
@@ -108,9 +112,12 @@ func _take(now: float, pk: Dictionary) -> void:
 		session.takeover(int(tk[0]), int(tk[1]))
 	acked = maxi(acked, int(pk.get("ack", 0)))
 	var t: int = int(pk.get("first", 0))
+	var ws: PackedInt32Array = pk.get("words", PackedInt32Array())
+	var n: int = 0
 	for p in pk.get("inputs", PackedInt64Array()):
-		session.addInput(1 - local, t, p)
+		session.addInput(1 - local, t, p, ws[n] if n < ws.size() else 0)
 		t += 1
+		n += 1
 	for c in pk.get("chk", []):
 		session.addRemoteCheck(int(c[0]), c[1])
 	var rf: int = int(pk.get("frame", 0))

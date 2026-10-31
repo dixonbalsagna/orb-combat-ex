@@ -18,13 +18,15 @@ extends SceneTree
 ## exchanged but never compared) must miss the injections, and a stale one (a checkpoint keeps its first run's digest,
 ## a guess, rather than its last) must raise a false alarm on every clean run where a re-run changed a checkpoint's state.
 ##   godot --headless --path . --script res://net/tools/desync_check.gd -- [--seeds=1,2] [--ticks=900] [--every=60]
-##     [--profiles=lan,p80j,...|all] [--setup=default|features|planet] [--delay=2] [--out=user://desync] [--negative-control]
-##     [--ai-timers]
+##     [--profiles=lan,p80j,...|all] [--setup=default|features|planet|field] [--delay=2] [--out=user://desync] [--negative-control]
+##     [--ai-timers] [--right-stick]
+## --right-stick turns switches.rightStick on in this process: the bots throw strikes, the word is on the wire, in the hash and in the digest.
 
 const SETUPS: Dictionary = {
 	"default": {},
 	"features": {"v2": [true, true], "forms": true, "brake": true, "flight": true, "hitstop": true, "ricochet": true},
 	"planet": {"planet": 7, "touch": 3},
+	"field": {"planet": 7, "touch": 1, "planetGen": 3, "intro": false},
 }
 
 ## name -> the change, made to the divergent peer's state after every run of the injection tick.
@@ -86,6 +88,8 @@ func _init() -> void:
 			negative = true
 		elif a == "--ai-timers":
 			aiTimers = true
+		elif a == "--right-stick":
+			NetBot.setRightStick(true)
 	DirAccess.make_dir_recursive_absolute(outDir)
 	var setup: Dictionary = SETUPS[setupName]
 	print("Orb Combat EX desync check   Godot %s   setup %s   %d ticks   checkpoint every %d   delay %d" % [Engine.get_version_info().string, setupName, ticks, every, delay])
@@ -123,6 +127,8 @@ func _init() -> void:
 		if int(detected.get(inj, 0)) == 0:
 			print("FAIL  injection %s healed every time: it tested nothing" % inj)
 			failures += 1
+	NetBot.forgetField()
+	WorldPlanet.forget()
 	var objects1: int = int(Performance.get_monitor(Performance.OBJECT_COUNT))
 	print("objects alive before %d, after %d" % [objects0, objects1])
 	if objects1 > objects0 + 50:
@@ -213,7 +219,7 @@ func _straight(seed: int, setup: Dictionary, ticks: int, every: int, delay: int)
 			break
 		var ins: Array = []
 		for k in range(2):
-			ins.append(SimIntent.unpack(NetSession.NEUTRAL if t < delay else bots[k].next()))
+			ins.append(SimIntent.unpack(NetSession.NEUTRAL) if t < delay else NetSession.intentOf(bots[k].next(), bots[k].word))
 		SimCore.step(S, ins)
 		S.out.feed.clear()
 		S.out.fx.clear()

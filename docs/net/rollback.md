@@ -368,3 +368,35 @@ In both, every confirmed tick from the decision to 60 ticks after the swap is co
 **What does not, and why.**
 - **The re-run swap is cold (World).** A rollback that runs the swap again finds no ring job and no preparation, because `swap()` dropped them (`_dropJobs`). It reads the ring and makes the preparation on the swap tick, the work the warm ticks exist to spread. The gameplay result is the same, but two unhashed counters in the state, `S.epoch.cold` and `S.epoch.unprep`, end at 1 where a straight run has 0. That is the only difference the field walk finds after a re-run swap. The rollback frame also pays the whole read. World's own notes (`epoch.gd`, the preparation) put the swap tick at 8.7 ms natively, and 38 to 46 ms at x4, before the preparation was spread over the warm ticks.
 - **A past snapshot hashed in place misreads its districts (Simulation).** The swap renumbers the kept buildings' districts. A building's generation fields are shared and copy-on-write, so the swap gives the live record a new copy, and every earlier snapshot keeps the old one in its own `S.bG`. A restore is right, because `afterRestore` puts the old copies back. But `SimHash.stateHash` of a past root, taken after the swap, read districts through the shared record and saw the new numbers. On p120 and far, the check flagged the last few ticks before the swap, the ones confirmed after it, while the digest and the field walk of those same states agreed. The parked two-line patch, `docs/net/pending/simhash-past-roots.patch`, reads them through `S.bG` and `S.tG`. With it, every SimHash matches. The field walk had the same blind spot and now compares generation records by value.
+
+## 14. The intent's second word
+
+The right-hand attacks add a second packed word (`SimIntent.pack2`, 26 bits, behind `switches.rightStick`), because the first word has no room. It travels beside the first, tick for tick.
+
+- **In the session.** `advance(p, w)` and `addInput(k, t, p, w)` take it, `words` holds it only where it isn't 0, and a tick's `usedW` keeps what it ran with. A late word that differs rolls back even when the first word agrees.
+- **A prediction** (`predictWord`) keeps a strike being held: `rsHeld`, `rsDir`, `rsLevel`, `rsMask`, `rsAim`. It drops the edges (`rsStart`, `rsRelease`, `rsCancel`, `rsLag`, `brace`, `braceDir`). Once `rsHeld` is off, the word was a throw's or a cancel's last tick, and the next is 0, because the layout writes nothing with no strike active. A held strike's level and aim steps are mispredictions, as a press is.
+- **On the wire.** A packet with any word that isn't 0 is kind byte 3: one u32 per input, right after the inputs, so 4 bytes an unacknowledged input in that packet only. A packet with none is kind 1, the bytes it always was. A word past 26 bits is refused.
+- **Spectators** get the words in the relay's packet.
+- **The digest** reads `pack2` of each fighter's intent with the switch on. The sim doesn't read the word yet, so nothing else would show a lost one. With the switch off, a digest is what it always was.
+- **A desync report's replay** uses `SimReplay`'s fifth number, and `replayState` reads it.
+- **Agreeing on the switch.** `SimReplay.dataHash` says `rightStick` when it's on, and the match key holds that hash, so peers on either side are refused at the handshake. `PROTO` 4.
+
+**Tests.** `net/tools/word_check.gd`, with its negative control, plus `--right-stick` on `rollback_check`, `desync_check` and `spectator_check`, which turns the switch on in that process. The bots then throw strikes on a stream of their own, so the first word's stream, and every run with the switch off, stays as it was. Nothing in the sim reads the word yet, so `word_check` has a stand-in reader: a throw spends ki on every run of a tick, so a lost word stays in the state as a director's reading of it would.
+
+## 15. A swing under rollback
+
+The turntable's decisions are state derived from inputs, so nothing new goes over the wire and replays hold. Re-simulation works out the rest. A field world (`planetGen` 3) has a line, a swing and a planet store in its state.
+
+- **The digest** reads what `SimHash` reads, only on a field world: the frame's fields (`SimState.Frame.HASHED`), the swing's (`SimSwing.HASHED`, which it follows by name), and the store's length and running hash. `PROTO` 5. Poses derive from these and aren't in either; the field walk still compares them.
+- **No ground height in the digest.** `docs/world/ring-any-angle/netcode.md` first proposed one under each fighter. A standing fighter's `y` is the ground's and is already there, and the match key samples the field's nodes, so it would only catch a wrong node a tick or two sooner, by reading the ground outside a tick.
+
+**The test.** `net/tools/swing_check.gd`. A stand-in plays the director, on every run of a tick: a Context press asks for a swing, the first fighter one way and the second the other, and a Signature press digs a crater into the store. Bots press these often, and a prediction drops a press, so a late one flips a swing on or off, reverses it or restarts it. It runs denser than a fight: 13 swings in 600 ticks, one running on about 70% of ticks.
+
+**What the correction looks like.** How far the line moved at the newest tick when a rollback ended, over 600 ticks, with `--right-stick` on:
+
+| Profile, deepest rollback | Moved / rollbacks | p99 | Worst | Worst with every ask the same way (`--one-way`, no right stick) |
+| :--- | ---: | ---: | ---: | ---: |
+| p120, 4 | 15 / 376 | 0.05° | **0.40°** | 0.21° |
+| far, 13 | 31 / 315 | 3.1° | **5.0°** | 5.0° |
+
+That's close to the paper's eased figures (4.2° at depth 13). Two earlier cuts of `SimSwing.ask` measured 6.0° and 19° (a reversal flipping at full rate), then 3.06° and 10.4° (a replacement dropping to rest on one tick). The cut on main eases both, and this check is how you'd see them come back. All are within the rate rule. Data's rate x `maxAhead` is 20°, and the check allows twice that for one timeline turning each way. With the cap lifted, the control breaks the bound.

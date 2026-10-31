@@ -13,6 +13,9 @@ extends RefCounted
 ##   - an input that arrives for a tick already run, and differs from what that tick used, rolls the state back to the
 ##     newest save at or before it and runs every tick again up to the present (re-simulation);
 ##   - a tick whose inputs are all confirmed, after ticks that all were, is final: onConfirmed reports it.
+## The intent's second word (SimIntent.pack2, switches.rightStick; rollback.md section 14) goes beside the first, tick for tick: 0 for a tick
+## without one, so a match that never uses it holds nothing more and sends what it always sent. A prediction keeps a strike being held and drops the
+## word's edges, as it does for the first word.
 ## The AI's takeover (docs/net/rollback.md section 13): a slot can be handed to the sim's own AI from an agreed tick T
 ## (takeover). Before tick T, on its first run and on every re-run, the session calls SimCore.toggleAI for the slot (the
 ## switch newMatch's ai flags set, and the replay format's toggle); from T on the slot needs no input (its input is
@@ -26,6 +29,9 @@ const NEUTRAL: int = 127 | (127 << 8)   # SimIntent.pack of a cleared intent: th
 ## The edge fields of a packed intent (SimIntent.pack's layout): upgrade, special, guardPress, dodge, powerPress, powerTap,
 ## light, heavy, sig, context, transform, the legacy pressed stance, escape and waited. A prediction clears them.
 const EDGE_MASK: int = (3 << 18) | (7 << 20) | (1 << 24) | (1 << 25) | (1 << 28) | (1 << 29) | (1 << 30) | (1 << 31) | (1 << 32) | (1 << 33) | (1 << 34) | (7 << 35) | (1 << 42) | (15 << 43)
+## The second word's held fields (SimIntent.pack2's layout): rsHeld, rsDir, rsLevel, rsMask, rsAim. A prediction keeps them while rsHeld is on; once it is off the
+## word was a throw's or a cancel's last tick, and the next is 0 (the layout writes nothing of it with no strike active).
+const WORD_HELD: int = 1 | (7 << 4) | (3 << 7) | (15 << 9) | (31 << 13)
 const NEVER: int = 0x3FFFFFFF   # a slot's contig once the AI plays it: it needs no more inputs (contig is 32-bit)
 
 var S: SimState
@@ -77,6 +83,10 @@ var finalTo: int = 0          # the state after this many ticks is final and rep
 var inputs: Array = []        # per slot: tick -> packed intent, confirmed (local, or received)
 var contig := PackedInt32Array()   # per slot: every tick below it has its confirmed input
 var used: Array = []          # per slot: tick -> the packed intent the tick last ran with
+var words: Array = []         # per slot: tick -> the second word, confirmed, only where it is not 0
+var usedW: Array = []         # per slot: tick -> the second word the tick last ran with, only where it is not 0
+var wordsLost: bool = false   # tests only: words received are dropped (word_check's negative control)
+var wordRollback: bool = true # tests only: false ignores a late word that contradicts a prediction when the first word agrees
 var outLog: Dictionary = {}   # tick -> digest of the feed and fx the tick last produced (NetSession.outDigest)
 var snaps: Dictionary = {}    # boundary -> NetSnapshot of the state before that tick
 var lastSaved: int = -1       # the newest boundary in snaps
@@ -114,6 +124,8 @@ func _init(S_: SimState, local_: int, delay_: int = 2, players_: int = 2) -> voi
 			d[t] = NEUTRAL
 		inputs.append(d)
 		used.append({})
+		words.append({})
+		usedW.append({})
 		contig[k] = delay
 
 
@@ -132,14 +144,14 @@ func canAdvance() -> bool:
 
 ## One frame: the local intent for tick frame + delay, any rollback the received inputs call for, then one tick. Returns
 ## false (and takes nothing) when the session must wait.
-func advance(localPacked: int) -> bool:
+func advance(localPacked: int, localWord: int = 0) -> bool:
 	resimThisFrame = 0
 	if not canAdvance():
 		stalls += 1
 		sync()
 		resimFrames.append(resimThisFrame)
 		return false
-	addInput(local, frame + delay, localPacked)
+	addInput(local, frame + delay, localPacked, localWord)
 	sync()
 	_run(frame)
 	frame += 1
@@ -150,13 +162,18 @@ func advance(localPacked: int) -> bool:
 
 ## An input for (slot, tick), local or received. Duplicates are ignored. One for a tick already run that differs from what
 ## it ran with marks a rollback, which sync() (or the next advance()) performs.
-func addInput(k: int, t: int, p: int) -> void:
+func addInput(k: int, t: int, p: int, w: int = 0) -> void:
 	var d: Dictionary = inputs[k]
 	if d.has(t) or (aiFrom.has(k) and t >= int(aiFrom[k])):   # a duplicate, or a tick the AI plays (a takeover supersedes it)
 		return
 	d[t] = p
+	if wordsLost and k != local:
+		w = 0
+	if w != 0:
+		words[k][t] = w
 	_walk(k, contig[k])
-	if t < frame and int(used[k].get(t, -1)) != p:
+	var wordOff: bool = wordRollback and int(usedW[k].get(t, 0)) != w
+	if t < frame and (int(used[k].get(t, -1)) != p or wordOff):
 		mispredicted += 1
 		if rollbackOn and (_rollTo < 0 or t < _rollTo):
 			_rollTo = t
@@ -170,7 +187,8 @@ func sync() -> void:
 	_confirm()
 
 
-## This peer's confirmed inputs from tick `since` on (at most `cap`), for a packet: [first tick, PackedInt64Array].
+## This peer's confirmed inputs from tick `since` on (at most `cap`), for a packet: [first tick, PackedInt64Array, second words]. The second
+## words are one per input, or an empty array when all of them are 0, and then the packet has none.
 func localSince(since: int, cap: int = 64) -> Array:
 	var d: Dictionary = inputs[local]
 	var out := PackedInt64Array()
@@ -178,7 +196,21 @@ func localSince(since: int, cap: int = 64) -> Array:
 	while d.has(t) and out.size() < cap:
 		out.append(d[t])
 		t += 1
-	return [since, out]
+	return [since, out, _wordsOf(local, since, t)]
+
+
+## A slot's second words for ticks a to b, one each, or an empty array when all of them are 0.
+func _wordsOf(k: int, a: int, b: int) -> PackedInt32Array:
+	var out := PackedInt32Array()
+	var w: Dictionary = words[k]
+	if w.is_empty():
+		return out
+	var any: bool = false
+	for t in range(a, b):
+		var x: int = int(w.get(t, 0))
+		any = any or x != 0
+		out.append(x)
+	return out if any else PackedInt32Array()
 
 
 ## The packed intent a slot's tick runs with now: the confirmed one, or the prediction (neutral where the AI plays it).
@@ -190,6 +222,28 @@ func inputFor(k: int, t: int) -> int:
 		return NEUTRAL
 	var last: int = contig[k] - 1
 	return (int(d[last]) if last >= 0 else NEUTRAL) & ~EDGE_MASK
+
+
+## The second word a slot's tick runs with now: the confirmed one, or the prediction (0 where the AI plays it).
+func wordFor(k: int, t: int) -> int:
+	if inputs[k].has(t):
+		return int(words[k].get(t, 0))
+	if aiFrom.has(k) and t >= int(aiFrom[k]):
+		return 0
+	return predictWord(int(words[k].get(contig[k] - 1, 0)))
+
+
+## What a prediction makes of a slot's last confirmed second word.
+static func predictWord(w: int) -> int:
+	return w & WORD_HELD if (w & 1) != 0 else 0
+
+
+## The intent a packed pair stands for: what every run of a tick, a spectator and a straight run step the sim with.
+static func intentOf(p: int, w: int = 0) -> SimIntent:
+	var i: SimIntent = SimIntent.unpack(p)
+	if w != 0:
+		SimIntent.unpack2(w, i)
+	return i
 
 
 ## True when (slot, tick)'s input is confirmed: received or local, or a tick the AI plays.
@@ -233,6 +287,10 @@ func takeover(k: int, t: int) -> void:
 	for u in d.keys():
 		if u >= t:
 			d.erase(u)
+	var dw: Dictionary = words[k]
+	for u in dw.keys():
+		if u >= t:
+			dw.erase(u)
 	_walk(k, mini(contig[k], t))
 	if t < finalTo:
 		push_error("NetSession: a takeover of slot %d at tick %d, which is already final (%d)" % [k, t, finalTo])
@@ -269,7 +327,10 @@ func dropSlot(k: int) -> int:
 	for u in range(mini(contig[k], t), t):
 		if not d.has(u):
 			var ran: int = int(used[k].get(u, inputFor(k, u)))
+			var ranW: int = int(usedW[k].get(u, 0)) if used[k].has(u) else wordFor(k, u)
 			d[u] = NEUTRAL if fillWrong else ran
+			if ranW != 0 and not fillWrong:
+				words[k][u] = ranW
 			fillDiff += 1 if int(d[u]) != ran and u < frame else 0
 	dropped.append(k)
 	takeover(k, t)
@@ -284,7 +345,12 @@ func _run(t: int) -> void:
 		if not hasInput(k, t):
 			predicted = true
 		used[k][t] = p
-		ins.append(SimIntent.unpack(p))
+		var w: int = wordFor(k, t)
+		if w != 0:
+			usedW[k][t] = w
+		else:
+			usedW[k].erase(t)
+		ins.append(intentOf(p, w))
 	if checkEvery > 0 and t > 0 and t % checkEvery == 0 and t > finalTo:
 		if chkPend.has(t):
 			chkReruns += 1
@@ -375,6 +441,7 @@ func _confirm() -> void:
 		outLog.erase(b - 1)
 		for k in range(players):
 			used[k].erase(b - 1)
+			usedW[k].erase(b - 1)
 		finalTo = b
 		if checkEvery > 0 and b % checkEvery == 0:
 			_confirmCheck(b)
@@ -456,29 +523,34 @@ func _compareChecks() -> void:
 
 
 ## Every slot's confirmed inputs from tick `since` up to the confirmed frontier (at most `cap` ticks), for a spectator:
-## [first tick, [PackedInt64Array per slot]].
+## [first tick, [PackedInt64Array per slot], [second words per slot: one each, or empty when all are 0]].
 func confirmedSince(since: int, cap: int = 64) -> Array:
 	var upto: int = mini(confirmedFrontier(), since + cap)
 	var per: Array = []
+	var perW: Array = []
 	for k in range(players):
 		var a := PackedInt64Array()
 		for t in range(since, upto):
 			a.append(confirmedInput(k, t))
 		per.append(a)
-	return [since, per]
+		perW.append(_wordsOf(k, since, upto))
+	return [since, per, perW]
 
 
-## The session's confirmed inputs as a SimReplay-style input list: [tick, slot, packed], only where a slot's input
+## The session's confirmed inputs as a SimReplay-style input list: [tick, slot, packed, second word], only where a slot's input
 ## changed, for ticks below `upto`.
 func confirmedLog(upto: int) -> Array:
 	var out: Array = []
 	for k in range(players):
 		var last: int = -1
+		var lastW: int = 0
 		for t in range(upto):
 			var p: int = confirmedInput(k, t)
-			if p != last:
-				out.append([t, k, p])
+			var w: int = int(words[k].get(t, 0))
+			if p != last or w != lastW:
+				out.append([t, k, p, w])
 				last = p
+				lastW = w
 	return out
 
 

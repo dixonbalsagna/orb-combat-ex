@@ -12,7 +12,9 @@ extends SceneTree
 ##     [--profiles=lan,p80j,...|all] [--setup=default|features|planet|calm] [--delay=2|auto] [--devices=1,1]
 ##     [--hash-every=1] [--sparse=K] [--negative-control]
 ##     [--takeover=T [--slot=K] [--by=owner|other|both]] [--drop=F [--slot=K] [--timeout=N]]
-##     [--ai-level=easy|medium|hard]
+##     [--ai-level=easy|medium|hard] [--right-stick]
+## --right-stick turns switches.rightStick on in this process: the bots throw strikes, so the word is on the wire, in every hash, in the straight
+## run's replay and in its playback.
 ## --delay=auto runs each profile at the delay its handshake agrees (NetLoopback.agree: both peers ping over links of
 ## that profile, propose NetDelay.choose for their own device, --devices' slowdowns, and the larger wins), against a
 ## straight run with that delay.
@@ -98,6 +100,7 @@ var by: String = ""         # --by: who proposes the takeover (owner, other, bot
 var dropAt: int = -1        # --drop=F: the slot's peer vanishes at loopback frame F
 var timeout: int = 30       # --timeout=N: frames with no packet before the survivor drops the slot
 var turnAt: int = -1        # --turn-at=N: a calm turn decided before tick N
+var _logWords: Array = []   # with --right-stick: each slot's confirmed second words, for the straight replay of a log
 var walkTicks: Dictionary = {}   # --walk-at=B,...: walk the peers' confirmed states after these ticks against the straight run's (a diagnosis; log mode)
 
 
@@ -111,6 +114,8 @@ class TakePlayer:
 	var at: int
 	var proposed: int = -1
 
+	var word: int = 0   # the inner player's second word
+
 	func _init(inner_, session_: NetSession, slot_: int, at_: int) -> void:
 		inner = inner_
 		session = session_
@@ -120,7 +125,10 @@ class TakePlayer:
 	func next() -> int:
 		if proposed < 0 and session.frame >= at - session.delay:
 			proposed = session.proposeTakeover(slot)
-		return inner.next()
+		var p: int = inner.next()
+		var w = inner.get("word")
+		word = int(w) if w != null else 0
+		return p
 
 	func close() -> void:
 		if inner.has_method("close"):
@@ -151,6 +159,8 @@ func _init() -> void:
 			hashEvery = maxi(1, int(a.substr(13)))
 		elif a.begins_with("--sparse="):
 			sparse = maxi(1, int(a.substr(9)))
+		elif a == "--right-stick":
+			NetBot.setRightStick(true)
 		elif a == "--negative-control":
 			sabotage = "on"
 		elif a == "--ai" or a == "--ai=sim":
@@ -334,10 +344,12 @@ func _straight(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery: 
 		var ins: Array = []
 		for k in range(2):
 			var p: int = NetSession.NEUTRAL if t < delay else bots[k].next()
+			var w: int = 0 if t < delay else bots[k].word
 			if takeAt >= 0 and k == takeSlot and t >= takeAt:
 				p = NetSession.NEUTRAL
+				w = 0
 			log[k].append(p)
-			ins.append(SimIntent.unpack(p))
+			ins.append(NetSession.intentOf(p, w))
 		if turnAt >= 0:
 			_forceTurn(S, t)
 		rec.step(ins)
@@ -672,6 +684,7 @@ func _logSession(seed: int, setup: Dictionary, cap: int, delay: int, hashEvery: 
 			late += 1 if L.peers[k].session.takeoverLate > 0 else 0
 		res.take = "  %s at tick %d (late at %d peer(s))" % ["drop, AI" if dropAt >= 0 else "takeover by peer %d" % proposer, at, late]
 	var log: Array = [[], []]
+	_logWords = L.peers[live[0]].session.words
 	if res.err == "":
 		for slot in range(2):
 			for t in range(until):
@@ -768,6 +781,7 @@ func _worldCaches() -> void:
 	WorldEpoch._jobs.clear()
 	WorldEpoch._plans.clear()
 	WorldPlanet.forget()
+	NetBot.forgetField()
 
 
 ## --turn-at: a calm turn decided before tick turnAt, on every run of it, as two_states_check's TURN_AT (and World's
@@ -857,7 +871,7 @@ func _aiStraight(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery
 					played[k][t] = p
 			else:
 				p = log[k][t]
-			ins.append(SimIntent.unpack(p))
+			ins.append(NetSession.intentOf(p, int(_logWords[k].get(t, 0)) if not log.is_empty() and k < _logWords.size() else 0))
 		while ti < toggles.size() and int(toggles[ti][0]) == t:   # then, as NetSession._run: the takeover's switch, the test's write, the tick
 			rec.toggle(int(toggles[ti][1]))
 			ti += 1

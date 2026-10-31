@@ -5,7 +5,7 @@ extends RefCounted
 ## report (writeReport): the tick, both digests, and the first differing fields a field walk finds.
 ##
 ## digest(S) is the cheap hash: the fields a divergence reaches first (the clock, the RNG, every fighter's hashed
-## fields and the AI's timers, the director's counters, the mood and the pause, each building's and tree's damage, the shots) and the
+## fields, the AI's timers and, with switches.rightStick on, the intent's second word, the director's counters, the mood and the pause, each building's and tree's damage, the shots, a field world's line, swing and planet store) and the
 ## terrain's per-column arrays (deform, water, scorch, rubble, crack, aftermath), through the engine's MD5, which reads
 ## a packed array as one block. A divergence in a field outside it is caught once it reaches
 ## one inside, which in this sim is the next tick or two (most state feeds the fighters or the RNG). SimHash.stateHash
@@ -27,6 +27,8 @@ const TERRAIN: Array = ["deform", "water", "scorch", "rubble", "crack", "afterma
 const WALK_SKIP: Array = ["out", "worldId"]
 
 static var aiBlind: bool = false   # tests only: the digest leaves out the AI's timers (desync_check's negative control)
+static var wordBlind: bool = false # tests only: the digest leaves out the intent's second word (word_check's negative control)
+static var swingBlind: bool = false   # tests only: the digest leaves out the line, the swing and the store (swing_check's negative control)
 
 
 ## The cheap confirmed-state digest (32 hex digits): every value goes into one PackedFloat64Array, strings into the
@@ -47,26 +49,17 @@ static func digest(S: SimState) -> String:
 	var p := S.pause
 	v.append(p.left); v.append(p.bank); v.append(p.acc); v.append(p.total); v.append(p.count)
 	v.append(S.fighters.size())
+	var word2: bool = SimInputData.right_stick_on() and not wordBlind   # as SimHash reads it: with the switch off, a digest is what it always was
 	for f in S.fighters:
-		for k in SimHash.FIGHTER:
-			var x = f.get(k)
-			match typeof(x):
-				TYPE_FLOAT, TYPE_INT:
-					v.append(x)
-				TYPE_BOOL:
-					v.append(1.0 if x else 0.0)
-				TYPE_STRING:
-					_text(md, x)
-				TYPE_NIL:
-					v.append(-1.0)
-				_:
-					v.append(-2.0)   # an object or a container: its presence only (the field walk reads it)
+		_fields(v, md, f, SimHash.FIGHTER)
 		if not aiBlind:
 			var ai = f.ai   # the AI's timers, as SimHash reads them: a slot's AI switched on a tick late differs here first
 			if ai == null:
 				v.append(-1.0)
 			else:
 				v.append(ai.t); v.append(ai.atk); v.append(ai.sT); v.append(ai.sOff); v.append(ai.st)
+		if word2:
+			v.append(SimIntent.pack2(f.input))   # the word nothing may read yet is still in the state: a lost one shows here, not when the director first reads it
 	v.append(S.buildings.size())
 	if S.bound():   # the per-tick fields from the state's arrays, as SimHash reads them: a snapshot's records read the live state's (docs/architecture/packed-structures.md)
 		for i in range(S.buildings.size()):
@@ -85,6 +78,10 @@ static func digest(S: SimState) -> String:
 	for s in S.shots:
 		v.append(s.x); v.append(s.y); v.append(s.left)
 	v.append(S.beams.size()); v.append(S.craters.size()); v.append(S.slides.size())
+	if S.frame != null and not swingBlind:   # a field world's line, swing and store, as SimHash reads them; poses derive from these, so they aren't here. Any other match digests as before
+		_fields(v, md, S.frame, SimState.Frame.HASHED)
+		_fields(v, md, S.swing, SimSwing.HASHED)
+		v.append(S.storeN); v.append(S.storeHash >> 32); v.append(S.storeHash & 0xFFFFFFFF)
 	md.update(v.to_byte_array())
 	for k in TERRAIN:
 		var a = S.get(k)
@@ -92,6 +89,22 @@ static func digest(S: SimState) -> String:
 		if bytes.size() > 0:
 			md.update(bytes)
 	return md.finish().hex_encode()
+
+
+static func _fields(v: PackedFloat64Array, md: HashingContext, o: Object, keys: Array) -> void:
+	for k in keys:
+		var x = o.get(k)
+		match typeof(x):
+			TYPE_FLOAT, TYPE_INT:
+				v.append(x)
+			TYPE_BOOL:
+				v.append(1.0 if x else 0.0)
+			TYPE_STRING:
+				_text(md, x)
+			TYPE_NIL:
+				v.append(-1.0)
+			_:
+				v.append(-2.0)   # an object or a container: its presence only (the field walk reads it)
 
 
 static func _text(md: HashingContext, s: String) -> void:
@@ -114,7 +127,10 @@ static func replayOf(sess: NetSession, info: Dictionary, upto: int) -> Dictionar
 	var log: Array = sess.confirmedLog(upto)
 	log.sort_custom(func(a, b): return a[0] < b[0] or (a[0] == b[0] and a[1] < b[1]))
 	for e in log:
-		rp.inputs.append([e[0], e[1]] + SimReplay.split(e[2]))
+		var entry: Array = [e[0], e[1]] + SimReplay.split(e[2])
+		if int(e[3]) != 0:
+			entry.append(e[3])   # SimReplay's fifth number: the second word, where it is not 0
+		rp.inputs.append(entry)
 	rp.toggles = togglesOf(sess.aiFrom, rp.ai, upto)
 	return rp
 
@@ -148,7 +164,8 @@ static func replayState(rp: Dictionary, ticks: int) -> SimState:
 			ti += 1
 		while ii < rp.inputs.size() and int(rp.inputs[ii][0]) == t:
 			var p: int = SimReplay.join(rp.inputs[ii][2], rp.inputs[ii][3])
-			cur[int(rp.inputs[ii][1])] = SimIntent.unpack(p) if p >= 0 else null
+			var e: Array = rp.inputs[ii]
+			cur[int(e[1])] = NetSession.intentOf(p, int(e[4]) if e.size() > 4 else 0) if p >= 0 else null
 			ii += 1
 		SimCore.step(S, cur)
 		S.out.fx.clear()
