@@ -1525,3 +1525,7 @@ In chat the same day: "the right stick homework really made me think. I couldn't
 Orb locked the canonical names from a naming session run through Gemini: **Grist** (Protagonist), **Loupe** (Rival), **Empress Orza** (Empress), **Bolus** (Cyborg). Orb: "I prefer Empress Orza, wherever necessary a fighter's titles should be exempt from the limit, the limit should serve as a guideline rather than a strict hard-stop." Legal cleared them as in-game names (RL-211): proper nouns only, no line plays on a name's meaning, and none may become a title or product name without a formal search. Supporting cast and place names are still being workshopped.
 
 **Orb's rule on Gemini (same day):** Gemini is used for creative writing only. Its descriptions of gameplay, mechanics or systems are not Orb's sign-off unless Orb names the one they like. This applies retroactively.
+
+## The beam struggle's look (Orb, 2026-10-30)
+
+"ideally I'd like to see that solid white glowing flare replaced with visually distinctive procedural shaders, the air should look like its rippling and glowing with pressure and energy, dynamic distortions and color changes and patterns should erupt out based on the composition and power behind each of the beams of each fighter, composition should be determined by the fighter's energy fighting style, their current form, any other unique situations future fighters may possess or cause when we increase the roster"
