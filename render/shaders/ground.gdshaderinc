@@ -450,6 +450,7 @@ float fp_top(int i) {
 // and from the camera it lies just under the fighter plane's own profile, as the old front face did. xr: world x (the
 // camera sits near 0); ox: the planet copy's offset (planet-local x = world x - ox); top: the sight line to the row's
 // top (its water) rather than its ground. Returns (cap, d cap/dx, d cap/dz).
+uniform float fore_ease = 0.0;   // RenderLook.FORE_EASE on a gen 2 ring (PlanetView.update), 0 elsewhere
 vec3 fore_cap3(float xr, float z, float ox, bool top) {
 	float t = z / fore_cam.z;
 	if (t >= 1.0) {
@@ -482,6 +483,11 @@ vec3 fore_cap3(float xr, float z, float ox, bool top) {
 		}
 	}
 	float yp = lows[1];
+	if (fore_ease > 0.0) {
+		// Eased in from the plane's own profile: at once, a bank within the span stepped down at the first row in front of
+		// the plane, and the shoreline jumped there.
+		yp = mix(mix(ys[4], ys[5], c - c0), yp, clamp(z / fore_ease, 0.0, 1.0));
+	}
 	float dy = (lows[2] - lows[0]) / col_w;
 	// Near the lens a vertex reads the plane many columns from its neighbour's reading (its mesh stride over 1 - t)
 	// and from its own last tick's (the camera's travel, spread the same way). Past FORE_FAR the profile gives way to

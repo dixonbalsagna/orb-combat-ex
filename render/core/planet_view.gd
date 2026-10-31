@@ -518,6 +518,8 @@ func update(S: SimState, cam_x: float, heat: PackedFloat32Array = PackedFloat32A
 		if lake_on != _lake_sent:
 			_lake_sent = lake_on
 			_water_mat.set_shader_parameter("lake_on", lake_on)
+			for m in [_terrain_mat, _water_mat]:
+				m.set_shader_parameter("fore_ease", RenderLook.FORE_EASE * lake_on)
 	for c in _copies:
 		c.position.x = float(c.get_meta("k")) * SimConst.W - cam_x
 	if _towns_on:

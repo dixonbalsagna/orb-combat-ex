@@ -494,6 +494,8 @@ const WATER_SURFACE := Color(0.42, 0.68, 0.9, 0.55)
 ## stands on it; to .y half hidden; from .y (wade.below, where he stands on the sheet) the bed is gone. .z: deep water.
 const LAKE_BANDS := Vector3(37.5, 75.0, 240.0)
 const LAKE_TONE: float = 0.3
+## How far in front of the fighter plane the foreground rule's narrow-rise span takes to come in, on a gen 2 ring (units).
+const FORE_EASE: float = 120.0
 const SKY: Array = ["#111a3e", "#4b4483", "#d9776b", "#f4b87a"]   # top to horizon
 ## The sky's gradient is anchored to the horizon (the far edge of the ground), in half-screen heights above it: the
 ## horizon colour at the line, the lower colour SKY_LOWER_AT above it, the upper at SKY_UPPER_AT, the top by
