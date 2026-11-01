@@ -541,7 +541,10 @@ On Combat's `docs/combat/pending/mixed-string/`, behind its own switch. Nobody h
   - **A low roof is cleared.** The director can raise the arc by up to half again, inside the lob's time, if that clears it.
   - **Nothing stops it in its first 2 bh,** so a press beside a wall isn't wasted and never bursts on the thrower.
   - **The director never aims at a building that's barred** (`WorldSettle.noTarget`, c09), and nothing reads who's inside (RL-213).
-  - **The line usually runs down a street,** with its walls off to the side, so this should be uncommon on an unswung line. **QA's first read: at most 1 in 3 lobs stopped on a dense street.** If it's more, the arc goes higher. Combat's first read is about 1 in 10, before a single tower.
+  - **The line usually runs down a street,** with its walls off to the side, so this should be uncommon on an unswung line. **QA's first read: at most 1 in 3 lobs stopped on a dense street, against a target who's moving.**
+  - **Re-ruled on Combat's runs (2026-11-01): the arc may rise as far as ×6, in place of half again,** and only as far as it needs, inside the lob's time, so open ground keeps its usual arc. At the ring's densest spot, ×6 stops 23% against a moving dummy, and ×12 adds nothing.
+  - **A target standing still among walls isn't part of the bound.** It's stopped 55 to 66% at any arc. **That's cover, and I'm keeping it:** each burst wears the cover down, and bolts and a lunge still reach him. It's a reason to fight in a city, and it breaks the city.
+  - **A ×6 lob falls almost straight down at speed, so the look gate decides it,** on a clip in both flash modes. If it looks wrong, the cap comes down and the bound with it.
 
 **C7's long yank: Combat's pitch is right, as the workshop's direction.** Not built, and no grab exists in the sim yet.
 - **E145. Past about 50 bh, both fighters fly and meet in the middle,** in at most about 65 ticks. Up to 50 bh it's E66's 12-tick snap. It's a better picture than one body dragged, and rule 8 of `rule-of-cool.md` holds, since it's no teleport.
