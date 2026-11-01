@@ -1603,3 +1603,19 @@ Orb locked the canonical names from a naming session run through Gemini: **Grist
 **Tonight's order, Orb (2026-11-01, starting the stand-in):** "highest priority is a playable versus mode on our 3d globe arena with the underlying mechanics and features of the controller layout fully fleshed out, aggressively tune the structure of the project towards a co-op experience that can be played over a local area network, define the vision for the way split screen will be handled."
 
 **Beams and the answers to them, Orb (2026-11-01):** "my stand-in mentioned something about returning a beam with direction and B, this should absolutely not fit in with our new meta, beams are exclusively fired with the right stick. I do, however, want a number of beam responses workshopped - there should be a brief window where the second player can dodge, powerful block, or fire a beam of their own. In addition, walking into the beam, swatting the beam away, anything else cool we can do, these all need to be workshopped and turned into possibilities within the new control scheme."
+
+**First play of versus on the globe, Orb (2026-11-01):** "knocked opponent back, a weird green tube popped up behind him after he hit the ground. its hard to notice in the screenshot, but the mountain with a house on the hill in the background is actually opened up and I can see the open interior of the hollow mountain."
+
+"the flight definitely feels overtuned, way too fast, and the split-screen taking up half of the screen real estate makes flying at super high speeds uncomfortable. lets workshop ideas to deal with this, I was thinking about something closer to a 70/30 split when your opponent is a CPU, lets keep working on this. It did feel way too slow on our first playable prototypes, so overall its an improvement, we just have to nail it down."
+
+"when I fire a beam, the character slowly drifts in a direction, then fires. I don't like this. Holding the right stick should start the charging, letting go should release the attack, the fighter should more or less remain stationary."
+
+"On startup, Player 1 should always be on the left, player 2 should always be on the right. video games have historically started on the left and progressed to the right, so we should keep with this."
+
+"its irritating when I charge up an attack with right stick and it gets interrupted by a small attack. charging attacks should be much harder to interrupt, especially with light attacks."
+
+"rumble works, no sound effects, I did save a match replay with more feedback."
+
+"first match against a player that didn't fight back ended pretty quickly, no chance to powerup. I activated the CPU and saw some cool speed blitzing attacks, I got knocked back and had some excessive terrain bounces, I bounced against an outcrop of ground maybe six or seven times, it was a little funny but I would have rather seen my fighter leave a crater or a trench."
+
+"launches seem to cause frame spikes. lets retune this whole system and determine a physics based approach to power scaling when it comes to launches, kinetic energy, beam attacks. A fighter at their base form who hasn't powered up much will definitely never launch their opponent at a speed to burn up in the atmosphere, but if they knock their opponent straight down a small crater or trench would be left. at maximum transformation and 100% power, a fighter should be capable of sending his opponent careening through multiple sky scrapers, or knocking his opponent into the ground with such force that an entire city block collapses into the resulting crate, and of course launching their opponent skyward at such speed they leave a burning meteor trail."
