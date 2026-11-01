@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beam Contact Test</title>
+<style>
+:root{--bg:#14161a;--fg:#e8e6df;--mut:#a9a69c;--line:#3a3d44;--on:#e8b23a;--onfg:#1b1608}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#f4f2ec;--fg:#1d1e20;--mut:#55534c;--line:#c4c1b6;--on:#b47f10;--onfg:#fff}}
+:root[data-theme="dark"]{--bg:#14161a;--fg:#e8e6df;--mut:#a9a69c;--line:#3a3d44;--on:#e8b23a;--onfg:#1b1608}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,sans-serif}
+main{max-width:1280px;margin:0 auto;padding:12px 16px}canvas{display:block;width:100%;height:auto;background:#000}
+.row{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;align-items:center}button{font:inherit;padding:5px 10px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--fg);cursor:pointer}button.on{background:var(--on);color:var(--onfg);border-color:var(--on)}
+label{display:flex;gap:6px;align-items:center;color:var(--mut)}p{margin:6px 0;color:var(--mut);max-width:70ch}h1{font-size:18px;margin:0 0 4px}
+</style>
+</head>
+<body>
+<main>
+<h1>Beam contact: ways to press two beams together</h1>
+<canvas id="cv" width="1280" height="720"></canvas>
+<div class="row" id="modes"></div>
+<div class="row"><button id="surgeA">Surge left (Q)</button><button id="surgeD">Surge right (E)</button>
+<label>Power <input id="pow" type="range" min="0" max="1" step="0.01" value="0.6"></label>
+<label>Who's ahead <input id="lead" type="range" min="-1" max="1" step="0.01" value="0.25"></label>
+<label><input id="auto" type="checkbox" checked> Surges on the beat</label></div>
+<p>Keys 1 to 8 pick a technique. Paper: <code>research/rule-of-cool/beam-contact.md</code>. This is a test scene for choosing a technique, not the game's beams.</p>
+</main>
+<script>
+(function () {
+'use strict';
+var cv = document.getElementById('cv'), gl = cv.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });
+var NAMES = ['Today: straight beams, a disc', 'A: flare', 'B: flare and sheet', 'C: stateless curl', 'D: eddy puffs', 'E: small feedback', 'Lite: flare, sheet, no noise', 'C, one step'], NP = 16;
+var FS = `#version 300 es
+precision highp float;
+uniform vec2 uRes; uniform float uT, uPow, uLead, uSA, uSD; uniform int uMode; uniform sampler2D uFB; uniform vec4 uP[${NP}]; uniform vec4 uQ[${NP}]; uniform int uFeedPass;
+in vec2 vUv; out vec4 O;
+const vec3 CA = vec3(.20,.80,.92), CA2 = vec3(.16,.50,.95), CD = vec3(1.,.50,.14), CD2 = vec3(.95,.25,.20), CM = vec3(.86,.72,.62);
+const float R0 = 26., W = 1400.;
+float h21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f); return mix(mix(h21(i),h21(i+vec2(1,0)),f.x),mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),f.x),f.y); }
+float fbm(vec2 p){ return .6*vn(p) + .3*vn(p*2.1+7.) + .1*vn(p*4.3+3.); }
+vec2 curl(vec2 p){ float e=.3, a=vn(p+vec2(0,e)), b=vn(p-vec2(0,e)), c=vn(p+vec2(e,0)), d=vn(p-vec2(e,0)); return vec2(a-b, d-c)/(2.*e); }
+vec3 sky(vec2 p){ float u = p.y/394.; vec3 c = mix(vec3(.62,.72,.84), vec3(.26,.42,.68), smoothstep(-.2,1.,u)); float gy = -210. + 26.*vn(vec2(p.x*.006,2.)) + 8.*vn(vec2(p.x*.03,5.)); if (p.y < gy) c = mix(vec3(.62,.52,.36), vec3(.46,.39,.28), vn(p*.02)*.6 + smoothstep(gy,gy-180.,p.y)*.5); return c; }
+float surgeOf(float a){ return a < 0. || a > 1. ? 0. : (1.-a)*(1.-a); }
+// The contact plane bows away from whoever's ahead: the winner dents the loser
+float contactX(float y, float cx){ float k = y/170.; return cx - uLead*70.*k*k/(1.+k*k); }
+struct Sh { vec3 c; float a; };
+Sh over(Sh top, Sh un){ float a = top.a + un.a*(1.-top.a); vec3 c = (top.c*top.a + un.c*un.a*(1.-top.a))/max(a,1e-3); return Sh(c,a); }
+// The beams, as a width along each one. flare 0: straight. Its streaks follow the width, so they fan out as the beam widens: the flow turns at the contact
+Sh beam(vec2 p, float cx, float flare, float tex){
+  float xc = flare > 0. ? contactX(p.y,cx) : cx; float s = p.x - xc, d = abs(s), side = s < 0. ? 0. : 1., lose = side < .5 ? max(0.,-uLead) : max(0.,uLead);
+  float sg = surgeOf(side < .5 ? uSA : uSD);
+  float F = flare*(38. + 74.*uPow + 46.*sg + 40.*lose), L = 70. + 50.*uPow, r = R0*(1.+.3*lose) + F*exp(-d/L);
+  if (flare > 0. && tex > 0.) r *= 1. + (.10 + .34*lose)*exp(-d/260.)*(vn(vec2(d*.014 + uT*(2.2+3.*lose), side*9. + sign(p.y)*3.)) - .5)*2.;
+  float lat = abs(p.y)/r, a = smoothstep(1.,.70,lat);
+  vec3 c0 = side < .5 ? CA : CD, c1 = side < .5 ? CA2 : CD2;
+  float st = tex > 0. ? vn(vec2((d + uT*620.)*.006, lat*4.5 + side*7.)) : .5;
+  vec3 c = mix(c1,c0,st); c = mix(c, min(c*1.25+.08, vec3(.92)), pow(max(0.,1.-lat),2.)*.8);
+  return Sh(c, a*.96);
+}
+// The sheet: where the two flows meet and turn, seen edge on. Two sides, the mix where they meet, thin at the middle and thickening to a broken rim
+Sh sheet(vec2 p, float cx, float tex){
+  float s = p.x - contactX(p.y,cx), q = abs(p.y), sn = p.y < 0. ? -1. : 1., sg = max(surgeOf(uSA),surgeOf(uSD));
+  float Rs = (84. + 132.*uPow + 90.*sg)*(tex > 0. ? (.8 + .4*vn(vec2(sn*4., uT*.6))) : 1.);
+  float w = tex > 0. ? fbm(vec2(q*.012 - uT*1.1, s*.018 + sn*5.)) : .5;
+  float tw = 7. + 30.*pow(min(1.,q/Rs),1.6) + 6.*sg;
+  float ss = s + (w-.5)*tw*2.2;
+  float ev = tex > 0. ? fbm(vec2((q - uT*280.)*.016 + 2.6*w, s*.045 + sn*3.)) : .55;
+  float band = smoothstep(tw,tw*.25,abs(ss))*smoothstep(Rs,Rs*.5,q + (ev-.5)*Rs*.7);
+  float c0 = smoothstep(-tw*.6,tw*.6,ss); vec3 c = mix(CA,CD,c0); c = mix(c,CM,(1.-abs(2.*c0-1.))*.8);
+  c = mix(c, min(c*1.3+.06, vec3(.92)), (1.-smoothstep(0.,Rs*.6,q))*.7);
+  return Sh(c, band*(.55+.6*ev));
+}
+// Today: a disc of rings and rays over two straight beams, a stand-in for the parked clash air
+Sh disc(vec2 p, float cx){ vec2 v = p - vec2(cx,0.); float r = length(v)/(120.+60.*uPow); if (r > 1.) return Sh(vec3(0),0.); float ring = pow(.5+.5*sin((r*4.8 - uT*.9 + (fbm(v*.012+uT*.1)-.5)*.9)*6.283),2.5)*(1.-r)*(1.-r); vec2 dr = v/max(length(v),1e-3); float ray = pow(smoothstep(.55,1.,vn(dr*5.+uT*.2)),1.6)*(1.-r); float sd = smoothstep(-.3,.3,v.x/(120.+60.*uPow) - uLead*.3); vec3 c = mix(CA,CD,sd); c = mix(c,CM,(1.-abs(2.*sd-1.))*.6); float e = clamp(ring*1.1+ray*.7+(1.-smoothstep(.05,.3,r))*.8,0.,1.); return Sh(min(c*1.05,vec3(.92)),e*(1.-smoothstep(.65,1.,r))); }
+void main(){
+  vec2 uv = vUv;
+  if (uFeedPass == 1) { // E: the small texture. Last frame's picture is moved along the flow and cooled, and the sheet feeds it
+    vec2 p = (uv-.5)*900.; float cx = uLead*150., s = p.x-contactX(p.y,cx), sn = p.y<0.?-1.:1., sd = s<0.?-1.:1.; vec2 c = curl(p*.011 + vec2(sd*uT*.8, sn*uT*-1.1));
+    vec2 v = vec2(sd*1.6*(.25+smoothstep(0.,160.,abs(p.y))), sn*3.4)*exp(-abs(s)/230.) + c*1.9; vec4 pr = texture(uFB, uv - v/900.);
+    Sh sh = sheet(p,cx,1.); vec4 add = vec4(sh.c*sh.a, sh.a); O = pr*.962 + add*.05; return; }
+  vec2 p = (uv-.5)*vec2(W, W*uRes.y/uRes.x); float cx = uLead*150.; Sh R = Sh(vec3(0),0.);
+  if (uMode == 9) { O = vec4(sky(p),1.); return; }
+  if (uMode == 0) { R = over(disc(p,cx), beam(p,cx,0.,1.)); }
+  else if (uMode == 1) { R = beam(p,cx,1.,1.); }
+  else if (uMode == 2) { R = over(sheet(p,cx,1.), beam(p,cx,1.,1.)); }
+  else if (uMode == 3 || uMode == 7) { vec2 b = p - vec2(cx,0.); int steps = uMode == 3 ? 3 : 1; float gain = uMode == 3 ? 1. : 2.;
+    for (int i = 0; i < steps; i++) { vec2 aa = abs(b), qd = sign(b); float amp = smoothstep(14.,100.,aa.y)*smoothstep(0.,34.,aa.x)*exp(-aa.x/230.)*exp(-aa.y/360.); b -= (curl(aa*.011 - vec2(uT*.7, uT*1.) + qd*vec2(3.1,5.7)) * 64. * gain * (.7+.35*uPow) + qd*vec2(-10.,14.)) * amp; }
+    vec2 q = b + vec2(cx,0.); R = over(sheet(q,cx,1.), beam(q,cx,1.,1.)); }
+  else if (uMode == 4) { R = over(sheet(p,cx,1.), beam(p,cx,1.,1.)); for (int i = 0; i < ${NP}; i++) { vec4 P = uP[i]; if (P.w <= 0.) continue; vec2 v = p - P.xy; float l = dot(v,v)/(P.z*P.z); if (l >= 1.) continue; vec4 Q = uQ[i]; float ang = Q.x*exp(-l*2.); float cs = cos(ang), sn = sin(ang); vec2 w = vec2(cs*v.x - sn*v.y, sn*v.x + cs*v.y)/P.z; float n = fbm(w*2.1 + Q.y); float blob = (1.-l)*(1.-l); float a = P.w*smoothstep(.25,.75,n*.75 + blob*.45)*smoothstep(0.,.5,blob); vec3 c = mix(Q.z < .5 ? CA : CD, CM, Q.w)*(.8+.4*n); R = over(Sh(min(c,vec3(.92)),a), R); } }
+  else if (uMode == 5) { R = beam(p,cx,1.,1.); vec2 f = p/900.+.5; if (abs(f.x-.5)<.5 && abs(f.y-.5)<.5) { vec4 t = texture(uFB,f); float e = smoothstep(.5,.42,max(abs(f.x-.5),abs(f.y-.5))); float a = clamp(t.a*1.5,0.,1.)*e; R = over(Sh(min(t.rgb/max(t.a,.02),vec3(.92)),a), R); } }
+  else if (uMode == 6) { R = over(sheet(p,cx,0.), beam(p,cx,1.,0.)); }
+  O = vec4(mix(sky(p), R.c, R.a), 1.);
+}`;
+var VS = `#version 300 es
+in vec2 aP; out vec2 vUv; void main(){ vUv = aP*.5+.5; gl_Position = vec4(aP,0.,1.); }`;
+function sh(t, s) { var o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o)); return o; }
+var pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(pr); if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr)); gl.useProgram(pr);
+var u = {}; ['uRes', 'uT', 'uPow', 'uLead', 'uSA', 'uSD', 'uMode', 'uFB', 'uP', 'uQ', 'uFeedPass'].forEach(function (n) { u[n] = gl.getUniformLocation(pr, n); });
+var vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW); var a = gl.getAttribLocation(pr, 'aP'); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
+// E's two small targets, 8 bits a channel: what Compatibility's viewports give
+var FN = 128, ft = [], fb = []; for (var i = 0; i < 2; i++) { var t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, FN, FN, 0, gl.RGBA, gl.UNSIGNED_BYTE, null); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); ft.push(t); var f = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, f); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT); fb.push(f); } gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+var S = { mode: 4, tick: 0, pow: 0.6, lead: 0.25, sA: -1e9, sD: -1e9, auto: true, cur: 0, extra: [] };
+function hash(k) { var x = Math.sin(k * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+// D: each puff is a closed form of its birth tick. The rim sheds one on a steady beat, a surge sheds three more; nothing is stored but the surge's tick
+var PUFF_LIFE = 54, PUFF_GAP = 9, SURGE_TICKS = [];
+function puffs() { var P = new Float32Array(NP * 4), Q = new Float32Array(NP * 4), n = 0, t = S.tick, cx = S.lead * 150, Rs = 84 + 132 * S.pow; function add(born, k) { if (n >= NP) return; var age = (t - born) / PUFF_LIFE; if (age < 0 || age >= 1) return; var sy = hash(k) < 0.5 ? -1 : 1, sd = hash(k + 3.1) < 0.5 ? -1 : 1, e = 1 - Math.exp(-age * 2.8), back = 110 + 160 * S.pow, out = 70 + 120 * S.pow, r = (16 + 44 * e) * (0.7 + 0.6 * S.pow) * (0.8 + 0.5 * hash(k + 7.7)); P[n * 4] = cx + sd * (10 + back * e * (0.5 + 0.7 * hash(k + 1.3))); P[n * 4 + 1] = sy * (Rs * (0.45 + 0.35 * hash(k + 2.2)) + out * e); P[n * 4 + 2] = r; P[n * 4 + 3] = Math.min(1, age / 0.12) * Math.pow(1 - age, 1.4) * 0.85; Q[n * 4] = -sy * sd * (1.2 + 2.6 * age); Q[n * 4 + 1] = hash(k + 9.1) * 40; Q[n * 4 + 2] = sd < 0 ? 0 : 1; Q[n * 4 + 3] = 0.15 + 0.5 * age; n++; } var b0 = Math.floor(t / PUFF_GAP); for (var b = b0; b > b0 - 7 && b >= 0; b--) add(b * PUFF_GAP, b); SURGE_TICKS.forEach(function (st) { for (var j = 0; j < 3; j++) add(st + j, st * 1.37 + j * 17); }); return [P, Q]; }
+function uniforms(res) { gl.uniform2f(u.uRes, res[0], res[1]); gl.uniform1f(u.uT, S.tick / 60); gl.uniform1f(u.uPow, S.pow); gl.uniform1f(u.uLead, S.lead); gl.uniform1f(u.uSA, (S.tick - S.sA) / 40); gl.uniform1f(u.uSD, (S.tick - S.sD) / 40); gl.uniform1i(u.uMode, S.mode); }
+function feed() { var sc = gl.isEnabled(gl.SCISSOR_TEST); gl.disable(gl.SCISSOR_TEST); var w = S.cur, r = 1 - w; gl.bindFramebuffer(gl.FRAMEBUFFER, fb[w]); gl.viewport(0, 0, FN, FN); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, ft[r]); gl.uniform1i(u.uFB, 0); gl.uniform1i(u.uFeedPass, 1); uniforms([FN, FN]); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.uniform1i(u.uFeedPass, 0); S.cur = r; if (sc) gl.enable(gl.SCISSOR_TEST); }
+function draw() { gl.viewport(0, 0, cv.width, cv.height); uniforms([cv.width, cv.height]); gl.uniform1i(u.uFeedPass, 0); if (S.mode === 5) { gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, ft[1 - S.cur]); gl.uniform1i(u.uFB, 0); } if (S.mode === 4) { var pq = puffs(); gl.uniform4fv(u.uP, pq[0]); gl.uniform4fv(u.uQ, pq[1]); } gl.drawArrays(gl.TRIANGLES, 0, 3); }
+function step() { S.tick++; if (S.auto && S.tick % 48 === 0) { if ((S.tick / 48) % 2 < 1) surge(0); else surge(1); } SURGE_TICKS = SURGE_TICKS.filter(function (x) { return S.tick - x < PUFF_LIFE + 4; }); if (S.mode === 5) feed(); }
+function surge(side) { if (side === 0) S.sA = S.tick; else S.sD = S.tick; SURGE_TICKS.push(S.tick); }
+var modes = document.getElementById('modes'); function paint() { Array.prototype.forEach.call(modes.children, function (b, k) { b.className = k === S.mode ? 'on' : ''; }); } NAMES.forEach(function (nm, k) { var b = document.createElement('button'); b.textContent = (k + 1) + ' ' + nm; b.onclick = function () { S.mode = k; paint(); }; modes.appendChild(b); }); paint();
+document.getElementById('surgeA').onclick = function () { surge(0); }; document.getElementById('surgeD').onclick = function () { surge(1); }; document.getElementById('pow').oninput = function (e) { S.pow = +e.target.value; }; document.getElementById('lead').oninput = function (e) { S.lead = +e.target.value; }; document.getElementById('auto').onchange = function (e) { S.auto = e.target.checked; };
+addEventListener('keydown', function (e) { if (e.code === 'KeyQ') surge(0); if (e.code === 'KeyE') surge(1); var m = /^Digit([1-8])$/.exec(e.code); if (m) { S.mode = +m[1] - 1; paint(); } });
+var last = 0, acc = 0; function frame(ts) { if (window.__hold) return; if (!last) last = ts; acc += Math.min(80, ts - last) / 16.667; last = ts; var n = 0; while (acc >= 1 && n < 6) { acc -= 1; step(); n++; } draw(); requestAnimationFrame(frame); }
+// Test hook: stepping, the cost over the patch a contact covers, and a rough flash count (never a substitute for Tools' analyser)
+window.BT = { S: S, step: function (n) { for (var i = 0; i < n; i++) step(); }, draw: draw, gl: gl, surge: surge,
+  reset: function (m) { S.mode = m; S.tick = 0; S.sA = S.sD = -1e9; SURGE_TICKS = []; for (var k = 0; k < 2; k++) { gl.bindFramebuffer(gl.FRAMEBUFFER, fb[k]); gl.clear(gl.COLOR_BUFFER_BIT); } gl.bindFramebuffer(gl.FRAMEBUFFER, null); },
+  cost: function (m, frames) { this.reset(m); this.step(150); var px = new Uint8Array(4), x = 440, y = 160, sz = 400; gl.enable(gl.SCISSOR_TEST); gl.scissor(x, y, sz, sz); for (var i = 0; i < 8; i++) { draw(); gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); } var t0 = performance.now(); for (i = 0; i < frames; i++) { if (m === 5) feed(); draw(); gl.readPixels(x, y, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); S.tick++; } var dt = performance.now() - t0; gl.disable(gl.SCISSOR_TEST); return dt / frames; },
+  flash: function (m, ticks) { this.reset(m); this.step(60); var W0 = cv.width, H0 = cv.height, cw = 64, ch = 36, rows = [], buf = new Uint8Array(W0 * H0 * 4), lin = function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; for (var t = 0; t < ticks; t++) { this.step(1); draw(); gl.readPixels(0, 0, W0, H0, gl.RGBA, gl.UNSIGNED_BYTE, buf); var f = new Float32Array(cw * ch); for (var cy = 0; cy < ch; cy++) for (var cx = 0; cx < cw; cx++) { var s = 0, n = 0; for (var yy = 0; yy < 20; yy += 5) for (var xx = 0; xx < 20; xx += 5) { var i = ((cy * 20 + yy) * W0 + cx * 20 + xx) * 4; s += 0.2126 * lin(buf[i]) + 0.7152 * lin(buf[i + 1]) + 0.0722 * lin(buf[i + 2]); n++; } f[cy * cw + cx] = s / n; } rows.push(f); } var worst = 0, over = 0, swing = 0; for (var c = 0; c < cw * ch; c++) { var ext = [], dir = 0, lastV = rows[0][c], mn = lastV, mx = lastV; for (t = 1; t < rows.length; t++) { var v = rows[t][c]; mn = Math.min(mn, v); mx = Math.max(mx, v); if (dir >= 0 && mx - v >= 0.1 && Math.min(mx, v) < 0.8) { ext.push(t); dir = -1; mn = v; } else if (dir <= 0 && v - mn >= 0.1 && Math.min(mn, v) < 0.8) { ext.push(t); dir = 1; mx = v; } } var peak = 0; for (var a2 = 0; a2 < ext.length; a2++) { var b2 = a2; while (b2 + 1 < ext.length && ext[b2 + 1] - ext[a2] < 60) b2++; peak = Math.max(peak, (b2 - a2 + 1) / 2); } worst = Math.max(worst, peak); if (peak > 3) over++; var mnA = 1e9, mxA = -1e9; rows.forEach(function (r) { mnA = Math.min(mnA, r[c]); mxA = Math.max(mxA, r[c]); }); if (mxA - mnA >= 0.1) swing++; } return { worstFlashesInASecond: worst, cellsOver3: over, shareOfFrameThatSwings: +(swing / (cw * ch)).toFixed(3) }; } };
+window.__ok = 1; S.tick = 0; requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
