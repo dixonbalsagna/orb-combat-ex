@@ -10,10 +10,10 @@ The EP's list for Orb's first play of versus on the globe with the new pad (`doc
 4. **A clash a player can reach.** Hold RT and press B against the computer or a second pad; the clash shows, and the meeting point isn't behind a roof.
 5. **A match that ends.** Every fight ends in a finisher, and Play again is one press from the next fight.
 6. **The pad tells the truth.** Everything on the sheet (`docs/tools/pad-steps.md`) does what it says on the live page. No press is silent. No hint is shown for a press that does nothing. That includes the meteor: the full-power shortcut plus the sheet's steps fire it, with the camera following. If it's flat or broken, Orb hears that before they try it.
-7. **It doesn't break.** Ten minutes of the moving reel with no script errors, stuck states or hangs.
+7. **It doesn't break.** Ten minutes of the sim natively, through the real input hub, on several seeds: no script errors, stuck states or hangs. Then a few minutes of the moving reel on the page, for what only the page can break.
 8. **The frame.** On a quiet PC, one scripted fight with a clash and a collapse: median frame under 16.7 ms on this PC, and the slowest moments are named. A hitch Orb would stop over stops the handover.
 9. **The warning and the black box.** The warning shows first, and the match record saves, including from a match cut short.
-10. **The right build.** Orb gets exactly the build that passed the quiet read: nothing running on the PC, no watch to swap it mid-match.
+10. **The right build.** Orb gets exactly the build that passed the quiet read: nothing running on the PC, no watch to swap it mid-match. That build is copied to a folder named by its commit, outside the repo, and kept, so Orb's recording can still be played back after anything lands.
 
 **And one no test answers: is it fun to watch?** The EP looks through a full minute of the moving reel, frame by frame on a dense sheet, before handing over. If it's embarrassing, Orb hears that at the handover, even with all ten passing.
 
