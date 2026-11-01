@@ -1,115 +1,103 @@
 # The meteor's arc: one curve, written down
 
-Research & Prototyping, 2026-10-31, on Orb's note: "the arc doesn't fully complete, the knocked-back fighter reaches the apex then drifts, and then stops and goes straight down". For Simulation and Encounter to follow. **Play it:** `research/ring-any-angle/proto-v2.html`, key M or RB+Y. **Reference code and table:** `node research/ring-any-angle/meteor-arc.mjs`.
+Research & Prototyping, 2026-11-01, on Orb's note: "the arc doesn't fully complete, the knocked-back fighter reaches the apex then drifts, and then stops and goes straight down". For Simulation and Encounter to follow. **Play it:** `research/ring-any-angle/proto-v2.html`, key M or RB+Y. **Reference code and table:** `node research/ring-any-angle/meteor-arc.mjs`.
 
-**A launch at the top of the ladder now flies one parabola from the launcher's ground to the landing's ground, and a single clock runs along it. It's a rule-of-cool path, not physics.** He leaves at 60° and comes in at 60°, 36° round the planet, with no corner anywhere.
+**Use Game Design's curve (`docs/design/rule-of-cool-map.md` §2): one formula from launch to contact, landing 60° round. It's now the proto's default, and it passes all of Game Design's shape tests.** I built a parabola first, without having seen their ruling, and my first report recommended it. **I withdraw that:** it fails their turn test by a wide margin, and the bigger arc is the better picture. It stays on a switch so Orb can see both.
 
-![The whole arc at the widest view](img/meteor-arc-whole.png)
+![Game Design's curve, the whole arc at the widest view](img/meteor-arc-whole.png)
 
 **How far to trust this.** Measured in the proto: the shape and the in-frame share. By arithmetic: everything in the sim's terms. Nobody has played this version, and none of it has run in the game.
 
 ## What was wrong, and it isn't only the proto
 
-**In the proto,** the flight was three pieces: a climb, a hang and a drop, each with its own height and its own distance rule. They met at corners, and the drop covered only the last 5% of the distance. That's the drift, the stop and the straight fall in Orb's picture.
+**In the proto,** the flight was three pieces: a climb, a hang and a drop, each with its own height and its own distance rule, meeting at corners. The drop covered the last 5% of the distance. That's the drift, the stop and the straight fall.
 
-**The game's own law does the same thing, so fixing the proto alone would have moved the fault into the build.** `stepLaunched` multiplies sideways speed by 0.55 a second and leaves the climb alone. So he spends his carry on the way up:
+**The game's own law does the same thing, so fixing the proto alone would have moved the fault into the build.** `stepLaunched` multiplies sideways speed by 0.55 a second and leaves the climb alone, so he spends his carry on the way up:
 
 | Send, today's law | Apex | Carry spent by the apex | Comes in at |
 | :--- | ---: | ---: | ---: |
-| 6,600 at 60° (Game Design's meteor) | 16,300 | **97%** | **90°** |
+| 6,600 at 60° (the meteor's old send) | 16,300 | **97%** | **90°** |
 | 7,000 at 60° | 18,300 | 97% | 90° |
 | 7,000 at 45° | 12,200 | 95% | 90° |
 | 5,000 at 45° | 6,200 | 89% | 89° |
 
-`SimFlight`'s curve doesn't help: it paces the same path, and "where it goes and lands" don't change. Game Design's "he comes down almost straight" and Simulation's "lands almost straight down" both describe this law. **So the meteor launch can't run on it.** Whether ordinary high launches should change too is the open question at the end.
+`SimFlight`'s curve doesn't help: it paces the same path. **So this launch can't run on that law.**
 
 ## The curve
 
-Two separate things, so timing can never bend the line.
-
-**1. The path.** A quadratic Bézier, which is exactly a parabola, in the plane of the great circle, with the origin at the planet's centre. `R` is the ring's radius (24,446 on a Whole ring), `g0` and `gL` the ground at launch and landing, `top` the apex above `g0`, `D` the carry along the ground, `lean` 0.
+Game Design's, as ruled, with the proto's reading of it. `H` is the apex above the launcher's ground, `D = 1.551 H` the carry, `g0` and `gL` the ground at launch and landing, `t` from 0 to 1 over the flight's `T` ticks, and `c` the apex's share of the time (3.6 s of 6.2 is 0.581).
 
 ```
-ph   = D / R
-P0   = (0, R + g0)
-P1   = ((R + gL) sin ph, (R + gL) cos ph)
-M    = (P0 + P1) / 2
-b    = (sin(ph/2), cos(ph/2))                  the radial through the middle
-up   = 2 (R + g0 + top) - 2 (M . b)
-C    = M + up b + lean (P1 - P0) / 2
+u_a = 0.5805                                    where along the ground the apex falls
+e   = tan(pi/4 (1 - t/c))                       t before c
+e   = tan(pi/4 (t - c) / (1 - c))               t after c
+u   = u_a (1 - e)                               before
+u   = u_a + (1 - u_a) e                         after
 
-P(q) = (1-q)^2 P0 + 2 q (1-q) C + q^2 P1       q from 0 to 1
-s(q) = R atan2(P.x, P.y)                       along the line, from the launch point
-h(q) = |P| - R                                 height above sea level
+w   = u - 0.328 u (1 - u)
+s   = D u                                       along the line, from the launch point
+y   = g0 + (gL - g0) u + 4 H w (1 - w)          height, the ground under it passing from launcher's to landing's
 ```
 
-**2. The clock.** A cubic from `q = 0` to `q = 1` over the flight's `T` ticks. `t = tick / T`:
+**Game Design writes the pace as `du/dt = k (1 + e^2)`. That integrates to the tangent above,** so it needs `tan` (sine over cosine, on our own trig), not only polynomials as §2 says. With `c` 0.581 the two sides' `k` differ by 0.3%, so I give each side its own and they meet at the apex. The `(gL - g0) u` term is mine: §2 doesn't say how the ground enters, and this lands him exactly on it.
 
-```
-c    = crest / T                               0.565 (3.5 s of 6.2)
-s1   = (0.5 - (c^3 - 2c^2 + c) s0 - (-2c^3 + 3c^2)) / (c^3 - c^2), kept to 0.2 .. sqrt(9 - s0^2)
-q(t) = (t^3 - 2t^2 + t) s0 + (-2t^3 + 3t^2) + (t^3 - t^2) s1
-```
+**On the ladder**, the proto uses the same formula on every row. Game Design rules the top two first and reads rows 2 and 3 against the tests.
 
-With `s0 = s1 = 1`, `q` is `t` and he flies exactly like a thrown ball. **`s0` 1.25 and `s1` 1.66 are the rule of cool:** he leaves harder than gravity would allow, eases over the top, and arrives hardest of all. The range on `s1` is what stops a cubic running backward.
+| Lower tier | `H` | `D` | Round a Whole ring | `T` |
+| :--- | ---: | ---: | ---: | ---: |
+| 1 | 700 | 1,086 | 2.5° | 1.28 s |
+| 2 | 2,500 | 3,878 | 9.1° | 2.42 s |
+| 3 | 5,000 | 7,755 | 18.2° | 3.42 s |
+| 4, not a meteor | 9,900 | 15,355 | 36° | 4.81 s |
+| **4, the meteor** | **16,400** | **25,436** | **59.6°** | **6.2 s** |
 
-**Values, in data.** `s0` 1.25, `crest` 3.5 s of 6.2, `lean` 0. `T` scales with the height's root, as the proto's ladder does. `D` by tier is below, and it's solved once for the 60° start, so the sim needn't solve it. **Half and Close rings:** scale `R`, `top` and `D` together, and the angles and the picture stay.
+Half and Close rings scale `H` and `D` with the ring, so the angle round holds.
 
-| Lower tier | Apex | Carry | Round a Whole ring | Time | Leaves at | Comes in at | Leaves, u/s | Slowest, u/s | Arrives, u/s |
-| :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | 700 | 1,528 | 3.6° | 1.28 s | 60° | 60° | 3,144 | 939 | 4,167 |
-| 2 | 2,500 | 4,759 | 11.2° | 2.42 s | 60° | 60° | 5,912 | 1,554 | 7,835 |
-| 3 | 5,000 | 8,040 | 18.8° | 3.42 s | 60° | 60° | 8,290 | 1,863 | 10,985 |
-| 4, not a meteor | 9,900 | 12,150 | 28.5° | 4.81 s | 60° | 60° | 11,456 | 2,004 | 15,181 |
-| **4, the meteor** | **16,400** | **15,297** | **35.9°** | **6.2 s** | **60°** | **60°** | **14,442** | **1,954** | **19,138** |
+## Against Game Design's tests, measured in the proto
 
-Flat ground, from the reference code. On real ground the angles move a degree or two. At the top row he's above 90% of his height for 2.3 s and above 99% for 0.75 s, so the hang is there without his ever stopping.
+Top tier, planet 7, flown at the proto's Standard level.
 
-**Why 60° now gives 36°.** The curve is a clean parabola across the chord, and the ground under it falls away. So 60° above the local ground is about 78° across the frame, which is the tall arch in the picture. It brings back Game Design's first arithmetic of 37°, against the 31° my old path gave.
+| Test | Limit | Game Design's curve | My parabola (36° round) |
+| :--- | ---: | ---: | ---: |
+| Slowest sideways speed against the mean | At least 0.5 | **0.79** (3,221 to 6,373 u/s) | 0.48, fails |
+| Fastest turn against slowest, 10% to 90% of the flight | At most 2 | **1.8** (23 to 42°/s) | 10, fails (7 to 68°/s) |
+| Foe in frame, descent | At least 90% | **113 of 120, 94%** | 120 of 120 |
+| Foe in frame, hang | | 72 of 72 | 72 of 72 |
+| Foe in frame, climb | | 145 of 180 (the first 0.6 s, as Camera expected; the trail stays in frame) | 145 of 180 |
+| Speed jumps between ticks | None | Largest step 441 u/s, at 20,000 u/s or so | 250 |
+| Two runs, one hash; a rollback across it | | **Not tested:** the proto has no hash | |
+
+Speeds as drawn: leaves at about 13,600 u/s, slowest about 5,800 at the crest, and arrives at about 21,700. The crest reads faster on screen than Game Design's 3,200 because he's far out from the planet there: 3,221 along the ground is 5,400 at that height. **So the hang is a sweep rather than a float, and Orb should judge that first.** The crest-time slider moves it, and a slower crest is one number in `e`.
+
+**Game Design's risk is answered: the landing at 60° round is visible.** It sits on the far limb at the widest view in the picture above, and the camera follows him in. It is on the limb, though, so an impact reads less head-on than at 36° round (`img/meteor-arc-parabola.png`).
+
+**Two camera changes for Camera to check,** both in the proto's descent:
+
+- The focus passes smoothly from the pair to just short of where he's going, as the width stops holding both of them. It removes a lurch, and the impact stays in frame.
+- The width follows his height with a margin of 1.25, because he comes in faster and stayed at the frame's edge. His 7 lost ticks are 1.5 s into the descent, near the top of the frame.
 
 ## For Simulation
 
-- **This launch doesn't step `stepLaunched`.** While he's on the arc, `x` and `y` come from the closed form of `(launch tick, x0, D, top, g0, gL, T)`. Nothing accumulates, so a re-run lands on the same bits, and `frameAt`-style reads are one evaluation. The numbers are constant for the flight, so they can be hashed once.
-- **Only `+ - * /`, sqrt, sin, cos and atan2.** All float64, on our own trig.
-- **In the sim's terms** `x = x0 + dir * s(q)` and `y = h(q)`. The sim's world is flat along the line and the curve is the view's, so these are the same numbers the view maps back to the sphere.
+- **This launch doesn't step `stepLaunched`.** While he's on the curve, `x` and `y` come from the closed form of `(live ticks since the send, x0, side, D, H, g0, gL, T)`. Nothing accumulates, so a re-run lands on the same bits, and a read at any tick is one evaluation. Those numbers are constant for the flight, so they can be hashed once. Hit-stops don't advance it.
+- **Only `+ - * /`, sin and cos,** in float64 on our own trig.
+- **`y` is height along the flat line,** as the sim's world has it, and the curve over the planet is the view's. So the arc's roundness on screen comes from the view's mapping and needs nothing from the sim.
 - **The ceiling isn't touched:** 16,400 is under 24,000.
-- **Contact ends the flight.** From the crest on, the first tick with `h(q)` at or under the ground is the landing, wherever that is. He never skims along the ground to reach the planned spot; that was the last kink I took out. A mountain or tower in the way takes the meteor.
-- **Before the crest,** what a tall building beside the launch point does to him is Game Design's call. The proto only keeps him above the ground.
-- **Leaving the arc** (Game Design's brake from the end of the hang; a catch by the launcher): his velocity is `dP/dq * dq/dt`, closed form:
-
-```
-dP/dq = 2 (1-q) (C - P0) + 2 q (P1 - C)
-dq/dt = ((3t^2 - 4t + 1) s0 + (-6t^2 + 6t) + (3t^2 - 2t) s1) / T
-```
-
-- **Rollback:** by my reasoning there's no new state beyond those constants and a flag.
+- **Contact ends the flight.** From the apex on, the first tick with `y` at or under the ground is the landing, wherever that is, so a mountain in the way takes the meteor. He never skims along the ground to reach the planned spot; that was the last kink I removed. Towers follow §2: he goes through by tier 4's ladder and stays on the curve.
+- **Leaving the curve** (the brake from the end of the hang, or a catch): §2 says on its current heading. The velocity is the difference of two evaluations a tick apart, so it needs no second formula.
+- **Rollback:** by my reasoning, no new state beyond those constants and a flag. Netcode's check should say.
 
 ## For Encounter
 
-- **The forecast is now cheap and exact.** The landing is at `x0 + dir * D`, known at the send, one ground read a side. `predictFlight`'s 240 ticks aren't needed. Check the descending half against the bake for an earlier contact; I'd sample every 500 units or so, which is about 15 reads, but I haven't measured it.
-- **A planned rest** (`restBy`) is `T - 31` ticks from the send, or earlier if the check finds a mountain. No swing runs in this shot, so it's only a guard.
-- **The side** stays as ruled: the stick nudges which side, one candidate each way.
-- **What `D` does to §12's rulings.** Game Design's "about 31°" and "he comes down almost straight" are replaced, and "inside the sixth of a loop" still holds at 36°. Game Design's to confirm.
+- **The forecast is cheap.** The landing is at `x0 + side * D`, or §2's three candidates at 85 to 100% of it, known at the send, one ground read each. `predictFlight`'s 240 ticks aren't needed. Check the descent against the bake for an earlier contact; I'd sample every 500 units or so, about 25 reads, not measured.
+- **A planned rest** (`restBy`) is about `T - 31` ticks from the send, or earlier if the check finds a mountain. No swing runs in this shot, so it's only a guard.
 
-## What it did to the shot, in the proto
+## Sliders for Orb
 
-Read at the top tier on planet 7, with exact projection, foe in the picture:
-
-| | Before | Now |
-| :--- | ---: | ---: |
-| Climb | 149 of 180 ticks | 145 of 180 (the first 0.6 s, as Camera expected; the trail stays in frame) |
-| Hang | 72 of 72 | 72 of 72 |
-| Descent | 120 of 120 | **120 of 120,** but only after the change below |
-| Biggest turn in a tick | Corners at the joins | 1.13°, at the crest |
-| Biggest change in that turn, tick to tick | | 0.01°, so no corner |
-| Slowest he goes | Near stopped sideways | 2,009 u/s at 3.4 s |
-
-**One change for Camera to check.** He now comes in fast and on a slant, and the old focus lost him for the last 11 ticks, so the impact was off screen. The focus now passes smoothly from the pair to just short of where he's going, as the width stops holding both of them. That's 120 of 120, and it also removes a lurch when the pair stopped fitting. The descent's width is Camera's ruled "follows him", so the crest leaves the frame as it closes; the other setting, "steady", is still there to compare.
-
-**Sliders for Orb:** the angle he leaves at (45 to 85°), the arc's lean (crest earlier or later), the launch pace, and when the crest comes. All of them stay one curve: the reference code flies 1,080 combinations of height, angle, lean, pace, crest and uneven ground, and each one lands exactly and never doubles back. At 85° the top is a needle, up to about 9° of turn in a step, so that end of the slider will look tight.
+- **The arc:** Game Design's, or the parabola to compare. The parabola is a quadratic Bézier with its own clock, in `meteor-arc.mjs`, with sliders for the angle it leaves at, its lean and its launch pace.
+- **Crest at:** seconds of the 6.2. It works on both.
+- **Top of the ladder,** which sets `H` and so `D`.
 
 ## Open
 
-- **Should ordinary high launches lose this fault too? I think so, and it's Game Design's and Simulation's call.** Any launch high enough for the player to read its shape falls straight down at the end. Less sideways drag on a launch is one data value, though it moves carry, so it moves the golden behind its switch and every launch forecast. Not changed, and not costed.
-- **A slanted impact wants a slanted crater and blast.** A 60° arrival with a round crater may look wrong now that it's visible. World's and VFX's.
-- **Game Design's reasons for a steep launch still hold** at 60°: the one picture stays. Orb's "diagonally up" may want it lower. The slider will show what happens to the picture.
+- **Should ordinary high launches lose this fault too? I think so, and it's Game Design's and Simulation's call.** Game Design keeps them physics for now. Any launch high enough for the player to read its shape still falls straight down at the end. Less sideways drag on a launch is one data value, but it moves carry, so it moves the golden behind its switch and every launch forecast. Not costed.
+- **A slanted impact wants a slanted crater and blast.** A 74° arrival with a round crater may look wrong now that it's visible. World's and VFX's.
