@@ -1,0 +1,30 @@
+# First press: what stops the handover
+
+The EP's list for Orb's first play of versus on the globe with the new pad (`docs/ep/vision.md`, the order of 2026-11-01). Written 2026-11-01. **Only what's on the first list lands from here until Orb has played.** Everything else waits, however good.
+
+## Stops the handover
+
+1. **Hidden fight.** With a scripted player who moves, 3,600 ticks: neither fighter stays behind a drawn building for over 3 s, and the stills agree.
+2. **Lens in the land.** Same reel: the frame reads as a fight on a planet, up from down, with no rock filling the frame on the camera's side.
+3. **Fighters in the ground.** Same reel: no bodies cut off by land they should be standing on or above.
+4. **A clash a player can reach.** Hold RT and press B against the computer or a second pad; the clash shows, and the meeting point isn't behind a roof.
+5. **A match that ends.** Every fight ends in a finisher, and Play again is one press from the next fight.
+6. **The pad tells the truth.** Everything on the sheet (`docs/tools/pad-steps.md`) does what it says on the live page. No press is silent. No hint is shown for a press that does nothing.
+7. **It doesn't break.** Ten minutes of the moving reel with no script errors, stuck states or hangs.
+8. **The frame.** On a quiet PC, one scripted fight with a clash and a collapse: median frame under 16.7 ms on this PC, and the slowest moments are named. A hitch Orb would stop over stops the handover.
+9. **The warning and the black box.** The warning shows first, and the match record saves, including from a match cut short.
+10. **The right build.** Orb gets exactly the build that passed the quiet read: nothing running on the PC, no watch to swap it mid-match.
+
+## After first play
+
+Rock bands, lake beds, foot walls, low hills apart from what fixes 2, scar fringe, the swing scored by the land, town-sea, the flight curve, melee crescents, beam alerts, ring restyle, the clinch's look, fighter select, match length tuning. If the flat grey is still bad once 2 is fixed, rock comes back up.
+
+## What Orb is told at the handover
+
+- Specials and transformations are off. RT does less at first.
+- There's no teleport or vanish: that's a question for them.
+- It's always Grist against Loupe, with no fighter select.
+- The Driver seeks and has no look of its own yet.
+- One meteor a match. A full-power shortcut reaches it without six minutes of play.
+- A light takes a flick's stun, not the flick. That's new, and their hands judge it.
+- Nobody has played any of this with a real pad before them.
