@@ -112,19 +112,24 @@ Six, because each answers something a player will try in the first ten minutes o
 
 | # | Feature | Pad action | What the choreographer does | The cool | Systems | Cost | Test |
 | ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 23 | **The kick and the coin turn** (Research's 2; likely, not final) | Flat-out flight (LT) from a standstill, or a stick flip at speed | Nothing: it's the fighter's own flight. Top speed in about 2 ticks, and a flip plants him for 3 ticks with a thump, then he's gone the other way. §5's rule limits the overspeed | He leaves on the press. The floaty lag is the first thing a player feels on the new pad | Simulation, Controls, Audio. Sim, two hashed fields, behind a switch | S | Standstill to 95% in at most 4 ticks, a full flip in at most 12. Escapes and catches inside their bands. A masher flipping the stick gains nothing |
 | 1 | **Phrases, and the place finishes them** (Combat's 1 and 2) | X, Y or a stick direction, in short patterns. The same phrase, anywhere | The generator writes each fighter 8 to 12 phrases of 2 to 4 presses, fixed by seed. A press inside a phrase takes its next piece in place of the pool's draw, and one outside it falls back to the pool. The last blow reads about eight place classes once, and takes that class's ender from **existing pieces only.** Worth and timing don't change | A combo you can name and show a friend, which nobody wrote by hand, and the planet changes its last word | Combat's generator, Encounter, UI's training list. Sim, behind its own switch | M | Same presses and place, same pieces, over 1,000 seeded runs. Two fighters' lists overlap under 30% by piece. Eight classes give eight distinct enders. QA's worth band holds. Under 1 ms a string, with no new read at press time |
 | 2 | **Walk him to the wall** (my string walk, §15's lever 1 and Combat's 3) | Lean the **left stick** toward a standing building during a string, then a knock-back or B | Each blow's carry leans him up to 1 bh onto the line to it, and prefers `links` that travel that way, reading the building once a string. The send then follows `buildings.md` §6.1's ladder, a plain send or a power send | "I walked him into that tower", with no learned input. Every brawl in town starts breaking the town, from tier 1 | Encounter, Combat, World. Sim | S to M | After 3 or more blows with the lean, at least 70% of Bs reach it. §15's rows: 4 to 8 sends and 2 to 5 wall slams a match. Worth identical. Match length and the civilian band hold |
-| 3 | **The long strike** | Flat out (hold LT) toward the rival, then B or a right-stick flick | Stages the arrival at flying speed. The blow keeps the speed on arrival and the send is up to ×1.25. A whiff carries him about 1 s past | Flying has a payoff: leave, turn and come back like a thrown spear. The defender has seconds and a visible line to answer | Encounter, Combat, Camera. Sim | S to M | Never the best button: a scripted long-striker wins no more than the medium arm. A perfect block stops it, and the hard AI punishes a whiff at least 70% of the time. Flee time doesn't rise |
 | 4 | **Flight lines** (§1) | Flat out and held steady, at tier 3 and up | Nothing: it's the fighter's own energy | Speed and power can be read from across the planet | VFX, Rendering, Performance. View | S to M | §1's reads. Hash identical with it on or off. Both flash modes, side-by-side, a still that tells all four apart |
 | 5 | **The meteor launch, one curve** (§2), **with ignition** (Combat's 5) | Hold B to the flash and release it on a stunned or weak foe, with both at tier 4. The stick picks the side. **Or:** a level 3 stick strike upward, then B | Picks the landing, runs the curve and the shot, and leaves the launcher to chase or wait. At both tier 4 only, a level 3 upward stun banks charge: B's full mark drops to 24 ticks inside that stun | Orb's picture, and the whole power ladder's payoff. The stick's 54 bare ticks become the route to it | Encounter, Simulation, Camera, VFX, Research. Sim | M | §2's tests. The ignition route lands in a scripted tier 4 run. About one match in two or three stands. **A training start with both at tier 4,** so players and QA can reach it |
-| 6 | **The pad keeps the beat** | Nothing new: it reads the pad's rumble | Sends a cue on a clash pulse, a wall slam, a jolt, flat-out flight and the meteor's kick and landing, using the kinds Controls has built | You feel a pulse and a landing through the hands when the picture is far away | Controls, UI host. View | S | Never the only cue. An off switch and a strength setting. Hash identical. Reads right on a pad in the web build |
+| 6 | **The press and the pad answer at once** (with Research's 3; likely, not final) | Any press, and the pad's rumble | The view answers a press on its own frame: the first frames of anticipation, a 1% eased push and the first sound, only on presses the sim's rules would accept. The pad cues a clash pulse, a wall slam, a jolt and the meteor's kick and landing, on the kinds Controls has built | The game stops feeling as if it's waiting, and you feel a landing when the picture is far away. It also hides the stick's 2-tick settle | Animation, Camera, Audio, Controls, UI host. View | S | Press to first change is 1 frame plus the browser's delay, counted on a recording. A refused press settles with no misleading tell. Rumble is never the only cue and has an off switch. Hash identical |
 
-**The build order:** 2, 4, 3, 6, 1, and 5 last, because it depends on the most parks. The curve in row 5 can reach the prototype first, today.
+**Still six.** The kick came in, the press joined the pad's row, and the long strike moved to the top of Next. **The build order:** 23, 6, 2, 4, 1, and 5 last, because it depends on the most parks. **Rows taken from Research's pitches are likely rather than final, since Orb is trying them with a pad.**
 
 ### Next: straight after the first playable
 
 | # | Feature | Pad action | What the choreographer does | The cool | Systems | Cost | Test |
 | ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 24 | **The low line** (Research's 1; likely, not final) | Flat out with the stick level | Pulls him down to skim what's under his line, with §5's tower rule, plus a wider lens and a look-ahead up to the look gate's limit | Far more rush for no extra speed, with towers whipping past | Simulation, Camera, Rendering. Sim, hashed | S to M | Never under the ground. Vertical speed under a limit. The stick wins on its tick. Hash and rollback gates. Orb's eye on the lens |
+| 25 | **Fly into night** (Research's 4) | Keep flying | The sun is fixed to the planet, so 4 to 8 s of flat-out flight takes you to night, with windows coming on | No meter says "you crossed a planet" as plainly | Rendering, Art, VFX. View | S | The look gate with fighters at night. A swing's 60°/s across the sunset, read by the flash clips. Legal, §5 |
+| 3 | **The long strike** | Flat out (hold LT) toward the rival, then B or a right-stick flick | Stages the arrival at flying speed. The blow keeps the speed on arrival and the send is up to ×1.25. A whiff carries him about 1 s past | Flying has a payoff: leave, turn and come back like a thrown spear. The defender has seconds and a visible line to answer | Encounter, Combat, Camera. Sim | S to M | Never the best button: a scripted long-striker wins no more than the medium arm. A perfect block stops it, and the hard AI punishes a whiff at least 70% of the time. Flee time doesn't rise |
+| 26 | **Aim the send in the freeze** (Research's 8, on the left stick) | Left stick during the meteor's 16-tick freeze | Picks the landing nearest where it points, with the launcher's body and a small camera lean showing it. The director still scores them | You choose which city he lands on, at the peak | Encounter, Controls, Netcode. Sim | S to M | The claw bot shows no gain. The choice lands on most meteors. Never people (RL-213) |
+| 27 | **The shock leaves during the freeze** (Research's 5) | Nothing new | A ring runs out through land and cloud during the hit-stop, from tier 3, at most two at once and zero near the fighters | Weight, with no pause added and no slow motion | Rendering, VFX. View | S to M | Never over a fighter. Flash clips, then Legal's reading. Feature 15's limits hold |
 | 7 | **The apex spike** | Chase up the trail (hold LT or hold the press), then B as he slows at the top | Meets him at the hang, with the planet filling the frame, and sends him down the rest of the curve, landing earlier | The launcher gets to be in Orb's picture too | Encounter, Camera, Animation. Sim | M | One curve holds. Inside the 20 s rule. A KO can't come from it alone. Under half of meteors, since waiting has to stay a real choice |
 | 8 | **Steer your fall** | The sent fighter's left stick, while coming down | Moves the landing inside its band, at most ±10%, re-solved without a kink | The victim has something to do for 6 s: into the sea or into the city | Encounter, Simulation. Sim | M | Curve tests hold. It never reaches past the band. Works beside the brake with no extra button |
 | 9 | **Your hands** (Combat's 7) | Whatever you've been doing | `DirAlchemy`'s read of the last presses picks the next ender's accent: fast for a masher, a clean stop for a timer, a big wind-up for a holder | Two players on one fighter end up with fights that look like their own | Combat, Encounter. Sim | S | Three scripted players give three distinct ender histograms. Worth unchanged to the bit |
@@ -146,6 +151,7 @@ Six, because each answers something a player will try in the first ten minutes o
 | 20 | **The lab run** (`game-design.md` §14) | Bolus's own command | Waits for Bolus to be built |
 | 21 | **Clamp and carry, and each fighter's own stick verbs** (Combat's 10) | After a stick stun, hold the stick toward him, then aim and release or press B | Waits for the fighters. It's the pattern for fighter-only verbs, and Bolus's stays inside RL-220's forms |
 | 22 | **Thrown vehicles and ships** (feature 17) | A in reach, then X, Y or B | Needs props on the new ground |
+| 28 | **The cloud scar** (Research's 7) | Fly through the clouds | M for a nice touch, and the lower levels may have no clouds. It waits for the widest view to be settled |
 
 ## 4. What every feature keeps
 
@@ -182,9 +188,39 @@ Six, because each answers something a player will try in the first ten minutes o
 
 **One line that changes for phrases:** `melee-press-feel.md` §8's "no two strings look alike" holds for everything outside a phrase. Inside one, repeating is the point, and freshness is what stops it being spammed.
 
-### Controls' and Research's
+### Research's (`research/rule-of-cool/pitches.md`), ruled
 
-`docs/controls/rule-of-cool-pitches.md` and `research/rule-of-cool/pitches.md` didn't exist when this was written. I'll rule on them here when they do, and a stronger idea can replace a row, but the must list stays at about six.
+**Likely, not final:** Orb is trying the first two with a pad, and their word replaces anything here.
+
+| Pitch | Ruling | Where |
+| :--- | :--- | :--- |
+| 1 The low line | **Next, first in line, with the tower rule below.** It isn't a flight line, since it moves him | Row 24 |
+| 2 The kick and the coin turn | **Yes, must, with the limit below.** Response is Orb's first word in this order | Row 23 |
+| 3 The press answers in one frame | **Yes, must, folded into the pad's row,** since they touch the same places | Row 6 |
+| 4 Fly into night | **Next, not must, though it can be in the build on a switch for Orb.** It's the one pitch here that can make a fight look worse, and nobody has seen fighters at night. **For Legal:** feature 12 says the sky never darkens. Night here follows where you are and never a fighter's power, so I think it's fine, but Legal should say | Row 25 |
+| 5 The shock leaves during the freeze | **Next** | Row 27 |
+| 6 A speedometer in your hands | **Folded into row 6, once the low line exists.** A light tick per building, sparing and chunky, and no constant purr | Row 6 |
+| 7 The cloud scar | **Later** | Row 28 |
+| 8 Aim the send in the freeze | **Next, moved to the left stick.** On the right stick it breaks the claw law: a thumb needs about 12 of the 16 ticks to travel from B, while a claw's thumb is already there. The left thumb is always in place, and §2 already gives it the side | Row 26 |
+
+**The tower rule for the low line.**
+- **He hops by default, for every fighter.** Over a place, the height reads roofs as well as ground, but only what's **on his line,** within about a body height of it. A tower beside the line stays beside it, so a street keeps him low with towers whipping past, and that's the picture to protect.
+- **In a place, he looks further ahead:** up to about 0.4 s, not 0.14 s, since a climb over a tall roof at this speed needs the room. Clearance over a roof is 140 units, as over ground.
+- **The low line itself never causes contact, and pays nothing:** no crash, no damage and no collateral from a hop. It reads structures only, with no care term and no people (RL-213).
+- **A held stick wins.** If a player pushes down into a tower, that's his own flight, so §8 of `game-design.md` applies: at tiers 1 and 2 he stops at the face with no damage and slides up and over, and at tiers 3 and 4 he ploughs through on the plain-send ladder, losing speed, inside the chain caps. **So smashing through at speed is a choice he makes, and it's earned by power.** Flying into a wall by accident can't happen with the stick level.
+- **When it's on:** flat out with the stick held level, and the rival out of reach, as §13's nudge. It pulls only up and down, and it never changes his heading.
+
+**The kick in escapes and catches.** By arithmetic, the overspeed is worth about 800 units at a 6,100 top speed, and the lost lag about 1,200 more: **about 2,000 units, roughly 27 body heights, on today's start.** An escape is ruled a gamble (pillar 3), so that can't be free. Response isn't the problem, though; overspeed is. So:
+- **Reaching top speed in about 2 ticks is free, always.** No ki and no cooldown, because this is the responsiveness Orb asked for.
+- **The overspeed above 100% depends on where he's going.** Toward the rival, always: an attack closes. Away from a rival inside charge range, or out of a brawl, **none:** he leaves instantly, at top speed, and the chaser's own kick reaches him. Beyond charge range, both ways, since nobody's escaping anybody.
+- **It softens with repeats:** the third kick inside 3 s has no overspeed, as the third slip of a direction loses its frames. No cooldown.
+- **It doesn't stack** with the zip away or the vanish, which keep their own prices. For about 30 ticks after one, there's no overspeed away.
+- **The coin turn has no invulnerability.** He can be hit in the plant, and that's its price.
+- **QA's rows:** escapes and catches stay inside their bands, and flee time doesn't rise. **If it's still too good, cut the overspeed before touching the response.**
+
+### Controls'
+
+`docs/controls/rule-of-cool-pitches.md` didn't exist when this was written. I'll rule on it here when it does, and a stronger idea can replace a row, but the must list stays at about six.
 
 ## 6. For Orb
 
