@@ -35,6 +35,8 @@ Ticks are counted from the stick's crossing, as in Controls' §1. A stick reques
 
 ## 2. The quick strike and the charged strike
 
+**Amended 2026-11-01 (`rule-of-cool-map.md` §5): the wind-up is 7, settle 1, commitment still 14, and the blow lands at the later of the wind-up's end and the stick's return.** Numbers below that say 10 and 12 are as first ruled. From the same physical moment, 10 lost to Y.
+
 **The quick strike** (level 0: the stick is back under `off` before tick 12; first values from v3's 4a, as Orb played it):
 - **Timing.** Its wind-up starts at the request (tick 2) and lasts 10 ticks (v3's 4a), so it lands on tick 12. A stick still out at `D` (tick 12) turns the same wind-up into the charge (R4: a hold is its flick, continued). Nothing waits, and a slow thumb never misfires.
 - **Commitment:** 14 ticks from the request, meaning the 10-tick wind-up and 4 of recovery. It is longer than Y's 12 and shorter than B's 24, and well over `L` (6), so the strike-to-button link hides the lockout. **It is the quickest stick pitch, so it leans hardest on the law** (§1).

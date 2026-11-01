@@ -16,7 +16,7 @@
 // profile, so no prompt is expected; the report says what was and was not tried).
 import { createServer } from 'node:http';
 import { createReadStream, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { networkInterfaces } from 'node:os';
+import { networkInterfaces, tmpdir } from 'node:os';
 import { dirname, extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -26,7 +26,7 @@ const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv
 const SITE = opt('--site') ? resolve(opt('--site')) : null;
 const PORT = Number(opt('--port', 8780));
 const MINUTES = Number(opt('--minutes', 45));
-const OUT = resolve(opt('--out', join(HERE, 'reports')));
+const OUT = resolve(opt('--out', join(tmpdir(), 'oldpc-reports')));   // outside the repo: only the numeric result is kept, and only here
 const ALIAS = opt('--alias', '');
 const GO = argv.includes('--go');
 let BIND = opt('--bind', '');
@@ -51,6 +51,8 @@ if (!BIND) {
   else { console.error(`\n--bind <address> is required (${homes.length} home-network candidates): pick the one the old PC can reach`); process.exit(2); }
 }
 const bindInfo = cands.find((c) => c.address === BIND);
+if (bindInfo && /zerotier|vpn|virtual|vethernet|tailscale|hamachi/i.test(bindInfo.name)) { console.error(`
+${BIND} is on "${bindInfo.name}", an overlay or virtual network. Legal's RL-224 allows the home address only: no ZeroTier or other member network, no tunnel. Pick the home adapter's address.`); process.exit(2); }
 const isLoop = BIND === '127.0.0.1';
 if (!isLoop && !bindInfo) { console.error(`\n${BIND} is not an address of this PC`); process.exit(2); }
 const prefix = isLoop ? '127.' : BIND.split('.').slice(0, 3).join('.') + '.';

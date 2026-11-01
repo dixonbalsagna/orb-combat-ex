@@ -159,7 +159,7 @@
   }
   function textReport(s, m, tr) {
     var L = [];
-    L.push('Orb Combat EX old PC test, ' + R.when);
+    L.push('Orb Combat EX old PC test, ' + R.when + '. A speed reading, not a flash reading.');
     L.push('graphics: ' + m.renderer + ' (' + m.vendor + ')' + (m.software ? '   [SOFTWARE DRAWING]' : ''));
     L.push('browser: ' + m.ua);
     L.push('cores ' + m.cores + ', memory ' + m.memGB + ' GB (browser rounds, caps at 8), screen ' + m.screen + ' at ' + m.dpr + 'x, game window ' + m.win);
@@ -201,8 +201,15 @@
   }
   // a tab hidden or minimised stops the frame clock: say so instead of reporting a false result
   document.addEventListener('visibilitychange', function () { if (document.hidden && phase === 'measure') R.hiddenDuringMeasure = (R.hiddenDuringMeasure || 0) + 1; });
+  // RL-224: before anything loads, the person is told what this is and what it is not; the game's own flashing-effects warning then shows in the game window and is never skipped (this page passes the game no skip word)
+  function gate() {
+    $('panel').className = 'show';
+    $('panelBody').innerHTML = '<h1>Old PC test</h1><p>Before it starts:</p><ul><li>The game shows its <b>flashing-effects warning</b> when it opens. Read it. It has a <b>Reduce flashing</b> choice: use it if you want. This test does not skip the warning.</li><li><b>Only you watch the screen.</b> Nobody else in the room, no guest, while it runs.</li><li><b>No photos, screenshots or recordings.</b> Only the numbers this page reports go anywhere, to the other computer.</li><li>This is a <b>speed reading</b>, not a flash reading.</li></ul><button id="begin" type="button">Start the test (only I am watching)</button>';
+    $('begin').addEventListener('click', function () { $('panel').className = ''; t0 = performance.now(); go(); });
+    say('Waiting for you to read the notes.');
+  }
   window.__oldpc = R;
-  go();
+  gate();
 })();
 </script>
 </body>

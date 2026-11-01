@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const html = readFileSync(fileURLToPath(new URL('./page.html', import.meta.url)), 'utf8');
 const code = /<script>([\s\S]*)<\/script>/.exec(html)[1];
 let now = 0; const timers = []; const raf = [];
-const els = {}; const el = (id) => (els[id] ||= { id, style: {}, className: '', textContent: '', innerHTML: '', value: '', addEventListener() {}, select() {}, contentWindow: null });
+const els = {}; const el = (id) => (els[id] ||= { id, style: {}, className: '', textContent: '', innerHTML: '', value: '', addEventListener(ev, fn) { (this.handlers ||= {})[ev] = fn; }, select() {}, contentWindow: null });
 const game = el('game'); game.contentWindow = { __preview: undefined };
 const sent = [];
 class XHR { open(m, u) { this.m = m; this.u = u; } setRequestHeader() {} send(b) { sent.push([this.m, this.u, JSON.parse(b)]); setTimeout(() => { this.status = 200; this.onload && this.onload(); }, 0); } }
@@ -21,6 +21,9 @@ const ctx = {
 };
 ctx.window = ctx; vm.createContext(ctx);
 vm.runInContext(code, ctx);
+if (!els.begin || !els.begin.handlers || !els.begin.handlers.click) { console.error('FAIL: the page did not offer the notes and a Start button first'); process.exit(1); }
+if (game.src) { console.error('FAIL: the game was loaded before the person pressed Start'); process.exit(1); }
+els.begin.handlers.click();
 // drive: 60 fps frames for a game that starts ticking at 20 s (the click), a 25 ms hitch at 40 s
 let tick = 0, lastTimer = 0;
 for (let step = 0; step < 90000 && sent.length === 0; step++) {
