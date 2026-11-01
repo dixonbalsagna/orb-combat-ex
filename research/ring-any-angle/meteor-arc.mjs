@@ -1,8 +1,11 @@
-// The meteor's arc, as closed forms: the reference for docs/world/ring-any-angle/meteor-arc.md and for proto v2's arcBuild, arcClock, arcQ and arcAt.
-// node research/ring-any-angle/meteor-arc.mjs           the table by tier, the shape's numbers, the checks
+// The meteor's arc, as closed forms: the reference for docs/world/ring-any-angle/meteor-arc.md and for proto v2's gdAt (the default), arcBuild, arcClock, arcQ and arcAt (the parabola it's compared with).
+// node research/ring-any-angle/meteor-arc.mjs           the parabola's table by tier, the shape's numbers, the checks, and today's law
 // Nothing here needs more than + - * / sqrt, sin, cos and atan2, so it ports to the sim's float64 maths. Heights are above sea level; the plane is the great circle's, its origin the planet's centre.
 
 const CIRC = 153600, RP = CIRC / (2 * Math.PI), RAD = Math.PI / 180;
+
+// Game Design's curve (docs/design/rule-of-cool-map.md section 2): t 0 to 1 over the flight, c the apex's share of the time, D = 1.551 H. Returns distance along the line and height.
+export function gd(t, H, g0, gL, c = 3.6 / 6.2, D = 1.551 * H) { const ua = 0.5805, e = t < c ? Math.tan(Math.PI / 4 * (1 - t / c)) : Math.tan(Math.PI / 4 * (t - c) / (1 - c)), u = t < c ? ua * (1 - e) : ua + (1 - ua) * e, w = u - 0.328 * u * (1 - u); return { s: D * u, y: g0 + (gL - g0) * u + 4 * H * w * (1 - w) }; }
 
 // The path: a quadratic Bezier, which is exactly a parabola, from the launcher's ground to the landing's ground.
 export function build(D, top, g0, gL, lean = 0, R = RP) {
