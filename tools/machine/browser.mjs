@@ -125,6 +125,64 @@ function killTreeByProfile(profile) {
 }
 
 /**
+ * The Windows command line for these arguments, quoted the way CommandLineToArgvW reads it back (a plain word as it is; else in quotes, every quote escaped, the backslashes before a quote doubled, a trailing run doubled).
+ * winSplit is the reader: the two are used together to prove, before anything is spawned, that the line Chrome will be given is exactly the flags (2026-11-01: a flag with a space put the whole command line into one data directory).
+ */
+export function winQuote(args) {
+  return args.map((a) => {
+    if (a === '') return '""';
+    if (!/[\s"]/.test(a)) return a;
+    let out = '"', bs = 0;
+    for (const ch of a) {
+      if (ch === '\\') { bs++; continue; }
+      if (ch === '"') { out += '\\'.repeat(bs * 2 + 1) + '"'; bs = 0; continue; }
+      out += '\\'.repeat(bs) + ch; bs = 0;
+    }
+    return out + '\\'.repeat(bs * 2) + '"';
+  }).join(' ');
+}
+export function winSplit(line) {
+  const args = [];
+  let i = 0;
+  const n = line.length;
+  while (i < n) {
+    while (i < n && (line[i] === ' ' || line[i] === '\t')) i++;
+    if (i >= n) break;
+    let cur = '', inq = false;
+    while (i < n) {
+      let bs = 0;
+      while (i < n && line[i] === '\\') { bs++; i++; }
+      if (i < n && line[i] === '"') {
+        cur += '\\'.repeat(Math.floor(bs / 2));
+        if (bs % 2) { cur += '"'; i++; } else if (inq && line[i + 1] === '"') { cur += '"'; i += 2; } else { inq = !inq; i++; }
+      } else {
+        cur += '\\'.repeat(bs);
+        if (i >= n) break;
+        if (!inq && (line[i] === ' ' || line[i] === '\t')) break;
+        cur += line[i]; i++;
+      }
+    }
+    args.push(cur);
+  }
+  return args;
+}
+/** Refuses, before any browser or helper exists, flags that cannot be passed safely: a non-string, an empty one, a line break or NUL, or the launcher's own --user-data-dir. */
+export function assertSafeFlags(flags) {
+  if (flags === undefined) return;
+  if (!Array.isArray(flags)) throw new Error('browser flags refused before any browser was started: flags is not a list');
+  flags.forEach((f, i) => {
+    if (typeof f !== 'string' || f === '') throw new Error(`browser flags refused before any browser was started: flag ${i} is not a non-empty string (${JSON.stringify(f)})`);
+    if (/[\r\n\0]/.test(f)) throw new Error(`browser flags refused before any browser was started: flag ${i} has a line break or a NUL (${JSON.stringify(f).slice(0, 80)})`);
+    if (/^--user-data-dir(=|$)/.test(f)) throw new Error('browser flags refused before any browser was started: --user-data-dir belongs to the launcher (it makes, checks and removes the profile folder); pass no data directory');
+  });
+}
+/** On Windows the quoted line must read back to exactly the flags: else a start that would hand Chrome one wrong argument is an error here, not a dialog on a desktop. */
+export function assertWindowsRoundTrip(flags) {
+  const back = winSplit(winQuote(flags));
+  if (back.length !== flags.length || back.some((a, i) => a !== flags[i])) throw new Error(`browser start refused before any browser was started: the flags do not survive Windows quoting (${flags.length} flags read back as ${back.length}); the first that differs: ${JSON.stringify(flags.find((a, i) => a !== back[i]))}`);
+}
+
+/**
  * Starts a browser with the guards above and returns { target, port, close(), profile, id, deadlineMs }. `target` is the first page target (connect with Cdp.open(target.webSocketDebuggerUrl)).
  * Options: exe (path), flags (extra command line flags: window size, GPU flags), session, purpose, timeoutS (default 5400: the hard limit), cpuPercent (default 25; 0 is no cap),
  * exitOnDeadline (default true: the hard end also ends this process with exit code 124; false only for a test of the guard itself), priority ('below-normal' by default; 'normal' only for a check that must not wait behind a busy machine), log (a function), portWaitMs, attempts, graceS (start-up allowance on top of the limit, default 180), headless (default true).
@@ -135,6 +193,7 @@ export async function launchBrowser(o = {}) {
   const log = o.log || ((m) => console.log(`[capture] ${m}`));
   const session = slug(o.session || process.env.MERIDIAN_SESSION, 'nosession');
   const purpose = slug(o.purpose, 'capture');
+  assertSafeFlags(o.flags);   // before anything is made: a flag that cannot be passed safely is an error, never a dialog
   const timeoutS = Number(o.timeoutS || 5400);
   // Software rendering (SwiftShader) cannot take an affinity mask: a page under ANY mask (94%, 75%, 50%, 25% of the cores) never answers a screenshot, with the same page at no mask
   // done in 43 s (measured 2026-10-13). A software browser therefore runs on every core at IDLE priority, which yields to everything else and is still bounded by the time limit and the job.
@@ -181,6 +240,7 @@ export async function launchBrowser(o = {}) {
     const deadlineMs = Date.now() + (timeoutS + graceS) * 1000;
     const flags = [`--user-data-dir=${profile}`, '--remote-debugging-port=0', ...(o.headless === false ? [] : ['--headless=new']), '--no-first-run', '--no-default-browser-check', '--disable-extensions',
       '--noerrdialogs', '--disable-sync', '--disable-component-update', '--hide-scrollbars', '--mute-audio', ...(process.env.CI ? ['--no-sandbox'] : []), ...(o.flags || []), 'about:blank'];
+    if (win) assertWindowsRoundTrip(flags);   // the line the helper will quote is read back by the Windows rules: exactly these flags, or nothing starts
     const entry = { session, purpose, id, profile, registry, exe, parentPid: process.pid, startedAt: Date.now(), deadlineMs, timeoutS, cpuPercent, state: 'running', cwd: process.cwd(), argv: process.argv.slice(1).join(' ').slice(0, 300) };
     writeFileSync(registry, JSON.stringify(entry, null, 2) + '\n');
     try { prepareProfile(profile); } catch (e) { last = e.message; try { rmSync(registry, { force: true }); } catch { /* gone */ } log(`browser launch attempt ${attempt} of ${attempts} failed: ${last}${attempt < attempts ? '; trying again' : ''}`); continue; }   // once more, the moment before it starts

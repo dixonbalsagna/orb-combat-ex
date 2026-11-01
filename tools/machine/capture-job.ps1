@@ -13,7 +13,8 @@ param(
   [int]$CpuPercent = 25,
   [ValidateSet('BelowNormal', 'Normal', 'Idle')][string]$Priority = 'BelowNormal',
   [int]$IdleSeconds = 0,
-  [string]$Registry = ''
+  [string]$Registry = '',
+  [switch]$DryRun
 )
 $ErrorActionPreference = 'Stop'
 $src = @'
@@ -100,11 +101,39 @@ function Note([string]$state, [string]$reason) {
   } catch { }
 }
 
+# One argument, quoted the way Windows reads a command line back (CommandLineToArgvW): none for a plain word, else in quotes with every quote escaped, the backslashes before a quote doubled and a trailing run of
+# backslashes doubled. (2026-11-01: the old one-line test wrapped the WHOLE argument list in one pair of quotes as soon as any flag held a space: Chrome got its command line as one data directory.)
+function Quote-Arg([string]$a) {
+  if ($a.Length -gt 0 -and $a -notmatch '[\s"]') { return $a }
+  $sb = New-Object System.Text.StringBuilder
+  [void]$sb.Append('"')
+  $bs = 0
+  foreach ($ch in $a.ToCharArray()) {
+    if ($ch -eq [char]92) { $bs++; continue }
+    if ($ch -eq [char]34) { [void]$sb.Append([string]::new([char]92, $bs * 2 + 1)); [void]$sb.Append('"'); $bs = 0; continue }
+    if ($bs -gt 0) { [void]$sb.Append([string]::new([char]92, $bs)); $bs = 0 }
+    [void]$sb.Append($ch)
+  }
+  if ($bs -gt 0) { [void]$sb.Append([string]::new([char]92, $bs * 2)) }
+  [void]$sb.Append('"')
+  return $sb.ToString()
+}
+# The arguments, as a LIST of strings: Windows PowerShell 5.1's ConvertFrom-Json gives an array back as ONE object, so it is walked, not piped. Anything that is not a plain string (or has a line break) stops here, before a job or a browser exists.
+$raw = Get-Content -LiteralPath $ArgsFile -Raw | ConvertFrom-Json
+$list = @()
+foreach ($x in $raw) { $list += ,$x }   # the comma keeps a nested array one element, so the string check below catches it
+foreach ($x in $list) {
+  if (($x -isnot [string]) -or ($x -match '[\r\n\0]')) {
+    [Console]::Error.WriteLine("capture-job: refusing to start: every argument must be one plain string without a line break (got [$x])")
+    if (-not $DryRun) { Note 'ended' 'bad-args' }
+    exit 3
+  }
+}
+$quoted = ($list | ForEach-Object { Quote-Arg $_ }) -join ' '
+if ($DryRun) { Write-Output $quoted; exit 0 }
+Remove-Item -LiteralPath $ArgsFile -Force -ErrorAction SilentlyContinue
 $prio = switch ($Priority) { 'Idle' { [uint32]0x40 } 'BelowNormal' { [uint32]0x4000 } default { [uint32]0 } }
 [CapJob]::Create($CpuPercent, $prio)
-$list = @(Get-Content -LiteralPath $ArgsFile -Raw | ConvertFrom-Json)
-Remove-Item -LiteralPath $ArgsFile -Force -ErrorAction SilentlyContinue
-$quoted = ($list | ForEach-Object { if ($_ -match '[\s"]') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ } }) -join ' '
 $psi = New-Object System.Diagnostics.ProcessStartInfo
 $psi.FileName = $Exe
 $psi.Arguments = $quoted

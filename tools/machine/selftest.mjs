@@ -1,4 +1,6 @@
 // Proves the capture guards on this machine (docs/tools/machine-captures.md): `node tools/machine/selftest.mjs [--quick]`. Starts real browsers through tools/machine/browser.mjs and checks:
+//   0  (no browser; --quote-only runs just this) the launcher's quoting: the flags survive Windows quoting exactly (a flag with a space, a quote, a trailing backslash), the PowerShell helper's dry run builds the same line, and a flag that cannot be
+//      passed safely is refused before any browser or helper exists (2026-11-01: a flag with a space made Chrome's whole command line its data directory and put a box on Orb's screen)
 //   1  a normal launch and close leaves no process and no profile folder behind
 //   1b the profile folder is made and proven writable before a browser starts (a folder that cannot be made is a plain error naming it), the browser carries --noerrdialogs, and a start that fails leaves
 //      no folder behind (2026-10-27: "Failed To Create Data Directory", a modal on a desktop)
@@ -11,10 +13,11 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { platform, cpus, tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Cdp, launchBrowser, prepareProfile, processesWithProfile } from './browser.mjs';
+import { Cdp, launchBrowser, prepareProfile, processesWithProfile, winQuote, winSplit, assertSafeFlags } from './browser.mjs';
 
+const here = dirname(fileURLToPath(import.meta.url));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const quick = process.argv.includes('--quick');
 const win = platform() === 'win32';
@@ -35,6 +38,67 @@ async function waitGone(profile, ms) {
   while (Date.now() - t0 < ms) { if (treeOf(profile).length === 0) return Date.now() - t0; await sleep(1000); }
   return -1;
 }
+
+// 0
+{
+  const prof = 'C:\\Users\\Old PC\\AppData\\Local\\Temp\\cap-selftest-quote-000000';
+  const CASES = {
+    'the launcher\'s own flags': [`--user-data-dir=${prof}`, '--remote-debugging-port=0', '--headless=new', '--no-first-run', 'about:blank'],
+    'a profile path with a space': [`--user-data-dir=${prof}`, '--remote-debugging-port=0', 'about:blank'],
+    'a flag with a space (a user agent)': ['--user-data-dir=C:\\t\\cap-x', '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/156', 'about:blank'],
+    'a flag with quotes': ['--user-data-dir=C:\\t\\cap-x', '--x=a "b" c', 'about:blank'],
+    'a trailing backslash and a space': ['--user-data-dir=C:\\Old PC\\Temp\\cap-x\\', '--remote-debugging-port=0', 'about:blank'],
+    'backslashes before a quote': ['--a=b\\\\"c d', 'about:blank'],
+    'one flag': ['about:blank'],
+    'an empty argument': ['--x', '', 'about:blank'],
+  };
+  const jsBad = Object.entries(CASES).filter(([, f]) => { const b = winSplit(winQuote(f)); return b.length !== f.length || b.some((a, i) => a !== f[i]); }).map(([n]) => n);
+  check('0 every case reads back from its quoted line as exactly its flags (the launcher\'s own check, winQuote and winSplit)', jsBad.length === 0, jsBad.join('; '));
+  if (win) {
+    const dir = mkdtempSync(join(tmpdir(), 'qt-'));
+    const names = Object.keys(CASES);
+    const lines = [], errs = [];
+    for (const n of names) {
+      const f = join(dir, `a-${lines.length}.json`);
+      writeFileSync(f, JSON.stringify(CASES[n]));
+      const r = spawnSync('powershell', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', join(here, 'capture-job.ps1'), '-Exe', 'x.exe', '-ArgsFile', f, '-ParentPid', '1', '-DeadlineMs', '1', '-DryRun'], { encoding: 'utf8', timeout: 60000 });
+      if (r.status !== 0) errs.push(`${n}: exit ${r.status} ${String(r.stderr).trim().slice(0, 100)}`);
+      lines.push(String(r.stdout || '').replace(/\r?\n$/, ''));
+    }
+    // the Windows parser itself (shell32 CommandLineToArgvW), one call for every line: what Chrome would be given
+    const lf = join(dir, 'lines.json'), pf = join(dir, 'parse.ps1');
+    writeFileSync(lf, JSON.stringify(lines));
+    writeFileSync(pf, [
+      "param([string]$F)",
+      "Add-Type -TypeDefinition @'",
+      "using System; using System.Runtime.InteropServices;",
+      "public static class CL { [DllImport(\"shell32.dll\", SetLastError = true)] static extern IntPtr CommandLineToArgvW([MarshalAs(UnmanagedType.LPWStr)] string cl, out int n);",
+      "  public static string[] Split(string cl) { int n; IntPtr p = CommandLineToArgvW(\"x.exe \" + cl, out n); string[] r = new string[n - 1]; for (int i = 1; i < n; i++) r[i - 1] = Marshal.PtrToStringUni(Marshal.ReadIntPtr(p, i * IntPtr.Size)); return r; } }",
+      "'@",
+      "$all = Get-Content -LiteralPath $F -Raw | ConvertFrom-Json",
+      "$out = @(); foreach ($l in $all) { $out += ,@([CL]::Split([string]$l)) }",
+      "ConvertTo-Json -InputObject $out -Compress -Depth 4",
+    ].join('\n'));
+    const rp = spawnSync('powershell', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', pf, '-F', lf], { encoding: 'utf8', timeout: 60000 });
+    let parsed = [];
+    try { parsed = JSON.parse(rp.stdout.trim()); } catch { /* reported below */ }
+    const winBad = names.filter((n, i) => { const want = CASES[n]; const got = Array.isArray(parsed[i]) ? parsed[i] : (parsed[i] === undefined ? [] : [parsed[i]]); return got.length !== want.length || got.some((a, k) => a !== want[k]); });
+    check('0 the PowerShell helper\'s dry run builds a line Windows reads back as exactly the flags, on every case (a flag with a space made one argument of them all before the fix)', errs.length === 0 && winBad.length === 0 && parsed.length === names.length, [...errs, ...winBad].join('; ') || `${names.length} cases`);
+    const bad = join(dir, 'bad.json');
+    writeFileSync(bad, JSON.stringify(['--a', ['--nested', 'x'], 'about:blank']));
+    const rb = spawnSync('powershell', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', join(here, 'capture-job.ps1'), '-Exe', 'x.exe', '-ArgsFile', bad, '-ParentPid', '1', '-DeadlineMs', '1', '-DryRun'], { encoding: 'utf8', timeout: 60000 });
+    check('0 the helper refuses an argument that is not a plain string (exit 3, a message, no line built)', rb.status === 3 && /refusing to start/.test(String(rb.stderr)) && !String(rb.stdout).trim(), `exit ${rb.status}`);
+    rmSync(dir, { recursive: true, force: true });
+  }
+  const refuse = (flags) => { try { assertSafeFlags(flags); return ''; } catch (e) { return e.message; } };
+  check('0 a flag that is not a string, is empty, has a line break or NUL, or sets --user-data-dir is refused before any browser exists', /not a non-empty string/.test(refuse([{ a: 1 }])) && /not a non-empty string/.test(refuse([''])) && /line break/.test(refuse(['--x\ny'])) && /line break/.test(refuse(['--x\u0000y'])) && /belongs to the launcher/.test(refuse(['--user-data-dir=C:\\x'])) && /not a list/.test(refuse('--x')) && refuse(['--user-agent=a b', '--x="q"']) === '');
+  const foldersBefore = readdirSync(tmpdir()).filter((x) => x.startsWith('cap-selftest-')).length;
+  let msg = '';
+  try { await launchBrowser({ exe: join(tmpdir(), 'no-such-browser.exe'), session: 'selftest', purpose: 'refuse', flags: ['--ok', 'bad\nflag'], timeoutS: 30, log: () => {} }); } catch (e) { msg = e.message; }
+  const foldersAfter = readdirSync(tmpdir()).filter((x) => x.startsWith('cap-selftest-')).length;
+  check('0 a launch with an unsafe flag throws before it makes a profile folder or starts a helper', /refused before any browser was started/.test(msg) && foldersAfter === foldersBefore, `${msg.slice(0, 80)}; folders ${foldersBefore} to ${foldersAfter}`);
+}
+if (process.argv.includes('--quote-only')) { console.log(failed ? `capture quoting: ${failed} FAILED` : 'capture quoting ok'); process.exit(failed ? 1 : 0); }
 
 // 1
 {
