@@ -320,7 +320,7 @@ Below tier 3 nothing leaves the atmosphere (`rule-of-cool.md` rule 4), and 2,500
 
 ### The meteor launch
 
-**Re-ruled 2026-11-01 on Orb's reaction: `docs/design/rule-of-cool-map.md` §2 replaces this table's speed and time, where it lands, and "he comes down almost straight".** It's one authored curve, landing about 60° round, not 31°, and it replaces the flatter launch question below. The rest stands.
+**Re-ruled 2026-11-01 on Orb's reaction: `docs/design/rule-of-cool-map.md` §2 replaces this table's speed and time, where it lands, and "he comes down almost straight".** It's one written curve (`meteor-arc.md`): 60° up, 74° down, landing about 60° round by default, not 31°, with a parabola landing 36° round on a switch for Orb to compare. It replaces the flatter launch question below. The rest stands.
 
 **It's `rule-of-cool.md`'s feature 19, orbit and re-entry, in its top form, in the shared budget** of 3 planet-scale launches a match, with rule 2's 20 s between set pieces.
 

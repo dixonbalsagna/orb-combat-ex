@@ -50,41 +50,42 @@ Orb on the prototype: "the arc doesn't fully complete, the knocked-back fighter 
 
 **The cause is my own §12 and the game's law.** §12's three phases put 5% of the carry in the descent, which is the stop Orb saw. Under them, `stepLaunched` bleeds sideways speed at 0.55 a second, so a 6,600 send at 60° spends 97% of its carry by the apex and comes in at 90° (Research). **So the meteor doesn't run on that law. It flies a closed form: a written curve, not physics.**
 
-**Re-ruled 2026-11-01: the default is Research's curve, `docs/world/ring-any-angle/meteor-arc.md`. It's one parabola on the globe: 60° up, 60° down, 36° round, about 15,300 units, 6.2 s, with the crest at 3.5 s. I withdraw my curve as the default** (74° down, apex 58% along, 60° round). Research's has been flown and measured in the prototype, with the foe in frame for all of the hang and descent. Mine was arithmetic on a flat line, and it wasn't right on a globe: a true parabola that lands 60° round leaves at 43°, not 60°.
+**The default, closed by the EP on 2026-11-01: this curve as Research flew it, with Research's parabola on a switch for Orb to compare (`docs/world/ring-any-angle/meteor-arc.md`, which has the formula). Its pace needs `tan` (sine over cosine, on our own trig), not only polynomials, and the height carries Research's ground term, `(gL − g0)·u`, so he lands exactly on the ground.** Research and I each withdrew in favour of the other's curve at the same moment, so ignore my earlier withdrawal. Orb's eye decides from here.
+
+| | The default | First value |
+| :--- | :--- | :--- |
+| **The shape** | One formula with no phases: `w = u − 0.328·u·(1 − u)`, height `= g0 + (gL − g0)·u + 4·H·w·(1 − w)`, with `u` running 0 to 1 along the ground | Apex 58% along |
+| **Launch and landing** | 60° up, 74° down. The landing is `1.551 × H` | **About 25,400 units, 60° round a Whole ring,** replacing §12's 31°. It just fits ruling 3d's sixth of the loop, and a Half ring scales to the same angle |
+| **The pace** | `du/dt = k·(1 + e²)`: slowest at the apex, quickest at both ends. Written out, that's the tangent in Research's paper | 6.2 s, with the apex at 3.6 s |
+| **As drawn** | **It never stops.** About 13,600 u/s leaving, 21,700 arriving | **The crest reads about 5,800 u/s on screen,** not my paper's 3,200, because he's far out from the planet there. So the hang is a sweep rather than a float, and **Orb should judge that first.** Slowing the crest is one number |
+| **The sim** | Position comes from live ticks and constants, with no gravity to step and no forecast to run, and hit-stops don't advance it. `simulation.md` §10's longer forecast, launch-only ceiling and paced curve aren't needed | Rollback by reasoning only: Netcode's check should say |
 
 ### In frame or distance
 
-**In frame wins, as a rule, and reach is what moves inside it.** A show of power nobody can see isn't one. Both sides of Orb's "reach and spectacle" stay open on the same slider, the angle he leaves at:
+**In frame is the rule, and this default keeps both:** measured on the prototype, the foe's in frame for all of the hang and 94% of the descent, and the landing is visible on the far limb. My horizon risk is answered, so the 65° fallback is gone.
 
-| He leaves at | Lands | On this formula | What it gives | What it costs |
-| ---: | ---: | :--- | :--- | :--- |
-| **60° (the default)** | **36°, 15,300** | Measured in frame: hang and descent all | The tall arch. Both fighters and the planet in one picture at the crest. The launcher can close in about 2.5 s flat out | **Reach:** a tenth of the way round, so the fight often stays in the same region. It also looks more up than "diagonally up" |
-| 51° | 48°, 20,500 | Not measured | A clear diagonal, and a new place more often. My first stop if Orb wants more | Closing about 3.4 s. The camera has to sit about 1,100 units higher over the middle to keep the landing above the horizon |
-| 43° | 60°, 25,400 | Not measured | Orb's "diagonally up" most literally, and a sixth of the planet in one blow | Closing about 4.2 s, about 1.7 s more of the fight's time. The landing is the hardest to frame, and the camera must sit about 2,500 units higher. Ground has to be ready further away, which Performance hasn't read |
+| The switch | Lands | What it gives | What it costs |
+| :--- | :--- | :--- | :--- |
+| **This curve (the default)** | **60° round** | A sixth of the planet in one blow, and a big arc that keeps turning. It passes the turn test at 1.8 | The impact is on the limb, so it reads less head-on. 7 lost ticks of descent. The hang's a sweep. Closing takes about 4.2 s flat out, about 1.7 s more of the fight's time. Far ground has to be ready, which Performance hasn't read |
+| **The parabola** | 36° round | An impact more head-on, 120 of 120 descent ticks, and about 2.5 s to close | Only a tenth of the way round, so the fight often stays in the same region. It fails the turn test at 10 and the sideways test at 0.48: its turn bunches at the crest |
 
-**The limits on any value Orb picks:**
-- the foe is in frame for all of the hang and at least 90% of the descent, and the impact is always on screen;
-- both fighters are in the one picture at the crest;
-- the landing stays inside ruling 3d's sixth of the loop, so the game's slider stops at 60° round. **Past that is feature 22's job,** the planet crossing;
-- one curve holds, as below.
-
-**The sliders:** Research's angle needs to go down to 43° (it stops at 45). Its lean and crest timing reach my old shape: positive lean moves the crest later and steepens the fall. **Research reads the in-frame share at 51° and 43°, so the two blank cells above are filled before Orb tries it.** Orb's choice sets the data, and no question has to be asked first.
+**The limits on anything Orb picks:** the foe's in frame for all of the hang and at least 90% of the descent, the impact's on screen, both fighters are in one picture at the crest, and the landing stays inside the sixth of the loop. **Past that is feature 22's job,** the planet crossing.
 
 ### What else is ruled
 
 | | The ruling |
 | :--- | :--- |
-| **The form** | Research's Bézier and cubic clock, with `s0` 1.25, as written there. `D` by tier is data. Half and Close rings scale `R`, the height and `D` together |
-| **Buildings on the way** | **Research's open question.** He goes through them by tier 4's ladder and stays on the curve, up or down (`buildings.md` §6.1), so the towers he crosses pancake and the crater is beyond them. A send that ends in a building's lodge doesn't apply here |
-| **Terrain on the way** | From the crest on, the first contact with terrain is the landing, as Research has it. Before the crest he stays above it |
-| **Landings** | One candidate a side in the first build, by §11's score, never people (RL-213). Three a side, at 85 to 100% of `D`, if the landings read as dull. It's a few more ground reads |
-| **The crater, wear and the brake** | §12 stands: capped at tier 4's largest × 1.5, one impact of wear, not a KO. A brake leaves on the curve's own velocity, from the end of the hang. At least 60% land |
-| **The crater's shape** | Round for the first playable. A leaning blast for a 60° arrival is World's and VFX's, next |
+| **Buildings on the way** | He goes through them by tier 4's ladder and stays on the curve, up or down (`buildings.md` §6.1), so the towers he crosses pancake and the crater is beyond them |
+| **Terrain on the way** | From the apex on, the first contact with terrain is the landing. Before the apex he stays above it |
+| **Landings** | Up to three a side, at 85 to 100% of the range, by §11's score, never people (RL-213). One a side is fine in the first build. The stick picks the side |
+| **The crater, wear and the brake** | §12 stands: capped at tier 4's largest × 1.5, one impact of wear, not a KO. A brake leaves on the curve's own heading, from the end of the hang. At least 60% land |
+| **The crater's shape** | Round for the first playable. A leaning blast for a slanted arrival is World's and VFX's, next |
 
-**The tests, replacing my earlier ones.** My "fastest turn at most twice the slowest" would fail a good parabola, which turns fastest at its crest, so it's withdrawn:
-- the heading turns one way only, with no corner: the turn changes by at most 0.05° from tick to tick (Research reads 0.01°);
-- he never stops: sideways speed stays above half its mean until contact;
-- two runs give one hash, and a rollback across the flight re-runs clean;
+**The tests,** with Research's prototype reads:
+- from launch to contact, sideways speed never falls below half its mean (0.79);
+- the on-screen heading turns one way, and between 10% and 90% of the flight the fastest turn is at most twice the slowest (1.8);
+- speed never jumps between ticks (largest step 441 u/s, at about 20,000);
+- two runs give one hash, and a rollback across the flight re-runs clean (**not yet tested:** the prototype has no hash);
 - the limits above;
 - **Orb's eye, which decides it.**
 
@@ -92,12 +93,12 @@ Orb on the prototype: "the arc doesn't fully complete, the knocked-back fighter 
 
 **Yes, they should lose the same fault, by the closed form rather than less drag, behind a switch.** The fault is in every launch high enough to read: 5,000 at 45° still comes in at 89°, and that's what Orb meant by "our game physics".
 
-- **Which:** upward launches on Camera's ladder, from the 2,500 row up. Each flies its row of Research's table (carry 4,759 at tier 2, 8,040 at tier 3, 12,150 at tier 4). A launch that's low, flat or short, and every knock-back, stays physics, since its fall is too short to read.
+- **Which:** upward launches on Camera's ladder, from the 2,500 row up, on this same formula (`D` 3,878 at tier 2, 7,755 at tier 3, 15,355 at tier 4's 9,900 row). A launch that's low, flat or short, and every knock-back, stays physics, since its fall is too short to read.
 - **Why not less drag:** a change to one number moves the carry of every launch in the game, and so the planner's forecasts, §15's landings and every band. The closed form moves only the launches that have the fault, and it needs no forecast, so it may help the launch tick. That saving isn't measured.
 - **The order:** the meteor and the 9,900 row in the first playable. **Rows 2 and 3 come next, behind their own switch,** because it's a feel change. It waits on a cost from Encounter and Simulation, and a QA read of match length, §15's sends into buildings and the civilian band.
 - **What needs answering in that cost:** how a closed-form flight meets ground contact, bounces and a skim at low height, which physics handles today; and whether the planner's scores still hold with the new carries.
 
-**The question I put to Orb on §12, a second flatter launch, is withdrawn.** The slider answers it. The planet crossing stays feature 22.
+**The question I put to Orb on §12, a second flatter launch, is withdrawn.** The switch answers it. The planet crossing stays feature 22.
 
 ## 3. The map
 
