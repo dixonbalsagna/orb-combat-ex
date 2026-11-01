@@ -108,7 +108,7 @@ Every row keeps §4's rules. "Sim" means it needs hashed state and the rollback 
 
 ### Must: the first playable
 
-Seven, because each answers something a player will try in the first ten minutes on the new arena and pad.
+Eight, because each answers something a player will try in the first ten minutes on the new arena and pad.
 
 | # | Feature | Pad action | What the choreographer does | The cool | Systems | Cost | Test |
 | ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -118,9 +118,10 @@ Seven, because each answers something a player will try in the first ten minutes
 | 4 | **Flight lines** (§1), **with water's A1** (§5) | Flat out and held steady, at tier 3 and up. Crossing water at any tier | Nothing: it's the fighter's own energy, and the sea answering | Speed and power can be read from across the planet, and every dive, skim and slam reads as water | VFX, Rendering, Performance. View | S to M | §1's reads. Hash identical with it on or off. Both flash modes, side-by-side, a still that tells all four apart |
 | 5 | **The meteor launch, one curve** (§2), **with ignition** (Combat's 5) | Hold B to the flash and release it on a stunned or weak foe, with both at tier 4. The stick picks the side. **Or:** a level 3 stick strike upward, then B | Picks the landing, runs the curve and the shot, and leaves the launcher to chase or wait. At both tier 4 only, a level 3 upward stun banks charge: B's full mark drops to 24 ticks inside that stun | Orb's picture, and the whole power ladder's payoff. The stick's 54 bare ticks become the route to it | Encounter, Simulation, Camera, VFX, Research. Sim | M | §2's tests. The ignition route lands in a scripted tier 4 run. About one match in two or three stands. **A training start with both at tier 4,** so players and QA can reach it |
 | 6 | **The press and the pad answer at once** (with Research's 3; likely, not final) | Any press, and the pad's rumble | The view answers a press on its own frame: the first frames of anticipation, a 1% eased push and the first sound, only on presses the sim's rules would accept. The pad cues a clash pulse, a wall slam, a jolt and the meteor's kick and landing, on the kinds Controls has built, plus each rung of a stick charge and, for the defender, a rival's strike starting (Controls' 1 and 3) | The game stops feeling as if it's waiting, and you feel a landing when the picture is far away. It also hides the stick's 2-tick settle | Animation, Camera, Audio, Controls, UI host. View | S | Press to first change is 1 frame plus the browser's delay, counted on a recording. A refused press settles with no misleading tell. Rumble is never the only cue and has an off switch. Hash identical |
+| 42 | **A far press follows him** (the fun check, §5) | After you send him, tap X, Y or B | For about 2.5 s after a send or knock-back you threw, a far tap flies you after him rather than taunting, at the far band's existing price. Otherwise a far tap's still the taunt | The first thing anyone does after a launch is press again, and now it works | Encounter, Controls. Sim, small | S | A scripted masher closes on a sent rival. Flee and chase rows hold. Taunts still happen in neutral. Row 34's lob and bolts come first in RB |
 | 40 | **Beams that travel, and the window to answer** (Orb; §5) | RB + stick fires. Answer with RB + stick, a dodge tap or a guard press before the front arrives | Runs the front by level, range and fighter, decides the hit on arrival, and starts a struggle where two fronts meet | A beam you can see coming, and a real choice with it. A struggle that begins with a collision | Encounter, VFX, Camera, Audio, Controls. Sim, small | M | Arrival times inside §5's table at any range. The dodge misses only near arrival. Fire-back starts where the fronts meet. Two runs, one hash. Flash clips. Struggle and dodge rates read |
 
-**Now seven: row 40 joined on Orb's word, since beams are core to the stick. The first version has the default alerts, and the options are row 41.** The kick came in, the press joined the pad's row, and the long strike moved to the top of Next. **The build order:** 23, 6, 2, 40, 4, 1, and 5 last, because it depends on the most parks. **Rows taken from Research's pitches are likely rather than final, since Orb is trying them with a pad.**
+**Now eight: row 40 joined on Orb's word, since beams are core to the stick, with its options as row 41, and row 42 from the fun check.** The kick came in, the press joined the pad's row, and the long strike moved to the top of Next. **The build order:** 23, 6, 2, 40, 4, 1, and 5 last, because it depends on the most parks. **Rows taken from Research's pitches are likely rather than final, since Orb is trying them with a pad.**
 
 ### Next: straight after the first playable
 
@@ -231,6 +232,10 @@ Seven, because each answers something a player will try in the first ten minutes
 - **The coin turn has no invulnerability.** He can be hit in the plant, and that's its price.
 - **QA's rows:** escapes and catches stay inside their bands, and flee time doesn't rise. **If it's still too good, cut the overspeed before touching the response.**
 
+### The fun check (2026-11-01)
+
+**On first pickup, your own follow-up doesn't work.** You land a launch and he's thousands of units away. You press X again, as everyone will, and your fighter taunts. In code and data, past 12.5 body heights a tap is a taunt and only a hold flies (`sim/director/bands.gd`, `bands.taunt`). That was fine on a small ring, where the far band was rare. On a globe, nearly every send lands in it, so the game's best moment is followed by a press that seems to do nothing. **From reading the code. I haven't played it or watched the reels,** so Orb's hands or a clip should confirm it. Row 42.
+
 ### Beams that travel, and the window to answer (Orb, 2026-11-01)
 
 Orb: "beams should not be instant rays cast in a direction, they should appear to the player to have a velocity and project out from the fighter", with "some way to non-intrusively alert the player on the receiving end that there is a window to fire back their own beam attack or dodge", and "granular display options". **Rows 40 and 41. First values, and nobody has played any of it.**
@@ -269,6 +274,45 @@ Time is the floor plus distance over speed, up to the ceiling. So at about 4,000
 - **The claw law:** the fire-back is RB and the stick, the same as any beam, and it's on the same mirror. The claw bot checks it.
 - **Can't pay? No answer.** Ki still counts.
 - **The AI answers through the same window,** with its reaction time. Under about 28 ticks it needs a read, drawn at the charge as today. **QA re-reads 30 to 60% struggles and the DODGE rates** (`rulings-2026-10-30e.md`), since both will move.
+
+**The signature at point blank, re-ruled 2026-11-01 on Tools' read** (the AI fires 2 beams per 90 s, always from point blank; an answer at 18 ticks clashes, at 25 it's a plain hit). This replaces the signature's floor of 24 and "the charge is a warning, not the window" for the signature. Unplayed.
+
+| | Ruling | First value |
+| :--- | :--- | :--- |
+| **The floor** | **Raise it. This is the number.** Distance can't supply the time: at 8,000 u/s, 12 more ticks is 1,600 units, about 24 bh, past the middle band | `front.rows.signature.floor` 24 to **36** (0.6 s), ceiling 60 stays. If a first-time player still misses it by reacting, 42 |
+| **The lit hand counts** | A signature or fire-back pressed during the charge answers it, and fires the moment he fires. `DirBeam._answer` already reads this from the queue, so **Tools confirms it on the real path** at 30 and 10 ticks before the fire. If it doesn't hold, make it | So from the first sign, a player has 48 + 36 = 84 ticks, 1.4 s |
+| **The stand-off** | **The look, not the time.** With no gap, a 36-tick front crawls across about 1 bh and the fronts meet at their hands, which is no shot. Any signature fired from under the stand-off, by anyone: the shooter kicks back during the charge along with its rise, and stops at a wall. The target's free to chase, and hitting him in the charge is the old read | `standoffBh` 9, which makes the front about 1,000 u/s at the floor. Encounter's, through the look gate |
+
+**Why 36.** 0.3 s is someone who knows what's coming. A first-time player has to notice, remember a chord and press it: about 0.5 to 0.6 s, a general figure and not a test of ours. **A person's first try settles it.** The dodge is unchanged, the last 18 ticks, so it opens at tick 18. The other beam levels keep their floors: they're for versus, where a read is fair, and the AI doesn't fire them.
+
+**Can't pay? Still no answer,** so that press must say why: the refusal cue, with `ki`. **Tools adds a row:** of the AI's beams, how many came when the player could pay 45 ki. If it's under half, the shot's held back by ki and not by the window, and that comes back here.
+
+**The AI's beam rate, ruled 2026-11-01.** Raise it a little, and time it better. All of it applies to an AI fighting a human only, so AI-against-AI batches and the golden don't move. Unplayed, and first values.
+
+| | Ruling | First value |
+| :--- | :--- | :--- |
+| **The rate** | `sigPick` is a flat chance at each new choice, so the first beam is down to luck: about 7% of fights go 2 minutes with none, if it's as random as it looks | **`sigPick` 0.025 to 0.04,** aiming for 3 per 90 s, band 2 to 4 |
+| **The first beam** | Orb should meet it early and be ready. The AI's first signature comes when the human can pay | **Between 25 and 45 s,** seeded. If the human can't pay at 45 s, it waits for them, up to 60 s |
+| **Lean toward a clash** | The AI fires more when an answer's possible, and less when it would only be a plain hit. It's the game's shot, so the AI goes looking for it | **`sigPick` ×1.5 with the human on 45 ki or more, ×0.5 under it** |
+| **Not its only plan** | A gap between its beams, so they can't bunch. The player's own 15 s cooldown doesn't change | **At least 25 s between the AI's signatures** |
+
+**Rows, QA or Tools, with a scripted pad:** first beam by 60 s in every match; 2 to 4 per 90 s; time in a brawl at least 50% (62 to 66% today); signatures at most 30% of damage, as already ruled; struggles at 30 to 60%.
+
+**If "could pay" comes back low, in order.** Read it with the lean on, and count the cooldown too, since `DirBeam._answer` also refuses a signature inside its own 15 s.
+1. **The cooldown is the wall:** an answer inside the window ignores the cooldown. It's a reply, not a fresh signature, and a player who's just fired shouldn't be locked out of the shot.
+2. **Ki is the wall, under half:** an answer inside the window costs 30, not 45 or 40, whichever press makes it. The shooter still pays 45. It's for versus too, so QA reads struggles again.
+3. **Not:** free ki, a beam that waits indefinitely, or an AI that holds back its other blows to leave you ki.
+
+**The meteor's real route, ruled 2026-11-01 on Encounter's read** (`docs/director/pending/meteor-route/`: level 3 flicks landed 0 in 792 tries against the AI, B alone makes the high arc and spends the budget). This amends `game-design.md` §12's "What earns it". Unplayed, and first values. Orb's words: "a fully charged launch attack landing on a stunned or weakened foe".
+
+| | Ruling | First value |
+| :--- | :--- | :--- |
+| **"Weakened" is the main route** | **Yes: a full B on a worn foe is the meteor.** It needs no read of a busy AI, and it's what Orb said. But past the first brink is too late: that's 4:30 to 7:00 | `arc.weakBrink`: **`brinkProgress` 0.5,** not 1. On wear only, so roughly 2:15 to 3:30 if wear climbs evenly. A broken region still counts |
+| **"Stunned" gets a route too** | A daze lasts 40 ticks and a full B takes 44, so today no daze can be followed by one. **A daze banks the charge,** as a level 3 upward flick does: at both tier 4, B's flash comes at 24 ticks | `DirArc.bank` on a daze, with its existing grace |
+| **High arcs can't starve it** | Three arcs in the first 24 s isn't "planet-scale", and it spends the meteor's budget. **Until the meteor's been used, the last slot is kept for it,** so at most 2 high arcs come before it. High arcs also space out | `arc.highGapSec` **60**; the meteor keeps `gapSec` 20 |
+| **Level 3 flick** | Stays bare, and stays a person's bet on an opening. Rule again after play | |
+
+**QA's row stands:** a meteor in about one match in two or three, at most about 2 in one, read on real fights reaching both at tier 4. If 0.5 makes it too common, it goes toward 0.75. **`arc.firstMeteor`** stays a stand-in for Orb's private page, off on main, and it doesn't change this rule.
 
 #### 3. The alerts
 

@@ -79,9 +79,36 @@ For Netcode and Simulation's check, in order of how worrying they are:
 4. **Lots of far buildings** (`places-everywhere.md`), if a far pair is breaking a town the other screen can't see.
 5. **The signature's pause and a finisher's camera:** they can't hold up the other pair.
 
+## Rulings for the build (2026-11-01)
+
+Orb's order is versus on the globe with the structure tuned for LAN co-op, the two of you against computer fighters first. These replace anything above where they differ. **The half-size ring is being dropped if Simulation's number allows,** so this is written for the full globe. First values, unplayed.
+
+**The clock.**
+- **One fight's hit-stop doesn't freeze the other.** A hit-stop holds only the fighters in that exchange. The world, shots, mines and everyone else run on. That includes the signature's pause and a transformation's: they hold that pair and take from that pair's budget.
+- **This is only for more than two fighters.** A 1v1 keeps today's whole-sim hold, byte for byte, so nothing in versus moves.
+- **A blow that reaches someone held lands the tick he's free,** so a hold can't be broken into or dodged out of.
+- **It's the same whether the pairs are close or far,** which is one rule rather than two. Each body's held ticks are hashed.
+
+**Can a blow hit the other fight? Yes, every blow can reach any enemy, and never a partner.**
+- **Blows:** one partner in your brawl, and any other enemy in reach takes **single blows on his openings,** one-versus-many's measured rule. All striking freely measured unplayable, so that limit stays. "One stun a string" counts across a team, so two fighters can't chain a lock.
+- **Shots, lobs and bursts** hit any enemy they meet and pass through a partner. **A beam** hits the first enemy on its line, and a partner's safe.
+- **A beam struggle stays two fighters.** A third's shots are eaten, and their beam does nothing to the point in the first version.
+- **A sent body** passes through other fighters, unless a partner catches him with a blow (the pass).
+
+**What brings the fights together on a full globe.** Distance isn't the problem: halfway round is 76,800 units, about 5 to 6 s flat out at the sim's real speed. **What's needed is a reason, not a shorter road.** All soft, and never a teleport:
+
+| | The lever | First value |
+| :--- | :--- | :--- |
+| **The sends** | With the pairs apart for a while, a send scores the direction of the other fight, for everyone, computer fighters too. A few sends bring them together | After about 60 s apart, up to the sixth of a loop per send |
+| **The brink** | A fighter on the brink calls: a voice line and the map. **It's the rescue's cue.** A computer fighter's partner comes too, so a rescue can be raced | On the brink's first moment |
+| **Winning** | Whoever finishes first flies to the other fight, with no input needed for a computer fighter | At once |
+| **A press** | Focus on the far enemy and a held press pursues, and the long strike (map row 3) pays for the arrival | |
+
+**QA's rows:** all four within about 15,000 units for 25 to 50% of a match, and 2 to 4 rescue flights a match. If the fights never meet, this is two 1v1s, and that's the failure to watch for. **All on one line stays,** with swings resting while the pairs are apart, as above.
+
 ## The smallest version worth playing
 
-Two PCs, two pads, two humans against two AI. **A Half ring,** so a rescue's about 4 to 8 seconds away. All four on one line, with no swings while apart. Focus picks itself, with the D-pad as override. Rescue by flying in, per-pair hit-stop, the map and the plate. No assists, no revive, no pass at first, and no meteor.
+Two PCs, two pads, two humans against two AI. The full globe if Simulation's number allows it, where a rescue's at most about 5 to 6 seconds away. All four on one line, with no swings while apart. Focus picks itself, with the D-pad as override. Rescue by flying in, per-pair hit-stop, the map and the plate. No assists, no revive, no pass at first, and no meteor.
 
 **What it answers:** when your friend calls, do you drop your fight and fly? And is that the best moment of the match? If so, the rest is worth it.
 

@@ -30,6 +30,20 @@ Numbers are **starting values**, which QA tunes against `balance-targets.md` (§
 | **The end** | A KO happens only through a finisher. Stray damage never ends a match |
 | **Breaks are chapters** | A break is a 1 to 2 s set piece: a camera break shot, a bark, then a **break launch**. The break launch is long (at least 1,500 units horizontally) and chosen by the planner's distance and new-biome terms (`balance-targets.md` §10) |
 
+### 1b-end. How a match always ends (ruled 2026-11-01)
+
+**A KO only ever comes from a finisher, and every versus match gets one.** Hit points are a leftover and end nothing: `HP_ENDS_MATCH` is false, and there's no health bar on the HUD. So hit points at 0 with wear short of the brink isn't a fault in itself: at about 100 s, that's on schedule for a first brink at 4:30 to 7:00. **Encounter checks nothing still reads `f.hp` to make a decision.** The ladder:
+
+| | When | What happens | First value |
+| ---: | :--- | :--- | :--- |
+| 1 | **A real fight** | Wear reaches the brink, a decisive win while he's open sets up the finisher, and the last-ditch struggle plays. As ruled | Brink to KO 45 to 90 s, unchanged |
+| 2 | **He isn't fighting back** | After no press or stick from him for a while, the wear he takes rises, and any input ends it at once. Once he's on the brink, the attacker goes straight for the set-up. It's for a pad that's been put down, not for a beginner, who's pressing something | After 10 s, wear ×3. Finisher within about 15 s of the brink |
+| 3 | **The time cap** | **Both fighters go on the brink,** Rallies are off, and every decisive win's a finisher, as `balance-targets.md` already says. **Today's stand-in doesn't do this:** it only changes a win against someone already on the brink, so a fight with nobody on the brink at 11:00 doesn't end. That's the real gap | 11:00 |
+| 4 | **Still nothing after the cap** | The planet gives way: the fighter with less wear gets his finisher anyway, with no contest. It's a real ending with a winner | 12:00 |
+| 5 | **Nobody's touched anything at all** | Wear's level, so there's no winner to give. It's a no-contest, straight to rematch | No input from anyone for 60 s, after the cap |
+
+**The ending itself:** the finisher, the winner standing in the wreckage (feature 8), then rematch in one press. **2v2:** a team's out when both are, each by its own finisher, and a partner's blow can break one.
+
 ### 1b. Tuning note for Encounter (KO by finisher, S2)
 
 **What QA's S1 baseline shows** (`docs/qa/baseline-g0.md`). With k = 0.08, HP still ends matches at about 108 s and no region ever breaks. The probe found 61 fresh, 76 bruised and 1 battered, and damage spread evenly: arms 31%, head 26%, legs 22%, core 21%.
