@@ -531,6 +531,26 @@ Orb: "make sure there is a fun and cool replacement for the beam function this w
 
 The frame stands (E60 to E69). **What to look at on the open arena:** a throw that arrives from any range makes the yank a long pull, which is either rule of cool or too much, so Combat clips it at 50 and 200 bh. And each payoff should lead somewhere in C9's string: a yank into a blow, a bind into a Driver's tap (E65), a slam into a lob, a throw into a wall. RL-220 stands for Bolus's hook and clamp, on fighters only.
 
+### The mixed string's prototype: three rulings (2026-11-01)
+
+On Combat's `docs/combat/pending/mixed-string/`, behind its own switch. Nobody has played it.
+
+- **E142. A tapped far Y is the lob everywhere, as E30 says, not only inside a string.** One press should mean one thing. The string's window (150 ticks) can't be seen, so a Y that's a lob now and a heavy shot a moment later would feel random, and Orb has said Y is explosive lobs. **All of it sits behind the row's switch,** so with the switch off, today's shot stays. **What the open string changes is only the aim:** inside it, the director leads to where the send's forecast has him (24 to 110 ticks). Outside it, the lob flies its usual 36 ticks to where he is at release, with E33's lean.
+- **E143. The lob's landing is fixed at release, and it doesn't home.** This amends E30's "lands on him", and it's what the prototype does: it lands on the place, so he can move off it. It always arrives, so pillar 3 holds. That's Y's job from E123: where he is, or where he's going. QA reads the AI's far Y again with this on.
+- **E144. What a dense street does to a lob.** **It bursts on what stops it,** with its full 2.5 bh, damaging the building by the tier's factor. The lob's wasted on him, but the street isn't, and that's more building destruction. Details:
+  - **A low roof is cleared.** The director can raise the arc by up to half again, inside the lob's time, if that clears it.
+  - **Nothing stops it in its first 2 bh,** so a press beside a wall isn't wasted and never bursts on the thrower.
+  - **The director never aims at a building that's barred** (`WorldSettle.noTarget`, c09), and nothing reads who's inside (RL-213).
+  - **The line usually runs down a street,** with its walls off to the side, so this should be uncommon on an unswung line. **QA's first read: at most 1 in 3 lobs stopped on a dense street.** If it's more, the arc goes higher. Combat's first read is about 1 in 10, before a single tower.
+
+**C7's long yank: Combat's pitch is right, as the workshop's direction.** Not built, and no grab exists in the sim yet.
+- **E145. Past about 50 bh, both fighters fly and meet in the middle,** in at most about 65 ticks. Up to 50 bh it's E66's 12-tick snap. It's a better picture than one body dragged, and rule 8 of `rule-of-cool.md` holds, since it's no teleport.
+- **The time holds and the speed rises:** up to about 13,000 u/s each, the meteor's kick, which covers about 375 bh. **Past that, the reel lets go at 65 ticks** with both still flying toward each other, and an ordinary approach finishes it, so pillar 3 holds.
+- **The reel isn't the hold.** E60's 40 ticks stays the catch. The reel is its payoff beat, and he keeps his way out: **RT's burst breaks it,** and then they're simply two fighters flying at each other, so a press can meet him in the middle, as an answered approach already does. That's a real moment, not a loss of control.
+- **Towers:** both arc over what's on the line, by the same read as the low line's tower rule (`rule-of-cool-map.md` §5). The reel causes no contact.
+
+**Beams travel (Orb, 2026-11-01): `rule-of-cool-map.md` §5, rows 40 and 41.** The hit's decided when the front arrives, which amends E7 and E48, and E91's struggle starts where the fronts meet.
+
 ### C9 and C10
 
 Both are rows in `rule-of-cool-map.md`: **the mixed string is row 34,** and **water's cheap list is row 35.**

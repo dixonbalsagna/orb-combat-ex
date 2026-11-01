@@ -62,7 +62,7 @@ World's second experiment, taken, with one addition for houses.
 | The commonest launch hauls him 13,200 units to open ground, and is paid for distance and for a new biome | **A launch along a street stays in the street.** In a settlement it lands inside it, 3,000 to 4,000 units on, while a street runs that way. The distance bonus is halved in a settlement, and the new-biome bonus is paid once in 60 s | Encounter |
 | A building launch is 5 to 9% of launches | With a building on the line and no stick held, it is preferred from tier 2. With the stick toward it, it wins | Encounter |
 | The hero's lure leads every fight out | It stays, since it is his care. It pulls by the people near, and not by the buildings. The Anti-hero's care pulls the other way. **Where the fight is becomes a tug between the two,** and a player takes it either way with his nudge | Encounter, with the care values |
-| A fight that starts in open country never sees a building | Nothing forces it to. The planet is the arena | |
+| A fight that starts in open country never sees a building | Nothing forces it to, and the planet is the arena, but on a planet a soft pull now brings it to a place (§15's addendum) | Encounter |
 
 ## 4. QA's rows
 
@@ -72,7 +72,7 @@ World's second experiment, taken, with one addition for houses.
 | Launches that take a building, in a settlement | 5 to 9% | **By the sender's tier (2026-10-31, `docs/world/ring-any-angle/game-design.md` §15): 15 to 25%, 25 to 40%, 40 to 55%, 50 to 70%.** It was 15 to 30% |
 | Buildings crossed a match, from a start in town | | 6 to 12 (§15). A chain is one send in the row above it |
 | Launches that end in a building, every launch from the default start | 10.4% at `bruntPrefer` 40 | **4 to 15%,** where it was 4 to 10% (ruled 2026-10-15). Orb has made destruction a priority, and the lever is doing what it was set for. The settlement row above is the one that matters |
-| Fight time within 1,500 units of a building, from a start in town | 15%, or 41% and falling | 30 to 50% |
+| Fight time within 1,500 units of a building, from a start in town | 15%, or 41% and falling | **20 to 35%** on a planet (2026-11-01, `docs/world/ring-any-angle/game-design.md` §15's addendum); it was 30 to 50% |
 | Fight time outside every settlement | | At least 25%: the fight isn't pinned |
 | A tier-1 body through a tower | | Never (hard) |
 | A tower hit at tier 3 or 4 with the strength to punch it | | He goes through (hard) |

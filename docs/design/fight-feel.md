@@ -33,6 +33,20 @@ A launched body no longer flies at one speed. Its speed follows a curve the came
 - **Who builds it.** Simulation: the curve as a speed profile on a sent body, deterministic. Encounter: the planner predicts with it. Camera: the push, the whip, the chase and the arrival's framing.
 - **QA's rows:** a full launch's flight from 1.0 to 1.6 s; the sent body inside the frame (or its pane) for at least 95% of a flight's ticks.
 
+**Fast flat sends use this curve, behind its switch (ruled 2026-11-01, on Camera's `docs/camera/launch-director.md`).** Camera can't follow a send past about 10,000 u/s softly, and the median launch is about 10,800. **This was ruled on 2026-10-19 and has sat off.** QA's read with it on had 99.8% of flight ticks in frame.
+
+| | The ruling | First value |
+| :--- | :--- | :--- |
+| **Which launches** | Physics launches whose send peaks past the camera's soft limit. Slower ones keep today's feel, with no pacing. Launches on the written curve (`rule-of-cool-map.md` §2) don't use it | `minPeak` about 7,000 u/s, a new data key |
+| **The cruise** | 0.4 of the peak still leaves a 26,700 send at about 10,700, so **the cruise is capped** too | At most about 6,500 u/s |
+| **The limit on time** | If the cap would hold a flight past the meteor's own time, the cruise rises instead | About 6 s |
+
+- **Carry:** none of it changes. It paces the same path, so where he lands, the planner's scores and §15's landings all stand. That's why it's better than touching the drag.
+- **Forecasts:** the landing's the same, and only its time moves. The predictors already fly the curve. **Encounter checks two things:** the forecast's 240 ticks must still see the landing, by stepping the path rather than the clock, and the swing's rest has to use the paced time. It also reads plan time on the launch tick, which is already over target.
+- **Feel:** the kick stays, ramped over 5 ticks, so it's still violent and no longer a one-tick jump. Then he glides at about flat-out flight speed, and rises into the impact. **The risk is that the glide feels floaty,** so Orb's eye decides, on Camera's clip beside today's. Flights get longer: up to about a second on a long haul, about 12 s a match at the very most.
+- **What it helps besides:** the picture sweeps less, for flash. A longer flight has time for a bigger swing, which helps the swing-size row. And a chaser can catch him, which the glide is for: chases stay at 1 to 4 a match.
+- **The test:** Camera's jolt on a flat 10,800 and 26,700 send comes down toward 0.06, at least 95% of flight ticks in frame, carry identical to the bit, and QA's match-length and chase rows. It needs its schema key (Tools') and the hash's existing fields. Camera's wider view and chosen hold stay as options for Orb to compare.
+
 ## 2. Recoil exits and flips: backflipping out of strikes
 
 Reconciled with Combat's `docs/combat/choreography-feel.md` §1 (`rulings-2026-10-22.md` §2a).

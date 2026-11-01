@@ -1,70 +1,106 @@
-# A combo builder for custom fighters: does it fit?
+# A combo builder for custom fighters
 
-Owner: Game Design. 2026-11-01. **A page for Orb to read. It isn't a decision, and nothing here is built or played.** Orb's idea (`docs/ep/vision.md`, last entry): mashing should count as part of a combo. In a custom fighter's campaign, you beat Grist in training and he teaches you one of three two-part combos, such as "Hold Y then Mash X" or "Tap X then Hold B", from a pool of attacks with stats and effects, which you unlock, upgrade and replace over time.
+Owner: Game Design. 2026-11-01. **A page for Orb to read, updated on Orb's direction. It's still paper: nothing's built or played, every number is a first value, and none of it touches the first playable.**
 
-**Short answer: yes, it fits well, and it gives custom fighters what they were missing. It needs one rule of yours to change, for the campaign only. And none of it needs to touch the first playable.**
+Orb's idea: mashing should count as part of a combo, and a custom fighter learns combos from a pool of attacks, starting with Grist in training. Orb's direction since (`docs/ep/vision.md`, last entries): a **hybrid** that takes the best of "fixed button patterns whose last hit changes with where you're standing"; **only a minimal disadvantage** for a fresh custom fighter in versus against a roster fighter; and deep pools of swappable moves, each tied to a damage type, with lore, graded on several levels such as knock-back force and the ratio of ki to physical force.
 
-## Why it fits
+**This changes one thing I wrote before.** I said custom fighters should use learned combos only. A fresh fighter would then have almost nothing, which breaks "minimal disadvantage", so I withdraw it.
 
-- **The game already knows tap, mash and hold apart,** on every button. So a part of a combo is simply a button and how you pressed it.
-- **Each press is still a blow.** "Hold Y then Mash X" isn't a macro: you hold Y and it lands, then you mash X and those land. A combo changes which blows you get and what they do. It doesn't play itself.
-- **No press has to wait.** A mash can't be recognised until about the third tap, so the first taps land as usual, and the combo's effect comes in when it's recognised. So the combo never costs you response.
+## 1. The hybrid
 
-**"Mashing counts as part of a combo" is worth having whatever you decide.** I'm asking Combat to let the phrases in the first playable (map row 1) include a mash and a hold as parts, for every fighter, if that's cheap. If it costs more than a small change, it follows the first playable.
+**One rule for everyone: a combo is a fixed pattern of presses, and the place you're standing finishes it.** The pattern never changes, so you can learn and rely on it. The last hit changes by place, so it stays a surprise you caused. A mash, a hold and a tap all count as parts.
 
-## Learned combos and phrases
-
-Three ways it could go:
-
-| | What it means | My view |
+| | Roster fighter (Grist, Loupe and the rest) | Custom fighter |
 | :--- | :--- | :--- |
-| A learned combo replaces a phrase | Grist and the others could have theirs swapped | No. Grist's combos are what make Grist, and every player should meet the same Grist |
-| Beside the phrases, on everyone | Roster fighters learn extras too | No. It's two lists to learn, and roster balance gets much harder |
-| **Custom fighters use learned combos only (my pick)** | Roster fighters keep their phrases, fixed by seed. **A custom fighter's phrases are the ones they've chosen.** Any press outside a combo plays from the generic pool, so they're never empty | **Yes.** A learned combo is simply a phrase you chose rather than one the seed wrote, so it needs no second system |
+| **Patterns from a seed** | 8 to 12, written once, the same for every player | **8, written when you create them, from a school you pick.** So they work from the first minute |
+| **Learned combos** | None. Every player meets the same Grist | **A belt of 3,** kept for good. A learned combo that uses the same presses as a seeded one takes its place, so nothing's left to clash |
+| **The place's ending** | Each pattern has an ending for each kind of place | **The same for seeded patterns. A learned combo's last move brings its own place reaction** for two or three kinds of place, with the generic ending elsewhere, so there's far less to author |
+| **Everything else you press** | The generic pool, as now | The same |
 
-So the custom fighter's whole identity is what you've picked. **That's the real gift of the idea:** a roster fighter has a style from their seed, and a custom fighter has had nothing like it until now.
+**So the difference is who wrote the list, not how it works.** Everything runs on one system, which is the one in the first playable (map row 1). Learned combos cost little more on top of it.
 
-## The right stick
+**The ending also reads the attack's damage type** (§3). The same combo over water might skip him if it's mostly body, or raise a column of steam if it's burn or mostly ki. That's where the depth comes from: pattern × place × type, without any more for a player to memorise.
 
-- **A stick move can be a part,** such as "Flick up then Mash X", because it's the same kind of gesture.
-- **Parts come one after the other, never together,** so a claw grip still gains nothing. The existing lockouts between the stick and the buttons simply become part of the combo's timing, and the claw bot checks every combo in the pool.
-- **What each control means doesn't change.** A combo can't make the stick send someone, as B is what sends. A button can't fire a beam, since beams are the stick's.
+**Research's loop, which I'd take** (`research/rule-of-cool/combo-builder.md`): **three combos on your belt, kept for good, with upgrades that last for that run only.** What you know is permanent, and how strong it is resets. A teacher offers one of three after a big moment, always with "keep what I have". A combo you replace stays in your book. That also keeps the rule that no stat carries past a run, so I withdraw that item from what breaks.
 
-## Stats and effects: the rule that has to bend
+## 2. Fairness: what a fresh custom fighter starts with
 
-Today, a generated move can change how a press looks but never what it's worth, so no move is the best one. Your idea gives attacks stats. **Those can live together if each one is a trade rather than a gain:**
+**In versus, a fresh custom fighter has:**
+- 8 seeded patterns from their style, at the same worth as a roster fighter's;
+- the full generic pool and the whole control scheme;
+- an energy kit at the middle of every band, which is what the reference fighter already has;
+- the same ladder of power as anyone, and one plain transformation track until a better one's designed;
+- **the whole pool of combos open for their belt, at base values.** No run upgrades count. A campaign never buys an advantage in versus.
 
-- **Every combo in the pool spends the same budget.** More damage but slower. Less damage but a longer stun. A shorter reach but it builds ki. One that carries toward a wall. QA checks each one stays inside a band.
-- **"Upgrade" is the hard word.** An upgrade that's only stronger is what the rules forbid. So I'd keep real growth to the campaign (below), and make upgrades mostly add a choice: a second effect to pick between, or a third part.
+Both players see each other's three combos on the loading screen, and the choice travels in the match's setup, so replays and online stay exact.
 
-## Arcade and versus
+**What they'll still lack,** and why it's "minimal" rather than none: a roster fighter's own mechanic, their signature and their hand-tuned look. That's what makes the roster worth playing, and I wouldn't flatten it.
 
-You've already said custom fighters can go into arcade and versus, so:
+**The test, with numbers.** QA runs a fresh custom fighter on default choices against each roster fighter, hard AI on both sides, sides swapped, about 400 matches a pairing, which gives roughly ±5 points. First values:
 
-| Mode | What a custom fighter brings |
-| :--- | :--- |
-| **The campaign** | Everything you've earned, upgrades included. It's a fight against the game, so growth is the fun |
-| **Arcade** | The same, in solo and co-op |
-| **Versus and online** | **The combos at their base values, with the whole pool open to anyone.** Hours in the campaign must never beat a friend who just started. It's still a real choice: you pick your own build before a match |
+| Row | Bound |
+| :--- | ---: |
+| **Win rate against every roster fighter** | **At least 45%,** and at least 47% averaged across the roster |
+| **The other way: it mustn't be the best pick** | No more than 55% against any roster fighter |
+| **A fully played fighter in versus against a fresh one** | No more than 52%, or the campaign's leaking into versus |
+| **Any one combo on a belt** | Its win rate within 45 to 55%, and picked under about a quarter of the time once players exist |
 
-The choice travels with the match's setup, so replays and online stay exact.
+**AI against AI can't prove this for people,** since an AI uses neither phrases nor a belt the way a person would. So it's a floor, and the real read is people's: QA's masher arm first, then Orb's hands.
 
-## What breaks
+## 3. The move sheet
 
-1. **Your own rule, from questionnaire 3: "Only cosmetics unlock; everything that changes play is open from the start"** (`unlocks.md`). This idea unlocks play. My suggestion keeps the rule everywhere but in the campaign and arcade, for custom fighters. **It's your call.**
-2. **"Never a stat that carries past the run"** in the run mode. Learned combos would carry across a custom fighter's save, so that line needs rewording too.
-3. **"Pick one of three" can't be a random roll,** since unlocks rule out random rewards. The three offers would be named and fixed by where you are in the story. **A combo you replace is never lost:** it stays on your list. Legal should look at this.
-4. **Balance.** A pool of combos can't be tested in every pairing, so the budget band has to do that work. A bad one could still slip into versus until QA catches it.
-5. **A hold-to-flurry assist has to count as a mash,** so players who can't mash aren't locked out of half the pool. The same goes for remapping and Simple mode.
-6. **The animation pool costs real work.** A separate pool of attacks is new art. Most of the first ones can reuse existing pieces, and the generator can help.
-7. **Teaching.** "Hold Y then Mash X" has to be shown on screen somewhere that isn't over the fighters: Grist's training scene and a list in the menu.
+**Built on Research's `research/rule-of-cool/move-pools.md`,** which has five worked examples. I've taken its shape: **about 50 moves first** (three schools × six jobs × about three), about ten of them showpieces with new poses, and the rest from the generator on existing poses. That's about one to two weeks of Animation by Research's estimate, plus Legal's screen of each new pose.
 
-## The smallest test
+| Field | What it says | Notes |
+| :--- | :--- | :--- |
+| **School** | A way of fighting, with a lean toward ki or body | Where lore attaches. **A custom fighter's starting style is a school,** so their 8 seeded patterns come from it |
+| **Job** | One of six: send, stun, break guard, move him, launch, linger | **Limits where it can go:** a send or launch only on B. **B sends, and the stick never does.** No move overrides that |
+| **Six grades, −2 to +2, adding up to 0** | Knock-back force, speed, reach, stun, guard damage, worth | **The budget.** A machine checks it |
+| **Ki-to-force ratio** | How much of the blow is ki. **Mostly body:** dust, cracks, a deep thud, more knock-back, more wear on buildings, and a guard stops it. **Mostly ki:** a lit limb, a higher sound, less knock-back, more through a guard, more ki spent, and more reaction from the place | **Orb's ratio,** outside the budget because it changes what the move does. Both ends must come out even, which QA reads |
+| **Damage type** | **Impact** moves him and breaks structures. **Pierce** gets through a guard. **Shock** stuns and wears the limb it hits. **Burn** lingers, and reacts to trees and water | **Research's four replace my draft.** No chart: none is strong against another. Shock is a word, not a look: **no lightning** (Legal's aura rule) |
+| **Launch angle** | Flat, low, steep or none | Visible at once |
+| **Place reaction** | What it does in a wall, on water, in trees, on ice | **This is the hybrid's ending** (§1) |
+| **Twist** | One rule-breaking thing per move | The rule of cool. See below |
+| **Body, poses** | The generator's limb, tip, target and path | Joint limits and Legal's banned list apply |
+| **Lore, name** | Filled from Orb's blanks, after the move works | Original only. Never claims to be a real school or art |
+| **Sound, hit-stop, camera** | Set by family, not by move | Never shown. Flash is read by family, which is the big saving |
 
-**After the first playable, and only with phrases in:** one stand-in custom fighter, one fight against an AI Grist in training, and a pick of three combos before it: Hold Y then Mash X, Tap X then Hold B, and Flick up then Mash X. They use existing pieces, one effect each, with the buttons shown at the frame's edge. No save, no campaign, no upgrades. It's a data row on the phrase reader, so it should be small.
+**What a player sees:** five bars (force, speed, reach, stun, guard), a mark for the ki lean, one sentence and a four-second clip, on one menu screen and never over the fighters. Worth is in training only, since players barely feel it.
 
-**What it answers:** by the second minute, are you using your combo on purpose? And afterwards, do you want to go back and try a different one? If so, the rest is worth building.
+**The three calls Research flagged, ruled.**
+1. **No stronger rare tier: agreed, in every mode.** A rare move can only be stranger. Zero-sum stays for good, or new moves slowly kill old ones.
+2. **Upgrades add a choice: agreed for anything permanent.** A kept upgrade is a different version of a combo, never a better one. **Upgrades that last one run can be real strength,** and that's where the campaign's growth lives. None of it reaches versus.
+3. **"Can you say when you'd pick it without quoting a number?": yes, as a gate.** A person watches the clip and says it in a line. A move that fails is cut, however well it balances. That's the guard against fifty moves that play as five.
 
-## One question for Orb
+**Where I've tightened Research's rules.**
+- **Grades aren't equal until they're tuned.** Research says it too: speed may be worth more than anything, so +1 speed isn't +1 worth. Zero-sum is only true once real fights set the numbers behind each grade. **A −2 must never be a trap,** and QA's pick and win tracking is the real judge.
+- **A twist can be a hidden strength,** since the budget can't see it. "Your next blow bites harder" is power. So every twist runs through the same win and pick bands, and one that's too good gets a grade cut.
+- **Keeping to one school gives no mechanical bonus.** Research floats a small effect for three matching combos, but that's a strength outside the budget. It gets a look and a rival's line, and straying is just as valid.
+- **Speed has floors.** Grades can't push a stick strike's wind-up under its ruled floor or below the lockouts, so the claw law holds. The bot checks the whole pool.
+- **The seeded patterns and the generic pool keep today's rule,** that a generated move changes the look and never the worth. Only pool moves carry grades.
 
-**Are you willing to let attacks unlock in the campaign and arcade for custom fighters, with versus staying fair by opening the whole pool?** That's the choice everything here hangs on. Research is looking at how other games keep this loop engaging, and UI is drawing mockups, so this needn't be answered until you've seen those.
+**Does the budget limit what Orb asked for? Yes, in one way, and plainly:**
+
+- **It gives you:** moves graded on many levels, including knock-back force and the ratio of ki to body, each with its own job, type, twist and lore.
+- **It rules out, in versus:** a move that's simply better. No legendary attack that's great at everything, and no moves that climb from bronze to gold. The strongest possible move still pays for its strength somewhere.
+- **What's left for "feels overpowered":** spectacle costs nothing, so a +2 force move can look and sound enormous. The twist can break a rule. And in the campaign, a run's upgrades can really make you stronger.
+- **So if "graded" meant better and worse moves,** that's only possible in the campaign. It's your call, below.
+
+## 4. What still breaks
+
+1. **"Only cosmetics unlock; everything that changes play is open from the start"** (`unlocks.md`, from questionnaire 3). Swappable moves imply a change, but Orb hasn't said so. This is the one question below.
+2. **"Pick one of three" can't be a random roll,** since unlocks rule that out. The offers are fixed by where you are in the story. Legal should look.
+3. **Balance rests on the budget,** since every combination can't be tested. A bad row could reach versus until QA catches it.
+4. **A hold-to-flurry assist has to count as a mash,** along with remapping and Simple mode. Research says this is needed from the start, and I agree.
+5. **Deep pools are real art.** Unique moves mean new animation, so the first ones reuse pieces and the generator helps. That's the main cost of "deep", and it's why this stays well after the first playable.
+
+## 5. The smallest test
+
+**Unchanged, after the first playable and with phrases in:** one stand-in custom fighter, one fight against an AI Grist in training, and a pick of three: Hold Y then Mash X, Tap X then Hold B, and Flick up then Mash X. They use existing pieces, with the buttons shown at the frame's edge, and no save or upgrades. **The question it answers:** by the second minute, are you using your combo on purpose, and do you want to try another afterwards?
+
+## Two questions for Orb
+
+Neither needs answering until you've seen UI's mockups.
+
+1. **"Only cosmetics unlock" was your rule. Should moves now unlock in the campaign for custom fighters, with versus staying fair by opening the whole pool to everyone?** My recommendation is yes.
+2. **By "graded on multiple levels", did you mean moves that differ in many ways, or moves that can be better and worse?** I've assumed the first, so that a fresh fighter isn't behind. The second can only happen in the campaign.

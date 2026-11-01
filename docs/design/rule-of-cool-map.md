@@ -108,7 +108,7 @@ Every row keeps §4's rules. "Sim" means it needs hashed state and the rollback 
 
 ### Must: the first playable
 
-Six, because each answers something a player will try in the first ten minutes on the new arena and pad.
+Seven, because each answers something a player will try in the first ten minutes on the new arena and pad.
 
 | # | Feature | Pad action | What the choreographer does | The cool | Systems | Cost | Test |
 | ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -118,8 +118,9 @@ Six, because each answers something a player will try in the first ten minutes o
 | 4 | **Flight lines** (§1), **with water's A1** (§5) | Flat out and held steady, at tier 3 and up. Crossing water at any tier | Nothing: it's the fighter's own energy, and the sea answering | Speed and power can be read from across the planet, and every dive, skim and slam reads as water | VFX, Rendering, Performance. View | S to M | §1's reads. Hash identical with it on or off. Both flash modes, side-by-side, a still that tells all four apart |
 | 5 | **The meteor launch, one curve** (§2), **with ignition** (Combat's 5) | Hold B to the flash and release it on a stunned or weak foe, with both at tier 4. The stick picks the side. **Or:** a level 3 stick strike upward, then B | Picks the landing, runs the curve and the shot, and leaves the launcher to chase or wait. At both tier 4 only, a level 3 upward stun banks charge: B's full mark drops to 24 ticks inside that stun | Orb's picture, and the whole power ladder's payoff. The stick's 54 bare ticks become the route to it | Encounter, Simulation, Camera, VFX, Research. Sim | M | §2's tests. The ignition route lands in a scripted tier 4 run. About one match in two or three stands. **A training start with both at tier 4,** so players and QA can reach it |
 | 6 | **The press and the pad answer at once** (with Research's 3; likely, not final) | Any press, and the pad's rumble | The view answers a press on its own frame: the first frames of anticipation, a 1% eased push and the first sound, only on presses the sim's rules would accept. The pad cues a clash pulse, a wall slam, a jolt and the meteor's kick and landing, on the kinds Controls has built, plus each rung of a stick charge and, for the defender, a rival's strike starting (Controls' 1 and 3) | The game stops feeling as if it's waiting, and you feel a landing when the picture is far away. It also hides the stick's 2-tick settle | Animation, Camera, Audio, Controls, UI host. View | S | Press to first change is 1 frame plus the browser's delay, counted on a recording. A refused press settles with no misleading tell. Rumble is never the only cue and has an off switch. Hash identical |
+| 40 | **Beams that travel, and the window to answer** (Orb; §5) | RB + stick fires. Answer with RB + stick, a dodge tap or a guard press before the front arrives | Runs the front by level, range and fighter, decides the hit on arrival, and starts a struggle where two fronts meet | A beam you can see coming, and a real choice with it. A struggle that begins with a collision | Encounter, VFX, Camera, Audio, Controls. Sim, small | M | Arrival times inside §5's table at any range. The dodge misses only near arrival. Fire-back starts where the fronts meet. Two runs, one hash. Flash clips. Struggle and dodge rates read |
 
-**Still six.** The kick came in, the press joined the pad's row, and the long strike moved to the top of Next. **The build order:** 23, 6, 2, 4, 1, and 5 last, because it depends on the most parks. **Rows taken from Research's pitches are likely rather than final, since Orb is trying them with a pad.**
+**Now seven: row 40 joined on Orb's word, since beams are core to the stick. The first version has the default alerts, and the options are row 41.** The kick came in, the press joined the pad's row, and the long strike moved to the top of Next. **The build order:** 23, 6, 2, 40, 4, 1, and 5 last, because it depends on the most parks. **Rows taken from Research's pitches are likely rather than final, since Orb is trying them with a pad.**
 
 ### Next: straight after the first playable
 
@@ -138,6 +139,7 @@ Six, because each answers something a player will try in the first ten minutes o
 | 8 | **Steer your fall** | The sent fighter's left stick, while coming down | Moves the landing inside its band, at most ±10%, re-solved without a kink | The victim has something to do for 6 s: into the sea or into the city | Encounter, Simulation. Sim | M | Curve tests hold. It never reaches past the band. Works beside the brake with no extra button |
 | 30 | **Catch the ground** (Controls' 5) | Guard in the last 6 ticks of a meteor's or high launch's fall | Turns the crater into a skid: less of the fall's damage, and a long trench | The sent fighter has a moment to win, and the launcher gets a longer scar | Encounter, Combat, Camera, Controls. Sim | M | Only presses inside the window skid. A cue that isn't rumble. An assist that widens the window. At least 60% of meteors still crater, or the window shrinks |
 | 32 | **Lean the world** (Controls' 8) | Left stick held across the fight when a swing is asked for | A vote between sides that score about the same | "I turned the world" | Encounter, Simulation. Sim | S | It never starts a swing or takes one to nothing. Opposite leans go to the score. Hash and rollback gates |
+| 41 | **Alert options** (Orb's "granular"; §5) | The options menu, per player and pad | Nothing: all view only, apart from the longer-window assist | You choose how much the game tells you | UI, Audio, VFX, Controls. View | S to M | Each family off leaves the hash identical. Presets work. Reduced flashing limits them. Captions read |
 | 29 | **Snap or push** (Controls' 2) | A fast flick or a slow push | A snap lands at the 7, and a push takes 10 with about a quarter more reach. Worth is identical, and the strike button counts as a snap | Thumb skill you can hear: a crack against a shove | Controls, Encounter, Animation. Sim, one bit | M | Real thumbs first. The claw bot gains nothing. The button lands with a snap |
 | 9 | **Your hands** (Combat's 7) | Whatever you've been doing | `DirAlchemy`'s read of the last presses picks the next ender's accent: fast for a masher, a clean stop for a timer, a big wind-up for a holder | Two players on one fighter end up with fights that look like their own | Combat, Encounter. Sim | S | Three scripted players give three distinct ender histograms. Worth unchanged to the bit |
 | 10 | **Power's dialect** (Combat's 6) | The same phrase at any tier | An ender has a row per tier band, so a known string speaks louder as power grows, with no world reaction below tier 3 | Pillar 4 at the size of one press | Combat, VFX, World. Sim | S to M | `balance-targets.md`'s dig limits hold. Worth follows the ladder only. Flash register passes |
@@ -229,9 +231,66 @@ Six, because each answers something a player will try in the first ten minutes o
 - **The coin turn has no invulnerability.** He can be hit in the plant, and that's its price.
 - **QA's rows:** escapes and catches stay inside their bands, and flee time doesn't rise. **If it's still too good, cut the overspeed before touching the response.**
 
+### Beams that travel, and the window to answer (Orb, 2026-11-01)
+
+Orb: "beams should not be instant rays cast in a direction, they should appear to the player to have a velocity and project out from the fighter", with "some way to non-intrusively alert the player on the receiving end that there is a window to fire back their own beam attack or dodge", and "granular display options". **Rows 40 and 41. First values, and nobody has played any of it.**
+
+**One correction to a note I was sent:** RL-218's "`fire_back` under 32" isn't about answering a beam. `bn.hold.fire_back` is the pose for firing **behind him,** and 32 is Legal's limit on how wide the arms are. It has no bearing here, though its pose conditions still stand.
+
+#### 1. The front is real
+
+**The hit is decided when the front arrives, not when it's fired.** Dodging and firing back are a real window, and it isn't only a look. The sim's most of the way there: `beamPlays` already reads what he did on the tick the beam reaches him, but at a fixed 20 ticks, and it's off. `FRONT_SEC` already gives a beam a time to full length.
+
+**A beam's speed is really a time, because the camera frames both fighters.** A front crossing the frame in half a second looks the same at a 4,000-wide view or a 53,000-wide one, so what the eye reads is how long it takes, not units a second. So the rule sets a time. It's quick to reach a fixed floor and stops growing at a ceiling, so across a planet the front simply goes faster, and it still always arrives (pillar 3).
+
+| | Snap | Level 1 | Level 2 | Level 3 | Signature |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| **Ticks from hand to him: at least, at most** | 6, 20 | 10, 30 | 14, 40 | 18, 50 | 24, 60 |
+| **Speed between those** | 14,000 u/s | 12,000 | 10,000 | 8,000 | 8,000 |
+
+Time is the floor plus distance over speed, up to the ceiling. So at about 4,000 to 5,000 units and beyond, it's at the ceiling.
+
+- **The further away, the more time to answer, and the bigger the beam, the more time too.** Up close, an answer is a read rather than a reaction, as a blow is. At range it's a real reaction, which also gives a charged beam a soft cost.
+- **Fighters differ within about 20%,** in keeping with their beams: Breakwater's wall is the slowest, Lance Sheaf the quickest, Hem Sweep a thin fast line, and Furnace Vent surges unevenly on the way, arriving on the same tick.
+- **Damage and carving start with the front,** along the path it's passed. The stick can still sweep it, so **a dodge made too early gets followed.**
+- **The look:** it comes out of the hand with weight and pushes forward, with no fade or dissolve. A front should cost the flash analyser less than today's frame-filling ray, but it needs reading. The swing still rests for a beam, and now it stays at rest until the beam's gone.
+
+#### 2. The answer window
+
+**It opens when the beam leaves his hand and closes when the front arrives.** The charge before that is a warning, not the window: a lit hand tells you to start thinking.
+
+| Answer | How | What it gets you |
+| :--- | :--- | :--- |
+| **Fire back** | RB and the stick toward him, or the signature, any time in the window. **Inside the window a beam fires at level 1 at once, at level 1's ki,** even with nothing charged, or at whatever level you've already got. A Loaded beam (E129) is the perfect answer. The snap can't open a struggle | **A struggle that starts where the fronts meet.** That's the natural beat: they collide, hold for about 6 ticks, and the pulse starts. **Answering late means meeting close to your own hands,** which is a real penalty you can see, at most 30% from the middle, and the comeback's ×1.5 near your hands is already there. It replaces the old late penalty. E91's head start stands on top |
+| **Dodge** | A dodge tap in the last 14 ticks before arrival, up to 6 after, as the data has it | **The whole beam misses, and he's still rooted** for its length, so it's your best opening of the match. He can cut it with LT, giving up the rest. There's no extra damage, and the opening is the prize |
+| **Perfect block** | A fresh guard press in the last ticks before arrival, moved from the tell | Swat, split or walk through, as ruled (feature 16) |
+| **Guard** | Held | Guard damage. It's always there, and wading stays |
+
+- **The claw law:** the fire-back is RB and the stick, the same as any beam, and it's on the same mirror. The claw bot checks it.
+- **Can't pay? No answer.** Ki still counts.
+- **The AI answers through the same window,** with its reaction time. Under about 28 ticks it needs a read, drawn at the charge as today. **QA re-reads 30 to 60% struggles and the DODGE rates** (`rulings-2026-10-30e.md`), since both will move.
+
+#### 3. The alerts
+
+**Nothing goes on, over or between the fighters. All of it's view only, so the hash doesn't change and it's fair for each player to set their own.** It only says what's already true on screen.
+
+| Family | What it is | Default | The player can set |
+| :--- | :--- | :--- | :--- |
+| **The shooter** | A glint at the hand as the charge steps up, in his own colour, by Legal's charge rule. The firing pose | On, as it's part of the fight | Brightness |
+| **The front** | The beam itself | Always | Nothing: it's the game |
+| **Air and light** | The air ripples ahead of the front, its colour sweeps along the ground, dust lifts and water shivers under its path | On, subtle | Off, subtle or strong |
+| **Sound** | A low rising note that belongs to the target, panned toward the shooter and climbing to arrival. Audio's chunky rule | On | Off or on, its own volume, and which beams |
+| **Rumble** | A new `incoming_beam` kind beside Controls' incoming ones: a crescendo to arrival, per pad | On | Off or on, strength |
+| **Screen edge** | A thin line of the shooter's colour at the edge he's on, for the target only | **On only when the shooter's off screen** | Off, off screen only or always; thickness; which edge rule |
+| **Caption** | "Beam incoming", small at the edge, for players who can't hear it | Off | Off or on, size |
+
+**The options are per player and per pad, and they also take:** which beams warn (all, charged only, signature only); three presets (Minimal, Standard and Full); and colour-vision presets. Reduced flashing limits the strong settings. **A "longer window" assist** can add ticks in solo and co-op, and in versus only if the match's setup says so, because that one isn't view only.
+
+**Who costs what:** Encounter the travel, the window and the meeting point (small, with `beamPlays` and `FRONT_SEC` already there, and it adds a little hashed state). VFX the front and the meeting. UI the options. Audio the note. Controls the rumble kind. **Legal:** the air and light family, against "the sky never darkens", and a screen-edge light.
+
 ### Orb's energy answer (`docs/design/energy-overhaul.md` §21)
 
-**Row 34, the mixed string, is the row Orb wants most:** "emergent combos, dynamic combat choreography ... something really special". **It's first in Next, and the first playable doesn't wait on `energy.v2`** (the EP's call: Orb asked to play the arena and pad soonest). Combat starts it now, in parallel. It's mine and Combat's to design; Combat's pitches 1, 2 and 8 and the Driver are what it runs on.
+**Row 34, the mixed string, is the row Orb wants most:** "emergent combos, dynamic combat choreography ... something really special". **Combat has it built in scratch, off (`docs/combat/pending/mixed-string`), needing only the far lob from `energy.v2`. The EP is moving it up to join the private page's stack, with its own switch, right after the stick lands.** The first playable still doesn't wait on it. The rulings on the lob, a dense street and the long yank are E142 to E145. It's mine and Combat's to design; Combat's pitches 1, 2 and 8 and the Driver are what it runs on.
 
 **What makes it a system rather than a clip.** One press stays one attack, with no cancel inputs, and these four rules do the rest:
 1. **One string across any range.** A shot that lands on him while he's sliding is the string's next blow, and freshness and "one stun a string" count it. So a string doesn't end when he leaves reach; it ends when nothing lands.

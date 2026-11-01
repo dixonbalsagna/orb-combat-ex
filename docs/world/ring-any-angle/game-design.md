@@ -522,7 +522,7 @@ Encounter's rows, 16 fights, 6 from town, AI against AI, swings off then on: sen
 | :--- | :--- | :--- |
 | **Inside an unused town** | A launch lands inside it, as `buildings.md` §3 rules. **Encounter checks that those levers fire on a field world.** "Launches carry far" suggests they don't | 3,000 to 4,000 units, until 2 sends there |
 | **Outside a town, or a used one** | When a place's standing buildings lie within the launch's reach on an offered line, its arrival is a real candidate, and **the carry is solved to reach it,** rather than the place having to sit where the usual length ends | Up to ruling 3d's sixth of the loop, by tier's reach |
-| **The pull** | §15's "dry" term starts sooner, so a fight doesn't wander for long. It's a soft term, and open ground, sea and mountains still win when they score better | 45 s, in place of 90 |
+| **The pull** | §15's "dry" term starts sooner, so a fight doesn't wander for long. It's a soft term, and open ground, sea and mountains still win when they score better | 45 s, in place of 90. **Withdrawn: back to 90 s,** by the next addendum |
 | **Leaving** | After 2 sends, a town's marked down for a while, so the fight goes on to somewhere else. **That's the visit:** arrive, break things, get sent on | About 60 s |
 | **The stick** | A player's stick still wins the side, and §13's nudge stays their way in by flight | |
 
@@ -544,7 +544,55 @@ Encounter's rows, 16 fights, 6 from town, AI against AI, swings off then on: sen
 | **Places visited a match** | **New: 2 to 4,** read from the map's trail. That's Orb's crossing and destruction in one number |
 | **Time within 1,500 of a building** | **20 to 35%, in place of 30 to 50%.** The old band came from the old ring, and it would pin a fight on a planet |
 | **Town fights with no send, first send inside 90 s** | **At most 1 in 8 and 80% stand.** They're the first impression |
-| **Knock-backs reaching a wall** | **25 to 50% of those with a wall inside 1,500,** not of all those in town |
+| **Knock-backs reaching a wall** | **50 to 70% with no stick held, and at least 90% with it (re-ruled below),** of those with a wall in reach, not of all those in town. Reach is Combat's `min(1,500, 3 × the knock's distance)`, which I accept, as it keeps a short knock short |
 | **Felled, swings on against off** | **Two thirds stands.** 64% on 16 fights can't be told from it |
 
 **I'm leaving the hero's lure alone.** It reads people, RL-214 keeps it for now, and RL-219's terms are for the mark-down only. If the hero's fights still leave town unused after this, it comes back here and goes to Legal.
+
+### Addendum: buildings at every place (2026-11-01, on `docs/world/places-everywhere.md`)
+
+**A correction to my last addendum.** I said places were in reach and launches just didn't land on them. World then found that only about one place in seven has buildings in the sim, so most of those places were empty ground anyway. With every place built, the lever has something to land on.
+
+**The people in a far town.** **They count toward the hero's anguish, by World's place-by-place share when the place is first posed, and they feed nothing else: not today's menace, not `power` from casualties (`collateral.gd`), not Witness, and not mood's aggression.** Orb's pillar 5 says the villain never feeds on civilian deaths and the hero's pressured by failing to protect the city. RL-217 keeps toll-fed stats to voice and the hero's cost, and today's menace is only grandfathered as it stands on the first ring, so a planet of new towns can't widen it. So World's one flag is two: anguish yes, the rest no. **For Legal, through the EP:** as `pop0` grows, the 12 to 30% band's share can fall while more people are lost across a tour of towns, so QA reads the band over the places reached and also as a total.
+
+**The sends sum again, by arithmetic and unrun.**
+
+| Step | Today | With every place built |
+| :--- | ---: | ---: |
+| Places with buildings a launch could reach | About 1 in 7 of them | **All:** about 54 on a planet, so about 4 inside a launch's 13,200 units on average, and more from land. About 1 on the line itself, and 2 to 4 with a swing |
+| Real launches a match | About 12 | About 12 |
+| Landings near buildings | About 1 in 4 | **About 1 in 2 to 2 in 3** with the lever |
+| Taken, at 85% | | **5 to 7 sends** |
+| Knock-backs reaching a wall, and throws and ploughs | | About 1 and about 1 |
+| **Sends a match** | **1.75 read** | **About 7 to 9: the top of 4 to 8, or just over** |
+| Buildings crossed | | About 9 to 12, inside 6 to 12 |
+
+**That means my 45 s pull is now too strong, so I withdraw it. `dry` goes back to 90 s for the first read.** A visit runs about 1.4 minutes: 2 sends at 1.7 launches a minute and 85%, and about 1 minute of it near buildings.
+
+| | Time in a cycle | Visits in 7 minutes | Time near a building (20 to 35%) | Sends from visits (4 to 8) |
+| :--- | ---: | ---: | ---: | ---: |
+| With 45 s | 2.2 minutes | About 3.3 | **About 47%: over** | About 6.6 |
+| **With 90 s** | 2.9 minutes | **About 2.4** | **About 34%** | **About 5,** plus what lands outside a visit |
+
+**So 90 s fits every band on paper,** including 2 to 4 places visited, and "at least 25% outside every settlement" stands. **The targets stay as they are.** If the read overshoots, the first cut is the lever's score rather than the bands, because Orb loves this and overshooting is the good problem to have. World's cost (about 0.5 s more at load, and a 0.8 ms rise in p99 until Simulation's index) is theirs and Performance's to read.
+
+### Addendum: open sea (2026-11-01, on Encounter's rows)
+
+Fights spend 16 to 20% of their time over open ocean, the longest stay is 85 to 106 s, and 71 to 77% of that is a locked brawl that stays where it starts. **The share isn't the problem, and the long stay is.** A planet's sea should be somewhere fights go, and 16 to 20% doesn't look high (I haven't found a measure of how much of a planet is sea), and the sea's about to get better (`rule-of-cool-map.md` row 35). The problem is a minute and a half of brawl with nothing to hit and nothing changing.
+
+| | The ruling | First value |
+| :--- | :--- | :--- |
+| **The share band** | **Not tightened to 10 to 15%.** A planet's fight should sometimes be at sea, and today's reading is fine | At most 25%, read not tuned |
+| **The stay** | **Yes, a bound.** It's a QA row on the long tail, with no hard stop, so it's always soft | 90% of stays under about 45 s |
+| **Lever 1: the planner** | **Yes, first, and it's most of the answer.** A send from open sea scores reaching land or a built place, using §15's carry solved to fit. A brawl ends in a send, and this makes the send count | A bonus, after about 30 s at sea |
+| **Lever 2: the drift** | **Yes, only with land in sight, and weaker than offered.** After about 30 s, not 20, a locked brawl's drift eases toward land, but only if the coast is within about 3,000 units. A pull toward land 20,000 units away would never arrive and would only feel strange | Slow, and a held stick cancels it that tick, for every fighter |
+| **What resets the clock** | **The sea doing something.** A body hitting the water, a skim, a slam or, once it's in, a parted sea. **So a sea fight that's being a sea fight isn't pulled away.** Only a dull one is | |
+| **Also** | The brawl's slow swing can bring a coast onto the line, by the score it already has. Nothing new | |
+
+**Pillar 1 and agency.** The planet stays the arena, with no walls, and nothing forbids the sea. It's soft, and the stick wins throughout: a player who wants to fight at sea just holds the stick or keeps it lively. **The lever gives way as row 35 lands,** so re-read the band then.
+
+**The wall's share: both. The band was wrong, and the number's too high.** It now counts only knock-backs with a wall in reach, so 25 to 50% was set for a different count. But 88 to 92% means a knock-back near a wall is nearly always a slam, and a slam is strong (twice the building's hit, a 24-tick stagger and the first move). And a knock should sometimes be just a knock.
+
+- **With no stick held: 50 to 70%, in place of 25 to 50%.** Bring `knockBack.wall.base` down to reach it.
+- **With the stick toward the wall: at least 90%,** because the stick's vote wins.
+- **The count decides:** wall slams stay 2 to 5 a match (`buildings.md` §4). If they're over, `base` comes down further. If they're under with this band, it comes back to me.
