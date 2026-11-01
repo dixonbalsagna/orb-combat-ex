@@ -26,6 +26,16 @@ export function expectations(on, { planet = true } = {}) {
     biome: set.has('biome'), water: set.has('water'), surface: set.has('surface'), floor: set.has('floor'), interrupts: set.has('interrupts'), turn: set.has('turn'),
     ...(set.has('rightStick') ? { rightStick: true } : {}),
     ...(set.has('meteor') ? { meteor: true } : {}),
+    ...(set.has('swing') ? { swingOn: true } : {}),
+    ...(set.has('quickRead') ? { quickRead: true } : {}),
+    ...(set.has('hapticLadder') ? { hapticLadder: true } : {}),
+    ...(set.has('hapticIncoming') ? { hapticIncoming: true } : {}),
+    ...(set.has('struggle') ? { struggle: true } : {}),
+    ...(set.has('kick') ? { kick: true } : {}),
+    ...(set.has('arc') ? { arc: true } : {}),
+    ...(set.has('beamFront') ? { beamFront: true } : {}),
+    ...(set.has('mixed') ? { mixed: true } : {}),
+    ...(set.has('rightStick') ? { stickOn: true } : {}),
     ...(set.has('gen3') ? { gen3: true } : {}),   // a field world: its generation reads 3 or the data's 2, and it may have no fine-biome columns   // the probe reports it only when the tree has the code that reads it, so it is asked only when the switch is on
   };
 }
@@ -37,7 +47,8 @@ export function probeProblems(probe, want) {
   for (const k of ['planetGen', 'dataGen']) if (!(want.gen3 && k === 'planetGen' ? probe[k] >= 2 : probe[k] === want[k])) out.push({ sw: 'gen2', text: `${k} reads ${probe[k]}, expected ${want.gen3 && k === 'planetGen' ? 'at least 2 (gen 3 asked)' : want[k]}` });
   if (!want.gen3 && (probe.fine > 0) !== (want.planetGen === 2)) out.push({ sw: 'gen2', text: `the planet has ${probe.fine} fine-biome columns, expected ${want.planetGen === 2 ? 'some (a gen 2 planet)' : 'none (the stored planet)'}` });
   if (probe.planet !== want.planet) out.push({ sw: 'gen2', text: `the match ${probe.planet ? 'is' : 'is not'} a generated planet, expected ${want.planet ? 'one' : 'the hand-made world'}` });
-  for (const k of ['biome', 'water', 'surface', 'floor', 'interrupts', 'turn', ...(want.rightStick ? ['rightStick'] : []), ...(want.meteor ? ['meteor'] : [])]) if (probe[k] !== want[k]) out.push({ sw: k, text: `${k} reads ${probe[k]} in the running game, expected ${want[k]}` });
+  for (const k of ['biome', 'water', 'surface', 'floor', 'interrupts', 'turn', ...(want.rightStick ? ['rightStick'] : []), ...(want.meteor ? ['meteor'] : []), ...['quickRead', 'hapticLadder', 'hapticIncoming', 'struggle', 'mixed', 'kick', 'arc', 'beamFront'].filter((k) => want[k] && probe[k] !== undefined)]) if (probe[k] !== want[k]) out.push({ sw: k, text: `${k} reads ${probe[k]} in the running game, expected ${want[k]}` });
+  for (const [k, sw] of [['swingOn', 'swing'], ['stickOn', 'rightStick']]) if (want[k] && probe[k] !== undefined && probe[k] !== true) out.push({ sw, text: `${k} reads ${probe[k]} in the running game, expected true (the switch is on in the data; the game does not run it)` });
   for (const e of probe.errors || []) out.push({ sw: errorSwitch(e) || 'water', text: `water loader: ${e}` });
   return out.map((p) => (typeof p === 'string' ? { sw: null, text: p } : p));
 }
@@ -102,7 +113,7 @@ export async function smoke({ dir, on = IDS, planet = 7, timeoutS = 240, shot, s
       const playUntil = Math.min(deadline, Date.now() + 20000);
       for (let i = 0; Date.now() < playUntil; i++) { await press(KEYS[i % KEYS.length], 250); await sleep(150); }
       p = (await read()) || p;
-      notes.push(`after play: tick ${p.tick} (${p.tick - t1} more in the keys' 20 s), hp ${JSON.stringify(p.hp)}, ring turns so far ${p.turns}${p.swings !== undefined ? `, swings so far ${p.swings} (-1: no swing state, not a field world; DirSwing asks at a launch, a chase, a form's pause, an AI's flight or a brawl)` : ''} (a turn needs a planet match, 60 s of match time since the last one and a calm moment after a launch has landed: not within this 20 s)`);
+      notes.push(`after play: tick ${p.tick} (${p.tick - t1} more in the keys' 20 s), hp ${JSON.stringify(p.hp)}, ring turns so far ${p.turns}${p.swingOn !== undefined || p.stickOn !== undefined ? `, DEFAULTS READ FROM THE RUNNING GAME: right hand ${p.rightStick}, DirStick ${p.stickOn}, DirSwing ${p.swingOn}` : ''}${p.swings !== undefined ? `, swings so far ${p.swings} (-1: no swing state, not a field world; DirSwing asks at a launch, a chase, a form's pause, an AI's flight or a brawl)` : ''} (a turn needs a planet match, 60 s of match time since the last one and a calm moment after a launch has landed: not within this 20 s)`);
       if (p.tick - t1 < 120) add(null, `the match did not play on: ${p.tick - t1} ticks in about 20 s of keys (it was at tick ${t1}; the How to play card or the start menu may still be up)`);
       probe = p;
       for (const x of probeProblems(p, want)) add(x.sw, x.text);

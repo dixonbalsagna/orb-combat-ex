@@ -8,7 +8,7 @@ import { request } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { buildPreview, buildKey, serveLocal, checkTree, plan, overlayPaths, overlayFiles, applyPatchText } from './preview.mjs';
-import { SWITCHES, IDS, locate, flip, resolve, errorSwitch, patchMain, tableWith, loadPending, planetFunc, present } from './switches.mjs';
+import { SWITCHES, KICK_SAMPLES, IDS, locate, flip, resolve, errorSwitch, patchMain, tableWith, loadPending, planetFunc, present } from './switches.mjs';
 import { expectations, probeProblems } from './smoke.mjs';
 import { browserExe } from '../machine/browser.mjs';
 
@@ -28,6 +28,7 @@ const MAIN = [
   'extends Node', 'const URL_ARGS: Array = ["nointro", "skyreact"]', 'var args: Dictionary = {}', 'var _planet_next: Dictionary = {}', 'var frames: int = 0', '',
   'func _match_setup(seed: int = 0) -> Dictionary:', '\tif manual or args.has("nointro"):', '\t\treturn _planet_next.duplicate()', '\tvar su: Dictionary = {"intro": 1}', '\tsu.merge(_planet_next)', '\treturn su', '',
   'func _on_menu_started(cfg: Dictionary) -> void:', '\tif bool(cfg.get("intros", true)):', '\t\tstart_match(1)', '\telse:', '\t\tvar su: Dictionary = _planet_next.duplicate()', '\t\tstart_match(1, {}, su)', '',
+  'func _ready() -> void:', '	ui_hud.menu_changed.connect(_on_menu_changed)', '',
   'func _process(delta: float) -> void:', '\tvar n: int = host.advance(delta, vp.x, vp.y)', '\tframes += 1', '',
 ].join('\n');
 
@@ -60,7 +61,7 @@ check('--off surface turns the floor off with it, and says why', R('surface').ac
 check('--off interrupts turns the floor off with it', !R('interrupts').active.includes('floor') && R('interrupts').active.includes('surface'));
 check('--off gen2 turns nothing else off', R('gen2').cascaded.length === 0 && R('gen2').active.length === IDS.length - 1);
 check('swing (DirSwing) is a data flag of data/director/swing.json `enabled`, waits for the file and needs gen3; the top-level key is the one flipped, not the nested ones', (() => { const s = SWITCHES.find((x) => x.id === 'swing'); if (!s || s.file !== 'data/director/swing.json' || s.path.join() !== 'enabled' || !s.optional || s.needs.join() !== 'gen3') return false; const T = '{\n  "enabled": false,\n  "kinds": {\n    "launch": {\n      "enabled": true\n    }\n  },\n  "other": {\n    "enabled": false\n  }\n}\n'; const f = flip(T, s); return f.text === T.replace('"enabled": false,\n  "kinds"', '"enabled": true,\n  "kinds"'); })());
-check('--off with a comma list and --off all', R('water,biome').active.join() === 'gen2,surface,interrupts,floor,calmTurn,turn,rightStick,gen3,meteor,tiles,swing' && R('all').active.length === 0);
+check('--off with a comma list and --off all', R('water,biome').active.join() === 'gen2,surface,interrupts,floor,calmTurn,turn,rightStick,quickRead,hapticLadder,hapticIncoming,gen3,go,meteor,tiles,swing,everywhere,arc,beamFront,kick,mixed,struggle' && R('all').active.length === 0);
 check('an unknown id is reported, not ignored', R('watr').unknown.join() === 'watr');
 
 // ---- error hints
@@ -188,6 +189,10 @@ try {
     check('with the file in the tree it is on, and the setup carries planetGen 3', g1.active.includes('gen3') && g1.setup.planetGen === 3 && !g1.waiting.some((w) => w.id === 'gen3'), JSON.stringify(g1));
     check('--off gen3 leaves the setup alone', plan(repo, sha, { overlay: ['sim/world'], off: ['gen3'], pending: pend.rows }).setup.planetGen === undefined);
     check('the scratch main.gd\'s planet entry carries the setup (planetGen 3), and not otherwise', /return \{"planet": int\(args\["planet"\]\), "touch": int\(args\.get\("touch", 3\)\), "planetGen": 3\}/.test(planetFunc([], { planetGen: 3 })) && !/"touch", 3\)\), "planetGen"/.test(planetFunc()) && patchMain(MAIN, [], { planetGen: 3 }).includes('"planetGen": 3') && patchMain(MAIN) === patchMain(MAIN, [], {}));
+    check('?kick=1 wraps the planet entry (kick true; off or 0 false) only when the tree has Simulation\'s kick, and the setup still reaches the base entry', planetFunc([], { planetGen: 3 }, { kickWord: true }).includes('func _preview_planet_base() -> Dictionary:') && planetFunc([], {}, { kickWord: true }).includes('d["kick"] = str(args["kick"]) != "off" and str(args["kick"]) != "0"') && /"planetGen": 3\}/.test(planetFunc([], { planetGen: 3 }, { kickWord: true })) && !planetFunc([], {}).includes('_preview_planet_base'));
+    check('the kick\'s takeoff words (instant, climbTicks) reach the setup with the same names, clamped, and four sample addresses are printed', (() => { const f = planetFunc([], {}, { kickWord: true }); return f.includes('d["instant"] = clampf(float(args["instant"]), 0.0, 1.0)') && f.includes('d["climbTicks"] = clampi(int(args["climbTicks"]), 0, 120)') && KICK_SAMPLES.length === 4 && KICK_SAMPLES.every((s) => s.add && s.label); })());
+    check('the go word runs before the HUD loads its menu, on a local page only, and keeps what the player chose', (() => { const m = patchMain(MAIN); return m.includes('\t_preview_go()\n\tui_hud.menu_changed.connect(_on_menu_changed)') && m.includes('func _preview_go() -> void:') && m.includes('if not d.has("p1"):') && m.includes('if not d.has("intros"):') && m.includes("location.hostname === \'127.0.0.1\'"); })());
+    check('?tier= becomes startTier only for a tree that knows it, and the kick lines only for a tree with the kick', (() => { const a = planetFunc([], {}, { tierWord: true }), b = planetFunc([], {}, { kickWord: true }), c = planetFunc([], {}, { kickWord: true, tierWord: true }); return a.includes('d["startTier"] = clampi(int(args["tier"]), 1, 4)') && !a.includes('d["kick"]') && b.includes('d["kick"]') && !b.includes('d["startTier"]') && c.includes('d["startTier"]') && c.includes('d["kick"]') && a.includes('func _preview_planet_base()'); })());
     check('a gen 3 probe reads 3 or the data\'s 2, and a field world may have no fine-biome columns: asked for, neither is a failure', probeProblems({ ...okProbe, planetGen: 3, fine: 0 }, expectations(IDS)).length === 0 && probeProblems({ ...okProbe, planetGen: 1, fine: 0 }, expectations(IDS)).some((p) => /planetGen reads 1, expected at least 2/.test(p.text)));
     const gb = await buildPreview({ ...opts, overlay: ['sim/world'], rebuild: true, pending: pend });
     const gs = JSON.parse(readFileSync(join(gb.web, 'seen.json'), 'utf8'));
@@ -218,6 +223,7 @@ try {
     work('sim/director/swing.gd', 'class_name DirSwing\nstatic func setForce(v: int) -> void:\n\tpass\n');
     const swOffPlan = plan(repo, sha, { overlay: ['sim/director'], pending: pend.rows });
     check('with setForce in the tree plan says yes and the address list gains the swings=off page word', swOffPlan.swingsOff === true && swOffPlan.alts.some((a) => a.add === 'swings=off'), JSON.stringify(swOffPlan.alts));
+    check('the tiles row lists the fore tone\'s page word as an alternative address (nofore=1 added, on by default)', sw('tiles').alt && sw('tiles').alt.add === 'nofore=1');
     // tiles: a page word, present when Rendering's tile ground is in the tree, needs gen3
     check('tiles is a page word, not a data flag: no file, the word, the command-line form, the file it waits for, and it needs gen3', sw('tiles').url === 'tiles=1' && sw('tiles').cmd === '--tiles' && sw('tiles').file === undefined && sw('tiles').presentIf.file === 'render/core/tile_ground.gd' && sw('tiles').needs.join() === 'gen3' && sw('tiles').optional === true);
     work('render/core/tile_ground.gd', 'extends RefCounted\n');
@@ -226,7 +232,7 @@ try {
     const t1 = plan(repo, sha, { overlay: ['render/core', 'sim/world'], pending: pend.rows });
     check('with both in the tree tiles is on and the word is carried on the address', t1.active.includes('tiles') && t1.urlWords.join() === 'tiles=1' && t1.setup.planetGen === 3, JSON.stringify(t1));
     check('--off tiles leaves no word', plan(repo, sha, { overlay: ['render/core', 'sim/world'], off: ['tiles'], pending: pend.rows }).urlWords.length === 0);
-    check('the scratch main.gd\'s URL list is edited at the START of the list, so the tile park\'s own words first do not break the anchor', (() => { const m = MAIN.replace('const URL_ARGS: Array = ["nointro", ', 'const URL_ARGS: Array = ["tiles", "tilerate", "nointro", '); return patchMain(m).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "tiles", "tilerate", "nointro", ') && patchMain(MAIN).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "nointro", '); })());
+    check('the scratch main.gd\'s URL list is edited at the START of the list, so the tile park\'s own words first do not break the anchor', (() => { const m = MAIN.replace('const URL_ARGS: Array = ["nointro", ', 'const URL_ARGS: Array = ["tiles", "tilerate", "nointro", '); return patchMain(m).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "tiles", "tilerate", "nointro", ') && patchMain(MAIN).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "nointro", '); })());
     const tb = await buildPreview({ ...opts, overlay: ['render/core', 'sim/world'], rebuild: true, pending: pend });
     check('a build with both overlaid reports the word and flips no file for it', tb.active.includes('tiles') && tb.urlWords.join() === 'tiles=1' && !tb.flips.some((x) => x.id === 'tiles'), JSON.stringify([tb.active, tb.urlWords]));
 

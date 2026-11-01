@@ -29,17 +29,49 @@ export const SWITCHES = [
   { id: 'rightStick', file: 'data/input/timing.json', path: ['switches', 'rightStick'], from: false, to: true, needs: [], optional: true, host: 'right-hand-host',
     probe: '"rightStick": SimInputData.right_stick_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func right_stick_on' },
     what: 'the right-hand attacks (pitch 4a, Controls): the right stick throws directional-charge strikes, the left hand braces and slips; the pad\'s right stick is read. Waits until Controls\' code is in the tree you build (or overlaid)' },
+  { id: 'quickRead', file: 'data/input/timing.json', path: ['switches', 'quickRead'], from: false, to: true, needs: [], optional: true,
+    probe: '"quickRead": SimInputData.quick_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func quick_on' },
+    what: 'the quick read (Controls, responsiveness): the strike and the brace read one tick sooner, the vanish resolves on the second press, and the layout publishes the stick\'s pre-read for the pose. timing.json switches.quickRead. Waits until Controls\' code and keys are in the tree (docs/controls/pending/quick-read)' },
+  { id: 'hapticLadder', file: 'data/input/timing.json', path: ['switches', 'hapticLadder'], from: false, to: true, needs: ['rightStick'], optional: true,
+    probe: '"hapticLadder": SimInputData.haptic_ladder_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func haptic_ladder_on' },
+    what: 'the strike charge\'s ladder on the pad (Controls, pitch 1): a held stick strike pulses once as each rung is reached, 12 / 30 / 50 live ticks from the request; none for a quick flick. Needs the right hand. timing.json switches.hapticLadder. Waits for docs/controls/pending/stick-feel' },
+  { id: 'hapticIncoming', file: 'data/input/timing.json', path: ['switches', 'hapticIncoming'], from: false, to: true, needs: ['rightStick'], optional: true,
+    probe: '"hapticIncoming": SimInputData.haptic_incoming_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func haptic_incoming_on' },
+    what: 'the incoming cue on the defender\'s pad (Controls, pitch 3): one cue when a rival\'s stick strike starts, high for toward and up, low for away and down; the striker feels nothing. Needs the right hand. timing.json switches.hapticIncoming. Waits for docs/controls/pending/stick-feel' },
   { id: 'gen3', setup: { planetGen: 3 }, presentIf: { file: 'sim/world/field.gd' }, needs: [], optional: true,
     what: 'planet generation 3 (World\'s field world): the match\'s setup says planetGen 3 on a whole ring (no arena key), not a data flag. Waits until the tree has World\'s code (sim/world/field.gd)' },
+  { id: 'go', url: 'go=1', presentIf: { file: 'ui/core/ui_prefs.gd' }, needs: [], optional: true,
+    what: 'the private page for a person with a pad (the EP, 2026-11-01): ?go=1 on a local page sets, before the start menu loads, Player 1 = Controller and Intros off if the player has not chosen otherwise, and counts the How to play card as seen. The notice card and its "I understand, start" stay, a deliberate click. Nothing already chosen is overwritten.' },
   { id: 'meteor', url: 'meteor=loud', alt: { word: 'meteor=quiet', label: 'the quiet trail' }, presentIf: { file: 'data/vfx/meteor.json' }, needs: [], optional: true,
     probe: '"meteor": host.vfx.meteor_enabled', probeIf: { file: 'render/vfx/vfx_hub.gd', text: 'meteor_enabled' },
     what: 'VFX\'s meteor trail: a fighter\'s own burn laid along his path and cooling in the world. A page word on a local page (?meteor=loud, the default here, or ?meteor=quiet: two sets of numbers for Orb to pick between); no word, the trail is off and byte-identical off. The printed address carries the loud word and the quiet one is printed beside it. Waits until the tree has VFX\'s data/vfx/meteor.json' },
-  { id: 'tiles', url: 'tiles=1', cmd: '--tiles', presentIf: { file: 'render/core/tile_ground.gd' }, needs: ['gen3'], optional: true,
+  { id: 'tiles', url: 'tiles=1', cmd: '--tiles', alt: { add: 'nofore=1', label: 'the fore tone OFF, to compare (Rendering\'s page word; on by default)' }, presentIf: { file: 'render/core/tile_ground.gd' }, needs: ['gen3'], optional: true,
     what: 'Rendering\'s tile ground (stage 4 of the ring-at-any-angle work): the fight on planet-keyed tiles on a true globe, through Simulation\'s frame. A page word for now (?tiles=1, local pages only): the printed address carries it. Needs gen3 and waits until the tree has render/core/tile_ground.gd' },
   { id: 'swing', file: 'data/director/swing.json', path: ['enabled'], from: false, to: true, needs: ['gen3'], optional: true,
     probe: '"swings": (st.swing.n if st.swing != null else -1), "swing": ({"on": st.swing.active, "rate": snappedf(st.swing.rate, 0.1), "left": snappedf(st.swing.left, 0.1), "cause": st.swing.cause, "kind": st.swing.kind} if st.swing != null else {}), "fst": [st.fighters[0].state, st.fighters[1].state], "ln": [st.fighters[0].launchN, st.fighters[1].launchN], "pz": [st.pause.left, snappedf(st.dirS.stop, 0.01)]',
-    probeMore: [{ line: '"mv": SimSwing.movingNow(st)', probeIf: { file: 'sim/core/swing.gd', text: 'func movingNow' } }], probeIf: { file: 'sim/core/state.gd', text: 'var swing = null' },
+    probeMore: [{ line: '"mv": SimSwing.movingNow(st)', probeIf: { file: 'sim/core/swing.gd', text: 'func movingNow' } },
+      { line: '"swingOn": DirSwing.on(st)', probeIf: { file: 'sim/director/swing.gd', text: 'static func on(S: SimState)' } },
+      { line: '"stickOn": DirStick.on()', probeIf: { file: 'sim/director/stick.gd', text: 'static func on() -> bool' } }], probeIf: { file: 'sim/core/state.gd', text: 'var swing = null' },
     what: 'DirSwing (Encounter): the choreographer\'s swing: a launch, a chase, a form\'s pause, an AI\'s flight and a brawl each offer the line a turn, which the core\'s SimSwing runs. data/director/swing.json `enabled`; it does nothing but on a field world, so it needs gen3 (setup planet, touch, planetGen 3). Waits until the tree has Encounter\'s code' },
+  { id: 'everywhere', file: 'data/biomes/field.json', path: ['plans', 'everywhere'], from: false, to: true, needs: ['gen3'], optional: true,
+    probe: '"everywhere": WorldPlan.everywhere()', probeIf: { file: 'sim/world/plan.gd', text: 'static func everywhere' },
+    what: 'buildings at every place (World, docs/world/places-everywhere.md): each place the first ring does not hold is laid as the whole of its plan, planet-fixed, with no people, so a swing or a launch onto any town finds real buildings. data/biomes/field.json plans.everywhere. Gen 3 only. Waits until the tree has World\'s park (docs/world/pending/places-everywhere)' },
+  { id: 'arc', file: 'data/director/launch.json', path: ['arc', 'enabled'], from: false, to: true, needs: [], optional: true,
+    probe: '"arc": DirArc.on()', probeIf: { file: 'sim/director/arc.gd', text: 'static func on' },
+    what: 'the meteor launch, one curve, with ignition (Encounter, docs/director/pending/meteor and meteor-2; row 5 of rule-of-cool-map.md): a heavy charged to full at tier 4 with two forms each goes up one authored curve, the meteor on a stunned or weak foe. data/director/launch.json arc.enabled. Try it from a training start: ?tier=4. Waits until the tree has Encounter\'s park' },
+  { id: 'beamFront', file: 'data/director/interrupts.json', path: ['beamPlays', 'front', 'enabled'], from: false, to: true, needs: [], optional: true,
+    probe: '"beamFront": DirBeamPlay.frontOn()', probeIf: { file: 'sim/director/beamplay.gd', text: 'static func frontOn' },
+    what: 'beams that travel, and the window to answer (Encounter, docs/director/pending/beam-front; row 40 of rule-of-cool-map.md): the beam takes ticks from hand to him, the hit is decided at arrival, and he can fire back, dodge in the last 14 ticks or block. data/director/interrupts.json beamPlays.front.enabled. Waits until the tree has Encounter\'s park' },
+  { id: 'kick', file: 'data/fight/kick.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
+    probe: '"kick": SimKick.enabled()', probeIf: { file: 'sim/core/kick.gd', text: 'static func enabled' },
+    what: 'the kick and the coin turn (Simulation, docs/architecture/kick.md; rule-of-cool-map.md row 23): flat out from under half of top speed leaves at `instant` of top speed on the first tick (default 0.8) and reaches top speed over `climbTicks` (default 8) (Orb: instant, or at least instant to about 80%); a stick flip above half of top speed brakes, plants and kicks the other way. The overspeed is its own switch and off. Page words to try values: ?instant=0.9&climbTicks=4 (the printed sample addresses). data/fight/kick.json enabled. A setup\'s "kick" overrides it for a match: the page word ?kick=1 puts true in the setup, ?kick=off puts false (to compare). Waits until the tree has Simulation\'s park (docs/architecture/pending/kick)' },
+  { id: 'mixed', file: 'data/combat/mixed.json', path: ['enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
+    probe: '"mixed": DirMixed.on()', probeIf: { file: 'sim/director/mixed.gd', text: 'static func on' },
+    what: 'the mixed string (Combat, Orb\'s clip C9; docs/design/energy-overhaul.md section 21): a send or a knock opens a string across any range, and in it a tapped far heavy is a lob aimed where he is going, timed to land as he does. data/combat/mixed.json enabled. Needs the right hand. A prototype nobody has played. Waits until the tree has Combat\'s park (docs/combat/pending/mixed-string)' },
+  { id: 'struggle', file: 'data/director/interrupts.json', path: ['beamStruggle', 'enabled'], from: false, to: true, needs: [], optional: true,
+    probe: '"struggle": DirBeam.struggleOn()', probeIf: { file: 'sim/director/beam.gd', text: 'static func struggleOn' },
+    alt: { add: 'struggle=off', label: 'the beam struggle OFF (Encounter\'s page word; on by default here)' },
+    what: 'the beam struggle on the pulse: surges, strays and letting go (Encounter; Game Design\'s redesign after Orb\'s playtest of 2026-10-16: what you press during the clash moves the outcome). data/director/interrupts.json beamStruggle.enabled. On by default on the private page; ?struggle=off on a local page turns it off. Waits until the tree has Encounter\'s park (docs/director/pending/beam-struggle)' },
 ];
 
 export const IDS = SWITCHES.map((s) => s.id);
@@ -182,6 +214,23 @@ export function errorSwitch(line) {
 export const PLANET_FUNC = [
   '',
   '',
+  '## Scratch (tools/preview): ?go=1 on a LOCAL page: before the HUD loads its start menu, Player 1 is a controller and Intros are off unless the player saved other choices, and the How to play card counts as seen.',
+  'func _preview_go() -> void:',
+  '\tif not args.has("go"):',
+  '\t\treturn',
+  '\tif not (OS.has_feature("web") and bool(JavaScriptBridge.eval("location.hostname === \'127.0.0.1\' || location.hostname === \'localhost\'", true))):',
+  '\t\treturn',
+  '\tvar m = UiPrefs.get_value("menu", {})',
+  '\tvar d: Dictionary = m if m is Dictionary else {}',
+  '\tif not d.has("p1"):',
+  '\t\td["p1"] = "pad"',
+  '\tif not d.has("intros"):',
+  '\t\td["intros"] = false',
+  '\tUiPrefs.set_value("menu", d)',
+  '\tUiPrefs.set_bool("howto_seen", true)',
+  '\tprint("[preview] go: menu prefs now ", UiPrefs.get_value("menu", {}), " howto_seen ", UiPrefs.get_bool("howto_seen"))',
+  '',
+  '',
   '## Scratch (tools/preview): the planet part of a match\'s setup. The next menu-started match\'s own (planet_part) when it has one, else ?planet=N from the URL (a generated planet; touch 3 as the golden planet matches use).',
   'func _preview_planet() -> Dictionary:',
   '\tif not _planet_next.is_empty():',
@@ -217,11 +266,102 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
     '',
     '',
   ].join('\n');
+  const sticks = [
+    '## Scratch (tools/preview): ?sticks=1 on a LOCAL page: player 1 is claimed by a scripted pad and its right stick is driven every tick: a quick flick at phase 30 and a held charge at 120 to 170 of every 240 ticks, the direction turning each 240; the stick cues are counted (stk).',
+    'var _pv_claimed: bool = false',
+    'var _pv_stick_n: int = 0',
+    'var _pv_stick_kinds: Dictionary = {}',
+    'var _pv_conn: bool = false',
+    'func _preview_sticks() -> void:',
+    '\tif not args.has("sticks") or host == null or host.S == null:',
+    '\t\treturn',
+    '\tif not (OS.has_feature("web") and bool(JavaScriptBridge.eval("location.hostname === \'127.0.0.1\' || location.hostname === \'localhost\'", true))):',
+    '\t\treturn',
+    '\tif not _pv_claimed:',
+    '\t\t_pv_claimed = true',
+    '\t\thost.hub.pad_button(0, "back", true)',
+    '\t\thost.hub.pad_button(0, "back", false)',
+    '\t\thost.take_players()',
+    '\tif host.S.fighters[0].ai != null:',
+    '\t\thost.toggle_ai(0)',
+    '\tvar t: int = host.ticks',
+    '\tvar ph: int = t % 240',
+    '\tvar dirs: Array = [Vector2(1.0, 0.0), Vector2(0.0, 1.0), Vector2(-1.0, 0.0), Vector2(0.0, -1.0)]',
+    '\tvar d: Vector2 = dirs[(t / 240) % 4]',
+    '\tif (ph >= 30 and ph < 34) or (ph >= 120 and ph < 170):',
+    '\t\thost.hub.pad_stick_right(0, d.x, d.y)',
+    '\telse:',
+    '\t\thost.hub.pad_stick_right(0, 0.0, 0.0)',
+    '\t# the signature (the arena pad\'s east button): a tap at phase 200 to 203 of every 240 ticks, so a beam goes out whenever there is the ki for it, and a clash can follow',
+    '\thost.hub.pad_button(0, "east", ph >= 200 and ph < 204)',
+    '\tif not _pv_conn:',
+    '\t\t_pv_conn = true',
+    '\t\thost.drained.connect(_pv_on_drained)',
+    '',
+    '',
+    '## The sim\'s events are cleared at the end of host.advance (S.out.fx.clear()), so they are counted where the host hands them out, on its drained signal.',
+    'func _pv_on_drained(events: Array, _lines: Array) -> void:',
+    '\tfor e in events:',
+    '\t\tif str(e.type) == "cue" and str(e.kind).begins_with("stick_"):',
+    '\t\t\t_pv_stick_n += 1',
+    '\t\t\t_pv_stick_kinds[str(e.kind)] = int(_pv_stick_kinds.get(str(e.kind), 0)) + 1',
+    '',
+    '',
+  ].join('\n');
+  const struggleOff = [
+    '## Scratch (tools/preview): ?struggle=off on a LOCAL page turns the beam struggle off before a match starts (Encounter\'s page word): beamStruggle.enabled false in DirInterrupt\'s loaded data.',
+    'func _preview_struggle_off() -> void:',
+    '\tif OS.has_feature("web") and bool(JavaScriptBridge.eval("(location.hostname === \'127.0.0.1\' || location.hostname === \'localhost\') && location.search.indexOf(\'struggle=off\') >= 0", true)):',
+    '\t\tvar bs = DirInterrupt.data().get("beamStruggle", {})',
+    '\t\tbs["enabled"] = false',
+    '',
+    '',
+  ].join('\n');
+  const kickLines = [
+    '\tif args.has("kick"):',
+    '\t\td["kick"] = str(args["kick"]) != "off" and str(args["kick"]) != "0"',
+    '\t# the takeoff, for Orb to try (Simulation\'s kick: the share of top speed on the first tick, and the ticks from there to top speed): the same names as the setup keys',
+    '\tif args.has("instant"):',
+    '\t\td["instant"] = clampf(float(args["instant"]), 0.0, 1.0)',
+    '\tif args.has("climbTicks"):',
+    '\t\td["climbTicks"] = clampi(int(args["climbTicks"]), 0, 120)',
+  ];
+  const tierLines = [
+    '\t# a training start (Encounter\'s meteor-2: both fighters on the ladder\'s own start at this tier), e.g. ?tier=4',
+    '\tif args.has("tier"):',
+    '\t\td["startTier"] = clampi(int(args["tier"]), 1, 4)',
+  ];
+  const kickWord = [
+    '## Scratch (tools/preview): page words that become setup keys on a LOCAL page: ?kick=1 puts "kick": true (Simulation\'s kick and coin turn on for the match whatever kick.json says; ?kick=off puts false), ?instant= and ?climbTicks= the kick\'s takeoff, ?tier=4 a training start (startTier).',
+    'func _preview_planet() -> Dictionary:',
+    '\tvar d: Dictionary = _preview_planet_base()',
+    ...(opts.kickWord ? kickLines : []),
+    ...(opts.tierWord ? tierLines : []),
+    '\treturn d',
+    '',
+    '',
+  ].join('\n');
   let out = extra.length ? PLANET_FUNC.replace(line, () => `\t\t${extra.join(', ')},\n${line}`) : PLANET_FUNC;
+  if (opts.sticks) {
+    const callAt = "\tif frames % 20 != 0 and not args.has(\"reel\"):";
+    if (!out.includes(callAt)) throw new Error('tools/preview/switches.mjs: the probe cadence line moved (planetFunc is out of date)');
+    const head = 'func _preview_probe() -> void:\n';
+    out = out.replace(head, () => sticks + head + '\t_preview_sticks()\n');
+  }
+  if (opts.struggleOff) {
+    const head = "func _preview_planet() -> Dictionary:\n";
+    if (!out.includes(head)) throw new Error('tools/preview/switches.mjs: the planet entry moved (planetFunc is out of date)');
+    out = out.replace(head, () => struggleOff + head + '\t_preview_struggle_off()\n');
+  }
   if (opts.swingsOff) {
     const head = "func _preview_planet() -> Dictionary:\n";
     if (!out.includes(head)) throw new Error('tools/preview/switches.mjs: the planet entry moved (planetFunc is out of date)');
     out = out.replace(head, () => swingsOff + head + '\t_preview_swings_off()\n');
+  }
+  if (opts.kickWord || opts.tierWord) {
+    const head = 'func _preview_planet() -> Dictionary:\n';
+    if (!out.includes(head)) throw new Error('tools/preview/switches.mjs: the planet entry moved (planetFunc is out of date)');
+    out = out.replace(head, () => kickWord + 'func _preview_planet_base() -> Dictionary:\n');
   }
   const keys = Object.entries(setup);
   if (keys.length) {
@@ -236,7 +376,8 @@ const EDITS = [
   { name: 'the match setup\'s planet part (no-intro and hook starts)', from: '\t\treturn _planet_next.duplicate()\n', to: '\t\treturn _preview_planet()\n' },
   { name: 'the match setup\'s planet part (the intro start)', from: '\tsu.merge(_planet_next)\n', to: '\tsu.merge(_preview_planet())\n' },
   { name: 'the menu start without intros', from: '\t\tvar su: Dictionary = _planet_next.duplicate()\n', to: '\t\tvar su: Dictionary = _preview_planet()\n' },
-  { name: 'the options the URL may set', from: 'const URL_ARGS: Array = [', to: 'const URL_ARGS: Array = ["planet", "touch", "preview", "reel", ' },
+  { name: 'the options the URL may set', from: 'const URL_ARGS: Array = [', to: 'const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", ' },
+  { name: 'the menu choices before the HUD loads them', from: '\tui_hud.menu_changed.connect(_on_menu_changed)\n', to: '\t_preview_go()\n\tui_hud.menu_changed.connect(_on_menu_changed)\n' },
   { name: 'the per-frame hook', from: '\tvar n: int = host.advance(delta, vp.x, vp.y)\n', to: '\tvar n: int = host.advance(delta, vp.x, vp.y)\n\tif args.has("preview"):\n\t\t_preview_probe()\n' },
 ];
 
@@ -256,3 +397,11 @@ export function patchMain(text, extra = [], setup = {}, opts = {}) {
   }
   return out.replace(/\s*$/, '') + nl(planetFunc(extra, setup, opts));
 }
+
+/** The kick's takeoff values for Orb to try (Simulation's data/fight/kick.json: the default is 0.8 and 8). Printed as addresses beside the page's own, each one the page's address plus these words. */
+export const KICK_SAMPLES = [
+  { id: 'kick', add: 'instant=0.9&climbTicks=4', label: 'the kick, quicker: 90% of top speed on the first tick, top speed in 4 more' },
+  { id: 'kick', add: 'instant=0.8&climbTicks=12', label: 'the kick, a longer climb: 80% on the first tick, a fifth of a second to top speed' },
+  { id: 'kick', add: 'instant=1&climbTicks=0', label: 'the kick, truly instant: top speed on the first tick' },
+  { id: 'kick', add: 'kick=off', label: 'the kick OFF, to compare' },
+];

@@ -2,7 +2,7 @@
 // of tools/preview/stack.json; the check is run on HEAD alone and on the first k parks, and the smallest k where it fails names the first park that causes it (assuming it stays failing: the report says so when it does not).
 // One Godot job at a time, below-normal priority; each probe is a fresh scratch tree (the commit, k parks, the import, the check). Never touches the repository.
 //
-//   node tools/preview/bisect.mjs --check anim|cover|lake|<res://path/to/check.gd> [--args "-- --seeds=4"] [--repo <dir>] [--manifest <file>] [--out <scratch>] [--lo 0] [--hi N] [--switches id,id|none] [--limit-min 40]
+//   node tools/preview/bisect.mjs --check anim|cover|lake|<res://path/to/check.gd> [--args "-- --seeds=4"] [--repo <dir>] [--manifest <file>] [--out <scratch>] [--rev <commit>] [--parks id,id] [--lo 0] [--hi N] [--switches id,id|none] [--with-switches-anyway] [--limit-min 40]
 //
 // Known checks: anim = render/anim/tools/anim_check.gd, cover = render/tools/cover_water_check.gd, lake = render/tools/lake_water_check.gd. A check prints "FAIL  <what>" lines and ends on a verdict line; its exit code is 0 when it passes.
 // Output: for each probe the k, the result and the failing lines; then "FIRST FAILING PARK: <id> (<owner>) at k" with the failing lines at k and the ones that are new at k against k-1.
@@ -32,9 +32,17 @@ const limitMs = Number(opt('--limit-min', 40)) * 60 * 1000;
 const log = (m) => console.error(`[bisect] ${m}`);
 const man = loadManifest(readFileSync(resolve(manifest || join(HERE, 'stack.json')), 'utf8'));
 if (man.problems.length) { console.error(man.problems.join('; ')); process.exit(2); }
-const parks = man.parks.filter((p) => p.ready !== false);
+const PARKS = (opt('--parks', '') || '').split(',').filter(Boolean);   // --parks a,b,c: bisect over just these, in the manifest's order (a stack of someone else's: "main + World 08-15 + field-pads + ...")
+const parks = PARKS.length ? man.parks.filter((p) => PARKS.includes(p.id)) : man.parks.filter((p) => p.ready !== false);
+if (PARKS.length && parks.length !== PARKS.length) { console.error(`--parks names ${PARKS.filter((x) => !man.parks.some((p) => p.id === x)).join(', ') || 'a park twice'}, which the manifest does not have`); process.exit(2); }
 const godot = godotExe(opt('--godot'));
-const SW = opt('--switches');   // which preview switches are on in every probe: a list, 'none', or absent (all, as the stack has them)
+// These five read the switches AS SHIPPED (Combat, 2026-11-01; found here with --switches): with the stack's switches on they fail on the commit alone, so by default they are run with the switches off, and run with them on only when told.
+const SHIPPED_ONLY = /(?:^|\/)(?:parity|launchbiome_probe|cover_water_check|lake_water_check|anim_check)\.gd$/;
+let SW = opt('--switches');   // which preview switches are on in every probe: a list, 'none', or absent (all, as the stack has them)
+if (SHIPPED_ONLY.test(script)) {
+  if (SW === undefined) { SW = 'none'; console.error('[bisect] this check reads the switches AS SHIPPED (golden, launchbiome_probe, cover/lake water, anim_check fail with the stack\'s switches on, on main alone): running it with the switches OFF; pass --switches <list> --with-switches-anyway to vary them'); }
+  else if (SW !== 'none' && !has('--with-switches-anyway')) { console.error(`refusing: ${script} reads the switches AS SHIPPED, so it fails on any tree with switches on (${SW}) whatever the parks are; use --switches none, or add --with-switches-anyway if you are tracing which switch does it`); process.exit(2); }
+}
 const switches = SW === undefined ? null : SW === 'none' ? [] : SW.split(',').filter(Boolean);
 const memo = new Map();
 

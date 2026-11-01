@@ -499,6 +499,13 @@ export async function runStack(o) {
   return { report, changes, unchanged: false, stateFile };
 }
 
+/** Said at the foot of every report (Combat, 2026-11-01): which gates read the switches AS SHIPPED and so must not be run, or believed, on a tree with the stack's switches on. */
+export const SHIPPED_NOTE = [
+  'NOTE for anyone reading these results: the stack turns every preview switch ON in its scratch tree. These gates check the switches AS SHIPPED and fail on such a tree whatever the parks are:',
+  '  golden (sim/core/tools/parity.gd) 8 rows and launchbiome_probe 1 row (both fail on main alone with the switches on); cover_water_check and lake_water_check (2 each, the "gen 1 planet" rows, with gen2 on); anim_check (13, with floor, surface and interrupts on).',
+  '  They are not run by the stack, and a failure of one on a stack tree is not a park\'s. Run them with the switches off: node tools/preview/bisect.mjs --check <name> --switches none (it does that by itself for these five), or on a tree without the flips.',
+];
+
 /** The report as text lines. */
 export function describeReport(r) {
   const L = [];
@@ -532,6 +539,7 @@ export function describeReport(r) {
   const ids = Object.keys(r.missing);
   L.push(ids.length ? 'Missing, by park:' : 'Missing: nothing the manifest knows of');
   for (const id of ids) for (const m of r.missing[id]) L.push(`  ${id}: ${m.need} (${m.why}${m.owner ? `; ${m.owner}` : ''})`);
+  L.push(...SHIPPED_NOTE);
   return L;
 }
 

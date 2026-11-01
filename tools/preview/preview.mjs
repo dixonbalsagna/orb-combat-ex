@@ -21,7 +21,7 @@ import { extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { exportRevision } from '../flash/head-export.mjs';
 import { scriptErrors } from '../gate.mjs';
-import { IDS, SWITCHES, EDITS_FINGERPRINT, flip, locate, present, patchMain, resolve as resolveSwitches, tableWith, loadPending } from './switches.mjs';
+import { IDS, SWITCHES, KICK_SAMPLES, EDITS_FINGERPRINT, flip, locate, present, patchMain, resolve as resolveSwitches, tableWith, loadPending } from './switches.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const REPO = resolve(HERE, '..', '..');
@@ -135,11 +135,14 @@ export function plan(repo, sha, { off = [], overlay = [], pending = [], read: re
     for (const sw of table) if (active.includes(sw.id) && sw.needs.some((n) => !active.includes(n))) { wait(sw.id, `it needs ${sw.needs.filter((n) => !active.includes(n)).join(' + ')}, which is not on`); again = true; }
   }
   for (const sw of table) if (active.includes(sw.id)) { if (sw.setup) Object.assign(setup, sw.setup); if (sw.url) urlWords.push(sw.url); }
+  const kickWord = (() => { const x = read('sim/core/kick.gd'); return x !== null && x.includes('static func enabled'); })();
+  const tierWord = (() => { const x = read('sim/core/sim.gd'); return x !== null && x.includes('startTier'); })();
+  const sticksOk = (() => { const x = read('sim/director/stick.gd'); return x !== null && x.includes('class_name DirStick'); })();
   const swingsOff = (() => { const x = read('sim/director/swing.gd'); return x !== null && x.includes('static func setForce'); })();
-  const alts = table.filter((s) => active.includes(s.id) && s.url && s.alt).map((s) => ({ id: s.id, word: s.url, to: s.alt.word, label: s.alt.label })).concat(swingsOff ? [{ id: 'swing', add: 'swings=off', label: 'DirSwing off (Encounter\'s page word)' }] : []);
+  const alts = table.filter((s) => active.includes(s.id) && s.url && s.alt).map((s) => (s.alt.add ? { id: s.id, add: s.alt.add, label: s.alt.label } : { id: s.id, word: s.url, to: s.alt.word, label: s.alt.label })).concat(swingsOff ? [{ id: 'swing', add: 'swings=off', label: 'DirSwing off (Encounter\'s page word)' }] : []).concat(kickWord && active.includes('kick') ? KICK_SAMPLES : []);
   const more = table.filter((s) => active.includes(s.id) && Array.isArray(s.probeMore)).flatMap((s) => s.probeMore.filter((m) => { const x = read(m.probeIf.file); return x !== null && x.includes(m.probeIf.text); }).map((m) => m.line));
-  const probes = more.concat(table.filter((s) => active.includes(s.id) && s.probe && s.probeIf && read(s.probeIf.file) !== null && read(s.probeIf.file).includes(s.probeIf.text)).map((s) => s.probe));
-  return { table, active: table.map((s) => s.id).filter((id) => active.includes(id)), cascaded: r.cascaded, waiting, stale, probes, hostPatch, unknown: r.unknown, setup, urlWords, alts, swingsOff };
+  const probes = (sticksOk ? ['"stk": _pv_stick_n', '"stkk": _pv_stick_kinds', '"p1human": (host.S.fighters[0].ai == null)'] : []).concat(more).concat(table.filter((s) => active.includes(s.id) && s.probe && s.probeIf && read(s.probeIf.file) !== null && read(s.probeIf.file).includes(s.probeIf.text)).map((s) => s.probe));
+  return { table, active: table.map((s) => s.id).filter((id) => active.includes(id)), cascaded: r.cascaded, waiting, stale, probes, hostPatch, unknown: r.unknown, setup, urlWords, alts, swingsOff, sticksOk, kickWord, tierWord };
 }
 
 /** Applies a git patch to a scratch tree (git apply, whitespace-tolerant: a CRLF checkout must not refuse it). Throws with git's first line when it does not fit. */
@@ -197,7 +200,7 @@ export async function buildPreview(o) {
   }
   const mainFile = join(tree, 'render', 'core', 'main.gd');
   if (pl.hostPatch) { applyPatchText(tree, pl.hostPatch); log('applied the right-hand host patch to the scratch main.gd (the pad\'s right stick)'); }
-  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff }));
+  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord }));
   const godot = o.godotNode ? null : godotExe(o.godot);
   const g = { godot, godotNode: o.godotNode };
   log('importing the project (Godot, below-normal priority)');

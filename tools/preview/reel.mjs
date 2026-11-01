@@ -2,7 +2,7 @@
 // launcher (the flash capture hook, ?flashcap=1, as tools/flash/capture-web.mjs does it), a still every 30 ticks, and the page's own state probe (?preview=1&reel=1) is read after every step, so each still says
 // what the swing is doing and why. Private: the output is a folder of contact sheets and a record, never published. Node 24 built-ins only.
 //
-//   node tools/preview/reel.mjs --dir <built web folder> --out <folder> [--seed 12345] [--every 30] [--swings 2] [--launches 1] [--cap 6000] [--margin 60] [--width 960 --height 540] [--planet 7] [--query "meteor=loud&tiles=1"]
+//   node tools/preview/reel.mjs --dir <built web folder> --out <folder> [--seed 12345] [--every 30] [--swings 2] [--launches 1] [--cap 6000] [--margin 60] [--width 960 --height 540] [--planet 7] [--query "meteor=loud&tiles=1"] [--sticks]
 //
 // It plays the hook's `ai` scenario (a real AI match) on the page's planet until it has seen --swings complete swings and --launches launch(es), then --margin more ticks, or --cap ticks. Stills are kept for the
 // ticks within --margin of a swing or a launch. Output: <out>/sheet-1.png ... (contact sheets of 12, the corner of each still reading the tick, the swing's state, rate, degrees left and cause, and the fighters'
@@ -18,7 +18,7 @@ if (!DIR || !OUT) { console.error('usage: node tools/preview/reel.mjs --dir <bui
 const SEED = Number(opt('--seed', 12345)), EVERY = Number(opt('--every', 30)), NSWING = Number(opt('--swings', 2)), NLAUNCH = Number(opt('--launches', 1));
 const CAP = Number(opt('--cap', 6000)), MARGIN = Number(opt('--margin', 60));
 const W = Number(opt('--width', 960)), H = Number(opt('--height', 540)), PLANET = Number(opt('--planet', 7));
-const QUERY = opt('--query', 'meteor=loud&tiles=1');
+const QUERY = `${opt('--query', 'meteor=loud&tiles=1')}${argv.includes('--sticks') ? '&sticks=1' : ''}`;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const log = (m) => console.log(`[reel] ${m}`);
 const exe = browserExe('chrome');
@@ -57,12 +57,13 @@ try {
       if (pv.swing.on && curSwing) { curSwing.maxRate = Math.max(curSwing.maxRate, Math.abs(pv.swing.rate)); if (!curSwing.cause) curSwing.cause = pv.swing.cause; }
       if (!pv.swing.on && curSwing) { curSwing.end = tick; curSwing = null; }
     }
+    if (pv && pv.stkk) record.stickKinds = pv.stkk;   // the cues by kind so far (the last probe read)
     if (pv && pv.ln) { for (let k = 0; k < 2; k++) if (pv.ln[k] > lastLn[k]) record.launches.push({ tick, fighter: k, n: pv.ln[k], states: pv.fst }); lastLn = pv.ln; }
     if (tick % EVERY === 0) {
       const shot = await page.send('Page.captureScreenshot', { format: 'jpeg', quality: 72, fromSurface: true });
       const file = `still-${String(tick).padStart(6, '0')}.jpg`;
       writeFileSync(join(OUT, 'stills', file), Buffer.from(shot.data, 'base64'));
-      shots.set(tick, { file, pv: pv ? { swing: pv.swing || null, swings: pv.swings, fst: pv.fst || null, ln: pv.ln || null, hp: pv.hp || null, pz: pv.pz || null, mv: pv.mv === undefined ? null : pv.mv } : null });
+      shots.set(tick, { file, pv: pv ? { swing: pv.swing || null, swings: pv.swings, fst: pv.fst || null, ln: pv.ln || null, hp: pv.hp || null, pz: pv.pz || null, mv: pv.mv === undefined ? null : pv.mv, stk: pv.stk === undefined ? null : pv.stk, p1h: pv.p1human === undefined ? null : pv.p1human, on: { rs: pv.rightStick, stick: pv.stickOn, swing: pv.swingOn } } : null });
     }
     const swingsDone = record.swings.filter((s) => s.end !== null).length;
     if (doneAt < 0 && swingsDone >= NSWING && record.launches.length >= NLAUNCH) doneAt = tick;
@@ -76,7 +77,8 @@ try {
     const near = record.swings.some((w) => tick >= w.start - MARGIN && tick <= (w.end === null ? last : w.end) + MARGIN) || record.launches.some((l) => Math.abs(tick - l.tick) <= MARGIN);
     if (near) keep.push({ tick, ...s });
   }
-  record.pictures = keep.map((k) => ({ tick: k.tick, file: `stills/${k.file}`, swing: k.pv && k.pv.swing, fighters: k.pv && k.pv.fst, launchN: k.pv && k.pv.ln, pause: k.pv && k.pv.pz, moving: k.pv && k.pv.mv }));
+  record.pictures = keep.map((k) => ({ tick: k.tick, file: `stills/${k.file}`, swing: k.pv && k.pv.swing, fighters: k.pv && k.pv.fst, launchN: k.pv && k.pv.ln, pause: k.pv && k.pv.pz, moving: k.pv && k.pv.mv, stickCues: k.pv && k.pv.stk }));
+  record.stickCues = Math.max(0, ...keep.map((k) => (k.pv && typeof k.pv.stk === 'number' ? k.pv.stk : 0)));
   log(`${last} ticks played: ${record.swings.length} swing(s), ${record.launches.length} launch(es), ${keep.length} stills kept of ${shots.size}`);
   // the contact sheets: an HTML page of the stills, the caption in each still's corner, shot by the same browser
   const label = (k) => {
@@ -87,6 +89,7 @@ try {
       sw ? (on ? `SWING ON  ${sw.rate} deg/s  ${sw.left} left` : 'swing at rest') : 'no swing state',
       sw && on ? `cause: ${sw.cause || '?'}` : (k.pv && k.pv.swings >= 0 ? `swings so far ${k.pv.swings}` : ''),
       k.pv && k.pv.fst ? `A ${k.pv.fst[0]} / B ${k.pv.fst[1]}` : '',
+      k.pv && k.pv.stk !== null && k.pv.stk !== undefined ? `stick cues so far ${k.pv.stk}   player 1 human: ${k.pv.p1h}   defaults: right hand ${k.pv.on && k.pv.on.rs}, DirStick ${k.pv.on && k.pv.on.stick}, DirSwing ${k.pv.on && k.pv.on.swing}` : '',
       k.pv && k.pv.pz ? `pause.left ${k.pv.pz[0]}  dirS.stop ${k.pv.pz[1]}${k.pv.mv === null || k.pv.mv === undefined ? '' : `  moving ${k.pv.mv}`}` : '', ...evL].filter(Boolean);
   };
   const PER = 12;

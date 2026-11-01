@@ -223,6 +223,10 @@ try {
   check('the report prints each park, the first conflict (or none), the switches, the import and the smoke match', /APPLIED\s+p-alpha/.test(lines) && /First conflict: none/.test(lines) && /Switches on:/.test(lines) && /Import: clean/.test(lines) && /Smoke match: ok/.test(lines));
   const bad = describeReport({ ...r3.report, firstConflict: { park: 'x', step: 'patch a', file: 'f.gd', with: 'HEAD', fileOwner: 'o', parkOwner: 'p', why: 'does not apply' } }).join('\n');
   check('a conflict with the commit says HEAD moved since the park was made', /FIRST CONFLICT: park x \(p\), patch a/.test(bad) && /HEAD moved since the park was made/.test(bad));
+  check('every report ends on the note that golden, launchbiome_probe, the water checks and anim_check read the switches AS SHIPPED and are not run, or believed, with the stack\'s switches on', /AS SHIPPED/.test(describeReport(r3.report).join('\n')) && /golden/.test(describeReport(r3.report).join('\n')) && /launchbiome_probe/.test(describeReport(r3.report).join('\n')) && /anim_check/.test(describeReport(r3.report).join('\n')));
+  const bz = spawnSync(process.execPath, [join(here, 'bisect.mjs'), '--check', 'res://sim/core/tools/parity.gd', '--switches', 'gen2', '--repo', repo], { encoding: 'utf8' });
+  const bz2 = spawnSync(process.execPath, [join(here, 'bisect.mjs'), '--check', 'anim', '--switches', 'floor', '--repo', repo], { encoding: 'utf8' });
+  check('bisect.mjs refuses the golden, launchbiome, the water checks and anim_check with switches on (exit 2, no Godot) unless told', bz.status === 2 && /AS SHIPPED/.test(bz.stderr) && bz2.status === 2 && /AS SHIPPED/.test(bz2.stderr), String(bz.stderr).slice(0, 100));
   // the command line
   const cli = (...a) => spawnSync(process.execPath, [join(here, 'stack.mjs'), ...a], { encoding: 'utf8' });
   const c1 = cli('--bogus');
