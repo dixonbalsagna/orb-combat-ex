@@ -27,9 +27,11 @@ Netcode, 2026-11-01. It combines Simulation's, Game Design's, Camera's and Contr
 | **0. The two-PC check, no network** | That two different processors play the same match. No firewall | **Built.** Goes in the old PC's one-click test |
 | **1. Plain 1v1 between the two PCs, on the globe** | The firewall step, the link, the feel | **Built, not run.** Waits for step 0 and Orb's yes |
 | **2. Both humans against 1 computer fighter, on the globe** | Three fighters over the link, taking turns in one fight, on Encounter's waiting-their-turn work (parked). No second fight, no clock change | About 3 to 5 more, once that's landed |
-| **3. Both humans against 2 computer fighters, on the globe,** all four on one line, no pass, assists, revive or meteors | The real question: when your friend calls, do you drop your fight and fly? | The full job below |
+| **3. Both humans against 2 computer fighters, on the full globe,** Game Design's smallest version: all four on one line with no turning while apart, focus that picks itself with the D-pad to override, rescue by flying in, each fight's own hit-stop, the map and the plate. No assists, revive, pass or meteor | The real question: when your friend calls, do you drop your fight and fly? And is that the best moment of the match? | The full job below |
 
 **The half-size flat ring is gone from these,** by Simulation's sizing: the globe adds only 1 or 2 sessions, and a rescue halfway round is about 5 or 6 seconds flat out, so it needs no shorter road.
+
+**Game Design's rulings that reach the network (`docs/design/two-v-two.md`):** each fight's hit-stop holds only its own fighters, and each fighter's held ticks are saved and compared, so the check numbers read them. A 1v1 keeps today's whole-game hold, so step 1 doesn't change. NetLan's rule for keeping a press back during a freeze then has to read the local fighter's hold. Any blow can reach any enemy and never a partner, which is all sim. If the fights never meet, this is two 1v1s, and QA watches for that.
 
 **What the globe changes for the network:**
 
@@ -43,7 +45,7 @@ Netcode, 2026-11-01. It combines Simulation's, Game Design's, Camera's and Contr
 
 | Work | Who | Sessions |
 | :--- | :--- | ---: |
-| Rulings: the shared clock, and whether a blow can hit the other fight | Game Design | 1 |
+| Rulings: the shared clock, and whether a blow can hit the other fight | Game Design | Done, first values |
 | Two fights at once: `S.dirS.ex`, read 111 times in 26 files | Encounter | 3 to 5 (mine, Encounter hasn't sized it) |
 | Each fight's own hit-stop, or a freeze only for big moments | Simulation | 2 to 3 (mine). **The biggest risk to how it feels** |
 | Focus and the line, for four fighters | Simulation | 2 to 3 |
@@ -73,7 +75,7 @@ Netcode, 2026-11-01. It combines Simulation's, Game Design's, Camera's and Contr
 
 - **Input size: unchanged.** About 4 to 5 KB/s each way, nothing on a home network.
 - **How often it rolls back: about never on a cable.** The game waits 2 ticks (33 ms) before using an input, and a home network delivers well inside that. Our LAN test row shows 0 rollbacks. Wi-Fi can break that for a moment.
-- **Slow ticks are the catch.** If one PC stalls past 33 ms, its buttons arrive late and the other PC has to guess, then re-run those ticks. A launch tick costs 18 to 27 ms on the main PC today, and two can land together. Waiting 3 ticks (50 ms) covers most of it, and the game already chooses its wait from each PC's speed.
+- **Slow ticks are the catch.** If one PC stalls past 33 ms, its buttons arrive late and the other PC has to guess, then re-run those ticks. A launch tick costs 18 to 27 ms on the main PC today, and two can land together. Waiting 3 ticks (50 ms) covers most of it, but the game won't choose that by itself: on a LAN its chooser always says 2, because it reads the link's ping and not slow ticks. So LAN version 1 has a shortcut with the longer wait, for Orb to compare by playing.
 
 **The old PC's frame,** by arithmetic. It uses the two-PC check's readings on this PC, on the globe, on a busy machine: a tick of about 1.2 ms and a save or restore of about 0.45 ms. It assumes four fighters double a tick and a 1.5 times slower PC, which is a guess.
 
@@ -130,4 +132,4 @@ A match can already hold 5 bodies, but as one fight with bystanders, not two fig
 ## For Orb, when it's time
 
 1. **Does a fight need to turn its own world while the other fight is far away?** If yes, that's the 6 to 10 extra sessions, plus World's. Playing one line with four fighters is the cheapest way to find out, so it isn't a question for now.
-2. **Who's the second player?** Legal's conditions for the old-PC test say Orb alone watches, and its no-network rule was written for the public builds, so step 1 needs Legal's word, through the EP.
+2. **Who's the second player?** Legal's RL-230 clears step 1 for Orb alone, on both PCs. A second person has to be named to Legal first, who rules on that name. Likely yes for one named adult at Orb's home, on Orb's own network, told beforehand.

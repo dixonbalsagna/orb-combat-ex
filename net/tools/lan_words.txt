@@ -1,0 +1,39 @@
+Orb Combat EX: a plain 1v1 between your two PCs
+
+What this is: one fight on your two PCs, with one pad each, or against yourself. This game opens a network link between the two PCs, over your home network only. It's a private test and it has rough edges.
+
+WHO PLAYS: Only Orb plays and watches, on both PCs, with nobody else in the room. This build has a flashing-effects warning; read it first. Don't copy, record, share or post this folder, the screens or the main PC's address.
+
+BEFORE YOU START: ONE WINDOWS QUESTION, ONCE
+This is the only approval it needs, and only on the main PC. Windows blocks programs from being reached over the network unless you say so. So you're allowing this one game, on one network port, from addresses on your home network only (not ZeroTier). It's only for this test: step 8 takes it away, so don't skip that.
+
+Both PCs must be on the same home network: no guest or shared Wi-Fi, no ZeroTier or other member network, no port forwarding, no tunnel.
+
+ON THE MAIN PC
+1. Double-click "Allow through the firewall (main PC, once)". Windows asks "Do you want to allow this app to make changes?". Click Yes. A window says Done.
+2. Double-click "Host (main PC)".
+
+ON THE OLD PC
+3. Copy this whole folder to the old PC first (your own USB stick or home share is fine). It stays on your two PCs.
+4. Double-click "Join (old PC)". If Windows says it protected your PC because the program isn't recognised, click More info, then Run anyway. That's because the build isn't signed.
+
+ON BOTH PCs
+5. The game shows its flashing-effects warning on each PC. Read it first. Flashing stays reduced in this build, and you can't turn that off.
+6. Choose a controller on the start menu and press Start. Do this on each PC, one after the other, in any order.
+7. Look at the top of the window. It says "Waiting for the other PC", then "Connected, input wait 2 ticks". Then fight.
+
+TO COMPARE TWO FEELS
+Close both, then use "Host with a longer wait (main PC)" in step 2. The top of the window says "input wait 3 ticks". Your button presses land about 17 ms later, and the two PCs have less to correct when one of them stutters. Tell the EP which you'd rather play.
+
+IF A WINDOWS FIREWALL BOX APPEARS ANYWAY
+We haven't been able to test whether step 1 stops it. If "Windows Security Alert" appears on the main PC, click "Allow access", and tell the EP it appeared. Don't click Cancel: that blocks the game until the rule's removed. Step 8 takes away what that box adds as well.
+
+WHAT DOESN'T WORK YET
+- One fight only. After a knockout, close both windows, and start again for another.
+- Don't pause. If you do, the other PC freezes until you come back.
+- If the top of the window says "OUT OF STEP" or "The other PC has gone", or it stays on "Waiting" for over a minute, close both and tell the EP.
+- If a PC's address has changed from {HOST_IP}, "Couldn't connect" shows at the top. Tell the EP.
+
+AFTERWARDS
+8. On the main PC, double-click "Remove the firewall rule (main PC, afterwards)". Click Yes. Do this every time.
+9. If you choose, give the EP the numbers in the files named lan-log-... on each PC: the ping, the step counts and the time.

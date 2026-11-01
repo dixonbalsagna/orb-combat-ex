@@ -295,6 +295,16 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/word_check.gd -- --negative-control'
       - name: Rollback check with the right stick on (two peers match the straight run, LAN and two lossy profiles)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --right-stick --seeds=1 --ticks=300 --profiles=lan,p80j,p200'
+      # Do two processors agree? (docs/net/two-pc-check.md): the report and its compare, here on one machine
+      - name: Two-PC check, self-test (two runs agree, a rematch equals a fresh match)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/two_pc_check.gd -- --self-test --ticks=900'
+      - name: Two-PC check, negative control (each deliberate change must be caught)
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/two_pc_check.gd -- --negative-control --ticks=900'
+      # The private LAN test's game side, no socket (docs/net/lan-v1.md): a press goes once, a frozen tick doesn't eat it, the game gets its fx
+      - name: LAN game side check
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/lan_check.gd -- --ticks=1200'
+      - name: LAN game side check, negative control
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/lan_check.gd -- --ticks=1200 --negative-control'
       # A swing under rollback (docs/net/rollback.md section 15): a forced flip of a swing and of the store, the rate bound, the digest on a field world
       - name: Swing check (late inputs flip a swing, the line and store restore, the correction stays in the rate bound)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/swing_check.gd -- --right-stick'

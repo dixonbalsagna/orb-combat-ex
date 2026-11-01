@@ -10,6 +10,7 @@ extends RefCounted
 var tr: NetTransport
 var S: SimState
 var local: int = 0
+var remote: int = 1           # the other PC's slot
 var hs: NetHandshake
 var bot: NetBot
 var session: NetSession = null
@@ -28,10 +29,11 @@ var stallFrames: int = 0      # tests only: the next this many frames run nothin
 
 
 ## S has had its newMatch; matchKey is NetHandshake.keyOf of it; bot answers for slot local_.
-func _init(tr_: NetTransport, S_: SimState, local_: int, matchKey: String, device: Dictionary, bot_: NetBot) -> void:
+func _init(tr_: NetTransport, S_: SimState, local_: int, matchKey: String, device: Dictionary, bot_: NetBot, remote_: int = -1) -> void:
 	tr = tr_
 	S = S_
 	local = local_
+	remote = remote_ if remote_ >= 0 else 1 - local_
 	hs = NetHandshake.new(matchKey, device)
 	bot = bot_
 
@@ -82,7 +84,7 @@ func _start() -> void:
 
 func _packet(now: float) -> Dictionary:
 	var since: Array = session.localSince(acked)
-	var pk := {"from": local, "frame": session.frame, "ack": session.ackOf(1 - local), "first": since[0], "inputs": since[1],
+	var pk := {"from": local, "frame": session.frame, "ack": session.ackOf(remote), "first": since[0], "inputs": since[1],
 		"chk": session.chkOut.duplicate(true), "ts": now, "echo": _echo, "age": now - _echoAt if _echo >= 0.0 else 0.0,
 		"adv": sync.current}
 	if since[2].size() > 0:
@@ -96,7 +98,7 @@ func _take(now: float, pk: Dictionary) -> void:
 	if pk.has("hs"):
 		hs.take(now, pk, tr)
 		return
-	if session == null or int(pk.get("from", -1)) != 1 - local:
+	if session == null or int(pk.get("from", -1)) != remote:
 		return
 	var ts: float = float(pk.get("ts", -1.0))
 	if ts > _echo:   # packets can arrive out of order: echo the newest
@@ -115,7 +117,7 @@ func _take(now: float, pk: Dictionary) -> void:
 	var ws: PackedInt32Array = pk.get("words", PackedInt32Array())
 	var n: int = 0
 	for p in pk.get("inputs", PackedInt64Array()):
-		session.addInput(1 - local, t, p, ws[n] if n < ws.size() else 0)
+		session.addInput(remote, t, p, ws[n] if n < ws.size() else 0)
 		t += 1
 		n += 1
 	for c in pk.get("chk", []):

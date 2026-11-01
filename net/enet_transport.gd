@@ -12,6 +12,7 @@ var listening: bool = false
 var lag: NetLoopback.Link = null   # the injected impairment, or null
 var failed: String = ""
 var disconnected: bool = false
+var allowPrefix: String = ""   # a listener's: only a peer whose address starts with this may connect ("" is anyone). Legal RL-230's home network filter, on top of the firewall rule's
 
 
 ## Bind addr:port and wait for one peer.
@@ -37,6 +38,10 @@ static func dial(addr: String, port: int) -> NetEnetTransport:
 	if t.peer == null:
 		t.failed = "connect to %s:%d failed" % [addr, port]
 	return t
+
+
+static func allowed(addr: String, prefix: String) -> bool:
+	return prefix == "" or addr.begins_with(prefix)
 
 
 ## Delay and drop outgoing packets like a loopback link: oneWay and jitter in ms, loss a share, seeded.
@@ -88,7 +93,10 @@ func receive(now: float) -> Array:
 			break
 		if kind == ENetConnection.EVENT_CONNECT:
 			if listening and peer == null:
-				peer = ev[1]
+				if allowed(ev[1].get_remote_address(), allowPrefix):
+					peer = ev[1]
+				else:
+					ev[1].peer_disconnect_now()
 		elif kind == ENetConnection.EVENT_DISCONNECT:
 			if ev[1] == peer:
 				disconnected = true

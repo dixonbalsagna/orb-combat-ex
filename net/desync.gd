@@ -120,12 +120,20 @@ static func _idx(fs: Array, f) -> float:
 	return -1.0 if f == null else float(fs.find(f))
 
 
+## The AI flags of a match whose every slot is a person.
+static func _noAi(slots: int) -> Dictionary:
+	var d: Dictionary = {}
+	for k in range(slots):
+		d["p%d" % (k + 1)] = false
+	return d
+
+
 ## A replay of a session's confirmed inputs below `upto`, in SimReplay's format (v4), with no checkpoints and no final
 ## hash: SimReplay.play runs it, and replayState stops it at a tick. info is the match: {seed, setup, ai}.
 static func replayOf(sess: NetSession, info: Dictionary, upto: int) -> Dictionary:
 	var setup: Dictionary = info.get("setup", {})
 	var rp := {"format": SimReplay.FORMAT, "v": SimReplay.V, "intent": SimIntent.VERSION, "data": SimReplay.dataHash(setup),
-		"seed": int(info.get("seed", 1)), "setup": setup.duplicate(true), "ai": info.get("ai", {"p1": false, "p2": false}).duplicate(),
+		"seed": int(info.get("seed", 1)), "setup": setup.duplicate(true), "ai": info.get("ai", _noAi(sess.players)).duplicate(),
 		"ticks": upto, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}
 	var log: Array = sess.confirmedLog(upto)
 	log.sort_custom(func(a, b): return a[0] < b[0] or (a[0] == b[0] and a[1] < b[1]))

@@ -40,6 +40,7 @@ var local: int = 0
 var delay: int = 2            # input delay, ticks
 var saveEvery: int = 1        # at most one snapshot every this many ticks (1: before every predicted tick)
 var maxAhead: int = 20        # ticks the session may run past the confirmed frontier before it waits
+var presentOut: bool = false  # a game is drawing this session: it drains each new tick's feed and fx itself (NetLan)
 var verify: bool = false      # save before every tick and report every confirmed tick's state (the test harness)
 var onConfirmed: Callable     # (tick: int, state: SimState or null, out: String) -> void: the state after `tick` ticks once final
 var clock: Callable           # () -> int microseconds, for profiling only; unset in a game
@@ -375,8 +376,9 @@ func _run(t: int) -> void:
 		perturb.call(S, t)
 	if onConfirmed.is_valid():
 		outLog[t] = outDigest(S)
-	S.out.feed.clear()
-	S.out.fx.clear()
+	if not (presentOut and t == frame):   # a game's new tick keeps its feed and fx for the game to draw; a re-run's are dropped, as the first run's were drawn
+		S.out.feed.clear()
+		S.out.fx.clear()
 
 
 ## Before tick t, on every run of it: a slot whose takeover is at t becomes the sim's AI (after the save and the checkpoint,
