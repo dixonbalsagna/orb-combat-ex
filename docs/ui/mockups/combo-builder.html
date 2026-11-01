@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Combo Builder Mockups</title>
+<style>
+:root {
+  --bg: #f4f1ea; --panel: #ffffff; --panel2: #ece8dd; --ink: #1b1d26; --dim: #5d6070; --edge: #c9c4b4;
+  --accent: #1f5fbf; --accent-ink: #ffffff; --good: #1f7a4a; --warn: #9a5b00; --lock: #8a8d9c;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1018; --panel: #181b27; --panel2: #222637; --ink: #f1eee6; --dim: #a7a9b8; --edge: #3a3f55;
+    --accent: #7fb2ff; --accent-ink: #0b0d14; --good: #6fd29b; --warn: #f0b560; --lock: #6c7087;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1018; --panel: #181b27; --panel2: #222637; --ink: #f1eee6; --dim: #a7a9b8; --edge: #3a3f55;
+  --accent: #7fb2ff; --accent-ink: #0b0d14; --good: #6fd29b; --warn: #f0b560; --lock: #6c7087;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { padding-bottom: 84px; }
+main { max-width: 860px; margin: 0 auto; padding: 16px; }
+h1 { font-size: 1.35rem; margin: 4px 0 2px; }
+h2 { font-size: 1.15rem; margin: 18px 0 4px; }
+p { margin: 6px 0; }
+.dim { color: var(--dim); }
+.small { font-size: .86rem; }
+.note { background: var(--panel2); border: 1px solid var(--edge); border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-size: .9rem; }
+.ph { font-style: italic; }
+.ph::after { content: "\2020"; font-style: normal; color: var(--warn); margin-left: 2px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.grow { flex: 1 1 auto; }
+button { font: inherit; color: inherit; cursor: pointer; }
+.btn { border: 2px solid var(--edge); background: var(--panel); border-radius: 10px; padding: 10px 14px; min-height: 48px; font-weight: 600; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.quiet { background: transparent; }
+.btn[disabled] { opacity: .5; cursor: default; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.cards { display: grid; gap: 12px; grid-template-columns: 1fr; }
+@media (min-width: 720px) { .cards.three { grid-template-columns: repeat(3, 1fr); } .cards.two { grid-template-columns: repeat(2, 1fr); } .cards.pool { grid-template-columns: repeat(3, 1fr); } }
+.card { background: var(--panel); border: 2px solid var(--edge); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.card.picked { border-color: var(--accent); }
+.card.locked { background: transparent; border-style: dashed; color: var(--lock); }
+.card h3 { margin: 0; font-size: 1.05rem; }
+.tag { display: inline-block; font-size: .78rem; font-weight: 700; border: 1.5px solid var(--edge); border-radius: 999px; padding: 1px 9px; margin-right: 4px; }
+.tag.new { border-color: var(--good); color: var(--good); }
+.tag.up { border-color: var(--warn); color: var(--warn); }
+.steps { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.step { display: flex; align-items: center; gap: 6px; background: var(--panel2); border-radius: 10px; padding: 5px 9px 5px 5px; }
+.step svg { flex: none; }
+.step .how { font-weight: 700; font-size: .92rem; line-height: 1.1; }
+.step .which { font-size: .78rem; color: var(--dim); line-height: 1.1; }
+.arrow { font-weight: 800; color: var(--dim); }
+.stats { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: center; font-size: .9rem; }
+.pips { display: inline-flex; gap: 3px; align-items: center; }
+.pip { width: 11px; height: 11px; border: 1.5px solid var(--ink); border-radius: 2px; }
+.pip.on { background: var(--ink); }
+.pip.add { background: var(--good); border-color: var(--good); }
+.num { margin-left: 6px; font-weight: 700; }
+.slot { background: var(--panel); border: 2px solid var(--edge); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.slot.empty { border-style: dashed; color: var(--dim); }
+.slotno { font-size: .78rem; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: .04em; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.chip { border: 2px solid var(--edge); background: transparent; border-radius: 999px; padding: 6px 14px; min-height: 44px; font-weight: 600; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+nav.tabs { position: fixed; left: 0; right: 0; bottom: 0; background: var(--panel); border-top: 2px solid var(--edge); display: flex; justify-content: center; z-index: 5; }
+nav.tabs button { flex: 1 1 0; max-width: 220px; border: 0; background: transparent; padding: 8px 4px 10px; min-height: 60px; font-weight: 600; font-size: .86rem; border-top: 4px solid transparent; }
+nav.tabs button .n { display: block; font-size: 1.05rem; }
+nav.tabs button[aria-selected="true"] { border-top-color: var(--accent); color: var(--accent); }
+.sheet-back { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: none; z-index: 9; }
+.sheet-back.open { display: block; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; max-height: 86vh; overflow: auto; background: var(--bg); border-radius: 18px 18px 0 0; padding: 16px; max-width: 860px; margin: 0 auto; }
+.toast { background: var(--good); color: #fff; border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-weight: 600; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .toast { color: #08130d; } }
+:root[data-theme="dark"] .toast { color: #08130d; }
+.before-after { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: start; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Combo builder: four mockups</h1>
+  <p class="dim">A spitball from Orb (2026-11-01), not a decision. Stand-in shapes only. Everything here is invented to show the idea.</p>
+  <div class="note"><span class="ph">Names like this</span> are placeholders (marked with a dagger). The numbers are made up. Button words follow the three-strengths layout (X Light, Y Medium, B Heavy, A Action) and would follow whatever layout ships.</div>
+  <div class="row small">
+    <button class="btn quiet" id="skip">Skip ahead (demo: a few fights in)</button>
+    <button class="btn quiet" id="reset">Start over</button>
+    <button class="btn quiet" id="theme">Light / dark</button>
+  </div>
+  <div id="view"></div>
+</main>
+<nav class="tabs" role="tablist" aria-label="Mockup screens">
+  <button role="tab" data-tab="choose" aria-selected="true"><span class="n">1</span>Choose</button>
+  <button role="tab" data-tab="mine" aria-selected="false"><span class="n">2</span>My combos</button>
+  <button role="tab" data-tab="reward" aria-selected="false"><span class="n">3</span>After a fight</button>
+  <button role="tab" data-tab="pool" aria-selected="false"><span class="n">4</span>The pool</button>
+</nav>
+<div class="sheet-back" id="sheetBack"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+
+<script>
+"use strict";
+// ---------- Data (all invented; names are placeholders) ----------
+// A step: btn is the face button, how is tap / hold / mash.
+var BUTTONS = { X: { pos: "west", word: "Light" }, Y: { pos: "north", word: "Medium" }, B: { pos: "east", word: "Heavy" }, A: { pos: "south", word: "Action" } };
+var HOWS = { tap: "Tap", hold: "Hold", mash: "Mash" };
+var POOL = [
+  { id: "c1", name: "Anvil Rush", steps: [["Y","hold"],["X","mash"]], does: "Charge a slow blow, then a flurry of quick ones while he reels.", dmg: 3, spd: 2, lnc: 1, cost: 0, ups: ["+1 damage; the flurry runs one hit longer", "The slow blow no longer needs a full hold", "Last hit of the flurry knocks him back"], found: "Win training against Grist", start: true },
+  { id: "c2", name: "Needle Chain", steps: [["X","tap"],["B","hold"]], does: "A quick jab that sets up a charged heavy. The jab always lands first.", dmg: 4, spd: 3, lnc: 2, cost: 0, ups: ["+1 speed", "The heavy charges faster", "A perfect release ends in a launch"], found: "Win training against Grist", start: true },
+  { id: "c3", name: "Shoulder Drive", steps: [["B","tap"],["X","tap"],["X","tap"]], does: "A heavy shove, then two quick follow-ups before he can guard.", dmg: 3, spd: 4, lnc: 1, cost: 0, ups: ["+1 damage", "The shove cracks his guard", "A third follow-up"], found: "Win training against Grist", start: true },
+  { id: "c4", name: "Sweeping Hook", steps: [["Y","tap"],["Y","hold"]], does: "A medium blow, then a long held swing that catches him if he dodges.", dmg: 3, spd: 3, lnc: 2, cost: 0, ups: ["+1 reach", "The swing starts faster", "Catches a dodge in mid-air too"], found: "Win a fight without being launched" },
+  { id: "c5", name: "Spiral Kick", steps: [["X","hold"],["Y","tap"]], does: "A held light blow spins into a medium kick that turns him round.", dmg: 2, spd: 4, lnc: 1, cost: 0, ups: ["+1 damage", "Turns him further", "Leaves him open for one extra blow"], found: "Land a combo of 8 blows" },
+  { id: "c6", name: "Ground Breaker", steps: [["B","hold"],["A","tap"]], does: "A heavy blow that grabs him on the way down and slams him into the ground.", dmg: 5, spd: 1, lnc: 3, cost: 0, ups: ["+1 damage", "Bigger crater", "He stays down a little longer"], found: "Launch him into the ground" },
+  { id: "c7", name: "Tempo Breaker", steps: [["X","mash"],["Y","tap"]], does: "Mash light blows, then cut in with a medium that breaks his rhythm.", dmg: 2, spd: 5, lnc: 1, cost: 0, ups: ["+1 damage", "The medium can't be blocked while he is mid-swing", "Mash runs longer"], found: "Win a fight in under a minute" },
+  { id: "c8", name: "Rising Arc", steps: [["Y","hold"],["B","tap"]], does: "A held medium lifts him, and a heavy follows to send him up and away.", dmg: 4, spd: 2, lnc: 4, cost: 1, ups: ["+1 launch", "Lifts him sooner", "Costs no Charge"], found: "Launch him three times in one fight" },
+  { id: "c9", name: "Pin and Press", steps: [["A","hold"],["X","mash"]], does: "Hold him in a grab and pound him while he struggles.", dmg: 3, spd: 3, lnc: 0, cost: 0, ups: ["+1 damage", "The grab is harder to break", "Ends with a throw"], found: "Grab him five times" },
+  { id: "c10", name: "Cross Counter", steps: [["B","tap"],["Y","hold"]], does: "A quick heavy that turns into a held medium if he guards, so the guard does not help.", dmg: 3, spd: 3, lnc: 2, cost: 0, ups: ["+1 speed", "Works through a perfect guard once", "A launch if both land"], found: "Break his guard twice in one fight" },
+  { id: "c11", name: "Quiet Finish", steps: [["X","tap"],["X","hold"]], does: "A single jab, then a held light that grows stronger the longer you wait.", dmg: 2, spd: 3, lnc: 0, cost: 0, ups: ["+1 damage", "Grows faster", "Can be held while moving"], found: "Win with a finishing move" },
+  { id: "c12", name: "Double Heavy", steps: [["B","tap"],["B","hold"]], does: "Two heavy blows in a row. Slow, but it takes a lot of his strength.", dmg: 5, spd: 1, lnc: 2, cost: 1, ups: ["+1 speed", "The second blow can't be dodged", "Costs no Charge"], found: "Win a fight after being behind by half" },
+  { id: "c13", name: "Skip Step", steps: [["Y","tap"],["A","tap"]], does: "A medium blow that slides into a grab as he steps back.", dmg: 2, spd: 4, lnc: 1, cost: 0, ups: ["+1 damage", "Longer slide", "The grab can start a throw"], found: "Dodge ten blows in one fight" },
+  { id: "c14", name: "Long Wind-up", steps: [["Y","hold"],["B","hold"]], does: "Two held blows. Hard to land, and it can end a fight on its own.", dmg: 5, spd: 1, lnc: 4, cost: 1, ups: ["+1 speed", "Armor during the first hold", "Costs no Charge"], found: "Win a fight in a city and spare most of it" },
+  { id: "c15", name: "Back-Door Barrage", steps: [["X","mash"],["B","mash"]], does: "Mash light, then mash heavy, so every press counts and the fight never slows.", dmg: 4, spd: 4, lnc: 1, cost: 0, ups: ["+1 damage", "Switches over sooner", "Last blow launches"], found: "Mash through a whole fight" },
+  { id: "c16", name: "Final Answer", steps: [["A","tap"],["Y","hold"],["B","hold"]], does: "A grab, a held medium and a held heavy. Three parts, one big finish.", dmg: 5, spd: 2, lnc: 5, cost: 2, ups: ["+1 speed", "Costs less Charge", "Each part can be ended early"], found: "Win a fight on the hardest setting" }
+];
+var BY = {}; POOL.forEach(function (c) { BY[c.id] = c; });
+var SLOTS = 4;
+
+function fresh() { return { known: {}, lvl: {}, slots: [null, null, null, null], picked: null, offer: 0, tab: "choose" }; }
+var S = fresh();
+
+// ---------- Helpers ----------
+function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+var ARROW = '<span class="arrow" aria-hidden="true">&rarr;</span>';
+
+// A face button as the neutral position diamond: four dots, the pressed one filled, with its letter.
+function padIcon(btn) {
+  var pos = BUTTONS[btn].pos, d = { north: [14, 5], east: [23, 14], south: [14, 23], west: [5, 14] }, s = '<svg width="32" height="28" viewBox="0 0 28 28" aria-hidden="true">';
+  Object.keys(d).forEach(function (k) {
+    s += k === pos ? '<circle cx="' + d[k][0] + '" cy="' + d[k][1] + '" r="4" fill="currentColor"/>' : '<circle cx="' + d[k][0] + '" cy="' + d[k][1] + '" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/>';
+  });
+  return s + '</svg>';
+}
+// How you press it: a shape each, never colour alone, plus the word.
+function howIcon(how) {
+  if (how === "tap") return '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="4" fill="currentColor"/></svg>';
+  if (how === "hold") return '<svg width="26" height="18" viewBox="0 0 26 18" aria-hidden="true"><rect x="2" y="5" width="22" height="8" rx="4" fill="currentColor"/></svg>';
+  return '<svg width="30" height="18" viewBox="0 0 30 18" aria-hidden="true"><path d="M3 4l5 5-5 5M12 4l5 5-5 5M21 4l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+function stepsHtml(c) {
+  var h = '<div class="steps" role="img" aria-label="' + esc(stepsText(c)) + '">';
+  c.steps.forEach(function (st, i) {
+    if (i) h += ARROW;
+    h += '<span class="step">' + padIcon(st[0]) + '<span><span class="how">' + howIcon(st[1]) + ' ' + HOWS[st[1]] + ' ' + st[0] + '</span><br><span class="which">' + BUTTONS[st[0]].word + '</span></span></span>';
+  });
+  return h + '</div>';
+}
+function stepsText(c) { return c.steps.map(function (s) { return HOWS[s[1]] + " " + s[0] + " (" + BUTTONS[s[0]].word + ")"; }).join(", then "); }
+function howTo(c) {
+  var parts = c.steps.map(function (s) {
+    var w = BUTTONS[s[0]].word;
+    return s[1] === "tap" ? "tap " + w : s[1] === "hold" ? "hold " + w : "mash " + w;
+  });
+  return "Press: " + parts.join(", then ") + ". Mash means press it again and again; hold means keep it down.";
+}
+function pips(n, max, add) {
+  var h = '<span class="pips" aria-hidden="true">';
+  for (var i = 1; i <= max; i++) h += '<span class="pip' + (i <= n ? " on" : (add && i <= n + add ? " add" : "")) + '"></span>';
+  return h + '</span>';
+}
+function level(c) { return S.lvl[c.id] || 0; }
+// Stats with upgrades folded in: an upgrade whose words say damage, speed or launch adds one to that stat.
+function upTarget(t) { return /damage/.test(t) ? "dmg" : /speed/.test(t) ? "spd" : /launch/.test(t) ? "lnc" : ""; }
+function stat(c, k, extra) {
+  var l = level(c) + (extra || 0), add = 0;
+  for (var i = 0; i < l && i < c.ups.length; i++) if (upTarget(c.ups[i]) === k) add++;
+  return Math.min(5, c[k] + add);
+}
+function statsHtml(c, extra) {
+  var rows = [["dmg", "Damage"], ["spd", "Speed"], ["lnc", "Launch"]], h = '<div class="stats">';
+  rows.forEach(function (r) { var v = stat(c, r[0], extra); h += '<span>' + r[1] + '</span><span>' + pips(v, 5) + '<span class="num">' + v + '/5</span></span>'; });
+  h += '<span>Charge</span><span class="num" style="margin:0">' + (c.cost ? "Uses " + c.cost : "Free") + '</span>';
+  return h + '</div>';
+}
+function levelTag(c) { return level(c) ? '<span class="tag up">Level ' + (level(c) + 1) + '</span>' : ""; }
+function nameHtml(c) { return '<span class="ph">' + esc(c.name) + '</span>'; }
+function comboCard(c, opts) {
+  opts = opts || {};
+  var d = el("div", "card" + (opts.picked ? " picked" : ""));
+  d.innerHTML = '<div><h3>' + nameHtml(c) + '</h3>' + (opts.tag || "") + levelTag(c) + '</div>' + stepsHtml(c) + '<div>' + esc(c.does) + '</div><div class="small dim">' + esc(howTo(c)) + '</div>' + statsHtml(c, opts.extra);
+  return d;
+}
+function owned() { return POOL.filter(function (c) { return S.known[c.id]; }); }
+function equipped(id) { return S.slots.indexOf(id) >= 0; }
+function toast(t) { return '<div class="toast" role="status">' + t + '</div>'; }
+
+// ---------- Screen 1: the training reward ----------
+var CHOICES = ["c1", "c2", "c3"];
+function screenChoose(v) {
+  v.appendChild(el("h2", null, "1. After winning training against Grist"));
+  v.appendChild(el("p", null, "<strong>Grist teaches you a combo. Choose one.</strong>"));
+  v.appendChild(el("p", "dim small", "Each card shows the buttons, how to press them, what it does and how strong it is. You keep one now. The other two can be found later."));
+  var grid = el("div", "cards three");
+  CHOICES.forEach(function (id) {
+    var c = BY[id], wrap = el("div"), card = comboCard(c, { picked: S.picked === id });
+    var b = el("button", "btn " + (S.picked === id ? "primary" : ""), S.known[id] ? "Learned" : (S.picked ? "Not chosen" : "Learn this one"));
+    b.disabled = !!S.known[id] || (S.picked && S.picked !== id);
+    if (!b.disabled) b.onclick = function () { S.picked = id; S.known[id] = true; S.slots[0] = id; render(); };
+    card.appendChild(b);
+    wrap.appendChild(card);
+    grid.appendChild(wrap);
+  });
+  v.appendChild(grid);
+  if (S.picked) {
+    v.insertAdjacentHTML("beforeend", toast("Learned <span class='ph'>" + esc(BY[S.picked].name) + "</span>. It is in slot 1 of your combo list."));
+    var go = el("button", "btn primary", "See my combo list"); go.onclick = function () { S.tab = "mine"; render(); };
+    v.appendChild(go);
+  }
+}
+
+// ---------- Screen 2: my combos ----------
+function screenMine(v) {
+  v.appendChild(el("h2", null, "2. Your combo list"));
+  v.appendChild(el("p", "dim small", "You can bring " + SLOTS + " combos into a fight. Everything else you know waits in the pool. Swap one out any time between fights."));
+  var grid = el("div", "cards two");
+  for (var i = 0; i < SLOTS; i++) (function (i) {
+    var id = S.slots[i], c = id ? BY[id] : null;
+    if (!c) {
+      var e = el("div", "slot empty");
+      e.innerHTML = '<span class="slotno">Slot ' + (i + 1) + '</span><div>Empty. ' + (owned().length ? "Pick a combo you know." : "Win a fight to learn one.") + '</div>';
+      var b0 = el("button", "btn", "Fill this slot"); b0.disabled = !owned().filter(function (k) { return !equipped(k.id); }).length;
+      b0.onclick = function () { openSwap(i); };
+      e.appendChild(b0); grid.appendChild(e); return;
+    }
+    var sl = el("div", "slot");
+    sl.innerHTML = '<span class="slotno">Slot ' + (i + 1) + '</span><div><strong>' + nameHtml(c) + '</strong> ' + levelTag(c) + '</div>' + stepsHtml(c) + '<div class="small">' + esc(c.does) + '</div>' + statsHtml(c);
+    var b = el("button", "btn", "Swap this one out"); b.onclick = function () { openSwap(i); };
+    sl.appendChild(b); grid.appendChild(sl);
+  })(i);
+  v.appendChild(grid);
+  var rest = owned().filter(function (c) { return !equipped(c.id); });
+  v.appendChild(el("h2", null, "Known, not in a slot (" + rest.length + ")"));
+  if (!rest.length) v.appendChild(el("p", "dim", "Nothing waiting. Combos you know but do not bring into a fight show up here."));
+  var g2 = el("div", "cards two");
+  rest.forEach(function (c) { g2.appendChild(comboCard(c)); });
+  v.appendChild(g2);
+}
+function openSwap(slot) {
+  var sheet = document.getElementById("sheet"), cur = S.slots[slot];
+  sheet.innerHTML = "";
+  sheet.appendChild(el("h2", null, cur ? "Swap out slot " + (slot + 1) : "Fill slot " + (slot + 1)));
+  sheet.appendChild(el("p", "dim small", "Pick the combo that goes in. The one you take out goes back to the pool and you can bring it back any time."));
+  var list = owned().filter(function (c) { return c.id !== cur && !equipped(c.id); });
+  if (!list.length) sheet.appendChild(el("p", null, "You have nothing else to bring yet."));
+  var g = el("div", "cards");
+  list.forEach(function (c) {
+    var card = comboCard(c), b = el("button", "btn primary", "Use this in slot " + (slot + 1));
+    b.onclick = function () { S.slots[slot] = c.id; closeSheet(); render(); };
+    card.appendChild(b); g.appendChild(card);
+  });
+  sheet.appendChild(g);
+  var x = el("button", "btn", "Cancel"); x.onclick = closeSheet; sheet.appendChild(x);
+  document.getElementById("sheetBack").classList.add("open"); x.focus();
+}
+function closeSheet() { document.getElementById("sheetBack").classList.remove("open"); }
+
+// ---------- Screen 3: after a fight ----------
+function screenReward(v) {
+  v.appendChild(el("h2", null, "3. After a fight"));
+  v.appendChild(el("p", "dim small", "Win a fight and the game offers one thing: a new combo, or a better version of one you already have. Switch the example here."));
+  var chips = el("div", "chips");
+  [["New combo", 0], ["Upgrade", 1]].forEach(function (o) {
+    var b = el("button", "chip", o[0]); b.setAttribute("aria-pressed", S.offer === o[1] ? "true" : "false");
+    b.onclick = function () { S.offer = o[1]; render(); }; chips.appendChild(b);
+  });
+  v.appendChild(chips);
+  if (S.offer === 0) rewardNew(v); else rewardUp(v);
+}
+function nextNew() { return POOL.filter(function (c) { return !S.known[c.id]; })[0]; }
+function rewardNew(v) {
+  var c = nextNew();
+  if (!c) { v.appendChild(el("p", null, "You have found every combo in the pool.")); return; }
+  v.appendChild(el("p", null, "<strong>You found a new combo.</strong> Earned by: " + esc(c.found) + "."));
+  var card = comboCard(c, { tag: '<span class="tag new">New</span>' });
+  var free = S.slots.indexOf(null);
+  var row = el("div", "row");
+  if (free >= 0) { var a = el("button", "btn primary", "Put it in slot " + (free + 1)); a.onclick = function () { S.known[c.id] = true; S.slots[free] = c.id; render(); }; row.appendChild(a); }
+  else {
+    for (var i = 0; i < SLOTS; i++) (function (i) {
+      var t = el("button", "btn primary", "Swap with slot " + (i + 1) + ": " + BY[S.slots[i]].name + "†");
+      t.onclick = function () { S.known[c.id] = true; S.slots[i] = c.id; render(); }; row.appendChild(t);
+    })(i);
+  }
+  var k = el("button", "btn", "Keep it in the pool"); k.onclick = function () { S.known[c.id] = true; render(); }; row.appendChild(k);
+  card.appendChild(row);
+  var g = el("div", "cards"); g.appendChild(card); v.appendChild(g);
+  var cmp = comboList();
+  if (cmp) v.insertAdjacentHTML("beforeend", '<p class="small dim">' + cmp + '</p>');
+}
+function comboList() {
+  var names = S.slots.filter(Boolean).map(function (id) { return "<span class='ph'>" + esc(BY[id].name) + "</span>"; });
+  return names.length ? "Your list now: " + names.join(", ") + "." : "";
+}
+function rewardUp(v) {
+  var have = owned();
+  if (!have.length) { v.appendChild(el("p", null, "You do not know a combo yet. Win training against Grist first (screen 1), or use Skip ahead.")); return; }
+  var c = have.filter(function (x) { return level(x) < 3; })[0] || have[0];
+  var l = level(c);
+  if (l >= 3) { v.appendChild(el("p", null, "Every combo you know is fully upgraded.")); return; }
+  v.appendChild(el("p", null, "<strong>One of your combos can be upgraded.</strong>"));
+  var card = el("div", "card");
+  card.innerHTML = '<div><h3>' + nameHtml(c) + '</h3><span class="tag up">Level ' + (l + 1) + ' &rarr; ' + (l + 2) + '</span></div>' + stepsHtml(c) + '<div><strong>New:</strong> ' + esc(c.ups[l]) + '.</div><div class="before-after"><div><div class="small dim">Now</div>' + statsHtml(c) + '</div><div class="arrow" aria-hidden="true" style="padding-top:24px">&rarr;</div><div><div class="small dim">After</div>' + statsHtml(c, 1) + '</div></div>';
+  var row = el("div", "row");
+  var a = el("button", "btn primary", "Upgrade it"); a.onclick = function () { S.lvl[c.id] = l + 1; render(); };
+  var s = el("button", "btn", "Skip"); s.onclick = function () { render(); };
+  row.appendChild(a); row.appendChild(s); card.appendChild(row);
+  var g = el("div", "cards"); g.appendChild(card); v.appendChild(g);
+  if (l > 0) v.insertAdjacentHTML("beforeend", '<p class="small dim">Upgrades you already took on this combo: ' + c.ups.slice(0, l).map(esc).join("; ") + '.</p>');
+}
+
+// ---------- Screen 4: the pool ----------
+var filter = "all";
+function screenPool(v) {
+  var found = POOL.filter(function (c) { return S.known[c.id]; }).length;
+  v.appendChild(el("h2", null, "4. The pool"));
+  v.appendChild(el("p", null, "<strong>" + found + " of " + POOL.length + " found.</strong> <span class='dim small'>Combos you have not found stay hidden. Each one tells you how to find it, once you are close.</span>"));
+  var chips = el("div", "chips");
+  [["all", "All"], ["known", "Found"], ["lost", "Not found"]].forEach(function (o) {
+    var b = el("button", "chip", o[1]); b.setAttribute("aria-pressed", filter === o[0] ? "true" : "false");
+    b.onclick = function () { filter = o[0]; render(); }; chips.appendChild(b);
+  });
+  v.appendChild(chips);
+  var grid = el("div", "cards pool");
+  POOL.forEach(function (c, i) {
+    var k = !!S.known[c.id];
+    if ((filter === "known" && !k) || (filter === "lost" && k)) return;
+    if (k) {
+      var card = comboCard(c, { tag: equipped(c.id) ? '<span class="tag">In slot ' + (S.slots.indexOf(c.id) + 1) + '</span>' : '' });
+      grid.appendChild(card);
+    } else {
+      var near = found >= 3 && i < found + 4;   // a hint shows once you are a few finds in
+      var h = el("div", "card locked");
+      h.innerHTML = '<div><h3>Not found yet</h3></div><div class="steps" aria-hidden="true"><span class="step">' + '▯▯' + '</span>' + ARROW + '<span class="step">' + '▯▯' + '</span></div><div class="small">' + (near ? "Hint: " + esc(c.found) + "." : "Keep fighting to find it.") + '</div>';
+      grid.appendChild(h);
+    }
+  });
+  v.appendChild(grid);
+}
+
+// ---------- Shell ----------
+function render() {
+  var v = document.getElementById("view"); v.innerHTML = "";
+  ({ choose: screenChoose, mine: screenMine, reward: screenReward, pool: screenPool })[S.tab](v);
+  document.querySelectorAll("nav.tabs button").forEach(function (b) { b.setAttribute("aria-selected", b.dataset.tab === S.tab ? "true" : "false"); });
+}
+document.querySelectorAll("nav.tabs button").forEach(function (b) { b.onclick = function () { S.tab = b.dataset.tab; render(); window.scrollTo(0, 0); }; });
+document.getElementById("reset").onclick = function () { var t = S.tab; S = fresh(); S.tab = t; render(); };
+document.getElementById("skip").onclick = function () {
+  var t = S.tab; S = fresh(); S.tab = t; S.picked = "c1";
+  ["c1", "c4", "c5", "c6", "c9"].forEach(function (id) { S.known[id] = true; });
+  S.slots = ["c1", "c4", "c6", null]; S.lvl = { c1: 1 };
+  render();
+};
+document.getElementById("theme").onclick = function () {
+  var r = document.documentElement, dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  r.dataset.theme = dark ? "light" : "dark";
+};
+document.getElementById("sheetBack").onclick = function (e) { if (e.target.id === "sheetBack") closeSheet(); };
+document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeSheet(); });
+render();
+</script>
+</body>
+</html>
