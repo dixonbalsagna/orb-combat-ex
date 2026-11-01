@@ -1,0 +1,733 @@
+{
+  "schema": "combat.phrases/1",
+  "_about": "Each fighter's phrases, written by docs/combat/pending/phrases/gen_phrases.mjs from a fixed seed (rule-of-cool-map.md row 1): don't edit by hand. A press inside a phrase takes its next piece in place of the pool's draw, and one outside falls back to the pool. Worth and timing are the cell's, unchanged. b: X, Y or stick. g: tap, mash or hold; a stick's flick or hold, with dir. piece: one blow; pieces: a mash or a held X's blows, in turn. enders: the last blow's piece by place class, read once at that blow. Reader rules: docs/combat/pending/phrases/README.md",
+  "enabled": false,
+  "generator": {
+    "seed": 20261004,
+    "version": 1
+  },
+  "gapTicks": 40,
+  "classes": [
+    "open",
+    "street",
+    "water",
+    "slick",
+    "face",
+    "trees",
+    "lowAir",
+    "highAir"
+  ],
+  "fighters": {
+    "protagonist": {
+      "seed": 373288828,
+      "phrases": [
+        {
+          "id": "p01",
+          "parts": [
+            {
+              "b": "stick",
+              "g": "flick",
+              "dir": "down",
+              "piece": "strike.scythe_sweep"
+            },
+            {
+              "b": "X",
+              "g": "hold",
+              "pieces": [
+                "strike.palm_turn",
+                "strike.palm_rise",
+                "strike.palm_lift"
+              ]
+            },
+            {
+              "b": "Y",
+              "g": "mash",
+              "pieces": [
+                "strike.body_hook",
+                "strike.haymaker",
+                "strike.overhand"
+              ]
+            },
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.palm_heel"
+            }
+          ],
+          "enders": {
+            "open": "strike.palm_heel",
+            "street": "strike.palm_turn",
+            "water": "strike.hammer_fist",
+            "slick": "strike.sweep",
+            "face": "strike.shoulder_check",
+            "trees": "strike.back_chop",
+            "lowAir": "strike.palm_rise",
+            "highAir": "strike.knife_chop"
+          }
+        },
+        {
+          "id": "p02",
+          "parts": [
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.edge_crescent"
+            },
+            {
+              "b": "Y",
+              "g": "tap",
+              "piece": "strike.palm_push"
+            },
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.hook"
+            },
+            {
+              "b": "Y",
+              "g": "mash",
+              "pieces": [
+                "strike.crescent_kick"
+              ]
+            }
+          ],
+          "enders": {
+            "open": "strike.crescent_kick",
+            "street": "strike.haymaker",
+            "water": "strike.overhand",
+            "slick": "strike.axe_kick",
+            "face": "strike.palm_push",
+            "trees": "strike.body_hook",
+            "lowAir": "strike.rising_palm",
+            "highAir": "strike.stomp"
+          }
+        },
+        {
+          "id": "p03",
+          "parts": [
+            {
+              "b": "stick",
+              "g": "hold",
+              "dir": "toward",
+              "piece": "strike.drive_palm"
+            },
+            {
+              "b": "Y",
+              "g": "tap",
+              "piece": "strike.uppercut"
+            }
+          ],
+          "enders": {
+            "open": "strike.uppercut",
+            "street": "strike.body_hook",
+            "water": "strike.overhand",
+            "slick": "strike.crescent_kick",
+            "face": "strike.palm_push",
+            "trees": "strike.haymaker",
+            "lowAir": "strike.rising_palm",
+            "highAir": "strike.axe_kick"
+          }
+        },
+        {
+          "id": "p04",
+          "parts": [
+            {
+              "b": "stick",
+              "g": "hold",
+              "dir": "down",
+              "piece": "strike.plunge_blade"
+            },
+            {
+              "b": "X",
+              "g": "mash",
+              "pieces": [
+                "strike.hook",
+                "strike.short_elbow",
+                "strike.palm_lift"
+              ]
+            }
+          ],
+          "enders": {
+            "open": "strike.hook",
+            "street": "strike.palm_heel",
+            "water": "strike.hammer_fist",
+            "slick": "strike.low_kick",
+            "face": "strike.shoulder_check",
+            "trees": "strike.hook_kick",
+            "lowAir": "strike.palm_rise",
+            "highAir": "strike.fist_chop"
+          }
+        },
+        {
+          "id": "p05",
+          "parts": [
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.edge_crescent"
+            },
+            {
+              "b": "Y",
+              "g": "mash",
+              "pieces": [
+                "strike.axe_kick",
+                "strike.body_hook",
+                "strike.stomp"
+              ]
+            },
+            {
+              "b": "stick",
+              "g": "hold",
+              "dir": "away",
+              "piece": "strike.turning_edge"
+            },
+            {
+              "b": "Y",
+              "g": "mash",
+              "pieces": [
+                "strike.crescent_kick",
+                "strike.haymaker",
+                "strike.overhand"
+              ]
+            }
+          ],
+          "enders": {
+            "open": "strike.crescent_kick",
+            "street": "strike.haymaker",
+            "water": "strike.overhand",
+            "slick": "strike.axe_kick",
+            "face": "strike.palm_push",
+            "trees": "strike.body_hook",
+            "lowAir": "strike.rising_palm",
+            "highAir": "strike.stomp"
+          }
+        },
+        {
+          "id": "p06",
+          "parts": [
+            {
+              "b": "Y",
+              "g": "mash",
+              "pieces": [
+                "strike.axe_kick",
+                "strike.body_hook",
+                "strike.haymaker"
+              ]
+            },
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.hook_kick"
+            },
+            {
+              "b": "stick",
+              "g": "hold",
+              "dir": "down",
+              "piece": "strike.plunge_blade"
+            },
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.back_chop"
+            }
+          ],
+          "enders": {
+            "open": "strike.back_chop",
+            "street": "strike.palm_heel",
+            "water": "strike.hammer_fist",
+            "slick": "strike.sweep",
+            "face": "strike.shoulder_check",
+            "trees": "strike.edge_crescent",
+            "lowAir": "strike.palm_rise",
+            "highAir": "strike.fist_chop"
+          }
+        },
+        {
+          "id": "p07",
+          "parts": [
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.edge_crescent"
+            },
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.snap_round"
+            },
+            {
+              "b": "Y",
+              "g": "tap",
+              "piece": "strike.palm_push"
+            }
+          ],
+          "enders": {
+            "open": "strike.palm_push",
+            "street": "strike.haymaker",
+            "water": "strike.overhand",
+            "slick": "strike.crescent_kick",
+            "face": "strike.axe_kick",
+            "trees": "strike.body_hook",
+            "lowAir": "strike.rising_palm",
+            "highAir": "strike.stomp"
+          }
+        },
+        {
+          "id": "p08",
+          "parts": [
+            {
+              "b": "stick",
+              "g": "flick",
+              "dir": "toward",
+              "piece": "strike.heel_thrust"
+            },
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.lift_kick"
+            },
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.snap_round"
+            }
+          ],
+          "enders": {
+            "open": "strike.snap_round",
+            "street": "strike.palm_heel",
+            "water": "strike.hammer_fist",
+            "slick": "strike.sweep",
+            "face": "strike.shoulder_check",
+            "trees": "strike.palm_turn",
+            "lowAir": "strike.palm_lift",
+            "highAir": "strike.knife_chop"
+          }
+        },
+        {
+          "id": "p09",
+          "parts": [
+            {
+              "b": "X",
+              "g": "mash",
+              "pieces": [
+                "strike.knee_hook",
+                "strike.jab",
+                "strike.short_knee"
+              ]
+            },
+            {
+              "b": "Y",
+              "g": "tap",
+              "piece": "strike.rising_knee"
+            },
+            {
+              "b": "Y",
+              "g": "tap",
+              "piece": "strike.palm_push"
+            }
+          ],
+          "enders": {
+            "open": "strike.palm_push",
+            "street": "strike.body_hook",
+            "water": "strike.overhand",
+            "slick": "strike.crescent_kick",
+            "face": "strike.axe_kick",
+            "trees": "strike.haymaker",
+            "lowAir": "strike.rising_palm",
+            "highAir": "strike.stomp"
+          }
+        },
+        {
+          "id": "p10",
+          "parts": [
+            {
+              "b": "Y",
+              "g": "hold",
+              "piece": "strike.spinning_back_kick"
+            },
+            {
+              "b": "X",
+              "g": "mash",
+              "pieces": [
+                "strike.short_elbow",
+                "strike.knee_hook",
+                "strike.jab"
+              ]
+            },
+            {
+              "b": "Y",
+              "g": "mash",
+              "pieces": [
+                "strike.stomp",
+                "strike.axe_kick",
+                "strike.body_hook"
+              ]
+            }
+          ],
+          "enders": {
+            "open": "strike.stomp",
+            "street": "strike.body_hook",
+            "water": "strike.overhand",
+            "slick": "strike.crescent_kick",
+            "face": "strike.palm_push",
+            "trees": "strike.haymaker",
+            "lowAir": "strike.rising_palm",
+            "highAir": "strike.axe_kick"
+          }
+        }
+      ]
+    },
+    "rival": {
+      "seed": 2772475020,
+      "phrases": [
+        {
+          "id": "r01",
+          "parts": [
+            {
+              "b": "Y",
+              "g": "mash",
+              "pieces": [
+                "strike.hammer",
+                "strike.dropping_elbow",
+                "strike.roundhouse"
+              ]
+            },
+            {
+              "b": "stick",
+              "g": "hold",
+              "dir": "down",
+              "piece": "strike.hammer_drop"
+            },
+            {
+              "b": "X",
+              "g": "mash",
+              "pieces": [
+                "strike.spear_hand",
+                "strike.cross_fist",
+                "strike.spear_fist"
+              ]
+            },
+            {
+              "b": "Y",
+              "g": "tap",
+              "piece": "strike.fist_rise"
+            }
+          ],
+          "enders": {
+            "open": "strike.fist_rise",
+            "street": "strike.headbutt",
+            "water": "strike.hammer",
+            "slick": "strike.roundhouse",
+            "face": "strike.driving_knee",
+            "trees": "strike.heel_backhand",
+            "lowAir": "strike.rising_knee",
+            "highAir": "strike.dropping_elbow"
+          }
+        },
+        {
+          "id": "r02",
+          "parts": [
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.cross"
+            },
+            {
+              "b": "Y",
+              "g": "mash",
+              "pieces": [
+                "strike.stomp",
+                "strike.hammer",
+                "strike.dropping_elbow"
+              ]
+            },
+            {
+              "b": "X",
+              "g": "mash",
+              "pieces": [
+                "strike.jab_fist",
+                "strike.jab",
+                "strike.spear_fist"
+              ]
+            },
+            {
+              "b": "Y",
+              "g": "mash",
+              "pieces": [
+                "strike.roundhouse"
+              ]
+            }
+          ],
+          "enders": {
+            "open": "strike.roundhouse",
+            "street": "strike.driving_knee",
+            "water": "strike.hammer",
+            "slick": "strike.stomp",
+            "face": "strike.dropping_elbow",
+            "trees": "strike.heel_backhand",
+            "lowAir": "strike.fist_rise",
+            "highAir": "strike.headbutt"
+          }
+        },
+        {
+          "id": "r03",
+          "parts": [
+            {
+              "b": "stick",
+              "g": "hold",
+              "dir": "down",
+              "piece": "strike.hammer_drop"
+            },
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.plate_drop"
+            }
+          ],
+          "enders": {
+            "open": "strike.plate_drop",
+            "street": "strike.cross_fist",
+            "water": "strike.elbow_drop",
+            "slick": "strike.low_thrust",
+            "face": "strike.shoulder_check",
+            "trees": "strike.fist_sweep",
+            "lowAir": "strike.short_uppercut",
+            "highAir": "strike.arm_chop"
+          }
+        },
+        {
+          "id": "r04",
+          "parts": [
+            {
+              "b": "stick",
+              "g": "flick",
+              "dir": "toward",
+              "piece": "strike.short_ram"
+            },
+            {
+              "b": "Y",
+              "g": "tap",
+              "piece": "strike.uppercut"
+            }
+          ],
+          "enders": {
+            "open": "strike.uppercut",
+            "street": "strike.driving_knee",
+            "water": "strike.hammer",
+            "slick": "strike.stomp",
+            "face": "strike.dropping_elbow",
+            "trees": "strike.heel_backhand",
+            "lowAir": "strike.fist_rise",
+            "highAir": "strike.roundhouse"
+          }
+        },
+        {
+          "id": "r05",
+          "parts": [
+            {
+              "b": "stick",
+              "g": "hold",
+              "dir": "away",
+              "piece": "strike.swing_elbow"
+            },
+            {
+              "b": "Y",
+              "g": "mash",
+              "pieces": [
+                "strike.heel_backhand",
+                "strike.stomp",
+                "strike.hammer"
+              ]
+            },
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.gut_rise"
+            },
+            {
+              "b": "Y",
+              "g": "mash",
+              "pieces": [
+                "strike.dropping_elbow",
+                "strike.roundhouse"
+              ]
+            }
+          ],
+          "enders": {
+            "open": "strike.dropping_elbow",
+            "street": "strike.headbutt",
+            "water": "strike.hammer",
+            "slick": "strike.roundhouse",
+            "face": "strike.driving_knee",
+            "trees": "strike.heel_backhand",
+            "lowAir": "strike.fist_rise",
+            "highAir": "strike.stomp"
+          }
+        },
+        {
+          "id": "r06",
+          "parts": [
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.cross"
+            },
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.forearm_drop"
+            },
+            {
+              "b": "Y",
+              "g": "mash",
+              "pieces": [
+                "strike.stomp",
+                "strike.heel_backhand",
+                "strike.dropping_elbow"
+              ]
+            },
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.front_kick"
+            }
+          ],
+          "enders": {
+            "open": "strike.front_kick",
+            "street": "strike.jab_fist",
+            "water": "strike.plate_drop",
+            "slick": "strike.low_thrust",
+            "face": "strike.cross",
+            "trees": "strike.fist_sweep",
+            "lowAir": "strike.knee_lift",
+            "highAir": "strike.elbow_drop"
+          }
+        },
+        {
+          "id": "r07",
+          "parts": [
+            {
+              "b": "Y",
+              "g": "tap",
+              "piece": "strike.rising_knee"
+            },
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.side_kick"
+            },
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.spear_hand"
+            }
+          ],
+          "enders": {
+            "open": "strike.spear_hand",
+            "street": "strike.cross_fist",
+            "water": "strike.plate_drop",
+            "slick": "strike.low_thrust",
+            "face": "strike.cross",
+            "trees": "strike.fist_sweep",
+            "lowAir": "strike.knee_lift",
+            "highAir": "strike.elbow_drop"
+          }
+        },
+        {
+          "id": "r08",
+          "parts": [
+            {
+              "b": "X",
+              "g": "tap",
+              "piece": "strike.cross"
+            },
+            {
+              "b": "Y",
+              "g": "tap",
+              "piece": "strike.uppercut"
+            }
+          ],
+          "enders": {
+            "open": "strike.uppercut",
+            "street": "strike.driving_knee",
+            "water": "strike.hammer",
+            "slick": "strike.roundhouse",
+            "face": "strike.headbutt",
+            "trees": "strike.heel_backhand",
+            "lowAir": "strike.fist_rise",
+            "highAir": "strike.dropping_elbow"
+          }
+        },
+        {
+          "id": "r09",
+          "parts": [
+            {
+              "b": "X",
+              "g": "mash",
+              "pieces": [
+                "strike.jab",
+                "strike.gut_rise",
+                "strike.spear_fist"
+              ]
+            },
+            {
+              "b": "Y",
+              "g": "tap",
+              "piece": "strike.rising_knee"
+            },
+            {
+              "b": "Y",
+              "g": "tap",
+              "piece": "strike.headbutt"
+            }
+          ],
+          "enders": {
+            "open": "strike.headbutt",
+            "street": "strike.driving_knee",
+            "water": "strike.hammer",
+            "slick": "strike.roundhouse",
+            "face": "strike.dropping_elbow",
+            "trees": "strike.heel_backhand",
+            "lowAir": "strike.fist_rise",
+            "highAir": "strike.stomp"
+          }
+        },
+        {
+          "id": "r10",
+          "parts": [
+            {
+              "b": "Y",
+              "g": "tap",
+              "piece": "strike.rising_knee"
+            },
+            {
+              "b": "stick",
+              "g": "hold",
+              "dir": "away",
+              "piece": "strike.swing_elbow"
+            },
+            {
+              "b": "Y",
+              "g": "mash",
+              "pieces": [
+                "strike.stomp",
+                "strike.heel_backhand",
+                "strike.hammer"
+              ]
+            }
+          ],
+          "enders": {
+            "open": "strike.stomp",
+            "street": "strike.headbutt",
+            "water": "strike.hammer",
+            "slick": "strike.roundhouse",
+            "face": "strike.driving_knee",
+            "trees": "strike.heel_backhand",
+            "lowAir": "strike.fist_rise",
+            "highAir": "strike.dropping_elbow"
+          }
+        }
+      ]
+    }
+  }
+}

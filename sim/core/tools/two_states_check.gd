@@ -35,6 +35,7 @@ const SETUPS: Dictionary = {   # rollback_check.gd's
 	"calm": {"planet": 7, "touch": 3, "arena": {"cols": 2400, "turn": true}},
 	"turn": {"planet": 7, "touch": 3, "arena": {"cols": 2400, "turn": true}},   # calm, with a turn decided at tick TURN_AT
 	"field": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false},   # a field world, with a swing asked every SWING_EVERY ticks
+	"fights": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "fights": 2},   # two AI fights on one line (sim/core/stage.gd)
 }
 const EVERY: int = 7         # a rollback every this many ticks
 const SWING_EVERY: int = 180 # the setup "field": a swing asked this often, in every run of the tick
@@ -57,7 +58,7 @@ var sabotage: String = ""   # the negative control's current break, a key of BRE
 func _init() -> void:
 	var seeds: Array = [1, 2]
 	var ticks: int = 600
-	var setups: Array = ["default", "planet", "calm", "turn", "field"]
+	var setups: Array = ["default", "planet", "calm", "turn", "field", "fights"]
 	var negative: bool = false
 	for a in OS.get_cmdline_user_args():
 		var kv: PackedStringArray = a.trim_prefix("--").split("=", true, 1)

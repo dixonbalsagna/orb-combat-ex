@@ -29,7 +29,7 @@ static func data() -> Dictionary:
 ## Start or replace the swing. deg: signed degrees to turn. cause: "launch", "chase", "form", "brawl" or "small". Optional rate: a peak in deg/s under the cause's. Optional blow: a small swing's cause is a blow. Optional pivotX: a
 ## strip x held as one planet point until rest. Optional restBy: ticks from now by which it is at rest (the angle gives way, as a flight has only so much time). False if it can't run now: no field world, or a beam in the air.
 static func ask(S: SimState, a: Dictionary) -> bool:
-	if S.frame == null or S.swing == null or S.swing.motion == "off" or S.beams.size() > 0 or float(a.get("deg", 0.0)) == 0.0:
+	if S.frame == null or S.swing == null or S.swing.motion == "off" or S.beams.size() > 0 or SimStage.halts(S) or float(a.get("deg", 0.0)) == 0.0:
 		return false
 	var sw = S.swing
 	var deg: float = float(a.deg)
@@ -160,7 +160,7 @@ static func at(sw, t: float) -> float:
 
 ## Is the world turning this tick? `S.swing` holds its numbers through a hit-stop, a pause and the intro, when the sim is frozen: rate and left are then stale, and this is false.
 static func movingNow(S: SimState) -> bool:
-	return S.swing != null and S.swing.active and S.pause.left <= 0 and S.dirS.stop <= 0.0
+	return S.swing != null and S.swing.active and S.pause.left <= 0 and SimClock.left(S) <= 0.0
 
 
 ## Ease to rest in `ticks_` ticks from the rate it is at now: a ramp with no rise. The angle to go becomes what that ease covers.
@@ -201,12 +201,20 @@ static func _standing(S: SimState, f) -> bool:
 
 
 ## Game Design's pivot: a standing fighter if exactly one stands, the midpoint if both or neither; a swing with an arrival keeps its point until it rests.
+## The bodies a swing answers to: its pivot, its law, who stays on the floor as it turns, whose marks and poses it keeps.
+static func _pair(S: SimState) -> Array:
+	return SimStage.bodies(S) if S.stage != null else [S.fighters[0], S.fighters[1]]
+
+
 static func _pivot(S: SimState) -> float:
 	var sw = S.swing
 	if sw.pivotHeld:
 		return sw.pivotX
-	var a = S.fighters[0]
-	var b = S.fighters[1]
+	if S.stage != null:
+		return SimStage.middle(S)
+	var pair: Array = _pair(S)
+	var a = pair[0]
+	var b = pair[1]
 	var ga: bool = _standing(S, a)
 	var gb: bool = _standing(S, b)
 	if ga and not gb:
@@ -222,8 +230,7 @@ static func _limit(S: SimState, px: float) -> float:
 	if d.get("limitOff", false) == true:
 		return 1.0e9
 	var lim: float = 1.0e9
-	for k in range(2):
-		var f = S.fighters[k]
+	for f in _pair(S):
 		var r: float = absf(SimWrap.sdx(px, f.x))
 		if r > 1.0:
 			lim = minf(lim, (float(d.standingLimit) if _standing(S, f) else float(d.airborneLimit)) / r * 180.0 / SimMathx.PI)
@@ -246,7 +253,7 @@ static func tick(S: SimState) -> void:
 	sw.layK = -1   # a swing again: the line is moving, and its rest lays them from the start
 	ticks += 1
 	sw.age += 1
-	if S.beams.size() > 0 and (sw.rampIn > 0.0 or sw.kind != RAMPED):   # a beam: to rest, on a launch's way out (a rest already running has no ramp in)
+	if (S.beams.size() > 0 or SimStage.halts(S)) and (sw.rampIn > 0.0 or sw.kind != RAMPED):   # a beam: to rest, on a launch's way out (a rest already running has no ramp in)
 		rest(S, int(data().causes.launch.out))
 	elif sw.restT >= 0 and sw.ticks - sw.tau > float(sw.restT - S.tick + 1):   # the law slowed it, and it's due at rest sooner than the plan ends (this tick counts: an ask's tick numbers restBy from the one before its first)
 		rest(S, maxi(1, sw.restT - S.tick + 1))
@@ -274,13 +281,14 @@ static func tick(S: SimState) -> void:
 	sw.rate = deg * 60.0
 	sw.left = sw.way * (sw.deg - at(sw, nt))
 	if deg != 0.0:
-		var sa: bool = _standing(S, S.fighters[0])
-		var sb: bool = _standing(S, S.fighters[1])
+		var pair: Array = _pair(S)
+		var on: Array = []
+		for f in pair:
+			on.append(_standing(S, f))
 		_applyTurn(S.frame, px, deg * sw.way)
-		if sa:   # standing, he stays on the ground as it moves under him, down as well as up: a free fighter has no gravity, so ground turned out from under him would leave him hanging, airborne by the law, and the swing would run at full speed that way only
-			S.fighters[0].y = SimFighter.floorFor(S, S.fighters[0], S.fighters[0].x, S.fighters[0].z)
-		if sb:
-			S.fighters[1].y = SimFighter.floorFor(S, S.fighters[1], S.fighters[1].x, S.fighters[1].z)
+		for q in range(pair.size()):
+			if on[q]:   # standing, he stays on the ground as it moves under him, down as well as up: a free fighter has no gravity, so ground turned out from under him would leave him hanging, airborne by the law, and the swing would run at full speed that way only
+				pair[q].y = SimFighter.floorFor(S, pair[q], pair[q].x, pair[q].z)
 		_layNear(S)
 	if sw.tau >= sw.ticks:
 		_stop(S)
@@ -409,8 +417,9 @@ static func _layNear(S: SimState) -> void:
 	var r: int = int(d.layNearCols)
 	var side: int = 2 * r + 1
 	var nc: int = SimConst.NC
-	var a: int = int(floor(SimWrap.wrap(S.fighters[0].x) / SimConst.COL))
-	var gap: int = int(SimWrap.sdx(S.fighters[0].x, S.fighters[1].x) / SimConst.COL)
+	var pair: Array = _pair(S)
+	var a: int = int(floor(SimWrap.wrap(pair[0].x) / SimConst.COL))
+	var gap: int = int(SimWrap.sdx(pair[0].x, pair[1].x) / SimConst.COL)
 	var one: bool = absi(gap) < side   # close enough to be one stretch
 	var span: int = absi(gap) + side if one else 2 * side
 	var k: int = sw.layN
@@ -428,7 +437,7 @@ static func _marksNear(S: SimState) -> bool:
 	var reach: float = 1.5 * float(data().layNearCols) * SimConst.COL / SimField.R
 	var reach2: float = reach * reach
 	for f in S.fighters:
-		SimField.pointIn(S.frame, f.x)
+		SimField.pointAt(S, f.x)
 		var px: float = SimField.ox
 		var py: float = SimField.oy
 		var pz: float = SimField.oz
@@ -459,8 +468,9 @@ static func _layBegin(S: SimState) -> void:
 		var kind: int = int(S.store[i * WorldStore.STRIDE])
 		if kind == WorldStore.KIND_CRACK or kind == WorldStore.KIND_SCORCH:
 			sw.layK = 0
-			var a = S.fighters[0]
-			sw.layC = int(floor(SimWrap.wrap(a.x + SimWrap.sdx(a.x, S.fighters[1].x) * 0.5) / SimConst.COL))
+			var pair: Array = _pair(S)
+			var a = pair[0]
+			sw.layC = int(floor(SimWrap.wrap(a.x + SimWrap.sdx(a.x, pair[1].x) * 0.5) / SimConst.COL))
 			return
 
 
@@ -480,7 +490,7 @@ static func _layMarks(S: SimState) -> void:
 
 
 static func _layCol(S: SimState, c: int) -> void:
-	SimField.pointIn(S.frame, (float(c) + 0.5) * SimConst.COL)
+	SimField.pointAt(S, (float(c) + 0.5) * SimConst.COL)
 	var qx: float = SimField.ox
 	var qy: float = SimField.oy
 	var qz: float = SimField.oz
@@ -497,8 +507,7 @@ static func _riseBackstop(S: SimState, px: float, deg1: float, k: float) -> floa
 	var out: float = k
 	var ahead = S.frame.copy()
 	_applyTurn(ahead, px, deg1 * k * S.swing.way)
-	for j in range(2):
-		var f = S.fighters[j]
+	for f in _pair(S):
 		if not _standing(S, f):
 			continue
 		var rise: float = absf(SimField.groundIn(S, ahead, f.x, false) - SimField.groundIn(S, S.frame, f.x, false))
@@ -507,12 +516,18 @@ static func _riseBackstop(S: SimState, px: float, deg1: float, k: float) -> floa
 	return out
 
 
+static var anchorBlind: bool = false   # tests only: the line's numbers stay where they are at rest (stage_check)
+
+
 ## The line's seam stays far from the fight at rest: past an eighth of the arena from x0, x0 moves to the pair's midpoint. The same line, so nothing anyone reads changes.
 static func _anchorAtRest(S: SimState) -> void:
+	if anchorBlind:
+		return
 	var fr = S.frame
-	var a = S.fighters[0]
+	var pair: Array = _pair(S)
+	var a = pair[0]
 	if absf(SimWrap.sdx(fr.x0, a.x)) > SimConst.W * 0.125:
-		_applyTurn(fr, SimWrap.wrap(a.x + SimWrap.sdx(a.x, S.fighters[1].x) * 0.5), 0.0)
+		_applyTurn(fr, SimWrap.wrap(a.x + SimWrap.sdx(a.x, pair[1].x) * 0.5), 0.0)
 
 
 ## ===================================================================== for the planners
@@ -548,11 +563,11 @@ static func _poseThese(S: SimState, list) -> void:
 	var moved: bool = false
 	for i in list:
 		var x0: float = S.bX[i]
-		var in0: bool = WorldStructures.inBand(S, S.bZ[i])
+		var in0: bool = WorldStructures.inBand(S, S.bZ[i], S.buildings[i].d)
 		SimField.strip(S, S.bDir[i * 3], S.bDir[i * 3 + 1], S.bDir[i * 3 + 2])
 		S.bX[i] = SimField.sx
 		S.bZ[i] = SimField.sz
-		var in1: bool = WorldStructures.inBand(S, SimField.sz)
+		var in1: bool = WorldStructures.inBand(S, SimField.sz, S.buildings[i].d)
 		var k0: int = mini(int(SimWrap.wrap(x0) / bw), buckets - 1)
 		var k1: int = mini(int(SimWrap.wrap(SimField.sx) / bw), buckets - 1)
 		if (k0 != k1 and (in0 or in1)) or in0 != in1:
@@ -588,8 +603,8 @@ static func _poseList(S: SimState) -> PackedInt32Array:
 	var cx := PackedFloat64Array()
 	var cc := PackedFloat64Array()
 	_centre(fr, px, float(d.poseReach), cx, cc)
-	_centre(fr, S.fighters[0].x, float(d.poseBody), cx, cc)
-	_centre(fr, S.fighters[1].x, float(d.poseBody), cx, cc)
+	for f in _pair(S):
+		_centre(fr, f.x, float(d.poseBody), cx, cc)
 	for sh in S.shots:
 		_centre(fr, sh.x, float(d.poseShot), cx, cc)
 	var nc: int = cc.size()
@@ -604,8 +619,8 @@ static func _poseList(S: SimState) -> PackedInt32Array:
 			if ax * cx[c * 3] + ay * cx[c * 3 + 1] + az * cx[c * 3 + 2] >= cc[c]:
 				out.append(i)
 				break
-	for k in range(2):
-		var ab: int = int(S.fighters[k].aimB)
+	for f in _pair(S):
+		var ab: int = int(f.aimB)
 		if ab >= 0 and ab < n and not out.has(ab):
 			out.append(ab)   # the building a sent body flies at: its edge is read each tick, however far
 	S.bList = out
@@ -627,7 +642,7 @@ static func posesNear(S: SimState, x: float) -> PackedInt32Array:
 	var n: int = S.bX.size()
 	if n == 0 or S.bDir.size() != n * 3:
 		return out
-	SimField.pointIn(S.frame, x)
+	SimField.pointAt(S, x)
 	var qx: float = SimField.ox
 	var qy: float = SimField.oy
 	var qz: float = SimField.oz

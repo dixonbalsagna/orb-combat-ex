@@ -44,6 +44,8 @@ static func _ensure() -> void:
 	h.text(DirLocation.dataText())   # data/director/location.json (location variety)
 	if DirPlane.rate() > 0.0:
 		h.text(DirPlane.dataText())   # data/combat/depth.json, for its planeEasePerTick (with depth on, the replay's own line has it)
+	if DirPhrase.on():
+		h.text(DirPhrase.dataText())   # data/combat/phrases.json, with phrases on
 	if DirStick.on():
 		h.text(DirStick.dataText())   # data/director/stick.json, with the right stick on
 	if DirSwing.enabled():

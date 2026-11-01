@@ -120,7 +120,7 @@ static func begin(S: SimState, A, D, weight: int, entry: int, pressTick: int, op
 		m = DirRecoil.cfg().counterRush
 	var n: int = clampi(int(ceil(maxf(0.0, d - eng) / float(m.speed) * DirData.TICKS_PER_SEC)), int(m.minTicks), int(m.maxTicks))
 	# The mid-band lunge winds up before it moves (melee-press-feel.md section 2b): a crouch the defender can read.
-	var wind: int = int(c.lunge.get("windupTicks", {}).get(_weightName(weight), 0)) if (b == MID and not charge and not cr) else 0   # (the counter-rush has no crouch)
+	var wind: int = int(c.lunge.get("windupTicks", {}).get("light" if DirStick.pending(A) else _weightName(weight), 0)) if (b == MID and not charge and not cr) else 0   # (the counter-rush has no crouch)
 	var ret: bool = DirBrawl.returning(S, A) and not cr
 	if ret:
 		# His approach back from a send (bands.return): long enough to read, and a crouch before it moves.
@@ -205,7 +205,7 @@ static func farPressNow(S: SimState, A, weight: int, entry: int) -> bool:
 	A.state = "free"
 	if taunting(D):
 		meet(S, A, D, weight, entry, S.tick)
-	elif DirBrawl.pursues(S, A, D) or DirRecoil.due(S, A) or DirWallKick.due(S, A):
+	elif DirBrawl.pursues(S, A, D) or DirRecoil.due(S, A) or DirWallKick.due(S, A) or DirFollow.due(S, A):
 		begin(S, A, D, weight, entry, S.tick)   # the first move is his: his press from afar flies in, where a tap would open a taunt
 	else:
 		farPress(S, A, D, weight, entry, S.tick)
@@ -365,6 +365,9 @@ static func tick(S: SimState) -> void:
 		if (req & CHARGE) != 0 and (req & 3) == SimAct.LIGHT and not f.input.lightHeld and not f.input.heavyHeld and f.input.upgrade == 0 and not SimAct.assisted(f, "autoCharge"):
 			drop(S, f, "a feint: he let the button go, and it costs nothing")
 			SimFx.cue(S, f, "charge_feint", "", "")
+			continue
+		if left <= 3 and wind == 0 and DirFollow.keepOn(S, f):
+			f.rush.end = S.T + 3.0 * SimConst.DT   # row 42: he's caught him up in the air, and goes with him till he comes down
 			continue
 		left -= 1
 		DirInterrupt.si(f, DirInterrupt.APPR_LEFT, left)

@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/combat-mixed",
+  "title": "The mixed string",
+  "description": "docs/combat/pending/mixed-string/README.md: data/combat/mixed.json. energy-overhaul.md section 21, rule-of-cool-map.md row 34. Policy: first values, off by default.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "enabled",
+    "windowTicks",
+    "tapMaxShare",
+    "burstBh",
+    "edgeShare",
+    "knockBh",
+    "leanBh",
+    "wayReachBh",
+    "wayEveryTicks",
+    "wayForceMul",
+    "leadTicks",
+    "arcMul",
+    "freeBh"
+  ],
+  "properties": {
+    "schema": {
+      "const": "combat.mixed/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "windowTicks": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "tapMaxShare": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1
+    },
+    "burstBh": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "edgeShare": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "knockBh": {
+      "type": "number",
+      "minimum": 0
+    },
+    "leanBh": {
+      "type": "number",
+      "minimum": 0
+    },
+    "wayReachBh": {
+      "type": "number",
+      "minimum": 0
+    },
+    "wayEveryTicks": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "wayForceMul": {
+      "type": "number",
+      "minimum": 0
+    },
+    "leadTicks": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "arcMul": {
+      "type": "number",
+      "minimum": 1
+    },
+    "freeBh": {
+      "type": "number",
+      "minimum": 0
+    }
+  }
+}

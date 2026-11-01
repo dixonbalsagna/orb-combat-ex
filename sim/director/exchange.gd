@@ -52,6 +52,8 @@ static func _request(S: SimState, A, kind: String) -> void:
 	# never queued, so mashed clash presses do not fire as attacks after it.
 	if DirBeam.inClash(S, A):
 		return
+	if DirDriver.takes(S, A, kind):
+		return   # RB + B: the Driver gathers
 	var big: bool = DirBrawl.isB(A, kind)   # B with no stance held is the heavy (brawl-second-pass.md section 2)
 	if not DirBrawl.holding:
 		DirAlchemy.log(S, A, SimAct.HEAVY if big else KIND.find(kind), A.act.mode, big)   # the press log (a hold's own press is the director's, and not in it)
@@ -83,6 +85,8 @@ static func _request(S: SimState, A, kind: String) -> void:
 		return   # his rival is on his way back from a send: they meet in the middle (bands.return)
 	if kind != "sig" and not DirBury.followUp(S, A, SimRoster.opp(S, A)) and DirBands.farPressNow(S, A, KIND.find(kind), entry):
 		return   # the far band: the press fires on its tick as a taunt, an answer or (held) a charge; it never waits
+	if kind == "sig":
+		DirBeamPlay.answerRefused(S, A)
 	SimAct.push(A, KIND.find(kind), A.act.mode, entry, S.tick)
 	_drain(S)
 
@@ -652,6 +656,8 @@ static func _update(S: SimState, dt: float) -> void:
 		S.game.timeCap = true
 		SimPause.request(S, SimPause.TIMECAP, -1)   # Q10 (granted): the planet giving way always pauses, outside the bank
 		SimEvents.feed(S, "TIME CAP", "every decisive win on the brink is a finisher")
+	DirEnding.tick(S)   # how a match always ends (docs/design/spec-wounds.md 1b-end)
+	DirDriver.tick(S)   # RB + B
 	_transforms(S)
 	if S.dirS.cool > 0.0:
 		S.dirS.cool -= dt

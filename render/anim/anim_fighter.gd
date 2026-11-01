@@ -2619,12 +2619,12 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 	if _worn > 0.04 or _brinkp > 0.4:
 		_wear_motion(f, T)
 	var shiver: float = float(prof.get("shiver", 0.0))
-	if S.dirS.stop > 0.0:
-		_stop_pk = maxf(_stop_pk, S.dirS.stop)
+	if SimClock.left(S) > 0.0:
+		_stop_pk = maxf(_stop_pk, SimClock.left(S))
 	else:
 		_stop_pk = 0.0
 	var shv := Vector3.ZERO
-	if S.dirS.stop > 0.0 and shiver > 0.0:
+	if SimClock.left(S) > 0.0 and shiver > 0.0:
 		# the shake follows the stop's weight: a mashed light's 2 ticks a little over half the profile's, 8 ticks as before, a launch's 12 a fifth more, a decisive blow's 20 and the KO's 24 at most 1.6
 		var wk: float = clampf(sqrt(_stop_pk * 60.0 / 8.0), 0.5, 1.6) if RenderAnim.shiver_by_weight else 1.0
 		shv = Vector3(_signed(S.tick, slot), _signed(S.tick + 13, slot) * 0.6, 0.0) * shiver * wk
@@ -2685,7 +2685,7 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 ## Nothing is asking for a precise pose this tick.
 func _idle(S: SimState, f) -> bool:
 	var ex = S.dirS.ex
-	return (ex == null or (ex.A != f and ex.D != f)) and _cue.is_empty() and _seq.is_empty() and _shove_watch == 0 and _stun_watch == 0 and _reacts.is_empty() and f.beamCharge == null and S.beams.is_empty() and S.dirS.stop <= 0.0 and _form.is_empty() and _rd.out_w <= 0.001
+	return (ex == null or (ex.A != f and ex.D != f)) and _cue.is_empty() and _seq.is_empty() and _shove_watch == 0 and _stun_watch == 0 and _reacts.is_empty() and f.beamCharge == null and S.beams.is_empty() and SimClock.left(S) <= 0.0 and _form.is_empty() and _rd.out_w <= 0.001
 
 
 ## A blow counts as heavy from the exchange kind, the strike's own weight (o.big) or its damage.

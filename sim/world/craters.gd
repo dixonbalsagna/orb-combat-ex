@@ -54,6 +54,15 @@ static func dataErrors() -> Array:
 	return _errors
 
 
+## The meteor's crater (craters.json meteor, read apart from the module's switch): the energy multiplier (the specials' 9) and the largest radius, units. Missing or invalid: 9 and 6,100.
+static func meteorEMult() -> float:
+	return float(data().get("meteor", {}).get("eMult", 9.0))
+
+
+static func meteorRMax() -> float:
+	return float(data().get("meteor", {}).get("rMax", 6100.0))
+
+
 static func on() -> bool:
 	if not _loaded:
 		_load()
@@ -101,6 +110,10 @@ static func _load() -> void:
 			continue
 		_shapes[code] = PackedFloat64Array([float(r.radius), float(r.depth), float(r.rim), float(r.steep), float(r.get("refill", 0.0)), float(r.get("refillTicks", 0)), float(r.get("embedMul", 1.0)),
 			float(fill), float(r.get("seaCols", 0)), 1.0 if bool(r.get("breakThrough", false)) else 0.0, float(code)])
+	if j.has("meteor"):
+		var mt = j.meteor
+		if not (mt is Dictionary) or float(mt.get("eMult", 0.0)) < 1.0 or float(mt.get("rMax", 0.0)) < 600.0:
+			_errors.append("craters.json: meteor needs eMult (at least 1) and rMax (at least 600)")
 	if not _errors.is_empty():
 		for k in range(_shapes.size()):
 			_shapes[k] = NONE

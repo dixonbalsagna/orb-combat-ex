@@ -283,7 +283,7 @@ static func _mineHit(S: SimState, sh, by, f) -> bool:
 		return true
 	var guarded: bool = f.stance == 1.0 and f.state != "down" and f.state != "launched"
 	var brink0: bool = f.brink
-	SimDamage.hit(S, null, by, f, sh.dmg, {"kind": "blast", "shot": sh.power, "ignoreStance": not guarded, "stop": float(c.stopTicks) / DirData.TICKS_PER_SEC, "shake": 7.0})
+	SimDamage.hit(S, null, by, f, sh.dmg, {"kind": "blast", "weight": "medium", "shot": sh.power, "ignoreStance": not guarded, "stop": float(c.stopTicks) / DirData.TICKS_PER_SEC, "shake": 7.0})
 	SimFx.shotHit(S, sh, f, "guard" if guarded else "hit")
 	if guarded or S.game.ko != null or S.dirS.ex != null or (f.state != "free" and f.state != "charging"):
 		return true
@@ -372,7 +372,7 @@ static func hit(S: SimState, sh, f) -> bool:
 	# Just out of his crater he is safe: the shot passes. Buried and helpless, he answers nothing: it is the follow-up.
 	if DirBury.followShot(f, sh):
 		DirBury.shotLanded(f)   # the follow-up he was held for: it lands clean
-		SimDamage.hit(S, null, by, f, sh.dmg, {"kind": "blast", "ignoreStance": true, "stop": float(c.stopTicks) / DirData.TICKS_PER_SEC, "shake": 7.0})
+		SimDamage.hit(S, null, by, f, sh.dmg, {"kind": "blast", "weight": "medium", "ignoreStance": true, "stop": float(c.stopTicks) / DirData.TICKS_PER_SEC, "shake": 7.0})
 		SimFx.shotHit(S, sh, f, "buried")
 		return true
 	if DirBury.safe(S, f):
@@ -380,7 +380,7 @@ static func hit(S: SimState, sh, f) -> bool:
 		return false
 	if DirBury.helpless(f):
 		DirBury.blasted(f)
-		SimDamage.hit(S, null, by, f, sh.dmg, {"kind": "blast", "ignoreStance": true, "stop": float(c.stopTicks) / DirData.TICKS_PER_SEC, "shake": 7.0})
+		SimDamage.hit(S, null, by, f, sh.dmg, {"kind": "blast", "weight": "medium", "ignoreStance": true, "stop": float(c.stopTicks) / DirData.TICKS_PER_SEC, "shake": 7.0})
 		SimFx.shotHit(S, sh, f, "buried")
 		return true
 	# The dodge: inside his dodge window he lets it pass, and it flies on.
@@ -408,7 +408,7 @@ static func hit(S: SimState, sh, f) -> bool:
 		return false
 	# A charge: a light one is stopped by any blast; a heavy one shrugs off a weak shot at part of its damage.
 	var dmg: float = sh.dmg
-	var outcome: String = "guard" if f.stance == 1.0 else "hit"
+	var outcome: String = "guard" if f.stance == 1.0 and not DirDriver.breaks(by, sh) else "hit"
 	if DirBands.pending(f) and (DirInterrupt.gi(f, DirInterrupt.APPR_REQ) & DirBands.FREE) != 0:
 		dmg *= float(c.charge.shrugMul)   # the free approach a deflect earned: any shot is shrugged off, and he keeps coming
 		outcome = "shrug"
@@ -441,9 +441,9 @@ static func hit(S: SimState, sh, f) -> bool:
 	elif zo == "stop":
 		outcome = "stop"
 	var brink0: bool = f.brink
-	SimDamage.hit(S, null, by, f, dmg, {"kind": "blast", "shot": sh.power, "stop": float(c.stopTicks) / DirData.TICKS_PER_SEC, "shake": 3.0 if sh.power < 2.0 else 7.0})
+	SimDamage.hit(S, null, by, f, dmg, {"kind": "blast", "weight": "heavy" if DirDriver.levelOf(by, sh) >= 0 else "medium", "ignoreStance": DirDriver.breaks(by, sh), "shot": sh.power, "stop": float(c.stopTicks) / DirData.TICKS_PER_SEC, "shake": 3.0 if sh.power < 2.0 else 7.0})
 	SimFx.shotHit(S, sh, f, outcome)
-	var knocked: bool = _knock(S, sh, by, f, outcome, brink0)
+	var knocked: bool = DirDriver.landed(S, sh, by, f, outcome, brink0) or _knock(S, sh, by, f, outcome, brink0)
 	_barrage(S, sh, by, f, outcome, brink0, knocked)
 	return true
 

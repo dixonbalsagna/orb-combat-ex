@@ -249,7 +249,10 @@ static func aiInput(S: SimState, f) -> void:
 	# A beat is not spent on a press the director would refuse (the cooldown, or a target in the air): it waits.
 	var ready: bool = S.dirS.cool <= 0.0 and o.state != "launched" and o.state != "locked" and DirBands.who(S) < 0 and not DirBands.taunting(o)
 	var blind: bool = a.atk <= 0.0 and ready and o.hidden and st == 0.0 and S.dirS.ex == null and S.rng.next() < BLIND_SWING
-	if a.atk <= 0.0 and ready and (not o.hidden or blind) and st != 3.0 and S.dirS.ex == null:
+	if S.dirS.ex == null and DirBands.who(S) < 0 and sigDue(S, f, o):
+		i.sig = true   # its first beam, on time: no beat of its own holds it back
+		i.stanceMask |= 4
+	elif a.atk <= 0.0 and ready and (not o.hidden or blind) and st != 3.0 and S.dirS.ex == null:
 		# Each attack beat either attacks or holds (repositions, charges): holding fills the downtime between exchanges.
 		var r: float = S.rng.next()
 		var pa: float = P_ATTACK[int(st)]
@@ -258,8 +261,8 @@ static func aiInput(S: SimState, f) -> void:
 			pa = 1.0
 		if r < pa:
 			var q: float = r / pa
-			var sigPick: float = skill().sigPick
-			if SimFighter.sigFree(f) or (f.ki >= 50.0 and q < sigPick and S.T >= f.sigReadyT):   # the signature cooldown (fighter.json sigCooldown); the AI takes its last stand
+			var sigPick: float = sigPickFor(S, f, o)
+			if SimFighter.sigFree(f) or sigDue(S, f, o) or (f.ki >= 50.0 and q < sigPick and S.T >= f.sigReadyT):   # the signature cooldown (fighter.json sigCooldown); the AI takes its last stand
 				i.sig = true
 				i.stanceMask |= 4   # the charging stance: with no stance held, B is the heavy
 			elif q < sigPick + (1.0 - sigPick) * (maxf(HEAVY_SHARE, float(lv().breakGuard)) if DirInterrupt.on() and DirInterrupt.gi(o, DirInterrupt.GUARDED) >= 2 else HEAVY_SHARE):
@@ -328,7 +331,7 @@ static func _healing(f) -> bool:
 # Tempo (balance-targets.md section 10).
 ## The AI's skill numbers (data/director/ai.json), read once: pressReact by stance (the chance it has an attack request
 ## in when attacked: its Press, stance-matrix.md §7.2), beamAnswer (the chance it answers a beam with its own signature when
-## it can) and sigPick (the chance an attack is the signature when it can be). They are the AI's inputs made by a number,
+## it can) and sigPick (the chance an attack is the signature when it can be). vsHuman: how it paces its beams against a human. They are the AI's inputs made by a number,
 ## as a player's are made by hand: the outcome still goes through the same rules.
 const SKILL_PATH: String = "res://data/director/ai.json"
 static var _skill = null
@@ -377,6 +380,41 @@ static func skill() -> Dictionary:
 ## The AI's level for this run: "" follows ai.json's "level". A host or a test sets it before the match (step 4 makes it
 ## a per-slot setup key). It is part of the data hash, so a replay made at another level has another header.
 static var level: String = ""
+
+
+## The AI's beams against a human (ai.json vsHuman). Against another AI, or off, it's plain sigPick, and nothing else here draws or moves.
+static func _vs(f, o) -> Dictionary:
+	if f.ai == null or o.ai != null:
+		return {}
+	var c = skill().get("vsHuman", {})
+	return c if c is Dictionary and bool(c.get("enabled", false)) else {}
+
+
+## When the AI's first beam comes in this match, seeded.
+static func _firstAt(S: SimState, c: Dictionary) -> float:
+	return float(c.firstMin) + (float(c.firstMax) - float(c.firstMin)) * SimRng.keyed(int(S.game.seed), "ai.firstBeam", 0)
+
+
+static func _fired(f) -> bool:
+	return f.sigReadyT > 0.0
+
+
+## This choice's chance of the signature: leaning toward a clash, and none before its first beam or inside the gap after its last.
+static func sigPickFor(S: SimState, f, o) -> float:
+	var c: Dictionary = _vs(f, o)
+	if c.is_empty():
+		return skill().sigPick
+	if not _fired(f) or S.T - (f.sigReadyT - DirBeam.sigCooldown(f)) < float(c.gapSec):
+		return 0.0
+	return float(c.sigPick) * (float(c.kiHigh) if o.ki >= float(c.kiAt) else float(c.kiLow))
+
+
+## Its first beam's time has come: when the human can pay, and at the latest at firstWait.
+static func sigDue(S: SimState, f, o) -> bool:
+	var c: Dictionary = _vs(f, o)
+	if c.is_empty() or _fired(f) or f.ki < 45.0:
+		return false
+	return S.T >= _firstAt(S, c) and (o.ki >= float(c.kiAt) or S.T >= float(c.firstWait))
 
 
 ## The level's numbers (ai.json levels): beamAnswer, perfectBlockMul, guardRepeat, punish, reversal, breakGuard, riposte,

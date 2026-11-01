@@ -4,29 +4,72 @@
   "title": "combat.stick/1",
   "description": "docs/combat/pending/stick/README.md: data/combat/stick.json, the right stick's pieces and the look of its beams. Read only with switches.rightStick on. Policy: closed except keys starting with an underscore.",
   "type": "object",
-  "required": ["schema", "beam", "pools"],
-  "patternProperties": { "^_": {} },
+  "required": [
+    "schema",
+    "beam",
+    "pools"
+  ],
+  "patternProperties": {
+    "^_": {}
+  },
   "additionalProperties": false,
   "properties": {
-    "schema": { "const": "combat.stick/1" },
+    "schema": {
+      "const": "combat.stick/1"
+    },
     "beam": {
       "type": "object",
-      "required": ["snap", "levels", "aimDeg", "fighters"],
-      "patternProperties": { "^_": {} },
+      "required": [
+        "snap",
+        "levels",
+        "aimDeg",
+        "fighters"
+      ],
+      "patternProperties": {
+        "^_": {}
+      },
       "additionalProperties": false,
       "properties": {
         "snap": {
           "type": "object",
-          "required": ["windupTicks", "ki", "lengthTicks", "worthOfHeavy", "power", "widthMul", "struggle"],
+          "required": [
+            "windupTicks",
+            "ki",
+            "lengthTicks",
+            "worthOfHeavy",
+            "power",
+            "widthMul",
+            "struggle"
+          ],
           "additionalProperties": false,
           "properties": {
-            "windupTicks": { "type": "integer", "minimum": 1 },
-            "ki": { "type": "number", "minimum": 0 },
-            "lengthTicks": { "type": "integer", "minimum": 1 },
-            "worthOfHeavy": { "type": "number", "exclusiveMinimum": 0 },
-            "power": { "type": "number", "exclusiveMinimum": 0 },
-            "widthMul": { "type": "number", "exclusiveMinimum": 0 },
-            "struggle": { "const": false }
+            "windupTicks": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "ki": {
+              "type": "number",
+              "minimum": 0
+            },
+            "lengthTicks": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "worthOfHeavy": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "power": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "widthMul": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "struggle": {
+              "const": false
+            }
           }
         },
         "levels": {
@@ -35,27 +78,66 @@
           "maxItems": 3,
           "items": {
             "type": "object",
-            "required": ["level", "atTicks", "lengthTicks", "worthOfHeavy", "ki", "power"],
+            "required": [
+              "level",
+              "atTicks",
+              "lengthTicks",
+              "worthOfHeavy",
+              "ki",
+              "power"
+            ],
             "additionalProperties": false,
             "properties": {
-              "level": { "type": "integer", "minimum": 1, "maximum": 3 },
-              "atTicks": { "type": "integer", "minimum": 1 },
-              "lengthTicks": { "type": "integer", "minimum": 1 },
-              "worthOfHeavy": { "type": "number", "exclusiveMinimum": 0 },
-              "ki": { "type": "number", "minimum": 0 },
-              "power": { "type": "number", "exclusiveMinimum": 0 }
+              "level": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3
+              },
+              "atTicks": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "lengthTicks": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "worthOfHeavy": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "ki": {
+                "type": "number",
+                "minimum": 0
+              },
+              "power": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
             }
           }
         },
         "aimDeg": {
           "type": "object",
-          "required": ["toward", "up", "down", "away"],
+          "required": [
+            "toward",
+            "up",
+            "down",
+            "away"
+          ],
           "additionalProperties": false,
           "properties": {
-            "toward": { "type": "number" },
-            "up": { "type": "number" },
-            "down": { "type": "number" },
-            "away": { "type": "number" }
+            "toward": {
+              "type": "number"
+            },
+            "up": {
+              "type": "number"
+            },
+            "down": {
+              "type": "number"
+            },
+            "away": {
+              "type": "number"
+            }
           }
         },
         "fighters": {
@@ -63,11 +145,20 @@
           "minProperties": 1,
           "additionalProperties": {
             "type": "object",
-            "required": ["widthMul", "sweepDegPerSec"],
+            "required": [
+              "widthMul",
+              "sweepDegPerSec"
+            ],
             "additionalProperties": false,
             "properties": {
-              "widthMul": { "type": "number", "exclusiveMinimum": 0 },
-              "sweepDegPerSec": { "type": "number", "exclusiveMinimum": 0 }
+              "widthMul": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "sweepDegPerSec": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
             }
           }
         }
@@ -79,26 +170,341 @@
       "description": "Per fighter (his recipes pool key): recipe pools, the row shape of data/combat/recipes.json.",
       "additionalProperties": {
         "type": "object",
-        "propertyNames": { "pattern": "^stick\\.(quick\\.(up|down|downAir|toward|away)|(charged|guard|move|beam)\\.(up|down|toward|away))$" },
+        "propertyNames": {
+          "pattern": "^stick\\.(quick\\.(up|down|downAir|toward|away)|(charged|guard|move|beam)\\.(up|down|toward|away))$"
+        },
         "required": [
-          "stick.quick.up", "stick.quick.down", "stick.quick.downAir", "stick.quick.toward", "stick.quick.away",
-          "stick.charged.up", "stick.charged.down", "stick.charged.toward", "stick.charged.away",
-          "stick.guard.up", "stick.guard.down", "stick.guard.toward", "stick.guard.away",
-          "stick.move.up", "stick.move.down", "stick.move.toward", "stick.move.away",
-          "stick.beam.up", "stick.beam.down", "stick.beam.toward", "stick.beam.away"
+          "stick.quick.up",
+          "stick.quick.down",
+          "stick.quick.downAir",
+          "stick.quick.toward",
+          "stick.quick.away",
+          "stick.charged.up",
+          "stick.charged.down",
+          "stick.charged.toward",
+          "stick.charged.away",
+          "stick.guard.up",
+          "stick.guard.down",
+          "stick.guard.toward",
+          "stick.guard.away",
+          "stick.move.up",
+          "stick.move.down",
+          "stick.move.toward",
+          "stick.move.away",
+          "stick.beam.up",
+          "stick.beam.down",
+          "stick.beam.toward",
+          "stick.beam.away"
         ],
         "additionalProperties": {
           "type": "array",
           "minItems": 1,
           "items": {
             "type": "object",
-            "required": ["id", "status"],
+            "required": [
+              "id",
+              "status"
+            ],
             "additionalProperties": false,
             "properties": {
-              "id": { "type": "string", "pattern": "^strike\\." },
-              "status": { "enum": ["posed", "derived"] }
+              "id": {
+                "type": "string",
+                "pattern": "^strike\\."
+              },
+              "status": {
+                "enum": [
+                  "posed",
+                  "derived"
+                ]
+              }
             }
           }
+        }
+      }
+    },
+    "directions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "up",
+        "down",
+        "downAir",
+        "toward",
+        "away",
+        "carryMaxBh"
+      ],
+      "properties": {
+        "_about": {
+          "type": "string"
+        },
+        "up": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "quick"
+          ],
+          "properties": {
+            "quick": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "stunMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "reachMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryAddBh": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryMul": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "charged": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "stunMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "reachMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryAddBh": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryMul": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        },
+        "down": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "quick"
+          ],
+          "properties": {
+            "quick": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "stunMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "reachMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryAddBh": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryMul": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "charged": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "stunMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "reachMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryAddBh": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryMul": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        },
+        "downAir": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "quick"
+          ],
+          "properties": {
+            "quick": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "stunMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "reachMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryAddBh": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryMul": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "charged": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "stunMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "reachMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryAddBh": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryMul": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        },
+        "toward": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "quick"
+          ],
+          "properties": {
+            "quick": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "stunMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "reachMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryAddBh": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryMul": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "charged": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "stunMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "reachMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryAddBh": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryMul": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        },
+        "away": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "quick"
+          ],
+          "properties": {
+            "quick": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "stunMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "reachMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryAddBh": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryMul": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "charged": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "stunMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "reachMul": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryAddBh": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "carryMul": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            }
+          }
+        },
+        "carryMaxBh": {
+          "type": "number",
+          "minimum": 0
         }
       }
     }

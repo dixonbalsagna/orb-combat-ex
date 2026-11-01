@@ -32,6 +32,14 @@
       "schema": "combat-stick.schema.json"
     },
     {
+      "match": "data/combat/phrases.json",
+      "schema": "combat-phrases.schema.json"
+    },
+    {
+      "match": "data/combat/mixed.json",
+      "schema": "combat-mixed.schema.json"
+    },
+    {
       "match": "data/combat/depth.json",
       "schema": "combat-depth.schema.json"
     },

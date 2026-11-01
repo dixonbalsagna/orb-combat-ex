@@ -4,7 +4,7 @@
   "title": "fight-kick (schema \"fight.kick/1\")",
   "description": "data/fight/kick.json: the switch and numbers of the kick and the coin turn (docs/architecture/kick.md). Policy: closed; a key starting with _ is a comment.",
   "type": "object",
-  "required": ["schema", "enabled", "stickOn", "startBelow", "instant", "climbTicks", "turn", "overspeed"],
+  "required": ["schema", "enabled", "stickOn", "startBelow", "instant", "climbTicks", "keepTop", "turn", "overspeed"],
   "properties": {
     "schema": { "const": "fight.kick/1" },
     "enabled": { "type": "boolean" },
@@ -12,6 +12,7 @@
     "startBelow": { "type": "number", "minimum": 0, "maximum": 1 },
     "instant": { "type": "number", "minimum": 0.5, "maximum": 1 },
     "climbTicks": { "type": "integer", "minimum": 0, "maximum": 120 },
+    "keepTop": { "type": "boolean" },
     "turn": {
       "type": "object",
       "required": ["above", "brakeTicks", "brake", "plantTicks", "hop"],

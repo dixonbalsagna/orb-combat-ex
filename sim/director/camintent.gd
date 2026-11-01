@@ -76,7 +76,7 @@ static func _story(S: SimState, ex, a, d, fav, big: bool, finisher: bool, base: 
 		tags.append("finisher")
 	if fav != null:
 		var other = d if fav == a else a
-		if float(fav.hp) / maxf(1.0, float(fav.maxhp)) + 0.2 <= float(other.hp) / maxf(1.0, float(other.maxhp)):
+		if DirEnding.standing(fav) + 0.2 <= DirEnding.standing(other):   # hit points are gone a minute in
 			tags.append("comeback")
 	var loser = null if fav == null else (d if fav == a else a)
 	if loser != null and big:
@@ -349,7 +349,7 @@ static func launched(S: SimState, tgt) -> void:
 				break
 	if n < 0:
 		return
-	var held: int = SimFx.stopTicks(S.dirS.stop, S.hitstopOn)   # the stop still to run: the flight starts after it (whole with hit-stop by weight on)
+	var held: int = SimFx.stopTicks(SimClock.left(S), S.hitstopOn)   # the stop still to run: the flight starts after it (whole with hit-stop by weight on)
 	e.n = S.tick + held + n
 	e.dur = float(n)
 	e.x = lx

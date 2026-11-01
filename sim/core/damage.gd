@@ -91,7 +91,7 @@ static func hit(S: SimState, ex, A, D, dmg: float, o = null) -> float:
 	D.power = SimMathx.jmin(100.0, D.power + dd * D.ld.taken)   # ladder.json takenPerDamage, dealtPerDamage: a hit feeds both ladders
 	A.power = SimMathx.jmin(100.0, A.power + dd * A.ld.dealt)
 	SimFx.spark(S, D.x, D.y + 34.0, 18 if o.get("big", false) else 9, "#fff3c0", 600.0, D.z)
-	S.dirS.stop = SimMathx.jmax(S.dirS.stop, SimHitstop.forHit(S, o, jor(o.get("stop", 0.0), 0.05)) if S.hitstopOn else jor(o.get("stop", 0.0), 0.05))   # hit-stop by weight: the table's for o.weight
+	SimClock.hold(S, SimHitstop.forHit(S, o, jor(o.get("stop", 0.0), 0.05)) if S.hitstopOn else jor(o.get("stop", 0.0), 0.05), A, D)   # hit-stop by weight: the table's for o.weight
 	SimFx.shake(S, jor(o.get("shake", 0.0), 6.0), D.x, D.z)
 	var fam: String = SimWounds.family(ex, D, o, dStance)
 	var kind: String = o.get("kind", "") if o.get("kind", "") != "" else ("guard" if fam == "guard" else ("beam" if ex != null and ex.kind == "sig" else ("heavy" if ex != null and ex.kind == "heavy" else ("medium" if ex != null and ex.kind == "medium" else "light"))))
@@ -120,7 +120,7 @@ static func hit(S: SimState, ex, A, D, dmg: float, o = null) -> float:
 	if S.hitstopOn:
 		SimHitstop.afterHit(S, D, st0)   # a blow that breaks a region holds decisive
 	if n0 < S.out.fx.size() and S.out.fx[n0].type == "damage":   # view fields outside the hash (Animation): the hit-stop in force after this hit, and the hitter's tier
-		S.out.fx[n0].stop = SimFx.stopTicks(S.dirS.stop, S.hitstopOn)
+		S.out.fx[n0].stop = SimFx.stopTicks(SimClock.left(S), S.hitstopOn)
 		S.out.fx[n0].tier = A.tier
 	if kind == "heavy" and dd > 0.0:
 		SimWounds.stagger(S, D)

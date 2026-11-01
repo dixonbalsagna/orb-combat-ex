@@ -37,6 +37,12 @@
   "autoGoTicks": 68,
   "repeatSec": 3.0,
   "carryTicks": 12,
-  "pendTicks": 90,
+  "pendTicks": 9,
+  "bufferTicks": 9,
+  "lightStops": true,
+  "softWorth": 1.7,
+  "softReel": 6,
+  "softRunOff": 2,
+  "guardStun": 14,
   "airAbove": 40.0
 }

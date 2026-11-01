@@ -130,6 +130,27 @@ static func takesA(S: SimState, f) -> bool:
 	return on() and DirBrawl.inBrawl(S, f) and not DirBrawl.quiet(S.dirS.ex)
 
 
+## A outside a brawl: in the close band it starts a brawl with the catch as its first blow, as X starts one with a blow; anywhere else it's the
+## far band's taunt, on its own ladder. False when he can't act, or it's not his to take: the empty-button cue says so.
+static func press(S: SimState, f) -> bool:
+	if not on() or DirBrawl.inBrawl(S, f) or S.dirS.ex != null or S.game.ko != null or DirBands.who(S) >= 0:
+		return false
+	if (f.state != "free" and f.state != "charging") or f.stunTicks > 0:
+		return false
+	var o = SimRoster.opp(S, f)
+	if o.state == "launched" or o.state == "down" or o.state == "dropped":
+		return false
+	if DirBands.band(f, o) == DirBands.CLOSE:
+		var ex = DirExchange.startZip(S, f, o, "light")
+		DirBrawl.beginQuiet(S, ex)
+		DirBrawl.announce(S, ex, f, "catch")
+		_catch(S, ex, f, o)
+		return true
+	f.state = "free"
+	DirBands.farPress(S, f, o, SimAct.LIGHT, 0, S.tick)
+	return true
+
+
 ## An attack press of f's in a brawl (DirBrawl.takes): in a tell or a clinch it is spent. Vicious blows are G2's.
 static func takes(S: SimState, f, kind: String) -> bool:
 	if not on() or _g(f, MODE) == 0:

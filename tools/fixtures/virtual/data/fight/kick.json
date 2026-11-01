@@ -10,6 +10,8 @@
   "_instant": "the share of top speed he's at on a kick's first tick. For Orb to try: 0.8, 0.9, 1.0",
   "climbTicks": 8,
   "_climbTicks": "ticks from there to top speed, in a straight line. For Orb to try: 8, 12, 4. With 0 he's at top speed at once",
+  "keepTop": true,
+  "_keepTop": "a held flat-out flight keeps the most speed it has had, until the gap's inside 1,500 units. Without it, flying at the rival slows as the gap closes, by the traversal's rule",
   "turn": {
     "above": 0.5,
     "_above": "a stick flip above this share of top speed is a coin turn",

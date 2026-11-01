@@ -302,7 +302,7 @@ static func perfectBlock(S: SimState, ex, a, d, o: Dictionary) -> void:
 		# the riposte, and the brawl goes on.
 		var sep: bool = String(o.get("class", "")) == "heavy"   # a turned heavy or ender: a heavy riposte separates them
 		d.ki = SimMathx.jmin(100.0, d.ki + float(c.ki))
-		S.dirS.stop = SimMathx.jmax(S.dirS.stop, float(c.stopTicks) / DirData.TICKS_PER_SEC)
+		SimClock.hold(S, float(c.stopTicks) / DirData.TICKS_PER_SEC, a, d)
 		SimFx.cue(S, d, "perfect_block", "", "")
 		SimFx.ring(S, a.x + a.face * 30.0, a.y + 34.0, 700.0, "#9fe0ff", 0.4, 10.0)
 		SimFx.banner(S, "PERFECT BLOCK", "#9fe0ff", 0.8)
@@ -316,7 +316,7 @@ static func perfectBlock(S: SimState, ex, a, d, o: Dictionary) -> void:
 	d.ki = SimMathx.jmin(100.0, d.ki + float(c.ki))
 	a.stunTicks = maxi(a.stunTicks, int(pb.staggerTicks))
 	a.rush = null
-	S.dirS.stop = SimMathx.jmax(S.dirS.stop, float(c.stopTicks) / DirData.TICKS_PER_SEC)
+	SimClock.hold(S, float(c.stopTicks) / DirData.TICKS_PER_SEC, a, d)
 	var cls: String = String(o.get("class", ""))
 	var launch: bool = cls == "heavy" or cls == "ender" or (ex.kind == "heavy" and not DirBrawl.isBrawl(ex))   # in a brawl the blow's own class says it
 	_open(S, d, OPEN_RIPOSTE_LAUNCH if launch else OPEN_RIPOSTE, int(pb.riposteTicks))
@@ -369,6 +369,8 @@ static func tick(S: SimState) -> void:
 		var cell: String = ""
 		if f.input.special >= 1 and f.input.special <= 3:
 			cell = EMPTY_CELLS[f.input.special - 1]
+		elif f.input.context and not f.input.guard and f.act.mode != 1 and DirGrapple.press(S, f):
+			pass   # near, a grab; anywhere else, the taunt (docs/design/stick-lands.md)
 		elif f.input.context and not f.input.guard and f.act.mode != 1 and not DirGrapple.takesA(S, f):   # in a brawl, A is the grapple's
 			cell = "a"
 		if cell != "":

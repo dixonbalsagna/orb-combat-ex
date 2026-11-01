@@ -20,6 +20,7 @@ func _init() -> void:
 	_played()
 	_meteorPlayed()
 	_ignition()
+	_meteorBowl()
 	_sides()
 	_crater()
 	_brake()
@@ -139,7 +140,7 @@ func _earned() -> void:
 	_expect(DirArc.fullTicks(S, A, ch) == int(ch.fullTicks), "no stun banked: the flash is the data's (%d)" % int(ch.fullTicks))
 	DirArc.bank(S, A, D, 40)
 	_expect(DirArc.fullTicks(S, A, ch) == int(cfg.bankFull), "a banked stun: the flash comes at %d" % int(cfg.bankFull))
-	for _k in range(45 + int(cfg.bankGrace)):
+	for _k in range(45):
 		SimCore.step(S, [SimIntent.new(), SimIntent.new()])
 	S.out.fx.clear()
 	S.out.feed.clear()
@@ -319,7 +320,7 @@ func _ignition() -> void:
 	var banked: bool = DirArc._g(S.fighters[0], DirArc.A_BANK) > DirBrawl._now(S)
 	_expect(banked, "a level 3 upward stick strike banks the charge")
 	var stun: int = S.fighters[1].stunTicks
-	var got: Array = _holdB(S, 44)
+	var got: Array = _holdB(S, 8)   # the hold counts from the strike: the flash comes 7 or so ticks after a press this late
 	print("      ignition: stun left at B %d; %s" % [stun, str(got)])
 	_expect(got.has("METEOR"), "and B, inside the stun, is the meteor (%s)" % str(got))
 	DirStick.setForce(-1)
@@ -401,3 +402,57 @@ func _brake() -> void:
 	_expect(left >= 0 and share >= float(DirArc.cfg().brakeFrom) - 0.02, "a held brake leaves the curve only from the end of the hang (%.2f)" % share)
 	_expect(absf(vAt) > 0.0, "on its heading")
 	SimCore.dispose(S)
+
+
+## The meteor's landing: World's bowl, a blast over it, and one a match.
+func _meteorBowl() -> void:
+	var S := _fresh()
+	var A = S.fighters[0]
+	var D = S.fighters[1]
+	var cfg: Dictionary = DirArc.cfg()
+	var saved: int = int(cfg.minForms)
+	cfg["minForms"] = 0
+	D.stunTicks = 20
+	_expect(DirArc.earned(S, A, D, {"charge": 1.0}) == 0, "stunned: the meteor")
+	DirArc.send(S, A, D, 0, -1.0)   # this way it lands on land
+	S.out.fx.clear()
+	_s0(S)
+	cfg["minForms"] = saved
+	SimCore.dispose(S)
+
+
+func _s0(S: SimState) -> void:
+	var A = S.fighters[0]
+	var D = S.fighters[1]
+	var n0: int = S.craters.size()
+	var alive0: Array = []
+	for t in range(600):
+		SimCore.step(S, [SimIntent.new(), SimIntent.new()])
+		S.out.fx.clear()
+		S.out.feed.clear()
+		if S.craters.size() > n0:
+			break
+	_expect(S.craters.size() == n0 + 1, "one crater, on land (%d)" % (S.craters.size() - n0))
+	if S.craters.size() <= n0:
+		return
+	var c = S.craters[S.craters.size() - 1]
+	print("      the bowl: radius %.0f, depth %.0f" % [float(c.r), float(c.depth)])
+	_expect(float(c.r) > 5000.0, "the meteor's own bowl (%.0f)" % float(c.r))
+	var standing: int = 0
+	var fell: int = 0
+	for b in S.buildings:
+		if absf(SimWrap.sdx(c.x, b.x)) < float(c.r) * 0.6:
+			if b.alive:
+				standing += 1
+			else:
+				fell += 1
+	print("      in the bowl's middle: %d down, %d standing" % [fell, standing])
+	_expect(standing == 0 or fell > 0, "the blast takes what's in it")
+	D.stunTicks = 20
+	var first = S.fighters[0]
+	DirArc._s(first, DirArc.A_LAST, 0)
+	DirArc._s(first, DirArc.A_USED, 0)
+	var cfg: Dictionary = DirArc.cfg()
+	cfg["minForms"] = 0
+	_expect(DirArc.earned(S, A, D, {"charge": 1.0}) == 1, "the second, on the first value: the high arc")
+

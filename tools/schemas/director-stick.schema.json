@@ -93,6 +93,29 @@
     "windTicks": {
       "type": "integer",
       "minimum": 1
+    },
+    "bufferTicks": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "lightStops": {
+      "type": "boolean"
+    },
+    "softWorth": {
+      "type": "number",
+      "minimum": 0
+    },
+    "softReel": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "softRunOff": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "guardStun": {
+      "type": "integer",
+      "minimum": 0
     }
   }
 }

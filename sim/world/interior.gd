@@ -170,7 +170,7 @@ static func begin(S: SimState, f, b, y: float, edge: float, dir: float, by, tier
 	ev.k = 0.0
 	var stopTicks: int = int(c.interiorFaceStop)
 	ev.stop = stopTicks
-	S.dirS.stop = SimMathx.jmax(S.dirS.stop, float(stopTicks) * SimConst.DT)
+	SimClock.hold(S, float(stopTicks) * SimConst.DT, f, by)
 	f.vx *= keep
 	f.vy *= keep
 	f.x = SimWrap.wrap(edge + dir * 2.0)

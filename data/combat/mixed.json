@@ -1,0 +1,17 @@
+{
+  "schema": "combat.mixed/1",
+  "_about": "The mixed string, a prototype (energy-overhaul.md section 21, rule-of-cool-map.md row 34; docs/combat/pending/mixed-string/README.md). First values. enabled: false leaves nothing running and no slot sized. windowTicks: how long a far string stays open after its last blow. tapMaxShare: a heavy let go with at most this share of its charge is a tap, so a lob. burstBh and edgeShare: E123's tapped burst, and half worth outside half its radius (E30). knockBh: E30's clean hit. leanBh: E33. wayReachBh: how far past him a building can be and still finish it. wayEveryTicks: rule-of-cool.md's rule 2, a big set piece every 20 s. wayForceMul: of a heavy's force. leadTicks: the lob's shortest and longest flight, timed to land as he does. arcMul: E144, how much a low roof may raise the arc. freeBh: E144, nothing stops it this near the thrower",
+  "enabled": false,
+  "windowTicks": 150,
+  "tapMaxShare": 0.34,
+  "burstBh": 2.5,
+  "edgeShare": 0.5,
+  "knockBh": 3.0,
+  "leanBh": 4.0,
+  "wayReachBh": 16.0,
+  "wayEveryTicks": 1200,
+  "wayForceMul": 1.0,
+  "leadTicks": [24, 110],
+  "arcMul": 6,
+  "freeBh": 2.0
+}

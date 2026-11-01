@@ -165,32 +165,32 @@ static func _col(x: float) -> int:
 	return int(floor(SimWrap.wrap(x) / SimConst.COL))
 
 
-## Dig a crater of energy E at x. kind is "impact", "beam" or "powerup". special marks the blows that are meant to leave the
+## Dig a crater of energy E at x. kind is "impact", "beam" or "powerup". meteor: the meteor's landing (Encounter's DirArc; docs/world/meteor-crater.md): its energy is times craters.json meteor.eMult and its radius is held only by meteor.rMax, not by ORD_R_MAX or the special flag (which also turns off the brake and the chase); no repeat-blow merge. special marks the blows that are meant to leave the
 ## big marks: a signature, a finisher, a break launch, a beam clash; its energy is multiplied by SPECIAL_E_MULT (bowl radius
 ## times its square root) and its radius may reach R_MAX, where an ordinary blow is held to ORD_R_MAX (a power-up is its
 ## own ladder and is held only by R_MAX). dirx is the impact velocity's signed horizontal share (vx / speed) and vert its
 ## vertical share (|vy| / speed); both only matter for impacts. shape: the material's bowl (WorldCraters.shapeAt: radius, depth, rim
 ## and steep factors on today's bowl; empty for today's bowl, exactly). Returns the record, or null when the spot was already too
 ## dented to take a crater of this size.
-static func dig(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, z: float = NAN, shape: PackedFloat64Array = PackedFloat64Array()):
+static func dig(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, z: float = NAN, shape: PackedFloat64Array = PackedFloat64Array(), meteor: bool = false):
 	SimField.far()
-	var r = _digRead(S, x, energy, cause, kind, dirx, vert, special, z, shape)
+	var r = _digRead(S, x, energy, cause, kind, dirx, vert, special, z, shape, meteor)
 	SimField.near()
 	return r
 
 
-static func _digRead(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, z: float = NAN, shape: PackedFloat64Array = PackedFloat64Array()):
-	if kind == "impact" and int(WorldBrunt.cfg().repeatMarks) > 0:
+static func _digRead(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, z: float = NAN, shape: PackedFloat64Array = PackedFloat64Array(), meteor: bool = false):
+	if kind == "impact" and not meteor and int(WorldBrunt.cfg().repeatMarks) > 0:
 		var rp: Array = _repeat(S, x, energy, special, shape[WorldCraters.S_R] if shape.size() > 0 else 1.0)
 		x = rp[0]
 		energy = rp[1]
 	if not S.depthOn:
-		return _dig(S, x, energy, cause, kind, dirx, vert, special, shape)
+		return _dig(S, x, energy, cause, kind, dirx, vert, special, shape, meteor)
 	var zz: float = z
 	if is_nan(zz):
 		zz = float(cause.z) if (cause != null and "z" in cause) else 0.0
 	var k: int = WorldTerrain.enterRow(S, WorldTerrain.rowOfZ(zz))
-	var rec = _dig(S, x, energy, cause, kind, dirx, vert, special, shape)
+	var rec = _dig(S, x, energy, cause, kind, dirx, vert, special, shape, meteor)
 	WorldTerrain.leaveRow(S, k)
 	if rec != null and k >= 0 and not _lastLive:   # a crater held in the planet store has no strip rows to dig: its bowl is radial about its planet point
 		_digNeighbours(S, rec, k, shape[WorldCraters.S_STEEP] if shape.size() > 0 else 1.0)
@@ -208,7 +208,7 @@ static func _pointOf(S: SimState, x: float) -> Array:
 	if pointHook.is_valid():
 		return pointHook.call(S, x, 0.0)
 	if S.frame != null:   # the line through the frame now
-		SimField.pointIn(S.frame, x)
+		SimField.pointAt(S, x)
 		return [SimField.ox, SimField.oy, SimField.oz]
 	var pr = S.planetRing
 	if not (pr is Dictionary) or pr.is_empty() or not pr.has("seed"):
@@ -275,19 +275,20 @@ static func _digNeighbours(S: SimState, rec, kc: int, steep: float = 1.0) -> voi
 		WorldWater.touched(S, c0, n + REPOSE_PAD, minG)
 
 
-static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, shape: PackedFloat64Array = PackedFloat64Array()):
+static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, shape: PackedFloat64Array = PackedFloat64Array(), meteor: bool = false):
 	if energy <= 0.0:
 		return null
-	var E: float = energy * (SPECIAL_E_MULT if special else 1.0)
+	var E: float = energy * (SPECIAL_E_MULT if special else (WorldCraters.meteorEMult() if meteor else 1.0))
 	var NC: int = SimConst.NC
 	var COL: float = SimConst.COL
-	var R: float = radiusOf(E, special or kind == "powerup")
+	var rcap: float = WorldCraters.meteorRMax() if meteor else (R_MAX if (special or kind == "powerup") else ORD_R_MAX)   # the meteor's own ladder (craters.json meteor): its size is data, so it can come down if the dig hitches
+	var R: float = minf(rcap, R_BASE * sqrt(E))
 	var R0: float = R        # today's radius: the depth, its cap and the rim are today's bowl's times the material's factors
 	var sD: float = 1.0      # the material's depth, rim and wall (craters.json); 1, 1, 1 is today's bowl exactly
 	var sRim: float = 1.0
 	var steep: float = 1.0
 	if shape.size() > 0:
-		R = minf(R_MAX if (special or kind == "powerup") else ORD_R_MAX, R_BASE * sqrt(E) * shape[WorldCraters.S_R])
+		R = minf(rcap, R_BASE * sqrt(E) * shape[WorldCraters.S_R])
 		sD = shape[WorldCraters.S_D]
 		sRim = shape[WorldCraters.S_RIM]
 		steep = shape[WorldCraters.S_STEEP]

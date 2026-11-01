@@ -107,6 +107,7 @@ static func addWear(S: SimState, f, region: int, damage: float) -> void:
 	var k: float = wearK(S, f)
 	if f.boon != "":
 		k *= SimBoons.wearMul(f)   # the borrowed form's price: his first broken region comes sooner
+	k *= SimDir.endingWearMul(f)   # a pad put down (spec-wounds.md 1b-end); 1 with the ending off
 	var add: int = int(SimMathx.jround(damage * k))
 	if wd.spill[region]:
 		# Pitch A: a limb wears to battered and stops; the rest spills into the core (all of it once the limb is broken).
@@ -347,6 +348,8 @@ static func rallyRegion(f, order: Array) -> int:
 static func rally(S: SimState, f, kind: String) -> bool:
 	if not f.brink or f.rallyCool > 0 or S.game.ko != null:
 		return false
+	if S.game.timeCap and SimDir.endingOn():
+		return false   # the time cap: Rallies are off (spec-wounds.md 1b-end)
 	var r: int = rallyRegion(f, SPITE_ORDER if kind == "spite" else RALLY_ORDER)
 	if r < 0:
 		return false

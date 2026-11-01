@@ -310361,6 +310361,128 @@
       }
     },
     {
+      "id": "combat-phrases-valid",
+      "schema": "combat-phrases.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/phrases.json",
+          "set": {
+            "/schema": "combat.phrases/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "combat-phrases-key-required",
+      "schema": "combat-phrases.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/phrases.json",
+          "del": [
+            "/fighters"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "combat-phrases-unknown-key",
+      "schema": "combat-phrases.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/phrases.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "combat-phrases-schema-version",
+      "schema": "combat-phrases.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/phrases.json",
+          "set": {
+            "/schema": "combat.phrases/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "combat-mixed-valid",
+      "schema": "combat-mixed.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/mixed.json",
+          "set": {
+            "/schema": "combat.mixed/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "combat-mixed-key-required",
+      "schema": "combat-mixed.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/mixed.json",
+          "del": [
+            "/arcMul"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "combat-mixed-unknown-key",
+      "schema": "combat-mixed.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/mixed.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "combat-mixed-schema-version",
+      "schema": "combat-mixed.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/mixed.json",
+          "set": {
+            "/schema": "combat.mixed/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
       "id": "combat-stick-valid",
       "schema": "combat-stick.schema.json",
       "mutate": [

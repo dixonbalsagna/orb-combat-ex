@@ -25,6 +25,8 @@ static func createSim(opts: Dictionary = {}) -> SimState:
 static func dispose(S: SimState, keepWorld: bool = false) -> void:
 	if SimField.cur == S:
 		SimField.cur = null   # the field match's reference (a static) doesn't keep a disposed state alive
+	if S.stage != null:
+		SimStage.dispose(S)
 	for f in S.fighters:
 		f.launchBy = null
 		f.rush = null
@@ -190,7 +192,9 @@ static func _mFighters(J: MatchJob) -> void:
 	var p1ai: bool = bool(ai["p1"]) if ai.has("p1") and ai["p1"] != null else (S.fighters[0].ai != null if S.fighters.size() > 0 else true)
 	var p2ai: bool = bool(ai["p2"]) if ai.has("p2") and ai["p2"] != null else (S.fighters[1].ai != null if S.fighters.size() > 1 else true)
 	dispose(S)
-	var slots: Array = setup.get("slots", FighterData.order().slice(0, 2))
+	S.stage = null
+	var fights: int = SimStage.fightsOf(setup)   # two AI fights on one line (sim/core/stage.gd), else one
+	var slots: Array = setup.get("slots", SimStage.slotsFor() if fights == 2 else FighterData.order().slice(0, 2))
 	if not SimRoster.slotsOk(slots):
 		# slots that are not 2 to MAX_BODIES fighters the data has (the roster's or the bench's): the default pairing plays
 		if not FighterData.quiet:
@@ -210,7 +214,7 @@ static func _mFighters(J: MatchJob) -> void:
 	for k in range(2, slots.size()):
 		var gx: float = SimWrap.wrap(S.fighters[1].x + away * SimRoster.GUARD_SPACING * float(k - 1))
 		var key: String = "p%d" % (k + 1)
-		S.fighters.append(SimRoster.createFighter(FighterData.def(slots[k]), gx, key, ai.get(key, false) == true))
+		S.fighters.append(SimRoster.createFighter(FighterData.def(slots[k]), gx, key, ai.get(key, fights == 2) == true))
 	if setup.has("names"):
 		for k in range(mini(setup.names.size(), S.fighters.size())):
 			S.fighters[k].name = setup.names[k]
@@ -218,6 +222,8 @@ static func _mFighters(J: MatchJob) -> void:
 		S.fighters[k].y = 60.0
 		S.fighters[k].face = (-1.0 if flip else 1.0) if k == 0 else (1.0 if flip else -1.0)
 		S.fighters[k].stance = 0.0
+	if fights == 2 and S.fighters.size() == 4:
+		SimStage.place(S)
 	S.beams.clear()
 	S.T = 0.0
 	S.game.ko = null
@@ -294,6 +300,8 @@ static func _mEnd(J: MatchJob) -> void:
 	S.out.fx.clear()
 	S.tick = 0
 	S.dt = 0.0
+	if SimStage.fightsOf(J.setup) == 2 and S.fighters.size() == 4:
+		SimStage.open(S, J.seed)
 	S.bindStructures()   # the world's buildings and trees: their per-tick fields into the state's arrays (snapshots share the records)
 	J.done = true
 
@@ -330,6 +338,8 @@ static func _step(S: SimState, inputs) -> bool:
 		WorldClimate.curGen = S.planetGen
 		WorldBiomes.worldId = S.worldId
 	SimField.bindStep(S)   # a field world's read: this match is the one reading, and no far scope is open
+	if S.stage != null:
+		return _stepFights(S, inputs)
 	var dtReal: float = SimConst.DT
 	var dt: float = dtReal * S.game.ts
 	S.dt = dt
@@ -337,6 +347,35 @@ static func _step(S: SimState, inputs) -> bool:
 	if SimIntro.tick(S, inputs):   # the intro phase: pre-clock ticks; the sim holds as in a pause, and only a skip press is read
 		SimFx.tickMark(S, dt, false)   # ... but effects run at full speed (not a pause's tenth), so the landing's dust and debris settle
 		return false
+	return _fightTick(S, inputs, dtReal, dt)
+
+
+## A match of more than one fight (sim/core/stage.gd): the line's tick once, then each fight's, in slot order, on its own
+## clock and its own holds. Fight 0 ends up in S.
+static func _stepFights(S: SimState, inputs) -> bool:
+	S.tick += 1
+	if SimIntro.tick(S, inputs):
+		SimFx.tickMark(S, S.dt, false)
+		return false
+	SimStage.swingTick(S)
+	var dtReal: float = SimConst.DT
+	var live: bool = false
+	for i in range(S.stage.fights.size()):
+		SimStage.enter(S, i)
+		if i > 0:   # fight 0's is the host's to drain, as ever; no host reads the others' yet
+			S.out.feed.clear()
+			S.out.fx.clear()
+		var dt: float = dtReal * S.game.ts
+		S.dt = dt
+		if _fightTick(S, SimStage.inputsOf(inputs, i), dtReal, dt):
+			live = true
+	SimStage.enter(S, 0)
+	SimField.warmStep(S)
+	return live
+
+
+## One fight's tick: its holds, its clock, its fighters, its director.
+static func _fightTick(S: SimState, inputs, dtReal: float, dt: float) -> bool:
 	if SimPause.frozenTick(S):   # Q10: a pausing set piece is a run of frozen ticks, ahead of the hit-stop
 		if S.epoch != null:
 			WorldEpoch.tick(S, false)   # the calm turn's warm runs under a pause too: no hold, so it only reads
@@ -351,7 +390,7 @@ static func _step(S: SimState, inputs) -> bool:
 		SimFx.tickMark(S, dt, true)
 		return false
 	S.T += dt
-	if S.frame != null:
+	if S.frame != null and S.stage == null:   # with fights, once a tick ahead of them (_stepFights)
 		SimSwing.tick(S)   # the turntable: the line turns before anyone reads it this tick
 	if S.epoch != null:
 		WorldEpoch.tick(S, DirCalm.hold(S))   # the calm-moment turn: swap when decided, held (Encounter's DirCalm.hold) and calm
@@ -390,6 +429,8 @@ static func _step(S: SimState, inputs) -> bool:
 		var sz: float = c.A.z + (c.D.z - c.A.z) * mid
 		SimFx.spark(S, sx, (c.A.y + (c.D.y - c.A.y) * mid) + 38.0, 3, "#ffffff", 700.0, sz)
 		SimFx.shake(S, 7.0, sx, sz)
+	if S.stage == null:
+		SimField.warmStep(S)
 	return true
 
 

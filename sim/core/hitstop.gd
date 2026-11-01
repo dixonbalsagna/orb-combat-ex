@@ -162,10 +162,10 @@ static func forHit(S: SimState, o, passed: float) -> float:
 
 
 ## Any other moment's hold (the director's: a launch's send, a perfect's duel), merged with the stop in force.
-static func hold(S: SimState, weight: String) -> void:
+static func hold(S: SimState, weight: String, a = null, b = null) -> void:
 	var n: int = ticks(S, weight)
 	if n > 0:
-		S.dirS.stop = SimMathx.jmax(S.dirS.stop, float(n) * SimConst.DT)
+		SimClock.hold(S, float(n) * SimConst.DT, a, b)
 
 
 ## After a hit's damage (SimDamage.hit): a blow that breaks a region holds decisive. stage0 is the struck fighter's

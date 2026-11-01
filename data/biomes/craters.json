@@ -4,6 +4,10 @@
   "enabled": false,
   "touchBuilt": false,
   "embedThresholdScales": true,
+  "meteor": {
+    "eMult": 9.0,
+    "rMax": 6100.0
+  },
   "classes": {
     "paving": { "radius": 1.0, "depth": 1.0, "rim": 1.0, "steep": 1.0, "cracks": "slabs_tilted", "ejecta": "slab_chunks" },
     "rock": { "radius": 0.9, "depth": 0.8, "rim": 0.6, "steep": 1.4, "cracks": "star", "ejecta": "blocks" },

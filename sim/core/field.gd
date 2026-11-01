@@ -31,6 +31,10 @@ static var _kSeed: int = -1
 static var _sh: int = 0
 static var _serial: int = 0
 static var _nc: int = 0
+static var _wCur: int = 0                   # the warm-up (warmStep): the next coarse column, the next building ...
+static var _wB: int = 0
+static var _wSer: int = -1                  # ... of the memos as laid at this serial ...
+static var _wQ: int = 0                     # ... and the ticks they've been quiet
 static var _F = null                        # the frame's field
 static var _stride: int = 4
 static var _st: int = 8                     # farStride, the data's
@@ -235,7 +239,7 @@ static func col(S: SimState, i: int) -> float:
 		return a + (_coarse(S, (i - r + _st) % _nc) - a) * float(r) / float(_st)
 	if _s1[i] == _serial:
 		return _m1[i]
-	pointIn(S.frame, float(i) * SimConst.COL)
+	pointAt(S, float(i) * SimConst.COL)
 	var h1: float = _ground(S, 1)
 	_m1[i] = h1
 	_s1[i] = _serial
@@ -246,7 +250,7 @@ static func col(S: SimState, i: int) -> float:
 static func _coarse(S: SimState, c: int) -> float:
 	if _s0[c] == _serial:
 		return _m0[c]
-	pointIn(S.frame, float(c) * SimConst.COL)
+	pointAt(S, float(c) * SimConst.COL)
 	var h: float = _ground(S, _stride)
 	_m0[c] = h
 	_s0[c] = _serial
@@ -265,13 +269,13 @@ static func nativeDepth(S: SimState, i: int, low: float) -> float:
 		var c0: int = i - i % _st
 		if _t0[c0] != _serial:
 			var hc: float = _coarse(S, c0)
-			pointIn(S.frame, float(c0) * SimConst.COL)
+			pointAt(S, float(c0) * SimConst.COL)
 			_w0[c0] = WorldField.recordWater(S, ox, oy, oz, hc)
 			_t0[c0] = _serial
 		w = _w0[c0]
 	else:
 		if _t1[i] != _serial:
-			pointIn(S.frame, float(i) * SimConst.COL)
+			pointAt(S, float(i) * SimConst.COL)
 			_w1[i] = WorldField.recordWater(S, ox, oy, oz, h)
 			_t1[i] = _serial
 		w = _w1[i]
@@ -283,7 +287,7 @@ static func nativeDepth(S: SimState, i: int, low: float) -> float:
 ## The untouched ground at strip x, depth z, through the frame: the depth rows' read on a field world (no memo: only with depth on).
 static func atDepth(S: SimState, x: float, z: float) -> float:
 	_fresh(S)
-	placeIn(S.frame, x, z)
+	placeAt(S, x, z)
 	return _ground(S, _stride if _far > 0 else 1)
 
 
@@ -313,6 +317,50 @@ static func buildingGround(S: SimState, i: int) -> float:
 	return h
 
 
+## Fills the memos a launch's plan would read cold, a few a tick, once they've been quiet for warmQuiet ticks: the coarse ground and the record water on it (groundCeilAt), then the
+## buildings' ground (WorldBrunt.candidates). Two thirds of a launch tick was these first reads (Performance, docs/perf/launch-ticks-2026-11-01.md). Nothing here is state: a value is
+## what the read would compute in the same state, so a match is the same to the bit, warm or cold, whatever a rollback does. A crater or a swing lays the memos again and it starts over.
+static func warmStep(S: SimState) -> void:
+	if S.frame == null or S.depthOn:
+		return
+	var d: Dictionary = data()
+	var nw: int = int(d.warmN)
+	var nb: int = int(d.warmB)
+	if nw <= 0 and nb <= 0:
+		return
+	_fresh(S)
+	if _serial != _wSer:
+		_wSer = _serial
+		_wCur = 0
+		_wB = 0
+		_wQ = 0
+		return
+	_wQ += 1
+	if _wQ < int(d.warmQuiet):
+		return
+	var total: int = _nc / _st
+	_far += 1
+	var k: int = 0
+	while k < nw and _wCur < total:
+		var cw: int = _wCur * _st
+		_wCur += 1
+		var hc: float = _coarse(S, cw)
+		if not S.fieldRecs.is_empty() and _t0[cw] != _serial:
+			pointAt(S, float(cw) * SimConst.COL)
+			_w0[cw] = WorldField.recordWater(S, ox, oy, oz, hc)
+			_t0[cw] = _serial
+		k += 1
+	if (_wCur >= total or nw <= 0) and nb > 0 and S.bDir.size() == S.buildings.size() * 3:
+		var near: bool = S.bFirst > 0   # with places everywhere, those the pose list holds: a plan only asks about buildings near the pair
+		var n: int = S.bList.size() if near else S.buildings.size()
+		k = 0
+		while k < nb and _wB < n:
+			buildingGround(S, S.bList[_wB] if near else _wB)
+			_wB += 1
+			k += 1
+	_far -= 1
+
+
 ## The highest a far read's ground, or the water on it, can be over the stretch of ceilCols columns that holds column col: on the stride's samples, with World's records and the store, the record water there, the strip's marks and a fight's water. A forecast above it over its stretch needn't read the ground or the sea at all: skipping those reads changes nothing it would compute (Combat: 98% and 93% of predictFlight's reads, where a planet-wide ceiling skipped 70% and 0%). A far level's bound, for this tick and this frame: it reads the strip, about 30 us. Infinity off a field world, or with depth on, whose rows it doesn't bound.
 static func groundCeilAt(S: SimState, col_: int) -> float:
 	if S.frame == null or S.depthOn:
@@ -331,7 +379,7 @@ static func groundCeilAt(S: SimState, col_: int) -> float:
 		if not S.fieldRecs.is_empty() and c < c0 + n:
 			if _t0[cw] != _serial:
 				var hc: float = _coarse(S, cw)
-				pointIn(S.frame, float(cw) * SimConst.COL)
+				pointAt(S, float(cw) * SimConst.COL)
 				_w0[cw] = WorldField.recordWater(S, ox, oy, oz, hc)
 				_t0[cw] = _serial
 			wet = maxf(wet, _w0[cw])
@@ -363,7 +411,7 @@ static func serialOf(S: SimState) -> int:
 ## The stored biome (WorldPlanet.BIO_*, an index into WorldPlanetWorld.BIOME_NAME) at strip x through the frame, on the bake: Camera's biome by strip x, and WorldBiomes once the line has swung, so a swing changes the biome under a fight.
 static func biomeAt(S: SimState, x: float) -> int:
 	_fresh(S)
-	pointIn(S.frame, x)
+	pointAt(S, x)
 	WorldField.sample(_F, ox, oy, oz, _stride)
 	return _F.ob
 
@@ -371,7 +419,7 @@ static func biomeAt(S: SimState, x: float) -> int:
 ## The fine biome at strip x through the frame, on the bake.
 static func fineAt(S: SimState, x: float) -> int:
 	_fresh(S)
-	pointIn(S.frame, x)
+	pointAt(S, x)
 	WorldField.sample(_F, ox, oy, oz, _stride)
 	return _F.ofine
 

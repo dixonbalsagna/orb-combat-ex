@@ -28,6 +28,10 @@
     "layPerTick",
     "indexBand",
     "posesRestPerTick",
+    "warmN",
+    "warmB",
+    "apartReach",
+    "warmQuiet",
     "layNearCols",
     "layNearPerTick",
     "waterWarmCols",
@@ -325,6 +329,28 @@
       "minimum": 1,
       "maximum": 16384,
       "description": "places everywhere: buildings a tick posed after a rest, past those a swing tick poses"
+    },
+    "warmN": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 600,
+      "description": "coarse columns a tick a field world's memos are filled ahead of a launch's plan, once they've been quiet; 0 off"
+    },
+    "warmB": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 16384,
+      "description": "buildings' ground a tick, once the columns are warm; 0 off"
+    },
+    "apartReach": {
+      "type": "number",
+      "minimum": 0
+    },
+    "warmQuiet": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 600,
+      "description": "ticks the memos must have been quiet before that starts"
     },
     "layNearCols": {
       "type": "integer",

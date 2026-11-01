@@ -35,6 +35,16 @@
       "type": "boolean",
       "description": "An embed's threshold is multiplied by the row's depth, so the embed rate is today's on every surface (Game Design, rulings 2026-10-23b item 3)."
     },
+    "meteor": {
+      "type": "object",
+      "description": "The meteor's crater (WorldCrater.dig with meteor on; docs/world/meteor-crater.md): the energy multiplier (the specials' 9) and the largest radius in units. Read whether or not the module is on. Lower rMax if the dig hitches.",
+      "required": ["eMult", "rMax"],
+      "additionalProperties": false,
+      "properties": {
+        "eMult": { "type": "number", "minimum": 1 },
+        "rMax": { "type": "number", "minimum": 600, "maximum": 8320 }
+      }
+    },
     "classes": {
       "type": "object",
       "description": "One row per look class (WorldGround.LOOKS); a class without a row digs today's bowl.",

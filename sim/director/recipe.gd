@@ -43,6 +43,7 @@ static func _stick() -> void:
 	for who in j.pools:
 		if _rec.pools.get(who) is Dictionary:
 			_rec.pools[who].merge(j.pools[who])
+	_rec["stickDirections"] = j.get("directions", {})
 	_text += st
 
 

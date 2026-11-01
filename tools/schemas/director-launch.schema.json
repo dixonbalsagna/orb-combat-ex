@@ -860,15 +860,21 @@
             "ground"
           ]
         },
-        "bankGrace": {
+        "meteorBudget": {
           "type": "integer",
           "minimum": 0
+        },
+        "blastKeep": {
+          "type": "number",
+          "minimum": 0
+        },
+        "firstMeteor": {
+          "type": "boolean"
         }
       },
       "required": [
         "apexU",
         "bankFull",
-        "bankGrace",
         "brakeFrom",
         "budget",
         "enabled",

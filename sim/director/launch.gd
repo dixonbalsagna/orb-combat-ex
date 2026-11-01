@@ -755,6 +755,7 @@ static func doLaunch(S: SimState, att, tgt, plan: Dictionary, force: float, spec
 	if String(plan.get("name", "")) != "KNOCK BACK":
 		DirBrawl.launched(S, tgt)   # the brawl's launcher rests on him after any launch
 	tgt.launchBy = att
+	DirFollow.sent(S, att)   # row 42: for a while, his far press flies after him
 	tgt.bounces = 0.0
 	tgt.launchSpecial = special
 	tgt.hopped = false

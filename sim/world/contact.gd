@@ -483,7 +483,7 @@ static func _townAt(S: SimState, col: int) -> int:
 	if WorldTerrain.baseAt(S, col) < WorldTerrain.TRIM_G:
 		return 0
 	var R: float = SimConst.PLANET_NC * SimConst.COL / (2.0 * SimMathx.PI)
-	SimField.pointIn(S.frame, float(col) * SimConst.COL)
+	SimField.pointAt(S, float(col) * SimConst.COL)
 	var qx: float = SimField.ox
 	var qy: float = SimField.oy
 	var qz: float = SimField.oz
@@ -1211,7 +1211,7 @@ static func _contact(S: SimState, f, by, b: Body, e: Dictionary) -> void:
 	if area > 0.0:
 		WorldStructures.damageArea(S, f.x, f.y + 5.0, r * 1.7, area, by)
 	SimFx.shake(S, SimMathx.jmin(30.0, sp * 0.01), f.x, f.z)
-	S.dirS.stop = SimMathx.jmax(S.dirS.stop, 0.06)
+	SimClock.hold(S, 0.06, f, by)
 	# wear: one impact in all. A slam pays all of it; a first touch-down pays its share; each later contact pays by the speed it removes
 	var j: float = f.jV0 * 0.018
 	if k == "slam":

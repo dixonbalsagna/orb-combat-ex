@@ -72,7 +72,7 @@ static func impact(S: SimState, f, g: float, sp: float) -> void:
 		var touch: float = WorldSlide.TOUCH_AREA if slideStart else 1.0
 		WorldStructures.damageArea(S, f.x, g + 5.0, r * 1.7, spN * (0.22 + 0.12 * tier) * touch, by)
 		SimFx.shake(S, SimMathx.jmin(30.0, spN * 0.01), f.x, f.z)
-		S.dirS.stop = SimMathx.jmax(S.dirS.stop, 0.06)
+		SimClock.hold(S, 0.06, f, by)
 		SimDamage.hurt(S, f, spN * 0.018 * (WorldSlide.TOUCH_DMG if slideStart else 1.0), by)
 		if hop:
 			f.hopped = true

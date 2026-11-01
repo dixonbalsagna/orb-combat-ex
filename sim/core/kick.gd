@@ -11,7 +11,7 @@ extends RefCounted
 
 const FILE: String = "res://data/fight/kick.json"
 ## The kick state the gameplay hash reads, only while S.kickOn (hash.gd).
-const HASHED: Array = ["t", "turn", "off", "t1", "t2", "no"]
+const HASHED: Array = ["boost", "t", "turn", "off", "t1", "t2", "no"]
 
 static var _d = null
 static var _hash: String = ""
@@ -21,6 +21,7 @@ static var stickOn: float = 0.5
 static var startBelow: float = 0.5
 static var instant: float = 0.8
 static var climbTicks: int = 8
+static var keepTop: bool = true
 static var overOn: bool = false
 static var topShare: float = 1.35
 static var hold: int = 8
@@ -55,6 +56,7 @@ static func _ensure() -> void:
 	startBelow = float(j.startBelow)
 	instant = float(j.instant)
 	climbTicks = int(j.climbTicks)
+	keepTop = j.keepTop == true
 	overOn = j.overspeed.enabled == true
 	topShare = float(j.overspeed.topShare)
 	hold = int(j.overspeed.hold)
@@ -104,6 +106,7 @@ static func note(_S: SimState, f, flying: bool) -> void:
 	if not flying:
 		k.t = 0
 		k.turn = 0
+		k.boost = 0.0
 	if SimDir.zipping(f):
 		k.off = afterZip
 
@@ -114,9 +117,11 @@ static func move(S: SimState, f, i: SimIntent, sp: float, lag: float) -> void:
 	if k.off > 0:
 		k.off -= 1
 	var flying: bool = i.dash and SimDetMath.hypot(i.mx, i.my) > stickOn
+	sp = _kept(S, f, flying, sp)
 	if k.turn == 0 and flying and i.mx * f.vx < 0.0 and absf(i.mx) > stickOn and absf(f.vx) > turnAbove * sp:
 		k.turn = brakeTicks + plantTicks
 		k.t = 0
+		k.boost = 0.0
 	if k.turn > 0:
 		k.turn -= 1
 		if k.turn >= plantTicks:
@@ -153,6 +158,24 @@ static func _share(S: SimState, t: int, over: bool) -> float:
 		return S.kickInstant + (top - S.kickInstant) * float(t - 1) / float(S.kickClimb)
 	var e: float = clampf(float(t - S.kickClimb - 1 - hold) / float(ease), 0.0, 1.0)
 	return top + (1.0 - top) * e * e * (3.0 - 2.0 * e)
+
+
+## His top speed, held. Flat-out speed grows with the gap (SimFighter.flightSpeed's traversal: 10 times at 12,000 units, plain inside 1,500), so flying at the rival it fell
+## as the gap closed: 5,491 to 3,100 in 36 ticks on the stick. With keepTop, a flight keeps the most that traversal has given it, until the gap's inside BOOST_NEAR, where a blow
+## starts; the plain lag then brings him down in time. Stance, wounds and water still apply: this holds the traversal's share, not the speed.
+static func _kept(S: SimState, f, flying: bool, sp: float) -> float:
+	var k = f.kik
+	if not keepTop or not flying:
+		k.boost = 0.0
+		return sp
+	var o = SimRoster.opp(S, f)
+	if absf(SimWrap.sdx(f.x, o.x)) <= SimConst.BOOST_NEAR:
+		k.boost = 0.0
+		return sp
+	var base: float = SimFighter.flightSpeed(S, f, false) * 2.4
+	var b: float = sp / base
+	k.boost = maxf(k.boost, b)
+	return base * k.boost
 
 
 ## A kick begins: the third inside repeatTicks has no overspeed.

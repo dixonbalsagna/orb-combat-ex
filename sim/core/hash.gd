@@ -60,6 +60,11 @@ static func _obj(out: Array, o, fields: Array) -> void:
 
 
 static func _args(out: Array, v) -> void:
+	if v is Array:   # a beam struggle's beat carries its presses as lists: the count, then each
+		out.append(float(v.size()))
+		for x in v:
+			_args(out, x)
+		return
 	if not (v is Dictionary):
 		out.append(v)
 		return
@@ -378,6 +383,8 @@ static func pristine(S: SimState, i: int) -> bool:
 
 
 static func stateHash(S: SimState) -> Dictionary:
+	if S.stage != null:
+		return {"gameplay": hashValues(SimStage.collect(S))}
 	return {"gameplay": hashValues(collect(S, "gameplay"))}
 
 

@@ -361,6 +361,9 @@ static func announce(S: SimState, ex, starter, why: String) -> void:
 ## "a launch or a close"); a mashed, flurry, burst or held-pace light a mashed light's (5b: "mash or burst light"); a
 ## tapped light a light's.
 static func weightOf(a: Dictionary) -> String:
+	if a.has("stick"):
+		var sl: int = int(a.get("stickL", 0))
+		return "launch" if sl >= 3 else ("heavy" if sl == 2 else "medium")   # charging buys its chunk: level 3 opens the send
 	if a.has("energy"):
 		return "medium" if String(a.energy) == "blast" else "light"
 	if bool(a.get("double", false)):
@@ -420,7 +423,9 @@ static func blowAt(S: SimState, ex, f, kind: int, lead: int, dmg: float, extra: 
 	elif not bool(extra.get("zip", false)) and not bool(extra.get("double", false)):
 		cell = "heavy" if kind == BIG else ("medium" if kind == MEDIUM else "light")   # a pressed blow thrown by rule: its strength's cell
 	_s(f, BOLT_N, 0)
-	var piece: String = _piece(S, f, 2 if kind == BIG else (1 if kind == MEDIUM else 0), false, cell)
+	var piece: String = DirPhrase.take(f, DirPhrase.read(S, f, o, "X", "burst")) if extra.has("burst") else ""   # a held X inside a phrase: its blows in turn
+	if piece == "":
+		piece = _piece(S, f, 2 if kind == BIG else (1 if kind == MEDIUM else 0), false, cell)
 	if piece != "":
 		args["piece"] = piece
 	DirExchange.schedule(ex, ex.t + (float(lead + (0 if _inTick else 1)) - 0.25) / DirData.TICKS_PER_SEC, "strike", args)
@@ -944,9 +949,12 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 	var cell: String = "launcher" if lau else (("blast" if st == 1 else "bolt") if energy else ("heavy" if st == 2 else ("medium" if st == 1 else ("burstFloor" if floor else ("lightToward" if toward else ("flurry" if kind == FLURRY else "light"))))))
 	if inFl and wound and not energy and not lau:
 		cell = _mashCell(cell)   # a mashed medium or heavy: the grind or the advance, when Combat's recipes name it
+	DirStance.note(f, args, st)
 	var piece: String = DirStick.piece(S, f, args) if args.has("stick") else ""   # first, so a medium's draw doesn't take a place in his last two
 	if piece == "" and bolt and _g(f, BOLT_N) >= 1:
 		piece = _boltRun(S, f, args)
+	if piece == "" and not energy and not lau and st < 2 and not args.has("stick"):
+		piece = DirPhrase.take(f, DirPhrase.read(S, f, o, "Y" if st == 1 else "X", "tap"))   # a press inside a phrase of his: its next piece
 	if piece == "":
 		piece = _piece(S, f, st, toward, cell, _sendOf(int(args.get("aim", 0))) if lau else "")
 	_s(f, BOLT_N, (_g(f, BOLT_N) + 1) if bolt else 0)
@@ -1227,6 +1235,7 @@ static func contact(S: SimState, ex, b) -> void:
 	var wind: bool = bool(a.get("wind", false))
 	var energy: String = String(a.get("energy", ""))
 	_s(f, LINE, 0)
+	DirStance.done(f)
 	_s(f, HOLD_AT, 0)
 	_s(f, CHG, 0)
 	_s(f, FLAV, 0)
@@ -1248,7 +1257,7 @@ static func contact(S: SimState, ex, b) -> void:
 	# The reach, read as it lands. A blow by rule (the double hit's, a sure one, a zip's) keeps the strike's own limit.
 	var ct: Dictionary = DirData.contact()
 	var far: float = (absf(SimWrap.sdx(f.x, o.x)) if (_lg(o, LA_POP_UNTIL) > S.tick or _lg(f, LA_POP_UNTIL) > S.tick) else DirBands.dist(f, o)) - float(ct.offset) + (0.0 if special else float(_g(f, PRE)) / 16.0)   # past striking distance, with what its own step through its reach has covered added back
-	if _g(f, GAPV_ON) == 1 and wound and not special:
+	if _g(f, GAPV_ON) == 1 and wound and not special and not DirArc.banked(S, f):   # a banked stun: he's where the stick's carry put him, in reach, and no gap counts
 		far = float(_g(f, GAPV)) / 16.0   # a blow with a wind-up: the gap as counted since it began (tick, _giveStep)
 	_s(f, PRE, 0)
 	_s(f, GAPV_ON, 0)
@@ -1272,7 +1281,7 @@ static func contact(S: SimState, ex, b) -> void:
 	ex.kind = "heavy" if kind == BIG else ("medium" if kind == MEDIUM else "light")   # the core reads the exchange's kind as the blow's weight
 	ex.sA = 0.0 if quiet(ex) else ex.A.stance   # a zipper has no guard in reach
 	ex.sD = ex.D.stance
-	if o.stance == 1.0 and (_g(o, LINE) != 0 or now < _g(o, OPEN_UNTIL) or o.stunTicks > 0 or DirRally.counterLive(S, f, o)):
+	if o.stance == 1.0 and ((_g(o, LINE) != 0 and not DirStick.guardHolds(o) and not DirStance.guardHolds(o)) or now < _g(o, OPEN_UNTIL) or o.stunTicks > 0 or DirRally.counterLive(S, f, o) or DirStick.guardDrops(S, o)):
 		# A fighter with a blow of his own on its way, open after a miss, or staggered is not guarding, whatever he holds;
 		# nor a rally's chaser against its counter-rush (10-26 item 30: he is committed to his arrival; a perfect block aside).
 		if o == ex.A:
@@ -1376,6 +1385,8 @@ static func contact(S: SimState, ex, b) -> void:
 	if energy != "":
 		_eLand(S, ex, f, o, energy, "hit", energy == "blast" and _g(f, RUN) >= RUN_U * int(c.energy.reach.blast.enderRun))
 	# A wound blow ends the wind-up it lands on: a medium's always, a heavy's before its armour holds a medium.
+	if not wound:
+		DirStick.lightOn(ex, o)   # it takes the stun, not the blow (docs/design/stick-lands.md)
 	if (wound or laStop or DirStick.bare(o)) and oWinding and _g(o, LINE) != 0:
 		_wEnd(S, o, oKind, 2)
 		_s(o, HOLD_AT, 0)
@@ -1389,6 +1400,7 @@ static func contact(S: SimState, ex, b) -> void:
 		_knock(S, ex, f, o, float(c.energy.reach.blast.knockBh), _quarter(f, o), bool(c.energy.reach.blast.halfSetup))
 		return
 	DirWalk.landed(S, ex, f, o)   # a lean toward a standing building: this blow's carry goes that way too
+	DirStance.landed(S, f, o, a)
 	if a.has("stick"):
 		_s(f, LL_AT, S.tick)
 		DirStick.landed(S, ex, f, o, a)
@@ -3024,7 +3036,7 @@ static func _thrownApart(S: SimState, ex) -> void:
 	var ticks: int = int(c.double.throwTicks)
 	var within: float = float(DirLaunch.data().knockBack.groundWithinBh) * DirInterrupt.BH
 	var sA: float = 1.0 if SimWrap.sdx(ex.D.x, ex.A.x) >= 0.0 else -1.0   # the attacker's side of the rival
-	var held: int = int(ceil(maxf(0.0, S.dirS.stop) * DirData.TICKS_PER_SEC))   # the blow's hit-stop holds the slide's start
+	var held: int = int(ceil(maxf(0.0, SimClock.left(S)) * DirData.TICKS_PER_SEC))   # the blow's hit-stop holds the slide's start
 	_s(ex.A, DBL_AT, 0)
 	for f in [ex.A, ex.D]:
 		var r := SimState.Rush.new()
@@ -3153,7 +3165,7 @@ static func winding(S: SimState, f) -> Dictionary:
 	var now: int = _now(S)
 	var n: int = now - _g(f, HOLD_AT)
 	var ch: Dictionary = cfg().heavy.charge
-	var share: float = clampf(float(n - int(ch.fromTicks)) / maxf(1.0, float(DirArc.fullTicks(S, f, ch) - int(ch.fromTicks))), 0.0, 1.0) if (kind == BIG and _g(f, CHG) > 0) else 0.0
+	var share: float = DirArc.chargeShare(S, f, ch, n) if (kind == BIG and _g(f, CHG) > 0) else 0.0
 	return {"strength": STRENGTH[kind], "n": maxi(0, n), "left": (_g(f, CONTACT) - now) if _g(f, LINE) == 1 else -1, "armoured": kind == BIG and _g(f, FLAV) == 0, "charge": share,
 		"launcher": _g(f, FLAV) == 2, "energy": _g(f, FLAV) == 1}
 
@@ -3177,6 +3189,9 @@ static func _windTick(S: SimState, ex, f, kind: int, now: int, up: bool = false)
 	var n: int = now - _g(f, HOLD_AT)
 	var down: bool = _down(f, kind) and not up   # up: a fresh press of the button says the old one was let go
 	if _g(f, LINE) == 1:
+		if kind == BIG and down and _g(f, FLAV) == 2 and DirArc.banked(S, f) and n >= SimInputData.ti(["read", "windupGrace"], 4) and f.ki >= float(c.heavy.charge.ki) - float(c.launcher.ki):
+			_bankHeld(S, ex, f)
+			return
 		if _g(f, CHG) == 0 and now >= _g(f, CONTACT) and down:
 			if _g(f, FLAV) == 2:
 				_unlaunch(S, ex, f)
@@ -3190,7 +3205,7 @@ static func _windTick(S: SimState, ex, f, kind: int, now: int, up: bool = false)
 			var fl = _ev(S, f, "charge_full", "", "b")
 			fl.n = S.tick
 		if not down or n >= int(ch.maxTicks):
-			_letGo(S, ex, f, int(ch.landTicks), clampf(float(n - int(ch.fromTicks)) / maxf(1.0, float(DirArc.fullTicks(S, f, ch) - int(ch.fromTicks))), 0.0, 1.0))
+			_letGo(S, ex, f, int(ch.landTicks), DirArc.chargeShare(S, f, ch, n))
 		return
 	var wind: int = int(c.energy.reach.blast.windupTicks) if _g(f, FLAV) == 1 else int(w.windupTicks)
 	if not down:
@@ -3201,14 +3216,29 @@ static func _windTick(S: SimState, ex, f, kind: int, now: int, up: bool = false)
 			f.ki -= more   # the charge's price, over the tap's
 			_s(f, CHG, 1)
 			var cs = _ev(S, f, "windup", "charge", "b")
-			cs.n = S.tick + int(ch.fullTicks) - n   # the tick of its flash
+			cs.n = S.tick + DirArc.fullTicks(S, f, ch) - n   # the tick of its flash
 			_repiece(S, ex, f, 2, "heavyHeld")   # it is a charge from here: its piece is the held cell's
 		else:
 			_letGo(S, ex, f, 0, -1.0)   # a medium has no charge yet, and a heavy he can't pay for: it goes by itself, a tap
 
 
+## A B held in a banked stun (rule-of-cool-map.md row 5): it's the charge at once, not the launcher, and it counts from the stick's strike.
+static func _bankHeld(S: SimState, ex, f) -> void:
+	var c: Dictionary = cfg()
+	f.ki -= float(c.heavy.charge.ki) - float(c.launcher.ki)
+	_unlaunch(S, ex, f)
+	_park(S, ex, f)
+	_s(f, HOLD_AT, DirArc.bankedAt(f))
+	_s(f, CHG, 1)
+	var cs = _ev(S, f, "windup", "charge", "b")
+	cs.n = S.tick + maxi(0, DirArc.bankedAt(f) + int(DirArc.cfg().bankFull) - _now(S))   # the tick of its flash
+	_repiece(S, ex, f, 2, "heavyHeld")
+
+
 ## His wound blow waits past its wind-up for the button.
 static func _park(S: SimState, ex, f) -> void:
+	if _g(f, KIND) == MEDIUM:
+		DirPhrase.heldY(S, ex, f, ex.D if f == ex.A else ex.A)
 	var role: String = "A" if f == ex.A else "D"
 	for b in ex.beats:
 		if not b.done and b.op == "strike" and b.args != null and b.args.get("brawl", false) and String(b.args.a) == role:
@@ -3324,6 +3354,7 @@ static func _burstTick(S: SimState, ex, f, now: int) -> void:
 			return
 		n = 1   # the press's own light was its first blow
 		_s(f, BURST_N, 1)
+		DirPhrase.read(S, f, SimRoster.opp(S, f), "X", "hold")   # X held to the burst's start: a hold, if a phrase is on one
 		var bs = _ev(S, f, "burst", "start", "x")
 		bs.n = S.tick + maxi(1, x + int(lands[0]) - now)
 	if n > lands.size():
@@ -3666,7 +3697,7 @@ static func tick(S: SimState, ex) -> void:
 		if (hp & 7) > 1 and _g(f, LINE) == 0 and not _wound(_g(f, KIND)):
 			_s(f, FREE_AT, mini(_g(f, FREE_AT), _g(f, LAND_AT) + int(c.light.recover)))   # a wound blow kept behind a light: the mix-up
 		if hp != 0:
-			if S.tick - _g(f, HELD_AT) > int(c.heldPressTicks):
+			if S.tick - _g(f, HELD_AT) > int(c.heldPressTicks) and not ((hp & 7) == 3 and DirArc.banked(S, f)):   # (a B in a banked stun waits for his line: the stick's recovery is longer than the hold)
 				_s(f, HELD_P, 0)
 				if (hp & 32) == 0:   # a blow of the floor pace was no press: it has no ack
 					var a = _ev(S, f, "press_ack", "lapsed", _cellOf((hp & 7) - 1))
@@ -3940,7 +3971,7 @@ static func aiInput(S: SimState, f) -> void:
 	if _g(f, LINE) != 0:
 		return   # a new choice waits for its blow to land
 	# A new choice.
-	if SimFighter.sigFree(f) or (f.ki >= 50.0 and S.T >= f.sigReadyT and S.rng.next() < float(DirAI.skill().sigPick)):
+	if SimFighter.sigFree(f) or DirAI.sigDue(S, f, o) or (f.ki >= 50.0 and S.T >= f.sigReadyT and S.rng.next() < DirAI.sigPickFor(S, f, o)):
 		i.sig = true
 		i.stanceMask |= 4   # the charging stance: with no stance held, B is the heavy
 		_s(f, AI_NEXT, S.tick + gap)

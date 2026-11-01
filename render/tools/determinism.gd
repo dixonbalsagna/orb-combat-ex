@@ -27,6 +27,8 @@ var intro: bool = false
 var _as_game: bool = false   # the next rendered run starts its match as the game does (not as a tool)
 var main: Node
 var _log: Array = []
+var fights: bool = false   # --fights: two AI fights on one line (sim/core/stage.gd); what's drawn is the first
+const FIGHTS: Dictionary = {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "fights": 2}
 
 
 func _initialize() -> void:
@@ -41,6 +43,8 @@ func _initialize() -> void:
 			negative = true
 		elif a == "--intro":
 			intro = true
+		elif a == "--fights":
+			fights = true
 	var vpn := SubViewport.new()
 	vpn.size = Vector2i(1280, 720)
 	vpn.render_target_update_mode = SubViewport.UPDATE_ALWAYS
@@ -58,7 +62,7 @@ func _run() -> void:
 		if intro:
 			ok = await _intro_runs(seed) and ok
 			continue
-		var pure: Array = _pure(seed)
+		var pure: Array = _pure(seed, FIGHTS if fights else {})
 		var n: int = pure.size() - 1
 		var last: int = pure[n][0]
 		var runs: Dictionary = {
@@ -132,6 +136,8 @@ func _rendered(seed: int, last: int, dt_of: Callable) -> Array:
 		main.manual = false
 		main.start_match(seed, {"p1": true, "p2": true})
 		main.manual = true
+	elif fights:
+		main.start_match(seed, {"p1": true, "p2": true}, FIGHTS)
 	else:
 		main.start_match(seed, {"p1": true, "p2": true})
 	var host: SimHost = main.host

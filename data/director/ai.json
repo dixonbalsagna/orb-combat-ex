@@ -11,6 +11,7 @@
   "beamAnswer": 0.35,
   "_beamAnswer": "kept for readers of the old shape: the medium level's value. The director reads levels.<level>.beamAnswer",
   "sigPick": 0.025,
+  "vsHuman": {"enabled": false, "sigPick": 0.04, "kiAt": 45.0, "kiHigh": 1.5, "kiLow": 0.5, "firstMin": 25.0, "firstMax": 45.0, "firstWait": 54.0, "gapSec": 25.0, "_note": "An AI's beams against a human (docs/design/rule-of-cool-map.md section 5). sigPick x kiHigh with the human on kiAt or more, x kiLow under it. Its first comes between firstMin and firstMax, seeded, when the human can pay, and by firstWait at the latest: it fires at the next gap between exchanges, so 54 lands by 60. gapSec: the least between its signatures. AI against AI uses plain sigPick."},
   "digInBy": {"RIVAL": 1},
   "digInBoth": false,
   "digInMax": 2,

@@ -94,6 +94,7 @@ var hs = null                         # ... its freeze budget: StopState while h
 var ricOn: bool = false               # the ricochet's glance (sim/core/ricochet.gd): data/fight/ricochet.json's switch, or the setup's "ricochet"; off
 var cata = null                       # the catastrophe's state (sim/core/cata.gd): CataState from the first blast cloud, null before
 var out := Out.new()
+var stage = null                      # a match of more than one fight (sim/core/stage.gd): a Stage, null in every other match
 
 ## For net/snapshot.gd: the fields a rollback snapshot shares with the live state instead of copying. S.base (the
 ## ground as generated) and S.bIdx (WorldStructures.buildIndex) are constants of the world the match is on: built whole
@@ -952,6 +953,37 @@ class CataState:
 	var ashLeft: int = 0       # ... and the live ticks of its rise left
 
 
+## A match of more than one fight (sim/core/stage.gd; docs/architecture/fight-swap.md).
+class Stage:
+	var fights: Array = []     # a Fight each
+	var cur: int = 0           # the fight in S's fields: 0 between ticks
+
+
+## One fight's fields, while another is in S's. The record of the fight in S holds blanks, so nothing is in two places.
+class Fight:
+	const SNAPSHOT: Dictionary = {"skip": ["out"]}   # output for the host, as S.out: cleared at its fight's tick
+	var fighters: Array = []
+	var dirS: DirS = null
+	var T: float = 0.0
+	var dt: float = 0.0
+	var rng: SimRng = null
+	var game: Game = null
+	var world: World = null    # its people and its budget: the buildings are shared, what a fight has done isn't
+	var beams: Array = []
+	var shots: Array = []
+	var shotSeq: int = 0
+	var mood: MoodState = null
+	var pause: PauseState = null
+	var hs = null
+	var cata = null
+	var epoch = null           # the calm turn is the first fight's
+	var popHist := PackedFloat32Array()
+	var waterWin: Array = []   # the windows it opened and its water clock: the water itself is shared
+	var waterTick: float = 0.0
+	var aftermathJobs: Array = []
+	var out := Out.new()
+
+
 ## A fighter's forms while S.formsOn (sim/core/forms.gd): his steps, the coil and the release, and the hold's signal.
 class FormState:
 	var step: int = 0          # steps taken (0 his base; his forms.json's count at the top)
@@ -971,6 +1003,7 @@ class FormState:
 
 ## A fighter's kick and coin turn while S.kickOn (sim/core/kick.gd).
 class KickState:
+	var boost: float = 0.0     # the most the traversal has given this flight (SimKick._kept); 0 none
 	var t: int = 0             # the kick's tick, from 1; 0 no kick
 	var turn: int = 0          # ticks left of the coin turn's brake and plant; 0 none
 	var off: int = 0           # ticks left with no overspeed away, after a zip or a vanish

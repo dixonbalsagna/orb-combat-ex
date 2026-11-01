@@ -731,6 +731,26 @@
             "^_": true
           },
           "description": "The return from a send (Orb, 2026-10-15)."
+        },
+        "follow": {
+          "type": "object",
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "ticks": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "enabled",
+            "ticks"
+          ]
         }
       },
       "description": "The ranged press (agency-pass.md section 1; sim/director/bands.gd). Orders (engageBh at most closeBh, closeBh below midBh, minTicks at most maxTicks) are checked by tools/lib/xref-fight.js (bands-order).",
@@ -1103,6 +1123,90 @@
           "patternProperties": {
             "^_": true
           }
+        },
+        "driver": {
+          "type": "object",
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "kind": {
+              "type": "string"
+            },
+            "levels": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minItems": 3
+            },
+            "ki": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minItems": 3
+            },
+            "power": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minItems": 3
+            },
+            "dmgMul": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minItems": 3
+            },
+            "knockMul": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minItems": 3
+            },
+            "sendAt": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "breakAt": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "sendForce": {
+              "type": "number",
+              "minimum": 0
+            },
+            "loadedKiPerSec": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "enabled",
+            "kind",
+            "levels",
+            "ki",
+            "power",
+            "dmgMul",
+            "knockMul",
+            "sendAt",
+            "breakAt",
+            "sendForce",
+            "loadedKiPerSec"
+          ]
         }
       },
       "description": "Energy, the first slice (agency-pass.md section 5 and section 11, item 6; sim/director/blast.gd). Orders (heavy holdMaxTicks is at least chargeTicks) and the shot kinds are checked by tools/lib/xref-fight.js (interrupts-order, blast-shot-kind).",
@@ -1568,13 +1672,27 @@
               "type": "number",
               "minimum": 0,
               "maximum": 0.5
+            },
+            "dodgeBefore": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "dodgeAfter": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "standoffBh": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
             "enabled",
             "rows",
             "answerKi",
-            "meetMax"
+            "meetMax",
+            "dodgeBefore",
+            "dodgeAfter"
           ]
         }
       },
@@ -4567,6 +4685,61 @@
         }
       },
       "description": "The daze, the sell and the rally (Game Design's rulings-2026-10-23d; sim/director/rally.gd)."
+    },
+    "ending": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "idleSec": {
+          "type": "number",
+          "minimum": 0
+        },
+        "idleWearMul": {
+          "type": "number",
+          "minimum": 1
+        },
+        "lastAt": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "enabled",
+        "idleSec",
+        "idleWearMul",
+        "lastAt"
+      ]
+    },
+    "stances": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "pushBh": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stepPastBh": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "enabled",
+        "pushBh",
+        "stepPastBh"
+      ]
     }
   },
   "additionalProperties": false,

@@ -23,8 +23,8 @@ static func opBeamCharge(S: SimState, ex, args) -> void:
 	DirBeamPlay.chargeCue(S, ex, true)
 	SimFx.banner(S, A.sigName.to_upper(), A.aura, 1.1)
 	var r := SimState.Rush.new()
-	r.px = A.x
 	r.py = SimMathx.jmin(SimConst.CEILING - 200.0, D.y + args.rise)
+	r.px = DirBeamPlay.standoffX(S, A, D, r.py)
 	r.end = S.T + 0.55
 	A.rush = r
 	SimFx.ring(S, A.x, A.y + 40.0, 260.0, A.aura, 0.8, 10.0)

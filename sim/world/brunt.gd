@@ -790,7 +790,7 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 	SimFx.debris(S, f.x, y + 20.0, 6, "#77808f", 500.0)
 	if not inside:
 		var stop: float = STOP_FIRST if link == 1 else STOP_LINK
-		S.dirS.stop = SimMathx.jmax(S.dirS.stop, minf(stop, STOP_TOTAL))
+		SimClock.hold(S, minf(stop, STOP_TOTAL), f, by)
 	else:
 		WorldInterior.begin(S, f, b, y, edge, dir, by, tierB, keep, broke)   # the face's stop is the data's ticks; the rest is the chain's (interior.gd step)
 		return
@@ -857,6 +857,41 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 		endFlight(S, f)
 
 
+## A body that stays on its curve through a building (Encounter's meteor: DirArc steps him itself and calls this; docs/world/building-pass-through.md): `hit`'s building half and none of its fighter half. The
+## ladder's outcome for the building (floors, collapse and pancake as `hit` has them), its damage capped at `capShare` of the building's hit points (DirArc's towerShare), the mark, the once-a-launch splash on
+## the neighbours and the event Audio, VFX and the camera read, with the text "through" (or the ladder's "collapse" or "pancake"). Nothing of him changes: no velocity or position write, no chain, no lodge, no interior,
+## no hit stop, no wear. `edge` and `dir` are `hit`'s: the near edge he meets and his way along x.
+static func through(S: SimState, f, b, y: float, edge: float, dir: float, capShare: float) -> void:
+	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
+	var trav: float = f.launchT if f.launchT > 0.0 else 1.0
+	var spN: float = SimDetMath.hypot(f.vx / trav, f.vy)
+	var tierB: float = tierAt(S, b, tierOf(by, f))
+	var oc: Dictionary = outcomeOf(S, b, y, spN, tierB, _count(f, MARK_TOWER), f.launchSpecial).duplicate()
+	oc.dmg = minf(float(oc.dmg), capShare * float(b.maxhp))
+	oc.keep = 1.0   # he goes on at the speed he had (the event's keep)
+	if int(cfg().repeatMarks) > 0:
+		b.marks += 1
+	f.flightHits += 1
+	var evt: float = f.chainEvt
+	var cx: float = f.x
+	var hitText: String = "through"
+	if oc.floors:
+		var res: Dictionary = applyFloors(S, b, oc, by, evt, cx, f, y)
+		if res.collapse:
+			hitText = "collapse"
+		elif res.pancake:
+			hitText = "pancake"
+	else:
+		WorldStructures.damageBuilding(S, b, oc.dmg, by, "burst", cx, evt)
+		if not b.alive:
+			hitText = "collapse"
+	f.splashed.append(MARK_HOUSE if isHouse(b) else MARK_TOWER)
+	SimFx.buildingHitB2(S, f, b, y, f.flightHits, by, oc, hitText, spN)
+	_splash(S, f, b, oc.dmg, by, evt, cx, SimWrap.wrap(b.x + dir * b.w * 0.5), dir, false)
+	SimFx.debris(S, f.x, y + 20.0, 6, "#77808f", 500.0)
+
+
+
 ## The live ticks a body at (f.x, f.y) with f.vy takes to reach the ground under it (gravity 1000, as stepLaunched and flightTo), at most 240.
 static func _flightTicks(S: SimState, f) -> int:
 	var h: float = maxf(f.y - WorldTerrain.groundY(S, f.x), 0.0)
@@ -870,7 +905,7 @@ static func _hold(S: SimState, f, seconds: float) -> void:
 	if str(cfg().lodgeHold) == "body":
 		f.stunTicks = maxi(f.stunTicks, int(ceil(seconds * 60.0)))
 	else:
-		S.dirS.stop = SimMathx.jmax(S.dirS.stop, seconds)
+		SimClock.hold(S, seconds, f)
 
 
 ## Splash: buildings beside b (within SPLASH_W of its width in x and SPLASH_Z in depth) take SPLASH_FRAC of the hit's damage,

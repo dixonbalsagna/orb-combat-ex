@@ -103,6 +103,9 @@
     "enabled": false,
     "minForms": 2,
     "budget": 3,
+    "meteorBudget": 1,
+    "firstMeteor": false,
+    "blastKeep": 0.2,
     "gapSec": 20.0,
     "wholeRing": 153600.0,
     "apexU": 0.5805,
@@ -112,7 +115,6 @@
       "high": {"h": 9900.0, "d": 15355.0, "sec": 4.81, "apex": 0.5806}
     },
     "bankFull": 24,
-    "bankGrace": 30,
     "brakeFrom": 0.677,
     "towerShare": 0.6,
     "landing": {"near": 2500.0, "perBuilding": 1.0, "buildingCap": 20.0, "water": -8.0, "ground": 0.0},

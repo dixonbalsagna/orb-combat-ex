@@ -126,7 +126,7 @@ static func contactTick(S: SimState, ex) -> void:
 	A.face = s
 	D.face = -s
 	var minS: float = float(ct.minSeparation)
-	if absf(dx) >= minS or absf(A.y - D.y) >= BODY_H or A.rush != null or D.rush != null or A.state == "launched" or D.state == "launched":
+	if absf(dx) >= minS or absf(A.y - D.y) >= BODY_H or A.rush != null or D.rush != null or A.state == "launched" or D.state == "launched" or DirStick.carrying(A) or DirStick.carrying(D):
 		return
 	var push: float = (minS - absf(dx)) * 0.5
 	A.x = SimWrap.wrap(A.x - s * push)

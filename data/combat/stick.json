@@ -3,88 +3,672 @@
   "_about": "The right stick's content (pitch 4a; docs/design/right-hand-attacks-rulings.md sections 2, 3 and 5; docs/combat/pending/stick/README.md). Read only with data/input/timing.json switches.rightStick on: with it off nothing opens this file and it is in no hash. pools are recipe pools, one row shape with data/combat/recipes.json, merged into that file's pools by fighter when the switch is on, so the director's own pick throws them under the variety rule and Legal's string rules. Stand-ins from each fighter's posed pieces until Animation makes eight of the class's own. stick.quick: level 0, by the direction relative to him, downAir when the thrower is in the air. stick.charged: levels 1 to 3, one piece played bigger by its worth. stick.guard: thrown with LB held, the check cells' pieces. stick.move: thrown with LT held, the travel cells' blows. stick.beam: the arm that fires a beam from the stick, by aim. beam: each fighter's own beam, from his parked energy kit, and the first values for the levels of Game Design's ladder.",
   "beam": {
     "_about": "The look and first values for a beam thrown from the stick. Level 0 is the snap-beam: the heavy blast's wind-up and ki (data/director/interrupts.json blast.heavy), power above the heavy blast's 4 so it cuts through one, under a charged beam's 6 so any charged beam overpowers it, and it never opens a struggle. Levels 1 to 3 are the frame's E43 lengths, worth and ki on Game Design's ticks 12, 30, 54; beam power is E43's. worthOfHeavy is a share of a heavy's worth",
-    "snap": { "windupTicks": 8, "ki": 8, "lengthTicks": 8, "worthOfHeavy": 0.4, "power": 5, "widthMul": 0.45, "struggle": false },
+    "snap": {
+      "windupTicks": 8,
+      "ki": 8,
+      "lengthTicks": 8,
+      "worthOfHeavy": 0.4,
+      "power": 5,
+      "widthMul": 0.45,
+      "struggle": false
+    },
     "levels": [
-      { "level": 1, "atTicks": 12, "lengthTicks": 20, "worthOfHeavy": 1.0, "ki": 12, "power": 6 },
-      { "level": 2, "atTicks": 30, "lengthTicks": 36, "worthOfHeavy": 1.6, "ki": 20, "power": 9 },
-      { "level": 3, "atTicks": 54, "lengthTicks": 54, "worthOfHeavy": 2.4, "ki": 32, "power": 12 }
+      {
+        "level": 1,
+        "atTicks": 12,
+        "lengthTicks": 20,
+        "worthOfHeavy": 1.0,
+        "ki": 12,
+        "power": 6
+      },
+      {
+        "level": 2,
+        "atTicks": 30,
+        "lengthTicks": 36,
+        "worthOfHeavy": 1.6,
+        "ki": 20,
+        "power": 9
+      },
+      {
+        "level": 3,
+        "atTicks": 54,
+        "lengthTicks": 54,
+        "worthOfHeavy": 2.4,
+        "ki": 32,
+        "power": 12
+      }
     ],
-    "aimDeg": { "toward": 0, "up": 45, "down": -45, "away": 180 },
+    "aimDeg": {
+      "toward": 0,
+      "up": 45,
+      "down": -45,
+      "away": 180
+    },
     "fighters": {
-      "protagonist": { "widthMul": 1.2, "sweepDegPerSec": 32 },
-      "rival": { "widthMul": 0.85, "sweepDegPerSec": 34 },
-      "reference": { "widthMul": 1.0, "sweepDegPerSec": 32 }
+      "protagonist": {
+        "widthMul": 1.2,
+        "sweepDegPerSec": 32
+      },
+      "rival": {
+        "widthMul": 0.85,
+        "sweepDegPerSec": 34
+      },
+      "reference": {
+        "widthMul": 1.0,
+        "sweepDegPerSec": 32
+      }
     }
+  },
+  "directions": {
+    "_about": "What makes the four directions play differently, at one worth (docs/design/pad-first-press.md, docs/design/stick-lands.md): up floats him, down drives him to the floor, toward drives him back, away turns him past. Quick is level 0, charged levels 1 to 3. Each row works on data/director/stick.json's level: stunMul and reachMul scale it; carryAddBh and carryMul work on its carry, in the direction's own way, never past carryMaxBh, so a level 3 holds the brawl. First values. Read only with switches.rightStick on.",
+    "up": {
+      "quick": {
+        "stunMul": 1.2,
+        "carryAddBh": 1.25
+      },
+      "charged": {
+        "stunMul": 1.2,
+        "carryMul": 1.5
+      }
+    },
+    "down": {
+      "quick": {
+        "stunMul": 1.1,
+        "carryAddBh": 0.75
+      },
+      "charged": {
+        "stunMul": 1.3,
+        "carryMul": 1.0
+      }
+    },
+    "downAir": {
+      "quick": {
+        "stunMul": 1.1,
+        "carryAddBh": 2.5
+      }
+    },
+    "toward": {
+      "quick": {
+        "stunMul": 0.8,
+        "carryAddBh": 1.25
+      },
+      "charged": {
+        "stunMul": 0.8,
+        "carryMul": 1.5
+      }
+    },
+    "away": {
+      "quick": {
+        "carryAddBh": 1.5,
+        "reachMul": 1.6
+      },
+      "charged": {
+        "carryMul": 1.0,
+        "reachMul": 1.3
+      }
+    },
+    "carryMaxBh": 4
   },
   "pools": {
     "protagonist": {
-      "stick.quick.up": [{ "id": "strike.flick_rise", "status": "posed" }],
-      "stick.quick.down": [{ "id": "strike.scythe_sweep", "status": "posed" }],
-      "stick.quick.downAir": [{ "id": "strike.spike_heel", "status": "posed" }],
-      "stick.quick.toward": [{ "id": "strike.heel_thrust", "status": "posed" }],
-      "stick.quick.away": [{ "id": "strike.wheel_blade", "status": "posed" }],
-      "stick.charged.up": [{ "id": "strike.lifting_heave", "status": "posed" }],
-      "stick.charged.down": [{ "id": "strike.plunge_blade", "status": "posed" }],
-      "stick.charged.toward": [{ "id": "strike.drive_palm", "status": "posed" }],
-      "stick.charged.away": [{ "id": "strike.turning_edge", "status": "posed" }],
-      "stick.guard.up": [{ "id": "strike.rising_elbow", "status": "posed" }, { "id": "strike.uppercut", "status": "posed" }, { "id": "strike.palm_rise", "status": "posed" }],
-      "stick.guard.down": [{ "id": "strike.short_knee", "status": "posed" }, { "id": "strike.low_kick", "status": "posed" }, { "id": "strike.knee_hook", "status": "posed" }],
-      "stick.guard.toward": [{ "id": "strike.palm_heel", "status": "posed" }, { "id": "strike.shoulder_check", "status": "posed" }],
-      "stick.guard.away": [{ "id": "strike.short_elbow", "status": "posed" }, { "id": "strike.hook", "status": "posed" }],
-      "stick.move.up": [{ "id": "strike.rising_palm", "status": "posed" }, { "id": "strike.uppercut", "status": "posed" }, { "id": "strike.palm_lift", "status": "posed" }],
-      "stick.move.down": [{ "id": "strike.overhand", "status": "posed" }, { "id": "strike.knife_chop", "status": "posed" }, { "id": "strike.fist_chop", "status": "posed" }],
-      "stick.move.toward": [{ "id": "strike.palm_push", "status": "posed" }, { "id": "strike.body_hook", "status": "posed" }],
-      "stick.move.away": [{ "id": "strike.crescent_kick", "status": "posed" }, { "id": "strike.palm_turn", "status": "posed" }, { "id": "strike.back_chop", "status": "posed" }],
-      "stick.beam.toward": [{ "id": "strike.blast_chest", "status": "posed" }],
-      "stick.beam.up": [{ "id": "strike.blast_chest", "status": "posed" }],
-      "stick.beam.down": [{ "id": "strike.blast_gut", "status": "posed" }],
-      "stick.beam.away": [{ "id": "strike.blast_chest", "status": "posed" }]
+      "stick.quick.up": [
+        {
+          "id": "strike.flick_rise",
+          "status": "posed"
+        }
+      ],
+      "stick.quick.down": [
+        {
+          "id": "strike.scythe_sweep",
+          "status": "posed"
+        }
+      ],
+      "stick.quick.downAir": [
+        {
+          "id": "strike.spike_heel",
+          "status": "posed"
+        }
+      ],
+      "stick.quick.toward": [
+        {
+          "id": "strike.heel_thrust",
+          "status": "posed"
+        }
+      ],
+      "stick.quick.away": [
+        {
+          "id": "strike.wheel_blade",
+          "status": "posed"
+        }
+      ],
+      "stick.charged.up": [
+        {
+          "id": "strike.lifting_heave",
+          "status": "posed"
+        }
+      ],
+      "stick.charged.down": [
+        {
+          "id": "strike.plunge_blade",
+          "status": "posed"
+        }
+      ],
+      "stick.charged.toward": [
+        {
+          "id": "strike.drive_palm",
+          "status": "posed"
+        }
+      ],
+      "stick.charged.away": [
+        {
+          "id": "strike.turning_edge",
+          "status": "posed"
+        }
+      ],
+      "stick.guard.up": [
+        {
+          "id": "strike.rising_elbow",
+          "status": "posed"
+        },
+        {
+          "id": "strike.uppercut",
+          "status": "posed"
+        },
+        {
+          "id": "strike.palm_rise",
+          "status": "posed"
+        }
+      ],
+      "stick.guard.down": [
+        {
+          "id": "strike.short_knee",
+          "status": "posed"
+        },
+        {
+          "id": "strike.low_kick",
+          "status": "posed"
+        },
+        {
+          "id": "strike.knee_hook",
+          "status": "posed"
+        }
+      ],
+      "stick.guard.toward": [
+        {
+          "id": "strike.palm_heel",
+          "status": "posed"
+        },
+        {
+          "id": "strike.shoulder_check",
+          "status": "posed"
+        }
+      ],
+      "stick.guard.away": [
+        {
+          "id": "strike.short_elbow",
+          "status": "posed"
+        },
+        {
+          "id": "strike.hook",
+          "status": "posed"
+        }
+      ],
+      "stick.move.up": [
+        {
+          "id": "strike.rising_palm",
+          "status": "posed"
+        },
+        {
+          "id": "strike.uppercut",
+          "status": "posed"
+        },
+        {
+          "id": "strike.palm_lift",
+          "status": "posed"
+        }
+      ],
+      "stick.move.down": [
+        {
+          "id": "strike.overhand",
+          "status": "posed"
+        },
+        {
+          "id": "strike.knife_chop",
+          "status": "posed"
+        },
+        {
+          "id": "strike.fist_chop",
+          "status": "posed"
+        }
+      ],
+      "stick.move.toward": [
+        {
+          "id": "strike.palm_push",
+          "status": "posed"
+        },
+        {
+          "id": "strike.body_hook",
+          "status": "posed"
+        }
+      ],
+      "stick.move.away": [
+        {
+          "id": "strike.crescent_kick",
+          "status": "posed"
+        },
+        {
+          "id": "strike.palm_turn",
+          "status": "posed"
+        },
+        {
+          "id": "strike.back_chop",
+          "status": "posed"
+        }
+      ],
+      "stick.beam.toward": [
+        {
+          "id": "strike.blast_chest",
+          "status": "posed"
+        }
+      ],
+      "stick.beam.up": [
+        {
+          "id": "strike.blast_chest",
+          "status": "posed"
+        }
+      ],
+      "stick.beam.down": [
+        {
+          "id": "strike.blast_gut",
+          "status": "posed"
+        }
+      ],
+      "stick.beam.away": [
+        {
+          "id": "strike.blast_chest",
+          "status": "posed"
+        }
+      ]
     },
     "rival": {
-      "stick.quick.up": [{ "id": "strike.lift_fist", "status": "posed" }],
-      "stick.quick.down": [{ "id": "strike.skid_kick", "status": "posed" }],
-      "stick.quick.downAir": [{ "id": "strike.spike_knee", "status": "posed" }],
-      "stick.quick.toward": [{ "id": "strike.short_ram", "status": "posed" }],
-      "stick.quick.away": [{ "id": "strike.swing_plate", "status": "posed" }],
-      "stick.charged.up": [{ "id": "strike.knee_launch", "status": "posed" }],
-      "stick.charged.down": [{ "id": "strike.hammer_drop", "status": "posed" }],
-      "stick.charged.toward": [{ "id": "strike.plate_ram", "status": "posed" }],
-      "stick.charged.away": [{ "id": "strike.swing_elbow", "status": "posed" }],
-      "stick.guard.up": [{ "id": "strike.rising_elbow", "status": "posed" }, { "id": "strike.uppercut", "status": "posed" }, { "id": "strike.short_uppercut", "status": "posed" }],
-      "stick.guard.down": [{ "id": "strike.short_knee", "status": "posed" }, { "id": "strike.low_kick", "status": "posed" }, { "id": "strike.knee_hook", "status": "posed" }, { "id": "strike.low_thrust", "status": "posed" }],
-      "stick.guard.toward": [{ "id": "strike.shoulder_check", "status": "posed" }, { "id": "strike.spear_hand", "status": "posed" }],
-      "stick.guard.away": [{ "id": "strike.front_kick", "status": "posed" }, { "id": "strike.cross", "status": "posed" }],
-      "stick.move.up": [{ "id": "strike.uppercut", "status": "posed" }, { "id": "strike.rising_knee", "status": "posed" }, { "id": "strike.knee_lift", "status": "posed" }],
-      "stick.move.down": [{ "id": "strike.hammer", "status": "posed" }, { "id": "strike.dropping_elbow", "status": "posed" }, { "id": "strike.plate_drop", "status": "posed" }, { "id": "strike.elbow_drop", "status": "posed" }],
-      "stick.move.toward": [{ "id": "strike.driving_knee", "status": "posed" }, { "id": "strike.spear_hand", "status": "posed" }],
-      "stick.move.away": [{ "id": "strike.hook", "status": "posed" }, { "id": "strike.drop_kick", "status": "posed" }, { "id": "strike.fist_sweep", "status": "posed" }],
-      "stick.beam.toward": [{ "id": "strike.blast_chest", "status": "posed" }],
-      "stick.beam.up": [{ "id": "strike.blast_chest", "status": "posed" }],
-      "stick.beam.down": [{ "id": "strike.blast_gut", "status": "posed" }],
-      "stick.beam.away": [{ "id": "strike.blast_chest", "status": "posed" }]
+      "stick.quick.up": [
+        {
+          "id": "strike.lift_fist",
+          "status": "posed"
+        }
+      ],
+      "stick.quick.down": [
+        {
+          "id": "strike.skid_kick",
+          "status": "posed"
+        }
+      ],
+      "stick.quick.downAir": [
+        {
+          "id": "strike.spike_knee",
+          "status": "posed"
+        }
+      ],
+      "stick.quick.toward": [
+        {
+          "id": "strike.short_ram",
+          "status": "posed"
+        }
+      ],
+      "stick.quick.away": [
+        {
+          "id": "strike.swing_plate",
+          "status": "posed"
+        }
+      ],
+      "stick.charged.up": [
+        {
+          "id": "strike.knee_launch",
+          "status": "posed"
+        }
+      ],
+      "stick.charged.down": [
+        {
+          "id": "strike.hammer_drop",
+          "status": "posed"
+        }
+      ],
+      "stick.charged.toward": [
+        {
+          "id": "strike.plate_ram",
+          "status": "posed"
+        }
+      ],
+      "stick.charged.away": [
+        {
+          "id": "strike.swing_elbow",
+          "status": "posed"
+        }
+      ],
+      "stick.guard.up": [
+        {
+          "id": "strike.rising_elbow",
+          "status": "posed"
+        },
+        {
+          "id": "strike.uppercut",
+          "status": "posed"
+        },
+        {
+          "id": "strike.short_uppercut",
+          "status": "posed"
+        }
+      ],
+      "stick.guard.down": [
+        {
+          "id": "strike.short_knee",
+          "status": "posed"
+        },
+        {
+          "id": "strike.low_kick",
+          "status": "posed"
+        },
+        {
+          "id": "strike.knee_hook",
+          "status": "posed"
+        },
+        {
+          "id": "strike.low_thrust",
+          "status": "posed"
+        }
+      ],
+      "stick.guard.toward": [
+        {
+          "id": "strike.shoulder_check",
+          "status": "posed"
+        },
+        {
+          "id": "strike.spear_hand",
+          "status": "posed"
+        }
+      ],
+      "stick.guard.away": [
+        {
+          "id": "strike.front_kick",
+          "status": "posed"
+        },
+        {
+          "id": "strike.cross",
+          "status": "posed"
+        }
+      ],
+      "stick.move.up": [
+        {
+          "id": "strike.uppercut",
+          "status": "posed"
+        },
+        {
+          "id": "strike.rising_knee",
+          "status": "posed"
+        },
+        {
+          "id": "strike.knee_lift",
+          "status": "posed"
+        }
+      ],
+      "stick.move.down": [
+        {
+          "id": "strike.hammer",
+          "status": "posed"
+        },
+        {
+          "id": "strike.dropping_elbow",
+          "status": "posed"
+        },
+        {
+          "id": "strike.plate_drop",
+          "status": "posed"
+        },
+        {
+          "id": "strike.elbow_drop",
+          "status": "posed"
+        }
+      ],
+      "stick.move.toward": [
+        {
+          "id": "strike.driving_knee",
+          "status": "posed"
+        },
+        {
+          "id": "strike.spear_hand",
+          "status": "posed"
+        }
+      ],
+      "stick.move.away": [
+        {
+          "id": "strike.hook",
+          "status": "posed"
+        },
+        {
+          "id": "strike.drop_kick",
+          "status": "posed"
+        },
+        {
+          "id": "strike.fist_sweep",
+          "status": "posed"
+        }
+      ],
+      "stick.beam.toward": [
+        {
+          "id": "strike.blast_chest",
+          "status": "posed"
+        }
+      ],
+      "stick.beam.up": [
+        {
+          "id": "strike.blast_chest",
+          "status": "posed"
+        }
+      ],
+      "stick.beam.down": [
+        {
+          "id": "strike.blast_gut",
+          "status": "posed"
+        }
+      ],
+      "stick.beam.away": [
+        {
+          "id": "strike.blast_chest",
+          "status": "posed"
+        }
+      ]
     },
     "reference": {
-      "stick.quick.up": [{ "id": "strike.uppercut", "status": "posed" }, { "id": "strike.rising_knee", "status": "posed" }],
-      "stick.quick.down": [{ "id": "strike.sweep", "status": "posed" }, { "id": "strike.low_kick", "status": "posed" }],
-      "stick.quick.downAir": [{ "id": "strike.axe_kick", "status": "posed" }, { "id": "strike.stomp", "status": "posed" }],
-      "stick.quick.toward": [{ "id": "strike.driving_knee", "status": "posed" }, { "id": "strike.body_ram", "status": "posed" }],
-      "stick.quick.away": [{ "id": "strike.roundhouse", "status": "posed" }, { "id": "strike.haymaker", "status": "posed" }],
-      "stick.charged.up": [{ "id": "strike.lift_kick", "status": "posed" }, { "id": "strike.rising_knee", "status": "posed" }],
-      "stick.charged.down": [{ "id": "strike.double_hammer", "status": "posed" }, { "id": "strike.axe_kick", "status": "posed" }],
-      "stick.charged.toward": [{ "id": "strike.drop_kick", "status": "posed" }, { "id": "strike.double_palm", "status": "posed" }],
-      "stick.charged.away": [{ "id": "strike.spinning_heel", "status": "posed" }, { "id": "strike.spinning_elbow", "status": "posed" }],
-      "stick.guard.up": [{ "id": "strike.rising_elbow", "status": "posed" }, { "id": "strike.rising_knee", "status": "posed" }],
-      "stick.guard.down": [{ "id": "strike.knee_hook", "status": "posed" }],
-      "stick.guard.toward": [{ "id": "strike.shoulder_check", "status": "posed" }, { "id": "strike.palm_heel", "status": "posed" }],
-      "stick.guard.away": [{ "id": "strike.short_elbow", "status": "posed" }, { "id": "strike.front_kick", "status": "posed" }],
-      "stick.move.up": [{ "id": "strike.uppercut", "status": "posed" }, { "id": "strike.rising_knee", "status": "posed" }],
-      "stick.move.down": [{ "id": "strike.overhand", "status": "posed" }, { "id": "strike.dropping_elbow", "status": "posed" }],
-      "stick.move.toward": [{ "id": "strike.driving_knee", "status": "posed" }, { "id": "strike.headbutt", "status": "posed" }],
-      "stick.move.away": [{ "id": "strike.roundhouse", "status": "posed" }, { "id": "strike.haymaker", "status": "posed" }],
-      "stick.beam.toward": [{ "id": "strike.blast_chest", "status": "posed" }],
-      "stick.beam.up": [{ "id": "strike.blast_chest", "status": "posed" }],
-      "stick.beam.down": [{ "id": "strike.blast_gut", "status": "posed" }],
-      "stick.beam.away": [{ "id": "strike.blast_chest", "status": "posed" }]
+      "stick.quick.up": [
+        {
+          "id": "strike.uppercut",
+          "status": "posed"
+        },
+        {
+          "id": "strike.rising_knee",
+          "status": "posed"
+        }
+      ],
+      "stick.quick.down": [
+        {
+          "id": "strike.sweep",
+          "status": "posed"
+        },
+        {
+          "id": "strike.low_kick",
+          "status": "posed"
+        }
+      ],
+      "stick.quick.downAir": [
+        {
+          "id": "strike.axe_kick",
+          "status": "posed"
+        },
+        {
+          "id": "strike.stomp",
+          "status": "posed"
+        }
+      ],
+      "stick.quick.toward": [
+        {
+          "id": "strike.driving_knee",
+          "status": "posed"
+        },
+        {
+          "id": "strike.body_ram",
+          "status": "posed"
+        }
+      ],
+      "stick.quick.away": [
+        {
+          "id": "strike.roundhouse",
+          "status": "posed"
+        },
+        {
+          "id": "strike.haymaker",
+          "status": "posed"
+        }
+      ],
+      "stick.charged.up": [
+        {
+          "id": "strike.lift_kick",
+          "status": "posed"
+        },
+        {
+          "id": "strike.rising_knee",
+          "status": "posed"
+        }
+      ],
+      "stick.charged.down": [
+        {
+          "id": "strike.double_hammer",
+          "status": "posed"
+        },
+        {
+          "id": "strike.axe_kick",
+          "status": "posed"
+        }
+      ],
+      "stick.charged.toward": [
+        {
+          "id": "strike.drop_kick",
+          "status": "posed"
+        },
+        {
+          "id": "strike.double_palm",
+          "status": "posed"
+        }
+      ],
+      "stick.charged.away": [
+        {
+          "id": "strike.spinning_heel",
+          "status": "posed"
+        },
+        {
+          "id": "strike.spinning_elbow",
+          "status": "posed"
+        }
+      ],
+      "stick.guard.up": [
+        {
+          "id": "strike.rising_elbow",
+          "status": "posed"
+        },
+        {
+          "id": "strike.rising_knee",
+          "status": "posed"
+        }
+      ],
+      "stick.guard.down": [
+        {
+          "id": "strike.knee_hook",
+          "status": "posed"
+        }
+      ],
+      "stick.guard.toward": [
+        {
+          "id": "strike.shoulder_check",
+          "status": "posed"
+        },
+        {
+          "id": "strike.palm_heel",
+          "status": "posed"
+        }
+      ],
+      "stick.guard.away": [
+        {
+          "id": "strike.short_elbow",
+          "status": "posed"
+        },
+        {
+          "id": "strike.front_kick",
+          "status": "posed"
+        }
+      ],
+      "stick.move.up": [
+        {
+          "id": "strike.uppercut",
+          "status": "posed"
+        },
+        {
+          "id": "strike.rising_knee",
+          "status": "posed"
+        }
+      ],
+      "stick.move.down": [
+        {
+          "id": "strike.overhand",
+          "status": "posed"
+        },
+        {
+          "id": "strike.dropping_elbow",
+          "status": "posed"
+        }
+      ],
+      "stick.move.toward": [
+        {
+          "id": "strike.driving_knee",
+          "status": "posed"
+        },
+        {
+          "id": "strike.headbutt",
+          "status": "posed"
+        }
+      ],
+      "stick.move.away": [
+        {
+          "id": "strike.roundhouse",
+          "status": "posed"
+        },
+        {
+          "id": "strike.haymaker",
+          "status": "posed"
+        }
+      ],
+      "stick.beam.toward": [
+        {
+          "id": "strike.blast_chest",
+          "status": "posed"
+        }
+      ],
+      "stick.beam.up": [
+        {
+          "id": "strike.blast_chest",
+          "status": "posed"
+        }
+      ],
+      "stick.beam.down": [
+        {
+          "id": "strike.blast_gut",
+          "status": "posed"
+        }
+      ],
+      "stick.beam.away": [
+        {
+          "id": "strike.blast_chest",
+          "status": "posed"
+        }
+      ]
     }
   }
 }

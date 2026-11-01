@@ -64,6 +64,54 @@ func _shape(instant: float, climb: int) -> void:
 	SimCore.dispose(S)
 
 
+## Flying at the rival from far away: he keeps the speed he had until he's close, then comes down without flying through him; away, he still gains. Without keepTop, the old fall.
+func _keep() -> void:
+	var run := func(keep: bool, sep: float, dir: float) -> Array:
+		SimKick.keepTop = keep
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 77, {"p1": false, "p2": false}, {"kick": true, "intro": false})
+		var f = S.fighters[0]
+		var o = S.fighters[1]
+		f.x = 40000.0
+		o.x = 40000.0 + sep
+		f.y = 3000.0
+		o.y = 3000.0
+		var peak: float = 0.0
+		var atNear: float = 0.0
+		var fell: bool = false
+		var last: float = 0.0
+		var closest: float = 1e18
+		for t in range(240):
+			var i := SimIntent.new()
+			i.mx = dir
+			i.dash = true
+			SimCore.step(S, [i, null])
+			S.out.fx.clear()
+			S.out.feed.clear()
+			var gap: float = absf(SimWrap.sdx(f.x, o.x))
+			closest = minf(closest, gap)
+			var v: float = absf(f.vx)
+			if t > SimKick.climbTicks + 1 and gap > SimConst.BOOST_NEAR + 200.0 and v < last - 1e-6:
+				fell = true
+			if gap > SimConst.BOOST_NEAR:
+				atNear = v
+			peak = maxf(peak, v)
+			last = v
+			if dir > 0.0 and f.x >= o.x:
+				break
+		SimCore.dispose(S)
+		return [peak, atNear, fell, closest, last]
+	var a: Array = run.call(true, 6500.0, 1.0)
+	ok(not a[2], "keepTop: flying at the rival he never slows until he's close (peak %.0f, at 1,500 %.0f)" % [a[0], a[1]])
+	var b: Array = run.call(false, 6500.0, 1.0)
+	ok(b[2], "without it the traversal's fall is there (peak %.0f, at 1,500 %.0f)" % [b[0], b[1]])
+	ok(a[1] > b[1], "keepTop arrives faster than the old fall (%.0f, %.0f)" % [a[1], b[1]])
+	var c: Array = run.call(true, 6500.0, -1.0)
+	ok(c[0] > a[0], "away, he still gains (%.0f)" % c[0])
+	print("keepTop: from 6,500: peak %.0f, at 1,500 %.0f, closest %.0f; without: at 1,500 %.0f" % [a[0], a[1], a[3], b[1]])
+	SimKick.keepTop = true
+
+
 func _toward() -> void:
 	var S := _mk(9000.0)
 	var f = S.fighters[0]
@@ -304,6 +352,7 @@ func _init() -> void:
 	_shape(0.8, 12)
 	_shape(1.0, 0)
 	_coin()
+	_keep()
 	SimKick.overOn = true   # the limits on the overspeed, for when it's on
 	_toward()
 	_away()

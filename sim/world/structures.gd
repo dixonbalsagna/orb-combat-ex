@@ -256,15 +256,18 @@ static func buildIndex(S: SimState) -> void:
 	for i in range(S.buildings.size()):
 		var b = S.buildings[i]
 		b.idx = i
-		if not inBand(S, b.z):
+		if not inBand(S, b.z, b.d):
 			continue
 		var k: int = mini(int(SimWrap.wrap(b.x) / (SimConst.W / 128.0)), BUCKETS - 1)
 		S.bIdx[k].append(i)
 
 
-## Does a query need a building at this depth? All do, but for places everywhere.
-static func inBand(S: SimState, z: float) -> bool:
-	return S.bFirst == 0 or absf(z) <= float(SimSwing.data().indexBand)
+## Does a query need a building at this depth? All do, but for places everywhere. Behind the line: out to indexBand, or the background lane's far edge if that is further (plans.indexBackBH: the first ring's row 3 stands at 3,037, past 3,000). In front of it (z positive,
+## toward the camera): only a building whose FRONT FACE (z + half its depth, d) is no further than plans.indexFrontBH, as Rendering's rule tests it (it brings a building down as its front face goes from -150 to -30), so a building
+## struck is one the view has not lowered. A planet-fixed building posed in front of that stands between the camera and the fight, and the first ring never lays one there (a free place has no lane; docs/world/front-limit.md).
+## The pose (SimSwing._poseThese) passes the building's depth too, as the index build does: one predicate, or a rebucket would insert a building twice.
+static func inBand(S: SimState, z: float, d: float = 0.0) -> bool:
+	return S.bFirst == 0 or (z + 0.5 * d <= WorldPlan.indexFront() and z >= -WorldPlan.indexBack(float(SimSwing.data().indexBand)))
 
 
 ## How many buildings a share of "all of them" counts: the first ring's, since a far town isn't in this fight's budget.
@@ -662,7 +665,7 @@ static func explode(S: SimState, x: float, y: float, r: float, cause, sf: float 
 		WorldCrater.dig(S, x, WorldCrater.explodeEnergy(cause.tier), cause, "beam", 0.0, 1.0, true)
 	var levelled: int = damageArea(S, x, y, r * 1.8, (130.0 + cause.tier * 110.0) * sf, cause, false, 0.0, capLeft, keep)
 	SimFx.shake(S, 16.0, x)
-	S.dirS.stop = SimMathx.jmax(S.dirS.stop, 0.08)
+	SimClock.hold(S, 0.08, cause)
 	return levelled
 
 

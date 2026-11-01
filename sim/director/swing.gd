@@ -89,7 +89,7 @@ static func setForce(v: int) -> void:
 
 ## A field world, the switch on. Nothing else has a line to turn.
 static func on(S: SimState) -> bool:
-	return enabled() and S.frame != null
+	return enabled() and S.frame != null and not SimStage.halts(S)
 
 
 static func _b() -> int:
@@ -553,7 +553,7 @@ static func _cue(S: SimState, A, cause: String, text: String, deg: float, rest: 
 	SimFx.cue(S, A, "swing_place", text, cause)
 	var e = S.out.fx[S.out.fx.size() - 1]
 	e.amount = deg
-	e.n = S.tick + int(round(float(S.dirS.stop) * DirData.TICKS_PER_SEC)) + rest if rest > 0 else 0
+	e.n = S.tick + int(round(float(SimClock.left(S)) * DirData.TICKS_PER_SEC)) + rest if rest > 0 else 0
 	e.x = pv
 
 

@@ -70,6 +70,7 @@ const SETUPS: Dictionary = {
 	"planet2": {"planet": 7, "touch": 3, "arena": {"cols": 2400}, "planetGen": 2, "intro": false},   # a gen 2 ring, as QA plays them (qa/godot/qa_planet.gd)
 	"planet2depth": {"planet": 7, "touch": 3, "arena": {"cols": 2400}, "planetGen": 2, "intro": false, "depth": true},
 	"field": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false},   # a field world (sim/core/field.gd): its line and store, in the hash
+	"fights": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "fights": 2},   # two AI fights on one line (sim/core/stage.gd): the bots play the first
 	"kick": {"kick": true},   # the kick and the coin turn (sim/core/kick.gd): six numbers a fighter, in the hash while on
 }
 

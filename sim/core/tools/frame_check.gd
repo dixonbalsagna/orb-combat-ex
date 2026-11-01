@@ -57,6 +57,7 @@ func _init() -> void:
 	_bothWays()
 	_waterHold()
 	_aimFollow()
+	_warm()
 	_layNearCheck()
 	_key()
 	print("frame_check: %d checks, %d failed" % [checks, fails])
@@ -795,6 +796,55 @@ func _layNearCheck() -> void:
 	SimSwing.tick(S2)
 	ok(not S2.swing.layNearOn, "lay near: off with no marks")
 	SimCore.dispose(S2)
+
+
+## The warm-up changes nothing: an AI fight with swings hashes the same warm or cold, on every checkpoint, and across a rollback; and it does fill the memos.
+func _warm() -> void:
+	var d: Dictionary = SimField.data()
+	var n0: int = int(d.warmN)
+	var b0: int = int(d.warmB)
+	var run := func(n: int, b: int, roll: bool) -> Array:
+		d["warmN"] = n
+		d["warmB"] = b
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 77, {"p1": true, "p2": true}, {"planet": 12, "touch": 1, "planetGen": 3, "intro": false})
+		var out: Array = []
+		var snap: NetSnapshot = null
+		for t in range(1500):
+			if roll and t == 900:
+				snap = NetSnapshot.take(S)
+			var a = S.fighters[0]
+			if (a.state == "launched" or S.fighters[1].state == "launched") and not S.swing.active and S.beams.is_empty():
+				SimSwing.ask(S, {"deg": 35.0 if t % 2 == 0 else -35.0, "cause": "launch"})
+			SimCore.step(S)
+			S.out.fx.clear()
+			S.out.feed.clear()
+			if t % 100 == 99:
+				out.append(str(SimHash.stateHash(S).gameplay))
+		if roll:
+			var hs: Array = []
+			NetSnapshot.restore(S, snap)
+			for t in range(900, 1500):
+				var a = S.fighters[0]
+				if (a.state == "launched" or S.fighters[1].state == "launched") and not S.swing.active and S.beams.is_empty():
+					SimSwing.ask(S, {"deg": 35.0 if t % 2 == 0 else -35.0, "cause": "launch"})
+				SimCore.step(S)
+				S.out.fx.clear()
+				S.out.feed.clear()
+				if t % 100 == 99:
+					hs.append(str(SimHash.stateHash(S).gameplay))
+			ok(hs == out.slice(9), "warm: a rollback re-runs the same")
+		out.append(SimField._wCur)
+		SimCore.dispose(S)
+		return out
+	var cold: Array = run.call(0, 0, false)
+	var warm: Array = run.call(8, 8, true)
+	cold.pop_back()
+	var cw: int = warm.pop_back()
+	ok(cold == warm, "warm: the same hash warm as cold, at every checkpoint")
+	ok(cw > 0, "warm: it filled columns (%d)" % cw)
+	d["warmN"] = n0
+	d["warmB"] = b0
 
 
 ## After a rest the strip's marks come from the store, a slice a tick, to exactly what World's lay functions give; a snapshot in the middle comes out the same.

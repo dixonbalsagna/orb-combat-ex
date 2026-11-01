@@ -16,7 +16,9 @@ const A_USED: int = 6   # on the first fighter: the match's planet-scale launche
 const A_LAST: int = 7   # ... and the live tick of the last, plus 1
 const A_LASTB: int = 8  # the building he last went through, plus 1
 const A_BANK: int = 10  # the live tick his banked charge runs out, on him who stunned: ignition
-const A_N: int = 11
+const A_BAT: int = 11   # the live tick the strike that banked it landed
+const A_METEORS: int = 12   # on the first fighter: the match's meteors, so far
+const A_N: int = 13
 
 const ROWS: Array = ["meteor", "high"]
 const NAMES: Array = ["METEOR", "HIGH ARC"]
@@ -71,7 +73,18 @@ static func _row(i: int) -> Dictionary:
 ## Ignition (rule-of-cool-map.md row 5): a level 3 upward stick stun, with both at tier 4, banks charge for as long as the stun lasts.
 static func bank(S: SimState, f, o, stun: int) -> void:
 	if on() and minf(float(f.tier), float(o.tier)) >= 4.0:
-		_s(f, A_BANK, DirBrawl._now(S) + stun + int(cfg().bankGrace))
+		_s(f, A_BANK, DirBrawl._now(S) + stun)
+		_s(f, A_BAT, DirBrawl._now(S))
+
+
+## Inside a banked stun?
+static func banked(S: SimState, f) -> bool:
+	return on() and _g(f, A_BANK) > DirBrawl._now(S)
+
+
+## The tick its strike landed: B's hold counts from there, so the stick's hold is what pays for it.
+static func bankedAt(f) -> int:
+	return _g(f, A_BAT)
 
 
 ## The ticks B takes to its flash: the data's, or the banked mark inside a banked stun. ch: the brawl's charge block.
@@ -79,6 +92,47 @@ static func fullTicks(S: SimState, f, ch: Dictionary) -> int:
 	if on() and _g(f, A_BANK) > DirBrawl._now(S):
 		return mini(int(ch.fullTicks), int(cfg().bankFull))
 	return int(ch.fullTicks)
+
+
+## How full B's charge is at n ticks held: from the data's fromTicks to its flash, or in a banked stun plainly to the banked mark, which comes before fromTicks.
+static func chargeShare(S: SimState, f, ch: Dictionary, n: int) -> float:
+	if banked(S, f):
+		return clampf(float(n) / float(cfg().bankFull), 0.0, 1.0)
+	return clampf(float(n - int(ch.fromTicks)) / maxf(1.0, float(int(ch.fullTicks) - int(ch.fromTicks))), 0.0, 1.0)
+
+
+## The meteor's own bowl (docs/world/meteor-crater.md), and a blast over it, since a bowl alone lowers a tower and leaves it standing. It stands
+## in for the ground contact's dig: he's marked as having hopped, so that doesn't dig too. Over water there's the ordinary splash.
+static func _impact(S: SimState, f, c: Dictionary, g: float) -> void:
+	var by = f.launchBy
+	var tier: float = float(by.tier) if by != null else 4.0
+	var n: int = S.craters.size()
+	WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(float(c.landSpeed), tier), by, "impact", 0.0, 1.0, false, f.z, PackedFloat64Array(), true)
+	f.hopped = true
+	if S.craters.size() > n:
+		_blast(S, f.x, f.z, float(S.craters[S.craters.size() - 1].r), by, c)
+
+
+## What stands in the bowl goes, by its plan distance, nearest in the index first, up to tier 4's share of all structures (a beam's own cap;
+## game-design.md section 12). Past that, it's left at blastKeep of its health.
+static func _blast(S: SimState, x: float, z: float, r: float, by, c: Dictionary) -> void:
+	var share: float = float(by.ld.beamLevelCapShare[3]) if by != null and by.ld != null else 1.0
+	var cap: int = maxi(1, int(SimMathx.jround(share * float(WorldStructures.ringCount(S)))))
+	var levelled: int = 0
+	S.world.fallTick = -1.0
+	SimField.far()
+	for bi in WorldStructures.near(S, x, r):
+		var b = S.buildings[bi]
+		if not b.alive or SimDetMath.hypot(SimWrap.sdx(x, b.x), float(b.z) - z) > r:
+			continue
+		var lost0: float = S.world.structuresLost
+		WorldStructures.damageBuilding(S, b, float(b.maxhp) * 2.0, by, "implode", x, 0.0, false, float(c.blastKeep) if levelled >= cap else 0.0)
+		if S.world.structuresLost > lost0:
+			levelled += 1
+	SimField.near()
+	if S.world.fallFold > 0.0:
+		SimFx.buildingFall(S, -1, x, 0.0, 0.0, 0.0, "implode", 0.0, x, 0.0, S.world.fallFold)
+		S.world.fallFold = 0.0
 
 
 ## How a ring smaller than the whole scales the curve, so the angle round holds.
@@ -113,7 +167,8 @@ static func earned(S: SimState, f, o, a: Dictionary) -> int:
 	var last: int = _g(first, A_LAST)
 	if last > 0 and float(DirBrawl._now(S) - (last - 1)) / DirData.TICKS_PER_SEC < float(c.gapSec):
 		return -1
-	return 0 if weak(o) or _g(f, A_BANK) > DirBrawl._now(S) else 1
+	var called: bool = weak(o) or _g(f, A_BANK) > DirBrawl._now(S) or (bool(c.firstMeteor) and _g(first, A_USED) == 0)   # firstMeteor: the match's first is the meteor, whatever he's doing
+	return 0 if called and _g(first, A_METEORS) < int(c.meteorBudget) else 1
 
 
 ## His transformations. A fighter with no form ladder in this match isn't held to the count: the tier is all there is to read.
@@ -199,6 +254,8 @@ static func send(S: SimState, f, o, row: int, side: float) -> void:
 	_s(o, A_LASTB, 0)
 	var first = S.fighters[0]
 	_s(first, A_USED, _g(first, A_USED) + 1)
+	if row == 0:
+		_s(first, A_METEORS, _g(first, A_METEORS) + 1)
 	_s(first, A_LAST, DirBrawl._now(S) + 1)
 	SimFx.launchPlan(S, f, o, "", NAMES[row])
 	SimFx.cue(S, o, "arc_send", ROWS[row], "")
@@ -252,7 +309,7 @@ static func step(S: SimState, f, dt: float) -> bool:
 			return false
 		var g: float = maxf(WorldTerrain.groundY(S, nx), WorldWater.surfaceAt(S, nx))
 		if ny <= g or age >= total:
-			_land(f, c, side, g)
+			_land(S, f, c, side, g, row == 0)
 			return false   # an ordinary body now: the ground contact takes this tick
 	return true
 
@@ -275,8 +332,10 @@ static func _towers(S: SimState, f, c: Dictionary) -> void:
 
 
 ## The landing's speed is data, so the crater is capped and doesn't read the curve's. It can't end a match by itself.
-static func _land(f, c: Dictionary, side: float, g: float) -> void:
+static func _land(S: SimState, f, c: Dictionary, side: float, g: float, meteor: bool) -> void:
 	_s(f, A_ROW, 0)
+	if meteor and not WorldTerrain.seaAt(S, f.x):
+		_impact(S, f, c, g)
 	var sp: float = float(c.landSpeed)
 	f.launchT = 1.0
 	f.vx = side * float(c.landVx)

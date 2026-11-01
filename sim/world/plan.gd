@@ -35,6 +35,17 @@ static func everywhere() -> bool:
 	return bool(WorldField.data().get("plans", {}).get("everywhere", false))
 
 
+## The most the ground may depart from a straight slope between a free building's centre and a corner of its plan footprint (plans.maxFootSlope, units; 0 or less: no limit). A building over a cliff or a step of another record
+## is not laid (like one in the sea): its underside would show (docs/world/lot-gap.md). A smooth slope, however steep, passes: the lot's tilt and the view's plinth answer that. `footSlopeOverride` (a test's) is used when it is 0 or more.
+static var footSlopeOverride: float = -1.0
+
+
+static func maxFootSlope() -> float:
+	if footSlopeOverride >= 0.0:
+		return footSlopeOverride
+	return float(WorldField.data().get("plans", {}).get("maxFootSlope", 0.0))
+
+
 ## Do the far places' buildings hold people (farPeople), and do those people count toward the hero's anguish (farAnguish)? Both off: a far building has none (docs/world/places-everywhere.md).
 static func farPeople() -> bool:
 	return everywhere() and bool(WorldField.data().get("plans", {}).get("farPeople", false))
@@ -46,6 +57,17 @@ static func farAnguish() -> bool:
 
 static func farShare() -> float:
 	return float(WorldField.data().get("plans", {}).get("farShare", 1.0))
+
+
+## The depth in front of the line (z positive toward the camera) past which a planet-fixed building is not indexed, so is neither drawn nor struck, in units, tested on the building's front face (z + d / 2):
+## -2 bh = -150, where Rendering's rule starts to bring a building down. A first-ring block is flush to the street's back edge, -2.5 bh, so its face is -187.5 and it is always kept.
+static func indexFront() -> float:
+	return float(WorldField.data().get("plans", {}).get("indexFrontBH", -3.0)) * BH
+
+
+## The depth behind the line out to which a planet-fixed building is indexed, units: swing.json's indexBand, or the background lane's far edge (lanes.json, row 3 ends at 44.5 bh) if that is further.
+static func indexBack(band: float) -> float:
+	return maxf(band, float(WorldField.data().get("plans", {}).get("indexBackBH", 45.0)) * BH)
 
 
 static func farReach() -> float:
@@ -419,10 +441,15 @@ static func layFree(S: SimState, P: WorldPlanet.Planet, id: int, circ: Dictionar
 	var geo: Dictionary = geometry(P, id, 0.0)
 	var span: float = float(SimConst.NC) * SimConst.COL
 	var kept: Array = []
+	var gmax: float = maxFootSlope()
+	var cliffed: int = 0
 	for e in geo.b:
 		var q: Array = pointOf(P, id, yaw, float(e.x) - float(geo.xc), float(e.z))
 		var g0: float = WorldField.applyRecords(S, q[0], q[1], q[2], WorldField.heightBake(P, q[0], q[1], q[2]), P)
 		if g0 < WorldTerrain.TRIM_G:
+			continue
+		if gmax > 0.0 and _overhangs(S, P, id, yaw, float(e.x) - float(geo.xc), float(e.z), 0.5 * float(e.w), 0.5 * float(e.d), g0, gmax):
+			cliffed += 1
 			continue
 		var cx0: float = stripX(P, circ, q)
 		var b: Dictionary = e.duplicate()
@@ -435,7 +462,20 @@ static func layFree(S: SimState, P: WorldPlanet.Planet, id: int, circ: Dictionar
 		b["u"] = float(e.x) - float(geo.xc)
 		b["v"] = float(e.z)
 		kept.append(b)
-	return {"buildings": kept, "dist": geo.dist, "yaw": yaw}
+	return {"buildings": kept, "dist": geo.dist, "yaw": yaw, "cliffed": cliffed}
+
+
+## Is the ground steeper than `slope` (rise over run) between the footprint's centre and any of eight points on the circle round it (radius r, the half diagonal: a footprint turned to any line has its corners on it)? Read from
+## the bake with the platform, as layFree reads it. A cliff has a slope of 3 or more; a hillside town stands on 0.3 to 0.6.
+static func _overhangs(S: SimState, P: WorldPlanet.Planet, id: int, yaw: float, u: float, v: float, hw: float, hd: float, g0: float, slope: float) -> bool:
+	var r: float = sqrt(hw * hw + hd * hd)
+	var q4: float = SimMathx.f64("3fe921fb54442d18")   # pi/4 from its bits (the parity lint allows no float literal over 15 digits)
+	for k in range(8):
+		var qc: Array = pointOf(P, id, yaw, u + r * SimDetMath.cos(float(k) * q4), v + r * SimDetMath.sin(float(k) * q4))
+		var gc: float = WorldField.applyRecords(S, qc[0], qc[1], qc[2], WorldField.heightBake(P, qc[0], qc[1], qc[2]), P)
+		if absf(g0 - gc) > r * slope:
+			return true
+	return false
 
 
 ## The lots of a free place, in its plan frame (a lot is the buildings of one band's row within `lots.gap` along the street; the strip's x means nothing for a far place): the same record as WorldField.lotRecords, its

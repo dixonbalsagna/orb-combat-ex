@@ -66,7 +66,7 @@ static func _windowCue(S: SimState, D, A, open: bool, tv: int) -> void:
 	e.target = float(S.fighters.find(D))
 	e.n = tv
 	e.k = 4.0
-	e.amount = float(data().dodge.beforeTicks)
+	e.amount = float(data().front.dodgeBefore)
 
 
 ## The charge's cues: text start or end, the shooter the actor, the receiver the target. A warning, not the window.
@@ -85,6 +85,58 @@ static func _arrival(D, A) -> int:
 static func windowOpen(S: SimState, f) -> bool:
 	var ex = S.dirS.ex
 	return ex != null and ex.kind == "sig" and ex.D == f and ex.branch == "" and frontOn() and _beat(ex, "beamReach") != null
+
+
+## True while the beam's still in the shooter's hand, with f its target: a press now answers it, and fires as he fires.
+static func charging(S: SimState, f) -> bool:
+	var ex = S.dirS.ex
+	return ex != null and ex.kind == "sig" and ex.D == f and ex.branch == "" and frontOn() and _beat(ex, "beamFire") != null
+
+
+## A signature pressed against a beam he can't answer with: it says why (the rule: can't pay, no answer).
+static func answerRefused(S: SimState, f) -> void:
+	if not (charging(S, f) or windowOpen(S, f)) or SimFighter.sigFree(f):
+		return
+	if f.ki < 45.0:
+		SimFx.cue(S, f, "answer_refused", "", "ki")
+	elif S.T < f.sigReadyT:
+		SimFx.cue(S, f, "answer_refused", "", "cooldown")
+
+
+## The stick's fire-back, RB and toward him, in the charge or the window. False when it isn't one: no beam's coming.
+static func stickAnswer(S: SimState, f) -> bool:
+	if fireBack(S, f):
+		return true
+	if not (charging(S, f) or windowOpen(S, f)):
+		return false
+	if f.ki < float(frontCfg().answerKi):
+		SimFx.cue(S, f, "answer_refused", "", "ki")
+		return true
+	SimAct.push(f, SimAct.HEAVY, 1, 0, S.tick)   # the lit hand: it answers when he fires (DirBeam._answer)
+	SimFx.cue(S, f, "answer_held", "", "")
+	return true
+
+
+## Where the shooter's charge takes him: a signature from under the stand-off, by anyone, kicks him back, so the fronts don't meet at their
+## hands. He stops at a wall: ground or a roof that stands above where he's rising to. Off, or already far enough, he stays where he is.
+static func standoffX(S: SimState, A, D, y: float) -> float:
+	if not frontOn():
+		return A.x
+	var gap: float = SimWrap.sdx(D.x, A.x)
+	var need: float = float(frontCfg().standoffBh) * DirInterrupt.BH - absf(gap)
+	if need <= 0.0:
+		return A.x
+	var side: float = SimDamage.jor(SimMathx.jsign(gap), -A.face)
+	var x: float = A.x
+	var went: float = 0.0
+	var step: float = 32.0
+	while went < need:
+		var nx: float = SimWrap.wrap(x + side * minf(step, need - went))
+		if SimFighter.floorFor(S, A, nx, A.z) > y:
+			break
+		x = nx
+		went += step
+	return x
 
 
 ## A fire-back by the stick (RB, toward him): at once, at level 1's ki. False if the window's shut or he can't pay.
@@ -141,7 +193,7 @@ static func held(f, o) -> int:
 static func fire(S: SimState, ex, args) -> void:
 	var A = ex.A
 	var D = ex.D
-	var dist: float = args.dist
+	var dist: float = maxf(float(args.dist), absf(SimWrap.sdx(A.x, D.x))) if frontOn() else float(args.dist)   # (the stand-off has moved him since it was planned)
 	var tv: int = frontTicks(dist, "signature") if frontOn() else int(data().travelTicks)
 	var len: float = SimMathx.jmin(4200.0 * SimConst.WS, dist + float(A.ld.beamOvershoot[DirBeam._tierIx(A)]) * SimConst.WS)
 	var ox: float = A.x
@@ -161,7 +213,7 @@ static func fire(S: SimState, ex, args) -> void:
 		_windowCue(S, D, A, true, tv)
 	SimEvents.feed(S, A.sigName + " FIRES", "it reaches " + D.name + " in " + str(tv) + " ticks")
 	SimFx.cue(S, A, "beam_fire", "", "")
-	DirExchange.schedule(ex, ex.t + float(tv + (int(data().dodge.afterTicks) if frontOn() else 0)) / DirData.TICKS_PER_SEC, "beamReach", {"perfect": perfect, "ux": dxs / L, "uy": dyy / L, "dist": dist, "variant": String(args.variant)})
+	DirExchange.schedule(ex, ex.t + float(tv + (int(data().front.dodgeAfter) if frontOn() else 0)) / DirData.TICKS_PER_SEC, "beamReach", {"perfect": perfect, "ux": dxs / L, "uy": dyy / L, "dist": dist, "variant": String(args.variant)})
 	DirCamIntent.exchange(S, ex, "beam")   # the camera-intent feed: the beam on its way
 
 
@@ -228,7 +280,7 @@ static func lateTick(S: SimState, ex) -> void:
 		var at: int = _arrival(D, A)
 		var c: Dictionary = data()
 		var ai: bool = D.ai != null and (DirInterrupt.gi(D, DirInterrupt.BEAM_AI) & AI_DODGE) != 0
-		if D.act.dodgeTick == S.tick and (ai or S.tick >= at - int(c.dodge.beforeTicks)):
+		if D.act.dodgeTick == S.tick and (ai or S.tick >= at - int(c.front.dodgeBefore)):
 			DirInterrupt.si(D, DirInterrupt.BEAM_DODGED, DirInterrupt.gi(D, DirInterrupt.BEAM_DODGED) | 1)   # too early, and the beam follows him
 		if D.input.guardPress and S.tick >= at - int(DirInterrupt.data().perfectBlock.windows.beam) and S.tick <= at:
 			DirInterrupt.si(D, DirInterrupt.BEAM_DODGED, DirInterrupt.gi(D, DirInterrupt.BEAM_DODGED) | 2)   # a perfect block, moved to the arrival
@@ -477,7 +529,8 @@ static func aiMayDodge(S: SimState, f) -> bool:
 	var c: Dictionary = data().dodge
 	var fb = _beat(ex, "beamFire")
 	if frontOn():
-		return fb != null or S.tick < _arrival(f, ex.A) - int(c.beforeTicks) or S.tick > _arrival(f, ex.A) + int(c.afterTicks)
+		var fr: Dictionary = data().front
+		return fb != null or S.tick < _arrival(f, ex.A) - int(fr.dodgeBefore) or S.tick > _arrival(f, ex.A) + int(fr.dodgeAfter)
 	if fb != null:
 		return (fb.t - ex.t) * DirData.TICKS_PER_SEC > float(c.beforeTicks) + 0.5
 	return S.tick - DirInterrupt.gi(f, DirInterrupt.BEAM_FIRE) > int(c.afterTicks)

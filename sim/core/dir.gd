@@ -37,6 +37,16 @@ static func zipping(f) -> bool:
 	return _d("zip.gd").zipping(f)
 
 
+## DirEnding.wearMul: what the ending does to a wound's wear.
+static func endingWearMul(f) -> float:
+	return _d("ending.gd").wearMul(f)
+
+
+## DirEnding.on: the ending's switch.
+static func endingOn() -> bool:
+	return _d("ending.gd").on()
+
+
 ## DirArc.step: a launched body on the closed-form arc.
 static func arcStep(S: SimState, f, dt: float) -> bool:
 	return _d("arc.gd").step(S, f, dt)

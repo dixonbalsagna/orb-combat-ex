@@ -129,6 +129,47 @@ func _init() -> void:
 				spread_bad += 1
 	ok(no_lot == 0, "every far building is inside a lot (%d are not; %d lots in all)" % [no_lot, lots.size()])
 	ok(spread_bad == 0, "no sampled far building stands in the sea (%d do)" % spread_bad)
+	# the front limit (plans.indexFrontBH): the index holds no building whose front face is in front of the front limit, and loses none of the first ring's
+	var lane_bottom: float = 1.0e30
+	for l in WorldPlan._lanes():
+		lane_bottom = minf(lane_bottom, float(l.bottom))
+	ok(WorldPlan.indexBack(float(SimSwing.data().indexBand)) >= -lane_bottom, "the back limit (%.0f) reaches the farthest lane's edge (%.0f)" % [WorldPlan.indexBack(float(SimSwing.data().indexBand)), -lane_bottom])
+	var indexed: Dictionary = {}
+	for bk in on.bIdx:
+		for ii in bk:
+			indexed[int(ii)] = true
+	var front_in: int = 0
+	var front_out: int = 0
+	var ring_lost: int = 0
+	for i in range(nb):
+		var zb: float = (float(on.bZ[i]) if on.bZ.size() == nb else float(on.buildings[i].z)) + 0.5 * float(on.buildings[i].d)   # the front face
+		if i < n_off and not indexed.has(i):
+			ring_lost += 1
+		if zb > WorldPlan.indexFront() + 1.0e-6:
+			if indexed.has(i):
+				front_in += 1
+			else:
+				front_out += 1
+	ok(front_in == 0, "no building with its front face past the front limit is in the index (%d are)" % front_in)
+	ok(front_out > 0, "the limit is at work: %d far buildings in front of it are left out of the index" % front_out)
+	ok(ring_lost == 0, "the first ring loses none of its buildings from the index (%d)" % ring_lost)
+	# the footprint slope (plans.maxFootSlope): a free building on ground steeper than that between its centre and the circle round its footprint (a cliff) is not laid; every place laid again with no limit stands more
+	var pr = on.planetRing
+	var circ2: Dictionary = WorldRingPick.ringFrom(pr.c, int(pr.cols), pr.t)
+	var n_lim: int = 0
+	var n_all: int = 0
+	var cliffed: int = 0
+	WorldPlan.footSlopeOverride = -1.0
+	var lim: float = WorldPlan.maxFootSlope()
+	for pid in range(P.n):
+		var gl: Dictionary = WorldPlan.layFree(on, P, pid, circ2)
+		n_lim += gl.buildings.size()
+		cliffed += int(gl.get("cliffed", 0))
+	WorldPlan.footSlopeOverride = 0.0
+	for pid in range(P.n):
+		n_all += WorldPlan.layFree(on, P, pid, circ2).buildings.size()
+	WorldPlan.footSlopeOverride = -1.0
+	ok(lim > 0.0 and n_lim < n_all and n_all - n_lim == cliffed, "with the footprint slope at %.2f, %d of %d buildings are not laid (%d counted)" % [lim, n_all - n_lim, n_all, cliffed])
 	# the same setup lays the same state
 	var again := _match(planet, touch, true)
 	ok(again.buildings.size() == nb and str(SimHash.stateHash(again).gameplay) == str(SimHash.stateHash(on).gameplay), "the same setup lays the same state twice")

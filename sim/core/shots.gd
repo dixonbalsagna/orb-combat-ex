@@ -358,6 +358,8 @@ static func hitFighter(S: SimState, sh, f) -> bool:
 	if sh.mode == MINE and f == S.fighters[sh.owner]:
 		dmg *= kinds[sh.kind].mine.ownShare
 	SimDamage.hurt(S, f, dmg, S.fighters[sh.owner], "spread", "blast", "", true)
+	if S.hitstopOn:
+		SimHitstop.hold(S, "light")   # a shot names its weight, or it holds nothing
 	SimFx.shotHit(S, sh, f, "hit")
 	return true
 

@@ -35,6 +35,17 @@ static var swingBlind: bool = false   # tests only: the digest leaves out the li
 ## hash as UTF-8, and the engine's MD5 reads the array and the terrain's packed arrays as blocks, so the GDScript cost is
 ## one append per value. Byte order is little-endian on every platform the game ships on.
 static func digest(S: SimState) -> String:
+	if S.stage == null:
+		return _digest(S)
+	var sum: String = _digest(S)   # a match of more than one fight: fight by fight (sim/core/stage.gd)
+	for i in range(1, S.stage.fights.size()):
+		SimStage.enter(S, i)
+		sum = (sum + _digest(S)).md5_text()
+	SimStage.enter(S, 0)
+	return sum
+
+
+static func _digest(S: SimState) -> String:
 	var v := PackedFloat64Array()
 	var md := HashingContext.new()
 	md.start(HashingContext.HASH_MD5)

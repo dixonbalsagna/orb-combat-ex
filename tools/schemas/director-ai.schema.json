@@ -2353,6 +2353,61 @@
         "vsHumanOnly"
       ],
       "additionalProperties": false
+    },
+    "vsHuman": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "sigPick": {
+          "type": "number",
+          "minimum": 0
+        },
+        "kiAt": {
+          "type": "number",
+          "minimum": 0
+        },
+        "kiHigh": {
+          "type": "number",
+          "minimum": 0
+        },
+        "kiLow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "firstMin": {
+          "type": "number",
+          "minimum": 0
+        },
+        "firstMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "firstWait": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gapSec": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "enabled",
+        "sigPick",
+        "kiAt",
+        "kiHigh",
+        "kiLow",
+        "firstMin",
+        "firstMax",
+        "firstWait",
+        "gapSec"
+      ]
     }
   },
   "additionalProperties": false,
