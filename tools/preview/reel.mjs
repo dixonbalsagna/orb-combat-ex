@@ -43,6 +43,7 @@ const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv
 const DIR = opt('--dir'), OUT = opt('--out');
 if (!DIR || !OUT) { console.error('usage: node tools/preview/reel.mjs --dir <built web folder> --out <folder> [--seed N] [--every 30] [--swings 2] [--launches 1] [--cap 6000] [--margin 60]'); process.exit(2); }
 const SEED = Number(opt('--seed', 12345)), EVERY = Number(opt('--every', 30)), NSWING = Number(opt('--swings', 2)), NLAUNCH = Number(opt('--launches', 1));
+const ALSO = new Set(String(opt('--also', '')).split(',').filter(Boolean).map(Number));   // extra ticks to take a still at (the EP names a tick)
 const CAP = Number(opt('--cap', 6000)), MARGIN = Number(opt('--margin', 60));
 const W = Number(opt('--width', 960)), H = Number(opt('--height', 540)), PLANET = Number(opt('--planet', 7));
 const QUERY = `${opt('--query', 'meteor=loud&tiles=1')}${argv.includes('--sticks8') ? '&sticks=8' : argv.includes('--sticks7') ? '&sticks=7' : argv.includes('--sticks6') ? '&sticks=6' : argv.includes('--sticks5') ? '&sticks=5' : argv.includes('--sticks4') ? '&sticks=4' : argv.includes('--sticks3') ? '&sticks=3' : argv.includes('--sticks2') ? '&sticks=2' : argv.includes('--sticks') ? '&sticks=1' : ''}`;
@@ -137,7 +138,7 @@ try {
         (record.flatFaceSeries = record.flatFaceSeries || []).push([tick, Math.round(flatFaceShare(png.w, png.h, png.data) * 1000) / 1000]);
       } catch (e) { record.flatFaceError = String(e.message || e).slice(0, 120); }
     }
-    if (tick % EVERY === 0 || (sinceClash >= 0 && sinceClash <= 150 && tick % 10 === 0)) {
+    if (tick % EVERY === 0 || ALSO.has(tick) || (sinceClash >= 0 && sinceClash <= 150 && tick % 10 === 0)) {
       const shot = await page.send('Page.captureScreenshot', { format: 'jpeg', quality: 72, fromSurface: true });
       const file = `still-${String(tick).padStart(6, '0')}.jpg`;
       writeFileSync(join(OUT, 'stills', file), Buffer.from(shot.data, 'base64'));

@@ -38,80 +38,12 @@
       ]
     },
     {
-      "id": "simulation-kick-keep-top",
-      "owner": "simulation-engine",
-      "notes": "A held flat-out flight keeps its speed (Simulation, 2026-11-01; Controls' finding): data/fight/kick.json keepTop (true) holds the most the traversal has given a flight until the gap is inside 1,500, so flying at the rival no longer slows him before he arrives. Only with the kick on. A plain patch on the kick; Tools' grant is the schema key and the fixture.",
-      "steps": [
-        {
-          "patch": "docs/architecture/pending/kick-keep-top/kick-keep-top.patch"
-        }
-      ]
-    },
-    {
-      "id": "simulation-ring-warm",
-      "owner": "simulation-engine",
-      "notes": "Warming the ground a launch's plan reads (Simulation, 2026-11-01; Performance's launch-ticks note): SimField.warmStep after each tick. Nothing it does is state.",
-      "steps": [
-        {
-          "patch": "docs/architecture/pending/ring-warm/ring-warm.patch"
-        }
-      ],
-      "needs": []
-    },
-    {
-      "id": "simulation-hash-beat-lists",
-      "owner": "simulation-engine",
-      "notes": "The hash reads a beam struggle's press lists (Simulation, 2026-11-01): the \"hashValues: unexpected value type 28\" error (an Array in the hashed values) at a checkpoint inside a struggle. A hash taken inside a struggle changes value, so a black box recording made before this park will not replay across one.",
-      "steps": [
-        {
-          "patch": "docs/architecture/pending/hash-beat-lists/hash-beat-lists.patch"
-        }
-      ],
-      "needs": []
-    },
-    {
       "id": "tools-anim-hold-w-schema",
       "owner": "tools-pipeline",
       "notes": "Two validate cases for Animation's hold_w (a valid one and an over-one one): the schema property itself is now in Animation's stick-class-schema.patch (12:02), so Tools' schema grant was dropped.",
       "steps": [
         {
           "patch": "docs/tools/pending/anim-hold-w-schema/anim-hold-w-schema.patch"
-        }
-      ]
-    },
-    {
-      "id": "combat-stick",
-      "owner": "combat-choreography",
-      "notes": "The right stick's content: martial.stick, energy.stick, the guard and travel lanes' draws.",
-      "steps": [
-        {
-          "copy": [
-            {
-              "from": "docs/combat/pending/stick/stick.json",
-              "to": "data/combat/stick.json",
-              "replace": true
-            },
-            {
-              "from": "docs/combat/pending/stick/combat-stick.schema.json",
-              "to": "tools/schemas/combat-stick.schema.json",
-              "replace": true
-            }
-          ]
-        },
-        {
-          "patch": "docs/combat/pending/stick/tools-map.patch"
-        },
-        {
-          "patch": "docs/combat/pending/stick/tools-cases.patch"
-        }
-      ],
-      "needs": [
-        {
-          "grep": {
-            "in": "sim/input/input_data.gd",
-            "text": "func right_stick_on"
-          },
-          "owner": "controls-feel"
         }
       ]
     },
@@ -353,44 +285,17 @@
       ]
     },
     {
-      "id": "world-front-limit",
-      "owner": "world-environment",
-      "notes": "The wall fix, re-cut on Rendering's face rule (World, 2026-11-01; docs/world/front-limit.md): the limit is on a building's front face at -150 (plans.indexFrontBH -2.0); the grant to Simulation's swing.gd (two arguments in _poseThese) lands with the code. a planet-fixed building posed in front of the first ring's front street stands between the camera and the fighters, so the spatial index looks forward only as far as plans.indexFrontBH and back to the band's edge. Measured in data, not yet seen: the wall reel is the test. After places-half.",
+      "id": "rendering-hole-depth-as-drawn",
+      "owner": "rendering-techart",
+      "notes": "The hole-misfire repair (Rendering, 2026-11-01n): the hole's depth is read as drawn. Goes with m (building plan depth).",
       "steps": [
         {
-          "patch": "docs/world/pending/front-limit/grant-simulation-depth.patch"
-        },
-        {
-          "patch": "docs/world/pending/front-limit/front-limit.diff"
-        }
-      ]
-    },
-    {
-      "id": "world-brunt-through",
-      "owner": "world-environment",
-      "notes": "WorldBrunt.through (World, 2026-11-01; building-pass-through.md): a body on its curve goes through a building and stays on it. Nothing calls it but the meteor.",
-      "steps": [
-        {
-          "patch": "docs/world/pending/brunt-through/brunt-through.diff",
-          "exclude": [
-            "tools/world-checks.json"
-          ],
-          "why": "meteor-crater edits the same line of tools/world-checks.json; brunt-through's one name goes in by the fixup below"
-        },
-        {
-          "fixup": [
-            {
-              "file": "tools/world-checks.json",
-              "from": "\"burial_check\", ",
-              "to": "\"burial_check\", \"through_check\", "
-            }
-          ],
-          "why": "puts through_check in the run list where brunt-through's own hunk would have (World's patch clashes with meteor-crater on that line)"
+          "patch": "docs/rendering/pending/2026-11-01n-hole-depth-as-drawn/hole.diff"
         }
       ],
       "needs": [
         {
-          "park": "world-front-limit"
+          "park": "rendering-building-plan-depth"
         }
       ]
     },
@@ -407,237 +312,6 @@
       "needs": [
         {
           "park": "combat-mixed-string"
-        }
-      ]
-    },
-    {
-      "id": "encounter-stick-acts",
-      "owner": "encounter-systems",
-      "notes": "Encounter's stick acts (docs/director/pending/stick-acts): a plain patch on beam-front, the last of the earlier list.",
-      "steps": [
-        {
-          "patch": "docs/director/pending/stick-acts/stick-acts.diff"
-        }
-      ]
-    },
-    {
-      "id": "encounter-front-dodge",
-      "owner": "encounter-systems",
-      "notes": "Encounter's front dodge (docs/director/pending/front-dodge): a plain patch on stick-acts, with beam-front under it.",
-      "steps": [
-        {
-          "patch": "docs/director/pending/front-dodge/front-dodge.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "encounter-stick-acts"
-        }
-      ]
-    },
-    {
-      "id": "encounter-match-ending",
-      "owner": "encounter-systems",
-      "notes": "Encounter's match ending (2026-11-01; Game Design's ladder, spec-wounds.md 1b-end): the finisher for the fighter with less wear at 12:00, a no-contest cue when wear is level, replacing the no-answer finisher. Behind data/director/interrupts.json ending.enabled (off as shipped; the preview's `ending` switch turns it on). UI's rematch card opens on the no_contest cue.",
-      "steps": [
-        {
-          "patch": "docs/director/pending/match-ending/match-ending.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "encounter-front-dodge"
-        }
-      ]
-    },
-    {
-      "id": "encounter-far-follow",
-      "owner": "encounter-systems",
-      "notes": "A far press follows him (Encounter, 2026-11-01; row 42 of rule-of-cool-map.md): for 150 ticks after a send or knock-back he threw, a far tap flies him after the target instead of taunting. Behind data/director/interrupts.json bands.follow.enabled (off as shipped; the preview's `follow` switch turns it on). On match-ending.",
-      "steps": [
-        {
-          "patch": "docs/director/pending/far-follow/far-follow.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "encounter-match-ending"
-        }
-      ]
-    },
-    {
-      "id": "combat-stick-directions",
-      "owner": "combat-choreography",
-      "notes": "The right stick's four directions (Combat, 2026-11-01): the direction table in sim/director/recipe.gd and stick.gd, on the refreshed stick.json. Under Encounter's stick-directions.",
-      "steps": [
-        {
-          "patch": "docs/combat/pending/stick-directions/directions.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "encounter-far-follow"
-        }
-      ]
-    },
-    {
-      "id": "encounter-stick-directions",
-      "owner": "encounter-systems",
-      "notes": "The stick lands, its directions pass and a press is never silent (Encounter, 2026-11-01): data/director/stick.json lightStops, A's grab and taunt (grapple.enabled), pendTicks 9. Only with rightStick on. The page turns lightStops off and the grapple on.",
-      "steps": [
-        {
-          "patch": "docs/director/pending/stick-directions/stick-directions.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "combat-stick-directions"
-        }
-      ]
-    },
-    {
-      "id": "world-meteor-crater",
-      "owner": "world-environment",
-      "notes": "The meteor's bowl, size in data (World, 2026-11-01): WorldCrater.dig takes a last argument for a meteor; data/biomes/craters.json meteor. Without the argument nothing changes.",
-      "steps": [
-        {
-          "patch": "docs/world/pending/meteor-crater/meteor-crater.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "encounter-stick-directions"
-        }
-      ]
-    },
-    {
-      "id": "encounter-meteor-landing",
-      "owner": "encounter-systems",
-      "notes": "The meteor's own crater and blast (Encounter, 2026-11-01): World's bowl on a land landing, a blast of its own, the second meteor on the high arc. Behind arc.enabled.",
-      "steps": [
-        {
-          "patch": "docs/director/pending/meteor-landing/meteor-landing.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "world-meteor-crater"
-        }
-      ]
-    },
-    {
-      "id": "encounter-driver",
-      "owner": "encounter-systems",
-      "notes": "RB + B, the Driver (Encounter, 2026-11-01): a player's gathered shot that is fired on release; behind blast.driver.enabled. Needs Controls' driverOnRb with signatureRtOnly, or RB + B never reaches it.",
-      "steps": [
-        {
-          "patch": "docs/director/pending/driver/driver.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "encounter-meteor-landing"
-        }
-      ]
-    },
-    {
-      "id": "encounter-stances",
-      "owner": "encounter-systems",
-      "notes": "LB and LT on a blow (Encounter, 2026-11-01; pad-first-press.md): the check, the push and the rest, each different. Behind interrupts.json stances.enabled; needs the stick on.",
-      "steps": [
-        {
-          "patch": "docs/director/pending/stances/stances.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "encounter-driver"
-        }
-      ]
-    },
-    {
-      "id": "combat-phrases",
-      "owner": "combat-choreography",
-      "notes": "Each fighter's phrases (Combat, 2026-11-01; rule-of-cool-map.md row 1): data/combat/phrases.json (enabled false), its schema, a map row and cases. Nothing plays them until Encounter's hook. The map and case patches also carry mixed.json's row and cases, so mixed's schema and data are copied too (mixed itself stays off).",
-      "steps": [
-        {
-          "copy": [
-            {
-              "from": "docs/combat/pending/phrases/phrases.json",
-              "to": "data/combat/phrases.json"
-            },
-            {
-              "from": "docs/combat/pending/phrases/combat-phrases.schema.json",
-              "to": "tools/schemas/combat-phrases.schema.json"
-            },
-            {
-              "from": "docs/combat/pending/mixed-string/mixed.json",
-              "to": "data/combat/mixed.json"
-            },
-            {
-              "from": "docs/combat/pending/mixed-string/combat-mixed.schema.json",
-              "to": "tools/schemas/combat-mixed.schema.json"
-            }
-          ]
-        },
-        {
-          "patch": "docs/combat/pending/phrases/tools-map.patch"
-        },
-        {
-          "patch": "docs/combat/pending/phrases/tools-cases.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "combat-stick"
-        }
-      ]
-    },
-    {
-      "id": "encounter-phrases-hook",
-      "owner": "encounter-systems",
-      "notes": "Row 1, the phrases hook (Encounter, 2026-11-01): a press inside a phrase takes its next piece. Behind data/combat/phrases.json enabled. On the stances; Combat's phrases first.",
-      "steps": [
-        {
-          "patch": "docs/director/pending/phrases-hook/phrases-hook.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "encounter-stances"
-        },
-        {
-          "park": "combat-phrases"
-        }
-      ]
-    },
-    {
-      "id": "encounter-clash-window",
-      "owner": "encounter-systems",
-      "notes": "A clash a player can reach (Encounter, 2026-11-01; first-press-list item 4): the front's floor 24 to 36, a signature pressed in the 48-tick charge answers too, the stand-off (a 617-unit kick with the rise, about 0.55 s, from under 9 body heights), answer_refused cues, the AI's beams against a human (ai.json vsHuman). Behind beamPlays.front.enabled and vsHuman.enabled. The stand-off changes what the player sees: its side-by-side is in docs/tools/img.",
-      "steps": [
-        {
-          "patch": "docs/director/pending/clash-window/clash-window.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "encounter-phrases-hook"
-        }
-      ]
-    },
-    {
-      "id": "encounter-meteor-route",
-      "owner": "encounter-systems",
-      "notes": "The meteor by a real pad (Encounter, 2026-11-01; first-press-list item 6): arc.firstMeteor makes the match's first planet-scale launch the meteor whatever the rival is doing, a stand-in rule for trying the move: both at tier 4, fly next to him, hold B until the flash, let go. Off as shipped; the page turns it on. meteor_route.gd holds Encounter's inputs.",
-      "steps": [
-        {
-          "patch": "docs/director/pending/meteor-route/meteor-route.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "encounter-clash-window"
         }
       ]
     },
@@ -1026,6 +700,21 @@
       "needs": [
         {
           "park": "camera-swing-readable"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-in-frame",
+      "owner": "camera-cinematography",
+      "notes": "Camera's swing-in-frame (2026-11-01, b403a3e7), after swing-peak-retry.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-in-frame.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-peak-retry"
         }
       ]
     },

@@ -22,7 +22,7 @@ const steps = opt('--script') ? JSON.parse(readFileSync(opt('--script'), 'utf8')
 ];
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const log = (m) => console.log(`[playtest] ${m}`);
-const exe = browserExe('chrome');
+const exe = process.env.PLAYTEST_EXE || browserExe('chrome');   // PLAYTEST_EXE: another Chromium (Opera GX, Edge), headless, to see whether the page behaves in the browser Orb's shortcut opens
 mkdirSync(OUT, { recursive: true });
 
 // a fake standard-mapping pad: window.__pad holds its state, navigator.getGamepads reads it, and gamepadconnected is fired by hand

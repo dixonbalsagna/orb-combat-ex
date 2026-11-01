@@ -39,12 +39,46 @@ let bad = a.length === b.length ? 0 : 1;
 for (let i = 0; i < a.length && !bad; i++) { if (statSync(a[i]).size !== statSync(b[i]).size || !readFileSync(a[i]).equals(readFileSync(b[i]))) bad++; }
 if (bad) { console.error('the copy differs from the source: refused'); process.exit(1); }
 for (const f of b) { try { chmodSync(f, 0o444); } catch { /* read-only is a courtesy on Windows */ } }
+// The copy serves itself: a standalone server (node's own modules only, no repository file) and the window that runs it, next to the web folder, so the game never depends on the repository's tools or state.
+writeFileSync(join(dest, 'serve.mjs'), [
+  "// Serves the web folder next to this file on 127.0.0.1 only. Node's own modules only. Usage: node serve.mjs [port]   (default 8766)",
+  "import { createServer } from 'node:http';",
+  "import { existsSync, readFileSync, statSync } from 'node:fs';",
+  "import { dirname, extname, join, resolve, sep } from 'node:path';",
+  "import { fileURLToPath } from 'node:url';",
+  "const base = resolve(dirname(fileURLToPath(import.meta.url)), 'web');",
+  "const port = Number(process.argv[2] || 8766);",
+  "const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.wasm': 'application/wasm', '.pck': 'application/octet-stream', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.json': 'application/json', '.css': 'text/css', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json' };",
+  "const server = createServer((req, res) => {",
+  "  let p; try { p = decodeURIComponent(new URL(req.url, 'http://x').pathname); } catch { res.writeHead(400); res.end(); return; }",
+  "  if (p.endsWith('/')) p += 'index.html';",
+  "  const file = resolve(join(base, p));",
+  "  if (!(file === base || file.startsWith(base + sep)) || !existsSync(file) || !statSync(file).isFile()) { res.writeHead(404); res.end('not found'); return; }",
+  "  res.writeHead(200, { 'content-type': MIME[extname(file)] || 'application/octet-stream', 'content-length': statSync(file).size, 'cache-control': 'no-store' });",
+  "  res.end(readFileSync(file));",
+  "});",
+  "server.on('error', (e) => { console.error(e.code === 'EADDRINUSE' ? `Port ${port} is already in use: the game may already be running at http://127.0.0.1:${port}/index.html` : String(e.message || e)); process.exit(1); });",
+  "server.listen(port, '127.0.0.1', () => console.log(`Serving ${base} at http://127.0.0.1:${port}/index.html (Ctrl-C or closing this window stops it; nothing is built or changed here)`));",
+  '',
+].join('\n'));
+writeFileSync(join(dest, 'serve.cmd'), [
+  '@echo off',
+  "title Orb Combat EX - the game server: KEEP THIS WINDOW OPEN while you play",
+  'echo This window serves the kept build to your browser. Closing it stops the game. Nothing is built here.',
+  'echo Kept build: %~dp0web',
+  'node "%~dp0serve.mjs" 8766',
+  'echo.',
+  'echo The server stopped. If you did not close it, the line above says why.',
+  'pause',
+  '',
+].join('\r\n'));
 writeFileSync(join(dest, 'README.txt'), [
   `The build Orb played: commit ${build.commit} ${build.subject || ''}`,
   `Made ${new Date().toISOString()} from the stack of ${build.parks ? build.parks.length : '?'} parks (key ${build.stackKey}); folder name in the tools' cache: ${build.folder || '?'}.`,
   `${a.length} files, checked byte for byte against the source. Untouched since: never rebuild, swap or edit this folder.`,
   '',
-  'To serve this copy again, as it is (no watch, no rebuild):   node tools/preview/handover.mjs --serve-only "<this folder>/web" --port 8766',
+  'To play: double-click serve.cmd (or run node serve.mjs 8766), then open http://127.0.0.1:8766/index.html?planet=7&meteor=loud&tiles=1&go=1&blackbox=1 . serve.cmd and serve.mjs use only node, no repository file.',
+  'To serve this copy again from the repository tools, as it is (no watch, no rebuild):   node tools/preview/handover.mjs --serve-only "<this folder>/web" --port 8766',
   'To watch a saved match file as a clip:   node tools/preview/blackbox-clip.mjs --file <the saved json> --dir "<this folder>/web" --out <a folder>',
   'The saved file names this build in its `build` field.',
 ].join('\n') + '\n');
