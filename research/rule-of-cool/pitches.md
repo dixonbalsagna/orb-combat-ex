@@ -51,6 +51,8 @@ Research & Prototyping, 2026-11-01, for Orb's order: "as playable, responsive, a
 
 ## 2. The kick and the coin turn (playable)
 
+**Changed after Orb tried it (2026-11-01):** Orb wants takeoff instant, or instant to about 80% and then a climb to top speed. The page now does that, with sliders, and has no burst over top speed. A hard turn comes out at full speed. The description and table below are the first version.
+
 **What the player notices.** He leaves on the press. A stick flip at full speed plants him for a beat, with dust and a thump in the pad, and he's gone the other way at full speed.
 
 **How it works.** The game's law is one lag toward the stick. That's why it feels floaty: speed takes a third of a second to arrive, and a reversal slides through zero with no moment to it.

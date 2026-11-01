@@ -8,11 +8,11 @@ function rep(a, b) { const n = s.split(a).length - 1; if (n !== 1) throw new Err
 
 rep('<title>Turntable arena</title>', '<title>Arena Feel Test</title>');
 const p0 = s.indexOf('<p><b>The turntable arena</b>'), p1 = s.indexOf('</p>', p0); if (p0 < 0 || p1 < 0) throw new Error('intro');
-s = s.slice(0, p0) + '<p><b>Arena feel test</b> (Research; paper: <code>research/rule-of-cool/pitches.md</code>). Plug in a pad and press any button so the browser sees it. <b>Left stick and either trigger: fly flat out.</b> Flip the stick at full speed to turn. <b>View button: the low line, on and off. Menu button: the kick and the coin turn, on and off.</b> On a keyboard: A and D, Shift, then Z and X. RB and Y together, or M, is the meteor. Fly it both ways: the top speed is the same 10,240 in both, and the numbers are in the corner. Sliders below.' + s.slice(p1);
+s = s.slice(0, p0) + '<p><b>Arena feel test</b> (Research; paper: <code>research/rule-of-cool/pitches.md</code>). Plug in a pad and press any button so the browser sees it. <b>Left stick and either trigger: fly flat out.</b> Flip the stick at full speed to turn. <b>The small button left of centre on the pad, two squares: the low line, on and off. The small button right of centre on the pad, three lines: quick takeoff and hard turn, on and off.</b> On a keyboard: A and D to move, Shift for flat out, Z for the low line, X for takeoff and turn. RB and Y together, or M, is the meteor. Fly it both ways: the top speed is the same 10,240 in both, and the numbers are in the corner. Sliders below.' + s.slice(p1);
 
 // The switches and their first values
-rep("var P = { tier: 5,", "var P = { low: 1, lowAlt: 140, lowWidth: 5200, lowFov: 26, lowLead: 18, kick: 1, kickTop: 1.35, turn: 1, tier: 5,");
-rep("['#', 'Flee with a nudge (N toggles)'],", "['#', 'One: the low line (View button or Z)'], ['low', 'Flat out, hug the land', 'c'], ['lowAlt', 'Height over the land', 60, 420, 10], ['lowWidth', 'Width of view, flat out', 2700, 16000, 100], ['lowFov', 'Lens when flat out, degrees (15 is today)', 15, 50, 1], ['lowLead', 'Look ahead, % of the view', 0, 35, 1],\n  ['#', 'Two: the kick and the coin turn (Menu button or X)'], ['kick', 'Kick out of a standing start', 'c'], ['kickTop', 'Kick, share of top speed', 1, 1.8, 0.05], ['turn', 'Coin turn on a stick flip', 'c'],\n  ['#', 'Flee with a nudge (N toggles)'],");
+rep("var P = { tier: 5,", "var P = { low: 1, lowAlt: 140, lowWidth: 5200, lowFov: 26, lowLead: 18, lowPitch: 11, lowSoft: 1, kick: 1, kickFrac: 80, kickClimb: 30, turn: 1, tier: 5,");
+rep("['#', 'Flee with a nudge (N toggles)'],", "['#', 'One: the low line. Switch it with the small button left of centre on the pad, two squares, or Z'], ['low', 'Flat out, hug the land', 'c'], ['lowAlt', 'Height over the land', 60, 420, 10], ['lowWidth', 'Width of view, flat out', 2700, 16000, 100], ['lowFov', 'Lens when flat out, degrees (15 is today)', 15, 50, 1], ['lowLead', 'Look ahead, % of the view', 0, 35, 1], ['lowPitch', 'Camera tilt when flat out, degrees (7 is today)', 7, 20, 1], ['lowSoft', 'Round off near hills, not flat tops', 'c'],\n  ['#', 'Two: quick takeoff and hard turn. Switch them with the small button right of centre on the pad, three lines, or X'], ['kick', 'Quick takeoff', 'c'], ['kickFrac', 'Share of top speed you get at once, %', 30, 100, 5], ['kickClimb', 'Then climb to top speed over (ticks, 60 is a second)', 1, 90, 1], ['turn', 'Hard turn when you flip the stick at speed', 'c'],\n  ['#', 'Flee with a nudge (N toggles)'],");
 
 // The pad: either trigger is flat out, as the layout has it; View and Menu switch the two pitches, so Orb can compare without letting go
 rep("o.fly = o.fly || bt(7);", "o.fly = o.fly || bt(7) || bt(6); o.togLow = bt(8); o.togKick = bt(9); padG = g;");
@@ -21,12 +21,12 @@ rep("var inp = { x: 0,", "var padG = null; function rumble(st, wk, ms) { try { i
 rep("if (e.code === 'KeyN') {", "if (e.code === 'KeyZ') { SETTERS.low(P.low ? 0 : 1); return; } if (e.code === 'KeyX') { var kk = P.kick ? 0 : 1; SETTERS.kick(kk); SETTERS.turn(kk); return; } if (e.code === 'KeyN') {");
 rep("  if (pr('meteor') && !S.met && !S.send && !S.stop) startMeteor(i);", "  if (pr('togLow')) SETTERS.low(P.low ? 0 : 1); if (pr('togKick')) { var k2 = P.kick ? 0 : 1; SETTERS.kick(k2); SETTERS.turn(k2); }\n  if (pr('meteor') && !S.met && !S.send && !S.stop) startMeteor(i);");
 
-// Two: the flight's law. Today it's one lag toward the stick. The kick leaves at once, over top speed, and eases to it; a stick flip plants, then kicks the other way
+// Two: the flight's law. Today it's one lag toward the stick. The takeoff gives a share of top speed at once and climbs to the rest; a stick flip plants, then takes off the other way
 rep("    S.v += (tv - S.v) * (i.fly ? 0.16 : 0.22); S.airL = S.airR = Math.abs(S.v) > 2500;", `    var flying2 = i.fly && Math.abs(i.x) > 0.5, sg = i.x > 0 ? 1 : -1; if (S.kickK === undefined) S.kickK = -1;
     if (P.turn && !S.coin && flying2 && i.x * S.v < 0 && Math.abs(S.v) > 0.5 * flat) { S.coin = { k: 0, to: sg }; S.kickK = -1; S.hopK = 0; }
-    if (S.coin) { var cn = S.coin; cn.k++; if (cn.k <= 5) S.v *= 0.55; else S.v = 0; if (cn.k === 6) { rumble(1, 0.6, 140); spawnDebris(norm(lineDir(0, S.t)), 240, 0.35); } if (cn.k >= 8) { S.coin = null; S.kickK = 0; rumble(0.5, 0.9, 110); } }
+    if (S.coin) { var cn = S.coin; cn.k++; if (cn.k <= 5) S.v *= 0.55; else S.v = 0; if (cn.k === 6) { rumble(1, 0.6, 140); spawnDebris(norm(lineDir(0, S.t)), 240, 0.35); } if (cn.k >= 8) { S.coin = null; S.kickK = -1; S.v = cn.to * flat; rumble(0.5, 0.9, 110); } }
     else if (P.kick && S.kickK < 0 && flying2 && (!prev.fly || !prev.xOn) && Math.abs(S.v) < 0.5 * flat) { S.kickK = 0; rumble(0.5, 0.9, 110); }
-    if (!S.coin) { var mult = 1, gain = i.fly ? 0.16 : 0.22; if (S.kickK >= 0) { if (!flying2) S.kickK = -1; else { S.kickK++; var kt = S.kickK, top = P.kickTop; mult = kt < 8 ? top : top + (1 - top) * sstep((kt - 8) / 28); gain = kt < 4 ? 0.55 : 0.3; if (kt >= 36) S.kickK = -1; } } S.v += (tv * mult - S.v) * gain; }
+    if (!S.coin) { var mult = 1, gain = i.fly ? 0.16 : 0.22; if (S.kickK >= 0) { if (!flying2) S.kickK = -1; else { S.kickK++; var kt = S.kickK, fr = P.kickFrac / 100; mult = fr + (1 - fr) * sstep(kt / Math.max(1, P.kickClimb)); gain = 1; if (kt >= P.kickClimb) S.kickK = -1; } } S.v += (tv * mult - S.v) * gain; }
     i.xOn = Math.abs(i.x) > 0.5; S.airL = S.airR = Math.abs(S.v) > 2500;`);
 
 // One: the low line. A height that looks ahead along his line, so he's over a ridge as it arrives, and falls away slowly behind it
@@ -39,12 +39,18 @@ rep("  S.altL += ((S.airL ? 420 : 0) - S.altL) * 0.08; S.altR += ((S.airR ? 420 
 rep("var fast = Math.abs(S.v) > 2500, tw = P.width * (fast ? P.wide : 1) + S.gap * 1.3,", "var fast = Math.abs(S.v) > 2500, tw = (fast ? P.width * P.wide + (P.lowWidth - P.width * P.wide) * (S.lowK || 0) : P.width) + S.gap * 1.3,");
 // the meteor keeps its own lens
 rep("  var m = S.met; m.k++;\n", "  var m = S.met; m.k++; T_FOV = Math.tan(15 * RAD); S.lead = 0; S.lowK = 0;\n");
+// near hills: the proto cuts land in front of the fighters flat at one sight line, which on the low line reads as flat-topped hills that pump as he rides up and down. Round them off, and lift the camera a little
+rep("w.y=mix(w.y,min(w.y,ln),smoothstep(0.,260.,w.z)*uFore);", "w.y=mix(w.y,uSoft>.5?(w.y<ln?w.y:ln+70.*(1.-exp(-(w.y-ln)/420.))):min(w.y,ln),smoothstep(0.,uSoft>.5?max(260.,uFG*3.):260.,w.z)*uFore);");
+rep("uniform float uR,uRr,uRel,uFore,uTy;uniform vec3 uF1,uF2,uCam;", "uniform float uR,uRr,uRel,uFore,uTy,uSoft,uFG;uniform vec3 uF1,uF2,uCam;");
+rep("gl.uniform1f(pT.u.uFore, foreNow); gl.uniform1f(pT.u.uTy, ty);", "gl.uniform1f(pT.u.uFore, foreNow); gl.uniform1f(pT.u.uSoft, P.lowSoft && (S.lowK || 0) > 0.01 ? 1 : 0); gl.uniform1f(pT.u.uFG, spacing()); gl.uniform1f(pT.u.uTy, ty);");
+rep("pit = P.pitch * Math.PI / 180, ty = S.y", "pit = (P.pitch + (P.lowPitch - P.pitch) * (S.lowK || 0)) * Math.PI / 180, ty = S.y");
+rep("  if (tg > S.softG) S.softG += (tg - S.softG) * 0.15;", "  if (P.lowSoft && S.lowK) tg = Math.min(tg, 707 - 357 * S.lowK);\n  if (tg > S.softG) S.softG += (tg - S.softG) * 0.15;");
 // the view looks ahead of him
 rep("cam = [0, ty + dist * Math.sin(pit), dist * Math.cos(pit)], view = look(cam, [0, ty, 0], [0, 1, 0]),", "cam = [S.lead || 0, ty + dist * Math.sin(pit), dist * Math.cos(pit)], view = look(cam, [S.lead || 0, ty, 0], [0, 1, 0]),");
 // the burn stays a thread up close, and comes to a point at his back rather than a square end
 rep("var coreW = 86 * wAge * Math.max(air, 0.15) * Math.max(heat, 0.3) * Math.max(cool, 0.3), corePx = coreW * pp, px = heat * cool < 0.02 ? 0 : Math.max(L[0] * corePx, L[1]) * (o.knot ? 1.5 : 1);", "var coreW = 86 * (1 - 0.72 * (S.lowK || 0)) * wAge * Math.max(air, 0.15) * Math.max(heat, 0.3) * Math.max(cool, 0.3), corePx = coreW * pp, px = heat * cool < 0.02 ? 0 : Math.max(L[0] * corePx, L[1]) * (o.knot ? 1.5 : 1) * Math.min(1, 0.1 + e / 0.25);");
 // what it does, in numbers
-rep("(function () { var N = S.nudge; if (!P.nudge && !N.total)", "'<br><b>one: low line ' + (P.low ? 'ON' : 'off') + ', two: kick and turn ' + (P.kick || P.turn ? 'ON' : 'off') + '</b> (View, Menu; or Z, X)<br>the land under him crosses ' + (Math.abs(S.v) / S.wid).toFixed(2) + ' views a second, ' + Math.round(S.alt) + ' u up' + (function () { var N = S.nudge; if (!P.nudge && !N.total)");
+rep("(function () { var N = S.nudge; if (!P.nudge && !N.total)", "'<br><b>one: low line ' + (P.low ? 'ON' : 'off') + ', two: takeoff and turn ' + (P.kick || P.turn ? 'ON' : 'off') + '</b> (the two small buttons in the middle of the pad, or Z and X)<br>the land under him crosses ' + (Math.abs(S.v) / S.wid).toFixed(2) + ' views a second, ' + Math.round(S.alt) + ' u up' + (function () { var N = S.nudge; if (!P.nudge && !N.total)");
 
 if (!s.includes('/*BUNDLE*/')) throw new Error('no slot');
 s = s.replace('/*BUNDLE*/', () => "var GEN2PACK = '" + readFileSync(A + 'gen2-p7.pack').toString('base64') + "';");
