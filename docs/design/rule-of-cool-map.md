@@ -125,6 +125,9 @@ Six, because each answers something a player will try in the first ten minutes o
 
 | # | Feature | Pad action | What the choreographer does | The cool | Systems | Cost | Test |
 | ---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 34 | **The mixed string** (C9, §5; with Combat) | Punches, then RB + X, Y or B as he slides, and a zip strike back in: the same presses as ever | Keeps one string across any range, leads the far blows from the send's forecast, and lets what's in the way finish it | **What Orb wants most:** a combo that starts as a fist fight and ends across the map, different each place | Combat, Encounter, Camera, World. Sim | M to L | Over seeded random presses, close-to-far strings are common and rarely alike outside a phrase. No worth gain: QA's no-best-button band holds. He can answer the far half. No lock |
+| 36 | **The Driver** (`energy-overhaul.md` §21, the replacement for B's hold) | RB + B held to a level, then released | One huge straight shot that moves him and kicks the shooter back. Level 3 is a full send from any range, with the planner choosing the landing | A punch thrown across the world, and a recoil you can use as movement | Encounter, Combat, Animation, VFX. Sim | M | Level 3 lands rarely on a reading opponent. QA's damage and match-length rows. The claw bot shows no gain with the stick inert. Legal's look |
+| 35 | **Water** (C10, §5) | Nothing new | Nothing: the world answers | Orb: "absolutely excited". Every big move has a wet version | World, Rendering, VFX, Performance. Mostly view | S per item | No frame cost on the old laptop. Flash clips. Each piece on its own switch |
 | 24 | **The low line** (Research's 1; likely, not final) | Flat out with the stick level | Pulls him down to skim what's under his line, with §5's tower rule, plus a wider lens and a look-ahead up to the look gate's limit | Far more rush for no extra speed, with towers whipping past | Simulation, Camera, Rendering. Sim, hashed | S to M | Never under the ground. Vertical speed under a limit. The stick wins on its tick. Hash and rollback gates. Orb's eye on the lens |
 | 25 | **Fly into night** (Research's 4) | Keep flying | The sun is fixed to the planet, so 4 to 8 s of flat-out flight takes you to night, with windows coming on | No meter says "you crossed a planet" as plainly | Rendering, Art, VFX. View | S | The look gate with fighters at night. A swing's 60°/s across the sunset, read by the flash clips. Legal, §5 |
 | 3 | **The long strike** | Flat out (hold LT) toward the rival, then B or a right-stick flick | Stages the arrival at flying speed. The blow keeps the speed on arrival and the send is up to ×1.25. A whiff carries him about 1 s past | Flying has a payoff: leave, turn and come back like a thrown spear. The defender has seconds and a visible line to answer | Encounter, Combat, Camera. Sim | S to M | Never the best button: a scripted long-striker wins no more than the medium arm. A perfect block stops it, and the hard AI punishes a whiff at least 70% of the time. Flee time doesn't rise |
@@ -157,6 +160,8 @@ Six, because each answers something a player will try in the first ten minutes o
 | 22 | **Thrown vehicles and ships** (feature 17) | A in reach, then X, Y or B | Needs props on the new ground |
 | 28 | **The cloud scar** (Research's 7) | Fly through the clouds | M for a nice touch, and the lower levels may have no clouds. It waits for the widest view to be settled |
 | 33 | **The lean, a bluff** (Controls' 10) | Push the right stick short of a request and hold it | L: a real feint, with two more bits in the word, and the AI has to read it. It needs the pre-read to be seen online |
+| 37 | **Mines on the open arena** (C8, E134 to E138) and **grabs** (C7) | LB + RB, A | Still in workshop, at Orb's word, on a big-ring prototype |
+| 38 | **Stick pulses** (C4, E133) | Pump the stick while a beam is out | Orb: "workshop when the right stick system is fully implemented". The claw bot decides |
 
 ## 4. What every feature keeps
 
@@ -223,6 +228,24 @@ Six, because each answers something a player will try in the first ten minutes o
 - **The coin turn has no invulnerability.** He can be hit in the plant, and that's its price.
 - **QA's rows:** escapes and catches stay inside their bands, and flee time doesn't rise. **If it's still too good, cut the overspeed before touching the response.**
 
+### Orb's energy answer (`docs/design/energy-overhaul.md` §21)
+
+**Row 34, the mixed string, is the row Orb wants most:** "emergent combos, dynamic combat choreography ... something really special". **It's first in Next, and it moves into the first playable if `energy.v2` lands in time.** That's the EP's call, as `energy.v2` isn't built. It's mine and Combat's to design; Combat's pitches 1, 2 and 8 and the Driver are what it runs on.
+
+**What makes it a system rather than a clip.** One press stays one attack, with no cancel inputs, and these four rules do the rest:
+1. **One string across any range.** A shot that lands on him while he's sliding is the string's next blow, and freshness and "one stun a string" count it. So a string doesn't end when he leaves reach; it ends when nothing lands.
+2. **The director leads the far blows.** A bolt follows him, a lob aims where the send's forecast says he lands, and a zip strike arrives at his get-up, with its piece chosen by what's between them. It reads the forecast the planner already has.
+3. **Nothing's guaranteed.** E1 stands: he has his hands back after his own reel, so he can guard the lob or dodge the zip. **The far half of the string is a read, not a true combo.**
+4. **What's in the way finishes it.** A wall, a mine on the line (E137), a tree (row 13), water (row 35), or at the far end a level 3 Driver and the meteor. So the same presses come out differently by place, and the fight writes its own endings.
+
+**What Combat adds:** shot pieces in phrases (row 1), so RB is part of a learnable pattern. **What Camera adds:** one eased framing from close to far, with no cut.
+
+**Row 35, water:** Orb: "any low-impact water physics we can accomodate I am absolutely excited for." In order of cost, with World's and Rendering's estimates still to come. **Most of this is view-only or already built:**
+- **Already built, off:** `docs/world/water-v2.md`'s fill (a trench or crater near water floods), the ring wave and the skip, measured at about a quarter of today's worst water step with four fills open.
+- **View only, and cheap:** a flat-out wake and a low-line spray (§1), a lob's column falling back as rain, steam where a beam crosses water, the parted sea's rush back (E114).
+- **Small sim, later:** a B shot skipping across water, as a body does.
+- **Not doing:** rivers, tides or water that climbs, as `water-v2.md` rules out.
+
 ### The stick's speed (`docs/controls/responsiveness.md`), ruled
 
 Measured natively: a face tap at close range lands 3 ticks after the finger moves, and a ramp-2 flick lands at 15. **The first playable ships all three below, behind Controls' switch and in the director's data, for Orb's thumbs to judge.** Together they take that flick from 15 to **11 ticks.** Nobody has played it.
@@ -269,7 +292,8 @@ Measured natively: a face tap at close range lands 3 ticks after the finger move
 
 ## 6. For Orb
 
-Two questions, neither of which holds up the first playable:
+Three questions, none of which holds up the first playable:
 
 1. **Same presses, same combo?** Once row 1 is in the build, try it with the switch on and off and say which you'd rather have. That settles pillar 2's wording (`pillar-2-wordings.md`), where #1 is my recommendation.
 2. **Do the first four lines feel like those four fighters?** (§1.) Answer once there's a still to look at.
+3. **The Driver as B's hold?** One huge shot that sends him and kicks you back, from a clip when Research has one. It's my pick over a shot that banks off the world and a battery of stored shots (`energy-overhaul.md` §21).

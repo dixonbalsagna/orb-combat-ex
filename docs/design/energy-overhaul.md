@@ -1,6 +1,6 @@
 # Energy overhaul: the system spec
 
-Owner: Game Design. **Status: the full spec, 2026-10-23** (the frame, §1 to §12, then Part 2, §13 to §19, with the builders' constraints ruled in §19 and Combat's kits in §20). Every rule is numbered (E1, E2 and on) so Controls, Combat, Research, Narrative and Legal can build on it and cite it. It is paper only. Nothing is built, every number is a first value for data, and all of it sits behind one switch (`energy.v2`) until Orb has played it. Part 2 holds Orb's step-by-step clips, the fighter kit sheet, QA's bands, the data shape and what retires.
+Owner: Game Design. **Orb answered the clips on 2026-11-01, and §21 replaces anything below where they differ: beams are the right stick's, Y is explosive, B is kinetic and its hold is the Driver.** **Status: the full spec, 2026-10-23** (the frame, §1 to §12, then Part 2, §13 to §19, with the builders' constraints ruled in §19 and Combat's kits in §20). Every rule is numbered (E1, E2 and on) so Controls, Combat, Research, Narrative and Legal can build on it and cite it. It is paper only. Nothing is built, every number is a first value for data, and all of it sits behind one switch (`energy.v2`) until Orb has played it. Part 2 holds Orb's step-by-step clips, the fighter kit sheet, QA's bands, the data shape and what retires.
 
 **Orb's ask** (`docs/ep/vision.md`, "Energy attacks overhaul", 2026-10-23), and where each part is answered:
 
@@ -66,6 +66,8 @@ Owner: Game Design. **Status: the full spec, 2026-10-23** (the frame, §1 to §1
 
 ## 4. Y: the lob
 
+**See §21 (E123): wider explosions.**
+
 - **E30. A tap** winds up for 12 ticks, read as a medium's, and then throws a blast on an arc that lands on him 36 ticks later from any range. It bursts over 1.5 bh. At the centre it is worth a medium (2.5 lights), and at the edge half that. A clean centre hit knocks him back 3 bh. 6 ki, trade power 3.
 - **E31. Mashed, it is a barrage:** one lob a press, at most one every 12 ticks. A barrage is one use for freshness.
 - **E32. Held past its decision point (16 ticks), it charges.**
@@ -78,6 +80,8 @@ Owner: Game Design. **Status: the full spec, 2026-10-23** (the frame, §1 to §1
 - **E36. Each fighter's own:** the lob's shape, its arc (high and slow, or low and quick, within 6 ticks of 36) and its level-2 form (Combat).
 
 ## 5. B: the heavy, as a blast or a beam
+
+**Replaced by §21:** B's hold is the Driver, and the beam rows below move to the right stick. E40's choice and E50's pulses no longer stand as written.
 
 - **E40. The choice: tap B for the blast, hold B for the beam.** Every press of B starts the same gather in his hand. Let go at any point before level 1, a tap or a short hold, and he throws the heavy blast: never a wasted charge. Hold to level 1 and it is a beam. So the choice is made by how long he holds, with the same thumb, and he can change his mind until level 1 lights.
 - **E41. The heavy blast.** After its 16-tick wind-up, read as a heavy's, it is one big seeking shot. It is worth a heavy, a clean hit knocks him back 5 bh, and it craters 2 bh. 10 ki. Trade power 4: it eats four bolts or one lob and goes on.
@@ -131,6 +135,8 @@ Owner: Game Design. **Status: the full spec, 2026-10-23** (the frame, §1 to §1
   For Legal: the ring binds. It never cuts, as a thrown disc would.
 
 ## 7. LB + RB: mines and traps
+
+**See §21 (E121, E134 to E138):** the open arena's workshop, and traps no longer fire a beam.
 
 - **E70. Defensive energy is LB + RB held (mask 3).** His guard stays up. Each face press lays one mine or trap nearby, of that button's weight. **Under mask 3 no shot is ever thrown:** every face press is a lay, so a press with guard and energy both held never drops the guard beyond the lay's own frames (E72). The input holds the guard throughout, and the sim drops it only for those frames. Mask 3 is switched on in data (`"hybrids": [3]`); every other pair stays newest-wins.
 - **E70b. The lay on each device** (Controls, `docs/controls/energy-input.md` §5). On a pad, LB + RB + a face button. On a keyboard and on Full touch, toggled or latched energy plus Guard held, which is the documented one-hand lay; it also keeps a toggled player in energy while guarding. On Simple pad and Simple touch, which have no energy button, the lay is Guard (held, or the one-shot tap that arms it for one blow or 90 ticks) plus a face button while the director is in energy mode at range; Encounter reads it. Pressing LB into the hybrid is also a perfect-block attempt, as every fresh LB press is.
@@ -453,3 +459,82 @@ Combat's kits are in `docs/combat/energy-movesets.md` and `docs/combat/pending/e
 **The Protagonist's parked ideas** (his kit's question 3):
 - **Bolts that wear a guard open ("the read"):** kept as a template for a future fighter. A guard already leaks shots (`brawl-second-pass.md` §5b).
 - **His beam capped at level 2 near people at high anguish:** not wanted. It would take a choice from the player, and his narrowing near people (E113) is his answer there.
+
+## 21. Orb's answer on the ten clips (2026-11-01)
+
+Orb, approving the direction with changes: "I really want emergent gameplay, dynamic approach to all of this, keep going because it looks superb." Their notes are the last entry of `docs/ep/vision.md`. **This section replaces E1 to E117 where they differ. Paper only: nothing here is built or played, and every number is a first value.**
+
+### Beams, and what Y and B are for
+
+- **E120. Beams belong to the right stick** (Orb: "exclusive", "with extremely few, if any, exceptions", revisited at the 12-fighter roster). **RB + stick, or its D-pad, key and swipe mirrors (R32), and a left-handed swap.** So E40's "hold B for the beam" is gone, §3 of `right-hand-attacks-rulings.md` stands, and no button press ever becomes a beam.
+- **E121. The one exception for now is the RT + B signature,** where a fighter's signature is a beam (E51). It stays where Orb played it. **Traps stop being one:** E75's line no longer "fires his level-1 beam". It snaps a kinetic shot along itself, and Combat's Velvet Rope changes to match.
+- **E122. What moves to the stick, unchanged:** E43's lengths, worth, ki and power, E44's carry at level 3, E48's rooted sweep, each fighter's beam (E49), and the struggles (§9), on the stick's ticks of 12, 30 and 54. The kits' beams move whole: Breakwater, Lance Sheaf, Hem Sweep and Furnace Vent.
+- **E123. Y is explosive and wide:** medium to high damage over an area. It answers "where he is, or where he's going". Tap: a burst of 2.5 bh, in place of 1.5, worth a medium at the centre. Level 1: 3.5 bh, ×1.4. Level 2: his own form (E32), up to about a heavy's worth. Ki and timing as E30 and E32. **Wider bursts cost more structures,** so QA reads the row-1 band.
+- **E124. B is kinetic and directed:** high to excessive damage down one line, with a single point of impact. It answers "him, there". A tap (E41) is still worth a heavy and costs 10 ki, but it flies **straight and fast,** arriving within 24 ticks from any range (pillar 3), along the line to where he is at release. So moving off that line at the right moment is a read, which a lob's area doesn't allow. It makes a smaller crater and a harder knock than Y.
+
+### What B's hold does now: the candidates
+
+Orb: "make sure there is a fun and cool replacement for the beam function this was going to control."
+
+| | The idea | What's fun | What's wrong with it |
+| :--- | :--- | :--- | :--- |
+| **1. The Driver (my pick)** | Hold B: one huge kinetic shot in three levels that **moves him and kicks you back** | It's a punch thrown across the world. At level 3 it's a full send from any range, so everything a launch sets up can now start from far away, and the recoil makes it a movement option in the open | "Excessive" damage has to be earned by the wait, and it needs QA's read |
+| 2. The Bank Shot | Hold B: more levels mean more bounces off ground, water and walls | The world's in every shot, and it skips across a sea | It's hard to read why it hit you, it's dull in open sky and costly to forecast. **Kept as Bolus's own form** |
+| 3. The Battery | Hold B to bank up to three shots, then tap to fire them one at a time | You carry a threat around with you, which is C5's appeal | It's bookkeeping, and it's a weaker picture. **Its threat survives as Loaded on the Driver (E129)** |
+
+**The pick is the Driver, a working name for Narrative.** It gives a clean grammar: **B sends him, in both layers. The stick puts him where you aim, or draws a beam. Y covers the ground.**
+
+- **E125. The hold.** RB + B held past its decision point of 20 ticks, with levels at 30, 54 and 84 (E42's ticks, cues and half-speed flight). E45 and E46 stand: he's armoured against lights from level 1, a heavy or a grab ends it, and a dodge or guard drops it for nothing. Let go before level 1 and it's the tap. It's the same gather either way.
+- **E126. The shot.** Straight, fast and narrow, with no root: he keeps flying as it leaves, unlike a beam.
+
+| Level | Charged at | Worth, of a heavy | Ki | On a clean hit | Recoil on the shooter |
+| ---: | ---: | ---: | ---: | :--- | ---: |
+| 1 | 30 | ×1.3 | 12 | Knock-back 6 bh | 1.5 bh |
+| 2 | 54 | ×1.8 | 20 | Knock-back 10 bh, and his own form (below) | 3 bh |
+| 3 | 84 | **×2.6** | 32 | **A full send, a power send on `buildings.md` §6.1's ladder,** with the left stick nudging it as any launch | 6 bh |
+
+- **E127. Against it.** A guard takes it at the guard's rate and skids back. **Level 3 breaks a guard,** as B does in a brawl. A dodge in its last 8 ticks, moving off the line, or a perfect block all answer it. It eats shots by trade power (6, 9 and 12), and a beam's power beats it unless level 3 punches through a level 1. It can't open a struggle.
+- **E128. The recoil is movement, and never takes control.** It kicks him back along the shot's line over about 10 ticks while the stick stays his, with no invulnerability. **So it's emergent:** fired on the kite (LT + RB) at a chaser behind you, it's a getaway you paid 32 ki and 84 lit ticks for. Fired from a tower's face, it knocks you off it. It doesn't stack with the kick's overspeed.
+- **E129. C5 Loaded lives in both places.** E47 stands as written for the **Driver** at level 3 (B held, 4 ki a second, stepping down, never firing by itself), and for a **beam on the stick** held at level 3 (RB and the stick held, the same rule). Orb's clip plays out the same either way: a lit hand he carries as a threat, which meets the lunge. It also needs no thumb on a face button.
+- **E130. It can earn the meteor.** A level 3 Driver is "a fully charged B", so with both at tier 4 on a stunned or weak foe it's the meteor launch (`rule-of-cool-map.md` §2), from range. That's the far end of C9's string. QA's "one match in two or three" still binds.
+- **E131. The claw law.** While B is held in energy, the stick is inert, so no grip can bank a Driver and draw a beam together. E46b's one charge at a time now covers the stick. Releasing B then moving the stick falls under the law's R. The claw bot gates it.
+- **E132. Charges off and the latch (E46c).** The latch reaches every Driver level. With charges off, B is the tap. The route to beams is the stick's mirror, with the latch for a player who can't hold.
+
+**The kits keep their differences.** The level 2 form is each fighter's own, and it uses what the heavy techniques already were. Combat's to choose and Narrative's to name, inside E81:
+
+| Fighter | Heavy technique | His Driver | Level 2's own form |
+| :--- | :--- | :--- | :--- |
+| **Grist** (control) | Whole Palm | An open-handed shove across the distance, wider and with the most knock-back | **The shove:** extra knock-back and less crater |
+| **Loupe** (precision) | Rank Breaker | The thinnest and fastest, and exact | **The pierce:** it goes through the first thing it meets, a shot, a mine or a wall, and carries on |
+| **Empress Orza** | Throne Quake | It runs along the ground from her stamp, then rears up under him | **The ground line:** it follows the ground, and leaves a crack along it |
+| **Bolus** | Wrecker Swing | A slug of scrap from the furnace | **The bank:** it bounces once off a wall, heap or ground (candidate 2, in one kit) |
+
+### C4 pulses: parked, with a constraint
+
+**E50 as written can't stand.** A press of B while the stick steers a beam gives a claw a real gain, since a standard thumb can't be in both places, and `right-hand-attacks-rulings.md` §3 already says no face button acts while a beam is out. **E133. The workshop's candidate, when the stick's fully in, as Orb asked: pumping the stick itself.** Easing it back toward the centre and out again along the same aim is a pulse, on the same numbers as E50, and nothing else moves. Struggles stay the beat's (E92). Controls and Research prototype it then, and the claw bot decides.
+
+### C8: mines on a large open arena (a workshop)
+
+**The fault.** A mine with a reach of 1 to 2 bh, left where it was laid, on a planet where the fight moves 5,000 units in a second, is usually left behind. **But the fight is on one line,** so a chase passes along the same line, and a send is aimed. That's the opening. For a prototype on the big ring, not final:
+
+- **E134. Lay in flight, and they wake behind you.** Laying while flying drops them on the line behind him, so a flee or a chase has a minefield in its path, and the chaser reads it, shoots it or goes over the top.
+- **E135. Throw it out.** A held lay carries out to about 30 bh along the stick, in place of 6, and it arms 1 tick later per bh. So it can cut off a route, but never spring instantly at range.
+- **E136. Reach scales with tier:** ×1, ×1.5, ×2 and ×3 at tiers 1 to 4, so a mine can be read and matters at a wider view.
+- **E137. Sends know about mines.** A send's score gains a small term for an armed mine on its line, and the stick's vote wins as usual. So you can lay it, then drive him into it from far away, which is C9's emergent ending. E74's rule stands: it can catch the layer too.
+- **E138. A cold mine fizzles.** One left about 120 bh behind the fight goes out quietly. There's no litter, and the frame rate holds.
+- **QA's first read:** of the mines laid by a mine-using arm, at least 40% go off or get answered, and 1 to 3 a match do real work. E79's rule on who's inside a burst isn't changed here.
+
+### C7 and C7b: grabs (a workshop)
+
+The frame stands (E60 to E69). **What to look at on the open arena:** a throw that arrives from any range makes the yank a long pull, which is either rule of cool or too much, so Combat clips it at 50 and 200 bh. And each payoff should lead somewhere in C9's string: a yank into a blow, a bind into a Driver's tap (E65), a slam into a lob, a throw into a wall. RL-220 stands for Bolus's hook and clamp, on fighters only.
+
+### C9 and C10
+
+Both are rows in `rule-of-cool-map.md`: **the mixed string is row 34,** and **water's cheap list is row 35.**
+
+### What this changes on Combat's sheet and in §17
+
+- **§14:** "Beam (B held)" becomes "Beam (stick)", and there's a new row, "Driver (B held), with his level 2 form", damage within 15% of the reference.
+- **§17:** RB + B becomes "tap for the heavy blast, hold for the Driver". The beam is on the stick.
+- **§18's question is closed by Orb's answer.**
+- **For Legal:** the Driver's look and its name, and the recoil pose, under the energy screen's rules. Nothing in or above a hand, and a straight shot, as with the beams.
