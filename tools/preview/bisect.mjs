@@ -35,7 +35,6 @@ if (man.problems.length) { console.error(man.problems.join('; ')); process.exit(
 const PARKS = (opt('--parks', '') || '').split(',').filter(Boolean);   // --parks a,b,c: bisect over just these, in the manifest's order (a stack of someone else's: "main + World 08-15 + field-pads + ...")
 const parks = PARKS.length ? man.parks.filter((p) => PARKS.includes(p.id)) : man.parks.filter((p) => p.ready !== false);
 if (PARKS.length && parks.length !== PARKS.length) { console.error(`--parks names ${PARKS.filter((x) => !man.parks.some((p) => p.id === x)).join(', ') || 'a park twice'}, which the manifest does not have`); process.exit(2); }
-const godot = godotExe(opt('--godot'));
 // These five read the switches AS SHIPPED (Combat, 2026-11-01; found here with --switches): with the stack's switches on they fail on the commit alone, so by default they are run with the switches off, and run with them on only when told.
 const SHIPPED_ONLY = /(?:^|\/)(?:parity|launchbiome_probe|cover_water_check|lake_water_check|anim_check)\.gd$/;
 let SW = opt('--switches');   // which preview switches are on in every probe: a list, 'none', or absent (all, as the stack has them)
@@ -43,6 +42,8 @@ if (SHIPPED_ONLY.test(script)) {
   if (SW === undefined) { SW = 'none'; console.error('[bisect] this check reads the switches AS SHIPPED (golden, launchbiome_probe, cover/lake water, anim_check fail with the stack\'s switches on, on main alone): running it with the switches OFF; pass --switches <list> --with-switches-anyway to vary them'); }
   else if (SW !== 'none' && !has('--with-switches-anyway')) { console.error(`refusing: ${script} reads the switches AS SHIPPED, so it fails on any tree with switches on (${SW}) whatever the parks are; use --switches none, or add --with-switches-anyway if you are tracing which switch does it`); process.exit(2); }
 }
+// after the refusal above, which needs no Godot (CI has none, and the self-test runs the refusal there)
+const godot = godotExe(opt('--godot'));
 const switches = SW === undefined ? null : SW === 'none' ? [] : SW.split(',').filter(Boolean);
 const memo = new Map();
 
