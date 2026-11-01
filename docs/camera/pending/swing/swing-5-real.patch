@@ -1,0 +1,905 @@
+diff --git a/data/camera/swing.json b/data/camera/swing.json
+new file mode 100644
+index 0000000..edcf9b0
+--- /dev/null
++++ b/data/camera/swing.json
+@@ -0,0 +1,6 @@
++{
++  "_note": "Camera's numbers for the swing that a reading can move (docs/camera/swing-view.md). A flash read or a tester can lower peakRate with no code change (Accessibility, docs/accessibility/swing-motion.md, ruling 3). The view's only: the sim never reads this.",
++  "schema": "camera.swing/1",
++  "peakRate": 3.0,
++  "_peakRate": "the peak launch's zoom, e-folds a second at most. 3 is Research's: 93% of the descent in frame, against 34% at 1. A slower number loses the falling fighter out of the frame"
++}
+diff --git a/render/camera/cam_places.gd b/render/camera/cam_places.gd
+index 3713fd9..6fe27ae 100644
+--- a/render/camera/cam_places.gd
++++ b/render/camera/cam_places.gd
+@@ -13,6 +13,20 @@ static var swing_source: Callable = Callable()
+ static var biome_source: Callable = Callable()
+ static var land_source: Callable = Callable()
+ 
++const _DATA: String = "res://data/camera/swing.json"
++static var _d = null
++
++
++## Camera's numbers a reading can move (data/camera/swing.json).
++static func data() -> Dictionary:
++	if _d == null:
++		var j = JSON.parse_string(FileAccess.get_file_as_string(_DATA))
++		if not (j is Dictionary):
++			push_error("CamPlaces: could not parse " + _DATA)
++			j = {}
++		_d = j
++	return _d
++
+ const _TALL_RINGS: Array = [0.5, 1.0]
+ const _TALL_SPOKES: int = 8
+ 
+@@ -74,16 +88,23 @@ static func view_of(f: PackedFloat64Array, x_from: float, p: Array) -> Vector2:
+ 	return Vector2(vx * k * r, vz * k * r)
+ 
+ 
+-## A building's or a mark's place in the view from x_from: (signed distance, depth). Through the frame when it has its own point
+-## (`anchor`, a mark as a record); otherwise where the sim poses it.
+-static func place(_S: SimState, f: PackedFloat64Array, x_from: float, thing, x: float, z: float = 0.0) -> Vector2:
++## A building's or a mark's place in the view from x_from: (signed distance, depth). Through the frame when it has its own point (`anchor`, a
++## mark as a record). A building in a running swing reads its planet point too, since the sim poses only those near the pivot until rest
++## (SimSwing's reach) and a pane on a far fighter can look past that. Otherwise where the sim poses it.
++static func place(S: SimState, f: PackedFloat64Array, x_from: float, thing, x: float, z: float = 0.0) -> Vector2:
+ 	var an = thing.get("anchor") if thing is Object else thing.get("anchor", null)
+ 	if an != null:
+ 		return view_of(f, x_from, an)
++	var sw = S.get("swing")
++	if sw != null and bool(sw.active) and thing is SimState.Building:
++		var dirs = S.get("bDir")
++		var i: int = int(thing.idx) * 3
++		if dirs != null and i + 2 < dirs.size():
++			return view_of(f, x_from, [dirs[i], dirs[i + 1], dirs[i + 2]])
+ 	return Vector2(SimWrap.sdx(x_from, x), z)
+ 
+ 
+-## The biome under the line at x, by the frame: the bake's stored biome at that point. What its name is comes from the strip's table.
++## The biome under the line at x: WorldBiomes follows the frame on a field world.
+ static func biome(S: SimState, x: float) -> String:
+ 	if biome_source.is_valid():
+ 		return biome_source.call(S, x)
+@@ -130,6 +151,6 @@ static func land_tall(S: SimState, x: float, r: float, tall: float) -> bool:
+ 		for k in range(_TALL_SPOKES):
+ 			var a: float = TAU * float(k) / float(_TALL_SPOKES)
+ 			F.placeAt(S, SimWrap.wrap(x + float(ring) * r * cos(a)), float(ring) * r * sin(a))
+-			if F.heightOf(int(S.planetRing.get("seed", 0)), S.planetGen, 0, F.ox, F.oy, F.oz) - base > tall:
++			if F.heightOf(S.frame.seed, S.frame.gen, 0, F.ox, F.oy, F.oz) - base > tall:
+ 				return true
+ 	return false
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index 3a90aec..538cd88 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -364,7 +364,6 @@ const PEAK_PLACE_RATE: float = 0.3       # shares of the height a second
+ const PEAK_MARGIN_W: float = 2700.0      # the launch framing's margin
+ const PEAK_ASPECT_W: float = 2.2         # the width for a height low down, and across for the pair
+ const PEAK_LAND_W: float = 8000.0        # the width at the landing: the blast reads whole
+-const PEAK_RATE: float = 3.0             # e-folds a second, as the slam's door (Research's test: 93% of the descent in frame)
+ const PEAK_EASE: float = 7.0             # how the width settles on its target, a second
+ const PEAK_START_TICKS: float = 6.0      # the width's rate comes up over these
+ const PEAK_IN: float = 0.2               # the shot takes the screen over this
+@@ -392,6 +391,8 @@ const SWING_TALL: float = 1500.0         # land or a building above this, within
+ const SWING_CORRECT: float = 1.047       # radians a second: a correction's ease, no faster than Game Design's 60 degrees a second
+ const SWING_SLOPE: float = 0.5           # the slope a hold is judged on (Rendering's section 7)
+ const SWING_FOOT: float = 10.0           # the units of foot error that show (Rendering's figure)
++const SWING_CUT_GAP: float = 4.0         # the motion setting's cuts, outside a launch's own, no closer than this (Accessibility's first value)
++const SWING_SMALL: float = 0.2618        # under 15 degrees: never cut, it folds into the next cut (Accessibility)
+ const SCAPE_WIDE: float = 0.72
+ const SCAPE_MIN_R: float = 0.06         # 43 px at 720p: the fighters stay readable
+ const SCAPE_PITCH: float = -4.0
+diff --git a/render/camera/split_frame.gd b/render/camera/split_frame.gd
+index 276bdd1..c58e5b0 100644
+--- a/render/camera/split_frame.gd
++++ b/render/camera/split_frame.gd
+@@ -42,6 +42,7 @@ var clear: Array = [{}, {}]          # per pane: what the foreground must open (
+ var slam: bool = false               # true on the one frame the slam closes
+ var many_off: Array = []             # one versus many (docs/camera/one-v-many.md): the bodies outside the frame, each [slot, side (-1 left, +1 right, 0 above)]: UI's markers; empty with two bodies
+ var cut: bool = true                 # a hard cut: do not interpolate into this frame
++var peak_launch: bool = false        # the peak launch's shot has the screen: UI's chips go off (split_record's peak_launch)
+ var place: PackedFloat64Array = PackedFloat64Array()   # the turntable: the frame the world is drawn in (CamPlaces.frame_of), empty when none
+ 
+ 
+@@ -50,6 +51,7 @@ func duplicate() -> SplitFrame:
+ 	f.vw = vw
+ 	f.vh = vh
+ 	f.place = place
++	f.peak_launch = peak_launch
+ 	f.mode = mode
+ 	f.sep = sep
+ 	f.e = e
+@@ -205,6 +207,8 @@ func split_record(pointer_always: bool = false) -> Dictionary:
+ 	d["dist_bh"] = absf(held_u) / CamParams.BODY_H
+ 	d["pointer"] = "always" if (pointer_always or sep < 0.5) else "split"
+ 	d["incoming"] = incoming
++	if peak_launch:
++		d["peak_launch"] = true
+ 	d["many_off"] = many_off   # the bodies outside the frame, [slot, side]: UI's markers (empty with two bodies)
+ 	d["scroll"] = scroll
+ 	d["ring"] = {
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 1bb339c..73df2f7 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -238,12 +238,14 @@ var _sw_prev: PackedFloat64Array = PackedFloat64Array()
+ var _sw_ticks: int = 0                     # how long this swing has run
+ var _sw_rest: float = 99.0                 # how long the world has been still
+ var _sw_sign: float = 0.0
+-var _sw_own: bool = false
+-var _sw_pa: float = 0.0
++var swing_angle: float = 0.0               # the swing's low angle now, degrees: its own, so another shot's ending can't take it off at a stroke
+ var _sw_pitch: float = 0.0
+ var _sw_tall: bool = false
+ var _sw_held: bool = false                 # the motion setting is holding the shown heading
+-var _sw_brawl: bool = false                # a brawl's slow swing is what's held: it can't hold for long
++var _sw_due: bool = false                  # the shown heading has parted too far from a standing fighter's ground: the next hit-stop cuts
++var _sw_cut_t: float = -1.0e9              # when the motion setting last cut
++var playback: float = 1.0                  # how fast this is being watched: above 1 every swing is a cut, whatever the setting (Accessibility)
++var world_turning: String = "auto"         # UI's option: auto follows Reduced motion, full turns, cut cuts
+ var _sw_cause: String = ""
+ var peak_launch: bool = false              # the upward launch's shot, earned by tier (camera.md "The meteor launch"; game-design.md section 12). Off: none of it runs
+ var peak_width: float = 0.0                # the shot's width at 16:9 this tick, for the debug feed; 0 when none
+@@ -372,12 +374,12 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
+ 	_sw_ticks = 0
+ 	_sw_rest = 99.0
+ 	_sw_sign = 0.0
+-	_sw_own = false
+-	_sw_pa = 0.0
++	swing_angle = 0.0
+ 	_sw_pitch = 0.0
+ 	_sw_tall = false
+ 	_sw_held = false
+-	_sw_brawl = false
++	_sw_due = false
++	_sw_cut_t = -1.0e9
+ 	_sw_cause = ""
+ 	_flip_age = 99.0
+ 	split_wanted = false
+@@ -582,7 +584,8 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
+ 	if clash_now and not _clash_prev and not reduced_motion:
+ 		_push = [0.0, 0.0]   # the beam struggle opens with the tier push's shape: in, hold, out
+ 	_clash_prev = clash_now
+-	_pitch_now = pitch_deg + _shot_pitch
++	# (a shot's own low angle and the swing's: the lower, which meets its ease at 0; a high angle takes the swing's on top)
++	_pitch_now = pitch_deg + (_shot_pitch + swing_angle if _shot_pitch > 0.0 else minf(_shot_pitch, swing_angle))
+ 	var d_pitch: float = absf(_pitch_now - _last_pitch)
+ 	if d_pitch > 0.01:
+ 		_last_pitch = _pitch_now
+@@ -636,6 +639,13 @@ func launch_decision_at(t: float) -> bool:
+ func cut(S: SimState) -> void:
+ 	_snap_cameras(S)
+ 	_cur.cut = true
++	if swing_view:
++		_pl = CamPlaces.frame_of(S)
++		_sw_prev = _pl
++		swing_shown = 0.0
++		_sw_held = false
++		_sw_due = false
++		_cur.place = _pl.duplicate()
+ 
+ 
+ # ---------------------------------------------------------------------------------------------------- trigger
+@@ -1599,7 +1609,7 @@ func _begin_solo(kind: String, slot: int, prio: int, sl: float, S: SimState = nu
+ 	if not cut_in and S != null and e > 0.02 and e_slot >= 0 and e_slot != slot:
+ 		cut_in = true
+ 		if reduced_motion:
+-			_cut_fade = CamParams.REDUCED_CUT_FADE   # a cut is a dissolve in reduced motion
++			_cut_fade = CamParams.REDUCED_CUT_FADE   # (the rig's value for SplitFrame.fade: nothing draws it, a cut is plain)
+ 	solo_kind = kind
+ 	solo_slot = slot
+ 	solo_prio = prio
+@@ -4284,6 +4294,7 @@ func _make_clear(S: SimState, f: SplitFrame, i: int, two_up: bool) -> Dictionary
+ 
+ func _make_frame(S: SimState) -> SplitFrame:
+ 	var f := SplitFrame.new()
++	f.peak_launch = _pk_phase != "" and _pk_phase != "back"
+ 	if not _pl.is_empty():
+ 		f.place = CamPlaces.turned(_pl, swing_shown)
+ 	f.vw = vw
+@@ -4865,7 +4876,7 @@ func _peak_tick(S: SimState) -> void:
+ 		_pk_phase = "hang"
+ 	elif _pk_phase == "hang" and float(f.vy) < -CamParams.PEAK_HANG_VY:
+ 		_pk_phase = "fall"
+-	if reduced_motion:
++	if _swing_cuts():
+ 		_peak_reduced(S)
+ 		return
+ 	# the width: the height he has reached, for the launcher's place in the frame, plus the margin the launch's framing has
+@@ -4885,7 +4896,8 @@ func _peak_tick(S: SimState) -> void:
+ 	if _pk_phase == "hold" or _pk_phase == "fall":
+ 		want_w = maxf(want_w, CamParams.PEAK_LAND_W * ring_k)
+ 	want_w = minf(want_w, _pk_top)
+-	_pk_rate = minf(CamParams.PEAK_RATE, _pk_rate + CamParams.PEAK_RATE / CamParams.PEAK_START_TICKS)
++	var rate_top: float = float(CamPlaces.data().get("peakRate", 3.0))
++	_pk_rate = minf(rate_top, _pk_rate + rate_top / CamParams.PEAK_START_TICKS)
+ 	var dl: float = log(maxf(want_w, 1.0) / maxf(_pk_w, 1.0))
+ 	var step_w: float = clampf(dl * CamParams.PEAK_EASE * DT, -_pk_rate * DT, _pk_rate * DT)
+ 	_pk_w *= exp(step_w)
+@@ -4933,11 +4945,10 @@ func _peak_begin(S: SimState, i: int) -> void:
+ 		_end_solo(S)
+ 	if split_wanted:
+ 		_set_split(false, "peak")
+-	if reduced_motion:
++	if _swing_cuts():
+ 		_pk_w = top
+ 		_pk_mix = 1.0
+ 		_cut_now = true   # a cut to the widest on the blow
+-	_shot_pitch = 0.0 if _shot_pitch == _sw_pa else _shot_pitch
+ 
+ 
+ func _peak_end(why: String, back: float) -> void:
+@@ -4974,7 +4985,7 @@ func _peak_outputs(S: SimState) -> void:
+ 	_pk_x = SimWrap.wrap(_pk_x + dx * clampf(_pk_mix * 0.2, 0.0, 1.0))
+ 	var y0: float = float(L.y) + CamParams.CHEST
+ 	var pk: Vector3 = _cam_at(_pk_x, y0, 0.0, z, Vector2(vw * 0.5, vh * _pk_place))
+-	var w: float = 1.0 if reduced_motion else _smootherstep(_pk_mix)
++	var w: float = 1.0 if _swing_cuts() else _smootherstep(_pk_mix)
+ 	for i in range(2):
+ 		_outs[i] = _blend_cam(_outs[i], pk, w)
+ 		_fzo[i] = lerpf(float(_fzo[i]), 0.0, w)
+@@ -5019,76 +5030,88 @@ func _swing_tick(S: SimState) -> void:
+ 		_sw_tall = _swing_tall_near(S, dist)
+ 		_sw_pitch = 0.0
+ 	# the shot's angle and lean: in over the swing's first half second, out once it has rested (a landing's hold first)
+-	var want: bool = _sw_ticks >= CamParams.SWING_SHOT_TICKS and _sw_rest < CamParams.SWING_REST_HOLD and not reduced_motion and not intro_active and not fold_active
++	var want: bool = _sw_ticks >= CamParams.SWING_SHOT_TICKS and _sw_rest < CamParams.SWING_REST_HOLD and not _swing_cuts() and not intro_active and not fold_active
+ 	swing_gesture = minf(1.0, swing_gesture + DT / CamParams.SWING_IN) if want else maxf(0.0, swing_gesture - DT / CamParams.SWING_OUT)
+ 	if want and _sw_pitch == 0.0:
+ 		_sw_tall = _sw_tall or _swing_tall_near(S, dist)
+ 		_sw_pitch = _ground_low(CamParams.SWING_PITCH_TALL if _sw_tall else CamParams.SWING_PITCH, _mz)
+-		_sw_own = _shot_pitch == 0.0 and absf(_sw_pitch) >= 1.0
+-		_sw_pa = 0.0
+-	if _sw_own:
+-		if _shot_pitch != _sw_pa:
+-			_sw_own = false   # another shot took the angle: it is its to set
+-		else:
+-			_shot_pitch = _sw_pitch * smoothstep(0.0, 1.0, swing_gesture)
+-			_sw_pa = _shot_pitch
+-			if swing_gesture <= 0.0:
+-				_shot_pitch = 0.0
+-				_sw_pa = 0.0
+-				_sw_own = false
++		if absf(_sw_pitch) < 1.0:
++			_sw_pitch = 0.0   # the ground leaves no room for the angle here
++	swing_angle = _sw_pitch * smoothstep(0.0, 1.0, swing_gesture)
+ 	if swing_gesture <= 0.0:
+ 		_sw_pitch = 0.0
+ 
+ 
+-## The motion setting: a player's setting never touches the sim, so the shown heading parts from it (camera.md section 5, RL-213 (7)). A
+-## launch or a chase is a cut on its start to where the swing ends; a form's pause or a brawl's swing holds still. A brawl's hold can't last:
+-## a standing fighter away from the pivot leaves the drawn ground, so it ends in a cut at the next blow's hit-stop, or at the limit
+-## (Rendering's section 7). A correction under no setting eases away at SWING_CORRECT.
++## Whether swings show as cuts: UI's world_turning (auto follows Reduced motion), or any playback above 1x (Accessibility, docs/accessibility/swing-motion.md).
++func _swing_cuts() -> bool:
++	return playback > 1.0 or world_turning == "cut" or (world_turning == "auto" and reduced_motion)
++
++
++## The motion setting: a player's setting never touches the sim, so the shown heading parts from it (camera.md section 5, RL-213 (7);
++## Accessibility's rulings). A launch is a plain cut on its release to where the swing ends. Anything else holds still: a chase's cut waits
++## for SWING_CUT_GAP since the last, a small swing is never cut but folds into the next one, and a form's pause cuts at its end. A hold
++## that has gone too far for a standing fighter away from the pivot (Rendering's section 7) cuts only on a hit-stop, never on its own.
++## A correction under no setting eases away at SWING_CORRECT.
+ func _swing_motion(S: SimState, sw: Dictionary, d_rad: float) -> void:
+-	if not reduced_motion:
++	if not _swing_cuts():
+ 		_sw_held = false
++		_sw_due = false
+ 		var step_c: float = CamParams.SWING_CORRECT * DT
+ 		step_c = minf(step_c, 0.12 * absf(swing_shown) + 1.0e-4)   # lands soft
+ 		swing_shown = clampf(0.0, swing_shown - step_c, swing_shown + step_c)
++		_sw_cause = String(sw.get("cause", ""))
+ 		return
+ 	var cause: String = String(sw.get("cause", ""))
+ 	var started: bool = cause != "" and cause != _sw_cause
+ 	var done: bool = cause == "" and _sw_cause != ""
+-	if started and (cause == "launch" or cause == "chase"):
+-		swing_shown = float(sw.get("toGo", 0.0))   # shown already at the end bearing: a cut on the action
++	var to_go: float = float(sw.get("toGo", 0.0))
++	var small: bool = cause == "small" or absf(to_go) < CamParams.SWING_SMALL
++	var free: bool = time - _sw_cut_t >= CamParams.SWING_CUT_GAP
++	var had: float = swing_shown   # what the sim's turn this tick doesn't move on the screen
++	if started and not small and (cause == "launch" or (cause == "chase" and free)):
++		swing_shown = to_go   # shown already at the end bearing: a cut on the action
+ 		_sw_held = true
+-		_sw_brawl = false
+-		_cut_now = true
++		_sw_due = false
++		_swing_cut()
+ 	else:
+-		if started:
+-			_sw_held = true   # still: the world holds, and the sim runs on behind it
+-			_sw_brawl = cause == "brawl"
+-		if _sw_held:
+-			swing_shown -= d_rad
+-	if _sw_held and done and _sw_cause == "form":
+-		swing_shown = 0.0   # the new bearing comes in as a cut at the pause's end
+-		_sw_held = false
+-		_cut_now = true
+-	if _sw_held and _sw_brawl and absf(swing_shown) > 1.0e-6 and _swing_past_limit(S):
+-		swing_shown = 0.0
+-		_sw_held = false
+-		_sw_brawl = false
+-		_cut_now = true
+-	if _sw_held and cause == "" and absf(swing_shown) <= 1.0e-6:
+-		_sw_held = false
++		_sw_held = true   # still: the world holds, and the sim runs on behind it
++		swing_shown = had - d_rad
++		var off: float = absf(swing_shown)
++		if off <= 1.0e-6:
++			swing_shown = 0.0
++			_sw_held = false
++			_sw_due = false
++		elif done and _sw_cause == "form" and free:
++			swing_shown = 0.0   # the new bearing comes in as a cut at the pause's end
++			_sw_held = false
++			_sw_due = false
++			_swing_cut()
++		elif _swing_past_limit(S, off):
++			_sw_due = true
++		if _sw_due and S.dirS.stop > 0.0 and free:
++			swing_shown = 0.0
++			_sw_held = false
++			_sw_due = false
++			_swing_cut()
+ 	_sw_cause = cause
+ 
+ 
++## A plain cut: the frame isn't interpolated into, and nothing dissolves.
++func _swing_cut() -> void:
++	_cut_now = true
++	_sw_cut_t = time
++
++
+ ## Whether a standing fighter's ground has parted from what's shown: about r x slope x angle, against what a foot can show (Rendering
+-## section 7: 10 units on a 1 in 2 slope); or the next blow has landed, and its hit-stop will hide a cut.
+-func _swing_past_limit(S: SimState) -> bool:
++## section 7: 10 units on a 1 in 2 slope).
++func _swing_past_limit(S: SimState, off: float) -> bool:
+ 	var pv: float = _pl[6]
+ 	for f in S.fighters:
+ 		if f.state == "launched" or float(f.y) - WorldTerrain.groundY(S, f.x) > 4.0:
+ 			continue
+-		if absf(SimWrap.sdx(pv, f.x)) * CamParams.SWING_SLOPE * absf(swing_shown) > CamParams.SWING_FOOT:
++		if absf(SimWrap.sdx(pv, f.x)) * CamParams.SWING_SLOPE * off > CamParams.SWING_FOOT:
+ 			return true
+-	return S.dirS.stop > 0.0
++	return false
+ 
+ 
+ ## Tall land near the camera on the side the turn is bringing forward (a fixed test, from the frame): Encounter's plan reads the same.
+diff --git a/render/camera/split_view.gd b/render/camera/split_view.gd
+index 93dd481..b1df082 100644
+--- a/render/camera/split_view.gd
++++ b/render/camera/split_view.gd
+@@ -204,6 +204,12 @@ func set_peak_launch(on: bool) -> void:
+ 		main.split_rig.peak_launch = on
+ 
+ 
++## How fast this is being watched: above 1x every swing is a cut, whatever the setting (Accessibility). A replay viewer calls it.
++func set_playback(rate: float) -> void:
++	if main != null:
++		main.split_rig.playback = rate
++
++
+ ## The turntable's switch: the rig reads places through the sim's frame, and gives it to Rendering in SplitFrame.place (swing-view.md).
+ func set_swing_view(on: bool) -> void:
+ 	if main != null:
+diff --git a/render/camera/tests/peak_shot_check.gd b/render/camera/tests/peak_shot_check.gd
+index 085d116..6e758c6 100644
+--- a/render/camera/tests/peak_shot_check.gd
++++ b/render/camera/tests/peak_shot_check.gd
+@@ -116,7 +116,7 @@ func _initialize() -> void:
+ 	_ok(int(r.cuts) == 0, "the shot cut %d times" % r.cuts)
+ 	_ok(int(r.land) > 0, "no landing was seen")
+ 	_ok(String(r.get("why", "")) == "land", "ended on %s" % String(r.get("why", "")))
+-	_ok(float(r.rate) <= CamParams.PEAK_RATE * 1.15, "the zoom ran %f e-folds a second" % r.rate)
++	_ok(float(r.rate) <= float(CamPlaces.data().peakRate) * 1.15, "the zoom ran %f e-folds a second" % r.rate)
+ 	_ok(rig.current().split_record().get("peak_launch", false) == false, "the record still says peak_launch after the shot")
+ 	_ok(float(r.get("landw", 0.0)) < 16000.0, "the landing's width was %f" % float(r.get("landw", 0.0)))
+ 	_ok(float(r.foe_in) >= 0.85 * float(r.foe_n), "the foe in frame only %d of %d" % [r.foe_in, r.foe_n])
+diff --git a/render/camera/tests/swing_fight_check.gd b/render/camera/tests/swing_fight_check.gd
+new file mode 100644
+index 0000000..3191107
+--- /dev/null
++++ b/render/camera/tests/swing_fight_check.gd
+@@ -0,0 +1,121 @@
++extends SceneTree
++## The swing's camera in real AI fights with DirSwing on (docs/camera/swing-view.md): gen 3, whole ring, the choreographer's own swings. It asks
++## for nothing and writes nothing. Run with data/director/swing.json enabled true; off it says so and skips.
++##   godot --headless --path . --script res://render/camera/tests/swing_fight_check.gd -- [--seeds=3] [--ticks=7200]
++## Ends with `swing_fight_check: N checks passed` or a line per failure.
++
++const VW: float = 1280.0
++const VH: float = 720.0
++const PLANETS: Array = [7, 3, 11, 25]
++
++var fails: int = 0
++var checks: int = 0
++
++
++func _ok(cond: bool, what: String) -> void:
++	checks += 1
++	if not cond:
++		fails += 1
++		print("FAIL ", what)
++
++
++func _run(seed: int, ticks: int, reduced: bool) -> Dictionary:
++	var S: SimState = SimCore.createSim()
++	SimCore.newMatch(S, seed, {"p1": true, "p2": true}, {"planet": int(PLANETS[seed % PLANETS.size()]), "touch": 1, "planetGen": 3, "intro": false})
++	S.dt = SplitRig.DT
++	var rig := SplitRig.new()
++	rig.swing_view = true
++	rig.peak_launch = true
++	rig.reduced_motion = reduced
++	rig.reset(S, VW, VH)
++	var r: Dictionary = {"swings": 0, "ticks": 0, "big": 0, "shot": 0, "cuts_in": 0, "cuts": [], "stepmax": 0.0, "shown": 0.0, "off": 0, "off_shot": 0, "peaks": 0, "peak": 0.0, "rate": 0.0, "causes": {}, "fade": 0.0, "corr": 0, "stepown": 0.0, "step_at": "", "fade_at": "", "fade_mine": 0.0}
++	var last_p: float = (rig._shot_pitch + rig.swing_angle)
++	var was: bool = false
++	var last_cause: String = ""
++	for _t in range(ticks):
++		SimCore.step(S)
++		var ev: Array = S.out.fx.duplicate()
++		S.out.fx.clear()
++		S.out.feed.clear()
++		rig.step(S, VW, VH, ev)
++		var f: SplitFrame = rig.current()
++		var on: bool = bool(S.swing.active)
++		if on and not was:
++			r.swings += 1
++			var c: String = String(S.swing.cause)
++			r.causes[c] = int(r.causes.get(c, 0)) + 1
++		was = on
++		if on:
++			r.ticks += 1
++			r.rate = maxf(float(r.rate), absf(rig.swing_deg))
++		if rig.swing_gesture > 0.0:
++			r.shot += 1
++		if f.cut and on:
++			r.cuts_in += 1
++		if f.cut and reduced and rig._sw_cut_t == rig.time and rig._sw_cause != "launch":
++			r.cuts.append(S.tick)   # the swing's own cuts outside a launch: Accessibility's 4 s
++		var st: float = absf((rig._shot_pitch + rig.swing_angle) - last_p)
++		if st > float(r.stepmax):
++			r.stepmax = st
++			r.step_at = "tick %d, shot %s, gesture %.2f, solo %s %s, angle %s, turn %.2f, pitch %.2f to %.2f" % [S.tick, f.mode, rig.swing_gesture, rig.solo_kind, rig.solo_phase, rig.angle_now, rig._turn_t, last_p, (rig._shot_pitch + rig.swing_angle)]
++		r.stepown = maxf(float(r.stepown), absf(rig.swing_angle - float(r.get("la", 0.0))))
++		r.la = rig.swing_angle
++		last_p = (rig._shot_pitch + rig.swing_angle)
++		r.shown = maxf(float(r.shown), absf(rig.swing_shown))
++		if f.fade > float(r.fade):
++			r.fade = f.fade
++			r.fade_at = "tick %d, solo %s, swing cut this tick %s" % [S.tick, rig.solo_kind, rig._sw_cut_t == rig.time]
++		if rig._sw_cut_t == rig.time:
++			r.fade_mine = maxf(float(r.fade_mine), f.fade)
++		if rig.peak_width > 0.0:
++			r.peak = maxf(float(r.peak), rig.peak_width)
++		# a fighter a pane is for, off the frame while the world turns
++		if on and not reduced:
++			for i in range(2):
++				if f.shows(i) and (rig.solo_kind != "launch" or rig.solo_slot == i):   # (a launch-follow shot leaves the launcher behind, as it does with no swing)
++					var fi = S.fighters[i]
++					var s: Vector2 = f.screen_pos(i, fi.x, fi.y + CamParams.CHEST, float(fi.z))
++					if s.x < 0.0 or s.x > VW or s.y < 0.0 or s.y > VH:
++						r.off += 1
++						if int(r.off) % 10 == 1:
++							print("   off the frame: tick %d, pane %d, %s, y over ground %.0f, at %s, mode %s, solo %s %s, cut %s, rate %.0f, sep %.2f" % [S.tick, i, fi.state, float(fi.y) - WorldTerrain.groundY(S, fi.x), s, f.mode, rig.solo_kind, rig.solo_phase, f.cut, rig.swing_deg, rig.sep])
++		if S.game.ko != null and S.game.koT > 3.0:
++			break
++	r["peak_shots"] = rig.peak_shots
++	return r
++
++
++func _initialize() -> void:
++	var seeds: int = 3
++	var ticks: int = 7200
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--seeds="):
++			seeds = int(a.substr(8))
++		elif a.begins_with("--ticks="):
++			ticks = int(a.substr(8))
++	var j = JSON.parse_string(FileAccess.get_file_as_string("res://data/director/swing.json"))
++	if not (j is Dictionary) or not bool(j.get("enabled", false)):
++		print("swing_fight_check: DirSwing is off in this build, skipped")
++		quit(0)
++		return
++	var total: int = 0
++	for seed in range(1, seeds + 1):
++		var n: Dictionary = _run(seed, ticks, false)
++		total += int(n.swings)
++		print("seed %d normal: %d swings %s, on %d ticks, shot in %d, fastest %.0f deg/s, cuts in a swing %d, worst angle step %.3f, off the frame %d, shown off %.4f, peak shots %d (widest %.0f)" % [seed, n.swings, n.causes, n.ticks, n.shot, n.rate, n.cuts_in, n.stepmax, n.off, n.shown, n.peak_shots, n.peak])
++		print("   worst angle step: %s; the swing's own worst %.3f" % [n.step_at, n.stepown])
++		_ok(float(n.stepown) <= CamParams.PITCH_CUT_DEG, "seed %d: the swing's angle stepped %f a tick, which the rig calls a cut" % [seed, n.stepown])
++		var m: Dictionary = _run(seed, ticks, true)
++		var gap: int = 100000
++		for i in range(1, m.cuts.size()):
++			gap = mini(gap, int(m.cuts[i]) - int(m.cuts[i - 1]))
++		print("seed %d motion: %d swings, %d of the swing's own cuts outside a launch, shortest gap %d ticks, shown off up to %.1f deg, fade %.3f" % [seed, m.swings, m.cuts.size(), gap, rad_to_deg(float(m.shown)), m.fade])
++		print("   worst fade: %s; on the swing's own cuts %.3f" % [m.fade_at, m.fade_mine])
++		_ok(gap >= 240, "seed %d: the swing's cuts are %d ticks apart" % [seed, gap])
++		_ok(float(m.fade_mine) == 0.0, "seed %d: a swing's cut dissolved: %f" % [seed, m.fade_mine])
++	_ok(total > 0, "no swing ran: is DirSwing on, on a field world?")
++	if fails == 0:
++		print("swing_fight_check: %d checks passed" % checks)
++	else:
++		print("swing_fight_check: %d of %d checks FAILED" % [fails, checks])
++	quit(1 if fails > 0 else 0)
+diff --git a/render/camera/tests/swing_real_check.gd b/render/camera/tests/swing_real_check.gd
+new file mode 100644
+index 0000000..cc7bdb3
+--- /dev/null
++++ b/render/camera/tests/swing_real_check.gd
+@@ -0,0 +1,290 @@
++extends SceneTree
++## The rig on Simulation's real frame and swing (docs/camera/swing-view.md; docs/architecture/field-ground.md): a gen 3 match on a whole ring,
++## with SimSwing.ask, so nothing here is staged but the ask. Skips with a line if the build has no SimField.
++##   godot --headless --path . --script res://render/camera/tests/swing_real_check.gd
++## Ends with `swing_real_check: N checks passed` or a line per failure.
++
++const VW: float = 1280.0
++const VH: float = 720.0
++
++var fails: int = 0
++var checks: int = 0
++
++
++func _ok(cond: bool, what: String) -> void:
++	checks += 1
++	if not cond:
++		fails += 1
++		print("FAIL ", what)
++
++
++func _match(ai: bool = false) -> SimState:
++	var S: SimState = SimCore.createSim()
++	SimCore.newMatch(S, 77, {"p1": ai, "p2": ai}, {"planet": 7, "touch": 1, "planetGen": 3, "intro": false})
++	S.dt = SplitRig.DT
++	return S
++
++
++func _tick(S: SimState, rig: SplitRig) -> void:
++	SimCore.step(S)
++	var ev: Array = S.out.fx.duplicate()
++	S.out.fx.clear()
++	S.out.feed.clear()
++	rig.step(S, VW, VH, ev)
++
++
++func _rig(S: SimState, reduced: bool = false) -> SplitRig:
++	var rig := SplitRig.new()
++	rig.swing_view = true
++	rig.reduced_motion = reduced
++	rig.reset(S, VW, VH)
++	return rig
++
++
++func _initialize() -> void:
++	var F = null
++	for c in ProjectSettings.get_global_class_list():
++		if String(c["class"]) == "SimField":
++			F = load(String(c["path"]))
++	if F == null:
++		print("swing_real_check: no SimField in this build, skipped")
++		quit(0)
++		return
++	_door()
++	_far_poses()
++	_sign()
++	_the_shot()
++	_motion()
++	_gates()
++	if fails == 0:
++		print("swing_real_check: %d checks passed" % checks)
++	else:
++		print("swing_real_check: %d of %d checks FAILED" % [fails, checks])
++	quit(1 if fails > 0 else 0)
++
++
++## The door's closed forms against SimField's own, before and after a real turn.
++func _door() -> void:
++	var S: SimState = _match()
++	var rig: SplitRig = _rig(S)
++	for _t in range(5):
++		_tick(S, rig)
++	SimSwing.ask(S, {"deg": 70.0, "cause": "launch"})
++	for pass_i in range(2):
++		var f: PackedFloat64Array = CamPlaces.frame_of(S)
++		_ok(f.size() == 7, "no frame on gen 3")
++		_ok(absf(CamPlaces.radius() - SimField.R) < 1.0e-6, "the line's radius isn't the field's: %f, %f" % [CamPlaces.radius(), SimField.R])
++		for x in [0.0, 300.0, S.fighters[1].x, 0.2 * SimConst.W, 0.7 * SimConst.W]:
++			SimField.pointAt(S, x)
++			var q: PackedFloat64Array = CamPlaces.on_line(f, x)
++			_ok(absf(q[0] - SimField.ox) + absf(q[1] - SimField.oy) + absf(q[2] - SimField.oz) < 1.0e-9, "the line's point at %f differs" % x)
++		# depth: SimField's place and the door's view agree on which way is toward the camera
++		SimField.placeAt(S, S.fighters[0].x, 900.0)
++		var v: Vector2 = CamPlaces.view_of(f, S.fighters[0].x, [SimField.ox, SimField.oy, SimField.oz])
++		_ok(absf(v.x) < 1.0e-3 and absf(v.y - 900.0) < 1.0e-3, "a place 900 toward the camera read %s" % v)
++		for _t in range(45):
++			_tick(S, rig)
++
++
++## Mid-swing, every building reads where it really is, however far past the sim's pose reach; at rest it reads the sim's pose, the same place.
++func _far_poses() -> void:
++	var S: SimState = _match()
++	var rig: SplitRig = _rig(S)
++	for _t in range(5):
++		_tick(S, rig)
++	SimSwing.ask(S, {"deg": 120.0, "cause": "launch"})
++	for _t in range(60):
++		_tick(S, rig)
++	_ok(S.swing.active, "the swing ended early")
++	var f: PackedFloat64Array = CamPlaces.frame_of(S)
++	var from_x: float = S.fighters[0].x
++	var n: int = 0
++	var stale: int = 0
++	var worst: float = 0.0
++	for b in S.buildings:
++		var i: int = int(b.idx) * 3
++		var v: Vector2 = CamPlaces.place(S, f, from_x, b, b.x, b.z)
++		var w: Vector2 = CamPlaces.view_of(f, from_x, [S.bDir[i], S.bDir[i + 1], S.bDir[i + 2]])
++		worst = maxf(worst, v.distance_to(w))
++		n += 1
++		SimField.strip(S, S.bDir[i], S.bDir[i + 1], S.bDir[i + 2])
++		if absf(SimWrap.sdx(SimField.sx, b.x)) > 50.0:
++			stale += 1
++	print("mid-swing: %d buildings, %d with a stale pose, the door's read off by at most %.3f" % [n, stale, worst])
++	_ok(n > 0 and worst < 1.0e-6, "the door read a building off by %f" % worst)
++	var cnt: int = 0
++	while S.swing.active and cnt < 600:
++		_tick(S, rig)
++		cnt += 1
++	for _t in range(3):
++		_tick(S, rig)
++	f = CamPlaces.frame_of(S)
++	var off: float = 0.0
++	for b in S.buildings:
++		var i: int = int(b.idx) * 3
++		var v2: Vector2 = CamPlaces.view_of(f, from_x, [S.bDir[i], S.bDir[i + 1], S.bDir[i + 2]])
++		if v2.length() < 6000.0:
++			off = maxf(off, v2.distance_to(CamPlaces.place(S, f, from_x, b, b.x, b.z)))
++	print("at rest: the sim's pose against the planet point within 6,000: at most %.1f" % off)
++	_ok(off < 120.0, "at rest the pose is %f from the point" % off)
++
++
++## The sign, read from the real thing: left above 0 turns as CamPlaces.turned, and left counts down what's still to turn.
++func _sign() -> void:
++	for deg in [40.0, -40.0]:
++		var S: SimState = _match()
++		var rig: SplitRig = _rig(S)
++		for _t in range(5):
++			_tick(S, rig)
++		var f0: PackedFloat64Array = CamPlaces.frame_of(S)
++		_ok(SimSwing.ask(S, {"deg": deg, "cause": "launch"}), "the ask was refused")
++		var left0: float = float(S.swing.left)
++		_ok(signf(left0) == signf(deg), "left's sign is %f for %f" % [left0, deg])
++		var sum: float = 0.0
++		var f1: PackedFloat64Array = f0
++		var worst_left: float = 0.0
++		var n: int = 0
++		while S.swing.active and n < 400:
++			_tick(S, rig)
++			var f2: PackedFloat64Array = CamPlaces.frame_of(S)
++			sum += CamPlaces.turn_between(f1, f2)
++			f1 = f2
++			# left is the live count: what's turned so far and what's left make the asked angle, every tick
++			worst_left = maxf(worst_left, absf(rad_to_deg(sum) + float(S.swing.left) - deg) if S.swing.active else 0.0)
++			n += 1
++		print("asked %.0f: the frame turned %.2f by turn_between in %d ticks, rig's rate at the end %.1f" % [deg, rad_to_deg(sum), n, rig.swing_deg])
++		_ok(absf(rad_to_deg(sum) - deg) < 0.5, "asked %f, the frame turned %f" % [deg, rad_to_deg(sum)])
++		print("   left against the frame's own count: off by at most %.3f deg" % worst_left)
++		_ok(worst_left < 0.5, "left parts from the frame by %f" % worst_left)
++		var want: PackedFloat64Array = CamPlaces.turned(f0, deg_to_rad(deg))
++		_ok(absf(CamPlaces.turn_between(want, f1)) < 0.01, "turned() and the sim's turn part: %f" % CamPlaces.turn_between(want, f1))
++
++
++func _the_shot() -> void:
++	var S: SimState = _match()
++	var rig: SplitRig = _rig(S)
++	for _t in range(60):
++		_tick(S, rig)
++	SimSwing.ask(S, {"deg": 90.0, "cause": "launch"})
++	var peak: float = 0.0
++	var min_p: float = 0.0
++	var step_p: float = 0.0
++	var last: float = rig.swing_angle
++	var cuts: int = 0
++	var n: int = 0
++	var worst_shown: float = 0.0
++	while S.swing.active and n < 400:
++		_tick(S, rig)
++		peak = maxf(peak, absf(rig.swing_deg))
++		min_p = minf(min_p, rig.swing_angle)
++		step_p = maxf(step_p, absf(rig.swing_angle - last))
++		last = rig.swing_angle
++		cuts += 1 if rig.current().cut else 0
++		worst_shown = maxf(worst_shown, absf(rig.swing_shown))
++		n += 1
++	print("real 90: %d ticks, peak %.1f deg/s (the law may slow it), angle %.2f, worst angle step %.3f, cuts %d, shown off the sim's %.4f" % [n, peak, min_p, step_p, cuts, worst_shown])
++	_ok(n > 18, "the swing ran %d ticks" % n)
++	_ok(peak > 1.0, "no rate read")
++	_ok(min_p < -1.0, "the low angle didn't come in: %f" % min_p)
++	_ok(cuts == 0, "%d cuts" % cuts)
++	_ok(worst_shown == 0.0, "the shown heading parted from the sim's by %f on a plain swing" % worst_shown)
++
++
++## The motion setting on real swings: a launch's cut, then at most one cut per 4 s outside a launch, small ones folded.
++func _motion() -> void:
++	var S: SimState = _match()
++	var rig: SplitRig = _rig(S, true)
++	for _t in range(30):
++		_tick(S, rig)
++	var cuts: Array = []
++	var asks: Array = [[10, {"deg": 40.0, "cause": "launch"}], [100, {"deg": 8.0, "cause": "small"}], [160, {"deg": 40.0, "cause": "chase"}], [340, {"deg": 40.0, "cause": "chase"}], [600, {"deg": 30.0, "cause": "form"}]]
++	var worst_fade: float = 0.0
++	var worst_roll: float = 0.0
++	for t in range(1000):
++		for a in asks:
++			if int(a[0]) == t:
++				SimSwing.ask(S, a[1])
++		_tick(S, rig)
++		var f: SplitFrame = rig.current()
++		if f.cut:
++			cuts.append(t)
++		worst_fade = maxf(worst_fade, f.fade)
++		worst_roll = maxf(worst_roll, absf(rig.swing_angle))
++	print("motion: cuts at ticks %s, fade %.3f, gesture angle %.3f" % [cuts, worst_fade, worst_roll])
++	_ok(worst_fade == 0.0, "a cut dissolved: %f" % worst_fade)
++	_ok(worst_roll == 0.0, "a tilt under the setting: %f" % worst_roll)
++	for i in range(1, cuts.size()):
++		_ok(int(cuts[i]) - int(cuts[i - 1]) >= 240, "cuts %d and %d are under 4 s apart" % [cuts[i - 1], cuts[i]])
++	_ok(cuts.size() >= 2, "too few cuts: %s" % [cuts])
++	_ok(absf(CamPlaces.turn_between(rig.current().place, CamPlaces.frame_of(S))) < 0.9, "the shown heading was left far behind")
++	# above 1x every swing is a cut, setting or no
++	S = _match()
++	rig = _rig(S)
++	rig.playback = 2.0
++	for _t in range(30):
++		_tick(S, rig)
++	SimSwing.ask(S, {"deg": 40.0, "cause": "launch"})
++	var c2: int = 0
++	var worst: float = 0.0
++	var first: PackedFloat64Array = PackedFloat64Array()
++	for t in range(120):
++		_tick(S, rig)
++		c2 += 1 if rig.current().cut else 0
++		if t == 0:
++			first = rig.current().place
++		else:
++			worst = maxf(worst, absf(CamPlaces.turn_between(first, rig.current().place)))
++	_ok(c2 == 1 and rad_to_deg(worst) < 0.01, "at 2x: %d cuts, shown moved %f" % [c2, rad_to_deg(worst)])
++	# UI's option: cut cuts with no setting, full turns even under Reduced motion
++	S = _match()
++	rig = _rig(S)
++	rig.world_turning = "cut"
++	for _t in range(30):
++		_tick(S, rig)
++	SimSwing.ask(S, {"deg": 40.0, "cause": "launch"})
++	_tick(S, rig)
++	_ok(rig.current().cut, "world_turning cut didn't cut")
++	S = _match()
++	rig = _rig(S, true)
++	rig.world_turning = "full"
++	for _t in range(30):
++		_tick(S, rig)
++	SimSwing.ask(S, {"deg": 40.0, "cause": "launch"})
++	var cf: int = 0
++	for _t in range(60):
++		_tick(S, rig)
++		cf += 1 if rig.current().cut else 0
++	_ok(cf == 0 and rig.swing_shown == 0.0, "world_turning full didn't turn: %d cuts" % cf)
++	# a seek snaps the heading, with no catch-up
++	rig.swing_shown = 0.5
++	theta_jump(S)
++	rig.cut(S)
++	_ok(rig.swing_shown == 0.0 and absf(CamPlaces.turn_between(rig.current().place, CamPlaces.frame_of(S))) < 1.0e-9, "a seek left the heading off")
++	_ok(rig.current().cut, "a seek isn't a cut")
++
++
++func theta_jump(S: SimState) -> void:
++	SimField.pointAt(S, 0.0)
++
++
++## The door's other reads on real data: the peak rate is a data number, tall land comes off the bake, and the biome follows the line.
++func _gates() -> void:
++	_ok(float(CamPlaces.data().get("peakRate", 0.0)) == 3.0, "the peak's rate isn't in data")
++	var S: SimState = _match()
++	var rig: SplitRig = _rig(S)
++	for _t in range(5):
++		_tick(S, rig)
++	var any: int = 0
++	var none: int = 0
++	var x: float = 0.0
++	while x < SimConst.W:
++		if CamPlaces.land_tall(S, x, 4000.0, 1500.0):
++			any += 1
++		else:
++			none += 1
++		x += 3000.0
++	print("tall land by the bake, round the line: %d of %d" % [any, any + none])
++	_ok(any + none > 0 and none > 0, "land_tall answers yes everywhere")
++	var b0: String = CamPlaces.biome(S, S.fighters[0].x)
++	_ok(b0 != "", "no biome")
++	_ok(SimField.cur == S, "the biome read isn't this match's")
+diff --git a/render/camera/tests/swing_shot_check.gd b/render/camera/tests/swing_shot_check.gd
+index 75b20f1..8c876fe 100644
+--- a/render/camera/tests/swing_shot_check.gd
++++ b/render/camera/tests/swing_shot_check.gd
+@@ -255,7 +255,7 @@ func _motion_form() -> void:
+ 	_ok(absf(CamPlaces.turn_between(rig.current().place, _frame())) < 1.0e-6, "the cut didn't reach the sim's heading")
+ 
+ 
+-## Motion setting, a brawl's slow swing: still until a standing fighter's ground parts from what's shown.
++## Motion setting, a brawl's slow swing: still; past a standing fighter's foot limit it waits for a hit-stop, and never cuts on its own.
+ func _motion_brawl() -> void:
+ 	var S: SimState = _match()
+ 	theta = 0.0
+@@ -265,17 +265,21 @@ func _motion_brawl() -> void:
+ 	for _t in range(30):
+ 		_tick(S, rig)
+ 	var r: float = absf(SimWrap.sdx(px, S.fighters[0].x))
+-	var at: float = -1.0
+-	for _t in range(1800):
++	var limit: float = rad_to_deg(CamParams.SWING_FOOT / (maxf(r, 1.0) * CamParams.SWING_SLOPE))
++	var cuts: int = 0
++	for _t in range(int(limit * 2.0 * 6.0)):   # twice the limit, at 10 degrees a second
+ 		theta += deg_to_rad(10.0 / 60.0)
+ 		sw = {"cause": "brawl", "toGo": 1.0}
+ 		_tick(S, rig)
+-		if rig.current().cut:
+-			at = rad_to_deg(theta)
+-			break
+-	var limit: float = rad_to_deg(CamParams.SWING_FOOT / (maxf(r, 1.0) * CamParams.SWING_SLOPE))
+-	print("motion, brawl: %.0f units from the pivot, held to %.1f deg, limit %.1f" % [r, at, limit])
+-	_ok(at > 0.0 and absf(at - limit) < 1.0, "the hold ended at %f, limit %f" % [at, limit])
++		cuts += 1 if rig.current().cut else 0
++	_ok(cuts == 0, "a hold cut on its own: %d" % cuts)
++	_ok(rig._sw_due, "the limit wasn't noticed, %.0f units from the pivot, limit %.1f" % [r, limit])
++	var f0 = S.dirS.stop
++	S.dirS.stop = 0.1
++	rig.step(S, VW, VH, [])
++	S.dirS.stop = f0
++	print("motion, brawl: %.0f units from the pivot, limit %.1f deg, held to %.1f, cut on the hit-stop: %s" % [r, limit, rad_to_deg(theta), rig.current().cut])
++	_ok(rig.current().cut and rig.swing_shown == 0.0, "the hit-stop didn't take the cut")
+ 
+ 
+ func _a_strip() -> void:
+diff --git a/tools/schemas/camera-swing.schema.json b/tools/schemas/camera-swing.schema.json
+new file mode 100644
+index 0000000..54c9236
+--- /dev/null
++++ b/tools/schemas/camera-swing.schema.json
+@@ -0,0 +1,14 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "meridian/camera-swing",
++  "title": "camera.swing/1",
++  "description": "data/camera/swing.json: Camera's numbers for the swing that a reading can move (CamPlaces.data; docs/camera/swing-view.md).",
++  "type": "object",
++  "patternProperties": { "^_": {} },
++  "additionalProperties": false,
++  "required": ["schema", "peakRate"],
++  "properties": {
++    "schema": { "const": "camera.swing/1" },
++    "peakRate": { "type": "number", "exclusiveMinimum": 0, "maximum": 3 }
++  }
++}
+diff --git a/tools/schemas/map.json b/tools/schemas/map.json
+index 0691a00..9504d18 100644
+--- a/tools/schemas/map.json
++++ b/tools/schemas/map.json
+@@ -395,6 +395,10 @@
+       "match": "data/anim/cues.json",
+       "schema": "anim-cues.schema.json"
+     },
++    {
++      "match": "data/camera/swing.json",
++      "schema": "camera-swing.schema.json"
++    },
+     {
+       "match": "data/director/location.json",
+       "schema": "director-location.schema.json"

@@ -1,0 +1,288 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index dcd2dc6..b6ad13d 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -377,6 +377,10 @@ const PEAK_BACK_CATCH: float = 0.6
+ const PEAK_BACK_KO: float = 0.5
+ const PEAK_BACK_MIN: float = 0.2
+ # The high-velocity moves (docs/camera/launch-director.md), first values
++const FLAT_SPEED: float = 10000.0        # a flat send this fast can't be followed softly at fight size (director.md section 5): it gets its own shot
++const FLAT_STEP: float = 0.06            # the frame's step after him, at most, of the width a tick
++const FLAT_ACC: float = 0.004            # and how fast that step changes
++const FLAT_HOLD: float = 0.4             # "hold": how long the frame stays still after he's gone
+ const SPEED_EXCURSION: float = 0.35      # how far a launched body may run ahead of his place in the frame while the camera catches him, of the width
+ const SPEED_SETTLED: float = 0.01        # ... and it has settled when what's left of it is under this
+ const SPEED_SMOOTH: float = 0.4          # how quickly the catch believes his speed has changed
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 079068e..f1955d8 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -322,6 +322,12 @@ var _clash_prev: bool = false
+ var _wide_t: float = -1.0                # a world-change or time-cap pause: the shared view pulls out and returns
+ var _wide_dur: float = 0.0
+ var cut_ins: int = 0                    # camera-only cut-ins started (counted for the tests)
++var flat_mode: String = ""                 # a flat send past FLAT_SPEED: "wide" (ride, release, pull wide), "hold" (the frame stays, he leaves it, then the same pull), "" neither
++var _pk_flat: bool = false
++var _pk_wait: float = 0.0
++var _pk_vx: float = 0.0
++var _pk_vy: float = 0.0
++var _pk_y: float = 0.0
+ var launch_director: bool = false        # the high-velocity moves (docs/camera/launch-director.md). Off: none of them runs
+ var _ozs: PackedFloat64Array = PackedFloat64Array([0.0, 0.0])   # ... and the zoom it drew
+ var _sim_f: Array = [null, null]
+@@ -374,6 +380,8 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
+ 	swing_t = -1.0
+ 	_pk_phase = ""
+ 	_pk_mix = 0.0
++	_pk_flat = false
++	_pk_wait = 0.0
+ 	_pk_prev_state = ["", ""]
+ 	peak_width = 0.0
+ 	_sw_prev = PackedFloat64Array()
+@@ -4890,7 +4898,9 @@ func _peak_tick(S: SimState) -> void:
+ 				_peak_end("brake", CamParams.PEAK_BACK_BRAKE)
+ 		elif ad < CamParams.PEAK_CATCH and rise < CamParams.PEAK_CATCH and _pk_t > 0.5:
+ 			_peak_end("catch", CamParams.PEAK_BACK_CATCH)
+-	if _pk_phase == "rise" and float(f.vy) < CamParams.PEAK_HANG_VY:
++	if _pk_flat:
++		pass   # a flat send has no crest: it's the ride until he stops
++	elif _pk_phase == "rise" and float(f.vy) < CamParams.PEAK_HANG_VY:
+ 		_pk_phase = "hang"
+ 	elif _pk_phase == "hang" and float(f.vy) < -CamParams.PEAK_HANG_VY:
+ 		_pk_phase = "fall"
+@@ -4913,6 +4923,15 @@ func _peak_tick(S: SimState) -> void:
+ 		want_w = maxf(want_w, CamParams.PEAK_ASPECT_W * ad)   # coming down the frame follows him, not the pair, so the launcher may leave it
+ 	if _pk_phase == "hold" or _pk_phase == "fall":
+ 		want_w = maxf(want_w, CamParams.PEAK_LAND_W * ring_k)
++	if _pk_flat:
++		want_w = maxf(CamParams.PEAK_ASPECT_W * ad + CamParams.PEAK_MARGIN_W, 1.778 * rise / maxf(_pk_place - CamParams.PEAK_TOP, 0.1))
++		_pk_place += clampf(CamParams.PEAK_PLACE_LAND - _pk_place, -CamParams.PEAK_PLACE_RATE * DT, CamParams.PEAK_PLACE_RATE * DT)
++		if _pk_phase == "hold" or _pk_phase == "back":
++			want_w = minf(want_w, CamParams.PEAK_LAND_W * ring_k)
++	if _pk_wait > 0.0:
++		_pk_wait -= DT
++		want_w = _pk_w   # the frame stays and he leaves it
++		_pk_rate = 0.0
+ 	want_w = minf(want_w, _pk_top)
+ 	var rate_top: float = float(CamPlaces.data().get("peakRate", 3.0))
+ 	_pk_rate = minf(rate_top, _pk_rate + rate_top / CamParams.PEAK_START_TICKS)
+@@ -4934,11 +4953,12 @@ func _peak_tick(S: SimState) -> void:
+ func _peak_begin(S: SimState, i: int) -> void:
+ 	var f = S.fighters[i]
+ 	var L = S.fighters[1 - i]
+-	if S.dirS.stop > 0.0 or intro_active or fold_active or float(f.vy) <= 0.0:
++	var vx: float = float(f.vx) / maxf(float(f.launchT), 0.001)
++	var flat: bool = launch_director and flat_mode != "" and float(f.vy) < CamParams.PEAK_STEEP * absf(vx) and sqrt(vx * vx + float(f.vy) * float(f.vy)) >= CamParams.FLAT_SPEED
++	if S.dirS.stop > 0.0 or intro_active or fold_active or (float(f.vy) <= 0.0 and not flat):
+ 		_pk_prev_state[i] = ""   # still in the hit-stop: he leaves when it ends
+ 		return
+-	var vx: float = float(f.vx) / maxf(float(f.launchT), 0.001)
+-	if float(f.vy) < CamParams.PEAK_STEEP * absf(vx):
++	if float(f.vy) < CamParams.PEAK_STEEP * absf(vx) and not flat:
+ 		return
+ 	var apex: float = maxf(0.0, float(f.y) - float(L.y)) + float(f.vy) * float(f.vy) / (2.0 * CamParams.PEAK_GRAVITY)
+ 	var ring_k: float = SimConst.W / CamParams.PEAK_RING
+@@ -4946,8 +4966,13 @@ func _peak_begin(S: SimState, i: int) -> void:
+ 	var top: float = float(CamParams.PEAK_LADDER[tier - 1]) * ring_k
+ 	var at_now: float = vw / maxf(_mz, 0.001) * 1.778 / (vw / vh)   # the view's width now, at 16:9
+ 	var want: float = maxf(1.778 * apex / (CamParams.PEAK_PLACE_HANG - CamParams.PEAK_TOP), CamParams.PEAK_ASPECT_W * apex + CamParams.PEAK_MARGIN_W)
+-	if tier <= 1 or minf(want, top) <= at_now * CamParams.PEAK_WORTH:
++	if not flat and (tier <= 1 or minf(want, top) <= at_now * CamParams.PEAK_WORTH):
+ 		return   # this launch fits the fight's own framing: an ordinary launch
++	_pk_flat = flat
++	_pk_wait = CamParams.FLAT_HOLD if flat and flat_mode == "hold" else 0.0
++	_pk_vx = 0.0
++	_pk_vy = 0.0
++	_pk_y = float(L.y) + CamParams.CHEST
+ 	_pk_slot = i
+ 	_pk_top = top
+ 	_pk_w = at_now
+@@ -5022,7 +5047,7 @@ func _peak_outputs(S: SimState) -> void:
+ 	var d_lf: float = SimWrap.sdx(L.x, f.x)
+ 	var cx: float = SimWrap.wrap(L.x + d_lf * 0.5)
+ 	# he stays in the frame, whatever that does to the launcher
+-	if launch_director and (_pk_phase == "fall" or _pk_phase == "hold" or _pk_phase == "back"):
++	if launch_director and (_pk_flat or _pk_phase == "fall" or _pk_phase == "hold" or _pk_phase == "back"):
+ 		# as the width stops holding both, the frame's centre passes from the pair to just short of where he's going
+ 		var hold_w: float = CamParams.PEAK_ASPECT_W * maxf(absf(d_lf), 1.0)
+ 		var pass_w: float = 1.0 - smoothstep(CamParams.PEAK_PASS_FROM, CamParams.PEAK_PASS_TO, _pk_w / hold_w)
+@@ -5032,9 +5057,25 @@ func _peak_outputs(S: SimState) -> void:
+ 	var off_f: float = SimWrap.sdx(cx, f.x)
+ 	if absf(off_f) > half:
+ 		cx = SimWrap.wrap(cx + off_f - signf(off_f) * half)
++	if _pk_wait > 0.0:
++		cx = _pk_x
+ 	var dx: float = SimWrap.sdx(_pk_x, cx)
+-	_pk_x = SimWrap.wrap(_pk_x + dx * clampf(_pk_mix * 0.2, 0.0, 1.0))
+ 	var y0: float = float(L.y) + CamParams.CHEST
++	if _pk_flat:
++		var wd: float = vw / z
++		var pass_y: float = 1.0 - smoothstep(CamParams.PEAK_PASS_FROM, CamParams.PEAK_PASS_TO, _pk_w / maxf(1.778 * maxf(float(f.y) - float(L.y), 1.0) / maxf(_pk_place - CamParams.PEAK_TOP, 0.1), 1.0))
++		var dy: float = (lerpf(y0, float(f.y) + CamParams.CHEST, pass_y) - _pk_y) if _pk_wait <= 0.0 else 0.0
++		var top_s: float = CamParams.FLAT_STEP * wd
++		var acc_s: float = CamParams.FLAT_ACC * wd
++		var want_x: float = clampf(dx * 0.2, -top_s, top_s)
++		var want_y: float = clampf(dy * 0.2, -top_s, top_s)
++		_pk_vx += clampf(want_x - _pk_vx, -acc_s, acc_s)
++		_pk_vy += clampf(want_y - _pk_vy, -acc_s, acc_s)
++		_pk_x = SimWrap.wrap(_pk_x + _pk_vx)
++		_pk_y += _pk_vy
++		y0 = _pk_y
++	else:
++		_pk_x = SimWrap.wrap(_pk_x + dx * clampf(_pk_mix * 0.2, 0.0, 1.0))
+ 	var pk: Vector3 = _cam_at(_pk_x, y0, 0.0, z, Vector2(vw * 0.5, vh * _pk_place))
+ 	var w: float = 1.0 if _swing_cuts() else _smootherstep(_pk_mix)
+ 	for i in range(2):
+@@ -5224,7 +5265,7 @@ func _mass_stage(was_cut: bool) -> void:
+ 		_ma[i] = aim
+ 		_mav[i] = aim_v
+ 		var want_v: Vector2 = Vector2(SimWrap.sdx(pp.x, aim.x), aim.y - pp.y)
+-		var soft: bool = launch_director and not was_cut and _pk_mix <= 0.0 and _pk_phase == "" and not reduced_motion and not intro_active and _ov_kind == "" and _slam_slot < 0 and not fold_active and (_speed_body(i) or _soft_settling(i, pp, aim, z))
++		var soft: bool = launch_director and not was_cut and ((_pk_mix <= 0.0 and _pk_phase == "") or _pk_phase == "back") and not reduced_motion and not intro_active and _ov_kind == "" and _slam_slot < 0 and not fold_active and (_speed_body(i) or _soft_settling(i, pp, aim, z))
+ 		if not soft and (not on or _own_step(i)):
+ 			# (a building send, its stage's relay and hand-over move by their own eased step)
+ 			_mv[i] = want_v
+diff --git a/render/camera/tests/flight_shots_check.gd b/render/camera/tests/flight_shots_check.gd
+new file mode 100644
+index 0000000..f73d6f3
+--- /dev/null
++++ b/render/camera/tests/flight_shots_check.gd
+@@ -0,0 +1,115 @@
++extends "res://render/camera/tests/launch_shots_check.gd"
++## The flat send's two shots, the reveal in flight and the follow-through (docs/camera/launch-director.md), each on the real rig with launch_shots_check's measures. Staged sends.
++##   godot --headless --path . --script res://render/camera/tests/flight_shots_check.gd -- [--measure]
++## Ends with `flight_shots_check: N checks passed` or a line per failure.
++
++
++func _mode_rig(mode: String, reveal: bool = false, ft: bool = false) -> Callable:
++	return func(rig: SplitRig) -> void:
++		rig.flat_mode = mode
++		if reveal:
++			rig.set("flight_reveal", true)
++		if ft:
++			rig.set("follow_through", true)
++
++
++func _flat(name: String, mode: String, tier: float, speed: float, lost_max: int) -> void:
++	var S: SimState = _match(tier)
++	var rig: SplitRig = _rig(S, _mode_rig(mode))
++	for _t in range(30):
++		SimCore.step(S)
++		S.out.fx.clear()
++		S.out.feed.clear()
++		rig.step(S, VW, VH, [])
++	_send(S.fighters[1], speed, 12.0)
++	var r: Dictionary = _watch(S, rig, 480, Callable(self, "_launched_flier"))
++	print("%-26s most width %.0f, ended %s, split %.2f" % [name, float(r.get("maxw", 0.0)), rig._pk_ended, rig.sep])
++	var keep: Dictionary = r.duplicate()
++	keep.lost_run = 0
++	_say(name, keep, 0.12)   # past the eye's ceiling, a layout closing as the shot takes over
++	print("    lost run %d (limit %d) at %s" % [r.lost_run, lost_max, r.lost_at])
++	if not measure:
++		_ok(int(r.lost_run) <= lost_max, "%s: lost for %d ticks" % [name, r.lost_run])
++		_ok(rig.peak_shots == 1, "%s: the shot didn't run" % name)
++
++
++func _reveal() -> void:
++	# a long flight opens out, eased, and comes back; a short one doesn't
++	for row in [[3.0, 8000.0, 6.0, true], [1.0, 4200.0, 6.0, true], [3.0, 8000.0, 0.7, false], [3.0, 8000.0, 6.0, false, "off"]]:
++		var S: SimState = _match(float(row[0]))
++		var rig = _rig(S, _mode_rig("", row.size() < 5))
++		for f0 in S.fighters:
++			f0.state = "launched"
++			f0.launchT = 1.0
++			f0.vx = 0.0
++			f0.vy = 0.0
++			f0.y = WorldTerrain.groundY(S, f0.x) + 900.0
++		rig.reset(S, VW, VH)
++		var stop: int = int(float(row[2]) * 60.0)
++		var widest: Array = [0.0]
++		var hold := func(St: SimState, r0, t0: int) -> void:
++			var fly: bool = t0 < stop
++			for f in St.fighters:
++				f.state = "launched" if fly else "free"
++				f.launchT = 1.0
++				f.vx = (6000.0 * minf(1.0, float(t0) / 30.0)) if fly else 0.0
++				f.vy = 0.0
++				f.y = WorldTerrain.groundY(St, f.x) + (900.0 if fly else 0.0)
++			widest[0] = maxf(float(widest[0]), VW / maxf(r0.current().cam_z[0], 0.001))
++		var r: Dictionary = _watch(S, rig, stop + 240, Callable(self, "_flier"), hold)
++		print("reveal, tier %.0f, %.1f s flight: %d shots, widest %.0f; back %.2f" % [float(row[0]), float(row[2]), rig.reveal_shots, float(widest[0]), rig.reveal_w])
++		_say("reveal %.1f s" % float(row[2]), r)
++		if measure or row.size() >= 5:
++			continue
++		_ok((rig.reveal_shots > 0) == bool(row[3]), "the reveal's %d shots on a %.1f s flight" % [rig.reveal_shots, float(row[2])])
++		if bool(row[3]):
++			_ok(float(widest[0]) >= float(row[1]) * 0.85 and float(widest[0]) <= float(row[1]) * 1.15, "the reveal's width was %f against %f" % [float(widest[0]), float(row[1])])
++		_ok(rig.reveal_w == 0.0, "the reveal didn't come back")
++
++
++func _follow() -> void:
++	var S: SimState = _match(2.0)
++	var rig = _rig(S, _mode_rig("", false, true))
++	for _t in range(30):
++		SimCore.step(S)
++		S.out.fx.clear()
++		S.out.feed.clear()
++		rig.step(S, VW, VH, [])
++	_send(S.fighters[1], 6000.0, 15.0)
++	var peak: Array = [0.0]
++	var stop := func(St: SimState, r0, t0: int) -> void:
++		peak[0] = maxf(float(peak[0]), r0.ft_offset.length())
++		if t0 == 30:
++			var f1 = St.fighters[1]
++			f1.state = "free"
++			f1.vx = 0.0
++			f1.vy = 0.0
++	var r: Dictionary = _watch(S, rig, 240, Callable(self, "_launched_flier"), stop)
++	print("overshoot: %d, peak %.4f of the width, back %.4f" % [rig.overshoots, float(peak[0]), rig.ft_offset.length()])
++	_say("a stop", r)
++	if measure:
++		return
++	_ok(rig.overshoots == 1, "the stop didn't overshoot: %d" % rig.overshoots)
++	_ok(float(peak[0]) > 0.005 and float(peak[0]) <= CamParams.FT_AMOUNT * 1.01, "the overshoot was %f" % float(peak[0]))
++	_ok(rig.ft_offset == Vector2.ZERO, "it didn't settle")
++
++
++func _initialize() -> void:
++	for a in OS.get_cmdline_user_args():
++		if a == "--measure":
++			measure = true
++	for row in [[1.0, 10800.0], [2.0, 10800.0], [3.0, 26700.0], [4.0, 26700.0]]:
++		_flat("wide, tier %d, %d" % [int(row[0]), int(row[1])], "wide", float(row[0]), float(row[1]), 40)
++		_flat("hold, tier %d, %d" % [int(row[0]), int(row[1])], "hold", float(row[0]), float(row[1]), 90)
++	var probe := SplitRig.new()
++	if "flight_reveal" in probe:
++		_reveal()
++	if "follow_through" in probe:
++		_follow()
++	if measure:
++		print("flight_shots_check: measured")
++	elif fails == 0:
++		print("flight_shots_check: %d checks passed" % checks)
++	else:
++		print("flight_shots_check: %d of %d checks FAILED" % [fails, checks])
++	quit(1 if fails > 0 and not measure else 0)
+diff --git a/render/core/main.gd b/render/core/main.gd
+index 7d75c54..43ec33c 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -242,6 +242,7 @@ func _ready() -> void:
+ 	split_rig.swing_view = RenderTileGround.on   # the camera's swing and peak launch go with the true globe (docs/camera/swing-view.md)
+ 	split_rig.peak_launch = RenderTileGround.on
+ 	split_rig.launch_director = RenderTileGround.on
++	split_rig.flat_mode = String(args.get("flat", "wide")) if RenderTileGround.on else ""   # for Orb's eye: flat=wide or flat=hold (launch-director.md)
+ 	RenderTileGround.rate = float(args.get("tilerate", 0.0))
+ 	RenderTileGround.quick = args.has("tilequick")
+ 	RenderTileGround.near_mode = int(args.get("nearmode", RenderLook.TILE_NEAR_DEFAULT))
+@@ -1568,8 +1569,8 @@ const HOLD_STYLE_OPTIONS := {"guard_style": "guard", "manoeuvre_style": "dodge",
+ ## host (gate_args). What a public page's link may still set are four reviewed look switches: skyreact, panhaze, nopanhaze, keyhelp (tools/site-url-words.json; a change to them runs the flash clips
+ ## like any look change, and tools/site-routes.mjs fails on any other word that is not here). The debug and A/B words added since (the camera roll, the slow drift, the far map, the culling and
+ ## cover switches, the touch scale, the fill, ladder and fine switches) are local-only too (Legal RL-196).
+-const LOCAL_ONLY_ARGS: Array = ["tiles", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
+-const URL_ARGS: Array = ["tiles", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
++const LOCAL_ONLY_ARGS: Array = ["tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
++const URL_ARGS: Array = ["tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
+ 
+ 
+ ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of

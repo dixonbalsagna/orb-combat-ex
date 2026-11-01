@@ -1,0 +1,63 @@
+diff --git a/render/core/main.gd b/render/core/main.gd
+index 865d726..8840d81 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -239,6 +239,8 @@ func _ready() -> void:
+ 		add_child(boot)
+ 		boot.begin([pane], RenderLook.BOOT_WORDS)
+ 	RenderTileGround.on = args.has("tiles")   # the tile ground: off; --tiles, ?tiles=1 on a local page (rendering.md)
++	split_rig.swing_view = RenderTileGround.on   # the camera's swing and peak launch go with the true globe (docs/camera/swing-view.md)
++	split_rig.peak_launch = RenderTileGround.on
+ 	RenderTileGround.rate = float(args.get("tilerate", 0.0))
+ 	RenderTileGround.quick = args.has("tilequick")
+ 	RenderTileGround.near_mode = int(args.get("nearmode", RenderLook.TILE_NEAR_DEFAULT))
+@@ -811,6 +813,7 @@ func render_view(a: float) -> void:
+ 		if "pitch_deg" in split_rig:
+ 			split_rig.pitch_deg = cam_pitch
+ 		split_frame = split_rig.frame(a)
++		RenderTileGround.shown = split_frame.place   # the heading to draw: the sim's, a correction's ease, or the motion setting's cut or still
+ 		var zmax: float = 0.0
+ 		var zfocus: float = 0.0   # the closer pane's focus depth, for the flash register's sizes
+ 		# Camera's frame may carry the pitch and each pane's cut-away request; until it does, the debug pitch, and in a
+@@ -1028,6 +1031,7 @@ func _sync_split_options() -> void:
+ 	var o: Dictionary = ui_hud.opts
+ 	split_rig.solo_split = bool(o.get("split_solo", true))
+ 	split_rig.reduced_motion = bool(o.get("reduced_motion", false))
++	split_rig.world_turning = String(o.get("world_turning", "auto"))
+ 	if split_view != null:
+ 		split_view.reduced_motion = split_rig.reduced_motion
+ 		split_view.set_zoom_pref(float(o.get("camera_zoom", CamParams.ZOOM_PREF_DEFAULT)))
+diff --git a/render/core/tile_ground.gd b/render/core/tile_ground.gd
+index 73b076a..3127ced 100644
+--- a/render/core/tile_ground.gd
++++ b/render/core/tile_ground.gd
+@@ -78,6 +78,20 @@ static func setup_of(su: Dictionary) -> Dictionary:
+ 	return out
+ 
+ 
++## The frame to draw: the rig's shown heading when it has one (SplitFrame.place), else the sim's.
++static var shown: PackedFloat64Array = PackedFloat64Array()
++
++
++static func _shown_frame(S: SimState):
++	if shown.size() != 7 or S.frame == null:
++		return S.frame
++	var fr := SimState.Frame.new()
++	fr.px = shown[0]; fr.py = shown[1]; fr.pz = shown[2]
++	fr.tx = shown[3]; fr.ty = shown[4]; fr.tz = shown[5]
++	fr.x0 = shown[6]
++	return fr
++
++
+ ## Reads this frame's camera and places the world. After the planet's update, in place of the split's culling (which
+ ## would put the strip's ground back).
+ func apply(host: SimHost, cam_x: float, vp: Vector2) -> void:
+@@ -90,7 +104,7 @@ func apply(host: SimHost, cam_x: float, vp: Vector2) -> void:
+ 	var tk: int = host.ticks
+ 	var turned: float = _turn_at(tk)
+ 	var wcx: float = SimWrap.wrap(cam_x)
+-	var fr: Array = field.frame_at(wcx, S.frame)
++	var fr: Array = field.frame_at(wcx, _shown_frame(S))
+ 	_pv0 = fr[0]
+ 	_hd0 = fr[1]
+ 	_sd0 = fr[2]

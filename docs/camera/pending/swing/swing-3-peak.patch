@@ -1,0 +1,548 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index 919c7ff..3a90aec 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -349,6 +349,34 @@ const ANGLE_GAP: float = 20.0
+ # changes it) and leans SCAPE_LEAN of the width toward the new ground. In over SCAPE_IN, held SCAPE_HOLD, back over SCAPE_OUT; no cut.
+ # A hit, the anticipation of one, a shot, the split or a clash lets it go at once, eased. One in SCAPE_GAP at most, none within
+ # SCAPE_PEAK_GAP of a peak or a building's fall; a crossing not shown within SCAPE_WINDOW is let pass.
++# The peak launch's shot (docs/camera/swing-view.md; camera.md "The meteor launch"; game-design.md section 12). Widths are at 16:9 on a full ring. First values
++const PEAK_LADDER: Array = [4200.0, 8000.0, 16000.0, 53000.0]   # by the lower of the two tiers (tier 4's sim-side send decides 32,000 or 53,000 by its height)
++const PEAK_RING: float = 153600.0        # the ring those widths are for: a smaller ring scales them
++const PEAK_GRAVITY: float = 1000.0       # the launch's gravity, for the apex he is sent to
++const PEAK_GRAVITY_TIME: float = 0.001   # one second before the apex is this many seconds per u/s of vy
++const PEAK_STEEP: float = 1.0            # steeper than 45 degrees is a launch up
++const PEAK_WORTH: float = 1.3            # the shot runs only if it would widen the view by more than this
++const PEAK_TOP: float = 0.05             # he may reach this share of the height from the top
++const PEAK_PLACE_CLIMB: float = 0.85     # the launcher's place in the frame through the climb, for headroom
++const PEAK_PLACE_HANG: float = 0.6       # ... craned to this over the climb's last second: the planet comes up
++const PEAK_PLACE_LAND: float = 0.7       # ... and this on the ground again
++const PEAK_PLACE_RATE: float = 0.3       # shares of the height a second
++const PEAK_MARGIN_W: float = 2700.0      # the launch framing's margin
++const PEAK_ASPECT_W: float = 2.2         # the width for a height low down, and across for the pair
++const PEAK_LAND_W: float = 8000.0        # the width at the landing: the blast reads whole
++const PEAK_RATE: float = 3.0             # e-folds a second, as the slam's door (Research's test: 93% of the descent in frame)
++const PEAK_EASE: float = 7.0             # how the width settles on its target, a second
++const PEAK_START_TICKS: float = 6.0      # the width's rate comes up over these
++const PEAK_IN: float = 0.2               # the shot takes the screen over this
++const PEAK_HANG_VY: float = 900.0        # under this he hangs
++const PEAK_ON_GROUND: float = 60.0       # what counts as landed
++const PEAK_CATCH: float = 1400.0         # both this close: a catch, the exchange's framing takes over
++const PEAK_HOLD: float = 0.5             # the hold after a landing
++const PEAK_BACK_LAND: float = 1.3        # the returns
++const PEAK_BACK_BRAKE: float = 1.5
++const PEAK_BACK_CATCH: float = 0.6
++const PEAK_BACK_KO: float = 0.5
++const PEAK_BACK_MIN: float = 0.2
+ # The swing's shot (docs/camera/swing-view.md; docs/world/ring-any-angle/camera.md, first values, nothing seen on real ground)
+ const SWING_STILL: float = 0.0087        # radians a second under which the world counts as still (half a degree)
+ const SWING_MAX_TICK: float = 0.0873     # the most a swing turns in a tick (5 degrees, past Orb's 240 a second): more is a correction
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index e02b940..1bb339c 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -245,6 +245,21 @@ var _sw_tall: bool = false
+ var _sw_held: bool = false                 # the motion setting is holding the shown heading
+ var _sw_brawl: bool = false                # a brawl's slow swing is what's held: it can't hold for long
+ var _sw_cause: String = ""
++var peak_launch: bool = false              # the upward launch's shot, earned by tier (camera.md "The meteor launch"; game-design.md section 12). Off: none of it runs
++var peak_width: float = 0.0                # the shot's width at 16:9 this tick, for the debug feed; 0 when none
++var peak_shots: int = 0
++var _pk_phase: String = ""                 # "", "rise", "hang", "fall", "hold", "back"
++var _pk_slot: int = -1                     # the body sent up
++var _pk_top: float = 0.0                   # the most this shot may show, 16:9 width
++var _pk_w: float = 0.0                     # its width now
++var _pk_rate: float = 0.0                  # how fast the width may move now, e-folds a second
++var _pk_place: float = 0.85                # where the launcher sits, a share of the height from the top
++var _pk_mix: float = 0.0                   # 1 the shot has the screen, 0 the fight's framing
++var _pk_t: float = 0.0
++var _pk_back: float = 1.3                  # how long this shot's return takes
++var _pk_x: float = 0.0
++var _pk_ended: String = ""
++var _pk_prev_state: Array = ["", ""]
+ var landscape: bool = true                 # the landscape shot on a new biome or a landmark coming into the frame (CamParams.SCAPE_*)
+ var scape_shots: int = 0
+ var scape_now: String = ""                  # "biome" or "landmark" while one runs, for the debug feed
+@@ -346,6 +361,10 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
+ 	phi = _phi_target(A, B)
+ 	theta = _theta_of(sigma_shown, phi)
+ 	swing_t = -1.0
++	_pk_phase = ""
++	_pk_mix = 0.0
++	_pk_prev_state = ["", ""]
++	peak_width = 0.0
+ 	_sw_prev = PackedFloat64Array()
+ 	swing_deg = 0.0
+ 	swing_gesture = 0.0
+@@ -548,6 +567,8 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
+ 	_flash = maxf(0.0, _flash - DT)
+ 	_update_orientation(S)
+ 	r_now = _metric(S)
++	if peak_launch:
++		_peak_tick(S)
+ 	_update_solo(S)
+ 	_update_panel(S)
+ 	_update_intro(S)
+@@ -673,6 +694,9 @@ func _r_merge() -> float:
+ 
+ 
+ func _update_trigger(S: SimState) -> void:
++	if _pk_phase != "" and _pk_phase != "back":
++		split_wanted = false
++		return   # one frame, never a split: the point is the two of them and the planet together
+ 	var A = S.fighters[0]
+ 	var B = S.fighters[1]
+ 	var ad: float = absf(u)
+@@ -1565,6 +1589,8 @@ func _begin_solo_clear() -> void:
+ func _begin_solo(kind: String, slot: int, prio: int, sl: float, S: SimState = null, cut_in: bool = false) -> void:
+ 	if slot < 0 or slot > 1 or fold_active:
+ 		return
++	if _pk_phase != "" and _pk_phase != "back" and (kind == "launch" or kind == "hold"):
++		return   # the peak shot lets him go: no whip after him
+ 	if solo_kind != "" and prio < solo_prio:
+ 		return
+ 	# A shot that takes the screen from another fighter's pane while that pane still holds it (a launch chase ending
+@@ -1750,7 +1776,7 @@ func _update_solo(S: SimState) -> void:
+ ## fighter for a crippling blow, the winner for the KO (the main view is on the loser then).
+ func _panel_request(S: SimState, kind: String, slot: int) -> void:
+ 	_pc_big_t = time   # a strip-worthy moment (a signature, a clash, a riposte) is a peak, whether or not its strip is drawn
+-	if panel_mode == "off" or slot < 0 or slot > 1 or fold_active or solo_kind == "transform" or intro_active or _sw_ticks >= CamParams.SWING_SHOT_TICKS:
++	if panel_mode == "off" or _pk_phase != "" or slot < 0 or slot > 1 or fold_active or solo_kind == "transform" or intro_active or _sw_ticks >= CamParams.SWING_SHOT_TICKS:
+ 		return
+ 	if flash_reduced and panel_flash_off.has(kind):
+ 		return
+@@ -3854,6 +3880,8 @@ func _outputs(S: SimState) -> void:
+ 		_oz[0] = oc.z
+ 		_oz[1] = oc.z
+ 	_oz_valid = true
++	if _pk_mix > 0.0:
++		_peak_outputs(S)
+ 	_mass_stage(_cut_now)   # before the travel budget: the budget keeps the last word on how far a picture moves in a tick
+ 	_travel_budget(S)
+ 
+@@ -4585,7 +4613,7 @@ func _angle_tick(S: SimState) -> void:
+ 			_shot_pitch = 0.0
+ 			_ang_pa = 0.0
+ 		return
+-	if want == "" or not angles or reduced_motion or not plain or time - _ang_last_t < CamParams.ANGLE_GAP or _shot_pitch != 0.0 or _sw_ticks > 0:
++	if want == "" or not angles or _pk_phase != "" or reduced_motion or not plain or time - _ang_last_t < CamParams.ANGLE_GAP or _shot_pitch != 0.0 or _sw_ticks > 0:
+ 		return
+ 	var A = S.fighters[0]
+ 	var mid: float = SimWrap.wrap(A.x + SimWrap.sdx(A.x, S.fighters[1].x) * 0.5)
+@@ -4794,6 +4822,165 @@ func _scape_tick(S: SimState) -> void:
+ 	scape_now = _scape_kind
+ 
+ 
++## The peak launch's shot (docs/camera/swing-view.md; camera.md "The meteor launch"): a body sent steeply up, between fighters who have both
++## earned it, is let go. No whip, no cut, one frame: the width follows his height, up to the ladder's row for the lower of the two tiers,
++## and the launcher goes low in the frame, then cranes up as he slows, so the planet comes up and fills it. The sim's flight decides the
++## height, so a meteor and a lesser launch are the same shot at another size. It reads only the fighters. Four endings, always eased.
++func _peak_tick(S: SimState) -> void:
++	peak_width = 0.0
++	if _pk_phase == "":
++		_pk_mix = maxf(0.0, _pk_mix - DT / CamParams.PEAK_BACK_MIN)
++		for i in range(2):
++			var f = S.fighters[i]
++			if f.state == "launched" and _pk_prev_state[i] != "launched":
++				_peak_begin(S, i)
++				break
++		for i in range(2):
++			_pk_prev_state[i] = S.fighters[i].state
++		return
++	for i in range(2):
++		_pk_prev_state[i] = S.fighters[i].state
++	_pk_t += DT
++	var f = S.fighters[_pk_slot]
++	var L = S.fighters[1 - _pk_slot]
++	var gh: float = float(L.y)
++	var rise: float = maxf(0.0, float(f.y) - gh)
++	var ad: float = absf(SimWrap.sdx(L.x, f.x))
++	var ring_k: float = SimConst.W / CamParams.PEAK_RING
++	if _pk_phase != "back":
++		if S.game.ko != null or solo_kind == "ko" or solo_kind == "finisher" or solo_kind == "transform":
++			_peak_end("ko", CamParams.PEAK_BACK_KO)
++		elif f.state != "launched":
++			var hgt: float = float(f.y) - WorldTerrain.groundY(S, f.x)
++			if _pk_phase == "hold":
++				pass
++			elif f.state == "down" or hgt < CamParams.PEAK_ON_GROUND:   # (a landing's bounce or a roof reads high: "down" is the sim's word for it)
++				_pk_phase = "hold"
++				_pk_t = 0.0
++			else:
++				_peak_end("brake", CamParams.PEAK_BACK_BRAKE)
++		elif ad < CamParams.PEAK_CATCH and rise < CamParams.PEAK_CATCH and _pk_t > 0.5:
++			_peak_end("catch", CamParams.PEAK_BACK_CATCH)
++	if _pk_phase == "rise" and float(f.vy) < CamParams.PEAK_HANG_VY:
++		_pk_phase = "hang"
++	elif _pk_phase == "hang" and float(f.vy) < -CamParams.PEAK_HANG_VY:
++		_pk_phase = "fall"
++	if reduced_motion:
++		_peak_reduced(S)
++		return
++	# the width: the height he has reached, for the launcher's place in the frame, plus the margin the launch's framing has
++	var want_w: float
++	var place_to: float = CamParams.PEAK_PLACE_CLIMB
++	if _pk_phase == "rise" or _pk_phase == "hang":
++		var to_top: float = CamParams.PEAK_GRAVITY_TIME * float(f.vy) if float(f.vy) > 0.0 else 0.0
++		place_to = lerpf(CamParams.PEAK_PLACE_HANG, CamParams.PEAK_PLACE_CLIMB, clampf(to_top, 0.0, 1.0))
++	elif _pk_phase == "fall":
++		place_to = CamParams.PEAK_PLACE_HANG
++	elif _pk_phase == "hold" or _pk_phase == "back":
++		place_to = CamParams.PEAK_PLACE_LAND
++	_pk_place += clampf(place_to - _pk_place, -CamParams.PEAK_PLACE_RATE * DT, CamParams.PEAK_PLACE_RATE * DT)
++	want_w = maxf(1.778 * rise / maxf(_pk_place - CamParams.PEAK_TOP, 0.1), CamParams.PEAK_ASPECT_W * rise + CamParams.PEAK_MARGIN_W)
++	if _pk_phase == "rise" or _pk_phase == "hang":
++		want_w = maxf(want_w, CamParams.PEAK_ASPECT_W * ad)   # coming down the frame follows him, not the pair, so the launcher may leave it
++	if _pk_phase == "hold" or _pk_phase == "fall":
++		want_w = maxf(want_w, CamParams.PEAK_LAND_W * ring_k)
++	want_w = minf(want_w, _pk_top)
++	_pk_rate = minf(CamParams.PEAK_RATE, _pk_rate + CamParams.PEAK_RATE / CamParams.PEAK_START_TICKS)
++	var dl: float = log(maxf(want_w, 1.0) / maxf(_pk_w, 1.0))
++	var step_w: float = clampf(dl * CamParams.PEAK_EASE * DT, -_pk_rate * DT, _pk_rate * DT)
++	_pk_w *= exp(step_w)
++	peak_width = _pk_w
++	if _pk_phase == "back":
++		_pk_mix = maxf(0.0, _pk_mix - DT / _pk_back)
++		if _pk_mix <= 0.0:
++			_pk_phase = ""
++			peak_width = 0.0
++	else:
++		_pk_mix = minf(1.0, _pk_mix + DT / CamParams.PEAK_IN)
++	if _pk_phase == "hold" and _pk_t >= CamParams.PEAK_HOLD:
++		_peak_end("land", CamParams.PEAK_BACK_LAND)
++
++
++func _peak_begin(S: SimState, i: int) -> void:
++	var f = S.fighters[i]
++	var L = S.fighters[1 - i]
++	if S.dirS.stop > 0.0 or intro_active or fold_active or float(f.vy) <= 0.0:
++		_pk_prev_state[i] = ""   # still in the hit-stop: he leaves when it ends
++		return
++	var vx: float = float(f.vx) / maxf(float(f.launchT), 0.001)
++	if float(f.vy) < CamParams.PEAK_STEEP * absf(vx):
++		return
++	var apex: float = maxf(0.0, float(f.y) - float(L.y)) + float(f.vy) * float(f.vy) / (2.0 * CamParams.PEAK_GRAVITY)
++	var ring_k: float = SimConst.W / CamParams.PEAK_RING
++	var tier: int = clampi(int(minf(float(f.tier), float(L.tier))), 1, CamParams.PEAK_LADDER.size())
++	var top: float = float(CamParams.PEAK_LADDER[tier - 1]) * ring_k
++	var at_now: float = vw / maxf(_mz, 0.001) * 1.778 / (vw / vh)   # the view's width now, at 16:9
++	var want: float = maxf(1.778 * apex / (CamParams.PEAK_PLACE_HANG - CamParams.PEAK_TOP), CamParams.PEAK_ASPECT_W * apex + CamParams.PEAK_MARGIN_W)
++	if tier <= 1 or minf(want, top) <= at_now * CamParams.PEAK_WORTH:
++		return   # this launch fits the fight's own framing: an ordinary launch
++	_pk_slot = i
++	_pk_top = top
++	_pk_w = at_now
++	_pk_rate = 0.0
++	_pk_t = 0.0
++	_pk_place = CamParams.PLANE_Y
++	_pk_mix = 0.0
++	_pk_ended = ""
++	_pk_phase = "rise"
++	_pk_x = _mx
++	peak_shots += 1
++	if solo_kind == "launch" or solo_kind == "hold":
++		_end_solo(S)
++	if split_wanted:
++		_set_split(false, "peak")
++	if reduced_motion:
++		_pk_w = top
++		_pk_mix = 1.0
++		_cut_now = true   # a cut to the widest on the blow
++	_shot_pitch = 0.0 if _shot_pitch == _sw_pa else _shot_pitch
++
++
++func _peak_end(why: String, back: float) -> void:
++	_pk_ended = why
++	_pk_phase = "back"
++	_pk_back = back
++	_pk_t = 0.0
++
++
++## The motion setting: a cut to the widest on the blow, held still, a cut back at the end. It frames both as they are at the top.
++func _peak_reduced(S: SimState) -> void:
++	peak_width = _pk_w
++	_pk_place = CamParams.PEAK_PLACE_HANG
++	if _pk_phase == "hold" or _pk_phase == "back":
++		_pk_phase = ""
++		_pk_mix = 0.0
++		peak_width = 0.0
++		_cut_now = true
++
++
++## The shot's camera over whatever the fight's framing has: it frames the pair, the launcher low in the frame, and comes back to it.
++func _peak_outputs(S: SimState) -> void:
++	var f = S.fighters[_pk_slot]
++	var L = S.fighters[1 - _pk_slot]
++	var z: float = (vw / vh) / 1.778 * vw / maxf(_pk_w, 1.0)   # height-for-height at any screen shape
++	var half: float = 0.45 * vw / z
++	var d_lf: float = SimWrap.sdx(L.x, f.x)
++	var cx: float = SimWrap.wrap(L.x + d_lf * 0.5)
++	# he stays in the frame, whatever that does to the launcher
++	var off_f: float = SimWrap.sdx(cx, f.x)
++	if absf(off_f) > half:
++		cx = SimWrap.wrap(cx + off_f - signf(off_f) * half)
++	var dx: float = SimWrap.sdx(_pk_x, cx)
++	_pk_x = SimWrap.wrap(_pk_x + dx * clampf(_pk_mix * 0.2, 0.0, 1.0))
++	var y0: float = float(L.y) + CamParams.CHEST
++	var pk: Vector3 = _cam_at(_pk_x, y0, 0.0, z, Vector2(vw * 0.5, vh * _pk_place))
++	var w: float = 1.0 if reduced_motion else _smootherstep(_pk_mix)
++	for i in range(2):
++		_outs[i] = _blend_cam(_outs[i], pk, w)
++		_fzo[i] = lerpf(float(_fzo[i]), 0.0, w)
++		_oz[i] = _outs[i].z
++
++
+ ## The swing's shot (docs/camera/swing-view.md; camera.md sections 1, 2 and 5): the sim runs the world's turn, and the camera holds its
+ ## frame on the fighters and adds three things, eased: a low angle, a lean toward what is arriving, and a held size where tall land is
+ ## near. A short small swing gets none of them. The world's rate is measured from the frame, so no timer of the camera's can part from
+@@ -4949,7 +5136,7 @@ func _scape_mult() -> float:
+ ## The camera's mass: each pane's drawn point (x, y) follows the follow's aim with a bounded change of velocity a tick
+ ## (MASS_ACC of the width), kept within MASS_DEV of the width of the aim. Passes through (and keeps its state) where it is off.
+ func _mass_stage(was_cut: bool) -> void:
+-	var on: bool = mass and not reduced_motion and not intro_active and not was_cut and (sep <= 0.001 or sep >= 0.999) and _slam_slot < 0 and _ov_kind == "" and (e < 0.001 or (solo_kind == "launch" and solo_w >= 0.999 and e >= 0.999)) and not fold_active
++	var on: bool = mass and _pk_mix <= 0.0 and not reduced_motion and not intro_active and not was_cut and (sep <= 0.001 or sep >= 0.999) and _slam_slot < 0 and _ov_kind == "" and (e < 0.001 or (solo_kind == "launch" and solo_w >= 0.999 and e >= 0.999)) and not fold_active
+ 	for i in range(2):
+ 		var o: Vector3 = _outs[i]
+ 		var aim: Vector2 = Vector2(o.x, o.y)
+diff --git a/render/camera/split_view.gd b/render/camera/split_view.gd
+index 4f4011e..93dd481 100644
+--- a/render/camera/split_view.gd
++++ b/render/camera/split_view.gd
+@@ -198,6 +198,12 @@ func set_struggle_framing(on: bool) -> void:
+ 
+ ## A pair moving apart fast is not merged on its present separation but on the one it will have a second on (docs/camera/rushcity.md): the merge
+ ## and the split that follows it within two seconds, with a pan between them, are what rushcity's standing area failure is. Off by default. A build-time switch.
++## The upward launch's shot, earned by tier (swing-view.md). Separate from the turntable: it needs no frame and works on today's ground.
++func set_peak_launch(on: bool) -> void:
++	if main != null:
++		main.split_rig.peak_launch = on
++
++
+ ## The turntable's switch: the rig reads places through the sim's frame, and gives it to Rendering in SplitFrame.place (swing-view.md).
+ func set_swing_view(on: bool) -> void:
+ 	if main != null:
+diff --git a/render/camera/tests/peak_shot_check.gd b/render/camera/tests/peak_shot_check.gd
+new file mode 100644
+index 0000000..085d116
+--- /dev/null
++++ b/render/camera/tests/peak_shot_check.gd
+@@ -0,0 +1,219 @@
++extends SceneTree
++## The peak launch's shot on the real rig (docs/camera/swing-view.md): a body sent up by the check, in a real match with idle fighters, at
++## Game Design's sends. The launch is staged, since no rule in the sim earns it yet: the check writes the body's state and speed.
++##   godot --headless --path . --script res://render/camera/tests/peak_shot_check.gd
++## Ends with `peak_shot_check: N checks passed` or a line per failure.
++
++const VW: float = 1280.0
++const VH: float = 720.0
++
++var fails: int = 0
++var checks: int = 0
++
++
++func _ok(cond: bool, what: String) -> void:
++	checks += 1
++	if not cond:
++		fails += 1
++		print("FAIL ", what)
++
++
++func _match(tier: float, su: Dictionary = {}) -> SimState:
++	var S: SimState = SimCore.createSim()
++	SimCore.newMatch(S, 7, {"p1": false, "p2": false}, su)
++	S.dt = SplitRig.DT
++	for f in S.fighters:
++		f.tier = tier
++	return S
++
++
++func _rig(S: SimState, on: bool = true, reduced: bool = false) -> SplitRig:
++	var rig := SplitRig.new()
++	rig.peak_launch = on
++	rig.reduced_motion = reduced
++	rig.reset(S, VW, VH)
++	return rig
++
++
++func _tick(S: SimState, rig: SplitRig) -> void:
++	SimCore.step(S)
++	var ev: Array = S.out.fx.duplicate()
++	S.out.fx.clear()
++	S.out.feed.clear()
++	rig.step(S, VW, VH, ev)
++
++
++func _send(S: SimState, speed: float, deg: float = 60.0) -> void:
++	var f = S.fighters[1]
++	f.state = "launched"
++	f.stateT = 0.0
++	f.launchT = 1.0
++	f.vx = speed * cos(deg_to_rad(deg))
++	f.vy = speed * sin(deg_to_rad(deg))
++	f.y += 40.0
++
++
++## Runs one shot and reads it. `until` a Callable taking (S, rig, tick) may stage an ending.
++func _run(S: SimState, rig: SplitRig, ticks: int, until: Callable = Callable()) -> Dictionary:
++	var r: Dictionary = {"maxw": 0.0, "split": 0, "cuts": 0, "jump": 0.0, "rate": 0.0, "foe_in": 0, "foe_n": 0, "peak_ticks": 0, "end": -1, "land": -1}
++	var prev := Vector3.ZERO
++	var pz: float = 0.0
++	for t in range(ticks):
++		if until.is_valid():
++			until.call(S, rig, t)
++		_tick(S, rig)
++		var c: SplitFrame = rig.current()
++		r["split"] = int(r["split"]) + (1 if rig.sep > 0.001 and rig._pk_phase != "" and rig._pk_phase != "back" else 0)
++		r["cuts"] = int(r["cuts"]) + (1 if c.cut else 0)
++		var z: float = c.cam_z[0]
++		if pz > 0.0:
++			var dzr: float = absf(log(z / pz)) * 60.0
++			r["rate"] = maxf(float(r["rate"]), dzr)
++			# how far the launcher moves on the screen in a tick, while he's on it: the frame's own steadiness
++			var L = S.fighters[0]
++			var lp := Vector2(VW * 0.5 + SimWrap.sdx(c.cam_x[0], L.x) * z, VH * CamParams.PLANE_Y - (L.y + CamParams.CHEST - c.cam_y[0]) * z)
++			if not c.cut and t > 0 and lp.x > 0.0 and lp.x < VW and lp.y > 0.0 and lp.y < VH and Vector2(r.get("lp", lp)).x >= 0.0:
++				var st: float = lp.distance_to(r.get("lp", lp)) / VW
++				if st > float(r["jump"]):
++					r["jump"] = st
++					r["jump_at"] = "%d %s" % [t, rig._pk_phase]
++			r["lp"] = lp
++		prev = Vector3(c.cam_x[0], c.cam_y[0], z)
++		pz = z
++		if rig._pk_phase != "":
++			r["peak_ticks"] = int(r["peak_ticks"]) + 1
++			r["maxw"] = maxf(float(r["maxw"]), rig.peak_width)
++		var foe = S.fighters[1]
++		if rig._pk_phase == "fall" or rig._pk_phase == "rise" or rig._pk_phase == "hang":
++			var px: float = VW * 0.5 + SimWrap.sdx(c.cam_x[0], foe.x) * z
++			var py: float = VH * CamParams.PLANE_Y - (foe.y + CamParams.CHEST - c.cam_y[0]) * z
++			r["foe_n"] = int(r["foe_n"]) + 1
++			if px >= 0.0 and px <= VW and py >= 0.0 and py <= VH:
++				r["foe_in"] = int(r["foe_in"]) + 1
++		if rig._pk_phase == "hold" and int(r["land"]) < 0:
++			r["land"] = t
++			r["landw"] = rig.peak_width
++		if rig._pk_phase == "back" and not r.has("seen"):
++			r["seen"] = "%s h %.0f" % [S.fighters[1].state, float(S.fighters[1].y) - WorldTerrain.groundY(S, S.fighters[1].x)]
++		if rig._pk_phase == "" and int(r["peak_ticks"]) > 0 and int(r["end"]) < 0:
++			r["end"] = t
++			r["why"] = rig._pk_ended
++			break
++	return r
++
++
++func _initialize() -> void:
++	# the top of the ladder: Game Design's 6,600 at 60 degrees
++	var S: SimState = _match(4.0)
++	var rig: SplitRig = _rig(S)
++	for _t in range(30):
++		_tick(S, rig)
++	_send(S, 6600.0)
++	var r: Dictionary = _run(S, rig, 1500)
++	print("the top: most width %.0f, landing width %.0f at tick %d, ended %d (%s), foe in frame %d of %d, zoom rate up to %.2f e-folds/s, the launcher's biggest step %.3f of the width (%s), splits %d, cuts %d; at the end's start: %s" % [r.maxw, float(r.get("landw", 0.0)), r.land, r.end, String(r.get("why", "")), r.foe_in, r.foe_n, r.rate, r.jump, r.get("jump_at", ""), r.split, r.cuts, r.get("seen", "")])
++	_ok(float(r.maxw) > 48000.0 and float(r.maxw) <= 53000.0, "the top's width was %f" % r.maxw)
++	_ok(int(r.split) == 0, "the shot split")
++	_ok(int(r.cuts) == 0, "the shot cut %d times" % r.cuts)
++	_ok(int(r.land) > 0, "no landing was seen")
++	_ok(String(r.get("why", "")) == "land", "ended on %s" % String(r.get("why", "")))
++	_ok(float(r.rate) <= CamParams.PEAK_RATE * 1.15, "the zoom ran %f e-folds a second" % r.rate)
++	_ok(rig.current().split_record().get("peak_launch", false) == false, "the record still says peak_launch after the shot")
++	_ok(float(r.get("landw", 0.0)) < 16000.0, "the landing's width was %f" % float(r.get("landw", 0.0)))
++	_ok(float(r.foe_in) >= 0.85 * float(r.foe_n), "the foe in frame only %d of %d" % [r.foe_in, r.foe_n])
++
++	# the record tells UI while the shot has the screen
++	S = _match(4.0)
++	rig = _rig(S)
++	for _t in range(30):
++		_tick(S, rig)
++	_ok(not rig.current().split_record().has("peak_launch"), "the record says peak_launch with no shot")
++	_send(S, 6600.0)
++	for _t in range(40):
++		_tick(S, rig)
++	_ok(bool(rig.current().split_record().get("peak_launch", false)), "the record doesn't say peak_launch in the shot")
++
++	# the ladder: the lower tier decides, and tier 1 keeps today's framing
++	for row in [[1.0, 1400.0, false, 0.0], [2.0, 2600.0, true, 8000.0], [3.0, 3700.0, true, 16000.0], [4.0, 5100.0, true, 32000.0]]:
++		S = _match(float(row[0]))
++		rig = _rig(S)
++		for _t in range(30):
++			_tick(S, rig)
++		_send(S, float(row[1]))
++		r = _run(S, rig, 1000)
++		print("tier %d, send %.0f: shot %s, most width %.0f" % [int(row[0]), float(row[1]), int(r.peak_ticks) > 0, r.maxw])
++		_ok((int(r.peak_ticks) > 0) == bool(row[2]), "tier %d: shot %s" % [int(row[0]), int(r.peak_ticks) > 0])
++		if bool(row[2]):
++			_ok(float(r.maxw) <= float(row[3]) * 1.01 and float(r.maxw) > float(row[3]) * 0.6, "tier %d's width was %f against %f" % [int(row[0]), r.maxw, float(row[3])])
++	# a strong fighter beating a weak one doesn't get the sky
++	S = _match(4.0)
++	S.fighters[0].tier = 2.0
++	rig = _rig(S)
++	for _t in range(30):
++		_tick(S, rig)
++	_send(S, 6600.0)
++	r = _run(S, rig, 1000)
++	_ok(float(r.maxw) <= 8000.0 * 1.01, "the lower tier didn't cap it: %f" % r.maxw)
++	# a flat launch isn't this shot
++	S = _match(4.0)
++	rig = _rig(S)
++	for _t in range(30):
++		_tick(S, rig)
++	_send(S, 6600.0, 25.0)
++	r = _run(S, rig, 300)
++	_ok(int(r.peak_ticks) == 0, "a flat launch got the shot")
++
++	# he brakes: no landing, the shot ends where he stops
++	S = _match(4.0)
++	rig = _rig(S)
++	for _t in range(30):
++		_tick(S, rig)
++	_send(S, 6600.0)
++	var brake := func(St: SimState, _rg, t: int) -> void:
++		if t == 300:
++			St.fighters[1].state = "idle"
++			St.fighters[1].vx = 0.0
++			St.fighters[1].vy = 0.0
++	r = _run(S, rig, 1200, brake)
++	print("a brake: ended %d (%s), biggest step %.3f" % [r.end, String(r.get("why", "")), r.jump])
++	_ok(String(r.get("why", "")) == "brake", "the brake ended on %s" % String(r.get("why", "")))
++
++	# the launcher catches him in the air
++	S = _match(4.0)
++	rig = _rig(S)
++	for _t in range(30):
++		_tick(S, rig)
++	_send(S, 6600.0)
++	var catch_up := func(St: SimState, _rg, t: int) -> void:
++		if t == 120:
++			var A = St.fighters[0]
++			var B = St.fighters[1]
++			A.x = B.x
++			A.y = B.y - 300.0
++	r = _run(S, rig, 1200, catch_up)
++	print("a catch: ended %d (%s), biggest zoom rate %.2f" % [r.end, String(r.get("why", "")), r.rate])
++	_ok(String(r.get("why", "")) == "catch", "the catch ended on %s" % String(r.get("why", "")))
++
++	# the motion setting: a cut at the release, still, a cut at the end
++	S = _match(4.0)
++	rig = _rig(S, true, true)
++	for _t in range(30):
++		_tick(S, rig)
++	_send(S, 6600.0)
++	r = _run(S, rig, 1500)
++	print("motion: cuts %d, most width %.0f" % [r.cuts, r.maxw])
++	_ok(int(r.cuts) == 2, "the motion setting cut %d times" % r.cuts)
++
++	# off
++	S = _match(4.0)
++	rig = _rig(S, false)
++	for _t in range(30):
++		_tick(S, rig)
++	_send(S, 6600.0)
++	r = _run(S, rig, 200)
++	_ok(int(r.peak_ticks) == 0 and rig.peak_shots == 0, "the switch off ran the shot")
++
++	if fails == 0:
++		print("peak_shot_check: %d checks passed" % checks)
++	else:
++		print("peak_shot_check: %d of %d checks FAILED" % [fails, checks])
++	quit(1 if fails > 0 else 0)

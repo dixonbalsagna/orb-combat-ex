@@ -1,0 +1,7 @@
+--- a/render/shaders/terrain.gdshaderinc
++++ b/render/shaders/terrain.gdshaderinc
+@@
++#ifdef TILE_GROUND
++	if (v_pv.y > 0.0) { c = biome_tone(v_ba, 1); }   // one tone in front of the plane: its facets, close to the lens, are the swing's flash (docs/camera/swing-view.md)
++#endif
+ 	c = c * wl_mul + wl_add;   // the world's light; the lane cue, the pair's mark and a groove's glow below are never dimmed

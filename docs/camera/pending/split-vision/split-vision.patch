@@ -1,0 +1,173 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index 538cd88..bfe9548 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -6,6 +6,7 @@ class_name CamParams
+ # --- the trigger (section 2) ---
+ const R_SPLIT: float = 0.055           # split when a fighter's height falls under this fraction of vh (Orb decides; 0.035 until director step 1, 2026-10-22: no one view under 40 px at 720p)
+ const R_MERGE: float = 0.07            # merge when it stays above this (Orb decides; 0.047 until director step 1)
++const SPLIT_POWER_EASE: float = 8.0     # split_ignores_power: the whole lowering (0 to 1) would take this long, seconds; power 1 to 4 is under 1.5 s of it
+ const R_BEAM_MIN: float = 0.032        # a beam struggle keeps the merged wide shot down to this
+ const MIN_PX: float = 18.0             # under 600 px of screen height the split line is at least this many pixels
+ const R_FLOOR: float = 0.032          # camera v2: no fighter is shown smaller than this anywhere (23 px at 720p)
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 73df2f7..21d8b4e 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -110,6 +110,9 @@ var _lg_sep: float = 0.0                 # the separation when the cue came (the
+ var _lg_mid: float = 0.0                 # the pair's midpoint when the cue came (the box's x is counted from it)
+ var _lg_box: Array = [0.0, 0.0, 0.0, 0.0]   # the zip's frame: x0, x1 (from _lg_mid), y0, y1: the pair at the cue, widened by what the zip will do
+ var _lg_cap: float = -1.0e9              # the hold never runs past this time
++var eased_merge: bool = false              # the panes open and close with a hard edge and a whole line, no blend between two pictures (Orb, 2026-10-18; docs/camera/split-vision.md). Off: the old soft seam
++var split_ignores_power: bool = false      # the view splits at the same distance at any power: power widens the shot but doesn't bring the split sooner (docs/camera/split-vision.md). Off: none of it runs
++var _split_k: float = 1.0                  # with split_ignores_power, how much the split and merge lines are lowered for the shot's power
+ var feather_mode: int = 0                # the feathered sweep of a layout change: 0 off (the default), 1 only under reduced flashing or reduced motion, 2 always
+ var _gov_arm_until: float = -1.0e9       # the scroll governor is armed (at a charge's cue) until this time ...
+ var _gov_arm_speed: float = 0.0          # ... as if the view were already moving this fast (units a second)
+@@ -696,11 +699,11 @@ func _metric(S: SimState) -> float:
+ 
+ 
+ func _r_split() -> float:
+-	return maxf(CamParams.R_SPLIT, CamParams.MIN_PX / vh)
++	return maxf(CamParams.R_SPLIT * _split_k, CamParams.MIN_PX / vh)
+ 
+ 
+ func _r_merge() -> float:
+-	return maxf(CamParams.R_MERGE, CamParams.MIN_PX * CamParams.R_MERGE / CamParams.R_SPLIT / vh)
++	return maxf(CamParams.R_MERGE * _split_k, CamParams.MIN_PX * CamParams.R_MERGE / CamParams.R_SPLIT / vh)
+ 
+ 
+ func _update_trigger(S: SimState) -> void:
+@@ -710,6 +713,9 @@ func _update_trigger(S: SimState) -> void:
+ 	var A = S.fighters[0]
+ 	var B = S.fighters[1]
+ 	var ad: float = absf(u)
++	if split_ignores_power:
++		# zoom_u's own power term, so it cancels; over time, so a power-up doesn't open or close the split on its tick
++		_split_k = move_toward(_split_k, 1.0 - CamParams.REF_TIER * (maxf(A.tier, B.tier) - 1.0), DT / CamParams.SPLIT_POWER_EASE)
+ 	var rs: float = _r_split()
+ 	var rm: float = _r_merge()
+ 	if S.game.clash != null:
+@@ -4323,6 +4329,9 @@ func _make_frame(S: SimState) -> SplitFrame:
+ 	if swing_t < 0.0 and sep > 0.001 and sep < 0.999 and (feather_mode == 2 or (feather_mode == 1 and (reduced_motion or flash_reduced))):
+ 		f.feather = maxf(f.feather, CamParams.SWEEP_FEATHER_FRAC * vw * sin(PI * sep))
+ 	f.line_alpha = smoothstep(0.0, 0.45, sep)
++	if eased_merge:
++		f.feather = 0.0
++		f.line_alpha = 1.0 if sep > 0.001 else 0.0   # whole until the two pictures are one, then gone: nothing fades
+ 	for i in range(2):
+ 		f.cam_x[i] = _outs[i].x
+ 		f.cam_y[i] = _outs[i].y
+diff --git a/render/camera/tests/split_vision_check.gd b/render/camera/tests/split_vision_check.gd
+new file mode 100644
+index 0000000..b726ab1
+--- /dev/null
++++ b/render/camera/tests/split_vision_check.gd
+@@ -0,0 +1,107 @@
++extends SceneTree
++## The split vision's two switches (docs/camera/split-vision.md). eased_merge: two pictures are never blended, in real AI fights. split_ignores_power: the split opens at the same distance at any power, and the line moves over time.
++##   godot --headless --path . --script res://render/camera/tests/split_vision_check.gd
++
++var fails: int = 0
++var checks: int = 0
++
++
++func _ok(c: bool, what: String) -> void:
++	checks += 1
++	if not c:
++		fails += 1
++		print("FAIL ", what)
++
++
++func _match(seed: int) -> SimState:
++	var S: SimState = SimCore.createSim()
++	SimCore.newMatch(S, seed, {"p1": true, "p2": true}, {"planet": 7, "touch": 1, "planetGen": 3, "intro": false})
++	S.dt = SplitRig.DT
++	return S
++
++
++func _step(S: SimState, rig: SplitRig) -> SplitFrame:
++	SimCore.step(S)
++	var ev: Array = S.out.fx.duplicate()
++	S.out.fx.clear()
++	S.out.feed.clear()
++	rig.step(S, 1280.0, 720.0, ev)
++	return rig.current()
++
++
++func _merge() -> void:
++	var closings: int = 0
++	var left_apart: float = 0.0
++	for seed in [12345, 2]:
++		var S: SimState = _match(seed)
++		var rig := SplitRig.new()
++		rig.eased_merge = true
++		rig.reset(S, 1280.0, 720.0)
++		var soft: int = 0
++		var part: int = 0
++		var prev_mode: String = "merged"
++		var last_gap: float = 0.0
++		for t in range(3600):
++			var f: SplitFrame = _step(S, rig)
++			if f.feather > 0.0:
++				soft += 1
++			if f.line_alpha != 0.0 and f.line_alpha != 1.0:
++				part += 1
++			if f.mode == "merged" and prev_mode == "closing":
++				closings += 1
++				left_apart = maxf(left_apart, last_gap)
++			var A = S.fighters[0]
++			var mx: float = SimWrap.wrap(A.x + 0.5 * SimWrap.sdx(A.x, S.fighters[1].x))
++			var my: float = 0.5 * (A.y + S.fighters[1].y)
++			last_gap = (f.screen_pos(0, mx, my) - f.screen_pos(1, mx, my)).length()
++			prev_mode = f.mode
++		_ok(soft == 0, "seed %d: %d ticks with a soft edge" % [seed, soft])
++		_ok(part == 0, "seed %d: %d ticks with a part-faded line" % [seed, part])
++	_ok(closings >= 2, "only %d merges to judge" % closings)
++	_ok(left_apart < 3.0, "the line went with the pictures still %.1f px apart" % left_apart)
++	print("merge: %d merges, the pictures at most %.1f px apart when the line goes" % [closings, left_apart])
++
++
++func _power() -> void:
++	# one flight, both at power 4: the split must open at about the same distance as at power 1
++	var at: Array = []
++	for tier in [1.0, 4.0]:
++		var S: SimState = _match(12345)
++		var rig := SplitRig.new()
++		rig.split_ignores_power = true
++		rig.reset(S, 1280.0, 720.0)
++		var open_at: float = -1.0
++		var x0: float = S.fighters[0].x
++		var biggest: float = 0.0
++		var last: float = rig._r_split()
++		for t in range(900):
++			S.fighters[0].tier = tier
++			S.fighters[1].tier = tier
++			var d: float = 300.0 if t < 500 else 300.0 + (t - 500) * 8.0
++			S.fighters[0].ai = null
++			S.fighters[1].ai = null
++			S.fighters[0].state = "free"
++			S.fighters[1].state = "free"
++			S.fighters[0].x = SimWrap.wrap(x0 - d * 0.5)
++			S.fighters[1].x = SimWrap.wrap(x0 + d * 0.5)
++			S.fighters[0].y = WorldTerrain.groundY(S, S.fighters[0].x) + 500.0
++			S.fighters[1].y = WorldTerrain.groundY(S, S.fighters[1].x) + 500.0
++			S.fighters[0].vx = 0.0
++			S.fighters[1].vx = 0.0
++			var f: SplitFrame = _step(S, rig)
++			biggest = maxf(biggest, absf(rig._r_split() - last))
++			last = rig._r_split()
++			if t >= 500 and open_at < 0.0 and rig.split_wanted:
++				open_at = d
++		at.append(open_at)
++		_ok(open_at > 0.0, "power %.0f: the split never opened" % tier)
++		_ok(biggest <= CamParams.R_SPLIT * SplitRig.DT / CamParams.SPLIT_POWER_EASE + 1e-9, "the line jumped %f in a tick" % biggest)
++	print("the split opened at %.0f apart at power 1, %.0f at power 4" % [at[0], at[1]])
++	_ok(absf(float(at[0]) - float(at[1])) < 0.1 * float(at[0]), "the split's distance moved with power: %.0f and %.0f" % [at[0], at[1]])
++
++
++func _initialize() -> void:
++	_merge()
++	_power()
++	print("split_vision_check: %d checks, %d failed" % [checks, fails] if fails > 0 else "split_vision_check: %d checks passed" % checks)
++	quit(1 if fails > 0 else 0)

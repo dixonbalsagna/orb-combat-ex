@@ -1,0 +1,115 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index f37091e..259e9b1 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -377,6 +377,10 @@ const PEAK_BACK_CATCH: float = 0.6
+ const PEAK_BACK_KO: float = 0.5
+ const PEAK_BACK_MIN: float = 0.2
+ # The high-velocity moves (docs/camera/launch-director.md), first values
++const CLOSE_R: float = 0.17              # a locked brawl's size: a fighter's height as a share of the screen's, against the fight's 0.12 and the cap's 0.14
++const CLOSE_GAP: float = 300.0           # near enough to count
++const CLOSE_IN: float = 0.7              # in over this, eased
++const CLOSE_OUT: float = 0.35            # and out
+ const FT_SPEED: float = 3000.0           # a stop from this fast carries the frame on (camera.md, follow-through); a stop is under FT_STOP of the speed a tick ago
+ const FT_STOP: float = 0.35
+ const FT_AMOUNT: float = 0.02            # at most this much of the width
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index d6e063b..65ad24c 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -343,6 +343,8 @@ var _ft_dir: Vector2 = Vector2.ZERO
+ var _ft_t: float = -1.0
+ var _ft_slot: int = -1
+ var _ft_v: Array = [Vector2.ZERO, Vector2.ZERO]
++var close_brawl: bool = false              # a locked brawl frames closer (Orb: close combat framing at base power). Off: none of it runs
++var _cb_w: float = 0.0
+ var launch_director: bool = false        # the high-velocity moves (docs/camera/launch-director.md). Off: none of them runs
+ var _ozs: PackedFloat64Array = PackedFloat64Array([0.0, 0.0])   # ... and the zoom it drew
+ var _sim_f: Array = [null, null]
+@@ -397,6 +399,7 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
+ 	_pk_mix = 0.0
+ 	_pk_flat = false
+ 	_pk_wait = 0.0
++	_cb_w = 0.0
+ 	_ft_t = -1.0
+ 	_ft_v = [Vector2.ZERO, Vector2.ZERO]
+ 	ft_offset = Vector2.ZERO
+@@ -2753,6 +2756,16 @@ func _merged_target(S: SimState) -> Vector3:
+ 		mx = SimWrap.wrap(mx + (clampf(sh_a, lo_a, hi_a) if lo_a <= hi_a else 0.0))
+ 		z *= 1.0 + CamParams.ANT_PUSH * _ant_w * _ant_pw
+ 	z *= _pc_zoom   # the pace's size: a little wider when calm and after a peak, a little tighter at one
++	if close_brawl:
++		# The two of them are locked and near: come in, as the brawl's own shot. Eased both ways, and a launch's own framing takes over as he leaves.
++		var locked: bool = A.state == "locked" and B.state == "locked" and absf(SimWrap.sdx(A.x, B.x)) < CamParams.CLOSE_GAP and solo_kind == "" and not fold_active
++		_cb_w = minf(1.0, _cb_w + DT / CamParams.CLOSE_IN) if locked else maxf(0.0, _cb_w - DT / CamParams.CLOSE_OUT)
++		if _cb_w > 0.0:
++			var r_here: float = z * CamParams.BODY_H / vh
++			var tier_k: float = 1.0 - CamParams.REF_TIER * (maxf(float(A.tier), float(B.tier)) - 1.0)
++			var r_to: float = CamParams.CLOSE_R * m_close() * tier_k
++			if r_to > r_here:
++				z *= exp(log(r_to / r_here) * smoothstep(0.0, 1.0, _cb_w))
+ 	if _scape_t >= 0.0 and _scape_w > 0.0:
+ 		# the landscape shot leans toward the new ground or the landmark, both fighters kept inside 0.42 of the width
+ 		var sh_l: float = CamParams.SCAPE_LEAN * vw / maxf(z, 0.001) * smoothstep(0.0, 1.0, _scape_w) * signf(SimWrap.sdx(mx, _scape_x))
+@@ -5133,6 +5146,10 @@ func _ft_outputs() -> void:
+ 		_outs[i] = Vector3(SimWrap.wrap(o.x + ft_offset.x * w), o.y + ft_offset.y * w, o.z)
+ 
+ 
++func m_close() -> float:
++	return _m()
++
++
+ ## The zoom's own ease: its step changes by at most ZOOM_ACC a tick, so the rate caps' clamps start and stop soft. Never on a cut, and never in a shot that
+ ## sets its own (the peak's width is eased already).
+ func _zoom_ease() -> void:
+diff --git a/render/camera/tests/flight_shots_check.gd b/render/camera/tests/flight_shots_check.gd
+index f73d6f3..748ee37 100644
+--- a/render/camera/tests/flight_shots_check.gd
++++ b/render/camera/tests/flight_shots_check.gd
+@@ -94,6 +94,25 @@ func _follow() -> void:
+ 	_ok(rig.ft_offset == Vector2.ZERO, "it didn't settle")
+ 
+ 
++## A locked brawl is close at base power, and the launch out of it stays smooth.
++func _close() -> void:
++	var S: SimState = _match(0.0, true, 12345)
++	var setup := func(rig0) -> void:
++		rig0.set("close_brawl", true)
++	var rig = _rig(S, setup)
++	var sum: Array = [0.0, 0]
++	var meter := func(St: SimState, r0, _t: int) -> void:
++		if St.fighters[0].state == "locked" and St.fighters[1].state == "locked" and r0._cb_w >= 1.0 and St.fighters[0].tier < 1.5:
++			sum[0] = float(sum[0]) + r0.current().cam_z[0] * CamParams.BODY_H / VH
++			sum[1] = int(sum[1]) + 1
++	var r: Dictionary = _watch(S, rig, 3600, Callable(self, "_who"), meter)
++	var mean: float = float(sum[0]) / maxf(float(sum[1]), 1.0)
++	print("close brawl: mean size %.3f over %d settled ticks" % [mean, sum[1]])
++	_say("close brawl", r, 0.16)
++	if not measure:
++		_ok(int(sum[1]) > 100 and mean >= CamParams.CLOSE_R * 0.9, "a locked brawl's size was %f" % mean)
++
++
+ func _initialize() -> void:
+ 	for a in OS.get_cmdline_user_args():
+ 		if a == "--measure":
+@@ -101,6 +120,8 @@ func _initialize() -> void:
+ 	for row in [[1.0, 10800.0], [2.0, 10800.0], [3.0, 26700.0], [4.0, 26700.0]]:
+ 		_flat("wide, tier %d, %d" % [int(row[0]), int(row[1])], "wide", float(row[0]), float(row[1]), 40)
+ 		_flat("hold, tier %d, %d" % [int(row[0]), int(row[1])], "hold", float(row[0]), float(row[1]), 90)
++	if "close_brawl" in SplitRig.new():
++		_close()
+ 	var probe := SplitRig.new()
+ 	if "flight_reveal" in probe:
+ 		_reveal()
+diff --git a/render/core/main.gd b/render/core/main.gd
+index 2437caa..727b996 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -242,6 +242,7 @@ func _ready() -> void:
+ 	split_rig.swing_view = RenderTileGround.on   # the camera's swing and peak launch go with the true globe (docs/camera/swing-view.md)
+ 	split_rig.peak_launch = RenderTileGround.on
+ 	split_rig.launch_director = RenderTileGround.on
++	split_rig.close_brawl = RenderTileGround.on
+ 	split_rig.follow_through = RenderTileGround.on
+ 	split_rig.flight_reveal = RenderTileGround.on
+ 	split_rig.flat_mode = String(args.get("flat", "wide")) if RenderTileGround.on else ""   # for Orb's eye: flat=wide or flat=hold (launch-director.md)

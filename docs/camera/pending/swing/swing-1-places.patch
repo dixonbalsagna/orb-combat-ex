@@ -1,0 +1,581 @@
+diff --git a/render/camera/cam_places.gd b/render/camera/cam_places.gd
+new file mode 100644
+index 0000000..3713fd9
+--- /dev/null
++++ b/render/camera/cam_places.gd
+@@ -0,0 +1,135 @@
++class_name CamPlaces
++extends RefCounted
++## The camera's one door to where places are while the world turns (docs/camera/swing-view.md), on Simulation's arena API
++## (docs/world/ring-any-angle/simulation.md section 11). `S.frame` says which great circle the fight's line lies on; on gen 3 the sim poses
++## buildings near the fighters as it turns, so `b.x` and `b.z` already read the view. A thing that keeps its own planet point (a mark once
++## it's a record) reads through the frame here. Pure reads: nothing here writes the sim or holds match state.
++##
++## With the switch off or off gen 3 (`S.frame` null) the rig doesn't come here at all and reads the strip as it always has.
++
++## A check's frame, swing, biome and tall land, in place of the sim's (Callables).
++static var frame_source: Callable = Callable()
++static var swing_source: Callable = Callable()
++static var biome_source: Callable = Callable()
++static var land_source: Callable = Callable()
++
++const _TALL_RINGS: Array = [0.5, 1.0]
++const _TALL_SPOKES: int = 8
++
++static var _field_script = null
++static var _field_looked: bool = false
++
++
++## SimField when it's in the build: this door is the camera's only reference to it, so the park can land before or after it.
++static func _field():
++	if not _field_looked:
++		_field_looked = true
++		for c in ProjectSettings.get_global_class_list():
++			if String(c["class"]) == "SimField":
++				_field_script = load(String(c["path"]))
++	return _field_script
++
++
++## The frame as [point x, y, z, heading x, y, z, its column's x], or empty when there is none.
++static func frame_of(S: SimState) -> PackedFloat64Array:
++	if frame_source.is_valid():
++		return frame_source.call(S)
++	var fr = S.get("frame")
++	if fr == null:
++		return PackedFloat64Array()
++	return PackedFloat64Array([fr.px, fr.py, fr.pz, fr.tx, fr.ty, fr.tz, fr.x0])
++
++
++## The planet's radius for this line: the line is a great circle W long.
++static func radius() -> float:
++	return SimConst.W / TAU
++
++
++## The line's point at x, and its heading there: the frame carried along its own great circle. [px, py, pz, hx, hy, hz]
++static func on_line(f: PackedFloat64Array, x: float) -> PackedFloat64Array:
++	var a: float = SimWrap.sdx(f[6], x) / radius()
++	var c: float = cos(a)
++	var s: float = sin(a)
++	return PackedFloat64Array([
++		c * f[0] + s * f[3], c * f[1] + s * f[4], c * f[2] + s * f[5],
++		c * f[3] - s * f[0], c * f[4] - s * f[1], c * f[5] - s * f[2]])
++
++
++## Toward the camera on the line: the same at every x, because a great circle has one axis. Rendering's `sd`: heading cross point.
++static func side(f: PackedFloat64Array) -> Vector3:
++	return Vector3(f[3], f[4], f[5]).cross(Vector3(f[0], f[1], f[2]))
++
++
++## Where a planet point is in the view from the line's point at x_from: (signed distance along the line, depth toward the camera),
++## on Rendering's projection (azimuthal equidistant about that point), so the rig and the drawn world agree at any radius.
++static func view_of(f: PackedFloat64Array, x_from: float, p: Array) -> Vector2:
++	var q: PackedFloat64Array = on_line(f, x_from)
++	var sv: Vector3 = side(f)
++	var vx: float = p[0] * q[3] + p[1] * q[4] + p[2] * q[5]
++	var vz: float = p[0] * sv.x + p[1] * sv.y + p[2] * sv.z
++	var vp: float = p[0] * q[0] + p[1] * q[1] + p[2] * q[2]
++	var s: float = sqrt(vx * vx + vz * vz)
++	var k: float = atan2(s, vp) / s if s > 1.0e-9 else 1.0
++	var r: float = radius()
++	return Vector2(vx * k * r, vz * k * r)
++
++
++## A building's or a mark's place in the view from x_from: (signed distance, depth). Through the frame when it has its own point
++## (`anchor`, a mark as a record); otherwise where the sim poses it.
++static func place(_S: SimState, f: PackedFloat64Array, x_from: float, thing, x: float, z: float = 0.0) -> Vector2:
++	var an = thing.get("anchor") if thing is Object else thing.get("anchor", null)
++	if an != null:
++		return view_of(f, x_from, an)
++	return Vector2(SimWrap.sdx(x_from, x), z)
++
++
++## The biome under the line at x, by the frame: the bake's stored biome at that point. What its name is comes from the strip's table.
++static func biome(S: SimState, x: float) -> String:
++	if biome_source.is_valid():
++		return biome_source.call(S, x)
++	return WorldBiomes.biomeAt(x)
++
++
++## The same frame with its heading turned by a radians about its own column: what the swing's own turn does, and what the shown heading adds.
++static func turned(f: PackedFloat64Array, a: float) -> PackedFloat64Array:
++	if a == 0.0:
++		return f
++	var sv: Vector3 = side(f)
++	var c: float = cos(a)
++	var s: float = sin(a)
++	return PackedFloat64Array([f[0], f[1], f[2], c * f[3] + s * sv.x, c * f[4] + s * sv.y, c * f[5] + s * sv.z, f[6]])
++
++
++## How far the line turned from frame a to frame b, signed as `turned` turns: the angle between the two great circles' axes.
++static func turn_between(a: PackedFloat64Array, b: PackedFloat64Array) -> float:
++	var na: Vector3 = side(a)
++	var nb: Vector3 = side(b)
++	var cr: Vector3 = na.cross(nb)
++	return atan2(-(cr.x * b[0] + cr.y * b[1] + cr.z * b[2]), na.dot(nb))
++
++
++## The sim's running swing: {cause, toGo (radians still to turn)}, {} at rest. `S.swing.left` is signed degrees.
++static func swing_of(S: SimState) -> Dictionary:
++	if swing_source.is_valid():
++		return swing_source.call(S)
++	var sw = S.get("swing")
++	if sw == null or not bool(sw.active):
++		return {}
++	return {"cause": String(sw.cause), "toGo": deg_to_rad(float(sw.left))}
++
++
++## Tall land round x within r (Game Design's fixed test, height only): the bake's heights on two rings of points, on the view's own line.
++static func land_tall(S: SimState, x: float, r: float, tall: float) -> bool:
++	if land_source.is_valid():
++		return land_source.call(S, x, r)
++	var F = _field()
++	if F == null or S.get("frame") == null:
++		return false
++	var base: float = WorldTerrain.groundY(S, x)
++	for ring in _TALL_RINGS:
++		for k in range(_TALL_SPOKES):
++			var a: float = TAU * float(k) / float(_TALL_SPOKES)
++			F.placeAt(S, SimWrap.wrap(x + float(ring) * r * cos(a)), float(ring) * r * sin(a))
++			if F.heightOf(int(S.planetRing.get("seed", 0)), S.planetGen, 0, F.ox, F.oy, F.oz) - base > tall:
++				return true
++	return false
+diff --git a/render/camera/split_frame.gd b/render/camera/split_frame.gd
+index 705a7a9..276bdd1 100644
+--- a/render/camera/split_frame.gd
++++ b/render/camera/split_frame.gd
+@@ -42,12 +42,14 @@ var clear: Array = [{}, {}]          # per pane: what the foreground must open (
+ var slam: bool = false               # true on the one frame the slam closes
+ var many_off: Array = []             # one versus many (docs/camera/one-v-many.md): the bodies outside the frame, each [slot, side (-1 left, +1 right, 0 above)]: UI's markers; empty with two bodies
+ var cut: bool = true                 # a hard cut: do not interpolate into this frame
++var place: PackedFloat64Array = PackedFloat64Array()   # the turntable: the frame the world is drawn in (CamPlaces.frame_of), empty when none
+ 
+ 
+ func duplicate() -> SplitFrame:
+ 	var f := SplitFrame.new()
+ 	f.vw = vw
+ 	f.vh = vh
++	f.place = place
+ 	f.mode = mode
+ 	f.sep = sep
+ 	f.e = e
+@@ -212,6 +214,24 @@ func split_record(pointer_always: bool = false) -> Dictionary:
+ 	return d
+ 
+ 
++## The frame between two ticks: at b's column, the point and heading each eased along the short way and made square again.
++static func _lerp_place(a: PackedFloat64Array, b: PackedFloat64Array, t: float) -> PackedFloat64Array:
++	var pa: PackedFloat64Array = CamPlaces.on_line(a, b[6])
++	var p := Vector3(lerpf(pa[0], b[0], t), lerpf(pa[1], b[1], t), lerpf(pa[2], b[2], t)).normalized()
++	var h := Vector3(lerpf(pa[3], b[3], t), lerpf(pa[4], b[4], t), lerpf(pa[5], b[5], t))
++	h = (h - p * h.dot(p)).normalized()
++	return PackedFloat64Array([p.x, p.y, p.z, h.x, h.y, h.z, b[6]])
++
++
++## What Rendering's frame uniform takes for pane i: the pane's own fighter's point, and the line's heading and the camera's side there
++## (its x comes from the sim: this frame's `pivot_x` argument). {pv, hd, sd}, or {} with no frame.
++func pane_basis(pivot_x: float) -> Dictionary:
++	if place.size() != 7:
++		return {}
++	var q: PackedFloat64Array = CamPlaces.on_line(place, pivot_x)
++	return {"pv": Vector3(q[0], q[1], q[2]), "hd": Vector3(q[3], q[4], q[5]), "sd": CamPlaces.side(place)}
++
++
+ static func lerp_frames(a: SplitFrame, b: SplitFrame, t: float) -> SplitFrame:
+ 	if b.cut or a.vw != b.vw or a.vh != b.vh:
+ 		return b
+@@ -235,6 +255,8 @@ static func lerp_frames(a: SplitFrame, b: SplitFrame, t: float) -> SplitFrame:
+ 	f.flash = lerpf(a.flash, b.flash, t)
+ 	f.pitch = lerpf(a.pitch, b.pitch, t)
+ 	f.held_u = lerpf(a.held_u, b.held_u, t)
++	if a.place.size() == 7 and b.place.size() == 7:
++		f.place = _lerp_place(a.place, b.place, t)
+ 	for i in range(2):
+ 		if not a.clear[i].is_empty() and not b.clear[i].is_empty() and not bool(b.clear[i].get("cut", false)):
+ 			var ra: Rect2 = a.clear[i]["rect"]
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 2dedb9c..b5d201b 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -229,6 +229,8 @@ var _rally_last_t: float = -1.0e9
+ var _rally_kind: String = ""               # the last link's base kind (chase, overtake, spike, bank, energy, world, grab)
+ var _rally_r_hold: float = -1.0            # a grab in flight holds the shot's size (Legal e12: nothing zoomed over a fighter held in the air)
+ var _la_v: Vector2 = Vector2.ZERO          # the launch anchor's spring speed in a rally, shares of the screen a second
++var swing_view: bool = false               # the turntable's switch (docs/camera/swing-view.md): places are read through the sim's frame. Off, nothing below reads anything new
++var _pl: PackedFloat64Array = PackedFloat64Array()   # the sim's frame this tick (CamPlaces), empty with the switch off or no frame
+ var landscape: bool = true                 # the landscape shot on a new biome or a landmark coming into the frame (CamParams.SCAPE_*)
+ var scape_shots: int = 0
+ var scape_now: String = ""                  # "biome" or "landmark" while one runs, for the debug feed
+@@ -508,6 +510,8 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
+ 			cut = true
+ 		elif String(_ef(ev, "type", "")) == "arena_turn" and turn_cut and not intro_active:
+ 			cut = true   # the ring's turn: every camera snaps to the wide on its tick (_read_events starts the wide)
++	if swing_view:
++		_pl = CamPlaces.frame_of(S)
+ 	_read_events(S, events)
+ 	_rush_commit(S)
+ 	_update_lunge(S)
+@@ -1847,6 +1851,13 @@ func _panel_frame(S: SimState) -> Dictionary:
+ 	}
+ 
+ 
++## How far along the view a thing at strip x (depth z) is from x_from: the strip's own distance, or through the sim's frame in a swing.
++func _place_dx(S: SimState, x_from: float, thing, x: float, z: float = 0.0) -> float:
++	if _pl.is_empty():
++		return SimWrap.sdx(x_from, x)
++	return CamPlaces.place(S, _pl, x_from, thing, x, z).x
++
++
+ ## Which side of the winner holds more wreckage: the craters (area times depth, a signature's double), the buildings
+ ## lost (their face area, scaled by how much is gone) and the knockback trenches, inside the part of the screen that side
+ ## will have, nearer counting more. Sets wreck_dir (+1 right, -1 left, 0 when little is in view) and wreck_score.
+@@ -1856,7 +1867,7 @@ func _wreck_scan(S: SimState, w: int) -> void:
+ 	var reach: float = CamParams.WRECK_REACH * vw / maxf(zf, 0.01)
+ 	var side: Array = [0.0, 0.0]   # [left, right]
+ 	for c in S.craters:
+-		var d: float = SimWrap.sdx(wf.x, c.x)
++		var d: float = _place_dx(S, wf.x, c, c.x)
+ 		if absf(d) > reach + c.r:
+ 			continue
+ 		var wt: float = c.r * c.depth * (1.0 + c.special) * (1.0 - 0.5 * minf(1.0, absf(d) / reach))
+@@ -1867,13 +1878,13 @@ func _wreck_scan(S: SimState, w: int) -> void:
+ 		var lost: float = 1.0 if not b.alive else 1.0 - clampf(b.hp / b.maxhp, 0.0, 1.0)
+ 		if lost < 0.2:
+ 			continue
+-		var d: float = SimWrap.sdx(wf.x, b.x)
++		var d: float = _place_dx(S, wf.x, b, b.x, b.z)
+ 		if absf(d) > reach:
+ 			continue
+ 		side[1 if d >= 0.0 else 0] += lost * b.w * b.h * CamParams.WRECK_BUILDING_W * (1.0 - 0.5 * absf(d) / reach)
+ 	for sl in S.slides:
+ 		var mid: float = SimWrap.wrap((sl.x0 + sl.x1) * 0.5)
+-		var d: float = SimWrap.sdx(wf.x, mid)
++		var d: float = _place_dx(S, wf.x, sl, mid)
+ 		if absf(d) > reach:
+ 			continue
+ 		side[1 if d >= 0.0 else 0] += sl.depth * absf(sl.x1 - sl.x0) * 0.5
+@@ -3234,11 +3245,21 @@ func _face_ahead(S: SimState, cam_x: float, lens: float) -> float:
+ 		if not b.alive or b.h < 150.0:
+ 			continue
+ 		var face: float = b.z + b.d * 0.5   # the face toward the camera
++		var dx_b: float = 0.0
++		var half_b: float = 0.5 * b.w
++		if _pl.is_empty():
++			dx_b = SimWrap.sdx(cam_x, b.x)
++		else:
++			# in a swing a building stands at any angle: its round bound, which is the same as its box when it hasn't turned far
++			var vb: Vector2 = CamPlaces.place(S, _pl, cam_x, b, b.x, b.z)
++			half_b = 0.5 * sqrt(b.w * b.w + b.d * b.d)
++			face = vb.y + half_b
++			dx_b = vb.x
+ 		var d: float = lens - face
+ 		if d <= 1.0 or d >= CamParams.DOLLY_NEAR_LOOK or d >= best:
+ 			continue
+ 		var half_w: float = half_h * aspect * d
+-		if absf(SimWrap.sdx(cam_x, b.x)) < 0.5 * b.w + CamParams.DOLLY_NEAR_CENTRE * half_w:
++		if absf(dx_b) < half_b + CamParams.DOLLY_NEAR_CENTRE * half_w:
+ 			best = d
+ 	return best
+ 
+@@ -4193,6 +4214,8 @@ func _make_clear(S: SimState, f: SplitFrame, i: int, two_up: bool) -> Dictionary
+ 
+ func _make_frame(S: SimState) -> SplitFrame:
+ 	var f := SplitFrame.new()
++	if not _pl.is_empty():
++		f.place = _pl.duplicate()
+ 	f.vw = vw
+ 	f.vh = vh
+ 	f.mode = _mode_name()
+@@ -4524,7 +4547,7 @@ func _angle_tick(S: SimState) -> void:
+ 		return
+ 	var A = S.fighters[0]
+ 	var mid: float = SimWrap.wrap(A.x + SimWrap.sdx(A.x, S.fighters[1].x) * 0.5)
+-	var fam: String = String(CamParams.ANGLE_BIOME.get(WorldBiomes.biomeAt(mid), ""))
++	var fam: String = String(CamParams.ANGLE_BIOME.get(_biome_at(S, mid), ""))
+ 	if fam == "":
+ 		fam = "high" if _ang_last_family == "low" else "low"
+ 	if want == "tier_up":
+@@ -4558,11 +4581,13 @@ func _ground_low(deg: float, z: float) -> float:
+ ## scorch or cracks within ANGLE_SHOW_R of x.
+ func _ground_shows(S: SimState, x: float) -> bool:
+ 	for c in S.craters:
+-		if absf(SimWrap.sdx(x, float(c.x))) < CamParams.ANGLE_SHOW_R:
++		if absf(_place_dx(S, x, c, float(c.x))) < CamParams.ANGLE_SHOW_R:
+ 			return true
+ 	for b in S.buildings:
+-		if absf(SimWrap.sdx(x, float(b.x))) < CamParams.ANGLE_SHOW_R + float(b.w) * 0.5:
++		if absf(_place_dx(S, x, b, float(b.x), float(b.z))) < CamParams.ANGLE_SHOW_R + float(b.w) * 0.5:
+ 			return true
++	if not _pl.is_empty():
++		return false   # scorch and cracks are by the strip's columns, which say nothing about this ground once the line has turned
+ 	var n: int = 0
+ 	var c0: int = int(floor((x - CamParams.ANGLE_SHOW_R) / SimConst.COL))
+ 	var cols: int = int(2.0 * CamParams.ANGLE_SHOW_R / SimConst.COL)
+@@ -4645,7 +4670,7 @@ func _pitch_in_move() -> bool:
+ func _scape_tick(S: SimState) -> void:
+ 	var A = S.fighters[0]
+ 	var mid: float = SimWrap.wrap(A.x + SimWrap.sdx(A.x, S.fighters[1].x) * 0.5)
+-	var bio: String = WorldBiomes.biomeAt(mid)
++	var bio: String = _biome_at(S, mid)
+ 	var half_w: float = 0.5 * vw / maxf(_mz, 0.001)
+ 	var jumped: bool = absf(SimWrap.sdx(_scape_mid, mid)) > half_w
+ 	_scape_mid = mid
+@@ -4661,15 +4686,27 @@ func _scape_tick(S: SimState) -> void:
+ 			_scape_new = ""
+ 			_scape_due = time + CamParams.SCAPE_WINDOW
+ 			_scape_kind = "biome"
+-			_scape_x = SimWrap.wrap(mid + (1500.0 if WorldBiomes.biomeAt(mid + 1500.0) == bio else -1500.0))   # the side the new ground goes on
++			_scape_x = SimWrap.wrap(mid + (1500.0 if _biome_at(S, mid + 1500.0) == bio else -1500.0))   # the side the new ground goes on
+ 	else:
+ 		_scape_new = ""
+ 	for b in (_landmarks(S) if lean_step else S.buildings):
+-		if b.landmark != 0 and b.alive and not _scape_seen.has(b.idx) and absf(SimWrap.sdx(mid, b.x)) < half_w + 0.5 * b.w:
++		if b.landmark == 0 or not b.alive or _scape_seen.has(b.idx):
++			continue
++		var in_frame: bool = false
++		var lm_x: float = b.x
++		if _pl.is_empty():
++			in_frame = absf(SimWrap.sdx(mid, b.x)) < half_w + 0.5 * b.w
++		else:
++			# through the frame: nothing in front of the plane is drawn, and the frame's width grows with depth behind it
++			var vb: Vector2 = CamPlaces.place(S, _pl, mid, b, b.x, b.z)
++			var dist: float = CamParams.K_FACTOR * vh / maxf(_mz, 0.001)
++			in_frame = vb.y < 0.0 and absf(vb.x) < half_w * (dist - vb.y) / maxf(dist, 1.0) + 0.5 * b.w
++			lm_x = SimWrap.wrap(mid + vb.x)
++		if in_frame:
+ 			_scape_seen[b.idx] = true
+ 			_scape_due = time + CamParams.SCAPE_WINDOW
+ 			_scape_kind = "landmark"
+-			_scape_x = b.x
++			_scape_x = lm_x
+ 	if jumped:
+ 		_scape_due = -1.0
+ 	var plain: bool = landscape and not reduced_motion and sep <= 0.001 and not split_wanted and solo_kind == "" and _ov_kind == "" and _pn.is_empty() and not intro_active and not fold_active and _lg_slot < 0 and S.game.clash == null and _turn_t < 0.0
+@@ -4715,6 +4752,10 @@ func _scape_tick(S: SimState) -> void:
+ 	scape_now = _scape_kind
+ 
+ 
++func _biome_at(S: SimState, x: float) -> String:
++	return WorldBiomes.biomeAt(x) if _pl.is_empty() else CamPlaces.biome(S, x)
++
++
+ ## The match's landmark buildings, in S.buildings order. Made again when the list is another (a new match, a relocation's new
+ ## ground): another array, another size, or other buildings at its ends (World makes the buildings and their landmark at
+ ## generation; a building that falls stays in the list, `alive` false).
+diff --git a/render/camera/split_view.gd b/render/camera/split_view.gd
+index b9bc019..4f4011e 100644
+--- a/render/camera/split_view.gd
++++ b/render/camera/split_view.gd
+@@ -198,6 +198,12 @@ func set_struggle_framing(on: bool) -> void:
+ 
+ ## A pair moving apart fast is not merged on its present separation but on the one it will have a second on (docs/camera/rushcity.md): the merge
+ ## and the split that follows it within two seconds, with a pan between them, are what rushcity's standing area failure is. Off by default. A build-time switch.
++## The turntable's switch: the rig reads places through the sim's frame, and gives it to Rendering in SplitFrame.place (swing-view.md).
++func set_swing_view(on: bool) -> void:
++	if main != null:
++		main.split_rig.swing_view = on
++
++
+ func set_merge_lookahead(on: bool) -> void:
+ 	if main != null:
+ 		main.split_rig.merge_lookahead = on
+diff --git a/render/camera/tests/swing_places_check.gd b/render/camera/tests/swing_places_check.gd
+new file mode 100644
+index 0000000..ebb6a7c
+--- /dev/null
++++ b/render/camera/tests/swing_places_check.gd
+@@ -0,0 +1,195 @@
++extends SceneTree
++## The rig reading places through the sim's frame (docs/camera/swing-view.md). Until Simulation's frame lands this makes its own, on
++## the real rig and a real match: the line's frame turned about the pair by a test's angle, and a building posed as the sim would pose
++## it. Nothing here writes the sim except what the check says it stages (a building's pose and a landmark's flag).
++##   godot --headless --path . --script res://render/camera/tests/swing_places_check.gd
++## Ends with `swing_places_check: N checks passed` or a line per failure.
++
++const VW: float = 1280.0
++const VH: float = 720.0
++
++var fails: int = 0
++var checks: int = 0
++var rest: PackedFloat64Array = PackedFloat64Array([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0])
++var theta: float = 0.0
++var pivot_x: float = 0.0
++
++
++func _ok(cond: bool, what: String) -> void:
++	checks += 1
++	if not cond:
++		fails += 1
++		print("FAIL ", what)
++
++
++## The rest line turned by theta about its point at pivot_x: the frame the sim would hold mid-swing.
++func _turned(_S = null) -> PackedFloat64Array:
++	var q: PackedFloat64Array = CamPlaces.on_line(rest, pivot_x)
++	var h := Vector3(q[3], q[4], q[5])
++	var sd: Vector3 = CamPlaces.side(rest)
++	var c: float = cos(theta)
++	var s: float = sin(theta)
++	return PackedFloat64Array([q[0], q[1], q[2], c * h.x + s * sd.x, c * h.y + s * sd.y, c * h.z + s * sd.z, pivot_x])
++
++
++func _rest_frame(_S = null) -> PackedFloat64Array:
++	return rest
++
++
++func _initialize() -> void:
++	_math()
++	_rig_same_at_rest()
++	_rig_turned()
++	CamPlaces.frame_source = Callable()
++	CamPlaces.biome_source = Callable()
++	if fails == 0:
++		print("swing_places_check: %d checks passed" % checks)
++	else:
++		print("swing_places_check: %d of %d checks FAILED" % [fails, checks])
++	quit(1 if fails > 0 else 0)
++
++
++func _math() -> void:
++	var r: float = CamPlaces.radius()
++	# the line carries itself: a point on it reads its own distance, depth 0, either way round and across the seam
++	for x in [0.0, 500.0, SimConst.W - 700.0, 0.25 * SimConst.W, 0.45 * SimConst.W]:
++		var q: PackedFloat64Array = CamPlaces.on_line(rest, x)
++		var v: Vector2 = CamPlaces.view_of(rest, 300.0, [q[0], q[1], q[2]])
++		_ok(absf(v.x - SimWrap.sdx(300.0, x)) < 1.0e-3 and absf(v.y) < 1.0e-3, "a point on the line at %f reads %s" % [x, v])
++	# a turn about the pivot is rigid at any radius and turns by its angle: the same as Rendering's frame uniform
++	pivot_x = 1000.0
++	var p := CamPlaces.on_line(rest, 4000.0)
++	var pt: Array = [p[0], p[1], p[2]]
++	for deg in [0.0, 30.0, 90.0, 137.0, 180.0, 360.0]:
++		theta = deg_to_rad(deg)
++		var v: Vector2 = CamPlaces.view_of(_turned(), 1000.0, pt)
++		_ok(absf(v.length() - 3000.0) < 1.0e-3, "radius moved at %f degrees: %f" % [deg, v.length()])
++		_ok(absf(v.x - 3000.0 * cos(theta)) < 1.0e-3 and absf(absf(v.y) - 3000.0 * absf(sin(theta))) < 1.0e-3, "wrong angle at %f: %s" % [deg, v])
++	theta = deg_to_rad(90.0)
++	var side_sign: float = CamPlaces.view_of(_turned(), 1000.0, pt).y
++	_ok(side_sign < 0.0, "a heading turned toward the camera puts what lay ahead behind the plane: %f" % side_sign)
++	# a thing without an anchor is where the sim poses it; one with its own point reads through the frame
++	theta = 0.0
++	var S: SimState = SimCore.createSim()
++	var strip: Vector2 = CamPlaces.place(S, rest, 2000.0, {"x": 2500.0}, 2500.0, -1500.0)
++	_ok(strip.distance_to(Vector2(500.0, -1500.0)) < 1.0e-6, "a posed building read %s" % strip)
++	var own: Vector2 = CamPlaces.place(S, rest, 1000.0, {"anchor": pt}, 9999.0, 0.0)
++	_ok(absf(own.x - 3000.0) < 1.0e-3 and absf(own.y) < 1.0e-3, "an anchor wasn't read through the frame: %s" % own)
++	# the frame between two ticks, on Rendering's basis
++	var f := SplitFrame.new()
++	theta = 0.0
++	pivot_x = 300.0
++	f.place = _turned()
++	var b: Dictionary = f.pane_basis(300.0)
++	_ok(absf(Vector3(b.pv).dot(b.hd)) < 1.0e-6 and absf(Vector3(b.pv).dot(b.sd)) < 1.0e-6 and absf(Vector3(b.hd).dot(b.sd)) < 1.0e-6, "the basis isn't square")
++	_ok(Vector3(b.hd).cross(b.pv).distance_to(b.sd) < 1.0e-5, "side isn't Rendering's head cross pivot")
++	var f2 := SplitFrame.new()
++	f2.vw = f.vw
++	f2.vh = f.vh
++	f2.cut = false
++	theta = deg_to_rad(2.0)
++	f2.place = _turned()
++	var m: SplitFrame = SplitFrame.lerp_frames(f, f2, 0.5)
++	theta = deg_to_rad(1.0)
++	var want: PackedFloat64Array = _turned()
++	_ok(Vector3(m.place[3], m.place[4], m.place[5]).distance_to(Vector3(want[3], want[4], want[5])) < 1.0e-3, "the frame between ticks is off")
++	_ok(SplitFrame.new().pane_basis(0.0).is_empty(), "no frame should give no basis")
++	theta = 0.0
++
++
++## A frame that hasn't turned tells the rig what the strip does, near the fight: the same layouts on a real AI match.
++func _rig_same_at_rest() -> void:
++	CamPlaces.frame_source = Callable(self, "_rest_frame")
++	CamPlaces.biome_source = Callable(self, "_strip_biome")
++	var res: Array = []
++	for on in [false, true]:
++		var S: SimState = SimCore.createSim()
++		SimCore.newMatch(S, 7, {"p1": true, "p2": true}, {})
++		S.dt = SplitRig.DT
++		var rig := SplitRig.new()
++		rig.swing_view = on
++		rig.reset(S, VW, VH)
++		var worst: float = 0.0
++		var cams: Array = []
++		for _t in range(3600):
++			SimCore.step(S)
++			var ev: Array = S.out.fx.duplicate()
++			S.out.fx.clear()
++			S.out.feed.clear()
++			rig.step(S, VW, VH, ev)
++			var c: SplitFrame = rig.current()
++			cams.append(Vector3(c.cam_x[0], c.cam_y[0], c.cam_z[0]))
++		res.append(cams)
++	var off_ticks: int = 0
++	var worst_dx: float = 0.0
++	for i in range(res[0].size()):
++		var d: float = absf(SimWrap.sdx(res[0][i].x, res[1][i].x))
++		worst_dx = maxf(worst_dx, d)
++		if d > 1.0:
++			off_ticks += 1
++	print("at rest: camera differs by over 1 unit on %d of %d ticks, worst %.2f" % [off_ticks, res[0].size(), worst_dx])
++	_ok(off_ticks * 50 < res[0].size(), "a frame at rest moved the camera on %d ticks" % off_ticks)
++
++
++func _strip_biome(_S, x: float) -> String:
++	return WorldBiomes.biomeAt(x)
++
++
++## Turned a quarter: what lay along the line now stands in depth, on the rig's own reads.
++func _rig_turned() -> void:
++	var S: SimState = SimCore.createSim()
++	SimCore.newMatch(S, 7, {"p1": true, "p2": true}, {})
++	S.dt = SplitRig.DT
++	var rig := SplitRig.new()
++	rig.swing_view = true
++	rig.reset(S, VW, VH)
++	CamPlaces.frame_source = Callable(self, "_turned")
++	var A = S.fighters[0]
++	pivot_x = A.x
++	var bld = null
++	for b in S.buildings:
++		if b.alive and b.h >= 150.0:
++			bld = b
++			break
++	_ok(bld != null, "this world has a tall building")
++	if bld == null:
++		return
++	# On gen 3 the sim poses a building near the fighters as the line turns (simulation.md section 11): this stages its pose.
++	# The near-tower rule looks where the tower is now: 1,000 in front of the plane, right in front of the lens.
++	theta = deg_to_rad(-90.0)
++	rig.step(S, VW, VH, [])
++	bld.x = A.x
++	bld.z = 1000.0
++	var half_bld: float = 0.5 * sqrt(bld.w * bld.w + bld.d * bld.d)
++	var lens: float = 1000.0 + half_bld + 200.0
++	var face: float = rig._face_ahead(S, A.x, lens)
++	_ok(absf(face - 200.0) < 40.0, "a tower turned in front of the lens isn't seen: %f" % face)
++	# A landmark in front of the plane isn't in the frame, whatever its x says; behind the plane it is, and the frame is wider there.
++	for b in S.buildings:
++		b.landmark = 0
++	bld.landmark = 1
++	rig._scape_seen = {}
++	rig._lm_src = []
++	rig._scape_tick(S)
++	_ok(not rig._scape_seen.has(bld.idx), "a landmark in front of the plane was shown")
++	bld.z = -1000.0
++	rig._scape_seen = {}
++	rig._scape_tick(S)
++	_ok(rig._scape_seen.has(bld.idx), "a landmark behind the plane wasn't seen")
++	var half_w: float = 0.5 * VW / maxf(rig._mz, 0.001)
++	var dist: float = CamParams.K_FACTOR * VH / maxf(rig._mz, 0.001)
++	bld.x = SimWrap.wrap(rig._scape_mid + half_w * (dist + 3000.0) / dist)
++	bld.z = -3000.0
++	rig._scape_seen = {}
++	rig._scape_tick(S)
++	_ok(rig._scape_seen.has(bld.idx), "a landmark at the wider edge, far behind the plane, wasn't seen")
++	bld.z = -200.0
++	rig._scape_seen = {}
++	rig._scape_tick(S)
++	_ok(not rig._scape_seen.has(bld.idx), "a landmark outside the frame's width at its depth was seen")
++	# the frame reaches Rendering through SplitFrame, each pane on its own fighter
++	var f: SplitFrame = rig.current()
++	_ok(f.place.size() == 7, "the frame didn't reach SplitFrame")
++	var basis: Dictionary = f.pane_basis(A.x)
++	_ok(absf(Vector3(basis.pv).length() - 1.0) < 1.0e-5, "a pane's pivot isn't on the sphere")
++	theta = 0.0

@@ -46,13 +46,28 @@ A jolt read in the last row is for all ticks but a release; a first measure of a
 | :--- | :--- |
 | **Three-beat focus on ordinary low launches** | Tiers 2 and up going upward now have it, through the peak shot. Flat sends don't |
 | **Hold a still frame and let him leave, as a chosen shot** | I tried `launch_hold` everywhere: jolts fell and it lost the subject for 56 to 396 ticks, and stalled then jumped. It needs a rule for when, and that rule needs Orb's eye. Not in the patch |
-| **Reveal in flight, follow-through overshoot, film's foreground on a low flight** | Not started: next, for Orb's eye. The foreground is Rendering's |
-| **A rule for flat sends past 10,000 u/s** | The honest next problem. Choices: wider, hold, or ask Game Design again for the launch in four parts (`director.md` section 5). `SimFlight`'s curve is that, and it's off |
+| **Film's foreground on a low flight** | Rendering's. Reveal and overshoot are built: below |
+| **Which flat shot** | Built both ways, below. Default wide. Orb's eye picks |
+
+## Parks 8 to 11: four more moves (2026-11-01)
+
+Each is its own patch and switch, all on with `tiles`.
+
+| Park | What you see | Numbers |
+| :--- | :--- | :--- |
+| **8, flat sends** (`flat_mode`; the page word `flat=wide` or `flat=hold`) | A flat send past 10,000 units a second can't be followed softly at fight size. **Wide:** the frame rides after him, lets go, and pulls wide. **Hold:** the frame stays still 0.4 s as he leaves, then the same pull. | Fighter out of frame 17 to 28 ticks wide, 47 to 55 hold. Frame's step at most 0.06 of the width a tick. `img/launch-director/flat-wide-vs-hold.gif` is for Orb's eye |
+| **9, reveal** (`flight_reveal`) | A flight at 3,000 units a second or more, for a second, opens out in its middle: low, wide, low. At most one every 8 s. | Out over 1 s, held 0.5 s, back over 1 s. Up to 8,000 units wide with both at power 3 or more, else the size floor |
+| **10, overshoot** (`follow_through`) | When a fast body stops dead, the frame's mass carries on a little and comes back. | At most 0.02 of the width, from 3,000 units a second |
+| **11, close brawl** (`close_brawl`) | Two locked fighters within 300 units frame closer, as Orb asked for at base power. Eases in over 0.7 s, out over 0.35 s. | 0.17 of the screen's height, against the fight's 0.12 and the cap's 0.14 |
+
+**A bug found by the real-fight gate, in the reveal.** It opened on a fighter whose pane wasn't on the screen, so the other pane took a jolt of 0.161 and lost its subject for 26 ticks. It now doesn't start or carry on while the other pane has the screen. The same fight now reads 0.028, and 3 ticks lost.
+
+**Not done:** no one has looked at a close-brawl clip. The first was filmed where no locked brawl happens, and the next was stopped at the pause. Seed 12345 from tick 1500 has a real one.
 
 ## Checks
 
 - Off: `clip_digest` (48,600 lines) and `split_sweep` identical to swing 1 to 6; `determinism`, `flight_check`, `seam_sweep`, `pane_check`, `sky_check`, `depth_check` pass.
-- On: `launch_shots_check` 549 pass, and with DirSwing on, 4 AI fights, 564 pass. `swing_real_check`, `swing_shot_check`, `peak_shot_check`, `swing_places_check` pass.
+- On: `launch_shots_check` 549 pass, and with DirSwing on, 4 AI fights, 564 pass. With all of 8 to 11 on and DirSwing on, 4 AI fights over 3,600 ticks: 553 pass. `swing_real_check`, `swing_shot_check`, `peak_shot_check`, `swing_places_check` pass.
 
 ## Clips, before on the left, after on the right
 

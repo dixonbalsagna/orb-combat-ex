@@ -1,0 +1,119 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index 537f180..f37091e 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -377,6 +377,11 @@ const PEAK_BACK_CATCH: float = 0.6
+ const PEAK_BACK_KO: float = 0.5
+ const PEAK_BACK_MIN: float = 0.2
+ # The high-velocity moves (docs/camera/launch-director.md), first values
++const FT_SPEED: float = 3000.0           # a stop from this fast carries the frame on (camera.md, follow-through); a stop is under FT_STOP of the speed a tick ago
++const FT_STOP: float = 0.35
++const FT_AMOUNT: float = 0.02            # at most this much of the width
++const FT_OUT: float = 0.13               # out, soft landing
++const FT_BACK: float = 0.4               # and back
+ const REVEAL_SPEED: float = 3000.0       # flying this fast, for this long, with this much under him, opens the view (camera.md section 3)
+ const REVEAL_AFTER: float = 1.0
+ const REVEAL_LOW: float = 100.0
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 19801bb..d6e063b 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -336,6 +336,13 @@ var _rv_slot: int = -1
+ var _rv_t: float = -1.0
+ var _rv_last: float = -1.0e9
+ var _rv_ang: float = 0.0
++var follow_through: bool = false           # the frame carries on a little past a fast body's stop, and settles. Off: none of it runs
++var overshoots: int = 0
++var ft_offset: Vector2 = Vector2.ZERO      # the offset now, in widths (x along the line, y up)
++var _ft_dir: Vector2 = Vector2.ZERO
++var _ft_t: float = -1.0
++var _ft_slot: int = -1
++var _ft_v: Array = [Vector2.ZERO, Vector2.ZERO]
+ var launch_director: bool = false        # the high-velocity moves (docs/camera/launch-director.md). Off: none of them runs
+ var _ozs: PackedFloat64Array = PackedFloat64Array([0.0, 0.0])   # ... and the zoom it drew
+ var _sim_f: Array = [null, null]
+@@ -390,6 +397,9 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
+ 	_pk_mix = 0.0
+ 	_pk_flat = false
+ 	_pk_wait = 0.0
++	_ft_t = -1.0
++	_ft_v = [Vector2.ZERO, Vector2.ZERO]
++	ft_offset = Vector2.ZERO
+ 	_rv_t = -1.0
+ 	_rv_slot = -1
+ 	_rv_last = -1.0e9
+@@ -605,6 +615,8 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
+ 	_update_solo(S)
+ 	_update_panel(S)
+ 	_update_intro(S)
++	if follow_through:
++		_ft_tick(S)
+ 	if flight_reveal:
+ 		_reveal_tick(S)
+ 	if swing_view:
+@@ -3932,6 +3944,8 @@ func _outputs(S: SimState) -> void:
+ 		_reveal_outputs(S)
+ 	if launch_director:
+ 		_zoom_ease()
++	if ft_offset != Vector2.ZERO:
++		_ft_outputs()
+ 	_mass_stage(_cut_now)   # before the travel budget: the budget keeps the last word on how far a picture moves in a tick
+ 	_travel_budget(S)
+ 
+@@ -5081,6 +5095,44 @@ func _reveal_outputs(S: SimState) -> void:
+ 		_oz[i] = nz
+ 
+ 
++## Follow-through: when a fast body stops dead (a landing, a wall, a brake) the frame's mass carries it on along his way by at most FT_AMOUNT of the width, a soft
++## out and a softer back. It reads the speed he had a tick ago, so it needs nothing from the sim.
++func _ft_tick(S: SimState) -> void:
++	for i in range(2):
++		var f = S.fighters[i]
++		var v := Vector2(float(f.vx) / maxf(float(f.launchT), 0.001), float(f.vy))
++		var was: Vector2 = _ft_v[i]
++		_ft_v[i] = v
++		if _ft_t < 0.0 and not reduced_motion and not intro_active and _pk_phase != "rise" and was.length() >= CamParams.FT_SPEED and v.length() <= CamParams.FT_STOP * was.length():
++			_ft_t = 0.0
++			_ft_slot = i
++			_ft_dir = was.normalized() * minf(1.0, was.length() / (2.0 * CamParams.FT_SPEED))
++			overshoots += 1
++	if _ft_t < 0.0:
++		ft_offset = Vector2.ZERO
++		return
++	_ft_t += DT
++	var a: float
++	if _ft_t < CamParams.FT_OUT:
++		var u: float = _ft_t / CamParams.FT_OUT
++		a = 1.0 - (1.0 - u) * (1.0 - u)
++	else:
++		a = 1.0 - smoothstep(0.0, 1.0, (_ft_t - CamParams.FT_OUT) / CamParams.FT_BACK)
++	if _ft_t >= CamParams.FT_OUT + CamParams.FT_BACK:
++		_ft_t = -1.0
++		a = 0.0
++	ft_offset = _ft_dir * (CamParams.FT_AMOUNT * a)
++
++
++func _ft_outputs() -> void:
++	for i in range(2):
++		if i != _ft_slot and sep > 0.5:
++			continue
++		var o: Vector3 = _outs[i]
++		var w: float = vw / maxf(o.z, 0.001)
++		_outs[i] = Vector3(SimWrap.wrap(o.x + ft_offset.x * w), o.y + ft_offset.y * w, o.z)
++
++
+ ## The zoom's own ease: its step changes by at most ZOOM_ACC a tick, so the rate caps' clamps start and stop soft. Never on a cut, and never in a shot that
+ ## sets its own (the peak's width is eased already).
+ func _zoom_ease() -> void:
+diff --git a/render/core/main.gd b/render/core/main.gd
+index 0475dca..2437caa 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -242,6 +242,7 @@ func _ready() -> void:
+ 	split_rig.swing_view = RenderTileGround.on   # the camera's swing and peak launch go with the true globe (docs/camera/swing-view.md)
+ 	split_rig.peak_launch = RenderTileGround.on
+ 	split_rig.launch_director = RenderTileGround.on
++	split_rig.follow_through = RenderTileGround.on
+ 	split_rig.flight_reveal = RenderTileGround.on
+ 	split_rig.flat_mode = String(args.get("flat", "wide")) if RenderTileGround.on else ""   # for Orb's eye: flat=wide or flat=hold (launch-director.md)
+ 	RenderTileGround.rate = float(args.get("tilerate", 0.0))

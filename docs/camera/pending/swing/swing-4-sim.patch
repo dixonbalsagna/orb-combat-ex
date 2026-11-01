@@ -1,0 +1,364 @@
+diff --git a/data/director/swing.json b/data/director/swing.json
+index a9d35ab..f4cd1c3 100644
+--- a/data/director/swing.json
++++ b/data/director/swing.json
+@@ -1,5 +1,37 @@
+ {
+   "schema": "director.swing/1",
++  "read": {
++    "_note": "How good a moment this is for the world to turn, -1 to +1. Terms add, then clamp. No term reads people (RL-213).",
++    "terms": {
++      "launch_release": 0.6,
++      "heavy_release": 0.4,
++      "both_airborne": 0.3,
++      "flight_room": 0.3,
++      "form_pause": 0.3,
++      "quiet": 0.2,
++      "anticipation": -0.6,
++      "flight_short": -0.5,
++      "just_landed": -0.4,
++      "tall_forward": -0.4,
++      "near_split": -0.3,
++      "both_standing": -0.2
++    },
++    "releaseS": 0.1,
++    "landedS": 0.35,
++    "anticipationS": 0.3,
++    "airborneH": 100.0,
++    "onePaneGap": 1400.0,
++    "flightShortS": 0.5,
++    "quietS": 4.0,
++    "gravity": 1000.0,
++    "splitGap": 2000.0,
++    "splitBand": 300.0,
++    "splitMoving": 100.0,
++    "standingGap": 300.0,
++    "tallH": 1500.0,
++    "tallReach": 4400.0,
++    "tallSamples": 5
++  },
+   "_note": "DirSwing, the choreographer's swing (docs/world/ring-any-angle/encounter.md section 2; game-design.md sections 2, 9, 10, 11, 13). It scores and asks; the rates, ramps and law are the core's (data/fight/swing.json). Every number is a first value. restTicks: at rest this long before a landing. restOut: ticks of an ease it asks for. stallTicks: a swing running this long, the law having slowed it, rests. sweep: the small class's allowance in units a second, which sizes a jolt. Off until World's place list and the look gate are in.",
+   "enabled": false,
+   "minDeg": 2.0,
+diff --git a/render/camera/tests/swing_read_check.gd b/render/camera/tests/swing_read_check.gd
+new file mode 100644
+index 0000000..1429384
+--- /dev/null
++++ b/render/camera/tests/swing_read_check.gd
+@@ -0,0 +1,104 @@
++extends SceneTree
++## The camera's read for the swing's score (docs/camera/swing-view.md). AI matches, with the read asked on the tick and the rig watching
++## alongside, so the model can be checked against the camera it models: offline and one way, nothing goes back.
++##   godot --headless --path . --script res://render/camera/tests/swing_read_check.gd -- [--seeds=4] [--ticks=3600]
++## Ends with `swing_read_check: N checks passed` or a line per failure.
++
++var fails: int = 0
++var checks: int = 0
++
++
++func _ok(cond: bool, what: String) -> void:
++	checks += 1
++	if not cond:
++		fails += 1
++		print("FAIL ", what)
++
++
++func _no_people() -> void:
++	# the read's own source: nothing from render/, and no word of people
++	var src: String = FileAccess.get_file_as_string("res://sim/director/swing_read.gd").to_lower()
++	var code: String = ""
++	for line in src.split("\n"):
++		if not line.strip_edges().begins_with("##"):
++			code += line + "\n"
++	for w in ["civilian", "people", "crowd", "casualt", "person", "toll", "menace", "anguish", "camparams", "splitrig", "render", "camplaces"]:
++		_ok(code.find(w) < 0, "the read mentions %s" % w)
++
++
++func _initialize() -> void:
++	var seeds: int = 4
++	var ticks: int = 3600
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--seeds="):
++			seeds = int(a.substr(8))
++		elif a.begins_with("--ticks="):
++			ticks = int(a.substr(8))
++	_no_people()
++	var counts: Dictionary = {}
++	var hist: Array = [0, 0, 0, 0, 0]
++	var n: int = 0
++	var agree: Dictionary = {"split": [0, 0], "launch": [0, 0], "ant": [0, 0]}
++	var worst_us: int = 0
++	var sum_us: int = 0
++	for seed in range(1, seeds + 1):
++		# the read changes nothing and repeats exactly: the same match with it and without it, by the digest
++		var S: SimState = SimCore.createSim()
++		SimCore.newMatch(S, seed, {"p1": true, "p2": true}, {})
++		S.dt = SplitRig.DT
++		var S2: SimState = SimCore.createSim()
++		SimCore.newMatch(S2, seed, {"p1": true, "p2": true}, {})
++		S2.dt = SplitRig.DT
++		var rig := SplitRig.new()
++		rig.reset(S, 1280.0, 720.0)
++		var same: bool = true
++		for t in range(ticks):
++			SimCore.step(S)
++			var ev: Array = S.out.fx.duplicate()
++			S.out.fx.clear()
++			S.out.feed.clear()
++			rig.step(S, 1280.0, 720.0, ev)
++			SimCore.step(S2)
++			S2.out.fx.clear()
++			S2.out.feed.clear()
++			var dir: int = 1 if t % 2 == 0 else -1
++			var t0: int = Time.get_ticks_usec()
++			var r: Dictionary = DirSwingRead.read(S, float(t % 400) / 60.0, 1.0, dir)
++			var us: int = Time.get_ticks_usec() - t0
++			worst_us = maxi(worst_us, us)
++			sum_us += us
++			var r2: Dictionary = DirSwingRead.read(S, float(t % 400) / 60.0, 1.0, dir)
++			if str(r) != str(r2):
++				same = false
++			_ok(float(r.value) >= -1.0 and float(r.value) <= 1.0, "out of range")
++			n += 1
++			var names: Dictionary = {}
++			for x in r.terms:
++				counts[x[0]] = int(counts.get(x[0], 0)) + 1
++				names[x[0]] = true
++			hist[clampi(int(floor((float(r.value) + 1.0) * 2.5)), 0, 4)] += 1
++			# the model against the camera: does its idea of a split, a launch and a tightening match the rig's?
++			var gap: float = absf(SimWrap.sdx(S.fighters[0].x, S.fighters[1].x))
++			var apart: bool = gap > 2000.0
++			agree["split"][0] += 1 if apart == (rig.sep > 0.5) else 0
++			agree["split"][1] += 1
++			if names.has("launch_release"):
++				agree["launch"][0] += 1 if (rig.solo_kind == "launch" or rig.solo_kind == "hold" or rig.sep > 0.5 or rig.chase_slot >= 0) else 0
++				agree["launch"][1] += 1
++			if names.has("anticipation"):
++				agree["ant"][0] += 1 if rig._ant_w > 0.0 else 0
++				agree["ant"][1] += 1
++		_ok(same, "seed %d: the same state read two ways" % seed)
++		_ok(NetDesync.digest(S) == NetDesync.digest(S2), "seed %d: asking the read changed the match" % seed)
++	print("reads %d, mean %.1f us, worst %d us" % [n, float(sum_us) / maxf(float(n), 1.0), worst_us])
++	print("values -1 to -0.6, to -0.2, to 0.2, to 0.6, to 1: %s" % [hist])
++	print("terms: %s" % [counts])
++	for k in agree:
++		var a: Array = agree[k]
++		print("the model and the rig, %s: agree on %d of %d (%.0f%%)" % [k, a[0], a[1], 100.0 * float(a[0]) / maxf(float(a[1]), 1.0)])
++	print("a line for the feed: ", DirSwingRead.text({"value": 0.7, "terms": [["launch_release", 0.6], ["flight_room", 0.3], ["near_split", -0.3]]}))
++	if fails == 0:
++		print("swing_read_check: %d checks passed" % checks)
++	else:
++		print("swing_read_check: %d of %d checks FAILED" % [fails, checks])
++	quit(1 if fails > 0 else 0)
+diff --git a/sim/director/swing_read.gd b/sim/director/swing_read.gd
+new file mode 100644
+index 0000000..23aa17d
+--- /dev/null
++++ b/sim/director/swing_read.gd
+@@ -0,0 +1,141 @@
++class_name DirSwingRead
++## The camera's model of itself, for the swing's one score (docs/world/ring-any-angle/camera.md section 5; Game Design weighs it, section
++## 11): how good a moment this is for the world to turn, from -1 to +1. Camera's numbers are the `read` block of data/director/swing.json. A pure function of
++## the sim's state and data: it reads the state, writes nothing, holds nothing, and imports nothing from render/, so rollback and the
++## digest see nothing new and the sim never reads a camera. No term reads people (RL-213). DirSwing asks it when it scores; nothing
++## else does.
++
++const PATH: String = "res://data/director/swing.json"
++static var _d = null
++
++
++static func data() -> Dictionary:
++	if _d == null:
++		var j = JSON.parse_string(FileAccess.get_file_as_string(PATH))
++		if not (j is Dictionary):
++			push_error("DirSwingRead: could not parse " + PATH)
++			j = {}
++		_d = j
++	return _d
++
++
++## The read. `quietS`: seconds since the last peak, launch or swing, which DirSwing keeps (negative: unknown, no term). `swingS`: how long the
++## swing being scored lasts. `turn`: +1 or -1 the way it would turn, 0 unknown; what lies behind x as it turns comes round in front.
++## Returns {value, terms: [[name, amount], ...]}: every term that counted, for the debug feed.
++static func read(S: SimState, quietS: float = -1.0, swingS: float = 1.0, turn: int = 0) -> Dictionary:
++	var R: Dictionary = data().read
++	var W: Dictionary = R.terms
++	var terms: Array = []
++	var A = S.fighters[0]
++	var B = S.fighters[1]
++	var hitstop: bool = S.dirS.stop > 0.0
++	var gap: float = absf(SimWrap.sdx(A.x, B.x))
++	var air: Array = [_air(S, A, R), _air(S, B, R)]
++
++	var released: bool = false
++	var left: float = 1.0e9
++	for f in [A, B]:
++		if f.state == "launched":
++			if not hitstop and float(f.stateT) <= float(R.releaseS):
++				released = true
++			left = minf(left, _flightLeft(S, f))
++		if f.state == "down" and float(f.stateT) <= float(R.landedS):
++			_add(terms, "just_landed", W)
++	if released:
++		_add(terms, "launch_release", W)
++	elif not hitstop and _beatDone(S, R):
++		_add(terms, "heavy_release", W)
++	if bool(air[0]) and bool(air[1]) and gap < float(R.onePaneGap):
++		_add(terms, "both_airborne", W)
++	if left < 1.0e9:
++		if left >= swingS:
++			_add(terms, "flight_room", W)
++		elif left < float(R.flightShortS):
++			_add(terms, "flight_short", W)
++	if S.pause.left > 0:
++		_add(terms, "form_pause", W)
++	if quietS >= float(R.quietS):
++		_add(terms, "quiet", W)
++	if _anticipating(S, R):
++		_add(terms, "anticipation", W)
++	if turn != 0 and _tallForward(S, A, B, gap, turn, R):
++		_add(terms, "tall_forward", W)
++	if absf(gap - float(R.splitGap)) < float(R.splitBand) and absf(_closing(A, B)) > float(R.splitMoving):
++		_add(terms, "near_split", W)
++	if not bool(air[0]) and not bool(air[1]) and gap > float(R.standingGap) and gap < float(R.splitGap):
++		_add(terms, "both_standing", W)
++	var v: float = 0.0
++	for t in terms:
++		v += float(t[1])
++	return {"value": SimMathx.jclamp(v, -1.0, 1.0), "terms": terms}
++
++
++## One line for the debug feed: the value, then each term's name and amount.
++static func text(r: Dictionary) -> String:
++	var parts: Array = []
++	for t in r.terms:
++		parts.append("%s %+.1f" % [t[0], t[1]])
++	return "%+.2f %s" % [r.value, ", ".join(parts)]
++
++
++static func _add(terms: Array, name: String, W: Dictionary) -> void:
++	terms.append([name, float(W[name])])
++
++
++static func _air(S: SimState, f, R: Dictionary) -> bool:
++	return f.state == "launched" or float(f.y) - WorldTerrain.groundY(S, f.x) > float(R.airborneH)
++
++
++## The flight's time left, by its law, to the ground under him now (a forecast, one read).
++static func _flightLeft(S: SimState, f) -> float:
++	var g: float = float(data().read.gravity)
++	var h: float = maxf(0.0, float(f.y) - WorldTerrain.groundY(S, f.x))
++	var vy: float = float(f.vy)
++	return (vy + sqrt(vy * vy + 2.0 * g * h)) / g
++
++
++static func _heavy(b) -> bool:
++	if b.op == "launch" or b.op == "knockBack" or b.op == "guardBreak":
++		return true
++	if b.op != "strike" and b.op != "chainStrike":
++		return false
++	var o2 = b.args.get("o") if b.args is Dictionary else null
++	return o2 is Dictionary and (String(o2.get("class", "")) == "heavy" or String(o2.get("class", "")) == "ender" or bool(o2.get("big", false)))
++
++
++## A heavy blow just landed: the exchange's clock is just past a heavy strike's beat.
++static func _beatDone(S: SimState, R: Dictionary) -> bool:
++	var ex = S.dirS.ex
++	if ex == null:
++		return false
++	for b in ex.beats:
++		if b.done and _heavy(b) and float(ex.t) - float(b.t) <= float(R.releaseS):
++			return true
++	return false
++
++
++## A heavy or a launch is about to land: the view is tightening on it.
++static func _anticipating(S: SimState, R: Dictionary) -> bool:
++	var ex = S.dirS.ex
++	if ex == null:
++		return false
++	for b in ex.beats:
++		if not b.done and _heavy(b) and float(b.t) - float(ex.t) <= float(R.anticipationS):
++			return true
++	return false
++
++
++## Tall land on the side the turn brings forward: Game Design's fixed test, height only, on the line until the field's read reaches off it.
++static func _tallForward(S: SimState, A, B, gap: float, turn: int, R: Dictionary) -> bool:
++	var mid: float = SimWrap.wrap(A.x + SimWrap.sdx(A.x, B.x) * 0.5)
++	var low: float = minf(WorldTerrain.groundY(S, A.x), WorldTerrain.groundY(S, B.x))
++	var n: int = int(R.tallSamples)
++	for i in range(1, n + 1):
++		var d: float = float(R.tallReach) * float(i) / float(n)
++		if WorldTerrain.groundY(S, SimWrap.wrap(mid - float(turn) * d)) - low > float(R.tallH):
++			return true
++	return false
++
++
++static func _closing(A, B) -> float:
++	return float(A.vx) / maxf(float(A.launchT), 0.001) - float(B.vx) / maxf(float(B.launchT), 0.001)
+diff --git a/tools/schemas/director-swing.schema.json b/tools/schemas/director-swing.schema.json
+index b762493..353ca46 100644
+--- a/tools/schemas/director-swing.schema.json
++++ b/tools/schemas/director-swing.schema.json
+@@ -9,6 +9,60 @@
+   },
+   "additionalProperties": false,
+   "properties": {
++    "read": {
++      "type": "object",
++      "patternProperties": {
++        "^_": {}
++      },
++      "additionalProperties": {
++        "type": "number"
++      },
++      "required": [
++        "terms",
++        "releaseS",
++        "landedS",
++        "anticipationS",
++        "airborneH",
++        "onePaneGap",
++        "flightShortS",
++        "quietS",
++        "gravity",
++        "splitGap",
++        "splitBand",
++        "splitMoving",
++        "standingGap",
++        "tallH",
++        "tallReach",
++        "tallSamples"
++      ],
++      "properties": {
++        "terms": {
++          "type": "object",
++          "additionalProperties": false,
++          "required": [
++            "launch_release",
++            "heavy_release",
++            "both_airborne",
++            "flight_room",
++            "form_pause",
++            "quiet",
++            "anticipation",
++            "flight_short",
++            "just_landed",
++            "tall_forward",
++            "near_split",
++            "both_standing"
++          ],
++          "patternProperties": {
++            "^[a-z_]+$": {
++              "type": "number",
++              "minimum": -1,
++              "maximum": 1
++            }
++          }
++        }
++      }
++    },
+     "schema": {
+       "const": "director.swing/1"
+     },
