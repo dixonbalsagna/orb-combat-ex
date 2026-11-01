@@ -2,7 +2,7 @@
 
 Research & Prototyping, 2026-11-01, on Orb's note: "the arc doesn't fully complete, the knocked-back fighter reaches the apex then drifts, and then stops and goes straight down". For Simulation and Encounter to follow. **Play it:** `research/ring-any-angle/proto-v2.html`, key M or RB+Y. **Reference code and table:** `node research/ring-any-angle/meteor-arc.mjs`.
 
-**Use Game Design's curve (`docs/design/rule-of-cool-map.md` §2): one formula from launch to contact, landing 60° round. It's now the proto's default, and it passes all of Game Design's shape tests.** I built a parabola first, without having seen their ruling, and my first report recommended it. **I withdraw that:** it fails their turn test by a wide margin, and the bigger arc is the better picture. It stays on a switch so Orb can see both.
+**The default is Game Design's curve (`docs/design/rule-of-cool-map.md` §2): one formula from launch to contact, landing 60° round. The EP closed this on 2026-11-01.** It's measured, and it's the bigger shot Orb described. My parabola stays on a switch and a key (J, or D-pad up), and Orb's eye decides from here.
 
 ![Game Design's curve, the whole arc at the widest view](img/meteor-arc-whole.png)
 
@@ -60,7 +60,8 @@ Top tier, planet 7, flown at the proto's Standard level.
 | Test | Limit | Game Design's curve | My parabola (36° round) |
 | :--- | ---: | ---: | ---: |
 | Slowest sideways speed against the mean | At least 0.5 | **0.79** (3,221 to 6,373 u/s) | 0.48, fails |
-| Fastest turn against slowest, 10% to 90% of the flight | At most 2 | **1.8** (23 to 42°/s) | 10, fails (7 to 68°/s) |
+| Fastest turn against slowest, 10% to 90% of the flight | **Dropped by Game Design;** the tests are no corner, no reversal, never stopping | 1.8 (23 to 42°/s) | 10 (7 to 68°/s) |
+| Doubles back, or stops | None | **None,** slowest sideways 3,221 u/s | **None,** slowest sideways 1,125 u/s |
 | Foe in frame, descent | At least 90% | **113 of 120, 94%** | 120 of 120 |
 | Foe in frame, hang | | 72 of 72 | 72 of 72 |
 | Foe in frame, climb | | 145 of 180 (the first 0.6 s, as Camera expected; the trail stays in frame) | 145 of 180 |
@@ -69,7 +70,17 @@ Top tier, planet 7, flown at the proto's Standard level.
 
 Speeds as drawn: leaves at about 13,600 u/s, slowest about 5,800 at the crest, and arrives at about 21,700. The crest reads faster on screen than Game Design's 3,200 because he's far out from the planet there: 3,221 along the ground is 5,400 at that height. **So the hang is a sweep rather than a float, and Orb should judge that first.** The crest-time slider moves it, and a slower crest is one number in `e`.
 
-**Game Design's risk is answered: the landing at 60° round is visible.** It sits on the far limb at the widest view in the picture above, and the camera follows him in. It is on the limb, though, so an impact reads less head-on than at 36° round (`img/meteor-arc-parabola.png`).
+**Game Design's horizon question is answered: the landing at 60° round clears it.** Over the midpoint at the hang, the camera is 10,119 above the ground against the 3,733 that sight line needs, and it clears the planet by 4,609 units on every hang tick. Both fighters and the landing point are in the picture on 72 of 72 hang ticks, and he and the landing are in the picture on the last tick of the flight. It is on the limb, though, so an impact reads less head-on than at 36° round (`img/meteor-arc-parabola.png`).
+
+**The parabola at Game Design's other distances, same reads:**
+
+| Leaves at | Lands | Hang | Descent in frame | Both at the crest | Impact in frame |
+| ---: | ---: | ---: | ---: | ---: | :--- |
+| 60° | 36° round | 72 of 72 | 120 of 120 | 72 of 72 | Yes |
+| 51° | 48° round | 72 of 72 | 120 of 120 | 72 of 72 | Yes |
+| 43° | 59° round | 72 of 72 | 113 of 120, 94% | 72 of 72 | Yes |
+
+All three pass Game Design's frame test.
 
 **Two camera changes for Camera to check,** both in the proto's descent:
 
@@ -93,7 +104,7 @@ Speeds as drawn: leaves at about 13,600 u/s, slowest about 5,800 at the crest, a
 
 ## Sliders for Orb
 
-- **The arc:** Game Design's, or the parabola to compare. The parabola is a quadratic Bézier with its own clock, in `meteor-arc.mjs`, with sliders for the angle it leaves at, its lean and its launch pace.
+- **The arc:** Game Design's, or the parabola to compare: the switch, J, or D-pad up. The parabola is a quadratic Bézier with its own clock, in `meteor-arc.mjs`, with sliders for the angle it leaves at (43 to 85°, which reaches 60° round), its lean and its launch pace.
 - **Crest at:** seconds of the 6.2. It works on both.
 - **Top of the ladder,** which sets `H` and so `D`.
 
