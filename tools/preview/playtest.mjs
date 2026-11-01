@@ -41,7 +41,7 @@ const BB_EVAL = `JSON.stringify({ state: window.__bb_state || null, replay: wind
 const record = { url: URL, steps: [] };
 let browser = null, page = null, code = 0;
 try {
-  browser = await launchBrowser({ exe, flags: [`--window-size=${W},${H}`], session: process.env.MERIDIAN_SESSION || 'tools-pipeline', purpose: 'playtest', timeoutS: 1500, cpuPercent: 25, log });
+  browser = await launchBrowser({ exe, flags: [`--window-size=${W},${H}`], session: process.env.MERIDIAN_SESSION || 'tools-pipeline', purpose: 'playtest', noMute: Boolean(process.env.PLAYTEST_NOMUTE), timeoutS: 1500, cpuPercent: 25, log });
   page = await Cdp.open(browser.target.webSocketDebuggerUrl);
   await page.send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false });
   await page.send('Page.enable');
@@ -64,6 +64,8 @@ try {
     else if (s.do === 'click') { for (const type of ['mouseMoved', 'mousePressed', 'mouseReleased']) { await page.send('Input.dispatchMouseEvent', { type, x: s.x, y: s.y, button: 'left', buttons: type === 'mousePressed' ? 1 : 0, clickCount: 1 }); await sleep(80); } }
     else if (s.do === 'bb') { const r = await page.eval(BB_EVAL); const o = JSON.parse(r || '{}'); writeFileSync(join(OUT, 'blackbox-' + (s.name || 'grab') + '.json'), JSON.stringify({ kind: 'orb-first-play', state: o.state, localStorageBytes: o.last, replay: o.replay ? JSON.parse(o.replay) : null })); record.bb = { state: o.state, localStorageBytes: o.last, hasReplay: !!o.replay }; }
     else if (s.do === 'snap') { const r = await page.eval('JSON.stringify((function () { if (!window.__bbf_snap) return null; var o = window.__bbf_snap(); return { rsCount: o.rsCount, rsPad: o.rsPad, first: (o.rs || []).slice(0, 14), last: (o.rs || []).slice(-6), frames: o.n, over33: o.over33 }; })())'); writeFileSync(join(OUT, 'snap-' + (s.name || 'grab') + '.json'), r || 'null'); log('snap ' + String(r).slice(0, 500)); }
+    else if (s.do === 'audio') { const r = await page.eval('JSON.stringify(window.__audio_snap ? window.__audio_snap() : null)'); writeFileSync(join(OUT, 'audio-' + (s.name || 'grab') + '.json'), r || 'null'); const o = r ? JSON.parse(r) : null; log('audio ' + (o ? 'ctx ' + (o.ctxs[0] ? o.ctxs[0].states.map((x) => x.state + '@' + x.at).join(',') : 'none') + ', gesture ' + JSON.stringify(o.gesture) + ', first sound ' + o.firstSoundMs + ' ms, peak ' + o.peak + ', loud windows ' + o.loudWindows + '/' + o.windows + ', cues ' + o.cues + ' (taken ' + o.cuesTaken + ', dropped ' + o.cuesDropped + '), rumble requests from the game ' + o.vibrationRequestsFromTheGame + ', browser calls: navigator.vibrate ' + o.navigatorVibrateCalls + ' playEffect ' + o.playEffect + ' pulse ' + o.pulseCalls : 'no audio log')); }
+    else if (s.do === 'eval') { const r = await page.eval(s.code); log('eval ' + (s.name || '') + ' => ' + String(JSON.stringify(r)).slice(0, 600)); }
     else if (s.do === 'forceover') { await page.eval('window.__bb_state = Object.assign({}, window.__bb_state || {}, { over: true, at: Date.now() })', true); }
     else if (s.do === 'stick') await page.eval(`window.__padAxes(${JSON.stringify(s.axes)})`, true);
     else if (s.do === 'key') { await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: s.key, code: s.code || s.key, windowsVirtualKeyCode: s.vk || 0 }); await sleep(120); await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: s.key, code: s.code || s.key, windowsVirtualKeyCode: s.vk || 0 }); }

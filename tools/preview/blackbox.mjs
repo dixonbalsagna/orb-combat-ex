@@ -142,8 +142,6 @@ export const HOST_FUNCS = [
   '\t\t_bb_fr = Engine.get_process_frames()',
   '\t\tJavaScriptBridge.eval("window.__bb_t=%d;" % int(_bb.ticks), true)',
   '\t_bb.ticks = int(_bb.ticks) + 1',
-  '\tif int(_bb.ticks) % 600 == 0:',
-  '\t\t_bb.checkpoints.append([int(_bb.ticks), SimHash.stateHash(S).gameplay])',
   '\tvar over_now: bool = S.game.ko != null',
   '\tif not over_now:   # a no-contest (Encounter\'s match ending) is a cue and no KO: it ends the match too',
   '\t\tfor e in S.out.fx:',
@@ -181,6 +179,56 @@ export function patchHost(text) {
     out = out.replace(from, () => nl(h.to));
   }
   return out.replace(/\s*$/, '') + nl(HOST_FUNCS);
+}
+
+
+/** audio/audio_voices.gd with the cue log: AudioVoices.play becomes a wrapper that asks the real one, then tells the page (window.__audcue) the cue and whether a voice took it. Read only; the real function is unchanged. */
+export function patchAudio(text) {
+  const crlf = text.includes('\r\n');
+  const from = 'func play(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:\n';
+  const fromN = crlf ? from.replace(/\n/g, '\r\n') : from;
+  const n = text.split(fromN).length - 1;
+  if (n !== 1) throw new Error('audio/audio_voices.gd: AudioVoices.play: expected the signature once, found it ' + n + ' times (tools/preview/blackbox.mjs patchAudio is out of date)');
+  const to = [
+    'func play(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:',
+    '\tvar ok_pv: bool = _play_real(cue, cam_x, zoom)',
+    '\t_pv_audlog(cue, ok_pv)',
+    '\treturn ok_pv',
+    '',
+    '',
+    '## Scratch (tools/preview): the cue log for ?audiolog=1 on a local page (read only).',
+    'var _pv_aud_on: int = -1',
+    'func _pv_audlog(cue: AudioCues.Cue, ok: bool) -> void:',
+    '\tif _pv_aud_on < 0:',
+    '\t\t_pv_aud_on = 1 if (OS.has_feature("web") and bool(JavaScriptBridge.eval("!!window.__audlog", true))) else 0',
+    '\tif _pv_aud_on == 1:',
+    '\t\tJavaScriptBridge.eval("window.__audcue && window.__audcue(%s, %s, %s, %.1f, %s)" % [JSON.stringify(cue.sound), JSON.stringify(cue.kind), JSON.stringify(cue.bus), cue.gain_db, "true" if ok else "false"], true)',
+    '',
+    '',
+    'func _play_real(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:',
+    '',
+  ].join('\n');
+  return text.replace(fromN, () => (crlf ? to.replace(/\n/g, '\r\n') : to));
+}
+
+/** render/core/main.gd with the rumble log: every step the host asks of a pad or a handheld is told to the page (window.__vibreq) before it is asked. Read only. */
+export function patchHaptics(text) {
+  const crlf = text.includes('\r\n');
+  const nl = (s) => (crlf ? s.replace(/\n/g, '\r\n') : s);
+  const from = nl('func _play_haptic_step(plan: Dictionary, s: Dictionary) -> void:\n');
+  const n = text.split(from).length - 1;
+  if (n !== 1) throw new Error('render/core/main.gd: _play_haptic_step: expected the signature once, found it ' + n + ' times (tools/preview/blackbox.mjs patchHaptics is out of date)');
+  const to = nl('func _play_haptic_step(plan: Dictionary, s: Dictionary) -> void:\n\t_pv_vib(plan, s)\n');
+  const fn = nl([
+    '',
+    '',
+    '## Scratch (tools/preview): the rumble log for ?audiolog=1 on a local page (read only).',
+    'func _pv_vib(plan: Dictionary, s: Dictionary) -> void:',
+    '\tif OS.has_feature("web") and bool(JavaScriptBridge.eval("!!window.__audlog", true)):',
+    '\t\tJavaScriptBridge.eval("window.__vibreq && window.__vibreq(%s, %s)" % [JSON.stringify(str(plan["via"])), JSON.stringify(s)], true)',
+    '',
+  ].join('\n'));
+  return text.replace(from, () => to).replace(/\s*$/, '') + fn;
 }
 
 /** The page's own script: the questions and the save, after the match. Plain DOM, no network. */
@@ -229,7 +277,7 @@ export const PAGE_SCRIPT = String.raw`
   function css(el, o) { for (var k in o) el.style[k] = o[k]; return el; }
   function stamp() { var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()); }
   function save(replayText, answers, matchOver, frames) {
-    var obj = { kind: 'orb-first-play', note: 'Recorded on this PC by the private page. Nothing was sent anywhere. The replay plays back through the game\'s own replay path. frames: the slow frames of that play (tick, ms, seconds in).', savedAt: new Date().toISOString(), pageSearch: String(location.search || ''), build: window.__build || null, matchOver: matchOver, answers: answers, frames: frames ? Object.assign({}, frames, { rs: undefined }) : null, rawRightStick: frames && frames.rs ? { pad: frames.rsPad, axes: 'the standard mapping, axes 2 and 3 (x, y)', note: 'a sample [tick, ms, x, y] each frame the stick was off centre, and the frame it came back; only read from the pad, nothing sent', samples: frames.rs } : null, replay: JSON.parse(replayText) };
+    var obj = { kind: 'orb-first-play', note: 'Recorded on this PC by the private page. Nothing was sent anywhere. The replay plays back through the game\'s own replay path. frames: the slow frames of that play (tick, ms, seconds in).', savedAt: new Date().toISOString(), pageSearch: String(location.search || ''), build: window.__build || null, audio: window.__audio_snap ? window.__audio_snap(true) : null, matchOver: matchOver, answers: answers, frames: frames ? Object.assign({}, frames, { rs: undefined }) : null, rawRightStick: frames && frames.rs ? { pad: frames.rsPad, axes: 'the standard mapping, axes 2 and 3 (x, y)', note: 'a sample [tick, ms, x, y] each frame the stick was off centre, and the frame it came back; only read from the pad, nothing sent', samples: frames.rs } : null, replay: JSON.parse(replayText) };
     var blob = new Blob([JSON.stringify(obj)], { type: 'application/json' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = 'orb-first-play-' + stamp() + '.json';
@@ -240,7 +288,7 @@ export const PAGE_SCRIPT = String.raw`
     var box = css(document.createElement('div'), { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', zIndex: 99999, width: 'min(560px, 92vw)', background: '#0b0d12', color: '#e8e8e0', border: '2px solid #8c8a80', borderRadius: '14px', padding: '18px 20px', font: '16px/1.4 sans-serif', boxShadow: '0 0 0 9999px rgba(0,0,0,0.55)' });
     var h = css(document.createElement('div'), { fontWeight: 'bold', fontSize: '20px', marginBottom: '8px' }); h.textContent = title; box.appendChild(h);
     var p = document.createElement('div'); p.textContent = intro; css(p, { marginBottom: '10px', color: '#c8c8c0' }); box.appendChild(p);
-    var qs = [], names = ['What did you try that did not work?', 'What felt best?', 'What would you change first?'], fields = [];
+    var qs = [], names = ['What did you try that did not work?', 'What felt best?', 'What would you change first?', 'Did the hits sound right?'], fields = [];
     if (withQuestions) names.forEach(function (q) {
       var l = document.createElement('label'); l.textContent = q + ' (optional)'; css(l, { display: 'block', margin: '8px 0 2px' });
       var t = css(document.createElement('textarea'), { width: '100%', height: '46px', background: '#14171e', color: '#e8e8e0', border: '1px solid #55534b', borderRadius: '6px', font: '15px sans-serif', boxSizing: 'border-box' });
@@ -280,8 +328,84 @@ export const PAGE_SCRIPT = String.raw`
 export function injectPage(html, meta = null) {
   if (html.includes('orb-blackbox-last')) return html;
   const stamp = meta ? `<script>window.__build = ${JSON.stringify(meta).replace(/</g, '\u003c')};</script>` : '';
+  const head = `<script>${AUDIO_HEAD}</script>`;
   const tag = `${stamp}<script>${PAGE_SCRIPT}</script>`;
-  return html.includes('</body>') ? html.replace('</body>', () => `${tag}\n</body>`) : html + tag;
+  let out = html.includes('<head>') ? html.replace('<head>', () => `<head>\n${head}`) : head + html;
+  return out.includes('</body>') ? out.replace('</body>', () => `${tag}\n</body>`) : out + tag;
 }
 
-export const BB_FINGERPRINT = createHash('sha1').update(JSON.stringify([HOOKS, HOST_FUNCS, PAGE_SCRIPT])).digest('hex').slice(0, 6);
+
+/** The first script in the page (before the engine): the audio and rumble taps, read only. window.__audlog is true on ?audiolog=1 and with the black box (?blackbox=1; Orb file of 2026-11-01 had the log off because only audiolog turned it on) (the game-side wrappers ask for it); window.__audio_snap() reads what was seen. */
+export const AUDIO_HEAD = String.raw`
+(function () {
+  var A = { on: /[?&](audiolog|blackbox)(=|&|$)/.test(location.search), t0: performance.now(), ctxs: [], gesture: null, firstSoundMs: null, peak: 0, windows: 0, loud: 0, rmsSum: 0, cues: 0, cuesTaken: 0, cuesDropped: 0, by: {}, vib: [], vibReq: [], navVibrate: 0, playEffect: 0, pulse: 0, rms: [], recentPeak: 0, srcs: {}, loudAt: [], cueT: [] };
+  window.__audlog = A.on;
+  if (/[?&]audiolog(=|&|$)/.test(location.search)) {   // the line on the page: only with the word, off otherwise
+    document.addEventListener('DOMContentLoaded', function () {
+      var el = document.createElement('div');
+      el.style.cssText = 'position:fixed;left:6px;bottom:6px;z-index:2147483647;font:11px/1.3 monospace;color:#9fe;background:rgba(0,0,0,.55);padding:2px 6px;pointer-events:none;white-space:pre';
+      document.body.appendChild(el);
+      setInterval(function () {
+        var c = A.ctxs.length ? A.ctxs[0].ctx : null;
+        el.textContent = 'sound ' + (c ? c.state + ' t=' + c.currentTime.toFixed(1) : 'no context yet') + '  played ' + A.cuesTaken + ' dropped ' + A.cuesDropped + '  out peak ' + A.recentPeak.toFixed(2);
+        A.recentPeak *= 0.5;
+      }, 500);
+    });
+  }
+  function now() { return Math.round(performance.now() - A.t0); }
+  ['pointerdown', 'mousedown', 'keydown', 'touchstart'].forEach(function (ev) { window.addEventListener(ev, function (e) { if (e.isTrusted) { if (A.gesture === null) A.gesture = { at: now(), kind: ev }; A.ctxs.forEach(function (r) { try { if (r.ctx && r.ctx.state === 'suspended') r.ctx.resume(); } catch (x) { /* none */ } }); } }, true); });
+  try {
+    var Orig = window.AudioContext || window.webkitAudioContext;
+    if (Orig && A.on) {
+      var oc = AudioNode.prototype.connect;
+      AudioNode.prototype.connect = function (dest) {
+        try {
+          if (dest && window.AudioDestinationNode && dest instanceof AudioDestinationNode) {
+            var ctx = dest.context; A.srcs[(this.constructor && this.constructor.name) || '?'] = (A.srcs[(this.constructor && this.constructor.name) || '?'] || 0) + 1;
+            if (!ctx.__tap) {
+              var an = ctx.createAnalyser(); an.fftSize = 2048;
+              var g0 = ctx.createGain(); g0.gain.value = 0;
+              oc.call(an, g0); oc.call(g0, dest);
+              ctx.__tap = an; ctx.__buf = new Float32Array(an.fftSize);
+              var rec = { created: now(), states: [{ at: now(), state: ctx.state }], sampleRate: ctx.sampleRate, ctx: ctx };
+              A.ctxs.push(rec);
+              ctx.addEventListener('statechange', function () { rec.states.push({ at: now(), state: ctx.state }); });
+              setInterval(function () {
+                if (ctx.state !== 'running') return;
+                ctx.__tap.getFloatTimeDomainData(ctx.__buf);
+                var s = 0, p = 0; for (var i = 0; i < ctx.__buf.length; i++) { var v = ctx.__buf[i]; s += v * v; if (Math.abs(v) > p) p = Math.abs(v); }
+                var rms = Math.sqrt(s / ctx.__buf.length);
+                A.windows++; A.rmsSum += rms; if (p > A.peak) A.peak = p; if (p > A.recentPeak) A.recentPeak = p;
+                if (rms > 0.0005) { A.loud++; if (A.firstSoundMs === null) A.firstSoundMs = now(); if (A.loudAt.length < 4000) A.loudAt.push(now()); }
+                if (A.windows % 5 === 0 && A.rms.length < 1200) A.rms.push([now(), Math.round(rms * 10000) / 10000, Math.round(p * 1000) / 1000]);
+              }, 40);
+            }
+            oc.call(this, ctx.__tap);
+          }
+        } catch (e) { /* a tap must never break the page */ }
+        return oc.apply(this, arguments);
+      };
+    }
+  } catch (e) { /* no Web Audio */ }
+  try { var nv = navigator.vibrate; if (nv) navigator.vibrate = function (p) { A.navVibrate++; if (A.vib.length < 400) A.vib.push({ at: now(), api: 'navigator.vibrate', arg: p }); return nv.apply(navigator, arguments); }; } catch (e) { /* none */ }
+  try {
+    if (window.GamepadHapticActuator) {
+      var pe = GamepadHapticActuator.prototype.playEffect, pu = GamepadHapticActuator.prototype.pulse;
+      if (pe) GamepadHapticActuator.prototype.playEffect = function (t, p) { A.playEffect++; if (A.vib.length < 400) A.vib.push({ at: now(), api: 'playEffect', arg: t, params: p }); return pe.apply(this, arguments); };
+      if (pu) GamepadHapticActuator.prototype.pulse = function (v, d) { A.pulse++; if (A.vib.length < 400) A.vib.push({ at: now(), api: 'pulse', v: v, d: d }); return pu.apply(this, arguments); };
+    }
+  } catch (e) { /* none */ }
+  window.__audeng = function (o) { A.eng = o; };
+  window.__audcue = function (sound, kind, bus, gain, ok) { A.cues++; if (A.cueT.length < 400) A.cueT.push([now(), sound, ok ? 1 : 0]); if (ok) A.cuesTaken++; else A.cuesDropped++; var k = (kind || '?') + ':' + sound; A.by[k] = (A.by[k] || 0) + 1; };
+  window.__vibreq = function (via, step) { if (A.vibReq.length < 400) A.vibReq.push({ at: now(), via: via, step: step }); };
+  window.__audio_snap = function (lean) {
+    var ctxs = A.ctxs.map(function (c) { return { created: c.created, sampleRate: c.sampleRate, states: c.states.slice(-12) }; });
+    var by = Object.keys(A.by).sort(function (a, b) { return A.by[b] - A.by[a]; }).slice(0, 60).map(function (k) { return [k, A.by[k]]; });
+    return { on: A.on, gesture: A.gesture, ctxs: ctxs, firstSoundMs: A.firstSoundMs, peak: Math.round(A.peak * 1000) / 1000, windows: A.windows, loudWindows: A.loud, meanRms: A.windows ? Math.round(A.rmsSum / A.windows * 10000) / 10000 : 0,
+      cues: A.cues, cuesTaken: A.cuesTaken, cuesDropped: A.cuesDropped, cuesBySound: by, engineMixer: A.eng || null, sourcesConnectedToTheOutput: A.srcs, navigatorVibrateCalls: A.navVibrate, playEffectCalls: A.playEffect, pulseCalls: A.pulse, vibrationRequestsFromTheGame: A.vibReq.length, cueTimes: lean ? undefined : A.cueT, loudAtMs: lean ? undefined : A.loudAt,
+      vibrationRequests: lean ? undefined : A.vibReq.slice(0, 60), browserVibrationCalls: lean ? undefined : A.vib.slice(0, 60), rmsSeries: lean ? undefined : A.rms.slice(-240) };
+  };
+})();
+`;
+
+export const BB_FINGERPRINT = createHash('sha1').update(JSON.stringify([HOOKS, HOST_FUNCS, PAGE_SCRIPT, AUDIO_HEAD, patchAudio.toString(), patchHaptics.toString()])).digest('hex').slice(0, 6);

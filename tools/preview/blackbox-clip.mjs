@@ -1,7 +1,7 @@
 // Plays a black box file back as a clip (the EP, 2026-11-01: "plays Orb's real match back as a clip through the existing replay path"). The page's `replay=1` word starts the recorded match again and steps it with the recorded intents exactly as SimReplay.play does;
 // the capture hook films it one tick per frame (every --every ticks a picture). The recorded checkpoints are compared with the page's own hashes as it goes, so the clip says whether it IS the match that was played.
 //
-//   node tools/preview/blackbox-clip.mjs --file <orb-first-play-....json> --dir <built web folder> --out <folder> [--every 2] [--scale 0.5] [--max 20000]
+//   node tools/preview/blackbox-clip.mjs --file <orb-first-play-....json> --dir <built web folder> --out <folder> [--every 2] [--scale 0.5] [--max 20000] [--from N --to N]
 //
 // Output: <out>/frames/f-000001.jpg ..., <out>/index.html (a player: Space pauses, arrows step, a slider), <out>/clip.json (the ticks, the checkpoints compared: ok or the first tick that differs, the answers Orb gave). Private.
 // The file's replay needs the build it was recorded on: a replay carries a data hash, and the page refuses a different one (the clip then says so).
@@ -18,7 +18,8 @@ const doc = JSON.parse(readFileSync(FILE, 'utf8'));
 const rp = doc.replay || doc;
 const fr = doc.frames || null;   // the slow frames of the real play (the page's own frame gaps): [tick, ms, seconds in]
 const marks = fr && Array.isArray(fr.slow) ? fr.slow : [];
-const TICKS = Math.min(Number(rp.ticks) || 0, MAXT);
+const FROM = Math.max(0, Number(opt('--from', 0))), TO = Number(opt('--to', 0));   // a window: pictures only from FROM, and the match is played no further than TO (0: to its end)
+const TICKS = Math.min(Number(rp.ticks) || 0, MAXT, TO > 0 ? TO : Infinity);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const log = (m) => console.log(`[blackbox-clip] ${m}`);
 const exe = browserExe('chrome');
@@ -48,7 +49,7 @@ try {
     if (got && got.err) throw new Error(`the page reported an error: ${got.err}`);
     if (!started && got.pr) { started = true; if (!got.pr.ok) throw new Error('the page refused the replay (another format, version or intent schema)'); }
     record.played = i;
-    if (i % EVERY === 0 || i === TICKS) {
+    if ((i % EVERY === 0 || i === TICKS) && i >= FROM) {
       await page.eval(`(() => { const g = document.getElementById('ov'); if (g) g.textContent = ${JSON.stringify(`your match, tick ${i} of ${rp.ticks}  (${(i / 60).toFixed(1)} s)`) + (marks.some((m) => m[0] > i - EVERY && m[0] <= i) ? ` + ' — SLOW FRAME on your PC: ' + ${JSON.stringify(marks.filter((m) => m[0] > i - EVERY && m[0] <= i).map((m) => Math.round(m[1]) + ' ms').join(', '))}` : '')}; })()`, true);
       const shot = await page.send('Page.captureScreenshot', { format: 'jpeg', quality: 70, fromSurface: true, clip: { x: 0, y: 0, width: W, height: H, scale: SCALE } });
       n++;

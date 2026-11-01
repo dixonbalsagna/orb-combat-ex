@@ -239,7 +239,7 @@ export async function launchBrowser(o = {}) {
     const graceS = o.graceS === undefined ? STARTUP_GRACE_S : Number(o.graceS);
     const deadlineMs = Date.now() + (timeoutS + graceS) * 1000;
     const flags = [`--user-data-dir=${profile}`, '--remote-debugging-port=0', ...(o.headless === false ? [] : ['--headless=new']), '--no-first-run', '--no-default-browser-check', '--disable-extensions',
-      '--noerrdialogs', '--disable-sync', '--disable-component-update', '--hide-scrollbars', '--mute-audio', ...(process.env.CI ? ['--no-sandbox'] : []), ...(o.flags || []), 'about:blank'];
+      '--noerrdialogs', '--disable-sync', '--disable-component-update', '--hide-scrollbars', ...(o.noMute ? ['--disable-audio-output'] : ['--mute-audio']), ...(process.env.CI ? ['--no-sandbox'] : []), ...(o.flags || []), 'about:blank'];
     if (win) assertWindowsRoundTrip(flags);   // the line the helper will quote is read back by the Windows rules: exactly these flags, or nothing starts
     const entry = { session, purpose, id, profile, registry, exe, parentPid: process.pid, startedAt: Date.now(), deadlineMs, timeoutS, cpuPercent, state: 'running', cwd: process.cwd(), argv: process.argv.slice(1).join(' ').slice(0, 300) };
     writeFileSync(registry, JSON.stringify(entry, null, 2) + '\n');

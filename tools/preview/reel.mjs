@@ -77,6 +77,7 @@ try {
   let base = 0, rawPrev = 0, matchNo = 0, koSince = -1, matchStart = 0, loopDeadline = Date.now() + Number(opt('--limit', 1500)) * 1000;
   record.matches = [];
   const wall = { run: [0, 0], max: [0, 0], total: [0, 0], maxAt: [0, 0] }, wallAll = { run: [0, 0], max: [0, 0], total: [0, 0], maxAt: [0, 0] };   // ticks a fighter has been behind a building (PaneWorld.occluded): the run now, the longest, the sum
+  let prevLum = null;
   const shots = new Map();   // tick -> { file, pv }
   for (let i = 1; i <= CAP; i++) {
     if (Date.now() > loopDeadline) throw new Error(`timed out after ${i - 1} ticks`);
@@ -136,6 +137,8 @@ try {
         const sm = await page.send('Page.captureScreenshot', { format: 'png', fromSurface: true, clip: { x: 0, y: 0, width: W, height: H, scale: 0.25 } });
         const png = decodePng(Buffer.from(sm.data, 'base64'));
         (record.flatFaceSeries = record.flatFaceSeries || []).push([tick, Math.round(flatFaceShare(png.w, png.h, png.data) * 1000) / 1000]);
+        // the cut finder: the mean absolute change of the picture's brightness since the still before it (a cut changes the whole frame at once; plain motion does not)
+        { const lum = new Uint8Array(png.w * png.h); for (let i = 0; i < lum.length; i++) { const p = i * 4; lum[i] = (png.data[p] * 3 + png.data[p + 1] * 6 + png.data[p + 2]) / 10; } if (prevLum && prevLum.length === lum.length) { let s = 0; for (let i = 0; i < lum.length; i++) s += Math.abs(lum[i] - prevLum[i]); (record.diffSeries = record.diffSeries || []).push([tick, Math.round(s / lum.length * 10) / 10, pv && pv.fst ? pv.fst.join('/') : '']); } prevLum = lum; }
       } catch (e) { record.flatFaceError = String(e.message || e).slice(0, 120); }
     }
     if (tick % EVERY === 0 || ALSO.has(tick) || (sinceClash >= 0 && sinceClash <= 150 && tick % 10 === 0)) {
@@ -151,6 +154,7 @@ try {
   record.ticks = last;
   if (record.flatFaceSeries && record.flatFaceSeries.length) {
     const s = record.flatFaceSeries;
+    if (record.diffSeries && record.diffSeries.length) { const top = [...record.diffSeries].sort((x, y) => y[1] - x[1]).slice(0, 12); record.cutCandidates = { note: 'the stills with the biggest change from the still before them (mean brightness change, 0 to 255): a cut shows as a spike far above the rest; the states of both fighters are given at that still', median: record.diffSeries.map((x) => x[1]).sort((x, y) => x - y)[Math.floor(record.diffSeries.length / 2)], top }; log('CUT CANDIDATES (change vs the still before, median ' + record.cutCandidates.median + '): ' + top.slice(0, 8).map((x) => 'tick ' + x[0] + ' ' + x[1] + ' [' + x[2] + ']').join('; ')); }
     record.flatFace = { note: 'the share of the frame filled by ONE flat, non-blue face (a wall close up), measured on a quarter-size PNG of every still; reported, it does not fail a run', maxShare: Math.max(...s.map((x) => x[1])), atTick: s.reduce((a, x) => (x[1] > a[1] ? x : a), [0, 0])[0], stillsOver35pc: s.filter((x) => x[1] > 0.35).length, stills: s.length, ticksOver35pc: s.filter((x) => x[1] > 0.35).map((x) => x[0]) };
     log('FLAT FACE: the largest single flat face filled ' + Math.round(record.flatFace.maxShare * 100) + '% of the frame (tick ' + record.flatFace.atTick + '); ' + record.flatFace.stillsOver35pc + ' of ' + record.flatFace.stills + ' stills over 35%');
   }
@@ -163,6 +167,11 @@ try {
   if (record.errors.length) { log(`PAGE ERRORS: ${record.errors.length}; first: ${record.errors[0].line.slice(0, 200)}`); code = 4; } else log('PAGE ERRORS: none');
   if (argv.includes('--wall-check') && record.wall.failAny) code = 3;
   if (curSwing) curSwing.end = null;
+  // the sound log (?audiolog=1 in --query): every cue the game handed to its voices, the output's level, the engine's own mixer and every vibration request, read once at the end
+  try {
+    const au = await page.eval('JSON.stringify(window.__audio_snap ? window.__audio_snap() : null)').catch(() => null);
+    if (au) { writeFileSync(join(OUT, 'audio.json'), `${au}\n`); const a = JSON.parse(au); record.audio = a && { cues: a.cues, cuesTaken: a.cuesTaken, cuesDropped: a.cuesDropped, rumbleRequests: a.vibrationRequestsFromTheGame, browserVibrate: a.navigatorVibrateCalls, peak: a.peak, loudWindows: a.loudWindows, windows: a.windows, engineMixer: a.engineMixer, bySound: a.cuesBySound }; log(`sound: ${a.cues} cues (${a.cuesTaken} taken), rumble requests ${a.vibrationRequestsFromTheGame}, output peak ${a.peak}, engine mixer ${JSON.stringify(a.engineMixer && a.engineMixer.maxDb)}`); }
+  } catch (e) { log(`sound log not read: ${e.message}`); }
   // which stills to keep: those within MARGIN of a swing (start to end) or a launch
   const keep = [];
   for (const [tick, s] of [...shots.entries()].sort((a, b) => a[0] - b[0])) {

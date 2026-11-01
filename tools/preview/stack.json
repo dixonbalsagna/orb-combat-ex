@@ -300,6 +300,21 @@
       ]
     },
     {
+      "id": "rendering-ice-value",
+      "owner": "rendering-techart",
+      "notes": "Ice no brighter than the beam (Rendering, 2026-11-01o, 38c399aa): the ice-sheet ground is held to 0.68 in its brightest channel after the light; the white shore ribbon and hump. Only with the tile ground on. Stacks on hole depth.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01o-ice-value/ice.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-hole-depth-as-drawn"
+        }
+      ]
+    },
+    {
       "id": "tools-mixed-schema",
       "owner": "tools-pipeline",
       "ready": false,
@@ -719,6 +734,21 @@
       ]
     },
     {
+      "id": "camera-swing-rush-follow",
+      "owner": "camera-cinematography",
+      "notes": "Camera's swing-rush-follow (2026-11-01, 254a9c97), after swing-in-frame: the camera follows a long rush.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-rush-follow.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-in-frame"
+        }
+      ]
+    },
+    {
       "id": "rendering-crater-look-words",
       "owner": "rendering-techart",
       "notes": "The three main.gd lines of the crater and scar look (the local word craterlook), laid after the camera swings because they edit the same URL_ARGS and LOCAL_ONLY_ARGS lines.",
@@ -802,7 +832,7 @@
     {
       "id": "controls-stick-feel",
       "owner": "controls-feel",
-      "notes": "The stick's feel: five haptic kinds (the strike charge's ladder, and the incoming cue on the defender's pad), the host's two lines in render/core/main.gd, and switches.hapticLadder and hapticIncoming (haptic-switches.patch). On top of quick-read. Controls' input-buffer pair (round 3) is left out: its stick_feel_test.gd hunk clashes with signature-rt-only in either order, it is off by default and changes nothing on a real-fight soak (Controls).",
+      "notes": "The stick's feel: five haptic kinds (the strike charge's ladder, and the incoming cue on the defender's pad), the host's two lines in render/core/main.gd, and switches.hapticLadder and hapticIncoming (haptic-switches.patch). On top of quick-read. Controls' input-buffer pair (round 3) is left out: its stick_feel_test.gd hunk clashes with signature-rt-only in either order, it is off by default and changes nothing on a real-fight soak (Controls). Plus web-rumble.patch (Controls, 2026-11-01): the page asks the pad's vibrationActuator itself (JavaScriptBridge), behind timing.json switches.webRumble.",
       "steps": [
         {
           "patch": "docs/controls/pending/stick-feel/stick-feel.patch"
@@ -821,6 +851,9 @@
         },
         {
           "patch": "docs/controls/pending/stick-feel/haptic-switches.patch"
+        },
+        {
+          "patch": "docs/controls/pending/stick-feel/web-rumble.patch"
         }
       ],
       "needs": [
@@ -915,6 +948,68 @@
       "needs": [
         {
           "park": "rendering-2026-10-30i-crowd-bend"
+        }
+      ]
+    },
+    {
+      "id": "audio-host-check",
+      "owner": "audio-music",
+      "notes": "Audio's working-tree copy of audio/tools/host_check.gd (the gain floor for a bed is -40 dB), laid over the commit: the tug and moment sets need it. Uncommitted.",
+      "steps": [
+        {
+          "overlay": [
+            "audio/tools/host_check.gd"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "audio-moments",
+      "owner": "audio-music",
+      "notes": "The moments a player would notice (Audio, 2026-11-01; docs/audio/pending/moments): beam charge and fire, KO, the biggest blows, launch, the meteor landing, parry, two bolts meeting. Existing sounds only, behind audio/data/moment_cues.json enabled (the soundMoments switch). The install script is Audio's apply.py: new files plus audio/audio_cues.gd.",
+      "steps": [
+        {
+          "script": "docs/audio/pending/moments/apply.py",
+          "sha1": "f763bed5575f6bca694f4e81362acf16269f6b45"
+        }
+      ],
+      "needs": [
+        {
+          "park": "audio-host-check"
+        }
+      ]
+    },
+    {
+      "id": "audio-bright-bolt",
+      "owner": "audio-music",
+      "notes": "The page only (the EP, 2026-11-01): Audio's bright bolt, energy.bolt.land.hit at gain -3 dB and pitch 0.85 in audio/data/brawl_cues.json.",
+      "steps": [
+        {
+          "fixup": [
+            {
+              "file": "audio/data/brawl_cues.json",
+              "from": "      \"step_db\": -3.0,\n      \"land\": {\n        \"hit\": {\n          \"gain_db\": 0.0,\n          \"pitch\": 1.0",
+              "to": "      \"step_db\": -3.0,\n      \"land\": {\n        \"hit\": {\n          \"gain_db\": -3.0,\n          \"pitch\": 0.85"
+            }
+          ],
+          "why": "the EP asked for Audio's bright bolt tamed on the page only (-3 dB, pitch 0.85); it is a data edit, not a park"
+        }
+      ]
+    },
+    {
+      "id": "sound-stream-mode",
+      "owner": "tools-pipeline",
+      "notes": "The web sound is played as a Stream (audio/general/default_playback_type.web=0 in project.godot), not as Sample (the EP, 2026-11-01). In headless Chrome and Opera GX the default Sample path reads silent at the destination on a plain HEAD build, and Stream reads real sound; Stream runs the bus effects Sample skips and may come a little late. Not landed in the repository: the build only.",
+      "steps": [
+        {
+          "fixup": [
+            {
+              "file": "project.godot",
+              "from": "[rendering]",
+              "to": "[audio]\n\ngeneral/default_playback_type.web=0\n\n[rendering]"
+            }
+          ],
+          "why": "the EP chose Stream as the main sound mode for the first press"
         }
       ]
     }

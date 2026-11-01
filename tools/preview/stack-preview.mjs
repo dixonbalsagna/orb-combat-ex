@@ -17,7 +17,7 @@ import { scriptErrors } from '../gate.mjs';
 import { HOST_PATCH, applyPatchText, godotExe, plan, readPending, runGodot, saveSmoke, serveLocal } from './preview.mjs';
 import { describeReport, loadManifest, runStack, stackKey } from './stack.mjs';
 import { patchMain, EDITS_FINGERPRINT } from './switches.mjs';
-import { patchHost, injectPage, BB_FINGERPRINT } from './blackbox.mjs';
+import { patchHost, patchAudio, patchHaptics, injectPage, BB_FINGERPRINT } from './blackbox.mjs';
 import { setWebCustomTemplate } from '../flash/web-preset.mjs';
 import { fetchTemplate } from '../site-template.mjs';
 
@@ -89,6 +89,7 @@ export async function buildStackPreview(o) {
   const mainFile = join(tree, 'render', 'core', 'main.gd');
   if (pl.hostPatch) { applyPatchText(tree, pl.hostPatch); log('applied the right-hand host patch to the scratch main.gd (the pad\'s right stick)'); }
   writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord }));
+  if (pl.active.includes('blackbox')) { const af = join(tree, 'audio', 'audio_voices.gd'); if (existsSync(af)) writeFileSync(af, patchAudio(readFileSync(af, 'utf8'))); writeFileSync(mainFile, patchHaptics(readFileSync(mainFile, 'utf8'))); }
   if (pl.active.includes('blackbox')) { const hf = join(tree, 'render', 'core', 'sim_host.gd'); writeFileSync(hf, patchHost(readFileSync(hf, 'utf8'))); log('the black box: its hooks are in the scratch sim_host.gd (it reads the intents, the seed and the setup; it never writes the sim)'); }
   if (tz) {   // the scratch tree's copy of the Web preset only: the engine template this page is exported with
     const pf = join(tree, 'export_presets.cfg');
@@ -115,7 +116,7 @@ export async function buildStackPreview(o) {
 
 async function main() {
   const a = process.argv.slice(2);
-  const known = new Set(['--template', '--watch', '--every', '--min-gap', '--max-load', '--planet', '--port', '--off', '--skip', '--only', '--rebuild', '--no-smoke', '--no-serve', '--open', '--repo', '--manifest', '--godot', '--godot-node', '--browser-path', '--out', '--keep-tree', '--help']);
+  const known = new Set(['--template', '--watch', '--every', '--min-gap', '--max-load', '--planet', '--port', '--off', '--skip', '--only', '--rebuild', '--no-smoke', '--no-serve', '--open', '--repo', '--rev', '--manifest', '--godot', '--godot-node', '--browser-path', '--out', '--keep-tree', '--help']);
   for (const x of a) if (x.startsWith('--') && !known.has(x)) { console.error(`unknown option ${x}; node tools/preview/stack-preview.mjs --help`); process.exit(2); }
   const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
   const has = (n) => a.includes(n);
@@ -123,7 +124,7 @@ async function main() {
   if (has('--help')) { console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').filter((l) => l.startsWith('//')).slice(0, 10).map((l) => l.slice(3)).join('\n')); return; }
   const planet = Number(opt('--planet', 7));
   if (!Number.isInteger(planet) || planet < 1) { console.error('--planet is a positive whole number (the planet\'s seed)'); process.exit(2); }
-  const o = { repo: opt('--repo'), manifest: opt('--manifest'), planet, off: list('--off'), skip: list('--skip'), only: list('--only'), out: opt('--out'), godot: opt('--godot'), godotNode: opt('--godot-node'), template: opt('--template', 'custom'), rebuild: has('--rebuild'), keepTree: has('--keep-tree'), log: (m) => console.error(`[stack-preview] ${m}`) };
+  const o = { repo: opt('--repo'), rev: opt('--rev'), manifest: opt('--manifest'), planet, off: list('--off'), skip: list('--skip'), only: list('--only'), out: opt('--out'), godot: opt('--godot'), godotNode: opt('--godot-node'), template: opt('--template', 'custom'), rebuild: has('--rebuild'), keepTree: has('--keep-tree'), log: (m) => console.error(`[stack-preview] ${m}`) };
   let b;
   try { b = await buildStackPreview(o); } catch (e) { console.error(`stack-preview: ${e.message}`); process.exit(1); }
   console.log(`\nOrb Combat EX private preview of the STACK on ${b.sha.slice(0, 8)}: ${b.subject}`);
