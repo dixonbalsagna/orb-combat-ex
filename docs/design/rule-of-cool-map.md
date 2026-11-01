@@ -196,7 +196,7 @@ Seven, because each answers something a player will try in the first ten minutes
 
 **Combat's three questions:**
 1. **A broken-off phrase is free and starts over.** Yes. Each press is already a blow, so all he's lost is the ender. Rally freshness still applies, so a repeated phrase loses freshness as any blow does.
-2. **The banked charge is the right fix,** at both tier 4 only, and from an upward level 3 stun only. Lengthening level 3's stun would change it at every tier, and saying the stick isn't a route would throw away the game's biggest bet.
+2. **The banked charge is the right fix,** at both tier 4 only, and from an upward level 3 stun only. **Encounter found the route doesn't work as built:** the level 3 carry ends the brawl, so B lunges, and lands about 62 ticks after the hit against a 40-tick stun. **So at both tier 4, the upward level 3 strike's carry is short enough to stay in reach and the brawl holds,** with no lunge. A bet of 54 bare ticks should pay when it's won, and landing it inside the stun takes all 40 ticks, so it's still hard. Lengthening level 3's stun would change it at every tier, and saying the stick isn't a route would throw away the game's biggest bet.
 3. **The line-up works the same for hero and rival,** because a player's stick is theirs (RL-219 (8)). The hero pays through his cost, as every send does. For the AI, care stays a flat weight, and the mark-down isn't touched by this.
 
 **One line that changes for phrases:** `melee-press-feel.md` §8's "no two strings look alike" holds for everything outside a phrase. Inside one, repeating is the point, and freshness is what stops it being spammed.
@@ -262,7 +262,7 @@ Time is the floor plus distance over speed, up to the ceiling. So at about 4,000
 | Answer | How | What it gets you |
 | :--- | :--- | :--- |
 | **Fire back** | RB and the stick toward him, or the signature, any time in the window. **Inside the window a beam fires at level 1 at once, at level 1's ki,** even with nothing charged, or at whatever level you've already got. A Loaded beam (E129) is the perfect answer. The snap can't open a struggle | **A struggle that starts where the fronts meet.** That's the natural beat: they collide, hold for about 6 ticks, and the pulse starts. **Answering late means meeting close to your own hands,** which is a real penalty you can see, at most 30% from the middle, and the comeback's ×1.5 near your hands is already there. It replaces the old late penalty. E91's head start stands on top |
-| **Dodge** | A dodge tap in the last 14 ticks before arrival, up to 6 after, as the data has it | **The whole beam misses, and he's still rooted** for its length, so it's your best opening of the match. He can cut it with LT, giving up the rest. There's no extra damage, and the opening is the prize |
+| **Dodge** | A dodge tap in the last 18 ticks before arrival, up to 2 after. **Re-ruled on Encounter's park:** 6 after would make the hit land visibly late, so the window keeps its length and moves earlier | **The whole beam misses, and he's still rooted** for its length, so it's your best opening of the match. He can cut it with LT, giving up the rest. There's no extra damage, and the opening is the prize |
 | **Perfect block** | A fresh guard press in the last ticks before arrival, moved from the tell | Swat, split or walk through, as ruled (feature 16) |
 | **Guard** | Held | Guard damage. It's always there, and wading stays |
 
