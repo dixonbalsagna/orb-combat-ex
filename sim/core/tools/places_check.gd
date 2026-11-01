@@ -34,10 +34,10 @@ func _indexBad(S: SimState) -> int:
 				bad += 1
 			last = i
 			seen[i] = true
-			if not WorldStructures.inBand(S, S.bZ[i]) or mini(int(SimWrap.wrap(S.bX[i]) / bw), WorldStructures.BUCKETS - 1) != k:
+			if not WorldStructures.inBand(S, S.bZ[i], S.buildings[i].d) or mini(int(SimWrap.wrap(S.bX[i]) / bw), WorldStructures.BUCKETS - 1) != k:
 				bad += 1
 	for i in range(S.buildings.size()):
-		if WorldStructures.inBand(S, S.bZ[i]) and not seen.has(i):
+		if WorldStructures.inBand(S, S.bZ[i], S.buildings[i].d) and not seen.has(i):
 			bad += 1
 	return bad
 
@@ -105,6 +105,9 @@ func _queries() -> void:
 	var S := _start(true)
 	var f = S.fighters[0]
 	var missed: int = 0
+	var ahead: int = 0   # World's front limit (docs/world/front-limit.md): in front of it a building isn't struck, on purpose
+	var ring: int = 0
+	var who: Dictionary = {}
 	for q in range(40):
 		var x: float = SimWrap.wrap(f.x + float(q) * 1900.0)
 		var got: Dictionary = {}
@@ -112,8 +115,21 @@ func _queries() -> void:
 			got[i] = true
 		for i in range(S.buildings.size()):
 			if absf(S.bZ[i]) <= 2500.0 and absf(SimWrap.sdx(x, S.bX[i])) <= 500.0 and not got.has(i):
-				missed += 1
+				if WorldStructures.inBand(S, S.bZ[i], S.buildings[i].d):
+					missed += 1
+				else:
+					ahead += 1
+					who[i] = true
+					if i < S.bFirst:
+						ring += 1
+	var past: int = 0
+	for i in who:
+		if S.bZ[i] + 0.5 * S.buildings[i].d <= WorldPlan.indexFront():
+			past += 1
+	print("near: %d left out, %d buildings, all in front of the limit: %s; first ring's %d" % [ahead, who.size(), str(past == 0), ring])
 	ok(missed == 0, "near() finds every building a fight in the band could touch (%d missed)" % missed)
+	ok(ahead > 0 and past == 0, "what it leaves out is in front of the front limit (%d left out, %d behind it)" % [ahead, past])
+	ok(ring == 0, "and none of those is the first ring's (%d)" % ring)
 	SimCore.dispose(S)
 
 

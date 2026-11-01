@@ -42,3 +42,6 @@ node tools/world-checks.mjs --verify 2>&1 | tail -n1 | cut -c1-100 >> "$O/r.txt"
 node tools/world-checks.mjs --run 2>&1 | tail -n1 | cut -c1-140 >> "$O/r.txt"
 cmp sim/core/test/golden.json "$R/sim/core/test/golden.json" && echo "golden_cmp 0 same" >> "$O/r.txt"
 echo ALLDONE >> "$O/r.txt"
+# Everything else CI runs as a Godot script: a check added to CI and not listed above must not reach main unrun (places_check, 2026-11-01).
+grep -oE "script res://[^']*" .github/workflows/ci.yml | grep -v enet_check | sed 's/^script //' | sort -u | while read -r line; do set -- $line; s=$1; shift; tag=ci_$(basename "$s" .gd)_$(echo "$*" | tr -c 'a-zA-Z0-9' '_' | cut -c1-40); "$G" --headless --path . --script "$s" "$@" > "$O/$tag.log" 2>&1; echo "$tag $? $(tail -n1 "$O/$tag.log" | cut -c1-100)" >> "$O/r.txt"; done
+echo CIDONE >> "$O/r.txt"
