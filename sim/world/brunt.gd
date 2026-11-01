@@ -15,6 +15,8 @@ const BH: float = 75.0
 # ---- candidates and aim ----
 const BR_MIN: float = 20.0 * WS            # buildings nearer than this (in x) are not candidates
 const BR_MAX: float = 1300.0 * WS          # nor farther than this
+const BR_Z_FRONT: float = 750.0            # a field world: how far toward the camera a building may stand from him (lanes.json, the foreground's front)
+const BR_Z_BACK: float = 2212.5            # ... and how far behind him (lanes.json, z_back)
 const BR_PRESELECT: int = 2                # best per side by the cheap score
 const AIM_UY: Array = [0.05, 0.12, 0.25, 0.4]
 const AIM_MIN_SP: float = 500.0            # normalised arrival speed below which a brunt is not worth aiming
@@ -532,8 +534,15 @@ static func _candidatesRead(S: SimState, D) -> Array:
 	var sides: Array = [[], []]
 	for bi in WorldStructures.near(S, D.x, BR_MAX):
 		var b = S.buildings[bi]
-		if not b.alive or (WorldSettle.enabled() and b.row != 1.0 and b.row != 2.0):
+		if not b.alive:
+			continue
+		if S.frame != null:
+			if b.z - D.z > BR_Z_FRONT or D.z - b.z > BR_Z_BACK:
+				continue   # a turned world: rows mean nothing, and the flight can't dart this far in depth
+		elif WorldSettle.enabled() and b.row != 1.0 and b.row != 2.0:
 			continue   # D1: the scenery rows (0 and 3) are not brunt targets
+		if WorldSettle.noTarget(b.landmark):
+			continue   # RL-214: a landmark so marked is never aimed at
 		var dx: float = SimWrap.sdx(D.x, b.x)
 		var d: float = absf(dx) - b.w * 0.5
 		if d < BR_MIN or d > BR_MAX:

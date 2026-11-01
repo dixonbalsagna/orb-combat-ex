@@ -10,7 +10,12 @@
     "align": true,
     "bandsCity": 2,
     "bandsTown": 1,
-    "pitchBH": 32
+    "pitchBH": 32,
+    "everywhere": false,
+    "farPeople": false,
+    "farAnguish": false,
+    "farReach": 9000,
+    "farShare": 1.0
   },
   "cache": {
     "enabled": true,
@@ -21,7 +26,10 @@
   "lots": {
     "sidewalk": 15,
     "gap": 300,
-    "blendMax": 180
+    "blendMax": 180,
+    "blendSide": 360,
+    "grade": 0.12,
+    "gradeAcross": 0.12
   },
   "refine": {
     "enabled": true,

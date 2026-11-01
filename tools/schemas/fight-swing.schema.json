@@ -25,7 +25,13 @@
     "farStride",
     "ceilCols",
     "posePlan",
-    "layPerTick"
+    "layPerTick",
+    "indexBand",
+    "posesRestPerTick",
+    "layNearCols",
+    "layNearPerTick",
+    "waterWarmCols",
+    "waterWarmGrow"
   ],
   "properties": {
     "schema": {
@@ -307,6 +313,42 @@
       "minimum": 0,
       "maximum": 200000,
       "description": "units from the fighter a plan looks from, within which a plan's pose pass moves a building"
+    },
+    "indexBand": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100000,
+      "description": "places everywhere: units of depth either side of the line within which a building is in the spatial index"
+    },
+    "posesRestPerTick": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16384,
+      "description": "places everywhere: buildings a tick posed after a rest, past those a swing tick poses"
+    },
+    "layNearCols": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2400,
+      "description": "columns each side of a fighter whose marks keep to the records while the line turns"
+    },
+    "layNearPerTick": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4800,
+      "description": "columns of those a tick"
+    },
+    "waterWarmCols": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4800,
+      "description": "columns a tick water's flow reads before it starts, after the line rests or a window opens wide"
+    },
+    "waterWarmGrow": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4800,
+      "description": "columns the water windows must grow by at once before that wait"
     },
     "layPerTick": {
       "type": "integer",

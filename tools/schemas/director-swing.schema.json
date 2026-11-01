@@ -1,0 +1,666 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/director-swing",
+  "title": "director.swing/1",
+  "description": "DRAFT by Encounter for Tools: data/director/swing.json, the choreographer's swing (docs/world/ring-any-angle/encounter.md section 2; game-design.md sections 2, 9, 10, 11, 13). Policy: no key beyond these, and every key required, since DirSwing reads each one.",
+  "type": "object",
+  "patternProperties": {
+    "^_": {}
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "director.swing/1"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "minDeg": {
+      "type": "number",
+      "minimum": 0
+    },
+    "bigMin": {
+      "type": "number",
+      "minimum": 0
+    },
+    "maxDeg": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 180
+    },
+    "causeMax": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "restTicks": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "restOut": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "sweep": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "smallStanding": {
+          "type": "number",
+          "minimum": 0
+        },
+        "smallAirborne": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "smallAirborne",
+        "smallStanding"
+      ]
+    },
+    "fit": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "minForce": {
+          "type": "number",
+          "minimum": 0
+        },
+        "secPerForce": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reachPerForce": {
+          "type": "number",
+          "minimum": 0
+        },
+        "window": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "minForce",
+        "reachPerForce",
+        "secPerForce",
+        "window"
+      ]
+    },
+    "chase": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "sec": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reach": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "reach",
+        "sec"
+      ]
+    },
+    "form": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "sec": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reach": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "reach",
+        "sec"
+      ]
+    },
+    "flee": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "every": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "minGap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sec": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reach": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "enabled",
+        "every",
+        "minGap",
+        "reach",
+        "sec"
+      ]
+    },
+    "brawl": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "every": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tallEvery": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sec": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reach": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "enabled",
+        "every",
+        "reach",
+        "sec",
+        "tallEvery"
+      ]
+    },
+    "placeBuildings": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "kindScore": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "kindBiome": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "terrain": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "bearings": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "highAt": {
+          "type": "number"
+        },
+        "ridgeAt": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "bearings",
+        "highAt",
+        "ridgeAt"
+      ]
+    },
+    "tall": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "height": {
+          "type": "number"
+        },
+        "samples": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "required": [
+        "height",
+        "samples"
+      ]
+    },
+    "timing": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "moment": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "recency": {
+          "type": "number",
+          "minimum": 0
+        },
+        "recencySec": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tierW": {
+          "type": "number"
+        },
+        "comebackW": {
+          "type": "number"
+        },
+        "tensionW": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "comebackW",
+        "moment",
+        "recency",
+        "recencySec",
+        "tensionW",
+        "tierW"
+      ]
+    },
+    "tension": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "enabled"
+      ]
+    },
+    "direction": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "arrive": {
+          "type": "number"
+        },
+        "arriveTerrain": {
+          "type": "number"
+        },
+        "buildingRef": {
+          "type": "number",
+          "minimum": 0
+        },
+        "care": {
+          "type": "number"
+        },
+        "anguish": {
+          "type": "number"
+        },
+        "sameSize": {
+          "type": "number"
+        },
+        "sameSide": {
+          "type": "number"
+        },
+        "samePlace": {
+          "type": "number"
+        },
+        "biome": {
+          "type": "number"
+        },
+        "lean": {
+          "type": "number"
+        },
+        "behind": {
+          "type": "number"
+        },
+        "tall": {
+          "type": "number"
+        },
+        "reversal": {
+          "type": "number"
+        },
+        "arriveBuilding": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "anguish",
+        "arrive",
+        "arriveTerrain",
+        "behind",
+        "biome",
+        "buildingRef",
+        "care",
+        "lean",
+        "reversal",
+        "samePlace",
+        "sameSide",
+        "sameSize",
+        "tall",
+        "arriveBuilding"
+      ]
+    },
+    "jolt": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "minSec": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minDeg": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maxDeg": {
+          "type": "number",
+          "minimum": 0
+        },
+        "leastDeg": {
+          "type": "number",
+          "minimum": 0
+        },
+        "base": {
+          "type": "number"
+        },
+        "weightW": {
+          "type": "number"
+        },
+        "recency": {
+          "type": "number"
+        },
+        "recencySec": {
+          "type": "number",
+          "minimum": 0
+        },
+        "leanDeg": {
+          "type": "number",
+          "minimum": 0
+        },
+        "leanReach": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "base",
+        "leanDeg",
+        "leanReach",
+        "leastDeg",
+        "maxDeg",
+        "minDeg",
+        "minSec",
+        "recency",
+        "recencySec",
+        "weightW"
+      ]
+    },
+    "nudge": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "rate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "placeDeg": {
+          "type": "number",
+          "minimum": 0
+        },
+        "windowDeg": {
+          "type": "number",
+          "minimum": 0
+        },
+        "windowSec": {
+          "type": "number",
+          "minimum": 0
+        },
+        "limitDeg": {
+          "type": "number",
+          "minimum": 0
+        },
+        "giveUpDeg": {
+          "type": "number",
+          "minimum": 0
+        },
+        "leastDeg": {
+          "type": "number",
+          "minimum": 0
+        },
+        "nearD": {
+          "type": "number",
+          "minimum": 0
+        },
+        "farD": {
+          "type": "number",
+          "minimum": 0
+        },
+        "closeD": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rivalBeyond": {
+          "type": "number",
+          "minimum": 0
+        },
+        "steadySec": {
+          "type": "number",
+          "minimum": 0
+        },
+        "flatShare": {
+          "type": "number",
+          "minimum": 0
+        },
+        "deadZone": {
+          "type": "number",
+          "minimum": 0
+        },
+        "every": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "leadTicks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lineFrom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "deg": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "closeD",
+        "deadZone",
+        "deg",
+        "enabled",
+        "every",
+        "farD",
+        "flatShare",
+        "giveUpDeg",
+        "leadTicks",
+        "leastDeg",
+        "limitDeg",
+        "lineFrom",
+        "nearD",
+        "placeDeg",
+        "rate",
+        "rivalBeyond",
+        "steadySec",
+        "windowDeg",
+        "windowSec"
+      ]
+    },
+    "stallTicks": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "buildings": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "bucketDeg": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "townNear": {
+          "type": "number",
+          "minimum": 0
+        },
+        "townCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sends": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "leave": {
+          "type": "number",
+          "minimum": 0
+        },
+        "drySec": {
+          "type": "number",
+          "minimum": 0
+        },
+        "dryRampSec": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "dry": {
+          "type": "number",
+          "minimum": 0
+        },
+        "keepNear": {
+          "type": "number",
+          "minimum": 0
+        },
+        "band": {
+          "type": "number",
+          "minimum": 0
+        },
+        "leaveLaunch": {
+          "type": "number",
+          "minimum": 0
+        },
+        "placeNear": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "bucketDeg",
+        "townNear",
+        "townCount",
+        "sends",
+        "leave",
+        "drySec",
+        "dryRampSec",
+        "dry",
+        "keepNear",
+        "band",
+        "leaveLaunch",
+        "placeNear"
+      ]
+    }
+  },
+  "required": [
+    "bigMin",
+    "brawl",
+    "causeMax",
+    "chase",
+    "direction",
+    "enabled",
+    "fit",
+    "flee",
+    "form",
+    "jolt",
+    "kindBiome",
+    "kindScore",
+    "maxDeg",
+    "minDeg",
+    "nudge",
+    "placeBuildings",
+    "restOut",
+    "restTicks",
+    "schema",
+    "stallTicks",
+    "sweep",
+    "tall",
+    "tension",
+    "terrain",
+    "timing",
+    "buildings"
+  ]
+}

@@ -1421,6 +1421,161 @@
           "patternProperties": {
             "^_": true
           }
+        },
+        "front": {
+          "type": "object",
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "rows": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "snap": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "floor": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "ceil": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "speed": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "required": [
+                    "floor",
+                    "ceil",
+                    "speed"
+                  ]
+                },
+                "level1": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "floor": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "ceil": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "speed": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "required": [
+                    "floor",
+                    "ceil",
+                    "speed"
+                  ]
+                },
+                "level2": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "floor": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "ceil": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "speed": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "required": [
+                    "floor",
+                    "ceil",
+                    "speed"
+                  ]
+                },
+                "level3": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "floor": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "ceil": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "speed": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "required": [
+                    "floor",
+                    "ceil",
+                    "speed"
+                  ]
+                },
+                "signature": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "floor": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "ceil": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "speed": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "required": [
+                    "floor",
+                    "ceil",
+                    "speed"
+                  ]
+                }
+              },
+              "required": [
+                "snap",
+                "level1",
+                "level2",
+                "level3",
+                "signature"
+              ]
+            },
+            "answerKi": {
+              "type": "number",
+              "minimum": 0
+            },
+            "meetMax": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 0.5
+            }
+          },
+          "required": [
+            "enabled",
+            "rows",
+            "answerKi",
+            "meetMax"
+          ]
         }
       },
       "description": "The beam plays (agency-pass.md section 5; sim/director/beamplay.gd): how a signature that reaches a defender plays out.",
@@ -3465,11 +3620,6 @@
           "minimum": 0,
           "description": "... a sharp surge, this share."
         },
-        "stray": {
-          "type": "number",
-          "minimum": 0,
-          "description": "A press off the pulse moves it this share back toward himself."
-        },
         "comebackZone": {
           "type": "number",
           "minimum": 0,
@@ -3523,6 +3673,11 @@
               "type": "number",
               "minimum": 0,
               "description": "... and this share of his own."
+            },
+            "stickUy": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The winner's stick moves the launch's rise by this much."
             }
           },
           "additionalProperties": false

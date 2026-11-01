@@ -84,6 +84,77 @@ static func histBucket(x: float) -> int:
 	return mini(int(SimWrap.wrap(x) / (SimConst.W / 48.0)), HIST_BUCKETS - 1)   # one bucket is a 48th of the arena (director/location.gd STEP)
 
 
+## ---- far places (docs/world/places-everywhere.md; Game Design, ring-any-angle/game-design.md section 15): with plans.farPeople the buildings of the places the first ring does not hold have people, asleep until the
+## place is posed (a fighter within plans.farReach of it), and with plans.farAnguish those people count toward the hero's anguish as a fraction of their own place's base (RL-228 term 3: a larger place does not raise the cost by itself), and
+## feed nothing else: not the budget or the ceiling, menace, power, Witness or mood (which read pop0 and `casualties`, neither of which they touch). S.world.farMask has a bit for each place posed. Nothing here runs unless the records hold a "far" record.
+static var _far: Dictionary = {}   # world id -> [first far index, places [{place, first, count, pop, dir}]]: derived from the buildings, not state
+
+
+static func _farInfo(S: SimState) -> Array:
+	var hit = _far.get(S.worldId)
+	if hit != null and hit[2] == S.buildings.size():
+		return hit
+	var n: int = -1
+	for r in S.fieldRecs:
+		if r.k == "far":
+			n = int(r.n)
+	var places: Array = []
+	if n >= 0:
+		var cur: int = -1
+		for bi in range(n, S.buildings.size()):
+			var b = S.buildings[bi]
+			if int(b.place) != cur:
+				cur = int(b.place)
+				places.append({"place": cur, "first": bi, "count": 0, "pop": 0.0})
+			places[places.size() - 1].count += 1
+			places[places.size() - 1].pop += float(b.pop)
+	if _far.size() > 8:
+		_far.clear()
+	var held: Dictionary = {}   # the first ring's places: a far place counts, when wholly lost, as plans.farShare of one of them (the average first-ring place's people)
+	for bi in range(mini(maxi(n, 0), S.buildings.size())):
+		held[int(S.buildings[bi].place)] = true
+	var w: float = WorldPlan.farShare() * S.world.pop0 / float(maxi(held.size(), 1))
+	hit = [n, places, S.buildings.size(), w]
+	_far[S.worldId] = hit
+	return hit
+
+
+static func isFar(S: SimState, bi: int) -> bool:
+	if S.fieldRecs.is_empty():
+		return false
+	var n: int = int(_farInfo(S)[0])
+	return n >= 0 and bi >= n
+
+
+## Every 30th tick: a far place whose first building is within farReach of a fighter (by planet distance, through the frame) is posed: its people wake.
+static func wakeFar(S: SimState) -> void:
+	if S.frame == null or S.fieldRecs.is_empty() or int(S.T * 60.0 + 0.5) % 30 != 0:
+		return
+	var info: Array = _farInfo(S)
+	if int(info[0]) < 0:
+		return
+	var R: float = SimConst.PLANET_NC * SimConst.COL / (2.0 * SimMathx.PI)
+	var reach: float = WorldPlan.farReach()
+	var pl: Array = info[1]
+	for f in S.fighters:
+		SimField.placeAt(S, f.x, f.z)
+		var fx: float = SimField.ox
+		var fy: float = SimField.oy
+		var fz: float = SimField.oz
+		for k in range(mini(pl.size(), 62)):
+			if (S.world.farMask >> k) & 1:
+				continue
+			var i3: int = 3 * int(pl[k].first)
+			var ex: float = fx - S.bDir[i3]
+			var ey: float = fy - S.bDir[i3 + 1]
+			var ez: float = fz - S.bDir[i3 + 2]
+			var d: float = R * sqrt(ex * ex + ey * ey + ez * ez)
+			if d <= reach:
+				S.world.farMask |= 1 << k
+				for bi in range(int(pl[k].first), int(pl[k].first) + int(pl[k].count)):
+					S.buildings[bi].popAlive = S.buildings[bi].pop
+
+
 ## Start of a match, after the buildings exist: the window, the state and the lure histogram.
 static func init(S: SimState) -> void:
 	var w: SimState.World = S.world
@@ -206,7 +277,7 @@ static func shelter(S: SimState, cx: float, n: float) -> int:
 	var bd: float = 1e18
 	for bi in WorldStructures.near(S, cx, SHELTER_MAX):
 		var b = S.buildings[bi]
-		if not b.alive:
+		if not b.alive or isFar(S, bi):
 			continue
 		var d: float = absf(SimWrap.sdx(cx, b.x))
 		if d < SHELTER_MIN or d > SHELTER_MAX or b.popAlive + n > SHELTER_CAP * b.pop:
@@ -226,6 +297,20 @@ static func kill(S: SimState, bi: int, want: float, cause, evt: float, cx: float
 	var w: SimState.World = S.world
 	_advance(S)
 	var b = S.buildings[bi] if bi >= 0 else null
+	if bi >= 0 and isFar(S, bi):   # --- far branch begin: a far town's people: the hero's anguish only, as a fraction of their place's own base; nothing else is read or written here ---
+		want = minf(want, b.popAlive)
+		b.popAlive -= want
+		if want > 0.0 and WorldPlan.farAnguish():
+			var finfo: Array = _farInfo(S)
+			var fp: Dictionary = {}
+			for pk in finfo[1]:
+				if int(pk.first) <= bi and bi < int(pk.first) + int(pk.count):
+					fp = pk
+			var eq: float = want * float(finfo[3]) / maxf(float(fp.get("pop", 1.0)), 1.0)
+			for f in S.fighters:
+				if f.hasAnguish:
+					f.anguish = SimMathx.jmin(100.0, f.anguish + eq * (f.md.anguishCasSelf if cause == f else SimForms.anguishOther(S, f)) * POP_REF / normPeople(S))
+		return want   # --- far branch end ---
 	if b != null:
 		want = minf(want, b.popAlive)
 		b.popAlive -= want
@@ -278,6 +363,7 @@ static func _feed(S: SimState, n: float, cause) -> void:
 static func tick(S: SimState) -> void:
 	var w: SimState.World = S.world
 	_advance(S)
+	wakeFar(S)
 	var sec: int = int(floor(S.T))
 	if sec > int(w.stateT):
 		w.stateT = float(sec)
@@ -292,7 +378,7 @@ static func tick(S: SimState) -> void:
 	var moved: float = 0.0
 	for bi in WorldStructures.near(S, w.heavyX, EVAC_R):
 		var b = S.buildings[bi]
-		if not b.alive or b.popAlive <= 0.0:
+		if not b.alive or b.popAlive <= 0.0 or isFar(S, bi):
 			continue
 		if absf(SimWrap.sdx(w.heavyX, b.x)) - b.w / 2.0 > EVAC_R:
 			continue

@@ -294531,6 +294531,67 @@
       }
     },
     {
+      "id": "fight-kick-valid",
+      "schema": "fight-kick.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/kick.json",
+          "set": {
+            "/schema": "fight.kick/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-kick-key-required-enabled",
+      "schema": "fight-kick.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/kick.json",
+          "del": [
+            "/enabled"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-kick-instant-too-low",
+      "schema": "fight-kick.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/kick.json",
+          "set": {
+            "/instant": 0.2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/instant"
+      }
+    },
+    {
+      "id": "fight-kick-plant-none",
+      "schema": "fight-kick.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/kick.json",
+          "set": {
+            "/turn/plantTicks": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/turn/plantTicks"
+      }
+    },
+    {
       "id": "fight-brake-valid",
       "schema": "fight-brake.schema.json",
       "mutate": [
@@ -310040,6 +310101,128 @@
       }
     },
     {
+      "id": "director-stick-valid",
+      "schema": "director-stick.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/stick.json",
+          "set": {
+            "/quickRecover": 5
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "director-stick-key-required",
+      "schema": "director-stick.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/stick.json",
+          "del": [
+            "/levels"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "director-stick-unknown-key",
+      "schema": "director-stick.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/stick.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "director-stick-recover-type",
+      "schema": "director-stick.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/stick.json",
+          "set": {
+            "/quickRecover": "four"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/quickRecover"
+      }
+    },
+    {
+      "id": "director-swing-valid",
+      "schema": "director-swing.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/swing.json",
+          "set": {
+            "/jolt/base": 2
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "director-swing-key-required",
+      "schema": "director-swing.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/swing.json",
+          "del": [
+            "/nudge"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "director-swing-unknown-key",
+      "schema": "director-swing.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/swing.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "director-swing-enabled-type",
+      "schema": "director-swing.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/swing.json",
+          "set": {
+            "/enabled": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
       "id": "director-rally-valid",
       "schema": "director-rally.schema.json",
       "mutate": [
@@ -310175,6 +310358,83 @@
       "expect": {
         "rule": "type",
         "pointer": "/events/slam/star"
+      }
+    },
+    {
+      "id": "combat-stick-valid",
+      "schema": "combat-stick.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/stick.json",
+          "set": {
+            "/schema": "combat.stick/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "combat-stick-key-required",
+      "schema": "combat-stick.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/stick.json",
+          "del": [
+            "/pools"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "combat-stick-unknown-key",
+      "schema": "combat-stick.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/stick.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "combat-stick-schema-version",
+      "schema": "combat-stick.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/stick.json",
+          "set": {
+            "/schema": "combat.stick/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "combat-stick-piece-id",
+      "schema": "combat-stick.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/stick.json",
+          "set": {
+            "/pools/rival/stick.quick.up/0/id": "lift_fist"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/pools/rival/stick.quick.up/0/id"
       }
     },
     {

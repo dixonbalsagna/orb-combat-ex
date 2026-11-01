@@ -33,6 +33,95 @@ static func on() -> bool:
 	return DirInterrupt.on() and data().get("enabled", false) and DirData.beamAtFire()
 
 
+# ---------------------------------------------------------------- the front (rule-of-cool-map.md section 5, row 40)
+
+static var _frontForce: int = -1   # tools: -1 the data's switch, 0 off, 1 on
+static var _meetShift: float = 0.0  # from an answer to the struggle it starts, in one call stack
+
+
+static func setFrontForce(v: int) -> void:
+	_frontForce = v
+
+
+static func frontCfg() -> Dictionary:
+	return data().get("front", {})
+
+
+## The hit is decided when the front arrives, and the window to answer runs from the hand to there.
+static func frontOn() -> bool:
+	return on() and (bool(frontCfg().get("enabled", false)) if _frontForce < 0 else _frontForce == 1)
+
+
+## Ticks from hand to him: the row's floor, plus the distance at its speed, up to its ceiling. So it always arrives (pillar 3).
+static func frontTicks(dist: float, row: String) -> int:
+	var r: Dictionary = frontCfg().rows[row]
+	return mini(int(r.ceil), int(r.floor) + int(round(dist / float(r.speed) * DirData.TICKS_PER_SEC)))
+
+
+## The window's cues (UI's contract): text start or end, the shooter the actor, the receiver the target, n the ticks from hand to arrival,
+## k the level (0 snap, 1 to 3, 4 the signature), amount the ticks before arrival a dodge counts from.
+static func _windowCue(S: SimState, D, A, open: bool, tv: int) -> void:
+	SimFx.cue(S, A, "beam_window", "start" if open else "end", "")
+	var e = S.out.fx[S.out.fx.size() - 1]
+	e.target = float(S.fighters.find(D))
+	e.n = tv
+	e.k = 4.0
+	e.amount = float(data().dodge.beforeTicks)
+
+
+## The charge's cues: text start or end, the shooter the actor, the receiver the target. A warning, not the window.
+static func chargeCue(S: SimState, ex, open: bool) -> void:
+	if not frontOn():
+		return
+	SimFx.cue(S, ex.A, "beam_charge", "start" if open else "end", "")
+	S.out.fx[S.out.fx.size() - 1].target = float(S.fighters.find(ex.D))
+
+
+static func _arrival(D, A) -> int:
+	return DirInterrupt.gi(D, DirInterrupt.BEAM_FIRE) + DirInterrupt.gi(A, DirInterrupt.BEAM_TRAVEL)
+
+
+## The window's open on him now.
+static func windowOpen(S: SimState, f) -> bool:
+	var ex = S.dirS.ex
+	return ex != null and ex.kind == "sig" and ex.D == f and ex.branch == "" and frontOn() and _beat(ex, "beamReach") != null
+
+
+## A fire-back by the stick (RB, toward him): at once, at level 1's ki. False if the window's shut or he can't pay.
+static func fireBack(S: SimState, f) -> bool:
+	if not windowOpen(S, f) or f.ki < float(frontCfg().answerKi):
+		return false
+	f.ki -= float(frontCfg().answerKi)
+	_answerNow(S, S.dirS.ex, "heavy_blast")
+	return true
+
+
+## The struggle an answer starts: where the fronts meet. A's front has gone its share of the way, and his comes the rest to meet it.
+static func _answerNow(S: SimState, ex, answer: String) -> void:
+	var A = ex.A
+	var D = ex.D
+	var rb = _beat(ex, "beamReach")
+	var tv: int = maxi(1, DirInterrupt.gi(A, DirInterrupt.BEAM_TRAVEL))
+	var done: float = clampf(float(S.tick - DirInterrupt.gi(D, DirInterrupt.BEAM_FIRE)) / float(tv), 0.0, 1.0)
+	rb.done = true
+	for i in range(S.beams.size() - 1, -1, -1):
+		if S.beams[i].A == A:
+			S.beams.remove_at(i)
+	DirInterrupt.si(A, DirInterrupt.BEAM_TRAVEL, 0)
+	var res: Dictionary = DirData.beamOutcome(S, ex, float(rb.args.dist), answer, false)
+	_meetShift = minf(float(frontCfg().meetMax), done * 0.5)
+	_windowCue(S, D, A, false, tv)
+	_decided(S, ex, "CLASH", "fired back (" + answer + "), the fronts meet " + str(int(round(_meetShift * 100.0))) + "% past the middle")
+	SimFx.cue(S, D, "beam_late", "", "")
+	DirBeam.startClash(S, ex, String(rb.args.variant), float(res.dAdd))
+	_meetShift = 0.0
+
+
+## What the struggle's start adds to the meeting point: 0 with no front.
+static func meetShift() -> float:
+	return _meetShift
+
+
 static func _beat(ex, op: String):
 	for b in ex.beats:
 		if not b.done and b.op == op:
@@ -52,8 +141,8 @@ static func held(f, o) -> int:
 static func fire(S: SimState, ex, args) -> void:
 	var A = ex.A
 	var D = ex.D
-	var tv: int = int(data().travelTicks)
 	var dist: float = args.dist
+	var tv: int = frontTicks(dist, "signature") if frontOn() else int(data().travelTicks)
 	var len: float = SimMathx.jmin(4200.0 * SimConst.WS, dist + float(A.ld.beamOvershoot[DirBeam._tierIx(A)]) * SimConst.WS)
 	var ox: float = A.x
 	var oy: float = A.y + 38.0
@@ -66,11 +155,13 @@ static func fire(S: SimState, ex, args) -> void:
 	DirInterrupt.si(A, DirInterrupt.BEAM_TRAVEL, tv)
 	DirInterrupt.si(A, DirInterrupt.BEAM_REACH, int(SimMathx.jmin(L, len)))
 	DirInterrupt.si(D, DirInterrupt.BEAM_FIRE, S.tick)
-	DirInterrupt.si(D, DirInterrupt.BEAM_DODGED, 1 if D.act.dodgeTick >= S.tick - int(data().dodge.beforeTicks) else 0)   # a tap in the last ticks of the tell
-	var perfect: bool = args.get("perfect", false) or (D.ai != null and (DirInterrupt.gi(D, DirInterrupt.BEAM_AI) & AI_PERFECT) != 0)
+	DirInterrupt.si(D, DirInterrupt.BEAM_DODGED, 1 if D.act.dodgeTick >= S.tick - int(data().dodge.beforeTicks) and not frontOn() else 0)   # a tap in the last ticks of the tell
+	var perfect: bool = (args.get("perfect", false) and not frontOn()) or (D.ai != null and (DirInterrupt.gi(D, DirInterrupt.BEAM_AI) & AI_PERFECT) != 0)
+	if frontOn():
+		_windowCue(S, D, A, true, tv)
 	SimEvents.feed(S, A.sigName + " FIRES", "it reaches " + D.name + " in " + str(tv) + " ticks")
 	SimFx.cue(S, A, "beam_fire", "", "")
-	DirExchange.schedule(ex, ex.t + float(tv) / DirData.TICKS_PER_SEC, "beamReach", {"perfect": perfect, "ux": dxs / L, "uy": dyy / L, "dist": dist, "variant": String(args.variant)})
+	DirExchange.schedule(ex, ex.t + float(tv + (int(data().dodge.afterTicks) if frontOn() else 0)) / DirData.TICKS_PER_SEC, "beamReach", {"perfect": perfect, "ux": dxs / L, "uy": dyy / L, "dist": dist, "variant": String(args.variant)})
 	DirCamIntent.exchange(S, ex, "beam")   # the camera-intent feed: the beam on its way
 
 
@@ -133,6 +224,20 @@ static func lateTick(S: SimState, ex) -> void:
 		return
 	var A = ex.A
 	var D = ex.D
+	if frontOn():
+		var at: int = _arrival(D, A)
+		var c: Dictionary = data()
+		var ai: bool = D.ai != null and (DirInterrupt.gi(D, DirInterrupt.BEAM_AI) & AI_DODGE) != 0
+		if D.act.dodgeTick == S.tick and (ai or S.tick >= at - int(c.dodge.beforeTicks)):
+			DirInterrupt.si(D, DirInterrupt.BEAM_DODGED, DirInterrupt.gi(D, DirInterrupt.BEAM_DODGED) | 1)   # too early, and the beam follows him
+		if D.input.guardPress and S.tick >= at - int(DirInterrupt.data().perfectBlock.windows.beam) and S.tick <= at:
+			DirInterrupt.si(D, DirInterrupt.BEAM_DODGED, DirInterrupt.gi(D, DirInterrupt.BEAM_DODGED) | 2)   # a perfect block, moved to the arrival
+		if S.tick > at:
+			return   # the front's there: no answer now
+		var fired: String = DirBeam._answer(S, D)
+		if fired != "none":
+			_answerNow(S, ex, fired)
+		return
 	if D.act.dodgeTick == S.tick and S.tick - DirInterrupt.gi(D, DirInterrupt.BEAM_FIRE) <= int(data().dodge.afterTicks):
 		DirInterrupt.si(D, DirInterrupt.BEAM_DODGED, 1)
 	if S.tick - DirInterrupt.gi(D, DirInterrupt.BEAM_FIRE) > int(data().late.ticks):
@@ -169,7 +274,11 @@ static func opReach(S: SimState, ex, args) -> void:
 		return
 	var c: Dictionary = data()
 	var dir: int = held(D, A)
-	var dodged: bool = DirInterrupt.gi(D, DirInterrupt.BEAM_DODGED) != 0   # a tap in the window, kept when it came (fire, lateTick)
+	var dodged: bool = (DirInterrupt.gi(D, DirInterrupt.BEAM_DODGED) & 1) != 0   # a tap in the window, kept when it came (fire, lateTick)
+	if frontOn():
+		_windowCue(S, D, A, false, DirInterrupt.gi(A, DirInterrupt.BEAM_TRAVEL))
+		if (DirInterrupt.gi(D, DirInterrupt.BEAM_DODGED) & 2) != 0:
+			args.perfect = true
 	var out: String = "DODGE"
 	var look: String = ""
 	var how: String = "a dodge in time"
@@ -276,7 +385,10 @@ static func _swatRead(S: SimState, b, A, D) -> void:
 	elif D.hasMenace:
 		var best = null
 		var bestD: float = len
-		for bd in S.buildings:
+		var nearBy: Array = WorldStructures.near(S, D.x, len)
+		nearBy.sort()   # in index order: a tie goes to the same building as a walk of them all
+		for bi in nearBy:
+			var bd = S.buildings[bi]
 			if not bd.alive:
 				continue
 			var dx: float = absf(SimWrap.sdx(D.x, bd.x))
@@ -313,6 +425,8 @@ static func opArrive(S: SimState, ex, args) -> void:
 ## The exchange ends (DirExchange.endEx): after a walk or a wade there is no pause before the next exchange, so the
 ## attacker's recovery is the defender's to use.
 static func onEnd(S: SimState, ex) -> void:
+	if ex.kind == "sig" and _beat(ex, "beamFire") != null:
+		chargeCue(S, ex, false)   # it never fired
 	if ex.kind != "sig":
 		return
 	for b in ex.beats:
@@ -362,6 +476,8 @@ static func aiMayDodge(S: SimState, f) -> bool:
 		return true
 	var c: Dictionary = data().dodge
 	var fb = _beat(ex, "beamFire")
+	if frontOn():
+		return fb != null or S.tick < _arrival(f, ex.A) - int(c.beforeTicks) or S.tick > _arrival(f, ex.A) + int(c.afterTicks)
 	if fb != null:
 		return (fb.t - ex.t) * DirData.TICKS_PER_SEC > float(c.beforeTicks) + 0.5
 	return S.tick - DirInterrupt.gi(f, DirInterrupt.BEAM_FIRE) > int(c.afterTicks)

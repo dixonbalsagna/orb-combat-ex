@@ -640,6 +640,18 @@ static func searching(S: SimState, f, target, x: float, kind: String = "lock") -
 ## A render-only cue from Combat's templates (the cue op): cue name in kind, actor the named fighter (-1 for both), text
 ## the camera hint, source the bark trigger ("true" for a bark pause with no trigger yet).
 ## The turntable's start and rest (sim/core/swing.gd): for the view; kind the cause, amount the degrees asked, dur its ticks (at rest, how long it ran).
+## A kick begins (sim/core/kick.gd): amount 1 when it goes over top speed, for the thump in the pad and the view.
+static func kick(S: SimState, f, over: bool) -> void:
+	var e := _ev(S, "kick")
+	e.actor = float(S.fighters.find(f)); e.x = f.x; e.y = f.y; e.amount = 1.0 if over else 0.0
+
+
+## A coin turn plants: the dust and the thump.
+static func coinPlant(S: SimState, f) -> void:
+	var e := _ev(S, "coin_plant")
+	e.actor = float(S.fighters.find(f)); e.x = f.x; e.y = f.y
+
+
 static func swingEvent(S: SimState, type: String, cause: String, deg: float, dur: int) -> void:
 	var e := _ev(S, type)
 	e.kind = cause

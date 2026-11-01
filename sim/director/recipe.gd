@@ -12,6 +12,7 @@ const PATH: String = "res://data/combat/recipes.json"
 const CFG_PATH: String = "res://data/director/alchemy.json"
 const STYLES: Array = [{"id": "blur", "heaviesInFive": [0, 0]}, {"id": "combo", "heaviesInFive": [1, 3]}, {"id": "power", "heaviesInFive": [4, 5]}]
 
+const STICK_PATH: String = "res://data/combat/stick.json"
 static var _rec = null
 static var _cfg = null
 static var _text: String = ""
@@ -27,6 +28,22 @@ static func _ensure() -> void:
 	_cfg = c if c is Dictionary else {}
 	_rec = r if r is Dictionary else {}
 	_text = ct + rt
+	_stick()
+
+
+## The right stick's pieces (Combat's data/combat/stick.json): with switches.rightStick on, its pools join the recipes' by fighter, so
+## the director's own pick throws them under the same rules. Off, the file is not opened and is in no hash.
+static func _stick() -> void:
+	if not SimInputData.right_stick_on() or not FileAccess.file_exists(STICK_PATH) or not (_rec.get("pools") is Dictionary):
+		return
+	var st: String = FileAccess.get_file_as_string(STICK_PATH)
+	var j = JSON.parse_string(st)
+	if not (j is Dictionary) or not (j.get("pools") is Dictionary):
+		return
+	for who in j.pools:
+		if _rec.pools.get(who) is Dictionary:
+			_rec.pools[who].merge(j.pools[who])
+	_text += st
 
 
 ## The two files' text, for DirData.dataHash() (the replay header).

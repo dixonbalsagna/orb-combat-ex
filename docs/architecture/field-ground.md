@@ -30,7 +30,20 @@ Simulation & Engine. Stage 5 of `docs/world/ring-any-angle/research.md` T6, on `
 
 ## After a rest
 
-`SimSwing._layMarks` lays the strip's `S.crack` and `S.scorch` from the store, the same values World's `layCracks` and `layScorch` give, `layPerTick` columns a tick, outward from the pair. Those arrays are hashed, so every peer writes them on the same tick. It only runs if the store holds a crack or a scorch. During a swing those marks ride with the line, and they snap to their true place outward from the pair over the 7 to 48 ticks after the rest.
+`SimSwing._layMarks` lays the strip's `S.crack` and `S.scorch` from the store, the same values World's `layCracks` and `layScorch` give, `layPerTick` columns a tick, outward from the pair. Those arrays are hashed, so every peer writes them on the same tick. It only runs if the store holds a crack or a scorch. Past `layNearCols` (120 columns, 3,840 units) of a fighter, those marks ride with the line in a swing and take their true place outward from the pair over the 7 to 48 ticks after the rest. Nearer, `SimSwing._layNear` keeps them to the records while the line turns, `layNearPerTick` columns a tick, if a crack or a scorch is near enough to matter.
+
+## Buildings at every place
+
+With `field.json plans.everywhere` on (`WorldPlan.layFree`), `S.buildings` holds the first ring's, `S.bFirst` of them, then every other place's, about 13 times as many, planet-fixed. So:
+
+- **The spatial index holds only the band:** a building within `indexBand` of the line in depth. `SimSwing._poseThese` moves one in or out as its pose changes. The index isn't hashed, and a snapshot shares it, copied on write.
+- **After a rest, the far poses come `posesRestPerTick` a tick.** The list a swing tick poses is posed at the rest, so a far one is only as stale as it was in the swing.
+- **`SimHash` skips a free building nothing has touched** (`SimHash.pristine`). Its plan is in the match key, and once one is touched its index and fields are in. `NetDesync.digest` doesn't skip: testing each one costs more than reading its six numbers.
+- **A beam's cap is a share of the first ring's count** (`WorldStructures.ringCount`), and the director's walks of all the buildings ask the index.
+
+## Water's flow
+
+`WorldWater.step` reads every column of its windows at the near ground, every 2 ticks. On a new line that was up to 118 new nodes and 335 sub-reads in a tick. On a field world `SimSwing.waterHeld` makes the flow wait while the line turns, and after a rest or when the windows grow by `waterWarmGrow` columns (30) at once, while it reads their columns, `waterWarmCols` (20) a tick. A flow step reads each column's base once. Those reads change nothing; only the wait is state, so every peer waits the same whatever its cache holds.
 
 ## What it doesn't do yet
 

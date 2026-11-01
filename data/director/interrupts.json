@@ -227,8 +227,22 @@
     },
     "_note": "The buried fighter (agency-pass.md sections 7 and 14.5; sim/director/bury.gd; World's embed holds him down for its own ticks, data/biomes/contact.json embed.ticks). followTicks: his rival's first attack press this soon after the burial is the free follow-up. A physical press is a dive: the director flies him to the crater at dive.speed (units a second, the light charge's; at least dive.minTicks), and the blow must land by landByTick of the burial, otherwise there is no follow-up. It is one heavy blow of 'damage' that he cannot answer, free of ki, with no launch, and it makes his crater 'deepen' times as deep as it was (WorldCrater.deepen). An energy press is the other free blow: a charged shot of blast.damage, free of ki, that arrives from any distance (data/fight/shots.json arriveTicks). He is held until the blow lands, never past landByTick; nothing of his stops a follow-up on its way. One follow-up to a burial. guardFromTick: his guard counts from this tick, or once the follow-up is used. burstFromTick: his burst throws him out, not before this tick; an AI bursts only when no follow-up is coming, with its rival within burstWithinBh (ai.json buriedBurst). safeTicks: out of the crater he is safe this long: no exchange starts on him and a shot passes"
   },
+  "beamStruggle": {"enabled": false, "pulseTicks": 20, "pulses": 15, "surgeTicks": 4, "sharpTicks": 2, "surge": 0.10, "sharp": 0.15, "comebackZone": 0.25, "comebackMul": 1.5, "headPerPoint": 0.005, "headMax": 0.15, "drawBand": 0.10, "aiHit": {"easy": 0.40, "medium": 0.65, "hard": 0.85}, "aiOffsets": [-4, -3, 3, 4], "overwhelm": {"winnerBeam": 1.0, "ownBeam": 0.5, "stickUy": 0.25}, "detonate": {"otherBeam": 0.25}, "timeLoss": {"share": 0.5}, "_note": "The beam struggle as a tug of war on the pulse (rule-of-cool.md section 2, 2026-10-16; energy-overhaul.md section 9; sim/director/beam.gd). The meeting point starts in the middle, moved toward the weaker side by state: headPerPoint of the line for each point of power (tier x 10, ki x 0.35, menace, flow), headMax at most. Every pulseTicks a pulse, pulses of them. X, Y or B within surgeTicks of a pulse is a surge, the point moving surge of the line toward the rival (sharp within sharpTicks). A press off the pulse, or a second press in a window, is a stray: it moves nothing and voids his next surge. Within comebackZone of his own hands a surge is times comebackMul. A on the pulse lets go: the rival's beam carries on past him, and he takes timeLoss.share of it with no launch; A off the pulse: he is caught and overwhelmed. The AI hits aiHit of the pulses by level, pressing aiOffsets ticks off it (never within sharpTicks), and never lets go. The point at a fighter: he is overwhelmed (overwhelm: shares of the winner's beam and his own; launched, the winner's stick moving the launch's rise by stickUy). On time within drawBand of the middle: the beams detonate (detonate.otherBeam each). On time further over: the side it is on takes timeLoss.share, no launch. enabled false: the clash as before."},
   "beamPlays": {
     "enabled": true,
+    "front": {
+      "enabled": false,
+      "rows": {
+        "snap": {"floor": 6, "ceil": 20, "speed": 14000.0},
+        "level1": {"floor": 10, "ceil": 30, "speed": 12000.0},
+        "level2": {"floor": 14, "ceil": 40, "speed": 10000.0},
+        "level3": {"floor": 18, "ceil": 50, "speed": 8000.0},
+        "signature": {"floor": 24, "ceil": 60, "speed": 8000.0}
+      },
+      "answerKi": 40.0,
+      "meetMax": 0.3,
+      "_note": "Beams that travel (docs/design/rule-of-cool-map.md section 5, row 40). rows: ticks from hand to him, the floor plus the distance at this speed, up to the ceiling. answerKi: a fire-back by the stick inside the window, at level 1's ki. meetMax: how far past the middle a late answer's struggle can start, toward his hands."
+    },
     "travelTicks": 20,
     "afterTicks": 42,
     "dodge": {

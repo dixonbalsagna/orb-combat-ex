@@ -188,7 +188,7 @@ static func exchange(S: SimState, ex, why: String = "") -> void:
 		if String(x.op) == "guardBreak" or String(x.op) == "clashResolve":
 			resolves = true
 	var base: int = 5 if fin else (4 if (why == "clash" or why.begins_with("beam") or beam[0] >= 0) else (3 if (launchAt >= 0 or resolves) else (2 if big else 1)))
-	var known: bool = fin or why == "clash" or why == "beam:HIT" or (big and int(ex.loser) >= 0)
+	var known: bool = fin or (why == "clash" and not DirBeam.struggleOn()) or why == "beam:HIT" or (big and int(ex.loser) >= 0)   # a beam struggle isn't decided at its start
 	var plan := {"ex": int(S.dirS.exN), "tpl": String(ex.tpl), "a": _slot(S, ex.A), "d": _slot(S, ex.D), "at": S.tick,
 		"beats": beats, "contacts": contacts, "pauses": sp[0], "noCut": sp[1],
 		"launch": ({"n": launchAt} if launchAt >= 0 else {}), "set": big or fin, "beam": beam[0] >= 0,

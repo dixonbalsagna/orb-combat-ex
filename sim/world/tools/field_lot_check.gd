@@ -72,7 +72,10 @@ func _init() -> void:
 			if not per_lot.has(home):
 				per_lot[home] = []
 			var h: float = WorldField.applyRecords(S, q[0], q[1], q[2], WorldField.height(P, q[0], q[1], q[2]))
-			per_lot[home].append(h)
+			var lr = lots[home]
+			var lat: float = ((q[0] - lr.c[0]) * lr.t[0] + (q[1] - lr.c[1]) * lr.t[1] + (q[2] - lr.c[2]) * lr.t[2]) * R
+			var lac: float = ((q[0] - lr.c[0]) * lr.s[0] + (q[1] - lr.c[1]) * lr.s[1] + (q[2] - lr.c[2]) * lr.s[2]) * R
+			per_lot[home].append(h - (float(lr.h) + float(lr.get("gt", 0.0)) * clampf(lat, -lr.hl, lr.hl) + float(lr.get("gs", 0.0)) * clampf(lac, -lr.hd, lr.hd)))   # its ground less its lot's plane
 	ok(outside == 0, "each building's laid point (bDir) is inside its lot, %.3f units outside at the worst: the lots are centred where the buildings are laid" % worst_in)
 	# the buildings of a lot stand at one height (the lot's), unless a neighbouring lot's blend reaches them
 	for li in per_lot:
@@ -85,7 +88,7 @@ func _init() -> void:
 		spread_max = maxf(spread_max, hi - lo)
 		if hi - lo > 1.0:
 			spread_bad += 1
-	ok(spread_bad <= lots.size() / 20, "the buildings of a lot stand at one height: %d of %d lots spread over a unit (largest %.2f; a neighbouring lot's blend may reach an edge building)" % [spread_bad, lots.size(), spread_max])
+	ok(spread_bad <= lots.size() / 20, "the buildings of a lot stand on its plane (climbing with the street and leaning across it by at most the data's grades): %d of %d lots spread over a unit (largest %.2f; a neighbouring lot's blend may reach an edge building)" % [spread_bad, lots.size(), spread_max])
 	# blends: a lot's blend does not reach into another lot's footprint (at the lot's centre and corners)
 	var reach: int = 0
 	for i in range(lots.size()):
@@ -118,10 +121,10 @@ func _init() -> void:
 			var pz: float = l.c[2] + sgn * l.t[2] * dist / R
 			var pl: float = 1.0 / sqrt(px * px + py * py + pz * pz)
 			var gnd: float = WorldField.applyRecords(S, px * pl, py * pl, pz * pl, WorldField.height(P, px * pl, py * pl, pz * pl))
-			steps.append(absf(gnd - float(l.h)))
+			steps.append(absf(gnd - (float(l.h) + float(l.get("gt", 0.0)) * sgn * float(l.hl))))   # against the lot's height at that end
 	steps.sort()
 	if steps.size() > 0:
-		print("  info the step between a lot's height and the ground just past its end along the street: median %.0f, 90th percentile %.0f, largest %.0f units (a fighter is 75 tall)" % [steps[steps.size() / 2], steps[(steps.size() * 9) / 10], steps[steps.size() - 1]])
+		print("  info the step between a lot's height at its end and the ground just past it along the street: median %.0f, 90th percentile %.0f, largest %.0f units (a fighter is 75 tall)" % [steps[steps.size() / 2], steps[(steps.size() * 9) / 10], steps[steps.size() - 1]])
 	# the fix Simulation asked for: dir is the laid point, not the plan's. How far apart the two are
 	var off: int = 0
 	var off_max: float = 0.0

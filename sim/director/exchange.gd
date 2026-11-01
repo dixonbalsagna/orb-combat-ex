@@ -639,6 +639,8 @@ static func dirUpdate(S: SimState, dt: float) -> void:
 	DirWater.tick(S)   # a drop into the water surfaces within water.surfaceTicks (rulings-2026-10-26 row 6)
 	DirRally.tick(S)   # 23d: the daze, and each rally's end
 	DirPlane.tick(S, dt)   # with depth off, a fighter eases back to the plane after a flight (rulings-2026-10-30f row 9)
+	DirSwing.tick(S, dt)   # the choreographer's swing (docs/world/ring-any-angle/encounter.md)
+	DirStick.tick(S, dt)   # the right stick's strike (docs/design/right-hand-attacks-rulings.md section 2)
 
 
 static func _update(S: SimState, dt: float) -> void:
@@ -692,6 +694,7 @@ static func _update(S: SimState, dt: float) -> void:
 		i += 1
 	DirBrawl.lineLeave(S)   # D1: the frame closes, and each is put back on the line in the world
 	_struggleTick(S, ex)
+	DirBeam.clashTick(S, ex)   # the beam struggle: its pulses, the presses, its end
 	if ex.ext != null and S.T < ex.ext.until:
 		var A = ex.A
 		var inReach: bool = not (ex.D.state == "launched" and absf(SimWrap.sdx(A.x, ex.D.x)) > CHAIN_REACH)
@@ -882,6 +885,8 @@ static func _transforms(S: SimState) -> void:
 			S.dirS.cool = SimMathx.jmax(S.dirS.cool, hold)
 			DirPress.onCool(S)   # (a live form step's hold holds a player too)
 			f.stunTicks = maxi(f.stunTicks, int(pz.ticks))
+		if int(pz.get("version", SimPause.LIVE)) != SimPause.LIVE:
+			DirSwing.atPause(S, f)   # a form's pause: nothing moves, so it's the easiest place to turn
 		DirCalm.atPause(S, f, pz)   # the calm-moment turn's first moment (Game Design's 5a): a pausing step, the pivot fixed as it starts
 		SimEvents.feed(S, f.name + " TRANSFORMS", "tier " + SimMathx.jstr(f.tier))
 		return

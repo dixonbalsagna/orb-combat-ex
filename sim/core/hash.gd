@@ -182,6 +182,9 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 		_obj(out, act, ["v2", "guardSince", "dodgeTick", "dodgeCool", "burstCool", "mode", "assist", "formReady", "burstFired", "breakIn", "flow"])
 		if S.brakeOn:   # the air brake: only when on, so a match without it hashes as before
 			_obj(out, f.brk, SimBrake.HASHED)
+		if S.kickOn:   # the kick: only when on, so a match without it hashes as before
+			_obj(out, f.kik, SimKick.HASHED)
+			out.append(S.kickInstant); out.append(float(S.kickClimb))
 		if S.formsOn:   # forms: only when on, so a match without them hashes as before
 			_obj(out, f.form, SimForms.HASHED)
 		if S.flightOn:   # the launch's curve: only when on
@@ -204,6 +207,9 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 			_obj(out, st, ["bi", "filled", "label", "leaveT", "shiftAt", "runKind", "runLen", "runMax", "sigLanded"])
 	_obj(out, S.world, ["pop0", "casualties", "structuresLost", "craters", "slides", "evacuated", "cbSec", "cbSum", "maxTier", "evtKind", "evtLeft", "evtToken", "evtDead", "evtEvac", "tokenSeq", "heavyX", "heavyT", "stateT"])
 	# present and peopleLeft are set at the stage's start and never change mid-match
+	if S.world.farMask != 0:
+		out.append(float(S.world.farMask & 0xFFFFFFFF))   # the far places posed (World's plans.farPeople), only when any is: two words, since one float keeps 53 bits
+		out.append(float(S.world.farMask >> 32))
 	if S.world.present != S.world.pop0:
 		out.append(S.world.present)   # a stage's people present, only when it differs from the arena's (a versus hash is as it was)
 	if S.world.peopleLeft >= 0.0:
@@ -211,9 +217,17 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 	for v in S.world.cbBuckets:
 		out.append(v)
 	out.append(float(S.buildings.size()))
+	var freePop: float = 0.0   # the people in those: World's far places wake and lose them with nothing else touched
+	if S.bFirst > 0:
+		out.append(float(S.bFirst))
 	var bound: bool = S.bound()   # the per-tick fields from the state's arrays (a snapshot's records read the live state's), in the same order
 	for i in range(S.buildings.size()):
 		var b = S.buildings[i]
+		if i >= S.bFirst and S.bFirst > 0:
+			if bound and pristine(S, i):
+				freePop += S.bPopAlive[i]
+				continue   # a free building nothing has touched is its plan's, and the plan is in the match key. 3,800 of them were 7 times the hash
+			out.append(float(i))
 		if bound:
 			for k in BUILDING:
 				match k:
@@ -233,6 +247,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 		var mk: int = S.bMarks[i] if bound else b.marks
 		if mk != 0:
 			out.append(float(mk))   # World: repeats escalate (only with brunt.json repeatMarks above 0)
+	if S.bFirst > 0:
+		out.append(freePop)
 	out.append(1.0 if S.contactOn else 0.0)   # World's ground contact (G2)
 	if S.epoch != null:   # World's calm-moment turn: only a match that can turn hashes it, so a match without it hashes as before. The count, the last turn's time, the drift, whether a turn is decided
 		out.append(float(S.epoch.n)); out.append(S.epoch.lastT); out.append(S.epoch.drift)   # (and its bearing and pivot column), and the hash of the ring's slice: the world the match is on
@@ -355,6 +371,12 @@ static func hashValues(vals: Array) -> String:
 
 
 ## hash.js stateHash(S): the sim state.
+## A building as it was laid, by the fields that change in a match, but for its people: the hash adds those up.
+static func pristine(S: SimState, i: int) -> bool:
+	var g = S.bG[i]
+	return S.bHp[i] == g.maxhp and S.bAlive[i] != 0 and S.bFmask[i] == (1 << int(g.floors)) - 1 and S.bWear[i] == 0 and S.bFled[i] == 0.0 and S.bMarks[i] == 0 and S.bFdmg[i].is_empty()
+
+
 static func stateHash(S: SimState) -> Dictionary:
 	return {"gameplay": hashValues(collect(S, "gameplay"))}
 
@@ -374,6 +396,7 @@ const FX_FIELDS: Dictionary = {
 	"shake": ["k", "x", "z"], "tick": ["dt", "frozen"],
 	"region_stage": ["actor", "region", "stage"], "rally": ["actor", "region", "kind"], "limb_break": ["actor", "victim", "region"], "region_broken": ["actor", "region"], "brink_enter": ["actor"], "brink_exit": ["actor"], "brink_open": ["actor", "target", "kind", "text"], "brink_close": ["actor", "kind"],
 	"mood_band": ["kind", "amount", "n"], "act_change": ["n", "kind"], "style_label": ["actor", "kind", "text"], "crowd_state": ["kind"], "building_hit": ["actor", "x", "n", "b", "y", "z", "amount", "ratio", "outcome", "link", "spd", "keep", "ux", "uy", "kind", "w", "h", "owner", "victim"],
+	"kick": ["actor", "x", "y", "amount"], "coin_plant": ["actor", "x", "y"],
 	"tier_up": ["actor", "tier", "onGround"], "transform_ready": ["actor", "tier", "source"], "ricochet": ["actor", "kind", "text", "x", "y", "ux", "uy", "amount", "n"], "blast_cloud": ["actor", "x", "y", "amount", "n"], "flight": ["actor", "text", "kind", "amount", "n", "t"], "air_brake": ["actor", "text", "kind", "amount", "ux", "uy"], "form_hold": ["actor", "n", "dur", "amount"], "form_release": ["actor", "n", "amount", "dur", "k", "tier"], "form_step": ["actor", "k", "kind", "tier", "amount", "text", "source"], "transform": ["actor", "tier", "source", "dur", "version", "gather"], "beam_outcome": ["actor", "target", "kind"], "pause_start": ["kind", "actor", "version", "dur"], "pause_end": ["kind"], "knockback": ["victim", "attacker", "kind", "amount", "dur", "n", "x", "y", "z"], "exchange_end": ["actor", "kind"], "flow": ["actor", "n"],
 	"embed": ["actor", "x", "y", "z", "depth", "r", "energy", "dur", "n"], "shot_fire": ["actor", "kind", "id", "x", "y", "z", "target", "spd", "amount", "link", "ux", "uy"], "shot_hit": ["actor", "victim", "kind", "id", "x", "y", "z", "amount", "outcome", "link"],
 	"shot_clash": ["id", "b", "x", "y", "z", "amount"], "shot_deflect": ["id", "actor", "kind", "x", "y", "z", "x1", "y1", "dur"], "mine_trip": ["id", "actor", "kind", "x", "y", "z", "dur"], "shot_end": ["id", "kind", "x", "y", "z", "cause"], "last_stand_ready": ["actor", "dur"], "last_stand_end": ["actor", "kind"], "intro_start": ["dur", "delay", "kind", "actor", "n", "text"], "intro_beat": ["actor", "kind", "dur"], "intro_line": ["actor", "kind", "variant", "stance", "angle", "event", "p"], "intro_gesture": ["actor", "kind", "text"], "entrance_fall": ["actor", "x", "y", "z", "y1", "dur", "mode"], "entrance_land": ["actor", "x", "y", "z", "y1", "r"], "staredown_start": ["dur"], "clock_start": ["kind"], "hide_start": ["actor", "cover"], "found": ["actor"], "ko": ["winner", "loser"],

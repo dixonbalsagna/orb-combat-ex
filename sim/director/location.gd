@@ -23,6 +23,28 @@ static var _d = null
 static var _text: String = ""
 static var _planet := PackedFloat64Array()   # each biome's share of the planet, from WorldBiomes.SEG
 static var _bucketBiome := PackedInt32Array()  # the biome index at each bucket's centre
+static var _lineAt := PackedFloat64Array()     # the line those were read on, a field world's frame; empty off one
+
+
+## A field world: has the line moved since these tables were read? They're a pure read of it, so they follow it, and two states
+## or a rollback read the same.
+static func _lineMoved() -> bool:
+	var cur = SimField.cur
+	if cur == null or cur.frame == null:
+		return _lineAt.size() != 0
+	var fr = cur.frame
+	if _lineAt.size() == 7 and _lineAt[0] == fr.px and _lineAt[1] == fr.py and _lineAt[2] == fr.pz and _lineAt[3] == fr.tx and _lineAt[4] == fr.ty and _lineAt[5] == fr.tz and _lineAt[6] == float(fr.seed):
+		return false
+	return true
+
+
+static func _noteLine() -> void:
+	var cur = SimField.cur
+	if cur == null or cur.frame == null:
+		_lineAt = PackedFloat64Array()
+		return
+	var fr = cur.frame
+	_lineAt = PackedFloat64Array([fr.px, fr.py, fr.pz, fr.tx, fr.ty, fr.tz, float(fr.seed)])
 
 
 static func _ensure() -> void:
@@ -34,9 +56,10 @@ static func _ensure() -> void:
 			_d = {}
 	# the tables follow the arena's length and a planet's world: rebuilt when either changes (a match on the hand-made world keeps today's)
 	var key: String = "%s/%d" % [str(SimConst.W), WorldBiomes.worldId]
-	if key == _key:
+	if key == _key and not _lineMoved():
 		return
 	_key = key
+	_noteLine()
 	STEP = SimConst.W / float(BUCKETS)
 	_planet.resize(BIOMES.size())
 	_planet.fill(0.0)

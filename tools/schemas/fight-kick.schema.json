@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/fight-kick",
+  "title": "fight-kick (schema \"fight.kick/1\")",
+  "description": "data/fight/kick.json: the switch and numbers of the kick and the coin turn (docs/architecture/kick.md). Policy: closed; a key starting with _ is a comment.",
+  "type": "object",
+  "required": ["schema", "enabled", "stickOn", "startBelow", "instant", "climbTicks", "turn", "overspeed"],
+  "properties": {
+    "schema": { "const": "fight.kick/1" },
+    "enabled": { "type": "boolean" },
+    "stickOn": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+    "startBelow": { "type": "number", "minimum": 0, "maximum": 1 },
+    "instant": { "type": "number", "minimum": 0.5, "maximum": 1 },
+    "climbTicks": { "type": "integer", "minimum": 0, "maximum": 120 },
+    "turn": {
+      "type": "object",
+      "required": ["above", "brakeTicks", "brake", "plantTicks", "hop"],
+      "properties": {
+        "above": { "type": "number", "minimum": 0, "maximum": 1 },
+        "brakeTicks": { "type": "integer", "minimum": 0, "maximum": 60 },
+        "brake": { "type": "number", "minimum": 0, "maximum": 1 },
+        "plantTicks": { "type": "integer", "minimum": 1, "maximum": 60 },
+        "hop": { "type": "number", "minimum": 0, "maximum": 2000 }
+      },
+      "additionalProperties": false,
+      "patternProperties": { "^_": true }
+    },
+    "overspeed": {
+      "type": "object",
+      "required": ["enabled", "topShare", "hold", "ease", "chargeRange", "repeatTicks", "afterZip"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "topShare": { "type": "number", "minimum": 1, "maximum": 2 },
+        "hold": { "type": "integer", "minimum": 0, "maximum": 120 },
+        "ease": { "type": "integer", "minimum": 1, "maximum": 240 },
+        "chargeRange": { "type": "number", "minimum": 0, "maximum": 100000 },
+        "repeatTicks": { "type": "integer", "minimum": 0, "maximum": 3600 },
+        "afterZip": { "type": "integer", "minimum": 0, "maximum": 600 }
+      },
+      "additionalProperties": false,
+      "patternProperties": { "^_": true }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": { "^_": true }
+}

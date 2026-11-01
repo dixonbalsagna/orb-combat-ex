@@ -165,6 +165,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 			c.append({"name": "CRATER SLAM", "ux": float(cs.ux) * f, "uy": float(cs.uy), "s": float(cs.score.base) + float(cs.score.perTier) * A.tier + (float(cs.score.high) if alt > float(cs.score.highAlt) else 0.0)})
 	c.append({"name": "SMASH ACROSS", "ux": f, "uy": ACROSS_UY, "fm": ACROSS_FORCE, "s": 8.0})
 	var tierF: float = SimForms.launchMul(S, A)   # D1b: ladder.json (forms: his own steps)
+	DirVisit.offer(S, A, D, c, force, tierF, f, longOnly, fresh)   # a place on the line is a landing, the carry solved to reach it
 	# BUILDING SMASH (B2, docs/world/b2-plan.md section 4): one candidate per building the launch can be aimed at, in any row,
 	# scored by personality first and drama on top; a chain through several buildings is part of the candidate.
 	var hadBrunt: bool = false
@@ -238,6 +239,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 			k.land = lastb.x
 			k.travel = absf(SimWrap.sdx(D.x, lastb.x))
 			k.p = {"x": br.hit.x, "travel": k.travel, "water": false, "building": true, "t": br.hit.t}
+			k.s += DirVisit.cost(S, D, br.hit.x)
 			if k.name == S.dirS.lastLaunch:
 				k.s -= REPEAT_1
 			if k.name == S.dirS.lastLaunch2:
@@ -246,7 +248,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 		var fm: float = (k.fm if k.has("fm") else 1.0) * (DirBrawl.freshMul(S, D, DirBrawl.kindOfSend(k)) if fresh else 1.0)   # fresh: each candidate x its own kind's freshness
 		var p: Dictionary = predictFlight(S, D.x, D.y, WorldSlide.launchVX(k.ux, k.uy, force * fm * tierF), k.uy * force * fm * tierF, WorldSlide.launchTravel(k.ux, k.uy))
 		var street: bool = false
-		if k.name == "SMASH ACROSS" and inTown and not longOnly and float(town.get("haulTarget", 0.0)) > 0.0:
+		if k.name == "SMASH ACROSS" and inTown and not longOnly and float(town.get("haulTarget", 0.0)) > 0.0 and not k.has("arrive"):
 			# A launch along a street stays in the street: the force is set (once, square-root rule) so the flight carries
 			# him town.haulTarget and no further. It is kept while he still lands inside the settlement, town.haulMin on at
 			# least; where the street does not run that far it is the long haul, below.
@@ -258,12 +260,12 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 				k.fm = fm
 				k.street = true
 				p = pT
-		if k.name == "SMASH ACROSS" and not street and p.travel < HAUL_TARGET and not fresh:   # a launcher's length is its power's: no long-haul boost
+		if k.name == "SMASH ACROSS" and not street and p.travel < HAUL_TARGET and not fresh and not k.has("arrive"):   # a launcher's length is its power's: no long-haul boost
 			# The long haul: raise the force (once, square-root rule, capped) so the predicted flight reaches HAUL_TARGET.
 			fm = SimMathx.jmin(HAUL_FM_MAX, fm * sqrt(HAUL_TARGET / SimMathx.jmax(p.travel, 1.0)))
 			k.fm = fm
 			p = predictFlight(S, D.x, D.y, WorldSlide.launchVX(k.ux, k.uy, force * fm * tierF), k.uy * force * fm * tierF, WorldSlide.launchTravel(k.ux, k.uy))
-		if k.name == "SMASH ACROSS" and not street and p.travel < HAUL_MIN and not longOnly:
+		if k.name == "SMASH ACROSS" and not street and p.travel < HAUL_MIN and not longOnly and not k.has("arrive"):
 			# SMASH ACROSS is the long haul or nothing: when it cannot carry the target HAUL_MIN, it is not offered.
 			k.s -= HAUL_SHORT
 		k.p = p
@@ -271,6 +273,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 		k.travel = absf(SimWrap.sdx(D.x, lx)) if k.has("land") else p.travel
 		var popL: float = WorldStructures.popNear(S, lx, CARE_R)
 		k.s += (-A.care) * CARE_W * popL
+		k.s += DirVisit.cost(S, D, lx)
 		# Distance and new ground only count when the landing is open ground: long hauls carry the fight to empty land.
 		if popL <= OPEN_POP:
 			k.s += DIST_W * SimMathx.jmin(k.travel, DIST_CAP) / DIST_UNIT * (float(town.get("distMul", 1.0)) if inTown else 1.0) * (float(biome().get("distMul", {}).get(WorldBiomes.fineNameAt(lx), 1.0)) if bon else 1.0)   # from a settlement the haul out is worth less; biome on: open country more, closed less
@@ -381,7 +384,8 @@ static func _biomeCandsRead(S: SimState, A, D, c: Array, longOnly: bool, fwdOnly
 	if (vq.is_empty() and pq.is_empty()) or not WorldGround.live():
 		return
 	var preach: float = float(pq.get("reachBh", 0.0)) * BH
-	var near: Array = _propsNear(S, D.x - maxf(float(vq.get("withinBh", 0.0)) * BH, preach), D.x + maxf(float(vq.get("withinBh", 0.0)) * BH, preach))
+	var vent: float = float(vq.get("withinBh", 0.0)) * BH
+	var near: Array = _propsNear(S, D.x - (vent if f > 0.0 else maxf(vent, preach)), D.x + (maxf(vent, preach) if f > 0.0 else vent))   # PROP SMASH looks only ahead
 	if not vq.is_empty():
 		for p in near:
 			if String(p.kind) == "vent" and absf(SimWrap.sdx(D.x, p.x)) <= float(vq.withinBh) * BH:
@@ -408,13 +412,12 @@ static func _biomeCandsRead(S: SimState, A, D, c: Array, longOnly: bool, fwdOnly
 ## column's props), and top is its height above the ground; a column whose props World does not smash has none.
 static func _propTargets(S: SimState, D, near: Array, kinds: Array, f: float, reach: float) -> Array:
 	var out: Array = []
-	var broken: PackedInt32Array = brokenProps(S)
 	for p in near:
 		var d: float = SimWrap.sdx(D.x, p.x) * f
 		if not kinds.has(String(p.kind)) or d < 0.0 or d > reach or out.any(func(q): return int(q.col) == int(p.col)):
 			continue
 		var here: Array = []
-		for q in WorldGround.matchProps(S, float(p.x) - SimConst.COL, float(p.x) + SimConst.COL, broken):
+		for q in near:   # near is cut at column edges, so it holds the whole column
 			if int(q.col) == int(p.col):
 				here.append(q)
 		var pick: int = WorldGround.smashIn(here)
@@ -443,7 +446,10 @@ static func _propFlight(S: SimState, A, D, ux: float, uy: float, F: float, props
 	b.slideD = float(D.slideD)
 	b.embedOK = S.T - D.embedCool >= WorldContact.K_EMB_COOL
 	var ev: Array = []
+	var bound: float = float(props[props.size() - 1].d) + WorldContact.PROP_STOP + 1.0 if not props.is_empty() else 0.0   # props are sorted nearest first (_propTargets); tools fly the whole journey
 	for t in range(WorldContact.TICK_CAP):
+		if rec == null and b.mode == WorldContact.AIR and SimWrap.sdx(D.x, b.x) * b.dir > bound:
+			return -1   # in the air past the furthest prop: Performance's cut of the launch tick (docs/perf/swing-tick-recut-2026-10-31.md)
 		var x0: float = b.x
 		var hit: int = -1
 		if b.mode == WorldContact.AIR:
@@ -659,6 +665,8 @@ static func bruntScore(S: SimState, A, plan: Dictionary) -> float:
 		pers += (-A.care) * CARE_W * clampf(cb.popAlive / WorldStructures.buildingPopRef(S), 0.0, 1.0)
 		if A.care < 0.0:
 			pers += (-A.care) * BRUNT_TALL_W * clampf(cb.h / SimConst.WS / 400.0, 0.0, 1.0)
+	if A.care > 0.0:
+		pers *= DirRelief.factor(S, A)   # RL-219: one factor, the same whoever's inside, and 1 with it off
 	drama += first.h / SimConst.WS / 32.0 + (BRUNT_FRESH if first.hp >= first.maxhp else 0.0)
 	if A.care < 0.0:
 		drama += BRUNT_ROW_W * first.row
@@ -699,6 +707,10 @@ static func _predictFlightRead(S: SimState, x0: float, y0: float, vx0: float, vy
 	var travel: float = 0.0
 	var t: float = 0.0
 	var dir0: float = -1.0 if vx0 < 0.0 else 1.0
+	var ceilOn: bool = S.frame != null and not S.depthOn   # a field world's far reads: SimField.groundCeilAt bounds them
+	var ceilN: int = int(SimField.data().ceilCols) if ceilOn else 1
+	var ceilAt: int = -1
+	var ceilY: float = INF
 	for n in range(PREDICT_STEPS):
 		t += dt
 		vy -= 1000.0 * dt
@@ -706,6 +718,13 @@ static func _predictFlightRead(S: SimState, x0: float, y0: float, vx0: float, vy
 		x = SimWrap.wrap(x + vx * dt)
 		travel += vx * dt
 		y += vy * dt
+		if ceilOn:
+			var cs: int = int(x / SimConst.COL) / ceilN
+			if cs != ceilAt:
+				ceilAt = cs
+				ceilY = SimField.groundCeilAt(S, cs * ceilN)
+			if y > ceilY:
+				continue   # above any ground or water on this stretch: nothing to read
 		if y < WorldWater.seaTop(S, x):
 			vx *= kWx
 			vy *= kWy
@@ -756,6 +775,10 @@ static func doLaunch(S: SimState, att, tgt, plan: Dictionary, force: float, spec
 		S.dirS.craterT[S.fighters.find(att)] = S.T
 	SimFx.launch(S, tgt, att, SimDetMath.hypot(tgt.vx, tgt.vy), 1.0 if tgt.vx >= 0.0 else -1.0)
 	WorldBrunt.arm(S, tgt, att, plan)   # B2: the aimed building, the depth waypoints and the chain's token
+	if plan.has("brunt"):
+		DirRelief.sent(att)
+	if plan.has("brunt"):
+		DirVisit.sent(S)
 	_hookArm(S, tgt, plan)   # biomes W6: the plan's biome fields for World's flight (biome.enabled only)
 	SimFx.ring(S, tgt.x, tgt.y + 34.0, 600.0, "#ffffff", 0.3, 20.0)
 	SimFx.shake(S, 10.0, tgt.x)
@@ -949,6 +972,20 @@ static func knock(S: SimState, att, tgt, mul: float = 1.0, ox: float = NAN) -> v
 	var s: float = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(att.x if is_nan(ox) else ox, tgt.x)), att.face)   # ox: away from that point (a mine's blast), not from the attacker
 	var g: float = WorldWater.floorAt(S, tgt.x)
 	var dist: float = float(kb.distBh[ti]) * BH * mul
+	var wall = _wall(S, att, tgt, s, dist) if is_nan(ox) else null
+	if wall != null:
+		if "launchPower" in tgt:
+			tgt.launchPower = 1.0
+		var wsp: float = float(wall.sp)
+		doLaunch(S, att, tgt, wall, wsp, false)
+		tgt.launchT = 1.0          # a knock's own speed, as a skid's: no travel boost
+		tgt.vx = s * wsp
+		tgt.vy = float(wall.uy) * wsp
+		var at: int = S.tick + int(ceil(float(wall.brunt.hit.t) * DirData.TICKS_PER_SEC))
+		SimFx.cue(S, tgt, "knock_wall", "", "")
+		SimFx.knockback(S, tgt, att, "slideLong", dist, at)
+		DirRecoil.knocked(S, att, tgt, dist, 1, at)
+		return
 	var ground: bool = String(kb.groundMode) == "skid" and tgt.y - g <= float(kb.groundWithinBh) * BH and not WorldTerrain.seaAt(S, tgt.x)
 	if ground:
 		SimFx.cue(S, tgt, "slide_brace", "", "")   # Combat's cue for the slide on the feet
@@ -994,6 +1031,78 @@ static func knock(S: SimState, att, tgt, mul: float = 1.0, ox: float = NAN) -> v
 	var wear: float = float(kb.get("wear", 0.0)) * float(kb.get("impactPerSpeed", 0.0)) * dist / (ticks * SimConst.DT)
 	if wear > 0.0:
 		SimDamage.hurt(S, tgt, wear, att)
+
+
+## A knock-back that aims at a wall (game-design.md section 15): a standing building on the side he goes, inside the knock's own
+## distance in plan. A plain send on buildings.md 6.1's ladder. It reads standing buildings only, and care as a flat weight, never
+## who is inside. A player's stick held another way wins. Null when there's none, and always with it off.
+static func _wall(S: SimState, att, tgt, s: float, dist: float):
+	var w: Dictionary = data().knockBack.get("wall", {})
+	var walked: Array = DirWalk.wall(S, att, s)
+	if not (bool(w.get("enabled", false)) if _wallForce < 0 else _wallForce == 1) and walked.is_empty():
+		return null
+	var chance: float = float(w.base) - float(att.care) * float(w.care)
+	if chance < 1.0 and SimRng.keyed(int(S.game.seed), "knock.wall", S.dirS.exN * 64 + int(tgt.launchN)) >= chance:
+		return null
+	if att.ai == null and S.dirS.ex != null:
+		var pt: int = phrase(S, S.dirS.ex, att)
+		var tilt: int = (pt >> 4) & 15 if pt >= 0 else 0
+		if tilt > 0 and [0.0, 0.7071, 1.0, 0.7071, 0.0, -0.7071, -1.0, -0.7071][tilt - 1] * s <= 0.0:
+			return null
+	var reach: float = minf(float(w.reach), dist * float(w.distMul))   # so a short ender with a wall far off stays a short ender
+	var best = null
+	var bd: float = 1.0e18
+	if not walked.is_empty():
+		var wb = S.buildings[int(walked[0])]
+		var wd: float = SimWrap.sdx(tgt.x, wb.x) * s - wb.w * 0.5
+		if wd > 0.0 and wd <= float(walked[1]):
+			best = wb
+			bd = wd
+	for bi in (WorldStructures.near(S, tgt.x, reach) if best == null else []):
+		var b = S.buildings[bi]
+		if not b.alive or WorldSettle.noTarget(b.landmark):
+			continue
+		if S.frame == null and WorldSettle.enabled() and b.row != 1.0 and b.row != 2.0:
+			continue
+		var dx: float = SimWrap.sdx(tgt.x, b.x)
+		if dx * s <= 0.0:
+			continue
+		var d: float = absf(dx) - b.w * 0.5
+		if d <= 0.0:
+			continue
+		var dz: float = float(b.z) - float(tgt.z)
+		if d <= reach and d < bd and dz <= WorldBrunt.BR_Z_FRONT and -dz <= WorldBrunt.BR_Z_BACK and tgt.y <= WorldStructures.baseY(S, b) + WorldStructures.curH(b):
+			bd = d
+			best = b
+	if best == null:
+		return null
+	wallSeen += 1
+	var sp: float = maxf(float(w.speed[clampi(int(att.tier) - 1, 0, 3)]), bd * float(w.perUnit))   # all the way to it, whatever his tier
+	for uy in w.uy:
+		var fr: Dictionary = WorldBrunt.flightTo(S, tgt.x, tgt.y, s * sp, float(uy) * sp, 1.0, best, tgt.z)
+		if fr.ok and fr.spN >= WorldBrunt.AIM_MIN_SP and float(fr.y) >= WorldStructures.baseY(S, best) + float(w.clear) and _wallClear(S, tgt, s * sp, float(uy) * sp, float(fr.t), float(w.clear) * 0.25):
+			var chain: Array = WorldBrunt.chainPlan(S, WorldBrunt.tierOf(att, tgt), false, best, fr, 1.0)
+			var edge: float = SimWrap.wrap(best.x - s * best.w * 0.5)
+			return {"name": "KNOCK BACK", "ux": s, "uy": float(uy), "fm": 1.0, "sp": sp,
+				"brunt": {"b": best.idx, "hit": fr, "chain": chain, "deaths": WorldBrunt.chainDeaths(chain), "z1": WorldBrunt.faceZ(best), "aimD": absf(SimWrap.sdx(tgt.x, edge))}}
+	return null
+
+
+## The plan's flight reads the far ground, and this close a coarse read decides it: the near ground along the way, with room.
+static func _wallClear(S: SimState, tgt, vx: float, vy: float, t: float, room: float) -> bool:
+	for k in range(1, 7):
+		var tk: float = t * float(k) / 6.0
+		if tgt.y + vy * tk - 500.0 * tk * tk < WorldTerrain.groundY(S, SimWrap.wrap(tgt.x + vx * tk)) + room:
+			return false
+	return true
+
+
+static var _wallForce: int = -1   # tools: -1 the data's switch, 0 off, 1 on
+static var wallSeen: int = 0      # tools: knock-backs that had a wall in reach
+
+
+static func setWallForce(v: int) -> void:
+	_wallForce = v
 
 
 const BUMP_SHORT: float = 30.0   # the slide stops this far short of the obstacle (a body's radius; World's figure)

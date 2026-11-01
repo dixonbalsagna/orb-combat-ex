@@ -28,6 +28,10 @@
       "schema": "combat-enders.schema.json"
     },
     {
+      "match": "data/combat/stick.json",
+      "schema": "combat-stick.schema.json"
+    },
+    {
       "match": "data/combat/depth.json",
       "schema": "combat-depth.schema.json"
     },
@@ -420,6 +424,14 @@
       "schema": "director-rally.schema.json"
     },
     {
+      "match": "data/director/stick.json",
+      "schema": "director-stick.schema.json"
+    },
+    {
+      "match": "data/director/swing.json",
+      "schema": "director-swing.schema.json"
+    },
+    {
       "match": "data/director/launch.json",
       "schema": "director-launch.schema.json"
     },
@@ -694,6 +706,10 @@
     {
       "match": "data/fight/brake.json",
       "schema": "fight-brake.schema.json"
+    },
+    {
+      "match": "data/fight/kick.json",
+      "schema": "fight-kick.schema.json"
     },
     {
       "match": "audio/data/carry_cues.json",

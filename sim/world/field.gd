@@ -640,14 +640,18 @@ static func applyRecords(S, qx: float, qy: float, qz: float, h: float, planet = 
 			var lx: float = (qx - rec.c[0]) * R
 			var ly: float = (qy - rec.c[1]) * R
 			var lz: float = (qz - rec.c[2]) * R
-			var la: float = absf(lx * rec.t[0] + ly * rec.t[1] + lz * rec.t[2]) - rec.hl
-			var lb: float = absf(lx * rec.s[0] + ly * rec.s[1] + lz * rec.s[2]) - rec.hd
-			var ld: float = sqrt(maxf(la, 0.0) * maxf(la, 0.0) + maxf(lb, 0.0) * maxf(lb, 0.0))
-			if ld < rec.blend:
-				var lw: float = 1.0 if ld <= 0.0 else clampf((rec.blend - ld) / rec.blend, 0.0, 1.0)
+			var lat: float = lx * rec.t[0] + ly * rec.t[1] + lz * rec.t[2]   # along the street from the lot's centre
+			var la: float = absf(lat) - rec.hl
+			var lac: float = lx * rec.s[0] + ly * rec.s[1] + lz * rec.s[2]   # across the street from the lot's centre
+			var lb: float = absf(lac) - rec.hd
+			var bt: float = rec.blend
+			var bs: float = float(rec.get("bs", bt))   # the blend across the street (a bank beside the street is longer than the ramp at a lot's end)
+			var ld: float = sqrt(maxf(la, 0.0) * maxf(la, 0.0) / (bt * bt) + maxf(lb, 0.0) * maxf(lb, 0.0) / (bs * bs))
+			if ld < 1.0:
+				var lw: float = 1.0 if ld <= 0.0 else 1.0 - ld
 				lw = lw * lw * (3.0 - 2.0 * lw)
 				padW += lw
-				padWH += lw * float(rec.h)
+				padWH += lw * (float(rec.h) + float(rec.get("gt", 0.0)) * clampf(lat, -rec.hl, rec.hl) + float(rec.get("gs", 0.0)) * clampf(lac, -rec.hd, rec.hd))   # the flat climbs with the street, and leans across it by at most lots.gradeAcross, to the lot's edges
 		elif kind == "river":
 			if P == null:
 				P = WorldPlanet.make(int(S.planetRing.seed))
@@ -777,11 +781,19 @@ static func lotRecords(P: WorldPlanet.Planet, S, buildings: Array, dirs: Array, 
 			right = maxf(right, float(bb.x) + float(bb.w) * 0.5)
 		if not run.is_empty():
 			out.append(_lot(P, S, buildings, dirs, circ, run, side, out.size()))
-	# a lot's blend: half the gap to the nearest other lot's edge along the line between them
-	var R: float = P.R
+	_blends(out, P.R, cfg)
+	return out
+
+
+## A lot's blends: along the street, half the gap to the nearest lot that lies beyond its end (the ramp down an avenue), at most `blendMax`; across it, half the gap to the nearest lot beside it, at most `blendSide`
+## (a bank beside a street, longer than a ramp because nothing stands there). A neighbour is beyond the end when the line to it runs more along the street than across.
+static func _blends(out: Array, R: float, cfg: Dictionary) -> void:
+	var bmax: float = float(cfg.get("blendMax", 180.0))
+	var smax: float = float(cfg.get("blendSide", bmax))
 	for i in range(out.size()):
 		var a: Dictionary = out[i]
-		var best: float = 1.0e9
+		var best_t: float = 1.0e9
+		var best_s: float = 1.0e9
 		for j in range(out.size()):
 			if j == i:
 				continue
@@ -797,11 +809,57 @@ static func lotRecords(P: WorldPlanet.Planet, S, buildings: Array, dirs: Array, 
 			var ux: float = dx / dist
 			var uy: float = dy / dist
 			var uz: float = dz / dist
-			var sa: float = absf(ux * a.t[0] + uy * a.t[1] + uz * a.t[2]) * float(a.hl) + absf(ux * a.s[0] + uy * a.s[1] + uz * a.s[2]) * float(a.hd)
+			var ut: float = absf(ux * a.t[0] + uy * a.t[1] + uz * a.t[2])
+			var us: float = absf(ux * a.s[0] + uy * a.s[1] + uz * a.s[2])
+			var sa: float = ut * float(a.hl) + us * float(a.hd)
 			var so: float = absf(ux * o.t[0] + uy * o.t[1] + uz * o.t[2]) * float(o.hl) + absf(ux * o.s[0] + uy * o.s[1] + uz * o.s[2]) * float(o.hd)
-			best = minf(best, dist - sa - so)
-		a["blend"] = clampf(0.5 * best, 2.0, float(cfg.get("blendMax", 180.0)))
-	return out
+			var gap: float = dist - sa - so
+			if ut >= us:
+				best_t = minf(best_t, gap)
+			else:
+				best_s = minf(best_s, gap)
+		a["blend"] = clampf(0.5 * best_t, 2.0, bmax)
+		a["bs"] = clampf(0.5 * best_s, 2.0, smax)
+
+
+## The lot's lean across the street: the ground at its two sides (centre plus or minus `hd` along `s`) gives the slope across it, clamped to `grade` (lots.gradeAcross; 0 keeps it level across).
+static func _cross(P: WorldPlanet.Planet, S, c: Array, s: Array, hd: float, grade: float) -> float:
+	if grade <= 0.0:
+		return 0.0
+	var R: float = P.R
+	var gp: float = 0.0
+	var gm: float = 0.0
+	for sg in [1.0, -1.0]:
+		var x: float = c[0] + s[0] * hd * sg / R
+		var y: float = c[1] + s[1] * hd * sg / R
+		var z: float = c[2] + s[2] * hd * sg / R
+		var n: float = 1.0 / sqrt(x * x + y * y + z * z)
+		var g: float = applyRecords(S, x * n, y * n, z * n, height(P, x * n, y * n, z * n), P)
+		if sg > 0.0:
+			gp = g
+		else:
+			gm = g
+	return clampf((gp - gm) / (2.0 * hd), -grade, grade)
+
+
+## The lot's tilt along the street: the least-squares slope of its members' ground against their place along the street, `along`, and `ground`, clamped to `lots.grade`; and the height at the lot's middle that
+## keeps the plane through the members' mean. Returns [h at the lot's centre (along 0), slope].
+static func _plane(along: Array, ground: Array, mid: float, grade: float) -> Array:
+	var n: int = along.size()
+	var sa: float = 0.0
+	var sg: float = 0.0
+	var saa: float = 0.0
+	var sag: float = 0.0
+	for k in range(n):
+		sa += float(along[k])
+		sg += float(ground[k])
+		saa += float(along[k]) * float(along[k])
+		sag += float(along[k]) * float(ground[k])
+	var den: float = float(n) * saa - sa * sa
+	var slope: float = 0.0
+	if n > 1 and den > 1.0:
+		slope = clampf((float(n) * sag - sa * sg) / den, -grade, grade)
+	return [sg / float(n) - slope * (sa / float(n) - mid), slope]
 
 
 static func _lot(P: WorldPlanet.Planet, S, buildings: Array, dirs: Array, circ: Dictionary, run: Array, side: float, id: int) -> Dictionary:
@@ -809,7 +867,8 @@ static func _lot(P: WorldPlanet.Planet, S, buildings: Array, dirs: Array, circ: 
 	var xr: float = -1.0e30
 	var zsum: float = 0.0
 	var dmax: float = 0.0
-	var hsum: float = 0.0
+	var along: Array = []
+	var ground: Array = []
 	for m in run:
 		var b = buildings[m]
 		xl = minf(xl, float(b.x) - float(b.w) * 0.5)
@@ -817,11 +876,14 @@ static func _lot(P: WorldPlanet.Planet, S, buildings: Array, dirs: Array, circ: 
 		zsum += float(b.z)
 		dmax = maxf(dmax, float(b.d))
 		var q: Array = dirs[m]
-		hsum += applyRecords(S, q[0], q[1], q[2], height(P, q[0], q[1], q[2]), P)
+		along.append(float(b.x))
+		ground.append(applyRecords(S, q[0], q[1], q[2], height(P, q[0], q[1], q[2]), P))
 	var xc: float = 0.5 * (xl + xr)
+	var pl: Array = _plane(along, ground, xc, float(data().get("lots", {}).get("grade", 0.0)))
 	var c: Array = WorldPlan.pointAtX(P, circ, xc, zsum / float(run.size()))
 	var t: Array = WorldPlan.ringTangent(circ, c)
 	var s: Array = WorldPlanet._unit(WorldPlanet._cross(c, t))
 	var hl: float = 0.5 * (xr - xl) + side
 	var hd: float = 0.5 * dmax + side
-	return {"k": "lot", "id": id, "c": c, "t": t, "s": s, "hl": hl, "hd": hd, "r": sqrt(hl * hl + hd * hd), "blend": 20.0, "h": hsum / float(run.size()), "n": run.size(), "lone": run.size() == 1}
+	var gs: float = _cross(P, S, c, s, hd, float(data().get("lots", {}).get("gradeAcross", 0.0)))
+	return {"k": "lot", "id": id, "c": c, "t": t, "s": s, "hl": hl, "hd": hd, "r": sqrt(hl * hl + hd * hd), "blend": 20.0, "bs": 20.0, "h": pl[0], "gt": pl[1], "gs": gs, "n": run.size(), "lone": run.size() == 1}

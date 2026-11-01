@@ -55,6 +55,9 @@ func _init() -> void:
 	_ceilAndRush()
 	_lay()
 	_bothWays()
+	_waterHold()
+	_aimFollow()
+	_layNearCheck()
 	_key()
 	print("frame_check: %d checks, %d failed" % [checks, fails])
 	print("PASS" if fails == 0 else "FAILED")
@@ -632,6 +635,166 @@ func _bothWays() -> void:
 		SimCore.dispose(S)
 	print("both ways: %s ticks" % str(ticks_))
 	ok(ticks_[0] == ticks_[1] and ticks_[1] == ticks_[2] and ticks_[2] == ticks_[3], "both ways: the same ticks each way (%s)" % str(ticks_))
+
+
+## Water's flow waits while the line turns and for `waterWarm` ticks after, and as long again when a window opens wide. Then it flows. The wait is in the state, and it doesn't depend on what the cache holds.
+func _waterHold() -> void:
+	var W: int = int(ceil(121.0 / float(SimSwing.data().waterWarmCols)))   # the window below has 121 columns
+	var hashes: Array = []
+	for run in range(2):
+		var S := start3()
+		var stepN := func(n: int) -> void:
+			for t in range(n):
+				SimCore.step(S)
+				S.out.fx.clear()
+				S.out.feed.clear()
+		for f in S.fighters:
+			f.y = 3000.0
+		var c: int = int(S.fighters[0].x / SimConst.COL)
+		while WorldTerrain.baseAt(S, c) < WorldWater.SEA_LEVEL + 100.0:
+			c = (c + 16) % SimConst.NC
+		for k in range(-20, 21):
+			S.deform[c + k] = -WorldTerrain.baseAt(S, c + k) - 500.0   # a hole for it to flow into
+		S.water[c] = 4000.0
+		S.waterWin.append([c, 60, 0, 0])
+		var w0: PackedFloat32Array = S.water.duplicate()
+		stepN.call(W)
+		ok(S.water == w0, "water hold: a wide new window waits %d ticks" % W)
+		ok(S.swing.waterWarm == 0, "water hold: its wait is done (%d)" % S.swing.waterWarm)
+		stepN.call(WorldWater.STEP_TICKS + 1)
+		ok(S.water != w0, "water hold: then it flows")
+		SimSwing.ask(S, {"deg": 30.0, "cause": "launch"})
+		var w1: PackedFloat32Array = S.water.duplicate()
+		var same: bool = true
+		var n: int = 0
+		var worst: int = 0
+		var F = SimField._F
+		while S.swing.active and n < 800:
+			stepN.call(1)
+			same = same and S.water == w1
+			n += 1
+		ok(n > 0 and n < 800 and same, "water hold: no flow in the %d ticks the line turns" % n)
+		ok(S.swing.waterWarm > 0, "water hold: at rest the columns are read before it flows (%d)" % S.swing.waterWarm)
+		var left: int = int(ceil(float(S.swing.waterWarm) / float(SimSwing.data().waterWarmCols)))
+		for t in range(left):
+			var r0: int = F.reads + F.subReads
+			stepN.call(1)
+			worst = maxi(worst, F.reads + F.subReads - r0)
+			same = same and S.water == w1
+		ok(same, "water hold: no flow in the %d ticks it reads" % left)
+		if run == 0:
+			print("water hold: %d ticks turning, worst reads in a tick of the warm-up %d" % [n, worst])
+		var r1: int = F.reads + F.subReads
+		stepN.call(WorldWater.STEP_TICKS + 1)
+		ok(S.water != w1, "water hold: after the rest it flows again")
+		ok(F.reads + F.subReads - r1 <= 40, "water hold: the flow step finds its columns read (%d new)" % (F.reads + F.subReads - r1))
+		hashes.append(SimHash.stateHash(S).gameplay)
+		var h0: String = SimHash.stateHash(S).gameplay
+		S.swing.waterWarm += 1
+		ok(SimHash.stateHash(S).gameplay != h0, "water hold: the wait is in the hash")
+		SimCore.dispose(S)
+	ok(hashes[0] == hashes[1], "water hold: a warm cache gives the same state as a colder one")
+
+
+## A flight aimed at a building meets its face in depth, though a swing moved it in flight.
+func _aimFollow() -> void:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 11, {"p1": true, "p2": true}, {"planet": 7, "touch": 2, "planetGen": 3, "intro": false})
+	var f = S.fighters[0]
+	for g in S.fighters:
+		g.y = 3000.0
+	var best: int = -1
+	for i in range(S.buildings.size()):
+		var d: float = absf(SimWrap.sdx(f.x, S.buildings[i].x))
+		if S.buildings[i].alive and d > 800.0 and d < 6000.0 and (best < 0 or d < absf(SimWrap.sdx(f.x, S.buildings[best].x))):
+			best = i
+	ok(best >= 0, "aim: a building to aim at")
+	if best < 0:
+		return
+	var b = S.buildings[best]
+	var dir: float = signf(SimWrap.sdx(f.x, b.x))
+	f.state = "launched"
+	f.vx = dir
+	f.aimB = best
+	f.aimX0 = f.x
+	f.aimZ0 = f.z
+	f.aimZ1 = WorldBrunt.faceZ(b)
+	f.aimD = absf(SimWrap.sdx(f.x, b.x - dir * b.w * 0.5))
+	var z1: float = f.aimZ1
+	SimSwing.ask(S, {"deg": 30.0, "cause": "launch", "pivotX": f.x})
+	var at: int = 0
+	var arrived: bool = false
+	while at < 300 and not arrived:
+		SimSwing.tick(S)
+		S.tick += 1
+		at += 1
+		var edge: float = SimWrap.wrap(b.x - dir * b.w * 0.5)
+		var togo: float = SimWrap.sdx(f.x, edge) * dir
+		f.x = SimWrap.wrap(f.x + dir * clampf(togo, 0.0, 30.0))
+		WorldBrunt.stepZ(S, f, 1.0 / 60.0)
+		arrived = togo <= 30.0
+	var moved: float = absf(WorldBrunt.faceZ(b) - z1)
+	ok(arrived and moved > 50.0, "aim: the swing moved its face in depth (%.0f units, %d ticks)" % [moved, at])
+	ok(absf(f.z - WorldBrunt.faceZ(b)) < 1.0, "aim: the body meets its face in depth (%.1f off)" % absf(f.z - WorldBrunt.faceZ(b)))
+	SimCore.dispose(S)
+
+
+## While the line turns, a scar near the pair keeps to its record under the line: on the last moving tick the strip already says what the rest would lay.
+func _layNearCheck() -> void:
+	var S := start3()
+	for f in S.fighters:
+		f.y = 3000.0
+	var fx: float = S.fighters[0].x
+	S.fighters[1].x = fx
+	for k in range(-12, 13):
+		SimField.pointAt(S, fx + 480.0 + float(k) * 16.0)
+		WorldStore.addScorch(S, [SimField.ox, SimField.oy, SimField.oz], 60.0, 10.0, 0.9, 0.0, 0)
+	var fr0 = S.frame
+	WorldStore.layScorch(S, func(xx: float) -> Array:
+		SimField.pointIn(fr0, xx)
+		return [SimField.ox, SimField.oy, SimField.oz])
+	SimSwing.ask(S, {"deg": 12.0, "cause": "launch", "pivotX": fx})
+	var cost: int = 0
+	var worst: int = 0
+	var n: int = 0
+	var wrong: int = 0
+	var was: int = 0
+	var ridden: PackedFloat32Array = S.scorch.duplicate()
+	while S.swing.active and n < 400:
+		var t0: int = Time.get_ticks_usec()
+		SimSwing.tick(S)
+		var dt: int = Time.get_ticks_usec() - t0
+		cost += dt
+		worst = maxi(worst, dt)
+		S.tick += 1
+		n += 1
+		if S.swing.active and S.swing.left < 0.3:
+			wrong = 0
+			was = 0
+			var c0: int = int(floor(SimWrap.wrap(fx) / SimConst.COL))
+			for q in range(-int(SimSwing.data().layNearCols), int(SimSwing.data().layNearCols) + 1):
+				var c: int = posmod(c0 + q, SimConst.NC)
+				SimField.pointIn(S.frame, (float(c) + 0.5) * SimConst.COL)
+				var tv: float = WorldStore.scorchAt(S, SimField.ox, SimField.oy, SimField.oz)[0]
+				if absf(S.scorch[c] - tv) > 0.3:
+					wrong += 1
+				if absf(ridden[c] - tv) > 0.3:
+					was += 1
+	print("lay near: %d ticks, mean %d us a tick, worst %d us; wrong columns at the end %d, %d if it had ridden" % [n, cost / maxi(n, 1), worst, wrong, was])
+	ok(S.swing.layNearOn, "lay near: a scar near the pair turns it on")
+	ok(wrong <= 2, "lay near: the marks near the pair keep to the records (%d columns off)" % wrong)
+	ok(was >= 3, "lay near: the test has something to catch (%d columns would be off)" % was)
+	var hb: String = SimHash.stateHash(S).gameplay
+	S.swing.layN += 1
+	ok(SimHash.stateHash(S).gameplay != hb, "lay near: its place is in the hash")
+	SimCore.dispose(S)
+	var S2 := start3()
+	for f in S2.fighters:
+		f.y = 3000.0
+	SimSwing.ask(S2, {"deg": 12.0, "cause": "launch"})
+	SimSwing.tick(S2)
+	ok(not S2.swing.layNearOn, "lay near: off with no marks")
+	SimCore.dispose(S2)
 
 
 ## After a rest the strip's marks come from the store, a slice a tick, to exactly what World's lay functions give; a snapshot in the middle comes out the same.

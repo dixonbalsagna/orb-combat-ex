@@ -394,6 +394,8 @@ static func blowAt(S: SimState, ex, f, kind: int, lead: int, dmg: float, extra: 
 	var k: int = _g(f, STR_K) + 1
 	_s(f, STR_K, k)
 	var o2 := {"class": "heavy" if _wound(kind) else "blow", "stop": float(int(c.hitstop.heavy if kind == BIG else (c.hitstop.medium if kind == MEDIUM else c.hitstop.light))) / DirData.TICKS_PER_SEC, "big": _wound(kind), "kb": float(c.recoil)}
+	if kind == BIG and DirSwing.enabled():
+		o2["jolt"] = true
 	if bool(extra.get("sure", false)):
 		o2["ignoreStance"] = true
 		o2["noParry"] = true
@@ -808,6 +810,7 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 		DirInterrupt.si(f, DirInterrupt.LANDED, 0)
 		if _g(f, BLOWS) + _g(o, BLOWS) > 0:
 			_newString(S, ex)
+		DirStick.newString(o)
 	var d: int = _closeTicks(f, o)   # the gap it closes on the way: it lands this much later
 	if d > 0 and DirRecoil.counter(S, f):
 		d = 0   # out of his recoil flip (Game Design's 1a): the counter-rush closes the gap at once
@@ -887,6 +890,8 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 	if rip > 0:
 		dmg += _unit() * float(SimForms.followBonus(S, f))   # forms: a Trial form's perfect follow-up is worth more (0 otherwise)
 	var o2 := {"class": "heavy" if wound else "blow", "stop": float(stop) / DirData.TICKS_PER_SEC, "big": wound, "kb": float(c.recoil)}
+	if kind == BIG and DirSwing.enabled():
+		o2["jolt"] = true   # (a blow's options are in the state's hash, so only with the swing on)
 	# The AI weighs a perfect block against a light or a medium at most once in aiPerfectEveryTicks (a fresh guard
 	# press cannot be mashed), and against every heavy.
 	if kind != BIG:
@@ -905,6 +910,7 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 		args["energy"] = called
 	args["close"] = d   # the ticks its closing adds, and the gap it closes, in body heights
 	args["gap"] = snappedf(gapBh, 0.01)
+	lead = DirStick.overlay(S, f, o, args, o2, lead, d)   # the right stick's strike: a medium's line, the class's own numbers
 	if lau:
 		args["launcher"] = true
 		args["ready"] = any or launcherRest(S, o) == 0   # a launch when one is ready on him; while the launcher rests, the hammer (launch anywhere: always ready)
@@ -938,7 +944,9 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 	var cell: String = "launcher" if lau else (("blast" if st == 1 else "bolt") if energy else ("heavy" if st == 2 else ("medium" if st == 1 else ("burstFloor" if floor else ("lightToward" if toward else ("flurry" if kind == FLURRY else "light"))))))
 	if inFl and wound and not energy and not lau:
 		cell = _mashCell(cell)   # a mashed medium or heavy: the grind or the advance, when Combat's recipes name it
-	var piece: String = _boltRun(S, f, args) if (bolt and _g(f, BOLT_N) >= 1) else ""
+	var piece: String = DirStick.piece(S, f, args) if args.has("stick") else ""   # first, so a medium's draw doesn't take a place in his last two
+	if piece == "" and bolt and _g(f, BOLT_N) >= 1:
+		piece = _boltRun(S, f, args)
 	if piece == "":
 		piece = _piece(S, f, st, toward, cell, _sendOf(int(args.get("aim", 0))) if lau else "")
 	_s(f, BOLT_N, (_g(f, BOLT_N) + 1) if bolt else 0)
@@ -1368,7 +1376,7 @@ static func contact(S: SimState, ex, b) -> void:
 	if energy != "":
 		_eLand(S, ex, f, o, energy, "hit", energy == "blast" and _g(f, RUN) >= RUN_U * int(c.energy.reach.blast.enderRun))
 	# A wound blow ends the wind-up it lands on: a medium's always, a heavy's before its armour holds a medium.
-	if (wound or laStop) and oWinding and _g(o, LINE) != 0:
+	if (wound or laStop or DirStick.bare(o)) and oWinding and _g(o, LINE) != 0:
 		_wEnd(S, o, oKind, 2)
 		_s(o, HOLD_AT, 0)
 		_drop(S, ex, o)
@@ -1380,6 +1388,11 @@ static func contact(S: SimState, ex, b) -> void:
 		_s(f, LL_AT, S.tick)
 		_knock(S, ex, f, o, float(c.energy.reach.blast.knockBh), _quarter(f, o), bool(c.energy.reach.blast.halfSetup))
 		return
+	DirWalk.landed(S, ex, f, o)   # a lean toward a standing building: this blow's carry goes that way too
+	if a.has("stick"):
+		_s(f, LL_AT, S.tick)
+		DirStick.landed(S, ex, f, o, a)
+		return   # no run, no close: its stun and its carry are its own
 	if bool(a.get("riposte", false)) or bool(a.get("reversal", false)):
 		# A riposte, or a reversal's blow: on the brink it counts as a close does. The brawl goes on.
 		_s(f, LL_AT, S.tick)
@@ -2597,6 +2610,8 @@ static func _stepIn(S: SimState, ex, f, o, ticks: int) -> void:
 ## heavy's reach, and a charged heavy's as it fills.
 static func _reachOf(a, kind: int) -> float:
 	var c: Dictionary = cfg()
+	if a.has("stick"):
+		return DirStick.reach(a)
 	if kind == BIG:
 		if bool(a.get("charged", false)):
 			return lerpf(float(c.heavy.reachBh), float(c.heavy.charge.reachBh), clampf(float(a.get("charge", 0.0)), 0.0, 1.0))
@@ -3138,7 +3153,7 @@ static func winding(S: SimState, f) -> Dictionary:
 	var now: int = _now(S)
 	var n: int = now - _g(f, HOLD_AT)
 	var ch: Dictionary = cfg().heavy.charge
-	var share: float = clampf(float(n - int(ch.fromTicks)) / maxf(1.0, float(int(ch.fullTicks) - int(ch.fromTicks))), 0.0, 1.0) if (kind == BIG and _g(f, CHG) > 0) else 0.0
+	var share: float = clampf(float(n - int(ch.fromTicks)) / maxf(1.0, float(DirArc.fullTicks(S, f, ch) - int(ch.fromTicks))), 0.0, 1.0) if (kind == BIG and _g(f, CHG) > 0) else 0.0
 	return {"strength": STRENGTH[kind], "n": maxi(0, n), "left": (_g(f, CONTACT) - now) if _g(f, LINE) == 1 else -1, "armoured": kind == BIG and _g(f, FLAV) == 0, "charge": share,
 		"launcher": _g(f, FLAV) == 2, "energy": _g(f, FLAV) == 1}
 
@@ -3170,12 +3185,12 @@ static func _windTick(S: SimState, ex, f, kind: int, now: int, up: bool = false)
 		return
 	var ch: Dictionary = c.heavy.charge
 	if kind == BIG and _g(f, CHG) > 0:
-		if _g(f, CHG) == 1 and n >= int(ch.fullTicks):
+		if _g(f, CHG) == 1 and n >= DirArc.fullTicks(S, f, ch):
 			_s(f, CHG, 2)
 			var fl = _ev(S, f, "charge_full", "", "b")
 			fl.n = S.tick
 		if not down or n >= int(ch.maxTicks):
-			_letGo(S, ex, f, int(ch.landTicks), clampf(float(n - int(ch.fromTicks)) / maxf(1.0, float(int(ch.fullTicks) - int(ch.fromTicks))), 0.0, 1.0))
+			_letGo(S, ex, f, int(ch.landTicks), clampf(float(n - int(ch.fromTicks)) / maxf(1.0, float(DirArc.fullTicks(S, f, ch) - int(ch.fromTicks))), 0.0, 1.0))
 		return
 	var wind: int = int(c.energy.reach.blast.windupTicks) if _g(f, FLAV) == 1 else int(w.windupTicks)
 	if not down:
@@ -3265,6 +3280,8 @@ static func _bigLanded(S: SimState, ex, f, o, a) -> void:
 		return
 	if bool(a.get("charged", false)):
 		if float(a.get("charge", 0.0)) >= 1.0:
+			if DirArc.heavyFull(S, ex, f, o, a):
+				return   # both at the top of their ladders: the curve
 			if not DirRally.daze(S, ex, f, o, "charged_heavy"):   # 23d 1: with the rally on, a clean full charge dazes
 				_send(S, ex, f, o, int(a.get("aim", 0)), "a heavy charged to full", 1.0)
 		else:

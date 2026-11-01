@@ -3343,10 +3343,10 @@ func _test_grip_throw() -> void:
 	print("grip throws: %s" % " | ".join(seen))
 
 
-## The per-tick work (docs/animation/tick-cost.md): the ragdoll step and the cloth and follow-through springs worked out once a tick give the same bodies, bit for bit, as the versions before (`--no-tick-fast`). One seeded match (seed 11: a launch, a flail) drawn both ways, a hash of every bone rotation, the hips, the ragdoll's angles and speeds and the springs after every frame.
+## The per-tick work (docs/animation/tick-cost.md): the ragdoll step and the cloth and follow-through springs worked out once a tick give the same bodies, bit for bit, as the versions before (`--no-tick-fast`). One seeded match (seed 1: a launch, a flail) drawn both ways, a hash of every bone rotation, the hips, the ragdoll's angles and speeds and the springs after every frame.
 func _tick_hash(fast: bool, ticks: int) -> Array:
 	RenderAnim.tick_fast = fast
-	main.start_match(11, {"p1": true, "p2": true})
+	main.start_match(1, {"p1": true, "p2": true})
 	var h: int = 7
 	var launched: int = 0
 	while main.host.ticks < ticks:
@@ -3430,7 +3430,7 @@ func _test_tick_fast() -> void:
 	var before: Array = _tick_hash(false, 1200)
 	_expect(int(fast[0]) == int(before[0]), "per-tick work: the poses with the work worked out once a tick are the poses before it, bit for bit (hash %d against %d)" % [int(fast[0]), int(before[0])])
 	_expect(int(fast[1]) > 0, "per-tick work: the match used to compare them launches a fighter (%d launched samples), so the ragdoll's flail is in the comparison" % int(fast[1]))
-	print("per-tick work: seed 11, 1200 ticks, hash %d both ways, %d launched samples" % [int(fast[0]), int(fast[1])])
+	print("per-tick work: seed 1, 1200 ticks, hash %d both ways, %d launched samples" % [int(fast[0]), int(fast[1])])
 
 
 ## The incremental bake's queue (docs/animation/incremental-bake.md). A queued pose exists before it is baked, is baked in order a slice at a time or at once when asked for, and is exactly the pose the eager bake makes of the same sketch;

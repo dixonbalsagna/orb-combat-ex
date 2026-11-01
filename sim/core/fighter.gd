@@ -97,6 +97,8 @@ static func impact(S: SimState, f, g: float, sp: float) -> void:
 ## Launched flight: gravity, air drag, water (with the skip), the aimed building (B2), the ground (slam or slide) and the
 ## ceiling. A fighter that is sliding is handled by WorldSlide.step.
 static func stepLaunched(S: SimState, f, dt: float) -> void:
+	if SimDir.arcStep(S, f, dt):
+		return   # one authored curve (docs/world/ring-any-angle/meteor-arc.md): this law bleeds his carry
 	if S.flightOn:
 		dt = SimFlight.pace(S, f, dt)   # the launch's curve: his first leg is paced along its path (sim/core/flight.gd)
 	f.stateT += dt
@@ -622,6 +624,8 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 	if f.state != "launched":
 		spin(S, f, dt, SPIN_FREE)
 
+	if S.kickOn:
+		SimKick.note(S, f, f.rush == null and f.state == "free" and not i.charge)
 	if f.rush != null:
 		stepRush(S, f, dt)
 	elif f.state == "free":
@@ -635,8 +639,11 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 		else:
 			var sp: float = flightSpeed(S, f, i.dash)
 			var k: float = 1.0 - SimDetMath.pow(0.0008, dt)
-			f.vx += (i.mx * sp - f.vx) * k
-			f.vy += (i.my * sp * 0.85 - f.vy) * k
+			if S.kickOn:
+				SimKick.move(S, f, i, sp, k)
+			else:
+				f.vx += (i.mx * sp - f.vx) * k
+				f.vy += (i.my * sp * 0.85 - f.vy) * k
 			if S.depthOn:   # no stick steers depth: a velocity in depth dies away as his own does with the stick at rest
 				f.vz += (0.0 - f.vz) * k
 				f.vzX += (0.0 - f.vzX) * k

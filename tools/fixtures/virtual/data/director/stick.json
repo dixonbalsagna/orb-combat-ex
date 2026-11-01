@@ -1,0 +1,42 @@
+{
+  "schema": "director.stick/1",
+  "_note": "The right stick's strike (docs/design/right-hand-attacks-rulings.md section 2, Game Design's first values): worth in units, ki in all, stun in live ticks, carryBh and reachBh in body heights. quickRecover and chargeRecover make the commitment. The wind-up and the ladder are data/input/timing.json's strike block: the wind-up is dwell less settle, the ladder levels and beamLevels.",
+  "levels": [
+    {
+      "worth": 2.5,
+      "ki": 2.0,
+      "stun": 20,
+      "carryBh": 0.0,
+      "reachBh": 0.5
+    },
+    {
+      "worth": 3.4,
+      "ki": 3.0,
+      "stun": 26,
+      "carryBh": 1.0,
+      "reachBh": 0.75
+    },
+    {
+      "worth": 4.3,
+      "ki": 4.0,
+      "stun": 32,
+      "carryBh": 2.0,
+      "reachBh": 1.0
+    },
+    {
+      "worth": 5.5,
+      "ki": 5.0,
+      "stun": 40,
+      "carryBh": 4.0,
+      "reachBh": 1.25
+    }
+  ],
+  "quickRecover": 7,
+  "chargeRecover": 16,
+  "autoGoTicks": 68,
+  "repeatSec": 3.0,
+  "carryTicks": 12,
+  "pendTicks": 90,
+  "airAbove": 40.0,
+  "windTicks": 7
+}

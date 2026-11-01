@@ -43,6 +43,7 @@ var rubbleZ: Array = []               # T: the same for the rubble heaps
 var lanes := PackedFloat32Array()      # L1: the lane table (world/lanes.gd build), derived, not hashed: read by the ground shader and the props
 var low := PackedFloat32Array()       # T: the lowest deform across the rows at each column (derived, not hashed): the ground water runs on when depthOn
 var rubble := PackedFloat32Array()    # rubble heap height per terrain column (world/structures.gd): part of S.deform, kept apart for cover, tint and digging
+var bFirst: int = 0                   # places everywhere (WorldPlan.layFree): how many of S.buildings are the first ring's, the rest being planet-fixed free places; 0 with none. A constant of the match
 var bIdx: Array = []                  # spatial index of the buildings: PackedInt32Array per x bucket (world/structures.gd), never changes in a match
 var popHist := PackedFloat32Array()   # living civilians per lure bucket (director/ai.gd LURE_STEP), kept up to date by WorldCollateral
 var crack := PackedFloat32Array()     # pavement crack intensity per terrain column, 0 to 1, permanent (world/slide.gd)
@@ -82,6 +83,9 @@ var mood := MoodState.new()           # M1 (sim/core/mood.gd): the fight's mood,
 var pause := PauseState.new()         # Q10 (sim/core/pause.gd): the pausing set pieces' bank and the running pause
 var intro := IntroState.new()         # the intro phase (sim/core/intro.gd): the pre-clock ticks of a match that asks for it
 var depthOn: bool = false             # fight lanes: depth is physical (the director's depth.json switch, or the setup's "depth"); off until L4
+var kickOn: bool = false              # the kick and the coin turn (sim/core/kick.gd): data/fight/kick.json's switch, or the setup's "kick"
+var kickInstant: float = 0.8          # ... its share of top speed on the first tick: the data's, or the setup's "instant"
+var kickClimb: int = 8                # ... and its ticks to top speed: the data's, or the setup's "climbTicks"
 var brakeOn: bool = false             # the air brake (sim/core/brake.gd): data/fight/brake.json's switch, or the setup's "brake"; off
 var formsOn: bool = false             # forms (sim/core/forms.gd): the Protagonist's five steps and the slingshot (data/fight/forms.json, or the setup's "forms"); off
 var flightOn: bool = false            # the launch's curve (sim/core/flight.gd): data/fight/flight.json's switch, or the setup's "flight"; off
@@ -431,6 +435,11 @@ class Swing:
 	var cruise: float = 0.0
 	var tau: float = 0.0
 	var motion: String = "full"
+	var poseK: int = -1         # the far poses after a rest with places everywhere (SimSwing._posesFar): the next building, -1 none
+	var layN: int = 0           # the marks near the pair in a swing (SimSwing._layNear): where the next share starts
+	var layNearOn: bool = false # a crack or a scorch is near enough to lay
+	var waterWarm: int = 0      # water's flow waits while this many more of its columns are read (SimSwing.waterHeld)
+	var waterSeen: int = 0      # columns in the water windows when last looked, to see one open wide
 	var layK: int = -1          # the marks' lay after a rest (SimSwing._layMarks): how far out from layC it has come, -1 none
 	var layC: int = 0
 	var nextDeg: float = 0.0
@@ -494,6 +503,7 @@ class World:
 	var heavyT: float = -1.0e9        # its match time
 	var lotAcc := PackedFloat32Array()      # per building: evacuees not yet reported in an evacuate event (district flight lots)
 	var stateT: float = 0.0           # match time of the last collateral_state event
+	var farMask: int = 0              # a bit for each far place posed (World's WorldCollateral.wakeFar; plans.farPeople), hashed only when set
 	var fallTick: float = -1.0        # scratch for the implode event cap of one blast (not hashed)
 	var fallN: float = 0.0
 	var fallFold: float = 0.0
@@ -959,6 +969,16 @@ class FormState:
 	var crossed: bool = false  # his last branch step changed branch (a cross: Narrative voices the turn)
 
 
+## A fighter's kick and coin turn while S.kickOn (sim/core/kick.gd).
+class KickState:
+	var t: int = 0             # the kick's tick, from 1; 0 no kick
+	var turn: int = 0          # ticks left of the coin turn's brake and plant; 0 none
+	var off: int = 0           # ticks left with no overspeed away, after a zip or a vanish
+	var t1: int = -1           # the tick of his last kick
+	var t2: int = -1           # ... and of the one before: a kick inside repeatTicks of it is the third
+	var no: bool = false       # this kick is that third: no overspeed
+
+
 ## A fighter's air brake while S.brakeOn (sim/core/brake.gd).
 class BrakeState:
 	var n: int = 0             # the launch number of his last send (Fighter.launchN): a new one is a new send
@@ -1024,6 +1044,7 @@ class Fighter:
 	var interior = null              # World: the chain inside a tower (world/interior.gd): a Dictionary while he is in it, else null. Hashed only while set
 	var act := ActState.new()        # I2a: what the fighter's presses mean now (sim/core/act.gd)
 	var style = null                 # M1: StyleState (sim/core/mood.gd)
+	var kik = null                   # the kick: KickState while S.kickOn (sim/core/kick.gd), null otherwise
 	var brk = null                   # the air brake: BrakeState while S.brakeOn (sim/core/brake.gd), null otherwise
 	var form = null                  # forms: FormState while S.formsOn (sim/core/forms.gd), null otherwise
 	var flt = null                   # the launch's curve: FlightState while S.flightOn (sim/core/flight.gd), null otherwise

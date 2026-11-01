@@ -341,6 +341,8 @@ static func strike(S: SimState, ex, a, d, dmg: float, o = null) -> void:
 			# Section 22: flow adds damage, dmgPer for each point, on every strike of his.
 			dmg *= 1.0 + float(DirRecipe.cfg().get("flow", {}).get("dmgPer", 0.0)) * float(a.act.flow)
 	SimDamage.hit(S, ex, a, d, dmg, o)
+	if bool(o.get("jolt", false)) and dmg > 0.0 and (ex.sD if d == ex.D else ex.sA) != 1.0:
+		DirSwing.atBlow(S, a, d, 0.3)   # a heavy that landed: the world jolts round it (game-design.md section 10)
 	if dmg > 0.0 and DirBlast.minesOn() and not S.shots.is_empty():
 		SimShots.tripNear(S, d.x, d.y + SimShots.chest, float(DirBlast.data().mine.blowR), "blow", S.fighters.find(a))   # a blow on a mine sets it off in the striker's face
 	if dmg > 0.0 and not o.get("ignoreStance", false) and (ex.sD if d == ex.D else ex.sA) == 1.0:
@@ -421,6 +423,8 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 				# a full set-up; below that it goes enderDist and is half of one.
 				var perfect: bool = ender and att.act.flow >= int(DirBlur.cfg().get("fullEnderFlow", 99))
 				DirLaunch.knock(S, att, tgt, 1.0 if heavy else (float(bl.get("perfectDist", 1.0)) if perfect else float(bl.enderDist)))
+				if heavy:
+					DirSwing.atBlow(S, att, tgt, 0.5)   # the world jolts round a heavy landing (game-design.md section 10)
 				SimEvents.feed(S, "KNOCK BACK" if heavy else "BLUR ENDER", "a heavy, but no launch was earned" if heavy else ("at flow " + str(att.act.flow) + ": the pattern's closing blow and the full knock-back" if perfect else "the light after " + str(DirInterrupt.gi(att, DirInterrupt.LANDED) - 1) + " landed strikes: the blur closes with its own knock-back"))
 				_knockDecisive(S, ex, att, tgt, "" if (heavy or perfect) else "blurPlain")   # a plain blur's ender is half a set-up (section 14.4); at flow fullEnderFlow it is a full one
 			else:
@@ -436,8 +440,10 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 		if "launchPower" in tgt:
 			tgt.launchPower = lpow * (DirBrawl.freshMul(S, tgt, 4) if DirBrawl.freshHurts() else 1.0)   # for World's building aim (when granted)
 	DirRally.openNoDown(S, att, tgt, lpow, longOnly, tilt)   # 10-26 item 22(b): a rally's opening send is never down on a neutral stick
+	DirSwing.atLaunch(S, att, tgt, force)   # the swing is decided first, on one line; the plan runs on the line it ends on
 	var r: Dictionary = DirLaunch.chooseLaunch(S, att, tgt, force, longOnly, String(args.get("sends", "")) if args != null else "", tilt, forced or (gate.get("enabled", false) and not DirData.contact().is_empty()), lpow >= 0.0)
 	DirRally.clearNoDown()
+	DirSwing.atPlanned(S, r.best)
 	var parts: PackedStringArray = []
 	for k in r.top:
 		parts.append(k.name + " " + SimMathx.jstr(SimMathx.jround(k.s)))
@@ -462,6 +468,7 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 			DirLaunch.knockBack(S, att, tgt)   # the old profiles keep the shove
 		else:
 			DirLaunch.knock(S, att, tgt)
+		DirSwing.atBlow(S, att, tgt, 0.5)
 		SimEvents.feed(S, "KNOCK BACK", "  |  ".join(parts))
 		if not DirData.contact().is_empty():
 			_knockDecisive(S, ex, att, tgt)
@@ -489,6 +496,7 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 	holdSend(S, longOnly or (args != null and bool(args.get("decisive", false))), (lpow * kf) if lpow >= 0.0 else 1.0)   # hit-stop by weight: the send holds a launch's stop
 	DirCamIntent.launched(S, tgt)   # the camera-intent feed: with the launch curve, the touchdown is the curve's
 	DirCalm.atSend(S, att, tgt, r.best)   # the calm-moment turn: the moment after this landing is coming, so World is asked now
+	DirSwing.atSend(S, att, tgt, r.best)   # the swing starts as the hit-stop ends, and rests before contact
 	DirBrawl.markKind(S, tgt, lkind)
 	# The showcase (section 2): a string's ender launched at flow showcaseAt is the showcase ender. The cue is the panel's;
 	# Combat's showcase rows and the extra impact wear wait for their data and for a wear hook on a launch.

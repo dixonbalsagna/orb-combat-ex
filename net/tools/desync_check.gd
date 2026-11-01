@@ -18,7 +18,7 @@ extends SceneTree
 ## exchanged but never compared) must miss the injections, and a stale one (a checkpoint keeps its first run's digest,
 ## a guess, rather than its last) must raise a false alarm on every clean run where a re-run changed a checkpoint's state.
 ##   godot --headless --path . --script res://net/tools/desync_check.gd -- [--seeds=1,2] [--ticks=900] [--every=60]
-##     [--profiles=lan,p80j,...|all] [--setup=default|features|planet|field] [--delay=2] [--out=user://desync] [--negative-control]
+##     [--profiles=lan,p80j,...|all] [--setup=default|features|planet|field|kick] [--delay=2] [--out=user://desync] [--negative-control]
 ##     [--ai-timers] [--right-stick]
 ## --right-stick turns switches.rightStick on in this process: the bots throw strikes, the word is on the wire, in the hash and in the digest.
 
@@ -27,6 +27,7 @@ const SETUPS: Dictionary = {
 	"features": {"v2": [true, true], "forms": true, "brake": true, "flight": true, "hitstop": true, "ricochet": true},
 	"planet": {"planet": 7, "touch": 3},
 	"field": {"planet": 7, "touch": 1, "planetGen": 3, "intro": false},
+	"kick": {"kick": true},
 }
 
 ## name -> the change, made to the divergent peer's state after every run of the injection tick.
@@ -92,6 +93,16 @@ func _init() -> void:
 			NetBot.setRightStick(true)
 	DirAccess.make_dir_recursive_absolute(outDir)
 	var setup: Dictionary = SETUPS[setupName]
+	if setupName == "kick":   # its state is in the digest only while on, so its injection is only for this setup
+		INJECT["kick"] = func(S: SimState) -> void: S.fighters[1].kik.t1 += 1
+		INJECT.erase("fighter_x")   # flyers heal an ulp of x before the next checkpoint on every seed tried (four), so it would test nothing here; the default setup keeps it
+		NetBot.flyer = true
+		var kc: Array = NetBot.flyerCount(seeds[0], setup)
+		print("kick: a straight 600 ticks has %d kicks and %d plants" % kc)
+		if kc[0] < 5 or kc[1] < 3:
+			print("FAIL  --setup=kick tests nothing unless the bots kick")
+			quit(1)
+			return
 	print("Orb Combat EX desync check   Godot %s   setup %s   %d ticks   checkpoint every %d   delay %d" % [Engine.get_version_info().string, setupName, ticks, every, delay])
 	if aiTimers:
 		_aiTimers(seeds, ticks, every, delay, profiles, negative)

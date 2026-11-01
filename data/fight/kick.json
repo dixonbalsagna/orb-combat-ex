@@ -1,0 +1,40 @@
+{
+  "schema": "fight.kick/1",
+  "enabled": false,
+  "_enabled": "the kick and the coin turn (docs/architecture/kick.md): a setup's \"kick\" overrides it for a match. Off, nothing runs and nothing is hashed",
+  "stickOn": 0.5,
+  "_stickOn": "how far the stick must be over for flat-out flight to count",
+  "startBelow": 0.5,
+  "_startBelow": "under this share of top speed, flat-out flight is a kick",
+  "instant": 0.8,
+  "_instant": "the share of top speed he's at on a kick's first tick. For Orb to try: 0.8, 0.9, 1.0",
+  "climbTicks": 8,
+  "_climbTicks": "ticks from there to top speed, in a straight line. For Orb to try: 8, 12, 4. With 0 he's at top speed at once",
+  "turn": {
+    "above": 0.5,
+    "_above": "a stick flip above this share of top speed is a coin turn",
+    "brakeTicks": 5,
+    "brake": 0.55,
+    "_brake": "the share of his speed kept each tick of the brake",
+    "plantTicks": 3,
+    "_plantTicks": "ticks he's stopped, and can be hit: there's no invulnerability",
+    "hop": 180.0,
+    "_hop": "u/s up at the plant: a small hop"
+  },
+  "overspeed": {
+    "enabled": false,
+    "_enabled": "going over top speed, by where he's going. Off: Orb asked for the response, and this is what QA reads for escapes and catches",
+    "topShare": 1.35,
+    "_topShare": "the share of top speed the climb reaches, when it may",
+    "hold": 8,
+    "_hold": "ticks at topShare",
+    "ease": 28,
+    "_ease": "ticks after that to ease down to top speed",
+    "chargeRange": 6000.0,
+    "_chargeRange": "units: inside this, flying away has no overspeed. 80 body heights, the far press's 4,000 u/s for its 90 ticks",
+    "repeatTicks": 180,
+    "_repeatTicks": "the third kick within this many ticks of the first has no overspeed",
+    "afterZip": 30,
+    "_afterZip": "ticks after a zip with no overspeed away"
+  }
+}

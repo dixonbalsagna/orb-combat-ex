@@ -194,6 +194,15 @@ static func columns(fine: PackedByteArray, stored: PackedByteArray) -> Dictionar
 	return {"grip": grip, "absorb": absorb, "rough": rough, "furrow": furrow, "surf": surf, "look": look}
 
 
+## One column's numbers, as `columns` gives them: [grip, absorb, rough, furrow, surf code, look code] for fine biome `fine` and stored biome `stored` (all 1 and 255 on a town's or a city's ground).
+static func one(fine: int, stored: int) -> Array:
+	if not _loaded:
+		_load()
+	if int(stored) >= 7 or fine >= _grip.size():
+		return [1.0, 1.0, 1.0, 1.0, 255, 255]
+	return [_grip[fine], _absorb[fine], _rough[fine], _furrow[fine], _surf[fine], _look[fine]]
+
+
 ## True when the match being played has fine ground: a gen 2 planet's columns (the fine biomes parallel to the stored ones). False for the hand-made world and a gen 1 planet, whatever an earlier match left.
 static func live() -> bool:
 	return WorldBiomes.fineCols.size() > 0 and WorldBiomes.fineCols.size() == WorldBiomes.planetCols.size()

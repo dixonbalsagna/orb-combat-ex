@@ -78,6 +78,9 @@ static func digest(S: SimState) -> String:
 	for s in S.shots:
 		v.append(s.x); v.append(s.y); v.append(s.left)
 	v.append(S.beams.size()); v.append(S.craters.size()); v.append(S.slides.size())
+	if S.kickOn:   # the kick and the coin turn, as SimHash reads them
+		for f in S.fighters:
+			_fields(v, md, f.kik, SimKick.HASHED)
 	if S.frame != null and not swingBlind:   # a field world's line, swing and store, as SimHash reads them; poses derive from these, so they aren't here. Any other match digests as before
 		_fields(v, md, S.frame, SimState.Frame.HASHED)
 		_fields(v, md, S.swing, SimSwing.HASHED)

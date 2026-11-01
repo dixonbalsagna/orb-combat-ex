@@ -287,6 +287,8 @@ static func step(S: SimState) -> void:
 		WorldAfter.step(S)   # a beam's aftermath (after.gd): its timed jobs, every unfrozen tick
 	if WorldFire.on():   # window 18: the burning trees, a tick (nothing runs when none burns)
 		WorldFire.step(S)
+	if S.frame != null and SimSwing.waterHeld(S):
+		return
 	if S.waterWin.is_empty() or int(S.waterTick) % STEP_TICKS != 0:
 		return
 	var NC: int = SimConst.NC
@@ -306,9 +308,13 @@ static func step(S: SimState) -> void:
 		var hi: int = w[0] + w[1]
 		var flux := PackedFloat32Array()
 		flux.resize(hi - lo + 1)   # flux[j - lo]: depth moving from column j to column j + 1 (negative: the other way)
+		var bs := PackedFloat64Array()   # each column's base, read once: on a field world a read walks the line
+		bs.resize(hi - lo + 1)
+		for j in range(lo, hi + 1):
+			bs[j - lo] = WorldTerrain.baseAt(S, posmod(j, NC))
 		var b: int = posmod(lo, NC)
-		var gb: float = WorldTerrain.baseAt(S, b) + dfm[b]
-		var rb: bool = WorldTerrain.baseAt(S, b) < RESERVOIR_BASE
+		var gb: float = bs[0] + dfm[b]
+		var rb: bool = bs[0] < RESERVOIR_BASE
 		var sb: float = SEA_LEVEL if rb and gb < SEA_LEVEL else gb + wat[b]
 		for j in range(lo, hi):
 			var a: int = b
@@ -316,8 +322,8 @@ static func step(S: SimState) -> void:
 			var ra: bool = rb
 			var sa: float = sb
 			b = posmod(j + 1, NC)
-			gb = WorldTerrain.baseAt(S, b) + dfm[b]
-			rb = WorldTerrain.baseAt(S, b) < RESERVOIR_BASE
+			gb = bs[j + 1 - lo] + dfm[b]
+			rb = bs[j + 1 - lo] < RESERVOIR_BASE
 			sb = SEA_LEVEL if rb and gb < SEA_LEVEL else gb + wat[b]
 			if ra and rb:
 				continue
@@ -341,7 +347,7 @@ static func step(S: SimState) -> void:
 		var moved: float = 0.0
 		for j in range(lo, hi + 1):
 			var i: int = posmod(j, NC)
-			if WorldTerrain.baseAt(S, i) < RESERVOIR_BASE:
+			if bs[j - lo] < RESERVOIR_BASE:
 				continue
 			var inflow: float = 0.0
 			if j > lo:

@@ -14,7 +14,7 @@ extends RefCounted
 ## The rate never jumps: an ask on a running swing starts its ramp from the rate it's at, and a reversal, or a small swing, first eases the running one to rest and waits there (next*).
 ## A match's motion (setup.swing, "full", "slow" or "off"; Accessibility's swing-motion.md): slow caps every peak at slowRate; off refuses every ask. A setup value, so it's in the match key and the replay; a lobby crosses two players' by strongest().
 
-const HASHED: Array = ["layK", "layC", "active", "rate", "left", "way", "cause", "n", "restT", "pivotHeld", "pivotX", "age", "clamps", "kind", "deg", "ticks", "rampIn", "rampOut", "ptick", "r0", "cruise", "tau", "motion", "nextDeg", "nextCause", "nextRate", "nextBlow", "nextHeld", "nextX", "nextRest"]
+const HASHED: Array = ["poseK", "layN", "layNearOn", "waterWarm", "waterSeen", "layK", "layC", "active", "rate", "left", "way", "cause", "n", "restT", "pivotHeld", "pivotX", "age", "clamps", "kind", "deg", "ticks", "rampIn", "rampOut", "ptick", "r0", "cruise", "tau", "motion", "nextDeg", "nextCause", "nextRate", "nextBlow", "nextHeld", "nextX", "nextRest"]
 const RAMPED: int = 0
 const BLOW: int = 1
 const SMOOTH: int = 2
@@ -239,7 +239,10 @@ static func tick(S: SimState) -> void:
 		_anchorAtRest(S)
 		if sw.layK >= 0:
 			_layMarks(S)
+		if sw.poseK >= 0:
+			_posesFar(S)
 		return
+	sw.poseK = -1   # a swing again: its rest poses them all from the start
 	sw.layK = -1   # a swing again: the line is moving, and its rest lays them from the start
 	ticks += 1
 	sw.age += 1
@@ -278,10 +281,24 @@ static func tick(S: SimState) -> void:
 			S.fighters[0].y = SimFighter.floorFor(S, S.fighters[0], S.fighters[0].x, S.fighters[0].z)
 		if sb:
 			S.fighters[1].y = SimFighter.floorFor(S, S.fighters[1], S.fighters[1].x, S.fighters[1].z)
+		_layNear(S)
 	if sw.tau >= sw.ticks:
 		_stop(S)
 		return
 	_poses(S, false)
+	_aimsFollow(S)
+
+
+## A flight aimed at a building takes its depth from where the building is now. The plan read it at the launch, and a swing moves it: without this a body stopped at the
+## building's x with its face 1,400 units off in depth.
+static func _aimsFollow(S: SimState) -> void:
+	for f in S.fighters:
+		if f.aimB < 0:
+			continue
+		var b = S.buildings[f.aimB]
+		var dir: float = -1.0 if f.vx < 0.0 else 1.0
+		f.aimZ1 = WorldBrunt.faceZ(b)
+		f.aimD = maxf(absf(SimWrap.sdx(f.aimX0, SimWrap.wrap(b.x - dir * b.w * 0.5))), 1.0)
 
 
 ## Turn a frame about the point at strip px, by deg, and put x0 there: the same line elsewhere, seen from the pivot.
@@ -323,7 +340,10 @@ static func _stop(S: SimState) -> void:
 	sw.pivotHeld = false
 	sw.restT = -1
 	SimFx.swingEvent(S, "swing_rest", sw.cause, 0.0, sw.age)
-	_poses(S, true)
+	_poses(S, S.bFirst == 0)
+	if S.bFirst > 0:
+		sw.poseK = 0   # thousands of free buildings: the near ones now, as a swing tick has them, and the rest a share a tick. All at once was 25 ms
+	_aimsFollow(S)
 	_layBegin(S)
 	if sw.nextDeg != 0.0:   # what waited for this rest
 		var a: Dictionary = {"deg": sw.nextDeg, "cause": sw.nextCause, "rate": sw.nextRate, "blow": sw.nextBlow}
@@ -333,6 +353,102 @@ static func _stop(S: SimState) -> void:
 			a["restBy"] = maxi(1, sw.nextRest - S.tick)
 		sw.nextDeg = 0.0
 		ask(S, a)
+
+
+## Should water's flow wait this tick? A flow step reads every column of its windows at the near ground, up to 118 new nodes and 335 sub-reads in a tick on a new line: Combat's hitch.
+## So it waits while the line turns, and when the line rests or a window opens wide it reads those columns, `waterWarmCols` a tick, before it flows. The reads change
+## nothing: only the wait is state, so every peer waits the same whatever its cache holds.
+static func waterHeld(S: SimState) -> bool:
+	var sw = S.swing
+	if S.waterWin.is_empty():
+		sw.waterWarm = 0
+		sw.waterSeen = 0
+		return false
+	var span: int = 0
+	for w in S.waterWin:
+		span += 2 * int(w[1]) + 1
+	var d: Dictionary = data()
+	if movingNow(S):
+		sw.waterWarm = span
+		sw.waterSeen = span
+		return true
+	if sw.waterWarm <= 0:
+		if span - sw.waterSeen < int(d.waterWarmGrow):
+			sw.waterSeen = span
+			return false
+		sw.waterWarm = span
+	var at: int = maxi(span - sw.waterWarm, 0)
+	var n: int = int(d.waterWarmCols)
+	_waterWarmSlice(S, at, at + n)
+	sw.waterWarm = maxi(sw.waterWarm - n, 0)
+	sw.waterSeen = span
+	return true
+
+
+## Reads the columns from..to-1 of the windows, taken end to end.
+static func _waterWarmSlice(S: SimState, from: int, to: int) -> void:
+	var at: int = 0
+	for w in S.waterWin:
+		var c: int = int(w[0])
+		var h: int = int(w[1])
+		var n: int = 2 * h + 1
+		for q in range(maxi(from, at), mini(to, at + n)):
+			SimField.col(S, posmod(c - h + q - at, SimConst.NC))
+		at += n
+
+
+## While the line turns, the strip's marks near the pair keep to the records under it, a share a tick, so a scar doesn't ride with the line and snap at the rest (in 5 of 156
+## natural swings one did, up to 51 columns within 800 units of a fighter). Only with such a record near: nearly every swing has none, and costs a walk of the store every 8 ticks.
+static func _layNear(S: SimState) -> void:
+	var sw = S.swing
+	if sw.age % 8 == 1:
+		sw.layNearOn = _marksNear(S)
+	if not sw.layNearOn:
+		return
+	var d: Dictionary = data()
+	var r: int = int(d.layNearCols)
+	var side: int = 2 * r + 1
+	var nc: int = SimConst.NC
+	var a: int = int(floor(SimWrap.wrap(S.fighters[0].x) / SimConst.COL))
+	var gap: int = int(SimWrap.sdx(S.fighters[0].x, S.fighters[1].x) / SimConst.COL)
+	var one: bool = absi(gap) < side   # close enough to be one stretch
+	var span: int = absi(gap) + side if one else 2 * side
+	var k: int = sw.layN
+	for q in range(int(d.layNearPerTick)):
+		var i: int = (k + q) % span
+		if one:
+			_layCol(S, posmod(a + mini(gap, 0) - r + i, nc))
+		else:
+			_layCol(S, posmod(a - r + i if i < side else a + gap - r + i - side, nc))
+	sw.layN = (k + int(d.layNearPerTick)) % span
+
+
+## Is a crack or a scorch within reach of a fighter? By planet distance, half as far again as the columns laid, as a mark has its own width and a crack its length.
+static func _marksNear(S: SimState) -> bool:
+	var reach: float = 1.5 * float(data().layNearCols) * SimConst.COL / SimField.R
+	var reach2: float = reach * reach
+	for f in S.fighters:
+		SimField.pointIn(S.frame, f.x)
+		var px: float = SimField.ox
+		var py: float = SimField.oy
+		var pz: float = SimField.oz
+		for i in range(S.storeN):
+			var o: int = i * WorldStore.STRIDE
+			var kind: int = int(S.store[o])
+			if kind != WorldStore.KIND_CRACK and kind != WorldStore.KIND_SCORCH:
+				continue
+			var dx: float = S.store[o + 1] - px
+			var dy: float = S.store[o + 2] - py
+			var dz: float = S.store[o + 3] - pz
+			if dx * dx + dy * dy + dz * dz <= reach2:
+				return true
+			if kind == WorldStore.KIND_CRACK:
+				dx = S.store[o + 4] - px
+				dy = S.store[o + 5] - py
+				dz = S.store[o + 6] - pz
+				if dx * dx + dy * dy + dz * dz <= reach2:
+					return true
+	return false
 
 
 ## The strip's cracks and scorch, from the planet's records, under the line where it came to rest (World's layCracks and layScorch, a slice a tick: 4,800 columns of look-ups are more than a tick has). Outward from the pair, so what's in view is right first: layPerTick columns a tick. Only when the store holds any. S.crack and S.scorch are hashed, and this writes them on the same tick on every peer; layK and layC are in the hash and the snapshot.
@@ -432,16 +548,28 @@ static func _poseThese(S: SimState, list) -> void:
 	var moved: bool = false
 	for i in list:
 		var x0: float = S.bX[i]
+		var in0: bool = WorldStructures.inBand(S, S.bZ[i])
 		SimField.strip(S, S.bDir[i * 3], S.bDir[i * 3 + 1], S.bDir[i * 3 + 2])
 		S.bX[i] = SimField.sx
 		S.bZ[i] = SimField.sz
+		var in1: bool = WorldStructures.inBand(S, SimField.sz)
 		var k0: int = mini(int(SimWrap.wrap(x0) / bw), buckets - 1)
 		var k1: int = mini(int(SimWrap.wrap(SimField.sx) / bw), buckets - 1)
-		if k0 != k1:
+		if (k0 != k1 and (in0 or in1)) or in0 != in1:
 			if not moved:
 				S.bIdx = S.bIdx.duplicate()   # the outer array only
 				moved = true
-			_rebucket(S, i, k0, k1)
+			_rebucket(S, i, k0 if in0 else -1, k1 if in1 else -1)
+
+
+## After a rest with places everywhere: the next share of the buildings, in index order. Until then a far one's pose is as stale as it was in the swing, and only a far one's.
+static func _posesFar(S: SimState) -> void:
+	var sw = S.swing
+	var n: int = S.bX.size()
+	var a: int = sw.poseK
+	var b: int = mini(a + int(data().posesRestPerTick), n)
+	_poseThese(S, range(a, b))
+	sw.poseK = b if b < n else -1
 
 
 ## The buildings a swing tick poses, by planet distance (Performance's test: a stored pose is stale past the reach, so a building swinging in would never be found by it): within poseReach of the pivot, poseBody of each of the
@@ -517,13 +645,15 @@ static func posesOf(S: SimState, list: PackedInt32Array) -> void:
 	_poseThese(S, list)
 
 
-## A building that crossed from bucket k0 to k1: both copied, then written. A bucket stays in ascending index order, as buildIndex makes it, so near() returns the same list in the same order.
+## A building that crossed from bucket k0 to k1, or into or out of the index (-1): both copied, then written. A bucket stays in ascending index order, as buildIndex makes it, so near() returns the same list in the same order.
 static func _rebucket(S: SimState, i: int, k0: int, k1: int) -> void:
-	var a: PackedInt32Array = S.bIdx[k0].duplicate()
-	var p: int = a.find(i)
-	if p >= 0:
-		a.remove_at(p)
-	S.bIdx[k0] = a
-	var b: PackedInt32Array = S.bIdx[k1].duplicate()
-	b.insert(b.bsearch(i), i)
-	S.bIdx[k1] = b
+	if k0 >= 0:
+		var a: PackedInt32Array = S.bIdx[k0].duplicate()
+		var p: int = a.find(i)
+		if p >= 0:
+			a.remove_at(p)
+		S.bIdx[k0] = a
+	if k1 >= 0:
+		var b: PackedInt32Array = S.bIdx[k1].duplicate()
+		b.insert(b.bsearch(i), i)
+		S.bIdx[k1] = b

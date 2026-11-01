@@ -247,7 +247,8 @@ static func pinned(S: SimState, c0: int, half: int) -> PackedByteArray:
 	return out
 
 
-## Build the spatial index (once per world; the buildings never move).
+## Build the spatial index (once per world; off a field world the buildings never move). With places everywhere, only the buildings in the fight's band of depth: a free
+## place is thousands of units off the line, its z test would drop it, and a query would walk 80 of them for nothing. A swing moves one in or out (SimSwing._poseThese).
 static func buildIndex(S: SimState) -> void:
 	S.bIdx = []
 	for i in range(BUCKETS):
@@ -255,8 +256,20 @@ static func buildIndex(S: SimState) -> void:
 	for i in range(S.buildings.size()):
 		var b = S.buildings[i]
 		b.idx = i
+		if not inBand(S, b.z):
+			continue
 		var k: int = mini(int(SimWrap.wrap(b.x) / (SimConst.W / 128.0)), BUCKETS - 1)
 		S.bIdx[k].append(i)
+
+
+## Does a query need a building at this depth? All do, but for places everywhere.
+static func inBand(S: SimState, z: float) -> bool:
+	return S.bFirst == 0 or absf(z) <= float(SimSwing.data().indexBand)
+
+
+## How many buildings a share of "all of them" counts: the first ring's, since a far town isn't in this fight's budget.
+static func ringCount(S: SimState) -> int:
+	return S.bFirst if S.bFirst > 0 else S.buildings.size()
 
 
 ## The indices of the buildings whose centres are within r + the widest half width of x, in bucket order (then index).

@@ -32,6 +32,16 @@ static func inStruggle(S: SimState, f) -> bool:
 	return cb != null and cb.args.has("sOpen") and f == (ex.D if cb.args.w == "A" else ex.A)
 
 
+## Is f zipping, from his press to the end of his way out? (DirZip.zipping). The kick's overspeed waits for it.
+static func zipping(f) -> bool:
+	return _d("zip.gd").zipping(f)
+
+
+## DirArc.step: a launched body on the closed-form arc.
+static func arcStep(S: SimState, f, dt: float) -> bool:
+	return _d("arc.gd").step(S, f, dt)
+
+
 ## DirExchange.endEx: the running exchange ends (a K.O. inside one).
 static func endEx(S: SimState, ex) -> void:
 	_d("exchange.gd").endEx(S, ex)

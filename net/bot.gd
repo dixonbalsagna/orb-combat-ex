@@ -7,6 +7,7 @@ extends RefCounted
 ## rates of golden_recipes.gd's scripted human, with the v2 stance mask too. Not a fighter AI: it does not read the state.
 ## With switches.rightStick on, it also throws strikes and braces on a stream of its own, in `word` (SimIntent.pack2) after each next(): the
 ## first word's stream, and so every match with the switch off, is what it always was.
+## With flyer set (a check's --setup=kick), it flies flat out and flips the stick on a stream of its own, and attacks far less: a plain bot's stream hardly ever kicks.
 
 var r: SimRng
 var mx: float = 0.0
@@ -26,6 +27,10 @@ var rsDir: int = 0
 var rsLevel: int = 0
 var rsMask: int = 0
 var rsAim: int = 0
+var r3: SimRng = null   # the flyer's stream
+var flyLeft: int = 0    # ticks before the next flip
+var flyWay: float = 1.0
+static var flyer: bool = false
 
 const STEER: Array = [-1.0, 0.0, 1.0]
 const MASKS: Array = [0, 1, 2, 4, 8]
@@ -35,6 +40,8 @@ func _init(seed: int, slot: int) -> void:
 	r = SimRng.new(SimRng.deriveSeed(seed & 0xFFFFFFFF, "netbot%d" % slot))
 	if SimInputData.right_stick_on():
 		r2 = SimRng.new(SimRng.deriveSeed(seed & 0xFFFFFFFF, "netbotword%d" % slot))
+	if flyer:
+		r3 = SimRng.new(SimRng.deriveSeed(seed & 0xFFFFFFFF, "netbotfly%d" % slot))
 
 
 ## The right-hand switch in this process, in memory (a check's --right-stick; data/input/timing.json says off).
@@ -92,7 +99,55 @@ func next() -> int:
 	i.transform = r.next() < 0.002
 	i.escape = r.next() < 0.003
 	word = _word() if r2 != null else 0
+	if r3 != null:
+		_fly(i)
 	return SimIntent.pack(i)
+
+
+## Flat out with the stick flipped every run of ticks, and most of its presses dropped, since an exchange ends a flight.
+func _fly(i: SimIntent) -> void:
+	if flyLeft <= 0:
+		flyLeft = 25 + int(floor(r3.next() * 50.0))
+		flyWay = -flyWay
+	flyLeft -= 1
+	i.dash = true
+	i.mx = flyWay
+	i.guard = false
+	i.charge = false
+	i.power = false
+	if r3.next() < 0.9:
+		i.light = false
+		i.lightHeld = false
+		i.heavy = false
+		i.sig = false
+		i.special = 0
+		i.context = false
+		i.transform = false
+		i.escape = false
+		i.dodge = false
+		i.guardPress = false
+		i.powerPress = false
+		i.powerTap = false
+		i.upgrade = 0
+
+
+## How many kicks and plants a straight match of two flyers has: a check's proof that its kick setup kicks.
+static func flyerCount(seed: int, setup: Dictionary, ticks: int = 600) -> Array:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, seed, {"p1": false, "p2": false}, setup)
+	var bots: Array = [NetBot.new(seed, 0), NetBot.new(seed, 1)]
+	var out: Array = [0, 0]
+	for t in range(ticks):
+		SimCore.step(S, [NetSession.intentOf(bots[0].next(), bots[0].word), NetSession.intentOf(bots[1].next(), bots[1].word)])
+		for e in S.out.fx:
+			if e.type == "kick":
+				out[0] += 1
+			elif e.type == "coin_plant":
+				out[1] += 1
+		S.out.feed.clear()
+		S.out.fx.clear()
+	SimCore.dispose(S)
+	return out
 
 
 ## What a field world keeps past a match, for a check about to count leaked objects: the fields and the store's indexes.

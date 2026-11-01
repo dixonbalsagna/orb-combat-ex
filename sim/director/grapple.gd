@@ -580,7 +580,11 @@ static func _bits(i: SimIntent) -> int:
 
 
 static func _prevIntent(f) -> SimIntent:
-	var b: int = _g(f, PREV)
+	return _bitsIntent(_g(f, PREV))
+
+
+## An intent with the levels of _bits, for SimPressRead.struggle_press.
+static func _bitsIntent(b: int) -> SimIntent:
 	var pv := SimIntent.new()
 	pv.lightHeld = (b & 1) != 0
 	pv.heavyHeld = (b & 2) != 0

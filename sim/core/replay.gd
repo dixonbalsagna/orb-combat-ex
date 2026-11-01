@@ -188,6 +188,8 @@ static func dataHash(setup: Dictionary = {}) -> String:
 		h.text(SimBoons.dataHash())
 	if setup.get("brake", SimBrake.enabled()) == true:   # the air brake: data/fight/brake.json, only for a match with it on
 		h.text(SimBrake.dataHash())
+	if setup.get("kick", SimKick.enabled()) == true:   # the kick and the coin turn: data/fight/kick.json, only for a match with them on
+		h.text(SimKick.dataHash())
 	if setup.get("flight", SimFlight.enabled()) == true:   # the launch's curve: data/fight/flight.json, only for a match with it on
 		h.text(SimFlight.dataHash())
 	if setup.get("ricochet", SimRicochet.enabled()) == true:   # the ricochet's glance: data/fight/ricochet.json, only for a match with it on

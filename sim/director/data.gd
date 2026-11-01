@@ -44,6 +44,10 @@ static func _ensure() -> void:
 	h.text(DirLocation.dataText())   # data/director/location.json (location variety)
 	if DirPlane.rate() > 0.0:
 		h.text(DirPlane.dataText())   # data/combat/depth.json, for its planeEasePerTick (with depth on, the replay's own line has it)
+	if DirStick.on():
+		h.text(DirStick.dataText())   # data/director/stick.json, with the right stick on
+	if DirSwing.enabled():
+		h.text(DirSwing.dataText())   # data/director/swing.json, once it's on
 	h.text(DirAI.skillText())   # data/director/ai.json (the AI's skill numbers)
 	h.text(DirLaunch.dataText())   # data/director/launch.json (the landing mix)
 	h.text(DirInterrupt.dataText())   # data/director/interrupts.json, and Controls' perfect-block timing

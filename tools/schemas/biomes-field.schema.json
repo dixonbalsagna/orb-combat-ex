@@ -22,6 +22,11 @@
         "bandsCity": { "type": "integer", "minimum": 0, "maximum": 6, "description": "A city's plan is the street's strip laid this many times each side of the middle one, a lane-band (pitchBH) apart, so a ring at any bearing crosses several." },
         "bandsTown": { "type": "integer", "minimum": 0, "maximum": 6, "description": "The same for a town." },
         "pitchBH": { "type": "number", "minimum": 8, "maximum": 80, "description": "The distance between bands, in fighter heights (the depth of the fight lanes' band, 32)." },
+        "farPeople": { "type": "boolean", "description": "On (with everywhere), the buildings of the places the first ring does not hold have their people, asleep until the place is first within farReach of a fighter (Game Design, docs/world/ring-any-angle/game-design.md section 15, addendum of 2026-11-01)." },
+        "farAnguish": { "type": "boolean", "description": "On (with farPeople), a far town's people count toward the hero's anguish by their place's share when it is first posed, and feed nothing else: not menace, power, Witness or mood." },
+        "farShare": { "type": "number", "minimum": 0, "maximum": 4, "description": "A far place, wholly lost, counts toward the hero's anguish as this many first-ring places' worth of people (the average one's); a part lost counts in proportion to the place's own people, so a larger place does not cost more by size (Legal RL-228 term 3)." },
+        "farReach": { "type": "number", "minimum": 500, "maximum": 40000, "description": "A far place is posed (its people wake, and join the anguish's norm) when a fighter is within this many units of its first building." },
+        "everywhere": { "type": "boolean", "description": "On, every place the first ring does not hold is laid too, as the whole of its plan, planet-fixed, with no people (docs/world/places-everywhere.md). Off, only the first ring's places stand." },
         "minBuildings": { "type": "integer", "minimum": 1, "maximum": 100, "description": "A place that would stand fewer buildings than this on a ring falls back to the chord layout." }
       }
     },
@@ -42,6 +47,9 @@
       "additionalProperties": false,
       "properties": {
         "sidewalk": { "type": "number", "minimum": 0, "maximum": 100, "description": "A lot edge is its buildings footprints plus this many units (Art rule: one lot per street block, the footprints plus a sidewalk)." },
+        "blendSide": { "type": "number", "minimum": 2, "maximum": 800, "description": "The bank beside a lot, across the street: it eases into the ground over at most this many units (and at most half the gap to the nearest lot beside it)." },
+        "gradeAcross": { "type": "number", "minimum": 0, "maximum": 0.5, "description": "A lot also leans across its street by the slope between the ground at its two sides, at most this rise over run (0: level across, as before): a street on a hillside tilts a little instead of cutting a bank into it." },
+        "grade": { "type": "number", "minimum": 0, "maximum": 0.5, "description": "A lot's flat climbs with its street by at most this rise over run (its least-squares slope along the street); 0 keeps every lot level." },
         "blendMax": { "type": "number", "minimum": 2, "maximum": 400, "description": "A lot eases into the ground beyond its edge over at most this many units (and at most half the gap to the nearest other lot): the ramp down an avenue." },
         "gap": { "type": "number", "minimum": 0, "maximum": 300, "description": "Buildings of one row of a place that stand within this many units of each other (no avenue between) share a lot." }
       }

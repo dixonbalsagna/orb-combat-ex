@@ -177,7 +177,7 @@ func _init() -> void:
 	var pfOk: bool = true
 	for k in range(15):
 		var xk: float = (float(k * 100 + 50) + 0.5) * SimConst.COL
-		if absf(WorldContact._pf(WorldContact._gAbs, xk) - float(g[k].absorb)) > 1.0e-9 or absf(WorldContact._pf(WorldContact._gRough, xk) - float(g[k].rough)) > 1.0e-9 or absf(WorldContact._pf(WorldContact._gFur, xk) - float(g[k].furrow)) > 1.0e-9:
+		if absf(WorldContact._gv(Sy, 2, xk) - float(g[k].absorb)) > 1.0e-9 or absf(WorldContact._gv(Sy, 3, xk) - float(g[k].rough)) > 1.0e-9 or absf(WorldContact._gv(Sy, 4, xk) - float(g[k].furrow)) > 1.0e-9:
 			pfOk = false
 	ok(pfOk, "the bounce's keep, the tumble band and the trench read each fine biome's absorb, rough and furrow")
 	# a town keeps contact's own rule and a multiplier of 1
@@ -185,7 +185,7 @@ func _init() -> void:
 	WorldBiomes.planetCols = pcs
 	WorldBiomes.worldId = WorldBiomes.claim()
 	Sy.worldId = WorldBiomes.worldId
-	ok(WorldContact.surfaceAt(Sy, 1150.5 * SimConst.COL) in ["paving", "soil"] and absf(WorldContact._pf(WorldContact._gFur, 1150.5 * SimConst.COL) - 1.0) < 1.0e-12, "a city column keeps the old rule and a multiplier of 1")
+	ok(WorldContact.surfaceAt(Sy, 1150.5 * SimConst.COL) in ["paving", "soil"] and absf(WorldContact._gv(Sy, 4, 1150.5 * SimConst.COL) - 1.0) < 1.0e-12, "a city column keeps the old rule and a multiplier of 1")
 
 	# the look class and the fine name, read per column
 	var looksOk: bool = true

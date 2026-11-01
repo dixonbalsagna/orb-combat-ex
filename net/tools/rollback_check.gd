@@ -70,6 +70,7 @@ const SETUPS: Dictionary = {
 	"planet2": {"planet": 7, "touch": 3, "arena": {"cols": 2400}, "planetGen": 2, "intro": false},   # a gen 2 ring, as QA plays them (qa/godot/qa_planet.gd)
 	"planet2depth": {"planet": 7, "touch": 3, "arena": {"cols": 2400}, "planetGen": 2, "intro": false, "depth": true},
 	"field": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false},   # a field world (sim/core/field.gd): its line and store, in the hash
+	"kick": {"kick": true},   # the kick and the coin turn (sim/core/kick.gd): six numbers a fighter, in the hash while on
 }
 
 ## Containers the state reaches by two paths that are only read, never written in place (checked by reading the code,
@@ -198,6 +199,14 @@ func _init() -> void:
 	if by == "":
 		by = "owner" if aiMode else "both"
 	var setup: Dictionary = SETUPS[setupName]
+	if setupName == "kick":
+		NetBot.flyer = true
+		var kc: Array = NetBot.flyerCount(seeds[0], setup)
+		print("kick: a straight 600 ticks has %d kicks and %d plants" % kc)
+		if kc[0] < 5 or kc[1] < 3:
+			print("FAIL  --setup=kick tests nothing unless the bots kick")
+			quit(1)
+			return
 	if aiLevel != "":
 		setup = setup.duplicate()
 		setup["aiLevel"] = aiLevel

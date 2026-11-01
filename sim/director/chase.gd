@@ -166,6 +166,7 @@ static func _begin(S: SimState, A, D, heavy: bool, spike: bool = false) -> void:
 	_s(A, CH_W, 3 if spike else (2 if heavy else 1))
 	DirRally.commitStick(S, A, D)   # the stick's class, read once at the commit (Controls' rule)
 	_cue(S, A, D, "start")
+	DirSwing.atChase(S, A, D)
 	SimEvents.feed(S, A.name + " CHASES", "a zip after " + D.name + "'s flight (" + str(int(_price(heavy))) + " ki): at " + str(int(_speed(D))) + " u/s")
 
 
@@ -252,7 +253,9 @@ static func _catch(S: SimState, A, D) -> void:
 		r = {"best": pl, "top": [pl], "all": [pl]}
 	else:
 		DirRally.linkNoDown(tilt, kind)   # 10-26 item 32: on a neutral stick no link's send is down (the spike aside)
+		DirSwing.atLaunch(S, A, D, force)
 		r = DirLaunch.chooseLaunch(S, A, D, force, false, "", tilt, true)
+		DirSwing.atPlanned(S, r.best)
 		DirRally.clearNoDown()
 	var all: PackedStringArray = []
 	for k in r.all:
@@ -266,6 +269,7 @@ static func _catch(S: SimState, A, D) -> void:
 		DirLaunch.doLaunch(S, A, D, r.best, force)
 		DirCamIntent.launched(S, D)
 		DirCalm.atSend(S, A, D, r.best)
+		DirSwing.atSend(S, A, D, r.best)
 		DirBrawl.markKind(S, D, lkind)
 		DirRally.onLink(S, A, D, kind, r.best)   # 23d 6: a rally's link
 	_end(S, A, D, "catch")
@@ -294,7 +298,8 @@ static func _tilt(A) -> int:
 static func _sky(S: SimState, o) -> bool:
 	if o.vy <= absf(o.vx):
 		return false
-	for b in S.buildings:
+	for bi in WorldStructures.near(S, o.x, 0.0):
+		var b = S.buildings[bi]
 		if b.alive and absf(SimWrap.sdx(o.x, b.x)) <= b.w * 0.5 and b.h + WorldTerrain.groundY(S, b.x) > o.y:
 			return false
 	return true

@@ -402,3 +402,9 @@ The turntable's decisions are state derived from inputs, so nothing new goes ove
 | far, 13 | 31 / 315 | 3.1° | **5.0°** | 5.0° |
 
 That's close to the paper's eased figures (4.2° at depth 13). Two earlier cuts of `SimSwing.ask` measured 6.0° and 19° (a reversal flipping at full rate), then 3.06° and 10.4° (a replacement dropping to rest on one tick). The cut on main eases both, and this check is how you'd see them come back. All are within the rate rule. Data's rate x `maxAhead` is 20°, and the check allows twice that for one timeline turning each way. With the cap lifted, the control breaks the bound.
+
+## 16. The kick under rollback
+
+The kick and the coin turn (`docs/architecture/kick.md`) add six numbers a fighter, state derived from inputs, so nothing new goes over the wire. While `S.kickOn`, the digest reads `SimKick.HASHED`, as `SimHash` does. A match with it off digests as before, and a build without the kick can't reach this state against one with it, because the kick's data is in the match key. So `PROTO` stays 5.
+
+**Tests.** `--setup=kick` on `rollback_check` and `desync_check`. A plain bot hardly ever kicks (1 or 2 kicks and no plants in 600 ticks), so with this setup the bots fly flat out and flip the stick (`NetBot.flyer`), and the check fails if a straight run doesn't kick. `desync_check` also injects a change to a fighter's last kick tick, which must be reported.

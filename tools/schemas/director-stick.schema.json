@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/director-stick",
+  "title": "director.stick/1",
+  "description": "DRAFT by Encounter for Tools: data/director/stick.json, the right stick's strike (docs/design/right-hand-attacks-rulings.md section 2). Policy: no key beyond these, and every key required, since DirStick reads each one.",
+  "type": "object",
+  "patternProperties": {
+    "^_": {}
+  },
+  "additionalProperties": false,
+  "required": [
+    "airAbove",
+    "autoGoTicks",
+    "carryTicks",
+    "chargeRecover",
+    "levels",
+    "pendTicks",
+    "quickRecover",
+    "repeatSec",
+    "schema",
+    "windTicks"
+  ],
+  "properties": {
+    "schema": {
+      "const": "director.stick/1"
+    },
+    "levels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "carryBh",
+          "ki",
+          "reachBh",
+          "stun",
+          "worth"
+        ],
+        "properties": {
+          "worth": {
+            "type": "number",
+            "minimum": 0
+          },
+          "ki": {
+            "type": "number",
+            "minimum": 0
+          },
+          "stun": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "carryBh": {
+            "type": "number",
+            "minimum": 0
+          },
+          "reachBh": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "quickRecover": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "chargeRecover": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "autoGoTicks": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "repeatSec": {
+      "type": "number",
+      "minimum": 0
+    },
+    "carryTicks": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "pendTicks": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "airAbove": {
+      "type": "number",
+      "minimum": 0
+    },
+    "windTicks": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

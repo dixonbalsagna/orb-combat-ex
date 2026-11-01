@@ -19,12 +19,80 @@ const BH: float = 75.0
 static var _memo: Dictionary = {}
 static var overrideOn: int = -1   # a tool's choice: -1 the data's, 0 off, 1 on
 static var alignOverride: int = -1   # a tool's choice for plans.align: -1 the data's, 0 off, 1 on
+static var everywhereOverride: int = -1   # a tool's choice for plans.everywhere: -1 the data's, 0 off, 1 on
 
 
 static func enabled() -> bool:
 	if overrideOn >= 0:
 		return overrideOn == 1
 	return bool(WorldField.data().get("plans", {}).get("enabled", false))
+
+
+## Whether every place the first ring does not hold is laid too, as the whole of its plan (layFree), so a swing or a launch onto any town finds buildings (docs/world/places-everywhere.md). Off, only the first ring's places stand.
+static func everywhere() -> bool:
+	if everywhereOverride >= 0:
+		return everywhereOverride == 1
+	return bool(WorldField.data().get("plans", {}).get("everywhere", false))
+
+
+## Do the far places' buildings hold people (farPeople), and do those people count toward the hero's anguish (farAnguish)? Both off: a far building has none (docs/world/places-everywhere.md).
+static func farPeople() -> bool:
+	return everywhere() and bool(WorldField.data().get("plans", {}).get("farPeople", false))
+
+
+static func farAnguish() -> bool:
+	return farPeople() and bool(WorldField.data().get("plans", {}).get("farAnguish", false))
+
+
+static func farShare() -> float:
+	return float(WorldField.data().get("plans", {}).get("farShare", 1.0))
+
+
+static func farReach() -> float:
+	return float(WorldField.data().get("plans", {}).get("farReach", 9000.0))
+
+
+## ===================================================================== the far places in the cache
+## A far place's laid plan (its buildings with their planet points and ground, its districts, its lots) is a pure function of the planet and the data, not of the ring: only a building's strip x and z read the ring,
+## and they are two reads from its planet point. So the whole set is kept in the field cache (WorldFieldCache.writeBlob, one blob a planet, `var_to_bytes`) and a warm match start reads it back: the plans' geometry
+## and the bake's ground reads, about 1 s native, are not done again. Not kept while rivers are on (a river cuts the ground the lots read, and it is read through the ring).
+const PLACES_REV: int = 1
+
+
+static func placesKey(P: WorldPlanet.Planet) -> String:
+	return "places|rev %d|seed %d|%s|%s|%s|%s" % [PLACES_REV, P.seed, WorldPlanet.dataHash(3), WorldField.dataHash(), WorldSettle.dataHash(), str(Engine.get_version_info().get("string", ""))]
+
+
+static func placesCached() -> bool:
+	return WorldFieldCache.enabled() and not WorldRivers.enabled()
+
+
+## pid -> {"b": buildings, "dist", "yaw", "lots"} for the planet, or {} when none is kept.
+static func placesLoad(P: WorldPlanet.Planet) -> Dictionary:
+	if not placesCached():
+		return {}
+	var bytes: PackedByteArray = WorldFieldCache.readBlob(placesKey(P))
+	if bytes.is_empty():
+		return {}
+	var v = bytes_to_var(bytes)
+	return v if v is Dictionary else {}
+
+
+static func placesStore(P: WorldPlanet.Planet, places: Dictionary) -> void:
+	if placesCached() and not places.is_empty():
+		WorldFieldCache.writeBlob(placesKey(P), var_to_bytes(places))
+
+
+## A kept place as layFree returns it: each building's strip x and z read against `circ`.
+static func placesRestore(P: WorldPlanet.Planet, kept: Dictionary, circ: Dictionary) -> Dictionary:
+	var span: float = float(SimConst.NC) * SimConst.COL
+	var bs: Array = kept.b
+	for e in bs:
+		var q: Array = e.dir
+		var cx0: float = stripX(P, circ, q)
+		e["x"] = cx0 - floor(cx0 / span) * span
+		e["z"] = -WorldPlanet.lateral(P, circ, q[0], q[1], q[2])
+	return {"buildings": bs, "dist": kept.dist, "yaw": kept.yaw}
 
 
 static func minBuildings() -> int:
@@ -86,7 +154,7 @@ static func geometry(P: WorldPlanet.Planet, id: int, shift: float = 0.0) -> Dict
 			e["pi"] = out.size()
 			out.append(e)
 	var geo: Dictionary = {"b": out, "dist": dist, "xc": xc}
-	if _memo.size() > 64:
+	if _memo.size() > 192:
 		_memo.clear()
 	_memo[key] = geo
 	return geo
@@ -186,6 +254,7 @@ static func lay(S: SimState, P: WorldPlanet.Planet, id: int, circ: Dictionary, p
 	geo = geometry(P, id, shift)
 	var lanes: Array = _lanes()
 	var kept: Array = []
+	var rest: Array = []
 	var byRow: Dictionary = {}
 	var rejected: int = 0
 	var span: float = float(SimConst.NC) * SimConst.COL
@@ -208,11 +277,15 @@ static func lay(S: SimState, P: WorldPlanet.Planet, id: int, circ: Dictionary, p
 			if z <= float(l.top) and z >= float(l.bottom):
 				lane = l
 				break
-		if lane.is_empty():
-			continue
 		var cx: float = cx0 - floor(cx0 / span) * span
+		if lane.is_empty():
+			if everywhere():   # the rest of the plan, outside the lanes of this ring: it stands too (planet-fixed, no people), for a line that turns toward it
+				rest.append(_restOf(e, geo, q, cx, z))
+			continue
 		if not WorldTerrain._footOk(S, cx, float(e.w)):
 			rejected += 1
+			if everywhere():
+				rest.append(_restOf(e, geo, q, cx, z))
 			continue
 		var row: int = int(lane.row)
 		var dd: float = minf(float(e.d), float(lane.top) - float(lane.bottom))
@@ -225,6 +298,8 @@ static func lay(S: SimState, P: WorldPlanet.Planet, id: int, circ: Dictionary, p
 				break
 		if clash:
 			rejected += 1
+			if everywhere():
+				rest.append(_restOf(e, geo, q, cx, z))
 			continue
 		var b: Dictionary = e.duplicate()
 		b["x"] = cx
@@ -274,8 +349,23 @@ static func lay(S: SimState, P: WorldPlanet.Planet, id: int, circ: Dictionary, p
 		districts.append({"name": gd.name, "look": gd.look, "a": lo, "b": hi, "avenues": av, "rows": gd.rows, "traffic": float(gd.get("traffic", 0.0))})
 	for b in kept:
 		b["district"] = int(remap.get(int(b.district), 0))
+	for b in rest:
+		b["district"] = int(remap.get(int(b.district), 0))
 	var sp: Array = [float(kept[0].x), float(kept[kept.size() - 1].x)]
-	return {"buildings": kept, "span": sp, "districts": districts, "rejected": rejected}
+	return {"buildings": kept, "span": sp, "districts": districts, "rejected": rejected, "rest": rest, "yaw": yaw}
+
+
+## A plan building this ring does not lay (outside its lanes, on ground that takes no footprint, or clashing with one it laid), as a planet-fixed building at its plan point `q`: strip x `cx`, z `z`.
+static func _restOf(e: Dictionary, geo: Dictionary, q: Array, cx: float, z: float) -> Dictionary:
+	var rb: Dictionary = e.duplicate()
+	rb["x"] = cx
+	rb["z"] = z
+	rb["pdir"] = q
+	rb["dir"] = q
+	rb["u"] = float(e.x) - float(geo.xc)
+	rb["v"] = float(e.z)
+	rb["pop"] = 0
+	return rb
 
 
 ## Signed shortest distance from a to b on a loop of `span` units (b minus a).
@@ -317,3 +407,137 @@ static func pointAtX(P: WorldPlanet.Planet, circ: Dictionary, x: float, z: float
 	var cs: float = SimDetMath.cos(a)
 	var sn: float = SimDetMath.sin(a)
 	return [p[0] * cs + t[0] * sn, p[1] * cs + t[1] * sn, p[2] * cs + t[2] * sn]
+
+
+## ===================================================================== places everywhere
+## Place `id` as the whole of its plan, planet-fixed (a place the first ring does not hold; docs/world/places-everywhere.md): every building of the plan at its planet point (pointOf at the planet's own yaw: a plan
+## turned to a ring is the first ring's business), no lane and no lane snap, its strip x and z read against the ring `circ` (the first frame; Simulation's pose arrays follow the frame from `dir`). A building whose
+## ground (the bake, with the platform) is in the sea is not laid. People are 0: a far town's people wait on Game Design's ruling (they would otherwise fill the lure buckets at x that has nothing near the line).
+## Returns {"buildings": [generate's dicts + pi, dir, pdir], "dist": the plan's districts, "yaw", "geo"}.
+static func layFree(S: SimState, P: WorldPlanet.Planet, id: int, circ: Dictionary) -> Dictionary:
+	var yaw: float = yawOf(P, id)
+	var geo: Dictionary = geometry(P, id, 0.0)
+	var span: float = float(SimConst.NC) * SimConst.COL
+	var kept: Array = []
+	for e in geo.b:
+		var q: Array = pointOf(P, id, yaw, float(e.x) - float(geo.xc), float(e.z))
+		var g0: float = WorldField.applyRecords(S, q[0], q[1], q[2], WorldField.heightBake(P, q[0], q[1], q[2]), P)
+		if g0 < WorldTerrain.TRIM_G:
+			continue
+		var cx0: float = stripX(P, circ, q)
+		var b: Dictionary = e.duplicate()
+		b["x"] = cx0 - floor(cx0 / span) * span
+		b["z"] = -WorldPlanet.lateral(P, circ, q[0], q[1], q[2])
+		b["pop"] = 0
+		b["g"] = g0
+		b["pdir"] = q
+		b["dir"] = q
+		b["u"] = float(e.x) - float(geo.xc)
+		b["v"] = float(e.z)
+		kept.append(b)
+	return {"buildings": kept, "dist": geo.dist, "yaw": yaw}
+
+
+## The lots of a free place, in its plan frame (a lot is the buildings of one band's row within `lots.gap` along the street; the strip's x means nothing for a far place): the same record as WorldField.lotRecords, its
+## height the mean of the bake's ground (with the platform) at its buildings (read once, in layFree), so a place's lots cost reads of the bake, not of the planet. `first`: the id of its first lot.
+static func freeLots(S: SimState, P: WorldPlanet.Planet, id: int, laid: Dictionary, first: int) -> Array:
+	var cfg: Dictionary = WorldField.data().get("lots", {})
+	var side: float = float(cfg.get("sidewalk", 15.0))
+	var gap_max: float = float(cfg.get("gap", 300.0))
+	var yaw: float = float(laid.yaw)
+	var bs: Array = laid.buildings
+	var groups: Dictionary = {}
+	for i in range(bs.size()):
+		var key: String = "%d/%d" % [int(bs[i].band), int(bs[i].row)]
+		if not groups.has(key):
+			groups[key] = []
+		groups[key].append(i)
+	var keys: Array = groups.keys()
+	keys.sort()
+	var out: Array = []
+	for key in keys:
+		var idxs: Array = groups[key]
+		idxs.sort_custom(func(a, c): return float(bs[a].u) < float(bs[c].u) or (float(bs[a].u) == float(bs[c].u) and a < c))
+		var run: Array = []
+		var right: float = -1.0e30
+		for ii in idxs:
+			var left: float = float(bs[ii].u) - float(bs[ii].w) * 0.5
+			if not run.is_empty() and left - right > gap_max:
+				out.append(_freeLot(S, P, id, yaw, bs, run, side, first + out.size()))
+				run = []
+				right = -1.0e30
+			run.append(ii)
+			right = maxf(right, float(bs[ii].u) + float(bs[ii].w) * 0.5)
+		if not run.is_empty():
+			out.append(_freeLot(S, P, id, yaw, bs, run, side, first + out.size()))
+	WorldField._blends(out, P.R, cfg)   # the blends, along the street and across it
+	return out
+
+
+static func _freeLot(S: SimState, P: WorldPlanet.Planet, id: int, yaw: float, bs: Array, run: Array, side: float, lid: int) -> Dictionary:
+	var ul: float = 1.0e30
+	var ur: float = -1.0e30
+	var vsum: float = 0.0
+	var dmax: float = 0.0
+	var alongs: Array = []
+	var ground: Array = []
+	for m in run:
+		var b: Dictionary = bs[m]
+		ul = minf(ul, float(b.u) - float(b.w) * 0.5)
+		ur = maxf(ur, float(b.u) + float(b.w) * 0.5)
+		vsum += float(b.v)
+		dmax = maxf(dmax, float(b.d))
+		alongs.append(float(b.u))
+		ground.append(float(b.g))
+	var pl: Array = WorldField._plane(alongs, ground, 0.5 * (ul + ur), float(WorldField.data().get("lots", {}).get("grade", 0.0)))
+	var cx: float = 0.0
+	var cy: float = 0.0
+	var cz: float = 0.0
+	for m in run:
+		var qd: Array = bs[m].dir
+		cx += qd[0]
+		cy += qd[1]
+		cz += qd[2]
+	var c: Array = WorldPlanet._unit([cx, cy, cz])
+	var tx: float
+	var ty: float
+	var tz: float
+	if run.size() > 1:   # along the street: from the first member to the last, by the plan's order
+		var qa: Array = bs[run[0]].dir
+		var qb: Array = bs[run[run.size() - 1]].dir
+		tx = qb[0] - qa[0]
+		ty = qb[1] - qa[1]
+		tz = qb[2] - qa[2]
+	else:
+		var vc: float = vsum / float(run.size())
+		var uc: float = 0.5 * (ul + ur)
+		var p1: Array = pointOf(P, id, yaw, uc + 50.0, vc)
+		var p0: Array = pointOf(P, id, yaw, uc - 50.0, vc)
+		tx = p1[0] - p0[0]
+		ty = p1[1] - p0[1]
+		tz = p1[2] - p0[2]
+	var along: float = tx * c[0] + ty * c[1] + tz * c[2]
+	var t: Array = WorldPlanet._unit([tx - c[0] * along, ty - c[1] * along, tz - c[2] * along])
+	var s: Array = WorldPlanet._unit(WorldPlanet._cross(c, t))
+	var R: float = P.R   # the box covers every member's footprint as it stands (a street that curves leaves the straight run's extent)
+	var hl: float = 0.5 * (ur - ul) + side
+	var hd: float = 0.5 * dmax + side
+	for m in run:
+		var bq: Array = bs[m].dir
+		var ex: float = (bq[0] - c[0]) * R
+		var ey: float = (bq[1] - c[1]) * R
+		var ez: float = (bq[2] - c[2]) * R
+		hl = maxf(hl, absf(ex * t[0] + ey * t[1] + ez * t[2]) + 0.5 * float(bs[m].w) + side)
+		hd = maxf(hd, absf(ex * s[0] + ey * s[1] + ez * s[2]) + 0.5 * float(bs[m].d) + side)
+	var gs: float = 0.0
+	var gA: float = float(WorldField.data().get("lots", {}).get("gradeAcross", 0.0))
+	if gA > 0.0:
+		var gg: Array = []
+		for sg in [1.0, -1.0]:
+			var x: float = c[0] + s[0] * hd * sg / R
+			var y: float = c[1] + s[1] * hd * sg / R
+			var z: float = c[2] + s[2] * hd * sg / R
+			var nn: float = 1.0 / sqrt(x * x + y * y + z * z)
+			gg.append(WorldField.applyRecords(S, x * nn, y * nn, z * nn, WorldField.heightBake(P, x * nn, y * nn, z * nn), P))
+		gs = clampf((float(gg[0]) - float(gg[1])) / (2.0 * hd), -gA, gA)
+	return {"k": "lot", "id": lid, "c": c, "t": t, "s": s, "hl": hl, "hd": hd, "r": sqrt(hl * hl + hd * hd), "blend": 20.0, "bs": 20.0, "h": pl[0], "gt": pl[1], "gs": gs, "n": run.size(), "lone": run.size() == 1}

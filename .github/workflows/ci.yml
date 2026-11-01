@@ -84,6 +84,11 @@ jobs:
         run: node tools/lint-determinism-selftest.mjs
       - name: Determinism lint (no engine trig, PI, random numbers or clock in the sim)
         run: node tools/lint-determinism.mjs
+      # The two-fighter ratchet (docs/tools/ratchet-two-fighter.md): the places shipped code names exactly two fighters may only go down, so the code stops growing while the game is restructured for 2v2.
+      - name: Two-fighter ratchet self-test
+        run: node tools/ratchet-two-fighter-selftest.mjs
+      - name: Two-fighter ratchet (shipped code names no more places than the baseline)
+        run: node tools/ratchet-two-fighter.mjs
       # The workflow files themselves must parse (an unquoted ": " in a step name broke this file once and nothing said so before the push): node only, the subset of YAML these files use.
       - name: Workflow files parse (self-test)
         run: node tools/check-workflows-selftest.mjs
@@ -180,6 +185,8 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/load_split.gd'
       - name: Load split, negative control (a forward missing, a forward the world calls that SimDir lacks, a world call by SimDir._d)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/load_split.gd -- --negative-control'
+      - name: Places check (buildings at every place, the spatial index against a walk of them all, after a swing and a restore; the far poses; the hash)
+        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/places_check.gd'
       - name: Two states in one process (rollbacks, snapshots read late and one restored into another state match a straight run)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/two_states_check.gd'
       - name: Two states in one process, negative control (three deliberate breaks must be caught)
@@ -188,6 +195,11 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/replay_xproc_check.gd'
       - name: Replays across processes, negative control (four deliberate breaks must be caught)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/replay_xproc_check.gd -- --negative-control'
+      # Statics a rolled-back branch leaves behind (docs/architecture/fork-check.md): six fresh processes on one timeline, a rematch on a field world; about a minute
+      - name: Fork check (fresh processes agree on every column's surface and the state after eight landings, whatever a rolled-back branch left in a static)
+        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/fork_check.gd'
+      - name: Fork check, negative control (a fighter moved by a unit in one process must be caught)
+        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/fork_check.gd -- --negative-control'
       # The rollback core (docs/net/rollback.md section 6): two peers over the loopback must match a straight run's gameplay hash at every confirmed tick; about a minute.
       - name: Rollback check (two peers over the loopback match the straight run, LAN and two lossy profiles)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --seeds=1 --ticks=300 --profiles=lan,p80j,p200'
@@ -294,6 +306,15 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/desync_check.gd -- --setup=field --seeds=1,2 --ticks=600 --profiles=lan,p120'
       - name: Desync check on a field world, negative control
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/desync_check.gd -- --setup=field --seeds=1,2 --ticks=600 --profiles=lan,p120 --negative-control'
+      # The kick under rollback (docs/net/rollback.md section 16): flying bots, which must kick
+      - name: Rollback check with the kick on
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=kick --seeds=1 --ticks=300 --profiles=lan,p120,far'
+      - name: Rollback check with the kick on, negative control
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=kick --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control'
+      - name: Desync check with the kick on
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/desync_check.gd -- --setup=kick --seeds=1,2 --ticks=600 --profiles=lan,p120'
+      - name: Desync check with the kick on, negative control
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/desync_check.gd -- --setup=kick --seeds=1,2 --ticks=600 --profiles=lan,p120 --negative-control'
       - name: Two-process ENet match on 127.0.0.1 (both processes match each other and the straight run, LAN and p200)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/enet_check.gd -- --ticks=1800 --profiles=lan,p200'
       - name: Two-process ENet match, negative control (a perturbed joiner must be caught)

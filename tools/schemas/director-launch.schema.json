@@ -221,6 +221,96 @@
           "type": "number",
           "minimum": 0,
           "description": "With the stick toward a building that has a plan, it scores this much more."
+        },
+        "visit": {
+          "type": "object",
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false,
+          "properties": {
+            "leave": {
+              "type": "number",
+              "minimum": 0
+            },
+            "markSec": {
+              "type": "number",
+              "minimum": 0
+            },
+            "mark": {
+              "type": "number",
+              "minimum": 0
+            },
+            "near": {
+              "type": "number",
+              "minimum": 0
+            },
+            "cone": {
+              "type": "number",
+              "minimum": 0
+            },
+            "minD": {
+              "type": "number",
+              "minimum": 0
+            },
+            "arrive": {
+              "type": "number",
+              "minimum": 0
+            },
+            "drySec": {
+              "type": "number",
+              "minimum": 0
+            },
+            "dry": {
+              "type": "number",
+              "minimum": 0
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "sends": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "dryRampSec": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "reach": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "places": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "solvePow": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "required": [
+            "arrive",
+            "cone",
+            "dry",
+            "dryRampSec",
+            "drySec",
+            "enabled",
+            "leave",
+            "mark",
+            "markSec",
+            "minD",
+            "near",
+            "places",
+            "reach",
+            "sends",
+            "solvePow"
+          ]
         }
       },
       "additionalProperties": false,
@@ -359,6 +449,70 @@
           "type": "number",
           "minimum": 0,
           "description": "World's single-impact figure: damage per unit a second of the first contact (sim/world/contact.gd)."
+        },
+        "wall": {
+          "type": "object",
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "base": {
+              "type": "number",
+              "minimum": 0
+            },
+            "care": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "uy": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "minItems": 1
+            },
+            "clear": {
+              "type": "number",
+              "minimum": 0
+            },
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "perUnit": {
+              "type": "number",
+              "minimum": 0
+            },
+            "distMul": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "enabled",
+            "base",
+            "care",
+            "reach",
+            "perUnit",
+            "speed",
+            "uy",
+            "clear",
+            "distMul"
+          ]
         }
       },
       "description": "The knock-back: a short send that is not a launch across the map (agency-pass.md section 3).",
@@ -473,6 +627,262 @@
       "patternProperties": {
         "^_": true
       }
+    },
+    "relief": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "share": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "minSends": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "scale": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 1
+        },
+        "floor": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "enabled",
+        "share",
+        "minSends",
+        "scale",
+        "floor"
+      ]
+    },
+    "walk": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "lean": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bhStep": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stopShort": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sendReach": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "enabled",
+        "lean",
+        "reach",
+        "bhStep",
+        "stopShort",
+        "sendReach"
+      ]
+    },
+    "arc": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "gapSec": {
+          "type": "number",
+          "minimum": 0
+        },
+        "wholeRing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "apexU": {
+          "type": "number",
+          "minimum": 0
+        },
+        "skew": {
+          "type": "number",
+          "minimum": 0
+        },
+        "brakeFrom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "towerShare": {
+          "type": "number",
+          "minimum": 0
+        },
+        "landSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "landVx": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hpFloor": {
+          "type": "number",
+          "minimum": 0
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "minForms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "budget": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rows": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "meteor": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "h": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "d": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "sec": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "apex": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "exclusiveMaximum": 1
+                }
+              },
+              "required": [
+                "h",
+                "d",
+                "sec",
+                "apex"
+              ]
+            },
+            "high": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "h": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "d": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "sec": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "apex": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "exclusiveMaximum": 1
+                }
+              },
+              "required": [
+                "h",
+                "d",
+                "sec",
+                "apex"
+              ]
+            }
+          },
+          "required": [
+            "meteor",
+            "high"
+          ]
+        },
+        "bankFull": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "landing": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "near": {
+              "type": "number"
+            },
+            "perBuilding": {
+              "type": "number"
+            },
+            "buildingCap": {
+              "type": "number"
+            },
+            "water": {
+              "type": "number"
+            },
+            "ground": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "near",
+            "perBuilding",
+            "buildingCap",
+            "water",
+            "ground"
+          ]
+        },
+        "bankGrace": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "apexU",
+        "bankFull",
+        "bankGrace",
+        "brakeFrom",
+        "budget",
+        "enabled",
+        "gapSec",
+        "hpFloor",
+        "landSpeed",
+        "landVx",
+        "landing",
+        "minForms",
+        "rows",
+        "skew",
+        "towerShare",
+        "wholeRing"
+      ]
     }
   },
   "additionalProperties": false,

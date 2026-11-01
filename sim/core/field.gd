@@ -354,6 +354,12 @@ static func heightOf(seed: int, gen: int, level: int, qx: float, qy: float, qz: 
 	return WorldField.height(P, qx, qy, qz) if level == 1 else WorldField.heightBake(P, qx, qy, qz)
 
 
+## The memo's serial once bound to S: moves whenever the frame, the swing or the store the memo reads changes (World's contact table memoises a column's ground on it).
+static func serialOf(S: SimState) -> int:
+	_fresh(S)
+	return _serial
+
+
 ## The stored biome (WorldPlanet.BIO_*, an index into WorldPlanetWorld.BIOME_NAME) at strip x through the frame, on the bake: Camera's biome by strip x, and WorldBiomes once the line has swung, so a swing changes the biome under a fight.
 static func biomeAt(S: SimState, x: float) -> int:
 	_fresh(S)

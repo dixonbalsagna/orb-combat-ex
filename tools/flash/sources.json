@@ -227,7 +227,7 @@
       ],
       "minTicks": 1500,
       "minEvents": {
-        "damage": 40
+        "damage": 35
       },
       "ticks": 1800,
       "seeds": [

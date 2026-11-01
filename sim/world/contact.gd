@@ -125,8 +125,13 @@ static func errors() -> Array:
 	return _errors
 
 
+## A match asks this once, right after it claims its world's id (sim.gd), so the surface table is built here, in the load, from the line as the match starts, and never at the first lookup in a tick: there it would
+## read the line as it is then, which a predicted branch or a rollback has turned (docs/world/pending/contact-surf-derive).
 static func enabled() -> bool:
-	return bool(data().get("enabled", false))
+	var on: bool = bool(data().get("enabled", false))
+	if _colSurfKey != WorldBiomes.worldId:
+		_buildSurf()
+	return on
 
 
 ## A hash of the data file's text, for the replay header's data hash.
@@ -276,12 +281,27 @@ static func _buildSurf() -> void:
 	var D: Dictionary = _d
 	_colSurfKey = WorldBiomes.worldId
 	_colSurf.resize(SimConst.NC)
+	# A planet's columns, before any swing, name their biomes in planetCols (biomeAt reads the same, through the field on a gen 3 world), and a match has a dozen biomes: one lookup per name, not per column
+	# (a rematch's first surface lookup built this with a biomeAt call a column: 56 to 92 ms, docs/perf/hitch-table-2026-10-31.md).
+	var pc: PackedByteArray = WorldBiomes.planetCols
+	var cols_known: bool = pc.size() == SimConst.NC and not SimField.swung()
+	var memo: Dictionary = {}
+	var by_index := PackedInt32Array()
+	by_index.resize(256)
+	by_index.fill(-1)
 	for i in range(SimConst.NC):
-		var biome: String = WorldBiomes.biomeAt(float(i) * SimConst.COL)
-		var code: int = SURF_NAMES.find(String(D.biomeSurface.get(biome, "soil")))
-		code = maxi(code, 0) & 3
-		if D.paving.biomes.has(biome):
-			code |= 4
+		var idx: int = pc[i] if cols_known else -1
+		var code: int = by_index[idx] if idx >= 0 else -1
+		if code < 0:
+			var biome: String = WorldPlanetWorld.BIOME_NAME[idx] if idx >= 0 else WorldBiomes.biomeAt(float(i) * SimConst.COL)
+			code = memo.get(biome, -1)
+			if code < 0:
+				code = maxi(SURF_NAMES.find(String(D.biomeSurface.get(biome, "soil"))), 0) & 3
+				if D.paving.biomes.has(biome):
+					code |= 4
+				memo[biome] = code
+			if idx >= 0:
+				by_index[idx] = code
 		_colSurf[i] = code
 	_gGrip = PackedFloat64Array()
 	_gAbs = PackedFloat64Array()
@@ -324,7 +344,7 @@ static func surfaceAt(S: SimState, x: float) -> String:
 		var al: String = WorldAfter.surfaceAt(S, x)
 		if al != "":
 			return al
-	var c: int = _colSurf[col]
+	var c: int = _surfCode(S, col)
 	if (c & 4) != 0 and S.deform[col] > K_PAVE_DUG:
 		return "paving"
 	return SURF_NAMES[c & 3]
@@ -384,13 +404,13 @@ static func stepSkate(S: SimState, f, dt: float) -> void:
 ## other world read as the surface (surfaceAt).
 static func lookAt(S: SimState, x: float) -> String:
 	var surf: String = surfaceAt(S, x)
-	if _colLook.size() == 0 or surf == "rubble" or surf == "paving":
+	if not _hasFine(S) or surf == "rubble" or surf == "paving":
 		return surf
 	if S.aftermath.size() > 0:   # a beam's strip (glaze, burnt grass, ember, crust) reads as its own
 		var al: String = WorldAfter.lookAt(S, x)
 		if al != "":
 			return al
-	var code: int = _colLook[_colOf(x)]
+	var code: int = _lookCode(S, _colOf(x))
 	return surf if code == 255 else String(WorldGround.LOOKS[code])
 
 
@@ -399,9 +419,9 @@ static func _brake(S: SimState, x: float) -> float:
 	var k: float = float(K_BRAKE[surf])
 	if _refOn:
 		return k
-	if _gGrip.size() > 0 and surf != "rubble" and surf != "paving":
+	if _hasFine(S) and surf != "rubble" and surf != "paving":
 		var ci: int = _colOf(x)
-		k *= _gGrip[ci] * _gRough[ci]
+		k *= _gv(S, 1, x) * _gv(S, 3, x)
 		if S.aftermath.size() > 0 and S.aftermath[ci] == WorldAfter.GLAZE:
 			k = float(K_BRAKE[surf]) * WorldAfter.glazeGrip()   # a glazed strip brakes as ice does
 		# gen 2: mud grips, ice slides; stones and roots brake (rough is at least 1: a skid is shortened, never lengthened, and never a tumble: Game Design, rulings 2026-10-23b item 11)
@@ -412,9 +432,98 @@ static func _colOf(x: float) -> int:
 	return int(floor(SimWrap.wrap(x) / SimConst.COL)) % SimConst.NC
 
 
-## A gen 2 ground profile's multiplier at x (1 on every other world).
-static func _pf(a: PackedFloat64Array, x: float) -> float:
-	return a[_colOf(x)] if a.size() > 0 else 1.0
+## A field world (gen 3 on a whole ring) takes its ground's biome through the frame, a read at a time: the line turns, so a table made once for the match goes stale at the first swing, and a table that is one for the
+## process is made from whichever state's line is current. `_fcol` is one column's numbers, memoised on SimField's serial (the frame, the swing and the store the memo is bound to): a pure function of the state's
+## line and the column. Every other world has the table `_buildSurf` makes at match build, from its own columns, and no line to turn.
+static var _fm: Dictionary = {}
+static var _fserial: int = -1
+static var _scodes: Dictionary = {}
+
+
+## [surface code (as _colSurf: 0 soil, 1 sand, 2 rock, | 4 paved), grip, absorb, rough, furrow, look code (255: the surface is the look)] of terrain column `col` on a field world.
+static func _fcol(S: SimState, col: int) -> Array:
+	var sr: int = SimField.serialOf(S)
+	if sr != _fserial:
+		_fm.clear()
+		_fserial = sr
+	var hit = _fm.get(col)
+	if hit != null:
+		return hit
+	var x: float = float(col) * SimConst.COL
+	var stored: int = SimField.biomeAt(S, x)
+	var town: int = _townAt(S, col)   # a place's ground (the field has none): village or city, from the platform records
+	if town > 0:
+		stored = town
+	var biome: String = WorldPlanetWorld.BIOME_NAME[stored]
+	var code: int = int(_scodes.get(biome, -1))
+	if code < 0:
+		code = maxi(SURF_NAMES.find(String(_d.biomeSurface.get(biome, "soil"))), 0) & 3
+		if _d.paving.biomes.has(biome):
+			code |= 4
+		_scodes[biome] = code
+	var out: Array = [code, 1.0, 1.0, 1.0, 1.0, 255]
+	if S.planetGen >= 2:   # the fine biome's ground (world/ground.gd); a town's or a city's ground keeps the rule above
+		var o: Array = WorldGround.one(SimField.fineAt(S, x), stored)
+		out[1] = o[0]
+		out[2] = o[1]
+		out[3] = o[2]
+		out[4] = o[3]
+		out[5] = o[5]
+		if int(o[4]) != 255:
+			out[0] = int(o[4])
+	_fm[col] = out
+	return out
+
+
+## The stored biome of a place's ground at a column of a field world: 8 (city) or 7 (village) where the column's planet point is inside a place's platform (its disc, dry ground), 0 elsewhere. What
+## WorldPlanetWorld.settleBiomes stamps over a first ring's chords, as a pure function of the point and the records, so it follows the line and covers every place (docs/world/pending/contact-paving).
+static func _townAt(S: SimState, col: int) -> int:
+	if S.fieldRecs.is_empty():
+		return 0
+	if WorldTerrain.baseAt(S, col) < WorldTerrain.TRIM_G:
+		return 0
+	var R: float = SimConst.PLANET_NC * SimConst.COL / (2.0 * SimMathx.PI)
+	SimField.pointIn(S.frame, float(col) * SimConst.COL)
+	var qx: float = SimField.ox
+	var qy: float = SimField.oy
+	var qz: float = SimField.oz
+	for rec in WorldWaterRec.near(S, qx, qy, qz):
+		if rec.k != "platform":
+			continue
+		var dx: float = (qx - rec.px) * R
+		var dy: float = (qy - rec.py) * R
+		var dz: float = (qz - rec.pz) * R
+		if sqrt(dx * dx + dy * dy + dz * dz) <= rec.r:
+			return 8 if int(WorldPlanet.make(int(S.planetRing.seed)).kind[int(rec.id)]) == WorldPlanet.KIND_CITY else 7
+	return 0
+
+
+static func _surfCode(S: SimState, col: int) -> int:
+	if S.frame != null:
+		return int(_fcol(S, col)[0])
+	return _colSurf[col]
+
+
+static func _lookCode(S: SimState, col: int) -> int:
+	if S.frame != null:
+		return int(_fcol(S, col)[5])
+	return _colLook[col]
+
+
+## Does the match have fine ground (a gen 2 planet's columns, or a gen 3 planet's)?
+static func _hasFine(S: SimState) -> bool:
+	if S.frame != null:
+		return S.planetGen >= 2
+	return _colLook.size() > 0
+
+
+## A gen 2 or 3 ground profile's multiplier at x: kind 1 grip, 2 absorb, 3 rough, 4 furrow (1 on every other world).
+static func _gv(S: SimState, kind: int, x: float) -> float:
+	var col: int = _colOf(x)
+	if S.frame != null:
+		return float(_fcol(S, col)[kind]) if S.planetGen >= 2 else 1.0
+	var a: PackedFloat64Array = _gGrip if kind == 1 else (_gAbs if kind == 2 else (_gRough if kind == 3 else _gFur))
+	return a[col] if a.size() > 0 else 1.0
 
 
 static func _gslope(S: SimState, x: float, z: float = 0.0) -> float:
@@ -616,7 +725,7 @@ static func _land(S: SimState, b: Body, g: float, ev: Array) -> void:
 		var cap: int = _bounceCap(b)
 		if sin2 >= K_SKID2 and int(b.bounces) < cap:
 			# a bounce: the normal part is reflected with the bounce's keep, the tangent part keeps its share
-			var e: float = float(K_VKEEP[mini(int(b.bounces), K_VKEEP.size() - 1)]) * _pf(_gAbs, b.x)
+			var e: float = float(K_VKEEP[mini(int(b.bounces), K_VKEEP.size() - 1)]) * _gv(S, 2, b.x)
 			var vn2: float = -e * vn
 			var vt2: float = K_TKEEP * vt
 			var vxn2: float = (vt2 - s * vn2) / q
@@ -966,7 +1075,7 @@ static func _skidEffects(S: SimState, f, by, b: Body, xa: float) -> void:
 	var hw: float = WorldSlide.HW0 + WorldSlide.HW_E * sqrt(E)
 	var pav: bool = WorldSlide._paved(f.x)
 	var tierF: float = 1.0 + K_FUR[3] * (by.tier - 1.0)
-	var depth: float = minf(WorldSlide.D_MAX * K_FUR[2], (WorldSlide.D0 + WorldSlide.D_V * K_FUR[0] * b.vN) * tierF) * _pf(_gFur, f.x)
+	var depth: float = minf(WorldSlide.D_MAX * K_FUR[2], (WorldSlide.D0 + WorldSlide.D_V * K_FUR[0] * b.vN) * tierF) * _gv(S, 4, f.x)
 	if b.mode == SKID:
 		WorldCrater.carveSegment(S, xa, f.x, depth, pav, WorldSlide.CRACK0 + WorldSlide.CRACK_E * sqrt(E), f.z)
 	elif K_FUR[1] > 0.0:
@@ -1149,7 +1258,7 @@ static func _finish(S: SimState, f, by, b: Body) -> void:
 		pass
 	elif how in ["tumble", "stop"] and f.slideEvt != 0.0:
 		var hw: float = WorldSlide.HW0 + WorldSlide.HW_E * sqrt(E)
-		WorldCrater.berm(S, f.x, f.vx if f.vx != 0.0 else 1.0, hw, minf(WorldSlide.D_MAX * K_FUR[2], (WorldSlide.D0 + WorldSlide.D_V * K_FUR[0] * f.jV0 * 0.25) * (1.0 + K_FUR[3] * (by.tier - 1.0))) * WorldSlide.BERM * K_FUR[4] * _pf(_gFur, f.x), f.z)
+		WorldCrater.berm(S, f.x, f.vx if f.vx != 0.0 else 1.0, hw, minf(WorldSlide.D_MAX * K_FUR[2], (WorldSlide.D0 + WorldSlide.D_V * K_FUR[0] * f.jV0 * 0.25) * (1.0 + K_FUR[3] * (by.tier - 1.0))) * WorldSlide.BERM * K_FUR[4] * _gv(S, 4, f.x), f.z)
 	if f.slideAcc > 0.0:
 		_pay(S, f, by, f.slideAcc)
 		f.slideAcc = 0.0

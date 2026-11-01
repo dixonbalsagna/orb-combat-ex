@@ -79,6 +79,9 @@ static func settle(S: SimState, P: WorldPlanet.Planet, chords: Array, wsum: floa
 	var dOff: int = distOffset
 	var si: int = setOffset - 1
 	var dlist: Array = []
+	var rest_b: Array = []
+	var rest_dirs: Array = []
+	var rest_places: Array = []
 	for ch in chords:
 		si += 1
 		var g: Dictionary = {}
@@ -109,8 +112,85 @@ static func settle(S: SimState, P: WorldPlanet.Planet, chords: Array, wsum: floa
 			nb.pop = float(e.pop); nb.popAlive = nb.pop
 			newPop += nb.pop
 			buildings.append(nb)
+		var rest_kept: Array = []   # gen 3 with places everywhere: the plan's buildings outside this ring's lanes, planet-fixed and without people, in the same districts
+		for e in g.get("rest", []):
+			var g0: float = WorldField.applyRecords(S, e.dir[0], e.dir[1], e.dir[2], WorldField.heightBake(P, e.dir[0], e.dir[1], e.dir[2]), P)
+			if g0 < WorldTerrain.TRIM_G:
+				continue
+			e["g"] = g0
+			rest_kept.append(e)
+			var rb := SimState.Building.new()
+			rb.place = ch[0]
+			rb.plan = int(e.get("pi", 0)) + 1000 * planTag
+			rest_dirs.append(e["dir"])
+			rb.x = e.x; rb.w = e.w; rb.d = e.d; rb.h = e.h; rb.kind = e.kind; rb.row = float(e.row); rb.z = e.z; rb.seed = e.seed
+			rb.district = dOff + int(e.district); rb.shape = String(e.shape); rb.landmark = int(e.landmark)
+			rb.floors = e.floors
+			rb.fmask = (1 << rb.floors) - 1
+			rb.maxhp = e.maxhp; rb.hp = e.maxhp; rb.alive = true
+			rb.pop = 0.0; rb.popAlive = 0.0
+			rest_b.append(rb)
+		if not rest_kept.is_empty():
+			rest_places.append({"id": ch[0], "yaw": float(g.get("yaw", 0.0)), "buildings": rest_kept})
 		dOff += g.districts.size()
-	return {"buildings": buildings, "dlist": dlist, "pop": newPop, "dirs": dirs}
+	return {"buildings": buildings, "dlist": dlist, "pop": newPop, "dirs": dirs, "rest": {"buildings": rest_b, "dirs": rest_dirs, "places": rest_places}}
+
+
+## Every place the first ring does not hold, as the whole of its plan, planet-fixed (WorldPlan.layFree): {buildings (Building records), dirs, dlist (their districts, which no lane or ground shader matches), lots}. Places in
+## ascending id; district and settlement numbers continue from the first ring's (`distOffset`, `setOffset`). Their people are 0 (docs/world/places-everywhere.md).
+static func settleFree(S: SimState, P: WorldPlanet.Planet, circ: Dictionary, held: Dictionary, distOffset: int, setOffset: int, rest: Dictionary = {}, wsum: float = 1.0) -> Dictionary:
+	var buildings: Array = []
+	var dirs: Array = []
+	var dlist: Array = []
+	var lots: Array = []
+	if not rest.is_empty():   # the first ring places beyond its lanes come first (their districts are the first ring's)
+		buildings.append_array(rest.buildings)
+		dirs.append_array(rest.dirs)
+		for rp in rest.places:
+			lots.append_array(WorldPlan.freeLots(S, P, int(rp.id), rp, 100000 + lots.size()))
+	var dOff: int = distOffset
+	var si: int = setOffset - 1
+	var kept: Dictionary = WorldPlan.placesLoad(P)   # a warm start: the far places as they were laid, ring-free (WorldPlan.placesRestore reads the ring for each building's x and z)
+	var fresh: Dictionary = {}
+	for pid in range(P.n):
+		if held.has(pid):
+			continue
+		si += 1
+		var warm: bool = kept.has(pid)
+		var g: Dictionary = WorldPlan.placesRestore(P, kept[pid], circ) if warm else WorldPlan.layFree(S, P, pid, circ)
+		var plain: Array = [] if warm else g.buildings.duplicate(true)   # as laid, before the people are shared out
+		for dd in g.dist:
+			dlist.append({"name": dd.name, "look": dd.look, "a": 1.0, "b": 0.0, "avenues": [], "rows": dd.rows, "traffic": 0.0, "settlement": si})   # a > b: no x lies in it
+		if WorldPlan.farPeople():   # their people, by the place's share; asleep (popAlive 0) until the place is posed (WorldCollateral.wakeFar)
+			WorldSettle.assignPeople(g.buildings, float(P.people[pid]) / maxf(wsum, 1.0))
+		for e in g.buildings:
+			var nb := SimState.Building.new()
+			nb.place = pid
+			nb.plan = int(e.pi)
+			dirs.append(e["dir"])
+			nb.x = e.x; nb.w = e.w; nb.d = e.d; nb.h = e.h; nb.kind = e.kind; nb.row = float(e.row); nb.z = e.z; nb.seed = e.seed
+			nb.district = dOff + int(e.district); nb.shape = String(e.shape); nb.landmark = int(e.landmark)
+			nb.floors = e.floors
+			nb.fmask = (1 << nb.floors) - 1
+			nb.maxhp = e.maxhp; nb.hp = e.maxhp; nb.alive = true
+			nb.pop = float(e.pop) if WorldPlan.farPeople() else 0.0; nb.popAlive = 0.0
+			buildings.append(nb)
+		if not g.buildings.is_empty():
+			var base: int = lots.size()
+			var pl: Array = []
+			if warm:
+				pl = kept[pid].lots
+				for k in range(pl.size()):
+					pl[k]["id"] = 100000 + base + k
+			else:
+				pl = WorldPlan.freeLots(S, P, pid, {"yaw": g.yaw, "buildings": plain}, 100000 + base)
+				fresh[pid] = {"b": plain, "dist": g.dist, "yaw": g.yaw, "lots": pl.duplicate(true)}
+			lots.append_array(pl)
+		dOff += g.dist.size()
+	if not fresh.is_empty():   # a ring that holds other places than the last one lays those cold: the union is kept, so the cache fills over the rings played
+		kept.merge(fresh)
+		WorldPlan.placesStore(P, kept)
+	return {"buildings": buildings, "dirs": dirs, "dlist": dlist, "lots": lots}
 
 
 ## The ring a slice was read on, as the epoch carries it (an axis, the columns and a touch-down): from a ring the picker or a setup named, or a great circle. {} when it is not one the turn
@@ -153,6 +233,13 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
 		var pids: Array = []
 		for ch in chords:
 			pids.append(ch[0])
+		if WorldPlan.enabled() and WorldPlan.everywhere():   # every other place has a platform too (its flat, 54 records), for the buildings laid on it below
+			var held_p: Dictionary = {}
+			for ch in chords:
+				held_p[ch[0]] = true
+			for pid in range(P.n):
+				if not held_p.has(pid):
+					pids.append(pid)
 		S.fieldRecs = WorldField.recordsOf(P, pids)
 	var sh: int = WorldPlanet.sliceHash(sl)
 	var lakes: Array = []
@@ -185,6 +272,22 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
 	for ch in chords:
 		wsum += float(P.people[ch[0]])
 	var gen: Dictionary = settle(S, P, chords, wsum, 0, 0, 0, sl.circ)
+	var lots_laid: bool = false
+	if P.gen >= 3 and "fieldRecs" in S and WorldPlan.enabled() and WorldPlan.everywhere() and not sl.circ.is_empty():   # gen 3: every place the first ring does not hold, as the whole of its plan
+		var held_ids: Dictionary = {}
+		for ch in chords:
+			held_ids[ch[0]] = true
+		var fr: Dictionary = settleFree(S, P, sl.circ, held_ids, gen.dlist.size(), chords.size(), gen.rest, wsum)
+		if not gen.dirs.is_empty():   # the first ring's lots, from its own buildings only (read before any free lot exists), then the free places'
+			S.fieldRecs.append_array(WorldField.lotRecords(P, S, gen.buildings, gen.dirs, sl.circ))
+		S.fieldRecs.append_array(fr.lots)
+		lots_laid = true
+		S.bFirst = gen.buildings.size()   # Simulation's: the index, the hash and the beam's cap read it
+		if WorldPlan.farPeople():   # the index of the first far building: from it on, a building's people are asleep and count only toward anguish (WorldCollateral)
+			S.fieldRecs.append({"k": "far", "n": gen.buildings.size() + gen.rest.buildings.size()})
+		gen.buildings.append_array(fr.buildings)
+		gen.dirs.append_array(fr.dirs)
+		gen.dlist.append_array(fr.dlist)
 	for nb in gen.buildings:
 		S.buildings.append(nb)
 	if P.gen >= 3 and "bDir" in S:   # gen 3: each building's planet direction, three numbers each in building order (Simulation's bound pose arrays are laid from these)
@@ -194,7 +297,7 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
 			bd.append(q[1])
 			bd.append(q[2])
 		S.bDir = bd
-	if P.gen >= 3 and "fieldRecs" in S and not gen.dirs.is_empty():   # gen 3: each building's pad, a flat of its own ground height round its footprint (world/field.gd padRecords), after the platforms
+	if P.gen >= 3 and "fieldRecs" in S and not gen.dirs.is_empty() and not lots_laid:   # gen 3: each building's pad, a flat of its own ground height round its footprint (world/field.gd padRecords), after the platforms
 		S.fieldRecs.append_array(WorldField.lotRecords(P, S, gen.buildings, gen.dirs, sl.circ))
 	var dlist: Array = gen.dlist
 	S.lanes = WorldLanes.build(S, dlist)
