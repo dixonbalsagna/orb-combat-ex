@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Old PC test</title>
+<style>
+  :root { --bg:#14161b; --fg:#e8ecf2; --dim:#9aa3b2; --line:#3a4150; --ok:#7bd88f; --warn:#f2c14e; --bad:#f07178; --btn:#2d6cdf; }
+  @media (prefers-color-scheme: light) { :root { --bg:#f4f5f7; --fg:#15181e; --dim:#566070; --line:#c5cbd6; --ok:#1b7f3b; --warn:#9a6a00; --bad:#b3261e; --btn:#1d5fd0; } }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--fg); font:15px/1.45 system-ui, "Segoe UI", sans-serif; }
+  #bar { position:fixed; left:0; right:0; top:0; height:34px; box-sizing:border-box; padding:6px 12px; background:var(--bg); border-bottom:1px solid var(--line); z-index:5; display:flex; gap:14px; align-items:center; white-space:nowrap; overflow:hidden; }
+  #bar b { font-weight:600; }
+  #msg { overflow:hidden; text-overflow:ellipsis; }
+  #msg.act { color:var(--warn); font-weight:700; }
+  #game { position:fixed; left:0; right:0; top:34px; bottom:0; width:100%; height:calc(100% - 34px); border:0; background:#000; }
+  #panel { position:fixed; inset:34px 0 0 0; background:var(--bg); z-index:4; overflow:auto; padding:16px 16px 40px; display:none; }
+  #panel.show { display:block; }
+  #panel > div { max-width:760px; margin:0 auto; }
+  h1 { font-size:20px; margin:4px 0 8px; }
+  pre { background:rgba(127,127,127,.12); border:1px solid var(--line); border-radius:6px; padding:10px; font:12.5px/1.4 ui-monospace, Consolas, monospace; white-space:pre-wrap; word-break:break-word; margin:8px 0; }
+  button { font:inherit; padding:7px 14px; border-radius:6px; border:1px solid var(--line); background:var(--btn); color:#fff; cursor:pointer; margin:4px 8px 4px 0; }
+  button.plain { background:transparent; color:var(--fg); }
+  .ok { color:var(--ok); } .warn { color:var(--warn); } .bad { color:var(--bad); } .dim { color:var(--dim); }
+  #skip { display:none; }
+</style>
+</head>
+<body>
+<div id="bar"><b>Old PC test</b><span id="t">0:00</span><span id="msg">Starting.</span><button id="skip" class="plain" type="button" style="margin:0;padding:2px 10px">Start measuring now</button></div>
+<iframe id="game" title="the game" allow="autoplay; fullscreen; gamepad"></iframe>
+<div id="panel"><div id="panelBody"></div></div>
+<script>
+(function () {
+  'use strict';
+  // ---- what runs, in order: look at this computer; time a small fixed job; load the game; wait for the one click; watch the frames for MEASURE_S seconds; send the report.
+  var MEASURE_S = Math.max(10, Math.min(600, parseInt((location.search.match(/[?&]m=(\d+)/) || [0, 120])[1], 10))), GAME = '/game/index.html?planet=7&preview=1&tiles=1&meteor=loud';
+  var $ = function (id) { return document.getElementById(id); };
+  var t0 = performance.now(), R = { when: new Date().toISOString(), page: location.href, steps: [] };
+  var phase = 'start', measureFrom = 0, rafT = [], tickS = [], longTasks = [], iframeLoadAt = 0, probeAt = 0, tickAt = 0, lastProbe = null, doneSent = false;
+
+  function fmt(s) { s = Math.round(s); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
+  function say(m, act) { $('msg').textContent = m; $('msg').className = act ? 'act' : ''; }
+  setInterval(function () { $('t').textContent = fmt((performance.now() - t0) / 1000); }, 500);
+  function step(name) { R.steps.push([name, Math.round(performance.now() - t0)]); }
+
+  // ---- this computer
+  function machine() {
+    var m = { ua: navigator.userAgent, cores: navigator.hardwareConcurrency, memGB: navigator.deviceMemory === undefined ? 'n/a' : navigator.deviceMemory,
+      screen: screen.width + 'x' + screen.height, dpr: window.devicePixelRatio, win: innerWidth + 'x' + innerHeight, secureContext: window.isSecureContext, isolated: !!window.crossOriginIsolated,
+      host: location.host, gamepads: (navigator.getGamepads ? 'api present' : 'no api'), webgl2: false, renderer: 'n/a', vendor: 'n/a', software: false };
+    try {
+      var c = document.createElement('canvas'), gl = c.getContext('webgl2');
+      if (gl) {
+        m.webgl2 = true;
+        var e = gl.getExtension('WEBGL_debug_renderer_info');
+        if (e) { m.renderer = gl.getParameter(e.UNMASKED_RENDERER_WEBGL); m.vendor = gl.getParameter(e.UNMASKED_VENDOR_WEBGL); }
+        m.maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+      }
+    } catch (x) { m.glError = String(x); }
+    m.software = /swiftshader|llvmpipe|software|basic render/i.test(m.renderer);
+    return m;
+  }
+  R.machine = machine();
+
+  // ---- a small fixed job (about 1.5 s): integer and float loops, so this PC's reading can be set beside the dev PC's, run through the same page
+  function cpuJob() {
+    var a = performance.now(), x = 0, i;
+    for (i = 0; i < 40000000; i++) { x = (x + i * 7) | 0; }
+    var b = performance.now(), f = 0.5;
+    for (i = 0; i < 12000000; i++) { f = Math.sin(f) + Math.sqrt(i) * 0.000001; }
+    var c = performance.now(), arr = new Float64Array(2000000), s = 0;
+    for (var k = 0; k < 6; k++) { for (i = 0; i < arr.length; i++) { arr[i] = i * 0.5 + k; } for (i = 0; i < arr.length; i += 3) { s += arr[(i * 7) % arr.length]; } }
+    var d = performance.now();
+    return { intMs: Math.round(b - a), floatMs: Math.round(c - b), memMs: Math.round(d - c), sink: (x + f + s) > 0 };
+  }
+
+  function go() {
+    step('page up');
+    say('Looking at this computer.');
+    setTimeout(function () {
+      R.cpu = cpuJob(); step('cpu job');
+      say('Loading the game. This can take a minute on an old computer. Do not touch anything.');
+      loadGame();
+    }, 400);
+  }
+
+  // ---- the game
+  function loadGame() {
+    var f = $('game');
+    f.addEventListener('load', function () { iframeLoadAt = performance.now(); step('game page loaded'); });
+    f.src = GAME; phase = 'loading';
+    setInterval(poll, 1000);
+    setTimeout(function () { if (phase === 'loading' || phase === 'waitclick') $('skip').style.display = 'inline-block'; }, 120000);
+    $('skip').addEventListener('click', function () { if (phase !== 'measure' && phase !== 'done') beginMeasure('by button'); });
+    watchLong();
+  }
+  function probe() { try { var w = $('game').contentWindow; return w && w.__preview ? w.__preview : null; } catch (e) { return null; } }
+  function poll() {
+    var p = probe();
+    if (p) lastProbe = p;
+    if (p && !probeAt) { probeAt = performance.now(); step('game published its state'); }
+    if (phase === 'loading') {
+      if (p && p.tick > 0) { tickAt = performance.now(); }
+      var s = Math.round((performance.now() - t0) / 1000);
+      if (p) { phase = 'waitclick'; say('The game is up. Click START in the game window once, close any card, then leave the mouse alone.', true); }
+      else say('Loading the game... ' + fmt(s));
+    } else if (phase === 'waitclick') {
+      // the match is held behind the how-to-play card and the flashing-effects notice until someone clicks; its tick starts counting afterwards
+      if (p && p.tick > 90 && !tickAt) tickAt = performance.now();
+      if (p && p.tick > 90) beginMeasure('match running');
+      else say('Waiting for you to click START in the game window (close any card first).', true);
+    } else if (phase === 'measure') {
+      var el = (performance.now() - measureFrom) / 1000;
+      tickS.push([Math.round(el * 10) / 10, p ? p.tick : -1]);
+      say('Measuring: ' + Math.round(el) + ' of ' + MEASURE_S + ' s. Keep this window in front and leave the mouse alone.');
+      if (el >= MEASURE_S) finish();
+    }
+  }
+  function beginMeasure(why) {
+    if (phase === 'measure' || phase === 'done') return;
+    phase = 'measure'; measureFrom = performance.now(); step('measuring (' + why + ')'); $('skip').style.display = 'none';
+    rafT = []; requestAnimationFrame(frame);
+  }
+  function frame(t) { if (phase !== 'measure') return; rafT.push(t); requestAnimationFrame(frame); }
+  function watchLong() {
+    try { new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { if (phase === 'measure') longTasks.push([Math.round(e.startTime - measureFrom), Math.round(e.duration)]); }); }).observe({ entryTypes: ['longtask'] }); } catch (e) { R.longtask = 'not supported'; }
+  }
+
+  // ---- the numbers
+  function q(a, p) { var s = a.slice().sort(function (x, y) { return x - y; }); return s.length ? s[Math.min(s.length - 1, Math.floor(p * s.length))] : 0; }
+  function stats() {
+    var d = [], i; for (i = 1; i < rafT.length; i++) d.push(rafT[i] - rafT[i - 1]);
+    var tot = rafT.length > 1 ? rafT[rafT.length - 1] - rafT[0] : 1;
+    var over = function (ms) { return d.filter(function (v) { return v > ms; }).length; };
+    var worst = d.map(function (v, k) { return [v, k]; }).sort(function (a, b) { return b[0] - a[0]; }).slice(0, 6).map(function (w) { return { ms: Math.round(w[0]), atS: Math.round((rafT[w[1]] - rafT[0]) / 100) / 10 }; });
+    var r1 = function (v) { return Math.round(v * 10) / 10; };
+    return { frames: rafT.length, seconds: r1(tot / 1000), fps: r1(1000 * d.length / Math.max(1, tot)), p50: r1(q(d, 0.5)), p95: r1(q(d, 0.95)), p99: r1(q(d, 0.99)), max: r1(Math.max.apply(null, d.length ? d : [0])),
+      over20: over(20), over34: over(34), over50: over(50), over100: over(100), worst: worst };
+  }
+  function tickRate() {
+    if (tickS.length < 6 || tickS[tickS.length - 1][1] < 0) return null;
+    var r = [], i; for (i = 1; i < tickS.length; i++) { var dt = tickS[i][0] - tickS[i - 1][0]; if (dt > 0.3 && tickS[i][1] >= 0 && tickS[i - 1][1] >= 0) r.push((tickS[i][1] - tickS[i - 1][1]) / dt); }
+    if (!r.length) return null;
+    var mean = r.reduce(function (a, b) { return a + b; }, 0) / r.length;
+    return { meanPerS: Math.round(mean * 10) / 10, minPerS: Math.round(Math.min.apply(null, r) * 10) / 10, secondsBelow50: r.filter(function (v) { return v < 50; }).length, n: r.length };
+  }
+  function verdict(s, m) {
+    var l = [];
+    if (m.software) l.push('BAD: the browser is drawing in software (' + m.renderer + '): this reading says nothing about the graphics hardware. Check the graphics driver and that the browser uses the GPU.');
+    if (!m.webgl2) l.push('BAD: no WebGL 2 in this browser: the game cannot draw.');
+    if (s.fps >= 55 && s.p99 < 25) l.push('OK: holds 60 frames a second (frame time p99 ' + s.p99 + ' ms).');
+    else if (s.fps >= 28) l.push('WARN: it plays but does not hold 60 (' + s.fps + ' frames a second, p99 ' + s.p99 + ' ms).');
+    else l.push('BAD: below 30 frames a second (' + s.fps + ').');
+    if (s.max > 150) l.push('WARN: at least one stall of ' + s.max + ' ms.');
+    var local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+    if (!local && R.probe && R.probe.meteor === false) l.push('WARN: this address is not "local" to the game, so it dropped the page words ?tiles=1 and ?meteor=loud (a rule for public pages). It ran WITHOUT the tile ground: this is not the stack as Orb plays it. Open the page as http://127.0.0.1:8780/oldpc/ through the relay (proxy.ps1) in the steps.');
+    if (R.hiddenDuringMeasure) l.push('WARN: the tab was hidden or the window covered during the measurement: the numbers may be wrong. Run again and leave the window in front.');
+    return l;
+  }
+  function textReport(s, m, tr) {
+    var L = [];
+    L.push('Orb Combat EX old PC test, ' + R.when);
+    L.push('graphics: ' + m.renderer + ' (' + m.vendor + ')' + (m.software ? '   [SOFTWARE DRAWING]' : ''));
+    L.push('browser: ' + m.ua);
+    L.push('cores ' + m.cores + ', memory ' + m.memGB + ' GB (browser rounds, caps at 8), screen ' + m.screen + ' at ' + m.dpr + 'x, game window ' + m.win);
+    L.push('address ' + m.host + ', secure context ' + m.secureContext + (R.probe ? '; the game read: meteor trail ' + R.probe.meteor + ', swings ' + R.probe.swings + ', planet gen ' + R.probe.planetGen : '; no game probe'));
+    L.push('page job (lower is faster): int ' + R.cpu.intMs + ' ms, float ' + R.cpu.floatMs + ' ms, memory ' + R.cpu.memMs + ' ms');
+    L.push('');
+    L.push('FRAMES over ' + s.seconds + ' s: ' + s.frames + ' frames, ' + s.fps + ' per second; ms p50 ' + s.p50 + ', p95 ' + s.p95 + ', p99 ' + s.p99 + ', max ' + s.max);
+    L.push('frames over 20 ms: ' + s.over20 + ', over 34: ' + s.over34 + ', over 50: ' + s.over50 + ', over 100: ' + s.over100);
+    L.push('worst frames: ' + s.worst.map(function (w) { return w.ms + ' ms at ' + w.atS + ' s'; }).join('; '));
+    if (tr) L.push('sim ticks per second: mean ' + tr.meanPerS + ', slowest second ' + tr.minPerS + ', seconds under 50: ' + tr.secondsBelow50 + ' of ' + tr.n);
+    else L.push('sim ticks: the page did not publish them (no probe)');
+    if (longTasks.length) L.push('long tasks (over 50 ms, browser main thread): ' + longTasks.length + ', longest ' + Math.max.apply(null, longTasks.map(function (x) { return x[1]; })) + ' ms');
+    L.push('');
+    L.push('LOAD (seconds from the page opening): ' + R.steps.map(function (x) { return x[0] + ' ' + Math.round(x[1] / 100) / 10; }).join(', '));
+    L.push('');
+    verdict(s, m).forEach(function (v) { L.push(v); });
+    return L.join('\n');
+  }
+  function finish() {
+    if (phase === 'done') return; phase = 'done';
+    var s = stats(), m = R.machine, tr = tickRate();
+    R.probe = lastProbe; R.frames = s; R.tickRate = tr; R.longTasks = longTasks.slice(0, 60); R.text = textReport(s, m, tr); R.verdict = verdict(s, m);
+    $('game').style.visibility = 'hidden';
+    $('panel').className = 'show'; say('Done.');
+    var b = $('panelBody');
+    b.innerHTML = '<h1>Done. You can close this tab.</h1><p id="sent" class="dim">Sending the result to the other computer...</p><pre id="rep"></pre><button id="copy" type="button">Copy the result</button><button id="again" class="plain" type="button">Run again</button>';
+    $('rep').textContent = R.text;
+    $('copy').addEventListener('click', function () { var r = document.createRange(); r.selectNodeContents($('rep')); var sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); try { document.execCommand('copy'); $('copy').textContent = 'Copied'; } catch (e) { $('copy').textContent = 'Select the text and copy it by hand'; } });
+    $('again').addEventListener('click', function () { location.reload(); });
+    send();
+  }
+  function send() {
+    if (doneSent) return; doneSent = true;
+    var x = new XMLHttpRequest(); x.open('POST', '/oldpc/report');
+    x.setRequestHeader('content-type', 'application/json');
+    x.onload = function () { $('sent').textContent = x.status === 200 ? 'The result was sent and saved on the other computer. Nothing else to do.' : 'Could not send (' + x.status + '). Press "Copy the result" and paste it into your message.'; $('sent').className = x.status === 200 ? 'ok' : 'warn'; };
+    x.onerror = function () { $('sent').textContent = 'Could not reach the other computer. Press "Copy the result" and paste it into your message.'; $('sent').className = 'warn'; };
+    x.send(JSON.stringify(R));
+  }
+  // a tab hidden or minimised stops the frame clock: say so instead of reporting a false result
+  document.addEventListener('visibilitychange', function () { if (document.hidden && phase === 'measure') R.hiddenDuringMeasure = (R.hiddenDuringMeasure || 0) + 1; });
+  window.__oldpc = R;
+  go();
+})();
+</script>
+</body>
+</html>
