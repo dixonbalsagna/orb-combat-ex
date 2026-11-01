@@ -5,7 +5,7 @@ The EP's list for Orb's first play of versus on the globe with the new pad (`doc
 ## Stops the handover
 
 1. **Hidden fight.** With a scripted player who moves, 3,600 ticks: neither fighter stays behind a drawn building for over 3 s, and the stills agree.
-2. **Lens in the land.** Same reel: the frame reads as a fight on a planet, up from down, with no rock filling the frame on the camera's side.
+2. **A planet you can read.** Same reel: the frame reads as a fight on a planet, up from down, with no towns hanging in the air behind the fight.
 3. **Fighters in the ground.** Same reel: no bodies cut off by land they should be standing on or above.
 4. **A clash a player can reach.** Hold RT and press B against the computer or a second pad; the clash shows, and the meeting point isn't behind a roof.
 5. **A match that ends.** Every fight ends in a finisher, and Play again is one press from the next fight.
@@ -19,7 +19,7 @@ The EP's list for Orb's first play of versus on the globe with the new pad (`doc
 
 ## After first play
 
-Rock bands, lake beds, foot walls, low hills apart from what fixes 2, scar fringe, the swing scored by the land, town-sea, the flight curve, melee crescents, beam alerts, ring restyle, the clinch's look, fighter select, match length tuning. If the flat grey is still bad once 2 is fixed, rock comes back up.
+Rock bands, lake beds, low hills, scar fringe, the swing scored by the land, town-sea, the flight curve, melee crescents, beam alerts, ring restyle, the clinch's look, fighter select, match length tuning. If the flat grey is still bad once 2 is fixed, rock comes back up.
 
 ## What Orb is told at the handover
 
