@@ -13,7 +13,7 @@ Combat, 2026-11-01, for Game Design's `docs/design/beam-answers.md` and Orb's or
 | Walk into it | **Best picture, wrong numbers** | Beams last 0.3 to 0.9 s. A slow wade can't arrive |
 | Split | **Only reads on paper as its own move** | It's the block's picture with a harder press. Fold it in |
 | Slip and close | **Good play, ordinary picture** | A dodge, then a lunge. It needs no new rule |
-| Eat it | **Spectacular on one fighter** | The Cyborg. It's close to the drain we already refused |
+| Eat it | **Out as pitched** (RL-231) | The Cyborg's plate taking it stays, as his block's look: no ki, health or move |
 | Blast the front | **Only reads on paper. Cut** | A small pop on a huge beam, and it shares fire-back's input |
 | **New: raise the ground** | **Spectacular** | The planet answers, and it's different in every biome |
 | **New: the hose** | **Spectacular** | Hook the rooted shooter's arm, and his beam goes wild |
@@ -48,26 +48,34 @@ The pieces are candidates by name from the recipes. **Grist and Loupe have them.
 - **Behind you:** everything. The trench carries on past him.
 
 ### Powerful block
-- **Bodies:** a fresh LB, both feet ploughing. He stops the front at his hands. Stay away from the crossed-arms pose and the other genre stances, and let Legal read it. Grist: flat palm. Loupe: the forearm plate. The Empress: the hem swept up. The Cyborg: shoulder in, grille shut.
+- **Bodies, after RL-231:** a fresh LB, both feet ploughing, one plated forearm or the shoulder, never above the shoulder. Loupe: the forearm guard. The Empress: the hem swept up, as cloth. The Cyborg: shoulder in, grille shut.
+- **Grist, the new look: he puts his shoulder to it.** The flat palm is out, and he has no forearm plate to use: his plates are on his fists, and his forearms are taped. So he does what a worker does to a stuck door:
+  - Side-on, in the same low stance as his beam's charge, with the lead shoulder driven into the front and his head tucked behind it.
+  - The lead fist is closed and tucked at his collar. The rear arm is low and behind him, for balance, not wide.
+  - The front breaks on his shoulder as water does on a harbour wall. The rolled sleeves and apron whip back, and the tape at his wrists tears loose in strips (render only).
+  - **Cost:** one hold pose, off `shoulder_check`'s contact key, which he already has. **The lint's risk:** a low stance with two fists near the sides is the banned crouch, so the fist at the collar and the arm behind the hip have to read clearly at every tick of the hold.
+  - **Stand in front** (Game Design's wider wedge): he sinks lower and sets the second foot, so the wedge widens from his stance, never from his arms.
 - **By beam:**
   - **Breakwater:** a slab that piles up and fans out, the biggest.
   - **Lance Sheaf:** forks straight, already ruled.
-  - **Hem Sweep:** barely parts. It's a wire on a blade, a small hot point, and it reads as precise.
+  - **Hem Sweep:** it doesn't part (RL-231). The straight line stops at a small hot point on the plate, with sparks.
   - **Furnace Vent:** splashes, and embers fall (render only).
 - **Behind you: a clean unburnt wedge,** with scars either side. A hero in front of a town with the town untouched in his shadow is the best image in this list. It needs the carve to take a mask.
 
 ### Swat
-- **Bodies, by aim:**
-  - **Up:** Grist `palm_turn`, Loupe `heel_backhand`.
-  - **Over the shoulder:** Grist `back_chop` or `turning_edge`, Loupe `swing_plate`.
-  - **Down:** Grist `knife_chop`, Loupe `forearm_drop` or `arm_chop`.
+- **Bodies, by aim, re-picked for RL-231:** a closed fist, a plate or the shoulder, and it should look like it costs him something.
+  - **Up:** Grist `uppercut` (fist, rising, heavy). Loupe `rising_elbow`, so the forearm guard takes it.
+  - **Over the shoulder:** Grist rolls under it and heaves it over his back, like a sack. That's one new piece, grown from `shoulder_check`, and it follows from his block. Loupe `swing_plate`.
+  - **Down:** Grist `fist_chop`. Loupe `forearm_drop`.
+  - **Out:** `palm_turn` and `heel_backhand` both fail: each is the heel of an open hand on an outward arc, and `palm_turn` is a light. `back_chop` and `arm_chop` fail the same test, as open hands. `knife_chop` and `turning_edge` go too: an open hand, and a foot.
+  - **Every piece here aims at a body,** so each needs its contact moved to the beam's height. None has been posed against a beam.
 - **By beam:**
   - **Breakwater:** a palm can't swat a wall. It should only take the middle, with the edges running past, or else it's level 1 only.
   - **Lance Sheaf:** the bundle scatters like dropped sticks, and they stand where they land. **The best fit, and the cheapest.**
   - **Hem Sweep:** flicked aside like a wire, and she can sweep it back. A good exchange.
   - **Furnace Vent:** a spray of slag instead of a line.
 - **Behind you:** up is free, so it's the hero's choice. Down craters at his feet. Over the shoulder lands on whatever's there.
-- **Legal first:** a player aiming a beam at a town needs reading. Keep `WorldSettle.noTarget` and "no term reads people", and it's the old ruling's "at buildings" that needs a fresh look.
+- **Legal, RL-231:** the aim is fine with limits: no assist, lock-on, highlight or prompt toward a town, never toward a school, hospital or place of worship, and no reward beyond what a beam already gives. The AI swats by a fixed rule that reads terrain and standing buildings, never people.
 
 ### Walk into it
 - **Bodies:** head down, leaning in, heavy steps, the guard shaking. It arrives with `shoulder_check` or a heavy: Grist `drive_palm`, Loupe `plate_ram`.
@@ -76,16 +84,20 @@ The pieces are candidates by name from the recipes. **Grist and Loupe have them.
 - **The problem:** 54 ticks at a walk is about a body height or two. The stand-off is 9 bh. Either it's a 3-step charge, which isn't a wade, or a beam being waded runs longer, which is new. **The old ruling skips the problem:** he arrives in front of the attacker. That's fine as a cut to the arrival, but it's not the picture Orb means.
 
 ### Split
-Fold it into the block: a neutral block *is* the split. A second timed flick asks a lot in under a second for a picture that hardly differs. Two limits: Hem Sweep is the one beam that shouldn't visibly part, as "never thins" and "never parts" were ruled for its struggle, so Legal should re-read that. And "the town behind you pays" is backwards: the wedge protects it, and the two scars either side are what pay.
+Fold it into the block: a neutral block *is* the split. A second timed flick asks a lot in under a second for a picture that hardly differs. Two limits: Hem Sweep never parts round a body (RL-231), so it has no split at all. And "the town behind you pays" is backwards: the wedge protects it, and the two scars either side are what pay.
 
 ### Slip and close
 A dodge, then a zip or lunge along the flank. It's the dodge's prize, and needs no rule of its own. **Hem Sweep and the sweep generally beat it,** which is the right tension. A hit on a rooted, side-on shooter is a good picture, but ordinary.
 
 ### Eat it
-- **Bodies:** arms back, chest open, the beam ends at him, and he glows.
-- **The Cyborg only:** the grille opens and the Furnace Vent's opposite happens. It suits him and no one else, and it's one of the roster's character moves.
-- **Limits:** "a drain payoff" is on our refused list, and the Cyborg's siphon was dropped. The rival's On the Chin is already a body-takes-it stance. So it needs Legal and Game Design both.
-- **Behind you:** untouched, like the block.
+**As pitched, it's out:** RL-231 says no to the grille opening and the beam ending in it. Loupe's On the Chin stands, on its own limits.
+
+**RL-231's alternative for the Cyborg: he takes it on the plate, which scars, and it vents as steam and sparks, for no ki, health or move. My call: worth having, as the look of his block, not as a move.**
+- **Why not a move:** a separate answer that pays nothing is one nobody should pick over the block, which already takes no damage. It would just be a press to learn with a worse result.
+- **Why it's worth having:** it's the one thing about him the others can't copy, and it costs no rule. His timed block plays it: shoulder in, grille shut, the front splashes on the plate, and steam and sparks come off the rivets for a moment after.
+- **The part I'd keep: the scar stays for the match.** Each beam he's blocked leaves a burn on the plate, so a long fight shows on him. Look only, and read from the events, so it never touches the sim. It's Art's, like Loupe's plates cracking.
+- **The hunger meter** may show it as output (RL-231), and I wouldn't start there: it's the part closest to the drain we refused. Nothing opens, and it isn't named eat, feed or swallow.
+- **Behind you:** untouched, like any block.
 
 ### Blast the front
 Cut. RB + stick inside the window already fires back, so one input can't be both. And the picture's weak.
