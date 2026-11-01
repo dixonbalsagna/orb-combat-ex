@@ -509,3 +509,42 @@ Orb loves building destruction, and it's rare on every generation: about 0.6 bod
 | First send into a building, from a start in town | Inside 90 s in at least 80% of fights |
 
 **Guards.** Every new term reads standing buildings, floors, mass or wear, and RL-213's lint applies. All of `buildings.md`'s hard rows stand, and a drifting brawl still never damages a building. **The civilian band of 12 to 30% stays a test result, and if it rises, the casualty budget answers rather than these targets.** The front-row structures band (25 to 50% of 47) is a gen 2 number, so QA reads gen 3 before it limits anything.
+
+### Addendum: the first 7-minute read, and what brings a fight to town (2026-11-01)
+
+Encounter's rows, 16 fights, 6 from town, AI against AI, swings off then on: sends 1.75 and 0.56, against 4 to 8; felled 32.8 and 21.0 (64%); knock-backs in town reaching a wall 3% and 0%; town fights with no send 3 of 6 both ways; first send inside 90 s 2 of 6 and 3 of 6; time near a building 13% and 9%. **Most rows miss with swings off too, so swings aren't the main fault. It's a small sample, and my arithmetic below is unrun.**
+
+**The diagnosis.** A planet has 12 cities and 44 towns (`data/biomes/planet.json`), mostly on land, so from most land a place lies within a launch's 13,200 units on some bearing. **So places are in reach; launches just don't land on them.** The planner picks a line, then runs its usual lengths along it, and a town is only a few thousand units across, so landing near one is luck: 34 of 124 with swings off and 20 of 105 with them on. Once a building is in reach the planner already takes it 82 to 86% of the time.
+
+**The lever: a launch picks where it lands first, then the carry fits it.**
+
+| | The ruling | First value |
+| :--- | :--- | :--- |
+| **Inside an unused town** | A launch lands inside it, as `buildings.md` §3 rules. **Encounter checks that those levers fire on a field world.** "Launches carry far" suggests they don't | 3,000 to 4,000 units, until 2 sends there |
+| **Outside a town, or a used one** | When a place's standing buildings lie within the launch's reach on an offered line, its arrival is a real candidate, and **the carry is solved to reach it,** rather than the place having to sit where the usual length ends | Up to ruling 3d's sixth of the loop, by tier's reach |
+| **The pull** | §15's "dry" term starts sooner, so a fight doesn't wander for long. It's a soft term, and open ground, sea and mountains still win when they score better | 45 s, in place of 90 |
+| **Leaving** | After 2 sends, a town's marked down for a while, so the fight goes on to somewhere else. **That's the visit:** arrive, break things, get sent on | About 60 s |
+| **The stick** | A player's stick still wins the side, and §13's nudge stays their way in by flight | |
+
+**What it costs.**
+- **Carry changes.** Launches stop having a fixed length, which is a feel change, behind a switch. The closed form (`rule-of-cool-map.md` §2) makes this exact and needs no forecast, so **this is a reason to cost rows 2 and 3 now;** for physics launches, Encounter solves the horizontal send.
+- **Plan time,** on a launch tick that's already 10 to 14 ms: one candidate per place, read once. Encounter's to read.
+- **More landings in towns move collateral.** The 12 to 30% civilian band binds (RL-213), and nothing new reads people. If it goes over, the casualty budget answers before this lever does.
+- **Less open country.** "At least 25% outside every settlement" stands as the check on being pinned, and the sea's skips must not vanish.
+
+**The sum, by arithmetic:** 12 real launches in 7 minutes. If landings near buildings go from about 1 in 4 to about 1 in 2, and the planner takes 85% of those, that's about 5 sends, inside 4 to 8, before knock-backs.
+
+**The knock-back's wall: yes, move the limit.** "No further than its own distance" was too physical. **A knock-back with a wall inside 1,500 units goes all the way to it,** at every tier, as a plain send on the same ladder. That's about 4× a knock's 262 to 600, as Encounter is reading. It costs a longer knock, up to about 20 bh, and the fight moves further. **But reach alone may not be the fault:** 3% at 4× is very low. A town's line usually runs down a street, so its walls stand off to the side, in depth (750 toward the camera and 2,212 behind). **Encounter checks the lever reads walls in depth as `WorldBrunt.candidates` does,** and not only along the line.
+
+**Do the targets suit a planet this size? Mostly, with a new way of counting.** They were set on a ring where a third of the land was settlement. On a planet, a town is a visit.
+
+| Row | The ruling |
+| :--- | :--- |
+| **Sends a match from a town start** | **4 to 8 stands.** The sum above says it can be reached. New row: from any start, **3 to 6** |
+| **Places visited a match** | **New: 2 to 4,** read from the map's trail. That's Orb's crossing and destruction in one number |
+| **Time within 1,500 of a building** | **20 to 35%, in place of 30 to 50%.** The old band came from the old ring, and it would pin a fight on a planet |
+| **Town fights with no send, first send inside 90 s** | **At most 1 in 8 and 80% stand.** They're the first impression |
+| **Knock-backs reaching a wall** | **25 to 50% of those with a wall inside 1,500,** not of all those in town |
+| **Felled, swings on against off** | **Two thirds stands.** 64% on 16 fights can't be told from it |
+
+**I'm leaving the hero's lure alone.** It reads people, RL-214 keeps it for now, and RL-219's terms are for the mark-down only. If the hero's fights still leave town unused after this, it comes back here and goes to Legal.
