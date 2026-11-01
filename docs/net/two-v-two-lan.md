@@ -1,15 +1,15 @@
 # 2v2 over LAN: can Orb's two PCs do it?
 
-Netcode, 2026-11-01, for Orb's spitball at the end of `docs/ep/vision.md`. It combines Simulation's, Game Design's, Camera's and Controls' notes. **Paper only: nothing was built, and nothing was run on either PC.** Every session count is a guess.
+Netcode, 2026-11-01. It combines Simulation's, Game Design's, Camera's and Controls' notes. **Updated for Orb's order of 2026-11-01, which makes LAN co-op a live direction:** "aggressively tune the structure of the project towards a co-op experience that can be played over a local area network". The arena and the pad still come first. Nobody has played any of this, and every session count is a guess.
 
 ## The answer
 
-**Yes, it's feasible, but don't build it before launch work.** About 16 to 22 sessions in all, and only 2 or 3 of those are for LAN. The rest is teaching the game to run two fights at once, which launch's 2v2 needs anyway. So 2v2 belongs on the launch list, where it already is, and LAN comes cheaply after it. That fits Orb's own call that online waits until after launch.
+**Yes, it's feasible, on the full globe: about 18 to 24 sessions (Simulation's `docs/architecture/two-v-two-globe.md`), and only about 2 of those are still for the network.** The rest is teaching the game to run two fights at once. This replaces my earlier "don't build it before launch work".
 
 - **The network is the easy part.** Two people on two PCs send only two players' buttons, however many fighters there are, because the computer's fighters run on both PCs and send nothing.
 - **The hard part is two fights at once.** The game runs one exchange of blows at a time, and it has one clock, so one fight's hit-stop would freeze the other several times a second.
-- **"Each player's own record of the planet" becomes each player's own opponent and camera,** on one shared planet with all four on one line. A true separate planet view per fight costs 6 to 10 more sessions, and nobody has worked out what happens when the two fights meet.
-- **If Orb wants to feel something sooner:** a plain 1v1 between the two PCs, about 2 sessions and no fighter work. It answers the biggest network risk, below. I'd still wait until the arena and the pad are in Orb's hands.
+- **"Each player's own record of the planet" becomes each player's own opponent and camera,** on one shared planet with all four on one line. The world turns while the pairs are close and rests while they're apart, which in Simulation's stand-in is about four-fifths of the time.
+- **Two pieces are ready to use now:** a check that the two PCs' processors agree, with no network (`docs/net/two-pc-check.md`), and a plain 1v1 between them that's built but has never run (`docs/net/lan-v1.md`). The firewall click needs Orb's real yes.
 
 ## Who plays whom
 
@@ -20,15 +20,24 @@ Netcode, 2026-11-01, for Orb's spitball at the end of `docs/ep/vision.md`. It co
 
 **Both humans together first** (Game Design agrees). The other then costs the network almost nothing.
 
-## The smallest versions, smallest first
+## The steps, smallest first
 
-| Version | What it proves | Size |
+| Step | What it proves | Size |
 | :--- | :--- | :--- |
-| **1. Plain 1v1 between the two PCs** | The firewall step, the link, and that two different processors agree | About 2 sessions |
-| **2. Both humans against 1 computer fighter** | Three fighters over the link, taking turns in one fight, on Encounter's waiting-their-turn work (parked). No second fight, no clock change | About 3 to 5 more, once that's landed |
-| **3. Game Design's: both humans against 2 computer fighters** on a half-size planet, all four on one line, no pass, assists, revive or meteors | The real question: when your friend calls, do you drop your fight and fly? | The full job below |
+| **0. The two-PC check, no network** | That two different processors play the same match. No firewall | **Built.** Goes in the old PC's one-click test |
+| **1. Plain 1v1 between the two PCs, on the globe** | The firewall step, the link, the feel | **Built, not run.** Waits for step 0 and Orb's yes |
+| **2. Both humans against 1 computer fighter, on the globe** | Three fighters over the link, taking turns in one fight, on Encounter's waiting-their-turn work (parked). No second fight, no clock change | About 3 to 5 more, once that's landed |
+| **3. Both humans against 2 computer fighters, on the globe,** all four on one line, no pass, assists, revive or meteors | The real question: when your friend calls, do you drop your fight and fly? | The full job below |
 
-A half-size planet is the older flat ring, because Orb's new turning planet only runs at full size. So version 3 **has no turning and doesn't show the 3D world.** Moving it to the full planet is a later step: there, the world turns by itself only when all four are close, since the turn slows to almost nothing while a fighter stands far away.
+**The half-size flat ring is gone from these,** by Simulation's sizing: the globe adds only 1 or 2 sessions, and a rescue halfway round is about 5 or 6 seconds flat out, so it needs no shorter road.
+
+**What the globe changes for the network:**
+
+- **The wire doesn't change.** Whether a turn may run is worked out from the fighters' places, which both PCs already agree on. The turn itself is already in the check numbers.
+- **The "apart" rule can flip on a rollback.** A late input can move a fighter across the line where turns rest, so a turn starts or stops on one timeline and not the other. The limit on how far a correction can move already covers that, but `swing_check` needs a row for it, with four fighters.
+- **Both PCs do all the work, wherever their player is.** The state has to match, so neither can skip the far fight's ground or buildings. Two launches landing on cold ground is the worst tick, and it hits the old PC hardest.
+- **Saves stay cheap so far.** The two-PC check reads about 0.45 ms to save or restore on the globe here, well under the older figure. But that's before buildings at every place land, so read it again then.
+- **The bent line, Simulation's idea if Orb misses the turning,** needs nothing from me now: the check numbers follow the line's fields by name.
 
 ## The size
 
@@ -42,15 +51,16 @@ A half-size planet is the older flat ring, because Orb's new turning planet only
 | The D-pad, the extra input bits, a check that a claw grip gains nothing | Controls | 1 (mine) |
 | Each player's camera, and only their own fight moves it | Camera | 1 |
 | Drawing four fighters: 175 reads | Rendering | 2 to 3 (mine) |
-| **LAN: starting a networked game, the firewall step, four-fighter checks** | **Netcode** | **2 to 3** |
+| The swing's sites and the rule for when turns rest, on the globe | Simulation | 1 to 2 (Simulation's) |
+| **LAN: the rest, past step 1: the other player isn't "1 minus me", computer-played slots from the first tick, four-fighter checks, the "apart" row** | **Netcode** | **About 2** |
 | **Measuring it on the old PC** | Performance | 1 (mine) |
 
 **Must land first, in order:**
 
 1. The arena and the pad in Orb's hands.
-2. World's fix for the table a rematch builds late, then a two-process comparison in my checks.
-3. Launch ticks made cheaper (Performance).
-4. The old PC's speed result.
+2. World's fix for the table a rematch builds late, with `fork_check` in CI.
+3. The two-PC check's result, on both PCs. If they disagree, everything else here waits.
+4. Launch ticks made cheaper (Performance).
 
 ## Focus
 
@@ -65,16 +75,18 @@ A half-size planet is the older flat ring, because Orb's new turning planet only
 - **How often it rolls back: about never on a cable.** The game waits 2 ticks (33 ms) before using an input, and a home network delivers well inside that. Our LAN test row shows 0 rollbacks. Wi-Fi can break that for a moment.
 - **Slow ticks are the catch.** If one PC stalls past 33 ms, its buttons arrive late and the other PC has to guess, then re-run those ticks. A launch tick costs 18 to 27 ms on the main PC today, and two can land together. Waiting 3 ticks (50 ms) covers most of it, and the game already chooses its wait from each PC's speed.
 
-**The old PC's frame,** by arithmetic on older one-to-one figures. It assumes four fighters double a tick, which Simulation says is about right or a little high, and a 1.5 times slower PC, which is a guess.
+**The old PC's frame,** by arithmetic. It uses the two-PC check's readings on this PC, on the globe, on a busy machine: a tick of about 1.2 ms and a save or restore of about 0.45 ms. It assumes four fighters double a tick and a 1.5 times slower PC, which is a guess.
 
 | Frame | Cost, of 16.7 ms |
 | :--- | ---: |
-| Normal, no rollback | about 5 ms |
-| Rolling back 3 ticks | about 23 ms: a visible hitch, but rare |
+| Normal, no rollback | about 4 ms |
+| Rolling back 3 ticks | about 18 ms: a visible hitch, but rare |
+
+The worst single ticks in that run took 43 to 80 ms here. Those are the hitches that could cause a rollback, and they're Performance's list. **The old PC's own report will replace the guess,** as it holds `tick_ms` and `snapshot_ms`.
 
 ## What the old PC can run
 
-i5 6600K, GTX 1080, 16 GB. **The graphics card is well above our budget** of an old laptop's built-in graphics. **The processor is the question,** because the game logic runs on one core, and two full fights are the costliest thing it could do. Its speed test hasn't reported, and four fighters can't be measured until two fights exist.
+i5 6600K, GTX 1080, 16 GB. **The graphics card is well above our budget** of an old laptop's built-in graphics. **The processor is the question,** because the game logic runs on one core, and two full fights are the costliest thing it could do. Its speed test hasn't reported, and four fighters can't be measured until two fights exist. Each player's camera costs the same as in a 1v1.
 
 ## Native or browser
 
@@ -82,7 +94,7 @@ i5 6600K, GTX 1080, 16 GB. **The graphics card is well above our budget** of an 
 
 ## Setting it up with no surprises
 
-**One known approval, once, on one PC. It can't be zero with native.** The PC that hosts waits on a port (`listen` in `net/enet_transport.gd`), which is what makes Windows ask, and it needs an Administrator's yes. The PC that joins only calls out (`dial`) and shouldn't be asked. **This is from reading the code. It hasn't been run,** because ENet stays off Orb's PC and CI has no Windows firewall.
+**Built: `docs/net/lan-v1.md` has the scripts and the exact words Orb reads. One known approval, once, on one PC. It can't be zero with native.** The PC that hosts waits on a port (`listen` in `net/enet_transport.gd`), which is what makes Windows ask, and it needs an Administrator's yes. The PC that joins only calls out (`dial`) and shouldn't be asked. **This is from reading the code. It hasn't been run,** because ENet stays off Orb's PC and CI has no Windows firewall.
 
 1. **The main PC hosts, always.** Its network is classed Public, and ZeroTier is on it too.
 2. **One small script, run once, adds the rule.** Orb's told first and clicks yes once. It allows only the game, one port and addresses from `10.0.0.x`, so ZeroTier members can't reach it. Whether that rule stops Windows asking is untested, so the first try needs Orb warned.
@@ -108,7 +120,7 @@ A match can already hold 5 bodies, but as one fight with bystanders, not two fig
 
 ## The network's real risk: two different processors
 
-**They've never played the same match.** Everything so far compared programs on one PC or in CI. The native and browser builds do match, which is a good sign, not proof. Simulation just found a table that a rematch builds late, which no single-program test can see. So the first LAN test is version 1, with the game's check numbers compared every second, so a mismatch gets reported rather than felt.
+**They've never played the same match.** Everything so far compared programs on one PC or in CI. The native and browser builds do match, which is a good sign, not proof. So step 0 comes before any link: the same match on each PC, with the two files compared. Simulation also found a table a rematch builds late, which is `fork_check`'s job, not step 0's. Step 1 then compares the check numbers every second, so a mismatch gets reported rather than felt.
 
 ## Rest of Game Design's list
 
@@ -118,4 +130,4 @@ A match can already hold 5 bodies, but as one fight with bystanders, not two fig
 ## For Orb, when it's time
 
 1. **Does a fight need to turn its own world while the other fight is far away?** If yes, that's the 6 to 10 extra sessions, plus World's. Playing one line with four fighters is the cheapest way to find out, so it isn't a question for now.
-2. **Who's the second player?** Legal's conditions for the old-PC test say Orb alone watches, so anyone else playing is a new question for Legal, through the EP.
+2. **Who's the second player?** Legal's conditions for the old-PC test say Orb alone watches, and its no-network rule was written for the public builds, so step 1 needs Legal's word, through the EP.
