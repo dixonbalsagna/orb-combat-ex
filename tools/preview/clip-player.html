@@ -1,0 +1,31 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Your match, played back</title>
+<style>
+  html, body { margin: 0; background: #0b0d12; color: #e8e8e0; font: 16px/1.4 sans-serif; }
+  #wrap { max-width: 1000px; margin: 0 auto; padding: 12px; }
+  canvas { width: 100%; background: #000; display: block; }
+  #bar { display: flex; gap: 10px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
+  button { font: bold 16px sans-serif; padding: 8px 14px; border-radius: 8px; border: 2px solid #8c8a80; background: #14171e; color: #e8e8e0; cursor: pointer; }
+  input[type=range] { flex: 1; min-width: 200px; }
+  .note { color: #a8a69c; font-size: 14px; }
+</style>
+<div id="wrap">
+  <h2 style="margin:6px 0">Your match, played back</h2>
+  <div class="note">This is the match you played, re-run from what was recorded (your presses and the seed) through the game's own replay path. Space plays and pauses, the arrow keys step, the slider scrubs.</div>
+  <div class="note" id="slow">__SLOW__</div>
+  <canvas id="c" width="480" height="270"></canvas>
+  <div id="bar"><button id="play">Play</button><span id="t">1</span><input id="s" type="range" min="1" max="__FRAMES__" value="1"></div>
+  <div class="note" id="load">Loading the pictures...</div>
+</div>
+<script>
+const N = __FRAMES__, FPS = __FPS__, imgs = [], ctx = document.getElementById('c').getContext('2d');
+let cur = 1, playing = false, last = 0, loaded = 0;
+function draw() { const im = imgs[cur]; if (im && im.complete) { ctx.canvas.width = im.naturalWidth; ctx.canvas.height = im.naturalHeight; ctx.drawImage(im, 0, 0); } document.getElementById('t').textContent = cur + ' / ' + N; document.getElementById('s').value = cur; }
+for (let i = 1; i <= N; i++) { const x = new Image(); x.onload = () => { loaded++; document.getElementById('load').textContent = loaded < N ? 'Loading the pictures: ' + loaded + ' of ' + N : 'Ready.'; if (i === cur) draw(); }; x.src = 'frames/f-' + String(i).padStart(6, '0') + '.jpg'; imgs[i] = x; }
+function frame(ts) { if (playing && ts - last >= 1000 / FPS) { last = ts; cur = cur >= N ? 1 : cur + 1; draw(); } requestAnimationFrame(frame); }
+requestAnimationFrame(frame);
+document.getElementById('play').onclick = () => { playing = !playing; document.getElementById('play').textContent = playing ? 'Pause' : 'Play'; };
+document.getElementById('s').oninput = (e) => { cur = +e.target.value; draw(); };
+addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); document.getElementById('play').click(); } if (e.code === 'ArrowRight') { cur = Math.min(N, cur + 1); draw(); } if (e.code === 'ArrowLeft') { cur = Math.max(1, cur - 1); draw(); } });
+</script>

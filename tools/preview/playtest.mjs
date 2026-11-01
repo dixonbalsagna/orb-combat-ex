@@ -37,6 +37,7 @@ const FAKE = `
   window.__padAxes = (a) => { state.axes = a.slice(); };
 })();`;
 
+const BB_EVAL = `JSON.stringify({ state: window.__bb_state || null, replay: window.__bb_replay || null, last: (function () { try { return (localStorage.getItem('orb-blackbox-last') || '').length; } catch (e) { return -1; } })() })`;
 const record = { url: URL, steps: [] };
 let browser = null, page = null, code = 0;
 try {
@@ -61,6 +62,9 @@ try {
     else if (s.do === 'release') await page.eval(`window.__padSet(${s.button}, false)`, true);
     else if (s.do === 'tap') { await page.eval(`window.__padSet(${s.button}, true)`, true); await sleep(250); await page.eval(`window.__padSet(${s.button}, false)`, true); }
     else if (s.do === 'click') { for (const type of ['mouseMoved', 'mousePressed', 'mouseReleased']) { await page.send('Input.dispatchMouseEvent', { type, x: s.x, y: s.y, button: 'left', buttons: type === 'mousePressed' ? 1 : 0, clickCount: 1 }); await sleep(80); } }
+    else if (s.do === 'bb') { const r = await page.eval(BB_EVAL); const o = JSON.parse(r || '{}'); writeFileSync(join(OUT, 'blackbox-' + (s.name || 'grab') + '.json'), JSON.stringify({ kind: 'orb-first-play', state: o.state, localStorageBytes: o.last, replay: o.replay ? JSON.parse(o.replay) : null })); record.bb = { state: o.state, localStorageBytes: o.last, hasReplay: !!o.replay }; }
+    else if (s.do === 'snap') { const r = await page.eval('JSON.stringify((function () { if (!window.__bbf_snap) return null; var o = window.__bbf_snap(); return { rsCount: o.rsCount, rsPad: o.rsPad, first: (o.rs || []).slice(0, 14), last: (o.rs || []).slice(-6), frames: o.n, over33: o.over33 }; })())'); writeFileSync(join(OUT, 'snap-' + (s.name || 'grab') + '.json'), r || 'null'); log('snap ' + String(r).slice(0, 500)); }
+    else if (s.do === 'forceover') { await page.eval('window.__bb_state = Object.assign({}, window.__bb_state || {}, { over: true, at: Date.now() })', true); }
     else if (s.do === 'stick') await page.eval(`window.__padAxes(${JSON.stringify(s.axes)})`, true);
     else if (s.do === 'key') { await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: s.key, code: s.code || s.key, windowsVirtualKeyCode: s.vk || 0 }); await sleep(120); await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: s.key, code: s.code || s.key, windowsVirtualKeyCode: s.vk || 0 }); }
     let probe = null;

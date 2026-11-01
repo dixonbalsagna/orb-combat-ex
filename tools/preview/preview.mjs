@@ -21,7 +21,8 @@ import { extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { exportRevision } from '../flash/head-export.mjs';
 import { scriptErrors } from '../gate.mjs';
-import { IDS, SWITCHES, KICK_SAMPLES, EDITS_FINGERPRINT, flip, locate, present, patchMain, resolve as resolveSwitches, tableWith, loadPending } from './switches.mjs';
+import { patchHost, injectPage } from './blackbox.mjs';
+import { IDS, SWITCHES, KICK_SAMPLES, HITSTOP_SAMPLES, PEAK_SAMPLES, EDITS_FINGERPRINT, flip, locate, present, patchMain, resolve as resolveSwitches, tableWith, loadPending } from './switches.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const REPO = resolve(HERE, '..', '..');
@@ -114,7 +115,8 @@ export function plan(repo, sha, { off = [], overlay = [], pending = [], read: re
   for (const sw of table) {
     if (!active.includes(sw.id) || !sw.optional) continue;
     if (sw.setup || sw.url) {   // a key of the match's setup, or a page word: not a data flag; present when the tree has the code it needs
-      if (read(sw.presentIf.file) === null) wait(sw.id, `${sw.presentIf.file} is not in this tree yet`);
+      const pf = read(sw.presentIf.file);
+      if (pf === null || (sw.presentIf.text && !pf.includes(sw.presentIf.text))) wait(sw.id, `${sw.presentIf.file}${sw.presentIf.text ? ' (' + sw.presentIf.text + ')' : ''} is not in this tree yet`);
       continue;   // the setup and the page words are collected below, after what waits has turned off what needs it
     }
     const text = read(sw.file);
@@ -137,12 +139,14 @@ export function plan(repo, sha, { off = [], overlay = [], pending = [], read: re
   for (const sw of table) if (active.includes(sw.id)) { if (sw.setup) Object.assign(setup, sw.setup); if (sw.url) urlWords.push(sw.url); }
   const kickWord = (() => { const x = read('sim/core/kick.gd'); return x !== null && x.includes('static func enabled'); })();
   const tierWord = (() => { const x = read('sim/core/sim.gd'); return x !== null && x.includes('startTier'); })();
+  const hitstopWord = (() => { const x = read('sim/core/hitstop.gd'); return x !== null && x.includes('static func enabled'); })();
   const sticksOk = (() => { const x = read('sim/director/stick.gd'); return x !== null && x.includes('class_name DirStick'); })();
   const swingsOff = (() => { const x = read('sim/director/swing.gd'); return x !== null && x.includes('static func setForce'); })();
-  const alts = table.filter((s) => active.includes(s.id) && s.url && s.alt).map((s) => (s.alt.add ? { id: s.id, add: s.alt.add, label: s.alt.label } : { id: s.id, word: s.url, to: s.alt.word, label: s.alt.label })).concat(swingsOff ? [{ id: 'swing', add: 'swings=off', label: 'DirSwing off (Encounter\'s page word)' }] : []).concat(kickWord && active.includes('kick') ? KICK_SAMPLES : []);
+  const alts = table.filter((s) => active.includes(s.id) && s.url && s.alt).map((s) => (s.alt.add ? { id: s.id, add: s.alt.add, label: s.alt.label } : { id: s.id, word: s.url, to: s.alt.word, label: s.alt.label })).concat(swingsOff ? [{ id: 'swing', add: 'swings=off', label: 'DirSwing off (Encounter\'s page word)' }] : []).concat(kickWord && active.includes('kick') ? KICK_SAMPLES : []).concat(hitstopWord ? HITSTOP_SAMPLES : []).concat(tierWord ? PEAK_SAMPLES : []);
   const more = table.filter((s) => active.includes(s.id) && Array.isArray(s.probeMore)).flatMap((s) => s.probeMore.filter((m) => { const x = read(m.probeIf.file); return x !== null && x.includes(m.probeIf.text); }).map((m) => m.line));
-  const probes = (sticksOk ? ['"stk": _pv_stick_n', '"stkk": _pv_stick_kinds', '"p1human": (host.S.fighters[0].ai == null)'] : []).concat(more).concat(table.filter((s) => active.includes(s.id) && s.probe && s.probeIf && read(s.probeIf.file) !== null && read(s.probeIf.file).includes(s.probeIf.text)).map((s) => s.probe));
-  return { table, active: table.map((s) => s.id).filter((id) => active.includes(id)), cascaded: r.cascaded, waiting, stale, probes, hostPatch, unknown: r.unknown, setup, urlWords, alts, swingsOff, sticksOk, kickWord, tierWord };
+  const occProbe = '"occ": (pane.occluded if pane != null and pane.occluded.size() >= 2 else []), "occAll": _pv_occ_all(), "ko": (host.S != null and host.S.game.ko != null), "fx": [host.S.fighters[0].x, host.S.fighters[1].x, host.S.fighters[0].y, host.S.fighters[1].y]', kiProbe = '"ki": [host.S.fighters[0].ki, host.S.fighters[1].ki]';
+  const probes = [occProbe, kiProbe].concat(sticksOk ? ['"stk": _pv_stick_n', '"stkk": _pv_stick_kinds', '"bo": _pv_beam_kinds', '"padtxt": _pv_padtxt', '"noise": [_pv_intended, _pv_real, _pv_phantom]', '"noised": _pv_nd', '"arcsends": _pv_arc_kinds', '"p1human": (host.S.fighters[0].ai == null)'] : []).concat(more).concat(table.filter((s) => active.includes(s.id) && s.probe && s.probeIf && read(s.probeIf.file) !== null && read(s.probeIf.file).includes(s.probeIf.text)).map((s) => s.probe));
+  return { table, active: table.map((s) => s.id).filter((id) => active.includes(id)), cascaded: r.cascaded, waiting, stale, probes, hostPatch, unknown: r.unknown, setup, urlWords, alts, swingsOff, sticksOk, kickWord, tierWord, hitstopWord };
 }
 
 /** Applies a git patch to a scratch tree (git apply, whitespace-tolerant: a CRLF checkout must not refuse it). Throws with git's first line when it does not fit. */
@@ -200,7 +204,8 @@ export async function buildPreview(o) {
   }
   const mainFile = join(tree, 'render', 'core', 'main.gd');
   if (pl.hostPatch) { applyPatchText(tree, pl.hostPatch); log('applied the right-hand host patch to the scratch main.gd (the pad\'s right stick)'); }
-  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord }));
+  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord }));
+  if (pl.active.includes('blackbox')) { const hf = join(tree, 'render', 'core', 'sim_host.gd'); writeFileSync(hf, patchHost(readFileSync(hf, 'utf8'))); log('the black box: its hooks are in the scratch sim_host.gd (it reads the intents, the seed and the setup; it never writes the sim)'); }
   const godot = o.godotNode ? null : godotExe(o.godot);
   const g = { godot, godotNode: o.godotNode };
   log('importing the project (Godot, below-normal priority)');
@@ -210,6 +215,7 @@ export async function buildPreview(o) {
   log('exporting Web (standard template, single-threaded)');
   code = await runGodot(g, ['--headless', '--path', tree, '--export-release', 'Web', join(web, 'index.html')], exportLog, 25 * 60 * 1000);
   if (code !== 0 || !existsSync(join(web, 'index.html'))) throw new Error(`Godot --export-release Web exited ${code}; the end of ${exportLog}:\n${tail(exportLog)}`);
+  if (pl.active.includes('blackbox')) { const ix = join(web, 'index.html'); writeFileSync(ix, injectPage(readFileSync(ix, 'utf8'))); log('the black box: the questions and the save are in the page'); }
   out.scriptErrors = scriptErrors(`${tail(importLog, 4000)}\n${tail(exportLog, 4000)}`).slice(0, 6);
   if (!o.keepTree) rmSync(tree, { recursive: true, force: true });
   out.seconds = Math.round((Date.now() - t0) / 1000);

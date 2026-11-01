@@ -16,7 +16,8 @@ import { fileURLToPath } from 'node:url';
 import { scriptErrors } from '../gate.mjs';
 import { HOST_PATCH, applyPatchText, godotExe, plan, readPending, runGodot, saveSmoke, serveLocal } from './preview.mjs';
 import { describeReport, loadManifest, runStack, stackKey } from './stack.mjs';
-import { patchMain } from './switches.mjs';
+import { patchMain, EDITS_FINGERPRINT } from './switches.mjs';
+import { patchHost, injectPage, BB_FINGERPRINT } from './blackbox.mjs';
 import { setWebCustomTemplate } from '../flash/web-preset.mjs';
 import { fetchTemplate } from '../site-template.mjs';
 
@@ -70,7 +71,9 @@ export async function buildStackPreview(o) {
   const parksIn = r.parks.filter((p) => p.status === 'applied').map((p) => p.id);
   const tz = templateZip(o.template, repo);
   const tzKey = tz ? `-t${createHash('sha1').update(readFileSync(tz)).digest('hex').slice(0, 8)}` : '';
-  const key = `${r.key}-${pl.active.join('+')}${pl.hostPatch ? '-host' : ''}${tzKey}`.replace(/[^A-Za-z0-9+._-]/g, '_').slice(0, 120);
+  const keyFull = `${r.key}-${pl.active.join('+')}${pl.hostPatch ? '-host' : ''}${tzKey}-e${EDITS_FINGERPRINT}-s${createHash('sha1').update(['switches.mjs', 'blackbox.mjs', 'preview.mjs'].map((f) => readFileSync(new URL('./' + f, import.meta.url), 'utf8')).join('\u0000')).digest('hex').slice(0, 6)}-p${createHash('sha1').update(JSON.stringify([pl.probes, pl.setup, pl.urlWords || null])).digest('hex').slice(0, 6)}`.replace(/[^A-Za-z0-9+._-]/g, '_');
+  // the key is long (the stack's key leads it, the switches follow): a tail cut dropped the stack's key and two different stacks shared a folder, so the whole is hashed and a readable tail kept
+  const key = createHash('sha1').update(keyFull).digest('hex').slice(0, 16) + '-' + keyFull.slice(-60);
   const dir = join(base, 'build', key), web = join(dir, 'web'), metaFile = join(dir, 'preview.json');
   Object.assign(out, { dir, web });
   if (!o.rebuild && existsSync(join(web, 'index.html')) && existsSync(metaFile)) {
@@ -85,7 +88,8 @@ export async function buildStackPreview(o) {
   writeFileSync(join(tree, 'build_info.json'), `${JSON.stringify({ commit: r.commit.slice(0, 7), stack: parksIn.length })}\n`);
   const mainFile = join(tree, 'render', 'core', 'main.gd');
   if (pl.hostPatch) { applyPatchText(tree, pl.hostPatch); log('applied the right-hand host patch to the scratch main.gd (the pad\'s right stick)'); }
-  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord }));
+  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord }));
+  if (pl.active.includes('blackbox')) { const hf = join(tree, 'render', 'core', 'sim_host.gd'); writeFileSync(hf, patchHost(readFileSync(hf, 'utf8'))); log('the black box: its hooks are in the scratch sim_host.gd (it reads the intents, the seed and the setup; it never writes the sim)'); }
   if (tz) {   // the scratch tree's copy of the Web preset only: the engine template this page is exported with
     const pf = join(tree, 'export_presets.cfg');
     writeFileSync(pf, setWebCustomTemplate(readFileSync(pf, 'utf8'), tz.split('\\').join('/')));
@@ -100,6 +104,7 @@ export async function buildStackPreview(o) {
   log(`exporting Web (${tz ? 'custom' : 'standard'} template, single-threaded)`);
   code = await runGodot(g, ['--headless', '--path', tree, '--export-release', 'Web', join(web, 'index.html')], exportLog, 25 * 60 * 1000);
   if (code !== 0 || !existsSync(join(web, 'index.html'))) throw new Error(`Godot --export-release Web exited ${code}; the end of ${exportLog}:\n${tail(exportLog)}`);
+  if (pl.active.includes('blackbox')) { const ix = join(web, 'index.html'); writeFileSync(ix, injectPage(readFileSync(ix, 'utf8'), { commit: r.commit, subject: r.subject, stackKey: r.key, parks: parksIn, switches: pl.active, tools: BB_FINGERPRINT, folder: key })); log('the black box: the questions and the save are in the page'); }
   out.scriptErrors = scriptErrors(`${tail(importLog, 4000)}\n${tail(exportLog, 4000)}`).slice(0, 6);
   if (!o.keepTree) rmSync(join(base, 'stack', `${r.commit.slice(0, 8)}-${r.key}`), { recursive: true, force: true });
   out.seconds = Math.round((Date.now() - t0) / 1000);
