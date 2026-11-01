@@ -1,0 +1,8 @@
+# Pre-play read tools (Performance and Platform, 2026-11-01)
+
+The EP's order: what Orb's first playthrough costs on this PC's real GPU, from a fresh browser profile.
+
+- `preplay-read.mjs`: the driver. Guarded headless Chrome (tools/machine/browser.mjs; fresh profile, below-normal, time limit, session name), no software-GL flag; the WebGL renderer string goes into the report. Scripted seeded pad. Records every animation-frame interval from page start, the game tick (`?preview=1`), the renderer, machine load before and after (above 60% = INVALID), and the black box's replay (`window.__bb_replay`) if the page has one. Writes `preplay.json`, `preplay.txt` (plain words: first-60-s median and p99, 10-s slices, the 15 slowest frames), `replay.json`, `last.png`.
+- `replay_firsts.gd`: re-runs the saved replay headless and writes the first tick of every fx type and feed tag (beam, collapse, meteor ...). `preplay-read.mjs --report <folder> --firsts <that file>` then adds "first beam / collapse / meteor: worst frame within a second".
+- Dry-run proof (this PC, 2026-11-01, busy machine, 30 s, a HEAD-only build): the driver runs end to end, reports the renderer as the RTX 5070 Ti (real GPU), and warns when the game never published a tick. Needs `--seconds 90` or more: the game takes about 25 s to load.
+- Limits: headless draws without vsync (a frame time is cost, not 240 Hz pacing); a fresh profile has a cold shader cache, Orb's own Opera may not; Opera itself is not driven (the launcher starts Chrome only); the pad script mashes buttons, it is not a designed fight; first beam/collapse/meteor come from the replay, so the page needs the black box.

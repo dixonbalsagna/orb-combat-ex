@@ -1,0 +1,26 @@
+# Pre-play read: what Orb's first match costs on this PC (Performance and Platform, 2026-11-01)
+
+For the EP. The build Orb plays: the kept copy `orb-first-play-018b4edf-fddd34b4` (commit 018b4edf, stack key dc01cd6e4c43), served on 127.0.0.1:8766, read only. Real GPU (RTX 5070 Ti through ANGLE/Direct3D11, the renderer string is in every result), fresh browser profile each run (cold cache), quiet machine (CPU 4 to 10% before and after every run: all runs VALID). Tools: `docs/perf/tools/preplay/` (driver, replay tool, meteor scene). Raw runs are in my scratch folder.
+
+## In plain words
+
+1. **The page freezes four to six times while it loads, before play.** In the first 35 seconds the browser stops drawing for 2.3 to 2.9 seconds each time (at about 3 s, 13 s, 16 s, 24 s and others), then sits on the flashing-effects card. Nothing is playable then, but a first-time player sees a frozen tab. It is the page loading and compiling, not the match.
+2. **The first minute of play is rougher than the rest.** First 60 s after "I understand, start": median frame 16.9 ms, 99th percentile 51.8 ms, worst 132 ms; 145 frames over 33 ms. After a minute: median 11 ms, 99th percentile 23 to 28 ms, worst 44 to 68 ms. (Headless Chrome draws without the display's vsync, so these are the cost of a frame, not Opera's 240 Hz pacing. A frame over 33 ms is a visible hitch at 60 Hz, over 50 ms is a stutter.)
+3. **The worst moment of the first minute is about 9 to 10 seconds in (game tick 510 to 567): ten frames of 70 to 130 ms in a row.** Tools' reels put the first launch at about tick 532 on this seed with a building collapse just after: **that is very likely the first launch and first collapse (inferred, not proved: I had no tree to replay the match and read the event ticks)**. It repeats in the second run (a 129 ms frame at tick 488) and in the first run of the meteor scene (hitches at ticks 61 to 67 and 106 to 108, 46 to 67 ms).
+4. **The ending of the fight is the biggest hitch of all.** In the meteor scene, as a fighter's health reaches zero (game tick about 2570 to 2650) there are about a dozen frames of 100 to 342 ms inside roughly 1.5 seconds (342, 233, 225, 221, 221, 213 ms): a visible stutter of about a second, followed by a third launch. The same happened in the earlier run of that scene (340 ms at tick 2255). **This is the one thing Orb would notice and could stop over.** Not isolated further: what the sim or the draw does at that moment.
+5. **The meteor itself is not a big hitch.** In the meteor scene (Tools' script: rival idle, B down at tick 20, held 60, released at 80; peak=1) the frames in game ticks 90 to 300 have median 25 to 29 ms (against 16.7 ms elsewhere) and the worst is 46 ms. The sim's own dig is 11 to 17 ms natively at rMax 6100 and 2.3 ms at 3000 (below); the page's single dig frame is not separable from the rest of that window, so "about 30 ms at the worst, under 50" is the most the page numbers say. I also cannot be sure that the meteor falls in that tick window (the scene file is my reading of Tools' description, not their script).
+6. **The meteor dig, native, quiet machine** (`sim/world/tools/meteor_crater_prof.gd`, planet 7, 3 digs): rMax 6100: **11.3, 12.2, 17.3 ms** for the dig call (the third is over a 16.7 ms frame on its own); rMax 3000: **2.3, 2.3, 2.4 ms**. The 120 ticks before and after stay under 3 ms at p99. rMax is left as it is (EP).
+
+## What I could not get
+
+- **A clash.** The staged clash scene of my frame-bench does not run on this build (it reported a frame of 0.9 ms and no game numbers: not a reading, discarded). Clash numbers: none.
+- **First beam, first collapse, first meteor as event ticks from a replay.** The page's black box did save the replay, but the tree to re-run it was not at hand; `replay_firsts.gd` is ready for it.
+- Opera itself (the launcher drives Chrome only), and a vsync'd 240 Hz read: both need Orb's own machine.
+
+## Method and limits
+
+Seeded random pad for the first run (pressing Start by a mouse click at 36 s), Tools' meteor scene for the second; `?preview=1` added to the address (a read-only probe of the game's tick and hit points). Frame time = interval between animation frames, recorded from the page's start. A run is INVALID when the CPU is above 60% before or after (none was). One person's seeded mash is not a designed fight: the same events do not recur at the same ticks between the two scenes.
+
+## This PC's kit file (for the compare)
+
+`mainpc-result-quiet-20261101-1137.json` (my scratch folder `...\pv\h\mainpc\`), made from a COPY of `oldpc-kit-dafc348f` (the original is unrun), quiet machine (load 2% at the start), full 120 s browser measure on the RTX 5070 Ti (page verdict: holds 60 frames a second, frame-time p99 20.9 ms, one stall of 191.7 ms). Netcode's check exit 0 (tick_ms mean 0.660, worst 13.3). No user, path or PC name in it. Against the earlier busy-machine file from the same PC: all 366 sim hashes agree and Netcode's compare says THE SAME on all 90 lines, so two runs on one processor reproduce; only the timings differ (fixed float64 job 147 ms against 169 ms, the busy run). Orb's file from the old PC goes against this one: `node docs/perf/oldpc/kit/compare-results.mjs <this file> <Orb's file> --project <kit>\project`.

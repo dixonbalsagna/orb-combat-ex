@@ -1,0 +1,5 @@
+{
+  "_note": "The meteor run of Tools' clip-meteor-route (docs/tools/img/clip-meteor-route/clip.json), as a ?script=1 scene: the rival idle next to him, B (east) down at tick 20, held 60, released at tick 80. Use with the full-power words: ?planet=7&meteor=loud&tiles=1&go=1&peak=1&script=1 and preplay-read.mjs --page-script.",
+  "scene": { "seed": 12345, "distanceUnits": 80, "ticks": 900 },
+  "events": [[20, "b", "east", true], [80, "b", "east", false]]
+}
