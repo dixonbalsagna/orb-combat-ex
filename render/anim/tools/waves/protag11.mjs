@@ -41,7 +41,7 @@ export const strikes = {
     orig: 'PROVISIONAL: a flat palm set on the gut, the forearm level, the body a little lower behind it' },
   bolt_flick: { tip: 'palm', path: 'arc_out', kind: 'hand', target: 'chest', step_max: 4, legal: ['hands_open_or_claw', 'not_at_hip'],
     chamber: { family: 'upright', lean: 2, hips: [-2, -4, 0], spine: { lean: 2, twist: 12 }, hand_r: [16, 40, 4], pole_hand_r: [-6, -10, 4], hand_l: [20, 60, -14], foot_r: [-6, 2.5, 9], foot_l: [12, 2.5, -7], ...OPEN },
-    contact: { family: 'crouched', lean: 2, hips: [6, -14, 0], spine: { lean: 4, twist: -6 }, head: { pitch: -2 }, hand_r: [44, 58, 14], pole_hand_r: [0, -18, 12], hand_l: [14, 54, -8],
+    contact: { family: 'crouched', lean: 0, hips: [6, -20, 0], spine: { lean: 2, twist: -6 }, head: { pitch: -2 }, hand_r: [44, 58, 14], pole_hand_r: [0, -18, 12], hand_l: [14, 54, -8],
       foot_r: [-6, 2.5, 9], foot_l: [20, 2.5, -7], ...OPEN },
     follow_t: 0.7,
     orig: 'PROVISIONAL: a palm flick: the hand carried in across the body and let out in a short outward arc to the chest' },

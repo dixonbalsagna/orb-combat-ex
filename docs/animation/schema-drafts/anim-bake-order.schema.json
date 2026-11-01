@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-bake-order",
+  "title": "anim.bake_order/1",
+  "description": "data/anim/bake_order.json: the bake's order and what a slice may start (docs/animation/bake-pace.md; AnimData.bake_pending and _queue). `first` lists poses the fight asks for in the order the queue bakes them before the rest (the dear ones, then the cheap ones, each in the order a fight asks for them); `cost` is the microseconds each pose takes to bake on the reference PC, quiet, so a slice does not start a pose that would take it past its budget unless the slice has baked nothing. Only the order and the pace change: every pose is baked from the same sketch. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore. Cross-reference to add in tools/lib/xref-fight.js (anim-bake-order-pose: every id in first and cost is a pose of poses.json or a wave's poses file).",
+  "type": "object",
+  "required": [
+    "schema",
+    "first",
+    "cost"
+  ],
+  "patternProperties": {
+    "^_": {}
+  },
+  "properties": {
+    "schema": {
+      "const": "anim.bake_order/1"
+    },
+    "first": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_~]+)*$"
+      }
+    },
+    "cost": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_~]+)*$"
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 100,
+        "maximum": 100000
+      }
+    }
+  },
+  "additionalProperties": false
+}

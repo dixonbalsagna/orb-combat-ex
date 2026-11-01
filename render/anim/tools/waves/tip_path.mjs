@@ -124,6 +124,25 @@ export const TIP_PATH = {
   'rk.bolt_sweep': { tip: 'blade', path: 'arc_in' },
   'rk.blast_chest': { tip: 'fist', path: 'line' },
   'rk.blast_gut': { tip: 'fist', path: 'line' },
+  // the right stick's class (docs/animation/stick-class.md): the Protagonist (pz) and the Anti-hero (rz)
+  'pz.flick_rise': { tip: 'palm', path: 'rise' },
+  'pz.lifting_heave': { tip: 'palm', path: 'rise' },
+  'pz.scythe_sweep': { tip: 'edge', path: 'arc_out' },
+  'pz.plunge_blade': { tip: 'blade', path: 'drop' },
+  'pz.heel_thrust': { tip: 'palm', path: 'line' },
+  'pz.drive_palm': { tip: 'palm', path: 'line' },
+  'pz.wheel_blade': { tip: 'blade', path: 'arc_out' },
+  'pz.turning_edge': { tip: 'edge', path: 'spin' },
+  'pz.spike_heel': { tip: 'heel', path: 'drop' },
+  'rz.lift_fist': { tip: 'fist', path: 'rise' },
+  'rz.knee_launch': { tip: 'cap', path: 'rise' },
+  'rz.skid_kick': { tip: 'sole', path: 'line' },
+  'rz.hammer_drop': { tip: 'fist', path: 'drop' },
+  'rz.short_ram': { tip: 'point', path: 'line' },
+  'rz.plate_ram': { tip: 'plate', path: 'line' },
+  'rz.swing_plate': { tip: 'plate', path: 'arc_out' },
+  'rz.swing_elbow': { tip: 'point', path: 'spin' },
+  'rz.spike_knee': { tip: 'cap', path: 'drop' },
 };
 export function tipPath(prefix, name) {
   return TIP_PATH[prefix + '.' + name] || TIP_PATH[name];

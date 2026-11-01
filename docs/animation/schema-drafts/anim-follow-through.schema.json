@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-follow-through",
+  "title": "anim.follow_through/1",
+  "description": "data/anim/follow_through.json: how a blow's body carries on after the contact (docs/animation/follow-through.md; AnimFighter._follow_carry, and the handover in _exchange_layers). For each key set under `pieces`, `drive` is how many units further forward the body is drawn and `dip` how many it sinks, peaking a third of the way through `ticks` and settled by the end; both are zero on the contact tick. `release_deg` (global, a row may carry its own): the most the striking upper arm may turn in a tick in the 17 ticks after a listed blow's contact (docs/animation/solve-carry.md). `handover_ticks`: when the next blow's wind-up takes the window while a listed blow's contact solve is still in force, the solve lets go over this many ticks (the body's lunge and step only) instead of on one. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore. Cross-reference to add in tools/lib/xref-fight.js (anim-follow-through-keyset: every key under pieces is a key set of a wave's keysets file).",
+  "type": "object",
+  "required": [
+    "schema",
+    "handover_ticks",
+    "pieces"
+  ],
+  "patternProperties": {
+    "^_": {}
+  },
+  "properties": {
+    "schema": {
+      "const": "anim.follow_through/1"
+    },
+    "handover_ticks": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 12
+    },
+    "pieces": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": {
+        "type": "object",
+        "patternProperties": {
+          "^_": {}
+        },
+        "properties": {
+          "drive": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 8
+          },
+          "dip": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 6
+          },
+          "ticks": {
+            "type": "integer",
+            "minimum": 4,
+            "maximum": 20
+          },
+          "release_deg": {
+            "type": "number",
+            "minimum": 10,
+            "maximum": 90
+          }
+        },
+        "required": [
+          "drive",
+          "dip",
+          "ticks"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "release_deg": {
+      "type": "number",
+      "minimum": 10,
+      "maximum": 90
+    }
+  },
+  "additionalProperties": false
+}

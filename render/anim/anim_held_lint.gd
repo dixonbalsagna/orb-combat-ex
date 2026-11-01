@@ -40,7 +40,7 @@ const CLASS_RULES := [
 	["rs.", "tell"], ["ps.", "tell"], ["st.", "tell"], ["stance.", "tell"], ["cue.", "tell"],
 	["ag.hold.charge", "charge"], ["pn.hold.brace", "charge"], ["charge.hold", "charge"], ["beam.charge", "charge"], ["bm.hold.charge", "charge"],
 	["ag.taunt", "gesture"], ["pg.taunt", "gesture"], ["rw.taunt", "gesture"], ["rw.drop_the_act", "gesture"], ["pi.", "gesture"], ["ri.", "gesture"], ["in.cuff", "gesture"], ["emote.", "gesture"],
-	["ls.ready_e.", "energy"], ["ls.ready_", "rest"], ["ls.", "rest"], ["rv.", "energy"], ["pn.", "energy"], ["pg.", "energy"], ["en.", "energy"], ["rw.", "energy"], ["pf.", "energy"], ["beam.", "energy"], ["bm.", "energy"], ["pe.", "energy"],
+	["ls.ready_e.", "energy"], ["ls.ready_", "rest"], ["ls.", "rest"], ["rv.", "energy"], ["pn.", "energy"], ["pg.", "energy"], ["en.", "energy"], ["rw.", "energy"], ["pf.", "energy"], ["beam.", "energy"], ["bm.", "energy"], ["bn.", "energy"], ["pe.", "energy"],
 	["zp.hold", "hold"],
 	# one-off motion and reaction poses that nothing emits from (knock-backs, the buried fighter, get-ups, intro landings, the stagger and block reactions, the pair's clash, check and grab poses)
 	["fn.", "gesture"], ["cl.", "rest"], ["cs.", "rest"], ["ak.", "rest"], ["rc.", "rest"], ["lg.", "rest"], ["ce.", "rest"], ["ab.", "rest"], ["zq.", "rest"], ["lq.", "rest"], ["mi.", "rest"], ["ag.", "rest"], ["gc.", "rest"], ["in.", "rest"], ["pp.", "rest"], ["s3.", "rest"], ["zp.", "rest"],

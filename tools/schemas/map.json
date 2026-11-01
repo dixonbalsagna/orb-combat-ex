@@ -252,6 +252,14 @@
       "schema": "anim-lead-in.schema.json"
     },
     {
+      "match": "data/anim/follow_through.json",
+      "schema": "anim-follow-through.schema.json"
+    },
+    {
+      "match": "data/anim/bake_order.json",
+      "schema": "anim-bake-order.schema.json"
+    },
+    {
       "match": "data/anim/forms.json",
       "schema": "anim-forms.schema.json"
     },

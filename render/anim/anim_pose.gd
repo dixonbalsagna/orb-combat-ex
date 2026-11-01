@@ -171,6 +171,24 @@ static func ik_limb(lq: Array[Quaternion], gq: Array[Quaternion], gp: PackedVect
 		gq[c] = gq[b] * lq[c]
 
 
+## The 72 planes the legal-plane search tries (`_plan_limb`): the angle of each and its cosine and sine, worked out once (the same numbers the loop used to work out for every limb).
+static var plan_scans: int = 0   # how many times the search ran (a count for the check)
+static var _scan_ph: PackedFloat64Array = PackedFloat64Array()
+static var _scan_c: PackedFloat64Array = PackedFloat64Array()
+static var _scan_s: PackedFloat64Array = PackedFloat64Array()
+
+
+static func _scan_table() -> void:
+	_scan_ph.resize(72)
+	_scan_c.resize(72)
+	_scan_s.resize(72)
+	for k in range(72):
+		var ph: float = -PI + float(k) * (TAU / 72.0)
+		_scan_ph[k] = ph
+		_scan_c[k] = cos(ph)
+		_scan_s[k] = sin(ph)
+
+
 ## Chooses the bend plane for a limb: returns {E (the joint's place), tgt (the end's place, drawn in if the joint cannot fold that far), phi, twist (rad, of the
 ## upper bone for that plane), excess (rad past the limits)}.
 static func _plan_limb(gq: Array[Quaternion], gp: PackedVector3Array, a: int, b: int, c: int, target: Vector3, pole: Vector3, s: float, shape: String, ease: bool = false) -> Dictionary:
@@ -204,28 +222,51 @@ static func _plan_limb(gq: Array[Quaternion], gp: PackedVector3Array, a: int, b:
 	if ease:
 		phi0 *= smoothstep(0.08, 0.30, psi)   # (the runtime solves: a limb must not jump between the two planes as it straightens; the bake keeps the hard switch below)
 	var phi: float = phi0
-	var ev: Vector3 = _plane_eval(a0, a1, phi0, u, l1, d, cos_a, sin_a, psi, P, s, a, shape)
+	# what every candidate plane shares (docs/animation/solve-cost.md): worked out once
+	var pe := PlaneCtx.new()
+	pe.a0 = a0
+	pe.a1 = a1
+	pe.base = u * (l1 * cos_a)
+	pe.k2 = l1 * sin_a
+	pe.ud = u * d
+	pe.pinv = P.inverse()
+	pe.rg = AnimJoints.twist_range_at(a, shape, psi)
+	pe.sscale = AnimJoints.scale_of(shape, "swing")
+	pe.s = s
+	pe.a = a
+	var ev: Vector3 = _plane_eval(pe, cos(phi0), sin(phi0))
 	if not ease and psi < 0.21:
 		phi = 0.0
-		ev = _plane_eval(a0, a1, 0.0, u, l1, d, cos_a, sin_a, psi, P, s, a, shape)
+		ev = _plane_eval(pe, cos(0.0), sin(0.0))
 	elif ev.x > 0.0001:
 		# a limb whose asked-for plane is illegal takes the legal plane nearest to it
-		var best: float = 1.0e9
-		var bphi: float = 0.0
+		if _scan_c.is_empty():
+			_scan_table()
+		plan_scans += 1
+		# The plane with the lowest score (first in the table's order on a tie). A plane's score is never below 0.35 of its distance from the asked-for plane (the other terms are not negative),
+		# so the plane nearest the asked-for one is tried first and a plane whose distance alone is past the best score so far is not evaluated: the same plane is chosen, with fewer evaluations.
+		var k0: int = int(roundf((phi0 + PI) / (TAU / 72.0))) % 72
+		var e0: Vector3 = _plane_eval(pe, _scan_c[k0], _scan_s[k0])
+		# the legal plane that strains the joint least (twist and swing each as a share of their range), nearer the asked-for one on a tie: a tuck
+		# takes the hip folded forward, not the leg swung back to its limit
+		var best: float = e0.x * 100.0 + e0.z + 0.35 * absf(wrapf(_scan_ph[k0] - phi0, -PI, PI))
+		var bphi: float = _scan_ph[k0]
+		var bk: int = k0
 		var k: int = 0
 		while k < 72:
-			var ph: float = -PI + float(k) * (TAU / 72.0)
-			var e2: Vector3 = _plane_eval(a0, a1, ph, u, l1, d, cos_a, sin_a, psi, P, s, a, shape)
-			var dist: float = absf(wrapf(ph - phi0, -PI, PI))
-			# the legal plane that strains the joint least (twist and swing each as a share of their range), nearer the asked-for one on a tie: a tuck
-			# takes the hip folded forward, not the leg swung back to its limit
-			var score: float = e2.x * 100.0 + e2.z + 0.35 * dist
-			if score < best:
-				best = score
-				bphi = ph
+			if k != k0:
+				var ph: float = _scan_ph[k]
+				var dist: float = absf(wrapf(ph - phi0, -PI, PI))
+				if 0.35 * dist <= best:
+					var e2: Vector3 = _plane_eval(pe, _scan_c[k], _scan_s[k])
+					var score: float = e2.x * 100.0 + e2.z + 0.35 * dist
+					if score < best or (score == best and k < bk):
+						best = score
+						bphi = ph
+						bk = k
 			k += 1
 		phi = bphi
-		ev = _plane_eval(a0, a1, phi, u, l1, d, cos_a, sin_a, psi, P, s, a, shape)
+		ev = _plane_eval(pe, cos(phi), sin(phi))
 	var E: Vector3 = A + u * (l1 * cos_a) + (a0 * cos(phi) + a1 * sin(phi)) * (l1 * sin_a)
 	return {"E": E, "tgt": tgt, "phi": phi, "excess": ev.x, "twist": ev.y, "psi": psi}
 
@@ -241,25 +282,34 @@ static func _is_wing(plan: Dictionary, A: Vector3, s: float) -> bool:
 	return float(plan.psi) > AnimJoints.wing_psi and E.y > A.y + AnimJoints.wing_up and E.y - T.y > AnimJoints.wing_drop and E.x < A.x - AnimJoints.wing_back
 
 
-## For the joint placed with its plane turned `phi` from neutral, the upper bone's frame as hinge_fix would give it: Vector2(the excess past the limits (rad,
-## twist plus swing), the twist (rad)).
-static func _plane_eval(a0: Vector3, a1: Vector3, phi: float, u: Vector3, l1: float, d: float, cos_a: float, sin_a: float, psi: float, P: Quaternion, s: float, a: int, shape: String) -> Vector3:
-	var e_off: Vector3 = u * (l1 * cos_a) + (a0 * cos(phi) + a1 * sin(phi)) * (l1 * sin_a)
+## What the candidate planes of one limb share (`_plan_limb`): the two axes the joint's plane turns between, the joint's place along the root-to-end axis and the size of its swing out of it, the end's
+## place, the parent's inverse, the upper bone's twist range at this flexion and the swing scale of the shape.
+class PlaneCtx:
+	var a0: Vector3
+	var a1: Vector3
+	var base: Vector3
+	var k2: float
+	var ud: Vector3
+	var pinv: Quaternion
+	var rg: Vector2
+	var sscale: float
+	var s: float
+	var a: int
+
+
+## For the joint placed with its plane turned `phi` from neutral (`cph` and `sph` its cosine and sine), the upper bone's frame as hinge_fix would give it: Vector3(the excess past the limits (rad,
+## twist plus swing), the twist (rad), the strain).
+static func _plane_eval(pe: PlaneCtx, cph: float, sph: float) -> Vector3:
+	var e_off: Vector3 = pe.base + (pe.a0 * cph + pe.a1 * sph) * pe.k2
 	var u1: Vector3 = e_off.normalized()
-	var u2: Vector3 = (u * d - e_off).normalized()
+	var u2: Vector3 = (pe.ud - e_off).normalized()
 	var w: Vector3 = u2 - u1 * u1.dot(u2)
 	if w.length() < 0.0001:
 		return Vector3.ZERO
-	w = w.normalized() * s
+	w = w.normalized() * pe.s
 	var yb: Vector3 = -u1
 	var qa: Quaternion = Basis(w, yb, w.cross(yb)).get_rotation_quaternion()
-	var ql: Quaternion = P.inverse() * qa
-	var ex: Vector2 = AnimJoints.excess_at(ql, a, shape, psi)
-	var tw: float = AnimJoints.twist_of(ql, AnimJoints.axis_of[a])
-	var rg: Vector2 = AnimJoints.twist_range_at(a, shape, psi)
-	var sa: float = AnimJoints.swing_of(ql, tw, AnimJoints.axis_of[a])
-	var strain: float = pow(tw / maxf(absf(rg.y) if tw >= 0.0 else absf(rg.x), 0.05), 2.0) + pow(sa / maxf(AnimJoints._limit_of(ql, a, tw, AnimJoints.axis_of[a], shape), 0.05), 2.0)
-	return Vector3(ex.x + ex.y, tw, strain)
+	return AnimJoints.plan_eval(pe.pinv * qa, pe.a, pe.rg, pe.sscale)
 
 
 ## After ik2: makes the joint a pure human hinge. The upper bone twists about its own axis until the bend plane is the

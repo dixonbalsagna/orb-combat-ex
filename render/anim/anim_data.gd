@@ -40,6 +40,12 @@ static var lazy: bool = false             # the incremental bake (docs/animation
 static var _pend: Dictionary = {}          # id -> the sketch not yet baked
 static var _pend_order: Array = []         # the ids in the order they are baked
 static var _pend_head: int = 0
+static var bake_order_on: bool = true       # the bake's own order and its refusal to overshoot a slice (data/anim/bake_order.json, docs/animation/bake-pace.md); --no-bake-order is the before
+static var bake_rank: Dictionary = {}       # pose id -> its place in bake_order.json `first`: the poses a fight asks for in its first seconds
+static var bake_cost: Dictionary = {}       # pose id -> microseconds to bake it (only the dear ones, 1 ms and over): a slice does not start one that would overshoot it
+static var _pend_hi: Array = []             # the queued ids that have a rank, in rank order
+static var _pend_hi_head: int = 0
+static var bake_deferred_heavy: int = 0     # times a dear pose waited for a slice of its own
 static var _work: Array = []               # the fighters' wave loads and pick-list builds not yet done, in order: {k: wave, wn} and {k: lists, key, names}
 static var _queued: Dictionary = {}        # fighter key -> true once his work is queued
 static var bake_drains: int = 0            # times the fighters' queued work was run to the end for a missing pose (none since the missing-pose lookup: it loads only the wave that holds it)
@@ -70,6 +76,7 @@ static var pop: Dictionary = {}            # data/anim/pop.json: the phases of t
 static var secondary: Dictionary = {}      # data/anim/secondary.json: follow-through of the head, upper back and forearms
 static var ground_motion: Dictionary = {}  # data/anim/ground_motion.json: ground locomotion (the gait, the kick-off, the landing by surface)
 static var locomotion: Dictionary = {}    # data/anim/locomotion.json: flight locomotion (the lean spring, the braking flare, the dash's coil, the bank, the hover's breath)
+static var follow_through: Dictionary = {}   # data/anim/follow_through.json: how far each listed blow's body carries on after the contact, and the handover to the next wind-up (docs/animation/follow-through.md)
 static var lead_in: Dictionary = {}      # data/anim/lead_in.json: the blows whose body leads the contact over the last ticks (docs/animation/lead-in.md)
 static var press_ack: Dictionary = {}    # data/anim/press_ack.json: the anticipation of a press that has to wait (Encounter's press_ack queued)
 static var recoil: Dictionary = {}       # data/anim/recoil.json: recoil exits and ricochets (docs/combat/choreography-feel.md)
@@ -114,6 +121,14 @@ static func load_all() -> void:
 	if cua.has("--lazy-bake"):
 		lazy = true
 	pair_own = not cua.has("--pair-ready-queue")
+	bake_order_on = not cua.has("--no-bake-order")
+	var bo: Dictionary = _read("bake_order.json")
+	bake_rank.clear()
+	var rk: int = 0
+	for bid in bo.get("first", []):
+		bake_rank[String(bid)] = rk
+		rk += 1
+	bake_cost = bo.get("cost", {})
 	AnimRig.setup()
 	var ej: Dictionary = _read("effectors.json")
 	var hj: Dictionary = ej.get("hunch", {})
@@ -208,6 +223,7 @@ static func load_all() -> void:
 	recoil = _read("recoil.json")
 	press_ack = _read("press_ack.json")
 	lead_in = _read("lead_in.json")
+	follow_through = _read("follow_through.json")
 	locomotion = _read("locomotion.json")
 	ground_motion = _read("ground_motion.json")
 	secondary = _read("secondary.json")
@@ -294,20 +310,38 @@ static func bake_pending(budget_us: int = -1) -> int:
 	var budget: int = bake_slice_us if budget_us < 0 else budget_us
 	var t0: int = Time.get_ticks_usec()
 	var npose: int = poses.size()
+	var baked: int = 0
 	while true:
 		var u0: int = Time.get_ticks_usec()
 		if not _work.is_empty():
 			_work_one()
+		elif _pend_hi_head < _pend_hi.size():
+			var hid: String = _pend_hi[_pend_hi_head]
+			# a dear pose (1 ms and over) that would take the slice past its budget waits for a slice of its own, unless this slice has baked nothing yet
+			if _pend.has(hid) and bake_order_on and baked > 0 and bake_cost.has(hid) and (u0 - t0) + int(bake_cost[hid]) > budget:
+				bake_deferred_heavy += 1
+				break
+			_pend_hi_head += 1
+			if _pend.has(hid):
+				_bake_one(hid)
+				baked += 1
 		elif _pend_head < _pend_order.size():
 			var id: String = _pend_order[_pend_head]
+			if _pend.has(id) and bake_order_on and baked > 0 and bake_cost.has(id) and (u0 - t0) + int(bake_cost[id]) > budget:
+				bake_deferred_heavy += 1
+				break
 			_pend_head += 1
 			if _pend.has(id):
 				_bake_one(id)
+				baked += 1
 		else:
 			break
 		bake_worst_us = maxi(bake_worst_us, Time.get_ticks_usec() - u0)
 		if Time.get_ticks_usec() - t0 >= budget:
 			break
+	if _pend_hi_head >= _pend_hi.size():
+		_pend_hi.clear()
+		_pend_hi_head = 0
 	if _pend_head >= _pend_order.size():
 		_pend_order.clear()
 		_pend_head = 0
@@ -325,8 +359,25 @@ static func bake_all() -> void:
 static func _queue(id: String, sk: Dictionary) -> void:
 	poses.erase(id)   # a later wave's pose of the same id replaces an earlier one, baked or not
 	_pend[id] = sk
-	_pend_order.append(id)
+	if bake_order_on and bake_rank.has(id):
+		_hi_insert(id)
+	else:
+		_pend_order.append(id)
 	bake_deferred += 1
+
+
+## A ranked pose goes into the queue's front part at its rank (the front part is a few hundred ids; a binary search keeps it in order).
+static func _hi_insert(id: String) -> void:
+	var r: int = int(bake_rank[id])
+	var lo: int = _pend_hi_head
+	var hi: int = _pend_hi.size()
+	while lo < hi:
+		var mid: int = (lo + hi) >> 1
+		if int(bake_rank[String(_pend_hi[mid])]) <= r:
+			lo = mid + 1
+		else:
+			hi = mid
+	_pend_hi.insert(lo, id)
 
 
 static func _fixed(id: String, sk: Dictionary) -> Dictionary:

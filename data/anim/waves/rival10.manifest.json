@@ -1,0 +1,361 @@
+{
+ "wave": "rival10",
+ "strikes": [
+  {
+   "id": "rz.lift_fist",
+   "combat": "strike.lift_fist",
+   "name": "lift_fist",
+   "weight": "light",
+   "target": "jaw",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 10,
+    "follow": 4,
+    "recover": 4
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": "upper",
+   "named": true,
+   "legal": [
+    "no_leap",
+    "no_held_raise"
+   ],
+   "look": "A short fist rising under the chin from a half crouch, the feet planted and the arm lowering at once.",
+   "orig": "a short fist rising under the chin from a half crouch, the feet planted and the arm lowering at once",
+   "poses": [
+    "rz.lift_fist.chamber",
+    "rz.lift_fist.contact",
+    "rz.lift_fist.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "fist",
+   "path": "rise",
+   "flags": []
+  },
+  {
+   "id": "rz.skid_kick",
+   "combat": "strike.skid_kick",
+   "name": "skid_kick",
+   "weight": "light",
+   "target": "legs",
+   "limb": "foot_r",
+   "limb2": null,
+   "offset": 50,
+   "reach": 76,
+   "band": "mid",
+   "ticks": {
+    "load": 10,
+    "follow": 4,
+    "recover": 4
+   },
+   "ground": "plant",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [],
+   "look": "The sole skidded straight along the ground into the shins, the standing leg firm and the fists up.",
+   "orig": "the sole skidded straight along the ground into the shins, the standing leg firm and the fists up",
+   "poses": [
+    "rz.skid_kick.chamber",
+    "rz.skid_kick.contact",
+    "rz.skid_kick.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "sole",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "rz.short_ram",
+   "combat": "strike.short_ram",
+   "name": "short_ram",
+   "weight": "light",
+   "target": "gut",
+   "limb": "elbow_r",
+   "limb2": null,
+   "offset": 38,
+   "reach": 64,
+   "band": "close",
+   "ticks": {
+    "load": 10,
+    "follow": 4,
+    "recover": 4
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [
+    "no_leap"
+   ],
+   "look": "The point of the elbow driven straight into the gut, the shoulder behind it, the other hand reaching out ahead.",
+   "orig": "the point of the elbow driven straight into the gut, the shoulder behind it, the other hand reaching out ahead",
+   "poses": [
+    "rz.short_ram.chamber",
+    "rz.short_ram.contact",
+    "rz.short_ram.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "point",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "rz.swing_plate",
+   "combat": "strike.swing_plate",
+   "name": "swing_plate",
+   "weight": "light",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 10,
+    "follow": 4,
+    "recover": 4
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": "hook",
+   "named": true,
+   "legal": [
+    "no_clasp",
+    "no_leap"
+   ],
+   "look": "The plate of the forearm swung out wide across the chest in a turn of the body, the chest opening away as it pushes past.",
+   "orig": "the plate of the forearm swung out wide across the chest in a turn of the body, the chest opening away as it pushes past",
+   "poses": [
+    "rz.swing_plate.chamber",
+    "rz.swing_plate.contact",
+    "rz.swing_plate.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": "hand_arc",
+   "tip": "plate",
+   "path": "arc_out",
+   "flags": []
+  },
+  {
+   "id": "rz.knee_launch",
+   "combat": "strike.knee_launch",
+   "name": "knee_launch",
+   "weight": "heavy",
+   "target": "chest",
+   "limb": "knee_r",
+   "limb2": null,
+   "offset": 28,
+   "reach": 54,
+   "band": "close",
+   "ticks": {
+    "load": 4,
+    "follow": 6,
+    "recover": 10
+   },
+   "ground": "plant",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [],
+   "look": "Sunk low with the knee loaded and both fists down, then the knee driven up into the chest and the whole body rising behind it.",
+   "orig": "sunk low with the knee loaded and both fists down, then the knee driven up into the chest and the whole body rising behind it",
+   "poses": [
+    "rz.knee_launch.chamber",
+    "rz.knee_launch.contact",
+    "rz.knee_launch.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "cap",
+   "path": "rise",
+   "flags": []
+  },
+  {
+   "id": "rz.hammer_drop",
+   "combat": "strike.hammer_drop",
+   "name": "hammer_drop",
+   "weight": "heavy",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 56,
+   "reach": 86,
+   "band": "long",
+   "ticks": {
+    "load": 4,
+    "follow": 6,
+    "recover": 10
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [
+    "no_clasp",
+    "no_leap"
+   ],
+   "look": "Tall with one fist cocked beside the head, the elbow bent and back, then brought down onto the chest in one stroke and lowered at once.",
+   "orig": "tall with one fist cocked beside the head, the elbow bent and back, then brought down onto the chest in one stroke and lowered at once",
+   "poses": [
+    "rz.hammer_drop.chamber",
+    "rz.hammer_drop.contact",
+    "rz.hammer_drop.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "fist",
+   "path": "drop",
+   "flags": []
+  },
+  {
+   "id": "rz.plate_ram",
+   "combat": "strike.plate_ram",
+   "name": "plate_ram",
+   "weight": "heavy",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": "hand_l",
+   "offset": 38,
+   "reach": 70,
+   "band": "close",
+   "ticks": {
+    "load": 4,
+    "follow": 6,
+    "recover": 10
+   },
+   "ground": "plant",
+   "uses": {
+    "arms": 2
+   },
+   "from": null,
+   "named": true,
+   "legal": [
+    "no_leap",
+    "not_both_arms_back",
+    "wrists_apart"
+   ],
+   "look": "Side-on with the weight back and the forearm drawn behind the shoulder, then the plate of the forearm rammed into the chest with a full lunge.",
+   "orig": "side-on with the weight back and the forearm drawn behind the shoulder, then the plate of the forearm rammed into the chest with a full lunge",
+   "poses": [
+    "rz.plate_ram.chamber",
+    "rz.plate_ram.contact",
+    "rz.plate_ram.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "plate",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "rz.swing_elbow",
+   "combat": "strike.swing_elbow",
+   "name": "swing_elbow",
+   "weight": "heavy",
+   "target": "chest",
+   "limb": "elbow_r",
+   "limb2": null,
+   "offset": 34,
+   "reach": 62,
+   "band": "close",
+   "ticks": {
+    "load": 4,
+    "follow": 6,
+    "recover": 10
+   },
+   "ground": "plant",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [
+    "no_leap",
+    "single_turn"
+   ],
+   "look": "Wound right round with the elbow cocked and his back half to him, then the point of the elbow swung through to the chest in a full turn.",
+   "orig": "wound right round with the elbow cocked and his back half to him, then the point of the elbow swung through to the chest in a full turn",
+   "poses": [
+    "rz.swing_elbow.chamber",
+    "rz.swing_elbow.contact",
+    "rz.swing_elbow.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "point",
+   "path": "spin",
+   "flags": []
+  },
+  {
+   "id": "rz.spike_knee",
+   "combat": "strike.spike_knee",
+   "name": "spike_knee",
+   "weight": "light",
+   "target": "chest",
+   "limb": "knee_r",
+   "limb2": null,
+   "offset": 54,
+   "reach": 76,
+   "band": "mid",
+   "ticks": {
+    "load": 10,
+    "follow": 4,
+    "recover": 4
+   },
+   "ground": "no",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [
+    "no_clasp"
+   ],
+   "look": "In the air: the knee drawn up, then driven straight down onto the chest of the rival below, the fists out for the balance.",
+   "orig": "in the air: the knee drawn up, then driven straight down onto the chest of the rival below, the fists out for the balance",
+   "poses": [
+    "rz.spike_knee.chamber",
+    "rz.spike_knee.contact",
+    "rz.spike_knee.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "cap",
+   "path": "drop",
+   "flags": [
+    "leap"
+   ]
+  }
+ ],
+ "skipped": []
+}

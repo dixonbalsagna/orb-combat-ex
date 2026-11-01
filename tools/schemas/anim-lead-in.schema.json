@@ -34,6 +34,14 @@
           },
           "arm": {
             "$ref": "#/$defs/weights"
+          },
+          "solve": {
+            "$ref": "#/$defs/weights",
+            "description": "The contact solve's own lead-in weights for this piece (lead-in-all: a row's arm, legs and solve lists)."
+          },
+          "legs": {
+            "$ref": "#/$defs/weights",
+            "description": "The legs' lead-in weights for this piece (a step-in or a heave that moves the legs before the contact)."
           }
         },
         "additionalProperties": false

@@ -1,0 +1,376 @@
+{
+ "wave": "protag13",
+ "strikes": [
+  {
+   "id": "pz.flick_rise",
+   "combat": "strike.flick_rise",
+   "name": "flick_rise",
+   "weight": "light",
+   "target": "jaw",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 10,
+    "follow": 4,
+    "recover": 4
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": "upper",
+   "named": true,
+   "legal": [
+    "hands_open_or_claw",
+    "not_at_hip",
+    "no_leap",
+    "no_held_raise"
+   ],
+   "look": "A flick of the open palm up under the chin from a loose stand, the wrist snapping it, the feet planted and the arm lowering at once.",
+   "orig": "a flick of the open palm up under the chin from a loose stand, the wrist snapping it, the feet planted and the arm lowering at once",
+   "poses": [
+    "pz.flick_rise.chamber",
+    "pz.flick_rise.contact",
+    "pz.flick_rise.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "palm",
+   "path": "rise",
+   "flags": []
+  },
+  {
+   "id": "pz.scythe_sweep",
+   "combat": "strike.scythe_sweep",
+   "name": "scythe_sweep",
+   "weight": "light",
+   "target": "shins",
+   "limb": "foot_r",
+   "limb2": null,
+   "offset": 50,
+   "reach": 72,
+   "band": "mid",
+   "ticks": {
+    "load": 10,
+    "follow": 4,
+    "recover": 4
+   },
+   "ground": "only",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [
+    "hands_open_or_claw",
+    "no_leap"
+   ],
+   "look": "The edge of the foot scythed out low across the shins from a crouch, one hand down for the balance.",
+   "orig": "the edge of the foot scythed out low across the shins from a crouch, one hand down for the balance",
+   "poses": [
+    "pz.scythe_sweep.chamber",
+    "pz.scythe_sweep.contact",
+    "pz.scythe_sweep.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "edge",
+   "path": "arc_out",
+   "flags": []
+  },
+  {
+   "id": "pz.heel_thrust",
+   "combat": "strike.heel_thrust",
+   "name": "heel_thrust",
+   "weight": "light",
+   "target": "gut",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 54,
+   "reach": 98,
+   "band": "mid",
+   "ticks": {
+    "load": 10,
+    "follow": 4,
+    "recover": 4
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [
+    "hands_open_or_claw",
+    "not_at_hip",
+    "no_leap"
+   ],
+   "look": "The heel of the palm driven straight into the belly from the shoulder, the weight going in behind it.",
+   "orig": "the heel of the palm driven straight into the belly from the shoulder, the weight going in behind it",
+   "poses": [
+    "pz.heel_thrust.chamber",
+    "pz.heel_thrust.contact",
+    "pz.heel_thrust.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "palm",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "pz.wheel_blade",
+   "combat": "strike.wheel_blade",
+   "name": "wheel_blade",
+   "weight": "light",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 88,
+   "band": "long",
+   "ticks": {
+    "load": 10,
+    "follow": 4,
+    "recover": 4
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": "hook",
+   "named": true,
+   "legal": [
+    "hands_open_or_claw",
+    "no_clasp"
+   ],
+   "look": "A blade hand swung out wide across the chest in a turn of the whole body, the chest opening away as it pushes past.",
+   "orig": "a blade hand swung out wide across the chest in a turn of the whole body, the chest opening away as it pushes past",
+   "poses": [
+    "pz.wheel_blade.chamber",
+    "pz.wheel_blade.contact",
+    "pz.wheel_blade.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": "hand_arc",
+   "tip": "blade",
+   "path": "arc_out",
+   "flags": []
+  },
+  {
+   "id": "pz.lifting_heave",
+   "combat": "strike.lifting_heave",
+   "name": "lifting_heave",
+   "weight": "heavy",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 4,
+    "follow": 6,
+    "recover": 10
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": "upper",
+   "named": true,
+   "legal": [
+    "hands_open_or_claw",
+    "not_at_hip",
+    "no_leap",
+    "no_held_raise"
+   ],
+   "look": "Sunk low with the palm under him, then the heel of the palm heaved up into the chest and the whole body rising behind it.",
+   "orig": "sunk low with the palm under him, then the heel of the palm heaved up into the chest and the whole body rising behind it",
+   "poses": [
+    "pz.lifting_heave.chamber",
+    "pz.lifting_heave.contact",
+    "pz.lifting_heave.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "palm",
+   "path": "rise",
+   "flags": []
+  },
+  {
+   "id": "pz.plunge_blade",
+   "combat": "strike.plunge_blade",
+   "name": "plunge_blade",
+   "weight": "heavy",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 56,
+   "reach": 86,
+   "band": "long",
+   "ticks": {
+    "load": 4,
+    "follow": 6,
+    "recover": 10
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [
+    "no_clasp",
+    "no_leap",
+    "wrists_apart"
+   ],
+   "look": "Tall on the rear foot with the blade hand cocked beside the head, the elbow bent and back, then brought down onto the chest in one stroke and lowered at once.",
+   "orig": "tall on the rear foot with the blade hand cocked beside the head, the elbow bent and back, then brought down onto the chest in one stroke and lowered at once",
+   "poses": [
+    "pz.plunge_blade.chamber",
+    "pz.plunge_blade.contact",
+    "pz.plunge_blade.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "blade",
+   "path": "drop",
+   "flags": []
+  },
+  {
+   "id": "pz.drive_palm",
+   "combat": "strike.drive_palm",
+   "name": "drive_palm",
+   "weight": "heavy",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 54,
+   "reach": 98,
+   "band": "mid",
+   "ticks": {
+    "load": 4,
+    "follow": 6,
+    "recover": 10
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [
+    "hands_open_or_claw",
+    "not_at_hip",
+    "no_leap",
+    "not_both_arms_back",
+    "wrists_apart"
+   ],
+   "look": "Side-on with the weight back and the palm at the shoulder, then the heel of the palm driven into the chest with a full lunge behind it.",
+   "orig": "side-on with the weight back and the palm at the shoulder, then the heel of the palm driven into the chest with a full lunge behind it",
+   "poses": [
+    "pz.drive_palm.chamber",
+    "pz.drive_palm.contact",
+    "pz.drive_palm.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "palm",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "pz.turning_edge",
+   "combat": "strike.turning_edge",
+   "name": "turning_edge",
+   "weight": "heavy",
+   "target": "chest",
+   "limb": "foot_r",
+   "limb2": null,
+   "offset": 50,
+   "reach": 78,
+   "band": "mid",
+   "ticks": {
+    "load": 4,
+    "follow": 6,
+    "recover": 10
+   },
+   "ground": "plant",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [
+    "hands_open_or_claw",
+    "no_clasp"
+   ],
+   "look": "Wound right round with his back half to him, then the edge of the foot swung through in a full turn that carries the rival past.",
+   "orig": "wound right round with his back half to him, then the edge of the foot swung through in a full turn that carries the rival past",
+   "poses": [
+    "pz.turning_edge.chamber",
+    "pz.turning_edge.contact",
+    "pz.turning_edge.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "edge",
+   "path": "spin",
+   "flags": []
+  },
+  {
+   "id": "pz.spike_heel",
+   "combat": "strike.spike_heel",
+   "name": "spike_heel",
+   "weight": "light",
+   "target": "chest",
+   "limb": "foot_r",
+   "limb2": null,
+   "offset": 48,
+   "reach": 68,
+   "band": "mid",
+   "ticks": {
+    "load": 10,
+    "follow": 4,
+    "recover": 4
+   },
+   "ground": "no",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [
+    "hands_open_or_claw"
+   ],
+   "look": "In the air: the knee drawn up, then the heel stabbed straight down onto the chest of the rival below, the hands open and out for the balance.",
+   "orig": "in the air: the knee drawn up, then the heel stabbed straight down onto the chest of the rival below, the hands open and out for the balance",
+   "poses": [
+    "pz.spike_heel.chamber",
+    "pz.spike_heel.contact",
+    "pz.spike_heel.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "heel",
+   "path": "drop",
+   "flags": [
+    "leap"
+   ]
+  }
+ ],
+ "skipped": []
+}

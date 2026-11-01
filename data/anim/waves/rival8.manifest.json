@@ -22,6 +22,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [],
    "look": "PROVISIONAL. A flat blade hand driven in to the gut with the forearm plate behind it; the shot a thin edge off the flat of the hand at the contact.",
    "orig": "PROVISIONAL: a flat blade hand driven in to the gut, the forearm plate behind it, the other hand open in guard",
@@ -58,6 +59,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [],
    "look": "PROVISIONAL. The lit fist: a straight punch to the chest, the shot leaving the knuckle edges at the contact.",
    "orig": "PROVISIONAL: the lit fist: a straight punch to the chest, the other hand open in guard",
@@ -94,6 +96,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [],
    "look": "PROVISIONAL. A blade flick: the flat hand carried in across him and let out in a short outward arc onto the gut, the shot at the contact.",
    "orig": "PROVISIONAL: a blade flick: the flat hand carried in across him and let out in a short outward arc onto the gut",
@@ -130,6 +133,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [],
    "look": "PROVISIONAL. A blade sweep: the flat hand swept inward across the chest from the outside, the shot at the contact.",
    "orig": "PROVISIONAL: a blade sweep: the flat hand swept inward across the chest from the outside",
@@ -166,6 +170,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [],
    "look": "PROVISIONAL. The blast: the lit fist driven straight to the chest after a 12-tick gather held at the shoulder, the shot a cone that carries him.",
    "orig": "PROVISIONAL: the blast: a 12-tick gather with the lit fist held at the shoulder and the other hand open, then driven straight to the chest",
@@ -202,6 +207,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [],
    "look": "PROVISIONAL. The blast on the gut: the lit fist driven low after the same gather, the shot a cone that carries him.",
    "orig": "PROVISIONAL: the blast on the gut: the same gather, the lit fist driven low as the body drops behind it",

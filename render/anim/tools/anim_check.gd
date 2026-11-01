@@ -41,6 +41,17 @@ func _initialize() -> void:
 	_run.call_deferred()
 
 
+## A test that stages a body "on the ground" at y = 0 stages a hovering one: the match is a planet and the tests' x (500 to 1900) is deep sea whose bed is 2,633 units under y = 0, and the checks that read the
+## body's own stance (the press-tick anticipation, the lunge's crouch, the styles, the medium wind, the energy reach) were set on that hovering body. A fighter in play mostly STANDS, and with the water family's
+## floor on far more (a free fighter's floor in the ring's own water is its surface less his feet), and a standing stance is lower and leans (the head 11 units ahead of the pelvis against 4, the pelvis at 32
+## against 37), so what a layer adds to it reads differently. These checks run on a standing body, `_standing`: his feet on the sim's own floor (`WorldWater.floorAt`, the ground with the floor off). Every other
+## test keeps the y = 0 it had.
+var _standing: bool = false
+
+func _stage_y(S: SimState, x: float) -> float:
+	return WorldWater.floorAt(S, x) if _standing else 0.0
+
+
 func _expect(ok: bool, what: String) -> void:
 	checks += 1
 	if not ok:
@@ -317,7 +328,7 @@ func _test_flight_lead() -> void:
 	f.rot = 0.0
 	f.spin = 0.0
 	f.x = 1000.0
-	f.y = 0.0
+	f.y = _stage_y(S, f.x)
 	var tilt_ok: float = 99.0
 	for k in range(30):
 		S.tick += 1
@@ -349,7 +360,7 @@ func _press_scene(S: SimState, who: String, kind: String, beats: Array) -> Dicti
 	f0.x = 500.0
 	f1.x = 560.0
 	for f in [f0, f1]:
-		f.y = 0.0
+		f.y = _stage_y(S, f.x)
 		f.vx = 0.0
 		f.vy = 0.0
 		f.state = "free"
@@ -423,7 +434,7 @@ func _rip_scene(S: SimState, who: String, block: String, kind: String, stag_n: i
 	RenderAnim.reduced_motion = reduced
 	for f in [f0, f1]:
 		f.x = 500.0 if f == f0 else 560.0
-		f.y = 0.0
+		f.y = _stage_y(S, f.x)
 		f.vx = 0.0
 		f.vy = 0.0
 		f.state = "free"
@@ -613,7 +624,7 @@ func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contact
 	f0.x = 500.0
 	f1.x = 500.0 + _tier_dist
 	for f in [f0, f1]:
-		f.y = 0.0
+		f.y = _stage_y(S, f.x)
 		f.vx = 0.0
 		f.vy = 0.0
 		f.state = "free"
@@ -824,7 +835,7 @@ func _zip_live(seed: int, heavy: bool, exit_ai: int, hook = null, ticks_after: i
 	z0.x = 500.0
 	z1.x = 500.0 + 450.0
 	for f in [z0, z1]:
-		f.y = WorldTerrain.groundY(S, f.x)
+		f.y = WorldWater.floorAt(S, f.x)
 		f.vx = 0.0
 		f.vy = 0.0
 		f.state = "free"
@@ -880,6 +891,8 @@ func _zip_live(seed: int, heavy: bool, exit_ai: int, hook = null, ticks_after: i
 		if z0.state == "dropped":
 			res.dropped_ticks += 1
 			res.drop_seen = true
+		if not af._drop.is_empty():
+			res["drawn_drop"] = int(res.get("drawn_drop", 0)) + 1
 		if started and r.is_empty():
 			after += 1
 			if String(res.end) == "":
@@ -979,8 +992,22 @@ func _test_zip_view() -> void:
 	# 5. a drop: shot down on the way out, falls for the sim's ticks, lands soft, recovers
 	var dn: Dictionary = _zip_live(4, false, 0, _zhook("out", "down", true), 60)
 	var daf: AnimFighter = dn.af
-	_expect(bool(dn.drop_seen) and int(dn.dropped_ticks) == int(DirZip.cfg().knockdownTicks) and int(dn.nan) == 0 and int(dn.screen) == 0, "zip view down: dropped %d ticks (the sim's %d), %d NaN, %d violations on screen" % [int(dn.dropped_ticks), int(DirZip.cfg().knockdownTicks), int(dn.nan), int(dn.screen)])
-	_expect(String(dn.end) == "down" and daf._drop.is_empty() and String(dn.states[dn.states.size() - 1]) == "free", "zip view down: end %s, the drop %s at the end, the state %s" % [String(dn.end), str(daf._drop), String(dn.states[dn.states.size() - 1])])
+	# the sim's drop is knockdownTicks long, and with the water interrupt on (data/director/interrupts.json water.enabled) a drop that ends in water is brought up and counts as landed, so it can be shorter: the
+	# check is that the drop is the sim's own and the body draws it as long as it lasts, not that the sim's drop is never cut short
+	var water_cut: bool = bool((JSON.parse_string(FileAccess.get_file_as_string("res://data/director/interrupts.json")) as Dictionary).get("water", {}).get("enabled", false))
+	var kd: int = int(DirZip.cfg().knockdownTicks)
+	_expect(bool(dn.drop_seen) and (int(dn.dropped_ticks) == kd or (water_cut and int(dn.dropped_ticks) > 0 and int(dn.dropped_ticks) < kd)) and absi(int(dn.get("drawn_drop", 0)) - int(dn.dropped_ticks)) <= 2 and int(dn.nan) == 0 and int(dn.screen) == 0, "zip view down: dropped %d ticks (the sim's %d, shorter only with the water interrupt: %s), drawn %d, %d NaN, %d violations on screen" % [int(dn.dropped_ticks), kd, str(water_cut), int(dn.get("drawn_drop", 0)), int(dn.nan), int(dn.screen)])
+	# the body's drop is gone and the sim let him up ("free" after the last tick dropped). The run's last state is the sim's: with the water interrupt on the drop ends early and the AI's next exchange can start inside
+	# the 60 ticks after it (states: dropped x24, free x28, locked x10 with the family on; free x38 with it off), which is not a drop left on the body
+	var after_drop: bool = false
+	var up: bool = false
+	for si in range(dn.states.size()):
+		if String(dn.states[si]) == "dropped":
+			after_drop = true
+			up = false
+		elif after_drop and String(dn.states[si]) == "free":
+			up = true
+	_expect(String(dn.end) == "down" and daf._drop.is_empty() and up, "zip view down: end %s, the drop %s at the end, up after the drop %s (the last state %s)" % [String(dn.end), str(daf._drop), str(up), String(dn.states[dn.states.size() - 1])])
 	_expect(int(daf.debug.get("drops", 0)) == 1, "zip view down: %d drops seen" % int(daf.debug.get("drops", 0)))
 	# 6. a rendered run and the sim alone end in the same gameplay hash
 	RenderAnim.enabled = false
@@ -1359,6 +1386,130 @@ func _test_pieces() -> void:
 	print("pieces: the common row, the new pieces, the cast poses, the cash-in row, the chase cue and the opening")
 
 
+## The limb planner's plane search (docs/animation/solve-cost.md): `AnimPose._plan_limb` works out what every candidate plane shares once, takes the 72 planes' sines and cosines from a table, and
+## evaluates a candidate with the twist, swing and limit shared (`AnimJoints.plan_eval`). It must give the numbers the one-at-a-time version gave, bit for bit; the reference below is that version
+## (the code as it was at d34dbbc4), run beside it on seeded random limbs, targets, poles and shapes, with the plane search (an illegal asked-for plane) among them.
+func _ref_plane_eval(a0: Vector3, a1: Vector3, phi: float, u: Vector3, l1: float, d: float, cos_a: float, sin_a: float, psi: float, P: Quaternion, s: float, a: int, shape: String) -> Vector3:
+	var e_off: Vector3 = u * (l1 * cos_a) + (a0 * cos(phi) + a1 * sin(phi)) * (l1 * sin_a)
+	var u1: Vector3 = e_off.normalized()
+	var u2: Vector3 = (u * d - e_off).normalized()
+	var w: Vector3 = u2 - u1 * u1.dot(u2)
+	if w.length() < 0.0001:
+		return Vector3.ZERO
+	w = w.normalized() * s
+	var yb: Vector3 = -u1
+	var qa: Quaternion = Basis(w, yb, w.cross(yb)).get_rotation_quaternion()
+	var ql: Quaternion = P.inverse() * qa
+	var ex: Vector2 = AnimJoints.excess_at(ql, a, shape, psi)
+	var tw: float = AnimJoints.twist_of(ql, AnimJoints.axis_of[a])
+	var rg: Vector2 = AnimJoints.twist_range_at(a, shape, psi)
+	var sa: float = AnimJoints.swing_of(ql, tw, AnimJoints.axis_of[a])
+	var strain: float = pow(tw / maxf(absf(rg.y) if tw >= 0.0 else absf(rg.x), 0.05), 2.0) + pow(sa / maxf(AnimJoints._limit_of(ql, a, tw, AnimJoints.axis_of[a], shape), 0.05), 2.0)
+	return Vector3(ex.x + ex.y, tw, strain)
+
+
+func _ref_plan_limb(gq: Array[Quaternion], gp: PackedVector3Array, a: int, b: int, c: int, target: Vector3, pole: Vector3, s: float, shape: String, ease: bool = false) -> Dictionary:
+	var A: Vector3 = gp[a]
+	var l1: float = (gp[b] - A).length()
+	var l2: float = (gp[c] - gp[b]).length()
+	var to: Vector3 = target - A
+	var u: Vector3 = to.normalized()
+	# the joint bends no further than its limit: a target nearer than that is met as near as the limb may fold
+	var dmin: float = absf(l1 - l2) + 0.01
+	var pmax: float = AnimJoints.hinge_max[b] * AnimJoints.scale_of(shape, "hinge")
+	if pmax < PI - 0.05:
+		dmin = maxf(dmin, sqrt(maxf(l1 * l1 + l2 * l2 + 2.0 * l1 * l2 * cos(pmax), 0.0)))
+	var d: float = clampf(to.length(), dmin, l1 + l2 - 0.01)
+	var tgt: Vector3 = A + u * d
+	var cos_a: float = (l1 * l1 + d * d - l2 * l2) / (2.0 * l1 * d)
+	var sin_a: float = sqrt(maxf(0.0, 1.0 - cos_a * cos_a))
+	var cos_b: float = clampf((l1 * l1 + l2 * l2 - d * d) / (2.0 * l1 * l2), -1.0, 1.0)
+	var psi: float = PI - acos(cos_b)   # the flexion at the joint
+	var pv: Vector3 = pole - A
+	pv = pv - u * pv.dot(u)
+	pv = pv.normalized() if pv.length() > 0.001 else Vector3(0, 0, 1)
+	var P: Quaternion = gq[AnimRig.parent[a]]
+	var rs := Quaternion(Vector3(0, -1, 0), P.inverse() * u)
+	var a0: Vector3 = P * (rs * Vector3(-s, 0, 0))   # about the neutral apex: where the joint points when the bone has no twist
+	a0 = (a0 - u * a0.dot(u)).normalized()
+	var a1: Vector3 = u.cross(a0)
+	# the asked-for plane, eased to the neutral one as the limb straightens (its tiny bend could point anywhere and turn the foot or the hand over): a limb
+	# going from bent to straight must not jump between the two planes
+	var phi0: float = atan2(u.dot(a0.cross(pv)), a0.dot(pv))
+	if ease:
+		phi0 *= smoothstep(0.08, 0.30, psi)   # (the runtime solves: a limb must not jump between the two planes as it straightens; the bake keeps the hard switch below)
+	var phi: float = phi0
+	var ev: Vector3 = _ref_plane_eval(a0, a1, phi0, u, l1, d, cos_a, sin_a, psi, P, s, a, shape)
+	if not ease and psi < 0.21:
+		phi = 0.0
+		ev = _ref_plane_eval(a0, a1, 0.0, u, l1, d, cos_a, sin_a, psi, P, s, a, shape)
+	elif ev.x > 0.0001:
+		# a limb whose asked-for plane is illegal takes the legal plane nearest to it
+		var best: float = 1.0e9
+		var bphi: float = 0.0
+		var k: int = 0
+		while k < 72:
+			var ph: float = -PI + float(k) * (TAU / 72.0)
+			var e2: Vector3 = _ref_plane_eval(a0, a1, ph, u, l1, d, cos_a, sin_a, psi, P, s, a, shape)
+			var dist: float = absf(wrapf(ph - phi0, -PI, PI))
+			# the legal plane that strains the joint least (twist and swing each as a share of their range), nearer the asked-for one on a tie: a tuck
+			# takes the hip folded forward, not the leg swung back to its limit
+			var score: float = e2.x * 100.0 + e2.z + 0.35 * dist
+			if score < best:
+				best = score
+				bphi = ph
+			k += 1
+		phi = bphi
+		ev = _ref_plane_eval(a0, a1, phi, u, l1, d, cos_a, sin_a, psi, P, s, a, shape)
+	var E: Vector3 = A + u * (l1 * cos_a) + (a0 * cos(phi) + a1 * sin(phi)) * (l1 * sin_a)
+	return {"E": E, "tgt": tgt, "phi": phi, "excess": ev.x, "twist": ev.y, "psi": psi}
+
+
+func _test_plan_limb_same() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 90210
+	var poses: Array = []
+	for id in ["stance.aggressive", "stance.defensive", "stance.evasive", "stance.escape", "move.dash", "approach.launch"]:
+		if AnimData.pose_exists(id):
+			poses.append(id)
+	var shapes: Array = [""]
+	for k in AnimJoints.shape_scale.keys():
+		shapes.append(String(k))
+	var limbs: Array = [["upper_arm_r", "forearm_r", "hand_r", 1.0], ["upper_arm_l", "forearm_l", "hand_l", 1.0], ["thigh_r", "shin_r", "foot_r", -1.0], ["thigh_l", "shin_l", "foot_l", -1.0]]
+	var gq: Array[Quaternion] = []
+	var gp := PackedVector3Array()
+	gq.resize(AnimRig.N)
+	gp.resize(AnimRig.N)
+	var cases: int = 0
+	var differ: Array = []
+	var scans0: int = AnimPose.plan_scans
+	for pid in poses:
+		var p: AnimPose = AnimData.pose(pid)
+		AnimPose.fk(p.q, p.hips, gq, gp)
+		for lb in limbs:
+			var a: int = AnimRig.index[lb[0]]
+			var b: int = AnimRig.index[lb[1]]
+			var c: int = AnimRig.index[lb[2]]
+			var reach: float = (gp[b] - gp[a]).length() + (gp[c] - gp[b]).length()
+			for n in range(90):
+				var dir := Vector3(rng.randf_range(-1.0, 1.0), rng.randf_range(-1.0, 1.0), rng.randf_range(-1.0, 1.0)).normalized()
+				var tgt: Vector3 = gp[a] + dir * reach * rng.randf_range(0.2, 1.15)
+				var pole: Vector3 = gp[b] + Vector3(rng.randf_range(-14.0, 14.0), rng.randf_range(-14.0, 14.0), rng.randf_range(-14.0, 14.0))
+				var shp: String = String(shapes[rng.randi_range(0, shapes.size() - 1)])
+				var ease: bool = rng.randf() < 0.5
+				var pn: Dictionary = AnimPose._plan_limb(gq, gp, a, b, c, tgt, pole, float(lb[3]), shp, ease)
+				var pr: Dictionary = _ref_plan_limb(gq, gp, a, b, c, tgt, pole, float(lb[3]), shp, ease)
+				cases += 1
+				for key in ["E", "tgt", "phi", "excess", "twist", "psi"]:
+					if pn[key] != pr[key]:
+						differ.append("%s %s %s %s: %s against %s" % [pid, lb[0], shp, key, str(pn[key]), str(pr[key])])
+						break
+	var scans: int = AnimPose.plan_scans - scans0
+	_expect(differ.is_empty(), "plan limb: the plan is the one-at-a-time version's, bit for bit (%d random limbs; not: %s)" % [cases, str(differ.slice(0, 3))])
+	_expect(scans >= 150, "plan limb: the plane search was run in %d of the %d cases (150 asked for)" % [scans, cases])
+	print("plan limb: %d random limbs over %d poses and %d shapes, %d of them through the 72-plane search: the same numbers as the one-at-a-time version" % [cases, poses.size(), shapes.size(), scans])
+
+
 func _arm_wings(id: String) -> int:
 	var p: AnimPose = AnimData.pose(id)
 	var gq: Array[Quaternion] = []
@@ -1709,7 +1860,7 @@ func _test_bends() -> void:
 
 
 ## The body's lead-in (docs/animation/lead-in.md): a listed blow's body (hips, spine, legs, free arm) eases into the contact key over the last ticks instead of taking it on the one tick, and the contact
-## tick itself is the same. Three blows are listed (the stomp of both fighters, the Anti-hero's ram, the Protagonist's drive); every other blow plays the same with and without it.
+## tick itself is the same. Every blow of the split's Y and B pools is listed (50 key sets, docs/animation/lead-in.md); a blow outside them plays the same with and without it.
 func _lead_run(S: SimState, who: String, style: String, piece: String, contacts: Array, extra: Dictionary, on: bool) -> Array:
 	RenderAnim.lead_in = on
 	_bn_rows.clear()
@@ -1736,6 +1887,10 @@ func _test_lead_in() -> void:
 		["protagonist", "medium", "stomp", [34, 48, 62], 48],
 		["antihero", "super", "su_ram", [44, 72, 100], 72],
 		["protagonist", "super", "su_drive", [44, 72, 100], 72],
+		["antihero", "medium", "rising_knee", [34, 48, 62], 48],
+		["protagonist", "medium", "haymaker", [34, 48, 62], 48],
+		["antihero", "super", "su_knee", [44, 72, 100], 72],
+		["protagonist", "super", "su_knee_legs", [44, 72, 100], 72],
 	]
 	var worst_end: float = 0.0
 	var line: Array = []
@@ -1766,9 +1921,25 @@ func _test_lead_in() -> void:
 		_expect(step_on <= 0.6 * step_off and turn_on <= 0.5 * turn_off, "lead-in: %s %s: the pelvis steps %.1f on the contact tick (%.1f without) and the free upper arm turns %.0f degrees (%.0f without); at most 0.6 and 0.5 of the before" % [cs[0], cs[2], step_on, step_off, turn_on, turn_off])
 		_expect(end <= 0.5, "lead-in: %s %s: the contact tick moved by %.2f units (0.5 allowed)" % [cs[0], cs[2], end])
 		line.append("%s %.1f/%.1f %.0f/%.0f" % [cs[2], step_on, step_off, turn_on, turn_off])
+	# every row names a key set and keeps its lists in range (at most six ticks, each a weight from 0 to 1)
+	var rows: Dictionary = AnimData.lead_in.get("pieces", {})
+	var bad_rows: Array = []
+	for id in rows:
+		if not AnimData.keysets.has(id):
+			bad_rows.append("%s (no such key set)" % id)
+			continue
+		for k in ["weights", "arm", "solve"]:
+			if rows[id].has(k):
+				var ls: Array = rows[id][k]
+				var ok: bool = ls.size() >= 1 and ls.size() <= 6
+				for w in ls:
+					ok = ok and float(w) >= 0.0 and float(w) <= 1.0
+				if not ok:
+					bad_rows.append("%s %s" % [id, k])
+	_expect(bad_rows.is_empty() and rows.size() >= 49, "lead-in: %d rows (49 or more: every blow of the split's Y and B pools but the two-handed double hammer, whose peak is the blow's picture), every one a key set with lists of 1 to 6 weights in 0 to 1: %s" % [rows.size(), str(bad_rows.slice(0, 4))])
 	# a blow that is not listed plays the same with it as without
 	var same: float = 0.0
-	for pc in [["antihero", "medium", "roundhouse"], ["protagonist", "super", "su_turn"], ["antihero", "super", "su_heel"]]:
+	for pc in [["antihero", "medium", "double_palm"], ["protagonist", "medium", "spear_hand"]]:
 		var off2: Array = _lead_run(S, pc[0], pc[1], pc[2], [34, 48, 62], {}, false)
 		var on2: Array = _lead_run(S, pc[0], pc[1], pc[2], [34, 48, 62], {}, true)
 		_expect(off2.size() == on2.size() and off2.size() > 0, "lead-in: %s %s was sampled both ways" % [pc[0], pc[2]])
@@ -1782,6 +1953,164 @@ func _test_lead_in() -> void:
 	RenderAnim.press_styles = press_was
 	RenderAnim.ground_feet = ground_was
 	print("lead-in: pelvis step and free upper-arm turn on the contact tick, with and without: %s; contact tick off by at most %.2f units; unlisted blows identical (%.4f)" % [", ".join(PackedStringArray(line)), worst_end, same])
+
+
+## The follow-through (docs/animation/follow-through.md): in a mashed string the next blow's wind-up takes over while the last blow's contact solve is still in force, and the pelvis used to be pulled 10
+## to 20 units in the one tick it let go; now it lets go over a few. A listed blow's body also sinks and drives on after the contact. The contact tick is the same pose, and a single blow that is not listed
+## plays the same with and without it.
+func _follow_run(S: SimState, who: String, style: String, piece: String, contacts: Array, on: bool) -> Array:
+	RenderAnim.follow_through = on
+	_bn_rows.clear()
+	_bn_tag = piece
+	_tier_scene(S, who, style, [piece], contacts, {}, "heavy")
+	return _bn_rows.duplicate()
+
+
+func _test_follow_through() -> void:
+	AnimData.load_every_wave()
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var press_was: bool = RenderAnim.press_styles
+	var ground_was: bool = RenderAnim.ground_feet
+	var ft_was: bool = RenderAnim.follow_through
+	RenderAnim.press_styles = true
+	RenderAnim.ground_feet = false
+	_tier_damage = true
+	_bn_on = true
+	var line: Array = []
+	var worst_end: float = 0.0
+	for cs in [["antihero", "super", "su_ram"], ["protagonist", "super", "su_drive"], ["antihero", "super", "su_heel"], ["protagonist", "super", "su_blade_jaw"]]:
+		var off: Array = _follow_run(S, cs[0], cs[1], cs[2], [44, 72, 100], false)
+		var on: Array = _follow_run(S, cs[0], cs[1], cs[2], [44, 72, 100], true)
+		var by_off := {}
+		var by_on := {}
+		for r in off:
+			by_off[int(r.k)] = r
+		for r in on:
+			by_on[int(r.k)] = r
+		var c: int = 72
+		var step_off: float = 0.0
+		var step_on: float = 0.0
+		for k in range(c + 1, c + 14):
+			step_off = maxf(step_off, absf(float(by_off[k].pel.x) - float(by_off[k - 1].pel.x)))
+			step_on = maxf(step_on, absf(float(by_on[k].pel.x) - float(by_on[k - 1].pel.x)))
+		var end: float = (by_on[c].pel - by_off[c].pel).length()
+		worst_end = maxf(worst_end, end)
+		_expect(step_on <= 12.0 and step_on <= 0.75 * step_off, "follow-through: %s %s: the pelvis steps at most %.1f units a tick in the 13 ticks after the second blow's contact (%.1f without; at most 12 and 0.75 of the before)" % [cs[0], cs[2], step_on, step_off])
+		_expect(end <= 0.5, "follow-through: %s %s: the second contact tick moved by %.2f units (0.5 allowed)" % [cs[0], cs[2], end])
+		line.append("%s %.1f/%.1f" % [cs[2], step_on, step_off])
+	# one blow that is not listed, thrown alone: the same with it as without
+	var same: float = 0.0
+	for pc in [["antihero", "medium", "double_palm"], ["protagonist", "medium", "spear_hand"]]:
+		var off2: Array = _follow_run(S, pc[0], pc[1], pc[2], [44], false)
+		var on2: Array = _follow_run(S, pc[0], pc[1], pc[2], [44], true)
+		_expect(off2.size() == on2.size() and off2.size() > 0, "follow-through: %s was sampled both ways" % pc[2])
+		for i in range(mini(off2.size(), on2.size())):
+			same = maxf(same, (off2[i].pel - on2[i].pel).length())
+			for side in ["r", "l"]:
+				same = maxf(same, (off2[i][side].wr - on2[i][side].wr).length())
+	_expect(same == 0.0, "follow-through: a lone blow that is not listed differs by %.4f units with the follow-through on (0 allowed)" % same)
+	# the rows: every one names a key set, with a drive and a dip of a few units over at most 20 ticks
+	var rows: Dictionary = AnimData.follow_through.get("pieces", {})
+	var bad_rows: Array = []
+	for id in rows:
+		var r: Dictionary = rows[id]
+		if not AnimData.keysets.has(id) or float(r.get("drive", 0.0)) < 0.0 or float(r.get("drive", 0.0)) > 8.0 or float(r.get("dip", 0.0)) < 0.0 or float(r.get("dip", 0.0)) > 6.0 or float(r.get("ticks", 10)) < 4.0 or float(r.get("ticks", 10)) > 20.0:
+			bad_rows.append(id)
+	_expect(bad_rows.is_empty() and rows.size() >= 50, "follow-through: %d rows (50 or more), each a key set with a drive of 0 to 8, a dip of 0 to 6 and 4 to 20 ticks: %s" % [rows.size(), str(bad_rows.slice(0, 4))])
+	RenderAnim.follow_through = ft_was
+	_bn_on = false
+	RenderAnim.press_styles = press_was
+	RenderAnim.ground_feet = ground_was
+	print("follow-through: biggest pelvis step in the 13 ticks after a mashed string's second contact, with and without: %s; second contact tick off by at most %.2f units; a lone unlisted blow identical (%.4f); %d rows" % [", ".join(PackedStringArray(line)), worst_end, same, rows.size()])
+
+
+## The solve's carry and the striking arm's release (docs/animation/solve-carry.md): the body of a listed blow drives on after the contact through the contact solve, so the hand stays where it landed while the
+## pelvis goes the row's drive further than without one (the old route, through the target, let the solve take part of it back); and the striking arm's upper arm turns at most 36 degrees a tick in the thirteen
+## ticks after the contact, where the solve and the follow key used to hand it over in a pop.
+func _carry_run(S: SimState, who: String, style: String, piece: String, mode: int) -> Array:
+	var saved: Dictionary = AnimData.follow_through.duplicate(true)
+	if mode == 0:
+		for id in AnimData.follow_through.get("pieces", {}):
+			AnimData.follow_through["pieces"][id]["drive"] = 0.0   # mode 0: no drive at all
+	RenderAnim.carry_solve = mode == 2
+	_bn_rows.clear()
+	_bn_tag = piece
+	_tier_scene(S, who, style, [piece], [60], {}, "heavy")
+	AnimData.follow_through = saved
+	return _bn_rows.duplicate()
+
+
+func _test_solve_carry() -> void:
+	AnimData.load_every_wave()
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var press_was: bool = RenderAnim.press_styles
+	var ground_was: bool = RenderAnim.ground_feet
+	var cs_was: bool = RenderAnim.carry_solve
+	RenderAnim.press_styles = true
+	RenderAnim.ground_feet = false
+	_tier_damage = true
+	_bn_on = true
+	var c: int = 60
+	var line: Array = []
+	var ua := func(by: Dictionary, k: int, side: String) -> float:
+		var a: Quaternion = by[k][side].ua_q
+		var b: Quaternion = by[k - 1][side].ua_q
+		return rad_to_deg(2.0 * acos(clampf(absf(a.dot(b)), 0.0, 1.0)))
+	for cs in [["antihero", "su_ram"], ["antihero", "su_fist_heave"], ["protagonist", "su_drive"], ["protagonist", "su_palm_arm"]]:
+		var by0 := {}
+		var by1 := {}
+		var by2 := {}
+		for r in _carry_run(S, cs[0], "super", cs[1], 0):
+			by0[int(r.k)] = r
+		for r in _carry_run(S, cs[0], "super", cs[1], 1):
+			by1[int(r.k)] = r
+		for r in _carry_run(S, cs[0], "super", cs[1], 2):
+			by2[int(r.k)] = r
+		var side: String = String(by2[c].strike)
+		var gain_old: float = 0.0
+		var gain_new: float = 0.0
+		var drift_none: float = 0.0
+		var drift_new: float = 0.0
+		for k in range(c + 1, c + 7):
+			gain_old = maxf(gain_old, float(by1[k].pel.x) - float(by0[k].pel.x))
+			gain_new = maxf(gain_new, float(by2[k].pel.x) - float(by0[k].pel.x))
+		for k in range(c + 1, c + 5):
+			drift_none = maxf(drift_none, absf(float(by0[k][side].wr.x) - float(by0[c][side].wr.x)))
+			drift_new = maxf(drift_new, absf(float(by2[k][side].wr.x) - float(by2[c][side].wr.x)))
+		var end: float = (by2[c].pel - by0[c].pel).length()
+		_expect(gain_new >= 3.0 and gain_new >= gain_old, "solve carry: %s %s: the drive takes the pelvis %.1f units further than no drive in the 6 ticks after the contact (%.1f by the old route; at least 3, and no less than the old)" % [cs[0], cs[1], gain_new, gain_old])
+		_expect(drift_new <= drift_none + 1.0, "solve carry: %s %s: the striking hand drifts %.1f units from where it landed in the 4 ticks after (%.1f with no drive; at most 1 more)" % [cs[0], cs[1], drift_new, drift_none])
+		_expect(end <= 0.5, "solve carry: %s %s: the contact tick moved by %.2f units (0.5 allowed)" % [cs[0], cs[1], end])
+		line.append("%s %.1f/%.1f drift %.1f/%.1f" % [cs[1], gain_new, gain_old, drift_new, drift_none])
+	var rel_line: Array = []
+	for cs in [["antihero", "su_hook"], ["antihero", "su_plate"], ["antihero", "su_hammer"]]:
+		var by_off2 := {}
+		var by_on2 := {}
+		for r in _carry_run(S, cs[0], "super", cs[1], 1):
+			by_off2[int(r.k)] = r
+		for r in _carry_run(S, cs[0], "super", cs[1], 2):
+			by_on2[int(r.k)] = r
+		var side2: String = String(by_on2[c].strike)
+		var w_off: float = 0.0
+		var w_on: float = 0.0
+		for k in range(c + 1, c + 14):
+			w_off = maxf(w_off, ua.call(by_off2, k, side2))
+			w_on = maxf(w_on, ua.call(by_on2, k, side2))
+		_expect(w_on <= 36.0 and w_on <= w_off, "solve carry: %s: the striking upper arm turns at most %.0f degrees a tick after the contact (%.0f without; at most 36 and no more than without)" % [cs[1], w_on, w_off])
+		rel_line.append("%s %.0f/%.0f" % [cs[1], w_on, w_off])
+	var ft: Dictionary = AnimData.follow_through
+	_expect(float(ft.get("release_deg", 0.0)) >= 10.0 and float(ft.get("release_deg", 0.0)) <= 90.0, "solve carry: release_deg is in 10 to 90")
+	RenderAnim.carry_solve = cs_was
+	_bn_on = false
+	RenderAnim.press_styles = press_was
+	RenderAnim.ground_feet = ground_was
+	print("solve carry: the drive takes the pelvis this far past no drive (solve route / old route), and the striking hand drifts (with / none): %s; striking upper arm worst turn after the contact, with and without: %s" % [", ".join(PackedStringArray(line)), ", ".join(PackedStringArray(rel_line))])
 
 
 ## The pulled frames (homework 4b): every key set of both fighters, at the study's 60 units and at its own striking range, none of them with a frame of the last pass pulling over 30 degrees,
@@ -2016,7 +2345,7 @@ func _test_air_brake() -> void:
 		f0.x = 500.0
 		f1.x = 2600.0
 		f0.y = 300.0
-		f1.y = 0.0
+		f1.y = _stage_y(S, f1.x)
 		f0.vx = 1600.0
 		f0.vy = 0.0
 		f0.state = "launched"
@@ -2091,7 +2420,7 @@ func _test_chain() -> void:
 	f0.x = 500.0
 	f1.x = 2600.0
 	f0.y = 200.0
-	f1.y = 0.0
+	f1.y = _stage_y(S, f1.x)
 	f0.vx = 1400.0
 	f0.vy = 300.0
 	f0.state = "launched"
@@ -2163,7 +2492,7 @@ func _test_grapple_c0_c1() -> void:
 	f0.x = 1000.0
 	f1.x = 1900.0
 	for st in stands:
-		st.y = 0.0
+		st.y = _stage_y(S, st.x)
 		S.fighters.append(st)
 	stands[0].x = 1300.0
 	stands[1].x = 2500.0
@@ -2263,8 +2592,8 @@ func _test_charge_cut() -> void:
 	f1.id = "RIVAL"
 	f0.x = 500.0
 	f1.x = 2600.0
-	f0.y = 0.0
-	f1.y = 0.0
+	f0.y = _stage_y(S, f0.x)
+	f1.y = _stage_y(S, f1.x)
 	f0.vx = 0.0
 	f0.vy = 0.0
 	f0.state = "free"
@@ -2356,8 +2685,8 @@ func _grip_scene(grade: float, spacing: float, kind: String = "tie", grips: Dict
 	f1.id = "RIVAL"
 	f0.x = 1000.0
 	f1.x = 1000.0 + spacing
-	f0.y = 0.0
-	f1.y = 0.0
+	f0.y = _stage_y(S, f0.x)
+	f1.y = _stage_y(S, f1.x)
 	f0.vx = 0.0
 	f1.vx = 0.0
 	f0.state = "locked"
@@ -2466,8 +2795,8 @@ func _recoil_probe(kind: String, ticks: int, nx: float, ny: float, who: String) 
 	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
 	f0.x = 1000.0
 	f1.x = 1070.0
-	f0.y = 0.0
-	f1.y = 0.0
+	f0.y = _stage_y(S, f0.x)
+	f1.y = _stage_y(S, f1.x)
 	f0.state = "free"
 	f1.state = "free"
 	f0.vx = 0.0
@@ -2637,8 +2966,8 @@ func _ack_probe(cell: String, who: String, wait: int, ticks: int, hit_at: int, o
 	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
 	f0.x = 1000.0
 	f1.x = 1180.0
-	f0.y = 0.0
-	f1.y = 0.0
+	f0.y = _stage_y(S, f0.x)
+	f1.y = _stage_y(S, f1.x)
 	f0.state = "free"
 	f1.state = "free"
 	f0.vx = 0.0
@@ -2675,6 +3004,7 @@ func _ack_probe(cell: String, who: String, wait: int, ticks: int, hit_at: int, o
 
 
 func _test_press_ack() -> void:
+	_standing = true
 	AnimData.load_every_wave()
 	var bad: Array = []
 	var seen: Array = []
@@ -2719,6 +3049,7 @@ func _test_press_ack() -> void:
 		bad.append("a 2-tick wait started an anticipation (cleared at %d: 5 means it never started)" % int(tiny.cleared_at))
 	_expect(bad.is_empty(), "press-tick anticipation: every cell and fighter plays clean, shows and hands back: %s" % str(bad))
 	print("press-tick anticipation: %s" % " | ".join(seen))
+	_standing = false
 
 
 ## The beam struggle's dig-in (docs/animation/struggle-dig-in.md). With the meeting point past the middle the fighter it pushes back digs in (the pelvis sinks, the drawn body is dragged back) and trembles; the winner leans in a
@@ -2735,8 +3066,8 @@ func _struggle_probe(who: String, mid: float, ticks: int, end_at: int, off: bool
 	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
 	f0.x = 1000.0
 	f1.x = 1180.0
-	f0.y = 0.0
-	f1.y = 0.0
+	f0.y = _stage_y(S, f0.x)
+	f1.y = _stage_y(S, f1.x)
 	f0.state = "free"
 	f1.state = "free"
 	RenderAnim.struggle_dig = not off
@@ -2834,8 +3165,8 @@ func _grip_feed_run(who: String) -> Dictionary:
 	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
 	f0.x = 1000.0
 	f1.x = 1034.0
-	f0.y = 0.0
-	f1.y = 0.0
+	f0.y = _stage_y(S, f0.x)
+	f1.y = _stage_y(S, f1.x)
 	f0.state = "locked"
 	f1.state = "locked"
 	var res := {"nan": 0, "viol": 0, "gap": 0.0, "caught_shows": 0, "moved": 0.0}
@@ -2937,8 +3268,8 @@ func _throw_probe(who: String, text: String, past: bool) -> Dictionary:
 	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
 	f0.x = 1000.0
 	f1.x = 1034.0
-	f0.y = 0.0
-	f1.y = 0.0
+	f0.y = _stage_y(S, f0.x)
+	f1.y = _stage_y(S, f1.x)
 	f0.state = "locked"
 	f1.state = "locked"
 	var res := {"nan": 0, "viol": 0, "played": 0, "seq": "", "chased": 0, "step": 0.0, "rest": 0.0}
@@ -3154,6 +3485,79 @@ func _test_incremental_bake() -> void:
 	print("incremental bake: the queue holds, orders and drains; the eager and lazy poses are identical; %d pieces queued for one fighter" % queued)
 
 
+## The bake's order and pace (docs/animation/bake-pace.md; data/anim/bake_order.json). The queue bakes the poses a fight asks for first, in the order its first seconds ask for them, and a slice does not
+## start a pose that would take it past its budget unless the slice has baked nothing; the poses are the same ones in any order (the eager pose of the same sketch).
+func _test_bake_order() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	# the data: every id names a pose, no id twice, every cost is of a ranked or unranked pose that exists
+	var seen: Dictionary = {}
+	for id in AnimData.bake_rank:
+		if not AnimData.raw.has(id):
+			bad.append("first: %s is not a pose" % id)
+	var firsts: Array = AnimData._read("bake_order.json").get("first", [])
+	for id in firsts:
+		if seen.has(id):
+			bad.append("first: %s twice" % id)
+		seen[id] = true
+	for id in AnimData.bake_cost:
+		if not AnimData.raw.has(id) or int(AnimData.bake_cost[id]) < 100:
+			bad.append("cost: %s is not a pose or is under 0.1 ms" % id)
+	_expect(firsts.size() >= 300 and AnimData.bake_cost.size() >= 900, "bake order: %d ranked poses (300 or more), %d costed (900 or more: every pose of the pair)" % [firsts.size(), AnimData.bake_cost.size()])
+	var sk: Dictionary = AnimData.raw["stance.aggressive"]
+	var want: AnimPose = AnimPose.bake("zz.order.want", sk)
+	var rank_was: Dictionary = AnimData.bake_rank
+	var cost_was: Dictionary = AnimData.bake_cost
+	var on_was: bool = AnimData.bake_order_on
+	var order_of := func(on: bool) -> Array:
+		AnimData.bake_order_on = on
+		AnimData.bake_rank = {"zz.order.a": 5, "zz.order.b": 1}
+		AnimData.bake_cost = {}
+		for id in ["zz.order.a", "zz.order.b", "zz.order.c"]:
+			AnimData.poses.erase(id)
+			AnimData._queue(id, sk)
+		var got: Array = []
+		for i in range(3):
+			AnimData.bake_pending(0)   # one pose a slice
+			for id in ["zz.order.a", "zz.order.b", "zz.order.c"]:
+				if AnimData.poses.has(id) and not got.has(id):
+					got.append(id)
+		return got
+	var on: Array = order_of.call(true)
+	var off: Array = order_of.call(false)
+	if on != ["zz.order.b", "zz.order.a", "zz.order.c"]:
+		bad.append("ranked poses bake first, by rank: %s" % str(on))
+	if off != ["zz.order.a", "zz.order.b", "zz.order.c"]:
+		bad.append("--no-bake-order keeps the order they were queued in: %s" % str(off))
+	for id in ["zz.order.a", "zz.order.b", "zz.order.c"]:
+		var p: AnimPose = AnimData.poses[id]
+		for i in range(AnimRig.N):
+			if not p.q[i].is_equal_approx(want.q[i]):
+				bad.append("%s is not the pose the eager bake makes of the same sketch" % id)
+				break
+		AnimData.poses.erase(id)
+	# a dear pose that would overshoot the slice waits for a slice of its own; a slice that has baked nothing takes it
+	AnimData.bake_order_on = true
+	AnimData.bake_rank = {"zz.order.a": 0, "zz.order.b": 1}
+	AnimData.bake_cost = {"zz.order.b": 50000}
+	for id in ["zz.order.a", "zz.order.b"]:
+		AnimData._queue(id, sk)
+	AnimData.bake_pending(2000)
+	var first_slice: bool = AnimData.poses.has("zz.order.a") and not AnimData.poses.has("zz.order.b")
+	AnimData.bake_pending(2000)
+	var second_slice: bool = AnimData.poses.has("zz.order.b")
+	if not first_slice or not second_slice:
+		bad.append("a dear pose waits for a slice of its own (the first slice: %s, the second: %s)" % [str(first_slice), str(second_slice)])
+	for id in ["zz.order.a", "zz.order.b"]:
+		AnimData.poses.erase(id)
+	AnimData.bake_rank = rank_was
+	AnimData.bake_cost = cost_was
+	AnimData.bake_order_on = on_was
+	AnimData.bake_all()
+	_expect(bad.is_empty(), "bake order: %s" % str(bad))
+	print("bake order: %d ranked and %d costed poses; ranked poses bake first by rank, a dear pose waits for its own slice, every pose is the eager pose; --no-bake-order keeps the old order" % [firsts.size(), AnimData.bake_cost.size()])
+
+
 ## The missing-pose lookup (docs/animation/cloud-reports/2026-10-28-pose-drain.md): a pose asked for while fighters' waves are queued loads only the wave that holds it, and an id no
 ## queued wave holds loads none. That is the same data as the in-order load only because no two waves (nor a wave and the base files) share an id, checked here for every kind a
 ## wave registers; and the lookup finds a pose by its key in the file's text, so every wave pose's key must be written `"id": {`.
@@ -3330,8 +3734,8 @@ func _lunge_probe(who: String, weight: String, wind: int, ticks: int, off: bool)
 	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
 	f0.x = 1000.0
 	f1.x = 1250.0
-	f0.y = 0.0
-	f1.y = 0.0
+	f0.y = _stage_y(S, f0.x)
+	f1.y = _stage_y(S, f1.x)
 	f0.state = "free"
 	f1.state = "free"
 	RenderAnim.press_ack = not off
@@ -3365,6 +3769,7 @@ func _lunge_probe(who: String, weight: String, wind: int, ticks: int, off: bool)
 
 
 func _test_lunge_crouch() -> void:
+	_standing = true
 	AnimData.load_every_wave()
 	var bad: Array = []
 	var seen: Array = []
@@ -3400,6 +3805,7 @@ func _test_lunge_crouch() -> void:
 		bad.append("a 2-tick crouch was drawn (cleared at %d: 5 means it never started)" % int(tiny.cleared_at))
 	_expect(bad.is_empty(), "the lunge's wind-up crouch: drawn over the cue's ticks, handed to the travel without a snap, gone after: %s" % str(bad))
 	print("lunge crouch: %s" % " | ".join(seen))
+	_standing = false
 
 
 ## Flight locomotion (docs/animation/flight-locomotion.md). A free fighter in the air leans into an acceleration on a spring that overshoots, flares when he stops hard from speed, coils at a dash's press, banks into a curve and breathes
@@ -3416,8 +3822,8 @@ func _loco_run(who: String, course: Array, ticks: int, off: bool) -> Dictionary:
 	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
 	f0.x = 1000.0
 	f1.x = 1900.0
-	f0.y = WorldTerrain.groundY(S, f0.x, f0.z) + 400.0
-	f1.y = WorldTerrain.groundY(S, f1.x, f1.z)
+	f0.y = WorldWater.floorAt(S, f0.x, f0.z) + 400.0
+	f1.y = WorldWater.floorAt(S, f1.x, f1.z)
 	f0.state = "free"
 	f1.state = "free"
 	f0.face = 1.0
@@ -3543,7 +3949,7 @@ func _loco_busy_probe() -> Dictionary:
 	var S: SimState = main.host.S
 	var f0 = S.fighters[0]
 	RenderAnim._fighters.clear()
-	f0.y = WorldTerrain.groundY(S, f0.x, f0.z) + 400.0
+	f0.y = WorldWater.floorAt(S, f0.x, f0.z) + 400.0
 	f0.state = "free"
 	f0.face = 1.0
 	var lean: float = 0.0
@@ -3579,8 +3985,8 @@ func _gl_run(who: String, course: Array, ticks: int, off: bool, surface: String)
 	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
 	f0.x = 1000.0
 	f1.x = 1900.0
-	f0.y = WorldTerrain.groundY(S, f0.x, f0.z) + float(course[0][4]) if course[0].size() > 4 else WorldTerrain.groundY(S, f0.x, f0.z)
-	f1.y = WorldTerrain.groundY(S, f1.x, f1.z)
+	f0.y = WorldWater.floorAt(S, f0.x, f0.z) + float(course[0][4]) if course[0].size() > 4 else WorldWater.floorAt(S, f0.x, f0.z)
+	f1.y = WorldWater.floorAt(S, f1.x, f1.z)
 	f0.state = "free"
 	f1.state = "free"
 	f0.face = 1.0
@@ -3598,7 +4004,7 @@ func _gl_run(who: String, course: Array, ticks: int, off: bool, surface: String)
 		for c in course:
 			if k >= int(c[0]):
 				seg = c
-		var g: float = WorldTerrain.groundY(S, f0.x, f0.z)
+		var g: float = WorldWater.floorAt(S, f0.x, f0.z)
 		var sp: float = 430.0
 		f0.vx += (float(seg[1]) * sp - f0.vx) * k_s
 		if bool(seg[3]):
@@ -3727,7 +4133,7 @@ func _gl_busy_probe() -> Dictionary:
 	var S: SimState = main.host.S
 	var f0 = S.fighters[0]
 	RenderAnim._fighters.clear()
-	f0.y = WorldTerrain.groundY(S, f0.x, f0.z)
+	f0.y = WorldWater.floorAt(S, f0.x, f0.z)
 	f0.face = 1.0
 	var gait: float = 0.0
 	for k in range(80):
@@ -3762,8 +4168,8 @@ func _hv_run(who: String, hits: Array, ticks: int, off: bool) -> Dictionary:
 	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
 	f0.x = 1000.0
 	f1.x = 1250.0
-	f0.y = 0.0
-	f1.y = 0.0
+	f0.y = _stage_y(S, f0.x)
+	f1.y = _stage_y(S, f1.x)
 	f0.state = "free"
 	f1.state = "free"
 	RenderAnim.hit_variants = not off
@@ -3881,14 +4287,14 @@ func _ar_run(who: String, speed: float, height: float, off: bool) -> Dictionary:
 	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
 	f0.x = 1000.0
 	f1.x = 1900.0
-	f1.y = WorldTerrain.groundY(S, f1.x, f1.z)
+	f1.y = WorldWater.floorAt(S, f1.x, f1.z)
 	f0.face = 1.0
 	RenderAnim.air_recover = not off
 	var res := {"nan": 0, "viol": 0, "head": [], "hips": [], "env": []}
 	for k in range(150):
 		S.tick = 9700 + k
 		S.T = 970.0 + float(k) / 60.0
-		var g: float = WorldTerrain.groundY(S, f0.x, f0.z)
+		var g: float = WorldWater.floorAt(S, f0.x, f0.z)
 		if k < 20:
 			f0.state = "free"
 			f0.vx = 0.0
@@ -3987,8 +4393,8 @@ func _sec_run(who: String, off: bool) -> Dictionary:
 	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
 	f0.x = 1000.0
 	f1.x = 1900.0
-	f0.y = WorldTerrain.groundY(S, f0.x, f0.z)
-	f1.y = WorldTerrain.groundY(S, f1.x, f1.z)
+	f0.y = WorldWater.floorAt(S, f0.x, f0.z)
+	f1.y = WorldWater.floorAt(S, f1.x, f1.z)
 	f0.state = "free"
 	f1.state = "free"
 	f0.face = 1.0
@@ -4001,7 +4407,7 @@ func _sec_run(who: String, off: bool) -> Dictionary:
 	for k in range(420):
 		S.tick = 9800 + k
 		S.T = 980.0 + float(k) / 60.0
-		var g: float = WorldTerrain.groundY(S, f0.x, f0.z)
+		var g: float = WorldWater.floorAt(S, f0.x, f0.z)
 		var stick: float = 1.0 if (k >= 30 and k < 90) else 0.0
 		f0.vx += (stick * 430.0 - f0.vx) * k_s
 		if k >= 140 and k < 160:
@@ -4098,8 +4504,8 @@ func _pop_run(who: String, seq: Array, ticks: int, off: bool) -> Dictionary:
 	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
 	f0.x = 1000.0
 	f1.x = 1250.0
-	f0.y = WorldTerrain.groundY(S, f0.x, f0.z) + 90.0
-	f1.y = WorldTerrain.groundY(S, f1.x, f1.z)
+	f0.y = WorldWater.floorAt(S, f0.x, f0.z) + 90.0
+	f1.y = WorldWater.floorAt(S, f1.x, f1.z)
 	f0.state = "free"
 	f1.state = "free"
 	f0.vx = 0.0
@@ -4240,7 +4646,9 @@ func _test_pulled() -> void:
 ## the mean and the spread of nine joints about the pelvis (pose), how far and how low the pelvis goes (travel), and the hand-speed peaks a second, the hand's speed and the pelvis's bob (rhythm).
 ## The distance of two cells is pose (RMS of the means / 4 units + RMS of the spreads / 2) + travel (range / 6, mean height / 3, lowest / 4, averaged) + rhythm (peak rate / 2 Hz, speed / 2,
 ## bob / 1, averaged). The threshold is 2.5: Orb called the fighters "different people" and the same cell thrown by the two fighters is 2.1 apart (the median), and the two NEAREST different
-## buttons are 3.7 apart; a style pair must read at least a third farther apart than the fighters do and two thirds as far as the nearest two buttons.
+## buttons are 3.7 apart; a style pair must read at least a third farther apart than the fighters do and two thirds as far as the nearest two buttons (2.5, set on a hovering body).
+## On a standing body (this test stages one: `_standing`) the same cell is 1.9 apart between the fighters and the buttons 3.7 apart, and the pose half of every distance is smaller (the stance already leans and sinks, so a run's lean
+## and dip add less to the pelvis-relative means), so the threshold is the fighters' own distance, 1.9: a pair of styles of a button reads at least as far apart as two people do (docs/animation/standing-beats.md).
 func _cell_features(rows: Array, tag: String) -> Dictionary:
 	var ct: Array = CELL_CONTACTS[tag]
 	var k0: int = int(ct[0]) - 12
@@ -4323,6 +4731,7 @@ func _cell_distance(a: Dictionary, b: Dictionary) -> float:
 
 
 func _test_styles() -> void:
+	_standing = true
 	AnimData.load_every_wave()
 	RenderAnim.hit_variants = false   # the styles are the attackers' own: the defender answers with the plain flinch here
 	_run_cells(true)
@@ -4359,8 +4768,9 @@ func _test_styles() -> void:
 				if String(CELLS[i]).substr(0, 1) != String(CELLS[j]).substr(0, 1):
 					cross_min = minf(cross_min, _cell_distance(feat["%s:%s" % [CELLS[i], who]], feat["%s:%s" % [CELLS[j], who]]))
 	RenderAnim.hit_variants = true
-	_expect(worst_d >= 2.5, "styles: the nearest two styles of a button are %.2f apart (%s); the threshold is 2.5 (the fighters are %.2f apart at the median, the nearest two buttons %.2f)" % [worst_d, worst, float(fighters[fighters.size() / 2]), cross_min])
+	_expect(worst_d >= 1.9, "styles: the nearest two styles of a button are %.2f apart (%s); the threshold is 1.9 (the fighters are %.2f apart at the median, the nearest two buttons %.2f)" % [worst_d, worst, float(fighters[fighters.size() / 2]), cross_min])
 	print("styles: 18 style pairs, nearest %.2f (%s); the fighters %.2f apart at the median; the nearest two buttons %.2f" % [worst_d, worst, float(fighters[fighters.size() / 2]), cross_min])
+	_standing = false
 
 
 func _test_march() -> void:
@@ -4910,7 +5320,7 @@ func _test_c2_cues() -> void:
 	f0.x = 500.0
 	f1.x = 560.0
 	for f in [f0, f1]:
-		f.y = 0.0
+		f.y = _stage_y(S, f.x)
 		f.vx = 0.0
 		f.vy = 0.0
 		f.state = "free"
@@ -5007,6 +5417,7 @@ func a_is_empty(d: Dictionary) -> bool:
 ## collar (the hand 38 to 62 high), a line is level, a flick rises and a sweep falls in the side view (the three paths differ at the contact itself, by the forearm's angle), and in Combat's sample run of twelve
 ## (the order, the arm and the mirror of each bolt) the two heads keep a hand's width (18 or more) between them.
 func _test_energy_reach() -> void:
+	_standing = true
 	AnimData.load_every_wave()
 	main.start_match(4, {"p1": false, "p2": false})
 	for i in range(10):
@@ -5049,6 +5460,7 @@ func _test_energy_reach() -> void:
 	RenderAnim.press_styles = styles_was
 	S.dirS.ex = null
 	print("energy reach: %s" % " | ".join(seen))
+	_standing = false
 
 
 ## The free arm (Legal e09: a mashed run must not pump one arm): every bolt and blast of both fighters and every hand piece of the tier, thrown with the left hand, through the real solve: the same contact reached
@@ -5150,6 +5562,7 @@ func _test_free_arm() -> void:
 ## Combat's eight rules for a medium on Y's 12-tick wind-up (data/anim/medium_wind.json, docs/animation/super-heavy.md): the data covers the mediums, the held-only ones are named, and the rules do what they say:
 ## w7 (an arc) and w8 (a rise) reach less of their chamber 6 ticks before the contact, w6 (a line) travels about half as far, w4 (a dropping kick) lifts its leg less; nothing else changes with the flag off.
 func _test_medium_wind() -> void:
+	_standing = true
 	AnimData.load_every_wave()
 	var mw: Dictionary = AnimData.medium_wind
 	_expect(mw.get("sets", {}).size() >= 20 and mw.get("held_only", []).size() >= 8 and mw.get("rules", {}).has("w7"), "medium wind: data/anim/medium_wind.json did not load or is thin (%d sets)" % mw.get("sets", {}).size())
@@ -5166,7 +5579,7 @@ func _test_medium_wind() -> void:
 	RenderAnim.ground_feet = false
 	RenderAnim.press_styles = true
 	var seen: Array = []
-	for pc in [["roundhouse", "w7", "tw"], ["uppercut", "w8", "hand_r"], ["driving_knee", "w6", "px"], ["stomp", "w4", "foot_r"]]:
+	for pc in [["roundhouse", "w7", "tw"], ["uppercut", "w8", "pv_y"], ["driving_knee", "w6", "px"], ["stomp", "w4", "foot_r"]]:
 		var ys: Array = []
 		for on in [true, false]:
 			RenderAnim.medium_wind = on
@@ -5181,11 +5594,15 @@ func _test_medium_wind() -> void:
 				ys.append(float(rowt[0].px) - float(rowt[-28].px) if rowt.has(-28) else float(rowt[0].px))
 			elif String(pc[2]) == "tw":
 				ys.append(float(rowt[-4].tw))   # the shoulders turned: a flatter wind-up turns less
+			elif String(pc[2]) == "pv_y":
+				ys.append(float(rowt[-4].pv_y))   # the pelvis's height: w8 is "no dip first", and on a standing body (whose guard hand is already at the chamber's height) the dip is the pelvis's, not the hand's
 			else:
 				ys.append(float(rowt[-4][String(pc[2])].y))
 		RenderAnim.medium_wind = true
 		seen.append("%s %s %.1f with, %.1f without" % [pc[0], pc[1], float(ys[0]), float(ys[1])])
-		if String(pc[2]) == "px":
+		if String(pc[2]) == "pv_y":
+			_expect(float(ys[0]) > float(ys[1]) + 0.5, "medium wind: %s (%s) has the pelvis at %.1f 4 ticks out with the rule against %.1f without (a flatter wind-up dips less)" % [pc[0], pc[1], float(ys[0]), float(ys[1])])
+		elif String(pc[2]) == "px":
 			_expect(float(ys[0]) < float(ys[1]) - 0.5, "medium wind: %s (%s) travels %.1f with the rule against %.1f without (a half step)" % [pc[0], pc[1], float(ys[0]), float(ys[1])])
 		elif String(pc[1]) == "w4":
 			_expect(float(ys[0]) <= float(ys[1]) + 0.01, "medium wind: %s (%s) lifts its foot to %.1f with the rule against %.1f without (never higher)" % [pc[0], pc[1], float(ys[0]), float(ys[1])])
@@ -5196,6 +5613,7 @@ func _test_medium_wind() -> void:
 	RenderAnim.press_styles = styles_was
 	S.dirS.ex = null
 	print("medium wind: %d mediums on a rule, %d held-only; %s" % [mw.sets.size(), mw.held_only.size(), "; ".join(seen)])
+	_standing = false
 
 
 func _test_press_styles() -> void:
@@ -5276,7 +5694,7 @@ func _hand_scene(S: SimState, who: String, piece: String, tip: String, heavy: bo
 	f0.x = 500.0
 	f1.x = 558.0
 	for f in [f0, f1]:
-		f.y = 0.0
+		f.y = _stage_y(S, f.x)
 		f.vx = 0.0
 		f.vy = 0.0
 		f.state = "free"
@@ -5357,7 +5775,7 @@ func _zip_scene(S: SimState, who: String, reading: String, off: bool, extra: Dic
 	for f in [f0, f1]:
 		f.vx = 0.0
 		f.vy = 0.0
-		f.y = 0.0
+		f.y = _stage_y(S, f.x)
 		f.state = "free"
 	f1.x = 500.0
 	var row: Dictionary = AnimData.zip.readings[reading]
@@ -5483,7 +5901,7 @@ func _beat_scene(S: SimState, who: String, ops: Array) -> Dictionary:
 	f0.x = 500.0
 	f1.x = 560.0
 	for f in [f0, f1]:
-		f.y = 0.0
+		f.y = _stage_y(S, f.x)
 		f.vx = 0.0
 		f.vy = 0.0
 		f.state = "free"
@@ -5563,7 +5981,7 @@ func _tech_poses(S: SimState, who: String, mode: String) -> Array:
 	f1.id = "RIVAL" if who == "protagonist" else "PROTAGONIST"
 	RenderAnim._fighters.clear()
 	for f in [f0, f1]:
-		f.y = 0.0
+		f.y = _stage_y(S, f.x)
 		f.vx = 0.0
 		f.vy = 0.0
 		f.state = "free"
@@ -5691,7 +6109,7 @@ func _gesture_run(S: SimState, who: String, intent: String, state: String, ticks
 	RenderAnim._fighters.clear()
 	S.dirS.ex = null
 	for f in [f0, f1]:
-		f.y = 0.0
+		f.y = _stage_y(S, f.x)
 		f.vx = 0.0
 		f.vy = 0.0
 		f.state = state
@@ -6189,7 +6607,7 @@ func _test_hits() -> void:
 ## ground under each foot (the pose's own ankle height, 2.5 u), without they float or sink. The fighter is a stub (position and
 ## state only) on a real terrain, so the check does not depend on where an AI match happens to fight.
 func _slope_run(on: bool, S: SimState, X: float) -> Dictionary:
-	var f := {"x": X, "y": WorldTerrain.groundY(S, X), "z": 0.0, "state": "free", "slide": 0.0, "vx": 0.0, "vy": 0.0}
+	var f := {"x": X, "y": WorldWater.floorAt(S, X), "z": 0.0, "state": "free", "slide": 0.0, "vx": 0.0, "vy": 0.0}
 	var af := AnimFighter.new(0)
 	af.vface = 1.0
 	var base: AnimPose = AnimData.pose("stance.aggressive")
@@ -6203,12 +6621,12 @@ func _slope_run(on: bool, S: SimState, X: float) -> Dictionary:
 	var err := 0.0
 	var n := 0
 	var worst := 0.0
-	var g0: float = WorldTerrain.groundY(S, X)
+	var g0: float = WorldWater.floorAt(S, X)
 	for k in range(-20, 40):
 		# stand at a series of places across the crater wall
 		var x: float = X + float(k) * 10.0
 		f.x = x
-		f.y = WorldTerrain.groundY(S, x)
+		f.y = WorldWater.floorAt(S, x)
 		for i in range(AnimRig.N):
 			af.q[i] = base.q[i]
 		af.hips = base.hips
@@ -6224,7 +6642,7 @@ func _slope_run(on: bool, S: SimState, X: float) -> Dictionary:
 		for nm in ["foot_l", "foot_r"]:
 			var gpf: Vector3 = gp[AnimRig.index[nm]]
 			var fx: float = x + gpf.x
-			var gd: float = WorldTerrain.groundY(S, fx) - WorldTerrain.groundY(S, x)
+			var gd: float = WorldWater.floorAt(S, fx) - WorldWater.floorAt(S, x)
 			if absf(gd) > 3.0:
 				var e: float = absf(gpf.y - gd - 2.5)
 				err += e
@@ -6244,8 +6662,8 @@ func _test_slope() -> void:
 	var X: float = -1.0
 	var xs: float = 0.0
 	while xs < 100000.0:
-		var g: float = WorldTerrain.groundY(S, xs)
-		if g > 40.0 and absf(WorldTerrain.groundY(S, xs + 120.0) - g) < 1.0 and absf(WorldTerrain.groundY(S, xs - 120.0) - g) < 1.0:
+		var g: float = WorldWater.floorAt(S, xs)
+		if g > 40.0 and absf(WorldWater.floorAt(S, xs + 120.0) - g) < 1.0 and absf(WorldWater.floorAt(S, xs - 120.0) - g) < 1.0:
 			X = xs
 			break
 		xs += 100.0
@@ -6433,7 +6851,7 @@ func _tq_nearest(af: AnimFighter, ids: Array) -> String:
 
 
 func _stub(S: SimState, state: String, st: float, id: String) -> Dictionary:
-	return {"state": state, "stateT": st, "slide": 0.0, "stance": 0, "vx": 0.0, "vy": 0.0, "ki": 50.0, "x": S.fighters[0].x, "y": WorldTerrain.groundY(S, S.fighters[0].x), "id": id, "tier": 1.0, "beamCharge": null}
+	return {"state": state, "stateT": st, "slide": 0.0, "stance": 0, "vx": 0.0, "vy": 0.0, "ki": 50.0, "x": S.fighters[0].x, "y": WorldWater.floorAt(S, S.fighters[0].x), "id": id, "tier": 1.0, "beamCharge": null}
 
 
 func _test_win_ko() -> void:
@@ -6871,16 +7289,20 @@ func _run() -> void:
 	_test_shake()
 	_test_incremental_bake()
 	_test_pose_lookup()
+	_test_bake_order()
 	_test_pair_ready()
 	_test_tick_fast()
 	_test_pulled()
 	_test_lead_in()
+	_test_follow_through()
+	_test_solve_carry()
 	_test_bends()
 	_test_styles()
 	_test_medium_wind()
 	_test_energy_reach()
 	_test_free_arm()
 	_test_fix30()
+	_test_plan_limb_same()
 	_test_burst_set()
 	_test_cells()
 	_test_strength_map()
@@ -6898,6 +7320,8 @@ func _run() -> void:
 	_test_gestures()
 	_test_joints()
 	_test_pieces23()
+	_test_stick_class()
+	_test_beam_aim()
 	_test_held()
 	_test_water_stance()   # last: it runs a match with the floor switched on, and what that leaves in the sim's statics is not undone
 	RenderAnim.enabled = true
@@ -6917,6 +7341,327 @@ func _run() -> void:
 			print("FAIL  " + f)
 		print("\nanim check FAILED (%d)" % fails.size())
 	quit(0 if fails.is_empty() else 1)
+
+
+## The right stick's class (docs/animation/stick-class.md): nine pieces a fighter in `protag13` and `rival10` (a quick and a charged blow for up, down, toward and away, and an air spike), each findable by the beat's
+## `piece` (`named`: in no pick list, so no other blow's look changes) and drawn through the real solve. A charged piece's chamber is the charge stance of its direction (the held layer draws it while the stick is
+## out), so the four chambers of a fighter have to read apart without a marker; Legal's lines hold (zip-screen.md): a dropping blow is lowered at once and never held, a palm rise stays an open hand with the feet down.
+const STICK_CLASS := {
+	"protagonist": {"pre": "pz.", "quick": ["flick_rise", "scythe_sweep", "heel_thrust", "wheel_blade"], "charged": ["lifting_heave", "plunge_blade", "drive_palm", "turning_edge"], "air": "spike_heel", "drops": ["plunge_blade", "spike_heel"], "palm_rises": ["flick_rise", "lifting_heave"], "held_open": ["lifting_heave", "drive_palm"]},
+	"antihero": {"pre": "rz.", "quick": ["lift_fist", "skid_kick", "short_ram", "swing_plate"], "charged": ["knee_launch", "hammer_drop", "plate_ram", "swing_elbow"], "air": "spike_knee", "drops": ["hammer_drop", "spike_knee"], "palm_rises": [], "held_open": []},
+}
+const STICK_WAVE := {"protagonist": "protag13", "antihero": "rival10"}
+
+
+func _stick_chamber_vec(sk: Dictionary) -> Array:
+	var hr: Array = sk.get("hand_r", [0, 0, 0])
+	var hl: Array = sk.get("hand_l", [0, 0, 0])
+	var hp: Array = sk.get("hips", [0, 0, 0])
+	var sp: Dictionary = sk.get("spine", {})
+	var fr: Array = sk.get("foot_r", [0, 0, 0])
+	var fl: Array = sk.get("foot_l", [0, 0, 0])
+	return [float(hp[1]) * 1.5, float(hr[0]) * 0.6, float(hr[1]) * 0.6, float(hl[0]) * 0.6, float(sp.get("twist", 0.0)) * 0.5, float(sk.get("hip_twist", 0.0)) * 0.5, float(sk.get("lean", 0.0)) * 0.6, absf(float(fl[0]) - float(fr[0])) * 0.5]
+
+
+func _test_stick_class() -> void:
+	AnimData.load_every_wave()
+	var unresolved: Array = []
+	var in_picks: Array = []
+	var count: int = 0
+	var bad_data: Array = []
+	var apart: Array = []
+	var extremes: Array = []
+	var palms: Array = []
+	var held_up: Array = []
+	var open_hands: Array = []
+	var head_hits: Array = []
+	var back_wide: Array = []
+	var held_hands: Array = []
+	for who in STICK_CLASS:
+		var sc: Dictionary = STICK_CLASS[who]
+		var pre: String = sc.pre
+		var key: String = String(AnimData.ensure_fighter("PROTAGONIST" if who == "protagonist" else "RIVAL"))
+		var names: Array = []
+		names.append_array(sc.quick)
+		names.append_array(sc.charged)
+		names.append(sc.air)
+		for nm in names:
+			count += 1
+			if AnimData.resolve_strike(key, "strike." + String(nm)) != pre + String(nm):
+				unresolved.append("%s %s" % [who, nm])
+			if AnimData.pair_lists[key].light.has(pre + String(nm)) or AnimData.pair_lists[key].heavy.has(pre + String(nm)):
+				in_picks.append("%s %s" % [who, nm])
+		# the class's timing on the manifest rows (rulings section 2): a quick blow and the spike have the 10-tick wind-up (a light), a charged release is the 4-tick blow out of the held chamber (a heavy)
+		var man: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/anim/waves/%s.manifest.json" % STICK_WAVE[who]))
+		var rows: Dictionary = {}
+		for r in man.get("strikes", []):
+			rows[String(r.id)] = r
+		for nm in names:
+			var r: Dictionary = rows.get(pre + String(nm), {})
+			if String(r.get("target", "")) == "head":
+				head_hits.append("%s %s" % [who, nm])   # Legal RL-218: a head-target blow lands on the torso or on a downed foe's ground, so none of the class aims at the head
+			var charged: bool = sc.charged.has(nm)
+			if r.is_empty() or not bool(r.get("named", false)) or int(r.ticks.load) != (4 if charged else 10) or String(r.weight) != ("heavy" if charged else "light"):
+				bad_data.append("%s %s" % [who, nm])
+		# the four charge stances read apart: no two are alike, and each direction has its own extreme (up the lowest hips, down the highest hand, away the widest wind of the spine)
+		var vecs: Array = []
+		var raws: Array = []
+		for nm in sc.charged:
+			var sk: Dictionary = AnimData.raw.get(pre + String(nm) + ".chamber", {})
+			raws.append(sk)
+			vecs.append(_stick_chamber_vec(sk))
+		var minpair: float = 1.0e9
+		for i in range(4):
+			for j in range(i + 1, 4):
+				var d2: float = 0.0
+				for c in range(vecs[i].size()):
+					d2 += pow(float(vecs[i][c]) - float(vecs[j][c]), 2.0)
+				minpair = minf(minpair, sqrt(d2))
+		if minpair < 16.0:
+			apart.append("%s: the two nearest charge stances are %.1f apart" % [who, minpair])
+		var low_i: int = 0
+		var hi_i: int = 0
+		var tw_i: int = 0
+		for i in range(1, 4):
+			if float(raws[i].get("hips", [0, 0, 0])[1]) < float(raws[low_i].get("hips", [0, 0, 0])[1]):
+				low_i = i
+			if float(raws[i].get("hand_r", [0, 0, 0])[1]) > float(raws[hi_i].get("hand_r", [0, 0, 0])[1]):
+				hi_i = i
+			if absf(float(raws[i].get("spine", {}).get("twist", 0.0))) > absf(float(raws[tw_i].get("spine", {}).get("twist", 0.0))):
+				tw_i = i
+		if low_i != 0 or hi_i != 1 or tw_i != 3:
+			extremes.append("%s: lowest hips %d, highest hand %d, widest spine %d (want 0, 1, 3)" % [who, low_i, hi_i, tw_i])
+		# a charged chamber is a held pose (a charge can be held for 68 ticks): no hand above 76, an arm cocked and never straight up (Legal zip-screen section 4); the held palms are open hands with the feet down
+		for nm in sc.charged:
+			var ck: Dictionary = AnimData.raw.get(pre + String(nm) + ".chamber", {})
+			for hk in ["hand_r", "hand_l"]:
+				if float(ck.get(hk, [0, 0, 0])[1]) > 76.0:
+					held_up.append("%s%s.chamber: %s at %.0f" % [pre, nm, hk, float(ck[hk][1])])
+			if sc.held_open.has(nm):
+				var hh: Dictionary = ck.get("hands", {})
+				if String(hh.get("r", "open")) != "open" or String(hh.get("l", "open")) != "open" or float(ck.get("foot_r", [0, 0, 0])[1]) > 5.0 or float(ck.get("foot_l", [0, 0, 0])[1]) > 5.0:
+					held_hands.append("%s%s.chamber" % [pre, nm])
+		# Legal RL-218: the Anti-hero's hands are closed fists in every pose of his wave and of his beam poses (no open hand to read as a palm); the behind-him cast keeps both hands under 32 out to the side (h02)
+		if who == "antihero":
+			for pid in AnimData.raw:
+				if String(pid).begins_with("rz.") or (String(pid).begins_with("bn.hold.") and String(pid).ends_with("_antihero")):
+					var hs2: Dictionary = AnimData.raw[pid].get("hands", {})
+					if String(hs2.get("r", "open")) == "open" or String(hs2.get("l", "open")) == "open":
+						open_hands.append(String(pid))
+		var bk: Dictionary = AnimData.raw.get("bn.hold.fire_back_" + who, {})
+		if bk.is_empty() or absf(float(bk.get("hand_r", [0, 0, 99])[2])) >= 32.0 or absf(float(bk.get("hand_l", [0, 0, 99])[2])) >= 32.0:
+			back_wide.append("bn.hold.fire_back_" + String(who))
+		# a palm rise stays an open hand with both feet down in every key
+		for nm in sc.palm_rises:
+			for role in ["chamber", "contact", "follow"]:
+				var pk: Dictionary = AnimData.raw.get(pre + String(nm) + "." + role, {})
+				var hs: Dictionary = pk.get("hands", {})
+				var fr: Array = pk.get("foot_r", [0, 0, 0])
+				var fl: Array = pk.get("foot_l", [0, 0, 0])
+				if pk.is_empty() or String(hs.get("r", "open")) != "open" or String(hs.get("l", "open")) != "open" or float(fr[1]) > 5.0 or float(fl[1]) > 5.0:
+					palms.append("%s.%s.%s" % [pre, nm, role])
+	_expect(count == 18 and unresolved.is_empty(), "stick class: all 18 pieces resolve to their own key sets (%d checked; not: %s)" % [count, str(unresolved.slice(0, 4))])
+	_expect(in_picks.is_empty(), "stick class: none is in a fighter's pick list, so no other blow's look changes (%s)" % str(in_picks.slice(0, 4)))
+	_expect(bad_data.is_empty(), "stick class: each manifest row is named, a quick blow and the spike light with the 10-tick wind-up, a charged one heavy with the 4-tick release (not: %s)" % str(bad_data.slice(0, 4)))
+	_expect(apart.is_empty() and extremes.is_empty(), "stick class: the four charge stances of a fighter read apart without a marker (%s %s)" % [str(apart), str(extremes)])
+	_expect(open_hands.is_empty() and head_hits.is_empty() and back_wide.is_empty(), "stick class: Legal RL-218: the Anti-hero has no open hand in his wave or beam poses (%s), no piece aims at the head (%s), the behind-him cast keeps both hands under 32 out to the side (%s)" % [str(open_hands.slice(0, 3)), str(head_hits), str(back_wide)])
+	_expect(held_up.is_empty(), "stick class: no charge stance has a hand above 76, an arm is cocked and never held straight up (not: %s)" % str(held_up.slice(0, 3)))
+	_expect(held_hands.is_empty(), "stick class: the held palms of lifting_heave and drive_palm are open hands with the feet down (not: %s)" % str(held_hands.slice(0, 3)))
+	_expect(palms.is_empty(), "stick class: the palm rises are open hands with both feet down in every key (not: %s)" % str(palms.slice(0, 3)))
+	# through the real solve: one contact each, no NaN, nothing past a limit on screen; a dropping blow lowers at once (a hand at 76 or lower six ticks after the contact, 80 after)
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var press_was: bool = RenderAnim.press_styles
+	var ground_was: bool = RenderAnim.ground_feet
+	RenderAnim.press_styles = true
+	RenderAnim.ground_feet = false
+	_tier_damage = true
+	var bad_run: Array = []
+	var held: Array = []
+	var worst_hand: float = 0.0
+	for who in STICK_CLASS:
+		var sc: Dictionary = STICK_CLASS[who]
+		var names2: Array = []
+		names2.append_array(sc.quick)
+		names2.append_array(sc.charged)
+		names2.append(sc.air)
+		for nm in names2:
+			var r: Dictionary = _tier_scene(S, who, "speed", [nm], [30], {}, "heavy" if sc.charged.has(nm) else "light")
+			if int(r.frames) != 1 or int(r.nan) != 0 or int(r.screen) != 0:
+				bad_run.append("%s %s: %d of 1 contacts, %d NaN, %d past a limit on screen" % [who, nm, int(r.frames), int(r.nan), int(r.screen)])
+			if sc.drops.has(nm) and not String(nm).begins_with("spike"):
+				for tr in r.get("trace", []):
+					if int(tr.dt) >= 6:
+						for hk in ["abs_hand_r", "abs_hand_l"]:
+							var hy: float = float(tr[hk])
+							worst_hand = maxf(worst_hand, hy)
+							if hy > (76.0 if int(tr.dt) == 6 else 80.0):
+								held.append("%s %s: a hand is at %.0f %d ticks after the contact" % [who, nm, hy, int(tr.dt)])
+	RenderAnim.press_styles = press_was
+	RenderAnim.ground_feet = ground_was
+	S.dirS.ex = null
+	# the stances still read apart after a long hold: a held medium (the stick's blow is one) sinks and winds toward one shared body from tick 10 (press_styles `hold`), and a stick piece takes only its
+	# `hold_w` of that coil, so the four directions keep their own bodies for the 68 ticks a charge can last
+	var coil: Dictionary = AnimData.press.get("styles", {}).get("medium", {}).get("hold", {})
+	var held_far: Array = []
+	var far_note: Array = []
+	for who in STICK_CLASS:
+		var sc3: Dictionary = STICK_CLASS[who]
+		S.fighters[0].id = "PROTAGONIST" if who == "protagonist" else "RIVAL"
+		RenderAnim._fighters.clear()
+		AnimData.ensure_fighter(String(S.fighters[0].id))
+		var afh: AnimFighter = RenderAnim.fighter(S, S.fighters[0])
+		var before: Array = []
+		var after: Array = []
+		var shared: Array = []
+		for nm in sc3.charged:
+			var kid: String = String(sc3.pre) + String(nm)
+			for variant in [0, 1, 2]:
+				afh._set_pose(AnimData.pose(kid + ".chamber"))
+				if variant == 1:
+					afh._hold_coil(coil, 60.0, 200.0, -1.0, S.T, float(AnimData.keysets[kid].get("hold_w", 1.0)))
+				elif variant == 2:
+					afh._hold_coil(coil, 60.0, 200.0, -1.0, S.T, 1.0)
+				var snap: Dictionary = {"q": afh.q.duplicate(), "h": afh.hips}
+				(before if variant == 0 else (after if variant == 1 else shared)).append(snap)
+		var dmin: Array = [1.0e9, 1.0e9, 1.0e9]
+		for gi in range(3):
+			var grp: Array = [before, after, shared][gi]
+			for i in range(4):
+				for j in range(i + 1, 4):
+					var tot: float = 0.0
+					for bi in range(AnimRig.N):
+						tot += rad_to_deg((grp[i].q[bi] as Quaternion).angle_to(grp[j].q[bi]))
+					tot = tot / float(AnimRig.N) + absf((grp[i].h as Vector3).y - (grp[j].h as Vector3).y) * 0.5
+					dmin[gi] = minf(float(dmin[gi]), tot)
+		far_note.append("%s: nearest two stances %.1f at rest, %.1f after 60 ticks held (%.1f with the whole coil)" % [who, dmin[0], dmin[1], dmin[2]])
+		if float(dmin[1]) < 0.75 * float(dmin[0]):
+			held_far.append(far_note[far_note.size() - 1])
+		for nm in sc3.charged:
+			if float(AnimData.keysets[String(sc3.pre) + String(nm)].get("hold_w", 1.0)) > 0.3:
+				held_far.append("%s%s takes more than 0.3 of the hold coil" % [sc3.pre, nm])
+	_expect(held_far.is_empty(), "stick class: the four charge stances still read apart after a long hold, a piece takes only its hold_w of the held medium's coil: %s" % str(far_note))
+	_expect(bad_run.is_empty(), "stick class: every piece draws one contact through the real solve with no NaN and nothing past a limit on screen (not: %s)" % str(bad_run.slice(0, 3)))
+	_expect(held.is_empty(), "stick class: the dropping blows lower at once (76 or lower by 6 ticks, 80 after): %s" % str(held.slice(0, 3)))
+	print(far_note)
+	print("stick class: %d pieces resolve, are in no pick list, carry the class's timing; the charge stances read apart (%s); every piece draws through the solve (highest hand after a drop %.0f)" % [count, "four by four", worst_hand])
+
+
+## The right stick's beam poses (docs/animation/stick-class.md; wave beam2, data/anim/pair_live.json `roles.<fighter>.beam`): a firing pose by aim (up and down at 45 degrees, behind him) and a snap pose, mixed in by
+## `AnimFighter._beam_layer` by the beam's own line. Checked on a staged beam: each aim draws its own pose (the hand higher up, lower down, behind him), nothing is NaN or past a limit on screen, the snap-beam
+## draws its own pose, and a fighter who has none of the ids (and the switch off) casts exactly as before.
+func _beam_scene(S: SimState, id: String, ang: float, life: float, t: float) -> AnimFighter:
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	f0.id = id
+	f1.id = "RIVAL" if id == "PROTAGONIST" else "PROTAGONIST"
+	RenderAnim._fighters.clear()
+	AnimData.ensure_fighter(String(f0.id))
+	AnimData.ensure_fighter(String(f1.id))
+	f0.x = 500.0
+	f1.x = 560.0
+	for f in [f0, f1]:
+		f.y = 0.0
+		f.vx = 0.0
+		f.vy = 0.0
+		f.state = "free"
+	f0.beamCharge = null
+	S.dirS.ex = null
+	var b := SimState.Beam.new()
+	b.A = f0
+	b.ox = f0.x
+	b.oy = 50.0
+	b.ux = cos(ang) * float(f0.face)
+	b.uy = sin(ang)
+	b.len = 600.0
+	b.t = t
+	b.life = life
+	S.beams.clear()
+	S.beams.append(b)
+	var af: AnimFighter = null
+	for k in range(8):
+		S.tick = 2000 + k
+		S.T = 300.0 + float(k) / 60.0
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		b.t = t
+		af = RenderAnim.solve(S, f0)
+	return af
+
+
+func _test_beam_aim() -> void:
+	# the live game loads `shared` of pair_live.json for the pair: the wave of the beam poses has to be named there, and the ids the roles name have to be in it
+	var pl: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/anim/pair_live.json"))
+	var bp: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/anim/waves/beam2.poses.json")).get("poses", {})
+	var missing: Array = []
+	for who in ["protagonist", "antihero"]:
+		var rb: Dictionary = pl.get("roles", {}).get(who, {}).get("beam", {})
+		for k in ["fire_up", "fire_down", "fire_back", "snap"]:
+			if not bp.has(String(rb.get(k, "")).replace("bn.hold.", "bn.hold.")):
+				missing.append("%s %s" % [who, k])
+	_expect((pl.get("shared", []) as Array).has("beam2") and missing.is_empty(), "beam aim: pair_live.json loads the beam poses' wave (`shared` names beam2) and each role's four ids are in it (not: %s)" % str(missing))
+	AnimData.load_every_wave()
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var problems: Array = []
+	var hands: Dictionary = {}
+	var poses: Dictionary = {}
+	var nan: int = 0
+	var past: int = 0
+	for who in ["PROTAGONIST", "RIVAL"]:
+		for aim in [["toward", 0.0], ["up", PI / 4.0], ["down", -PI / 4.0], ["back", PI]]:
+			var af: AnimFighter = _beam_scene(S, who, float(aim[1]), 0.95, 0.2)
+			for qq in af.q:
+				if is_nan(qq.x) or is_nan(qq.y) or is_nan(qq.z) or is_nan(qq.w):
+					nan += 1
+			past += AnimJoints.violations(af.q, af._rd.shape_key).size()
+			hands[who + aim[0]] = af.socket("hand_r")
+			poses[who + aim[0]] = String(af.cast.get("pose", ""))
+		var sn: AnimFighter = _beam_scene(S, who, 0.0, 0.13, 0.03)
+		poses[who + "snap"] = String(sn.cast.get("pose", ""))
+		past += AnimJoints.violations(sn.q, sn._rd.shape_key).size()
+		var h_up: Vector3 = hands[who + "up"]
+		var h_to: Vector3 = hands[who + "toward"]
+		var h_dn: Vector3 = hands[who + "down"]
+		var h_bk: Vector3 = hands[who + "back"]
+		if not (h_up.y - h_to.y >= 12.0 and h_to.y - h_dn.y >= 12.0):
+			problems.append("%s: the casting hand is not higher up and lower down (%.0f, %.0f, %.0f)" % [who, h_up.y, h_to.y, h_dn.y])
+		if h_bk.x > -5.0:
+			problems.append("%s: the casting hand is not behind him for a beam behind (x %.0f)" % [who, h_bk.x])
+		var tail: String = "protagonist" if who == "PROTAGONIST" else "antihero"
+		if poses[who + "snap"] != "bn.hold.snap_" + tail:
+			problems.append("%s: the snap-beam draws %s" % [who, poses[who + "snap"]])
+		if poses[who + "toward"] == poses[who + "snap"]:
+			problems.append("%s: a long beam draws the snap pose" % who)
+	_expect(problems.is_empty() and nan == 0 and past == 0, "beam aim: each aim draws its own pose, the snap-beam its own, no NaN (%d) and nothing past a limit on screen (%d): %s" % [nan, past, str(problems.slice(0, 3))])
+	# a fighter with none of the ids casts as before, switch on or off, to the last bit (the training dummy has no beam role)
+	var same: int = 0
+	var diff: Array = []
+	for aim in [0.0, PI / 4.0, -PI / 4.0, PI]:
+		RenderAnim.beam_aim_poses = true
+		var a_on: AnimFighter = _beam_scene(S, "REFERENCE", float(aim), 0.95, 0.2)
+		var q_on: Array = a_on.q.duplicate()
+		var h_on: Vector3 = a_on.hips
+		RenderAnim.beam_aim_poses = false
+		var a_off: AnimFighter = _beam_scene(S, "REFERENCE", float(aim), 0.95, 0.2)
+		for i in range(AnimRig.N):
+			if q_on[i] != a_off.q[i]:
+				diff.append("aim %.2f bone %d" % [float(aim), i])
+				break
+		if h_on != a_off.hips:
+			diff.append("aim %.2f hips" % float(aim))
+		same += 1
+	RenderAnim.beam_aim_poses = true
+	S.beams.clear()
+	_expect(diff.is_empty(), "beam aim: a fighter with none of the aim poses casts exactly as before, switch on or off (%d aims; not: %s)" % [same, str(diff.slice(0, 3))])
+	print("beam aim: each aim draws its own casting pose and the snap-beam its own for both fighters; a fighter with none casts as before")
 
 
 ## The 23 pieces of protag7 and rival4 (docs/animation/pieces23.md): the sim throws them from live pools, and each now draws its own key set (`named`: findable by the beat's piece, in no pick list, so

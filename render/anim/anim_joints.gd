@@ -264,6 +264,35 @@ static func excess_at(q: Quaternion, bone: int, shape: String, fl: float) -> Vec
 	return Vector2(0.0 if minf(sa, smax) > POLE_SWING else maxf(maxf(rg.x - tw, tw - rg.y), 0.0), maxf(sa - smax, 0.0))
 
 
+## One candidate rotation of a ball joint for the limb planner (`AnimPose._plane_eval`, docs/animation/solve-cost.md): Vector3(twist excess plus swing excess, twist, strain), the numbers
+## `excess_at`, `twist_of`, `swing_of` and `_limit_of` give one by one, worked out once (the twist, the swing quaternion and the limit are shared) and with the parts that do not change between
+## candidates handed in: `rg` is `twist_range_at(bone, shape, flexion)` and `swing_scale` is `scale_of(shape, "swing")`. The same operations in the same order, so the same numbers.
+static func plan_eval(q: Quaternion, bone: int, rg: Vector2, swing_scale: float) -> Vector3:
+	var k: int = axis_of[bone]
+	var tw: float = twist_of(q, k)
+	var sw: Quaternion = q * _axis_quat(k, -tw * 0.5)
+	var sa: float = 2.0 * atan2(sqrt(sw.x * sw.x + sw.y * sw.y + sw.z * sw.z), absf(sw.w))
+	var smax: float
+	if k != 1:
+		smax = swing_max[bone] * swing_scale
+	else:
+		var vl: float = sqrt(sw.x * sw.x + sw.z * sw.z)
+		if vl < 0.000001:
+			smax = swing_max[bone] * swing_scale
+		else:
+			var tx: float = sw.z / vl   # (`swing_limit` with its arguments sx = sw.x / vl, sz = sw.z / vl)
+			var tl: float = -(sw.x / vl) * side_sign[bone]
+			var lx: float = sw_dir[bone * 4] if tx >= 0.0 else sw_dir[bone * 4 + 1]
+			var lz: float = sw_dir[bone * 4 + 2] if tl >= 0.0 else sw_dir[bone * 4 + 3]
+			var m: float = sqrt((tx / lx) * (tx / lx) + (tl / lz) * (tl / lz))
+			smax = (1.0 / m if m > 0.000001 else PI) * swing_scale
+	var ex_t: float = 0.0 if minf(sa, smax) > POLE_SWING else maxf(maxf(rg.x - tw, tw - rg.y), 0.0)
+	var ex_s: float = maxf(sa - smax, 0.0)
+	var strain: float = pow(tw / maxf(absf(rg.y) if tw >= 0.0 else absf(rg.x), 0.05), 2.0) + pow(sa / maxf(smax, 0.05), 2.0)
+	var ex := Vector2(ex_t, ex_s)   # (a Vector2 holds single floats: the sum is of the rounded two, as `excess_at`'s was)
+	return Vector3(ex.x + ex.y, tw, strain)
+
+
 ## How far past its limits a ball joint's rotation is: [twist excess, swing excess] in radians (0 when inside). `bone` is the bone index.
 static func ball_excess(lq: Array[Quaternion], bone: int, shape: String = "") -> Vector2:
 	var q: Quaternion = lq[bone]

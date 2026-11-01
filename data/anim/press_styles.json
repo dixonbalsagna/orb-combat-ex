@@ -12,6 +12,8 @@
  "guard": {"pose": "stance.defensive", "bones": ["clavicle", "upper_arm", "forearm", "hand"], "weight": 0.9},
  "_riposte": "The brawl's riposte (docs/animation/press-styles.md section 12): the blocker's counter blow leaves from his block pose (s3.perfect_block, or s3.reversal for a reversal), which is its wind-up, as a zip's tell is. windup: the ticks the strike block cuts its own wind-up to for a riposte (light, heavy), with no squash. fade: the ticks before the blow's contact tick over which the block pose fades out. style and grade: what a riposte plays when its beat names none (a perfect timing: tech and perfect for a light, heavy for a heavy). The stagger of the rival it earns is the step 3 sequence fitted to the cue's ticks and needs no row.",
  "riposte": {"windup": {"light": 2, "heavy": 3}, "fade": 4, "style": {"light": "tech", "heavy": "heavy"}, "grade": "perfect"},
+ "_energy_back": "Energy in reach (the bolts and blasts) sits the shoulders back by deg degrees through the blow, out over `out` ticks after the contact, head level: a standing fighter's stance leans the head 11 units ahead of the pelvis (4 in the hover), and Legal e09 wants the two heads a hand's width (18 units) apart in a run of bolts (docs/animation/standing-beats.md).",
+ "energy_back": {"deg": 4.0, "root": 3.6, "out": 8},
  "squash_pose": {"default": "brace", "by_fighter": {"protagonist": "pn.hold.brace_load", "antihero": "pe.plant_coil.arrive"}, "bones": ["pelvis", "spine_1", "thigh_l", "shin_l", "foot_l", "thigh_r", "shin_r", "foot_r"]},
  "styles": {
   "_burst": "PROVISIONAL (the flurry look study): X held, a burst of low-damage blows that starts near one every 3 ticks and slows on a curve. The speed row plus gap_amp: a blow is narrower the closer it is to the last (its pose is mixed toward the guard it came from by 1 - amp, amp from 0.5 at a 4-tick gap to 1 at 11), so the burst of Combat and Legal (gaps 4 4 5 6 8 11 15) grows as it slows, so a tight burst reads as short quick jabs that grow as it slows, not as a stutter of full blows. Live matches never name this style, so the live speed row and every ordinary mash are unchanged.",
@@ -31,7 +33,7 @@
    "squash": 0.55, "lean_back": 0.10, "back": 1.4,
    "stretch": {"spine": 0.10, "rise": 1.0, "lead": 2.0, "ticks": 3, "smear_ticks": 1},
    "twist": 0.18, "twist_ticks": 6, "ghosts": 2,
-   "press_run": {"gap": 18, "deg_per_blow": 4.5, "max_deg": 22.0, "bob": 2.6},
+   "press_run": {"gap": 18, "deg_per_blow": 5.5, "max_deg": 26.0, "bob": 7.0},
    "hold": {"from": 10, "to": 28, "squash": 1.1, "lean_back": 0.28, "tremor": 0.6, "twist_back": 36, "pose": {"protagonist": "ch.y_p.load", "antihero": "ch.y_r.load"}}
   },
   "_super": "PROVISIONAL (the flurry look study): B, the top strength. A whole-body blow that reads as far bigger than a medium at a glance: a wind-up of 18 that starts on the press, the full squash, a long lean back and step back, a big stretch with a lead of 9 units and two smear frames, an 8-tick hold, two ghosts (Legal f01: at most 2 ghosts of a limb at any instant).",

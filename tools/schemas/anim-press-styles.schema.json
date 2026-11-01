@@ -206,6 +206,39 @@
         "^_": true
       }
     },
+    "energy_back": {
+      "type": "object",
+      "required": [
+        "deg",
+        "root",
+        "out"
+      ],
+      "properties": {
+        "deg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 12,
+          "description": "Degrees the shoulders sit back through a bolt or blast (energy in reach), head level."
+        },
+        "root": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 6,
+          "description": "Units the drawn root is moved back through the blow (the hand still reaches the same contact)."
+        },
+        "out": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "description": "Ticks after the contact over which it is let go."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "Optional. Energy in reach (the bolts and blasts) keeps the two heads a hand's width apart on a standing body (Legal e09): the shoulders and the root sit back through the blow (docs/animation/standing-beats.md)."
+    },
     "riposte": {
       "type": "object",
       "required": [

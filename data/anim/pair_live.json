@@ -1,6 +1,6 @@
 {
  "schema": "anim.pairlive/1",
- "bake": {"slice_us": 4000, "play_us": 1500, "over_ms": 20, "over_us": 500},
+ "bake": {"slice_us": 4000, "play_us": 700, "over_ms": 20, "over_us": 500},
  "aliases": {
   "rival": "antihero",
   "anti-hero": "antihero",
@@ -14,7 +14,7 @@
   "burst1",
   "launch1",
   "miss1",
-  "charge1", "depth1", "round10", "beam1"
+  "charge1", "depth1", "round10", "beam1", "beam2"
  ],
  "gated": [
   {
@@ -64,6 +64,10 @@
    "beam": {
     "charge": "bm.hold.charge_protagonist",
     "fire": "bm.hold.fire_protagonist",
+    "fire_up": "bn.hold.fire_up_protagonist",
+    "fire_down": "bn.hold.fire_down_protagonist",
+    "fire_back": "bn.hold.fire_back_protagonist",
+    "snap": "bn.hold.snap_protagonist",
     "bone": "hand_r"
    },
    "bolt": {
@@ -213,6 +217,10 @@
    "beam": {
     "charge": "bm.hold.charge_antihero",
     "fire": "bm.hold.fire_antihero",
+    "fire_up": "bn.hold.fire_up_antihero",
+    "fire_down": "bn.hold.fire_down_antihero",
+    "fire_back": "bn.hold.fire_back_antihero",
+    "snap": "bn.hold.snap_antihero",
     "bone": "hand_r"
    },
    "bolt": {

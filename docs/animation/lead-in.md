@@ -1,6 +1,6 @@
-# The body's lead-in: weight and arm paths on three blows of the split (Animation, 2026-10-30)
+# The body's lead-in: weight and arm paths on the split's blows (Animation, 2026-10-30)
 
-Owner: Animation. The EP's brief (Orb on the split clip: "looks pretty good, we should definitely keep refining the combos and the visual presentation"): improve how the blows of the split read on screen, in anticipation, follow-through, weight on contact and arm paths, on the two or three blows that gain most. Render only: no sim state, no contact tick and no hash moves.
+Owner: Animation. The EP's brief (Orb on the split clip: "looks pretty good, we should definitely keep refining the combos and the visual presentation"), then Orb on the three-blow clips: "give the other blows the lead-in too". Improve how the blows of the split read on screen, in anticipation, follow-through, weight on contact and arm paths. Render only: no sim state, no contact tick and no hash moves.
 
 ## What was wrong
 
@@ -12,36 +12,48 @@ Read from the split's cells (`docs/combat/pending/split/`, stacked on HEAD in sc
 | the head steps forward | -11 to 54 units |
 | the free upper arm turns | 26 to 156 degrees in the one frame, median 74 |
 
-The body teleports into the blow and the free arm swaps its elbow side in a frame. In a mashed Y that is five pops a second. The strips (`img/lead-in/`) show it: the guard arm out straight one frame and folded in front of the face the next, the whole figure a step further on.
+The body teleports into the blow and the free arm swaps its elbow side in a frame. In a mashed Y that is five pops a second.
 
 ## The fix
 
-`AnimFighter._lead_in`, data in `data/anim/lead_in.json`. For a key set listed in the file, over the last three or four ticks before the contact the hips, spine, legs and free arm ease toward the contact key by the row's weights (the tick before the contact first). **The striking limb keeps its chamber and still lands on the contact tick**, so the fist or the foot is as instant as it was and the body is already behind it. The contact tick itself is the same pose as before (0.00 units apart in the test).
+`AnimFighter._lead_in`, data in `data/anim/lead_in.json`, one row for each key set. Over the last three to five ticks before the contact the hips, spine, legs and free arm ease toward the contact key by the row's lists (the tick before the contact first). **The striking limb keeps its chamber and still lands on the contact tick**, so the fist or the foot is as instant as it was and the body is already behind it. The contact tick itself is the same pose as before (0.00 units apart in the test).
 
-Two lists a row: `weights` for hips, spine, legs and head, and `arm` for the free arm, which moves nothing else and so can lead further. The weights are tuned to the end state, not to the raw key: a heavy's contact tick ends well short of its key's hips (the contact solve and the squash release take it back), so a ram's weights are smaller than a stomp's or its pelvis overshoots and comes back.
+A row has up to four lists, each a weight from 0 to 1 per tick:
 
-**Three blows are listed**, picked for use after the split and for what they gain:
+| List | Moves | Why separate |
+| :--- | :--- | :--- |
+| `weights` | hips, spine, head | the body's own lead; tuned to the end state, not the raw key: a heavy's contact tick ends well short of its key's hips (the contact solve and the squash release take it back), so too large a weight overshoots and comes back |
+| `arm` | the free arm | it moves nothing else, so it can lead further |
+| `legs` | the legs that are not striking | a planted leg straightening early reads as a knee turned in |
+| `solve` | the contact solve's lunge and step | the blow's own reach (a rising knee, a headbutt) is 10 to 30 units that the contact tick used to take whole; it now meets the target over the same ticks (`_ci_wb` in `_exchange_layers`) |
 
-| Blow | Where it is thrown | Pelvis step on the contact tick | Free upper arm turn |
-| :--- | :--- | :--- | :--- |
-| `stomp` (`w1.stomp`, `pr.stomp`) | Y mashed, both fighters (the grind) | 12.0 to 3.7 units | 96 and 92 to 15 and 14 degrees |
-| `su_ram` (`ru.su_ram`) | the Anti-hero's B: tapped, mashed and held | 23.2 to 4.3 | 54 to 11 |
-| `su_drive` (`pu.su_drive`) | the Protagonist's B mashed | 10.4 to -1.0 (a unit of settle) | 59 to 12 |
+The pelvis may sink into the blow ahead of the contact but never rises before it (a heave's tell, a planted foot).
 
-Every other blow plays the same bytes with the lead-in on and off (the test samples three unlisted ones and requires 0). `RenderAnim.lead_in` is the switch (`--no-lead-in` is the before). To list another blow, add a row; the numbers to start from are the stomp's.
+**How each row was picked.** A probe plays every blow in its cells with five candidate scales of a three- or four-tick shape, and then with the contact solve's ramp at 0, a half and the whole of it, and keeps the one with the smallest worst one-tick pelvis step before the contact and no overshoot (`pelvis_step + 3 x overshoot`). One blow (the crescent kick) took the five-tick shape; the rest the plain three- and four-tick ones, with the scale and the solve's share picked by the probe.
+
+**Two blows are not at full strength, on purpose.** `w1.double_hammer` has no row: its hands-up peak is the blow's picture and `anim_check`'s double-hammer test holds it (the lead-in drew the hands together early). `ru.su_heel`'s last tick does not lead: any lead on it, of any size, turns the planted knee in on that frame (the nine-cell bends test allows none), so its contact tick still steps 23 units; the ticks before it do lead. Its fix is a pose, not a weight.
+
+## What it did (75 samples, the worst one-tick move over the ten ticks before to the fourteen after a contact)
+
+| Reading | Before | With the lead-in |
+| :--- | :--- | :--- |
+| pelvis step, median | 14.5 units | 8.2 |
+| pelvis step, worst | 40.7 | 23.3 (the heel, below) |
+| samples with a step over 12 units | 48 of 75 | 16 |
+| free arm's visible swing a tick (the direction of the upper arm and the forearm), median | 74 degrees | 35 |
+| samples with a free arm swing over 45 degrees | 63 | 26 |
+| ... over 70 degrees | 39 | 14 |
+
+The free arm swings that remain are the blows where the "free" arm is also doing something (`cross_arm_ram`, `body_hook`) or where the lead-in is short (`su_hook`, `su_plate`); they are the next rows to tune.
 
 ## Proof
 
-- `anim_check` `_test_lead_in` (new): the four listed cases, with and without; the contact tick within half a unit (it was 0.00); the pelvis step and the free arm's turn at most 0.6 and 0.5 of the before; three unlisted blows identical with the switch on and off. 9,923 checks pass, on clean HEAD with these files and again on HEAD with the split stacked (recipes, enders and the mash key, scratch).
-- `joint_scan --strict` (also `--bodies=4 --only=live`), `lead_scan --strict` (also `--bodies=4`), `held_scan --strict`, `guard_scan --strict`: pass on both. Determinism plain and `--intro` (2 seeds, 900 ticks): pass on both. The sim hash cannot move: nothing here is read by the sim, and `_scan_writes` holds.
-- The look gate (ADR 0010), no dissolves, fades or markers over the fighters. The edge strip and the labels in the clips are on the clips, not in the game.
-  - `img/lead-in/stomp-protagonist.gif`, `su_ram-antihero.gif`, `su_drive-protagonist.gif`: the study scene (the real solver against a dummy), the split's pools, today on the left (blue bar) and with the lead-in on the right (orange bar), one frame a tick, the contact tick lit in the strip along the bottom edge. In the ram the body now drops, rises and drives from three ticks out and the fist lands on the same tick; today he crouches and is a body-length further on in the next frame. In the stomp the guard arm folds up into the blow over three ticks instead of going from extended to folded in a frame.
-  - `img/lead-in/split-walk-before-after.gif`: Combat's walk through the presses (Y tapped, mashed, held; B tapped, mashed, held; X held, mashed) on the idle dummy, real play on the split stack, the X, Y and B pressed drawn at the bottom edge, about 16 seconds. Only three blows changed, so most of it is the same twice; sampled every third tick, the lead-in is a frame or two.
-- The collapse clip (`collapse`, seed 12345, 1500 ticks, headless Chrome through `tools/flash/capture-web.mjs`) on the split stack, with and without the lead-in: **reduced PASS (2.5 general, 3 at the area threshold 15% lower, 0 dips), the same without; normal FAIL at 3.5 on both** (the reading `water-stance.md` found on pure HEAD too; not this change's). The machine was busy; the capture guard held its 25% cap and the clips ran to their 1,500 ticks.
-- Not run by me: the render gates outside Animation's (seam, ground, city, depth and the rest), outline and cull (they need a window), `validate` and `self-test`.
+- `anim_check` `_test_lead_in`: eight blows with and without (the stomp of both fighters, the ram, the drive, a rising knee, a haymaker, the Anti-hero's knee, the Protagonist's heave knee): the contact tick within half a unit (it was 0.00), the pelvis step and the free arm's turn on the contact tick at most 0.6 and 0.5 of the before; every row a real key set with lists of one to six weights in 0 to 1 (49 rows); two blows outside the pools identical with the switch on and off. 9,945 checks pass on clean HEAD with the split stacked.
+- The other gates are in the report. The clips are in `img/lead-in/` (and the follow-through's in `img/follow-through/`).
 
 ## Not here
 
-- The other blows of the split's pools have the same one-tick pop (the table above is all 75 samples). They take the same row each; the three here are the ones the clip shows most. A blanket row for every medium and heavy is Orb's call, because it touches the approved snap's neighbours.
-- The strike arm's own turn on the contact tick (50 to 170 degrees) is the instant blow and stays.
+- Rows for blows outside the split's pools (the X cells, the zips, the launcher) are not written; the mechanism takes them.
+- The strike arm's own turn on the contact tick is the instant blow and stays.
+- Hand and foot targets and the pole hints in the poses are in today's rig's units; the lead-in's lists are weights and carry onto the finished models unchanged. The rows' *values* were tuned on today's proportions: a finished model with longer legs may want its heavy rows re-picked (the probe is the recipe).
 - `data/anim/lead_in.json` needs Tools' schema: the draft is `schema-drafts/anim-lead-in.schema.json`.

@@ -50,6 +50,8 @@ static var hit_variants: bool = true          # hit reactions with variety (data
 static var struggle_dig: bool = true         # the beam struggle's dig-in (S.game.clash.mid): the pushed-back fighter sinks, trembles and is dragged back along the ground, the winner leans in; --no-struggle-dig is the before
 static var grip_feed: bool = true            # the grip fed from the sim's grapple (DirGrapple.now and its cues) as five stages: the reach, the tie-up by grade, the pummel, the leader's set and the cave; inert with the grapple off; --no-grip-feed is the before
 static var shiver_by_weight: bool = true       # the struck body's shake follows the hit-stop's weight (2 ticks a little over half, 8 as before, 24 at 1.6) and a blow with no stop of its own (a mash's later blows) still shakes, small; --no-shiver-weight is the before
+static var carry_solve: bool = true            # a listed blow's forward carry goes through the contact solve (the hand stays on the defender while the body drives on) and its striking arm's release is rate-limited (data/anim/follow_through.json); --no-carry-solve is the before
+static var follow_through: bool = true        # a listed blow's body carries its weight on after the contact and settles (data/anim/follow_through.json), and a mashed string's next wind-up lets the last blow's contact solve go over a few ticks instead of in one; --no-follow-through is the before
 static var lead_in: bool = true               # the body's lead-in to a listed blow (data/anim/lead_in.json): hips, spine, legs and the free arm ease toward the contact key over the last ticks, the striking limb still lands on the contact tick; --no-lead-in is the before
 static var kick_retreat: bool = true          # a kick whose hips are past its target gives ground instead of swinging the thigh back through its limit (data sockets.json limbs.foot.min_fwd); false is the before
 static var mash_press: bool = true            # a run of mashed blows leans in (data styles.<style>.press_run); false is the before
@@ -99,6 +101,7 @@ static var solve_count: int = 0
 static var consume_usec: int = 0   # the bench: wall time inside consume, and how many calls
 static var consume_count: int = 0
 static var tick_fast: bool = true   # the per-tick work (the ragdoll step, the cloth and follow-through springs) worked out once a tick; --no-tick-fast is the version before (docs/animation/tick-cost.md)
+static var beam_aim_poses: bool = true       # the right stick's beam (docs/animation/stick-class.md): a firing pose by aim (up and down at 45 degrees, behind him) and a snap pose, from data/anim/pair_live.json `roles.<fighter>.beam`; a fighter with none casts as ever; --no-beam-aim-poses is the before
 
 
 static func _read_args() -> void:
@@ -110,6 +113,8 @@ static func _read_args() -> void:
 			enabled = false
 		elif a == "--noragdoll":
 			ragdoll_enabled = false
+		elif a == "--no-beam-aim-poses":
+			beam_aim_poses = false
 		elif a == "--no-last-stand-poses":
 			last_stand_poses = false
 		elif a == "--no-agency-poses":
@@ -146,6 +151,10 @@ static func _read_args() -> void:
 			press_ack = false
 		elif a == "--no-lead-in":
 			lead_in = false
+		elif a == "--no-follow-through":
+			follow_through = false
+		elif a == "--no-carry-solve":
+			carry_solve = false
 		elif a == "--no-flight-loco":
 			flight_loco = false
 		elif a == "--no-ground-loco":

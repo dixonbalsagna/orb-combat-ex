@@ -112,6 +112,12 @@
             "maximum": 12,
             "description": "Ticks the contact key is held (a heavy lands, then lets go sooner: Legal's nudge)."
           },
+          "hold_w": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "The share of the style's held coil this piece takes while the sim holds its blow back (1 is all of it, the default): a stick charge's chamber is the stance of its direction and keeps its own body (docs/animation/stick-class.md)."
+          },
           "ci_end": {
             "type": "integer",
             "minimum": 0,

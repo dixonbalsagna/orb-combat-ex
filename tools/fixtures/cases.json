@@ -281259,6 +281259,43 @@
       }
     },
     {
+      "id": "anim-pressstyles-energy-back-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/energy_back": {
+              "deg": 4,
+              "root": 3.6,
+              "out": 8
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-energy-back-root-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/energy_back": {
+              "deg": 4,
+              "root": -1,
+              "out": 8
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/energy_back/root"
+      }
+    },
+    {
       "id": "vfx-energy-valid",
       "schema": "vfx-energy.schema.json",
       "mutate": [
@@ -312090,6 +312127,259 @@
       "expect": {
         "rule": "additionalProperties",
         "pointer": "/stray"
+      }
+    },
+    {
+      "id": "anim-lead-in-solve-weight-over-one",
+      "schema": "anim-lead-in.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/lead_in.json",
+          "set": {
+            "/pieces/ph.body_hook/solve": [
+              1.5,
+              0.2
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/pieces/ph.body_hook/solve/0"
+      }
+    },
+    {
+      "id": "anim-lead-in-legs-not-array",
+      "schema": "anim-lead-in.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/lead_in.json",
+          "set": {
+            "/pieces/pu.su_ball_heave/legs": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/pieces/pu.su_ball_heave/legs"
+      }
+    },
+    {
+      "id": "anim-lead-in-piece-stray-key",
+      "schema": "anim-lead-in.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/lead_in.json",
+          "set": {
+            "/pieces/ph.body_hook/stray": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/pieces/ph.body_hook/stray"
+      }
+    },
+    {
+      "id": "anim-follow-through-live-valid",
+      "schema": "anim-follow-through.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/follow_through.json",
+          "set": {
+            "/schema": "anim.follow_through/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-follow-through-bad-schema",
+      "schema": "anim-follow-through.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/follow_through.json",
+          "set": {
+            "/schema": "anim.follow_through/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-follow-through-extra-key",
+      "schema": "anim-follow-through.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/follow_through.json",
+          "set": {
+            "/stray": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/stray"
+      }
+    },
+    {
+      "id": "anim-follow-through-handover-not-integer",
+      "schema": "anim-follow-through.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/follow_through.json",
+          "set": {
+            "/handover_ticks": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/handover_ticks"
+      }
+    },
+    {
+      "id": "anim-follow-through-release-zero",
+      "schema": "anim-follow-through.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/follow_through.json",
+          "set": {
+            "/release_deg": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/release_deg"
+      }
+    },
+    {
+      "id": "anim-follow-through-drive-too-big",
+      "schema": "anim-follow-through.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/follow_through.json",
+          "set": {
+            "/pieces/ph.body_hook/drive": 11
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/pieces/ph.body_hook/drive"
+      }
+    },
+    {
+      "id": "anim-follow-through-piece-needs-ticks",
+      "schema": "anim-follow-through.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/follow_through.json",
+          "del": [
+            "/pieces/ph.body_hook/ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/pieces/ph.body_hook"
+      }
+    },
+    {
+      "id": "anim-bake-order-live-valid",
+      "schema": "anim-bake-order.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/bake_order.json",
+          "set": {
+            "/schema": "anim.bake_order/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-bake-order-bad-schema",
+      "schema": "anim-bake-order.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/bake_order.json",
+          "set": {
+            "/schema": "anim.bake_order/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-bake-order-extra-key",
+      "schema": "anim-bake-order.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/bake_order.json",
+          "set": {
+            "/stray": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/stray"
+      }
+    },
+    {
+      "id": "anim-bake-order-first-not-array",
+      "schema": "anim-bake-order.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/bake_order.json",
+          "set": {
+            "/first": "move.dash"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/first"
+      }
+    },
+    {
+      "id": "anim-bake-order-cost-negative",
+      "schema": "anim-bake-order.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/bake_order.json",
+          "set": {
+            "/cost/ab.skid.enter": -100
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/cost/ab.skid.enter"
+      }
+    },
+    {
+      "id": "anim-bake-order-cost-not-to-100",
+      "schema": "anim-bake-order.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/bake_order.json",
+          "set": {
+            "/cost/ab.skid.enter": 150
+          }
+        }
+      ],
+      "expect": {
+        "rule": "multipleOf",
+        "pointer": "/cost/ab.skid.enter"
       }
     },
     {

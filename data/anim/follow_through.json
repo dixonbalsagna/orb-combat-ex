@@ -1,0 +1,258 @@
+{
+ "schema": "anim.follow_through/1",
+ "_about": "How a blow's body carries on after the contact (docs/animation/follow-through.md; AnimFighter._follow_carry and the handover in _exchange_layers). For each listed key set `drive` is how many units further forward the body is drawn and `dip` how many it sinks, peaking a third of the way through `ticks` and settled by the end; both are zero on the contact tick, so the landing is the key's. `handover_ticks`: when the next blow's wind-up takes the window while the last blow's contact solve is still in force, the solve lets go over this many ticks (the body's lunge and step only) instead of on one. `release_deg`: the most the striking arm's upper arm may turn in a tick after the contact of a listed blow (a row may carry its own); the solve's carry goes through the contact solve (`_pr_carry`) so the hand stays where it landed. Render only, outside the sim's data hash.",
+ "handover_ticks": 5,
+ "pieces": {
+  "ph.body_hook": {
+   "drive": 1.5,
+   "dip": 1.0,
+   "ticks": 8
+  },
+  "pr.axe_kick": {
+   "drive": 2.0,
+   "dip": 1.8,
+   "ticks": 10
+  },
+  "pr.crescent_kick": {
+   "drive": 2.0,
+   "dip": 1.8,
+   "ticks": 10
+  },
+  "pr.cross_arm_ram": {
+   "drive": 1.5,
+   "dip": 1.0,
+   "ticks": 8
+  },
+  "pr.drop_kick": {
+   "drive": 2.0,
+   "dip": 1.8,
+   "ticks": 10
+  },
+  "pr.haymaker": {
+   "drive": 1.5,
+   "dip": 1.0,
+   "ticks": 8
+  },
+  "pr.overhand": {
+   "drive": 1.5,
+   "dip": 1.0,
+   "ticks": 8
+  },
+  "pr.palm_push": {
+   "drive": 1.5,
+   "dip": 1.0,
+   "ticks": 8
+  },
+  "pr.rising_knee": {
+   "drive": 2.0,
+   "dip": 1.8,
+   "ticks": 10
+  },
+  "pr.rising_palm": {
+   "drive": 1.5,
+   "dip": 1.0,
+   "ticks": 8
+  },
+  "pr.spinning_back_kick": {
+   "drive": 2.0,
+   "dip": 1.8,
+   "ticks": 10
+  },
+  "pr.spinning_heel": {
+   "drive": 2.0,
+   "dip": 1.8,
+   "ticks": 10
+  },
+  "pr.stomp": {
+   "drive": 2.6,
+   "dip": 3.2,
+   "ticks": 10
+  },
+  "pr.uppercut": {
+   "drive": 1.5,
+   "dip": 1.0,
+   "ticks": 8
+  },
+  "pu.su_ball_heave": {
+   "drive": 3.0,
+   "dip": 3.0,
+   "ticks": 12
+  },
+  "pu.su_blade_jaw": {
+   "drive": 3.5,
+   "dip": 2.2,
+   "ticks": 12
+  },
+  "pu.su_drive": {
+   "drive": 3.5,
+   "dip": 2.2,
+   "ticks": 12
+  },
+  "pu.su_edge_step": {
+   "drive": 3.0,
+   "dip": 3.0,
+   "ticks": 12
+  },
+  "pu.su_edge_unwind": {
+   "drive": 3.0,
+   "dip": 3.0,
+   "ticks": 12
+  },
+  "pu.su_elbow_jaw": {
+   "drive": 3.5,
+   "dip": 2.2,
+   "ticks": 12
+  },
+  "pu.su_hammer_arm": {
+   "drive": 3.5,
+   "dip": 2.2,
+   "ticks": 12
+  },
+  "pu.su_knee_legs": {
+   "drive": 3.0,
+   "dip": 3.0,
+   "ticks": 12
+  },
+  "pu.su_palm_heave": {
+   "drive": 3.5,
+   "dip": 2.2,
+   "ticks": 12
+  },
+  "pu.su_turn": {
+   "drive": 3.5,
+   "dip": 2.2,
+   "ticks": 12
+  },
+  "pv.su_blade_fall": {
+   "drive": 3.5,
+   "dip": 2.2,
+   "ticks": 12
+  },
+  "pv.su_palm_arm": {
+   "drive": 3.5,
+   "dip": 2.2,
+   "ticks": 12
+  },
+  "rb.rib_shot": {
+   "drive": 1.5,
+   "dip": 1.0,
+   "ticks": 8
+  },
+  "rq.su_fist_unwind": {
+   "drive": 3.5,
+   "dip": 2.2,
+   "ticks": 12
+  },
+  "ru.su_edge_legs": {
+   "drive": 3.0,
+   "dip": 3.0,
+   "ticks": 12
+  },
+  "ru.su_elbow_heave": {
+   "drive": 3.5,
+   "dip": 2.2,
+   "ticks": 12
+  },
+  "ru.su_fist_heave": {
+   "drive": 3.5,
+   "dip": 2.2,
+   "ticks": 12
+  },
+  "ru.su_hammer": {
+   "drive": 0.0,
+   "dip": 0.0,
+   "ticks": 12
+  },
+  "ru.su_heel": {
+   "drive": 3.0,
+   "dip": 3.0,
+   "ticks": 12
+  },
+  "ru.su_hook": {
+   "drive": 3.5,
+   "dip": 2.2,
+   "ticks": 12
+  },
+  "ru.su_knee": {
+   "drive": 3.0,
+   "dip": 3.0,
+   "ticks": 12
+  },
+  "ru.su_plate": {
+   "drive": 3.5,
+   "dip": 2.2,
+   "ticks": 12
+  },
+  "ru.su_plate_arm": {
+   "drive": 3.5,
+   "dip": 2.2,
+   "ticks": 12
+  },
+  "ru.su_ram": {
+   "drive": 3.5,
+   "dip": 2.2,
+   "ticks": 12
+  },
+  "w1.cross_arm_ram": {
+   "drive": 1.5,
+   "dip": 1.0,
+   "ticks": 8
+  },
+  "w1.double_hammer": {
+   "drive": 1.5,
+   "dip": 1.0,
+   "ticks": 8
+  },
+  "w1.driving_knee": {
+   "drive": 2.0,
+   "dip": 1.8,
+   "ticks": 10
+  },
+  "w1.drop_kick": {
+   "drive": 2.0,
+   "dip": 1.8,
+   "ticks": 10
+  },
+  "w1.dropping_elbow": {
+   "drive": 1.5,
+   "dip": 1.0,
+   "ticks": 8
+  },
+  "w1.hammer": {
+   "drive": 1.5,
+   "dip": 1.0,
+   "ticks": 8
+  },
+  "w1.headbutt": {
+   "drive": 1.5,
+   "dip": 1.0,
+   "ticks": 8
+  },
+  "w1.rising_knee": {
+   "drive": 2.0,
+   "dip": 1.8,
+   "ticks": 10
+  },
+  "w1.roundhouse": {
+   "drive": 2.0,
+   "dip": 1.8,
+   "ticks": 10
+  },
+  "w1.spinning_elbow": {
+   "drive": 1.5,
+   "dip": 1.0,
+   "ticks": 8
+  },
+  "w1.stomp": {
+   "drive": 2.6,
+   "dip": 3.2,
+   "ticks": 10
+  },
+  "w1.uppercut": {
+   "drive": 1.5,
+   "dip": 1.0,
+   "ticks": 8
+  }
+ },
+ "release_deg": 30
+}

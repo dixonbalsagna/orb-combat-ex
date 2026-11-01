@@ -2,9 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "meridian/anim-lead-in",
   "title": "anim.lead_in/1",
-  "description": "data/anim/lead_in.json: the blows whose body leads the contact (docs/animation/lead-in.md; AnimFighter._lead_in). For each key set listed under `pieces`, over the last ticks before the contact the hips, spine, legs and free arm ease toward the contact key by `weights` (index 0 is the tick before the contact), while the striking limb keeps its chamber and lands on the contact tick. `arm` is the free arm's own list. A row may carry its own lists; an empty row takes the file's. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore. Cross-reference to add in tools/lib/xref-fight.js (anim-lead-in-keyset: every key under pieces is a key set of a wave's keysets file).",
+  "description": "data/anim/lead_in.json: the blows whose body leads the contact (docs/animation/lead-in.md; AnimFighter._lead_in). For each key set listed under `pieces`, over the last ticks before the contact the hips, spine, legs and free arm ease toward the contact key by `weights` (index 0 is the tick before the contact), while the striking limb keeps its chamber and lands on the contact tick. `arm` is the free arm's own list, `legs` the legs that are not striking, `solve` the contact solve's lunge and step (all default to `weights`, except `solve`, which defaults to none). A row may carry its own lists; an empty row takes the file's. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore. Cross-reference to add in tools/lib/xref-fight.js (anim-lead-in-keyset: every key under pieces is a key set of a wave's keysets file).",
   "type": "object",
-  "required": ["schema", "weights", "pieces"],
+  "required": [
+    "schema",
+    "weights",
+    "pieces"
+  ],
   "patternProperties": {
     "^_": {}
   },
@@ -34,10 +38,19 @@
           },
           "arm": {
             "$ref": "#/$defs/weights"
+          },
+          "legs": {
+            "$ref": "#/$defs/weights"
+          },
+          "solve": {
+            "$ref": "#/$defs/weights"
           }
         },
         "additionalProperties": false
       }
+    },
+    "legs": {
+      "$ref": "#/$defs/weights"
     }
   },
   "additionalProperties": false,

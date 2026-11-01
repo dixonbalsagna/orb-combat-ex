@@ -1077,6 +1077,26 @@
                 "type": "string",
                 "pattern": "^[a-z][a-z0-9_]*$",
                 "description": "The bone the beam leaves from."
+              },
+              "fire_up": {
+                "type": "string",
+                "pattern": "^[a-z]+[0-9]*.[a-z0-9_.]+$",
+                "description": "The pose of a parked wave the fighter casts in when the beam goes up at 45 degrees (the right stick's beam); with none, the usual fire pose is turned to the aim."
+              },
+              "fire_down": {
+                "type": "string",
+                "pattern": "^[a-z]+[0-9]*.[a-z0-9_.]+$",
+                "description": "The same for a beam going down at 45 degrees."
+              },
+              "fire_back": {
+                "type": "string",
+                "pattern": "^[a-z]+[0-9]*.[a-z0-9_.]+$",
+                "description": "The same for a beam going behind him."
+              },
+              "snap": {
+                "type": "string",
+                "pattern": "^[a-z]+[0-9]*.[a-z0-9_.]+$",
+                "description": "The pose of the snap-beam, the short beam (under a quarter of a second, or flagged snap); with none it casts as any beam."
               }
             },
             "additionalProperties": false,

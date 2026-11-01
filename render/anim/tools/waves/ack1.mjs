@@ -4,11 +4,11 @@
 // the rival (_r) sits back a little with his chin up. Shallower than the held blows' bodies (ch.*): this is a press being committed to, not a charge. Prefix ak. Originality: every pose has an _orig line.
 const O = { hands: { r: 'open', l: 'open' } };
 export const sequences = {
-  x_p: { dur: 6, phases: [{ id: 'set', ticks: 6, sketch: { family: 'upright', lean: 8, hips: [2, -3, 0], spine: { lean: 8, twist: -8 }, head: { pitch: 4 }, hand_r: [8, 60, 12], hand_l: [22, 58, -10], foot_r: [-8, 2.5, 10], foot_l: [14, 2.5, -8], ...O },
-    orig: 'a light being committed to: the body leans in a little, the near hand drawn back to set, the weight forward before the beat lets it go' }] },
+  x_p: { dur: 6, phases: [{ id: 'set', ticks: 6, sketch: { family: 'upright', lean: 14, hips: [5, -6, 0], spine: { lean: 10, twist: -10 }, head: { pitch: 7 }, hand_r: [5, 59, 13], hand_l: [26, 56, -10], foot_r: [-10, 2.5, 10], foot_l: [16, 2.5, -8], ...O },
+    orig: 'a light being committed to: the body sinks and leans in, the near hand drawn back to set, the weight forward before the beat lets it go (read against a standing body, whose stance is already low and leaning)' }] },
   x_r: { dur: 6, phases: [{ id: 'set', ticks: 6, sketch: { family: 'upright', lean: 3, hips: [-2, -4, 0], spine: { lean: 2, twist: -12 }, head: { pitch: -2 }, hand_r: [6, 62, 13], hand_l: [20, 60, -11], foot_r: [-10, 2.5, 10], foot_l: [14, 2.5, -8], ...O },
     orig: 'a light being committed to, his way: the weight sits back a little, the shoulder turns, the chin stays up' }] },
-  y_p: { dur: 6, phases: [{ id: 'set', ticks: 6, sketch: { family: 'upright', lean: 12, hips: [0, -7, 0], spine: { lean: 11, twist: -14 }, head: { pitch: 6 }, hand_r: [6, 60, 12], hand_l: [22, 58, -10], foot_r: [-9, 2.5, 10], foot_l: [15, 2.5, -8], ...O },
+  y_p: { dur: 6, phases: [{ id: 'set', ticks: 6, sketch: { family: 'upright', lean: 18, hips: [3, -11, 0], spine: { lean: 14, twist: -16 }, head: { pitch: 9 }, hand_r: [8, 58, 12], hand_l: [24, 58, -10], foot_r: [-9, 2.5, 10], foot_l: [15, 2.5, -8], ...O },
     orig: 'a heavier blow being committed to: forward and patient, one shoulder wound back, the weight coming onto the front foot' }] },
   y_r: { dur: 6, phases: [{ id: 'set', ticks: 6, sketch: { family: 'upright', lean: 0, hips: [-4, -8, 0], spine: { lean: 0, twist: -18 }, head: { pitch: -5 }, hand_r: [4, 62, 14], hand_l: [20, 60, -12], foot_r: [-12, 2.5, 10], foot_l: [14, 2.5, -8], ...O },
     orig: 'a heavier blow being committed to, his way: the weight sunk back, the shoulder wound round, the chin up' }] },

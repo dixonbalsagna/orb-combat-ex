@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-bake-order",
+  "title": "anim.bake_order/1",
+  "description": "data/anim/bake_order.json: the pose bake's order and what a slice may start (docs/animation/bake-pace.md; AnimData.bake_pending, _queue). first: the poses a fight asks for, the dear ones first, in the order a fight asks for them, so the queue bakes them before the rest; cost: the microseconds each pose takes to bake on the measuring PC (the minimum of three runs, to 100), so a slice does not start a pose that would take it past its budget. Only the order and the pace change: every pose is baked from the same sketch. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore. Cross-references (every pose in `first` has a cost) are checked by tools/lib/xref-*.",
+  "type": "object",
+  "required": [
+    "schema",
+    "first",
+    "cost"
+  ],
+  "patternProperties": {
+    "^_": {}
+  },
+  "properties": {
+    "schema": {
+      "const": "anim.bake_order/1"
+    },
+    "first": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Pose ids in the order the queue bakes them first."
+    },
+    "cost": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1000000,
+        "multipleOf": 100
+      },
+      "description": "Microseconds a pose takes to bake, by pose id, to 100."
+    }
+  },
+  "additionalProperties": false
+}
