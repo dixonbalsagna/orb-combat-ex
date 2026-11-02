@@ -652,7 +652,7 @@ session: `Meridian - Executive Producer`  |  model: `opus`  |  owns: `docs/decis
 - Own the rendering core: terrain from the deformable heightfield, fighters, structures and effect hooks, drawn side-on in 2.5D across the wrap seam.
 - Build the cel-shaded, low-poly look with Art: shaders, outlines, lighting and palette application.
 - Own the procedural asset pipeline that generates meshes, textures and variations from data, so a small team and modders can add content.
-- Keep level of detail and draw calls within Performance's budgets on old laptops, the browser and mobile.
+- Keep level of detail and draw calls within Performance's budgets on the machines we read (ADR 0013) and the browser.
 - Keep rendering read-only with respect to the sim: it reads state and never writes it.
 
 **Decides:** Rendering architecture; Shader and lighting approach; Procedural asset pipeline
