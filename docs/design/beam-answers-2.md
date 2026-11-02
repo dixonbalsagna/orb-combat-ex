@@ -72,7 +72,7 @@ So at equal power you need about half your stages, which is 0.77 s at maximum. A
 
 ## 3. RT
 
-**My pick: RT stays the charge. You still need one button that means "I'm powering up".** It matters more now, because power is what buys stages. So holding RT is how a base fighter becomes a 6-stage fighter. Standing there charging while the ground cracks is the genre's best moment, and I wouldn't give it up.
+**My pick: RT stays the charge. You still need one button that means "I'm powering up".** It matters more now, because power is what buys stages. So holding RT is how a base fighter becomes a 6-stage fighter. Standing there powering up while the ground cracks is a moment I wouldn't give up, though Legal holds it to two effects at once (below).
 
 | | RT is | For | Against |
 | :--- | :--- | :--- | :--- |
@@ -88,10 +88,10 @@ So at equal power you need about half your stages, which is 0.77 s at maximum. A
 
 | Fighter | The verb | Your hands | What the stage count does |
 | :--- | :--- | :--- | :--- |
-| **Grist** | **Holds** | Hold at least 0.8 s, let go to fire, at him. **The direction you hold is where the hit puts him:** toward carries him off, up throws him skyward at the end, down drives him into the ground, away drops him at your feet for a follow-up | How much force: a short plain lance at base, a column to the horizon at the top |
+| **Grist** | **Holds** | Hold at least 0.8 s, let go to fire, at him. **The direction you hold is where the hit puts him:** toward carries him off, up throws him skyward at the end, down drives him into the ground, away drops him at your feet for a follow-up | How much force: a short plain lance at base, a wide beam to the horizon at the top |
 | **Loupe** | **Flicks** | Hold RT, and each flick throws a volley as he walks forward. **The direction picks the volley.** Land most of them and he arrives with one heavy blow. If not, he's open | One volley a stage: two at base, six at the top |
 | **Orza** | **Draws** | The line fires at him, then **the stick drags it across the world,** whole and straight, at her own speed | How long the sweep lasts |
-| **Bolus** | **Stokes** | **Pump the stick** to open the slats, and let go at the top. Let it sit and it sputters back. On the last pump, toward is a column, and down comes up under him | How many slats |
+| **Bolus** | **Stokes** | **Pump the stick** to open the slats, and let go at the top. Let it sit and it sputters back. On the last pump, toward is a full surge, and down bursts up under him as a post of slag and steam | How many slats |
 
 - **Loupe's isn't a beam, so it can't start a struggle.** He fires back with RB + stick like anyone. It's your call whether that's fine for a signature, and answers work volley by volley. **It's the one to prove first:** it's the most character and the most control, and the shot kinds exist.
 - **Limits:** Loupe's volleys have to pass Legal's limits on hands and the flash rule, and six in a row needs that most. Orza's line never bends. Bolus's pumping needs a thumb's read from Controls, and if it's hard on thumbs or the claw grip, it's a plain hold with a sputter you time. Nothing opens, and nothing eats.
@@ -202,6 +202,31 @@ A quarter of his beam's energy goes into the ground. The harder his beam is than
 
 **One thing this may cost:** the top stage at 2 s and Loupe's walk are both long holds in motion, so if the check shortens them, the ladder or the walk has to change. Six volleys with the flash limit may also need wider spacing.
 
+## Legal's limits on the rest (RL-239)
+
+**None of it's a no.** Again, it's all open until built and through the look gate, the flash clips by day and night, and the held-pose check.
+
+**What bites, in order:**
+
+1. **Powering up can't be the scene you might picture.** Legal calls it the genre's best-known scene, so it's held to **two effects at once at most.** The ground cracking is one. The other can't be a scream, lightning, a flame aura, a hair change or a flash with a shouted name. The pose is upright or braced, hands low or one fist, never a crouch with clenched fists or arms wide. The sky can pale but never darken. **It has to read as our own moment, and it'll need the most thought of anything here.** That's a real creative limit for you to know about, Orb.
+2. **Grist's biggest signature can't be a column of light.** It's a wide horizontal beam with a cap on its width, and it never fills the screen white. So the top stage is wider, not overwhelming. I've changed Combat's "column" on this page. **The cap on how wide it's drawn isn't set yet,** and it may sit under the energy model's groove.
+3. **Bolus's pumping can't flash with your thumb.** His glow follows the pumps through a smoothing that can't go over three light events a second, so a frantic pump won't look frantic in light. **The sound and rumble have to carry it.** The last pump's post is slag and steam, a few body heights tall, and never light going into the sky. His slats tilt and never open like a mouth.
+4. **A released charge has to fade its glow,** over at least 6 ticks (0.1 s), and can't cut out at once. It's a tenth of a second on a hand, not the screen fades you've ruled out, but Orb should see it in a clip. A top stage can't be brighter than the rule's cap, so **a big charge reads by sound and rumble more than by light.**
+5. **UI's page has one short flash at the top stage, and Legal says the pips stay steady and never blink.** UI should drop that flash.
+6. **A 17.5 s power-up is a long held pose,** checked every tick. If the check shortens it, the charge rate goes up to fit.
+
+**What doesn't bite:**
+
+| Move | The limits |
+| :--- | :--- |
+| **Grist's hold** | One firing hand, no ball, at or below the shoulder, thin glow in his colour. The held direction only changes where the hit puts him. A drive into the ground follows the crater limits |
+| **Orza's draw** | A thin straight line, at her own sweep speed and no faster, with no help toward a town. It ends in a hot point on a body, never a cut through a person. The AI drags by a fixed rule |
+| **The stage ladder** | Brightness steps on a hand and body in the fighter's colour, each rising over at least 6 ticks. Never a full-body halo or an upward flame, never gold, white or red. Six steps count as one rise |
+| **RT + B** | B's existing flash, counted as usual |
+| **The aim lock** | Sticks only to the opposing fighter, never to a building or a place, with no reticle or line drawn. The AI's is the same |
+
+**Grist's width cap: yes** (Combat's, in `signatures-on-stick.md`). The beam's body is never wider than **170 units**, about 2.3 fighter heights, and never more than a quarter of the frame's height. It widens by stage from ×1 to ×1.75. **A dodge clears stage 6:** a dodge throws you about 785 units, over four times the whole beam's width. So up, or into depth, gets you well clear, and only a dodge along the line doesn't, as Combat's dodge note already says. A dodge's success is set by its timing, so this is about it **looking** clear. **The groove it digs stays wider than the beam's body,** as today. That's the blast, not the beam, and the energy model sets it.
+
 ## What it does to the struggle
 
 Good news: **a risky swat helps.** My worry was that a safe swat would pull skilled players away from struggles, and a miss now costs everything. Walking is itself a struggle, so it counts toward the target of 30 to 60% of signature beams. The block is still free, and it's the one to watch.
@@ -218,7 +243,7 @@ Good news: **a risky swat helps.** My worry was that a safe swat would pull skil
 | **UI** | The pips in the left panel while holding, and the hints |
 | **Narrative** | The straight-down voice line and its achievement |
 | **QA** | The stage reached, swat results by energy, walk wins, catch breaks and the struggle's share |
-| **Legal** | RL-238 read this page: limits below. Still not asked: Grist's, Orza's and Bolus's stick verbs, the stage ladder, RT and the aim lock-on. **RL-231 and RL-232 still stand** |
+| **Legal** | RL-238 read this page: limits below. RL-239 read the rest: limits below. **RL-231 and RL-232 still stand** |
 
 ## Your calls
 

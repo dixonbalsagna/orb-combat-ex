@@ -20,8 +20,8 @@ What UI does **not** do: no ring, bar, number or marker near either body. The fi
 
 - **Segments, not a smooth fill.** At 6 stages each arc is 60 degrees less a 6 degree gap. On a 24 px ring (1280x720) that is a 12 px arc, which reads; at 2 stages each is a half. The current stage fills inside its arc, so the player sees progress to the next click as well as the click.
 - **Shape, not colour.** Reached stages are solid; the current one is striped as it fills (the plate bars' existing striped look); stages not reached are an outline. The last stage carries a notch on its arc so "the top one" is a shape.
-- **A cut at each stage** (no fade, no pulse): the arc becomes solid on the tick the stage is reached. One short flash at the top stage, with the same single-frame rule as the full-charge flash (the flash analyser's count applies; nothing above 3 a second, never a large area).
-- **Reduced motion:** the current stage fills in quarters; the top stage is a steady solid ring.
+- **A cut at each stage** (no fade, no pulse, **no flash**): the arc becomes solid on the tick the stage is reached, and that is all that changes. The top stage is marked by its notch and a steady solid ring, never a flash (Legal's RL-239: the top-stage flash is out). The ring, the plate's pips and the foe's ladder are all **steady** marks: nothing on them blinks, pulses or flashes, at any speed of charge.
+- **Reduced motion:** the current stage fills in quarters; the rest is as above (the top stage is already a steady solid ring).
 - **The ladder on the plate** reuses the plate's bar row (the one that shows charge today): it swaps the smooth ki bar's tick marks for N stage bars only while a charge is going, and puts the bar back on release. No new row, so the plate does not grow.
 - **The foe's ladder** is drawn the same way on his plate, as soon as he starts to charge, so the answer is learnable from the first fight.
 
@@ -44,4 +44,4 @@ What UI does **not** do: no ring, bar, number or marker near either body. The fi
 
 ## 7. Cost and checks
 
-About a day and a half: the cue and hub fields (half a day with Encounter's cue), the ring and ladder planners (static, testable), reduced motion, the foe's ladder, the strings and tests. Checks for hud_check: the ring and ladder planners at N = 2 to 6 at the six screen sizes and both slots, every rect clear of the fighters' anchors (the chip-clearance check), the plate not growing, the flash count, and reduced motion steps. Off-switch: `charge_stages` in `features.json`, off until the cue exists.
+About a day and a half: the cue and hub fields (half a day with Encounter's cue), the ring and ladder planners (static, testable), reduced motion, the foe's ladder, the strings and tests. Checks for hud_check: the ring and ladder planners at N = 2 to 6 at the six screen sizes and both slots, every rect clear of the fighters' anchors (the chip-clearance check), the plate not growing, that no layer of the ring or ladder animates except the fill itself (and none flashes), and reduced motion steps. Off-switch: `charge_stages` in `features.json`, off until the cue exists.

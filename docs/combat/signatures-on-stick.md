@@ -1,6 +1,6 @@
 # The four signatures on the stick, and making Loupe memorable
 
-Combat, 2026-11-01, for Game Design's beam workshop and Orb's marks (`docs/ep/vision.md`, "Beam answers, Orb's marks"). **Paper only: nothing here is built, drawn or played.** Names beyond Keeper's Lance and The Barrage are descriptions, for Narrative. All of it goes to Legal when built.
+Combat, 2026-11-01, for Game Design's beam workshop and Orb's marks (`docs/ep/vision.md`, "Beam answers, Orb's marks"). **Paper only: nothing here is built, drawn or played.** Names beyond Keeper's Lance and The Barrage are descriptions, for Narrative. Legal has read the verbs for Grist, Orza and Bolus (RL-239: all fine with limits, written in below). All of it goes through the look gate, the flash clips in both modes and the held-pose lint when built.
 
 ## The idea: one input, four verbs
 
@@ -21,10 +21,10 @@ So all four are 45 ki, one cooldown, RT + stick, and there's still nothing to le
 
 | | A stage is | Base, 2 stages | Top, 6 stages |
 | :--- | :--- | :--- | :--- |
-| **Grist** | A step up in force | A short, plain lance | A column that holds its width to the horizon |
+| **Grist** | A step up in force and width | A short, plain lance | A wide horizontal beam to the horizon, at the width cap |
 | **Loupe** | **One more volley** | Two volleys | Six, and the walk in |
 | **Orza** | More of the sweep | A short cut | A line across the whole frame |
-| **Bolus** | A slat open | A sputter | A full surge |
+| **Bolus** | A louvre tilted | A sputter | A full surge |
 
 ## Each one
 
@@ -32,8 +32,31 @@ So all four are 45 ki, one cooldown, RT + stick, and there's still nothing to le
 - **The move:** his low, side-on stance, as his beam's charge. Let go, and it fires at him along the line, as ruled. It can't miss by aim.
 - **The stick's direction is where the hit puts him,** read at the release. This obeys "the stick puts him where you aimed", and it needs little new: `beam.gd` already takes a direction at the end of a hit, and `sigafter`'s `under` and `wall` twists are this kind of thing.
   - Toward: carried off along the line. Up: thrown skyward at the end. Down: pinned and driven into the ground. Away: dropped at his feet, in reach, for a follow-up.
+- **Limits (RL-239):** hold at least 0.8 s. One firing hand, no ball, the loaded limb at shoulder height or lower, never at the hip, never both hands together. The glow is thin and in his colour. **Its top stage is a wide horizontal beam: never a vertical column of light, and never a beam that fills the screen white.** A drive into the ground keeps to RL-232's crater limits.
 - **By place:** the variants by biome stand.
 - **Spectacular? Yes,** and it's the plain reference the others are read against.
+
+#### The width cap, my proposal
+
+Fighters are 75 units tall, and at fight framing a fighter is 11% of the screen, so the frame's about 680 units high. A beam's drawn body today is `w × 1.4 × his width_k`, with `w = 24 + 9 × tier`: Grist's at tier 4 is 97 units, about 14% of the frame. The sheath and the core are 1.8 and 0.6 of `w`.
+
+**The cap: the body is never wider than 170 units (about 2.3 fighter heights), and never more than a quarter of the frame's height.** That's 1.75 times his top beam today.
+
+| Stage | 1 | 2 | 3 | 4 | 5 | 6 |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| **Width, times `w`** | 1 | 1.15 | 1.3 | 1.45 | 1.6 | **1.75** |
+| Grist's body at tier 4, units | 97 | 111 | 126 | 141 | 155 | **170** |
+| Share of the frame at fight framing | 14% | 16% | 19% | 21% | 23% | **25%** |
+
+At the cap, the sheath's 217 units (faint, 12% alpha) and the core's 73. A base fighter at his own stage 2 is 61 units, under a fighter's height.
+
+- **Two halves, because the sim can't read the camera:**
+  - **In the sim and data, the world cap:** `beam.stageWidth` [1, 1.15, 1.3, 1.45, 1.6, 1.75], and `capBodyBh` 2.3. The hit width follows these.
+  - **In the render only, the frame share:** `capFrameShare` 0.25. In a tight shot the drawn layers narrow to it, and the hit doesn't change.
+- **Why a quarter:** three quarters of the frame stays sky and ground, so it reads as a beam across a picture and not as a white screen. The core's already kept off white (L* 86 at most), and its width stops at about one fighter height.
+- **It's the cap for every beam,** but only Grist's verb gets near it. Lance Sheaf's width of 1.1 (Grist's is 1.15), and the kits' Hem Sweep ×0.4 and Furnace Vent ×0.9, have no stage widening, so they stay well under.
+- **The groove is separate:** `power-scale.md`'s half widths are what it does to the ground, and they don't change. A cut wider than the beam is already how it looks.
+- **What needs checking when built:** the flash register, as a wider body weighs more area at its start and end. A dodge has to clear it at the top stage, which is QA's and Game Design's: Breakwater was already "you have to go up". And Orb's eye.
 
 ### Loupe: The Barrage
 - **The move:** RT held, then each flick throws a volley, one hand in one motion, as he walks forward. It's already the shape of his finisher, and Combat drew it in `barrage-signature.md`. **Now the player throws it.**
@@ -46,15 +69,15 @@ So all four are 45 ki, one cooldown, RT + stick, and there's still nothing to le
 ### Orza: Hem Sweep's top form
 - **The move:** her arm swing from the shoulder, and the thinnest line in the game fires at him. Then the stick drags it, the whole straight line, at her 38° a second.
 - **It's the only one that aims,** so it's the skilled one: it starts on him, and if he slips it, she can chase him, or give up on him and write across the landscape. A scored hairline stays, cooling for 60 ticks.
-- **Limits:** never bent, whipped or curved, as RL-231 and the beam screen say, and it doesn't part round a body. Aimed by the player, with no assist toward a town.
+- **Limits (RL-231, RL-239):** a thin straight line, **never bent, whipped or curved.** The whole line turns, at her own 38° a second and no faster. Where it meets a fighter it ends in a hot point on the body, and it never reads as a cut through a person. Aimed by the player, with no assist toward a town or a school, hospital or place of worship. The AI drags by a fixed rule from terrain and standing buildings, and never reads people. Start and end flashes count. QA reads a long sweep over towns in the civilian band, as any beam.
 - **Form-tied:** she only has it from revision 9, and "Final Approved" is her form signature. Her jokes before that are the joke.
 - **Spectacular? Yes,** on a landscape. Against a target in open sky it's a thin line, so it needs the world behind it.
 
 ### Bolus: Furnace Vent's top form
-- **The move:** RT, then push the stick back and forth to stoke. Each pump opens a pair of slats, a click and a rumble tick. Let go at the top for a full surge. Let it sit, and it sputters back a slat.
-- **Direction on the last pump:** toward, the column; down, it vents into the ground and comes up under him, using the `under` twist.
+- **The move:** RT, then push the stick back and forth to stoke. **Each pump tilts a pair of louvres on his chest furnace,** a click and a rumble tick. Let go at the top for a full surge. Let it sit, and it sputters back a louvre.
+- **Direction on the last pump:** toward, the beam at him. **Down: a post of ground, slag and steam,** a few body heights tall, rising over several ticks from the ground at him, using the `under` twist. It's never a vertical beam of light, and never wraps round a fighter's body.
 - **Why it's his:** he's the only one you work at, like a machine, and it's the only signature with a rhythm that goes wrong. Orb wanted "timing the release".
-- **Limits:** "a pumping hand" is a Legal bar on volleys (e06): here it's a chest grille with no hand motion, so Legal should read that it stays clear. His wobble stays in the edge and width, not brightness (fx09). Nothing opens or eats.
+- **Limits (RL-239):** the louvres tilt and never hinge apart: no mouth, no teeth, no inside shown as a throat. Nothing opens and nothing eats. **The glow follows the pump count through a smoothed envelope, never the thumb's rate:** at most three light events a second on the whole screen, whatever the thumb does, and the clip runs with a mashed pump in both modes. No gold, white or red. His wobble stays in the edge and width, not brightness (fx09).
 - **Spectacular? Probably,** but it's the riskiest to play: a stick pumped hard is hard on thumbs and pads, and Controls should say whether it fights the claw law. **If it does,** it's a plain hold with a sputter you time.
 
 ## Making Loupe memorable
