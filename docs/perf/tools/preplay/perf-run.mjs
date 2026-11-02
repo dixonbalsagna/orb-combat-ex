@@ -32,7 +32,8 @@ try {
   // the page keeps the rows; they are read in slices so no single call is huge
   await page.eval(`(() => { const fc = window.__flashcap; window.__rows = []; fc.auto = true; let last = performance.now(); const f = (t) => { const p = fc.perf || {}, pv = p.pv || {}; window.__rows.push([+(t - last).toFixed(2), fc.tick, p.tick_ms, p.fx_ms, p.view_ms, p.rcpu, p.draws, pv['pane._tiles.apply'] || 0, pv['pane.planet.update'] || 0, pv['pane.vfx_layer.update'] || 0, pv['m.audio'] || 0, pv['m.hud'] || 0, pv['pane.v.update'] || 0]); last = t; if (fc.tick < ${UNTIL}) requestAnimationFrame(f); else fc.auto = false; }; requestAnimationFrame(f); })()`, true);
   const t0 = Date.now();
-  for (;;) { await sleep(5000); const tk = await page.eval('window.__flashcap.tick').catch(() => -1); if (tk >= UNTIL || Date.now() - t0 > 1300 * 1000) break; }
+  let stuck = 0;
+  for (;;) { await sleep(5000); const tk = await page.eval('window.__flashcap.tick').catch(() => -1); if (tk >= UNTIL || Date.now() - t0 > 1300 * 1000) break; if (tk <= 0 && ++stuck > 12) throw new Error('the page never ran a tick in 60 s (it may have refused the replay: its data hash differs from this build: window.__pr = ' + (await page.eval('JSON.stringify(window.__pr || null)').catch(() => '?')) + ')'); }
   const rows = [];
   const n = await page.eval('window.__rows.length');
   for (let a = 0; a < n; a += 4000) rows.push(...JSON.parse(await page.eval(`JSON.stringify(window.__rows.slice(${a}, ${a + 4000}))`)));

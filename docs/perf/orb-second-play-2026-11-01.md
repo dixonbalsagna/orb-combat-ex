@@ -56,3 +56,40 @@ Orb's first play (the `sound-stream-mode` park, Stream) averaged 7.5 ms a frame 
 ## Tools
 
 `docs/perf/tools/preplay/`: `replay_prof.gd` (the native per-tick profile; the timed copies are scratch), `perf-run.mjs` (the whole match on the page, per-frame counters), `perf-stretch.mjs`, `layer-bisect*.mjs`; `docs/perf/tools/scratch-hooks/`: `hook-layers2.mjs`, `hook-perf.mjs` (existing), `hook-viewtimers.mjs` (the view update's timers). **The old-PC kit stays ready to rebuild** (`build-kit.mjs`, default `homework/Files/oldpc-kit-<build>`) when the EP says the next build is kept.
+
+## The next kept build, 3d997381 (key 868f521e4743, 92 parks): how much of the top three went (native sim; the page not read)
+
+Orb's second-play inputs were played on a timed copy of the kept build's own tree (`homework/Files/builds/orb-first-play-3d997381-7e2d88ff/tree`: sim, data, net), with `docs/perf/tools/scratch-hooks/hook-simtimers.py` (timers only). **It is not the same match:** the 92 parks changed the sim (data hash d5130126a76e11d0 against the recording's 7718f9da7cb66d26), the recording diverges at its second checkpoint (tick 1200) and the same inputs then play another fight, with more launches. So these are totals over a whole match, not pairs on the same ticks. Two runs, one Godot job, below-normal, **machine load 77 to 93%: INVALID as absolutes** (upper bounds); the counts of calls and the shares carry.
+
+| | as played (fc994) | with the parked patches (fc994 + field-place + grant) | new build 3d997381 |
+| :--- | ---: | ---: | ---: |
+| Ticks of 9 ms or more natively | 189 / 114 (two runs) | 27 | 66 / 58 |
+| of which the swing's building walk (`DirSwing._standing` over 3 ms) | 139 | 0 | **5 / 11** |
+| Launch ticks (`chooseLaunch` over 3 ms) and their median | 10 to 11, 6 to 9 ms | 9, 8 ms | **24, 16 ms** |
+| `predictFlight` over 3 ms | 1 | 1 | 14 (max 12.7 ms) |
+| The first swing's one-time walk (`_builtPlaces`) | 33 to 41 ms at tick 583 | 35 ms | **33 ms at tick 456** |
+| `WorldWater.step` single ticks | 15.4, 16.4 | 15 | up to 44.7 (20179) and 57.8 (20679) |
+| `beamStep` | 7 to 9 ms | 8 | 13 to 21 ms (ticks 19147, 20166 to 20168) |
+
+**The top three, by how much went:**
+1. **The swing director's building walk: gone.** 139 ticks of 8 to 16 ms (1.5 s of the match) are now 5 to 11 ticks over 3 ms; the parked patches landed in this stack. Of the three, this is the one that fully went.
+2. **The launches and the first swing: not reduced in this comparison.** The one-time first-swing walk is still 33 ms (tick 456). `chooseLaunch` is a median of 16 ms over 24 launch ticks against 6 to 9 ms over 10 in Orb's match; the new match has more launches and `predictFlight` over 3 ms 14 times against once, so this is a different fight and not a verdict that launches got slower per launch; **but nothing here shows them getting cheaper.** Owners as before: Simulation (the ceil table, `predictFlight`), Encounter (`atLaunch`, `_launchPick`, the first walk).
+3. **The page's tile-ground stretches: not measured.** The kept build's tree has no `render/`, so I cannot export it for the page; I need the full stack tree for key 868f521e4743 (Tools).
+
+New this build, native: **`WorldWater.step` up to 44.7 ms (tick 20179) and 57.8 ms (tick 20679)** and **`beamStep` 13 to 21 ms**, both worse than the 15 and 8 ms of Orb's match (a different fight; load 77 to 93%). World's and Combat's to look at on their own replay of this build.
+
+### World's `water-read` and the merge-aware `water-window-warm` on the new build's two window ticks (2026-11-02)
+
+Same inputs and timed tree as above (`orb-first-play-3d997381-7e2d88ff/tree`, which already carries field-place: `memo_check.gd` is in it), the `WorldWater.step` time at the two worst ticks of that diverged match, two rounds back to back, native, one Godot job, below-normal, **load 45 to 82%: INVALID as absolutes, the pairs carry**. `water-read.diff`'s `sim/world/waterrec.gd` applied (hash-exact: both runs end on the same final hash as without it, 644e60c266f07c82); then the warm diff's `water.gd` and `water.json` with `flowWarm.cols` 48 on top (its hashes move, as it says: final b010fd08b97f9488 in both runs).
+
+| `WorldWater.step`, ms | tick 20179 | tick 20679 | whole tick 20679 |
+| :--- | ---: | ---: | ---: |
+| the build as kept (two rounds) | 35.1 / 42.2 | 43.0 / 44.4 | 65.5 / 67.4 |
+| + `water-read` | 29.2 / 25.4 | 18.8 / 20.6 | 36.1 / 41.1 |
+| + `water-read` + warm (`cols` 48) | **3.6 / 3.6** | 22.3 / 25.1 | 37.6 / 42.5 |
+
+**`water-read` alone takes the two window ticks from 35 to 42 and 43 to 44 ms down to 25 to 29 and 19 to 21 ms. With the warm on top, the first window (20179) falls to 3.6 ms in both rounds; the second (20679) does not move (22 to 25 ms) and stays the worst water tick of the match.** What is left at 20679 is not the columns the warm reads (World's to look at; the whole tick there is still 38 to 42 ms with the launch on the same tick). Every other `WorldWater.step` tick in the match is under 6 ms in every variant.
+
+### Page side, tile ground, the new build against the earlier one (same inputs; a different match from tick 1200; load 78 to 82%: INVALID, shape only)
+
+Tools' full stack tree for the new build (key a6cd6095b310, which differs from the kept build's key 868f521e4743 only in Camera's chase-air re-cut: so **this page reading is of a build that is not the one Orb will play**), exported to a scratch web build with `hook-perf.mjs` and `hook-viewtimers.mjs`, played in auto mode through Orb's second-play inputs (17,964 ticks recorded; the earlier build 18,474 on the same method). The tile ground's median is unchanged (`RenderTileGround.apply` 6.3 ms against 5.8; p95 8.9 against 10.9; the planet update 2.6 against 2.7), but **the long stretches went: stretches of 30 ticks or more with the tile ground over 10 ms a tick are 1 (32 ticks, mean 12.7 ms, worst 55 ms) against 5 (379 ticks, a worst mean of 23.8 ms, the longest 155 ticks, worst 121 ms)** on the earlier build. Caveat that matters: the match diverged, so the new build's fight may simply not have gone through the far-separation and turning conditions that made the earlier ones; the paired check is the same recorded fight on both, which needs a recording made on the new build.
