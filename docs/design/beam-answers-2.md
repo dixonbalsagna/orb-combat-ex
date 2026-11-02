@@ -131,7 +131,7 @@ A quarter of his beam's energy goes into the ground. The harder his beam is than
   - **Let go of LB:** it parts around you. It's a block from then on.
 - **Why it isn't always best:** you're being pushed toward whatever's behind you, and you're spending energy he's already spent.
 
-**Legal cleared a 0.5 s hold, so a longer one goes back to them.** The rule still stands: one arm, shoulder height or lower, no open palm.
+**Legal now allows a catch for as long as the beam lasts, up to 3 s.** One arm, shoulder height or lower, no open palm. The sinking is the ground giving way, and never shown as injury.
 
 ## 7. Aiming
 
@@ -185,6 +185,23 @@ A quarter of his beam's energy goes into the ground. The harder his beam is than
 | **The hose** | Doubtful | **Shelved.** Not built, and no time spent on it unless you bring it back |
 | **Knock their aim** | Maybe | **Later, on a switch.** Signature charges now have armour, so only a heavy blow can do it |
 
+## Legal's limits (RL-238, `docs/legal/review-log.md`)
+
+**None of it's a no.** It all stays open until it's built and through the look gate, the flash clips in both modes and the held-pose check.
+
+| Move | The limits |
+| :--- | :--- |
+| **Walking into it** | One guard arm forward, a plated forearm or shoulder. Never an open palm, both hands or arms wide. The beam parts at the plate, with **no rim or ring of light.** A step can crack the ground under the foot, as a small local mark, with no rubble ring or wind around him. **The only light is the struggle's pulse. Nine pulses in 3 s is close to the flash limit,** so it's read on clips, and if a pulse flashes on each step, it's capped. No taunt, zoom or finisher on the loser |
+| **The ground answering** | One wall and one burst, local, with one light event and no ring of rubble around him. Aim's the player's. The AI goes by terrain and standing buildings, and never reads people. Nothing's gained for what it hits |
+| **Punch up the beam** | **One fist, shoulder or closed edge leads.** Never both hands or an open palm, and nothing above the shoulder until the last 6 ticks. Orza leads with her shoulder or one edge of her hand, never her mantle. Bolus leads with his shoulder, and nothing opens. The beam splits at the body, as a block does. No shouted line or named move. The cost to health stays |
+| **The catch** | Up to the beam's length, at most 3 s. One arm, at or below the shoulder. **Never a crouch with clenched fists.** No scream, lightning, rising flame, hair change or flash with a name. The crater's a bowl that digs, with debris thrown along the beam's line, not a rising ring. One light event when it breaks |
+| **Loupe's volleys** | **Straight narrow bolts only,** never a sphere, disc, column or spiral. From a closed fist, one hand at a time, **the hands alternating.** No ball in or above a hand. The loaded arm at shoulder height or lower, never both fists together, never a beckon. **No flash per bolt:** a steady glint at the hand. **At most three light events a second,** counting everything on screen, with clips of six in a row by day and by night |
+| **He calls it** | One brief gesture at shoulder height, never a beckon. It gets its own look when drawn |
+| **Straight down from opposite sides** | **Only a voice line and an achievement.** No planet-splitting picture, cutscene or text about ending the world. Its words celebrate no destruction and name no real place. It's earned by two humans coinciding, never by what the beams hit. Once only |
+| **Any moving hold** | Moving doesn't reset the clock on a held pose. The check reads it tick by tick, and a hold that can't stay inside the rules for its length gets shortened |
+
+**One thing this may cost:** the top stage at 2 s and Loupe's walk are both long holds in motion, so if the check shortens them, the ladder or the walk has to change. Six volleys with the flash limit may also need wider spacing.
+
 ## What it does to the struggle
 
 Good news: **a risky swat helps.** My worry was that a safe swat would pull skilled players away from struggles, and a miss now costs everything. Walking is itself a struggle, so it counts toward the target of 30 to 60% of signature beams. The block is still free, and it's the one to watch.
@@ -201,7 +218,7 @@ Good news: **a risky swat helps.** My worry was that a safe swat would pull skil
 | **UI** | The pips in the left panel while holding, and the hints |
 | **Narrative** | The straight-down voice line and its achievement |
 | **QA** | The stage reached, swat results by energy, walk wins, catch breaks and the struggle's share |
-| **Legal** | Not yet ruled: walking, the ground answering, the punch for everyone. A catch held past 0.5 s. **Their limits from RL-231 and RL-232 still stand** |
+| **Legal** | RL-238 read this page: limits below. Still not asked: Grist's, Orza's and Bolus's stick verbs, the stage ladder, RT and the aim lock-on. **RL-231 and RL-232 still stand** |
 
 ## Your calls
 
