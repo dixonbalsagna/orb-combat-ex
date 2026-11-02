@@ -1644,3 +1644,5 @@ Orb locked the canonical names from a naming session run through Gemini: **Grist
 **The overnight order, Orb (2026-11-01):** "conduct a check-in every hour. this is brand new, I just got an email, but we are no longer limited by 5-hour sessions. Your priorities haven't changed, I want full workloads actively bringing us to a playable versus on the 3d globe and then the two player 2v2 versus over LAN."
 
 **Third play, Orb (2026-11-02, build 10d8b8c, a short match):** "sound worked, I'm in a rush to get out of here so I cant play any longer". Tags: Confusing, Loved it.
+
+**Beam clash, Orb (2026-11-02, on Camera's tight-then-pull-back GIF):** "that third gif is what I had in mind, one thing I see in it is the building collapses by the fighter on the left. in my mind, the center where the beams collide would have the biggest shockwave, possibly causing a crater underneath."
