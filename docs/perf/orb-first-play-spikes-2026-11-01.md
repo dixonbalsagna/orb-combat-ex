@@ -89,3 +89,30 @@ Same replay (reproduces 630154cb09579ddc), on a scratch copy with timers around 
 | 21759 | 14.0 | `stepFighter` 11.4 | a building falling |
 
 Reading it: **two single calls own most of the worst ticks: `DirSwing.tick`'s first walk (32 ms, once a match) and `WorldWater.step` at a beam's start (19 to 27 ms, twice in this match).** The launches are `chooseLaunch` at 7 to 15 ms, still with 10 ms of `predictFlight` on two of them (cold ground reads that the ceil-table patch in `docs/architecture/pending/ceil-table/` is aimed at), plus 5 to 10 ms in `dirUpdate` that I did not time (the rest of the exchange machinery around the launch: `doLaunch`, the swing offer that follows it). The beam sweeps are gone (field-place); nothing else is above 15 ms natively. Page cost of these ticks is higher (WebAssembly, and the frame that draws them).
+
+## The far-separation draw stretch, layer by layer (the page, a scratch export of Tools' stack tree; same day)
+
+**Answer: the cost is `RenderTileGround.apply` (`pane._tiles.apply`, the tile ground's per-frame work on the main thread), not a node layer and not the GPU.** It is about half of the view update all the time (6.7 ms of 13) and **it more than doubles inside Orb's stretch (14.7 to 15.9 ms)**, which is all of the stretch's rise.
+
+Method. A scratch export of the kept stack tree for key dc01cd6e4c43 (copied to scratch, imported and exported there; the kept tree and kept page untouched) with three scratch hooks: `hook-layers2.mjs` (hide nodes by name per pane), `hook-perf.mjs` (the engine's own per-frame counters and auto mode: one tick on every animation frame, as the game runs) and timers I added around every step of `PaneWorld.render`, `main.render_view` and the per-frame view calls. Orb's replay is played on the page (the fighters are at the same places as in the native replay: tick 1590, x 76,408 and 105,426, y 1,256 and 1,839: 29,018 apart). Headless Chrome on the RTX 5070 Ti, a fresh profile, below-normal, one job at a time; machine load 15 to 55% (all runs under the 60% rule). The hooked page is slower than Orb's play (a frame is 28 to 32 ms outside the stretch against his 7 ms median), so absolute milliseconds are this harness's; the ratios are what carries over.
+
+1. **Paused, the far picture is cheap.** Paused at tick 1590 (29,018 apart), the same frame is 4 to 5 ms (the 240 Hz tick of the browser), 297 draw calls, 424,000 triangles; hiding the buildings, trees, props, crowd, cover, beams, particles, VFX, fighters, the HUD, pane 1 or pane 2 changes nothing visible in time (every cut reads 4.2 ms). **The stretch does not cost in the drawing of a still picture.**
+2. **Moving, the stretch is +6 ms a frame whatever layer is hidden.** Ticks 1562 to 1644 against the 45 ticks before and 60 after: median ms a frame before / in / after: 24.6 / 29.1 / 21.2 with nothing hidden (load 55%) and 15.6 / 21.2 / 15.1 in a repeat (load 33%). With pane 1 hidden, panes 1 and 2 hidden, every planet copy hidden, the scenery multimeshes hidden, the effects hidden, the fighters hidden or the HUD hidden the rise stays 5.5 to 8.3 ms. (Hiding pane 1 lowers the frame everywhere by about 7 ms: the second pane is always drawn; that is a standing cost, not the stretch's.)
+3. **The counters, in auto mode (one tick a frame), two runs, mean ms a frame before / in the stretch / after:**
+
+| | before | stretch | after |
+| :--- | ---: | ---: | ---: |
+| Whole animation frame | 32.4 / 27.6 | 46.2 / 41.1 | 34.2 / 29.4 |
+| **View update** (`render_view`, HUD, audio cues) | 14.3 / 12.8 | **24.3 / 21.8** | 15.1 / 13.1 |
+| Sim tick | 0.7 / 0.6 | 3.8 / 3.2 | 2.3 / 1.9 |
+| Effects and camera | 2.8 / 2.4 | 3.9 / 3.5 | 2.7 / 2.3 |
+| Render CPU (draw submission) | 0.8 / 0.6 | 0.8 / 0.7 | 0.8 / 0.6 |
+| Draw calls | 297 | 282 | 213 |
+
+4. **Inside the view update (timers on each step, two runs, ms a frame, before / stretch / after):** `RenderTileGround.apply` 6.7 / **15.9** / 8.1 and 6.7 / **14.7** / 7.8 (stretch minus its neighbours: +8.5 and +7.5 of the view update's +9.0 and +7.8). Everything else together moves under 1 ms: `planet.update` 2.3 / 2.4 / 2.2, the fighters' views 0.55 / 0.65 / 0.64, the effects layer 0.55 / 0.73 / 0.44, the HUD 0.4, the occlusion 0.12. The sim's own tick rises 3 ms in the stretch (the swing moving the frame), the effects and camera 1 ms.
+
+Why it fits what I saw earlier: the tile ground is applied to the camera's view (`_tiles.apply(host, cam_x, vp)`), it is not a node I could hide (it does not appear in the node tree my cuts walk), so the layer cuts could not remove it, and its cost follows how much of the world the view has to lay tiles over and how fast the frame moves under it. In the stretch both are at their largest: the frame turns on 82 of 83 ticks (the swing) and the camera frames two fighters 29,000 apart. The swing at tick 2480 (frame moving, fighters close) has no slow frames; this one (frame moving, fighters far apart) has 28.
+
+**Fix direction (Rendering's `render/core/tile_ground.gd`, not mine):** cap or level the tile ground's per-frame work at a wide view (fewer, coarser tiles beyond a span; re-lay at most N tiles a frame when the frame turns) and look at why it costs 6.7 ms when nothing moves (half of the view update, always). **To check a fix:** `docs/perf/tools/preplay/perf-stretch.mjs` on a scratch export of the new stack: `pane._tiles.apply` in the stretch against its neighbours, and Orb's 28 slow frames at ticks 1562 to 1644.
+
+**Limits:** the hooked harness (a frame 28 to 32 ms outside the stretch, Orb's 7 ms), so the real size of the rise on his machine is not measured (37 to 50 ms frames in his play against 7); GPU time is not read on the web (the counter says 0); load 15 to 55%, the neighbours of every comparison taken in the same run; the page's own checkpoints do not match the recording's from tick 600 although the fighters are at the same places as in the native replay at tick 1590, so the hash comparison there is another hash, not another match.
