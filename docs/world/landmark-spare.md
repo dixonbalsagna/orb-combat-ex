@@ -1,0 +1,9 @@
+# A barred landmark is out of every blast and fall (World, 2026-11-02)
+
+Legal's RL-242 (`docs/legal/review-log.md`), through the EP: "the barred landmarks are out of every blast and fall list, so the meteor, the block fall and any later area effect agree." The list is `WorldSettle.noTarget` (a data fact on the landmark in `data/biomes/settlements.json`; today only the hill chapel; a school, hospital or place of worship if one is ever added, as c09 bars them all). Nothing is visible: no shield, glow, marker or sound; the building simply takes no damage; the AI's landing choice still reads terrain and standing buildings only (RL-213 to RL-217), and the planner already kept the chapel off the aim list (RL-214).
+
+**Where:** one condition in each place an area effect walks buildings: the meteor's blast (`DirArc._blast`), area damage (`WorldStructures.damageArea`: a beam, a power-up, any blast, a thrown wreck's burst), a brunt's splash on its neighbours (`WorldBrunt._splash`), and the crater's block fall (`WorldStructures.levelIn`, already in `crater-collapse`). **Not** in these: a body that physically meets the building in flight (a brunt's own hit on the building it strikes) and a shot's direct hit: they are not blast or fall lists, the planner never aims at the chapel, and an unaimed body meeting it is a collision, not an area effect; if Legal wants that too it is one line in `WorldBrunt.hit`.
+
+Park: `docs/world/pending/landmark-spare/` (the golden moves: see its README).
+
+**RL-243 (2026-11-02): the direct hit is spared too.** A body that meets a barred landmark in flight (`WorldBrunt.checkHit`, `_checkHitSwept`, `next`, `hit`, `through`) passes it as air: no hit, bounce, flash, sound, debris or mark, no hit-stop, and its flight is unchanged. This replaces the paragraph above that left a direct hit alone. Look-gate risk (it can read as a fighter clipping through a wall, and Legal allows dropping it): the park's README.
