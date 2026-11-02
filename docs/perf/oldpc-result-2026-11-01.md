@@ -2,7 +2,7 @@
 
 For the EP. Orb ran `oldpc-kit-dafc348f` on the old PC (Intel Core i5-6600K 3.5 GHz, 4 cores, 15.9 GB, GeForce GTX 1080, Windows 10 Pro, Firefox 159, window 925 x 846 on a 2048 x 1152 screen at 125%) and brought back `homework/Files/oldpc-result-20261101-1813.json`. **Orb's ruling: it counts as a success. It is one, for this machine.** The kit ran from a double-click to one result file with no prompt, no network and nothing to install; the two-processor check and the sim speed run finished; the browser part finished.
 
-**Plainly: a GTX 1080 is not the ADR 0011 budget machine.** The budget machine is the old laptop with integrated graphics. That number is still unmeasured. This result says what a 2015 desktop CPU with a strong graphics card does; it says nothing about integrated graphics. (The kit's step 5, the board's own HD 530 on this same PC, would be the nearest cheap read; it was not done.)
+**What it is: a reading of one machine**, a 2015 desktop CPU (i5-6600K) with a GeForce GTX 1080. There is no target machine during development (ADR 0013, Orb's ruling; minimum specs are set before launch), so this is not measured against one and gives no verdict on any other machine. It says what this PC does.
 
 ## Two processors, one match
 
@@ -51,6 +51,8 @@ What this does and does not say:
 
 So **the old PC showed the plain commit: the old ground, no tile ground, no meteor trail, none of the 58 parks' looks, no black box.** Whatever looked odd to Orb on that PC cannot be a render park's doing; it is either the older render path of dafc348f or Firefox on that machine. The kit builds its game from the commit it is given: for a look-faithful test, build it from the same stack as the first play (`stack-preview.mjs` with the parks, then `build-kit.mjs --site` that folder).
 
+**The reading covers the plain build, not the first-play stack, so the tile ground's cost on that PC is unmeasured** (and so is that of the other render parks, the meteor trail and the camera swings). A second test from a kit built on the stack is the way to get it, with Firefox on the tile ground as a by-product.
+
 ## Limits
 
-One run; one pair of processors; Firefox, not Chrome or Edge; a different build from Orb's first play; the budget machine (integrated graphics) not measured.
+One run; one pair of processors; Firefox, not Chrome or Edge; a different build from Orb's first play.
