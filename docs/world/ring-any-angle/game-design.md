@@ -596,3 +596,19 @@ Fights spend 16 to 20% of their time over open ocean, the longest stay is 85 to 
 - **With no stick held: 50 to 70%, in place of 25 to 50%.** Bring `knockBack.wall.base` down to reach it.
 - **With the stick toward the wall: at least 90%,** because the stick's vote wins.
 - **The count decides:** wall slams stay 2 to 5 a match (`buildings.md` §4). If they're over, `base` comes down further. If they're under with this band, it comes back to me.
+
+## Addendum, 2026-11-02: QA's kept-build read
+
+On `docs/qa/cloud-reports/2026-11-02-kept-build.md`. First values, unplayed.
+
+**1. The swing.**
+- **Share of fight time: 8.1% is in band.** The band has been 3 to 8% since the second read, as a result and never a target. QA's 10 to 15% is my old band, which I withdrew. 8.1% is at the top, so it's one to watch, and the swing doesn't need more.
+- **Variety: drop QA's per-match rows** (no cause over half in 90% of matches, no 30° band over half in 90%). One match with mostly launch swings is a fight that launched a lot, not a fault. **Keep the batch rows:** across a batch, launch at most 50% of swings and any other cause at most 40%, and no 30° band of sizes over half. **Keep the per-match row QA already meets:** three or more causes in 90% of matches with six big swings. QA reports the batch shares.
+
+**2. The civilian band, on a whole ring.**
+- **Re-based: 12 to 30% of the people in the places the fight reached,** not of the whole planet. A whole ring has far more people than a slice, so a share of all of them falls with the planet's size, as RL-228 foresaw (4.4% on a whole ring against 26.6% on slices).
+- **QA also reports the whole-planet total, as information only.**
+- **It's still a test result, never a target** (RL-214). Nothing in the game reads it.
+- **Legal confirms the new denominator** against RL-214 and RL-228 before RL-232's maximum-tier read uses it. Until then, the slices' band stands for that read.
+
+**3. Match length: fine.** A median of 7.4 to 7.7 minutes, AI against AI, is inside "five minutes or more". **The p90 limit becomes 11:00,** the time cap, in place of 10:00. The cap ends a match there anyway, so a p90 just over 10 isn't a fault. The p10 stays at least 5:00. A player who doesn't fight back losing in about 3.4 minutes is also fine: the AI simply won.
