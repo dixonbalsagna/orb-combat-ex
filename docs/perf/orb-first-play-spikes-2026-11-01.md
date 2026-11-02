@@ -72,3 +72,20 @@ The number: **74 and 73 ticks over 8 ms become 11 and 11; over 16 ms 17 becomes 
 ## Rendering's lead: is it the two pictures of an open split? (same day; page, `nosplit` against none)
 
 `docs/perf/tools/preplay/replay-bench.mjs` on Orb's replay, ticks 1562 to 1644, Tools' capture hook at 960 x 540, real GPU, load 12 to 23% (valid), page words `planet=7&meteor=loud&tiles=1` with and without `nosplit=1`, two runs each. Median frame cost (ms) before the stretch / in it / after it: none 16.1 / 22.9 / 15.2 and 15.8 / 23.1 / 15.1; `nosplit` 16.2 / 22.8 / 15.2 and 15.1 / 21.3 / 14.3. **`nosplit` does not take the stretch under 16 ms (22.8 and 21.3 against 22.9 and 23.1: 0 to 8% lower), so the two pictures are not the cost of it.** Caveats: the page's own checkpoints differ from the recording's (first at tick 600; the page ran the same match in all four runs, but not Orb's), so tick 1562 to 1644 on the page may not be the same event as Orb's; this hook's frame cost is about 15 ms outside the stretch (a step is two frames); I could not verify that `nosplit=1` acted on the web page. The window on the page IS 45% slower than the frames around it, in all four runs.
+
+## What the ticks left over are made of (field-place and Encounter's grant applied; one run, native, load 14 to 20%)
+
+Same replay (reproduces 630154cb09579ddc), on a scratch copy with timers around the fight tick's subsystems and the director's per-tick calls, `chooseLaunch` and `predictFlight` (timers only: they write nothing and the run still reproduces the final hash). Milliseconds of the tick:
+
+| Tick | Tick total | Where it went | What it is |
+| ---: | ---: | :--- | :--- |
+| 252 | 32.1 | **`DirSwing.tick` 31.8** | the first swing offer of the match: `DirSwing._builtPlaces`' one first walk of every place against every building (Encounter's; the README of field-place already names it) |
+| 2751 | 23.6 | `chooseLaunch` 13.5 (of which `predictFlight` 0.6); about 10 more inside `dirUpdate` outside the timed calls | a launch into buildings |
+| 18753 | 20.8 | `chooseLaunch` 14.9 (**`predictFlight` 10.4**); about 5 more in `dirUpdate` | an uppercut launch |
+| 19500 | 21.6 | `chooseLaunch` 14.7 (**`predictFlight` 10.4**); about 7 more in `dirUpdate` | a launch |
+| 21732 | 11.5 | `chooseLaunch` 6.6 (`predictFlight` 1.5); about 5 more | a launch |
+| 11548 | 27.9 | **`WorldWater.step` 27.1** | a beam's first water window (World's: cold ground reads, per Simulation's note) |
+| 11570 | 19.3 | **`WorldWater.step` 18.9** | the same |
+| 21759 | 14.0 | `stepFighter` 11.4 | a building falling |
+
+Reading it: **two single calls own most of the worst ticks: `DirSwing.tick`'s first walk (32 ms, once a match) and `WorldWater.step` at a beam's start (19 to 27 ms, twice in this match).** The launches are `chooseLaunch` at 7 to 15 ms, still with 10 ms of `predictFlight` on two of them (cold ground reads that the ceil-table patch in `docs/architecture/pending/ceil-table/` is aimed at), plus 5 to 10 ms in `dirUpdate` that I did not time (the rest of the exchange machinery around the launch: `doLaunch`, the swing offer that follows it). The beam sweeps are gone (field-place); nothing else is above 15 ms natively. Page cost of these ticks is higher (WebAssembly, and the frame that draws them).
