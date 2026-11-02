@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Beam Answers Toy</title>
+<style>
+:root{--bg:#0d1226;--panel:#161d38;--ink:#e8ecf8;--dim:#9aa6cc;--you:#6fb7ff;--him:#c08bff;--ok:#7be0a4;--bad:#ff8f8f;--line:#2c3763}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,Segoe UI,sans-serif;padding:16px}
+main{max-width:980px;margin:0 auto}
+h1{font-size:22px;margin:0 0 4px}
+p{margin:4px 0 10px;color:var(--dim)}
+canvas{display:block;width:100%;height:auto;background:#101a3a;border:1px solid var(--line);border-radius:6px}
+#say{min-height:30px;font-size:18px;font-weight:600;margin:10px 0 6px}
+.row{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;margin:8px 0}
+label{display:flex;gap:8px;align-items:center;color:var(--dim)}
+output{color:var(--ink);min-width:3.2em}
+table{border-collapse:collapse;width:100%;font-size:15px;margin-top:10px}
+th,td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+th{color:var(--dim);font-weight:500}
+kbd{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:0 5px;font:13px ui-monospace,monospace}
+#tally{color:var(--dim);font-size:14px}
+</style>
+</head>
+<body>
+<main>
+<h1>Beam Answers Toy</h1>
+<p>For feeling the timing only: boxes on a line, not how it will look. He fires at you over and over. Nothing here is the game, and every number is a first value.</p>
+<canvas id="c" width="960" height="400"></canvas>
+<div id="say">Get ready.</div>
+<div class="row">
+  <label>Your power <input id="lv" type="range" min="0" max="1" step="0.05" value="0.66"><output id="lvo"></output></label>
+  <label>His power <input id="hv" type="range" min="0" max="1" step="0.05" value="0.66"><output id="hvo"></output></label>
+  <label>Timing window <input id="win" type="range" min="6" max="24" step="1" value="12"><output id="wino"></output></label>
+  <label><input id="above" type="checkbox"> He fires from above</label>
+</div>
+<div id="tally"></div>
+<div id="timing" style="color:var(--dim);font-size:14px"></div>
+<table>
+<tr><th>Try</th><th>Pad</th><th>Keyboard</th></tr>
+<tr><td><b>Swat</b>: hold, let go as it hits</td><td>Right stick up, down or away</td><td>Hold <kbd>↑</kbd> <kbd>↓</kbd> or <kbd>←</kbd></td></tr>
+<tr><td><b>Knock it back</b>, or at your top stage <b>punch up the beam</b></td><td>Right stick toward him</td><td>Hold <kbd>→</kbd></td></tr>
+<tr><td><b>Fire back</b>: any time before it hits</td><td>RB + right stick toward him</td><td><kbd>R</kbd> + <kbd>→</kbd></td></tr>
+<tr><td><b>Block</b>, then <b>catch</b> by keeping it down</td><td>LB press as it hits, keep holding</td><td><kbd>Q</kbd></td></tr>
+<tr><td>In a catch: throw it, or let go</td><td>Flick right stick, or release LB</td><td>An arrow key, or release <kbd>Q</kbd></td></tr>
+<tr><td><b>Walk into it</b>, then hit the pulse</td><td>Hold LB and push left stick toward him early. Then X on each pulse</td><td>Hold <kbd>Q</kbd> + <kbd>D</kbd> early. Then <kbd>F</kbd> on each pulse</td></tr>
+<tr><td><b>Dodge</b></td><td>LT tap</td><td><kbd>E</kbd></td></tr>
+</table>
+</main>
+<script>
+'use strict';
+const STAGE_AT=[12,28,46,66,90,120];
+const CHARGE=48, FLOOR=36, PULSE=20, DODGE_BEFORE=18, AFTER=2;
+const $=id=>document.getElementById(id);
+const cv=$('c'),g=cv.getContext('2d');
+const energy=l=>4.94*Math.pow(12.25,l);
+const stages=l=>2+Math.round(4*l);
+const W=960,GROUND=320,YOU0=170,HIM0=790;
+const keys=new Set();
+addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys.add(e.key.toLowerCase())});
+addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
+addEventListener('blur',()=>keys.clear());
+function readInput(){
+  const p=(navigator.getGamepads?[...navigator.getGamepads()]:[]).find(Boolean);
+  const b=i=>p&&p.buttons[i]&&p.buttons[i].pressed;
+  const a=i=>p&&p.axes[i]||0;
+  let rx=a(2),ry=a(3),lx=a(0);
+  if(keys.has('arrowleft'))rx=-1; if(keys.has('arrowright'))rx=1; if(keys.has('arrowup'))ry=-1; if(keys.has('arrowdown'))ry=1;
+  if(keys.has('a'))lx=-1; if(keys.has('d'))lx=1;
+  const m=Math.hypot(rx,ry);
+  let dir=null;
+  if(m>0.6){ if(Math.abs(rx)>=Math.abs(ry))dir=rx>0?'toward':'away'; else dir=ry<0?'up':'down'; }
+  return {dir,lx,lb:b(4)||keys.has('q'),rb:b(5)||keys.has('r'),lt:b(6)||keys.has('e'),x:b(2)||keys.has('f')};
+}
+let prev=readInput();
+const S={rel:[],t:0,phase:'wait',at:90,flight:FLOOR,beamX:0,hold:0,holdDir:null,lastDir:null,you:YOU0,sink:0,stuck:0,thrown:0,
+  catching:false,ki:100,walk:0,walkPos:0,pulseAt:0,struggle:0,point:0.5,pressed:false,fire:false,walkIn:false,dodged:-999,lbAt:-999,
+  trench:[],bowl:null,tally:{},fx:0,rest:0};
+function say(t,c){const e=$('say');e.textContent=t;e.style.color=c||'var(--ink)'}
+function score(k){S.tally[k]=(S.tally[k]||0)+1;$('tally').textContent='So far: '+Object.entries(S.tally).map(([a,b])=>a+' '+b).join(', ')}
+function vals(){return {me:+$('lv').value,he:+$('hv').value,win:+$('win').value,above:$('above').checked}}
+function stageOf(hold,max){let s=0;for(let i=0;i<max;i++)if(hold>=STAGE_AT[i])s=i+1;return s}
+function reset(after){S.phase='wait';S.at=S.t+(after||80);S.hold=0;S.holdDir=null;S.catching=false;S.walkIn=false;S.fire=false;S.stuck=0;S.struggle=0;S.walk=0}
+function finish(msg,col,key,rest){say(msg,col);score(key);reset(rest)}
+function arrive(v,inp){
+  const dt=S.t-S.lbAt;
+  if(S.fire){S.phase='struggle';S.point=0.5;S.pulseAt=S.t+PULSE;S.struggle=0;S.pressed=false;say('Fronts meet! Press on each pulse.');return}
+  if(S.walkIn){S.phase='walk';S.walkPos=0.1;S.pulseAt=S.t+PULSE;S.struggle=0;S.pressed=false;say('Walking! Press on each pulse.');return}
+  if(S.t-S.dodged<=DODGE_BEFORE){finish('Dodged. It carries on behind you, and he\'s stuck: your opening.','var(--ok)','dodge');return}
+  if(inp.lb&&dt<=v.win){S.phase='catch';S.catching=true;S.catchT=0;S.ki=100;S.sink=0;say('Blocked. Keep holding to catch it.','var(--ok)');return}
+  S.phase='late';S.lateAt=S.t;
+}
+function release(v,dir,hold){
+  const inWin=S.phase==='fly'&&S.flight-(S.t-S.fireT)<=v.win||S.phase==='late'&&S.t-S.lateAt<=AFTER;
+  const max=stages(v.me),st=stageOf(hold,max);
+  if(!st)return;
+  if(S.phase==='fly'||S.phase==='late'){const off=S.phase==='fly'?S.flight-(S.t-S.fireT):-(S.t-S.lateAt);S.rel.push(off);const n=S.rel.length,m=S.rel.reduce((a,b)=>a+b,0)/n,sd=Math.sqrt(S.rel.reduce((a,b)=>a+(b-m)*(b-m),0)/n);$('timing').textContent='Your let-go: last '+off+' ticks before it hit. Over '+n+' tries: average '+m.toFixed(1)+', spread '+sd.toFixed(1)+' ticks.'}
+  if(!inWin){
+    if(S.phase==='fly'||S.phase==='charge'){S.missed=true;say('Too soon. That was a charged blow into thin air.','var(--bad)')}
+    return;
+  }
+  const mine=energy(v.me)*st/max,his=energy(v.he)*stages(v.he)/stages(v.he),r=mine/his;
+  if(dir==='toward'){
+    if(st===max){finish('Punched up the beam! You took half of it, and you arrive fist first.','var(--ok)','punch');return}
+    if(r>=0.5){finish('Knocked it back along its line, and it burst halfway. He is stuck for 0.5 s.','var(--ok)','knocked back');return}
+    if(r>=0.25){finish('Glancing: it went aside, but you took 30%. You needed more charge.','#ffd27b','glancing');return}
+    hit('Not enough charge to move that ('+Math.round(r*100)+'% of his). You took all of it.');return;
+  }
+  if(r>=0.5){const w={up:'into the sky',down:v.above?'into the ground at your feet':'and the ground heaves up: it bursts on the wall',away:'over your shoulder'}[dir];
+    finish('Clean swat, '+w+'. He\'s stuck for 0.5 s.','var(--ok)','clean swat');return}
+  if(r>=0.25){finish('Glancing: it went aside, but you took 30%. You needed more charge.','#ffd27b','glancing');return}
+  hit('Not enough charge to move that ('+Math.round(r*100)+'% of his). You took all of it.');
+}
+function hit(msg){S.thrown=30;finish(msg,'var(--bad)','hit',110)}
+function step(){
+  S.t++;
+  const v=vals(),inp=readInput();
+  const lbPress=inp.lb&&!prev.lb, ltPress=inp.lt&&!prev.lt, xPress=inp.x&&!prev.x;
+  if(lbPress)S.lbAt=S.t;
+  if(ltPress)S.dodged=S.t;
+  if(S.thrown>0){S.thrown--;S.you=Math.max(40,S.you-6)}else if(S.phase==='wait'&&S.you<YOU0)S.you=Math.min(YOU0,S.you+8);
+  // the hold, in any phase but a struggle or a catch
+  if(!['catch','struggle','walk'].includes(S.phase)){
+    if(inp.dir&&!inp.rb){S.hold++;S.holdDir=inp.dir;S.lastDir=inp.dir}
+    else{
+      if(S.hold>0&&!inp.rb)release(v,S.holdDir,S.hold);
+      S.hold=0;S.holdDir=null;
+    }
+    if(inp.rb&&inp.dir==='toward'&&(S.phase==='charge'||S.phase==='fly')&&!S.fire){S.fire=true;say('Your beam leaves your hand.')}
+    if(inp.lb&&inp.lx>0.5&&(S.phase==='charge'||S.phase==='fly')&&!(S.t-S.lbAt<=v.win&&S.phase==='fly'&&S.flight-(S.t-S.fireT)<=v.win)&&!S.walkIn){S.walkIn=true;say('You lean in. Get ready for the pulse.')}
+  }
+  if(S.phase==='wait'&&S.t>=S.at){S.phase='charge';S.chargeT=S.t;S.missed=false;S.trench=[];S.bowl=null;say('His hand lights up.')}
+  else if(S.phase==='charge'&&S.t-S.chargeT>=CHARGE){S.phase='fly';S.fireT=S.t;S.flight=FLOOR;say('It\'s coming!')}
+  else if(S.phase==='fly'){if(S.t-S.fireT>=S.flight)arrive(v,inp)}
+  else if(S.phase==='late'){
+    if(S.phase==='late'&&S.t-S.lateAt>AFTER){
+      if(inp.lb){finish('Guarded. You took guard damage.','#ffd27b','guard')}
+      else hit(S.hold>0?'Too late: you never let go. You took all of it.':(S.missed?'Too soon, and then it hit you. You took all of it.':'It hit you.'));
+    }
+  }
+  else if(S.phase==='catch')stepCatch(v,inp);
+  else if(S.phase==='struggle'||S.phase==='walk')stepBeat(v,inp,xPress);
+  prev=inp;
+}
+function stepCatch(v,inp){
+  S.catchT++;
+  const ratio=energy(v.he)/energy(v.me);
+  const slide=Math.min(1050,Math.max(150,300*Math.sqrt(ratio)))/60/10;
+  const drain=Math.min(60,Math.max(20,20*Math.sqrt(ratio)))/60;
+  S.ki-=drain;
+  if(v.above){S.sink=Math.min(46,S.sink+slide*0.35);S.bowl=Math.min(150,12+S.sink*3.2)}
+  else{S.you=Math.max(40,S.you-slide);S.trench.push(S.you)}
+  if(S.ki<=0){S.sink=0;hit('You ran out of energy holding it. It broke you.');return}
+  if(!inp.lb){S.sink=0;finish('You let go, and it parted around you.','var(--ok)','block');return}
+  if(inp.dir&&!prev.dir){S.sink=0;finish('Caught and thrown, '+inp.dir+'! He\'s stuck for 0.25 s.','var(--ok)','caught and thrown');return}
+  if(S.catchT>=90){S.sink=0;finish('You held it to the end, standing in your own '+(v.above?'crater':'trench')+'. He\'s stuck for 0.5 s.','var(--ok)','held to the end',150)}
+}
+function stepBeat(v,inp,xPress){
+  const walking=S.phase==='walk';
+  const off=S.t-S.pulseAt;
+  if(xPress){
+    if(Math.abs(off)<=4||Math.abs(off-PULSE)<=4){if(!S.pressed){S.pressed=true;const d=walking?0.2:0.1;walking?S.walkPos+=d:S.point+=d;S.fx=8}}
+    else{S.pressed=true;S.stray=true;say('Off the beat.','var(--bad)')}
+  }
+  if(off>=4){
+    S.struggle++;
+    const hitsBeat=Math.random()<0.65;
+    if(hitsBeat){walking?S.walkPos-=0.1:S.point-=0.1}
+    S.pulseAt+=PULSE;S.pressed=false;
+  }
+  if(walking){
+    S.you=YOU0+(HIM0-70-YOU0)*Math.max(0,Math.min(1,S.walkPos));
+    if(S.walkPos>=1){finish('You walked it! A full send, from point blank.','var(--ok)','walk won',140)}
+    else if(S.walkPos<=0){hit('Pushed back past where you started. You took the beam.')}
+    else if(S.struggle>=9){finish('The beam ran out with you partway there. No prize.','#ffd27b','walk ran out')}
+  }else{
+    if(S.point>=1){finish('You won the struggle! He\'s overwhelmed and thrown.','var(--ok)','struggle won',140)}
+    else if(S.point<=0){hit('You lost the struggle.')}
+    else if(S.struggle>=15){finish('Time. The beams burst where they met.','#ffd27b','struggle drawn')}
+  }
+}
+function fig(x,y,col,h){g.fillStyle=col;g.fillRect(x-11,y-h,22,h);g.beginPath();g.arc(x,y-h-11,10,0,7);g.fill()}
+function draw(){
+  const v=vals();
+  g.clearRect(0,0,W,400);
+  g.fillStyle='#31412f';g.fillRect(0,GROUND,W,80);
+  if(S.trench.length){g.fillStyle='#1c2519';const a=Math.min(...S.trench);g.fillRect(a,GROUND,YOU0-a,12)}
+  if(S.bowl){g.fillStyle='#1c2519';g.beginPath();g.ellipse(YOU0,GROUND,S.bowl,S.bowl*0.3,0,0,Math.PI);g.fill()}
+  const himY=v.above?120:GROUND,meY=GROUND+S.sink,mx=S.you;
+  const hx=HIM0,hy=himY-28,tx=mx,ty=meY-30;
+  if(S.phase==='charge'){const k=(S.t-S.chargeT)/CHARGE;g.fillStyle='rgba(192,139,255,.9)';g.beginPath();g.arc(hx-18,hy,4+14*k,0,7);g.fill()}
+  const bw=4+10*v.he;
+  const line=(x1,y1,x2,y2,c,w)=>{g.strokeStyle=c;g.lineWidth=w;g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke()};
+  if(S.phase==='fly'){const k=Math.min(1,(S.t-S.fireT)/S.flight);line(hx-18,hy,hx-18+(tx-hx+18)*k,hy+(ty-hy)*k,'#c08bff',bw)}
+  if(S.phase==='late'||S.phase==='catch'||S.phase==='walk')line(hx-18,hy,tx+12,ty,'#c08bff',bw);
+  if(S.fire&&S.phase==='fly'){const k=Math.min(1,(S.t-S.fireT)/S.flight)/2;line(tx,ty,tx+(hx-tx)*k,ty+(hy-ty)*k,'#6fb7ff',8)}
+  if(S.phase==='struggle'){const px=tx+(hx-tx)*S.point,py=ty+(hy-ty)*S.point;line(tx,ty,px,py,'#6fb7ff',8);line(hx-18,hy,px,py,'#c08bff',bw);g.fillStyle='#fff';g.beginPath();g.arc(px,py,10+(S.fx>0?(S.fx--,6):0),0,7);g.fill()}
+  fig(hx,himY,'#c08bff',48);
+  fig(mx,meY,'#6fb7ff',48);
+  // charge glow on the body in your own colour, and the panel's pips off to the left
+  const max=stages(v.me),st=stageOf(S.hold,max);
+  if(S.hold>0){g.fillStyle='rgba(111,183,255,'+(0.2+0.12*st)+')';g.beginPath();g.arc(mx+16,meY-30,5+st*3,0,7);g.fill()}
+  g.fillStyle='rgba(22,29,56,.9)';g.fillRect(10,10,150,76);
+  g.fillStyle='#9aa6cc';g.font='13px system-ui';g.fillText('Stage',20,28);
+  for(let i=0;i<6;i++){const on=i<st,avail=i<max;g.fillStyle=on?'#6fb7ff':(avail?'#34477f':'#1a2142');g.fillRect(20+i*22,36,16,16)}
+  g.fillStyle='#9aa6cc';g.fillText(S.phase==='catch'?'Energy '+Math.max(0,Math.round(S.ki)):(S.phase==='walk'||S.phase==='struggle'?'Pulse':''),20,74);
+  if(S.phase==='walk'||S.phase==='struggle'){const off=Math.abs(S.t-S.pulseAt);g.fillStyle=off<=4?'#ffffff':'#34477f';g.beginPath();g.arc(120,70,9,0,7);g.fill()}
+  // the timing window, as a strip along the bottom: for the toy only
+  if(S.phase==='fly'){const left=S.flight-(S.t-S.fireT);g.fillStyle='#1a2142';g.fillRect(300,372,360,14);g.fillStyle=left<=v.win?'#7be0a4':'#34477f';g.fillRect(300,372,360*Math.max(0,left)/S.flight,14)}
+}
+function sync(){$('lvo').textContent=stages(+$('lv').value)+' stages';$('hvo').textContent=Math.round(energy(+$('hv').value))+' energy';$('wino').textContent=(+$('win').value/60).toFixed(2)+' s'}
+['lv','hv','win'].forEach(i=>$(i).addEventListener('input',sync));sync();
+let last=performance.now(),acc=0;
+function loop(n){acc+=Math.min(100,n-last);last=n;while(acc>=1000/60){step();acc-=1000/60}draw();requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+window.__toy={S,step,keys};
+</script>
+</body>
+</html>

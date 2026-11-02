@@ -19,7 +19,7 @@ Owner: Game Design. 2026-11-01. Rules Combat's read (`docs/combat/pending/stick-
 | :--- | :--- | :--- |
 | **1. A light on a quick flick** | The flick still lands. He takes the light as normal. **It loses the stun and some worth, and keeps its direction,** so the player always sees the stick do what they aimed | Worth 2.5 to 1.7, no stun, full carry |
 | **2. Y or B on a quick flick** | Ends it, as they end a Y. Unchanged | |
-| **3. A charged flick** | Still bare at every level, so a light ends it. It's a chosen bet, and it's what Orb played | |
+| **3. A charged flick** | **Re-ruled on Orb's first play:** a hold past the quick flick has B's armour, so a light never stops it (`power-scale.md`) | |
 | **4. LB held + flick** | **The guard stays up through the wind-up,** so lights are blocked and can't touch the stun. It drops for the recovery. Y's double chip and B's guard break are the answers, and B ends the wind-up | Stun 14, against 20. Same worth, ki and commitment |
 | **5. LT held + flick** | No change. It keeps its move lane and its pieces | |
 | **6. A flick that can't start** | **Encounter:** a request is honoured on the first free tick inside 9 ticks. It never turns into some other blow (109 of 795 did). If it's dropped, the pad gets the refusal cue | The 90-tick note goes |
@@ -81,6 +81,35 @@ Combat's bots (`docs/combat/pending/stick-directions/README.md`): land at all 66
 **The wind-up stays at 7.** The "wind-up 5, last" lever is withdrawn too, as Combat's read shows it does nothing for this.
 
 **Not a lever yet: giving the AI pauses.** A more varied AI would make the stun easier to reach and the brawl richer, but people's hands should come first.
+
+## The stick steals his run (the stand-in's proposal, 2026-11-01)
+
+`docs/ep/proposals/stick-steals-run.md`. **Yes to a scratch QA run, in a narrower shape.** My reel-and-run rule held a masher off on paper, and QA's read since has stick-only far behind X mash. A steal rewards reading a flurry, which is the right promise. Unplayed.
+
+**It barely touches "a beginner's mash holds up":** QA says the AI doesn't use the stick, so a beginner mashing against the computer is never stolen from. It only applies between people. **Keep it that way for this run:** the AI doesn't steal.
+
+| | The shape for the run | Why |
+| :--- | :--- | :--- |
+| **Which flicks** | **A quick flick that isn't guarded, from no stance.** Not LB + flick, and not a charged hold | LB + flick is already safe from lights, and a hold now has armour. Armour plus a steal would simply win |
+| **The steal** | His run goes to 0, and yours rises by what you took, at most 3. It's still no close from the flick itself | A close needs 4, so it takes a blow of yours to finish, within the run's usual lapse |
+| **The stumble: first value 2 ticks a point** | Reel `6 + 2 × taken`. Also run 3 a point as a second arm | The flick's recovery is 7, and X needs 2. So at 2 a point, a steal of 2 or 3 leaves time for X and a steal of 1 doesn't: he has to really be mashing. At 3, every steal does, and the toy runs away soon above that |
+| **Carry** | **No bonus for the first run** | The toy's bonus throws him up to 3 body heights away, and the gap eats the time the stumble just bought |
+| **Worth** | Unchanged: 1.7 if a light took the stun, 2.5 if not | |
+
+**The limits that are already there:** his next close is barred for 1.5 s after one lands, and he's only stolen from once a run. Stumbling blocks him from building another. So it can't lock him, by my arithmetic. **With a clean flick,** the stun already covers the stumble.
+
+**The rows.**
+
+| Row | Band |
+| :--- | :--- |
+| **A bot that mashes X and flicks when his run is 2 or more, against X mash and against the medium AI** | **At least 10 points above X mash.** This is the expert's promise, and the row that matters most |
+| Stick-only against the AI | Within 10 points of X mash, as ruled, and no higher than it |
+| Y's share of blows, for a free-choice bot | Doesn't fall under what it is today. A steal competes with Y against a flurry |
+| Closes on a stick player | Fewer |
+| The masher and the newcomer against the AI | Unchanged, as the AI doesn't steal |
+| Claw gate | Zero gain |
+
+**If it's too strong:** `max` 3 to 2, then steal only at 2 or more. **What would kill it:** Orb's hands, if being stolen from feels random, or stick-only becoming the best way to play.
 
 ## The Driver seeks
 

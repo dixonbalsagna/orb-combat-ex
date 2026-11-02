@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Driver and Mines</title>
+<style>
+:root{--bg:#f6f5f0;--fg:#1f1f1c;--mut:#5f5e5a;--line:#d3d1c7;--on:#0c447c;--onfg:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#17181b;--fg:#ecebe5;--mut:#a9a79e;--line:#3b3d43;--on:#e8b23a;--onfg:#1b1608}}
+:root[data-theme="dark"]{--bg:#17181b;--fg:#ecebe5;--mut:#a9a79e;--line:#3b3d43;--on:#e8b23a;--onfg:#1b1608}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 system-ui,sans-serif}
+main{max-width:960px;margin:0 auto;padding:12px 16px}h1{font-size:18px;margin:0 0 6px}canvas{display:block;width:100%;height:auto;background:#000}
+.row{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}button{font:inherit;padding:5px 10px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--fg);cursor:pointer}button.on{background:var(--on);color:var(--onfg);border-color:var(--on)}
+ol{margin:6px 0;padding-left:22px;color:var(--mut)}li.now{color:var(--fg);font-weight:600}p{margin:6px 0;color:var(--mut)}kbd{border:1px solid var(--line);border-radius:3px;padding:0 3px;font-size:12px}
+</style>
+</head>
+<body>
+<main>
+<h1>The Driver and mines on a big ring</h1>
+<canvas id="cv" width="800" height="450"></canvas>
+<div class="row" id="clips"></div>
+<div class="row"><button id="who">Fighter: Grist</button><button id="hold">B's hold: the Driver</button><button id="tier">Tier 4</button><button id="ai">Rival: reads you sometimes</button><button id="fuse">Fuse: leads a fast flyer</button><button id="cold">Goes cold at 600 body heights</button><button id="slow">Speed: full</button></div>
+<ol id="steps"></ol>
+<p id="keys"><b>Try it with a pad</b> (press any button first so the browser sees it). Left stick flies. <b>LT</b> flat out. <b>RB + B:</b> tap for the shot, hold for the Driver. <b>LB + RB + Y:</b> a blast mine; hold to throw it out along the stick. <b>LB + RB + X:</b> a spark mine. The small button left of centre on the pad (two squares) switches the Driver and the old beam. D-pad up and down change tier, left and right change fighter. The small button right of centre (three lines) restarts. <b>Keyboard:</b> <kbd>WASD</kbd> fly, <kbd>Shift</kbd> flat out, <kbd>E</kbd> RB, <kbd>Q</kbd> LB, <kbd>L</kbd> B, <kbd>K</kbd> Y, <kbd>J</kbd> X.</p>
+</main>
+<script>
+// ==== SIM (no DOM) ====
+var E = (function () {
+var W = 800, H = 450, LEG = 44, VH = H - LEG, RING = 153600, RP = RING / (2 * Math.PI), BH = 75, TAU = Math.PI * 2;
+var REACH = [1, 1.5, 2, 3], SEND_H = [700, 2500, 5000, 9900], DRV = [null, { at: 30, k: 1.3, ki: 12, kb: 6, rec: 1.5 }, { at: 54, k: 1.8, ki: 20, kb: 10, rec: 3 }, { at: 84, k: 2.6, ki: 32, kb: 0, rec: 6 }], HEAVY = 60;
+var MINE = { Y: { arm: 20, reach: 2, dmg: 30, kb: 3, ki: 6, lay: 8 }, X: { arm: 12, reach: 1, dmg: 12, kb: 1, ki: 3, lay: 4 } };
+var OPT = { hold: 'driver', tier: 4, read: 0.35, recoilK: 1, fuse: 'lead', coldBh: 600, fighter: 'grist' };
+var KITS = { grist: { name: 'Grist', lane: '#6fc4f2', deep: '#2f7fb8', hot: '#83ccf4', len: [0.7, 0.6, 0.55, 0.85], wid: [1.5, 1.6, 2.1, 1.5], sp: 1 }, loupe: { name: 'Loupe', lane: '#9a80d8', deep: '#5b3f9e', hot: '#a48ddc', len: [1, 1.1, 1.3, 1.15], wid: [0.45, 0.4, 0.3, 0.55], sp: 1.25 }, orza: { name: 'Empress Orza', lane: '#dcd0ae', deep: '#a9996f', hot: '#dcd0ae', len: [0.9, 0.9, 0.5, 1.05], wid: [0.8, 0.8, 1, 0.9], sp: 1 }, bolus: { name: 'Bolus', lane: '#e2742c', deep: '#9c4f22', hot: '#e58240', len: [0.75, 0.7, 0.38, 0.85], wid: [1.2, 1.3, 1.75, 1.35], sp: 0.95 } }, KIT_ORDER = ['grist', 'loupe', 'orza', 'bolus'];
+function setLanes() { var a = KITS[OPT.fighter], b = OPT.fighter === 'grist' ? KITS.loupe : KITS.grist; PAL.L = a.lane; PAL.L2 = a.deep; PAL.Lh = a.hot; PAL.R = b.lane; PAL.R2 = b.deep; PAL.Rh = b.hot; }
+function wrap(x) { x %= RING; return x < 0 ? x + RING : x; }
+function sdx(a, b) { var d = wrap(b - a); return d > RING / 2 ? d - RING : d; }
+function hash(n) { var x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function ground(x) { var a = x / RING * TAU, h = 120 + 190 * Math.sin(a * 7) + 110 * Math.sin(a * 23 + 1) + 40 * Math.sin(a * 61 + 2); return Math.max(0, h); }
+function cityAt(x) { return Math.sin(x / RING * TAU * 11 + 0.7) > 0.72 && ground(x) > 0; }
+
+function newFighter(id, x, y) { return { id: id, x: x, y: y, vx: 0, vy: 0, hp: 1000, ki: 100, face: 1, inp: {}, prev: {}, ch: null, lay: null, rec: null, reel: 0, dodge: 0, send: null, beam: null, trail: [], down: 0, blow: 0, label: '' }; }
+function newWorld(clip, take) {
+  var w = { t: 0, L: newFighter('L', 1000, 900), R: newFighter('R', 3250, 900), shots: [], mines: [], fx: [], craters: [], cracks: [], cam: { x: 2000, y: 700, wid: 6000 }, stats: { fired: [0, 0, 0, 0], land: [0, 0, 0, 0], read: [0, 0, 0, 0], laid: 0, off: 0, answered: 0, fizzled: 0, sentInto: 0, hitsOnYou: 0, cold: 0, expired: 0 }, feed: '', feedT: 0, last: '', lastT: 0, aiMode: 'chase', seed: 1 };
+  if (clip && clip.takes[take].setup) clip.takes[take].setup(w);
+  return w;
+}
+function pressed(f, k) { return f.inp[k] && !f.prev[k]; }
+function say(w, s) { w.feed = s; w.feedT = 150; }
+function burst(w, x, y, r, c) { w.fx.push({ k: 'ring', x: x, y: y, r: r, t: 0, n: 18, c: c }); }
+
+function fighterStep(w, f) {
+  var o = f === w.L ? w.R : w.L, i = f.inp, d = sdx(f.x, o.x);
+  if (f.send) { stepSend(w, f, o); f.prev = i; return; }
+  if (f.down > 0) { f.down--; f.vx *= 0.8; f.vy = 0; f.y = Math.max(f.y, ground(f.x)); f.prev = i; return; }
+  if (f.dodge > 0) f.dodge--;
+  if (f.blow > 0) f.blow--;
+  f.ki = Math.min(100, f.ki + 12 / 60);
+  if (f.reel > 0) { f.reel--; f.vx *= 0.93; f.vy *= 0.93; f.x = wrap(f.x + f.vx / 60); f.y = Math.max(ground(f.x), f.y + f.vy / 60); f.prev = i; return; }
+  if (f.beam) { stepBeam(w, f, o); f.prev = i; return; }
+  var sp = i.LT ? 10240 : 2400; if (f.ch && f.ch.t >= 20) sp *= 0.5;
+  var k = 0.112; f.vx += ((i.mx || 0) * sp - f.vx) * k; f.vy += ((i.my || 0) * sp * 0.85 * (i.LT ? 0.4 : 1) - f.vy) * k;
+  var rx = 0, ry = 0; if (f.rec) { rx = f.rec.x; ry = f.rec.y; if (--f.rec.n <= 0) f.rec = null; }
+  f.x = wrap(f.x + f.vx / 60 + rx); f.y = clamp(f.y + f.vy / 60 + ry, ground(f.x), 24000);
+  if (Math.abs(d) > 20 && !(i.LT && Math.abs(f.vx) > 2500)) f.face = d > 0 ? 1 : -1; else if (i.LT && Math.abs(f.vx) > 2500) f.face = f.vx > 0 ? 1 : -1;
+  var en = i.RB && !i.LB, lay = i.RB && i.LB;
+  // RB + B: the tap, the Driver or the old beam
+  if (en && pressed(f, 'B') && !f.ch && f.ki >= 10) f.ch = { t: 0, lvl: 0 };
+  if (f.ch) {
+    if (!i.RB || i.LB) { f.ch = null; }
+    else if (i.B) { f.ch.t++; for (var l = 3; l >= 1; l--) if (f.ch.t >= DRV[l].at && f.ki >= DRV[l].ki) { if (f.ch.lvl !== l) { f.ch.lvl = l; f.cue = l; } break; } }
+    else { fire(w, f, o, f.ch.lvl); f.ch = null; }
+  }
+  // LB + RB + X or Y: a lay. A tap sets it at the hand, or drops it on the line behind him in flight. Held, it's carried out along the stick
+  ['Y', 'X'].forEach(function (b) { if (lay && pressed(f, b) && !f.lay && f.ki >= MINE[b].ki) f.lay = { b: b, t: 0, gx: i.mx || 0, gy: i.my || 0 }; });
+  if (f.lay) { var L = f.lay; if (Math.abs(i.mx || 0) > 0.3 || Math.abs(i.my || 0) > 0.3) { L.gx = i.mx || 0; L.gy = i.my || 0; } L.t++; if (!i[L.b] || !lay) { setMine(w, f, L); f.lay = null; } }
+  f.prev = i;
+  if (f.id === 'L') { f.trailOn = Math.abs(f.vx) > 6000; }
+}
+function fire(w, f, o, lvl) {
+  var dx = sdx(f.x, o.x), dy = o.y - f.y, dist = Math.hypot(dx, dy) || 1, ux = dx / dist, uy = dy / dist, d = lvl ? DRV[lvl] : null;
+  if (lvl && OPT.hold === 'beam') { f.ki -= d.ki; f.beam = { t: 0, len: [0, 30, 45, 60][lvl], lvl: lvl, ux: ux, uy: uy, dist: dist }; f.vx = 0; f.vy = 0; w.stats.fired[lvl]++; return; }
+  f.ki -= lvl ? d.ki : 10; var kit = f.id === 'L' ? OPT.fighter : (OPT.fighter === 'grist' ? 'loupe' : 'grist'), K = KITS[kit], sp = Math.max(9000, dist / 24 * 60) * K.sp;
+  var sh = { x: f.x, y: f.y + BH * 0.6, x0: f.x, y0: f.y + BH * 0.6, ux: ux, uy: uy, sp: sp, lvl: lvl, own: f.id, left: dist + 900, t: 0, kit: kit, id: w.t + 1 }; if (lvl === 2 && kit === 'orza') { sh.ground = true; sh.tx = o.x; sh.ty = o.y + BH * 0.5; sh.dir = dx >= 0 ? 1 : -1; sh.ux = sh.dir; sh.uy = 0; sh.left = Math.abs(dx) + 1200; } if (lvl === 2 && kit === 'bolus') sh.bank = true; if (lvl === 2 && kit === 'loupe') sh.pierce = 1; w.shots.push(sh); w.stats.fired[lvl]++;
+  if (lvl) { var n = 10, tot = d.rec * BH * OPT.recoilK; f.rec = { x: -ux * tot / n, y: -uy * tot / n, n: n }; f.cue = 0; }
+}
+function stepBeam(w, f, o) { var b = f.beam; b.t++; var dx = sdx(f.x, o.x), dy = o.y - f.y, dist = Math.hypot(dx, dy) || 1, cross = Math.abs(dx * b.uy - dy * b.ux); if (cross < BH * (1 + 0.3 * b.lvl) && o.dodge <= 0 && !o.send && dx * b.ux + dy * b.uy > 0 && b.t % 6 === 0) { o.hp -= 4 + 3 * b.lvl; o.reel = Math.max(o.reel, 4); if (!b.hit) { b.hit = true; w.stats.land[b.lvl]++; } } if (b.t >= b.len) { if (b.lvl === 3 && b.hit && !o.send) sendHim(w, f, o, b.ux >= 0 ? 1 : -1); f.beam = null; } }
+function setMine(w, f, L) {
+  var M = MINE[L.b], own = w.mines.filter(function (m) { return m.own === f.id && m.state !== 'gone'; }); if (own.length >= 4) { own[0].state = 'gone'; w.stats.fizzled++; burst(w, own[0].x, own[0].y, 20, 'dim'); }
+  var tx, ty, extra = 0, fly = Math.abs(f.vx) > 2500;
+  if (L.t >= 16) { var bh = Math.min(30, L.t - 16 + 3), gl = Math.hypot(L.gx, L.gy), ux = gl > 0.2 ? L.gx / gl : f.face, uy = gl > 0.2 ? L.gy / gl : 0; tx = f.x + ux * bh * BH; ty = Math.max(ground(wrap(tx)) + 40, f.y + uy * bh * BH); extra = bh; }
+  else if (fly) { tx = f.x - (f.vx > 0 ? 1 : -1) * (Math.abs(f.vx) * 0.09 + BH * 2); ty = Math.max(ground(wrap(tx)) + 40, f.y); }
+  else { tx = f.x + (L.gx || 0) * 3 * BH; ty = Math.max(ground(wrap(tx)) + 40, f.y + (L.gy || 0) * 3 * BH); }
+  f.ki -= M.ki; w.stats.laid++;
+  w.mines.push({ x: wrap(f.x), y: f.y + BH * 0.5, tx: wrap(tx), ty: ty, fx: 0, fn: L.t >= 16 ? 12 : 3, own: f.id, kind: L.b, arm: M.arm + extra, age: 0, reach: M.reach * BH * REACH[OPT.tier - 1], state: 'arming', flare: 0, armedAt: 0, id: w.t * 7 + w.stats.laid });
+}
+function mineOff(w, m, onTarget, how) {
+  m.state = 'gone'; burst(w, m.x, m.y, m.reach, m.own === 'L' ? 'L' : 'R');
+  if (how === 'hit' || how === 'sent') { var M = MINE[m.kind], t = onTarget, s = t.x === m.x ? 1 : sdx(m.x, t.x) > 0 ? 1 : -1; t.hp -= M.dmg * (how === 'sent' ? 1.5 : 1); if (how === 'hit') { t.vx = s * M.kb * BH * 6 * REACH[OPT.tier - 1]; t.vy = 500; t.reel = Math.max(t.reel, 16); t.ch = null; t.lay = null; } w.stats.off++; if (how === 'sent') { w.stats.sentInto++; say(w, 'A send set off an armed mine, with no flare'); } }
+  else if (how === 'answered') w.stats.answered++;
+}
+function minesStep(w) {
+  w.mines.forEach(function (m) {
+    if (m.state === 'gone') return; m.age++;
+    if (m.fx < m.fn) { m.fx++; var u = m.fx / m.fn; m.x = wrap(m.x + sdx(m.x, m.tx) * u); m.y += (m.ty - m.y) * u; }
+    var foe = m.own === 'L' ? w.R : w.L;
+    if (m.state === 'arming' && m.age >= m.arm) { m.state = 'armed'; m.armedAt = m.age; }
+    if (m.state === 'armed') {
+      if (m.age - m.armedAt > 720) { m.state = 'gone'; w.stats.expired++; burst(w, m.x, m.y, 16, 'dim'); return; }
+      if (Math.abs(sdx(m.x, w.L.x)) > OPT.coldBh * BH && Math.abs(sdx(m.x, w.R.x)) > OPT.coldBh * BH) { m.state = 'gone'; w.stats.cold++; burst(w, m.x, m.y, 16, 'dim'); return; }
+      if (!foe.send && foe.down <= 0) { var fdx = sdx(m.x, foe.x), fdy = foe.y + BH * 0.5 - m.y, nowIn = Math.hypot(fdx, fdy) < m.reach, soon = OPT.fuse === 'lead' && Math.hypot(fdx + foe.vx * 0.1, fdy + foe.vy * 0.1) < m.reach; if (nowIn || soon) { m.state = 'flare'; m.flare = 6; } }
+    } else if (m.state === 'flare') {
+      if (--m.flare <= 0) { var inR = Math.hypot(sdx(m.x, foe.x), m.y - foe.y - BH * 0.5) < m.reach * 1.1 && foe.dodge <= 0; mineOff(w, m, foe, inR ? 'hit' : 'answered'); }
+    }
+  });
+  w.mines = w.mines.filter(function (m) { return m.state !== 'gone'; });
+}
+function shotsStep(w) {
+  w.shots = w.shots.filter(function (s) {
+    s.t++; var step = s.sp / 60, f = s.own === 'L' ? w.R : w.L, shooter = s.own === 'L' ? w.L : w.R, r = BH * (0.8 + 0.25 * s.lvl);
+    for (var q = 0; q < 4; q++) {
+      s.x = wrap(s.x + s.ux * step / 4); s.y += s.uy * step / 4; s.left -= step / 4;
+      if (s.ground) { var was = s.y; s.y = ground(s.x) + 16; if (q === 0) { w.cracks.push({ x: s.x, born: w.t }); } if (Math.abs(sdx(s.x, s.tx)) < 420) { var rdx = sdx(s.x, s.tx), rdy = s.ty - s.y, rl = Math.hypot(rdx, rdy) || 1; s.ux = rdx / rl; s.uy = rdy / rl; s.left = rl + 700; s.ground = false; s.reared = true; } }
+      var gone = false; for (var mi = 0; mi < w.mines.length; mi++) { var m = w.mines[mi]; if (m.state !== 'gone' && m.age >= 6 && Math.hypot(sdx(m.x, s.x), m.y - s.y) < BH * 0.8 && m.own !== s.own) { mineOff(w, m, null, 'answered'); if (s.pierce) s.pierce = 0; else gone = true; } } if (gone) return false;
+      if (!f.send && f.dodge <= 0 && f.down <= 0 && Math.hypot(sdx(s.x, f.x), s.y - f.y - BH * 0.5) < r) { landShot(w, s, f, shooter); return false; }
+      if (!s.ground && s.y <= ground(s.x)) { if (s.bank) { s.bank = false; s.uy = Math.abs(s.uy); s.y = ground(s.x) + 12; s.left = 2600; burst(w, s.x, s.y, 70, 'dust'); continue; } w.craters.push({ x: s.x, r: 70 + 40 * s.lvl, d: 20 + 12 * s.lvl }); burst(w, s.x, s.y, 80 + 60 * s.lvl, 'dust'); return false; }
+    }
+    if (s.lvl && f.dodge > 0 && Math.hypot(sdx(s.x, f.x), s.y - f.y) < BH * 12 && !s.read) { s.read = true; w.stats.read[s.lvl]++; }
+    return s.left > 0;
+  });
+}
+function landShot(w, s, f, shooter) {
+  var dir = s.ux >= 0 ? 1 : -1, worth = HEAVY * (s.lvl ? DRV[s.lvl].k : 1); f.hp -= worth; w.stats.land[s.lvl]++; f.ch = null; f.lay = null; burst(w, s.x, s.y, 70 + 50 * s.lvl, s.own);
+  if (s.lvl === 3) { sendHim(w, shooter, f, dir); return; }
+  var kb = (s.lvl ? DRV[s.lvl].kb : 3) * (s.lvl === 2 && s.kit === 'grist' ? 1.4 : 1), n = 18; f.vx = s.ux * kb * BH / n * 60 * 1.6; f.vy = s.uy * kb * BH / n * 60 * 1.6 + 300; f.reel = Math.max(f.reel, n + 6);
+}
+// A full send. The candidates are the same one curve at three heights; an armed mine on the line scores, and the stick's vote wins
+function sendHim(w, by, f, dir) {
+  var H0 = SEND_H[OPT.tier - 1], i = by.inp, y0 = f.y, cands = [{ n: 'high', H: H0, D: 1.551 * H0 }, { n: 'long and low', H: H0 * 0.55, D: 1.551 * H0 * 0.95 }, { n: 'flat', H: H0 * 0.28, D: 1.551 * H0 * 0.7 }], best = null, bestS = -1e9, side = dir, note = '';
+  if (Math.abs(i.mx || 0) > 0.6 && (i.mx > 0 ? 1 : -1) !== dir) { /* the stick nudges the length, not the side, in a shot's send */ }
+  cands.forEach(function (c, ci) { var hits = 0, gL = ground(wrap(f.x + side * c.D)); w.mines.forEach(function (m) { if (m.state === 'armed' || m.state === 'flare') { for (var k = 1; k < 40; k++) { var u = k / 40, ww = u - 0.328 * u * (1 - u), px = f.x + side * c.D * u, py = y0 + (gL - y0) * u + 4 * c.H * ww * (1 - ww); if (Math.hypot(sdx(m.x, px), m.y - py) < m.reach + BH) { hits++; break; } } } }); c.hits = hits; var s = (ci === 0 ? 0.3 : 0) + 1.0 * hits; if ((i.my || 0) > 0.6 && ci === 0) s += 5; if ((i.my || 0) < -0.6 && ci === 2) s += 5; if (s > bestS) { bestS = s; best = c; } });
+  var nudge = 1 + clamp((i.mx || 0) * side, -1, 1) * 0.15, D = best.D * nudge, H = best.H, gL = ground(wrap(f.x + side * D));
+  f.send = { x0: f.x, y0: y0, dir: side, H: H, D: D, gL: gL, T: Math.max(50, Math.round(372 * Math.sqrt(Math.max(H, 700) / 16400))), t: 0, hitMines: {} };
+  f.ch = null; f.lay = null; f.reel = 0; f.rec = null; f.dodge = 0; f.vx = 0; f.vy = 0;
+  say(w, 'Send: ' + best.n + (best.hits ? ', ' + best.hits + ' armed mine' + (best.hits > 1 ? 's' : '') + ' on its line' : ''));
+}
+function stepSend(w, f, o) {
+  var s = f.send; s.t++; var t = Math.min(1, s.t / s.T), c = 0.581, ua = 0.5805, e = t < c ? Math.tan(Math.PI / 4 * (1 - t / c)) : Math.tan(Math.PI / 4 * (t - c) / (1 - c)), u = t < c ? ua * (1 - e) : ua + (1 - ua) * e, ww = u - 0.328 * u * (1 - u);
+  var nx = wrap(s.x0 + s.dir * s.D * u), ny = s.y0 + (s.gL - s.y0) * u + 4 * s.H * ww * (1 - ww); f.vx = sdx(f.x, nx) * 60; f.vy = (ny - f.y) * 60; f.x = nx; f.y = Math.max(ny, ground(nx));
+  f.face = -s.dir;
+  w.mines.forEach(function (m) { if (m.state !== 'gone' && (m.state === 'armed' || m.state === 'flare') && Math.hypot(sdx(m.x, f.x), m.y - f.y - BH * 0.5) < m.reach + BH) { mineOff(w, m, f, 'sent'); } });
+  if (t >= 1 || (t > c && ny <= ground(nx))) { f.send = null; f.down = 40; f.y = ground(nx); f.vx = 0; f.vy = 0; w.craters.push({ x: f.x, r: 220 + s.H * 0.03, d: 60 + s.H * 0.006 }); burst(w, f.x, f.y, 260 + s.H * 0.04, 'dust'); }
+}
+// The rival in a try: chases, flees, keeps range. "Reads": it can dodge a shot in its last 8 ticks, go over a mine it can see, or dodge a flare, as often as the setting says
+function aiStep(w) {
+  var f = w.R, p = w.L, d = sdx(f.x, p.x), o = {}, dist = Math.abs(d), rd = OPT.read;
+  if (!w.script) { var ph = Math.floor(w.t / 60 / 5) % 5; w.aiMode = ['chase', 'chase', 'flee', 'range', 'flee'][ph]; }
+  var m = w.aiMode, sgn = d > 0 ? 1 : -1;
+  if (m === 'chase') { o.mx = sgn; o.LT = dist > 6 * BH; o.my = clamp((p.y - f.y) / 900, -1, 1); if (dist < 2.5 * BH && Math.abs(p.y - f.y) < 3 * BH && f.blow <= 0) { f.blow = 60; p.hp -= 40; if (!(p.ch && p.ch.lvl >= 1)) { p.vx = sgn * 900; p.vy = 400; p.reel = 12; p.ch = null; p.lay = null; } w.stats.hitsOnYou++; burst(w, p.x, p.y + BH * 0.5, 50, 'R'); } }
+  else if (m === 'flee') { o.mx = -sgn; o.LT = true; o.my = (2000 - f.y) / 3000; }
+  else if (m === 'range') { o.mx = dist > 40 * BH ? sgn : dist < 26 * BH ? -sgn : 0; o.my = clamp((1400 + 500 * Math.sin(w.t * 0.02) - f.y) / 600, -1, 1); }
+  else if (m === 'still') { o.mx = 0; o.my = 0; }
+  else if (m === 'cruise') { o.mx = sgn; o.my = clamp((p.y - f.y) / 900, -1, 1); }
+  // what it sees coming
+  w.shots.forEach(function (s) { if (s.own !== 'L' || !s.lvl || f.dodge > 0 || s.seen) return; var eta = Math.hypot(sdx(s.x, f.x), s.y - f.y) / s.sp * 60; if (eta <= 8) { s.seen = true; if (hash(s.t + s.x * 0.01 + w.seed) < rd && !w.noRead) { f.dodge = 14; f.vy += 2200; } } });
+  w.mines.forEach(function (mn) { if (mn.own !== 'L' || mn.state === 'gone') return; if (mn.state === 'flare' && !mn.seen2 && f.dodge <= 0) { mn.seen2 = true; if (hash(mn.id + 3.3 + w.seed) < rd && !w.noRead) { f.dodge = 14; f.vy += 2000; } } if (mn.state === 'armed') { var ahead = sdx(f.x, mn.x) * (f.vx >= 0 ? 1 : -1), lead = Math.abs(f.vx) * 0.3 + mn.reach * 2; if (ahead > 0 && ahead < lead && Math.abs(mn.y - f.y) < mn.reach * 2.5 && hash(mn.id + w.seed) < rd * 0.8 && !w.noRead) { o.my = 1; o.LT = true; o.overT = 20; f.overY = mn.y + mn.reach * 1.6; } } });
+  if (f.overY && f.y < f.overY) { o.my = 1; if (f.y >= f.overY - 40) f.overY = 0; } else f.overY = 0;
+  f.inp = o;
+}
+function cameraStep(w) {
+  var a = w.L, b = w.R, gap = sdx(a.x, b.x), mid = wrap(a.x + gap / 2), hi = Math.max(a.y, b.y), lo = Math.min(a.y, b.y), far = Math.abs(gap) > 56000, tw = clamp(Math.max(Math.abs(gap) * 1.3 + 1600, (hi - lo + 800) * 1.778 * 1.25), 2600, 60000), c = w.cam;
+  if (far) { mid = a.x; tw = 8000; lo = a.y; hi = a.y; }
+  var ln = Math.log(c.wid), to = Math.log(tw), dz = clamp((to - ln) * 0.09, -1 / 60, 3 / 60); c.wid = Math.exp(ln + dz);
+  c.x = wrap(c.x + sdx(c.x, mid) * 0.14); c.y += ((lo + hi) / 2 - c.y) * 0.1;
+}
+function fxStep(w) { w.fx = w.fx.filter(function (e) { e.t++; return e.t < e.n; }); w.craters = w.craters.slice(-24); w.cracks = w.cracks.filter(function (k) { return w.t - k.born < 480; }); [w.L, w.R].forEach(function (f) { var fast = f.send || Math.abs(f.vx) > 6000; if (fast && w.t % 2 === 0) { f.trail.push({ x: f.x, y: f.y + BH * 0.5, t: w.t, send: !!f.send }); if (f.trail.length > 150) f.trail.shift(); } f.trail = f.trail.filter(function (q) { return w.t - q.t < (q.send ? 480 : 40); }); }); if (w.feedT > 0) w.feedT--; }
+function stepWorld(w) { fighterStep(w, w.L); fighterStep(w, w.R); shotsStep(w); minesStep(w); fxStep(w); cameraStep(w); w.t++; }
+
+// ---- drawing: flat polygons only, so the node GIF tool can draw it too ----
+var PAL = { sky: ['#9fb9d6', '#88a7cd', '#7196c3', '#5c84b8', '#4a72aa', '#3a5f97'], land: '#7c8a5a', land2: '#66744c', sand: '#a58f62', sea: '#3f6f9e', tower: '#858b96', towerD: '#6c7280', crater: '#4f4a3c', L: '#2fc4dd', L2: '#1787b5', Lh: '#b6f1f7', R: '#ff8a2a', R2: '#c8571a', Rh: '#ffd9a8', dim: '#b9bbb5', ink: '#f2f1ea', dust: '#b8a786', band: '#20211e', key: '#3c3e39', keyOn: '#e8b23a', inkD: '#b0afa5', scrap: '#8c9098', crack: '#3f3a30' };
+function view(w) { var c = w.cam, ppu = W / c.wid; return { ppu: ppu, sx: function (x) { return W / 2 + sdx(c.x, x) * ppu; }, sy: function (x, y) { var dx = sdx(c.x, x); return VH * 0.68 - (y - c.y - dx * dx / (2 * RP)) * ppu; } }; }
+function line(R, x0, y0, x1, y1, th, col) { var dx = x1 - x0, dy = y1 - y0, l = Math.hypot(dx, dy) || 1, nx = -dy / l * th / 2, ny = dx / l * th / 2; R.poly([x0 + nx, y0 + ny, x1 + nx, y1 + ny, x1 - nx, y1 - ny, x0 - nx, y0 - ny], col); }
+function ring(R, x, y, r, th, col, n) { n = n || 16; for (var i = 0; i < n; i++) { var a = i / n * TAU, b = (i + 1) / n * TAU; line(R, x + Math.cos(a) * r, y + Math.sin(a) * r, x + Math.cos(b) * r, y + Math.sin(b) * r, th, col); } }
+function drawWorld(w, R) {
+  setLanes(); var V = view(w), c = w.cam; R.clear(PAL.sky[0]);
+  // the sky steps with height, never a gradient, so it stays a small palette
+  for (var i = 1; i < 6; i++) { var yb = VH * 0.68 - ((i * 2200) - c.y) * V.ppu; if (yb > 0) R.poly([0, 0, W, 0, W, Math.min(yb, VH), 0, Math.min(yb, VH)], PAL.sky[i]); }
+  // towers and the ground, the planet's curve included
+  var step = Math.max(1, c.wid / 60), x0 = c.x - c.wid * 0.6;
+  if (V.ppu > 0.035) { var bx = Math.floor(x0 / 170) * 170; for (var q = bx; q < x0 + c.wid * 1.2; q += 170) { var xq = wrap(q); if (!cityAt(xq)) continue; var ix = Math.round(xq / 170), hh = 110 + 340 * hash(ix), wd = 90, g = ground(xq), sxa = V.sx(xq), sya = V.sy(xq, g - 20), syb = V.sy(xq, g + hh); R.poly([sxa, sya, sxa + wd * V.ppu, sya, sxa + wd * V.ppu, syb, sxa, syb], ix % 3 ? PAL.tower : PAL.towerD); } }
+  for (var sx = -step * V.ppu, k = 0; k < 74; k++) { var xa = wrap(x0 + k * step), xb = wrap(x0 + (k + 1) * step), ga = ground(xa), gb = ground(xb); w.craters.forEach(function (cr) { var da = Math.abs(sdx(cr.x, xa)), db = Math.abs(sdx(cr.x, xb)); if (da < cr.r) ga -= cr.d * (1 - da / cr.r); if (db < cr.r) gb -= cr.d * (1 - db / cr.r); }); var col = ga <= 1 && gb <= 1 ? PAL.sea : (Math.floor(xa / 2600) % 3 === 0 ? PAL.sand : Math.floor(xa / 1400) % 2 ? PAL.land : PAL.land2); var pa = V.sx(xa), pb = V.sx(xb); if (pb < pa) continue; R.poly([pa, V.sy(xa, ga), pb, V.sy(xb, gb), pb, VH, pa, VH], col); }
+  for (var cq = 1; cq < w.cracks.length; cq++) { var ca = w.cracks[cq - 1], cb = w.cracks[cq]; if (Math.abs(sdx(ca.x, cb.x)) < 900) { var ja = 4 * Math.sin(ca.x * 0.05), jb = 4 * Math.sin(cb.x * 0.05); line(R, V.sx(ca.x), V.sy(ca.x, ground(ca.x)) + ja, V.sx(cb.x), V.sy(cb.x, ground(cb.x)) + jb, Math.max(1.5, 14 * V.ppu), PAL.crack); } }
+  // burned lines
+  [w.L, w.R].forEach(function (f) { var col = f.id === 'L' ? PAL.L2 : PAL.R2; for (var t = 1; t < f.trail.length; t++) { var a = f.trail[t - 1], b = f.trail[t]; if (Math.abs(sdx(a.x, b.x)) > 3000) continue; var age = w.t - b.t, th = (b.send ? 3 + 3 * Math.max(0, 1 - age / 300) : 2); line(R, V.sx(a.x), V.sy(a.x, a.y), V.sx(b.x), V.sy(b.x, b.y), th, b.send && age < 40 ? (f.id === 'L' ? PAL.L : PAL.R) : col); } });
+  w.mines.forEach(function (m) { var sxm = V.sx(m.x), sym = V.sy(m.x, m.y), col = m.own === 'L' ? PAL.L : PAL.R, s = Math.max(4, 22 * V.ppu), th = Math.max(2, 10 * V.ppu); if (m.state === 'arming') { line(R, sxm - s * 0.7, sym, sxm + s * 0.7, sym, Math.max(1.5, th * 0.6), m.own === 'L' ? PAL.L2 : PAL.R2); } else { var glow = m.state === 'flare' ? 1.8 : 1 + 0.25 * Math.sin(m.age * 0.1); line(R, sxm - s * glow, sym, sxm + s * glow, sym, th * glow, m.state === 'flare' ? (m.own === 'L' ? PAL.Lh : PAL.Rh) : col); line(R, sxm, sym - s * 0.55 * glow, sxm, sym + s * 0.55 * glow, th * 0.7, col); } });
+  w.shots.forEach(function (s) { drawShot(R, w, V, s); });
+  [w.L, w.R].forEach(function (f) { drawFighter(R, w, V, f); });
+  w.fx.forEach(function (e) { var u = e.t / e.n, sxe = V.sx(e.x), sye = V.sy(e.x, e.y); if (e.k === 'ring') { var col = e.c === 'L' ? PAL.L : e.c === 'R' ? PAL.R : e.c === 'dust' ? PAL.dust : PAL.dim, rr = Math.max(6, e.r * V.ppu * (0.3 + 0.7 * u)), th = Math.max(1.5, (1 - u) * Math.max(3, e.r * V.ppu * 0.18)); for (var dj = 0; dj < 11; dj++) { var da = dj / 11 * TAU + (e.x * 0.01) % 1, dr = rr * (0.8 + 0.3 * Math.sin(dj * 2.3 + e.x)), dl = Math.max(3, rr * 0.28 * (1 - u) + 2); line(R, sxe + Math.cos(da) * dr, sye + Math.sin(da) * dr, sxe + Math.cos(da) * (dr + dl), sye + Math.sin(da) * (dr + dl), Math.max(1.2, th * 0.7), col); } }});
+  drawEdge(R, w);
+}
+// The shot (RL-225): a straight, narrow bolt, wedge, lance or slug in lane colour. Never a sphere, a column, a disc, gold, white or red. Level 3's size is length and weight
+var SHOT_LEN = [420, 760, 1300, 3400], SHOT_WID = [12, 18, 28, 46], SHOT_MIN = [3, 4, 6, 9];
+function drawShot(R, w, V, s) {
+  var K = KITS[s.kit], c0 = s.own === 'L' ? PAL.L : PAL.R, c1 = s.own === 'L' ? PAL.Lh : PAL.Rh, c2 = s.own === 'L' ? PAL.L2 : PAL.R2, lv = s.lvl, len = Math.min(SHOT_LEN[lv] * K.len[lv], s.t * s.sp / 60 + 60), hw = Math.max(SHOT_MIN[lv] * K.wid[lv] * 0.5, SHOT_WID[lv] * K.wid[lv] * V.ppu), hx = V.sx(s.x), hy = V.sy(s.x, s.y), tax = wrap(s.x - s.ux * len), tay = s.y - s.uy * len, tx = V.sx(tax), ty = V.sy(tax, s.ground ? ground(tax) + 16 : tay), dx = hx - tx, dy = hy - ty, l = Math.hypot(dx, dy) || 1, fx = dx / l, fy = dy / l, nx = -fy, ny = fx;
+  if (s.kit === 'grist') { // a short thick wedge, its flat front pressing
+    R.poly([tx, ty, hx - fx * hw * 0.2 + nx * hw, hy - fy * hw * 0.2 + ny * hw, hx + fx * hw * 0.45 + nx * hw * 0.45, hy + fy * hw * 0.45 + ny * hw * 0.45, hx + fx * hw * 0.45 - nx * hw * 0.45, hy + fy * hw * 0.45 - ny * hw * 0.45, hx - fx * hw * 0.2 - nx * hw, hy - fy * hw * 0.2 - ny * hw], c0);
+    line(R, tx + dx * 0.45, ty + dy * 0.45, hx, hy, Math.max(1.5, hw * 0.55), c1);
+  } else if (s.kit === 'bolus') { // a jagged slug of scrap, fixed in the shot, never flickering
+    var pts = [], n = 7, i; for (i = 0; i <= n; i++) { var u = i / n, wd = hw * (0.55 + 0.45 * Math.sin(u * Math.PI)) * (0.72 + 0.5 * h01(s.id + i * 3.1)), px = tx + dx * (0.25 + 0.75 * u), py = ty + dy * (0.25 + 0.75 * u); pts.push(px + nx * wd, py + ny * wd); } pts.push(hx + fx * hw * 0.5, hy + fy * hw * 0.5); for (i = n; i >= 0; i--) { var u2 = i / n, wd2 = hw * (0.55 + 0.45 * Math.sin(u2 * Math.PI)) * (0.72 + 0.5 * h01(s.id + i * 5.7)), qx = tx + dx * (0.25 + 0.75 * u2), qy = ty + dy * (0.25 + 0.75 * u2); pts.push(qx - nx * wd2, qy - ny * wd2); } R.poly(pts, c0);
+    for (i = 0; i < 4; i++) { var v = 0.3 + 0.6 * h01(s.id + i * 9.3), side = (h01(s.id + i * 2.2) - 0.5) * hw * 1.1, ch = hw * 0.32; var cx = tx + dx * v + nx * side, cy = ty + dy * v + ny * side; R.poly([cx - fx * ch, cy - fy * ch, cx + nx * ch * 0.7, cy + ny * ch * 0.7, cx + fx * ch, cy + fy * ch, cx - nx * ch * 0.7, cy - ny * ch * 0.7], PAL.scrap); }
+    line(R, tx, ty, tx + dx * 0.3, ty + dy * 0.3, Math.max(1.5, hw * 0.3), c2);
+  } else { // a lance or a needle: a long point at both ends, widest near the head
+    R.poly([tx, ty, hx - fx * hw * 3 + nx * hw, hy - fy * hw * 3 + ny * hw, hx + fx * hw * 2.2, hy + fy * hw * 2.2, hx - fx * hw * 3 - nx * hw, hy - fy * hw * 3 - ny * hw], c0);
+    line(R, tx + dx * 0.5, ty + dy * 0.5, hx, hy, Math.max(1.2, hw * 0.34), c1);
+  }
+}
+function h01(n) { var x = Math.sin(n * 91.3 + 7.7) * 43758.5453; return x - Math.floor(x); }
+function drawFighter(R, w, V, f) {
+  var o = f === w.L ? w.R : w.L, c0 = f.id === 'L' ? PAL.L : PAL.R, c1 = f.id === 'L' ? PAL.L2 : PAL.R2, sc = Math.max(V.ppu, 22 / BH), x = V.sx(f.x), y = V.sy(f.x, f.y), h = BH * sc, fc = f.face, lean = f.rec ? -fc * 0.35 : f.send ? -fc * 0.8 : clamp(f.vx / 16000, -0.5, 0.5), hipx = x, hipy = y - h * 0.45, nx = x + lean * h * 0.5, ny = y - h * 0.86;
+  if (f.down > 0) { line(R, x - h * 0.5, y - 3, x + h * 0.5, y - 3, h * 0.16, c1); return; }
+  line(R, hipx, hipy, x - fc * h * 0.14, y, h * 0.11, c1); line(R, hipx, hipy, x + fc * h * 0.12 - lean * 8, y - h * 0.03, h * 0.11, c1); line(R, hipx, hipy, nx, ny, h * 0.2, c0); R.poly([nx - h * 0.07, ny - h * 0.18, nx + h * 0.07, ny - h * 0.18, nx + h * 0.07, ny - h * 0.04, nx - h * 0.07, ny - h * 0.04], c0);
+  var dx = sdx(f.x, o.x), dy = o.y - f.y, dl = Math.hypot(dx, dy) || 1, ax = dx / dl, ay = -dy / dl, sx = nx, sy = ny + h * 0.06;
+  if (f.ch && f.ch.t >= 20 || f.rec || f.beam || f.lay) {
+    // one firing hand: the arm straight along the line, the other open and away. The charge is a step of brightness at the heel of the palm and a thin open ring, never a ball
+    if (f.ch && ay < 0) { ay = 0; ax = ax < 0 ? -1 : 1; }
+    var pl = h * 0.5, px = sx + ax * pl, py = sy + ay * pl, kicked = f.rec ? 0.1 : 0; line(R, sx, sy, px, py, h * 0.08, c0); line(R, sx, sy, sx - ax * h * 0.28, sy + h * 0.2, h * 0.07, c1);
+    var lv = f.ch ? f.ch.lvl : 0, c2 = f.id === 'L' ? PAL.L2 : PAL.R2, col = lv >= 2 ? (f.id === 'L' ? PAL.Lh : PAL.Rh) : lv === 1 ? c0 : c2, heel = Math.max(3, h * (0.08 + 0.02 * lv)); line(R, px - ax * 3, py - ay * 3, px + ax * 3, py + ay * 3, heel, col);
+    if (f.ch && lv) { var r0 = (4 + lv * 2) * Math.max(1, sc * 2), ang = Math.atan2(ay, ax), th0 = lv >= 3 ? 1.8 : 1.2; for (var a = -1.1; a < 1; a += 0.42) line(R, px + Math.cos(ang + a) * r0, py + Math.sin(ang + a) * r0, px + Math.cos(ang + a + 0.32) * r0, py + Math.sin(ang + a + 0.32) * r0, th0, col); }
+    if (f.beam) { var b = f.beam, far = 3000 + b.dist; var ex = wrap(f.x + b.ux * far), ey = f.y + BH * 0.6 + b.uy * far, th = (6 + 4 * b.lvl) + 80 * V.ppu * b.lvl * 0.3; line(R, px, py, V.sx(ex), V.sy(ex, ey), th, c0); line(R, px, py, V.sx(ex), V.sy(ex, ey), Math.max(1.5, th * 0.35), f.id === 'L' ? PAL.Lh : PAL.Rh); }
+  } else { line(R, sx, sy, sx + fc * h * 0.26, sy + h * 0.24, h * 0.07, c1); line(R, sx, sy, sx - fc * h * 0.22, sy + h * 0.26, h * 0.07, c1); }
+}
+// The frame's edge: the player's inputs, the ring, the score. Nothing here goes near the fighters
+function keyBox(R, x, y, w0, s, on) { R.poly([x, y, x + w0, y, x + w0, y + 18, x, y + 18], on ? PAL.keyOn : PAL.key); R.text(x + 4, y + 5, s, on ? PAL.band : PAL.ink); }
+function drawEdge(R, w) {
+  var f = w.L, i = f.inp || {}; R.poly([0, VH, W, VH, W, H, 0, H], PAL.band);
+  var lx = 8, ly = VH + 4; ring(R, lx + 16, ly + 18, 15, 1.5, PAL.inkD, 14); R.poly([lx + 12 + (i.mx || 0) * 11, ly + 14 - (i.my || 0) * 11, lx + 20 + (i.mx || 0) * 11, ly + 14 - (i.my || 0) * 11, lx + 20 + (i.mx || 0) * 11, ly + 22 - (i.my || 0) * 11, lx + 12 + (i.mx || 0) * 11, ly + 22 - (i.my || 0) * 11], PAL.ink);
+  keyBox(R, 44, ly, 26, 'LT', i.LT); keyBox(R, 74, ly, 26, 'LB', i.LB); keyBox(R, 104, ly, 26, 'RB', i.RB); keyBox(R, 134, ly, 18, 'X', i.X); keyBox(R, 156, ly, 18, 'Y', i.Y); keyBox(R, 178, ly, 18, 'B', i.B);
+  var s = '', mask = i.RB && i.LB ? 'LB + RB + ' : i.RB ? 'RB + ' : '';
+  if (f.ch) s = 'RB + B held ' + f.ch.t + (f.ch.t < 20 ? ' (a tap if let go now)' : f.ch.lvl ? ', level ' + f.ch.lvl : ', gathering');
+  else if (f.lay) s = 'LB + RB + ' + f.lay.b + ' held ' + f.lay.t + (f.lay.t >= 16 ? ', out ' + Math.min(30, f.lay.t - 16 + 3) + ' body heights' : ' (a tap if let go now)');
+  else if (i.X || i.Y || i.B) s = mask + (i.B ? 'B' : i.Y ? 'Y' : 'X');
+  if (s) { w.last = s; w.lastT = 60; } else if (w.lastT > 0) { w.lastT--; s = w.last; }
+  R.text(204, ly + 5, s, PAL.ink);
+  R.text(44, ly + 25, 'ki ' + Math.round(f.ki) + '  hp ' + Math.round(f.hp) + '  rival ' + Math.round(w.R.hp) + '  tier ' + OPT.tier + '  ' + (OPT.hold === 'driver' ? 'Driver' : 'old beam'), PAL.inkD);
+  var st = w.stats; R.text(452, ly + 25, 'mines laid ' + st.laid + ', off ' + st.off + ', answered ' + st.answered, PAL.inkD);
+  if (w.feedT > 0) R.text(452, ly + 5, w.feed, PAL.keyOn);
+  // the ring, at the very top
+  var rx = 210, rw = W - 420; R.poly([rx, 6, rx + rw, 6, rx + rw, 8, rx, 8], PAL.band); [w.L, w.R].forEach(function (g) { var u = wrap(g.x - w.cam.x + RING / 2) / RING, xx = rx + u * rw; R.poly([xx - 2, 2, xx + 2, 2, xx + 2, 12, xx - 2, 12], g.id === 'L' ? PAL.L : PAL.R); });
+  R.text(rx + rw + 8, 3, Math.round(Math.abs(sdx(w.L.x, w.R.x)) / BH) + ' body heights apart', PAL.band);
+}
+
+// ---- clips: scripts of held buttons, for the player's fighter, and the rival's orders ----
+function ev(list, t) { var o = {}; list.forEach(function (e) { if (t >= e[1] && t < e[2]) o[e[0]] = e.length > 3 ? e[3] : true; }); return o; }
+function take(len, setup, script, rival) { return { len: len, setup: function (w) { w.script = true; w.noRead = true; OPT.fighter = 'grist'; if (setup) setup(w); }, input: function (w) { return ev(script, w.t); }, rival: rival }; }
+var RB = function (a, b) { return ['RB', a, b]; };
+var CLIPS = [
+  { n: 'D1', name: 'The Driver: three levels', takes: [take(560, function (w) { w.L.y = 900; w.R.x = 3250; w.R.y = 1000; w.aiMode = 'still'; OPT.hold = 'driver'; w.R.hp = 1000; }, [RB(10, 540), ['B', 20, 52], ['B', 170, 226], ['B', 340, 426]])], steps: [[0, 'He holds RB. The rival hangs 30 body heights away.'], [20, 'RB + B held to tick 30: level 1. A step of brightness at the heel of his palm and one thin open ring, nothing in his hand, and the other hand open and away.'], [52, 'He lets go. A straight shot, 1.3 heavies, there inside 24 ticks. The rival takes 6 body heights of knock-back and he kicks back 1.5.'], [170, 'Held to tick 54: level 2, a step brighter, at half speed while it gathers.'], [226, '1.8 heavies, 10 body heights of knock-back, 3 of recoil.'], [340, 'Held to tick 84: level 3, the hand at its brightest.'], [426, '2.6 heavies and a full send from range. Huge means long and heavy. He is kicked back 6 body heights along the line over 10 ticks, with nothing on his body. A punch thrown across the world.']] },
+  { n: 'D2', name: 'The recoil, with a chaser on you', takes: [take(330, function (w) { w.L.x = 11000; w.R.x = 1200; w.L.y = 800; w.R.y = 800; w.aiMode = 'chase'; OPT.hold = 'driver'; }, [['mx', 0, 330, 1], ['LT', 0, 330], RB(10, 150), ['B', 20, 112]])], steps: [[0, 'The rival chases from 130 body heights back, both flat out. Only that far back is there time for this.'], [20, 'RB + B held. He keeps flying, at half speed while it gathers, so the chaser closes 95 body heights in the 84 ticks. He has to hold his nerve.'], [112, 'He lets go over his shoulder. 32 ki and a full send on the chaser, and 6 body heights of kick the way he was already going. The stick stayed his.'], [150, 'Flat out, and away, with the chaser flying off the other way.']] },
+  { n: 'D3', name: 'Old beam against the Driver', takes: [take(240, function (w) { w.R.x = 3250; w.R.y = 1000; w.aiMode = 'still'; OPT.hold = 'beam'; }, [RB(5, 230), ['B', 10, 96]]), take(240, function (w) { w.R.x = 3250; w.R.y = 1000; w.aiMode = 'still'; OPT.hold = 'driver'; }, [RB(5, 230), ['B', 10, 96]])], steps: [[0, 'The old idea: B held to level 3 is a beam. He roots while it runs, and the line reaches the rival for a full second.'], [240, 'The Driver, the same hold: no root, one shot, gone in an instant. He keeps flying and it kicks him back. Beams now live on the right stick.']] },
+  { n: 'D4', name: 'Four fighters, level 2', takes: [
+    take(170, function (w) { OPT.fighter = 'grist'; w.R.x = 3250; w.R.y = 1000; w.aiMode = 'still'; OPT.hold = 'driver'; }, [RB(5, 150), ['B', 20, 76]]),
+    take(170, function (w) { OPT.fighter = 'loupe'; w.R.x = 3250; w.R.y = 1000; w.aiMode = 'still'; OPT.hold = 'driver'; w.mines.push({ x: 2100, y: 960, tx: 2100, ty: 960, fx: 9, fn: 3, own: 'R', kind: 'Y', arm: 0, age: 9, reach: 150, state: 'armed', flare: 0, armedAt: 9, id: 5 }); }, [RB(5, 150), ['B', 20, 76]]),
+    take(190, function (w) { OPT.fighter = 'orza'; w.R.x = 3250; w.R.y = 1000; w.aiMode = 'still'; OPT.hold = 'driver'; }, [RB(5, 170), ['B', 20, 76]]),
+    take(210, function (w) { OPT.fighter = 'bolus'; w.L.y = 1500; w.R.x = 2500; w.R.y = 800; w.aiMode = 'still'; OPT.hold = 'driver'; OPT.read = 1; w.noRead = false; }, [RB(5, 190), ['B', 20, 76]])],
+    steps: [[0, 'Grist: the shove, a short thick wedge with a flat front. More knock-back and less crater.'], [170, 'Loupe: the pierce, a needle. It goes through the first thing it meets, here the rival\'s mine, and carries on.'], [340, 'Empress Orza: the ground line. It runs along the ground from her, leaves a crack, and rears up under him.'], [530, 'Bolus: the bank, a jagged slug of scrap. The rival moves off the line, and it ricochets once off the ground as one piece.']] },
+  { n: 'D5', name: 'Reading the line', takes: [take(300, function (w) { w.R.x = 4500; w.R.y = 1100; w.aiMode = 'still'; OPT.hold = 'driver'; w.noRead = false; OPT.read = 1; }, [RB(5, 280), ['B', 10, 96]])], steps: [[0, 'The rival is far off, and can see the hold from the hand and hear the steps.'], [96, 'He fires at where the rival is. The rival moves off the line in its last 8 ticks: a miss, 32 ki gone, and the shot carries on to the ground.']] },
+  { n: 'M1', name: 'Laying a wake while fleeing', takes: [take(560, function (w) { w.L.x = 6000; w.R.x = 500; w.L.y = 700; w.R.y = 700; w.aiMode = 'chase'; OPT.read = 0.5; w.seed = 3; w.noRead = false; OPT.tier = 4; }, [['mx', 0, 560, 1], ['LT', 0, 560], ['LB', 40, 300], ['RB', 40, 300], ['Y', 60, 64], ['Y', 104, 108], ['Y', 150, 154], ['Y', 200, 204], ['X', 240, 243], ['X', 252, 255]])], steps: [[0, 'He flees flat out with a chaser behind, down one line, so the chaser has to come through what he leaves.'], [60, 'LB + RB + Y tapped in flight: a blast mine drops on the line behind him and wakes after 20 ticks.'], [150, 'Each is small, in his colour, dim until it arms. Tier 4 reach is 6 body heights, so at this speed the chaser has to choose early.'], [240, 'The chaser goes over some and into others. Each flares for 6 ticks, then bursts. X lays quicker spark mines. Mines fizzle after 12 s, or once the fight has gone far away.']] },
+  { n: 'M2', name: 'Throwing one out to cut him off', takes: [take(420, function (w) { w.L.x = 1000; w.R.x = 10000; w.L.y = 900; w.R.y = 900; w.aiMode = 'cruise'; w.noRead = true; OPT.tier = 4; }, [['mx', 20, 76, 0.3], ['LB', 20, 90], ['RB', 20, 90], ['Y', 26, 76]])], steps: [[0, 'The rival comes in at cruising speed, 120 body heights off.'], [26, 'LB + RB + Y held: the lay is carried out along the stick, one body height a tick, up to 30.'], [76, 'Let go. It arms 1 tick later per body height, so at range it can never spring at once.'], [130, 'He has to go through it, over it, or shoot it. Here he flies into it: it flares for 6 ticks, then bursts.']] },
+  { n: 'M3', name: 'Driving him into your own mine', takes: [take(620, function (w) { w.L.x = 1000; w.R.x = 2800; w.L.y = 900; w.R.y = 900; w.aiMode = 'still'; OPT.hold = 'driver'; OPT.tier = 4; w.noRead = true; }, [['LB', 10, 70], ['RB', 10, 70], ['Y', 16, 66], ['mx', 10, 66, 0.4], ['my', 10, 66, 0.05], ['RB', 90, 220], ['B', 100, 186]])], steps: [[0, 'The rival hangs at range. He throws a blast mine out past him.'], [70, 'It arms in the air behind the rival.'], [100, 'RB + B held to level 3.'], [186, 'A full send from range. The send\'s score gains a term for an armed mine on its line, so it takes the flat line through it, and the stick\'s vote would win if he gave one.'], [230, 'It carries him through: the mine goes off at once, with no flare, then he lands. Lay it, then drive him into it from far away.']] }
+];
+function clipLen(c) { return c.takes.reduce(function (a, t) { return a + t.len; }, 0); }
+function newRun(ci, mode) { if (mode === 'play') { var w = newWorld(null, 0); return { clip: null, w: w, t: 0, take: 0, off: 0 }; } var c = CLIPS[ci]; return { clip: c, w: newWorld(c, 0), t: 0, take: 0, off: 0 }; }
+function stepRun(run, keys) {
+  var c = run.clip, w = run.w;
+  if (c) { var T = c.takes[run.take]; if (w.t >= T.len) { run.off += T.len; run.take++; if (run.take >= c.takes.length) { run.take = 0; run.off = 0; } run.w = w = newWorld(c, run.take); T = c.takes[run.take]; } w.L.inp = T.input(w); aiStep(w); }
+  else { w.L.inp = keys || {}; aiStep(w); }
+  stepWorld(w); run.t = run.off + w.t;
+}
+function stepOf(c, t) { var k = 0; for (var i = 0; i < c.steps.length; i++) if (t >= c.steps[i][0]) k = i; return k; }
+return { W: W, H: H, CLIPS: CLIPS, OPT: OPT, KITS: KITS, KIT_ORDER: KIT_ORDER, newRun: newRun, newWorld: newWorld, stepRun: stepRun, stepWorld: stepWorld, aiStep: aiStep, draw: function (run, R) { drawWorld(run.w, R); }, stepOf: stepOf, clipLen: clipLen, sdx: sdx, BH: BH, PAL: PAL };
+})();
+// ==== PAGE (DOM) ====
+(function () {
+var cv = document.getElementById('cv'), g = cv.getContext('2d'), R = { clear: function (c) { g.fillStyle = c; g.fillRect(0, 0, E.W, E.H); }, poly: function (p, c) { g.fillStyle = c; g.beginPath(); g.moveTo(p[0], p[1]); for (var i = 2; i < p.length; i += 2) g.lineTo(p[i], p[i + 1]); g.closePath(); g.fill(); }, text: function (x, y, s, c) { g.fillStyle = c; g.font = '11px monospace'; g.textBaseline = 'top'; g.fillText(s, x, y); } };
+var st = { ci: -1, spd: 1 }, run = null, keys = {}, prevPad = {}, acc = 0, last = 0;
+var box = document.getElementById('clips'), btns = []; function pick(i) { st.ci = i; E.OPT.read = READS[readI].v; if (i < 0) E.OPT.fighter = chosen; run = i < 0 ? E.newRun(0, 'play') : E.newRun(i, 'demo'); btns.forEach(function (b, k) { b.className = k - 1 === i ? 'on' : ''; }); steps(); shown = -1; }
+function add(t, i) { var b = document.createElement('button'); b.textContent = t; b.onclick = function () { pick(i); b.blur(); }; box.appendChild(b); btns.push(b); }
+add('Try it', -1); E.CLIPS.forEach(function (c, i) { add(c.n + ' ' + c.name, i); });
+var ol = document.getElementById('steps'), shown = -1; function steps() { ol.textContent = ''; if (st.ci >= 0) E.CLIPS[st.ci].steps.forEach(function (s) { var li = document.createElement('li'); li.textContent = s[1]; ol.appendChild(li); }); }
+var READS = [{ n: 'Rival: reads you sometimes', v: 0.35 }, { n: 'Rival: never reads you', v: 0 }, { n: 'Rival: reads you often', v: 0.75 }], readI = 0;
+function hold() { E.OPT.hold = E.OPT.hold === 'driver' ? 'beam' : 'driver'; document.getElementById('hold').textContent = "B's hold: " + (E.OPT.hold === 'driver' ? 'the Driver' : 'the old beam'); }
+var chosen = 'grist'; function who(d) { var o = E.KIT_ORDER, i = (o.indexOf(chosen) + d + o.length) % o.length; chosen = o[i]; E.OPT.fighter = chosen; document.getElementById('who').textContent = 'Fighter: ' + E.KITS[chosen].name; }
+function tier(d) { E.OPT.tier = Math.max(1, Math.min(4, E.OPT.tier + d)); document.getElementById('tier').textContent = 'Tier ' + E.OPT.tier; }
+document.getElementById('who').onclick = function () { who(1); }; document.getElementById('hold').onclick = hold; document.getElementById('tier').onclick = function () { E.OPT.tier = E.OPT.tier % 4 + 1; tier(0); }; document.getElementById('ai').onclick = function (e) { readI = (readI + 1) % 3; E.OPT.read = READS[readI].v; e.target.textContent = READS[readI].n; }; document.getElementById('cold').onclick = function (e) { E.OPT.coldBh = E.OPT.coldBh === 600 ? 120 : 600; e.target.textContent = 'Goes cold at ' + E.OPT.coldBh + ' body heights'; }; document.getElementById('fuse').onclick = function (e) { E.OPT.fuse = E.OPT.fuse === 'lead' ? 'plain' : 'lead'; e.target.textContent = 'Fuse: ' + (E.OPT.fuse === 'lead' ? 'leads a fast flyer' : 'as written, E74'); }; document.getElementById('slow').onclick = function (e) { st.spd = st.spd === 1 ? 0.4 : 1; e.target.textContent = 'Speed: ' + (st.spd === 1 ? 'full' : 'slow'); };
+addEventListener('keydown', function (e) { keys[e.code] = true; if (['Space', 'ArrowUp', 'ArrowDown'].indexOf(e.code) >= 0) e.preventDefault(); }); addEventListener('keyup', function (e) { keys[e.code] = false; });
+function read() { var o = { mx: (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0), my: (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0), LT: !!(keys.ShiftLeft || keys.ShiftRight), RB: !!keys.KeyE, LB: !!keys.KeyQ, B: !!keys.KeyL, Y: !!keys.KeyK, X: !!keys.KeyJ }, ps = navigator.getGamepads ? navigator.getGamepads() : [], p = null; for (var i = 0; i < ps.length; i++) if (ps[i] && ps[i].connected) { p = ps[i]; break; } if (p) { var bt = function (k) { return !!(p.buttons[k] && (p.buttons[k].pressed || p.buttons[k].value > 0.5)); }; if (Math.abs(p.axes[0]) > 0.2) o.mx = p.axes[0]; if (Math.abs(p.axes[1]) > 0.2) o.my = -p.axes[1]; o.LT = o.LT || bt(6); o.LB = o.LB || bt(4); o.RB = o.RB || bt(5); o.X = o.X || bt(2); o.Y = o.Y || bt(3); o.B = o.B || bt(1); var ed = function (k, fn) { if (bt(k) && !prevPad[k]) fn(); prevPad[k] = bt(k); }; ed(8, hold); ed(12, function () { tier(1); }); ed(13, function () { tier(-1); }); ed(14, function () { who(-1); }); ed(15, function () { who(1); }); ed(9, function () { pick(st.ci); }); if (run && run.w) { var cue = run.w.L.cue; if (cue !== undefined && cue !== null) { run.w.L.cue = null; try { if (p.vibrationActuator) p.vibrationActuator.playEffect('dual-rumble', { duration: cue ? 70 : 170, strongMagnitude: cue ? 0.2 + 0.15 * cue : 1, weakMagnitude: cue ? 0.4 : 0.8 }); } catch (e) { } } } } return o; }
+function frame(ts) { if (window.__hold) return; if (!last) last = ts; acc += Math.min(80, ts - last) / 16.667 * st.spd; last = ts; var n = 0; while (acc >= 1 && n < 6) { acc -= 1; E.stepRun(run, st.ci < 0 ? read() : null); n++; } E.draw(run, R); if (st.ci >= 0) { var k = E.stepOf(run.clip, run.t); if (k !== shown) { shown = k; Array.prototype.forEach.call(ol.children, function (li, j) { li.className = j === k ? 'now' : ''; }); } } requestAnimationFrame(frame); }
+window.DM = { pick: pick, run: function () { return run; }, step: function (n, keysIn) { for (var i = 0; i < n; i++) E.stepRun(run, st.ci < 0 ? (keysIn || read()) : null); E.draw(run, R); }, read: read }; pick(0); window.__ok = 1; requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

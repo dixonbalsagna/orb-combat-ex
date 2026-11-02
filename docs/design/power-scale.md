@@ -29,13 +29,13 @@ Owner: Game Design. 2026-11-01, on Orb's first play: "a physics based approach t
 
 | What | Rule | Why |
 | :--- | :--- | :--- |
-| **Launch speed** | `900 × √(E × share)`. A fully charged B is share 1, a tapped launcher 0.25 | Kinetic energy goes with speed squared |
+| **Launch speed** | `900 × √(E × share)`. A fully charged B is share 1, a lit launcher 0.5 | Kinetic energy goes with speed squared |
 | **On screen** | **Along the line, twice the launch speed,** in place of today's ×6 | So a sent body is never faster than a flat-out flyer of that level, the top only just reaching it, and a chase can catch it. The trail and the crater read the launch speed |
 | **Crater** | Radius `160 × √E`, depth 0.22 of that, as the code does now. **The tier's extra term and the ordinary cap of 600 both go,** since level already counts | One path, so nothing's counted twice |
 | **Through buildings** | Each building takes energy out of the body: house 1, low tower 5, tall tower or skyscraper 15. If he has less than that left, he stops inside it. What's left sets his new speed | "Careening through" is just energy running out |
 | **Hitting the ground** | Steep: a crater, and at most one small hop. Shallow: **a trench, and the slide spends the rest.** At most one bounce off terrain per send, then he digs in | Orb bounced 6 or 7 times off an outcrop and wanted a crater or a trench |
 | **Beam** | Groove half width `300 × 3.5^level`, depth a tenth of that. Damage to buildings goes with E. Level 1, 2 and 3 beams spend 0.25, 0.5 and 1. A signature spends 1 | Nearly today's width and depth. The damage to buildings is what changes |
-| **Burning up** | A **launched** body glows from 4,500 a second, and has a full burning trail from 6,000. It's a look only | Base can't reach it, as you asked |
+| **Burning up** | A **launched** body has a thin edge in its own colour behind it from 4,500 a second, and a full burning trail from 6,000. It's a look only: never an aura around him, never gold, white or red, and he's never shown hurt by it | Base can't reach it, as you asked |
 | **Flying** | Flat out, plain stance, `5,000 × 2.305^level`. It grows with the **cube root** of energy, the way top speed does against air drag | Faster with power, without the gap running away |
 
 **Not in the model: wear.** Hit damage stays where it is, so a maximum send doesn't do 12 times the wear, and match length isn't tied to this page. **Signature, finisher and break launches keep their existing 9× energy** at the crater (3× the radius).
@@ -50,10 +50,10 @@ Full-charged B straight down, unless it says otherwise. Units are world units, a
 | **Energy** | 4.9 | 8.2 | 11.5 | 26 | **60** |
 | **Launch speed** | 2,000 | 2,570 | 3,050 | 4,590 | **7,000** |
 | On screen, along the line | 4,000 | 5,140 | 6,100 | 9,180 | **14,000** |
-| Tapped launcher's speed | 1,000 | 1,285 | 1,525 | 2,295 | 3,500 |
+| Lit launcher's speed | 1,414 | 1,817 | 2,157 | 3,246 | 4,950 |
 | **Crater radius** | 356 (5 bh) | 457 | 542 | 816 | **1,244 (18 bh)** |
 | Crater depth | 78 | 101 | 119 | 180 | 274 |
-| Tapped launcher's crater radius | 178 | 228 | 271 | 408 | 622 |
+| Lit launcher's crater radius | 252 | 323 | 383 | 577 | 880 |
 | Signature's crater radius (×3) | 1,068 | 1,371 | 1,626 | 2,448 | 3,732 |
 | **Goes through** | 4 houses, or stops inside a low tower | A low tower and 3 houses | 2 low towers | A tall tower and 2 low | **4 skyscrapers** |
 | **Trail** | None | None | None | First glow | **Burning** |
@@ -65,11 +65,27 @@ Full-charged B straight down, unless it says otherwise. Units are world units, a
 
 **Checked against Orb's ends:**
 - **Base never burns:** its fastest send is 2,570, well under 4,500. **This is a hard test: no send by a base or tier 2 fighter ever glows.**
-- **Base straight down:** a crater about 5 body heights across each way, or half that from a tapped launcher, and a trench if it's shallow.
+- **Base straight down:** a crater about 5 body heights across each way, or about 70% of that from a lit launcher, and a trench if it's shallow.
 - **Maximum through skyscrapers:** 4, with today's table allowing 4 links at tier 4. Its speed falls as it goes, which should read well.
 - **Maximum into the ground:** radius 1,244, about 2,500 across. A tower's 240 to 512 wide, so that's about five towers across, which I read as a city block. **World has to confirm that.** Whatever stands in the bowl falls in. Today the crater only digs; the falling is a new rule.
-- **Maximum skyward:** 7,000 at 60° up. That matches the meteor, which already sends at about 6,600, so the meteor needs no change.
+- **Maximum skyward:** the meteor. **My "about 6,600" was wrong for what you see.** Simulation measured 12,821 on screen on its first tick and 9,777 mid-flight. **The meteor is its own thing:** an authored curve, whose on-screen speed is pacing, not the launch speed. It stays inside the model's 14,000 top. For its crater, buildings and energy it counts as the model's top, 7,000. **Its trail burns in full for the whole curve,** whatever the speed reads at that moment. The high arc's the same. `game-design.md` §12's figure is the older sum.
 - **World's old scale page** has tier 1 craters at 150 to 450, which this meets. Its tier 3 and 4 figures are close to the signature's row here, not the ordinary send's.
+
+**A narrower beam cuts deeper: yes** (Combat's question). The same energy over a narrower line digs the same amount of ground. For a beam of width `w` (0.4 to 1.2):
+
+`half width = 300 × 3.5^level × √share × w`, and `depth = 30 × 3.5^level × √share ÷ w`
+
+| At maximum, full share | Half width | Depth |
+| :--- | ---: | ---: |
+| Hem Sweep, ×0.4 | 420 | **262** |
+| The reference, ×1 | 1,050 | 105 |
+| Breakwater, ×1.2 | 1,260 | **88** |
+
+Even the thinnest beam stays just under a full send's crater at the same level: 262 against 274 at the top, and 75 against 78 at base. So no separate cap is needed. **Only the groove changes.** Damage to buildings stays one number for every width, inside Legal's ×1.5. It's a look and terrain rule, through the look gate. The beam's width is its `w` for the dig, so a look that's only drawn wider doesn't count.
+
+**A repeat launch doesn't go as far as the first** (Encounter's question). **Simulation reports this has no effect yet with the switch on, so it's still to do.** Freshness stays, and it works inside the model: it multiplies the launch's **share** by `fresh²`, with `fresh` worked out as it is today (×0.9 for each launch of that kind on him in the last 60 s, ×0.97 for any kind, never under 0.7). So its speed falls by `fresh`, exactly as today, and everything else follows from the energy spent: at the floor, the speed and crater radius fall to 0.7 and the energy to 0.49. **So `fresh.destruction` goes:** there's now one path, and a slower body breaks less. The meteor's and the high arc's curves are fixed shapes, so freshness doesn't touch them, and their budget limits them instead.
+
+**The lit launcher, on Simulation's measure.** At a share of 0.25 it carried only 1,150 across at base: a building half the time and little else, and less than a charged knock-back's share, for the reward of an opening. **Raised to 0.5,** which should be about 2,300 across at base, reaching most of a town and nothing beyond it. **A full B at base only just clearing the long haul (3,200) is what I want:** the far planet opens up with power. So a charged knock-back and a lit launcher spend the same: one's earned by waiting, the other by an opening.
 
 ## In the data
 
@@ -79,11 +95,11 @@ A new `data/fight/power.json`, behind a switch, off until read:
 {
   "level": {"tierShare": 0.8, "powerShare": 0.2},
   "energy": {"base": 4.94, "topOverBase": 12.25},
-  "share": {"fullB": 1.0, "launcher": 0.25, "driverLevel3": 1.0},
+  "share": {"fullB": 1.0, "launcher": 0.5, "driverLevel3": 1.0},
   "absorb": {"house": 1, "lowTower": 5, "tallTower": 15},
   "contact": {"maxTerrainBounces": 1},
   "burn": {"glow": 4500, "full": 6000},
-  "beam": {"halfWidth": 300, "depthShare": 0.1, "levels": [0.25, 0.5, 1.0], "signature": 1.0},
+  "beam": {"halfWidth": 300, "depthShare": 0.1, "levels": [0.25, 0.5, 1.0], "signature": 1.0, "depthDividesByWidth": true},
   "flight": {"flatOut": 5000, "exponent": 0.333},
   "launchTravel": 2.0
 }
@@ -102,7 +118,32 @@ A new `data/fight/power.json`, behind a switch, off until read:
 | **Combat** | Shares for every launching move, and whether the Driver or a fighter's kit needs its own |
 | **QA** | The sends, places and falling rows in §15 by tier, which will drop at low tier. The civilian band, match length, launches a match. **The hard test above** |
 | **Performance** | Bigger ordinary craters and whole blocks falling, when launches already spike the frame. **A falling block may have to be spread over several frames in the view.** Orb named this: destruction has to stay smooth |
-| **Legal** | A whole city block coming down at maximum, and a burning body. Both are new at this scale. **Not decided here** |
+| **Legal** | Read: RL-232, below. Stays open until QA has read the civilian band at maximum and the flash clips and look gate have passed |
+
+## Legal's limits (RL-232, `docs/legal/review-log.md`)
+
+Fine with these limits. All of it ships through the look gate and the flash clips in both modes.
+
+**The block falling at maximum.**
+- **It falls by the energy spent, never as a chosen place.** No AI, picker or landing score reads a block's size, occupancy or population. The filter for schools, hospitals and places of worship reaches this fall too.
+- **No ceremony:** no slow motion, zoom, held shot, sting, score popup, or line about the dead. No person is on screen in the bowl, and no civilian is shown dying. The toll is the existing number, with no new count, line or reward.
+- **Light:** it's one event, even when the fall is spread over several frames. It rises over at least 0.3 s and falls over at least 1 s, with a calm form under Reduce flashing, measured by day and by night.
+- **Dust stays a local cloud,** never a wash across the screen that darkens the sky.
+- **QA** re-reads the civilian band (12 to 30% at the KO) at maximum with the fall on, plus the civilians-removed run.
+
+**The trail.**
+- It follows RL-222: a ribbon from the body, trailing behind, with its head width capped.
+- From 4,500 it's a thin edge in the fighter's own colour, behind the body. **Never an aura,** and a glow on or around the body counts toward the stacking limit.
+- **Never gold, white or red.** The body is never charred, aflame, or shown hurt, and the heat doesn't kill him.
+- Only a launched body burns. **Base and tier 2 never glow,** and the hard test stands.
+
+**The beam.**
+- **Its damage to buildings is capped at ×1.5,** and any rise goes back to Legal. It acts on structures only, with no people term and no reward.
+- It can raise falls and so the toll, so QA reads the civilian band at tier 4 with it on.
+
+## Hit weight
+
+**Combat's table, in `press-decides.md`,** replaces the one I first put here.
 
 ## The five rulings
 
@@ -149,7 +190,19 @@ The AI treats it as it treats a B winding up. This should also open the meteor's
 | **A press during the rush** | **It picks the blow,** and the newest press wins: X the strike, Y the heavy, **B drives him down,** at Y's price, so a chase can end in a crater. It never queues another chase. The stick leans the send, as it does now | After the blow lands, a press inside 0.33 s starts the next chase. No press and you peel off |
 | **On the meteor's curve** | **Not alongside: the apex spike (row 7).** A tap on the way up rises with him and meets him at the top, wherever you pressed, and any press sends him down the rest of the curve, landing earlier. One a curve, no chase after it, no extra wear, and it can't end a match. A tap after the top flies to his landing, for the first move | If the spike costs too much for now, every tap on the curve goes to his landing. Under half of meteors should get a spike, as row 7 says, so waiting stays a choice |
 
-The hint keeps its line, and gains: "It lands as you catch them."
+**The chain, on Camera's read** (at base, 4 tapped chases got 1 catch, as he lands first; at the top, a full B is the meteor, and its taps got no blow). **Not what I want at base. It's fine for the meteor, except that a tap must never go unanswered.**
+
+| | Ruling | First value |
+| :--- | :--- | :--- |
+| **At base** | **A chase's blow holds him up, whatever his energy.** A catch gives him at least a set time in the air before he lands. It's a hit's hang, not more energy: he still goes a short way, so it's a small fight in the air, and the planet doesn't open up | At least **40 ticks** in the air after each catch, unless it's B driving him down. Aim: 2 or 3 catches at base, 3 or 4 at the top, as ki allows |
+| **The meteor** | It's a chapter break, so **no chain from it, as ruled.** Chains belong to ordinary sends: a lit launcher at the top flies 4,950 and has plenty of air. **Camera re-reads the top on a lit launcher** | |
+| **A tap that reaches a landing** | **It's a blow, not just an arrival.** Your press lands as he gets up, as an ordinary blow he can guard, so Orb's follow-up always hits something. It replaces "for the first move", and it's the stand-in until the apex spike is built | As he rises, after his usual 0.35 s down |
+
+**The meteor's peak shot, with the fighter 3 to 4 pixels high at 720p: acceptable for that moment.** The picture is the planet and the trail. **The conditions:** under 6 pixels for no longer than about 2 s around the top, the trail unbroken and in frame, and the view back in before he lands, with the fighter easy to see in the last second. Orb's eye decides, from the clip.
+
+**Teaching it.** The game has no hint for this yet: I meant the line in Orb's first-play sheet, in the homework folder, which isn't in `ui/`. So it's a new panel line, in the small left panel, with the chase switch on: "Tap an attack to chase. It lands as you catch them." It shows after your own launch, for as long as a tap would chase, the first three times in a match. Then it stops until the next match. The sheet's line gains the same words.
+
+**On a keyboard, the beam's line names the keys:** "Hold the arrows: beam. Let go to fire", with the arrow glyph, or the bound keys if they've been changed. "Strike keys" is our word, not a player's.
 
 ### 5. Teaching the beam
 
