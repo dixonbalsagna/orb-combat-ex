@@ -1,7 +1,8 @@
 import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 const S = process.argv[2];
 const T = S + '/h/t8';
-const gd = 'C:/Users/itsha/Documents/Claude Proj/Breakers-Like/docs/perf/tools/swing-bench/gdrun.mjs';
+const gd = fileURLToPath(new URL('./gdrun.mjs', import.meta.url));   // next to this file: no project folder name is written here
 const cases = [];
 for (const run of [1, 2, 3]) for (const seed of [77, 5]) for (const planet of [7, 12, 21]) for (const sw of ['on', 'off']) cases.push({ planet, seed, sw, run });
 let i = 0;

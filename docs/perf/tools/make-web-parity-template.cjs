@@ -1,6 +1,6 @@
 // Writes ./web_parity_tpl.mjs, a scratch copy of sim/core/tools/web_parity.mjs (Simulation's) that reads WEB_TEMPLATE=<zip> and writes it into the scratch export's Web preset (the repo's preset is never changed); REPO is fixed to this checkout. Run it in a scratch folder. Owner: Performance and Platform.
 const fs=require('fs');
-const R='C:/Users/itsha/Documents/Claude Proj/Breakers-Like';
+const R=require('path').resolve(__dirname,'..','..','..').replace(/\\/g,'/');   // the repo root, from where this file sits (docs/perf/tools): no project folder name is written here
 let s=fs.readFileSync(R+'/sim/core/tools/web_parity.mjs','utf8');
 const a="const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');";
 if(!s.includes(a)) throw new Error('no REPO line');

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Builds the old-PC kit (Performance and Platform, 2026-11-01): ONE folder to copy to the old PC by USB stick, with ONE file to double-click in it (RUN-TEST.cmd).
-//   node docs/perf/oldpc/kit/build-kit.mjs --site <the web build folder with index.html> --out <new empty folder> [--build <name for the two-PC check, default: the tree's short commit>] [--tree <a project tree with sim/ and data/, default: the repo>] [--godot-dir <folder with Godot_v4.7.2-stable_win64.exe and its _console.exe>]
+//   node docs/perf/oldpc/kit/build-kit.mjs --site <the web build folder with index.html> [--out <new empty folder, default: <repo>/homework/Files/oldpc-kit-<build>>] [--build <name for the two-PC check, default: the tree's short commit>] [--tree <a project tree with sim/ and data/, default: the repo>] [--godot-dir <folder with Godot_v4.7.2-stable_win64.exe and its _console.exe>]
 // The folder holds: RUN-TEST.cmd (the batch file with PowerShell and the test page inside), game\ (the web build), project\ (sim/, data/, net/, project.godot, oldpc_sim.gd: no art, no audio; with net/tools/two_pc_check.gd in the tree, Netcode's two-PC check runs as part 1a),
 // godot\ (the two Godot executables, copied from this PC; the editor install, not a download), README.txt. Nothing is fetched from the network.
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -13,15 +13,14 @@ const REPO = resolve(HERE, '..', '..', '..', '..');
 const argv = process.argv.slice(2);
 const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
 const SITE = opt('--site') && resolve(opt('--site'));
-const OUT = opt('--out') && resolve(opt('--out'));
 const TREE = resolve(opt('--tree', REPO));
 const GODOT = resolve(opt('--godot-dir', 'C:/Users/itsha/AppData/Local/Programs/Godot/4.7.2'));
 let BUILD = opt('--build', '');
 if (!BUILD) { try { BUILD = execFileSync('git', ['-C', TREE, 'rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim(); } catch { BUILD = ''; } }
 if (!/^[A-Za-z0-9._-]+$/.test(BUILD)) { console.error('--build <name> is required (letters, digits, dot, dash, underscore): both PCs must run ONE kit, and the two-PC check refuses reports of different builds'); process.exit(2); }
+const OUT = resolve(opt('--out', join(REPO, 'homework', 'Files', `oldpc-kit-${BUILD}`)));   // default: homework/Files/oldpc-kit-<build> inside the repo folder (nothing of the project lives outside it)
 const die = (m) => { console.error(m); process.exit(2); };
 if (!SITE || !existsSync(join(SITE, 'index.html'))) die('--site <folder with the game\'s index.html> is required');
-if (!OUT) die('--out <new folder> is required');
 if (existsSync(OUT) && readdirSync(OUT).length) die(`${OUT} is not empty`);
 for (const d of ['sim', 'data', 'net']) if (!existsSync(join(TREE, d))) die(`${TREE} has no ${d}/`);
 if (!existsSync(join(TREE, 'project.godot'))) die(`${TREE} has no project.godot`);

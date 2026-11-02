@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 // Sets two result files of the old-PC kit side by side (Performance and Platform, 2026-11-01): the two-processor check and the speed ratio.
 //   node docs/perf/oldpc/kit/compare-results.mjs <result A.json> <result B.json>      (for example the main PC's and the old PC's; both from RUN-TEST.cmd)
+//   node docs/perf/oldpc/kit/compare-results.mjs --orb [--main <file>] [--project <kit>/project] [--root <repo>]   (Orb's file: the newest oldpc-result-*.json in homework/1 Urgent against the newest mainpc-result-*.json in homework/Files, with the newest homework/Files/oldpc-kit-*/project for Netcode's compare)
 //   node docs/perf/oldpc/kit/compare-results.mjs --selftest                           (proves the check can fail: a flipped hash is found at the right tick)
 // Exit 0 when every match's gameplay hashes agree tick for tick; 1 when any differ or the files do not hold the same cases.
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 const argv = process.argv.slice(2);
 const load = (p) => JSON.parse(readFileSync(p, 'utf8'));
 const med = (a) => { const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
@@ -42,6 +44,23 @@ export function compare(A, B) {
   return out;
 }
 
+// --orb: find the two files and the kit's project folder inside the repo folder (nothing of the project lives outside it)
+if (argv.includes('--orb')) {
+  const o = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
+  const root = resolve(o('--root', resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..')));
+  const newest = (dir, re, want = 'file') => { if (!existsSync(dir)) return null; const c = readdirSync(dir).filter((f) => re.test(f)).map((f) => join(dir, f)).filter((f) => (want === 'dir' ? statSync(f).isDirectory() : statSync(f).isFile())).sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs); return c[0] || null; };
+  const mine = o('--main', newest(join(root, 'homework', 'Files'), /^mainpc-result-.*\.json$/));
+  const orbs = o('--orb-file', newest(join(root, 'homework', '1 Urgent'), /^oldpc-result-.*\.json$/));
+  const kit = newest(join(root, 'homework', 'Files'), /^oldpc-kit-/, 'dir');
+  const proj = o('--project', kit ? join(kit, 'project') : '');
+  if (!mine || !orbs) { console.log(`--orb needs two files: the main PC's (${mine || 'none: homework/Files/mainpc-result-*.json'}) and Orb's (${orbs || 'none: homework/1 Urgent/oldpc-result-*.json'}); pass --main <file> and/or --orb-file <file>`); process.exit(2); }
+  argv.length = 0; argv.push(mine, orbs, '--project', proj);
+  if (o('--godot', '')) argv.push('--godot', o('--godot', ''));
+  console.log(`main PC: ${mine}
+Orb's:   ${orbs}
+project: ${proj}
+`);
+}
 if (argv[0] === '--selftest') {
   const mk = () => ({ cpu: 'x', when: 'now', sim: { godot: 'g', ticks: 600, every: 120, job_ms: 100, cases: [{ planet: 7, seed: 77, matches: [{ mean_us: 400, p99_us: 1200, max_us: 9000, over16ms: 0, new_ms: 1, final: 'abc', end: 'e', hashes: ['h1', 'h2', 'h3', 'h4', 'h5'] }] }] } });
   const a = mk(), b = mk();
