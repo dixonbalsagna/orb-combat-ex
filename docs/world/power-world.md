@@ -1,0 +1,31 @@
+# The power model, World's half (World, 2026-11-02)
+
+Game Design's `docs/design/power-scale.md` (Orb: "a physics based approach to power scaling ... a small crater or trench ... skyscrapers ... a city block ... a burning meteor trail") and Simulation's core (`docs/architecture/pending/power-core/`, `SimPower`, a match's `S.powerOn`). This is World's part, **parked on top of power-core and off with it** (`power.json` `enabled` false, or a setup's `power`): `docs/world/pending/power-world/`. With the switch off a match is byte for byte as it was (the parity gate, below).
+
+## What it does
+
+**1. Craters by energy** (`sim/world/crater.gd`). `impactEnergy(sp, tier, S)` is v squared (v = speed over 900) with **no tier term** when `S.powerOn`; the level is already in the speed. An impact's bowl is no longer held to the ordinary 600 (8 fighter heights): it is `160 x sqrt(E)` up to the largest bowl of all (8,320), depth 0.22 of that. A special blow keeps its nine times the energy (three times the radius). Off, both are as they were (`impactEnergy` with no `S` is the old formula; the cap stays 600). The three callers in `contact.gd` pass the match; the meteor's landing (`arc.gd`) and the apex spike (`brawl.gd`) are Encounter's two one-argument lines (`grant-encounter-energy.patch`).
+
+**2. What a body goes through, by mass** (`sim/world/brunt.gd`). A building takes its mass of the body's energy `E = (speed / 900)^2`: **house 1, low tower 5, tall tower 15** (Game Design's `absorb` in `power.json`; a tower is low under `brunt.json` `powerLowTowerMaxH`, 1,200 units). A body with at least that much goes through (a house collapses, a tower is punched through at the floors it covers) and keeps `sqrt((E - mass) / E)` of its speed; with less it is held, as a wall holds (a crack or a dent by how much of the mass it had). **No tier, link or punch table is read**: `chainCap` is the energy, not a count. The base send (E 4.94, 2,000 a second) goes through four houses and no tower of five; a maximum send (E 60.5) goes through four tall towers and is held by the fifth, its speed falling as it goes (Game Design's "four skyscrapers").
+
+**3. The ground: a crater or a trench, not a bounce** (`sim/world/contact.gd`). A send bounces off the terrain at most once (`power.json` `contact.maxTerrainBounces`, 1), the same at every tier (it was 1, 2, 3, 3), and at most three ground contacts before it tumbles to a stop (`contact.json` `power.maxContacts`, 3; water's skims keep their own limit). A steep landing is a slam with its crater and at most one small hop (as before); a shallow one skids and furrows, and the rest of the energy goes in the slide. This is Encounter's `ground-settle` in spirit, for the power model: that park (a `settle` switch for the old model) and this one do not conflict, they read different switches.
+
+**4. The block fall** is `docs/world/crater-collapse.md` (RL-232), unchanged: a big bowl levels what stands within 0.8 of its radius. With power on a tier-4 send of E 60 digs R 1,240, about one block and its two rows.
+
+## Measured (planet 7; this PC)
+
+`POWERWORLD` (`sim/world/tools/power_world_check.gd`) 0 failed: the switch is the match's; off, tier 4 at 900 a second is E 1.75 and an E-100 blow is held to 600; on, 900 is E 1, 2,700 is E 9 and E 100 digs 1,600; masses 1, 5 and 15; a base send goes through a house keeping 0.89; E 4.94 does not go through a low tower, E 6 does keeping 0.41; E 14 is held by a tall tower; a maximum send goes through four tall towers; chain cap 99 on, the tier's links off; bounces by tier off, one on, and no journey of eight shallow tier-4 sends bounces off the ground twice (off: 2, and 4 contacts against 3). `COLLAPSE` 0 failed. Simulation's `power_check` 0 failed and `two_states --setups=power` pass with it. **Parity (the golden) passes with the switch off**: nothing moves.
+
+**The planet's towers** (planets 7 and 12, everywhere on): houses 260 to 450 high (median 340, 74% of buildings), towers 675 to 4,875 (median about 1,600; a third under 1,200, 13% over 3,000). By my hit-point formula a house is about 130, a low tower 300 to 1,100, a tall one 1,800 to 3,900: **so 1 / 5 / 15 reads right for a low tower, and a skyscraper is 25 to 50 houses, more than 15.** The numbers are Game Design's and sit in their file; `powerLowTowerMaxH` is mine.
+
+## What is not done, or not mine
+
+- **`kitFields`** (the Protagonist's Driver level 2 `craterMul` 0.6; the Rival's `ignoresFirstAbsorb`): not read. They need the Driver's blow to say which kit it is at the dig and the pass; Encounter's `driver.gd` has it.
+- **`interior.gd` and `wrecks.gd`** (the chain inside a tower, thrown wrecks) still read the tier tables. The interior chain is off in the data (`interiorChain` 0); a wreck's speed is its own. Both stay on the old numbers under power until Game Design says what they should be.
+- **The lodge's last hit** (what is left of a send when its chain ends) and the splash on neighbours still use `tierFactor`; they are small and read the tier. A follow-up if the balance wants them in energy.
+- **The beam's groove and structure row, the burn's look** (`power.json` `beam` and `burn`): Combat's, VFX's and Rendering's.
+- **Not run:** native against web, `anim_check`, QA's civilian band with the fall on at tier 4 (RL-232), the flash clips and the look gate, a play with it on.
+
+## To land
+
+`power-core` and `field-place` beneath it; `crater-collapse` and `water-window-warm` are also in this stack (collapse is part of the block fall; the warm is the water spike). Then `power-world.diff` (my files) and `grant-encounter-energy.patch` (Encounter's two lines). `world-checks.json` gets two lines (`collapse_check`, `power_world_check`, and `water_warm_check`); hand-merge as before.

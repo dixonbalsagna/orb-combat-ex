@@ -1,0 +1,22 @@
+--- a/sim/director/arc.gd
++++ b/sim/director/arc.gd
+@@ -107,7 +107,7 @@
+ 	var by = f.launchBy
+ 	var tier: float = float(by.tier) if by != null else 4.0
+ 	var n: int = S.craters.size()
+-	WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(float(c.landSpeed), tier), by, "impact", 0.0, 1.0, false, f.z, PackedFloat64Array(), true)
++	WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(float(c.landSpeed), tier, S), by, "impact", 0.0, 1.0, false, f.z, PackedFloat64Array(), true)
+ 	f.hopped = true
+ 	if S.craters.size() > n:
+ 		_blast(S, f.x, f.z, float(S.craters[S.craters.size() - 1].r), by, c)
+--- a/sim/director/brawl.gd
++++ b/sim/director/brawl.gd
+@@ -1934,7 +1934,7 @@
+ 			if spk:
+ 				_ls(f, LA_POP_SPK, 0)
+ 				var by = SimRoster.opp(S, f)
+-				WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(float(popCfg().get("spike", {}).get("speed", 1800.0)), float(by.tier)), by, "impact", 0.0, 1.0, false)   # the spike's crater, under him
++				WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(float(popCfg().get("spike", {}).get("speed", 1800.0)), float(by.tier), S), by, "impact", 0.0, 1.0, false)   # the spike's crater, under him
+ 			if landedSet:
+ 				_ls(f, LA_POP_STUN, S.tick)
+ 			var le = _ev(S, f, "pop", "land")

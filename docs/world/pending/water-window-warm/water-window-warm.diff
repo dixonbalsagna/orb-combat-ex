@@ -1,0 +1,240 @@
+--- a/sim/world/water.gd
++++ b/sim/world/water.gd
+@@ -227,6 +227,14 @@
+ 					wet = false
+ 
+ 
++## The columns a new flow window reads a step before any water moves in it (data/biomes/water.json flowWarm.cols; 0, the default, is today: the window's whole span is read in its first step, 300 to 420 cold ground reads,
++## 19 to 27 ms on Orb's replay). With it on, a new window starts at a negative age: each step it reads `cols` more of its span (WorldTerrain.baseAt, which only warms the ground memo and changes no state) and no water moves
++## until the whole span is read, so the first flow starts ceil(span / cols) steps later (2 ticks a step) and no tick reads more than `cols` columns. docs/world/water-window-warm.md.
++static func warmCols() -> int:
++	var w: Variant = WorldFill.data().get("flowWarm", {})
++	return int(w.get("cols", 0)) if w is Dictionary else 0
++
++
+ ## Terrain changed around column c0 (half width cols) and the lowest ground there is minG: keep the reservoir
+ ## columns full, and open a flow window if any of it is below sea level.
+ static func touched(S: SimState, c0: int, cols: int, minG: float) -> void:
+@@ -268,7 +276,8 @@
+ 			w[1] = mini(MAX_HALF, maxi(w[1], dc + hw))
+ 			w[2] = 0
+ 			return
+-	S.waterWin.append([c0, hw, 0, 0])
++	var wc: int = warmCols()
++	S.waterWin.append([c0, hw, 0, -((2 * hw + wc) / wc) if wc > 0 else 0])   # flowWarm: a negative age is the steps left to read the span (the span, 2 hw + 1, over wc, rounded up)
+ 	if S.waterWin.size() > MAX_WINDOWS:
+ 		S.waterWin.remove_at(0)
+ 
+@@ -295,6 +304,7 @@
+ 	var base: PackedFloat32Array = S.base
+ 	var dfm: PackedFloat32Array = WorldTerrain.lowD(S)
+ 	var wat: PackedFloat32Array = S.water
++	var wc: int = maxi(warmCols(), 1)
+ 	var wi: int = 0
+ 	while wi < S.waterWin.size():
+ 		var w: Array = S.waterWin[wi]
+@@ -304,6 +314,11 @@
+ 			else:
+ 				wi += 1
+ 			continue
++		if int(w[3]) < 0:   # flowWarm: the span is read a chunk a step first, and no water moves in this window until it is read
++			_warmChunk(S, w, wc)
++			w[3] += 1
++			wi += 1
++			continue
+ 		var lo: int = w[0] - w[1]
+ 		var hi: int = w[0] + w[1]
+ 		var flux := PackedFloat32Array()
+@@ -366,3 +381,16 @@
+ 			S.waterWin.remove_at(wi)
+ 		else:
+ 			wi += 1
++
++
++## One step of a warming window (flowWarm): read the next `wc` columns of its span. Which columns are read never changes a result (a ground read is a pure function that only fills the memo), only when the window's flow
++## starts, which the age sets. The chunk is the one the steps left leave: the first step reads the first.
++static func _warmChunk(S: SimState, w: Array, wc: int) -> void:
++	var NC: int = SimConst.NC
++	var span: int = 2 * int(w[1]) + 1
++	var chunks: int = (span + wc - 1) / wc
++	var idx: int = clampi(chunks + int(w[3]), 0, chunks - 1)   # w[3] is minus the steps left: the last step reads the last chunk
++	var lo: int = int(w[0]) - int(w[1]) + idx * wc
++	var hi: int = mini(lo + wc, int(w[0]) + int(w[1]) + 1)
++	for j in range(lo, hi):
++		WorldTerrain.baseAt(S, posmod(j, NC))
+--- a/data/biomes/water.json
++++ b/data/biomes/water.json
+@@ -42,6 +42,7 @@
+     "ageMax": 400,
+     "settle": 3
+   },
++  "flowWarm": {"cols": 0},
+   "wade": {
+     "below": 75.0
+   },
+--- a/tools/schemas/biomes-water.schema.json
++++ b/tools/schemas/biomes-water.schema.json
+@@ -246,6 +246,15 @@
+         }
+       }
+     },
++    "flowWarm": {
++      "type": "object",
++      "required": ["cols"],
++      "additionalProperties": false,
++      "description": "A new flow window (WorldWater, not water v2's fill windows) reads its span this many columns a step before any water moves in it, so no tick reads a window's 300 to 420 cold columns at once (docs/world/water-window-warm.md). 0, the default and today, reads them all in the first step. With it on the first flow starts ceil(span / cols) steps (2 ticks each) later and every hash with a window moves. Optional.",
++      "properties": {
++        "cols": { "type": "integer", "minimum": 0, "maximum": 480 }
++      }
++    },
+     "floor": {
+       "type": "object",
+       "required": [
+--- a/tools/world-checks.json
++++ b/tools/world-checks.json
+@@ -7,6 +7,7 @@
+     "farsites_check", "field_check", "field_plan_check", "field_crater_check", "field_water_check", "field_lot_check", "everywhere_check", "far_people_check", "places_cache_check", "field_crack_check", "field_scorch_check", "field_trench_check", "field_cache_check", "planet_cache_check", "field_load_check", "field_records_check", "fill_check", "store_check", "fire_check", "gen2_state_check", "ground_check", "ground_props_check", "host_check", "interior_check", "isect_check", "lakes_check",
+     "land_check", "minecheck", "noise_check", "planet_check", "planet_world_check", "props_check", "repeat_check", "ringpick_check", "rivers_check", "sea_rules_check",
+     "sites_check", "skate_check", "stagecheck", "step_check", "surface_check", "through_check", "meteor_crater_check", "collapse_check", "surface_follow_check", "switchon_check", "wall_check", "wrecks_check",
++    "water_warm_check",
+     "floor_walk_probe"
+   ],
+   "leaveOut": {
+--- /dev/null
++++ b/sim/world/tools/water_warm_check.gd
+@@ -0,0 +1,135 @@
++extends SceneTree
++# A new flow window reads its span in chunks (World, sim/world/water.gd flowWarm, data/biomes/water.json flowWarm.cols; docs/world/water-window-warm.md): off (cols 0) a window starts at age 0 and reads all its span in its first step,
++# as it always did; on, it starts at minus the steps its span needs, no water moves in it until that is read, and then it flows as a window does; the same setup gives the same state twice. Prints the worst tick of each (informational).
++#   godot --headless --path . --script res://sim/world/tools/water_warm_check.gd -- [--cols=48]
++var fails: int = 0
++var COLS: int = 48
++
++
++func ok(cond: bool, what: String) -> void:
++	if cond:
++		print("  ok   ", what)
++	else:
++		fails += 1
++		print("  FAIL ", what)
++
++
++func _match(planet: int, touch: int) -> SimState:
++	WorldClimate.useGen(3)
++	WorldPlanet.forget()
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {}, {"intro": false, "planet": planet, "touch": touch, "planetGen": 3})
++	for i in range(30):
++		SimCore.step(S)
++	return S
++
++
++## A column of dry land within 60 columns of the sea (a coast): the centre of a dig that opens a flow window.
++func _coast(S: SimState) -> int:
++	var NC: int = SimConst.NC
++	for i in range(0, NC):
++		if WorldTerrain.baseAt(S, i) < WorldWater.RESERVOIR_BASE:
++			continue
++		var sea: bool = false
++		for k in range(1, 60):
++			if WorldTerrain.baseAt(S, posmod(i + k, NC)) < WorldWater.RESERVOIR_BASE:
++				sea = true
++				break
++		if sea and WorldTerrain.baseAt(S, i) < 400.0:
++			return i
++	return -1
++
++
++func _dig(S: SimState, c: int) -> void:
++	var x: float = (float(c) + 0.5) * SimConst.COL
++	WorldCrater.dig(S, x, 27.0, S.fighters[0], "impact", 0.0, 1.0, false, NAN, PackedFloat64Array(), true)   # a meteor-size bowl, a window of a few hundred columns
++
++
++func _flow_wins(S: SimState) -> Array:
++	var out: Array = []
++	for w in S.waterWin:
++		if w.size() <= 4:
++			out.append(w)
++	return out
++
++
++func _run(planet: int, touch: int, cols: int) -> Dictionary:
++	WorldFill.data()["flowWarm"] = {"cols": cols}
++	var S := _match(planet, touch)
++	var c: int = _coast(S)
++	if c < 0:
++		return {"coast": false}
++	_dig(S, c)
++	var wins: Array = _flow_wins(S)
++	var all_steps: int = 0
++	for w0 in wins:
++		all_steps += -int(w0[3])
++	var out := {"coast": true, "wins": wins.size(), "age0": int(wins[0][3]) if wins.size() > 0 else 0, "span": 2 * int(wins[0][1]) + 1 if wins.size() > 0 else 0, "all_steps": all_steps}
++	var worst: float = 0.0
++	var moved_early: bool = false
++	var water0: float = 0.0
++	for v in S.water:
++		water0 += v
++	var neg_ticks: int = 0
++	var t_flow: int = -1
++	var first120: Array = []
++	for t in range(1200):
++		var a: int = Time.get_ticks_usec()
++		SimCore.step(S)
++		var ms: float = float(Time.get_ticks_usec() - a) / 1000.0
++		worst = maxf(worst, ms)
++		if t < 120:
++			first120.append([ms, t])
++		var neg: bool = false
++		for w in _flow_wins(S):
++			if int(w[3]) < 0:
++				neg = true
++		for w2 in _flow_wins(S):
++			if int(w2[3]) >= 1 and t_flow < 0:
++				t_flow = t   # the first tick a window has taken a flow step
++		if neg:
++			neg_ticks += 1
++		if t == 30:
++			out["ticks_at_30"] = neg_ticks
++	var water1: float = 0.0
++	for v in S.water:
++		water1 += v
++	out["worst_ms"] = worst
++	out["neg_ticks"] = neg_ticks
++	out["t_flow"] = t_flow
++	first120.sort_custom(func(p, q): return p[0] > q[0])
++	out["top"] = "%.1f ms at tick %d, %.1f at %d, %.1f at %d" % [first120[0][0], first120[0][1], first120[1][0], first120[1][1], first120[2][0], first120[2][1]]
++	out["water0"] = water0
++	out["water1"] = water1
++	out["hash"] = str(SimHash.stateHash(S).gameplay)
++	return out
++
++
++func _init() -> void:
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--cols="):
++			COLS = int(a.substr(7))
++	var d: Dictionary = WorldFill.data()
++	ok(int(d.get("flowWarm", {}).get("cols", -1)) == 0, "off in the data as shipped (flowWarm.cols 0)")
++	var picks: Array = [[7, 1], [12, 1], [7, 2], [3, 1], [13, 1], [17, 1]]
++	var done: bool = false
++	for p in picks:
++		var off: Dictionary = _run(p[0], p[1], 0)
++		if not off.coast or int(off.wins) == 0:
++			continue
++		var on: Dictionary = _run(p[0], p[1], COLS)
++		var on2: Dictionary = _run(p[0], p[1], COLS)
++		ok(int(on.wins) >= 1 and int(off.age0) == 0, "planet %d touch %d: off, the dig's window (span %d) starts at age 0" % [p[0], p[1], int(off.span)])
++		var steps: int = (int(on.span) + COLS - 1) / COLS
++		ok(int(on.age0) == -steps and steps >= 2, "on (%d a step): the window starts at minus %d steps to read %d columns (%d)" % [COLS, steps, int(on.span), int(on.age0)])
++		ok(int(on.neg_ticks) > 0 and int(off.neg_ticks) == 0 and int(off.t_flow) >= 0 and absi(int(on.t_flow) - int(off.t_flow) - 2 * int(on.all_steps)) <= 2, "the first flow step comes %d ticks later (the %d window(s) need %d steps of 2); the off run never warms (%d)" % [int(on.t_flow) - int(off.t_flow), int(on.wins), int(on.all_steps), int(off.neg_ticks)])
++		ok(on.hash == on2.hash, "the same setup gives the same state twice")
++		ok(absf(float(on.water1) - float(off.water1)) <= 0.01 * maxf(1.0, absf(float(off.water1))), "after 1,200 ticks the water is the same (%.0f against %.0f)" % [float(on.water1), float(off.water1)])
++		print("  info worst tick over 1,200 after the dig: off %.1f ms, on %.1f ms (a shared PC, indicative)" % [float(off.worst_ms), float(on.worst_ms)])
++		print("  info the three worst ticks of the first 120 after the dig: off: %s; on: %s" % [off.top, on.top])
++		done = true
++		break
++	ok(done, "a coast with a window was found to test on")
++	WorldFill.data()["flowWarm"] = {"cols": 0}
++	print("WATERWARM: %d check(s) failed" % fails)
++	quit(0 if fails == 0 else 1)
