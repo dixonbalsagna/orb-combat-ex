@@ -72,7 +72,7 @@ The rule I would keep, from ADR 0012 and `world.md` section 14: **the expensive 
 | Piece | When it is made | Cost (source) | Fits? |
 | :--- | :--- | :--- | :--- |
 | **The blueprint** (plates, climate grid, flow routing, reasons) | once, in the planet load job, time-sliced | A is 1.8x today's cost a column; B 3.4x in noise, 4.3x in JS time (about 40 to 50 microseconds a column in GDScript, against today's 10); C needs a planet grid, 69 to 153 ms in JS and an estimated 1 to 5 s in GDScript (`planet-gen.md`). At 600 to 1,000 units a cell that is hundreds of KB | Yes, as a load phase. A canon planet (Everhold) can be **cached** so the load pays nothing |
-| **The ground nodes** (the 128 ground, the 512 bake) | once, in the load, by lookup after | The 512 bake is 34,656 nodes, 1.7 s native for today's ground (48 microseconds a node); a whole 128 bake is 458,400 nodes, 2.3 MB, 23 s on the web and 9 native **for today's ground**. **If B's cost a column is 4.3 times today's, my scaled estimate is about four times that:** the 512 bake would be 7 s native, a 128 bake 40 s native and about 100 s on the web. That is not a load | The 512 bake yes. The 128 ground **only if the blueprint carries the shape and the node read stays cheap** (below) |
+| **The ground nodes** (the 128 ground, the 512 bake) | once, in the load, by lookup after | The 512 bake is 34,656 nodes, 1.7 s native for today's ground (48 microseconds a node); a whole 128 bake is 458,400 nodes, 2.3 MB, 23 s on the web and 9 native **for today's ground**. **(Scaled estimate, superseded by section 8: B was measured at 1.5 times a node, not 4.3.) If B's cost a column is 4.3 times today's, my scaled estimate is about four times that:** the 512 bake would be 7 s native, a 128 bake 40 s native and about 100 s on the web. That is not a load | The 512 bake yes. The 128 ground **only if the blueprint carries the shape and the node read stays cheap** (below) |
 | **Edges: coasts, cliffs, rivers, lakes** | as records over the ground | Coast about 8,000 vertices, cliffs about 1,100, rivers a few thousand: 64 KB to a few hundred KB, no per-tick cost (`world.md` 14.2) | Yes. Records keep a coast, a cliff or a river exact at any density, which is the answer to "low detail" for edges |
 | **Places and landmarks** | with the blueprint, as data | Cheap: a record per place (hash by place id). A landmark is a building with a class | Yes |
 | **View detail** (denser reads, a cubic filter, planet-keyed micro relief, drawing records at full density) | per player, view only | `world.md` 14.4: no sim cost, a granular setting | Yes: this is how a weaker and a stronger machine share one planet |
@@ -172,3 +172,29 @@ Section 4 (sizes) is arithmetic from constants and earlier measures, not a run. 
 3. **Megastructures** (unpopulated machine structures, no people at the foot, never a place a fight is steered to): something you can never break, or something that falls in a catastrophe, in sections, at a joint? And should a fight ever happen *on* one?
 4. Do you want to **see one new planet's pictures first** (step 1 and 2 on seed 7 beside today's) before anything else is built?
 5. **World sizes:** are the six sizes (each twice the last round, medium today's) the ones you mean? On the biggest worlds, do you want the whole great circle always to be the fight's ring, even if that costs more netcode work, or is a long ring that the swing carries round the world enough? And should places keep today's spacing on big worlds (many more places, laid only where the fight can reach them)?
+
+## 8. Step 1, measured (2026-11-02; scratch only: nothing in the game or its data changed)
+
+The EP's order: port A and B to a coarse grid in scratch, measure the load and the node cost on this PC. **A (climate) is already the gen 2 planet every gen 3 match reads; B (plates) is built and shipped off (`land.json` `b.enabled`), and the 512-unit bake is already a coarse grid of the planet function**, so there was nothing to port: I measured what is there, with `WorldLand.setB` flipping B in a scratch process, on planets 7 and 12, cold (cache off), native, this PC at about half load, two runs each (the runs agree to a few per cent).
+
+| | B off (today) | B on |
+| :--- | ---: | ---: |
+| `newMatch`, cold planet (planet make, bake, ring, places) | 2.3 to 2.9 s | **4.5 to 5.2 s** |
+| the 512-unit bake (34,656 nodes) | 1.55 to 1.67 s (47 microseconds a node) | **2.35 to 2.46 s (68 a node)** |
+| one cold node, read at random on the planet | 85 to 93 microseconds | **133 to 140 microseconds** |
+| a coarse-grid read (bilinear from the bake, 4 nodes) | 0.8 to 1.2 microseconds | 0.9 to 1.0 |
+
+**The one number: B costs 1.5 times per node, not 4.3.** The scaled estimate in section 3 took Research's JS ratio (4.3 times); in GDScript on the field's node read it is 137 against 91 microseconds (and 68 against 47 on the bake's contiguous nodes). So **B's exact ground is affordable**: the 512 bake loads in 2.4 s (0.8 s more than today), the whole `newMatch` takes about 2 to 3 s more (the plates' make, the ring's 3,700 reads and the bake together), and a node read stays under 1.5 times today's, which meets step 1's own gate. A whole 128-unit canonical bake with B would be about 74 s native (543,606 nodes), still not a load, as before: the 128 ground stays "read on demand, 512 baked".
+
+**What the coarse grid does not do: it cannot stand in for B's node read.** The grid is 40 to 100 times cheaper to read (about 1 microsecond) but loses the relief; reading the planet's height at a 128-unit node by bilinear interpolation of a coarser grid, against the exact node (700 random nodes a case, root-mean-square error and the worst, in units; a fighter is 75):
+
+| grid spacing | today (B off): RMS / worst | B on: RMS / worst |
+| ---: | :--- | :--- |
+| 256 | 9.5 to 12 / 106 to 196 | 23 to 30 / 347 to 470 |
+| 512 (the bake) | 18 to 25 / 129 to 280 | **63 to 67 / 480 to 533** |
+| 1,024 | 43 to 45 / 281 to 321 | 169 to 189 / 1,635 to 2,482 |
+| 2,048 | 87 to 89 / 495 to 548 | 290 to 319 / 2,011 to 3,055 |
+
+B's ranges are sharp: at 512 the interpolated ground is 65 units off on average (about a fighter) and up to 530, **three times today's error**; to hold today's error with B the grid must be 256 (4 times the nodes: 138,624, about 9.4 s of bake at 68 microseconds). So the blueprint (section 2) should **carry the shape and the reasons (plates, ranges, coasts, rivers, places), not the heights**: the heights keep coming from the exact function at the nodes, with the 512 bake as the coarse level the forecasts read, as today. That settles the first fork of the plan: option 2's "move the shape onto a coarse grid read once" holds for the planning layers and fails for the ground itself.
+
+**What this does not measure:** the planet make's plates alone (46 ms by Research's measure; inside the newMatch difference), C (erosion and rivers: the flow field on the grid, 100 to 150 ms by `rivers.md`, not run here), the web (the sim's ground is slower there by 2 to 3 times in the earlier estimate, not measured), and the look (the pictures above are Research's; the sim's B on gen 3 has not been looked at here). The random-node cost (91 microseconds) is twice the contiguous one the node warm measured (41 to 49): a cold random node pays the planet function's table and cache misses.
