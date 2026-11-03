@@ -4,7 +4,7 @@ Written by the EP on 2026-11-03 at Orb's request. This is market research, not f
 
 ## The short answer
 
-**The most likely first month is about 100 to 250 copies, which is roughly $500 to $1,500 to you.** That assumes a paid release at $9.99 with a skeleton budget of about $500 and no publisher. A good run (about 1 in 3) is around 450 to 800 copies, or $2,000 to $4,000. A breakout (about 1 in 10) is 2,000 copies or more, $10,000 and up. That needs a clip of the planet-scale destruction going viral, which is this game's best shot.
+**The most likely first month is about 120 to 200 copies, which is roughly $600 to $1,000 to you.** That assumes a paid release at $9.99 with a skeleton budget of about $500 and no publisher. A good run (about 1 in 3) is around 450 to 750 copies, or $2,300 to $3,800. A breakout (about 1 in 10) is around 1,800 to 3,000 copies, $9,000 to $15,000. That needs a clip of the planet-scale destruction going viral, which is this game's best shot.
 
 The two biggest things that will move the number are things you control: **how many wishlists you have on launch day**, and **whether online versus is in at launch**.
 
