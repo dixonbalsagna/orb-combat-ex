@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Physics Packet</title>
+<style>
+  :root {
+    --bg:#f6f5f1; --panel:#ffffff; --ink:#1c1d22; --dim:#5d6070; --line:#dddbd3;
+    --a:#2f6f9f; --b:#c0503f; --gold:#b07a12; --ok:#2e7d4f; --warn:#a4462f;
+    --soil:#8a6a48; --sand:#cdb07a; --pave:#8d9097; --rock:#6d6a66; --ice:#bcd7e6; --sea:#3d78a8; --sky:#dfe8f0;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg:#121419; --panel:#1b1e26; --ink:#e8eaf0; --dim:#9aa1b2; --line:#2d3240;
+    --a:#6fb2e0; --b:#ee8a78; --gold:#e8be5a; --ok:#7fd3a0; --warn:#f09a84;
+    --soil:#8a6a48; --sand:#bfa36c; --pave:#7b7f87; --rock:#5d5a57; --ice:#9fc2d6; --sea:#2c5f8a; --sky:#1f2a38;
+  } }
+  :root[data-theme="dark"] {
+    --bg:#121419; --panel:#1b1e26; --ink:#e8eaf0; --dim:#9aa1b2; --line:#2d3240;
+    --a:#6fb2e0; --b:#ee8a78; --gold:#e8be5a; --ok:#7fd3a0; --warn:#f09a84;
+    --soil:#8a6a48; --sand:#bfa36c; --pave:#7b7f87; --rock:#5d5a57; --ice:#9fc2d6; --sea:#2c5f8a; --sky:#1f2a38;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 system-ui,Segoe UI,sans-serif; }
+  main { max-width:980px; margin:0 auto; padding:24px 16px 80px; }
+  h1 { font-size:28px; margin:0 0 6px; }
+  h2 { font-size:21px; margin:44px 0 8px; padding-top:12px; border-top:1px solid var(--line); }
+  h3 { font-size:17px; margin:22px 0 6px; }
+  p { margin:8px 0; }
+  .dim { color:var(--dim); }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin:12px 0; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:12px; }
+  .tag { display:inline-block; font-size:12px; padding:1px 7px; border-radius:20px; border:1px solid var(--line); color:var(--dim); margin-left:4px; vertical-align:middle; }
+  .tag.ok { color:var(--ok); border-color:var(--ok); } .tag.warn { color:var(--warn); border-color:var(--warn); } .tag.gold { color:var(--gold); border-color:var(--gold); }
+  table { width:100%; border-collapse:collapse; font-size:14px; margin:8px 0; }
+  th, td { border-bottom:1px solid var(--line); padding:7px 6px; text-align:left; vertical-align:top; }
+  th { font-weight:600; color:var(--dim); font-size:13px; }
+  .scroll { overflow-x:auto; }
+  canvas { width:100%; height:auto; display:block; background:var(--panel); border:1px solid var(--line); border-radius:8px; }
+  svg { width:100%; height:auto; display:block; }
+  .row { display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; margin:8px 0; font-size:14px; }
+  .row label { display:flex; gap:6px; align-items:center; }
+  input[type=range] { width:150px; }
+  button { font:inherit; font-size:14px; background:var(--panel); color:var(--ink); border:1px solid var(--line); border-radius:6px; padding:5px 11px; cursor:pointer; }
+  button.on { border-color:var(--a); color:var(--a); }
+  .out { font-size:14px; background:var(--bg); border-radius:6px; padding:8px 10px; margin-top:6px; }
+  .num { font-variant-numeric:tabular-nums; }
+  ol li, ul li { margin:4px 0; }
+  code { font:13px ui-monospace,Consolas,monospace; background:var(--bg); padding:1px 4px; border-radius:4px; }
+  pre { font:13px/1.45 ui-monospace,Consolas,monospace; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:10px 12px; overflow-x:auto; }
+  .find { border-left:3px solid var(--warn); }
+  .new { border-left:3px solid var(--gold); }
+  nav a { color:var(--a); text-decoration:none; margin-right:12px; font-size:14px; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Fights by physics: the packet</h1>
+<p class="dim">From your stand-in, 2026-11-02. It builds on the EP's first sketch (<code>docs/ep/proposals/physics-model.html</code>) and adds an audit of every system that moves a fighter or touches the world. It's design only: nothing is built, and every number is a first value. The diagrams below are toys that use the model's formulas, not the game.</p>
+
+<nav>
+  <a href="#model">1. The model</a><a href="#try">2. Try it</a><a href="#skim">3. Skims</a><a href="#trench">4. Trenches</a><a href="#camera">5. Camera</a><a href="#found">6. What the audit found</a><a href="#systems">7. Every system</a><a href="#new">8. New ideas</a><a href="#you">9. Your calls</a>
+</nav>
+
+<div class="card">
+  <strong>In one minute.</strong> Every hit has a damage number and a force number. Force over the target's weight gives a speed, and that speed decides everything else: a stagger, a knock-back, a launch, a burning trail, a meteor, and how big the crater, trench or skip is. Your two named features fit in cleanly. <strong>Skims</strong> become a body spending its force on each skip. <strong>Trenches</strong> become the force left at touch-down, spent against the ground's grip. The audit also turned up 15 things worth knowing. The biggest is that a hidden sideways speed boost of up to 6 times is behind much of the "too fast to read" problem, and it also breaks the skim rule. And in a small set of new ideas, the world takes the force a fight puts into it and hands it back.
+</div>
+
+<h2 id="model">1. The model, revised</h2>
+<p>The first sketch, with your answers from today folded in. Six rules:</p>
+
+<div class="grid">
+  <div class="card"><h3>1. Weight works both ways</h3><p>Everyone starts at 100 and gets heavier as they transform. A heavier body is harder to move <em>and</em> hits harder, so two equally transformed fighters cancel out. Heavier is slower to stop too: it takes longer to recover in the air and to brake out of a slide.</p></div>
+  <div class="card"><h3>2. The fight's shape stays, the scale grows</h3><p>Whether a hit staggers, knocks back or launches is judged against the defender's own power. Two maxed fighters brawl with the same rhythm as two at base. The burning trail and the meteor are fixed speeds, because the sky is the same for everyone.</p></div>
+  <div class="card"><h3>3. Force hurts where it can't move you</h3><p>Base damage is per attack. Extra damage comes only where force can't become movement: slamming into the ground or a building, being pinned, or blocking. It's not the fall that hurts, it's the sudden stop.</p></div>
+  <div class="card"><h3>4. You can see the force</h3><p>Your charge stages, 2 at base and up to 6 at max, are steps of force on the fighter's body. A player knows roughly what a release will do before letting go. That's the cure for "knockbacks feel arbitrary".</p></div>
+  <div class="card"><h3>5. A launch knows its whole flight</h3><p>At the hit, the game works out the path, the landing, the crater and the buildings crossed, and hands that plan to the camera, the choreographer, the effects and the world. The choreographer can bend the aim but never add force.</p></div>
+  <div class="card"><h3>6. Each planet, its own gravity</h3><p>A big throw should feel big on every world size, from tiny to COLOSSAL. All of it is the game's own maths, never Godot's physics engine, so both PCs on LAN always agree.</p></div>
+</div>
+
+<pre>attacker's force   = power energy × the attack's share × (attacker weight ÷ 100)
+speed of the hit   = 900 × √(force × 100 ÷ defender weight)
+outcome            = force ÷ the defender's own power   →  stagger · knock-back · launch
+burn and meteor    = by speed alone: glow from 4,500, burning from 6,000, meteor past the top line
+crater             = radius 160 × √(force at impact)
+damage             = the attack's own number + what was lost in a sudden stop</pre>
+
+<h2 id="try">2. Try it: one rule, every outcome</h2>
+<p>Pick who's hitting whom and how hard. The figure shows the outcome, the speed, the crater and the trench a shallow landing on soil would leave. Watch two maxed fighters: a light blow still only staggers, but a full B is a meteor.</p>
+<div class="card">
+  <div class="row">
+    <label>Attacker power <input id="aL" type="range" min="0" max="100" value="0"><span id="aLv" class="num"></span></label>
+    <label>Defender power <input id="dL" type="range" min="0" max="100" value="0"><span id="dLv" class="num"></span></label>
+  </div>
+  <div class="row">
+    <label>Attacker weight <input id="aW" type="range" min="100" max="150" value="100"><span id="aWv" class="num"></span></label>
+    <label>Defender weight <input id="dW" type="range" min="100" max="150" value="100"><span id="dWv" class="num"></span></label>
+  </div>
+  <div class="row" id="atk"></div>
+  <canvas id="ladder" width="940" height="250"></canvas>
+  <div class="out num" id="ladderOut"></div>
+</div>
+
+<h2 id="skim">3. The pebble skip</h2>
+<p><strong>You asked:</strong> "I don't want to lose the 'pebble skip' we have when fighters get knocked across the surface of a body of water". <strong>Today</strong> a launched body skims if it's going over 500 and comes in shallower than about 31°, up to 6 times. Each skim keeps 85% of its speed. <span class="dim">(<code>sim/world/contact.gd:566-599</code>, <code>data/biomes/contact.json</code>)</span></p>
+<p><strong>With physics</strong> each skip spends a slice of the body's force, roughly a quarter of it, and that slice goes into the water as spray. A skip needs speed over a sink line that rises with weight and gravity, so a heavy transformed body skips fewer times and flatter, and a light one skips more and higher. Ice is the same kind of surface with a break-through threshold.</p>
+<div class="card">
+  <div class="row">
+    <label>Speed <input id="sV" type="range" min="800" max="7000" value="2500" step="100"><span id="sVv" class="num"></span></label>
+    <label>Weight <input id="sW" type="range" min="100" max="150" value="100"><span id="sWv" class="num"></span></label>
+    <button id="sGo">Skip</button>
+  </div>
+  <canvas id="skimC" width="940" height="260"></canvas>
+  <div class="out num" id="skimOut"></div>
+</div>
+<div class="card find"><strong>Found:</strong> the skim test reads the on-screen sideways speed, which the hidden boost multiplies by up to 6, so nearly every sideways send counts as "shallow". Encounter's parked bounce fix would also cut skims from 6 to 3, because skims and ground bounces share one counter. <strong>My recommendation:</strong> skims get their own count, decided by force, and the boost goes.</div>
+
+<h2 id="trench">4. The trench</h2>
+<p><strong>You asked:</strong> "dragging their feet or hands along the ground to stay upright, which leaves a deep trench, shatters concrete, and kicks up massive clouds of dust". Your friend's words: "Love when they carve a trench". <strong>Today</strong> a slide brakes at a fixed rate times the ground's grip, plus a drag that grows with speed. The trench's width grows with the square root of the energy, and its depth with speed, capped at half a fighter height. <span class="dim">(<code>sim/world/slide.gd</code>, <code>contact.gd:1075-1089</code>)</span></p>
+<p><strong>With physics</strong> the force left at touch-down sets the trench's length, width and depth. The braking law the code already has stays, because it's good. The sketch's guess of "a quarter of the carry" can go. Each ground gets two numbers, hardness and grip:</p>
+<div class="card">
+  <div class="row" id="grounds"></div>
+  <div class="row">
+    <label>Speed at touch-down <input id="tV" type="range" min="600" max="5000" value="2000" step="100"><span id="tVv" class="num"></span></label>
+    <label>Weight <input id="tW" type="range" min="100" max="150" value="100"><span id="tWv" class="num"></span></label>
+    <button id="tGo">Slide</button>
+  </div>
+  <canvas id="trenchC" width="940" height="230"></canvas>
+  <div class="out num" id="trenchOut"></div>
+</div>
+<div class="card find"><strong>Found:</strong>
+  <ul>
+    <li><strong>At base, a knock-back never leaves a trench at all.</strong> Anything under 4 body heights is carried upright by the director, against your "a small crater or trench" at base.</li>
+    <li><strong>The trench is capped at 152 deep,</strong> about 2 body heights, while craters go much deeper, so "longer and wider trenches" at high power hit a ceiling.</li>
+    <li><strong>The trench's power term</strong> counts power twice once force carries it.</li>
+  </ul>
+All three are small fixes once force decides the trench.</div>
+
+<h2 id="camera">5. Readable at any speed</h2>
+<p>You like the speed, but the acceleration and sheer speed can make fights hard to read. The audit found why fighters get lost or tiny. Bodies cross the screen faster than the eye can follow, past about 1.9 screen widths a second (Camera's own research). When the camera zooms out to keep up, it shrinks fighters to 23 to 41 pixels. And the camera reacts after a body has moved, so it whips.</p>
+<p><strong>The fix is a published flight plan.</strong> The game knows the whole flight at the hit, so the camera can start easing out and frame the landing during the held moment of the hit, before the body moves. It leads instead of chasing. Below, the same launch is shown both ways:</p>
+<div class="card">
+  <div class="row"><button id="cGo">Play both</button><span class="dim">Left: today, the camera reacts. Right: the plan is known at the hit, so the camera is already there.</span></div>
+  <canvas id="camC" width="940" height="300"></canvas>
+</div>
+<div class="card">
+  <strong>The readability budget</strong>, which every launch is checked against:
+  <ul>
+    <li><strong>Speed cap on screen:</strong> a fighter never crosses the screen faster than the eye can follow. The camera eases out ahead of a fast launch to stay under it.</li>
+    <li><strong>Always see yourself:</strong> your own fighter is never out of your picture.</li>
+    <li><strong>Size floor:</strong> fighters never shrink to specks. Over empty sea or sky the wide shot doesn't open, and the trail carries the read.</li>
+    <li><strong>A held moment that grows with force:</strong> a short pause on the hit, longer for a bigger send. It gives the eye the start of the flight, and the camera its head start. Camera has asked for 14 to 18 ticks on a launch.</li>
+    <li><strong>Remove the hidden sideways boost:</strong> on-screen speeds fall from a median of about 10,800 to at most 14,000 at max and 4,000 at base. That alone takes most launches back inside what the camera can follow.</li>
+  </ul>
+</div>
+
+<h2 id="found">6. What the audit found</h2>
+<p>Four read-only reviewers went through the code, the docs and all of your vision, with a skeptic checking every claim against the files. These are the findings I think you'd most want to know, in plain words.</p>
+<div class="card find">
+<ol>
+  <li><strong>A hidden sideways boost of up to 6 times</strong> is applied to every launch, and 10 times to free flight far from the rival. Damage, craters and braking read the real speed, but the screen shows the boosted one. It's the single biggest cause of "too fast to read", and it breaks the skim test. <span class="dim">constants.gd:17</span></li>
+  <li><strong>More power means more bounces today,</strong> 1, 2, 3 and 3 by tier, the opposite of what you asked. A tumble's clock also restarts at each landing, so a rattle can run to the limit of 8 contacts, about the 6 or 7 you saw. <span class="dim">contact.json:21, contact.gd:747</span></li>
+  <li><strong>On main, the villain still gains power from civilian deaths</strong> (menace and power, every casualty he causes). That breaks pillar 5 as you approved it on October 31. It's known and queued, but not yet built. <span class="dim">sim/world/collateral.gd:351-356</span></li>
+  <li><strong>Base and max leave the same crater,</strong> because ordinary blows are capped at a radius of 600. <span class="dim">crater.gd</span></li>
+  <li><strong>A big clash is a dice roll weighted by tier,</strong> not a contest of force. <span class="dim">templates.json 698-710</span></li>
+  <li><strong>A guarded beam launches the blocker,</strong> at a fixed force, which contradicts your picture of a catch. <span class="dim">beam.gd 159</span></li>
+  <li><strong>Most beam struggles leave no mark,</strong> while you pictured the biggest crater at the meeting point. The fix is designed and Legal has read it (RL-246).</li>
+  <li><strong>The rule meant to make upper floors crush lower ones never fires,</strong> because it compares a count of floors with hit points. <span class="dim">brunt.gd:1041</span></li>
+  <li><strong>There are six separate flight predictors.</strong> The one the launch planner uses differs most from the real flight, so a chosen landing often isn't where they land. The camera's launch cue is built on it too. One flight plan fixes all of it.</li>
+  <li><strong>Gravity is written into at least ten places,</strong> and tripled after a body's first contact as a tuning shortcut. Per-planet gravity needs one number.</li>
+  <li><strong>There's no air recovery on main.</strong> The mid-air brake and its skid pose were built weeks ago and are switched off, so you've never had them in a build.</li>
+  <li><strong>Repeat launches break less, not more.</strong> A rule meant to stop repetition is squared into the energy, against your "the more destroyed it will be". It's off on main today.</li>
+  <li><strong>Several things have no weight yet.</strong> Thrown wrecks, cars and fighters use three mass scales that don't agree.</li>
+  <li><strong>An old camera paper for the space fight uses dissolves and cross-fades,</strong> which you rejected. It has to be rewritten before any of it is built. <span class="dim">exosphere.md</span></li>
+  <li><strong>The sketch's own table breaks three of your rulings.</strong> It has a flick knocking back at tier 3 (you ruled the stick never sends), a tapped B launching at tier 3 (you ruled a tap staggers), and lights knocking back at max. Rule 2 above fixes all three.</li>
+</ol>
+</div>
+
+<h2 id="systems">7. Every system, folded in</h2>
+<p>All the systems the audit found, including ones you may not remember asking for. "Today" is how it decides now. "With physics" is what changes.</p>
+<div class="scroll card" id="sysTable"></div>
+
+<h2 id="new">8. New ways fighters and the world interact</h2>
+<p>Ideas where the same rules make something happen that nobody scripted. A skeptic checked each one against your record, Legal's rulings and existing pitches. Two were cut as scripts in disguise, and one was already pitched by Game Design. Each says what still needs fixing.</p>
+<div id="ideas"></div>
+
+<h2 id="you">9. Your calls</h2>
+<p>Things only you can settle, smallest first:</p>
+<ol>
+  <li><strong>A big hit on a guard:</strong> should the blocker slide back and carve a trench? Your melee prototype said "a blocker is never knocked back". I think the slide is a great moment, and it fits the beam catch you asked for. It's your rule to change.</li>
+  <li><strong>An even mash:</strong> pure physics would cancel two equal hits to nothing, but you asked for "both thrown back, nobody wins". I'd keep yours: both are shoved back, and the cancelled force goes into the ground as a crater under them.</li>
+  <li><strong>The meteor:</strong> one ordinary launch past the top line, as you asked, rather than Game Design's separate authored curve. Today's curve does complete the arc. I'd keep its shape only as a fallback.</li>
+  <li><strong>Gravity by world size:</strong> do smaller worlds get stronger gravity so a big throw covers a similar share of the planet?</li>
+  <li><strong>Names:</strong> weight and force, from section 6 of my last note: heft or ballast, and clout.</li>
+</ol>
+
+<h3>When you say go: the order I'd suggest</h3>
+<ol>
+  <li>Land the parked energy model, Simulation's power core and World's power world, behind one switch.</li>
+  <li>One flight plan, replacing the six predictors, published at the hit.</li>
+  <li>Remove the hidden sideways boost.</li>
+  <li>Weight, the two kinds of threshold, and damage at the sudden stop.</li>
+  <li>Skims, trenches, bounces and craters spending force.</li>
+  <li>The camera's readability budget, checked by clips: for each row of the sketch's table, can you say what happened and where everyone ended up?</li>
+  <li>The new ideas, one at a time, each behind its own switch.</li>
+</ol>
+<p class="dim">Sources: the audit read sim/world (contact, slide, crater, brunt, interior, water, collateral), sim/director (launch, chase, arc, beam), data/biomes, docs/world, docs/design (power-scale, beam-answers-2, rule-of-cool-map), docs/camera and docs/legal, with line numbers in my notes. The EP's pointers filled in the parked work. Legal limits held to: RL-213 to RL-217, RL-222, RL-231, RL-232, RL-246 and the megastructure rulings RL-233 to RL-237.</p>
+
+</main>
+
+<script>
+"use strict";
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const C = () => ({ a:css('--a'), b:css('--b'), gold:css('--gold'), ink:css('--ink'), dim:css('--dim'), line:css('--line'), panel:css('--panel'), ok:css('--ok'), warn:css('--warn'),
+  soil:css('--soil'), sand:css('--sand'), pave:css('--pave'), rock:css('--rock'), ice:css('--ice'), sea:css('--sea'), sky:css('--sky') });
+const $ = id => document.getElementById(id);
+const fmt = n => Math.round(n).toLocaleString('en-US');
+
+// ---- The model's numbers (power-scale.md and physics-model.html)
+const E = lvl => 4.94 * Math.pow(12.25, lvl);
+const FOOT = 0.75, LIFT = 2.0, GLOW = 4500, BURN = 6000, SKY = 6490;
+const ATTACKS = [
+  { name:'X light', share:0.02 }, { name:'Stick flick', share:0.03 }, { name:'Y heavy', share:0.125 },
+  { name:'Chase catch', share:0.25 }, { name:'Lit launcher', share:0.5 }, { name:'Full B', share:1 }
+];
+let attack = 5;
+
+function outcome(aL, dL, aW, dW, share){
+  const force = E(aL) * share * (aW / 100);
+  const speed = 900 * Math.sqrt(force * 100 / dW);
+  const rel = force / (E(dL) / 4.94) * (100 / dW);
+  let kind = rel < FOOT ? 'stagger' : rel < LIFT ? 'knock-back' : 'launch';
+  let burn = '';
+  if (kind === 'launch') burn = speed >= SKY ? 'meteor' : speed >= BURN ? 'burning trail' : speed >= GLOW ? 'glow' : '';
+  const crater = kind === 'launch' ? 160 * Math.sqrt(force) : 0;
+  return { force, speed, rel, kind, burn, crater };
+}
+
+function slideLen(v, grip){ // the knockback slide's braking law: dv/dt = -(1200*grip + 1.2 v)
+  const a = 1200 * grip, k = 1.2;
+  return v / k - (a / (k * k)) * Math.log(1 + k * v / a);
+}
+
+// ---- 2. The ladder
+(function(){
+  const atk = $('atk');
+  ATTACKS.forEach((x, i) => { const b = document.createElement('button'); b.textContent = x.name; b.onclick = () => { attack = i; draw(); }; atk.appendChild(b); });
+  ['aL','dL','aW','dW'].forEach(id => $(id).oninput = draw);
+  const cv = $('ladder'), g = cv.getContext('2d');
+  function draw(){
+    const k = C();
+    [...atk.children].forEach((b, i) => b.classList.toggle('on', i === attack));
+    const aL = $('aL').value / 100, dL = $('dL').value / 100, aW = +$('aW').value, dW = +$('dW').value;
+    $('aLv').textContent = aL === 0 ? 'base' : aL === 1 ? 'max' : Math.round(aL * 100) + '%';
+    $('dLv').textContent = dL === 0 ? 'base' : dL === 1 ? 'max' : Math.round(dL * 100) + '%';
+    $('aWv').textContent = aW; $('dWv').textContent = dW;
+    const o = outcome(aL, dL, aW, dW, ATTACKS[attack].share);
+    g.clearRect(0, 0, cv.width, cv.height);
+    // The outcome scale: force relative to the defender
+    const x0 = 40, x1 = cv.width - 40, y = 70;
+    const lx = r => x0 + (x1 - x0) * Math.min(1, Math.log10(1 + r * 4) / Math.log10(1 + 40));
+    const bands = [[0, FOOT, 'stagger', k.dim], [FOOT, LIFT, 'knock-back', k.a], [LIFT, 10, 'launch', k.b]];
+    g.font = '13px system-ui'; g.textAlign = 'center';
+    bands.forEach(([s, e, t, c]) => { g.fillStyle = c; g.globalAlpha = 0.18; g.fillRect(lx(s), y - 18, lx(e) - lx(s), 36); g.globalAlpha = 1; g.fillStyle = c; g.fillText(t, (lx(s) + lx(e)) / 2, y - 26); });
+    g.fillStyle = k.ink; g.textAlign = 'left'; g.fillText('Outcome: judged against the defender\'s own power', x0, 20);
+    const px = lx(o.rel);
+    g.fillStyle = k.ink; g.beginPath(); g.moveTo(px, y - 22); g.lineTo(px - 8, y - 34); g.lineTo(px + 8, y - 34); g.fill();
+    g.fillRect(px - 1.5, y - 18, 3, 36);
+    // The speed scale: absolute, the sky's lines
+    const y2 = 170, sx = v => x0 + (x1 - x0) * Math.min(1, v / 8000);
+    g.fillText('Speed: the same lines for everyone', x0, 128);
+    g.fillStyle = k.line; g.fillRect(x0, y2 - 4, x1 - x0, 8);
+    [[GLOW, 'glow'], [BURN, 'burning'], [SKY, 'meteor']].forEach(([v, t]) => { g.fillStyle = k.gold; g.fillRect(sx(v) - 1, y2 - 14, 2, 28); g.textAlign = 'center'; g.fillText(t, sx(v), y2 + 30); });
+    g.fillStyle = o.kind === 'launch' ? k.b : o.kind === 'knock-back' ? k.a : k.dim;
+    g.beginPath(); g.arc(sx(o.speed), y2, 9, 0, 7); g.fill();
+    g.textAlign = 'left'; g.fillStyle = k.dim;
+    for (let v = 0; v <= 8000; v += 2000) { g.fillText(fmt(v), sx(v) - 10, y2 + 52); }
+    const shallow = o.kind === 'launch' ? slideLen(o.speed * 0.6, 1.3) * (dW / 100) : 0;
+    $('ladderOut').innerHTML = `<strong>${ATTACKS[attack].name}: ${o.kind}${o.burn ? ', ' + o.burn : ''}.</strong> Force ${o.force.toFixed(2)}${o.kind === 'stagger' ? '' : ', ' + fmt(o.speed) + ' a second'}. ` +
+      (o.kind === 'launch' ? `Crater radius about ${fmt(o.crater)}. Landing shallow on soil, a trench about ${fmt(shallow)} long.` : o.kind === 'knock-back' ? 'A short slide, and the brawl breaks for a moment.' : 'The brawl carries on.');
+  }
+  draw();
+})();
+
+// ---- 3. Skim animation
+(function(){
+  const cv = $('skimC'), g = cv.getContext('2d');
+  const sea = 170; let anim = null;
+  function plan(v0, w){
+    const sink = 500 * Math.sqrt(w / 100);
+    const pts = []; let x = 40, vx = v0 * Math.cos(0.38), vy = v0 * 0.25, skips = 0;
+    const scale = 0.06;
+    while (skips < 9 && vx > sink) {
+      const t = 2 * vy / 1000; const dx = vx * t * scale;
+      pts.push({ x0:x, x1:x + dx, h:vy * vy / 2000 * scale * 1.6, lost:0.5 * w / 100 * (vx * vx) * (1 - 0.85 * 0.85) / 810000 });
+      x += dx; vx *= 0.85; vy *= 0.65 * Math.sqrt(100 / w); skips++;
+      if (x > cv.width - 60) break;
+    }
+    return { pts, end:x, sink, skips };
+  }
+  function draw(t){
+    const k = C(), v0 = +$('sV').value, w = +$('sW').value;
+    $('sVv').textContent = fmt(v0); $('sWv').textContent = w;
+    const p = plan(v0, w);
+    g.clearRect(0, 0, cv.width, cv.height);
+    g.fillStyle = k.sky; g.fillRect(0, 0, cv.width, sea);
+    g.fillStyle = k.sea; g.fillRect(0, sea, cv.width, cv.height - sea);
+    let total = 0; p.pts.forEach(s => total += s.x1 - s.x0);
+    let walked = t === null ? Infinity : t * (total + 80) ;
+    let bx = 40, by = sea;
+    for (const s of p.pts) {
+      const len = s.x1 - s.x0;
+      const done = Math.min(1, Math.max(0, walked / len));
+      // the arc so far
+      g.strokeStyle = k.dim; g.setLineDash([4, 4]); g.lineWidth = 1.5; g.beginPath();
+      for (let u = 0; u <= done; u += 0.02) { const xx = s.x0 + len * u, yy = sea - 4 * s.h * u * (1 - u); u === 0 ? g.moveTo(xx, yy) : g.lineTo(xx, yy); }
+      g.stroke(); g.setLineDash([]);
+      if (done > 0) { bx = s.x0 + len * done; by = sea - 4 * s.h * done * (1 - done); }
+      if (done >= 1) {
+        // spray where it touched down, sized by the force lost
+        const hgt = Math.min(110, 30 * Math.sqrt(s.lost));
+        g.strokeStyle = k.ice; g.lineWidth = 2;
+        for (let i = -3; i <= 3; i++) { g.beginPath(); g.moveTo(s.x1, sea); g.lineTo(s.x1 + i * 4, sea - hgt * (1 - Math.abs(i) / 5)); g.stroke(); }
+      }
+      walked -= len;
+      if (walked < 0) break;
+    }
+    if (walked >= 0 && t !== null) { bx = p.end + Math.min(40, walked); by = sea + Math.min(18, walked * 0.5); }
+    g.fillStyle = k.b; g.beginPath(); g.arc(bx, by - 6, 7 * Math.sqrt(w / 100), 0, 7); g.fill();
+    $('skimOut').textContent = `${p.skips} skips before it sinks (today's limit is a flat 6; here the count comes out of speed and weight). Sink line for this weight: ${fmt(p.sink)} a second. Each skip keeps 85% of the speed, so about a quarter of the force goes into the spray, and the walls shrink.`;
+  }
+  function play(){ const t0 = performance.now(); cancelAnimationFrame(anim); const step = now => { const t = Math.min(1, (now - t0) / 2600); draw(t); if (t < 1) anim = requestAnimationFrame(step); }; anim = requestAnimationFrame(step); }
+  $('sGo').onclick = play; $('sV').oninput = () => draw(null); $('sW').oninput = () => draw(null);
+  draw(null);
+})();
+
+// ---- 4. Trench animation
+(function(){
+  const G = [
+    { key:'soil', name:'Soil', grip:1.3, hard:0.4, push:0.3 }, { key:'sand', name:'Sand', grip:1.3, hard:0.2, push:0.8 },
+    { key:'pave', name:'Paving', grip:0.8, hard:0.8, push:0 }, { key:'rock', name:'Rock', grip:0.8, hard:1.0, push:0 },
+    { key:'ice', name:'Sea ice', grip:0.25, hard:0.9, push:0 }
+  ];
+  let gi = 0, anim = null;
+  const row = $('grounds');
+  G.forEach((x, i) => { const b = document.createElement('button'); b.textContent = x.name; b.onclick = () => { gi = i; draw(null); }; row.appendChild(b); });
+  const cv = $('trenchC'), g = cv.getContext('2d');
+  function info(){
+    const v = +$('tV').value, w = +$('tW').value, s = G[gi];
+    const len = slideLen(v, s.grip) * (w / 100) ** 0.5;
+    const force = (w / 100) * (v / 900) ** 2;
+    const width = 30 * Math.sqrt(force) * (1 - s.hard * 0.5);
+    const depth = Math.min(60, (4 + 0.008 * v) * (w / 100) * (1 - s.hard * 0.8));
+    const iceCut = s.key === 'ice' && force > 6;
+    return { v, w, s, len, force, width, depth, iceCut };
+  }
+  function draw(t){
+    const k = C(), I = info();
+    [...row.children].forEach((b, i) => b.classList.toggle('on', i === gi));
+    $('tVv').textContent = fmt(I.v); $('tWv').textContent = I.w;
+    g.clearRect(0, 0, cv.width, cv.height);
+    const top = 90, x0 = 40, maxLen = 4200, sx = d => x0 + (cv.width - 80) * Math.min(1, d / maxLen);
+    g.fillStyle = k.sky; g.fillRect(0, 0, cv.width, top);
+    g.fillStyle = k[I.s.key]; g.fillRect(0, top, cv.width, cv.height - top);
+    const p = t === null ? 1 : t;
+    const ease = 1 - Math.pow(1 - p, 2.2);
+    const end = sx(I.len * ease);
+    // trench seen from above, below the side view
+    const midY = top + 70;
+    const showTrench = !(I.s.key === 'ice' && !I.iceCut);
+    if (showTrench) {
+      g.fillStyle = I.iceCut ? k.sea : 'rgba(0,0,0,0.35)';
+      g.beginPath(); g.moveTo(x0, midY);
+      for (let x = x0; x <= end; x += 4) { const u = (x - x0) / Math.max(1, sx(I.len) - x0); g.lineTo(x, midY - I.width * (1 - u * 0.6) / 2); }
+      for (let x = end; x >= x0; x -= 4) { const u = (x - x0) / Math.max(1, sx(I.len) - x0); g.lineTo(x, midY + I.width * (1 - u * 0.6) / 2); }
+      g.closePath(); g.fill();
+    } else {
+      g.strokeStyle = 'rgba(255,255,255,0.7)'; g.setLineDash([2, 6]); g.beginPath(); g.moveTo(x0, midY); g.lineTo(end, midY); g.stroke(); g.setLineDash([]);
+    }
+    if (I.s.key === 'pave') { g.strokeStyle = 'rgba(0,0,0,0.5)'; g.lineWidth = 1; for (let x = x0 + 20; x < end; x += 37) { g.beginPath(); g.moveTo(x, midY); g.lineTo(x + 14, midY - 26); g.lineTo(x + 22, midY - 34); g.moveTo(x, midY); g.lineTo(x + 9, midY + 30); g.stroke(); } }
+    if (I.s.key === 'rock' && t !== null && t < 1) { g.fillStyle = k.gold; for (let i = 0; i < 8; i++) { g.fillRect(end - 6 - i * 5, top - 4 - (i % 3) * 5, 3, 3); } }
+    if (I.s.push > 0) { const bh = Math.min(48, I.s.push * Math.sqrt(I.force) * 9 * ease); g.fillStyle = k[I.s.key]; g.strokeStyle = 'rgba(0,0,0,0.35)'; g.beginPath(); g.moveTo(end + 4, top); g.quadraticCurveTo(end + 22, top - bh, end + 44, top); g.fill(); g.stroke(); }
+    // the fighter, side view
+    g.fillStyle = k.b; g.fillRect(end - 6, top - 30, 12, 30);
+    g.fillStyle = k.dim; g.font = '13px system-ui'; g.textAlign = 'left';
+    g.fillText('Side view above the line, trench from above below it', x0, 20);
+    let msg = `${I.s.name}: slides about ${fmt(I.len)} units, a trench about ${fmt(I.width * 9)} wide and ${fmt(I.depth * 2.4)} deep.`;
+    if (I.s.key === 'pave') msg += ' Paving shatters into long cracks with a shallow dig.';
+    if (I.s.key === 'sand') msg += ' Soft ground piles a berm ahead of the feet. A fast slide rides up it and jumps, and a slow one buries itself in it.';
+    if (I.s.key === 'rock') msg += ' Rock grinds and throws sparks, with almost no dig.';
+    if (I.s.key === 'ice') msg += I.iceCut ? ' Enough force to cut the floe: it splits to the sea behind him.' : ' Too little force to cut the floe: he skates across and leaves no scratch.';
+    $('trenchOut').textContent = msg;
+  }
+  function play(){ const t0 = performance.now(); cancelAnimationFrame(anim); const step = now => { const t = Math.min(1, (now - t0) / 2000); draw(t); if (t < 1) anim = requestAnimationFrame(step); }; anim = requestAnimationFrame(step); }
+  $('tGo').onclick = play; $('tV').oninput = () => draw(null); $('tW').oninput = () => draw(null);
+  draw(null);
+})();
+
+// ---- 5. Camera: reacting against leading
+(function(){
+  const cv = $('camC'), g = cv.getContext('2d'); let anim = null;
+  const W = cv.width / 2 - 10, H = cv.height;
+  const path = u => ({ x: 60 + u * 1400, y: 220 - Math.sin(Math.PI * u) * 150 });
+  function panel(ox, t, leading){
+    const k = C();
+    g.save(); g.beginPath(); g.rect(ox, 0, W, H); g.clip();
+    g.fillStyle = k.sky; g.fillRect(ox, 0, W, H);
+    const hit = 0.12, fly = Math.max(0, (t - hit) / (1 - hit));
+    const u = Math.min(1, fly), body = path(u);
+    let cam;
+    if (leading) {
+      const z = t < hit ? 1 - 0.55 * (t / hit) : 0.45 + 0.1 * Math.max(0, (u - 0.85) / 0.15);
+      const cx = t < hit ? 60 + (700 - 60) * (t / hit) * 0.9 : 60 + 0.9 * 640 + (path(Math.min(1, u)).x - (60 + 0.9 * 640)) * 0.25;
+      cam = { x: cx, y: 160, z };
+    } else {
+      cam = panel.prev || { x: 60, y: 200, z: 1 };
+      const lag = 0.12; cam = { x: cam.x + (body.x - cam.x) * lag, y: cam.y + (body.y - cam.y) * lag, z: cam.z + ((u > 0 && u < 1 ? 0.7 : 1) - cam.z) * 0.08 };
+      panel.prev = cam;
+    }
+    const tx = X => ox + W / 2 + (X - cam.x) * cam.z, ty = Y => H / 2 + (Y - cam.y) * cam.z;
+    g.fillStyle = k.soil; g.fillRect(ox, ty(230), W, H);
+    if (leading) { g.strokeStyle = k.gold; g.setLineDash([5, 6]); g.lineWidth = 1.5; g.beginPath(); for (let s = 0; s <= 1; s += 0.02) { const p = path(s); s === 0 ? g.moveTo(tx(p.x), ty(p.y)) : g.lineTo(tx(p.x), ty(p.y)); } g.stroke(); g.setLineDash([]); }
+    g.fillStyle = k.a; g.fillRect(tx(60) - 5, ty(220) - 16, 10, 16);
+    const onScreen = tx(body.x) > ox && tx(body.x) < ox + W;
+    g.fillStyle = k.b; g.beginPath(); g.arc(tx(body.x), ty(body.y) - 8, Math.max(3, 7 * cam.z), 0, 7); g.fill();
+    g.restore();
+    g.fillStyle = k.ink; g.font = '13px system-ui'; g.textAlign = 'left';
+    g.fillText(leading ? 'Plan known at the hit: the camera leads' : 'Today: the camera reacts', ox + 10, 20);
+    if (!leading && !onScreen && t > 0.15 && t < 0.98) { g.fillStyle = k.warn; g.fillText('Lost him', ox + 10, 40); }
+  }
+  function draw(t){ g.clearRect(0, 0, cv.width, cv.height); panel(0, t, false); panel(cv.width / 2 + 10, t, true); }
+  function play(){ panel.prev = null; const t0 = performance.now(); cancelAnimationFrame(anim); const step = now => { const t = Math.min(1, (now - t0) / 3200); draw(t); if (t < 1) anim = requestAnimationFrame(step); }; anim = requestAnimationFrame(step); }
+  $('cGo').onclick = play;
+  panel.prev = null; draw(0);
+})();
+
+// ---- 7. Systems table
+(function(){
+  const S = [
+    ['Ground and water', 'Pebble skip', 'On', 'Over 500, shallower than about 31°, up to 6, each keeps 85% of speed', 'Each skip spends force; heavier bodies skip fewer; its own counter', 'Reads the boosted speed; a parked fix would cut skims to 3'],
+    ['Ground and water', 'Trench from a slide', 'On', 'Fixed braking times grip; width from energy; depth capped', 'Force at touch-down sets length, width and depth; berms on soft ground', 'No trench at base; capped at 152 deep'],
+    ['Ground and water', 'Bounces', 'On', '1, 2, 3, 3 bounces by tier, up to 8 contacts', 'Only force the ground can\'t absorb comes back, on hard ground', 'More power means more bounces, opposite of your ask'],
+    ['Ground and water', 'Craters and rims', 'On', 'One energy number, capped at 600 for ordinary blows', 'Radius from force at impact; rims take a share; no cap', 'Base and max leave the same crater'],
+    ['Ground and water', 'Buried in a big crater, free follow-up', 'On', 'Bowl deeper than 1.75 body heights holds him 60 ticks', 'Comes from crater depth, so it appears from tier 3 up', 'Almost unreachable today'],
+    ['Ground and water', 'Water filling holes', 'Off on main, on in your build', 'Fills when dug deep near the sea', 'Kept cosmetic; warmed along the flight plan', 'The first fill costs 19 to 27 ms; fixes parked'],
+    ['Ground and water', 'Ground materials', 'Partly', 'Paving cracks; brakes differ; crater shapes off', 'Each material gets hardness and grip', ''],
+    ['Ground and water', 'Powering up on the ground', 'On', 'Digs a crater by tier', 'Releases force outward: pushes debris and a close rival', 'Needs Legal\'s power-up limits re-read'],
+    ['Buildings', 'Through several skyscrapers', 'On', 'Damage from speed times a tier factor', 'Each building takes force out of him; he goes on with what\'s left', 'Units disagree on a tower\'s cost'],
+    ['Buildings', 'Wall slam and lodged fighter', 'On', 'Damage twice over, rebound at a quarter speed', 'The sudden stop: force left is the damage', 'Stops the whole fight for every lodge'],
+    ['Buildings', 'Floor, ceiling, floor inside a tower', 'Built, off', 'Which slabs break is a tier step', 'Each slab costs force; he breaks it or bounces', 'Only the first building of a flight can start it'],
+    ['Buildings', 'Collapse and pancaking', 'On', 'Falls at zero hit points; pancake rule', 'Floors above fall the gap and break what they can', 'The pancake rule never fires'],
+    ['Buildings', 'A city block into the crater', 'Parked', 'A crater only digs', 'What stands in a big enough bowl falls in', 'Needs the 600 cap gone'],
+    ['Buildings', 'Rubble heaps', 'On', 'Height from the building\'s height', 'Heap has mass: a ramp, or ground you tumble on', ''],
+    ['Buildings', 'Megastructures', 'Concept art', 'Not in the game', 'Sections with big force costs and joints', 'Legal: no picker may steer toward them'],
+    ['Flight and air', 'Launch speeds', 'On', 'Fixed forces, tier multiplier, sideways boost of 6', 'Force over weight only; the planner picks aim, not speed', 'Planner\'s forecast differs from the real flight'],
+    ['Flight and air', 'Knock-back', 'On', 'Distance by striker\'s tier only', 'The middle band between footing and liftoff', 'Ignores the blow: "arbitrary"'],
+    ['Flight and air', 'Air recovery and the mid-air skid', 'Built, off', 'None on main', 'Act again once under your own liftoff speed; brake to get there sooner', 'You\'ve never had it'],
+    ['Flight and air', 'High launches stall at the top', 'On', 'Fixed drag', 'Drag by speed and weight; planet\'s gravity', 'Moves every launch\'s carry'],
+    ['Flight and air', 'The meteor', 'Built, off', 'An authored curve that completes', 'An ordinary launch past the top line', 'Three rulings disagree'],
+    ['Flight and air', 'Chase after a launch', 'Off on main, on in your build', 'Re-aims and re-predicts every tick; fixed 1,600 send', 'One intercept on the known path; the catch adds force as an arrow', 'The 40-tick hang reads as floating'],
+    ['Flight and air', 'Rally around the planet', 'Built, off', 'Variety scoring picks links', 'Links only re-aim; reach comes from force', 'Picks places it can\'t reach at base'],
+    ['Flight and air', 'Ragdoll with visible weight', 'On', 'Weight by launch speed, view only', 'Pass it weight and force: heavy flails less', 'No weight to show until fighters differ'],
+    ['Clashes and beams', 'Heavy clash', 'On', 'A dice roll weighted by tier', 'Forces meet: the difference sends, the rest digs', ''],
+    ['Clashes and beams', 'Even mash, both thrown back', 'On', 'Fixed 6 body heights both ways', 'Both shoved; the cancelled force digs under them', 'Your call: section 9'],
+    ['Clashes and beams', 'Beam hit', 'On', 'Fixed force; a guarded beam launches the blocker', 'Beam\'s force over weight; a guard becomes the slide or the catch', 'Contradicts your catch'],
+    ['Clashes and beams', 'Beam struggle crater', 'Built, off', 'Most struggles leave no mark', 'Force builds at the meeting point; close fights dig most', 'Legal read it: RL-246'],
+    ['Clashes and beams', 'Beam catch', 'Designed', 'Not built', 'Force against footing: crater from above, trench on the level', ''],
+    ['Clashes and beams', 'Blasts, deflects and mines', 'On', 'Fixed knock-backs', 'Each shot carries force; mines push by distance', 'Keep the deflect\'s landing a surprise'],
+    ['Clashes and beams', 'Grab throws and the tackle', 'Partly off', 'Throws set his height in one tick', 'A throw is a launch in the stick\'s direction; a tackle carries both', 'The one-tick move reads as a stutter'],
+    ['World reacting', 'Fire', 'Built, off', 'A fixed chance per tree', 'Heat reaching a tree against its resistance', ''],
+    ['World reacting', 'Smoke, landslides, quakes', 'Designed', 'Not in the game', 'From the force put into the ground', 'Casualty sources: Legal'],
+    ['World reacting', 'Rubble rises, windows blow, clouds part', 'On (clouds off)', 'By tier', 'By the force he carries', ''],
+    ['World reacting', 'Ash that darkens the planet', 'Built, unused', 'Waits for top tier', 'From the biggest blasts\' force', ''],
+    ['World reacting', 'Damage that stays across a run', 'Built, off', 'Marks stored per place', 'Weakened buildings break with less force', ''],
+    ['World reacting', 'Repeat launches break more', 'Off', 'Squared into the energy', 'The building remembers its damage instead', 'Today it would break less'],
+    ['Camera', 'Following a launch', 'On', 'Reacts after the body moves; zooms to keep up', 'Leads from the plan; speed cap; size floor', 'Too fast for the eye; specks of 23 to 41 px'],
+    ['Camera', 'Meteor\'s peak shot', 'Parked', 'Opens to the planet\'s curve', 'Times its widest moment to the plan\'s peak', 'Trail thins to a pixel'],
+    ['Camera', 'Space fight paper', 'Paper', 'Uses dissolves', 'Must be rewritten without them', 'You rejected dissolves'],
+  ];
+  let h = '<table><tr><th>Group</th><th>System</th><th>State</th><th>Today</th><th>With physics</th><th>Found</th></tr>';
+  for (const r of S) h += `<tr><td class="dim">${r[0]}</td><td><strong>${r[1]}</strong></td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[5] ? '<span style="color:var(--warn)">' + r[5] + '</span>' : ''}</td></tr>`;
+  $('sysTable').innerHTML = h + '</table>';
+})();
+
+// ---- 8. Ideas, each with a small picture
+(function(){
+  const I = [
+    { name:'The berm that grows', size:'small', ok:'holds', pic:'berm',
+      see:'In sand, snow or mud, a slide shoves a growing wave of ground ahead of the feet. A fast slide rides up its own wave and is thrown into the air off it, so a desert send ends in a jump. A slower one buries itself in the wave and stops in a burst of sand. Either way the wave stays as a new dune or drift, and a later slide that meets it is launched off it.',
+      rule:'The ground dug out of a soft trench has to go somewhere, so it piles ahead. Two rules that already exist decide the ending: a crest tight enough for the speed throws him up, and a face too steep to climb stops him.',
+      left:'Nothing new to fix. Combat\'s biome looks already picture a berm, as a fixed size.' },
+    { name:'The forest falls in a ring', size:'medium', ok:'holds', pic:'ring',
+      see:'A big slam in a forest flattens the trees around the crater in a starburst, every trunk pointing away from the impact. Harder hits make wider rings, and trees behind a ridge stay standing. In the wide shot at the end, the match\'s biggest blows are written across the forest.',
+      rule:'The shock spreads out and weakens with distance. Each tree has a hold set by its height and kind, and falls away from the centre when the shock beats it. So the ring grows with the crater, by the same law.',
+      left:'Trees topple over about 0.4 s, never fade. Trunks then count as rough ground, so a later slide over them becomes a tumble.' },
+    { name:'What\'s under the clash takes the difference', size:'medium', ok:'fixed', pic:'clash',
+      see:'Two equal blows meet: neither fighter moves, and both end up standing in fresh craters with the ground heaved up between them. If one is stronger, the other gives ground and ploughs two furrows backward, and their length shows by how much. On a rooftop the floor gives way and the pair crash down through the storeys, still locked. In open sky, both are blown apart. In a beam struggle, a close fight digs the biggest bowl and a lopsided one sends the loser flying.',
+      rule:'Momentum decides who moves. Whatever can\'t become motion goes into whatever is holding them up: the ground, a floor, the sea\'s surface.',
+      left:'Fixes from the check: use the sketch\'s own units, and nobody sinks into water. The camera may not hold on the crater (Legal RL-246), so ordinary framing only. The size of the struggle\'s bowl is Game Design\'s call.' },
+    { name:'The anvil and the partner brace', size:'small', ok:'fixed', pic:'anvil',
+      see:'You block a huge blow and plough backward on your heels, with a trench opening in front of your feet. If a cliff or a megastructure\'s foot is behind you, nothing gives: you stop dead and take the jolt yourself. In 2v2, if your partner flies in behind you, you stop shoulder to back, the trench doubles in width, and you share the jolt.',
+      rule:'A guard turns a hit into a slide. When the slide meets something that can\'t move, the force left is a sudden stop, so it becomes damage. A partner\'s weight adds to your footing.',
+      left:'One branch was cut: bracing on an occupied tower to be spared. Legal and Game Design rule that a town is never taught as a shield, so a building behind you is extra cost, never relief. Depends on your call on guard slides.' },
+    { name:'Paid forward', size:'small', ok:'fixed', pic:'paid',
+      see:'A body bursts out of a tower\'s far face, and a cone of broken slabs and glass flies on ahead of him down the street. It cracks the next tower before he gets there, so he goes through that one too. In a dense downtown, a send runs one building further than the same send through a lone suburb, and the wreckage in the street shows why.',
+      rule:'Each building takes force out of the body. Instead of vanishing, a share of it leaves the far face as a debris front that weakens the next building. Nothing extra is created.',
+      left:'Fix from the check: one currency, so the front lowers the next building\'s force cost directly. The cars and trees it shoves along wait for props on the new ground.' },
+    { name:'Spray walls', size:'small', ok:'fixed', pic:'spray',
+      see:'Each bounce of a pebble skip throws a wall of spray, the first tallest and each after it lower, so the line of walls shows the skip losing speed. At max power the walls are about six fighters tall and hang for nearly two seconds. On a light-gravity world they hang longer.',
+      rule:'Each skip loses a slice of force into the water. Its height follows the same square-root law as craters, and it rises and falls under the planet\'s gravity.',
+      left:'Mostly built already: VFX\'s skim spray shrinks with each skip. The change is sizing it from the force lost. It has to stay behind the fighters, so its height is capped.' },
+    { name:'The slide that cuts the floe', size:'medium', ok:'fixed', pic:'floe',
+      see:'On sea ice, a base knock-back skates across a floe and leaves no scratch. At tier 3 the same send cuts a black line through the white. The floe splits behind him, and at open water he skips like a stone, lands on the next floe and slides on. One big send leaves a chain of split floes.',
+      rule:'Ice is slick, so a slide spends little and digs nothing, until its force beats the floe\'s hold, which grows with thickness. Then it cuts through to the sea, and a body on water at speed skims.',
+      left:'Needs an ice class in the ground table. Today a slide would cut straight through every floe, because a trench is deeper than the ice is thick.' },
+    { name:'The cradle (2v2)', size:'medium', ok:'fixed', pic:'cradle',
+      see:'You launch your rival across the city, and he slams into his own partner, who is mid-fight with your friend. If they weigh the same, your rival stops dead in the air and his partner shoots off along the same line, like the steel balls of a desk toy. Your friend suddenly has a free moment.',
+      rule:'A sent body that meets an enemy on its line trades momentum with him by weight, like two colliding balls. Never with the sender\'s own partner.',
+      left:'Fix from the check: below tier 3 a sent body draws no trail, so there\'s no warning. Either keep it to tier 3 and up or accept the surprise. Game Design\'s first 2v2 version leaves out sends from outside a fight.' },
+    { name:'Meet him coming (2v2)', size:'medium', ok:'fixed', pic:'meet',
+      see:'You send your rival toward your partner, and your partner chooses how to meet him. Hit him the way he\'s travelling and he rockets on further than either blow alone. Hit him head-on and he stops dead with a crunch, takes the biggest damage in 2v2, and drops into a crater. Hit him from the side and his line bends up or down.',
+      rule:'The partner\'s blow and the incoming body\'s motion add like arrows. Same way, the speeds add. Head-on, they cancel, and the cancelled part is a sudden stop.',
+      left:'Fix from the check: the first maths created energy. The energies add with no gain; the arrows only decide direction. One meeting per send, so partners can\'t juggle a rival forever.' },
+    { name:'The long way down', size:'medium', ok:'later', pic:'fall',
+      see:'High up beside a tall structure, you spike your rival down its length. He grinds down the face, cutting a groove, gathering speed, and hits the ground with a crater far bigger than your base blow could make on level ground. Height becomes worth fighting for.',
+      rule:'If a crater reads the speed at impact, height stores force. Capped under the glow line, so a base fall never burns.',
+      left:'Sound, but nothing in the sim is that tall yet: mountains in the fight lane are about 8 fighters high. It waits for the planet overhaul or megastructures.' },
+  ];
+  const k = C();
+  const pics = {
+    berm:`<svg viewBox="0 0 240 90"><rect y="56" width="240" height="34" fill="${k.sand}"/><path d="M10 56 L150 56 L150 62 L10 60 Z" fill="rgba(0,0,0,.3)"/><path d="M150 56 Q175 22 200 56 Z" fill="${k.sand}" stroke="rgba(0,0,0,.3)"/><rect x="140" y="30" width="10" height="26" fill="${k.b}"><animate attributeName="x" values="20;140;140" dur="2.4s" repeatCount="indefinite"/></rect><path d="M150 26 q20 -18 40 -6" stroke="${k.dim}" fill="none" stroke-dasharray="3 3"/></svg>`,
+    ring:`<svg viewBox="0 0 240 90"><rect width="240" height="90" fill="${k.ok}" opacity=".18"/><circle cx="120" cy="45" r="14" fill="rgba(0,0,0,.35)"/>${[...Array(18)].map((_, i) => { const a = i / 18 * 6.283, r = 26 + (i % 3) * 6; const x = 120 + Math.cos(a) * r, y = 45 + Math.sin(a) * r * 0.7; return `<line x1="${x}" y1="${y}" x2="${x + Math.cos(a) * 14}" y2="${y + Math.sin(a) * 10}" stroke="${k.soil}" stroke-width="3"/>`; }).join('')}<circle cx="120" cy="45" r="14" fill="none" stroke="${k.gold}"><animate attributeName="r" values="14;46;14" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0;0" dur="2.4s" repeatCount="indefinite"/></circle></svg>`,
+    clash:`<svg viewBox="0 0 240 90"><rect y="60" width="240" height="30" fill="${k.soil}"/><rect x="92" y="34" width="10" height="26" fill="${k.a}"/><rect x="138" y="34" width="10" height="26" fill="${k.b}"/><path d="M80 60 Q97 74 112 60 M128 60 Q143 74 158 60" fill="rgba(0,0,0,.35)"/><path d="M112 60 Q120 50 128 60" fill="${k.soil}" stroke="rgba(0,0,0,.3)"/><circle cx="120" cy="44" r="4" fill="${k.gold}"><animate attributeName="r" values="3;14;3" dur="1.6s" repeatCount="indefinite"/></circle></svg>`,
+    anvil:`<svg viewBox="0 0 240 90"><rect y="60" width="240" height="30" fill="${k.soil}"/><rect x="200" y="6" width="40" height="54" fill="${k.rock}"/><path d="M60 60 L188 60 L188 64 L60 62 Z" fill="rgba(0,0,0,.35)"/><rect x="180" y="34" width="10" height="26" fill="${k.a}"><animate attributeName="x" values="60;180;180" dur="2.2s" repeatCount="indefinite"/></rect></svg>`,
+    paid:`<svg viewBox="0 0 240 90"><rect y="70" width="240" height="20" fill="${k.pave}"/><rect x="40" y="14" width="40" height="56" fill="${k.rock}" opacity=".6"/><rect x="150" y="10" width="40" height="60" fill="${k.rock}" opacity=".6"/><circle r="5" fill="${k.b}" cy="42"><animate attributeName="cx" values="10;220" dur="2.4s" repeatCount="indefinite"/></circle>${[0, 1, 2, 3].map(i => `<rect width="4" height="4" fill="${k.gold}" y="${36 + i * 4}"><animate attributeName="x" values="80;150" begin="${0.8 + i * 0.06}s" dur="0.9s" repeatCount="indefinite"/></rect>`).join('')}</svg>`,
+    spray:`<svg viewBox="0 0 240 90"><rect y="62" width="240" height="28" fill="${k.sea}"/>${[[40, 34], [100, 24], [150, 16], [190, 10]].map(([x, h]) => `<path d="M${x - 6} 62 L${x} ${62 - h} L${x + 6} 62" fill="none" stroke="${k.ice}" stroke-width="2"/>`).join('')}<circle r="5" fill="${k.b}" cy="56"><animate attributeName="cx" values="10;220" dur="2.4s" repeatCount="indefinite"/></circle></svg>`,
+    floe:`<svg viewBox="0 0 240 90"><rect y="56" width="240" height="34" fill="${k.sea}"/><rect x="10" y="50" width="90" height="10" fill="${k.ice}"/><rect x="130" y="50" width="100" height="10" fill="${k.ice}"/><line x1="10" y1="55" x2="100" y2="55" stroke="${k.sea}" stroke-width="3"/><circle r="5" fill="${k.b}" cy="45"><animate attributeName="cx" values="10;230" dur="2.6s" repeatCount="indefinite"/></circle></svg>`,
+    cradle:`<svg viewBox="0 0 240 90"><circle cx="70" cy="45" r="9" fill="${k.b}"><animate attributeName="cx" values="10;110;110" dur="2.4s" repeatCount="indefinite"/></circle><circle cx="130" cy="45" r="9" fill="${k.b}" opacity=".7"><animate attributeName="cx" values="130;130;230" keyTimes="0;0.45;1" dur="2.4s" repeatCount="indefinite"/></circle><rect x="160" y="30" width="10" height="26" fill="${k.a}"/></svg>`,
+    meet:`<svg viewBox="0 0 240 90"><line x1="20" y1="45" x2="110" y2="45" stroke="${k.b}" stroke-width="3" marker-end="url(#ah)"/><line x1="200" y1="45" x2="130" y2="45" stroke="${k.a}" stroke-width="3"/><line x1="120" y1="80" x2="120" y2="52" stroke="${k.a}" stroke-width="2" stroke-dasharray="3 3"/><line x1="120" y1="45" x2="180" y2="12" stroke="${k.gold}" stroke-width="2" stroke-dasharray="4 3"/><circle cx="120" cy="45" r="7" fill="${k.b}"/></svg>`,
+    fall:`<svg viewBox="0 0 240 90"><rect x="150" y="0" width="22" height="80" fill="${k.rock}"/><rect y="80" width="240" height="10" fill="${k.soil}"/><circle r="5" fill="${k.b}" cx="146"><animate attributeName="cy" values="6;76" dur="1.8s" repeatCount="indefinite"/></circle><path d="M110 80 Q146 98 182 80" fill="rgba(0,0,0,.35)"/></svg>`,
+  };
+  const tagOf = s => s === 'holds' ? '<span class="tag ok">checked, holds</span>' : s === 'fixed' ? '<span class="tag gold">checked, fixes noted</span>' : '<span class="tag">later</span>';
+  $('ideas').innerHTML = I.map(x => `<div class="card new"><div class="grid"><div>${pics[x.pic]}</div><div><h3 style="margin-top:0">${x.name} <span class="tag">${x.size}</span>${tagOf(x.ok)}</h3><p>${x.see}</p></div></div><p><strong>Why it emerges:</strong> ${x.rule}</p><p class="dim"><strong>Still to settle:</strong> ${x.left}</p></div>`).join('') +
+    `<p class="dim">Cut by the skeptic: "height is banked force" for a fighter's own dive (free flight isn't pulled by gravity, so it would be a scripted bonus), and "the fight brews its own squall" (a separate weather system, not physics). "Footing decides the catch" was already pitched by Game Design in <code>docs/design/beam-answers-2.md</code>, and it's the same rule as the anvil above.</p>`;
+})();
+</script>
+</body>
+</html>
