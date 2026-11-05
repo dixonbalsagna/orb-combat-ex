@@ -32,3 +32,13 @@ Orb wants development snippets on hand for marketing and a possible "how I'm mak
 6. **Video for YouTube.** Chrome's recorder can write WebM with nothing to install. ffmpeg would add MP4 and better quality, but it's a download and needs Orb's go.
 
 **Rough cost to build:** one Tools session of about 0.5 to 0.8 million tokens, with a small part from Camera. **After that:** a batch of clips costs tens of thousands of tokens, mostly the command and its report.
+
+## Drafted additions (EP, 2026-11-04, for Orb's go)
+
+1. **Clip button in the game.** One button press while playing (proposed: View plus RB on the pad, F9 on the keyboard) marks "the last 15 seconds" in the match's black box. Nothing is recorded as video: the black box already keeps the seed and every input, a few hundred KB a match. The kit renders each mark later from the replay, at full quality, with the HUD on or off. The game also bookmarks moments by itself: a launch, a crater, the end of a beam struggle, a building falling, a KO.
+2. **Replay viewer and photo mode.** Open a saved match, scrub to any tick, frame a shot with an eased free camera, hide the HUD, and save the shot as a recipe line. The kit renders it, so nobody stages scenes by hand.
+3. **Automatic highlights and before/after.** The kit scores a saved match's events (biggest crater, longest launch, a beam struggle won, a comeback) and renders the top few as clips with a one-page index. It can also play the same seed on two builds side by side, for "how it changed" segments.
+
+**Video straight from the page (optional):** the browser's own recorder (canvas capture plus MediaRecorder) can save a WebM of what's on screen. It's a fallback for a quick share. The replay path gives better quality at no cost while playing.
+
+**Browser extension: not recommended.** The page can already take hotkeys, save files and record video. An extension adds upkeep, only works in one browser, and needs its own privacy read. For raw screen recording with a voice-over, Windows' Game Bar (Win+Alt+G, Win+Alt+R) is built in and free.
