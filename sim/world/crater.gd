@@ -513,20 +513,30 @@ static func relax(S: SimState, c0: int, half: int, freezeFrom: int = 0, freezeDi
 	var rub: PackedFloat32Array = S.rubble
 	var cnt: int = mini(2 * half + 1, NC)
 	var lo: int = c0 - half
+	# the ground under the window and the step each pair may keep, read once: the base never moves in a relaxation, only the deform and the rubble, so every pass reads the same numbers (a pass read each four times a pair, a tower's
+	# footing's heap up to 64 passes: 12 ms in one tick of Orb's play)
+	var ix := PackedInt32Array()
+	ix.resize(cnt)
+	var bg := PackedFloat64Array()
+	bg.resize(cnt)
+	for k in range(cnt):
+		ix[k] = posmod(lo + k, NC)
+		bg[k] = WorldTerrain.baseAt(S, ix[k])
+	var lp := PackedFloat64Array()
+	lp.resize(maxi(cnt - 1, 0))
+	for k in range(cnt - 1):
+		lp[k] = maxf(limit, absf(bg[k + 1] - bg[k]))
 	# Most calls find nothing to do: look first, before the footing mask is built.
 	var need: bool = false
 	for k in range(cnt - 1):
-		var i0: int = posmod(lo + k, NC)
-		var j0: int = posmod(lo + k + 1, NC)
-		var d0: float = (WorldTerrain.baseAt(S, j0) + dfm[j0]) - (WorldTerrain.baseAt(S, i0) + dfm[i0])
-		if absf(d0) - maxf(limit, absf(WorldTerrain.baseAt(S, j0) - WorldTerrain.baseAt(S, i0))) > REPOSE_EPS:
+		var d0: float = (bg[k + 1] + dfm[ix[k + 1]]) - (bg[k] + dfm[ix[k]])
+		if absf(d0) - lp[k] > REPOSE_EPS:
 			need = true
 			break
 	if not need:
 		var m0: float = 1.0e9
 		for k in range(cnt):
-			var c0m: int = posmod(lo + k, NC)
-			m0 = minf(m0, WorldTerrain.baseAt(S, c0m) + dfm[c0m])
+			m0 = minf(m0, bg[k] + dfm[ix[k]])
 		return m0
 	var pin: PackedByteArray = WorldStructures.pinned(S, c0, half)   # a standing building's footing is never moved
 	if freezeDir != 0:   # columns from freezeFrom on, in this direction, are not touched at all (value 2)
@@ -539,10 +549,10 @@ static func relax(S: SimState, c0: int, half: int, freezeFrom: int = 0, freezeDi
 		for sweep in range(2):
 			for k in range(cnt - 1):
 				var kk: int = k if sweep == 0 else cnt - 2 - k
-				var i: int = posmod(lo + kk, NC)
-				var j: int = posmod(lo + kk + 1, NC)
-				var d: float = (WorldTerrain.baseAt(S, j) + dfm[j]) - (WorldTerrain.baseAt(S, i) + dfm[i])
-				var ex: float = absf(d) - maxf(limit, absf(WorldTerrain.baseAt(S, j) - WorldTerrain.baseAt(S, i)))
+				var i: int = ix[kk]
+				var j: int = ix[kk + 1]
+				var d: float = (bg[kk + 1] + dfm[j]) - (bg[kk] + dfm[i])
+				var ex: float = absf(d) - lp[kk]
 				if ex <= REPOSE_EPS:
 					continue
 				var e: float = ex * 0.5
@@ -565,8 +575,7 @@ static func relax(S: SimState, c0: int, half: int, freezeFrom: int = 0, freezeDi
 	S.rubble = rub
 	var minG: float = 1.0e9
 	for k in range(cnt):
-		var c: int = posmod(lo + k, NC)
-		minG = minf(minG, WorldTerrain.baseAt(S, c) + dfm[c])
+		minG = minf(minG, bg[k] + dfm[ix[k]])
 	return minG
 
 

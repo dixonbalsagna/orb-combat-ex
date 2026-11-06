@@ -19,8 +19,10 @@ class Wave:
 	var big: bool = false
 
 const DEFAULTS: Dictionary = {
-	"push_k": 0.5, "ease_s": 0.35, "wave_ticks": 14.0, "surge_amp": 0.8, "sharp_k": 1.4, "beat_amp": 0.34, "stray_amp": -0.4, "wave_half": 0.15, "wave_half_max": 120.0, "lum": 0.08,
+	"push_k": 0.3, "ease_s": 0.35, "wave_ticks": 14.0, "surge_amp": 0.8, "sharp_k": 1.4, "beat_amp": 0.34, "stray_amp": -0.4, "wave_half": 0.15, "wave_half_max": 120.0, "lum": 0.08,
 	"knot_amp": 0.6, "knot_s": 1.8, "knot_surge": 0.14, "knot_decay_s": 2.5, "calm_gap": 40.0, "amp_calm": 0.8, "flare_k": 0.3, "flare_ease_s": 0.4,
+	"lose_min": 1.0, "buck_bulge": 0.7, "buck_bow": 0.09, "buck_bow_max": 70.0, "buck_quiv": 0.03, "buck_quiv_max": 24.0, "buck_bow_hz": 0.7, "buck_quiv_hz": 1.6, "buck_wave": 0.3,
+	"buck_wave_min": 130.0, "buck_calm": 0.5, "buck_calm_hz": 0.6,
 }
 
 var active: bool = false
@@ -191,12 +193,20 @@ func _stray(S: SimState, e) -> void:
 	made["stray"] = int(made.get("stray", 0)) + 1
 
 
-## The width factor of a side's beam: the winner's thicker (1 + push_k at the most), the loser's thinner.
+## The width factor of a side's beam: the winner's thicker (1 + push_k at the most); the loser's is never thinner than `lose_min` (1: Orb, 2026-10-22, "instead of thinning out"): he buckles instead (`lost`).
 func width_k(side: int) -> float:
 	if not active:
 		return 1.0
 	var s: float = push if side == 0 else -push
-	return clampf(1.0 + p("push_k") * s, 0.5, 1.5)
+	return clampf(1.0 + p("push_k") * s, p("lose_min"), 1.5)
+
+
+## How much ground a side has lost, 0 to 1, eased: what the buckling grows with (his side of the push, smoothed so it starts gently).
+func lost(side: int) -> float:
+	if not active:
+		return 0.0
+	var gain: float = push if side == 0 else -push
+	return smoothstep(0.0, 1.0, clampf(-gain, 0.0, 1.0))
 
 
 ## The flare of a fighter's aura (0 to flare_k): the loser's grows with the ground he has lost, the winner's is nil. The standing aura's size and alpha read it (transform_view.gd).
@@ -236,15 +246,56 @@ func apply(mat: ShaderMaterial, side: int, len: float, scale: float) -> void:
 	if active and knot_level > 0.002:
 		kv = Vector4(len, minf(len * 0.2, p("wave_half_max") * 1.2), p("knot_amp") * knot_level * scale, 0.0)
 	mat.set_shader_parameter("wv2", kv)
+	# the loser's buckling: geometry only, in his own beam, growing with the ground he has lost; calm (Reduce flashing or Reduced motion): half the size at 0.6 of the rate
+	var ck: float = p("buck_calm") if _calm else 1.0
+	var hk: float = p("buck_calm_hz") if _calm else 1.0
+	mat.set_shader_parameter("buck", Vector4(lost(side), minf(len * p("buck_bow"), p("buck_bow_max")) * ck, minf(len * p("buck_quiv"), p("buck_quiv_max")) * ck, p("buck_bulge") * ck))
+	mat.set_shader_parameter("buck2", Vector4(p("buck_bow_hz") * hk, p("buck_quiv_hz") * hk, maxf(len * p("buck_wave"), p("buck_wave_min")), 1.0 if side == 0 else -1.0))
+	# the press: how near the head each surge's swell has got, and the knot, drive the eddies
+	var surge: float = 0.0
+	for w in mine:
+		var near: float = 1.0 - clampf((len - wave_pos(w, len)) / maxf(len * 0.25, 1.0), 0.0, 1.0)
+		surge = maxf(surge, near * clampf(w.amp / maxf(p("surge_amp"), 0.01), 0.0, 1.5))
+	set_press(mat, side, len, scale, minf(surge, 1.0), clampf(knot_level, 0.0, 1.0), push if side == 0 else -push)
 
 
 const LAYER_SCALE: Array = [1.15, 1.0, 0.75]
+## What the clash's air view last drew (clash_view.gd sets these each frame; a frame behind, which the eased values hide): the clash's rise and fall, each side's power, and whether the press is calm. The beams read them here so the
+## press (the heads' flare, sheet and eddies) is one language with the air at the meeting point, from the same composition.
+static var press_ck: float = 0.0
+static var press_pow: Array = [0.0, 0.0]
+static var press_calm: bool = false
+static var press_quality: int = 2      # the hub's quality: low draws the lite press (the flare and the sheet only), medium adds the eddies' shape, high their hue
+static var press_seed: Array = [0.0, 0.0]
+
+
+## The press on one layer of a clash beam (render/vfx/shaders/beam_core.gdshaderinc): the head's flare, the flat sheet and the eddies, from this side's power, the struggle's knot and the surges that have reached the head.
+## `surge` and `knot` are 0 to 1 (0 with no struggle). Geometry and hue only; the eddies roll back at `eddy_v` units a second, one every `eddy_wl`, so a point of the beam sees one at 0.9 Hz or slower.
+static func set_press(mat: ShaderMaterial, side: int, len: float, scale: float, surge: float, knot: float, lead: float) -> void:
+	var ck: float = press_ck
+	if ck <= 0.001 or not VfxClashLook.on():
+		mat.set_shader_parameter("press", Vector4(0.0, 0.0, 110.0, 0.0))
+		return
+	var pw: float = clampf(float(press_pow[clampi(side, 0, 1)]) / 1.4, 0.0, 1.0)
+	var calm: float = VfxClashLook.pp("calm_k") if press_calm else 1.0
+	var vk: float = 0.6 if press_calm else 1.0
+	var flare: float = VfxClashLook.pp("flare_k") * ck * (0.55 + 0.45 * pw) * (0.85 + 0.15 * clampf(lead, -1.0, 1.0)) * scale * calm
+	var sheet: float = VfxClashLook.pp("sheet_k") * ck * (0.45 + 0.35 * pw + 0.2 * knot)
+	var depth: float = VfxClashLook.pp("eddy_k") * ck * (0.4 + 0.6 * pw) * (0.55 + 0.45 * knot + VfxClashLook.pp("surge_k") * surge) * calm
+	if press_quality <= 0:
+		depth = 0.0       # the lite press: the flare and the sheet alone, no eddy noise in the vertex or the fragment stage
+	mat.set_shader_parameter("press", Vector4(flare, depth * scale, VfxClashLook.pp("eddy_v") * (0.7 + 0.3 * pw) * vk, sheet * calm))
+	mat.set_shader_parameter("press2", Vector4(float(press_seed[clampi(side, 0, 1)]), VfxClashLook.pp("eddy_wl"), minf(len * 0.45, VfxClashLook.pp("reach")), VfxClashLook.pp("hue") if press_quality >= 2 else 0.0))
 
 
 ## The one call BeamView makes per layer of every beam: a clash beam (side 0 or 1) with a struggle on gets its waves, any other beam has them cleared if its material was a clash beam's before.
 static func set_on(mat: ShaderMaterial, sk, side: int, len: float, layer: int) -> void:
 	if sk != null and side >= 0 and sk.active:
 		sk.apply(mat, side, len, float(LAYER_SCALE[layer]))
+		mat.set_meta("sw", true)
+	elif side >= 0:
+		# a clash with no struggle behind it (the sim's glide): the press alone, no surges and no knot
+		set_press(mat, side, len, float(LAYER_SCALE[layer]), 0.0, 0.0, 0.0)
 		mat.set_meta("sw", true)
 	elif mat.has_meta("sw"):
 		sk_clear(mat)
@@ -254,3 +305,5 @@ static func set_on(mat: ShaderMaterial, sk, side: int, len: float, layer: int) -
 static func sk_clear(mat: ShaderMaterial) -> void:
 	for n in ["wv0", "wv1", "wv2"]:
 		mat.set_shader_parameter(n, Vector4(0.0, 1.0, 0.0, 0.0))
+	mat.set_shader_parameter("buck", Vector4(0.0, 0.0, 0.0, 0.0))
+	mat.set_shader_parameter("press", Vector4(0.0, 0.0, 110.0, 0.0))

@@ -42,6 +42,7 @@
     "ageMax": 400,
     "settle": 3
   },
+  "flowWarm": {"cols": 0},
   "wade": {
     "below": 75.0
   },

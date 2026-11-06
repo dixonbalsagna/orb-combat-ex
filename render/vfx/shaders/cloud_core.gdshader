@@ -4,6 +4,8 @@
 shader_type spatial;
 render_mode unshaded, cull_disabled, blend_add, depth_draw_never;
 
+#include "res://render/shaders/bend.gdshaderinc"
+
 #include "res://render/vfx/shaders/cloud_curves.gdshaderinc"
 
 uniform float light = 0.0;             // the granted envelope times its peak, 0 to 1
@@ -44,6 +46,7 @@ void vertex() {
 	float a = light * core_alpha * (g < 3.5 ? 1.0 : 0.6);
 	v_col = vec4(ramp(0.7 + 0.3 * heat) * 1.0, a);
 	v_sd = sd;
+	POSITION = globe_r > 0.0 ? PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(MODEL_MATRIX, VERTEX)) : PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
 }
 
 void fragment() {

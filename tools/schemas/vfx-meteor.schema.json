@@ -1,0 +1,1106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/vfx-meteor",
+  "title": "vfx meteor trail (version 1)",
+  "description": "data/vfx/meteor.json: a fighter's own burn, laid along his path and cooling in the world (docs/vfx/meteor-trail.md). Presentation only: read by render/vfx/meteor.gd and meteor_view.gd, never by the sim, and drawn only while the hub's meteor switch is on. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "version"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "Off: the model does not step and nothing draws."
+    },
+    "frame": {
+      "type": "object",
+      "properties": {
+        "burn_from": {
+          "type": "number",
+          "minimum": 0
+        },
+        "burn_full": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "air_depth": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "air_h": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2
+        },
+        "air_floor": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "sheath_floor": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "ground_h": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rise_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "fall_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "min_burn": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "base_w": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "peak_w": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "w_min": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "layer_k": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "layer_alpha": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "floor_px": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "ceil_px": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "px_ref": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "wfloor_from": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "wfloor_to": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "wfloor_hot": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "send_only": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "min_tier": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 4
+        },
+        "wfloor_mul": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "number",
+            "minimum": 1
+          }
+        },
+        "glow_cap": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 0.95
+        },
+        "calm_strength": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "hz": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.9
+        },
+        "hz_calm": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.55
+        },
+        "pattern_flow": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "life_s": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "number",
+            "minimum": 2
+          }
+        },
+        "life_calm_k": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "life_min_s": {
+          "type": "number",
+          "minimum": 2
+        },
+        "burn_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "cool_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "w_cool": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "w_smoulder": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "taper": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 1
+        },
+        "end_taper_pts": {
+          "type": "number",
+          "minimum": 1
+        },
+        "deep_dark": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "spacing": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "draw_pts": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "number",
+            "minimum": 2
+          }
+        },
+        "max_pts": {
+          "type": "number",
+          "minimum": 16
+        },
+        "chest_y": {
+          "type": "number"
+        },
+        "z_off": {
+          "type": "number"
+        },
+        "wide_k": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "wide_from": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "wide_to": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "blade_on": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "blade_off": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "bright_k": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 3
+        },
+        "ramp_s": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "pan_from": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pan_to": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "pan_k": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "head_cap_bh": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1.5
+        },
+        "head_len_bh": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The burn, the pixel floors and ceilings, the linger and the cost, by quality (low, medium, high). A pattern's rate is how often a point of the ribbon sees a feature pass, in Hz: 0.9 or slower (0.55 under Reduce flashing), inside Legal's 2 Hz and 1.5 Hz. glow_cap keeps a colour from reaching white. life_s is at least 2 s, so no point can rise and fall inside a second. wide_k is the alpha share a ribbon keeps once it is wide on screen (from wide_from to wide_to times its pixel floor): the flash reading follows area, so a thin far ribbon keeps its full strength. blade_on and blade_off: the burn at which the old white trail blade stops being drawn for a fighter, and the lower burn at which it comes back. bright_k: how a burn becomes strength (alpha = layer alpha x burn x bright_k, at most 1): the burn tops out at the cool term times the air, so a tier-4 burn of 0.7 needs more than 1 to be a full-strength trail. ramp_s: a point heats up to full strength over this long after the head lays it (0 is at once). pan_from, pan_to and pan_k: the ribbon dims to the share pan_k as the camera's speed across the world rises from pan_from to pan_to screen widths a second (1 is no dimming). head_cap_bh and head_len_bh: near the fighter's body the sheath is at most head_cap_bh body heights wide (the body and core in the layers' ratio), widening to its ceiling over head_len_bh body heights back along the path (Legal RL-222 (1): not a body-wide flame)."
+    },
+    "cool": {
+      "type": "object",
+      "properties": {
+        "tier": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "description": "The rule of cool by tier 1 to 4 (the game has four tiers)."
+        },
+        "form_step": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "form_max": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The rule of cool: the tier's term plus the form steps taken, at most form_max. Clamped to 0 to 1."
+    },
+    "fronts": {
+      "type": "object",
+      "description": "A front's name to the shader's id (0 wall, 1 lances, 2 wire, 3 sputter, 4 plain).",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 4
+      },
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "textures": {
+      "type": "object",
+      "description": "A texture's name to the shader's id (0 none, 1 boil, 2 facets).",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2
+      },
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "fighters": {
+      "type": "object",
+      "description": "The rows, by roster id.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "front": {
+            "type": "string",
+            "description": "How the pattern moves: a key of `fronts`."
+          },
+          "texture": {
+            "type": "string",
+            "description": "A key of `textures`. Missing: the fighter's beam pattern (energy.json)."
+          },
+          "width_k": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 3
+          },
+          "linger_k": {
+            "type": "number",
+            "minimum": 0.25,
+            "maximum": 3
+          },
+          "scale": {
+            "type": "number",
+            "minimum": 8,
+            "maximum": 1000
+          },
+          "braid": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3
+          },
+          "cool": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "forms": {
+            "type": "object",
+            "description": "Keyed by the form step he has taken (a string of the integer): the keys to change in that form.",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "front": {
+                  "type": "string",
+                  "description": "How the pattern moves: a key of `fronts`."
+                },
+                "texture": {
+                  "type": "string",
+                  "description": "A key of `textures`. Missing: the fighter's beam pattern (energy.json)."
+                },
+                "width_k": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 3
+                },
+                "linger_k": {
+                  "type": "number",
+                  "minimum": 0.25,
+                  "maximum": 3
+                },
+                "scale": {
+                  "type": "number",
+                  "minimum": 8,
+                  "maximum": 1000
+                },
+                "braid": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 3
+                },
+                "cool": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "fl_braid": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 3
+                },
+                "fl_width_k": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 3
+                },
+                "fl_linger_k": {
+                  "type": "number",
+                  "minimum": 0.25,
+                  "maximum": 3
+                },
+                "fl_knot_k": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 10
+                },
+                "fl_w_cool": {
+                  "type": "number",
+                  "minimum": 0.05,
+                  "maximum": 3
+                },
+                "fl_w_smoulder": {
+                  "type": "number",
+                  "minimum": 0.05,
+                  "maximum": 3
+                },
+                "fl_deep_dark": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "fl_settle": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "fl_gaps": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "fl_dull": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "fl_spark": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "fl_rim_k": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "fl_rim": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$",
+                  "description": "A thin rim line on the body, a hex colour. Gold (the Empress's #c9a227) is a ribbon rim only (Legal RL-221)."
+                },
+                "fl_gap_lo": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 0.8
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            }
+          },
+          "situations": {
+            "type": "array",
+            "description": "Each entry whose condition holds changes the row, in order. The open slot for a fighter's special cases.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "read": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*){0,3}$",
+                  "description": "A dotted path off the fighter: tier, form.step, form.branch ..."
+                },
+                "is": {
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean"
+                  ]
+                },
+                "min": {
+                  "type": "number"
+                },
+                "max": {
+                  "type": "number"
+                },
+                "set": {
+                  "type": "object",
+                  "properties": {
+                    "front": {
+                      "type": "string",
+                      "description": "How the pattern moves: a key of `fronts`."
+                    },
+                    "texture": {
+                      "type": "string",
+                      "description": "A key of `textures`. Missing: the fighter's beam pattern (energy.json)."
+                    },
+                    "width_k": {
+                      "type": "number",
+                      "minimum": 0.1,
+                      "maximum": 3
+                    },
+                    "linger_k": {
+                      "type": "number",
+                      "minimum": 0.25,
+                      "maximum": 3
+                    },
+                    "scale": {
+                      "type": "number",
+                      "minimum": 8,
+                      "maximum": 1000
+                    },
+                    "braid": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 3
+                    },
+                    "cool": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "fl_braid": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 3
+                    },
+                    "fl_width_k": {
+                      "type": "number",
+                      "minimum": 0.1,
+                      "maximum": 3
+                    },
+                    "fl_linger_k": {
+                      "type": "number",
+                      "minimum": 0.25,
+                      "maximum": 3
+                    },
+                    "fl_knot_k": {
+                      "type": "number",
+                      "minimum": 1,
+                      "maximum": 10
+                    },
+                    "fl_w_cool": {
+                      "type": "number",
+                      "minimum": 0.05,
+                      "maximum": 3
+                    },
+                    "fl_w_smoulder": {
+                      "type": "number",
+                      "minimum": 0.05,
+                      "maximum": 3
+                    },
+                    "fl_deep_dark": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "fl_settle": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "fl_gaps": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "fl_dull": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "fl_spark": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "fl_rim_k": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "fl_rim": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$",
+                      "description": "A thin rim line on the body, a hex colour. Gold (the Empress's #c9a227) is a ribbon rim only (Legal RL-221)."
+                    },
+                    "fl_gap_lo": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 0.8
+                    }
+                  },
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                }
+              },
+              "required": [
+                "read",
+                "set"
+              ],
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            }
+          },
+          "fl_braid": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 3
+          },
+          "fl_width_k": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 3
+          },
+          "fl_linger_k": {
+            "type": "number",
+            "minimum": 0.25,
+            "maximum": 3
+          },
+          "fl_knot_k": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 10
+          },
+          "fl_w_cool": {
+            "type": "number",
+            "minimum": 0.05,
+            "maximum": 3
+          },
+          "fl_w_smoulder": {
+            "type": "number",
+            "minimum": 0.05,
+            "maximum": 3
+          },
+          "fl_deep_dark": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "fl_settle": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "fl_gaps": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "fl_dull": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "fl_spark": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "fl_rim_k": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "fl_rim": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "description": "A thin rim line on the body, a hex colour. Gold (the Empress's #c9a227) is a ribbon rim only (Legal RL-221)."
+          },
+          "fl_gap_lo": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.8
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "profiles": {
+      "type": "object",
+      "description": "Named profiles of frame values.",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "burn_from": {
+            "type": "number",
+            "minimum": 0
+          },
+          "burn_full": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "air_depth": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "air_h": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 2
+          },
+          "air_floor": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "sheath_floor": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "ground_h": {
+            "type": "number",
+            "minimum": 0
+          },
+          "rise_s": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "fall_s": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "min_burn": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "base_w": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "peak_w": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2
+          },
+          "w_min": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1
+          },
+          "layer_k": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "layer_alpha": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "floor_px": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "ceil_px": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "px_ref": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "glow_cap": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 0.95
+          },
+          "calm_strength": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1
+          },
+          "hz": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.9
+          },
+          "hz_calm": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.55
+          },
+          "pattern_flow": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "life_s": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "number",
+              "minimum": 2
+            }
+          },
+          "life_calm_k": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1
+          },
+          "life_min_s": {
+            "type": "number",
+            "minimum": 2
+          },
+          "burn_s": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "cool_s": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "w_cool": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "w_smoulder": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "taper": {
+            "type": "number",
+            "minimum": 0.05,
+            "maximum": 1
+          },
+          "end_taper_pts": {
+            "type": "number",
+            "minimum": 1
+          },
+          "deep_dark": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "spacing": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            }
+          },
+          "draw_pts": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "number",
+              "minimum": 2
+            }
+          },
+          "max_pts": {
+            "type": "number",
+            "minimum": 16
+          },
+          "chest_y": {
+            "type": "number"
+          },
+          "z_off": {
+            "type": "number"
+          },
+          "wide_k": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1
+          },
+          "wide_from": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "wide_to": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "blade_on": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "blade_off": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "bright_k": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 3
+          },
+          "ramp_s": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "pan_from": {
+            "type": "number",
+            "minimum": 0
+          },
+          "pan_to": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "pan_k": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "head_cap_bh": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1.5
+          },
+          "head_len_bh": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        },
+        "description": "A named set of frame keys that win over `frame` while the profile is in force: `quiet` is the base, `loud` the full-strength set (the preview's page word ?meteor=quiet or =loud)."
+      },
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "flight": {
+      "type": "object",
+      "description": "The flight lines (docs/vfx/flight-lines.md): strength by tier plus the form steps, the speed ramp from `from_k` of `flat_out`, the altitude's length and width, and the knot and settle numbers.",
+      "properties": {
+        "flat_out": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "from_k": {
+          "type": "number",
+          "minimum": 0
+        },
+        "form_step": {
+          "type": "number",
+          "minimum": 0
+        },
+        "form_max": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hold_min": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hold_s": {
+          "type": "number",
+          "minimum": 0
+        },
+        "len_ground": {
+          "type": "number",
+          "minimum": 0
+        },
+        "len_high": {
+          "type": "number",
+          "minimum": 0
+        },
+        "alt_high": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "thin_w": {
+          "type": "number",
+          "minimum": 0
+        },
+        "dev_bh": {
+          "type": "number",
+          "minimum": 0
+        },
+        "settle_s": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tier": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "pan_k": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

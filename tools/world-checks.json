@@ -7,6 +7,7 @@
     "farsites_check", "field_check", "field_plan_check", "field_crater_check", "field_water_check", "field_lot_check", "everywhere_check", "far_people_check", "places_cache_check", "field_crack_check", "field_scorch_check", "field_trench_check", "field_cache_check", "planet_cache_check", "field_load_check", "field_records_check", "fill_check", "store_check", "fire_check", "gen2_state_check", "ground_check", "ground_props_check", "host_check", "interior_check", "isect_check", "lakes_check",
     "land_check", "minecheck", "noise_check", "planet_check", "planet_world_check", "props_check", "repeat_check", "ringpick_check", "rivers_check", "sea_rules_check",
     "sites_check", "skate_check", "stagecheck", "step_check", "surface_check", "meteor_crater_check", "through_check", "surface_follow_check", "switchon_check", "wall_check", "wrecks_check",
+    "water_warm_check", "water_read_check", "landmark_spare_check", "lot_reach_check", "relax_check", "node_warm_check",
     "floor_walk_probe"
   ],
   "leaveOut": {

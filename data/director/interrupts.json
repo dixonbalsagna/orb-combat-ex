@@ -248,18 +248,28 @@
   },
   "ending": {
     "enabled": false,
-    "idleSec": 10.0,
-    "idleWearMul": 3.0,
+    "idleSec": 60.0,
+    "idleWearMul": 2.0,
+    "pushSec": 90.0,
     "lastAt": 720.0,
-    "_note": "How a match always ends (docs/design/spec-wounds.md 1b-end; sim/director/ending.gd). idleSec, idleWearMul: a player with no input for this long takes this much more wear, and on the brink he's opened. The time cap is finishers.json timeCapAt: both go on the brink and Rallies stop. lastAt: the less worn gets his finisher, with no contest, or level wear is a no-contest."
+    "_note": "How a match always ends (docs/design/spec-wounds.md 1b-end; sim/director/ending.gd). idleSec, idleWearMul: a player with no input for this long takes this much more wear. pushSec: after this long, on the brink he's opened (docs/design/power-scale.md section 3). The time cap is finishers.json timeCapAt: both go on the brink and Rallies stop. lastAt: the less worn gets his finisher, with no contest, or level wear is a no-contest."
   },
   "stances": {
     "enabled": false,
     "pushBh": 2.0,
     "stepPastBh": 0.8,
+    "circle": {
+      "enabled": false,
+      "ticks": 24,
+      "riseBh": 1.3,
+      "ki": 10,
+      "repeatMul": 1.5,
+      "repeatSec": 3.0,
+      "_note": "LT + Y in reach, the circle (docs/design/press-decides.md section 4; the input waits for Orb's pick of three clips). He flies round the rival in one curve of riseBh over ticks, and the medium lands as he arrives on the far side. ki, times repeatMul for each one inside repeatSec. A light doesn't stop it; a heavy or a grab does."
+    },
     "_note": "The stances on a blow (docs/design/pad-first-press.md; sim/director/stance.gd). LB + X, the check: the guard stays up through it. LB + Y, the push: he's shoved back pushBh. LT + X, the step strike: the attacker comes out stepPastBh beyond him. First values."
   },
-  "beamStruggle": {"enabled": false, "pulseTicks": 20, "pulses": 15, "surgeTicks": 4, "sharpTicks": 2, "surge": 0.10, "sharp": 0.15, "comebackZone": 0.25, "comebackMul": 1.5, "headPerPoint": 0.005, "headMax": 0.15, "drawBand": 0.10, "aiHit": {"easy": 0.40, "medium": 0.65, "hard": 0.85}, "aiOffsets": [-4, -3, 3, 4], "overwhelm": {"winnerBeam": 1.0, "ownBeam": 0.5, "stickUy": 0.25}, "detonate": {"otherBeam": 0.25}, "timeLoss": {"share": 0.5}, "_note": "The beam struggle as a tug of war on the pulse (rule-of-cool.md section 2, 2026-10-16; energy-overhaul.md section 9; sim/director/beam.gd). The meeting point starts in the middle, moved toward the weaker side by state: headPerPoint of the line for each point of power (tier x 10, ki x 0.35, menace, flow), headMax at most. Every pulseTicks a pulse, pulses of them. X, Y or B within surgeTicks of a pulse is a surge, the point moving surge of the line toward the rival (sharp within sharpTicks). A press off the pulse, or a second press in a window, is a stray: it moves nothing and voids his next surge. Within comebackZone of his own hands a surge is times comebackMul. A on the pulse lets go: the rival's beam carries on past him, and he takes timeLoss.share of it with no launch; A off the pulse: he is caught and overwhelmed. The AI hits aiHit of the pulses by level, pressing aiOffsets ticks off it (never within sharpTicks), and never lets go. The point at a fighter: he is overwhelmed (overwhelm: shares of the winner's beam and his own; launched, the winner's stick moving the launch's rise by stickUy). On time within drawBand of the middle: the beams detonate (detonate.otherBeam each). On time further over: the side it is on takes timeLoss.share, no launch. enabled false: the clash as before."},
+  "beamStruggle": {"enabled": false, "endEvent": false, "pulseTicks": 20, "pulses": 15, "surgeTicks": 4, "sharpTicks": 2, "surge": 0.10, "sharp": 0.15, "comebackZone": 0.25, "comebackMul": 1.5, "headPerPoint": 0.005, "headMax": 0.15, "drawBand": 0.10, "aiHit": {"easy": 0.40, "medium": 0.65, "hard": 0.85}, "aiOffsets": [-4, -3, 3, 4], "overwhelm": {"winnerBeam": 1.0, "ownBeam": 0.5, "stickUy": 0.25}, "detonate": {"otherBeam": 0.25}, "timeLoss": {"share": 0.5}, "_note": "The beam struggle as a tug of war on the pulse (rule-of-cool.md section 2, 2026-10-16; energy-overhaul.md section 9; sim/director/beam.gd). The meeting point starts in the middle, moved toward the weaker side by state: headPerPoint of the line for each point of power (tier x 10, ki x 0.35, menace, flow), headMax at most. Every pulseTicks a pulse, pulses of them. X, Y or B within surgeTicks of a pulse is a surge, the point moving surge of the line toward the rival (sharp within sharpTicks). A press off the pulse, or a second press in a window, is a stray: it moves nothing and voids his next surge. Within comebackZone of his own hands a surge is times comebackMul. A on the pulse lets go: the rival's beam carries on past him, and he takes timeLoss.share of it with no launch; A off the pulse: he is caught and overwhelmed. The AI hits aiHit of the pulses by level, pressing aiOffsets ticks off it (never within sharpTicks), and never lets go. The point at a fighter: he is overwhelmed (overwhelm: shares of the winner's beam and his own; launched, the winner's stick moving the launch's rise by stickUy). On time within drawBand of the middle: the beams detonate (detonate.otherBeam each). On time further over: the side it is on takes timeLoss.share, no launch. enabled false: the clash as before."},
   "beamPlays": {
     "enabled": true,
     "front": {
@@ -274,9 +284,19 @@
       "answerKi": 40.0,
       "meetMax": 0.3,
       "standoffBh": 9.0,
+      "stationary": true,
+      "releaseTell": 6,
+      "holdFromTicks": 12,
+      "holdMove": 0.1,
+      "shoveSec": 0.25,
+      "aim": {
+        "enabled": false,
+        "assistDeg": 35,
+        "_note": "A beam on RB and the right stick fires where the stick aims (docs/controls/beam-aim-feel.md): within assistDeg of the line to him it's a shot at him, as before; wider, it goes where it was aimed and misses him. Needs Controls' beam-aim reader (switches.beamAim) for the throw's aim. The signature is aimed at him, always."
+      },
       "dodgeBefore": 18,
       "dodgeAfter": 2,
-      "_note": "Beams that travel (docs/design/rule-of-cool-map.md section 5, row 40). dodgeBefore, dodgeAfter: a dodge counts this many ticks either side of the front's arrival, and the hit lands dodgeAfter past it (Game Design's ruling). rows: ticks from hand to him, the floor plus the distance at this speed, up to the ceiling. answerKi: a fire-back by the stick inside the window, at level 1's ki. meetMax: how far past the middle a late answer's struggle can start, toward his hands."
+      "_note": "Beams that travel (docs/design/rule-of-cool-map.md section 5, row 40). stationary: nothing moves the shooter in a beam's charge, so no rise and no stand-off, and a stick's hold is the charge: it fires on the release, after what's left of the charge's warning and at least releaseTell (Orb, first play). holdFromTicks, holdMove: past this the hold leaves him this share of his flying speed, and no dash. shoveSec: from under standoffBh the firing throws the other back to it over this long, no damage or stun (docs/design/power-scale.md, the last section). dodgeBefore, dodgeAfter: a dodge counts this many ticks either side of the front's arrival, and the hit lands dodgeAfter past it (Game Design's ruling). rows: ticks from hand to him, the floor plus the distance at this speed, up to the ceiling. answerKi: a fire-back by the stick inside the window, at level 1's ki. meetMax: how far past the middle a late answer's struggle can start, toward his hands."
     },
     "travelTicks": 20,
     "afterTicks": 42,
@@ -335,6 +355,22 @@
     },
     "idleTicks": 60,
     "heldPressTicks": 10,
+    "oneRuleB": {
+      "enabled": false,
+      "_note": "One rule for B, everywhere (docs/design/press-decides.md section 1): a tap staggers, a tap with B lit is the launcher, past the first flash a knock-back, the full flash a send. Flow, strings and blows taken no longer decide whether a heavy sends. launcher.anywhere stays off."
+    },
+    "pressWait": {
+      "enabled": false,
+      "maxTicks": 600,
+      "_note": "A press waits for the blow in hand, however long, one slot, the newest wins; a stun or the brawl's end clears it, and says so; a held button has been building since the press (docs/design/press-decides.md sections 3 and 5). maxTicks is only a backstop. Off: heldPressTicks."
+    },
+    "chargeClose": {
+      "enabled": false,
+      "firstBh": 3,
+      "fullBh": 6,
+      "maxTicks": 12,
+      "_note": "A released charge closes the gap (docs/design/press-decides.md section 2): past the first flash it travels up to firstBh to him, at the full flash fullBh, over at most maxTicks; the stick from stage 2 and 3 likewise. Stepping back doesn't beat it; a dodge, a guard or a perfect block does."
+    },
     "stringLapseTicks": 30,
     "recoil": 1,
     "tradeTicks": 2,
@@ -437,6 +473,7 @@
       "closeMaxTicks": 4,
       "closeMaxBh": 0.6,
       "closeSlackBh": 0.07,
+      "sureWaitTicks": 6,
       "lightReachBh": 0.6,
       "edgeBh": 0.033
     },
@@ -575,9 +612,45 @@
     "rushBlowTicks": 20,
     "towardDot": 0.5
   },
+  "outside": {
+    "enabled": false,
+    "reachBh": 3.0,
+    "waitSec": 0.5,
+    "whiffTicks": 20,
+    "damageMul": 1.0,
+    "shotReachBh": 40.0,
+    "teamRestunTicks": 24,
+    "join": {
+      "afterSec": 60.0,
+      "w": 8.0
+    },
+    "aiDodge": {
+      "easy": 0.3,
+      "medium": 0.6,
+      "hard": 0.85
+    },
+    "_note": "join: after the pairs have been apart afterSec, a send scores the way of the other fight, w for a landing a sixth of the loop nearer (not while a team is two on one). teamRestunTicks: one stun a string across a team, a blow from outside keeps him from being free of the team's blows this long. shotReachBh: a blast press with his focus across fires at the enemy of the other fight within it (SimCross.fireAt). aiDodge: a warned AI's chance to answer a beam from the other fight with a dodge, by its level. 2v2, a blow from outside (Game Design's Hits across fights, docs/design/two-v-two.md): a press with no exchange of his own, when an enemy of the other fight is within reachBh and nearer than his own rival, goes to him and lands only on an opening; he hovers waitSec for one, else whiffs and is open whiffTicks. One an opening. Only in a two-fight match with cross on."
+  },
   "chase": {
     "_note": "The chase of a launch is the zip (sim/director/chase.gd; Game Design's rulings-2026-10-22.md 7c; brawl-second-pass.md section 16). A player presses X or Y with LT held while his own launch flies; the AI chases at a send of its own on its level's chaseShare (ai.json; times skyMul when the send goes up into open sky), no sooner than its reaction time. Either pays the zip's ki (the strike's or the heavy's); without it there is no chase. The chase is a rush at the body re-aimed each live tick at speedMul times his speed, never under minSpeed u/s. Within catchBh of him while he flies the zip's blow lands and sends him on (the launch planner from where he is, at sendForce, the chaser's stick its tilt); when his landing comes first it arrives at his landing, for the first move; at most maxTicks. enabled false: nothing runs.",
     "enabled": false,
+    "tap": {
+      "enabled": false,
+      "priceStep": 1.5,
+      "nextTicks": 20,
+      "holdTicks": 24,
+      "landReadTicks": 12,
+      "minCatchTicks": 12,
+      "arriveTicks": 60,
+      "maxSpeed": 20000,
+      "easeTicks": 10,
+      "minAirTicks": 40,
+      "riseTicks": 60,
+      "riseRushTicks": 20,
+      "carryTicks": 8,
+      "hangMinPace": 0,
+      "_note": "minAirTicks: a catch holds him up at least this many live ticks, his flight paced along its path, unless B drove him down (power-scale.md section 4). hangMinPace: 0 as ruled; above it, a hang's pace never falls under it, and a send too short for minAirTicks at that pace hangs for less (Tools' film: about 2% after a low catch). carryTicks: at a catch the chaser keeps the speed he caught him at and eases to a stop over this many live ticks (Camera's read: 10,175 to 0 in one tick before). riseTicks: a tap that reaches his landing waits up to this long for him to get up, and lands then as an ordinary blow he can guard; if he got up out of reach, the chaser rushes to him in riseRushTicks at most. maxSpeed: the rush never goes faster, so it never jumps. easeTicks: the top speed builds up to maxSpeed over this many live ticks. minCatchTicks: a chase can't catch sooner than this, so the next one, pressed in the blow's own hit-stop, doesn't land at once. arriveTicks: it reaches him within this, however far he's got. The chase by a plain tap (docs/design/power-scale.md section 4; sim/director/chase_tap.gd). The first tap of a send is free, then the chase's price, times priceStep for each one after in that chain. After the blow, a press inside nextTicks (0.33 s) starts the next, wherever he is. holdTicks: a press made while the send still holds him waits this long for his first free tick. landReadTicks: how often the chase re-forecasts his landing."
+    },
     "speedMul": 1.25,
     "minSpeed": 1900,
     "catchBh": 1.5,

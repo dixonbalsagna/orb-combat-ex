@@ -276,10 +276,17 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 	out.append(float(S.shotSeq)); out.append(float(S.shots.size()))   # shots in flight (sim/core/shots.gd)
 	for sh in S.shots:
 		_obj(out, sh, SHOT)
+		if sh.inT >= 0:   # 2v2: a shot from outside (none in any other match)
+			out.append(sh.from)
+			out.append(float(sh.inT))
 	out.append(float(S.beams.size()))
 	for b in S.beams:
 		out.append(_idx(fs, b.A))
 		_obj(out, b, BEAM)
+		if b.cross != 0 or b.first != "" or b.stopAt >= 0.0:   # 2v2: the other fight's bodies it has met (none in any other match)
+			out.append(float(b.cross))
+			out.append(b.first)
+			out.append(b.stopAt)
 	for i in range(S.deform.size()):
 		out.append(S.deform[i])
 	if S.depthOn:   # T: the depth rows (their non-zero columns), only when depth is on, so a match without depth hashes as before

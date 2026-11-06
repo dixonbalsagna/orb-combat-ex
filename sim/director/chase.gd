@@ -32,7 +32,12 @@ static func cfg() -> Dictionary:
 
 
 static func on() -> bool:
-	return DirInterrupt.on() and (bool(cfg().get("enabled", false)) or DirRally.on())   # (on with the rally: 23d)
+	return _own() or DirChaseTap.on()
+
+
+## chase.enabled's own route: LT with a press, and the AI's. (On with the rally: 23d.)
+static func _own() -> bool:
+	return DirInterrupt.on() and (bool(cfg().get("enabled", false)) or DirRally.on())
 
 
 static func _base() -> int:
@@ -73,6 +78,10 @@ static func _price(heavy: bool) -> float:
 ## his own launch flies starts it; a press during it is spent.
 static func takes(S: SimState, A, kind: String) -> bool:
 	if not on() or A.ai != null:
+		return false
+	if DirChaseTap.on() and DirChaseTap.takes(S, A, kind):
+		return true   # power-scale.md section 4: no LT
+	if not _own():
 		return false
 	if kind == "sig":
 		return _spikePress(S, A)   # 23d 6: B from above him in a rally is the spike
@@ -129,7 +138,7 @@ static func startQueued(S: SimState, A, D, k: int) -> void:
 ## The AI (DirAI.aiInput, before the approach cap): its draw at a send of its own, and its start. True while it chases
 ## (its rush moves it; the cap doesn't hold it).
 static func steer(S: SimState, f, o, i: SimIntent) -> bool:
-	if not on() or f.ai == null or o == null:
+	if not _own() or f.ai == null or o == null:
 		return false
 	if chasing(f):
 		return true
@@ -159,6 +168,21 @@ static func steer(S: SimState, f, o, i: SimIntent) -> bool:
 	return true
 
 
+## A tap's chase (DirChaseTap): at the price it's worked out. pick: 1 the strike, 2 the heavy, 3 drives him down.
+static func startTap(S: SimState, A, D, pick: int, cost: float) -> void:
+	A.ki -= cost
+	_s(A, CH_ON, DirBrawl._now(S) + 1)
+	setBlow(A, pick)
+	DirRally.commitStick(S, A, D)
+	_cue(S, A, D, "start")
+	DirSwing.atChase(S, A, D)
+	SimEvents.feed(S, A.name + " CHASES", "after " + D.name + "'s flight (" + str(int(cost)) + " ki): at " + str(int(_speed(D))) + " u/s")
+
+
+static func setBlow(A, pick: int) -> void:
+	_s(A, CH_W, pick)
+
+
 static func _begin(S: SimState, A, D, heavy: bool, spike: bool = false) -> void:
 	if not spike:
 		A.ki -= _price(heavy)   # (the rally's spike is a B: no zip price)
@@ -181,30 +205,51 @@ static func tick(S: SimState) -> void:
 	if not on():
 		return
 	var c: Dictionary = cfg()
+	DirChaseTap.tick(S)
 	for A in S.fighters:
 		if _g(A, CH_ON) <= 0:
 			continue
 		var D = SimRoster.opp(S, A)
-		if A.state != "free" or S.game.ko != null or S.dirS.ex != null or (DirBrawl._now(S) - (_g(A, CH_ON) - 1) > int(c.get("maxTicks", 120)) and not DirRally._owner(S, A, D)):
+		var tap: bool = DirChaseTap.on() and A.ai == null
+		if A.state != "free" or S.game.ko != null or S.dirS.ex != null or (DirBrawl._now(S) - (_g(A, CH_ON) - 1) > int(c.get("maxTicks", 120)) and not DirRally._owner(S, A, D) and not tap):
 			_end(S, A, D, "stopped")
 			continue
 		if D.state != "launched":
 			if A.rush == null:
+				if tap:
+					DirChaseTap.landed(S, A, D, _g(A, CH_W) != 1)
 				_end(S, A, D, "landing")   # he came down before the catch: the chaser arrives at his landing, for the first move
 			continue
+		if tap and DirChaseTap.onCurve(A):
+			if A.rush == null:
+				DirChaseTap.landed(S, A, D, false)
+				_end(S, A, D, "landing")
+			continue   # it's on its way to the landing, with no catch
 		var d: float = DirBands.dist(A, D)
 		# within catchBh of him, plus the gap he opens in one live tick: the rush steps to where he is before he moves,
 		# so a chaser that has caught him reads one tick behind (at a fast send, more than catchBh)
-		if d <= float(c.get("catchBh", 1.5)) * DirInterrupt.BH + SimDetMath.hypot(D.vx, D.vy) * SimConst.DT:
+		var since: int = DirBrawl._now(S) - (_g(A, CH_ON) - 1)
+		if d <= float(c.get("catchBh", 1.5)) * DirInterrupt.BH + SimDetMath.hypot(D.vx, D.vy) * SimConst.DT and (not tap or since >= int(c.tap.minCatchTicks)):
 			_catch(S, A, D)
 			continue
 		var v: float = _speed(D)
 		var n: int = maxi(1, int(ceil(d / (v * SimConst.DT))))
-		var land: Dictionary = DirLaunch.predictFlight(S, D.x, D.y, D.vx / maxf(D.launchT, 0.001), D.vy, D.launchT)   # (his vx carries the traversal factor)
-		var tl: int = int(ceil(float(land.get("t", 99.0)) * DirData.TICKS_PER_SEC))
+		var least: int = 1
+		if tap:
+			var ease: float = minf(1.0, float(since + 1) / maxf(1.0, float(c.tap.easeTicks)))   # the rush builds, so the picture doesn't jump after him
+			least = maxi(1, int(ceil(d / (float(c.tap.maxSpeed) * ease * SimConst.DT))))   # it never jumps
+			n = maxi(least, mini(n, int(c.tap.arriveTicks) - since))   # you rush him: it's a blow, and not a long flight behind him
+		var tl: int = DirChaseTap.landingIn(S, A, D) if tap else 0
+		if not tap:
+			var land: Dictionary = DirLaunch.predictFlight(S, D.x, D.y, D.vx / maxf(D.launchT, 0.001), D.vy, D.launchT)   # (his vx carries the traversal factor)
+			tl = int(ceil(float(land.get("t", 99.0)) * DirData.TICKS_PER_SEC))
 		var r := SimState.Rush.new()
 		r.tgt = D
-		if tl > 0 and tl < n and DirRally._owner(S, A, D):
+		if tap:
+			if tl > 1 and tl < n and tl - 1 >= least:
+				n = tl - 1   # at him before his landing, if it can without a jump; else at him as he's landed, and the blow lands there
+			r.off = 0.0
+		elif tl > 0 and tl < n and DirRally._owner(S, A, D):
 			n = maxi(1, tl - 1)   # 10-26 item 22(e): a rally's chase always arrives, at him before his landing
 			r.off = 0.0
 		elif tl > 0 and tl < n:
@@ -223,17 +268,16 @@ static func tick(S: SimState) -> void:
 ## The catch: the zip's blow lands and sends him on, the chaser's stick its tilt.
 static func _catch(S: SimState, A, D) -> void:
 	var c: Dictionary = cfg()
-	var kind: String = DirRally.linkKind(S, A, D, _g(A, CH_W) == 3, _g(A, CH_W) == 2) if DirRally.on() else "chase"   # 23d 6, 17 to 19: the link's kind
+	var kind: String = DirRally.linkKind(S, A, D, _g(A, CH_W) == 3, _g(A, CH_W) == 2) if DirRally.on() else ("spike" if _g(A, CH_W) == 3 else "chase")   # 23d 6, 17 to 19: the link's kind (a tap's B drives him down)
 	if DirRally.on() and DirRally.teched(S, A, D, kind):
 		A.rush = null
 		_end(S, A, D, "teched")
 		return   # 23d 8: he teched its arrival
-	var heavy: bool = _g(A, CH_W) == 2 or kind == "spike"
-	var dmg: float = float(DirZip.cfg().get("heavy", {}).get("damage", 132.0)) if heavy else float(DirBrawl.cfg().get("light", {}).get("damage", 26.0))
-	dmg *= DirRally.linkWorth(S, A, D)   # 10-26 item 33: a link deals its share of the blow
-	A.rush = null
-	A.face = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(A.x, D.x)), A.face)
-	SimDamage.hit(S, null, A, D, dmg, {"kind": "zip", "ignoreStance": true, "noParry": true, "stop": 0.08 if heavy else 0.05, "shake": 9.0 if heavy else 5.0})
+	if DirChaseTap.on() and A.ai == null:
+		DirChaseTap.carry(S, A, D)   # (before the blow sends him on: the speed it caught him at)
+	blow(S, A, D, _g(A, CH_W) == 2 or kind == "spike")
+	if DirChaseTap.on() and A.ai == null:
+		DirChaseTap.caught(S, A, D)
 	if D.state != "launched" and D.state != "free" and D.state != "down":
 		_end(S, A, D, "catch")
 		return
@@ -272,7 +316,19 @@ static func _catch(S: SimState, A, D) -> void:
 		DirSwing.atSend(S, A, D, r.best)
 		DirBrawl.markKind(S, D, lkind)
 		DirRally.onLink(S, A, D, kind, r.best)   # 23d 6: a rally's link
+		if DirChaseTap.on() and A.ai == null:
+			DirChaseTap.caught(S, A, D)   # (he's on a new launch number now)
+			DirChaseTap.hang(S, A, D, kind == "spike")
 	_end(S, A, D, "catch")
+
+
+## The chase's blow lands: the strike's or the heavy's damage.
+static func blow(S: SimState, A, D, heavy: bool) -> void:
+	var dmg: float = float(DirZip.cfg().get("heavy", {}).get("damage", 132.0)) if heavy else float(DirBrawl.cfg().get("light", {}).get("damage", 26.0))
+	dmg *= DirRally.linkWorth(S, A, D)   # 10-26 item 33: a link deals its share of the blow
+	A.rush = null
+	A.face = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(A.x, D.x)), A.face)
+	SimDamage.hit(S, null, A, D, dmg, {"kind": "zip", "ignoreStance": true, "noParry": true, "stop": 0.08 if heavy else 0.05, "shake": 9.0 if heavy else 5.0})
 
 
 ## The chaser's stick as the launch planner's tilt (1 up, then clockwise by eighths; 0 neutral). The AI leaves it to the

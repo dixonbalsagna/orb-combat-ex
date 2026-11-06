@@ -3003,6 +3003,170 @@ func _ack_probe(cell: String, who: String, wait: int, ticks: int, hit_at: int, o
 	return res
 
 
+## The beam's shove (docs/animation/beam-shove.md): Encounter's cue beam_shove on the one thrown back, a slide of `dur` ticks the sim carries (a rush). The body is thrown back, digs in (the pelvis sinks, the lean shows) and comes up as the
+## slide ends; nothing may be NaN or past a limit, it must be gone a few ticks after the slide, and with the flag off nothing is drawn.
+func _shove_probe(who: String, dur: int, off: bool) -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = who
+	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
+	f0.x = 1000.0
+	f1.x = 1060.0
+	f0.y = WorldWater.floorAt(S, f0.x, f0.z)
+	f1.y = WorldWater.floorAt(S, f1.x, f1.z)
+	f0.state = "free"
+	f1.state = "free"
+	f0.vx = 0.0
+	RenderAnim.beam_shove = not off
+	var res := {"nan": 0, "viol": 0, "samples": [], "cleared_at": -1}
+	for k in range(60):
+		S.tick = 9000 + k
+		S.T = 900.0 + float(k) / 60.0
+		if k == 4:
+			f0.rush = SimState.Rush.new()
+			f0.rush.end = S.T + float(dur) / 60.0
+			RenderAnim.fighter(S, f0).on_beam_shove(S.T, float(dur) / 60.0)
+		if k == 4 + dur:
+			f0.rush = null
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		var a0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		for i in range(AnimRig.N):
+			if is_nan(a0.q[i].x) or is_nan(a0.q[i].w):
+				res.nan += 1
+		res.viol += AnimJoints.violations(a0.q, a0._rd.shape_key).size()
+		var pel: Vector3 = a0.socket("pelvis")
+		var hd: Vector3 = a0.head_center()
+		res.samples.append([(hd.x - pel.x) * a0.vface, pel.y])
+		if res.cleared_at < 0 and k > 4 and String(a0._seq.get("id", "")) != "sv.shove":
+			res.cleared_at = k
+	RenderAnim.beam_shove = true
+	return res
+
+
+## The stick's pre-read (docs/animation/stick-pre.md): the host's {dir, depth} for 5 ticks before a request starts eases the direction's quick piece's chamber in; the request starting (a wind-up in the exchange) lets it go
+## over the exit ramp; a pre-read that never becomes a request is let go after stale_ticks; with the flag off, or an empty pre-read, nothing is drawn. Nothing past a limit, no NaN, and it never moves the sim.
+func _pre_probe(who: String, dir: int, mode: String, off: bool) -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = who
+	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
+	f0.x = 1000.0
+	f1.x = 1070.0
+	f0.y = WorldWater.floorAt(S, f0.x, f0.z)
+	f1.y = WorldWater.floorAt(S, f1.x, f1.z)
+	f0.state = "free"
+	f1.state = "free"
+	RenderAnim.stick_pre = not off
+	var res := {"nan": 0, "viol": 0, "samples": [], "cleared_at": -1, "x": f0.x}
+	for k in range(70):
+		S.tick = 9500 + k
+		S.T = 950.0 + float(k) / 60.0
+		var lean: bool = k >= 4 and k < 9 if mode == "request" else (k >= 4 and k < 40 if mode == "stale" else k >= 4 and k < 9)
+		RenderAnim.strike_pre = {0: {"dir": dir, "depth": 1.0}} if (lean and mode != "none") else {}
+		if mode == "request" and k == 9:
+			RenderAnim.fighter(S, f0).on_windup("start", "", 7.0, S.tick + 7, 0, S.T, S.tick)   # the request has started: the sim's wind-up cue
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		var a0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		for i in range(AnimRig.N):
+			if is_nan(a0.q[i].x) or is_nan(a0.q[i].w):
+				res.nan += 1
+		res.viol += AnimJoints.violations(a0.q, a0._rd.shape_key).size()
+		var pel: Vector3 = a0.socket("pelvis")
+		var hd: Vector3 = a0.head_center()
+		res.samples.append([(hd.x - pel.x) * a0.vface, pel.y, a0._pre_w])
+		if mode == "request" and k == 9:
+			pass
+	S.dirS.ex = null
+	RenderAnim.strike_pre = {}
+	RenderAnim.stick_pre = true
+	res["moved"] = absf(f0.x - float(res.x))
+	return res
+
+
+func _test_stick_pre() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var seen: Array = []
+	for who in ["PROTAGONIST", "RIVAL"]:
+		for dir in [1, 2, 3, 4]:
+			var on: Dictionary = _pre_probe(who, dir, "plain", false)
+			var off: Dictionary = _pre_probe(who, dir, "plain", true)
+			var shown: float = 0.0
+			for k in range(on.samples.size()):
+				shown = maxf(shown, absf(float(on.samples[k][0]) - float(off.samples[k][0])) + absf(float(on.samples[k][1]) - float(off.samples[k][1])))
+			var rest: float = float(on.samples[69][2])
+			seen.append("%s dir %d: shows %.1f, weight at rest %.3f" % [who.substr(0, 1), dir, shown, rest])
+			if int(on.nan) > 0 or int(on.viol) > 0:
+				bad.append("%s dir %d: nan %d viol %d" % [who, dir, int(on.nan), int(on.viol)])
+			if shown < 1.0:
+				bad.append("%s dir %d: the pre-read shows %.2f units (1 wanted)" % [who, dir, shown])
+			if rest > 0.0:
+				bad.append("%s dir %d: the pose is still on 60 ticks after the pre-read went (%.3f)" % [who, dir, rest])
+			if float(on.moved) != 0.0:
+				bad.append("%s dir %d: the sim's position moved" % [who, dir])
+	# the request starts: it lets go (the weight falls to 0 inside the exit ramp and a few ticks), a stale one lets go too, an empty one draws nothing
+	var rq: Dictionary = _pre_probe("PROTAGONIST", 1, "request", false)
+	if float(rq.samples[9 + 12][2]) > 0.0:
+		bad.append("a request starting leaves the pre-read on 12 ticks later (%.3f)" % float(rq.samples[21][2]))
+	var st: Dictionary = _pre_probe("PROTAGONIST", 1, "stale", false)
+	if float(st.samples[4 + 10 + 14][2]) > 0.0 or float(st.samples[39][2]) > 0.0:
+		bad.append("a pre-read that never became a request is still drawn after its stale ticks (%.3f)" % float(st.samples[39][2]))
+	var none: Dictionary = _pre_probe("PROTAGONIST", 1, "none", false)
+	for k in range(none.samples.size()):
+		if float(none.samples[k][2]) != 0.0:
+			bad.append("an empty pre-read drew a pose")
+			break
+	_expect(bad.is_empty(), "stick pre-read: each direction of each fighter eases its piece in before the request, lets go as it starts or lapses, within limits: %s" % str(bad))
+	print("stick pre-read: %s" % " | ".join(seen))
+
+
+func _test_beam_shove() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var seen: Array = []
+	for who in ["PROTAGONIST", "RIVAL"]:
+		for dur in [15, 9]:
+			var on: Dictionary = _shove_probe(who, dur, false)
+			var off: Dictionary = _shove_probe(who, dur, true)
+			var sink: float = 0.0
+			var lean: float = 0.0
+			for k in range(on.samples.size()):
+				sink = maxf(sink, float(off.samples[k][1]) - float(on.samples[k][1]))
+				lean = maxf(lean, absf(float(on.samples[k][0]) - float(off.samples[k][0])))
+			var rest: float = 0.0
+			for k in range(50, 60):
+				rest = maxf(rest, absf(float(on.samples[k][0]) - float(off.samples[k][0])) + absf(float(on.samples[k][1]) - float(off.samples[k][1])))
+			seen.append("%s %d ticks: sink %.1f lean %.1f rest %.2f cleared %d" % [who.substr(0, 1), dur, sink, lean, rest, int(on.cleared_at)])
+			if int(on.nan) > 0 or int(on.viol) > 0:
+				bad.append("%s %d: nan %d viol %d" % [who, dur, int(on.nan), int(on.viol)])
+			if sink < 6.0:
+				bad.append("%s %d: the dig-in sinks the pelvis %.1f (6 wanted)" % [who, dur, sink])
+			if rest > 0.35 or int(on.cleared_at) < 0:
+				bad.append("%s %d: not back to the stand after the slide (diff %.2f, cleared %d)" % [who, dur, rest, int(on.cleared_at)])
+	_expect(bad.is_empty(), "beam shove: the body is thrown back and digs in for the slide, within limits, and is gone after: %s" % str(bad))
+	print("beam shove: %s" % " | ".join(seen))
+
+
 func _test_press_ack() -> void:
 	_standing = true
 	AnimData.load_every_wave()
@@ -6150,6 +6314,88 @@ func _gesture_run(S: SimState, who: String, intent: String, state: String, ticks
 	return res
 
 
+## The other fight's bodies on a 2v2 stage (RenderAnim.fight_view; docs/animation/fight-view.md): a read-only view of S whose swapped fields are fight 1's own record, so the layers that read the exchange from S.dirS, the
+## opponent from S.fighters and the clock from S.T draw fight 1's bodies from fight 1's own state. The pose through the view must equal the pose of the same body with the fight swapped into S (SimStage.enter, the sim's own
+## swap), the view must write nothing (the state hash, S.stage.cur and S.fighters are as they were), and a match with no stage must give S back.
+func _test_fight_view() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var seen: String = ""
+	main.start_match(7, {"p1": true, "p2": true}, {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "fights": 2})
+	for i in range(240):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	if S.stage == null or S.stage.fights.size() < 2:
+		bad.append("no stage: the match did not open two fights")
+	else:
+		var h0: String = str(SimHash.stateHash(S).gameplay)
+		var fighters0: Array = S.fighters
+		var cur0: int = int(S.stage.cur)
+		var rec = S.stage.fights[1]
+		var V: SimState = RenderAnim.fight_view(S, 1)
+		if V == S or V.fighters != rec.fighters or V.dirS != rec.dirS or V.game != rec.game or V.T != rec.T or V.tick != S.tick or V.stage != null:
+			bad.append("the view is not fight 1's record in its swapped fields")
+		if RenderAnim.fight_view(S, 0) != S:
+			bad.append("the view of the fight S holds is not S itself")
+		# the truth: fight 1 swapped into S, solved there, swapped back
+		var truth: Array = []
+		RenderAnim._fighters.clear()
+		SimStage.enter(S, 1)
+		for f in S.fighters:
+			var a: AnimFighter = RenderAnim.solve(S, f)
+			var qs: Array = []
+			for i in range(AnimRig.N):
+				qs.append(a.q[i])
+			truth.append({"q": qs, "hips": a.hips, "face": a.vface})
+		var n_in: int = int(S.fighters.size())
+		# how much two solves of the same swapped fight differ by themselves (the springs read the wall clock between solves): the view is held to that and a little more
+		var jitter: float = 0.0
+		RenderAnim._fighters.clear()
+		for i in range(S.fighters.size()):
+			var a1: AnimFighter = RenderAnim.solve(S, S.fighters[i])
+			for j in range(AnimRig.N):
+				jitter = maxf(jitter, (truth[i].q[j] as Quaternion).angle_to(a1.q[j]))
+		SimStage.enter(S, 0)
+		# the view of the same tick, fresh bodies
+		RenderAnim._fighters.clear()
+		RenderAnim._sid = 0
+		V = RenderAnim.fight_view(S, 1)
+		for i in range(V.fighters.size()):
+			var a2: AnimFighter = RenderAnim.solve(V, V.fighters[i])
+			var worst: float = 0.0
+			for j in range(AnimRig.N):
+				worst = maxf(worst, (truth[i].q[j] as Quaternion).angle_to(a2.q[j]))
+			seen += "body %d: view %.5f rad, two swapped solves differ by %.5f; " % [i, worst, jitter]
+			if worst > maxf(0.0001, jitter * 3.0 + 0.002) or (truth[i].hips as Vector3).distance_to(a2.hips) > 0.01 or absf(float(truth[i].face) - a2.vface) > 0.0001:
+				bad.append("fight 1 body %d: the pose through the view differs from the swapped one (%.5f rad)" % [i, worst])
+			if a2.gslot != 2 + i:
+				bad.append("fight 1 body %d: his input slot is %d, not %d" % [i, a2.gslot, 2 + i])
+		# a negative control: the same bodies solved against fight 0's state (what drawing them without the view would do) must NOT equal the swapped pose, or the check could not tell a view from none
+		RenderAnim._fighters.clear()
+		RenderAnim._sid = 0
+		var wrong: float = 0.0
+		for i in range(V.fighters.size()):
+			var aw: AnimFighter = RenderAnim.solve(S, V.fighters[i])
+			for j in range(AnimRig.N):
+				wrong = maxf(wrong, (truth[i].q[j] as Quaternion).angle_to(aw.q[j]))
+		seen += "without the view: %.5f rad" % wrong
+		if wrong < 0.02:
+			bad.append("the check cannot tell a view from none: the bodies solved against fight 0 differ only %.4f rad from the swapped pose" % wrong)
+		RenderAnim.consume(V, [])
+		if n_in != 2 or V.fighters.size() != 2:
+			bad.append("fight 1 does not hold two bodies")
+		if str(SimHash.stateHash(S).gameplay) != h0 or int(S.stage.cur) != cur0 or S.fighters != fighters0:
+			bad.append("the view or the solve wrote the sim (hash, stage.cur or fighters changed)")
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S1: SimState = main.host.S
+	if RenderAnim.fight_view(S1, 1) != S1:
+		bad.append("a match with no stage did not give S back")
+	_expect(bad.is_empty(), "fight view: fight 1's bodies are drawn from fight 1's own record, equal to the swapped solve, writing nothing: %s" % str(bad))
+	print("fight view: %d problems; %s" % [bad.size(), seen])
+
+
 func _test_gestures() -> void:
 	_expect(AnimData.pair.get("gesture_groups", {}).has("head") and AnimData.pair.roles.protagonist.has("gestures") and AnimData.pair.roles.antihero.has("gestures"), "gestures: pair_live.json has no gestures table")
 	main.start_match(4, {"p1": false, "p2": false})
@@ -7276,6 +7522,8 @@ func _run() -> void:
 	_test_grip()
 	_test_recoil()
 	_test_press_ack()
+	_test_beam_shove()
+	_test_stick_pre()
 	_test_lunge_crouch()
 	_test_locomotion()
 	_test_ground_motion()
@@ -7318,6 +7566,7 @@ func _run() -> void:
 	_test_tech_consistency()
 	_test_zip_slice()
 	_test_gestures()
+	_test_fight_view()
 	_test_joints()
 	_test_pieces23()
 	_test_stick_class()
@@ -7391,7 +7640,7 @@ func _test_stick_class() -> void:
 				unresolved.append("%s %s" % [who, nm])
 			if AnimData.pair_lists[key].light.has(pre + String(nm)) or AnimData.pair_lists[key].heavy.has(pre + String(nm)):
 				in_picks.append("%s %s" % [who, nm])
-		# the class's timing on the manifest rows (rulings section 2): a quick blow and the spike have the 10-tick wind-up (a light), a charged release is the 4-tick blow out of the held chamber (a heavy)
+		# the class's timing on the manifest rows (rulings section 2): a quick blow and the spike have the 7-tick wind-up (a light; it was 10: windTicks 7), a charged release is the 4-tick blow out of the held chamber (a heavy)
 		var man: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/anim/waves/%s.manifest.json" % STICK_WAVE[who]))
 		var rows: Dictionary = {}
 		for r in man.get("strikes", []):
@@ -7401,7 +7650,7 @@ func _test_stick_class() -> void:
 			if String(r.get("target", "")) == "head":
 				head_hits.append("%s %s" % [who, nm])   # Legal RL-218: a head-target blow lands on the torso or on a downed foe's ground, so none of the class aims at the head
 			var charged: bool = sc.charged.has(nm)
-			if r.is_empty() or not bool(r.get("named", false)) or int(r.ticks.load) != (4 if charged else 10) or String(r.weight) != ("heavy" if charged else "light"):
+			if r.is_empty() or not bool(r.get("named", false)) or int(r.ticks.load) != (4 if charged else 7) or String(r.weight) != ("heavy" if charged else "light"):
 				bad_data.append("%s %s" % [who, nm])
 		# the four charge stances read apart: no two are alike, and each direction has its own extreme (up the lowest hips, down the highest hand, away the widest wind of the spine)
 		var vecs: Array = []

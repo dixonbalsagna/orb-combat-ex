@@ -111,8 +111,11 @@ static func _push(S, rec: Array) -> int:
 		live = int(e.n) == n and int(e.hash) == int(S.storeHash)
 	for k in range(STRIDE):
 		S.store.append(float(rec[k]) if k < rec.size() else 0.0)
-	S.storeHash = _fold(int(S.storeHash), rec)
+	var h0: int = int(S.storeHash)
+	S.storeHash = _fold(h0, rec)
 	S.storeN = n + 1
+	if S is SimState:   # (a check's fake state has no line)
+		SimField.storeGrew(S, h0, n * STRIDE)   # Simulation's memos: only what this record can reach is read again
 	if live:
 		var ent: Dictionary = _ix[id]
 		_list(ent.grid, S, n)

@@ -71,6 +71,7 @@ const SETUPS: Dictionary = {
 	"planet2depth": {"planet": 7, "touch": 3, "arena": {"cols": 2400}, "planetGen": 2, "intro": false, "depth": true},
 	"field": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false},   # a field world (sim/core/field.gd): its line and store, in the hash
 	"fights": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "fights": 2},   # two AI fights on one line (sim/core/stage.gd): the bots play the first
+	"fights2": NetLan.SETUP2,   # two fights with a player in each (--lan-2v2): the bots play slots 0 and 2, the sim's AI plays 1 and 3
 	"kick": {"kick": true},   # the kick and the coin turn (sim/core/kick.gd): six numbers a fighter, in the hash while on
 }
 
@@ -103,6 +104,7 @@ var dropAt: int = -1        # --drop=F: the slot's peer vanishes at loopback fra
 var timeout: int = 30       # --timeout=N: frames with no packet before the survivor drops the slot
 var turnAt: int = -1        # --turn-at=N: a calm turn decided before tick N
 var _logWords: Array = []   # with --right-stick: each slot's confirmed second words, for the straight replay of a log
+var tradeAt: int = -1       # --trade-at=T, with --setup=fights2: the two players (partners) change fights at the first quiet tick from T, on every run
 var walkTicks: Dictionary = {}   # --walk-at=B,...: walk the peers' confirmed states after these ticks against the straight run's (a diagnosis; log mode)
 
 
@@ -172,6 +174,8 @@ func _init() -> void:
 				aiFlags = {"p1": false, "p2": true}
 		elif a.begins_with("--tail="):
 			tail = maxi(1, int(a.substr(7)))
+		elif a.begins_with("--trade-at="):
+			tradeAt = int(a.substr(11))
 		elif a.begins_with("--takeover="):
 			takeAt = int(a.substr(11))
 		elif a.begins_with("--slot="):
@@ -327,7 +331,13 @@ func _ref(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery: int) 
 	var key: Array = [seed, delay, takeAt]
 	if refs.has(key):
 		return refs[key]
+	tradedAt = -1
 	var ref := _straight(seed, setup, ticks, delay, hashEvery)
+	if tradeAt >= 0 and sabotage == "":
+		print("seed %d  the trade went through at tick %d" % [seed, tradedAt])
+		if tradedAt < 0:
+			failures += 1
+			print("FAIL  seed %d: the trade never went through" % seed)
 	if sabotage == "":
 		print("seed %d  delay %d  straight: %d exchanges, %d ticks with feed or fx, replay %s, KO %s, aliases %s%s" % [seed, delay, ref.exN, ref.outTicks, "verified" if ref.replayOk else "FAILED", ref.ko, "none" if ref.aliases.is_empty() else str(ref.aliases), "" if takeAt < 0 else ", slot %d the AI's from tick %d" % [takeSlot, takeAt]])
 		if not ref.replayOk or not ref.aliases.is_empty():
@@ -341,7 +351,8 @@ func _ref(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery: int) 
 ## replay records the toggle) and plays neutral from it, as the session's confirmed inputs say.
 func _straight(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery: int) -> Dictionary:
 	var S := SimCore.createSim()
-	var rec := SimReplay.recorder(S, seed, {"p1": false, "p2": false}, setup)
+	var inFights: bool = setup == NetLan.SETUP2
+	var rec := SimReplay.recorder(S, seed, NetLan.AI2 if inFights else {"p1": false, "p2": false}, setup)
 	var bots: Array = [NetBot.new(seed, 0), NetBot.new(seed, 1)]
 	var hashes: Dictionary = {}
 	var outs: Array = []
@@ -352,6 +363,8 @@ func _straight(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery: 
 		if t == takeAt:
 			rec.toggle(takeSlot)
 		var ins: Array = []
+		if inFights:
+			ins.resize(4)
 		for k in range(2):
 			var p: int = NetSession.NEUTRAL if t < delay else bots[k].next()
 			var w: int = 0 if t < delay else bots[k].word
@@ -359,9 +372,14 @@ func _straight(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery: 
 				p = NetSession.NEUTRAL
 				w = 0
 			log[k].append(p)
-			ins.append(NetSession.intentOf(p, w))
+			if inFights:
+				ins[NetSession.slotNow(S, NetLan.SLOTS2[k])] = NetSession.intentOf(p, w)
+			else:
+				ins.append(NetSession.intentOf(p, w))
 		if turnAt >= 0:
 			_forceTurn(S, t)
+		if inFights:
+			_trade(S, t)   # after the inputs are placed, as a session's beforeTick runs
 		rec.step(ins)
 		var d: String = NetSession.outDigest(S)
 		if d != "":
@@ -375,12 +393,26 @@ func _straight(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery: 
 			aliases += NetSnapshot.aliasAudit(S)
 	aliases += NetSnapshot.aliasAudit(S)
 	aliases = aliases.filter(func(a): return not READ_ONLY_SHARED.has(a))
-	var rp: Dictionary = rec.finish()
-	var play: Dictionary = SimReplay.play(rp)
+	var play: Dictionary = SimReplay.play(rec.finish())
 	var ref := {"hash": hashes, "out": outs, "final": hashes[ticks], "log": log, "exN": S.dirS.exN, "outTicks": outTicks,
-		"replayOk": (play.ok and play.final == hashes[ticks]) or turnAt >= 0, "aliases": aliases, "ko": S.game.ko != null}   # a forced turn is not an input: no replay holds it
+		"replayOk": (play.ok and play.final == hashes[ticks]) or turnAt >= 0 or tradedAt >= 0, "aliases": aliases, "ko": SimCore.ended(S)}   # a forced turn or trade is not an input: no replay holds it
 	SimCore.dispose(S)
 	return ref
+
+
+## --trade-at: on every run of a tick from tradeAt, until it has gone through. The state says whether it has, so every run agrees.
+func _trade(S: SimState, t: int) -> void:
+	if tradeAt >= 0 and t >= tradeAt and NetSession.slotNow(S, 0) == 0 and _tradePartners(S):
+		tradedAt = t
+
+
+var tradedAt: int = -1
+
+
+## The two players change fights (with hits across fights on, a trade is between partners only).
+static func _tradePartners(S: SimState) -> bool:
+	var bs: Array = SimStage.bodies(S)
+	return SimStage.trade(S, bs.filter(func(f): return f.keys == "p1")[0], bs.filter(func(f): return f.keys == "p3")[0])
 
 
 ## The tests-only breaks a session carries for the current sabotage. A takeover's breaks: "late" on the peer that did not
@@ -402,13 +434,17 @@ func _plant(sess: NetSession, k: int, proposer: int) -> void:
 
 
 func _session(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery: int, profile: Dictionary, ref: Dictionary, proposer: int = -1) -> Dictionary:
-	var L := NetLoopback.make(seed, setup, profile, delay, seed, seed * 31 + int(profile.ping))
+	var L := NetLoopback.make(seed, setup, profile, delay, seed, seed * 31 + int(profile.ping), false, NetLan.AI2 if setup == NetLan.SETUP2 else {"p1": false, "p2": false})
 	var res := {"err": "", "hashed": 0, "outs": 0, "rollbacks": 0, "resim": 0, "maxDepth": 0, "mispred": 0, "stalls": 0, "lost": 0, "sent": 0, "late": 0, "turns": ""}
 	var recs: Array = []   # per peer: its calm turns and rollbacks (_turnTrack, _turnLine)
 	for k in range(2):
 		var sess: NetSession = L.peers[k].session
 		sess.verify = sparse == 0
 		sess.saveEvery = maxi(1, sparse)
+		if setup == NetLan.SETUP2:
+			sess.slotOf = NetLan.SLOTS2
+			if tradeAt >= 0:
+				sess.beforeTick = _trade
 		_plant(sess, k, proposer)
 		if k == proposer:
 			L.peers[k].bot = TakePlayer.new(L.peers[k].bot, sess, takeSlot, takeAt)
@@ -623,7 +659,7 @@ func _logSession(seed: int, setup: Dictionary, cap: int, delay: int, hashEvery: 
 				r.hash[b] = SimHash.stateHash(st).gameplay
 			if st != null and ((int(r.lastSwap) >= 0 and b == int(r.lastSwap) + TURN_TAIL) or walkTicks.has(b)):
 				r.walk[b] = NetSnapshot.take(st, walkPool)
-			if r.ko < 0 and st != null and st.game.ko != null:
+			if r.ko < 0 and st != null and SimCore.ended(st):
 				r.ko = b
 	var until: int = cap
 	res.until = until
@@ -897,7 +933,7 @@ func _aiStraight(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery
 			hashes[t + 1] = SimHash.stateHash(S).gameplay
 		if walkAt.has(t + 1):
 			walk[t + 1] = walkAt[t + 1].map(func(root): return NetDesync.firstDiffs(root, S, 4))
-		if ko < 0 and S.game.ko != null:
+		if ko < 0 and SimCore.ended(S):
 			ko = t + 1
 		if t + 1 == ticks / 2:
 			aliases += NetSnapshot.aliasAudit(S)

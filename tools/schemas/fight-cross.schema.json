@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/fight-cross",
+  "title": "fight-cross (schema \"fight.cross/1\")",
+  "description": "data/fight/cross.json: the switch and numbers of 2v2's hits across fights (docs/architecture/cross-fights.md). Policy: closed; a key starting with _ is a comment.",
+  "type": "object",
+  "required": [
+    "schema",
+    "enabled",
+    "beam",
+    "rejoinAfter"
+  ],
+  "properties": {
+    "schema": {
+      "const": "fight.cross/1"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "beam": {
+      "type": "object",
+      "required": [
+        "dmg",
+        "stop",
+        "shake"
+      ],
+      "properties": {
+        "dmg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2000
+        },
+        "stop": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "shake": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "rejoinAfter": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 30
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

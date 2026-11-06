@@ -6,6 +6,7 @@ class_name CamParams
 # --- the trigger (section 2) ---
 const R_SPLIT: float = 0.055           # split when a fighter's height falls under this fraction of vh (Orb decides; 0.035 until director step 1, 2026-10-22: no one view under 40 px at 720p)
 const R_MERGE: float = 0.07            # merge when it stays above this (Orb decides; 0.047 until director step 1)
+const SPLIT_POWER_EASE: float = 8.0     # split_ignores_power: the whole lowering (0 to 1) would take this long, seconds; power 1 to 4 is under 1.5 s of it
 const R_BEAM_MIN: float = 0.032        # a beam struggle keeps the merged wide shot down to this
 const MIN_PX: float = 18.0             # under 600 px of screen height the split line is at least this many pixels
 const R_FLOOR: float = 0.032          # camera v2: no fighter is shown smaller than this anywhere (23 px at 720p)
@@ -349,6 +350,111 @@ const ANGLE_GAP: float = 20.0
 # changes it) and leans SCAPE_LEAN of the width toward the new ground. In over SCAPE_IN, held SCAPE_HOLD, back over SCAPE_OUT; no cut.
 # A hit, the anticipation of one, a shot, the split or a clash lets it go at once, eased. One in SCAPE_GAP at most, none within
 # SCAPE_PEAK_GAP of a peak or a building's fall; a crossing not shown within SCAPE_WINDOW is let pass.
+# The peak launch's shot (docs/camera/swing-view.md; camera.md "The meteor launch"; game-design.md section 12). Widths are at 16:9 on a full ring. First values
+const PEAK_LADDER: Array = [4200.0, 8000.0, 16000.0, 53000.0]   # by the lower of the two tiers (tier 4's sim-side send decides 32,000 or 53,000 by its height)
+const PEAK_RING: float = 153600.0        # the ring those widths are for: a smaller ring scales them
+const PEAK_GRAVITY: float = 1000.0       # the launch's gravity, for the apex he is sent to
+const PEAK_GRAVITY_TIME: float = 0.001   # one second before the apex is this many seconds per u/s of vy
+const PEAK_STEEP: float = 1.0            # steeper than 45 degrees is a launch up
+const PEAK_WORTH: float = 1.3            # the shot runs only if it would widen the view by more than this
+const PEAK_TOP: float = 0.05             # he may reach this share of the height from the top
+const PEAK_PLACE_CLIMB: float = 0.85     # the launcher's place in the frame through the climb, for headroom
+const PEAK_PLACE_HANG: float = 0.6       # ... craned to this over the climb's last second: the planet comes up
+const PEAK_PLACE_LAND: float = 0.7       # ... and this on the ground again
+const PEAK_PLACE_RATE: float = 0.3       # shares of the height a second
+const PEAK_MARGIN_W: float = 2700.0      # the launch framing's margin
+const PEAK_ASPECT_W: float = 2.2         # the width for a height low down, and across for the pair
+const PEAK_LAND_W: float = 8000.0        # the width at the landing: the blast reads whole
+const PEAK_EASE: float = 7.0             # how the width settles on its target, a second
+const PEAK_START_TICKS: float = 6.0      # the width's rate comes up over these
+const PEAK_IN: float = 0.2               # the shot takes the screen over this
+const PEAK_HANG_VY: float = 900.0        # under this he hangs
+const PEAK_ON_GROUND: float = 60.0       # what counts as landed
+const PEAK_CATCH: float = 1400.0         # both this close: a catch, the exchange's framing takes over
+const PEAK_HOLD: float = 0.5             # the hold after a landing
+const PEAK_BACK_LAND: float = 1.3        # the returns
+const PEAK_BACK_BRAKE: float = 1.5
+const PEAK_BACK_CATCH: float = 0.6
+const PEAK_BACK_KO: float = 0.5
+const PEAK_BACK_MIN: float = 0.2
+# The high-velocity moves (docs/camera/launch-director.md), first values
+const CLOSE_R: float = 0.17              # a locked brawl's size: a fighter's height as a share of the screen's, against the fight's 0.12 and the cap's 0.14
+const REVEAL_R: float = 0.05             # readable: a reveal keeps him at least this size (36 px at 720p)
+const REVEAL_R_HIGH: float = 0.03        # ... and this with both at tier 3 or up, where the width is the point
+const LEAD_AHEAD_X: float = 0.16         # lead_ahead: how far ahead the pane leads him at speed, of the width, against PANE_LEAD_X's 0.08
+const LEAD_AHEAD_V: float = 6000.0       # ... reached at this speed
+const SHARE_EVEN: float = 0.6            # split_share: the line eases to the middle for a beam struggle, and back, over this
+const READ_FAST: float = 0.06            # readable: the least the scroll governor leaves a fast body in his pane (43 px at 720p), against R_FLOOR's 0.032 and LAUNCH_FLOOR's 0.05
+const R_READ: float = 0.1                # readable: the size a slow body comes back to, at least (72 px at 720p), against the fight's 0.11 and the pane's 0.085
+const READ_SPEED: float = 1500.0         # under this a body isn't really flying
+const READ_AFTER: float = 0.3            # for this long, so an arc's top doesn't count
+const READ_MZ: float = 0.012             # the zoom coming in as the panes merge, log units a tick (MZ_RATE's 0.0035 took over two seconds to reach a readable size)
+const READ_MARGIN: float = 0.5           # the one view's margin round a slow pair, of its usual
+const CLOSE_GAP: float = 300.0           # near enough to count
+const CLOSE_IN: float = 0.7              # in over this, eased
+const CLOSE_OUT: float = 0.35            # and out
+const FT_SPEED: float = 3000.0           # a stop from this fast carries the frame on (camera.md, follow-through); a stop is under FT_STOP of the speed a tick ago
+const FT_STOP: float = 0.35
+const FT_AMOUNT: float = 0.02            # at most this much of the width
+const FT_OUT: float = 0.13               # out, soft landing
+const FT_BACK: float = 0.4               # and back
+const REVEAL_SPEED: float = 3000.0       # flying this fast, for this long, with this much under him, opens the view (camera.md section 3)
+const REVEAL_AFTER: float = 1.0
+const REVEAL_LOW: float = 100.0
+const REVEAL_IN: float = 1.0             # out over this, held, back over REVEAL_OUT: low, wide, low
+const REVEAL_HOLD: float = 0.5
+const REVEAL_OUT: float = 1.0
+const REVEAL_GAP: float = 8.0            # no closer than this
+const REVEAL_W: float = 8000.0           # the width it opens to, at 16:9 on a full ring, the lower tier at REVEAL_TIER or up (Orb: below the size floor only at peak)
+const REVEAL_W_LOW: float = 4200.0       # ... and under it: the size floor
+const REVEAL_TIER: float = 3.0
+const REVEAL_PITCH: float = -6.0
+const REVEAL_PLACE: float = 0.8          # he goes this low in the frame
+const FLAT_SPEED: float = 10000.0        # a flat send this fast can't be followed softly at fight size (director.md section 5): it gets its own shot
+const FLAT_STEP: float = 0.06            # the frame's step after him, at most, of the width a tick
+const FLAT_ACC: float = 0.004            # and how fast that step changes
+const FLAT_HOLD: float = 0.4             # "hold": how long the frame stays still after he's gone
+const SPEED_EXCURSION: float = 0.35      # how far a launched body may run ahead of his place in the frame while the camera catches him, of the width
+const SPEED_SETTLED: float = 0.01        # ... and it has settled when what's left of it is under this
+const SPEED_SMOOTH: float = 0.4          # how quickly the catch believes his speed has changed
+const SPEED_PULL: float = 0.12           # ... and how much of that the camera takes back a tick
+const ZOOM_ACC: float = 0.004            # the zoom's step changes by at most this a tick, log units
+const PEAK_FALL_MARGIN: float = 1.25     # the descent's width over his height (Research: he comes in faster than he left)
+const PEAK_PASS_FROM: float = 0.8        # the focus passes to the landing as the width falls through these shares of what holds both
+const PEAK_PASS_TO: float = 1.2
+const PEAK_PASS_AHEAD: float = 0.5       # just short of where he's going: this many seconds of his sideways speed ahead of him
+# Why a cut is a cut (Orb, 2026-10-22: no instant move without a reason from real cinematography; docs/camera/director.md section 11)
+const CUT_REASONS: Dictionary = {
+	"angle": "an authored shot's angle, on its beat",
+	"relocate": "a change of space: the sim moved the pair",
+	"side_swap": "no visible change: the divider isn't shown",
+	"rush_pin": "a jump a move would only smear: the departure matched to the arrival",
+	"solo_cut_in": "a shot taking over from another pane: on the action",
+	"hold_to_victim": "cut on action, at the impact",
+	"insert": "cut on action and the reveal of the damage; the return ends the insert",
+	"transform": "a shock beat, on the break's onset",
+	"intro": "into and out of an authored set piece",
+	"travel_safety": "a change of space a move would only smear (the budget's; it ships off)",
+	"far_catch_up": "a change of space: beyond WHIP_MAX a move would only smear",
+	"motion_setting": "the player asked for a cut in place of a move; on the action where there is one",
+}
+# The swing's shot (docs/camera/swing-view.md; docs/world/ring-any-angle/camera.md, first values, nothing seen on real ground)
+const SWING_STILL: float = 0.0087        # radians a second under which the world counts as still (half a degree)
+const SWING_MAX_TICK: float = 0.0873     # the most a swing turns in a tick (5 degrees, past Orb's 240 a second): more is a correction
+const SWING_SHOT_TICKS: int = 18         # a swing shorter than this is a jolt or a correction and gets no shot (a 15 degree one is 7 to 11 ticks)
+const SWING_IN: float = 0.5              # the low angle and the lean come in over this
+const SWING_OUT: float = 0.7             # ... and out over this
+const SWING_REST_HOLD: float = 0.35      # the shot holds this long after the world rests: the landing's hold
+const SWING_REST_END: float = 1.1        # the swing is over this long after the world rests
+const SWING_PITCH: float = -4.0          # the fighter plane goes low in the frame, and the far land against the sky
+const SWING_PITCH_TALL: float = -6.0     # ... lower with tall land in front: what comes round passes under his feet
+const SWING_LEAN: float = 0.04           # of the width, toward what's arriving
+const SWING_TALL: float = 1500.0         # land or a building above this, within the camera's distance, is "tall"
+const SWING_CORRECT: float = 1.047       # radians a second: a correction's ease, no faster than Game Design's 60 degrees a second
+const SWING_SLOPE: float = 0.5           # the slope a hold is judged on (Rendering's section 7)
+const SWING_FOOT: float = 10.0           # the units of foot error that show (Rendering's figure)
+const SWING_CUT_GAP: float = 4.0         # the motion setting's cuts, outside a launch's own, no closer than this (Accessibility's first value)
+const SWING_SMALL: float = 0.2618        # under 15 degrees: never cut, it folds into the next cut (Accessibility)
 const SCAPE_WIDE: float = 0.72
 const SCAPE_MIN_R: float = 0.06         # 43 px at 720p: the fighters stay readable
 const SCAPE_PITCH: float = -4.0

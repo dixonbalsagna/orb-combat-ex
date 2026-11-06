@@ -35,6 +35,7 @@ const SETTLE_STEPS: int = 3           # a window closes after this many quiet st
 const MAX_AGE_STEPS: int = 900        # ... or after this many steps whatever happens (a bound on the cost)
 const MAX_WINDOWS: int = 8            # more than this and the oldest window is dropped
 const MAX_HALF: int = 240             # widest a window may grow (columns each side of its centre)
+const MAX_WARM_STEPS: int = 16        # flowWarm: the most steps a new window waits before its water moves, however far merges widen it
 ## Submerged hiding (cover.gd): 60 units under the surface, in water at least 100 deep. The prototype's rule for the sea.
 const HIDE_BELOW_SURFACE: float = 60.0
 const HIDE_MIN_DEPTH: float = 100.0
@@ -227,36 +228,55 @@ static func init(S: SimState) -> void:
 					wet = false
 
 
+## The columns a new flow window reads a step before any water moves in it (data/biomes/water.json flowWarm.cols; 0, the default, is today: the window's whole span is read in its first step, 300 to 420 cold ground reads,
+## 19 to 27 ms on Orb's replay). With it on, a new window starts at a negative age: each step it reads `cols` more of its span (WorldTerrain.baseAt, which only warms the ground memo and changes no state) and no water moves
+## until the whole span is read, so the first flow starts ceil(span / cols) steps later (2 ticks a step) and no tick reads more than `cols` columns. docs/world/water-window-warm.md.
+static func warmCols() -> int:
+	var w: Variant = WorldFill.data().get("flowWarm", {})
+	return int(w.get("cols", 0)) if w is Dictionary else 0
+
+
 ## Terrain changed around column c0 (half width cols) and the lowest ground there is minG: keep the reservoir
 ## columns full, and open a flow window if any of it is below sea level.
 static func touched(S: SimState, c0: int, cols: int, minG: float) -> void:
 	var NC: int = SimConst.NC
 	var base: PackedFloat32Array = S.base
 	var dfm: PackedFloat32Array = WorldTerrain.lowD(S)
+	# each column's ground is read once here, not once a loop (a scorch calls this every beam sample: hundreds of ground reads a call, a quarter of a millisecond a loop): the span of the first loops, then (only if the
+	# window is wanted, below) the rest of the widest span
+	var hw: int = mini(MAX_HALF, cols + PAD_COLS)
+	var wide: int = maxi(cols, hw)
+	var bs := PackedFloat64Array()
+	bs.resize(2 * wide + 1)
+	for k in range(-cols, cols + 1):
+		bs[k + wide] = WorldTerrain.baseAt(S, (c0 + k + NC) % NC)
 	if S.depthOn:   # the lowest ground over all the rows, in the window
 		for k in range(-cols, cols + 1):
 			var ic: int = (c0 + k + NC) % NC
-			minG = minf(minG, WorldTerrain.baseAt(S, ic) + dfm[ic])
+			minG = minf(minG, bs[k + wide] + dfm[ic])
 	for k in range(-cols, cols + 1):
 		var i: int = (c0 + k + NC) % NC
-		if WorldTerrain.baseAt(S, i) < RESERVOIR_BASE:
-			S.water[i] = maxf(0.0, SEA_LEVEL - (WorldTerrain.baseAt(S, i) + dfm[i]))
+		if bs[k + wide] < RESERVOIR_BASE:
+			S.water[i] = maxf(0.0, SEA_LEVEL - (bs[k + wide] + dfm[i]))
 	if not S.planetRing.is_empty():
 		WorldLakes.refill(S, c0, cols)   # a gen 2 ring's lakes stand flat when their bed is dug
 	if WorldFill.on():
 		WorldFill.open(S, c0, cols)   # water v2: a hole dug where water would come fills (its own windows)
 	if minG >= WET_GROUND:
 		return
-	var hw: int = mini(MAX_HALF, cols + PAD_COLS)
 	# Water can only spread from water, and only into a dynamic column that is low enough: worth a window only if the
 	# reach holds both some water and some such column.
+	for k in range(-wide, -cols):
+		bs[k + wide] = WorldTerrain.baseAt(S, (c0 + k + NC) % NC)
+	for k in range(cols + 1, wide + 1):
+		bs[k + wide] = WorldTerrain.baseAt(S, (c0 + k + NC) % NC)
 	var near: bool = false
 	var hole: bool = false
 	for k in range(-hw, hw + 1):
 		var i2: int = (c0 + k + NC) % NC
 		if S.water[i2] >= MIN_DEPTH:
 			near = true
-		if WorldTerrain.baseAt(S, i2) >= RESERVOIR_BASE and WorldTerrain.baseAt(S, i2) + dfm[i2] < WET_GROUND:
+		if bs[k + wide] >= RESERVOIR_BASE and bs[k + wide] + dfm[i2] < WET_GROUND:
 			hole = true
 	if not (near and hole):
 		return
@@ -265,10 +285,15 @@ static func touched(S: SimState, c0: int, cols: int, minG: float) -> void:
 			continue   # a fill or wave window (WorldFill) is not a flow window
 		var dc: int = absi(colDelta(c0, w[0]))
 		if dc <= w[1] + hw:
+			var w1_old: int = w[1]
 			w[1] = mini(MAX_HALF, maxi(w[1], dc + hw))
+			var wcm: int = warmCols()
+			if wcm > 0 and int(w[3]) < 0 and w[1] > w1_old:   # flowWarm: a window still warming that a merge widens reads the new columns too (the steps it still owes grow by what they need, to at most MAX_WARM_STEPS)
+				w[3] = maxi(int(w[3]) - (2 * (int(w[1]) - w1_old) + wcm - 1) / wcm, -MAX_WARM_STEPS)
 			w[2] = 0
 			return
-	S.waterWin.append([c0, hw, 0, 0])
+	var wc: int = warmCols()
+	S.waterWin.append([c0, hw, 0, -((2 * hw + wc) / wc) if wc > 0 else 0])   # flowWarm: a negative age is the steps left to read the span (the span, 2 hw + 1, over wc, rounded up)
 	if S.waterWin.size() > MAX_WINDOWS:
 		S.waterWin.remove_at(0)
 
@@ -287,7 +312,7 @@ static func step(S: SimState) -> void:
 		WorldAfter.step(S)   # a beam's aftermath (after.gd): its timed jobs, every unfrozen tick
 	if WorldFire.on():   # window 18: the burning trees, a tick (nothing runs when none burns)
 		WorldFire.step(S)
-	if S.frame != null and SimSwing.waterHeld(S):
+	if S.frame != null and (SimSwing.waterHeld(S) or (warmCols() > 0 and S.swing != null and S.swing.active)):   # flowWarm: the line is turning, or paused with its strip just re-posed: every ground read of a window is cold (a swing's first tick read 1,067 columns, 21 to 31 ms), so the water waits for the swing to end and for its own warm
 		return
 	if S.waterWin.is_empty() or int(S.waterTick) % STEP_TICKS != 0:
 		return
@@ -295,6 +320,7 @@ static func step(S: SimState) -> void:
 	var base: PackedFloat32Array = S.base
 	var dfm: PackedFloat32Array = WorldTerrain.lowD(S)
 	var wat: PackedFloat32Array = S.water
+	var wc: int = maxi(warmCols(), 1)
 	var wi: int = 0
 	while wi < S.waterWin.size():
 		var w: Array = S.waterWin[wi]
@@ -303,6 +329,11 @@ static func step(S: SimState) -> void:
 				S.waterWin.remove_at(wi)
 			else:
 				wi += 1
+			continue
+		if int(w[3]) < 0:   # flowWarm: the span is read a chunk a step first, and no water moves in this window until it is read
+			_warmChunk(S, w, wc)
+			w[3] += 1
+			wi += 1
 			continue
 		var lo: int = w[0] - w[1]
 		var hi: int = w[0] + w[1]
@@ -366,3 +397,16 @@ static func step(S: SimState) -> void:
 			S.waterWin.remove_at(wi)
 		else:
 			wi += 1
+
+
+## One step of a warming window (flowWarm): read the next `wc` columns of its span. Which columns are read never changes a result (a ground read is a pure function that only fills the memo), only when the window's flow
+## starts, which the age sets. The chunk is the one the steps left leave: the first step reads the first.
+static func _warmChunk(S: SimState, w: Array, wc: int) -> void:
+	var NC: int = SimConst.NC
+	var span: int = 2 * int(w[1]) + 1
+	var chunks: int = (span + wc - 1) / wc
+	var idx: int = clampi(chunks + int(w[3]), 0, chunks - 1)   # w[3] is minus the steps left: the last step reads the last chunk
+	var lo: int = int(w[0]) - int(w[1]) + idx * wc
+	var hi: int = mini(lo + wc, int(w[0]) + int(w[1]) + 1)
+	for j in range(lo, hi):
+		WorldTerrain.baseAt(S, posmod(j, NC))

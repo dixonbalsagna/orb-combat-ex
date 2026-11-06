@@ -230,6 +230,10 @@ static func _cache() -> void:
 	K_TKEEP = float(D.bounce.tangentKeep)
 	K_VKEEP = D.bounce.vertKeep
 	K_PERTIER = D.bounce.perTier
+	var st: Dictionary = D.get("settle", {})
+	if bool(st.get("enabled", false)):   # (Orb, first play) a body on the ground digs or stops: no rattling off it
+		K_PERTIER = st.perTier
+		K_MAXC = int(st.maxContacts)
 	K_CAPTURNS = D.spin.capTurns
 	K_BODYR = float(D.spin.bodyR)
 	K_WPS = float(D.wear.perSpeed)

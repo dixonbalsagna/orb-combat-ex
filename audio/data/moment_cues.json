@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "note": "The moments a player would notice that had no sound (docs/audio/first-play-sound.md; the EP's brief of 2026-11-01): a beam charging and firing, a KO, the biggest blows, a launch, the meteor's landing, a parry and two bolts meeting. EXISTING SOUNDS ONLY, each at its own pitch and level (the lower, chunkier family, Orb 2026-10-16). PARKED behind `enabled`: false: off, nothing here runs and audio is byte-for-byte what it was. The silence while the meteor flies is left alone on purpose. Needs a schema from Tools (a warning until then).",
+  "enabled": false,
+  "charge": {"sound": "energy.gather", "gain_db": -4.0, "pitch": 0.9, "priority": 60, "cls": "moment.charge", "cap": 2, "caption": "[charging]", "stop_ms": 120},
+  "fire": {"layers": [{"sound": "energy.blast", "gain_db": -2.0, "pitch": 0.8}, {"sound": "impact.heavy", "gain_db": -6.0, "pitch": 0.7}], "priority": 70, "cls": "moment.fire", "cap": 2, "caption": "[beam]"},
+  "ko": {"layers": [{"sound": "impact.heavy", "gain_db": 0.0, "pitch": 0.55}, {"sound": "impact.crater", "gain_db": -3.0, "pitch": 0.8}], "priority": 98, "cls": "moment.ko", "cap": 1, "caption": "[knock-out]"},
+  "decisive": {
+    "kinds": {
+      "knockback": {"layers": [{"sound": "impact.heavy", "gain_db": -4.0, "pitch": 0.8}], "priority": 85, "cls": "moment.decisive", "cap": 1},
+      "beam": {"layers": [{"sound": "impact.heavy", "gain_db": -2.0, "pitch": 0.7}, {"sound": "impact.crater", "gain_db": -6.0, "pitch": 0.9}], "priority": 86, "cls": "moment.decisive", "cap": 1}
+    }
+  },
+  "launch": {"layers": [{"sound": "rush.whoosh", "gain_db": -2.0, "pitch": 0.7}], "priority": 62, "cls": "moment.launch", "cap": 2},
+  "meteor": {"within_ticks": 1500, "min_energy": 2.6, "layers": [{"sound": "impact.crater", "gain_db": 3.0, "pitch": 0.5}, {"sound": "impact.heavy", "gain_db": 0.0, "pitch": 0.55}], "priority": 99, "cls": "moment.meteor", "cap": 1, "caption": "[impact]"},
+  "parry": {"layers": [{"sound": "impact.absorbed", "gain_db": -3.0, "pitch": 1.1}], "priority": 66, "cls": "moment.parry", "cap": 1},
+  "shot_clash": {"layers": [{"sound": "impact.guard", "gain_db": -4.0, "pitch": 0.9}], "priority": 58, "cls": "moment.clash", "cap": 2}
+}

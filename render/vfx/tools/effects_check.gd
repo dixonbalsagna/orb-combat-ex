@@ -224,7 +224,17 @@ func _run() -> void:
 	_brawl()
 	_small_blasts()
 	_beam_look()
+	_meteor()
+	_flight_lines()
+	_perf_level()
 	_beam_struggle_beams()
+	_clash_look()
+	_energy_heads()
+	_beam_front()
+	_other_fights()
+	_clash_wave()
+	_shot_from_outside()
+	_crack_heights()
 	_beam_pattern()
 	_beam_scar()
 	_multi()
@@ -3644,6 +3654,46 @@ func _beamplay() -> void:
 	for k in range(80):
 		_tick(S, h_idle, [])
 	_check(not h_idle.beamplay.walks[1].on, "a walk that never gets its arrival cue ends of itself (70 ticks)")
+	# beam_shove (Encounter's beam-hold): up close the firing throws him back; a wedge of the blast in front of him, a flat ring at his feet, then the dust of the slide; in the air no ring and no dust; off with `shove_on`.
+	S.beams = []
+	f0.x = plains
+	f1.x = SimWrap.wrap(plains + 700.0)
+	f1.y = g
+	var h_sh: VfxHub = fresh_beam.call()
+	var sh_sp0: int = h_sh.debris.spawned
+	_tick(S, h_sh, [cue.call(1, "beam_shove")])
+	var sh_wedge = null
+	var sh_ring = null
+	for e in h_sh.beamplay.fx:
+		if e.kind == "launch":
+			sh_wedge = e
+		if e.kind == "land":
+			sh_ring = e
+	var sh_front: bool = sh_wedge != null and sh_wedge.dx > 0.5 and SimWrap.sdx(sh_wedge.x, f1.x) > 40.0 and SimWrap.sdx(sh_wedge.x, f1.x) < 140.0 and sh_wedge.z < f1.z - 20.0 and sh_ring != null and sh_ring.z < f1.z - 20.0      # behind him in depth, never over his body
+	var sh_on: bool = h_sh.beamplay.shoves[1].on
+	for k in range(12):
+		_tick(S, h_sh, [])
+	var sh_dust: int = h_sh.debris.spawned - sh_sp0
+	for k in range(20):
+		_tick(S, h_sh, [])
+	var sh_end: bool = not h_sh.beamplay.shoves[1].on
+	_check(sh_front and sh_ring != null and sh_on and sh_dust >= 3 and sh_end, "beam_shove: a wedge of the blast in front of him pointing the way he goes and a flat ring at his feet, both behind him in depth (not over his body), dust off his feet while he slides (%d puffs) and it ends after 0.3 s" % sh_dust)
+	f1.y = g + 900.0
+	var h_sh2: VfxHub = fresh_beam.call()
+	var sh_sp2: int = h_sh2.debris.spawned
+	_tick(S, h_sh2, [cue.call(1, "beam_shove")])
+	for k in range(14):
+		_tick(S, h_sh2, [])
+	_check(h_sh2.beamplay.made.get("launch", 0) == 1 and h_sh2.beamplay.made.get("land", 0) == 0 and h_sh2.debris.spawned == sh_sp2 and not h_sh2.beamplay.shoves[1].on, "beam_shove in the air: the wedge only, no ring on the ground and no dust")
+	f1.y = g
+	VfxBeamPlay._data["beamplay"] = {"shove_on": 0.0}
+	var h_sh3: VfxHub = fresh_beam.call()
+	var sh3_launch: int = int(h_sh3.beamplay.made.get("launch", 0))
+	var sh3_land: int = int(h_sh3.beamplay.made.get("land", 0))
+	_tick(S, h_sh3, [cue.call(1, "beam_shove")])
+	_check(int(h_sh3.beamplay.made.get("beam_shove", 0)) == 0 and int(h_sh3.beamplay.made.get("launch", 0)) == sh3_launch and int(h_sh3.beamplay.made.get("land", 0)) == sh3_land and not h_sh3.beamplay.shoves[1].on, "beam_shove is off with shove_on 0")
+	VfxBeamPlay._data = {}
+	VfxBeamPlay._loaded = false
 	# the late answer: the beam is gone from the state in the same tick as the cue, so the cut is where its head last was
 	var h_late: VfxHub = fresh_beam.call()
 	var last_head = h_late.beamplay.heads[0]
@@ -5817,7 +5867,235 @@ func _blast_cloud() -> void:
 	_check(states[0] == states[1], "the same cue gives the same cloud (determinism)")
 
 
+## The beam clash's air (docs/vfx/clash-look.md): the composition of each side from data, the pair's mix, a surge's eruptions, and the view's frame: deterministic, calm form softer, never over the fighters.
+func _clash_look() -> void:
+	print("the beam clash: composition from data")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var A = S.fighters[0]
+	var D = S.fighters[1]
+	A.id = "protagonist"
+	D.id = "rival"
+	var sa: Dictionary = VfxClashLook.side(A, String(A.aura))
+	var sd: Dictionary = VfxClashLook.side(D, String(D.aura))
+	_check(sa["front"] != sd["front"] and sa["texture"] != sd["texture"] and sa["key"] == "protagonist" and sd["key"] == "rival", "two fighters compose two different looks: front %s and %s, texture %s and %s" % [sa["names"][0], sd["names"][0], sa["names"][1], sd["names"][1]])
+	_check(String(sa["names"][1]) == "boil" and String(sd["names"][1]) == "facets", "the textures are the beams' own patterns (boil, facets)")
+	_check((sa["tint_a"] as Color).h != (sd["tint_a"] as Color).h or (sa["tint_a"] as Color).s != (sd["tint_a"] as Color).s, "each side keeps its own lane colour")
+	# a fighter with no row: the default; a new fighter is a data row
+	A.id = "someone_new"
+	var sn: Dictionary = VfxClashLook.side(A, String(A.aura))
+	_check(sn["key"] == "default" and int(sn["front"]) == 0, "a fighter with no row gets the default row (front wall)")
+	A.id = "empress"
+	var se: Dictionary = VfxClashLook.side(A, String(A.aura))
+	_check(se["key"] == "empress" and int(se["front"]) == 2 and (se["lane"] as Color).to_html(false) == "b8c96a", "a data row alone makes a new fighter (empress: front wire, her own lane colour)")
+	# situations: a condition read off the fighter
+	A.id = "cyborg"
+	A.tier = 2.0
+	var c2: Dictionary = VfxClashLook.side(A, String(A.aura))
+	A.tier = 4.0
+	var c4: Dictionary = VfxClashLook.side(A, String(A.aura))
+	_check(absf(float(c2["spike_k"]) - 1.3) < 0.001 and absf(float(c4["spike_k"]) - 1.6) < 0.001, "a situation (tier 4) changes the row (spike_k %.1f at tier 2, %.1f at tier 4)" % [c2["spike_k"], c4["spike_k"]])
+	_check(VfxClashLook.read_path(A, "form.step") == null and VfxClashLook.read_path(A, "tier") == 4.0, "a path off the fighter reads what is there and is null for what is not")
+	# forms: a row's `forms` entry for his step
+	A.id = "protagonist"
+	A.tier = 1.0
+	var f0: Dictionary = VfxClashLook.side(A, String(A.aura))
+	var fs := SimState.FormState.new()
+	fs.step = 4
+	A.form = fs
+	var f4: Dictionary = VfxClashLook.side(A, String(A.aura))
+	_check(float(f4["ring_k"]) > float(f0["ring_k"]) and float(f4["power"]) > float(f0["power"]), "a form he has taken shows (ring_k %.2f to %.2f, power %.2f to %.2f)" % [f0["ring_k"], f4["ring_k"], f0["power"], f4["power"]])
+	A.form = null
+	# power
+	A.tier = 1.0
+	var p1: float = VfxClashLook.power_of(A)
+	A.tier = 4.0
+	var p4: float = VfxClashLook.power_of(A)
+	_check(p4 > p1 and p4 <= VfxClashLook.power_p("max") and VfxClashLook.power_of(null) == 0.0, "power grows with the tier (%.2f to %.2f) inside its cap" % [p1, p4])
+	_check(VfxClashLook.radius_of(p4, p4) > VfxClashLook.radius_of(p1, p1) and VfxClashLook.radius_of(2.0, 2.0) <= VfxClashLook.fp("radius_max"), "more power moves more air, inside the cap")
+	# the mix: opposite hues do not average to grey
+	var mixc: Color = VfxClashLook.mix_tint(Color.from_hsv(0.5, 0.8, 0.9), Color.from_hsv(0.0, 0.8, 0.9))
+	_check(mixc.s > 0.4, "the pair's mix of opposite hues stays a colour (s %.2f)" % mixc.s)
+	# the data: every row's names exist, the rates are slow
+	var rows: Dictionary = VfxClashLook._group("fighters")
+	var bad: int = 0
+	for k in rows:
+		var r: Dictionary = rows[k]
+		if r.has("front") and not VfxClashLook._group("fronts").has(r["front"]):
+			bad += 1
+		if r.has("texture") and not VfxClashLook._group("textures").has(r["texture"]):
+			bad += 1
+	_check(bad == 0 and rows.has("default"), "every row names a front and a texture the shader has")
+	_check(VfxClashLook.fp("ring_hz") <= 2.0 and VfxClashLook.fp("ring_hz_calm") <= 1.5 and VfxClashLook.fp("front_hz") <= 2.0, "the rings and fronts move at Legal's rates (%.2f Hz, %.2f calm)" % [VfxClashLook.fp("ring_hz"), VfxClashLook.fp("ring_hz_calm")])
+	# a surge's eruptions: surges only, once, kept for a while, spaced
+	var W := VfxBeamStruggle.Wave
+	var mkw := func(born: float, side: int, amp: float) -> Variant:
+		var w := W.new()
+		w.born = born
+		w.side = side
+		w.amp = amp
+		return w
+	var seen: Dictionary = {}
+	var waves: Array = [mkw.call(10.0, 0, 0.8), mkw.call(10.0, 1, 0.34), mkw.call(12.0, 1, -0.4), mkw.call(20.0, 1, 0.8)]
+	var waves_late: Array = waves + [mkw.call(60.0, 1, 0.8)]
+	var bs: Array = VfxClashLook.plan_bursts(waves, 25.0, 1.0, 14.0, 1.0 / 60.0, [], seen, 30.0, 0.55, 0.5)
+	_check(bs.size() == 1 and int(bs[0]["side"]) == 0, "a beat's swell and a stray start no eruption, and a second surge within the gap starts none (%d)" % bs.size())
+	var bs2: Array = VfxClashLook.plan_bursts(waves, 25.0, 1.0, 14.0, 1.0 / 60.0, bs, seen, 30.0, 0.55, 0.5)
+	_check(bs2.size() == 1, "a wave is planned once (%d)" % bs2.size())
+	var bs3: Array = VfxClashLook.plan_bursts(waves_late, 65.0, 1.8, 14.0, 1.0 / 60.0, bs2, seen, 30.0, 0.55, 0.5)
+	_check(bs3.size() == 1 and int(bs3[0]["side"]) == 1 and float(bs3[0]["t0"]) > 1.0, "a later surge starts its own, and the first has ended (%d)" % bs3.size())
+	var seen2: Dictionary = {}
+	var again: Array = VfxClashLook.plan_bursts(waves, 25.0, 1.0, 14.0, 1.0 / 60.0, [], seen2, 30.0, 0.55, 0.5)
+	_check(str(again) == str(bs), "the same waves and times plan the same eruptions")
+	# the view
+	print("the beam clash: the view")
+	A.id = "protagonist"
+	D.id = "rival"
+	A.tier = 2.0
+	D.tier = 2.0
+	A.x = 0.0
+	D.x = 500.0
+	A.y = 100.0
+	D.y = 100.0
+	var c := SimState.Clash.new()
+	c.A = A
+	c.D = D
+	c.mid = 0.5
+	c.t0 = 0.0
+	c.dur = 5.0
+	S.T = 1.0
+	var v := VfxClashView.new()
+	var m := Vector2(250.0, 138.0)
+	var ap := Vector2(0.0, 138.0)
+	var dp := Vector2(500.0, 138.0)
+	v.update(S, null, ap, dp, m, 0.0, 0.5, 1.0, false, 1.0)
+	_check(not v.visible, "no clash: nothing is drawn")
+	v.update(S, c, ap, dp, m, 0.0, 0.5, 1.0, false, 1.0)
+	_check(v.visible and absf(v.scale.x - float(v.last["radius"])) < 0.01 and v.position.x == 250.0, "a clash is drawn at the meeting point, sized by its power (radius %.0f)" % float(v.last["radius"]))
+	var r_even: float = float(v.last["radius"])
+	A.tier = 4.0
+	D.tier = 4.0
+	v.update(S, c, ap, dp, m, 0.0, 0.5, 1.0, false, 1.0)
+	_check(float(v.last["radius"]) > r_even, "more power behind the beams is a bigger disc (%.0f to %.0f)" % [r_even, float(v.last["radius"])])
+	A.tier = 2.0
+	D.tier = 2.0
+	v.update(S, c, ap, dp, m, 0.0, 0.8, 1.0, false, 1.0)
+	_check(float(v.last["lead"]) > 0.5, "the lead follows the meeting point (A ahead: %.2f)" % float(v.last["lead"]))
+	v.update(S, c, ap, dp, m, 0.0, 0.5, 1.0, false, 1.0)
+	var m1: ShaderMaterial = v._glow.material_override
+	var snap1: Array = [m1.get_shader_parameter("time"), m1.get_shader_parameter("strength"), m1.get_shader_parameter("ca0"), m1.get_shader_parameter("look_a"), m1.get_shader_parameter("seed")]
+	var v2 := VfxClashView.new()
+	v2.update(S, c, ap, dp, m, 0.0, 0.5, 1.0, false, 1.0)
+	var m2: ShaderMaterial = v2._glow.material_override
+	var snap2: Array = [m2.get_shader_parameter("time"), m2.get_shader_parameter("strength"), m2.get_shader_parameter("ca0"), m2.get_shader_parameter("look_a"), m2.get_shader_parameter("seed")]
+	_check(str(snap1) == str(snap2) and float(m1.get_shader_parameter("time")) == S.T, "two views of the same tick draw the same (driven by the sim's clock, not the wall clock)")
+	# the air comes up and goes down slowly (the beams' own 0.15 s would step it)
+	var vslow := VfxClashView.new()
+	S.T = 0.1
+	vslow.update(S, c, ap, dp, m, 0.0, 0.5, 1.0, false, 1.0)
+	var s_early: float = float(vslow.last["strength"])
+	S.T = c.dur - 0.1
+	vslow.update(S, c, ap, dp, m, 0.0, 0.5, 1.0, false, 1.0)
+	var s_late: float = float(vslow.last["strength"])
+	S.T = 1.0
+	_check(s_early < 0.3 and s_late < 0.5 and VfxClashLook.fp("rise_s") >= 0.3 and VfxClashLook.fp("fall_s") >= 0.4, "it comes up over %.1f s and goes down over %.1f s, never a step (%.2f at 0.1 s in, %.2f 0.1 s from the end)" % [VfxClashLook.fp("rise_s"), VfxClashLook.fp("fall_s"), s_early, s_late])
+	# calm: softer and slower, still drawn
+	var vc := VfxClashView.new()
+	vc.update(S, c, ap, dp, m, 0.0, 0.5, 1.0, true, 1.0)
+	_check(vc.visible and float(vc.last["strength"]) < 1.0 and float(vc.last["ring_hz"]) < float(v.last["ring_hz"]) and float(vc.last["ring_hz"]) <= 1.5, "reduced flashing: still drawn, softer (%.2f against 1) and slower (%.2f Hz against %.2f)" % [vc.last["strength"], vc.last["ring_hz"], v.last["ring_hz"]])
+	# the distortion's form follows the quality; the lite form has no screen read
+	_check(v.uses_screen(VfxLook.Q_HIGH) and not v.uses_screen(VfxLook.Q_LOW), "the distortion (a screen read) at medium and high; the lite form at low")
+	v.screen_read = 0
+	_check(not v.uses_screen(VfxLook.Q_HIGH), "the lite form can be forced")
+	v.screen_read = -1
+	# never over the fighters: the keep zones sit on the two bodies in the quad's own units
+	var ka = m1.get_shader_parameter("keep_a")
+	var kd = m1.get_shader_parameter("keep_d")
+	_check(ka.x < -0.2 and kd.x > 0.2 and ka.z > 0.0 and ka.z < 1.0, "the air keeps clear of both bodies (keep zones at %.2f and %.2f of the radius, size %.2f)" % [ka.x, kd.x, ka.z])
+	# a struggle on: eruptions from a surge, the eased lead and the knot from the model
+	var hub := VfxHub.new()
+	hub.reset(S, 6)
+	c.mid = 0.7
+	S.game.clash = c
+	S.tick = 200
+	hub.struggle.step(S, [], false)
+	S.tick += 1
+	hub.struggle.step(S, [VfxMock.ev("cue", {"actor": 0, "kind": "beam_surge", "text": "surge"})], false)
+	var host := {"vfx": hub}
+	var vs := VfxClashView.new()
+	for i in range(12):
+		S.tick += 1
+		S.T += 1.0 / 60.0
+		hub.struggle.step(S, [], false)
+		vs.update(S, c, ap, dp, m, 0.0, 0.7, 1.0, false, 1.0, host)
+	var live_b: int = int(vs.last["bursts"])
+	for i in range(8):
+		S.tick += 1
+		S.T += 1.0 / 60.0
+		hub.struggle.step(S, [], false)
+		vs.update(S, c, ap, dp, m, 0.0, 0.7, 1.0, false, 1.0, host)
+	_check(live_b == 0 and int(vs.last["bursts"]) == 1 and float(vs.last["lead"]) > 0.0, "a surge erupts at the point as its swell arrives (none before, %d after)" % int(vs.last["bursts"]))
+	for i in range(60):
+		S.tick += 1
+		S.T += 1.0 / 60.0
+		hub.struggle.step(S, [], false)
+		vs.update(S, c, ap, dp, m, 0.0, 0.7, 1.0, false, 1.0, host)
+	_check(int(vs.last["bursts"]) == 0, "and it has ended within a second")
+	S.game.clash = null
+	# the switch: off, nothing is drawn here (BeamView keeps the old flare)
+	var was: bool = bool(VfxClashLook._data.get("enabled", true))
+	VfxClashLook._data["enabled"] = false
+	vs.update(S, c, ap, dp, m, 0.0, 0.5, 1.0, false, 1.0)
+	_check(not vs.visible and not VfxClashLook.on(), "the switch off hides it")
+	VfxClashLook._data["enabled"] = was
+
+
 ## Each fighter's beam made unmistakable (docs/vfx/beam-look.md, "Distinct patterns"): the Protagonist's BOIL (rounded scallops along the edge, bubble rings of the second tint inside) and the Anti-hero's FACETS (a straight zigzag edge, a mosaic of two close hues), told apart by shape and by hue, never by a step in brightness (Legal fx03).
+	# The press (docs/vfx/clash-look.md): the beams' heads flare, flatten and shed eddies; one language with the air, from the same composition; geometry and hue only; the lite form on the lower levels.
+	var pm := ShaderMaterial.new()
+	pm.shader = preload("res://render/vfx/shaders/beam.gdshader")
+	VfxBeamStruggle.press_ck = 1.0
+	VfxBeamStruggle.press_pow = [1.0, 0.5]
+	VfxBeamStruggle.press_calm = false
+	VfxBeamStruggle.press_quality = 2
+	VfxBeamStruggle.set_press(pm, 0, 900.0, 1.0, 0.0, 0.0, 0.0)
+	var pa: Vector4 = pm.get_shader_parameter("press")
+	var pa2: Vector4 = pm.get_shader_parameter("press2")
+	VfxBeamStruggle.set_press(pm, 1, 900.0, 1.0, 0.0, 0.0, 0.0)
+	var pd: Vector4 = pm.get_shader_parameter("press")
+	_check(pa.x > 0.0 and pa.y > 0.0 and pa.w > 0.0 and pa.x > pd.x and pa.y > pd.y, "a pressed head flares, flattens and sheds eddies, the more powerful side's the more (flare %.2f against %.2f, eddies %.2f against %.2f)" % [pa.x, pd.x, pa.y, pd.y])
+	VfxBeamStruggle.set_press(pm, 0, 900.0, 1.0, 1.0, 1.0, 0.0)
+	var ps: Vector4 = pm.get_shader_parameter("press")
+	_check(ps.y > pa.y, "a surge and a built knot deepen the eddies (%.2f from %.2f)" % [ps.y, pa.y])
+	var rate: float = VfxClashLook.pp("eddy_v") / VfxClashLook.pp("eddy_wl")
+	_check(rate <= 0.9 + 1e-6 and pa.z / pa2.y <= 0.9 + 1e-6, "a point of a beam sees an eddy go by at %.2f Hz at the most (Legal 2 Hz; held to 0.9)" % maxf(rate, pa.z / pa2.y))
+	VfxBeamStruggle.press_calm = true
+	VfxBeamStruggle.set_press(pm, 0, 900.0, 1.0, 1.0, 1.0, 0.0)
+	var pc: Vector4 = pm.get_shader_parameter("press")
+	_check(pc.y < ps.y and pc.z < ps.z, "under Reduce flashing or reduced motion the eddies are shallower and slower (%.2f at %.0f from %.2f at %.0f)" % [pc.y, pc.z, ps.y, ps.z])
+	VfxBeamStruggle.press_calm = false
+	VfxBeamStruggle.press_quality = 0
+	VfxBeamStruggle.set_press(pm, 0, 900.0, 1.0, 1.0, 1.0, 0.0)
+	var pl: Vector4 = pm.get_shader_parameter("press")
+	_check(pl.x > 0.0 and pl.w > 0.0 and pl.y == 0.0, "the lite level keeps the flare and the sheet and draws no eddy noise")
+	VfxBeamStruggle.press_quality = 1
+	VfxBeamStruggle.set_press(pm, 0, 900.0, 1.0, 1.0, 1.0, 0.0)
+	var pm2: Vector4 = pm.get_shader_parameter("press2")
+	_check(float(pm.get_shader_parameter("press").y) > 0.0 and pm2.w == 0.0, "the middle level draws the eddies' shape without their hue")
+	VfxBeamStruggle.press_ck = 0.0
+	VfxBeamStruggle.set_press(pm, 0, 900.0, 1.0, 1.0, 1.0, 0.0)
+	var p0: Vector4 = pm.get_shader_parameter("press")
+	_check(p0.x == 0.0 and p0.y == 0.0 and p0.w == 0.0, "with no clash nothing is pressed")
+	VfxBeamStruggle.press_quality = 2
+	var lane_ok: bool = true
+	for who in ["protagonist", "rival", "empress", "cyborg"]:
+		var pside: Dictionary = VfxClashLook.side({"id": who.to_upper(), "aura": "#8fd6ff", "tier": 3.0}, "#8fd6ff")
+		for k in ["lane", "tint_a", "tint_b", "accent"]:
+			var cc: Color = pside[k] if pside[k] is Color else Color.BLACK
+			if pside.has(k) and pside[k] is Color and (cc.s < 0.12 and cc.v > 0.8):
+				lane_ok = false      # no white in a fighter's colours (Legal RL-221)
+	_check(lane_ok, "no fighter's clash colours are white (RL-221); the Empress's row is moss, not gold")
+
 func _beam_pattern() -> void:
 	print("the beams' own patterns")
 	var P := {"id": "PROTAGONIST"}
@@ -6076,6 +6354,1063 @@ func _tick(S: SimState, h: VfxHub, events: Array) -> void:
 	h.consume(S, evs)
 
 
+## A stand-in for Simulation's field frame: its seven numbers.
+class MeteorFrame:
+	var px: float = 1.0
+	var py: float = 0.0
+	var pz: float = 0.0
+	var tx: float = 0.0
+	var ty: float = 1.0
+	var tz: float = 0.0
+	var x0: float = 0.0
+	static func make(p0: float, p1: float, p2: float, t0: float, t1: float, t2: float, ox: float) -> MeteorFrame:
+		var f := MeteorFrame.new()
+		f.px = p0
+		f.py = p1
+		f.pz = p2
+		f.tx = t0
+		f.ty = t1
+		f.tz = t2
+		f.x0 = ox
+		return f
+
+
+## A stand-in for the SimHost's three accessors the meteor view reads.
+class MeteorHost:
+	var S
+	func fighter_x(i: int, _a: float) -> float:
+		return S.fighters[i].x
+	func fighter_pose(i: int, _a: float) -> Vector3:
+		return Vector3(S.fighters[i].x, S.fighters[i].y, 0.0)
+	func fighter_z(i: int, _a: float) -> float:
+		return S.fighters[i].z
+
+
+## The meteor trail (docs/vfx/meteor-trail.md; Orb 2026-10-31): burn = air x speed ramp x cool from data, the rows composed by roster id, form step and situations, a path laid in the ring's coordinates that cools and ends tail first,
+## a floor above the air, four tiers, and nothing at all while the hub's switch is off.
+func _meteor() -> void:
+	print("the meteor trail")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var fp = S.fighters[0]
+	var fr = S.fighters[1]
+	# Data: the compiled defaults are the file's frame (a file edit that forgets the default is caught here).
+	var drift: String = ""
+	for k in VfxMeteor.DEFAULT_FRAME:
+		var dv = VfxMeteor.DEFAULT_FRAME[k]
+		var fv = VfxMeteor.fp(k) if not (dv is Array) else VfxMeteor.fa(k)
+		if str(fv) != str(dv):
+			drift += " " + String(k)
+	_check(drift == "", "the compiled frame equals data/vfx/meteor.json (differs:%s)" % drift)
+	# Rows: roster id, form, situations.
+	var rp: Dictionary = VfxMeteor.row_of(fp)
+	var rr: Dictionary = VfxMeteor.row_of(fr)
+	_check(rp["front"] == "wall" and rp["texture"] == "boil" and rr["front"] == "lances" and rr["texture"] == "facets", "the Protagonist's trail is a rolling boil, the Anti-hero's lances and facets (%s/%s, %s/%s)" % [rp["front"], rp["texture"], rr["front"], rr["texture"]])
+	_check(float(rr["linger_k"]) > 1.2 and float(rr["width_k"]) < float(rp["width_k"]), "the Anti-hero's is the narrower needle that lasts longer (%.2f against %.2f wide, linger %.1f)" % [float(rr["width_k"]), float(rp["width_k"]), float(rr["linger_k"])])
+	var anyone: Dictionary = VfxMeteor.row_of({"id": "SOMEONE"})
+	_check(anyone["front"] == "wall" and float(anyone["width_k"]) == 1.0 and not anyone.has("forms"), "an unknown id takes the default row")
+	var cy: Dictionary = VfxMeteor.row_of({"id": "CYBORG", "tier": 4.0})
+	var cy3: Dictionary = VfxMeteor.row_of({"id": "CYBORG", "tier": 3.0})
+	_check(cy["front"] == "sputter" and float(cy["width_k"]) > float(cy3["width_k"]), "a situation (tier 4 or more) widens the Cyborg's row; a new fighter is a data row (%.2f against %.2f)" % [float(cy["width_k"]), float(cy3["width_k"])])
+	var p4: Dictionary = VfxMeteor.row_of({"id": "PROTAGONIST", "form": {"step": 4}})
+	var p0: Dictionary = VfxMeteor.row_of({"id": "PROTAGONIST", "form": {"step": 1}})
+	_check(float(p4["width_k"]) > float(p0["width_k"]), "the Protagonist's trail is wider in a later form (%.2f against %.2f)" % [float(p4["width_k"]), float(p0["width_k"])])
+	_check(VfxMeteor.name_id("fronts", "lances") == 1 and VfxMeteor.name_id("textures", "facets") == 2 and VfxMeteor.name_id("fronts", "nope") == 0, "fronts and textures map to the shader's ids")
+	# The rule of cool: four tiers, none at tier 1 or 2, form steps add up to form_max, and a row can set it.
+	var c1: float = VfxMeteor.cool_of({"tier": 1.0}, {})
+	var c2: float = VfxMeteor.cool_of({"tier": 2.0}, {})
+	var c3: float = VfxMeteor.cool_of({"tier": 3.0}, {})
+	var c4: float = VfxMeteor.cool_of({"tier": 4.0}, {})
+	var c5: float = VfxMeteor.cool_of({"tier": 5.0}, {})
+	_check(c1 == 0.0 and c2 == 0.0 and absf(c3 - 0.3) < 1e-6 and absf(c4 - 0.7) < 1e-6 and c5 == c4, "cool by tier: %.2f %.2f %.2f %.2f, and a fifth would not exceed the fourth (%.2f)" % [c1, c2, c3, c4, c5])
+	_check(VfxMeteor.cool_of({"tier": 4.0, "form": {"step": 9}}, {}) <= 1.0 and VfxMeteor.cool_of({"tier": 4.0, "form": {"step": 9}}, {}) - c4 <= 0.3001, "form steps add at most 0.3 and the sum stays inside 1")
+	_check(VfxMeteor.cool_of({"tier": 1.0}, {"cool": 1.0}) == 1.0, "a situation can set the rule of cool outright")
+	# Air, the floor, and the burn.
+	var a0: float = VfxMeteor.air_at(0.0)
+	var a_mid: float = VfxMeteor.air_at(5000.0)
+	var a_top: float = VfxMeteor.air_at(60000.0)
+	_check(a0 == 1.0 and a_mid < a0 and a_top < a_mid, "the air thins with height (1, %.2f, %.3f)" % [a_mid, a_top])
+	_check(VfxMeteor.air_eff(60000.0) >= VfxMeteor.fp("air_floor") - 1e-6 and absf(VfxMeteor.air_eff(60000.0) - 0.6) < 1e-6, "above the air the burn keeps its floor of 0.6 (Orb: enough to look cool when the camera zooms; %.2f)" % VfxMeteor.air_eff(60000.0))
+	var launch: float = VfxMeteor.burn_of(12000.0, 0.0, c4)
+	var flier: float = VfxMeteor.burn_of(6100.0, 0.0, c4)
+	_check(absf(launch - 0.7) < 1e-6 and flier > 0.05 and flier < 0.5 * launch, "a tier-4 launch at 12,000 u/s is at full burn (%.2f), the same fighter's own max-speed flight at 6,100 u/s a faint trail (%.2f)" % [launch, flier])
+	_check(VfxMeteor.burn_of(30000.0, 0.0, c1) == 0.0 and VfxMeteor.burn_of(3000.0, 0.0, 1.0) == 0.0, "no burn at tier 1 at any speed, none under the ramp's start")
+	# Width, heat and alpha by age: the tail narrows to a point, colour only cools, nothing goes white or fades up.
+	var life: float = 8.0
+	var w_ok: bool = true
+	var h_ok: bool = true
+	var a_ok: bool = true
+	var pw: float = 2.0
+	var pv: float = 2.0
+	var pa: float = 2.0
+	var lane := Color("#8fd6ff")
+	var white: bool = false
+	for i in range(0, 161):
+		var age: float = life * float(i) / 160.0
+		var w: float = VfxMeteor.width_at(age, life)
+		var hc: Color = VfxMeteor.heat(lane, age, life)
+		var al: float = VfxMeteor.alpha_at(age, life)
+		w_ok = w_ok and w <= pw + 1e-6
+		h_ok = h_ok and hc.v <= pv + 1e-6
+		a_ok = a_ok and al <= pa + 1e-6
+		pw = w
+		pv = hc.v
+		pa = al
+		white = white or (hc.r > 0.93 and hc.g > 0.93 and hc.b > 0.93)
+	_check(w_ok and h_ok and a_ok and VfxMeteor.width_at(life, life) < 1e-4 and VfxMeteor.width_at(0.0, life) == 1.0, "a point only narrows, cools and dims with age, and a tail ends in a point (%.3f at its life)" % VfxMeteor.width_at(life, life))
+	_check(not white, "the heat never reaches white")
+	# The model: a tier-4 fighter flung at 12,000 u/s, high in the air, lays a path in the ring's coordinates; a tier-1 one lays none.
+	var M := VfxMeteor.new()
+	fp.tier = 4.0
+	fr.tier = 1.0
+	var gy: float = WorldTerrain.groundY(S, 1000.0)
+	fp.x = 1000.0
+	fp.y = gy + 3000.0
+	fr.x = 1000.0
+	fr.y = gy + 3000.0
+	fp.state = "launched"
+	fr.state = "launched"
+	var dt: float = SimConst.DT
+	var vxs: float = 12000.0 * dt
+	for i in range(120):
+		fp.x = SimWrap.wrap(fp.x + vxs)
+		fp.y += vxs * 0.5
+		fr.x = SimWrap.wrap(fr.x + vxs)
+		fr.y += vxs * 0.5
+		S.tick += 1
+		M.step(S, dt, VfxLook.Q_HIGH, false)
+	var nlive: int = 0
+	var pts: int = 0
+	for r in M.runs:
+		if r.slot == 0:
+			pts += r.x.size()
+			nlive += 1 if r.live else 0
+	_check(nlive == 1 and pts > 20 and M.kb[0] > 0.35 and M.kb[1] == 0.0, "a tier-4 fighter flung at 12,000 u/s burns (%d points in a live run, burn %.2f); a tier-1 one does not (%.2f)" % [pts, M.kb[0], M.kb[1]])
+	var wrapped: bool = true
+	for r in M.runs:
+		for j in range(r.x.size()):
+			wrapped = wrapped and r.x[j] >= 0.0 and r.born[j] <= M.clock
+	_check(wrapped, "the points are in the ring's own coordinates (x on the wrap)")
+	# It ends where he slows, the run keeps cooling where it is, and then it is gone after its life.
+	var live0: int = M.runs.size()
+	for i in range(240):
+		S.tick += 1
+		M.step(S, dt, VfxLook.Q_HIGH, false)
+	var ended: bool = true
+	for r in M.runs:
+		ended = ended and not r.live
+	_check(live0 >= 1 and ended and M.runs.size() >= 1 and M.cur[0] == null, "when he stops the run is ended and the trail stays in the world (%d runs)" % M.runs.size())
+	for i in range(int(14.0 / dt)):
+		S.tick += 1
+		M.step(S, dt, VfxLook.Q_HIGH, false)
+	_check(M.runs.size() == 0, "the trail is gone after its life (%d runs left after 14 s)" % M.runs.size())
+	# Replay: the same ticks lay the same points; Reduce flashing and the quality level only shorten and thin it.
+	var M2 := VfxMeteor.new()
+	var M3 := VfxMeteor.new()
+	var M4 := VfxMeteor.new()
+	fp.x = 1000.0
+	fp.y = gy + 3000.0
+	for i in range(90):
+		fp.x = SimWrap.wrap(fp.x + vxs)
+		fp.y += vxs * 0.5
+		S.tick += 1
+		M2.step(S, dt, VfxLook.Q_HIGH, false)
+		M3.step(S, dt, VfxLook.Q_HIGH, false)
+		M4.step(S, dt, VfxLook.Q_LOW, true)
+	var same: bool = M2.laid == M3.laid and M2.runs.size() == M3.runs.size()
+	for k in range(mini(M2.runs.size(), M3.runs.size())):
+		same = same and M2.runs[k].x == M3.runs[k].x and M2.runs[k].y == M3.runs[k].y
+	_check(same and M2.laid > 0, "a replay lays the same points (%d)" % M2.laid)
+	_check(M4.laid > 0 and M4.laid < M2.laid and M4.runs[0].life <= 4.0 * 0.5 * 1.0001 + 1e-6 and M4.runs[0].life >= 2.0, "low quality with Reduce flashing lays fewer points and lives half as long, never under 2 s (%d against %d, %.1f s)" % [M4.laid, M2.laid, M4.runs[0].life])
+	# Cut by the ring's turn: a point beyond the carry is gone, the live run is kept at its head.
+	var Mt := VfxMeteor.new()
+	fp.x = 1000.0
+	fp.y = gy + 3000.0
+	for i in range(60):
+		fp.x = SimWrap.wrap(fp.x + vxs)
+		fp.y += vxs * 0.5
+		S.tick += 1
+		Mt.step(S, dt, VfxLook.Q_HIGH, false)
+	var before: int = 0
+	for r in Mt.runs:
+		before += r.x.size()
+	Mt.on_turn(fp.x, 2000.0)
+	var after: int = 0
+	for r in Mt.runs:
+		after += r.x.size()
+	_check(before > after and after > 0 and Mt.cur[0] != null and Mt.cur[0].live, "the ring's turn drops the points beyond the zone and keeps the burning head (%d to %d points)" % [before, after])
+	# Planet coordinates: a field world's frame is Simulation's `S.frame` (seven numbers); a point is kept as the planet direction it was laid at and carried when the frame turns. A stand-in frame here.
+	var fa := MeteorFrame.make(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1000.0)
+	var rt_ok: bool = true
+	var worst_rt: float = 0.0
+	for rx in [200.0, 1000.0, 3000.0, 150000.0]:
+		for rz in [-800.0, 0.0, 600.0]:
+			var q: PackedFloat64Array = VfxMeteor.place(fa, rx, rz)
+			var v: Vector2 = VfxMeteor.unplace(fa, q[0], q[1], q[2])
+			var err: float = maxf(absf(SimWrap.sdx(rx, v.x)), absf(v.y - rz))
+			worst_rt = maxf(worst_rt, err)
+			rt_ok = rt_ok and absf(sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2]) - 1.0) < 1e-12
+	_check(rt_ok and worst_rt < 1e-6, "a planet direction maps back to the strip x and depth it was laid at, and is a unit vector (worst error %f units)" % worst_rt)
+	var qp: PackedFloat64Array = VfxMeteor.place(fa, 1000.0, 0.0)
+	_check(absf(qp[0] - 1.0) < 1e-12 and absf(qp[1]) < 1e-12 and absf(qp[2]) < 1e-12, "the point at x0 is the frame's own point")
+	var alpha: float = 0.4
+	var fb := MeteorFrame.make(1.0, 0.0, 0.0, 0.0, cos(alpha), -sin(alpha), 1000.0)
+	var qa: PackedFloat64Array = VfxMeteor.place(fa, 4000.0, 0.0)
+	var vb: Vector2 = VfxMeteor.unplace(fb, qa[0], qa[1], qa[2])
+	var ang: float = 3000.0 / VfxMeteor.R_PLANET
+	var z_expect: float = VfxMeteor.R_PLANET * asin(sin(ang) * sin(alpha))
+	_check(absf(absf(vb.y) - absf(z_expect)) < 1e-6 * VfxMeteor.R_PLANET and vb.x != 4000.0, "turning the frame about its pivot moves a far point in depth by R asin(sin a sin turn) (%.1f against %.1f) and along the line" % [vb.y, z_expect])
+	var MP := VfxMeteor.new()
+	MP.frame_override = fa
+	fp.x = 1000.0
+	fp.y = gy + 200.0
+	for i in range(60):
+		fp.x = SimWrap.wrap(fp.x + vxs)
+		fp.y += vxs * 0.5
+		S.tick += 1
+		MP.step(S, dt, VfxLook.Q_HIGH, false)
+	var rpl = MP.runs[0]
+	var n_before: int = rpl.x.size()
+	var x_laid: float = rpl.x[n_before - 1]
+	_check(rpl.has_q and MP.remaps == 1 and n_before > 10, "on a field world each point carries its planet direction (%d points, one mapping so far)" % n_before)
+	for i in range(5):
+		S.tick += 1
+		fp.x = SimWrap.wrap(fp.x + vxs)
+		fp.y += vxs * 0.5
+		MP.step(S, dt, VfxLook.Q_HIGH, false)
+	_check(MP.remaps == 1, "a frame at rest costs no mapping (%d mappings over 5 more ticks)" % MP.remaps)
+	MP.frame_override = fb
+	S.tick += 1
+	MP.step(S, dt, VfxLook.Q_HIGH, false)
+	var moved: bool = false
+	var carried: bool = true
+	for j in range(rpl.x.size()):
+		var vq: Vector2 = VfxMeteor.unplace(fb, rpl.qx[j], rpl.qy[j], rpl.qz[j])
+		carried = carried and absf(rpl.x[j] - vq.x) < 1e-6 and absf(rpl.z[j] - vq.y) < 1e-6
+		moved = moved or absf(rpl.z[j]) > 1.0
+	_check(MP.remaps == 2 and carried and moved, "a turned frame carries every point with the planet (mapped again once, depths now up to %.0f units)" % absf(rpl.z[rpl.x.size() / 2]))
+	var kept_n: int = rpl.x.size()
+	MP.on_turn(fp.x, 2000.0)
+	var after_n: int = 0
+	for r in MP.runs:
+		after_n += r.x.size()
+	_check(after_n == kept_n, "the ring's turn leaves a field world's points alone (%d to %d)" % [kept_n, after_n])
+	# One trail: the old white blade gives way while the burn is the trail (the EP's call), with a gap so it does not flicker.
+	var MS := VfxMeteor.new()
+	fp.x = 1000.0
+	fp.y = gy + 200.0
+	fr.y = gy + 200.0
+	var swapped_at: int = -1
+	var low_burn_swap: bool = false
+	for i in range(40):
+		fp.x = SimWrap.wrap(fp.x + vxs)
+		fp.y += vxs * 0.5
+		S.tick += 1
+		MS.step(S, dt, VfxLook.Q_HIGH, false)
+		if swapped_at < 0 and MS.swap[0]:
+			swapped_at = i
+		low_burn_swap = low_burn_swap or (MS.swap[0] and MS.kb[0] < VfxMeteor.fp("blade_off"))
+	_check(swapped_at > 0 and swapped_at < 30 and MS.swap[0] and not MS.swap[1] and not low_burn_swap, "the old blade gives way once his burn is at 0.3 (tick %d of the launch) and not for the tier-1 fighter" % swapped_at)
+	for i in range(300):
+		S.tick += 1
+		MS.step(S, dt, VfxLook.Q_HIGH, false)
+	_check(not MS.swap[0], "and it comes back when the burn is gone")
+	# Legal RL-222 (1): the head's width is capped near the body so the trail does not read as a body-wide flame, widening to its ceiling a few body heights back.
+	var bh_px: float = VfxLook.BH * 1.28      # a close view: 1.28 px a unit, a body 96 px tall
+	var cap_near: float = VfxMeteor.head_cap_px(0.0, bh_px, 1.0, 107.0)
+	var cap_far: float = VfxMeteor.head_cap_px(VfxMeteor.fp("head_len_bh") * VfxLook.BH, bh_px, 1.0, 107.0)
+	var cap_mid: float = VfxMeteor.head_cap_px(2.0 * VfxLook.BH, bh_px, 1.0, 107.0)
+	_check(cap_near <= 0.65 * bh_px and cap_near < 107.0 and cap_far == 107.0 and cap_near < cap_mid and cap_mid < cap_far, "the sheath at the head is under two thirds of a body height (%.0f px of %.0f) and widens to its ceiling %.0f px a few body heights back (%.0f at two)" % [cap_near, bh_px, cap_far, cap_mid])
+	_check(VfxMeteor.head_cap_px(0.0, bh_px * 0.05, 1.0, 107.0) < 8.0, "far out, where a body is a few pixels, the cap lets the floor stand (%.1f px)" % VfxMeteor.head_cap_px(0.0, bh_px * 0.05, 1.0, 107.0))
+	# The two profiles Orb judges (the page word): the base is quiet, loud keeps a wide ribbon at full strength and dims it by the camera's speed instead; an unknown word is the base; a page with no word reads nothing.
+	VfxMeteor.set_profile("loud")
+	var loud_wide: float = VfxMeteor.fp("wide_k")
+	var loud_pan: float = VfxMeteor.fp("pan_k")
+	var loud_bright: float = VfxMeteor.fp("bright_k")
+	VfxMeteor.set_profile("quiet")
+	var quiet_wide: float = VfxMeteor.fp("wide_k")
+	var quiet_pan: float = VfxMeteor.fp("pan_k")
+	VfxMeteor.set_profile("no such word")
+	_check(loud_wide == 1.0 and loud_pan < 0.2 and quiet_wide < 0.5 and quiet_pan == 1.0 and VfxMeteor.fp("wide_k") == quiet_wide and loud_bright == VfxMeteor.fp("bright_k"), "loud keeps a wide ribbon at full strength (wide_k %.1f) and dims by the camera's speed (pan_k %.1f); quiet is the base (wide_k %.1f, no pan dimming); an unknown word is the base" % [loud_wide, loud_pan, quiet_wide])
+	_check(VfxMeteor.page_word() == "" and not VfxMeteor.new().swap[0], "off the web, or on a page without the word, the switch reads nothing")
+	# The hub: off by default, nothing runs; on, it lays the path from the same ticks.
+	var h := VfxHub.new()
+	h.reset(S, 5)
+	_check(h.meteor_enabled == false and VfxLook.METEOR_DEFAULT == false, "the meteor switch is off by default")
+	fp.x = 1000.0
+	fp.y = gy + 3000.0
+	for i in range(60):
+		fp.x = SimWrap.wrap(fp.x + vxs)
+		fp.y += vxs * 0.5
+		_tick(S, h, [])
+	_check(h.meteor.laid == 0 and h.meteor.runs.size() == 0 and h.meteor.clock == 0.0, "with the switch off the model never steps")
+	var h2 := VfxHub.new()
+	h2.reset(S, 5)
+	h2.meteor_enabled = true
+	fp.x = 1000.0
+	fp.y = gy + 3000.0
+	for i in range(60):
+		fp.x = SimWrap.wrap(fp.x + vxs)
+		fp.y += vxs * 0.5
+		_tick(S, h2, [])
+	_check(h2.meteor.laid > 0, "with it on, the hub lays the path (%d points)" % h2.meteor.laid)
+	# The view builds, with the pixel floors: the core is at least 3 px at 1,280 wide however far out the camera is.
+	var V := VfxMeteorView.new()
+	V._ready()
+	var host := MeteorHost.new()
+	host.S = S
+	var worst: float = 1000.0
+	for wv in [4200.0, 10000.0, 20000.0, 53000.0]:
+		var zoom: float = 1280.0 / wv
+		V.update(h2, host, 1.0, fp.x, zoom, wv * 0.5, 3000.0)
+		worst = minf(worst, float(V.last.get("core_px", 0.0)))
+	_check(worst >= 3.0 - 1e-3, "the core stays at least 3 px wide at 1,280 across 4,200 to 53,000 (%.2f)" % worst)
+	# Who burns (Orb, 2026-11-01: a base-form fighter never burns up): only a SENT body (launched or dropped), and only a real high-energy send: tier 4, or a real meteor on the director's curve at any tier. A fighter flying under his own power, even at tier 4 and flat out, lays no burn.
+	var st_keep: String = String(fp.state)
+	var tr_keep: float = float(fp.tier)
+	fp.state = "launched"
+	fp.tier = 4.0
+	var mb_sent4: bool = VfxMeteor.may_burn(fp)
+	fp.state = "free"
+	var mb_free4: bool = VfxMeteor.may_burn(fp)
+	fp.state = "launched"
+	fp.tier = 3.0
+	var mb_sent3: bool = VfxMeteor.may_burn(fp)
+	fp.tier = 1.0
+	var mb_sent1: bool = VfxMeteor.may_burn(fp)
+	fp.tier = 2.0
+	DirArc._s(fp, DirArc.A_ROW, 1)
+	var mb_arc2: bool = VfxMeteor.may_burn(fp)
+	DirArc._s(fp, DirArc.A_ROW, 0)
+	_check(mb_sent4 and not mb_free4 and not mb_sent3 and not mb_sent1 and mb_arc2, "the burn is for a sent body at tier 4 or a real meteor: sent at 4 %s, flying at 4 %s, sent at 3 %s, sent at 1 %s, on a meteor curve at 2 %s" % [mb_sent4, mb_free4, mb_sent3, mb_sent1, mb_arc2])
+	var laid_by: Dictionary = {}
+	for stn in ["free", "launched"]:
+		var hb := VfxHub.new()
+		hb.reset(S, 5)
+		hb.meteor_enabled = true
+		hb.meteor_burn_enabled = true
+		fp.state = stn
+		fp.tier = 4.0
+		fp.x = 1000.0
+		fp.y = gy + 3000.0
+		for i in range(60):
+			fp.x = SimWrap.wrap(fp.x + vxs)
+			fp.y += vxs * 0.5
+			_tick(S, hb, [])
+		laid_by[stn] = hb.meteor.laid
+	_check(int(laid_by["free"]) == 0 and int(laid_by["launched"]) > 0, "a tier-4 fighter at 12,000 a second lays no ribbon while he flies himself (%d points) and lays one when he is sent (%d)" % [int(laid_by["free"]), int(laid_by["launched"])])
+	fp.state = st_keep
+	fp.tier = tr_keep
+	# The floors grow with the view's width: at a fight's width and at 12,000 across the core is as it was (the multiple at 1); out at the peak shot's 50,000 (the fighters about 2 px) it is the data's multiple wider, in between it is part way, and it never passes its own ceiling.
+	var wmul: Array = VfxMeteor.fa("wfloor_mul")
+	var core_new: Dictionary = {}
+	var core_old: Dictionary = {}
+	for pass_i in range(2):
+		VfxMeteor._prof["wfloor_mul"] = [1.0, 1.0, 1.0] if pass_i == 1 else wmul
+		for wv in [4200.0, 12000.0, 31000.0, 50000.0, 53000.0]:
+			V.update(h2, host, 1.0, fp.x, 1280.0 / wv, wv * 0.5, 3000.0)
+			(core_old if pass_i == 1 else core_new)[wv] = float(V.last.get("core_px", 0.0))
+	VfxMeteor._prof.erase("wfloor_mul")
+	var f2: float = float(VfxMeteor.fa("floor_px")[2])
+	_check(absf(core_new[4200.0] - core_old[4200.0]) < 1e-3 and absf(core_new[12000.0] - core_old[12000.0]) < 1e-3 and absf(core_old[50000.0] - f2) < 1e-3 and absf(core_new[50000.0] - f2 * float(wmul[2])) < 1e-3 and core_new[31000.0] > core_old[31000.0] + 0.3 and core_new[31000.0] < core_new[50000.0] and absf(core_new[53000.0] - core_new[50000.0]) < 1e-3 and core_new[50000.0] <= float(VfxMeteor.fa("ceil_px")[2]), "the core grows with the view's width: as it was at 4,200 and 12,000 (%.1f and %.1f px), %.1f at 31,000 (was %.1f), %.1f at 50,000 and past (was %.1f, the floor x %.1f)" % [core_new[4200.0], core_new[12000.0], core_new[31000.0], core_old[31000.0], core_new[50000.0], core_old[50000.0], float(wmul[2])])
+	# At the peak width the trail also stays hot: a point's colour and alpha cool by only the data's share of its age (1 at a fight's width and at 12,000 across, `wfloor_hot` at 50,000 and past).
+	var hot_at: Dictionary = {}
+	for wv in [4200.0, 12000.0, 50000.0]:
+		V.update(h2, host, 1.0, fp.x, 1280.0 / wv, wv * 0.5, 3000.0)
+		hot_at[wv] = float(V.last.get("hot", -1.0))
+	_check(absf(hot_at[4200.0] - 1.0) < 1e-6 and absf(hot_at[12000.0] - 1.0) < 1e-6 and absf(hot_at[50000.0] - VfxMeteor.fp("wfloor_hot")) < 1e-6 and VfxMeteor.fp("wfloor_hot") < 1.0, "the trail cools by %.2f of its age at 50,000 across and by all of it at 4,200 and 12,000" % hot_at[50000.0])
+	var shape_ok: bool = int(V.last.get("verts", 0)) > 0
+	_check(shape_ok, "the view builds a ribbon of %d vertices from the run" % int(V.last.get("verts", 0)))
+	V.free()
+
+
+## A stand-in for the SimHost's accessors a view reads.
+class PerfHost:
+	var S
+	func fighter_x(i: int, _a: float) -> float:
+		return S.fighters[i].x
+	func fighter_pose(i: int, _a: float) -> Vector3:
+		return Vector3(S.fighters[i].x, S.fighters[i].y, 0.0)
+	func fighter_z(i: int, _a: float) -> float:
+		return S.fighters[i].z
+
+
+## The flight streaks as they were before the loop-invariant body positions were hoisted (a copy, for the check that the new loop draws the same streaks).
+func _ref_flight(view: VfxShotsView, n: int, hub: VfxHub, host, a: float, cam_x: float, half_w: float, bh: float, minpx: float) -> int:
+	if not hub.speedlines_enabled:
+		return n
+	var S: SimState = host.S
+	var made: int = 0
+	var share: float = 0.5 if hub.reduced_motion else 1.0
+	for i in range(mini(2, S.fighters.size())):
+		var f = S.fighters[i]
+		if String(f.state) != "launched":
+			continue
+		var vx: float = float(f.vx)
+		var vy: float = float(f.vy)
+		var sp: float = sqrt(vx * vx + vy * vy)
+		if sp < VfxShotsView.FLIGHT_MIN_SPEED:
+			continue
+		var amt: float = clampf((sp - VfxShotsView.FLIGHT_MIN_SPEED) / (VfxShotsView.FLIGHT_FULL_SPEED - VfxShotsView.FLIGHT_MIN_SPEED), 0.0, 1.0)
+		var dv: Vector2 = Vector2(vx, vy) / sp
+		var fz: float = host.fighter_z(i, a)
+		var lane: Color = VfxAura.lane_color(String(f.aura))
+		var k0: int = int(floor((cam_x - half_w) / VfxShotsView.FLIGHT_CELL_X))
+		var k1: int = int(ceil((cam_x + half_w) / VfxShotsView.FLIGHT_CELL_X))
+		var gy: float = WorldTerrain.groundY(S, cam_x)
+		var j0: int = int(floor((gy + 0.5 * bh) / VfxShotsView.FLIGHT_CELL_Y))
+		var j1: int = int(ceil((gy + 10.0 * bh) / VfxShotsView.FLIGHT_CELL_Y))
+		for k in range(k0, k1 + 1):
+			for j in range(j0, j1 + 1):
+				if made >= VfxShotsView.FLIGHT_MAX or n >= VfxShotsView.CAP - 4:
+					return n
+				var h: float = VfxTremor.hash01(posmod(k, 4096) * 131 + j * 7, 17 + i)
+				if h > 0.3 * share * (0.4 + 0.6 * amt):
+					continue
+				var wx: float = (float(k) + VfxTremor.hash01(k * 3 + j, 29)) * VfxShotsView.FLIGHT_CELL_X
+				var cy: float = (float(j) + VfxTremor.hash01(k + j * 5, 31)) * VfxShotsView.FLIGHT_CELL_Y
+				var rel: float = SimWrap.sdx(cam_x, SimWrap.wrap(wx))
+				var c := Vector2(rel, cy)
+				for who in range(mini(2, S.fighters.size())):
+					var fxr: float = SimWrap.sdx(cam_x, host.fighter_x(who, a))
+					var pyr: float = host.fighter_pose(who, a).y
+					if absf(rel - fxr) < 1.5 * bh + 60.0 and absf(cy - (pyr + 0.5 * bh)) < 1.5 * bh + 40.0:
+						c = Vector2(1e9, 0.0)
+				if c.x > 1e8:
+					continue
+				var ln: float = 60.0 + minf(sp, 4000.0) * 0.03 * (0.6 + 0.8 * VfxTremor.hash01(k + j, 41))
+				var col: Color = lane
+				col.a = 0.75 * (0.5 + 0.5 * amt) * (0.6 + 0.4 * VfxTremor.hash01(k * 7 + j, 43))
+				n = view._line(n, c - dv * ln * 0.5, c + dv * ln * 0.5, maxf(3.0, minpx * 2.0), fz - 2.0, col)
+				made += 1
+	return n
+
+
+## The Performance level (docs/vfx/perf-level.md; Performance's order of 2026-10-31): the flight streaks the same, the caps, the batching of a burst, the far-side skip, the job cap, and nothing at all while the switch is off.
+func _perf_level() -> void:
+	print("the Performance level")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var fp = S.fighters[0]
+	var fr = S.fighters[1]
+	# The compiled defaults are the file's.
+	var drift: String = ""
+	for g in VfxPerf.DEFAULTS:
+		for k in VfxPerf.DEFAULTS[g]:
+			if absf(VfxPerf.p(g, k) - float(VfxPerf.DEFAULTS[g][k])) > 1e-9:
+				drift += " " + g + "." + k
+	_check(drift == "", "the compiled caps equal data/vfx/perf.json (differs:%s)" % drift)
+	# The flight streaks: the hoisted loop draws what the old one drew, byte for byte, over cameras and view widths.
+	var hubf := VfxHub.new()
+	hubf.speedlines_enabled = true
+	var host := PerfHost.new()
+	host.S = S
+	fp.x = 5000.0
+	fr.x = 5400.0
+	fp.y = WorldTerrain.groundY(S, 5000.0) + 400.0
+	fr.y = fp.y + 200.0
+	fp.state = "launched"
+	fr.state = "launched"
+	fp.vx = 1800.0
+	fp.vy = 900.0
+	fr.vx = -1500.0
+	fr.vy = 1200.0
+	var v1 := VfxShotsView.new()
+	v1._ready()
+	var v2 := VfxShotsView.new()
+	v2._ready()
+	var same: bool = true
+	var drawn: int = 0
+	for cam in [5200.0, 5230.0, 9000.0, 20000.0]:
+		for hw in [900.0, 2500.0, 12000.0]:
+			var n1: int = v1._flight_streaks(0, hubf, host, 0.5, cam, hw, 75.0, 1.6)
+			var n2: int = _ref_flight(v2, 0, hubf, host, 0.5, cam, hw, 75.0, 1.6)
+			drawn += n1
+			if n1 != n2:
+				same = false
+			else:
+				for q in range(n1 * VfxShotsView.STRIDE):
+					if v1._buf[q] != v2._buf[q]:
+						same = false
+						break
+	_check(same and drawn > 100, "the flight streaks are the same as before the hoist (%d streaks over 12 views)" % drawn)
+	v1.free()
+	v2.free()
+	# Off: the pool is as it was. On: the caps.
+	var h := VfxHub.new()
+	h.reset(S, 5)
+	_check(h.perf_level == false and VfxLook.PERF_DEFAULT == false and h.debris.perf == false, "the Performance level is off by default")
+	h.debris.far_x = PackedFloat64Array([fp.x])
+	for k in range(400):
+		h.debris._shard(VfxDebris.GLASS, 5000.0, 400.0, 0.0, Vector2.UP, 600.0, 0.5, 1.0, 1.0, 0.3)
+	var off_bits: int = h.debris.bits.size()
+	_check(off_bits <= VfxLook.SPAWN_PER_TICK + VfxLook.SHARD_PER_TICK and h.debris._spill.is_empty() and h.debris.skipped_far == 0, "with it off a burst of 400 is kept whole (the tick's budget is 460; %d kept) and nothing is queued or skipped" % off_bits)
+	var hp := VfxHub.new()
+	hp.reset(S, 5)
+	hp.perf_level = true
+	_tick(S, hp, [])
+	var d: VfxDebris = hp.debris
+	_check(d.perf and d._cap < VfxLook.DEBRIS_CAP, "on, the pool's cap is %d (was %d)" % [d._cap, VfxLook.DEBRIS_CAP])
+	d.far_x = PackedFloat64Array([5000.0])
+	d.far_half = 3000.0
+	for k in range(400):
+		d._shard(VfxDebris.GLASS, 5000.0, 400.0, 0.0, Vector2.UP, 600.0, 0.5, 1.0, 1.0, 0.3)
+	var on_bits: int = d.bits.size()
+	var queued: int = d._spill.size()
+	_check(on_bits <= d._spt + d._sht and queued > 0 and queued <= int(VfxPerf.p("debris", "spill_cap")), "a burst of 400 lands at most %d bits this tick and queues %d for the next (spill cap %d)" % [d._spt + d._sht, queued, int(VfxPerf.p("debris", "spill_cap"))])
+	var got: int = 0
+	for t in range(8):
+		_tick(S, hp, [])
+		got = d.spill_in
+	_check(got > 0 and d.bits.size() <= d._cap and d._spill.size() < queued, "the queue is let in a few a tick (%d so far), the pool stays under its cap (%d of %d)" % [got, d.bits.size(), d._cap])
+	# The far side: not made, and the stream stays where a made one would have left it.
+	var rs := VfxHub.new()
+	rs.reset(S, 9)
+	var ra := VfxHub.new()
+	ra.reset(S, 9)
+	ra.perf_level = true
+	_tick(S, ra, [])
+	ra.debris.far_x = PackedFloat64Array([1000.0])
+	ra.debris.far_half = 3000.0
+	ra.debris._shard(VfxDebris.GLASS, 90000.0, 400.0, 0.0, Vector2.UP, 600.0, 0.5, 1.0, 1.0, 0.3)
+	rs.debris._shard(VfxDebris.GLASS, 90000.0, 400.0, 0.0, Vector2.UP, 600.0, 0.5, 1.0, 1.0, 0.3)
+	ra.debris._shard(VfxDebris.GLASS, 1000.0, 400.0, 0.0, Vector2.UP, 600.0, 0.5, 1.0, 1.0, 0.3)
+	rs.debris._shard(VfxDebris.GLASS, 1000.0, 400.0, 0.0, Vector2.UP, 600.0, 0.5, 1.0, 1.0, 0.3)
+	var ba: VfxDebris.Bit = ra.debris.bits[ra.debris.bits.size() - 1] if ra.debris.bits.size() > 0 else null
+	var bs: VfxDebris.Bit = rs.debris.bits[rs.debris.bits.size() - 1] if rs.debris.bits.size() > 0 else null
+	_check(ra.debris.skipped_far == 1 and ba != null and bs != null and ba.vx == bs.vx and ba.seed == bs.seed, "a spawn far from both fighters is not made (%d skipped), and the next one is the very bit it would have been" % ra.debris.skipped_far)
+	d.far_half = 3000.0
+	var bits0: int = d.bits.size()
+	d._puffs(1000.0, 100.0, -5000.0, 6, 60.0, 160.0, 1.0, 1.0)
+	_check(d.bits.size() == bits0, "dust far behind the fighter plane is not made")
+	# The job cap: two timed jobs a tick, the rest wait.
+	for k in range(5):
+		var j := VfxDebris.Job.new()
+		j.at = 0.0
+		j.kind = "vent"
+		j.a = {"x": 1000.0, "z": 0.0, "w": 100.0}
+		d.jobs.append(j)
+		var j2 := VfxDebris.Job.new()
+		j2.at = 0.0
+		j2.kind = "vent"
+		j2.a = {"x": 1000.0, "z": 0.0, "w": 100.0}
+		rs.debris.jobs.append(j2)
+	d.step(S, SimConst.DT)
+	rs.debris.step(S, SimConst.DT)
+	_check(d.jobs.size() == 3 and rs.debris.jobs.size() == 0, "on, two of five due jobs run in a tick and three wait (%d left); off, all five run (%d left)" % [d.jobs.size(), rs.debris.jobs.size()])
+
+
+## The blasts' heads and impacts in the beam's language (docs/vfx/energy-language.md; Orb 2026-11-01): one composition per fighter, a shape per front (never a ball, a disc or a hoop: Legal RL-225), a piece count per front, off by default.
+func _energy_heads() -> void:
+	print("the blasts' heads in the beam's language")
+	var shapes: Dictionary = {}
+	for front in range(5):
+		var sz: Vector2 = VfxEnergyHeads.size_of(front, 20.0, 1.0)
+		shapes[front] = sz
+	var elong_ok: bool = true
+	for front in range(5):
+		var sz2: Vector2 = shapes[front]
+		elong_ok = elong_ok and sz2.x >= 1.3 * sz2.y      # every head is longer than it is wide: a wedge, a needle, a lens, a slug, a capsule, never a round disc
+	_check(elong_ok, "every front's head is longer than it is wide: no ball, no disc (RL-225)")
+	_check(shapes[1].x / shapes[1].y > shapes[0].x / shapes[0].y, "the Anti-hero's needle is thinner than the Protagonist's wedge (%.1f against %.1f)" % [shapes[1].x / shapes[1].y, shapes[0].x / shapes[0].y])
+	_check(VfxEnergyHeads.burst_n(1) > VfxEnergyHeads.burst_n(0) and VfxEnergyHeads.burst_n(2) < VfxEnergyHeads.burst_n(0), "an impact throws a sheaf of lances, a pressure fan, or a few long arcs by the front (%d, %d, %d)" % [VfxEnergyHeads.burst_n(1), VfxEnergyHeads.burst_n(0), VfxEnergyHeads.burst_n(2)])
+	var h := VfxHub.new()
+	_check(h.energy_heads_enabled == false and VfxLook.HEADS_DEFAULT == false, "the heads are off by default")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var side_p: Dictionary = VfxClashLook.side(S.fighters[0], String(S.fighters[0].aura))
+	var side_r: Dictionary = VfxClashLook.side(S.fighters[1], String(S.fighters[1].aura))
+	_check(int(side_p["front"]) != int(side_r["front"]) and int(side_p["texture"]) != int(side_r["texture"]), "two fighters draw two different heads from the same composition the clash uses")
+	var hv := VfxEnergyHeads.new()
+	hv._ready()
+	hv.begin()
+	for i in range(VfxEnergyHeads.CAP + 20):
+		hv.add(Vector2(float(i), 0.0), Vector2.RIGHT, 60.0, 30.0, 0.0, side_p, 1.0, float(i))
+	_check(hv.count == VfxEnergyHeads.CAP, "the view holds at its cap (%d)" % hv.count)
+	hv.free()
+
+
+## One fighter flying a straight line at a given speed, altitude and stick for `ticks` ticks, with the flight lines on or off: the meteor model after them.
+func _flight_model(S: SimState, tier: float, speed: float, alt: float, held: float, flight: bool, ticks: int) -> VfxMeteor:
+	var M := VfxMeteor.new()
+	M.flight_on = flight
+	M.burn_on = not flight
+	var f = S.fighters[0]
+	f.tier = tier
+	f.state = "idle"
+	f.heldMx = held
+	f.heldMy = 0.0
+	f.x = 1000.0
+	f.y = WorldTerrain.groundY(S, f.x) + alt
+	var step: float = speed * VfxMeteor.flat_out_of(S, f) * SimConst.DT       # `speed` is a share of his own flat out (the sea slows it, so he is put in the air first)
+	for i in range(ticks):
+		f.x = SimWrap.wrap(f.x + step)
+		f.y = WorldTerrain.groundY(S, f.x) + alt
+		S.tick += 1
+		M.step(S, SimConst.DT, VfxLook.Q_HIGH, false)
+	return M
+
+
+## A point's distance to the segment a-b.
+func _seg_dist(p: Vector2, a: Vector2, b: Vector2) -> float:
+	var ab: Vector2 = b - a
+	var l2: float = ab.length_squared()
+	var t: float = 0.0 if l2 < 1e-9 else clampf((p - a).dot(ab) / l2, 0.0, 1.0)
+	return p.distance_to(a + ab * t)
+
+
+## The flight lines (docs/vfx/flight-lines.md; Game Design docs/design/rule-of-cool-map.md section 1): a strength of their own by tier and form step, laid near flat out with the stick held, longer and thinner high up,
+## a row of data per fighter (the Protagonist's widening braid, the Anti-hero's needle of few knots, the Empress's gold rim and settling arc, the Cyborg's gaps that close), and nothing at all with the switch off.
+func _flight_lines() -> void:
+	print("the flight lines")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var fo: float = VfxMeteor.flp("flat_out")
+	# Strength: a term of its own, none at tiers 1 and 2, then 0.5 and 0.8, a tenth a form step up to 1 (and none for a form step where there is no line).
+	var s1: float = VfxMeteor.flight_strength({"tier": 1.0}, {})
+	var s2: float = VfxMeteor.flight_strength({"tier": 2.0, "form": {"step": 3}}, {})
+	var s3: float = VfxMeteor.flight_strength({"tier": 3.0}, {})
+	var s4: float = VfxMeteor.flight_strength({"tier": 4.0}, {})
+	var s4f: float = VfxMeteor.flight_strength({"tier": 4.0, "form": {"step": 1}}, {})
+	var s4m: float = VfxMeteor.flight_strength({"tier": 4.0, "form": {"step": 9}}, {})
+	_check(s1 == 0.0 and s2 == 0.0 and absf(s3 - 0.5) < 1e-6 and absf(s4 - 0.8) < 1e-6, "strength by tier: none at 1 and 2 (even with form steps), %.2f at 3, %.2f at 4" % [s3, s4])
+	_check(absf(s4f - 0.9) < 1e-6 and s4m == 1.0, "each form step adds a tenth, and it stops at 1 (%.2f one step in, %.2f at nine)" % [s4f, s4m])
+	var burn4: float = VfxMeteor.burn_of(VfxMeteor.flat_out_of(S, S.fighters[0]), 3000.0, VfxMeteor.cool_of({"tier": 4.0}, {}))
+	_check(s4 > 1.5 * burn4, "a tier-4 flier at flat out reads %.2f as a flight line, where the meteor's own product left %.2f: the term is its own" % [s4, burn4])
+	# Speed: nothing under 80% of flat out, full at flat out. Altitude: x0.7 on the ground to x1.5 at 8,000 and up.
+	_check(VfxMeteor.flight_ramp(0.79 * fo) == 0.0 and VfxMeteor.flight_ramp(0.8 * fo) == 0.0 and VfxMeteor.flight_ramp(fo) == 1.0 and VfxMeteor.flight_ramp(0.9 * fo) > 0.4 and VfxMeteor.flight_ramp(0.9 * fo) < 0.6, "the line starts at 80%% of flat out and is full at flat out (%.2f at 90%%)" % VfxMeteor.flight_ramp(0.9 * fo))
+	_check(absf(VfxMeteor.len_k(0.0) - 0.7) < 1e-6 and absf(VfxMeteor.len_k(8000.0) - 1.5) < 1e-6 and VfxMeteor.len_k(40000.0) == 1.5 and absf(VfxMeteor.len_k(4000.0) - 1.1) < 1e-6, "the line is x0.7 as long on the ground and x1.5 from 8,000 up (%.2f at 4,000)" % VfxMeteor.len_k(4000.0))
+	# The rows: composed, and only while the lines are on.
+	var g4: Dictionary = VfxMeteor.row_of({"id": "PROTAGONIST", "form": {"step": 4}}, true)
+	var g3: Dictionary = VfxMeteor.row_of({"id": "PROTAGONIST", "form": {"step": 3}}, true)
+	var g2: Dictionary = VfxMeteor.row_of({"id": "PROTAGONIST", "form": {"step": 2}}, true)
+	var g1: Dictionary = VfxMeteor.row_of({"id": "PROTAGONIST", "form": {"step": 1}}, true)
+	_check(float(g1["braid"]) == 0.0 and float(g2["braid"]) < float(g3["braid"]) and float(g3["braid"]) < float(g4["braid"]) and float(g4["braid"]) == 1.0 and float(g4["w_cool"]) > 1.0, "Grist's line takes a braid with each form step (%.2f, %.2f, %.2f) and widens as it cools (x%.1f)" % [float(g2["braid"]), float(g3["braid"]), float(g4["braid"]), float(g4["w_cool"])])
+	var lp: Dictionary = VfxMeteor.row_of({"id": "RIVAL"}, true)
+	_check(float(lp["knot_k"]) >= 2.0 and float(lp["w_cool"]) < 0.5 and float(lp["width_k"]) < float(g4["width_k"]) and float(lp["linger_k"]) > 1.2 and float(lp["deep_dark"]) > VfxMeteor.fp("deep_dark"), "Loupe's is a needle of fewer knots (x%.0f apart) that narrows (x%.1f), colder, and lasts x%.1f" % [float(lp["knot_k"]), float(lp["w_cool"]), float(lp["linger_k"])])
+	var oz: Dictionary = VfxMeteor.row_of({"id": "EMPRESS"}, true)
+	_check(String(oz["rim"]) == "#c9a227" and float(oz["settle"]) > 0.5 and float(oz["w_cool"]) < 1.0 and String(oz["front"]) == "wire", "the Empress's is a taut wire arc with a gold rim that draws tight and settles when she stops")
+	var steps: Array = []
+	for st in range(1, 5):
+		steps.append(VfxMeteor.row_of({"id": "CYBORG", "form": {"step": st}}, true))
+	var gaps_ok: bool = true
+	var thick_ok: bool = true
+	for k in range(1, 4):
+		gaps_ok = gaps_ok and float(steps[k]["gaps"]) < float(steps[k - 1]["gaps"])
+		thick_ok = thick_ok and float(steps[k]["width_k"]) > float(steps[k - 1]["width_k"])
+	_check(gaps_ok and thick_ok and float(steps[0]["gaps"]) == 1.0 and float(steps[3]["gaps"]) > 0.0 and String(steps[0]["front"]) == "sputter", "the Cyborg's gaps are fixed in the world and close with each molt (%.2f, %.2f, %.2f, %.2f) while the line thickens" % [float(steps[0]["gaps"]), float(steps[1]["gaps"]), float(steps[2]["gaps"]), float(steps[3]["gaps"])])
+	# Off: no flight key reaches a row, and the meteor trail's own rows are as they were.
+	var leak: bool = false
+	var rims_ok: bool = true
+	for id in ["PROTAGONIST", "RIVAL", "REFERENCE", "EMPRESS", "CYBORG", "SOMEONE"]:
+		var off: Dictionary = VfxMeteor.row_of({"id": id, "tier": 4.0, "form": {"step": 4}})
+		for k in off.keys():
+			leak = leak or String(k).begins_with("fl_") or String(k) in ["rim", "gaps", "knot_k", "settle", "w_cool", "dull"]
+		var on: Dictionary = VfxMeteor.row_of({"id": id, "tier": 4.0, "form": {"step": 4}}, true)
+		for k in on.keys():
+			leak = leak or String(k).begins_with("fl_")
+		if on.has("rim"):
+			var c := Color.html(String(on["rim"]))
+			var gold: bool = c.h >= 0.10 and c.h <= 0.17 and c.s > 0.5 and c.v > 0.5
+			var white: bool = c.s < 0.2 and c.v > 0.85
+			var red: bool = (c.h < 0.03 or c.h > 0.97) and c.s > 0.5
+			rims_ok = rims_ok and not white and not red and (not gold or id == "EMPRESS")
+	_check(not leak, "with the lines off no flight key is read, and none leaks into a row either way")
+	_check(rims_ok, "no rim is white or red, and gold is the Empress's alone (Legal RL-221: gold is a ribbon rim only)")
+	_check(float(VfxMeteor.row_of({"id": "CYBORG", "tier": 4.0})["width_k"]) == 1.35 and float(VfxMeteor.row_of({"id": "PROTAGONIST", "form": {"step": 4}})["braid"]) == 0.0, "the meteor trail's own rows are as they were (the Cyborg's 1.35 at tier 4, no braid)")
+	# The model: tier 4 at flat out with the stick held draws a line at its own strength; a burn alone leaves a faint one.
+	var M4: VfxMeteor = _flight_model(S, 4.0, 1.0, 3000.0, 1.0, true, 90)
+	var Mb: VfxMeteor = _flight_model(S, 4.0, 1.0, 3000.0, 1.0, false, 90)
+	_check(M4.kb[0] > 0.7 and M4.cur[0] != null and M4.fshare[0] == 1.0 and Mb.kb[0] < 0.5, "a tier-4 flier at flat out burns %.2f as a flight line against %.2f as a burn alone" % [M4.kb[0], Mb.kb[0]])
+	var Mhalf: VfxMeteor = _flight_model(S, 4.0, 0.5, 3000.0, 1.0, true, 90)
+	var Mt2: VfxMeteor = _flight_model(S, 2.0, 1.0, 3000.0, 1.0, true, 90)
+	var Mt3: VfxMeteor = _flight_model(S, 3.0, 1.0, 3000.0, 1.0, true, 90)
+	var Mrel: VfxMeteor = _flight_model(S, 4.0, 1.0, 3000.0, 0.0, true, 90)
+	_check(Mhalf.kb[0] < VfxMeteor.fp("min_burn") and Mt2.kb[0] < VfxMeteor.fp("min_burn") and Mrel.kb[0] < VfxMeteor.fp("min_burn") and Mt3.kb[0] > 0.4 and Mt3.kb[0] < 0.55, "no line at half speed, at tier 2, or with the stick let go; tier 3 draws it at half strength (%.2f)" % Mt3.kb[0])
+	# Altitude: shorter and wider on the ground, longer and thinner high up.
+	var Mlo: VfxMeteor = _flight_model(S, 4.0, 1.0, 100.0, 1.0, true, 40)
+	var Mhi: VfxMeteor = _flight_model(S, 4.0, 1.0, 9000.0, 1.0, true, 40)
+	var rlo = Mlo.runs[0]
+	var rhi = Mhi.runs[0]
+	_check(rlo.lk[rlo.lk.size() - 1] < 0.8 and rhi.lk[rhi.lk.size() - 1] > 1.45 and rhi.w[rhi.w.size() - 1] < rlo.w[rlo.w.size() - 1], "on the ground the line is x%.2f as long, at 9,000 x%.2f and %.0f%% as wide" % [rlo.lk[rlo.lk.size() - 1], rhi.lk[rhi.lk.size() - 1], 100.0 * rhi.w[rhi.w.size() - 1] / rlo.w[rlo.w.size() - 1]])
+	# Fewer knots: the Anti-hero's line is drawn from fewer points than the Protagonist's, yet stays within a body height of his true path round a corner and an arc.
+	var Mk := VfxMeteor.new()
+	Mk.flight_on = true
+	Mk.burn_on = false
+	for slot in range(2):
+		S.fighters[slot].tier = 4.0
+		S.fighters[slot].state = "idle"
+		S.fighters[slot].heldMx = 1.0
+		S.fighters[slot].heldMy = 0.0
+		S.fighters[slot].x = 1000.0
+		S.fighters[slot].y = WorldTerrain.groundY(S, 1000.0) + 3000.0
+	var steps2: Array = [VfxMeteor.flat_out_of(S, S.fighters[0]) * SimConst.DT, VfxMeteor.flat_out_of(S, S.fighters[1]) * SimConst.DT]
+	var hd: float = 0.0
+	var path: Array = []
+	var worst: float = 0.0
+	var idx_l: int = 0
+	var prev_laid: int = 0
+	var ux: float = 0.0
+	for i in range(100):
+		if i >= 24 and i < 28:
+			hd = lerpf(0.0, PI * 0.5, float(i - 23) / 4.0)       # the corner: a quarter turn in four ticks
+		elif i >= 52:
+			hd = minf(PI * 0.5 + 0.045 * float(i - 51), PI)       # then a long arc
+		for slot in range(2):
+			var f = S.fighters[slot]
+			f.x = SimWrap.wrap(f.x + cos(hd) * steps2[slot])
+			f.y += sin(hd) * steps2[slot]
+		ux += cos(hd) * steps2[1]
+		S.tick += 1
+		Mk.step(S, SimConst.DT, VfxLook.Q_HIGH, false)
+		var fl = S.fighters[1]
+		path.append(Vector2(ux, fl.y + VfxMeteor.fp("chest_y")))
+		var rr = Mk.cur[1]
+		if rr == null or rr.x.size() == 0:
+			continue
+		var nrr: int = rr.x.size()
+		var head := Vector2(ux, fl.y + VfxMeteor.fp("chest_y"))
+		var knot := Vector2(ux + SimWrap.sdx(fl.x, rr.x[nrr - 1]), rr.y[nrr - 1])
+		if nrr != prev_laid:       # a knot was laid: at his position, or (a corner) at the tick before
+			prev_laid = nrr
+			idx_l = i - (1 if i > 0 and knot.distance_to(head) > 1.0 and knot.distance_to(path[i - 1]) < 1.0 else 0)
+		for j in range(maxi(idx_l, 0), i + 1):
+			worst = maxf(worst, _seg_dist(path[j], knot, head))
+	var n_loupe: int = 0
+	var n_grist: int = 0
+	for r in Mk.runs:
+		if r.slot == 1:
+			n_loupe += r.x.size()
+		else:
+			n_grist += r.x.size()
+	_check(n_loupe > 4 and float(n_loupe) < 0.65 * float(n_grist), "the Anti-hero's line is drawn from %d knots where the Protagonist's takes %d" % [n_loupe, n_grist])
+	_check(worst <= VfxLook.BH, "round a corner and an arc the drawn line stays within a body height (%.0f units) of his true path (the worst is %.0f)" % [VfxLook.BH, worst])
+	# The Empress's line draws tight: with the lines relaxed, a curve moves onto the straight line joining its ends, and the ends stay.
+	var arc := PackedVector2Array()
+	for k in range(9):
+		var an: float = PI * float(k) / 8.0
+		arc.append(Vector2(-cos(an) * 600.0, sin(an) * 300.0))
+	var half_set: PackedVector2Array = VfxMeteor.settle(arc, 0.5)
+	var full_set: PackedVector2Array = VfxMeteor.settle(arc, 1.0)
+	var span_ok: bool = true
+	for k in range(9):
+		span_ok = span_ok and _seg_dist(full_set[k], arc[0], arc[8]) < 1e-3
+	_check(VfxMeteor.settle(arc, 0.0) == arc and half_set[4].y < arc[4].y and half_set[4].y > full_set[4].y and span_ok and full_set[0] == arc[0] and full_set[8] == arc[8], "the Empress's arc settles toward the line between its ends as she stops (middle %.0f, then %.0f, then %.0f)" % [arc[4].y, half_set[4].y, full_set[4].y])
+	# The tier-2 speed streak stops where the line takes over at tier 3 (Game Design, rule-of-cool-map.md section 1): a launched fighter at tier 3 or more draws no streak while the lines are on, a tier-2 one keeps its own, and with the lines off both are as they were. (The launch and heavy streak of feature 11 is VfxSpeed's, and stays.)
+	var hs := VfxHub.new()
+	hs.speedlines_enabled = true
+	var vs := VfxShotsView.new()
+	vs._ready()
+	var shost := MeteorHost.new()
+	shost.S = S
+	var f_s = S.fighters[0]       # one launched fighter at a time: the streaks have a cap for the frame, shared by both
+	var f_o = S.fighters[1]
+	f_s.x = 5000.0
+	f_s.y = WorldTerrain.groundY(S, f_s.x) + 400.0
+	f_s.state = "launched"
+	f_s.vx = 1800.0
+	f_s.vy = 900.0
+	f_o.x = 9000.0
+	f_o.state = "idle"
+	f_s.tier = 2.0
+	var n_two: int = vs._flight_streaks(0, hs, shost, 0.5, 5200.0, 2500.0, 75.0, 1.6)
+	hs.flight_enabled = true
+	var n_two_on: int = vs._flight_streaks(0, hs, shost, 0.5, 5200.0, 2500.0, 75.0, 1.6)
+	f_s.tier = 3.0
+	var n_three_on: int = vs._flight_streaks(0, hs, shost, 0.5, 5200.0, 2500.0, 75.0, 1.6)
+	hs.flight_enabled = false
+	var n_three_off: int = vs._flight_streaks(0, hs, shost, 0.5, 5200.0, 2500.0, 75.0, 1.6)
+	_check(n_two > 5 and n_two_on == n_two and n_three_off == n_two and n_three_on == 0, "the speed streak stays at tier 2 (%d, and %d with the lines on), stops for a tier-3 fighter while the lines are on (%d), and is as it was with the lines off (%d)" % [n_two, n_two_on, n_three_on, n_three_off])
+	vs.free()
+	# The switch: off by default; on, the hub lays a flight line from the same ticks, without the burn.
+	var h := VfxHub.new()
+	h.reset(S, 5)
+	_check(h.flight_enabled == false and VfxLook.FLIGHT_DEFAULT == false and h.meteor_enabled == false, "the flight lines are off by default, and the ribbon is not running")
+	var hf := VfxHub.new()
+	hf.reset(S, 5)
+	hf.flight_enabled = true
+	hf.meteor_enabled = true
+	var f0 = S.fighters[0]
+	f0.tier = 4.0
+	f0.state = "idle"
+	f0.heldMx = 1.0
+	f0.x = 1000.0
+	f0.y = WorldTerrain.groundY(S, 1000.0) + 3000.0
+	var fo0: float = VfxMeteor.flat_out_of(S, f0)
+	for i in range(60):
+		f0.x = SimWrap.wrap(f0.x + fo0 * SimConst.DT)
+		_tick(S, hf, [])
+	_check(hf.meteor.flight_on and not hf.meteor.burn_on and hf.meteor.laid > 0, "with the switch on the hub lays the line (%d points) and the burn is not laid" % hf.meteor.laid)
+	# The view: the Empress's rim reaches the shader, the Cyborg's slag rim and spark too, and a row without one gives it nothing.
+	var V := VfxMeteorView.new()
+	V._ready()
+	var host := MeteorHost.new()
+	host.S = S
+	f0.id = "EMPRESS"
+	hf.meteor.reset()
+	f0.x = 1000.0
+	for i in range(60):
+		f0.x = SimWrap.wrap(f0.x + fo0 * SimConst.DT)
+		_tick(S, hf, [])
+	V.update(hf, host, 1.0, f0.x, 0.3, 2000.0, 3000.0)
+	var rimv: Vector4 = V._mat[0].get_shader_parameter("rimc")
+	_check(int(V.last.get("verts", 0)) > 0 and rimv.w > 0.5 and absf(rimv.x - 0.788) < 0.01, "the Empress's ribbon is drawn with her gold rim (%.2f, %.2f, %.2f; strength %.2f)" % [rimv.x, rimv.y, rimv.z, rimv.w])
+	f0.id = "CYBORG"
+	hf.meteor.reset()
+	f0.x = 1000.0
+	for i in range(60):
+		f0.x = SimWrap.wrap(f0.x + fo0 * SimConst.DT)
+		_tick(S, hf, [])
+	V.update(hf, host, 1.0, f0.x, 0.3, 2000.0, 3000.0)
+	var fxv: Vector4 = V._mat[0].get_shader_parameter("fx")
+	_check(fxv.x == 1.0 and fxv.y > 0.0 and fxv.z > 0.0, "the Cyborg's ribbon is drawn with its gaps open, a dull core and sparks (%.2f, %.2f, %.2f)" % [fxv.x, fxv.y, fxv.z])
+	f0.id = "PROTAGONIST"
+	V.free()
+
+
+## A crack lies on the ground as drawn, and a wrong height read for one of its points does not stand it up: the strip's vertices are kept within CRACK_UP_MAX above and CRACK_DOWN_MAX below the ground the fighters stand on at their x (the green column Orb saw, 2026-11-01).
+class SpikyGround extends GroundField:
+	var spike: float = 0.0
+	var every: int = 5
+	var _n: int = 0
+	func ground_at(S: SimState, x: float, z: float) -> float:
+		_n += 1
+		if z != 0.0 and _n % every == 0:
+			return WorldTerrain.groundY(S, x) + spike
+		return super.ground_at(S, x, z)
+
+
+func _crack_heights() -> void:
+	print("crack heights")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 12345)
+	var fx: float = S.fighters[0].x
+	var lines: Array = VfxCrackGen.crater_lines(7, VfxCrackGen.crater_key(fx, 230.0, 100.0), 230.0, 18.0, false, "powerup", VfxLook.Q_HIGH)
+	var worst_up: float = -1e9
+	var worst_down: float = 1e9
+	var built: Dictionary = {}
+	for spike in [0.0, 5000.0, -9000.0, INF]:
+		var gf := SpikyGround.new()
+		gf.spike = spike
+		var m = VfxCrackMesh.new().build(S, gf, fx, lines, 0.0, "plains")
+		var up: float = -1e9
+		var down: float = 1e9
+		if m != null:
+			var vs: PackedVector3Array = m.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+			for v in vs:
+				var g0: float = WorldTerrain.groundY(S, SimWrap.wrap(fx + v.x))
+				up = maxf(up, v.y - g0)
+				down = minf(down, v.y - g0)
+		built[spike] = [m != null, up, down]
+		worst_up = maxf(worst_up, up)
+		worst_down = minf(worst_down, down)
+	_check(bool(built[0.0][0]) and bool(built[5000.0][0]) and worst_up <= VfxLook.CRACK_UP_MAX + 0.01 and worst_down >= -VfxLook.CRACK_DOWN_MAX - 0.01 and float(built[5000.0][1]) > 0.0, "a wrong height read does not stand a crack up: with every fifth vertex read 5,000 above, 9,000 below or infinite, the strip stays between %.0f below and %.0f above the ground (limits %.0f and %.0f)" % [worst_down, worst_up, -VfxLook.CRACK_DOWN_MAX, VfxLook.CRACK_UP_MAX])
+	SimCore.dispose(S)
+
+
+## A shot from outside has owner -1 and its shooter in the other fight (SimCross.shooter): the look reads the shooter, never this fight's last fighter by Godot's negative index.
+func _shot_from_outside() -> void:
+	print("a shot from outside")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 12345, {"p1": true, "p2": true, "p3": true, "p4": true}, {"fights": 2, "intro": false})
+	for t in range(5):
+		SimCore.step(S)
+		S.out.fx.clear()
+	var far = S.stage.fights[1].fighters[0]
+	var keys: String = String(far.keys)
+	var sh_out := {"owner": -1, "from": keys}
+	var sh_own := {"owner": 1, "from": ""}
+	var b_out = VfxShots.body_of(S, -1, sh_out)
+	var b_own = VfxShots.body_of(S, 1, sh_own)
+	var b_none = VfxShots.body_of(S, -1, null)
+	var last = S.fighters[S.fighters.size() - 1]
+	_check(b_out == far and b_out != last and b_own == S.fighters[1] and b_none == null, "a shot from outside is its shooter's, in the other fight (%s), not this fight's last fighter's; an own shot is its owner's; none is null" % keys)
+	var c_out: Color = VfxShots.lane_of_body(b_out)
+	var c_def: Color = VfxShots.lane_of_body(null)
+	_check(c_out == VfxAura.lane_color(String(far.aura)) and c_def == VfxAura.lane_color("#8fd6ff"), "the lane colour is the shooter's, the default where there is no body")
+	SimCore.dispose(S)
+
+
+## The clash's shockwave (docs/vfx/clash-shockwave.md; Legal RL-246): growth rings at most one in 2 s and none per pulse; ONE release at the end, started after the cue's own tick, as wide as World's meeting crater by tier and ending; in the air a
+## half-size ring and no dust; never two in one tick; off with the switch.
+func _clash_wave() -> void:
+	print("the clash's shockwave")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var g: float = WorldTerrain.groundY(S, plains)
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	f0.x = plains
+	f0.y = g
+	f1.x = SimWrap.wrap(plains + 700.0)
+	f1.y = g
+	f0.tier = 4.0
+	f1.tier = 4.0
+	var r_draw4: float = VfxClashWave.release_radius(4.0, "draw")
+	var r_win1: float = VfxClashWave.release_radius(1.0, "win")
+	_check(absf(r_draw4 - 3096.0) < 1.0 and absf(r_win1 - 1136.0 * sqrt(0.6)) < 1.0, "the release is as wide as World's meeting crater: %.0f units at the top tier on a draw, %.0f at the lowest on a win" % [r_draw4, r_win1])
+	# the growth: a struggle runs 5 s with 15 pulses; rings come on the clock, not on the pulse
+	var h := VfxHub.new()
+	h.reset(S, 6)
+	h.clash_wave_enabled = true
+	var cl := SimState.Clash.new()
+	cl.A = f0
+	cl.D = f1
+	cl.mid = 0.5
+	cl.t0 = S.T
+	cl.dur = 5.0
+	cl.aw = true
+	S.game.clash = cl
+	for t in range(300):
+		var evs: Array = []
+		if t % 20 == 0:
+			evs.append(VfxMock.ev("cue", {"actor": 0, "kind": "beam_pulse", "text": "", "source": ""}))
+		_tick(S, h, evs)
+	var grown: int = int(h.clash_wave.made.get("grow", 0))
+	_check(grown >= 2 and grown <= 3 and int(h.clash_wave.made.get("ring", 0)) == 0 and h.clash_wave.last_z <= f0.z - 20.0, "while a struggle runs for 5 s with 15 pulses, rings come at most one in 2 s (%d), none for a pulse, behind the fighters in depth, and no release yet" % grown)
+	S.game.clash = null
+	# the release
+	var end := func(how: String, y: float) -> Dictionary:
+		return {"actor": 0, "kind": "beam_clash_end", "text": how, "source": "", "x": SimWrap.wrap(plains + 350.0), "y": y, "z": 0.0}
+	var sp0: int = h.debris.spawned
+	_tick(S, h, [VfxMock.ev("cue", end.call("draw", g + 300.0)), VfxMock.ev("cue", end.call("draw", g + 300.0))])
+	var ring_at_cue: int = int(h.clash_wave.made.get("ring", 0)) + int(h.clash_wave.made.get("dust", 0))      # the shockwave's own pieces in the cue's tick (the pool's delayed dust from the growth rings is not its)
+	var made_end: int = int(h.clash_wave.made.get("end", 0))
+	for t in range(14):
+		_tick(S, h, [])
+	var rings: int = int(h.clash_wave.made.get("ring", 0))
+	var dust: int = int(h.clash_wave.made.get("dust", 0))
+	_check(made_end == 1 and ring_at_cue == 0 and rings == 2 and dust >= 4 and h.debris.spawned > sp0, "one release for the end cue (a second in the same tick is ignored): nothing of the shockwave's in the cue's own tick, then a wide ring and a softer second (%d) and a local dust dome (%d puffs); ends %d, its pieces in the cue tick %d" % [rings, dust, made_end, ring_at_cue])
+	# in the air: an air burst, a half-size ring and no dome
+	var h2 := VfxHub.new()
+	h2.reset(S, 6)
+	h2.clash_wave_enabled = true
+	_tick(S, h2, [VfxMock.ev("cue", end.call("draw", g + 4000.0))])
+	for t in range(14):
+		_tick(S, h2, [])
+	_check(int(h2.clash_wave.made.get("ring", 0)) == 2 and int(h2.clash_wave.made.get("dust", 0)) == 0, "an air burst (the point far above the ground) is a ring and no dust dome")
+	var h3 := VfxHub.new()
+	h3.reset(S, 6)
+	_tick(S, h3, [VfxMock.ev("cue", end.call("draw", g + 300.0))])
+	for t in range(14):
+		_tick(S, h3, [])
+	_check(h3.clash_wave_enabled == false and VfxLook.CLASH_WAVE_DEFAULT == false and int(h3.clash_wave.made.get("end", 0)) == 0, "off by default: nothing is made")
+	S.game.clash = null
+	SimCore.dispose(S)
+
+
+## 2v2 (docs/vfx/other-fights.md): the other fight's events reach a hub of its own, read only. Two computer pairs, 900 ticks: the second pair's hits, sparks and dust are made in its own hub; the main hub's work, the sim's hash and the
+## fight's own events are the same as with the switch off; fight 0 is back in S after every call.
+func _other_fights() -> void:
+	print("the other fight")
+	var run := func(on: bool) -> Dictionary:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 12345, {"p1": true, "p2": true, "p3": true, "p4": true}, {"fights": 2, "intro": false})
+		var h := VfxHub.new()
+		h.reset(S, 5)
+		h.other_fights_enabled = on
+		h.host_pushes = on
+		var kept_ok: bool = true
+		var cur_ok: bool = true
+		for t in range(900):
+			SimCore.step(S)
+			var n1: int = S.stage.fights[1].out.fx.size()
+			h.consume(S, S.out.fx.duplicate())
+			if on:
+				h.consume_others(S, [S.stage.fights[1].out.fx.duplicate()])      # the host's push: fight 1's events as the host reads them
+			kept_ok = kept_ok and S.stage.fights[1].out.fx.size() == n1
+			cur_ok = cur_ok and S.stage.cur == 0
+			S.out.fx.clear()
+			S.out.feed.clear()
+		var r: Dictionary = {"hash": str(SimHash.stateHash(S).gameplay), "spawned": h.debris.spawned, "kept": kept_ok, "cur": cur_ok, "hubs": h.stage_feed.hubs.duplicate(), "other_spawned": (h.stage_feed.hubs[1].debris.spawned if h.stage_feed.hubs.size() > 1 and h.stage_feed.hubs[1] != null else -1), "fed": h.stage_feed.fed, "events": h.stage_feed.events_fed, "kinds": h.stage_feed.kinds.duplicate(), "ticks": h.ticks}
+		SimCore.dispose(S)
+		return r
+	var off: Dictionary = run.call(false)
+	var on: Dictionary = run.call(true)
+	var hb = on["hubs"][1] if on["hubs"].size() > 1 else null
+	var hits: int = int(on["kinds"].get("hit", 0)) + int(on["kinds"].get("spark", 0)) + int(on["kinds"].get("dust", 0)) + int(on["kinds"].get("cue", 0))
+	_check(hb != null and int(on["fed"]) == 900 and int(on["events"]) > 900 and hits > 0 and hb.ticks > 600 and hb.ticks <= 900 and hb.debris.spawned > 0, "the second fight has a hub of its own, fed every tick from the host's push of its own events (%d events, %d hits, sparks, dust and cues, %d pieces made, %d of its unheld ticks)" % [int(on["events"]), hits, hb.debris.spawned if hb != null else 0, hb.ticks if hb != null else 0])
+	_check(on["hash"] == off["hash"] and on["spawned"] == off["spawned"] and on["ticks"] == off["ticks"] and off["hubs"].is_empty(), "the switch changes nothing of the sim (one hash) nor of the main hub's work (%d pieces both ways); off, no other hub exists" % int(on["spawned"]))
+	_check(bool(on["kept"]) and bool(on["cur"]), "feeding drains nothing of the other fight's events and leaves fight 0 in S after every call")
+	# The alias is a read, never a swap: S keeps its own fight, fight 1's record is untouched, and the alias carries fight 1's own fields and S's shared ones by reference.
+	var S2 := SimCore.createSim()
+	SimCore.newMatch(S2, 12345, {"p1": true, "p2": true, "p3": true, "p4": true}, {"fights": 2, "intro": false})
+	for t in range(40):
+		SimCore.step(S2)
+		S2.out.fx.clear()
+	var fighters0 = S2.fighters
+	var rec1 = S2.stage.fights[1]
+	var fighters1 = rec1.fighters
+	var out1 = rec1.out
+	var vw: SimState = RenderAnim.fight_view(S2, 1)
+	_check(vw.fighters == fighters1 and vw.fighters != fighters0 and vw.out == out1 and is_equal_approx(vw.T, rec1.T) and vw.stage == null and vw.get_meta("root") == S2 and vw.buildings == S2.buildings and S2.fighters == fighters0 and S2.stage.fights[1].fighters == fighters1 and S2.stage.cur == 0 and S2.stage.fights[1].out == out1, "Animation's view of fight 1 (RenderAnim.fight_view), which the other hub reads, holds fight 1's own bodies, events and clock and S's shared world by reference; S, the fight's record and the current fight are as they were")
+	SimCore.dispose(S2)
+
+## The front of a beam that travels (docs/vfx/beam-front.md; Game Design row 40): while a beam's head is on its way out (`Beam.p` under 1) the head is drawn as the fighter's own energy head in the beam's language, on the tip of the body; a finished one draws none.
+func _beam_front() -> void:
+	print("the beam's front")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var fr := VfxBeamFront.new()
+	fr.heads._ready()
+	fr._ready()
+	var b := SimState.Beam.new()
+	b.A = S.fighters[0]
+	b.ox = 1000.0
+	b.oy = 400.0
+	b.ux = 1.0
+	b.uy = 0.0
+	b.len = 3000.0
+	b.w = 24.0 + 3.0 * 9.0
+	b.col = String(S.fighters[0].aura)
+	b.life = 1.2
+	b.p = 0.4
+	var tip := Vector2(1200.0, 400.0)
+	var tail := Vector2(0.0, 400.0)
+	fr.begin()
+	fr.add(b, tail, tip, 1.0, 1.0, 0.0)
+	var one: int = fr.count
+	b.p = 1.0
+	fr.add(b, tail, tip, 1.0, 1.0, 0.0)
+	_check(one == 1 and fr.count == 1, "a beam still travelling out draws one front, a finished one none (%d, %d)" % [one, fr.count])
+	b.p = 0.4
+	fr.begin()
+	fr.add(b, tail, tip, 1.0, 1.0, 0.0)
+	var side: Dictionary = VfxClashLook.side(b.A, String(b.col))
+	var sz: Vector2 = VfxEnergyHeads.size_of(int(side["front"]), VfxBeamLook.thickness(b.A, b.w, 1, 1.0, VfxBeamLook.is_short(b), 1200.0) * 0.58, 1.0)
+	var cx: float = fr.heads._buf[3]      # the instance's centre x: the quad runs ahead of the shape, so the shape's own centre is a little behind it
+	var shape_cx: float = cx - 0.5 * (VfxEnergyHeads.HALO_L - 1.0) * sz.x
+	_check(absf(shape_cx - (tip.x + 0.1 * sz.x)) < 1.0 and shape_cx - 0.5 * sz.x < tip.x and shape_cx + 0.5 * sz.x > tip.x + 0.5 * sz.x, "the head leads the tip of the body, most of it ahead (centre %.0f, tip %.0f, length %.0f)" % [shape_cx, tip.x, sz.x])
+	fr.begin()
+	fr.add(b, Vector2(0.0, 400.0), Vector2(18.0, 400.0), 1.0, 1.0, 0.0)
+	var small: float = fr.heads._buf[0]
+	fr.begin()
+	fr.add(b, tail, tip, 1.0, 1.0, 0.0)
+	var full: float = fr.heads._buf[0]
+	_check(small < 0.35 * full, "a front that has only just left the hand is a small head that grows, not a whole shape in the hand (%.0f against %.0f)" % [small, full])
+	var sh_text: String = FileAccess.get_file_as_string("res://render/vfx/shaders/energy_head.gdshader")
+	_check(sh_text.contains("const float HALO_L = %.2f;" % VfxEnergyHeads.HALO_L) and sh_text.contains("const float HALO_W = %.1f;" % VfxEnergyHeads.HALO_W), "the head's quad and its shader agree on the halo (%.2f long, %.1f wide)" % [VfxEnergyHeads.HALO_L, VfxEnergyHeads.HALO_W])
+	# Two fronts meeting: each side's head is at the meeting point for the first six ticks of the clash, nose on it, shrinking into it as the press takes over; none after.
+	var cl := {"A": S.fighters[0], "D": S.fighters[1]}
+	var hand_a := Vector2(0.0, 400.0)
+	var hand_d := Vector2(1200.0, 400.0)
+	var mp := Vector2(600.0, 400.0)
+	fr.begin()
+	fr.meet(cl, hand_a, hand_d, mp, 0.0, 0.0, 1.0, 1.0)
+	var early_n: int = fr.count
+	var big: float = fr.heads._buf[0]
+	var len_a: float = big / VfxEnergyHeads.HALO_L       # the quad is HALO_L times the shape: the shape's own length
+	var nose_a: float = (fr.heads._buf[3] - 0.5 * (VfxEnergyHeads.HALO_L - 1.0) * len_a) + 0.5 * len_a
+	fr.begin()
+	fr.meet(cl, hand_a, hand_d, mp, 0.0, 0.08, 1.0, 1.0)
+	var small_m: float = fr.heads._buf[0]
+	fr.begin()
+	fr.meet(cl, hand_a, hand_d, mp, 0.0, 0.2, 1.0, 1.0)
+	_check(early_n == 2 and absf(nose_a - mp.x) < 1.0 and small_m < 0.5 * big and fr.count == 0, "two fronts meeting: both heads at the meeting point on the clash's first tick, nose on it (%.0f of %.0f), under half the size by tick five (%.0f against %.0f), none after six ticks" % [nose_a, mp.x, small_m, big])
+	fr.free()
+
+
 ## The beams' look (docs/vfx/beam-look.md; Legal fx03): a real width by default, a thin one as a fighter's own, a ripple that moves hue at steady luminance, 2 Hz or slower, no white core, the flavour by roster id.
 func _arena_turn_check() -> void:
 	print("the ring's turn")
@@ -6268,12 +7603,52 @@ func _beam_struggle_beams() -> void:
 		sk.step(S, [], false)
 		if i == 0:
 			first = sk.width_k(0)
-	_check(sk.width_k(0) > 1.0 and sk.width_k(1) < 1.0 and first < sk.width_k(0), "the winner's beam is thicker, the loser's thinner, and the shift is eased (%.3f then %.3f)" % [first, sk.width_k(0)])
+	_check(sk.width_k(0) > 1.0 and sk.width_k(1) >= 1.0 and first < sk.width_k(0), "the winner's beam is thicker, the loser's is not thinner (it buckles instead), and the shift is eased (%.3f then %.3f)" % [first, sk.width_k(0)])
 	for i in range(240):
 		S.tick += 1
 		sk.step(S, [], false)
 	var kmax: float = 1.0 + VfxBeamStruggle.p("push_k")
-	_check(sk.width_k(0) <= kmax + 0.001 and sk.width_k(1) >= 1.0 - VfxBeamStruggle.p("push_k") * 0.6 - 0.001 and sk.width_k(0) > 1.1, "it settles inside the limits (%.2f and %.2f)" % [sk.width_k(0), sk.width_k(1)])
+	_check(sk.width_k(0) <= kmax + 0.001 and sk.width_k(1) >= VfxBeamStruggle.p("lose_min") - 0.001 and sk.width_k(0) > 1.1, "it settles inside the limits (%.2f and %.2f)" % [sk.width_k(0), sk.width_k(1)])
+	# the loser buckles (Orb, 2026-10-22): geometry in his own beam, growing with the ground he has lost, never a brightness change
+	_check(sk.lost(1) > 0.3 and sk.lost(0) == 0.0, "the loser has lost ground (%.2f) and the winner has not (%.2f)" % [sk.lost(1), sk.lost(0)])
+	var mw := VfxBeamLook.new_material(0)
+	var ml := VfxBeamLook.new_material(0)
+	sk.apply(mw, 0, 800.0, 1.0)
+	sk.apply(ml, 1, 800.0, 1.0)
+	var bw: Vector4 = mw.get_shader_parameter("buck")
+	var bl: Vector4 = ml.get_shader_parameter("buck")
+	var bl2: Vector4 = ml.get_shader_parameter("buck2")
+	_check(bw.x == 0.0 and bl.x > 0.3 and bl.y > 0.0 and bl.z > 0.0 and bl.w > 0.0, "the buckling is in the loser's beam only (winner %.2f, loser %.2f; bow %.0f, quiver %.0f, bulge %.2f)" % [bw.x, bl.x, bl.y, bl.z, bl.w])
+	_check(bl2.x <= 2.0 and bl2.y <= 2.0 and bl2.x > 0.0 and bl2.y > 0.0, "its rates are 2 Hz or slower (Legal): the bow at %.2f and the quiver at %.2f" % [bl2.x, bl2.y])
+	var half_hz: bool = true
+	for key in ["buck_bow_hz", "buck_quiv_hz"]:
+		half_hz = half_hz and VfxBeamStruggle.p(key) <= 2.0
+	_check(half_hz, "the data's rates are 2 Hz or slower too")
+	var skc := VfxBeamStruggle.new()
+	c.mid = 0.8
+	S.tick = 700
+	skc.step(S, [], true)
+	for i in range(240):
+		S.tick += 1
+		skc.step(S, [], true)
+	var mc := VfxBeamLook.new_material(0)
+	skc.apply(mc, 1, 800.0, 1.0)
+	var bc: Vector4 = mc.get_shader_parameter("buck")
+	var bc2: Vector4 = mc.get_shader_parameter("buck2")
+	_check(bc.y < bl.y and bc.z < bl.z and bc2.y < bl2.y, "under Reduce flashing or Reduced motion the buckling is smaller and slower (bow %.0f against %.0f, quiver rate %.2f against %.2f)" % [bc.y, bl.y, bc2.y, bl2.y])
+	var skg := VfxBeamStruggle.new()
+	var lost_by_mid: Array = []
+	for m_to in [0.45, 0.35, 0.2]:
+		c.mid = m_to
+		for i in range(240):
+			S.tick += 1
+			skg.step(S, [], false)
+		lost_by_mid.append(skg.lost(0))
+	_check(lost_by_mid[0] < lost_by_mid[1] and lost_by_mid[1] < lost_by_mid[2], "it grows as he loses ground (%.2f, %.2f, %.2f)" % [lost_by_mid[0], lost_by_mid[1], lost_by_mid[2]])
+	VfxBeamStruggle.sk_clear(ml)
+	var bcl: Vector4 = ml.get_shader_parameter("buck")
+	_check(bcl.x == 0.0, "a beam that is not in a struggle (cleared) does not buckle")
+	c.mid = 0.8
 	# the loser's aura flares, the winner's does not
 	var fa: float = sk.flare(0)
 	var fd: float = sk.flare(1)

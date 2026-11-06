@@ -4,10 +4,13 @@
 shader_type spatial;
 render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
 
+#include "res://render/shaders/bend.gdshaderinc"
+
 varying vec4 v_custom;
 
 void vertex() {
 	v_custom = INSTANCE_CUSTOM;
+	POSITION = globe_r > 0.0 ? PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(MODEL_MATRIX, VERTEX)) : PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
 }
 
 float h21(vec2 p) {

@@ -51,6 +51,7 @@ const FORE_LOW_S: float = 0.25
 const TOUCH_3D_SCALE: float = 0.6
 const BOOT_FRAME_MS: float = 250.0
 const BOOT_PER_MAX: int = 4
+const LOAD_STEP_MS: float = 14.0   # a planet's load: slices run until this has gone in a frame, so the load uses the frame and doesn't pay a frame's overhead a slice (Performance, page-load-2026-10-31: 573 frames at 7 ms each). Where a slice stops changes no value
 const BOOT_STEP_MS: float = 30.0   # the first match's build: steps run until this has gone in a frame (main.gd _step_build)
 const BOOT_WORDS: String = "Preparing the graphics"
 const BOOT_INK := "#8a93a6"
@@ -162,6 +163,7 @@ const DMG_HOLES: float = 0.18
 ## wall may differ in relative luminance. The frame analyser counts a pixel that changes by a tenth; under that, a
 ## facade's own pattern cannot flip a pixel however the camera shakes, pans or cuts across it.
 const PATTERN_BUDGET: float = 0.085
+const BURNT_BUDGET: float = 0.14
 ## City variety (Orb, homework 4: up close the towers were "a bunch of dark grid lines"; Art's palettes and facade types,
 ## docs/art/city-facades.md and data/art/city-looks.json; building.gdshader 7c), on the downtown and mid-rise towers.
 ## Two switches (2026-10-16). CITY_TINTS: A, the glass takes the sky, and B, Art's tints. CITY_FACADES: C, Art's facade
@@ -315,6 +317,10 @@ const WINDOW_PITCH: float = 62.0
 const WINDOW_LIT_SHARE: float = 0.3
 const WINDOW_LIT: String = "#f3cf86"
 const WINDOW_GLASS: String = "#2c3550"
+const BUILDING_INSIDE_TILE := "#24252c"  # ... on the tile ground: a dark charcoal, so a cut or a blown-out window is not a black block
+const ROOM_LIT := "#6b6157"         # ... and a room's wall seen through it, lit
+const ROOM_SHADE := "#4a4540"       # ... under its ceiling
+const ROOM_BANDS := Vector2(0.14, 0.2)   # ... the share of a floor that is its slab, and its ceiling's shadow
 const BUILDING_INSIDE := "#12131a"       # the inside of a tower seen through its cut floors (a tunnel)
 ## A building's look by World's damage stage (WorldStructures.stage; building.gdshader): 1 its windows are out, 2 it
 ## is cracked and a top corner is sheared off, 3 it is a shell (the bare frame, no lid, a broken top).
@@ -458,6 +464,8 @@ const SHADOW_D: float = 26.0             # ... in depth, in world units at his f
 const SHADOW_ALPHA: float = 0.38         # its strength under a fighter on the ground,
 const SHADOW_FADE_H: float = 900.0       # ... easing to a quarter of that (and half again as wide) this high above it
 const SHADOW_LIFT: float = 2.0           # it lies this far above the ground, clear of it
+const OTHER_VIEW_MARGIN: float = 1.5     # 2v2: the other fight's body is posed while within this many half-widths of a pane's view,
+const OTHER_VIEW_PAD: float = 400.0      # ... and this much further, in world units
 const OUTLINE_PX: float = 1.5            # fighter outline width on screen, in pixels (placeholder until Art sets it)
 ## The sky's clouds, and its reaction to a fighter at tier 3 or more (docs/design/rule-of-cool.md feature 12;
 ## render/shaders/sky.gdshader): the clouds part in a tall opening above him and the sky there takes his colour.
@@ -489,6 +497,8 @@ const OUTLINE := "#0a0d14"               # fighter outline colour
 const SHORE_FLOOD: float = 24.0          # dry land at most this far below the water beside it is drawn under that water (World's shore step is at most 0.25 bh)
 const WATER := Color(30.0 / 255.0, 110.0 / 255.0, 175.0 / 255.0)
 const WATER_SURFACE := Color(0.42, 0.68, 0.9, 0.55)
+## A fighter under the water (AnimBody.set_under) reads clearly at any depth: this share of the sheet's colour on his body, none on his outline.
+const UNDER_BODY: float = 0.22
 ## The water's depth on a gen 2 ring, lake and sea alike, so deep water never reads as shallow (docs/design/rulings-2026-10-30.md rows 6 and 7): hard steps at
 ## these depths, each LAKE_TONE further toward WATER. Under .x the plain sheet, the bed clear, as deep as a fighter
 ## stands on it; to .y half hidden; from .y (wade.below, where he stands on the sheet) the bed is gone. .z: deep water.
@@ -533,6 +543,75 @@ const ROLL_TIMES := Vector3(0.5, 0.8, 0.9)   # in over 0.5 s (30 frames: Researc
 ## DRIFT_DEG_PER_MIN degrees a minute of match time, up to DRIFT_MAX_DEG, from 0 at a match's start and again at World's
 ## turn (under its hard cut). Render only; off unless SLOW_DRIFT_ON or main's --drift (?drift=1 on a page).
 const SLOW_DRIFT_ON: bool = false
+## The tile ground (RenderTileGround, RenderTileField; docs/world/ring-any-angle/rendering.md): off unless main's --tiles.
+const TILE_PLANET: int = 7                 # with no planet in the setup, this one
+const TILE_K: float = 1.6                  # a tile splits within this many of its widths
+const TILE_TALLEST: float = 7200.0         # the tallest ground, for how far past the horizon a tile can show
+const TILE_CHUNK_TALL: float = 1500.0      # ... and the crowd's and cover's chunks
+const TILE_CHUNK_STEP: float = 256.0
+const TILE_WALK_STEP: float = 32.0         # the camera's move that picks the tiles again
+const CROWD_RUN_GROUND_FRAMES: int = 4     # on the tile ground a running figure reads the ground under it this often, by turns
+const TILE_FILL_US: int = 750              # a frame's slice of new tiles: the least it gets
+const TILE_FILL_TARGET_US: int = 16667     # ... and the frame it measures its room against,
+const TILE_FILL_ROOM: float = 0.5          # ... this share of that room going to tiles,
+const TILE_FILL_MAX_US: int = 6000         # ... up to this
+const TILE_URGENT_NEAR: float = 3000.0     # a wanted tile this near the camera's ground: the fill runs at
+const TILE_URGENT_X: int = 6               # ... this many times its slice
+const TILE_BOOT_US: int = 12000            # ... and one of the load's
+const TILE_OFF_COLS: int = 24              # the body offset's columns read a frame
+const TILE_OFF_STALE_FRAMES: int = 8       # ... while the line turns, its table is read again from the feet out at most this often
+const TILE_PROFILE_FRAMES: int = 4         # the sight line is read again at most this often while only the view turns,
+const TILE_PROFILE_MOVE: float = 128.0     # ... at once if the camera has moved this far along the line
+const TILE_LINE_NEAR: float = 96.0         # the strip's own height holds within this of the line, easing out by
+const TILE_LINE_FAR: float = 480.0
+const TILE_PLACE_MARGIN: float = 200.0     # a place's band: this past its buildings along the line
+const TILE_PLACE_EASE: float = 1500.0      # ... easing out over this
+const TILE_PLACE_DEPTH: float = 3400.0     # ... and this deep
+const TILE_LIFT_FROM: float = 75.0         # the lift fades with height over the sim's ground (bend.gdshaderinc globe_place keeps the same numbers)
+const TILE_LIFT_TO: float = 150.0
+const TILE_LIFT_Z0: float = 300.0
+const TILE_LIFT_Z1: float = 600.0
+const TILE_RING_NEAR: float = 40.0         # water's A1: a body this near the surface, moving
+const TILE_RING_MOVE: float = 2.0          # ... this much a tick across it, leaves a ring,
+const TILE_RING_TICKS: int = 30            # ... no faster than this,
+const TILE_RING_S: float = 0.9             # ... running this long,
+const TILE_RING_LIFT: float = 6.0          # ... this high
+const TILE_WAKE_UP: float = 600.0          # a short V wake below this over the water,
+const TILE_WAKE_SPEED: float = 600.0       # ... faster than this
+const TILE_ASK_REACH: float = 4500.0       # ground asked for ahead (RenderTileField.ask_around): the line this far either side,
+const TILE_ASK_DEPTH: float = 1500.0       # ... and this deep either side of it
+const TILE_ASK_FRAMES: int = 120           # ... at a bigger slice for this long after the ask
+const TILE_ASK_US: int = 4500
+const TILE_AHEAD_SPEED: float = 2500.0     # a fighter faster than this along the line has the ground ahead of it asked for,
+const TILE_AHEAD_S: float = 2.0            # ... this far ahead,
+const TILE_AHEAD_TICKS: int = 30           # ... this often
+const TILE_CRATER_CHECKS: int = 48         # shapes a frame looked at after a crater opens
+const TILE_POSE_MARGIN: float = 500.0      # a building this near the sim's pose reach in a swing counts as past it
+## The band between the camera and the fight: a building comes down to its kept base as its front face goes from .x to .y of depth, its base shrinks to nothing by .y and past .y it's gone; past .z a small thing is gone.
+## The first ring's blocks stop at its street's back edge, -2.5 fighter heights (-187), so at rest they all stand.
+const TILE_BAND := Vector3(-150.0, -30.0, 150.0)
+## The bowls the tile ground draws from World's store: how many, nearest the camera (the vertex stage's array), how often the choice is made again, and the seconds a new one takes to open.
+const TILE_BOWLS: int = 16
+const TILE_BOWL_FRAMES: int = 15
+const TILE_BOWL_OPEN: float = 0.25
+## Art's crater (docs/art/crater-look.md). CRATER_RINGS: depth of the lip, the outer wall's end, the inner wall's end; below .w of slope it's floor.
+## CRATER_STEPS: the inner ring's step on the outer's tone, the floor's on the subsoil's shade, a floor stripe's half-step, a stripe's width in nodes.
+const CRATER_RINGS := Vector4(6.0, 40.0, 120.0, 0.12)
+const CRATER_STEPS := Vector4(0.74, 0.68, 0.08, 1.6)
+## Art's scar (docs/art/crater-look.md). SCAR_LOOK: the width's share of the sim's groove, the outline's variation, its rate along the line, the singe fringe past the core as a share of the width. SCAR_FRINGE: the ground under the singe, by multiply. SCAR_SLICE: columns read a frame for the taper table. SCAR_MIN: the scorch that counts as scar.
+const SCAR_LOOK := Vector4(0.27, 0.1, 1.0, 0.33)
+const SCAR_FRINGE: float = 0.72
+const SCAR_SLICE: int = 600
+const SCAR_MIN: float = 0.27
+## Ice's ground on the tile ground: its brightest channel, after the world's light (0 to 1).
+const TILE_ICE_CAP: float = 0.68
+## A building's foot on the tile ground. TILE_FOOT_CAP: the deepest its body goes under its base (World: docs/world/lot-gap.md). TILE_FOOT_READS: footings read a frame; TILE_FOOT_SCAN: buildings looked at a frame; TILE_FOOT_NEAR: after the first pass, only those this near the camera on the planet (the cosine of the angle).
+const TILE_FOOT_CAP: float = 320.0
+const TILE_FOOT_READS: int = 6
+const TILE_FOOT_SCAN: int = 64
+const TILE_FOOT_NEAR: float = 0.985
+const TILE_NEAR_DEFAULT: int = 3           # a tower near the line: 3 the rule and sink (Orb's Q and W), until Orb picks
+
 ## The split's culling (planet_view.gd cull_to): a pane leaves out of its draw the ground's and water's chunks that lie
 ## wholly on the hidden side of its visible half-plane (Camera's SplitFrame.visible_half_plane). Nothing that can show
 ## is lost, so it is on; main's --nocull (?nocull=1) turns it off.
@@ -544,6 +623,7 @@ const SPLIT_CULL_ON: bool = true
 ## at the crowd's largest boost, CROWD_BOOST_MAX, and room to spare).
 const PANE_SWEEP_ON: bool = true
 const SWEEP_SLICE: int = 16
+const SWEEP_TILE_PAD: float = 640.0   # on the tile ground, past a building's own reach: what the finest tile's test allows the ground
 const SWEEP_PAD: float = 200.0
 const DRIFT_DEG_PER_MIN: float = 3.0
 const DRIFT_MAX_DEG: float = 30.0

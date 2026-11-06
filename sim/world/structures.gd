@@ -603,7 +603,7 @@ static func _damageAreaRead(S: SimState, x: float, y: float, r0: float, dmg: flo
 	var zc: float = float(cause.z) if (S.depthOn and cause != null and "z" in cause) else 0.0
 	for bi in near(S, x, r):
 		var b = S.buildings[bi]
-		if not b.alive:
+		if not b.alive or WorldSettle.noTarget(b.landmark):   # RL-242: a landmark barred by c09 (school, hospital, place of worship) takes no area damage: out of every blast and fall, a data fact and nothing to see
 			continue
 		var d: float = absf(SimWrap.sdx(x, b.x)) - b.w / 2.0
 		if d > r:

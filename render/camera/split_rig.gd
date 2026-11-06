@@ -110,6 +110,9 @@ var _lg_sep: float = 0.0                 # the separation when the cue came (the
 var _lg_mid: float = 0.0                 # the pair's midpoint when the cue came (the box's x is counted from it)
 var _lg_box: Array = [0.0, 0.0, 0.0, 0.0]   # the zip's frame: x0, x1 (from _lg_mid), y0, y1: the pair at the cue, widened by what the zip will do
 var _lg_cap: float = -1.0e9              # the hold never runs past this time
+var eased_merge: bool = true              # the panes open and close with a hard edge and a whole line, no blend between two pictures (Orb, 2026-10-18; docs/camera/split-vision.md). Off: the old soft seam
+var split_ignores_power: bool = false      # the view splits at the same distance at any power: power widens the shot but doesn't bring the split sooner (docs/camera/split-vision.md). Off: none of it runs
+var _split_k: float = 1.0                  # with split_ignores_power, how much the split and merge lines are lowered for the shot's power
 var feather_mode: int = 0                # the feathered sweep of a layout change: 0 off (the default), 1 only under reduced flashing or reduced motion, 2 always
 var _gov_arm_until: float = -1.0e9       # the scroll governor is armed (at a charge's cue) until this time ...
 var _gov_arm_speed: float = 0.0          # ... as if the view were already moving this fast (units a second)
@@ -229,6 +232,40 @@ var _rally_last_t: float = -1.0e9
 var _rally_kind: String = ""               # the last link's base kind (chase, overtake, spike, bank, energy, world, grab)
 var _rally_r_hold: float = -1.0            # a grab in flight holds the shot's size (Legal e12: nothing zoomed over a fighter held in the air)
 var _la_v: Vector2 = Vector2.ZERO          # the launch anchor's spring speed in a rally, shares of the screen a second
+var swing_view: bool = false               # the turntable's switch (docs/camera/swing-view.md): places are read through the sim's frame. Off, nothing below reads anything new
+var _pl: PackedFloat64Array = PackedFloat64Array()   # the sim's frame this tick (CamPlaces), empty with the switch off or no frame
+var swing_deg: float = 0.0                 # the world's turn this tick, degrees a second, signed (swing-view.md): measured from the frame itself
+var swing_gesture: float = 0.0             # 0..1, how far the swing's shot is in: the low angle and the lean
+var swing_shown: float = 0.0               # radians between the shown frame and the sim's: an eased correction, or the motion setting's cut or still
+var _sw_prev: PackedFloat64Array = PackedFloat64Array()
+var _sw_ticks: int = 0                     # how long this swing has run
+var _sw_rest: float = 99.0                 # how long the world has been still
+var _sw_sign: float = 0.0
+var swing_angle: float = 0.0               # the swing's low angle now, degrees: its own, so another shot's ending can't take it off at a stroke
+var _sw_pitch: float = 0.0
+var _sw_tall: bool = false
+var _sw_held: bool = false                 # the motion setting is holding the shown heading
+var _sw_due: bool = false                  # the shown heading has parted too far from a standing fighter's ground: the next hit-stop cuts
+var _sw_cut_t: float = -1.0e9              # when the motion setting last cut
+var playback: float = 1.0                  # how fast this is being watched: above 1 every swing is a cut, whatever the setting (Accessibility)
+var world_turning: String = "auto"         # UI's option: auto follows Reduced motion, full turns, cut cuts
+var _sw_cause: String = ""
+var peak_launch: bool = false              # the upward launch's shot, earned by tier (camera.md "The meteor launch"; game-design.md section 12). Off: none of it runs
+var peak_width: float = 0.0                # the shot's width at 16:9 this tick, for the debug feed; 0 when none
+var peak_shots: int = 0
+var _pk_retry: bool = false
+var _pk_phase: String = ""                 # "", "rise", "hang", "fall", "hold", "back"
+var _pk_slot: int = -1                     # the body sent up
+var _pk_top: float = 0.0                   # the most this shot may show, 16:9 width
+var _pk_w: float = 0.0                     # its width now
+var _pk_rate: float = 0.0                  # how fast the width may move now, e-folds a second
+var _pk_place: float = 0.85                # where the launcher sits, a share of the height from the top
+var _pk_mix: float = 0.0                   # 1 the shot has the screen, 0 the fight's framing
+var _pk_t: float = 0.0
+var _pk_back: float = 1.3                  # how long this shot's return takes
+var _pk_x: float = 0.0
+var _pk_ended: String = ""
+var _pk_prev_state: Array = ["", ""]
 var landscape: bool = true                 # the landscape shot on a new biome or a landmark coming into the frame (CamParams.SCAPE_*)
 var scape_shots: int = 0
 var scape_now: String = ""                  # "biome" or "landmark" while one runs, for the debug feed
@@ -289,6 +326,45 @@ var _clash_prev: bool = false
 var _wide_t: float = -1.0                # a world-change or time-cap pause: the shared view pulls out and returns
 var _wide_dur: float = 0.0
 var cut_ins: int = 0                    # camera-only cut-ins started (counted for the tests)
+var flat_mode: String = ""                 # a flat send past FLAT_SPEED: "wide" (ride, release, pull wide), "hold" (the frame stays, he leaves it, then the same pull), "" neither
+var _pk_flat: bool = false
+var _pk_wait: float = 0.0
+var _pk_vx: float = 0.0
+var _pk_vy: float = 0.0
+var _pk_y: float = 0.0
+var flight_reveal: bool = false            # a long flight opens out in its middle: low, wide, low (camera.md section 3). Off: none of it runs
+var reveal_shots: int = 0
+var reveal_w: float = 0.0                  # 0..1, how far it's in
+var _rv_fly: Array = [0.0, 0.0]            # how long each has been flying fast
+var _rv_slot: int = -1
+var _rv_t: float = -1.0
+var _rv_last: float = -1.0e9
+var _rv_ang: float = 0.0
+var follow_through: bool = false           # the frame carries on a little past a fast body's stop, and settles. Off: none of it runs
+var overshoots: int = 0
+var ft_offset: Vector2 = Vector2.ZERO      # the offset now, in widths (x along the line, y up)
+var _ft_dir: Vector2 = Vector2.ZERO
+var _ft_t: float = -1.0
+var _ft_slot: int = -1
+var _ft_v: Array = [Vector2.ZERO, Vector2.ZERO]
+var lead_ahead: bool = true               # flying fast, more of the pane ahead of him, launched or not (docs/camera/split-unequal.md). Off: the pane's small lead, and none for a launch
+var split_share: float = 0.0               # against a CPU, the player's pane takes this share of the split, 0.5 to 1 (Orb's first play: about 0.7; docs/camera/split-unequal.md). 0: off, none of it runs
+var _sh_slot: int = -1                     # the player the share is for, -1 none
+var _sh_w: float = 1.0                     # 1, or easing to 0 in a beam struggle: the beams meet at the middle
+var readable: bool = false                 # wide while a body's really flying, readable within about a second of it stopping (Orb: fighters seem too small; docs/camera/launch-director.md). Off: none of it runs
+var _rd_t: Array = [0.0, 0.0]              # how long each body has been slow
+var _rd_p: Array = [Vector2.ZERO, Vector2.ZERO]
+var close_brawl: bool = false              # a locked brawl frames closer (Orb: close combat framing at base power). Off: none of it runs
+var _cb_w: float = 0.0
+var launch_director: bool = false        # the high-velocity moves (docs/camera/launch-director.md). Off: none of them runs
+var _ozs: PackedFloat64Array = PackedFloat64Array([0.0, 0.0])   # ... and the zoom it drew
+var _sim_f: Array = [null, null]
+var _soft_on: Array = [false, false]
+var _mavs: Array = [Vector2.ZERO, Vector2.ZERO]
+var _ma: Array = [null, null]             # each pane's aim last tick (the soft catch)
+var _mav: Array = [Vector2.ZERO, Vector2.ZERO]
+var _ozv: PackedFloat64Array = PackedFloat64Array([0.0, 0.0])   # each pane's zoom step last tick, log units (the zoom's own ease)
+var cut_why: String = ""                 # the last cut's reason, a key of CamParams.CUT_REASONS
 var _cut_fade: float = 0.0              # seconds left of a safety cut's fade-in
 var _cut_now: bool = false              # a safety cut happened this tick: the frame is a cut
 var lag_whips: int = 0                  # ticks the hard bound had to pull a focus (counted for the tests)
@@ -330,6 +406,37 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	phi = _phi_target(A, B)
 	theta = _theta_of(sigma_shown, phi)
 	swing_t = -1.0
+	_pk_phase = ""
+	_pk_mix = 0.0
+	_pk_flat = false
+	_pk_wait = 0.0
+	_cb_w = 0.0
+	_rd_t = [0.0, 0.0]
+	_ft_t = -1.0
+	_ft_v = [Vector2.ZERO, Vector2.ZERO]
+	ft_offset = Vector2.ZERO
+	_rv_t = -1.0
+	_rv_slot = -1
+	_rv_last = -1.0e9
+	_rv_ang = 0.0
+	_rv_fly = [0.0, 0.0]
+	reveal_w = 0.0
+	_pk_prev_state = ["", ""]
+	peak_width = 0.0
+	_sw_prev = PackedFloat64Array()
+	swing_deg = 0.0
+	swing_gesture = 0.0
+	swing_shown = 0.0
+	_sw_ticks = 0
+	_sw_rest = 99.0
+	_sw_sign = 0.0
+	swing_angle = 0.0
+	_sw_pitch = 0.0
+	_sw_tall = false
+	_sw_held = false
+	_sw_due = false
+	_sw_cut_t = -1.0e9
+	_sw_cause = ""
 	_flip_age = 99.0
 	split_wanted = false
 	sep = 0.0
@@ -508,6 +615,8 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 			cut = true
 		elif String(_ef(ev, "type", "")) == "arena_turn" and turn_cut and not intro_active:
 			cut = true   # the ring's turn: every camera snaps to the wide on its tick (_read_events starts the wide)
+	if swing_view:
+		_pl = CamPlaces.frame_of(S)
 	_read_events(S, events)
 	_rush_commit(S)
 	_update_lunge(S)
@@ -516,9 +625,27 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 	_flash = maxf(0.0, _flash - DT)
 	_update_orientation(S)
 	r_now = _metric(S)
+	if split_share > 0.0:
+		_sh_slot = _human_slot(S)
+		_sh_w = move_toward(_sh_w, 0.0 if S.game.clash != null else 1.0, DT / CamParams.SHARE_EVEN)
+	if peak_launch:
+		_peak_tick(S)
 	_update_solo(S)
 	_update_panel(S)
 	_update_intro(S)
+	if follow_through:
+		_ft_tick(S)
+	if readable:
+		for i0 in range(2):
+			# (by where he's got to as well: a rush moves a body without its velocity)
+			var f0 = S.fighters[i0]
+			var moved: float = Vector2(SimWrap.sdx(float(_rd_p[i0].x), f0.x), f0.y - float(_rd_p[i0].y)).length() / DT
+			_rd_p[i0] = Vector2(f0.x, f0.y)
+			_rd_t[i0] = float(_rd_t[i0]) + DT if maxf(_body_speed(f0), moved) < CamParams.READ_SPEED else 0.0
+	if flight_reveal:
+		_reveal_tick(S)
+	if swing_view:
+		_swing_tick(S)
 	_angle_tick(S)
 	_scape_tick(S)
 	_impact_evt = [false, false]
@@ -527,12 +654,13 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 	if clash_now and not _clash_prev and not reduced_motion:
 		_push = [0.0, 0.0]   # the beam struggle opens with the tier push's shape: in, hold, out
 	_clash_prev = clash_now
-	_pitch_now = pitch_deg + _shot_pitch
+	# (a shot's own low angle and the swing's: the lower, which meets its ease at 0; a high angle takes the swing's on top)
+	_pitch_now = pitch_deg + (_shot_pitch + swing_angle if _shot_pitch > 0.0 else minf(_shot_pitch, minf(swing_angle, _rv_ang)))
 	var d_pitch: float = absf(_pitch_now - _last_pitch)
 	if d_pitch > 0.01:
 		_last_pitch = _pitch_now
 		if d_pitch > CamParams.PITCH_CUT_DEG:
-			_cut_now = true   # a jump of angle is a cut (an authored shot's); an eased tilt (an angle shot, the turn's way back) is a move
+			_mark_cut("angle")   # a jump of angle is a cut (an authored shot's); an eased tilt (an angle shot, the turn's way back) is a move
 	_update_trigger(S)
 	_update_layout()
 	_update_pushes()
@@ -546,7 +674,7 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 	_cut_fade = maxf(0.0, _cut_fade - DT)
 	_prev = _cur
 	if cut:
-		_cut_now = true   # a relocation is a cut for the foreground's state too
+		_mark_cut("relocate")   # a relocation is a cut for the foreground's state too
 	_cur = _make_frame(S)
 	_cur.cut = cut or _cut_now
 	_cut_now = false
@@ -581,6 +709,13 @@ func launch_decision_at(t: float) -> bool:
 func cut(S: SimState) -> void:
 	_snap_cameras(S)
 	_cur.cut = true
+	if swing_view:
+		_pl = CamPlaces.frame_of(S)
+		_sw_prev = _pl
+		swing_shown = 0.0
+		_sw_held = false
+		_sw_due = false
+		_cur.place = _pl.duplicate()
 
 
 # ---------------------------------------------------------------------------------------------------- trigger
@@ -631,17 +766,25 @@ func _metric(S: SimState) -> float:
 
 
 func _r_split() -> float:
-	return maxf(CamParams.R_SPLIT, CamParams.MIN_PX / vh)
+	return maxf(CamParams.R_SPLIT * _split_k, CamParams.MIN_PX / vh)
 
 
 func _r_merge() -> float:
-	return maxf(CamParams.R_MERGE, CamParams.MIN_PX * CamParams.R_MERGE / CamParams.R_SPLIT / vh)
+	return maxf(CamParams.R_MERGE * _split_k, CamParams.MIN_PX * CamParams.R_MERGE / CamParams.R_SPLIT / vh)
 
 
 func _update_trigger(S: SimState) -> void:
+	if reveal_w > 0.0 and not split_wanted:
+		return   # the reveal's low angle needs more height for the pair: that isn't a reason to split
+	if _pk_phase != "" and _pk_phase != "back":
+		split_wanted = false
+		return   # one frame, never a split: the point is the two of them and the planet together
 	var A = S.fighters[0]
 	var B = S.fighters[1]
 	var ad: float = absf(u)
+	if split_ignores_power:
+		# zoom_u's own power term, so it cancels; over time, so a power-up doesn't open or close the split on its tick
+		_split_k = move_toward(_split_k, 1.0 - CamParams.REF_TIER * (maxf(A.tier, B.tier) - 1.0), DT / CamParams.SPLIT_POWER_EASE)
 	var rs: float = _r_split()
 	var rm: float = _r_merge()
 	if S.game.clash != null:
@@ -704,7 +847,7 @@ func _update_trigger(S: SimState) -> void:
 		if merge_lookahead and _sep_rate > 0.0:
 			var ad_p: float = minf(SimConst.HALF, ad + _sep_rate * CamParams.MERGE_LOOKAHEAD)
 			r_merge_now = minf(r_now, CamParams.BODY_H * zoom_u(vw, vh, ad_p, _pair_dy(A, B), maxf(A.tier, B.tier)) / vh)
-		_above_t = _above_t + DT if (r_merge_now > rm and chase_slot < 0) else 0.0   # not while one is being chased
+		_above_t = _above_t + DT if (r_merge_now > rm and (chase_slot < 0 or (readable and float(_rd_t[chase_slot]) >= CamParams.READ_AFTER))) else 0.0   # not while one is being chased
 		if _above_t >= CamParams.MERGE_DWELL and _layout_age >= CamParams.MIN_SPLIT_AGE:
 			if nocut_hold and _no_cut(S):
 				nocut_holds += 1
@@ -785,6 +928,8 @@ func _slam_step(S: SimState) -> bool:
 		return false
 	for k in range(2):
 		var f = S.fighters[k]
+		if readable and f.rush != null and f.rush.tgt != null and f.rush.tgt.state == "launched":
+			continue   # the door lands on someone who stays there; he'd only open again as the blow sends him on
 		if f.rush != null and f.rush.tgt != null and not _rush_pin[k]:   # a long rush has no door: his pane is already at the arrival
 			var rem: float = f.rush.end - S.T
 			if rem <= CamParams.SLAM_WINDOW and rem >= -DT:
@@ -911,7 +1056,7 @@ func _update_orientation(S: SimState) -> void:
 			sigma_shown = cand
 			_flip_age = 0.0
 			theta = _theta_of(sigma_shown, phi)
-			_cut_now = true   # the divider is all but invisible here: the frame is not interpolated into the new sides
+			_mark_cut("side_swap")   # the divider is all but invisible here: the frame is not interpolated into the new sides
 		elif full:
 			sigma_u = cand
 			_flip_age = 0.0
@@ -1080,6 +1225,48 @@ func _gov_armed() -> float:
 
 ## The speed the body has (units a second): a launched fighter has it from the launch event, ten ticks before he moves (the hit-stop), so the
 ## zoom is out by the time he goes; the governor's measured speed (the focus's) comes only as he moves.
+## Whether the readable rule holds for this body now: slow for long enough, and no shot of a flight, nor a wide shot of its own (the arena turn, a pause), on.
+func _rd_on(i: int) -> bool:
+	return readable and float(_rd_t[i]) >= CamParams.READ_AFTER and _pk_phase == "" and reveal_w <= 0.0 and _turn_t < 0.0 and _wide_t < 0.0 and not intro_active and not fold_active
+
+
+## The one view's zoom for a slow pair: a tighter margin, at most the readable size.
+func _read_z(ahead: float, dy: float) -> float:
+	var tight: float = minf(vw / (ahead + CamParams.FIT_MARGIN_X * CamParams.READ_MARGIN / _m()), vh * 0.8 / (dy + CamParams.REF_MARGIN_Y * CamParams.READ_MARGIN))
+	return minf(tight, CamParams.R_READ * _m() * vh / CamParams.BODY_H)
+
+
+## For the check: the size this pane should have reached under the rule, or 0 if the rule doesn't hold for it. A body's own shot (a form, a KO) keeps its size.
+func read_size(S: SimState, i: int) -> float:
+	if not _rd_on(i) or solo_kind != "" or _slam_slot >= 0:
+		return 0.0
+	if sep > 0.5:
+		return CamParams.R_READ * _m() * (1.0 - CamParams.REF_TIER * (float(S.fighters[i].tier) - 1.0))
+	if not _rd_on(1 - i):
+		return 0.0
+	var me = S.fighters[i]
+	var o = S.fighters[1 - i]
+	var d: float = absf(SimWrap.sdx(me.x, o.x))
+	return _read_z(d, _pair_dy(me, o)) * CamParams.BODY_H / vh
+
+
+## The middle of the fight on the line: the roster's fighters about the first, wrapped.
+func _pair_mid(S: SimState) -> float:
+	var x0: float = float(S.fighters.front().x)
+	var off: float = 0.0
+	for f in S.fighters:
+		off += SimWrap.sdx(x0, f.x)
+	return SimWrap.wrap(x0 + off / float(S.fighters.size()))
+
+
+## The faster of the pair's two bodies: the roster's first two.
+func _pair_speed(S: SimState) -> float:
+	var v: float = 0.0
+	for f in S.fighters.slice(0, 2):
+		v = maxf(v, _body_speed(f))
+	return v
+
+
 func _body_speed(f) -> float:
 	var sp: float = Vector2(float(f.vx), float(f.vy)).length()
 	return sp if sp < 60000.0 else 0.0
@@ -1168,6 +1355,8 @@ func _update_lunge(S: SimState) -> void:
 
 ## Whether a rush of `ra` at `rt` is long enough, in screens at the rusher pane's zoom, to cut ahead for.
 func _rush_far(S: SimState, ra: int, rt: int) -> bool:
+	if readable:
+		return false   # no cut ahead: his pane stays his, or he's out of his own picture for the whole rush
 	var rf = S.fighters[ra]
 	var r_off: float = float(rf.rush.off) if rf.rush != null else 0.0
 	var dr: float = absf(SimWrap.sdx(rf.x, S.fighters[rt].x + r_off))   # to the arrival point
@@ -1177,7 +1366,7 @@ func _rush_far(S: SimState, ra: int, rt: int) -> bool:
 func _rush_pin_now(ra: int) -> void:
 	_rush_pin[ra] = true
 	rush_cuts += 1
-	_cut_now = true
+	_mark_cut("rush_pin")
 	if reduced_motion:
 		_cut_fade = CamParams.REDUCED_CUT_FADE
 
@@ -1531,6 +1720,8 @@ func _begin_solo_clear() -> void:
 func _begin_solo(kind: String, slot: int, prio: int, sl: float, S: SimState = null, cut_in: bool = false) -> void:
 	if slot < 0 or slot > 1 or fold_active:
 		return
+	if _pk_phase != "" and _pk_phase != "back" and (kind == "launch" or kind == "hold"):
+		return   # the peak shot lets him go: no whip after him
 	if solo_kind != "" and prio < solo_prio:
 		return
 	# A shot that takes the screen from another fighter's pane while that pane still holds it (a launch chase ending
@@ -1539,7 +1730,7 @@ func _begin_solo(kind: String, slot: int, prio: int, sl: float, S: SimState = nu
 	if not cut_in and S != null and e > 0.02 and e_slot >= 0 and e_slot != slot:
 		cut_in = true
 		if reduced_motion:
-			_cut_fade = CamParams.REDUCED_CUT_FADE   # a cut is a dissolve in reduced motion
+			_cut_fade = CamParams.REDUCED_CUT_FADE   # (the rig's value for SplitFrame.fade: nothing draws it, a cut is plain)
 	solo_kind = kind
 	solo_slot = slot
 	solo_prio = prio
@@ -1569,7 +1760,7 @@ func _begin_solo(kind: String, slot: int, prio: int, sl: float, S: SimState = nu
 		e = 1.0
 		_snap_focus(S, slot)
 		_zo[slot] = _own_zoom_target(S, slot)
-		_cut_now = true
+		_mark_cut("solo_cut_in")
 	elif (kind == "launch" or kind == "hold") and S != null and sep < 0.5:
 		var lf = S.fighters[slot]
 		solo_w = 1.0
@@ -1716,7 +1907,7 @@ func _update_solo(S: SimState) -> void:
 ## fighter for a crippling blow, the winner for the KO (the main view is on the loser then).
 func _panel_request(S: SimState, kind: String, slot: int) -> void:
 	_pc_big_t = time   # a strip-worthy moment (a signature, a clash, a riposte) is a peak, whether or not its strip is drawn
-	if panel_mode == "off" or slot < 0 or slot > 1 or fold_active or solo_kind == "transform" or intro_active:
+	if panel_mode == "off" or _pk_phase != "" or slot < 0 or slot > 1 or fold_active or solo_kind == "transform" or intro_active or _sw_ticks >= CamParams.SWING_SHOT_TICKS:
 		return
 	if flash_reduced and panel_flash_off.has(kind):
 		return
@@ -1847,6 +2038,13 @@ func _panel_frame(S: SimState) -> Dictionary:
 	}
 
 
+## How far along the view a thing at strip x (depth z) is from x_from: the strip's own distance, or through the sim's frame in a swing.
+func _place_dx(S: SimState, x_from: float, thing, x: float, z: float = 0.0) -> float:
+	if _pl.is_empty():
+		return SimWrap.sdx(x_from, x)
+	return CamPlaces.place(S, _pl, x_from, thing, x, z).x
+
+
 ## Which side of the winner holds more wreckage: the craters (area times depth, a signature's double), the buildings
 ## lost (their face area, scaled by how much is gone) and the knockback trenches, inside the part of the screen that side
 ## will have, nearer counting more. Sets wreck_dir (+1 right, -1 left, 0 when little is in view) and wreck_score.
@@ -1856,7 +2054,7 @@ func _wreck_scan(S: SimState, w: int) -> void:
 	var reach: float = CamParams.WRECK_REACH * vw / maxf(zf, 0.01)
 	var side: Array = [0.0, 0.0]   # [left, right]
 	for c in S.craters:
-		var d: float = SimWrap.sdx(wf.x, c.x)
+		var d: float = _place_dx(S, wf.x, c, c.x)
 		if absf(d) > reach + c.r:
 			continue
 		var wt: float = c.r * c.depth * (1.0 + c.special) * (1.0 - 0.5 * minf(1.0, absf(d) / reach))
@@ -1867,13 +2065,13 @@ func _wreck_scan(S: SimState, w: int) -> void:
 		var lost: float = 1.0 if not b.alive else 1.0 - clampf(b.hp / b.maxhp, 0.0, 1.0)
 		if lost < 0.2:
 			continue
-		var d: float = SimWrap.sdx(wf.x, b.x)
+		var d: float = _place_dx(S, wf.x, b, b.x, b.z)
 		if absf(d) > reach:
 			continue
 		side[1 if d >= 0.0 else 0] += lost * b.w * b.h * CamParams.WRECK_BUILDING_W * (1.0 - 0.5 * absf(d) / reach)
 	for sl in S.slides:
 		var mid: float = SimWrap.wrap((sl.x0 + sl.x1) * 0.5)
-		var d: float = SimWrap.sdx(wf.x, mid)
+		var d: float = _place_dx(S, wf.x, sl, mid)
 		if absf(d) > reach:
 			continue
 		side[1 if d >= 0.0 else 0] += sl.depth * absf(sl.x1 - sl.x0) * 0.5
@@ -1938,7 +2136,7 @@ func _start_cut(S: SimState, v: int) -> void:
 	_launch_anchor_y = 0.62
 	_snap_focus(S, v)
 	_zo[v] = _own_zoom_target(S, v)
-	_cut_now = true
+	_mark_cut("hold_to_victim")
 
 
 ## A camera-only cut-in (a building smash, a crippling moment): a hard cut to a fixed or followed view for `dur` seconds,
@@ -1969,7 +2167,7 @@ func _start_overlay(kind: String, slot: int, pt: Vector3, r0: float, r1: float, 
 		if _ov_times.size() > 12:
 			_ov_times.pop_front()
 		cut_ins += 1
-	_cut_now = true
+	_mark_cut("insert")
 
 
 func _overlay_cam(S: SimState) -> Vector3:
@@ -2007,7 +2205,7 @@ func _transform_beats(S: SimState) -> void:
 		if _tf_ver == "full" and ph == "break":
 			_tf_calm = flash_reduced or (flash_ask.is_valid() and not bool(flash_ask.call("transform_cut", 1.0, 0.4)))
 		if _tf_ver == "full" and ph == "break" and not _tf_calm:
-			_cut_now = true
+			_mark_cut("transform")
 			_snap_focus(S, solo_slot)
 			_zo[solo_slot] = _own_zoom_target(S, solo_slot)
 		elif _tf_ver != "full":
@@ -2074,7 +2272,7 @@ func _cut_dip() -> void:
 
 
 func _intro_cut(S: SimState, slot: int) -> void:
-	_cut_now = true
+	_mark_cut("intro")
 	intro_cuts += 1
 	if reduced_motion:
 		_cut_fade = CamParams.REDUCED_CUT_FADE
@@ -2208,7 +2406,7 @@ func _intro_clock(S: SimState, kind: String) -> void:
 	if was_solo or kind == "skip" or _in_phase != "stare":
 		_force_merged(S)
 		_snap_cameras(S)
-		_cut_now = true
+		_mark_cut("intro")
 		_cut_dip()
 	_in_phase = ""
 	if kind == "skip":
@@ -2415,7 +2613,7 @@ func _update_pushes() -> void:
 		_ov_t += DT
 		if _ov_t >= _ov_dur:
 			_ov_kind = ""
-			_cut_now = true
+			_mark_cut("insert")
 			_oz_valid = false   # the cut back is a cut: the drawn zoom does not ease down from the close-up (a fighter 1,700 units away was off the screen for 0.3 s while it did)
 	for i in range(2):
 		if _hit_t[i] >= 0.0:
@@ -2629,6 +2827,18 @@ func _merged_target(S: SimState) -> Vector3:
 		mx = SimWrap.wrap(mx + (clampf(sh_a, lo_a, hi_a) if lo_a <= hi_a else 0.0))
 		z *= 1.0 + CamParams.ANT_PUSH * _ant_w * _ant_pw
 	z *= _pc_zoom   # the pace's size: a little wider when calm and after a peak, a little tighter at one
+	if close_brawl:
+		# The two of them are locked and near: come in, as the brawl's own shot. Eased both ways, and a launch's own framing takes over as he leaves.
+		var locked: bool = A.state == "locked" and B.state == "locked" and absf(SimWrap.sdx(A.x, B.x)) < CamParams.CLOSE_GAP and solo_kind == "" and not fold_active
+		_cb_w = minf(1.0, _cb_w + DT / CamParams.CLOSE_IN) if locked else maxf(0.0, _cb_w - DT / CamParams.CLOSE_OUT)
+		if _cb_w > 0.0:
+			var r_here: float = z * CamParams.BODY_H / vh
+			var tier_k: float = 1.0 - CamParams.REF_TIER * (maxf(float(A.tier), float(B.tier)) - 1.0)
+			var r_to: float = CamParams.CLOSE_R * m_close() * tier_k
+			if r_to > r_here:
+				z *= exp(log(r_to / r_here) * smoothstep(0.0, 1.0, _cb_w))
+	if _rd_on(0) and _rd_on(1):
+		z = maxf(z, _read_z(ahead, dy_pair))
 	if _scape_t >= 0.0 and _scape_w > 0.0:
 		# the landscape shot leans toward the new ground or the landmark, both fighters kept inside 0.42 of the width
 		var sh_l: float = CamParams.SCAPE_LEAN * vw / maxf(z, 0.001) * smoothstep(0.0, 1.0, _scape_w) * signf(SimWrap.sdx(mx, _scape_x))
@@ -2638,6 +2848,15 @@ func _merged_target(S: SimState) -> Vector3:
 		var lo_l: float = maxf(da_l, db_l) - hf_l
 		var hi_l: float = minf(da_l, db_l) + hf_l
 		mx = SimWrap.wrap(mx + (clampf(sh_l, lo_l, hi_l) if lo_l <= hi_l else 0.0))
+	if swing_gesture > 0.0:
+		# the swing leans toward what is arriving, both fighters kept inside 0.42 of the width
+		var sh_w: float = CamParams.SWING_LEAN * vw / maxf(z, 0.001) * smoothstep(0.0, 1.0, swing_gesture) * _sw_sign
+		var hf_w: float = 0.42 * vw / maxf(z, 0.001)
+		var da_w: float = SimWrap.sdx(mx, A.x)
+		var db_w: float = SimWrap.sdx(mx, B.x)
+		var lo_w: float = maxf(da_w, db_w) - hf_w
+		var hi_w: float = minf(da_w, db_w) + hf_w
+		mx = SimWrap.wrap(mx + (clampf(sh_w, lo_w, hi_w) if lo_w <= hi_w else 0.0))
 	if _mlead != 0.0 and not fold_active and _lg_slot < 0 and not _lg_rel and _st_w <= 0.0:
 		# the lead, kept so that both fighters stay inside the middle MERGED_LEAD_KEEP of the width at this zoom
 		var half_k: float = 0.5 * CamParams.MERGED_LEAD_KEEP * vw / maxf(z, 0.001)
@@ -2902,10 +3121,13 @@ func _own_zoom_target(S: SimState, i: int) -> float:
 				var wp: float = 1.0 if reduced_motion else clampf(solo_t / CamParams.WRECK_T, 0.0, 1.0)
 				r = lerpf(CamParams.R_WRECK_0, CamParams.R_WRECK, smoothstep(0.0, 1.0, wp)) * m
 				alt_f = 1.0
+	if _rd_on(i) and not (solo_kind != "" and solo_slot == i):
+		r = maxf(r, CamParams.R_READ * m)
+		alt_f = 1.0
 	var z: float = r * vh / CamParams.BODY_H * tier_f * alt_f
 	z *= _push_mult(i) * _hit_mult(i) * _arr_mult(i) * _turn_mult()
 	if f.state != "launched" and chase_slot != i and not (solo_kind != "" and solo_slot == i):
-		var zfl: float = CamParams.R_FLOOR * vh / CamParams.BODY_H
+		var zfl: float = (CamParams.READ_FAST if readable else CamParams.R_FLOOR) * vh / CamParams.BODY_H
 		if many_framing and S.fighters.size() > 2:
 			zfl = maxf(zfl, CamParams.MANY_PIX_FLOOR / CamParams.BODY_H)   # a pane's pixel floor in a many-body match (a share of a phone's height is 12 px)
 		var gv: float = _scroll_gov(maxf(maxf(float(_vsm[i]), _gov_armed()), _body_speed(f)), z * pz)
@@ -2916,7 +3138,7 @@ func _own_zoom_target(S: SimState, i: int) -> float:
 		# 0.06 of the width a tick, and a cliff face against sunlit sand swept 23,000 pixels twice in 14 ticks at ai seed
 		# 4 (Tools: 3 flashes, the pair 6 and 5% over the area threshold). The same governor as any pursuit (the scenery no
 		# faster than SCROLL_MAX of the width a tick), with a floor of his size: LAUNCH_FLOOR of the height.
-		var zl: float = CamParams.LAUNCH_FLOOR * vh / CamParams.BODY_H
+		var zl: float = (CamParams.READ_FAST if readable else CamParams.LAUNCH_FLOOR) * vh / CamParams.BODY_H
 		var gvl: float = _scroll_gov(maxf(float(_vsm[i]), _body_speed(f)), z * pz)
 		_gov_bind[i] = gvl < 0.999
 		z = maxf(z * gvl, minf(z, zl))
@@ -2944,7 +3166,22 @@ func _own_zoom_target(S: SimState, i: int) -> float:
 func _anchor_rest(i: int) -> Vector2:
 	var n: Vector2 = Vector2(cos(theta), sin(theta))
 	var s: float = -1.0 if i == 0 else 1.0
-	return Vector2(vw * 0.5, vh * 0.5 + CamParams.ANCHOR_DROP * vh) + s * Vector2(n.x * CamParams.ANCHOR_LX * vw, n.y * CamParams.ANCHOR_LY * vh)
+	return Vector2(vw * 0.5, vh * 0.5 + CamParams.ANCHOR_DROP * vh) + s * Vector2(n.x * CamParams.ANCHOR_LX * vw, n.y * CamParams.ANCHOR_LY * vh) + n * _share_delta(n) * 0.5
+
+
+## This pane's width against an even split's: more than 1 for the large pane, less for the small one, 1 with no share.
+func _pane_k(i: int) -> float:
+	if split_share <= 0.0 or _sh_slot < 0:
+		return 1.0
+	var mine: float = split_share if i == _sh_slot else 1.0 - split_share
+	return lerpf(1.0, mine / 0.5, _smootherstep(sep) * smoothstep(0.0, 1.0, _sh_w))
+
+
+## How far the share moves the divider from the middle along n: it comes in as the panes open and goes as they close, so it has no clock of its own.
+func _share_delta(n: Vector2) -> float:
+	if split_share <= 0.0 or _sh_slot < 0:
+		return 0.0
+	return _half_extent_along_n(n) * (2.0 * split_share - 1.0) * (1.0 if _sh_slot == 0 else -1.0) * _smootherstep(sep) * smoothstep(0.0, 1.0, _sh_w)
 
 
 func _half_extent_along_n(n: Vector2) -> float:
@@ -3234,11 +3471,21 @@ func _face_ahead(S: SimState, cam_x: float, lens: float) -> float:
 		if not b.alive or b.h < 150.0:
 			continue
 		var face: float = b.z + b.d * 0.5   # the face toward the camera
+		var dx_b: float = 0.0
+		var half_b: float = 0.5 * b.w
+		if _pl.is_empty():
+			dx_b = SimWrap.sdx(cam_x, b.x)
+		else:
+			# in a swing a building stands at any angle: its round bound, which is the same as its box when it hasn't turned far
+			var vb: Vector2 = CamPlaces.place(S, _pl, cam_x, b, b.x, b.z)
+			half_b = 0.5 * sqrt(b.w * b.w + b.d * b.d)
+			face = vb.y + half_b
+			dx_b = vb.x
 		var d: float = lens - face
 		if d <= 1.0 or d >= CamParams.DOLLY_NEAR_LOOK or d >= best:
 			continue
 		var half_w: float = half_h * aspect * d
-		if absf(SimWrap.sdx(cam_x, b.x)) < 0.5 * b.w + CamParams.DOLLY_NEAR_CENTRE * half_w:
+		if absf(dx_b) < half_b + CamParams.DOLLY_NEAR_CENTRE * half_w:
 			best = d
 	return best
 
@@ -3508,7 +3755,7 @@ func _update_cameras(S: SimState) -> void:
 			var ry: float = (fy_ref - _fy[i]) * zc
 			var e_w: float = sqrt(rx * rx + ry * ry) / vw
 			var lag_soft: float = CamParams.LAG_SOFT
-			var lag_hard: float = CamParams.LAG_HARD
+			var lag_hard: float = CamParams.LAG_HARD * _pane_k(i)
 			var cut_w: float = CamParams.LAG_CUT
 			if staged:
 				lag_soft = CamParams.STAGE_LAG_HARD
@@ -3721,6 +3968,7 @@ func _update_cameras(S: SimState) -> void:
 
 
 func _outputs(S: SimState) -> void:
+	_sim_f = S.fighters.slice(0, 2)
 	var w: float = 1.0 - _smootherstep(sep)
 	for i in range(2):
 		_anchors[i] = _anchor(S, i) + Vector2(float(_plead[i]), 0.0)
@@ -3752,8 +4000,11 @@ func _outputs(S: SimState) -> void:
 			var cap: float = (CamParams.SLAM_ZOOM_RATE if slam_now else CamParams.ZOOM_RATE_TRANS) * DT
 			var cap_up: float = cap
 			if merge_zoom_limit and not reduced_motion and _merging_now():
-				cap_up = minf(cap, CamParams.MZ_RATE)
-			var z_held: float = exp(log(_oz[i]) + clampf(log(o.z) - log(_oz[i]), -cap, cap_up))
+				cap_up = minf(cap, CamParams.READ_MZ if readable else CamParams.MZ_RATE)
+			if _sw_ticks >= CamParams.SWING_SHOT_TICKS and S.fighters[i].state == "launched":
+				cap_up = 0.0   # no zoom in during a swing on a body in the air (camera.md section 2; Legal e12)
+			var cap_dn: float = 0.0 if (_sw_tall and _sw_ticks > 0 and solo_kind == "") else cap   # tall land near: no pull out either
+			var z_held: float = exp(log(_oz[i]) + clampf(log(o.z) - log(_oz[i]), -cap_dn, cap_up))
 			# The approach cap's other half: the lens (the focus depth plus the camera's distance to it) is the same whatever moves
 			# it, so a zoom that comes in while the focus goes deeper is held when the lens would close on the face ahead faster
 			# than DOLLY_NEAR_RATE of its distance a second (by at most 2% a tick: never a pop).
@@ -3791,6 +4042,14 @@ func _outputs(S: SimState) -> void:
 		_oz[0] = oc.z
 		_oz[1] = oc.z
 	_oz_valid = true
+	if _pk_mix > 0.0:
+		_peak_outputs(S)
+	if reveal_w > 0.0:
+		_reveal_outputs(S)
+	if launch_director:
+		_zoom_ease()
+	if ft_offset != Vector2.ZERO:
+		_ft_outputs()
 	_mass_stage(_cut_now)   # before the travel budget: the budget keeps the last word on how far a picture moves in a tick
 	_travel_budget(S)
 
@@ -3896,7 +4155,7 @@ func _travel_budget(S: SimState) -> void:
 				var cool: float = CamParams.TRAVEL_COOL_MORPH if morphing else CamParams.TRAVEL_COOL
 				var due: bool = leaving and time - float(_tb_cut_t[i]) >= cool and (morphing or float(_tb_lost[i]) >= CamParams.TRAVEL_WAIT)
 				if due:
-					_cut_now = true
+					_mark_cut("travel_safety")
 					_cut_dip()
 					_tb_cut_t[i] = time
 					travel_cuts += 1
@@ -4193,12 +4452,18 @@ func _make_clear(S: SimState, f: SplitFrame, i: int, two_up: bool) -> Dictionary
 
 func _make_frame(S: SimState) -> SplitFrame:
 	var f := SplitFrame.new()
+	f.peak_launch = _pk_phase != "" and _pk_phase != "back"
+	if not _pl.is_empty():
+		f.place = CamPlaces.turned(_pl, swing_shown)
 	f.vw = vw
 	f.vh = vh
 	f.mode = _mode_name()
 	f.sep = sep
 	f.e = e
 	f.e_slot = e_slot
+	var share_on: bool = split_share > 0.0 and _sh_slot >= 0 and _sh_w >= 0.5
+	f.share = split_share if share_on else 0.0
+	f.share_slot = _sh_slot if share_on else -1
 	f.sliver = sliver if e_slot >= 0 else 0.0
 	f.many_off = _many_marks.duplicate(true)
 	f.theta = theta
@@ -4210,6 +4475,10 @@ func _make_frame(S: SimState) -> SplitFrame:
 		# lands with them instead of crossing the screen at one speed while they ease. The slam's door keeps its own shape (e = p^3).
 		var ev: float = e if _slam_slot >= 0 else smoothstep(0.0, 1.0, e)
 		delta = ev * hn * (1.0 - 2.0 * sliver) * (1.0 if e_slot == 0 else -1.0)
+		if split_share > 0.0:
+			delta += _share_delta(f.n) * (1.0 - ev)   # a shot's or the slam's divider takes over from the share
+	elif split_share > 0.0:
+		delta = _share_delta(f.n)
 	f.c = Vector2(vw * 0.5, vh * 0.5) + f.n * delta
 	var ss: float = _smootherstep(sep)
 	f.gap = maxf(CamParams.GAP_MIN_PX, CamParams.GAP_FRAC * vw)
@@ -4219,6 +4488,9 @@ func _make_frame(S: SimState) -> SplitFrame:
 	if swing_t < 0.0 and sep > 0.001 and sep < 0.999 and (feather_mode == 2 or (feather_mode == 1 and (reduced_motion or flash_reduced))):
 		f.feather = maxf(f.feather, CamParams.SWEEP_FEATHER_FRAC * vw * sin(PI * sep))
 	f.line_alpha = smoothstep(0.0, 0.45, sep)
+	if eased_merge:
+		f.feather = 0.0
+		f.line_alpha = 1.0 if sep > 0.001 else 0.0   # whole until the two pictures are one, then gone: nothing fades
 	for i in range(2):
 		f.cam_x[i] = _outs[i].x
 		f.cam_y[i] = _outs[i].y
@@ -4313,9 +4585,13 @@ func _update_pane_lead(S: SimState) -> void:
 	for i in range(2):
 		var tgt: float = 0.0
 		var f = S.fighters[i]
-		if merged_lead and not reduced_motion and sep >= 0.999 and e < 0.001 and solo_kind == "" and chase_slot != i and f.state != "launched" and _lg_slot < 0:
+		if merged_lead and not reduced_motion and sep >= 0.999 and e < 0.001 and solo_kind == "" and ((chase_slot != i and f.state != "launched") or (lead_ahead and (split_share <= 0.0 or i == _sh_slot))) and _lg_slot < 0:
 			var w: float = smoothstep(CamParams.PANE_LEAD_V0, CamParams.PANE_LEAD_V1, absf(f.vx))
-			var dx: float = -clampf(f.vx * CamParams.PANE_LEAD_T * maxf(float(_zo[i]), 0.001), -CamParams.PANE_LEAD_X * vw, CamParams.PANE_LEAD_X * vw) * w
+			var lead_x: float = CamParams.PANE_LEAD_X
+			if lead_ahead and (split_share <= 0.0 or i == _sh_slot):
+				lead_x = lerpf(lead_x, CamParams.LEAD_AHEAD_X, smoothstep(CamParams.PANE_LEAD_V1, CamParams.LEAD_AHEAD_V, absf(f.vx)))
+			lead_x *= _pane_k(i)
+			var dx: float = -clampf(f.vx * CamParams.PANE_LEAD_T * maxf(float(_zo[i]), 0.001), -lead_x * vw, lead_x * vw) * w
 			# kept off the divider: his distance from it along n stays at least PANE_LEAD_KEEP of the rest anchor's
 			var s: float = -1.0 if i == 0 else 1.0
 			var rest_d: float = (_anchor_rest(i) - Vector2(vw * 0.5, vh * 0.5)).dot(n) * s
@@ -4520,11 +4796,10 @@ func _angle_tick(S: SimState) -> void:
 			_shot_pitch = 0.0
 			_ang_pa = 0.0
 		return
-	if want == "" or not angles or reduced_motion or not plain or time - _ang_last_t < CamParams.ANGLE_GAP or _shot_pitch != 0.0:
+	if want == "" or not angles or _pk_phase != "" or reduced_motion or not plain or time - _ang_last_t < CamParams.ANGLE_GAP or _shot_pitch != 0.0 or _sw_ticks > 0:
 		return
-	var A = S.fighters[0]
-	var mid: float = SimWrap.wrap(A.x + SimWrap.sdx(A.x, S.fighters[1].x) * 0.5)
-	var fam: String = String(CamParams.ANGLE_BIOME.get(WorldBiomes.biomeAt(mid), ""))
+	var mid: float = _pair_mid(S)
+	var fam: String = String(CamParams.ANGLE_BIOME.get(_biome_at(S, mid), ""))
 	if fam == "":
 		fam = "high" if _ang_last_family == "low" else "low"
 	if want == "tier_up":
@@ -4558,11 +4833,13 @@ func _ground_low(deg: float, z: float) -> float:
 ## scorch or cracks within ANGLE_SHOW_R of x.
 func _ground_shows(S: SimState, x: float) -> bool:
 	for c in S.craters:
-		if absf(SimWrap.sdx(x, float(c.x))) < CamParams.ANGLE_SHOW_R:
+		if absf(_place_dx(S, x, c, float(c.x))) < CamParams.ANGLE_SHOW_R:
 			return true
 	for b in S.buildings:
-		if absf(SimWrap.sdx(x, float(b.x))) < CamParams.ANGLE_SHOW_R + float(b.w) * 0.5:
+		if absf(_place_dx(S, x, b, float(b.x), float(b.z))) < CamParams.ANGLE_SHOW_R + float(b.w) * 0.5:
 			return true
+	if not _pl.is_empty():
+		return false   # scorch and cracks are by the strip's columns, which say nothing about this ground once the line has turned
 	var n: int = 0
 	var c0: int = int(floor((x - CamParams.ANGLE_SHOW_R) / SimConst.COL))
 	var cols: int = int(2.0 * CamParams.ANGLE_SHOW_R / SimConst.COL)
@@ -4617,6 +4894,12 @@ func _turn_pitch() -> float:
 	return minf(0.0, maxf(CamParams.TURN_PITCH, total_min - pitch_deg))
 
 
+## Every cut says why (CamParams.CUT_REASONS; docs/camera/launch-director.md): the reason's written down, and launch_shots_check fails one that has none.
+func _mark_cut(why: String) -> void:
+	_cut_now = true
+	cut_why = why
+
+
 ## A catch-up the follow cannot make (a fighter a screen and more from his anchor: the lag bound, a rush ended early, a launch
 ## hold let go). Up to WHIP_MAX widths it is a crisp whip of WHIP_TICKS (Orb, 2026-10-22: no instant move without a reason; "the
 ## framing target jumped" is not one, Research). Farther, a move would only smear: a cut, the space has changed.
@@ -4629,7 +4912,7 @@ func _catch_up(i: int, f, dist_w: float) -> void:
 		return
 	_fx[i] = f.x
 	_fy[i] = f.y + CamParams.CHEST
-	_cut_now = true
+	_mark_cut("far_catch_up")
 	_cut_dip()
 
 
@@ -4643,9 +4926,8 @@ func _pitch_in_move() -> bool:
 ## standing landmark coming into the frame, is shown within SCAPE_WINDOW at a calm moment in the plain one view: the view eases out
 ## (SCAPE_WIDE, never a fighter under SCAPE_MIN_R), a slight low angle and a lean toward the new ground, held, and eased back. No cut.
 func _scape_tick(S: SimState) -> void:
-	var A = S.fighters[0]
-	var mid: float = SimWrap.wrap(A.x + SimWrap.sdx(A.x, S.fighters[1].x) * 0.5)
-	var bio: String = WorldBiomes.biomeAt(mid)
+	var mid: float = _pair_mid(S)
+	var bio: String = _biome_at(S, mid)
 	var half_w: float = 0.5 * vw / maxf(_mz, 0.001)
 	var jumped: bool = absf(SimWrap.sdx(_scape_mid, mid)) > half_w
 	_scape_mid = mid
@@ -4661,19 +4943,31 @@ func _scape_tick(S: SimState) -> void:
 			_scape_new = ""
 			_scape_due = time + CamParams.SCAPE_WINDOW
 			_scape_kind = "biome"
-			_scape_x = SimWrap.wrap(mid + (1500.0 if WorldBiomes.biomeAt(mid + 1500.0) == bio else -1500.0))   # the side the new ground goes on
+			_scape_x = SimWrap.wrap(mid + (1500.0 if _biome_at(S, mid + 1500.0) == bio else -1500.0))   # the side the new ground goes on
 	else:
 		_scape_new = ""
 	for b in (_landmarks(S) if lean_step else S.buildings):
-		if b.landmark != 0 and b.alive and not _scape_seen.has(b.idx) and absf(SimWrap.sdx(mid, b.x)) < half_w + 0.5 * b.w:
+		if b.landmark == 0 or not b.alive or _scape_seen.has(b.idx):
+			continue
+		var in_frame: bool = false
+		var lm_x: float = b.x
+		if _pl.is_empty():
+			in_frame = absf(SimWrap.sdx(mid, b.x)) < half_w + 0.5 * b.w
+		else:
+			# through the frame: nothing in front of the plane is drawn, and the frame's width grows with depth behind it
+			var vb: Vector2 = CamPlaces.place(S, _pl, mid, b, b.x, b.z)
+			var dist: float = CamParams.K_FACTOR * vh / maxf(_mz, 0.001)
+			in_frame = vb.y < 0.0 and absf(vb.x) < half_w * (dist - vb.y) / maxf(dist, 1.0) + 0.5 * b.w
+			lm_x = SimWrap.wrap(mid + vb.x)
+		if in_frame:
 			_scape_seen[b.idx] = true
 			_scape_due = time + CamParams.SCAPE_WINDOW
 			_scape_kind = "landmark"
-			_scape_x = b.x
+			_scape_x = lm_x
 	if jumped:
 		_scape_due = -1.0
 	var plain: bool = landscape and not reduced_motion and sep <= 0.001 and not split_wanted and solo_kind == "" and _ov_kind == "" and _pn.is_empty() and not intro_active and not fold_active and _lg_slot < 0 and S.game.clash == null and _turn_t < 0.0
-	var calm: bool = (pace == "relax" or pace == "fade") and _ant_w < 0.05 and not _gov_bind_m and maxf(_body_speed(A), _body_speed(S.fighters[1])) < CamParams.SCAPE_SPEED_MAX
+	var calm: bool = (pace == "relax" or pace == "fade") and _ant_w < 0.05 and not _gov_bind_m and _pair_speed(S) < CamParams.SCAPE_SPEED_MAX
 	if _scape_t >= 0.0:
 		if _scape_own and _shot_pitch != _scape_pa:
 			_scape_own = false   # another shot took the angle: it is its to set; the view still eases back
@@ -4699,7 +4993,7 @@ func _scape_tick(S: SimState) -> void:
 	if time > _scape_due:
 		_scape_due = -1.0   # the moment passed
 		return
-	if not plain or not calm or time - _pc_big_t < CamParams.SCAPE_PEAK_GAP or time - _scape_busy_t < CamParams.SCAPE_PEAK_GAP or time - _scape_last_t < CamParams.SCAPE_GAP or _shot_pitch != 0.0 or _ang_t >= 0.0:
+	if _sw_ticks > 0 or not plain or not calm or time - _pc_big_t < CamParams.SCAPE_PEAK_GAP or time - _scape_busy_t < CamParams.SCAPE_PEAK_GAP or time - _scape_last_t < CamParams.SCAPE_GAP or _shot_pitch != 0.0 or _ang_t >= 0.0:
 		return
 	_scape_t = 0.0
 	_scape_w = 0.0
@@ -4713,6 +5007,478 @@ func _scape_tick(S: SimState) -> void:
 	_scape_pa = 0.0
 	scape_shots += 1
 	scape_now = _scape_kind
+
+
+## The peak launch's shot (docs/camera/swing-view.md; camera.md "The meteor launch"): a body sent steeply up, between fighters who have both
+## earned it, is let go. No whip, no cut, one frame: the width follows his height, up to the ladder's row for the lower of the two tiers,
+## and the launcher goes low in the frame, then cranes up as he slows, so the planet comes up and fills it. The sim's flight decides the
+## height, so a meteor and a lesser launch are the same shot at another size. It reads only the fighters. Four endings, always eased.
+func _peak_tick(S: SimState) -> void:
+	peak_width = 0.0
+	if _pk_phase == "":
+		_pk_mix = maxf(0.0, _pk_mix - DT / CamParams.PEAK_BACK_MIN)
+		for i in range(2):
+			var f = S.fighters[i]
+			if f.state == "launched" and _pk_prev_state[i] != "launched":
+				_pk_retry = false
+				_peak_begin(S, i)
+				if _pk_retry:
+					return   # still in the hit-stop: he leaves when it ends, so this launch is still new next tick
+				break
+		for i in range(2):
+			_pk_prev_state[i] = S.fighters[i].state
+		return
+	for i in range(2):
+		_pk_prev_state[i] = S.fighters[i].state
+	_pk_t += DT
+	var f = S.fighters[_pk_slot]
+	var L = S.fighters[1 - _pk_slot]
+	var gh: float = float(L.y)
+	var rise: float = maxf(0.0, float(f.y) - gh)
+	var ad: float = absf(SimWrap.sdx(L.x, f.x))
+	var ring_k: float = SimConst.W / CamParams.PEAK_RING
+	if _pk_phase != "back":
+		if S.game.ko != null or solo_kind == "ko" or solo_kind == "finisher" or solo_kind == "transform":
+			_peak_end("ko", CamParams.PEAK_BACK_KO)
+		elif f.state != "launched":
+			var hgt: float = float(f.y) - WorldTerrain.groundY(S, f.x)
+			if _pk_phase == "hold":
+				pass
+			elif f.state == "down" or hgt < CamParams.PEAK_ON_GROUND:   # (a landing's bounce or a roof reads high: "down" is the sim's word for it)
+				_pk_phase = "hold"
+				_pk_t = 0.0
+			else:
+				_peak_end("brake", CamParams.PEAK_BACK_BRAKE)
+		elif ad < CamParams.PEAK_CATCH and rise < CamParams.PEAK_CATCH and _pk_t > 0.5:
+			_peak_end("catch", CamParams.PEAK_BACK_CATCH)
+	if _pk_flat:
+		pass   # a flat send has no crest: it's the ride until he stops
+	elif _pk_phase == "rise" and float(f.vy) < CamParams.PEAK_HANG_VY:
+		_pk_phase = "hang"
+	elif _pk_phase == "hang" and float(f.vy) < -CamParams.PEAK_HANG_VY:
+		_pk_phase = "fall"
+	if _swing_cuts():
+		_peak_reduced(S)
+		return
+	# the width: the height he has reached, for the launcher's place in the frame, plus the margin the launch's framing has
+	var want_w: float
+	var place_to: float = CamParams.PEAK_PLACE_CLIMB
+	if _pk_phase == "rise" or _pk_phase == "hang":
+		var to_top: float = CamParams.PEAK_GRAVITY_TIME * float(f.vy) if float(f.vy) > 0.0 else 0.0
+		place_to = lerpf(CamParams.PEAK_PLACE_HANG, CamParams.PEAK_PLACE_CLIMB, clampf(to_top, 0.0, 1.0))
+	elif _pk_phase == "fall":
+		place_to = CamParams.PEAK_PLACE_HANG
+	elif _pk_phase == "hold" or _pk_phase == "back":
+		place_to = CamParams.PEAK_PLACE_LAND
+	_pk_place += clampf(place_to - _pk_place, -CamParams.PEAK_PLACE_RATE * DT, CamParams.PEAK_PLACE_RATE * DT)
+	want_w = maxf(1.778 * rise / maxf(_pk_place - CamParams.PEAK_TOP, 0.1), CamParams.PEAK_ASPECT_W * rise + CamParams.PEAK_MARGIN_W)
+	if _pk_phase == "rise" or _pk_phase == "hang":
+		want_w = maxf(want_w, CamParams.PEAK_ASPECT_W * ad)   # coming down the frame follows him, not the pair, so the launcher may leave it
+	if _pk_phase == "hold" or _pk_phase == "fall":
+		want_w = maxf(want_w, CamParams.PEAK_LAND_W * ring_k)
+	if _pk_flat:
+		want_w = maxf(CamParams.PEAK_ASPECT_W * ad + CamParams.PEAK_MARGIN_W, 1.778 * rise / maxf(_pk_place - CamParams.PEAK_TOP, 0.1))
+		_pk_place += clampf(CamParams.PEAK_PLACE_LAND - _pk_place, -CamParams.PEAK_PLACE_RATE * DT, CamParams.PEAK_PLACE_RATE * DT)
+		if _pk_phase == "hold" or _pk_phase == "back":
+			want_w = minf(want_w, CamParams.PEAK_LAND_W * ring_k)
+	if _pk_wait > 0.0:
+		_pk_wait -= DT
+		want_w = _pk_w   # the frame stays and he leaves it
+		_pk_rate = 0.0
+	want_w = minf(want_w, _pk_top)
+	var rate_top: float = float(CamPlaces.data().get("peakRate", 3.0))
+	_pk_rate = minf(rate_top, _pk_rate + rate_top / CamParams.PEAK_START_TICKS)
+	var dl: float = log(maxf(want_w, 1.0) / maxf(_pk_w, 1.0))
+	var step_w: float = clampf(dl * CamParams.PEAK_EASE * DT, -_pk_rate * DT, _pk_rate * DT)
+	_pk_w *= exp(step_w)
+	peak_width = _pk_w
+	if _pk_phase == "back":
+		_pk_mix = maxf(0.0, _pk_mix - DT / _pk_back)
+		if _pk_mix <= 0.0:
+			_pk_phase = ""
+			peak_width = 0.0
+	else:
+		_pk_mix = minf(1.0, _pk_mix + DT / CamParams.PEAK_IN)
+	if _pk_phase == "hold" and _pk_t >= CamParams.PEAK_HOLD:
+		_peak_end("land", CamParams.PEAK_BACK_LAND)
+
+
+func _peak_begin(S: SimState, i: int) -> void:
+	var f = S.fighters[i]
+	var L = S.fighters[1 - i]
+	var vx: float = float(f.vx) / maxf(float(f.launchT), 0.001)
+	var flat: bool = launch_director and flat_mode != "" and float(f.vy) < CamParams.PEAK_STEEP * absf(vx) and sqrt(vx * vx + float(f.vy) * float(f.vy)) >= CamParams.FLAT_SPEED
+	if S.dirS.stop > 0.0 or intro_active or fold_active or (float(f.vy) <= 0.0 and not flat):
+		_pk_retry = true   # still in the hit-stop: he leaves when it ends
+		return
+	if float(f.vy) < CamParams.PEAK_STEEP * absf(vx) and not flat:
+		return
+	var apex: float = maxf(0.0, float(f.y) - float(L.y)) + float(f.vy) * float(f.vy) / (2.0 * CamParams.PEAK_GRAVITY)
+	var ring_k: float = SimConst.W / CamParams.PEAK_RING
+	var tier: int = clampi(int(minf(float(f.tier), float(L.tier))), 1, CamParams.PEAK_LADDER.size())
+	var top: float = float(CamParams.PEAK_LADDER[tier - 1]) * ring_k
+	var at_now: float = vw / maxf(_mz, 0.001) * 1.778 / (vw / vh)   # the view's width now, at 16:9
+	var want: float = maxf(1.778 * apex / (CamParams.PEAK_PLACE_HANG - CamParams.PEAK_TOP), CamParams.PEAK_ASPECT_W * apex + CamParams.PEAK_MARGIN_W)
+	if not flat and (tier <= 1 or minf(want, top) <= at_now * CamParams.PEAK_WORTH):
+		return   # this launch fits the fight's own framing: an ordinary launch
+	_pk_flat = flat
+	_pk_wait = CamParams.FLAT_HOLD if flat and flat_mode == "hold" else 0.0
+	_pk_vx = 0.0
+	_pk_vy = 0.0
+	_pk_y = float(L.y) + CamParams.CHEST
+	_pk_slot = i
+	_pk_top = top
+	_pk_w = at_now
+	_pk_rate = 0.0
+	_pk_t = 0.0
+	_pk_place = CamParams.PLANE_Y
+	_pk_mix = 0.0
+	_pk_ended = ""
+	_pk_phase = "rise"
+	_pk_x = _mx
+	peak_shots += 1
+	if solo_kind == "launch" or solo_kind == "hold":
+		_end_solo(S)
+	if split_wanted:
+		_set_split(false, "peak")
+	if _swing_cuts():
+		_pk_w = top
+		_pk_mix = 1.0
+		_mark_cut("motion_setting")   # a cut to the widest on the blow
+
+
+func _peak_end(why: String, back: float) -> void:
+	_pk_ended = why
+	_pk_phase = "back"
+	_pk_back = back
+	_pk_t = 0.0
+
+
+## The motion setting: a cut to the widest on the blow, held still, a cut back at the end. It frames both as they are at the top.
+func _peak_reduced(S: SimState) -> void:
+	peak_width = _pk_w
+	_pk_place = CamParams.PEAK_PLACE_HANG
+	if _pk_phase == "hold" or _pk_phase == "back":
+		_pk_phase = ""
+		_pk_mix = 0.0
+		peak_width = 0.0
+		_mark_cut("motion_setting")
+
+
+## The reveal: a fighter flying fast for REVEAL_AFTER, with room left, opens out and comes back, so the flight goes low, wide, low. It's the shot of a long flight only, and
+## it ends early, eased, the moment he stops. Fixed lengths from the flight, never from what's in the frame (RL-213). Nothing in it reads people.
+func _reveal_tick(S: SimState) -> void:
+	for i in range(2):
+		var f = S.fighters[i]
+		var fast: bool = _body_speed(f) >= CamParams.REVEAL_SPEED and float(f.y) - WorldTerrain.groundY(S, f.x) > CamParams.REVEAL_LOW
+		_rv_fly[i] = float(_rv_fly[i]) + DT if fast else 0.0
+	if _rv_t < 0.0:
+		reveal_w = maxf(0.0, reveal_w - DT / CamParams.REVEAL_OUT)
+		_rv_ang = CamParams.REVEAL_PITCH * smoothstep(0.0, 1.0, reveal_w) if _rv_ang != 0.0 else 0.0
+		var free: bool = time - _rv_last >= CamParams.REVEAL_GAP and not reduced_motion and not intro_active and not fold_active and _pk_phase == "" and solo_kind != "transform" and solo_kind != "ko" and solo_kind != "finisher" and S.game.clash == null and S.game.ko == null and _sw_ticks < CamParams.SWING_SHOT_TICKS
+		for i in range(2):
+			if free and float(_rv_fly[i]) >= CamParams.REVEAL_AFTER and not (e_slot == 1 - i and e > 0.001) and (not readable or _reveal_has_land(S, i)):   # (not while the other's pane has the screen: he isn't in the picture)
+				_rv_slot = i
+				_rv_t = 0.0
+				_rv_last = time
+				reveal_shots += 1
+				break
+		return
+	_rv_t += DT
+	var running: bool = float(_rv_fly[_rv_slot]) > 0.0 and _pk_phase == "" and _sw_ticks < CamParams.SWING_SHOT_TICKS and not (e_slot == 1 - _rv_slot and e > 0.001)
+	if running and _rv_t < CamParams.REVEAL_IN + CamParams.REVEAL_HOLD:
+		reveal_w = minf(1.0, reveal_w + DT / CamParams.REVEAL_IN)
+	else:
+		_rv_t = -1.0
+	_rv_ang = CamParams.REVEAL_PITCH * smoothstep(0.0, 1.0, reveal_w)
+
+
+## Whether the view opening out would show any land: over open sea it would be an empty frame, so he stays at follow size with his speed lines.
+func _reveal_has_land(S: SimState, i: int) -> bool:
+	var f = S.fighters[i]
+	var dir: float = signf(float(f.vx))
+	for ahead in [0.0, 1500.0, 3000.0]:
+		if _biome_at(S, SimWrap.wrap(float(f.x) + dir * float(ahead))) != "ocean":
+			return true
+	return false
+
+
+## Opens the view on the flier: the width eases out to REVEAL_W, or to the size floor below tier 3, and he goes low in the frame. Over a shared view it opens both.
+func _reveal_outputs(S: SimState) -> void:
+	if _rv_slot < 0:
+		return
+	var f = S.fighters[_rv_slot]
+	var L = S.fighters[1 - _rv_slot]
+	var ring_k: float = SimConst.W / CamParams.PEAK_RING
+	var top: float = (CamParams.REVEAL_W if minf(float(f.tier), float(L.tier)) >= CamParams.REVEAL_TIER else CamParams.REVEAL_W_LOW) * ring_k
+	if readable:
+		# a width that keeps him a size you can see: 16:9 width is 1.778 * BODY_H / r
+		var r_least: float = CamParams.REVEAL_R_HIGH if minf(float(f.tier), float(L.tier)) >= CamParams.REVEAL_TIER else CamParams.REVEAL_R
+		top = minf(top, 1.778 * CamParams.BODY_H / r_least)
+	var w: float = smoothstep(0.0, 1.0, reveal_w)
+	for i in range(2):
+		if i != _rv_slot and sep > 0.5:
+			continue
+		var o: Vector3 = _outs[i]
+		var now_w: float = vw / maxf(o.z, 0.001) * 1.778 / (vw / vh)
+		var nz: float = o.z * exp(log(now_w / top) * w) if now_w < top else o.z   # (his place in the frame eases either way: skipping it jumped)
+		var p: Vector2 = SplitFrame.project(o.x, o.y, o.z, _pitch_now, vw, vh, f.x, f.y + CamParams.CHEST, float(f.z) - float(_fzo[i]))
+		p.y = lerpf(p.y, vh * CamParams.REVEAL_PLACE, w)
+		_outs[i] = _cam_at(f.x, f.y + CamParams.CHEST, float(f.z) - float(_fzo[i]), nz, p)
+		_oz[i] = nz
+
+
+## Follow-through: when a fast body stops dead (a landing, a wall, a brake) the frame's mass carries it on along his way by at most FT_AMOUNT of the width, a soft
+## out and a softer back. It reads the speed he had a tick ago, so it needs nothing from the sim.
+func _ft_tick(S: SimState) -> void:
+	for i in range(2):
+		var f = S.fighters[i]
+		var v := Vector2(float(f.vx) / maxf(float(f.launchT), 0.001), float(f.vy))
+		var was: Vector2 = _ft_v[i]
+		_ft_v[i] = v
+		if _ft_t < 0.0 and not reduced_motion and not intro_active and _pk_phase != "rise" and was.length() >= CamParams.FT_SPEED and v.length() <= CamParams.FT_STOP * was.length():
+			_ft_t = 0.0
+			_ft_slot = i
+			_ft_dir = was.normalized() * minf(1.0, was.length() / (2.0 * CamParams.FT_SPEED))
+			overshoots += 1
+	if _ft_t < 0.0:
+		ft_offset = Vector2.ZERO
+		return
+	_ft_t += DT
+	var a: float
+	if _ft_t < CamParams.FT_OUT:
+		var u: float = _ft_t / CamParams.FT_OUT
+		a = 1.0 - (1.0 - u) * (1.0 - u)
+	else:
+		a = 1.0 - smoothstep(0.0, 1.0, (_ft_t - CamParams.FT_OUT) / CamParams.FT_BACK)
+	if _ft_t >= CamParams.FT_OUT + CamParams.FT_BACK:
+		_ft_t = -1.0
+		a = 0.0
+	ft_offset = _ft_dir * (CamParams.FT_AMOUNT * a)
+
+
+func _ft_outputs() -> void:
+	for i in range(2):
+		if i != _ft_slot and sep > 0.5:
+			continue
+		var o: Vector3 = _outs[i]
+		var w: float = vw / maxf(o.z, 0.001)
+		_outs[i] = Vector3(SimWrap.wrap(o.x + ft_offset.x * w), o.y + ft_offset.y * w, o.z)
+
+
+func m_close() -> float:
+	return _m()
+
+
+## The zoom's own ease: its step changes by at most ZOOM_ACC a tick, so the rate caps' clamps start and stop soft. Never on a cut, and never in a shot that
+## sets its own (the peak's width is eased already).
+func _zoom_ease() -> void:
+	for i in range(2):
+		var o: Vector3 = _outs[i]
+		var prev_z: float = float(_ozs[i])
+		if prev_z <= 0.0 or _cut_now or _ov_kind != "" or (_pk_mix > 0.0 and _pk_phase != "back") or reduced_motion:
+			_ozs[i] = o.z
+			_ozv[i] = 0.0
+			continue
+		var want: float = log(o.z / prev_z)
+		var st: float = float(_ozv[i])
+		st += clampf(want - st, -CamParams.ZOOM_ACC, CamParams.ZOOM_ACC)
+		# it may not overshoot the zoom it's aiming at, and it comes to rest on it
+		var remain: float = absf(want)
+		var brake: float = sqrt(2.0 * CamParams.ZOOM_ACC * remain)
+		st = clampf(st, -brake, brake)
+		if want == 0.0 or (st > 0.0) != (want > 0.0):
+			st = clampf(want, -CamParams.ZOOM_ACC, CamParams.ZOOM_ACC)
+		var nz: float = prev_z * exp(st)
+		_ozv[i] = st
+		_ozs[i] = nz
+		_outs[i] = Vector3(o.x, o.y, nz)
+		_oz[i] = nz
+
+
+## The shot's camera over whatever the fight's framing has: it frames the pair, the launcher low in the frame, and comes back to it.
+func _peak_outputs(S: SimState) -> void:
+	var f = S.fighters[_pk_slot]
+	var L = S.fighters[1 - _pk_slot]
+	var z: float = (vw / vh) / 1.778 * vw / maxf(_pk_w, 1.0)   # height-for-height at any screen shape
+	var half: float = 0.45 * vw / z
+	var d_lf: float = SimWrap.sdx(L.x, f.x)
+	var cx: float = SimWrap.wrap(L.x + d_lf * 0.5)
+	# he stays in the frame, whatever that does to the launcher
+	if launch_director and (_pk_flat or _pk_phase == "fall" or _pk_phase == "hold" or _pk_phase == "back"):
+		# as the width stops holding both, the frame's centre passes from the pair to just short of where he's going
+		var hold_w: float = CamParams.PEAK_ASPECT_W * maxf(absf(d_lf), 1.0)
+		var pass_w: float = 1.0 - smoothstep(CamParams.PEAK_PASS_FROM, CamParams.PEAK_PASS_TO, _pk_w / hold_w)
+		var vx_f: float = float(f.vx) / maxf(float(f.launchT), 0.001)
+		var land_x: float = SimWrap.wrap(f.x + vx_f * CamParams.PEAK_PASS_AHEAD)
+		cx = SimWrap.wrap(cx + SimWrap.sdx(cx, land_x) * pass_w)
+	var off_f: float = SimWrap.sdx(cx, f.x)
+	if absf(off_f) > half:
+		cx = SimWrap.wrap(cx + off_f - signf(off_f) * half)
+	if _pk_wait > 0.0:
+		cx = _pk_x
+	var dx: float = SimWrap.sdx(_pk_x, cx)
+	var y0: float = float(L.y) + CamParams.CHEST
+	if _pk_flat:
+		var wd: float = vw / z
+		var pass_y: float = 1.0 - smoothstep(CamParams.PEAK_PASS_FROM, CamParams.PEAK_PASS_TO, _pk_w / maxf(1.778 * maxf(float(f.y) - float(L.y), 1.0) / maxf(_pk_place - CamParams.PEAK_TOP, 0.1), 1.0))
+		var dy: float = (lerpf(y0, float(f.y) + CamParams.CHEST, pass_y) - _pk_y) if _pk_wait <= 0.0 else 0.0
+		var top_s: float = CamParams.FLAT_STEP * wd
+		var acc_s: float = CamParams.FLAT_ACC * wd
+		var want_x: float = clampf(dx * 0.2, -top_s, top_s)
+		var want_y: float = clampf(dy * 0.2, -top_s, top_s)
+		_pk_vx += clampf(want_x - _pk_vx, -acc_s, acc_s)
+		_pk_vy += clampf(want_y - _pk_vy, -acc_s, acc_s)
+		_pk_x = SimWrap.wrap(_pk_x + _pk_vx)
+		_pk_y += _pk_vy
+		y0 = _pk_y
+	else:
+		_pk_x = SimWrap.wrap(_pk_x + dx * clampf(_pk_mix * 0.2, 0.0, 1.0))
+	var pk: Vector3 = _cam_at(_pk_x, y0, 0.0, z, Vector2(vw * 0.5, vh * _pk_place))
+	var w: float = 1.0 if _swing_cuts() else _smootherstep(_pk_mix)
+	for i in range(2):
+		_outs[i] = _blend_cam(_outs[i], pk, w)
+		_fzo[i] = lerpf(float(_fzo[i]), 0.0, w)
+		_oz[i] = _outs[i].z
+
+
+## The swing's shot (docs/camera/swing-view.md; camera.md sections 1, 2 and 5): the sim runs the world's turn, and the camera holds its
+## frame on the fighters and adds three things, eased: a low angle, a lean toward what is arriving, and a held size where tall land is
+## near. A short small swing gets none of them. The world's rate is measured from the frame, so no timer of the camera's can part from
+## the sim's. The shown heading stays the sim's, except for a rollback's correction, eased, and the motion setting's cut or still.
+func _swing_tick(S: SimState) -> void:
+	if _pl.is_empty():
+		swing_deg = 0.0
+		_sw_ticks = 0
+		_sw_prev = PackedFloat64Array()
+		return
+	var d_rad: float = 0.0 if _sw_prev.is_empty() else CamPlaces.turn_between(_sw_prev, _pl)
+	_sw_prev = _pl
+	var sw: Dictionary = CamPlaces.swing_of(S)
+	var stalled: bool = readable and not sw.is_empty() and S.get("swing") != null and absf(float(S.swing.rate)) < 0.01
+	var running: bool = absf(d_rad) > CamParams.SWING_STILL * DT or (not sw.is_empty() and not stalled)
+	# A rollback's correction or a re-seat shows as a turn no swing makes: it stays out of the picture and eases away, no faster than a swing.
+	if absf(d_rad) > CamParams.SWING_MAX_TICK:
+		swing_shown -= d_rad
+		d_rad = 0.0
+	swing_deg = rad_to_deg(d_rad) / DT
+	if running:
+		_sw_rest = 0.0
+		_sw_ticks += 1
+		_scape_busy_t = time   # no landscape shot straight after: the swing has shown the ground
+		if _sw_sign == 0.0 and d_rad != 0.0:
+			_sw_sign = signf(d_rad)
+	else:
+		_sw_rest += DT
+		if _sw_rest >= CamParams.SWING_REST_END:
+			_sw_ticks = 0
+			_sw_sign = 0.0
+	if _sw_ticks >= CamParams.SWING_SHOT_TICKS and not _pn.is_empty():
+		_pn["dur"] = minf(float(_pn["dur"]), float(_pn["t"]) + (CamParams.PANEL_CLOSE_REDUCED if flash_reduced else CamParams.PANEL_CLOSE))
+	_swing_motion(S, sw, d_rad)
+	var dist: float = CamParams.K_FACTOR * vh / maxf(_mz, 0.001)
+	if _sw_ticks == 1:
+		_sw_tall = _swing_tall_near(S, dist)
+		_sw_pitch = 0.0
+	# the shot's angle and lean: in over the swing's first half second, out once it has rested (a landing's hold first)
+	var want: bool = _sw_ticks >= CamParams.SWING_SHOT_TICKS and _sw_rest < CamParams.SWING_REST_HOLD and not _swing_cuts() and not intro_active and not fold_active
+	swing_gesture = minf(1.0, swing_gesture + DT / CamParams.SWING_IN) if want else maxf(0.0, swing_gesture - DT / CamParams.SWING_OUT)
+	if want and _sw_pitch == 0.0:
+		_sw_tall = _sw_tall or _swing_tall_near(S, dist)
+		_sw_pitch = _ground_low(CamParams.SWING_PITCH_TALL if _sw_tall else CamParams.SWING_PITCH, _mz)
+		if absf(_sw_pitch) < 1.0:
+			_sw_pitch = 0.0   # the ground leaves no room for the angle here
+	swing_angle = _sw_pitch * smoothstep(0.0, 1.0, swing_gesture)
+	if swing_gesture <= 0.0:
+		_sw_pitch = 0.0
+
+
+## Whether swings show as cuts: UI's world_turning (auto follows Reduced motion), or any playback above 1x (Accessibility, docs/accessibility/swing-motion.md).
+func _swing_cuts() -> bool:
+	return playback > 1.0 or world_turning == "cut" or (world_turning == "auto" and reduced_motion)
+
+
+## The motion setting: a player's setting never touches the sim, so the shown heading parts from it (camera.md section 5, RL-213 (7);
+## Accessibility's rulings). A launch is a plain cut on its release to where the swing ends. Anything else holds still: a chase's cut waits
+## for SWING_CUT_GAP since the last, a small swing is never cut but folds into the next one, and a form's pause cuts at its end. A hold
+## that has gone too far for a standing fighter away from the pivot (Rendering's section 7) cuts only on a hit-stop, never on its own.
+## A correction under no setting eases away at SWING_CORRECT.
+func _swing_motion(S: SimState, sw: Dictionary, d_rad: float) -> void:
+	if not _swing_cuts():
+		_sw_held = false
+		_sw_due = false
+		var step_c: float = CamParams.SWING_CORRECT * DT
+		step_c = minf(step_c, 0.12 * absf(swing_shown) + 1.0e-4)   # lands soft
+		swing_shown = clampf(0.0, swing_shown - step_c, swing_shown + step_c)
+		_sw_cause = String(sw.get("cause", ""))
+		return
+	var cause: String = String(sw.get("cause", ""))
+	var started: bool = cause != "" and cause != _sw_cause
+	var done: bool = cause == "" and _sw_cause != ""
+	var to_go: float = float(sw.get("toGo", 0.0))
+	var small: bool = cause == "small" or absf(to_go) < CamParams.SWING_SMALL
+	var free: bool = time - _sw_cut_t >= CamParams.SWING_CUT_GAP
+	var had: float = swing_shown   # what the sim's turn this tick doesn't move on the screen
+	if started and not small and (cause == "launch" or (cause == "chase" and free)):
+		swing_shown = to_go   # shown already at the end bearing: a cut on the action
+		_sw_held = true
+		_sw_due = false
+		_swing_cut()
+	else:
+		_sw_held = true   # still: the world holds, and the sim runs on behind it
+		swing_shown = had - d_rad
+		var off: float = absf(swing_shown)
+		if off <= 1.0e-6:
+			swing_shown = 0.0
+			_sw_held = false
+			_sw_due = false
+		elif done and _sw_cause == "form" and free:
+			swing_shown = 0.0   # the new bearing comes in as a cut at the pause's end
+			_sw_held = false
+			_sw_due = false
+			_swing_cut()
+		elif _swing_past_limit(S, off):
+			_sw_due = true
+		if _sw_due and S.dirS.stop > 0.0 and free:
+			swing_shown = 0.0
+			_sw_held = false
+			_sw_due = false
+			_swing_cut()
+	_sw_cause = cause
+
+
+## A plain cut: the frame isn't interpolated into, and nothing dissolves.
+func _swing_cut() -> void:
+	_mark_cut("motion_setting")
+	_sw_cut_t = time
+
+
+## Whether a standing fighter's ground has parted from what's shown: about r x slope x angle, against what a foot can show (Rendering
+## section 7: 10 units on a 1 in 2 slope).
+func _swing_past_limit(S: SimState, off: float) -> bool:
+	var pv: float = _pl[6]
+	for f in S.fighters:
+		if f.state == "launched" or float(f.y) - WorldTerrain.groundY(S, f.x) > 4.0:
+			continue
+		if absf(SimWrap.sdx(pv, f.x)) * CamParams.SWING_SLOPE * off > CamParams.SWING_FOOT:
+			return true
+	return false
+
+
+## Tall land near the camera on the side the turn is bringing forward (a fixed test, from the frame): Encounter's plan reads the same.
+func _swing_tall_near(S: SimState, dist: float) -> bool:
+	var mid: float = _pair_mid(S)
+	for b in S.buildings:
+		if not b.alive or b.h < CamParams.SWING_TALL:
+			continue
+		var v: Vector2 = CamPlaces.place(S, _pl, mid, b, b.x, b.z)
+		if v.length() < dist and v.x * _sw_sign <= 0.0:
+			return true
+	return CamPlaces.land_tall(S, mid, dist, CamParams.SWING_TALL)
+
+
+func _biome_at(S: SimState, x: float) -> String:
+	return WorldBiomes.biomeAt(x) if _pl.is_empty() else CamPlaces.biome(S, x)
 
 
 ## The match's landmark buildings, in S.buildings order. Made again when the list is another (a new match, a relocation's new
@@ -4743,7 +5509,7 @@ func _scape_mult() -> float:
 ## The camera's mass: each pane's drawn point (x, y) follows the follow's aim with a bounded change of velocity a tick
 ## (MASS_ACC of the width), kept within MASS_DEV of the width of the aim. Passes through (and keeps its state) where it is off.
 func _mass_stage(was_cut: bool) -> void:
-	var on: bool = mass and not reduced_motion and not intro_active and not was_cut and (sep <= 0.001 or sep >= 0.999) and _slam_slot < 0 and _ov_kind == "" and (e < 0.001 or (solo_kind == "launch" and solo_w >= 0.999 and e >= 0.999)) and not fold_active
+	var on: bool = mass and _pk_mix <= 0.0 and not reduced_motion and not intro_active and not was_cut and (sep <= 0.001 or sep >= 0.999) and _slam_slot < 0 and _ov_kind == "" and (e < 0.001 or (solo_kind == "launch" and solo_w >= 0.999 and e >= 0.999)) and not fold_active
 	for i in range(2):
 		var o: Vector3 = _outs[i]
 		var aim: Vector2 = Vector2(o.x, o.y)
@@ -4753,11 +5519,18 @@ func _mass_stage(was_cut: bool) -> void:
 			_mv[i] = Vector2.ZERO
 			continue
 		var pp: Vector2 = _mp[i]
+		var aim_v: Vector2 = Vector2.ZERO if _ma[i] == null else Vector2(SimWrap.sdx(_ma[i].x, aim.x), aim.y - _ma[i].y)
+		_ma[i] = aim
+		_mav[i] = aim_v
 		var want_v: Vector2 = Vector2(SimWrap.sdx(pp.x, aim.x), aim.y - pp.y)
-		if not on or _own_step(i):
+		var soft: bool = launch_director and not was_cut and ((_pk_mix <= 0.0 and _pk_phase == "") or _pk_phase == "back") and not reduced_motion and not intro_active and _ov_kind == "" and _slam_slot < 0 and not fold_active and (_speed_body(i) or _soft_settling(i, pp, aim, z))
+		if not soft and (not on or _own_step(i)):
 			# (a building send, its stage's relay and hand-over move by their own eased step)
 			_mv[i] = want_v
 			_mp[i] = aim
+			continue
+		if soft:
+			_soft_catch(i, pp, aim, z, o.z)
 			continue
 		var acc: float = CamParams.MASS_ACC * vw / z
 		var v: Vector2 = Vector2(_mv[i])
@@ -4776,6 +5549,49 @@ func _mass_stage(was_cut: bool) -> void:
 		_mv[i] = v
 		_mp[i] = np
 		_outs[i] = Vector3(np.x, np.y, o.z)
+
+
+## The softest catch that never loses him: the camera's velocity heads for his, plus a gentle pull on what it has fallen behind. It changes that velocity by
+## the least that still stops him going past SPEED_EXCURSION of the width (half that in a pane of a split): closing a velocity gap g takes g^2 / 2a of room.
+func _soft_catch(i: int, pp: Vector2, aim: Vector2, z: float, oz: float) -> void:
+	_soft_on[i] = true
+	var w: float = vw / z
+	var room: float = CamParams.SPEED_EXCURSION * (0.5 * _pane_k(i) if sep > 0.5 else 1.0) * w
+	var dev0: Vector2 = Vector2(SimWrap.sdx(pp.x, aim.x), aim.y - pp.y)
+	var v: Vector2 = Vector2(_mv[i])
+	_mavs[i] = Vector2(_mavs[i]).lerp(Vector2(_mav[i]), CamParams.SPEED_SMOOTH)   # (a lag bound's one-tick pull isn't his speed)
+	var target: Vector2 = Vector2(_mavs[i]) + dev0 * CamParams.SPEED_PULL
+	var dv: Vector2 = target - v
+	var left: float = maxf(room - dev0.length(), 0.05 * w)
+	var acc: float = maxf(CamParams.MASS_ACC * w, dv.length() * dv.length() / (2.0 * left))
+	if dv.length() > acc:
+		dv = dv.normalized() * acc
+	v += dv
+	var np: Vector2 = Vector2(SimWrap.wrap(pp.x + v.x), pp.y + v.y)
+	var dev: Vector2 = Vector2(SimWrap.sdx(np.x, aim.x), aim.y - np.y)
+	if dev.length() > room:
+		var fix: Vector2 = dev - dev.normalized() * room
+		np = Vector2(SimWrap.wrap(np.x + fix.x), np.y + fix.y)
+		v += fix
+	_mv[i] = v
+	_mp[i] = np
+	_outs[i] = Vector3(np.x, np.y, oz)
+
+
+## Once a catch has begun it runs until it has settled: dropping it when he stops dead would give the frame back to the ordinary limit all at once.
+func _soft_settling(i: int, pp: Vector2, aim: Vector2, z: float) -> bool:
+	if not bool(_soft_on[i]):
+		return false
+	var w: float = vw / z
+	var left: float = Vector2(SimWrap.sdx(pp.x, aim.x), aim.y - pp.y).length() + Vector2(_mv[i]).length()
+	_soft_on[i] = left > CamParams.SPEED_SETTLED * w
+	return bool(_soft_on[i])
+
+
+## Whether pane i's move is a launched body's, fast enough that the follow can't simply stay with him.
+func _speed_body(i: int) -> bool:
+	var f = _sim_f[i]
+	return f != null and (f.state == "launched" or (readable and f.rush != null))
 
 
 ## Whether pane i shows a body whose framing moves by its own eased step (a building send, its stage's relay, the hand-over):

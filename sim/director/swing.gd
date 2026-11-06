@@ -21,7 +21,7 @@ const TENSION: Array = ["f.anguish", "f.menace", "S.mood.v"]   # the scalars tim
 
 const W_LAST: int = 0     # the live tick of the last big swing, plus 1
 const W_JOLT: int = 1     # ... of the last small one
-const W_CAUSE: int = 2    # index in CAUSES, plus 1
+const W_CAUSE: int = 2    # index in CAUSES, plus 1; with brawl.shareCap on, plus 16 x the match's big swings and 65536 x its brawl ones
 const W_SIZE: int = 3     # its size in degrees
 const W_SIDE: int = 4     # its sign
 const W_PLACE: int = 5    # the place it went to, plus 1
@@ -57,6 +57,7 @@ static var _posed := PackedInt32Array()   # the buildings that plan posed, to pu
 static var everyPlace: bool = false       # tools: the planet's places, built or not, to test a turn against any of them
 static var _builtKey: String = ""         # _builtPlaces' memo, by the world: a pure read of it, so it holds nothing the state does
 static var _builtMemo := PackedByteArray()
+static var _joltDue: Dictionary = {}   # one tick (jolt.yieldToLaunch): a jolt atBlow asked, sent at tick's end; never kept past it
 
 
 static func _ensure() -> void:
@@ -96,14 +97,23 @@ static func _b() -> int:
 	return DirPlane._base() + DirPlane.PL_N
 
 
+## Who keeps the swing director's memory: the match's first body. It's the line's memory, so there's one copy, whichever fight the
+## swap has in S (docs/architecture/fight-swap.md); in the line's own tick S.fighters is everyone, fight 0 first.
+static func _anchor(S: SimState):
+	var st = S.stage
+	if st == null or st.cur == SimStage.WHOLE or st.cur == 0:
+		return S.fighters[0]
+	return st.fights[0].fighters[0]
+
+
 static func _g(S: SimState, k: int) -> int:
-	var d: PackedInt32Array = S.fighters[0].act.dirI
+	var d: PackedInt32Array = _anchor(S).act.dirI
 	var i: int = _b() + k
 	return d[i] if i < d.size() else 0
 
 
 static func _s(S: SimState, k: int, v: int) -> void:
-	var f = S.fighters[0]
+	var f = _anchor(S)
 	DirPlane._size(f)
 	if f.act.dirI.size() < _b() + W_N:
 		f.act.dirI.resize(_b() + W_N)
@@ -123,7 +133,7 @@ static func restRule(S: SimState) -> String:
 		return "struggle"
 	if DirArc.flying(S):
 		return "meteor"
-	var ex = S.dirS.ex
+	var ex = DirBrawl.exOf(S)
 	if ex != null:
 		if ex.kind == "sig":
 			return "beam"
@@ -187,11 +197,18 @@ static func _builtPlaces(S: SimState, P) -> PackedByteArray:
 	var out := PackedByteArray()
 	out.resize(P.n)
 	var least: float = SimDetMath.cos(float(cfg().buildings.placeNear) / SimField.R)
+	var dirs: PackedFloat64Array = S.bDir
+	var nb: int = dirs.size() / 3
 	for i in range(P.n):
-		for b in range(S.bDir.size() / 3):
-			if P.px[i] * S.bDir[b * 3] + P.py[i] * S.bDir[b * 3 + 1] + P.pz[i] * S.bDir[b * 3 + 2] >= least:
-				out[i] = 1
-				break
+		var px: float = P.px[i]
+		var py: float = P.py[i]
+		var pz: float = P.pz[i]
+		for step_ in [16, 1]:   # every 16th first: a place with buildings has many, so only an empty place walks them all. The same answer, in about a fiftieth of the time
+			var b: int = 0
+			while b < nb and out[i] == 0:
+				if px * dirs[b * 3] + py * dirs[b * 3 + 1] + pz * dirs[b * 3 + 2] >= least:
+					out[i] = 1
+				b += step_
 	_builtKey = key
 	_builtMemo = out
 	return out
@@ -207,15 +224,19 @@ static func _standing(S: SimState, fr: Dictionary, maxD: float) -> Array:
 	var T: Array = fr.T
 	var N: Array = fr.N
 	var least: float = SimDetMath.cos(minf(maxD / SimField.R, SimMathx.PI))
+	var m0: float = M[0]
+	var m1: float = M[1]
+	var m2: float = M[2]
+	var dirs: PackedFloat64Array = S.bDir
 	for i in range(S.buildings.size()):
+		var q0: float = dirs[i * 3]
+		var q1: float = dirs[i * 3 + 1]
+		var q2: float = dirs[i * 3 + 2]
+		var cm: float = q0 * m0 + q1 * m1 + q2 * m2
+		if cm < least:   # the far ones first: with buildings at every place, a walk of the records was most of a swing's offer
+			continue
 		var b = S.buildings[i]
 		if not b.alive or WorldSettle.noTarget(b.landmark):
-			continue
-		var q0: float = S.bDir[i * 3]
-		var q1: float = S.bDir[i * 3 + 1]
-		var q2: float = S.bDir[i * 3 + 2]
-		var cm: float = q0 * M[0] + q1 * M[1] + q2 * M[2]
-		if cm < least:
 			continue
 		var d: float = WorldPlanet.acosf(clampf(cm, -1.0, 1.0)) * SimField.R
 		if d < WorldBrunt.BR_MIN:
@@ -227,8 +248,18 @@ static func _standing(S: SimState, fr: Dictionary, maxD: float) -> Array:
 ## How many of the buildings stand within band of a line turned by turn, either way along it.
 static func _onLine(near: Array, turn: float, band: float) -> int:
 	var n: int = 0
+	var inside: float = band * 0.999999
+	var outside: float = band * 1.000001
 	for e in near:
-		if float(e[0]) * absf(SimDetMath.sin((float(e[1]) - turn) * SimMathx.PI / 180.0)) <= band:
+		var d: float = float(e[0])
+		var y: float = fposmod(absf(float(e[1]) - turn), 180.0)
+		y = minf(y, 180.0 - y)
+		# sin of y degrees, for y up to 90, lies between y / 90 and y x pi / 180. Most are decided by that, and the sine's the costly part.
+		if d * y / 90.0 > outside:
+			continue
+		if d * y * SimMathx.PI / 180.0 < inside:
+			n += 1
+		elif d * absf(SimDetMath.sin((float(e[1]) - turn) * SimMathx.PI / 180.0)) <= band:
 			n += 1
 	return n
 
@@ -534,7 +565,10 @@ static func _take(S: SimState, cause: String, A, top: Dictionary, spec: Dictiona
 		return false
 	var now: int = DirBrawl._now(S)
 	_s(S, W_LAST, now + 1)
+	var counts: int = _g(S, W_CAUSE) & ~15
 	_s(S, W_CAUSE, CAUSES.find(cause) + 1)
+	if _shareOn():
+		_s(S, W_CAUSE, CAUSES.find(cause) + 1 + counts + 16 + (65536 if cause == "brawl" else 0))   # the match's big swings, and its brawl ones
 	_s(S, W_NCAUSE, CAUSES.find(cause) + 1)
 	_s(S, W_SIZE, int(round(absf(float(spec.deg)))))
 	_s(S, W_SIDE, int(signf(float(spec.deg))))
@@ -569,11 +603,13 @@ static func _planOn(S: SimState, fr, x: float) -> void:
 	S.frame = fr
 	SimField.far()
 	_posed = SimSwing.posesNear(S, x)
+	SimSwing.holdPlan(fr, x, _posed)
 
 
 static func _planOff(S: SimState) -> void:
 	if _was == null:
 		return
+	SimSwing.holdPlan(null, 0.0, _posed)
 	S.frame = _was
 	_was = null
 	SimField.near()
@@ -669,7 +705,7 @@ static func atPause(S: SimState, A) -> void:
 	var c: Dictionary = cfg()
 	if not on(S):
 		return
-	_offer(S, "form", A, SimRoster.opp(S, A), float(c.form.sec), float(c.form.reach), false)
+	_offer(S, "form", A, DirBrawl.rivalOf(S, A), float(c.form.sec), float(c.form.reach), false)
 
 
 ## The core's cause and its rate for one of ours: a flight an AI chose runs as a chase.
@@ -703,6 +739,8 @@ static func atBlow(S: SimState, A, D, weight: float) -> void:
 		return
 	var c: Dictionary = cfg()
 	var j: Dictionary = c.jolt
+	if bool(j.get("yieldToLaunch", false)) and _g(S, W_PDEG) != 0:
+		return   # a launch's swing is waiting for its hit-stop to end: a jolt now would start on its tick (QA: 52 of 2,395 gaps were 0 s)
 	var now: int = DirBrawl._now(S)
 	var last: int = _g(S, W_JOLT)
 	var since: float = float(now - (last - 1)) / DirData.TICKS_PER_SEC if last > 0 else 1.0e9
@@ -721,6 +759,15 @@ static func atBlow(S: SimState, A, D, weight: float) -> void:
 		return
 	var sgn: float = _joltSign(S, A, D, pv)
 	var deg: float = sgn * size
+	if bool(j.get("yieldToLaunch", false)):
+		_joltDue = {"a": S.fighters.find(A), "deg": deg, "score": score, "pv": pv}
+		return   # it goes at the tick's end, unless the same blow's launch has started its own swing by then (tick)
+	_joltGo(S, A, deg, score, pv)
+
+
+## The jolt's ask, and what it leaves for the next.
+static func _joltGo(S: SimState, A, deg: float, score: float, pv: float) -> void:
+	var now: int = DirBrawl._now(S)
 	if not SimSwing.ask(S, {"deg": deg, "cause": "small", "blow": true, "pivotX": pv}):
 		return
 	_s(S, W_JOLT, now + 1)
@@ -753,7 +800,7 @@ static func _brawlTick(S: SimState) -> void:
 	var c: Dictionary = cfg().get("brawl", {})
 	if not bool(c.get("enabled", false)):
 		return
-	var ex = S.dirS.ex
+	var ex = DirBrawl.exOf(S)
 	var now: int = DirBrawl._now(S)
 	if ex == null or not DirBrawl.isBrawl(ex):
 		return
@@ -764,7 +811,17 @@ static func _brawlTick(S: SimState) -> void:
 		return
 	if now % int(c.every) != 0:
 		return
+	if _shareOn():
+		var cw: int = _g(S, W_CAUSE)
+		var bigN: int = (cw >> 4) & 4095
+		var brN: int = (cw >> 16) & 4095
+		if bigN >= int(c.shareCap.after) and float(brN + 1) / float(bigN + 1) > float(c.shareCap.max):
+			return   # brawl swings at their share of the match's big ones: Game Design's cap for any cause but a launch
 	_offer(S, "brawl", ex.A, ex.D, float(c.sec), float(c.reach), false)
+
+
+static func _shareOn() -> bool:
+	return bool(cfg().get("brawl", {}).get("shareCap", {}).get("enabled", false))
 
 
 ## An AI flying flat out with no human holding a direction: its flight may swing at a chase's rate (section 13's last row).
@@ -773,8 +830,8 @@ static func _fleeTick(S: SimState) -> void:
 	if not bool(c.get("enabled", false)) or S.swing.active or DirBrawl._now(S) % int(c.every) != 0:
 		return
 	for f in S.fighters:
-		if f.ai != null and _flat(S, f) and absf(SimWrap.sdx(f.x, SimRoster.opp(S, f).x)) > float(c.minGap):
-			_offer(S, "flee", f, SimRoster.opp(S, f), float(c.sec), float(c.reach), false)
+		if f.ai != null and _flat(S, f) and absf(SimWrap.sdx(f.x, DirBrawl.rivalOf(S, f).x)) > float(c.minGap):
+			_offer(S, "flee", f, DirBrawl.rivalOf(S, f), float(c.sec), float(c.reach), false)
 			return
 
 
@@ -817,7 +874,7 @@ static func _flyingByChoice(S: SimState):
 static func _flyer(S: SimState):
 	var who = null
 	for f in S.fighters:
-		if _flat(S, f) and absf(SimWrap.sdx(f.x, SimRoster.opp(S, f).x)) > float(cfg().nudge.rivalBeyond):
+		if _flat(S, f) and absf(SimWrap.sdx(f.x, DirBrawl.rivalOf(S, f).x)) > float(cfg().nudge.rivalBeyond):
 			if f.ai == null:
 				return f
 			who = f
@@ -935,7 +992,7 @@ static func _nudgeTick(S: SimState) -> void:
 	_s(S, W_NCAUSE, CAUSES.find("nudge") + 1)
 	_s(S, W_FULL, int(round(deg * 4096.0)))
 	_s(S, W_SCORE, 0)
-	var o = SimRoster.opp(S, f)
+	var o = DirBrawl.rivalOf(S, f)
 	var pv: float = float(o.x) if SimSwing._standing(S, o) else SimWrap.wrap(f.x + 0.5 * SimWrap.sdx(f.x, o.x))
 	_s(S, N_DEG, int(round(deg * 4096.0)))
 	_s(S, N_LEAD, maxi(1, int(c.leadTicks)))
@@ -950,6 +1007,8 @@ static func _nudgeTick(S: SimState) -> void:
 
 ## Once a live tick, last in the director's update.
 static func tick(S: SimState, dt: float) -> void:
+	var jd: Dictionary = _joltDue
+	_joltDue = {}
 	if dt <= 0.0 or not on(S):
 		return
 	var sw = S.swing
@@ -957,8 +1016,10 @@ static func tick(S: SimState, dt: float) -> void:
 	if waiting != 0:
 		_s(S, W_PDEG, 0)
 		SimSwing.ask(S, {"deg": float(waiting) / 4096.0, "cause": "launch", "pivotX": float(_g(S, W_PPV)) / 16.0, "restBy": _g(S, W_PBY)})
+	if not jd.is_empty() and not (sw.active and int(sw.age) == 0 and String(sw.cause) != "small"):
+		_joltGo(S, S.fighters[int(jd.a)], float(jd.deg), float(jd.score), float(jd.pv))   # no big swing started this tick: the jolt goes
 	if sw.active and not _resting(sw):
-		var ex = S.dirS.ex
+		var ex = DirBrawl.exOf(S)
 		if restRule(S) != "" or int(sw.age) >= int(cfg().stallTicks):   # (a swing the law has all but stopped lets the next one come)
 			SimSwing.rest(S, int(cfg().restOut))
 		elif ex != null and DirBrawl.isBrawl(ex) and sw.cause != "small" and sw.cause != "brawl" and float(sw.rate) > float(SimSwing.data().causes.brawl.peak):

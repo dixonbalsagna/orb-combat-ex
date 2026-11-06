@@ -11,7 +11,10 @@ extends RefCounted
 ## are constant for the match (S.fieldRecs). Reads are pure functions of the records and the field. Off gen 3 nothing here runs. Lakes beyond the ring's neighbourhood are not planned: water out of a swing's path.
 
 const BOX: float = 1024.0
-const BIG: float = 2048.0           # a record reaching further than this is scanned every read (a few), not listed in the grid
+const BIG: float = 2048.0           # a record reaching further than this is not in the fine grid
+const BOX2: float = 4096.0          # ... but in a coarse one (a platform is a few thousand units across: a point is in one or two of them, not scanned against all fifty)
+const BIG_MAX: float = 16384.0      # a record reaching further than this is scanned every read (none today)
+static var scanBig: bool = false    # tests only: every record past BIG at every read, as before the coarse grid (rec_check)
 const MAX_NODES: int = 8000         # a lake's flood stops here (a basin that large is a sea)
 const BAND: float = 9000.0          # rivers are planned within this lateral distance of the ring
 
@@ -24,6 +27,10 @@ static func _R() -> float:
 
 static func _key(ix: int, iy: int, iz: int) -> int:
 	return ((ix + 64) * 128 + (iy + 64)) * 128 + (iz + 64)
+
+
+static func _box2(v: float) -> int:
+	return int(floor(v / BOX2))
 
 
 static func _box(v: float) -> int:
@@ -231,6 +238,8 @@ static func _index(S) -> Dictionary:
 	if ent.is_empty() or not is_same(ent.recs, S.fieldRecs) or int(ent.n) != S.fieldRecs.size():   # the records grow while a match is planned (pads after platforms): the index follows the array
 		var grid: Dictionary = {}
 		var big: Array = []
+		var bgrid: Dictionary = {}
+		var wide: Array = []        # every record past BIG: what scanBig reads
 		var R: float = _R()
 		for k in range(S.fieldRecs.size()):
 			var rec: Dictionary = S.fieldRecs[k]
@@ -239,7 +248,22 @@ static func _index(S) -> Dictionary:
 				c = [rec.get("px", 0.0), rec.get("py", 0.0), rec.get("pz", 0.0)]
 			var reach: float = float(rec.get("r", 0.0)) + float(rec.get("blend", 0.0))
 			if reach > BIG:
+				wide.append(k)
+			if reach > BIG_MAX:
 				big.append(k)
+				continue
+			if reach > BIG:
+				var bx: float = c[0] * R
+				var by: float = c[1] * R
+				var bz: float = c[2] * R
+				var far: float = (reach + float(rec.get("bs", 0.0))) * 1.05   # all it can reach, as a scan read it: a bank across the street, and the sphere's bulge off its plane
+				for ix2 in range(_box2(bx - far), _box2(bx + far) + 1):
+					for iy2 in range(_box2(by - far), _box2(by + far) + 1):
+						for iz2 in range(_box2(bz - far), _box2(bz + far) + 1):
+							var key2: int = _key(ix2, iy2, iz2)
+							var lst2: PackedInt32Array = bgrid.get(key2, PackedInt32Array())
+							lst2.append(k)
+							bgrid[key2] = lst2
 				continue
 			var cx: float = c[0] * R
 			var cy: float = c[1] * R
@@ -251,7 +275,7 @@ static func _index(S) -> Dictionary:
 						var lst: PackedInt32Array = grid.get(key, PackedInt32Array())
 						lst.append(k)
 						grid[key] = lst
-		ent = {"recs": S.fieldRecs, "n": S.fieldRecs.size(), "grid": grid, "big": big}
+		ent = {"recs": S.fieldRecs, "n": S.fieldRecs.size(), "grid": grid, "bgrid": bgrid, "big": big, "merged": {}, "wide": wide}
 		if _ix.size() > 16:
 			_ix.clear()
 		_ix[id] = ent
@@ -265,15 +289,33 @@ static func near(S, qx: float, qy: float, qz: float) -> Array:
 	var ent: Dictionary = _index(S)
 	var R: float = _R()
 	var key: int = _key(_box(qx * R), _box(qy * R), _box(qz * R))
+	if scanBig:
+		var all := PackedInt32Array()
+		if ent.grid.has(key):
+			all.append_array(ent.grid[key])
+		all.append_array(PackedInt32Array(ent.wide))
+		all.sort()
+		var was: Array = []
+		for k in all:
+			was.append(S.fieldRecs[k])
+		return was
+	var hit = ent.merged.get(key)   # the box records and the big ones, in plan order, made once a box and index: the ground is read hundreds of times a tick
+	if hit != null:
+		return hit
 	var ids := PackedInt32Array()
 	if ent.grid.has(key):
 		ids.append_array(ent.grid[key])
+	var key2: int = _key(_box2(qx * R), _box2(qy * R), _box2(qz * R))
+	var coarse: bool = ent.bgrid.has(key2)
+	if coarse:
+		ids.append_array(ent.bgrid[key2])
 	ids.append_array(PackedInt32Array(ent.big))
-	if ent.big.size() > 0:
+	if coarse or ent.big.size() > 0:
 		ids.sort()   # the records apply in the order they were planned (a platform before the pads on it), whichever list holds them
 	var out: Array = []
 	for k in ids:
 		out.append(S.fieldRecs[k])
+	ent.merged[key] = out
 	return out
 
 

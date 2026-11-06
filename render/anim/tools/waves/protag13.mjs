@@ -3,7 +3,7 @@
 // and the fighter's `more` list names this wave. His own sketches (open hands, palms and blades, heels, round arcs, the edge of the foot). Legal's lines (zip-screen.md): a palm is a blow only, never
 // chambered at a hip and never held up after it; a rising blow keeps his feet down and no turn; a dropping blow is one fist or blade, lowered at once (hold_t 1, ci_end 4); no leap, no clasp.
 //
-// The class's timing (rulings section 2): a quick blow lands on tick 12 from the request, a 10-tick wind-up; it is a flick, one motion. A charged blow is held at its CHAMBER by the stick (the held
+// The class's timing (rulings section 2): a quick blow lands on tick 9 from the request, a 7-tick wind-up (Game Design's ruling, data/director/stick.json windTicks 7; it was 10); it is a flick, one motion. A charged blow is held at its CHAMBER by the stick (the held
 // layer draws the key set's first key while the sim waits), so each charged piece's chamber IS the charge stance for its direction, and it has to read without a marker: the silhouette says
 // which way the blow goes. The release is a 4-tick blow that blends out of that chamber.
 //   quick   up flick_rise      hand palm, rise, jaw       down scythe_sweep   foot edge, arc out, shins       toward heel_thrust  hand palm, line, gut       away wheel_blade  hand blade, arc out, chest
@@ -15,7 +15,7 @@ const OPEN = { hands: { r: 'open', l: 'open' } };
 const FIST = { hands: { r: 'fist', l: 'open' } };
 const LEGAL_PALM = ['hands_open_or_claw', 'not_at_hip', 'no_leap'];
 
-const Q = { load: 10, follow: 4, recover: 4 };   // the quick blow: the 10-tick wind-up, 14 from the request with the recovery
+const Q = { load: 7, follow: 4, recover: 4 };   // the quick blow: the 7-tick wind-up, 11 from the request with the recovery
 const C = { load: 4, follow: 6, recover: 10 };   // the charged release: the 4-tick blow out of the held chamber
 
 const NEW = {

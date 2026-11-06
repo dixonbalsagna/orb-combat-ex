@@ -7,6 +7,11 @@
 //   node tools/flash/signature-gate.mjs --check [--file <signature-gate.json>] [--pin <full sha>]
 //        exit 1 unless the record is for the pin (tools/site.json "pin" by default) and reduced is within the limits (or the record is the standing pin's grandfathered one).
 //   tools/check-site-interim.mjs runs the same check on the owner-approved site, so a pin moved without a reading fails the deploy.
+//   node tools/flash/signature-gate.mjs --record-child <child summary.json> --pin-summary <pin summary.json> --commit <child sha> --of <pin sha> [--file <f>] [--date YYYY-MM-DD]
+//        Legal RL-209 (b): a WORDS-ONLY CHILD of the grandfathered pin (tools/pin-child.mjs) inherits the pin's grandfathering when its signature and collapse clips, both modes, read no worse than the pin's on
+//        EVERY reading (each size and scale of the four, each of primary, red, area-15% and the two-second memory). It REFUSES (exit 1, nothing written) when one is worse or missing. Both summaries are run-pixels
+//        summary.json files (their rows carry `readings`, tools/flash/readings.mjs). Writes this file for the child: grandfathered, the pin's worst-of-four numbers as `reduced` and `normal`, the pin's and the
+//        child's readings, and the engine-flip entry (RL-202) re-pointed at the child.
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -39,6 +44,44 @@ export function worseThan(reduced, max = REDUCED_MAX) {
   return Object.keys(max).filter((k) => reduced[k] > max[k]).map((k) => `${k} ${reduced[k]} (over ${max[k]})`);
 }
 
+/** The clips a words-only child must read no worse than its pin on (RL-209 (b)): the signature and the collapse clips, both modes. */
+export const CHILD_CLIPS = ['signature-normal', 'signature-reduced', 'collapse-normal', 'collapse-reduced'];
+const NUMBER_KEYS = ['primary', 'red', 'area15', 'twoSec'];
+
+/** The readings of a summary row, [{ size, scale, primary, red, area15, twoSec }], or null when the row has none (RL-209: four readings a clip). Pure. */
+export function readingsOf(row) {
+  return row && !row.error && Array.isArray(row.readings) && row.readings.length ? row.readings : null;
+}
+
+/** Why a child does not inherit its pin's grandfathering: every reading of every clip must exist and be no worse than the pin's. An array; empty when it does. Pure. */
+export function childProblems(childRows, pinRows) {
+  const out = [];
+  const by = (rows) => new Map((rows || []).map((r) => [r.id, r]));
+  const c = by(childRows), p = by(pinRows);
+  for (const id of CHILD_CLIPS) {
+    const pr = readingsOf(p.get(id)), cr = readingsOf(c.get(id));
+    if (!pr) { out.push(`${id}: the pin's summary has no readings for it`); continue; }
+    if (!cr) { out.push(`${id}: the child's summary has no readings for it (a missing clip is not a pass)`); continue; }
+    for (const a of pr) {
+      const b = cr.find((x) => x.size === a.size && x.scale === a.scale);
+      if (!b) { out.push(`${id}: the child has no reading at ${a.size} scale ${a.scale}`); continue; }
+      for (const k of NUMBER_KEYS) {
+        const pv = typeof a[k] === 'number' ? a[k] : 0, cv = typeof b[k] === 'number' ? b[k] : 0;
+        if (cv > pv) out.push(`${id} at ${a.size} scale ${a.scale}: ${k} reads ${cv} on the child, worse than the pin's ${pv}`);
+      }
+    }
+  }
+  return out;
+}
+
+/** The worst-of-four numbers of a row, the way a record keeps them: { primary, area15, twoSec } (the same as readingOf of its merged result). Pure. */
+export function worstNumbers(row) {
+  const rs = readingsOf(row);
+  if (!rs) return null;
+  const max = (k) => Math.max(...rs.map((x) => (typeof x[k] === 'number' ? x[k] : 0)));
+  return { primary: max('primary'), area15: max('area15'), twoSec: max('twoSec') };
+}
+
 /** The text of a reading, for a report line. */
 export function readingText(x) { return x ? `${x.primary} / ${x.area15} / ${x.twoSec}` : 'not read'; }
 
@@ -66,6 +109,30 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     const p = gateProblems(record, pin);
     if (p.length) { for (const m of p) console.error(`signature gate FAILED: ${m}`); process.exit(1); }
     console.log(`signature gate ok: ${String(pin).slice(0, 8)}; reduced ${readingText(record.reduced)} (limit 2.5 / 3 / 2)${record.grandfathered ? ' (grandfathered: the pin Legal ruled on before the condition)' : ''}`);
+    process.exit(0);
+  }
+  if (args.includes('--record-child')) {
+    const childFile = opt('--record-child'), pinFile = opt('--pin-summary'), child = opt('--commit'), of = opt('--of');
+    if (!childFile || !pinFile || !/^[0-9a-f]{40}$/.test(String(child)) || !/^[0-9a-f]{40}$/.test(String(of))) { console.error('usage: node tools/flash/signature-gate.mjs --record-child <child summary.json> --pin-summary <pin summary.json> --commit <child sha> --of <pin sha> [--file <f>] [--date YYYY-MM-DD]'); process.exit(2); }
+    let childRows, pinRows;
+    try { childRows = JSON.parse(readFileSync(resolve(childFile), 'utf8')); pinRows = JSON.parse(readFileSync(resolve(pinFile), 'utf8')); } catch (e) { console.error(`signature gate: a summary could not be read: ${e.message}`); process.exit(2); }
+    const bad = childProblems(childRows, pinRows);
+    if (bad.length) { for (const m of bad) console.error(`signature gate: ${m}`); console.error(`signature gate: the child ${child.slice(0, 8)} reads worse than its pin ${of.slice(0, 8)} or has a reading missing; nothing recorded (it does not inherit the grandfathering)`); process.exit(1); }
+    const prevC = existsSync(file) ? (() => { try { return JSON.parse(readFileSync(file, 'utf8')); } catch { return null; } })() : null;
+    const table = (rows) => Object.fromEntries(CHILD_CLIPS.map((id) => [id, readingsOf(rows.find((r) => r.id === id)).map(({ size, scale, primary, red, area15, twoSec }) => ({ size, scale, primary, red, area15, twoSec }))]));
+    const date = opt('--date', new Date().toISOString().slice(0, 10));
+    const pinSig = (id) => worstNumbers(pinRows.find((r) => r.id === id));
+    const recordC = {
+      _why: prevC && prevC._why ? prevC._why : 'The signature clip read on the pin (Legal RL-195 condition (a)); written by tools/flash/signature-gate.mjs --record, checked by tools/check-site-interim.mjs.',
+      commit: child, date, grandfathered: true,
+      child: { of, ruling: 'RL-209', words: 'tools/pin-child.json', clips: CHILD_CLIPS },
+      _grandfathered: `The words-only child ${child.slice(0, 8)} of the live pin ${of.slice(0, 8)} (Legal RL-209 (b)): the pin's own code plus only the cleared ui/data words. It inherits the pin's grandfathering because every reading (both sizes, both scales) of the signature and collapse clips, both modes, is no worse than the pin's. \`reduced\` and \`normal\` are the PIN's worst of four, kept as measured; the next pin has to pass the limits and replaces this record.`,
+      limits: REDUCED_MAX, reduced: pinSig('signature-reduced'), normal: pinSig('signature-normal'),
+      pinReadings: table(pinRows), childReadings: table(childRows),
+    };
+    if (prevC && prevC.engineFlip) recordC.engineFlip = { ...prevC.engineFlip, commit: child };
+    writeFileSync(file, JSON.stringify(recordC, null, 2) + '\n');
+    console.log(`signature gate: recorded the child ${child.slice(0, 8)} of ${of.slice(0, 8)}: no reading of the signature or collapse clips, either mode, is worse than the pin's (reduced signature ${readingText(recordC.reduced)}, normal ${readingText(recordC.normal)}, the pin's worst of four)`);
     process.exit(0);
   }
   const summary = opt('--record');

@@ -1,8 +1,8 @@
 class_name DirEnding
 extends RefCounted
 ## How a match always ends (docs/design/spec-wounds.md 1b-end). A KO only comes from a finisher, and hit points end nothing.
-## - A player with no input for idleSec: the wear he takes is idleWearMul times, and on the brink he's opened, so his rival's next decisive
-##   win is the finisher, unless the rival's idle too. Any input ends it at once. An AI is never idle.
+## - A player with no input for idleSec: the wear he takes is idleWearMul times. After pushSec, on the brink he's opened, so his rival's next
+##   decisive win is the finisher, unless the rival's idle too. Any input ends it at once. An AI is never idle.
 ## - The time cap (finishers.json timeCapAt): both go on the brink, Rallies stop, and every decisive win is a finisher (DirExchange.decisive).
 ## - lastAt: the fighter with less wear gets his finisher, with no contest; level wear with anyone playing breaks by seed. Nobody's played
 ##   since the cap, and wear level: a no-contest, and a cue.
@@ -55,6 +55,11 @@ static func idle(f) -> bool:
 	return on() and f.ai == null and _g(f, E_IDLE) >= int(float(cfg().idleSec) * DirData.TICKS_PER_SEC)
 
 
+## Long enough that the finisher's pushed on him.
+static func pushed(f) -> bool:
+	return on() and f.ai == null and _g(f, E_IDLE) >= int(float(cfg().pushSec) * DirData.TICKS_PER_SEC)
+
+
 ## SimWounds.addWear's factor.
 static func wearMul(f) -> float:
 	return float(cfg().idleWearMul) if idle(f) else 1.0
@@ -102,7 +107,7 @@ static func tick(S: SimState) -> void:
 	for k in [0, 1]:
 		var f = pair[k]
 		var o = pair[1 - k]
-		if idle(f) and f.brink and not f.brinkOpen and not idle(o):
+		if pushed(f) and f.brink and not f.brinkOpen and not idle(o):
 			DirExchange._openBrink(S, o, f)
 	if not S.game.timeCap:
 		return

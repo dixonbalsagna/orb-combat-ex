@@ -10,6 +10,7 @@
     "schema": { "const": "biomes.field/1" },
     "_about": { "type": "string" },
     "cells": { "type": "integer", "minimum": 4, "maximum": 1200, "description": "Cells along a face's edge: the canonical lattice (38,400 / cells units a cell). A multiple of bakeStride." },
+    "warm": { "type": "object", "additionalProperties": false, "required": ["radius"], "description": "Nodes read ahead (WorldField.warmNear; docs/world/node-warm.md): at a match start every canonical node within radius units of the touch-down is read, so a view or a ring that later reads that ground finds it (a node is a pure function of the seed and the data: the result of nothing changes, only when the cost is paid; about 41 microseconds a cold node: 8,000 units is about 0.3 s, 16,000 about 1.2 s). 0 is off.", "properties": { "radius": { "type": "number", "minimum": 0, "maximum": 40000 } } },
     "bakeStride": { "type": "integer", "minimum": 1, "maximum": 16, "description": "The bake is every bakeStride-th node of the canonical lattice." },
     "plans": {
       "type": "object",

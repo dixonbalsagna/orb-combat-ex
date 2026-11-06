@@ -11,6 +11,27 @@ Netcode, 2026-11-01. It combines Simulation's, Game Design's, Camera's and Contr
 - **"Each player's own record of the planet" becomes each player's own opponent and camera,** on one shared planet with all four on one line. The world turns while the pairs are close and rests while they're apart, which in Simulation's stand-in is about four-fifths of the time.
 - **Two pieces are ready to use now:** a check that the two PCs' processors agree, with no network (`docs/net/two-pc-check.md`), and a plain 1v1 between them that's built but has never run (`docs/net/lan-v1.md`). The firewall click needs Orb's real yes.
 
+## Where it stands (Orb's overnight order, 2026-11-01: "the two player 2v2 versus over LAN")
+
+**Built and passing, nobody has played it:** each PC's player in their own fight, against a computer fighter, on one globe, over one link. **What it doesn't have yet is the part that makes it a 2v2: the two fights can't touch, and neither PC draws the other fight.**
+
+| Piece | Who | State |
+| :--- | :--- | :--- |
+| Two fights on one line (`{"fights": 2}`), holds per fight, turns rest while apart, trading bodies | Simulation | On main (`docs/architecture/fight-swap.md`) |
+| A player in each fight: the session maps its two players to slots 0 and 2, and the sim's AI plays 1 and 3 (`NetSession.slotOf`) | Netcode | **Done.** `rollback_check --setup=fights2` |
+| **Each PC holds its own fight in the state between ticks** (`--lan-2v2`, `NetLan`). The step puts fight 0 in place itself, and the hash and digest leave the state as they found it (Simulation's cross-fights), so to the camera, HUD, pad and drawing it's a plain 1v1 against the computer. **So Camera's pair view isn't needed for a first match** | Netcode | **Done.** `lan_check`'s two-fight rows |
+| A late input moving someone across the line where turns rest | Netcode | **Done.** `swing_check`'s apart rows, and it did happen under test |
+| **A trade** (`SimStage.trade`, for Encounter's "I'll take him"): a player's inputs follow his body into the other fight (`NetSession.slotNow`, by the body's keys), his PC shows the fight he's now in, and its pad takes his place in the pair. **With hits across fights on, a trade is between partners only,** so the checks trade the two players | Netcode | **Done, ahead of Encounter's tag.** `rollback_check --setup=fights2 --trade-at=0` and `--trade-at=150 --seeds=1`, `lan_check`'s trade rows and their control, with hits across fights off and on. A trade is refused while either fight is busy, so a mid-match one needs the right seed |
+| **Blows, shots and beams that cross fights** | Simulation, Encounter | **Simulation's model is parked** (`docs/architecture/pending/cross-fights/`, off by its switch): teams by starting slot, a shot or beam reaches an enemy of the other fight, a blow lands on his fight's next live tick. **Encounter decides who strikes across and when, so until then it's still two 1v1s on one planet.** My checks pass on it with the switch off and on |
+| **Drawing the other fight's two bodies** | Rendering | Not started. Today they're invisible, on either PC |
+| What happens when one fight ends: a KO puts that fighter out, the match ends when a team has nobody standing, and the two standing rejoin as one pair | Simulation, Encounter | **Simulation's sim part is parked** (`docs/architecture/pending/cross-end/`, behind the cross switch). **Netcode's side is parked on it** (`docs/net/pending/two-fights-end/`): a PC whose player is out shows his partner's fight and says "You're out", and "The match is over" when it is. Hosts ask `SimCore.ended`, not the KO |
+| The sends that bring the fights together, the brink's call | Encounter | Ruled, not built |
+| Focus: picks itself, D-pad to override, 3 more input bits | Controls, Netcode | Not needed until blows cross. **The bits are mine when it's time: 6 spare** |
+| The statics audit for two fights (`DirAlchemy`'s memo keyed by match, tick and key) | Encounter | Not done. Two fights on one tick can read each other's memo: the checks here would catch it only if it reached the state differently on each PC, which it can't, so it's a rules bug rather than a desync |
+| Replays of two fights | Simulation | In the cross-fights park: every slot is recorded. The two-player straight run uses the recorder and plays its replay back |
+| Its folder's shortcuts | Netcode | **In the folder** (`Host 2v2`, `Join 2v2`), with Legal's RL-241 sentence in its words. Orb alone, one seat on each PC or both |
+| A hold for one body, not the whole fight | Simulation | Not built. It will be `Fighter.stop`, and NetLan's rule for keeping a press back during a freeze then reads this player's own |
+
 ## Who plays whom
 
 | Setup | Network | Everything else |

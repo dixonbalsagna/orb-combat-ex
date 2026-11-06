@@ -18948,6 +18948,73 @@
       "expect": null
     },
     {
+      "id": "anim-wave-keysets-hold-w-valid",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/wave1.keysets.json",
+          "set": {
+            "/keysets/w1.test": {
+              "limb": "hand_r",
+              "target": "head",
+              "weight": "heavy",
+              "hold_w": 0.25,
+              "keys": [
+                {
+                  "role": "load",
+                  "pose": "w1.jab.chamber"
+                },
+                {
+                  "role": "contact",
+                  "pose": "w1.jab.contact"
+                },
+                {
+                  "role": "follow",
+                  "pose": "w1.jab.follow"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-wave-keysets-hold-w-over-one",
+      "schema": "anim-wave-keysets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/wave1.keysets.json",
+          "set": {
+            "/keysets/w1.test": {
+              "limb": "hand_r",
+              "target": "head",
+              "weight": "heavy",
+              "hold_w": 2,
+              "keys": [
+                {
+                  "role": "load",
+                  "pose": "w1.jab.chamber"
+                },
+                {
+                  "role": "contact",
+                  "pose": "w1.jab.contact"
+                },
+                {
+                  "role": "follow",
+                  "pose": "w1.jab.follow"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/keysets/w1.test/hold_w"
+      }
+    },
+    {
       "id": "anim-wave-keysets-variant-name-ok",
       "schema": "anim-wave-keysets.schema.json",
       "mutate": [
@@ -281485,6 +281552,435 @@
       }
     },
     {
+      "id": "vfx-meteor-valid",
+      "schema": "vfx-meteor.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/version": 1
+          },
+          "file": "data/vfx/meteor.json"
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "vfx-meteor-version-required",
+      "schema": "vfx-meteor.schema.json",
+      "mutate": [
+        {
+          "del": [
+            "/version"
+          ],
+          "file": "data/vfx/meteor.json"
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "vfx-meteor-unknown-key",
+      "schema": "vfx-meteor.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/extra": 1
+          },
+          "file": "data/vfx/meteor.json"
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "vfx-meteor-hz-too-fast",
+      "schema": "vfx-meteor.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/frame/hz": 1.5
+          },
+          "file": "data/vfx/meteor.json"
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/frame/hz"
+      }
+    },
+    {
+      "id": "vfx-meteor-hz-calm-too-fast",
+      "schema": "vfx-meteor.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/frame/hz_calm": 0.9
+          },
+          "file": "data/vfx/meteor.json"
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/frame/hz_calm"
+      }
+    },
+    {
+      "id": "vfx-meteor-glow-cap-white",
+      "schema": "vfx-meteor.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/frame/glow_cap": 1
+          },
+          "file": "data/vfx/meteor.json"
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/frame/glow_cap"
+      }
+    },
+    {
+      "id": "vfx-meteor-life-too-short",
+      "schema": "vfx-meteor.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/frame/life_s/0": 1
+          },
+          "file": "data/vfx/meteor.json"
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/frame/life_s/0"
+      }
+    },
+    {
+      "id": "vfx-meteor-cool-five-tiers",
+      "schema": "vfx-meteor.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/cool/tier": [
+              0,
+              0,
+              0.3,
+              0.7,
+              0.9
+            ]
+          },
+          "file": "data/vfx/meteor.json"
+        }
+      ],
+      "expect": {
+        "rule": "maxItems",
+        "pointer": "/cool/tier"
+      }
+    },
+    {
+      "id": "vfx-meteor-row-unknown-key",
+      "schema": "vfx-meteor.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/fighters/rival/spin": 1
+          },
+          "file": "data/vfx/meteor.json"
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/fighters/rival/spin"
+      }
+    },
+    {
+      "id": "vfx-meteor-situation-read-required",
+      "schema": "vfx-meteor.schema.json",
+      "mutate": [
+        {
+          "del": [
+            "/fighters/cyborg/situations/0/read"
+          ],
+          "file": "data/vfx/meteor.json"
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/fighters/cyborg/situations/0"
+      }
+    },
+    {
+      "id": "vfx-perf-valid",
+      "schema": "vfx-perf.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/version": 1
+          },
+          "file": "data/vfx/perf.json"
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "vfx-perf-version-required",
+      "schema": "vfx-perf.schema.json",
+      "mutate": [
+        {
+          "del": [
+            "/version"
+          ],
+          "file": "data/vfx/perf.json"
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "vfx-perf-unknown-key",
+      "schema": "vfx-perf.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/extra": 1
+          },
+          "file": "data/vfx/perf.json"
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "vfx-perf-cap-over-pool",
+      "schema": "vfx-perf.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/debris/cap": 600
+          },
+          "file": "data/vfx/perf.json"
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/debris/cap"
+      }
+    },
+    {
+      "id": "vfx-perf-budget-over-sim",
+      "schema": "vfx-perf.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/debris/spawn_per_tick": 300
+          },
+          "file": "data/vfx/perf.json"
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/debris/spawn_per_tick"
+      }
+    },
+    {
+      "id": "vfx-perf-jobs-zero",
+      "schema": "vfx-perf.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/jobs/per_tick": 0
+          },
+          "file": "data/vfx/perf.json"
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/jobs/per_tick"
+      }
+    },
+    {
+      "id": "vfx-perf-reach-zero",
+      "schema": "vfx-perf.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/far/reach_k": 0
+          },
+          "file": "data/vfx/perf.json"
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/far/reach_k"
+      }
+    },
+    {
+      "id": "vfx-clash-valid",
+      "schema": "vfx-clash.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/version": 1
+          },
+          "file": "data/vfx/clash.json"
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "vfx-clash-version-required",
+      "schema": "vfx-clash.schema.json",
+      "mutate": [
+        {
+          "del": [
+            "/version"
+          ],
+          "file": "data/vfx/clash.json"
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "vfx-clash-unknown-key",
+      "schema": "vfx-clash.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/extra": 1
+          },
+          "file": "data/vfx/clash.json"
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "vfx-clash-ring-too-fast",
+      "schema": "vfx-clash.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/frame/ring_hz": 3
+          },
+          "file": "data/vfx/clash.json"
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/frame/ring_hz"
+      }
+    },
+    {
+      "id": "vfx-clash-ring-calm-too-fast",
+      "schema": "vfx-clash.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/frame/ring_hz_calm": 1.8
+          },
+          "file": "data/vfx/clash.json"
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/frame/ring_hz_calm"
+      }
+    },
+    {
+      "id": "vfx-clash-glow-cap-white",
+      "schema": "vfx-clash.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/frame/glow_cap": 1
+          },
+          "file": "data/vfx/clash.json"
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/frame/glow_cap"
+      }
+    },
+    {
+      "id": "vfx-clash-row-bad-lane",
+      "schema": "vfx-clash.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/fighters/empress/lane": "ivory"
+          },
+          "file": "data/vfx/clash.json"
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/fighters/empress/lane"
+      }
+    },
+    {
+      "id": "vfx-clash-row-unknown-key",
+      "schema": "vfx-clash.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/fighters/rival/spin": 1
+          },
+          "file": "data/vfx/clash.json"
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/fighters/rival/spin"
+      }
+    },
+    {
+      "id": "vfx-clash-situation-read-required",
+      "schema": "vfx-clash.schema.json",
+      "mutate": [
+        {
+          "del": [
+            "/fighters/cyborg/situations/0/read"
+          ],
+          "file": "data/vfx/clash.json"
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/fighters/cyborg/situations/0"
+      }
+    },
+    {
+      "id": "vfx-clash-front-id-range",
+      "schema": "vfx-clash.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/fronts/wall": 9
+          },
+          "file": "data/vfx/clash.json"
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/fronts/wall"
+      }
+    },
+    {
       "id": "art-city-looks-valid",
       "schema": "art-city-looks.schema.json",
       "mutate": [
@@ -294531,6 +295027,83 @@
       }
     },
     {
+      "id": "fight-cross-rejoin-negative",
+      "schema": "fight-cross.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/cross.json",
+          "set": {
+            "/rejoinAfter": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/rejoinAfter"
+      }
+    },
+    {
+      "id": "fight-cross-valid",
+      "schema": "fight-cross.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/cross.json",
+          "set": {
+            "/schema": "fight.cross/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-cross-key-required-enabled",
+      "schema": "fight-cross.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/cross.json",
+          "del": [
+            "/enabled"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-cross-beam-dmg-negative",
+      "schema": "fight-cross.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/cross.json",
+          "set": {
+            "/beam/dmg": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/beam/dmg"
+      }
+    },
+    {
+      "id": "fight-cross-stray-key",
+      "schema": "fight-cross.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/cross.json",
+          "set": {
+            "/stray": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/stray"
+      }
+    },
+    {
       "id": "fight-kick-valid",
       "schema": "fight-kick.schema.json",
       "mutate": [
@@ -299222,6 +299795,67 @@
       "expect": {
         "rule": "xref:anim-recoil-fighter",
         "pointer": "/fighters/RIVAL/cartwheel"
+      }
+    },
+    {
+      "id": "anim-stick-pre-valid",
+      "schema": "anim-stick-pre.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/stick_pre.json",
+          "set": {
+            "/w": 0.5
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-stick-pre-w-too-big",
+      "schema": "anim-stick-pre.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/stick_pre.json",
+          "set": {
+            "/w": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/w"
+      }
+    },
+    {
+      "id": "anim-stick-pre-key-required-dirs",
+      "schema": "anim-stick-pre.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/stick_pre.json",
+          "del": [
+            "/dirs"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-stick-pre-unknown-key",
+      "schema": "anim-stick-pre.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/stick_pre.json",
+          "set": {
+            "/depth_gate": 0.25
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/depth_gate"
       }
     },
     {
@@ -313198,6 +313832,70 @@
       "expect": {
         "rule": "xref:stances-right-stick",
         "pointer": "/withRightStick/0"
+      }
+    },
+    {
+      "id": "camera-swing-peakrate-required",
+      "schema": "camera-swing.schema.json",
+      "mutate": [
+        {
+          "del": [
+            "/peakRate"
+          ],
+          "file": "data/camera/swing.json"
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "camera-swing-unknown-key",
+      "schema": "camera-swing.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/extra": 1
+          },
+          "file": "data/camera/swing.json"
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "camera-swing-peakrate-over",
+      "schema": "camera-swing.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/peakRate": 4
+          },
+          "file": "data/camera/swing.json"
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/peakRate"
+      }
+    },
+    {
+      "id": "camera-swing-share-over",
+      "schema": "camera-swing.schema.json",
+      "mutate": [
+        {
+          "set": {
+            "/splitShare": 1.5
+          },
+          "file": "data/camera/swing.json"
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/splitShare"
       }
     }
   ],

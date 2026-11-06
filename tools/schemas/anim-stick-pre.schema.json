@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-stick-pre",
+  "title": "anim.stickpre/1",
+  "description": "data/anim/stick_pre.json: the right stick's strike drawn before the request starts (docs/animation/stick-pre.md; AnimFighter's pre layer): Controls' hub.strike_pre(slot) publishes the direction while the stick leans in; the layer eases that direction's quick piece's chamber in at w over enter_ticks, lets go over exit_ticks, and lets a pre-read with no request go after stale_ticks. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "w",
+    "enter_ticks",
+    "exit_ticks",
+    "stale_ticks",
+    "dirs"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.stickpre/1"
+    },
+    "w": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "How much of the pose is mixed in at full depth, 0 to 1."
+    },
+    "enter_ticks": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20,
+      "description": "Ticks the pose takes to ease in."
+    },
+    "exit_ticks": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20,
+      "description": "Ticks the pose takes to let go."
+    },
+    "stale_ticks": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 60,
+      "description": "Ticks after which a pre-read with no request is let go."
+    },
+    "dirs": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "up",
+          "down",
+          "toward",
+          "away"
+        ],
+        "properties": {
+          "up": {
+            "type": "string",
+            "pattern": "^(pz|rz)\\.[a-z0-9_]+\\.chamber$",
+            "description": "A chamber pose id of the stick class (pz. or rz.): the direction's quick piece's chamber."
+          },
+          "down": {
+            "type": "string",
+            "pattern": "^(pz|rz)\\.[a-z0-9_]+\\.chamber$",
+            "description": "A chamber pose id of the stick class (pz. or rz.): the direction's quick piece's chamber."
+          },
+          "toward": {
+            "type": "string",
+            "pattern": "^(pz|rz)\\.[a-z0-9_]+\\.chamber$",
+            "description": "A chamber pose id of the stick class (pz. or rz.): the direction's quick piece's chamber."
+          },
+          "away": {
+            "type": "string",
+            "pattern": "^(pz|rz)\\.[a-z0-9_]+\\.chamber$",
+            "description": "A chamber pose id of the stick class (pz. or rz.): the direction's quick piece's chamber."
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        },
+        "description": "One fighter's chamber for each direction (toward and away by his facing)."
+      },
+      "description": "Fighter id to the poses for up, down, toward and away."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

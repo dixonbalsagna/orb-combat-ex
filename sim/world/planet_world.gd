@@ -322,6 +322,8 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
 	if P.gen >= 3 and not sl.circ.has("st"):   # a field world on a whole ring: from here on the sim reads the ground through this great circle (sim/core/field.gd); S.base stays for the builders above and the old renderer at rest
 		S.planetRing = {"seed": seed}   # World's records read the planet by it from the first read; the whole of it is set below
 		SimField.begin(S, seed, sl.circ.u, sl.circ.v, float(WorldPlanet.touchCol()) * SimConst.COL)
+		if WorldField.warmRadius() > 0.0 and S.frame != null:   # the nodes round the touch-down are read now, not by the first frame that needs them (field.json warm.radius; docs/world/node-warm.md)
+			WorldField.warmNear(WorldField.of(P), float(S.frame.px), float(S.frame.py), float(S.frame.pz), WorldField.warmRadius(), 0, {})
 	WorldWater.init(S)
 	if S.frame == null:   # on a field world the lakes are records, read through the line
 		WorldLakes.apply(S, lakes)

@@ -212,6 +212,15 @@ static func _doubleLeft(ex) -> bool:
 
 
 ## True when ex is a brawl.
+## The running exchange, and a fighter's rival: the director's one place for each, for the 2v2 restructure (tools/ratchet-two-fighter.mjs).
+static func exOf(S: SimState):
+	return S.dirS.ex
+
+
+static func rivalOf(S: SimState, f):
+	return SimRoster.opp(S, f)
+
+
 static func isBrawl(ex) -> bool:
 	return ex != null and ex.tpl == TPL
 
@@ -483,6 +492,10 @@ static func over(S: SimState, ex, why: String) -> void:
 static func end(S: SimState, ex, why: String) -> void:
 	if S.dirS.ex != ex:
 		return
+	if bool(cfg().get("pressWait", {}).get("enabled", false)):
+		for f in [ex.A, ex.D]:
+			if _g(f, HELD_P) != 0:
+				_s(f, HELD_P, 0)   # the brawl's end clears a waiting press
 	over(S, ex, why)
 	for b in ex.beats:
 		b.done = true
@@ -815,7 +828,8 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 		DirInterrupt.si(f, DirInterrupt.LANDED, 0)
 		if _g(f, BLOWS) + _g(o, BLOWS) > 0:
 			_newString(S, ex)
-		DirStick.newString(o)
+		if not DirOutside.holdsStun(S, o):
+			DirStick.newString(o)   # (2v2: not while a blow from outside keeps him from being free of the team's blows)
 	var d: int = _closeTicks(f, o)   # the gap it closes on the way: it lands this much later
 	if d > 0 and DirRecoil.counter(S, f):
 		d = 0   # out of his recoil flip (Game Design's 1a): the counter-rush closes the gap at once
@@ -950,6 +964,7 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 	if inFl and wound and not energy and not lau:
 		cell = _mashCell(cell)   # a mashed medium or heavy: the grind or the advance, when Combat's recipes name it
 	DirStance.note(f, args, st)
+	lead = DirStance.circle(S, f, o, args, lead)
 	var piece: String = DirStick.piece(S, f, args) if args.has("stick") else ""   # first, so a medium's draw doesn't take a place in his last two
 	if piece == "" and bolt and _g(f, BOLT_N) >= 1:
 		piece = _boltRun(S, f, args)
@@ -1219,6 +1234,35 @@ static func _tradeTick(S: SimState, ex) -> void:
 
 # ---------------------------------------------------------------- a blow lands
 
+## True when a sure blow waits a tick (QA's 10.reach): a rival carried off as it comes, by a recoil flip out of the stagger,
+## can leave it beyond contact.reach even after a closing step. He takes the step, and the blow comes a tick later, for at
+## most give.sureWaitTicks; a blow still out of reach then meets nothing, as any other from out there. A double hit's and a
+## zip's keep to their own rules. In reach, nothing here runs.
+static func sureWaits(S: SimState, ex, b) -> bool:
+	var a = b.args
+	if not bool(a.get("sure", false)) or bool(a.get("double", false)) or bool(a.get("zip", false)) or ex.branch != "":
+		return false
+	var f = ex.A if a.a == "A" else ex.D
+	var o = ex.D if a.a == "A" else ex.A
+	var ct: Dictionary = DirData.contact()
+	if absf(SimWrap.sdx(f.x, o.x)) <= float(ct.reach) or f.stunTicks > 0 or f.state != "locked" or o.state != "locked":
+		return false
+	var most: int = int(cfg().give.sureWaitTicks)
+	if most <= 0:
+		return false
+	var d: float = absf(SimWrap.sdx(f.x, o.x)) if (_lg(o, LA_POP_UNTIL) > S.tick or _lg(f, LA_POP_UNTIL) > S.tick) else DirBands.dist(f, o)
+	if d > float(ct.reach) * float(ct.placementReaches):
+		return false   # past the strike's own limit: contact's miss, as it was
+	_stepIn(S, ex, f, o, 1)
+	var waited: int = int(a.get("waited", 0))
+	if absf(SimWrap.sdx(f.x, o.x)) <= float(ct.reach) or waited >= most:
+		a["stepped"] = true
+		return false
+	a["waited"] = waited + 1
+	DirExchange.schedule(ex, ex.t + 0.75 / DirData.TICKS_PER_SEC, "strike", a)
+	return true
+
+
 ## A blow of the brawl lands (DirExchange.runBeat, in place of the planned strike): the reach, read as it lands; the
 ## strike; then what it did. A wound blow has a reach past striking distance (medium.reachBh, heavy.reachBh, and up to
 ## heavy.charge.reachBh as a charge fills); out of it, it misses, and he is open for its recoverWhiff. A blow that
@@ -1246,6 +1290,7 @@ static func contact(S: SimState, ex, b) -> void:
 	if ex.branch != "" or (f.stunTicks > 0 and not bool(a.get("double", false))) or f.state != "locked" or o.state != "locked":
 		if wound:
 			_s(f, FREE_AT, S.tick + int(_wcfg(kind).recoverWhiff))   # a wound blow that met nothing: the punish
+			DirStick.missed(S, f, a)
 			if wind:
 				_wEnd(S, f, kind, 3)
 		if energy != "":
@@ -1257,21 +1302,25 @@ static func contact(S: SimState, ex, b) -> void:
 	# The reach, read as it lands. A blow by rule (the double hit's, a sure one, a zip's) keeps the strike's own limit.
 	var ct: Dictionary = DirData.contact()
 	var far: float = (absf(SimWrap.sdx(f.x, o.x)) if (_lg(o, LA_POP_UNTIL) > S.tick or _lg(f, LA_POP_UNTIL) > S.tick) else DirBands.dist(f, o)) - float(ct.offset) + (0.0 if special else float(_g(f, PRE)) / 16.0)   # past striking distance, with what its own step through its reach has covered added back
-	if _g(f, GAPV_ON) == 1 and wound and not special and not DirArc.banked(S, f):   # a banked stun: he's where the stick's carry put him, in reach, and no gap counts
+	if _g(f, GAPV_ON) == 1 and wound and not special and not DirArc.banked(S, f) and not a.has("circle") and not chargeCloses(a):   # a banked stun: he's where the stick's carry put him, in reach, and no gap counts
 		far = float(_g(f, GAPV)) / 16.0   # a blow with a wind-up: the gap as counted since it began (tick, _giveStep)
 	_s(f, PRE, 0)
 	_s(f, GAPV_ON, 0)
 	var reach: float = (float(ct.reach) * float(ct.placementReaches) - float(ct.offset)) if special else (_reachOf(a, kind) - float(c.give.edgeBh)) * DirInterrupt.BH
 	if far > reach:   # the very edge of a reach (give.edgeBh) doesn't connect
 		_miss(S, ex, f, o, kind, wind, energy)
+		DirStick.missed(S, f, a)
 		return
-	_stepIn(S, ex, f, o, 1)   # he is placed for the contact, and never further than a closing step
+	if not a.has("stepped"):
+		_stepIn(S, ex, f, o, 1)   # he is placed for the contact, and never further than a closing step
+	a.erase("stepped")   # sureWaits has placed him this tick
 	var zipOnly: bool = bool(a.get("zip", false)) and not bool(a.get("sure", false)) and not bool(a.get("double", false))
-	if (not special or zipOnly) and absf(SimWrap.sdx(f.x, o.x)) > float(ct.reach):
+	if (not special or zipOnly or a.has("waited")) and absf(SimWrap.sdx(f.x, o.x)) > float(ct.reach):
 		# Placed, the two still stand beyond the strike's reach: it meets nothing. No damaging strike of a brawl lands
 		# from beyond contact.reach of horizontal distance, whatever its own reach said before the step. A zip's blow
 		# keeps to it too: its exit is then read as for a blow that did not land.
 		_miss(S, ex, f, o, kind, wind, energy, true)
+		DirStick.missed(S, f, a)
 		if zipOnly and S.dirS.ex == ex and ex.branch == "" and not _setPiece(ex):
 			DirZip.onBlow(S, ex, f, o, a, 0)
 		return
@@ -1307,6 +1356,14 @@ static func contact(S: SimState, ex, b) -> void:
 				_ls(o, LA_LHIT_AT, _now(S))   # the newest light it took: the next must land within armourLightTicks of it
 		elif kind == MEDIUM and now - _g(o, HOLD_AT) >= int(c.heavy.armour.mediumUntilTicks):
 			armour = true
+	if not armour and not special and DirStick.armoured(S, o):   # a charge on the stick has B's armour (power-scale.md section 2)
+		if not wound:
+			armour = true
+			dmg *= float(c.heavy.armour.lightMul)
+		elif kind == MEDIUM and DirStick.mediumHolds(S, o):
+			armour = true
+	if not armour and not special and not wound and DirStance.circling(o):
+		armour = true   # a light doesn't stop the circle (press-decides.md section 4)
 	if kind == MEDIUM and energy == "" and not special and (ex.sD if o == ex.D else ex.sA) == 1.0:
 		dmg *= float(c.medium.guardChipMul)   # a medium on a guard chips double, and tires it twice as fast
 	var landed0: int = DirInterrupt.gi(f, DirInterrupt.LANDED)
@@ -1382,6 +1439,7 @@ static func contact(S: SimState, ex, b) -> void:
 		if energy != "":
 			_eLand(S, ex, f, o, energy, "armour")
 		return   # it met a heavy's armour: its damage, and nothing more (no run, no reel, no close)
+	DirStick.holdHit(S, o)
 	if energy != "":
 		_eLand(S, ex, f, o, energy, "hit", energy == "blast" and _g(f, RUN) >= RUN_U * int(c.energy.reach.blast.enderRun))
 	# A wound blow ends the wind-up it lands on: a medium's always, a heavy's before its armour holds a medium.
@@ -1468,6 +1526,7 @@ static func _reel(S: SimState, f, ticks: int) -> void:
 ## f was staggered: his blow on its way is lost, and his string is over.
 static func _drop(S: SimState, ex, f) -> void:
 	var role: String = "A" if f == ex.A else "D"
+	DirStance.dropped(f)
 	for b in ex.beats:
 		if not b.done and b.op == "strike" and b.args != null and b.args.get("brawl", false) and String(b.args.a) == role:
 			b.done = true
@@ -3166,7 +3225,7 @@ static func winding(S: SimState, f) -> Dictionary:
 	var n: int = now - _g(f, HOLD_AT)
 	var ch: Dictionary = cfg().heavy.charge
 	var share: float = DirArc.chargeShare(S, f, ch, n) if (kind == BIG and _g(f, CHG) > 0) else 0.0
-	return {"strength": STRENGTH[kind], "n": maxi(0, n), "left": (_g(f, CONTACT) - now) if _g(f, LINE) == 1 else -1, "armoured": kind == BIG and _g(f, FLAV) == 0, "charge": share,
+	return {"strength": STRENGTH[kind], "n": maxi(0, n), "left": (_g(f, CONTACT) - now) if _g(f, LINE) == 1 else -1, "armoured": (kind == BIG and _g(f, FLAV) == 0) or DirStick.armoured(S, f), "charge": share,
 		"launcher": _g(f, FLAV) == 2, "energy": _g(f, FLAV) == 1}
 
 
@@ -3265,6 +3324,9 @@ static func _letGo(S: SimState, ex, f, lead: int, charge: float) -> void:
 			b.args["dmg"] = lerpf(float(ch.worth[0]), float(ch.worth[1]), charge) * _unit()
 			if charge >= 1.0:
 				DirInterrupt.si(f, DirInterrupt.PHRASE_P, DirInterrupt.gi(f, DirInterrupt.PHRASE_P) | (DirAlchemy.HELD << 8))   # held to full: a launch's earner
+		if charge >= 0.0:
+			var cc: Dictionary = c.get("chargeClose", {})
+			lead = closeIn(S, f, o, float(cc.get("fullBh" if charge >= 1.0 else "firstBh", 0.0)), lead)
 		b.t = ex.t + (float(lead) - 0.25) / DirData.TICKS_PER_SEC
 		_s(f, LINE, 1)
 		_s(f, CHG, 3)
@@ -3275,6 +3337,45 @@ static func _letGo(S: SimState, ex, f, lead: int, charge: float) -> void:
 		e.dur = float(lead)
 		e.x = maxf(0.0, charge)
 		return
+
+
+## A released charge closes the gap (chargeClose.enabled; press-decides.md section 2): it travels up to `bh` body heights to him, over at most
+## maxTicks, so stepping back doesn't beat it. Returns the live ticks to its contact: `lead` when it doesn't need to travel or can't reach.
+static func closeIn(S: SimState, f, o, bh: float, lead: int) -> int:
+	var cc: Dictionary = cfg().get("chargeClose", {})
+	if not bool(cc.get("enabled", false)) or bh <= 0.0:
+		return lead
+	var gap: float = DirBands.dist(f, o) - float(DirData.contact().offset)
+	if gap <= 0.0 or gap > bh * DirInterrupt.BH:
+		return lead
+	var most: float = float(cc.fullBh) * DirInterrupt.BH
+	var ticks: int = clampi(int(ceil(gap / (most / float(cc.maxTicks)))), lead, int(cc.maxTicks))
+	var r := SimState.Rush.new()
+	r.tgt = o
+	r.off = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(o.x, f.x)), -f.face) * float(DirData.contact().offset)
+	r.end = S.T + float(ticks) * SimConst.DT
+	f.rush = r
+	_s(f, GAPV_ON, 0)   # it's at him: what the rival gave on the way no longer counts
+	return ticks
+
+
+static func chargeCloses(a: Dictionary) -> bool:
+	return bool(cfg().get("chargeClose", {}).get("enabled", false)) and (bool(a.get("charged", false)) or int(a.get("stickL", 0)) >= 2)
+
+
+## A press made while a stun holds him (SimControl, before the stun clears it): with pressWait on it's told, so no press is silent. It doesn't
+## wait: Game Design's rule clears a press in a stun.
+static func pressInStun(S: SimState, f, i) -> void:
+	if f.ai != null or not (i.light or i.heavy or i.sig) or not bool(cfg().get("pressWait", {}).get("enabled", false)):
+		return
+	var a = _ev(S, f, "press_ack", "stunned", _cellOf(2 if i.sig else (1 if i.heavy else 0)))
+	a.n = S.tick
+
+
+## One rule for B (oneRuleB.enabled; press-decides.md section 1): how long it was held decides, in a brawl or starting one. A tap staggers, a
+## tap with B lit is the launcher, past the first flash a knock-back, the full flash a send. Flow, strings and blows taken no longer decide.
+static func oneRule() -> bool:
+	return bool(cfg().get("oneRuleB", {}).get("enabled", false))
 
 
 ## A heavy landed clean. A tap staggers him in place. The launcher launches him when a launch is ready; while it
@@ -3316,6 +3417,9 @@ static func _bigLanded(S: SimState, ex, f, o, a) -> void:
 				_send(S, ex, f, o, int(a.get("aim", 0)), "a heavy charged to full", 1.0)
 		else:
 			_knock(S, ex, f, o, 0.0, int(a.get("aim", 0)))
+		return
+	if oneRule():
+		_stagger(S, ex, f, o, int(c.heavy.staggerTicks), "heavy")   # one rule for B: a tap is a stagger, always (press-decides.md section 1)
 		return
 	if DirRecoil.heavyRecoil(S, ex, f, o):
 		return   # Game Design's 1a: a clean tapped heavy recoils him 1.5 bh, in place of the stagger
@@ -3697,13 +3801,20 @@ static func tick(S: SimState, ex) -> void:
 		if (hp & 7) > 1 and _g(f, LINE) == 0 and not _wound(_g(f, KIND)):
 			_s(f, FREE_AT, mini(_g(f, FREE_AT), _g(f, LAND_AT) + int(c.light.recover)))   # a wound blow kept behind a light: the mix-up
 		if hp != 0:
-			if S.tick - _g(f, HELD_AT) > int(c.heldPressTicks) and not ((hp & 7) == 3 and DirArc.banked(S, f)):   # (a B in a banked stun waits for his line: the stick's recovery is longer than the hold)
+			var pw: bool = bool(c.get("pressWait", {}).get("enabled", false))
+			if pw and f.stunTicks > 0:
+				_s(f, HELD_P, 0)   # a stun clears it, so a press never comes out long after its moment (press-decides.md section 3)
+				var st0 = _ev(S, f, "press_ack", "lapsed", _cellOf((hp & 7) - 1))
+				st0.n = _g(f, HELD_AT)
+				st0.text = "stunned"
+			elif S.tick - _g(f, HELD_AT) > (int(c.pressWait.maxTicks) if pw else int(c.heldPressTicks)) and not ((hp & 7) == 3 and DirArc.banked(S, f)):   # (a B in a banked stun waits for his line: the stick's recovery is longer than the hold)
 				_s(f, HELD_P, 0)
 				if (hp & 32) == 0:   # a blow of the floor pace was no press: it has no ack
 					var a = _ev(S, f, "press_ack", "lapsed", _cellOf((hp & 7) - 1))
 					a.n = _g(f, HELD_AT)
 			elif _free(S, f):
-				_throw(S, f, (hp & 7) - 1, _g(f, HELD_AT), false, false, (hp & 8) != 0, (hp & 16) != 0, (hp & 32) != 0)
+				var built: bool = pw and (hp & 8) == 0 and (hp & 7) > 1 and _down(f, BIG if (hp & 7) == 3 else MEDIUM)   # still held: it's been building since the press (section 5)
+				_throw(S, f, (hp & 7) - 1, _g(f, HELD_AT), false, built, (hp & 8) != 0, (hp & 16) != 0, (hp & 32) != 0)
 		_burstTick(S, ex, f, now)
 		_floorTick(S, ex, f)
 		# His string is over when nothing of his was thrown or landed for a while.
@@ -3943,7 +4054,7 @@ static func aiInput(S: SimState, f) -> void:
 		_s(f, AI_LEFT, -1)
 		_aiNudge(S, ex, f, false)
 	# The rival winds a heavy: a medium that lands while one still ends it. One draw for each wind-up it sees.
-	if oh > 0 and _g(o, LINE) != 0 and _g(o, KIND) == BIG and _g(o, FLAV) == 0 and _g(f, AI_SAW) != oh:
+	if oh > 0 and _g(o, LINE) != 0 and ((_g(o, KIND) == BIG and _g(o, FLAV) == 0) or DirStick.armoured(S, o)) and _g(f, AI_SAW) != oh:
 		_s(f, AI_SAW, oh)
 		if _free(S, f) and f.ki >= float(c.medium.ki) and (_now(S) - oh) + int(c.medium.windupTicks) < int(c.heavy.armour.mediumUntilTicks) and SimRng.keyed(seed, "brawl.vsheavy", S.tick * 2 + slot) < float(bl.get("mediumIntoHeavy", 0.0)):
 			_s(f, AI_GUARD, 0)

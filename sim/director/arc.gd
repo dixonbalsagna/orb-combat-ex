@@ -121,9 +121,8 @@ static func _blast(S: SimState, x: float, z: float, r: float, by, c: Dictionary)
 	var levelled: int = 0
 	S.world.fallTick = -1.0
 	SimField.far()
-	for bi in WorldStructures.near(S, x, r):
-		var b = S.buildings[bi]
-		if not b.alive or SimDetMath.hypot(SimWrap.sdx(x, b.x), float(b.z) - z) > r:
+	for b in S.buildings:   # every one: near() only knows those on the fight's own line, and this happens once a match
+		if not b.alive or WorldSettle.noTarget(b.landmark) or SimDetMath.hypot(SimWrap.sdx(x, b.x), float(b.z) - z) > r:   # RL-242: a landmark barred by c09 (school, hospital, place of worship) is out of every blast and fall
 			continue
 		var lost0: float = S.world.structuresLost
 		WorldStructures.damageBuilding(S, b, float(b.maxhp) * 2.0, by, "implode", x, 0.0, false, float(c.blastKeep) if levelled >= cap else 0.0)
@@ -225,6 +224,13 @@ static func landingScore(S: SimState, o, row: int, side: float) -> float:
 	return s + float(c.perBuilding) * minf(float(n), float(c.buildingCap))
 
 
+## Where the curve he's on comes down, the way it's going, and the live ticks till then.
+static func landing(o) -> Dictionary:
+	var r: Dictionary = _row(_g(o, A_ROW) - 1)
+	var side: float = float(_g(o, A_SIDE) - 2)
+	return {"x": SimWrap.wrap(float(_g(o, A_X0)) / 16.0 + side * float(r.d) * _scale()), "y": float(_g(o, A_GL)) / 16.0, "side": side, "ticks": _ticks(r) - _g(o, A_AGE)}
+
+
 ## Puts him on the curve, and tells the view where he'll land.
 static func send(S: SimState, f, o, row: int, side: float) -> void:
 	var r: Dictionary = _row(row)
@@ -272,6 +278,8 @@ static func _ticks(r: Dictionary) -> int:
 
 ## A tick of a launched fighter (SimFighter.stepLaunched, first). True when the curve moved him.
 static func step(S: SimState, f, dt: float) -> bool:
+	if DirChaseTap.hangStep(S, f, dt):
+		return true   # a catch's hang paces him (DirChaseTap): this is the core's hook for a launched body
 	if not on() or _g(f, A_ROW) == 0:
 		return false
 	if dt <= 0.0:

@@ -1,0 +1,12 @@
+{
+  "schema": "anim.stickpre/1",
+  "_about": "The right stick's strike, drawn before the request starts (docs/animation/stick-pre.md; Controls' hub.strike_pre(slot), docs/controls/responsiveness.md section 3 row 2). The quick read publishes {dir, depth} while the stick leans in past its threshold and the request has not started, 2 to 3 ticks before it does; AnimFighter's pre layer eases that direction's quick piece's chamber (the fighter's own, `dirs`) in at `w` of the pose over enter_ticks (the snappy profile solves on twos: a ramp under 6 ticks reads as a snap, so it reaches about half of `w` by the start), scaled between 0.6 and 1 by depth, and lets go over exit_ticks as the blow's own 7-tick wind-up takes over (the request starting, a blow taken, a state change). A pre-read that never becomes a request is let go after stale_ticks. Local and render only: never in the intent or the hash, rollback-safe by construction; nothing is published with Controls' quickRead switch off. Under reduced motion the weight is scaled by 0.6. dirs: fighter id to the pose for each of up, down, toward and away (toward and away by the fighter's facing).",
+  "w": 0.5,
+  "enter_ticks": 6,
+  "exit_ticks": 6,
+  "stale_ticks": 10,
+  "dirs": {
+    "PROTAGONIST": {"up": "pz.flick_rise.chamber", "down": "pz.scythe_sweep.chamber", "toward": "pz.heel_thrust.chamber", "away": "pz.wheel_blade.chamber"},
+    "RIVAL": {"up": "rz.lift_fist.chamber", "down": "rz.skid_kick.chamber", "toward": "rz.short_ram.chamber", "away": "rz.swing_plate.chamber"}
+  }
+}

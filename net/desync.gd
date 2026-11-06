@@ -37,11 +37,15 @@ static var swingBlind: bool = false   # tests only: the digest leaves out the li
 static func digest(S: SimState) -> String:
 	if S.stage == null:
 		return _digest(S)
-	var sum: String = _digest(S)   # a match of more than one fight: fight by fight (sim/core/stage.gd)
+	var was: int = S.stage.cur   # a match of more than one fight: fight by fight (sim/core/stage.gd), from fight 0, and S holds the fight it held
+	SimStage.enter(S, 0)
+	var sum: String = _digest(S)
 	for i in range(1, S.stage.fights.size()):
 		SimStage.enter(S, i)
 		sum = (sum + _digest(S)).md5_text()
-	SimStage.enter(S, 0)
+	SimStage.enter(S, was)
+	if S.stage.cross:   # 2v2: the hits on their way from one fight to the other
+		sum = (sum + SimCross.digest(S)).md5_text()
 	return sum
 
 

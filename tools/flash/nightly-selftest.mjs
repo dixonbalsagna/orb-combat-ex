@@ -1,6 +1,6 @@
 // Self-test of tools/flash/nightly-seeds.mjs: the night's seeds (new, never repeated, none from the recorded set), what a run says and the take-down trigger. No browser. CI runs it.
 //   node tools/flash/nightly-selftest.mjs
-import { nextSeeds, readRun, reportLine, signatureOf, signatureText, TAKE_DOWN_ABOVE, TAKE_DOWN_ABOVE_OWNER, limitFor, limitFromRecord, modeOf, verdictOf, EXIT, ruleState, switchStates, switchFlips, buildInfoLine, loadSwitchTable, routeCheck } from './nightly-seeds.mjs';
+import { nextSeeds, readRun, reportLine, signatureOf, signatureText, TAKE_DOWN_ABOVE, TAKE_DOWN_ABOVE_OWNER, limitFor, limitFromRecord, modeOf, verdictOf, EXIT, ruleState, switchStates, switchFlips, buildInfoLine, loadSwitchTable, routeCheck, FIXED_CLIPS, AREA15_TRIP } from './nightly-seeds.mjs';
 import { readSignature, worseThan, gateProblems, REDUCED_MAX } from './signature-gate.mjs';
 import { readFileSync, writeFileSync, mkdtempSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -99,6 +99,24 @@ check('a watched switch that is ON when reviewed OFF is exit 5 and names its row
 check('a take-down outranks a flipped switch, and a flipped switch outranks the signature and a finding', V({ r: rr('r'), flips: flip1 }).code === 1 && V({ r: rr(''), flips: flip1, sig: { missing: [], worse: ['x'] } }).code === 5 && V({ r: rr('n'), flips: flip1 }).code === 5);
 check('the signature clip reading worse is exit 3, ahead of a finding', V({ r: rr(''), sig: { missing: [], worse: ['reduced primary 3 over 2.5'] } }).code === 3 && V({ r: rr('n'), sig: { missing: [], worse: ['x'] } }).code === 3);
 check('the pixel run itself failing, with every clip read, is exit 2', V({ r: rr(''), runOk: false }).code === 2);
+// Legal RL-212: the area-15% tripwire on a reduced clip, and the at-the-line finding
+{
+  const rowL = (id, primary, lower) => ({ id, result: { general: { flashes: primary }, combined: { lower } } });
+  const base = (extra = []) => readRun([rowL('ai-1-normal', 2, 2), rowL('ai-1-reduced', 2, 2), ...extra], [1], 3.5);
+  check('the area-15% trip is 4.5', AREA15_TRIP === 4.5);
+  const x = readRun([rowL('ai-1-normal', 2, 5), rowL('ai-1-reduced', 3, 4.5)], [1], 3.5);
+  check('a reduced clip at area-15% 4.5 is NOT over (no worse than ai-1049-reduced), and a normal clip at 5 is not a reduced trip', x.overArea.length === 0);
+  const y = readRun([rowL('ai-1-normal', 2, 2), rowL('ai-1-reduced', 3, 5)], [1], 3.5);
+  check('a reduced clip at area-15% 5 is over 4.5, named with the number', y.overArea.length === 1 && y.overArea[0].id === 'ai-1-reduced' && y.overArea[0].area15 === 5, JSON.stringify(y.overArea));
+  check('and it is the take-down although its primary is only 3 (RL-212: the area reading trips it on a reduced clip)', verdictOf({ r: y, sig: okSig, routes: PASS, flips: [] }).code === 1 && /area-15% reading is over 4\.5/.test(verdictOf({ r: y, sig: okSig, routes: PASS, flips: [] }).lines.join(' ')));
+  check('the report line says TAKE DOWN with the area reading', /TAKE DOWN: ai-1-reduced reads 5 at area-15% \(over 4\.5, RL-212\)/.test(reportLine('2026-10-30', 'a'.repeat(40), [1], y, 3.5)), reportLine('2026-10-30', 'a'.repeat(40), [1], y, 3.5));
+  const z = readRun([rowL('ai-1-normal', 2, 2), rowL('ai-1-reduced', 3.5, 4.5)], [1], 3.5);
+  check('a reduced clip at primary 3.5 (the line) is a finding: listed, not a take-down, and the line says a pin move waits', z.atLine.length === 1 && z.over.length === 0 && verdictOf({ r: z, sig: okSig, routes: PASS, flips: [] }).code === 0 && /AT THE LINE.*RL-212 \(5\).*ai-1-reduced/.test(reportLine('2026-10-30', 'a'.repeat(40), [1], z, 3.5)), reportLine('2026-10-30', 'a'.repeat(40), [1], z, 3.5));
+  check('a normal clip at 3.5 is not "at the line" (the finding is for the mode players get)', readRun([rowL('ai-1-normal', 3.5, 3.5), rowL('ai-1-reduced', 2, 2)], [1], 3.5).atLine.length === 0);
+  check('a clean night has neither', base().overArea.length === 0 && base().atLine.length === 0);
+}
+check('the fixed clips are the clash clip, both modes', FIXED_CLIPS.join() === 'clash-normal,clash-reduced');
+check('readRun counts the fixed clips: one missing is NOT COMPLETE, one over the limit is over, and the seeds are unaffected', (() => { const fx = (id, v) => ({ id, result: { general: { flashes: v } } }); const x = readRun([row(1, 'normal', 1), row(1, 'reduced', 1), fx('clash-normal', 1)], [1], 3.5, FIXED_CLIPS); const y = readRun([row(1, 'normal', 1), row(1, 'reduced', 1), fx('clash-normal', 1), fx('clash-reduced', 4)], [1], 3.5, FIXED_CLIPS); return x.clips === 4 && x.missing.join() === 'clash-reduced' && y.overReduced.map((o) => o.id).join() === 'clash-reduced' && readRun([row(1, 'normal', 1), row(1, 'reduced', 1)], [1], 3.5).clips === 2; })());
 check('the six exit codes are distinct', new Set(Object.values(EXIT)).size === 6);
 
 // the watched switches, on a fixture tree
@@ -154,7 +172,7 @@ check('a skipped route check is "not run", never a pass', await routeCheck({ ski
       "const e = process.env;",
       "const row = (id, p, lower, two) => ({ id, result: { general: { flashes: p }, combined: { lower: lower ?? p }, cross: { general: { flashes: two ?? p } } } });",
       "let rows;",
-      "if (a.includes('--clip')) rows = [row('signature-normal', 3.5, 5, 3), row('signature-reduced', 2.5, 3, 2)];",
+      "if (a.includes('--clip')) rows = [row('signature-normal', 3.5, 5, 3), row('signature-reduced', 2.5, 3, 2), row('clash-normal', Number(e.STUB_CLASH_NORMAL || 2)), row('clash-reduced', Number(e.STUB_CLASH_REDUCED || 2))];",
       "else rows = o('--seeds').split(',').flatMap((s) => [row('ai-' + s + '-normal', Number(e.STUB_NORMAL || 2)), row('ai-' + s + '-reduced', Number(e.STUB_REDUCED || 2))]);",
       "writeFileSync(join(out, 'summary.json'), JSON.stringify(rows));",
     ].join('\n'));
@@ -172,6 +190,11 @@ check('a skipped route check is "not run", never a pass', await routeCheck({ ski
     setRally(true);
     const fl = run({});
     check('a watched switch that is on (rally) exits 5, is named with its row, and shows in the build info', fl.status === 5 && /rally on/.test(fl.stdout) && /NOT AS REVIEWED: rally \(RL-183\)/.test(fl.stdout) && /verdict: SWITCH FLIPPED \(exit 5\)/.test(fl.stdout), fl.stdout);
+    const clashRed = run({ STUB_CLASH_REDUCED: '4' });
+    check('a REDUCED clash clip over the limit is the take-down (exit 1) and the line names it', clashRed.status === 1 && /TAKE DOWN: clash-reduced reads 4/.test(clashRed.stdout) && /verdict: TAKE DOWN \(exit 1\)/.test(clashRed.stdout), clashRed.stdout);
+    const clashNor = run({ STUB_CLASH_NORMAL: '4' });
+    check('a NORMAL clash clip over the limit with the route check not run is a take-down too (not run is never a pass)', clashNor.status === 1 && /clash-normal reads 4/.test(clashNor.stdout), clashNor.stdout);
+    check('the clean night counts the two clash clips among its clips (2 seed clips and 2 clash clips)', row0.clips === 4, JSON.stringify(row0).slice(0, 300));
     check('the flipped switch is in the history row', JSON.parse(readFileSync(hist, 'utf8')).runs[0].switches.rally === 'on');
   } finally { rmSync(d, { recursive: true, force: true }); }
 }

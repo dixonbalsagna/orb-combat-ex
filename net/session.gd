@@ -36,6 +36,8 @@ const NEVER: int = 0x3FFFFFFF   # a slot's contig once the AI plays it: it needs
 
 var S: SimState
 var players: int = 2
+var slotOf: Array = []        # a match of two fights with a player in each (docs/net/two-v-two-lan.md): the sim's slot each player here starts in, as [0, 2]; the other slots are the sim's AI. A player's inputs follow his body when a trade moves it (slotNow). Empty: the players are the first slots
+var followBodies: bool = true # tests only: off for the negative control (inputs stay with the slot a trade has given to someone else)
 var local: int = 0
 var delay: int = 2            # input delay, ticks
 var saveEvery: int = 1        # at most one snapshot every this many ticks (1: before every predicted tick)
@@ -340,6 +342,8 @@ func dropSlot(k: int) -> int:
 
 func _run(t: int) -> void:
 	var ins: Array = []
+	if not slotOf.is_empty():
+		ins.resize(S.stage.fights.size() * 2)
 	var predicted: bool = false
 	for k in range(players):
 		var p: int = inputFor(k, t)
@@ -351,7 +355,10 @@ func _run(t: int) -> void:
 			usedW[k][t] = w
 		else:
 			usedW[k].erase(t)
-		ins.append(intentOf(p, w))
+		if slotOf.is_empty():
+			ins.append(intentOf(p, w))
+		else:
+			ins[slotNow(S, slotOf[k]) if followBodies else int(slotOf[k])] = intentOf(p, w)
 	if checkEvery > 0 and t > 0 and t % checkEvery == 0 and t > finalTo:
 		if chkPend.has(t):
 			chkReruns += 1
@@ -367,6 +374,10 @@ func _run(t: int) -> void:
 	_switch(t)
 	if beforeTick.is_valid():
 		beforeTick.call(S, t)
+	if presentOut and t == frame and S.stage != null:   # fight 0's events from the last tick shown: a host holding another fight never drains them, and the step clears the others' at their own next tick only
+		var o = S.out if S.stage.cur == 0 else S.stage.fights[0].out
+		o.feed.clear()
+		o.fx.clear()
 	var t0: int = clock.call() if clock.is_valid() else 0
 	SimCore.step(S, ins)
 	if clock.is_valid():
@@ -376,9 +387,25 @@ func _run(t: int) -> void:
 		perturb.call(S, t)
 	if onConfirmed.is_valid():
 		outLog[t] = outDigest(S)
-	if not (presentOut and t == frame):   # a game's new tick keeps its feed and fx for the game to draw; a re-run's are dropped, as the first run's were drawn
+	if not (presentOut and t == frame):   # a game's new tick keeps every fight's feed and fx for the game to draw (the other fight's too: docs/architecture/cross-fights.md); a re-run's are dropped, as the first run's were drawn
 		S.out.feed.clear()
 		S.out.fx.clear()
+		if S.stage != null:
+			for i in range(1, S.stage.fights.size()):
+				S.stage.fights[i].out.feed.clear()
+				S.stage.fights[i].out.fx.clear()
+
+
+## Where the body that started in slot s is now, as a slot: fight i's pair are slots 2i and 2i + 1. A trade (SimStage.trade) moves bodies between fights; a body is known by its keys ("p1" for slot 0).
+static func slotNow(S: SimState, s: int) -> int:
+	var key: String = "p%d" % (s + 1)
+	var st = S.stage
+	for i in range(st.fights.size()):
+		var pair: Array = S.fighters if i == st.cur else st.fights[i].fighters
+		for j in range(pair.size()):
+			if pair[j].keys == key:
+				return i * 2 + j
+	return s
 
 
 ## Before tick t, on every run of it: a slot whose takeover is at t becomes the sim's AI (after the save and the checkpoint,

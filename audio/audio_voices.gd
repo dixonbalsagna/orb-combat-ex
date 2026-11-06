@@ -201,6 +201,32 @@ static func setup_buses(m: Dictionary) -> void:
 		AudioServer.add_bus_effect(0, lim)
 
 
+## One line of what the audio is doing, for the page's audio log (?audiolog=1). Read-only: it changes nothing and is safe to call
+## every second. Godot's side: cues played and dropped, voices sounding, cues lost or waiting for the warm-up, the output's rate and
+## latency, the Master bus's peak (the mixer's real output level in Stream mode; -200 means nothing is being mixed), the player's three
+## trims and the bus levels. On the web also the browser's side, from the page shell's hook: the AudioContext's state, its clock (frozen means suspended), rate and
+## output latency. Reading it: a Master peak well above -60 dB while nothing is heard means the page works and the browser, the OS or
+## the device does not; -200 with `played` rising means a trim or a mute; -200 with `played` flat means no cues arrive.
+func status_line() -> String:
+	var live: int = 0
+	for p in _pool:
+		if p.playing:
+			live += 1
+	var peak: float = AudioServer.get_bus_peak_volume_left_db(0, 0)
+	var s: String = "audio: played %d dropped %d live %d | lost %d waiting %d warming %s | %d Hz %.0f ms out %s | master peak %.0f dB | trim m %.0f e %.0f v %.0f dB" % [
+		played, dropped, live, bank.skipped, bank.deferred_n, str(bank.warming), int(AudioServer.get_mix_rate()), AudioServer.get_output_latency() * 1000.0,
+		AudioServer.get_output_device(), peak, float(_user_db.get("master", 0.0)), float(_user_db.get("effects", 0.0)), float(_user_db.get("voice", 0.0))]
+	var levels: PackedStringArray = PackedStringArray()
+	for i in range(AudioServer.bus_count):
+		levels.append("%s %.0f%s" % [AudioServer.get_bus_name(i), AudioServer.get_bus_volume_db(i), " MUTED" if AudioServer.is_bus_mute(i) else ""])
+	s += " | buses " + ", ".join(levels)
+	if OS.has_feature("web"):
+		# The engine's own context is not a global of the page; the page shell keeps a reference to every AudioContext it is made
+		# (docs/audio/pending/audio-resume/shell-snippet.js) and answers for them: the state, the clock, the rate and the output latency.
+		s += " | ctx " + str(JavaScriptBridge.eval("(function(){try{return window.__audioShell&&window.__audioShell.state?window.__audioShell.state():'no shell hook'}catch(e){return 'error ('+e+')'}})()"))
+	return s
+
+
 ## Level in dB for a sound this far (world units) from the camera; below the floor means inaudible.
 func distance_db(dist: float) -> float:
 	var s: Dictionary = mix.space

@@ -1,0 +1,176 @@
+{
+  "version": 1,
+  "_note": "VFX's meteor trail (docs/vfx/meteor-trail.md): a fighter's own burn, a ribbon along his real path that glows through the air and cools in the world. Read by render/vfx/meteor.gd and meteor_view.gd, never by the sim, and drawn only while the hub's `meteor_enabled` switch is on (off by default). burn = air(altitude) x smoothstep(burn_from, burn_full, speed) x cool, where `cool` is the rule of cool: the tier, the form step and the situations below. Widths are clamped in PIXELS (floors and ceilings are for a 1,280-wide screen and grow with width) so the trail never thins to nothing at a wide zoom. A fighter's look is COMPOSED: his lane colour and beam flavour (energy.json), then this file's `default` row, the row for his roster id (lower case), its `forms` entry for his form step, then every `situations` entry whose condition holds ({read: a dotted path off the fighter, is / min / max, set: any key of the row}). A new fighter is a data row. Rows empress and cyborg are rows only: their kits are parked.",
+  "enabled": true,
+  "frame": {
+    "burn_from": 3500,
+    "burn_full": 10000,
+    "air_depth": 20000,
+    "air_h": 0.28,
+    "air_floor": 0.6,
+    "sheath_floor": 0.4,
+    "ground_h": 40,
+    "rise_s": 0.3,
+    "fall_s": 1.0,
+    "min_burn": 0.03,
+    "base_w": 60,
+    "peak_w": 0.6,
+    "w_min": 0.45,
+    "layer_k": [4.0, 2.2, 0.9],
+    "layer_alpha": [0.30, 0.80, 0.95],
+    "floor_px": [10, 5, 3],
+    "wfloor_from": 12000,
+    "wfloor_to": 50000,
+    "wfloor_mul": [1.6, 2.4, 3.2],
+    "wfloor_hot": 0.25,
+    "send_only": 1,
+    "min_tier": 4,
+    "ceil_px": [107, 53, 27],
+    "px_ref": 1280,
+    "glow_cap": 0.92,
+    "wide_k": 0.3,
+    "wide_from": 1.5,
+    "wide_to": 5.0,
+    "bright_k": 1.6,
+    "ramp_s": 0.0,
+    "pan_from": 0.6,
+    "pan_to": 3.0,
+    "pan_k": 1.0,
+    "head_cap_bh": 0.6,
+    "head_len_bh": 4.0,
+    "blade_on": 0.3,
+    "blade_off": 0.18,
+    "calm_strength": 0.82,
+    "hz": 0.9,
+    "hz_calm": 0.55,
+    "pattern_flow": 1.0,
+    "life_s": [4.0, 8.0, 12.0],
+    "life_calm_k": 0.5,
+    "life_min_s": 2.0,
+    "burn_s": 1.2,
+    "cool_s": 4.0,
+    "w_cool": 0.4,
+    "w_smoulder": 0.25,
+    "taper": 0.15,
+    "end_taper_pts": 3,
+    "deep_dark": 0.35,
+    "spacing": [800, 500, 300],
+    "draw_pts": [32, 64, 96],
+    "max_pts": 1024,
+    "chest_y": 36,
+    "z_off": -12
+  },
+  "profiles": {
+    "_note": "Two sets Orb judges in the private preview (the page word ?meteor=quiet or ?meteor=loud; ?meteor=1 is quiet). `quiet` is the base `frame` as shipped: a ribbon that is wide on screen is dimmed (wide_k 0.3). `loud` keeps a wide ribbon at full strength (wide_k 1.0) and dims it instead only while the camera sweeps across the world fast (pan_k 0.1 from 0.6 to 3 screen widths a second): the flash reading follows motion as well as area. Flash readings of the scripted launch, normal and reduced, are in docs/vfx/meteor-trail.md section 12.",
+    "quiet": {},
+    "loud": { "wide_k": 1.0, "pan_k": 0.1 }
+  },
+  "cool": {
+    "tier": [0.0, 0.0, 0.3, 0.7],
+    "form_step": 0.1,
+    "form_max": 0.3
+  },
+  "flight": {
+    "_note": "The flight lines (docs/vfx/flight-lines.md; Game Design docs/design/rule-of-cool-map.md section 1): the meteor ribbon laid by a fighter flying near flat out, with a strength of its own (`tier` by tier 1 to 4, plus `form_step` per form step up to `form_max` more, 1 at most), none at tier 1 or 2. The speed ramps from `from_k` of flat out (the sim's own: SimFighter.flightSpeed at the full traversal boost; `flat_out` here is only the fallback where there is no state to read) to full at it, and needs the stick held (`hold_min`) for `hold_s`. Length x`len_ground` on the ground to x`len_high` from `alt_high` up, a thin-air line `thin_w` as wide. `dev_bh` is how far (in body heights) a row with fewer knots may stray from his true path before a knot is laid; `settle_s` how long a drawn-tight line takes to straighten. A row's own `fl_*` keys (gaps, rim, knots, settle ...) apply only while the lines are on.",
+    "flat_out": 6100,
+    "from_k": 0.8,
+    "tier": [0.0, 0.0, 0.5, 0.8],
+    "form_step": 0.1,
+    "form_max": 0.2,
+    "hold_min": 0.6,
+    "hold_s": 0.3,
+    "len_ground": 0.7,
+    "len_high": 1.5,
+    "alt_high": 8000,
+    "thin_w": 0.8,
+    "dev_bh": 1.0,
+    "settle_s": 1.5,
+    "pan_k": 0.6
+  },
+  "fronts": {
+    "wall": 0,
+    "lances": 1,
+    "wire": 2,
+    "sputter": 3,
+    "plain": 4
+  },
+  "textures": {
+    "none": 0,
+    "boil": 1,
+    "facets": 2
+  },
+  "fighters": {
+    "default": {
+      "front": "wall",
+      "width_k": 1.0,
+      "linger_k": 1.0,
+      "scale": 100,
+      "braid": 0.0
+    },
+    "protagonist": {
+      "_source": "docs/vfx/meteor-trail.md section 5: broad and rolling, bubble rings; the beam's own boil pattern",
+      "front": "wall",
+      "texture": "boil",
+      "width_k": 1.15,
+      "scale": 150,
+      "fl_w_cool": 1.3,
+      "fl_w_smoulder": 0.9,
+      "forms": {
+        "2": { "width_k": 1.25, "fl_braid": 0.34 },
+        "3": { "fl_braid": 0.67 },
+        "4": { "width_k": 1.4, "fl_braid": 1.0 }
+      }
+    },
+    "rival": {
+      "_source": "docs/vfx/meteor-trail.md section 5: exact and cold, a hard needle with lances and facets; lasts 1.3 times longer",
+      "front": "lances",
+      "texture": "facets",
+      "width_k": 0.8,
+      "linger_k": 1.3,
+      "scale": 64,
+      "fl_knot_k": 5.0,
+      "fl_w_cool": 0.3,
+      "fl_w_smoulder": 0.15,
+      "fl_deep_dark": 0.5
+    },
+    "reference": {
+      "front": "plain",
+      "texture": "none",
+      "width_k": 0.7,
+      "scale": 160
+    },
+    "empress": {
+      "_source": "docs/vfx/meteor-trail.md section 5 (parked kit): a taut wire arc with a gold rim. A row only: she is not on the roster",
+      "front": "wire",
+      "texture": "none",
+      "width_k": 0.9,
+      "scale": 120,
+      "fl_rim": "#c9a227",
+      "fl_rim_k": 0.9,
+      "fl_w_cool": 0.55,
+      "fl_w_smoulder": 0.3,
+      "fl_settle": 0.9
+    },
+    "cyborg": {
+      "_source": "docs/vfx/meteor-trail.md section 5 (parked kit): broken, with gaps fixed in the world and sparks. A row only: he is not on the roster",
+      "front": "sputter",
+      "texture": "none",
+      "width_k": 1.2,
+      "scale": 90,
+      "fl_gaps": 1.0,
+      "fl_gap_lo": 0.44,
+      "fl_dull": 0.5,
+      "fl_spark": 1.0,
+      "fl_rim": "#fa9a2e",
+      "fl_rim_k": 0.8,
+      "forms": {
+        "2": { "fl_gaps": 0.75, "fl_width_k": 1.3 },
+        "3": { "fl_gaps": 0.5, "fl_width_k": 1.4 },
+        "4": { "fl_gaps": 0.25, "fl_width_k": 1.5 }
+      },
+      "situations": [
+        { "read": "tier", "min": 4, "set": { "width_k": 1.35 } }
+      ]
+    }
+  }
+}

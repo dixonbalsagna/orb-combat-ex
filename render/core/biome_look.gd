@@ -7,7 +7,7 @@ extends RefCounted
 ## its stored alias (ALIAS: World's fallback for a consumer that knows only the stored seven). The rows: the ground's
 ## lit, mid and shade faces; the rock's; the subsoil's (a crater's inside: Art's lite 0.14, the subsoil, Art's dark 0.3);
 ## a beam's scar band and its edge; and in the last row, red: whether the biome's rock carries strata lines (desert,
-## mountains, volcanic, highland), green: the height above which its ground is rock whatever its slope (ROCK_ABOVE, in
+## mountains, volcanic, highland, tundra), green: the height above which its ground is rock whatever its slope (ROCK_ABOVE, in
 ## tens of thousands of units; Art's mountains are green only at the foot). The render's own biome names
 ## (GroundField.BIOME_ORDER) map onto these by id_of. Window 2: rows COVER_ROW to COVER_ROW + 15 hold the cover's 16
 ## palette slots for the biome (RenderCoverMeshes: vegetation, secondary and rock, each lit, mid and shade; trunk;
@@ -36,7 +36,7 @@ const ROWS: int = 34
 const CITY_GREY := "#8c9098"   # a city's far ridges: the plains' ladder half toward this grey
 const LITE := "#fff6e0"      # Art's lite() and dark() (art/concepts/biomes/draw.mjs)
 const DARK := "#0c0a14"
-const STRATA: Array = ["desert", "mountains", "volcanic", "highland"]
+const STRATA: Array = ["desert", "mountains", "volcanic", "highland", "tundra"]
 const SCAR_DEFAULT: Array = ["#221c18", "#4a4036"]
 const ROCK_ABOVE: Dictionary = {"mountains": 900.0, "highland": 700.0}   # units: above this the ground is rock
 

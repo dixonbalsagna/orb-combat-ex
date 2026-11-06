@@ -62,7 +62,7 @@ func start(world: World3D) -> void:
 	var quad := QuadMesh.new()
 	quad.size = Vector2(1.0, 1.0)
 	var x: float = -4.0
-	for e in SHADERS:
+	for e in SHADERS + ([["res://render/shaders/terrain_tile.gdshader", "multimesh"], ["res://render/shaders/water_tile.gdshader", "multimesh"]] if RenderTileGround.on else []):
 		if not ResourceLoader.exists(str(e[0])):
 			continue
 		var sh: Shader = load(str(e[0]))

@@ -3,7 +3,7 @@
 // fighter's `more` list names this wave. His own identity: fists on the heavies and plates or blades on the lights, never a palm; straight lines, drops and rises, knees and elbows. Legal's lines
 // (zip-screen.md): a rising blow keeps his feet down and no turn, its hand is never drawn back to a hip; a dropping blow is one fist, blade or plate, lowered at once (hold_t 1, ci_end 4); no leap, no clasp.
 //
-// The class's timing (rulings section 2): a quick blow lands on tick 12 from the request, a 10-tick wind-up: one motion. A charged blow is held at its CHAMBER by the stick (the held layer draws the key
+// The class's timing (rulings section 2): a quick blow lands on tick 9 from the request, a 7-tick wind-up (windTicks 7; it was 10): one motion. A charged blow is held at its CHAMBER by the stick (the held layer draws the key
 // set's first key while the sim waits), so each charged piece's chamber IS the charge stance for its direction and has to read without a marker. The release is a 4-tick blow out of that chamber.
 //   quick   up lift_fist       hand fist, rise, jaw       down skid_kick      foot sole, line, legs           toward short_ram    elbow point, line, gut     away swing_plate  hand plate, arc out, chest
 //   charged up knee_launch     knee cap, rise, chest      down hammer_drop    hand fist, drop, head           toward plate_ram    hand plate, line, chest    away swing_elbow  elbow point, spin, head
@@ -15,7 +15,7 @@ const LUNGE = { foot_r: [-6, 2.5, 9], foot_l: [26, 2.5, -7] };
 const OPEN = { hands: { r: 'fist', l: 'fist' } };
 const FIST = { hands: { r: 'fist', l: 'fist' } };
 
-const Q = { load: 10, follow: 4, recover: 4 };
+const Q = { load: 7, follow: 4, recover: 4 };   // the 7-tick wind-up
 const C = { load: 4, follow: 6, recover: 10 };
 
 const NEW = {

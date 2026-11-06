@@ -290,6 +290,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 		if k.name == S.dirS.lastLaunch2:
 			k.s -= REPEAT_2
 		k.s += DirRally.variety(S, A, k)   # 23d 13: a rally's variety (0 outside one)
+		k.s += DirOutside.joinScore(S, A, D, lx)   # 2v2: after a while apart, the way of the other fight scores
 	# Stable sort by score, highest first: an insertion sort keeps equal scores in candidate order.
 	for i in range(1, c.size()):
 		var key = c[i]
@@ -711,6 +712,7 @@ static func _predictFlightRead(S: SimState, x0: float, y0: float, vx0: float, vy
 	var ceilN: int = int(SimField.data().ceilCols) if ceilOn else 1
 	var ceilAt: int = -1
 	var ceilY: float = INF
+	var ceilRead: bool = false
 	for n in range(PREDICT_STEPS):
 		t += dt
 		vy -= 1000.0 * dt
@@ -722,9 +724,15 @@ static func _predictFlightRead(S: SimState, x0: float, y0: float, vx0: float, vy
 			var cs: int = int(x / SimConst.COL) / ceilN
 			if cs != ceilAt:
 				ceilAt = cs
-				ceilY = SimField.groundCeilAt(S, cs * ceilN)
+				ceilY = SimField.planetCeilAt(S, cs * ceilN)   # the planet's table first, on any line, with no read
+				ceilRead = false
 			if y > ceilY:
 				continue   # above any ground or water on this stretch: nothing to read
+			if not ceilRead:
+				ceilRead = true
+				ceilY = SimField.groundCeilAt(S, cs * ceilN)
+				if y > ceilY:
+					continue
 		if y < WorldWater.seaTop(S, x):
 			vx *= kWx
 			vy *= kWy
@@ -756,6 +764,7 @@ static func doLaunch(S: SimState, att, tgt, plan: Dictionary, force: float, spec
 		DirBrawl.launched(S, tgt)   # the brawl's launcher rests on him after any launch
 	tgt.launchBy = att
 	DirFollow.sent(S, att)   # row 42: for a while, his far press flies after him
+	DirChaseTap.sent(S, att, plan)
 	tgt.bounces = 0.0
 	tgt.launchSpecial = special
 	tgt.hopped = false
@@ -917,6 +926,8 @@ static func earned(S: SimState, ex, att, tgt) -> String:
 		return ""
 	if ((p >> 8) & 3) == DirAlchemy.HELD:
 		return "a held heavy"
+	if DirBrawl.oneRule():
+		return ""   # one rule for B: nothing but the hold earns a send (press-decides.md section 1)
 	var landed: int = DirInterrupt.gi(att, DirInterrupt.LANDED)
 	var fl: Dictionary = DirRecipe.cfg().get("flow", {})   # data/director/alchemy.json
 	if fl.get("enabled", false):

@@ -47,8 +47,8 @@ static func sent(S: SimState, att) -> void:
 
 ## His flight has run out with the one he sent still in the air: he stays with him, and the exchange starts when he's down.
 static func keepOn(S: SimState, f) -> bool:
-	if not on() or f.rush == null:
-		return false
+	if not on() or f.rush == null or DirChaseTap.on():
+		return false   # (with the tap, the chase ends with a blow: he doesn't float: power-scale.md section 4)
 	var o = f.rush.tgt
 	return o != null and o.state == "launched" and o.launchBy == f
 

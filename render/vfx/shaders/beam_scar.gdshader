@@ -6,6 +6,8 @@
 shader_type spatial;
 render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
 
+#include "res://render/shaders/bend.gdshaderinc"
+
 uniform float heal_s = 3.6;       // seconds a point takes to heal
 uniform float cell = 110.0;       // the pieces it drops out in, in world units
 uniform float cool_s = 1.2;       // seconds the rim takes to cool
@@ -31,6 +33,7 @@ float vn(vec2 p) {
 
 void vertex() {
 	v_c = INSTANCE_CUSTOM;
+	POSITION = globe_r > 0.0 ? PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(MODEL_MATRIX, VERTEX)) : PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
 }
 
 void fragment() {

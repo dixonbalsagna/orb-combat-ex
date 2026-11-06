@@ -83,13 +83,13 @@ static func _arrival(D, A) -> int:
 
 ## The window's open on him now.
 static func windowOpen(S: SimState, f) -> bool:
-	var ex = S.dirS.ex
+	var ex = DirBrawl.exOf(S)
 	return ex != null and ex.kind == "sig" and ex.D == f and ex.branch == "" and frontOn() and _beat(ex, "beamReach") != null
 
 
 ## True while the beam's still in the shooter's hand, with f its target: a press now answers it, and fires as he fires.
 static func charging(S: SimState, f) -> bool:
-	var ex = S.dirS.ex
+	var ex = DirBrawl.exOf(S)
 	return ex != null and ex.kind == "sig" and ex.D == f and ex.branch == "" and frontOn() and _beat(ex, "beamFire") != null
 
 
@@ -115,6 +115,65 @@ static func stickAnswer(S: SimState, f) -> bool:
 	SimAct.push(f, SimAct.HEAVY, 1, 0, S.tick)   # the lit hand: it answers when he fires (DirBeam._answer)
 	SimFx.cue(S, f, "answer_held", "", "")
 	return true
+
+
+## Orb, on first play: "holding the right stick should start the charging, letting go should release the attack, the fighter should more or
+## less remain stationary." With this on nothing moves him in a beam's charge: no rise to the rival's height and no stand-off.
+static func stationary() -> bool:
+	return frontOn() and bool(frontCfg().get("stationary", false))
+
+
+## A beam from the stick's hold has started: the hold was its charge, so it goes when he lets go, after what's left of the charge's warning
+## and at least releaseTell. held: the ticks he held it.
+static func fromStick(S: SimState, f, held: int) -> void:
+	if not stationary():
+		return
+	var ex = DirBrawl.exOf(S)
+	if ex == null or ex.kind != "sig" or ex.A != f:
+		f.beamCharge = null   # no beam came of it
+		return
+	var fb = _beat(ex, "beamFire")
+	if fb != null:
+		var tell: int = maxi(int(frontCfg().releaseTell), int(round((float(fb.t) - ex.t) * DirData.TICKS_PER_SEC)) - held)
+		fb.t = ex.t + float(tell) / DirData.TICKS_PER_SEC
+
+
+## Fired wide of him (DirBeamAim): it goes where it was aimed and carves what it crosses. Nobody's answering it, so the exchange ends now and
+## both are free.
+static func _fireWide(S: SimState, ex, A, ux: float, uy: float, variant: String) -> void:
+	var len: float = 4200.0 * SimConst.WS
+	DirBeam.fireBeam(S, A, A.x, A.y + 38.0, ux, uy, len, variant)
+	var tv: int = frontTicks(len, "signature")
+	var b = S.beams[S.beams.size() - 1]
+	b.life += float(tv) * SimConst.DT
+	DirInterrupt.si(A, DirInterrupt.BEAM_TRAVEL, tv)
+	DirInterrupt.si(A, DirInterrupt.BEAM_REACH, int(len))
+	SimFx.cue(S, A, "beam_fire", "", "")
+	SimFx.cue(S, A, "beam_wide", "", "")
+	SimEvents.feed(S, A.sigName + " FIRES WIDE", "where he aimed, away from " + ex.D.name)
+	for bt in ex.beats:
+		bt.done = true
+	DirExchange.schedule(ex, ex.t + SimConst.DT, "nop")
+
+
+## Up close, the firing throws the other back to the stand-off, ahead of the front, like a shock wave: no damage and no stun, and he keeps his
+## hands, so he can still answer. It stops at a wall. Returns where he'll be.
+static func _shove(S: SimState, A, D) -> float:
+	if not stationary():
+		return D.x
+	var x: float = standoffX(S, D, A, D.y)
+	if x == D.x:
+		return x
+	var r := SimState.Rush.new()
+	r.px = x
+	r.py = D.y
+	r.pz = D.z
+	r.end = S.T + float(frontCfg().shoveSec)
+	D.rush = r
+	D.vx = 0.0
+	D.vy = 0.0
+	SimFx.cue(S, D, "beam_shove", "", "")
+	return x
 
 
 ## Where the shooter's charge takes him: a signature from under the stand-off, by anyone, kicks him back, so the fronts don't meet at their
@@ -144,7 +203,7 @@ static func fireBack(S: SimState, f) -> bool:
 	if not windowOpen(S, f) or f.ki < float(frontCfg().answerKi):
 		return false
 	f.ki -= float(frontCfg().answerKi)
-	_answerNow(S, S.dirS.ex, "heavy_blast")
+	_answerNow(S, DirBrawl.exOf(S), "heavy_blast")
 	return true
 
 
@@ -193,12 +252,17 @@ static func held(f, o) -> int:
 static func fire(S: SimState, ex, args) -> void:
 	var A = ex.A
 	var D = ex.D
-	var dist: float = maxf(float(args.dist), absf(SimWrap.sdx(A.x, D.x))) if frontOn() else float(args.dist)   # (the stand-off has moved him since it was planned)
+	var aimed: Array = DirBeamAim.wide(S, A, A.x, A.y + 38.0, D.x, D.y + 36.0)
+	if not aimed.is_empty():
+		_fireWide(S, ex, A, float(aimed[0]), float(aimed[1]), String(args.variant))
+		return
+	var toX: float = _shove(S, A, D)
+	var dist: float = maxf(float(args.dist), absf(SimWrap.sdx(A.x, toX))) if frontOn() else float(args.dist)   # (the stand-off has moved him since it was planned)
 	var tv: int = frontTicks(dist, "signature") if frontOn() else int(data().travelTicks)
 	var len: float = SimMathx.jmin(4200.0 * SimConst.WS, dist + float(A.ld.beamOvershoot[DirBeam._tierIx(A)]) * SimConst.WS)
 	var ox: float = A.x
 	var oy: float = A.y + 38.0
-	var dxs: float = SimWrap.sdx(ox, D.x)
+	var dxs: float = SimWrap.sdx(ox, toX)
 	var dyy: float = (D.y + 36.0) - oy
 	var L: float = SimDamage.jor(SimDetMath.hypot(dxs, dyy), 1.0)
 	DirBeam.fireBeam(S, A, ox, oy, dxs / L, dyy / L, len, String(args.variant))
@@ -521,7 +585,7 @@ static func aiPlan(S: SimState, ex, answers: bool) -> void:
 
 ## False while an AI defender whose dodge is not in time would tap inside the window: it taps too early or too late.
 static func aiMayDodge(S: SimState, f) -> bool:
-	var ex = S.dirS.ex
+	var ex = DirBrawl.exOf(S)
 	if ex == null or ex.kind != "sig" or ex.D != f or ex.branch != "" or not on():
 		return true
 	if (DirInterrupt.gi(f, DirInterrupt.BEAM_AI) & AI_DODGE) != 0:
@@ -538,7 +602,7 @@ static func aiMayDodge(S: SimState, f) -> bool:
 
 ## The stick an AI defender holds as a beam comes: the look of its perfect block, or toward when it wades. 0: nothing.
 static func aiDir(S: SimState, f) -> float:
-	var ex = S.dirS.ex
+	var ex = DirBrawl.exOf(S)
 	if ex == null or ex.kind != "sig" or ex.D != f or ex.branch != "" or not on():
 		return 0.0
 	var plan: int = DirInterrupt.gi(f, DirInterrupt.BEAM_AI)

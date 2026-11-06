@@ -4,6 +4,7 @@
 // anchor's own scale, so a fighter never warps or leans toward the screen edges: it looks the same at the centre and
 // the edges, at any zoom. Depth stays the vertex's true perspective depth, so the ground still hides feet in a
 // hollow and the parts still sort among themselves. ortho 0 (the default) is the plain perspective path.
+#include "res://render/shaders/bend.gdshaderinc"
 uniform vec3 anchor = vec3(0.0);
 uniform float ortho = 0.0;
 
@@ -12,6 +13,14 @@ vec4 ortho_clip(mat4 model, mat4 view, mat4 proj, vec3 v) {
 	vec4 cp = proj * (view * w);
 	vec4 ca = proj * (view * vec4(anchor, 1.0));
 	vec3 d = (view * vec4(w.xyz - anchor, 0.0)).xyz;
+	if (globe_r > 0.0) {
+		// The tile ground: the pivot lands where the globe puts it; what keeps its shape only follows the curve from there.
+		vec3 dw = w.xyz - anchor;
+		dw.y -= globe_sag(w.xyz) - globe_sag(anchor);
+		d = (view * vec4(dw, 0.0)).xyz;
+		ca = proj * (view * globe_place(anchor));
+		cp = proj * (view * globe_place(w.xyz));
+	}
 	vec4 c = ca + vec4(proj[0][0] * d.x, proj[1][1] * d.y, 0.0, 0.0);
 	c.z = cp.z / cp.w * ca.w;
 	return c;

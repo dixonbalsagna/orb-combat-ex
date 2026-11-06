@@ -411,6 +411,13 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 		why = String(args.get("why", "forced")) if forced else (DirLaunch.earned(S, ex, att, tgt) if ends != "level" else "")
 		if why == "":
 			var heavy: bool = DirLaunch.heavyBlow(S, ex, att) and ends != "level"
+			if heavy and DirBrawl.oneRule() and not forced:
+				# one rule for B: a tapped heavy starting an exchange staggers, as in a brawl; it isn't a knock-back
+				DirInterrupt.si(ex.A, DirInterrupt.LAST_END, DirInterrupt.END_STAY)
+				SimFx.launchPlan(S, att, tgt, "", "STAY")
+				tgt.stunTicks = maxi(tgt.stunTicks, int(DirBrawl.cfg().heavy.staggerTicks))
+				SimEvents.feed(S, "STAGGERED", "a tapped heavy: one rule for B")
+				return
 			# A blur always closes (section 13): the light that follows enderAfter landed strikes is the blur's own ender,
 			# a knock-back the player did not have to earn, at enderDist of the distance. Never a launch.
 			var bl: Dictionary = DirLaunch.data().get("blur", {})

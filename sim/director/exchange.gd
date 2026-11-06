@@ -54,10 +54,12 @@ static func _request(S: SimState, A, kind: String) -> void:
 		return
 	if DirDriver.takes(S, A, kind):
 		return   # RB + B: the Driver gathers
+	if DirOutside.takes(S, A, kind):
+		return   # 2v2: a blow from outside, on an enemy of the other fight
 	var big: bool = DirBrawl.isB(A, kind)   # B with no stance held is the heavy (brawl-second-pass.md section 2)
 	if not DirBrawl.holding:
 		DirAlchemy.log(S, A, SimAct.HEAVY if big else KIND.find(kind), A.act.mode, big)   # the press log (a hold's own press is the director's, and not in it)
-	if DirRally.queues(S, A, kind):
+	if DirRally.queues(S, A, kind) or DirChaseTap.holds(S, A, kind):
 		return   # 10-26 item 7: a link press while his rally's send still holds him waits for his first free tick
 	if DirBrawl.takes(S, A, kind):
 		return   # a brawl is on and he is in it: the press is a blow on his own line, never a request
@@ -430,6 +432,8 @@ static func runBeat(S: SimState, ex, b) -> void:
 				who.lastAtkT = S.T
 		"strike":
 			if a.get("brawl", false):
+				if DirBrawl.sureWaits(S, ex, b):
+					return   # a sure blow still out of reach comes a tick later
 				DirBrawl.contact(S, ex, b)   # a brawl's blow: it lands, and its line, its string and its close follow
 				DirBrawl.carryOn(ex)   # the strike placed its attacker and stopped him: the pair's drift carries on
 				DirBrawl.afterBlow(S, ex, b)   # a press kept behind this blow is thrown as it lands
@@ -645,6 +649,7 @@ static func dirUpdate(S: SimState, dt: float) -> void:
 	DirPlane.tick(S, dt)   # with depth off, a fighter eases back to the plane after a flight (rulings-2026-10-30f row 9)
 	DirSwing.tick(S, dt)   # the choreographer's swing (docs/world/ring-any-angle/encounter.md)
 	DirStick.tick(S, dt)   # the right stick's strike (docs/design/right-hand-attacks-rulings.md section 2)
+	DirOutside.tick(S, dt)   # 2v2: a blow from outside lands on an opening, waits or whiffs
 
 
 static func _update(S: SimState, dt: float) -> void:

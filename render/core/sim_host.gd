@@ -39,6 +39,12 @@ var feed: Array = []            # recent SimState.FeedLine, oldest first
 var jitter := Vector2.ZERO      # screen shake offset in pixels for the current tick
 var film_in: Array = [null, null]   # the capture hook's film scenes only (render/tools/flash_capture.gd): each slot's intent for the next tick, or null; null in play
 var tick_usec: int = 0          # cost of the last SimCore.step
+static var draw_others: bool = false   # 2v2: the other fights' bodies are captured and drawn (--others, ?others=1 on a local page)
+const OTHER_JUMP: float = 2000.0   # a body that moved further than this in a tick changed places (a trade): drawn where it is, not crossing
+var _others: Array = []          # the other fights' bodies at the last tick, fight by fight past the one in S
+var _others_k: Array = []        # ... and the fight each is in (its index in S.stage.fights)
+var _oprev := PackedFloat64Array()
+var _ocur := PackedFloat64Array()
 var fx_usec: int = 0            # cost of the last fx consume and camera step
 var _prev := PackedFloat64Array()
 var _cur := PackedFloat64Array()
@@ -131,6 +137,8 @@ func _started(su: Dictionary, remember: bool) -> void:
 	jitter = Vector2.ZERO
 	_cur = _capture()
 	_prev = _cur
+	_ocur = _ocapture()
+	_oprev = _ocur
 
 
 ## What a planet's making depends on, for telling a choice that changed from one that did not: the planet, its generation, the touch-down and the arena. "" when the setup names no planet.
@@ -184,7 +192,7 @@ func load_progress() -> float:
 	return load_job.progress() if load_job != null else (match_job.progress() if match_job != null else 1.0)
 
 
-## One frame's slice of the load (SimRun.planetUnitsPerRead units, about 5 ms). When the planet is made the match starts, as new_match would have: the call it was waiting for runs now.
+## One frame's slices of the load (SimRun.planetUnitsPerRead units, about 5 ms natively, until RenderLook.LOAD_STEP_MS has gone). When the planet is made the match starts, as new_match would have: the call it was waiting for runs now.
 ## Returns true when it has started.
 func load_step() -> bool:
 	if load_job == null and match_job != null:   # the match's own start, a piece a frame
@@ -194,8 +202,12 @@ func load_step() -> bool:
 		_started(_start_args[0], _start_args[1])
 		_start_args = []
 		return true
-	if load_job == null or not load_job.step(SimRun.planetUnitsPerRead):
+	if load_job == null:
 		return false
+	var t0: int = Time.get_ticks_usec()
+	while not load_job.step(SimRun.planetUnitsPerRead):
+		if Time.get_ticks_usec() - t0 >= int(RenderLook.LOAD_STEP_MS * 1000.0):
+			return false
 	var call: Array = _load_call
 	load_job = null
 	_load_call = []
@@ -463,6 +475,10 @@ func tick(vw: float, vh: float) -> void:
 	pending_cues.append_array(audio_cues.consume(S, S.out.fx))
 	drained.emit(S.out.fx, lines)
 	vfx.consume(S, S.out.fx)
+	if draw_others and S.stage != null and vfx.has_method("consume_others"):
+		# 2v2: VFX draws the other fights' effects from their own events, pushed from here (its hub.consume_others)
+		vfx.set("host_pushes", true)
+		vfx.call("consume_others", S, other_events())
 	# Rendering's flashes ask the shared register here, after VFX's of this tick: the ones that start from an event
 	# (main), then a new beam and a clash, then a new hit's white body, the commonest and least needed, last.
 	if not vfx.enabled:
@@ -481,6 +497,8 @@ func tick(vw: float, vh: float) -> void:
 	ticks += 1
 	_prev = _cur
 	_cur = _capture()
+	_oprev = _ocur
+	_ocur = _ocapture()
 	ticked.emit(ticks)
 
 
@@ -512,6 +530,8 @@ func follow(vw: float, vh: float) -> void:
 	cam.camStep(S, SimConst.DT, vw, vh)
 	_prev = _cur
 	_cur = _capture()
+	_oprev = _ocur
+	_ocur = _ocapture()
 
 
 func key_down(code: String) -> void:
@@ -571,6 +591,78 @@ func fighter_x(i: int, a: float) -> float:
 func fighter_z(i: int, a: float) -> float:
 	var o: int = S.fighters.size() * 3 + 3 + i
 	return lerpf(_prev[o], _cur[o], a) if o < _prev.size() and o < _cur.size() else 0.0
+
+
+## 2v2: the other fights' bodies, [x, y, rot, z] each, fight by fight past the one in S (between ticks S holds fight 0:
+## SimStage). Empty with the switch off, or in a match of one fight.
+func _ocapture() -> PackedFloat64Array:
+	_others.clear()
+	_others_k.clear()
+	var v := PackedFloat64Array()
+	if not draw_others or S.stage == null:
+		return v
+	var st = S.stage
+	for k in range(st.fights.size()):
+		if k == st.cur:
+			continue
+		var r = st.fights[k]
+		for f in r.fighters:
+			_others.append(f)
+			_others_k.append(k)
+			v.append(f.x)
+			v.append(f.y)
+			v.append(f.rot)
+			v.append(f.z)
+	return v
+
+
+func other_count() -> int:
+	return _others.size()
+
+
+func other_fighter(j: int):
+	return _others[j]
+
+
+## The fight the other fights' body j is in, its index in S.stage.fights: what Animation's view of it is asked by
+## (RenderAnim.fight_view).
+func other_k(j: int) -> int:
+	return int(_others_k[j])
+
+
+## Interpolated [x, y, rot] of the other fights' body j, as fighter_pose. One that changed places since the last tick is
+## where it is now, not drawn crossing the planet.
+func other_pose(j: int, a: float) -> Vector3:
+	var o: int = j * 4
+	if o + 3 >= _oprev.size() or absf(SimWrap.sdx(_oprev[o], _ocur[o])) > OTHER_JUMP:
+		return Vector3(_ocur[o], _ocur[o + 1], _ocur[o + 2])
+	return Vector3(_wlerp(_oprev[o], _ocur[o], a), lerpf(_oprev[o + 1], _ocur[o + 1], a), lerpf(_oprev[o + 2], _ocur[o + 2], a))
+
+
+func other_x(j: int, a: float) -> float:
+	var o: int = j * 4
+	if o + 3 >= _oprev.size() or absf(SimWrap.sdx(_oprev[o], _ocur[o])) > OTHER_JUMP:
+		return _ocur[o]
+	return _wlerp(_oprev[o], _ocur[o], a)
+
+
+func other_z(j: int, a: float) -> float:
+	var o: int = j * 4 + 3
+	if o >= _oprev.size() or absf(SimWrap.sdx(_oprev[o - 3], _ocur[o - 3])) > OTHER_JUMP:
+		return _ocur[o]
+	return lerpf(_oprev[o], _ocur[o], a)
+
+
+## The other fights' events of the last tick, one list a fight past the one in S: each fight's own (out.fx), kept in its
+## record from its tick until its next (SimCore._stepFights clears them there). For what draws them. Read only.
+func other_events() -> Array:
+	var out: Array = []
+	if S.stage == null:
+		return out
+	for k in range(S.stage.fights.size()):
+		if k != S.stage.cur:
+			out.append(S.stage.fights[k].out.fx)
+	return out
 
 
 func _capture() -> PackedFloat64Array:

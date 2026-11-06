@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/vfx-perf",
+  "title": "vfx performance level (version 1)",
+  "description": "data/vfx/perf.json: the Performance level's caps on the debris pool (docs/vfx/perf-level.md). Presentation only: read by render/vfx/perf.gd and debris.gd, never by the sim, and used only while the hub's perf_level switch is on. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "version"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "debris": {
+      "type": "object",
+      "properties": {
+        "cap": {
+          "type": "integer",
+          "minimum": 16,
+          "maximum": 460,
+          "description": "The pool's cap at the Performance level (460 otherwise)."
+        },
+        "spawn_per_tick": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 260
+        },
+        "shard_per_tick": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 200
+        },
+        "spill_cap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 460,
+          "description": "Bits a burst's overflow may queue; 0 drops them as before."
+        },
+        "spill_per_tick": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "spill_wait_ticks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "A queued bit that has waited this many ticks is dropped."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The pool's cap, the per-tick budgets, and the batching of a burst's overflow."
+    },
+    "jobs": {
+      "type": "object",
+      "properties": {
+        "per_tick": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Timed jobs of the pool run in one tick; the rest run on the next."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "far": {
+      "type": "object",
+      "properties": {
+        "reach_k": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "margin": {
+          "type": "number",
+          "minimum": 0
+        },
+        "puff_z_back": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "A spawn farther than reach_k half-views plus margin (units) from both fighters is not made, nor dust more than puff_z_back behind the fighter plane."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

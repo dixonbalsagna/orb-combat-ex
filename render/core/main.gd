@@ -239,6 +239,24 @@ func _ready() -> void:
 		boot = RenderBoot.new()
 		add_child(boot)
 		boot.begin([pane], RenderLook.BOOT_WORDS)
+	SimHost.draw_others = args.has("others")   # 2v2: the other fight drawn; off; --others, ?others=1 on a local page
+	RenderTileGround.on = args.has("tiles")   # the tile ground: off; --tiles, ?tiles=1 on a local page (rendering.md)
+	split_rig.swing_view = RenderTileGround.on   # the camera's swing and peak launch go with the true globe (docs/camera/swing-view.md)
+	split_rig.peak_launch = RenderTileGround.on
+	split_rig.launch_director = RenderTileGround.on
+	split_rig.close_brawl = RenderTileGround.on
+	split_rig.readable = RenderTileGround.on
+	split_rig.split_share = float(CamPlaces.data().get("splitShare", 0.0)) if RenderTileGround.on else 0.0
+	split_rig.follow_through = RenderTileGround.on
+	split_rig.flight_reveal = RenderTileGround.on
+	split_rig.flat_mode = String(args.get("flat", "wide")) if RenderTileGround.on else ""   # for Orb's eye: flat=wide or flat=hold (launch-director.md)
+	RenderTileGround.rate = float(args.get("tilerate", 0.0))
+	RenderTileGround.quick = args.has("tilequick")
+	RenderTileGround.near_mode = int(args.get("nearmode", RenderLook.TILE_NEAR_DEFAULT))
+	RenderTileGround.share = float(args.get("tileshare", 100.0)) / 100.0
+	RenderTileGround.gen = int(args.get("tilegen", 3))
+	RenderTileGround.fore_tone = not args.has("nofore")
+	RenderTileGround.crater_look = args.has("craterlook")
 	host.stepped_start = not manual and not args.has("syncstart") and not args.has("flashcap")   # the match starts in pieces, the loading screen between them (docs/architecture/match-start.md); a tool's main starts it whole
 	start_match(int(args["seed"]) if args.has("seed") else fresh_seed())
 	if args.has("human"):
@@ -306,7 +324,8 @@ func all_panes() -> Array:
 func start_match(seed: int, ai: Dictionary = {}, setup = null) -> void:
 	_build_queue.clear()   # a match started while the boot builds the panes (the notice's Start): those steps were the old match's
 	var own: bool = not (setup is Dictionary)
-	host.new_match(seed, ai, _match_setup(seed) if own else setup, own)
+	var su: Dictionary = _match_setup(seed) if own else setup
+	host.new_match(seed, ai, RenderTileGround.setup_of(su) if RenderTileGround.on else su, own)
 	if host.loading():
 		ui_hud.show_loading(host.load_phase(), host.load_progress())   # frame() steps the load; the match is built when it is made (_match_built)
 		return
@@ -745,6 +764,8 @@ func frame(delta: float) -> void:
 	host.vfx.reduced_flashing = bool(ui_hud.opts.get("reduce_flashing", false))   # UI's Reduce flashing: the register's reduced mode
 	if not manual:
 		RenderAnim.reduced_motion = host.vfx.reduced_motion   # Animation's ragdoll honours it (a tool sets its own)
+		if RenderAnim.stick_pre:
+			RenderAnim.strike_pre = {0: host.hub.strike_pre(0), 1: host.hub.strike_pre(1)}   # Controls' pre-read of the strike stick for the pose (render only, never in the intent; {} with the quick read off)
 	# The reduced versions (docs/design/rule-of-cool.md rule 6) follow VFX's quality: at its lowest, battle damage is a
 	# flat tint, the guard arc is its line alone and there are no afterimages. The clouds stay (they cost nothing
 	# measurable); with reduced motion they stand still and do not part.
@@ -806,6 +827,7 @@ func render_view(a: float) -> void:
 		split_frame = split_rig.frame(a)
 		if film_cam.is_valid():
 			film_cam.call(split_frame, host.S, a)
+		RenderTileGround.shown = split_frame.place   # the heading to draw: the sim's, a correction's ease, or the motion setting's cut or still
 		var zmax: float = 0.0
 		var zfocus: float = 0.0   # the closer pane's focus depth, for the flash register's sizes
 		# Camera's frame may carry the pitch and each pane's cut-away request; until it does, the debug pitch, and in a
@@ -872,6 +894,11 @@ func _on_drained(events: Array, lines: Array) -> void:
 	if roll_on:
 		camera_roll.consume(host.S, events, split_rig if compositor != null else null)   # the rig's story, once it has read the tick
 	RenderAnim.consume(host.S, events)
+	if SimHost.draw_others and host.S.stage != null:
+		# 2v2: the other fights' bodies take their own fight's ticks and cues, through Animation's read-only view of it
+		for k in range(host.S.stage.fights.size()):
+			if k != host.S.stage.cur:
+				RenderAnim.consume(RenderAnim.fight_view(host.S, k), host.S.stage.fights[k].out.fx)
 	ui_hud.consume_all(events)
 	if barks != null:
 		ui_hud.consume_all(barks.step(host.S, events))
@@ -1025,6 +1052,7 @@ func _sync_split_options() -> void:
 	var o: Dictionary = ui_hud.opts
 	split_rig.solo_split = bool(o.get("split_solo", true))
 	split_rig.reduced_motion = bool(o.get("reduced_motion", false))
+	split_rig.world_turning = String(o.get("world_turning", "auto"))
 	if split_view != null:
 		split_view.reduced_motion = split_rig.reduced_motion
 		split_view.set_zoom_pref(float(o.get("camera_zoom", CamParams.ZOOM_PREF_DEFAULT)))
@@ -1235,7 +1263,7 @@ func _feedback_context() -> Dictionary:
 			fx.append(k)
 	var view: String = "split screen" if split_view != null and split_view.is_attached() else "one view"
 	var setup: String = " vs ".join(parts) + "; %s; effects: %s" % [view, ", ".join(fx) if not fx.is_empty() else "none"]
-	return {"seed": host.seed, "time": host.ticks * SimConst.DT, "ended": host.S.game.ko != null, "setup": setup}
+	return {"seed": host.seed, "time": host.ticks * SimConst.DT, "ended": SimCore.ended(host.S), "setup": setup}   # a 2v2 with cross on ends when a team has nobody standing, not at a first KO
 
 
 ## UI's pause menu (docs/ui/hud-spec.md section 28; P, a pad's Start and the touch pause button toggle it through
@@ -1560,8 +1588,8 @@ const HOLD_STYLE_OPTIONS := {"guard_style": "guard", "manoeuvre_style": "dodge",
 ## host (gate_args). What a public page's link may still set are four reviewed look switches: skyreact, panhaze, nopanhaze, keyhelp (tools/site-url-words.json; a change to them runs the flash clips
 ## like any look change, and tools/site-routes.mjs fails on any other word that is not here). The debug and A/B words added since (the camera roll, the slow drift, the far map, the culling and
 ## cover switches, the touch scale, the fill, ladder and fine switches) are local-only too (Legal RL-196).
-const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
-const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
+const LOCAL_ONLY_ARGS: Array = ["craterlook", "others", "tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "study", "flashcap", "nointro", "staticsky", "sky", "skymood", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
+const URL_ARGS: Array = ["craterlook", "others", "tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
 
 
 ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of

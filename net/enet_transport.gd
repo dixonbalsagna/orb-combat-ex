@@ -15,6 +15,21 @@ var disconnected: bool = false
 var allowPrefix: String = ""   # a listener's: only a peer whose address starts with this may connect ("" is anyone). Legal RL-230's home network filter, on top of the firewall rule's
 
 
+## Start calling again from scratch: a call that went out before the other PC was listening gets no answer, and ENet gives up on it. The caller's only, before anything has been heard.
+func redial(addr: String, port: int) -> void:
+	if conn != null:
+		conn.destroy()
+	peer = null
+	disconnected = false
+	conn = ENetConnection.new()
+	if conn.create_host(1, 1) != OK:
+		failed = "create_host failed"
+		return
+	peer = conn.connect_to_host(addr, port, 1)
+	if peer == null:
+		failed = "connect failed"
+
+
 ## Bind addr:port and wait for one peer.
 static func listen(addr: String, port: int) -> NetEnetTransport:
 	var t := NetEnetTransport.new()

@@ -78,8 +78,8 @@ func on_cue(S: SimState, e, out: Array) -> void:
 			_creak(S, e, out)
 		"grapple_pummel":
 			_pummel(S, e, out)
-		"grapple_refused":
-			_refuse(S, e, out)
+		"grapple_refused", "press_ack":
+			_refuse(S, e, out)      # a press_ack is only refused when its text is listed ("stunned": a press made in a stun and cleared; "refused": a press the brawl refused)
 		"perfect_block":
 			_block(S, e, out)
 

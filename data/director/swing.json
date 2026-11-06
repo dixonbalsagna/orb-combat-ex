@@ -1,5 +1,37 @@
 {
   "schema": "director.swing/1",
+  "read": {
+    "_note": "How good a moment this is for the world to turn, -1 to +1. Terms add, then clamp. No term reads people (RL-213).",
+    "terms": {
+      "launch_release": 0.6,
+      "heavy_release": 0.4,
+      "both_airborne": 0.3,
+      "flight_room": 0.3,
+      "form_pause": 0.3,
+      "quiet": 0.2,
+      "anticipation": -0.6,
+      "flight_short": -0.5,
+      "just_landed": -0.4,
+      "tall_forward": -0.4,
+      "near_split": -0.3,
+      "both_standing": -0.2
+    },
+    "releaseS": 0.1,
+    "landedS": 0.35,
+    "anticipationS": 0.3,
+    "airborneH": 100.0,
+    "onePaneGap": 1400.0,
+    "flightShortS": 0.5,
+    "quietS": 4.0,
+    "gravity": 1000.0,
+    "splitGap": 2000.0,
+    "splitBand": 300.0,
+    "splitMoving": 100.0,
+    "standingGap": 300.0,
+    "tallH": 1500.0,
+    "tallReach": 4400.0,
+    "tallSamples": 5
+  },
   "_note": "DirSwing, the choreographer's swing (docs/world/ring-any-angle/encounter.md section 2; game-design.md sections 2, 9, 10, 11, 13). It scores and asks; the rates, ramps and law are the core's (data/fight/swing.json). Every number is a first value. restTicks: at rest this long before a landing. restOut: ticks of an ease it asks for. stallTicks: a swing running this long, the law having slowed it, rests. sweep: the small class's allowance in units a second, which sizes a jolt. Off until World's place list and the look gate are in.",
   "enabled": false,
   "minDeg": 2.0,
@@ -40,7 +72,13 @@
     "every": 60,
     "tallEvery": 30,
     "sec": 6.0,
-    "reach": 6000.0
+    "reach": 6000.0,
+    "shareCap": {
+      "enabled": false,
+      "max": 0.4,
+      "after": 3,
+      "_note": "Brawl swings at most max of the match's big swings, once there have been after of them (Game Design's 40% cap for any cause but a launch; QA read 44% on the kept build)."
+    }
   },
   "placeBuildings": {
     "city": 30.0,
@@ -142,7 +180,8 @@
     "recency": 2.5,
     "recencySec": 12.0,
     "leanDeg": 60.0,
-    "leanReach": 6000.0
+    "leanReach": 6000.0,
+    "yieldToLaunch": false
   },
   "nudge": {
     "enabled": true,

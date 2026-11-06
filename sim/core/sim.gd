@@ -301,7 +301,7 @@ static func _mEnd(J: MatchJob) -> void:
 	S.tick = 0
 	S.dt = 0.0
 	if SimStage.fightsOf(J.setup) == 2 and S.fighters.size() == 4:
-		SimStage.open(S, J.seed)
+		SimStage.open(S, J.seed, J.setup)
 	S.bindStructures()   # the world's buildings and trees: their per-tick fields into the state's arrays (snapshots share the records)
 	J.done = true
 
@@ -353,6 +353,7 @@ static func _step(S: SimState, inputs) -> bool:
 ## A match of more than one fight (sim/core/stage.gd): the line's tick once, then each fight's, in slot order, on its own
 ## clock and its own holds. Fight 0 ends up in S.
 static func _stepFights(S: SimState, inputs) -> bool:
+	SimStage.enter(S, 0)   # a host may have held another fight between ticks
 	S.tick += 1
 	if SimIntro.tick(S, inputs):
 		SimFx.tickMark(S, S.dt, false)
@@ -369,7 +370,11 @@ static func _stepFights(S: SimState, inputs) -> bool:
 		S.dt = dt
 		if _fightTick(S, SimStage.inputsOf(inputs, i), dtReal, dt):
 			live = true
+		if S.stage.cross:
+			SimCross.beams(S)   # 2v2: this fight's beams on the other fight's bodies
 	SimStage.enter(S, 0)
+	if S.stage.cross:
+		SimCross.settle(S)   # 2v2: the two standing, one on each team, rejoined once both fights are finished
 	SimField.warmStep(S)
 	return live
 
@@ -390,6 +395,8 @@ static func _fightTick(S: SimState, inputs, dtReal: float, dt: float) -> bool:
 		SimFx.tickMark(S, dt, true)
 		return false
 	S.T += dt
+	if S.stage != null and S.stage.cross:
+		SimCross.deliver(S)   # 2v2: hits from another fight land on this one's live tick, on its clock
 	if S.frame != null and S.stage == null:   # with fights, once a tick ahead of them (_stepFights)
 		SimSwing.tick(S)   # the turntable: the line turns before anyone reads it this tick
 	if S.epoch != null:
@@ -434,6 +441,14 @@ static func _fightTick(S: SimState, inputs, dtReal: float, dt: float) -> bool:
 	return true
 
 
+## The match is over: its KO; or, with hits across two fights on (sim/core/cross.gd), a team with nobody standing, as one fight's KO
+## isn't the match's end. What a host asks.
+static func ended(S: SimState) -> bool:
+	if S.stage != null and S.stage.cross:
+		return S.stage.over >= 0
+	return S.game.ko != null
+
+
 static func toggleAI(S: SimState, idx: int) -> void:
-	var f = S.fighters[idx]
+	var f = SimStage.bodies(S)[idx] if S.stage != null else S.fighters[idx]   # with fights, a slot of the match
 	f.ai = null if f.ai != null else SimState.AiState.new()

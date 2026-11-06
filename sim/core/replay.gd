@@ -39,12 +39,13 @@ static func recorder(S_: SimState, seed: int, ai: Dictionary = {}, setup: Dictio
 	SimCore.newMatch(S_, seed, ai, setup)
 	var rec := SimReplay.new()
 	rec.S = S_
+	var all: Array = SimStage.bodies(S_) if S_.stage != null else S_.fighters   # two fights: all four slots
 	rec.replay = {"format": FORMAT, "v": V, "intent": SimIntent.VERSION, "data": dataHash(setup), "seed": seed, "setup": setup.duplicate(true),
-		"ai": {"p1": S_.fighters[0].ai != null, "p2": S_.fighters[1].ai != null},
+		"ai": {"p1": all[0].ai != null, "p2": all[1].ai != null},
 		"ticks": 0, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}
-	for k in range(2, S_.fighters.size()):   # one versus many: the bodies past the pair (a 1v1's header is as it was)
-		rec.replay.ai["p%d" % (k + 1)] = S_.fighters[k].ai != null
-	for k in range(S_.fighters.size()):
+	for k in range(2, all.size()):   # one versus many, or two fights: the bodies past the pair (a 1v1's header is as it was)
+		rec.replay.ai["p%d" % (k + 1)] = all[k].ai != null
+	for k in range(all.size()):
 		rec._last.append(-1)
 		rec._last2.append(0)
 	return rec
@@ -54,9 +55,9 @@ static func recorder(S_: SimState, seed: int, ai: Dictionary = {}, setup: Dictio
 ## each intent's canonical form. An AI body's intent is the AI's, and nothing of his is recorded.
 func step(inputs = null) -> bool:
 	var cur: Array = []
-	cur.resize(S.fighters.size())
+	cur.resize(_last.size())
 	var word2: bool = SimInputData.right_stick_on()
-	for k in range(S.fighters.size()):
+	for k in range(_last.size()):
 		var i = inputs[k] if inputs != null and k < inputs.size() else null
 		var p: int = SimIntent.pack(i) if i != null else -1
 		var w: int = SimIntent.pack2(i) if word2 and i != null else 0
@@ -139,9 +140,10 @@ static func play(rp: Dictionary) -> Dictionary:
 	for c in rp.checkpoints:
 		checks[int(c[0])] = c[1]
 	var cur: Array = []
-	cur.resize(S_.fighters.size())
+	var slots: int = SimStage.slotCount(S_)
+	cur.resize(slots)
 	for inp in rp.get("inputs", []):
-		if int(inp[1]) < 0 or int(inp[1]) >= S_.fighters.size():   # a slot the match does not have
+		if int(inp[1]) < 0 or int(inp[1]) >= slots:   # a slot the match does not have
 			SimCore.dispose(S_)
 			return refuse
 	var ii: int = 0
@@ -196,6 +198,8 @@ static func dataHash(setup: Dictionary = {}) -> String:
 		h.text(SimRicochet.dataHash())
 	if setup.get("hitstop", SimHitstop.enabled()) == true:   # hit-stop by weight: data/fight/hitstop.json, only for a match with it on
 		h.text(SimHitstop.dataHash())
+	if SimStage.fightsOf(setup) == 2 and setup.get("cross", SimCross.enabled()) == true:   # 2v2's hits across fights: data/fight/cross.json, only for a match of two fights with it on
+		h.text(SimCross.dataHash())
 	if setup.get("forms", SimForms.enabled()) == true:   # forms: data/fight/forms.json and each fighter's forms.json, only for a match with them on
 		h.text(SimForms.dataHash())
 	if setup.has("wear"):   # a campaign stage's place state: World lays it by data/biomes/campaign.json's bands (campaign-core.md)

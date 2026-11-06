@@ -404,6 +404,78 @@
           "type": "number",
           "maximum": 5,
           "exclusiveMinimum": 0.02
+        },
+        "lose_min": {
+          "type": "number",
+          "description": "the loser's beam is never thinner than this share of its width (Orb, 2026-10-22: it buckles instead of thinning)",
+          "maximum": 1.2,
+          "minimum": 0.8
+        },
+        "buck_bulge": {
+          "type": "number",
+          "description": "how much the loser's beam swells where the push lands at full ground lost, a share of the radius",
+          "maximum": 1.5,
+          "minimum": 0
+        },
+        "buck_bow": {
+          "type": "number",
+          "description": "the loser's bow at full ground lost, a share of the beam's length",
+          "maximum": 0.3,
+          "minimum": 0
+        },
+        "buck_bow_max": {
+          "type": "number",
+          "description": "the bow's cap in world units",
+          "maximum": 200,
+          "minimum": 0
+        },
+        "buck_quiv": {
+          "type": "number",
+          "description": "the quiver's amplitude, a share of the beam's length",
+          "maximum": 0.15,
+          "minimum": 0
+        },
+        "buck_quiv_max": {
+          "type": "number",
+          "description": "the quiver's cap in world units",
+          "maximum": 80,
+          "minimum": 0
+        },
+        "buck_bow_hz": {
+          "type": "number",
+          "description": "the bow's rate in Hz (Legal: 2 or slower)",
+          "maximum": 2,
+          "exclusiveMinimum": 0
+        },
+        "buck_quiv_hz": {
+          "type": "number",
+          "description": "the quiver's rate in Hz (Legal: 2 or slower)",
+          "maximum": 2,
+          "exclusiveMinimum": 0
+        },
+        "buck_wave": {
+          "type": "number",
+          "description": "the quiver's wavelength, a share of the beam's length",
+          "maximum": 1,
+          "minimum": 0.1
+        },
+        "buck_wave_min": {
+          "type": "number",
+          "description": "the quiver's shortest wavelength in world units",
+          "maximum": 400,
+          "minimum": 40
+        },
+        "buck_calm": {
+          "type": "number",
+          "description": "the share of the buckling's size kept under Reduce flashing or Reduced motion",
+          "maximum": 1,
+          "minimum": 0
+        },
+        "buck_calm_hz": {
+          "type": "number",
+          "description": "the share of the buckling's rates kept under Reduce flashing or Reduced motion",
+          "maximum": 1,
+          "minimum": 0
         }
       },
       "additionalProperties": false

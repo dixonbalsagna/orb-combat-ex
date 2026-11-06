@@ -176,6 +176,15 @@ static func _fire(S: SimState, f, weight: int, charge: float) -> void:
 		DirInterrupt.si(f, DirInterrupt.BLAST_LAST, S.tick)
 		o2["group"] = g
 		_spray(S, f, o2, gap)
+	var X = DirOutside.shotAcross(S, f)
+	if X != null:
+		f.face = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(f.x, X.x)), f.face)
+		var sx = SimCross.fireAt(S, f, kind, X, {"dmg": o2.dmg} if o2.has("dmg") else {})   # 2v2: his focus is across, so it's made in that fight
+		if sx == null:
+			return   # the cap on live shots there: the press is spent
+		f.ki -= float(w.ki)
+		SimEvents.feed(S, f.name + " FIRES ACROSS", "at " + String(X.keys) + ", of the other fight")
+		return
 	f.face = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(f.x, o.x)), f.face)
 	var sh = SimShots.fire(S, slot, kind, o2)
 	if sh == null:
@@ -362,10 +371,18 @@ static func _aiBlock(S: SimState, f) -> void:
 		DirInterrupt.guardPress(S, f)
 
 
+## f has made a blast press this match: a shot from outside goes by the rules here when its shooter has (SimDir.blastBy).
+static func firedBy(f) -> bool:
+	return on() and DirInterrupt.gi(f, DirInterrupt.BLAST_AT) != DirInterrupt.NEVER
+
+
 ## A shot has met f (SimShots.hitFighter). True when the shot ends on him.
+## 2v2 (sim/core/cross.gd): a shot from outside (owner -1) is met as any shot, whoever fired it (Game Design): no knock-back,
+## driver landing or barrage, which are its shooter's in his own fight.
 static func hit(S: SimState, sh, f) -> bool:
 	var c: Dictionary = data()
-	var by = S.fighters[sh.owner]
+	var by = S.fighters[sh.owner] if sh.owner >= 0 else SimCross.shooter(S, sh)
+	var outside: bool = sh.owner < 0
 	var slot: int = S.fighters.find(f)
 	if sh.mode == SimShots.MINE:
 		return _mineHit(S, sh, by, f)
@@ -443,6 +460,8 @@ static func hit(S: SimState, sh, f) -> bool:
 	var brink0: bool = f.brink
 	SimDamage.hit(S, null, by, f, dmg, {"kind": "blast", "weight": "heavy" if DirDriver.levelOf(by, sh) >= 0 else "medium", "ignoreStance": DirDriver.breaks(by, sh), "shot": sh.power, "stop": float(c.stopTicks) / DirData.TICKS_PER_SEC, "shake": 3.0 if sh.power < 2.0 else 7.0})
 	SimFx.shotHit(S, sh, f, outcome)
+	if outside:
+		return true
 	var knocked: bool = DirDriver.landed(S, sh, by, f, outcome, brink0) or _knock(S, sh, by, f, outcome, brink0)
 	_barrage(S, sh, by, f, outcome, brink0, knocked)
 	return true

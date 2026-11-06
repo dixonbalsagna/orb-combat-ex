@@ -105,6 +105,10 @@ func _init() -> void:
 						r.void += 1
 					else:
 						r.strays += 1
+				elif ck == "beam_clash_end":
+					r["clashEnd:" + String(e.text)] = int(r.get("clashEnd:" + String(e.text), 0)) + 1
+					if not r.has("clashEndAt"):
+						r["clashEndAt"] = "x %.0f y %.0f z %.1f energy %.0f surges %d winner %d" % [e.x, e.y, e.z, e.energy, int(e.n), int(e.winner)]
 				elif ck == "beam_end" and st != null:
 					r.struggles += 1
 					var how: String = String(e.text)

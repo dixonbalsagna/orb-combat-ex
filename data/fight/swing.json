@@ -75,6 +75,8 @@
   "_warmB": "buildings' ground a tick, once the columns are warm. 0 off",
   "apartReach": 4000.0,
   "_apartReach": "two fights on one line: a swing rests unless every fighter is within this many units of their middle",
+  "warmCeil": 8,
+  "_warmCeil": "tiles of the planet's height table a tick, and four times that of World's records. 0 off: a launch's plan reads the ground for its ceilings",
   "warmQuiet": 6,
   "_warmQuiet": "ticks the memos must have been quiet before that starts",
   "layPerTick": 100,

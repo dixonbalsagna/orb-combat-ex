@@ -84,6 +84,8 @@ var _crack_seen := PackedFloat32Array()
 var _deform_seen := PackedFloat32Array()
 var _scorch_seen := PackedFloat32Array()
 var _water_seen := PackedFloat32Array()
+var tile_field: RenderTileField = null   # main's --tiles: the ground in depth is the tiles'
+var crater_gen: int = 0                  # counts the craters' uploads: the tile field looks at what stands in them
 var water_version: int = 0           # counts the changes to the water (rebuilt, or S.water moved): the planet view's water chunks follow it
 var _ncr: int = 0
 var _first = null
@@ -275,15 +277,18 @@ static func gen2_ring(S: SimState) -> bool:
 
 
 ## The level of the water over a body at x, height y on a gen 2 ring, where the sheet would hide him (from the first depth
-## step, RenderLook.LAKE_BANDS.x); NO_SHORE where it wouldn't. AnimBody.set_under draws him over the water then. Reads the
-## sim's columns and writes nothing.
+## step, RenderLook.LAKE_BANDS.x); NO_SHORE where it wouldn't. AnimBody.set_under draws him over the water then. The open sea
+## isn't in S.water: its level is WorldWater.SEA_LEVEL over a base under RESERVOIR_BASE. Reads the sim's columns and writes nothing.
 static func under_level(S: SimState, x: float, y: float) -> float:
 	if not gen2_ring(S):
 		return NO_SHORE
 	var c: int = int(SimWrap.wrap(x) / SimConst.COL) % SimConst.NC
-	if S.water[c] < RenderLook.LAKE_BANDS.x:
+	var gr: float = S.base[c] + S.deform[c]
+	var lv: float = gr + S.water[c]
+	if S.base[c] < WorldWater.RESERVOIR_BASE:
+		lv = WorldWater.SEA_LEVEL
+	if lv - gr < RenderLook.LAKE_BANDS.x:
 		return NO_SHORE
-	var lv: float = S.base[c] + S.deform[c] + S.water[c]
 	return lv if y < lv else NO_SHORE
 
 
@@ -414,6 +419,10 @@ func ground_at(S: SimState, x: float, z: float) -> float:
 	var c: float = SimWrap.wrap(x) / SimConst.COL
 	var fi: float = floor(c)
 	var i: int = int(fi)
+	if tile_field != null:
+		# The tile ground: what's drawn there, and today's marks on top.
+		var td: Vector3 = tile_field.dir_at(x, z, S.frame)
+		return tile_field.height_at(td) + offset_at(S, i, fi * SimConst.COL, z) + WorldStore.heightDelta(S, td.x, td.y, td.z)
 	var j: int = (i + 1) % SimConst.NC
 	var a: float = S.base[i] + offset_at(S, i, fi * SimConst.COL, z)
 	var b: float = S.base[j] + offset_at(S, j, (fi + 1.0) * SimConst.COL, z)
@@ -515,6 +524,8 @@ func _g_col(S: SimState, i: int) -> void:
 
 
 func _upload(S: SimState, craters_changed: bool) -> void:
+	if craters_changed:
+		crater_gen += 1
 	var bytes: PackedByteArray = S.base.to_byte_array() + S.deform.to_byte_array() + g.to_byte_array() + S.scorch.to_byte_array() + S.water.to_byte_array() + _heat.to_byte_array() + lists.to_byte_array() + _far.to_byte_array() + S.crack.to_byte_array() + trench.to_byte_array() + S.rubble.to_byte_array() + rub_lo.to_byte_array() + rub_hi.to_byte_array() + shore.to_byte_array() + _zone.to_byte_array()
 	img.set_data(tw, ROWS * rpl, false, Image.FORMAT_RF, bytes)
 	tex.update(img)

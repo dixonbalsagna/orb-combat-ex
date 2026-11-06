@@ -1,0 +1,2260 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index f322db0..2b7942f 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -200,6 +200,43 @@ jobs:
+         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/fork_check.gd'
+       - name: Fork check, negative control (a fighter moved by a unit in one process must be caught)
+         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/fork_check.gd -- --negative-control'
++      # The field's memos by place (docs/architecture/field-ground.md, determinism rule 3; Simulation's field-place): a record joining the store forgets only the columns and buildings it can reach, and everything the memos hold must equal a fresh read, to the bit. Lands with field-place (memo_check.gd is its file).
++      - name: Memo check (the field's memos by place hold what a fresh read gives, to the bit, for records of each kind, size and place, AI fights, a rollback and two states)
++        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/memo_check.gd'
++      - name: Memo check, negative control (stale columns and stale buildings put back must be seen)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/memo_check.gd -- --negative-control'
++      - name: Chase tap check (a launch chased by a plain tap, the catch, the price, the blow and the landing, two runs and one hash)
++        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/chase_tap_check.gd'
++      - name: Chase rush check (a rush at a body in the air keeps the split open and the pane follows him, no flapping, the picture's step and jolt inside their limits)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/chase_rush_check.gd'
++      - name: Power check (one energy model, the shares of every launching move, flat-out flight, two runs one hash and a rollback across launches)
++        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/power_check.gd'
++      - name: Power check, negative control (a send past what he has must be seen)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/power_check.gd -- --negative-control'
++      - name: Press check (Game Design press-decides: a held B and a stance circle, the stops and the prices, the one rule for B, the steal, two runs one hash)
++        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/press_decides_check.gd'
++      - name: Rec check (the ground's records and water by the coarse grid against every big record scanned, the place table against the plain walk; Simulation places-records)
++        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/rec_check.gd'
++      - name: Rec check, negative control (an emptied coarse grid must be seen)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/rec_check.gd -- --negative-control'
++      - name: Cross check (teams by starting slot, shots from outside, replays; Simulation cross-fights)
++        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_check.gd'
++      - name: Cross check, negative control (a lost shot, a double landing and a lost shot going over must be seen)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_check.gd -- --negative-control'
++      - name: Field static check (the second memo and the split of the field give what a fresh read gives, on planets 7 and 12; Simulation field-static)
++        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/field_static_check.gd'
++      - name: Field static check, negative control (a kept ground without the store's delta must be seen)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/field_static_check.gd -- --negative-control'
++      - name: Cross end check (how a fight ends in a match of two fights: the fallen body, rejoinAfter; Simulation cross-end)
++        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_end_check.gd'
++      - name: Cross end check, negative control (a fallen body left standing must be seen)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_end_check.gd -- --negative-control'
++      - name: Two-fights rollback check (four slots, lan, p120 and far; Netcode two-fights)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=fights2 --seeds=1 --ticks=300 --profiles=lan,p120,far'
++      - name: Two-fights rollback check, negative control
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=fights2 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control'
++      - name: Two-fights rollback check, a trade at tick 0
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=fights2 --trade-at=0 --seeds=1 --ticks=300 --profiles=lan,p120'
+       # The rollback core (docs/net/rollback.md section 6): two peers over the loopback must match a straight run's gameplay hash at every confirmed tick; about a minute.
+       - name: Rollback check (two peers over the loopback match the straight run, LAN and two lossy profiles)
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --seeds=1 --ticks=300 --profiles=lan,p80j,p200'
+@@ -329,6 +366,8 @@ jobs:
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/enet_check.gd -- --ticks=1800 --profiles=lan,p200'
+       - name: Two-process ENet match, negative control (a perturbed joiner must be caught)
+         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/enet_check.gd -- --ticks=1800 --profiles=lan,p200 --negative-control'
++      - name: Two-process ENet match, a late host (the PC that joins started 40 s first; Netcode two-fights; CI only, it opens a port)
++        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/enet_check.gd -- --ticks=600 --profiles=lan --late-host=40000'
+ 
+   # World's checks (sim/world/tools): the 48 scripts that print a verdict line, listed in tools/world-checks.json (the probes, profiles, benches and soaks beside them are left out there, each with its reason).
+   # Most of them end on a plain quit() (exit 0) whatever they found, so tools/gate.mjs --verdict reads the "NAME: N check(s) failed" line as the result and fails on a nonzero N, on no such line (a script that quit early) and on a SCRIPT ERROR.
+diff --git a/docs/tools/preview.md b/docs/tools/preview.md
+index 6495b02..b62d943 100644
+--- a/docs/tools/preview.md
++++ b/docs/tools/preview.md
+@@ -157,3 +157,7 @@ The private page (`node tools/preview/stack-preview.mjs --port 8766 --watch --op
+ **The black box takes no mid-match checkpoint hash** (Performance: 38 to 58 ms a hit in the page). The final hash at the KO proves the replay; `blackbox-verify.mjs` prints `BLACKBOX OK-UNCHECKED` for a match left before its KO (it replays, nothing to compare). `blackbox-clip.mjs` takes `--from N --to N`: pictures only from N, the match played no further than `--to`.
+ **`stack-preview.mjs --rev <sha>`** builds a stack on that commit (the default stays `main`); with `--keep-tree --out <scratch>` it leaves the tree for a replay on exactly the page's key.
+ **Reel cut finder** (`reel.mjs`): the mean frame change from still to still; `reel.json` `cutCandidates` lists the biggest, with both fighters' states.
++
++**v6 additions (Tools, 2026-11-01).** `reel.mjs --hold 541,3301 [--hold-for 60] [--hold-every 6]` pauses on a tick (the sim is not stepped; the page keeps drawing) and takes a still every few seconds for a minute, with the mean change from still to still in `reel.json` `holds` (stills in `<out>/holds/`): ground that stays reads as a change near 0. `blackbox-clip.mjs --hold-at N` does the same on a tick of a recorded match. The page word `?splitshare=N` sets Camera's split share each frame (0.5 against the default 0.7). Parks added to the manifest: Camera's swing-share and lead-ahead (+ a fixup turning `lead_ahead` on), Encounter's beam-still, ground-settle, swing-warm, Simulation's field-place (+ Encounter's standing grant), Controls' first-pad, Audio's status line, Rendering's p to t (tile pool, coarse first, fill slice, tile level word, tundra strata) and Art's `data/art/biomes.json` overlay; the switches `splitShare` and `settle`.
++
++**The energy model on the page (Simulation's power-core, off by default).** `?power=1` puts `"power": true` in a match's setup (data/fight/power.json stays off); `?flatout=N` (3,500 to 7,000, the data's own range) or the slider shown with `?power=1` (bottom right, remembered in the browser, read at the start of the next match) sets `"flatOut"`, the base of flat-out flight. The parks `simulation-ceil-table` and `simulation-power-core` are in the manifest after field-place; CI has `Power check` and its negative control.
+diff --git a/tools/preview/blackbox-clip.mjs b/tools/preview/blackbox-clip.mjs
+index 5be4d01..12695e8 100644
+--- a/tools/preview/blackbox-clip.mjs
++++ b/tools/preview/blackbox-clip.mjs
+@@ -1,7 +1,7 @@
+ // Plays a black box file back as a clip (the EP, 2026-11-01: "plays Orb's real match back as a clip through the existing replay path"). The page's `replay=1` word starts the recorded match again and steps it with the recorded intents exactly as SimReplay.play does;
+ // the capture hook films it one tick per frame (every --every ticks a picture). The recorded checkpoints are compared with the page's own hashes as it goes, so the clip says whether it IS the match that was played.
+ //
+-//   node tools/preview/blackbox-clip.mjs --file <orb-first-play-....json> --dir <built web folder> --out <folder> [--every 2] [--scale 0.5] [--max 20000] [--from N --to N]
++//   node tools/preview/blackbox-clip.mjs --file <orb-first-play-....json> --dir <built web folder> --out <folder> [--every 2] [--scale 0.5] [--max 20000] [--from N --to N] [--hold-at N [--hold-for 60] [--hold-every 6]]
+ //
+ // Output: <out>/frames/f-000001.jpg ..., <out>/index.html (a player: Space pauses, arrows step, a slider), <out>/clip.json (the ticks, the checkpoints compared: ok or the first tick that differs, the answers Orb gave). Private.
+ // The file's replay needs the build it was recorded on: a replay carries a data hash, and the page refuses a different one (the clip then says so).
+@@ -18,6 +18,7 @@ const doc = JSON.parse(readFileSync(FILE, 'utf8'));
+ const rp = doc.replay || doc;
+ const fr = doc.frames || null;   // the slow frames of the real play (the page's own frame gaps): [tick, ms, seconds in]
+ const marks = fr && Array.isArray(fr.slow) ? fr.slow : [];
++const HOLD_AT = Number(opt('--hold-at', 0)), HOLD_FOR = Number(opt('--hold-for', 60)), HOLD_EVERY = Math.max(1, Number(opt('--hold-every', 6)));   // pause on a tick of the match: not stepping, a still every HOLD_EVERY s for HOLD_FOR s (docs/tools/preview.md)
+ const FROM = Math.max(0, Number(opt('--from', 0))), TO = Number(opt('--to', 0));   // a window: pictures only from FROM, and the match is played no further than TO (0: to its end)
+ const TICKS = Math.min(Number(rp.ticks) || 0, MAXT, TO > 0 ? TO : Infinity);
+ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+@@ -43,12 +44,26 @@ try {
+   if (!ready) throw new Error('the page offers no window.__flashcap that becomes ready');
+   await page.eval(`window.__flashcap.start("ai", { reduced: false, seed: ${Number(rp.seed)} })`, true);
+   log(`${url}: ${TICKS} ticks of ${rp.ticks}, a picture every ${EVERY}`);
+-  let n = 0, started = false;
++  let n = 0, started = false, small = false;
++  if (FROM > 40) { small = true; await page.send('Emulation.setDeviceMetricsOverride', { width: 240, height: 135, deviceScaleFactor: 1, mobile: false }); log(`ticks before ${FROM} are played on a small page (240x135: the frames cost less), the window at full size`); }
+   for (let i = 1; i <= TICKS; i++) {
++    if (small && i >= FROM - 30) { small = false; await page.send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false }); await sleep(1500); }
+     const got = await page.eval('window.__flashcap.step().then((t) => ({ tick: t, err: window.__flashcap.error || null, pr: window.__pr || null }))', true);
+     if (got && got.err) throw new Error(`the page reported an error: ${got.err}`);
+     if (!started && got.pr) { started = true; if (!got.pr.ok) throw new Error('the page refused the replay (another format, version or intent schema)'); }
+     record.played = i;
++    if (HOLD_AT > 0 && i === HOLD_AT) {
++      if (small) { small = false; await page.send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false }); }
++      mkdirSync(join(OUT, 'holds'), { recursive: true });
++      record.hold = { tick: i, every: HOLD_EVERY, stills: [] };
++      for (let k = 0; k * HOLD_EVERY <= HOLD_FOR; k++) {
++        await sleep(k === 0 ? 1500 : HOLD_EVERY * 1000);
++        const sh = await page.send('Page.captureScreenshot', { format: 'jpeg', quality: 80, fromSurface: true });
++        const hf = `hold-${String(i).padStart(6, '0')}-${String(k).padStart(2, '0')}.jpg`;
++        writeFileSync(join(OUT, 'holds', hf), Buffer.from(sh.data, 'base64')); record.hold.stills.push(hf);
++      }
++      log(`hold at tick ${i}: ${record.hold.stills.length} stills`);
++    }
+     if ((i % EVERY === 0 || i === TICKS) && i >= FROM) {
+       await page.eval(`(() => { const g = document.getElementById('ov'); if (g) g.textContent = ${JSON.stringify(`your match, tick ${i} of ${rp.ticks}  (${(i / 60).toFixed(1)} s)`) + (marks.some((m) => m[0] > i - EVERY && m[0] <= i) ? ` + ' — SLOW FRAME on your PC: ' + ${JSON.stringify(marks.filter((m) => m[0] > i - EVERY && m[0] <= i).map((m) => Math.round(m[1]) + ' ms').join(', '))}` : '')}; })()`, true);
+       const shot = await page.send('Page.captureScreenshot', { format: 'jpeg', quality: 70, fromSurface: true, clip: { x: 0, y: 0, width: W, height: H, scale: SCALE } });
+diff --git a/tools/preview/blackbox.mjs b/tools/preview/blackbox.mjs
+index cce6af2..c6086b7 100644
+--- a/tools/preview/blackbox.mjs
++++ b/tools/preview/blackbox.mjs
+@@ -352,10 +352,14 @@ export const PAGE_SCRIPT = String.raw`
+ 
+ /** index.html with the page script added before </body>. */
+ /** meta: what this build is made of (the commit, the stack's key and parks, the switches), stamped into the page as window.__build and into every saved file as `build`, so a recording says which build it was played on. */
+-export function injectPage(html, meta = null) {
++export function injectPage(html, meta = null, shellSnippet = '') {
+   if (html.includes('orb-blackbox-last')) return html;
+   const stamp = meta ? `<script>window.__build = ${JSON.stringify(meta).replace(/</g, '\u003c')};</script>` : '';
+-  const head = `<script>${AUDIO_HEAD}</script>`;
++  const shell = shellSnippet ? `<script>
++${shellSnippet.split('</script').join('<\\/script')}
++</script>
++` : '';   // Audio's web shell snippet (docs/audio/pending/audio-resume): first, before the engine script
++  const head = `${shell}<script>${AUDIO_HEAD}</script>`;
+   const tag = `${stamp}<script>${PAGE_SCRIPT}</script>`;
+   let out = html.includes('<head>') ? html.replace('<head>', () => `<head>\n${head}`) : head + html;
+   return out.includes('</body>') ? out.replace('</body>', () => `${tag}\n</body>`) : out + tag;
+@@ -367,14 +371,16 @@ export const AUDIO_HEAD = String.raw`
+ (function () {
+   var A = { on: /[?&](audiolog|blackbox)(=|&|$)/.test(location.search), t0: performance.now(), ctxs: [], gesture: null, firstSoundMs: null, peak: 0, windows: 0, loud: 0, rmsSum: 0, cues: 0, cuesTaken: 0, cuesDropped: 0, by: {}, vib: [], vibReq: [], navVibrate: 0, playEffect: 0, pulse: 0, rms: [], recentPeak: 0, srcs: {}, loudAt: [], cueT: [] };
+   window.__audlog = A.on;
++  window.__audHeadCopies = (window.__audHeadCopies || 0) + 1;   // more than 1: this head ran twice in the page (two taps would split the counters)
++  A.tl = []; A.snap5 = null;
+   if (/[?&]audiolog(=|&|$)/.test(location.search)) {   // the line on the page: only with the word, off otherwise
+     document.addEventListener('DOMContentLoaded', function () {
+       var el = document.createElement('div');
+-      el.style.cssText = 'position:fixed;left:6px;bottom:6px;z-index:2147483647;font:11px/1.3 monospace;color:#9fe;background:rgba(0,0,0,.55);padding:2px 6px;pointer-events:none;white-space:pre';
++      el.style.cssText = 'position:fixed;left:6px;bottom:6px;z-index:2147483647;font:11px/1.3 monospace;color:#9fe;background:rgba(0,0,0,.55);padding:2px 6px;pointer-events:none;white-space:pre-wrap;max-width:96vw';
+       document.body.appendChild(el);
+       setInterval(function () {
+         var c = A.ctxs.length ? A.ctxs[0].ctx : null;
+-        el.textContent = 'sound ' + (c ? c.state + ' t=' + c.currentTime.toFixed(1) : 'no context yet') + '  played ' + A.cuesTaken + ' dropped ' + A.cuesDropped + '  out peak ' + A.recentPeak.toFixed(2);
++        el.textContent = 'sound ' + (c ? c.state + ' t=' + c.currentTime.toFixed(1) : 'no context yet') + '  played ' + A.cuesTaken + ' dropped ' + A.cuesDropped + '  out peak ' + A.recentPeak.toFixed(2) + (A.status ? '\n' + A.status : '');
+         A.recentPeak *= 0.5;
+       }, 500);
+     });
+@@ -422,16 +428,52 @@ export const AUDIO_HEAD = String.raw`
+       if (pu) GamepadHapticActuator.prototype.pulse = function (v, d) { A.pulse++; if (A.vib.length < 400) A.vib.push({ at: now(), api: 'pulse', v: v, d: d }); return pu.apply(this, arguments); };
+     }
+   } catch (e) { /* none */ }
+-  window.__audeng = function (o) { A.eng = o; };
++  window.__audeng = function (o) { A.eng = o; A.engCalls = (A.engCalls || 0) + 1; };
++  if (/[?&]power(=(?!0|off)[^&]*|&|$)/.test(location.search)) {   // Orb's slider for the base of flat-out flight (Simulation's flatOut, 3,500 to 7,000): read at the start of the next match
++    var K = 'orb_flatout', v0 = 5000; try { var sv = parseFloat(localStorage.getItem(K)); if (sv >= 3500 && sv <= 7000) v0 = sv; } catch (e) { /* none */ }
++    window.__flatout = v0;
++    document.addEventListener('DOMContentLoaded', function () {
++      var box = document.createElement('div');
++      box.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:2147483646;font:12px/1.3 sans-serif;color:#fff;background:rgba(0,0,0,.6);padding:4px 8px;border-radius:4px';
++      var lab = document.createElement('span'), sl = document.createElement('input');
++      sl.type = 'range'; sl.min = '3500'; sl.max = '7000'; sl.step = '100'; sl.value = String(v0); sl.style.cssText = 'vertical-align:middle;width:160px';
++      function show() { lab.textContent = 'flat-out flight base speed ' + sl.value + ' (applies at the next match) '; }
++      sl.addEventListener('input', function () { window.__flatout = parseFloat(sl.value); try { localStorage.setItem(K, sl.value); } catch (e) { /* none */ } show(); });
++      ['keydown', 'keyup'].forEach(function (ev) { sl.addEventListener(ev, function (e) { e.stopPropagation(); }); });
++      show(); box.appendChild(lab); box.appendChild(sl); document.body.appendChild(box);
++    });
++  }
++  window.__audstatus = function (s) { A.status = String(s); A.statusCalls = (A.statusCalls || 0) + 1; };
+   window.__audcue = function (sound, kind, bus, gain, ok) { A.cues++; if (A.cueT.length < 400) A.cueT.push([now(), sound, ok ? 1 : 0]); if (ok) A.cuesTaken++; else A.cuesDropped++; var k = (kind || '?') + ':' + sound; A.by[k] = (A.by[k] || 0) + 1; };
+   window.__vibreq = function (via, step) { if (A.vibReq.length < 400) A.vibReq.push({ at: now(), via: via, step: step }); };
+-  window.__audio_snap = function (lean) {
++  function snapOf(lean) {
+     var ctxs = A.ctxs.map(function (c) { return { created: c.created, sampleRate: c.sampleRate, states: c.states.slice(-12) }; });
+     var by = Object.keys(A.by).sort(function (a, b) { return A.by[b] - A.by[a]; }).slice(0, 60).map(function (k) { return [k, A.by[k]]; });
+     return { on: A.on, gesture: A.gesture, ctxs: ctxs, firstSoundMs: A.firstSoundMs, peak: Math.round(A.peak * 1000) / 1000, windows: A.windows, loudWindows: A.loud, meanRms: A.windows ? Math.round(A.rmsSum / A.windows * 10000) / 10000 : 0,
+-      cues: A.cues, cuesTaken: A.cuesTaken, cuesDropped: A.cuesDropped, cuesBySound: by, engineMixer: A.eng || null, sourcesConnectedToTheOutput: A.srcs, navigatorVibrateCalls: A.navVibrate, playEffectCalls: A.playEffect, pulseCalls: A.pulse, vibrationRequestsFromTheGame: A.vibReq.length, cueTimes: lean ? undefined : A.cueT, loudAtMs: lean ? undefined : A.loudAt,
++      cues: A.cues, cuesTaken: A.cuesTaken, cuesDropped: A.cuesDropped, cuesBySound: by, engineMixer: A.eng || null, audioStatus: A.status || null, sourcesConnectedToTheOutput: A.srcs, navigatorVibrateCalls: A.navVibrate, playEffectCalls: A.playEffect, pulseCalls: A.pulse, vibrationRequestsFromTheGame: A.vibReq.length, cueTimes: lean ? undefined : A.cueT, loudAtMs: lean ? undefined : A.loudAt,
+       vibrationRequests: lean ? undefined : A.vibReq.slice(0, 60), browserVibrationCalls: lean ? undefined : A.vib.slice(0, 60), rmsSeries: lean ? undefined : A.rms.slice(-240) };
++  }
++  // Audio's read of Orb's 68ee save (2026-11-02: the record said suspended and every counter 0 for 194 s while Orb heard sound): the snapshot now also reads the live state of each context, the tab's visibility and focus,
++  // counts the engine's and the status line's calls separately, says how many copies of this head ran, keeps a one-second timeline, and keeps a snapshot taken 5 s into the match (tick 300) beside the one at the save
++  function live() {
++    var o = { visibility: document.visibilityState, focus: document.hasFocus(), headCopies: window.__audHeadCopies || 0, engCalls: A.engCalls || 0, statusCalls: A.statusCalls || 0, cueCalls: A.cues, bridgeAlive: typeof window.__audcue === 'function' };
++    o.liveCtxs = A.ctxs.map(function (c) { var x = c.ctx; return { state: x ? x.state : '?', currentTime: x ? Math.round(x.currentTime * 100) / 100 : null, baseLatency: x && x.baseLatency != null ? Math.round(x.baseLatency * 1000) / 1000 : null }; });
++    return o;
++  }
++  window.__audio_snap = function (lean) {
++    var r = snapOf(lean), l = live();
++    for (var k in l) r[k] = l[k];
++    r.timeline = A.tl.slice(-120);
++    r.atFiveSeconds = A.snap5;
++    return r;
+   };
++  setInterval(function () {
++    var l = live(), c0 = l.liveCtxs[0] || {};
++    var bbt = window.__bb_t || 0;
++    A.tl.push([now(), c0.state || 'none', c0.currentTime == null ? null : c0.currentTime, l.visibility === 'visible' ? 1 : 0, l.focus ? 1 : 0, bbt, A.cues, A.engCalls || 0, A.statusCalls || 0]);
++    if (A.tl.length > 400) A.tl.shift();
++    if (!A.snap5 && bbt >= 300) { var s5 = snapOf(true), ll = live(); for (var k2 in ll) s5[k2] = ll[k2]; s5.takenAtMs = now(); s5.tick = bbt; A.snap5 = s5; }
++  }, 1000);
+ })();
+ `;
+ 
+diff --git a/tools/preview/film-hook.mjs b/tools/preview/film-hook.mjs
+new file mode 100644
+index 0000000..adaf7c7
+--- /dev/null
++++ b/tools/preview/film-hook.mjs
+@@ -0,0 +1,51 @@
++// The film variant's changes to the capture hook (render/tools/flash_capture.gd of a scratch tree; stack-preview --film): the match starts with the page's setup words, and the scene `chapel` is added:
++// both fighters set down 1,500 units west of the nearest barred landmark (WorldSettle.noTarget: the hill chapel, a school, a hospital) and player one launches the AI east toward it (reel.mjs --scenario chapel).
++export function patchHook(hook) {
++  const T = '\t', N = '\n';
++  const pairs = [
++    ['{} if slots.size() < 2 else {"slots": slots})', 'main._preview_planet() if slots.size() < 2 else {"slots": slots})'],
++    ['func drive(sc: String, t: int, S: SimState) -> void:\n', `func drive(sc: String, t: int, S: SimState) -> void:${N}${T}if main.args.has("nohud"):   # ?nohud=1 (film variant only): no HUD layer, no take-over prompt: a picture of the world and the fighters${N}${T}${T}main.get_node("HUD").visible = false${N}`],
++    ['"launchai", "clashcity",', '"launchai", "chapel", "towers", "chase", "chargehold", "clashcity",'],
++    ['"launchai": [false, true],', '"launchai": [false, true], "chapel": [false, true], "towers": [false, true], "chase": [false, true], "chargehold": [false, true],'],
++    [`${T}${T}"launchai":     # player one launches the AI${N}`, `${T}${T}"chargehold":     # player one closes to within 6 body heights of the rival, holds the right stick toward him for 60 ticks and lets go (every 240 ticks): the stick's charged strike${N}${T}${T}${T}_chargehold(t, S)${N}${T}${T}"launchai":     # player one launches the AI${N}`, 'chargehold case'],
++    ['func _launch_ai(t: int, S: SimState) -> void:', [
++      'func _chargehold(t: int, S: SimState) -> void:',
++      `${T}var dx: float = SimWrap.sdx(S.fighters[0].x, S.fighters[1].x)`,
++      `${T}var u: int = t % 240`,
++      `${T}if u < 120:`,
++      `${T}${T}_stick(0, signf(dx) if absf(dx) > 450.0 else 0.0)`,
++      `${T}${T}main.host.hub.pad_stick_right(0, 0.0, 0.0)`,
++      `${T}elif u < 180:`,
++      `${T}${T}_stick(0, 0.0)`,
++      `${T}${T}main.host.hub.pad_stick_right(0, signf(dx), 0.0)`,
++      `${T}else:`,
++      `${T}${T}_stick(0, 0.0)`,
++      `${T}${T}main.host.hub.pad_stick_right(0, 0.0, 0.0)`, '', '',
++      'func _launch_ai(t: int, S: SimState) -> void:'].join(N), 'chargehold func'],
++    [`${T}${T}"launchai":     # player one launches the AI${N}`, `${T}${T}"chase":     # player one launches the AI, then taps X at it while it is in the air (the chase tap, its hang and its carry)${N}${T}${T}${T}_launch_ai(t, S)${N}${T}${T}${T}_btn(0, "west", String(S.fighters[1].state) == "launched" and _tap(t, 6, 0))${N}${T}${T}"launchai":     # player one launches the AI${N}`, 'chase'],
++    [`${T}${T}"launchai":     # player one launches the AI${N}`, `${T}${T}"towers":     # player one launches the AI east from beside the tallest tower: through the row of towers${N}${T}${T}${T}if t == 0:${N}${T}${T}${T}${T}_to_the_city(S)${N}${T}${T}${T}_launch_ai(t, S)${N}${T}${T}"launchai":     # player one launches the AI${N}`, 'towers'],
++    [`${T}${T}"launchai":     # player one launches the AI${N}`, `${T}${T}"chapel":     # player one launches the AI beside the nearest barred landmark${N}${T}${T}${T}if t == 0:${N}${T}${T}${T}${T}_to_the_chapel(S)${N}${T}${T}${T}_launch_ai(t, S)${N}${T}${T}"launchai":     # player one launches the AI${N}`],
++    ['func _launch_ai(t: int, S: SimState) -> void:', [
++      'func _to_the_chapel(S: SimState) -> void:',
++      `${T}var tgt = null`,
++      `${T}for b in S.buildings:`,
++      `${T}${T}if b.alive and WorldSettle.noTarget(b.landmark):`,
++      `${T}${T}${T}if tgt == null or absf(SimWrap.sdx(S.fighters[0].x, b.x)) < absf(SimWrap.sdx(S.fighters[0].x, tgt.x)):`,
++      `${T}${T}${T}${T}tgt = b`,
++      `${T}if tgt == null:`,
++      `${T}${T}return`,
++      `${T}for i in range(2):`,
++      `${T}${T}var fi = S.fighters[i]`,
++      `${T}${T}fi.x = SimWrap.wrap(tgt.x - 1500.0 + 60.0 * float(i))`,
++      `${T}${T}fi.y = WorldTerrain.groundY(S, fi.x) + 10.0`,
++      `${T}${T}fi.vx = 0.0`,
++      `${T}${T}fi.vy = 0.0`, '', '',
++      'func _launch_ai(t: int, S: SimState) -> void:'].join(N)],
++  ];
++  let h = hook;
++  for (const [x, y] of pairs) {
++    if (h.split(x).length !== 2) throw new Error('--film: the hook changed near ' + x.slice(0, 40));
++    h = h.replace(x, () => y);
++  }
++  return h;
++}
+diff --git a/tools/preview/handover.mjs b/tools/preview/handover.mjs
+index 7065486..d9ee595 100644
+--- a/tools/preview/handover.mjs
++++ b/tools/preview/handover.mjs
+@@ -1,26 +1,33 @@
+ // The handover (the EP, 2026-11-01, item 10 of docs/ep/first-press-list.md): Orb gets exactly the build that passed, kept untouched.
+ //
+-//   node tools/preview/handover.mjs --dir <the built web folder> --out <a folder OUTSIDE the repository> [--serve [--port 8766]]
++//   node tools/preview/handover.mjs --dir <the built web folder> [--out <a folder>] [--repo <the repository, when run from a copy of the tools>] [--serve [--port 8766]]
++//   --out defaults to <repository>/homework/Files/builds, the one place inside the repository a copy may go (git-ignored, under homework/.gdignore): Orb's rule, 2026-11-01, that everything for the project stays inside its folder. Any other folder inside the repository is refused (a landing, a checkout or a clean could touch it); one outside it is allowed.
+ //
+ // It copies the web folder to <out>/orb-first-play-<commit8>-<build key 8>/web (the commit and the key are read from the page itself: the black box stamps them into index.html as window.__build and into every saved match file as `build`),
+ // checks the copy byte for byte against the source, marks every file read-only, and writes a README.txt beside it. Nothing in the copy is ever rebuilt or swapped: land anything you like in the repository afterwards, the copy stays the
+ // build Orb played, so Orb's first match stays a watchable clip (blackbox-clip.mjs --dir <that web folder>). --serve then serves the copy on 127.0.0.1 (the same local server as the page; no watch, no rebuild).
+ import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync, chmodSync } from 'node:fs';
+ import { join, resolve, sep } from 'node:path';
++import { spawnSync } from 'node:child_process';
+ import { serveLocal } from './preview.mjs';
+ 
+ const argv = process.argv.slice(2);
+ const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
+-const DIR = opt('--dir'), OUT = opt('--out');
++const DIR = opt('--dir');
+ if (opt('--serve-only')) {   // serve a kept copy again, as it is: no copy, no watch, no rebuild
+   const server = await serveLocal(resolve(opt('--serve-only')), Number(opt('--port', 8766)), { strict: true });
+   console.log(`serving ${resolve(opt('--serve-only'))} at http://127.0.0.1:${server.address().port}/index.html (Ctrl-C stops it)`);
+   await new Promise(() => {});
+ }
+-if (!DIR || !OUT) { console.error('usage: node tools/preview/handover.mjs --dir <built web folder> --out <folder outside the repository> [--serve [--port 8766]]'); process.exit(2); }
+-const repo = resolve(new URL('../..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+-const out = resolve(OUT);
+-if (out === repo || out.startsWith(repo + sep)) { console.error('refused: the copy goes OUTSIDE the repository (a landing, a checkout or a clean could touch it)'); process.exit(2); }
++if (!DIR) { console.error('usage: node tools/preview/handover.mjs --dir <built web folder> [--out <folder>] [--repo <repository>] [--serve [--port 8766]]'); process.exit(2); }
++const repo = resolve(opt('--repo') || new URL('../..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
++const BUILDS = join(repo, 'homework', 'Files', 'builds');
++const out = resolve(opt('--out') || BUILDS);
++if (out === repo || out.startsWith(repo + sep)) {
++  // the one allowed place inside the repository: homework/Files/builds, if git ignores it and a .gdignore keeps Godot out of it
++  const ignored = spawnSync('git', ['check-ignore', '-q', join(BUILDS, 'x', 'web', 'index.pck')], { cwd: repo }).status === 0;
++  if (out !== BUILDS || !ignored || !existsSync(join(repo, 'homework', '.gdignore'))) { console.error(`refused: inside the repository only ${BUILDS} may hold a copy, and only while git ignores it and homework/.gdignore exists (a landing, a checkout or a clean could touch any other)`); process.exit(2); }
++}
+ const src = resolve(DIR);
+ const index = join(src, 'index.html');
+ if (!existsSync(index)) { console.error(`no index.html in ${src}`); process.exit(2); }
+@@ -31,14 +38,26 @@ const build = JSON.parse(m[1]);
+ const name = `orb-first-play-${String(build.commit).slice(0, 8)}-${String(build.folder || build.stackKey || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 8)}`;
+ const dest = join(out, name);
+ if (existsSync(dest)) { console.error(`refused: ${dest} already exists (a handover copy is never overwritten)`); process.exit(2); }
++// the tree of the build, kept with it (the EP's rule of 2026-11-02): <build>/replay-tree (written by stack-preview.mjs), or the folder named by --tree; refused without one unless --no-tree
++const treeSrc = opt('--tree') ? resolve(opt('--tree')) : join(resolve(src, '..'), 'replay-tree');
++const noTree = argv.includes('--no-tree');
++if (!noTree && !existsSync(join(treeSrc, 'sim'))) { console.error(`refused: this build has no replay tree (${treeSrc}). Build it again with the current stack-preview.mjs, or name a tree with --tree <folder>, or --no-tree to leave it out (a saved match could then not be replayed exactly)`); process.exit(2); }
+ mkdirSync(join(dest, 'web'), { recursive: true });
+ cpSync(src, join(dest, 'web'), { recursive: true });
++if (!noTree) { cpSync(treeSrc, join(dest, 'tree'), { recursive: true }); }
+ const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : [join(d, e.name)]));
+ const a = walk(src), b = walk(join(dest, 'web'));
+ let bad = a.length === b.length ? 0 : 1;
+ for (let i = 0; i < a.length && !bad; i++) { if (statSync(a[i]).size !== statSync(b[i]).size || !readFileSync(a[i]).equals(readFileSync(b[i]))) bad++; }
+ if (bad) { console.error('the copy differs from the source: refused'); process.exit(1); }
+ for (const f of b) { try { chmodSync(f, 0o444); } catch { /* read-only is a courtesy on Windows */ } }
++if (!noTree) {   // the kept tree: the same byte check, the same read-only
++  const ta = walk(treeSrc), tb = walk(join(dest, 'tree'));
++  let tbad = ta.length === tb.length ? 0 : 1;
++  for (let i = 0; i < ta.length && !tbad; i++) { if (statSync(ta[i]).size !== statSync(tb[i]).size || !readFileSync(ta[i]).equals(readFileSync(tb[i]))) tbad++; }
++  if (tbad) { console.error('the tree copy differs from the source: refused'); process.exit(1); }
++  for (const f of tb) { try { chmodSync(f, 0o444); } catch { /* a courtesy */ } }
++}
+ // The copy serves itself: a standalone server (node's own modules only, no repository file) and the window that runs it, next to the web folder, so the game never depends on the repository's tools or state.
+ writeFileSync(join(dest, 'serve.mjs'), [
+   "// Serves the web folder next to this file on 127.0.0.1 only. Node's own modules only. Usage: node serve.mjs [port]   (default 8766)",
+@@ -78,6 +97,7 @@ writeFileSync(join(dest, 'README.txt'), [
+   `${a.length} files, checked byte for byte against the source. Untouched since: never rebuild, swap or edit this folder.`,
+   '',
+   'To play: double-click serve.cmd (or run node serve.mjs 8766), then open http://127.0.0.1:8766/index.html?planet=7&meteor=loud&tiles=1&go=1&blackbox=1 . serve.cmd and serve.mjs use only node, no repository file.',
++  ...(noTree ? [] : ['The tree of this build (sim, data with the page switches flipped, net, project.godot) is in tree/: a saved match of this build replays exactly with', '  node tools/preview/blackbox-verify.mjs <orb-first-play-....json> --tree "<this folder>/tree"', '']),
+   'To serve this copy again from the repository tools, as it is (no watch, no rebuild):   node tools/preview/handover.mjs --serve-only "<this folder>/web" --port 8766',
+   'To watch a saved match file as a clip:   node tools/preview/blackbox-clip.mjs --file <the saved json> --dir "<this folder>/web" --out <a folder>',
+   'The saved file names this build in its `build` field.',
+diff --git a/tools/preview/preview-selftest.mjs b/tools/preview/preview-selftest.mjs
+index 7998d62..02d12eb 100644
+--- a/tools/preview/preview-selftest.mjs
++++ b/tools/preview/preview-selftest.mjs
+@@ -62,7 +62,7 @@ check('--off surface turns the floor off with it, and says why', R('surface').ac
+ check('--off interrupts turns the floor off with it', !R('interrupts').active.includes('floor') && R('interrupts').active.includes('surface'));
+ check('--off gen2 turns nothing else off', R('gen2').cascaded.length === 0 && R('gen2').active.length === IDS.length - 1);
+ check('swing (DirSwing) is a data flag of data/director/swing.json `enabled`, waits for the file and needs gen3; the top-level key is the one flipped, not the nested ones', (() => { const s = SWITCHES.find((x) => x.id === 'swing'); if (!s || s.file !== 'data/director/swing.json' || s.path.join() !== 'enabled' || !s.optional || s.needs.join() !== 'gen3') return false; const T = '{\n  "enabled": false,\n  "kinds": {\n    "launch": {\n      "enabled": true\n    }\n  },\n  "other": {\n    "enabled": false\n  }\n}\n'; const f = flip(T, s); return f.text === T.replace('"enabled": false,\n  "kinds"', '"enabled": true,\n  "kinds"'); })());
+-check('--off with a comma list and --off all', R('water,biome').active.join() === 'gen2,surface,interrupts,floor,calmTurn,turn,rightStick,quickRead,hapticLadder,specialsOff,signatureRtOnly,hapticRefused,hapticIncoming,webRumble,gen3,blackbox,go,meteor,tiles,swing,everywhere,arc,ending,follow,lightStops,grapple,driver,driverOnRb,stances,phrases,craterlook,vsHuman,firstMeteor,beamFront,kick,mixed,struggle,soundTug,soundMoments,soundCarry' && R('all').active.length === 0);
++check('--off with a comma list and --off all', R('water,biome').active.join() === 'gen2,surface,interrupts,floor,calmTurn,turn,rightStick,quickRead,hapticLadder,specialsOff,signatureRtOnly,beamAim,hapticRefused,hapticIncoming,webRumble,settle,splitShare,chaseTap,chargeArmour,powerPace,waterWarm,chargeClose,pressWait,oneRuleB,beamAim2,nodeWarm,stickPend,joltYield,brawlShareCap,gen3,blackbox,go,meteor,tiles,swing,everywhere,arc,ending,follow,lightStops,grapple,driver,driverOnRb,stances,phrases,craterlook,vsHuman,firstMeteor,beamFront,kick,mixed,struggle,soundTug,soundMoments,soundCarry' && R('all').active.length === 0);
+ check('an unknown id is reported, not ignored', R('watr').unknown.join() === 'watr');
+ 
+ // ---- error hints
+@@ -167,7 +167,7 @@ try {
+     work('docs/controls/pending/right-hand/right-hand-host.patch', hostText);
+     const OV = ['data/input', 'sim/input', 'docs/controls/pending/right-hand'];
+     const p1 = plan(repo, sha, { overlay: OV, pending: pend.rows });
+-    check('with the work overlaid the switch is on, needs the host patch (main.gd has not got it) and brings its probe field', p1.active.includes('rightStick') && p1.hostPatch === hostText && p1.probes.length === 3 && /right_stick_on/.test(p1.probes[2]) && !p1.waiting.some((w) => w.id === 'rightStick'), JSON.stringify(p1));
++    check('with the work overlaid the switch is on, needs the host patch (main.gd has not got it) and brings its probe field', p1.active.includes('rightStick') && p1.hostPatch === hostText && p1.probes.length === 4 && /right_stick_on/.test(p1.probes[3]) && !p1.waiting.some((w) => w.id === 'rightStick'), JSON.stringify(p1));
+     check('the overlay is read from the working tree and the commit is not: without it the same switch waits', !plan(repo, sha, { pending: pend.rows }).active.includes('rightStick'));
+     work('data/input/timing.json', JSON.stringify({ switches: { rightStick: false } }, null, 2) + '\n');
+     const noPatch = plan(repo, sha, { overlay: ['data/input', 'sim/input'], pending: pend.rows });
+@@ -237,7 +237,7 @@ try {
+     const t1 = plan(repo, sha, { overlay: ['render/core', 'sim/world'], pending: pend.rows });
+     check('with both in the tree tiles is on and the word is carried on the address', t1.active.includes('tiles') && t1.urlWords.join() === 'tiles=1' && t1.setup.planetGen === 3, JSON.stringify(t1));
+     check('--off tiles leaves no word', plan(repo, sha, { overlay: ['render/core', 'sim/world'], off: ['tiles'], pending: pend.rows }).urlWords.length === 0);
+-    check('the scratch main.gd\'s URL list is edited at the START of the list, so the tile park\'s own words first do not break the anchor', (() => { const m = MAIN.replace('const URL_ARGS: Array = ["nointro", ', 'const URL_ARGS: Array = ["tiles", "tilerate", "nointro", '); return patchMain(m).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "tiles", "tilerate", "nointro", ') && patchMain(MAIN).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "nointro", '); })());
++    check('the scratch main.gd\'s URL list is edited at the START of the list, so the tile park\'s own words first do not break the anchor', (() => { const m = MAIN.replace('const URL_ARGS: Array = ["nointro", ', 'const URL_ARGS: Array = ["tiles", "tilerate", "nointro", '); return patchMain(m).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "splitshare", "power", "flatout", "circle", "nohud", "tiles", "tilerate", "nointro", ') && patchMain(MAIN).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "splitshare", "power", "flatout", "circle", "nohud", "nointro", '); })());
+     const tb = await buildPreview({ ...opts, overlay: ['render/core', 'sim/world'], rebuild: true, pending: pend });
+     check('a build with both overlaid reports the word and flips no file for it', tb.active.includes('tiles') && tb.urlWords.join() === 'tiles=1' && !tb.flips.some((x) => x.id === 'tiles'), JSON.stringify([tb.active, tb.urlWords]));
+ 
+diff --git a/tools/preview/preview.mjs b/tools/preview/preview.mjs
+index ff056ba..19ce2b5 100644
+--- a/tools/preview/preview.mjs
++++ b/tools/preview/preview.mjs
+@@ -140,13 +140,15 @@ export function plan(repo, sha, { off = [], overlay = [], pending = [], read: re
+   const kickWord = (() => { const x = read('sim/core/kick.gd'); return x !== null && x.includes('static func enabled'); })();
+   const tierWord = (() => { const x = read('sim/core/sim.gd'); return x !== null && x.includes('startTier'); })();
+   const hitstopWord = (() => { const x = read('sim/core/hitstop.gd'); return x !== null && x.includes('static func enabled'); })();
++  const powerWord = (() => { const x = read('sim/core/power.gd'); return x !== null && x.includes('class_name SimPower'); })();
++  const circleWord = (() => { const x = read('sim/director/stance.gd'); return x !== null && x.includes('static func circleOn'); })();
+   const sticksOk = (() => { const x = read('sim/director/stick.gd'); return x !== null && x.includes('class_name DirStick'); })();
+   const swingsOff = (() => { const x = read('sim/director/swing.gd'); return x !== null && x.includes('static func setForce'); })();
+   const alts = table.filter((s) => active.includes(s.id) && s.url && s.alt).map((s) => (s.alt.add ? { id: s.id, add: s.alt.add, label: s.alt.label } : { id: s.id, word: s.url, to: s.alt.word, label: s.alt.label })).concat(swingsOff ? [{ id: 'swing', add: 'swings=off', label: 'DirSwing off (Encounter\'s page word)' }] : []).concat(kickWord && active.includes('kick') ? KICK_SAMPLES : []).concat(hitstopWord ? HITSTOP_SAMPLES : []).concat(tierWord ? PEAK_SAMPLES : []);
+   const more = table.filter((s) => active.includes(s.id) && Array.isArray(s.probeMore)).flatMap((s) => s.probeMore.filter((m) => { const x = read(m.probeIf.file); return x !== null && x.includes(m.probeIf.text); }).map((m) => m.line));
+-  const occProbe = '"occ": (pane.occluded if pane != null and pane.occluded.size() >= 2 else []), "occAll": _pv_occ_all(), "aud": _pv_aud(), "ko": (host.S != null and host.S.game.ko != null), "fx": [host.S.fighters[0].x, host.S.fighters[1].x, host.S.fighters[0].y, host.S.fighters[1].y]', kiProbe = '"ki": [host.S.fighters[0].ki, host.S.fighters[1].ki]';
+-  const probes = [occProbe, kiProbe].concat(sticksOk ? ['"stk": _pv_stick_n', '"stkk": _pv_stick_kinds', '"bo": _pv_beam_kinds', '"padtxt": _pv_padtxt', '"noise": [_pv_intended, _pv_real, _pv_phantom]', '"noised": _pv_nd', '"arcsends": _pv_arc_kinds', '"p1human": (host.S.fighters[0].ai == null)'] : []).concat(more).concat(table.filter((s) => active.includes(s.id) && s.probe && s.probeIf && read(s.probeIf.file) !== null && read(s.probeIf.file).includes(s.probeIf.text)).map((s) => s.probe));
+-  return { table, active: table.map((s) => s.id).filter((id) => active.includes(id)), cascaded: r.cascaded, waiting, stale, probes, hostPatch, unknown: r.unknown, setup, urlWords, alts, swingsOff, sticksOk, kickWord, tierWord, hitstopWord };
++  const occProbe = '"occ": (pane.occluded if pane != null and pane.occluded.size() >= 2 else []), "occAll": _pv_occ_all(), "aud": _pv_aud(), "ko": (host.S != null and host.S.game.ko != null), "fx": [host.S.fighters[0].x, host.S.fighters[1].x, host.S.fighters[0].y, host.S.fighters[1].y]', kiProbe = '"ki": [host.S.fighters[0].ki, host.S.fighters[1].ki]', uiProbe = '"teach": ([str(ui_hud.hub.models[0].teach), str(ui_hud.hub.models[1].teach)] if ui_hud != null and ui_hud.hub.models.size() >= 2 else []), "taught": [UiPrefs.get_bool("taught_beam"), UiPrefs.get_bool("taught_beam_nudge"), UiPrefs.get_bool("taught_fire_back")], "tnow": (ui_hud.hub.t_now if ui_hud != null else -1.0)';
++  const probes = [occProbe, kiProbe, uiProbe].concat(sticksOk ? ['"stk": _pv_stick_n', '"stkk": _pv_stick_kinds', '"bo": _pv_beam_kinds', '"padtxt": _pv_padtxt', '"noise": [_pv_intended, _pv_real, _pv_phantom]', '"noised": _pv_nd', '"arcsends": _pv_arc_kinds', '"p1human": (host.S.fighters[0].ai == null)'] : []).concat(powerWord ? ['"powerOn": host.S.powerOn', '"flatOut": snappedf(host.S.powerFlat, 1.0)', '"crn": host.S.craters.size()', '"cr": ([snappedf(host.S.craters[-1].x, 1.0), snappedf(host.S.craters[-1].r, 1.0), snappedf(host.S.craters[-1].depth, 1.0), host.S.craters[-1].t] if host.S.craters.size() > 0 else [])'] : []).concat(circleWord ? ['"circleOn": DirStance.circleOn()'] : []).concat((() => { const x = read('sim/world/settlements.gd'); return x !== null && x.includes('static func noTarget') ? ['"lm": (host.S.buildings.filter(func(b): return b.alive and WorldSettle.noTarget(b.landmark)).map(func(b): return [snappedf(b.x, 1.0), snappedf(float(b.z), 1.0)]) if host.ticks % 150 == 1 else [])'] : []; })()).concat((() => { const x = read('data/director/interrupts.json'); return x !== null && x.includes('chargeClose') ? ['"press": [bool(DirInterrupt.data().get("brawl", {}).get("chargeClose", {}).get("enabled", false)), bool(DirInterrupt.data().get("brawl", {}).get("pressWait", {}).get("enabled", false)), bool(DirInterrupt.data().get("brawl", {}).get("oneRuleB", {}).get("enabled", false)), bool(DirInterrupt.data().get("beamPlays", {}).get("front", {}).get("aim", {}).get("enabled", false)), bool(DirInterrupt.data().get("stances", {}).get("circle", {}).get("enabled", false))]'] : []; })()).concat(more).concat(table.filter((s) => active.includes(s.id) && s.probe && s.probeIf && read(s.probeIf.file) !== null && read(s.probeIf.file).includes(s.probeIf.text)).map((s) => s.probe));
++  return { table, active: table.map((s) => s.id).filter((id) => active.includes(id)), cascaded: r.cascaded, waiting, stale, probes, hostPatch, unknown: r.unknown, setup, urlWords, alts, swingsOff, sticksOk, kickWord, tierWord, hitstopWord, powerWord, circleWord };
+ }
+ 
+ /** Applies a git patch to a scratch tree (git apply, whitespace-tolerant: a CRLF checkout must not refuse it). Throws with git's first line when it does not fit. */
+@@ -204,7 +206,7 @@ export async function buildPreview(o) {
+   }
+   const mainFile = join(tree, 'render', 'core', 'main.gd');
+   if (pl.hostPatch) { applyPatchText(tree, pl.hostPatch); log('applied the right-hand host patch to the scratch main.gd (the pad\'s right stick)'); }
+-  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord }));
++  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord, powerWord: pl.powerWord, circleWord: pl.circleWord }));
+   if (pl.active.includes('blackbox')) { const hf = join(tree, 'render', 'core', 'sim_host.gd'); writeFileSync(hf, patchHost(readFileSync(hf, 'utf8'))); log('the black box: its hooks are in the scratch sim_host.gd (it reads the intents, the seed and the setup; it never writes the sim)'); }
+   const godot = o.godotNode ? null : godotExe(o.godot);
+   const g = { godot, godotNode: o.godotNode };
+diff --git a/tools/preview/reel.mjs b/tools/preview/reel.mjs
+index 841b256..b42f8b9 100644
+--- a/tools/preview/reel.mjs
++++ b/tools/preview/reel.mjs
+@@ -42,7 +42,10 @@ const argv = process.argv.slice(2);
+ const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
+ const DIR = opt('--dir'), OUT = opt('--out');
+ if (!DIR || !OUT) { console.error('usage: node tools/preview/reel.mjs --dir <built web folder> --out <folder> [--seed N] [--every 30] [--swings 2] [--launches 1] [--cap 6000] [--margin 60]'); process.exit(2); }
++const SCEN = String(opt('--scenario', 'ai')).replace(/[^a-z]/g, '');   // the hook's scene: ai (a real AI match), collapse (AI against AI beside the tallest tower, a blast through a row of buildings every 150 ticks), launchai ...
+ const SEED = Number(opt('--seed', 12345)), EVERY = Number(opt('--every', 30)), NSWING = Number(opt('--swings', 2)), NLAUNCH = Number(opt('--launches', 1));
++const HOLD = new Set(String(opt('--hold', '')).split(',').filter(Boolean).map(Number)), HOLD_FOR = Number(opt('--hold-for', 60)), HOLD_EVERY = Math.max(1, Number(opt('--hold-every', 6)));   // pause on a view: the sim is not stepped, a still every HOLD_EVERY s for HOLD_FOR s
++let lastTeach = '';
+ const ALSO = new Set(String(opt('--also', '')).split(',').filter(Boolean).map(Number));   // extra ticks to take a still at (the EP names a tick)
+ const CAP = Number(opt('--cap', 6000)), MARGIN = Number(opt('--margin', 60));
+ const W = Number(opt('--width', 960)), H = Number(opt('--height', 540)), PLANET = Number(opt('--planet', 7));
+@@ -54,7 +57,7 @@ if (!exe) { console.error('no chrome found'); process.exit(2); }
+ 
+ mkdirSync(join(OUT, 'stills'), { recursive: true });
+ const server = await serve(resolve(DIR));
+-const url = `http://127.0.0.1:${server.address().port}/index.html?flashcap=1&preview=1&reel=1&planet=${PLANET}&${QUERY}`;
++const url = `http://127.0.0.1:${server.address().port}/index.html?flashcap=1&preview=1&reel=1${argv.includes('--no-planet') ? '' : `&planet=${PLANET}`}&${QUERY}`;   // --no-planet: the hand-made world (the old default arena), where the hill chapel stands
+ let browser = null, page = null, code = 0;
+ const record = { url, seed: SEED, every: EVERY, swings: [], launches: [], pictures: [], ticks: 0, planetGen: null, note: '' };
+ try {
+@@ -70,7 +73,7 @@ try {
+   let ready = false;
+   while (Date.now() < deadline && !ready) { await sleep(500); ready = await page.eval('Boolean(window.__flashcap && window.__flashcap.ready)').catch(() => false); }
+   if (!ready) throw new Error('the page offers no window.__flashcap that becomes ready (is it an export with the capture hook, and ?flashcap=1 allowed?)');
+-  await page.eval(`window.__flashcap.start("ai", { reduced: false, seed: ${SEED} })`, true);
++  await page.eval(`window.__flashcap.start("${SCEN}", { reduced: false, seed: ${SEED} })`, true);
+   log(`${url}: the hook's ai scenario, seed ${SEED}, ${W}x${H}, until ${NSWING} swing(s) and ${NLAUNCH} launch(es) have been seen`);
+   let last = -1, curSwing = null, lastLn = [0, 0], doneAt = -1;
+   const KEEP_ALL = argv.includes('--keep-all'), REMATCH = argv.includes('--rematch');
+@@ -97,7 +100,7 @@ try {
+         const bbNow = await page.eval('JSON.stringify({ q: (window.__bb_q || []).map((e) => ({ over: e.over, ended: e.ended, ticks: e.ticks })), s: window.__bb_state || null })').catch(() => null);
+         record.matches.push({ n: matchNo, seed: SEED + matchNo, from: matchStart, to: tick, ended: endedKo ? 'KO' : 'did not end in 7200 ticks', blackBox: bbNow ? JSON.parse(bbNow) : null });
+         matchNo++; koSince = -1; matchStart = tick; base = tick; rawPrev = 0;
+-        await page.eval(`window.__flashcap.start("ai", { reduced: false, seed: ${SEED + matchNo} })`, true);
++        await page.eval(`window.__flashcap.start("${SCEN}", { reduced: false, seed: ${SEED + matchNo} })`, true);
+         curSwing = null; lastLn = [0, 0]; wall.run = [0, 0]; wallAll.run = [0, 0];
+         continue;
+       }
+@@ -120,6 +123,10 @@ try {
+       }
+     }
+     if (pv && Array.isArray(pv.fx) && tick % EVERY === 0) (record.positions = record.positions || []).push([tick, Math.round(pv.fx[0]), Math.round(pv.fx[1]), Math.round(pv.fx[2]), Math.round(pv.fx[3])]);   // where they stand (world x, height), a row per still: for naming a place to Rendering
++    if (pv && Array.isArray(pv.fx)) (record.track = record.track || []).push([tick, Math.round(pv.fx[0] * 10) / 10, Math.round(pv.fx[1] * 10) / 10, Math.round(pv.fx[2] * 10) / 10, Math.round(pv.fx[3] * 10) / 10]);   // every tick: world x of both, then heights (speeds are read from it)
++    if (pv && typeof pv.crn === 'number' && pv.crn !== (record.crn || 0)) { (record.craters = record.craters || []).push({ tick, n: pv.crn, last: pv.cr }); record.crn = pv.crn; }   // each change of the crater list: the count and the newest (x, radius, depth, sim time)
++    if (pv && 'lm' in pv && !record.lmKeyAt) record.lmKeyAt = { tick, n: Array.isArray(pv.lm) ? pv.lm.length : -1 };   // the probe key seen: the first tick and what it held
++    if (pv && Array.isArray(pv.lm) && pv.lm.length && !record.landmarks) record.landmarks = pv.lm;   // every barred landmark (c09: x, depth), read in the first ticks
+     if (pv && Array.isArray(pv.ki)) record.kiMax = (record.kiMax || [0, 0]).map((m, k) => Math.max(m, Number(pv.ki[k]) || 0));
+     if (pv && pv.bo) {
+       record.beamOutcomes = pv.bo;   // CLASH, GUARD, DODGE, HIT ... counted so far
+@@ -129,7 +136,9 @@ try {
+     if (pv && pv.arcsends) { record.arcSends = pv.arcsends; if (Object.keys(pv.arcsends).length && !(record.arcTicks || []).length) (record.arcTicks = record.arcTicks || []).push(tick); }
+     if (pv && Array.isArray(pv.noised)) record.thumbCueTimes = pv.noised;   // each stick cue: its kind and the ticks since the last flick of the synthetic thumb
+     if (pv && Array.isArray(pv.noise)) record.thumbNoise = { flicksMade: pv.noise[0], stickCuesAfterAFlick: pv.noise[1], phantomCues: pv.noise[2], note: 'a phantom is a stick cue (start, charge, refused) with no flick of the synthetic thumb in the 45 ticks before it' };
++    if (pv && pv.stkk) { for (const kk of Object.keys(pv.stkk)) if ((record.stickKinds || {})[kk] !== pv.stkk[kk]) (record.stickLog = record.stickLog || []).push({ tick, kind: kk, n: pv.stkk[kk] }); }   // each change of a stick cue's count: the tick and the kind
+     if (pv && pv.stkk) record.stickKinds = pv.stkk;   // the cues by kind so far (the last probe read)
++    if (pv && Array.isArray(pv.teach)) { const tk = JSON.stringify([pv.teach, pv.taught]); if (tk !== lastTeach) { (record.teachLog = record.teachLog || []).push({ tick, teach: pv.teach, taught: pv.taught, tnow: pv.tnow }); lastTeach = tk; } }   // the HUD's teaching lines: each change of what a model says, or of the taught flags
+     if (pv && pv.ln) { for (let k = 0; k < 2; k++) if (pv.ln[k] > lastLn[k]) record.launches.push({ tick, fighter: k, n: pv.ln[k], states: pv.fst }); lastLn = pv.ln; }
+     const sinceClash = (record.clashTicks || []).length ? tick - record.clashTicks[record.clashTicks.length - 1] : 1e9;
+     if (tick % EVERY === 0) {   // the flat-face number: a small PNG of this frame, measured in node
+@@ -147,6 +156,25 @@ try {
+       writeFileSync(join(OUT, 'stills', file), Buffer.from(shot.data, 'base64'));
+       shots.set(tick, { file, pv: pv ? { padtxt: pv.padtxt || null, swing: pv.swing || null, swings: pv.swings, fst: pv.fst || null, ln: pv.ln || null, hp: pv.hp || null, pz: pv.pz || null, mv: pv.mv === undefined ? null : pv.mv, stk: pv.stk === undefined ? null : pv.stk, p1h: pv.p1human === undefined ? null : pv.p1human, on: { rs: pv.rightStick, stick: pv.stickOn, swing: pv.swingOn } } : null });
+     }
++    if (HOLD.has(tick) && !(record.holds || []).some((h) => h.tick === tick)) {   // a pause: not stepping, only looking
++      const hold = { tick, fighters: pv && pv.fst || null, swing: pv && pv.swing || null, every: HOLD_EVERY, stills: [], changes: [] };
++      (record.holds = record.holds || []).push(hold); mkdirSync(join(OUT, 'holds'), { recursive: true });
++      let prev = null;
++      for (let k = 0; k * HOLD_EVERY <= HOLD_FOR; k++) {
++        await sleep(k === 0 ? 1500 : HOLD_EVERY * 1000);
++        const sh = await page.send('Page.captureScreenshot', { format: 'jpeg', quality: 80, fromSurface: true });
++        const hf = `hold-${String(tick).padStart(6, '0')}-${String(k).padStart(2, '0')}.jpg`;
++        writeFileSync(join(OUT, 'holds', hf), Buffer.from(sh.data, 'base64')); hold.stills.push(hf);
++        try {
++          const sm = await page.send('Page.captureScreenshot', { format: 'png', fromSurface: true, clip: { x: 0, y: 0, width: W, height: H, scale: 0.25 } });
++          const png = decodePng(Buffer.from(sm.data, 'base64')); const lum = new Uint8Array(png.w * png.h);
++          for (let i = 0; i < lum.length; i++) { const p = i * 4; lum[i] = (png.data[p] * 3 + png.data[p + 1] * 6 + png.data[p + 2]) / 10; }
++          if (prev && prev.length === lum.length) { let s = 0; for (let i = 0; i < lum.length; i++) s += Math.abs(lum[i] - prev[i]); hold.changes.push(Math.round(s / lum.length * 100) / 100); }
++          prev = lum;
++        } catch (e) { hold.error = String(e.message || e).slice(0, 100); }
++      }
++      log(`hold at tick ${tick}: ${hold.stills.length} stills over ${HOLD_FOR} s, the change from still to still ${JSON.stringify(hold.changes)}`);
++    }
+     const swingsDone = record.swings.filter((s) => s.end !== null).length;
+     if (doneAt < 0 && swingsDone >= NSWING && record.launches.length >= NLAUNCH) doneAt = tick;
+     if (doneAt >= 0 && tick >= doneAt + (argv.includes('--until-clash') ? 150 : MARGIN)) break;
+diff --git a/tools/preview/stack-preview.mjs b/tools/preview/stack-preview.mjs
+index 1c8fc51..00b643e 100644
+--- a/tools/preview/stack-preview.mjs
++++ b/tools/preview/stack-preview.mjs
+@@ -14,6 +14,7 @@ import { cpus, tmpdir } from 'node:os';
+ import { join, resolve } from 'node:path';
+ import { fileURLToPath } from 'node:url';
+ import { scriptErrors } from '../gate.mjs';
++import { patchHook } from './film-hook.mjs';
+ import { HOST_PATCH, applyPatchText, godotExe, plan, readPending, runGodot, saveSmoke, serveLocal } from './preview.mjs';
+ import { describeReport, loadManifest, runStack, stackKey } from './stack.mjs';
+ import { patchMain, EDITS_FINGERPRINT } from './switches.mjs';
+@@ -48,6 +49,15 @@ export function templateZip(spec, repo) {
+ 
+ const tail = (f, n = 1500) => { try { return readFileSync(f, 'utf8').slice(-n); } catch { return ''; } };
+ 
++/** The replay tree of a build: the sim, the data (with the page's switches flipped), the net code and the project, which is all SimReplay needs (blackbox-verify.mjs --tree <this folder>). 12 MB against the tree's 574. */
++export function writeReplayTree(tree, dest, r) {
++  rmSync(dest, { recursive: true, force: true });
++  mkdirSync(dest, { recursive: true });
++  for (const x of ['sim', 'data', 'net', '.godot']) if (existsSync(join(tree, x))) cpSync(join(tree, x), join(dest, x), { recursive: true });
++  cpSync(join(tree, 'project.godot'), join(dest, 'project.godot'));
++  writeFileSync(join(dest, 'README.txt'), [`The replay tree of the build ${r.commit.slice(0, 8)}-${r.key} (the commit and the stack key of the page's stamp).`, 'Replay a saved match of that build exactly:', '  node tools/preview/blackbox-verify.mjs <orb-first-play-....json> --tree <this folder>', 'It holds only what the sim needs (sim, data with the page switches flipped, net, project.godot): no art, no render, no ui.', ''].join('\n'));
++}
++
+ export async function buildStackPreview(o) {
+   const repo = resolve(o.repo || REPO);
+   const log = o.log || (() => {});
+@@ -71,12 +81,12 @@ export async function buildStackPreview(o) {
+   const parksIn = r.parks.filter((p) => p.status === 'applied').map((p) => p.id);
+   const tz = templateZip(o.template, repo);
+   const tzKey = tz ? `-t${createHash('sha1').update(readFileSync(tz)).digest('hex').slice(0, 8)}` : '';
+-  const keyFull = `${r.key}-${pl.active.join('+')}${pl.hostPatch ? '-host' : ''}${tzKey}-e${EDITS_FINGERPRINT}-s${createHash('sha1').update(['switches.mjs', 'blackbox.mjs', 'preview.mjs'].map((f) => readFileSync(new URL('./' + f, import.meta.url), 'utf8')).join('\u0000')).digest('hex').slice(0, 6)}-p${createHash('sha1').update(JSON.stringify([pl.probes, pl.setup, pl.urlWords || null])).digest('hex').slice(0, 6)}`.replace(/[^A-Za-z0-9+._-]/g, '_');
++  const keyFull = `${r.key}-${pl.active.join('+')}${pl.hostPatch ? '-host' : ''}${o.film ? '-film' : ''}${tzKey}-e${EDITS_FINGERPRINT}-s${createHash('sha1').update(['switches.mjs', 'blackbox.mjs', 'preview.mjs'].map((f) => readFileSync(new URL('./' + f, import.meta.url), 'utf8')).join('\u0000')).digest('hex').slice(0, 6)}-p${createHash('sha1').update(JSON.stringify([pl.probes, pl.setup, pl.urlWords || null])).digest('hex').slice(0, 6)}`.replace(/[^A-Za-z0-9+._-]/g, '_');
+   // the key is long (the stack's key leads it, the switches follow): a tail cut dropped the stack's key and two different stacks shared a folder, so the whole is hashed and a readable tail kept
+   const key = createHash('sha1').update(keyFull).digest('hex').slice(0, 16) + '-' + keyFull.slice(-60);
+   const dir = join(base, 'build', key), web = join(dir, 'web'), metaFile = join(dir, 'preview.json');
+   Object.assign(out, { dir, web });
+-  if (!o.rebuild && existsSync(join(web, 'index.html')) && existsSync(metaFile)) {
++  if (!o.rebuild && !o.treeOnly && existsSync(join(web, 'index.html')) && existsSync(metaFile)) {
+     out.cached = true; out.meta = JSON.parse(readFileSync(metaFile, 'utf8'));
+     rmSync(join(base, 'stack', `${r.commit.slice(0, 8)}-${r.key}`), { recursive: true, force: true });
+     return out;
+@@ -88,14 +98,39 @@ export async function buildStackPreview(o) {
+   writeFileSync(join(tree, 'build_info.json'), `${JSON.stringify({ commit: r.commit.slice(0, 7), stack: parksIn.length })}\n`);
+   const mainFile = join(tree, 'render', 'core', 'main.gd');
+   if (pl.hostPatch) { applyPatchText(tree, pl.hostPatch); log('applied the right-hand host patch to the scratch main.gd (the pad\'s right stick)'); }
+-  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord }));
++  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord, powerWord: pl.powerWord, circleWord: pl.circleWord }));
+   if (pl.active.includes('blackbox')) { const af = join(tree, 'audio', 'audio_voices.gd'); if (existsSync(af)) writeFileSync(af, patchAudio(readFileSync(af, 'utf8'))); writeFileSync(mainFile, patchHaptics(readFileSync(mainFile, 'utf8'))); }
+   if (pl.active.includes('blackbox')) { const hf = join(tree, 'render', 'core', 'sim_host.gd'); writeFileSync(hf, patchHost(readFileSync(hf, 'utf8'))); log('the black box: its hooks are in the scratch sim_host.gd (it reads the intents, the seed and the setup; it never writes the sim)'); }
++  if (pl.active.includes('blackbox')) {   // Encounter's fix (2026-11-02): during a playback of a saved match the hook's ai scene stages nothing into it (the forms at 300 and 1500, the tier at 900, the stage at 1200)
++    const hf = join(tree, 'render', 'tools', 'flash_capture.gd');
++    if (existsSync(hf)) {
++      const hook = readFileSync(hf, 'utf8');
++      const a = '\t\t"ai":           # the real AI match, forms readied at 300 and 1500, a tier raised at 900\n';
++      if (hook.split(a).length === 2 && !hook.includes('_bb_pb.is_empty()')) writeFileSync(hf, hook.replace(a, () => a + '\t\t\tif not main.host._bb_pb.is_empty():\n\t\t\t\treturn   # a playback of a saved match is that match, with nothing staged into it\n'));
++    }
++  }
++  if (o.film) {   // a film build: the capture hook starts its match with the page's own setup words
++    const hf = join(tree, 'render', 'tools', 'flash_capture.gd');
++    const hook = readFileSync(hf, 'utf8');
++    const was = '{} if slots.size() < 2 else {"slots": slots})';
++    if (hook.split(was).length !== 2) throw new Error('--film: the start_match line of the hook moved');
++    writeFileSync(hf, patchHook(hook));
++    log('film build: the capture hook now starts its match with the page words (power, peak, tier, flatout)');
++  }
+   if (tz) {   // the scratch tree's copy of the Web preset only: the engine template this page is exported with
+     const pf = join(tree, 'export_presets.cfg');
+     writeFileSync(pf, setWebCustomTemplate(readFileSync(pf, 'utf8'), tz.split('\\').join('/')));
+     log(`exporting with the custom template ${tz}`);
+   }
++  if (o.treeOnly) {   // the tree this page would be exported from, whole (render/ too), for a measurement on the kept build; nothing is imported or exported
++    const dest = resolve(o.treeOnly);
++    if (existsSync(dest)) throw new Error(`refused: ${dest} already exists`);
++    cpSync(tree, dest, { recursive: true });
++    rmSync(join(base, 'stack', `${r.commit.slice(0, 8)}-${r.key}`), { recursive: true, force: true });
++    rmSync(dir, { recursive: true, force: true });
++    out.treeOnly = dest; out.stackKey = r.key; out.seconds = Math.round((Date.now() - t0) / 1000);
++    return out;
++  }
+   const godot = o.godotNode ? null : godotExe(o.godot);
+   const g = { godot, godotNode: o.godotNode };
+   const importLog = join(dir, 'import.log'), exportLog = join(dir, 'export.log');
+@@ -105,7 +140,8 @@ export async function buildStackPreview(o) {
+   log(`exporting Web (${tz ? 'custom' : 'standard'} template, single-threaded)`);
+   code = await runGodot(g, ['--headless', '--path', tree, '--export-release', 'Web', join(web, 'index.html')], exportLog, 25 * 60 * 1000);
+   if (code !== 0 || !existsSync(join(web, 'index.html'))) throw new Error(`Godot --export-release Web exited ${code}; the end of ${exportLog}:\n${tail(exportLog)}`);
+-  if (pl.active.includes('blackbox')) { const ix = join(web, 'index.html'); writeFileSync(ix, injectPage(readFileSync(ix, 'utf8'), { commit: r.commit, subject: r.subject, stackKey: r.key, parks: parksIn, switches: pl.active, tools: BB_FINGERPRINT, folder: key })); log('the black box: the questions and the save are in the page'); }
++  if (pl.active.includes('blackbox')) { const ix = join(web, 'index.html'); const snipFile = join(repo, 'docs', 'audio', 'pending', 'audio-resume', 'shell-snippet.js'); const snip = existsSync(snipFile) ? readFileSync(snipFile, 'utf8') : ''; writeFileSync(ix, injectPage(readFileSync(ix, 'utf8'), { commit: r.commit, subject: r.subject, stackKey: r.key, parks: parksIn, switches: pl.active, tools: BB_FINGERPRINT, folder: key, shell: snip ? createHash('sha1').update(snip).digest('hex').slice(0, 8) : null }, snip)); log('the black box: the questions and the save are in the page'); }
++  writeReplayTree(tree, join(dir, 'replay-tree'), r);   // the kept build keeps what replays a saved match exactly
+   out.scriptErrors = scriptErrors(`${tail(importLog, 4000)}\n${tail(exportLog, 4000)}`).slice(0, 6);
+   if (!o.keepTree) rmSync(join(base, 'stack', `${r.commit.slice(0, 8)}-${r.key}`), { recursive: true, force: true });
+   out.seconds = Math.round((Date.now() - t0) / 1000);
+@@ -116,7 +152,7 @@ export async function buildStackPreview(o) {
+ 
+ async function main() {
+   const a = process.argv.slice(2);
+-  const known = new Set(['--template', '--watch', '--every', '--min-gap', '--max-load', '--planet', '--port', '--off', '--skip', '--only', '--rebuild', '--no-smoke', '--no-serve', '--open', '--repo', '--rev', '--manifest', '--godot', '--godot-node', '--browser-path', '--out', '--keep-tree', '--help']);
++  const known = new Set(['--template', '--watch', '--every', '--min-gap', '--max-load', '--planet', '--port', '--off', '--skip', '--only', '--rebuild', '--no-smoke', '--no-serve', '--open', '--repo', '--rev', '--manifest', '--godot', '--godot-node', '--browser-path', '--out', '--keep-tree', '--tree-only', '--film', '--help']);
+   for (const x of a) if (x.startsWith('--') && !known.has(x)) { console.error(`unknown option ${x}; node tools/preview/stack-preview.mjs --help`); process.exit(2); }
+   const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
+   const has = (n) => a.includes(n);
+@@ -124,7 +160,7 @@ async function main() {
+   if (has('--help')) { console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').filter((l) => l.startsWith('//')).slice(0, 10).map((l) => l.slice(3)).join('\n')); return; }
+   const planet = Number(opt('--planet', 7));
+   if (!Number.isInteger(planet) || planet < 1) { console.error('--planet is a positive whole number (the planet\'s seed)'); process.exit(2); }
+-  const o = { repo: opt('--repo'), rev: opt('--rev'), manifest: opt('--manifest'), planet, off: list('--off'), skip: list('--skip'), only: list('--only'), out: opt('--out'), godot: opt('--godot'), godotNode: opt('--godot-node'), template: opt('--template', 'custom'), rebuild: has('--rebuild'), keepTree: has('--keep-tree'), log: (m) => console.error(`[stack-preview] ${m}`) };
++  const o = { repo: opt('--repo'), rev: opt('--rev'), manifest: opt('--manifest'), planet, off: list('--off'), skip: list('--skip'), only: list('--only'), out: opt('--out'), godot: opt('--godot'), godotNode: opt('--godot-node'), template: opt('--template', 'custom'), rebuild: has('--rebuild'), keepTree: has('--keep-tree'), treeOnly: opt('--tree-only'), film: has('--film'), log: (m) => console.error(`[stack-preview] ${m}`) };
+   let b;
+   try { b = await buildStackPreview(o); } catch (e) { console.error(`stack-preview: ${e.message}`); process.exit(1); }
+   console.log(`\nOrb Combat EX private preview of the STACK on ${b.sha.slice(0, 8)}: ${b.subject}`);
+diff --git a/tools/preview/stack.json b/tools/preview/stack.json
+index 57d3518..e163a4f 100644
+--- a/tools/preview/stack.json
++++ b/tools/preview/stack.json
+@@ -314,6 +314,191 @@
+         }
+       ]
+     },
++    {
++      "id": "rendering-tile-pool",
++      "owner": "rendering-techart",
++      "notes": "A tile in use is never evicted and the pool fits two panes (POOL 800; Rendering 2026-11-01p). Land with s (the level word): without it the bigger pool draws floating plates.",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-01p-tile-pool/pool.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-ice-value"
++        }
++      ]
++    },
++    {
++      "id": "rendering-coarse-first",
++      "owner": "rendering-techart",
++      "notes": "The fill takes the coarsest level first, nearest first within it (Rendering 2026-11-01q).",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-01q-coarse-first/coarse.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-tile-pool"
++        }
++      ]
++    },
++    {
++      "id": "rendering-fill-slice",
++      "owner": "rendering-techart",
++      "notes": "The fill slice follows the frame's room: 1.5 ms plus half the room under a 16.67 ms frame, at most 6 ms (Rendering 2026-11-01r).",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-01r-fill-slice/slice.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-coarse-first"
++        }
++      ]
++    },
++    {
++      "id": "rendering-tile-level-word",
++      "owner": "rendering-techart",
++      "notes": "A tile's data level kept apart from its layer number (Rendering 2026-11-01s). Goes with the pool: without it the bigger pool draws floating plates.",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-01s-tile-level-word/layer.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-fill-slice"
++        }
++      ]
++    },
++    {
++      "id": "rendering-tundra-strata",
++      "owner": "rendering-techart",
++      "notes": "Tundra rock carries strata lines (Rendering 2026-11-01t; Orb's hollow mountain colour half). Goes with Art's warmer tundra rock in data/art/biomes.json (the overlay park after it).",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-01t-tundra-strata/strata.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-tile-level-word"
++        }
++      ]
++    },
++    {
++      "id": "rendering-rock-edge",
++      "owner": "rendering-techart",
++      "notes": "The rock's edge follows the hill, not the grid (Rendering 2026-11-01u, 476d77e1): the saw-toothed top edge of rock on a steep hillside (render/shaders/tile_vertex.gdshaderinc). On tundra strata.",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-01u-rock-edge/rock_edge.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-tundra-strata"
++        }
++      ]
++    },
++    {
++      "id": "rendering-lake-water-coarse",
++      "owner": "rendering-techart",
++      "notes": "Lakes keep their water on the coarsest tiles (Rendering 2026-11-01v, 48770ce9): hard-edged brown lake beds with no water in fast low flight (render/core/tile_field.gd). On rock-edge.",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-01v-lake-water-coarse/lake_l0.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-rock-edge"
++        }
++      ]
++    },
++    {
++      "id": "rendering-no-street-on-steep",
++      "owner": "rendering-techart",
++      "notes": "No street paint on a slope (Rendering 2026-11-01w, f8980a3f; part of Orb's note on low hills): render/shaders/terrain.gdshaderinc. On lake-water-coarse.",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-01w-no-street-on-steep/low_street.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-lake-water-coarse"
++        }
++      ]
++    },
++    {
++      "id": "rendering-tile-frame",
++      "owner": "rendering-techart",
++      "notes": "The tile ground's per-frame work (Rendering 2026-11-01x, e42a851a; Performance is Orb's first ask): docs/rendering/pending/2026-11-01x-tile-frame/tileframe.diff, on w, needs r (the fill slice). The EP's named exception to the freeze.",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-01x-tile-frame/tileframe.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-no-street-on-steep"
++        },
++        {
++          "park": "rendering-fill-slice"
++        }
++      ]
++    },
++    {
++      "id": "rendering-crowd-run-ground",
++      "owner": "rendering-techart",
++      "notes": "A running figure reads the ground one frame in four on the tile ground (Rendering 2026-11-01y, 4ab188d8; docs/rendering/pending/2026-11-01y-crowd-run-ground/crowdrun.diff), on x. Only with the tile ground on. Performance: CrowdFlight.step after a swing.",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-01y-crowd-run-ground/crowdrun.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-tile-frame"
++        }
++      ]
++    },
++    {
++      "id": "rendering-sweep-by-view",
++      "owner": "rendering-techart",
++      "notes": "The building sweep goes by what the camera can see on the tile ground (Rendering 2026-11-01z, f2990fbd; docs/rendering/pending/2026-11-01z-sweep-by-view/viewcap.diff), on y. Only with the tile ground on; also fixes an index sorted once that a swing leaves stale.",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-01z-sweep-by-view/viewcap.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-crowd-run-ground"
++        }
++      ]
++    },
++    {
++      "id": "art-biomes-working-tree",
++      "owner": "art-direction",
++      "notes": "Art's working-tree edits to data/art/biomes.json (the warmer tundra rock: lit #8c8270, mid #777472, shade #504d4e), uncommitted: laid over the commit. It reads as landed once it is committed.",
++      "steps": [
++        {
++          "overlay": [
++            "data/art/biomes.json"
++          ]
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-tundra-strata"
++        }
++      ]
++    },
+     {
+       "id": "tools-mixed-schema",
+       "owner": "tools-pipeline",
+@@ -487,6 +672,21 @@
+         }
+       ]
+     },
++    {
++      "id": "vfx-ratchet-meteor",
++      "owner": "vfx",
++      "notes": "The second two-fighter ratchet fix (VFX, c236215e; docs/vfx/pending/ratchet-meteor/apply.patch): render/vfx/meteor.gd takes the pair from the list. After flight-lines.",
++      "steps": [
++        {
++          "patch": "docs/vfx/pending/ratchet-meteor/apply.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "vfx-flight-lines"
++        }
++      ]
++    },
+     {
+       "id": "vfx-beam-front",
+       "owner": "vfx",
+@@ -577,6 +777,21 @@
+         }
+       ]
+     },
++    {
++      "id": "encounter-camera-swing-read",
++      "owner": "camera-cinematography",
++      "notes": "The ratchet fix in Camera's sim/director/swing_read.gd (Encounter, ce4e18c7; granted; docs/director/pending/ratchet-roster/camera-swing-read.patch), after Camera's swing-4-sim.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/ratchet-roster/camera-swing-read.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "camera-swing-4-sim"
++        }
++      ]
++    },
+     {
+       "id": "camera-swing-5-real",
+       "owner": "camera-cinematography",
+@@ -748,6 +963,58 @@
+         }
+       ]
+     },
++    {
++      "id": "camera-swing-share",
++      "owner": "camera-cinematography",
++      "notes": "Against a CPU the player's pane takes splitShare of the split (Camera, 785d0ddb; Orb's first play asked for about 0.7). Off in data (splitShare 0); the page's switch splitShare sets 0.7. Under tiles (RenderTileGround.on).",
++      "steps": [
++        {
++          "patch": "docs/camera/pending/swing/swing-share.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "camera-swing-rush-follow"
++        }
++      ]
++    },
++    {
++      "id": "camera-swing-lead-ahead",
++      "owner": "camera-cinematography",
++      "notes": "SplitRig.lead_ahead (Camera, 271e9b12): flying fast, more of the pane ahead of him, in the large pane or an even split only. Off in code; the park lead-ahead-on turns it on for the page. After swing-share.",
++      "steps": [
++        {
++          "patch": "docs/camera/pending/swing/swing-lead-ahead.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "camera-swing-share"
++        }
++      ]
++    },
++    {
++      "id": "camera-lead-ahead-on",
++      "owner": "tools-pipeline",
++      "notes": "The page runs with lead_ahead on (the EP, 2026-11-01): the one line in render/camera/split_rig.gd.",
++      "steps": [
++        {
++          "fixup": [
++            {
++              "file": "render/camera/split_rig.gd",
++              "from": "var lead_ahead: bool = false",
++              "to": "var lead_ahead: bool = true"
++            }
++          ],
++          "why": "the EP asked for lead_ahead on for the page; it is off in Camera's code"
++        }
++      ],
++      "needs": [
++        {
++          "park": "camera-swing-lead-ahead"
++        }
++      ]
++    },
+     {
+       "id": "rendering-crater-look-words",
+       "owner": "rendering-techart",
+@@ -862,6 +1129,36 @@
+         }
+       ]
+     },
++    {
++      "id": "controls-beam-aim",
++      "owner": "controls-feel",
++      "notes": "The beam's aim holds and the throw carries it (Controls, 2026-11-01; docs/controls/beam-aim-feel.md): the release step carries the sector of the mean of the last 3 rim ticks, the shown aim trails the thumb by 4 degrees, at rest the aim is 0. Behind data/input/timing.json switches.beamAim (the beamAim switch turns it on for the page). After quick-read, stick-feel (responsive-2, first-press, haptic-switches); independent of first-pad. Includes sim/input tests, orb_aim_probe and the schema key.",
++      "steps": [
++        {
++          "patch": "docs/controls/pending/beam-aim/beam-aim.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "controls-stick-feel"
++        }
++      ]
++    },
++    {
++      "id": "controls-stage-haptics",
++      "owner": "controls-feel",
++      "notes": "Stage haptics (Controls, docs/controls/pending/stage-haptics): after stick-feel, first-press and haptic-switches; hapticLadder is on for the page.",
++      "steps": [
++        {
++          "patch": "docs/controls/pending/stage-haptics/stage-haptics.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "controls-stick-feel"
++        }
++      ]
++    },
+     {
+       "id": "controls-queue-20",
+       "owner": "controls-feel",
+@@ -877,6 +1174,25 @@
+         }
+       ]
+     },
++    {
++      "id": "controls-first-pad",
++      "owner": "controls-feel",
++      "notes": "The seat fix (Controls, 2026-11-01, Orb's pad joined as player two): one person's first press takes player one; hub only (sim/input/hub.gd, +12 lines), no change to render/core/main.gd. Independent of the other parks.",
++      "steps": [
++        {
++          "patch": "docs/controls/pending/first-pad/first-pad.patch",
++          "exclude": [
++            "sim/input/test/pad_first_press_test.gd"
++          ],
++          "why": "the overlay of the working tree's sim/input (controls-quick-read) already lays Controls' copy of this test (byte for byte the patch's own); the patch would create it again"
++        }
++      ],
++      "needs": [
++        {
++          "park": "controls-queue-20"
++        }
++      ]
++    },
+     {
+       "id": "rendering-load-pace",
+       "owner": "simulation-engine",
+@@ -1012,6 +1328,1078 @@
+           "why": "the EP chose Stream as the main sound mode for the first press"
+         }
+       ]
++    },
++    {
++      "id": "audio-status-line",
++      "owner": "audio-music",
++      "notes": "AudioVoices.status_line() (Audio, 2026-11-01; docs/audio/pending/status-line): one read-only line of what the audio is doing (played, dropped, live voices, the Master peak, the trims, the buses, and on the web the browser's context). The install script is Audio's apply.py (audio/audio_voices.gd and a check), hash-locked. The page prints it behind ?audiolog=1 about once a second.",
++      "steps": [
++        {
++          "script": "docs/audio/pending/status-line/apply.py",
++          "sha1": "fe830c502ec03df5e014194b279059f11e3a0aa4"
++        }
++      ]
++    },
++    {
++      "id": "audio-resume",
++      "owner": "audio-music",
++      "notes": "Keep the page's audio running (Audio, 2026-11-01 overnight, re-cut after Tools' test): the first cut asked from inside the game through GodotAudio.ctx, which is not a global of the page, and is withdrawn. The re-cut is a snippet for the web shell (docs/audio/pending/audio-resume/shell-snippet.js): it wraps the AudioContext constructor and resumes each context on a trusted pointerdown, mousedown, keydown, touchend or click. Tools' grant: stack-preview puts it first in the page's head, before the engine script. Not proven to be the cause of the silence. AudioVoices.status_line() (the audio-status-line park) reads window.__audioShell.state().",
++      "steps": [
++        {
++          "manual": "the snippet is injected into the page head by stack-preview.mjs (tools/preview/blackbox.mjs injectPage), not applied to the tree"
++        }
++      ],
++      "needs": [
++        {
++          "park": "audio-status-line"
++        }
++      ]
++    },
++    {
++      "id": "encounter-beam-still",
++      "owner": "encounter",
++      "notes": "He stays still, and letting go fires (Encounter, 2026-11-01, Orb's first play: the fighter drifts while charging a beam). A plain patch on HEAD; it acts with beamPlays.front.enabled on, by its own key front.stationary (true in the data).",
++      "steps": [
++        {
++          "patch": "docs/director/pending/beam-still/beam-still.diff"
++        }
++      ]
++    },
++    {
++      "id": "encounter-ground-settle",
++      "owner": "encounter",
++      "notes": "A body on the ground digs or stops (Encounter, 2026-11-01, Orb's first play: bounced off an outcrop six or seven times). Behind data/biomes/contact.json settle.enabled, off; the page turns it on (the settle switch). On top of beam-still. It edits World's contact.gd and contact.json: World's grant is pending (the EP).",
++      "steps": [
++        {
++          "patch": "docs/director/pending/ground-settle/ground-settle.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-beam-still"
++        },
++        {
++          "note": "World's grant for sim/world/contact.gd and data/biomes/contact.json is pending",
++          "owner": "world"
++        }
++      ]
++    },
++    {
++      "id": "world-landmark-spare",
++      "owner": "world",
++      "notes": "A barred landmark is out of every blast and fall (World, 2026-11-02; docs/world/pending/landmark-spare; Legal RL-242): one list, WorldSettle.noTarget, for the meteor's blast, area damage, a brunt's splash and the crater's block fall; a data fact with nothing visible. Needs ground-settle beneath it. THE GOLDEN MOVES, as intended: Simulation regenerates sim/core/test/golden.json at landing; the golden check fails on a page tree and is not run for the page. \"landmark_spare_check\" goes into tools/world-checks.json \"run\" by hand when it lands (the stack runs no world-checks).",
++      "steps": [
++        {
++          "patch": "docs/world/pending/landmark-spare/landmark-spare.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-ground-settle"
++        }
++      ]
++    },
++    {
++      "id": "encounter-chase-tap",
++      "owner": "encounter",
++      "notes": "The chase after a launch, by a plain tap (Encounter, 2026-11-01; Orb: the follow-up floats; docs/design/power-scale.md section 4). Behind data/director/interrupts.json chase.tap.enabled (the chaseTap switch turns it on for the page). Includes sim/director/tools/chase_tap_check.gd (its CI step is in the tools v6 patch). chase_route.gd in the park folder is a repeat of the read, not part of the stack. Nobody has looked at it: the look gate is Encounter's note.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/chase-tap/chase-tap.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-ground-settle"
++        }
++      ]
++    },
++    {
++      "id": "encounter-chase-ease",
++      "owner": "encounter",
++      "notes": "The chase's top speed builds up over easeTicks live ticks (Encounter, 7bdea655) so the picture does not jump after him: data/director/interrupts.json chase.tap.easeTicks (10), sim/director/chase.gd, its check, and the easeTicks key in tools/schemas/director-interrupts.schema.json. On chase-tap.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/chase-tap/chase-ease.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-chase-tap"
++        }
++      ]
++    },
++    {
++      "id": "encounter-chase-air",
++      "owner": "encounter",
++      "notes": "A catch holds him up, and a tap at his landing lands as he gets up (Encounter, 2026-11-02; docs/director/pending/chase-air; Game Design power-scale section 4): the body hangs at about 30% speed for 40 ticks after a catch. Behind the chase tap's own switch (chaseTap, ON in page builds); changes only what chase-tap does. Applies after chase-tap and chase-ease.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/chase-air/chase-air.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-chase-ease"
++        }
++      ]
++    },
++    {
++      "id": "encounter-charge-armour",
++      "owner": "encounter",
++      "notes": "A charged attack has B's armour (Encounter, 8f84bbfa; Orb: charged attacks should be much harder to interrupt, especially by light attacks; docs/design/power-scale.md section 2). Behind data/director/stick.json armour.enabled (the chargeArmour switch). Also applies on chase-tap.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/charge-armour/charge-armour.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-chase-ease"
++        }
++      ]
++    },
++    {
++      "id": "encounter-idle-match",
++      "owner": "encounter",
++      "notes": "A foe who does not fight back (Encounter, 9f5fa1bc; docs/design/power-scale.md section 3): wear and the finisher push start later (60 s, 90 s). Acts with ending.enabled (on for the page). Its power-up pace is the powerPace switch.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/idle-match/idle-match.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-charge-armour"
++        }
++      ]
++    },
++    {
++      "id": "encounter-beam-hold",
++      "owner": "encounter",
++      "notes": "Holding a beam, he barely moves (Encounter, fc6dc185; docs/design/power-scale.md, last section). Acts with beamPlays.front.stationary (the beamFront switch). On beam-still and charge-armour.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/beam-hold/beam-hold.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-beam-still"
++        },
++        {
++          "park": "encounter-charge-armour"
++        }
++      ]
++    },
++    {
++      "id": "vfx-beam-shove",
++      "owner": "vfx",
++      "notes": "The beam shove (VFX, 2ba1991a (the re-cut, same path); docs/vfx/pending/beam-shove). After beam-hold.",
++      "steps": [
++        {
++          "patch": "docs/vfx/pending/beam-shove/apply.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-beam-hold"
++        },
++        {
++          "park": "vfx-beam-front"
++        }
++      ]
++    },
++    {
++      "id": "animation-beam-shove",
++      "owner": "animation",
++      "notes": "The body of Encounter's beam_shove cue (Animation, 2026-11-01, sha1 b4cf40ab; docs/animation/pending/beam-shove.patch): wave shove1 (thrown back, digs in, settles, fitted to the slide), AnimFighter.on_beam_shove, RenderAnim.beam_shove (stays on; --no-beam-shove turns it off). Independent; after beam-hold.",
++      "steps": [
++        {
++          "patch": "docs/animation/pending/beam-shove.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-beam-hold"
++        }
++      ]
++    },
++    {
++      "id": "animation-fight-view",
++      "owner": "animation",
++      "notes": "Animation's fight view (docs/animation/pending/fight-view.patch): the bodies of the other fights in a match of two fights. After cross-fights and cross-end; Rendering's draw-others reads it. Re-cut 61922bd2 (2026-11-02): applies in any order.",
++      "steps": [
++        {
++          "patch": "docs/animation/pending/fight-view.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "animation-beam-shove"
++        }
++      ]
++    },
++    {
++      "id": "camera-swing-chase-air",
++      "owner": "camera-cinematography",
++      "notes": "A rush at a body in the air has no slam door (Camera, 0ce428d0): the split stays open and the pane follows him. Under readable. Needs Encounter's chase-tap, then chase-ease, first (the check calls DirChaseTap and its limits are for the eased rush). Includes render/camera/tests/chase_rush_check.gd (its CI step is in the tools v6 patch).",
++      "steps": [
++        {
++          "patch": "docs/camera/pending/swing/swing-chase-air.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-chase-tap"
++        },
++        {
++          "park": "encounter-chase-ease"
++        },
++        {
++          "park": "camera-swing-lead-ahead"
++        }
++      ]
++    },
++    {
++      "id": "camera-swing-size-floor",
++      "owner": "camera-cinematography",
++      "notes": "Under readable, the scroll governor leaves a fast body at least 0.06 of the width (43 px at 720p), against 0.032 and 0.05 (Camera, 9688ecb3). split_rig.gd and camera_params.gd. After chase-air.",
++      "steps": [
++        {
++          "patch": "docs/camera/pending/swing/swing-size-floor.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "camera-swing-chase-air"
++        }
++      ]
++    },
++    {
++      "id": "simulation-field-place",
++      "owner": "simulation-engine",
++      "notes": "The field memos forget by place (Simulation, 2026-11-01, f6c078a5; Orb's first play: spikes at a beam and a swing): a record joining the store forgets only the columns and buildings it can reach. sim/core/field.gd (Simulation) and a 4-line call in sim/world/store.gd (World's grant, being confirmed). Plus sim/core/tools/memo_check.gd (its CI step is in the tools v6 patch).",
++      "steps": [
++        {
++          "patch": "docs/architecture/pending/field-place/field-place.patch"
++        }
++      ]
++    },
++    {
++      "id": "simulation-field-place-standing",
++      "owner": "encounter",
++      "notes": "Encounter's grant (c440aee6), optional, with field-place: DirSwing._standing tests the far buildings first (about 10 lines in sim/director/swing.gd), the same answer, 42 slow ticks down to 10 in Orb's replay. Encounter confirms its line.",
++      "steps": [
++        {
++          "patch": "docs/architecture/pending/field-place/grant-encounter-standing.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "simulation-field-place"
++        }
++      ]
++    },
++    {
++      "id": "world-water-read",
++      "owner": "world",
++      "notes": "The ground's record lookup, made once and in a coarse grid (World, 2026-11-02; docs/world/pending/water-read): hash-exact, no data and no switch. Needs field-place beneath it. The tools/world-checks.json word (\"water_read_check\" in \"run\") is for landing, the stack runs no world-checks.",
++      "steps": [
++        {
++          "patch": "docs/world/pending/water-read/water-read.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "simulation-field-place"
++        }
++      ]
++    },
++    {
++      "id": "world-lot-reach",
++      "owner": "world",
++      "notes": "A lot answers only near itself (World, 2026-11-02; docs/world/pending/lot-reach): sim/world/field.gd applyRecords, one distance test in the lot branch; hash-exact for today's lots. \"lot_reach_check\" goes into tools/world-checks.json \"run\" by hand when it lands (the stack runs no world-checks).",
++      "steps": [
++        {
++          "patch": "docs/world/pending/lot-reach/lot-reach.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "world-water-read"
++        }
++      ]
++    },
++    {
++      "id": "world-node-warm",
++      "owner": "world",
++      "notes": "The ground's nodes round the start, read at the match start (World, 2026-11-02; docs/world/pending/node-warm): off in data (field.json warm.radius 0); the page switch nodeWarm sets it to 10,000 (+0.34 s at match load native, hash-safe). \"node_warm_check\" goes into tools/world-checks.json \"run\" by hand when it lands.",
++      "steps": [
++        {
++          "patch": "docs/world/pending/node-warm/node-warm.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "world-lot-reach"
++        }
++      ]
++    },
++    {
++      "id": "simulation-places-records",
++      "owner": "simulation-engine",
++      "notes": "The ground's records by a coarser grid for the big ones, and the place table's coarse pass (Simulation, re-cut 60c4835e2e21; docs/architecture/pending/places-records), on water-read: golden byte-identical, rec_check 0 differ. CI: rec_check (verdict REC: n check(s) failed) and its negative control.",
++      "steps": [
++        {
++          "patch": "docs/architecture/pending/places-records/places-records.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "world-water-read"
++        }
++      ]
++    },
++    {
++      "id": "simulation-field-static",
++      "owner": "simulation-engine",
++      "notes": "A second memo and a split for the static part of the field (Simulation, d5387fe9d5ad; docs/architecture/pending/field-static): hash-exact, no switch. On field-place and its grant, tested with water-read beneath. CI: field_static_check (verdict FIELDSTATIC: n check(s) failed) and its negative control.",
++      "steps": [
++        {
++          "patch": "docs/architecture/pending/field-static/field-static.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "simulation-field-place-standing"
++        }
++      ]
++    },
++    {
++      "id": "rendering-fill-floor",
++      "owner": "rendering-techart",
++      "notes": "The tile ground's fill cost (Rendering 2026-11-02a, 7d25907b; docs/rendering/pending/2026-11-02a-fill-floor/fill_floor.diff), on z. Lands with or after World's water-read, never before. Only with the tile ground on.",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-02a-fill-floor/fill_floor.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-sweep-by-view"
++        },
++        {
++          "park": "world-water-read"
++        }
++      ]
++    },
++    {
++      "id": "rendering-rubble-stones",
++      "owner": "rendering-techart",
++      "notes": "The rubble heap reads as stones, not a checker (Rendering 2026-11-02b, bd93d388; docs/rendering/pending/2026-11-02b-rubble-stones/rubble_cells.diff), on fill-floor; the EP looked at the side-by-side and accepted it. Only with the tile ground on.",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-02b-rubble-stones/rubble_cells.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-fill-floor"
++        }
++      ]
++    },
++    {
++      "id": "rendering-burnt-charcoal",
++      "owner": "rendering-techart",
++      "notes": "Burnt ground reads as charcoal (Rendering 2026-11-02c, c64d4018; docs/rendering/pending/2026-11-02c-burnt-charcoal/burnt.diff), on b (rubble-stones); the EP looked at the side-by-side and accepted it. Only with the tile ground on.",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-02c-burnt-charcoal/burnt.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-rubble-stones"
++        }
++      ]
++    },
++    {
++      "id": "rendering-shadow-on-slope",
++      "owner": "rendering-techart",
++      "notes": "Shadow tilt on a slope (Rendering 2026-11-02d, ae614e48; docs/rendering/pending/2026-11-02d-shadow-on-slope/shadow_tilt.diff), on c (burnt-charcoal). Only with the tile ground on.",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-02d-shadow-on-slope/shadow_tilt.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-burnt-charcoal"
++        }
++      ]
++    },
++    {
++      "id": "rendering-ratchet-list",
++      "owner": "rendering-techart",
++      "notes": "The two-fighter ratchet fix in Rendering's files (Rendering 2026-11-02e, 0cea67ac; docs/rendering/pending/2026-11-02e-ratchet-list/ratchet.diff), after d (shadow-on-slope).",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-02e-ratchet-list/ratchet.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-shadow-on-slope"
++        }
++      ]
++    },
++    {
++      "id": "world-water-window-warm",
++      "owner": "world",
++      "notes": "A new flow window reads its span in chunks (World, re-cut 2026-11-02; docs/world/pending/water-window-warm): OFF in data (water.json flowWarm.cols 0), no switch. The EP: keep it off until World says whether it is hash-neutral (it is not hash-neutral when ON: the window's age is hashed). Sits beneath power-world.",
++      "steps": [
++        {
++          "patch": "docs/world/pending/water-window-warm/water-window-warm.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "world-water-read"
++        }
++      ]
++    },
++    {
++      "id": "world-water-cost",
++      "owner": "world",
++      "notes": "Three cuts in the beam's ticks (World, 2026-11-02; docs/world/pending/water-cost): `touched` reads each column once and `relax` reads the ground once (both hash-exact); the water waits while a swing is active under the warm switch (moves the hash only with flowWarm.cols above 0). Plain git apply after water-window-warm. \"relax_check\" goes into tools/world-checks.json \"run\" by hand when it lands.",
++      "steps": [
++        {
++          "patch": "docs/world/pending/water-cost/water-cost.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "world-water-window-warm"
++        }
++      ]
++    },
++    {
++      "id": "world-checks-run",
++      "owner": "world",
++      "notes": "The ten new World checks in CI's run list (World, 2026-11-02; docs/world/pending/world-checks-run): one added line in tools/world-checks.json \"run\", before floor_walk_probe. After World's ten parks. A tools file; the stack runs no world-checks.",
++      "steps": [
++        {
++          "patch": "docs/world/pending/world-checks-run/world-checks-run.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "world-water-cost"
++        }
++      ]
++    },
++    {
++      "id": "simulation-ceil-table",
++      "owner": "simulation-engine",
++      "notes": "A height ceiling on the planet for a launch's plan (Simulation, docs/architecture/pending/ceil-table; the EP's option 1): about 4 to 6 ms on two launch ticks; nothing in it is state. On field-place. Includes sim/core/tools/ceil_check.gd and a 9-line grant in Encounter's sim/director/launch.gd, the schema and fixture of swing.json (Tools'; in the patch). The EP decides whether it earns its 218 lines.",
++      "steps": [
++        {
++          "patch": "docs/architecture/pending/ceil-table/ceil-table.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "simulation-field-place"
++        }
++      ]
++    },
++    {
++      "id": "encounter-swing-plan-cost",
++      "owner": "encounter",
++      "notes": "A swing's plan and offer, for less, with the same answers (Encounter, cc2c741a; from Simulation's timers on a launch tick): sim/core/swing.gd and sim/director/swing.gd. No switch; changes no answer (Orb's match reproduces every checkpoint and the final hash). A plain patch on HEAD; does not touch field-place's grant. NOT the withdrawn docs/director/pending/plan-cost (PROP SMASH).",
++      "steps": [
++        {
++          "patch": "docs/director/pending/swing-plan-cost/swing-plan-cost.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "simulation-field-place-standing"
++        }
++      ]
++    },
++    {
++      "id": "simulation-swing-check-page",
++      "owner": "simulation-engine",
++      "notes": "swing_check reads true with the page's switches on (Simulation, 50f51b964d28): the 4 swing_check failures were the check's own assumptions, the sim does what it should. One file, sim/director/tools/swing_check.gd (Encounter's: a grant). The sim is unchanged.",
++      "steps": [
++        {
++          "patch": "docs/architecture/pending/swing-check-page/swing-check-page.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-swing-plan-cost"
++        }
++      ]
++    },
++    {
++      "id": "encounter-candidates-heights",
++      "owner": "encounter",
++      "notes": "A building's height is only asked when the choice reaches it (Encounter, 2026-11-02): same choice for fewer ground reads, no switch. World's sim/world/brunt.gd is a grant. First of the press-decides order.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/candidates-heights/candidates-heights.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-ground-settle"
++        }
++      ]
++    },
++    {
++      "id": "encounter-charge-close",
++      "owner": "encounter",
++      "notes": "Press-decides 1 of 6 (Encounter, 2026-11-02; Game Design press-decides section 2): a B held and let go at a rival walking away. Page switch chargeClose ON (data/director/interrupts.json brawl.chargeClose.enabled). press_decides_check goes into CI.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/charge-close/charge-close.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-candidates-heights"
++        }
++      ]
++    },
++    {
++      "id": "encounter-press-wait",
++      "owner": "encounter",
++      "notes": "Press-decides 2 of 6 (replaced cut): hard to charge when every hit seems to interrupt. Page switch pressWait ON (brawl.pressWait.enabled).",
++      "steps": [
++        {
++          "patch": "docs/director/pending/press-wait/press-wait.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-charge-close"
++        }
++      ]
++    },
++    {
++      "id": "encounter-b-one-rule",
++      "owner": "encounter",
++      "notes": "Press-decides 3 of 6: the one rule for B; replaces the earlier press-send. Page switch oneRuleB ON (brawl.oneRuleB.enabled).",
++      "steps": [
++        {
++          "patch": "docs/director/pending/b-one-rule/b-one-rule.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-press-wait"
++        }
++      ]
++    },
++    {
++      "id": "encounter-beam-aim",
++      "owner": "encounter",
++      "notes": "Press-decides 4 of 6 (re-cut): the beam aim, acts only with beamPlays.front.stationary; wants Controls' beam-aim on. Page switch beamAim2 ON (beamPlays.front.aim.enabled, needs beamFront).",
++      "steps": [
++        {
++          "patch": "docs/director/pending/beam-aim/beam-aim.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-b-one-rule"
++        }
++      ]
++    },
++    {
++      "id": "encounter-stance-circle",
++      "owner": "encounter",
++      "notes": "Press-decides 5 of 6 (replaced): LT + Y in reach is the circle. OFF on the page until Orb picks (data stances.circle.enabled false; no page switch row).",
++      "steps": [
++        {
++          "patch": "docs/director/pending/stance-circle/stance-circle.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-beam-aim"
++        }
++      ]
++    },
++    {
++      "id": "encounter-stick-steal",
++      "owner": "encounter",
++      "notes": "Press-decides 6 of 6 (re-cut 2026-11-02, no bridge): the stick steals his run. OFF (data/director/stick.json steal.enabled false), for QA's scratch only; no page switch.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/stick-steal/stick-steal.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-stance-circle"
++        }
++      ]
++    },
++    {
++      "id": "encounter-stick-pend",
++      "owner": "encounter",
++      "notes": "The stick press waits with its request (Encounter, 2026-11-02; docs/director/pending/stick-pend; Game Design stick-lands): up to 90 ticks, told at once when answered or refused. Two switches in data: pendFollow (page switch stickPend ON) and flickRun (OFF until Game Design sets its points; no row). After chase-air, on the press-decides six.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/stick-pend/stick-pend.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-chase-air"
++        },
++        {
++          "park": "encounter-stick-steal"
++        }
++      ]
++    },
++    {
++      "id": "encounter-swing-pair",
++      "owner": "encounter",
++      "notes": "The swing's jolt yields to a launch swing and brawl swings are capped at 0.4 of the big ones (Encounter, 2026-11-02; docs/director/pending/swing-pair): page switches joltYield and brawlShareCap ON. Cut with one line of context.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/swing-pair/swing-pair.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-stick-pend"
++        }
++      ]
++    },
++    {
++      "id": "encounter-chase-carry",
++      "owner": "encounter",
++      "notes": "The chaser carries on 8 ticks past a catch instead of stopping in one tick (Encounter, 2026-11-02; docs/director/pending/chase-carry): behind the chase tap switch (chaseTap, ON), chase.tap.carryTicks 8. Changes what the player sees: needs the side-by-side.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/chase-carry/chase-carry.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-chase-air"
++        }
++      ]
++    },
++    {
++      "id": "encounter-ratchet-roster",
++      "owner": "encounter",
++      "notes": "The two-fighter ratchet fix (Encounter, a5b23ea0; docs/director/pending/ratchet-roster/ratchet-roster.diff): the director files take the pair from the roster. One line of context; if a hunk misses,  does the same replacements. After chase-carry.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/ratchet-roster/ratchet-roster.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-chase-carry"
++        }
++      ]
++    },
++    {
++      "id": "camera-swing-roster",
++      "owner": "camera-cinematography",
++      "notes": "The two-fighter ratchet in Camera's files (Camera, ee95c5c7; docs/camera/pending/swing/swing-roster.patch): the pair's middle and speed and the read's pair come from the roster (_pair_mid, _pair_speed, S.fighters.slice(0, 2)), byte-identical. split_rig.gd and sim/director/swing_read.gd. After Encounter's ratchet-roster and camera-swing-read.",
++      "steps": [
++        {
++          "patch": "docs/camera/pending/swing/swing-roster.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-ratchet-roster"
++        },
++        {
++          "park": "encounter-camera-swing-read"
++        },
++        {
++          "park": "camera-swing-size-floor"
++        }
++      ]
++    },
++    {
++      "id": "encounter-clash-end",
++      "owner": "encounter",
++      "notes": "The beam clash's end event (Encounter, b43784a7 md5; docs/director/pending/clash-end): beam_clash_end cue behind data/director/interrupts.json beamStruggle.endEvent, OFF; no page switch row (the EP: off). After ratchet-roster. VFX's clash-wave reads its cue.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/clash-end/clash-end.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-ratchet-roster"
++        }
++      ]
++    },
++    {
++      "id": "encounter-two-fights-swing",
++      "owner": "encounter",
++      "notes": "The swing in a match of two fights (Encounter, ab39256b; docs/director/pending/two-fights-swing): DirSwing._g, _s and a new _anchor; acts only when S.stage is set, so a 1v1 is unchanged. No switch. After chase-carry.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/two-fights-swing/two-fights-swing.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-chase-carry"
++        }
++      ]
++    },
++    {
++      "id": "simulation-fights-check-turn",
++      "owner": "simulation-engine",
++      "notes": "fights_check reads true with the swing on (Simulation, c5ff39fa70e4; docs/architecture/pending/fights-check-turn): sim/core/tools/fights_check.gd only (the check, not the sim). Check only.",
++      "steps": [
++        {
++          "patch": "docs/architecture/pending/fights-check-turn/fights-check-turn.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-two-fights-swing"
++        }
++      ]
++    },
++    {
++      "id": "audio-press-stunned",
++      "owner": "audio-music",
++      "notes": "The stunned press has the refusal sound (Audio, 2026-11-02; docs/audio/pending/press-stunned): Encounter's press-wait emits press_ack stunned and the brawl press_ack refused; both get the grip's refused-press knock (grip.refuse). No new sound. Behind the carry switch (soundCarry, ON in page builds). Install script is Audio's apply.py. A re-cut is coming: the sha1 lock below is the cut of 2026-11-02 00:26.",
++      "steps": [
++        {
++          "script": "docs/audio/pending/press-stunned/apply.py",
++          "sha1": "f8a81cf52657921b5de23a4ed9cfc69de6870828"
++        }
++      ],
++      "needs": [
++        {
++          "park": "audio-status-line"
++        },
++        {
++          "park": "encounter-press-wait"
++        }
++      ]
++    },
++    {
++      "id": "tools-landing-schemas",
++      "owner": "tools-pipeline",
++      "notes": "Two schema lines the landing tree's validate asked for (Tools, 2026-11-02; docs/tools/pending/landing-schemas): audio-carry-cues.schema.json grapple.refuse.texts maxItems 3 (press-stunned), director-swing.schema.json brawl.shareCap (swing-pair). Mine.",
++      "steps": [
++        {
++          "patch": "docs/tools/pending/landing-schemas/landing-schemas.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-swing-pair"
++        },
++        {
++          "park": "audio-press-stunned"
++        }
++      ]
++    },
++    {
++      "id": "simulation-cross-fights",
++      "owner": "simulation-engine",
++      "notes": "Teams by starting slot, shots from outside, one switch OFF in data (Simulation, c60055216752; docs/architecture/pending/cross-fights; data/fight/cross.json). A plain patch. CI: cross_check (verdict CROSS: n check(s) failed) and its negative control.",
++      "steps": [
++        {
++          "patch": "docs/architecture/pending/cross-fights/cross-fights.patch"
++        }
++      ],
++      "needs": []
++    },
++    {
++      "id": "vfx-other-fights",
++      "owner": "vfx",
++      "notes": "The other fight's effects in 2v2 (VFX 2026-11-02, 0a821536; docs/vfx/pending/other-fights): read-only on Animation's fight_view, host-pushed, off. After the VFX chain, beam-shove, Animation's fight-view and cross-fights. Added by Tools because clash-wave's other-fights variant needs it (the EP said it is in the stack).",
++      "steps": [
++        {
++          "patch": "docs/vfx/pending/other-fights/apply.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "vfx-beam-shove"
++        },
++        {
++          "park": "animation-fight-view"
++        },
++        {
++          "park": "simulation-cross-fights"
++        }
++      ]
++    },
++    {
++      "id": "vfx-clash-wave",
++      "owner": "vfx",
++      "notes": "The beam clash's shockwave at the meeting point (VFX 2026-11-02, apply-after-other-fights.patch e37bc905 of apply.patch 90512445; docs/vfx/pending/clash-wave): VfxHub.clash_wave_enabled / VfxLook.CLASH_WAVE_DEFAULT OFF. READY behind Encounter's clash-end (the EP, 2026-11-02); off.",
++      "steps": [
++        {
++          "patch": "docs/vfx/pending/clash-wave/apply-after-other-fights.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "vfx-clash-look"
++        },
++        {
++          "park": "vfx-other-fights"
++        },
++        {
++          "park": "encounter-clash-end"
++        }
++      ]
++    },
++    {
++      "id": "simulation-cross-end",
++      "owner": "simulation-engine",
++      "notes": "How a fight ends in a match of two fights (Simulation, da3bc1c6a6cd; docs/architecture/pending/cross-end): cross.json rejoinAfter, the fallen body, stage and damage lines. After cross-fights. CI: cross_end_check (verdict CROSSEND: n check(s) failed) and its negative control. The schema line rejoinAfter in fight-cross.schema.json is Tools' (landing-schemas park).",
++      "steps": [
++        {
++          "patch": "docs/architecture/pending/cross-end/cross-end.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "simulation-cross-fights"
++        }
++      ]
++    },
++    {
++      "id": "rendering-draw-others",
++      "owner": "rendering-techart",
++      "notes": "Draws the other fights' bodies (Rendering 2026-11-02f, 8974d8f1; docs/rendering/pending/2026-11-02f-draw-others/others.diff): off by SimHost.draw_others. After e (ratchet-list), cross-fights, cross-end and Animation's fight-view. Re-cut 02beb3b3 (2026-11-02) on this manifest order.",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-02f-draw-others/others.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-ratchet-list"
++        },
++        {
++          "park": "simulation-cross-end"
++        },
++        {
++          "park": "animation-fight-view"
++        }
++      ]
++    },
++    {
++      "id": "rendering-inside-rooms",
++      "owner": "rendering-techart",
++      "notes": "Inside rooms (Rendering 2026-11-02g, 25f4f8ca; docs/rendering/pending/2026-11-02g-inside-rooms/inside_rooms.diff), after f (draw-others); the EP looked at the side-by-side and accepted it. Only with the tile ground on.",
++      "steps": [
++        {
++          "patch": "docs/rendering/pending/2026-11-02g-inside-rooms/inside_rooms.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "rendering-draw-others"
++        }
++      ]
++    },
++    {
++      "id": "netcode-two-fights",
++      "owner": "netcode",
++      "notes": "Two fights over LAN (Netcode, e0c10603c56c; docs/net/pending/two-fights): net/enet_transport.gd, lan.gd, session.gd, the net checks and the LAN kit. After cross-fights. CI: rollback_check --setup=fights2 (and its negative control, and --trade-at=0), enet_check --late-host=40000 (CI only).",
++      "steps": [
++        {
++          "patch": "docs/net/pending/two-fights/two-fights.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "simulation-cross-fights"
++        }
++      ]
++    },
++    {
++      "id": "netcode-two-fights-end",
++      "owner": "netcode",
++      "notes": "The end of a two-fights match over LAN (Netcode, 360c75403744; docs/net/pending/two-fights-end): ai_driver, lan, lan_check rows, rollback_check KO readings ask SimCore.ended. After cross-fights, cross-end and two-fights. No new CI lines (lan_check and rollback_check are already in CI).",
++      "steps": [
++        {
++          "patch": "docs/net/pending/two-fights-end/two-fights-end.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "simulation-cross-end"
++        },
++        {
++          "park": "netcode-two-fights"
++        }
++      ]
++    },
++    {
++      "id": "encounter-outside-blow",
++      "owner": "encounter",
++      "notes": "A blow from outside and a beam that stops on someone else (Encounter 2v2 steps 2a and 2b, 6607c5ed; docs/director/pending/outside-blow): behind interrupts.json outside.enabled, OFF; acts only in a match of two fights with cross on. With Simulation's grant-simulation-forward.patch (ea37115c: 2 lines in sim/core/cross.gd and the forward in sim/core/dir.gd). After cross-fights, ratchet-roster, two-fights-swing and stance-circle.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/outside-blow/grant-simulation-forward.patch"
++        },
++        {
++          "patch": "docs/director/pending/outside-blow/outside-blow.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "simulation-cross-fights"
++        },
++        {
++          "park": "encounter-ratchet-roster"
++        },
++        {
++          "park": "encounter-two-fights-swing"
++        },
++        {
++          "park": "encounter-stance-circle"
++        }
++      ]
++    },
++    {
++      "id": "encounter-two-fights-join",
++      "owner": "encounter",
++      "notes": "Two fights: the join (Encounter, 6f52df0a; docs/director/pending/two-fights-join): after join.afterSec 60 s apart every send scores the way of the other fight (a term in DirLaunch.chooseLaunch). After outside-blow.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/two-fights-join/two-fights-join.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-outside-blow"
++        }
++      ]
++    },
++    {
++      "id": "encounter-two-fights-end",
++      "owner": "encounter",
++      "notes": "Two fights: the end (Encounter, 785ed259; docs/director/pending/two-fights-end) with grant-controls-winner-input.patch (c6dedea2: 2 lines in Controls' sim/input/control.gd, a standing winner's input under his fight's KO). After two-fights-join, on Simulation's cross-fights and cross-end.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/two-fights-end/two-fights-end.diff"
++        },
++        {
++          "patch": "docs/director/pending/two-fights-end/grant-controls-winner-input.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-two-fights-join"
++        },
++        {
++          "park": "simulation-cross-end"
++        }
++      ]
++    },
++    {
++      "id": "encounter-two-fights-read",
++      "owner": "encounter",
++      "notes": "A read-only headless tool for Game Design's 2v2 QA rows (Encounter, d68c3ca5; docs/director/pending/two-fights-read): sim/director/tools/two_fights_read.gd. Changes no data. After two-fights-end. Main manifest and the landing tree.",
++      "steps": [
++        {
++          "patch": "docs/director/pending/two-fights-read/two-fights-read.diff"
++        }
++      ],
++      "needs": [
++        {
++          "park": "encounter-two-fights-end"
++        }
++      ]
++    },
++    {
++      "id": "animation-stick-pre",
++      "owner": "animation",
++      "notes": "The stick's pre-read drawn and the quick pieces re-timed to the 7-tick wind-up (Animation, 2026-11-01; docs/animation/stick-pre.md): stick-pre.patch (c67a7b94) on beam-shove, plus stick-pre-schema.patch (56f5f411, Tools' schema, map entry and cases; granted). Inert while Controls' quickRead is off.",
++      "steps": [
++        {
++          "patch": "docs/animation/pending/stick-pre.patch"
++        },
++        {
++          "patch": "docs/animation/pending/stick-pre-schema.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "animation-beam-shove"
++        },
++        {
++          "park": "encounter-stick-steal"
++        }
++      ]
++    },
++    {
++      "id": "animation-stick-pre-ratchet",
++      "owner": "animation",
++      "notes": "The first two-fighter ratchet fix (Animation, 2026-11-02; docs/animation/pending/stick-pre-ratchet.patch): takes the fighter pair from the list in the stick-pre code, on top of stick-pre.patch.",
++      "steps": [
++        {
++          "patch": "docs/animation/pending/stick-pre-ratchet.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "animation-stick-pre"
++        }
++      ]
++    },
++    {
++      "id": "simulation-power-core",
++      "owner": "simulation-engine",
++      "notes": "One energy model, the sim's part (Simulation, 4bd6d36a0b77; docs/architecture/pending/power-core, Game Design's docs/design/power-scale.md): sends by power, flat-out flight, a KO's fallback send. OFF in data (data/fight/power.json enabled false); the page word ?power=1 puts \"power\": true in a match's setup and ?flatout=N (3,500 to 7,000, or the page's slider) the base of flat-out flight. On field-place. The patch carries Tools' files (the schema, map.json, cases.json, the fixture) and grants in Encounter's, World's, Rendering's and Netcode's lines (granted by the EP for this park). LEFT OUT of the build of 2026-11-01 (the EP): Simulation is re-cutting it for bugs Combat and Encounter found.",
++      "steps": [
++        {
++          "patch": "docs/architecture/pending/power-core/power-core.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "simulation-field-place"
++        }
++      ],
++      "ready": false
++    },
++    {
++      "id": "vfx-power-burn",
++      "owner": "vfx",
++      "ready": false,
++      "notes": "The burn and the trail read the launch speed (VFX, e3e154ee; docs/vfx/pending/power-burn): on top of the energy core, which it cannot go without (it replaces peak-floor's send_only and min_tier keys). LEFT OUT of the build of 2026-11-01 with power-core; it goes in the page that comes with ?power=1.",
++      "steps": [
++        {
++          "patch": "docs/vfx/pending/power-burn/apply.patch"
++        }
++      ],
++      "needs": [
++        {
++          "park": "simulation-power-core"
++        },
++        {
++          "park": "vfx-peak-floor"
++        }
++      ]
+     }
+   ]
+ }
+diff --git a/tools/preview/stack.mjs b/tools/preview/stack.mjs
+index 2d6d259..f5b4236 100644
+--- a/tools/preview/stack.mjs
++++ b/tools/preview/stack.mjs
+@@ -98,7 +98,19 @@ export function tryApply(tree, text, exclude = []) {
+   try {
+     const files = patchFiles(text).filter((x) => !exclude.includes(x));
+     const chk = git(['--check']);
+-    if (chk.status === 0) { const r = git([]); return { ok: r.status === 0, already: false, files, error: r.status === 0 ? '' : String(r.stderr).trim(), failedFiles: [] }; }
++    if (chk.status === 0) {
++      const r = git(['--verbose']);
++      if (r.status !== 0) return { ok: false, already: false, files, error: String(r.stderr).trim(), failedFiles: [] };
++      // the EP's rule (2026-11-02, after a schema's hunk landed inside "required"): a patch that applies must leave every .json it touches well-formed, and a hunk that landed far from where it was cut is said loudly
++      for (const f of files.filter((x) => /\.json$/.test(x))) {
++        const p = join(tree, ...f.split('/'));
++        if (!existsSync(p)) continue;
++        try { JSON.parse(readFileSync(p, 'utf8')); } catch (e) { git(['-R']); /* the bad hunk is taken out again: the tree stays valid */ return { ok: false, already: false, files, error: `the patch applies but leaves ${f} invalid JSON (${String(e.message).slice(0, 90)}): a hunk landed in the wrong place`, failedFiles: [f] }; }
++      }
++      const offs = [...String(r.stderr).matchAll(/Hunk #(\d+) succeeded at (\d+) \(offset (-?\d+) lines?\)/g)].map((m) => ({ hunk: Number(m[1]), at: Number(m[2]), offset: Number(m[3]) }));
++      const far = offs.filter((o) => Math.abs(o.offset) > 40);
++      return { ok: true, already: false, files, error: '', failedFiles: [], offsets: offs.length, warn: far.length ? `WARNING: ${far.length} hunk(s) landed far from where they were cut (offset ${far.map((o) => o.offset).join(', ')} lines): check the place` : '' };
++    }
+     if (git(['-R', '--check']).status === 0) return { ok: true, already: true, files, error: '', failedFiles: [] };
+     const err = String(chk.stderr || chk.error || '').trim();
+     const failed = [...new Set([...err.matchAll(/^error: (?:patch failed: )?(.+?)(?::\d+)?(?:: (?:patch does not apply|already exists in working directory|No such file or directory|does not exist in index))?$/gm)].map((m) => m[1]).filter((f) => f && !/^patch /.test(f)))];
+@@ -169,6 +181,7 @@ export function applyStack({ repo, tree, parks, owners = {} }) {
+         if (!existsSync(f)) { step.state = 'missing'; step.detail = `${s.patch} is not in the working tree`; res.status = res.status === 'conflict' ? 'conflict' : 'missing'; res.steps.push(step); break; }
+         const r = tryApply(tree, readFileSync(f, 'utf8'), s.exclude || []);
+         if (s.exclude && r.ok) step.detail = `EXCLUDING ${s.exclude.join(', ')}: ${s.why}`;
++        if (r.warn) { step.detail = `${step.detail ? step.detail + '; ' : ''}${r.warn}`; (res.warnings = res.warnings || []).push(`${park.id}: ${r.warn}`); }
+         if (r.already) { step.state = 'already'; step.detail = 'already in the tree (it reverses cleanly): landed'; }
+         else if (!r.ok) conflict(r.failedFiles[0], `does not apply: ${r.error.split('\n').slice(0, 2).join(' | ').slice(0, 220)}`);
+         else for (const file of r.files) { touched.set(file, park.id); res.files.push(file); }
+@@ -513,7 +526,7 @@ export function describeReport(r) {
+   if (r.left.length) L.push(`  left out: ${r.left.join(', ')}`);
+   for (const p of r.parks) {
+     L.push(`  ${p.status.toUpperCase().padEnd(8)} ${p.id} (${p.owner}), ${p.files} files`);
+-    for (const s of p.steps.filter((x) => x.state !== 'applied' || /^FIXUP|EXCLUDING/.test(x.label))) L.push(`             ${s.state}: ${s.label}${s.detail ? ` — ${s.detail}` : ''}`);
++    for (const s of p.steps.filter((x) => x.state !== 'applied' || /^FIXUP|EXCLUDING/.test(x.label) || /WARNING/.test(x.detail || ''))) L.push(`             ${s.state}: ${s.label}${s.detail ? ` — ${s.detail}` : ''}`);
+     if (p.tainted) L.push(`             NOTE: ${p.id}'s install script stopped half-way and what it had done stays in the scratch tree: later parks may be affected (re-run with --skip ${p.id})`);
+   }
+   if (r.firstConflict) { const c = r.firstConflict; L.push(`FIRST CONFLICT: park ${c.park} (${c.parkOwner}), ${c.step}\n  file ${c.file}, in conflict with ${c.with === 'HEAD' ? 'the commit itself (HEAD moved since the park was made)' : `park ${c.with}`}; the file's owner is ${c.fileOwner || '?'}\n  ${c.why}`); }
+diff --git a/tools/preview/switches.mjs b/tools/preview/switches.mjs
+index aa38b35..31f359d 100644
+--- a/tools/preview/switches.mjs
++++ b/tools/preview/switches.mjs
+@@ -42,6 +42,9 @@ export const SWITCHES = [
+   { id: 'signatureRtOnly', file: 'data/input/timing.json', path: ['switches', 'signatureRtOnly'], from: false, to: true, needs: ['rightStick'], optional: true,
+     probe: '"signatureRtOnly": SimInputData.signature_rt_only()', probeIf: { file: 'sim/input/input_data.gd', text: 'func signature_rt_only' },
+     what: 'the signature on RT + B only (Controls, round 4): B alone is the big blow, RT + B is the signature, and B with LB, RB or LT held is the heavy of that stance, so a guard or a dodge never fires a beam by accident. timing.json switches.signatureRtOnly. The pad sheet assumes it is on. Waits for docs/controls/pending/stick-feel (round 4)' },
++  { id: 'beamAim', file: 'data/input/timing.json', path: ['switches', 'beamAim'], from: false, to: true, needs: ['rightStick'], optional: true,
++    probe: '"beamAim": SimInputData.beam_aim_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func beam_aim_on' },
++    what: 'the beam aim (Controls, docs/controls/pending/beam-aim, docs/controls/beam-aim-feel.md): the throw carries the aim the stick held at the rim, the shown aim trails the thumb by 4 degrees and at rest the aim is 0, so a beam goes where the thumb threw it. timing.json switches.beamAim. Needs the right hand. Waits for the park' },
+   { id: 'hapticRefused', file: 'data/input/timing.json', path: ['switches', 'hapticRefused'], from: false, to: true, needs: ['rightStick'], optional: true,
+     probe: '"hapticRefused": SimInputData.haptic_refused_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func haptic_refused_on' },
+     what: 'a stick press the game did not answer tells its pad (two dull knocks, 30 live ticks after the request; the audit\'s gap 2). Needs the right hand. timing.json switches.hapticRefused. Waits for docs/controls/pending/stick-feel (round 2)' },
+@@ -51,6 +54,38 @@ export const SWITCHES = [
+   { id: 'webRumble', file: 'data/input/timing.json', path: ['switches', 'webRumble'], from: false, to: true, needs: [], optional: true,
+     probe: '"webRumble": bool(SimInputData.t(["switches", "webRumble"], false))', probeIf: { file: 'sim/input/input_data.gd', text: 'static func t(' },
+     what: 'the pad rumble on the page (Controls, docs/controls/pending/stick-feel/web-rumble.patch): the page asks the vibrationActuator of the pad itself (dual-rumble; Chrome, Edge and Opera GX with an Xbox-type or DualSense pad), because the web runtime of Godot has no pad rumble. timing.json switches.webRumble. Waits for haptic-switches.patch and web-rumble.patch' },
++  { id: 'settle', file: 'data/biomes/contact.json', path: ['settle', 'enabled'], from: false, to: true, needs: [], optional: true,
++    probe: '"settle": int(WorldContact.K_MAXC)', probeIf: { file: 'sim/world/contact.gd', text: 'static var K_MAXC' },
++    what: 'a body on the ground digs or stops (Encounter, docs/director/pending/ground-settle): a launched body meets the ground at most 3 times, and 0, 0, 1, 1 bounces by tier, instead of tumbling off it up to 8. data/biomes/contact.json settle.enabled. The read-back is the contact limit (3 on, 8 off). Waits for the patch and its key' },
++  { id: 'splitShare', file: 'data/camera/swing.json', path: ['splitShare'], from: 0, to: 0.7, needs: [], optional: true,
++    probe: '"splitShare": (split_rig.split_share if split_rig != null else -1.0), "leadAhead": (split_rig.lead_ahead if split_rig != null else false)', probeIf: { file: 'data/camera/swing.json', text: 'splitShare' },
++    what: 'against a CPU the player pane takes 0.7 of the split (Camera swing-share, Orb first play asked for about 0.7), instead of 50/50; with tiles on. data/camera/swing.json splitShare. ?splitshare=0.5 on a local page sets it for a comparison. The probe also reads lead_ahead. Waits for swing-share.patch' },
++  { id: 'chaseTap', file: 'data/director/interrupts.json', path: ['chase', 'tap', 'enabled'], from: false, to: true, needs: [], optional: true,
++    probe: '"chaseTap": DirChaseTap.on()', probeIf: { file: 'sim/director/chase_tap.gd', text: 'static func on' },
++    what: 'the chase after a launch by a plain tap (Encounter, docs/director/pending/chase-tap; Orb: the follow-up floats): while the one you sent is in the air, press X, Y or B and you rush him; the blow lands as you catch him and sends him on. The price is free, 20, 30, 45 for X. data/director/interrupts.json chase.tap.enabled. Waits for the park' },
++  { id: 'chargeArmour', file: 'data/director/stick.json', path: ['armour', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
++    probe: '"chargeArmour": DirStick.armourOn()', probeIf: { file: 'sim/director/stick.gd', text: 'static func armourOn' },
++    what: 'a charged attack has the armour of B (Encounter, docs/director/pending/charge-armour; Orb: charged attacks should be much harder to interrupt, especially by light attacks): data/director/stick.json armour.enabled. Needs the right hand. Waits for the park' },
++  { id: 'powerPace', file: 'data/fight/ladder.json', path: ['chargePerSec'], from: 0.5, to: 2, needs: [], optional: true,
++    what: 'the power-up pace for the page (from the idle-match README of Encounter, until QA has read the tier pace): data/fight/ladder.json chargePerSec 0.5 to 2, so a fighter charges four times as fast. It moves the golden and every replay data hash: for the page only' },
++  { id: 'waterWarm', file: 'data/biomes/water.json', path: ['flowWarm', 'cols'], from: 0, to: 48, needs: [], optional: true, presentIf: { file: 'sim/world/water.gd', text: 'warmCols' },
++    what: 'a new flow window reads its span in chunks of 48 columns (World, docs/world/pending/water-window-warm): the first flow step comes 16 ticks later and no tick reads more than 48 columns of a window. data/biomes/water.json flowWarm.cols 0 to 48. IT MOVES EVERY HASH from the first water window: for the page only, and never for a replay proof against an older build (pass --off waterWarm there). Waits for the park' },
++  { id: 'chargeClose', file: 'data/director/interrupts.json', path: ['brawl', 'chargeClose', 'enabled'], from: false, to: true, needs: [], optional: true,
++    what: 'Encounters press-decides charge-close (docs/director/pending/charge-close; Game Design press-decides section 2): a B held and let go at a rival walking away. data/director/interrupts.json brawl.chargeClose.enabled. Waits for the park' },
++  { id: 'pressWait', file: 'data/director/interrupts.json', path: ['brawl', 'pressWait', 'enabled'], from: false, to: true, needs: [], optional: true,
++    what: 'Encounters press-decides press-wait (docs/director/pending/press-wait; Orbs second play: hard to charge an attack when every hit seems to interrupt). data/director/interrupts.json brawl.pressWait.enabled. Waits for the park' },
++  { id: 'oneRuleB', file: 'data/director/interrupts.json', path: ['brawl', 'oneRuleB', 'enabled'], from: false, to: true, needs: [], optional: true,
++    what: 'Encounters press-decides one rule for B (docs/director/pending/b-one-rule; replaces press-send). data/director/interrupts.json brawl.oneRuleB.enabled. Waits for the park' },
++  { id: 'beamAim2', file: 'data/director/interrupts.json', path: ['beamPlays', 'front', 'aim', 'enabled'], from: false, to: true, needs: ['beamFront'], optional: true,
++    what: 'Encounters beam aim cut (docs/director/pending/beam-aim): acts only with the beam fronts stationary, beside Controls beamAim. data/director/interrupts.json beamPlays.front.aim.enabled. Waits for the park' },
++  { id: 'nodeWarm', file: 'data/biomes/field.json', path: ['warm', 'radius'], from: 0, to: 10000, needs: [], optional: true, presentIf: { file: 'sim/world/field.gd', text: 'warmNear' },
++    what: 'the ground\'s nodes round the start are read at the match start (World, docs/world/pending/node-warm): data/biomes/field.json warm.radius 0 to 10,000; about 0.34 s more at match load on a native build (the web load time is in the smoke), the same state hash. Waits for the park' },
++  { id: 'stickPend', file: 'data/director/stick.json', path: ['pendFollow', 'enabled'], from: false, to: true, needs: [], optional: true,
++    what: 'a stick press waits with its request, up to 90 ticks, and is told at once when it is answered or refused (Encounter, docs/director/pending/stick-pend; Game Design stick-lands). data/director/stick.json pendFollow.enabled. The park\'s other switch, flickRun, stays OFF until Game Design sets its points (no row). Waits for the park' },
++  { id: 'joltYield', file: 'data/director/swing.json', path: ['jolt', 'yieldToLaunch'], from: false, to: true, needs: [], optional: true,
++    what: 'a jolt swing yields to a launch swing on the same tick (Encounter, docs/director/pending/swing-pair; QA kept-build row 4). data/director/swing.json jolt.yieldToLaunch. Waits for the park' },
++  { id: 'brawlShareCap', file: 'data/director/swing.json', path: ['brawl', 'shareCap', 'enabled'], from: false, to: true, needs: [], optional: true,
++    what: 'brawl swings are not offered while they would be over 0.4 of the match\'s big swings, once there have been 3 (Encounter, docs/director/pending/swing-pair). data/director/swing.json brawl.shareCap.enabled. Waits for the park' },
+   { id: 'gen3', setup: { planetGen: 3 }, presentIf: { file: 'sim/world/field.gd' }, needs: [], optional: true,
+     what: 'planet generation 3 (World\'s field world): the match\'s setup says planetGen 3 on a whole ring (no arena key), not a data flag. Waits until the tree has World\'s code (sim/world/field.gd)' },
+   { id: 'blackbox', url: 'blackbox=1', presentIf: { file: 'sim/core/replay.gd' }, needs: [], optional: true,
+@@ -220,7 +255,8 @@ export function flip(text, sw) {
+   if (!loc) throw new Error(`${sw.file}: no key ${sw.path.join('.')} (the switch table in tools/preview/switches.mjs is out of date)`);
+   const was = text.slice(loc.start, loc.end);
+   const from = JSON.stringify(sw.from), to = JSON.stringify(sw.to);
+-  if (was !== from && was !== to) throw new Error(`${sw.file}: ${sw.path.join('.')} is ${was}, not ${from} or ${to} (the switch table in tools/preview/switches.mjs is out of date)`);
++  const sameNum = typeof sw.from === "number" && (Number(was) === sw.from || Number(was) === sw.to);   // 0.0 in the file is the number 0
++  if (was !== from && was !== to && !sameNum) throw new Error(`${sw.file}: ${sw.path.join('.')} is ${was}, not ${from} or ${to} (the switch table in tools/preview/switches.mjs is out of date)`);
+   const out = text.slice(0, loc.start) + to + text.slice(loc.end);
+   let v = JSON.parse(out.charCodeAt(0) === 0xfeff ? out.slice(1) : out);
+   for (const k of sw.path) v = v == null ? undefined : v[k];
+@@ -318,10 +354,18 @@ export const PLANET_FUNC = [
+   '\t\t_pv_ae_voices["nodes"] = ps.size()',
+   '\t\t_pv_ae_voices["withStream"] = withs',
+   '\t\t_pv_ae_voices["playingMax"] = maxi(int(_pv_ae_voices["playingMax"]), playing)',
++  '\tif _pv_ae_frames % 60 == 0 and OS.has_feature("web") and audio != null and audio.has_method("status_line"):',
++  '\t\tJavaScriptBridge.eval("window.__audstatus && window.__audstatus(%s)" % JSON.stringify(audio.status_line()), true)',
+   '\tif _pv_ae_frames % 30 == 0 and OS.has_feature("web"):',
+   '\t\tJavaScriptBridge.eval("window.__audeng && window.__audeng(%s)" % JSON.stringify({"frames": _pv_ae_frames, "maxDb": {"master": snappedf(float(_pv_ae_max[0]), 0.1), "sfx": snappedf(float(_pv_ae_max[1]), 0.1), "voice": snappedf(float(_pv_ae_max[2]), 0.1)}, "voices": _pv_ae_voices, "framesAbove60": {"master": _pv_ae_loud[0], "sfx": _pv_ae_loud[1], "voice": _pv_ae_loud[2]}}), true)',
+   '',
+   '',
++  '## Scratch (tools/preview): ?splitshare=N: the split share for a comparison (Camera swing-share, 0.5 to 1), set each frame on the split rig when the park is in the tree.',
++  'func _pv_split_share() -> void:',
++  '\tif split_rig != null and split_rig.get("split_share") != null:',
++  '\t\tsplit_rig.split_share = float(str(args["splitshare"]))',
++  '',
++  '',
+   '## Scratch (tools/preview): ?script=1 on a LOCAL page: the capture driver\'s script (window.__script: { scene: { distanceUnits }, events: [[tick, op, a, b], ...] }) is fed to a scripted pad before each tick it is due. Ops: b (a button by name, a bool), t (a trigger, 0 to 1), rs and ls (a stick, x and y). Player 1 is pad 0; player 2 is pad 1 and plays nothing. Publishes window.__ps = { t, hold, hp } each frame.',
+   'var _ps_events: Array = []',
+   'var _ps_dist: float = 80.0',
+@@ -602,6 +646,14 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
+     '\t\thost.hub.pad_stick_right(0, clampf(out6.x + _pv_drift.x, -1.0, 1.0), clampf(out6.y + _pv_drift.y, -1.0, 1.0))',
+     '\tif str(args["sticks"]) == "9":   # ?sticks=9: player 1 is a pad that never presses anything (the black box KO check: the computer finishes him)',
+     '\t\treturn',
++    '\tif str(args["sticks"]) == "10":   # ?sticks=10: player 1 holds RB and flicks the right stick for 3 ticks at phase 100 of every 600 (the quick beam of the stick, the line Hold for a beam), and presses nothing else; the computer plays',
++    '\t\tvar p10: int = host.ticks % 600',
++    '\t\thost.hub.pad_button(0, "rb", p10 >= 96 and p10 < 112)',
++    '\t\tif p10 >= 100 and p10 < 103:',
++    '\t\t\thost.hub.pad_stick_right(0, 1.0, 0.0)',
++    '\t\telse:',
++    '\t\t\thost.hub.pad_stick_right(0, 0.0, 0.0)',
++    '\t\treturn',
+     '\tvar t: int = host.ticks',
+     '\tvar ph: int = t % 240',
+     '\tvar dirs: Array = [Vector2(1.0, 0.0), Vector2(0.0, 1.0), Vector2(-1.0, 0.0), Vector2(0.0, -1.0)]',
+@@ -749,6 +801,31 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
+     '\tif args.has("peak") and str(args["peak"]) != "0" and str(args["peak"]) != "off":',
+     '\t\td["startTier"] = 4',
+   ];
++  const powerLines = [
++    '\t# ?power=1: one energy model on for this match (Simulation\'s setup key "power": true; data/fight/power.json stays off); ?flatout=N or the page\'s slider (window.__flatout) tries another base for flat-out flight, 3,500 to 7,000',
++    '\tif args.has("power") and str(args["power"]) != "0" and str(args["power"]) != "off":',
++    '\t\td["power"] = true',
++    '\t\tvar fo: float = 0.0',
++    '\t\tif OS.has_feature("web"):',
++    '\t\t\tfo = float(JavaScriptBridge.eval("window.__flatout || 0", true))',
++    '\t\tif fo <= 0.0 and args.has("flatout"):',
++    '\t\t\tfo = float(str(args["flatout"]))',
++    '\t\tif fo > 0.0:',
++    '\t\t\td["flatOut"] = clampf(fo, 3500.0, 7000.0)',
++  ];
++  const circleLines = [
++    '## Scratch (tools/preview): ?circle=1 turns the stance circle (LT + Y in reach; Encounter, docs/director/pending/stance-circle) on for the match: data stances.circle.enabled, off as shipped. Local pages only.',
++    'func _preview_circle() -> void:',
++    '	if not args.has("circle") or str(args["circle"]) == "0" or str(args["circle"]) == "off":',
++    '		return',
++    "\tif OS.has_feature(\"web\") and not bool(JavaScriptBridge.eval(\"location.hostname === '127.0.0.1' || location.hostname === 'localhost'\", true)):",
++    '		return',
++    '	var c: Dictionary = DirStance.cfg()',
++    '	if c.has("circle") and c["circle"] is Dictionary:',
++    '		c["circle"]["enabled"] = true',
++    '',
++    '',
++  ];
+   const hitstopLines = [
+     '\t# hit-stop by weight (data/fight/hitstop.json: a light 3 ticks, a medium 5, a heavy 8, a launch 12; off as shipped), for a match: ?hitstop=1, ?hitstop=off',
+     '\tif args.has("hitstop"):',
+@@ -761,6 +838,7 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
+     ...(opts.kickWord ? kickLines : []),
+     ...(opts.tierWord ? tierLines : []),
+     ...(opts.hitstopWord ? hitstopLines : []),
++    ...(opts.powerWord ? powerLines : []),
+     '\treturn d',
+     '',
+     '',
+@@ -782,7 +860,12 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
+     if (!out.includes(head)) throw new Error('tools/preview/switches.mjs: the planet entry moved (planetFunc is out of date)');
+     out = out.replace(head, () => swingsOff + head + '\t_preview_swings_off()\n');
+   }
+-  if (opts.kickWord || opts.tierWord || opts.hitstopWord) {
++  if (opts.circleWord) {
++    const head = 'func _preview_planet() -> Dictionary:\n';
++    if (!out.includes(head)) throw new Error('tools/preview/switches.mjs: the planet entry moved (planetFunc is out of date)');
++    out = out.replace(head, () => circleLines.join('\n') + head + '\t_preview_circle()\n');
++  }
++  if (opts.kickWord || opts.tierWord || opts.hitstopWord || opts.powerWord) {
+     const head = 'func _preview_planet() -> Dictionary:\n';
+     if (!out.includes(head)) throw new Error('tools/preview/switches.mjs: the planet entry moved (planetFunc is out of date)');
+     out = out.replace(head, () => kickWord + 'func _preview_planet_base() -> Dictionary:\n');
+@@ -800,9 +883,9 @@ const EDITS = [
+   { name: 'the match setup\'s planet part (no-intro and hook starts)', from: '\t\treturn _planet_next.duplicate()\n', to: '\t\treturn _preview_planet()\n' },
+   { name: 'the match setup\'s planet part (the intro start)', from: '\tsu.merge(_planet_next)\n', to: '\tsu.merge(_preview_planet())\n' },
+   { name: 'the menu start without intros', from: '\t\tvar su: Dictionary = _planet_next.duplicate()\n', to: '\t\tvar su: Dictionary = _preview_planet()\n' },
+-  { name: 'the options the URL may set', from: 'const URL_ARGS: Array = [', to: 'const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", ' },
++  { name: 'the options the URL may set', from: 'const URL_ARGS: Array = [', to: 'const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "splitshare", "power", "flatout", "circle", "nohud", ' },
+   { name: 'the menu choices before the HUD loads them', from: '\tui_hud.menu_changed.connect(_on_menu_changed)\n', to: '\t_preview_go()\n\tui_hud.menu_changed.connect(_on_menu_changed)\n' },
+-  { name: 'the per-frame hook', from: '\tvar n: int = host.advance(delta, vp.x, vp.y)\n', to: '\tif args.has("audiolog"):\n\t\t_pv_aud_tick()   # the engine\'s own mixer, read only\n\tif args.has("replay"):\n\t\t_preview_replay()   # a saved black box match played again\n\tif args.has("script"):\n\t\t_preview_script()   # the scripted pad: its events for the coming tick are set before it runs\n\tvar n: int = host.advance(delta, vp.x, vp.y)\n\tif args.has("preview"):\n\t\t_preview_probe()\n' },
++  { name: 'the per-frame hook', from: '\tvar n: int = host.advance(delta, vp.x, vp.y)\n', to: '\tif args.has("splitshare"):\n\t\t_pv_split_share()\n\tif args.has("audiolog"):\n\t\t_pv_aud_tick()   # the engine\'s own mixer, read only\n\tif args.has("replay"):\n\t\t_preview_replay()   # a saved black box match played again\n\tif args.has("script"):\n\t\t_preview_script()   # the scripted pad: its events for the coming tick are set before it runs\n\tvar n: int = host.advance(delta, vp.x, vp.y)\n\tif args.has("preview"):\n\t\t_preview_probe()\n' },
+ ];
+ 
+ /** A short fingerprint of the scratch patch and the switch table: a cached build is reused only for the same patch. */

@@ -4,7 +4,7 @@ Owner: Animation. The EP's order (Orb's night order: a playable with the new con
 
 ## 1. The eighteen pieces (waves `protag13`, prefix `pz`; `rival10`, prefix `rz`)
 
-A quick and a charged blow for each of the four directions (rulings section 2: up a rising blow, down a low sweep, toward a body blow, away a wide turning blow that pushes him off) and an air spike. Every piece is `named`: findable by the beat's `piece` (`strike.<name>`), in no pick list, so no other blow's look changes. Quick pieces are lights with the 10-tick wind-up (load 10, follow 4, recover 4 on the manifest row); charged pieces are heavies whose release is the 4-tick blow out of the held chamber (load 4, follow 6, recover 10).
+A quick and a charged blow for each of the four directions (rulings section 2: up a rising blow, down a low sweep, toward a body blow, away a wide turning blow that pushes him off) and an air spike. Every piece is `named`: findable by the beat's `piece` (`strike.<name>`), in no pick list, so no other blow's look changes. Quick pieces are lights with the 7-tick wind-up (load 7, follow 4, recover 4 on the manifest row; it was 10 until Game Design's ruling, `data/director/stick.json` `windTicks` 7, re-timed 2026-11-01); charged pieces are heavies whose release is the 4-tick blow out of the held chamber (load 4, follow 6, recover 10).
 
 | | Protagonist (palms, blades, heels, arcs) | Anti-hero (fists, plates, knees, elbows, lines) |
 | :--- | :--- | :--- |

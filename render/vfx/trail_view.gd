@@ -16,6 +16,7 @@ var shots_view := VfxShotsView.new()   # the energy blasts (shots_view.gd): a ch
 var dust_view := VfxDustView.new()   # the tremor's dust curtains (dust_view.gd), a child like the shots view
 var cloud_view := VfxCloudView.new()   # the blast cloud (cloud_view.gd), a child like the dust view
 var scar_view := VfxScarView.new()   # the scar a beam leaves in the air (scar_view.gd), a child like the dust view
+var meteor_view := VfxMeteorView.new()   # the meteor trail (meteor_view.gd), a child like the scar view; drawn only while the hub's switch is on
 var cam_dist: float = 3000.0   # the pane camera's distance to the fighter plane (set by the layer), for the perspective scale at depth
 
 
@@ -45,6 +46,8 @@ func _ready() -> void:
 	add_child(cloud_view)
 	scar_view.name = "Scar"
 	add_child(scar_view)
+	meteor_view.name = "Meteor"
+	add_child(meteor_view)
 
 
 ## a: the frame's interpolation between the last two ticks. cam_x: this pane's wrapped camera x. zoom: this pane's
@@ -53,6 +56,9 @@ func update(hub: VfxHub, host: SimHost, a: float, cam_x: float, zoom: float, hal
 	dust_view.visible = hub.catastrophe_enabled
 	if hub.catastrophe_enabled:
 		dust_view.update(hub, host, cam_x, half_w)
+	meteor_view.visible = hub.meteor_enabled
+	if hub.meteor_enabled:
+		meteor_view.update(hub, host, a, cam_x, zoom, half_w, cam_dist)
 	scar_view.visible = hub.scar_enabled
 	if hub.scar_enabled:
 		scar_view.update(hub, cam_x, zoom)
@@ -111,6 +117,8 @@ func update(hub: VfxHub, host: SimHost, a: float, cam_x: float, zoom: float, hal
 		var ts: VfxTrailState = hub.trails[i]
 		if ts.k < 0.02 or n >= CAP - 2 * VfxLook.SEGS:
 			continue
+		if hub.meteor_enabled and hub.meteor.swap[i]:
+			continue       # one trail: while his burn is the trail (meteor.gd), the old white blade is not drawn (the EP's call, 2026-10-31)
 		var fx: float = host.fighter_x(i, a)
 		var pose: Vector3 = host.fighter_pose(i, a)
 		var head_rel: float = SimWrap.sdx(cam_x, fx)

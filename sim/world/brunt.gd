@@ -445,7 +445,7 @@ static func next(S: SimState, b, y: float, vx: float, vy: float, trav: float) ->
 	var best: Array = []
 	for bi in WorldStructures.near(S, SimWrap.wrap(far + dir * CHAIN_GAP * 0.5), CHAIN_GAP * 0.5 + 64.0):
 		var nb = S.buildings[bi]
-		if not nb.alive or nb == b:
+		if not nb.alive or nb == b or WorldSettle.noTarget(nb.landmark):
 			continue
 		var gap: float = SimWrap.sdx(far, nb.x) * dir - nb.w * 0.5
 		if gap < 0.0 or gap > CHAIN_GAP or absf(nb.z - b.z) > CHAIN_DZ:
@@ -547,21 +547,40 @@ static func _candidatesRead(S: SimState, D) -> Array:
 		var d: float = absf(dx) - b.w * 0.5
 		if d < BR_MIN or d > BR_MAX:
 			continue
-		if D.y > WorldStructures.baseY(S, b) + WorldStructures.curH(b) + 40.0:
-			continue
 		sides[0 if dx < 0.0 else 1].append([_cheap(b, popCap), bi, d])
 	var out: Array = []
 	for s in sides:
+		# Whether his height clears a building is the costly part (its ground), so it's only asked of those the choice reaches: the highest
+		# scores in turn, then the nearest in turn. A building it isn't asked of couldn't have changed the choice.
 		s.sort_custom(func(p, q): return p[0] > q[0] or (p[0] == q[0] and p[1] < q[1]))
-		for k in range(mini(BR_PRESELECT, s.size())):
-			out.append(s[k][1])
-		var nearest = null   # the nearest building on this side, whatever its score: the street's own front
+		var clears: Dictionary = {}
+		var took: int = 0
 		for e in s:
-			if nearest == null or e[2] < nearest[2] or (e[2] == nearest[2] and e[1] < nearest[1]):
-				nearest = e
-		if nearest != null and not out.has(nearest[1]):
-			out.append(nearest[1])
+			if took >= BR_PRESELECT:
+				break
+			if _clears(S, D, e[1], clears):
+				out.append(e[1])
+				took += 1
+		if took == 0:
+			continue   # none clears: no nearest either
+		s.sort_custom(func(p, q): return p[2] < q[2] or (p[2] == q[2] and p[1] < q[1]))
+		for e in s:   # the nearest building on this side, whatever its score: the street's own front
+			if _clears(S, D, e[1], clears):
+				if not out.has(e[1]):
+					out.append(e[1])
+				break
 	return out
+
+
+## He isn't above this building's top by more than the margin. memo: this side's answers so far.
+static func _clears(S: SimState, D, bi: int, memo: Dictionary) -> bool:
+	var v = memo.get(bi)
+	if v != null:
+		return v
+	var b = S.buildings[bi]
+	var r: bool = D.y <= WorldStructures.baseY(S, b) + WorldStructures.curH(b) + 40.0
+	memo[bi] = r
+	return r
 
 
 ## The launch that brings the target D (launched by A with the given force and tier factor) into building b, or null:
@@ -666,7 +685,7 @@ static func checkHit(S: SimState, f, ox: float, oy: float) -> bool:
 	if f.aimB < 0:
 		return false
 	var b = S.buildings[f.aimB]
-	if not b.alive:
+	if not b.alive or WorldSettle.noTarget(b.landmark):   # RL-243: a landmark barred by c09 is not struck: he flies on, nothing shown
 		f.aimB = -1
 		return false
 	var dir: float = -1.0 if f.vx < 0.0 else 1.0
@@ -695,6 +714,7 @@ static func _checkHitSwept(S: SimState, f, ox: float, oy: float) -> bool:
 		return false   # the launch's chain is over (a rebound, the cap, nothing ahead): the rest of the flight is the ground's
 	var body: Array = WorldLanes.body()
 	var list: Array = WorldStructures.along(S, ox, f.x, body[0] + 64.0)
+	list = list.filter(func(i): return not WorldSettle.noTarget(S.buildings[i].landmark))   # RL-243: a barred landmark is not struck: no hit, bounce, flash, sound or mark; his flight is as if it were not there
 	if list.is_empty():
 		return false
 	var hr: Dictionary = WorldStructures.sweep(S, list, ox, oy, f.z, f.x, f.y, f.z, body[0], body[1], body[2], true)
@@ -729,6 +749,8 @@ static func tierAt(S: SimState, b, tier: float) -> float:
 
 ## Resolve one hit on building b at height y on the near edge, and what happens to the fighter.
 static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
+	if WorldSettle.noTarget(b.landmark):   # RL-243 (a belt for the paths above): a barred landmark is never struck
+		return
 	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
 	var trav: float = f.launchT
 	var spN: float = SimDetMath.hypot(f.vx / trav, f.vy)
@@ -862,6 +884,8 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 ## the neighbours and the event Audio, VFX and the camera read, with the text "through" (or the ladder's "collapse" or "pancake"). Nothing of him changes: no velocity or position write, no chain, no lodge, no interior,
 ## no hit stop, no wear. `edge` and `dir` are `hit`'s: the near edge he meets and his way along x.
 static func through(S: SimState, f, b, y: float, edge: float, dir: float, capShare: float) -> void:
+	if WorldSettle.noTarget(b.landmark):   # RL-243: the meteor passes a barred landmark as it passes air
+		return
 	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
 	var trav: float = f.launchT if f.launchT > 0.0 else 1.0
 	var spN: float = SimDetMath.hypot(f.vx / trav, f.vy)
@@ -914,7 +938,7 @@ static func _hold(S: SimState, f, seconds: float) -> void:
 static func _splash(S: SimState, f, b, dmg: float, by, evt: float, cx: float, far: float, dir: float, chainGoesOn: bool) -> void:
 	for bi in WorldStructures.near(S, b.x, b.w * (0.5 + SPLASH_W) + 64.0):
 		var nb = S.buildings[bi]
-		if not nb.alive or nb == b or _splashN(f) >= SPLASH_CAP:
+		if not nb.alive or nb == b or _splashN(f) >= SPLASH_CAP or WorldSettle.noTarget(nb.landmark):   # RL-242: a barred landmark takes no splash
 			continue
 		if f.splashed.has(bi) or nb.idx == f.aimB:
 			continue

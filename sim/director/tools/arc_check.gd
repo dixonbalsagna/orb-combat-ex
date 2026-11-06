@@ -114,6 +114,7 @@ func _flight(row: int, side: float) -> void:
 
 
 func _earned() -> void:
+	DirArc.cfg()["firstMeteor"] = false   # (the page's first-send rule has its own row in meteor_route)
 	var S := _fresh()
 	var A = S.fighters[0]
 	var D = S.fighters[1]
@@ -441,7 +442,7 @@ func _s0(S: SimState) -> void:
 	var standing: int = 0
 	var fell: int = 0
 	for b in S.buildings:
-		if absf(SimWrap.sdx(c.x, b.x)) < float(c.r) * 0.6:
+		if SimDetMath.hypot(SimWrap.sdx(c.x, b.x), float(b.z) - float(D.z)) < float(c.r) * 0.6:
 			if b.alive:
 				standing += 1
 			else:

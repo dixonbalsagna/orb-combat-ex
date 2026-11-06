@@ -251,20 +251,76 @@ func _litHand() -> void:
 	DirStick.setForce(-1)
 
 
-## From point blank he kicks back with his rise, so the front has somewhere to cross; from far off he doesn't.
+## Stationary (Orb, first play): nothing moves him in the charge. With it off, the old rise and the stand-off.
 func _standoff() -> void:
-	for row in [[58.0, true], [3000.0, false]]:
+	var cfg: Dictionary = DirBeamPlay.frontCfg()
+	for row in [[58.0, true], [3000.0, true], [58.0, false]]:
+		cfg["stationary"] = bool(row[1])
 		var S := _fresh(float(row[0]))
 		var A = S.fighters[0]
+		S.fighters[1].y = A.y + 200.0
 		var x0: float = A.x
+		var y0: float = A.y
 		_fire(S)
 		var gap: float = absf(SimWrap.sdx(A.x, S.fighters[1].x))
-		print("      fired from %.0f: %.0f apart as it leaves, moved %.0f, %d ticks to arrive" % [row[0], gap, absf(SimWrap.sdx(x0, A.x)), _openN - _fireAt])
+		var moved: float = SimDetMath.hypot(SimWrap.sdx(x0, A.x), A.y - y0)
+		print("      stationary %s, fired from %.0f: moved %.0f in the charge, %.0f apart as it leaves, %d ticks to arrive" % [str(row[1]), row[0], moved, gap, _openN - _fireAt])
 		if bool(row[1]):
-			_expect(gap >= float(DirBeamPlay.frontCfg().standoffBh) * 75.0 - 40.0, "point blank: he's kicked back to the stand-off (%.0f)" % gap)
+			_expect(moved < 1.0, "stationary, from %.0f: he stays where he is (%.0f)" % [row[0], moved])
 		else:
-			_expect(absf(SimWrap.sdx(x0, A.x)) < 1.0, "from far off: he stays where he is")
+			_expect(gap >= float(cfg.standoffBh) * 75.0 - 40.0, "off, point blank: the stand-off's kick (%.0f)" % gap)
 		SimCore.dispose(S)
+	cfg["stationary"] = true
+	_release()
+	_holdMoves()
+	_kite()
+	_shoved()
+	_aimed()
+
+
+## The stick: the hold's the charge and shows, and it fires on the release, after what's left of the warning.
+func _release() -> void:
+	DirStick.setForce(1)
+	for hold in [36, 60]:
+		var S := _fresh(2400.0)
+		var A = S.fighters[0]
+		var x0: float = A.x
+		var y0: float = A.y
+		var w := SimIntent.new()
+		w.rsStart = true
+		w.rsHeld = true
+		w.rsDir = SimStrikeRead.RIGHT
+		w.rsMask = DirStick.RB
+		w.stanceMask = DirStick.RB
+		_step(S, w)
+		var showing: bool = true
+		for _k in range(hold - 1):
+			var h := SimIntent.new()
+			h.rsHeld = true
+			h.rsDir = SimStrikeRead.RIGHT
+			h.rsMask = DirStick.RB
+			h.stanceMask = DirStick.RB
+			_step(S, h)
+			showing = showing and A.beamCharge != null
+		_expect(showing, "held %d: the hold shows as the charge" % hold)
+		var r := SimIntent.new()
+		r.rsRelease = true
+		r.rsDir = SimStrikeRead.RIGHT
+		r.rsMask = DirStick.RB
+		r.rsLevel = 2
+		r.stanceMask = DirStick.RB
+		_fireAt = -1
+		_step(S, r)
+		var n: int = 0
+		while _fireAt < 0 and n < 80:
+			_step(S)
+			n += 1
+		var moved: float = SimDetMath.hypot(SimWrap.sdx(x0, A.x), A.y - y0)
+		print("      held %d: it fires %d ticks after the release, moved %.0f" % [hold, n, moved])
+		_expect(n <= maxi(int(DirBeamPlay.frontCfg().releaseTell), 48 - hold) + 2, "held %d: it fires on the release (%d)" % [hold, n])
+		_expect(moved < 1.0, "held %d: he stays where he is (%.0f)" % [hold, moved])
+		SimCore.dispose(S)
+	DirStick.setForce(-1)
 
 
 func _cantPay() -> void:
@@ -289,3 +345,170 @@ func _cantPay() -> void:
 	_expect(said, "can't pay: no answer, and the press says why")
 	SimCore.dispose(S)
 
+
+## Past 0.2 s he barely moves, with no dash; a flick's first ticks move as ever.
+func _holdMoves() -> void:
+	DirStick.setForce(1)
+	var S := _fresh(6000.0)
+	var A = S.fighters[0]
+	var w := SimIntent.new()
+	w.rsStart = true
+	w.rsHeld = true
+	w.rsDir = SimStrikeRead.RIGHT
+	w.rsMask = DirStick.RB
+	w.stanceMask = DirStick.RB
+	w.mx = -1.0
+	w.dash = true
+	_step(S, w)
+	for _k in range(90):
+		var h := SimIntent.new()
+		h.rsHeld = true
+		h.rsDir = SimStrikeRead.RIGHT
+		h.rsMask = DirStick.RB
+		h.stanceMask = DirStick.RB
+		h.mx = -1.0
+		h.dash = true
+		_step(S, h)
+	var x0: float = A.x
+	var top: float = SimFighter.flightSpeed(S, A, true)
+	for _k in range(30):
+		var h := SimIntent.new()
+		h.rsHeld = true
+		h.rsDir = SimStrikeRead.RIGHT
+		h.rsMask = DirStick.RB
+		h.stanceMask = DirStick.RB
+		h.mx = -1.0
+		h.dash = true
+		_step(S, h)
+	var went: float = absf(SimWrap.sdx(x0, A.x)) * 2.0
+	_expect(A.beamCharge != null, "the hold shows as the charge")
+	var free: float = 430.0 * A.spd * SimForms.speedMul(S, A)
+	print("      holding, flat out: %.0f u/s, against %.0f with no hold or dash" % [went, free])
+	_expect(top <= free * 0.1 * 1.4, "he barely moves, and the dash does nothing (%.0f of %.0f)" % [top, free])
+	_expect(went <= free * 0.2, "... as he flies, with the kick's overspeed on or off (%.0f)" % went)
+	var cn := SimIntent.new()
+	cn.rsCancel = true
+	cn.rsDir = SimStrikeRead.RIGHT
+	cn.rsMask = DirStick.RB
+	_step(S, cn)
+	_expect(A.beamCharge == null and DirStick._g(A, DirStick.ST_ON) == 0, "a dodge or guard press drops it, and it stops showing")
+	_expect(SimFighter.flightSpeed(S, A, false) > free * 0.5, "... and he has his speed back")
+	SimCore.dispose(S)
+	DirStick.setForce(-1)
+
+
+## The kite (LT + RB): a hold charges nothing, and the release is the quick blast.
+func _kite() -> void:
+	DirStick.setForce(1)
+	var S := _fresh(2400.0)
+	var A = S.fighters[0]
+	var m: int = DirStick.RB | DirStick.LT
+	var w := SimIntent.new()
+	w.rsStart = true
+	w.rsHeld = true
+	w.rsDir = SimStrikeRead.RIGHT
+	w.rsMask = m
+	w.stanceMask = m
+	_step(S, w)
+	for _k in range(60):
+		var h := SimIntent.new()
+		h.rsHeld = true
+		h.rsDir = SimStrikeRead.RIGHT
+		h.rsMask = m
+		h.stanceMask = m
+		_step(S, h)
+	_expect(A.beamCharge == null, "the kite's hold isn't a charge")
+	var r := SimIntent.new()
+	r.rsRelease = true
+	r.rsDir = SimStrikeRead.RIGHT
+	r.rsMask = m
+	r.rsLevel = 3
+	r.stanceMask = m
+	_fireAt = -1
+	_step(S, r)
+	for _k in range(80):
+		_step(S)
+	_expect(_fireAt < 0, "... and no beam comes of it")
+	SimCore.dispose(S)
+	DirStick.setForce(-1)
+
+
+## Up close the firing throws the other back to 9 bh over 0.25 s: no damage and no stun, and he can still answer. Far off, nothing.
+func _shoved() -> void:
+	var need: float = float(DirBeamPlay.frontCfg().standoffBh) * DirInterrupt.BH
+	var S := _fresh(58.0)
+	var A = S.fighters[0]
+	var D = S.fighters[1]
+	var x0: float = A.x
+	var hp: float = D.hp
+	_fire(S)
+	var t0: int = S.tick
+	for _k in range(16):
+		_step(S)
+	var gap: float = absf(SimWrap.sdx(A.x, D.x))
+	print("      from 58: %.0f apart 16 ticks after the fire, %d ticks to arrive" % [gap, _openN - t0])
+	_expect(gap >= need - 40.0, "up close, the firing throws him back to the stand-off (%.0f)" % gap)
+	_expect(absf(SimWrap.sdx(x0, A.x)) < 1.0, "... and the shooter stays put")
+	_expect(D.hp == hp and D.stunTicks == 0, "... no damage, no stun")
+	_expect(DirBeamPlay.fireBack(S, D), "... he keeps his hands: he can fire back")
+	SimCore.dispose(S)
+	var S2 := _fresh(3000.0)
+	var d2 = S2.fighters[1]
+	var x2: float = d2.x
+	_fire(S2)
+	for _k in range(16):
+		_step(S2)
+	_expect(absf(SimWrap.sdx(x2, d2.x)) < 1.0, "from far off, nothing moves him")
+	SimCore.dispose(S2)
+
+
+## The stick aims an RB beam: near him it's a shot at him; up, it goes up and he's untouched; the charge's aim follows the stick. Off, at him.
+func _aimed() -> void:
+	DirStick.setForce(1)
+	for row in [[true, 0, true], [true, 8, false], [true, 2, true], [true, 4, false], [false, 8, true]]:
+		DirBeamAim.setForce(1 if bool(row[0]) else 0)
+		var S := _fresh(2400.0)
+		var A = S.fighters[0]
+		var D = S.fighters[1]
+		var hp: float = D.hp
+		var w := SimIntent.new()
+		w.rsStart = true
+		w.rsHeld = true
+		w.rsDir = SimStrikeRead.RIGHT
+		w.rsMask = DirStick.RB
+		w.stanceMask = DirStick.RB
+		w.rsAim = int(row[1])
+		_step(S, w)
+		var seen: int = -1
+		for _k in range(50):
+			var h := SimIntent.new()
+			h.rsHeld = true
+			h.rsDir = SimStrikeRead.RIGHT
+			h.rsMask = DirStick.RB
+			h.stanceMask = DirStick.RB
+			h.rsAim = int(row[1])
+			_step(S, h)
+			seen = int(DirBeamAim.aimDeg(A)) if not is_nan(DirBeamAim.aimDeg(A)) else seen
+		var r := SimIntent.new()
+		r.rsRelease = true
+		r.rsDir = SimStrikeRead.RIGHT
+		r.rsMask = DirStick.RB
+		r.rsLevel = 2
+		r.rsAim = int(row[1])
+		r.stanceMask = DirStick.RB
+		_step(S, r)
+		var uy: float = 0.0
+		for _k in range(120):
+			_step(S)
+			if not S.beams.is_empty():
+				uy = maxf(uy, float(S.beams[0].uy))
+		var at: bool = D.hp < hp or _open > 0
+		print("      aim %s, sector %d: held %d deg, beam's rise %.2f, at him %s, he took %.0f" % [str(row[0]), row[1], seen, uy, str(at), hp - D.hp])
+		_expect(at == bool(row[2]), "aim %s, sector %d: %s" % [str(row[0]), row[1], "a shot at him" if bool(row[2]) else "it goes where it was aimed, wide of him"])
+		if bool(row[0]):
+			_expect(seen == int(row[1]) * 11 + int(int(row[1]) * 0.25), "the charge's aim follows the stick (%d)" % seen)
+		if bool(row[0]) and not bool(row[2]):
+			_expect(uy >= SimDetMath.sin(float(row[1]) * 11.25 * SimMathx.PI / 180.0) - 0.05 and S.dirS.ex == null, "... it rises as aimed, and the exchange is over (%.2f)" % uy)
+		SimCore.dispose(S)
+	DirBeamAim.setForce(-1)
+	DirStick.setForce(-1)

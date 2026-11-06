@@ -9,6 +9,7 @@ var failed: int = 0
 
 func _init() -> void:
 	DirStick.setForce(1)
+	DirStick.setArmourForce(0)
 	_quick()
 	_charged()
 	_guarded()
@@ -31,6 +32,9 @@ func _init() -> void:
 	_stops()
 	_lightsLand()
 	_levelThreeAll()
+	DirStick.setArmourForce(1)
+	_armour()
+	DirStick.setArmourForce(-1)
 	DirStick.setForce(-1)
 	print("STICK: %d check(s) failed" % failed)
 	quit(1 if failed > 0 else 0)
@@ -160,6 +164,74 @@ func _guarded() -> void:
 		_step(S, null, g)
 	_expect(_hits == 0, "a guard blocks it, with no stun (%d)" % _hits)
 	SimCore.dispose(S)
+
+
+## Past the flick a hold has B's armour (power-scale.md section 2): a light takes 30% and it goes on, a medium stops it only before level 2,
+## a heavy always, and the beam's hold is armoured too.
+func _armour() -> void:
+	var light := SimIntent.new()
+	light.light = true
+	var medium := SimIntent.new()
+	medium.heavy = true
+	var heavy := SimIntent.new()
+	heavy.sig = true
+	for row in [["light", light, 16, true], ["medium", medium, 2, false], ["medium", medium, 30, true], ["heavy", heavy, 14, false]]:
+		var S := _pair()
+		var A = S.fighters[0]
+		_step(S, _word(true, false, true, SimStrikeRead.LEFT, 0))
+		var hp: float = A.hp
+		var lost: int = -1
+		for k in range(60):
+			_step(S, _word(false, false, true, SimStrikeRead.LEFT, 0), row[1] if k == int(row[2]) else null)
+			if lost < 0 and DirStick._g(A, DirStick.ST_ON) != 2 and k > 8:
+				lost = k
+		print("      a %s pressed %d ticks into the hold: %s, he took %.1f" % [row[0], row[2], ("the charge was lost at %d" % lost) if lost >= 0 else "the charge goes on", hp - A.hp])
+		_expect((lost < 0) == bool(row[3]), "a %s pressed %d ticks in: the charge %s" % [row[0], row[2], "goes on" if bool(row[3]) else "is lost"])
+		if String(row[0]) == "light":
+			_expect(hp - A.hp > 0.0 and hp - A.hp <= float(DirBrawl.cfg().light.damage) * 0.31, "... at 30%% of its damage (%.1f of %.1f)" % [hp - A.hp, float(DirBrawl.cfg().light.damage)])
+		SimCore.dispose(S)
+	# The beam's hold.
+	var S2 := _pair()
+	var A2 = S2.fighters[0]
+	var w: SimIntent = _word(true, false, true, SimStrikeRead.LEFT, 0)
+	w.rsMask = DirStick.RB
+	w.stanceMask = DirStick.RB
+	_step(S2, w)
+	var hp2: float = A2.hp
+	for k in range(40):
+		var h: SimIntent = _word(false, false, true, SimStrikeRead.LEFT, 0)
+		h.rsMask = DirStick.RB
+		h.stanceMask = DirStick.RB
+		_step(S2, h, light if k == 16 else null)
+	print("      a light on a beam's hold: he took %.1f, stun %d, holding %s" % [hp2 - A2.hp, A2.stunTicks, str(DirStick._g(A2, DirStick.ST_ON) == 3)])
+	_expect(DirStick._g(A2, DirStick.ST_ON) == 3 and hp2 - A2.hp <= float(DirBrawl.cfg().light.damage) * 0.31, "a light on a beam's hold: it goes on, at 30%")
+	var rel: SimIntent = _word(false, true, false, SimStrikeRead.LEFT, 2)
+	rel.rsMask = DirStick.RB
+	rel.stanceMask = DirStick.RB
+	_step(S2, rel)
+	for _k in range(60):
+		_step(S2)
+	print("      let go in the brawl: exchange %s, beams %d, charge showing %s" % [S2.dirS.ex.kind if S2.dirS.ex != null else "none", S2.beams.size(), str(A2.beamCharge != null)])
+	SimCore.dispose(S2)
+	# A dodge makes it miss, and he's open.
+	var S3 := _pair()
+	var A3 = S3.fighters[0]
+	S3.fighters[1].act.v2 = true
+	_step(S3, _word(true, false, true, SimStrikeRead.LEFT, 0))
+	for _k in range(18):
+		_step(S3, _word(false, false, true, SimStrikeRead.LEFT, 0))
+	var dg := SimIntent.new()
+	dg.dodge = true
+	dg.mx = 1.0   # the stick away: in a brawl a dodge leaves only so
+	_hits = 0
+	_step(S3, _word(false, false, true, SimStrikeRead.LEFT, 0), dg)
+	for _k in range(3):
+		_step(S3, _word(false, false, true, SimStrikeRead.LEFT, 0))
+	var open: int = DirBrawl._g(A3, DirBrawl.OPEN_UNTIL) - DirBrawl._now(S3)
+	print("      dodged: %d hits, charge %d, open %d more ticks, exchange %s" % [_hits, DirStick._g(A3, DirStick.ST_ON), open, str(S3.dirS.ex != null)])
+	_expect(_hits == 0 and DirStick._g(A3, DirStick.ST_ON) == 0, "a dodge makes it miss")
+	_expect(open >= int(DirStick.cfg().armour.missOpenTicks) - 6, "... and he's open for 0.33 s (%d)" % open)
+	SimCore.dispose(S3)
 
 
 func _bare() -> void:

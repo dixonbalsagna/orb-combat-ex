@@ -12,6 +12,7 @@ shader_type spatial;
 render_mode unshaded, cull_back;
 
 #include "res://render/shaders/color.gdshaderinc"
+#include "res://render/shaders/bend.gdshaderinc"
 
 uniform vec3 wl_mul = vec3(1.0);   // the world's light (SkyDrive.world_at), this layer's multiply in linear light
 uniform vec3 wl_add = vec3(0.0);   // ... and its night lift
@@ -91,6 +92,7 @@ void vertex() {
 	}
 	VERTEX = v * boost * nearc;
 	NORMAL = nrm;
+	POSITION = globe_r > 0.0 ? PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(MODEL_MATRIX, VERTEX)) : PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
 }
 
 void fragment() {

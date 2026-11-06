@@ -75,6 +75,8 @@ func update(hub: VfxHub, host: SimHost, a: float, cam_x: float, zoom: float, hal
 			var pulse: float = 1.0
 			if not hub.reduced_motion:
 				pulse = 1.0 + VfxAura.p("standing", "pulse") * sin(TAU * (float(hub.aura.clock) + a) / maxf(VfxAura.p("standing", "pulse_ticks"), 1.0) + float(i) * 2.0)
+			var flare: float = hub.struggle.flare(i) if hub.struggle_enabled else 0.0       # the loser's aura flares as he digs in (beam_struggle.gd)
+			pulse *= 1.0 + flare
 			var colr: Color = VfxAura.lane_color(String(fs.aura))
 			var fill: float = 0.0 if q == VfxLook.Q_LOW else float(ads["fill"]) * VfxAura.p("standing", "fill_scale")
 			colr.a = VfxAura.p("standing", "alpha") * smoothstep(0.0, 1.0, lvl)

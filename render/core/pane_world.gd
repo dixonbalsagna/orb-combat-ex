@@ -26,6 +26,9 @@ var particles := ParticleView.new()
 var vfx_layer := VfxLayer.new()    # VFX's drawing for this pane (render/vfx/); main sets its hub, which every pane shares
 var fighter_views: Array = []
 var shadows: Array = []            # per fighter: the ground shadow under him (render/shaders/shadow.gdshader)
+var other_views: Array = []        # 2v2: the other fights' bodies (SimHost.draw_others), a view each
+var other_shadows: Array = []      # ... and their shadows
+var _other_for: Array = []         # ... the body each view was built for
 var source: PaneWorld = null       # a second pane: the first, whose world it draws
 var view_cam_x: float = 0.0        # this frame's camera's wrapped world x
 var drift: float = 0.0             # the slow drift's angle this frame (radians; World's window 2), set by main; 0 off
@@ -71,6 +74,7 @@ static var sky_calm: bool = false          # reduced motion: the clouds stand st
 static var sky_react_on: bool = false      # the clouds part for a fighter at tier 3 or more: off unless asked for (main's --skyreact; QA's GB-002)
 static var flash_calm: bool = false        # reduced flashing or reduced motion: the grooves' glow and char are drawn calm (main sets it)
 static var pan_haze_on: bool = RenderLook.PAN_HAZE_DEFAULT   # the buildings melt toward the sky while this pane's camera travels fast (main's --panhaze and --nopanhaze)
+var _tiles: RenderTileGround = null   # the tile ground (main's --tiles)
 var pan_haze: float = 0.0                  # 0 to 1, this frame
 var pan_whip: float = 0.0                  # 0 to 1, this frame: the whip haze (RenderLook.PAN_WHIP), in every match
 var fore_low := Vector2(NAN, NAN)          # the fighter plane's lowest ground and top in this pane's view, eased (RenderLook.FORE_FAR)
@@ -129,6 +133,13 @@ func _bs_fighters_begin() -> bool:
 		fighters_root.remove_child(v)
 		v.free()
 	fighter_views.clear()
+	for v in other_views:
+		fighters_root.remove_child(v)
+		v.free()
+	other_views.clear()
+	_other_for.clear()
+	for sh in other_shadows:
+		sh.visible = false
 	return true
 
 
@@ -159,17 +170,21 @@ func _build_fighter(S: SimState, i: int) -> void:
 		v.flash_view.set_leader(source.fighter_views[i].flash_view)
 	fighter_views.append(v)
 	if i >= shadows.size():
-		# kept across matches (its material is tracked for the pane's bend once)
-		var sh := MeshInstance3D.new()
-		sh.name = "Shadow%d" % i
-		sh.mesh = _shadow_mesh()
-		var sm := ShaderMaterial.new()
-		sm.shader = SHADOW_SHADER
-		mats.track(sm)
-		sh.material_override = sm
-		sh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		fighters_root.add_child(sh)
-		shadows.append(sh)
+		shadows.append(_new_shadow("Shadow%d" % i))
+
+
+## A fighter's ground shadow, kept across matches (its material is tracked for the pane's bend once).
+func _new_shadow(nm: String) -> MeshInstance3D:
+	var sh := MeshInstance3D.new()
+	sh.name = nm
+	sh.mesh = _shadow_mesh()
+	var sm := ShaderMaterial.new()
+	sm.shader = SHADOW_SHADER
+	mats.track(sm)
+	sh.material_override = sm
+	sh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	fighters_root.add_child(sh)
+	return sh
 
 
 ## Draw one frame from a camera: its wrapped world x (float64), cam.y and cam.z (the reference camera's height and
@@ -203,13 +218,24 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 		# The building sweep by view: this pane's camera is placed for the frame, so its view is known. The first pane
 		# hands it to its refresh; a second pane's is swept now (its source refreshed first: main draws pane 0 first).
 		var src: PlanetView = planet if planet.source == null else planet.source
-		var sp: PackedFloat64Array = src.view_span(cam_rig, cam_x, planet)
-		if planet.source == null:
+		var cap: Array = _tiles.view_cap(S, host.ticks, cam_x, vp) if _tiles != null and _tiles.field == src.tile_field and src.cap_ready(S) else []
+		var sp: PackedFloat64Array = src.view_span(cam_rig, cam_x, planet) if cap.is_empty() else PackedFloat64Array([0.0, -1.0])
+		if planet.source != null:
+			src.see_more(S, sp, cap)
+		elif cap.is_empty():
 			planet.see(sp)
 		else:
-			src.see_more(S, sp)
+			planet.see_cap(cap)
 	planet.update(S, cam_x, host.impact.heat, host.impact.heat_changed)
-	planet.cull_to(cam_rig, vis_plane)   # the split's culling: chunks wholly on this pane's hidden side are not drawn
+	if _tiles != null and _tiles.field != planet.tile_field:
+		_tiles.drop()
+		_tiles = null
+	if RenderTileGround.on and planet.tile_field != null:
+		if _tiles == null:
+			_tiles = RenderTileGround.new(self, planet.tile_field)
+		_tiles.apply(host, cam_x, vp)
+	else:
+		planet.cull_to(cam_rig, vis_plane)   # the split's culling: chunks wholly on this pane's hidden side are not drawn
 	for i in range(fighter_views.size()):
 		var v: FighterView = fighter_views[i]
 		var pose: Vector3 = host.fighter_pose(i, a)
@@ -217,6 +243,8 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 		var vx: float = SimWrap.sdx(cam_x, wx)
 		v.depth = host.fighter_z(i, a)
 		v.sag = mats.sag(vx, v.depth)
+		if _tiles != null:
+			v.sag -= _tiles.field.lift(wx, pose.y, v.depth)   # the body offset: he stands on what's drawn
 		v.markers = markers and not host.intro_running()   # no head badge before the clock: UI's HUD is hidden too
 		# The intro: a fighter is out of sight until his fall starts (the sim holds him high above his spot until
 		# then), and so is his shadow on the ground he will land on.
@@ -224,6 +252,8 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 		v.hit_white_T = host.hit_flash_T[i] if i < host.hit_flash_T.size() else -INF
 		v.update(S, S.fighters[i], pose, vx, cam.z)
 		_place_shadow(S, i, wx, vx, pose.y, v.depth, v.visible)
+	if SimHost.draw_others:
+		_draw_others(host, a, cam_x, cam, vp)
 	_occlusion(S, cam_x, vp)
 	_lane_cues(host, a)
 	_pair_mark(host, a)
@@ -1011,17 +1041,90 @@ static func _shadow_mesh() -> PlaneMesh:
 ## A fighter's ground shadow: on the ground as drawn under him at his depth (or the water over it), fainter and wider
 ## the higher he flies. It is what shows where he is over the ground when a launch carries him into the rows.
 func _place_shadow(S: SimState, i: int, wx: float, vx: float, y: float, z: float, shown: bool = true) -> void:
-	var sh: MeshInstance3D = shadows[i]
-	var g: float = maxf(planet.ground.ground_at(S, wx, z), WorldWater.surfaceAt(S, wx))
+	_shadow_at(shadows[i], S, wx, vx, y, z, shown)
+
+
+## 2v2: the other fights' bodies, each with a view and a shadow of its own, drawn through Animation's read-only view of
+## his fight (RenderAnim.fight_view: its pair, exchange and clock), as fight 0's are through S. One off this pane's screen
+## along the line is hidden and not posed: most of the time, since the other fight starts half a ring away.
+func _draw_others(host: SimHost, a: float, cam_x: float, cam: Vector3, vp: Vector2) -> void:
+	var S: SimState = host.S
+	var n: int = host.other_count()
+	var views: Dictionary = {}   # this frame's view of each other fight
+	for j in range(n):
+		var f = host.other_fighter(j)
+		if j >= other_views.size() or _other_for[j] != f:
+			# a new body here (a new match, or a trade): its view is built for him
+			if j < other_views.size():
+				fighters_root.remove_child(other_views[j])
+				other_views[j].free()
+			var nv := FighterView.new()
+			fighters_root.add_child(nv)
+			nv.markers = false
+			nv.build(f)
+			if j < other_views.size():
+				other_views[j] = nv
+				_other_for[j] = f
+			else:
+				other_views.append(nv)
+				_other_for.append(f)
+		if j >= other_shadows.size():
+			other_shadows.append(_new_shadow("OtherShadow%d" % j))
+	for j in range(other_views.size()):
+		var v: FighterView = other_views[j]
+		var sh: MeshInstance3D = other_shadows[j]
+		if j >= n:
+			v.visible = false
+			sh.visible = false
+			continue
+		var wx: float = host.other_x(j, a)
+		var vx: float = SimWrap.sdx(cam_x, wx)
+		var z: float = host.other_z(j, a)
+		var on: bool = absf(vx) <= cam_rig.half_width(vp.x, z - focus_z) * RenderLook.OTHER_VIEW_MARGIN + RenderLook.OTHER_VIEW_PAD
+		v.visible = on
+		if not on:
+			sh.visible = false
+			continue
+		var pose: Vector3 = host.other_pose(j, a)
+		v.depth = z
+		v.sag = mats.sag(vx, z)
+		var k: int = host.other_k(j)
+		if not views.has(k):
+			views[k] = RenderAnim.fight_view(S, k)
+		v.update(views[k], host.other_fighter(j), pose, vx, cam.z)
+		_shadow_at(sh, S, wx, vx, pose.y, z, true)
+
+
+## A fighter's ground shadow, placed: see _place_shadow.
+func _shadow_at(sh: MeshInstance3D, S: SimState, wx: float, vx: float, y: float, z: float, shown: bool = true) -> void:
+	var land: float = planet.ground.ground_at(S, wx, z)
+	var g: float = maxf(land, WorldWater.surfaceAt(S, wx))
+	var on_land: bool = g == land
 	if S.depthOn:
 		# Over a roof his shadow lies on the roof (World's standingAt), not on the ground under the building.
 		var st: Dictionary = WorldStructures.standingAt(S, wx, y, z, 0.3 * FighterView.HEIGHT)
-		if str(st.get("kind", "")) == "roof":
-			g = maxf(g, float(st["y"]))
+		if str(st.get("kind", "")) == "roof" and float(st["y"]) > g:
+			g = float(st["y"])
+			on_land = false
 	var up: float = clampf((y - g) / RenderLook.SHADOW_FADE_H, 0.0, 1.0)
 	sh.visible = shown and y >= g - 1.0
-	sh.position = Vector3(vx, g + RenderLook.SHADOW_LIFT, z)
-	sh.scale = Vector3(RenderLook.SHADOW_W * (1.0 + 0.5 * up), 1.0, RenderLook.SHADOW_D * (1.0 + 0.5 * up))
+	var w: float = RenderLook.SHADOW_W * (1.0 + 0.5 * up)
+	var d: float = RenderLook.SHADOW_D * (1.0 + 0.5 * up)
+	# On the tile ground's land it lies along the ground's slope under it, read at its four edges, and clear of any hollow
+	# under its edges: flat, a cross-slope would bury part of it and leave a cut hairline. Over water or a roof it lies flat.
+	var sx: float = 0.0
+	var sz: float = 0.0
+	var lift: float = 0.0
+	if on_land and shown and RenderTileGround.on:
+		var gx0: float = planet.ground.ground_at(S, SimWrap.wrap(wx - 0.5 * w), z)
+		var gx1: float = planet.ground.ground_at(S, SimWrap.wrap(wx + 0.5 * w), z)
+		var gz0: float = planet.ground.ground_at(S, wx, z - 0.5 * d)
+		var gz1: float = planet.ground.ground_at(S, wx, z + 0.5 * d)
+		sx = (gx1 - gx0) / w
+		sz = (gz1 - gz0) / d
+		lift = maxf(0.0, maxf(0.5 * (gx0 + gx1), 0.5 * (gz0 + gz1)) - g)   # a hollow under him: the plane through his centre runs under its edges by this much
+	sh.basis = Basis(Vector3(w, sx * w, 0.0), Vector3(0.0, 1.0, 0.0), Vector3(0.0, sz * d, d))
+	sh.position = Vector3(vx, g + RenderLook.SHADOW_LIFT + lift, z)
 	(sh.material_override as ShaderMaterial).set_shader_parameter("strength", RenderLook.SHADOW_ALPHA * lerpf(1.0, 0.25, up))
 
 

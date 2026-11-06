@@ -16,6 +16,8 @@ const LAYER_COUNT: int = 3   # a sheath, a body and a core: their widths and loo
 
 var _pool: Array = []       # per beam slot: 3 MeshInstance3D
 var _flare: MeshInstance3D
+var _front := VfxBeamFront.new()   # the head of a beam that is still travelling out from the hand, in the beam's language (render/vfx/beam_front.gd; docs/vfx/beam-front.md)
+var _clash: VfxClashView      # the meeting point of a clash: rippling glowing air (render/vfx/clash_view.gd, data/vfx/clash.json); the white flare below is the fallback when its switch is off
 var _cyl: CylinderMesh
 
 
@@ -46,6 +48,10 @@ func _ready() -> void:
 	_flare.mesh = s
 	_flare.material_override = RenderMats.glow(Color.WHITE, 1.0, 1.4)
 	add_child(_flare)
+	_clash = VfxClashView.new()
+	add_child(_clash)
+	_front.name = "Front"
+	add_child(_front)
 
 
 func update(S: SimState, cam_x: float, z: float, host: SimHost = null) -> void:
@@ -53,19 +59,35 @@ func update(S: SimState, cam_x: float, z: float, host: SimHost = null) -> void:
 	# The scale a bright beam's tail is paced at: the flash register's (the closest pane's, so every pane draws one
 	# beam's tail at the same place in the world); a tool's posed state has only this view's own.
 	var ppu: float = host.vfx.px_per_unit if host != null else z
+	_front.begin()
+	# 2v2 (SimHost.draw_others): the other fights' beams too, each on its own fight's clock, and calm: they don't ask the
+	# flash register, which is the fight in S's.
+	var all: Array = []
 	for b in S.beams:
-		var bright: bool = host == null or host.beam_flash(b)
+		all.append([b, S.T, true])
+	if SimHost.draw_others and S.stage != null:
+		for fk in range(S.stage.fights.size()):
+			if fk != S.stage.cur:
+				for b in S.stage.fights[fk].beams:
+					all.append([b, float(S.stage.fights[fk].T), false])
+	for bt in all:
+		var b = bt[0]
+		var bright: bool = bool(bt[2]) and (host == null or host.beam_flash(b))
 		var k: float = strength(b.t, b.life, 0.0 if bright else VfxBeamLook.calm_rise())
-		var s: float = b.p * b.len
-		var tail: float = tail_at(b, ppu if bright else 0.0)
+		# 2v2: a beam that stopped on an enemy of the other fight goes no further than him (SimCross.beams)
+		var s: float = b.p * b.len if b.stopAt < 0.0 else minf(b.p * b.len, b.stopAt)
+		var tail: float = minf(tail_at(b, ppu if bright else 0.0), s)
 		var x0: float = SimWrap.sdx(cam_x, b.ox + b.ux * tail)
 		var a := Vector2(x0, b.oy + b.uy * tail)
 		var e := Vector2(x0 + b.ux * (s - tail), b.oy + b.uy * s)
-		_beam(n, a, e, b.w, RenderLook.col(b.col), k, z, bright, b.oz + b.zs * tail, b.oz + b.zs * s, b.A, String(b.col), S.T, tail <= 0.5, VfxBeamLook.is_short(b))
+		_beam(n, a, e, b.w, RenderLook.col(b.col), k, z, bright, b.oz + b.zs * tail, b.oz + b.zs * s, b.A, String(b.col), float(bt[1]), tail <= 0.5, VfxBeamLook.is_short(b))
+		if b.p < 1.0 and host != null and host.vfx.energy_heads_enabled:
+			_front.add(b, a, e, z, k, b.oz + b.zs * s)
 		n += 1
 	var c = S.game.clash
 	var clash_ok: bool = host == null or host.clash_flash
-	_flare.visible = c != null and clash_ok
+	var air: bool = VfxClashLook.on()
+	_flare.visible = c != null and clash_ok and not air
 	if c != null:
 		var p: float = clampf((S.T - c.t0) / c.dur, 0.0, 1.0)
 		var ck: float = clash_strength(S.T - c.t0, c.dur)
@@ -77,12 +99,23 @@ func update(S: SimState, cam_x: float, z: float, host: SimHost = null) -> void:
 		var dx: float = SimWrap.sdx(c.A.x, c.D.x)
 		var m := Vector2(ax + dx * mid, c.A.y + 38.0 + (c.D.y - c.A.y) * mid)
 		var mz: float = c.A.z + (c.D.z - c.A.z) * mid   # the fighters' depths (0 on the plane): the beams meet between them
-		_beam(n, Vector2(ax, c.A.y + 38.0), m, 26.0 + c.A.tier * 8.0, RenderLook.col(c.A.aura), ck, z, clash_ok, c.A.z, mz, c.A, String(c.A.aura), S.T, true)
-		_beam(n + 1, Vector2(ax + dx, c.D.y + 38.0), m, 26.0 + c.D.tier * 8.0, RenderLook.col(c.D.aura), ck, z, clash_ok, c.D.z, mz, c.D, String(c.D.aura), S.T, true)
-		RenderMats.set_glow(_flare.material_override, Color.WHITE, ck)
+		var sk: VfxBeamStruggle = host.vfx.struggle if (host != null and host.vfx.struggle_enabled) else null       # the beams carry the struggle (VFX): who pushes, the beat, the surges, the loser's buckling
+		var wa: float = sk.width_k(0) if sk != null else 1.0
+		var wd: float = sk.width_k(1) if sk != null else 1.0
+		_beam(n, Vector2(ax, c.A.y + 38.0), m, (26.0 + c.A.tier * 8.0) * wa, RenderLook.col(c.A.aura), ck, z, clash_ok, c.A.z, mz, c.A, String(c.A.aura), S.T, true, false, 0, sk)
+		_beam(n + 1, Vector2(ax + dx, c.D.y + 38.0), m, (26.0 + c.D.tier * 8.0) * wd, RenderLook.col(c.D.aura), ck, z, clash_ok, c.D.z, mz, c.D, String(c.D.aura), S.T, true, false, 1, sk)
+		if air:
+			_clash.update(S, c, Vector2(ax, c.A.y + 38.0), Vector2(ax + dx, c.D.y + 38.0), m, mz, mid, ck, not clash_ok, z, host)
+		else:
+			RenderMats.set_glow(_flare.material_override, Color.WHITE, ck)
+			_flare.position = Vector3(m.x, m.y, RenderLook.Z_BEAMS + 2.0 + mz)
+			_flare.scale = Vector3.ONE * 2.0 * (70.0 + 20.0 / z)
+		if host != null and host.vfx.energy_heads_enabled:
+			_front.meet(c, Vector2(ax, c.A.y + 38.0), Vector2(ax + dx, c.D.y + 38.0), m, mz, S.T - c.t0, z, ck)
 		n += 2
-		_flare.position = Vector3(m.x, m.y, RenderLook.Z_BEAMS + 2.0 + mz)
-		_flare.scale = Vector3.ONE * 2.0 * (70.0 + 20.0 / z)
+	elif air:
+		_clash.update(S, null, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, 0.0, 0.5, 0.0, false, z, host)
+	_front.finish(S.T)
 	for i in range(n, _pool.size()):
 		for mi in _pool[i]:
 			mi.visible = false
@@ -133,7 +166,7 @@ func _grow_pool(i: int) -> void:
 
 ## One beam from a to e (this view's x and the world's y). za, ze: the depth at each end (the sim's Beam.oz and zs; 0 on
 ## the fighter plane). A beam with no depth is placed exactly as it always was.
-func _beam(i: int, a: Vector2, e: Vector2, w: float, c: Color, k: float, z: float, bright: bool = true, za: float = 0.0, ze: float = 0.0, who = null, hex: String = "", t: float = 0.0, at_heel: bool = true, short: bool = false) -> void:
+func _beam(i: int, a: Vector2, e: Vector2, w: float, c: Color, k: float, z: float, bright: bool = true, za: float = 0.0, ze: float = 0.0, who = null, hex: String = "", t: float = 0.0, at_heel: bool = true, short: bool = false, sw_side: int = -1, sk = null) -> void:
 	_grow_pool(i)
 	var d: Vector2 = e - a
 	var l: float = d.length()
@@ -154,3 +187,4 @@ func _beam(i: int, a: Vector2, e: Vector2, w: float, c: Color, k: float, z: floa
 			var side := Vector3(u.y, -u.x, 0.0)
 			mi.transform = Transform3D(Basis(side * th, dir * (l3 + th * 0.5), side.cross(dir) * th), Vector3((a.x + e.x) * 0.5, (a.y + e.y) * 0.5, RenderLook.Z_BEAMS + (za + ze) * 0.5))
 		VfxBeamLook.set_layer(mi.material_override, who, VfxAura.lane_color(hex) if hex != "" else c, j, k, not bright, t, l, at_heel, float(i), short)
+		VfxBeamStruggle.set_on(mi.material_override, sk, sw_side, l, j)

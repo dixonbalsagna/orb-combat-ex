@@ -199,8 +199,8 @@
       "step_db": -3.0,
       "land": {
         "hit": {
-          "gain_db": 0.0,
-          "pitch": 1.0
+          "gain_db": -3.0,
+          "pitch": 0.85
         },
         "guard": {
           "gain_db": -5.0,

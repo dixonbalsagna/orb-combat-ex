@@ -246,6 +246,15 @@
         }
       }
     },
+    "flowWarm": {
+      "type": "object",
+      "required": ["cols"],
+      "additionalProperties": false,
+      "description": "A new flow window (WorldWater, not water v2's fill windows) reads its span this many columns a step before any water moves in it, so no tick reads a window's 300 to 420 cold columns at once (docs/world/water-window-warm.md). 0, the default and today, reads them all in the first step. With it on the first flow starts ceil(span / cols) steps (2 ticks each) later and every hash with a window moves. Optional.",
+      "properties": {
+        "cols": { "type": "integer", "minimum": 0, "maximum": 480 }
+      }
+    },
     "floor": {
       "type": "object",
       "required": [

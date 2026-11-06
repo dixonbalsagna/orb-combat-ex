@@ -28,9 +28,13 @@ uniform vec4 char_col : source_color;
 uniform vec4 heat_lo : source_color;
 uniform vec4 heat_hi : source_color;
 uniform vec4 snow : source_color;
+#ifdef TILE_GROUND
+uniform float ice_cap = 0.68;   // RenderLook.TILE_ICE_CAP: the brightest channel ice's ground reaches, after the world's light
+#endif
 uniform vec4 cracked : source_color;
 uniform vec4 rubble : source_color;
 uniform float rubble_tint_h = 20.0;
+uniform vec2 rubble_cell = vec2(16.0, 0.12);   // the tile ground's rubble: a stone's size in units, and its spread of value
 uniform float snow_from = 560.0;
 uniform float snow_full = 900.0;
 uniform float z_front = 140.0;   // RenderLook.Z_TERRAIN_FRONT: the top brightens from the back of the band to here
@@ -76,6 +80,9 @@ varying float v_s;            // the far land's weight (far_weight): the band's 
 varying vec2 v_grad;          // the ground's slope (d height / dx, / dz), smooth across the mesh: a facet's tone follows it
 varying float v_new;          // how much of its own colour the ground keeps under a crater dug moments ago (ground.gdshaderinc crater_new; over CRATER_OPEN_S, over CRATER_CALM_S with reduced flashing)
 
+#ifdef TILE_GROUND
+#include "res://render/shaders/tile_vertex.gdshaderinc"
+#else
 void vertex() {
 	int i = int(UV.x + 0.5) % nc;
 	float xw = UV.x * col_w;
@@ -148,6 +155,7 @@ void vertex() {
 	v_wz = bw.z;
 	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bw);
 }
+#endif
 
 void fragment() {
 	// The ground's facet (Art's biome look, biome rendering window 1). Its light: the ground's normal against the sun
@@ -162,6 +170,17 @@ void fragment() {
 	// its own both sides outside one) and its place across the zone, stepped in five hard bands. Read here, not passed
 	// from the vertices: a flat varying costs the old GPUs a rewrite of every draw's index buffer (ANGLE's D3D11), and a
 	// vertex outside a zone carries none of it.
+#ifdef TILE_GROUND
+	// The node's own biome. A border wanders up to a third of a node, keyed to the planet (Art's look check), with one flat band between
+	// the two biomes where the next node over is the other one. Hard edges only: no blend, no dither.
+	vec2 u_w = v_uv + vec2(tile_tri(v_q.y + 0.7 * v_q.z), tile_tri(v_q.x + 0.6 * v_q.z)) * 0.33;
+	int v_la = int(v_layer + 0.5);
+	ivec2 u_a = clamp(ivec2(floor(u_w + 0.5)), ivec2(0), ivec2(27));
+	ivec2 u_b = clamp(ivec2(floor(u_w + 0.95)), ivec2(0), ivec2(27));
+	int v_ba = int(texelFetch(ids, ivec3(u_a, v_la), 0).r * 255.0 + 0.5);
+	int v_bb = int(texelFetch(ids, ivec3(u_b, v_la), 0).r * 255.0 + 0.5);
+	float zf = v_ba == v_bb ? 0.0 : 0.5;
+#else
 	float cx = v_px.x / col_w;
 	int ci = int(cx - float(nc) * floor(cx / float(nc))) % nc;
 	int v_ba = int(gf(ci, 21) + 0.5);
@@ -171,6 +190,7 @@ void fragment() {
 	du -= float(nc) * floor(du / float(nc) + 0.5);
 	float zt = (jb < -1.0e8 || v_ba == v_bb) ? 0.0 : clamp(0.5 + du * col_w / biome_zone, 0.0, 1.0);
 	float zf = zt <= 0.0 ? 0.0 : (zt >= 1.0 ? 1.0 : (floor(zt * 5.0) + 0.5) / 5.0);
+#endif
 	vec3 rk = biome_tone(zf < 0.5 ? v_ba : v_bb, 11);   // r: the rock has strata; g: a rocky biome's height (/ 10,000) from which rock starts at gentler slopes
 	// Rock by the ground's steepness, in Art's five hard bands from rock_slope.x to .y (so the green and the rock meet along
 	// the slope's contour, stepped); in a rocky biome the rock starts at gentler slopes the higher it is, so the foot stays
@@ -194,7 +214,11 @@ void fragment() {
 	// the ridge's own step. Without the ladder, its own colour shaded as before.
 	int lk = -1;
 	if (ladder_on && v_s >= ladder_from) {
+#ifdef TILE_GROUND
+		float zb = v_rad;
+#else
 		float zb = -v_px.y;
+#endif
 		lk = zb < ladder_z.x ? 0 : (zb < ladder_z.y ? 1 : 2);
 		c = (lk == 0 ? v_lad_n : (lk == 1 ? mix(v_lad_n, v_lad_f, 0.5) : v_lad_f)) * (tone == 0 ? ladder_tone.x : (tone == 2 ? ladder_tone.z : ladder_tone.y));
 	} else if (!ladder_on) {
@@ -202,7 +226,11 @@ void fragment() {
 	}
 	if (lk < 0 && v_base < sea_base && v_h < sea_base) {
 		c = mix(sea_floor.rgb * tk, c, v_s);
+#ifdef TILE_GROUND
+	} else if (v_street > 0.001 && length(v_grad) < rock_slope.x) {   // no paint on a slope it would streak down
+#else
 	} else if (v_street > 0.001) {
+#endif
 		vec4 st = street_paint(v_px, fwidth(v_px.x));
 		if (st.a <= 0.0) {
 			st = block_paint(v_px, fwidth(v_px.x));   // between the streets: an avenue, or the district's paved lot
@@ -210,7 +238,31 @@ void fragment() {
 		c = mix(c, st.rgb * tk, st.a * v_street);
 	}
 	if (v_dent < -dent_min) {
+#ifdef TILE_GROUND
+		vec3 earth;
+		if (crater_look > 0.5) {
+			// Art's crater: hard edges and flat colour. A wall's tone is which way it faces, in eight flat sides, against the biome's light.
+			float cd = -v_dent;
+			float cs = length(v_dg);
+			float cf = floor(atan(v_dg.y, v_dg.x) / 0.7853982 + 0.5) * 0.7853982;
+			float cl = dot(-vec2(cos(cf), sin(cf)), normalize(sun_dir.xz));
+			int ct = cl > 0.35 ? 0 : (cl < -0.35 ? 2 : 1);
+			earth = mix(biome_tone(v_ba, 6 + ct), biome_tone(v_bb, 6 + ct), zf);
+			if (cs < crater_rings.w || cd >= crater_rings.z) {
+				// The floor: warm, in flat stripes at slightly different slants.
+				float cz = dot(v_q.xz, vec2(0.83, 0.55)) + 0.35 * tile_tri(v_q.x * 0.31 - v_q.z * 0.17);
+				earth = mix(biome_tone(v_ba, 8), biome_tone(v_bb, 8), zf) * crater_steps.y * (1.0 + crater_steps.z * (mod(floor(cz / crater_steps.w), 3.0) - 1.0));
+			} else if (cd >= crater_rings.y) {
+				earth *= crater_steps.x;
+			} else if (cd < crater_rings.x + dent_min && cl > 0.0) {
+				earth = mix(biome_tone(v_ba, 6), biome_tone(v_bb, 6), zf);   // the lip: only on an edge facing the light
+			}
+		} else {
+			earth = mix(biome_tone(v_ba, 6 + tone), biome_tone(v_bb, 6 + tone), zf);   // a crater's inside: the subsoil (Art), not the surface
+		}
+#else
 		vec3 earth = mix(biome_tone(v_ba, 6 + tone), biome_tone(v_bb, 6 + tone), zf);   // a crater's inside: the subsoil (Art), not the surface
+#endif
 		c = v_new > 0.0 ? mix(earth, c, v_new) : earth;
 	} else if (v_dent > 0.5 * dent_min) {
 		c = mix(c, ejecta.rgb * tk, (v_dent > 2.5 * dent_min ? 0.5 : 0.25) * (1.0 - v_new));   // rubble on the rim, in two hard steps
@@ -229,9 +281,15 @@ void fragment() {
 		c = mix(c, cracked.rgb, clamp(v_crack, 0.0, 1.0) * (0.3 + 0.7 * line));
 	}
 	if (v_rubble > 0.01) {
+#ifdef TILE_GROUND
+		// Stones keyed to the planet, small and close in value: the strip's 45-unit squares read as a checker on a hill face toward the camera.
+		float n = floor(fract(sin(dot(floor(v_q * (128.0 / rubble_cell.x)), vec3(41.3, 289.1, 113.7))) * 43758.5453) * 3.0) * 0.5;   // three hard steps
+		c = mix(c, rubble.rgb * (1.0 + rubble_cell.y * (n - 0.5)), clamp(v_rubble / rubble_tint_h, 0.0, 1.0) * 0.9);
+#else
 		vec2 q = v_px / 45.0;
 		float n = fract(sin(dot(floor(q), vec2(41.3, 289.1))) * 43758.5453);
 		c = mix(c, rubble.rgb * (0.8 + 0.4 * n), clamp(v_rubble / rubble_tint_h, 0.0, 1.0) * 0.9);
+#endif
 	}
 	// A groove chars as it cools: under a fresh glow the ground keeps its own colour, so a beam's burn does not turn a
 	// broad strip of ground dark in one tick.
@@ -240,14 +298,68 @@ void fragment() {
 	float sc = clamp(v_scorch * 1.1, 0.0, 0.92) * char_gain * (1.0 - fresh) * (1.0 - v_new);
 	// The band is where the burn passes scar_band.y; its edge a rim of scar_band.x pixels just inside the band's border, so a
 	// faded scar narrows and goes, and never turns into a wide pale band.
+#ifdef TILE_GROUND
+	if (crater_look > 0.5) {
+		if (v_scorch > 0.0) {
+		// Art's scar: read by the pixel from the column, so it's as narrow as the look wants and not as wide as the mesh's corners say.
+		float scx = v_px.x / col_w;
+		int sci = int(scx - float(nc) * floor(scx / float(nc))) % nc;
+		float sleft = mix(texelFetch(scar_tex, ivec2(sci, 0), 0).r, texelFetch(scar_tex, ivec2((sci + 1) % nc, 0), 0).r, fract(scx));
+		if (sleft > 0.0 && clamp(gh(sci, 0) * 1.1, 0.0, 0.92) * char_gain * (1.0 - fresh) * (1.0 - v_new) > scar_band.y) {
+			float sside = v_px.y > 0.0 ? 13.0 : 0.0;   // each side its own outline
+			// The burn's own width, without a slide's trench, which jumps from column to column.
+			float sg0 = groove_w0 + groove_wp * clamp((gh(sci, 0) - groove_i0) / groove_ip, groove_pmin, groove_pmax);
+			float sg1 = groove_w0 + groove_wp * clamp((gh((sci + 1) % nc, 0) - groove_i0) / groove_ip, groove_pmin, groove_pmax);
+			// Stronger beams burn wider: the look's width is the strongest beam's, a weak one's a little over half of it.
+			float spn = clamp((clamp((gh(sci, 0) - groove_i0) / groove_ip, groove_pmin, groove_pmax) - groove_pmin) / max(groove_pmax - groove_pmin, 0.001), 0.0, 1.0);
+			float swid = mix(sg0, sg1, fract(scx)) * scar_look.x * (0.55 + 0.45 * spn) * sleft * (1.0 + scar_look.y * tile_tri((scx + sside) * scar_look.z));
+			float sz = abs(v_px.y) / max(swid, 1.0);
+			if (sz < 1.0) {
+				if (sz > 1.0 - fwidth(sz) * scar_band.x) {
+					c = mix(biome_tone(v_ba, 10), biome_tone(v_bb, 10), zf);
+				} else {
+					float sst = dot(v_q.xz, vec2(0.83, 0.55)) + 0.35 * tile_tri(v_q.x * 0.31 - v_q.z * 0.17);
+					c = mix(biome_tone(v_ba, 9), biome_tone(v_bb, 9), zf) * (1.0 + crater_steps.z * (mod(floor(sst / crater_steps.w), 3.0) - 1.0));
+				}
+			} else if (sz < 1.0 + scar_look.w) {
+				c *= scar_fringe;
+			}
+		}
+		}
+	} else if (sc > scar_band.y) {
+		float rim = fwidth(sc) * scar_band.x;
+		c = mix(biome_tone(v_ba, sc > scar_band.y + rim ? 9 : 10), biome_tone(v_bb, sc > scar_band.y + rim ? 9 : 10), zf);
+	}
+#else
 	if (sc > scar_band.y) {
 		float rim = fwidth(sc) * scar_band.x;
 		c = mix(biome_tone(v_ba, sc > scar_band.y + rim ? 9 : 10), biome_tone(v_bb, sc > scar_band.y + rim ? 9 : 10), zf);
 	}
+#endif
+#ifdef TILE_GROUND
+	// One tone in front of the plane: its big facets, close to the lens, are a swing's flash (docs/camera/swing-view.md). Marks keep their colours.
+	if (fore_tone > 0.5 && v_pv.y > 0.0 && abs(v_dent) < dent_min && v_rubble <= 0.01 && v_crack <= 0.01) {
+		c = mix(biome_tone(v_ba, 2), biome_tone(v_bb, 2), zf);   // the biome's shade colour (Art: docs/art/tile-ground-look.md)
+	}
+#endif
 	c = c * wl_mul + wl_add;   // the world's light; the lane cue, the pair's mark and a groove's glow below are never dimmed
+#ifdef TILE_GROUND
+	// Ice above the water (World's fine ids 5 and 6): a low sun would clip Art's warm white to the brightest thing in the frame, above a beam. Its hue stays.
+	if (v_h > sea_base && (v_ba == 5 || v_ba == 6 || v_bb == 5 || v_bb == 6)) {
+		c *= min(1.0, ice_cap / max(max(c.r, c.g), max(c.b, 0.001)));
+	}
+#endif
+#ifdef TILE_GROUND
+	vec4 cue = lane_cue_at(v_pv, fwidth(v_pv.y));
+#else
 	vec4 cue = lane_cue_at(v_px, fwidth(v_px.y));
+#endif
 	c = mix(c, cue.rgb, cue.a);
+#ifdef TILE_GROUND
+	c = pair_mark_on(c, v_pv, fwidth(v_pv.y));
+#else
 	c = pair_mark_on(c, v_px, fwidth(v_px.y));
+#endif
 	float hh = clamp(v_heat, 0.0, 1.6);
 	vec3 glow = mix(heat_lo.rgb, heat_hi.rgb, clamp(hh - 0.6, 0.0, 1.0));
 	// The glow's tint comes in gently at low heat (a weak beam's groove is a faint red, not a dark one, at first).

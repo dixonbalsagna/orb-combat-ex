@@ -19,14 +19,20 @@ static func _setLoser(S: SimState, ex, out: String) -> void:
 static func opBeamCharge(S: SimState, ex, args) -> void:
 	var A = ex.A
 	var D = ex.D
-	A.beamCharge = S.T
+	var still: bool = DirBeamPlay.stationary()
+	if not still or A.beamCharge == null:   # (a stick's hold has been charging already)
+		A.beamCharge = S.T
 	DirBeamPlay.chargeCue(S, ex, true)
 	SimFx.banner(S, A.sigName.to_upper(), A.aura, 1.1)
-	var r := SimState.Rush.new()
-	r.py = SimMathx.jmin(SimConst.CEILING - 200.0, D.y + args.rise)
-	r.px = DirBeamPlay.standoffX(S, A, D, r.py)
-	r.end = S.T + 0.55
-	A.rush = r
+	if still:
+		A.vx = 0.0
+		A.vy = 0.0
+	else:
+		var r := SimState.Rush.new()
+		r.py = SimMathx.jmin(SimConst.CEILING - 200.0, D.y + args.rise)
+		r.px = DirBeamPlay.standoffX(S, A, D, r.py)
+		r.end = S.T + 0.55
+		A.rush = r
 	SimFx.ring(S, A.x, A.y + 40.0, 260.0, A.aura, 0.8, 10.0)
 	# Step 2b: an AI defender may answer the beam, by the same rule as a player: its own signature (45 ki and the cooldown
 	# over), or else a heavy blast (40 ki). How often is its difficulty (control-rules.md §10); the press comes in the tell.
@@ -292,6 +298,26 @@ static func _cue(S: SimState, f, o, name: String, text: String, mid: float, sour
 	return e
 
 
+## The struggle's end, for VFX's shockwave and World's crater (beamStruggle.endEvent; Orb's note): the cue beam_clash_end. text the
+## outcome (win: overwhelmed or run out on his side; break: he let go; draw: they detonated), x, y, z the meeting point in the world,
+## amount the point (0 at A's hands to 1 at D's), energy the clash's (both beams' damage at the pair's mean tier), winner and loser
+## their slots (-1 at a draw), n the surges it took, source the ending as beam_end names it (time, overwhelmed, letgo, detonate). Called
+## once for any ending. Off, nothing is emitted. (World's struggle-meeting-point call goes here, ahead of the switch: its own.)
+static func _clashEnd(S: SimState, A, D, W, L, outcome: String, how: String, mid: float, st: Dictionary) -> void:
+	if not bool(_bs().get("endEvent", false)):
+		return
+	SimFx.cue(S, W if W != null else A, "beam_clash_end", outcome, how)
+	var e = S.out.fx[S.out.fx.size() - 1]
+	e.x = SimWrap.wrap(A.x + SimWrap.sdx(A.x, D.x) * mid)
+	e.y = A.y + 38.0 + (D.y - A.y) * mid
+	e.z = A.z + (D.z - A.z) * mid
+	e.amount = mid
+	e.energy = 2.0 * 260.0 * sigDamageMul() * (float(A.tier) + float(D.tier)) * 0.5
+	e.winner = float(S.fighters.find(W)) if W != null else -1.0
+	e.loser = float(S.fighters.find(L)) if L != null else -1.0
+	e.n = int(st.surgesA) + int(st.surgesD)
+
+
 static func _struggleBeat(ex):
 	for b in ex.beats:
 		if not b.done and b.op == "clashResolve" and b.args != null and b.args.has("bs"):
@@ -411,6 +437,7 @@ static func _resolveStruggle(S: SimState, ex, args) -> void:
 			SimFx.afterimage(S, Ls)
 			SimDamage.hit(S, ex, Wn, Ls, beam * float(bs.timeLoss.share), {"ignoreStance": true, "stop": 0.12, "shake": 12.0, "big": true})
 			_cue(S, Wn, Ls, "beam_end", "time", mid, "letgo")
+			_clashEnd(S, A, D, Wn, Ls, "break", "letgo", mid, st)
 			SimEvents.feed(S, Ls.name + " LETS GO", "he slips aside and the beam carries on past him")
 			if S.game.ko == null:
 				DirExchange.decisive(S, ex, Wn, Ls, "beam_clash")
@@ -420,6 +447,7 @@ static func _resolveStruggle(S: SimState, ex, args) -> void:
 			SimDamage.hit(S, ex, Wn, Ls, beam * (float(ov.winnerBeam) + float(ov.ownBeam)), {"ignoreStance": true, "stop": 0.16, "shake": 18.0, "big": true})
 			_blast(S, Wn, Ls.x, Ls.y + 30.0, (70.0 + Wn.tier * 32.0) * SimConst.WS)
 			_cue(S, Wn, Ls, "beam_end", "overwhelmed", mid)
+			_clashEnd(S, A, D, Wn, Ls, "win", "overwhelmed", mid, st)
 			SimEvents.feed(S, Ls.name + " OVERWHELMED", "the meeting point reached him")
 			if S.game.ko == null:
 				var aim: float = Wn.input.my * float(ov.stickUy) if Wn.ai == null else 0.0   # up or down aims the overwhelm
@@ -437,12 +465,14 @@ static func _resolveStruggle(S: SimState, ex, args) -> void:
 			DirLaunch.knockBack(S, A, D)
 		ex.loser = -1
 		_cue(S, null, null, "beam_end", "detonate", mid)
+		_clashEnd(S, A, D, null, null, "draw", "detonate", mid, st)
 		SimEvents.feed(S, "THE BEAMS DETONATE", "the struggle ran out in the middle")
 	else:
 		var Wn2 = A if mid > 0.5 else D
 		var Ls2 = D if mid > 0.5 else A
 		SimDamage.hit(S, ex, Wn2, Ls2, beam * float(bs.timeLoss.share), {"ignoreStance": true, "stop": 0.12, "shake": 12.0, "big": true})
 		_cue(S, Wn2, Ls2, "beam_end", "time", mid)
+		_clashEnd(S, A, D, Wn2, Ls2, "win", "time", mid, st)
 		SimEvents.feed(S, Ls2.name + " GIVES WAY", "the struggle ran out on his side")
 		if S.game.ko == null:
 			DirExchange.decisive(S, ex, Wn2, Ls2, "beam_clash")
@@ -559,6 +589,8 @@ static func beamStep(S: SimState, dt: float) -> void:
 			np = DirBeamPlay.front(b, tv)   # the beam plays: it reaches the defender at a set tick, at any distance
 		var s0: float = b.p * b.len
 		var s1: float = np * b.len
+		if b.stopAt >= 0.0:
+			s1 = minf(s1, b.stopAt)   # 2v2: it stopped on an enemy of the other fight (SimCross.beams)
 		var was: float = b.p
 		b.p = np
 		var s: float = s0

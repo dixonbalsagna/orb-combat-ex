@@ -8,7 +8,8 @@
 //   2. the night's seeds: the next --count integers from --base that are in neither the recorded set (tools/flash/sources.json) nor the history (tools/flash/nightly-seeds.json), so no seed
 //      is read twice and the set never repeats; the pick is deterministic (the history is the only state);
 //   3. tools/flash/run-pixels.mjs --seeds <those> in both modes through the guarded launcher (below-normal, the cap, a time limit), three at a time;
-//   3b. the `signature` clip in both modes on the same export (Legal RL-195 condition (a)), every night, with its three readings (primary / area-15% / two-second memory) in the line and the row;
+//   3b. the `signature` clip in both modes on the same export (Legal RL-195 condition (a)), every night, with its three readings (primary / area-15% / two-second memory) in the line and the row; and the
+//      `clash` clip in both modes (the EP, 2026-10-30), read like a seed clip: it counts in the limit, a reduced one over it is the take-down;
 //   3c. the build info of the pinned export (its commit and date, and the state of every watched switch in ITS data: tools/flash/nightly-switches.json, Legal RL-208 (2): kits, rapid fire,
 //      snares and mines, grab call-outs, rally), and the exported-build ROUTE CHECK (RL-208 (1)): the pin's PUBLIC export (lock on, capture_hook off) scanned for every route that could lift the
 //      Reduce flashing lock and run in a browser on a public hostname (the interim check's routes scan and tools/check-site-hook.mjs). --no-route-check / --no-hook-check skip them: "not run" is never a pass.
@@ -50,15 +51,24 @@ export function nextSeeds(count, base, recorded, used) {
   return out;
 }
 
+/** Legal RL-212 (2026-10-30): the interim's trigger on a REDUCED clip also fires on an area-15% reading over this (no worse than ai-1049-reduced's 4.5 at 960x540). */
+export const AREA15_TRIP = 4.5;
+
+/** The fixed clips every night plays besides the seeds, both modes, read like a seed clip against the limit (the signature clip has its own reading, RL-195). */
+export const FIXED_CLIPS = ['clash-normal', 'clash-reduced'];
+
 /** What a run says, from the summary rows (run-pixels summary.json: { id, error?, result: { general: { flashes } } }). Pure. */
-export function readRun(rows, seeds, limit = TAKE_DOWN_ABOVE) {
-  const want = seeds.flatMap((s) => [`ai-${s}-normal`, `ai-${s}-reduced`]);
+export function readRun(rows, seeds, limit = TAKE_DOWN_ABOVE, fixed = []) {
+  const want = [...seeds.flatMap((s) => [`ai-${s}-normal`, `ai-${s}-reduced`]), ...fixed];
   const have = new Map(rows.filter((r) => !r.error && r.result && r.result.general).map((r) => [r.id, r.result.general.flashes]));
+  const lowers = new Map(rows.filter((r) => !r.error && r.result && r.result.combined && typeof r.result.combined.lower === 'number').map((r) => [r.id, r.result.combined.lower]));
   const missing = want.filter((id) => !have.has(id));
   let maxId = null, max = -1;
   for (const [id, v] of have) if (want.includes(id) && v > max) { max = v; maxId = id; }
   const over = [...have].filter(([id, v]) => want.includes(id) && v > limit).map(([id, v]) => ({ id, primary: v }));
-  return { clips: want.length, read: want.length - missing.length, missing, max, maxId, over, overReduced: over.filter((o) => modeOf(o.id) === 'reduced'), overNormal: over.filter((o) => modeOf(o.id) !== 'reduced') };
+  return { clips: want.length, read: want.length - missing.length, missing, max, maxId, over, overReduced: over.filter((o) => modeOf(o.id) === 'reduced'),
+    overArea: [...lowers].filter(([id, v]) => want.includes(id) && modeOf(id) === 'reduced' && v > AREA15_TRIP).map(([id, v]) => ({ id, area15: v })),
+    atLine: [...have].filter(([id, v]) => want.includes(id) && modeOf(id) === 'reduced' && v === limit).map(([id, v]) => ({ id, primary: v })), overNormal: over.filter((o) => modeOf(o.id) !== 'reduced') };
 }
 
 /** The mode a clip id names ("ai-1000-reduced" is reduced), or null. */
@@ -77,7 +87,9 @@ export function verdictOf({ r, sig, routes = { status: 'not run', problems: [] }
   if (r.missing.length || (sig && sig.missing.length)) return { code: EXIT.runFailed, label: 'RUN FAILED', lines: [`a clip was not read (${[...r.missing, ...(sig ? sig.missing : [])].join(', ')}): a missing clip is not a pass`] };
   const reduced = r.over.filter((o) => modeOf(o.id) === 'reduced'), normal = r.over.filter((o) => modeOf(o.id) !== 'reduced');
   const why = routes.status === 'failed' ? `FAILED (${routes.problems.slice(0, 3).join(' | ')})` : 'did not run';
+  const area = r.overArea || [];
   if (reduced.length) lines.push(`reduced, the mode players get, reads over the limit: ${reduced.map((o) => `${o.id} ${o.primary}`).join(', ')}`);
+  if (area.length) lines.push(`a reduced clip's area-15% reading is over ${AREA15_TRIP} (RL-212): ${area.map((o) => `${o.id} ${o.area15}`).join(', ')}`);
   if (normal.length && routes.status !== 'passed') lines.push(`normal reads over the limit (${normal.map((o) => `${o.id} ${o.primary}`).join(', ')}) and the exported-build route check ${why}: the lock may be reachable, so normal is a trigger on its own (RL-208, addendum 12(c))`);
   if (routes.status === 'failed' && !normal.length) lines.push(`the exported-build route check ${why}: the lock may be reachable (RL-195 condition (b))`);
   if (lines.length) return { code: EXIT.takeDown, label: 'TAKE DOWN', lines };
@@ -150,10 +162,11 @@ export function signatureText(sig) {
 export function reportLine(date, commit, seeds, r, limit = TAKE_DOWN_ABOVE, sig = null) {
   const head = `nightly seeds ${date} on the pinned ${commit.slice(0, 8)}: seeds ${seeds.join(',')} x 2 modes, ${r.read} of ${r.clips} clips read`;
   if (r.missing.length) return `${head}; NOT COMPLETE: ${r.missing.join(', ')} not read (a missing clip is not a pass)${signatureText(sig)}`;
-  const red = r.overReduced || r.over, nor = r.overNormal || [];
-  if (red.length) return `${head}; TAKE DOWN: ${red.map((o) => `${o.id} reads ${o.primary}`).join(', ')} on the primary reading (over ${limit})${nor.length ? `; normal over too: ${nor.map((o) => o.id).join(', ')}` : ''}${signatureText(sig)}`;
-  if (nor.length) return `${head}; FINDING (normal mode, not the mode players get; a trigger only if the route check fails): ${nor.map((o) => `${o.id} reads ${o.primary}`).join(', ')} on the primary reading (over ${limit})${signatureText(sig)}`;
-  return `${head}; largest primary ${r.max} (${r.maxId}); none over ${limit}${signatureText(sig)}`;
+  const red = r.overReduced || r.over, nor = r.overNormal || [], area = r.overArea || [], line = r.atLine || [];
+  const atLine = line.length ? `; AT THE LINE, reduced primary ${limit} (a finding; RL-212 (5): a pin move waits until it is explained): ${line.map((o) => o.id).join(', ')}` : '';
+  if (red.length || area.length) return `${head}; TAKE DOWN: ${[...red.map((o) => `${o.id} reads ${o.primary} on the primary reading (over ${limit})`), ...area.map((o) => `${o.id} reads ${o.area15} at area-15% (over ${AREA15_TRIP}, RL-212)`)].join(', ')}${nor.length ? `; normal over too: ${nor.map((o) => o.id).join(', ')}` : ''}${atLine}${signatureText(sig)}`;
+  if (nor.length) return `${head}; FINDING (normal mode, not the mode players get; a trigger only if the route check fails): ${nor.map((o) => `${o.id} reads ${o.primary}`).join(', ')} on the primary reading (over ${limit})${atLine}${signatureText(sig)}`;
+  return `${head}; largest primary ${r.max} (${r.maxId}); none over ${limit}${atLine}${signatureText(sig)}`;
 }
 
 /** The exported-build route check of a night (Legal RL-208 (1)): the PUBLIC export of the pin (lock on, capture_hook off, the measurement export's hook is not in it) is scanned for every route that could
@@ -238,13 +251,13 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   let rows = [];
   try { rows = JSON.parse(readFileSync(join(out, 'clips', 'summary.json'), 'utf8')); } catch { /* reported as missing */ }
   // the signature clip, both modes, every night (Legal RL-195 condition (a)): on the same pinned export, a second run of the guarded launcher
-  const rps = spawnSync(process.execPath, [RUN_PIXELS, '--dir', web, '--path', '/index.html?flashcap=1', '--out', join(out, 'clips-signature'), '--jobs', String(Math.min(2, Number(jobs))), '--cpu-cap', cap, '--clip', 'signature-normal,signature-reduced'], { stdio: 'inherit', env: { ...process.env, MERIDIAN_SESSION: process.env.MERIDIAN_SESSION || 'tools' } });
+  const rps = spawnSync(process.execPath, [RUN_PIXELS, '--dir', web, '--path', '/index.html?flashcap=1', '--out', join(out, 'clips-signature'), '--jobs', String(Math.min(2, Number(jobs))), '--cpu-cap', cap, '--clip', ['signature-normal', 'signature-reduced', ...FIXED_CLIPS].join(',')], { stdio: 'inherit', env: { ...process.env, MERIDIAN_SESSION: process.env.MERIDIAN_SESSION || 'tools' } });
   let sigRows = [];
   try { sigRows = JSON.parse(readFileSync(join(out, 'clips-signature', 'summary.json'), 'utf8')); } catch { /* reported as not read */ }
   const sig = signatureOf(sigRows);
   // 3.5 under the owner-approved interim (Legal's addendum 11); the record gives it when the site is offline or a pin was given, the live site.json when the interim is online
   const limit = opt('--pin') || config.offline === true || !config.interim ? limitFromRecord(words) : limitFor(config);
-  const r = readRun(rows, seeds, limit);
+  const r = readRun([...rows, ...sigRows], seeds, limit, FIXED_CLIPS);   // the seeds' rows and the fixed clash clips' (the signature rows are read separately)
   const routes = await routeCheck({ pin, work, godot: opt('--godot') || process.env.GODOT, skip: args.includes('--no-route-check'), skipHook: args.includes('--no-hook-check') });
   const runOk = rp.status === 0 || rp.status === 1;
   const v = verdictOf({ r, sig, routes, flips, runOk });

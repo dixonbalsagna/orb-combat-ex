@@ -31,6 +31,7 @@
     "warmN",
     "warmB",
     "apartReach",
+    "warmCeil",
     "warmQuiet",
     "layNearCols",
     "layNearPerTick",
@@ -344,6 +345,10 @@
     },
     "apartReach": {
       "type": "number",
+      "minimum": 0
+    },
+    "warmCeil": {
+      "type": "integer",
       "minimum": 0
     },
     "warmQuiet": {

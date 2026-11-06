@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "_note": "VFX's beam-clash look (docs/vfx/clash-look.md): the point where two beams meet, drawn as rippling, glowing air with distortion, colour and patterns erupting from it, instead of the old solid white flare. Read by render/vfx/clash_look.gd and clash_view.gd, never by the sim. Each side's look is COMPOSED from data: the fighter's lane colour (Art's, from his aura) and his beam flavour (energy.json: the second tint's hue shift, the beam's pattern), then this file's row for his roster id (lower case), then the row for the form he is in (`forms`, keyed by his form step), then every `situations` entry whose condition holds. A new fighter is a data row; a special case of his (a form, a stance, a state the sim can read off him) is a `situations` entry: {read: a path off the fighter (tier, form.step, form.branch, ...), is / min / max: the condition, set: any of the row's keys}. Nothing here is code. Present rows: protagonist, rival, reference (on main), and empress and cyborg (rows only: their kits are parked, docs/combat/energy-movesets.md, and nothing reads them until those fighters are on the roster). A fighter with no row gets `default`.",
+  "enabled": true,
+  "frame": {
+    "radius": 165,
+    "radius_per_power": 130,
+    "radius_max": 360,
+    "ring_n": 3.6,
+    "ring_n_per_power": 1.6,
+    "ring_hz": 0.9,
+    "ring_hz_calm": 0.55,
+    "front_hz": 0.7,
+    "distort": 0.07,
+    "distort_calm": 0.035,
+    "lens": 0.3,
+    "keep_r": 105,
+    "keep_y": 55,
+    "glow": 1.0,
+    "glow_cap": 0.92,
+    "lighten": 0.1,
+    "z_off": -3.0,
+    "strip_k": 0.7,
+    "core_r": 0.14,
+    "core_per_knot": 0.7,
+    "lean": 0.55,
+    "ease_s": 0.3,
+    "burst_ticks": 14,
+    "burst_s": 0.9,
+    "rise_s": 0.4,
+    "fall_s": 0.5,
+    "burst_gap": 45,
+    "burst_gap_calm": 60,
+    "burst_amp": 0.7,
+    "calm_strength": 0.82,
+    "calm_rise_s": 0.3,
+    "spikes": 6,
+    "spikes_per_power": 4
+  },
+  "press": {
+    "_note": "The press (docs/vfx/clash-look.md, Orb 2026-11-01): each clash beam's head flares and bells out into a flat sheet where it meets the other, and eddies shed off its rim and roll back along it, driven by that side's power, the struggle's knot and its surges. flare_k: the head's extra radius as a share; sheet_k: how flat and wide the front lies (0 to 1); eddy_k: the eddies' depth as a share of the radius; eddy_v: the speed they roll back at, units a second; eddy_wl: the distance between two, in units (a point sees one go by at eddy_v / eddy_wl Hz: 0.9 or slower); reach: how far back from the head it all reaches, units; hue: the share of the eddies that takes the second tint; surge_k: the extra depth a surge's swell adds at the head; calm_k: the share kept under Reduce flashing or reduced motion (half the depth at 0.6 of the speed).",
+    "flare_k": 1.1,
+    "sheet_k": 0.8,
+    "eddy_k": 0.5,
+    "eddy_v": 100,
+    "eddy_wl": 140,
+    "reach": 320,
+    "hue": 0.8,
+    "surge_k": 0.35,
+    "calm_k": 0.5
+  },
+  "power": {
+    "tier": 0.22,
+    "step": 0.1,
+    "max": 1.4
+  },
+  "fronts": {
+    "wall": 0,
+    "lances": 1,
+    "wire": 2,
+    "sputter": 3,
+    "plain": 4
+  },
+  "textures": {
+    "none": 0,
+    "boil": 1,
+    "facets": 2
+  },
+  "fighters": {
+    "default": {
+      "front": "wall",
+      "ring_k": 1.0,
+      "spike_k": 1.0,
+      "scale": 1.0
+    },
+    "protagonist": {
+      "_source": "docs/combat/energy-movesets.md: Breakwater, broad and blunt, pushes as a wall; beam pattern boil (energy.json)",
+      "front": "wall",
+      "texture": "boil",
+      "ring_k": 1.15,
+      "spike_k": 0.8,
+      "scale": 1.1,
+      "forms": {
+        "2": {
+          "ring_k": 1.25
+        },
+        "4": {
+          "ring_k": 1.4,
+          "spike_k": 1.1
+        }
+      }
+    },
+    "rival": {
+      "_source": "docs/combat/energy-movesets.md: Lance Sheaf, thin straight lances that tighten and press; beam pattern facets (energy.json)",
+      "front": "lances",
+      "texture": "facets",
+      "ring_k": 0.8,
+      "spike_k": 1.2,
+      "scale": 0.8
+    },
+    "reference": {
+      "front": "plain",
+      "texture": "none",
+      "ring_k": 0.8,
+      "spike_k": 0.6,
+      "scale": 1.0
+    },
+    "empress": {
+      "_source": "docs/combat/energy-movesets.md (parked): Hem Sweep bows like an overdrawn wire. Her colours are Art's moss (Legal RL-221: no gold, white or red in an aura, ring or flash; the gold #c9a227 is her flight-line ribbon rim only, never here). A row only: she is not on the roster",
+      "lane": "#b8c96a",
+      "accent": "#6d7d30",
+      "front": "wire",
+      "texture": "none",
+      "ring_k": 0.9,
+      "spike_k": 0.9,
+      "scale": 0.9
+    },
+    "cyborg": {
+      "_source": "docs/combat/energy-movesets.md (parked): Furnace Vent sputters and surges; molten slag orange with scrap-metal grey. A row only: he is not on the roster",
+      "lane": "#e2742c",
+      "accent": "#8c9098",
+      "front": "sputter",
+      "texture": "none",
+      "ring_k": 1.1,
+      "spike_k": 1.3,
+      "scale": 1.2,
+      "situations": [
+        {
+          "read": "tier",
+          "min": 4,
+          "set": {
+            "spike_k": 1.6
+          }
+        }
+      ]
+    }
+  },
+  "shockwave": {
+    "_note": "The clash's shockwave at the meeting point (docs/vfx/clash-shockwave.md, Legal RL-246). VFX's PROPOSED numbers until Game Design rules them. Growth: a thin ground ring at most every ring_gap_s, radius grow_r0 to grow_r1 with the struggle's swell (knot_s); never per pulse. Release at the end: rings out to World's meeting crater (release_r by the pair's mean tier 1 to 4, times the root of f_end by the ending), over release_s, starting release_delay ticks after the cue; a local dust dome (dome_k of the radius, at most dome_max). Above height_reach the point is an air burst (air_k of the radius, no dome).",
+    "grow_r0": 70,
+    "grow_r1": 300,
+    "ring_gap_s": 2.0,
+    "knot_s": 1.8,
+    "ring_life_s": 1.0,
+    "ring_alpha": 0.55,
+    "skirt_puffs": 3,
+    "release_r": [
+      1136,
+      1821,
+      2466,
+      3096
+    ],
+    "f_end": {
+      "win": 0.6,
+      "break": 0.5,
+      "draw": 1.0
+    },
+    "height_reach": 1600,
+    "air_k": 0.5,
+    "release_delay": 12,
+    "release_s": 0.45,
+    "second_k": 0.7,
+    "second_delay": 8,
+    "release_alpha": 0.7,
+    "dome_k": 0.35,
+    "dome_max": 800,
+    "dome_puffs": 14,
+    "back": 60
+  }
+}

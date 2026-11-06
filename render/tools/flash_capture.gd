@@ -91,6 +91,7 @@ func poll() -> void:
 
 ## Set a worst case up, as tools/flash/flash_worst.gd does, and hold the sim (nothing ticks until step()).
 func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0, variant: int = 0, slots: Array = []) -> void:
+	RenderTileField.steady_fill = true
 	VARIANT = variant
 	var err: String = ""
 	if not SCENARIOS.has(sc) and not FILM_SCENES.has(sc):

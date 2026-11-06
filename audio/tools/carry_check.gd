@@ -185,6 +185,12 @@ func _grip() -> void:
 	r = tick(t + 50, [cue("grapple_refused", "lockout", 1, {"n": t + 70})])
 	var rf: Array = with_sound(r, "grip.refuse")
 	ok(rf.size() == 1 and absf(rf[0].x - 4100.0) < 0.01, "a press in the lockout gets the short dull refusal, at the presser")
+	r = tick(t + 53, [cue("press_ack", "stunned", 0, {"source": "x"})])
+	rf = with_sound(r, "grip.refuse")
+	ok(rf.size() == 1 and absf(rf[0].x - 4000.0) < 0.01 and r.size() == 1, "a press made in a stun and cleared (press_ack stunned) gets the same refusal, at the presser")
+	ok(tick(t + 54, [cue("press_ack", "held", 0, {"source": "x"})]).is_empty() and tick(t + 56, [cue("press_ack", "lapsed", 0, {"source": "x"})]).is_empty(), "the accepted presses (held, lapsed) stay silent: their blows sound")
+	r = tick(t + 55, [cue("press_ack", "refused", 0, {"source": "b"})])
+	ok(with_sound(r, "grip.refuse").size() == 1 and r.size() == 1, "a press the brawl refused (press_ack refused) gets the same refusal")
 	ok(tick(t + 51, [cue("grapple_refused", "busy", 1)]).is_empty() and tick(t + 52, [cue("grapple_refused", "thrown", 1)]).is_empty(), "a busy or thrown refusal is silent")
 
 

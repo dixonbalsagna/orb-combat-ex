@@ -766,6 +766,9 @@ class Beam:
 	var sf: float = 1.0          # step 2, the tier gate (balance-targets.md §15): the structure-damage factor at fire time
 	var cap: int = -1            # ... buildings this beam may level (-1: no cap); past it they are left at 25% hp
 	var levelled: int = 0        # ... and how many it has levelled so far
+	var cross: int = 0           # 2v2 (sim/core/cross.gd): the bodies of the other fight it has met, a bit each by starting slot
+	var first: String = ""       # ... the keys of the other fight's enemy first on its line now: his warning
+	var stopAt: float = -1.0     # ... how far along it stopped on one, -1 while it hasn't
 
 
 ## An energy blast in flight (sim/core/shots.gd). Timers are whole live ticks.
@@ -803,6 +806,8 @@ class Shot:
 	var ground: bool = false  # MINE: it rests on the ground (else it hovers where it was laid)
 	var fresh: bool = true    # fired this tick: it moves from the next
 	var dead: bool = false    # ended this tick: removed at the end of the shots' step
+	var from: String = ""     # 2v2 (sim/core/cross.gd): a shot from outside, owner -1: its shooter's keys, in another fight
+	var inT: int = -1         # ... the tick it came over: it starts on its new fight's next tick
 
 
 class FeedLine:
@@ -854,6 +859,7 @@ class FxEvent:
 	var onGround: bool = false   # tier_up: a ground-level power-up (it cratered the terrain)
 	var cover: String = ""       # hide_start: submerged, canopy or ridge
 	var winner: float = -1.0     # ko
+	var winners: Array = []      # ko: the match's last, the winning team's starting slots (SimCross.winnersOf)
 	var loser: float = -1.0      # ko
 	var region: String = ""       # wounds: head, core, arms or legs
 	var stage: int = 0            # wounds: 0 fresh, 1 bruised, 2 battered, 3 broken
@@ -956,7 +962,21 @@ class CataState:
 ## A match of more than one fight (sim/core/stage.gd; docs/architecture/fight-swap.md).
 class Stage:
 	var fights: Array = []     # a Fight each
-	var cur: int = 0           # the fight in S's fields: 0 between ticks
+	var cur: int = 0           # the fight in S's fields: 0 after a step (a host may hold another between ticks)
+	var cross: bool = false    # 2v2: hits reach the other fight (sim/core/cross.gd): data/fight/cross.json's switch, or the setup's "cross"
+	var mail: Array = []       # ... a Cross each, on its way to a body of another fight, in the order sent
+	var over: int = -1         # ... the team with nobody standing: the match is over (SimCore.ended); -1 while both stand
+	var rejoined: int = 0      # ... how often the two standing have been made one fight's pair (SimStage.rejoin)
+
+
+## A hit from one fight on a body of another (sim/core/cross.gd), waiting for his fight's next live tick.
+class Cross:
+	var tick: int = 0          # the tick it was sent on: it lands on a later one
+	var kind: String = ""      # shot, beam or blow
+	var from: String = ""      # the sender's keys ("p1" for slot 0), empty for none
+	var to: String = ""        # ... and the body it's for: it follows him through a trade
+	var dmg: float = 0.0
+	var o: Dictionary = {}     # a beam's or a blow's options for SimDamage.hit
 
 
 ## One fight's fields, while another is in S's. The record of the fight in S holds blanks, so nothing is in two places.
@@ -1099,6 +1119,7 @@ class Fighter:
 	var lastAtkT: float = -99.0
 	var hurtT: float = -99.0
 	var keys: String = ""
+	var out: bool = false    # 2v2 (sim/core/cross.gd): KO'd and out for the match, inert
 	var ai = null            # AiState or null
 	var beamCharge = null    # float or null
 	var wet: bool = false

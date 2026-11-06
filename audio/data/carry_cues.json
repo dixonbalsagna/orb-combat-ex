@@ -106,7 +106,9 @@
       "sound": "grip.refuse",
       "gain_db": 0.0,
       "texts": [
-        "lockout"
+        "lockout",
+        "stunned",
+        "refused"
       ],
       "priority": 60,
       "cls": "grip.refuse",

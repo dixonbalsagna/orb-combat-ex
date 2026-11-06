@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/camera-swing",
+  "title": "camera.swing/1",
+  "description": "data/camera/swing.json: Camera's numbers for the swing that a reading can move (CamPlaces.data; docs/camera/swing-view.md). Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "patternProperties": { "^_": {} },
+  "additionalProperties": false,
+  "required": ["schema", "peakRate"],
+  "properties": {
+    "schema": { "const": "camera.swing/1" },
+    "splitShare": { "type": "number", "minimum": 0, "maximum": 1 },
+    "peakRate": { "type": "number", "exclusiveMinimum": 0, "maximum": 3 }
+  }
+}

@@ -26,6 +26,12 @@ uniform float head_at_zero = 1.0;   // 1: UV.y is 0 at the head, as the cylinder
 uniform vec4 wv0 = vec4(0.0, 1.0, 0.0, 0.0);
 uniform vec4 wv1 = vec4(0.0, 1.0, 0.0, 0.0);
 uniform vec4 wv2 = vec4(0.0, 1.0, 0.0, 0.0);
+// The loser's buckling (render/vfx/beam_struggle.gd, Orb 2026-10-22: the losing beam bulges and quivers like it is buckling under pressure, instead of thinning). All GEOMETRY, no brightness:
+// buck = (how much ground he has lost 0 to 1, the bow in world units, the quiver in world units, the bulge as a share of the radius), buck2 = (the bow's Hz, the quiver's Hz, the quiver's wavelength in
+// world units, the side the bow leans: +1 up, -1 down). The beam stays anchored at the hand and at the meeting point; between them it bows, its width swells where the push lands, and two slow travelling waves
+// shake its axis. A point of the beam moves at buck2.x or buck2.y Hz at most (data bounds: 2 Hz), so nothing flickers.
+uniform vec4 buck = vec4(0.0, 0.0, 0.0, 0.0);
+uniform vec4 buck2 = vec4(0.7, 1.6, 160.0, 1.0);
 
 float wbump(float s, vec4 w) {
 	float u = (s - w.x) / max(w.y, 1.0);
@@ -36,6 +42,12 @@ uniform float pat = 0.0;            // the fighter's own beam pattern: 0 plain, 
 uniform float pat_k = 0.0;          // the pattern's brightness inside the beam, a share of the alpha (kept at 3% or under: Legal fx03's step under a tenth)
 uniform float pat_a = 0.0;          // how deep the edge scallops or zigzags cut in, a share of the radius (shape, never a flicker)
 uniform float pat_scale = 90.0;     // units between two scallops or cells
+// The press (docs/vfx/clash-look.md, Orb 2026-11-01: the two beams "colliding and pressed against each other at the centre point ... flare out or erupt in eddies"). A clash beam's head, where it meets the other, flares and bells out into a
+// flat sheet, and eddies shed off its rim and roll back along it. press = (the flare: the head's extra radius as a share, the eddies' depth as a share of the radius, their speed back along the beam in units a second, the sheet: how
+// flat and wide the front lies, 0 to 1), press2 = (a seed, the eddies' wavelength in units, how far back from the head the press reaches in units, the eddies' hue share). Geometry and hue only: no brightness moves but `lum_amp`'s,
+// and a point of the beam sees an eddy go by at press.z / press2.y Hz, held under 0.9 (data bound).
+uniform vec4 press = vec4(0.0, 0.0, 110.0, 0.0);
+uniform vec4 press2 = vec4(0.0, 170.0, 300.0, 0.5);
 
 float h21(vec2 p) {
 	p = fract(p * vec2(123.34, 456.21));
@@ -79,7 +91,32 @@ void vertex() {
 	vec3 v = VERTEX;
 	float s0 = (head_at_zero > 0.5 ? 1.0 - UV.y : UV.y) * len;
 	float wsum = wv0.z * wbump(s0, wv0) + wv1.z * wbump(s0, wv1) + wv2.z * wbump(s0, wv2);
+	float bu = clamp(s0 / max(len, 1.0), 0.0, 1.0);
+	if (buck.x > 0.0) {
+		float gb = (bu - 0.62) / 0.3;
+		wsum += buck.w * buck.x * exp(-gb * gb);
+	}
+	if (press.x + press.y + press.w > 0.0) {
+		// the prism has 24 rings along it, far too few where the beams meet: bunch them toward the head (the cylinder's top, y = +0.5) so the flare and the eddies are drawn with more than a handful of them
+		float t0 = v.y + 0.5;
+		float t2 = 1.0 - pow(1.0 - clamp(t0, 0.0, 1.0), 2.2);
+		v.y = t2 - 0.5;
+		float hd = max((1.0 - t2) * len, 0.0);                              // the distance back from the head, where the beams meet (by where this ring now sits)
+		float tp = 1.0 - smoothstep(0.0, max(press2.z, 1.0), hd);           // 1 at the head, 0 at the press's reach
+		float ew = max(press2.y, 20.0);
+		float arg = (hd - press.z * time) / ew;                              // an eddy sits at a fixed arg, so it rolls away from the head at press.z units a second
+		float lob = (vn(vec2(arg, press2.x)) - 0.5) + 0.5 * (vn(vec2(arg * 1.9 + 3.1, press2.x + 5.0)) - 0.5);
+		wsum += press.x * pow(tp, 2.2) + press.w * smoothstep(0.86, 1.0, bu) * 0.9 + press.y * tp * lob * 2.0;
+	}
 	v.xz *= max(0.2, 1.0 + wsum);
+	if (buck.x > 0.0) {
+		float env = sin(3.14159265 * bu);
+		float bow = buck.y * (0.72 + 0.28 * sin(6.2831853 * buck2.x * time + 1.3));
+		float lam = max(buck2.z, 1.0);
+		float q = buck.z * 0.625 * (sin(6.2831853 * (s0 / lam - buck2.y * time)) + 0.6 * sin(6.2831853 * (s0 / (0.57 * lam) + 0.7 * buck2.y * time) + 2.1));
+		vec3 up_m = inverse(mat3(MODEL_MATRIX)) * vec3(0.0, 1.0, 0.0);
+		v += up_m * (buck2.w * buck.x * env * (bow + q));
+	}
 	if (wob > 0.0) {
 		float sw = (vn(vec2(s0 * 0.011 - time * flow * 0.012, seed + 3.0)) - 0.5) * 2.0;
 		v.xz *= 1.0 + wob * sw;
@@ -124,13 +161,28 @@ void fragment() {
 		pat_ring = pat < 1.5 ? (1.0 - smoothstep(0.0, 0.1, abs(wc.x - 0.3))) : 0.0;
 		pat_cell = pat < 1.5 ? -1.0 : wc.z;
 	}
-	float ends = smoothstep(0.0, cap_e, from_tail) * smoothstep(0.0, cap_e, len - from_tail);
+	// a pressed head is cut flat where it meets the other beam, not rounded off (press.w)
+	float head_cap = mix(smoothstep(0.0, cap_e, len - from_tail), 1.0, clamp(press.w * 1.6, 0.0, 1.0));
+	float ends = smoothstep(0.0, cap_e, from_tail) * head_cap;
 	float swell = 1.0 + heel * exp(-from_tail / 70.0);
 	float wl = 1.0 + wv0.w * wbump(from_tail, wv0) + wv1.w * wbump(from_tail, wv1);
 	// the pattern is told apart by HUE, not brightness: the two tints have the same luminance, so a ring of the boil takes the second tint and a facet of the crystal takes its own flat mix of the two,
 	// a mosaic of two close hues with no step in luminance at all (Legal fx03); the only brightness the pattern moves is `pat_k`, 6% at most
 	if (pat > 0.5) {
 		col = pat < 1.5 ? mix(col, tint_b.rgb, clamp(pat_ring * 0.9, 0.0, 1.0)) : mix(tint_a.rgb, tint_b.rgb, clamp(pat_cell * 0.9 + 0.05, 0.0, 1.0));
+	}
+	if (press.y > 0.0) {
+		// the eddies take the second tint where they swell (hue, at the tints' same luminance), strongest near the head
+		float hd2 = max(len - from_tail, 0.0);
+		float tp2 = 1.0 - smoothstep(0.0, max(press2.z, 1.0), hd2);
+		float arg2 = (hd2 - press.z * time) / max(press2.y, 20.0);
+		float lob2 = vn(vec2(arg2, press2.x)) + 0.5 * vn(vec2(arg2 * 1.9 + 3.1, press2.x + 5.0));
+		col = mix(col, tint_b.rgb, clamp(press2.w * tp2 * smoothstep(0.55, 1.05, lob2), 0.0, 1.0));
+	}
+	if (press.w > 0.0) {
+		// the pressed face: a thin bright line along the head where the two beams meet (the lane colour lightened, held under 0.92: never white)
+		float line = smoothstep(0.955, 1.0, 1.0 - max(len - from_tail, 0.0) / max(len, 1.0)) * press.w;
+		col = mix(col, min(col * 1.3 + 0.07, vec3(0.92)), clamp(line, 0.0, 1.0));
 	}
 	ALBEDO = col;
 	ALPHA = clamp(tint_a.a * strength * edge * shim * ends * swell * wl * pat_edge * pat_tex, 0.0, 1.0);

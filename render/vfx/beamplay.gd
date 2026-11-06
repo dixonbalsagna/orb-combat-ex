@@ -14,6 +14,7 @@ extends RefCounted
 ##               sparks back along the beam and dust off his feet
 ##   beam_arrive (the defender) the end of the walk or wade: a flat ring on the ground and a puff of dust where he lands against the attacker
 ##   beam_late   (the defender) the beam is cut where it had got to: a burst of lines there, and his answer is seen to run out to meet it
+##   beam_shove  (the thrown one) the firing up close throws him back to the stand-off: a wedge of the blast in front of him, thrown the way he goes, and a flat ring on the ground at his feet, in the shooter's lane colour; then, while he slides, dust off his feet behind him. All of it is BEHIND the fighter in depth (`shove_back`), never over his body
 ##
 ## Every effect is hard-edged (a flat wedge or a thin ring: Legal's blade language and RL-041/050's looks of a perfect block), in the lane colour
 ## of the fighter whose it is, never white, gold or red; none is a flame or a body aura. Presentation only: it reads S.beams, the fighters and the
@@ -21,7 +22,8 @@ extends RefCounted
 
 const DEFAULTS: Dictionary = {
 	"beamplay": {"head_len": 90.0, "head_w": 38.0, "head_ring": 70.0, "trail_every": 3.0, "trail_max": 7.0, "trail_life": 16.0, "launch_life": 10.0, "sweep_life": 9.0, "part_life": 12.0,
-		"arrive_life": 14.0, "cut_life": 12.0, "answer_life": 8.0, "walk_timeout": 70.0, "wave_h": 170.0, "wave_w": 52.0, "alpha": 0.9},
+		"arrive_life": 14.0, "cut_life": 12.0, "answer_life": 8.0, "walk_timeout": 70.0, "wave_h": 170.0, "wave_w": 52.0, "alpha": 0.9,
+		"shove_on": 1.0, "shove_s": 0.3, "shove_wedge": 190.0, "shove_ring": 170.0, "shove_off": 80.0, "shove_every": 2.0, "shove_back": 60.0},
 }
 
 class Fx:
@@ -48,7 +50,13 @@ class Walk:
 	var t: float = 0.0              # ticks
 	var fade: float = 0.0           # ticks of fade left after it ended
 
+class Shove:
+	var on: bool = false
+	var t: float = 0.0              # ticks
+	var dir: float = 1.0            # the way he is thrown, 1 or -1
+
 var fx: Array = []                  # Fx, oldest first
+var shoves: Array = [Shove.new(), Shove.new()]
 var walks: Array = [Walk.new(), Walk.new()]
 var heads: Array = [null, null]     # per attacker slot: [x, y, ux, uy, p] of his main beam's head (also after the beam has gone, for a cut)
 var made: Dictionary = {}           # counters by kind, for the tests
@@ -84,6 +92,7 @@ static func p(group: String, key: String) -> float:
 func reset() -> void:
 	fx.clear()
 	walks = [Walk.new(), Walk.new()]
+	shoves = [Shove.new(), Shove.new()]
 	heads = [null, null]
 	made = {}
 	clock = 0
@@ -170,6 +179,18 @@ func step(S: SimState, frozen: bool, debris: VfxDebris = null) -> void:
 			if live < int(p("beamplay", "trail_max")):
 				_add("wake", hd.x, hd.y, float(b.oz) + float(b.zs) * float(b.p) * float(b.len), float(b.ux), float(b.uy), p("beamplay", "head_ring") * 0.8, p("beamplay", "trail_life"), lane_of(S, slot), Color.WHITE, slot)
 	for s in range(2):
+		var sh: Shove = shoves[s]
+		if sh.on:
+			sh.t += 1.0
+			if debris != null and int(sh.t) % maxi(int(p("beamplay", "shove_every")), 1) == 0:
+				var fs = S.fighters[s]
+				var gys: float = WorldTerrain.groundY(S, fs.x)
+				if fs.y - gys < 1.2 * VfxLook.BH:
+					# Dust off his feet as he slides, left behind him, going the way he came from (the pool's own cosmetic stream).
+					var rds: SimRng = debris._rd
+					debris.dust_puff(VfxPalette.biome_key(fs.x), fs.x, gys + 8.0, fs.z - p("beamplay", "shove_back") * 0.5 - rds.range_(0.0, 16.0), -sh.dir * rds.range_(80.0, 240.0), rds.range_(20.0, 70.0), 20.0, 46.0, rds.range_(0.5, 0.8), int(sh.t) % 3)
+			if sh.t >= p("beamplay", "shove_s") * 60.0:
+				sh.on = false
 		var w: Walk = walks[s]
 		if w.on:
 			w.t += 1.0
@@ -249,6 +270,20 @@ func on_events(S: SimState, events: Array, debris: VfxDebris) -> void:
 					for k in range(3 if was == "wade" else 2):
 						var side: float = 1.0 if k % 2 == 0 else -1.0
 						debris.dust_puff(VfxPalette.biome_key(f.x), f.x + side * rd.range_(10.0, 60.0), gy + 8.0, f.z + rd.range_(0.0, 16.0), side * rd.range_(100.0, 320.0), rd.range_(10.0, 60.0), 18.0, 40.0, rd.range_(0.5, 0.8), k % 3)
+			"beam_shove":
+				# He is thrown back to the stand-off, away from the shooter. In front of him (not on him), a wedge of the blast pointing the way he goes; on the ground at his feet, a flat ring where it hit; then the dust of the slide.
+				if p("beamplay", "shove_on") < 0.5:
+					continue
+				var sdir: float = 1.0 if SimWrap.sdx(S.fighters[o].x, f.x) >= 0.0 else -1.0
+				_add("launch", f.x - sdir * p("beamplay", "shove_off"), chest, f.z - p("beamplay", "shove_back"), sdir, 0.0, p("beamplay", "shove_wedge"), p("beamplay", "launch_life"), other, lane, slot)
+				var gy3: float = WorldTerrain.groundY(S, f.x)
+				if f.y - gy3 < 1.2 * VfxLook.BH:
+					_add("land", f.x, gy3 + 12.0, f.z - p("beamplay", "shove_back"), 1.0, 0.0, p("beamplay", "shove_ring"), p("beamplay", "arrive_life"), other, lane, slot)
+					var sv: Shove = shoves[slot]
+					sv.on = true
+					sv.t = 0.0
+					sv.dir = sdir
+				made[name] = int(made.get(name, 0)) + 1
 			"beam_late":
 				# The beam is cut where it had got to, and his answer is seen to run out to it.
 				var h = heads[o]

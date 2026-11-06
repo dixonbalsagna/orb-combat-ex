@@ -80,6 +80,11 @@ var _visit_at := PackedInt32Array()    # per building: the frame it was last vis
 var _frame: int = 0                    # the refreshes so far: the frame a visit is stamped with
 var _all_at: int = -1                  # the last frame that visited every building
 var _slice_at: int = 0                 # where the slice of the rest goes on
+var _cap: Array = []                   # this frame's view on the tile ground (see_cap): the refresh's visit goes by it
+var _bins: Array = []                  # the tile ground's buildings by level 1 tile: [the tile's centre, the buildings]
+var _bin_r: float = 0.0                # the angle from a bin's centre to its furthest building
+var _bin_field: RenderTileField = null  # the ground the table was made for
+var _dirs := PackedVector3Array()      # each building's planet point, as drawn
 var _touched: Dictionary = {}          # buildings this frame's events named or threw debris at (consume)
 var _owed: Dictionary = {}             # buildings still owed figures at their last visit (people on their way to it)
 var _zone_last: Array = []             # the district flight's [x, shelter] at the last refresh, or []
@@ -157,6 +162,11 @@ var _last_tick: int = -1             # the sim's tick at the last refresh (a see
 var _spread_sent: float = -1.0       # the tick last sent to this pane's building shaders
 var _fold: Array = []                # [cx, sim time]: a district of implodes folded into one event this tick
 var _copies: Array = []
+var tile_field: RenderTileField = null   # the tile ground's (main's --tiles); a second pane reads its source's
+var _tile_for: SimState = null
+var _tf_i: int = 0
+var _tf_first: bool = true
+var _tf_ver: int = -1
 var _bld_seen: Array = []          # per building: [curH, alive, fmask, hp, stage], the height and stage as it last stood
 var _drawn: Array = []             # per building: [height, stage 0 to 3, standing] as drawn (a falling one keeps its last look)
 var _grow := PackedInt32Array()    # this refresh's buildings with more people than figures at home
@@ -182,10 +192,47 @@ func build(S: SimState) -> void:
 ## screen): each a Callable that returns true when it is done (one that returns false goes again: the ground's meshes,
 ## a chunk a call). Run one after another they are build().
 func build_steps(S: SimState) -> Array:
-	return [_bs_begin.bind(S), _bs_materials, _bs_meshes, _bs_share.bind(S), _bs_setup.bind(S), _bs_copies, _bs_refresh.bind(S)]
+	var steps: Array = [_bs_begin.bind(S), _bs_materials, _bs_meshes, _bs_share.bind(S), _bs_setup.bind(S), _bs_copies, _bs_refresh.bind(S)]
+	if RenderTileGround.on and S.planetRing is Dictionary and not S.planetRing.is_empty():
+		steps.append(_bs_tiles.bind(S))
+	return steps
+
+
+## The tile ground's load (main's --tiles): the first pane's field, level 0 and the things' feet; a second pane reads it.
+func _bs_tiles(S: SimState) -> bool:
+	if source != null:
+		tile_field = source.tile_field
+		return true
+	if tile_field == null or _tile_for != S:
+		_tile_for = S
+		tile_field = RenderTileField.new()
+		tile_field.begin(S)
+		_tf_i = 0
+		_tf_first = true
+		ground.tile_field = tile_field
+		tile_field.ground = ground
+		for tm in trees.meshes:
+			tile_field.add_feet(tm[1])
+		for pm in props.meshes:
+			tile_field.add_feet(pm[1])
+		for cv in cover.meshes:
+			tile_field.add_feet(cv[2])
+		if _crowd != null:
+			for cm in _crowd.chunks:
+				tile_field.add_feet(cm)
+	if not tile_field.boot(RenderLook.TILE_BOOT_US):
+		return false
+	if not tile_field.boot_near(RenderLook.TILE_BOOT_US):
+		return false
+	tile_field.fill(RenderLook.TILE_BOOT_US)
+	return tile_field.feet_left() == 0
 
 
 func _bs_begin(S: SimState) -> bool:
+	tile_field = null   # the tile ground's: a build starts it again, once its copies are made
+	_tile_for = null
+	if ground != null:
+		ground.tile_field = null
 	for c in _copies:
 		remove_child(c)
 		c.free()
@@ -241,6 +288,8 @@ func _bs_materials() -> bool:
 
 ## The ground's meshes, a chunk a call (_ground_mesh_job); true when none is left.
 func _bs_meshes() -> bool:
+	if RenderTileGround.on:
+		_mesh_jobs.clear()   # the tile ground draws in their place
 	if not _mesh_jobs.is_empty():
 		_ground_mesh_job(_mesh_jobs.pop_front())
 	return _mesh_jobs.is_empty()
@@ -342,11 +391,13 @@ func _bs_copies() -> bool:
 				_mm_child(n, pm[0], pm[1], _cover_mat)
 			for c in range(_crowd.chunks.size()):
 				_mm_child(n, "Crowd%d" % c, _crowd.chunks[c], _crowd_mats[c])
-			_mm_child(n, "FarTowns", null, _town_mat)
+			if not RenderTileGround.on:
+				_mm_child(n, "FarTowns", null, _town_mat)
 			for cv in cover.meshes:
 				_mm_child(n, "Cover_%s_%d" % [cv[0], cv[1]], cv[2], _cover_mat)
-			_town_nodes.append(n.get_node("FarTowns"))
-			_town_nodes[-1].visible = false
+			if not RenderTileGround.on:
+				_town_nodes.append(n.get_node("FarTowns"))
+				_town_nodes[-1].visible = false
 		_copies.append(n)
 		_cull_items(n)
 	return true
@@ -844,6 +895,7 @@ func refresh(S: SimState, force: bool) -> void:
 		for bi in list:
 			_visit(S, bi, dirty, dchg, false)
 	_span = PackedFloat64Array()
+	_cap = []
 	_see_all = false
 	_unseen = false
 	_touched.clear()
@@ -1013,7 +1065,9 @@ func _visit_list(S: SimState, dirty: PackedByteArray, dchg: bool) -> PackedInt32
 		_touched.clear()
 		_hit_at.clear()
 		dchg = false
-	if _span.size() == 2 and _span[1] >= 0.0:
+	if not _cap.is_empty():
+		_in_cap(_cap, c)
+	elif _span.size() == 2 and _span[1] >= 0.0:
 		_along_span(_span[0], _span[1], c)
 	for d in [_touched, _hit_at, _falls, _drops, _owed]:
 		for bi in d:
@@ -1092,6 +1146,89 @@ func _index_range(a: float, b: float, out: PackedInt32Array) -> void:
 		i += 1
 
 
+## The tile ground's table for the sweep: where each building is drawn (a swing moves b.x, not this), by level 1 tile.
+func _bin_index(S: SimState) -> void:
+	_bins = []
+	_bin_r = 0.0
+	_bin_field = tile_field
+	var n: int = S.buildings.size()
+	_dirs.resize(n)
+	var by: Dictionary = {}
+	for bi in range(n):
+		var b: SimState.Building = S.buildings[bi]
+		var d: Vector3 = tile_field.dir_at(b.g.x, b.g.z, S.frame0)
+		_dirs[bi] = d
+		var key: int = RenderTileField.key_at(d, 1)
+		if not by.has(key):
+			by[key] = PackedInt32Array()
+		var ids: PackedInt32Array = by[key]
+		ids.append(bi)
+		by[key] = ids
+	for key in by:
+		var ids: PackedInt32Array = by[key]
+		var c := Vector3.ZERO
+		for bi in ids:
+			c += _dirs[bi]
+		c = c.normalized()
+		var least: float = 1.0
+		for bi in ids:
+			least = minf(least, c.dot(_dirs[bi]))
+		_bin_r = maxf(_bin_r, acos(clampf(least, -1.0, 1.0)))
+		_bins.append([c, ids])
+
+
+## Whether the sweep can go by the tile ground's view: the table, made here the first time for this ground and these buildings.
+func cap_ready(S: SimState) -> bool:
+	if tile_field == null or S.buildings.is_empty():
+		return false
+	if _bin_field != tile_field or _dirs.size() != S.buildings.size():
+		_bin_index(S)
+	return true
+
+
+## The buildings a tile ground view can show: a tile's own test (RenderTileGround._walk), a building's reach for the
+## tile's. Past it a building cannot draw a pixel; the slice and this frame's events still come to it.
+func _in_cap(v: Array, out: PackedInt32Array) -> void:
+	var pv: Vector3 = v[0]
+	var hd: Vector3 = v[1]
+	var sd: Vector3 = v[2]
+	var cam_d: float = v[3]
+	var tn: float = v[5]
+	var r: float = tile_field.R
+	var pad: float = _reach + RenderLook.SWEEP_TILE_PAD
+	var far: float = float(v[4]) + pad
+	var cut: float = cos(minf(far / r, PI))
+	var bin_pad: float = pad + _bin_r * r
+	var bin_cut: float = cos(minf(far / r + _bin_r, PI))
+	for bin in _bins:
+		var bc: Vector3 = bin[0]
+		var ca: float = bc.dot(pv)
+		if ca < bin_cut:
+			continue
+		var a: float = acos(clampf(ca, -1.0, 1.0))
+		var k: float = a / maxf(sin(a), 1.0e-5) * r
+		var depth: float = cam_d - bc.dot(sd) * k
+		if depth < -bin_pad or absf(bc.dot(hd) * k) - bin_pad > (maxf(depth, 0.0) + bin_pad) * tn:
+			continue
+		for bi in bin[1]:
+			var d: Vector3 = _dirs[bi]
+			ca = d.dot(pv)
+			if ca < cut:
+				continue
+			a = acos(clampf(ca, -1.0, 1.0))
+			k = a / maxf(sin(a), 1.0e-5) * r
+			depth = cam_d - d.dot(sd) * k
+			if depth < -pad or absf(d.dot(hd) * k) - pad > (maxf(depth, 0.0) + pad) * tn:
+				continue
+			out.append(bi)
+
+
+## A pane's view for the sweep on the tile ground, before its source's refresh this frame: RenderTileGround.view_cap's.
+func see_cap(cap: Array) -> void:
+	_cap = cap
+	see(PackedFloat64Array([0.0, -1.0]))
+
+
 ## A pane's view for the sweep, before its source's refresh this frame (PaneWorld.render): view_span's answer.
 func see(span: PackedFloat64Array) -> void:
 	views = [span]
@@ -1103,13 +1240,15 @@ func see(span: PackedFloat64Array) -> void:
 
 ## A second pane's view (PaneWorld.render, after the first pane's refresh this frame): the buildings it can show that
 ## the refresh did not visit are visited now, before anything is drawn. [] (a view that cannot be placed) visits all.
-func see_more(S: SimState, span: PackedFloat64Array) -> void:
+func see_more(S: SimState, span: PackedFloat64Array, cap: Array = []) -> void:
 	views.append(span)
 	var n: int = S.buildings.size()
 	if not pane_sweep or _all_at == _frame or _visit_at.size() != n:
 		return   # this frame's refresh visited every building
 	var c := PackedInt32Array()
-	if span.is_empty():
+	if not cap.is_empty():
+		_in_cap(cap, c)
+	elif span.is_empty():
 		c = _xs_i
 	elif span[1] >= 0.0:
 		_along_span(span[0], span[1], c)
@@ -1186,6 +1325,14 @@ static func _col(x: float) -> int:
 	return int(floor(SimWrap.wrap(x) / SimConst.COL))
 
 
+## In a swing: whether x is past the sim's pose reach of every body (it poses only the buildings near one).
+static func _past_reach(S: SimState, x: float, reach: float) -> bool:
+	for f in S.fighters:   # in the swing's tick that is every body (SimStage.swingTick)
+		if absf(SimWrap.sdx(f.x, x)) <= reach:
+			return false
+	return true
+
+
 ## Whether the ground changed anywhere under a building's footprint (the columns WorldStructures.baseY reads).
 static func _foot_dirty(dirty: PackedByteArray, b) -> bool:
 	var nc: int = SimConst.NC
@@ -1205,11 +1352,50 @@ static func _depth(b) -> Vector2:
 	return Vector2(RenderLook.Z_BUILDING_FRONT - d * 0.5, d)
 
 
+## The tile ground's footings: every building once, then those near the camera again as finer tiles come, a few a frame. A footing that moved sets its building again.
+func _tile_foot_slice(S: SimState, cam: Vector3) -> void:
+	var n: int = S.buildings.size()
+	if n == 0:
+		return
+	if not _tf_first and _tf_i == 0 and tile_field.version == _tf_ver:
+		return   # no tile has changed since the last pass
+	var left: int = RenderLook.TILE_FOOT_READS if tile_field.frame_room else 2
+	var seen: int = RenderLook.TILE_FOOT_SCAN
+	while left > 0 and seen > 0:
+		seen -= 1
+		if _tf_i >= n:
+			_tf_i = 0
+			_tf_first = false
+			_tf_ver = tile_field.version
+		var bi: int = _tf_i
+		_tf_i += 1
+		var b = S.buildings[bi]
+		if not b.alive or _falls.has(bi) or _drops.has(bi):
+			continue
+		if not _tf_first and tile_field.dir_at(b.g.x, b.g.z, S.frame0).dot(cam) < RenderLook.TILE_FOOT_NEAR:
+			continue
+		left -= 1
+		var f: Vector2 = _footing(S, b)
+		if absf(f.x - _foot[bi].x) > 1.0:
+			_foot[bi] = f
+			_bld_seen[bi][4] = _set_building(S, bi, b, WorldStructures.curH(b))
+		else:
+			_foot[bi] = f
+
+
 ## The lowest and highest ground under a building's footprint (its corners, edges and centre, as drawn).
 func _footing(S: SimState, b) -> Vector2:
 	var zd: Vector2 = _depth(b)
 	var lo: float = INF
 	var hi: float = -INF
+	if tile_field != null:
+		# The tile ground: at its plan's place, as the view draws it, and a plinth no deeper than TILE_FOOT_CAP under its base.
+		for x in [b.g.x - b.w * 0.5, b.g.x, b.g.x + b.w * 0.5]:
+			for z in [b.g.z + zd.y * 0.5, b.g.z, b.g.z - zd.y * 0.5]:
+				var g: float = tile_field.height_at(tile_field.dir_at(x, z, S.frame0))
+				lo = minf(lo, g)
+				hi = maxf(hi, g)
+		return Vector2(maxf(lo, WorldStructures.baseY(S, b) - RenderLook.TILE_FOOT_CAP), hi)
 	for x in [b.x - b.w * 0.5, b.x, b.x + b.w * 0.5]:
 		for z in [zd.x + zd.y * 0.5, zd.x, zd.x - zd.y * 0.5]:
 			var g: float = ground.ground_at(S, x, z)
@@ -1224,7 +1410,8 @@ func _footing(S: SimState, b) -> Vector2:
 func _set_building(S: SimState, bi: int, b, h: float) -> int:
 	var stage: int = mini(WorldStructures.stage(b), 3) if b.alive else int(_bld_seen[bi][4])
 	var zd: Vector2 = _depth(b)
-	var zc: float = zd.x
+	# The tile ground turns a building with the planet from its plan's place (globe_m), x and depth both; b.z is the sim's pose, which has already swung.
+	var zc: float = float(b.g.z) if RenderTileGround.on else zd.x
 	var d: float = zd.y
 	var foot: Vector2 = _foot[bi]
 	var standing: bool = b.alive
@@ -1299,7 +1486,7 @@ func _set_building(S: SimState, bi: int, b, h: float) -> int:
 			continue
 		var top: float = base + float(sp[1]) - sink
 		var bottom: float = (minf(foot.x, base) if float(sp[0]) <= 0.0 else base + float(sp[0])) - sink
-		var t := Transform3D(Basis.from_scale(Vector3(float(p[RenderShapes.W]), top - bottom, float(p[RenderShapes.D]))), Vector3(b.x + float(p[RenderShapes.X]), (top + bottom) * 0.5, zc + float(p[RenderShapes.Z])))
+		var t := Transform3D(Basis.from_scale(Vector3(float(p[RenderShapes.W]), top - bottom, float(p[RenderShapes.D]))), Vector3((b.g.x if RenderTileGround.on else b.x) + float(p[RenderShapes.X]), (top + bottom) * 0.5, zc + float(p[RenderShapes.Z])))
 		var col := Color(p[RenderShapes.COL] as Color, 0.0 if (int(p[RenderShapes.FLAGS]) & RenderShapes.ROOF) != 0 else 1.0)   # alpha 0: a roof (building.gdshader)
 		mm.set_instance_transform(k, t)
 		mm.set_instance_color(k, col)
@@ -1336,7 +1523,7 @@ func _set_crowd(S: SimState, bi: int, b, alive: int) -> void:
 		var ci: int = first + j
 		var x: float = _crowd_x[ci]
 		if j < alive:
-			_crowd.set_instance_transform(ci, Transform3D(Basis.from_scale(Vector3.ONE * RenderLook.CROWD_SCALE), Vector3(x, ground.ground_at(S, x, _crowd_z[ci]), _crowd_z[ci])))
+			_crowd.set_instance_transform(ci, Transform3D(Basis.from_scale(Vector3.ONE * RenderLook.CROWD_SCALE), Vector3(x, tile_field.height_at(tile_field.dir_at(x, _crowd_z[ci], S.frame0)) if tile_field != null else ground.ground_at(S, x, _crowd_z[ci]), _crowd_z[ci])))
 		elif gone_now.has(ci) or not flight.running(ci):
 			_crowd.set_instance_transform(ci, _hidden(x))
 
@@ -1527,7 +1714,7 @@ func _make_materials() -> void:
 	_town_mat = ShaderMaterial.new()
 	_town_mat.shader = FAR_TOWN_SHADER
 	_cover_mat = ShaderMaterial.new()
-	_cover_mat.shader = COVER_SHADER
+	_cover_mat.shader = COVER_SHADER if not RenderTileGround.on else load("res://render/shaders/cover_tile.gdshader")
 	_cover_mat.set_shader_parameter("biome_pal", RenderBiomeLook.texture())
 	_cover_mat.set_shader_parameter("cover_row", RenderBiomeLook.COVER_ROW)
 	_cover_mat.set_shader_parameter("fixed_row", RenderBiomeLook.FIXED_ROW)
@@ -1535,7 +1722,7 @@ func _make_materials() -> void:
 	_cover_mat.set_shader_parameter("tone_dark", RenderCoverMeshes.TONE_DARK)
 	_cover_mat.set_shader_parameter("prop_sink", RenderProps.FOOT_SINK)
 	_tree_mat = ShaderMaterial.new()   # the fellable trees: the cover's shader (tree_view.gd)
-	_tree_mat.shader = COVER_SHADER
+	_tree_mat.shader = COVER_SHADER if not RenderTileGround.on else load("res://render/shaders/cover_tile.gdshader")
 	_tree_mat.set_shader_parameter("biome_pal", RenderBiomeLook.texture())
 	_tree_mat.set_shader_parameter("cover_row", RenderBiomeLook.COVER_ROW)
 	_tree_mat.set_shader_parameter("tone_light", RenderCoverMeshes.TONE_LIGHT)
@@ -1988,8 +2175,13 @@ static func _multimesh(mesh: Mesh, count: int, y1: float, custom: bool = false, 
 ## clearance those calls will ask for.
 func occluder_candidates(S: SimState, cam_x: float, xa: float, xb: float, z_min: float, m: float) -> Array:
 	var out: Array = []
+	# In a swing a building past the sim's pose reach of both fighters has a stale pose: no see-through from it until rest (the EP's ruling).
+	var swinging: bool = S.frame != null and S.swing != null and S.swing.active
+	var reach: float = float(SimSwing.data().poseReach) - RenderLook.TILE_POSE_MARGIN if swinging else 0.0
 	for bi in WorldStructures.near(S, SimWrap.wrap(cam_x + (xa + xb) * 0.5), absf(xb - xa) * 0.5 + m):
 		if _top[bi] == -INF:
+			continue
+		if swinging and _past_reach(S, S.buildings[bi].x, reach):
 			continue
 		var zd: Vector2 = _depth(S.buildings[bi])
 		if zd.x + zd.y * 0.5 > z_min + 1.0:
@@ -2398,6 +2590,10 @@ func _building_mat() -> ShaderMaterial:
 	var m := ShaderMaterial.new()
 	m.shader = BUILDING_SHADER
 	m.set_shader_parameter("inside", RenderLook.col(RenderLook.BUILDING_INSIDE))
+	m.set_shader_parameter("inside_tile", RenderLook.col(RenderLook.BUILDING_INSIDE_TILE))
+	m.set_shader_parameter("room_lit", RenderLook.col(RenderLook.ROOM_LIT))
+	m.set_shader_parameter("room_shade", RenderLook.col(RenderLook.ROOM_SHADE))
+	m.set_shader_parameter("room_bands", RenderLook.ROOM_BANDS)
 	m.set_shader_parameter("win_pitch", RenderLook.WINDOW_PITCH)
 	m.set_shader_parameter("win_lit_share", RenderLook.WINDOW_LIT_SHARE)
 	m.set_shader_parameter("win_lit", RenderLook.col(RenderLook.WINDOW_LIT))
@@ -2413,6 +2609,7 @@ func _building_mat() -> ShaderMaterial:
 	m.set_shader_parameter("pan_whip_mix", RenderLook.PAN_WHIP_MIX)
 	m.set_shader_parameter("dmg_holes", RenderLook.DMG_HOLES)
 	m.set_shader_parameter("pattern_budget", RenderLook.PATTERN_BUDGET)
+	m.set_shader_parameter("burnt_budget", RenderLook.BURNT_BUDGET)
 	m.set_shader_parameter("open_col", RenderLook.OPEN_COL)
 	m.set_shader_parameter("open_beam", RenderLook.OPEN_BEAM)
 	m.set_shader_parameter("open_frame_col", RenderLook.col(RenderLook.OPEN_FRAME_COL))

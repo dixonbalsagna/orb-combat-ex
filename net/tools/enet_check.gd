@@ -12,7 +12,8 @@ extends SceneTree
 ## At most three Godot processes run at once: this one and the two peers.
 ##   godot --headless --path . --script res://net/tools/enet_check.gd -- [--seed=1] [--ticks=3600]
 ##     [--profiles=lan,p120,p200] [--slowdowns=1,1] [--hash-every=60] [--hitch=T:F] [--setup=default] [--port=47100] [--max-lead=12] [--max-lead-mean=3]
-##     [--negative-control]
+##     [--late-host=MS] [--negative-control]
+## --late-host starts the host listening MS after the joiner starts calling, and the joiner calls again every few seconds (NetLan's rule): 40000 is past ENet's own limit on one call.
 ## --slowdowns gives each peer's device (NetDelay.device) for its proposal. --hitch freezes the joiner for F frames at
 ## tick T, so time sync has to bring the peers back together.
 ## --negative-control runs the same match with the joiner perturbed (one RNG bit flipped at the middle tick) and passes
@@ -23,7 +24,7 @@ var failures: int = 0
 
 func _init() -> void:
 	var o := {"seed": 1, "ticks": 3600, "profiles": ["lan", "p120", "p200"], "slowdowns": ["1", "1"], "hashEvery": 60, "hitch": "",
-		"setup": "default", "port": 47100, "negative": false, "maxLead": 12.0, "maxLeadMean": 3.0}
+		"setup": "default", "port": 47100, "negative": false, "maxLead": 12.0, "maxLeadMean": 3.0, "lateHost": 0}
 	for a in OS.get_cmdline_user_args():
 		var kv: PackedStringArray = a.trim_prefix("--").split("=", true, 1)
 		match kv[0]:
@@ -38,6 +39,7 @@ func _init() -> void:
 			"max-lead": o.maxLead = float(kv[1])
 			"max-lead-mean": o.maxLeadMean = float(kv[1])
 			"negative-control": o.negative = true
+			"late-host": o.lateHost = int(kv[1])
 	print("Orb Combat EX ENet two-process check   Godot %s   seed %d   %d ticks   setup %s   devices x%s   %s%s" % [Engine.get_version_info().string,
 		o.seed, o.ticks, o.setup, " and x".join(o.slowdowns), "negative control" if o.negative else "hash every %d" % o.hashEvery,
 		("   hitch " + o.hitch) if o.hitch != "" else ""])
@@ -88,6 +90,8 @@ func _play(o: Dictionary, pname: String, port: int, dir: String) -> Array:
 		var args: Array = ["--headless", "--path", root, "--script", "res://net/tools/enet_peer.gd", "--", "--role=" + role,
 			"--port=%d" % port, "--out=" + out, "--seed=%d" % o.seed, "--ticks=%d" % o.ticks, "--setup=" + o.setup,
 			"--profile=" + pname, "--slowdown=" + str(o.slowdowns[0 if role == "host" else 1]), "--hash-every=%d" % o.hashEvery]
+		if o.lateHost > 0:
+			args.append("--start-after=%d" % o.lateHost if role == "host" else "--redial=1")
 		if role == "join":
 			if o.negative:
 				args.append("--perturb=%d" % (o.ticks / 2))

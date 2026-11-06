@@ -18,7 +18,7 @@ const FRAME_MS: float = 1000.0 / 60.0
 
 func _init() -> void:
 	var o := {"role": "", "port": 47100, "out": "", "seed": 1, "ticks": 3600, "setup": "default", "profile": "lan", "slowdown": 1.0,
-		"hashEvery": 60, "perturb": -1, "hitchAt": -1, "hitchFrames": 0, "timeout": 0.0}
+		"hashEvery": 60, "perturb": -1, "hitchAt": -1, "hitchFrames": 0, "timeout": 0.0, "startAfter": 0, "redial": false}
 	for a in OS.get_cmdline_user_args():
 		var kv: PackedStringArray = a.trim_prefix("--").split("=", true, 1)
 		if kv.size() < 2:
@@ -39,6 +39,8 @@ func _init() -> void:
 				o.hitchAt = int(p[0])
 				o.hitchFrames = int(p[1]) if p.size() > 1 else 30
 			"timeout": o.timeout = float(kv[1])
+			"start-after": o.startAfter = int(kv[1])
+			"redial": o.redial = true
 	quit(_run(o))
 
 
@@ -51,6 +53,8 @@ func _run(o: Dictionary) -> int:
 	var ai := {"p1": false, "p2": false}
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, o.seed, ai, setup)
+	if o.startAfter > 0:
+		OS.delay_msec(o.startAfter)   # --late-host: the other peer has been calling all this while
 	var tr: NetEnetTransport = NetEnetTransport.listen("127.0.0.1", o.port) if slot == 0 else NetEnetTransport.dial("127.0.0.1", o.port)
 	var prof: Dictionary = NetLoopback.PROFILES[o.profile]
 	var skew: float = float(prof.get("skew", 0.5))
@@ -87,8 +91,12 @@ func _run(o: Dictionary) -> int:
 	var hitched: bool = false
 	var adv: Array = []
 	var frameUs := PackedInt32Array()
+	var dialAt: float = 0.0
 	while true:
 		var now: float = float(Time.get_ticks_usec() - t0) / 1000.0
+		if o.redial and host.session == null and not tr.connected() and now - dialAt >= NetLan.REDIAL_MS:   # as NetLan does
+			dialAt = now
+			tr.redial("127.0.0.1", o.port)
 		var f0: int = Time.get_ticks_usec()
 		host.frame(now, o.ticks)
 		if host.session != null:

@@ -56,6 +56,10 @@ static func aiInput(S: SimState, f) -> void:
 	# unless it holds one on purpose (forms: _formHold).
 	f.act.v2 = true
 	i.mode = 0   # the physical family, unless this tick's press is a blast (below)
+	if DirOutside.aiAnswer(S, f, i):
+		return   # 2v2: a beam of the other fight has it first on its line: it dodges
+	if DirOutside.aiRescue(S, f, i):
+		return   # 2v2: its partner in the other fight is on the brink: it comes
 	if f.act.formReady and not _formHold(S, f, o):
 		i.transform = true
 	if DirBrawl.inBrawl(S, f):

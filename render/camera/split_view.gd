@@ -198,6 +198,30 @@ func set_struggle_framing(on: bool) -> void:
 
 ## A pair moving apart fast is not merged on its present separation but on the one it will have a second on (docs/camera/rushcity.md): the merge
 ## and the split that follows it within two seconds, with a pan between them, are what rushcity's standing area failure is. Off by default. A build-time switch.
+## The upward launch's shot, earned by tier (swing-view.md). Separate from the turntable: it needs no frame and works on today's ground.
+func set_peak_launch(on: bool) -> void:
+	if main != null:
+		main.split_rig.peak_launch = on
+
+
+## How fast this is being watched: above 1x every swing is a cut, whatever the setting (Accessibility). A replay viewer calls it.
+func set_playback(rate: float) -> void:
+	if main != null:
+		main.split_rig.playback = rate
+
+
+## The high-velocity moves (docs/camera/launch-director.md).
+func set_launch_director(on: bool) -> void:
+	if main != null:
+		main.split_rig.launch_director = on
+
+
+## The turntable's switch: the rig reads places through the sim's frame, and gives it to Rendering in SplitFrame.place (swing-view.md).
+func set_swing_view(on: bool) -> void:
+	if main != null:
+		main.split_rig.swing_view = on
+
+
 func set_merge_lookahead(on: bool) -> void:
 	if main != null:
 		main.split_rig.merge_lookahead = on
@@ -251,6 +275,11 @@ func set_feathered_sweeps(v: int) -> void:
 
 ## The player's settings (docs/camera/split-screen.md sections 2 and 13). Solo against the AI: split like two players
 ## (default) or follow the human fighter alone when far. Reduced motion: quicker swing, no tier push, no launch follow.
+func set_split_share(share: float) -> void:
+	if main != null:
+		main.split_rig.split_share = share
+
+
 func set_solo_split(on: bool) -> void:
 	if main != null:
 		main.split_rig.solo_split = on

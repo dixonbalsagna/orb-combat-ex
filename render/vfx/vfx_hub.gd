@@ -69,6 +69,8 @@ var pressure_enabled: bool = VfxLook.PRESSURE_DEFAULT   # a ring of shoved air a
 var pressure := VfxPressure.new()
 var shots_enabled: bool = VfxLook.SHOTS_DEFAULT   # energy blasts: every shot in S.shots drawn, the charge on the hand, the hits by outcome (shots.gd, shots_view.gd)
 var shots := VfxShots.new()
+var clash_wave_enabled: bool = VfxLook.CLASH_WAVE_DEFAULT   # the clash's shockwave at the meeting point: growth rings while it runs, one release at its end (clash_wave.gd): off by default
+var clash_wave := VfxClashWave.new()
 var beamplay_enabled: bool = VfxLook.BEAMPLAY_DEFAULT   # the beam plays' effects, by cue (beamplay.gd, drawn by shots_view.gd)
 var beamplay := VfxBeamPlay.new()
 var glare_enabled: bool = VfxLook.GLARE_DEFAULT   # the rival's glasses glare (glare.gd, drawn by shots_view.gd)
@@ -90,6 +92,16 @@ var struggle := VfxBeamStruggle.new()           # the beam struggle carried by t
 var struggle_enabled: bool = true
 var scars := VfxBeamScar.new()                    # the scar each beam leaves in the air as its tail draws back (beam_scar.gd, scar_view.gd; Orb 2026-10-19), behind the same flags as the beams
 var scar_enabled: bool = true
+var energy_heads_enabled: bool = VfxLook.HEADS_DEFAULT or VfxEnergyHeads.page_on()   # the blasts' heads and impacts in the beam's language (energy_head.gd; docs/vfx/energy-language.md): off by default (a local preview page can turn it on with ?heads=1)
+var meteor := VfxMeteor.new()                     # the meteor trail: a fighter's own burn, laid in the ring's coordinates (meteor.gd, meteor_view.gd; docs/vfx/meteor-trail.md; Orb 2026-10-31)
+var other_fights_enabled: bool = VfxLook.OTHER_FIGHTS_DEFAULT or VfxStageFeed.page_word()   # 2v2: the other fight's hits, sparks, dust, beams and shots, each fight with a hub of its own (stage_feed.gd): off by default
+var stage_feed := VfxStageFeed.new()
+var host_pushes: bool = false     # the host calls consume_others each tick with the other fights' events (Rendering's host.other_events()): the only way the other fights' events reach their hubs
+var is_other: bool = false      # an other fight's hub (stage_feed.gd): it reads Animation's view of that fight (RenderAnim.fight_view), and leaves the shared colour-blind table to the main hub
+var meteor_burn_enabled: bool = VfxLook.METEOR_DEFAULT or VfxMeteor.page_word() != ""   # the meteor burn: off by default (a local preview page can turn it on with the word ?meteor=1, =quiet or =loud): with it off nothing here runs and nothing draws
+var flight_enabled: bool = VfxLook.FLIGHT_DEFAULT or VfxMeteor.flight_word() != ""   # the flight lines (docs/vfx/flight-lines.md): off by default; a local preview page turns them on with ?flight=1, =quiet or =loud. They use the meteor trail's ribbon
+var meteor_enabled: bool = meteor_burn_enabled or flight_enabled      # the ribbon runs and draws while either is on
+var perf_level: bool = VfxLook.PERF_DEFAULT       # the Performance level (perf.gd): a smaller pool, a burst's overflow batched over a few ticks, spawns on the far side skipped, fewer timed jobs a tick; off by default and then not read at all
 var ash: float = 0.0                              # the world's darkening, 0 to 1 (read-only from the sim when it exists): scales a catastrophe light's peak
 var catastrophe_enabled: bool = true            # the catastrophe tier's effects (nothing draws until the cues exist)
 var zip := VfxZip.new()                       # the LT zip's looks (zip.gd), behind the same flag
@@ -145,6 +157,8 @@ func reset(S: SimState, p_seed: int) -> void:
 	_rng_trail = SimRng.new(SimRng.deriveSeed(seed, "vfx.trail"))
 	_rng_hole = SimRng.new(SimRng.deriveSeed(seed, "vfx.hole"))
 	debris.reset(seed)
+	stage_feed.reset()
+	clash_wave.reset()
 	xform.reset(seed)
 	aura.reset()
 	react.debris = debris
@@ -163,6 +177,7 @@ func reset(S: SimState, p_seed: int) -> void:
 	tremor.reset()
 	blastcloud.reset()
 	scars.reset()
+	meteor.reset()
 	struggle.reset()
 	ghosts.reset()
 	_vision_sig = ""
@@ -236,20 +251,30 @@ func consume(S: SimState, events: Array) -> void:
 	stat_consume_max = maxi(stat_consume_max, dt_us)
 
 
+## The host's push (2v2): one fx list for each fight past the first, as Rendering's host reads them (`host.other_events()`), into that fight's own hub, once a tick after `consume`. The only way in: `consume` never reads the other fights itself.
+## Needs `host_pushes` (the host says it will) and `other_fights_enabled`.
+func consume_others(S: SimState, lists: Array) -> void:
+	if other_fights_enabled and host_pushes and S.stage != null:
+		stage_feed.feed(S, self, lists)
+
+
 ## The colour-blind preset (UI's `colour_vision`, UiLook.vision): every effect that draws in a fighter's lane or aura colour (VfxAura.lane_color, VfxLook.trail_accent, so the press looks, the zip,
 ## energy in reach, the wind-up rings, the launcher's chevrons, the shots, the aura and the transformation) reads Art's preset colour for that fighter (UiLook.lane, by its roster id) in place of its
 ## own. Off, the table is empty and nothing changes by a pixel. The table is keyed by the fighter's own aura hex and rebuilt when the preset or the fighters change.
 func _sync_vision(S: SimState) -> void:
+	if is_other:
+		return
 	var mode: String = UiLook.vision
 	var sig: String = mode
-	for f in S.fighters:
+	var bodies: Array = SimStage.bodies(S) if S.stage != null else S.fighters      # every fight's bodies: the table is shared by every hub
+	for f in bodies:
 		sig += "|" + String(f.id) + String(f.aura)
 	if sig == _vision_sig:
 		return
 	_vision_sig = sig
 	var m: Dictionary = {}
 	if mode != "off":
-		for f in S.fighters:
+		for f in bodies:
 			var own: Color = RenderLook.col(String(f.aura))
 			var lane: Color = UiLook.lane(String(f.id).to_lower(), own)    # by roster id, lower case: the key Art's data and UI's alias use
 			if not lane.is_equal_approx(own):
@@ -266,6 +291,14 @@ func _consume(S: SimState, events: Array) -> void:
 	flashes.ppu = px_per_unit
 	flashes.cam_dist = cam_dist
 	debris.clear_query = clear_query
+	if perf_level != debris.perf:
+		debris.perf = perf_level
+	if perf_level:
+		var fxs := PackedFloat64Array()
+		for f in S.fighters:
+			fxs.append(f.x)
+		debris.far_x = fxs
+		debris.far_half = 512.0 / maxf(px_per_unit, 0.05) * VfxPerf.p("far", "reach_k") + VfxPerf.p("far", "margin")
 	flashes.begin_tick(reduced_motion or reduced_flashing)
 	if catastrophe_enabled:
 		tremor.step(reduced_motion or reduced_flashing)
@@ -365,6 +398,9 @@ func _consume(S: SimState, events: Array) -> void:
 		debris.quality = quality
 		debris.reduced = reduced_motion
 		shots.on_events(S, events, debris, water if water_enabled else null, quality, reduced_motion)
+	if clash_wave_enabled:
+		clash_wave.on_events(S, events)
+		clash_wave.step(S, frozen, debris, quality, reduced_motion)
 	if beamplay_enabled:
 		beamplay.step(S, frozen, debris)
 		debris.quality = quality
@@ -527,6 +563,10 @@ func _consume(S: SimState, events: Array) -> void:
 		trails[i].step(S, S.fighters[i], dt, _rng_trail, quality, reduced_motion)
 	if pressure_enabled:
 		pressure.step(S, trails, xform.forms, quality, reduced_motion)
+	if meteor_enabled:
+		meteor.flight_on = flight_enabled
+		meteor.burn_on = meteor_burn_enabled or not flight_enabled
+		meteor.step(S, dt, quality, reduced_motion or reduced_flashing)
 
 
 # ------------------------------------------------------------------------------ buildings: hits, chains and falls
@@ -965,6 +1005,8 @@ func _arena_turn(S: SimState, e) -> void:
 	inreach.fx = inreach.fx.filter(func(f): return not (f.style == "scorch" and absf(SimWrap.sdx(px, float(f.x))) > carry))
 	debris.bits = debris.bits.filter(func(b): return absf(SimWrap.sdx(px, float(b.x))) <= carry)
 	stages._next_puff.clear()       # the smoking shells are keyed by building index, and the buildings are laid again
+	if meteor_enabled:
+		meteor.on_turn(px, carry)
 
 
 ## Orb's rule for every ring round a fighter (2026-10-22): hug the contact point, small, or remove it. The sim's own `ring` events (the power-up's, a launch's, a landing's: growth 300 to 1,300 units a second,

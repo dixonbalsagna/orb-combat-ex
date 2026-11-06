@@ -47,6 +47,7 @@ var brawl: AudioBrawl                 # the brawl's cues (audio_brawl.gd)
 var carry: AudioCarry                   # what the HUD no longer draws (audio_carry.gd), parked behind data/carry_cues.json `enabled`
 var world: AudioWorld                   # biome sound: the beds and the surfaces (audio_world.gd), parked behind data/world_cues.json `enabled`
 var tug: AudioTug                     # the beam struggle's (audio_tug.gd), parked behind data/tug_cues.json `enabled`
+var moments: AudioMoments             # a beam's charge and fire, the KO, the big blows, a launch, the meteor's landing (audio_moments.gd), parked behind data/moment_cues.json `enabled`
 
 
 func _init(p_bank: AudioBank = null) -> void:
@@ -56,6 +57,7 @@ func _init(p_bank: AudioBank = null) -> void:
 	tug = AudioTug.new(self)
 	carry = AudioCarry.new(self)
 	world = AudioWorld.new(self)
+	moments = AudioMoments.new(self)
 	reset(1)
 
 
@@ -68,6 +70,7 @@ func reset(p_seed: int) -> void:
 	tug.reset()
 	carry.reset()
 	world.reset()
+	moments.reset()
 
 
 ## One tick's events, in order. Returns the cues to play.
@@ -93,6 +96,9 @@ func consume(S: SimState, events: Array) -> Array:
 	for e in events:
 		if e.type in ["rush", "transform_ready", "form_hold", "form_release", "air_brake", "arena_turn"]:
 			carry.on_event(S, e, out)
+	if moments.enabled():
+		for e in events:
+			moments.on_event(S, e, out)
 	tug.after(S, out)
 	carry.after(S, out)
 	world.consume(S, events, out)

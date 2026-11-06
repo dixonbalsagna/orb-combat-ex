@@ -12,6 +12,8 @@ var mode: String = "merged"          # merged, opening, split, closing, slam, sw
 var sep: float = 0.0                 # 0 one view, 1 two panes (linear; the panes' blend uses smootherstep(sep))
 var e: float = 0.0                   # how far one pane has taken the screen (a launch, a cinematic, a slam)
 var e_slot: int = -1
+var share: float = 0.0                # the large pane's share of an unequal split; 0 when the split is even (no CPU, the switch off, a beam struggle)
+var share_slot: int = -1              # whose pane is the large one, -1 none
 var sliver: float = 0.0              # share of the screen the other pane keeps at e = 1
 var theta: float = 0.0               # angle of n, radians
 var n: Vector2 = Vector2.RIGHT
@@ -42,16 +44,22 @@ var clear: Array = [{}, {}]          # per pane: what the foreground must open (
 var slam: bool = false               # true on the one frame the slam closes
 var many_off: Array = []             # one versus many (docs/camera/one-v-many.md): the bodies outside the frame, each [slot, side (-1 left, +1 right, 0 above)]: UI's markers; empty with two bodies
 var cut: bool = true                 # a hard cut: do not interpolate into this frame
+var peak_launch: bool = false        # the peak launch's shot has the screen: UI's chips go off (split_record's peak_launch)
+var place: PackedFloat64Array = PackedFloat64Array()   # the turntable: the frame the world is drawn in (CamPlaces.frame_of), empty when none
 
 
 func duplicate() -> SplitFrame:
 	var f := SplitFrame.new()
 	f.vw = vw
 	f.vh = vh
+	f.place = place
+	f.peak_launch = peak_launch
 	f.mode = mode
 	f.sep = sep
 	f.e = e
 	f.e_slot = e_slot
+	f.share = share
+	f.share_slot = share_slot
 	f.sliver = sliver
 	f.theta = theta
 	f.n = n
@@ -194,6 +202,8 @@ func viewed_arc(i: int) -> float:
 func split_record(pointer_always: bool = false) -> Dictionary:
 	var d: Dictionary = {}
 	d["sep"] = sep
+	d["share"] = share
+	d["share_slot"] = share_slot
 	d["c"] = c
 	d["n"] = n
 	d["gap"] = gap
@@ -203,6 +213,8 @@ func split_record(pointer_always: bool = false) -> Dictionary:
 	d["dist_bh"] = absf(held_u) / CamParams.BODY_H
 	d["pointer"] = "always" if (pointer_always or sep < 0.5) else "split"
 	d["incoming"] = incoming
+	if peak_launch:
+		d["peak_launch"] = true
 	d["many_off"] = many_off   # the bodies outside the frame, [slot, side]: UI's markers (empty with two bodies)
 	d["scroll"] = scroll
 	d["ring"] = {
@@ -210,6 +222,24 @@ func split_record(pointer_always: bool = false) -> Dictionary:
 		"swing": swing, "sep": sep, "W": SimConst.W,
 	}
 	return d
+
+
+## The frame between two ticks: at b's column, the point and heading each eased along the short way and made square again.
+static func _lerp_place(a: PackedFloat64Array, b: PackedFloat64Array, t: float) -> PackedFloat64Array:
+	var pa: PackedFloat64Array = CamPlaces.on_line(a, b[6])
+	var p := Vector3(lerpf(pa[0], b[0], t), lerpf(pa[1], b[1], t), lerpf(pa[2], b[2], t)).normalized()
+	var h := Vector3(lerpf(pa[3], b[3], t), lerpf(pa[4], b[4], t), lerpf(pa[5], b[5], t))
+	h = (h - p * h.dot(p)).normalized()
+	return PackedFloat64Array([p.x, p.y, p.z, h.x, h.y, h.z, b[6]])
+
+
+## What Rendering's frame uniform takes for pane i: the pane's own fighter's point, and the line's heading and the camera's side there
+## (its x comes from the sim: this frame's `pivot_x` argument). {pv, hd, sd}, or {} with no frame.
+func pane_basis(pivot_x: float) -> Dictionary:
+	if place.size() != 7:
+		return {}
+	var q: PackedFloat64Array = CamPlaces.on_line(place, pivot_x)
+	return {"pv": Vector3(q[0], q[1], q[2]), "hd": Vector3(q[3], q[4], q[5]), "sd": CamPlaces.side(place)}
 
 
 static func lerp_frames(a: SplitFrame, b: SplitFrame, t: float) -> SplitFrame:
@@ -235,6 +265,8 @@ static func lerp_frames(a: SplitFrame, b: SplitFrame, t: float) -> SplitFrame:
 	f.flash = lerpf(a.flash, b.flash, t)
 	f.pitch = lerpf(a.pitch, b.pitch, t)
 	f.held_u = lerpf(a.held_u, b.held_u, t)
+	if a.place.size() == 7 and b.place.size() == 7:
+		f.place = _lerp_place(a.place, b.place, t)
 	for i in range(2):
 		if not a.clear[i].is_empty() and not b.clear[i].is_empty() and not bool(b.clear[i].get("cut", false)):
 			var ra: Rect2 = a.clear[i]["rect"]

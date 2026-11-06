@@ -38,6 +38,7 @@ const TRAIL_MAX: int = 6               # knocked-loose shots that trail smoke at
 class Mine:
 	var id: int = 0
 	var owner: int = 0
+	var body = null                 # the body that fired it (null: unknown): see VfxShots.body_of
 	var x: float = 0.0
 	var y: float = 0.0            # the centre (a ground mine sits on the ground, a hovering one is up)
 	var z: float = 0.0
@@ -161,6 +162,7 @@ static func mine_of(S: SimState, sp, sh) -> Mine:
 	var m := Mine.new()
 	m.id = int(sp.id)
 	m.owner = int(sp.owner)
+	m.body = body_of(S, m.owner, sp)      # a mine fired in another fight is its shooter's, not this fight's last fighter's
 	m.x = float(sp.x)
 	m.y = float(sp.y)
 	m.z = float(sp.z)
@@ -175,8 +177,24 @@ static func mine_of(S: SimState, sp, sh) -> Mine:
 	else:
 		m.state = "armed"
 		m.age = float(sh.clock + int(sp.id) * 7)
-	m.radius = VfxExplode.radius_for("mine", 52.8, VfxReact.tier_of(S.fighters[m.owner]) if m.owner < S.fighters.size() else 1)
+	m.radius = VfxExplode.radius_for("mine", 52.8, VfxReact.tier_of(m.body) if m.body != null else 1)
 	return m
+
+
+## The body that fired a shot: his place in this fight's S.fighters, or, for a shot from outside (owner -1), the shooter SimCross names (in any fight). `sh` is the shot's own record (S.shots) where there is one. null when there is none.
+static func body_of(S: SimState, owner: int, sh = null):
+	if owner >= 0 and owner < S.fighters.size():
+		return S.fighters[owner]
+	if owner < 0 and sh != null:
+		return SimCross.shooter(S, sh)
+	return null
+
+
+## A body's lane colour (a shooter in any fight); the default where there is none.
+static func lane_of_body(f) -> Color:
+	if f != null:
+		return VfxAura.lane_color(String(f.aura))
+	return VfxAura.lane_color("#8fd6ff")
 
 
 static func lane_of(S: SimState, slot: int) -> Color:
@@ -225,7 +243,7 @@ func _add(kind: String, x: float, y: float, z: float, size: float, life: float, 
 func on_events(S: SimState, events: Array, debris: VfxDebris, water: VfxWater, quality: int, reduced: bool) -> void:
 	_deflect_seen.clear()
 	for sh0 in S.shots:
-		_known[int(sh0.id)] = [int(sh0.owner), float(sh0.dmg), bool(sh0.ground), int(sh0.mode)]
+		_known[int(sh0.id)] = [int(sh0.owner), float(sh0.dmg), bool(sh0.ground), int(sh0.mode), body_of(S, int(sh0.owner), sh0)]      # the last: his body, kept for the shot_end that carries no owner
 	if _known.size() > 160:
 		_known.clear()
 	for e in events:
@@ -346,10 +364,11 @@ func mine_blast(S: SimState, m: Mine, debris: VfxDebris, quality: int, reduced: 
 		return
 	explosions += 1
 	var on_ground: bool = m.mode == "ground"
-	var rad: float = VfxExplode.radius_for("mine", 52.8, VfxReact.tier_of(S.fighters[m.owner]) if m.owner < S.fighters.size() else 1)
+	var mb = m.body if m.body != null else body_of(S, m.owner)      # a mine made by hand (a test, add_mine) has no recorded body: its owner's, in this fight
+	var rad: float = VfxExplode.radius_for("mine", 52.8, VfxReact.tier_of(mb) if mb != null else 1)
 	last_radius = rad
 	_explode(S, debris, m.x, m.y, m.z, rad, "ground" if on_ground else "fighter")
-	_add("ring", m.x, m.y, m.z, m.radius * 0.85, p("shots", "hit_life") * 1.4, lane_of(S, m.owner))
+	_add("ring", m.x, m.y, m.z, m.radius * 0.85, p("shots", "hit_life") * 1.4, lane_of_body(mb))
 
 
 func _on_hit(S: SimState, e, oc: String, debris: VfxDebris) -> void:
@@ -360,10 +379,14 @@ func _on_hit(S: SimState, e, oc: String, debris: VfxDebris) -> void:
 	var victim: int = int(VfxHub._g(e, "victim", -1))
 	var amt: float = float(VfxHub._g(e, "amount", 8.0))
 	var life: float = p("shots", "hit_life")
-	var col: Color = lane_of(S, owner)
+	var hinfo = _known.get(int(VfxHub._g(e, "id", -1)))
+	var hbody = body_of(S, owner)
+	if hbody == null and hinfo != null and hinfo.size() > 4:
+		hbody = hinfo[4]      # a shot from outside: its shooter, in the other fight
+	var col: Color = lane_of_body(hbody) if (owner < 0 or owner >= S.fighters.size()) and hbody != null else lane_of(S, owner)
 	var back: float = 1.0
-	if victim >= 0 and victim < S.fighters.size() and owner >= 0 and owner < S.fighters.size():
-		back = 1.0 if SimWrap.sdx(S.fighters[victim].x, S.fighters[owner].x) >= 0.0 else -1.0
+	if victim >= 0 and victim < S.fighters.size() and hbody != null:
+		back = 1.0 if SimWrap.sdx(S.fighters[victim].x, hbody.x) >= 0.0 else -1.0
 	var kn: String = String(VfxHub._g(e, "kind", "bolt"))
 	var info = _known.get(int(VfxHub._g(e, "id", -1)))
 	var dmg: float = float(info[1]) if info != null else (VfxExplode.kind_dmg("charged") if kn == "charged" else float(VfxHub._g(e, "amount", 8.0)))
@@ -375,7 +398,7 @@ func _on_hit(S: SimState, e, oc: String, debris: VfxDebris) -> void:
 		_deflect_seen[did] = true
 	if explode_enabled and debris != null and oc != "dodge":
 		explosions += 1
-		last_radius = VfxExplode.radius_for(kn, dmg, VfxReact.tier_of(S.fighters[owner]) if owner >= 0 and owner < S.fighters.size() else 1)
+		last_radius = VfxExplode.radius_for(kn, dmg, VfxReact.tier_of(hbody) if hbody != null else 1)
 		_explode(S, debris, x, y, z, last_radius, "fighter", "burst" if (oc == "hit" or oc == "stop") else "spark", col)
 	match oc:
 		"guard":

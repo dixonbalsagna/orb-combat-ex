@@ -1,0 +1,14 @@
+{
+  "schema": "fight.cross/1",
+  "_note": "2v2: blows, shots and beams that reach a body of the other fight (docs/architecture/cross-fights.md; sim/core/cross.gd). Read only by a match of two fights (a setup's \"fights\": 2). Teams by starting slot: 0 and 2 against 1 and 3. First values.",
+  "enabled": false,
+  "_enabled": "a setup's \"cross\" overrides it for a match. Off, nothing reaches the other fight and nothing is hashed",
+  "beam": {
+    "_note": "A beam's hit on an enemy of the other fight in its width, once a beam: SimDamage.hit's damage by his stance, the hold in seconds and the shake. The damage is a clean signature hit's (DirBeam's 230)",
+    "dmg": 230.0,
+    "stop": 0.14,
+    "shake": 16.0
+  },
+  "rejoinAfter": 2.2,
+  "_rejoinAfter": "seconds of a fight's KO before its winner and the other fight's, one on each team, are made one fight's pair (2v2's step 3). Its slow motion is 2.2"
+}

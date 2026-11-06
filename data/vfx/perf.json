@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "_note": "VFX's Performance-level caps (docs/vfx/perf-level.md; Performance's order of 2026-10-31). Read by render/vfx/perf.gd and debris.gd, never by the sim, and used only while the hub's `perf_level` is on (off by default: with it off nothing here is read and the pool is exactly as it was). `debris`: the pool's cap and the per-tick budgets (the file's defaults are VfxLook's 460, 260 and 200), and the BATCHING of a burst's overflow: bits past the tick's budget wait in a queue of `spill_cap`, `spill_per_tick` of them are let in each tick, each with its flight advanced by the ticks it waited, and one that has waited `spill_wait_ticks` is dropped. `jobs.per_tick`: at most this many of the pool's timed jobs run in one tick. `far`: a dust or debris spawn farther than reach_k half-views plus margin (units) from BOTH fighters is not made, nor dust more than puff_z_back behind the fighter plane.",
+  "debris": {
+    "cap": 80,
+    "spawn_per_tick": 50,
+    "shard_per_tick": 40,
+    "spill_cap": 60,
+    "spill_per_tick": 20,
+    "spill_wait_ticks": 8
+  },
+  "jobs": {
+    "per_tick": 2
+  },
+  "far": {
+    "reach_k": 1.4,
+    "margin": 1200,
+    "puff_z_back": 900
+  }
+}

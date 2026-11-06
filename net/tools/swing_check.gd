@@ -13,9 +13,11 @@ extends SceneTree
 ##   - the rate rule (netcode.md section 3): data's flash governor x maxAhead is at most 20 degrees, and no rollback moved the line at the newest tick by more than twice that (one timeline turning each way).
 ##   - reduced motion (setup.swing): peers on different values are refused at the handshake, two players' settings cross to one key, a match reads its value fresh; a match on slow or off keeps step with its
 ##     straight run under rollback, slow under its cap on every run of a tick, off never turning.
+##   - apart (docs/net/two-v-two-lan.md): four fighters, a player in each of two fights, the pairs near the edge of "together": a re-run of a tick can land on the other side of the rule for when the line may
+##     turn, and the peers still equal a straight run. It was a real test only if that happened.
 ## Prints each profile's correction: how far the line moved at the newest tick when a rollback ended, in degrees.
 ## --negative-control breaks it, and each must be caught: the swing's state or the line not restored by a rollback (the timeline being replaced is kept), the store not restored, late inputs ignored, a
-## digest that leaves all of it out, the rate cap lifted, which must break the bound, a full peer and a slow peer past the handshake, and slow's cap lifted.
+## digest that leaves all of it out, the rate cap lifted, which must break the bound, a full peer and a slow peer past the handshake, and slow's cap lifted, and with four fighters a body of the other fight moved on one peer only.
 
 const SETUP: Dictionary = {"planet": 7, "touch": 1, "planetGen": 3, "intro": false}
 const SEED: int = 77
@@ -91,6 +93,101 @@ func straight() -> Dictionary:
 		if (t + 1) % hashEvery == 0:
 			hashes[t + 1] = SimHash.stateHash(S).gameplay
 	return {"S": S, "hash": hashes, "digest": digests, "live": live, "asked": asked, "store": storeMax}
+
+
+## Four fighters: the second pair started so that everyone's about at the edge of "together".
+static func placeNear(S: SimState) -> void:
+	for k in range(2):
+		S.stage.fights[1].fighters[k].x = SimWrap.wrap(S.fighters[k].x + float(SimSwing.data().apartReach) * 1.8)
+
+
+static func askEvery(S: SimState, t: int) -> void:
+	if t % 30 == 0:
+		SimSwing.ask(S, {"deg": 20.0 if (t / 30) % 2 == 0 else -20.0, "rate": 60.0, "cause": "launch"})
+
+
+func apartStraight() -> Dictionary:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, SEED, NetLan.AI2, NetLan.SETUP2)
+	placeNear(S)
+	var bots: Array = [NetBot.new(SEED, 0), NetBot.new(SEED, 1)]
+	var hashes: Dictionary = {}
+	var swingTicks: int = 0
+	var apart: int = 0
+	for t in range(ticks):
+		var ins: Array = []
+		ins.resize(4)
+		for k in range(2):
+			ins[NetLan.SLOTS2[k]] = SimIntent.unpack(NetSession.NEUTRAL) if t < DELAY else NetSession.intentOf(bots[k].next(), bots[k].word)
+		askEvery(S, t)
+		SimCore.step(S, ins)
+		S.out.feed.clear()
+		S.out.fx.clear()
+		swingTicks += 1 if S.swing.active else 0
+		apart += 0 if SimStage.together(S) else 1
+		if (t + 1) % hashEvery == 0:
+			hashes[t + 1] = SimHash.stateHash(S).gameplay
+	SimCore.dispose(S)
+	return {"hash": hashes, "swing": swingTicks, "apart": apart}
+
+
+func apartRun(pname: String, ref: Dictionary, onePeer: bool = false) -> Dictionary:
+	var prof: Dictionary = NetLoopback.PROFILES[pname]
+	var L := NetLoopback.make(SEED, NetLan.SETUP2, prof, DELAY, SEED, SEED * 31 + int(prof.ping), false, NetLan.AI2)
+	var res := {"bad": 0, "first": -1, "flips": 0, "rollbacks": 0, "desync": false, "matched": 0, "ran": false}
+	for k in range(2):
+		var sess: NetSession = L.peers[k].session
+		placeNear(sess.S)
+		sess.slotOf = NetLan.SLOTS2
+		sess.verify = true
+		var seen: Dictionary = {}
+		var kk: int = k
+		sess.beforeTick = func(S: SimState, t: int) -> void:
+			askEvery(S, t)
+			if onePeer and kk == 1 and t == 121:
+				S.stage.fights[1].fighters[0].x = SimWrap.wrap(S.stage.fights[1].fighters[0].x + 1.0)
+		sess.perturb = func(S: SimState, t: int) -> void:
+			var now: bool = SimStage.together(S)
+			if seen.has(t) and seen[t] != now:
+				res.flips += 1
+			seen[t] = now
+		sess.onConfirmed = func(b: int, st, _out: String) -> void:
+			if st != null and ref.hash.has(b) and SimHash.stateHash(st).gameplay != ref.hash[b]:
+				res.bad += 1
+				if res.first < 0:
+					res.first = b
+	res.ran = L.run(ticks)
+	for k in range(2):
+		var sess: NetSession = L.peers[k].session
+		res.rollbacks += sess.rollbacks
+		res.desync = res.desync or not sess.desync.is_empty()
+		res.matched += sess.checksMatched
+	L.close()
+	return res
+
+
+func apartRows(negative: bool) -> void:
+	var wasFlyer: bool = NetBot.flyer
+	NetBot.flyer = true
+	var ref := apartStraight()
+	print("apart: a straight run has a swing on %d ticks and the pairs apart on %d of %d" % [ref.swing, ref.apart, ticks])
+	ok(int(ref.swing) > 0 and int(ref.apart) > 0, "apart: the straight run both swings and parts (%d, %d)" % [ref.swing, ref.apart])
+	var flips: int = 0
+	for pname in profiles:
+		if negative:
+			if pname == "lan":
+				var c := apartRun(pname, ref, true)
+				print("  control apart, a body of the other fight moved on one peer only: desync %s" % str(c.desync))
+				ok(c.desync, "apart: a body of the other fight moved on one peer only must part the peers")
+			continue
+		var r := apartRun(pname, ref)
+		ok(r.ran and int(r.bad) == 0, "apart %s: %d hashes differ from the straight run, first at %d" % [pname, r.bad, r.first])
+		ok(not r.desync and int(r.matched) > 0, "apart %s: desync %s, matched %d" % [pname, str(r.desync), r.matched])
+		flips += int(r.flips)
+		print("  apart %-5s rollbacks %4d, re-runs that landed on the other side of the rule %3d" % [pname, r.rollbacks, r.flips])
+	if not negative and profiles.size() > 1:
+		ok(flips > 0, "apart: a re-run crossed the rule (%d)" % flips)
+	NetBot.flyer = wasFlyer
 
 
 ## Every hashed field, one step: the digest must move, and with the digest blind it must not.
@@ -389,6 +486,7 @@ func _init() -> void:
 		motionKeyRows()
 		motionRow(pn, "slow")
 		motionRow(pn, "off")
+	apartRows(negative)
 	SimCore.dispose(ref.S)
 	print("swing check %s: %d checks, %d failed" % ["passed" if fails == 0 else "FAILED", checks, fails])
 	quit(0 if fails == 0 else 1)

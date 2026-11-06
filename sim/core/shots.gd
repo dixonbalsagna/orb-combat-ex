@@ -271,7 +271,7 @@ static func deflect(S: SimState, sh, newOwner: int) -> void:
 		var far: bool = SimRng.keyed(seed, "shot.deflect.far", key) < defl.farChance
 		var u: float = SimRng.keyed(seed, "shot.deflect.dist", key)
 		var dist: float = (defl.farMin + (defl.farMax - defl.farMin) * u) if far else (defl.nearMin + (defl.nearMax - defl.nearMin) * u)
-		var shooter = S.fighters[sh.owner]
+		var shooter = S.fighters[sh.owner] if sh.owner >= 0 else SimCross.shooter(S, sh)
 		var tx: float = SimWrap.sdx(sh.x, shooter.x)   # the line back to the shooter
 		var ty: float = shooter.y + chest - sh.y
 		var tl: float = SimDetMath.hypot(tx, ty)
@@ -313,6 +313,18 @@ static func deflect(S: SimState, sh, newOwner: int) -> void:
 		sh.lastB = -1
 		SimFx.shotDeflect(S, sh, newOwner, float(sh.left) / TPS)
 		return
+	if sh.owner < 0:   # 2v2: a shot from outside goes back the way it came, his now: over there it can meet its shooter's team
+		sh.owner = newOwner
+		sh.from = ""
+		sh.mode = LINE
+		sh.tgt = -1
+		sh.vx = -sh.vx
+		sh.vy = -sh.vy
+		sh.left = int(kinds[sh.kind].lifeTicks)
+		sh.total = sh.left
+		sh.deflected += 1
+		sh.passed = 0
+		return
 	var old: int = sh.owner
 	sh.owner = newOwner
 	sh.mode = SEEK
@@ -328,7 +340,7 @@ static func deflect(S: SimState, sh, newOwner: int) -> void:
 static func release(_S: SimState, sh) -> void:
 	var kd: Dictionary = kinds[sh.kind]
 	if SimDetMath.hypot(sh.vx, sh.vy) <= 0.0:   # released before it moved: straight ahead of its owner
-		sh.vx = _S.fighters[sh.owner].face * kd.speed * TPS
+		sh.vx = (_S.fighters[sh.owner] if sh.owner >= 0 else SimCross.shooter(_S, sh)).face * kd.speed * TPS
 		sh.vy = 0.0
 	sh.mode = LINE
 	sh.tgt = -1
@@ -352,12 +364,13 @@ static func end(S: SimState, sh, cause: String) -> void:
 ## f may be the shot's own owner (his wild shot, or his own mine's blast): that case takes the plain rule here and is not
 ## handed to the director, whose rule reads the owner as the attacker (a knock-back, a barrage, a finisher).
 static func hitFighter(S: SimState, sh, f) -> bool:
-	if SimDir.blastRules(S) and f != S.fighters[sh.owner]:
+	var own = S.fighters[sh.owner] if sh.owner >= 0 else null   # null: a shot from outside (2v2, sim/core/cross.gd)
+	if f != own and (SimDir.blastRules(S) or (own == null and SimDir.blastBy(SimCross.shooter(S, sh)))):
 		return SimDir.blastHit(S, sh, f)   # the director's blast rules: the dodge, the perfect block's deflect, the guard, a charge
 	var dmg: float = sh.dmg
-	if sh.mode == MINE and f == S.fighters[sh.owner]:
+	if sh.mode == MINE and f == own:
 		dmg *= kinds[sh.kind].mine.ownShare
-	SimDamage.hurt(S, f, dmg, S.fighters[sh.owner], "spread", "blast", "", true)
+	SimDamage.hurt(S, f, dmg, own if own != null else SimCross.shooter(S, sh), "spread", "blast", "", true)
 	if S.hitstopOn:
 		SimHitstop.hold(S, "light")   # a shot names its weight, or it holds nothing
 	SimFx.shotHit(S, sh, f, "hit")
@@ -405,14 +418,16 @@ static func _explode(S: SimState, sh) -> void:
 	var md: Dictionary = kinds[sh.kind].mine
 	var grow: float = md.tierR[clampi(int(S.fighters[sh.owner].tier), 1, 4) - 1]
 	var rr: float = md.blastR * grow * md.blastR * grow
-	if S.game.ko == null:
+	if S.game.ko == null or (S.stage != null and S.stage.cross):   # 2v2: a fight with a KO keeps its standing winner
 		for f in S.fighters:
-			if f.state == "intro":
+			if f.state == "intro" or f.out:
 				continue
 			var dx: float = SimWrap.sdx(sh.x, f.x)
 			var dy: float = f.y + chest - sh.y
 			if dx * dx + dy * dy <= rr:
 				hitFighter(S, sh, f)
+		if S.stage != null and S.stage.cross:
+			SimCross.blast(S, sh, rr)   # 2v2: the other fight's enemies in its blast
 	hitWorld(S, sh, "mine")
 	var cr: float = md.chainR * md.chainR
 	var near: Array = []   # [distance squared, the mine], nearest first, ties in the order they were laid
@@ -539,6 +554,8 @@ static func _stepRead(S: SimState, dt: float) -> void:
 		mx[i] = 0.0
 		my[i] = 0.0
 		rad[i] = kinds[sh.kind].r
+		if sh.inT == S.tick:   # 2v2: come over from another fight this tick: it starts on the next
+			continue
 		if sh.fresh or sh.dead:   # fired this tick: it starts to move on the next
 			sh.fresh = false
 			continue
@@ -584,6 +601,8 @@ static func _stepRead(S: SimState, dt: float) -> void:
 		my[i] = sh.y - oy
 	# trades: opposing shots whose paths come within their radii this tick. Only pairs of different owners are walked
 	# (each owner's shots in firing order), from the positions at the tick's start, kept in arrays for the inner loop.
+	var xf: bool = S.stage != null and S.stage.cross   # 2v2: the other fight's bodies and beams too (sim/core/cross.gd)
+	var gone: Array = []                                # ... and the shots that went over to it
 	var mine: Array = [PackedInt32Array(), PackedInt32Array()]
 	var laid := PackedInt32Array()   # the mines
 	var fly := PackedInt32Array()    # every shot that is not a mine, in firing order
@@ -595,14 +614,15 @@ static func _stepRead(S: SimState, dt: float) -> void:
 		var q = S.shots[i]
 		sx[i] = q.x - mx[i]
 		sy[i] = q.y - my[i]
-		if q.dead:
+		if q.dead or q.inT == S.tick:
 			continue
 		if q.mode == MINE:
 			laid.append(i)
 			continue
 		fly.append(i)
-		if q.owner >= 0 and q.owner < 2:
-			mine[q.owner].append(i)
+		var qo: int = q.owner if q.owner >= 0 or not xf else SimCross.slotOf(S, SimCross.teamOf(q.from))   # 2v2: a shot from outside trades as its team's
+		if qo >= 0 and qo < 2:
+			mine[qo].append(i)
 	for i in mine[0]:
 		var a = S.shots[i]
 		for j in mine[1]:
@@ -673,13 +693,13 @@ static func _stepRead(S: SimState, dt: float) -> void:
 	# fighters, then the buildings, the ground, the water and the life
 	for i in range(n):
 		var sh = S.shots[i]
-		if sh.dead:
+		if sh.dead or sh.inT == S.tick:
 			continue
 		if sh.mode == MINE:
-			if sh.fuse < 0 and sh.arm <= 0 and S.game.ko == null:
+			if sh.fuse < 0 and sh.arm <= 0 and (S.game.ko == null or xf):
 				var tr: float = kinds[sh.kind].mine.trigR
 				for k in range(S.fighters.size()):
-					if k == sh.owner or S.fighters[k].state == "intro":
+					if k == sh.owner or S.fighters[k].state == "intro" or S.fighters[k].out:
 						continue
 					var ty: float = S.fighters[k].y + chest - sh.y
 					if absf(ty) > tr:
@@ -688,6 +708,8 @@ static func _stepRead(S: SimState, dt: float) -> void:
 					if tx * tx + ty * ty <= tr * tr and absf(S.fighters[k].z - sh.z) <= tr:
 						trip(S, sh, "fighter", k)
 						break
+				if xf and sh.fuse < 0 and SimCross.trips(S, sh, tr):
+					trip(S, sh, "fighter", -1)
 			if sh.fuse == 0:
 				_explode(S, sh)
 			elif arrived[i] and sh.fuse < 0:
@@ -698,12 +720,14 @@ static func _stepRead(S: SimState, dt: float) -> void:
 			sh.safeT -= 1
 		var r: float = rad[i] + bodyR
 		var hitOne: bool = false
-		if S.game.ko == null:
+		if S.game.ko == null or xf:   # 2v2: a fight with a KO keeps its standing winner, whom a shot from outside can meet
 			for k in range(S.fighters.size()):
 				if (k == sh.owner and not sh.wild) or (sh.passed & (1 << k)) != 0 or (k == sh.safe and safeNow):
 					continue
+				if sh.owner < 0 and not sh.wild and SimCross.teamOf(sh.from) == SimCross.team(S.fighters[k]):
+					continue   # 2v2: a shot from outside passes its shooter's partner
 				var f = S.fighters[k]
-				if f.state == "intro":
+				if f.state == "intro" or f.out:
 					continue
 				var met: bool = arrived[i] and sh.mode == SEEK and sh.tgt == k and sh.ax * sh.ax + sh.ay * sh.ay <= r * r
 				if not met:
@@ -730,6 +754,13 @@ static func _stepRead(S: SimState, dt: float) -> void:
 					break
 		if sh.dead or hitOne:
 			continue
+		if xf:
+			if SimCross.eaten(S, sh, rad[i]):
+				end(S, sh, "clash")
+				continue
+			if SimCross.shot(S, sh, mx[i], my[i], r):
+				gone.append(sh)   # it's gone over to the fight of the enemy it met
+				continue
 		if structures and (sh.mode == LINE or sh.mode == LOB):
 			var hb: int = _building(S, sh, mx[i], my[i], rad[i])
 			if hb >= 0:
@@ -764,7 +795,7 @@ static func _stepRead(S: SimState, dt: float) -> void:
 			end(S, sh, "life")
 	var live: Array = []
 	for sh in S.shots:
-		if not sh.dead:
+		if not sh.dead and (gone.is_empty() or not gone.has(sh)):
 			live.append(sh)
 	S.shots = live
 

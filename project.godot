@@ -9,7 +9,18 @@ config/name="Orb Combat EX"
 run/main_scene="res://render/boot_entry.tscn"
 config/features=PackedStringArray("4.7")
 
+[audio]
+
+general/default_playback_type.web=0
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+
+[shader_globals]
+
+globe_r={
+"type": "float",
+"value": 0.0
+}

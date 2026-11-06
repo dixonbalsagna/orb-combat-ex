@@ -31,6 +31,7 @@
     "maxSeconds": 1.2,
     "cappedTail": 0.3
   },
+  "settle": {"enabled": false, "perTier": [0, 0, 1, 1], "maxContacts": 3, "_note": "Orb, first play: a launched body that hits the ground digs or stops at the power it has. Over the journey's bounces and contacts above when on: perTier, the ground bounces a send may take; maxContacts, then it skids or tumbles out, and water's skims are still their own."},
   "journey": {
     "maxContacts": 8,
     "maxSeconds": 4.0

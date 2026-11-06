@@ -194,7 +194,7 @@
   "cap": 10
  },
  "struggle": {
-  "push_k": 0.5,
+  "push_k": 0.3,
   "ease_s": 0.35,
   "wave_ticks": 14,
   "surge_amp": 0.8,
@@ -211,6 +211,18 @@
   "calm_gap": 40,
   "amp_calm": 0.8,
   "flare_k": 0.3,
-  "flare_ease_s": 0.4
+  "flare_ease_s": 0.4,
+  "lose_min": 1.0,
+  "buck_bulge": 0.7,
+  "buck_bow": 0.09,
+  "buck_bow_max": 70.0,
+  "buck_quiv": 0.03,
+  "buck_quiv_max": 24.0,
+  "buck_bow_hz": 0.7,
+  "buck_quiv_hz": 1.6,
+  "buck_wave": 0.3,
+  "buck_wave_min": 130.0,
+  "buck_calm": 0.5,
+  "buck_calm_hz": 0.6
  }
 }

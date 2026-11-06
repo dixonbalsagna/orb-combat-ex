@@ -557,20 +557,47 @@ static func _poses(S: SimState, all: bool) -> void:
 	_poseThese(S, range(n) if all else _poseList(S))
 
 
+## SimField.stripIn and WorldStructures.inBand, with what doesn't change along the list taken out of the loop: this runs over hundreds of buildings
+## on a plan's ticks. The same sums, to the bit.
 static func _poseThese(S: SimState, list) -> void:
 	var buckets: int = WorldStructures.BUCKETS
 	var bw: float = SimConst.W / 128.0
 	var moved: bool = false
+	var fr = S.frame
+	var R: float = SimField.R
+	var x00: float = fr.x0
+	var tx: float = fr.tx
+	var ty: float = fr.ty
+	var tz: float = fr.tz
+	var px: float = fr.px
+	var py: float = fr.py
+	var pz: float = fr.pz
+	var nx: float = ty * pz - tz * py
+	var ny: float = tz * px - tx * pz
+	var nz: float = tx * py - ty * px
+	var whole: bool = S.bFirst == 0
+	var front: float = 0.0 if whole else WorldPlan.indexFront()
+	var back: float = 0.0 if whole else -WorldPlan.indexBack(float(data().indexBand))
+	var q: PackedFloat64Array = S.bDir
+	var blds: Array = S.buildings
 	for i in list:
 		var x0: float = S.bX[i]
-		var in0: bool = WorldStructures.inBand(S, S.bZ[i], S.buildings[i].d)
-		SimField.strip(S, S.bDir[i * 3], S.bDir[i * 3 + 1], S.bDir[i * 3 + 2])
-		S.bX[i] = SimField.sx
-		S.bZ[i] = SimField.sz
-		var in1: bool = WorldStructures.inBand(S, SimField.sz, S.buildings[i].d)
+		var z0: float = S.bZ[i]
+		var half: float = 0.5 * blds[i].d
+		var qx: float = q[i * 3]
+		var qy: float = q[i * 3 + 1]
+		var qz: float = q[i * 3 + 2]
+		var sz: float = R * WorldPlanet.asinf(qx * nx + qy * ny + qz * nz)
+		var sx: float = SimWrap.wrap(x00 + R * WorldPlanet.atan2f(qx * tx + qy * ty + qz * tz, qx * px + qy * py + qz * pz))
+		S.bX[i] = sx
+		S.bZ[i] = sz
+		var in0: bool = whole or (z0 + half <= front and z0 >= back)
+		var in1: bool = whole or (sz + half <= front and sz >= back)
+		if not in0 and not in1:
+			continue
 		var k0: int = mini(int(SimWrap.wrap(x0) / bw), buckets - 1)
-		var k1: int = mini(int(SimWrap.wrap(SimField.sx) / bw), buckets - 1)
-		if (k0 != k1 and (in0 or in1)) or in0 != in1:
+		var k1: int = mini(int(SimWrap.wrap(sx) / bw), buckets - 1)
+		if k0 != k1 or in0 != in1:
 			if not moved:
 				S.bIdx = S.bIdx.duplicate()   # the outer array only
 				moved = true
@@ -638,6 +665,8 @@ static func _centre(fr, x: float, reach: float, cx: PackedFloat64Array, cc: Pack
 
 ## A plan's narrower pass: the buildings within posePlan of strip x by planet distance, posed in S.frame as it is now. It returns them, so a plan that swaps S.frame for frameAt's can put the same ones back with posesOf when it swaps back. Everything past the reach keeps its pose, and a rest poses them all (DirSwing's _planOn and _planOff; a launch plan's candidates).
 static func posesNear(S: SimState, x: float) -> PackedInt32Array:
+	if _heldFrame != null and _heldFrame == S.frame and _heldX == x:
+		return _heldList   # DirSwing's plan posed these on this line, and nothing's moved: a pose is a function of the line
 	var out := PackedInt32Array()
 	var n: int = S.bX.size()
 	if n == 0 or S.bDir.size() != n * 3:
@@ -653,6 +682,18 @@ static func posesNear(S: SimState, x: float) -> PackedInt32Array:
 			out.append(i)
 	posesOf(S, out)
 	return out
+
+
+static var _heldFrame = null                  # the line a plan is on, in one call stack (DirSwing._planOn to _planOff)
+static var _heldX: float = 0.0
+static var _heldList := PackedInt32Array()
+
+
+## A plan has posed these on the line it's on, about x: asking again in that plan needs no second pass. null ends it.
+static func holdPlan(fr, x: float, list: PackedInt32Array) -> void:
+	_heldFrame = fr
+	_heldX = x
+	_heldList = list
 
 
 ## These buildings, posed in S.frame as it is now.

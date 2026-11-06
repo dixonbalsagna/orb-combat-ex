@@ -37,6 +37,16 @@ static func zipping(f) -> bool:
 	return _d("zip.gd").zipping(f)
 
 
+## DirStick.holdMove: what holding a beam leaves of his flying speed.
+static func holdMove(S: SimState, f) -> float:
+	return _d("stick.gd").holdMove(S, f)
+
+
+## DirBrawl.pressInStun: a press a stun is about to clear.
+static func pressInStun(S: SimState, f, i) -> void:
+	_d("brawl.gd").pressInStun(S, f, i)
+
+
 ## DirEnding.wearMul: what the ending does to a wound's wear.
 static func endingWearMul(f) -> float:
 	return _d("ending.gd").wearMul(f)
@@ -50,6 +60,11 @@ static func endingOn() -> bool:
 ## DirArc.step: a launched body on the closed-form arc.
 static func arcStep(S: SimState, f, dt: float) -> bool:
 	return _d("arc.gd").step(S, f, dt)
+
+
+## DirOutside.landed: a blow from another fight has landed on D, in his fight (SimCross._land).
+static func outsideLanded(S: SimState, A, D, o: Dictionary) -> void:
+	_d("outside.gd").landed(S, A, D, o)
 
 
 ## DirExchange.endEx: the running exchange ends (a K.O. inside one).
@@ -105,6 +120,11 @@ static func bandsWho(S: SimState) -> int:
 ## DirBlast.rules: the director's blast rules are on.
 static func blastRules(S: SimState) -> bool:
 	return _d("blast.gd").rules(S)
+
+
+## DirBlast.firedBy: the director's blast rules are on and f has made a blast press (a shot from outside: its shooter's).
+static func blastBy(f) -> bool:
+	return f != null and _d("blast.gd").firedBy(f)
 
 
 ## DirBlast.hit: a shot meets a fighter under the director's blast rules.

@@ -44,7 +44,10 @@ func build(S: SimState, ground: GroundField, origin_x: float, lines: Array, born
 		# Height along the line, once: the strips share the centre line.
 		var hs := PackedFloat32Array()
 		for p in pts:
-			hs.append(ground.ground_at(S, SimWrap.wrap(origin_x + p.x), p.y))
+			var wx: float = SimWrap.wrap(origin_x + p.x)
+			var g0: float = WorldTerrain.groundY(S, wx)      # the ground the fighters stand on here: the drawn height is kept near it
+			var h: float = ground.ground_at(S, wx, p.y)
+			hs.append(clampf(h, g0 - VfxLook.CRACK_DOWN_MAX, g0 + VfxLook.CRACK_UP_MAX) if is_finite(h) else g0)
 		# Broken edges under the throat under the lip, so the order of drawing is the order of the strips.
 		_strip(verts, cols, cust, uvs, idx, pts, hs, ln.w0 * (1.9 if ln.fissure else 1.7), 0.0, edge, VfxLook.CRACK_EDGE_PX, born, reach)
 		_strip(verts, cols, cust, uvs, idx, pts, hs, ln.w0, 0.0, core, VfxLook.CRACK_CORE_PX, born, reach)

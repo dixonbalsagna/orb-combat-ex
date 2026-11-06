@@ -18,6 +18,7 @@ const DT := 1.0 / 60.0
 const STANCES := ["aggressive", "defensive", "evasive", "escape"]
 
 var slot: int = 0
+var gslot: int = 0                    # the body's place among all the match's bodies (a stage: fight * 2 + slot): the input slot a host reads for him
 var q: Array[Quaternion] = []
 var hips := Vector3.ZERO
 var curl := Vector2.ZERO
@@ -103,6 +104,9 @@ var _gr: Dictionary = {}                # the clinch's hold read (on_hold): part
 var _gr_w: float = 0.0                 # the hold's weight now: in over ramp_ticks, out over the same
 var _rc: Dictionary = {}                # the recoil exit playing (on_recoil): kind, t0, dur, cfg, seq, the surface's normal
 var _fid: String = ""                 # this body's roster id, kept from the ragdoll's tick (for the per-fighter sequences)
+var _pre: Dictionary = {}               # the stick's pre-read pose easing in (_pre_layer): pose id, start, last seen, end
+var _pre_w: float = 0.0
+var _pre_block: bool = false            # a pre-read that lapsed with no request: not drawn again until the stick lets go
 var _ack: Dictionary = {}               # the press-tick anticipation playing (on_press_ack): pose, weight, start, hold, end, the hits taken at the start
 var _str_w: float = 0.0                # the beam struggle's dig-in: how far he is being pushed back (0 to 1), eased
 var _str_lead: float = 0.0             # ... and how far he is winning (0 to 1)
@@ -389,6 +393,7 @@ var _step_x: float = 0.0               # the step-in a blow takes toward a defen
 
 func _init(slot_: int) -> void:
 	slot = slot_
+	gslot = slot_
 	_hang_right = (_hash(slot_, 11, 3) & 1) == 0
 	_leg_right = (_hash(slot_, 12, 5) & 1) == 0
 	q = AnimPose.identity_q()
@@ -625,6 +630,15 @@ func on_press_ack(cell: String, n: int, wait: int, T: float) -> void:
 	var hold_ticks: int = wait if wait >= 0 else int(A.get("max_ticks", 36))
 	_ack = {"pose": id, "w": float(cfg.get("w", 0.6)), "t0": T, "hold": float(hold_ticks) * DT, "end": -1.0, "hits": _hit_n, "wind": float(windup_cue.get("T", -10.0))}
 	debug["acks"] = int(debug.get("acks", 0)) + 1
+
+
+## A beam fired from up close throws the other fighter back to the stand-off (Encounter's cue `beam_shove`, on the one thrown; no damage, no stun, he keeps his hands): the sim slides him over `dur` seconds and this is the body,
+## the fit sequence `sv.shove` (docs/animation/beam-shove.md): thrown back at first, then digging in with the forearms up and the weight low, then up out of it as the slide ends. Reduced motion scales it by 0.6.
+func on_beam_shove(T: float, dur: float) -> void:
+	if not RenderAnim.beam_shove or not AnimData.entries.has("sv.shove"):
+		return
+	_seq = {"id": "sv.shove", "t0": T, "dur": clampf(dur, 0.1, 0.8), "wt": 0.6 if RenderAnim.reduced_motion else 1.0, "fit": true}
+	debug["beam_shoves"] = int(debug.get("beam_shoves", 0)) + 1
 
 
 ## The mid-band lunge's wind-up crouch (docs/animation/lunge-crouch.md; data/anim/press_ack.json `lunge`). The sim reacts to a press from 225 units or more on the press tick (a rush event, the cue lunge_light or lunge_heavy with `amount` the
@@ -1000,6 +1014,63 @@ func _ground_layer(S: SimState, f, dt: float) -> void:
 		debug["gl_gait"] = _gl_gw
 		debug["gl_phase"] = _gl_ph
 		debug["gl_surface"] = surf_key
+
+
+## The right stick's strike before the request starts (docs/animation/stick-pre.md; data/anim/stick_pre.json): the host passes Controls' `hub.strike_pre(slot)` ({dir 1 up, 2 down, 3 left, 4 right, depth}) while the stick leans in and the
+## request has not started. This eases the direction's quick piece's chamber in at a part weight, so the press shows 2 to 3 ticks sooner, and lets go as the blow's own wind-up takes over (the request starting, a blow taken, a state
+## change) or when no request follows (`stale_ticks`). A wrong pre-read costs a frame of pose and nothing else: nothing is written to the sim.
+func _pre_layer(S: SimState, f, dt: float) -> void:
+	var A: Dictionary = AnimData.stick_pre
+	if A.is_empty() or not RenderAnim.stick_pre:
+		_pre = {}
+		_pre_w = 0.0
+		return
+	var T: float = S.T
+	var rd: Dictionary = RenderAnim.strike_pre.get(slot, {})
+	# in a blow of his own: the layers' own record of it (his wind-up cue, the press style playing), not the director's exchange: a body of another fight has its own director
+	var busy: bool = f.state != "free" or f.rush != null or f.beamCharge != null or not _ack.is_empty() or not press.is_empty()
+	var id: String = ""
+	if not rd.is_empty() and not busy:
+		var d: int = int(rd.get("dir", 0))
+		var face: float = signf(float(f.face)) if float(f.face) != 0.0 else 1.0
+		var nm: String = ""
+		if d == 1:
+			nm = "up"
+		elif d == 2:
+			nm = "down"
+		elif d == 3 or d == 4:
+			nm = "toward" if (d == 4) == (face > 0.0) else "away"
+		id = String(A.get("dirs", {}).get(_fid, {}).get(nm, ""))
+		if not AnimData.pose_exists(id):
+			id = ""
+	if id != "" and (_pre.is_empty() or String(_pre.id) != id) and not _pre_block:
+		_pre = {"id": id, "t0": T, "end": -1.0, "dep": 0.0}
+	elif id == "" and not _pre.is_empty() and float(_pre.end) < 0.0:
+		_pre.end = T
+	elif not _pre.is_empty() and float(_pre.end) < 0.0 and float(windup_cue.get("T", -10.0)) >= float(_pre.t0):
+		_pre.end = T   # the request started: his wind-up cue has come, the blow's own wind-up takes over
+	if not _pre.is_empty() and float(_pre.end) < 0.0:
+		_pre.dep = clampf(float(rd.get("depth", 0.0)), 0.0, 1.0)
+		if T - float(_pre.t0) > float(A.get("stale_ticks", 10)) * DT:
+			_pre.end = T
+			_pre_block = true
+	if rd.is_empty():
+		_pre_block = false
+	var w: float = float(A.get("w", 0.5))
+	var tgt: float = 0.0
+	var rate: float = w * 60.0 * dt / maxf(float(A.get("exit_ticks", 6)), 1.0)
+	if not _pre.is_empty() and float(_pre.end) < 0.0:
+		tgt = w * lerpf(0.6, 1.0, float(_pre.dep))
+		rate = w * 60.0 * dt / maxf(float(A.get("enter_ticks", 6)), 1.0)
+	_pre_w = move_toward(_pre_w, tgt, rate)
+	if _pre_w <= 0.0005 and tgt == 0.0:
+		_pre_w = 0.0
+		if not _pre.is_empty() and float(_pre.end) >= 0.0:
+			_pre = {}
+		return
+	if not _pre.is_empty():
+		debug["pre"] = int(debug.get("pre", 0)) + 1
+		_mix_pose(AnimData.pose(String(_pre.id)), _pre_w * (0.6 if RenderAnim.reduced_motion else 1.0))
 
 
 func _ack_layer(S: SimState, f, dt: float) -> void:
@@ -2652,6 +2723,7 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 	_hold_feed(S, f, T)
 	_grip_layer(S, f, dt)
 	_ack_layer(S, f, dt)
+	_pre_layer(S, f, dt)
 	_loco_layer(S, f, dt)
 	_ground_layer(S, f, dt)
 	_pop_layer(S, f, dt)

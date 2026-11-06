@@ -523,6 +523,10 @@ static func formBreak(S: SimState, f) -> void:
 ## velocity toward the stick times this (the vertical toward 0.85 of it). One read for the director and the view.
 static func flightSpeed(S: SimState, f, dash: bool) -> float:
 	var sp: float = 430.0 * f.spd * SimForms.speedMul(S, f)   # the tier's step (with forms: his own steps, by the coil's factor on his form)
+	var hold: float = SimDir.holdMove(S, f)
+	if hold != 1.0:
+		sp *= hold   # holding a beam: he barely moves, and has no dash
+		dash = false
 	if SimWounds.battered(f, SimWounds.LEGS):
 		sp *= f.wd.legsSpeed
 	if f.stance == 2.0:
@@ -639,7 +643,7 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 		else:
 			var sp: float = flightSpeed(S, f, i.dash)
 			var k: float = 1.0 - SimDetMath.pow(0.0008, dt)
-			if S.kickOn:
+			if S.kickOn and SimDir.holdMove(S, f) == 1.0:
 				SimKick.move(S, f, i, sp, k)
 			else:
 				f.vx += (i.mx * sp - f.vx) * k

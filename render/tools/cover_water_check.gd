@@ -63,7 +63,7 @@ func _run() -> void:
 	ok(kept > 0 and in_control == kept, "rivers and lakes: %d land shapes kept out across %d gen 2 worlds; the control sees them all (%d)" % [kept, GEN2.size(), in_control])
 	ok(krummholz > 0 and mirrored == 0 and others_mirrored > 0, "no flip: of %d krummholz across the gen 2 worlds %d are mirrored; %d shapes of other kinds are" % [krummholz, mirrored, others_mirrored])
 	for pl in GEN1:
-		var r: Dictionary = _both(1, {"planet": pl, "touch": 3, "intro": false})
+		var r: Dictionary = _both(1, {"planet": pl, "touch": 3, "planetGen": 1, "intro": false})
 		ok(int(r.lakes) == 0 and int(r.in_water) == 0 and bool(r.same), "gen 1 planet %d: no lakes, nothing kept out, the same %d shapes with the rule on and off" % [pl, int(r.control_count)])
 	for sd in HAND:
 		var r: Dictionary = _both(sd, {"intro": false})

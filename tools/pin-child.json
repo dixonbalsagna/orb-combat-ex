@@ -1,0 +1,30 @@
+{
+  "_about": "The words-only child of the live pin (Legal RL-209 (b), 2026-10-30): the pin's own commit plus ONLY the cleared words of the game's ui/data strings (RL-192, RL-193, the lock line) and nothing else. Each entry names a string in the pin's file and the same string, as the cleared words, in the commit `from`. tools/pin-child.mjs rewrites exactly those strings in the pin's text (each must occur once), proves nothing else in ui/data changed, and prints the patch or writes the tree. A file or pointer not listed here is never touched: a feature, a new key or a moved item in `from` is not a word.",
+  "pin": "257a766c26f8766fb09b063864c41c5d8ba64dc0",
+  "from": "b7a2cd869f9bcd1f8e1bede07ba33c26465cdcd1",
+  "commit": {
+    "name": "Meridian Tools",
+    "email": "tools@meridian.invalid",
+    "date": "2026-10-30T20:00:00Z",
+    "message": "Words-only child of the pin 257a766c: the cleared ui/data words of RL-192 and RL-193 and the lock line, nothing else (Legal RL-209)"
+  },
+  "words": [
+    { "file": "ui/data/terms.json", "pointer": "/prompt/photo_body_a", "row": "RL-192" },
+    { "file": "ui/data/terms.json", "pointer": "/prompt/photo_body_b", "row": "RL-192" },
+    { "file": "ui/data/terms.json", "pointer": "/prompt/menu_notice", "row": "RL-192" },
+    { "file": "ui/data/terms.json", "pointer": "/prompt/menu_rf_locked", "row": "RL-192 (the lock line)" },
+    { "file": "ui/data/settings.json", "locate": { "key": "action", "equals": "photo_notice" }, "field": "help", "row": "RL-192" },
+    { "file": "ui/data/options.json", "pointer": "/options/colour_vision/label", "row": "RL-192" },
+    { "file": "ui/data/options.json", "pointer": "/options/colour_vision/help", "row": "RL-193" },
+    { "file": "ui/data/options.json", "pointer": "/options/glyph_style/help", "row": "RL-193" },
+    { "file": "ui/data/options.json", "pointer": "/options/you_marker/help", "row": "RL-193" },
+    { "file": "ui/data/howto.json", "pointer": "/pages/3/items/8/text", "row": "RL-193" },
+    { "file": "ui/data/howto.json", "pointer": "/pages/5/title", "row": "RL-193" },
+    { "file": "ui/data/howto.json", "pointer": "/pages/5/items/0/text", "row": "RL-193" },
+    { "file": "ui/data/howto.json", "pointer": "/pages/5/items/1/text", "row": "RL-193" },
+    { "file": "ui/data/howto.json", "pointer": "/pages/5/items/2/text", "row": "RL-193" },
+    { "file": "ui/data/howto.json", "pointer": "/pages/5/items/3/text", "row": "RL-193" },
+    { "file": "ui/data/howto.json", "pointer": "/pages/6/title", "row": "RL-193" },
+    { "file": "ui/data/howto.json", "pointer": "/pages/6/items/0/text", "row": "RL-193" }
+  ]
+}

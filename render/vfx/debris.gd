@@ -79,6 +79,28 @@ var _rs: SimRng               # vfx.shard
 var _rd: SimRng               # vfx.dust
 var quality: int = VfxLook.Q_HIGH
 var reduced: bool = false
+# The Performance level (perf.gd, data/vfx/perf.json): off unless the hub sets `perf`; nothing below is read or changed while it is off.
+var perf: bool = false:
+	set(v):
+		perf = v
+		_cap = int(VfxPerf.p("debris", "cap")) if v else VfxLook.DEBRIS_CAP
+		_spt = int(VfxPerf.p("debris", "spawn_per_tick")) if v else VfxLook.SPAWN_PER_TICK
+		_sht = int(VfxPerf.p("debris", "shard_per_tick")) if v else VfxLook.SHARD_PER_TICK
+		if not v:
+			_spill.clear()
+var far_x := PackedFloat64Array()   # the two fighters' x, set by the hub each tick while `perf`
+var far_half: float = INF           # a spawn farther than this from both is not made
+var spilled: int = 0                # bits let wait past a tick's budget (the tests and the bench) ...
+var spill_in: int = 0               # ... let in later ...
+var spill_out: int = 0              # ... and dropped after waiting too long
+var skipped_far: int = 0            # spawns not made on the far side
+var jobs_held: int = 0              # jobs that waited a tick for the per-tick cap
+var _cap: int = VfxLook.DEBRIS_CAP
+var _spt: int = VfxLook.SPAWN_PER_TICK
+var _sht: int = VfxLook.SHARD_PER_TICK
+var _spill: Array = []              # [Bit, tick]: the overflow of a burst, oldest first
+var _ticks: int = 0
+var _draining: bool = false
 
 
 func reset(seed: int) -> void:
@@ -90,6 +112,13 @@ func reset(seed: int) -> void:
 	spawned = 0
 	dropped = 0
 	max_live = 0
+	_spill.clear()
+	_ticks = 0
+	spilled = 0
+	spill_in = 0
+	spill_out = 0
+	skipped_far = 0
+	jobs_held = 0
 	_rs = SimRng.new(SimRng.deriveSeed(seed, "vfx.shard"))
 	_rd = SimRng.new(SimRng.deriveSeed(seed, "vfx.dust"))
 
@@ -100,6 +129,10 @@ func reset(seed: int) -> void:
 func step(S: SimState, dt: float) -> void:
 	_spawned_tick = 0
 	_ember_tick = 0
+	if perf:
+		_ticks += 1
+		if not _spill.is_empty():
+			_drain(dt)
 	_ember_alive = 0
 	var spray_n: int = 0   # recounted below, after the jobs, so a job's throws see the real count
 	var amb_n: int = 0
@@ -108,10 +141,17 @@ func step(S: SimState, dt: float) -> void:
 	# Jobs are on unfrozen sim time (S.T): a hit-stopped ripple waits with the world.
 	if not jobs.is_empty():
 		var i: int = 0
+		var ran: int = 0
+		var job_cap: int = int(VfxPerf.p("jobs", "per_tick")) if perf else 1 << 30
 		while i < jobs.size():
 			var j: Job = jobs[i]
 			if now >= j.at:
+				if ran >= job_cap:
+					jobs_held += 1       # the Performance level runs a few timed jobs a tick; this one waits for the next
+					i += 1
+					continue
 				jobs.remove_at(i)
+				ran += 1
 				_run_job(S, j)
 			else:
 				i += 1
@@ -444,6 +484,10 @@ func _chips(S: SimState, a: Dictionary) -> void:
 
 ## One shard flying out from (x, y) around direction dir with spread `spread` (radians, half angle) at about `speed`.
 func _shard(kind: int, x: float, y: float, z: float, dir: Vector2, speed: float, spread: float, kscale: float, q: float, life_jitter: float) -> void:
+	if perf and _far(x):
+		_burn(_rs, 13)       # the same draws a made shard takes (7 for its flight, 5 for the bit, 1 to keep it), so the stream is the one it would have been
+		skipped_far += 1
+		return
 	# All draws happen whatever the quality, so the stream is independent of it.
 	var ang: float = atan2(dir.y, dir.x) + _rs.range_(-spread, spread)
 	var sp: float = speed * _rs.range_(0.35, 1.0)
@@ -491,6 +535,10 @@ func _bit(kind: int, x: float, y: float, z: float, vx: float, vy: float, kscale:
 
 ## Dust puffs around (x, y): n of them, sizes between s0 and s1 (world units), rising and spreading.
 func _puffs(x: float, y: float, z: float, n: int, s0: float, s1: float, q: float, life_scale: float) -> void:
+	if perf and (_far(x) or z < -VfxPerf.p("far", "puff_z_back")):
+		_burn(_rd, 4 * n)    # the draws of a puff that is not kept (4 each), so a skipped burst moves the stream as a dropped one does
+		skipped_far += n
+		return
 	for k in range(n):
 		var ang: float = _rd.range_(0.0, TAU)
 		var sp: float = _rd.range_(40.0, 260.0)
@@ -550,14 +598,63 @@ func thin_puffs(x: float, r: float, fade: float = 0.2) -> int:
 	return k
 
 
+## The Performance level: true when x is farther than the view can reach from both fighters. A pool with no fighters set (a tool) skips nothing.
+func _far(x: float) -> bool:
+	if far_half == INF or far_x.is_empty():
+		return false
+	for fx in far_x:
+		if absf(SimWrap.sdx(fx, x)) <= far_half:
+			return false
+	return true
+
+
+func _burn(r: SimRng, n: int) -> void:
+	for i in range(n):
+		r.next()
+
+
+## The Performance level: the overflow of earlier ticks, let in a few a tick. Each bit's flight is advanced by the time it waited; one that waited too long is dropped.
+func _drain(dt: float) -> void:
+	var take: int = int(VfxPerf.p("debris", "spill_per_tick"))
+	var wait_max: int = int(VfxPerf.p("debris", "spill_wait_ticks"))
+	var zs: float = z_shift
+	z_shift = 0.0
+	_draining = true
+	while take > 0 and not _spill.is_empty():
+		var e: Array = _spill.pop_front()
+		var b: Bit = e[0]
+		var waited: int = _ticks - int(e[1])
+		if waited > wait_max:
+			spill_out += 1
+			dropped += 1
+			continue
+		var w: float = float(waited) * dt
+		b.x = SimWrap.wrap(b.x + b.vx * w)
+		b.y += b.vy * w
+		b.age = w
+		_add(b)
+		spill_in += 1
+		take -= 1
+	_draining = false
+	z_shift = zs
+
+
 ## Add to the pool. When it is full a shard or chip drops the oldest puff first; a puff at the puff cap drops the oldest puff.
 func _add(b: Bit) -> void:
-	b.z += z_shift
+	if not _draining:
+		b.z += z_shift
+		if perf and b.kind != RING and (_far(b.x) or (b.kind == PUFF and b.z < -VfxPerf.p("far", "puff_z_back"))):
+			skipped_far += 1
+			return
 	_spawned_tick += 1
-	if _spawned_tick > VfxLook.SPAWN_PER_TICK + VfxLook.SHARD_PER_TICK and b.kind != RING:
+	if _spawned_tick > _spt + _sht and b.kind != RING:
+		if perf and not _draining and b.kind != PUFF and _spill.size() < int(VfxPerf.p("debris", "spill_cap")):
+			_spill.append([b, _ticks])        # a burst's overflow waits for the next ticks instead of landing on this frame
+			spilled += 1
+			return
 		dropped += 1
 		return
-	if _spawned_tick > VfxLook.SPAWN_PER_TICK and b.kind == PUFF:
+	if _spawned_tick > _spt and b.kind == PUFF:
 		dropped += 1
 		return
 	if b.kind == PUFF:
@@ -568,14 +665,14 @@ func _add(b: Bit) -> void:
 			return
 		_puff_area += a2
 	spawned += 1
-	if bits.size() >= VfxLook.DEBRIS_CAP:
+	if bits.size() >= _cap:
 		for i in range(bits.size()):
 			if bits[i].kind == PUFF:
 				bits[i] = bits[bits.size() - 1]
 				bits.pop_back()
 				dropped += 1
 				break
-		if bits.size() >= VfxLook.DEBRIS_CAP:
+		if bits.size() >= _cap:
 			dropped += 1
 			return
 	bits.append(b)

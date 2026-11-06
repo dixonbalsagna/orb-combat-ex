@@ -1684,6 +1684,43 @@
             "standoffBh": {
               "type": "number",
               "minimum": 0
+            },
+            "stationary": {
+              "type": "boolean"
+            },
+            "releaseTell": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "holdFromTicks": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "holdMove": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "shoveSec": {
+              "type": "number",
+              "minimum": 0
+            },
+            "aim": {
+              "type": "object",
+              "patternProperties": {
+                "^_": {}
+              },
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "assistDeg": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 180
+                }
+              }
             }
           },
           "required": [
@@ -2634,6 +2671,11 @@
               "minimum": 0,
               "description": "The farthest a close goes, in body heights (at most the leash: rule brawl-order)."
             },
+            "sureWaitTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "How many ticks a sure blow waits for its attacker to close, when the rival is carried beyond contact.reach as it comes. 0: it lands from where the closing step leaves him."
+            },
             "closeSlackBh": {
               "type": "number",
               "minimum": 0,
@@ -3256,6 +3298,58 @@
           "patternProperties": {
             "^_": true
           }
+        },
+        "chargeClose": {
+          "type": "object",
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "firstBh": {
+              "type": "number",
+              "minimum": 0
+            },
+            "fullBh": {
+              "type": "number",
+              "minimum": 0
+            },
+            "maxTicks": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "pressWait": {
+          "type": "object",
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "maxTicks": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "oneRuleB": {
+          "type": "object",
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
         }
       },
       "description": "The brawl (docs/director/brawl-plan.md): a blow for each press in the close band.",
@@ -3707,6 +3801,10 @@
         "enabled": {
           "type": "boolean",
           "description": "The beam struggle as a tug of war on the pulse; false: the clash as before."
+        },
+        "endEvent": {
+          "type": "boolean",
+          "description": "At the struggle's end, the cue beam_clash_end: the meeting point, the outcome, the energy (VFX's shockwave, World's crater)."
         },
         "pulseTicks": {
           "type": "integer",
@@ -4438,6 +4536,74 @@
       ],
       "additionalProperties": false
     },
+    "outside": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "reachBh": {
+          "type": "number",
+          "minimum": 0
+        },
+        "waitSec": {
+          "type": "number",
+          "minimum": 0
+        },
+        "whiffTicks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "damageMul": {
+          "type": "number",
+          "minimum": 0
+        },
+        "shotReachBh": {
+          "type": "number",
+          "minimum": 0
+        },
+        "teamRestunTicks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "join": {
+          "type": "object",
+          "properties": {
+            "afterSec": {
+              "type": "number",
+              "minimum": 0
+            },
+            "w": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "afterSec",
+            "w"
+          ],
+          "additionalProperties": false
+        },
+        "aiDodge": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "_note": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "enabled",
+        "reachBh",
+        "waitSec",
+        "whiffTicks",
+        "damageMul"
+      ],
+      "additionalProperties": false
+    },
     "chase": {
       "type": "object",
       "description": "The chase of a launch is the zip (Game Design's 7c).",
@@ -4478,6 +4644,72 @@
           "type": "integer",
           "minimum": 1,
           "description": "The longest chase, in live ticks."
+        },
+        "tap": {
+          "type": "object",
+          "description": "The chase by a plain tap (docs/design/power-scale.md section 4).",
+          "properties": {
+            "_note": {
+              "type": "string"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "priceStep": {
+              "type": "number",
+              "minimum": 1
+            },
+            "nextTicks": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "holdTicks": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "minCatchTicks": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "maxSpeed": {
+              "type": "number",
+              "minimum": 1
+            },
+            "easeTicks": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "minAirTicks": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "riseTicks": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "riseRushTicks": {
+              "type": "integer",
+              "minimum": 2
+            },
+            "carryTicks": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "hangMinPace": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "arriveTicks": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "landReadTicks": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
         }
       },
       "required": [
@@ -4707,6 +4939,11 @@
         "lastAt": {
           "type": "number",
           "minimum": 0
+        },
+        "pushSec": {
+          "type": "number",
+          "minimum": 0,
+          "description": "After this long with no input, on the brink he's opened."
         }
       },
       "required": [
@@ -4733,6 +4970,38 @@
         "stepPastBh": {
           "type": "number",
           "minimum": 0
+        },
+        "circle": {
+          "type": "object",
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "ticks": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "riseBh": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ki": {
+              "type": "number",
+              "minimum": 0
+            },
+            "repeatMul": {
+              "type": "number",
+              "minimum": 0
+            },
+            "repeatSec": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
         }
       },
       "required": [

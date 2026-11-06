@@ -470,6 +470,42 @@ static func block(F: Field, face: int, i0: int, j0: int, n: int, step: int = 1) 
 
 ## ===================================================================== the bake
 ## The bake's nodes, in order: face, then j, then i, every stride-th node. Reads up to `units` of load (NODE_UNITS a node); true when the bake is whole and hashed. A whole-bake budget does it in one call.
+## The nodes read ahead round a point (data field.json warm.radius, units; 0 is off): every canonical node within `radius` units of the unit direction (qx, qy, qz) is read now, so a view or a ring that later reads that ground finds them. A node is
+## a pure function of the seed and the data (ensure reads it from the planet's own function, the same on any machine in any order), so which nodes are loaded never changes a result (research.md T6: a reader's level is fixed by the
+## reader, never by what is loaded); this only moves the cost (about 41 microseconds a cold node, native) from the first frame that needs it to here. At 128 units a node a radius of 8,000 is about 7,000 nodes (0.3 s), 16,000 about 29,000
+## (1.2 s); a node is 6 bytes. `budget` nodes are read a call (0 or less: all), and the return is true when the disc is done, so a loading screen can read it a slice at a time. `state` is the disc's progress (a Dictionary the caller keeps).
+static func warmNear(F: Field, qx: float, qy: float, qz: float, radius: float, budget: int, state: Dictionary) -> bool:
+	if radius <= 0.0:
+		return true
+	var step: float = float(SimConst.PLANET_NC) * SimConst.COL / 4.0 / float(F.N)   # a node's spacing in units: a face edge is a quarter of the planet round
+	var n: int = int(ceil(radius / step))
+	if not state.has("k"):
+		_locate(qx, qy, qz, F.N)
+		state["face"] = _lf
+		state["ci"] = int(round(_la))
+		state["cj"] = int(round(_lb))
+		state["k"] = 0
+	var side: int = 2 * n + 1
+	var total: int = side * side
+	var limit: int = state.k + budget if budget > 0 else total
+	var r2: float = (radius / step) * (radius / step)
+	while state.k < mini(limit, total):
+		var q: int = state.k
+		state["k"] = q + 1
+		var di: int = q % side - n
+		var dj: int = q / side - n
+		if float(di * di + dj * dj) > r2:
+			continue
+		var d: Array = dirOf(int(state.face), int(state.ci) + di, int(state.cj) + dj, F.N)   # beyond a face's edge the cube's own lattice goes on: locate says which face and node it is
+		_locate(d[0], d[1], d[2], F.N)
+		ensure(F, _lf, clampi(int(round(_la)), 0, F.N), clampi(int(round(_lb)), 0, F.N))
+	return state.k >= total
+
+
+static func warmRadius() -> float:
+	return float(data().get("warm", {}).get("radius", 0.0))
+
+
 static func bakeStep(F: Field, units: int) -> bool:
 	if F.bakeDone:
 		return true
@@ -640,6 +676,9 @@ static func applyRecords(S, qx: float, qy: float, qz: float, h: float, planet = 
 			var lx: float = (qx - rec.c[0]) * R
 			var ly: float = (qy - rec.c[1]) * R
 			var lz: float = (qz - rec.c[2]) * R
+			var lr: float = (float(rec.r) + float(rec.blend) + float(rec.get("bs", rec.blend))) * 1.3 + 400.0   # the lot's reach (its half diagonal and its blends, and what the sphere's curve adds): off it the tests below, along and across the street, say nothing of the distance off the street's plane, and a big lot answered in a tube through the planet
+			if lx * lx + ly * ly + lz * lz > lr * lr:
+				continue
 			var lat: float = lx * rec.t[0] + ly * rec.t[1] + lz * rec.t[2]   # along the street from the lot's centre
 			var la: float = absf(lat) - rec.hl
 			var lac: float = lx * rec.s[0] + ly * rec.s[1] + lz * rec.s[2]   # across the street from the lot's centre

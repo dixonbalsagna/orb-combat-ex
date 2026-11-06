@@ -66,7 +66,13 @@ func _off() -> void:
 		if S.game.ko != null:
 			break
 	_expect(picks == 0 and S.swing.n == 0, "the switch off: no pick, no swing (%d, %d)" % [picks, S.swing.n])
-	_expect(S.fighters[0].act.dirI.size() < DirSwing._b() + DirSwing.W_N, "the switch off: no slot is sized")
+	# Another block's switch can size the integers past the swing's (a grapple's, say). What the switch off promises is that the swing wrote nothing there.
+	var ints = S.fighters[0].act.dirI
+	var wrote: int = 0
+	for i in range(DirSwing._b(), mini(ints.size(), DirSwing._b() + DirSwing.W_N)):
+		if int(ints[i]) != 0:
+			wrote += 1
+	_expect(wrote == 0, "the switch off: nothing in the swing's slots (%d)" % wrote)
 	SimCore.dispose(S)
 
 
@@ -160,7 +166,8 @@ func _match(planet: int) -> void:
 	_expect(a[0] == b[0], "planet %d: two runs, one hash" % planet)
 	_expect(int(a[1]) > 0, "planet %d: swings ran (%d, of which %d big, on %d ticks)" % [planet, int(a[1]), int(a[2]), int(a[3])])
 	_expect(int(a[4]) == 0, "planet %d: no plan left its frame in place (%d)" % [planet, int(a[4])])
-	_expect(float(a[5]) < 0.5, "planet %d: at rest, the worst pose is %.3f off the line" % [planet, float(a[5])])
+	_expect(float(a[5]) < 0.5, "planet %d: at rest, once the far poses are done, the worst pose is %.3f off the line (%d rests)" % [planet, float(a[5]), int(a[7])])
+	_expect(float(a[6]) < 0.5, "planet %d: on the rest's own tick, the worst pose a plan can ask about is %.3f off the line" % [planet, float(a[6])])
 
 
 func _fight(planet: int) -> Array:
@@ -169,7 +176,10 @@ func _fight(planet: int) -> Array:
 	var leak: int = 0
 	var ticks: int = 0
 	var worst: float = 0.0
+	var worstNear: float = 0.0
+	var rests: int = 0
 	var was: bool = false
+	var due: bool = false
 	for _k in range(FIGHT_TICKS):
 		SimCore.step(S)
 		for e in S.out.fx:
@@ -181,14 +191,22 @@ func _fight(planet: int) -> Array:
 			leak += 1
 		if S.swing.active:
 			ticks += 1
+			due = false
 		elif was:
+			due = true
+			for i in SimSwing._poseList(S):   # the buildings a plan can ask about are right at once. With places everywhere the far ones follow, a share a tick (SimSwing._posesFar)
+				SimField.strip(S, S.bDir[i * 3], S.bDir[i * 3 + 1], S.bDir[i * 3 + 2])
+				worstNear = maxf(worstNear, absf(SimWrap.sdx(SimField.sx, S.bX[i])))
+		if due and S.swing.poseK < 0:
+			due = false
+			rests += 1
 			for i in range(S.bX.size()):
 				SimField.strip(S, S.bDir[i * 3], S.bDir[i * 3 + 1], S.bDir[i * 3 + 2])
 				worst = maxf(worst, absf(SimWrap.sdx(SimField.sx, S.bX[i])))
 		was = S.swing.active
 		if S.game.ko != null:
 			break
-	var out: Array = [SimHash.stateHash(S), S.swing.n, big, ticks, leak, worst]
+	var out: Array = [SimHash.stateHash(S), S.swing.n, big, ticks, leak, worst, worstNear, rests]
 	SimCore.dispose(S)
 	return out
 
@@ -316,7 +334,7 @@ func _buildings() -> void:
 	var P3 = DirSwing._planet(S3)
 	var all: int = P3.n
 	var built: int = DirSwing.places(S3, P3, DirSwing._frame(S3, float(S3.fighters[0].x)), 200000.0).size()
-	_expect(built > 0 and built < all, "only built places count as towns (%d of %d)" % [built, all])
+	_expect(built > 0 and (built < all or S3.bFirst > 0), "only built places count as towns (%d of %d; with places everywhere, all of them are built)" % [built, all])
 	SimCore.dispose(S3)
 	_expect(bad == 0, "after a turn, no target stands off the fight's depth (%d of %d)" % [bad, seen])
 	SimCore.dispose(S2)

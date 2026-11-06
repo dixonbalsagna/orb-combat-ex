@@ -30,6 +30,12 @@
 #include "res://render/shaders/bend.gdshaderinc"
 #include "res://render/shaders/ground.gdshaderinc"
 #include "res://render/shaders/skycol.gdshaderinc"
+#ifdef TILE_GROUND
+#include "res://render/shaders/tile_read.gdshaderinc"
+varying vec2 v_pv;
+uniform int wk_n = 0;      // the short V wakes (RenderTileGround._water_marks), at most 2
+uniform vec4 wk_a[2];      // x, y (the surface), the way it's going (1 or -1), its length
+#endif
 
 uniform vec3 wl_mul = vec3(1.0);   // the world's light (SkyDrive.world_at), this layer's multiply in linear light
 uniform vec3 wl_add = vec3(0.0);   // ... and its night lift
@@ -46,9 +52,14 @@ uniform int wf_n = 0;      // the live fills, at most 4
 uniform vec4 wf_a[4];      // x (the front's source), y (the surface it heads for), its speed (units a second), t0 (its start)
 uniform vec4 wf_b[4];      // its run behind x (from .x to .y units from x) and ahead (.z to .w)
 uniform vec4 wf_c[4];      // the crest's height, the slosh's
-uniform int ww_n = 0;      // the live rings, at most 2
+uniform int ww_n = 0;      // the live rings, at most 2 (6 on the tile ground: water's A1)
+#ifdef TILE_GROUND
+uniform vec4 ww_a[6];
+uniform vec4 ww_b[6];
+#else
 uniform vec4 ww_a[2];      // x, y (the surface), t0, the radius it runs out to
 uniform vec4 ww_b[2];      // its lift, the time it runs
+#endif
 uniform vec4 fill_t = vec4(0.22, 0.55, 0.3, 1.6);   // RenderLook.WATER_FILL_T, WATER_PILE: the crest's length behind the front (s), the slosh's period and settle time (s), the pile at a wall
 uniform vec2 foam_band = vec2(14.0, 50.0);   // RenderLook.WATER_FOAM_BAND: the foam line's width on a front, a pile or a ring (units); the ring's width
 uniform float lake_on = 0.0;                 // 1 on a gen 2 ring (GroundField.gen2_ring, PlanetView.update)
@@ -112,6 +123,46 @@ vec2 water_drama(float x, float z) {
 	return o;
 }
 
+#ifdef TILE_GROUND
+void vertex() {
+	vec3 dir;
+	float skirt;
+	float h;
+	float wet_n;
+	ivec2 ic;
+	int layer;
+	float dist;
+	vec2 st;
+	float dsize;
+	tile_node(MODEL_MATRIX, INSTANCE_CUSTOM, UV, dir, skirt, h, wet_n, ic, layer, dist, st, dsize);
+	// The water's top: a lake's or a river's level at its node, else the sea's. Over dry land it lies under the ground, so the shoreline is
+	// where the land rises through it.
+	float surf = wet_n > 0.5 ? h + wet_n : 0.0;
+	float z0 = asin(clamp(dot(dir, sd0), -1.0, 1.0)) * globe_r;
+	float xw = strip_x + atan(dot(dir, hd0), dot(dir, pv0)) * globe_r;
+	xw -= world_w * floor(xw / world_w);
+	v_px = vec2(xw, z0);
+	vec2 p = tile_chart(dir, hd, sd, pv);
+	v_pv = vec2(strip_x + p.x, p.y);
+	v_wet = 1.0;
+	v_ok = 1.0;
+	v_lake = surf - h;
+	v_near = 1.0;
+	if (ww_n > 0) {
+		surf += max(water_drama(xw, z0).x, -0.6 * max(surf - h, 0.0));   // a ring (never below the floor)
+	}
+	float ground = tile_fore(cb_n > 0 ? h + tile_bowls(dir) : h, p);   // a bowl below the water's top floods
+	v_ok = surf < fore_cam.y ? 1.0 : 0.0;   // a lens under the water's top doesn't draw the sheet: from below it's a flat wall across the frame
+	surf = tile_fore(surf, p);
+	v_under = 0.0;
+	v_depth = surf - ground;
+	float rr = globe_r + surf - skirt * mod(INSTANCE_CUSTOM.a, 16.0) * 1000.0 * 0.05;
+	vec4 bw = vec4(rr * dot(dir, hd), rr * dot(dir, pv) - globe_r, rr * dot(dir, sd), 1.0);
+	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;
+	v_wz = bw.z;
+	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bw);
+}
+#else
 void vertex() {
 	int i = int(UV.x + 0.5) % nc;
 	float xw = UV.x * col_w;
@@ -187,6 +238,7 @@ void vertex() {
 	v_wz = bw.z;
 	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bw);
 }
+#endif
 
 void fragment() {
 	if (v_wet < 0.5 || v_depth <= 0.0 || v_ok < 0.5) {
@@ -215,12 +267,32 @@ void fragment() {
 			c = foam.rgb;   // the crest's and the ring's foam
 			a = foam.a;
 		}
+#ifdef TILE_GROUND
+		// A short V wake behind a body flying low and fast: two hard foam lines, narrowing away.
+		for (int j = 0; j < wk_n; j++) {
+			float back = v_px.x - wk_a[j].x;
+			back -= world_w * round(back / world_w);
+			back *= -wk_a[j].z;
+			if (back > 0.0 && back < wk_a[j].w && abs(abs(v_px.y - wk_a[j].y) - back * 0.35) < 10.0 * (1.0 - back / wk_a[j].w)) {
+				c = foam.rgb;
+				a = foam.a;
+			}
+		}
+#endif
 	}
 	c = c * wl_mul + wl_add;   // the world's light; the lane cue is never dimmed
+#ifdef TILE_GROUND
+	vec4 cue = lane_cue_at(v_pv, fwidth(v_pv.y));
+#else
 	vec4 cue = lane_cue_at(v_px, fwidth(v_px.y));   // the lane cue lies on the surface
+#endif
 	c = mix(c, cue.rgb, cue.a);
 	a = max(a, cue.a);
+#ifdef TILE_GROUND
+	c = pair_mark_on(c, v_pv, fwidth(v_pv.y));
+#else
 	c = pair_mark_on(c, v_px, fwidth(v_px.y));   // ... and so does the pair's mark
+#endif
 	// The sea takes the sky: by depth toward the horizon band at haze_sea of its value, and at the far edge it ends there
 	// (not in the sky's own colour), one clear step below the sky at the horizon. It turns opaque as it hazes.
 	vec2 hz = haze_parts(v_view, -v_wz, fog_far);

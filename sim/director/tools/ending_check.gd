@@ -74,14 +74,17 @@ func _idle() -> void:
 	P2.wear[SimWounds.CORE] = int(P2.wd.stageAt[2])
 	SimWounds.updateStages(S2, P2)
 	_run(S2, sec + 2, null, _moving())
-	_expect(P2.brink and P2.brinkOpen, "idle on the brink, the rival playing: he's open")
+	_expect(P2.brink and not P2.brinkOpen, "idle on the brink for the wear's time: he isn't pushed yet")
+	var push: int = int(float(DirEnding.cfg().pushSec) * DirData.TICKS_PER_SEC)
+	_run(S2, push - sec, null, _moving())
+	_expect(P2.brink and P2.brinkOpen, "idle on the brink for the push's time, the rival playing: he's open")
 	SimCore.dispose(S2)
 	# both idle: nothing's opened
 	var S3 := _fresh()
 	var P3 = S3.fighters[0]
 	P3.wear[SimWounds.CORE] = int(P3.wd.stageAt[2])
 	SimWounds.updateStages(S3, P3)
-	_run(S3, sec + 60)
+	_run(S3, int(float(DirEnding.cfg().pushSec) * DirData.TICKS_PER_SEC) + 60)
 	_expect(not P3.brinkOpen, "both idle: nobody's opened")
 	SimCore.dispose(S3)
 	# an AI is never idle

@@ -4,6 +4,8 @@
 shader_type spatial;
 render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
 
+#include "res://render/shaders/bend.gdshaderinc"
+
 uniform vec4 dark_col : source_color = vec4(0.08, 0.09, 0.11, 1.0);
 uniform vec4 rim_col : source_color = vec4(0.60, 0.64, 0.70, 1.0);
 
@@ -11,6 +13,7 @@ varying vec4 v_custom;
 
 void vertex() {
 	v_custom = INSTANCE_CUSTOM;
+	POSITION = globe_r > 0.0 ? PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(MODEL_MATRIX, VERTEX)) : PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
 }
 
 void fragment() {

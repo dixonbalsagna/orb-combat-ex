@@ -51,7 +51,7 @@ func _run() -> void:
 			var c: int = _fine_centre("tundra")
 			ok(c >= 0 and S.water[c] >= WorldWater.MIN_DEPTH and S.base[c] >= WorldWater.RESERVOIR_BASE, "the reported picture: planet %d's tundra column %d is wet off the sea, %.1f deep" % [pl, c, S.water[c] if c >= 0 else 0.0])
 	for pl in GEN1:
-		var S: SimState = _start(1, {"planet": pl, "touch": 3, "intro": false})
+		var S: SimState = _start(1, {"planet": pl, "touch": 3, "planetGen": 1, "intro": false})
 		ok(_lake_on() == 0.0 and S.planetRing.get("lakes", []).is_empty() and GroundField.under_level(S, S.fighters[0].x, -1.0e6) == GroundField.NO_SHORE, "gen 1 planet %d: no lakes, lake_on 0, and no one is under" % pl)
 	for sd in HAND:
 		var Sh: SimState = _start(sd, {"intro": false})
@@ -89,6 +89,14 @@ func _under(S: SimState) -> void:
 	var lv: float = S.base[deep] + S.deform[deep] + S.water[deep]
 	ok(GroundField.under_level(S, x, lv - 10.0) == lv and GroundField.under_level(S, x, lv + 10.0) == GroundField.NO_SHORE, "under_level: column %d, %.1f deep: the level below it, none above it" % [deep, S.water[deep]])
 	ok(thin < 0 or GroundField.under_level(S, (float(thin) + 0.5) * SimConst.COL, -1.0e6) == GroundField.NO_SHORE, "under_level: none in water under the first step")
+	var sea: int = -1
+	for i in range(SimConst.NC):
+		if S.base[i] < WorldWater.RESERVOIR_BASE and WorldWater.SEA_LEVEL - S.base[i] - S.deform[i] >= RenderLook.LAKE_BANDS.x:
+			sea = i
+			break
+	if sea >= 0:
+		var sx: float = (float(sea) + 0.5) * SimConst.COL
+		ok(GroundField.under_level(S, sx, WorldWater.SEA_LEVEL - 10.0) == WorldWater.SEA_LEVEL and GroundField.under_level(S, sx, WorldWater.SEA_LEVEL + 10.0) == GroundField.NO_SHORE, "under_level: open sea at column %d: the sea's level below it, none above it" % sea)
 	var b := AnimBody.new()
 	root.add_child(b)
 	var c := Color(0.5, 0.5, 0.5)

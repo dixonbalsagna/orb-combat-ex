@@ -15,6 +15,8 @@ extends RefCounted
 ## Render-side only: reads the sim and the events, never writes either.
 
 class Run:
+	var gy: float = 0.0   # the ground under it as last read
+	var gy_at: int = -1
 	var t0: float      # sim time it started
 	var x0: float
 	var z0: float
@@ -182,10 +184,14 @@ func arrive(S: SimState, mm: RenderCrowdChunks) -> void:
 
 
 ## Per frame, after the planet view placed its figures (which starts this frame's runners): move every runner.
+var _step_n: int = 0
+
+
 func step(S: SimState, mm: RenderCrowdChunks) -> void:
 	_hit_x.clear()
 	if _runs.is_empty():
 		return
+	_step_n += 1
 	var yaw: float = deg_to_rad(RenderLook.RUN_YAW)
 	var scale := Basis.from_scale(Vector3.ONE * RenderLook.CROWD_SCALE)
 	for ci in _runs:
@@ -199,7 +205,11 @@ func step(S: SimState, mm: RenderCrowdChunks) -> void:
 		var x: float = r.x0 + r.dir * d
 		var u: float = clampf(t / r.dur, 0.0, 1.0)
 		var z: float = lerpf(r.z0, r.z1, u * u * (3.0 - 2.0 * u))
-		var y: float = WorldTerrain.groundY(S, SimWrap.wrap(x)) + r.dy * maxf(0.0, 1.0 - d / 200.0)
+		# On the tile ground one frame in four, by turns: its height barely changes in that time, and each read can be a cold column.
+		if not RenderTileGround.on or r.gy_at < 0 or (_step_n + ci) % RenderLook.CROWD_RUN_GROUND_FRAMES == 0:
+			r.gy = WorldTerrain.groundY(S, SimWrap.wrap(x))
+			r.gy_at = _step_n
+		var y: float = r.gy + r.dy * maxf(0.0, 1.0 - d / 200.0)
 		# Local +x where it runs (or, looking back, where it came from), turned a little toward it.
 		var turn: float = yaw if (r.dir > 0.0) != looking else PI - yaw
 		mm.set_instance_transform(ci, Transform3D(Basis(Vector3.UP, turn) * scale, Vector3(x, y, z)))

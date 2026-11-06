@@ -1,0 +1,2467 @@
+{
+  "_about": "The parks of the stack, in the order they must land (tools/preview/stack.mjs, docs/tools/preview.md). Tools keeps this file from each park's README: add a park here when its folder appears, move it when its order changes, set \"ready\": false while its owner says it is unfinished (it is left out unless --include-unready). Steps: patch (git apply of a file in the working tree), copy ({from, to}, \"replace\": true to take the park's file), overlay (working-tree folders an owner has not committed yet, laid over the commit; a folder that already equals the commit counts as landed), manual (a note; an apply script is never run). needs: {park}, {file}, {grep: {in, text}}, {note, owner} (a known gap that is not in the tree: it stays listed as missing until it is taken out of this file). switches: rows {id, file, path, from, to, needs, what} for flags a park adds that the stack should turn on.",
+  "parks": [
+    {
+      "id": "ui-working-tree",
+      "owner": "ui-ux",
+      "notes": "UI's working tree (the quiet legend, the versus flow, the hints and how-to cards): uncommitted in the repository, laid over the commit so the page is what the tree plays. It is the tree as it stands when the page is built.",
+      "steps": [
+        {
+          "overlay": [
+            "ui"
+          ]
+        }
+      ],
+      "needs": [
+        {
+          "note": "the code is overlaid from the working tree: it is UI's and not committed; the park lands with it",
+          "owner": "ui-ux"
+        }
+      ]
+    },
+    {
+      "id": "controls-layouts",
+      "owner": "controls-feel",
+      "notes": "Controls' data/input/layouts.json (the arena pad's layout), uncommitted in the repository, laid over the commit; sim/input comes with controls-quick-read's overlay.",
+      "steps": [
+        {
+          "overlay": [
+            "data/input/layouts.json"
+          ]
+        }
+      ],
+      "needs": [
+        {
+          "note": "the file is overlaid from the working tree: it is Controls' and not committed; the park lands with it",
+          "owner": "controls-feel"
+        }
+      ]
+    },
+    {
+      "id": "tools-anim-hold-w-schema",
+      "owner": "tools-pipeline",
+      "notes": "Two validate cases for Animation's hold_w (a valid one and an over-one one): the schema property itself is now in Animation's stick-class-schema.patch (12:02), so Tools' schema grant was dropped.",
+      "steps": [
+        {
+          "patch": "docs/tools/pending/anim-hold-w-schema/anim-hold-w-schema.patch"
+        }
+      ]
+    },
+    {
+      "id": "encounter-sure-reach",
+      "owner": "encounter-systems",
+      "notes": "A sure blow keeps to contact.reach.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/sure-reach/sure-reach.diff"
+        }
+      ]
+    },
+    {
+      "id": "rendering-tile-ground",
+      "owner": "rendering-techart",
+      "notes": "Rendering's tile ground in the real game (stage 4 of the ring-at-any-angle work), behind its switch (--tiles, ?tiles=1 on a local page): planet-keyed tiles on a true globe through Simulation's frame. Stacks on field-frame (needs SimField and WorldField). The stack's `tiles` switch is the page word.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-10-31a-tile-ground/tile.diff"
+        }
+      ]
+    },
+    {
+      "id": "rendering-near-towers",
+      "owner": "rendering-techart",
+      "notes": "Orb's near-tower pick (Rendering, 2026-10-31b): A's shape, Q's slightly kept bases, the cut eased on tall towers (globe_tower, mode 3). On only with the tile ground's switch and only when a swing brings a building nearer than its plan. On top of tile.diff (a7cc87de).",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-10-31b-near-towers/near.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-tile-ground"
+        }
+      ]
+    },
+    {
+      "id": "rendering-far-tiles",
+      "owner": "rendering-techart",
+      "notes": "Far tiles asked for before the camera gets there (Rendering, 2026-11-01a, for docs/perf/meteor-ground-2026-10-31.md): RenderTileField.ask_around and RenderTileGround._look_ahead (a fighter faster than 2,500 u/s has the ground 2 s ahead asked for). On only with the tile ground's switch. The meteor's send has no caller yet. On top of tile.diff and near.diff.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01a-far-tiles/far.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-tile-ground"
+        },
+        {
+          "park": "rendering-near-towers"
+        }
+      ]
+    },
+    {
+      "id": "rendering-water-sheet",
+      "owner": "rendering-techart",
+      "notes": "The gen 3 water sheet with water's A1 (Rendering, 2026-11-01b): the tiles with water draw a second time with water_tile.gdshader, the ground is the real bed, a hollow ring where a body crosses the surface and a V wake behind a low fast flight (view only, nothing hashed). On the tile ground, near towers and far tiles. Rendering's gates are clean (the EP, 2026-11-01): in.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01b-water-sheet/water.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-far-tiles"
+        }
+      ]
+    },
+    {
+      "id": "rendering-fighters-at-sea",
+      "owner": "rendering-techart",
+      "notes": "Fighters at sea (Rendering, 2026-11-01c): the fix for the fight reading as tiny over open ocean. On the tile ground and its neighbours.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01c-fighters-at-sea/sea.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-water-sheet"
+        }
+      ]
+    },
+    {
+      "id": "rendering-building-band",
+      "owner": "rendering-techart",
+      "notes": "The band between the camera and the fight stays clear (Rendering, 2026-11-01d): globe_tower (mode 3) lowers a building to its kept base as its front face goes from -150 to -30 of depth, at rest too, and removes it past +150; parts stacked on it come down with it. World's front-limit tests the same face. Only with the tile ground's switch on. The wall rule.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01d-building-band/band.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-fighters-at-sea"
+        }
+      ]
+    },
+    {
+      "id": "rendering-crater-line",
+      "owner": "rendering-techart",
+      "notes": "The crater line (Rendering, 2026-11-01e): on top of the building band.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01e-crater-line/crater.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-building-band"
+        }
+      ]
+    },
+    {
+      "id": "rendering-fine-cells",
+      "owner": "rendering-techart",
+      "notes": "32 units near the fight (Rendering, 2026-11-01f): the tile data goes on to 64 and 32 units near the camera. Only with the tile ground's switch on.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01f-fine-cells/fine.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-crater-line"
+        }
+      ]
+    },
+    {
+      "id": "rendering-citizens-feet",
+      "owner": "rendering-techart",
+      "notes": "Citizens stand on the tile ground (Rendering, 2026-11-01g). Only with the tile ground's switch on.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01g-citizens-feet/cit.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-fine-cells"
+        }
+      ]
+    },
+    {
+      "id": "rendering-store-bowls",
+      "owner": "rendering-techart",
+      "notes": "Craters are drawn on the tile ground (Rendering, 2026-11-01h): the 16 bowls nearest the camera, read from World's store.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01h-store-bowls/bowls.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-citizens-feet"
+        }
+      ]
+    },
+    {
+      "id": "rendering-crater-scar-look",
+      "owner": "rendering-techart",
+      "notes": "Art's crater and scar looks (Rendering, 2026-11-01i), behind the page word craterlook=1.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01i-crater-scar-look/look.diff",
+          "exclude": [
+            "render/core/main.gd"
+          ],
+          "why": "Camera's swing 8 edits the URL_ARGS and LOCAL_ONLY_ARGS lines of main.gd too; the look's three main.gd lines go in by the fixups below"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-store-bowls"
+        }
+      ]
+    },
+    {
+      "id": "rendering-sheet-from-below",
+      "owner": "rendering-techart",
+      "notes": "The water sheet is not drawn from below (Rendering, 2026-11-01j): a vertex whose water top is above the lens is not drawn, so a lens under the sea sees the bed and not a flat blue wall. Only with the tile ground's switch on.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01j-sheet-from-below/below.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-crater-scar-look"
+        }
+      ]
+    },
+    {
+      "id": "rendering-foot-walls",
+      "owner": "rendering-techart",
+      "notes": "Foot walls (Rendering, 2026-11-01k): a building no longer hangs over a slope its footing does not reach. Only with the tile ground's switch on.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01k-foot-walls/foot.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-sheet-from-below"
+        }
+      ]
+    },
+    {
+      "id": "rendering-no-base-past-line",
+      "owner": "rendering-techart",
+      "notes": "No base past the line (Rendering, 2026-11-01l): slab removal. Only with the tile ground's switch on.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01l-no-base-past-line/slab.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-foot-walls"
+        }
+      ]
+    },
+    {
+      "id": "rendering-building-plan-depth",
+      "owner": "rendering-techart",
+      "notes": "The hanging towns (Rendering, 2026-11-01m): a one-line bug in how a building's plan depth is read. Only with the tile ground's switch on.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01m-building-plan-depth/depth.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-no-base-past-line"
+        }
+      ]
+    },
+    {
+      "id": "rendering-hole-depth-as-drawn",
+      "owner": "rendering-techart",
+      "notes": "The hole-misfire repair (Rendering, 2026-11-01n): the hole's depth is read as drawn. Goes with m (building plan depth).",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01n-hole-depth-as-drawn/hole.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-building-plan-depth"
+        }
+      ]
+    },
+    {
+      "id": "rendering-ice-value",
+      "owner": "rendering-techart",
+      "notes": "Ice no brighter than the beam (Rendering, 2026-11-01o, 38c399aa): the ice-sheet ground is held to 0.68 in its brightest channel after the light; the white shore ribbon and hump. Only with the tile ground on. Stacks on hole depth.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01o-ice-value/ice.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-hole-depth-as-drawn"
+        }
+      ]
+    },
+    {
+      "id": "rendering-tile-pool",
+      "owner": "rendering-techart",
+      "notes": "A tile in use is never evicted and the pool fits two panes (POOL 800; Rendering 2026-11-01p). Land with s (the level word): without it the bigger pool draws floating plates.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01p-tile-pool/pool.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-ice-value"
+        }
+      ]
+    },
+    {
+      "id": "rendering-coarse-first",
+      "owner": "rendering-techart",
+      "notes": "The fill takes the coarsest level first, nearest first within it (Rendering 2026-11-01q).",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01q-coarse-first/coarse.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-tile-pool"
+        }
+      ]
+    },
+    {
+      "id": "rendering-fill-slice",
+      "owner": "rendering-techart",
+      "notes": "The fill slice follows the frame's room: 1.5 ms plus half the room under a 16.67 ms frame, at most 6 ms (Rendering 2026-11-01r).",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01r-fill-slice/slice.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-coarse-first"
+        }
+      ]
+    },
+    {
+      "id": "rendering-tile-level-word",
+      "owner": "rendering-techart",
+      "notes": "A tile's data level kept apart from its layer number (Rendering 2026-11-01s). Goes with the pool: without it the bigger pool draws floating plates.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01s-tile-level-word/layer.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-fill-slice"
+        }
+      ]
+    },
+    {
+      "id": "rendering-tundra-strata",
+      "owner": "rendering-techart",
+      "notes": "Tundra rock carries strata lines (Rendering 2026-11-01t; Orb's hollow mountain colour half). Goes with Art's warmer tundra rock in data/art/biomes.json (the overlay park after it).",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01t-tundra-strata/strata.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-tile-level-word"
+        }
+      ]
+    },
+    {
+      "id": "rendering-rock-edge",
+      "owner": "rendering-techart",
+      "notes": "The rock's edge follows the hill, not the grid (Rendering 2026-11-01u, 476d77e1): the saw-toothed top edge of rock on a steep hillside (render/shaders/tile_vertex.gdshaderinc). On tundra strata.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01u-rock-edge/rock_edge.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-tundra-strata"
+        }
+      ]
+    },
+    {
+      "id": "rendering-lake-water-coarse",
+      "owner": "rendering-techart",
+      "notes": "Lakes keep their water on the coarsest tiles (Rendering 2026-11-01v, 48770ce9): hard-edged brown lake beds with no water in fast low flight (render/core/tile_field.gd). On rock-edge.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01v-lake-water-coarse/lake_l0.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-rock-edge"
+        }
+      ]
+    },
+    {
+      "id": "rendering-no-street-on-steep",
+      "owner": "rendering-techart",
+      "notes": "No street paint on a slope (Rendering 2026-11-01w, f8980a3f; part of Orb's note on low hills): render/shaders/terrain.gdshaderinc. On lake-water-coarse.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01w-no-street-on-steep/low_street.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-lake-water-coarse"
+        }
+      ]
+    },
+    {
+      "id": "rendering-tile-frame",
+      "owner": "rendering-techart",
+      "notes": "The tile ground's per-frame work (Rendering 2026-11-01x, e42a851a; Performance is Orb's first ask): docs/rendering/pending/2026-11-01x-tile-frame/tileframe.diff, on w, needs r (the fill slice). The EP's named exception to the freeze.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01x-tile-frame/tileframe.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-no-street-on-steep"
+        },
+        {
+          "park": "rendering-fill-slice"
+        }
+      ]
+    },
+    {
+      "id": "rendering-crowd-run-ground",
+      "owner": "rendering-techart",
+      "notes": "A running figure reads the ground one frame in four on the tile ground (Rendering 2026-11-01y, 4ab188d8; docs/rendering/pending/2026-11-01y-crowd-run-ground/crowdrun.diff), on x. Only with the tile ground on. Performance: CrowdFlight.step after a swing.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01y-crowd-run-ground/crowdrun.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-tile-frame"
+        }
+      ]
+    },
+    {
+      "id": "rendering-sweep-by-view",
+      "owner": "rendering-techart",
+      "notes": "The building sweep goes by what the camera can see on the tile ground (Rendering 2026-11-01z, f2990fbd; docs/rendering/pending/2026-11-01z-sweep-by-view/viewcap.diff), on y. Only with the tile ground on; also fixes an index sorted once that a swing leaves stale.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-01z-sweep-by-view/viewcap.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-crowd-run-ground"
+        }
+      ]
+    },
+    {
+      "id": "art-biomes-working-tree",
+      "owner": "art-direction",
+      "notes": "Art's working-tree edits to data/art/biomes.json (the warmer tundra rock: lit #8c8270, mid #777472, shade #504d4e), uncommitted: laid over the commit. It reads as landed once it is committed.",
+      "steps": [
+        {
+          "overlay": [
+            "data/art/biomes.json"
+          ]
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-tundra-strata"
+        }
+      ]
+    },
+    {
+      "id": "tools-mixed-schema",
+      "owner": "tools-pipeline",
+      "ready": false,
+      "notes": "LEFT OUT while combat-mixed-string conflicts with main (sim/director/launch.gd, 2026-11-01): its cases need data/combat/mixed.json. Tools' part of the mixed string: the schema for data/combat/mixed.json, its map row and 8 cases (docs/tools/pending/mixed-schema). Lands with the mixed string.",
+      "steps": [
+        {
+          "patch": "docs/tools/pending/mixed-schema/mixed-schema.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "combat-mixed-string"
+        }
+      ]
+    },
+    {
+      "id": "combat-mixed-string",
+      "owner": "combat-choreography",
+      "notes": "The mixed string, a built prototype (Orb's clip C9, row 34 of rule-of-cool-map.md): one string across any range, the director leads the far blow (a tapped far Y is a lob aimed where he is going). mixed.gd to sim/director, mixed.json to data/combat (enabled false), hooks.patch (launch, blast, exchange, data). Stacks on Encounter's stick (its state sits after DirStick's slots). Left out by the stack if it conflicts; the preview's mixed switch then waits. LEFT OUT (2026-11-01): hooks.patch clashes with the Driver in sim/director/blast.gd (the DirMixed.landed line), before or after it; a prototype nobody has played.",
+      "steps": [
+        {
+          "copy": [
+            {
+              "from": "docs/combat/pending/mixed-string/mixed.gd",
+              "to": "sim/director/mixed.gd"
+            },
+            {
+              "from": "docs/combat/pending/mixed-string/mixed.json",
+              "to": "data/combat/mixed.json"
+            }
+          ]
+        },
+        {
+          "patch": "docs/combat/pending/mixed-string/hooks.patch"
+        }
+      ],
+      "needs": [
+        {
+          "note": "a prototype nobody has played; it needs Encounter's and World's review to land (its README)",
+          "owner": "combat-choreography"
+        }
+      ],
+      "ready": false
+    },
+    {
+      "id": "tools-ci-kick-check",
+      "owner": "tools-pipeline",
+      "notes": "Tools only: the kick check as a CI step (docs/tools/pending/ci-kick-check): node tools/gate.mjs --verdict on sim/core/tools/kick_check.gd, after the two-states check. Lands with the kick.",
+      "steps": [
+        {
+          "patch": "docs/tools/pending/ci-kick-check/ci-kick-check.patch"
+        }
+      ]
+    },
+    {
+      "id": "vfx-meteor-trail",
+      "owner": "vfx",
+      "notes": "VFX's meteor trail behind its own switch (VfxHub.meteor_enabled: off by default and byte-identical off, on by the page word ?meteor=quiet or ?meteor=loud on a local page); the stack's page carries the loud word and prints the quiet address beside it (the `meteor` switch). 15 files, one patch.",
+      "steps": [
+        {
+          "patch": "docs/vfx/pending/meteor-trail/apply.patch"
+        },
+        {
+          "patch": "docs/vfx/pending/meteor-trail/apply-rl222.patch"
+        }
+      ],
+      "needs": [
+        {
+          "note": "the old white trail blade still draws beside the burn: Orb may want it off when the meteor is on (VFX's README)",
+          "owner": "vfx"
+        }
+      ]
+    },
+    {
+      "id": "vfx-perf-level",
+      "owner": "vfx",
+      "notes": "The VFX profile and the Performance level (VFX, 2026-11-01): the shots view's flight streaks cost 0.11 ms instead of 0.52 (a real gain at every level, no look change), plus the Performance level (VfxHub.perf_level, off by default). The re-cut for after the meteor trail. No grants.",
+      "steps": [
+        {
+          "patch": "docs/vfx/pending/perf-level/apply-after-meteor.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "vfx-meteor-trail"
+        }
+      ]
+    },
+    {
+      "id": "vfx-clash-look",
+      "owner": "vfx",
+      "notes": "The beam clash's air (VFX, re-cut on the meteor trail and the perf level, 2026-11-01): procedural shaders where the white flare was, composed from each fighter's energy style, form and power. apply-after-meteor-and-perf.patch and Rendering's grant in render/core/beam_view.gd. The old flare stays behind clash.json enabled (true).",
+      "steps": [
+        {
+          "patch": "docs/vfx/pending/clash-look/apply-after-meteor-and-perf.patch"
+        },
+        {
+          "patch": "docs/vfx/pending/clash-look/grant-beam-view.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "vfx-perf-level"
+        }
+      ]
+    },
+    {
+      "id": "vfx-beam-buckle",
+      "owner": "vfx",
+      "notes": "The losing beam buckles (VFX): bulge, bow and quiver instead of thinning (Orb's note, vision.md 92f860b9). apply.patch (render/vfx/beam_struggle.gd, the beam shader include, energy.json) and the grant after the clash look's beam_view.gd. Does nothing without a writer of Clash.mid: Encounter's beam struggle, which is in this stack.",
+      "steps": [
+        {
+          "patch": "docs/vfx/pending/beam-buckle/apply.patch"
+        },
+        {
+          "patch": "docs/vfx/pending/beam-buckle/grant-rendering-ui-after-clash.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "vfx-clash-look"
+        }
+      ]
+    },
+    {
+      "id": "vfx-clash-press",
+      "owner": "vfx",
+      "notes": "The clash press (VFX, 2026-11-01): two beams shoving at the point, flaring and eddying, the air drawn behind the beams and the shine before them. 8 files on top of the clash look and the buckle. Its eddies follow the surges of Encounter's beam struggle (in this stack). The shine's strength is strip_k in data/vfx/clash.json (0.7).",
+      "steps": [
+        {
+          "patch": "docs/vfx/pending/clash-press/apply.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "vfx-clash-look"
+        },
+        {
+          "park": "vfx-beam-buckle"
+        }
+      ]
+    },
+    {
+      "id": "vfx-energy-language",
+      "owner": "vfx",
+      "notes": "VFX's energy language (2026-11-01): last in the VFX chain (docs/vfx/pending/energy-language/README.md). Colours and shapes per fighter and form.",
+      "steps": [
+        {
+          "patch": "docs/vfx/pending/energy-language/apply.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "vfx-clash-press"
+        }
+      ]
+    },
+    {
+      "id": "vfx-flight-lines",
+      "owner": "vfx",
+      "notes": "VFX's flight lines (2026-11-01; rule-of-cool-map.md section 1; Legal's RL-221, RL-222): apply-after-chain.patch, for the end of the whole VFX chain.",
+      "steps": [
+        {
+          "patch": "docs/vfx/pending/flight-lines/apply-after-chain.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "vfx-energy-language"
+        }
+      ]
+    },
+    {
+      "id": "vfx-ratchet-meteor",
+      "owner": "vfx",
+      "notes": "The second two-fighter ratchet fix (VFX, c236215e; docs/vfx/pending/ratchet-meteor/apply.patch): render/vfx/meteor.gd takes the pair from the list. After flight-lines.",
+      "steps": [
+        {
+          "patch": "docs/vfx/pending/ratchet-meteor/apply.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "vfx-flight-lines"
+        }
+      ]
+    },
+    {
+      "id": "vfx-beam-front",
+      "owner": "vfx",
+      "notes": "VFX's look for Encounter's beam front (2026-11-01): apply-after-flight.patch, for the end of the chain with flight lines landed. Grant given for 7 lines in render/core/beam_view.gd.",
+      "steps": [
+        {
+          "patch": "docs/vfx/pending/beam-front/apply-after-flight.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "vfx-flight-lines"
+        }
+      ]
+    },
+    {
+      "id": "vfx-peak-floor",
+      "owner": "vfx",
+      "notes": "VFX's peak floor (2026-11-01, ca93f8b5): the meteor trail thickened at the peak. After the whole VFX chain.",
+      "steps": [
+        {
+          "patch": "docs/vfx/pending/peak-floor/apply.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "vfx-beam-front"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-1-places",
+      "owner": "camera-cinematography",
+      "notes": "The swing's camera, park 1 of 6 (docs/camera/swing-view.md): render/camera cam_places.gd (new), split_rig, split_frame, split_view, a check. After the tile ground and Encounter's swing (the README's order).",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-1-places.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-tile-ground"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-2-shot",
+      "owner": "camera-cinematography",
+      "notes": "The swing's camera, park 2 of 6: split_rig, camera_params, a check.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-2-shot.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-1-places"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-3-peak",
+      "owner": "camera-cinematography",
+      "notes": "The swing's camera, park 3 of 6: split_rig, split_view, camera_params, a check.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-3-peak.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-2-shot"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-4-sim",
+      "owner": "camera-cinematography",
+      "notes": "The swing's camera, park 4 of 6: sim/director/swing_read.gd (new, by the EP's grant), a check, and the read block in Encounter's data/director/swing.json and its schema. Re-cut on Encounter's current swing.diff (back in the stack).",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-4-sim.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-3-peak"
+        }
+      ]
+    },
+    {
+      "id": "encounter-camera-swing-read",
+      "owner": "camera-cinematography",
+      "notes": "The ratchet fix in Camera's sim/director/swing_read.gd (Encounter, ce4e18c7; granted; docs/director/pending/ratchet-roster/camera-swing-read.patch), after Camera's swing-4-sim.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/ratchet-roster/camera-swing-read.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-4-sim"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-5-real",
+      "owner": "camera-cinematography",
+      "notes": "The swing's camera, park 5 of 6: render/camera, data/camera/swing.json and its schema (new), a tools/schemas/map.json row.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-5-real.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-4-sim"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-6-grant",
+      "owner": "camera-cinematography",
+      "notes": "The swing's camera, park 6 of 6: Rendering's grant in render/core/main.gd and render/core/tile_ground.gd.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-6-grant.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-5-real"
+        },
+        {
+          "park": "rendering-near-towers"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-7-director",
+      "owner": "camera-cinematography",
+      "notes": "The launch director's camera (Camera, docs/camera/launch-director.md): render/camera and a line of Rendering's main.gd. Off byte-identical with tiles off. After swing 6.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-7-director.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-6-grant"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-8-flat",
+      "owner": "camera-cinematography",
+      "notes": "Flat sends past 10,000 units a second (Camera, swing 8, the re-cut 6bc69662): a line of Rendering's main.gd. After swing 7.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-8-flat.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-7-director"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-9-reveal",
+      "owner": "camera-cinematography",
+      "notes": "A long flight opens out in its middle (Camera, swing 9, a3bbef1f). After swing 8.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-9-reveal.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-8-flat"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-10-overshoot",
+      "owner": "camera-cinematography",
+      "notes": "A fast stop carries the frame on a little (Camera, swing 10, 0c912fef). After swing 9. Swing 11 (a locked brawl frames closer) waits for Rendering's wall rule and is not in.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-10-overshoot.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-9-reveal"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-11-close",
+      "owner": "camera-cinematography",
+      "notes": "A locked brawl frames closer (Camera, swing 11, 55fb48b8). Lands after the building wall's fix: a closer shot lets one wall fill more of the frame. In the stack now that the band and the front limit are.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-11-close.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-10-overshoot"
+        },
+        {
+          "park": "rendering-building-band"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-readable",
+      "owner": "camera-cinematography",
+      "notes": "Camera's swing-readable (2026-11-01, 2be401e1): the fix for specks after a launch. After swing 11.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-readable.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-11-close"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-peak-retry",
+      "owner": "camera-cinematography",
+      "notes": "Camera's meteor peak-shot fix (2026-11-01, d56f1a42), after swing-readable. Not swing-12-sky.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-peak-retry.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-readable"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-in-frame",
+      "owner": "camera-cinematography",
+      "notes": "Camera's swing-in-frame (2026-11-01, b403a3e7), after swing-peak-retry.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-in-frame.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-peak-retry"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-rush-follow",
+      "owner": "camera-cinematography",
+      "notes": "Camera's swing-rush-follow (2026-11-01, 254a9c97), after swing-in-frame: the camera follows a long rush.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-rush-follow.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-in-frame"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-share",
+      "owner": "camera-cinematography",
+      "notes": "Against a CPU the player's pane takes splitShare of the split (Camera, 785d0ddb; Orb's first play asked for about 0.7). Off in data (splitShare 0); the page's switch splitShare sets 0.7. Under tiles (RenderTileGround.on).",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-share.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-rush-follow"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-lead-ahead",
+      "owner": "camera-cinematography",
+      "notes": "SplitRig.lead_ahead (Camera, 271e9b12): flying fast, more of the pane ahead of him, in the large pane or an even split only. Off in code; the park lead-ahead-on turns it on for the page. After swing-share.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-lead-ahead.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-share"
+        }
+      ]
+    },
+    {
+      "id": "camera-lead-ahead-on",
+      "owner": "tools-pipeline",
+      "notes": "The page runs with lead_ahead on (the EP, 2026-11-01): the one line in render/camera/split_rig.gd.",
+      "steps": [
+        {
+          "fixup": [
+            {
+              "file": "render/camera/split_rig.gd",
+              "from": "var lead_ahead: bool = false",
+              "to": "var lead_ahead: bool = true"
+            }
+          ],
+          "why": "the EP asked for lead_ahead on for the page; it is off in Camera's code"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-lead-ahead"
+        }
+      ]
+    },
+    {
+      "id": "rendering-crater-look-words",
+      "owner": "rendering-techart",
+      "notes": "The three main.gd lines of the crater and scar look (the local word craterlook), laid after the camera swings because they edit the same URL_ARGS and LOCAL_ONLY_ARGS lines.",
+      "steps": [
+        {
+          "fixup": [
+            {
+              "file": "render/core/main.gd",
+              "from": "const URL_ARGS: Array = [",
+              "to": "const URL_ARGS: Array = [\"craterlook\", "
+            },
+            {
+              "file": "render/core/main.gd",
+              "from": "const LOCAL_ONLY_ARGS: Array = [",
+              "to": "const LOCAL_ONLY_ARGS: Array = [\"craterlook\", "
+            },
+            {
+              "file": "render/core/main.gd",
+              "from": "\tRenderTileGround.fore_tone = not args.has(\"nofore\")\n",
+              "to": "\tRenderTileGround.fore_tone = not args.has(\"nofore\")\n\tRenderTileGround.crater_look = args.has(\"craterlook\")\n"
+            }
+          ],
+          "why": "the three lines of the look's main.gd hunks: --craterlook as a local word, read at start-up (laid after the camera swings, which edit the same two lines)"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-crater-scar-look"
+        },
+        {
+          "park": "camera-swing-11-close"
+        }
+      ]
+    },
+    {
+      "id": "camera-split-vision",
+      "owner": "camera-cinematography",
+      "notes": "Split vision (Camera, 2026-11-01; docs/camera/split-vision.md): SplitRig.eased_merge (no soft edge, the whole line) and split_ignores_power, both off as shipped; the page turns eased_merge ON by a fixup (var eased_merge: bool = true in render/camera/split_rig.gd), as the README says. Applies on main alone or after swing 1 to 11.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/split-vision/split-vision.patch"
+        },
+        {
+          "fixup": [
+            {
+              "file": "render/camera/split_rig.gd",
+              "from": "var eased_merge: bool = false",
+              "to": "var eased_merge: bool = true"
+            }
+          ],
+          "why": "the page runs with the eased merge on (the EP, 2026-11-01); the README says to set it in split_rig.gd once Orb has marked it"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-10-overshoot"
+        }
+      ]
+    },
+    {
+      "id": "controls-quick-read",
+      "owner": "controls-feel",
+      "notes": "The quick read (responsiveness): Controls' code is in the working tree and not committed (sim/input: input_data, hub, layout, left_hand, strike_read, its test and probes), so it is laid over the commit as an OVERLAY; then quick-read.patch (timing.json switches.quickRead, strike.settleQuick and preAt, and the schema). The stack's quickRead switch turns it on.",
+      "steps": [
+        {
+          "overlay": [
+            "sim/input"
+          ]
+        },
+        {
+          "patch": "docs/controls/pending/quick-read/quick-read.patch"
+        }
+      ],
+      "needs": [
+        {
+          "note": "the code is overlaid from the working tree: it is Controls' and not committed (frozen until the EP's gate); the park lands with it",
+          "owner": "controls-feel"
+        }
+      ]
+    },
+    {
+      "id": "controls-stick-feel",
+      "owner": "controls-feel",
+      "notes": "The stick's feel: five haptic kinds (the strike charge's ladder, and the incoming cue on the defender's pad), the host's two lines in render/core/main.gd, and switches.hapticLadder and hapticIncoming (haptic-switches.patch). On top of quick-read. Controls' input-buffer pair (round 3) is left out: its stick_feel_test.gd hunk clashes with signature-rt-only in either order, it is off by default and changes nothing on a real-fight soak (Controls). Plus web-rumble.patch (Controls, 2026-11-01): the page asks the pad's vibrationActuator itself (JavaScriptBridge), behind timing.json switches.webRumble.",
+      "steps": [
+        {
+          "patch": "docs/controls/pending/stick-feel/stick-feel.patch"
+        },
+        {
+          "patch": "docs/controls/pending/stick-feel/responsive-2.patch"
+        },
+        {
+          "patch": "docs/controls/pending/stick-feel/first-press.patch"
+        },
+        {
+          "patch": "docs/controls/pending/stick-feel/signature-rt-only.patch"
+        },
+        {
+          "patch": "docs/controls/pending/stick-feel/stick-feel-host.patch"
+        },
+        {
+          "patch": "docs/controls/pending/stick-feel/haptic-switches.patch"
+        },
+        {
+          "patch": "docs/controls/pending/stick-feel/web-rumble.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "controls-quick-read"
+        }
+      ]
+    },
+    {
+      "id": "controls-beam-aim",
+      "owner": "controls-feel",
+      "notes": "The beam's aim holds and the throw carries it (Controls, 2026-11-01; docs/controls/beam-aim-feel.md): the release step carries the sector of the mean of the last 3 rim ticks, the shown aim trails the thumb by 4 degrees, at rest the aim is 0. Behind data/input/timing.json switches.beamAim (the beamAim switch turns it on for the page). After quick-read, stick-feel (responsive-2, first-press, haptic-switches); independent of first-pad. Includes sim/input tests, orb_aim_probe and the schema key.",
+      "steps": [
+        {
+          "patch": "docs/controls/pending/beam-aim/beam-aim.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "controls-stick-feel"
+        }
+      ]
+    },
+    {
+      "id": "controls-stage-haptics",
+      "owner": "controls-feel",
+      "notes": "Stage haptics (Controls, docs/controls/pending/stage-haptics): after stick-feel, first-press and haptic-switches; hapticLadder is on for the page.",
+      "steps": [
+        {
+          "patch": "docs/controls/pending/stage-haptics/stage-haptics.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "controls-stick-feel"
+        }
+      ]
+    },
+    {
+      "id": "controls-queue-20",
+      "owner": "controls-feel",
+      "notes": "Controls' queue life (2026-11-01): strike.queueTicks 36 to 20 and the gate test that proves it (docs/controls/pending/queue-20). After quick-read and the stick feel. input-buffer stays out (the EP).",
+      "steps": [
+        {
+          "patch": "docs/controls/pending/queue-20/queue-20.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "controls-stick-feel"
+        }
+      ]
+    },
+    {
+      "id": "controls-first-pad",
+      "owner": "controls-feel",
+      "notes": "The seat fix (Controls, 2026-11-01, Orb's pad joined as player two): one person's first press takes player one; hub only (sim/input/hub.gd, +12 lines), no change to render/core/main.gd. Independent of the other parks.",
+      "steps": [
+        {
+          "patch": "docs/controls/pending/first-pad/first-pad.patch",
+          "exclude": [
+            "sim/input/test/pad_first_press_test.gd"
+          ],
+          "why": "the overlay of the working tree's sim/input (controls-quick-read) already lays Controls' copy of this test (byte for byte the patch's own); the patch would create it again"
+        }
+      ],
+      "needs": [
+        {
+          "park": "controls-queue-20"
+        }
+      ]
+    },
+    {
+      "id": "rendering-load-pace",
+      "owner": "simulation-engine",
+      "notes": "A planet's load runs slices until 14 ms of a frame has gone (SimHost.load_step, RenderLook.LOAD_STEP_MS): Simulation's, in Rendering's files (render/core/sim_host.gd, look.gd), granted by the EP. Performance estimates about -2.5 to -3 s on a cold web load; not measured.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/load-pace/load-pace.patch"
+        }
+      ],
+      "needs": [
+        {
+          "note": "the gain is not measured: a fresh load-probe on the page (Performance's tool) is owed",
+          "owner": "performance-platform"
+        }
+      ]
+    },
+    {
+      "id": "tools-nightly-rl212",
+      "owner": "tools-pipeline",
+      "notes": "Tools only: RL-212 tripwires and the clash clip in the nightly.",
+      "steps": [
+        {
+          "patch": "docs/tools/pending/nightly-rl212/nightly-rl212.patch"
+        }
+      ]
+    },
+    {
+      "id": "tools-pin-child-readings",
+      "owner": "tools-pipeline",
+      "notes": "Tools only: the words-only child, the four readings, the load findings.",
+      "steps": [
+        {
+          "patch": "docs/tools/pending/pin-child-readings/pin-child-readings.patch"
+        }
+      ]
+    },
+    {
+      "id": "camera-damage-inset",
+      "owner": "camera-cinematography",
+      "ready": false,
+      "notes": "Parked off, not ready for Orb's look (Camera's README).",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/damage-inset/director-22-damage-inset.patch"
+        }
+      ]
+    },
+    {
+      "id": "rendering-2026-10-30i-crowd-bend",
+      "owner": "rendering-techart",
+      "ready": false,
+      "notes": "Unfinished: do not land yet (Rendering's README).",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-10-30i/bend.diff"
+        }
+      ]
+    },
+    {
+      "id": "rendering-2026-10-30j-crowd-clock",
+      "owner": "rendering-techart",
+      "ready": false,
+      "notes": "Unfinished, on top of 2026-10-30i: the crowd's cycles read the sim's tick (the wall-clock leak Tools found).",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-10-30j/clock.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-2026-10-30i-crowd-bend"
+        }
+      ]
+    },
+    {
+      "id": "audio-host-check",
+      "owner": "audio-music",
+      "notes": "Audio's working-tree copy of audio/tools/host_check.gd (the gain floor for a bed is -40 dB), laid over the commit: the tug and moment sets need it. Uncommitted.",
+      "steps": [
+        {
+          "overlay": [
+            "audio/tools/host_check.gd"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "audio-moments",
+      "owner": "audio-music",
+      "notes": "The moments a player would notice (Audio, 2026-11-01; docs/audio/pending/moments): beam charge and fire, KO, the biggest blows, launch, the meteor landing, parry, two bolts meeting. Existing sounds only, behind audio/data/moment_cues.json enabled (the soundMoments switch). The install script is Audio's apply.py: new files plus audio/audio_cues.gd.",
+      "steps": [
+        {
+          "script": "docs/audio/pending/moments/apply.py",
+          "sha1": "f763bed5575f6bca694f4e81362acf16269f6b45"
+        }
+      ],
+      "needs": [
+        {
+          "park": "audio-host-check"
+        }
+      ]
+    },
+    {
+      "id": "audio-bright-bolt",
+      "owner": "audio-music",
+      "notes": "The page only (the EP, 2026-11-01): Audio's bright bolt, energy.bolt.land.hit at gain -3 dB and pitch 0.85 in audio/data/brawl_cues.json.",
+      "steps": [
+        {
+          "fixup": [
+            {
+              "file": "audio/data/brawl_cues.json",
+              "from": "      \"step_db\": -3.0,\n      \"land\": {\n        \"hit\": {\n          \"gain_db\": 0.0,\n          \"pitch\": 1.0",
+              "to": "      \"step_db\": -3.0,\n      \"land\": {\n        \"hit\": {\n          \"gain_db\": -3.0,\n          \"pitch\": 0.85"
+            }
+          ],
+          "why": "the EP asked for Audio's bright bolt tamed on the page only (-3 dB, pitch 0.85); it is a data edit, not a park"
+        }
+      ]
+    },
+    {
+      "id": "sound-stream-mode",
+      "owner": "tools-pipeline",
+      "notes": "The web sound is played as a Stream (audio/general/default_playback_type.web=0 in project.godot), not as Sample (the EP, 2026-11-01). In headless Chrome and Opera GX the default Sample path reads silent at the destination on a plain HEAD build, and Stream reads real sound; Stream runs the bus effects Sample skips and may come a little late. Not landed in the repository: the build only.",
+      "steps": [
+        {
+          "fixup": [
+            {
+              "file": "project.godot",
+              "from": "[rendering]",
+              "to": "[audio]\n\ngeneral/default_playback_type.web=0\n\n[rendering]"
+            }
+          ],
+          "why": "the EP chose Stream as the main sound mode for the first press"
+        }
+      ]
+    },
+    {
+      "id": "audio-status-line",
+      "owner": "audio-music",
+      "notes": "AudioVoices.status_line() (Audio, 2026-11-01; docs/audio/pending/status-line): one read-only line of what the audio is doing (played, dropped, live voices, the Master peak, the trims, the buses, and on the web the browser's context). The install script is Audio's apply.py (audio/audio_voices.gd and a check), hash-locked. The page prints it behind ?audiolog=1 about once a second.",
+      "steps": [
+        {
+          "script": "docs/audio/pending/status-line/apply.py",
+          "sha1": "fe830c502ec03df5e014194b279059f11e3a0aa4"
+        }
+      ]
+    },
+    {
+      "id": "audio-resume",
+      "owner": "audio-music",
+      "notes": "Keep the page's audio running (Audio, 2026-11-01 overnight, re-cut after Tools' test): the first cut asked from inside the game through GodotAudio.ctx, which is not a global of the page, and is withdrawn. The re-cut is a snippet for the web shell (docs/audio/pending/audio-resume/shell-snippet.js): it wraps the AudioContext constructor and resumes each context on a trusted pointerdown, mousedown, keydown, touchend or click. Tools' grant: stack-preview puts it first in the page's head, before the engine script. Not proven to be the cause of the silence. AudioVoices.status_line() (the audio-status-line park) reads window.__audioShell.state().",
+      "steps": [
+        {
+          "manual": "the snippet is injected into the page head by stack-preview.mjs (tools/preview/blackbox.mjs injectPage), not applied to the tree"
+        }
+      ],
+      "needs": [
+        {
+          "park": "audio-status-line"
+        }
+      ]
+    },
+    {
+      "id": "encounter-beam-still",
+      "owner": "encounter",
+      "notes": "He stays still, and letting go fires (Encounter, 2026-11-01, Orb's first play: the fighter drifts while charging a beam). A plain patch on HEAD; it acts with beamPlays.front.enabled on, by its own key front.stationary (true in the data).",
+      "steps": [
+        {
+          "patch": "docs/director/pending/beam-still/beam-still.diff"
+        }
+      ]
+    },
+    {
+      "id": "encounter-ground-settle",
+      "owner": "encounter",
+      "notes": "A body on the ground digs or stops (Encounter, 2026-11-01, Orb's first play: bounced off an outcrop six or seven times). Behind data/biomes/contact.json settle.enabled, off; the page turns it on (the settle switch). On top of beam-still. It edits World's contact.gd and contact.json: World's grant is pending (the EP).",
+      "steps": [
+        {
+          "patch": "docs/director/pending/ground-settle/ground-settle.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-beam-still"
+        },
+        {
+          "note": "World's grant for sim/world/contact.gd and data/biomes/contact.json is pending",
+          "owner": "world"
+        }
+      ]
+    },
+    {
+      "id": "world-landmark-spare",
+      "owner": "world",
+      "notes": "A barred landmark is out of every blast and fall (World, 2026-11-02; docs/world/pending/landmark-spare; Legal RL-242): one list, WorldSettle.noTarget, for the meteor's blast, area damage, a brunt's splash and the crater's block fall; a data fact with nothing visible. Needs ground-settle beneath it. THE GOLDEN MOVES, as intended: Simulation regenerates sim/core/test/golden.json at landing; the golden check fails on a page tree and is not run for the page. \"landmark_spare_check\" goes into tools/world-checks.json \"run\" by hand when it lands (the stack runs no world-checks).",
+      "steps": [
+        {
+          "patch": "docs/world/pending/landmark-spare/landmark-spare.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-ground-settle"
+        }
+      ]
+    },
+    {
+      "id": "encounter-chase-tap",
+      "owner": "encounter",
+      "notes": "The chase after a launch, by a plain tap (Encounter, 2026-11-01; Orb: the follow-up floats; docs/design/power-scale.md section 4). Behind data/director/interrupts.json chase.tap.enabled (the chaseTap switch turns it on for the page). Includes sim/director/tools/chase_tap_check.gd (its CI step is in the tools v6 patch). chase_route.gd in the park folder is a repeat of the read, not part of the stack. Nobody has looked at it: the look gate is Encounter's note.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/chase-tap/chase-tap.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-ground-settle"
+        }
+      ]
+    },
+    {
+      "id": "encounter-chase-ease",
+      "owner": "encounter",
+      "notes": "The chase's top speed builds up over easeTicks live ticks (Encounter, 7bdea655) so the picture does not jump after him: data/director/interrupts.json chase.tap.easeTicks (10), sim/director/chase.gd, its check, and the easeTicks key in tools/schemas/director-interrupts.schema.json. On chase-tap.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/chase-tap/chase-ease.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-chase-tap"
+        }
+      ]
+    },
+    {
+      "id": "encounter-chase-air",
+      "owner": "encounter",
+      "notes": "A catch holds him up, and a tap at his landing lands as he gets up (Encounter, 2026-11-02; docs/director/pending/chase-air; Game Design power-scale section 4): the body hangs at about 30% speed for 40 ticks after a catch. Behind the chase tap's own switch (chaseTap, ON in page builds); changes only what chase-tap does. Applies after chase-tap and chase-ease.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/chase-air/chase-air.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-chase-ease"
+        }
+      ]
+    },
+    {
+      "id": "encounter-charge-armour",
+      "owner": "encounter",
+      "notes": "A charged attack has B's armour (Encounter, 8f84bbfa; Orb: charged attacks should be much harder to interrupt, especially by light attacks; docs/design/power-scale.md section 2). Behind data/director/stick.json armour.enabled (the chargeArmour switch). Also applies on chase-tap.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/charge-armour/charge-armour.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-chase-ease"
+        }
+      ]
+    },
+    {
+      "id": "encounter-idle-match",
+      "owner": "encounter",
+      "notes": "A foe who does not fight back (Encounter, 9f5fa1bc; docs/design/power-scale.md section 3): wear and the finisher push start later (60 s, 90 s). Acts with ending.enabled (on for the page). Its power-up pace is the powerPace switch.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/idle-match/idle-match.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-charge-armour"
+        }
+      ]
+    },
+    {
+      "id": "encounter-beam-hold",
+      "owner": "encounter",
+      "notes": "Holding a beam, he barely moves (Encounter, fc6dc185; docs/design/power-scale.md, last section). Acts with beamPlays.front.stationary (the beamFront switch). On beam-still and charge-armour.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/beam-hold/beam-hold.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-beam-still"
+        },
+        {
+          "park": "encounter-charge-armour"
+        }
+      ]
+    },
+    {
+      "id": "vfx-beam-shove",
+      "owner": "vfx",
+      "notes": "The beam shove (VFX, 2ba1991a (the re-cut, same path); docs/vfx/pending/beam-shove). After beam-hold.",
+      "steps": [
+        {
+          "patch": "docs/vfx/pending/beam-shove/apply.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-beam-hold"
+        },
+        {
+          "park": "vfx-beam-front"
+        }
+      ]
+    },
+    {
+      "id": "animation-beam-shove",
+      "owner": "animation",
+      "notes": "The body of Encounter's beam_shove cue (Animation, 2026-11-01, sha1 b4cf40ab; docs/animation/pending/beam-shove.patch): wave shove1 (thrown back, digs in, settles, fitted to the slide), AnimFighter.on_beam_shove, RenderAnim.beam_shove (stays on; --no-beam-shove turns it off). Independent; after beam-hold.",
+      "steps": [
+        {
+          "patch": "docs/animation/pending/beam-shove.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-beam-hold"
+        }
+      ]
+    },
+    {
+      "id": "animation-fight-view",
+      "owner": "animation",
+      "notes": "Animation's fight view (docs/animation/pending/fight-view.patch): the bodies of the other fights in a match of two fights. After cross-fights and cross-end; Rendering's draw-others reads it. Re-cut 61922bd2 (2026-11-02): applies in any order.",
+      "steps": [
+        {
+          "patch": "docs/animation/pending/fight-view.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "animation-beam-shove"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-chase-air",
+      "owner": "camera-cinematography",
+      "notes": "A rush at a body in the air has no slam door (Camera, 0ce428d0): the split stays open and the pane follows him. Under readable. Needs Encounter's chase-tap, then chase-ease, first (the check calls DirChaseTap and its limits are for the eased rush). Includes render/camera/tests/chase_rush_check.gd (its CI step is in the tools v6 patch).",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-chase-air.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-chase-tap"
+        },
+        {
+          "park": "encounter-chase-ease"
+        },
+        {
+          "park": "camera-swing-lead-ahead"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-size-floor",
+      "owner": "camera-cinematography",
+      "notes": "Under readable, the scroll governor leaves a fast body at least 0.06 of the width (43 px at 720p), against 0.032 and 0.05 (Camera, 9688ecb3). split_rig.gd and camera_params.gd. After chase-air.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-size-floor.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "camera-swing-chase-air"
+        }
+      ]
+    },
+    {
+      "id": "simulation-field-place",
+      "owner": "simulation-engine",
+      "notes": "The field memos forget by place (Simulation, 2026-11-01, f6c078a5; Orb's first play: spikes at a beam and a swing): a record joining the store forgets only the columns and buildings it can reach. sim/core/field.gd (Simulation) and a 4-line call in sim/world/store.gd (World's grant, being confirmed). Plus sim/core/tools/memo_check.gd (its CI step is in the tools v6 patch).",
+      "steps": [
+        {
+          "patch": "docs/architecture/pending/field-place/field-place.patch"
+        }
+      ]
+    },
+    {
+      "id": "simulation-field-place-standing",
+      "owner": "encounter",
+      "notes": "Encounter's grant (c440aee6), optional, with field-place: DirSwing._standing tests the far buildings first (about 10 lines in sim/director/swing.gd), the same answer, 42 slow ticks down to 10 in Orb's replay. Encounter confirms its line.",
+      "steps": [
+        {
+          "patch": "docs/architecture/pending/field-place/grant-encounter-standing.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "simulation-field-place"
+        }
+      ]
+    },
+    {
+      "id": "simulation-ceil-table",
+      "owner": "simulation-engine",
+      "notes": "A height ceiling on the planet for a launch's plan (Simulation, docs/architecture/pending/ceil-table; the EP's option 1): about 4 to 6 ms on two launch ticks; nothing in it is state. On field-place. Includes sim/core/tools/ceil_check.gd and a 9-line grant in Encounter's sim/director/launch.gd, the schema and fixture of swing.json (Tools'; in the patch). The EP decides whether it earns its 218 lines.",
+      "steps": [
+        {
+          "patch": "docs/architecture/pending/ceil-table/ceil-table.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "simulation-field-place"
+        }
+      ]
+    },
+    {
+      "id": "encounter-swing-plan-cost",
+      "owner": "encounter",
+      "notes": "A swing's plan and offer, for less, with the same answers (Encounter, cc2c741a; from Simulation's timers on a launch tick): sim/core/swing.gd and sim/director/swing.gd. No switch; changes no answer (Orb's match reproduces every checkpoint and the final hash). A plain patch on HEAD; does not touch field-place's grant. NOT the withdrawn docs/director/pending/plan-cost (PROP SMASH).",
+      "steps": [
+        {
+          "patch": "docs/director/pending/swing-plan-cost/swing-plan-cost.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "simulation-field-place-standing"
+        }
+      ]
+    },
+    {
+      "id": "simulation-swing-check-page",
+      "owner": "simulation-engine",
+      "notes": "swing_check reads true with the page's switches on (Simulation, 50f51b964d28): the 4 swing_check failures were the check's own assumptions, the sim does what it should. One file, sim/director/tools/swing_check.gd (Encounter's: a grant). The sim is unchanged.",
+      "steps": [
+        {
+          "patch": "docs/architecture/pending/swing-check-page/swing-check-page.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-swing-plan-cost"
+        }
+      ]
+    },
+    {
+      "id": "simulation-power-core",
+      "owner": "simulation-engine",
+      "notes": "One energy model, the sim's part (Simulation, 4bd6d36a0b77; docs/architecture/pending/power-core, Game Design's docs/design/power-scale.md): sends by power, flat-out flight, a KO's fallback send. OFF in data (data/fight/power.json enabled false); the page word ?power=1 puts \"power\": true in a match's setup and ?flatout=N (3,500 to 7,000, or the page's slider) the base of flat-out flight. On field-place. The patch carries Tools' files (the schema, map.json, cases.json, the fixture) and grants in Encounter's, World's, Rendering's and Netcode's lines (granted by the EP for this park). Re-cut 33bc6207ffca (2026-11-02): for Combat's and Encounter's reads; grants in Encounter's data.gd (planChain) and World's brunt.gd. IN the ?power=1 page; data/fight/power.json enabled stays false (the page word ?power=1 puts \"power\": true in the setup).",
+      "steps": [
+        {
+          "patch": "docs/architecture/pending/power-core/power-core.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "simulation-field-place"
+        }
+      ]
+    },
+    {
+      "id": "world-crater-collapse",
+      "owner": "world",
+      "notes": "A big bowl brings down what stands in it (World, re-cut 2026-11-02; docs/world/pending/crater-collapse): off in data (craters.json collapse.enabled false). Applies clean on this stack, no bridge. The world-checks.json word is for landing.",
+      "steps": [
+        {
+          "patch": "docs/world/pending/crater-collapse/crater-collapse.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "simulation-power-core"
+        }
+      ]
+    },
+    {
+      "id": "world-water-read",
+      "owner": "world",
+      "notes": "The ground's record lookup, made once and in a coarse grid (World, 2026-11-02; docs/world/pending/water-read): hash-exact, no data and no switch. Needs field-place beneath it. The tools/world-checks.json word (\"water_read_check\" in \"run\") is for landing, the stack runs no world-checks.",
+      "steps": [
+        {
+          "patch": "docs/world/pending/water-read/water-read.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "simulation-field-place"
+        }
+      ]
+    },
+    {
+      "id": "world-lot-reach",
+      "owner": "world",
+      "notes": "A lot answers only near itself (World, 2026-11-02; docs/world/pending/lot-reach): sim/world/field.gd applyRecords, one distance test in the lot branch; hash-exact for today's lots. \"lot_reach_check\" goes into tools/world-checks.json \"run\" by hand when it lands (the stack runs no world-checks).",
+      "steps": [
+        {
+          "patch": "docs/world/pending/lot-reach/lot-reach.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "world-water-read"
+        }
+      ]
+    },
+    {
+      "id": "world-node-warm",
+      "owner": "world",
+      "notes": "The ground's nodes round the start, read at the match start (World, 2026-11-02; docs/world/pending/node-warm): off in data (field.json warm.radius 0); the page switch nodeWarm sets it to 10,000 (+0.34 s at match load native, hash-safe). \"node_warm_check\" goes into tools/world-checks.json \"run\" by hand when it lands.",
+      "steps": [
+        {
+          "patch": "docs/world/pending/node-warm/node-warm.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "world-lot-reach"
+        }
+      ]
+    },
+    {
+      "id": "simulation-places-records",
+      "owner": "simulation-engine",
+      "notes": "The ground's records by a coarser grid for the big ones, and the place table's coarse pass (Simulation, re-cut 60c4835e2e21; docs/architecture/pending/places-records), on water-read: golden byte-identical, rec_check 0 differ. CI: rec_check (verdict REC: n check(s) failed) and its negative control.",
+      "steps": [
+        {
+          "patch": "docs/architecture/pending/places-records/places-records.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "world-water-read"
+        }
+      ]
+    },
+    {
+      "id": "simulation-field-static",
+      "owner": "simulation-engine",
+      "notes": "A second memo and a split for the static part of the field (Simulation, d5387fe9d5ad; docs/architecture/pending/field-static): hash-exact, no switch. On field-place and its grant, tested with water-read beneath. CI: field_static_check (verdict FIELDSTATIC: n check(s) failed) and its negative control.",
+      "steps": [
+        {
+          "patch": "docs/architecture/pending/field-static/field-static.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "simulation-field-place-standing"
+        }
+      ]
+    },
+    {
+      "id": "rendering-fill-floor",
+      "owner": "rendering-techart",
+      "notes": "The tile ground's fill cost (Rendering 2026-11-02a, 7d25907b; docs/rendering/pending/2026-11-02a-fill-floor/fill_floor.diff), on z. Lands with or after World's water-read, never before. Only with the tile ground on.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-02a-fill-floor/fill_floor.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-sweep-by-view"
+        },
+        {
+          "park": "world-water-read"
+        }
+      ]
+    },
+    {
+      "id": "rendering-rubble-stones",
+      "owner": "rendering-techart",
+      "notes": "The rubble heap reads as stones, not a checker (Rendering 2026-11-02b, bd93d388; docs/rendering/pending/2026-11-02b-rubble-stones/rubble_cells.diff), on fill-floor; the EP looked at the side-by-side and accepted it. Only with the tile ground on.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-02b-rubble-stones/rubble_cells.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-fill-floor"
+        }
+      ]
+    },
+    {
+      "id": "rendering-burnt-charcoal",
+      "owner": "rendering-techart",
+      "notes": "Burnt ground reads as charcoal (Rendering 2026-11-02c, c64d4018; docs/rendering/pending/2026-11-02c-burnt-charcoal/burnt.diff), on b (rubble-stones); the EP looked at the side-by-side and accepted it. Only with the tile ground on.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-02c-burnt-charcoal/burnt.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-rubble-stones"
+        }
+      ]
+    },
+    {
+      "id": "rendering-shadow-on-slope",
+      "owner": "rendering-techart",
+      "notes": "Shadow tilt on a slope (Rendering 2026-11-02d, ae614e48; docs/rendering/pending/2026-11-02d-shadow-on-slope/shadow_tilt.diff), on c (burnt-charcoal). Only with the tile ground on.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-02d-shadow-on-slope/shadow_tilt.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-burnt-charcoal"
+        }
+      ]
+    },
+    {
+      "id": "rendering-ratchet-list",
+      "owner": "rendering-techart",
+      "notes": "The two-fighter ratchet fix in Rendering's files (Rendering 2026-11-02e, 0cea67ac; docs/rendering/pending/2026-11-02e-ratchet-list/ratchet.diff), after d (shadow-on-slope).",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-02e-ratchet-list/ratchet.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-shadow-on-slope"
+        }
+      ]
+    },
+    {
+      "id": "world-water-window-warm",
+      "owner": "world",
+      "notes": "A new flow window reads its span in chunks (World, re-cut 2026-11-02; docs/world/pending/water-window-warm): OFF in data (water.json flowWarm.cols 0), no switch. The EP: keep it off until World says whether it is hash-neutral (it is not hash-neutral when ON: the window's age is hashed). Sits beneath power-world.",
+      "steps": [
+        {
+          "patch": "docs/world/pending/water-window-warm/water-window-warm.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "world-water-read"
+        }
+      ]
+    },
+    {
+      "id": "world-water-cost",
+      "owner": "world",
+      "notes": "Three cuts in the beam's ticks (World, 2026-11-02; docs/world/pending/water-cost): `touched` reads each column once and `relax` reads the ground once (both hash-exact); the water waits while a swing is active under the warm switch (moves the hash only with flowWarm.cols above 0). Plain git apply after water-window-warm. \"relax_check\" goes into tools/world-checks.json \"run\" by hand when it lands.",
+      "steps": [
+        {
+          "patch": "docs/world/pending/water-cost/water-cost.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "world-water-window-warm"
+        }
+      ]
+    },
+    {
+      "id": "world-power-world",
+      "owner": "world",
+      "notes": "The power model, World's half (World, re-cut 2026-11-02; docs/world/pending/power-world): every branch reads S.powerOn, so with the switch off a match is as it was. Applies clean on this stack, no bridge. water-window-warm stays off in data.",
+      "steps": [
+        {
+          "patch": "docs/world/pending/power-world/power-world.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "world-crater-collapse"
+        },
+        {
+          "park": "world-water-window-warm"
+        }
+      ]
+    },
+    {
+      "id": "world-power-world-grant",
+      "owner": "encounter",
+      "notes": "Encounter's arc.gd and brawl.gd, granted for this page (World's grant-encounter-energy.patch): the meteor's landing and the apex spike pass the match to impactEnergy.",
+      "steps": [
+        {
+          "patch": "docs/world/pending/power-world/grant-encounter-energy.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "world-power-world"
+        }
+      ]
+    },
+    {
+      "id": "world-meteor-power",
+      "owner": "world",
+      "notes": "The meteor keeps its bowl under the power model (World, 2026-11-02; docs/world/pending/meteor-power): arc_check with power on passed 0 failed, bowl 6,046 deep 1,330 as before. Stacks on crater-collapse and power-world. POWER PAGE ONLY.",
+      "steps": [
+        {
+          "patch": "docs/world/pending/meteor-power/meteor-power.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "world-power-world"
+        }
+      ]
+    },
+    {
+      "id": "world-checks-run",
+      "owner": "world",
+      "notes": "The ten new World checks in CI's run list (World, 2026-11-02; docs/world/pending/world-checks-run): one added line in tools/world-checks.json \"run\", before floor_walk_probe. After World's ten parks. A tools file; the stack runs no world-checks.",
+      "steps": [
+        {
+          "patch": "docs/world/pending/world-checks-run/world-checks-run.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "world-water-cost"
+        }
+      ]
+    },
+    {
+      "id": "vfx-power-burn",
+      "owner": "vfx",
+      "notes": "The burn and the trail read the launch speed (VFX, e3e154ee; docs/vfx/pending/power-burn): on top of the energy core, which it cannot go without (it replaces peak-floor's send_only and min_tier keys). IN the ?power=1 page.",
+      "steps": [
+        {
+          "patch": "docs/vfx/pending/power-burn/apply.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "simulation-power-core"
+        },
+        {
+          "park": "vfx-peak-floor"
+        }
+      ]
+    },
+    {
+      "id": "encounter-candidates-heights",
+      "owner": "encounter",
+      "notes": "A building's height is only asked when the choice reaches it (Encounter, 2026-11-02): same choice for fewer ground reads, no switch. World's sim/world/brunt.gd is a grant. First of the press-decides order.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/candidates-heights/candidates-heights.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-ground-settle"
+        }
+      ]
+    },
+    {
+      "id": "encounter-charge-close",
+      "owner": "encounter",
+      "notes": "Press-decides 1 of 6 (Encounter, 2026-11-02; Game Design press-decides section 2): a B held and let go at a rival walking away. Page switch chargeClose ON (data/director/interrupts.json brawl.chargeClose.enabled). press_decides_check goes into CI.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/charge-close/charge-close.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-candidates-heights"
+        }
+      ]
+    },
+    {
+      "id": "encounter-press-wait",
+      "owner": "encounter",
+      "notes": "Press-decides 2 of 6 (replaced cut): hard to charge when every hit seems to interrupt. Page switch pressWait ON (brawl.pressWait.enabled).",
+      "steps": [
+        {
+          "patch": "docs/director/pending/press-wait/press-wait.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-charge-close"
+        }
+      ]
+    },
+    {
+      "id": "encounter-b-one-rule",
+      "owner": "encounter",
+      "notes": "Press-decides 3 of 6: the one rule for B; replaces the earlier press-send. Page switch oneRuleB ON (brawl.oneRuleB.enabled).",
+      "steps": [
+        {
+          "patch": "docs/director/pending/b-one-rule/b-one-rule.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-press-wait"
+        }
+      ]
+    },
+    {
+      "id": "encounter-beam-aim",
+      "owner": "encounter",
+      "notes": "Press-decides 4 of 6 (re-cut): the beam aim, acts only with beamPlays.front.stationary; wants Controls' beam-aim on. Page switch beamAim2 ON (beamPlays.front.aim.enabled, needs beamFront).",
+      "steps": [
+        {
+          "patch": "docs/director/pending/beam-aim/beam-aim.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-b-one-rule"
+        }
+      ]
+    },
+    {
+      "id": "encounter-stance-circle",
+      "owner": "encounter",
+      "notes": "Press-decides 5 of 6 (replaced): LT + Y in reach is the circle. OFF on the page until Orb picks (data stances.circle.enabled false; no page switch row).",
+      "steps": [
+        {
+          "patch": "docs/director/pending/stance-circle/stance-circle.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-beam-aim"
+        }
+      ]
+    },
+    {
+      "id": "encounter-stick-steal",
+      "owner": "encounter",
+      "notes": "Press-decides 6 of 6 (re-cut 2026-11-02, no bridge): the stick steals his run. OFF (data/director/stick.json steal.enabled false), for QA's scratch only; no page switch.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/stick-steal/stick-steal.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-stance-circle"
+        }
+      ]
+    },
+    {
+      "id": "encounter-stick-pend",
+      "owner": "encounter",
+      "notes": "The stick press waits with its request (Encounter, 2026-11-02; docs/director/pending/stick-pend; Game Design stick-lands): up to 90 ticks, told at once when answered or refused. Two switches in data: pendFollow (page switch stickPend ON) and flickRun (OFF until Game Design sets its points; no row). After chase-air, on the press-decides six.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/stick-pend/stick-pend.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-chase-air"
+        },
+        {
+          "park": "encounter-stick-steal"
+        }
+      ]
+    },
+    {
+      "id": "encounter-swing-pair",
+      "owner": "encounter",
+      "notes": "The swing's jolt yields to a launch swing and brawl swings are capped at 0.4 of the big ones (Encounter, 2026-11-02; docs/director/pending/swing-pair): page switches joltYield and brawlShareCap ON. Cut with one line of context.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/swing-pair/swing-pair.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-stick-pend"
+        }
+      ]
+    },
+    {
+      "id": "encounter-chase-carry",
+      "owner": "encounter",
+      "notes": "The chaser carries on 8 ticks past a catch instead of stopping in one tick (Encounter, 2026-11-02; docs/director/pending/chase-carry): behind the chase tap switch (chaseTap, ON), chase.tap.carryTicks 8. Changes what the player sees: needs the side-by-side.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/chase-carry/chase-carry.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-chase-air"
+        }
+      ]
+    },
+    {
+      "id": "encounter-ratchet-roster",
+      "owner": "encounter",
+      "notes": "The two-fighter ratchet fix (Encounter, a5b23ea0; docs/director/pending/ratchet-roster/ratchet-roster.diff): the director files take the pair from the roster. One line of context; if a hunk misses,  does the same replacements. After chase-carry.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/ratchet-roster/ratchet-roster.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-chase-carry"
+        }
+      ]
+    },
+    {
+      "id": "camera-swing-roster",
+      "owner": "camera-cinematography",
+      "notes": "The two-fighter ratchet in Camera's files (Camera, ee95c5c7; docs/camera/pending/swing/swing-roster.patch): the pair's middle and speed and the read's pair come from the roster (_pair_mid, _pair_speed, S.fighters.slice(0, 2)), byte-identical. split_rig.gd and sim/director/swing_read.gd. After Encounter's ratchet-roster and camera-swing-read.",
+      "steps": [
+        {
+          "patch": "docs/camera/pending/swing/swing-roster.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-ratchet-roster"
+        },
+        {
+          "park": "encounter-camera-swing-read"
+        },
+        {
+          "park": "camera-swing-size-floor"
+        }
+      ]
+    },
+    {
+      "id": "encounter-clash-end",
+      "owner": "encounter",
+      "notes": "The beam clash's end event (Encounter, b43784a7 md5; docs/director/pending/clash-end): beam_clash_end cue behind data/director/interrupts.json beamStruggle.endEvent, OFF; no page switch row (the EP: off). After ratchet-roster. VFX's clash-wave reads its cue.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/clash-end/clash-end.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-ratchet-roster"
+        }
+      ]
+    },
+    {
+      "id": "encounter-two-fights-swing",
+      "owner": "encounter",
+      "notes": "The swing in a match of two fights (Encounter, ab39256b; docs/director/pending/two-fights-swing): DirSwing._g, _s and a new _anchor; acts only when S.stage is set, so a 1v1 is unchanged. No switch. After chase-carry.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/two-fights-swing/two-fights-swing.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-chase-carry"
+        }
+      ]
+    },
+    {
+      "id": "simulation-fights-check-turn",
+      "owner": "simulation-engine",
+      "notes": "fights_check reads true with the swing on (Simulation, c5ff39fa70e4; docs/architecture/pending/fights-check-turn): sim/core/tools/fights_check.gd only (the check, not the sim). Check only.",
+      "steps": [
+        {
+          "patch": "docs/architecture/pending/fights-check-turn/fights-check-turn.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-two-fights-swing"
+        }
+      ]
+    },
+    {
+      "id": "audio-press-stunned",
+      "owner": "audio-music",
+      "notes": "The stunned press has the refusal sound (Audio, 2026-11-02; docs/audio/pending/press-stunned): Encounter's press-wait emits press_ack stunned and the brawl press_ack refused; both get the grip's refused-press knock (grip.refuse). No new sound. Behind the carry switch (soundCarry, ON in page builds). Install script is Audio's apply.py. A re-cut is coming: the sha1 lock below is the cut of 2026-11-02 00:26.",
+      "steps": [
+        {
+          "script": "docs/audio/pending/press-stunned/apply.py",
+          "sha1": "f8a81cf52657921b5de23a4ed9cfc69de6870828"
+        }
+      ],
+      "needs": [
+        {
+          "park": "audio-status-line"
+        },
+        {
+          "park": "encounter-press-wait"
+        }
+      ]
+    },
+    {
+      "id": "tools-landing-schemas",
+      "owner": "tools-pipeline",
+      "notes": "Two schema lines the landing tree's validate asked for (Tools, 2026-11-02; docs/tools/pending/landing-schemas): audio-carry-cues.schema.json grapple.refuse.texts maxItems 3 (press-stunned), director-swing.schema.json brawl.shareCap (swing-pair). Mine.",
+      "steps": [
+        {
+          "patch": "docs/tools/pending/landing-schemas/landing-schemas.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-swing-pair"
+        },
+        {
+          "park": "audio-press-stunned"
+        }
+      ]
+    },
+    {
+      "id": "simulation-cross-fights",
+      "owner": "simulation-engine",
+      "notes": "Teams by starting slot, shots from outside, one switch OFF in data (Simulation, c60055216752; docs/architecture/pending/cross-fights; data/fight/cross.json). A plain patch. CI: cross_check (verdict CROSS: n check(s) failed) and its negative control.",
+      "steps": [
+        {
+          "patch": "docs/architecture/pending/cross-fights/cross-fights.patch",
+          "exclude": [
+            "tools/fixtures/cases.json"
+          ],
+          "why": "cross-fights' tools/fixtures/cases.json hunk and power-core's both append at the end of the fixture file; the page runs no fixtures (Tools' file, a Tools merge at landing)"
+        }
+      ],
+      "needs": []
+    },
+    {
+      "id": "vfx-other-fights",
+      "owner": "vfx",
+      "notes": "The other fight's effects in 2v2 (VFX 2026-11-02, 0a821536; docs/vfx/pending/other-fights): read-only on Animation's fight_view, host-pushed, off. After the VFX chain, beam-shove, Animation's fight-view and cross-fights. Added by Tools because clash-wave's other-fights variant needs it (the EP said it is in the stack).",
+      "steps": [
+        {
+          "patch": "docs/vfx/pending/other-fights/apply.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "vfx-beam-shove"
+        },
+        {
+          "park": "animation-fight-view"
+        },
+        {
+          "park": "simulation-cross-fights"
+        }
+      ]
+    },
+    {
+      "id": "vfx-clash-wave",
+      "owner": "vfx",
+      "notes": "The beam clash's shockwave at the meeting point (VFX 2026-11-02, apply-after-other-fights.patch e37bc905 of apply.patch 90512445; docs/vfx/pending/clash-wave): VfxHub.clash_wave_enabled / VfxLook.CLASH_WAVE_DEFAULT OFF. READY behind Encounter's clash-end (the EP, 2026-11-02); off.",
+      "steps": [
+        {
+          "patch": "docs/vfx/pending/clash-wave/apply-after-other-fights.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "vfx-clash-look"
+        },
+        {
+          "park": "vfx-other-fights"
+        },
+        {
+          "park": "encounter-clash-end"
+        }
+      ]
+    },
+    {
+      "id": "simulation-cross-end",
+      "owner": "simulation-engine",
+      "notes": "How a fight ends in a match of two fights (Simulation, da3bc1c6a6cd; docs/architecture/pending/cross-end): cross.json rejoinAfter, the fallen body, stage and damage lines. After cross-fights. CI: cross_end_check (verdict CROSSEND: n check(s) failed) and its negative control. The schema line rejoinAfter in fight-cross.schema.json is Tools' (landing-schemas park).",
+      "steps": [
+        {
+          "patch": "docs/architecture/pending/cross-end/cross-end.patch",
+          "exclude": [
+            "tools/fixtures/cases.json"
+          ],
+          "why": "cross-end's tools/fixtures/cases.json hunk and power-core's both append at the end of the fixture file; the page runs no fixtures (Tools' file; the clean landing tree has no power-core)"
+        }
+      ],
+      "needs": [
+        {
+          "park": "simulation-cross-fights"
+        }
+      ]
+    },
+    {
+      "id": "rendering-draw-others",
+      "owner": "rendering-techart",
+      "notes": "Draws the other fights' bodies (Rendering 2026-11-02f, 8974d8f1; docs/rendering/pending/2026-11-02f-draw-others/others.diff): off by SimHost.draw_others. After e (ratchet-list), cross-fights, cross-end and Animation's fight-view. Re-cut 02beb3b3 (2026-11-02) on this manifest order.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-02f-draw-others/others.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-ratchet-list"
+        },
+        {
+          "park": "simulation-cross-end"
+        },
+        {
+          "park": "animation-fight-view"
+        }
+      ]
+    },
+    {
+      "id": "rendering-inside-rooms",
+      "owner": "rendering-techart",
+      "notes": "Inside rooms (Rendering 2026-11-02g, 25f4f8ca; docs/rendering/pending/2026-11-02g-inside-rooms/inside_rooms.diff), after f (draw-others); the EP looked at the side-by-side and accepted it. Only with the tile ground on.",
+      "steps": [
+        {
+          "patch": "docs/rendering/pending/2026-11-02g-inside-rooms/inside_rooms.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "rendering-draw-others"
+        }
+      ]
+    },
+    {
+      "id": "netcode-two-fights",
+      "owner": "netcode",
+      "notes": "Two fights over LAN (Netcode, e0c10603c56c; docs/net/pending/two-fights): net/enet_transport.gd, lan.gd, session.gd, the net checks and the LAN kit. After cross-fights. CI: rollback_check --setup=fights2 (and its negative control, and --trade-at=0), enet_check --late-host=40000 (CI only).",
+      "steps": [
+        {
+          "patch": "docs/net/pending/two-fights/two-fights.patch",
+          "exclude": [
+            "net/tools/rollback_check.gd"
+          ],
+          "why": "power-core grants a line of net/tools/rollback_check.gd that two-fights also edits; the page runs no checks (a Netcode/Simulation merge at landing, and the clean landing tree has no power-core)"
+        }
+      ],
+      "needs": [
+        {
+          "park": "simulation-cross-fights"
+        }
+      ]
+    },
+    {
+      "id": "netcode-two-fights-end",
+      "owner": "netcode",
+      "notes": "The end of a two-fights match over LAN (Netcode, 360c75403744; docs/net/pending/two-fights-end): ai_driver, lan, lan_check rows, rollback_check KO readings ask SimCore.ended. After cross-fights, cross-end and two-fights. No new CI lines (lan_check and rollback_check are already in CI).",
+      "steps": [
+        {
+          "patch": "docs/net/pending/two-fights-end/two-fights-end.patch",
+          "exclude": [
+            "net/tools/rollback_check.gd"
+          ],
+          "why": "two-fights (on this manifest) already leaves net/tools/rollback_check.gd out, because power-core grants a line of it; the page runs no checks (the clean landing tree has no power-core)"
+        }
+      ],
+      "needs": [
+        {
+          "park": "simulation-cross-end"
+        },
+        {
+          "park": "netcode-two-fights"
+        }
+      ]
+    },
+    {
+      "id": "encounter-outside-blow",
+      "owner": "encounter",
+      "notes": "A blow from outside and a beam that stops on someone else (Encounter 2v2 steps 2a and 2b, 6607c5ed; docs/director/pending/outside-blow): behind interrupts.json outside.enabled, OFF; acts only in a match of two fights with cross on. With Simulation's grant-simulation-forward.patch (ea37115c: 2 lines in sim/core/cross.gd and the forward in sim/core/dir.gd). After cross-fights, ratchet-roster, two-fights-swing and stance-circle.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/outside-blow/grant-simulation-forward.patch"
+        },
+        {
+          "patch": "docs/director/pending/outside-blow/outside-blow.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "simulation-cross-fights"
+        },
+        {
+          "park": "encounter-ratchet-roster"
+        },
+        {
+          "park": "encounter-two-fights-swing"
+        },
+        {
+          "park": "encounter-stance-circle"
+        }
+      ]
+    },
+    {
+      "id": "encounter-two-fights-join",
+      "owner": "encounter",
+      "notes": "Two fights: the join (Encounter, 6f52df0a; docs/director/pending/two-fights-join): after join.afterSec 60 s apart every send scores the way of the other fight (a term in DirLaunch.chooseLaunch). After outside-blow.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/two-fights-join/two-fights-join.diff"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-outside-blow"
+        }
+      ]
+    },
+    {
+      "id": "encounter-two-fights-end",
+      "owner": "encounter",
+      "notes": "Two fights: the end (Encounter, 785ed259; docs/director/pending/two-fights-end) with grant-controls-winner-input.patch (c6dedea2: 2 lines in Controls' sim/input/control.gd, a standing winner's input under his fight's KO). After two-fights-join, on Simulation's cross-fights and cross-end.",
+      "steps": [
+        {
+          "patch": "docs/director/pending/two-fights-end/two-fights-end.diff"
+        },
+        {
+          "patch": "docs/director/pending/two-fights-end/grant-controls-winner-input.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "encounter-two-fights-join"
+        },
+        {
+          "park": "simulation-cross-end"
+        }
+      ]
+    },
+    {
+      "id": "animation-stick-pre",
+      "owner": "animation",
+      "notes": "The stick's pre-read drawn and the quick pieces re-timed to the 7-tick wind-up (Animation, 2026-11-01; docs/animation/stick-pre.md): stick-pre.patch (c67a7b94) on beam-shove, plus stick-pre-schema.patch (56f5f411, Tools' schema, map entry and cases; granted). Inert while Controls' quickRead is off.",
+      "steps": [
+        {
+          "patch": "docs/animation/pending/stick-pre.patch"
+        },
+        {
+          "patch": "docs/animation/pending/stick-pre-schema.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "animation-beam-shove"
+        },
+        {
+          "park": "encounter-stick-steal"
+        }
+      ]
+    },
+    {
+      "id": "animation-stick-pre-ratchet",
+      "owner": "animation",
+      "notes": "The first two-fighter ratchet fix (Animation, 2026-11-02; docs/animation/pending/stick-pre-ratchet.patch): takes the fighter pair from the list in the stick-pre code, on top of stick-pre.patch.",
+      "steps": [
+        {
+          "patch": "docs/animation/pending/stick-pre-ratchet.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "animation-stick-pre"
+        }
+      ]
+    }
+  ]
+}

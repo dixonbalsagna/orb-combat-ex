@@ -46,8 +46,8 @@ func next() -> int:
 
 ## The AI's answer for the slot in state S. S is not changed (unless impure).
 func think(S: SimState) -> int:
-	if S.game.ko != null or S.fighters[slot].ai != null:
-		return NetSession.NEUTRAL   # over, or the slot is the sim's own AI (it reads no input)
+	if SimCore.ended(S) or S.fighters[slot].ai != null:
+		return NetSession.NEUTRAL   # over (with hits across two fights, a first KO isn't the end), or the slot is the sim's own AI (it reads no input)
 	if impure:
 		return _run(S)
 	var snap := NetSnapshot.take(S, pool)

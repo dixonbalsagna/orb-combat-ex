@@ -443,7 +443,7 @@
                 "type": "string"
               },
               "minItems": 1,
-              "maxItems": 1
+              "maxItems": 3
             },
             "priority": {
               "type": "integer",

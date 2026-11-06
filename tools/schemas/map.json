@@ -416,6 +416,10 @@
       "schema": "anim-cues.schema.json"
     },
     {
+      "match": "data/camera/swing.json",
+      "schema": "camera-swing.schema.json"
+    },
+    {
       "match": "data/director/location.json",
       "schema": "director-location.schema.json"
     },
@@ -600,6 +604,18 @@
       "schema": "vfx-energy.schema.json"
     },
     {
+      "match": "data/vfx/clash.json",
+      "schema": "vfx-clash.schema.json"
+    },
+    {
+      "match": "data/vfx/perf.json",
+      "schema": "vfx-perf.schema.json"
+    },
+    {
+      "match": "data/vfx/meteor.json",
+      "schema": "vfx-meteor.schema.json"
+    },
+    {
       "match": "data/vfx/catastrophe.json",
       "schema": "vfx-catastrophe.schema.json"
     },
@@ -670,6 +686,10 @@
     {
       "match": "data/anim/press_ack.json",
       "schema": "anim-press-ack.schema.json"
+    },
+    {
+      "match": "data/anim/stick_pre.json",
+      "schema": "anim-stick-pre.schema.json"
     },
     {
       "match": "data/anim/grip_feed.json",
@@ -758,6 +778,10 @@
     {
       "match": "data/fight/swing.json",
       "schema": "fight-swing.schema.json"
+    },
+    {
+      "match": "data/fight/cross.json",
+      "schema": "fight-cross.schema.json"
     }
   ]
 }

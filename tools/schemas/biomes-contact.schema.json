@@ -709,6 +709,36 @@
       "patternProperties": {
         "^_": true
       }
+    },
+    "settle": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "perTier": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "maxContacts": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "enabled",
+        "perTier",
+        "maxContacts"
+      ]
     }
   },
   "additionalProperties": false,

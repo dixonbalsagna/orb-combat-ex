@@ -42,6 +42,8 @@ func attach(p_mats: RenderMats, p_ground: GroundField) -> void:
 
 ## cam_x: this pane's wrapped camera x; half_w: half the visible width at the fighter plane (world units); zoom: pixels per unit there.
 func update(hub: VfxHub, S: SimState, cam_x: float, half_w: float, zoom: float) -> void:
+	if RenderTileGround.on and S.frame != null and S.swing != null and S.swing.active and not hub.crack_sets.is_empty():
+		hub.crack_sets.clear()   # the tile ground: a set lies on the strip, not the planet, so it goes as the line moves off it (no fade: the EP's ruling)
 	visible_count = 0
 	built_now = 0
 	mat.set_shader_parameter("now", hub.fx_now(S))

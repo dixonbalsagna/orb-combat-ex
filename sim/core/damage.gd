@@ -144,9 +144,10 @@ static func ko(S: SimState, D, A) -> void:
 	if S.hitstopOn:
 		SimHitstop.hold(S, "ko")   # hit-stop by weight: the KO holds the cap
 	D.hp = 0.0
-	SimFx.banner(S, "K.O.  " + A.name + " WINS", "#ffd45a", 4.0)
-	SimFx.ko(S, A, D)
-	SimEvents.feed(S, "K.O. — " + A.name + " wins", "Casualties " + SimMathx.jstr(SimMathx.jround(S.world.casualties)) + ", structures lost " + SimMathx.jstr(S.world.structuresLost))
+	var over: bool = SimCross.fallen(S, D) if S.stage != null and S.stage.cross else true   # 2v2: he's out, and the match ends only with his team
+	SimFx.banner(S, ("K.O.  " + A.name + " WINS") if over else ("K.O.  " + D.name + " IS OUT"), "#ffd45a", 4.0)
+	SimFx.ko(S, A, D, over, SimCross.winnersOf(S, A) if over else [])   # UI's card: the match over or not, and the winning team
+	SimEvents.feed(S, ("K.O. — " + A.name + " wins") if over else ("K.O. — " + D.name + " is out"), "Casualties " + SimMathx.jstr(SimMathx.jround(S.world.casualties)) + ", structures lost " + SimMathx.jstr(S.world.structuresLost))
 	if S.dirS.ex != null:
 		SimDir.endEx(S, S.dirS.ex)
 	A.state = "free" if A.state == "locked" else A.state

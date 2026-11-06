@@ -34,12 +34,35 @@
   "windTicks": 7,
   "quickRecover": 7,
   "chargeRecover": 16,
+  "armour": {
+    "enabled": false,
+    "fromTicks": 12,
+    "mediumUntilTicks": 30,
+    "missOpenTicks": 20,
+    "_note": "Past the quick flick a hold has B's armour, a beam's on the stick too (docs/design/power-scale.md section 2). From fromTicks (0.2 s) a light never stops it, and does heavy.armour.lightMul of its damage. A medium stops it before mediumUntilTicks (level 2, 0.5 s). A heavy, a beam or a grab stops it. A dodge makes a charged strike miss, and he's open for missOpenTicks (0.33 s)."
+  },
+  "steal": {
+    "enabled": false,
+    "max": 3,
+    "reelBase": 6,
+    "reelPer": 2,
+    "_note": "The stick steals his run, for QA's arm (docs/design/stick-lands.md): a quick flick from no stance that lands clean takes his run to 0, yours rises by what was taken, at most max, and he reels reelBase + reelPer each point. The AI never steals."
+  },
   "autoGoTicks": 68,
   "repeatSec": 3.0,
   "carryTicks": 12,
   "pendTicks": 9,
   "bufferTicks": 9,
-  "lightStops": true,
+  "pendFollow": {
+    "enabled": false,
+    "maxTicks": 90,
+    "_note": "A stick strike waiting for its blow follows its request: queued, it waits up to maxTicks; answered by a planned exchange or refused, it's told at once (stick_refused answered or refused). A hold the answer swept up becomes the charge on his first free tick, counting from then, nothing banked (Game Design, 2026-11-02). Off, it lapses after pendTicks as late, whatever happened."
+  },
+  "flickRun": {
+    "enabled": false,
+    "points": 3,
+    "_note": "A landed quick flick counts in its striker's run, points of it, with the steal on top (Game Design, stick-lands.md, 2026-11-02): a light's 1 first, and a medium's 3 if stick-only still lost every trade break. At 1 it lost all 48 of 48 to the easy AI; at 3 it won 45 of 45. Game Design's to tune."
+  },  "lightStops": true,
   "softWorth": 1.7,
   "softReel": 6,
   "softRunOff": 2,

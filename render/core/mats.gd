@@ -12,6 +12,9 @@ const FLAT_ALPHA: Shader = preload("res://render/shaders/flat_alpha.gdshader")
 const GLOW: Shader = preload("res://render/shaders/glow.gdshader")
 
 var _cache: Dictionary = {}
+var _globe_r: float = 0.0
+var _globe_sx: float = 0.0
+var _globe_n: int = 0
 var _tracked: Array = []      # other materials whose shader includes bend.gdshaderinc
 var _bend: float = 0.0
 var _dist: float = 3000.0
@@ -113,8 +116,8 @@ static func fighter_under() -> ShaderMaterial:
 	h.shader = preload("res://render/shaders/fighter_hull_under.gdshader")
 	h.render_priority = 1
 	m.next_pass = h
-	for x in [m, h]:
-		x.set_shader_parameter("under_sheet", RenderLook.WATER_SURFACE)
+	m.set_shader_parameter("under_sheet", Color(RenderLook.WATER_SURFACE, RenderLook.UNDER_BODY))
+	h.set_shader_parameter("under_sheet", Color(RenderLook.WATER_SURFACE, 0.0))
 	return m
 
 
@@ -149,9 +152,28 @@ func track(m: ShaderMaterial) -> void:
 ## How far the planet's bend lowers a point at camera-relative x and depth z this frame: the CPU twin of bent_world()
 ## in render/shaders/bend.gdshaderinc, for what is placed rather than bent in a shader (a fighter at depth).
 func sag(x: float, z: float) -> float:
+	if _globe_r > 0.0:
+		return 0.0   # the tile ground: the placement does it, in the shaders (ortho.gdshaderinc for what keeps its shape)
 	var back: float = maxf(_focus - z, 0.0)
 	var k: float = clampf((back - 60.0) / 1200.0, 0.0, 1.0) * _dist / (_dist + back)
 	return _bend * x * x * k
+
+
+## The tile ground's placement for this pane (bend.gdshaderinc globe_place): the camera's strip x, the lift's table.
+func set_globe(r: float, sx: float, off: Texture2D) -> void:
+	_globe_r = r
+	_globe_n += 1
+	if sx == _globe_sx and _globe_n % 30 != 1:
+		return
+	_globe_sx = sx
+	for m in _cache.values():
+		m.set_shader_parameter("globe_sx", sx)
+		m.set_shader_parameter("globe_off", off)
+		m.set_shader_parameter("globe_lift_on", 1.0)
+	for m in _tracked:
+		m.set_shader_parameter("globe_sx", sx)
+		m.set_shader_parameter("globe_off", off)
+		m.set_shader_parameter("globe_lift_on", 1.0)
 
 
 ## The bend's three numbers (bend, the camera's distance, the focus depth), for a bound on what it may bring into view

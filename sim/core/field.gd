@@ -30,6 +30,18 @@ static var _kp := PackedFloat64Array([2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0])
 static var _kSeed: int = -1
 static var _sh: int = 0
 static var _serial: int = 0
+static var _ctF = null                     # planetCeilAt's table of the bake: the highest node of each tile of each face, for this field; pure, so it isn't state
+static var _ct := PackedFloat32Array()
+static var _ctK: int = 0                   # ... its tiles done (warmStep fills it, a few a tick)
+static var _ctT: int = 0                   # ... a tile's side in bake cells
+static var _ctN: int = 0                   # ... tiles to a face's side
+static var _crW: int = -1                  # ... the highest World's records can make the ground, by box of the planet: for this world and this many records
+static var _crN: int = -1
+static var _crI: int = 0
+static var _cr: Dictionary = {}
+static var _riseH: int = -1                # ... what the store's rims can add, by box: for the store with this hash
+static var _rise: Dictionary = {}
+static var _changes: int = 0               # counts every change a memo keyed on serialOf must see: a bind, and a record joining the store
 static var _nc: int = 0
 static var _wCur: int = 0                   # the warm-up (warmStep): the next coarse column, the next building ...
 static var _wB: int = 0
@@ -48,6 +60,16 @@ static var _w0 := PackedFloat64Array()      # ... and each level's record water 
 static var _w1 := PackedFloat64Array()
 static var _t0 := PackedInt32Array()
 static var _t1 := PackedInt32Array()
+static var _fs: int = 0                     # the frame's serial: a column's ground before the store keys on it (World's request), so a record joining the store, or a
+static var _recs = null                     # rollback's store, doesn't move it; a new frame, planet, level or set of records does
+static var _recN: int = -1
+static var _m0f := PackedFloat64Array()     # ... that ground, the field and World's records, by coarse and fine column
+static var _m1f := PackedFloat64Array()
+static var _f0 := PackedInt32Array()
+static var _f1 := PackedInt32Array()
+static var splitOff: bool = false           # tests only: every column read whole, as before (field_static_check)
+static var blindStore: bool = false         # tests only: a kept ground read without the store's delta (its negative control)
+static var kept: int = 0                    # tests only: reads that found a kept ground
 
 
 static func data() -> Dictionary:
@@ -189,11 +211,18 @@ static func _fresh(S: SimState) -> void:
 
 static func _bind(S: SimState) -> void:
 	var fr = S.frame
+	var F = WorldField.of(_planet(fr.seed, fr.gen))
+	var same: bool = _nc == SimConst.NC and is_same(F, _F) and _stride == WorldField.bakeStride() and fr.px == _kp[0] and fr.py == _kp[1] and fr.pz == _kp[2] and fr.tx == _kp[3] and fr.ty == _kp[4] and fr.tz == _kp[5] and fr.x0 == _kp[6] and is_same(S.fieldRecs, _recs) and S.fieldRecs.size() == _recN
+	if not same:   # only the store moved, or the ground before it is laid again too
+		_fs += 1
+		_recs = S.fieldRecs
+		_recN = S.fieldRecs.size()
 	_kp[0] = fr.px; _kp[1] = fr.py; _kp[2] = fr.pz; _kp[3] = fr.tx; _kp[4] = fr.ty; _kp[5] = fr.tz; _kp[6] = fr.x0
 	_kSeed = fr.seed
 	_sh = S.storeHash
 	_serial += 1
-	_F = WorldField.of(_planet(fr.seed, fr.gen))
+	_changes += 1
+	_F = F
 	_stride = WorldField.bakeStride()
 	_st = int(data().get("farStride", 8))
 	if _nc != SimConst.NC:
@@ -210,6 +239,123 @@ static func _bind(S: SimState) -> void:
 		_t1.resize(_nc)
 		_t0.fill(-1)
 		_t1.fill(-1)
+		_m0f.resize(_nc)
+		_m1f.resize(_nc)
+		_f0.resize(_nc)
+		_f1.resize(_nc)
+		_f0.fill(-1)
+		_f1.fill(-1)
+
+
+## A record joined the store (WorldStore._push; h0 is the store's hash before it). If the memos are this store's, on this line, what the record can't reach is still right: its
+## term in WorldStore.heightDelta is exactly nothing there, so a read would give the same bits. Only the columns and buildings it can reach are read again. Any other state, a
+## rollback or another line doesn't match h0 or the frame, and _fresh lays the memos again whole, as ever. A kind that adds no height (a crack) changes no ground.
+static func storeGrew(S: SimState, h0: int, o: int) -> void:
+	var fr = S.frame
+	if fr == null:
+		return
+	var kind: int = int(S.store[o])
+	if _riseH == h0:   # the rims, the same way: only the store they were added up for moves on
+		_riseH = S.storeHash
+		if kind == WorldStore.KIND_CRATER:
+			_riseAdd(S, o)
+	var height: bool = kind != WorldStore.KIND_CRACK
+	var same: bool = h0 == _sh and _nc == SimConst.NC and fr.seed == _kSeed and fr.tx == _kp[3] and fr.ty == _kp[4] and fr.tz == _kp[5] and fr.px == _kp[0] and fr.py == _kp[1] and fr.pz == _kp[2] and fr.x0 == _kp[6]
+	var bk0: int = h0 ^ (S.get_instance_id() << 8) ^ S.bDir.size()
+	var bSame: bool = bk0 == _bKey
+	if not same and not bSame:
+		return
+	if same:
+		_sh = S.storeHash
+		_changes += 1
+		if height:
+			_clearColumns(S, o, kind)
+	if bSame:
+		_bKey = S.storeHash ^ (S.get_instance_id() << 8) ^ S.bDir.size()
+		if height and not _bHave.is_empty():
+			_clearBuildings(S, o, kind)
+
+
+## How far from its point (or its segment) a record's height reaches, in chord units, as heightDelta tests it.
+static func _reachOf(S: SimState, o: int, kind: int) -> float:
+	if kind == WorldStore.KIND_CRATER:
+		return S.store[o + 4] * WorldStore.REACH_R
+	if kind == WorldStore.KIND_SCORCH:
+		return S.store[o + 4]
+	return S.store[o + 8]   # a trench's half width
+
+
+## Forget the columns a record can reach. A point at chord distance d from another has both its arc along the line and its depth at most 2R asin(d / 2R), under 1.05 d while d is
+## under R; past that, or for a segment too long to read as straight on the strip, everything goes.
+static func _clearColumns(S: SimState, o: int, kind: int) -> void:
+	var reach: float = _reachOf(S, o, kind)
+	var seg: bool = kind == WorldStore.KIND_TRENCH
+	var len: float = 0.0
+	if seg:
+		var ex: float = S.store[o + 4] - S.store[o + 1]
+		var ey: float = S.store[o + 5] - S.store[o + 2]
+		var ez: float = S.store[o + 6] - S.store[o + 3]
+		len = sqrt(ex * ex + ey * ey + ez * ez) * R
+	if reach + len >= R * 0.25:
+		_serial += 1
+		return
+	var pad: float = reach * 1.05 + 2.0 * SimConst.COL
+	var sx0: float = sx   # a caller's strip read stays as it was: a store's add can come between it and its use
+	var sz0: float = sz
+	strip(S, S.store[o + 1], S.store[o + 2], S.store[o + 3])
+	var xa: float = sx
+	var za: float = sz
+	var way: float = 0.0
+	if seg:
+		strip(S, S.store[o + 4], S.store[o + 5], S.store[o + 6])
+		way = SimWrap.sdx(xa, sx)
+	var zb: float = sz
+	sx = sx0
+	sz = sz0
+	var off: float = (reach + len) * 1.05
+	if absf(za) > off and absf(zb) > off:
+		return
+	var c0: int = int(floor((xa + minf(way, 0.0) - pad) / SimConst.COL))
+	var c1: int = int(ceil((xa + maxf(way, 0.0) + pad) / SimConst.COL))
+	if c1 - c0 >= _nc:
+		_serial += 1
+		return
+	for c in range(c0, c1 + 1):
+		var i: int = posmod(c, _nc)
+		_s0[i] = -1
+		_s1[i] = -1
+		_t0[i] = -1
+		_t1[i] = -1
+
+
+## Forget the buildings' ground a record can reach: a building reads one point, its own.
+static func _clearBuildings(S: SimState, o: int, kind: int) -> void:
+	var reach: float = _reachOf(S, o, kind) * 1.001 / R
+	var r2: float = reach * reach
+	var ax: float = S.store[o + 1]
+	var ay: float = S.store[o + 2]
+	var az: float = S.store[o + 3]
+	var ex: float = 0.0
+	var ey: float = 0.0
+	var ez: float = 0.0
+	var e2: float = 0.0
+	if kind == WorldStore.KIND_TRENCH:
+		ex = S.store[o + 4] - ax
+		ey = S.store[o + 5] - ay
+		ez = S.store[o + 6] - az
+		e2 = ex * ex + ey * ey + ez * ez
+	for k in _bHave.keys():
+		var i: int = int(k) >> 1
+		var dx: float = S.bDir[i * 3] - ax
+		var dy: float = S.bDir[i * 3 + 1] - ay
+		var dz: float = S.bDir[i * 3 + 2] - az
+		if e2 > 0.0:
+			var t: float = clampf((dx * ex + dy * ey + dz * ez) / e2, 0.0, 1.0)
+			dx -= ex * t
+			dy -= ey * t
+			dz -= ez * t
+		if dx * dx + dy * dy + dz * dz < r2:
+			_bHave.erase(k)
 
 
 ## The ground the sim stands on at direction ox, oy, oz, before a fight's strip marks: the field's height by the reader's level, World's records, the planet store.
@@ -222,6 +368,33 @@ static func _ground(S: SimState, step: int) -> float:
 	if not S.fieldRecs.is_empty():
 		h = WorldField.applyRecords(S, qx, qy, qz, h)
 	if S.storeN > 0:
+		h += WorldStore.heightDelta(S, qx, qy, qz)
+	return h
+
+
+## _ground at column c, with the part before the store's delta kept for the frame and the records (_fs): a record joining the store forgets the columns it reaches
+## (storeGrew), and a re-read of one adds the store's delta to what's kept. The same bits as _ground's: the field, then the records, then the store, in that order.
+static func _split(S: SimState, c: int, step: int, fine: bool) -> float:
+	var qx: float = ox
+	var qy: float = oy
+	var qz: float = oz
+	var h: float
+	var have: bool = (_f1[c] if fine else _f0[c]) == _fs
+	if have:
+		h = _m1f[c] if fine else _m0f[c]
+		kept += 1
+	else:
+		WorldField.sample(_F, qx, qy, qz, step)
+		h = _F.oh
+		if not S.fieldRecs.is_empty():
+			h = WorldField.applyRecords(S, qx, qy, qz, h)
+		if fine:
+			_m1f[c] = h
+			_f1[c] = _fs
+		else:
+			_m0f[c] = h
+			_f0[c] = _fs
+	if S.storeN > 0 and not (have and blindStore):
 		h += WorldStore.heightDelta(S, qx, qy, qz)
 	return h
 
@@ -240,7 +413,7 @@ static func col(S: SimState, i: int) -> float:
 	if _s1[i] == _serial:
 		return _m1[i]
 	pointAt(S, float(i) * SimConst.COL)
-	var h1: float = _ground(S, 1)
+	var h1: float = _ground(S, 1) if splitOff else _split(S, i, 1, true)
 	_m1[i] = h1
 	_s1[i] = _serial
 	return h1
@@ -251,7 +424,7 @@ static func _coarse(S: SimState, c: int) -> float:
 	if _s0[c] == _serial:
 		return _m0[c]
 	pointAt(S, float(c) * SimConst.COL)
-	var h: float = _ground(S, _stride)
+	var h: float = _ground(S, _stride) if splitOff else _split(S, c, _stride, false)
 	_m0[c] = h
 	_s0[c] = _serial
 	return h
@@ -319,11 +492,12 @@ static func buildingGround(S: SimState, i: int) -> float:
 
 ## Fills the memos a launch's plan would read cold, a few a tick, once they've been quiet for warmQuiet ticks: the coarse ground and the record water on it (groundCeilAt), then the
 ## buildings' ground (WorldBrunt.candidates). Two thirds of a launch tick was these first reads (Performance, docs/perf/launch-ticks-2026-11-01.md). Nothing here is state: a value is
-## what the read would compute in the same state, so a match is the same to the bit, warm or cold, whatever a rollback does. A crater or a swing lays the memos again and it starts over.
+## what the read would compute in the same state, so a match is the same to the bit, warm or cold, whatever a rollback does. A swing lays the memos again (a crater only forgets the columns it reaches) and it starts over.
 static func warmStep(S: SimState) -> void:
 	if S.frame == null or S.depthOn:
 		return
 	var d: Dictionary = data()
+	_ceilStep(S, int(d.warmCeil))
 	var nw: int = int(d.warmN)
 	var nb: int = int(d.warmB)
 	if nw <= 0 and nb <= 0:
@@ -365,6 +539,198 @@ static func warmStep(S: SimState) -> void:
 static func groundCeilAt(S: SimState, col_: int) -> float:
 	if S.frame == null or S.depthOn:
 		return INF
+	return _ceilRead(S, col_)
+
+
+## A box of the planet, as WorldStore's grid keys one. Any point of a stretch is in the box of the stretch's middle or one beside it, so a box is at least half a stretch.
+const CEIL_BOX: float = 2048.0
+
+
+static func _boxKey(ix: int, iy: int, iz: int) -> int:
+	return ((ix + 64) * 128 + (iy + 64)) * 128 + (iz + 64)
+
+
+## An upper bound on the same far reads as groundCeilAt, on any line, with no read of the ground: a flight above this is above all of them, whatever line the plan is on. INF where
+## it can't say: the table not built yet, near a face's edge, or World's water near (a read's water depends on the ground there). Whether it can say changes nothing: it's only ever
+## asked first, and a flight under it asks groundCeilAt, so a match is the same to the bit with it or without it.
+## The ground of a far read is a triangle of bake nodes, then World's records, then the store: the most of the nodes near, the most the records can make it, and all the rims that reach.
+static func planetCeilAt(S: SimState, col_: int) -> float:
+	if S.frame == null or S.depthOn:
+		return INF
+	_fresh(S)
+	if _ctF != _F or _ctK < 6 * _ctN * _ctN or _crW != S.worldId or _crN != S.fieldRecs.size() or _crI < _crN:
+		return INF
+	var n: int = int(data().ceilCols)
+	var c0: int = posmod(col_, _nc)
+	c0 -= c0 % n
+	pointAt(S, (float(c0) + 0.5 * float(n)) * SimConst.COL)
+	var qx: float = ox
+	var qy: float = oy
+	var qz: float = oz
+	var nb: int = _F.N / _F.stride
+	WorldField._locate(qx, qy, qz, nb)
+	var face: int = WorldField._lf
+	var a: float = WorldField._la
+	var b: float = WorldField._lb
+	var t: float = float(_ctT)
+	if a < t or b < t or a > float(nb) - t or b > float(nb) - t:
+		return INF
+	var ti: int = mini(int(a) / _ctT, _ctN - 1)
+	var tj: int = mini(int(b) / _ctT, _ctN - 1)
+	var hi: float = -1.0e18
+	for j in range(maxi(tj - 1, 0), mini(tj + 2, _ctN)):
+		for i in range(maxi(ti - 1, 0), mini(ti + 2, _ctN)):
+			hi = maxf(hi, _ct[(face * _ctN + j) * _ctN + i])
+	if _riseH != S.storeHash:
+		_riseBuild(S)
+	var r: float = _R_BOX()
+	var ix: int = int(floor(qx * r))
+	var iy: int = int(floor(qy * r))
+	var iz: int = int(floor(qz * r))
+	var rise: float = 0.0
+	for dx in range(-1, 2):
+		for dy in range(-1, 2):
+			for dz in range(-1, 2):
+				var key: int = _boxKey(ix + dx, iy + dy, iz + dz)
+				var v = _cr.get(key)
+				if v != null:
+					if v == INF:
+						return INF
+					hi = maxf(hi, v)
+				var w = _rise.get(key)
+				if w != null:
+					rise = maxf(rise, w)
+	return maxf(hi + rise + _marksOver(S, c0, n), WorldWater.SEA_LEVEL)
+
+
+## Boxes to a unit direction's number.
+static func _R_BOX() -> float:
+	return R / CEIL_BOX
+
+
+## The most the strip's own marks and made water add over a stretch.
+static func _marksOver(S: SimState, c0: int, n: int) -> float:
+	var low: PackedFloat32Array = WorldTerrain.lowD(S)
+	var mark: float = 0.0
+	var made: float = 0.0
+	for k in range(c0, c0 + n + 1):
+		var cw2: int = k % _nc
+		mark = maxf(mark, S.deform[cw2])
+		mark = maxf(mark, low[cw2])
+		made = maxf(made, S.water[cw2])
+	return mark + made
+
+
+## Every box a reach of `reach` round a unit direction touches, as WorldStore._list lists a record.
+static func _boxesOf(qx: float, qy: float, qz: float, reach: float) -> Array:
+	var r: float = reach / CEIL_BOX
+	var q: float = _R_BOX()
+	var x0: int = int(floor(qx * q - r))
+	var x1: int = int(floor(qx * q + r))
+	var y0: int = int(floor(qy * q - r))
+	var y1: int = int(floor(qy * q + r))
+	var z0: int = int(floor(qz * q - r))
+	var z1: int = int(floor(qz * q + r))
+	var out: Array = []
+	for ix in range(x0, x1 + 1):
+		for iy in range(y0, y1 + 1):
+			for iz in range(z0, z1 + 1):
+				out.append(_boxKey(ix, iy, iz))
+	return out
+
+
+## A crater's rim added to the boxes it reaches. Past u = 2 a crater adds nothing, and nowhere does it add more than its rim (WorldCrater.profile). The scorches and trenches only dig.
+static func _riseAdd(S: SimState, o: int) -> void:
+	var hr: float = S.store[o + 6]
+	if hr <= 0.0:
+		return
+	for key in _boxesOf(S.store[o + 1], S.store[o + 2], S.store[o + 3], S.store[o + 4] * WorldStore.REACH_R):
+		_rise[key] = float(_rise.get(key, 0.0)) + hr
+
+
+static func _riseBuild(S: SimState) -> void:
+	_rise.clear()
+	for k in range(S.storeN):
+		var o: int = k * WorldStore.STRIDE
+		if int(S.store[o]) == WorldStore.KIND_CRATER:
+			_riseAdd(S, o)
+	_riseH = S.storeHash
+
+
+## The tiles and the records, `budget` tiles and four times that many records a tick: a flight over ground it hasn't reached yet reads it, as ever.
+static func _ceilStep(S: SimState, budget: int) -> void:
+	if budget <= 0:
+		return
+	_fresh(S)
+	if not _F.bakeDone:
+		return   # a node the bake hasn't reached isn't in the arrays yet
+	if _ctF != _F:
+		_ctF = _F
+		_ctK = 0
+		var nb: int = _F.N / _F.stride
+		# A stretch's half and the cell its read interpolates, in bake cells: a cell is never under 0.6 of its middle's arc, by the cube's map.
+		_ctT = int(ceil((0.5 * float(data().ceilCols) * SimConst.COL + SimConst.COL) / (R * SimMathx.PI * 0.5 / float(nb) * 0.6))) + 1
+		_ctN = (nb + _ctT - 1) / _ctT
+		_ct.resize(6 * _ctN * _ctN)
+	var total: int = 6 * _ctN * _ctN
+	var nb2: int = _F.N / _F.stride
+	var left: int = budget
+	while left > 0 and _ctK < total:
+		var k: int = _ctK
+		var i: int = k % _ctN
+		var r: int = k / _ctN
+		var j: int = r % _ctN
+		var face: int = r / _ctN
+		var hi: float = -1.0e18
+		var side2: int = _F.side
+		var base: int = face * side2 * side2
+		for bj in range(j * _ctT, mini((j + 1) * _ctT, nb2) + 1):
+			var row: int = base + bj * _F.stride * side2
+			for bi in range(i * _ctT, mini((i + 1) * _ctT, nb2) + 1):
+				hi = maxf(hi, _F.h[row + bi * _F.stride])
+		_ct[k] = hi
+		_ctK += 1
+		left -= 1
+	if _crW != S.worldId or _crN != S.fieldRecs.size():
+		_crW = S.worldId
+		_crN = S.fieldRecs.size()
+		_crI = 0
+		_cr.clear()
+	var m: int = budget * 4
+	while m > 0 and _crI < _crN:
+		_ceilRec(S.fieldRecs[_crI])
+		_crI += 1
+		m -= 1
+
+
+## One of World's records: the most it can make the ground (WorldField.applyRecords), or INF for water, which a read takes from the ground under it.
+static func _ceilRec(rec: Dictionary) -> void:
+	var kind: String = rec.k
+	if kind == "far":
+		return
+	var top: float = INF
+	var reach: float = 0.0
+	var c: Array = rec.get("c", [0.0, 0.0, 0.0])
+	if kind == "platform":
+		top = float(rec.floor)
+		reach = float(rec.r) + float(rec.blend)
+		c = [rec.px, rec.py, rec.pz]
+	elif kind == "pad":
+		top = float(rec.h)
+		reach = float(rec.r) + float(rec.blend)
+	elif kind == "lot":
+		top = float(rec.h) + absf(float(rec.get("gt", 0.0))) * float(rec.hl) + absf(float(rec.get("gs", 0.0))) * float(rec.hd)
+		reach = float(rec.hl) + float(rec.hd) + float(rec.blend) + float(rec.get("bs", rec.blend))
+	else:
+		reach = float(rec.get("r", 1.0e18))   # a lake, a river, a kind not known here: this ground isn't the table's to say
+	if reach >= 2.0 * R:
+		reach = 2.0 * R
+	for key in _boxesOf(c[0], c[1], c[2], reach):
+		var v = _cr.get(key)
+		_cr[key] = maxf(float(v), top) if v != null else top
+
+
+static func _ceilRead(S: SimState, col_: int) -> float:
 	_fresh(S)
 	var n: int = int(data().ceilCols)
 	var c0: int = posmod(col_, _nc)
@@ -385,15 +751,7 @@ static func groundCeilAt(S: SimState, col_: int) -> float:
 			wet = maxf(wet, _w0[cw])
 		c += _st
 	_far -= 1
-	var low: PackedFloat32Array = WorldTerrain.lowD(S)
-	var mark: float = 0.0
-	var made: float = 0.0
-	for k in range(c0, c0 + n + 1):
-		var cw2: int = k % _nc
-		mark = maxf(mark, S.deform[cw2])
-		mark = maxf(mark, low[cw2])
-		made = maxf(made, S.water[cw2])
-	return maxf(hi + wet + mark + made, WorldWater.SEA_LEVEL)
+	return maxf(hi + wet + _marksOver(S, c0, n), WorldWater.SEA_LEVEL)
 
 
 ## The ground at a direction by level, 0 the bake, 1 the 128 ground: pure, no frame, no records, no store (Rendering's CPU twin, Camera's tall land).
@@ -405,7 +763,7 @@ static func heightOf(seed: int, gen: int, level: int, qx: float, qy: float, qz: 
 ## The memo's serial once bound to S: moves whenever the frame, the swing or the store the memo reads changes (World's contact table memoises a column's ground on it).
 static func serialOf(S: SimState) -> int:
 	_fresh(S)
-	return _serial
+	return _changes
 
 
 ## The stored biome (WorldPlanet.BIO_*, an index into WorldPlanetWorld.BIOME_NAME) at strip x through the frame, on the bake: Camera's biome by strip x, and WorldBiomes once the line has swung, so a swing changes the biome under a fight.

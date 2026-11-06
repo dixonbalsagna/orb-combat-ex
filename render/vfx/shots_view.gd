@@ -28,6 +28,7 @@ const PLAY_LIFT := 30.0     # the beam plays sit in front of the ground dust (it
 const Z_HAND := 5.0
 
 var _buf := PackedFloat32Array()
+var heads := VfxEnergyHeads.new()   # the blasts' heads and impact pieces in the beam's own language (energy_head.gd), drawn instead of the discs while the hub's `energy_heads_enabled` is on
 var count: int = 0           # instances drawn last frame (the tests)
 var shots_drawn: int = 0     # shots drawn last frame
 var charges_drawn: int = 0   # fighters with a charge drawn last frame
@@ -51,12 +52,18 @@ func _ready() -> void:
 	material_override = m
 	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_buf.resize(CAP * STRIDE)
+	heads.name = "Heads"
+	add_child(heads)
 
 
 ## a: the frame's interpolation between the last two ticks. host: anything with .S and fighter_x / fighter_pose / fighter_z (the
 ## pane's SimHost; a stub in the tests).
 func update(hub: VfxHub, host, a: float, cam_x: float, zoom: float, half_w: float) -> void:
 	var n: int = 0
+	var hd: bool = hub.energy_heads_enabled
+	heads.visible = hd
+	if hd:
+		heads.begin()
 	shots_drawn = 0
 	charges_drawn = 0
 	var S: SimState = host.S
@@ -107,19 +114,20 @@ func update(hub: VfxHub, host, a: float, cam_x: float, zoom: float, half_w: floa
 		if tumbling and not hub.reduced_motion:
 			dirv = dirv.rotated(sin(spin * 0.8) * 0.35)
 		var pz: float = float(sp.z) + Z_SHOT
-		var lane: Color = VfxShots.lane_of(S, int(sp.owner))
+		var shbody = VfxShots.body_of(S, int(sp.owner), sp)      # a shot from outside is its shooter's, in the other fight
+		var lane: Color = VfxShots.lane_of_body(shbody) if int(sp.owner) < 0 else VfxShots.lane_of(S, int(sp.owner))
 		var look: Dictionary = VfxShots.look_of(sp)
 		var rad: float = look["rad"]
 		var tail: float = look["tail"]
 		shots_drawn += 1
 		var tcol: Color = lane
 		tcol.a = alpha * 0.8
-		if hub.reduced_motion or tumbling or sp.owner >= S.fighters.size():
+		if hub.reduced_motion or tumbling or shbody == null:
 			n = _put(n, Vector2(px, py) - dirv * tail * 0.5, dirv, tail, rad * 1.5, pz - 0.6, tcol, 0.55, 0.04, SHAPE_STREAK)
 		else:
 			# The shooter's flavour (data/vfx/energy.json, docs/vfx/beam-look.md): the tail is a ribbon of five segments that swims a little as it goes (the Protagonist's laminar, the Rival's ragged,
 			# the Anti-hero's a straight thin line), stepping between the fighter's two tints at the same luminance. Steady in brightness: only its shape moves.
-			var fo = S.fighters[int(sp.owner)]
+			var fo = shbody
 			var flv: Dictionary = VfxBeamLook.flavour(fo)
 			var tt2: Array = VfxBeamLook.tints(fo, lane, 1)
 			var amp: float = rad * 0.38 * float(flv["wob_k"])
@@ -134,19 +142,25 @@ func update(hub: VfxHub, host, a: float, cam_x: float, zoom: float, half_w: floa
 				rc2.a = alpha * 0.85 * (1.0 - 0.8 * tq)
 				n = _line(n, prev, cur, lerpf(rad * 1.25, rad * 0.3, tq), pz - 0.6, rc2)
 				prev = cur
-		if look["halo"]:
+		if look["halo"] and not hd:
 			var hc: Color = lane
 			hc.a = alpha * 0.7
 			n = _put(n, Vector2(px, py), Vector2(1.0, 0.0), rad * 3.0, rad * 3.0, pz - 0.3, hc, maxf(0.06, 1.6 * minpx / (rad * 1.5)), 0.0, SHAPE_RING)
-		var rim: Color = lane.darkened(0.35)
-		rim.a = alpha
-		n = _put(n, Vector2(px, py), Vector2(1.0, 0.0), rad * 2.0, rad * 2.0, pz, rim, 1.0, 0.0, SHAPE_RING)
-		var body: Color = lane
-		body.a = alpha
-		n = _put(n, Vector2(px, py), Vector2(1.0, 0.0), rad * 1.55, rad * 1.55, pz + 0.2, body, 1.0, 0.0, SHAPE_RING)
-		var core: Color = lane.lightened(0.18)
-		core.a = alpha
-		n = _put(n, Vector2(px, py), Vector2(1.0, 0.0), rad * 0.8, rad * 0.8, pz + 0.4, core, 1.0, 0.0, SHAPE_RING)
+		if hd and shbody != null:
+			# The head in the beam's language: his composition (energy style, form, power), his shape and texture, one quad along the flight, in place of the three discs
+			var sdk: Dictionary = VfxClashLook.side(shbody, String(shbody.aura))
+			var sz: Vector2 = VfxEnergyHeads.size_of(int(sdk["front"]), rad, float(sdk["scale"]))
+			heads.add(Vector2(px, py) + dirv * sz.x * 0.2, dirv, sz.x, sz.y, pz + 0.2, sdk, alpha, float(sp.id) * 0.37)
+		else:
+			var rim: Color = lane.darkened(0.35)
+			rim.a = alpha
+			n = _put(n, Vector2(px, py), Vector2(1.0, 0.0), rad * 2.0, rad * 2.0, pz, rim, 1.0, 0.0, SHAPE_RING)
+			var body: Color = lane
+			body.a = alpha
+			n = _put(n, Vector2(px, py), Vector2(1.0, 0.0), rad * 1.55, rad * 1.55, pz + 0.2, body, 1.0, 0.0, SHAPE_RING)
+			var core: Color = lane.lightened(0.18)
+			core.a = alpha
+			n = _put(n, Vector2(px, py), Vector2(1.0, 0.0), rad * 0.8, rad * 0.8, pz + 0.4, core, 1.0, 0.0, SHAPE_RING)
 		if tumbling:
 			# Tumbling: a cross of light turning on it (still, at a slant, with reduced motion).
 			var ang0: float = 0.6 if hub.reduced_motion else spin
@@ -178,6 +192,18 @@ func update(hub: VfxHub, host, a: float, cam_x: float, zoom: float, half_w: floa
 		var u: float = clampf(st / e.life, 0.0, 1.0)
 		var ez: float = e.z + Z_FX
 		var eo: float = 1.0 - pow(1.0 - u, 2.0)
+		if hd and (e.kind == "flash" or e.kind == "splash" or e.kind == "burst"):
+			# An impact in the beam's language: the fighter's own pieces thrown out of the point (a pressure fan, a sheaf of lances, a few long arcs, a scatter of scrap), not a disc or a hoop
+			var imp: Dictionary = _impact_side(S, e.col)
+			var nn: int = VfxEnergyHeads.burst_n(int(imp["front"]))
+			var spread: float = 1.0 if e.kind == "burst" else (0.5 if e.kind == "splash" else 0.8)
+			for k in range(nn):
+				var an: float = (TAU * float(k) / float(nn) + 0.35) if e.kind != "splash" else atan2(e.dy, e.dx) + (float(k) - float(nn - 1) * 0.5) * 0.42
+				var dvv := Vector2(cos(an), sin(an))
+				var dist: float = e.size * (0.15 + 0.75 * eo) * spread
+				var pl: float = e.size * (0.5 - 0.25 * u) * float(imp["scale"])
+				heads.add(Vector2(rx, e.y) + dvv * dist, dvv, pl, pl * 0.42, ez, imp, alpha * (1.0 - u) * 0.95, float(k) * 1.7 + e.size * 0.01)
+			continue
 		match e.kind:
 			"flash":
 				var fr: float = e.size * (0.45 + 0.55 * eo)
@@ -218,9 +244,19 @@ func update(hub: VfxHub, host, a: float, cam_x: float, zoom: float, half_w: floa
 	n = _ground_rings(n, hub, host, a, cam_x, bh, minpx)
 	n = _flight_streaks(n, hub, host, a, cam_x, half_w, bh, minpx)
 	count = n
+	if hd:
+		heads.finish(S.T)
 	multimesh.visible_instance_count = n
 	if n > 0:
 		multimesh.buffer = _buf
+
+
+## The composition of the fighter whose lane colour an impact wears (a shot's effects carry the colour, not the owner): his own, or a plain one for a colour no fighter has.
+func _impact_side(S: SimState, col: Color) -> Dictionary:
+	for i in range(S.fighters.size()):
+		if VfxShots.lane_of(S, i).is_equal_approx(col):
+			return VfxClashLook.side(S.fighters[i], String(S.fighters[i].aura))
+	return VfxClashLook.side({"id": "REFERENCE", "aura": "#8fd6ff", "tier": 1.0}, "#8fd6ff")
 
 
 ## The power-up's ground ring (Research's cinematic paper, rec 14: the environment tells it; Orb: nothing over the fighters): on the break one thin flat ring leaves the fighter's feet along the ground, in his
@@ -271,10 +307,19 @@ func _flight_streaks(n: int, hub: VfxHub, host, a: float, cam_x: float, half_w: 
 	var S: SimState = host.S
 	var made: int = 0
 	var share: float = 0.5 if hub.reduced_motion else 1.0
+	# Where each fighter stands in this view, once: the streaks keep clear of both bodies, and the old loop asked the host for the same four numbers for every streak it kept (about 56 times a frame, of the
+	# slowest frames' 0.5 ms: Performance's profile, docs/vfx/perf-level.md). The streaks drawn are exactly the same.
+	var keep_x := PackedFloat64Array()
+	var keep_y := PackedFloat64Array()
+	for who in range(mini(2, S.fighters.size())):
+		keep_x.append(SimWrap.sdx(cam_x, host.fighter_x(who, a)))
+		keep_y.append(host.fighter_pose(who, a).y + 0.5 * bh)
 	for i in range(mini(2, S.fighters.size())):
 		var f = S.fighters[i]
 		if String(f.state) != "launched":
 			continue
+		if hub.flight_enabled and VfxMeteor.flight_strength(f, {}) > 0.0:
+			continue       # tier 3 and up: the flight line takes over from this streak, so a fighter never shows both (Game Design; the launch and heavy streak of feature 11 is VfxSpeed's and stays)
 		var vx: float = float(f.vx)
 		var vy: float = float(f.vy)
 		var sp: float = sqrt(vx * vx + vy * vy)
@@ -290,25 +335,30 @@ func _flight_streaks(n: int, hub: VfxHub, host, a: float, cam_x: float, half_w: 
 		var gy: float = WorldTerrain.groundY(S, cam_x)       # the rows stand on the ground under the view, up to ten body heights above it (the view follows the pair, not the body that has flown off)
 		var j0: int = int(floor((gy + 0.5 * bh) / FLIGHT_CELL_Y))
 		var j1: int = int(ceil((gy + 10.0 * bh) / FLIGHT_CELL_Y))
+		# The cell's acceptance hash is VfxTremor.hash01(posmod(k, 4096) * 131 + j * 7, 17 + i), written out here: it is asked of hundreds of cells to find the 56 that are kept, and the call was most of the cost
+		# of a launch's frames (docs/vfx/perf-level.md). The same integer steps, so the same cells are kept.
+		var thr: float = 0.3 * share * (0.4 + 0.6 * amt)
+		var hb: int = (17 + i) * 19349663
 		for k in range(k0, k1 + 1):
+			var pk: int = posmod(k, 4096) * 131
 			for j in range(j0, j1 + 1):
 				if made >= FLIGHT_MAX or n >= CAP - 4:
 					return n
-				var h: float = VfxTremor.hash01(posmod(k, 4096) * 131 + j * 7, 17 + i)
-				if h > 0.3 * share * (0.4 + 0.6 * amt):
+				var hh: int = (((pk + j * 7) * 73856093) ^ hb ^ 0x5bd1e995) & 0x7fffffff
+				hh = ((hh >> 13) ^ hh) & 0x7fffffff
+				hh = (hh * 1274126177) & 0x7fffffff
+				if float((hh >> 8) & 0xffff) / 65536.0 > thr:
 					continue
 				var wx: float = (float(k) + VfxTremor.hash01(k * 3 + j, 29)) * FLIGHT_CELL_X
 				var cy: float = (float(j) + VfxTremor.hash01(k + j * 5, 31)) * FLIGHT_CELL_Y
 				var rel: float = SimWrap.sdx(cam_x, SimWrap.wrap(wx))
 				var c := Vector2(rel, cy)
-				var fr: float = SimWrap.sdx(cam_x, host.fighter_x(i, a))
-				for who in range(mini(2, S.fighters.size())):
-					var fxr: float = SimWrap.sdx(cam_x, host.fighter_x(who, a))
-					var pyr: float = host.fighter_pose(who, a).y
-					if absf(rel - fxr) < 1.5 * bh + 60.0 and absf(cy - (pyr + 0.5 * bh)) < 1.5 * bh + 40.0:
-						made = made
-						c = Vector2(1e9, 0.0)
-				if c.x > 1e8:
+				var near_body: bool = false
+				for who in range(keep_x.size()):
+					if absf(rel - keep_x[who]) < 1.5 * bh + 60.0 and absf(cy - keep_y[who]) < 1.5 * bh + 40.0:
+						near_body = true
+						break
+				if near_body:
 					continue
 				var ln: float = 60.0 + minf(sp, 4000.0) * 0.03 * (0.6 + 0.8 * VfxTremor.hash01(k + j, 41))
 				var col: Color = lane
@@ -1625,8 +1675,8 @@ func _beamplay(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: flo
 	var bp: VfxBeamPlay = hub.beamplay
 	var al: float = alpha * VfxBeamPlay.p("beamplay", "alpha")
 	var z0: float = Z_FX + 1.0 + PLAY_LIFT
-	# A beam crossing: its head leads it, so it is seen to travel.
-	for b in S.beams:
+	# A beam crossing: its head leads it, so it is seen to travel. With the heads on, VfxBeamFront draws that head in the beam's own language, so the wedge, the ring across it and the rings left behind are not drawn.
+	for b in ([] if hub.energy_heads_enabled else S.beams):
 		if n >= CAP - 30:
 			break
 		if not VfxBeamPlay.crossing(b):
@@ -1668,14 +1718,16 @@ func _beamplay(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: flo
 			"wake":
 				var wc: Color = e.col
 				wc.a = al * 0.5 * (1.0 - u)
-				n = _across(n, c, dv2, e.size * lerpf(0.8, 1.3, eo), 0.3, ez - 0.4, wc, minpx)
+				if not hub.energy_heads_enabled:
+					n = _across(n, c, dv2, e.size * lerpf(0.8, 1.3, eo), 0.3, ez - 0.4, wc, minpx)
 			"launch":
 				var lc: Color = e.col
 				lc.a = fa
 				n = _wedge(n, c, dv2, lerpf(40.0, e.size, eo), 54.0 * (1.0 - 0.6 * u), ez, lc)
 				var lr: Color = e.col
 				lr.a = fa * 0.7
-				n = _across(n, c + dv2 * 20.0, dv2, lerpf(60.0, 130.0, eo), 0.3, ez - 0.2, lr, minpx)
+				if not hub.energy_heads_enabled:
+					n = _across(n, c + dv2 * 20.0, dv2, lerpf(60.0, 130.0, eo), 0.3, ez - 0.2, lr, minpx)
 			"sweep":
 				# A slash: wedges at the angles it has swept through, the newest the brightest, then a ring at his hand.
 				for k in range(4):
@@ -1810,8 +1862,9 @@ func _draw_mine(n: int, m: VfxShots.Mine, life_k: float, S: SimState, hub: VfxHu
 	var rx: float = SimWrap.sdx(cam_x, m.x)
 	if absf(rx) > half_w + 3.0 * bh:
 		return n
-	var lane: Color = VfxShots.lane_of(S, m.owner)
-	var villain: bool = String(S.fighters[m.owner].role) == "villain"
+	var mb = m.body if m.body != null else VfxShots.body_of(S, m.owner)
+	var lane: Color = VfxShots.lane_of_body(mb)
+	var villain: bool = mb != null and String(mb.role) == "villain"
 	var age: float = m.age + (0.0 if sh.last_frozen else a)
 	var hover: bool = m.mode == "hover"
 	var gy: float = WorldTerrain.groundY(S, m.x)

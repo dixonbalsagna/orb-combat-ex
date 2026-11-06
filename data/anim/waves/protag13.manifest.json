@@ -13,7 +13,7 @@
    "reach": 98,
    "band": "long",
    "ticks": {
-    "load": 10,
+    "load": 7,
     "follow": 4,
     "recover": 4
    },
@@ -55,7 +55,7 @@
    "reach": 72,
    "band": "mid",
    "ticks": {
-    "load": 10,
+    "load": 7,
     "follow": 4,
     "recover": 4
    },
@@ -95,7 +95,7 @@
    "reach": 98,
    "band": "mid",
    "ticks": {
-    "load": 10,
+    "load": 7,
     "follow": 4,
     "recover": 4
    },
@@ -136,7 +136,7 @@
    "reach": 88,
    "band": "long",
    "ticks": {
-    "load": 10,
+    "load": 7,
     "follow": 4,
     "recover": 4
    },
@@ -342,7 +342,7 @@
    "reach": 68,
    "band": "mid",
    "ticks": {
-    "load": 10,
+    "load": 7,
     "follow": 4,
     "recover": 4
    },

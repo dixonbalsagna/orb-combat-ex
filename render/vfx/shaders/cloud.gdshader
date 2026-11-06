@@ -4,6 +4,8 @@
 shader_type spatial;
 render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
 
+#include "res://render/shaders/bend.gdshaderinc"
+
 #include "res://render/vfx/shaders/cloud_curves.gdshaderinc"
 
 uniform float body_a = 0.0;            // the body's opacity now (blast_cloud.gd's body_alpha): in, held, out
@@ -24,6 +26,7 @@ void vertex() {
 	float a = body_a * per * (0.55 + 0.45 * INSTANCE_CUSTOM.w);
 	v_col = vec4(ramp(heat) * shade, a);
 	v_sd = INSTANCE_CUSTOM.z;
+	POSITION = globe_r > 0.0 ? PROJECTION_MATRIX * (VIEW_MATRIX * bent_world(MODEL_MATRIX, VERTEX)) : PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(VERTEX, 1.0));
 }
 
 void fragment() {

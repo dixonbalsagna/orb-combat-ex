@@ -1,0 +1,8 @@
+{
+  "_note": "Camera's numbers for the swing that a reading can move (docs/camera/swing-view.md). A flash read or a tester can lower peakRate with no code change (Accessibility, docs/accessibility/swing-motion.md, ruling 3). The view's only: the sim never reads this.",
+  "schema": "camera.swing/1",
+  "splitShare": 0.0,
+  "_splitShare": "against a CPU, the player's pane takes this share of the split, 0.5 to 1; 0 is even. Orb's first play asked for about 0.7 (docs/camera/split-unequal.md). Off here: a page word turns it on",
+  "peakRate": 3.0,
+  "_peakRate": "the peak launch's zoom, e-folds a second at most. 3 is Research's: 93% of the descent in frame, against 34% at 1. A slower number loses the falling fighter out of the frame"
+}

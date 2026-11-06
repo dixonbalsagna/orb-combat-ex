@@ -1,6 +1,7 @@
 // Makes the private LAN test's folder (docs/net/lan-v1.md): a plain 1v1 between two PCs. It edits a SCRATCH COPY of the project, exports it and writes the shortcuts. It starts no game and opens no port.
 // The public desktop builds stay as they are: they exclude net/ (Legal RL-204), and nothing here goes on main. So the two lines the game needs are patched in here, and this stops if they no longer fit.
 //   node net/tools/lan_kit.mjs --tree=SCRATCH_COPY --out=FOLDER --godot=PATH\Godot_v4.7.2-stable_win64_console.exe --host-ip=10.0.0.135 --build=NAME [--no-export]
+// --tree: a copy of main, or of the tree Tools' stack exported for the kept build (its sim_host steps through the black box's _bb_step).
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { networkInterfaces } from 'node:os';
@@ -37,17 +38,26 @@ function patch(rel, edits) {
   writeFileSync(p, s);
 }
 
+const hostText = readFileSync(join(tree, 'render/core/sim_host.gd'), 'utf8');
+const stepCall = hostText.includes('\tif _bb_step(inputs):') ? '_bb_step(inputs)' : 'SimCore.step(S, inputs)';   // the kept build records through the black box; on a PC it stays off
 patch('render/core/sim_host.gd', [
   ['var read_ahead_cols: int = 0', 'var lan = null   # the private LAN test (net/lan.gd): it steps the sim\nvar read_ahead_cols: int = 0'],
-  ['\tif SimCore.step(S, inputs):', '\tif (lan.tick(inputs[0]) if lan != null else SimCore.step(S, inputs)):'],
+  [`\tif ${stepCall}:`, `\tif (lan.tick(inputs[lan.hubSlot]) if lan != null else ${stepCall}):`],
+  ['func toggle_ai(idx: int) -> void:\n', 'func toggle_ai(idx: int) -> void:\n\tif lan != null:\n\t\treturn   # a pad leaving must not hand one PC\'s fighter to its AI: the PCs would part\n'],
 ]);
 patch('render/core/main.gd', [
   ['func start_match(seed: int, ai: Dictionary = {}, setup = null) -> void:\n', 'func start_match(seed: int, ai: Dictionary = {}, setup = null) -> void:\n\tif host.lan != null:\n\t\treturn   # one match in the private LAN test\n'],
   ['func _on_menu_started(cfg: Dictionary) -> void:\n', 'func _on_menu_started(cfg: Dictionary) -> void:\n\tif host.lan != null:\n\t\treturn\n'],
-  ['\tvar ai := {"p1": false, "p2": not two}\n', '\tvar ai := {"p1": false, "p2": not two}\n\tvar lan_on: bool = args.has("lan-host") or args.has("lan-join") or args.has("lan-loop")\n\tif lan_on:\n\t\tai = NetLan.AI\n'],
-  ['\tif bool(cfg.get("intros", true)):\n\t\tstart_match(sd, ai)\n', '\tif lan_on:\n\t\tstart_match(NetLan.SEED, ai, NetLan.SETUP)\n\t\thost.lan = NetLan.new(host, args)\n\telif bool(cfg.get("intros", true)):\n\t\tstart_match(sd, ai)\n'],
+  ['\tvar ai := {"p1": false, "p2": not two}\n', '\tvar ai := {"p1": false, "p2": not two}\n\tvar lan_on: bool = args.has("lan-host") or args.has("lan-join") or args.has("lan-loop")\n\tif lan_on:\n\t\tai = NetLan.aiFor(args)\n'],
+  ['\tif bool(cfg.get("intros", true)):\n\t\tstart_match(sd, ai)\n', '\tif lan_on:\n\t\tstart_match(NetLan.SEED, ai, NetLan.setupFor(args))\n\t\thost.lan = NetLan.new(host, args)\n\t\tsplit_rig.test_human_slot = -2 if host.lan.two else host.lan.hubSlot   # this PC\'s player is the human, for the camera: their pane is the bigger, as against the computer (with two fights, the one with no AI in the fight S holds)\n\telif bool(cfg.get("intros", true)):\n\t\tstart_match(sd, ai)\n'],
+  ['\t\thost.hub.claimed[s] = true\n\tstarted = true\n', '\t\thost.hub.claimed[s] = true\n\tif lan_on and host.lan.hubSlot == 1:   # the joiner plays the second fighter, so its pad is the hub\'s second slot: its rumble and its struggle follow that fighter\n\t\tNetLan.moveHub(host.hub, 0, 1)\n\tstarted = true\n'],
   ['\tstart_match(int(args["seed"]) if args.has("seed") else fresh_seed())\n', '\tstart_match(int(args["seed"]) if args.has("seed") else fresh_seed())\n\tif args.has("lan-loop") and DisplayServer.get_name() == "headless":\n\t\t_on_menu_started({})   # no window, no menu, so no warning to show: a test only\n'],
 ]);
+// The kept page's own word for the meteor's trail (?meteor=loud), which a PC can't be given: VFX reads it from the page's address only.
+{
+  const m = join(tree, 'render/vfx/meteor.gd');
+  if (existsSync(m) && readFileSync(m, 'utf8').includes('\t_word = ""\n\tif OS.has_feature("web") and UiHud.bypass_allowed():')) patch('render/vfx/meteor.gd', [['\t_word = ""\n\tif OS.has_feature("web") and UiHud.bypass_allowed():', '\t_word = "loud"\n\tif OS.has_feature("web") and UiHud.bypass_allowed():']]);
+}
 // Only this copy's presets: the network code goes in, its tools stay out.
 patch('export_presets.cfg', [
   ['name="Windows Desktop"', 'name="Windows Desktop"'],
@@ -96,6 +106,17 @@ writeFileSync(join(out, 'Host with a longer wait (main PC).cmd'), crlf([
   'cd /d "%~dp0"',
   `start "" "${exeName}" -- --lan-host=${a['host-ip']} --lan-delay=3 --lan-log="%~dp0lan-log-main.txt" --tiles=1`,
 ]));
+// Legal RL-241: two fights, one seat each, once its sentence is in the words (checked below)
+writeFileSync(join(out, 'Host 2v2 (main PC).cmd'), crlf([
+  '@echo off',
+  'cd /d "%~dp0"',
+  `start "" "${exeName}" -- --lan-host=${a['host-ip']} --lan-2v2 --lan-log="%~dp0lan-log-main.txt" --tiles=1`,
+]));
+writeFileSync(join(out, 'Join 2v2 (old PC).cmd'), crlf([
+  '@echo off',
+  'cd /d "%~dp0"',
+  `start "" "${exeName}" -- --lan-join=${a['host-ip']} --lan-2v2 --lan-log="%~dp0lan-log-old.txt" --tiles=1`,
+]));
 writeFileSync(join(out, 'Allow through the firewall (main PC, once).cmd'), crlf([
   '@echo off',
   'powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0firewall-allow.ps1"',
@@ -133,6 +154,7 @@ writeFileSync(join(out, 'firewall-remove.ps1'), crlf([
 const words = readFileSync(join(tree, 'net', 'tools', 'lan_words.txt'), 'utf8').replaceAll('{HOST_IP}', a['host-ip']);
 // Legal RL-230's words, checked: its WHO PLAYS line as it stands, a plain word that a link opens, and the public build's privacy line nowhere.
 if (!words.includes("WHO PLAYS: Only Orb plays and watches, on both PCs, with nobody else in the room. This build has a flashing-effects warning; read it first. Don't copy, record, share or post this folder, the screens or the main PC's address.")) stop('lan_words.txt: the WHO PLAYS line is not RL-230\'s');
+if (!words.includes("Two fights share one globe, so craters and damage from the other fight can appear in the world.")) stop('lan_words.txt: RL-241\'s sentence must be in the words before the 2v2 shortcuts go in');
 if (!/opens a network link between the two PCs/.test(words)) stop('lan_words.txt: it must say a link opens');
 if (/collects|sends nothing|no accounts/i.test(words)) stop('lan_words.txt: RL-204\'s privacy line stays out of the kit');
 writeFileSync(join(out, 'READ ME FIRST.txt'), words.replace(/\r?\n/g, '\r\n'));

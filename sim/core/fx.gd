@@ -439,9 +439,11 @@ static func found(S: SimState, f) -> void:
 
 
 ## The match's KO.
-static func ko(S: SimState, winner, loser) -> void:
+static func ko(S: SimState, winner, loser, over: bool = true, winners: Array = []) -> void:
 	var e := _ev(S, "ko")
 	e.winner = float(S.fighters.find(winner)); e.loser = float(S.fighters.find(loser))
+	e.over = over   # 2v2 (sim/core/cross.gd): false for a KO that leaves his team standing; true in every other match
+	e.winners = winners   # ... on the match's last KO, the winning team's starting slots ("p1" is 0); empty otherwise
 
 
 # ---------------------------------------------------------------- director events (Encounter, S2)

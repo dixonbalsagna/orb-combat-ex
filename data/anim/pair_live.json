@@ -14,7 +14,7 @@
   "burst1",
   "launch1",
   "miss1",
-  "charge1", "depth1", "round10", "beam1", "beam2"
+  "charge1", "depth1", "round10", "beam1", "beam2", "shove1"
  ],
  "gated": [
   {

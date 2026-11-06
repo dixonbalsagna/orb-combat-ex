@@ -9,7 +9,9 @@ class_name DirStick
 ##  - A flick and a hold share one wind-up, dwell less settle from the request (timing.json's strike: Game Design's 10). A stick
 ##    still out as it ends holds the blow back, a tick at a time, until the release or autoGoTicks. Past dwell it's a charge,
 ##    with the ladder Controls' reader has.
-##  - Bare at every level: any blow that lands on his wind-up ends it, and the charge is lost.
+##  - Bare at every level: any blow that lands on his wind-up ends it, and the charge is lost. With armour.enabled (power-scale.md section 2),
+##    past the quick flick a hold has B's armour, a beam's on the stick too: a light never stops it, and does lightMul of its damage. A medium
+##    stops it before mediumUntilTicks. A heavy, a beam or a grab stops it. A dodge makes it miss, and he's open for missOpenTicks.
 ## State: integers after DirSwing's on f.act.dirI.
 
 const PATH: String = "res://data/director/stick.json"
@@ -26,11 +28,13 @@ const ST_CY: int = 8     # ... the height to go, x 16
 const ST_Q0: int = 9     # the last quick strike's live tick, plus 1, by direction 1 to 4
 const ST_Q1: int = 13    # the one before it
 const ST_RL: int = 17    # a release before the wind-up ended (a long lunge, a request still waiting): its level, plus 1
-const ST_BUF: int = 18   # a press waiting for him to be able to act: its direction, plus (the mask + 1) x 8; 0 none
+const ST_BUF: int = 18   # a press waiting for him to be able to act: its direction, plus (the mask + 1) x 8, plus SWEPT; 0 none
 const ST_BAT: int = 19   # the live tick it was made, plus 1
 const ST_SOFT: int = 20   # a light has landed on this flick: it still lands, at softWorth, with no stun (lightStops false)
 const ST_GUARD: int = 21  # this flick is on the guard layer: his guard holds through its wind-up and drops for its recovery (lightStops false)
 const ST_N: int = 22
+const SWEPT: int = 4096  # on ST_BUF: a hold a planned exchange swept up, waiting for his first free tick (pendFollow)
+const RL_SWEPT: int = 16  # on ST_RL: this strike is that swept hold, so its level counts from its own request
 
 const UP: int = 1
 const DOWN: int = 2
@@ -45,6 +49,7 @@ static var _d = null
 static var _text: String = ""
 static var _force: int = -1   # tools: -1 Controls' switch, 0 off, 1 on
 static var _rd = null         # Controls' reader, for its numbers and its ladder; holds no one's stick
+static var _armourForce: int = -1   # tools: -1 the data's switch, 0 off, 1 on
 
 
 static func _ensure() -> void:
@@ -110,7 +115,7 @@ static func relative(S: SimState, f, rsDir: int) -> int:
 	if rsDir == SimStrikeRead.DOWN:
 		return DOWN
 	if rsDir == SimStrikeRead.LEFT or rsDir == SimStrikeRead.RIGHT:
-		var o = SimRoster.opp(S, f)
+		var o = DirBrawl.rivalOf(S, f)
 		var right: bool = SimWrap.sdx(f.x, o.x) >= 0.0
 		return TOWARD if (rsDir == SimStrikeRead.RIGHT) == right else AWAY
 	return TOWARD
@@ -181,6 +186,60 @@ static func chargedPiece(S: SimState, f, dir: int) -> String:
 	return DirBrawl._cellPiece(S, f, "", "stick.charged." + NAMES[dir], "")
 
 
+static func setArmourForce(v: int) -> void:
+	_armourForce = v
+
+
+static func armourOn() -> bool:
+	return on() and (bool(cfg().get("armour", {}).get("enabled", false)) if _armourForce < 0 else _armourForce == 1)
+
+
+## How long this hold has run, in live ticks.
+static func heldFor(S: SimState, o) -> int:
+	return DirBrawl._now(S) - (_g(o, ST_AT) - 1)
+
+
+## True while he's holding a charge past the quick flick, a strike's or a beam's.
+static func armoured(S: SimState, o) -> bool:
+	if not armourOn():
+		return false
+	var st: int = _g(o, ST_ON)
+	return (st == 2 or st == 3) and heldFor(S, o) >= int(cfg().armour.fromTicks)
+
+
+## ... and a medium no longer stops it.
+static func mediumHolds(S: SimState, o) -> bool:
+	return heldFor(S, o) >= int(cfg().armour.mediumUntilTicks)
+
+
+## What's left of his flying speed: past the quick flick, holding a beam, he barely moves, with no dash (SimFighter.flightSpeed, by SimDir).
+## 1 otherwise. A kite's hold isn't a charge, so it keeps his speed.
+static func holdMove(S: SimState, f) -> float:
+	if not on() or _g(f, ST_ON) != 3 or f.beamCharge == null or not DirBeamPlay.stationary() or heldFor(S, f) < int(DirBeamPlay.frontCfg().holdFromTicks):
+		return 1.0
+	return float(DirBeamPlay.frontCfg().holdMove)
+
+
+static func _holdLost(S: SimState, f) -> void:
+	_clear(f)
+	f.beamCharge = null
+	SimFx.cue(S, f, "stick_refused", "beam", "taken")
+
+
+## A blow its armour didn't take has landed on him (DirBrawl.contact): a beam's hold is lost.
+static func holdHit(S: SimState, o) -> void:
+	if on() and _g(o, ST_ON) == 3 and DirBeamPlay.stationary():
+		_holdLost(S, o)
+
+
+## A charged strike met nothing (DirBrawl.contact): a dodge or a step back has made it miss, and he's open.
+static func missed(S: SimState, f, a: Dictionary) -> void:
+	if armourOn() and int(a.get("stickL", 0)) > 0:
+		var open: int = int(cfg().armour.missOpenTicks)
+		DirBrawl._s(f, DirBrawl.FREE_AT, S.tick + open)
+		DirBrawl._s(f, DirBrawl.OPEN_UNTIL, DirBrawl._now(S) + open)
+
+
 ## True while a blow landing on him ends what he's winding: the stick's strike is bare. With lightStops false a quick flick isn't ended by a
 ## light, only softened (lightOn); a charged one still is (docs/design/stick-lands.md).
 static func bare(f) -> bool:
@@ -239,6 +298,8 @@ static func landed(S: SimState, ex, f, o, a: Dictionary) -> void:
 	var stun: int = int(round(float(lv.stun) * float(dr.get("stunMul", 1.0))))
 	var now: int = DirBrawl._now(S)
 	DirBrawl._s(f, DirBrawl.LAST_AT, S.tick)   # he acted: a level 3's hold doesn't run out the brawl's idle clock
+	_steal(S, f, o, a, lvl)   # first: the stun that follows breaks his run
+	_flickRun(S, f, o, lvl)
 	var trade: bool = DirBrawl._g(o, DirBrawl.LINE) == 1 and DirBrawl._g(o, DirBrawl.CONTACT) == now
 	var stuns: bool = not trade and _g(o, ST_STUN) == 0 and not (lvl == 0 and _g(f, ST_SOFT) == 1)
 	if lvl == 0 and _g(f, ST_GUARD) == 1 and not lightStops():
@@ -286,6 +347,34 @@ static func landed(S: SimState, ex, f, o, a: Dictionary) -> void:
 	e.n = stun if stuns else 0
 
 
+## A landed flick counts in its striker's run as a light does (flickRun.enabled; Game Design, stick-lands.md, 2026-11-02): flickRun.points,
+## on top of the steal. As a light's, it doesn't add on a staggered rival unless the brawl's flurry says so.
+static func _flickRun(S: SimState, f, o, lvl: int) -> void:
+	var c: Dictionary = cfg().get("flickRun", {})
+	if not bool(c.get("enabled", false)) or lvl != 0:
+		return
+	DirBrawl._s(f, DirBrawl.LAND_AT, S.tick)   # his string goes on, as a light's landing keeps it: else its lapse spends the run
+	if o.stunTicks <= 0 or bool(DirBrawl.cfg().flurry.get("staggeredAddsRun", false)):
+		DirBrawl._s(f, DirBrawl.RUN, DirBrawl._g(f, DirBrawl.RUN) + int(round(float(c.points) * float(DirBrawl.RUN_U))))
+
+
+## The stick steals his run (steal.enabled, for QA's arm; stick-lands.md): a quick flick from no stance that lands clean takes his run to 0, and
+## yours rises by what was taken, at most steal.max; he stumbles reelBase + reelPer for each point. Never the AI's, so a beginner mashing
+## against the computer is never stolen from. A steal takes his run, so he's only stolen from once a run.
+static func _steal(S: SimState, f, o, a: Dictionary, lvl: int) -> void:
+	var c: Dictionary = cfg().get("steal", {})
+	if not bool(c.get("enabled", false)) or lvl != 0 or int(a.get("stickMask", 0)) != 0 or f.ai != null:
+		return
+	var taken: int = mini(DirBrawl._g(o, DirBrawl.RUN) / DirBrawl.RUN_U, int(c.max))
+	if taken <= 0:
+		return
+	DirBrawl._s(o, DirBrawl.RUN, 0)
+	DirBrawl._s(f, DirBrawl.RUN, DirBrawl._g(f, DirBrawl.RUN) + taken * DirBrawl.RUN_U)
+	DirBrawl._reel(S, o, int(c.reelBase) + int(c.reelPer) * taken)
+	var e = DirBrawl._ev(S, f, "stick_steal", str(taken))
+	e.target = float(S.fighters.find(o))
+
+
 # ---- the tick -----------------------------------------------------------------------------------------------------
 
 static func _beat(ex, f):
@@ -311,6 +400,8 @@ static func _start(S: SimState, f, i) -> void:
 			return   # a beam's coming: in its window it fires at once and the fronts meet; in its charge it fires as he fires
 		_s(f, ST_ON, 3)   # the energy layer's stick is the beam: it fires on the release
 		_s(f, ST_AT, DirBrawl._now(S) + 1)
+		if DirBeamPlay.stationary() and (mask & LT) == 0:
+			f.beamCharge = S.T   # the hold is the charge, and shows (the kite's isn't one: power-scale.md, the last section)
 		SimFx.cue(S, f, "stick_start", NAMES[dir], str(mask))
 		return
 	if _cant(S, f):
@@ -326,9 +417,14 @@ static func _start(S: SimState, f, i) -> void:
 
 
 ## The request goes in.
-static func _go(S: SimState, f, dir: int, mask: int) -> void:
+static func _go(S: SimState, f, dir: int, mask: int, quiet: bool = false) -> void:
+	if DirChaseTap.refuses(S, f):
+		if not quiet:
+			SimFx.cue(S, f, "stick_refused", NAMES[dir], "chase")   # it can't reach him in the air, and it never sends
+		return
 	if f.ki < float(DirBrawl.cfg().medium.ki):
-		SimFx.cue(S, f, "stick_refused", NAMES[dir], "ki")   # the press would throw a lighter blow: it never becomes another
+		if not quiet:
+			SimFx.cue(S, f, "stick_refused", NAMES[dir], "ki")   # the press would throw a lighter blow: it never becomes another
 		return
 	if _g(f, ST_PEND) != 0:
 		SimFx.cue(S, f, "stick_refused", NAMES[_g(f, ST_PEND) & 7], "replaced")   # the newest only: the one it replaces is told
@@ -337,6 +433,14 @@ static func _go(S: SimState, f, dir: int, mask: int) -> void:
 	_s(f, ST_PAT, DirBrawl._now(S) + 1)
 	_s(f, ST_AT, DirBrawl._now(S) + 1)
 	DirExchange.requestAttack(S, f, "heavy")
+	if pendFollow() and _g(f, ST_PEND) != 0:
+		var slot: int = S.fighters.find(f)
+		for e in S.out.fx:
+			if String(e.type) == "cue" and String(e.kind) == "press_ack" and String(e.text) == "refused" and int(e.actor) == slot:
+				_s(f, ST_PEND, 0)
+				if not quiet:
+					SimFx.cue(S, f, "stick_refused", NAMES[dir], "refused")   # (the first move is his rival's): told now, not as late
+				return
 
 
 ## A press he couldn't act on: it goes on his first tick free inside bufferTicks; past that it's refused, said once.
@@ -344,12 +448,23 @@ static func _waiting(S: SimState, f) -> void:
 	var b: int = _g(f, ST_BUF)
 	if b == 0:
 		return
-	if not _cant(S, f):
+	var swept: bool = (b & SWEPT) != 0
+	if not _cant(S, f) and not (swept and _planned(S, f)):
 		_s(f, ST_BUF, 0)
-		_go(S, f, b & 7, (b >> 3) - 1)
-	elif DirBrawl._now(S) - (_g(f, ST_BAT) - 1) >= int(cfg().bufferTicks):
+		if not swept or f.input.rsHeld:
+			_go(S, f, b & 7, ((b >> 3) & 511) - 1, swept)   # (a swept hold goes only if he's still holding it, and quietly: its press was told)
+			if swept:
+				_s(f, ST_RL, _g(f, ST_RL) | RL_SWEPT)
+	elif DirBrawl._now(S) - (_g(f, ST_BAT) - 1) >= (int(cfg().pendFollow.maxTicks) if swept else int(cfg().bufferTicks)):
 		_s(f, ST_BUF, 0)
-		SimFx.cue(S, f, "stick_refused", NAMES[b & 7], str((b >> 3) - 1))
+		if not swept:
+			SimFx.cue(S, f, "stick_refused", NAMES[b & 7], str(((b >> 3) & 511) - 1))
+
+
+## A planned exchange holds him, window or no window: a swept hold waits for the end of it, his first free tick.
+static func _planned(S: SimState, f) -> bool:
+	var ex = DirBrawl.exOf(S)
+	return ex != null and not DirBrawl.isBrawl(ex) and (ex.A == f or ex.D == f)
 
 
 ## True when this press can't become a blow: he's been sent, a long stun holds him, or a planned exchange or set piece is playing with no
@@ -357,7 +472,7 @@ static func _waiting(S: SimState, f) -> void:
 static func _cant(S: SimState, f) -> bool:
 	if f.state == "launched" or f.state == "down" or f.state == "dropped" or f.stunTicks > 0:
 		return true
-	var ex = S.dirS.ex
+	var ex = DirBrawl.exOf(S)
 	if ex == null or ex.ext != null:
 		return false
 	return not DirBrawl.isBrawl(ex) or ex.branch != "" or DirBrawl._setPiece(ex)
@@ -373,6 +488,44 @@ static func carry(f, dx: float, dy: float) -> void:
 ## True while a stick strike is moving him: it's an authored move, so an "away" can take him past his attacker.
 static func carrying(f) -> bool:
 	return on() and _g(f, ST_CT) > 0
+
+
+static func pendFollow() -> bool:
+	return on() and bool(cfg().get("pendFollow", {}).get("enabled", false))
+
+
+## pendFollow: a request still on its way keeps the stick's blow waiting with it, and one his rival answered is told at once (QA's meteor
+## bot found both said "late"). While his request is queued it waits, up to pendFollow.maxTicks. True when this tick is handled, so the
+## usual lapse doesn't run.
+static func _followed(S: SimState, f, pat: int) -> bool:
+	var ex = DirBrawl.exOf(S)
+	if ex != null and not DirBrawl.isBrawl(ex) and (ex.A == f or ex.D == f):
+		var pend: int = _g(f, ST_PEND)
+		_s(f, ST_PEND, 0)
+		if (_g(f, ST_RL) & RL_SWEPT) != 0:
+			return true   # the swept hold's own go, answered again: its press was told once, and it's over
+		SimFx.cue(S, f, "stick_refused", NAMES[pend & 7], "answered")   # a planned exchange took the request: his rival's answer, not lateness
+		if f.input.rsHeld:
+			sweep(S, f, pend)
+		return true
+	if DirBrawl._now(S) - (pat - 1) > int(cfg().pendFollow.maxTicks):
+		return false
+	return not f.act.queue.is_empty()
+
+
+## A hold a planned exchange swept up (Game Design, 2026-11-02): it becomes the charge on his first free tick, counting from then, with
+## nothing banked. It waits in the buffer up to pendFollow.maxTicks.
+static func sweep(S: SimState, f, pend: int) -> void:
+	_s(f, ST_BUF, (pend & 511) | SWEPT)
+	_s(f, ST_BAT, DirBrawl._now(S) + 1)
+
+
+## The level of a release: the stick's own; for a swept hold, no more than he's held since its request went in, on his first free tick.
+static func _relLevel(S: SimState, f, i) -> int:
+	var l: int = int(i.rsLevel)
+	if (_g(f, ST_RL) & RL_SWEPT) != 0:
+		l = mini(l, int(_reader().level_at(DirBrawl._now(S) - (_g(f, ST_AT) - 1))))
+	return l
 
 
 ## True while a request of his is waiting for its blow.
@@ -404,8 +557,14 @@ static func _release(S: SimState, ex, f, b, lvl: int) -> void:
 		var p: String = chargedPiece(S, f, dir)
 		if p != "":
 			b.args["piece"] = p
-	b.t = ex.t + dt * 0.75   # it lands on the next live tick
-	DirBrawl._s(f, DirBrawl.CONTACT, DirBrawl._now(S) + 1)
+	var cc: Dictionary = DirBrawl.cfg().get("chargeClose", {})
+	var bh: float = float(cc.get("fullBh", 0.0)) if l >= 3 else (float(cc.get("firstBh", 0.0)) if l == 2 else 0.0)
+	var o = ex.D if f == ex.A else ex.A
+	var lead: int = DirBrawl.closeIn(S, f, o, bh, 1)   # (press-decides.md section 2: from stage 2 a hold closes the gap too)
+	if lead > 1:
+		b.args["stickReach"] = maxf(float(b.args.stickReach), bh)
+	b.t = ex.t + dt * (float(lead) - 0.25)   # it lands on the next live tick, or as it arrives
+	DirBrawl._s(f, DirBrawl.CONTACT, DirBrawl._now(S) + lead)
 	_clear(f)
 	SimFx.cue(S, f, "stick_release", NAMES[dir], str(l))
 
@@ -425,9 +584,11 @@ static func tick(S: SimState, dt: float) -> void:
 		else:
 			_waiting(S, f)
 		if i.rsRelease and (_g(f, ST_PEND) != 0 or _g(f, ST_ON) == 1):
-			_s(f, ST_RL, int(i.rsLevel) + 1)   # the edge is one tick: the blow's level is kept for when its wind-up ends
+			_s(f, ST_RL, (_g(f, ST_RL) & RL_SWEPT) | (_relLevel(S, f, i) + 1))   # the edge is one tick: the blow's level is kept for when its wind-up ends
 		var pat: int = _g(f, ST_PAT)
-		if _g(f, ST_PEND) != 0 and DirBrawl._now(S) - (pat - 1) > int(cfg().pendTicks) and not DirBands.pending(f):
+		if _g(f, ST_PEND) != 0 and pendFollow() and _followed(S, f, pat):
+			pass
+		elif _g(f, ST_PEND) != 0 and DirBrawl._now(S) - (pat - 1) > int(cfg().pendTicks) and not DirBands.pending(f):
 			_s(f, ST_PEND, 0)   # no blow came of it, and it doesn't become some other blow: what it asked for goes too
 			SimAct.clear(f)
 			if (DirBrawl._g(f, DirBrawl.HELD_P) & 7) == 2:
@@ -436,22 +597,30 @@ static func tick(S: SimState, dt: float) -> void:
 		if _g(f, ST_ON) == 0:
 			continue
 		if _g(f, ST_ON) == 3:
+			DirBeamAim.holding(S, f, i)
+			if DirBeamPlay.stationary() and (f.state == "launched" or f.state == "down" or f.state == "dropped" or f.stunTicks > 0):
+				_holdLost(S, f)   # something took him
+				continue
 			if i.rsRelease or not i.rsHeld:
-				_beamGo(S, f, int(i.rsLevel) if i.rsRelease else int(_reader().level_at(DirBrawl._now(S) - (_g(f, ST_AT) - 1), true)))
+				DirBeamAim.thrown(f, i)
+				_beamGo(S, f, 0 if (DirBeamPlay.stationary() and f.beamCharge == null) else (int(i.rsLevel) if i.rsRelease else int(_reader().level_at(DirBrawl._now(S) - (_g(f, ST_AT) - 1), true))), DirBrawl._now(S) - (_g(f, ST_AT) - 1))
 			continue
-		var ex = S.dirS.ex
+		var ex = DirBrawl.exOf(S)
 		var b = _beat(ex, f)
 		if b == null or DirBrawl._g(f, DirBrawl.LINE) == 0:
+			if armoured(S, f) and ex == null and DirBrawl.rivalOf(S, f).act.dodgeTick >= S.tick - 2:
+				missed(S, f, {"stickL": 1})   # he dodged out from under it
+				SimFx.cue(S, f, "stick_refused", NAMES[_g(f, ST_DIR)], "dodged")
 			_clear(f)   # a blow ended it, or the exchange did
 			continue
 		var c: Dictionary = cfg()
 		var since: int = DirBrawl._now(S) - (_g(f, ST_AT) - 1)
-		var kept: int = _g(f, ST_RL)
+		var kept: int = _g(f, ST_RL) & 15   # (the swept mark aside)
 		var due: bool = b.t <= ex.t + dt * 1.25
 		if kept > 1 and due:
 			_release(S, ex, f, b, kept - 1)
 		elif _g(f, ST_ON) == 2 and (i.rsRelease or not i.rsHeld or since >= int(c.autoGoTicks)):
-			_release(S, ex, f, b, int(i.rsLevel) if i.rsRelease else int(_reader().level_at(since)))
+			_release(S, ex, f, b, _relLevel(S, f, i) if i.rsRelease else int(_reader().level_at(since)))
 		elif i.rsHeld and not i.rsRelease and kept == 0 and due:
 			_s(f, ST_ON, 2)
 			b.t += dt   # still out as its wind-up ends: the blow waits for the release
@@ -465,15 +634,17 @@ static var firing: bool = false   # not state: true for one call
 
 ## A first cut of the beam on the stick, on what plays today: a quick is the heavy blast, in place of the snap-beam; a charge
 ## is the beam B holds now, fired at him at its own price. The snap-beam, the aim latched at the settle and the sweep are next.
-static func _beamGo(S: SimState, f, lvl: int) -> void:
+static func _beamGo(S: SimState, f, lvl: int, held: int) -> void:
 	_clear(f)
 	SimFx.cue(S, f, "stick_release", "beam", str(lvl))
 	if lvl <= 0:
+		f.beamCharge = null
 		DirBlast.press(S, f, SimAct.SIG)
 	else:
 		firing = true   # it's the stick's beam, and not a press of B
 		DirExchange.requestAttack(S, f, "sig")
 		firing = false
+		DirBeamPlay.fromStick(S, f, held)
 
 
 ## The left hand's cancel: a guard press or a dodge ends a started charge, and it's lost.
@@ -486,7 +657,9 @@ static func _cancel(S: SimState, f) -> void:
 		_s(f, ST_BUF, 0)
 	if _g(f, ST_ON) == 0:
 		return
-	var ex = S.dirS.ex
+	if _g(f, ST_ON) == 3 and DirBeamPlay.stationary():
+		f.beamCharge = null   # the hold was the charge, and it's dropped
+	var ex = DirBrawl.exOf(S)
 	if ex != null and DirBrawl._g(f, DirBrawl.LINE) != 0:
 		DirBrawl._wEnd(S, f, DirBrawl.MEDIUM, 3)
 		DirBrawl._drop(S, ex, f)
@@ -511,5 +684,5 @@ static func _carry(S: SimState, o) -> void:
 
 ## In a struggle: a beam clash or the finisher's contest, for the host's hub.set_struggle(slot, on) each tick.
 static func inStruggle(S: SimState, f) -> bool:
-	var ex = S.dirS.ex
+	var ex = DirBrawl.exOf(S)
 	return S.game.clash != null or (ex != null and (f == ex.A or f == ex.D) and (ex.tpl == "finisher" or ex.branch == "finisher"))

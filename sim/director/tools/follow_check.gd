@@ -10,6 +10,7 @@ var _hp: float = 100000.0
 
 
 func _init() -> void:
+	DirChaseTap.setForce(0)
 	for f0 in [0, 1]:
 		DirFollow.setForce(f0)
 		_rows(f0 == 1)

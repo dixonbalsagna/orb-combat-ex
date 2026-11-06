@@ -2,8 +2,9 @@ class_name SimStage
 extends RefCounted
 ## A match of more than one fight on one line (docs/architecture/fight-swap.md): setup {"fights": 2} with four slots.
 ## Each fight is a plain 1v1 to everything that reads S: its pair, its director, its clock, its holds. Only one fight is
-## in S's fields at a time: SimCore._stepFights steps them in turn, in slot order, and between ticks S holds fight 0, so
-## what reads S between ticks reads the first fight. The planet, its stored damage, the buildings and the water are S's
+## in S's fields at a time: SimCore._stepFights steps them in turn, in slot order, and leaves fight 0 in S, so what reads
+## S between ticks reads the first fight. A host may hold another between ticks (NetLan, a player's own fight): the step
+## puts fight 0 back first, and every walk here leaves S holding the fight it found. The planet, its stored damage, the buildings and the water are S's
 ## own, so all of them are shared. In any other match S.stage is null and nothing here runs.
 
 const WHOLE: int = -1   # Stage.cur while S.fighters is everyone: the swing's tick, once a tick
@@ -64,8 +65,9 @@ static func place(S: SimState) -> void:
 
 ## At the end of newMatch, the bodies all set up: the pairs apart into fights. Fight 1 starts as fight 0 has, by copying
 ## its fresh state, with its own stream and seed. Nothing here holds a fighter yet (a test below says so).
-static func open(S: SimState, seed: int) -> void:
+static func open(S: SimState, seed: int, setup: Dictionary = {}) -> void:
 	var st := SimState.Stage.new()
+	st.cross = setup.get("cross", SimCross.enabled()) == true
 	var all: Array = S.fighters
 	S.fighters = all.slice(0, 2)
 	st.fights.append(SimState.Fight.new())
@@ -116,6 +118,7 @@ static func dispose(S: SimState) -> void:
 		if r.dirS != null:
 			r.dirS.ex = null
 		r.beams.clear()
+	S.stage.mail.clear()
 
 
 static func inputsOf(inputs, i: int):
@@ -222,21 +225,25 @@ static func rebase(f, from: float, to: float) -> void:
 
 ## Two bodies of different fights change places in them, each taking the other's slot, so a fight stays a pair and its
 ## director needs nothing new. Between ticks only. Refused (false) while either fight has something that names a slot or
-## a fighter: an exchange, a clash, a beam, a shot, a pause, a KO, a launch. A real tag needs Encounter's side.
+## a fighter: an exchange, a clash, a beam, a shot, a pause, a KO, a launch; and with hits across fights on, for two of
+## different teams, as each fight stays one of each. A real tag needs Encounter's side.
 static func trade(S: SimState, a, b) -> bool:
 	var st = S.stage
-	if st == null or st.cur != 0:
+	if st == null:
 		return false
+	if st.cross and SimCross.team(a) != SimCross.team(b):
+		return false
+	var was: int = st.cur
 	var ia: int = fightOf(S, a)
 	var ib: int = fightOf(S, b)
 	if ia < 0 or ib < 0 or ia == ib:
 		return false
-	if a.launchBy != null or b.launchBy != null:
+	if a.state == "launched" or b.state == "launched":   # in a launch (launchBy, who sent him, isn't cleared on every landing)
 		return false
 	for i in [ia, ib]:
 		enter(S, i)
 		var busy: bool = S.dirS.ex != null or S.game.clash != null or S.game.ko != null or S.beams.size() > 0 or S.shots.size() > 0 or S.pause.left > 0
-		enter(S, 0)
+		enter(S, was)
 		if busy:
 			return false
 	enter(S, ia)
@@ -247,17 +254,93 @@ static func trade(S: SimState, a, b) -> bool:
 	var kb: int = S.fighters.find(b)
 	var tb: float = S.T
 	S.fighters[kb] = a
-	enter(S, 0)
+	enter(S, was)
 	rebase(a, ta, tb)
 	rebase(b, tb, ta)
+	a.launchBy = null   # who last sent each was of the fight he left
+	b.launchBy = null
 	return true
 
 
-## The hash's values, fight by fight: fight 0's walk (the world with it), then each other's.
+## 2v2 (SimCross.settle): both fights finished and one body standing on each team, in different fights. The two standing become the
+## pair of the fight the first of them is in, and the two out the other's. That fight's KO is cleared and it fights on as a 1v1,
+## wear and the brink as they stood (Game Design); each moved body's times go to his new fight's clock, as a trade's do; the
+## shots of the two slots that changed hands end, as a shot names its owner by slot, and who last sent each of the three is
+## forgotten, as he was of the old fight. It waits while either fight's KO is in its moment (koT under after), a pause runs, or
+## one of the three is in a launch or a rush (by his state: launchBy isn't cleared on every landing). True when it rejoined.
+static func rejoin(S: SimState, after: float) -> bool:
+	var st = S.stage
+	var stand: Array = []
+	for i in range(st.fights.size()):
+		for f in (S.fighters if i == st.cur else st.fights[i].fighters):
+			if not f.out:
+				stand.append([i, f])
+	if stand.size() != 2 or stand[0][0] == stand[1][0] or SimCross.team(stand[0][1]) == SimCross.team(stand[1][1]):
+		return false
+	var ia: int = stand[0][0]
+	var ib: int = stand[1][0]
+	var a = stand[0][1]
+	var b = stand[1][1]
+	var was: int = st.cur
+	enter(S, ia)
+	var ko_: int = S.fighters.find(a) ^ 1
+	var o = S.fighters[ko_]
+	enter(S, was)
+	for f in [a, b, o]:
+		if f.state == "launched" or f.rush != null:
+			return false
+	for i in [ia, ib]:
+		enter(S, i)
+		var wait: bool = S.game.ko == null or S.game.koT < after or S.pause.left > 0
+		enter(S, was)
+		if wait:
+			return false
+	enter(S, ia)
+	var ta: float = S.T
+	_endShots(S, ko_)
+	S.fighters[ko_] = b
+	S.game.ko = null
+	S.game.koT = 0.0
+	S.game.ts = 1.0
+	S.game.clash = null
+	enter(S, ib)
+	var kb: int = S.fighters.find(b)
+	var tb: float = S.T
+	_endShots(S, kb)
+	S.fighters[kb] = o
+	enter(S, ia)
+	SimEvents.feed(S, "TWO LEFT", a.name + " and " + b.name + " fight on")
+	enter(S, was)
+	rebase(b, tb, ta)
+	rebase(o, ta, tb)
+	for f in [a, b, o]:
+		f.launchBy = null
+	st.rejoined += 1
+	return true
+
+
+## The live shots of slot k in the fight in S end.
+static func _endShots(S: SimState, k: int) -> void:
+	for sh in S.shots:
+		if not sh.dead and sh.owner == k:
+			SimShots.end(S, sh, "life")
+
+
+## The hash's values, fight by fight: fight 0's walk (the world with it), then each other's, then the hits on their way
+## across. S holds the fight it held.
 static func collect(S: SimState) -> Array:
+	var was: int = S.stage.cur
+	enter(S, 0)
 	var v: Array = SimHash.collect(S, "gameplay")
 	for i in range(1, S.stage.fights.size()):
 		enter(S, i)
 		v.append_array(SimHash.collect(S, "gameplay"))
-	enter(S, 0)
+	enter(S, was)
+	if S.stage.cross:
+		SimCross.collect(S, v)
 	return v
+
+
+## A match's slots: everyone, fight by fight (inputs and a replay's entries are by these).
+static func slotCount(S: SimState) -> int:
+	return bodies(S).size() if S.stage != null else S.fighters.size()

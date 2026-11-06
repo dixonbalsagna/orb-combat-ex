@@ -40,6 +40,9 @@ static var air_brake: bool = true            # RG2: the sim's air brake braces a
 static var chain_poses: bool = true          # RG4: World's interior contacts and its lodge play the ceiling's slam and rebound and the climb out (data/anim/chain.json); inert without those events; --no-chain-poses is the before
 static var grip_layer: bool = true            # the clinch's grip layer (docs/animation/clinch-sizing.md slice C2): the sim's hold read mixes the clinch poses in and puts each gripping hand on its region of the partner; inert without a read; --no-grip-layer is the before
 static var recoil_flips: bool = true          # recoil exits and ricochets (docs/combat/choreography-feel.md): Encounter's cue `recoil` turns the struck body over in an arc (back flip, handspring, back tuck, skip, ricochet); inert without the cue; --no-recoil-flips is the before
+static var stick_pre: bool = true             # the right stick's strike drawn before the request starts (Controls' hub.strike_pre(slot), published only with switches.quickRead): the host fills `strike_pre`; --no-stick-pre is the before
+static var strike_pre: Dictionary = {}       # slot -> {dir, depth} from the host each frame; {} with the quick read off
+static var beam_shove: bool = true            # the body of a beam's shove (Encounter's cue beam_shove on the one thrown back): thrown back, then digging in, fitted to the slide; --no-beam-shove is the before
 static var press_ack: bool = true            # the anticipation of a press that has to wait (Encounter's cue press_ack, text queued): the first frames of the wind-up on the press tick, handed over to the real one; --no-press-ack is the before
 static var flight_loco: bool = true           # flight locomotion (data/anim/locomotion.json): the lean spring, the braking flare, the dash's coil, the bank and the hover's breath, read from the sim's velocity; --no-flight-loco is the before
 static var ground_loco: bool = true           # ground locomotion (data/anim/ground_motion.json): the gait, the kick-off and the landing by surface, read from the sim's velocity and ground; --no-ground-loco is the before
@@ -147,6 +150,10 @@ static func _read_args() -> void:
 			grip_layer = false
 		elif a == "--no-recoil-flips":
 			recoil_flips = false
+		elif a == "--no-stick-pre":
+			stick_pre = false
+		elif a == "--no-beam-shove":
+			beam_shove = false
 		elif a == "--no-press-ack":
 			press_ack = false
 		elif a == "--no-lead-in":
@@ -242,10 +249,57 @@ static func profile() -> Dictionary:
 
 
 static func _sync(S: SimState) -> void:
+	S = _root(S)   # a view of another fight is its match's state: it must not look like a new match
 	if S.get_instance_id() != _sid or S.tick < _last_tick:
 		_fighters.clear()
 		_sid = S.get_instance_id()
 	_last_tick = S.tick
+
+
+## The other fights of a stage (sim/core/stage.gd, docs/architecture/fight-swap.md and cross-fights.md): S holds one fight at a time, fight 0 between ticks, and the others sit in `S.stage.fights[k]` as records. Every layer reads its
+## pair, its exchange and its clock from the S it is given (`S.fighters`, `S.dirS`, `S.T`, `S.game`, `S.beams`, the world), so the bodies of fight k are drawn by handing them a READ-ONLY VIEW of S whose swapped fields are
+## that fight's own record, the same fields `SimStage._swap` exchanges: `RenderAnim.solve(view, view.fighters[i])` and `RenderAnim.consume(view, events_of_fight_k)`. Nothing is swapped in S (the view is a copy of
+## its references; it never writes the sim) and S.stage.cur stays what it was. The view is the same object every frame for a fight, refreshed on each ask; `fight_view(S, k)` is S itself for the fight S holds, and for any match
+## with no stage. A view has `stage` null and a meta `root` (the real S) and `fight` (k), so `_sync` does not reset the bodies and a body's input slot is `fight * 2 + its place` (AnimFighter.gslot).
+const _VIEW_FIELDS: Array = ["fighters", "dirS", "T", "dt", "rng", "game", "world", "beams", "shots", "shotSeq", "mood", "pause", "hs", "cata", "epoch", "popHist", "waterWin", "waterTick", "aftermathJobs", "out"]
+static var _views: Dictionary = {}
+static var _view_props: Array = []
+
+
+static func fight_view(S: SimState, k: int) -> SimState:
+	var root: SimState = _root(S)
+	var st = root.stage
+	if st == null or k == int(st.cur) or k < 0 or k >= st.fights.size():
+		return root
+	var V: SimState = _views.get(k)
+	if V == null or V.get_meta("root") != root:
+		V = SimState.new()
+		V.set_meta("root", root)
+		V.set_meta("fight", k)
+		_views[k] = V
+	if _view_props.is_empty():
+		for p in root.get_property_list():
+			if (int(p.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE) != 0 and String(p.name) != "stage":
+				_view_props.append(String(p.name))
+	for n in _view_props:
+		V.set(n, root.get(n))
+	var r = st.fights[k]
+	for n in _VIEW_FIELDS:
+		V.set(n, r.get(n))
+	V.stage = null
+	return V
+
+
+## The match's own state: S itself, or the one a view was made from.
+static func _root(S: SimState) -> SimState:
+	if S != null and S.has_meta("root"):
+		return S.get_meta("root")
+	return S
+
+
+## Which fight a state's bodies belong to (0 for a match with no stage).
+static func fight_of(S: SimState) -> int:
+	return int(S.get_meta("fight")) if S.has_meta("fight") else 0
 
 
 static func fighter(S: SimState, f) -> AnimFighter:
@@ -255,6 +309,7 @@ static func fighter(S: SimState, f) -> AnimFighter:
 	if af == null:
 		AnimData.load_all()
 		af = AnimFighter.new(S.fighters.find(f))
+		af.gslot = fight_of(S) * 2 + af.slot
 		af.pair_key = AnimData.ensure_fighter(String(f.id))   # his own waves, baked when his first body is built (the match-start cost)
 		_log_pair_bake(S)
 		_fighters[id] = af
@@ -418,6 +473,10 @@ static func consume(S: SimState, events: Array) -> void:
 					elif kd == "lunge_light" or kd == "lunge_heavy" or kd == "return" or ((kd == "charge_light" or kd == "charge_heavy") and float(_ev(e, "amount", 0.0)) > 0.0):
 						# the mid-band lunge's authored wind-up crouch (bands.lunge.windupTicks: light 6, heavy 10) and the return's: the cue comes on the press tick with `amount` the crouch's ticks, then the body moves
 						fighter(S, S.fighters[who]).on_lunge_crouch("heavy" if kd.ends_with("heavy") else ("return" if kd == "return" else "light"), int(roundf(float(_ev(e, "amount", 0.0)))), t_cue)
+					elif kd == "beam_shove":
+						# a beam fired from up close throws the other fighter back to the stand-off over the rush's own time (no damage, no stun): the body digs in for as long as the slide lasts
+						var sr = S.fighters[who].rush
+						fighter(S, S.fighters[who]).on_beam_shove(t_cue, maxf(float(sr.end) - S.T, 0.1) if sr != null else 0.25)
 					elif kd == "press_ack" and String(e.text) == "queued":
 						# a press that has to wait, on its press tick: source its button cell (x, y, b), n the tick it is due to start (-1 when the wait is not a cooldown), amount the ticks to it
 						fighter(S, S.fighters[who]).on_press_ack(String(_ev(e, "source", "")), int(roundf(float(_ev(e, "n", -1.0)))), int(roundf(float(_ev(e, "amount", -1.0)))), t_cue)

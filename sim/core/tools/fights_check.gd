@@ -1,7 +1,9 @@
 extends SceneTree
 ## Two fights on one line (sim/core/stage.gd): godot --headless --path . --script res://sim/core/tools/fights_check.gd
 ## Run twice, its digest line says two processes agree.
-## - fight 0 of a four-fighter match against a plain 1v1 of the seed, tick by tick, while the fights are apart
+## - fight 0 of a four-fighter match against a plain 1v1 of the seed, tick by tick, while the fights are apart and until the
+##   1v1's line first turns (swings rest while apart, so where the 1v1 turns, fight 0 can't); the two fights' line doesn't turn
+##   while they're apart
 ## - each fight's holds stop only its own clock, and fight 1 really fights
 ## - two runs one hash, and a rollback across holds the same on every tick, by hash and by digest
 ## - a trade of bodies between fights keeps what each had left on his times
@@ -48,18 +50,24 @@ func _drain(S: SimState) -> void:
 	S.out.feed.clear()
 
 
-## Fight 0 inside the match against a plain 1v1. Past the first tick the fights come close nothing is promised.
+## Fight 0 inside the match against a plain 1v1. Past the first tick the fights come close, or the 1v1's line is asked to turn,
+## nothing is promised: with the director's swing on, a 1v1 turns its line for a brawl, a chase or a launch, and the two fights'
+## line rests while they're apart (Game Design), so fight 0 differs from there (a launch planned on the turn the tick it asks).
 func _same(seed: int, world: Dictionary) -> void:
 	var R := _new(seed, world, false)
 	var rows: Array = []
+	var swung: int = -1
 	for t in range(ticks):
 		SimCore.step(R)
 		_drain(R)
 		rows.append(_row(R))
+		if swung < 0 and R.swing != null and R.swing.active:
+			swung = t
 	SimCore.dispose(R)
 	var S := _new(seed, world, true)
 	var first: int = -1
 	var close: int = -1
+	var turned: int = -1   # the two fights' line asked to turn
 	var held: Array = [0, 0]
 	var blows: Array = [0, 0]
 	var stopped: Array = [0, 0]   # ticks one fight was held while the other's clock ran
@@ -85,13 +93,16 @@ func _same(seed: int, world: Dictionary) -> void:
 				stopped[1] += 1
 		if close < 0 and SimStage.gap(S) < APART:
 			close = t
+		if turned < 0 and S.swing != null and S.swing.active:
+			turned = t
 		if first < 0 and _row(S) != rows[t]:
 			first = t
-			if close < 0:
+			if close < 0 and (swung < 0 or t < swung):
 				print("  first difference at tick %d:\n    %s\n    %s" % [t, str(_row(S)), str(rows[t])])
 	var r = S.stage.fights[1]
-	print("same: seed %d %s: first difference %d, fights first close %d; held %d and %d, each alone %d and %d; blows %d and %d; clocks %.2f and %.2f" % [seed, world.get("planet", "flat"), first, close, held[0], held[1], stopped[0], stopped[1], blows[0], blows[1], S.T, r.T])
-	ok(first < 0 or (close >= 0 and first >= close), "seed %d %s: fight 0 is the 1v1 while apart (differs at %d, close at %d)" % [seed, world.get("planet", "flat"), first, close])
+	print("same: seed %d %s: first difference %d, fights first close %d, the 1v1's line first turned %d, the two fights' %d; held %d and %d, each alone %d and %d; blows %d and %d; clocks %.2f and %.2f" % [seed, world.get("planet", "flat"), first, close, swung, turned, held[0], held[1], stopped[0], stopped[1], blows[0], blows[1], S.T, r.T])
+	ok(first < 0 or (close >= 0 and first >= close) or (swung >= 0 and first >= swung), "seed %d %s: fight 0 is the 1v1 while apart and the 1v1's line still (differs at %d, close at %d, the 1v1 turned at %d)" % [seed, world.get("planet", "flat"), first, close, swung])
+	ok(turned < 0 or (close >= 0 and turned >= close), "seed %d %s: the two fights' line doesn't turn while they're apart (turned at %d, close at %d)" % [seed, world.get("planet", "flat"), turned, close])
 	ok(blows[1] > 0, "seed %d %s: fight 1 fights (%d blows)" % [seed, world.get("planet", "flat"), blows[1]])
 	ok(stopped[0] > 0 and stopped[1] > 0, "seed %d %s: a hold stops only its own fight (%d, %d)" % [seed, world.get("planet", "flat"), stopped[0], stopped[1]])
 	SimCore.dispose(S)
