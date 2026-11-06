@@ -32,6 +32,8 @@ extends RefCounted
 
 const SCENARIOS: Array = ["mash", "mashcity", "clash", "signature", "signaturecity", "rushcity", "transform", "collapse", "mashdummy", "ring", "launchai", "clashcity", "signaturedummy", "blastdummy", "plumedesert", "plumeice", "plumevolc", "ai"]
 const SEED: int = 12345
+## Film scenes (clips for people, not Tools' worst cases; tools/clips): not in SCENARIOS, so the flash check's lists stay as sources.json has them (tools/flash/selftest.js). Which slots are the AI's (true) in each.
+const FILM_SCENES: Dictionary = {"beamduel": [false, false], "chase": [false, true], "chargehold": [false, true], "towers": [false, true]}
 const FORM_TICKS: Array = [300, 1500]
 ## Which slots are the AI's (true) in each scenario.
 const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true], "plumedesert": [false, false], "plumeice": [false, false], "plumevolc": [false, false], "mashdummy": [false, true], "ring": [false, true], "launchai": [false, true], "clashcity": [false, false], "signaturedummy": [false, true], "blastdummy": [false, true]}
@@ -52,7 +54,7 @@ var _load_since: int = 0         # when the wait began (Time.get_ticks_msec)
 func _init(m: Node) -> void:
 	main = m
 	JavaScriptBridge.eval("""window.__flashcap = {
-		ready: false, tick: 0, scenario: '', error: '', in_window: 0, _req: null, _want: 0, _done: 0, _waiting: [],
+		ready: false, tick: 0, scenario: '', error: '', in_window: 0, events: [], _req: null, _want: 0, _done: 0, _waiting: [],
 		start(scenario, opts) { this._req = { scenario: String(scenario), reduced: !!(opts && opts.reduced), seed: (opts && opts.seed) | 0, variant: (opts && opts.variant) | 0, skip: (opts && opts.skip) | 0, slots: (opts && Array.isArray(opts.slots)) ? opts.slots.map(String) : [] }; },
 		step() { return new Promise((res) => { this._waiting.push(res); this._want += 1; }); },
 		_shown(tick, inWindow) { this.tick = tick; this.in_window = inWindow; this._done += 1; const r = this._waiting.shift(); if (r) r(tick); }
@@ -91,18 +93,25 @@ func poll() -> void:
 func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0, variant: int = 0, slots: Array = []) -> void:
 	VARIANT = variant
 	var err: String = ""
-	if not SCENARIOS.has(sc):
+	if not SCENARIOS.has(sc) and not FILM_SCENES.has(sc):
 		err = "no scenario '%s' (%s): playing ai" % [sc, ", ".join(PackedStringArray(SCENARIOS))]
 		sc = "ai"
 	scenario = sc
 	VfxBiome.override_biome = ""      # the plume clips force a biome for their own run only (_plume)
-	var ai: Array = AI_SLOTS[sc]
+	var ai: Array = AI_SLOTS[sc] if AI_SLOTS.has(sc) else FILM_SCENES[sc]
 	var host: SimHost = main.host
 	# a pairing other than the roster's first two: the page's `slots` (two fighter ids, tools/flash/capture-web.mjs --slots), as flash_worst.gd's --slots does
 	var ai_set: Dictionary = {"p1": ai[0], "p2": ai[1]}
 	for i in range(2, slots.size()):
 		ai_set["p%d" % (i + 1)] = sc == "ring"   # the ring's bodies past the pair fight; any other scene's stand
-	main.start_match(seed if seed != 0 else SEED, ai_set, {} if slots.size() < 2 else {"slots": slots})   # its own setup: no intro, not filed
+	var su: Dictionary = _film_setup()
+	if sc == "beamduel":   # the duel starts from the page's own world words (planet, tiles), the film words on top
+		var ws: Dictionary = main._match_setup(seed if seed != 0 else SEED)
+		ws.merge(su, true)
+		su = ws
+	if slots.size() >= 2:
+		su["slots"] = slots
+	main.start_match(seed if seed != 0 else SEED, ai_set, su)   # its own setup: no intro, not filed; empty unless a film word is in the address
 	_pend = {"sc": sc, "reduced": reduced, "skip": skip, "err": err, "ai": ai}
 	_load_since = Time.get_ticks_msec()
 	if not _loading():   # a gen 1 world is made whole by start_match: set up at once, as it always was
@@ -167,6 +176,8 @@ func _finish_begin() -> void:
 			applied["nocam"] = true
 	JavaScriptBridge.eval("window.__flashcap.switches = %s;" % JSON.stringify(applied), true)
 	main.started = true              # the demo's prompt is not part of a worst case
+	if _page_flag("nohud"):          # clip kit: the HUD layer and the take-over prompt hidden: a picture of the world and the fighters (film only; the sim is untouched)
+		main.get_node("HUD").visible = false
 	host.vfx.auto_quality = false
 	host.vfx.destruction_enabled = true
 	host.vfx.force_reduced = reduced
@@ -184,6 +195,45 @@ func _finish_begin() -> void:
 		host.acc = SimConst.DT * 0.9999
 		main.frame(SimConst.DT)
 	JavaScriptBridge.eval("window.__flashcap.scenario = %s; window.__flashcap.error = %s; window.__flashcap.tick = 0;" % [JSON.stringify(sc), JSON.stringify(err)], true)
+
+
+## Clip kit (tools/clips): film words in the address that set the match up, read here because main.parse_args() keeps only its own keys. `peak=1` or `tier=N`: both fighters start at that tier; `power=1` (with `flatout=N`):
+## the one energy model on, when the build has it. No word, no key: the setup stays empty and the clip is the one the hook always made.
+func _film_setup() -> Dictionary:
+	var su: Dictionary = {}
+	if _page_flag("peak"):
+		su["startTier"] = 4
+	elif _page_kv("tier") != "":
+		su["startTier"] = clampi(int(_page_kv("tier")), 1, 4)
+	if _page_kv("power") != "" and _page_kv("power") != "0" and _page_kv("power") != "off":
+		su["power"] = true
+		if _page_kv("flatout") != "":
+			su["flatOut"] = clampf(float(_page_kv("flatout")), 3500.0, 7000.0)
+	return su
+
+
+## The sim's own events of the tick just run, for a clip recipe's `event` windows: [tick, type, kind, x] in window.__flashcap.events (the driver takes them with events.splice(0)). Read only; only the types a clip is cut around.
+const LOG_TYPES: Array = ["launch", "crater", "building_fall", "ko", "exchange_end", "cue", "clash_draw", "beam_outcome", "tier_up", "transform", "brink_enter", "knockback", "rush", "floors_fall"]
+
+
+var _ev_buf: Array = []
+var _ev_hooked: bool = false
+
+
+## The host drains the tick's events and then clears them (SimHost.drained, before the clear): the hook listens there and keeps the types a clip is cut around.
+func _on_drained(events: Array, _lines) -> void:
+	for e in events:
+		if LOG_TYPES.has(e.type):
+			_ev_buf.append([int(e.tick), e.type, str(e.kind), snappedf(e.x, 1.0)])
+
+
+func _log_events(host: SimHost) -> void:
+	if not _ev_hooked:
+		_ev_hooked = true
+		host.drained.connect(_on_drained)
+	if not _ev_buf.is_empty():
+		JavaScriptBridge.eval("window.__flashcap.events.push(...%s);" % JSON.stringify(_ev_buf), true)
+		_ev_buf.clear()
 
 
 ## A switch of the page's own URL (`budget=1`, `hold=1`). main.parse_args() keeps only the keys of main.URL_ARGS, so the hook reads location.search itself.
@@ -209,9 +259,13 @@ func step() -> void:
 	var before: int = host.ticks
 	if scenario != "":
 		drive(scenario, host.ticks, host.S)
+	if not _ev_hooked:
+		_ev_hooked = true
+		host.drained.connect(_on_drained)   # the clip kit's event log (read only), connected before the first tick it should hear
 	host.acc = SimConst.DT * 0.9999    # one tick's time short of a tick: the frame below runs one tick and draws its end
 	main.frame(SimConst.DT)
 	steps += 1
+	_log_events(host)
 	if steps == 1:   # what main.frame copied from the option on the first tick: the register's flag and the look's, which capture-web.mjs checks against the clip's mode
 		JavaScriptBridge.eval("window.__flashcap.mode = %s;" % JSON.stringify({"reduce_flashing": host.vfx.reduced_flashing, "flash_calm": PaneWorld.flash_calm}), true)
 	if host.ticks != before + 1:
@@ -256,6 +310,8 @@ func _walk(S: SimState, near: float) -> void:
 ## The inputs and the staging for tick t of a scenario.
 func drive(sc: String, t: int, S: SimState) -> void:
 	match sc:
+		"beamduel":     # Camera's film scene: both charge, a signature, the answer, the beam struggle (_duel)
+			_duel(t, S)
 		"mash":         # both human, walking into reach and mashing light, with a heavy now and then
 			_mash(t, S)
 		"mashcity":     # the same, in the re-laid city, set down beside its tallest tower
@@ -305,6 +361,12 @@ func drive(sc: String, t: int, S: SimState) -> void:
 			_mash_dummy(t, S)
 		"ring":         # player one against the ring: the AI and his guards
 			_ring(t, S)
+		"chase":        # clip kit (tools/clips): player one launches the AI, then taps X at it while it is in the air (the chase tap, its hang and its carry)
+			_chase(t, S)
+		"chargehold":   # clip kit: player one closes to within 6 body heights of the rival, holds the right stick toward him for 60 ticks and lets go, every 240 ticks (the stick's charged strike)
+			_chargehold(t, S)
+		"towers":       # clip kit: beside the tallest tower, player one launches the AI east through the row of towers (with `peak=1&power=1` words: the top-power launch)
+			_towers(t, S)
 		"launchai":     # player one launches the AI
 			_launch_ai(t, S)
 		"plumedesert":    # a desert crater's plume, at the close framing (Legal's fx07)
@@ -314,6 +376,8 @@ func drive(sc: String, t: int, S: SimState) -> void:
 		"plumevolc":      # a volcanic impact's plume, with its steady ember chips
 			_plume(t, S, "volcanic")
 		"ai":           # the real AI match, forms readied at 300 and 1500, a tier raised at 900
+			if "_bb_pb" in main.host and not main.host._bb_pb.is_empty():
+				return   # a playback of a saved match (the black box page patch) is that match, with nothing staged into it
 			_ready_forms(S, t, FORM_TICKS)
 			if t == 900:
 				S.fighters[0].tier = 3.0
@@ -375,6 +439,31 @@ func _ring(t: int, S: SimState) -> void:
 
 
 ## Player one launches the AI: a heavy every 45 ticks against the real AI (in the 1,800 ticks of the seed it launches the AI twice and is launched once; a launch is rare).
+func _towers(t: int, S: SimState) -> void:
+	if t == 0:
+		_to_the_city(S)
+	_launch_ai(t, S)
+
+
+func _chase(t: int, S: SimState) -> void:
+	_launch_ai(t, S)
+	_btn(0, "west", String(S.fighters[1].state) == "launched" and _tap(t, 6, 0))
+
+
+func _chargehold(t: int, S: SimState) -> void:
+	var dx: float = SimWrap.sdx(S.fighters[0].x, S.fighters[1].x)
+	var u: int = t % 240
+	if u < 120:
+		_stick(0, signf(dx) if absf(dx) > 450.0 else 0.0)
+		main.host.hub.pad_stick_right(0, 0.0, 0.0)
+	elif u < 180:
+		_stick(0, 0.0)
+		main.host.hub.pad_stick_right(0, signf(dx), 0.0)
+	else:
+		_stick(0, 0.0)
+		main.host.hub.pad_stick_right(0, 0.0, 0.0)
+
+
 func _launch_ai(t: int, S: SimState) -> void:
 	_walk_in(S, 250.0)
 	S.fighters[0].ki = 100.0
@@ -469,3 +558,138 @@ func _stage_collapse(S: SimState, t: int) -> void:
 	var b0 = front[mini(front.size() - 1, k * 3)]
 	S.fighters[0].tier = 3.0
 	WorldStructures.explode(S, b0.x, WorldTerrain.groundY(S, b0.x) + 40.0, 800.0, S.fighters[0])
+
+
+# ------------------------------------------------------------------ film scene: the beam duel (Camera; docs/camera/pending/clip-scenes)
+# Both charge, P1 fires the signature, P2's answer is put in his queue as the beam leaves (a write into the sim, like the
+# other scenes' ki and set-downs), and the real beam struggle runs. Words: bdshot=1|2|3 the film camera's framing (absent
+# or 0: the game's own camera), bdgap the pair's distance (1000), bdalt their height over the ground (0), bdx P1's x
+# (the seed's start), bdcity=1 set down beside the tallest tower first. The HUD is hidden for the scene.
+
+const BD_CHARGE_TO: int = 70   # both charge from the start; P1 fires on this tick
+var _bd_tb: int = -1           # the tick P1's beam left
+var _bd_shot: int = 1
+var _bd_t0: float = -1.0
+var _bd_mid: Vector2 = Vector2.ZERO
+
+
+func _kvf(key: String, d: float) -> float:
+	var v: String = _page_kv(key)
+	return float(v) if v != "" else d
+
+
+func _duel(t: int, S: SimState) -> void:
+	var host: SimHost = main.host
+	var A = S.fighters[0]
+	var D = S.fighters[1]
+	if t == 0:
+		_bd_shot = int(_kvf("bdshot", 0.0))
+		if _page_kv("bdcity") == "1":
+			_to_the_city(S)
+		if _page_kv("bdx") != "":
+			A.x = SimWrap.wrap(_kvf("bdx", 0.0))
+		D.x = SimWrap.wrap(A.x + _kvf("bdgap", 1000.0))
+		for f in [A, D]:
+			f.y = WorldTerrain.groundY(S, f.x) + _kvf("bdalt", 0.0)
+			f.vx = 0.0
+			f.vy = 0.0
+			f.ki = 100.0
+		main.get_node("HUD").visible = false
+		if _bd_shot > 0:
+			main.set("film_cam", _film)   # a dynamic set: with Camera's main.gd and sim_host.gd hunks (docs/camera/pending/clip-scenes) it takes, without them it is a no-op and the hook still compiles
+		_bd_tb = -1
+		_bd_t0 = -1.0
+	if _bd_tb < 0 and S.beams.size() > 0:
+		_bd_tb = t
+	if _bd_tb >= 0 and t == _bd_tb + 4:
+		SimAct.push(D, SimAct.SIG, 0, 0, S.tick)   # P2 fires back as the beam leaves: the fronts meet, the struggle starts
+	var ins: Array = []
+	for k in range(2):
+		var i := SimIntent.new()
+		i.charge = t < BD_CHARGE_TO
+		if k == 0 and (t == BD_CHARGE_TO or t == BD_CHARGE_TO + 1):
+			i.sig = t == BD_CHARGE_TO
+			i.sigHeld = true
+			i.stanceMask = 4
+		ins.append(i)
+	host.set("film_in", ins)
+
+
+static func _ss(x: float) -> float:
+	var u: float = clampf(x, 0.0, 1.0)
+	return u * u * u * (u * (u * 6.0 - 15.0) + 10.0)
+
+
+## The frame's camera put where the shot wants it: the world point (wx, wy) at (u, v) of the screen, zoom z, pitch p.
+func _place(fr: SplitFrame, wx: float, wy: float, wz: float, u: float, v: float, z: float, p: float) -> void:
+	var cx: float = wx
+	var cy: float = wy - 0.2 * fr.vh / z
+	for k in range(8):
+		var q: Vector2 = SplitFrame.project(cx, cy, z, p, fr.vw, fr.vh, wx, wy, wz)
+		cx = SimWrap.wrap(cx + (q.x - u * fr.vw) / z)
+		cy -= (q.y - v * fr.vh) / z
+	fr.cam_x[0] = cx
+	fr.cam_y[0] = cy
+	fr.cam_z[0] = z
+	fr.pitch = p
+
+
+func _film(fr: SplitFrame, S: SimState, a: float) -> void:
+	var tt: float = float(main.host.ticks) + a
+	if _bd_t0 < 0.0:
+		_bd_t0 = tt
+	var t: float = tt - _bd_t0
+	var A = S.fighters[0]
+	var D = S.fighters[1]
+	var dx: float = SimWrap.sdx(A.x, D.x)
+	var span: float = maxf(absf(dx), 300.0)
+	var mid := Vector2(SimWrap.wrap(A.x + dx * 0.5), (float(A.y) + float(D.y)) * 0.5 + CamParams.CHEST)
+	# the subjects' point, eased: the fighters hardly move, and the camera never takes a step from them
+	if _bd_mid == Vector2.ZERO or t < 1.0:
+		_bd_mid = mid
+	else:
+		_bd_mid = Vector2(SimWrap.wrap(_bd_mid.x + SimWrap.sdx(_bd_mid.x, mid.x) * 0.06), lerpf(_bd_mid.y, mid.y, 0.06))
+	var fz: float = (float(A.z) + float(D.z)) * 0.5
+	var u: float = _ss((t - 62.0) / 70.0)   # held on the charge, the move as he fires, settled as the beams lock; the struggle is held still
+	var fit: float = fr.vw / span
+	var dir: float = signf(dx) if dx != 0.0 else 1.0
+	match _bd_shot:
+		1:   # low and side-on, the ground along the bottom, a slow push in and drift
+			var z: float = fit * lerpf(0.70, 0.79, u)
+			var wx: float = SimWrap.wrap(_bd_mid.x + dir * span * lerpf(0.03, -0.03, u))
+			_place(fr, wx, _bd_mid.y, fz, 0.5, lerpf(0.62, 0.60, u), z, lerpf(0.0, 3.0, u))
+		2:   # high and wide, looking down on the town under them, craning down a little and easing in
+			var z: float = fit * lerpf(0.58, 0.68, u)
+			_place(fr, _bd_mid.x, _bd_mid.y, fz, 0.5, lerpf(0.30, 0.35, u), z, lerpf(17.0, 11.0, u))
+		_:   # tight on P1 charging, across to P2 charging, then pulling back to both as the beams meet
+			var tight: float = 2.3
+			var wide: float = fit * 0.70
+			var ax := Vector2(float(A.x), float(A.y) + CamParams.CHEST)
+			var dpt := Vector2(float(D.x), float(D.y) + CamParams.CHEST)
+			var c: float = _ss((t - 36.0) / 30.0)    # across, P1 to P2
+			var w: float = _ss((t - 100.0) / 50.0)   # back, to both
+			var hx: float = SimWrap.wrap(ax.x + SimWrap.sdx(ax.x, dpt.x) * c)
+			var hy: float = lerpf(ax.y, dpt.y, c)
+			var lift: float = sin(PI * c) * 0.35   # the move across opens a little in its middle, so it reads as a move and not a whip
+			var zt: float = tight * (1.0 - lift)
+			var z: float = exp(lerpf(log(zt), log(wide), w))
+			var wx: float = SimWrap.wrap(hx + SimWrap.sdx(hx, _bd_mid.x) * w)
+			var wy: float = lerpf(hy, _bd_mid.y, w)
+			var su: float = lerpf(0.5 - 0.12 * dir, 0.5 + 0.12 * dir, c)
+			_place(fr, wx, wy, fz, lerpf(su, 0.5, w), lerpf(0.52, 0.58, w), z, lerpf(-1.0, 4.0, w))
+	fr.focus_z[0] = fz
+	fr.mode = "merged"
+	fr.sep = 0.0
+	fr.e = 0.0
+	fr.e_slot = -1
+	fr.share = 0.0
+	fr.sliver = 0.0
+	fr.active = [true, false]
+	fr.panel = {}
+	fr.fade = 0.0
+	fr.flash = 0.0
+	fr.line_alpha = 0.0
+	fr.gap = 0.0
+	fr.shake = PackedFloat64Array([0.0, 0.0])
+	fr.many_off = []
+	fr.cut = t < 1.0

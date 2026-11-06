@@ -1,0 +1,98 @@
+{
+  "about": "The clip kit's recipes (tools/clips/make.mjs, docs/tools/clips.md). One recipe is one clip: a scene of the capture hook (render/tools/flash_capture.gd) or a mockup script, the seed, the page words, a tick window (from + frames x step) or an event window, a crop of the 960x540 picture, and the encoding. The sim is deterministic, so a recipe gives the same clip on the same build, and moves to a newer build with nobody looking. `nohud=1` hides the HUD on builds whose hook has it; the crops also keep the HUD's corners out, so an older build works too.",
+  "defaults": {
+    "scene": "ai",
+    "seed": 12345,
+    "words": "planet=7&meteor=loud&tiles=1&nohud=1",
+    "size": [960, 540],
+    "step": 3,
+    "frames": 36,
+    "fps": 12,
+    "width": 480,
+    "maxkb": 560,
+    "format": "gif",
+    "crop": [0, 0, 960, 540],
+    "blur": 0,
+    "tol": 0
+  },
+  "events": {
+    "about": "Names a recipe's `event` can use, matched against the sim's own events the hook logs (type, kind). Any other name is read as type or type:kind.",
+    "launch": ["launch"],
+    "crater": ["crater"],
+    "building_fall": ["building_fall"],
+    "ko": ["ko"],
+    "catch": ["exchange_end", "catch"],
+    "beam_clash_end": ["cue", "beam_clash_end"],
+    "clash_draw": ["clash_draw"],
+    "tier_up": ["tier_up"],
+    "transform": ["transform"]
+  },
+  "bookmarks": {
+    "about": "Windows (ticks before and after) for the marks and bookmarks of a saved match (make.mjs --from-match): the game's own launch, crater, beam clash end, building fall and KO, and the player's clip button (F9, or View + RB), which marks the last 15 seconds.",
+    "launch": { "before": 60, "after": 90, "format": "gif" },
+    "crater": { "before": 60, "after": 90, "format": "gif" },
+    "building_fall": { "before": 60, "after": 120, "format": "gif" },
+    "beam_clash_end": { "before": 240, "after": 90, "format": "gif" },
+    "ko": { "before": 150, "after": 60, "format": "gif" },
+    "clip": { "before": 900, "after": 0, "format": "webm", "step": 3 }
+  },
+  "clips": {
+    "selftest": {
+      "desc": "A short clip for the kit's self-test: the beam clash staging, 12 frames of the struggle's blast (works on builds whose hook is older than the film scenes).",
+      "scene": "clash", "from": 312, "frames": 12, "crop": [180, 130, 780, 468], "maxkb": 300
+    },
+    "charged-strike": {
+      "desc": "A right stick held 60 ticks toward the rival, then released and landing: the stick's charged strike.",
+      "scene": "chargehold", "from": 114, "crop": [300, 190, 900, 528], "maxkb": 560, "needs": "a build with the film scenes (the hook of 2026-11-06 on)"
+    },
+    "chase": {
+      "desc": "A launch, the tap, the rush and the catch, in the split view.",
+      "scene": "chase", "from": 414, "needs": "a build with the film scenes and the chase tap"
+    },
+    "beam-and-shove": {
+      "desc": "A beam charged and fired standing still at point-blank; the rival is shoved away.",
+      "scene": "signaturedummy", "from": 72, "maxkb": 600
+    },
+    "beam-struggle": {
+      "desc": "Both beams meeting in the village, then the blast and the crater at the clash.",
+      "scene": "clash", "from": 312, "crop": [180, 130, 780, 468]
+    },
+    "top-power-towers": {
+      "desc": "A top-power launch through the tower row, the burn streak and the rubble thrown at the start.",
+      "scene": "towers", "words": "planet=7&meteor=loud&tiles=1&nohud=1&power=1&peak=1", "from": 495, "crop": [0, 0, 960, 500], "blur": 1.4,
+      "needs": "a build with the film scenes and the power park (power=1)"
+    },
+    "building-gives-way": {
+      "desc": "A city building's cracked charcoal wall drops, with stone rubble and dust, the two fighters in front.",
+      "scene": "collapse", "from": 498, "crop": [180, 200, 780, 538]
+    },
+    "planet-today-vs-plates": {
+      "desc": "MOCKUP: planet 7 today beside the plate terrain, two globes turning slowly, drawn from World's flat maps (not the game's globe).",
+      "mockup": "globes.py", "args": ["--frames", "40", "--turn", "70"], "frames": 40
+    },
+    "megastructures-pan": {
+      "desc": "MOCKUP: a slow pan across the bottom row of Art's megastructure sheet, the card text left out.",
+      "mockup": "pan.py", "args": ["--frames", "40"], "frames": 40
+    },
+    "beam-clash-1-low-side-on": {
+      "desc": "Camera's film shot 1: low and side on, a push in and a drift as he fires; the struggle held still.",
+      "scene": "beamduel", "words": "planet=7&meteor=loud&tiles=1&nohud=1&bdshot=1&bdgap=750&bdalt=220", "from": 12, "frames": 49, "step": 5, "tol": 10, "needs": "Camera's clip-scenes park (main.gd and sim_host.gd hunks) landed"
+    },
+    "beam-clash-2-high-wide-over-town": {
+      "desc": "Camera's film shot 2: high and wide over the town, craning down and easing in.",
+      "scene": "beamduel", "words": "planet=7&meteor=loud&tiles=1&nohud=1&bdshot=2&bdgap=900&bdalt=450", "from": 12, "frames": 49, "step": 5, "tol": 10, "needs": "Camera's clip-scenes park landed"
+    },
+    "beam-clash-3-tight-then-pull-back": {
+      "desc": "Camera's film shot 3: tight on P1 charging, across to P2, then a pull back as the beams meet.",
+      "scene": "beamduel", "words": "planet=7&meteor=loud&tiles=1&nohud=1&bdshot=3&bdgap=750&bdalt=200", "from": 12, "frames": 49, "step": 5, "tol": 10, "needs": "Camera's clip-scenes park landed"
+    },
+    "first-launch": {
+      "desc": "An event window, as an example: the first launch of an AI match, 60 ticks before to 90 after.",
+      "scene": "ai", "event": { "name": "launch", "nth": 1, "before": 60, "after": 90 }
+    },
+    "first-clash-end": {
+      "desc": "An event window: the end of the first beam struggle (needs Encounter's clash-end park, beamStruggle.endEvent on).",
+      "scene": "clash", "event": { "name": "beam_clash_end", "nth": 1, "before": 240, "after": 90 }, "needs": "Encounter's clash-end park with its switch on"
+    }
+  }
+}

@@ -105,6 +105,14 @@ export const HOST_FUNCS = [
   '',
   '',
   'func _bb_pb_step() -> bool:',
+  '\tif _bb_pb_t == 0:   # the recorded match exactly as SimReplay.play starts it, with no hub setup merged in',
+  '\t\tseed = int(_bb_pb.get("seed", 0)) & 0xFFFFFFFF',
+  '\t\tSimCore.newMatch(S, seed, _bb_pb.get("ai", {}), _bb_pb.get("setup", {}))',
+  '\t\t_started(_bb_pb.get("setup", {}), false)',
+  '\t\tfor k in range(S.fighters.size()):',
+  '\t\t\tvar want_ai0: bool = bool(_bb_pb.get("ai", {}).get("p%d" % (k + 1), true))',
+  '\t\t\tif (S.fighters[k].ai != null) != want_ai0:',
+  '\t\t\t\tSimCore.toggleAI(S, k)',
   '\twhile _bb_pb_ti < _bb_pb.toggles.size() and int(_bb_pb.toggles[_bb_pb_ti][0]) == _bb_pb_t:',
   '\t\tSimCore.toggleAI(S, int(_bb_pb.toggles[_bb_pb_ti][1]))',
   '\t\t_bb_pb_ti += 1',
@@ -138,6 +146,15 @@ export const HOST_FUNCS = [
   '\t\t\t\tentry.append(w)',
   '\t\t\t_bb.inputs.append(entry)',
   '\tvar r: bool = SimCore.step(S, inputs)',
+  '\tif OS.has_feature("web"):   # clip kit: the moments a clip can be cut around, told to the page, which keeps them with the match\'s marks (read only: the events are looked at, nothing is written)',
+  '\t\tfor ev in S.out.fx:',
+  '\t\t\tvar bk: String = ""',
+  '\t\t\tif ev.type == "launch" or ev.type == "crater" or ev.type == "building_fall" or ev.type == "ko":',
+  '\t\t\t\tbk = ev.type',
+  '\t\t\telif ev.type == "cue" and str(ev.kind) == "beam_clash_end":',
+  '\t\t\t\tbk = "beam_clash_end"',
+  '\t\t\tif bk != "":',
+  '\t\t\t\tJavaScriptBridge.eval("window.__bbm && window.__bbm(%d, \'%s\')" % [int(_bb.ticks), bk], true)',
   '\tif OS.has_feature("web") and Engine.get_process_frames() != _bb_fr:   # once a frame: the tick the page is on, for its slow-frame marks',
   '\t\t_bb_fr = Engine.get_process_frames()',
   '\t\tJavaScriptBridge.eval("window.__bb_t=%d;" % int(_bb.ticks), true)',
@@ -238,6 +255,15 @@ export const PAGE_SCRIPT = String.raw`
   // Slow frames (render side only, nothing of the sim): the browser's own gaps between frames and the tick the game was on (the host sets window.__bb_t once a frame), for the match in play. A gap over 33 ms is a mark,
   // with its time; a gap over a second is the tab being away (hidden, a sleeping PC) and is only counted. So a bad match says whether it was the PC (marks all through, at any tick) or the game (marks at certain ticks).
   var F = {};
+  // Clip kit (tools/clips/clips.md): F9 on the keyboard, or View + RB on a pad, marks "the last 15 seconds" of the match in play; the game's own launch, crater, beam clash end, building fall and KO bookmark themselves (the host calls __bbm).
+  // The marks are kept with the match and saved in its file as 'marks' ([{tick, kind}]); tools/clips/make.mjs --from-match renders each one through the replay. A small text note in the page's corner for 1.5 s: nothing is drawn on the game, and nothing of the sim is read or written.
+  var M = [], noteEl = null, noteT = 0, lastBm = {}, lastBmTick = 0, padHeld = false;
+  window.__bb_marks = M;
+  function note(txt) { try { if (!noteEl) { noteEl = document.createElement('div'); noteEl.style.cssText = 'position:fixed;left:6px;bottom:30px;z-index:2147483645;font:12px/1.3 monospace;color:#fff;background:rgba(0,0,0,.6);padding:2px 8px;border-radius:3px;pointer-events:none;display:none'; document.body.appendChild(noteEl); } noteEl.textContent = txt; noteEl.style.display = 'block'; clearTimeout(noteT); noteT = setTimeout(function () { noteEl.style.display = 'none'; }, 1500); } catch (e) { /* none */ } }
+  function markNow() { if (M.length < 600) M.push({ tick: window.__bb_t || 0, kind: 'clip', before: 900 }); note('Clip marked'); }
+  window.__bbm = function (tick, kind) { if (lastBmTick > tick + 5) lastBm = {}; lastBmTick = tick; if (lastBm[kind] !== undefined && tick - lastBm[kind] < 60) return; lastBm[kind] = tick; if (M.length < 600) M.push({ tick: tick, kind: kind }); };
+  window.addEventListener('keydown', function (e) { if (e.isTrusted && e.key === 'F9' && !e.repeat) { e.preventDefault(); markNow(); } }, true);
+  setInterval(function () { try { var g = navigator.getGamepads ? navigator.getGamepads() : [], on = false; for (var i = 0; i < g.length; i++) { var q = g[i]; if (q && q.buttons && q.buttons[8] && q.buttons[5] && q.buttons[8].pressed && q.buttons[5].pressed) on = true; } if (on && !padHeld) markNow(); padHeld = on; } catch (e) { /* none */ } }, 80);
   function fReset() { F = { n: 0, over33: 0, over50: 0, over100: 0, away: 0, worst: 0, worstTick: 0, slow: [], last: 0, t0: performance.now(), rs: [], rsLast: false, rsPad: '' }; }
   fReset();
   window.__bbf_reset = fReset;
@@ -277,7 +303,7 @@ export const PAGE_SCRIPT = String.raw`
   function css(el, o) { for (var k in o) el.style[k] = o[k]; return el; }
   function stamp() { var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()); }
   function save(replayText, answers, matchOver, frames) {
-    var obj = { kind: 'orb-first-play', note: 'Recorded on this PC by the private page. Nothing was sent anywhere. The replay plays back through the game\'s own replay path. frames: the slow frames of that play (tick, ms, seconds in).', savedAt: new Date().toISOString(), pageSearch: String(location.search || ''), build: window.__build || null, audio: window.__audio_snap ? window.__audio_snap(true) : null, matchOver: matchOver, answers: answers, frames: frames ? Object.assign({}, frames, { rs: undefined }) : null, rawRightStick: frames && frames.rs ? { pad: frames.rsPad, axes: 'the standard mapping, axes 2 and 3 (x, y)', note: 'a sample [tick, ms, x, y] each frame the stick was off centre, and the frame it came back; only read from the pad, nothing sent', samples: frames.rs } : null, replay: JSON.parse(replayText) };
+    var obj = { kind: 'orb-first-play', marks: (window.__bb_lastMarks || M).slice(0, 600), note: 'Recorded on this PC by the private page. Nothing was sent anywhere. The replay plays back through the game\'s own replay path. frames: the slow frames of that play (tick, ms, seconds in).', savedAt: new Date().toISOString(), pageSearch: String(location.search || ''), build: window.__build || null, audio: window.__audio_snap ? window.__audio_snap(true) : null, matchOver: matchOver, answers: answers, frames: frames ? Object.assign({}, frames, { rs: undefined }) : null, rawRightStick: frames && frames.rs ? { pad: frames.rsPad, axes: 'the standard mapping, axes 2 and 3 (x, y)', note: 'a sample [tick, ms, x, y] each frame the stick was off centre, and the frame it came back; only read from the pad, nothing sent', samples: frames.rs } : null, replay: JSON.parse(replayText) };
     var blob = new Blob([JSON.stringify(obj)], { type: 'application/json' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = 'orb-first-play-' + stamp() + '.json';
@@ -307,6 +333,7 @@ export const PAGE_SCRIPT = String.raw`
       var q = window.__bb_q;
       while (q && q.length) {
         var e = q.shift(), eid = e.seed + ':' + e.ticks;
+        window.__bb_lastMarks = M.splice(0);   // the match that ended keeps its marks; the next one starts with none
         if (seen[eid] === 1) continue;
         seen[eid] = 1;
         try { var L = JSON.parse(localStorage.getItem(K + '-list') || '[]'); L.push({ at: e.at, over: !!e.over, replay: e.replay, frames: e.frames ? Object.assign({}, e.frames, { rs: undefined }) : null }); while (L.length > 5) L.shift(); localStorage.setItem(K + '-list', JSON.stringify(L)); } catch (x) { /* storage full or private: the card still offers it */ }

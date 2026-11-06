@@ -37,6 +37,7 @@ var hub := SimInputHub.new()    # every device's input and the intent v2 per hum
 var touch: SimTouch = hub.touch  # the hub's touch layer, for the host's hit tests and UI's button state
 var feed: Array = []            # recent SimState.FeedLine, oldest first
 var jitter := Vector2.ZERO      # screen shake offset in pixels for the current tick
+var film_in: Array = [null, null]   # the capture hook's film scenes only (render/tools/flash_capture.gd): each slot's intent for the next tick, or null; null in play
 var tick_usec: int = 0          # cost of the last SimCore.step
 var fx_usec: int = 0            # cost of the last fx consume and camera step
 var _prev := PackedFloat64Array()
@@ -417,6 +418,9 @@ func tick(vw: float, vh: float) -> void:
 			if SimInputData.right_stick_on():
 				hub.set_struggle(k, SimDir.inStruggle(S, S.fighters[k]))   # a beam clash or a finisher's contest: the stick does nothing there (Controls' K3)
 			inputs[k] = hub.intent(k)
+	for k in range(2):
+		if film_in[k] != null:
+			inputs[k] = film_in[k]
 	var pausing: bool = S.pause.left > 0   # Q10: this tick is one of a pausing set piece's frozen ticks
 	var pre: bool = intro_running()        # the intro phase: this tick is a pre-clock tick
 	if pre and _skip_intro > 0:

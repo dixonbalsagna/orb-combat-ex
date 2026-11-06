@@ -1,0 +1,32 @@
+<!doctype html><meta charset="utf-8"><title>clip kit: WebM from frames</title>
+<canvas id="c"></canvas>
+<script>
+// The clip kit's WebM step (tools/clips/make.mjs --format webm): the prepared frames (frames.json: { fps, frames: [names] }) drawn to a canvas at their frame rate and recorded by the browser's own MediaRecorder
+// (no encoder to install). The result is read by the driver as window.__webm (base64) once window.__webmDone is true. Real time: a 5 s clip takes 5 s.
+(async () => {
+  try {
+    const meta = await (await fetch('frames.json')).json();
+    const imgs = [];
+    for (const n of meta.frames) { const im = new Image(); im.src = n; await im.decode(); imgs.push(im); }
+    const c = document.getElementById('c'); c.width = imgs[0].width; c.height = imgs[0].height;
+    const g = c.getContext('2d');
+    const stream = c.captureStream(0), track = stream.getVideoTracks()[0];
+    const mime = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].find((m) => MediaRecorder.isTypeSupported(m));
+    const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 3000000 });
+    const chunks = [];
+    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    const done = new Promise((r) => { rec.onstop = r; });
+    rec.start();
+    const dt = 1000 / meta.fps, t0 = performance.now();
+    for (let i = 0; i < imgs.length; i++) {
+      g.drawImage(imgs[i], 0, 0); if (track.requestFrame) track.requestFrame();
+      const wait = t0 + (i + 1) * dt - performance.now(); if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    }
+    await new Promise((r) => setTimeout(r, 250)); rec.stop(); await done;
+    const blob = new Blob(chunks, { type: 'video/webm' });
+    const buf = new Uint8Array(await blob.arrayBuffer()); let s = ''; for (let i = 0; i < buf.length; i += 32768) s += String.fromCharCode.apply(null, buf.subarray(i, i + 32768));
+    window.__webm = btoa(s); window.__webmMime = mime;
+  } catch (e) { window.__webmError = String(e); }
+  window.__webmDone = true;
+})();
+</script>

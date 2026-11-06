@@ -58,6 +58,7 @@ var split_frame: SplitFrame = null  # this frame's, while a compositor is attach
 ## once per displayed frame after drawing the panes, and its pane_jitter(i) (if it has one) for a pane's shake.
 ## Attaching one resets the rig to the current state; without one the rig costs nothing (about 0.05 ms a tick).
 var split_view: SplitView = null   # Camera's compositor in the game (null in the tools)
+var film_cam: Callable               # the capture hook's film camera (a film scene's `bdshot` word): rewrites the rig's frame each draw; invalid in play
 var flashcap: FlashCapture = null     # Tools' capture hook (--flashcap, on the web ?flashcap=1): the game is stepped from the page; null in normal play
 static var render_scale: float = 1.0      # the 3D render scale (_render_scale): lower on a phone
 var _build_queue: Array = []             # the boot's pane build still to run (_step_build): _match_built's steps
@@ -803,6 +804,8 @@ func render_view(a: float) -> void:
 		if "pitch_deg" in split_rig:
 			split_rig.pitch_deg = cam_pitch
 		split_frame = split_rig.frame(a)
+		if film_cam.is_valid():
+			film_cam.call(split_frame, host.S, a)
 		var zmax: float = 0.0
 		var zfocus: float = 0.0   # the closer pane's focus depth, for the flash register's sizes
 		# Camera's frame may carry the pitch and each pane's cut-away request; until it does, the debug pitch, and in a
@@ -816,6 +819,8 @@ func render_view(a: float) -> void:
 		for i in range(panes.size()):
 			if i == 0 or split_frame.shows(i):
 				var j: Vector2 = compositor.pane_jitter(i) if compositor.has_method("pane_jitter") else (host.jitter if i == 0 else Vector2.ZERO)
+				if film_cam.is_valid():
+					j = Vector2.ZERO   # a film shot has no shake
 				panes[i].occlusion = occlusion
 				panes[i].cutaway = PaneWorld.request(cw[i] if cw is Array and i < cw.size() else ({"only": i} if two else {}), cl[i] if cl is Array and i < cl.size() else null)
 				panes[i].focus_z = float(fzs[i]) if fzs != null and i < fzs.size() else 0.0
