@@ -1,8 +1,9 @@
 extends SceneTree
 ## The scheme gauntlet's player (Tools; docs/tools/feel.md): one scripted pad on the real input hub plays whole seeded matches against the computer at one level, and the run is read the same way for every arm and every scheme.
-##   godot --headless --path <tree copy with qa/godot/qa_planet.gd> --script <this file> -- <matches> <baseSeed> --arm=stick|masher|timing|beam|circle --level=easy|medium|hard [--capsec=900] [--wall=300] [--budget=3600]
+##   godot --headless --path <tree copy with qa/godot/qa_planet.gd> --script <this file> -- <matches> <baseSeed> --arm=stick|masher|timing|beam|circle|orbs --level=easy|medium|hard [--capsec=900] [--wall=300] [--budget=3600]
 ## The arms (the pad is slot 0 in every match, so a spawn side effect is in all alike; every arm walks at the rival with the left stick):
 ##   stick   a right-stick flick in one of the four directions every 8 to 24 ticks (nothing else)
+##   orbs    (asked for by name, not in the default five) Orb's scheme: a right-stick flick every 30 to 48 ticks (thumb pace) and LB for 10 ticks on every wind-up of his; nothing else
 ##   masher  X every 8 ticks (nothing else)
 ##   timing  LB for 10 ticks when his blow winds up (a heavy's wind-up or any "windup" start cue, lights too; the perfect block's window), then X straight after; X every 8 ticks otherwise
 ##   beam    RB held and the right stick held toward him for 40 ticks, then let go to fire, then RB off; X every 8 ticks to build energy while it cannot pay
@@ -61,7 +62,7 @@ func _init() -> void:
 			return
 		var rng := RandomNumberGenerator.new()
 		rng.seed = seed_
-		var st := {"next": 20, "rel": {}, "rsTo": -1, "aim": Vector2.ZERO, "ltTo": -1, "stk": Vector2.ZERO, "beam": 0, "bTo": 0, "cool": 0, "lbTo": -1, "xAt": -1, "presses": 0}
+		var st := {"next": 20, "rel": {}, "rsTo": -1, "aim": Vector2.ZERO, "ltTo": -1, "stk": Vector2.ZERO, "beam": 0, "bTo": 0, "cool": 0, "lbTo": -1, "xAt": -1, "gNext": 0, "presses": 0}
 		_btn("west", true)       # as the stick player of qa/godot/stickplay.gd begins: one X, so the pad is the human
 		st.rel[2] = ["west"]
 		var t0: int = Time.get_ticks_msec()
@@ -180,6 +181,27 @@ func _drive(arm: String, S: SimState, t: int, st: Dictionary, rng: RandomNumberG
 				hub.pad_stick_right(0, st.aim.x, st.aim.y)
 			elif t == int(st.rsTo):
 				hub.pad_stick_right(0, 0.0, 0.0)
+		"orbs":
+			# Orb's scheme, fair: the right thumb flicks (three ticks out, never faster than about two a second: every 30 to 48 ticks) and the left hand guards, LB for 10 ticks, on every wind-up of his (the same wind-up read as the timing pad), walking as the others do
+			if t >= int(st.next):
+				st.aim = _aim(S, rng.randi_range(1, 4))
+				st.rsTo = t + 3
+				st.presses = int(st.presses) + 1
+				st.next = t + rng.randi_range(30, 48)
+			if t < int(st.rsTo):
+				hub.pad_stick_right(0, st.aim.x, st.aim.y)
+			elif t == int(st.rsTo):
+				hub.pad_stick_right(0, 0.0, 0.0)
+			var wound: bool = (not DirBrawl.winding(S, foe).is_empty()) or (t - _foe_windup_t <= 3)
+			if int(st.lbTo) >= 0:
+				if t >= int(st.lbTo):
+					_btn("lb", false)
+					st.lbTo = -1
+			elif wound and t >= int(st.gNext):
+				_btn("lb", true)
+				st.lbTo = t + 10
+				st.gNext = t + 14
+				st.presses = int(st.presses) + 1
 		"masher":
 			if t >= int(st.next):
 				_tap(st, t, ["west"])

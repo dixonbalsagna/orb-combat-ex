@@ -11,7 +11,7 @@ import { ROOT, HERE, workCopy, runGd, patchTree, parseOverride, putFile } from '
 
 export const ARMS = ['stick', 'masher', 'timing', 'beam', 'circle'];
 export const LEVELS = ['easy', 'medium', 'hard'];
-export const ARM_WORDS = { stick: 'stick-only', masher: 'masher', timing: 'timing', beam: 'beam-first', circle: 'circle-first' };
+export const ARM_WORDS = { stick: 'stick-only', masher: 'masher', timing: 'timing', beam: 'beam-first', circle: 'circle-first', orbs: "orb's scheme" };   // orbs is asked for by name (--arms orbs,stick), it is not one of the default five
 
 /** The newest kept build's tree (the playable build), or throws. */
 export function latestKeptTree(root = ROOT) {
