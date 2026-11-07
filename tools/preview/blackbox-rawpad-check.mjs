@@ -79,6 +79,14 @@ export function rawPadProblems() {
   need(one.file && one.file.rawRightStick && one.file.rawRightStick.samples.length >= 6, 'rawRightStick is unchanged and still recorded');
   need(f && f.frames && f.frames.rb === undefined && f.frames.pads === undefined, 'the frames summary stays small (the arrays are not in it)');
   need(r.sent === 0, 'nothing is sent');
+  // 1b. the right stick of every pad: the phantom is listed first, so rawRightStick (the first pad with a right stick) stays empty while the real pad's right stick moves; rawPad.rightStick has it, under the real pad's index
+  const rr = run(120, (t) => [pad('Virtual Pad', {}, [0, 0, 0, 0]), pad(XBOX, {}, [0, 0, t >= 40 && t <= 50 ? 0.8 : 0, t >= 40 && t <= 50 ? -0.6 : 0])]);
+  const rs = rr.file && rr.file.rawPad ? rr.file.rawPad.rightStick : null;
+  need(Array.isArray(rs) && rs.length >= 11 && rs.every((x) => x[2] === 1), 'the right stick of the second pad is in rawPad.rightStick under pad 1 (' + (rs ? rs.length : 'none') + ' rows)');
+  need(rs && rs.some((x) => x[3] === 0.8 && x[4] === -0.6) && rs[rs.length - 1][3] === 0, 'it carries the push and the frame it came back');
+  need(rs && rs.length < 20, 'only while off centre (' + (rs ? rs.length : 0) + ' rows for 120 frames)');
+  need(rr.file && rr.file.rawRightStick && rr.file.rawRightStick.samples.length === 0, 'the old rawRightStick, reading the phantom first, is empty: the case this record exists for');
+  need(rr.file && rr.file.frames && rr.file.frames.rsa === undefined, 'the frames summary stays small');
   // 2. a clean pad: a button goes down and comes back; the record shows both
   const c = run(120, (t) => [pad(XBOX, t >= 10 && t < 20 ? { 0: true } : {}, [0, 0, 0, 0])]);
   const cb = c.file && c.file.rawPad ? c.file.rawPad.buttons : [];
