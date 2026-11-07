@@ -1,0 +1,87 @@
+{
+ "label": "control",
+ "query": "webvoices=0",
+ "seed": 7,
+ "when": "2026-11-07T04:48:52.949Z",
+ "trials": [
+  {
+   "tick": 1264,
+   "stallMs": 0,
+   "startedByThePage": null,
+   "engineBlocksSkipped": 0,
+   "onsetMs": 70,
+   "seconds": 1.56,
+   "peak": 0.404,
+   "holes": 0,
+   "holeMs": 0,
+   "longestHoleMs": 0,
+   "firstHoles": []
+  },
+  {
+   "tick": 1543,
+   "stallMs": 40,
+   "startedByThePage": null,
+   "engineBlocksSkipped": 1,
+   "onsetMs": 72,
+   "seconds": 1.59,
+   "peak": 0.24,
+   "holes": 0,
+   "holeMs": 0,
+   "longestHoleMs": 0,
+   "firstHoles": []
+  },
+  {
+   "tick": 1808,
+   "stallMs": 100,
+   "startedByThePage": null,
+   "engineBlocksSkipped": 25,
+   "onsetMs": 2,
+   "seconds": 1.65,
+   "peak": 0.891,
+   "holes": 1,
+   "holeMs": 66.7,
+   "longestHoleMs": 66.7,
+   "firstHoles": [
+    {
+     "at": 0.336,
+     "ms": 66.7
+    }
+   ]
+  },
+  {
+   "tick": 2075,
+   "stallMs": 150,
+   "startedByThePage": null,
+   "engineBlocksSkipped": 40,
+   "onsetMs": 80,
+   "seconds": 1.7,
+   "peak": 0.45,
+   "holes": 1,
+   "holeMs": 106.7,
+   "longestHoleMs": 106.7,
+   "firstHoles": [
+    {
+     "at": 0.344,
+     "ms": 106.7
+    }
+   ]
+  }
+ ],
+ "loadBefore": 53,
+ "hasWebPlayer": false,
+ "contexts": 1,
+ "ticks": [
+  1264,
+  1543,
+  1808,
+  2075
+ ],
+ "stalls": [
+  0,
+  40,
+  100,
+  150
+ ],
+ "loadAfter": 38,
+ "valid": true
+}

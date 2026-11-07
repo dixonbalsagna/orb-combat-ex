@@ -16,6 +16,11 @@ var bank: AudioBank
 var mix: Dictionary = {}
 var played: int = 0
 var dropped: int = 0
+var web: AudioWeb = null       # the browser-direct one-shots (audio_web.gd): on the web only, null everywhere else and with ?webvoices=0
+var _web_db: Dictionary = {}   # bus name -> the last level (dB) sent to the page
+var _lowpass: Dictionary = {}  # bus name -> its low-pass (Hz) from mix.json, for the page's muffled voices
+const WEB_TRIM_DB := -3.0      # measured: with no trim the page's one-shots sit 5.5 to 6 dB above the same cues through Godot's mixer (docs/audio/crackle.md), +3 dB were wrong; -3 puts them within 1 dB
+static var _inst: AudioVoices = null
 var _pool: Array = []          # AudioStreamPlayer2D
 var _meta: Array = []          # per player: {priority, group, t}
 var _tweens: Array = []        # per player: the tween moving a looped voice, or null
@@ -48,10 +53,21 @@ func _ready() -> void:
 		_pool.append(p)
 		_meta.append({"priority": -1, "group": "", "t": -1.0, "cls": ""})
 		_tweens.append(null)
+	for b in mix.buses:
+		if b.has("lowpass_hz"):
+			_lowpass[String(b.name)] = float(b.lowpass_hz)
+	_inst = self
+	var w := AudioWeb.new()
+	if w.install():
+		web = w
+		_sync_web(true)
+		web.set_mono(mono)
 
 
 func _process(delta: float) -> void:
 	_clock += delta
+	if web != null:
+		_sync_web(false)
 	_run_deferred()
 	for bus in _duck.keys():
 		var d: Dictionary = _duck[bus]
@@ -64,6 +80,34 @@ func _process(delta: float) -> void:
 		elif idx != -1:
 			var k: float = clampf(left / DUCK_RELEASE, 0.0, 1.0)     # 1 while held, then a short ramp back up
 			AudioServer.set_bus_volume_db(idx, float(_base_db.get(bus, 0.0)) + user_db(bus) + float(d.db) * k)
+
+
+## Whether a pool slot is sounding: its Godot player is playing, or the page is playing its one-shot (until the time it was started for).
+func _busy(i: int) -> bool:
+	return _pool[i].playing or float(_meta[i].get("until", 0.0)) > _clock
+
+
+## Send the buses' levels to the page's graph: what AudioServer holds (mix.json's level, the player's trim, any duck) in dB for each
+## bus, and the Master's, when it has moved by more than 0.05 dB (or at once with force).
+func _sync_web(force: bool) -> void:
+	for b in mix.buses:
+		var name: String = String(b.name)
+		var idx: int = AudioServer.get_bus_index(name)
+		if idx == -1:
+			continue
+		var db: float = AudioServer.get_bus_volume_db(idx)
+		if force or absf(db - float(_web_db.get(name, 1000.0))) > 0.05:
+			_web_db[name] = db
+			web.set_bus(name, db_to_linear(db))
+	var m: float = AudioServer.get_bus_volume_db(0)
+	if force or absf(m - float(_web_db.get("Master", 1000.0))) > 0.05:
+		_web_db["Master"] = m
+		web.set_master(db_to_linear(m))
+
+
+## A cue the page may play itself: a one-shot that nothing moves after it starts (not a loop, not updated) and the page's context runs.
+func _web_ok(cue: AudioCues.Cue) -> bool:
+	return web != null and not cue.loop and not cue.ambient and web.running()
 
 
 ## A cue for a sound the warm-up has not rendered: move that sound to the front of the queue, and hold the cue. It plays when the sound
@@ -160,6 +204,8 @@ static func set_user_volume(group: String, linear: float) -> void:
 ## Mono sound: a stereo enhancer with no pull-out on the Master bus sums left and right (added on first use, then switched).
 static func set_mono(on: bool) -> void:
 	mono = on
+	if _inst != null and _inst.web != null:
+		_inst.web.set_mono(on)      # the page's one-shots too
 	var e: int = _effect_index(0, "AudioEffectStereoEnhance")
 	if e == -1:
 		if not on:
@@ -208,10 +254,7 @@ static func setup_buses(m: Dictionary) -> void:
 ## output latency. Reading it: a Master peak well above -60 dB while nothing is heard means the page works and the browser, the OS or
 ## the device does not; -200 with `played` rising means a trim or a mute; -200 with `played` flat means no cues arrive.
 func status_line() -> String:
-	var live: int = 0
-	for p in _pool:
-		if p.playing:
-			live += 1
+	var live: int = active()
 	var peak: float = AudioServer.get_bus_peak_volume_left_db(0, 0)
 	var s: String = "audio: played %d dropped %d live %d | lost %d waiting %d warming %s | %d Hz %.0f ms out %s | master peak %.0f dB | trim m %.0f e %.0f v %.0f dB" % [
 		played, dropped, live, bank.skipped, bank.deferred_n, str(bank.warming), int(AudioServer.get_mix_rate()), AudioServer.get_output_latency() * 1000.0,
@@ -223,6 +266,8 @@ func status_line() -> String:
 	if OS.has_feature("web"):
 		# The engine's own context is not a global of the page; the page shell keeps a reference to every AudioContext it is made
 		# (docs/audio/pending/audio-resume/shell-snippet.js) and answers for them: the state, the clock, the rate and the output latency.
+		if web != null:
+			s += " | web: " + web.status()
 		s += " | ctx " + str(JavaScriptBridge.eval("(function(){try{return window.__audioShell&&window.__audioShell.state?window.__audioShell.state():'no shell hook'}catch(e){return 'error ('+e+')'}})()"))
 	return s
 
@@ -257,6 +302,28 @@ func play(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:
 		dropped += 1
 		return false
 	var p: AudioStreamPlayer2D = _pool[slot]
+	if web != null and bool(_meta[slot].get("js", false)):
+		web.stop_slot(slot)
+	if _web_ok(cue):
+		var st: AudioStreamWAV = bank.stream(cue.sound, vsel)
+		var key: String = "%s#%d" % [cue.sound, vsel]
+		web.ensure(key, st)
+		var bus_name: String = cue.bus
+		var lp: float = 0.0
+		if cue.muffled:
+			bus_name = "SfxMuffled" if cue.bus == "Sfx" else ("VoiceMuffled" if cue.bus == "Voice" else cue.bus)
+			lp = float(_lowpass.get(bus_name, 0.0))
+		var half: float = maxf(get_viewport().get_visible_rect().size.x * 0.5, 1.0)
+		var pan: float = clampf(dx * zoom / half, -1.0, 1.0)
+		var lin: float = db_to_linear(cue.gain_db + distance_db(dist) + WEB_TRIM_DB)
+		if web.play(slot, key, lin, pan, cue.pitch, bus_name, lp, cue.group):
+			p.stop()
+			_kill_tween(slot)
+			_meta[slot] = {"priority": cue.priority, "group": cue.group, "t": _clock, "cls": cue.cls, "js": true, "until": _clock + st.get_length() / maxf(cue.pitch, 0.1)}
+			for d in cue.duck:
+				_hold_down(String(d.bus), float(d.db), int(d.ms))
+			played += 1
+			return true
 	p.stop()
 	_kill_tween(slot)
 	p.stream = _looped(bank.stream(cue.sound, vsel)) if cue.loop else bank.stream(cue.sound, vsel)
@@ -317,13 +384,13 @@ func update_group(group: String, volume_db: float, pitch: float, ramp_ms: int, x
 func _take(cue: AudioCues.Cue) -> int:
 	if cue.group != "":
 		for i in range(_pool.size()):
-			if _meta[i].group == cue.group and _pool[i].playing:
+			if _meta[i].group == cue.group and _busy(i):
 				return i
 	if cue.cap > 0 and cue.cls != "":
 		var oldest: int = -1
 		var count: int = 0
 		for i in range(_pool.size()):
-			if _pool[i].playing and _meta[i].cls == cue.cls:
+			if _busy(i) and _meta[i].cls == cue.cls:
 				count += 1
 				if oldest == -1 or _meta[i].t < _meta[oldest].t:
 					oldest = i
@@ -331,7 +398,7 @@ func _take(cue: AudioCues.Cue) -> int:
 			return oldest if cue.priority >= int(_meta[oldest].priority) else -1
 	var weakest: int = -1
 	for i in range(_pool.size()):
-		if not _pool[i].playing:
+		if not _busy(i):
 			return i
 		if weakest == -1 or _meta[i].priority < _meta[weakest].priority or (_meta[i].priority == _meta[weakest].priority and _meta[i].t < _meta[weakest].t):
 			weakest = i
@@ -344,6 +411,10 @@ func _take(cue: AudioCues.Cue) -> int:
 func stop_group(group: String, fade_ms: int = 40) -> bool:
 	var found: bool = false
 	for i in range(_pool.size()):
+		if web != null and bool(_meta[i].get("js", false)) and float(_meta[i].get("until", 0.0)) > _clock and _meta[i].group == group:
+			found = true
+			web.stop_slot(i, fade_ms)
+			_meta[i]["until"] = 0.0
 		if _pool[i].playing and _meta[i].group == group:
 			found = true
 			var p: AudioStreamPlayer2D = _pool[i]
@@ -358,7 +429,7 @@ func stop_group(group: String, fade_ms: int = 40) -> bool:
 
 func active() -> int:
 	var n: int = 0
-	for p in _pool:
-		if p.playing:
+	for i in range(_pool.size()):
+		if _busy(i):
 			n += 1
 	return n

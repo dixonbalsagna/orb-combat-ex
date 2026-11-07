@@ -1,0 +1,77 @@
+{
+ "label": "lat150",
+ "query": "webvoices=0",
+ "seed": 7,
+ "when": "2026-11-07T04:54:05.361Z",
+ "trials": [
+  {
+   "tick": 1264,
+   "stallMs": 0,
+   "startedByThePage": null,
+   "engineBlocksSkipped": 0,
+   "onsetMs": 200,
+   "seconds": 1.55,
+   "peak": 0.404,
+   "holes": 0,
+   "holeMs": 0,
+   "longestHoleMs": 0,
+   "firstHoles": []
+  },
+  {
+   "tick": 1543,
+   "stallMs": 40,
+   "startedByThePage": null,
+   "engineBlocksSkipped": 0,
+   "onsetMs": 195,
+   "seconds": 1.59,
+   "peak": 0.24,
+   "holes": 0,
+   "holeMs": 0,
+   "longestHoleMs": 0,
+   "firstHoles": []
+  },
+  {
+   "tick": 1808,
+   "stallMs": 100,
+   "startedByThePage": null,
+   "engineBlocksSkipped": 0,
+   "onsetMs": 0,
+   "seconds": 1.65,
+   "peak": 0.891,
+   "holes": 0,
+   "holeMs": 0,
+   "longestHoleMs": 0,
+   "firstHoles": []
+  },
+  {
+   "tick": 2075,
+   "stallMs": 150,
+   "startedByThePage": null,
+   "engineBlocksSkipped": 0,
+   "onsetMs": 200,
+   "seconds": 1.7,
+   "peak": 0.45,
+   "holes": 0,
+   "holeMs": 0,
+   "longestHoleMs": 0,
+   "firstHoles": []
+  }
+ ],
+ "loadBefore": 42,
+ "hasWebPlayer": false,
+ "contexts": 1,
+ "ticks": [
+  1264,
+  1543,
+  1808,
+  2075
+ ],
+ "stalls": [
+  0,
+  40,
+  100,
+  150
+ ],
+ "loadAfter": 73,
+ "valid": false
+}
