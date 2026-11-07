@@ -428,6 +428,9 @@ func _ledger() -> Dictionary:
 		var edges: Array = _feed_to(S, fd, t)
 		for k in edges:
 			var row: Dictionary = {"t": t, "press": k, "state": S.fighters[SLOT].state, "ki": int(S.fighters[SLOT].ki), "cues": [], "refused": [], "acts": 0}
+			var fme = S.fighters[SLOT]
+			var ffoe = S.fighters[1 - SLOT]
+			row["air"] = [int(fme.y - WorldTerrain.groundY(S, fme.x, fme.z)), String(ffoe.state), int(ffoe.y - WorldTerrain.groundY(S, ffoe.x, ffoe.z)), int(absf(SimWrap.sdx(fme.x, ffoe.x)))]   # the ledger's extra read (2026-11-07): his height over the ground, the rival's state, the rival's height over the ground, and the gap, at the press
 			var it = fd.cur[SLOT]
 			if it != null:
 				row["rs"] = [int(it.rsDir), int(it.rsLevel), int(it.rsMask)] if k == "rsStart" else []
@@ -463,6 +466,6 @@ func _ledger() -> Dictionary:
 			verdict = "partly"
 		elif row.acts == 0:
 			verdict = "silent"
-		rows.append({"t": row.t, "press": row.press, "verdict": verdict, "reasons": row.refused, "cues": row.cues.slice(0, 4), "state": row.state, "ki": row.ki, "rs": row.get("rs", [])})
+		rows.append({"t": row.t, "press": row.press, "verdict": verdict, "reasons": row.refused, "cues": row.cues.slice(0, 4), "state": row.state, "ki": row.ki, "rs": row.get("rs", []), "air": row.get("air", [])})
 	return {"mode": "ledger", "presses": rows, "recorded": _recorded(final)}
 
