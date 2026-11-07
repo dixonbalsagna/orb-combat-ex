@@ -841,6 +841,8 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
     '\t\tif str(e.type) == "cue" and str(e.kind).begins_with("stick_"):',
     '\t\t\t_pv_stick_n += 1',
     '\t\t\t_pv_stick_kinds[str(e.kind)] = int(_pv_stick_kinds.get(str(e.kind), 0)) + 1',
+    '\t\t\tif str(e.kind) == "stick_refused" and int(e.actor) == 0:   # the reason of each refusal of player 1, counted apart (refused_ki, refused_late ...): the word UI says comes from it',
+    '\t\t\t\t_pv_stick_kinds["refused_" + str(e.source)] = int(_pv_stick_kinds.get("refused_" + str(e.source), 0)) + 1',
     '',
     '',
   ].join('\n');

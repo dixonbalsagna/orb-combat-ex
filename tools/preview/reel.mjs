@@ -81,6 +81,9 @@ try {
   record.matches = [];
   const wall = { run: [0, 0], max: [0, 0], total: [0, 0], maxAt: [0, 0] }, wallAll = { run: [0, 0], max: [0, 0], total: [0, 0], maxAt: [0, 0] };   // ticks a fighter has been behind a building (PaneWorld.occluded): the run now, the longest, the sum
   let prevLum = null;
+  const AFTER_REF = Number(opt('--after-refused', 0)), AFTER_MAX = Number(opt('--after-max', 2));
+  const AFTER_WORDS = new Set(String(opt('--after-words', '')).split(',').map((x) => x.trim()).filter(Boolean));
+  let refSeen = 0, refUntil = -1, lastWord = '';
   const shots = new Map();   // tick -> { file, pv }
   for (let i = 1; i <= CAP; i++) {
     if (Date.now() > loopDeadline) throw new Error(`timed out after ${i - 1} ticks`);
@@ -138,6 +141,15 @@ try {
     if (pv && Array.isArray(pv.noise)) record.thumbNoise = { flicksMade: pv.noise[0], stickCuesAfterAFlick: pv.noise[1], phantomCues: pv.noise[2], note: 'a phantom is a stick cue (start, charge, refused) with no flick of the synthetic thumb in the 45 ticks before it' };
     if (pv && pv.stkk) { for (const kk of Object.keys(pv.stkk)) if ((record.stickKinds || {})[kk] !== pv.stkk[kk]) (record.stickLog = record.stickLog || []).push({ tick, kind: kk, n: pv.stkk[kk] }); }   // each change of a stick cue's count: the tick and the kind
     if (pv && pv.stkk) record.stickKinds = pv.stkk;   // the cues by kind so far (the last probe read)
+    if (AFTER_REF > 0 && AFTER_WORDS.size && pv && Array.isArray(pv.teach)) {   // --after-words "Too close,Hit": the same window when the HUD's teaching line of player 1 BECOMES one of these words (a refusal word the HUD holds)
+      const w = String(pv.teach[0] || '');
+      if (w !== lastWord && AFTER_WORDS.has(w) && (record.refusedAt || []).length < AFTER_MAX && tick > refUntil) { (record.refusedAt = record.refusedAt || []).push(tick); (record.wordAt = record.wordAt || []).push({ tick, word: w }); refUntil = tick + AFTER_REF; }
+      lastWord = w;
+    }
+    if (AFTER_REF > 0 && !AFTER_WORDS.size && pv && pv.stkk && Number(pv.stkk.stick_refused || 0) > refSeen) {   // --after-refused N: a still EVERY tick for N ticks after each new stick_refused cue (the first --after-max of them), for the word at the edge
+      refSeen = Number(pv.stkk.stick_refused);
+      if ((record.refusedAt || []).length < AFTER_MAX) { (record.refusedAt = record.refusedAt || []).push(tick); refUntil = tick + AFTER_REF; }
+    }
     if (pv && Array.isArray(pv.teach)) { const tk = JSON.stringify([pv.teach, pv.taught]); if (tk !== lastTeach) { (record.teachLog = record.teachLog || []).push({ tick, teach: pv.teach, taught: pv.taught, tnow: pv.tnow }); lastTeach = tk; } }   // the HUD's teaching lines: each change of what a model says, or of the taught flags
     if (pv && pv.ln) { for (let k = 0; k < 2; k++) if (pv.ln[k] > lastLn[k]) record.launches.push({ tick, fighter: k, n: pv.ln[k], states: pv.fst }); lastLn = pv.ln; }
     const sinceClash = (record.clashTicks || []).length ? tick - record.clashTicks[record.clashTicks.length - 1] : 1e9;
@@ -150,7 +162,7 @@ try {
         { const lum = new Uint8Array(png.w * png.h); for (let i = 0; i < lum.length; i++) { const p = i * 4; lum[i] = (png.data[p] * 3 + png.data[p + 1] * 6 + png.data[p + 2]) / 10; } if (prevLum && prevLum.length === lum.length) { let s = 0; for (let i = 0; i < lum.length; i++) s += Math.abs(lum[i] - prevLum[i]); (record.diffSeries = record.diffSeries || []).push([tick, Math.round(s / lum.length * 10) / 10, pv && pv.fst ? pv.fst.join('/') : '']); } prevLum = lum; }
       } catch (e) { record.flatFaceError = String(e.message || e).slice(0, 120); }
     }
-    if (tick % EVERY === 0 || ALSO.has(tick) || (sinceClash >= 0 && sinceClash <= 150 && tick % 10 === 0)) {
+    if (tick % EVERY === 0 || ALSO.has(tick) || tick <= refUntil || (sinceClash >= 0 && sinceClash <= 150 && tick % 10 === 0)) {
       const shot = await page.send('Page.captureScreenshot', { format: 'jpeg', quality: 72, fromSurface: true });
       const file = `still-${String(tick).padStart(6, '0')}.jpg`;
       writeFileSync(join(OUT, 'stills', file), Buffer.from(shot.data, 'base64'));
@@ -178,6 +190,7 @@ try {
     const swingsDone = record.swings.filter((s) => s.end !== null).length;
     if (doneAt < 0 && swingsDone >= NSWING && record.launches.length >= NLAUNCH) doneAt = tick;
     if (doneAt >= 0 && tick >= doneAt + (argv.includes('--until-clash') ? 150 : MARGIN)) break;
+    if (AFTER_REF > 0 && (record.refusedAt || []).length >= AFTER_MAX && tick > refUntil) break;   // the refusals asked for are caught, and their windows are over
   }
   record.ticks = last;
   if (record.flatFaceSeries && record.flatFaceSeries.length) {
