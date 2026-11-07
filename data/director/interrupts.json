@@ -269,7 +269,7 @@
     },
     "_note": "The stances on a blow (docs/design/pad-first-press.md; sim/director/stance.gd). LB + X, the check: the guard stays up through it. LB + Y, the push: he's shoved back pushBh. LT + X, the step strike: the attacker comes out stepPastBh beyond him. First values."
   },
-  "beamStruggle": {"enabled": false, "endEvent": false, "pulseTicks": 20, "pulses": 15, "surgeTicks": 4, "sharpTicks": 2, "surge": 0.10, "sharp": 0.15, "comebackZone": 0.25, "comebackMul": 1.5, "headPerPoint": 0.005, "headMax": 0.15, "drawBand": 0.10, "aiHit": {"easy": 0.40, "medium": 0.65, "hard": 0.85}, "aiOffsets": [-4, -3, 3, 4], "overwhelm": {"winnerBeam": 1.0, "ownBeam": 0.5, "stickUy": 0.25}, "detonate": {"otherBeam": 0.25}, "timeLoss": {"share": 0.5}, "_note": "The beam struggle as a tug of war on the pulse (rule-of-cool.md section 2, 2026-10-16; energy-overhaul.md section 9; sim/director/beam.gd). The meeting point starts in the middle, moved toward the weaker side by state: headPerPoint of the line for each point of power (tier x 10, ki x 0.35, menace, flow), headMax at most. Every pulseTicks a pulse, pulses of them. X, Y or B within surgeTicks of a pulse is a surge, the point moving surge of the line toward the rival (sharp within sharpTicks). A press off the pulse, or a second press in a window, is a stray: it moves nothing and voids his next surge. Within comebackZone of his own hands a surge is times comebackMul. A on the pulse lets go: the rival's beam carries on past him, and he takes timeLoss.share of it with no launch; A off the pulse: he is caught and overwhelmed. The AI hits aiHit of the pulses by level, pressing aiOffsets ticks off it (never within sharpTicks), and never lets go. The point at a fighter: he is overwhelmed (overwhelm: shares of the winner's beam and his own; launched, the winner's stick moving the launch's rise by stickUy). On time within drawBand of the middle: the beams detonate (detonate.otherBeam each). On time further over: the side it is on takes timeLoss.share, no launch. enabled false: the clash as before."},
+  "beamStruggle": {"enabled": false, "endEvent": false, "pulseTicks": 20, "pulses": 15, "surgeTicks": 4, "sharpTicks": 2, "surge": 0.10, "sharp": 0.15, "comebackZone": 0.25, "comebackMul": 1.5, "headPerPoint": 0.005, "headMax": 0.15, "drawBand": 0.10, "aiHit": {"easy": 0.40, "medium": 0.65, "hard": 0.85}, "aiOffsets": [-4, -3, 3, 4], "overwhelm": {"winnerBeam": 1.0, "ownBeam": 0.5, "stickUy": 0.25}, "detonate": {"otherBeam": 0.25}, "timeLoss": {"share": 0.5}, "pushMode": {"enabled": false, "default": "stick", "values": ["stick", "face"], "reserved": ["third"], "perPlayer": true, "_note": "What a player presses to push (playable-build.md section 3), his own option, carried in the match setup per slot (setup.pushMode: a list by slot, or one word for all). stick: a flick of the right stick toward the rival on the beat pushes, away lets go, and the face buttons do nothing. face: X, Y or B, and A lets go, as below. The same window and push for both. third is reserved. enabled false: face for everyone, as before."}, "_note": "The beam struggle as a tug of war on the pulse (rule-of-cool.md section 2, 2026-10-16; energy-overhaul.md section 9; sim/director/beam.gd). The meeting point starts in the middle, moved toward the weaker side by state: headPerPoint of the line for each point of power (tier x 10, ki x 0.35, menace, flow), headMax at most. Every pulseTicks a pulse, pulses of them. X, Y or B within surgeTicks of a pulse is a surge, the point moving surge of the line toward the rival (sharp within sharpTicks). A press off the pulse, or a second press in a window, is a stray: it moves nothing and voids his next surge. Within comebackZone of his own hands a surge is times comebackMul. A on the pulse lets go: the rival's beam carries on past him, and he takes timeLoss.share of it with no launch; A off the pulse: he is caught and overwhelmed. The AI hits aiHit of the pulses by level, pressing aiOffsets ticks off it (never within sharpTicks), and never lets go. The point at a fighter: he is overwhelmed (overwhelm: shares of the winner's beam and his own; launched, the winner's stick moving the launch's rise by stickUy). On time within drawBand of the middle: the beams detonate (detonate.otherBeam each). On time further over: the side it is on takes timeLoss.share, no launch. enabled false: the clash as before."},
   "beamPlays": {
     "enabled": true,
     "front": {
@@ -289,6 +289,20 @@
       "holdFromTicks": 12,
       "holdMove": 0.1,
       "shoveSec": 0.25,
+      "ownMove": {
+        "enabled": false,
+        "freeTicks": 18,
+        "maxWaitTicks": 90,
+        "stageTicks": [12, 28, 46, 66, 90, 120],
+        "price": [12, 20, 32, 38, 44, 50],
+        "dmgMul": [1.0, 1.6, 2.4, 2.8, 3.2, 3.6],
+        "dmgUnit": 96,
+        "lastsSec": [0.33, 0.6, 0.9, 1.1, 1.3, 1.5],
+        "topDrainPerSec": 4.0,
+        "ai": false,
+        "aiStage": {"easy": 0.5, "medium": 0.75, "hard": 1.0},
+        "_note": "The stick beam as its own move (docs/design/beams-third-play.md section 2; playable-build.md section 2; beam-answers-2.md section 1; docs/director/beams-own-move-plan.md step 1). The RB hold is the charge: nobody is locked by it, and it never fires by itself. Its stages: the count is 2 + round(4 x level), level from tier and power as power-scale.md has it, taken as the charge starts; stage s is reached at stageTicks[s-1] live ticks held, and no higher than the energy affords. Holding at the top costs topDrainPerSec, stepping down a stage when it can't pay. The release pays price[s-1] and starts the beam's exchange at the fire, with no signature wait: in a brawl the brawl gives way then. It fires only once its target has been free to act freeTicks (0.3 s); the lit hand holds till then, up to maxWaitTicks, then it's refused. Its hit does dmgUnit x dmgMul[s-1] (96, 153, 230, 268, 307, 345; a guarded hit the same share of the guard's: Game Design, playable-build.md section 2), and it lasts lastsSec[s-1] past its arrival. While the stick holds a charge, a beam's or a strike's, his energy doesn't refill (SimDir.refillHeld), from the press to the release."
+      },
       "aim": {
         "enabled": false,
         "assistDeg": 35,
@@ -593,6 +607,7 @@
     "_note": "A player's attack press reacts on its own tick (Controls' T1; the EP's brief of 2026-10-22 after Performance's input-latency-2026-10-22.md, where a light first reacted 5 ticks late: the opening cooldown). Only a player's presses (the AI's are as before). skipOpenCool: his request is not held by the match's opening cooldown (SimCore.newMatch's 0.6 s) while no exchange has started this match; a cooldown after an exchange still holds it. ackQueued: a request still waiting after the drain is acknowledged on its press tick, the cue press_ack, text queued, source its cell, n the tick it is due when the wait is a cooldown (else -1), amount the ticks to it. capTicks and setPieceCapTicks (Game Design's 7a): after an exchange ends the cooldown holds a player's request at most capTicks, after a set piece's end setPieceCapTicks (a signature's exchange, a finisher, a template tagged with one of setPieceTags, a throw); it is kept and thrown at the cap. The AI keeps the whole cooldown. capTicks -1: off.",
     "skipOpenCool": true,
     "ackQueued": true,
+    "refusedCue": false,
     "capTicks": 6,
     "setPieceCapTicks": 12,
     "setPieceTags": ["CLASH"]

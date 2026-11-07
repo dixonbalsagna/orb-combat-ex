@@ -72,6 +72,7 @@ const SETUPS: Dictionary = {
 	"field": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false},   # a field world (sim/core/field.gd): its line and store, in the hash
 	"fights": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "fights": 2},   # two AI fights on one line (sim/core/stage.gd): the bots play the first
 	"fights2": NetLan.SETUP2,   # two fights with a player in each (--lan-2v2): the bots play slots 0 and 2, the sim's AI plays 1 and 3
+	"together": NetLan.SETUP2X,   # the same with hits across the fights on (--lan-2v2-together)
 	"power": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true},   # one energy model (sim/core/power.gd)
 	"kick": {"kick": true},   # the kick and the coin turn (sim/core/kick.gd): six numbers a fighter, in the hash while on
 }
@@ -105,6 +106,8 @@ var dropAt: int = -1        # --drop=F: the slot's peer vanishes at loopback fra
 var timeout: int = 30       # --timeout=N: frames with no packet before the survivor drops the slot
 var turnAt: int = -1        # --turn-at=N: a calm turn decided before tick N
 var _logWords: Array = []   # with --right-stick: each slot's confirmed second words, for the straight replay of a log
+var near: float = -1.0      # --near=D, with two fights: the second pair starts crosswise inside the first, each enemy of the other fight D units from a player, nearer than his own rival (blows from outside, with hits across on)
+var outsideCues: Dictionary = {}   # the straight run's blows from outside: "start", "hit", "whiff" -> count
 var tradeAt: int = -1       # --trade-at=T, with --setup=fights2: the two players (partners) change fights at the first quiet tick from T, on every run
 var walkTicks: Dictionary = {}   # --walk-at=B,...: walk the peers' confirmed states after these ticks against the straight run's (a diagnosis; log mode)
 
@@ -178,6 +181,10 @@ func _init() -> void:
 				aiFlags = {"p1": false, "p2": true}
 		elif a.begins_with("--tail="):
 			tail = maxi(1, int(a.substr(7)))
+		elif a == "--outside":
+			DirOutside.setForce(1)   # Encounter's blows from outside, as the LAN kit turns them on for 2v2 together (they need hits across fights on)
+		elif a.begins_with("--near="):
+			near = float(a.substr(7))
 		elif a.begins_with("--trade-at="):
 			tradeAt = int(a.substr(11))
 		elif a.begins_with("--takeover="):
@@ -337,6 +344,8 @@ func _ref(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery: int) 
 		return refs[key]
 	tradedAt = -1
 	var ref := _straight(seed, setup, ticks, delay, hashEvery)
+	if near >= 0.0 and sabotage == "":
+		print("seed %d  blows from outside in the straight run: %s" % [seed, str(outsideCues)])
 	if tradeAt >= 0 and sabotage == "":
 		print("seed %d  the trade went through at tick %d" % [seed, tradedAt])
 		if tradedAt < 0:
@@ -355,8 +364,13 @@ func _ref(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery: int) 
 ## replay records the toggle) and plays neutral from it, as the session's confirmed inputs say.
 func _straight(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery: int) -> Dictionary:
 	var S := SimCore.createSim()
-	var inFights: bool = setup == NetLan.SETUP2
+	var inFights: bool = _twoPlayers(setup)
+	if setup.get("outside", false) and not NetLan.outsideKeyed():
+		DirOutside.setForce(1)   # the together setup's blows from outside (Simulation's per-setup key does it once it's in)
 	var rec := SimReplay.recorder(S, seed, NetLan.AI2 if inFights else {"p1": false, "p2": false}, setup)
+	if inFights:
+		_placeNear(S)
+	outsideCues = {}
 	var bots: Array = [NetBot.new(seed, 0), NetBot.new(seed, 1)]
 	var hashes: Dictionary = {}
 	var outs: Array = []
@@ -385,6 +399,8 @@ func _straight(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery: 
 		if inFights:
 			_trade(S, t)   # after the inputs are placed, as a session's beforeTick runs
 		rec.step(ins)
+		if inFights:
+			_countOutside(S)
 		var d: String = NetSession.outDigest(S)
 		if d != "":
 			outTicks += 1
@@ -399,9 +415,32 @@ func _straight(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery: 
 	aliases = aliases.filter(func(a): return not READ_ONLY_SHARED.has(a))
 	var play: Dictionary = SimReplay.play(rec.finish())
 	var ref := {"hash": hashes, "out": outs, "final": hashes[ticks], "log": log, "exN": S.dirS.exN, "outTicks": outTicks,
-		"replayOk": (play.ok and play.final == hashes[ticks]) or turnAt >= 0 or tradedAt >= 0, "aliases": aliases, "ko": SimCore.ended(S)}   # a forced turn or trade is not an input: no replay holds it
+		"replayOk": (play.ok and play.final == hashes[ticks]) or turnAt >= 0 or tradedAt >= 0 or near >= 0.0, "aliases": aliases, "ko": SimCore.ended(S)}   # a forced turn or trade, or a start moved, is not an input: no replay holds it
 	SimCore.dispose(S)
 	return ref
+
+
+## NetLan's two-player setups: two fights with a player in each, hits across off or on.
+static func _twoPlayers(setup: Dictionary) -> bool:
+	return setup == NetLan.SETUP2 or setup == NetLan.SETUP2X
+
+
+## --near: the second pair crosswise inside the first (slot 3 D units from slot 0 toward slot 1, slot 2 D units from slot 1 toward slot 0), between newMatch and the first tick, on every peer
+## and the straight run alike.
+func _placeNear(S: SimState) -> void:
+	if near < 0.0:
+		return
+	var way: float = signf(SimWrap.sdx(S.fighters[0].x, S.fighters[1].x))
+	S.stage.fights[1].fighters[1].x = SimWrap.wrap(S.fighters[0].x + way * near)
+	S.stage.fights[1].fighters[0].x = SimWrap.wrap(S.fighters[1].x - way * near)
+
+
+## The blows from outside the straight run's tick made, in every fight (DirOutside's cues).
+func _countOutside(S: SimState) -> void:
+	for r in [S.out] + S.stage.fights.map(func(f): return f.out):
+		for e in r.fx:
+			if str(e.type) == "cue" and str(e.kind) == "outside":
+				outsideCues[str(e.text)] = int(outsideCues.get(str(e.text), 0)) + 1
 
 
 ## --trade-at: on every run of a tick from tradeAt, until it has gone through. The state says whether it has, so every run agrees.
@@ -438,14 +477,15 @@ func _plant(sess: NetSession, k: int, proposer: int) -> void:
 
 
 func _session(seed: int, setup: Dictionary, ticks: int, delay: int, hashEvery: int, profile: Dictionary, ref: Dictionary, proposer: int = -1) -> Dictionary:
-	var L := NetLoopback.make(seed, setup, profile, delay, seed, seed * 31 + int(profile.ping), false, NetLan.AI2 if setup == NetLan.SETUP2 else {"p1": false, "p2": false})
+	var L := NetLoopback.make(seed, setup, profile, delay, seed, seed * 31 + int(profile.ping), false, NetLan.AI2 if _twoPlayers(setup) else {"p1": false, "p2": false})
 	var res := {"err": "", "hashed": 0, "outs": 0, "rollbacks": 0, "resim": 0, "maxDepth": 0, "mispred": 0, "stalls": 0, "lost": 0, "sent": 0, "late": 0, "turns": ""}
 	var recs: Array = []   # per peer: its calm turns and rollbacks (_turnTrack, _turnLine)
 	for k in range(2):
 		var sess: NetSession = L.peers[k].session
 		sess.verify = sparse == 0
 		sess.saveEvery = maxi(1, sparse)
-		if setup == NetLan.SETUP2:
+		if _twoPlayers(setup):
+			_placeNear(sess.S)
 			sess.slotOf = NetLan.SLOTS2
 			if tradeAt >= 0:
 				sess.beforeTick = _trade

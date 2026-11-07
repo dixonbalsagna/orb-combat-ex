@@ -1,0 +1,85 @@
+{
+ "wave": "rival11",
+ "strikes": [
+  {
+   "id": "rl.slide_knee",
+   "combat": "strike.slide_knee",
+   "name": "slide_knee",
+   "weight": "heavy",
+   "target": "legs",
+   "limb": "knee_r",
+   "limb2": null,
+   "offset": 28,
+   "reach": 54,
+   "band": "close",
+   "ticks": {
+    "load": 10,
+    "follow": 6,
+    "recover": 8
+   },
+   "ground": "no",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [
+    "no_clasp"
+   ],
+   "look": "Skimming low under him, the knee driven into his legs with the shoulder behind it, both fists tucked in close.",
+   "orig": "skimming low under him, the knee driven into his legs with the shoulder behind it, both fists tucked in close",
+   "poses": [
+    "rl.slide_knee.chamber",
+    "rl.slide_knee.contact",
+    "rl.slide_knee.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "cap",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "rl.trail_elbow",
+   "combat": "strike.trail_elbow",
+   "name": "trail_elbow",
+   "weight": "light",
+   "target": "chest",
+   "limb": "elbow_r",
+   "limb2": null,
+   "offset": 38,
+   "reach": 64,
+   "band": "close",
+   "ticks": {
+    "load": 6,
+    "follow": 4,
+    "recover": 4
+   },
+   "ground": "no",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [
+    "no_leap",
+    "no_clasp"
+   ],
+   "look": "Going away, turning off from him: the point of the elbow thrown back across his chest as he leaves.",
+   "orig": "going away, turning off from him: the point of the elbow thrown back across his chest as he leaves",
+   "poses": [
+    "rl.trail_elbow.chamber",
+    "rl.trail_elbow.contact",
+    "rl.trail_elbow.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "point",
+   "path": "arc_out",
+   "flags": []
+  }
+ ],
+ "skipped": []
+}

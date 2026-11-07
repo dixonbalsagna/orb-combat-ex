@@ -109,7 +109,7 @@ static func stickAnswer(S: SimState, f) -> bool:
 		return true
 	if not (charging(S, f) or windowOpen(S, f)):
 		return false
-	if f.ki < float(frontCfg().answerKi):
+	if f.ki < answerCost():
 		SimFx.cue(S, f, "answer_refused", "", "ki")
 		return true
 	SimAct.push(f, SimAct.HEAVY, 1, 0, S.tick)   # the lit hand: it answers when he fires (DirBeam._answer)
@@ -135,6 +135,8 @@ static func fromStick(S: SimState, f, held: int) -> void:
 	var fb = _beat(ex, "beamFire")
 	if fb != null:
 		var tell: int = maxi(int(frontCfg().releaseTell), int(round((float(fb.t) - ex.t) * DirData.TICKS_PER_SEC)) - held)
+		if DirBeamMove.on():
+			tell = int(frontCfg().releaseTell)   # the beam's own move: the hold was its charge, however short; it fires on the release
 		fb.t = ex.t + float(tell) / DirData.TICKS_PER_SEC
 
 
@@ -198,11 +200,17 @@ static func standoffX(S: SimState, A, D, y: float) -> float:
 	return x
 
 
-## A fire-back by the stick (RB, toward him): at once, at level 1's ki. False if the window's shut or he can't pay.
+## What a fire-back by the stick costs: level 1's ki (answerKi); with the beam's own move, its smallest stage's price ("a flick at once",
+## beam-answers-2.md section 1).
+static func answerCost() -> float:
+	return float(DirBeamMove.cfg().price[0]) if DirBeamMove.on() else float(frontCfg().answerKi)
+
+
+## A fire-back by the stick (RB, toward him): at once, at answerCost. False if the window's shut or he can't pay.
 static func fireBack(S: SimState, f) -> bool:
-	if not windowOpen(S, f) or f.ki < float(frontCfg().answerKi):
+	if not windowOpen(S, f) or f.ki < answerCost():
 		return false
-	f.ki -= float(frontCfg().answerKi)
+	f.ki -= answerCost()
 	_answerNow(S, DirBrawl.exOf(S), "heavy_blast")
 	return true
 
@@ -267,7 +275,11 @@ static func fire(S: SimState, ex, args) -> void:
 	var L: float = SimDamage.jor(SimDetMath.hypot(dxs, dyy), 1.0)
 	DirBeam.fireBeam(S, A, ox, oy, dxs / L, dyy / L, len, String(args.variant))
 	var b = S.beams[S.beams.size() - 1]
-	b.life += float(tv) * SimConst.DT   # it lasts as long past him as it did
+	var lasts: float = DirBeamMove.lasts(A)
+	if lasts >= 0.0:
+		b.life = lasts + float(tv) * SimConst.DT   # the stick beam's own move: its stage's length past him
+	else:
+		b.life += float(tv) * SimConst.DT   # it lasts as long past him as it did
 	DirInterrupt.si(A, DirInterrupt.BEAM_TRAVEL, tv)
 	DirInterrupt.si(A, DirInterrupt.BEAM_REACH, int(SimMathx.jmin(L, len)))
 	DirInterrupt.si(D, DirInterrupt.BEAM_FIRE, S.tick)
@@ -545,6 +557,7 @@ static func onEnd(S: SimState, ex) -> void:
 		chargeCue(S, ex, false)   # it never fired
 	if ex.kind != "sig":
 		return
+	DirBeamMove.onEnd(S, ex)
 	for b in ex.beats:
 		if b.op == "beamArrive":
 			S.dirS.cool = 0.0

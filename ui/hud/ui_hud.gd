@@ -490,7 +490,8 @@ func _advance(dt: float) -> void:
 	hub.keep_hints = bool(opts["keep_hints"])
 	for pm in hub.models:
 		pm.beat_steady = bool(opts["reduce_flashing"])   # Reduce flashing: the beat ring holds steady for the whole struggle (RL-248)
-		pm.push_mode = str(opts["struggle_push_p2" if pm.slot == 1 else "struggle_push"]) if UiData.feature("right_hand") else "face"   # struggle_teach: each person's own push mode (with the right-hand attacks off there is no stick push: the face buttons)
+		if hub.t_now <= 0.0:   # the sim reads each person's push mode from the setup at the start of a match, so the teaching does too: it follows the option until the match clock starts, then holds (an Options change mid-match is next match's)
+			pm.push_mode = str(opts["struggle_push_p2" if pm.slot == 1 else "struggle_push"]) if UiData.feature("right_hand") else "face"   # struggle_teach: each person's own push mode (with the right-hand attacks off there is no stick push: the face buttons)
 	_t += dt
 	_dt = dt
 	for idx in _tl_down:
@@ -1038,15 +1039,21 @@ func _update_alert() -> void:
 		return
 	var t: int = int(a["target"])
 	var sh: int = int(a["shooter"])
-	if t < 0 or t >= hub.models.size() or sh < 0 or sh >= hub.models.size() or hub.models[t].ai:
+	var warn: bool = str(a["phase"]) == "warn"   # a beam from the other fight of a 2v2: no shooter here, no timing
+	if t < 0 or t >= hub.models.size() or (not warn and (sh < 0 or sh >= hub.models.size())) or hub.models[t].ai:
 		_l_alert.update_sig(null)
 		return
 	var eff: Dictionary = UiAnswerAlert.effective(opts, t)
 	if not UiAnswerAlert.wanted(a, eff):
 		_l_alert.update_sig(null)
 		return
+	if warn:
+		eff = eff.duplicate()
+		eff["edge_width"] = "thin"   # RL-249: the warning line is thin whatever the player's width
+		_alert_d = UiAnswerAlert.side_hint(str(a.get("side", "")), _anchor(t), layout.vp)
+	else:
+		_alert_d = UiAnswerAlert.side(_anchor(t), _anchor(sh), layout.vp, hub.models[sh].left_side)
 	_alert_eff = eff
-	_alert_d = UiAnswerAlert.side(_anchor(t), _anchor(sh), layout.vp, hub.models[sh].left_side)
 	_l_alert.update_sig(UiAnswerAlert.sig(a, eff, _alert_d, bool(opts["reduced_motion"])))
 
 
@@ -1056,7 +1063,8 @@ func _paint_alert(ci: CanvasItem) -> void:
 		return
 	var t: int = int(a["target"])
 	var sh: int = int(a["shooter"])
-	if t < 0 or t >= hub.models.size() or sh < 0 or sh >= hub.models.size():
+	var warn: bool = str(a["phase"]) == "warn"
+	if t < 0 or t >= hub.models.size() or (not warn and (sh < 0 or sh >= hub.models.size())):
 		return
 	var bodies: Array = []
 	for i in range(mini(2, hub.models.size())):
@@ -1064,7 +1072,7 @@ func _paint_alert(ci: CanvasItem) -> void:
 		if bb.size.x > 0.0:
 			bodies.append(bb)
 	var m: UiFighterModel = hub.models[t]
-	UiAnswerAlert.draw(ci, layout, a, _alert_eff, _alert_d, hub.models[sh].aura, bodies, bool(opts["reduced_motion"]), UiHints.preset_id(m, _o()), t, m.device)
+	UiAnswerAlert.draw(ci, layout, a, _alert_eff, _alert_d, UiAnswerAlert.outside_col() if warn else hub.models[sh].aura, bodies, bool(opts["reduced_motion"]), UiHints.preset_id(m, _o()), t, m.device)
 
 
 ## What a player chose for the beam alert, with Reduce flashing's limit applied: the host (VFX for the glint and the air, Audio for the note, Controls for the rumble) reads it for its own family.
@@ -1313,7 +1321,7 @@ func _quiet_step(m: UiFighterModel) -> void:
 		_quiet_on[s] = false   # a stance button is held: the legend is for that moment, and stays
 		_quiet_t[s] = 0.0
 		return
-	var key: Array = [m.teach, m.stance_kind, m.stance_armed > 0.0, m.press_ack_kind, m.charge_on, m.charge_cell, m.launcher_open, m.gauge_full, bool(m.avail["transform"]), m.punish_left > 0.0, m.flurry_dots, m.open_left > 0.0, m.sig_queued]
+	var key: Array = [m.teach, m.stance_kind, m.stance_armed > 0.0, m.press_ack_kind, m.charge_on, m.charge_cell, m.launcher_open, m.gauge_full, bool(m.avail["transform"]), m.punish_left > 0.0, m.flurry_dots, m.open_left > 0.0, m.sig_queued, m.cstage]
 	if key != _quiet_key[s]:
 		_quiet_key[s] = key
 		_quiet_t[s] = 0.0

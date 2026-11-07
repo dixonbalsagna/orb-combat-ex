@@ -1,0 +1,132 @@
+extends SceneTree
+# A beam that plays is sampled once at each point of a fixed grid (World, sim/director/beam.gd beamStep, docs/world/beam-grid.md): with the fronts on, a beam crawls (about 18 units a tick at 750 range), and sampled at its front
+# every tick the ground by the shooter's hand took about 15 hits, so a small building beside him fell before the struggle began (Camera's beamduel). Staged on planet 7, seed 12345: the shooter 200 up, the rival 750 east, a
+# building beside him on either side; the beam crosses unanswered for 70 ticks. With the grid the buildings near him lose less and fewer fall; with the beam not playing nothing changes; the same run twice gives one hash.
+#   godot --headless --path . --script res://sim/world/tools/beam_grid_check.gd -- [--planet=7] [--touch=3]
+var fails: int = 0
+var S: SimState
+var fireTick: int = -1
+
+
+func ok(cond: bool, what: String) -> void:
+	if cond:
+		print("  ok   ", what)
+	else:
+		fails += 1
+		print("  FAIL ", what)
+
+
+func _step(a: SimIntent = null) -> void:
+	SimCore.step(S, [a if a != null else SimIntent.new(), SimIntent.new()])
+	for e in S.out.fx:
+		if e.type == "cue" and e.kind == "beam_fire" and fireTick < 0:
+			fireTick = S.tick
+
+
+## A staged duel: the shooter at x, 200 up; the rival gap east. Returns [hp lost by buildings within 900 units of the shooter, of them down, hp lost anywhere, the state hash].
+func _duel(planet: int, touch: int, x: float, gap: float, off: bool, plays: bool) -> Array:
+	if S != null:
+		SimCore.dispose(S)
+	DirBeam.gridOff = off
+	DirBeamPlay.setFrontForce(1)
+	DirBeamPlay.data()["enabled"] = plays
+	S = SimCore.createSim()
+	SimCore.newMatch(S, 12345, {"p1": false, "p2": false}, {"intro": false, "planet": planet, "touch": touch, "planetGen": 3})
+	for f in S.fighters:
+		f.ai = null
+		f.act.v2 = true
+		f.hp = 100000.0
+		f.ki = 100.0
+	S.fighters[0].x = SimWrap.wrap(x)
+	S.fighters[0].y = WorldTerrain.groundY(S, x) + 200.0
+	S.fighters[1].x = SimWrap.wrap(x + gap)
+	S.fighters[1].y = S.fighters[0].y
+	S.out.fx.clear()
+	fireTick = -1
+	var hp0 := PackedFloat64Array()
+	for b in S.buildings:
+		hp0.append(b.hp if b.alive else 0.0)
+	var a := SimIntent.new()
+	a.sig = true
+	a.stanceMask = 4
+	_step(a)
+	var guard: int = 0
+	while fireTick < 0 and guard < 400:
+		_step()
+		guard += 1
+	for t in range(70):
+		_step()
+	var near: float = 0.0
+	var down: int = 0
+	var all: float = 0.0
+	for i in range(S.buildings.size()):
+		var b = S.buildings[i]
+		var h: float = b.hp if b.alive else 0.0
+		var d: float = hp0[i] - h
+		if d > 0.5:
+			all += d
+			if absf(SimWrap.sdx(S.fighters[0].x, b.x)) < 900.0:
+				near += d
+				if h <= 0.0:
+					down += 1
+	return [near, down, all, str(SimHash.stateHash(S).gameplay)]
+
+
+func _init() -> void:
+	var planet: int = 7
+	var touch: int = 3
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--planet="):
+			planet = int(a.substr(9))
+		elif a.begins_with("--touch="):
+			touch = int(a.substr(8))
+	DirBeam._bs()["enabled"] = true
+	WorldClimate.useGen(3)
+	WorldPlanet.forget()
+	SimCore.dispose(SimCore.createSim())
+	var probe := SimCore.createSim()
+	SimCore.newMatch(probe, 12345, {"p1": false, "p2": false}, {"intro": false, "planet": planet, "touch": touch, "planetGen": 3})
+	var x0: float = probe.fighters[0].x
+	var cands: Array = []
+	for b in probe.buildings:
+		if b.alive and b.row == 1.0 and b.h > 250.0 and absf(SimWrap.sdx(x0, b.x)) < 5000.0 and cands.size() < 10:
+			cands.append([float(b.x), float(b.w)])
+	SimCore.dispose(probe)
+	ok(cands.size() >= 6, "the start has front-street buildings to stage beside (%d)" % cands.size())
+	var offNear: float = 0.0
+	var gridNear: float = 0.0
+	var offDown: int = 0
+	var gridDown: int = 0
+	var offAll: float = 0.0
+	var gridAll: float = 0.0
+	for c in cands:
+		for side in [-1.0, 1.0]:
+			var px: float = float(c[0]) - side * (float(c[1]) * 0.5 + 150.0)
+			var r0: Array = _duel(planet, touch, px, 750.0, true, true)
+			var r1: Array = _duel(planet, touch, px, 750.0, false, true)
+			offNear += r0[0]
+			gridNear += r1[0]
+			offDown += r0[1]
+			gridDown += r1[1]
+			offAll += r0[2]
+			gridAll += r1[2]
+	print("      buildings within 900 of the shooter, 20 stagings: hp lost %.0f before, %.0f with the grid; down %d before, %d with it; the whole path %.0f, %.0f" % [offNear, gridNear, offDown, gridDown, offAll, gridAll])
+	ok(offNear > 0.0, "before the grid the buildings by the shooter take damage")
+	ok(gridNear < offNear * 0.8, "with the grid they lose at least a fifth less")
+	ok(gridDown <= offDown, "and no more of them fall (%d of %d)" % [gridDown, offDown])
+	ok(gridAll > 0.0 and gridAll <= offAll, "the beam still carves its path (%.0f hp across it, %.0f before)" % [gridAll, offAll])
+	# the beam not playing (beamPlays off: the beam is as it was, its front at 0.22 s): a sample is where it was, so the grid changes nothing
+	var q0: Array = _duel(planet, touch, float(cands[0][0]) - 300.0, 750.0, true, false)
+	var q1: Array = _duel(planet, touch, float(cands[0][0]) - 300.0, 750.0, false, false)
+	ok(str(q0[3]) == str(q1[3]), "a beam that does not play is sampled as before: one hash")
+	var d0: Array = _duel(planet, touch, float(cands[0][0]) - 300.0, 750.0, false, true)
+	var d1: Array = _duel(planet, touch, float(cands[0][0]) - 300.0, 750.0, false, true)
+	ok(str(d0[3]) == str(d1[3]), "the same run twice gives one hash")
+	DirBeam.gridOff = false
+	DirBeamPlay.setFrontForce(-1)
+	DirBeamPlay.data()["enabled"] = true
+	DirBeam._bs()["enabled"] = false
+	if S != null:
+		SimCore.dispose(S)
+	print("BEAMGRID: %d check(s) failed" % fails)
+	quit(0 if fails == 0 else 1)

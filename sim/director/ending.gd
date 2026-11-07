@@ -113,20 +113,34 @@ static func tick(S: SimState) -> void:
 		return
 	for f in pair:
 		_toBrink(S, f)
-	if S.T >= float(cfg().lastAt) and _g(pair[0], E_DONE) == 0:
+	if _now(S) >= _lastAt(S) and _g(pair[0], E_DONE) == 0:
 		_last(S, pair)
 
 
+## 2v2 with hits across: the last event and the cap on the stage's clock, at cross.json's lastAt and timeCapAt (Simulation's
+## SimCross), so both fights reach them on one tick; otherwise the fight's own clock and a 1v1's numbers.
+static func _now(S: SimState) -> float:
+	return S.stage.clock if SimCross.on(S) else S.T
+
+
+static func _lastAt(S: SimState) -> float:
+	return SimCross.lastAt() if SimCross.on(S) else float(cfg().lastAt)
+
+
+static func _capAt(S: SimState) -> float:
+	return SimCross.timeCap() if SimCross.on(S) else DirData.timeCapAt()
+
+
 ## Nobody's played for the time since the cap: two players with no input.
-static func _nobody(pair: Array) -> bool:
-	var need: int = int((float(cfg().lastAt) - DirData.timeCapAt()) * DirData.TICKS_PER_SEC)
+static func _nobody(S: SimState, pair: Array) -> bool:
+	var need: int = int((_lastAt(S) - _capAt(S)) * DirData.TICKS_PER_SEC)
 	return pair[0].ai == null and pair[1].ai == null and _g(pair[0], E_IDLE) >= need and _g(pair[1], E_IDLE) >= need
 
 
 static func _last(S: SimState, pair: Array) -> void:
 	var a: int = _worn(pair[0])
 	var b: int = _worn(pair[1])
-	if a == b and _nobody(pair):
+	if a == b and _nobody(S, pair):
 		_s(pair[0], E_DONE, 2)
 		SimFx.cue(S, null, "no_contest", "", "")
 		SimEvents.feed(S, "NO CONTEST", "nobody's touched anything: straight to the rematch")

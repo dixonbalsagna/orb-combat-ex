@@ -143,6 +143,10 @@ export const TIP_PATH = {
   'rz.swing_plate': { tip: 'plate', path: 'arc_out' },
   'rz.swing_elbow': { tip: 'point', path: 'spin' },
   'rz.spike_knee': { tip: 'cap', path: 'drop' },
+  'pl.skim_heel': { tip: 'edge', path: 'arc_out' },
+  'pl.trail_backhand': { tip: 'blade', path: 'arc_out' },
+  'rl.slide_knee': { tip: 'cap', path: 'line' },
+  'rl.trail_elbow': { tip: 'point', path: 'arc_out' },
 };
 export function tipPath(prefix, name) {
   return TIP_PATH[prefix + '.' + name] || TIP_PATH[name];

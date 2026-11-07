@@ -93,6 +93,14 @@ static func _request(S: SimState, A, kind: String) -> void:
 	_drain(S)
 
 
+## Controls' refusal contract (docs/controls/refusals.md; press.refusedCue): a player's press the director lets go of, said at that tick as
+## the cue press_refused, actor the presser, source the code: stun_limit, queue_expired or block_lockout. Never the computer's.
+static func refused(S: SimState, f, code: String) -> void:
+	if f == null or f.ai != null or not bool(pressCfg().get("refusedCue", false)):
+		return
+	SimFx.cue(S, f, "press_refused", "", code)
+
+
 ## The press block (data/director/interrupts.json press): a player's attack press reacts on its own tick.
 static func pressCfg() -> Dictionary:
 	return DirInterrupt.data().get("press", {})
@@ -133,6 +141,7 @@ static var planLaunch: bool = false
 static var planStale: int = 0
 static var planTick: int = -1   # the tick of the request being started (its press in the log), -1 outside _drain
 static var engaging: bool = false   # true while an approach's end starts its exchange (DirBands._engage); not state
+static var ownBeam: bool = false    # true while the stick beam's own move starts its exchange (DirBeamMove): no 45, no signature wait, no cooldown; not state
 static var planOpen: int = 0        # ... and the opening that approach began with (DirInterrupt.OPEN_*, or 0)
 static var planDefStance: int = -1   # ... and the stance a buried defender is read in (DirBury.stance), -1 otherwise
 static var planMeet: bool = false   # ... and whether it is the meeting after an answered taunt: the rival is pressing too
@@ -219,7 +228,10 @@ static func _queues(S: SimState) -> void:
 		# fighter's later presses are his links, and the rival's press is his answer, read when the exchange starts.
 		var ex = S.dirS.ex
 		if not (ex != null and (ex.A == f or (ex.kind == "sig" and ex.D == f and ex.branch == ""))) and DirBands.who(S) < 0:
+			var n0: int = f.act.queue.size()
 			SimAct.expire(f, S.tick, QUEUE_LIFE)
+			if f.act.queue.size() < n0:
+				refused(S, f, "queue_expired")   # his request ran out before it could start
 	_drain(S)
 
 
@@ -238,7 +250,7 @@ static func _start(S: SimState, A, kind: String) -> int:
 	var fu: bool = kind != "sig" and not engaging and DirBury.followUp(S, A, D)
 	if DirBury.safe(S, D):
 		return WAIT
-	if opn == 0 and not fu and DirPress.held(S, A):   # the cooldown, as it holds him (DirPress: a player's cap, and the opening skip)
+	if opn == 0 and not fu and not ownBeam and DirPress.held(S, A):   # the cooldown, as it holds him (the stick beam fires on its release) (DirPress: a player's cap, and the opening skip)
 		return WAIT   # (a player's press is not held by the match's opening cooldown: no exchange yet, the opening beat is the intro's)
 	if A.stunTicks > 0 and DirInterrupt.on():
 		return WAIT   # step 3: a staggered fighter's requests wait
@@ -250,14 +262,18 @@ static func _start(S: SimState, A, kind: String) -> int:
 		return WAIT   # in his wall kick's push: the press waits for its end (5c)
 	if D.state == "launched" or D.state == "locked" or DirZip.untouchable(D) or DirZip.leaving(S, D):
 		return WAIT   # (no strike reaches a zipper on his way out, or about to leave)
-	if kind == "sig" and A.ki < 45.0 and not SimFighter.sigFree(A):   # the last stand's signature is free
+	if kind == "sig" and not ownBeam and A.ki < 45.0 and not SimFighter.sigFree(A):   # the last stand's signature is free
 		if A.ai == null:
 			SimFx.banner(S, "NEED 45 KI", "#9fb4ff", 0.6)
+			if DirStick.firing and bool(pressCfg().get("refusedCue", false)):
+				SimFx.cue(S, A, "stick_refused", "beam", "ki")   # the stick's beam on the signature's path: said, with UI's word
 		return DROPPED
 	# The signature cooldown (questionnaire 5; fighter.json sigCooldown): 2 to 4 signatures a match, each an event.
-	if kind == "sig" and S.T < A.sigReadyT and not SimFighter.sigFree(A):   # ... and off cooldown
+	if kind == "sig" and not ownBeam and S.T < A.sigReadyT and not SimFighter.sigFree(A):   # ... and off cooldown
 		if A.ai == null:
 			SimFx.banner(S, "SIGNATURE RECHARGING", "#9fb4ff", 0.6)
+			if DirStick.firing and bool(pressCfg().get("refusedCue", false)):
+				SimFx.cue(S, A, "stick_refused", "beam", "cooling")   # recharging: UI's "Cooling" (hud-spec section 84)
 		return DROPPED
 	if kind == "heavy" and A.ki < 4.0:
 		kind = "light"
@@ -309,7 +325,7 @@ static func _start(S: SimState, A, kind: String) -> int:
 		kind = "heavy"   # the follow-up is a heavy blow whatever was pressed, and it is free
 	elif kind == "heavy":
 		A.ki -= 4.0
-	if kind == "sig":
+	if kind == "sig" and not ownBeam:   # (the stick beam's own move pays its stage's price, and has no signature wait)
 		if SimFighter.sigFree(A):
 			SimFighter.lastStandUse(S, A)   # the last stand: no cost, and the window closes
 		else:
@@ -393,6 +409,11 @@ static func _start(S: SimState, A, kind: String) -> int:
 		SimFx.ambush(S, A, D)
 		SimFx.danger(S, D, "ambush", 0.0)
 	return STARTED
+
+
+## The stick beam's own move starts its exchange (DirBeamMove.tryFire, with ownBeam set): the signature's plan, from its fire.
+static func startBeam(S: SimState, A) -> int:
+	return _start(S, A, "sig")
 
 
 ## Runs one beat (module-spec section 4). Fighters are read from ex when the beat runs.
@@ -657,7 +678,11 @@ static func _update(S: SimState, dt: float) -> void:
 	# The time-cap stand-in (granted write): past contest.timeCapAt every decisive win against a fighter on the brink is a
 	# finisher (decisive()). The full 11:00 event is Game Design's and Simulation's.
 	var cap: float = DirData.timeCapAt()
-	if cap > 0.0 and not S.game.timeCap and S.T >= cap:
+	var now: float = S.T
+	if SimCross.on(S):   # 2v2: one cap for both fights, on the stage's clock (Simulation's cross.json timeCapAt, S.stage.clock)
+		cap = SimCross.timeCap()
+		now = S.stage.clock
+	if cap > 0.0 and not S.game.timeCap and now >= cap:
 		S.game.timeCap = true
 		SimPause.request(S, SimPause.TIMECAP, -1)   # Q10 (granted): the planet giving way always pauses, outside the bank
 		SimEvents.feed(S, "TIME CAP", "every decisive win on the brink is a finisher")

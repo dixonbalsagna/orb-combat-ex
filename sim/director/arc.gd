@@ -107,7 +107,7 @@ static func _impact(S: SimState, f, c: Dictionary, g: float) -> void:
 	var by = f.launchBy
 	var tier: float = float(by.tier) if by != null else 4.0
 	var n: int = S.craters.size()
-	WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(float(c.landSpeed), tier), by, "impact", 0.0, 1.0, false, f.z, PackedFloat64Array(), true)
+	WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(float(c.landSpeed), tier, S), by, "impact", 0.0, 1.0, false, f.z, PackedFloat64Array(), true)
 	f.hopped = true
 	if S.craters.size() > n:
 		_blast(S, f.x, f.z, float(S.craters[S.craters.size() - 1].r), by, c)

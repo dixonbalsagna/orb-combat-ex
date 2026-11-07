@@ -2,6 +2,7 @@ extends SceneTree
 ## 2v2 across fights (sim/core/cross.gd): godot --headless --path . --script res://sim/core/tools/cross_check.gd
 ## - with the switch on and the fights apart, each fight is what it is with the switch off, tick by tick
 ## - a shot from outside lands exactly as the same shot from inside would, clean, guarded or dodged, on the next tick, and
+##   meets a building or the ground as its shooter's own would: his tier, and he's the cause; and
 ##   passes a partner; one fired across can be perfect-blocked and comes back; a shot inside the other fight's beam is eaten
 ## - a beam stops at the first enemy of the other fight on its line and names him first; it passes a partner, a dodge, and
 ##   anyone past its own target; a mine's blast and a blow reach the other fight's enemy
@@ -493,6 +494,109 @@ func _ai() -> void:
 		SimCore.dispose(Off)
 
 
+## A shot from outside that meets a building or the ground does there what the same shot of his would do in his own
+## fight: his tier sets it and he's its cause ("the same rules as its own shots", cross-fights.md): the dead, his menace,
+## his anguish and, with forms, his Witness. A building used to read the fight's last body by Godot's negative index, and
+## the ground blasted nothing.
+func _outsideWorld() -> void:
+	for c in [["building", "menace"], ["ground", "menace"], ["building", "anguish"], ["building", "witness"]]:
+		var a: Array = _worldHit(31, true, c[0], c[1])
+		var b: Array = _worldHit(31, false, c[0], c[1])
+		var w: String = "%s, the shooter's %s" % [c[0], c[1]]
+		ok(float(a[0]) > 0.0 and a[0] == b[0], "a shot from outside meets the %s as its shooter's own shot would (%.4f against %.4f)" % [w, a[0], b[0]])
+		ok(a[1] == b[1] and a[2] == b[2], "... his tier sets it and it's his (%s %.6f against %.6f, casualties %.4f against %.4f)" % [c[1], a[1], b[1], a[2], b[2]])
+		if c[1] == "menace":
+			ok(float(a[3]) == 0.0, "... and nobody of the fight it met is its cause (menace %.6f)" % a[3])
+		if c[0] == "building" and c[1] != "menace":
+			ok(float(a[1]) != 0.0, "... and the row can tell: it moved his %s (%.6f)" % [c[1], a[1]])
+		notes.append("a shot from outside at the %s: %.4f across, %.4f inside; his %s %.6f and %.6f; casualties %.4f and %.4f" % [c[0], a[0], b[0], c[1], a[1], b[1], a[2], b[2]])
+
+
+## A bolt of A's (at tier 4; everyone else at tier 1) meets a plain building with people in it, or open ground, at the same
+## point and speed: across, as a shot from outside in fight 1, fired at an enemy there; inside, as his own shot in fight 0.
+## meter: menace (A is fight 0's first body with menace), anguish (the first with anguish), witness (the same, with forms
+## on and his Witness at 50). Returns [what it did (hit points the building lost, or how far the ground went down), A's
+## meter's change, casualties in the fight it met, menace gained by fight 1's bodies (across; 0 inside)].
+func _worldHit(seed: int, across: bool, what: String, meter: String) -> Array:
+	var S := _new(seed, true, false, {"forms": true} if meter == "witness" else {})
+	var A = null
+	for f in S.fighters:
+		if A == null and (f.hasMenace if meter == "menace" else f.hasAnguish):
+			A = f
+	ok(A != null, "fight 0 has a body with %s" % meter)
+	if A == null:
+		SimCore.dispose(S)
+		return [0.0, 0.0, 0.0, 0.0]
+	if meter == "witness":
+		ok(SimForms.has(S, A), "... and forms for him")
+		if not SimForms.has(S, A):
+			SimCore.dispose(S)
+			return [0.0, 0.0, 0.0, 0.0]
+		A.form.witness = 50.0
+	for f in SimStage.bodies(S):
+		f.tier = 4.0 if f == A else 1.0
+	var D = null
+	for f in S.stage.fights[1].fighters:
+		if D == null and SimCross.team(f) != SimCross.team(A):
+			D = f
+	var b = null
+	if what == "building":
+		for c in S.buildings:
+			if c.alive and c.floors < WorldBrunt.FLOORS_MIN and c.popAlive > 0.0 and (b == null or c.maxhp > b.maxhp):
+				b = c
+		ok(b != null, "a plain building with people in it stands on the line")
+		if b == null:
+			SimCore.dispose(S)
+			return [0.0, 0.0, 0.0, 0.0]
+	var sh = null
+	if across:
+		sh = SimCross.fireAt(S, A, "bolt", D)
+		SimStage.enter(S, 1)
+	else:
+		sh = SimShots.fire(S, S.fighters.find(A), "bolt", {"ux": A.face, "uy": 0.0})
+	ok(sh != null, "the bolt is made (%s)" % ("across" if across else "inside"))
+	if sh == null:
+		SimCore.dispose(S)
+		return [0.0, 0.0, 0.0, 0.0]
+	var x: float = b.x if b != null else SimWrap.wrap(A.x + 300.0 * A.face)
+	var z: float = WorldBrunt.faceZ(b) if b != null else A.z
+	var g: float = WorldTerrain.groundY(S, x, z)
+	sh.x = x
+	sh.y = g + (30.0 if b != null else 0.0)
+	sh.z = z
+	sh.vx = 900.0 * A.face
+	sh.vy = 0.0 if b != null else -300.0
+	var m0: float = _meter(A, meter)
+	var c0: float = S.world.casualties
+	var o0: float = 0.0
+	for f in S.fighters:
+		o0 += f.menace
+	var did: float = 0.0
+	if b != null:
+		b.wear = -1.0   # it shows already: every hit counts at once
+		var hp0: float = b.hp
+		SimShots.hitStructure(S, sh, b)
+		did = hp0 - b.hp
+		ok(b.alive, "... the building still stands, so its hit points tell the tier (%s)" % ("across" if across else "inside"))
+	else:
+		SimShots.hitWorld(S, sh, "ground")
+		did = g - WorldTerrain.groundY(S, x, z)
+	var o1: float = 0.0
+	for f in S.fighters:
+		o1 += f.menace
+	var out: Array = [did, _meter(A, meter) - m0, S.world.casualties - c0, (o1 - o0) if across else 0.0]
+	SimCore.dispose(S)
+	return out
+
+
+func _meter(f, meter: String) -> float:
+	if meter == "menace":
+		return f.menace
+	if meter == "anguish":
+		return f.anguish
+	return f.form.witness
+
+
 func _fightVals(S: SimState) -> Array:
 	var v: Array = []
 	for i in range(S.stage.fights.size()):
@@ -520,6 +624,7 @@ func _run() -> void:
 		quit(1 if fails > 0 else 0)
 		return
 	_shot()
+	_outsideWorld()
 	_deflect()
 	_held()
 	_mine()

@@ -18,7 +18,8 @@ extends SceneTree
 ## exchanged but never compared) must miss the injections, and a stale one (a checkpoint keeps its first run's digest,
 ## a guess, rather than its last) must raise a false alarm on every clean run where a re-run changed a checkpoint's state.
 ##   godot --headless --path . --script res://net/tools/desync_check.gd -- [--seeds=1,2] [--ticks=900] [--every=60]
-##     [--profiles=lan,p80j,...|all] [--setup=default|features|planet|field|kick] [--delay=2] [--out=user://desync] [--negative-control]
+##     [--profiles=lan,p80j,...|all] [--setup=default|features|planet|field|kick|fights2|together] [--delay=2] [--out=user://desync] [--negative-control]
+## fights2 and together are two fights with a player in each (slots 0 and 2, the sim's AI in 1 and 3), hits across them off and on (NetLan's --lan-2v2 and --lan-2v2-together).
 ##     [--ai-timers] [--right-stick]
 ## --right-stick turns switches.rightStick on in this process: the bots throw strikes, the word is on the wire, in the hash and in the digest.
 
@@ -28,6 +29,8 @@ const SETUPS: Dictionary = {
 	"planet": {"planet": 7, "touch": 3},
 	"field": {"planet": 7, "touch": 1, "planetGen": 3, "intro": false},
 	"kick": {"kick": true},
+	"fights2": NetLan.SETUP2,
+	"together": NetLan.SETUP2X,
 }
 
 ## name -> the change, made to the divergent peer's state after every run of the injection tick.
@@ -103,6 +106,12 @@ func _init() -> void:
 			print("FAIL  --setup=kick tests nothing unless the bots kick")
 			quit(1)
 			return
+	if setup.has("fights"):
+		aiFlags = NetLan.AI2
+		if setup.get("outside", false) and not NetLan.outsideKeyed():
+			DirOutside.setForce(1)   # the together setup's blows from outside (Simulation's per-setup key does it once it's in)
+		INJECT.erase("fighter_x")   # an ulp of fight 0's x heals here as on the field: the other fight's own stream stands in for a fighter's change
+		INJECT["other_fight"] = func(S: SimState) -> void: S.stage.fights[1].rng.a ^= 1
 	print("Orb Combat EX desync check   Godot %s   setup %s   %d ticks   checkpoint every %d   delay %d" % [Engine.get_version_info().string, setupName, ticks, every, delay])
 	if aiTimers:
 		_aiTimers(seeds, ticks, every, delay, profiles, negative)
@@ -217,6 +226,7 @@ func _straight(seed: int, setup: Dictionary, ticks: int, every: int, delay: int)
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, seed, aiFlags, setup)
 	var bots: Array = [NetBot.new(seed, 0), NetBot.new(seed, 1)]
+	var slots: Array = NetLan.SLOTS2 if setup.has("fights") else [0, 1]
 	var dig: Dictionary = {}
 	var full: Dictionary = {}
 	var us: int = 0
@@ -229,8 +239,9 @@ func _straight(seed: int, setup: Dictionary, ticks: int, every: int, delay: int)
 		if t == ticks:
 			break
 		var ins: Array = []
+		ins.resize(4 if setup.has("fights") else 2)
 		for k in range(2):
-			ins.append(SimIntent.unpack(NetSession.NEUTRAL) if t < delay else NetSession.intentOf(bots[k].next(), bots[k].word))
+			ins[slots[k]] = SimIntent.unpack(NetSession.NEUTRAL) if t < delay else NetSession.intentOf(bots[k].next(), bots[k].word)
 		SimCore.step(S, ins)
 		S.out.feed.clear()
 		S.out.fx.clear()
@@ -251,6 +262,8 @@ func _run(seed: int, setup: Dictionary, ticks: int, every: int, delay: int, pnam
 		var sess: NetSession = L.peers[k].session
 		sess.checkEvery = every
 		sess.matchInfo = info
+		if setup.has("fights"):
+			sess.slotOf = NetLan.SLOTS2
 		sess.chkCompare = brk != "blind"
 		sess.chkStale = brk == "stale"
 		sess.onCheck = func(b: int, d: String) -> void:

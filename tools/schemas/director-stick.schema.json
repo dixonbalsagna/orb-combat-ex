@@ -70,6 +70,42 @@
       "type": "integer",
       "minimum": 0
     },
+    "strikeStages": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "stageTicks",
+        "levelCap",
+        "topDrainPerSec"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "stageTicks": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 6,
+          "maxItems": 6
+        },
+        "levelCap": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "topDrainPerSec": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
     "autoGoTicks": {
       "type": "integer",
       "minimum": 0
@@ -167,6 +203,10 @@
           "type": "boolean"
         },
         "fromTicks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "beamFromTicks": {
           "type": "integer",
           "minimum": 0
         },

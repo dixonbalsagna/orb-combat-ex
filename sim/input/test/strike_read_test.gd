@@ -18,6 +18,7 @@ func ok(c: bool, what: String) -> void:
 
 func _init() -> void:
 	SimInputData.load_and_apply()
+	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
 	SimInputData.clear_overrides()
 	_helpers()
 	_quick()
@@ -82,7 +83,8 @@ func _helpers() -> void:
 	ok(SimStrikeRead.relative(SimStrikeRead.RIGHT, 1) == "toward" and SimStrikeRead.relative(SimStrikeRead.RIGHT, -1) == "away", "helpers: relative: right is toward when he faces right")
 	ok(SimStrikeRead.relative(SimStrikeRead.LEFT, -1) == "toward" and SimStrikeRead.relative(SimStrikeRead.UP, -1) == "up", "helpers: relative: left, and up never turns")
 	ok(r.level_at(11) == 0 and r.level_at(12) == 1 and r.level_at(30) == 2 and r.level_at(49) == 2 and r.level_at(50) == 3, "helpers: the strike rungs 12, 30, 50")
-	ok(r.level_at(53, true) == 2 and r.level_at(54, true) == 3, "helpers: the beam rungs 12, 30, 54")
+	ok(r.level_at(11, true) == 0 and r.level_at(12, true) == 1 and r.level_at(27, true) == 1 and r.level_at(28, true) == 2 and r.level_at(45, true) == 2 and r.level_at(46, true) == 3, "helpers: the beam rungs 12, 28, 46 (the first three of Encounter's six stages)")
+	ok(r.level_at(65, true) == 3 and r.level_at(66, true) == 4 and r.level_at(89, true) == 4 and r.level_at(90, true) == 5 and r.level_at(119, true) == 5 and r.level_at(120, true) == 6, "helpers: the beam's rungs go on to 66, 90, 120 for the director's reading")
 	ok(SimStrikeRead.is_beam_layer(SimStance.ENERGY) and SimStrikeRead.is_beam_layer(SimStance.CHARGING) and not SimStrikeRead.is_beam_layer(SimStance.MARTIAL) and not SimStrikeRead.is_beam_layer(SimStance.DEFENSIVE), "helpers: beam layers are energy and power")
 
 
@@ -175,11 +177,14 @@ func _lock() -> void:
 
 func _beam_rungs() -> void:
 	var r := SimStrikeRead.new()
-	var o: Dictionary = _drive(r, _hold(Vector2(1.0, 0.0), 53) + _hold(Vector2.ZERO, 4), SimStance.ENERGY)
-	ok(o["lvl_at_release"] == 2, "beam: 53 live ticks on the energy layer is level 2 (the beam's third rung is 54): got %d" % o["lvl_at_release"])
+	var o: Dictionary = _drive(r, _hold(Vector2(1.0, 0.0), 45) + _hold(Vector2.ZERO, 4), SimStance.ENERGY)
+	ok(o["lvl_at_release"] == 2, "beam: 45 live ticks on the energy layer is level 2 (the beam's third rung is 46): got %d" % o["lvl_at_release"])
 	var r2 := SimStrikeRead.new()
 	var o2: Dictionary = _drive(r2, _hold(Vector2(1.0, 0.0), 58) + _hold(Vector2.ZERO, 4), SimStance.ENERGY)
 	ok(o2["lvl_at_release"] == 3, "beam: 58 ticks is level 3")
+	var r4 := SimStrikeRead.new()
+	var o4: Dictionary = _drive(r4, _hold(Vector2(1.0, 0.0), 130) + _hold(Vector2.ZERO, 4), SimStance.ENERGY)
+	ok(o4["lvl_at_release"] == 3, "beam: a 130-tick hold (past the sixth rung) is still rsLevel 3: the intent's level is cut to the wire's two bits, got %d" % o4["lvl_at_release"])
 	var r3 := SimStrikeRead.new()
 	var o3: Dictionary = _drive(r3, _hold(Vector2(1.0, 0.0), 53) + _hold(Vector2.ZERO, 4), SimStance.MARTIAL)
 	ok(o3["lvl_at_release"] == 3, "beam: the same hold on the martial layer is level 3 already (50)")

@@ -454,7 +454,7 @@ static func consume(S: SimState, events: Array) -> void:
 					if kd == "stagger" and (String(e.text) == "perfect_block" or String(e.text) == "reversal" or String(e.text) == "zip" or String(e.text) == "counter"):
 						fighter(S, S.fighters[who]).on_stagger(String(e.text), int(_ev(e, "n", 0)), t_cue)
 					elif kd == "zip_light" or kd == "zip_heavy":
-						fighter(S, S.fighters[who]).on_zip_cue(kd, int(roundf(float(_ev(e, "amount", 0.0)))), int(_ev(e, "n", 0)), float(_ev(e, "dur", 0.0)), int(roundf(float(_ev(e, "x", 0.0)))), int(roundf(float(_ev(e, "y", 0.0)))), t_cue)
+						fighter(S, S.fighters[who]).on_zip_cue(kd, int(roundf(float(_ev(e, "amount", 0.0)))), int(_ev(e, "n", 0)), float(_ev(e, "dur", 0.0)), int(roundf(float(_ev(e, "x", 0.0)))), int(roundf(float(_ev(e, "y", 0.0)))), t_cue, String(e.text))
 					elif kd == "zip_out":
 						fighter(S, S.fighters[who]).on_zip_out(String(e.text), float(_ev(e, "x", 0.0)), float(_ev(e, "y", 0.0)), int(_ev(e, "n", 0)), int(roundf(float(_ev(e, "k", 0.0)))), t_cue)
 					elif kd == "zip_end":

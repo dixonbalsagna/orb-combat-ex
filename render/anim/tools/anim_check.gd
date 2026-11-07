@@ -6396,6 +6396,171 @@ func _test_fight_view() -> void:
 	print("fight view: %d problems; %s" % [bad.size(), seen])
 
 
+## A flight strike's loop (docs/animation/flight-strikes.md): an arc over is a rush bowed up, an arc under bowed down, with the blow thrown at the top or the bottom. The body tilts along the path (up on the rise, level at the
+## apex, down on the fall: the zip's tilt, `zip.json` loop for a bow of 20 or more) and eases toward level round the blow's contact. Staged on the real solve with the sim's own rush path (SimFighter.rushAt).
+var _loop_y: Array = [400.0, 340.0, 320.0]   # the attacker's start, the defender's and the path's end, above the floor
+
+func _loop_probe(who: String, arc: float, piece: String, ticks: int, contact: int, flight: bool = true) -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = who
+	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
+	var gy: float = WorldWater.floorAt(S, 1000.0, 0.0)
+	f0.x = 1000.0
+	f1.x = 1000.0 + 150.0
+	f0.y = gy + float(_loop_y[0])   # in the air: an arc under must have room below it (the sim clamps a path at the floor)
+	f1.y = gy + float(_loop_y[1])
+	f0.state = "free"
+	f1.state = "free"
+	f1.vx = 0.0
+	var ex := DirExchange.newEx(f0, f1, "light")
+	ex.n = 970
+	ex.tag = "TIER"
+	DirExchange.schedule(ex, float(contact) / 60.0, "strike", {"a": "A", "dmg": 20.0, "piece": "strike." + piece, "style": "speed", "o": {"big": false}, "windup": 6})
+	S.dirS.ex = ex
+	var r := SimState.Rush.new()
+	r.x0 = f0.x
+	r.y0 = f0.y
+	r.px = f1.x + 70.0
+	r.py = gy + float(_loop_y[2])
+	r.pz = f1.z
+	r.arc = arc
+	r.dur = float(ticks) / 60.0
+	f0.rush = r
+	RenderAnim.fighter(S, f0).flight_loop = flight   # the cue's path word: only a flight strike's arc takes the loop's tilt
+	var res := {"nan": 0, "viol": 0, "tilt": [], "ttc": [], "maxtilt": 0.0}
+	for k in range(ticks + 12):
+		S.tick = 8200 + k
+		S.T = 800.0 + float(k) / 60.0
+		ex.t = float(k) / 60.0
+		if k == 0:
+			r.end = S.T + r.dur + SimConst.DT
+		if k <= ticks:
+			var u: float = SimFighter.rushU(S, f0)
+			var pa: PackedFloat64Array = SimFighter.rushAt(S, f0, u)
+			f0.x = pa[0]
+			f0.y = pa[1]
+		else:
+			f0.rush = null
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		var a0: AnimFighter = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		for i in range(AnimRig.N):
+			if is_nan(a0.q[i].x) or is_nan(a0.q[i].w):
+				res.nan += 1
+		res.viol += AnimJoints.violations(a0.q, a0._rd.shape_key).size()
+		res.tilt.append(a0._zip_tilt)
+		res.ttc.append(int(a0.press.get("ticks_to_contact", 99)) if not a0.press.is_empty() else 99)
+		res.maxtilt = maxf(float(res.maxtilt), absf(a0._zip_tilt))
+	S.dirS.ex = null
+	f0.rush = null
+	return res
+
+
+## The flight strikes' blows (docs/animation/flight-strikes.md; docs/design/playable-build.md section 1): the tell is the beat's `windup` (X 6, Y 10, B 14, a chained one at least 4), so the body must reach its contact on the tick
+## the sim says whatever the piece. The two blows the library lacked, one pair a fighter (the arc under's heavy low blow, the parting shot's light), are named pieces: found by the beat's `piece`, in no pick list, in the
+## manifest at the right weight and limb, and played whole through the real solve at their own tell.
+func _test_flight_blows() -> void:
+	AnimData.load_every_wave()
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var bad: Array = []
+	var seen: Array = []
+	var press_was: bool = RenderAnim.press_styles
+	RenderAnim.press_styles = true
+	var new_rows := {"protagonist": [["pl.skim_heel", "heavy", "foot_r", 10], ["pl.trail_backhand", "light", "hand_r", 6]], "antihero": [["rl.slide_knee", "heavy", "knee_r", 10], ["rl.trail_elbow", "light", "elbow_r", 6]]}
+	for who in ["protagonist", "antihero"]:
+		var key: String = String(AnimData.ensure_fighter("PROTAGONIST" if who == "protagonist" else "RIVAL"))
+		for spec in new_rows[who]:
+			var id: String = String(spec[0])
+			var name: String = id.substr(3)
+			if AnimData.resolve_strike(key, "strike." + name) != id:
+				bad.append("%s does not resolve by the beat's piece name" % id)
+				continue
+			if AnimData.pair_lists[key].light.has(id) or AnimData.pair_lists[key].heavy.has(id):
+				bad.append("%s is in a pick list (it must be named only)" % id)
+			var r: Dictionary = _tier_scene(S, who, "medium" if String(spec[1]) == "heavy" else "speed", [name], [60], {"windup": int(spec[3])}, String(spec[1]))
+			seen.append("%s tell %d: contact error %.2f, first load tick %s" % [id, int(spec[3]), float(r.err), str(r.get("load_first"))])
+			if int(r.nan) > 0 or int(r.screen) > 0 or int(r.frames) != 1 or float(r.err) > 0.25:
+				bad.append("%s: nan %d, %d on screen, %d of 1 contacts, error %.2f" % [id, int(r.nan), int(r.screen), int(r.frames), float(r.err)])
+		# the three tells and a chained one reach their contact on the sim's tick, for an existing piece of each strength
+		for t in [["speed", "cross", 6, "light"], ["medium", "roundhouse", 10, "heavy"], ["super", "su_drive" if who == "protagonist" else "su_ram", 14, "heavy"], ["speed", "cross", 4, "light"]]:
+			var rt: Dictionary = _tier_scene(S, who, String(t[0]), [String(t[1])], [60], {"windup": int(t[2])}, String(t[3]))
+			var lf: Array = rt.get("load_first", [])
+			if int(rt.nan) > 0 or int(rt.screen) > 0 or float(rt.err) > 0.25 or lf.is_empty() or absi(int(lf[0]) - int(t[2])) > 1:
+				bad.append("%s %s: the %d-tick tell did not reach its contact on the tick (first load %s, error %.2f)" % [who, t[1], int(t[2]), str(lf), float(rt.err)])
+	RenderAnim.press_styles = press_was
+	S.dirS.ex = null
+	_expect(bad.is_empty(), "flight blows: the new heavy low blow and light parting shot of each fighter play whole at their tell, and the tells 6, 10, 14 and a chained 4 reach their contacts: %s" % str(bad))
+	print("flight blows: %s" % " | ".join(seen))
+
+
+func _test_flight_loop() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var seen: Array = []
+	for who in ["PROTAGONIST", "RIVAL"]:
+		var up: Dictionary = _loop_probe(who, 150.0, "cross", 24, 12)
+		var tl: Array = up.tilt
+		var rise: float = -1.0e9
+		for tk in range(2, 11):
+			rise = maxf(rise, float(tl[tk]))
+		var fall: float = 1.0e9
+		for tk in range(16, 25):
+			fall = minf(fall, float(tl[tk]))
+		var top: float = float(tl[12])
+		seen.append("%s arc over: rises to %.2f, level %.2f at the blow, falls to %.2f, peak %.2f" % [who.substr(0, 1), rise, top, fall, float(up.maxtilt)])
+		if int(up.nan) > 0 or int(up.viol) > 0:
+			bad.append("%s arc over: nan %d viol %d" % [who, int(up.nan), int(up.viol)])
+		if rise < 0.3 or fall > -0.3:
+			bad.append("%s arc over: the body does not tilt up on the rise (%.2f) and down on the fall (%.2f)" % [who, rise, fall])
+		if absf(top) > 0.5 * float(up.maxtilt):
+			bad.append("%s arc over: the body is not level at the blow (%.2f against a peak of %.2f)" % [who, top, float(up.maxtilt)])
+		var dn: Dictionary = _loop_probe(who, -150.0, "sweep", 24, 12)
+		var dl: Array = dn.tilt
+		var late: float = -1.0e9
+		for tk in range(18, 25):
+			late = maxf(late, float(dl[tk]))
+		seen.append("%s arc under: down %.2f at tick 5, level %.2f at the blow, up to %.2f late" % [who.substr(0, 1), float(dl[5]), float(dl[12]), late])
+		if float(dl[5]) > -0.3 or late < 0.1:
+			bad.append("%s arc under: the body does not tilt down on the way under (%.2f) and up on the way out (%.2f)" % [who, float(dl[5]), late])
+		if absf(float(dl[12])) > 0.6 * absf(float(dl[5])):
+			bad.append("%s arc under: the body is not eased toward level at the blow (%.2f against %.2f)" % [who, float(dl[12]), float(dl[5])])
+		if int(dn.nan) > 0 or int(dn.viol) > 0:
+			bad.append("%s arc under: nan %d viol %d" % [who, int(dn.nan), int(dn.viol)])
+		# every other bowed rush (a pop, a recoil flip, the stance circle, a zip's pass) is a bowed rush with no flight path: it keeps the zip's own tilt, as if the loop row were not in the data
+		var plain: Dictionary = _loop_probe(who, 150.0, "cross", 24, 12, false)
+		var saved: Dictionary = (AnimData.zip.get("loop", {}) as Dictionary).duplicate()
+		AnimData.zip.erase("loop")
+		var bare: Dictionary = _loop_probe(who, 150.0, "cross", 24, 12, false)
+		AnimData.zip["loop"] = saved
+		var same: bool = true
+		for tk in range(plain.tilt.size()):
+			if absf(float(plain.tilt[tk]) - float(bare.tilt[tk])) > 0.000001:
+				same = false
+		if not same:
+			bad.append("%s: a bowed rush with no flight path tilts differently with the loop row in the data" % who)
+		if float(plain.maxtilt) > 1.2 * 0.85 + 0.001:
+			bad.append("%s: a bowed rush with no flight path tilts %.2f, past the zip's own cap" % [who, float(plain.maxtilt)])
+		seen.append("%s a bowed rush with no flight path: peak %.2f, the same with or without the loop row" % [who.substr(0, 1), float(plain.maxtilt)])
+		var flat: Dictionary = _loop_probe(who, 0.0, "cross", 24, 12)
+		if float(flat.maxtilt) > float(up.maxtilt):
+			bad.append("%s: a straight rush tilts more (%.2f) than a loop (%.2f)" % [who, float(flat.maxtilt), float(up.maxtilt)])
+	_expect(bad.is_empty(), "flight loop: an arc over and an arc under tilt along the path and are level at the blow, within limits: %s" % str(bad))
+	print("flight loop: %s" % " | ".join(seen))
+
+
 func _test_gestures() -> void:
 	_expect(AnimData.pair.get("gesture_groups", {}).has("head") and AnimData.pair.roles.protagonist.has("gestures") and AnimData.pair.roles.antihero.has("gestures"), "gestures: pair_live.json has no gestures table")
 	main.start_match(4, {"p1": false, "p2": false})
@@ -7566,6 +7731,8 @@ func _run() -> void:
 	_test_tech_consistency()
 	_test_zip_slice()
 	_test_gestures()
+	_test_flight_loop()
+	_test_flight_blows()
 	_test_fight_view()
 	_test_joints()
 	_test_pieces23()

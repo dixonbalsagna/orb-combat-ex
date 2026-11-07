@@ -70,6 +70,8 @@ static var record_writes: bool = false   # tools only (sweep_check): keep each b
 static var ctl_slice_only: bool = false  # tools only (sweep_check's failing control): the sweep visits its slice alone
 var writes: Dictionary = {}              # ... in `writes`, Vector2i(row 0 or not, instance) -> [transform, colour]
 var _xs := PackedFloat64Array()        # the buildings' x (wrapped), in order along the planet: the sweep's index
+var _bx_seen := PackedFloat64Array()   # a field world's poses (S.bX) when _bx_sorted was made
+var _bx_sorted := PackedFloat64Array() # ... and sorted: where a swing has moved the buildings to (_near_x)
 var _xs_i := PackedInt32Array()        # ... and which building each is
 var _reach: float = 0.0                # the farthest a building's parts or figures stand from its x, and SWEEP_PAD
 var _wmax: float = 0.0                 # the widest building
@@ -87,6 +89,10 @@ var _bin_field: RenderTileField = null  # the ground the table was made for
 var _dirs := PackedVector3Array()      # each building's planet point, as drawn
 var _touched: Dictionary = {}          # buildings this frame's events named or threw debris at (consume)
 var _owed: Dictionary = {}             # buildings still owed figures at their last visit (people on their way to it)
+var _later: Dictionary = {}            # buildings off the screen whose visit was put off (the frame's VISIT_SPARE_US ran out), oldest first
+var _moved_owed: Dictionary = {}       # ... of them, the ones whose ground changed meanwhile
+var _view_at := PackedInt32Array()     # per building: the last frame its visit could not wait (_visit_list: in view, or the sim changed it)
+var deferred: int = 0                  # visits put off this frame (a readout)
 var _zone_last: Array = []             # the district flight's [x, shelter] at the last refresh, or []
 var _unseen: bool = false              # the state changed without its events (unseen): the next refresh visits everything
 var swept: int = 0                     # the buildings this frame's sweep visited (for tools and the bench)
@@ -147,6 +153,12 @@ var _holes_on: bool = false          # a porthole is open in this pane's buildin
 var _cues_on: bool = false           # a lane cue shows in this pane's ground materials
 var _pair_on: bool = false           # the pair's mark shows in them
 var _foot: Array = []                # per building: the lowest and highest ground under its footprint (shared by panes)
+var _ft_lo := PackedFloat64Array()   # the tile ground: each footing's lowest and highest tile read, as of
+var _ft_hi := PackedFloat64Array()
+var _ft_ver := PackedInt32Array()    # ... this tile_field.version (-1: none)
+var _cv_ver := PackedInt32Array()    # ... and the version its figures were last placed at
+var _ft_field: RenderTileField = null   # the field those are of
+var _ft_dirs: Array = []             # ... and each footing's nine points on the planet (PackedVector3Array)
 var _falls: Dictionary = {}          # building -> [sim time its sink starts, standing height]: implodes in progress
 var _spread: Dictionary = {}         # building -> [x from its shell's middle, y over its base, the tick it started, the stage before, sharing]: a stage spreading over it from where it was hit (shared by panes)
 var _marks: Dictionary = {}          # building -> its held hits' marks as written: [[first floor, floors, share, side, the share before, the tick it grows from, sharing], ...] (shared by panes)
@@ -167,6 +179,9 @@ var _tile_for: SimState = null
 var _tf_i: int = 0
 var _tf_first: bool = true
 var _tf_ver: int = -1
+var _tb_list := PackedInt32Array()   # the buildings to stand on the tile ground before the match's first frame (stand_opening)
+var _tb_at: int = -1                 # ... how far it has come (-1: not begun)
+var _tb_for: SimState = null         # ... and the match they are of
 var _bld_seen: Array = []          # per building: [curH, alive, fmask, hp, stage], the height and stage as it last stood
 var _drawn: Array = []             # per building: [height, stage 0 to 3, standing] as drawn (a falling one keeps its last look)
 var _grow := PackedInt32Array()    # this refresh's buildings with more people than figures at home
@@ -226,6 +241,39 @@ func _bs_tiles(S: SimState) -> bool:
 		return false
 	tile_field.fill(RenderLook.TILE_BOOT_US)
 	return tile_field.feet_left() == 0
+
+
+## The tile ground's footings and figures before the match's first frame (main.gd _mb_opening, while the loading screen
+## is up). The build's sweep stood the buildings on the strip's ground and the tiles' is a little different, so a first
+## frame whose ground is all changed (an opening's) stood every one in view again at once. Each building the first
+## picture's sweep had to visit (_view_at: in its view) is visited here as that frame would visit it, its ground changed,
+## a share of the load's time at a time, and with every (the boot's load, in steps) every other building after them: the
+## first frame finds them standing and their reads kept (RenderTileField.kept_since), and shows what it showed; the rest
+## the sweep visits as it comes to them, as before. True when done (and when there is nothing to do).
+func stand_opening(S: SimState, every: bool) -> bool:
+	if source != null or tile_field == null or _view_at.size() != S.buildings.size():
+		return true
+	if _tb_at < 0 or _tb_for != S:
+		_tb_for = S
+		_tb_list = PackedInt32Array()
+		var rest := PackedInt32Array()
+		for bi in range(_view_at.size()):
+			if _view_at[bi] == _frame:
+				_tb_list.append(bi)
+			elif every:
+				rest.append(bi)
+		_tb_list.append_array(rest)
+		_tb_at = 0
+	var t0: int = Time.get_ticks_usec()
+	while _tb_at < _tb_list.size():
+		if Time.get_ticks_usec() - t0 > RenderLook.TILE_BOOT_US:
+			return false
+		var bi: int = _tb_list[_tb_at]
+		_tb_at += 1
+		_moved_owed[bi] = true   # its ground changed: footing, building and figures as that visit has them
+		_visit(S, bi, ground.dirty, true, false)
+	_tb_at = -1
+	return true
 
 
 func _bs_begin(S: SimState) -> bool:
@@ -805,9 +853,16 @@ func _startle(S: SimState) -> void:
 		if seen.has(key):
 			continue
 		seen[key] = true
-		for bi in range(S.buildings.size()):
+		var cand := PackedInt32Array()
+		if _xs.size() == S.buildings.size():
+			_near_x(S, bx, R + _wmax + RenderLook.CROWD_SPREAD, cand)   # the buildings near the blow: the set the test below keeps, and a few more
+		else:
+			cand = PackedInt32Array(range(S.buildings.size()))
+		for bi in cand:
+			if _shown[bi] <= 0:
+				continue
 			var b = S.buildings[bi]
-			if absf(SimWrap.sdx(bx, b.x)) > R + b.w + RenderLook.CROWD_SPREAD or _shown[bi] <= 0:
+			if absf(SimWrap.sdx(bx, b.x)) > R + b.w + RenderLook.CROWD_SPREAD:
 				continue
 			for j in range(_shown[bi]):
 				var ci: int = _crowd_first[bi] + j
@@ -882,9 +937,21 @@ func refresh(S: SimState, force: bool) -> void:
 	if force or _visit_at.size() != n:
 		_sweep_index(S)
 	all = all or _xs.size() != n
-	if all:
+	deferred = 0
+	if all and not force and not back and pane_sweep and not _see_all and not _span.is_empty():
+		# Every building wanted (a first sweep of them, or one asked for) with the view known: what it can show now,
+		# the rest put off and visited over the next frames, as a pane comes to them or as the budget allows.
+		var list: PackedInt32Array = _visit_list(S, dirty, dchg)
+		swept = n
+		for bi in range(n):
+			if _visit_at[bi] != _frame:
+				_defer(S, bi, dirty, dchg)
+		_visit_budgeted(S, list, dirty, dchg)
+	elif all:
 		_all_at = _frame
 		swept = n
+		_later.clear()
+		_moved_owed.clear()
 		for bi in range(n):
 			_visit(S, bi, dirty, dchg, force)
 	else:
@@ -892,8 +959,7 @@ func refresh(S: SimState, force: bool) -> void:
 		# view is swept when it draws (see_more).
 		var list: PackedInt32Array = _visit_list(S, dirty, dchg)
 		swept = list.size()
-		for bi in list:
-			_visit(S, bi, dirty, dchg, false)
+		_visit_budgeted(S, list, dirty, dchg)
 	_span = PackedFloat64Array()
 	_cap = []
 	_see_all = false
@@ -942,9 +1008,11 @@ func refresh(S: SimState, force: bool) -> void:
 func _visit(S: SimState, bi: int, dirty: PackedByteArray, dchg: bool, force: bool) -> void:
 	_visit_at[bi] = _frame
 	_owed.erase(bi)
+	_later.erase(bi)
 	var b: SimState.Building = S.buildings[bi]
 	var seen: Array = _bld_seen[bi]
-	var moved: bool = dchg and (force or _foot_dirty(dirty, b))
+	var moved: bool = (dchg and (force or _foot_dirty(dirty, b))) or _moved_owed.has(bi)
+	_moved_owed.erase(bi)
 	# The figures at home: the people it has, as many as it has figures. Fewer go now (they run or are gone, and the
 	# runners may head for a building the sweep has passed); more wait for the second pass (_grow_pass).
 	var have: int = clampi(int(b.popAlive), 0, _crowd_first[bi + 1] - _crowd_first[bi])
@@ -966,16 +1034,57 @@ func _visit(S: SimState, bi: int, dirty: PackedByteArray, dchg: bool, force: boo
 		elif not _fold.is_empty() and absf(float(_fold[1]) - S.T) < 0.5:
 			var delay: float = clampf(absf(SimWrap.sdx(float(_fold[0]), b.x)) / WorldStructures.IMPLODE_SPEED, 0.0, WorldStructures.IMPLODE_MAX_DELAY)
 			_falls[bi] = [float(_fold[1]) + delay, seen[0]]
+	var footed: bool = force
 	if moved or force:
-		_foot[bi] = _footing(S, b)
+		var fo: Vector2 = _footing(S, b, bi)
+		footed = footed or fo != _foot[bi]
+		_foot[bi] = fo
 	# A fallen building is set once, when it falls (and while it sinks): its height is not compared, so the fallen
 	# ones cost nothing a frame. A standing one is set again when its height, floors or hit points change (a cut
-	# tower's stage moves with its hit points alone).
-	if moved or (b.alive and (h != seen[0] or b.hp != seen[3])) or b.alive != seen[1] or b.fmask != seen[2] or _falls.has(bi) or _drops.has(bi):
+	# tower's stage moves with its hit points alone), or its footing: ground that changed beside it, and not under it,
+	# leaves it as it stands (a blow's dirty columns reach every building near it).
+	if footed or (b.alive and (h != seen[0] or b.hp != seen[3])) or b.alive != seen[1] or b.fmask != seen[2] or _falls.has(bi) or _drops.has(bi):
 		var st: int = _set_building(S, bi, b, h)
 		_bld_seen[bi] = [h if b.alive else seen[0], b.alive, b.fmask, b.hp, st]
-	if moved or show != _shown[bi]:
+	# Its figures stand on the ground as drawn: on the tile ground the tiles', which no blow changes.
+	if show != _shown[bi] or (moved and (force or not _crowd_still(bi))):
 		_set_crowd(S, bi, b, show)
+
+
+## The visits of a frame: the ones that cannot wait (_view_at: what this pane can show, and what the sim changed or set
+## going) whole; the rest (off the screen: the slice, and ground that changed beyond the view) while
+## RenderLook.VISIT_SPARE_US lasts, the ones put off longest first. What is left waits for a later frame (_later), and a
+## pane that can show one visits it first (see_more): a building off the screen can lag a few frames, never one in view.
+func _visit_budgeted(S: SimState, list: PackedInt32Array, dirty: PackedByteArray, dchg: bool) -> void:
+	var rest := PackedInt32Array()
+	for bi in list:
+		if _view_at[bi] == _frame:
+			_visit(S, bi, dirty, dchg, false)
+		else:
+			rest.append(bi)
+	var t0: int = Time.get_ticks_usec()
+	if not _later.is_empty():
+		for bi in _later.keys():   # oldest first; a visit takes it out
+			if Time.get_ticks_usec() - t0 > RenderLook.VISIT_SPARE_US:
+				break
+			if _visit_at[bi] != _frame:
+				_visit(S, int(bi), dirty, dchg, false)
+	for k in range(rest.size()):
+		if Time.get_ticks_usec() - t0 > RenderLook.VISIT_SPARE_US:
+			for q in range(k, rest.size()):
+				_defer(S, rest[q], dirty, dchg)
+			return
+		_visit(S, rest[k], dirty, dchg, false)
+
+
+## A visit put off: the building waits in _later (a pane that can show it visits it at once: its frame stamp is not this
+## frame's), and keeps that its ground changed this frame.
+func _defer(S: SimState, bi: int, dirty: PackedByteArray, dchg: bool) -> void:
+	_later[bi] = true
+	_visit_at[bi] = -1
+	deferred += 1
+	if dchg and not _moved_owed.has(bi) and _foot_dirty(dirty, S.buildings[bi]):
+		_moved_owed[bi] = true
 
 
 ## People sheltering in a building (World's RELOCATE) are shown there as their runners arrive: one figure for each
@@ -1014,8 +1123,12 @@ func _sweep_index(S: SimState) -> void:
 	var n: int = S.buildings.size()
 	_visit_at.resize(n)
 	_visit_at.fill(-1)
+	_view_at.resize(n)
+	_view_at.fill(-1)
 	_slice_at = 0
 	_owed.clear()
+	_later.clear()
+	_moved_owed.clear()
 	_touched.clear()
 	_zone_last = []
 	if _parts.size() != n or _crowd_first.size() != n + 1:
@@ -1082,6 +1195,16 @@ func _visit_list(S: SimState, dirty: PackedByteArray, dchg: bool) -> PackedInt32
 			if int(z[1]) >= 0:
 				c.append(int(z[1]))
 	_zone_last = zone
+	# What this pane can show, and what the sim changed or set going this frame (a touch, a hit, a fall, a drop, people
+	# on their way, the evacuation's zone), is visited whole, every frame: runs and falls start when their visit comes,
+	# and would start late. Only changed ground and the slice can wait (_visit_budgeted).
+	var n0: int = S.buildings.size()
+	if _view_at.size() != n0:
+		_view_at.resize(n0)
+		_view_at.fill(-1)
+	for bi in c:
+		if bi >= 0 and bi < n0:
+			_view_at[bi] = _frame
 	if dchg:
 		_dirty_feet(dirty, c)
 	var n: int = S.buildings.size()
@@ -1113,6 +1236,43 @@ func _dirty_feet(dirty: PackedByteArray, out: PackedInt32Array) -> void:
 		var x0: float = float(c0 + first) * col
 		var x1: float = float(c0 + last + 1) * col
 		_along(0.5 * (x0 + x1), 0.5 * (x1 - x0) + 0.5 * _wmax + 2.0 * col, out)
+
+
+## The buildings whose x, as the sim has it now, lies within r of x, round the planet. On most worlds that is the sweep's
+## index (_along). On a field world a building's x is the swing's pose (S.bX), which the index does not follow: there the
+## poses are sorted again when they have changed (a copy, sorted natively), and each one in range is found by its own x.
+func _near_x(S: SimState, x: float, r: float, out: PackedInt32Array) -> void:
+	var px: PackedFloat64Array = S.bX
+	if px.size() != _xs.size():
+		_along(x, r, out)
+		return
+	if px != _bx_seen:
+		_bx_seen = px.duplicate()
+		_bx_sorted = px.duplicate()
+		_bx_sorted.sort()
+	var W: float = SimConst.W
+	if 2.0 * r >= W:
+		out.append_array(PackedInt32Array(range(px.size())))
+		return
+	var a: float = SimWrap.wrap(x - r)
+	_poses_in(px, a, minf(a + 2.0 * r, W), out)
+	if a + 2.0 * r > W:
+		_poses_in(px, 0.0, a + 2.0 * r - W, out)
+
+
+func _poses_in(px: PackedFloat64Array, a: float, b: float, out: PackedInt32Array) -> void:
+	var i: int = _bx_sorted.bsearch(a)
+	var last: float = NAN
+	while i < _bx_sorted.size() and _bx_sorted[i] <= b:
+		var v: float = _bx_sorted[i]
+		i += 1
+		if v == last:
+			continue   # two buildings at one x: both were found the first time
+		last = v
+		var at: int = px.find(v)
+		while at >= 0:
+			out.append(at)
+			at = px.find(v, at + 1)
 
 
 ## The buildings whose x lies within r of x, round the planet (the sweep's index).
@@ -1375,7 +1535,7 @@ func _tile_foot_slice(S: SimState, cam: Vector3) -> void:
 		if not _tf_first and tile_field.dir_at(b.g.x, b.g.z, S.frame0).dot(cam) < RenderLook.TILE_FOOT_NEAR:
 			continue
 		left -= 1
-		var f: Vector2 = _footing(S, b)
+		var f: Vector2 = _footing(S, b, bi)
 		if absf(f.x - _foot[bi].x) > 1.0:
 			_foot[bi] = f
 			_bld_seen[bi][4] = _set_building(S, bi, b, WorldStructures.curH(b))
@@ -1383,18 +1543,53 @@ func _tile_foot_slice(S: SimState, cam: Vector3) -> void:
 			_foot[bi] = f
 
 
+## The tile reads kept (footings, figures) are of one field: another one starts them again.
+func _tiles_seen() -> void:
+	if _ft_field != tile_field:
+		_ft_field = tile_field
+		_ft_ver.fill(-1)
+		_cv_ver.fill(-1)
+		_ft_dirs.fill(PackedVector3Array())
+
+
+## Whether building bi's figures stand where they were placed, as the tile ground has it: no tile stored since.
+func _crowd_still(bi: int) -> bool:
+	if tile_field == null or bi >= _cv_ver.size():
+		return false
+	_tiles_seen()
+	return _cv_ver[bi] == tile_field.version
+
+
 ## The lowest and highest ground under a building's footprint (its corners, edges and centre, as drawn).
-func _footing(S: SimState, b) -> Vector2:
+func _footing(S: SimState, b, bi: int = -1) -> Vector2:
 	var zd: Vector2 = _depth(b)
 	var lo: float = INF
 	var hi: float = -INF
 	if tile_field != null:
 		# The tile ground: at its plan's place, as the view draws it, and a plinth no deeper than TILE_FOOT_CAP under its base.
-		for x in [b.g.x - b.w * 0.5, b.g.x, b.g.x + b.w * 0.5]:
-			for z in [b.g.z + zd.y * 0.5, b.g.z, b.g.z - zd.y * 0.5]:
-				var g: float = tile_field.height_at(tile_field.dir_at(x, z, S.frame0))
+		# The tiles' heights change only when a tile is stored (version), so building bi's reads are kept until one is.
+		_tiles_seen()
+		var kept: bool = bi >= 0 and bi < _ft_ver.size()
+		if kept and _ft_ver[bi] == tile_field.version:
+			lo = _ft_lo[bi]
+			hi = _ft_hi[bi]
+		else:
+			# Its nine points on the planet are its own (its plan's place: a swing does not move them), kept once made.
+			var pts: PackedVector3Array = _ft_dirs[bi] if kept and (_ft_dirs[bi] as PackedVector3Array).size() == 9 else PackedVector3Array()
+			if pts.is_empty():
+				for x in [b.g.x - b.w * 0.5, b.g.x, b.g.x + b.w * 0.5]:
+					for z in [b.g.z + zd.y * 0.5, b.g.z, b.g.z - zd.y * 0.5]:
+						pts.append(tile_field.dir_at(x, z, S.frame0))
+				if kept:
+					_ft_dirs[bi] = pts
+			for d in pts:
+				var g: float = tile_field.height_at(d)
 				lo = minf(lo, g)
 				hi = maxf(hi, g)
+			if kept:
+				_ft_lo[bi] = lo
+				_ft_hi[bi] = hi
+				_ft_ver[bi] = tile_field.version
 		return Vector2(maxf(lo, WorldStructures.baseY(S, b) - RenderLook.TILE_FOOT_CAP), hi)
 	for x in [b.x - b.w * 0.5, b.x, b.x + b.w * 0.5]:
 		for z in [zd.x + zd.y * 0.5, zd.x, zd.x - zd.y * 0.5]:
@@ -1519,6 +1714,9 @@ func _set_crowd(S: SimState, bi: int, b, alive: int) -> void:
 		for ci in flight.vanish(S, bi, b.x, slots, _crowd_x, _crowd_z, ground):
 			gone_now[ci] = true
 	_shown[bi] = alive
+	if tile_field != null and bi < _cv_ver.size():
+		_tiles_seen()
+		_cv_ver[bi] = tile_field.version
 	for j in range(n):
 		var ci: int = first + j
 		var x: float = _crowd_x[ci]
@@ -2741,6 +2939,13 @@ func _make_props(S: SimState) -> void:
 	_drawn.clear()
 	_foot.resize(nb)
 	_foot.fill(Vector2.ZERO)
+	for a in [_ft_ver, _cv_ver]:
+		a.resize(nb)
+		a.fill(-1)
+	_ft_lo.resize(nb)
+	_ft_hi.resize(nb)
+	_ft_dirs.resize(nb)
+	_ft_dirs.fill(PackedVector3Array())
 	_top.resize(nb)
 	_top.fill(-INF)
 	_falls.clear()

@@ -53,6 +53,7 @@ var _zh: Dictionary = {}               # held by a zip (carried, lifted): {kind,
 var _zip_tilt: float = 0.0             # the body turned along its path (rad), smoothed
 var _zip_dy: float = 0.0               # the lifted fighter's cosmetic rise (model units)
 var _zip_phase: String = ""
+var flight_loop: bool = false             # a flight strike's arc over or under is in flight (the cue's path word): only then does a bowed rush take the loop's tilt (zip.json `loop`); every other bowed rush keeps the zip's own
 var zip_cue: Dictionary = {}              # the plan the last zip_light or zip_heavy cue announced: {kind, tell, in, dur, reach_before, reach_after, T} (VFX, Camera)
 var zip_exit: Dictionary = {}             # the last zip_out cue: {kind, x, y, out, reading, T}
 var _drop: Dictionary = {}                # a drop in progress: {t0, landed}
@@ -2108,7 +2109,8 @@ func on_stagger(text: String, n: int, T: float) -> void:
 
 ## The zip's cues are edges (zip.md sections 9 and 12): the read (DirZip.read) is what the body poses from. zip_light and zip_heavy start a zip: the plan the sim announced is kept for VFX and Camera
 ## (`zip_cue`), and the last end word is cleared. zip_out is the exit becoming known (6 or 10 ticks before the way out): the exit point and the ticks are kept (`zip_exit`).
-func on_zip_cue(kind: String, amount: int, n_in: int, dur: float, rx: int, ry: int, T: float) -> void:
+func on_zip_cue(kind: String, amount: int, n_in: int, dur: float, rx: int, ry: int, T: float, path: String = "") -> void:
+	flight_loop = path == "over" or path == "under"   # Encounter's flight strike names its path on the cue's text (zip, line, over, under, parting); a zip cue with none is today's
 	_zip_end = {}
 	_zblend = {}
 	zip_cue = {"kind": "heavy" if kind == "zip_heavy" else "strike", "tell": amount, "in": n_in, "dur": dur, "reach_before": rx, "reach_after": ry, "T": T}

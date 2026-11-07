@@ -223,6 +223,9 @@ static func dataHash(setup: Dictionary = {}) -> String:
 			FighterData._canon(h, WorldRingPick.cfg().turn)
 	if SimInputData.right_stick_on():   # the intent's second word is in the hash and the entries: a replay made with the switch on plays only with it on, and the other way round (a match with it off reads none of it)
 		h.text("rightStick")
+	if setup.has("pushMode"):   # each player's push in a beam struggle (DirBeam.pushModes): both ends of a link must agree
+		h.text("pushMode")
+		h.text(str(setup.pushMode))
 	var lvl: String = DirAI.levelOf(setup)   # the computer's level, a setup key (the start menu's Easy or Hard); nothing for the data's own level, so no earlier replay's hash moves
 	if lvl != "":
 		h.text("aiLevel")

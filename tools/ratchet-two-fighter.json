@@ -7,10 +7,10 @@
     "fighters[1]",
     "SimRoster.opp"
   ],
-  "total": 367,
+  "total": 365,
   "bySpelling": {
     "S.dirS.ex": 153,
-    "fighters[0]": 85,
+    "fighters[0]": 83,
     "fighters[1]": 57,
     "SimRoster.opp": 72
   },
@@ -25,7 +25,7 @@
     "render/anim/anim_fighter.gd": 17,
     "render/anim/anim_many.gd": 1,
     "render/anim/spike/spike.gd": 5,
-    "render/camera/split_rig.gd": 43,
+    "render/camera/split_rig.gd": 41,
     "render/core/hud.gd": 1,
     "render/core/main.gd": 6,
     "render/core/pane_world.gd": 2,

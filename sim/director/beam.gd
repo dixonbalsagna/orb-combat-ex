@@ -158,7 +158,7 @@ static func opBeamImpact(S: SimState, ex, args) -> void:
 		return
 	if D.state == "locked":
 		D.state = "free"
-	SimDamage.hit(S, ex, A, D, (200.0 if out == "GUARD" else 230.0) * sigDamageMul(), {"ignoreStance": out != "GUARD", "stop": 0.14, "shake": 16.0, "big": true})
+	SimDamage.hit(S, ex, A, D, DirBeamMove.hitDamage(A, (200.0 if out == "GUARD" else 230.0) * sigDamageMul()), {"ignoreStance": out != "GUARD", "stop": 0.14, "shake": 16.0, "big": true})   # the stick beam's own move: by its stage
 	_blast(S, A, D.x, D.y + 30.0, 60.0 + A.tier * 30.0)
 	if S.game.ko == null:
 		D.state = "locked"
@@ -318,6 +318,52 @@ static func _clashEnd(S: SimState, A, D, W, L, outcome: String, how: String, mid
 	e.n = int(st.surgesA) + int(st.surgesD)
 
 
+## struggle.pushMode (Game Design, playable-build.md section 3): what a player presses to push in a beam struggle, his own option, by slot from
+## the match's setup (sim.gd's _mHead sets pushModes, as it sets DirAI.level). "stick": a flick of the right stick toward the rival on the beat
+## pushes and one away lets go, and the face buttons do nothing; "face": X, Y or B, and A lets go. The same window and the same push. The
+## computer is unaffected. Off (pushMode.enabled false): face for everyone, as it was.
+static var pushModes: PackedStringArray = PackedStringArray()
+
+
+static func pushOn() -> bool:
+	return struggleOn() and bool(_bs().get("pushMode", {}).get("enabled", false))
+
+
+## The setup's push modes: a list by slot, one word for all, or none (each takes the default).
+static func pushModesOf(setup: Dictionary) -> PackedStringArray:
+	var out := PackedStringArray()
+	var v = setup.get("pushMode", null)
+	if v is Array:
+		for x in v:
+			out.append(String(x))
+	elif v is String:
+		out.append(String(v))
+	return out
+
+
+## f's push mode: his slot's, or the default; never a reserved or unknown one.
+static func pushModeOf(S: SimState, f) -> String:
+	if not pushOn():
+		return "face"
+	var pm: Dictionary = _bs().pushMode
+	var k: int = S.fighters.find(f)
+	var m: String = ""
+	if pushModes.size() == 1:
+		m = pushModes[0]
+	elif k >= 0 and k < pushModes.size():
+		m = pushModes[k]
+	return m if (pm.values as Array).has(m) else String(pm.default)
+
+
+## A stick-mode push this tick: a flick toward is a surge, away a let-go (the reader's request edge: the stick has to come back under its
+## release line before the next counts, so holding or scrubbing does nothing).
+static func _stickPush(S: SimState, f) -> String:
+	if not f.input.rsStart:
+		return "none"
+	var d: int = DirStick.relative(S, f, int(f.input.rsDir))
+	return "surge" if d == DirStick.TOWARD else ("letgo" if d == DirStick.AWAY else "none")
+
+
 static func _struggleBeat(ex):
 	for b in ex.beats:
 		if not b.done and b.op == "clashResolve" and b.args != null and b.args.has("bs"):
@@ -347,7 +393,12 @@ static func clashTick(S: SimState, ex) -> void:
 			if (st["ai" + side] as Array).has(rel):
 				_press(S, ex, f, side, rel, st, bs)
 			continue
-		var what: String = SimPressRead.struggle_press(DirGrapple._bitsIntent(int(st["prev" + side])), f.input) if rel > 0 else "none"   # a press on the tick it starts was for what came before
+		var mode: String = pushModeOf(S, f)
+		if rel == 1 and pushOn():
+			SimFx.cue(S, f, "push_mode", mode, "")   # his mode, for the teaching in the left panel (UI)
+		var what: String = "none"
+		if rel > 0:   # a press on the tick it starts was for what came before
+			what = _stickPush(S, f) if mode == "stick" else SimPressRead.struggle_press(DirGrapple._bitsIntent(int(st["prev" + side])), f.input)
 		st["prev" + side] = DirGrapple._bits(f.input)
 		if what == "letgo":
 			_letGo(S, ex, f, side, rel - DirBrawl._waited(f), st, bs)
@@ -579,6 +630,10 @@ static func _sampleBeamRead(S: SimState, b, s: float) -> void:
 		SimFx.fire(S, x, g, 1)
 
 
+## Tests only (beam_grid_check): a playing beam sampled at its front every tick, as before the grid.
+static var gridOff: bool = false
+
+
 static func beamStep(S: SimState, dt: float) -> void:
 	for i in range(S.beams.size() - 1, -1, -1):
 		var b = S.beams[i]
@@ -594,6 +649,8 @@ static func beamStep(S: SimState, dt: float) -> void:
 		var was: float = b.p
 		b.p = np
 		var s: float = s0
+		if tv > 0 and not gridOff:
+			s = ceil(s0 / (36.0 * SimConst.WS)) * (36.0 * SimConst.WS)   # a beam that plays crawls (a few units a tick near him): sampled once at each point of a fixed grid, not at its front every tick, or the ground by his hand takes a dozen hits
 		while s < s1:
 			sampleBeam(S, b, s)
 			s += 36.0 * SimConst.WS

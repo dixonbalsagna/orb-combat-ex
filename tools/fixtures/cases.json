@@ -51941,6 +51941,35 @@
       }
     },
     {
+      "id": "anim-zip-loop-max-ok",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/loop/max": 1.4
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-zip-loop-max-too-big",
+      "schema": "anim-zip.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/zip.json",
+          "set": {
+            "/loop/max": 3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/loop/max"
+      }
+    },
+    {
       "id": "anim-zip-underscore-key-ok",
       "schema": "anim-zip.schema.json",
       "mutate": [

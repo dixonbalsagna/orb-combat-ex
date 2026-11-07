@@ -19,6 +19,7 @@ func ok(c: bool, what: String) -> void:
 
 func _init() -> void:
 	SimInputData.load_data()
+	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
 	SimInputData.clear_overrides()
 	_listing_and_required()
 	_rebind()

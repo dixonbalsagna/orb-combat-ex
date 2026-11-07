@@ -123,6 +123,8 @@ var stall_keep: bool = false        # switches.stallKeep: keep the strike stick'
 var _peak_rs: Vector2 = Vector2.ZERO    # the strike vector at its furthest, as the events reported it, since the last build
 var _peak_pressed: bool = false         # a strike key was down at some moment since the last build
 var in_struggle: bool = false       # the host says this slot's fighter is in a struggle (a beam clash, a finisher): the stick does nothing and the faces are free
+var struggle_push: bool = false     # ... and that this player's push mode is the stick (struggle.pushMode, playable-build.md section 3): the stick is read as a strike stick in the struggle, a flick toward is his surge, away his let-go
+var _push_prev: bool = false        # the last build was a stick-push struggle (its first tick lets go of a charge in hand)
 var _b_hold_prev: bool = false      # B was held in the energy layer on the last build (E131: the stick is inert while it is)
 var _inert_masks: Array = []        # the stance masks on which the strike stick does nothing (pure 4a: the power layer, and the lay), from data
 var _brace_dir: int = 0             # a brace read waiting for a step to take it
@@ -1078,14 +1080,20 @@ func set_brace_flick(on: bool) -> void:
 ## The host's word each tick that this slot's fighter is in a struggle (a beam clash, the finisher's contest). GD's ruling: in a struggle the stick does
 ## nothing (the surges are face presses on a pulse, and a sweep alongside them would pair the stick and a button in one beat). The layout makes it so:
 ## a started strike is cancelled, the stick is ignored until it rests, and the faces are free at once (no wait, no queue). Only a preset with a strike control reads it.
-func set_struggle(on: bool) -> void:
+## `push` is the host's second word, true when this player's push mode is the stick (the director's DirBeam.pushModeOf): then the stick is NOT inert in the struggle. It reads as in
+## any strike (a flick is a request edge with its direction; it has to come back under the release line before the next counts), and the director takes the edge as the push
+## (toward) or the let-go (away); the faces are still free and the director gives them no meaning (docs/controls/push-stick.md).
+func set_struggle(on: bool, push: bool = false) -> void:
 	in_struggle = on
+	struggle_push = on and push
 
 
 func _right_hand_reset() -> void:
 	_rs = Vector2.ZERO
 	_b_hold_prev = false
 	in_struggle = false
+	struggle_push = false
+	_push_prev = false
 	_brace_pending = false
 	_brace_t0 = -1000
 	_brace_was = false
@@ -1171,12 +1179,17 @@ func _right_hand(i: SimIntent, mask: int) -> void:
 		i.dodgeHeld = _dodge_phys_down()
 	var digital: bool = (_stick_control == "")
 	var lv: Vector2 = Vector2(i.mx, i.my) if digital else _stick
-	if in_struggle:
+	var push_live: bool = in_struggle and struggle_push
+	if (in_struggle and not push_live) or push_live != _push_prev:
+		# The stick does nothing in a struggle; in a stick-push struggle that is only its first and its last tick: a charge in hand is let go at either edge (a held thumb must come back to rest
+		# before a flick counts, and a flick never carries a strike out of the struggle into the fight).
 		if _strike.phase == SimStrikeRead.ACTIVE:
 			_strike.cancel_now(tick)
 		if _strike.phase == SimStrikeRead.SPENT or _strike.phase == SimStrikeRead.CROSSED:
 			_strike.phase = SimStrikeRead.IGNORED if _strike.down else SimStrikeRead.IDLE
+	if in_struggle:
 		_law.free_faces()
+	_push_prev = push_live
 	if _aedge.has("guardPress") or _aedge.has("dodge"):
 		if _strike.cancel_now(tick):
 			_law.note_stick_end(tick)
@@ -1201,7 +1214,8 @@ func _right_hand(i: SimIntent, mask: int) -> void:
 	if _b_hold_prev and not b_hold:
 		_law.note_hold_release(tick)
 	_b_hold_prev = b_hold
-	_strike.step(sv[0].x, sv[0].y, mask, tick, live, _law.floor_tick(), sv[1], in_struggle or _inert_masks.has(mask) or b_hold)
+	# A stick-push struggle reads the stick whatever the layer or a held B (nothing else counts there) and with no reverse lockout (the faces mean nothing in it).
+	_strike.step(sv[0].x, sv[0].y, mask, tick, live, 0 if push_live else _law.floor_tick(), sv[1], (in_struggle and not push_live) or (not push_live and (_inert_masks.has(mask) or b_hold)))
 	if was_down and not _strike.down:
 		_law.note_stick_end(tick)   # the thumb left the stick: the faces are free L later (a throw, a cancel or a toggled charge's rest alike)
 	if _strike.is_active():

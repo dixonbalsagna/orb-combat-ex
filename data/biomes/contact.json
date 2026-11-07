@@ -97,5 +97,6 @@
     "biomes": ["city", "village"],
     "dugBelow": -3.0
   },
-  "rubbleMin": 8.0
+  "rubbleMin": 8.0,
+  "power": {"maxContacts": 3}
 }

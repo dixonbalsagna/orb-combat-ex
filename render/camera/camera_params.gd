@@ -589,6 +589,11 @@ const DOUBLE_SLIDE_SPAN: float = 1000.0  # the pull-back holds both slides: 6 bo
 const DOUBLE_PANEL_PUSH: float = 0.03    # the close-up pushes 3% inside its own frame
 
 # --- the winner in the wreckage (rule-of-cool.md row 8) ---
+const FOCUS_EASE: float = 0.2          # 2v2: a finished fight's winner's framing turns to his focus across over this (Game Design: about 12 ticks)
+const ACROSS_LEAD: float = 0.12        # ... leading toward it by this share of the width
+const ACROSS_WIDE_SPEED: float = 10000.0   # ... flying faster than this (units a second) the scroll governor may take his framing as wide as ACROSS_WIDE_R
+const ACROSS_WIDE_R: float = 0.02         # ... (of the height; 14 px at 720): towers streaming past at fight size flashed (4 in the register, both modes)
+const ACROSS_NEAR: float = 150.0       # ... the lead falls away as he closes on it: none within this (units, 2 bh), all of it from ten times this
 const WRECK_AT: float = 1.8            # seconds after the KO: the loser's close-up has played, the sim's slow motion is ending
 const WRECK_T: float = 3.5             # the pull-back from a close-up to the wide shot, eased
 const R_WRECK_0: float = 0.13          # it starts on the winner at this size ...

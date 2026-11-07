@@ -22,6 +22,7 @@ func ok(c: bool, what: String) -> void:
 
 func _init() -> void:
 	SimInputData.load_and_apply()
+	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
 	SimInputData.clear_overrides()
 	_sw(true, true, true, true)
 	_landing()
@@ -267,7 +268,7 @@ func _beam_form(l: SimLayout, rb: String, press: Callable, release: Callable, na
 	ok(st >= 0 and (its[st] as SimIntent).rsMask == SimStance.ENERGY, "beam: %s: RB + the stick is a request on the energy layer (mask %d)" % [name, (its[st] as SimIntent).rsMask if st >= 0 else -1])
 	if st >= 0:
 		var lv: Callable = func(k: int) -> int: return (its[st + k] as SimIntent).rsLevel
-		ok(lv.call(11) == 0 and lv.call(12) == 1 and lv.call(29) == 1 and lv.call(30) == 2 and lv.call(53) == 2 and lv.call(54) == 3, "beam: %s: the beam ladder is 12 / 30 / 54 live ticks from the start" % name)
+		ok(lv.call(11) == 0 and lv.call(12) == 1 and lv.call(27) == 1 and lv.call(28) == 2 and lv.call(45) == 2 and lv.call(46) == 3, "beam: %s: the beam ladder is 12 / 28 / 46 live ticks from the start (the first three of Encounter's stages)" % name)
 		ok((its[st + 90] as SimIntent).rsHeld and (its[st + 90] as SimIntent).rsLevel == 3, "beam: %s: a level 3 beam is held and never thrown by a timer (E129's Loaded is reachable on the stick)" % name)
 
 

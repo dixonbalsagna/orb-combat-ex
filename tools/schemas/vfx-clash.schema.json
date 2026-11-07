@@ -473,10 +473,6 @@
           "type": "number",
           "exclusiveMinimum": 0
         },
-        "knot_s": {
-          "type": "number",
-          "exclusiveMinimum": 0
-        },
         "ring_life_s": {
           "type": "number",
           "exclusiveMinimum": 0
@@ -501,15 +497,7 @@
           "type": "number",
           "exclusiveMinimum": 0
         },
-        "release_s": {
-          "type": "number",
-          "exclusiveMinimum": 0
-        },
         "second_k": {
-          "type": "number",
-          "exclusiveMinimum": 0
-        },
-        "second_delay": {
           "type": "number",
           "exclusiveMinimum": 0
         },
@@ -557,6 +545,34 @@
           "additionalProperties": false
         },
         "back": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "ring_rise_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "rise_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "fall_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "thin_k": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "dug_ref": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "dug_min_k": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "smoke_puffs": {
           "type": "number",
           "exclusiveMinimum": 0
         }

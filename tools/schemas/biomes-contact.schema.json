@@ -208,6 +208,15 @@
         "^_": true
       }
     },
+    "power": {
+      "type": "object",
+      "required": ["maxContacts"],
+      "additionalProperties": false,
+      "description": "The power model (data/fight/power.json, docs/world/power-world.md): with a match's power switch on, a send makes at most this many ground contacts before it tumbles to a stop (journey.maxContacts is the cap otherwise, and water's skims keep it). Optional; missing is 3.",
+      "properties": {
+        "maxContacts": { "type": "integer", "minimum": 1, "maximum": 8 }
+      }
+    },
     "journey": {
       "type": "object",
       "required": [

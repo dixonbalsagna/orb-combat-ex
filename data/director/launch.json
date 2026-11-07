@@ -130,6 +130,8 @@
     "bhStep": 1.0,
     "stopShort": 60.0,
     "sendReach": 3000.0,
+    "reachWalked": false,
+    "ai": {"enabled": false, "hero": 0.275, "villain": 0.5, "_note": "The computer leans for it too, with the same stick (Game Design's addendum of 2026-11-06 to docs/world/ring-any-angle/game-design.md, section 1): in a string with a standing building beyond its rival, in reach, it holds its left stick toward him, as a player would, in this share of those strings by its personality (hero: the protector, 20 to 35%; villain: one who feeds on destruction, 40 to 60%; the middles, as its launches take buildings). It reads standing buildings only, never who is inside. One draw a string."},
     "_note": "Walk him to the wall (docs/design/rule-of-cool-map.md row 2). lean: how far a player's left stick leans for it to count. reach: how far along the line it reads a standing building, once a string. bhStep: what each landed blow's carry adds toward it, in body heights, and it stops stopShort from the face. sendReach: how far his knock-back then reaches for that building."
   },
   "relief": {

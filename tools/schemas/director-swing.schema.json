@@ -502,6 +502,36 @@
         "arriveBuilding"
       ]
     },
+    "slam": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "maxDeg",
+        "rate",
+        "score"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "maxDeg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 180
+        },
+        "rate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "score": {
+          "type": "number"
+        }
+      }
+    },
     "jolt": {
       "type": "object",
       "patternProperties": {

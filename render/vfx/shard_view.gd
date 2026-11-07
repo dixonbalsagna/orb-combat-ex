@@ -96,6 +96,8 @@ func update(hub: VfxHub, cam_x: float, zoom: float, half_w: float) -> void:
 						# A big flat ring (a crater's shock ring at tier 3 or 4 is a thousand units across) would be a broad pale band over a quarter of the screen, a flash by the standard's
 						# area test (Tools' frame analyser, docs/vfx/flash-registry.md): its band is at most about 70 units thick and it is fainter the wider it is, so its step stays under 0.10.
 						c.a *= clampf(RING_FADE_REF / maxf(sx, 1.0), 0.12, 1.0)
+						if b.rise > 0.0:
+							c.a *= smoothstep(0.0, b.rise, b.age)      # a ring that rises over `rise` seconds (the clash's shockwave: Legal's rise and fall)
 						ring_w = clampf(35.0 / maxf(sx * 0.5, 1.0), 0.02, 0.16)
 				_:
 					c.a = 1.0 - smoothstep(0.7, 1.0, f)

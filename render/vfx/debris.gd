@@ -35,6 +35,7 @@ class Bit:
 	var mode: int = 0              # a chunk: 0 concrete (the shared rim colour), 2 earth (lit and shaded sides of its own colour)
 	var aw: float = 1.0            # a puff's weight in the pool's drawn-area budget: a plume puff close to its ground in luminance counts less (biome.gd), the default 1
 	var amb: bool = false          # an ambient fleck (biome.gd `ambient`): counted for its recipe's cap
+	var rise: float = 0.0           # a ring's rise: its alpha climbs over this many seconds before it falls (0: as it always was)
 	var stay: bool = false         # a biome chunk that lands and stays (Art: debris that lands stays): not buried in dust a moment after it comes to rest
 
 ## A spawn waiting for its time (an implode's ripple delay): sim time to fire, and what to do.
@@ -1017,10 +1018,11 @@ func star(x: float, y: float, z: float, r: float, life: float, col: Color) -> vo
 
 
 ## A flat ring on the ground in a colour (biome.gd: the ring wave of the sea ice, a beach's dark wet sand): a band that widens and thins out as it goes.
-func ring_tint(x: float, y: float, z: float, r0: float, r1: float, life: float, col: Color) -> void:
+func ring_tint(x: float, y: float, z: float, r0: float, r1: float, life: float, col: Color, rise: float = 0.0) -> void:
 	var b := Bit.new()
 	b.kind = RING
 	b.mode = 3
+	b.rise = rise
 	b.x = SimWrap.wrap(x)
 	b.y = y
 	b.z = z

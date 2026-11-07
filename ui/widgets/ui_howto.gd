@@ -171,6 +171,8 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 			continue
 		if icon_name == "rh_beam" and not UiData.feature("legend_beam"):
 			continue
+		if icon_name == "rh_beam" and tight and cols == 1:
+			continue   # a line the legend also says, left out of the narrowest column once the page is laid out tight and still would not fit (a phone held upright)
 		if icon_name == "rh_vanish" and not UiData.feature("vanish_live"):
 			continue   # the vanish is off the first press (it is only the dodge today): no line for it
 		if icon_name.begins_with("rh_") and (not UiData.feature("right_hand") or device == "kbd" or touch):

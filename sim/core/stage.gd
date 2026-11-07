@@ -44,6 +44,18 @@ static func _swap(S: SimState, r) -> void:
 	var o = S.out; S.out = r.out; r.out = o
 
 
+## 2v2 with hits across: the stage's clock as a tick starts, the longer of the fights' clocks (S holds fight 0). Both fights'
+## time cap and the ending's last event read it (SimCross.timeCap, lastAt), so they reach them on one tick.
+static func clockTick(S: SimState) -> void:
+	var st = S.stage
+	if SimCross.blind == 6:   # tests only: it stands still
+		return
+	var t: float = S.T
+	for i in range(1, st.fights.size()):
+		t = maxf(t, st.fights[i].T)
+	st.clock = t
+
+
 ## The setup's number of fights: 1 in every match but one that asks for 2 and has the bodies for it (slots can be left
 ## out: the roster's first two, twice).
 static func fightsOf(setup: Dictionary) -> int:
@@ -68,6 +80,8 @@ static func place(S: SimState) -> void:
 static func open(S: SimState, seed: int, setup: Dictionary = {}) -> void:
 	var st := SimState.Stage.new()
 	st.cross = setup.get("cross", SimCross.enabled()) == true
+	if setup.has("outside") and SimCross.blind != 5:   # blows from outside for this match, over the data's switch (5: tests only, ignored)
+		st.outside = 1 if setup["outside"] == true else 0
 	var all: Array = S.fighters
 	S.fighters = all.slice(0, 2)
 	st.fights.append(SimState.Fight.new())

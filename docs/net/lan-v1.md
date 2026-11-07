@@ -47,6 +47,7 @@ Build it on the main PC: the kit stops if the address isn't that PC's own. `10.0
 | `Host with a longer wait (main PC).cmd` | The same, with `--lan-delay=3`, so Orb can compare by playing | Main PC |
 | `Join (old PC).cmd` | Starts the game and calls the main PC. It asks for nothing | Old PC |
 | `Host 2v2 (main PC).cmd`, `Join 2v2 (old PC).cmd` | Two fights, one on each PC, each against the computer | Each PC |
+| `Host 2v2 together (main PC).cmd`, `Join 2v2 together (old PC).cmd` | The same, a team: hits across the fights and Encounter's blows from outside on, the partner's fight not drawn. Both PCs must use them | Each PC |
 | `Remove the firewall rule (main PC, afterwards).cmd` | Takes the rule away, and any Windows added | Main PC |
 
 ## The folder of 2026-11-01, from the kept build 3d997381
@@ -81,9 +82,9 @@ No socket was opened, no firewall script was run, and `enet_check` wasn't run.
 
 The two processors already agree: Performance's old PC test ran Netcode's two-PC check on both (`docs/perf/oldpc-result-2026-11-01.md`).
 
-**Known rough edges, all in the words:** one match only, no rematch; pausing freezes the other PC; a lost link just stops. In 2v2 the other fight can't be seen or reached yet. The first try's log gives real ping and rollback numbers.
+**Known rough edges, all in the words:** one match only, no rematch; a pause holds the other PC, which says so, and the link stays up; a lost link just stops. In 2v2 the other fight isn't drawn; together, it can still reach you. The first try's log gives real ping and rollback numbers.
 
-## Legal's terms (RL-230, RL-241)
+## Legal's terms (RL-230, RL-241, RL-249)
 
 **Orb alone, on both PCs.** A second person isn't covered: Orb names them first and Legal rules on that name. In 2v2, Orb plays one seat on each PC, or both.
 
@@ -93,6 +94,8 @@ The two processors already agree: Performance's old PC test ran Netcode's two-PC
 | Reduce flashing locked on | `desktop-package lock`, and the kit stops if the flag isn't on or the capture hook is |
 | Orb alone, nobody else in either room | The WHO PLAYS line, verbatim, and the kit stops if it isn't |
 | RL-241's sentence for two fights | In WHO PLAYS. The kit stops without it, and the 2v2 shortcuts go in only with it |
+| RL-249's sentence for 2v2 together, the partner's fight not drawn | In WHO PLAYS. The kit stops without it. The together shortcuts don't pass `--others` |
+| RL-249: the beam warning from the other fight (`beam_warn`) steady, thin, a 6-tick ramp (RL-227) | UI's and VFX's: the edge alert that shows it |
 | Home network only, the /24 filter, no ZeroTier | The kit stops unless the address is this PC's own, on a real adapter. The rule allows that /24 only, and the host also refuses any other address itself (`NetEnetTransport.allowPrefix`). **The filter's rule is tested, but not over a real link** |
 | The firewall rule removed afterwards | Step 8, "do this every time" |
 | Nothing recorded or shared, the kit and address stay on Orb's PCs | The WHO PLAYS line and step 3. The logs hold no address or PC name, and handing them over is Orb's choice |

@@ -149,6 +149,7 @@ class MatchJob extends RefCounted:
 static func _mHead(J: MatchJob) -> void:
 	var S: SimState = J.S
 	var setup: Dictionary = J.setup
+	DirBeam.pushModes = DirBeam.pushModesOf(setup)   # each player's push in a beam struggle, his option (Game Design, playable-build.md section 3): the director's, with every match
 	if setup.has("aiLevel"):   # the computer's level for this match, the start menu's choice (UI): a level of data/director/ai.json. The file's own level is "" (as a match with no key runs), so a match at it is the same as ever; the replay header names the level by the same rule (SimReplay.dataHash: DirAI.levelOf)
 		DirAI.level = DirAI.levelOf(setup)
 	S.game.seed = float(J.seed & 0xFFFFFFFF)
@@ -356,17 +357,23 @@ static func _step(S: SimState, inputs) -> bool:
 ## A match of more than one fight (sim/core/stage.gd): the line's tick once, then each fight's, in slot order, on its own
 ## clock and its own holds. Fight 0 ends up in S.
 static func _stepFights(S: SimState, inputs) -> bool:
+	var held: int = S.stage.cur   # the fight a host held between ticks: its list is the host's to drain (NetLan holds its player's)
 	SimStage.enter(S, 0)   # a host may have held another fight between ticks
+	if held != 0 and SimCross.blind != 7:   # fight 0's list isn't the host's then: it keeps one tick's events, as the others' do (7: tests only, the old rule)
+		S.out.feed.clear()
+		S.out.fx.clear()
 	S.tick += 1
 	if SimIntro.tick(S, inputs):
 		SimFx.tickMark(S, S.dt, false)
 		return false
 	SimStage.swingTick(S)
+	if S.stage.cross:
+		SimStage.clockTick(S)   # 2v2: one clock for both fights' time cap and last event (data/fight/cross.json)
 	var dtReal: float = SimConst.DT
 	var live: bool = false
 	for i in range(S.stage.fights.size()):
 		SimStage.enter(S, i)
-		if i > 0:   # fight 0's is the host's to drain, as ever; no host reads the others' yet
+		if i > 0 and (i != held or SimCross.blind == 7):   # every other fight's list holds its own tick's events, for the picture (SimHost.other_events)
 			S.out.feed.clear()
 			S.out.fx.clear()
 		var dt: float = dtReal * S.game.ts

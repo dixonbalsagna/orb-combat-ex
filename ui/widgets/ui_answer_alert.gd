@@ -45,6 +45,8 @@ static func effective(opts: Dictionary, slot: int) -> Dictionary:
 static func wanted(alert: Dictionary, eff: Dictionary) -> bool:
 	if alert.is_empty():
 		return false
+	if str(alert["phase"]) == "warn":
+		return str(eff.get("edge", "off")) != "off" or bool(eff.get("caption", false))   # a beam from the other fight: its level is not known, so Which beams does not filter it
 	if str(alert["phase"]) == "charge" and not bool(eff.get("early", false)):
 		return false
 	return int(alert.get("level", 1)) >= int(MIN_LEVEL.get(str(eff.get("which", "all")), 0))
@@ -69,6 +71,17 @@ static func line_alpha(alert: Dictionary) -> float:
 	if alert.has("end_t"):
 		a_out = 1.0 - clampf(float(alert["end_t"]) / ramp, 0.0, 1.0)
 	return minf(a_in, a_out)
+
+
+## The line's colour for a beam from the other fight, whose shooter has no colour here: the blue-violet RL-227 falls back to (never white, gold or red).
+static func outside_col() -> Color:
+	return Color.from_hsv(0.66, 0.55, 0.95)
+
+
+## Where a beam from the other fight comes from: "left" or "right" when the sim says it (dir -1 or +1), else 0 for both edges. The shooter is in the other fight, so he is taken to be off this screen.
+static func side_hint(hint: String, an_t: Dictionary, vp: Vector2) -> Dictionary:
+	var t_pos: Vector2 = an_t.get("pos", Vector2.ZERO)
+	return {"dir": -1 if hint == "left" else (1 if hint == "right" else 0), "off": true, "y": t_pos.y if t_pos != Vector2.ZERO else vp.y * 0.5}
 
 
 ## Where the shooter is on this player's screen: +1 for the right edge, -1 for the left, and whether he is off screen. `an_t` and `an_s` are the target's and the shooter's anchors.
@@ -123,6 +136,8 @@ static func dodge_open(alert: Dictionary) -> bool:
 
 ## The caption's pieces: the title, and the answers that are open as [{word, action, open}]. A gathering has no answers yet.
 static func pieces(alert: Dictionary) -> Dictionary:
+	if str(alert["phase"]) == "warn":
+		return {"title": UiData.t("prompt.alert_outside"), "answers": [{"word": UiData.t("prompt.alert_dodge"), "action": "dodge", "open": true}]}
 	var charging: bool = str(alert["phase"]) == "charge"
 	var answers: Array = []
 	if not charging:
@@ -143,18 +158,22 @@ static func draw(ci: CanvasItem, lay: UiLayout, alert: Dictionary, eff: Dictiona
 	var show_line: bool = edge_mode == "always" or (edge_mode == "offscreen" and bool(d["off"]))
 	var la: float = line_alpha(alert)
 	if show_line and la > 0.0:
-		var lr: Rect2 = line_rect(lay, dir, float(d["y"]), eff)
-		if not _meets(lr, bodies):
+		shooter_col = Color(safe_colour(shooter_col), la)
+		for dd in ([-1, 1] if dir == 0 else [dir]):   # dir 0 (a beam from the other fight with no side said): the line on both edges, and no arrow
+			var lr: Rect2 = line_rect(lay, dd, float(d["y"]), eff)
+			if _meets(lr, bodies):
+				continue
 			var back := Color(0.04, 0.05, 0.08, 0.9 * la)
-			shooter_col = Color(safe_colour(shooter_col), la)
 			var wpx: float = lr.size.x
 			ci.draw_rect(Rect2(lr.position - Vector2(2.0, 2.0), lr.size + Vector2(4.0, 4.0)), back)
 			ci.draw_rect(lr, shooter_col)
+			if dir == 0:
+				continue
 			# A small mark pointing inward, level with the middle of the line: the direction is a shape as well as a place.
 			var tip: float = wpx * 2.2 + 8.0 * lay.s
 			var mid: Vector2 = lr.get_center()
-			var base_x: float = lr.end.x if dir < 0 else lr.position.x
-			var sgn: float = 1.0 if dir < 0 else -1.0
+			var base_x: float = lr.end.x if dd < 0 else lr.position.x
+			var sgn: float = 1.0 if dd < 0 else -1.0
 			var tri := PackedVector2Array([Vector2(base_x, mid.y - tip * 0.6), Vector2(base_x + sgn * tip, mid.y), Vector2(base_x, mid.y + tip * 0.6)])
 			ci.draw_colored_polygon(tri, shooter_col)
 			ci.draw_polyline(PackedVector2Array([tri[0], tri[1], tri[2]]), back, 2.0, true)

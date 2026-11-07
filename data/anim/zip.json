@@ -24,5 +24,7 @@
  "_dropped": "A zipper shot down on his way out (SimFighter.drop: state dropped; zip.md section 10). The fall is the tumble's body. land_w is the weight of the soft catch (gc.hold.brace_tumble) when he reaches the ground (nothing hurts), held until the drop ends; tech maps the sim's word on drop_end to an entry (a word with none plays as end).",
  "dropped": {"land_w": 0.35, "tech": {"recover": "gc.tech_flip", "tech": "gc.tech_flip"}},
  "orient": {"max": 1.2, "rate": 18.0, "speed": 700.0, "gain": 0.85},
+ "_loop": "A flight strike's arc over or under (docs/animation/flight-strikes.md): a flight strike's rush (the cue's path word over or under, AnimFighter.flight_loop) bowed by bow_min units or more (Rush.arc) is a loop; every other bowed rush keeps orient's numbers. The body tilts along its tangent as orient does, but up to max (the steep climb close in), at rate, from speed (a close loop is slow) and eases toward level for the ticks round the blow's contact: `level` of the tilt is dropped within level_ticks of it, so the blow is not thrown by a body in mid-turn.",
+ "loop": {"bow_min": 20.0, "max": 1.45, "gain": 1.0, "rate": 14.0, "speed": 150.0, "level": 0.8, "level_ticks": 3},
  "carry": 26.0
 }

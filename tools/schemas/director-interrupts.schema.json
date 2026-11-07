@@ -1705,6 +1705,92 @@
               "type": "number",
               "minimum": 0
             },
+            "ownMove": {
+              "type": "object",
+              "patternProperties": {
+                "^_": {}
+              },
+              "additionalProperties": false,
+              "required": [
+                "enabled",
+                "freeTicks",
+                "maxWaitTicks",
+                "stageTicks",
+                "price",
+                "dmgMul",
+                "dmgUnit",
+                "lastsSec",
+                "topDrainPerSec"
+              ],
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "freeTicks": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "maxWaitTicks": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "stageTicks": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "minItems": 6,
+                  "maxItems": 6
+                },
+                "price": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "minItems": 6,
+                  "maxItems": 6
+                },
+                "dmgMul": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "minItems": 6,
+                  "maxItems": 6
+                },
+                "dmgUnit": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "lastsSec": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "minItems": 6,
+                  "maxItems": 6
+                },
+                "topDrainPerSec": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "ai": {
+                  "type": "boolean"
+                },
+                "aiStage": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                }
+              }
+            },
             "aim": {
               "type": "object",
               "patternProperties": {
@@ -3919,6 +4005,41 @@
             }
           },
           "additionalProperties": false
+        },
+        "pushMode": {
+          "type": "object",
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false,
+          "required": [
+            "enabled",
+            "default",
+            "values"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "default": {
+              "type": "string"
+            },
+            "values": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "reserved": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "perPlayer": {
+              "type": "boolean"
+            }
+          }
         }
       },
       "additionalProperties": false,
@@ -4424,6 +4545,9 @@
         "skipOpenCool": {
           "type": "boolean",
           "description": "A player's request is not held by the match's opening cooldown while no exchange has started."
+        },
+        "refusedCue": {
+          "type": "boolean"
         },
         "ackQueued": {
           "type": "boolean",

@@ -18,6 +18,7 @@ func ok(c: bool, what: String) -> void:
 
 func _init() -> void:
 	SimInputData.load_data()
+	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
 	ok(SimInputData.loaded and not SimInputData.presets.is_empty(), "data: the presets loaded from data/input")
 	_data()
 	_keyboard()
@@ -51,6 +52,7 @@ func _data() -> void:
 			ok(b.has(k) and is_equal_approx(float(a[k]), float(b[k])), "data: DEFAULT_TIMING.%s.%s equals timing.json" % [sect, k])
 	ok(SimInputData.default_preset("pad") == "arena" and SimInputData.default_preset("kb") == "kb-solo" and SimInputData.default_preset("touch") == "touch-simple", "data: the default preset per device")
 	SimInputData.load_and_apply()
+	SimInputData.pin_switches_off()   # the data ships the page's switches on; this check is of the behaviour with them off
 	ok(SimAct.queueMax == 3 and SimAct.dodgeWindow == 12 and is_equal_approx(SimAct.awayDead, 0.3), "data: SimAct's statics set from the data")
 
 

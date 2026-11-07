@@ -11,6 +11,10 @@ extends SceneTree
 ##   - with two fights and a player in each (--lan-2v2): the same, and each PC's S holds its own fight between ticks, and each player's presses reach the fighter in that PC's fight, and (lan, no
 ##     rollbacks) the other fight's record holds, after each frame, exactly the events the other PC's game drew from its own fight that tick, for the picture to draw;
 ##   - a trade (SimStage.trade, on both peers on every run of the tick) has the two players change fights, as partners do: each PC's S follows its player, and his presses still reach him;
+##   - a pause of 60 s on the second PC (its game paused: idle() each frame): the first PC says "Paused by the other player" and waits, the paused one keeps sending, and after it the match goes on
+##     with every press going once and the checkpoints matching;
+##   - 2v2 together (NetLan's --lan-2v2-together, with the blows from outside on as the kit has them, the pairs started side by side): the peers agree under rollbacks, each player's presses go
+##     once, and blows from outside happened;
 ##   - with hits across fights, KOs staged on both peers on every run of the tick: one player out doesn't end the match, his PC says so and shows his partner's fight; with both out it's over, and both say so.
 ## --negative-control: with the freeze rule off, at least three presses must land on frozen ticks; with the session clearing its output, the game must get none; with two fights, a PC that doesn't move S
 ## to its player's fight must be caught holding the wrong one, and with no map of players to slots the second player's fighter must never act, and with inputs left on the slot after a trade the traded player
@@ -54,7 +58,7 @@ func ok(c: bool, s: String) -> void:
 		print("FAIL  " + s)
 
 
-func _run(pname: String, freezeRule: bool, keepOut: bool, askDelay: int = 0, twoFights: bool = false, entered: bool = true, slots: bool = true, tradeAt: int = -1, follow: bool = true, kos: Array = [], watch: bool = true) -> Dictionary:
+func _run(pname: String, freezeRule: bool, keepOut: bool, askDelay: int = 0, twoFights: bool = false, entered: bool = true, slots: bool = true, tradeAt: int = -1, follow: bool = true, kos: Array = [], watch: bool = true, together: bool = false, pauseAt: int = -1, pauseFor: int = 0) -> Dictionary:
 	var prof: Dictionary = NetLoopback.PROFILES[pname]
 	var ab := NetLoopback.Link.new(float(prof.ping) * 0.5, float(prof.jitter), float(prof.loss), 21)
 	var ba := NetLoopback.Link.new(float(prof.ping) * 0.5, float(prof.jitter), float(prof.loss), 23)
@@ -63,13 +67,20 @@ func _run(pname: String, freezeRule: bool, keepOut: bool, askDelay: int = 0, two
 	var players: Array = []
 	var live: Array = [{}, {}]
 	var setup: Dictionary = {"v2": [true, true, true, true], "assists": [[], [], [], []], "intro": false, "fights": 2} if twoFights else {"v2": [true, true], "assists": [[], []], "intro": false}
-	if not kos.is_empty():
+	if not kos.is_empty() or together:
 		setup["cross"] = true
+	if together:
+		setup["outside"] = true   # NetLan.SETUP2X's key; until the sim reads it, forced
+	DirOutside.setForce(1 if together and not NetLan.outsideKeyed() else -1)
 	var aiNow: Dictionary = NetLan.AI2 if twoFights else NetLan.AI
 	for k in range(2):
 		var st := Stand.new()
 		st.S = SimCore.createSim()
 		SimCore.newMatch(st.S, NetLan.SEED, aiNow, setup)
+		if together:   # crosswise inside the first pair, each enemy of the other fight nearer to a player than his own rival, so the fights meet at once
+			var way: float = signf(SimWrap.sdx(st.S.fighters[0].x, st.S.fighters[1].x))
+			st.S.stage.fights[1].fighters[1].x = SimWrap.wrap(st.S.fighters[0].x + way * 150.0)
+			st.S.stage.fights[1].fighters[0].x = SimWrap.wrap(st.S.fighters[1].x - way * 150.0)
 		st.setup_used = setup
 		var l := NetLan.new(st, {"lan-2v2": true} if twoFights else {})
 		l.entered = entered
@@ -117,6 +128,8 @@ func _run(pname: String, freezeRule: bool, keepOut: bool, askDelay: int = 0, two
 	var ownAt: Array = [{}, {}]     # tick -> the events of this PC's own fight that tick, as its game drained them
 	var otherAt: Array = [{}, {}]   # tick -> the events in the other fight's record after the frame that ran it
 	var wrongFight: int = 0
+	var pause := {"titles": {}, "sentDuring": 0, "frameAt": -1, "frameAfter": -1}   # with pauseAt: what the first PC's title said during the pause, the packets the paused one sent, the first PC's frame at its start and end
+	var outside: Dictionary = {}   # with together: blows from outside seen by the first PC, "start", "hit", "whiff" -> count
 	var actedBefore: float = -1.0e9
 	var traded: int = -1
 	for frame in range(ticks):
@@ -124,6 +137,17 @@ func _run(pname: String, freezeRule: bool, keepOut: bool, askDelay: int = 0, two
 		for k in range(2):
 			var S: SimState = lans[k].gameHost.S
 			var before: int = lans[k].net.session.frame if lans[k].net != null and lans[k].net.session != null else -1
+			if k == 1 and pauseAt >= 0 and frame >= pauseAt and frame < pauseAt + pauseFor:
+				var out0: int = lans[1].net.tr.pktOut
+				lans[1].idle()
+				pause.sentDuring += lans[1].net.tr.pktOut - out0
+				if frame == pauseAt:
+					pause.frameAt = lans[0].net.session.frame
+				if frame == pauseAt + pauseFor - 1:
+					pause.frameAfter = lans[0].net.session.frame
+				continue
+			if k == 0 and pauseAt >= 0 and frame >= pauseAt + 60 and frame < pauseAt + pauseFor:
+				pause.titles[lans[0]._state] = int(pause.titles.get(lans[0]._state, 0)) + 1
 			if lans[k].tick(players[k].intent()):
 				if players[k].waiting:
 					players[k].waiting = false
@@ -135,12 +159,18 @@ func _run(pname: String, freezeRule: bool, keepOut: bool, askDelay: int = 0, two
 				actedBefore = S.fighters[lans[0].hubSlot].lastAtkT
 			fx[k] += S.out.fx.size()
 			var sess: NetSession = lans[k].net.session
+			if together and k == 0 and sess != null and sess.frame > before and before >= 0:
+				for o in [S.out] + S.stage.fights.map(func(f): return f.out):
+					for e in o.fx:
+						if str(e.type) == "cue" and str(e.kind) == "outside":
+							outside[str(e.text)] = int(outside.get(str(e.text), 0)) + 1
 			if twoFights and sess != null and sess.frame > before and before >= 0:
 				ownAt[k][sess.frame - 1] = S.out.fx.size()
 				otherAt[k][sess.frame - 1] = S.stage.fights[1 - S.stage.cur].out.fx.size()
 			S.out.feed.clear()
 			S.out.fx.clear()
-	return {"lans": lans, "players": players, "fx": fx, "live": live, "wrongFight": wrongFight, "traded": traded, "actedBefore": actedBefore, "ownAt": ownAt, "otherAt": otherAt}
+	DirOutside.setForce(-1)
+	return {"lans": lans, "players": players, "fx": fx, "live": live, "wrongFight": wrongFight, "traded": traded, "actedBefore": actedBefore, "ownAt": ownAt, "otherAt": otherAt, "outside": outside, "pause": pause}
 
 
 ## With two fights and no rollbacks: what each PC found in the other fight's record, tick by tick, against what the other PC's game drained from its own fight. [ticks compared, ticks that differ, events seen]
@@ -303,14 +333,51 @@ func _init() -> void:
 		var S0: SimState = l0.gameHost.S
 		ok(a.desync.is_empty() and b.desync.is_empty() and a.checksMatched > 0, "%s, hits across, one player out: checkpoints: desync %s %s, matched %d" % [pname, str(not a.desync.is_empty()), str(not b.desync.is_empty()), a.checksMatched])
 		ok(not SimCore.ended(S0) and not SimCore.ended(r.lans[1].gameHost.S), "%s, hits across, one player out: the match goes on" % pname)
+		var g0 = S0.game if S0.stage.cur == 0 else S0.stage.fights[0].game
+		ok(g0.ko != null and a.frame > ticks - 100 and b.frame > ticks - 100, "%s, hits across, one player out: his fight has its KO and both PCs played on past it (KO %s, frames %d, %d)" % [pname, str(g0.ko != null), a.frame, b.frame])
 		ok(S0.stage.cur == SimStage.fightOf(S0, _body(S0, "p3")), "%s, hits across, one player out: his PC shows his partner's fight (%d)" % [pname, S0.stage.cur])
 		ok(l0._state.begins_with("You're out") and r.lans[1]._state.begins_with("Connected"), "%s, hits across, one player out: the titles (%s; %s)" % [pname, l0._state, r.lans[1]._state])
 		print("  %-5s hits across, the first player out at tick 100: his PC shows fight %d, says \"%s\"; the other says \"%s\"" % [pname, S0.stage.cur, l0._state, r.lans[1]._state])
 		_close(r)
+		if pname == "lan":   # the same first KO in 2v2 together (hits across and the blows from outside on, the pairs side by side)
+			r = _run(pname, true, true, 0, true, true, true, -1, true, [[100, "p1", "p2"]], true, true)
+			var T0: SimState = r.lans[0].gameHost.S
+			var tg = T0.game if T0.stage.cur == 0 else T0.stage.fights[0].game
+			ok(tg.ko != null and not SimCore.ended(T0) and not SimCore.ended(r.lans[1].gameHost.S) and r.lans[0]._state.begins_with("You're out") and r.lans[0].net.session.frame > ticks - 100 and r.lans[0].net.session.desync.is_empty(), "lan, 2v2 together, the first player out: one fight's KO, the match goes on (%s; frames %d)" % [r.lans[0]._state, r.lans[0].net.session.frame])
+			_close(r)
 		r = _run(pname, true, true, 0, true, true, true, -1, true, [[100, "p1", "p2"], [300, "p3", "p4"]])
 		ok(SimCore.ended(r.lans[0].gameHost.S) and SimCore.ended(r.lans[1].gameHost.S), "%s, hits across, both players out: the match is over on both PCs" % pname)
 		ok(r.lans[0]._state.begins_with("The match is over") and r.lans[1]._state.begins_with("The match is over"), "%s, hits across, both out: the titles (%s; %s)" % [pname, r.lans[0]._state, r.lans[1]._state])
 		ok(r.lans[0].net.session.desync.is_empty() and r.lans[1].net.session.desync.is_empty(), "%s, hits across, both out: no desync" % pname)
+		_close(r)
+	var saved: int = ticks
+	ticks = 1200 + 3600
+	for pname in ["lan", "p120"]:
+		var r := _run(pname, true, true, 0, false, true, true, -1, true, [], true, false, 600, 3600)
+		var a: NetSession = r.lans[0].net.session
+		var b: NetSession = r.lans[1].net.session
+		var pz: Dictionary = r.pause
+		ok(pz.titles.size() == 1 and pz.titles.has("Paused by the other player"), "%s, a 60 s pause: the first PC says so all through it (%s)" % [pname, str(pz.titles)])
+		ok(int(pz.sentDuring) > 3000, "%s, a 60 s pause: the paused PC kept sending (%d packets)" % [pname, pz.sentDuring])
+		ok(int(pz.frameAfter) - int(pz.frameAt) <= a.maxAhead + 1, "%s, a 60 s pause: the first PC waited, at most its lead past the last input it holds (it moved %d ticks)" % [pname, int(pz.frameAfter) - int(pz.frameAt)])
+		ok(a.frame > 1000 and b.frame > 1000 and a.desync.is_empty() and b.desync.is_empty() and a.checksMatched > 10, "%s, a 60 s pause: the match went on after it (frames %d, %d, checks matched %d)" % [pname, a.frame, b.frame, a.checksMatched])
+		for k in range(2):
+			var pl: Player = r.players[k]
+			ok(_pressesIn(r.lans[k].net.session, k).size() == pl.sent and pl.made - pl.sent <= 1, "%s, a 60 s pause: peer %d pressed %d, %d went" % [pname, k, pl.made, pl.sent])
+		print("  %-5s a 60 s pause on the second PC: the first said %s, the paused one sent %d packets, the first moved %d ticks; after it frames %d and %d, checks matched %d" % [pname, str(pz.titles), pz.sentDuring, int(pz.frameAfter) - int(pz.frameAt), a.frame, b.frame, a.checksMatched])
+		_close(r)
+	ticks = saved
+	for pname in ["lan", "p120"]:
+		var r := _run(pname, true, true, 0, true, true, true, -1, true, [], true, true)
+		var a: NetSession = r.lans[0].net.session
+		var b: NetSession = r.lans[1].net.session
+		ok(a.desync.is_empty() and b.desync.is_empty() and a.checksMatched > 0, "%s, 2v2 together: checkpoints: desync %s %s, matched %d" % [pname, str(not a.desync.is_empty()), str(not b.desync.is_empty()), a.checksMatched])
+		for k in range(2):
+			var pl: Player = r.players[k]
+			ok(_pressesIn(r.lans[k].net.session, k).size() == pl.sent and pl.made - pl.sent <= 1 and pl.sent > 20, "%s, 2v2 together: peer %d pressed %d, %d went" % [pname, k, pl.made, pl.sent])
+		if pname == "lan":   # the same presses on p120 meet other moments, as predictions differ: the count there is read, not required
+			ok(int(r.outside.get("start", 0)) > 0, "lan, 2v2 together: blows from outside happened (%s)" % str(r.outside))
+		print("  %-5s 2v2 together: rollbacks %d, %d, checks matched %d, blows from outside %s" % [pname, a.rollbacks, b.rollbacks, a.checksMatched, str(r.outside)])
 		_close(r)
 	var pre: String = NetLan.prefixOf("10.0.0.135")
 	ok(pre == "10.0.0.", "the /24 of an address (%s)" % pre)

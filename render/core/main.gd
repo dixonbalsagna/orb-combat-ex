@@ -343,14 +343,15 @@ func _match_built() -> void:
 
 ## _match_built as steps (each a Callable that returns true when done; the boot runs them a few a frame, _step_build):
 ## the camera, the far land and the HUD's fighters; each pane's build (PaneWorld.build_steps); the flashes and the
-## split; the first picture; the split's attach that waited for the boot's match.
+## split; the first picture; the tile ground's buildings stood on it; the split's attach that waited for the boot's
+## match.
 func _match_built_steps() -> Array:
 	var steps: Array = [_mb_begin]
 	for p in all_panes():
 		steps.append(_mb_pane_hub.bind(p))
 		steps.append_array(p.build_steps(host.S))
 		steps.append(_mb_pane_flashes.bind(p))
-	steps.append_array([_mb_end, _mb_picture, _mb_attach])
+	steps.append_array([_mb_end, _mb_picture, _mb_opening, _mb_attach])
 	return steps
 
 
@@ -388,6 +389,19 @@ func _mb_end() -> bool:
 func _mb_picture() -> bool:
 	render_view(host.alpha())
 	return true
+
+
+## The tile ground's buildings stood on it before the match's first frame (PlanetView.stand_opening), a share at a time,
+## so that frame finds them standing and does not stand every one in view at once. The boot's load, in steps behind the
+## loading screen, stands every building; a match built whole stands the first picture's alone (the rest as the sweep
+## comes to them), so its one long frame is not longer by the whole planet's.
+func _mb_opening() -> bool:
+	var every: bool = not _build_queue.is_empty()
+	var done: bool = true
+	for p in all_panes():
+		if p.planet != null and not p.planet.stand_opening(host.S, every):
+			done = false
+	return done
 
 
 func _mb_attach() -> bool:
@@ -792,6 +806,7 @@ func frame(delta: float) -> void:
 		fire_flash(1, ids[(frames / 40 + 7) % ids.size()])
 	var t1: int = Time.get_ticks_usec()
 	_sync_players()
+	ui_hud.refusals(host.hub.take_refusals())   # the presses the game let go of this frame (Controls' refusals), for UI's word at the edge (docs/ui/hud-spec.md section 85)
 	render_view(host.alpha())
 	ui_hud.advance(0.0 if host.paused else delta)
 	# Audio's warm-up takes its quiet budget while nothing is being played: the sim held, or a notice, a card, the start
@@ -984,9 +999,9 @@ func _haptics_from_events(events: Array) -> void:
 		if name == "beam_window":
 			_beam_window_rumble(e)
 			continue
-		if name == "stick_start":
-			host.hub.note_stick_started(int(e.actor))   # Controls: the request was answered, so no refusal cue (timing.json switches.hapticRefused)
-		for r in SimHaptics.requests(name, int(e.actor), int(e.target), String(e.text), float(e.amount), _haptic_firer):
+		if name == "stick_start" or name == "stick_refused" or name == "press_refused":
+			host.hub.note_press_answered(int(e.actor))   # Controls: the press was answered (started, or refused with a reason), so no second "no answer" knock (timing.json switches.hapticRefused)
+		for r in SimHaptics.requests(name, int(e.actor), int(e.target), String(e.text), float(e.amount), _haptic_firer, String(e.source)):   # the reason of a refusal is the cue's source
 			_on_haptic(int(r["slot"]), String(r["kind"]), float(r["scale"]))
 		for r in SimHaptics.event_requests(e):   # Controls: the blows, closes, launches, landings and building breaks (timing.json switches.hapticImpact; empty while it is off)
 			_on_haptic(int(r["slot"]), String(r["kind"]), float(r["scale"]))

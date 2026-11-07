@@ -14,6 +14,7 @@ const PORT: int = 47100
 const SEED: int = 77
 const SETUP: Dictionary = {"v2": [true, true], "assists": [[], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false}   # every key the hub's own setup has, so a saved layout can't make two PCs differ
 const AI: Dictionary = {"p1": false, "p2": false}
+const SETUP2X: Dictionary = {"v2": [true, true, true, true], "assists": [[], [], [], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "fights": 2, "cross": true, "outside": true}   # --lan-2v2-together: hits across the two fights (sim/core/cross.gd) and Encounter's blows from outside (Simulation's per-setup key, S.stage.outside), a team against a team
 const SETUP2: Dictionary = {"v2": [true, true, true, true], "assists": [[], [], [], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "fights": 2}
 const AI2: Dictionary = {"p1": false, "p2": true, "p3": false, "p4": true}
 const SLOTS2: Array = [0, 2]   # the sim's slot each PC's player plays
@@ -25,7 +26,7 @@ var args: Dictionary
 var net: NetHost = null
 var pad := Pad.new()
 var local: int = 0
-var two: bool = false         # --lan-2v2
+var two: bool = false         # --lan-2v2 or --lan-2v2-together
 var hubSlot: int = 0          # which of the hub's slots this PC's pad is, and which fighter it plays in the fight in S's fields
 var entered: bool = true      # tests only: off for the negative control (S is left holding whatever fight the step left, not this PC's player's)
 var watchPartner: bool = true # tests only: off for the negative control (a PC whose player is out keeps showing his finished fight)
@@ -59,16 +60,21 @@ func _init(gameHost_, args_: Dictionary) -> void:
 	gameHost = gameHost_
 	args = args_
 	local = 1 if args.has("lan-join") or String(args.get("lan-as", "0")) == "1" else 0
-	two = args.has("lan-2v2")
+	two = args.has("lan-2v2") or args.has("lan-2v2-together")
 	hubSlot = 0 if two else local
 
 
+## Whether the sim carries a setup's "outside" into the match (Simulation's per-setup key, S.stage.outside). Until it does, the checks force the blows from outside on for the together setup.
+static func outsideKeyed() -> bool:
+	return SimState.Stage.new().get("outside") != null
+
+
 static func setupFor(args_: Dictionary) -> Dictionary:
-	return SETUP2 if args_.has("lan-2v2") else SETUP
+	return SETUP2X if args_.has("lan-2v2-together") else (SETUP2 if args_.has("lan-2v2") else SETUP)
 
 
 static func aiFor(args_: Dictionary) -> Dictionary:
-	return AI2 if args_.has("lan-2v2") else AI
+	return AI2 if args_.has("lan-2v2") or args_.has("lan-2v2-together") else AI
 
 
 ## One fixed tick. True if the session took this intent and any press in it went.
@@ -141,6 +147,18 @@ func setUp(sess: NetSession) -> void:
 	sess.presentOut = keepOut
 	if two:
 		sess.slotOf = SLOTS2
+
+
+## A frame while the game is paused (SimHost.advance, as the kit patches it): the link and the packets go on, no tick runs, and the other PC is told.
+func idle() -> void:
+	if net == null:
+		return
+	var now: float = clock.call() if clock.is_valid() else float(Time.get_ticks_usec()) / 1000.0
+	_keepCalling(now)
+	net.idle(now)
+	if peer != null:
+		peer.frame(now, FOREVER)
+	_report(now)
 
 
 ## The caller, before the other PC has answered: call again every few seconds.
@@ -226,6 +244,10 @@ func _report(now: float) -> void:
 		_say("OUT OF STEP at tick %d. Close both and tell the EP" % int(sess.desync.get("tick", -1)))
 	elif not net.tr.isOpen():
 		_say("The other PC has gone")
+	elif net.paused:
+		_say("Paused. The other PC waits for you")
+	elif net.remotePaused:
+		_say("Paused by the other player")
 	elif SimCore.ended(gameHost.S):
 		_say("The match is over. Close both windows")
 	elif two and bodyAt(gameHost.S, NetSession.slotNow(gameHost.S, SLOTS2[local])).out:

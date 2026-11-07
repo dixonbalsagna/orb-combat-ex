@@ -6,12 +6,12 @@ var fails: int = 0
 
 # gen 1 gameplay hashes at the given ticks, recorded before window 2 (base_hash.gd)
 const BASE: Dictionary = {
-	"planet7/2400": "9c7181701205ae71",
-	"planet3/1200": "cb3ca643cea700b8",
-	"planet25/4800": "754246e9ace48ce5",
-	"planet11/2400": "2198f110e8d41b12",
-	"handmade": "597d3daf6d12ba62",
-	"turn": "n=1 4882e3577ea0c491",
+	"planet7/2400": "e13e8a88f58e0b6e",
+	"planet3/1200": "27ebbd771589291f",
+	"planet25/4800": "d22db1eb84d6a3d7",
+	"planet11/2400": "637e82d03ec7fdbc",
+	"handmade": "68c1d089d8a1df92",
+	"turn": "n=1 7e3e4229d57ec017",
 }
 
 

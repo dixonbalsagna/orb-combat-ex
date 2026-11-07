@@ -399,7 +399,7 @@ func _consume(S: SimState, events: Array) -> void:
 		debris.reduced = reduced_motion
 		shots.on_events(S, events, debris, water if water_enabled else null, quality, reduced_motion)
 	if clash_wave_enabled:
-		clash_wave.on_events(S, events)
+		clash_wave.on_events(S, events, debris, quality, reduced_motion)
 		clash_wave.step(S, frozen, debris, quality, reduced_motion)
 	if beamplay_enabled:
 		beamplay.step(S, frozen, debris)

@@ -90,6 +90,9 @@ var beats: Dictionary = {}       # tutorial beat id to state (start, done, skipp
 var keep_hints: bool = false     # accessibility: a hint stays up after its beat is done, until the next one
 var no_contest: bool = false     # Encounter's match ending (docs/director/pending/match-ending): the planet gave way with nobody having touched anything: no KO, straight to the rematch card
 var winner: int = -1             # the slot that won the KO (-1 until there is one), for the match-over card
+var frame_n: int = 0                # advance() calls so far: two refusal cues for one press arrive in the same frame, and say their word once
+var refuse_seen: Dictionary = {}   # "slot:word" to the frame it was last said in
+var brink_calls: int = 0           # brink_call cues seen this match (the mark itself is read from the sim's state: UiSimBridge.calls)
 var refuse_n: Dictionary = {}    # refusal_words: how many times each reason has been said to each slot this match ("slot:code" to count)
 var struggle_n: int = 0          # struggle_teach: the beam struggles of this match so far (the first three teach the push)
 var winners: Array = []          # cross_end (2v2): the winning team's starting slots, from the last KO's `winners` (empty in a 1v1 or when the host sends none)
@@ -143,6 +146,9 @@ func reset() -> void:
 	winner = -1
 	winners = []
 	refuse_n = {}
+	refuse_seen = {}
+	frame_n = 0
+	brink_calls = 0
 	struggle_n = 0
 	act = 1
 	mood_band = ""
@@ -197,7 +203,7 @@ func model(slot: int) -> UiFighterModel:
 # --- Event intake -------------------------------------------------------------------------------------------------
 
 const _FIELDS: Array = ["type", "actor", "target", "region", "stage", "internal", "n", "text", "dur", "k", "col", "kind",
-	"station", "revision", "speaker", "cues", "priority", "setpiece", "winner", "loser", "chance", "survived", "attacker", "victim", "tier", "version", "cover", "beats", "half_width", "resolve", "lead", "result", "action", "available", "dur_ticks", "clean_ticks", "weight", "state", "stance", "act", "band", "id", "text_key", "display", "cell", "source", "mode", "launcher_ready", "launcher_rest_left"]
+	"station", "revision", "speaker", "cues", "priority", "setpiece", "winner", "loser", "chance", "survived", "attacker", "victim", "tier", "version", "cover", "beats", "half_width", "resolve", "lead", "result", "action", "available", "dur_ticks", "clean_ticks", "weight", "state", "stance", "act", "band", "id", "text_key", "display", "cell", "source", "mode", "launcher_ready", "launcher_rest_left", "over", "winners"]   # over and winners: the `ko` event's (2v2: a first KO is not the match's end). norm() only copies what is listed, so without them a real FxEvent read as over=true and the first KO opened the match-over card
 
 
 ## Any event (a Dictionary, or an object with these properties such as the sim's FxEvent) as a Dictionary.
@@ -458,6 +464,7 @@ func consume(e) -> void:
 			elif ck == "blow":
 				_on_blow(m, d)
 			elif ck == "stick_release":
+				_stage_clear(m)
 				if UiData.feature("beam_teach") and m != null and not m.ai and str(d.get("text", "")) == "beam" and str(d.get("source", "")) == "0":
 					var flicks: int = int(UiPrefs.get_value("taught_flick_n", 0))
 					if flicks < 3:
@@ -472,7 +479,18 @@ func consume(e) -> void:
 			elif ck == "press_refused":
 				_refusal(m, str(d.get("source", "")))   # Encounter's director-side drops (docs/controls/refusals.md): source stun_limit, queue_expired or block_lockout
 			elif ck == "stick_refused":
+				_stage_clear(m)
 				_refusal(m, str(d.get("source", "")))   # the sim's cue: text the stick's direction, source the reason
+			elif ck == "stick_stage":
+				_on_stage(m, d)   # Encounter's charge stage: k the stage, n the count, source capped when it stopped at what the energy pays
+			elif ck == "beam_warn":
+				_on_beam_warn(m, d)   # a beam from the other fight of a 2v2 is on this fighter's line (text the shooter's slot, source the side when the sim says it)
+			elif ck == "outside":
+				_on_outside(m, d)   # this fighter's press became a blow from outside: text start, whiff or hit
+			elif ck == "outside_hit":
+				_on_outside_hit(m, d)   # a blow from outside landed on this fighter (source finisher when it broke his finisher)
+			elif ck == "brink_call":
+				brink_calls += 1   # his partner's cue to come (the ring map's mark follows the brink in state)
 			elif ck == "no_contest":
 				if UiData.feature("versus_flow"):
 					no_contest = true
@@ -876,12 +894,99 @@ func _refusal(m: UiFighterModel, code: String) -> void:
 		var uk: String = "refusal_unread_" + code
 		stats[uk] = int(stats.get(uk, 0)) + 1
 		return
+	var word: String = UiData.t(key)
+	var seen_k: String = "%d:%s" % [m.slot, word]
+	if int(refuse_seen.get(seen_k, -1)) == frame_n:
+		return   # the same word for the same person in the same frame is one refusal told twice (the director's cue and the input hub's list, or two codes for one word): said once, counted once
+	refuse_seen[seen_k] = frame_n
 	var k: String = "%d:%s" % [m.slot, code]
 	var n: int = int(refuse_n.get(k, 0))
 	if n >= REFUSE_FIRST_N:
 		return
 	refuse_n[k] = n + 1
-	_teach(m, UiData.t(key), [], REFUSE_SECONDS)
+	_teach(m, word, [], REFUSE_SECONDS)
+
+
+## co-op 2v2 (docs/ui/pending/coop-marks/README.md). Words for a blow from outside the fight: the first REFUSE_FIRST_N times per kind per match, then nothing (as the refusal words); the computer is never told.
+func _outside_word(m: UiFighterModel, code: String, secs: float) -> void:
+	if m == null or m.ai or not UiData.feature("outside_words"):
+		return
+	var key: String = "prompt.outside_" + code
+	if not UiData.has_term(key):
+		return
+	var k: String = "o%d:%s" % [m.slot, code]
+	var n: int = int(refuse_n.get(k, 0))
+	if n >= REFUSE_FIRST_N:
+		return
+	refuse_n[k] = n + 1
+	_teach(m, UiData.t(key), [], secs)
+
+
+func _on_outside(m: UiFighterModel, d: Dictionary) -> void:
+	match str(d.get("text", "")):
+		"start":
+			_outside_word(m, "start", REFUSE_SECONDS)
+		"whiff":
+			_outside_word(m, "whiff", REFUSE_SECONDS)
+		"hit":
+			_outside_word(m, "landed", REFUSE_SECONDS)
+
+
+func _on_outside_hit(m: UiFighterModel, d: Dictionary) -> void:
+	if str(d.get("source", "")) == "finisher":
+		_outside_word(m, "broken", 2.5)
+	else:
+		_outside_word(m, "taken", REFUSE_SECONDS)
+
+
+## A beam of the other fight is on this fighter's line (`beam_warn`, once, from the moment the line is his). It rides the beam answer alert as a phase of its own: only the edge line (thin, a 6-tick ramp in and out, RL-227)
+## and a caption with the dodge; there is no timing (the sim sends no end), so it is held WARN_HOLD seconds and a second warning inside that only extends it. The side comes in the cue's `source` when the sim says it
+## ("left" or "right": where the shooter is from this fighter); with none the line shows on both edges. A beam of this fight's own already on the alert keeps it. Read only.
+const WARN_HOLD := 1.5
+func _on_beam_warn(m: UiFighterModel, d: Dictionary) -> void:
+	if m == null or m.ai:
+		return
+	var side: String = str(d.get("source", "")).to_lower()
+	if side != "left" and side != "right":
+		side = ""
+	if not alert.is_empty() and str(alert.get("phase", "")) != "warn":
+		return
+	if not alert.is_empty() and int(alert.get("target", -1)) == m.slot:
+		var ramp_left: float = float(alert["end_t"]) if alert.has("end_t") else 0.0
+		alert.erase("end_t")
+		if ramp_left > 0.0:
+			alert["age"] = minf(float(alert["age"]), ALERT_RAMP - ramp_left)   # the line picks up where the ramp out had got to: no jump
+		alert["until"] = float(alert["age"]) + WARN_HOLD
+		if side != "":
+			alert["side"] = side
+		return
+	alert = {"phase": "warn", "shooter": -1, "from": str(d.get("text", "")), "side": side, "target": m.slot, "level": 1, "dur": WARN_HOLD, "dodge_from": 0, "age": 0.0, "until": WARN_HOLD}
+
+
+## The stick charge's stage (`stick_stage`: k the stage, n the count, source capped when it stopped rising at what the energy pays): a steady digit on the strike stick's glyph in the legend, for a person only, never on the foe's plate.
+## Capped says No energy (a refusal word, the first three times). The release or a refusal clears it.
+func _on_stage(m: UiFighterModel, d: Dictionary) -> void:
+	if m == null or m.ai or not UiData.feature("charge_stages"):
+		return
+	var k: int = int(d.get("k", 0))
+	var n: int = int(d.get("n", 0))
+	if k <= 0 or n <= 0:
+		_stage_clear(m)
+		return
+	m.cstage = mini(k, n)
+	m.cstage_of = n
+	m.cstage_t = 0.0
+	m.cstage_capped = str(d.get("source", "")) == "capped"
+	if m.cstage_capped:
+		_refusal(m, "no_energy")
+
+
+func _stage_clear(m: UiFighterModel) -> void:
+	if m == null:
+		return
+	m.cstage = 0
+	m.cstage_of = 0
+	m.cstage_capped = false
 
 
 ## The match-over card's line naming who won: a 2v2's winning team ("A and B win"), else the one who struck the last blow ("A wins"), "" while there is no winner.
@@ -1363,6 +1468,7 @@ func card_alpha(c: Card) -> float:
 # --- Time ---------------------------------------------------------------------------------------------------------
 
 func advance(dt: float) -> void:
+	frame_n += 1
 	# A sim pause (a transformation, a world set piece, the time cap) freezes the fight: the match clock, the struggle's rings, the
 	# finisher telegraph, the tutorial hint's clock, the parry and chain windows and the prompts' timers hold for it (sdt is 0), while
 	# what is only drawn (cards, barks, banners, the crown's fades, the cinematic mode) keeps its real time.
@@ -1405,6 +1511,9 @@ func advance(dt: float) -> void:
 			alert["end_t"] = float(alert["end_t"]) + sdt
 			if float(alert["end_t"]) >= ALERT_RAMP:
 				alert = {}
+		elif str(alert["phase"]) == "warn":
+			if float(alert["age"]) >= float(alert["until"]):
+				alert["end_t"] = 0.0   # a beam from the other fight has no end cue: the hold is up, and the line ramps out over ALERT_RAMP
 		elif float(alert["age"]) > (float(alert["dur"]) + 0.5 if str(alert["phase"]) == "window" else 6.0):
 			alert = {}   # an end cue that never came: the alert does not stay drawn
 	if not tug.is_empty():

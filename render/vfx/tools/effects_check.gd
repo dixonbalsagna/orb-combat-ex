@@ -7231,8 +7231,9 @@ func _shot_from_outside() -> void:
 	SimCore.dispose(S)
 
 
-## The clash's shockwave (docs/vfx/clash-shockwave.md; Legal RL-246): growth rings at most one in 2 s and none per pulse; ONE release at the end, started after the cue's own tick, as wide as World's meeting crater by tier and ending; in the air a
-## half-size ring and no dust; never two in one tick; off with the switch.
+## The clash's shockwave (docs/vfx/clash-shockwave.md; docs/world/struggle-meet.md; Legal RL-246): the growth rings come from World's cue `struggle_ring`, at most one in 2 s whatever arrives, rising over at least 6 ticks, behind the fighters,
+## and none for a pulse; ONE release at the end (`beam_clash_end` with r, rGlass, dug and the ground's shape): one rise of at least 0.3 s and one fall of at least 1 s, a ring out to the bowl, or a thin ring at the glass radius with the burn
+## in the air for scorch and air, a dust dome at most 6 body heights across, started after the cue's own tick, never two in one tick; a cue without the fields reads the crater by tier; off with the switch.
 func _clash_wave() -> void:
 	print("the clash's shockwave")
 	var S := SimCore.createSim()
@@ -7247,56 +7248,83 @@ func _clash_wave() -> void:
 	f1.y = g
 	f0.tier = 4.0
 	f1.tier = 4.0
+	var mid_x: float = SimWrap.wrap(plains + 350.0)
 	var r_draw4: float = VfxClashWave.release_radius(4.0, "draw")
 	var r_win1: float = VfxClashWave.release_radius(1.0, "win")
-	_check(absf(r_draw4 - 3096.0) < 1.0 and absf(r_win1 - 1136.0 * sqrt(0.6)) < 1.0, "the release is as wide as World's meeting crater: %.0f units at the top tier on a draw, %.0f at the lowest on a win" % [r_draw4, r_win1])
-	# the growth: a struggle runs 5 s with 15 pulses; rings come on the clock, not on the pulse
+	_check(absf(r_draw4 - 3096.0) < 1.0 and absf(r_win1 - 1136.0 * sqrt(0.6)) < 1.0, "a cue without World's fields reads the crater by tier and ending: %.0f units at the top tier on a draw, %.0f at the lowest on a win" % [r_draw4, r_win1])
+	# the growth: World sends a ring cue every 20 ticks (faster than the 2 s it may draw), and a pulse cue every 20 ticks too
 	var h := VfxHub.new()
 	h.reset(S, 6)
 	h.clash_wave_enabled = true
-	var cl := SimState.Clash.new()
-	cl.A = f0
-	cl.D = f1
-	cl.mid = 0.5
-	cl.t0 = S.T
-	cl.dur = 5.0
-	cl.aw = true
-	S.game.clash = cl
+	var ring_cue := func(amount: float, n: float) -> Dictionary:
+		return {"actor": 0, "kind": "struggle_ring", "text": "", "source": "", "x": mid_x, "y": g + 150.0, "z": 0.0, "amount": amount, "n": n}
 	for t in range(300):
-		var evs: Array = []
+		var evs: Array = [VfxMock.ev("cue", {"actor": 0, "kind": "beam_pulse", "text": "", "source": ""})] if t % 20 == 0 else []
 		if t % 20 == 0:
-			evs.append(VfxMock.ev("cue", {"actor": 0, "kind": "beam_pulse", "text": "", "source": ""}))
+			evs.append(VfxMock.ev("cue", ring_cue.call(75.0 + 150.0 * float(t) / 300.0, 100.0 + 200.0 * float(t) / 300.0)))
 		_tick(S, h, evs)
 	var grown: int = int(h.clash_wave.made.get("grow", 0))
-	_check(grown >= 2 and grown <= 3 and int(h.clash_wave.made.get("ring", 0)) == 0 and h.clash_wave.last_z <= f0.z - 20.0, "while a struggle runs for 5 s with 15 pulses, rings come at most one in 2 s (%d), none for a pulse, behind the fighters in depth, and no release yet" % grown)
-	S.game.clash = null
-	# the release
-	var end := func(how: String, y: float) -> Dictionary:
-		return {"actor": 0, "kind": "beam_clash_end", "text": how, "source": "", "x": SimWrap.wrap(plains + 350.0), "y": y, "z": 0.0}
-	var sp0: int = h.debris.spawned
-	_tick(S, h, [VfxMock.ev("cue", end.call("draw", g + 300.0)), VfxMock.ev("cue", end.call("draw", g + 300.0))])
-	var ring_at_cue: int = int(h.clash_wave.made.get("ring", 0)) + int(h.clash_wave.made.get("dust", 0))      # the shockwave's own pieces in the cue's tick (the pool's delayed dust from the growth rings is not its)
+	var ring_bit = null
+	for b in h.debris.bits:
+		if b.kind == VfxDebris.RING and b.mode == 3 and b.rise > 0.0:
+			ring_bit = b
+	_check(grown >= 2 and grown <= 3 and int(h.clash_wave.made.get("ring_skipped", 0)) >= 10 and int(h.clash_wave.made.get("ring", 0)) == 0 and h.clash_wave.last_z <= f0.z - 20.0 and h.clash_wave.last_r >= 75.0 and h.clash_wave.last_r <= 225.0, "World's ring cues (15 in 5 s, with 15 pulses) draw at most one ring in 2 s (%d, %d skipped), none for a pulse, behind the fighters, 1 to 3 body heights wide (the last %.0f units)" % [grown, int(h.clash_wave.made.get("ring_skipped", 0)), h.clash_wave.last_r])
+	_check(ring_bit != null and ring_bit.rise >= 0.1 - 1e-6, "a growth ring rises over at least 6 ticks (%.2f s)" % (ring_bit.rise if ring_bit != null else -1.0))
+	# the release over a bowl
+	var end := func(r: float, glass: float, dug: float, ground: String, y: float) -> Dictionary:
+		return {"actor": 0, "kind": "beam_clash_end", "text": "draw", "source": "detonate", "x": mid_x, "y": y, "z": 0.0, "r": r, "rGlass": glass, "dug": dug, "ground": ground}
+	var ring_before: int = int(h.clash_wave.made.get("ring", 0))
+	h.debris.bits.clear()
+	_tick(S, h, [VfxMock.ev("cue", end.call(1200.0, 1500.0, 300.0, "bowl", g + 150.0)), VfxMock.ev("cue", end.call(1200.0, 1500.0, 300.0, "bowl", g + 150.0))])
+	var at_cue: int = int(h.clash_wave.made.get("ring", 0)) + int(h.clash_wave.made.get("dust", 0)) - ring_before
 	var made_end: int = int(h.clash_wave.made.get("end", 0))
 	for t in range(14):
 		_tick(S, h, [])
-	var rings: int = int(h.clash_wave.made.get("ring", 0))
+	var rings: int = int(h.clash_wave.made.get("ring", 0)) - ring_before
 	var dust: int = int(h.clash_wave.made.get("dust", 0))
-	_check(made_end == 1 and ring_at_cue == 0 and rings == 2 and dust >= 4 and h.debris.spawned > sp0, "one release for the end cue (a second in the same tick is ignored): nothing of the shockwave's in the cue's own tick, then a wide ring and a softer second (%d) and a local dust dome (%d puffs); ends %d, its pieces in the cue tick %d" % [rings, dust, made_end, ring_at_cue])
-	# in the air: an air burst, a half-size ring and no dome
+	var big = null
+	for b in h.debris.bits:
+		if b.kind == VfxDebris.RING and b.mode == 3 and b.rise >= 0.3 - 1e-6 and ((b.sx - b.grow * b.age) * 0.5 + b.grow * 0.5 * b.life) > 1100.0:
+			big = b
+	var reach: float = ((big.sx - big.grow * big.age) * 0.5 + big.grow * 0.5 * big.life) if big != null else -1.0
+	_check(made_end == 1 and at_cue == 0 and rings == 2 and dust >= 4 and big != null and absf(reach - 1200.0) < 1.0 and big.rise >= 0.3 - 1e-6 and big.life - big.rise >= 1.0 - 1e-6, "one release for the end cue (a second in the same tick is ignored): nothing in its own tick, then a ring out to the bowl (%.0f units) with a rise of %.2f s and a fall of %.2f s, a softer second inside it (%d rings), and a dust dome (%d puffs)" % [reach, big.rise if big != null else -1.0, (big.life - big.rise) if big != null else -1.0, rings, dust])
+	_check(h.clash_wave.last_dome <= 3.0 * VfxLook.BH + 0.01, "the dust dome is at most 6 body heights across (%.0f units radius, %.0f allowed)" % [h.clash_wave.last_dome, 3.0 * VfxLook.BH])
+	# an air burst: no bowl, a thin ring at the glass radius, the burn in the air, no dust
 	var h2 := VfxHub.new()
 	h2.reset(S, 6)
 	h2.clash_wave_enabled = true
-	_tick(S, h2, [VfxMock.ev("cue", end.call("draw", g + 4000.0))])
+	_tick(S, h2, [VfxMock.ev("cue", end.call(0.0, 2000.0, 0.0, "air", g + 4000.0))])
 	for t in range(14):
 		_tick(S, h2, [])
-	_check(int(h2.clash_wave.made.get("ring", 0)) == 2 and int(h2.clash_wave.made.get("dust", 0)) == 0, "an air burst (the point far above the ground) is a ring and no dust dome")
+	var thin = null
+	for b in h2.debris.bits:
+		if b.kind == VfxDebris.RING and b.mode == 3:
+			thin = b
+	_check(int(h2.clash_wave.made.get("ring", 0)) == 1 and int(h2.clash_wave.made.get("dust", 0)) == 0 and int(h2.clash_wave.made.get("smoke", 0)) >= 1 and thin != null and absf(((thin.sx - thin.grow * thin.age) * 0.5 + thin.grow * 0.5 * thin.life) - 2000.0) < 1.0, "an air burst is one thin ring at the glass radius (2,000) and the burn in the air (%d puffs of smoke), and no dust" % int(h2.clash_wave.made.get("smoke", 0)))
+	# a scorch (a dent): the same thin ring and burn, a little local dust; the ground's shape is read from r and dug when the cue has none
+	var h4 := VfxHub.new()
+	h4.reset(S, 6)
+	h4.clash_wave_enabled = true
+	var sc: Dictionary = end.call(0.0, 500.0, 0.3, "", g + 150.0)
+	sc.erase("ground")
+	_tick(S, h4, [VfxMock.ev("cue", sc)])
+	for t in range(14):
+		_tick(S, h4, [])
+	_check(int(h4.clash_wave.made.get("ring", 0)) == 1 and int(h4.clash_wave.made.get("smoke", 0)) >= 1 and int(h4.clash_wave.made.get("dust", 0)) >= 2 and int(h4.clash_wave.made.get("dust", 0)) < dust, "a scorch (no ground in the cue: read from r 0 and dug 0.3) is a thin ring, the burn in the air and a little dust (%d against %d for the bowl)" % [int(h4.clash_wave.made.get("dust", 0)), dust])
+	# a cue from before World's fields: the crater by tier
+	var h5 := VfxHub.new()
+	h5.reset(S, 6)
+	h5.clash_wave_enabled = true
+	_tick(S, h5, [VfxMock.ev("cue", {"actor": 0, "kind": "beam_clash_end", "text": "draw", "source": "", "x": mid_x, "y": g + 300.0, "z": 0.0})])
+	for t in range(14):
+		_tick(S, h5, [])
+	_check(int(h5.clash_wave.made.get("ring", 0)) == 2 and int(h5.clash_wave.made.get("dust", 0)) >= 4, "a cue without World's fields still draws the release by tier (the fallback)")
 	var h3 := VfxHub.new()
 	h3.reset(S, 6)
-	_tick(S, h3, [VfxMock.ev("cue", end.call("draw", g + 300.0))])
+	_tick(S, h3, [VfxMock.ev("cue", end.call(1200.0, 1500.0, 300.0, "bowl", g + 150.0)), VfxMock.ev("cue", ring_cue.call(100.0, 150.0))])
 	for t in range(14):
 		_tick(S, h3, [])
-	_check(h3.clash_wave_enabled == false and VfxLook.CLASH_WAVE_DEFAULT == false and int(h3.clash_wave.made.get("end", 0)) == 0, "off by default: nothing is made")
-	S.game.clash = null
+	_check(h3.clash_wave_enabled == false and VfxLook.CLASH_WAVE_DEFAULT == false and int(h3.clash_wave.made.get("end", 0)) == 0 and int(h3.clash_wave.made.get("grow", 0)) == 0, "off by default: nothing is made")
 	SimCore.dispose(S)
 
 

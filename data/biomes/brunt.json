@@ -67,5 +67,6 @@
   "interiorBounceTangent": 0.8,
   "interiorLinkSpeed": 900.0,
   "repeatMarks": 0,
-  "repeatCraterGrow": 1.25
+  "repeatCraterGrow": 1.25,
+  "powerLowTowerMaxH": 1200.0
 }

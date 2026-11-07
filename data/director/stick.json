@@ -37,9 +37,10 @@
   "armour": {
     "enabled": false,
     "fromTicks": 12,
-    "mediumUntilTicks": 30,
+    "beamFromTicks": 0,
+    "mediumUntilTicks": 28,
     "missOpenTicks": 20,
-    "_note": "Past the quick flick a hold has B's armour, a beam's on the stick too (docs/design/power-scale.md section 2). From fromTicks (0.2 s) a light never stops it, and does heavy.armour.lightMul of its damage. A medium stops it before mediumUntilTicks (level 2, 0.5 s). A heavy, a beam or a grab stops it. A dodge makes a charged strike miss, and he's open for missOpenTicks (0.33 s)."
+    "_note": "Past the quick flick a hold has B's armour, a beam's on the stick too (docs/design/power-scale.md section 2). From fromTicks (0.2 s), a beam's hold from beamFromTicks (its first tick: playable-build.md section 2), a light never stops it, and does heavy.armour.lightMul of its damage. A medium stops it before mediumUntilTicks (stage 2, 28 ticks). A heavy, a beam or a grab stops it. A dodge makes a charged strike miss, and he's open for missOpenTicks (0.33 s)."
   },
   "steal": {
     "enabled": false,
@@ -49,6 +50,13 @@
     "_note": "The stick steals his run, for QA's arm (docs/design/stick-lands.md): a quick flick from no stance that lands clean takes his run to 0, yours rises by what was taken, at most max, and he reels reelBase + reelPer each point. The AI never steals."
   },
   "autoGoTicks": 68,
+  "strikeStages": {
+    "enabled": false,
+    "stageTicks": [12, 28, 46, 66, 90, 120],
+    "levelCap": 3,
+    "topDrainPerSec": 2.0,
+    "_note": "The plain hold's stages (docs/director/beams-own-move-plan.md step 2; playable-build.md section 2; beam-answers-2.md section 1). A right-stick strike's hold climbs the beam's ladder: its count is 2 + round(4 x level), taken at the request; stage s comes at stageTicks[s-1] live ticks from the request, no higher than its level's price (levels, over the quick's) affords. It never goes by itself (autoGoTicks is ignored with this on), and at the top it costs topDrainPerSec, stepping down when it can't pay. Its blow lands at the stage up to levelCap: damage and stun stop growing at stage 3, and the stages past it are for the swat and the punch."
+  },
   "repeatSec": 3.0,
   "carryTicks": 12,
   "pendTicks": 9,

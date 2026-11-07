@@ -310,6 +310,8 @@ static func kill(S: SimState, bi: int, want: float, cause, evt: float, cx: float
 			for f in S.fighters:
 				if f.hasAnguish:
 					f.anguish = SimMathx.jmin(100.0, f.anguish + eq * (f.md.anguishCasSelf if cause == f else SimForms.anguishOther(S, f)) * POP_REF / normPeople(S))
+			if cause != null and not S.fighters.has(cause) and cause.hasAnguish:   # a body of another fight (a shot from outside, Simulation's cross-fights): his own dead cost him as at home
+				cause.anguish = SimMathx.jmin(100.0, cause.anguish + eq * cause.md.anguishCasSelf * POP_REF / normPeople(S))
 		return want   # --- far branch end ---
 	if b != null:
 		want = minf(want, b.popAlive)
@@ -357,6 +359,8 @@ static func _feed(S: SimState, n: float, cause) -> void:
 	for f in S.fighters:
 		if f.hasAnguish:
 			f.anguish = SimMathx.jmin(100.0, f.anguish + n * (f.md.anguishCasSelf if cause == f else SimForms.anguishOther(S, f)) * norm)   # D1b: meters.json
+	if cause != null and not S.fighters.has(cause) and cause.hasAnguish:   # a body of another fight (a shot from outside, Simulation's cross-fights): his own dead cost him as at home
+		cause.anguish = SimMathx.jmin(100.0, cause.anguish + n * cause.md.anguishCasSelf * norm)
 
 
 ## Once per unfrozen tick: advance the window, report the state once a second, and run the district flight.

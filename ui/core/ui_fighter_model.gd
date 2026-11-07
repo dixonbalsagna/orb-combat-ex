@@ -85,6 +85,11 @@ var press_ack_t: float = 99.0          # seconds since
 var charge_cell: String = ""           # the wind-up of a medium (y) or a heavy (b) now: which face button (the director's `windup` cue)
 var charge_t: float = 99.0             # seconds since it started
 var charge_dur: float = 0.0            # its length in seconds (12 or 28 ticks)
+const STAGE_STALE := 15.0   # seconds a charge stage stays up with no cue to change or clear it
+var cstage: int = 0                    # the stick charge's stage now (Encounter's `stick_stage` cue, k), 0 for none; shown as a digit on the stick's glyph (docs/ui/charge-stages.md section 8)
+var cstage_of: int = 0                  # how many stages this charge has (the cue's n)
+var cstage_capped: bool = false         # it stopped rising at what the energy pays (the cue's source `capped`)
+var cstage_t: float = 0.0
 var charge_on: bool = false
 var launcher_known: bool = false       # the director says whether this fighter's launcher is ready or resting (patch keys launcher_ready and launcher_rest_left): the plate's LAUNCH or RESTING mark
 var launcher_ready: bool = false
@@ -179,6 +184,10 @@ func reset_wounds() -> void:
 	charge_t = 99.0
 	charge_dur = 0.0
 	charge_on = false
+	cstage = 0
+	cstage_of = 0
+	cstage_capped = false
+	cstage_t = 0.0
 	blow_kind = ""
 	blow_t = 99.0
 	open_left = 0.0
@@ -273,6 +282,12 @@ func advance(dt: float, sim_dt: float = -1.0) -> void:
 	charge_t += sdt
 	if charge_on and charge_t > maxf(charge_dur * 2.0, 1.5):
 		charge_on = false   # an end cue that never came: the ring does not stay up
+	if cstage > 0:
+		cstage_t += sdt
+		if cstage_t > STAGE_STALE:
+			cstage = 0   # a release or refusal cue that never came: the digit does not stay up
+			cstage_of = 0
+			cstage_capped = false
 	stance_prompt_t += sdt
 	weight_fallback_t += sdt
 	blow_t += sdt

@@ -428,7 +428,7 @@ func tick(vw: float, vh: float) -> void:
 	for k in range(2):
 		if S.fighters[k].ai == null:
 			if SimInputData.right_stick_on():
-				hub.set_struggle(k, SimDir.inStruggle(S, S.fighters[k]))   # a beam clash or a finisher's contest: the stick does nothing there (Controls' K3)
+				hub.set_struggle(k, SimDir.inStruggle(S, S.fighters[k]), DirBeam.pushModeOf(S, S.fighters[k]) == "stick")   # a beam clash or a finisher's contest: the stick does nothing there (Controls' K3), unless his push mode is the stick (struggle.pushMode; DirBeam.pushModeOf is "face" with it off): then it is read as the push
 			inputs[k] = hub.intent(k)
 	for k in range(2):
 		if film_in[k] != null:

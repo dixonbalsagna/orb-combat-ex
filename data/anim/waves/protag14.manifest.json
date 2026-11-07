@@ -1,0 +1,87 @@
+{
+ "wave": "protag14",
+ "strikes": [
+  {
+   "id": "pl.skim_heel",
+   "combat": "strike.skim_heel",
+   "name": "skim_heel",
+   "weight": "heavy",
+   "target": "legs",
+   "limb": "foot_r",
+   "limb2": null,
+   "offset": 50,
+   "reach": 78,
+   "band": "mid",
+   "ticks": {
+    "load": 10,
+    "follow": 6,
+    "recover": 8
+   },
+   "ground": "no",
+   "uses": {
+    "legs": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [
+    "hands_open_or_claw",
+    "no_leap"
+   ],
+   "look": "Skimming low under him, the edge of the foot swung through at shin height with the whole body behind it and one hand trailing near the ground.",
+   "orig": "skimming low under him, the edge of the foot swung through at shin height with the whole body behind it and one hand trailing near the ground",
+   "poses": [
+    "pl.skim_heel.chamber",
+    "pl.skim_heel.contact",
+    "pl.skim_heel.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "edge",
+   "path": "arc_out",
+   "flags": []
+  },
+  {
+   "id": "pl.trail_backhand",
+   "combat": "strike.trail_backhand",
+   "name": "trail_backhand",
+   "weight": "light",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 88,
+   "band": "long",
+   "ticks": {
+    "load": 6,
+    "follow": 4,
+    "recover": 4
+   },
+   "ground": "no",
+   "uses": {
+    "arms": 1
+   },
+   "from": "hook",
+   "named": true,
+   "legal": [
+    "hands_open_or_claw",
+    "no_clasp",
+    "no_leap"
+   ],
+   "look": "Going away, half turned back to him: the blade of the hand swung out over the shoulder across his chest as he leaves.",
+   "orig": "going away, half turned back to him: the blade of the hand swung out over the shoulder across his chest as he leaves",
+   "poses": [
+    "pl.trail_backhand.chamber",
+    "pl.trail_backhand.contact",
+    "pl.trail_backhand.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": "hand_arc",
+   "tip": "blade",
+   "path": "arc_out",
+   "flags": []
+  }
+ ],
+ "skipped": []
+}

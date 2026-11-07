@@ -62,6 +62,7 @@ var _haptic_pending: Array = []
 var _refusals: Array = []                  # every press the game let go of with no sign, for UI: [{slot, code, tick, button}] (take_refusals)
 var _stick_wait: Array = [-1, -1]           # per slot: live ticks since a stick request began with no strike started, -1 when none is waiting             # the rumble the hub asked for since the host last took it
 var struggle_pref: Array = [false, false]   # the host's word each tick that the slot's fighter is in a struggle (set_struggle)
+var struggle_push_pref: Array = [false, false]   # ... and that the slot's push mode is the stick: the strike stick is read in the struggle as the push (set_struggle's second word)
 var _pad_no_right_stick: Dictionary = {}   # device id -> true: the host says this pad has no right stick
 
 
@@ -390,7 +391,7 @@ func intent(slot: int) -> SimIntent:
 				pads[d].set_latch_charge(bool(latch_charge_pref[slot]))
 				pads[d].set_charges_off(bool(charges_off_pref[slot]))
 				pads[d].set_strike_style(strike_style_of(slot))
-				pads[d].set_struggle(bool(struggle_pref[slot]))
+				pads[d].set_struggle(bool(struggle_pref[slot]), bool(struggle_push_pref[slot]))
 				pads[d].set_brace_flick(brace_style_of(slot) == "flick")
 				pads[d].set_mirror_dpad(mirror_on(slot))
 				_apply_hold_styles(pads[d], slot)
@@ -415,7 +416,7 @@ func intent(slot: int) -> SimIntent:
 			kl.set_latch_charge(bool(latch_charge_pref[slot]))
 			kl.set_charges_off(bool(charges_off_pref[slot]))
 			kl.set_strike_style(strike_style_of(slot))
-			kl.set_struggle(bool(struggle_pref[slot]))
+			kl.set_struggle(bool(struggle_pref[slot]), bool(struggle_push_pref[slot]))
 			kl.set_brace_flick(brace_style_of(slot) == "flick")
 			_apply_hold_styles(kl, slot)
 			i = kl.build()
@@ -660,8 +661,11 @@ func set_pad_has_right_stick(dev: int, has: bool) -> void:
 
 ## The host's word that a slot's fighter is in a struggle (a beam clash, the finisher's contest): the strike stick does nothing and the faces are free
 ## (Game Design's ruling, 2026-10-28). Call it each tick, like set_sent.
-func set_struggle(slot: int, on: bool) -> void:
+## `push`: this player's push mode is the stick (Encounter's DirBeam.pushModeOf(S, fighter) == "stick", struggle.pushMode; docs/controls/push-stick.md). Then the strike stick is read in the
+## struggle (a flick toward is his surge, away his let-go) instead of being inert, and a flick is no stick request that could go unanswered, so it never raises a "no answer" refusal.
+func set_struggle(slot: int, on: bool, push: bool = false) -> void:
 	struggle_pref[slot] = on
+	struggle_push_pref[slot] = on and push
 
 
 func mirror_on(slot: int) -> bool:
@@ -859,6 +863,12 @@ func note_stick_started(slot: int) -> void:
 		_stick_wait[slot] = -1
 
 
+## The host's word that the director answered a slot's press either way: it started the strike (stick_start), or told the player why it could not (stick_refused, press_refused). Either ends the hub's
+## wait, so a refusal the director already knocked for is not knocked again 30 ticks later as "no answer" (the double knock). Call it from the cue loop for all three cues.
+func note_press_answered(slot: int) -> void:
+	note_stick_started(slot)
+
+
 func take_haptics() -> Array:
 	var out: Array = _haptic_pending
 	_haptic_pending = []
@@ -867,7 +877,7 @@ func take_haptics() -> Array:
 
 ## The ladder's rumble (pitch 1): one pulse as each rung of a held strike's charge is reached, once. Called with each slot's intent as it is built.
 func _note_refusal(slot: int, i: SimIntent) -> void:
-	if not SimInputData.haptic_refused_on():
+	if not SimInputData.haptic_refused_on() or bool(struggle_push_pref[slot]):   # a stick-push struggle's flick is the push, never a request the director could leave unanswered
 		_stick_wait[slot] = -1
 		return
 	if i.rsCancel:
@@ -884,7 +894,7 @@ func _note_ladder(slot: int, i: SimIntent) -> void:
 		for r in SimHaptics.release_requests(slot, i.rsLevel):
 			_haptic_pending.append(r)
 	var lv: int = i.rsLevel if i.rsHeld else 0
-	if lv > int(_ladder_prev[slot]):
+	if lv > int(_ladder_prev[slot]) and not SimInputData.haptic_stages_on():   # with hapticStages the director's stick_stage cues are the rungs (SimHaptics.stage_event_requests)
 		for r in SimHaptics.ladder_requests(slot, int(_ladder_prev[slot]), lv):
 			_haptic_pending.append(r)
 	_ladder_prev[slot] = lv

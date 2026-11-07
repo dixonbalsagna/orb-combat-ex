@@ -277,6 +277,8 @@ static func guardPress(S: SimState, f) -> bool:
 	si(f, GUARD_AT, S.tick)
 	if b == null and not (S.tick < gi(f, PB_LOCK) and not assist) and DirBlast.mark(S, f):
 		return true   # a shot inside its window: the block resolves when it arrives (DirBlast.hit)
+	if b != null and S.tick < gi(f, PB_LOCK) and not assist:
+		DirExchange.refused(S, f, "block_lockout")   # it would have been a perfect block: the anti-mash lockout held it
 	if b == null or (S.tick < gi(f, PB_LOCK) and not assist):
 		# The lockout starts only when the press came during a visible wind-up and missed its window, or when two guard
 		# presses come within the lockout's length of each other (agency-pass.md section 11, 3b). A single press with no

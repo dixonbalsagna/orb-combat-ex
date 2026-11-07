@@ -62,6 +62,10 @@ var e_target: float = 0.0
 var e_hold: bool = false               # keep the pane expanded until the panes have merged
 var sliver: float = 0.0
 var solo_kind: String = ""
+var _ko_shown = null   # the KO body whose close-up has played; a 2v2's fight keeps its KO after it (sim/core/cross.gd)
+var _ac_w: float = 0.0     # a finished fight's winner's lead toward his focus across, signed along the line: -1 to 1, eased at 1 a FOCUS_EASE
+var _ac_hold: int = 0      # ticks the KO close-up's pane holds the screen after it ends, while the layout settles behind it
+var _ac_won: int = -1      # the finished fight's standing winner, or -1
 var solo_slot: int = -1
 var solo_prio: int = 0
 var solo_w: float = 0.0
@@ -97,6 +101,7 @@ var _tf_s: int = 0
 var intro_active: bool = false           # between intro_start and clock_start (docs/architecture/intro-phase.md)
 var rush_cuts: int = 0                   # long rushes the rusher's pane was cut ahead for (counted for the tests)
 var _rush_pin: Array = [false, false]
+var _pin_point: Array = [false, false]   # the pin is on a point rush's end (the travel budget's cut put it there), not a fighter
 var _rush_wait: Array = [0, 0]            # ticks before a long rush's cut ahead is made (a rush that ends in them is not cut for)
 var lunge_holds: int = 0                 # lunges held for (counted for the tests); docs/camera/lunge-framing.md
 var _lg_slot: int = -1                   # the attacker of a lunge being held for, else -1
@@ -464,6 +469,7 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_sig_done = [true, true]
 	_derived_beams_t = -1.0e9
 	_rush_pin = [false, false]
+	_pin_point = [false, false]
 	_rush_wait = [0, 0]
 	_od_valid = false
 	_od_shown = [false, false]
@@ -1845,16 +1851,45 @@ func _update_solo(S: SimState) -> void:
 	for ai in range(2):
 		if _aim[ai] != null and S.fighters[ai].state != "launched":
 			_aim[ai] = null
-	if S.game.ko != null and solo_kind != "ko" and solo_kind != "wreck" and not fold_active:
-		var loser: int = 0 if S.fighters[0] == S.game.ko else 1
+	var xko: bool = S.stage != null and S.stage.cross   # 2v2, hits across fights: a KO can leave the match going on
+	if S.game.ko != null and solo_kind != "ko" and solo_kind != "wreck" and not fold_active and not (xko and S.game.ko == _ko_shown):
+		var loser: int = _ko_slot(S)
 		_begin_solo("ko", loser, 4, 0.0)
+		_ko_shown = S.game.ko
 	if solo_kind == "ko" and S.game.ko != null and S.game.koT >= CamParams.WRECK_AT:
-		# After the loser's close-up: the winner, small, with the match's damage round him.
-		var winner: int = 1 if S.fighters[0] == S.game.ko else 0
-		_wreck_scan(S, winner)
-		_begin_solo("wreck", winner, 4, 0.0, S, not reduced_motion)
+		if xko and not SimCore.ended(S):
+			_end_solo(S)   # he's out and his team stands: after his close-up, back to the fight, which goes on
+			var won_i: int = 1 - _ko_slot(S)
+			_snap_focus(S, won_i)   # the winner's pane opens on him: he may be flying off already (a computer winner goes at once)
+			_mp[won_i] = null
+			var wf = S.fighters[won_i]
+			if wf.rush != null and wf.rush.tgt != null:   # a rush moves him with no velocity: the pane's speed is the rush's, or the governor reads him as still
+				_vsm[won_i] = absf(SimWrap.sdx(wf.x, wf.rush.tgt.x)) / maxf(float(wf.rush.end) - S.T, DT)
+			_ac_won = won_i
+			_zo[won_i] = _own_zoom_target(S, won_i)   # ... at his own size, not the close-up's
+			if float(_vsm[won_i]) > CamParams.ACROSS_WIDE_SPEED:
+				_zo[won_i] = minf(float(_zo[won_i]), CamParams.ACROSS_WIDE_R * vh / CamParams.BODY_H)   # ... or wide, if he's flying: the pane is hidden, so it opens wide
+				_oz[won_i] = _zo[won_i]
+				_ozs[won_i] = _zo[won_i]   # the zoom's own ease starts there too
+				_ozv[won_i] = 0.0
+			e_target = 1.0   # ... and the close-up's pane holds the screen two ticks more while the new layout settles behind it
+			_ac_hold = 2
+		else:
+			# After the loser's close-up: the winner, small, with the match's damage round him.
+			var winner: int = 1 - _ko_slot(S)
+			_wreck_scan(S, winner)
+			_begin_solo("wreck", winner, 4, 0.0, S, not reduced_motion)
+	elif xko and S.game.ko != null and S.game.ko == _ko_shown and solo_kind != "wreck" and not fold_active and SimCore.ended(S):
+		# The match ended in the other fight: the final shot is this fight's winner, small, with the damage round him.
+		var won: int = 1 - _ko_slot(S)
+		_wreck_scan(S, won)
+		_begin_solo("wreck", won, 4, 0.0, S, not reduced_motion)
 	if (solo_kind == "ko" or solo_kind == "wreck") and S.game.ko == null:
 		_end_solo(S)
+	if S.game.ko == null:
+		_ko_shown = null
+	if xko:
+		_across_tick(S)
 	if solo_kind == "":
 		return
 	solo_t += DT
@@ -1897,6 +1932,55 @@ func _update_solo(S: SimState) -> void:
 				_end_solo(S)
 		"ko", "wreck":
 			pass
+
+
+## The KO'd body's pane slot, from the list (0 for the first body, 1 otherwise: the same answer as before, without naming two fighters).
+func _ko_slot(S: SimState) -> int:
+	return 0 if S.fighters.find(S.game.ko) == 0 else 1
+
+
+## 2v2 with hits across fights: the standing winner of a finished fight (his fight keeps its KO until the rejoin) has his
+## focus across. Once his fight's KO close-up has handed back (no solo, the layout's ease done), his pane takes the screen:
+## the KO'd body is out of the match and isn't framed. His framing leads toward his focus across, eased in over FOCUS_EASE.
+## The rejoin ends it (the KO is cleared; the layout eases back); the match's end takes it to the wreck.
+func _across_tick(S: SimState) -> void:
+	if _ac_hold > 0:
+		_ac_hold -= 1
+		if _ac_hold == 0:
+			e_target = 0.0
+	var won: int = -1
+	if S.game.ko != null and not SimCore.ended(S):
+		for k in range(2):
+			if S.fighters[k] != S.game.ko and not bool(S.fighters[k].get("out")):
+				won = k
+	_ac_won = won
+	if solo_kind == "across" and (won < 0 or solo_slot != won):
+		_end_solo(S)
+	if won >= 0 and solo_kind == "" and e < 0.02 and S.game.ko == _ko_shown and not fold_active and not intro_active:
+		_begin_solo("across", won, 1, 0.0, S)
+		if solo_kind == "across":
+			var an: Vector2 = _anchors[won]   # from where he is in his pane: nothing jumps as the pane takes the screen
+			_launch_anchor_x = clampf(an.x / vw, 0.2, 0.8)
+			_launch_anchor_y = clampf(an.y / vh, 0.2, 0.85)
+	# The lead's target: toward him, falling away as he closes (he's in the picture then, and a target that passes him
+	# doesn't flip the frame); the lead eases at one whole lead a FOCUS_EASE, so a turn round goes through the middle.
+	var to: float = 0.0
+	if solo_kind == "across":
+		var D = DirOutside.focusAcross(S, S.fighters[solo_slot], SimConst.W * 0.5)
+		if D != null:
+			var dx: float = SimWrap.sdx(S.fighters[solo_slot].x, D.x)
+			to = signf(dx) * smoothstep(CamParams.ACROSS_NEAR, CamParams.ACROSS_NEAR * 10.0, absf(dx))
+	_ac_w = move_toward(_ac_w, to, DT / CamParams.FOCUS_EASE)
+
+
+## A KO the shots in hand give way to: any, but in a 2v2 with hits across fights only the match's last. A finished fight's
+## winner there can still be sent flying from the other fight.
+func _ko_ends(S: SimState) -> bool:
+	if S.game.ko == null:
+		return false
+	if S.stage != null and S.stage.cross:
+		return SimCore.ended(S)
+	return true
 
 
 ## A panel cut-in (Orb's pick B): a slanted close-up strip over the live view, drawn by the compositor from an inset
@@ -3121,13 +3205,15 @@ func _own_zoom_target(S: SimState, i: int) -> float:
 				var wp: float = 1.0 if reduced_motion else clampf(solo_t / CamParams.WRECK_T, 0.0, 1.0)
 				r = lerpf(CamParams.R_WRECK_0, CamParams.R_WRECK, smoothstep(0.0, 1.0, wp)) * m
 				alt_f = 1.0
-	if _rd_on(i) and not (solo_kind != "" and solo_slot == i):
+	if _rd_on(i) and not (solo_kind != "" and solo_kind != "across" and solo_slot == i):
 		r = maxf(r, CamParams.R_READ * m)
 		alt_f = 1.0
 	var z: float = r * vh / CamParams.BODY_H * tier_f * alt_f
 	z *= _push_mult(i) * _hit_mult(i) * _arr_mult(i) * _turn_mult()
-	if f.state != "launched" and chase_slot != i and not (solo_kind != "" and solo_slot == i):
+	if f.state != "launched" and chase_slot != i and not (solo_kind != "" and solo_kind != "across" and solo_slot == i):
 		var zfl: float = (CamParams.READ_FAST if readable else CamParams.R_FLOOR) * vh / CamParams.BODY_H
+		if i == _ac_won and float(_vsm[i]) > CamParams.ACROSS_WIDE_SPEED:
+			zfl = CamParams.ACROSS_WIDE_R * vh / CamParams.BODY_H   # a finished fight's winner flying across the world: wide while he's really flying, as a flat send's
 		if many_framing and S.fighters.size() > 2:
 			zfl = maxf(zfl, CamParams.MANY_PIX_FLOOR / CamParams.BODY_H)   # a pane's pixel floor in a many-body match (a share of a phone's height is 12 px)
 		var gv: float = _scroll_gov(maxf(maxf(float(_vsm[i]), _gov_armed()), _body_speed(f)), z * pz)
@@ -3214,6 +3300,10 @@ func _anchor(S: SimState, i: int) -> Vector2:
 			_launch_anchor_y += (0.62 - _launch_anchor_y) * (1.0 - exp(-DT / 0.25))
 		solo_pt.x = vw * _launch_anchor_x
 		solo_pt.y = vh * _launch_anchor_y
+	if solo_kind == "across" and solo_slot == i:
+		_launch_anchor_x += (0.5 - _launch_anchor_x) * (1.0 - exp(-DT / 0.25))
+		_launch_anchor_y += (0.62 - _launch_anchor_y) * (1.0 - exp(-DT / 0.25))
+		solo_pt = Vector2(vw * _launch_anchor_x, vh * _launch_anchor_y)
 	if solo_kind == "intro" and solo_slot == i:
 		match _in_phase:
 			"fall":
@@ -3711,7 +3801,10 @@ func _update_cameras(S: SimState) -> void:
 			if absf(_depth_s(S, i, zc) - 1.0) > 0.15:
 				lmax = 0.0   # off the plane the lead shows larger (or smaller) and the depth framing has the pane's room: no lead
 			lead_t = clampf(vxm * CamParams.CHASE_LEAD_T, -lmax, lmax)
-		_lead[i] += (lead_t - _lead[i]) * (1.0 - exp(-DT / CamParams.CHASE_LEAD_TAU))
+		if solo_kind == "across" and solo_slot == i:
+			_lead[i] = 0.0 if reduced_motion else signf(_ac_w) * _smootherstep(absf(_ac_w)) * CamParams.ACROSS_LEAD * vw / zc
+		else:
+			_lead[i] += (lead_t - _lead[i]) * (1.0 - exp(-DT / CamParams.CHASE_LEAD_TAU))
 		var lead_c: float = _lead[i]
 		# A body low over the ground (a bounce, a lip flight, a tumble) is not followed up: the focus stays at the ground
 		# level until he is above LOW_AIR_DEAD, so a half-body-height bounce moves on the screen as it does in the world
@@ -3733,8 +3826,9 @@ func _update_cameras(S: SimState) -> void:
 			freeze = true   # a rush's pane waits RUSH_COMMIT_TICKS before its cut ahead: still, not following him (the whip of a pane chasing 18,000 units a second was 63 more rush jolts in the sweep)
 		if _rush_pin[i]:
 			var rp = f.rush
-			if rp == null or rp.tgt == null or solo_kind != "" or sep < 0.999:
+			if rp == null or (rp.tgt == null and not bool(_pin_point[i])) or solo_kind != "" or sep < 0.999:
 				_rush_pin[i] = false
+				_pin_point[i] = false
 				# The rush ended before he got there (a parry, a knock-back): a pane aimed far from him cuts back to him once,
 				# instead of the lag bound whipping across.
 				var ux: float = SimWrap.sdx(_fx[i], f.x) * zc
@@ -3744,8 +3838,12 @@ func _update_cameras(S: SimState) -> void:
 					rush_cuts += 1
 			else:
 				_rush_pin_t[i] = time
-				_fx[i] = SimWrap.wrap(rp.tgt.x + rp.off)
-				_fy[i] = rp.tgt.y + CamParams.CHEST
+				if bool(_pin_point[i]) and rp.tgt == null:
+					_fx[i] = SimWrap.wrap(rp.px)
+					_fy[i] = rp.py + CamParams.CHEST
+				else:
+					_fx[i] = SimWrap.wrap(rp.tgt.x + rp.off)
+					_fy[i] = rp.tgt.y + CamParams.CHEST
 				freeze = true
 		if not freeze:
 			# The lag bound (camera-v2.md section 2). e is the fighter's offset from where the camera is aiming, in screen
@@ -4083,6 +4181,17 @@ func _subject_leaving(S: SimState, i: int, cam: Vector3) -> bool:
 	return false
 
 
+## Where pane i's own fighter's point rush ends (a rush with no fighter target, still running), or NAN when there is none.
+## Only in a split, where the pane is his alone.
+func _point_rush_end(S: SimState, i: int) -> Vector2:
+	if sep < 0.999 or solo_kind != "":
+		return Vector2(NAN, NAN)
+	var rp = S.fighters[i].rush
+	if rp == null or rp.tgt != null or float(rp.end) <= S.T:
+		return Vector2(NAN, NAN)
+	return Vector2(SimWrap.wrap(rp.px), rp.py)
+
+
 func _pane_shown(i: int) -> bool:
 	if i == 0:
 		return not (sep > 0.001 and e >= 0.999 and sliver <= 0.0 and e_slot == 1)
@@ -4160,6 +4269,16 @@ func _travel_budget(S: SimState) -> void:
 					_tb_cut_t[i] = time
 					travel_cuts += 1
 					_od[i] = tgt_full
+					var pr: Vector2 = _point_rush_end(S, i)
+					if pr.x == pr.x:
+						# He's on a point rush (a beam's rise): the cut goes where it ends and the pin holds the pane there, or he
+						# leaves again at once and TRAVEL_COOL holds the next cut for a second.
+						var ox: float = SimWrap.sdx(float(_fx[i]), pr.x)
+						var oy: float = pr.y + CamParams.CHEST - float(_fy[i])
+						_od[i] = Vector3(SimWrap.wrap(tgt_full.x + ox), tgt_full.y + oy, tgt_full.z)
+						_outs[i] = Vector3(_od[i].x, _od[i].y, tgt_full.z / pm)
+						_rush_pin[i] = true
+						_pin_point[i] = true
 				else:
 					_od[i] = lim
 					_outs[i] = Vector3(lim.x, lim.y, lim.z / pm)
@@ -5038,7 +5157,7 @@ func _peak_tick(S: SimState) -> void:
 	var ad: float = absf(SimWrap.sdx(L.x, f.x))
 	var ring_k: float = SimConst.W / CamParams.PEAK_RING
 	if _pk_phase != "back":
-		if S.game.ko != null or solo_kind == "ko" or solo_kind == "finisher" or solo_kind == "transform":
+		if _ko_ends(S) or solo_kind == "ko" or solo_kind == "finisher" or solo_kind == "transform":
 			_peak_end("ko", CamParams.PEAK_BACK_KO)
 		elif f.state != "launched":
 			var hgt: float = float(f.y) - WorldTerrain.groundY(S, f.x)

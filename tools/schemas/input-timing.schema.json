@@ -1000,6 +1000,10 @@
           "type": "boolean",
           "description": "LT held, in the intent's second word, bit 26 (docs/controls/dodge-held.md; needs rightStick): the intent says whether the dodge control is physically down this tick, so the flight strike's take-back (a face press within 4 ticks of LT, LT still held) can be read. Off."
         },
+        "hapticStages": {
+          "type": "boolean",
+          "description": "The charge rumble from the director's stages (docs/controls/stage-pulses.md; needs hapticLadder and rightStick): a pulse at every stage of Encounter's stick_stage cue (a base fighter's two stages are two pulses, the last the thud), and the hub's own three rungs step aside. Flip with beam-move and strike-stages: with them off no cue comes and a hold is silent. Off."
+        },
         "hapticImpact": {
           "type": "boolean",
           "description": "Orb's 2026-10-05 rumble picks that were missing (docs/controls/impact-haptics.md): a landed blow felt by the one who landed it (blow_land) and by the one it hit (hit_taken), a close (close_surge), a launch felt by the one sent (launch_felt), a landing (landing_thud) and a building breaking (building_break, both pads). Independent of rightStick. Off."
@@ -1118,12 +1122,12 @@
         "beamLevels": {
           "type": "array",
           "minItems": 3,
-          "maxItems": 3,
+          "maxItems": 6,
           "items": {
             "type": "integer",
             "minimum": 1
           },
-          "description": "The same for a beam or the signature (12, 30, 54)."
+          "description": "The same for a beam or the signature: the beam's own stages, 12, 28, 46, 66, 90 and 120 live ticks (Encounter's charge stages, so the pad's pulses meet them; three to six rungs). The intent's rsLevel stays 0 to 3 whatever the count; the director reads the full count through level_at."
         },
         "lockout": {
           "type": "integer",

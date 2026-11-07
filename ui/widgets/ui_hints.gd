@@ -113,6 +113,24 @@ static func draw_dots(ci: CanvasItem, c: Vector2, r: float, lit: int, alpha: flo
 			ci.draw_arc(p, dr, 0.0, TAU, 10, Color(ink, alpha * 0.7), maxf(1.2, dr * 0.45), true)
 
 
+## The charge stage on the strike stick's glyph: a small digit in a dark disc at the glyph's top corner, changed by a cut at each stage and never animated; at the top stage the disc is solid with a ring round it
+## (a shape, not only a colour; RL-239: nothing flashes). In the legend, at the screen's edge; never over a body.
+static func draw_stage(ci: CanvasItem, c: Vector2, gh: float, k: int, n: int, fs: int, alpha: float) -> void:
+	if alpha <= 0.01 or k <= 0:
+		return
+	var r: float = maxf(gh * 0.3, 7.0)
+	var at: Vector2 = c + Vector2(gh * 0.42, -gh * 0.42)
+	var ink := Color(UiLook.col(UiLook.INK))
+	var dark := Color(UiLook.col(UiLook.INK_DARK))
+	var top: bool = k >= n
+	ci.draw_circle(at, r + 1.5, Color(dark, 0.9 * alpha))
+	if top:
+		ci.draw_circle(at, r, Color(ink, alpha))
+		ci.draw_arc(at, r + 3.0, 0.0, TAU, 20, Color(ink, alpha), 1.5, true)
+	var fsd: int = maxi(int(float(fs) * 0.8), 9)
+	UiText.draw(ci, str(k), Vector2(at.x, at.y - UiText.height(fsd) * 0.5 + UiText.ascent(fsd)), fsd, Color(dark if top else ink, alpha), 0)
+
+
 ## The clash teaching's ring on a legend glyph at the beat (RL-248): a ring with six ticks, in its own colour (UiLook.BEAT), inside the legend and nowhere else.
 static func draw_beat(ci: CanvasItem, c: Vector2, r: float, alpha: float) -> void:
 	if alpha <= 0.01:
@@ -239,6 +257,8 @@ static func compact_rows(m: UiFighterModel, all_rows: Array) -> Array:
 		if cell != "":
 			keep = keep or (lit_b(m) and cell == "b") or (m.charge_on and cell == m.charge_cell) or (m.press_ack_kind != "" and m.press_ack_t < ACK_POP and cell == m.press_ack_cell) \
 				or (UiStance.three() and m.punish_left > 0.0 and cell == "y") or (UiStance.three() and m.flurry_dots > 0 and cell == "x")
+		if not keep and m.cstage > 0 and ["strike", "strike_mirror"].has(_act0(r)) and not bool(r.get("teach", false)):
+			keep = true   # a stick charge is at a stage: the strike stick's rows stay, with the digit on the glyph
 		if keep:
 			out.append(r)
 	return out
@@ -470,7 +490,7 @@ static func plan(m: UiFighterModel, rect: Rect2, s: float, o: Dictionary) -> Dic
 	var y: float = rect.position.y + pad
 	var placed: Array = []
 	for i in range(shown.size()):
-		placed.append({"specs": full[i], "label": shown[i]["label"], "held": bool(shown[i].get("held", false)), "dim": bool(shown[i].get("dim", false)), "note": str(shown[i].get("note", "")), "cell": str(shown[i].get("cell", "")), "beat": bool(shown[i].get("beat", false)), "y": y + row_h * 0.5})
+		placed.append({"specs": full[i], "label": shown[i]["label"], "held": bool(shown[i].get("held", false)), "dim": bool(shown[i].get("dim", false)), "note": str(shown[i].get("note", "")), "cell": str(shown[i].get("cell", "")), "beat": bool(shown[i].get("beat", false)), "stick": ["strike", "strike_mirror"].has(_act0(shown[i])) and not bool(shown[i].get("teach", false)), "y": y + row_h * 0.5})
 		y += row_h
 	out["rows"] = placed
 	out["label_x"] = rect.position.x + pad + maxw + gap
@@ -500,7 +520,7 @@ static func lit_b(m: UiFighterModel) -> bool:
 static func sig(m: UiFighterModel, alpha: float, preset: String, energy: String = "hold", reduced: bool = false, compact: bool = false, styles: Dictionary = {}) -> Array:
 	var ack_step: int = 0 if m.press_ack_kind == "" or m.press_ack_t >= ACK_SECONDS else (1 if reduced else 1 + int(m.press_ack_t / ACK_SECONDS * 6.0))
 	var cf: float = charge_frac(m, reduced)
-	return [m.teach, m.teach_acts.size(), m.beat_rows.size(), int(m.beat_ring * 10.0), m.out, m.device, m.slot, int(alpha * 10.0), preset, m.avail["transform"], m.left_side, m.form_shown, energy, m.stance_kind, m.press_ack_kind, m.press_ack_cell, ack_step,
+	return [m.teach, m.teach_acts.size(), m.beat_rows.size(), int(m.beat_ring * 10.0), m.out, m.cstage, m.device, m.slot, int(alpha * 10.0), preset, m.avail["transform"], m.left_side, m.form_shown, energy, m.stance_kind, m.press_ack_kind, m.press_ack_cell, ack_step,
 		int(cf * 8.0) if cf >= 0.0 else -1, m.charge_cell if m.charge_on else "", lit_b(m), UiStance.three(), m.punish_left > 0.0, m.flurry_dots, UiStance.launch_marks() and m.gauge_full, compact, str(styles.get("guard", "hold")) + str(styles.get("dodge", "hold")) + str(styles.get("power", "hold")) + str(styles.get("strike", "")) + str(styles.get("_mirror", ""))]
 
 
@@ -537,6 +557,7 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Di
 	var box: Rect2 = p["box"]
 	var ack_a: float = ack_alpha(m, bool(o.get("reduced_motion", false)))
 	UiText.no_outline = true
+	var stage_done := false
 	var bx: float = box.position.x if left else rect.end.x - box.size.x
 	var shift: float = bx - box.position.x
 	UiIcons.rrect(ci, Rect2(bx, box.position.y, box.size.x, box.size.y), 8.0 * s, Color(UiLook.col(UiLook.SCRIM), 0.5 * alpha), Color(UiLook.col(UiLook.EDGE), 0.25 * alpha), 1.2)
@@ -547,11 +568,16 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Di
 			var hb: float = float(p["row_h"]) * 0.7
 			ci.draw_rect(Rect2(bx + 1.0, float(r["y"]) - hb * 0.5, maxf(3.0, 3.0 * s), hb), Color(UiLook.col(UiLook.INK), alpha))
 		var beat_a: float = m.beat_ring if bool(r.get("beat", false)) else 0.0
+		var last_c := Vector2.ZERO
 		for sp in r["specs"]:
 			var w: float = UiGlyphs.draw_spec(ci, sp, Vector2(x, float(r["y"])), gh, alpha, true)
+			last_c = Vector2(x + w * 0.5, float(r["y"]))
 			if beat_a > 0.01:
 				draw_beat(ci, Vector2(x + w * 0.5, float(r["y"])), gh * 0.52, alpha * beat_a)   # the beat: a ring on each pressed glyph (RL-248)
 			x += w + gap * 0.4
+		if m.cstage > 0 and bool(r.get("stick", false)) and not stage_done:
+			stage_done = true
+			draw_stage(ci, last_c, gh, m.cstage, m.cstage_of, fs, alpha)   # the charge stage: a steady digit on the strike stick's glyph (docs/ui/charge-stages.md section 8)
 		var dim_row: bool = bool(r.get("dim", false))
 		var ra: float = alpha * (0.45 if dim_row else 1.0)   # a row for a button with no move yet is greyed
 		var lx: float = float(p["label_x"]) + shift

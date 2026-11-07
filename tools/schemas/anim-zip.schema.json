@@ -182,6 +182,66 @@
       },
       "additionalProperties": false
     },
+    "loop": {
+      "type": "object",
+      "required": [
+        "bow_min",
+        "max",
+        "gain",
+        "rate",
+        "speed",
+        "level",
+        "level_ticks"
+      ],
+      "properties": {
+        "bow_min": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 400,
+          "description": "A rush bowed by this many units or more (Rush.arc) is a loop (a flight strike's arc over or under)."
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1.6,
+          "description": "The most a loop tilts the body along its path, in radians (the zip's orient.max is 1.2)."
+        },
+        "gain": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Share of the path's angle the body takes."
+        },
+        "rate": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "How fast the tilt follows its target, per second."
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2000,
+          "description": "The path speed, in units a second, under which a loop does not tilt (a close loop is slow)."
+        },
+        "level": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Share of the tilt dropped within level_ticks of the blow's contact, so the blow is not thrown mid-turn."
+        },
+        "level_ticks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 12,
+          "description": "Ticks each side of the contact over which the tilt is eased."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "Optional. A flight strike's arc over or under (docs/animation/flight-strikes.md): how the body tilts along a bowed rush and eases toward level at the blow."
+    },
     "carry": {
       "type": "number",
       "minimum": 0,

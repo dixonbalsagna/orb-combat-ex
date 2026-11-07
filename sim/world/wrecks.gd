@@ -213,7 +213,7 @@ static func burst(S: SimState, id: int, x: float, y: float, tier: float, cause) 
 	var b = S.buildings[id]
 	b.marks = TAKEN
 	var sc: float = sqrt(wreckMass(b) / K_B_REF)
-	var dmg: float = K_B_SPEED * float(WorldBrunt.cfg().tierFactor[WorldBrunt.tierIx(tier, false)]) * float(WorldBrunt.cfg().bruntMul) * clampf(sc, K_B_SMIN, K_B_SMAX)
+	var dmg: float = K_B_SPEED * WorldBrunt.tierFactorOf(S, cause, tier, false) * float(WorldBrunt.cfg().bruntMul) * clampf(sc, K_B_SMIN, K_B_SMAX)
 	var r: float = clampf(K_B_R * BH * sc, K_B_RMIN * BH, K_B_RMAX * BH)
 	SimFx.debris(S, x, y + BH * 0.3, 14, "#8a8f98", 520.0)
 	SimFx.dust(S, x, y, 5, "#a89f92")

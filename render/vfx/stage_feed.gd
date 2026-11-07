@@ -1,7 +1,8 @@
 class_name VfxStageFeed
 extends RefCounted
-## The other fights' effects (2v2, `{"fights": 2}`; docs/vfx/other-fights.md). Simulation's fight swap (docs/architecture/fight-swap.md) keeps one fight in S between ticks, fight 0's, and the host drains only
-## its events. Rendering's host reads each other fight's events (`host.other_events()`, one fx list for each fight past the first, behind `SimHost.draw_others`) and pushes them here: `VfxHub.consume_others`.
+## The other fights' effects (2v2, `{"fights": 2}`; docs/vfx/other-fights.md). Simulation's fight swap (docs/architecture/fight-swap.md) keeps one fight in S between ticks (fight 0's after a step; a host may hold its own player's fight:
+## `S.stage.cur`), and the host drains only its events. Rendering's host reads each other fight's events (`host.other_events()`, one fx list for each fight but the one in S, in order, behind
+## `SimHost.draw_others`) and pushes them here: `VfxHub.consume_others`.
 ## This gives every other fight its own VfxHub, fed from its own events on its own clock, so its hits, sparks, dust, beams and shots are made as in a fight of their own.
 ##
 ## READ ONLY. It never swaps a fight into S and assigns nothing to S or to a fight's record. The state a fight's hub reads is Animation's one view of another fight, `RenderAnim.fight_view(S, k)` (docs/animation/fight-view.md):
@@ -9,7 +10,7 @@ extends RefCounted
 ##
 ## Off by default (`VfxHub.other_fights_enabled`, `?otherfights=1` on a local page), and a hub only takes the push when the host has said it will (`VfxHub.host_pushes`).
 
-var hubs: Array = []              # hubs[i] is fight i's hub (null for 0: the main hub is that)
+var hubs: Array = []              # hubs[i] is fight i's hub (null for the fight in S, S.stage.cur: the main hub is that one's)
 var fed: int = 0                  # calls that fed at least one other fight (for the tests)
 var events_fed: int = 0           # events handed to the other hubs
 var kinds: Dictionary = {}        # event type -> count, for the tests
@@ -40,17 +41,26 @@ func reset() -> void:
 	_sync_at = -1000
 
 
-## Once per tick, after the host has handed the main hub fight 0's events: each other fight's events (`lists[i - 1]`, as the host read them) to its own hub, read through Animation's view of that fight.
+## Once per tick, after the host has handed the main hub the events of the fight in S: each other fight's events to its own hub, read through Animation's view of that fight. The host's
+## lists are the fights other than the one in S (`S.stage.cur`), in order (`host.other_events()`), so the j-th list is the j-th of those fights: fight 0's when S holds fight 1 (the PC that
+## plays fight 1, or after a trade). A fight now in S drops the hub it had as an other fight: the main hub draws it, and a hub it needs again later starts afresh.
 func feed(S: SimState, main: VfxHub, lists: Array) -> void:
 	if S.stage == null:
 		return
 	var n: int = S.stage.fights.size()
+	var cur: int = int(S.stage.cur)
+	if cur < 0 or cur >= n:
+		return   # between ticks S always holds one fight; anything else is not a moment to read
 	while hubs.size() < n:
 		hubs.append(null)
+	hubs[cur] = null
 	var any: bool = false
 	var do_sync: bool = S.tick - _sync_at >= 30
-	for i in range(1, n):
-		if i - 1 >= lists.size():
+	var j: int = 0
+	for i in range(n):
+		if i == cur:
+			continue
+		if j >= lists.size():
 			break
 		var v: SimState = RenderAnim.fight_view(S, i)
 		var hb: VfxHub = hubs[i]
@@ -63,7 +73,8 @@ func feed(S: SimState, main: VfxHub, lists: Array) -> void:
 			do_sync = true
 		if do_sync:
 			_sync(main, hb)
-		var ev: Array = (lists[i - 1] as Array).duplicate()      # the host's list for this fight, copied: nothing here drains or clears it
+		var ev: Array = (lists[j] as Array).duplicate()      # the host's list for this fight, copied: nothing here drains or clears it
+		j += 1
 		for e in ev:
 			var tp: String = String(e.type)
 			kinds[tp] = int(kinds.get(tp, 0)) + 1

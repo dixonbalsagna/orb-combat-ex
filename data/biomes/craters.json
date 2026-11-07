@@ -23,5 +23,19 @@
     "ash": { "radius": 1.2, "depth": 0.8, "rim": 0.7, "steep": 0.7, "refill": 0.2, "refillTicks": 180, "embedMul": 1.2, "cracks": "none", "ejecta": "ash_plume" },
     "crust": { "radius": 0.9, "depth": 0.9, "rim": 0.8, "steep": 1.3, "glowTicks": 480, "cracks": "star_glowing", "ejecta": "crust_plates" },
     "shingle": { "radius": 1.1, "depth": 0.8, "rim": 0.9, "steep": 0.7, "refill": 0.3, "refillTicks": 120, "fill": "waterNearSea", "seaCols": 30, "cracks": "none", "ejecta": "pebble_spray" }
+  },
+  "struggleMeet": {
+    "enabled": false,
+    "_note": "Where a beam struggle does its damage: the meeting point (docs/world/struggle-meet.md; numbers from Game Design, docs/design/power-scale.md 'By stage, as data for World'; Legal RL-232, RL-242, RL-243, RL-246). Read by sim/world/struggle_meet.gd, apart from the module's switch. Off: nothing calls it and a match is as it was. energy: each beam brings its fighter's energy times its stage share (E(level) x stage / count); E_meet is the two added, times sigMul if either is a signature. fEnd: the share of E_meet dug by the ending (overwhelm and letGo are times the run's share of fullRunSec). The bowl is radius.k x sqrt(dug energy), its depth depthShare of it, dug once under the point by the special dig. heightReach: the energy is cut by 1 - height / (ofRadius x the radius before the cut), height the point's lowest above the ground in the last second; above the reach it is an air burst (no bowl). minE: under it a dent, so a scorch instead. perPulse: no digging while it runs. during: the ring at the point grows from ringFromBh to ringToBh body heights, at most one every ringMinGapSec, and the buildings inside it take the beam's damage. wave: the radius is the crater's (radiusOfCrater); fallReach: the share of the radius inside which a building falls, dent: the hit points a building takes from there to the lip, falling to nothing at the lip, keep: the share a building past the level cap is left at; glassHpShare: a tower within the radius before the height cut is taken to this share of its hit points (windows out, stage 1: keep it under stages.json hpAt[0]); bodyHeight: units. overwhelmCarve: the winner's beam carves from the point outward (Encounter's); carveAlongBeams false: the beams carve nothing from the moment their fronts meet (Encounter's).",
+    "energy": { "perBeam": "levelEnergyTimesStageShare", "sigMul": 9, "sigMulIf": "either" },
+    "fEnd": { "detonate": 0.5, "time": 0.25, "overwhelm": 0.25, "letGo": 0.25 },
+    "fEndByRun": { "endings": ["overwhelm", "letGo"], "fullRunSec": 5 },
+    "radius": { "k": 160, "depthShare": 0.22 },
+    "heightReach": { "ofRadius": 2.0, "heightFrom": "lowestInLastSec" },
+    "minE": 0.47,
+    "perPulse": 0,
+    "during": { "ringFromBh": 1, "ringToBh": 3, "ringMinGapSec": 2, "ringBuildingDamage": "beam", "carveAlongBeams": false },
+    "wave": { "radiusOfCrater": 1.0, "fallOff": "fromCentre", "glassRadius": "beforeHeightCut", "dustMaxBh": 6, "fallReach": 0.8, "dent": 0.4, "keep": 0.2, "glassHpShare": 0.85, "bodyHeight": 75 },
+    "overwhelmCarve": "fromPointOutward"
   }
 }

@@ -155,7 +155,7 @@ static func replayOf(sess: NetSession, info: Dictionary, upto: int) -> Dictionar
 	var log: Array = sess.confirmedLog(upto)
 	log.sort_custom(func(a, b): return a[0] < b[0] or (a[0] == b[0] and a[1] < b[1]))
 	for e in log:
-		var entry: Array = [e[0], e[1]] + SimReplay.split(e[2])
+		var entry: Array = [e[0], int(sess.slotOf[int(e[1])]) if not sess.slotOf.is_empty() else e[1]] + SimReplay.split(e[2])   # two fights: the player's starting slot (a trade later on isn't followed here)
 		if int(e[3]) != 0:
 			entry.append(e[3])   # SimReplay's fifth number: the second word, where it is not 0
 		rp.inputs.append(entry)
@@ -182,7 +182,7 @@ static func replayState(rp: Dictionary, ticks: int) -> SimState:
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, int(rp.seed), rp.ai, rp.get("setup", {}))
 	var cur: Array = []
-	cur.resize(S.fighters.size())
+	cur.resize(SimStage.bodies(S).size() if S.stage != null else S.fighters.size())
 	var ii: int = 0
 	var ti: int = 0
 	var toggles: Array = rp.get("toggles", [])

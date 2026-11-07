@@ -2,7 +2,7 @@ Orb Combat EX: a match between your two PCs
 
 What this is: one fight between your two PCs, with one pad on each, or two fights at once, one on each PC, each against the computer. This game opens a network link between the two PCs, over your home network only. It's a private test and it has rough edges.
 
-WHO PLAYS: Only Orb plays and watches, on both PCs, with nobody else in the room. This build has a flashing-effects warning; read it first. Don't copy, record, share or post this folder, the screens or the main PC's address. Two fights share one globe, so craters and damage from the other fight can appear in the world.
+WHO PLAYS: Only Orb plays and watches, on both PCs, with nobody else in the room. This build has a flashing-effects warning; read it first. Don't copy, record, share or post this folder, the screens or the main PC's address. Two fights share one globe, so craters and damage from the other fight can appear in the world. Fighters in the other fight can hit you, and your partner's fight isn't shown on your screen.
 
 BEFORE YOU START: ONE WINDOWS QUESTION, ONCE
 This is the only approval it needs, and only on the main PC. Windows blocks programs from being reached over the network unless you say so. So you're allowing this one game, on one network port, from addresses on your home network only (not ZeroTier). It's only for this test: step 8 takes it away, so don't skip that.
@@ -22,8 +22,11 @@ ON BOTH PCs
 6. Choose a controller on the start menu and press Start. Do this on each PC, one after the other, in any order.
 7. Look at the top of the window. It says "Waiting for the other PC", then "Connected, input wait 2 ticks". The PC that started first just waits, however long you take. Then fight. Your fighter is yours on each PC: the main PC plays the first, the old PC the second.
 
-TWO FIGHTS AT ONCE
-Close both, then use "Host 2v2 (main PC)" in step 2 and "Join 2v2 (old PC)" in step 4. Each PC now has its own fight against a computer fighter, on the same planet. The main PC's fight starts where the 1v1 does, and the old PC's half a world away. This version can't reach the other fight yet: you can't see it or hit it, but its craters and broken buildings stay where they fall. If one PC uses the 2v2 shortcut and the other doesn't, the top of the window says "Couldn't start".
+TWO OF YOU AGAINST TWO: "2v2 together"
+Close both, then use "Host 2v2 together (main PC)" in step 2 and "Join 2v2 together (old PC)" in step 4. You and your partner are a team against two computer fighters, one fight on each PC, on the same planet. Hits cross between the fights: shots and beams can reach an enemy in the other fight, and near one you can land a single blow on his opening, as his fighters can on yours. Your partner's fight isn't shown on your screen. A knocked-out fighter is out, and the match ends when a team has nobody standing. Both PCs must use the "together" shortcuts.
+
+TWO FIGHTS AT ONCE, APART
+Close both, then use "Host 2v2 (main PC)" in step 2 and "Join 2v2 (old PC)" in step 4. Each PC now has its own fight against a computer fighter, on the same planet. The main PC's fight starts where the 1v1 does, and the old PC's half a world away. In this one nothing crosses between the fights, but their craters and broken buildings stay where they fall. If the two PCs use different shortcuts, the top of the window says "Couldn't start".
 
 TO COMPARE TWO FEELS
 Close both, then use "Host with a longer wait (main PC)" in step 2. The top of the window says "input wait 3 ticks". Your button presses land about 17 ms later, and the two PCs have less to correct when one of them stutters. Tell the EP which you'd rather play.

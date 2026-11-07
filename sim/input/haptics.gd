@@ -236,13 +236,16 @@ const REFUSALS: Dictionary = {
 	"stun_limit": {"word": "One a string", "owner": "encounter", "what": "a stick stun held back by the one-a-string rule"},
 	"queue_expired": {"word": "Too slow", "owner": "encounter", "what": "the director's attack queue ran out before it could start the blow"},
 	"block_lockout": {"word": "Block cooling", "owner": "encounter", "what": "the perfect block's anti-mash lockout held the press"},
+	"too_close": {"word": "Too close", "owner": "encounter", "what": "a quick RB flick in a brawl: the heavy blast can't go in an exchange he is in (stick_refused source close)"},
+	"cooling": {"word": "Cooling", "owner": "encounter", "what": "the stick's beam met the signature's wait (stick_refused source cooling)"},
+	"soon": {"word": "Soon", "owner": "encounter", "what": "the beam is waiting for its target to be free to act, up to maxWaitTicks (stick_refused source soon)"},
 	"other": {"word": "Not now", "owner": "controls", "what": "a refusal whose text this table does not know"},
 }
-## The director's stick_refused cue texts, as codes.
-const REFUSAL_TEXT: Dictionary = {"ki": "no_energy", "taken": "hit", "late": "too_late", "replaced": "replaced", "chase": "no_reach", "answered": "answered", "dodged": "dodged", "cancel": "cancelled", "refused": "not_yours"}
+## The director's stick_refused cue reasons (the cue's `source`; its `text` is the stick's direction), as codes.
+const REFUSAL_TEXT: Dictionary = {"ki": "no_energy", "taken": "hit", "late": "too_late", "replaced": "replaced", "chase": "no_reach", "answered": "answered", "dodged": "dodged", "cancel": "cancelled", "refused": "not_yours", "close": "too_close", "cooling": "cooling", "soon": "soon"}
 
 
-## The reason code for a refusal cue's text: a known code passes through, the director's words map (REFUSAL_TEXT), a number (a state mask) is "busy", anything else "other".
+## The reason code for a refusal cue's reason (its `source`, hud-spec sections 84 and 85): a known code passes through, the director's words map (REFUSAL_TEXT), a number (a state mask) is "busy", anything else "other".
 static func refusal_code(text: String) -> String:
 	if REFUSALS.has(text):
 		return text
@@ -272,8 +275,10 @@ const BUILDING_H_REF: float = 300.0
 ##   launch      actor = the one sent, target = the launcher (the launcher's own cue is UI's launcher_open)  -> launch_felt on the sent one, scaled by speed
 ##   land        actor = the one touching down, spd      -> landing_thud, scaled by the speed
 ##   building_fall  (no fighter)                         -> building_break on both pads, scaled by the height
-## [] for any other event, and for all of them with switches.hapticImpact off. Pure: nothing is read or written but the event.
+## [] for any other event, and for all of them with switches.hapticImpact off (the one exception is the cue stick_stage, below, behind its own switch). Reads only the event (stage_event_requests keeps the last stage each pad was told).
 static func event_requests(e) -> Array:
+	if String(e.type) == "cue" and String(e.kind) == "stick_stage":
+		return stage_event_requests(e)
 	if not SimInputData.haptic_impact_on():
 		return []
 	match String(e.type):
@@ -306,6 +311,34 @@ static func event_requests(e) -> Array:
 			var sc: float = clampf(float(e.depth) / BUILDING_H_REF, 0.3, 1.0)
 			return [{"slot": 0, "kind": "building_break", "scale": sc}, {"slot": 1, "kind": "building_break", "scale": sc}]
 	return []
+
+
+## The charge's stages on the pad (docs/controls/stage-pulses.md; switches.hapticStages, off): Encounter's cue `stick_stage` (actor the charger, `k` the stage, `n` the count, source "capped" when
+## what he can pay stopped the climb) is one pulse by `stage_requests`: the first stage the tick, the last the thud, those between the knock climbing, so a base fighter's two stages are the tick
+## and the thud and a six-stage charge climbs. A step down (k under the last) says nothing; "capped" is the knock of a press that went nowhere (stick_refused, 0.6). A first stage is always a
+## new charge. The only state is the last stage each pad was told, so a step down is told from a climb: presentation only, never read by the sim.
+static var _stage_last: Array = [0, 0]
+
+
+static func reset_stage_state() -> void:
+	_stage_last = [0, 0]
+
+
+static func stage_event_requests(e) -> Array:
+	if not SimInputData.haptic_stages_on():
+		return []
+	var slot: int = int(e.actor)
+	if slot < 0 or slot > 1:
+		return []
+	var k: int = int(e.k)
+	var of: int = int(e.n)
+	var last: int = int(_stage_last[slot])
+	_stage_last[slot] = k
+	if String(e.source) == "capped":
+		return [{"slot": slot, "kind": "stick_refused", "scale": 0.6}]
+	if k < 1 or of < 1 or k > of or (k <= last and k != 1):
+		return []
+	return stage_requests(slot, k, of)
 
 
 ## The kinds this knows.
@@ -433,18 +466,20 @@ static func push_share(point: float, pusher_is_firer: bool) -> float:
 ##                        overwhelmed fighter
 ## `firer` is the slot that fired the struggle's first beam (the `beam_struggle` cue's actor, whose hands are the point's 0), which the
 ## host keeps; -1 if unknown (the surge's actor is then taken as the firer). A beam_stray and every other cue rumble nothing.
-static func requests(name: String, actor: int, target: int, text: String, amount: float, firer: int = -1) -> Array:
+static func requests(name: String, actor: int, target: int, text: String, amount: float, firer: int = -1, source: String = "") -> Array:
 	match name:
 		"stick_refused":
 			# Encounter's cue when it drops a stick request it cannot start (busy, stunned, in a struggle): actor = the presser. The truth, told as soon as the director knows.
 			if not SimInputData.haptic_refused_on() or actor < 0 or actor > 1:
 				return []
-			return [{"slot": actor, "kind": "stick_refused", "scale": 1.0, "reason": refusal_code(text)}]
+			if source == "soon":
+				return []   # a held release waiting on its target's gate is not a refusal: the screen word is enough (the EP, 2026-11-07)
+			return [{"slot": actor, "kind": "stick_refused", "scale": 1.0, "reason": refusal_code(source if source != "" else text)}]   # the reason is the cue's source (text is the direction); an old caller with the reason in text still reads
 		"press_refused":
-			# The director's (or the block's) cue for a press that is not a stick request and was let go of: actor = the presser, text = a reason code (stun_limit, queue_expired, block_lockout).
+			# The director's (or the block's) cue for a press that is not a stick request and was let go of: actor = the presser, source = a reason code (stun_limit, queue_expired, block_lockout).
 			if not SimInputData.refusal_cues_on() or actor < 0 or actor > 1:
 				return []
-			return [{"slot": actor, "kind": "stick_refused", "scale": 1.0, "reason": refusal_code(text)}]
+			return [{"slot": actor, "kind": "stick_refused", "scale": 1.0, "reason": refusal_code(source if source != "" else text)}]
 		"stick_start":
 			# Encounter's cue when a stick strike's request begins: actor = the striker, text = its direction as the defender faces it. The defender feels it (switches.hapticIncoming).
 			if not SimInputData.haptic_incoming_on() or actor < 0 or actor > 1:

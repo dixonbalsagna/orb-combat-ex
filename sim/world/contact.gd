@@ -32,6 +32,7 @@ static var K_SKIM_LIFT: float = 0.65
 static var K_SKIM_KEEP: float = 0.85
 static var K_SINK: float = 200.0
 static var K_MAXC: int = 8
+static var K_MAXC_POWER: int = 3   # contact.json power.maxContacts: the ground contacts a send may make under the power model (a skim keeps K_MAXC)
 static var K_MAXT: int = 240
 static var K_TUMT: int = 72
 static var K_TAILT: int = 18
@@ -211,6 +212,7 @@ static func _cache() -> void:
 	K_SKIM_KEEP = float(w.skimKeep)
 	K_SINK = float(w.sinkBelow)
 	K_MAXC = int(D.journey.maxContacts)
+	K_MAXC_POWER = int(D.get("power", {}).get("maxContacts", 3))
 	K_MAXT = _ticks(float(D.journey.maxSeconds))
 	K_TUMT = _ticks(float(D.tumble.maxSeconds))
 	K_TAILT = _ticks(float(D.tumble.cappedTail))
@@ -643,7 +645,31 @@ static func groundPhase(S: SimState, b: Body, ev: Array) -> void:
 		b.vy = SimMathx.jmin(b.vy, 0.0)
 
 
-static func _bounceCap(b: Body) -> int:
+## The contacts after which a send tumbles to a stop on the ground: the journey's, or under the power model (S.powerOn) at most contact.json power.maxContacts, so a body does not rattle off bumps in the ground (Orb, first play): a hard landing digs,
+## a shallow one skids and furrows, and what is left of the energy is spent in the slide. Water's skims keep the journey's.
+static func _maxC(S: SimState) -> int:
+	return mini(K_MAXC, K_MAXC_POWER) if S.powerOn else K_MAXC
+
+
+static var _pwBounces: int = -1
+
+
+## The most terrain bounces a send may take under the power model (data/fight/power.json contact.maxTerrainBounces, 1: Game Design, docs/design/power-scale.md; Orb: "I would have rather seen my fighter leave a crater or a trench").
+## Read once; only a match with S.powerOn uses it.
+static func _powerBounces() -> int:
+	if _pwBounces < 0:
+		_pwBounces = 1
+		var f := FileAccess.open("res://data/fight/power.json", FileAccess.READ)
+		if f != null:
+			var j = JSON.parse_string(f.get_as_text())
+			if j is Dictionary and j.get("contact") is Dictionary and (j.contact.get("maxTerrainBounces") is float or j.contact.get("maxTerrainBounces") is int):
+				_pwBounces = maxi(0, int(j.contact.maxTerrainBounces))
+	return _pwBounces
+
+
+static func _bounceCap(S: SimState, b: Body) -> int:
+	if S.powerOn:   # the power model: one bounce a send at most, whatever the tier, then he digs in or skids
+		return _powerBounces()
 	return int(K_PERTIER[clampi(int(b.tier), 1, 4) - 1])
 
 
@@ -685,7 +711,7 @@ static func _land(S: SimState, b: Body, g: float, ev: Array) -> void:
 	# a steep landing is a slam at the first contact, and the landing after a hard slam's hop; a later steep landing after a bounce or a
 	# lip launch is a bounce or a skid by the usual rules (a journey makes one mark)
 	var slam: bool = sea or (sin2 >= K_SLAM2 and (first or wasHopped)) or (b.swallow and first)   # biomes W6: the marsh swallows the slam whatever its angle
-	var forceTumble: bool = b.contacts >= K_MAXC or b.t >= K_MAXT
+	var forceTumble: bool = b.contacts >= _maxC(S) or b.t >= K_MAXT
 	if S.ricOn and not sea and not forceTumble and SimRicochet.steepGround(s):   # Simulation's ricochet (sim/core/ricochet.gd): fast and shallow on steep ground, a glance
 		var gl: PackedFloat64Array = SimRicochet.rule(vn, vt, b.rics)
 		if int(gl[0]) == SimRicochet.GLANCE:
@@ -705,7 +731,7 @@ static func _land(S: SimState, b: Body, g: float, ev: Array) -> void:
 	if slam:
 		var hop: bool = (not sea) and sp >= K_HOPSPEED and not b.hopped and not b.swallow
 		if hop and first and b.embedOK:   # a blow that will embed him digs in and stays there: no hop
-			var Ee: float = WorldCrater.impactEnergy(sp, b.tier) * (WorldCrater.SPECIAL_E_MULT if b.special else 1.0)
+			var Ee: float = WorldCrater.impactEnergy(sp, b.tier, S) * (WorldCrater.SPECIAL_E_MULT if b.special else 1.0)
 			var dEst: float = WorldCrater.radiusOf(Ee, b.special) * WorldCrater.DEPTH_RATIO * (WorldCrater.GRAZE_MIN + (1.0 - WorldCrater.GRAZE_MIN) * vertL) / 75.0
 			if dEst >= K_EMB_MIN or (b.special and dEst >= K_EMB_SPECIAL):
 				hop = false
@@ -726,7 +752,7 @@ static func _land(S: SimState, b: Body, g: float, ev: Array) -> void:
 	if absf(vt) < 1.0e-6:
 		dir = 1.0 if b.vx >= 0.0 else -1.0
 	if not tumbleOnly:
-		var cap: int = _bounceCap(b)
+		var cap: int = _bounceCap(S, b)
 		if sin2 >= K_SKID2 and int(b.bounces) < cap:
 			# a bounce: the normal part is reflected with the bounce's keep, the tangent part keeps its share
 			var e: float = float(K_VKEEP[mini(int(b.bounces), K_VKEEP.size() - 1)]) * _gv(S, 2, b.x)
@@ -800,7 +826,7 @@ static func stepContact(S: SimState, b: Body, dt: float, ev: Array) -> void:
 	var xa: float = SimWrap.wrap(b.x + dir * vN2 * tv * SimDetMath.pow(0.55, dt) * dt)
 	var yb: float = b.y + (vyT - 1000.0 * dt) * dt
 	# past the journey's caps (8 contacts or 4 s) he tumbles to a stop: no more leaving the ground
-	var capNow: bool = b.contacts >= K_MAXC or b.t >= K_MAXT
+	var capNow: bool = b.contacts >= _maxC(S) or b.t >= K_MAXT
 	if not capNow and vN2 > 0.0 and yb - WorldTerrain.groundY(S, xa, b.z) > K_CLEAR:
 		var cause: String = "crest"   # natural ground: a hill's or ridge's crest
 		if S.rubble[int(floor(SimWrap.wrap(b.x) / SimConst.COL)) % SimConst.NC] > 0.0:
@@ -1169,7 +1195,7 @@ static func _contact(S: SimState, f, by, b: Body, e: Dictionary) -> void:
 	var first: bool = bool(e.first)
 	f.contactT = 0
 	var sea: bool = WorldTerrain.seaAt(S, f.x)
-	var E: float = WorldCrater.impactEnergy(sp, tier)
+	var E: float = WorldCrater.impactEnergy(sp, tier, S)
 	if first:
 		f.slideE = E
 		f.slideX0 = f.x
@@ -1389,7 +1415,7 @@ static func slideObstacle(S: SimState, x: float, z: float, dir: float, dist: flo
 static func bump(S: SimState, f, by, kind: String, spN: float) -> float:
 	var dmg: float = spN * WorldSlide.STOP_DMG
 	if kind != "heap":
-		WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(spN, by.tier) * WorldSlide.STOP_E, by, "impact", 0.0, 1.0, false, f.z)
+		WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(spN, by.tier, S) * WorldSlide.STOP_E, by, "impact", 0.0, 1.0, false, f.z)
 	SimDamage.hurt(S, f, dmg, by)
 	SimFx.shake(S, minf(10.0, spN * 0.004), f.x, f.z)
 	SimFx.debris(S, f.x, f.y + 8.0, 3, "#6d6a66", 400.0, f.z)

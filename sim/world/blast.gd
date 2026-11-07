@@ -55,21 +55,22 @@ static func _load() -> void:
 
 
 ## A shot of the given kind, fired by slot, ended at (x, y, z) moving at (vx, vy) units a second, against the ground (cause "ground") or the
-## water (cause "water"). Returns {"crater": the record or null, "levelled": buildings levelled}.
-static func shotHit(S: SimState, slot: int, kind: String, x: float, y: float, z: float, vx: float, vy: float, cause: String, charge: float = 1.0, capLeft: int = 1) -> Dictionary:
+## water (cause "water"). Returns {"crater": the record or null, "levelled": buildings levelled}. shooter: the body that
+## fired a shot from outside (Simulation's cross-fights, slot -1), read in place of slot's.
+static func shotHit(S: SimState, slot: int, kind: String, x: float, y: float, z: float, vx: float, vy: float, cause: String, charge: float = 1.0, capLeft: int = 1, shooter = null) -> Dictionary:
 	SimField.far()
-	var r: Dictionary = _shotHitRead(S, slot, kind, x, y, z, vx, vy, cause, charge, capLeft)
+	var r: Dictionary = _shotHitRead(S, slot, kind, x, y, z, vx, vy, cause, charge, capLeft, shooter)
 	SimField.near()
 	return r
 
 
-static func _shotHitRead(S: SimState, slot: int, kind: String, x: float, y: float, z: float, vx: float, vy: float, cause: String, charge: float = 1.0, capLeft: int = 1) -> Dictionary:
+static func _shotHitRead(S: SimState, slot: int, kind: String, x: float, y: float, z: float, vx: float, vy: float, cause: String, charge: float = 1.0, capLeft: int = 1, shooter = null) -> Dictionary:
 	var res := {"crater": null, "levelled": 0}
 	var D: Dictionary = data()
-	if D.is_empty() or not D.kinds.has(kind) or slot < 0 or slot >= S.fighters.size():
+	if D.is_empty() or not D.kinds.has(kind) or (shooter == null and (slot < 0 or slot >= S.fighters.size())):
 		return res
 	var k: Dictionary = D.kinds[kind]
-	var f = S.fighters[slot]
+	var f = shooter if shooter != null else S.fighters[slot]
 	var ti: int = clampi(int(f.tier), 1, 4) - 1
 	if cause == "water":
 		SimFx.splash(S, x, y, int(k.splash), z)
@@ -108,11 +109,12 @@ static func _area(S: SimState, f, k: Dictionary, D: Dictionary, ti: int, charge:
 ## A shot hits building b at (x, y) (SimShots.hitStructure calls this): the damage by the shot's kind and the shooter's tier, through the building's floors (a skyscraper loses
 ## floors: dent, crack or punch, and a punched span pancakes what stands above it) or its hit points (a house). A light shot (chip in the data)
 ## first piles into the building's wear pool (nothing shows); at chip.threshold of maxhp the pool is paid in one blow. Returns {"outcome",
-## "dmg", "levelled"}: outcome chip (nothing shown), or what the floors did, or hit/collapse for a plain building.
-static func shotBuilding(S: SimState, slot: int, kind: String, power: float, b, x: float, y: float, z: float, vx: float, vy: float, charge: float = 1.0) -> Dictionary:
+## "dmg", "levelled"}: outcome chip (nothing shown), or what the floors did, or hit/collapse for a plain building. shooter:
+## the body that fired a shot from outside (Simulation's cross-fights, slot -1), read in place of slot's.
+static func shotBuilding(S: SimState, slot: int, kind: String, power: float, b, x: float, y: float, z: float, vx: float, vy: float, charge: float = 1.0, shooter = null) -> Dictionary:
 	var D: Dictionary = data()
 	var k: Dictionary = D.kinds[kind]
-	var f = S.fighters[slot]
+	var f = shooter if shooter != null else S.fighters[slot]
 	var ti: int = clampi(int(f.tier), 1, 4) - 1
 	var dmg: float = structDamage(k, charge) * float(D.tierDamage[ti])
 	var res := {"outcome": "hit", "dmg": dmg, "levelled": false}

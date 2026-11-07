@@ -42,6 +42,11 @@ static func holdMove(S: SimState, f) -> float:
 	return _d("stick.gd").holdMove(S, f)
 
 
+## DirBeamMove.refillHeld: while the stick holds a charge, his energy doesn't refill (Game Design, playable-build.md section 2).
+static func refillHeld(f) -> bool:
+	return _d("beam_move.gd").refillHeld(f)
+
+
 ## DirBrawl.pressInStun: a press a stun is about to clear.
 static func pressInStun(S: SimState, f, i) -> void:
 	_d("brawl.gd").pressInStun(S, f, i)

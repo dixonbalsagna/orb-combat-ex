@@ -313,7 +313,7 @@ static func _breakSlab(S: SimState, f, b, by, j: int, sp: float) -> void:
 	if j >= b.floors or not WorldBrunt.isStanding(b, j):
 		return
 	var c: Dictionary = WorldBrunt.cfg()
-	var dmg: float = sp * float(c.tierFactor[WorldBrunt.tierIx(float(f.interior.tier), f.launchSpecial)]) * float(c.bruntMul)
+	var dmg: float = sp * WorldBrunt.tierFactorOf(S, by, float(f.interior.tier), f.launchSpecial) * float(c.bruntMul)
 	var oc: Dictionary = {"floors": true, "dmg": dmg, "ratio": maxf(dmg / WorldBrunt.floorStr(b, j), 1.0), "outcome": "punch", "k": j, "hit": [j], "pass": true, "keep": float(c.interiorFloorKeep), "deaths": 0.0}
 	WorldBrunt.applyFloors(S, b, oc, by, f.chainEvt, f.x, f, f.y)
 
@@ -360,12 +360,12 @@ static func _end(S: SimState, f, b, by, end: String, viaFace: bool = false) -> v
 	var cm: Dictionary = WorldBrunt.cfg()
 	var held: bool = end == "lodge" or end == "capped"
 	if held:
-		var tfac: float = float(cm.tierFactor[WorldBrunt.tierIx(float(s.tier), f.launchSpecial)])
+		var tfac: float = WorldBrunt.tierFactorOf(S, by, float(s.tier), f.launchSpecial)
 		var rest: float = spLeft * tfac * float(cm.bruntMul) * float(cm.lodgeDump)
 		if b.alive and rest > 0.0:
 			WorldStructures.damageBuilding(S, b, minf(rest, WorldStructures.coreCap() * b.maxhp), by, "burst", f.x, f.chainEvt, true)
 		SimDamage.hurt(S, f, spLeft * WorldBrunt.FIGHTER_DMG, by)
-		var holdS: float = WorldBrunt.lodgeSeconds(float(s.tier), f.launchSpecial)
+		var holdS: float = WorldBrunt.lodgeSecondsOf(S, by, float(s.tier), f.launchSpecial)
 		WorldBrunt._hold(S, f, holdS)
 		f.vx = 0.0
 		f.vy = 0.0

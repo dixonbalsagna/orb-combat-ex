@@ -46,7 +46,7 @@ const W_SENDS: int = 23   # sends into a building in this town (game-design.md s
 const W_SENT: int = 24    # the live tick of the last one, plus 1
 const W_N: int = 25
 
-const CAUSES: Array = ["launch", "chase", "flee", "form", "brawl", "story", "jolt", "nudge"]
+const CAUSES: Array = ["launch", "chase", "flee", "form", "brawl", "story", "jolt", "nudge", "slam"]   # (slam last: the others keep their numbers)
 
 static var _d = null
 static var _text: String = ""
@@ -57,6 +57,13 @@ static var _posed := PackedInt32Array()   # the buildings that plan posed, to pu
 static var everyPlace: bool = false       # tools: the planet's places, built or not, to test a turn against any of them
 static var _builtKey: String = ""         # _builtPlaces' memo, by the world: a pure read of it, so it holds nothing the state does
 static var _builtMemo := PackedByteArray()
+static var _stKey := PackedFloat64Array()  # _standing's memo (Performance's second round, docs/perf/impact-stutter.md): each building's distance and
+static var _stLay: Array = []             # bearing from one frame's point, a pure read of the frame and the buildings' places (which never move on the
+static var _stStamp: int = 0              # planet), so the launch's look, its candidates and the jolt's lean from the same point work them out once
+static var _stSeen := PackedInt32Array()
+static var _stD := PackedFloat64Array()
+static var _stP := PackedFloat64Array()
+static var memoOff: bool = false          # tools: _standing whole on every call, the launch's look over its whole list (launch_cost_check)
 static var _joltDue: Dictionary = {}   # one tick (jolt.yieldToLaunch): a jolt atBlow asked, sent at tick's end; never kept past it
 
 
@@ -215,7 +222,7 @@ static func _builtPlaces(S: SimState, P) -> PackedByteArray:
 
 
 ## Each standing building within maxD of the point that may be aimed at: its distance, its bearing as places reads one, its
-## index. Standing is all it reads (RL-213).
+## index. Standing is all it reads (RL-213). The distance and bearing come from the memo when this frame has worked them out.
 static func _standing(S: SimState, fr: Dictionary, maxD: float) -> Array:
 	var out: Array = []
 	if S.bDir.size() != S.buildings.size() * 3:
@@ -228,7 +235,9 @@ static func _standing(S: SimState, fr: Dictionary, maxD: float) -> Array:
 	var m1: float = M[1]
 	var m2: float = M[2]
 	var dirs: PackedFloat64Array = S.bDir
-	for i in range(S.buildings.size()):
+	var nb: int = S.buildings.size()
+	var stamp: int = _stFor(S, fr)
+	for i in range(nb):
 		var q0: float = dirs[i * 3]
 		var q1: float = dirs[i * 3 + 1]
 		var q2: float = dirs[i * 3 + 2]
@@ -238,11 +247,71 @@ static func _standing(S: SimState, fr: Dictionary, maxD: float) -> Array:
 		var b = S.buildings[i]
 		if not b.alive or WorldSettle.noTarget(b.landmark):
 			continue
-		var d: float = WorldPlanet.acosf(clampf(cm, -1.0, 1.0)) * SimField.R
+		if _stSeen[i] != stamp:
+			_stD[i] = WorldPlanet.acosf(clampf(cm, -1.0, 1.0)) * SimField.R
+			_stP[i] = WorldPlanet.atan2f(q0 * N[0] + q1 * N[1] + q2 * N[2], q0 * T[0] + q1 * T[1] + q2 * T[2]) * 180.0 / SimMathx.PI
+			_stSeen[i] = stamp
+		var d: float = _stD[i]
 		if d < WorldBrunt.BR_MIN:
 			continue
-		out.append([d, WorldPlanet.atan2f(q0 * N[0] + q1 * N[1] + q2 * N[2], q0 * T[0] + q1 * T[1] + q2 * T[2]) * 180.0 / SimMathx.PI, i])
+		out.append([d, _stP[i], i])
 	return out
+
+
+## The stamp of _standing's memo for the frame fr: the one it holds, or a new one for a new frame or another world.
+static func _stFor(S: SimState, fr: Dictionary) -> int:
+	var M: Array = fr.M
+	var T: Array = fr.T
+	var N: Array = fr.N
+	var nb: int = S.buildings.size()
+	var key := PackedFloat64Array([M[0], M[1], M[2], T[0], T[1], T[2], N[0], N[1], N[2]])
+	var lay: Array = [int(S.frame.seed), nb, S.bDir[0] if nb > 0 else 0.0]
+	if key != _stKey or lay != _stLay or _stSeen.size() != nb or memoOff:
+		_stKey = key
+		_stLay = lay
+		if _stSeen.size() != nb or _stStamp >= 1 << 30:
+			_stSeen.resize(nb)
+			_stSeen.fill(0)
+			_stD.resize(nb)
+			_stP.resize(nb)
+			_stStamp = 0
+		_stStamp += 1
+	return _stStamp
+
+
+## Whether _standing(S, fr, maxD), read in order, has a building within minDeg of the line's way side: the same walk, stopped at
+## the first such building, so the ones after it aren't worked out (a launch's look stops there more often than not).
+static func _lineBuilding(S: SimState, fr: Dictionary, maxD: float, side: int, minDeg: float) -> bool:
+	if S.bDir.size() != S.buildings.size() * 3:
+		return false
+	var M: Array = fr.M
+	var T: Array = fr.T
+	var N: Array = fr.N
+	var least: float = SimDetMath.cos(minf(maxD / SimField.R, SimMathx.PI))
+	var m0: float = M[0]
+	var m1: float = M[1]
+	var m2: float = M[2]
+	var dirs: PackedFloat64Array = S.bDir
+	var stamp: int = _stFor(S, fr)
+	for i in range(S.buildings.size()):
+		var q0: float = dirs[i * 3]
+		var q1: float = dirs[i * 3 + 1]
+		var q2: float = dirs[i * 3 + 2]
+		var cm: float = q0 * m0 + q1 * m1 + q2 * m2
+		if cm < least:
+			continue
+		var b = S.buildings[i]
+		if not b.alive or WorldSettle.noTarget(b.landmark):
+			continue
+		if _stSeen[i] != stamp:
+			_stD[i] = WorldPlanet.acosf(clampf(cm, -1.0, 1.0)) * SimField.R
+			_stP[i] = WorldPlanet.atan2f(q0 * N[0] + q1 * N[1] + q2 * N[2], q0 * T[0] + q1 * T[1] + q2 * T[2]) * 180.0 / SimMathx.PI
+			_stSeen[i] = stamp
+		if _stD[i] < WorldBrunt.BR_MIN:
+			continue
+		if absf(_turnFor(_stP[i], side)) < minDeg:
+			return true
+	return false
 
 
 ## How many of the buildings stand within band of a line turned by turn, either way along it.
@@ -633,10 +702,17 @@ static func _launchPick(S: SimState, A, D, force: float):
 		_explain(S, "launch", [], false, "", 0)
 		return null
 	var side: int = 1 if float(A.face) >= 0.0 else -1
-	for e in _standing(S, _frame(S, float(A.x)), reach):
-		if absf(_turnFor(float(e[1]), side)) < float(c.minDeg):
-			SimEvents.feed(S, "SWING launch", "a building on the line; stay 0")
-			return null
+	var onLine: bool = false
+	if memoOff:   # tools: the list whole, as it was
+		for e in _standing(S, _frame(S, float(A.x)), reach):
+			if absf(_turnFor(float(e[1]), side)) < float(c.minDeg):
+				onLine = true
+				break
+	else:
+		onLine = _lineBuilding(S, _frame(S, float(A.x)), reach, side, float(c.minDeg))
+	if onLine:
+		SimEvents.feed(S, "SWING launch", "a building on the line; stay 0")
+		return null
 	var list: Array = scored(S, "launch", A, D, float(A.x), side, cap, reach, cap)
 	var took: bool = not list.is_empty() and float(list[0].s) > 0.0 and _beats(S, float(list[0].s), float(list[0].turn))
 	_explain(S, "launch", list, took, "launcher", 0)
@@ -763,6 +839,38 @@ static func atBlow(S: SimState, A, D, weight: float) -> void:
 		_joltDue = {"a": S.fighters.find(A), "deg": deg, "score": score, "pv": pv}
 		return   # it goes at the tick's end, unless the same blow's launch has started its own swing by then (tick)
 	_joltGo(S, A, deg, score, pv)
+
+
+## The world turns on impact (swing.json slam; Game Design, playable-build.md section 4): this tick's wall slams (a building that held him) and
+## lodges, each a chance for a big swing toward the street behind its building. World made them in the fighters' step, before the director's.
+static func _impacts(S: SimState) -> void:
+	if not bool(cfg().get("slam", {}).get("enabled", false)):
+		return
+	for e in S.out.fx:
+		var ty: String = String(e.type)
+		if (ty == "building_hit" and String(e.outcome) == "wall") or ty == "lodge":
+			var k: int = int(e.actor)
+			if k < 0 or k >= S.fighters.size():
+				continue
+			var D = S.fighters[k]
+			var A = D.launchBy if D.launchBy != null else DirBrawl.rivalOf(S, D)
+			atImpact(S, A, D, int(e.b))
+
+
+## A slam into building bi: the line eases toward the street behind it, up to slam.maxDeg, pivoting on him, at slam.rate at most. The turn is the
+## street's angle to the line (WorldStructures.streetAxis alongSin), so the line comes to run down it. Nothing for a building no lot holds.
+static func atImpact(S: SimState, A, D, bi: int) -> void:
+	var c: Dictionary = cfg().get("slam", {})
+	if not bool(c.get("enabled", false)) or not on(S) or restRule(S) != "" or _flyingByChoice(S) != null:
+		return
+	var ax: Dictionary = WorldStructures.streetAxis(S, bi)
+	if not bool(ax.found):
+		return
+	var sn: float = clampf(float(ax.alongSin), -1.0, 1.0)
+	var deg: float = clampf(WorldPlanet.atan2f(sn, sqrt(maxf(0.0, 1.0 - sn * sn))) * 180.0 / SimMathx.PI, -float(c.maxDeg), float(c.maxDeg))
+	if absf(deg) < float(cfg().minDeg) or not _beats(S, float(c.score), deg):
+		return
+	_take(S, "slam", A, {"turn": deg, "id": -1, "kind": "street", "s": float(c.score)}, {"deg": deg, "cause": "slam", "pivotX": float(D.x), "rate": float(c.rate)}, "contact")
 
 
 ## The jolt's ask, and what it leaves for the next.
@@ -1024,6 +1132,7 @@ static func tick(S: SimState, dt: float) -> void:
 			SimSwing.rest(S, int(cfg().restOut))
 		elif ex != null and DirBrawl.isBrawl(ex) and sw.cause != "small" and sw.cause != "brawl" and float(sw.rate) > float(SimSwing.data().causes.brawl.peak):
 			SimSwing.ask(S, {"deg": float(sw.left), "cause": "brawl"})   # a swing the pair has caught up with comes down to a brawl's rate
+	_impacts(S)
 	_nudgeTick(S)
 	_fleeTick(S)
 	_brawlTick(S)

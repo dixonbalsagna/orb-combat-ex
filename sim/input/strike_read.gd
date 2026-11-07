@@ -14,6 +14,7 @@ extends RefCounted
 ## The edges (start, release, cancel) are kept until clear_edges(), which the layout calls when a step took the intent, so a press made during a
 ## freeze is not lost and a flick shorter than the freeze still reports start and release together.
 
+const LEVEL_MAX: int = 3    # the most the reader's `level` (the intent's rsLevel) can be: two bits on the wire, whatever the count of rungs
 const NONE: int = 0
 const UP: int = 1
 const DOWN: int = 2
@@ -80,11 +81,11 @@ func _init() -> void:
 	aim_peak = SimInputData.tf(["strike", "aimLatchPeak"], 0.85)
 	dwell = SimInputData.ti(["strike", "dwell"], 12)
 	ladder = _ints(SimInputData.t(["strike", "levels"], [12, 30, 50]), [12, 30, 50])
-	beam_ladder = _ints(SimInputData.t(["strike", "beamLevels"], [12, 30, 54]), [12, 30, 54])
+	beam_ladder = _ints(SimInputData.t(["strike", "beamLevels"], [12, 28, 46, 66, 90, 120]), [12, 28, 46, 66, 90, 120])
 
 
 static func _ints(a, fallback: Array) -> Array:
-	if not (a is Array) or a.size() != 3:
+	if not (a is Array) or a.size() < 3 or a.size() > 6:   # three rungs for the martial ladder, and for a beam up to the six stages of Encounter's charge
 		return fallback
 	var out: Array = []
 	for v in a:
@@ -131,7 +132,8 @@ static func relative(d: int, facing: int) -> String:
 	return ""
 
 
-## The ladder level a charge held for `held` live ticks has reached: 0 below the first rung, 3 at the last. A beam or the signature uses its own rungs.
+## The ladder level a charge held for `held` live ticks has reached: 0 below the first rung, up to the count of rungs (3, or for a beam up to 6, the director's own reading of a plain charge). A beam or the signature uses its own rungs.
+## The reader's `level`, and so the intent's rsLevel, is cut to LEVEL_MAX (3), the width the wire and every reader of rsLevel have.
 func level_at(held: int, beam: bool = false) -> int:
 	var lad: Array = beam_ladder if beam else ladder
 	var n: int = 0
@@ -185,7 +187,7 @@ func step(x: float, y: float, mask: int, tick: int, live: int, floor_tick: int =
 			_try_start(x, y, tick, live, floor_tick)
 		ACTIVE:
 			var held: int = live - _start_live
-			level = level_at(held, is_beam_layer(layer))
+			level = mini(level_at(held, is_beam_layer(layer)), LEVEL_MAX)
 			if toggle:
 				if not down:
 					_rest_seen = true
@@ -271,7 +273,7 @@ func _try_start(x: float, y: float, tick: int, live: int, floor_tick: int) -> vo
 
 
 func _throw(tick: int, live: int) -> void:
-	level = level_at(live - _start_live, is_beam_layer(layer))
+	level = mini(level_at(live - _start_live, is_beam_layer(layer)), LEVEL_MAX)
 	release = true
 	if SimInputData.beam_aim_on():
 		aim = _latched_aim()   # the stick has sprung home by the tick it is read: the throw carries the aim it held (docs/controls/beam-aim-feel.md)

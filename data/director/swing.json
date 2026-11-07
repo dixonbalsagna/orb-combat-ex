@@ -170,6 +170,7 @@
     "tall": 6.0,
     "reversal": 3.0
   },
+  "slam": {"enabled": false, "maxDeg": 45.0, "rate": 60.0, "score": 10.0, "_note": "The world turns on impact (Game Design, playable-build.md section 4): a wall slam (a building that holds him, building_hit outcome wall) or a lodge can start a big swing, easing the city toward the street behind the building (WorldStructures.streetAxis), up to maxDeg, pivoting on the contact, at no more than rate degrees a second under the rate law. Its cause is slam, and it counts with the big swings. score: what it weighs against a swing already running."},
   "jolt": {
     "minSec": 1.0,
     "minDeg": 3.0,

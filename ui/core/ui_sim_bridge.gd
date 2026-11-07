@@ -252,7 +252,36 @@ static func strip_data(S, cam_x: float, cam_w: float) -> Dictionary:
 		if o != null and o.lastSeen != null:
 			seen = float(o.lastSeen.x)
 		fs.append({"x": float(f.x), "slot": i, "hidden": bool(f.hidden), "aura": _aura(str(f.aura)), "seen_x": seen})
-	return {"W": SimConst.W, "segs": segs, "cam_x": cam_x, "cam_w": cam_w, "dead": dead, "fighters": fs}
+	return {"W": SimConst.W, "segs": segs, "cam_x": cam_x, "cam_w": cam_w, "dead": dead, "fighters": fs, "calls": calls(S)}
+
+
+## The brink's call as places on the ring (the strip and the globe): where each body of the viewer's team in the OTHER fight of a 2v2 stands while it is on its brink, his partner calling. Read only; [] in 1v1 and with
+## the feature brink_mark off. The viewer's team is that of the first person in this fight (any fighter with no computer driving it), else of the first fighter.
+static func calls(S) -> Array:
+	var out: Array = []
+	if not UiData.feature("brink_mark") or S == null or not ("stage" in S) or S.stage == null:
+		return out
+	var st = S.stage
+	if int(st.cur) == SimStage.WHOLE or st.fights.size() < 2:
+		return out
+	var team: int = _view_team(S)
+	for i in range(st.fights.size()):
+		if i == int(st.cur):
+			continue
+		for g in st.fights[i].fighters:
+			if g.brink and not g.out and SimCross.team(g) == team:
+				out.append(float(g.x))
+	return out
+
+
+static func _view_team(S) -> int:
+	var first = null   # the first of the list, the fallback when every body has a computer
+	for f in S.fighters:
+		if f.ai == null:
+			return SimCross.team(f)
+		if first == null:
+			first = f
+	return SimCross.team(first) if first != null else 0
 
 
 static func _aura(hex: String) -> Color:

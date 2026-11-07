@@ -6,7 +6,7 @@ extends RefCounted
 ## stun, a stagger or a daze, the recovery after a blow of his own or a whiff). If he isn't open, he hovers in reach up to waitSec for
 ## one, and if none comes it's a whiff: he's open whiffTicks. One blow from outside an opening. It lands in the other fight on its clock,
 ## through SimDamage.hit (his guard answers it), and never sends, knocks back or stuns. What it does there is landed's.
-## Behind interrupts.json outside.enabled, only with SimCross on. State: integers on f.act.dirI after DirStanceCost's.
+## Behind interrupts.json outside.enabled, or a setup's "outside" for its match (S.stage.outside), only with SimCross on. State: integers on f.act.dirI after DirStanceCost's.
 
 const O_KEY: int = 0    # the enemy he's going for: his starting slot, 1 to 4; 0 none
 const O_UNTIL: int = 1  # the live tick his hover ends, plus 1
@@ -30,7 +30,16 @@ static func cfg() -> Dictionary:
 
 
 static func on(S: SimState) -> bool:
-	return SimCross.on(S) and (bool(cfg().get("enabled", false)) if _force < 0 else _force == 1)
+	return SimCross.on(S) and enabled(S)
+
+
+## Blows from outside in this match: the tools' force, else the setup's "outside" (S.stage.outside, Simulation's), else
+## interrupts.json's outside.enabled.
+static func enabled(S: SimState) -> bool:
+	if _force >= 0:
+		return _force == 1
+	var o: int = S.stage.outside if S.stage != null else -1
+	return o == 1 if o >= 0 else bool(cfg().get("enabled", false))
 
 
 static func _b() -> int:
@@ -311,7 +320,7 @@ static func _hit(S: SimState, A, D) -> void:
 ## breaks it, his victim free and still on the brink; on someone in a string it ends his string, his run with it (a blow he'd thrown
 ## still lands). Otherwise it's the damage and the hold, and the exchange runs on.
 static func landed(S: SimState, A, D, _o: Dictionary) -> void:
-	if not bool(cfg().get("enabled", false)) and _force != 1:
+	if not enabled(S):
 		return
 	SimFx.cue(S, D, "outside_hit", String(A.keys), "")
 	_s(D, O_TEAM, S.tick + 1)

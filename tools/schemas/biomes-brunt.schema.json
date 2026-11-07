@@ -324,6 +324,12 @@
       "minimum": 1,
       "maximum": 3,
       "description": "The radius factor an impact on already cratered ground asks of the old crater."
+    },
+    "powerLowTowerMaxH": {
+      "type": "number",
+      "minimum": 100,
+      "maximum": 6000,
+      "description": "The power model (data/fight/power.json absorb, docs/world/power-world.md): a tower under this height takes the low-tower mass of a body's energy, a taller one the tall-tower mass. About a third of planet 7's towers are under 1,200 (their heights run 675 to 4,875, median 1,620). Read only with the power switch on."
     }
   },
   "additionalProperties": false,

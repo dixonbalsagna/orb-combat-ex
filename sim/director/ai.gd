@@ -60,6 +60,8 @@ static func aiInput(S: SimState, f) -> void:
 		return   # 2v2: a beam of the other fight has it first on its line: it dodges
 	if DirOutside.aiRescue(S, f, i):
 		return   # 2v2: its partner in the other fight is on the brink: it comes
+	if DirBeamMove.aiHolding(S, f, i):
+		return   # its beam's hold (the stick beam's own move): it charges, then lets go
 	if f.act.formReady and not _formHold(S, f, o):
 		i.transform = true
 	if DirBrawl.inBrawl(S, f):
@@ -254,8 +256,9 @@ static func aiInput(S: SimState, f) -> void:
 	var ready: bool = S.dirS.cool <= 0.0 and o.state != "launched" and o.state != "locked" and DirBands.who(S) < 0 and not DirBands.taunting(o)
 	var blind: bool = a.atk <= 0.0 and ready and o.hidden and st == 0.0 and S.dirS.ex == null and S.rng.next() < BLIND_SWING
 	if S.dirS.ex == null and DirBands.who(S) < 0 and sigDue(S, f, o):
-		i.sig = true   # its first beam, on time: no beat of its own holds it back
-		i.stanceMask |= 4
+		if not DirBeamMove.aiStart(S, f, i):   # (the stick beam's own move: a hold, as a player's)
+			i.sig = true   # its first beam, on time: no beat of its own holds it back
+			i.stanceMask |= 4
 	elif a.atk <= 0.0 and ready and (not o.hidden or blind) and st != 3.0 and S.dirS.ex == null:
 		# Each attack beat either attacks or holds (repositions, charges): holding fills the downtime between exchanges.
 		var r: float = S.rng.next()
@@ -267,8 +270,9 @@ static func aiInput(S: SimState, f) -> void:
 			var q: float = r / pa
 			var sigPick: float = sigPickFor(S, f, o)
 			if SimFighter.sigFree(f) or sigDue(S, f, o) or (f.ki >= 50.0 and q < sigPick and S.T >= f.sigReadyT):   # the signature cooldown (fighter.json sigCooldown); the AI takes its last stand
-				i.sig = true
-				i.stanceMask |= 4   # the charging stance: with no stance held, B is the heavy
+				if not DirBeamMove.aiStart(S, f, i):   # (the stick beam's own move: a hold, as a player's)
+					i.sig = true
+					i.stanceMask |= 4   # the charging stance: with no stance held, B is the heavy
 			elif q < sigPick + (1.0 - sigPick) * (maxf(HEAVY_SHARE, float(lv().breakGuard)) if DirInterrupt.on() and DirInterrupt.gi(o, DirInterrupt.GUARDED) >= 2 else HEAVY_SHARE):
 				i.heavy = true   # step 3: a rival that only guards gets the guard-breaker (a heavy) at the level's rate
 			else:

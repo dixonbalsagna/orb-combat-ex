@@ -706,7 +706,7 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 		regen *= f.wd.coreKiRegen
 	if steps:
 		regen *= SimForms.regenMul(f)   # forms: his steps' regen gain
-	if f.state == "free" or f.state == "locked" or f.state == "down":
+	if (f.state == "free" or f.state == "locked" or f.state == "down") and not SimDir.refillHeld(f):   # a held charge doesn't refill (the director's stick beam move)
 		f.ki = SimMathx.jmin(100.0, f.ki + regen * dt)
 	if f.skateV > 0.0:
 		WorldContact.stepSkate(S, f, dt)   # ruling 12: the skate after control is back (World, window 8; off: skateV stays 0)

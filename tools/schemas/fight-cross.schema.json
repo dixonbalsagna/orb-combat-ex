@@ -8,7 +8,9 @@
     "schema",
     "enabled",
     "beam",
-    "rejoinAfter"
+    "rejoinAfter",
+    "timeCapAt",
+    "lastAt"
   ],
   "properties": {
     "schema": {
@@ -50,6 +52,16 @@
       "type": "number",
       "minimum": 0,
       "maximum": 30
+    },
+    "timeCapAt": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 3600
+    },
+    "lastAt": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 3600
     }
   },
   "additionalProperties": false,

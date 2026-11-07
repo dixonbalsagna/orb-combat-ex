@@ -174,6 +174,11 @@ static func haptic_ladder_on() -> bool:
 	return right_stick_on() and bool(t(["switches", "hapticLadder"], false))
 
 
+## The charge rumble from the director's stages (docs/controls/stage-pulses.md; switches.hapticStages, off): a pulse for each stick_stage cue, the hub's own rungs aside. Needs the ladder switch.
+static func haptic_stages_on() -> bool:
+	return haptic_ladder_on() and bool(t(["switches", "hapticStages"], false))
+
+
 ## The signature is RT + B only (docs/design/energy-overhaul.md E121; the EP's decision of 2026-11-01): B with LB, RB or LT held is the heavy of that stance (B with RB is Y's blast until the Driver
 ## has its own job), so a guard or a dodge can never fire a beam by accident. B alone stays the big blow. switches.signatureRtOnly, off.
 static func signature_rt_only() -> bool:
@@ -235,6 +240,17 @@ static func refusal_cues_on() -> bool:
 ## The hits, closes, launches, landings and building breaks on the pad (Orb's 2026-10-05 rumble picks; docs/controls/impact-haptics.md; switches.hapticImpact, off). Independent of the right-hand switch.
 static func haptic_impact_on() -> bool:
 	return bool(t(["switches", "hapticImpact"], false))
+
+
+## For the checks: every Controls switch off, as the data first shipped them, so a check of the old behaviour runs against it whatever the page's values are (the shipped data has them on).
+## Reads the data as it is, sets the switches in memory and drops the caches; nothing is written.
+static func pin_switches_off() -> void:
+	var sw: Dictionary = timing.get("switches", {})
+	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
+		sw[k] = false
+	timing["switches"] = sw
+	clear_overrides()
+	invalidate()
 
 
 ## The beam's aim (docs/controls/beam-aim-feel.md): the strike stick's aim trails the thumb by a small dead band, and the throw carries the aim the stick held at the rim,

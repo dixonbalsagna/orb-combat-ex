@@ -18,7 +18,7 @@ const FRAME_MS: float = 1000.0 / 60.0
 
 func _init() -> void:
 	var o := {"role": "", "port": 47100, "out": "", "seed": 1, "ticks": 3600, "setup": "default", "profile": "lan", "slowdown": 1.0,
-		"hashEvery": 60, "perturb": -1, "hitchAt": -1, "hitchFrames": 0, "timeout": 0.0, "startAfter": 0, "redial": false}
+		"hashEvery": 60, "perturb": -1, "hitchAt": -1, "hitchFrames": 0, "timeout": 0.0, "startAfter": 0, "redial": false, "pauseAt": -1, "pauseMs": 0.0}
 	for a in OS.get_cmdline_user_args():
 		var kv: PackedStringArray = a.trim_prefix("--").split("=", true, 1)
 		if kv.size() < 2:
@@ -41,6 +41,10 @@ func _init() -> void:
 			"timeout": o.timeout = float(kv[1])
 			"start-after": o.startAfter = int(kv[1])
 			"redial": o.redial = true
+			"pause":
+				var q: PackedStringArray = kv[1].split(":")
+				o.pauseAt = int(q[0])
+				o.pauseMs = float(q[1]) if q.size() > 1 else 40000.0
 	quit(_run(o))
 
 
@@ -92,12 +96,19 @@ func _run(o: Dictionary) -> int:
 	var adv: Array = []
 	var frameUs := PackedInt32Array()
 	var dialAt: float = 0.0
+	var pausedAt: float = -1.0
 	while true:
 		var now: float = float(Time.get_ticks_usec() - t0) / 1000.0
 		if o.redial and host.session == null and not tr.connected() and now - dialAt >= NetLan.REDIAL_MS:   # as NetLan does
 			dialAt = now
 			tr.redial("127.0.0.1", o.port)
 		var f0: int = Time.get_ticks_usec()
+		if o.pauseAt >= 0 and host.session != null and host.session.frame >= o.pauseAt and pausedAt < 0.0:
+			pausedAt = now
+		if pausedAt >= 0.0 and now - pausedAt < o.pauseMs:
+			host.idle(now)   # the game's pause: NetLan.idle
+			OS.delay_msec(16)
+			continue
 		host.frame(now, o.ticks)
 		if host.session != null:
 			frameUs.append(Time.get_ticks_usec() - f0)

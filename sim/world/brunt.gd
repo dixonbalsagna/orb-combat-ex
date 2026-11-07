@@ -50,6 +50,8 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
 	"interiorBounceSpeed": 900.0, "interiorBounceTanMin": 0.8391, "interiorBounceTanMax": 2.7475, "interiorBounceKeep": 0.45, "interiorBounceTangent": 0.8, "interiorLinkSpeed": 900.0,
 	# repeats escalate (Orb, homework 30): repeatMarks 0 off, else the most marks a building counts and the most repeats a crater grows; repeatCraterGrow the radius factor a repeat asks
 	"repeatMarks": 0, "repeatCraterGrow": 1.25,
+	# the power model (data/fight/power.json, docs/world/power-world.md): the tower height under which a tower takes its low-tower mass, over it the tall-tower mass
+	"powerLowTowerMaxH": 1200.0,
 }
 const BRUNT_STRINGS: Dictionary = {   # the switches that are words: their values and the default (today's behaviour)
 	"lodgeHold": [["world", "body"], "world"],   # does a lodge hold the whole fight (a hit-stop) or only the body (he is stunned, the fight goes on)
@@ -349,6 +351,72 @@ static func _flightToSweptRead(S: SimState, x0: float, y0: float, vx0: float, vy
 	return {"ok": false}
 
 
+# ===================================================================== the power model: what a body goes through, by mass
+
+const POWER_PATH: String = "res://data/fight/power.json"
+static var _pw: Dictionary = {}
+static var _pwLoaded: bool = false
+
+
+## The power model's absorb masses (data/fight/power.json absorb: house, lowTower, tallTower; Game Design, docs/design/power-scale.md), in the unit a body's energy is in: (speed / speedUnit) squared. Only a match with
+## S.powerOn reads them. The file is Simulation's switch and Game Design's numbers; its hash is SimPower's, so a replay on other masses is refused with it.
+static func _absorb() -> Dictionary:
+	if not _pwLoaded:
+		_pwLoaded = true
+		_pw = {"house": 1.0, "lowTower": 5.0, "tallTower": 15.0}
+		var f := FileAccess.open(POWER_PATH, FileAccess.READ)
+		if f != null:
+			var j = JSON.parse_string(f.get_as_text())
+			if j is Dictionary and j.get("absorb") is Dictionary:
+				for k in _pw:
+					if j.absorb.has(k) and (j.absorb[k] is float or j.absorb[k] is int):
+						_pw[k] = float(j.absorb[k])
+	return _pw
+
+
+## What building b takes of a body's energy: a house its house mass, a tower under brunt.json powerLowTowerMaxH its low-tower mass, any other tower the tall-tower mass.
+static func massOf(b) -> float:
+	var a: Dictionary = _absorb()
+	if isHouse(b):
+		return float(a.house)
+	return float(a.lowTower) if b.h < float(cfg().powerLowTowerMaxH) else float(a.tallTower)
+
+
+## The share of the speed a body keeps after a building takes m of its energy E: the root of what is left.
+static func keepAfter(E: float, m: float) -> float:
+	return clampf(sqrt(maxf(E - m, 0.0) / maxf(E, 1.0e-9)), 0.0, 1.0)
+
+
+## The ladder under the power model: a building takes its mass of the body's energy, (spN / speedUnit) squared. A body with at least that much goes through (a house collapses, a tower is punched through) and keeps the root of what is
+## left; with less it is held, a crack or a dent by how much of the mass it had. No tier, link or punch table is read: the energy is the whole budget, so a send can only go through what it can pay for.
+static func _outcomePower(S: SimState, b, y: float, spN: float) -> Dictionary:
+	var m: float = massOf(b)
+	var u: float = SimPower.speedUnit
+	var E: float = spN * spN / (u * u)
+	var through: bool = E >= m
+	var keep: float = keepAfter(E, m) if through else 0.0
+	if isHouse(b):
+		if through:
+			return {"floors": false, "dmg": b.hp, "ratio": 999.0, "outcome": "collapse", "pass": true, "keep": keep, "deaths": b.popAlive}
+		return {"floors": false, "dmg": E / m * b.maxhp * 0.5, "ratio": E / m, "outcome": "crack", "pass": false, "keep": 0.0, "deaths": 0.0}
+	var probe: Dictionary = outcomeDmg(S, b, y, 1.0)
+	if not probe.floors:   # a tower too short to have floors: the whole building by the energy
+		var w: Dictionary = outcomeDmg(S, b, y, (2.0 if through else E / m) * b.maxhp)
+		w.keep = keep if w.pass else 0.0
+		return w
+	if probe.hit.is_empty():
+		return probe   # its floors there are gone: nothing to hold him
+	var oc: Dictionary = outcomeDmg(S, b, y, (2.0 if through else E / m) * probe.sumS)
+	if through:
+		oc.keep = keep
+	else:
+		oc.pass = false
+		oc.keep = 0.0
+		oc.held = true
+		oc.deaths = floorPop(b) * float(oc.hit.size()) * minf(minf(1.0, oc.ratio * FLOOR_DEATH), float(cfg().heldDeathShare))
+	return oc
+
+
 # ===================================================================== the outcome of one hit (pure)
 
 ## What hitting building b at height y with normalised speed spN and launcher tier does, without changing anything.
@@ -359,6 +427,8 @@ static func _flightToSweptRead(S: SimState, x0: float, y0: float, vx0: float, vy
 ## towerPunches already went through this flight (punched) holds the body, unless its covered floors have already taken giveWay times their
 ## own strength in damage (a building that remembers its walls): the held hit is a crack or a dent, the body comes off the face.
 static func outcomeOf(S: SimState, b, y: float, spN: float, tier: float, punched: int = 0, special: bool = false) -> Dictionary:
+	if S.powerOn:   # one energy model: the body's energy and the building's mass, no tier table
+		return _outcomePower(S, b, y, spN)
 	var c: Dictionary = cfg()
 	var ti: int = tierIx(tier, special)
 	var dmg: float = spN * float(c.tierFactor[ti]) * float(c.bruntMul)
@@ -434,7 +504,9 @@ static func outcomeDmg(S: SimState, b, y: float, dmg: float) -> Dictionary:
 	return {"floors": false, "dmg": dmg, "ratio": r, "outcome": "crack", "pass": false, "keep": 0.0, "deaths": dead}
 
 
-static func chainCap(tier: float, special: bool) -> float:
+static func chainCap(tier: float, special: bool, S: SimState = null) -> float:
+	if S != null and S.powerOn:   # the energy is the budget, not a link count
+		return 99.0
 	var c: Dictionary = cfg()
 	return float(c.chainSpecial) if special else float(c.chainMax[tierIx(tier, false)])
 
@@ -469,7 +541,7 @@ static func next(S: SimState, b, y: float, vx: float, vy: float, trav: float) ->
 ## ends inside it. A pure lookahead: nothing is changed.
 static func chainPlan(S: SimState, tier: float, special: bool, b, fr: Dictionary, trav: float) -> Array:
 	var out: Array = []
-	var cap: float = chainCap(tier, special)
+	var cap: float = chainCap(tier, special, S)
 	var cur = b
 	var r: Dictionary = fr
 	var t0: float = fr.t
@@ -514,6 +586,29 @@ static func chainDeaths(chain: Array) -> float:
 
 
 # ===================================================================== candidates and aim (the planner's interface)
+
+## A four-row table (brunt.json tierFactor, lodgeSeconds) read at a place along its rows: row 0 to 3, a straight line between two rows.
+static func _tableAt(tbl: Array, row: float) -> float:
+	var i: int = clampi(int(floor(row)), 0, tbl.size() - 1)
+	var j: int = mini(i + 1, tbl.size() - 1)
+	return float(tbl[i]) + (float(tbl[j]) - float(tbl[i])) * (row - float(i))
+
+
+## The damage a body does per unit of speed, tierFactor at the send's tier. Under the power model (S.powerOn) there is no tier: it is the table read along its rows by the sender's level (SimPower.level, 0 at base with no power to 1 at the top
+## with all of it), so a lodge's last hit, a slab's break and a thrown wreck grow with the level and not in steps (docs/world/power-world.md).
+static func tierFactorOf(S: SimState, by, tier: float, special: bool) -> float:
+	var c: Dictionary = cfg()
+	if S != null and S.powerOn and by != null:
+		return _tableAt(c.tierFactor, SimPower.level(by) * 3.0)
+	return float(c.tierFactor[tierIx(tier, special)])
+
+
+## The seconds a lodge or a wall holds a body: lodgeSeconds at the tier, or under the power model along its rows by the sender's level.
+static func lodgeSecondsOf(S: SimState, by, tier: float, special: bool) -> float:
+	if S != null and S.powerOn and by != null:
+		return _tableAt(cfg().lodgeSeconds, SimPower.level(by) * 3.0)
+	return lodgeSeconds(tier, special)
+
 
 ## A cheap score used to choose which buildings are worth an aim search: tall, occupied, undamaged.
 static func _cheap(b, popCap: float) -> float:
@@ -796,7 +891,7 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 		f.splashed.append(MARK_HOUSE if isHouse(b) else MARK_TOWER)   # this flight went through it
 	var nx: Dictionary = {"b": -1}
 	var spLeft: float = SimDetMath.hypot(f.vx * keep / trav, f.vy * keep)
-	if passes and not inside and chainUsed(f) < chainCap(tierOf(by, f), f.launchSpecial) - 0.0001 and spLeft >= CHAIN_MIN_SP:
+	if passes and not inside and chainUsed(f) < chainCap(tierOf(by, f), f.launchSpecial, S) - 0.0001 and spLeft >= CHAIN_MIN_SP:
 		nx = next(S, b, y, f.vx * keep, f.vy * keep, trav)
 	# the lodge: the last building of a chain takes what is left; he ends inside it
 	var lodge: bool = passes and nx.b < 0 and not inside
@@ -827,12 +922,12 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 		return
 	if lodge:
 		# what is left of the launch is one more hit on the building (the core wears most), and he is held in the breach
-		var tfac: float = float(cm.tierFactor[tierIx(tierB, f.launchSpecial)])
+		var tfac: float = tierFactorOf(S, by, tierB, f.launchSpecial)
 		var rest: float = spLeft * tfac * float(cm.bruntMul) * float(cm.lodgeDump)
 		if b.alive and rest > 0.0:
 			WorldStructures.damageBuilding(S, b, minf(rest, WorldStructures.coreCap() * b.maxhp), by, "burst", cx, evt, true)
 		SimDamage.hurt(S, f, spLeft * FIGHTER_DMG, by)
-		var holdS: float = lodgeSeconds(tierB, f.launchSpecial)
+		var holdS: float = lodgeSecondsOf(S, by, tierB, f.launchSpecial)
 		_hold(S, f, holdS)
 		var bodyW: float = WorldLanes.body()[0]
 		f.x = SimWrap.wrap(far - dir * (bodyW * 2.0))
@@ -844,7 +939,7 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 		return
 	if not passes:
 		if not kicked:
-			_hold(S, f, lodgeSeconds(tierB, f.launchSpecial))   # held at the wall for the lodge's seconds, then he comes off it
+			_hold(S, f, lodgeSecondsOf(S, by, tierB, f.launchSpecial))   # held at the wall for the lodge's seconds, then he comes off it
 		# the wall slam (buildings.md section 2): he takes the building's hit again over (wallSlamMul, Game Design's twice); the stagger is set below
 		var slam: float = float(cm.wallSlamMul) - 1.0
 		if slam > 0.0:

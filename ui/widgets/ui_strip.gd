@@ -50,6 +50,9 @@ static func marks_sig(lay: UiLayout, data: Dictionary, t: float, o: Dictionary) 
 		if bool(f.get("hidden", false)) and UiData.feature("hiding"):
 			ping = true
 			out.append(int(float(f.get("seen_x", 0.0)) * k))
+	if UiData.feature("brink_mark"):
+		for cx in data.get("calls", []):
+			out.append(int(float(cx) * k))
 	if ping and not bool(o.get("reduced_motion", false)):
 		out.append(int(t * 12.0))
 	return out
@@ -86,6 +89,14 @@ static func draw_marks(ci: CanvasItem, lay: UiLayout, hub: UiEventHub, data: Dic
 			UiText.draw(ci, "?", Vector2(sx, r.position.y - 3.0), UiText.px(18.0, s), Color(UiLook.col(UiLook.INK), a), 0, 1.5)
 		else:
 			_marker(ci, slot, Vector2(fx, cy), msz, Color(col, a), Color(0, 0, 0, a), false)
+	# A partner's call in the other fight of a 2v2 (the brink): a steady triangle pointing down at his place on the bar (a shape beside the circle and the diamond), while he is on his brink.
+	if UiData.feature("brink_mark"):
+		for cx in data.get("calls", []):
+			var px: float = bar.position.x + fposmod(float(cx), W) / W * bar.size.x
+			var tip := Vector2(px, bar.position.y - 1.0)
+			var tri := PackedVector2Array([tip, tip + Vector2(-msz * 1.1, -msz * 1.7), tip + Vector2(msz * 1.1, -msz * 1.7)])
+			UiIcons.fill_poly(ci, tri, Color(UiLook.col(UiLook.INK), a))
+			ci.draw_polyline(PackedVector2Array([tri[0], tri[1], tri[2], tri[0]]), Color(0, 0, 0, 0.85 * a), 1.5, true)
 	# The region label, under the camera's centre.
 	if bool(o.get("region_label", false)):
 		var name: String = UiData.place_at(fposmod(float(data.get("cam_x", 0.0)), W))

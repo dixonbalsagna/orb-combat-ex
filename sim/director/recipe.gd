@@ -31,10 +31,11 @@ static func _ensure() -> void:
 	_stick()
 
 
-## The right stick's pieces (Combat's data/combat/stick.json): with switches.rightStick on, its pools join the recipes' by fighter, so
-## the director's own pick throws them under the same rules. Off, the file is not opened and is in no hash.
+## The right stick's pieces (Combat's data/combat/stick.json): with the stick on (DirStick.on: switches.rightStick, or a tool's force), its
+## pools join the recipes' by fighter, so the director's own pick throws them under the same rules. Off, the file is not opened and is in no
+## hash. (It read Controls' switch alone, so a check that forces the stick on, stick_check, ran it with none of its pieces or directions.)
 static func _stick() -> void:
-	if not SimInputData.right_stick_on() or not FileAccess.file_exists(STICK_PATH) or not (_rec.get("pools") is Dictionary):
+	if not DirStick.on() or not FileAccess.file_exists(STICK_PATH) or not (_rec.get("pools") is Dictionary):
 		return
 	var st: String = FileAccess.get_file_as_string(STICK_PATH)
 	var j = JSON.parse_string(st)

@@ -83,9 +83,10 @@ static func beamPower(A) -> float:
 
 
 ## sp is the unboosted speed: the launch's horizontal traversal factor is divided out before the energy is taken.
-static func impactEnergy(sp: float, tier: float) -> float:
+## The energy of a body hitting the ground at speed sp: v squared, times (1 + IMPACT_TIER_E per tier above 1). With S given and its power model on (S.powerOn: docs/design/power-scale.md) the tier term is gone, since the level is already in the speed: one path, nothing counted twice.
+static func impactEnergy(sp: float, tier: float, S: SimState = null) -> float:
 	var v: float = sp / IMPACT_SPEED_REF
-	return v * v * (1.0 + IMPACT_TIER_E * (tier - 1.0))
+	return v * v * (1.0 if (S != null and S.powerOn) else 1.0 + IMPACT_TIER_E * (tier - 1.0))
 
 
 static func powerupEnergy(tier: float) -> float:
@@ -281,7 +282,7 @@ static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx
 	var E: float = energy * (SPECIAL_E_MULT if special else (WorldCraters.meteorEMult() if meteor else 1.0))
 	var NC: int = SimConst.NC
 	var COL: float = SimConst.COL
-	var rcap: float = WorldCraters.meteorRMax() if meteor else (R_MAX if (special or kind == "powerup") else ORD_R_MAX)   # the meteor's own ladder (craters.json meteor): its size is data, so it can come down if the dig hitches
+	var rcap: float = WorldCraters.meteorRMax() if meteor else (R_MAX if (special or kind == "powerup" or (S.powerOn and kind == "impact")) else ORD_R_MAX)   # the power model has no ordinary cap (power-scale.md: the level is already in the energy); the meteor's own ladder (craters.json meteor): its size is data, so it can come down if the dig hitches
 	var R: float = minf(rcap, R_BASE * sqrt(E))
 	var R0: float = R        # today's radius: the depth, its cap and the rim are today's bowl's times the material's factors
 	var sD: float = 1.0      # the material's depth, rim and wall (craters.json); 1, 1, 1 is today's bowl exactly

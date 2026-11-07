@@ -63,7 +63,7 @@ static func _read(S: SimState, x: float, z: float, side: float) -> int:
 
 ## A blow of his landed. The stick is read as the blow lands, so a lean at any point of a string counts from there.
 static func landed(S: SimState, ex, f, o) -> void:
-	if not on() or f.ai != null:
+	if not on() or (f.ai != null and not aiOn()):
 		return
 	var c: Dictionary = cfg()
 	var mx: float = float(f.input.mx)
@@ -95,9 +95,38 @@ static func landed(S: SimState, ex, f, o) -> void:
 	_s(f, W_N, _g(f, W_N) + 1)
 
 
+## The computer leans for the wall push too (walk.ai; Game Design's addendum of 2026-11-06, section 1), with the same stick a player has: once a
+## string, by its personality's share, when a standing building stands beyond its rival in reach, it holds its left stick toward him for the
+## string. The string's draw and its building are kept where a player's are (W_STR, W_TGT), so landed reads the lean as his.
+## walk.reachWalked (off): a walked knock-back skips the knock's care roll, and B counts the walked building among its candidates. Both can
+## read people (the care term moves with SimForms' witness branch, and bruntScore reads who is inside), so they wait on Orb's hold (RL-247).
+static func reachWalked() -> bool:
+	return on() and bool(cfg().get("reachWalked", false))
+
+
+static func aiOn() -> bool:
+	return on() and bool(cfg().get("ai", {}).get("enabled", false))
+
+
+## Each tick of the computer's brawl input (DirBrawl.aiInput): its lean, if this string has one.
+static func aiLean(S: SimState, f, o, i) -> void:
+	if not aiOn() or f.ai == null:
+		return
+	var side: float = 1.0 if SimWrap.sdx(f.x, o.x) >= 0.0 else -1.0
+	var key: int = (S.dirS.exN + 1) * 2 + (1 if side > 0.0 else 0)
+	if _g(f, W_STR) != key:
+		_s(f, W_STR, key)
+		_s(f, W_N, 0)
+		var share: float = float(cfg().ai.get(DirLaunch._persOf(f), 0.0))
+		var lean: bool = share > 0.0 and SimRng.keyed(int(S.game.seed), "walk.ai", key * 4 + S.fighters.find(f)) < share
+		_s(f, W_TGT, (_read(S, o.x, float(o.z), side) + 1) if lean else 0)
+	if _g(f, W_TGT) > 0:
+		i.mx = side   # toward him: the building is beyond him
+
+
 ## How far a knock-back of his reaches for the building he has walked him to, and which: [] when he hasn't, by this string's blows.
 static func wall(S: SimState, att, side: float) -> Array:
-	if not on() or att.ai != null or _g(att, W_N) < 1 or _g(att, W_STR) % 2 != (1 if side > 0.0 else 0):
+	if not on() or (att.ai != null and not aiOn()) or _g(att, W_N) < 1 or _g(att, W_STR) % 2 != (1 if side > 0.0 else 0):
 		return []
 	var t: int = _g(att, W_TGT) - 1
 	if t < 0 or not S.buildings[t].alive:

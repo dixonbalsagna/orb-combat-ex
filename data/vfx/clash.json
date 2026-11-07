@@ -136,12 +136,11 @@
     }
   },
   "shockwave": {
-    "_note": "The clash's shockwave at the meeting point (docs/vfx/clash-shockwave.md, Legal RL-246). VFX's PROPOSED numbers until Game Design rules them. Growth: a thin ground ring at most every ring_gap_s, radius grow_r0 to grow_r1 with the struggle's swell (knot_s); never per pulse. Release at the end: rings out to World's meeting crater (release_r by the pair's mean tier 1 to 4, times the root of f_end by the ending), over release_s, starting release_delay ticks after the cue; a local dust dome (dome_k of the radius, at most dome_max). Above height_reach the point is an air burst (air_k of the radius, no dome).",
-    "grow_r0": 70,
-    "grow_r1": 300,
+    "_note": "The clash's shockwave at the meeting point (docs/vfx/clash-shockwave.md, Legal RL-246), drawn from World's cues (docs/world/struggle-meet.md): `struggle_ring` for the growth rings (at most one in ring_gap_s, rising over ring_rise_s) and `beam_clash_end` with r, rGlass, dug and the ground's shape for the release: one rise of rise_s and one fall of fall_s, a ring out to the bowl (or a thin ring at rGlass, thin_k as strong, with smoke at the point, for scorch and air), strength by dug (dug_min_k at none to full at dug_ref), a dust dome of at most dome_max units radius (6 body heights across), starting release_delay ticks after the cue. release_r, f_end, height_reach and air_k are the fallback for a cue without World's fields. VFX's PROPOSED numbers until Game Design rules them.",
+    "grow_r0": 75,
+    "grow_r1": 225,
     "ring_gap_s": 2.0,
-    "knot_s": 1.8,
-    "ring_life_s": 1.0,
+    "ring_life_s": 1.2,
     "ring_alpha": 0.55,
     "skirt_puffs": 3,
     "release_r": [
@@ -158,13 +157,18 @@
     "height_reach": 1600,
     "air_k": 0.5,
     "release_delay": 12,
-    "release_s": 0.45,
     "second_k": 0.7,
-    "second_delay": 8,
     "release_alpha": 0.7,
     "dome_k": 0.35,
-    "dome_max": 800,
+    "dome_max": 225,
     "dome_puffs": 14,
-    "back": 60
+    "back": 60,
+    "ring_rise_s": 0.1,
+    "rise_s": 0.3,
+    "fall_s": 1.1,
+    "thin_k": 0.6,
+    "dug_ref": 400,
+    "dug_min_k": 0.5,
+    "smoke_puffs": 4
   }
 }

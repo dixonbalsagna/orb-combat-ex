@@ -43,6 +43,7 @@ const stepCall = hostText.includes('\tif _bb_step(inputs):') ? '_bb_step(inputs)
 patch('render/core/sim_host.gd', [
   ['var read_ahead_cols: int = 0', 'var lan = null   # the private LAN test (net/lan.gd): it steps the sim\nvar read_ahead_cols: int = 0'],
   [`\tif ${stepCall}:`, `\tif (lan.tick(inputs[lan.hubSlot]) if lan != null else ${stepCall}):`],
+  ['func advance(frame_dt: float, vw: float, vh: float) -> int:\n\tif paused:\n', 'func advance(frame_dt: float, vw: float, vh: float) -> int:\n\tif paused:\n\t\tif lan != null:\n\t\t\tlan.idle()   # the link and the packets go on through a pause, so the other PC waits instead of losing the link\n'],
   ['func toggle_ai(idx: int) -> void:\n', 'func toggle_ai(idx: int) -> void:\n\tif lan != null:\n\t\treturn   # a pad leaving must not hand one PC\'s fighter to its AI: the PCs would part\n'],
 ]);
 patch('render/core/main.gd', [
@@ -57,6 +58,18 @@ patch('render/core/main.gd', [
 {
   const m = join(tree, 'render/vfx/meteor.gd');
   if (existsSync(m) && readFileSync(m, 'utf8').includes('\t_word = ""\n\tif OS.has_feature("web") and UiHud.bypass_allowed():')) patch('render/vfx/meteor.gd', [['\t_word = ""\n\tif OS.has_feature("web") and UiHud.bypass_allowed():', '\t_word = "loud"\n\tif OS.has_feature("web") and UiHud.bypass_allowed():']]);
+}
+// "2v2 together" is a co-op match only with Encounter's blows from outside (sim/director/outside.gd: the single blow across, the sends that bring the fights together, the computer's dodge). They're
+// behind their own data switch, which a match's setup can't reach, and do nothing unless hits across fights are on, as only the together shortcuts have them. So this copy turns it on.
+// Simulation's per-setup key ("outside" in NetLan.SETUP2X) does it once it's in the tree; until then the data switch stands in.
+const outsideBySetup = ['sim/core/stage.gd', 'sim/director/outside.gd'].some((p) => existsSync(join(tree, p)) && /setup(\.has\("outside"\)|\.get\("outside"|\["outside"\])/.test(readFileSync(join(tree, p), 'utf8')));
+if (!outsideBySetup) {
+  const f = join(tree, 'data/director/interrupts.json');
+  const s = readFileSync(f, 'utf8');
+  const from = /("outside": \{\s*"enabled": )false/;
+  if (!from.test(s) && !/"outside": \{\s*"enabled": true/.test(s)) stop('data/director/interrupts.json: no outside.enabled to turn on (Encounter moved it: update lan_kit.mjs)');
+  writeFileSync(f, s.replace(from, '$1true'));
+  if (JSON.parse(readFileSync(f, 'utf8')).outside.enabled !== true) stop('the blows from outside did not turn on');
 }
 // Only this copy's presets: the network code goes in, its tools stay out.
 patch('export_presets.cfg', [
@@ -117,6 +130,16 @@ writeFileSync(join(out, 'Join 2v2 (old PC).cmd'), crlf([
   'cd /d "%~dp0"',
   `start "" "${exeName}" -- --lan-join=${a['host-ip']} --lan-2v2 --lan-log="%~dp0lan-log-old.txt" --tiles=1`,
 ]));
+writeFileSync(join(out, 'Host 2v2 together (main PC).cmd'), crlf([
+  '@echo off',
+  'cd /d "%~dp0"',
+  `start "" "${exeName}" -- --lan-host=${a['host-ip']} --lan-2v2-together --lan-log="%~dp0lan-log-main.txt" --tiles=1`,
+]));
+writeFileSync(join(out, 'Join 2v2 together (old PC).cmd'), crlf([
+  '@echo off',
+  'cd /d "%~dp0"',
+  `start "" "${exeName}" -- --lan-join=${a['host-ip']} --lan-2v2-together --lan-log="%~dp0lan-log-old.txt" --tiles=1`,
+]));
 writeFileSync(join(out, 'Allow through the firewall (main PC, once).cmd'), crlf([
   '@echo off',
   'powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0firewall-allow.ps1"',
@@ -155,6 +178,7 @@ const words = readFileSync(join(tree, 'net', 'tools', 'lan_words.txt'), 'utf8').
 // Legal RL-230's words, checked: its WHO PLAYS line as it stands, a plain word that a link opens, and the public build's privacy line nowhere.
 if (!words.includes("WHO PLAYS: Only Orb plays and watches, on both PCs, with nobody else in the room. This build has a flashing-effects warning; read it first. Don't copy, record, share or post this folder, the screens or the main PC's address.")) stop('lan_words.txt: the WHO PLAYS line is not RL-230\'s');
 if (!words.includes("Two fights share one globe, so craters and damage from the other fight can appear in the world.")) stop('lan_words.txt: RL-241\'s sentence must be in the words before the 2v2 shortcuts go in');
+if (!words.includes("Fighters in the other fight can hit you, and your partner's fight isn't shown on your screen.")) stop('lan_words.txt: RL-249\'s sentence must be in the words before the together shortcuts go in');
 if (!/opens a network link between the two PCs/.test(words)) stop('lan_words.txt: it must say a link opens');
 if (/collects|sends nothing|no accounts/i.test(words)) stop('lan_words.txt: RL-204\'s privacy line stays out of the kit');
 writeFileSync(join(out, 'READ ME FIRST.txt'), words.replace(/\r?\n/g, '\r\n'));

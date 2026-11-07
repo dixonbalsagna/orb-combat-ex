@@ -51,6 +51,59 @@
       "additionalProperties": {
         "$ref": "#/$defs/row"
       }
+    },
+    "struggleMeet": {
+      "type": "object",
+      "description": "Where a beam struggle does its damage: the meeting point (docs/world/struggle-meet.md; WorldStruggleMeet, read whether or not the module is on). Game Design's numbers (docs/design/power-scale.md, 'By stage, as data for World') and World's own wave keys. Off by default.",
+      "required": ["enabled", "energy", "fEnd", "fEndByRun", "radius", "heightReach", "minE", "perPulse", "during", "wave"],
+      "patternProperties": { "^_": {} },
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "energy": { "type": "object", "required": ["sigMul"], "properties": { "sigMul": { "type": "number", "minimum": 1, "maximum": 81 } } },
+        "fEnd": {
+          "type": "object",
+          "required": ["detonate", "time", "overwhelm", "letGo"],
+          "additionalProperties": false,
+          "properties": {
+            "detonate": { "type": "number", "minimum": 0, "maximum": 1 },
+            "time": { "type": "number", "minimum": 0, "maximum": 1 },
+            "overwhelm": { "type": "number", "minimum": 0, "maximum": 1 },
+            "letGo": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "fEndByRun": { "type": "object", "required": ["fullRunSec"], "properties": { "fullRunSec": { "type": "number", "exclusiveMinimum": 0, "maximum": 60 } } },
+        "radius": {
+          "type": "object",
+          "required": ["k", "depthShare"],
+          "properties": {
+            "k": { "type": "number", "exclusiveMinimum": 0, "maximum": 400, "description": "Bowl radius at dug energy 1, units (the crater's R_BASE, 160)." },
+            "depthShare": { "type": "number", "exclusiveMinimum": 0, "maximum": 0.5, "description": "Bowl depth as a share of its radius (the crater's 0.22; read for the record, WorldCrater digs it)." }
+          }
+        },
+        "heightReach": { "type": "object", "required": ["ofRadius"], "properties": { "ofRadius": { "type": "number", "exclusiveMinimum": 0, "maximum": 10 } } },
+        "minE": { "type": "number", "minimum": 0, "maximum": 5 },
+        "perPulse": { "type": "number", "const": 0, "description": "No digging while the struggle runs." },
+        "during": {
+          "type": "object",
+          "required": ["ringFromBh", "ringToBh", "ringMinGapSec"],
+          "properties": {
+            "ringFromBh": { "type": "number", "exclusiveMinimum": 0, "maximum": 10 },
+            "ringToBh": { "type": "number", "exclusiveMinimum": 0, "maximum": 10 },
+            "ringMinGapSec": { "type": "number", "minimum": 0.5, "maximum": 30 }
+          }
+        },
+        "wave": {
+          "type": "object",
+          "required": ["fallReach", "dent", "keep", "glassHpShare", "bodyHeight"],
+          "properties": {
+            "fallReach": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+            "dent": { "type": "number", "minimum": 0, "maximum": 1 },
+            "keep": { "type": "number", "minimum": 0, "maximum": 1 },
+            "glassHpShare": { "type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1 },
+            "bodyHeight": { "type": "number", "exclusiveMinimum": 0, "maximum": 300 }
+          }
+        }
+      }
     }
   },
   "$defs": {

@@ -21,7 +21,28 @@ func _initialize() -> void:
 	_run.call_deferred()
 
 
+# Controls' switches (data/input/timing.json, `switches`): the shipped data has them on (specialsOff, signatureRtOnly, rightStick and the rest) once their landing batch is in, off before it. The older rules
+# below were written for the behaviour with them off (the Specials row, Escape on R3 in Remap, the settings screen's row order, the stances page without the right-hand rows), so the suite pins them off
+# at the start, in memory, whatever the data says; `_switches_on_rules` then checks the layout-sensitive pages with them on, so the shipped state is covered too. (This is what SimInputData.pin_switches_off
+# does once Controls' landing batch is in; it is repeated here so the check runs before it as well.)
+const CONTROLS_SWITCHES := ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]
+
+
+func _set_controls_switches(on: bool) -> void:
+	SimInputData.ensure()
+	var sw: Dictionary = SimInputData.timing.get("switches", {})
+	for k in CONTROLS_SWITCHES:
+		if sw.has(k) or on:
+			sw[k] = on
+	sw["driverOnRb"] = false   # Controls leaves this one off in the shipped data
+	sw["dodgeHeld"] = false    # and this one
+	SimInputData.timing["switches"] = sw
+	SimInputData.clear_overrides()
+	SimInputData.invalidate()
+
+
 func _run() -> void:
+	_set_controls_switches(false)
 	_terms()
 	UiData.set_feature("minimal_hud", false)   # minimal_hud is on as shipped (features.json); the older rules look at the full HUD, and _minimal_hud_rules runs the shipped default and the rest explicitly
 	_live_on()
@@ -105,12 +126,15 @@ func _run() -> void:
 	await _cross_end_rules()
 	await _refusal_struggle_rules()
 	await _refusal_take_rules()
+	await _coop_marks_rules()
+	_first_ko_object_rules()
 	await _pause_menu_rules()
 	await _faces_rules()
 	await _two_player_rules()
 	await _sim_pause_rules()
 	await _bridge()
 	await _sim_untouched_rules()
+	await _switches_on_rules()
 	print("hud_check: %d checks, %d failed" % [checks, fails])
 	quit(1 if fails > 0 else 0)
 
@@ -1368,6 +1392,7 @@ func _refusal_struggle_rules() -> void:
 		m.teach_left = 0.0
 		hub.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "right", "source": "ki"})
 		said.append(m.teach)
+		hub.advance(1.0 / 60.0)   # a refusal told twice in one frame says its word once, so each of these is its own frame
 	m.teach = ""
 	hub.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "beam", "source": "hit"})
 	var hit_word: String = m.teach
@@ -1487,6 +1512,7 @@ func _refusal_struggle_rules() -> void:
 		p0.teach_left = 0.0
 		h2.consume({"type": "cue", "kind": "beam_stray", "actor": 0, "target": 1, "text": ""})
 		strays.append(p0.teach)
+		h2.advance(1.0 / 60.0)
 	h2.consume({"type": "cue", "kind": "beam_end", "actor": 1, "target": 0, "text": "time"})
 	var ended: bool = p0.beat_rows.is_empty()
 	struggle.call(h2)
@@ -1532,11 +1558,18 @@ func _refusal_struggle_rules() -> void:
 	await process_frame
 	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
 	UiData.set_feature("right_hand", true)   # the right-hand attacks on: the stick push exists
-	var def_ok: bool = hud.hub.model(0).push_mode == "stick" and hud.hub.model(1).push_mode == "stick"
-	hud.set_option("struggle_push_p2", "face")
+	hud.advance(1.0 / 60.0)   # the first frame gives each model its person's choice and starts the match clock
+	await process_frame
+	var def_ok: bool = hud.hub.model(0).push_mode == "face" and hud.hub.model(1).push_mode == "face"   # the fallback: while the stick push is inert in a struggle, everyone is taught the face buttons
+	hud.set_option("struggle_push_p2", "stick")
 	hud.advance(1.0 / 60.0)
 	await process_frame
-	var synced: bool = hud.hub.model(0).push_mode == "stick" and hud.hub.model(1).push_mode == "face"
+	var held_mid: bool = hud.hub.model(1).push_mode == "face"   # the match clock is running: a change in Options is next match's
+	hud.hub.reset()
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	var synced: bool = hud.hub.model(0).push_mode == "face" and hud.hub.model(1).push_mode == "stick" and held_mid
+	hud.hub.reset()   # (a new match: the push modes are read again)
 	UiData.set_feature("right_hand", false)   # with them off there is no stick push: everyone is taught the face buttons, and the row is not listed
 	hud.advance(1.0 / 60.0)
 	await process_frame
@@ -1572,7 +1605,7 @@ func _refusal_struggle_rules() -> void:
 	_ok(quiet_before and up_in_struggle, "struggle teach: the legend that had gone quiet stays up for the whole of one of the first struggles (quiet before %s, up in the struggle %s)" % [str(quiet_before), str(up_in_struggle)])
 	hud.queue_free()
 	await process_frame
-	_ok(str(o1["default"]) == "stick" and str(o2["default"]) == "stick" and (o1["choices"] as Array) == ["stick", "face"] and in_controls and words_ok and def_ok and synced, "struggle teach: Beam struggle push is a Controls row for each player (Right stick by default, or Face buttons), and the HUD gives each fighter their person's choice")
+	_ok(str(o1["default"]) == "face" and str(o2["default"]) == "face" and (o1["choices"] as Array) == ["stick", "face"] and in_controls and words_ok and def_ok and synced, "struggle teach: Beam struggle push is a Controls row for each player (Right stick by default, or Face buttons), and the HUD gives each fighter their person's choice")
 	_live_on()
 
 
@@ -1606,6 +1639,7 @@ func _refusal_take_rules() -> void:
 		fresh.models[0].teach = ""
 		fresh.consume({"type": "cue", "actor": 0, "kind": "press_refused", "text": "", "source": "stun_limit"})
 		seen.append(fresh.models[0].teach)
+		fresh.advance(1.0 / 60.0)
 	_ok(seen == ["Already stunned", "Already stunned", "Already stunned", "", ""], "refusal codes: the director's press_refused cue says its word the first three times per reason, then only the pad's knock")
 	# Silent codes (the pad's knock alone): a mashed fourth press, the player's own newer press, an answered or dodged strike, and an unknown one; the computer is never told.
 	var quiet := true
@@ -1618,6 +1652,340 @@ func _refusal_take_rules() -> void:
 	hud.queue_free()
 	await process_frame
 	_live_on()
+
+
+# --- The shipped state: Controls' switches on ---------------------------------------------------------------------------------------------------------------------------
+# The pages whose layout the switches change (the right-hand rows on the Controls page, the strike and beam lines, no Specials row, the stances page's cells), checked with every switch on: every howto page fits at the
+# fifteen sizes, the About and first-run cards fit, and the stances page fits. They are written for either state; the rest of the suite is for the state with the switches off (pinned above).
+
+func _switches_on_rules() -> void:
+	_set_controls_switches(true)
+	UiData.reload()   # the features as shipped (brace, vanish, forms and the rest off): the cards a player sees, not the richest the older rules lay out
+	var before: int = fails
+	await _howto_rules()
+	await _about_rules()
+	await _first_run_rules()
+	await _stances_page_rules()
+	_ok(fails == before, "switches on: the How to play, About, first-run and stances pages fit and hold at every size with Controls' switches on (%d checks failed in them)" % (fails - before))
+	_set_controls_switches(false)
+	_live_on()
+
+
+# --- Co-op 2v2 marks (docs/ui/pending/coop-marks/README.md): the brink's call on the ring map, a beam from the other fight on the alert's edge line, words for blows from outside, the charge stage's digit ---
+
+class _CoBody:
+	var keys: String = "p1"
+	var brink: bool = false
+	var out: bool = false
+	var ai = null
+	var x: float = 0.0
+
+
+class _CoFight:
+	var fighters: Array = []
+
+
+class _CoStage:
+	var cur: int = 0
+	var fights: Array = []
+
+
+class _CoSim:
+	var fighters: Array = []
+	var stage = null
+
+
+func _co_body(keys: String, x: float, brink: bool, computer: bool) -> _CoBody:
+	var b := _CoBody.new()
+	b.keys = keys
+	b.x = x
+	b.brink = brink
+	b.ai = 1 if computer else null
+	return b
+
+
+func _coop_marks_rules() -> void:
+	_set_controls_switches(true)
+	for k in ["brink_mark", "outside_words", "charge_stages", "refusal_words", "beam_teach", "legend_beam", "legend_quiet"]:
+		UiData.set_feature(k, null)   # the shipped state
+	UiData.set_feature("answer_alert", true)
+	# A2. Where the partner stands while he is on his brink: the bodies of the viewer's team in the other fight, never in 1v1, never the foe, never one who is out.
+	var S := _CoSim.new()
+	var own := _co_body("p1", 100.0, false, false)
+	var foe := _co_body("p2", 300.0, false, true)
+	S.fighters = [own, foe]
+	var partner := _co_body("p3", 4800.0, true, true)
+	var far_foe := _co_body("p4", 5000.0, true, true)
+	var f0 := _CoFight.new()
+	f0.fighters = S.fighters
+	var f1 := _CoFight.new()
+	f1.fighters = [partner, far_foe]
+	var stg := _CoStage.new()
+	stg.fights = [f0, f1]
+	S.stage = stg
+	var c1: Array = UiSimBridge.calls(S)
+	partner.brink = false
+	var c2: Array = UiSimBridge.calls(S)
+	partner.brink = true
+	partner.out = true
+	var c3: Array = UiSimBridge.calls(S)
+	partner.out = false
+	own.keys = "p2"
+	foe.keys = "p1"
+	var c4: Array = UiSimBridge.calls(S)   # the viewer is on the second team: his partner is p4
+	own.keys = "p1"
+	foe.keys = "p2"
+	stg.cur = SimStage.WHOLE
+	var c5: Array = UiSimBridge.calls(S)
+	stg.cur = 0
+	UiData.set_feature("brink_mark", false)
+	var c6: Array = UiSimBridge.calls(S)
+	UiData.set_feature("brink_mark", null)
+	S.stage = null
+	var c7: Array = UiSimBridge.calls(S)
+	_ok(c1 == [4800.0] and c2.is_empty() and c3.is_empty() and c4 == [5000.0] and c5.is_empty() and c6.is_empty() and c7.is_empty(), "co-op: the brink's call reads from state: where his partner in the other fight stands while he is on his brink (the foe, one who is out, the same fight, 1v1 and the flag off give none)")
+	var feed: Dictionary = UiPlanetMap.feed_from_strip({"W": 9600.0, "segs": [], "fighters": [{"x": 100.0}], "calls": [4800.0]}, 0)
+	var feed0: Dictionary = UiPlanetMap.feed_from_strip({"W": 9600.0, "segs": [], "fighters": [{"x": 100.0}]}, 0)
+	var near: Dictionary = UiPlanetMap.call_point({"lon": 0.1, "lat": 0.0}, 0.0, 0.0, Vector2(50.0, 50.0), 40.0)
+	var far: Dictionary = UiPlanetMap.call_point({"lon": PI + 0.3, "lat": 0.0}, 0.0, 0.0, Vector2(50.0, 50.0), 40.0)
+	_ok((feed["calls"] as Array).size() == 1 and (feed0["calls"] as Array).is_empty() and UiPlanetMap.sig({}, feed) != UiPlanetMap.sig({}, feed0), "co-op: the globe's feed carries the call and its redraw key changes with it")
+	_ok(not bool(near["far"]) and (near["at"] as Vector2).distance_to(Vector2(50.0, 50.0)) < 40.0 and bool(far["far"]) and absf((far["at"] as Vector2).distance_to(Vector2(50.0, 50.0)) - 40.0) < 0.01, "co-op: a call on the near side sits on his place; round the back it is pinned to the rim in his direction")
+	var lay2 := UiLayout.new()
+	lay2.strip = Rect2(0.0, 0.0, 1000.0, 20.0)
+	var sd := {"W": 9600.0, "cam_x": 0.0, "cam_w": 1600.0, "fighters": [], "calls": []}
+	var sd2 := {"W": 9600.0, "cam_x": 0.0, "cam_w": 1600.0, "fighters": [], "calls": [4800.0]}
+	_ok(UiStrip.marks_sig(lay2, sd, 0.0, {}) != UiStrip.marks_sig(lay2, sd2, 0.0, {}), "co-op: the strip redraws its marks when a call appears")
+	# A3. A beam from the other fight: the alert's edge line, thin, held and ramped, the dodge in the caption; this fight's own beam keeps the alert.
+	var hub := _refusal_rules_hub()
+	hub.consume({"type": "cue", "kind": "beam_warn", "actor": 0, "text": "p3", "source": "left"})
+	var w: Dictionary = hub.alert.duplicate()
+	_ok(str(w.get("phase", "")) == "warn" and int(w["target"]) == 0 and str(w["side"]) == "left" and int(w["shooter"]) == -1 and hub.tug.is_empty(), "beam warn: the cue sets a warn phase on the warned fighter, with the side the sim says")
+	hub.alert = {}
+	hub.consume({"type": "cue", "kind": "beam_window", "text": "start", "actor": 1, "target": 0, "n": 60, "k": 1})
+	hub.consume({"type": "cue", "kind": "beam_warn", "actor": 0, "text": "p3", "source": "right"})
+	var own_keeps: bool = str(hub.alert.get("phase", "")) == "window"
+	hub.alert = {}
+	hub.consume({"type": "cue", "kind": "beam_warn", "actor": 1, "text": "p3", "source": "right"})   # the computer is never warned
+	var ai_none: bool = hub.alert.is_empty()
+	hub.consume({"type": "cue", "kind": "beam_warn", "actor": 0, "text": "p3", "source": ""})
+	var both_edges: bool = str(hub.alert["side"]) == ""
+	_ok(own_keeps and ai_none and both_edges, "beam warn: a beam of this fight's own keeps the alert, the computer is not warned, and no side said is kept as none")
+	for i in range(int((UiEventHub.WARN_HOLD - 0.1) * 60.0)):
+		hub.advance(1.0 / 60.0)
+	var held: bool = not hub.alert.is_empty() and not hub.alert.has("end_t")
+	for i in range(8):
+		hub.advance(1.0 / 60.0)
+	var ramping: bool = hub.alert.has("end_t")
+	var a_mid: float = UiAnswerAlert.line_alpha(hub.alert) if not hub.alert.is_empty() else -1.0
+	for i in range(12):
+		hub.advance(1.0 / 60.0)
+	_ok(held and ramping and a_mid >= 0.0 and a_mid < 1.0 and hub.alert.is_empty(), "beam warn: held for WARN_HOLD seconds, then the line ramps out over 6 ticks (RL-227) and the alert is gone")
+	hub.consume({"type": "cue", "kind": "beam_warn", "actor": 0, "text": "p3", "source": "left"})
+	for i in range(60):
+		hub.advance(1.0 / 60.0)
+	hub.consume({"type": "cue", "kind": "beam_warn", "actor": 0, "text": "p3", "source": "left"})
+	for i in range(60):
+		hub.advance(1.0 / 60.0)
+	var extended: bool = not hub.alert.is_empty() and not hub.alert.has("end_t")   # a second warning inside the hold extends it: 2 s on, still up
+	hub.alert = {}
+	hub.consume({"type": "cue", "kind": "beam_warn", "actor": 0, "text": "p3", "source": "left"})
+	var guard := 0
+	while not hub.alert.has("end_t") and guard < 400:
+		hub.advance(1.0 / 60.0)
+		guard += 1
+	hub.advance(1.0 / 60.0)
+	var a_before: float = UiAnswerAlert.line_alpha(hub.alert)
+	hub.consume({"type": "cue", "kind": "beam_warn", "actor": 0, "text": "p3", "source": "left"})
+	var a_after: float = UiAnswerAlert.line_alpha(hub.alert)
+	_ok(extended and absf(a_before - a_after) < 0.02 and a_before < 1.0, "beam warn: a second warning inside the hold extends it, and one in the ramp out picks the line up where it was (no jump, no blink)")
+	_ok(UiAnswerAlert.wanted({"phase": "warn", "level": 1}, {"edge": "offscreen", "caption": false}) and UiAnswerAlert.wanted({"phase": "warn", "level": 1}, {"edge": "off", "caption": true}) and not UiAnswerAlert.wanted({"phase": "warn", "level": 1}, {"edge": "off", "caption": false}) and UiAnswerAlert.wanted({"phase": "warn", "level": 1}, {"edge": "always", "caption": false, "which": "signature"}), "beam warn: shown when the line or the caption is on (Which beams does not filter it); with both off nothing")
+	var hint_l: Dictionary = UiAnswerAlert.side_hint("left", {"pos": Vector2(300.0, 400.0)}, Vector2(1280.0, 720.0))
+	var hint_n: Dictionary = UiAnswerAlert.side_hint("", {}, Vector2(1280.0, 720.0))
+	var pcs: Dictionary = UiAnswerAlert.pieces({"phase": "warn"})
+	_ok(int(hint_l["dir"]) == -1 and bool(hint_l["off"]) and int(hint_n["dir"]) == 0 and is_equal_approx(float(hint_n["y"]), 360.0) and str(pcs["title"]) == "BEAM FROM THE OTHER FIGHT" and (pcs["answers"] as Array).size() == 1 and bool(pcs["answers"][0]["open"]) and UiAnswerAlert.safe_colour(UiAnswerAlert.outside_col()) == UiAnswerAlert.outside_col(), "beam warn: the side from the cue (none: both edges), a caption that names the dodge, and a line colour that is never white, gold or red")
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	hud.set_option("alert_preset", "full")
+	var spot := [Vector2(300, 400), Vector2(1900, 380)]
+	hud.anchor_fn = func(slot: int) -> Dictionary:
+		return {"pos": spot[slot], "h": hud.layout.vp.y * 0.12, "visible": slot == 0}
+	var run := func(n: int) -> void:
+		for i in range(n):
+			hud.advance(1.0 / 60.0)
+			await process_frame
+	await run.call(3)
+	var r0: int = hud._l_alert.redraws
+	hud.hub.consume({"type": "cue", "kind": "beam_warn", "actor": 0, "text": "p3", "source": "right"})
+	await run.call(4)
+	var shown: bool = hud._l_alert.sig != null and str(hud._alert_eff["edge_width"]) == "thin" and int(hud._alert_d["dir"]) == 1 and hud._l_alert.redraws > r0
+	await run.call(100)
+	var gone: bool = hud._l_alert.sig == null and hud.hub.alert.is_empty()
+	hud.set_option("alert_preset", "calm")
+	hud.hub.consume({"type": "cue", "kind": "beam_warn", "actor": 0, "text": "p3", "source": ""})
+	await run.call(4)
+	var calm_shown: bool = hud._l_alert.sig != null and int(hud._alert_d["dir"]) == 0   # Calm has the caption on and the line off: still told
+	await run.call(120)
+	hud.set_option("alert_caption", false)
+	hud.hub.consume({"type": "cue", "kind": "beam_warn", "actor": 0, "text": "p3", "source": ""})
+	await run.call(4)
+	var both_off: bool = hud._l_alert.sig == null
+	await run.call(120)
+	UiData.set_feature("answer_alert", false)
+	hud.hub.consume({"type": "cue", "kind": "beam_warn", "actor": 0, "text": "p3", "source": "left"})
+	await run.call(4)
+	var flag_off: bool = hud._l_alert.sig == null
+	UiData.set_feature("answer_alert", true)
+	_ok(shown and gone and calm_shown and both_off and flag_off, "beam warn: in the HUD the line draws thin on the said side and is gone after the hold; Calm is told by its caption; with the line and the caption both off, or the alert off, nothing draws")
+	hud.queue_free()
+	await process_frame
+	# Words for blows from outside: the first three per kind per match, the computer never, the flag off none.
+	var hw := _refusal_rules_hub()
+	var mw: UiFighterModel = hw.model(0)
+	var said: Array = []
+	for i in range(5):
+		mw.teach = ""
+		hw.consume({"type": "cue", "actor": 0, "kind": "outside", "text": "start", "source": "p4"})
+		said.append(mw.teach)
+	var word_ok: bool = said == ["Going for the other fight's foe", "Going for the other fight's foe", "Going for the other fight's foe", "", ""]
+	var kinds := {}
+	for pair in [["whiff", "", "Missed the other fight's foe"], ["hit", "", "Hit the other fight's foe"]]:
+		mw.teach = ""
+		hw.consume({"type": "cue", "actor": 0, "kind": "outside", "text": pair[0], "source": "p4"})
+		kinds[pair[0]] = mw.teach == pair[2]
+	mw.teach = ""
+	hw.consume({"type": "cue", "actor": 0, "kind": "outside_hit", "text": "p4", "source": ""})
+	var taken: bool = mw.teach == "Hit from the other fight"
+	mw.teach = ""
+	hw.consume({"type": "cue", "actor": 0, "kind": "outside_hit", "text": "p4", "source": "finisher"})
+	var broken: bool = mw.teach == "Your finisher was broken" and mw.teach_left > 2.0
+	hw.model(1).teach = ""
+	hw.consume({"type": "cue", "actor": 1, "kind": "outside", "text": "start", "source": "p1"})
+	hw.consume({"type": "cue", "actor": 1, "kind": "outside_hit", "text": "p1", "source": ""})
+	var ai_quiet: bool = hw.model(1).teach == ""
+	UiData.set_feature("outside_words", false)
+	var h2 := _refusal_rules_hub()
+	h2.consume({"type": "cue", "actor": 0, "kind": "outside_hit", "text": "p4", "source": ""})
+	var off_quiet: bool = h2.model(0).teach == ""
+	UiData.set_feature("outside_words", null)
+	_ok(word_ok and kinds["whiff"] and kinds["hit"] and taken and broken and ai_quiet and off_quiet and hw.stats.get("cue_unread_outside", 0) == 0 and hw.stats.get("cue_unread_outside_hit", 0) == 0, "outside words: a press that went to the other fight, its miss and its hit, a blow taken from there and a broken finisher each say their words the first three times; the computer and the flag off say nothing")
+	hw.consume({"type": "cue", "actor": 0, "kind": "brink_call", "text": "p3", "source": ""})
+	_ok(hw.brink_calls == 1 and hw.stats.get("cue_unread_brink_call", 0) == 0 and hw.stats.get("cue_unread_beam_warn", 0) == 0, "co-op: the brink call and the beam warning are read cues, not counted as unread")
+	# The charge stage: a steady digit for a person's stick charge; capped says No energy; a release or a refusal clears it; it is never on the foe.
+	var hs := _refusal_rules_hub()
+	var ms: UiFighterModel = hs.model(0)
+	hs.consume({"type": "cue", "actor": 0, "kind": "stick_stage", "k": 2, "n": 4, "source": ""})
+	var s2: bool = ms.cstage == 2 and ms.cstage_of == 4 and not ms.cstage_capped
+	var sig2: Array = UiHints.sig(ms, 1.0, "arena")
+	hs.consume({"type": "cue", "actor": 0, "kind": "stick_stage", "k": 3, "n": 4, "source": "capped"})
+	var s3: bool = ms.cstage == 3 and ms.cstage_capped and ms.teach == "No energy" and UiHints.sig(ms, 1.0, "arena") != sig2
+	hs.consume({"type": "cue", "actor": 0, "kind": "stick_release", "text": "beam", "source": "2"})
+	var rel: bool = ms.cstage == 0 and ms.cstage_of == 0 and not ms.cstage_capped
+	hs.consume({"type": "cue", "actor": 0, "kind": "stick_stage", "k": 1, "n": 5, "source": ""})
+	hs.consume({"type": "cue", "actor": 0, "kind": "stick_refused", "text": "right", "source": "taken"})
+	var ref: bool = ms.cstage == 0
+	hs.consume({"type": "cue", "actor": 1, "kind": "stick_stage", "k": 2, "n": 4, "source": ""})
+	var ai_no: bool = hs.model(1).cstage == 0
+	hs.consume({"type": "cue", "actor": 0, "kind": "stick_stage", "k": 9, "n": 6, "source": ""})
+	var clamp_ok: bool = ms.cstage == 6   # a stage past the count is the top one
+	for i in range(1200):
+		hs.advance(1.0 / 60.0)
+	var stale: bool = ms.cstage == 0   # no cue to clear it for 15 s: it does not stay up
+	UiData.set_feature("charge_stages", false)
+	hs.consume({"type": "cue", "actor": 0, "kind": "stick_stage", "k": 2, "n": 4, "source": ""})
+	var off_ok: bool = ms.cstage == 0
+	UiData.set_feature("charge_stages", null)
+	_ok(s2 and s3 and rel and ref and ai_no and clamp_ok and stale and off_ok and hs.stats.get("cue_unread_stick_stage", 0) == 0, "charge stage: the cue sets the digit for a person, capped says No energy, a release or a refusal clears it, the computer and the flag off show none, a stage past the count is the top, and a stale one goes")
+	ms.device = "xbox"
+	ms.stance_kind = UiStance.ENERGY
+	ms.cstage = 0
+	var plan0: Dictionary = UiHints.plan(ms, Rect2(0.0, 0.0, 480.0, 400.0), 1.0, {"glyph_style": "neutral"})
+	var stick_rows := 0
+	for r in plan0["rows"]:
+		if bool(r.get("stick", false)):
+			stick_rows += 1
+	var all_rows: Array = UiHints.rows(ms, "arena", "hold", UiHints.styles(ms, {}))
+	var kept0: int = 0
+	for r in UiHints.compact_rows(ms, all_rows):
+		if ["strike", "strike_mirror"].has(UiHints._act0(r)):
+			kept0 += 1
+	ms.cstage = 2
+	ms.cstage_of = 4
+	var kept2: int = 0
+	for r in UiHints.compact_rows(ms, all_rows):
+		if ["strike", "strike_mirror"].has(UiHints._act0(r)):
+			kept2 += 1
+	_ok(stick_rows >= 1 and kept0 == 0 and kept2 >= 1, "charge stage: the strike stick's rows carry the mark, and the compact legend keeps them while a charge is at a stage")
+	ms.cstage = 0
+	ms.stance_kind = 0
+	# One refusal told twice in a frame (the director's cue and the input hub's list, or two codes for one word) says its word once and counts once: three refusals use the three.
+	var hd := _refusal_rules_hub()
+	var md: UiFighterModel = hd.model(0)
+	var first_said: Array = []
+	var second_quiet := true
+	for fr in range(4):
+		md.teach = ""
+		hd.consume({"type": "cue", "actor": 0, "kind": "press_refused", "text": "", "source": "stun_limit"})
+		first_said.append(md.teach)
+		md.teach = ""
+		hd.refusal(0, "stun_limit")   # the same refusal again, from the input hub
+		second_quiet = second_quiet and md.teach == ""
+		hd.advance(1.0 / 60.0)
+	var dedupe_ok: bool = first_said == ["Already stunned", "Already stunned", "Already stunned", ""] and second_quiet
+	var hd2 := _refusal_rules_hub()
+	hd2.model(0).teach = ""
+	hd2.refusal(0, "face_late")
+	hd2.model(0).teach = ""
+	hd2.refusal(0, "late")   # a second code for the same word, the same frame
+	var same_word: bool = hd2.model(0).teach == "" and int(hd2.refuse_n.get("0:late", 0)) == 0
+	hd2.advance(1.0 / 60.0)
+	hd2.refusal(0, "late")
+	_ok(dedupe_ok and same_word and hd2.model(0).teach == "Too late", "refusal words: one refusal told twice in a frame says its word once and counts once; the next frame's says it again")
+	# The words for Encounter's quick RB flick in a brawl ("close") and beam-move's gate holding a release ("soon"), a frame apart.
+	var hc := _refusal_rules_hub()
+	var mc: UiFighterModel = hc.model(0)
+	mc.teach = ""
+	hc.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "right", "source": "close"})
+	var close_w: String = mc.teach
+	hc.advance(1.0 / 60.0)
+	mc.teach = ""
+	hc.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "beam", "source": "soon"})
+	_ok(close_w == "Too close" and mc.teach == "Too soon" and int(hc.stats.get("refusal_unread_close", 0)) == 0, "refusal words: close (the quick RB flick in a brawl) says Too close and soon (the gate holding a release) says Too soon")
+	_set_controls_switches(false)
+	UiData.set_feature("answer_alert", null)
+	_live_on()
+
+
+# --- A first KO in a 2v2, as the sim's own event object: not the match's end (norm() must carry `over` and `winners` from an FxEvent; the dictionary tests above could not see it) ---------------
+
+func _ko_event(winner: int, loser: int, over: bool, winners: Array) -> SimState.FxEvent:
+	var e := SimState.FxEvent.new()
+	e.type = "ko"
+	e.winner = float(winner)
+	e.loser = float(loser)
+	e.over = over
+	e.winners = winners
+	return e
+
+
+func _first_ko_object_rules() -> void:
+	UiData.set_feature("cross_end", null)   # the shipped state (on)
+	var hub := _refusal_rules_hub()
+	hub.models[1].ai = false
+	var norm_ok: bool = UiEventHub.norm(_ko_event(1, 0, false, [])).get("over", true) == false and (UiEventHub.norm(_ko_event(0, 1, true, [0, 2])).get("winners") as Array) == [0, 2]
+	hub.consume(_ko_event(1, 0, false, []))   # fight one's KO: his team still has someone standing
+	var first_ok: bool = not hub.match_over and hub.model(0).out and hub.model(0).ko and not hub.model(1).out
+	hub.consume(_ko_event(0, 1, true, [0, 2]))   # the last KO: the match is over
+	var last_ok: bool = hub.match_over and hub.winners == [0, 2] and hub.winner == 0
+	var h3 := _refusal_rules_hub()
+	h3.consume(_ko_event(1, 0, true, []))
+	var sim_ok: bool = h3.match_over and not h3.model(0).out
+	_ok(norm_ok and first_ok and last_ok and sim_ok, "cross end: a real ko event object keeps its over and winners: a first KO (over false) marks him out and does not open the match-over card, the last one does and names the team, and a 1v1 KO (over true) ends it")
+	UiData.set_feature("cross_end", null)
 
 
 # --- Hub rules -----------------------------------------------------------------------------------------------------
@@ -2882,7 +3250,8 @@ func _howto_rules() -> void:
 		return out
 	var rt_solo: Array = row_texts.call(UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 1, "kbd", 0, "kb-solo"))
 	var rt_simple: Array = row_texts.call(UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 1, "xbox", 0, "simple-pad"))
-	_ok(rt_solo.has("Heavy") and rt_solo.has("Energy (hold; Settings can make it a toggle)") and rt_solo.has("Specials") and not rt_simple.has("Heavy") and not rt_simple.has("Energy (hold; Settings can make it a toggle)") and not rt_simple.has("Specials") and rt_simple.has("Guard (hold)"), "howto: the controls page lists the actions the layout binds (Simple has no heavy, mode or specials row)")
+	var specials_row: bool = not bool(SimInputData.t(["switches", "specialsOff"], false))   # Controls' specialsOff takes the Specials row away (the powers are not built)
+	_ok(rt_solo.has("Heavy") and rt_solo.has("Energy (hold; Settings can make it a toggle)") and rt_solo.has("Specials") == specials_row and not rt_simple.has("Heavy") and not rt_simple.has("Energy (hold; Settings can make it a toggle)") and not rt_simple.has("Specials") and rt_simple.has("Guard (hold)"), "howto: the controls page lists the actions the layout binds (Simple has no heavy, mode or specials row)")
 	_ok(rt_solo.size() >= 10 and rt_simple.size() >= 6, "howto: the controls page keeps its rows (%d keyboard, %d Simple)" % [rt_solo.size(), rt_simple.size()])
 	# Hold or toggle: the page says toggle for the player who chose it (what it draws is the record's lines, not the item's own text).
 	var drawn := func(pl: Dictionary) -> String:

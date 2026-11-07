@@ -65,6 +65,33 @@ const BIOME_PATH: String = "res://data/combat/launch_biome.json"
 static var _bio = null
 static var _bioText: String = ""
 static var forceBiome: int = -1   # tools only: 1 on, 0 off, -1 the file's biome.enabled
+## Performance's second round (docs/perf/impact-stutter.md, the launch tick): two memos of reads that cannot change while
+## they are kept, so every plan is the same to the bit.
+## 1. The ground's far heights while chooseLaunch runs. Nothing in it writes the ground or moves the line, so a strip
+##    column's height as WorldTerrain.groundY takes it in a far read (the column through SimField plus its marks) is read
+##    once and kept until chooseLaunch returns. _gy is groundY at depth 0, the same arithmetic on the same numbers, for the
+##    reads inside SimField.far(); outside chooseLaunch it is groundY itself.
+static var _gOn: bool = false
+static var _gStamp: int = 0
+static var _gSeen := PackedInt32Array()
+static var _gH := PackedFloat64Array()
+## 2. The props a span holds (_propsNear). WorldGround.propsIn lays each strip column's props from that column (its biomes
+##    and ground) and the planet's seed and lakes, the same for any span that holds it, so a column is laid once and kept
+##    while all of that is unchanged (compared on each call: an epoch or another match lays them again). A row World lays
+##    by the ring's trees (a lone tree's gap) would make the trees an input too: while World lays one, the memo is off
+##    (_treesMatter). It keeps no trees, so it holds nothing of a match that has ended.
+static var _pmKey: Array = []
+static var _pmBase := PackedFloat32Array()
+static var _pmFine := PackedByteArray()
+static var _pmPlanet := PackedByteArray()
+static var _pmLakes: Array = []
+static var _tmD: Dictionary = {}     # _treesMatter's memo: World's rows it read, the provisional switch, the answer
+static var _tmProv: bool = false
+static var _tmOn: bool = false
+static var _pmCol: Array = []    # per strip column: its props as propsIn lays them, null before it is laid
+static var memoOff: bool = false   # tools: both memos off, every read whole (launch_cost_check holds the two together)
+static var memoTaint: float = 0.0  # tools: the check's negative control, added to each kept height
+static var chooseN: int = 0        # tools: chooseLaunch calls
 
 
 ## data/director/launch.json: the drive's angle rule and the CRATER SLAM's gates and score.
@@ -145,6 +172,8 @@ static func craterOffered(S: SimState, A, D) -> bool:
 ## longOnly (break and finisher launches, spec-wounds.md §1): only the long-haul candidates (SMASH ACROSS, BUILDING SMASH,
 ## MOUNTAINSIDE), SMASH ACROSS always offered, and no "no launch".
 static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false, sends: String = "", tilt: int = 0, noKnock: bool = false, fresh: bool = false) -> Dictionary:
+	_gBegin()
+	chooseN += 1
 	var g: float = WorldTerrain.groundY(S, D.x)
 	var alt: float = D.y - g
 	var bio: String = WorldBiomes.biomeAt(D.x)
@@ -172,7 +201,11 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 	# Contact (contact-spacing.md section 5.1): no launch goes back through the launcher. With a contact block only the
 	# targets on the far side of the rival are offered.
 	var fwdOnly: bool = not DirData.contact().is_empty()
-	for bi in WorldBrunt.candidates(S, D):
+	var cands: Array = WorldBrunt.candidates(S, D)
+	var walked: Array = DirWalk.wall(S, A, f) if DirWalk.reachWalked() else []   # the building he walked him to: B reaches for it too (walk.reachWalked, rule-of-cool-map row 2)
+	if not walked.is_empty() and not cands.has(int(walked[0])):
+		cands.append(int(walked[0]))
+	for bi in cands:
 		var plan = WorldBrunt.aim(S, A, D, S.buildings[bi], force * (DirBrawl.freshMul(S, D, 4) if fresh or S.powerOn else 1.0), tierF, longOnly)   # fresh: the launcher's send into a building, x its freshness
 		if plan != null and fwdOnly and float(plan.ux) * f < 0.0:
 			plan = null
@@ -314,7 +347,47 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 			S.dirS.lastBrunt = float(c[0].brunt.b)
 		else:
 			S.dirS.sinceBrunt += 1.0
+	_gEnd()
 	return {"best": c[0], "top": c.slice(0, 3), "all": c}
+
+
+static func _gBegin() -> void:
+	if _gH.size() != SimConst.NC or _gStamp >= 1 << 30:
+		_gH.resize(SimConst.NC)
+		_gSeen.resize(SimConst.NC)
+		_gSeen.fill(0)
+		_gStamp = 0
+	_gStamp += 1
+	_gOn = not memoOff
+
+
+static func _gEnd() -> void:
+	_gOn = false
+
+
+## WorldTerrain.groundY(S, x) at depth 0 in a far read: from the column memo while chooseLaunch runs, groundY itself otherwise.
+static func _gy(S: SimState, x: float) -> float:
+	if not _gOn:
+		return WorldTerrain.groundY(S, x)
+	var c: float = SimWrap.wrap(x) / SimConst.COL
+	var fi: float = floor(c)
+	var f: float = c - fi
+	var i: int = int(fi)
+	if i < 0 or i >= SimConst.NC:
+		return WorldTerrain.groundY(S, x)
+	var j: int = (i + 1) % SimConst.NC
+	if _gSeen[i] != _gStamp:
+		_gH[i] = WorldTerrain.baseAt(S, i) + S.deform[i]
+		if memoTaint != 0.0:
+			_gH[i] += memoTaint
+		_gSeen[i] = _gStamp
+	if _gSeen[j] != _gStamp:
+		_gH[j] = WorldTerrain.baseAt(S, j) + S.deform[j]
+		if memoTaint != 0.0:
+			_gH[j] += memoTaint
+		_gSeen[j] = _gStamp
+	var fa: float = _gH[i]
+	return fa + (_gH[j] - fa) * f
 
 
 ## Biomes W3 (docs/combat/biomes.md section 3; data/combat/launch_biome.json): the eight candidates that use the ground,
@@ -332,7 +405,7 @@ static func _biomeCandsRead(S: SimState, A, D, c: Array, longOnly: bool, fwdOnly
 	var cd: Dictionary = biome().get("candidates", {})
 	var pers: String = _persOf(A)
 	var f: float = A.face
-	var g: float = WorldTerrain.groundY(S, D.x)
+	var g: float = _gy(S, D.x)
 	var alt: float = D.y - g
 	var q: Dictionary = cd.get("CLIFFSIDE", {})
 	if not q.is_empty():
@@ -358,7 +431,7 @@ static func _biomeCandsRead(S: SimState, A, D, c: Array, longOnly: bool, fwdOnly
 		var reach: float = float(q.reachBh) * BH
 		for t in S.trees:
 			var d: float = SimWrap.sdx(D.x, t.x) * f
-			if t.alive and d >= 0.0 and d <= reach and D.y - WorldTerrain.groundY(S, t.x) < t.h:   # a standing trunk the low line passes through
+			if t.alive and d >= 0.0 and d <= reach and D.y - _gy(S, t.x) < t.h:   # a standing trunk the low line passes through
 				n += 1
 		if n >= int(q.minTrees):
 			n = mini(n, int(q.maxTrees))
@@ -375,7 +448,7 @@ static func _biomeCandsRead(S: SimState, A, D, c: Array, longOnly: bool, fwdOnly
 		var run: float = float(q.dropRunBh) * BH
 		var d: float = SimConst.COL
 		while d <= run:
-			var gy: float = WorldTerrain.groundY(S, D.x + f * d)
+			var gy: float = _gy(S, D.x + f * d)
 			if gy < low:
 				low = gy
 				lowX = D.x + f * d
@@ -489,7 +562,7 @@ static func _propOnPathRead(S: SimState, b: WorldContact.Body, x0: float, dir: f
 		return -1
 	for i in range(props.size()):
 		var d: float = SimWrap.sdx(x0, float(props[i].x)) * dir
-		if d >= 0.0 and d <= run + WorldContact.PROP_STOP and b.y - WorldTerrain.groundY(S, float(props[i].x)) < float(props[i].top):
+		if d >= 0.0 and d <= run + WorldContact.PROP_STOP and b.y - _gy(S, float(props[i].x)) < float(props[i].top):
 			return i
 	return -1
 
@@ -517,17 +590,17 @@ static func _cliffRead(S: SimState, x0: float, sign: float, pr: Dictionary):
 	var minRise: float = float(pr.minRiseBh) * BH
 	var tn: float = float(pr.minTan) * SimConst.COL
 	var d: float = 0.0
-	var g0: float = WorldTerrain.groundY(S, x0)
+	var g0: float = _gy(S, x0)
 	while d < reach:
 		var d1: float = minf(d + step, reach)
-		var g1: float = WorldTerrain.groundY(S, x0 + sign * d1)
+		var g1: float = _gy(S, x0 + sign * d1)
 		if g1 - g0 >= minRise:
 			var e: float = d
-			var gp: float = WorldTerrain.groundY(S, x0 + sign * e)
+			var gp: float = _gy(S, x0 + sign * e)
 			var foot: float = -1.0
 			var rise: float = 0.0
 			while e < d1 + step:
-				var gn: float = WorldTerrain.groundY(S, x0 + sign * (e + SimConst.COL))
+				var gn: float = _gy(S, x0 + sign * (e + SimConst.COL))
 				if gn - gp >= tn:
 					if foot < 0.0:
 						foot = e
@@ -586,16 +659,91 @@ static func _skimAshoreRead(S: SimState, x0: float, y0: float, vx0: float, vy0: 
 			else:
 				return null   # he goes in
 		wet = y < top
-		if y <= WorldTerrain.groundY(S, x) and not WorldTerrain.seaAt(S, x):
+		if y <= _gy(S, x) and not WorldTerrain.seaAt(S, x):
 			return {"x": x, "n": n}
 	return null
 
 
 ## World's set dressing between x0 and x1 on a gen 2 planet: the match's props as the sim owns them (WorldGround.matchProps,
 ## keyed by the planet's seed, the same draw the renderer lays), less the props a launch has broken (brokenProps):
-## [{"x", "kind", "size", "col"}]. Empty on any other world.
+## [{"x", "kind", "size", "col"}]. Empty on any other world. It is matchProps to the prop, from the column memo (see _pmCol);
+## director_check's props test holds the two together.
 static func _propsNear(S: SimState, x0: float, x1: float) -> Array:
-	return WorldGround.matchProps(S, x0, x1, brokenProps(S))
+	if memoOff or _treesMatter():
+		return WorldGround.matchProps(S, x0, x1, brokenProps(S))
+	var fc: PackedByteArray = WorldBiomes.fineCols
+	var n: int = fc.size()
+	if n == 0 or S.base.size() != n or not S.planetRing.has("seed"):
+		return []
+	var pc: PackedByteArray = WorldBiomes.planetCols
+	var lakes: Array = S.planetRing.get("lakes", [])
+	var seed: int = int(S.planetRing.seed)
+	var key: Array = [seed, n, WorldGround.K_PROVISIONAL]
+	if key != _pmKey or S.base != _pmBase or fc != _pmFine or pc != _pmPlanet or lakes != _pmLakes:
+		_pmKey = key
+		_pmBase = S.base.duplicate()
+		_pmFine = fc.duplicate()
+		_pmPlanet = pc.duplicate()
+		_pmLakes = lakes.duplicate(true)
+		_pmCol = []
+		_pmCol.resize(n)
+	# matchProps' span: by columns, split at the seam, the whole ring once at most
+	var i0: int = int(floor(x0 / SimConst.COL))
+	var i1: int = int(floor(x1 / SimConst.COL)) + 1
+	var parts: Array = [[0, n]]
+	if i1 - i0 < n:
+		var a: int = posmod(i0, n)
+		var b: int = posmod(i1, n)
+		parts = [[a, b]] if a < b else [[a, n], [0, b]]
+	var laid: Array = []
+	for part in parts:
+		var c: int = maxi(int(part[0]), 0)
+		var hi: int = mini(int(part[1]), n)
+		while c < hi:
+			if _pmCol[c] == null:   # lay the run of columns not laid yet, in one call, and file each prop under its column
+				var e: int = c + 1
+				while e < hi and _pmCol[e] == null:
+					e += 1
+				for k in range(c, e):
+					_pmCol[k] = []
+				for p in WorldGround.propsIn(fc, pc, S.base, seed, c, e, S.trees, lakes):
+					(_pmCol[int(p.col)] as Array).append(p)
+			laid.append_array(_pmCol[c])
+			c += 1
+	var broken: PackedInt32Array = brokenProps(S)
+	if broken.is_empty():
+		return laid
+	var lost: Dictionary = {}   # matchProps' rule: a broken column loses its biggest smashable prop (smashIn), and only that one
+	for bc in broken:
+		var here: Array = []
+		for q in range(laid.size()):
+			if int(laid[q].col) == int(bc):
+				here.append(q)
+		var pick: int = WorldGround.smashIn(here.map(func(q): return laid[q]))
+		if pick >= 0:
+			lost[here[pick]] = true
+	var out: Array = []
+	for q in range(laid.size()):
+		if not lost.has(q):
+			out.append(laid[q])
+	return out
+
+
+## Whether World lays any prop by the ring's trees: a row with a gap (WorldGround._loneStands) that it lays, provisional rows
+## only with provisionalProps on. Then _propsNear is matchProps itself. With World's rows today it never is: both gap rows (the
+## lone trees) are provisional and provisionalProps is off.
+static func _treesMatter() -> bool:
+	WorldGround.smashIn([])   # World's rows are loaded
+	var d: Dictionary = WorldGround._d
+	if not is_same(d, _tmD) or WorldGround.K_PROVISIONAL != _tmProv:
+		_tmD = d
+		_tmProv = WorldGround.K_PROVISIONAL
+		_tmOn = false
+		for g in d.get("grounds", []):
+			for p in (g as Dictionary).get("props", []):
+				if (p as Dictionary).has("gap") and (_tmProv or not bool(p.get("provisional", false))):
+					_tmOn = true
+	return _tmOn
 
 
 ## The landing's biome terms on a candidate k landing at lx (p its predicted flight): the surface's row by the kind of
@@ -741,7 +889,7 @@ static func _predictFlightRead(S: SimState, x0: float, y0: float, vx0: float, vy
 			vy *= kWy
 			if SimDetMath.hypot(vx, vy) < 200.0 and t > 0.3:
 				return {"x": x, "travel": absf(travel), "water": true, "t": t, "land": x}
-		var g: float = WorldTerrain.groundY(S, x)
+		var g: float = _gy(S, x)
 		if y <= g:
 			# The same rule as SimFighter.impact: a slam (or the sea, or too slow) lands here; anything shallower is a
 			# knockback slide that ends slideDistance() further on. The optional hop is ignored.
@@ -1058,8 +1206,8 @@ static func _wall(S: SimState, att, tgt, s: float, dist: float):
 	if not (bool(w.get("enabled", false)) if _wallForce < 0 else _wallForce == 1) and walked.is_empty():
 		return null
 	var chance: float = float(w.base) - float(att.care) * float(w.care)
-	if chance < 1.0 and SimRng.keyed(int(S.game.seed), "knock.wall", S.dirS.exN * 64 + int(tgt.launchN)) >= chance:
-		return null
+	if (walked.is_empty() or not DirWalk.reachWalked()) and chance < 1.0 and SimRng.keyed(int(S.game.seed), "knock.wall", S.dirS.exN * 64 + int(tgt.launchN)) >= chance:
+		return null   # (with walk.reachWalked a player who walked him there chose it, so his always reaches; off, the care roll stands: it can read people, RL-247)
 	if att.ai == null and S.dirS.ex != null:
 		var pt: int = phrase(S, S.dirS.ex, att)
 		var tilt: int = (pt >> 4) & 15 if pt >= 0 else 0

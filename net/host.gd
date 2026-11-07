@@ -26,6 +26,8 @@ var _echo: float = -1.0       # the newest ts received, and when
 var _echoAt: float = 0.0
 var _remoteFrame: int = -1    # the newest frame the other peer has reported
 var stallFrames: int = 0      # tests only: the next this many frames run nothing at all (a hitch: the process froze)
+var paused: bool = false      # this PC's game is paused: idle() keeps the link and says so
+var remotePaused: bool = false   # the other PC said it's paused, and hasn't moved on since
 
 
 ## S has had its newMatch; matchKey is NetHandshake.keyOf of it; bot answers for slot local_.
@@ -60,6 +62,8 @@ func frame(now: float, until: int) -> void:
 		if not hs.done() or hs.failed != "":
 			return
 		_start()
+	if until > session.frame:
+		paused = false
 	if session.frame < until:
 		if sync.shouldWait(session.frame):
 			waits += 1
@@ -95,6 +99,9 @@ func _packet(now: float) -> Dictionary:
 
 
 func _take(now: float, pk: Dictionary) -> void:
+	if str(pk.get("hs", "")) == "pause":
+		remotePaused = bool(pk.get("on", false))
+		return
 	if pk.has("hs"):
 		hs.take(now, pk, tr)
 		return
@@ -123,9 +130,19 @@ func _take(now: float, pk: Dictionary) -> void:
 	for c in pk.get("chk", []):
 		session.addRemoteCheck(int(c[0]), c[1])
 	var rf: int = int(pk.get("frame", 0))
+	if rf > _remoteFrame:
+		remotePaused = false   # it has moved on: no longer paused
 	if rf >= _remoteFrame:   # a packet overtaken by a newer one would understate the other's frame: time sync skips it
 		_remoteFrame = rf
 		sync.observe(session.frame, rf, float(pk.get("adv", 0.0)), rttMs())
+
+
+## A frame while this PC's game is paused: the link is serviced and the session's packets go out as ever, so the other PC keeps hearing from it
+## (an unserviced link drops past ENet's timeout), but no tick is run. A pause notice goes with it.
+func idle(now: float) -> void:
+	paused = true
+	frame(now, session.frame if session != null else 0)
+	tr.send(now, {"hs": "pause", "on": true})
 
 
 ## Done when this peer has run and confirmed `until` ticks and the other holds all its inputs.

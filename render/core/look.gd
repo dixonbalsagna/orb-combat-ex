@@ -623,6 +623,7 @@ const SPLIT_CULL_ON: bool = true
 ## at the crowd's largest boost, CROWD_BOOST_MAX, and room to spare).
 const PANE_SWEEP_ON: bool = true
 const SWEEP_SLICE: int = 16
+const VISIT_SPARE_US: int = 2000   # a frame's building visits off the screen: the time they may take; the rest wait for the next frames (PlanetView._visit_budgeted)
 const SWEEP_TILE_PAD: float = 640.0   # on the tile ground, past a building's own reach: what the finest tile's test allows the ground
 const SWEEP_PAD: float = 200.0
 const DRIFT_DEG_PER_MIN: float = 3.0

@@ -364,16 +364,28 @@ static func orient(af: AnimFighter, S: SimState, f, dt: float) -> void:
 	var O: Dictionary = AnimData.zip.get("orient", {})
 	af.root_off.z += af._zip_depth
 	var bowed: bool = f != null and f.rush != null and float(f.rush.arc) != 0.0
+	# a flight strike's arc over or under (docs/animation/flight-strikes.md): a rush bowed past `loop.bow_min` is a loop. It tilts further (the steep climb close in), a little faster, and eases toward level for the ticks
+	# round the blow's contact (`level` of the tilt dropped within `level_ticks`), so the blow is thrown by a body that is not mid-turn
+	var L: Dictionary = AnimData.zip.get("loop", {})
+	var looping: bool = bowed and not L.is_empty() and af.flight_loop and absf(float(f.rush.arc)) >= float(L.get("bow_min", 20.0))   # only a flight strike's arc: the pop, the recoil flips, the stance circle and the zip's passes are bowed rushes too and keep the zip's own tilt
+	if not bowed:
+		af.flight_loop = false
+	var cap: float = float(L.get("max", O.get("max", 1.2))) if looping else float(O.get("max", 1.2))
+	var gain: float = float(L.get("gain", O.get("gain", 0.85))) if looping else float(O.get("gain", 0.85))
+	var rate: float = float(L.get("rate", O.get("rate", 18.0))) if looping else float(O.get("rate", 18.0))
+	var spd: float = float(L.get("speed", O.get("speed", 700.0))) if looping else float(O.get("speed", 700.0))   # a close loop is slow (half a circle in 24 ticks is under 700 units a second) and still has to turn
 	if bowed or (not af.zip.is_empty() and bool(af.zip.get("travelling", false))):
 		var vm: Vector2 = af._lead_measure(S, f)
 		if bowed:
 			vm = _tangent_v(S, f)
-		if vm.length() > float(O.get("speed", 700.0)):
+		if vm.length() > spd:
 			var al: float = atan2(vm.y, maxf(absf(vm.x), 1.0))
 			if vm.x * af.vface < 0.0:
 				al = atan2(vm.y, -vm.x * af.vface)   # backing out: the angle from the facing direction, not from the travel
-			want = clampf(al, -float(O.get("max", 1.2)), float(O.get("max", 1.2))) * float(O.get("gain", 0.85))
-	af._zip_tilt += (want - af._zip_tilt) * (1.0 - exp(-dt * float(O.get("rate", 18.0))))
+			want = clampf(al, -cap, cap) * gain
+			if looping and not af.press.is_empty() and absi(int(af.press.get("ticks_to_contact", 99))) <= int(L.get("level_ticks", 3)):
+				want *= 1.0 - float(L.get("level", 0.8))
+	af._zip_tilt += (want - af._zip_tilt) * (1.0 - exp(-dt * rate))
 	if absf(af._zip_tilt) < 0.002:
 		return
 	var phi: float = af._zip_tilt

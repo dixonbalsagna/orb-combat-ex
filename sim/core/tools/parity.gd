@@ -5013,8 +5013,8 @@ func _formBranches() -> String:
 	return ""
 
 
-## The air brake (buildings.md section 7.2; docs/architecture/brake-core.md). Off (the committed switch), a match has no
-## brake state and a replay carries no brake data. On: the start window runs straight-line from 8 to 20 ticks by the
+## The air brake (buildings.md section 7.2; docs/architecture/brake-core.md), with the data's switch either way. Off (a
+## match's "brake": false, or no key and the switch off), a match has no brake state and a replay carries no brake data. On: the start window runs straight-line from 8 to 20 ticks by the
 ## send's power, 25% sooner a mark; a sent fighter who holds the brake starts on the window's tick and not before, slows
 ## at the rate and pays ki, and under a third of the send's speed has control back in the air (World's journey_end, kind
 ## brake); with no ki the brake is half as fast; letting go ends it; a set piece's send never brakes; the events say so;
@@ -5022,13 +5022,12 @@ func _formBranches() -> String:
 func _brake() -> String:
 	if not SimBrake.errors().is_empty():
 		return "the brake data: " + "; ".join(SimBrake.errors())
-	if SimBrake.enabled():
-		return "the brake is on in the committed data"
-	var d0: String = SimReplay.dataHash()
-	if SimReplay.dataHash({"brake": false}) != d0 or SimReplay.dataHash({"brake": true}) == d0:
+	var dOff: String = SimReplay.dataHash({"brake": false})
+	var dOn: String = SimReplay.dataHash({"brake": true})
+	if dOn == dOff or SimReplay.dataHash() != (dOn if SimBrake.enabled() else dOff):   # a match with no key of its own takes the data's switch
 		return "the brake data is not in a replay's data hash exactly when it is on"
 	var S0 := SimCore.createSim()
-	SimCore.newMatch(S0, 5, {"p1": false, "p2": false})
+	SimCore.newMatch(S0, 5, {"p1": false, "p2": false}, {"brake": false})
 	if S0.brakeOn or S0.fighters[1].brk != null:
 		return "a match without the brake has brake state"
 	SimCore.dispose(S0)
@@ -5669,6 +5668,14 @@ func _wordRun(word: int) -> Dictionary:
 
 ## Off: a word set on an intent reaches nothing: the same entries, the same hash, the same header as no word. On: it is in the hash, in a fifth number, and in the header; it plays back; a changed word is caught; a snapshot keeps it.
 func _rightWord() -> String:
+	SimInputData.ensure()
+	var prev: bool = bool(SimInputData.timing.get("switches", {}).get("rightStick", false))
+	var r: String = _rightWordBody()
+	_setRightStick(prev)   # put back what the data says, so later rows see the shipped switch
+	return r
+
+
+func _rightWordBody() -> String:
 	var word: int = 1 | (3 << 4) | (2 << 7) | (5 << 13)
 	_setRightStick(false)
 	var plain: Dictionary = _wordRun(0)

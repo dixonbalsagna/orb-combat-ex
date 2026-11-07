@@ -20,7 +20,9 @@ static var beamDmg: float = 230.0
 static var beamStop: float = 0.14
 static var beamShake: float = 16.0
 static var rejoinAfter: float = 2.2    # seconds of a fight's KO before its winner can be rejoined with the other fight's (SimStage.rejoin)
-static var blind: int = 0              # tests only: 1 loses what's sent, 2 lands it twice, 3 loses a shot going over (cross_check's negative control)
+static var blind: int = 0              # tests only: 1 loses what's sent, 2 lands it twice, 3 loses a shot going over (cross_check's negative control); 4 a fallen body stays standing (cross_end_check's); 5 a setup's "outside" is ignored, 6 the stage's clock stands still, 7 the step clears the picture's lists as it used to (coop_check's)
+static var _cap: float = 840.0         # 2v2's time cap, seconds on the stage's clock (timeCap)
+static var _last: float = 900.0        # ... and the ending's last event (lastAt)
 static var sent: Dictionary = {}       # tests only: what's been sent across, by kind (a shot gone over counts as "shot")
 static var landed: Dictionary = {}     # ... and what's landed from the stage
 static var partners: int = 0           # ... and what was refused for being sent to a partner
@@ -46,6 +48,8 @@ static func _ensure() -> void:
 	beamStop = float(j.beam.stop)
 	beamShake = float(j.beam.shake)
 	rejoinAfter = float(j.rejoinAfter)
+	_cap = float(j.timeCapAt)
+	_last = float(j.lastAt)
 
 
 static func enabled() -> bool:
@@ -66,6 +70,19 @@ static func errors() -> Array:
 ## On for this match: two fights, and the switch.
 static func on(S: SimState) -> bool:
 	return S.stage != null and S.stage.cross
+
+
+## 2v2's time cap (Game Design: 14:00, docs/design/two-v-two.md) and the ending's last event, in seconds on the stage's
+## clock (S.stage.clock), for a match with hits across on: DirExchange and DirEnding read them in place of a 1v1's, so
+## both fights reach them on one tick. 0: none.
+static func timeCap() -> float:
+	_ensure()
+	return _cap
+
+
+static func lastAt() -> float:
+	_ensure()
+	return _last
 
 
 ## A body's team, by the slot he started in ("p1" is slot 0): 0 for slots 0 and 2, 1 for 1 and 3.

@@ -5,6 +5,8 @@ extends SceneTree
 ##   godot --headless --script res://net/tools/two_pc_check.gd -- --compare=A,B        exit 0 the same, 1 they disagree, 2 not comparable (another build or data)
 ##   godot --headless --path . --script res://net/tools/two_pc_check.gd -- --self-test  [--ticks=900]
 ##   godot --headless --path . --script res://net/tools/two_pc_check.gd -- --negative-control  [--ticks=900]
+## --setup=fights2 or --setup=together (with any of the above) plays two fights instead (NetLan's 2v2 setups, hits across them off or on): the first match the AI in all four slots, the rematch NetBots in
+## slots 0 and 2 against the AI, and every body's x and y in the lines.
 ## The first match is the sim's AI against itself, the rematch a NetBot against the AI, and a scripted ask turns the line every 300 ticks, so a line that has moved reaches what's read and cached.
 ## Every 60 ticks a line holds the desync digest, the gameplay SimHash, a rolling digest of the ticks' feed and fx, and the fighters' x and y as raw bytes. Below the --- line the two files must be
 ## byte for byte the same. Above it, build, godot, proto, data and setup must match or the two aren't comparable; cpu, cores, os and the timings are for reading, and are never compared.
@@ -22,6 +24,8 @@ const HEADER_MUST: Array = ["format", "build", "godot", "proto", "data", "setup"
 const SAMPLES: int = 24   # snapshot takes and restores timed at the end of a match
 
 var _deadlineMs: int = 0
+var setupName: String = ""
+var setupNow: Dictionary = SETUP
 
 
 func _init() -> void:
@@ -30,6 +34,10 @@ func _init() -> void:
 		var kv := s.trim_prefix("--").split("=", true, 1)
 		a[kv[0]] = kv[1] if kv.size() > 1 else "1"
 	var ticks: int = int(a.get("ticks", 3600))
+	setupName = String(a.get("setup", ""))
+	setupNow = {"fights2": NetLan.SETUP2, "together": NetLan.SETUP2X}.get(setupName, SETUP)
+	if setupNow.get("outside", false) and not NetLan.outsideKeyed():
+		DirOutside.setForce(1)   # the together setup's blows from outside (Simulation's per-setup key does it once it's in)
 	if a.has("compare"):
 		var p := String(a.compare).split(",")
 		var r: Dictionary = compareFiles(p[0], p[1])
@@ -72,10 +80,10 @@ func play(ticks: int, build: String, brk: String, onlyB: bool) -> String:
 	var body := PackedStringArray()
 	var us: Array = [0, 0, 0, 0]   # tick count, tick time, the worst tick, swings
 	if not onlyB:
-		SimCore.newMatch(S, SEED_A, {"p1": true, "p2": true}, SETUP)
+		SimCore.newMatch(S, SEED_A, {"p1": true, "p2": true, "p3": true, "p4": true} if setupNow.has("fights") else {"p1": true, "p2": true}, setupNow)
 		if not _match(S, "A", ticks, null, brk, body, us):
 			return ""
-	SimCore.newMatch(S, SEED_B, {"p1": false, "p2": true}, SETUP)
+	SimCore.newMatch(S, SEED_B, NetLan.AI2 if setupNow.has("fights") else {"p1": false, "p2": true}, setupNow)
 	if not _match(S, "B", ticks / 2, NetBot.new(SEED_B, 0), brk, body, us):
 		return ""
 	var head := PackedStringArray([
@@ -83,8 +91,8 @@ func play(ticks: int, build: String, brk: String, onlyB: bool) -> String:
 		"build %s" % build,
 		"godot %s" % Engine.get_version_info().string,
 		"proto %d" % NetHandshake.PROTO,
-		"data %s" % SimReplay.dataHash(SETUP),
-		"setup %s" % JSON.stringify(SETUP, "", true),
+		"data %s" % SimReplay.dataHash(setupNow),
+		"setup %s" % JSON.stringify(setupNow, "", true),
 		"cpu %s" % OS.get_processor_name(),
 		"cores %d" % OS.get_processor_count(),
 		"os %s" % OS.get_name(),
@@ -102,6 +110,7 @@ func play(ticks: int, build: String, brk: String, onlyB: bool) -> String:
 func _match(S: SimState, name: String, n: int, bot: NetBot, brk: String, body: PackedStringArray, us: Array) -> bool:
 	var roll: String = ""
 	var way: float = 1.0
+	var bot2: NetBot = NetBot.new(SEED_B, 1)   # two fights: the second player, in slot 2
 	var neutral: SimIntent = SimIntent.unpack(NetSession.NEUTRAL)
 	for t in range(n):
 		if _deadlineMs > 0 and Time.get_ticks_msec() > _deadlineMs:
@@ -110,7 +119,11 @@ func _match(S: SimState, name: String, n: int, bot: NetBot, brk: String, body: P
 			way = -way
 			us[3] += 1
 		var t0: int = Time.get_ticks_usec()
-		if bot != null:
+		if bot != null and setupNow.has("fights"):
+			var p: int = bot.next()
+			var q: int = bot2.next()
+			SimCore.step(S, [NetSession.intentOf(p, bot.word), null, NetSession.intentOf(q, bot2.word), null])
+		elif bot != null:
 			var p: int = bot.next()
 			SimCore.step(S, [NetSession.intentOf(p, bot.word), neutral])
 		else:
@@ -126,7 +139,7 @@ func _match(S: SimState, name: String, n: int, bot: NetBot, brk: String, body: P
 			S.fighters[1].hp = S.fighters[1].hp + absf(S.fighters[1].hp) * 2.220446049250313e-16
 		if (t + 1) % EVERY == 0 or t + 1 == n:
 			var nums := PackedFloat64Array()
-			for f in S.fighters:
+			for f in (SimStage.bodies(S) if S.stage != null else S.fighters):
 				nums.append(f.x)
 				nums.append(f.y)
 			body.append("%s %d %s %s %s %s" % [name, t + 1, NetDesync.digest(S), SimHash.stateHash(S).gameplay, roll, nums.to_byte_array().hex_encode()])
@@ -199,7 +212,7 @@ static func _split(t: String) -> Array:
 
 func _child(ticks: int, tag: String, extra: Array = []) -> String:
 	var path: String = OS.get_user_data_dir().path_join("two_pc_%d_%s.txt" % [OS.get_process_id(), tag])
-	var args: Array = ["--headless", "--path", ProjectSettings.globalize_path("res://"), "--script", "res://net/tools/two_pc_check.gd", "--", "--out=" + path, "--ticks=%d" % ticks, "--build=selftest"] + extra
+	var args: Array = ["--headless", "--path", ProjectSettings.globalize_path("res://"), "--script", "res://net/tools/two_pc_check.gd", "--", "--out=" + path, "--ticks=%d" % ticks, "--build=selftest"] + extra + (["--setup=" + setupName] if setupName != "" else [])
 	var out: Array = []
 	var code: int = OS.execute(OS.get_executable_path(), args, out, true)
 	var text: String = FileAccess.get_file_as_string(path)

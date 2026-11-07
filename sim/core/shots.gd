@@ -381,8 +381,15 @@ static func hitFighter(S: SimState, sh, f) -> bool:
 ## Returns true if the shot ends there. The rule here ends it and does the building nothing; World fills in what a shot of
 ## this kind and power does to it (and may return false for a shot that levels the building and flies on).
 static func hitStructure(S: SimState, sh, b) -> bool:
-	WorldBlast.shotBuilding(S, sh.owner, sh.kind, sh.power, b, sh.x, sh.y, sh.z, sh.vx, sh.vy, WorldBlast.chargeOf(sh))   # World: the shot's hit on the building (the wear pool, the floors, one building at most)
+	WorldBlast.shotBuilding(S, sh.owner, sh.kind, sh.power, b, sh.x, sh.y, sh.z, sh.vx, sh.vy, WorldBlast.chargeOf(sh), outsider(S, sh))   # World: the shot's hit on the building (the wear pool, the floors, one building at most)
 	return true
+
+
+## Who fired a shot from outside (owner -1): its shooter, in another fight (SimCross.shooter), for World's blast to read
+## his tier and make him the cause, as for his own shots there. null for a shot of the fight's own, which World reads by
+## its slot. (Mines never come from outside.)
+static func outsider(S: SimState, sh):
+	return SimCross.shooter(S, sh) if sh.owner < 0 else null
 
 
 ## Set a mine off: it blows after its fuse, the shot's for cause shot and the body's for any other (delay: after that many
@@ -522,7 +529,7 @@ static func hitWorld(S: SimState, sh, cause: String) -> void:
 	if cause == "mine":
 		WorldBlast.mineBlast(S, sh.owner, sh.x, sh.y, sh.z)   # a mine's blast, on the ground or hanging in the air (the bowl fades with the height)
 		return
-	WorldBlast.shotHit(S, sh.owner, sh.kind, sh.x, sh.y, sh.z, sh.vx, sh.vy, cause, WorldBlast.chargeOf(sh))   # World's blast on the ground, the structures and the water; cause "air" for a burst where the shot's life ran out
+	WorldBlast.shotHit(S, sh.owner, sh.kind, sh.x, sh.y, sh.z, sh.vx, sh.vy, cause, WorldBlast.chargeOf(sh), 1, outsider(S, sh))   # World's blast on the ground, the structures and the water; cause "air" for a burst where the shot's life ran out
 
 
 # ---------------------------------------------------------------- the step

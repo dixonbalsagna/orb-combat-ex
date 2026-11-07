@@ -10,5 +10,9 @@
     "shake": 16.0
   },
   "rejoinAfter": 2.2,
-  "_rejoinAfter": "seconds of a fight's KO before its winner and the other fight's, one on each team, are made one fight's pair (2v2's step 3). Its slow motion is 2.2"
+  "_rejoinAfter": "seconds of a fight's KO before its winner and the other fight's, one on each team, are made one fight's pair (2v2's step 3). Its slow motion is 2.2",
+  "timeCapAt": 840.0,
+  "_timeCapAt": "2v2, with hits across fights on: the time cap's moment, in seconds on the stage's clock, for both fights at once (Game Design's 14:00, docs/design/two-v-two.md: the cap puts all four on the brink). The stage's clock is the longer of the two fights' clocks as a tick starts (SimStage.clockTick), so both fights reach it on one tick. With hits across off, each fight keeps finishers.json's contest.timeCapAt on its own clock, as a 1v1. 0: none",
+  "lastAt": 900.0,
+  "_lastAt": "... and the ending's last event (DirEnding; interrupts.json ending.lastAt in a 1v1), on the stage's clock: a 1v1's minute after the cap, kept. A first value, Game Design's to rule"
 }

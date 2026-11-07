@@ -969,6 +969,8 @@ class Stage:
 	var mail: Array = []       # ... a Cross each, on its way to a body of another fight, in the order sent
 	var over: int = -1         # ... the team with nobody standing: the match is over (SimCore.ended); -1 while both stand
 	var rejoined: int = 0      # ... how often the two standing have been made one fight's pair (SimStage.rejoin)
+	var outside: int = -1      # ... blows from outside (DirOutside) in this match: the setup's "outside" (1 on, 0 off), or -1 for interrupts.json's outside.enabled
+	var clock: float = 0.0     # ... with hits across: the stage's clock as a tick starts, the longer of the fights' clocks (SimStage.clockTick), for 2v2's time cap and last event
 
 
 ## A hit from one fight on a body of another (sim/core/cross.gd), waiting for his fight's next live tick.

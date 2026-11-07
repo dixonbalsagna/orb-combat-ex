@@ -201,9 +201,11 @@ static func heldFor(S: SimState, o) -> int:
 
 ## True while he's holding a charge past the quick flick, a strike's or a beam's.
 static func armoured(S: SimState, o) -> bool:
+	var st: int = _g(o, ST_ON)
+	if st == 3 and DirBeamMove.on():
+		return heldFor(S, o) >= int(cfg().armour.get("beamFromTicks", 0))   # the beam's own move: its hold is armoured from its first tick, armour's switch or not (playable-build.md section 2)
 	if not armourOn():
 		return false
-	var st: int = _g(o, ST_ON)
 	return (st == 2 or st == 3) and heldFor(S, o) >= int(cfg().armour.fromTicks)
 
 
@@ -215,6 +217,8 @@ static func mediumHolds(S: SimState, o) -> bool:
 ## What's left of his flying speed: past the quick flick, holding a beam, he barely moves, with no dash (SimFighter.flightSpeed, by SimDir).
 ## 1 otherwise. A kite's hold isn't a charge, so it keeps his speed.
 static func holdMove(S: SimState, f) -> float:
+	if DirBeamMove.pending(f):
+		return 1.0   # let go and waiting on the gate: he moves again
 	if not on() or _g(f, ST_ON) != 3 or f.beamCharge == null or not DirBeamPlay.stationary() or heldFor(S, f) < int(DirBeamPlay.frontCfg().holdFromTicks):
 		return 1.0
 	return float(DirBeamPlay.frontCfg().holdMove)
@@ -222,6 +226,7 @@ static func holdMove(S: SimState, f) -> float:
 
 static func _holdLost(S: SimState, f) -> void:
 	_clear(f)
+	DirBeamMove.lost(f)
 	f.beamCharge = null
 	SimFx.cue(S, f, "stick_refused", "beam", "taken")
 
@@ -288,6 +293,15 @@ static func reach(a: Dictionary) -> float:
 	return float(a.get("stickReach", 0.5))
 
 
+## A blow has ended the stick strike o was winding (DirBrawl.contact): said, as UI's "Hit".
+static func stopped(S: SimState, o) -> void:
+	if not on() or o.ai != null or not bool(DirExchange.pressCfg().get("refusedCue", false)):
+		return
+	var st: int = _g(o, ST_ON)
+	if st == 1 or st == 2:
+		SimFx.cue(S, o, "stick_refused", NAMES[_g(o, ST_DIR)], "hit")
+
+
 ## A clean hit (DirBrawl.contact, past a guard, a perfect block, armour and a miss).
 static func landed(S: SimState, ex, f, o, a: Dictionary) -> void:
 	var c: Dictionary = cfg()
@@ -302,6 +316,8 @@ static func landed(S: SimState, ex, f, o, a: Dictionary) -> void:
 	_flickRun(S, f, o, lvl)
 	var trade: bool = DirBrawl._g(o, DirBrawl.LINE) == 1 and DirBrawl._g(o, DirBrawl.CONTACT) == now
 	var stuns: bool = not trade and _g(o, ST_STUN) == 0 and not (lvl == 0 and _g(f, ST_SOFT) == 1)
+	if not trade and _g(o, ST_STUN) != 0:
+		DirExchange.refused(S, f, "stun_limit")   # one stun a string: this one's held back
 	if lvl == 0 and _g(f, ST_GUARD) == 1 and not lightStops():
 		stun = int(c.guardStun)
 	if lvl == 0:
@@ -390,16 +406,30 @@ static func _beat(ex, f):
 static func _clear(f) -> void:
 	_s(f, ST_ON, 0)
 	_s(f, ST_RL, 0)
+	DirBeamMove.lost(f)   # (its ladder goes with it)
 
 
 static func _start(S: SimState, f, i) -> void:
+	if DirBeam.inClash(S, f) and DirBeam.pushModeOf(S, f) == "stick":
+		return   # in a beam struggle his stick pushes (DirBeam.clashTick reads it): no strike and no beam starts
 	var dir: int = relative(S, f, int(i.rsDir))
 	var mask: int = int(i.rsMask)
 	if (mask & RB) != 0:
 		if dir == TOWARD and DirBeamPlay.stickAnswer(S, f):
+			var told: bool = false
+			for k in range(S.out.fx.size() - 1, -1, -1):
+				var e = S.out.fx[k]
+				if String(e.type) == "cue" and String(e.kind) == "answer_refused" and int(e.actor) == S.fighters.find(f):
+					told = true
+					break
+			if told:
+				SimFx.cue(S, f, "stick_refused", NAMES[dir], "ki")   # it can't pay: the pad's knock and UI's word
+			else:
+				SimFx.cue(S, f, "stick_start", NAMES[dir], str(mask))   # answered: the hub hears it was, and doesn't knock "no answer"
 			return   # a beam's coming: in its window it fires at once and the fronts meet; in its charge it fires as he fires
 		_s(f, ST_ON, 3)   # the energy layer's stick is the beam: it fires on the release
 		_s(f, ST_AT, DirBrawl._now(S) + 1)
+		DirBeamMove.began(S, f)   # its own move: the stage count is taken now
 		if DirBeamPlay.stationary() and (mask & LT) == 0:
 			f.beamCharge = S.T   # the hold is the charge, and shows (the kite's isn't one: power-scale.md, the last section)
 		SimFx.cue(S, f, "stick_start", NAMES[dir], str(mask))
@@ -432,6 +462,7 @@ static func _go(S: SimState, f, dir: int, mask: int, quiet: bool = false) -> voi
 	_s(f, ST_PEND, dir | ((mask + 1) << 3))
 	_s(f, ST_PAT, DirBrawl._now(S) + 1)
 	_s(f, ST_AT, DirBrawl._now(S) + 1)
+	DirBeamMove.strikeBegan(S, f)   # the plain hold's ladder: its count is taken now
 	DirExchange.requestAttack(S, f, "heavy")
 	if pendFollow() and _g(f, ST_PEND) != 0:
 		var slot: int = S.fighters.find(f)
@@ -528,6 +559,11 @@ static func _relLevel(S: SimState, f, i) -> int:
 	return l
 
 
+## The level a plain hold's release lands at: the ladder's stage up to its cap with the stages on, else the stick's own.
+static func _strikeLvl(S: SimState, f, i) -> int:
+	return DirBeamMove.strikeLevel(f) if DirBeamMove.strikeOn() else _relLevel(S, f, i)
+
+
 ## True while a request of his is waiting for its blow.
 static func pending(f) -> bool:
 	return on() and _g(f, ST_PEND) != 0
@@ -574,6 +610,7 @@ static func _release(S: SimState, ex, f, b, lvl: int) -> void:
 static func tick(S: SimState, dt: float) -> void:
 	if dt <= 0.0 or not on():
 		return
+	DirBeamMove.stamp(S)
 	for f in S.fighters:
 		var i = f.input
 		_carry(S, f)
@@ -583,8 +620,10 @@ static func tick(S: SimState, dt: float) -> void:
 			_start(S, f, i)
 		else:
 			_waiting(S, f)
+		if DirBeamMove.strikeOn() and i.rsHeld and not i.rsRelease and (_g(f, ST_PEND) != 0 or _g(f, ST_ON) == 1 or _g(f, ST_ON) == 2):
+			DirBeamMove.strikeHolding(S, f, DirBrawl._now(S) - (_g(f, ST_AT) - 1), dt)   # the plain hold climbs the ladder from its request
 		if i.rsRelease and (_g(f, ST_PEND) != 0 or _g(f, ST_ON) == 1):
-			_s(f, ST_RL, (_g(f, ST_RL) & RL_SWEPT) | (_relLevel(S, f, i) + 1))   # the edge is one tick: the blow's level is kept for when its wind-up ends
+			_s(f, ST_RL, (_g(f, ST_RL) & RL_SWEPT) | (_strikeLvl(S, f, i) + 1))   # the edge is one tick: the blow's level is kept for when its wind-up ends
 		var pat: int = _g(f, ST_PAT)
 		if _g(f, ST_PEND) != 0 and pendFollow() and _followed(S, f, pat):
 			pass
@@ -600,6 +639,21 @@ static func tick(S: SimState, dt: float) -> void:
 			DirBeamAim.holding(S, f, i)
 			if DirBeamPlay.stationary() and (f.state == "launched" or f.state == "down" or f.state == "dropped" or f.stunTicks > 0):
 				_holdLost(S, f)   # something took him
+				continue
+			if DirBeamMove.on():
+				if DirBeamMove.pending(f):
+					if DirBeamMove.tryFire(S, f):
+						_clear(f)   # it fired, or it was refused and said why
+					continue
+				DirBeamMove.holding(S, f, heldFor(S, f), dt)
+				if i.rsRelease or not i.rsHeld:
+					DirBeamAim.thrown(f, i)
+					if not DirBeamMove.released(S, f, heldFor(S, f)):
+						_beamGo(S, f, 0, heldFor(S, f))   # before its first stage: the quick, as it was
+					elif DirBeamMove.tryFire(S, f):
+						_clear(f)
+					elif not DirBeamMove.pending(f):
+						_clear(f)
 				continue
 			if i.rsRelease or not i.rsHeld:
 				DirBeamAim.thrown(f, i)
@@ -619,8 +673,8 @@ static func tick(S: SimState, dt: float) -> void:
 		var due: bool = b.t <= ex.t + dt * 1.25
 		if kept > 1 and due:
 			_release(S, ex, f, b, kept - 1)
-		elif _g(f, ST_ON) == 2 and (i.rsRelease or not i.rsHeld or since >= int(c.autoGoTicks)):
-			_release(S, ex, f, b, _relLevel(S, f, i) if i.rsRelease else int(_reader().level_at(since)))
+		elif _g(f, ST_ON) == 2 and (i.rsRelease or not i.rsHeld or (since >= int(c.autoGoTicks) and not DirBeamMove.strikeOn())):   # with the stages a held charge never goes by itself
+			_release(S, ex, f, b, _strikeLvl(S, f, i) if (i.rsRelease or DirBeamMove.strikeOn()) else int(_reader().level_at(since)))
 		elif i.rsHeld and not i.rsRelease and kept == 0 and due:
 			_s(f, ST_ON, 2)
 			b.t += dt   # still out as its wind-up ends: the blow waits for the release
@@ -639,7 +693,8 @@ static func _beamGo(S: SimState, f, lvl: int, held: int) -> void:
 	SimFx.cue(S, f, "stick_release", "beam", str(lvl))
 	if lvl <= 0:
 		f.beamCharge = null
-		DirBlast.press(S, f, SimAct.SIG)
+		if not DirBlast.press(S, f, SimAct.HEAVY) and DirBlast.on() and bool(DirExchange.pressCfg().get("refusedCue", false)):   # the quick is the heavy blast, standing in for the snap-beam (right-hand-attacks-rulings.md section 2)
+			SimFx.cue(S, f, "stick_refused", "beam", "close")   # in an exchange he's in, a blast can't go: "Too close" (beams-third-play.md section 2)
 	else:
 		firing = true   # it's the stick's beam, and not a press of B
 		DirExchange.requestAttack(S, f, "sig")
@@ -659,6 +714,7 @@ static func _cancel(S: SimState, f) -> void:
 		return
 	if _g(f, ST_ON) == 3 and DirBeamPlay.stationary():
 		f.beamCharge = null   # the hold was the charge, and it's dropped
+		DirBeamMove.lost(f)
 	var ex = DirBrawl.exOf(S)
 	if ex != null and DirBrawl._g(f, DirBrawl.LINE) != 0:
 		DirBrawl._wEnd(S, f, DirBrawl.MEDIUM, 3)

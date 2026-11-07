@@ -1446,6 +1446,7 @@ static func contact(S: SimState, ex, b) -> void:
 	if not wound:
 		DirStick.lightOn(ex, o)   # it takes the stun, not the blow (docs/design/stick-lands.md)
 	if (wound or laStop or DirStick.bare(o)) and oWinding and _g(o, LINE) != 0:
+		DirStick.stopped(S, o)   # a stick strike's wind-up he loses: said
 		_wEnd(S, o, oKind, 2)
 		_s(o, HOLD_AT, 0)
 		_drop(S, ex, o)
@@ -1993,7 +1994,7 @@ static func _popTick(S: SimState) -> void:
 			if spk:
 				_ls(f, LA_POP_SPK, 0)
 				var by = SimRoster.opp(S, f)
-				WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(float(popCfg().get("spike", {}).get("speed", 1800.0)), float(by.tier)), by, "impact", 0.0, 1.0, false)   # the spike's crater, under him
+				WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(float(popCfg().get("spike", {}).get("speed", 1800.0)), float(by.tier), S), by, "impact", 0.0, 1.0, false)   # the spike's crater, under him
 			if landedSet:
 				_ls(f, LA_POP_STUN, S.tick)
 			var le = _ev(S, f, "pop", "land")
@@ -3948,6 +3949,7 @@ static func aiInput(S: SimState, f) -> void:
 		return   # the double hit is on its way: nothing it presses counts
 	if DirGrapple.aiInput(S, ex, f, o, i):
 		return   # a catch's tell or a clinch is the grapple's, or it catches now
+	DirWalk.aiLean(S, f, o, i)   # the wall push, by its personality (walk.ai): its stick toward him when a building stands beyond him
 	# Giving ground, and following a rival who does (brawl-second-pass.md section 1). One draw for each wind-up: it
 	# backs off after its reaction time, hands down, until his blow has landed or missed.
 	var oh: int = _g(o, HOLD_AT)
@@ -4098,8 +4100,9 @@ static func aiInput(S: SimState, f) -> void:
 		return   # a new choice waits for its blow to land
 	# A new choice.
 	if SimFighter.sigFree(f) or DirAI.sigDue(S, f, o) or (f.ki >= 50.0 and S.T >= f.sigReadyT and S.rng.next() < DirAI.sigPickFor(S, f, o)):
-		i.sig = true
-		i.stanceMask |= 4   # the charging stance: with no stance held, B is the heavy
+		if not DirBeamMove.aiStart(S, f, i):   # (the stick beam's own move: a hold, as a player's; the brawl gives way at its release)
+			i.sig = true
+			i.stanceMask |= 4   # the charging stance: with no stance held, B is the heavy
 		_s(f, AI_NEXT, S.tick + gap)
 		return
 	if o.stance == 1.0 and f.ki >= float(c.heavy.ki) and S.rng.next() < float(bl.get("breakGuard", lv.get("breakGuard", 0.0))):

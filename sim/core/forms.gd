@@ -408,6 +408,8 @@ static func casualty(S: SimState, n: float, cause, x: float) -> void:
 			h.form.witness = SimMathx.jmax(0.0, h.form.witness - n * h.fd.wOwnKill * norm)
 		elif c == SimRoster.opp(S, h) and absf(SimWrap.sdx(h.x, x)) <= h.fd.wRange:
 			h.form.witness += n * h.fd.wPerPerson * norm
+	if not S.fighters.has(c) and has(S, c) and c.fd.wPerPerson > 0.0:   # a body of another fight (a shot from outside, cross-fights.md): his own dead cost him as at home
+		c.form.witness = SimMathx.jmax(0.0, c.form.witness - n * c.fd.wOwnKill * norm)
 
 
 ## What a casualty someone else caused feeds his anguish (WorldCollateral._feed, World's line). For a fighter with

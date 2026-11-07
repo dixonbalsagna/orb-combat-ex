@@ -4,7 +4,7 @@ extends Control
 ##
 ## Run:  godot --path . res://ui/demo/hud_demo.tscn
 ## Options after "--": --scenario=hero_vs_proud|empress_vs_cyborg|placeholders|stress|controls   --shot=file.png (save a frame)
-##   --at=SECONDS (fast-forward the feed to that time before the shot)   --frames=N   --portrait (start portrait-shaped)   --sil --crown --clear --nofeed --nolegend --reduced --split --flip --prompts --dp=2.6 --touch[=press|ready] --left --device=xbox --preset=arena|simple-pad|kb-solo|kb-shared-p2 --ready --brink --alert[=window|charge] --alertn=TICKS --alertset=SET (the beam alert) --rh (the right-hand attacks) --pm (the planet map) --mirror --strike=toggle --stance=N --target=github|mailto|form --p2[=kbd] --joinnote=joined|left --pause[=N] [--pconfirm] --remap[=LAYOUT] [--rcapture=ACTION] [--rtry=kb:KeyK] [--rfocus=ACTION] --settings[=FOCUS_STEPS] [--pad] [--sscroll=PX] --howto[=PAGE] [--firstrun] [--notice] --ack=KIND[:CELL] --refuse=CODE --push=face|stick --pulse (with --struggle) --three --charge=CELL[:FRACTION] --launcher --launchready --rf --ko --feedback[=copied|review]
+##   --at=SECONDS (fast-forward the feed to that time before the shot)   --frames=N   --portrait (start portrait-shaped)   --sil --crown --clear --nofeed --nolegend --reduced --split --flip --prompts --dp=2.6 --touch[=press|ready] --left --device=xbox --preset=arena|simple-pad|kb-solo|kb-shared-p2 --ready --brink --alert[=window|charge] --alertn=TICKS --alertset=SET (the beam alert) --rh (the right-hand attacks) --pm (the planet map) --mirror --strike=toggle --stance=N --target=github|mailto|form --p2[=kbd] --joinnote=joined|left --pause[=N] [--pconfirm] --remap[=LAYOUT] [--rcapture=ACTION] [--rtry=kb:KeyK] [--rfocus=ACTION] --settings[=FOCUS_STEPS] [--pad] [--sscroll=PX] --howto[=PAGE] [--firstrun] [--notice] --ack=KIND[:CELL] --refuse=CODE --push=face|stick --pulse (with --struggle) --warn[=left|right] (a beam from the other fight; --alertset=SET) --stage=K:N[:capped] (the stick charge stage; with --rh --stance=2) --call[=X] (a partner on his brink at ring x; with --pm) --three --charge=CELL[:FRACTION] --launcher --launchready --rf --ko --feedback[=copied|review]
 ## Keys: Tab scenario | Space pause | R restart | S silhouette | F4 feed | C captions | M reduced motion | K crown always on | B brink ring | T arc thickness
 ##       Z clear zones | L region label | V viewport size | +/- fighter size | H hide this legend
 
@@ -149,6 +149,16 @@ func _ready() -> void:
 		hud.hub.consume({"type": "cue", "kind": "beam_pulse", "actor": 1, "target": 0, "k": 1})   # --pulse: a beat has just landed (the glyphs of the clash rows are ringed)
 	if args.has("refuse"):
 		hud.hub.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "right", "source": str(args["refuse"])})   # --refuse=CODE: that refusal's word (ki, hit, soon, cooling, late, chase)
+	if args.has("warn"):
+		# --warn[=left|right] [--alertset=SET]: a beam from the other fight of a 2v2 is on the first fighter's line (the alert's thin edge line and its caption; docs/ui/pending/coop-marks/README.md)
+		UiData.set_feature("answer_alert", true)
+		hud.set_option("alert_preset", str(args.get("alertset", "full")))
+		var wside: String = str(args["warn"]) if ["left", "right"].has(str(args["warn"])) else ""
+		hud.hub.consume({"type": "cue", "kind": "beam_warn", "actor": 0, "text": "p3", "source": wside})
+	if args.has("stage"):
+		# --stage=K:N[:capped]: the stick charge is at stage K of N (the digit on the strike stick's glyph); hold Energy with --stance=2
+		var stp: PackedStringArray = str(args["stage"]).split(":")
+		hud.hub.consume({"type": "cue", "kind": "stick_stage", "actor": 0, "k": int(stp[0]), "n": int(stp[1]) if stp.size() > 1 else 4, "source": "capped" if stp.size() > 2 else ""})
 	if args.has("mirror"):
 		hud.set_option("dpad_mirror", "on")   # --mirror: the D-pad strikes
 	if args.has("strike"):
@@ -288,6 +298,10 @@ func _split_fn() -> Dictionary:
 
 
 func _process(delta: float) -> void:
+	if args.has("warn") and hud.hub.alert.has("until"):
+		hud.hub.alert["until"] = float(hud.hub.alert["age"]) + 1.0   # --warn holds the warning on for the still (in play it is held for 1.5 s)
+	if args.has("stage"):
+		hud.hub.model(0).cstage_t = 0.0
 	if args.has("pulse"):
 		hud.hub.model(0).beat_hold = 1.0   # --pulse holds the beat's ring on for the still (in play it follows the beats)
 	if args.has("charge"):
@@ -412,7 +426,10 @@ func _strip() -> Dictionary:
 	var models: Array = [m0, m1]
 	for i in range(2):
 		fs.append({"x": xs[i], "slot": i, "hidden": models[i] != null and models[i].hidden, "aura": models[i].aura if models[i] != null else Color.WHITE, "seen_x": xs[i] - 120.0})
-	return {"W": W, "segs": SEGS, "cam_x": (xs[0] + xs[1]) * 0.5, "cam_w": 2200.0, "dead": [3100.0, 3160.0, 3300.0, 1400.0], "fighters": fs}
+	var calls: Array = []
+	if args.has("call"):
+		calls = [float(str(args["call"])) if str(args["call"]).is_valid_float() else 6200.0]   # --call[=X]: his partner on his brink in the other fight, at ring x
+	return {"W": W, "segs": SEGS, "cam_x": (xs[0] + xs[1]) * 0.5, "cam_w": 2200.0, "dead": [3100.0, 3160.0, 3300.0, 1400.0], "fighters": fs, "calls": calls}
 
 
 func _unhandled_key_input(e: InputEvent) -> void:

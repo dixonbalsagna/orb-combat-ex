@@ -30,7 +30,10 @@ static func feed_from_strip(data: Dictionary, tick: int) -> Dictionary:
 	var pair: Array = []
 	for f in data.get("fighters", []):
 		pair.append({"lon": fposmod(float((f as Dictionary).get("x", 0.0)), W) / W * TAU, "lat": 0.0})
-	return {"pair": pair, "tick": tick, "segs": data.get("segs", []), "W": W}
+	var calls: Array = []
+	for cx in data.get("calls", []):
+		calls.append({"lon": fposmod(float(cx), W) / W * TAU, "lat": 0.0})   # the partners on their brink in the other fight (UiSimBridge.calls)
+	return {"pair": pair, "tick": tick, "segs": data.get("segs", []), "W": W, "calls": calls}
 
 
 ## The longitude and latitude the globe faces: the pair's middle by the short way round (one point when together).
@@ -102,7 +105,38 @@ static func sig(state: Dictionary, feed: Dictionary) -> Array:
 		var p: Array = lonlat(d)
 		key.append(int(roundf(float(p[0]) / (STEP * 2.0))))
 		key.append(int(roundf(float(p[1]) / (STEP * 2.0))))
+	if UiData.feature("brink_mark"):
+		var cl: Array = feed.get("calls", [])
+		key.append(cl.size())
+		for cd in cl:
+			var cp: Array = lonlat(cd)
+			key.append(int(roundf(float(cp[0]) / (STEP * 2.0))))
+			key.append(int(roundf(float(cp[1]) / (STEP * 2.0))))
 	return key
+
+
+## A partner's call on the globe (the brink in the other fight of a 2v2): on the near side the mark sits on his place; on the far side it is pinned to the rim in his direction, pointing out, so the call
+## is read as "that way" at the edge. {at, dir, far}.
+static func call_point(d, clon: float, clat: float, c: Vector2, r: float) -> Dictionary:
+	var p: Array = lonlat(d)
+	var q: Vector3 = project(float(p[0]), float(p[1]), clon, clat)
+	var v := Vector2(q.x, q.y)
+	var dir: Vector2 = v.normalized() if v.length() > 0.001 else Vector2(0.0, -1.0)
+	if q.z <= 0.02:
+		return {"at": c + dir * r, "dir": dir, "far": true}
+	return {"at": c + v * r, "dir": dir, "far": false}
+
+
+## The call's mark: a steady triangle (a shape beside the pair's circle and diamond), pointing down at his place, or out from the rim when he is round the back.
+static func _call_mark(ci: CanvasItem, cp: Dictionary, size: float, alpha: float) -> void:
+	var far: bool = bool(cp["far"])
+	var pointing: Vector2 = cp["dir"] if far else Vector2(0.0, 1.0)
+	var nrm := Vector2(-pointing.y, pointing.x)
+	var tip: Vector2 = cp["at"]
+	var bc: Vector2 = tip - pointing * size * 1.7
+	var tri := PackedVector2Array([tip, bc + nrm * size, bc - nrm * size])
+	UiIcons.fill_poly(ci, tri, Color(UiLook.col(UiLook.INK), alpha))
+	ci.draw_polyline(PackedVector2Array([tri[0], tri[1], tri[2], tri[0]]), Color(0.0, 0.0, 0.0, 0.85 * alpha), 1.5, true)
 
 
 ## The runs of a line of [lon, lat] points that are on the near side, as screen polylines.
@@ -185,4 +219,7 @@ static func draw(ci: CanvasItem, rect: Rect2, state: Dictionary, feed: Dictionar
 			var dia := PackedVector2Array([at + Vector2(0, -d), at + Vector2(d, 0), at + Vector2(0, d), at + Vector2(-d, 0)])
 			ci.draw_colored_polygon(dia, ink)
 			ci.draw_polyline(PackedVector2Array([dia[0], dia[1], dia[2], dia[3], dia[0]]), Color(0.0, 0.0, 0.0, 0.8 * alpha), 1.5, true)
+	if UiData.feature("brink_mark"):
+		for cd in feed.get("calls", []):
+			_call_mark(ci, call_point(cd, clon, clat, c, r), tiny * 1.1, alpha)
 	ci.draw_arc(c, r, 0.0, TAU, 40, edge, maxf(1.5 * s, 1.5), true)
