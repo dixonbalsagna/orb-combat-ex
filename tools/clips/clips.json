@@ -1,11 +1,12 @@
 {
-  "about": "The clip kit's recipes (tools/clips/make.mjs, docs/tools/clips.md). One recipe is one clip: a scene of the capture hook (render/tools/flash_capture.gd) or a mockup script, the seed, the page words, a tick window (from + frames x step) or an event window, a crop of the 960x540 picture, and the encoding. The sim is deterministic, so a recipe gives the same clip on the same build, and moves to a newer build with nobody looking. `nohud=1` hides the HUD on builds whose hook has it; the crops also keep the HUD's corners out, so an older build works too.",
+  "about": "The clip kit's recipes (tools/clips/make.mjs, docs/tools/clips.md). One recipe is one clip: a scene of the capture hook (render/tools/flash_capture.gd) or a mockup script, the seed, the page words, a tick window (from + frames x step) or an event window, a crop of the 960x540 picture, and the encoding. The sim is deterministic, so a recipe gives the same clip on the same build, and moves to a newer build with nobody looking. `nohud=1` hides the HUD on builds whose hook has it; the crops also keep the HUD's corners out, so an older build works too. `strip` (default true): the button strip, one band under the picture (never over it) that lights each control the pad of `stripSlot` (default 0) pressed, with a word under it: tap, hold or mash; it is drawn from the hook's pad log (--no-strip leaves it off; a scene the computer plays, such as `ai`, sets strip false). A recipe with `pending` set is a SLOT for a move that has not landed: `all` skips it and naming it says what it waits for; when the move lands, give it a scene and words and remove `pending`.",
   "defaults": {
     "scene": "ai",
     "seed": 12345,
-    "words": "planet=7&meteor=loud&tiles=1&nohud=1",
+    "words": "planet=7&meteor=loud&tiles=1&nohud=1&blackbox=off",
     "size": [960, 540],
     "step": 3,
+    "strip": true,
     "frames": 36,
     "fps": 12,
     "width": 480,
@@ -59,7 +60,7 @@
     },
     "top-power-towers": {
       "desc": "A top-power launch through the tower row, the burn streak and the rubble thrown at the start.",
-      "scene": "towers", "words": "planet=7&meteor=loud&tiles=1&nohud=1&power=1&peak=1", "from": 495, "crop": [0, 0, 960, 500], "blur": 1.4,
+      "scene": "towers", "words": "planet=7&meteor=loud&tiles=1&nohud=1&power=1&peak=1&blackbox=off", "from": 495, "crop": [0, 0, 960, 500], "blur": 1.4,
       "needs": "a build with the film scenes and the power park (power=1)"
     },
     "building-gives-way": {
@@ -76,23 +77,33 @@
     },
     "beam-clash-1-low-side-on": {
       "desc": "Camera's film shot 1: low and side on, a push in and a drift as he fires; the struggle held still.",
-      "scene": "beamduel", "words": "planet=7&meteor=loud&tiles=1&nohud=1&bdshot=1&bdgap=750&bdalt=220", "from": 12, "frames": 49, "step": 5, "tol": 10, "needs": "Camera's clip-scenes park (main.gd and sim_host.gd hunks) landed"
+      "scene": "beamduel", "words": "planet=7&meteor=loud&tiles=1&nohud=1&bdshot=1&bdgap=750&bdalt=220&blackbox=off", "from": 12, "frames": 49, "step": 5, "tol": 10, "needs": "Camera's clip-scenes park (main.gd and sim_host.gd hunks) landed"
     },
     "beam-clash-2-high-wide-over-town": {
       "desc": "Camera's film shot 2: high and wide over the town, craning down and easing in.",
-      "scene": "beamduel", "words": "planet=7&meteor=loud&tiles=1&nohud=1&bdshot=2&bdgap=900&bdalt=450", "from": 12, "frames": 49, "step": 5, "tol": 10, "needs": "Camera's clip-scenes park landed"
+      "scene": "beamduel", "words": "planet=7&meteor=loud&tiles=1&nohud=1&bdshot=2&bdgap=900&bdalt=450&blackbox=off", "from": 12, "frames": 49, "step": 5, "tol": 10, "needs": "Camera's clip-scenes park landed"
     },
     "beam-clash-3-tight-then-pull-back": {
       "desc": "Camera's film shot 3: tight on P1 charging, across to P2, then a pull back as the beams meet.",
-      "scene": "beamduel", "words": "planet=7&meteor=loud&tiles=1&nohud=1&bdshot=3&bdgap=750&bdalt=200", "from": 12, "frames": 49, "step": 5, "tol": 10, "needs": "Camera's clip-scenes park landed"
+      "scene": "beamduel", "words": "planet=7&meteor=loud&tiles=1&nohud=1&bdshot=3&bdgap=750&bdalt=200&blackbox=off", "from": 12, "frames": 49, "step": 5, "tol": 10, "needs": "Camera's clip-scenes park landed"
     },
     "first-launch": {
       "desc": "An event window, as an example: the first launch of an AI match, 60 ticks before to 90 after.",
-      "scene": "ai", "event": { "name": "launch", "nth": 1, "before": 60, "after": 90 }
+      "scene": "ai", "strip": false, "event": { "name": "launch", "nth": 1, "before": 60, "after": 90 }
     },
     "first-clash-end": {
       "desc": "An event window: the end of the first beam struggle (needs Encounter's clash-end park, beamStruggle.endEvent on).",
       "scene": "clash", "event": { "name": "beam_clash_end", "nth": 1, "before": 240, "after": 90 }, "needs": "Encounter's clash-end park with its switch on"
-    }
+    },
+    "flight-zip": { "desc": "Flight strike, the zip: hold LT with the left stick at nothing, press a face button; straight in, the blow, straight back.", "pending": true, "needs": "Controller vision section 2: the flight strike dispatcher (Encounter) and a scene that holds LT and presses X, Y or B up close" },
+    "flight-line": { "desc": "Flight strike, the line: LT held, left stick toward them, a face button; through them, striking as you pass, landing on their other side.", "pending": true, "needs": "Controller vision section 2: the flight strike dispatcher and the line path" },
+    "flight-arc": { "desc": "Flight strike, the arc: LT held, left stick up or down, a face button; a real loop round them, over or under, striking at the top or bottom.", "pending": true, "needs": "Controller vision section 2: the loop path (Simulation grant) and the dispatcher" },
+    "flight-parting-shot": { "desc": "Flight strike, the parting shot: LT held, left stick away, a face button; the blow, then out further than the start.", "pending": true, "needs": "Controller vision section 2: the dispatcher and the parting-shot path" },
+    "beam-answer-fire-back": { "desc": "Beam answer, fire back: RB plus the right stick toward them while his beam comes.", "pending": true, "needs": "Controller vision section 3: the beam as its own move (Encounter, UI, Controls)" },
+    "beam-answer-dodge": { "desc": "Beam answer, dodge: an LT tap with the left stick as his beam arrives.", "pending": true, "needs": "Controller vision section 3: the beam as its own move and the warning rumble" },
+    "beam-answer-powerful-block": { "desc": "Beam answer, the powerful block: LB as his beam arrives.", "pending": true, "needs": "Controller vision section 3: the powerful block" },
+    "beam-answer-catch": { "desc": "Beam answer, the catch: LB held as his beam arrives; pushed back carving a trench, or driven down with a crater from above.", "pending": true, "needs": "Controller vision section 3: the catch" },
+    "beam-answer-swat": { "desc": "Beam answer, the swat: a charged right-stick strike released as his beam arrives.", "pending": true, "needs": "Controller vision section 3: charge stages and the swat" },
+    "beam-answer-walk-in": { "desc": "Beam answer, walk into it: Game Design walk-in, cleared by Legal with limits.", "pending": true, "needs": "Game Design walk-in design; the EP and Orb have not picked it yet" }
   }
 }

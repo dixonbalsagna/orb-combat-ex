@@ -98,7 +98,19 @@ export function tryApply(tree, text, exclude = []) {
   try {
     const files = patchFiles(text).filter((x) => !exclude.includes(x));
     const chk = git(['--check']);
-    if (chk.status === 0) { const r = git([]); return { ok: r.status === 0, already: false, files, error: r.status === 0 ? '' : String(r.stderr).trim(), failedFiles: [] }; }
+    if (chk.status === 0) {
+      const r = git(['--verbose']);
+      if (r.status !== 0) return { ok: false, already: false, files, error: String(r.stderr).trim(), failedFiles: [] };
+      // the EP's rule (2026-11-02, after a schema's hunk landed inside "required"): a patch that applies must leave every .json it touches well-formed, and a hunk that landed far from where it was cut is said loudly
+      for (const f of files.filter((x) => /\.json$/.test(x))) {
+        const p = join(tree, ...f.split('/'));
+        if (!existsSync(p)) continue;
+        try { JSON.parse(readFileSync(p, 'utf8')); } catch (e) { git(['-R']); /* the bad hunk is taken out again: the tree stays valid */ return { ok: false, already: false, files, error: `the patch applies but leaves ${f} invalid JSON (${String(e.message).slice(0, 90)}): a hunk landed in the wrong place`, failedFiles: [f] }; }
+      }
+      const offs = [...String(r.stderr).matchAll(/Hunk #(\d+) succeeded at (\d+) \(offset (-?\d+) lines?\)/g)].map((m) => ({ hunk: Number(m[1]), at: Number(m[2]), offset: Number(m[3]) }));
+      const far = offs.filter((o) => Math.abs(o.offset) > 40);
+      return { ok: true, already: false, files, error: '', failedFiles: [], offsets: offs.length, warn: far.length ? `WARNING: ${far.length} hunk(s) landed far from where they were cut (offset ${far.map((o) => o.offset).join(', ')} lines): check the place` : '' };
+    }
     if (git(['-R', '--check']).status === 0) return { ok: true, already: true, files, error: '', failedFiles: [] };
     const err = String(chk.stderr || chk.error || '').trim();
     const failed = [...new Set([...err.matchAll(/^error: (?:patch failed: )?(.+?)(?::\d+)?(?:: (?:patch does not apply|already exists in working directory|No such file or directory|does not exist in index))?$/gm)].map((m) => m[1]).filter((f) => f && !/^patch /.test(f)))];
@@ -169,6 +181,7 @@ export function applyStack({ repo, tree, parks, owners = {} }) {
         if (!existsSync(f)) { step.state = 'missing'; step.detail = `${s.patch} is not in the working tree`; res.status = res.status === 'conflict' ? 'conflict' : 'missing'; res.steps.push(step); break; }
         const r = tryApply(tree, readFileSync(f, 'utf8'), s.exclude || []);
         if (s.exclude && r.ok) step.detail = `EXCLUDING ${s.exclude.join(', ')}: ${s.why}`;
+        if (r.warn) { step.detail = `${step.detail ? step.detail + '; ' : ''}${r.warn}`; (res.warnings = res.warnings || []).push(`${park.id}: ${r.warn}`); }
         if (r.already) { step.state = 'already'; step.detail = 'already in the tree (it reverses cleanly): landed'; }
         else if (!r.ok) conflict(r.failedFiles[0], `does not apply: ${r.error.split('\n').slice(0, 2).join(' | ').slice(0, 220)}`);
         else for (const file of r.files) { touched.set(file, park.id); res.files.push(file); }
@@ -513,7 +526,7 @@ export function describeReport(r) {
   if (r.left.length) L.push(`  left out: ${r.left.join(', ')}`);
   for (const p of r.parks) {
     L.push(`  ${p.status.toUpperCase().padEnd(8)} ${p.id} (${p.owner}), ${p.files} files`);
-    for (const s of p.steps.filter((x) => x.state !== 'applied' || /^FIXUP|EXCLUDING/.test(x.label))) L.push(`             ${s.state}: ${s.label}${s.detail ? ` — ${s.detail}` : ''}`);
+    for (const s of p.steps.filter((x) => x.state !== 'applied' || /^FIXUP|EXCLUDING/.test(x.label) || /WARNING/.test(x.detail || ''))) L.push(`             ${s.state}: ${s.label}${s.detail ? ` — ${s.detail}` : ''}`);
     if (p.tainted) L.push(`             NOTE: ${p.id}'s install script stopped half-way and what it had done stays in the scratch tree: later parks may be affected (re-run with --skip ${p.id})`);
   }
   if (r.firstConflict) { const c = r.firstConflict; L.push(`FIRST CONFLICT: park ${c.park} (${c.parkOwner}), ${c.step}\n  file ${c.file}, in conflict with ${c.with === 'HEAD' ? 'the commit itself (HEAD moved since the park was made)' : `park ${c.with}`}; the file's owner is ${c.fileOwner || '?'}\n  ${c.why}`); }

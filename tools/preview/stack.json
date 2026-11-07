@@ -38,279 +38,14 @@
       ]
     },
     {
-      "id": "tools-anim-hold-w-schema",
-      "owner": "tools-pipeline",
-      "notes": "Two validate cases for Animation's hold_w (a valid one and an over-one one): the schema property itself is now in Animation's stick-class-schema.patch (12:02), so Tools' schema grant was dropped.",
+      "id": "art-biomes-working-tree",
+      "owner": "art-direction",
+      "notes": "Art's working-tree edits to data/art/biomes.json (the warmer tundra rock: lit #8c8270, mid #777472, shade #504d4e), uncommitted: laid over the commit. It reads as landed once it is committed.",
       "steps": [
         {
-          "patch": "docs/tools/pending/anim-hold-w-schema/anim-hold-w-schema.patch"
-        }
-      ]
-    },
-    {
-      "id": "encounter-sure-reach",
-      "owner": "encounter-systems",
-      "notes": "A sure blow keeps to contact.reach.",
-      "steps": [
-        {
-          "patch": "docs/director/pending/sure-reach/sure-reach.diff"
-        }
-      ]
-    },
-    {
-      "id": "rendering-tile-ground",
-      "owner": "rendering-techart",
-      "notes": "Rendering's tile ground in the real game (stage 4 of the ring-at-any-angle work), behind its switch (--tiles, ?tiles=1 on a local page): planet-keyed tiles on a true globe through Simulation's frame. Stacks on field-frame (needs SimField and WorldField). The stack's `tiles` switch is the page word.",
-      "steps": [
-        {
-          "patch": "docs/rendering/pending/2026-10-31a-tile-ground/tile.diff"
-        }
-      ]
-    },
-    {
-      "id": "rendering-near-towers",
-      "owner": "rendering-techart",
-      "notes": "Orb's near-tower pick (Rendering, 2026-10-31b): A's shape, Q's slightly kept bases, the cut eased on tall towers (globe_tower, mode 3). On only with the tile ground's switch and only when a swing brings a building nearer than its plan. On top of tile.diff (a7cc87de).",
-      "steps": [
-        {
-          "patch": "docs/rendering/pending/2026-10-31b-near-towers/near.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-tile-ground"
-        }
-      ]
-    },
-    {
-      "id": "rendering-far-tiles",
-      "owner": "rendering-techart",
-      "notes": "Far tiles asked for before the camera gets there (Rendering, 2026-11-01a, for docs/perf/meteor-ground-2026-10-31.md): RenderTileField.ask_around and RenderTileGround._look_ahead (a fighter faster than 2,500 u/s has the ground 2 s ahead asked for). On only with the tile ground's switch. The meteor's send has no caller yet. On top of tile.diff and near.diff.",
-      "steps": [
-        {
-          "patch": "docs/rendering/pending/2026-11-01a-far-tiles/far.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-tile-ground"
-        },
-        {
-          "park": "rendering-near-towers"
-        }
-      ]
-    },
-    {
-      "id": "rendering-water-sheet",
-      "owner": "rendering-techart",
-      "notes": "The gen 3 water sheet with water's A1 (Rendering, 2026-11-01b): the tiles with water draw a second time with water_tile.gdshader, the ground is the real bed, a hollow ring where a body crosses the surface and a V wake behind a low fast flight (view only, nothing hashed). On the tile ground, near towers and far tiles. Rendering's gates are clean (the EP, 2026-11-01): in.",
-      "steps": [
-        {
-          "patch": "docs/rendering/pending/2026-11-01b-water-sheet/water.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-far-tiles"
-        }
-      ]
-    },
-    {
-      "id": "rendering-fighters-at-sea",
-      "owner": "rendering-techart",
-      "notes": "Fighters at sea (Rendering, 2026-11-01c): the fix for the fight reading as tiny over open ocean. On the tile ground and its neighbours.",
-      "steps": [
-        {
-          "patch": "docs/rendering/pending/2026-11-01c-fighters-at-sea/sea.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-water-sheet"
-        }
-      ]
-    },
-    {
-      "id": "rendering-building-band",
-      "owner": "rendering-techart",
-      "notes": "The band between the camera and the fight stays clear (Rendering, 2026-11-01d): globe_tower (mode 3) lowers a building to its kept base as its front face goes from -150 to -30 of depth, at rest too, and removes it past +150; parts stacked on it come down with it. World's front-limit tests the same face. Only with the tile ground's switch on. The wall rule.",
-      "steps": [
-        {
-          "patch": "docs/rendering/pending/2026-11-01d-building-band/band.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-fighters-at-sea"
-        }
-      ]
-    },
-    {
-      "id": "rendering-crater-line",
-      "owner": "rendering-techart",
-      "notes": "The crater line (Rendering, 2026-11-01e): on top of the building band.",
-      "steps": [
-        {
-          "patch": "docs/rendering/pending/2026-11-01e-crater-line/crater.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-building-band"
-        }
-      ]
-    },
-    {
-      "id": "rendering-fine-cells",
-      "owner": "rendering-techart",
-      "notes": "32 units near the fight (Rendering, 2026-11-01f): the tile data goes on to 64 and 32 units near the camera. Only with the tile ground's switch on.",
-      "steps": [
-        {
-          "patch": "docs/rendering/pending/2026-11-01f-fine-cells/fine.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-crater-line"
-        }
-      ]
-    },
-    {
-      "id": "rendering-citizens-feet",
-      "owner": "rendering-techart",
-      "notes": "Citizens stand on the tile ground (Rendering, 2026-11-01g). Only with the tile ground's switch on.",
-      "steps": [
-        {
-          "patch": "docs/rendering/pending/2026-11-01g-citizens-feet/cit.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-fine-cells"
-        }
-      ]
-    },
-    {
-      "id": "rendering-store-bowls",
-      "owner": "rendering-techart",
-      "notes": "Craters are drawn on the tile ground (Rendering, 2026-11-01h): the 16 bowls nearest the camera, read from World's store.",
-      "steps": [
-        {
-          "patch": "docs/rendering/pending/2026-11-01h-store-bowls/bowls.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-citizens-feet"
-        }
-      ]
-    },
-    {
-      "id": "rendering-crater-scar-look",
-      "owner": "rendering-techart",
-      "notes": "Art's crater and scar looks (Rendering, 2026-11-01i), behind the page word craterlook=1.",
-      "steps": [
-        {
-          "patch": "docs/rendering/pending/2026-11-01i-crater-scar-look/look.diff",
-          "exclude": [
-            "render/core/main.gd"
-          ],
-          "why": "Camera's swing 8 edits the URL_ARGS and LOCAL_ONLY_ARGS lines of main.gd too; the look's three main.gd lines go in by the fixups below"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-store-bowls"
-        }
-      ]
-    },
-    {
-      "id": "rendering-sheet-from-below",
-      "owner": "rendering-techart",
-      "notes": "The water sheet is not drawn from below (Rendering, 2026-11-01j): a vertex whose water top is above the lens is not drawn, so a lens under the sea sees the bed and not a flat blue wall. Only with the tile ground's switch on.",
-      "steps": [
-        {
-          "patch": "docs/rendering/pending/2026-11-01j-sheet-from-below/below.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-crater-scar-look"
-        }
-      ]
-    },
-    {
-      "id": "rendering-foot-walls",
-      "owner": "rendering-techart",
-      "notes": "Foot walls (Rendering, 2026-11-01k): a building no longer hangs over a slope its footing does not reach. Only with the tile ground's switch on.",
-      "steps": [
-        {
-          "patch": "docs/rendering/pending/2026-11-01k-foot-walls/foot.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-sheet-from-below"
-        }
-      ]
-    },
-    {
-      "id": "rendering-no-base-past-line",
-      "owner": "rendering-techart",
-      "notes": "No base past the line (Rendering, 2026-11-01l): slab removal. Only with the tile ground's switch on.",
-      "steps": [
-        {
-          "patch": "docs/rendering/pending/2026-11-01l-no-base-past-line/slab.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-foot-walls"
-        }
-      ]
-    },
-    {
-      "id": "rendering-building-plan-depth",
-      "owner": "rendering-techart",
-      "notes": "The hanging towns (Rendering, 2026-11-01m): a one-line bug in how a building's plan depth is read. Only with the tile ground's switch on.",
-      "steps": [
-        {
-          "patch": "docs/rendering/pending/2026-11-01m-building-plan-depth/depth.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-no-base-past-line"
-        }
-      ]
-    },
-    {
-      "id": "rendering-hole-depth-as-drawn",
-      "owner": "rendering-techart",
-      "notes": "The hole-misfire repair (Rendering, 2026-11-01n): the hole's depth is read as drawn. Goes with m (building plan depth).",
-      "steps": [
-        {
-          "patch": "docs/rendering/pending/2026-11-01n-hole-depth-as-drawn/hole.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-building-plan-depth"
-        }
-      ]
-    },
-    {
-      "id": "rendering-ice-value",
-      "owner": "rendering-techart",
-      "notes": "Ice no brighter than the beam (Rendering, 2026-11-01o, 38c399aa): the ice-sheet ground is held to 0.68 in its brightest channel after the light; the white shore ribbon and hump. Only with the tile ground on. Stacks on hole depth.",
-      "steps": [
-        {
-          "patch": "docs/rendering/pending/2026-11-01o-ice-value/ice.diff"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-hole-depth-as-drawn"
+          "overlay": [
+            "data/art/biomes.json"
+          ]
         }
       ]
     },
@@ -358,455 +93,6 @@
         }
       ],
       "ready": false
-    },
-    {
-      "id": "tools-ci-kick-check",
-      "owner": "tools-pipeline",
-      "notes": "Tools only: the kick check as a CI step (docs/tools/pending/ci-kick-check): node tools/gate.mjs --verdict on sim/core/tools/kick_check.gd, after the two-states check. Lands with the kick.",
-      "steps": [
-        {
-          "patch": "docs/tools/pending/ci-kick-check/ci-kick-check.patch"
-        }
-      ]
-    },
-    {
-      "id": "vfx-meteor-trail",
-      "owner": "vfx",
-      "notes": "VFX's meteor trail behind its own switch (VfxHub.meteor_enabled: off by default and byte-identical off, on by the page word ?meteor=quiet or ?meteor=loud on a local page); the stack's page carries the loud word and prints the quiet address beside it (the `meteor` switch). 15 files, one patch.",
-      "steps": [
-        {
-          "patch": "docs/vfx/pending/meteor-trail/apply.patch"
-        },
-        {
-          "patch": "docs/vfx/pending/meteor-trail/apply-rl222.patch"
-        }
-      ],
-      "needs": [
-        {
-          "note": "the old white trail blade still draws beside the burn: Orb may want it off when the meteor is on (VFX's README)",
-          "owner": "vfx"
-        }
-      ]
-    },
-    {
-      "id": "vfx-perf-level",
-      "owner": "vfx",
-      "notes": "The VFX profile and the Performance level (VFX, 2026-11-01): the shots view's flight streaks cost 0.11 ms instead of 0.52 (a real gain at every level, no look change), plus the Performance level (VfxHub.perf_level, off by default). The re-cut for after the meteor trail. No grants.",
-      "steps": [
-        {
-          "patch": "docs/vfx/pending/perf-level/apply-after-meteor.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "vfx-meteor-trail"
-        }
-      ]
-    },
-    {
-      "id": "vfx-clash-look",
-      "owner": "vfx",
-      "notes": "The beam clash's air (VFX, re-cut on the meteor trail and the perf level, 2026-11-01): procedural shaders where the white flare was, composed from each fighter's energy style, form and power. apply-after-meteor-and-perf.patch and Rendering's grant in render/core/beam_view.gd. The old flare stays behind clash.json enabled (true).",
-      "steps": [
-        {
-          "patch": "docs/vfx/pending/clash-look/apply-after-meteor-and-perf.patch"
-        },
-        {
-          "patch": "docs/vfx/pending/clash-look/grant-beam-view.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "vfx-perf-level"
-        }
-      ]
-    },
-    {
-      "id": "vfx-beam-buckle",
-      "owner": "vfx",
-      "notes": "The losing beam buckles (VFX): bulge, bow and quiver instead of thinning (Orb's note, vision.md 92f860b9). apply.patch (render/vfx/beam_struggle.gd, the beam shader include, energy.json) and the grant after the clash look's beam_view.gd. Does nothing without a writer of Clash.mid: Encounter's beam struggle, which is in this stack.",
-      "steps": [
-        {
-          "patch": "docs/vfx/pending/beam-buckle/apply.patch"
-        },
-        {
-          "patch": "docs/vfx/pending/beam-buckle/grant-rendering-ui-after-clash.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "vfx-clash-look"
-        }
-      ]
-    },
-    {
-      "id": "vfx-clash-press",
-      "owner": "vfx",
-      "notes": "The clash press (VFX, 2026-11-01): two beams shoving at the point, flaring and eddying, the air drawn behind the beams and the shine before them. 8 files on top of the clash look and the buckle. Its eddies follow the surges of Encounter's beam struggle (in this stack). The shine's strength is strip_k in data/vfx/clash.json (0.7).",
-      "steps": [
-        {
-          "patch": "docs/vfx/pending/clash-press/apply.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "vfx-clash-look"
-        },
-        {
-          "park": "vfx-beam-buckle"
-        }
-      ]
-    },
-    {
-      "id": "vfx-energy-language",
-      "owner": "vfx",
-      "notes": "VFX's energy language (2026-11-01): last in the VFX chain (docs/vfx/pending/energy-language/README.md). Colours and shapes per fighter and form.",
-      "steps": [
-        {
-          "patch": "docs/vfx/pending/energy-language/apply.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "vfx-clash-press"
-        }
-      ]
-    },
-    {
-      "id": "vfx-flight-lines",
-      "owner": "vfx",
-      "notes": "VFX's flight lines (2026-11-01; rule-of-cool-map.md section 1; Legal's RL-221, RL-222): apply-after-chain.patch, for the end of the whole VFX chain.",
-      "steps": [
-        {
-          "patch": "docs/vfx/pending/flight-lines/apply-after-chain.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "vfx-energy-language"
-        }
-      ]
-    },
-    {
-      "id": "vfx-beam-front",
-      "owner": "vfx",
-      "notes": "VFX's look for Encounter's beam front (2026-11-01): apply-after-flight.patch, for the end of the chain with flight lines landed. Grant given for 7 lines in render/core/beam_view.gd.",
-      "steps": [
-        {
-          "patch": "docs/vfx/pending/beam-front/apply-after-flight.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "vfx-flight-lines"
-        }
-      ]
-    },
-    {
-      "id": "vfx-peak-floor",
-      "owner": "vfx",
-      "notes": "VFX's peak floor (2026-11-01, ca93f8b5): the meteor trail thickened at the peak. After the whole VFX chain.",
-      "steps": [
-        {
-          "patch": "docs/vfx/pending/peak-floor/apply.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "vfx-beam-front"
-        }
-      ]
-    },
-    {
-      "id": "camera-swing-1-places",
-      "owner": "camera-cinematography",
-      "notes": "The swing's camera, park 1 of 6 (docs/camera/swing-view.md): render/camera cam_places.gd (new), split_rig, split_frame, split_view, a check. After the tile ground and Encounter's swing (the README's order).",
-      "steps": [
-        {
-          "patch": "docs/camera/pending/swing/swing-1-places.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-tile-ground"
-        }
-      ]
-    },
-    {
-      "id": "camera-swing-2-shot",
-      "owner": "camera-cinematography",
-      "notes": "The swing's camera, park 2 of 6: split_rig, camera_params, a check.",
-      "steps": [
-        {
-          "patch": "docs/camera/pending/swing/swing-2-shot.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "camera-swing-1-places"
-        }
-      ]
-    },
-    {
-      "id": "camera-swing-3-peak",
-      "owner": "camera-cinematography",
-      "notes": "The swing's camera, park 3 of 6: split_rig, split_view, camera_params, a check.",
-      "steps": [
-        {
-          "patch": "docs/camera/pending/swing/swing-3-peak.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "camera-swing-2-shot"
-        }
-      ]
-    },
-    {
-      "id": "camera-swing-4-sim",
-      "owner": "camera-cinematography",
-      "notes": "The swing's camera, park 4 of 6: sim/director/swing_read.gd (new, by the EP's grant), a check, and the read block in Encounter's data/director/swing.json and its schema. Re-cut on Encounter's current swing.diff (back in the stack).",
-      "steps": [
-        {
-          "patch": "docs/camera/pending/swing/swing-4-sim.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "camera-swing-3-peak"
-        }
-      ]
-    },
-    {
-      "id": "camera-swing-5-real",
-      "owner": "camera-cinematography",
-      "notes": "The swing's camera, park 5 of 6: render/camera, data/camera/swing.json and its schema (new), a tools/schemas/map.json row.",
-      "steps": [
-        {
-          "patch": "docs/camera/pending/swing/swing-5-real.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "camera-swing-4-sim"
-        }
-      ]
-    },
-    {
-      "id": "camera-swing-6-grant",
-      "owner": "camera-cinematography",
-      "notes": "The swing's camera, park 6 of 6: Rendering's grant in render/core/main.gd and render/core/tile_ground.gd.",
-      "steps": [
-        {
-          "patch": "docs/camera/pending/swing/swing-6-grant.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "camera-swing-5-real"
-        },
-        {
-          "park": "rendering-near-towers"
-        }
-      ]
-    },
-    {
-      "id": "camera-swing-7-director",
-      "owner": "camera-cinematography",
-      "notes": "The launch director's camera (Camera, docs/camera/launch-director.md): render/camera and a line of Rendering's main.gd. Off byte-identical with tiles off. After swing 6.",
-      "steps": [
-        {
-          "patch": "docs/camera/pending/swing/swing-7-director.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "camera-swing-6-grant"
-        }
-      ]
-    },
-    {
-      "id": "camera-swing-8-flat",
-      "owner": "camera-cinematography",
-      "notes": "Flat sends past 10,000 units a second (Camera, swing 8, the re-cut 6bc69662): a line of Rendering's main.gd. After swing 7.",
-      "steps": [
-        {
-          "patch": "docs/camera/pending/swing/swing-8-flat.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "camera-swing-7-director"
-        }
-      ]
-    },
-    {
-      "id": "camera-swing-9-reveal",
-      "owner": "camera-cinematography",
-      "notes": "A long flight opens out in its middle (Camera, swing 9, a3bbef1f). After swing 8.",
-      "steps": [
-        {
-          "patch": "docs/camera/pending/swing/swing-9-reveal.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "camera-swing-8-flat"
-        }
-      ]
-    },
-    {
-      "id": "camera-swing-10-overshoot",
-      "owner": "camera-cinematography",
-      "notes": "A fast stop carries the frame on a little (Camera, swing 10, 0c912fef). After swing 9. Swing 11 (a locked brawl frames closer) waits for Rendering's wall rule and is not in.",
-      "steps": [
-        {
-          "patch": "docs/camera/pending/swing/swing-10-overshoot.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "camera-swing-9-reveal"
-        }
-      ]
-    },
-    {
-      "id": "camera-swing-11-close",
-      "owner": "camera-cinematography",
-      "notes": "A locked brawl frames closer (Camera, swing 11, 55fb48b8). Lands after the building wall's fix: a closer shot lets one wall fill more of the frame. In the stack now that the band and the front limit are.",
-      "steps": [
-        {
-          "patch": "docs/camera/pending/swing/swing-11-close.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "camera-swing-10-overshoot"
-        },
-        {
-          "park": "rendering-building-band"
-        }
-      ]
-    },
-    {
-      "id": "camera-swing-readable",
-      "owner": "camera-cinematography",
-      "notes": "Camera's swing-readable (2026-11-01, 2be401e1): the fix for specks after a launch. After swing 11.",
-      "steps": [
-        {
-          "patch": "docs/camera/pending/swing/swing-readable.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "camera-swing-11-close"
-        }
-      ]
-    },
-    {
-      "id": "camera-swing-peak-retry",
-      "owner": "camera-cinematography",
-      "notes": "Camera's meteor peak-shot fix (2026-11-01, d56f1a42), after swing-readable. Not swing-12-sky.",
-      "steps": [
-        {
-          "patch": "docs/camera/pending/swing/swing-peak-retry.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "camera-swing-readable"
-        }
-      ]
-    },
-    {
-      "id": "camera-swing-in-frame",
-      "owner": "camera-cinematography",
-      "notes": "Camera's swing-in-frame (2026-11-01, b403a3e7), after swing-peak-retry.",
-      "steps": [
-        {
-          "patch": "docs/camera/pending/swing/swing-in-frame.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "camera-swing-peak-retry"
-        }
-      ]
-    },
-    {
-      "id": "camera-swing-rush-follow",
-      "owner": "camera-cinematography",
-      "notes": "Camera's swing-rush-follow (2026-11-01, 254a9c97), after swing-in-frame: the camera follows a long rush.",
-      "steps": [
-        {
-          "patch": "docs/camera/pending/swing/swing-rush-follow.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "camera-swing-in-frame"
-        }
-      ]
-    },
-    {
-      "id": "rendering-crater-look-words",
-      "owner": "rendering-techart",
-      "notes": "The three main.gd lines of the crater and scar look (the local word craterlook), laid after the camera swings because they edit the same URL_ARGS and LOCAL_ONLY_ARGS lines.",
-      "steps": [
-        {
-          "fixup": [
-            {
-              "file": "render/core/main.gd",
-              "from": "const URL_ARGS: Array = [",
-              "to": "const URL_ARGS: Array = [\"craterlook\", "
-            },
-            {
-              "file": "render/core/main.gd",
-              "from": "const LOCAL_ONLY_ARGS: Array = [",
-              "to": "const LOCAL_ONLY_ARGS: Array = [\"craterlook\", "
-            },
-            {
-              "file": "render/core/main.gd",
-              "from": "\tRenderTileGround.fore_tone = not args.has(\"nofore\")\n",
-              "to": "\tRenderTileGround.fore_tone = not args.has(\"nofore\")\n\tRenderTileGround.crater_look = args.has(\"craterlook\")\n"
-            }
-          ],
-          "why": "the three lines of the look's main.gd hunks: --craterlook as a local word, read at start-up (laid after the camera swings, which edit the same two lines)"
-        }
-      ],
-      "needs": [
-        {
-          "park": "rendering-crater-scar-look"
-        },
-        {
-          "park": "camera-swing-11-close"
-        }
-      ]
-    },
-    {
-      "id": "camera-split-vision",
-      "owner": "camera-cinematography",
-      "notes": "Split vision (Camera, 2026-11-01; docs/camera/split-vision.md): SplitRig.eased_merge (no soft edge, the whole line) and split_ignores_power, both off as shipped; the page turns eased_merge ON by a fixup (var eased_merge: bool = true in render/camera/split_rig.gd), as the README says. Applies on main alone or after swing 1 to 11.",
-      "steps": [
-        {
-          "patch": "docs/camera/pending/split-vision/split-vision.patch"
-        },
-        {
-          "fixup": [
-            {
-              "file": "render/camera/split_rig.gd",
-              "from": "var eased_merge: bool = false",
-              "to": "var eased_merge: bool = true"
-            }
-          ],
-          "why": "the page runs with the eased merge on (the EP, 2026-11-01); the README says to set it in split_rig.gd once Orb has marked it"
-        }
-      ],
-      "needs": [
-        {
-          "park": "camera-swing-10-overshoot"
-        }
-      ]
     },
     {
       "id": "controls-quick-read",
@@ -863,6 +149,36 @@
       ]
     },
     {
+      "id": "controls-beam-aim",
+      "owner": "controls-feel",
+      "notes": "The beam's aim holds and the throw carries it (Controls, 2026-11-01; docs/controls/beam-aim-feel.md): the release step carries the sector of the mean of the last 3 rim ticks, the shown aim trails the thumb by 4 degrees, at rest the aim is 0. Behind data/input/timing.json switches.beamAim (the beamAim switch turns it on for the page). After quick-read, stick-feel (responsive-2, first-press, haptic-switches); independent of first-pad. Includes sim/input tests, orb_aim_probe and the schema key.",
+      "steps": [
+        {
+          "patch": "docs/controls/pending/beam-aim/beam-aim.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "controls-stick-feel"
+        }
+      ]
+    },
+    {
+      "id": "controls-stage-haptics",
+      "owner": "controls-feel",
+      "notes": "Stage haptics (Controls, docs/controls/pending/stage-haptics): after stick-feel, first-press and haptic-switches; hapticLadder is on for the page.",
+      "steps": [
+        {
+          "patch": "docs/controls/pending/stage-haptics/stage-haptics.patch"
+        }
+      ],
+      "needs": [
+        {
+          "park": "controls-stick-feel"
+        }
+      ]
+    },
+    {
       "id": "controls-queue-20",
       "owner": "controls-feel",
       "notes": "Controls' queue life (2026-11-01): strike.queueTicks 36 to 20 and the gate test that proves it (docs/controls/pending/queue-20). After quick-read and the stick feel. input-buffer stays out (the EP).",
@@ -878,38 +194,21 @@
       ]
     },
     {
-      "id": "rendering-load-pace",
-      "owner": "simulation-engine",
-      "notes": "A planet's load runs slices until 14 ms of a frame has gone (SimHost.load_step, RenderLook.LOAD_STEP_MS): Simulation's, in Rendering's files (render/core/sim_host.gd, look.gd), granted by the EP. Performance estimates about -2.5 to -3 s on a cold web load; not measured.",
+      "id": "controls-first-pad",
+      "owner": "controls-feel",
+      "notes": "The seat fix (Controls, 2026-11-01, Orb's pad joined as player two): one person's first press takes player one; hub only (sim/input/hub.gd, +12 lines), no change to render/core/main.gd. Independent of the other parks.",
       "steps": [
         {
-          "patch": "docs/rendering/pending/load-pace/load-pace.patch"
+          "patch": "docs/controls/pending/first-pad/first-pad.patch",
+          "exclude": [
+            "sim/input/test/pad_first_press_test.gd"
+          ],
+          "why": "the overlay of the working tree's sim/input (controls-quick-read) already lays Controls' copy of this test (byte for byte the patch's own); the patch would create it again"
         }
       ],
       "needs": [
         {
-          "note": "the gain is not measured: a fresh load-probe on the page (Performance's tool) is owed",
-          "owner": "performance-platform"
-        }
-      ]
-    },
-    {
-      "id": "tools-nightly-rl212",
-      "owner": "tools-pipeline",
-      "notes": "Tools only: RL-212 tripwires and the clash clip in the nightly.",
-      "steps": [
-        {
-          "patch": "docs/tools/pending/nightly-rl212/nightly-rl212.patch"
-        }
-      ]
-    },
-    {
-      "id": "tools-pin-child-readings",
-      "owner": "tools-pipeline",
-      "notes": "Tools only: the words-only child, the four readings, the load findings.",
-      "steps": [
-        {
-          "patch": "docs/tools/pending/pin-child-readings/pin-child-readings.patch"
+          "park": "controls-queue-20"
         }
       ]
     },
@@ -964,52 +263,29 @@
       ]
     },
     {
-      "id": "audio-moments",
-      "owner": "audio-music",
-      "notes": "The moments a player would notice (Audio, 2026-11-01; docs/audio/pending/moments): beam charge and fire, KO, the biggest blows, launch, the meteor landing, parry, two bolts meeting. Existing sounds only, behind audio/data/moment_cues.json enabled (the soundMoments switch). The install script is Audio's apply.py: new files plus audio/audio_cues.gd.",
+      "id": "simulation-power-core",
+      "owner": "simulation-engine",
+      "notes": "One energy model, the sim's part (Simulation, 4bd6d36a0b77; docs/architecture/pending/power-core, Game Design's docs/design/power-scale.md): sends by power, flat-out flight, a KO's fallback send. OFF in data (data/fight/power.json enabled false); the page word ?power=1 puts \"power\": true in a match's setup and ?flatout=N (3,500 to 7,000, or the page's slider) the base of flat-out flight. On field-place. The patch carries Tools' files (the schema, map.json, cases.json, the fixture) and grants in Encounter's, World's, Rendering's and Netcode's lines (granted by the EP for this park). LEFT OUT of the build of 2026-11-01 (the EP): Simulation is re-cutting it for bugs Combat and Encounter found.",
       "steps": [
         {
-          "script": "docs/audio/pending/moments/apply.py",
-          "sha1": "f763bed5575f6bca694f4e81362acf16269f6b45"
+          "patch": "docs/architecture/pending/power-core/power-core.patch"
+        }
+      ],
+      "ready": false
+    },
+    {
+      "id": "vfx-power-burn",
+      "owner": "vfx",
+      "ready": false,
+      "notes": "The burn and the trail read the launch speed (VFX, e3e154ee; docs/vfx/pending/power-burn): on top of the energy core, which it cannot go without (it replaces peak-floor's send_only and min_tier keys). LEFT OUT of the build of 2026-11-01 with power-core; it goes in the page that comes with ?power=1.",
+      "steps": [
+        {
+          "patch": "docs/vfx/pending/power-burn/apply.patch"
         }
       ],
       "needs": [
         {
-          "park": "audio-host-check"
-        }
-      ]
-    },
-    {
-      "id": "audio-bright-bolt",
-      "owner": "audio-music",
-      "notes": "The page only (the EP, 2026-11-01): Audio's bright bolt, energy.bolt.land.hit at gain -3 dB and pitch 0.85 in audio/data/brawl_cues.json.",
-      "steps": [
-        {
-          "fixup": [
-            {
-              "file": "audio/data/brawl_cues.json",
-              "from": "      \"step_db\": -3.0,\n      \"land\": {\n        \"hit\": {\n          \"gain_db\": 0.0,\n          \"pitch\": 1.0",
-              "to": "      \"step_db\": -3.0,\n      \"land\": {\n        \"hit\": {\n          \"gain_db\": -3.0,\n          \"pitch\": 0.85"
-            }
-          ],
-          "why": "the EP asked for Audio's bright bolt tamed on the page only (-3 dB, pitch 0.85); it is a data edit, not a park"
-        }
-      ]
-    },
-    {
-      "id": "sound-stream-mode",
-      "owner": "tools-pipeline",
-      "notes": "The web sound is played as a Stream (audio/general/default_playback_type.web=0 in project.godot), not as Sample (the EP, 2026-11-01). In headless Chrome and Opera GX the default Sample path reads silent at the destination on a plain HEAD build, and Stream reads real sound; Stream runs the bus effects Sample skips and may come a little late. Not landed in the repository: the build only.",
-      "steps": [
-        {
-          "fixup": [
-            {
-              "file": "project.godot",
-              "from": "[rendering]",
-              "to": "[audio]\n\ngeneral/default_playback_type.web=0\n\n[rendering]"
-            }
-          ],
-          "why": "the EP chose Stream as the main sound mode for the first press"
+          "park": "simulation-power-core"
         }
       ]
     }

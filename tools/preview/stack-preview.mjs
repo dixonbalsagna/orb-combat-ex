@@ -14,6 +14,7 @@ import { cpus, tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { scriptErrors } from '../gate.mjs';
+import { patchHook } from './film-hook.mjs';
 import { HOST_PATCH, applyPatchText, godotExe, plan, readPending, runGodot, saveSmoke, serveLocal } from './preview.mjs';
 import { describeReport, loadManifest, runStack, stackKey } from './stack.mjs';
 import { patchMain, EDITS_FINGERPRINT } from './switches.mjs';
@@ -48,6 +49,15 @@ export function templateZip(spec, repo) {
 
 const tail = (f, n = 1500) => { try { return readFileSync(f, 'utf8').slice(-n); } catch { return ''; } };
 
+/** The replay tree of a build: the sim, the data (with the page's switches flipped), the net code and the project, which is all SimReplay needs (blackbox-verify.mjs --tree <this folder>). 12 MB against the tree's 574. */
+export function writeReplayTree(tree, dest, r) {
+  rmSync(dest, { recursive: true, force: true });
+  mkdirSync(dest, { recursive: true });
+  for (const x of ['sim', 'data', 'net', '.godot']) if (existsSync(join(tree, x))) cpSync(join(tree, x), join(dest, x), { recursive: true });
+  cpSync(join(tree, 'project.godot'), join(dest, 'project.godot'));
+  writeFileSync(join(dest, 'README.txt'), [`The replay tree of the build ${r.commit.slice(0, 8)}-${r.key} (the commit and the stack key of the page's stamp).`, 'Replay a saved match of that build exactly:', '  node tools/preview/blackbox-verify.mjs <orb-first-play-....json> --tree <this folder>', 'It holds only what the sim needs (sim, data with the page switches flipped, net, project.godot): no art, no render, no ui.', ''].join('\n'));
+}
+
 export async function buildStackPreview(o) {
   const repo = resolve(o.repo || REPO);
   const log = o.log || (() => {});
@@ -71,12 +81,12 @@ export async function buildStackPreview(o) {
   const parksIn = r.parks.filter((p) => p.status === 'applied').map((p) => p.id);
   const tz = templateZip(o.template, repo);
   const tzKey = tz ? `-t${createHash('sha1').update(readFileSync(tz)).digest('hex').slice(0, 8)}` : '';
-  const keyFull = `${r.key}-${pl.active.join('+')}${pl.hostPatch ? '-host' : ''}${tzKey}-e${EDITS_FINGERPRINT}-s${createHash('sha1').update(['switches.mjs', 'blackbox.mjs', 'preview.mjs'].map((f) => readFileSync(new URL('./' + f, import.meta.url), 'utf8')).join('\u0000')).digest('hex').slice(0, 6)}-p${createHash('sha1').update(JSON.stringify([pl.probes, pl.setup, pl.urlWords || null])).digest('hex').slice(0, 6)}`.replace(/[^A-Za-z0-9+._-]/g, '_');
+  const keyFull = `${r.key}-${pl.active.join('+')}${pl.hostPatch ? '-host' : ''}${o.film ? '-film' : ''}${tzKey}-e${EDITS_FINGERPRINT}-s${createHash('sha1').update(['switches.mjs', 'blackbox.mjs', 'preview.mjs'].map((f) => readFileSync(new URL('./' + f, import.meta.url), 'utf8')).join('\u0000')).digest('hex').slice(0, 6)}-p${createHash('sha1').update(JSON.stringify([pl.probes, pl.setup, pl.urlWords || null])).digest('hex').slice(0, 6)}`.replace(/[^A-Za-z0-9+._-]/g, '_');
   // the key is long (the stack's key leads it, the switches follow): a tail cut dropped the stack's key and two different stacks shared a folder, so the whole is hashed and a readable tail kept
   const key = createHash('sha1').update(keyFull).digest('hex').slice(0, 16) + '-' + keyFull.slice(-60);
   const dir = join(base, 'build', key), web = join(dir, 'web'), metaFile = join(dir, 'preview.json');
   Object.assign(out, { dir, web });
-  if (!o.rebuild && existsSync(join(web, 'index.html')) && existsSync(metaFile)) {
+  if (!o.rebuild && !o.treeOnly && existsSync(join(web, 'index.html')) && existsSync(metaFile)) {
     out.cached = true; out.meta = JSON.parse(readFileSync(metaFile, 'utf8'));
     rmSync(join(base, 'stack', `${r.commit.slice(0, 8)}-${r.key}`), { recursive: true, force: true });
     return out;
@@ -88,13 +98,38 @@ export async function buildStackPreview(o) {
   writeFileSync(join(tree, 'build_info.json'), `${JSON.stringify({ commit: r.commit.slice(0, 7), stack: parksIn.length })}\n`);
   const mainFile = join(tree, 'render', 'core', 'main.gd');
   if (pl.hostPatch) { applyPatchText(tree, pl.hostPatch); log('applied the right-hand host patch to the scratch main.gd (the pad\'s right stick)'); }
-  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord }));
+  writeFileSync(mainFile, patchMain(readFileSync(mainFile, 'utf8'), pl.probes, pl.setup, { swingsOff: pl.swingsOff, sticks: pl.sticksOk, struggleOff: pl.active.includes('struggle'), kickWord: pl.kickWord, tierWord: pl.tierWord, hitstopWord: pl.hitstopWord, powerWord: pl.powerWord, circleWord: pl.circleWord }));
   if (pl.active.includes('blackbox')) { const af = join(tree, 'audio', 'audio_voices.gd'); if (existsSync(af)) writeFileSync(af, patchAudio(readFileSync(af, 'utf8'))); writeFileSync(mainFile, patchHaptics(readFileSync(mainFile, 'utf8'))); }
   if (pl.active.includes('blackbox')) { const hf = join(tree, 'render', 'core', 'sim_host.gd'); writeFileSync(hf, patchHost(readFileSync(hf, 'utf8'))); log('the black box: its hooks are in the scratch sim_host.gd (it reads the intents, the seed and the setup; it never writes the sim)'); }
+  if (pl.active.includes('blackbox')) {   // Encounter's fix (2026-11-02): during a playback of a saved match the hook's ai scene stages nothing into it (the forms at 300 and 1500, the tier at 900, the stage at 1200)
+    const hf = join(tree, 'render', 'tools', 'flash_capture.gd');
+    if (existsSync(hf)) {
+      const hook = readFileSync(hf, 'utf8');
+      const a = '\t\t"ai":           # the real AI match, forms readied at 300 and 1500, a tier raised at 900\n';
+      if (hook.split(a).length === 2 && !hook.includes('_bb_pb.is_empty()')) writeFileSync(hf, hook.replace(a, () => a + '\t\t\tif not main.host._bb_pb.is_empty():\n\t\t\t\treturn   # a playback of a saved match is that match, with nothing staged into it\n'));
+    }
+  }
+  if (o.film) {   // a film build: the capture hook starts its match with the page's own setup words
+    const hf = join(tree, 'render', 'tools', 'flash_capture.gd');
+    const hook = readFileSync(hf, 'utf8');
+    const was = '{} if slots.size() < 2 else {"slots": slots})';
+    if (hook.split(was).length !== 2) throw new Error('--film: the start_match line of the hook moved');
+    writeFileSync(hf, patchHook(hook));
+    log('film build: the capture hook now starts its match with the page words (power, peak, tier, flatout)');
+  }
   if (tz) {   // the scratch tree's copy of the Web preset only: the engine template this page is exported with
     const pf = join(tree, 'export_presets.cfg');
     writeFileSync(pf, setWebCustomTemplate(readFileSync(pf, 'utf8'), tz.split('\\').join('/')));
     log(`exporting with the custom template ${tz}`);
+  }
+  if (o.treeOnly) {   // the tree this page would be exported from, whole (render/ too), for a measurement on the kept build; nothing is imported or exported
+    const dest = resolve(o.treeOnly);
+    if (existsSync(dest)) throw new Error(`refused: ${dest} already exists`);
+    cpSync(tree, dest, { recursive: true });
+    rmSync(join(base, 'stack', `${r.commit.slice(0, 8)}-${r.key}`), { recursive: true, force: true });
+    rmSync(dir, { recursive: true, force: true });
+    out.treeOnly = dest; out.stackKey = r.key; out.seconds = Math.round((Date.now() - t0) / 1000);
+    return out;
   }
   const godot = o.godotNode ? null : godotExe(o.godot);
   const g = { godot, godotNode: o.godotNode };
@@ -105,7 +140,8 @@ export async function buildStackPreview(o) {
   log(`exporting Web (${tz ? 'custom' : 'standard'} template, single-threaded)`);
   code = await runGodot(g, ['--headless', '--path', tree, '--export-release', 'Web', join(web, 'index.html')], exportLog, 25 * 60 * 1000);
   if (code !== 0 || !existsSync(join(web, 'index.html'))) throw new Error(`Godot --export-release Web exited ${code}; the end of ${exportLog}:\n${tail(exportLog)}`);
-  if (pl.active.includes('blackbox')) { const ix = join(web, 'index.html'); writeFileSync(ix, injectPage(readFileSync(ix, 'utf8'), { commit: r.commit, subject: r.subject, stackKey: r.key, parks: parksIn, switches: pl.active, tools: BB_FINGERPRINT, folder: key })); log('the black box: the questions and the save are in the page'); }
+  if (pl.active.includes('blackbox')) { const ix = join(web, 'index.html'); const snipFile = join(repo, 'docs', 'audio', 'pending', 'audio-resume', 'shell-snippet.js'); const snip = existsSync(snipFile) ? readFileSync(snipFile, 'utf8') : ''; writeFileSync(ix, injectPage(readFileSync(ix, 'utf8'), { commit: r.commit, subject: r.subject, stackKey: r.key, parks: parksIn, switches: pl.active, tools: BB_FINGERPRINT, folder: key, shell: snip ? createHash('sha1').update(snip).digest('hex').slice(0, 8) : null }, snip)); log('the black box: the questions and the save are in the page'); }
+  writeReplayTree(tree, join(dir, 'replay-tree'), r);   // the kept build keeps what replays a saved match exactly
   out.scriptErrors = scriptErrors(`${tail(importLog, 4000)}\n${tail(exportLog, 4000)}`).slice(0, 6);
   if (!o.keepTree) rmSync(join(base, 'stack', `${r.commit.slice(0, 8)}-${r.key}`), { recursive: true, force: true });
   out.seconds = Math.round((Date.now() - t0) / 1000);
@@ -116,7 +152,7 @@ export async function buildStackPreview(o) {
 
 async function main() {
   const a = process.argv.slice(2);
-  const known = new Set(['--template', '--watch', '--every', '--min-gap', '--max-load', '--planet', '--port', '--off', '--skip', '--only', '--rebuild', '--no-smoke', '--no-serve', '--open', '--repo', '--rev', '--manifest', '--godot', '--godot-node', '--browser-path', '--out', '--keep-tree', '--help']);
+  const known = new Set(['--template', '--watch', '--every', '--min-gap', '--max-load', '--planet', '--port', '--off', '--skip', '--only', '--rebuild', '--no-smoke', '--no-serve', '--open', '--repo', '--rev', '--manifest', '--godot', '--godot-node', '--browser-path', '--out', '--keep-tree', '--tree-only', '--film', '--help']);
   for (const x of a) if (x.startsWith('--') && !known.has(x)) { console.error(`unknown option ${x}; node tools/preview/stack-preview.mjs --help`); process.exit(2); }
   const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
   const has = (n) => a.includes(n);
@@ -124,7 +160,7 @@ async function main() {
   if (has('--help')) { console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').filter((l) => l.startsWith('//')).slice(0, 10).map((l) => l.slice(3)).join('\n')); return; }
   const planet = Number(opt('--planet', 7));
   if (!Number.isInteger(planet) || planet < 1) { console.error('--planet is a positive whole number (the planet\'s seed)'); process.exit(2); }
-  const o = { repo: opt('--repo'), rev: opt('--rev'), manifest: opt('--manifest'), planet, off: list('--off'), skip: list('--skip'), only: list('--only'), out: opt('--out'), godot: opt('--godot'), godotNode: opt('--godot-node'), template: opt('--template', 'custom'), rebuild: has('--rebuild'), keepTree: has('--keep-tree'), log: (m) => console.error(`[stack-preview] ${m}`) };
+  const o = { repo: opt('--repo'), rev: opt('--rev'), manifest: opt('--manifest'), planet, off: list('--off'), skip: list('--skip'), only: list('--only'), out: opt('--out'), godot: opt('--godot'), godotNode: opt('--godot-node'), template: opt('--template', 'custom'), rebuild: has('--rebuild'), keepTree: has('--keep-tree'), treeOnly: opt('--tree-only'), film: has('--film'), log: (m) => console.error(`[stack-preview] ${m}`) };
   let b;
   try { b = await buildStackPreview(o); } catch (e) { console.error(`stack-preview: ${e.message}`); process.exit(1); }
   console.log(`\nOrb Combat EX private preview of the STACK on ${b.sha.slice(0, 8)}: ${b.subject}`);

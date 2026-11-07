@@ -42,6 +42,12 @@ To make a new clip: copy a recipe, change the scene, seed, words and window, and
 
 The encoder keeps one palette for a whole clip (so colours do not shimmer) and takes the palette down (64, 48, 40, 32, 24, 20, 16 colours) until the file fits. Every GIF goes through the flash check (`tools/flash/analyse-gif.mjs`) and its verdict is in `index.txt`; a clip that fails is replaced by another moment, not sent.
 
+## The button strip, and the slots for the moves still to come
+
+Every GIF and WebM has a **strip under the picture** (never over it, nothing covers a fighter): the left stick, LT, LB, X, Y, B, A, RB, RT and the right stick, each lit while the pad had it down (or had pressed it since the last picture), with a word under a lit one: **tap**, **hold** (12 ticks or more) or **mash** (three presses in 30 ticks). The right stick shows its direction and charge level. It is drawn from what the game was fed each tick (the hook's pad log), so it is what was pressed, not a guess. `--no-strip` leaves it off; a recipe sets `"strip": false` for a scene the computer plays, and `"stripSlot"` for the pad's slot (default 0). A build older than the pad log makes the clip without a strip. For a clip of a saved match (`--from-match`) the strip shows the pad of that match.
+
+**Slots.** `clips.json` has a recipe slot for each flight strike (`flight-zip`, `flight-line`, `flight-arc`, `flight-parting-shot`) and each beam answer (`beam-answer-fire-back`, `-dodge`, `-powerful-block`, `-catch`, `-swat`, `-walk-in`), marked `"pending": true` with what each waits for. `all` skips them and naming one says what it waits for. When a move lands: give the slot a `scene` (a hook scene that presses it), its `words`, a `from` and `frames`, and remove `pending`; `node tools/clips/make.mjs --list` shows which are still open.
+
 ## Good to know
 
 - **Which builds:** the film scenes and the event log are in the capture hook from 2026-11-06; a kept build made before then has the older scenes only (`clash`, `collapse`, `signaturedummy` and the other 15). Asking such a build for a film scene or an event window gives a plain message saying so. `selftest` uses an old scene on purpose, so it runs on any kept build.

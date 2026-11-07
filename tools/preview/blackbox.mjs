@@ -381,10 +381,14 @@ export const PAGE_SCRIPT = String.raw`
 
 /** index.html with the page script added before </body>. */
 /** meta: what this build is made of (the commit, the stack's key and parks, the switches), stamped into the page as window.__build and into every saved file as `build`, so a recording says which build it was played on. */
-export function injectPage(html, meta = null) {
+export function injectPage(html, meta = null, shellSnippet = '') {
   if (html.includes('orb-blackbox-last')) return html;
   const stamp = meta ? `<script>window.__build = ${JSON.stringify(meta).replace(/</g, '\u003c')};</script>` : '';
-  const head = `<script>${AUDIO_HEAD}</script>`;
+  const shell = shellSnippet ? `<script>
+${shellSnippet.split('</script').join('<\\/script')}
+</script>
+` : '';   // Audio's web shell snippet (docs/audio/pending/audio-resume): first, before the engine script
+  const head = `${shell}<script>${AUDIO_HEAD}</script>`;
   const tag = `${stamp}<script>${PAGE_SCRIPT}</script>`;
   let out = html.includes('<head>') ? html.replace('<head>', () => `<head>\n${head}`) : head + html;
   return out.includes('</body>') ? out.replace('</body>', () => `${tag}\n</body>`) : out + tag;
@@ -396,14 +400,16 @@ export const AUDIO_HEAD = String.raw`
 (function () {
   var A = { on: /[?&](audiolog|blackbox)(=|&|$)/.test(location.search), t0: performance.now(), ctxs: [], gesture: null, firstSoundMs: null, peak: 0, windows: 0, loud: 0, rmsSum: 0, cues: 0, cuesTaken: 0, cuesDropped: 0, by: {}, vib: [], vibReq: [], navVibrate: 0, playEffect: 0, pulse: 0, rms: [], recentPeak: 0, srcs: {}, loudAt: [], cueT: [] };
   window.__audlog = A.on;
+  window.__audHeadCopies = (window.__audHeadCopies || 0) + 1;   // more than 1: this head ran twice in the page (two taps would split the counters)
+  A.tl = []; A.snap5 = null;
   if (/[?&]audiolog(=|&|$)/.test(location.search)) {   // the line on the page: only with the word, off otherwise
     document.addEventListener('DOMContentLoaded', function () {
       var el = document.createElement('div');
-      el.style.cssText = 'position:fixed;left:6px;bottom:6px;z-index:2147483647;font:11px/1.3 monospace;color:#9fe;background:rgba(0,0,0,.55);padding:2px 6px;pointer-events:none;white-space:pre';
+      el.style.cssText = 'position:fixed;left:6px;bottom:6px;z-index:2147483647;font:11px/1.3 monospace;color:#9fe;background:rgba(0,0,0,.55);padding:2px 6px;pointer-events:none;white-space:pre-wrap;max-width:96vw';
       document.body.appendChild(el);
       setInterval(function () {
         var c = A.ctxs.length ? A.ctxs[0].ctx : null;
-        el.textContent = 'sound ' + (c ? c.state + ' t=' + c.currentTime.toFixed(1) : 'no context yet') + '  played ' + A.cuesTaken + ' dropped ' + A.cuesDropped + '  out peak ' + A.recentPeak.toFixed(2);
+        el.textContent = 'sound ' + (c ? c.state + ' t=' + c.currentTime.toFixed(1) : 'no context yet') + '  played ' + A.cuesTaken + ' dropped ' + A.cuesDropped + '  out peak ' + A.recentPeak.toFixed(2) + (A.status ? '\n' + A.status : '');
         A.recentPeak *= 0.5;
       }, 500);
     });
@@ -451,16 +457,52 @@ export const AUDIO_HEAD = String.raw`
       if (pu) GamepadHapticActuator.prototype.pulse = function (v, d) { A.pulse++; if (A.vib.length < 400) A.vib.push({ at: now(), api: 'pulse', v: v, d: d }); return pu.apply(this, arguments); };
     }
   } catch (e) { /* none */ }
-  window.__audeng = function (o) { A.eng = o; };
+  window.__audeng = function (o) { A.eng = o; A.engCalls = (A.engCalls || 0) + 1; };
+  if (/[?&]power(=(?!0|off)[^&]*|&|$)/.test(location.search)) {   // Orb's slider for the base of flat-out flight (Simulation's flatOut, 3,500 to 7,000): read at the start of the next match
+    var K = 'orb_flatout', v0 = 5000; try { var sv = parseFloat(localStorage.getItem(K)); if (sv >= 3500 && sv <= 7000) v0 = sv; } catch (e) { /* none */ }
+    window.__flatout = v0;
+    document.addEventListener('DOMContentLoaded', function () {
+      var box = document.createElement('div');
+      box.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:2147483646;font:12px/1.3 sans-serif;color:#fff;background:rgba(0,0,0,.6);padding:4px 8px;border-radius:4px';
+      var lab = document.createElement('span'), sl = document.createElement('input');
+      sl.type = 'range'; sl.min = '3500'; sl.max = '7000'; sl.step = '100'; sl.value = String(v0); sl.style.cssText = 'vertical-align:middle;width:160px';
+      function show() { lab.textContent = 'flat-out flight base speed ' + sl.value + ' (applies at the next match) '; }
+      sl.addEventListener('input', function () { window.__flatout = parseFloat(sl.value); try { localStorage.setItem(K, sl.value); } catch (e) { /* none */ } show(); });
+      ['keydown', 'keyup'].forEach(function (ev) { sl.addEventListener(ev, function (e) { e.stopPropagation(); }); });
+      show(); box.appendChild(lab); box.appendChild(sl); document.body.appendChild(box);
+    });
+  }
+  window.__audstatus = function (s) { A.status = String(s); A.statusCalls = (A.statusCalls || 0) + 1; };
   window.__audcue = function (sound, kind, bus, gain, ok) { A.cues++; if (A.cueT.length < 400) A.cueT.push([now(), sound, ok ? 1 : 0]); if (ok) A.cuesTaken++; else A.cuesDropped++; var k = (kind || '?') + ':' + sound; A.by[k] = (A.by[k] || 0) + 1; };
   window.__vibreq = function (via, step) { if (A.vibReq.length < 400) A.vibReq.push({ at: now(), via: via, step: step }); };
-  window.__audio_snap = function (lean) {
+  function snapOf(lean) {
     var ctxs = A.ctxs.map(function (c) { return { created: c.created, sampleRate: c.sampleRate, states: c.states.slice(-12) }; });
     var by = Object.keys(A.by).sort(function (a, b) { return A.by[b] - A.by[a]; }).slice(0, 60).map(function (k) { return [k, A.by[k]]; });
     return { on: A.on, gesture: A.gesture, ctxs: ctxs, firstSoundMs: A.firstSoundMs, peak: Math.round(A.peak * 1000) / 1000, windows: A.windows, loudWindows: A.loud, meanRms: A.windows ? Math.round(A.rmsSum / A.windows * 10000) / 10000 : 0,
-      cues: A.cues, cuesTaken: A.cuesTaken, cuesDropped: A.cuesDropped, cuesBySound: by, engineMixer: A.eng || null, sourcesConnectedToTheOutput: A.srcs, navigatorVibrateCalls: A.navVibrate, playEffectCalls: A.playEffect, pulseCalls: A.pulse, vibrationRequestsFromTheGame: A.vibReq.length, cueTimes: lean ? undefined : A.cueT, loudAtMs: lean ? undefined : A.loudAt,
+      cues: A.cues, cuesTaken: A.cuesTaken, cuesDropped: A.cuesDropped, cuesBySound: by, engineMixer: A.eng || null, audioStatus: A.status || null, sourcesConnectedToTheOutput: A.srcs, navigatorVibrateCalls: A.navVibrate, playEffectCalls: A.playEffect, pulseCalls: A.pulse, vibrationRequestsFromTheGame: A.vibReq.length, cueTimes: lean ? undefined : A.cueT, loudAtMs: lean ? undefined : A.loudAt,
       vibrationRequests: lean ? undefined : A.vibReq.slice(0, 60), browserVibrationCalls: lean ? undefined : A.vib.slice(0, 60), rmsSeries: lean ? undefined : A.rms.slice(-240) };
+  }
+  // Audio's read of Orb's 68ee save (2026-11-02: the record said suspended and every counter 0 for 194 s while Orb heard sound): the snapshot now also reads the live state of each context, the tab's visibility and focus,
+  // counts the engine's and the status line's calls separately, says how many copies of this head ran, keeps a one-second timeline, and keeps a snapshot taken 5 s into the match (tick 300) beside the one at the save
+  function live() {
+    var o = { visibility: document.visibilityState, focus: document.hasFocus(), headCopies: window.__audHeadCopies || 0, engCalls: A.engCalls || 0, statusCalls: A.statusCalls || 0, cueCalls: A.cues, bridgeAlive: typeof window.__audcue === 'function' };
+    o.liveCtxs = A.ctxs.map(function (c) { var x = c.ctx; return { state: x ? x.state : '?', currentTime: x ? Math.round(x.currentTime * 100) / 100 : null, baseLatency: x && x.baseLatency != null ? Math.round(x.baseLatency * 1000) / 1000 : null }; });
+    return o;
+  }
+  window.__audio_snap = function (lean) {
+    var r = snapOf(lean), l = live();
+    for (var k in l) r[k] = l[k];
+    r.timeline = A.tl.slice(-120);
+    r.atFiveSeconds = A.snap5;
+    return r;
   };
+  setInterval(function () {
+    var l = live(), c0 = l.liveCtxs[0] || {};
+    var bbt = window.__bb_t || 0;
+    A.tl.push([now(), c0.state || 'none', c0.currentTime == null ? null : c0.currentTime, l.visibility === 'visible' ? 1 : 0, l.focus ? 1 : 0, bbt, A.cues, A.engCalls || 0, A.statusCalls || 0]);
+    if (A.tl.length > 400) A.tl.shift();
+    if (!A.snap5 && bbt >= 300) { var s5 = snapOf(true), ll = live(); for (var k2 in ll) s5[k2] = ll[k2]; s5.takenAtMs = now(); s5.tick = bbt; A.snap5 = s5; }
+  }, 1000);
 })();
 `;
 

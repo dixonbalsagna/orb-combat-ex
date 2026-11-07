@@ -1,7 +1,7 @@
 // Plays a black box file back as a clip (the EP, 2026-11-01: "plays Orb's real match back as a clip through the existing replay path"). The page's `replay=1` word starts the recorded match again and steps it with the recorded intents exactly as SimReplay.play does;
 // the capture hook films it one tick per frame (every --every ticks a picture). The recorded checkpoints are compared with the page's own hashes as it goes, so the clip says whether it IS the match that was played.
 //
-//   node tools/preview/blackbox-clip.mjs --file <orb-first-play-....json> --dir <built web folder> --out <folder> [--every 2] [--scale 0.5] [--max 20000] [--from N --to N]
+//   node tools/preview/blackbox-clip.mjs --file <orb-first-play-....json> --dir <built web folder> --out <folder> [--every 2] [--scale 0.5] [--max 20000] [--from N --to N] [--hold-at N [--hold-for 60] [--hold-every 6]]
 //
 // Output: <out>/frames/f-000001.jpg ..., <out>/index.html (a player: Space pauses, arrows step, a slider), <out>/clip.json (the ticks, the checkpoints compared: ok or the first tick that differs, the answers Orb gave). Private.
 // The file's replay needs the build it was recorded on: a replay carries a data hash, and the page refuses a different one (the clip then says so).
@@ -18,6 +18,7 @@ const doc = JSON.parse(readFileSync(FILE, 'utf8'));
 const rp = doc.replay || doc;
 const fr = doc.frames || null;   // the slow frames of the real play (the page's own frame gaps): [tick, ms, seconds in]
 const marks = fr && Array.isArray(fr.slow) ? fr.slow : [];
+const HOLD_AT = Number(opt('--hold-at', 0)), HOLD_FOR = Number(opt('--hold-for', 60)), HOLD_EVERY = Math.max(1, Number(opt('--hold-every', 6)));   // pause on a tick of the match: not stepping, a still every HOLD_EVERY s for HOLD_FOR s (docs/tools/preview.md)
 const FROM = Math.max(0, Number(opt('--from', 0))), TO = Number(opt('--to', 0));   // a window: pictures only from FROM, and the match is played no further than TO (0: to its end)
 const TICKS = Math.min(Number(rp.ticks) || 0, MAXT, TO > 0 ? TO : Infinity);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -43,12 +44,26 @@ try {
   if (!ready) throw new Error('the page offers no window.__flashcap that becomes ready');
   await page.eval(`window.__flashcap.start("ai", { reduced: false, seed: ${Number(rp.seed)} })`, true);
   log(`${url}: ${TICKS} ticks of ${rp.ticks}, a picture every ${EVERY}`);
-  let n = 0, started = false;
+  let n = 0, started = false, small = false;
+  if (FROM > 40) { small = true; await page.send('Emulation.setDeviceMetricsOverride', { width: 240, height: 135, deviceScaleFactor: 1, mobile: false }); log(`ticks before ${FROM} are played on a small page (240x135: the frames cost less), the window at full size`); }
   for (let i = 1; i <= TICKS; i++) {
+    if (small && i >= FROM - 30) { small = false; await page.send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false }); await sleep(1500); }
     const got = await page.eval('window.__flashcap.step().then((t) => ({ tick: t, err: window.__flashcap.error || null, pr: window.__pr || null }))', true);
     if (got && got.err) throw new Error(`the page reported an error: ${got.err}`);
     if (!started && got.pr) { started = true; if (!got.pr.ok) throw new Error('the page refused the replay (another format, version or intent schema)'); }
     record.played = i;
+    if (HOLD_AT > 0 && i === HOLD_AT) {
+      if (small) { small = false; await page.send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false }); }
+      mkdirSync(join(OUT, 'holds'), { recursive: true });
+      record.hold = { tick: i, every: HOLD_EVERY, stills: [] };
+      for (let k = 0; k * HOLD_EVERY <= HOLD_FOR; k++) {
+        await sleep(k === 0 ? 1500 : HOLD_EVERY * 1000);
+        const sh = await page.send('Page.captureScreenshot', { format: 'jpeg', quality: 80, fromSurface: true });
+        const hf = `hold-${String(i).padStart(6, '0')}-${String(k).padStart(2, '0')}.jpg`;
+        writeFileSync(join(OUT, 'holds', hf), Buffer.from(sh.data, 'base64')); record.hold.stills.push(hf);
+      }
+      log(`hold at tick ${i}: ${record.hold.stills.length} stills`);
+    }
     if ((i % EVERY === 0 || i === TICKS) && i >= FROM) {
       await page.eval(`(() => { const g = document.getElementById('ov'); if (g) g.textContent = ${JSON.stringify(`your match, tick ${i} of ${rp.ticks}  (${(i / 60).toFixed(1)} s)`) + (marks.some((m) => m[0] > i - EVERY && m[0] <= i) ? ` + ' — SLOW FRAME on your PC: ' + ${JSON.stringify(marks.filter((m) => m[0] > i - EVERY && m[0] <= i).map((m) => Math.round(m[1]) + ' ms').join(', '))}` : '')}; })()`, true);
       const shot = await page.send('Page.captureScreenshot', { format: 'jpeg', quality: 70, fromSurface: true, clip: { x: 0, y: 0, width: W, height: H, scale: SCALE } });

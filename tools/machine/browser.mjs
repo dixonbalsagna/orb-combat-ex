@@ -211,23 +211,27 @@ export async function launchBrowser(o = {}) {
     const l = live; live = null;
     if (l.port) {
       try {
-        const v = await (await fetch(`http://127.0.0.1:${l.port}/json/version`)).json();
-        const c = await Cdp.open(v.webSocketDebuggerUrl);
-        await Promise.race([c.send('Browser.close'), sleep(3000)]);
-        c.close();
+        // a polite close, under a time limit of its own: a browser that is stuck (or a machine that is starved) must not hold the tool that started it; the kills below end it regardless
+        await Promise.race([(async () => {
+          const v = await (await fetch(`http://127.0.0.1:${l.port}/json/version`, { signal: AbortSignal.timeout(4000) })).json();
+          const c = await Cdp.open(v.webSocketDebuggerUrl);
+          await Promise.race([c.send('Browser.close'), sleep(3000)]);
+          c.close();
+        })(), sleep(9000)]);
       } catch { /* gone, or never up */ }
     }
-    try { if (l.helper && l.helper.pid) { if (win) spawnSync('taskkill', ['/PID', String(l.helper.pid), '/T', '/F'], { stdio: 'ignore', timeout: 15000 }); else l.helper.kill('SIGKILL'); } } catch { /* gone */ }
-    killTreeByProfile(l.profile);
-    // the folder goes only when nothing carries it any more: a browser still coming up when its folder was removed is what put "Failed To Create Data Directory" on a desktop (2026-10-27)
-    for (let i = 0; i < 20 && processesWithProfile(l.profile) > 0; i++) { killTreeByProfile(l.profile); await sleep(500); }
+    // The helper is ended through the handle node holds, not by its PID: when the browser has quit on the polite close the helper (which watches the job) has already ended itself, and a PID can belong to another process by then. Its job object takes the browser with it.
+    try { if (l.helper && l.helper.exitCode === null && l.helper.signalCode === null) l.helper.kill(); } catch { /* gone */ }
+    // No PowerShell process-list scan here (2026-11-06): on this machine a new child process (a PowerShell, a node) hung for good in many calls that day, and a synchronous wait on one held the whole tool. The job object has ended the browser; the folder is removed below once it lets go.
+    if (!win) killTreeByProfile(l.profile);
+    await sleep(1200);
     for (let i = 0; i < 8; i++) { try { rmSync(l.profile, { recursive: true, force: true }); break; } catch { await sleep(400); } }
     try { rmSync(l.registry, { force: true }); } catch { /* gone */ }
     try { if (l.argsFile) rmSync(l.argsFile, { force: true }); } catch { /* gone */ }
   };
   const onExit = () => {
     if (!live) return;
-    try { if (win && live.helper && live.helper.pid) spawnSync('taskkill', ['/PID', String(live.helper.pid), '/T', '/F'], { stdio: 'ignore', timeout: 10000 }); } catch { /* gone */ }
+    try { if (live.helper && live.helper.exitCode === null && live.helper.signalCode === null) live.helper.kill(); } catch { /* gone */ }
     try { killTreeByProfile(live.profile); } catch { /* gone */ }
   };
   process.once('exit', onExit);

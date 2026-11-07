@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pad lab</title>
+<style>
+  :root { --bg:#12141a; --card:#1b1f29; --card2:#222836; --fg:#e8ecf4; --dim:#9aa4b5; --accent:#5ec8ff; --good:#5fd38d; --warn:#ffb454; --bad:#ff6b6b; --line:#313a4d; }
+  * { box-sizing: border-box; }
+  html { color-scheme: dark; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:18px/1.5 system-ui, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 20px 16px 80px; }
+  h1 { font-size: 34px; margin: 0 0 4px; }
+  h2 { font-size: 24px; margin: 0 0 10px; }
+  h3 { font-size: 20px; margin: 0 0 6px; }
+  p { margin: 6px 0; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin: 18px 0; }
+  .dim { color: var(--dim); }
+  .small { font-size: 15px; }
+  .privacy { color: var(--good); font-weight: 600; }
+  kbd { background: var(--card2); border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 6px; padding: 1px 8px; font: inherit; font-size: 16px; }
+  button, select { font: inherit; background: var(--card2); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 14px; cursor: pointer; }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button.primary { background: #1f5f86; border-color: var(--accent); font-weight: 600; }
+  button:disabled { opacity: .5; cursor: default; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .pad { background: var(--card2); border: 2px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .pad.moving { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(94,200,255,.35); }
+  .pad.empty { opacity: .55; }
+  .pad .id { word-break: break-word; font-size: 15px; color: var(--dim); }
+  .badges { margin: 4px 0; min-height: 4px; }
+  .badge { display: inline-block; font-size: 14px; border-radius: 999px; padding: 1px 10px; margin: 2px 4px 2px 0; font-weight: 600; }
+  .badge.bad { background: rgba(255,107,107,.18); color: var(--bad); border: 1px solid var(--bad); }
+  .badge.warn { background: rgba(255,180,84,.16); color: var(--warn); border: 1px solid var(--warn); }
+  .badge.info { background: rgba(94,200,255,.16); color: var(--accent); border: 1px solid var(--accent); }
+  .bar { display: grid; grid-template-columns: 78px 1fr 58px; gap: 6px; align-items: center; font-size: 14px; margin: 2px 0; }
+  .track { position: relative; height: 12px; background: #0e1017; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
+  .track i { position: absolute; top: 0; bottom: 0; background: var(--accent); }
+  .track b { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: #55607a; }
+  .val { text-align: right; font-variant-numeric: tabular-nums; }
+  .btns { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 6px; }
+  .btn { width: 22px; height: 22px; border-radius: 5px; border: 1px solid var(--line); background: #0e1017; font-size: 10px; line-height: 20px; text-align: center; color: var(--dim); position: relative; overflow: hidden; }
+  .btn i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--good); opacity: .85; }
+  .btn span { position: relative; }
+  .finding { background: var(--card2); border-left: 5px solid var(--dim); border-radius: 6px; padding: 8px 12px; margin: 8px 0; }
+  .finding.good { border-color: var(--good); } .finding.bad { border-color: var(--bad); } .finding.warn { border-color: var(--warn); }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 8px 0; }
+  .progress { height: 18px; background: #0e1017; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+  .progress i { display: block; height: 100%; width: 0; background: var(--accent); }
+  ol.steps { list-style: none; padding: 0; margin: 8px 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  ol.steps li { border: 1px solid var(--line); border-radius: 8px; padding: 3px 10px; font-size: 15px; cursor: pointer; background: var(--card2); }
+  ol.steps li.cur { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+  ol.steps li.done { color: var(--good); }
+  .panel { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+  .panel .text { flex: 1 1 340px; min-width: 280px; }
+  .big { font-size: 22px; font-weight: 600; }
+  canvas { background: #0e1017; border: 1px solid var(--line); border-radius: 8px; max-width: 100%; }
+  .results { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 14px; margin-top: 12px; }
+  .res { background: var(--card2); border-radius: 10px; padding: 10px 14px; }
+  .res p { font-size: 17px; }
+  .plots { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+  pre { background: #0e1017; border: 1px solid var(--line); border-radius: 8px; padding: 10px; overflow: auto; max-height: 340px; font-size: 13px; }
+  .axsel { display: inline-flex; gap: 6px; align-items: center; margin-right: 14px; }
+  .axsel select { padding: 3px 8px; }
+  #log { max-height: 130px; overflow: auto; font-size: 14px; color: var(--dim); margin-top: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Pad lab</h1>
+  <p>A small page with no fight in it. It reads what your thumbs do on a gamepad and saves the numbers to a file on this computer.</p>
+  <p class="privacy">Nothing is sent anywhere: this page makes no network requests, and the only file written is the one you save yourself.</p>
+  <p class="dim small">Keyboard: press <kbd>Space</kbd> to start a step, and <kbd>Space</kbd> again for the next one, so you can run the whole thing with your other hand. <kbd>Esc</kbd> cancels the step that is running. If no pad shows up, press any button on the pad once (Chrome hides a pad until its first press).</p>
+
+  <section id="padsSec">
+    <h2>1. Every pad the browser reports</h2>
+    <p class="dim small">All slots are shown, even empty ones and ones a game might skip. The bars move live. Left stick is axes 0 and 1, right stick is axes 2 and 3.</p>
+    <div id="padList" class="cards"></div>
+    <div id="log"></div>
+  </section>
+
+  <section id="phantomSec">
+    <h2>2. Is there a phantom pad?</h2>
+    <p class="dim small">A phantom is a hidden or virtual pad (a second controller entry from Steam Input or a driver tool) that can hide the real stick from a game. Two checks: the idle test (steps 1 below) and the live highlight on the pad cards above, which names the pad that really changes when you push a stick.</p>
+    <div class="row"><button id="idleBtn">Run the idle test now</button><span id="liveLine" class="dim"></span></div>
+    <div id="findings"></div>
+  </section>
+
+  <section id="measureSec">
+    <h2>3. Measure a stick</h2>
+    <div class="row">
+      <label>Pad to measure: <select id="padSel"></select></label>
+      <span id="padWhy" class="dim small"></span>
+    </div>
+    <div class="row small dim" id="axisRow"></div>
+    <ol class="steps" id="stepList"></ol>
+    <div class="panel">
+      <div class="text">
+        <h3 id="stepTitle"></h3>
+        <p id="stepHelp"></p>
+        <p class="big" id="stepStatus"></p>
+        <div class="progress"><i id="stepBar"></i></div>
+        <div class="row"><button class="primary" id="goBtn">Start (Space)</button><button id="cancelBtn">Cancel (Esc)</button></div>
+        <p class="dim small" id="stepNote"></p>
+      </div>
+      <canvas id="liveCv" width="260" height="260"></canvas>
+    </div>
+    <div class="results" id="results"></div>
+  </section>
+
+  <section id="saveSec">
+    <h2>4. Save profile</h2>
+    <p>Saves a small JSON file with the pads seen, what the phantom check found, and the numbers for each stick you measured, plus suggested values in the game's units. It goes to your browser's Downloads folder, and a copy is kept in this browser's storage.</p>
+    <div class="row"><button class="primary" id="save">Save profile</button><span id="saveMsg" class="dim"></span></div>
+    <details><summary class="dim">Show what would be saved</summary><pre id="preview">(nothing yet)</pre></details>
+  </section>
+</main>
+
+<script src="core.js"></script>
+<script>
+(() => {
+  'use strict';
+  const C = window.PadLabCore;
+  const Q = new URLSearchParams(location.search);
+  const FAST = Q.get('fast') === '1';
+  // every guided duration; ?fast=1 shortens them for tests only
+  const CFG = FAST
+    ? { idleMs: 1000, findMs: 1000, restMs: 1000, flicks: 2, aimHoldMs: 300, readyMs: 100, settleMs: 150 }
+    : { idleMs: 5000, findMs: 3000, restMs: 3000, flicks: 5, aimHoldMs: 1000, readyMs: 1000, settleMs: 300 };
+  const $ = (id) => document.getElementById(id);
+  const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+  const setText = (e, s) => { if (e._t !== s) { e._t = s; e.textContent = s; } };
+  const f2 = (v) => (Number.isFinite(v) ? v.toFixed(3) : 'n/a');
+  const sg = (v) => (v >= 0 ? '+' : '') + v.toFixed(1);
+  const ms = (v) => (Number.isFinite(v) ? Math.round(v) + ' ms' : 'n/a');
+  const DIRS = [
+    { name: 'up', ang: 90 }, { name: 'up-right', ang: 45 }, { name: 'right', ang: 0 }, { name: 'down-right', ang: -45 },
+    { name: 'down', ang: -90 }, { name: 'down-left', ang: -135 }, { name: 'left', ang: 180 }, { name: 'up-left', ang: 135 },
+  ];
+  const NOMINALS = DIRS.map((d) => d.ang);
+  const STICKS = { right: { label: 'Right stick', ax: [2, 3] }, left: { label: 'Left stick', ax: [0, 1] } };
+  const STEPS = [
+    { kind: 'idle', title: 'Hands off every pad', help: 'Put every controller down. Let go of all sticks and buttons and touch nothing for ' + CFG.idleMs / 1000 + ' seconds. The lab looks for a pad that moves anyway.' },
+    { kind: 'find', title: 'Push a stick around', help: 'On the pad you play with, push one stick around in big circles for ' + CFG.findMs / 1000 + ' seconds. The lab names the pad that really changed, and flags any pad that copies it.' },
+    { kind: 'rest', stick: 'right', title: 'Right stick: let go', help: 'Let go of the right stick for ' + CFG.restMs / 1000 + ' seconds. This measures where it rests, how much it wobbles and whether it drifts.' },
+    { kind: 'flick', stick: 'right', title: 'Right stick: flicks', help: 'Flick the right stick fully to any side and let go. Do it ' + CFG.flicks + ' times, letting it spring back each time. This measures rise time, spring-back and overshoot.' },
+    { kind: 'aim', stick: 'right', title: 'Right stick: eight directions', help: 'Point the right stick at the ring marked on the picture and hold it for ' + CFG.aimHoldMs / 1000 + ' second, then let go. It goes round all eight compass directions. Space skips a direction.' },
+    { kind: 'rest', stick: 'left', title: 'Left stick: let go', help: 'Let go of the left stick for ' + CFG.restMs / 1000 + ' seconds.' },
+    { kind: 'flick', stick: 'left', title: 'Left stick: flicks', help: 'Flick the left stick fully to any side and let go. Do it ' + CFG.flicks + ' times.' },
+    { kind: 'aim', stick: 'left', title: 'Left stick: eight directions', help: 'Point the left stick at the ring marked on the picture and hold it for ' + CFG.aimHoldMs / 1000 + ' second, then let go. Space skips a direction.' },
+  ];
+
+  // ---------------------------------------------------------------- state
+  const seen = {};                       // slot -> last known pad info (also pads that were unplugged)
+  const hist = { idle: [], active: [] };
+  let idleRec = false;
+  let report = null, live = null, lastReportT = 0, lastT = 0;
+  const dts = [];
+  const mirrorSticky = {};               // pad -> pad it copies, once seen
+  const tested = { index: null, picked: false, why: '' };
+  const axisSel = { right: [2, 3], left: [0, 1] };
+  const results = { right: {}, left: {} };
+  let cur = 0, run = null;
+  let flickMsg = '';
+  const liveSeen = { leaders: [] };      // for the self-test: which pad led while a stick moved a lot
+  const events = [];
+
+  // ---------------------------------------------------------------- pads
+  function readPads() {
+    let raw = [];
+    try { raw = navigator.getGamepads ? Array.from(navigator.getGamepads()) : []; } catch (e) { raw = []; }
+    return raw.map((p, i) => (p ? {
+      index: i, reportedIndex: p.index, id: String(p.id), mapping: p.mapping || '', connected: p.connected !== false,
+      axes: Array.from(p.axes || []), buttons: Array.from(p.buttons || [], (b) => (b && typeof b === 'object' ? b.value : Number(b) || 0)),
+    } : null));
+  }
+  function logEvent(text) {
+    events.push(text);
+    const d = mk('div', null, ((performance.now() / 1000).toFixed(1)) + ' s  ' + text);
+    $('log').prepend(d);
+    while ($('log').childNodes.length > 40) $('log').lastChild.remove();
+  }
+  window.addEventListener('gamepadconnected', (e) => { logEvent('pad ' + e.gamepad.index + ' connected: ' + e.gamepad.id); });
+  window.addEventListener('gamepaddisconnected', (e) => { logEvent('pad ' + e.gamepad.index + ' disconnected: ' + e.gamepad.id); if (seen[e.gamepad.index]) seen[e.gamepad.index].connected = false; });
+
+  // ---------------------------------------------------------------- cards
+  const cards = [];
+  function ensureCard(i) {
+    if (cards[i]) return cards[i];
+    const root = mk('div', 'pad empty');
+    const head = mk('h3', null, 'Pad ' + i);
+    const badges = mk('div', 'badges');
+    const id = mk('div', 'id');
+    const meta = mk('div', 'small dim');
+    const bars = [];
+    const names = ['Left X (axis 0)', 'Left Y (axis 1)', 'Right X (axis 2)', 'Right Y (axis 3)'];
+    const barBox = mk('div');
+    for (let k = 0; k < 4; k++) {
+      const row = mk('div', 'bar');
+      const label = mk('span', 'small', names[k]);
+      const track = mk('div', 'track');
+      const fill = mk('i'); track.append(fill, mk('b'));
+      const val = mk('span', 'val', '0.000');
+      row.append(label, track, val);
+      barBox.append(row);
+      bars.push({ row, fill, val });
+    }
+    const other = mk('div', 'small dim');
+    const trig = mk('div', 'small dim');
+    const btnBox = mk('div', 'btns');
+    root.append(head, badges, id, meta, barBox, other, trig, btnBox);
+    $('padList').append(root);
+    cards[i] = { root, head, badges, id, meta, bars, other, trig, btnBox, btns: [], badgeKey: '' };
+    return cards[i];
+  }
+  function setBar(b, v) {
+    const x = Number.isFinite(v) ? Math.max(-1, Math.min(1, v)) : 0;
+    const key = x.toFixed(3);
+    if (b.key === key) return;
+    b.key = key;
+    b.fill.style.left = (50 + Math.min(0, x) * 50) + '%';
+    b.fill.style.width = (Math.abs(x) * 50) + '%';
+    b.val.textContent = key;
+  }
+  function badgesFor(i) {
+    const out = [];
+    const rp = report && report.pads.find((p) => p.index === i);
+    const lp = live && live.pads.find((p) => p.index === i);
+    if (rp) for (const f of rp.flags) {
+      if (f.kind === 'moves-by-itself' || f.kind === 'buttons-by-themselves') out.push(['bad', 'moves by itself']);
+      else if (f.kind === 'off-centre') out.push(['warn', 'sits off centre']);
+      else if (f.kind === 'silent') out.push(['warn', 'did not react']);
+    }
+    const mo = mirrorSticky[i] !== undefined ? mirrorSticky[i] : (lp && lp.mirrorOf !== null ? lp.mirrorOf : null);
+    if (mo !== null) out.push(['bad', 'mirror of pad ' + mo]);
+    if (live && live.moving.pads.indexOf(i) >= 0 && !idleRec) out.push(['info', live.moving.leader === i ? 'moving now' : 'also moving']);
+    return out;
+  }
+  function renderPads(pads) {
+    const n = Math.max(pads.length, cards.length);
+    for (let i = 0; i < n; i++) {
+      const c = ensureCard(i);
+      const p = pads[i] || null;
+      const info = p || seen[i] || null;
+      c.root.classList.toggle('empty', !p);
+      c.root.classList.toggle('moving', !!(live && !idleRec && live.moving.leader === i));
+      const bs = badgesFor(i);
+      const key = bs.map((b) => b[1]).join('|');
+      if (key !== c.badgeKey) { c.badgeKey = key; c.badges.replaceChildren(...bs.map((b) => mk('span', 'badge ' + b[0], b[1]))); }
+      if (!info) { setText(c.id, 'Slot ' + i + ' is empty (the browser reports nothing here).'); setText(c.meta, ''); c.bars.forEach((b) => { b.row.style.display = 'none'; }); setText(c.other, ''); setText(c.trig, ''); c.btnBox.style.display = 'none'; continue; }
+      c.btnBox.style.display = '';
+      setText(c.id, info.id + (info.reportedIndex !== undefined && info.reportedIndex !== i ? '  (the browser calls it index ' + info.reportedIndex + ')' : ''));
+      setText(c.meta, 'mapping: ' + (info.mapping || 'none (not a standard layout)') + '  |  connected: ' + (p && p.connected ? 'yes' : 'no') + '  |  buttons: ' + info.buttons.length + '  |  axes: ' + info.axes.length);
+      const ax = p ? p.axes : [];
+      c.bars.forEach((b, k) => { b.row.style.display = k < info.axes.length ? '' : 'none'; setBar(b, ax[k]); });
+      setText(c.other, ax.length > 4 ? 'other axes: ' + ax.slice(4).map((v, k) => (k + 4) + ': ' + v.toFixed(2)).join('   ') : '');
+      const bt = p ? p.buttons : [];
+      if (info.mapping === 'standard' && bt.length > 7) setText(c.trig, 'triggers: left ' + bt[6].toFixed(2) + '   right ' + bt[7].toFixed(2));
+      else setText(c.trig, '');
+      while (c.btns.length < info.buttons.length) {
+        const cell = mk('div', 'btn'); const fill = mk('i'); const lab = mk('span', null, String(c.btns.length)); cell.append(fill, lab); c.btnBox.append(cell); c.btns.push({ fill });
+      }
+      c.btns.forEach((b, k) => { const v = bt[k] || 0; const key = v.toFixed(2); if (b.key !== key) { b.key = key; b.fill.style.height = Math.round(v * 100) + '%'; } });
+    }
+  }
+  function registerSeen(pads) {
+    pads.forEach((p, i) => { if (p) seen[i] = Object.assign({}, seen[i] || {}, { index: i, id: p.id, mapping: p.mapping, buttons: p.buttons.map(() => 0), axes: p.axes.map(() => 0), connected: p.connected, reportedIndex: p.reportedIndex }); else if (seen[i]) seen[i].connected = false; });
+  }
+
+  // ---------------------------------------------------------------- the pad being measured
+  function padChoices() { return Object.values(seen).filter((p) => p.axes.length >= 2).sort((a, b) => a.index - b.index); }
+  let selSig = '';
+  function refreshSelect() {
+    const list = padChoices();
+    const sig = list.map((p) => p.index + p.id + p.connected).join('|') + '#' + tested.index;
+    if (sig === selSig) return;
+    selSig = sig;
+    const sel = $('padSel');
+    sel.replaceChildren(...list.map((p) => { const o = mk('option', null, 'Pad ' + p.index + ': ' + p.id.slice(0, 60) + (p.connected ? '' : ' (unplugged)')); o.value = String(p.index); return o; }));
+    if (tested.index !== null) sel.value = String(tested.index);
+    setText($('padWhy'), tested.index === null ? 'No pad with sticks found yet.' : (tested.picked ? 'You picked this one.' : 'Chosen for you: ' + tested.why + '.'));
+  }
+  $('padSel').addEventListener('change', (e) => { tested.index = Number(e.target.value); tested.picked = true; selSig = ''; });
+  function buildAxisRow() {
+    const row = $('axisRow');
+    row.replaceChildren(mk('span', null, 'Which axes are the sticks on this pad? (change only if a pad is not a standard layout)'));
+    for (const s of Object.keys(STICKS)) {
+      const wrap = mk('span', 'axsel');
+      wrap.append(mk('span', null, STICKS[s].label + ': x axis'));
+      for (let k = 0; k < 2; k++) {
+        const sel = mk('select');
+        for (let a = 0; a < 10; a++) { const o = mk('option', null, String(a)); o.value = String(a); sel.append(o); }
+        sel.value = String(axisSel[s][k]);
+        sel.addEventListener('change', () => { axisSel[s][k] = Number(sel.value); });
+        wrap.append(sel);
+        if (k === 0) wrap.append(mk('span', null, 'y axis'));
+      }
+      row.append(wrap);
+    }
+  }
+  function stickVec(pads, stick) {
+    const p = tested.index === null ? null : pads[tested.index];
+    if (!p || !p.connected) return null;
+    const a = axisSel[stick];
+    if (p.axes.length <= Math.max(a[0], a[1])) return null;
+    return { x: p.axes[a[0]], y: p.axes[a[1]] };
+  }
+
+  // ---------------------------------------------------------------- guided steps
+  function restFor(stick) {
+    const r = results[stick].rest;
+    return r && r.ok ? { x: r.offset.x, y: r.offset.y, band: Math.max(r.noise.maxDev, 0.02) } : { x: 0, y: 0, band: 0.05 };
+  }
+  function msg(s) { setText($('stepNote'), s); }
+  function startStep() {
+    const s = STEPS[cur];
+    const t = performance.now();
+    if (run && (run.phase === 'ready' || run.phase === 'run')) return;
+    if (s.stick && tested.index === null) { msg('No pad with sticks to measure yet. Press a button on your controller.'); return; }
+    run = { phase: 'ready', readyUntil: t + ((s.kind === 'idle' || s.kind === 'rest') ? CFG.readyMs : 0), startT: 0, samples: [] };
+    flickMsg = '';
+    msg('');
+  }
+  function beginRun(t) {
+    const s = STEPS[cur];
+    run.phase = 'run'; run.startT = t; run.samples = [];
+    if (s.kind === 'idle') { idleRec = true; hist.idle = []; live = null; }
+    if (s.kind === 'flick') run.f = { mode: 'wait', pre: [], cap: [], flicks: [], startTh: Math.max(0.12, 3 * restFor(s.stick).band), peak: 0, peakT: 0, bandSince: null };
+    if (s.kind === 'aim') run.a = { i: 0, mode: 'wait', holdStart: 0, samples: [], skipped: [] };
+  }
+  function cancelStep() {
+    if (run && (run.phase === 'ready' || run.phase === 'run')) { if (idleRec) { idleRec = false; } run = null; msg('Step cancelled.'); }
+  }
+  function nextStep() {
+    if (cur < STEPS.length - 1) { cur++; run = null; msg(''); } else msg('That was the last step. Press "Save profile" below.');
+  }
+  function onSpace() {
+    if (!run || run.phase === 'idle') startStep();
+    else if (run.phase === 'done') nextStep();
+    else if (run.phase === 'run' && STEPS[cur].kind === 'aim') { const a = run.a; a.skipped.push(a.i); advanceAim(performance.now()); }
+  }
+  function finishStep() { run.phase = 'done'; run.doneAt = performance.now(); refreshRecommend(); results_dirty = true; }
+  let results_dirty = true;
+
+  function refreshReport(t) {
+    report = C.phantomReport({ idle: hist.idle, active: hist.active }, {});
+    for (const m of report.mirrors) mirrorSticky[m.pad] = m.of;
+    if (!tested.picked && report.defaultPad) {
+      if (tested.index !== report.defaultPad.index) selSig = '';
+      tested.index = report.defaultPad.index; tested.why = report.defaultPad.reason;
+    }
+    lastReportT = t;
+    renderFindings();
+  }
+
+  function stepTick(t, pads) {
+    if (!run) return;
+    const s = STEPS[cur];
+    if (run.phase === 'ready' && t >= run.readyUntil) beginRun(t);
+    if (run.phase !== 'run') return;
+    const el = t - run.startT;
+    if (s.kind === 'idle') { if (el >= CFG.idleMs) { idleRec = false; refreshReport(t); finishStep(); } return; }
+    if (s.kind === 'find') { if (el >= CFG.findMs) { refreshReport(t); finishStep(); } return; }
+    const v = stickVec(pads, s.stick);
+    if (!v) { msg('The pad being measured is not reporting. Is it still connected?'); return; }
+    if (s.kind === 'rest') {
+      run.samples.push({ t, x: v.x, y: v.y });
+      if (el >= CFG.restMs) {
+        const st = C.restStats(run.samples);
+        const keep = run.samples.filter((_, k) => k % Math.max(1, Math.floor(run.samples.length / 500)) === 0);
+        results[s.stick].rest = Object.assign({}, st, { points: keep.map((p) => [p.x, p.y]) });
+        finishStep();
+      }
+    } else if (s.kind === 'flick') flickTick(t, v, s);
+    else if (s.kind === 'aim') aimTick(t, v, s);
+  }
+
+  function flickTick(t, v, s) {
+    const st = run.f, rest = restFor(s.stick);
+    const m = Math.hypot(v.x - rest.x, v.y - rest.y);
+    st.pre.push({ t, x: v.x, y: v.y });
+    while (st.pre.length && t - st.pre[0].t > 250) st.pre.shift();
+    if (st.mode === 'wait') {
+      if (m > st.startTh) { st.mode = 'cap'; st.cap = st.pre.slice(); st.peak = m; st.peakT = t; st.bandSince = null; }
+      return;
+    }
+    st.cap.push({ t, x: v.x, y: v.y });
+    if (m > st.peak) { st.peak = m; st.peakT = t; }
+    if (m <= rest.band) { if (st.bandSince === null) st.bandSince = t; } else st.bandSince = null;
+    const settled = st.bandSince !== null && t - st.bandSince >= CFG.settleMs;
+    if (settled) {
+      if (st.peak >= 0.5) {
+        const fs = C.flickStats(st.cap, { rest });
+        if (fs.ok && fs.settled) {
+          st.flicks.push({ fs, curve: st.cap.map((p) => [p.t - fs.t10, Math.hypot(p.x - rest.x, p.y - rest.y)]) });
+          flickMsg = 'Flick ' + st.flicks.length + ' of ' + CFG.flicks + ' recorded (rise ' + ms(fs.riseMs) + ').';
+        } else flickMsg = 'That flick could not be measured (' + (fs.reason || 'it did not settle') + '). Try again.';
+        st.mode = 'wait'; st.cap = [];
+        if (st.flicks.length >= CFG.flicks) {
+          const L = st.flicks.map((q) => q.fs);
+          results[s.stick].flick = {
+            list: st.flicks, rise: C.summarize(L.map((q) => q.riseMs)), spring: C.summarize(L.map((q) => q.springMs)),
+            firstEntry: C.summarize(L.map((q) => q.firstEntryMs)), overshoot: C.summarize(L.map((q) => q.overshoot)), peak: C.summarize(L.map((q) => q.peak)),
+          };
+          finishStep();
+        }
+      } else { flickMsg = 'That push was too gentle (peak ' + st.peak.toFixed(2) + '). Flick the stick all the way to the edge.'; st.mode = 'wait'; st.cap = []; }
+    } else if (t - st.peakT > 4000 && m > rest.band) {
+      flickMsg = 'The stick did not come back to centre. Let go of it completely after each flick.'; st.mode = 'wait'; st.cap = [];
+    }
+  }
+
+  function advanceAim(t) {
+    const a = run.a;
+    a.i++; a.mode = a.i >= DIRS.length ? 'finished' : 'release';
+    if (a.mode === 'finished') {
+      const s = STEPS[cur];
+      results[s.stick].aim = C.aimStats(a.samples, NOMINALS, { minMag: 0.7, skipMs: CFG.aimHoldMs * 0.15 });
+      results[s.stick].aim.skipped = a.skipped.slice();
+      finishStep();
+    }
+  }
+  function aimTick(t, v) {
+    const a = run.a;
+    if (a.mode === 'finished') return;
+    const mag = Math.hypot(v.x, v.y), ang = C.angleDeg(v.x, v.y);
+    if (a.mode === 'release') { if (mag < 0.3) a.mode = 'wait'; return; }
+    const d = DIRS[a.i];
+    if (a.mode === 'wait') {
+      if (mag > 0.7 && Math.abs(C.wrap180(ang - d.ang)) < 35) { a.mode = 'hold'; a.holdStart = t; }
+      else return;
+    }
+    if (a.mode === 'hold') {
+      a.samples.push({ t, x: v.x, y: v.y, dir: a.i });
+      if (t - a.holdStart >= CFG.aimHoldMs) advanceAim(t);
+    }
+  }
+
+  // ---------------------------------------------------------------- recommendations and results
+  function triggerRestMax() {
+    const p = tested.index === null ? null : seen[tested.index];
+    if (!p || p.mapping !== 'standard') return undefined;
+    let mx = -1;
+    for (const f of hist.idle) { const q = f.pads[tested.index]; if (q && q.buttons.length > 7) mx = Math.max(mx, q.buttons[6], q.buttons[7]); }
+    return mx >= 0 ? mx : undefined;
+  }
+  function refreshRecommend() {
+    for (const s of Object.keys(results)) {
+      const r = results[s];
+      if (!r.rest && !r.flick && !r.aim) continue;
+      r.rec = C.recommend({ rest: r.rest, rise: r.flick && r.flick.rise, spring: r.flick && r.flick.spring, aim: r.aim, triggerRestMax: triggerRestMax() });
+    }
+  }
+
+  const resEls = {};
+  function ensureResult(stick) {
+    if (resEls[stick]) return resEls[stick];
+    const root = mk('div', 'res');
+    root.append(mk('h3', null, STICKS[stick].label));
+    const lines = mk('div');
+    const plots = mk('div', 'plots');
+    const cv = { rest: mk('canvas'), flick: mk('canvas'), aim: mk('canvas') };
+    cv.rest.width = 220; cv.rest.height = 220; cv.flick.width = 360; cv.flick.height = 200; cv.aim.width = 220; cv.aim.height = 220;
+    plots.append(cv.rest, cv.flick, cv.aim);
+    root.append(lines, plots);
+    $('results').append(root);
+    resEls[stick] = { root, lines, cv };
+    return resEls[stick];
+  }
+  function frameMs() { return dts.length ? C.median(dts) : 16.7; }
+  function renderResults() {
+    results_dirty = false;
+    for (const s of Object.keys(STICKS)) {
+      const r = results[s];
+      const e = ensureResult(s);
+      const L = [];
+      const P = (text, cls) => L.push([text, cls]);
+      if (!r.rest && !r.flick && !r.aim) { P('Not measured yet.', 'dim'); }
+      if (r.rest && r.rest.ok) {
+        const q = r.rest;
+        P('At rest the stick sits at x ' + f2(q.offset.x) + ', y ' + f2(q.offset.y) + ' (' + f2(q.offset.mag) + ' away from exact zero).');
+        P('Rest noise: the biggest reading was ' + f2(q.noise.maxMag) + ' from zero (' + f2(q.noise.maxDev) + ' from its own resting spot); typical wobble (standard deviation) ' + f2(q.noise.std) + '.');
+        P('Drift over ' + (q.durationMs / 1000).toFixed(1) + ' s: the resting spot moved ' + f2(q.drift.mag) + ' between the first and the last second (x ' + sg(q.drift.x * 1000) + ' thousandths, y ' + sg(q.drift.y * 1000) + ' thousandths).');
+        P('Suggested dead zone: ' + q.deadzone.toFixed(2) + ' (the biggest reading ' + f2(q.noiseCeiling) + ' times 1.5, rounded up to 0.01, never below 0.05).');
+      }
+      if (r.flick) {
+        const q = r.flick;
+        P('Rise time (10% to 90% of each flick\'s peak), ' + q.rise.n + ' flicks: median ' + ms(q.rise.median) + ', from ' + ms(q.rise.min) + ' to ' + ms(q.rise.max) + '. This page samples once per frame, about ' + frameMs().toFixed(0) + ' ms on this machine, so differences under one frame mean nothing.');
+        P('Spring-back (from letting go until the stick is inside its rest noise and stays there): median ' + ms(q.spring.median) + ', from ' + ms(q.spring.min) + ' to ' + ms(q.spring.max) + '. First time back inside: median ' + ms(q.firstEntry.median) + '.');
+        P('Overshoot past centre after letting go: median ' + Math.round(q.overshoot.median * 100) + '% of the peak (from ' + Math.round(q.overshoot.min * 100) + '% to ' + Math.round(q.overshoot.max * 100) + '%). Peak reached: median ' + q.peak.median.toFixed(2) + '.');
+      }
+      if (r.aim) {
+        const q = r.aim;
+        if (q.ok) {
+          P('Aim spread: ' + q.spreadDeg.toFixed(1) + ' degrees (how much the stick wobbles while you hold one direction). Typical distance from the target direction: ' + q.rmsErrorDeg.toFixed(1) + ' degrees; average bias ' + q.biasRmsDeg.toFixed(1) + ' degrees.');
+          P('Worst direction: ' + DIRS[q.worst.index].name + ' (' + sg(q.worst.meanErr) + ' degrees off on average, wobble ' + q.worst.sd.toFixed(1) + ').');
+          P(q.perDir.map((d) => DIRS[d.index].name + (d.n ? ' ' + sg(d.meanErr) + '°±' + d.sd.toFixed(1) : ' skipped')).join('   '), 'small dim');
+          P('Plus means the stick points counter-clockwise (to the left of the target on screen); minus means clockwise.', 'small dim');
+        } else P('Aim: ' + q.reason + '.');
+      }
+      if (r.rec) {
+        const q = r.rec;
+        P('Suggestions for the game (in its units, from this stick only): dead zone ' + q.deadzone.toFixed(2) + ', away-dead ' + q.awayDead.toFixed(2) + (q.flickRiseMs !== undefined ? ', flick rise ' + q.flickRiseMs + ' ms' : '') + (q.springBackMs !== undefined ? ', spring-back ' + q.springBackMs + ' ms' : '') + (q.aimToleranceDeg !== undefined ? ', aim tolerance ' + q.aimToleranceDeg + ' degrees' : '') + '. The game\'s own values today: stick dead zone 0.20, away-dead 0.30. These are suggestions only.', 'small');
+      }
+      e.lines.replaceChildren(...L.map(([text, cls]) => mk('p', cls || '', text)));
+      drawRest(e.cv.rest, r.rest);
+      drawFlicks(e.cv.flick, r.flick);
+      drawAimResult(e.cv.aim, r.aim);
+    }
+  }
+
+  // ---------------------------------------------------------------- drawing
+  const COL = { ring: '#3b455c', dim: '#6b7790', fg: '#e8ecf4', acc: '#5ec8ff', good: '#5fd38d', warn: '#ffb454', bad: '#ff6b6b' };
+  function drawRest(cv, q) {
+    const g = cv.getContext('2d'), W = cv.width, H = cv.height, cx = W / 2, cy = H / 2, R = W / 2 - 14;
+    g.clearRect(0, 0, W, H);
+    g.strokeStyle = COL.ring; g.lineWidth = 1.5; g.beginPath(); g.arc(cx, cy, R, 0, 7); g.stroke();
+    g.beginPath(); g.moveTo(cx - R, cy); g.lineTo(cx + R, cy); g.moveTo(cx, cy - R); g.lineTo(cx, cy + R); g.stroke();
+    g.fillStyle = COL.dim; g.font = '12px system-ui';
+    if (!q || !q.ok) { g.fillText('rest cloud appears here', 40, cy); return; }
+    const S = Math.max(0.1, q.noiseCeiling * 1.5, q.deadzone * 1.1);
+    g.fillText('circle edge = ' + S.toFixed(2), 8, 14);
+    g.strokeStyle = COL.warn; g.setLineDash([4, 4]); g.beginPath(); g.arc(cx, cy, (q.deadzone / S) * R, 0, 7); g.stroke(); g.setLineDash([]);
+    g.fillStyle = COL.acc;
+    for (const p of q.points) { g.fillRect(cx + (p[0] / S) * R - 1, cy + (p[1] / S) * R - 1, 3, 3); }
+    g.strokeStyle = COL.bad; g.lineWidth = 2; const mx = cx + (q.offset.x / S) * R, my = cy + (q.offset.y / S) * R;
+    g.beginPath(); g.moveTo(mx - 6, my); g.lineTo(mx + 6, my); g.moveTo(mx, my - 6); g.lineTo(mx, my + 6); g.stroke();
+    g.fillStyle = COL.warn; g.fillText('dashed = suggested dead zone', 8, H - 8);
+  }
+  function drawFlicks(cv, q) {
+    const g = cv.getContext('2d'), W = cv.width, H = cv.height, L = 38, B = H - 24, T = 12, Rr = W - 10;
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = COL.dim; g.font = '12px system-ui'; g.strokeStyle = COL.ring; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(L, T); g.lineTo(L, B); g.lineTo(Rr, B); g.stroke();
+    if (!q) { g.fillText('flick curves appear here', 90, H / 2); return; }
+    let tmax = 0;
+    for (const f of q.list) for (const p of f.curve) tmax = Math.max(tmax, p[0]);
+    tmax = Math.max(200, tmax);
+    const X = (t) => L + ((t + 50) / (tmax + 50)) * (Rr - L), Y = (m) => B - Math.min(1.2, m) / 1.2 * (B - T);
+    for (const lv of [0.1, 0.9]) { g.strokeStyle = COL.ring; g.setLineDash([3, 4]); g.beginPath(); g.moveTo(L, Y(lv)); g.lineTo(Rr, Y(lv)); g.stroke(); g.setLineDash([]); g.fillStyle = COL.dim; g.fillText(Math.round(lv * 100) + '%', 4, Y(lv) + 4); }
+    const cols = [COL.acc, COL.good, COL.warn, COL.bad, '#c79bff'];
+    q.list.forEach((f, k) => { g.strokeStyle = cols[k % cols.length]; g.lineWidth = 1.5; g.beginPath(); f.curve.forEach((p, i) => { if (i) g.lineTo(X(p[0]), Y(p[1])); else g.moveTo(X(p[0]), Y(p[1])); }); g.stroke(); });
+    g.fillStyle = COL.dim; g.fillText('push size over time (ms), 0 = 10% of the peak', L, H - 6);
+  }
+  function drawAimResult(cv, q) {
+    const g = cv.getContext('2d'), W = cv.width, H = cv.height, cx = W / 2, cy = H / 2, R = W / 2 - 20;
+    g.clearRect(0, 0, W, H);
+    g.strokeStyle = COL.ring; g.lineWidth = 1.5; g.beginPath(); g.arc(cx, cy, R, 0, 7); g.stroke();
+    DIRS.forEach((d) => { const a = d.ang * Math.PI / 180; g.beginPath(); g.arc(cx + Math.cos(a) * R, cy - Math.sin(a) * R, 5, 0, 7); g.stroke(); });
+    if (!q || !q.ok) { g.fillStyle = COL.dim; g.font = '12px system-ui'; g.fillText('aim result appears here', 50, cy); return; }
+    for (const d of q.perDir) {
+      if (!d.n) continue;
+      const a = (d.nominal + d.meanErr) * Math.PI / 180;
+      g.strokeStyle = COL.acc; g.lineWidth = 3; g.beginPath(); g.arc(cx, cy, R * 0.86, -(a + d.sd * Math.PI / 180), -(a - d.sd * Math.PI / 180)); g.stroke();
+      g.fillStyle = Math.abs(d.meanErr) > 8 ? COL.bad : COL.good; g.beginPath(); g.arc(cx + Math.cos(a) * R * 0.86, cy - Math.sin(a) * R * 0.86, 4, 0, 7); g.fill();
+    }
+    g.fillStyle = COL.dim; g.font = '12px system-ui'; g.fillText('rings = target, dots = your average, arcs = wobble', 6, H - 6);
+  }
+  function drawLive(pads) {
+    const cv = $('liveCv'), g = cv.getContext('2d'), W = cv.width, H = cv.height, cx = W / 2, cy = H / 2, R = W / 2 - 22;
+    const s = STEPS[cur];
+    g.clearRect(0, 0, W, H);
+    if (!s.stick) { g.fillStyle = COL.dim; g.font = '14px system-ui'; g.fillText('stick picture shows here', 62, cy); return; }
+    const v = stickVec(pads, s.stick);
+    const zoom = s.kind === 'rest' ? 0.25 : 1;
+    g.strokeStyle = COL.ring; g.lineWidth = 1.5; g.beginPath(); g.arc(cx, cy, R, 0, 7); g.stroke();
+    g.beginPath(); g.moveTo(cx - R, cy); g.lineTo(cx + R, cy); g.moveTo(cx, cy - R); g.lineTo(cx, cy + R); g.stroke();
+    g.fillStyle = COL.dim; g.font = '12px system-ui';
+    if (s.kind === 'rest') g.fillText('zoomed: circle edge = 0.25', 8, 14);
+    if (s.kind === 'aim') {
+      g.setLineDash([4, 4]); g.beginPath(); g.arc(cx, cy, 0.7 * R, 0, 7); g.stroke(); g.setLineDash([]);
+      DIRS.forEach((d, i) => {
+        const a = d.ang * Math.PI / 180, px = cx + Math.cos(a) * R, py = cy - Math.sin(a) * R;
+        const isCur = run && run.a && run.a.i === i && run.a.mode !== 'finished';
+        g.strokeStyle = isCur ? COL.warn : COL.ring; g.lineWidth = isCur ? 4 : 1.5; g.beginPath(); g.arc(px, py, isCur ? 14 : 8, 0, 7); g.stroke();
+      });
+    }
+    if (v) {
+      g.fillStyle = COL.acc; g.beginPath(); g.arc(cx + Math.max(-1.2, Math.min(1.2, v.x / zoom)) * R, cy + Math.max(-1.2, Math.min(1.2, v.y / zoom)) * R, 7, 0, 7); g.fill();
+    } else { g.fillStyle = COL.bad; g.fillText('no reading from the pad', 8, H - 8); }
+  }
+
+  // ---------------------------------------------------------------- panels
+  function renderFindings() {
+    const box = $('findings');
+    const items = [];
+    if (report) {
+      for (const line of report.summary) items.push([line, /No phantom/.test(line) ? 'good' : (/moves by itself|sits away|mirror|did not move|change by themselves|No pad is reported/.test(line) ? 'bad' : '')]);
+    } else items.push(['No findings yet. Start with the idle test (step 1 below, or the button above).', '']);
+    const sig = JSON.stringify(items);
+    if (box._sig === sig) return;
+    box._sig = sig;
+    box.replaceChildren(...items.map(([t, c]) => mk('div', 'finding ' + c, t)));
+  }
+  function renderLiveLine() {
+    let text = 'Push a stick: the pad that really changes is highlighted above.';
+    if (idleRec) text = 'Idle test running: hands off every pad.';
+    else if (live && live.moving.leader !== null) text = 'Moving now: pad ' + live.moving.leader + (seen[live.moving.leader] ? ' (' + seen[live.moving.leader].id.slice(0, 50) + ')' : '');
+    setText($('liveLine'), text);
+  }
+  function renderStepPanel(t) {
+    const s = STEPS[cur];
+    const list = $('stepList');
+    if (!list._built) {
+      list._built = true;
+      STEPS.forEach((st, i) => { const li = mk('li', null, (i + 1) + '. ' + st.title); li.addEventListener('click', () => { cancelStep(); cur = i; run = null; msg(''); }); list.append(li); });
+    }
+    [...list.children].forEach((li, i) => { li.className = (i === cur ? 'cur ' : '') + (stepDone(i) ? 'done' : ''); });
+    setText($('stepTitle'), 'Step ' + (cur + 1) + ' of ' + STEPS.length + ': ' + s.title);
+    setText($('stepHelp'), s.help);
+    let status = 'Press Space to start.', prog = 0;
+    const ph = run ? run.phase : 'idle';
+    if (ph === 'ready') status = 'Get ready... hands off in a moment.';
+    else if (ph === 'run') {
+      const el = t - run.startT;
+      if (s.kind === 'idle') { status = 'Hands off! ' + Math.max(0, (CFG.idleMs - el) / 1000).toFixed(1) + ' s left.'; prog = el / CFG.idleMs; }
+      else if (s.kind === 'find') { status = 'Push a stick around... ' + Math.max(0, (CFG.findMs - el) / 1000).toFixed(1) + ' s left.'; prog = el / CFG.findMs; }
+      else if (s.kind === 'rest') { status = 'Let go and keep still... ' + Math.max(0, (CFG.restMs - el) / 1000).toFixed(1) + ' s left.'; prog = el / CFG.restMs; }
+      else if (s.kind === 'flick') { const n = run.f.flicks.length; status = 'Flick ' + (n + 1) + ' of ' + CFG.flicks + ': flick fully to a side, then let go.'; prog = n / CFG.flicks; }
+      else if (s.kind === 'aim') {
+        const a = run.a;
+        if (a.mode === 'finished') { status = 'Done.'; prog = 1; }
+        else {
+          const d = DIRS[a.i];
+          status = a.mode === 'release' ? 'Let go of the stick.' : a.mode === 'hold' ? 'Hold ' + d.name + '... ' + Math.max(0, (CFG.aimHoldMs - (t - a.holdStart)) / 1000).toFixed(1) + ' s' : 'Point at ' + d.name.toUpperCase() + ' (the lit ring) and hold.';
+          prog = (a.i + (a.mode === 'hold' ? Math.min(1, (t - a.holdStart) / CFG.aimHoldMs) : 0)) / DIRS.length;
+        }
+      }
+    } else if (ph === 'done') { status = cur < STEPS.length - 1 ? 'Done. Press Space for the next step.' : 'All done. Press Save profile below.'; prog = 1; }
+    setText($('stepStatus'), status);
+    $('stepBar').style.width = Math.round(Math.max(0, Math.min(1, prog)) * 100) + '%';
+    if (run && run.phase === 'run' && s.kind === 'flick' && flickMsg) msg(flickMsg);
+    $('goBtn').textContent = ph === 'done' ? 'Next step (Space)' : (ph === 'run' && s.kind === 'aim' ? 'Skip this direction (Space)' : 'Start (Space)');
+    $('goBtn').disabled = ph === 'ready' || (ph === 'run' && s.kind !== 'aim');
+    $('cancelBtn').disabled = !(ph === 'ready' || ph === 'run');
+  }
+  function stepDone(i) {
+    const s = STEPS[i];
+    if (s.kind === 'idle') return hist.idle.length >= 5 && !idleRec;
+    if (s.kind === 'find') return !!(report && report.pads.some((p) => p.peakRange >= 0.3)) && i < cur;
+    return !!results[s.stick][s.kind];
+  }
+
+  $('goBtn').addEventListener('click', (e) => { e.currentTarget.blur(); onSpace(); });
+  $('cancelBtn').addEventListener('click', (e) => { e.currentTarget.blur(); cancelStep(); });
+  $('idleBtn').addEventListener('click', (e) => { e.currentTarget.blur(); cancelStep(); cur = 0; run = null; startStep(); document.getElementById('measureSec').scrollIntoView({ block: 'start' }); });
+  const isSpace = (e) => e.code === 'Space' || e.key === ' ';
+  const typing = (e) => { const t = e.target && e.target.tagName; return t === 'SELECT' || t === 'INPUT' || t === 'TEXTAREA'; };
+  window.addEventListener('keydown', (e) => {
+    if (typing(e)) return;
+    if (isSpace(e)) { e.preventDefault(); if (!e.repeat) onSpace(); }
+    else if (e.key === 'Escape') cancelStep();
+  }, true);
+  window.addEventListener('keyup', (e) => { if (isSpace(e) && !typing(e)) e.preventDefault(); }, true);
+
+  // ---------------------------------------------------------------- the profile
+  const r4 = (k, v) => (typeof v === 'number' ? (Number.isFinite(v) ? Math.round(v * 10000) / 10000 : null) : v);
+  function stickProfile(s) {
+    const r = results[s];
+    const out = { axes: axisSel[s].slice(), measured: { rest: !!r.rest, flicks: !!r.flick, aim: !!r.aim } };
+    if (r.rest) out.rest = { ok: r.rest.ok, durationMs: r.rest.durationMs, samples: r.rest.n, offset: r.rest.offset, noise: r.rest.noise, noiseCeiling: r.rest.noiseCeiling, drift: r.rest.drift, recommendedDeadzone: r.rest.deadzone };
+    if (r.flick) out.flicks = { count: r.flick.list.length, riseMs: r.flick.rise, springBackMs: r.flick.spring, firstBackInsideMs: r.flick.firstEntry, overshoot: r.flick.overshoot, peak: r.flick.peak, frameMs: frameMs(), resolutionNote: 'one animation frame', list: r.flick.list.map((q) => ({ peak: q.fs.peak, angleDeg: q.fs.angleDeg, riseMs: q.fs.riseMs, springBackMs: q.fs.springMs, overshoot: q.fs.overshoot })) };
+    if (r.aim) out.aim = { ok: r.aim.ok, spreadDeg: r.aim.spreadDeg, rmsErrorDeg: r.aim.rmsErrorDeg, biasRmsDeg: r.aim.biasRmsDeg, worst: r.aim.worst && Object.assign({ name: DIRS[r.aim.worst.index].name }, r.aim.worst), skipped: (r.aim.skipped || []).map((i) => DIRS[i].name), perDirection: r.aim.perDir.map((d) => ({ name: DIRS[d.index].name, nominalDeg: d.nominal, n: d.n, meanErrDeg: d.meanErr, sdDeg: d.sd })) };
+    out.recommended = r.rec ? Object.assign({ isSuggestion: true }, r.rec) : null;
+    return out;
+  }
+  function buildProfile() {
+    refreshRecommend();
+    const rep = report || C.phantomReport({ idle: hist.idle, active: hist.active }, {});
+    const recs = Object.values(results).map((r) => r.rec).filter(Boolean);
+    const suggested = recs.length ? {
+      isSuggestion: true, label: 'Suggestions only, in the units of the game\'s data/input/timing.json (stick.deadzone 0.2, triggerOn 0.35, triggerOff 0.25, awayDead 0.3). The worst stick decides the dead zone.',
+      deadzone: Math.max(...recs.map((q) => q.deadzone)), awayDead: Math.max(...recs.map((q) => q.awayDead)), triggerOn: recs[0].triggerOn, triggerOff: recs[0].triggerOff,
+    } : null;
+    const testedPad = tested.index === null ? null : { index: tested.index, id: seen[tested.index] ? seen[tested.index].id : null, chosen: tested.picked ? 'picked by you' : tested.why };
+    return {
+      kind: 'orb-pad-profile', version: 1, savedAt: new Date().toISOString(), userAgent: navigator.userAgent,
+      note: 'Nothing was sent anywhere. This file was made inside your browser and saved to your own computer.',
+      padsSeen: Object.values(seen).sort((a, b) => a.index - b.index).map((p) => ({ index: p.index, id: p.id, mapping: p.mapping, connected: p.connected, buttons: p.buttons.length, axes: p.axes.length })),
+      testedPad,
+      phantom: {
+        idleTestRun: hist.idle.length >= 5,
+        findings: rep.summary,
+        pads: rep.pads.map((p) => ({ index: p.index, id: p.id, movesByItself: p.movesByItself, sitsOffCentre: p.offCenter, mirrorOf: mirrorSticky[p.index] !== undefined ? mirrorSticky[p.index] : p.mirrorOf, silent: p.silent, flags: p.flags.map((f) => f.text), idleRanges: p.idle ? p.idle.ranges : null, idleMeans: p.idle ? p.idle.means : null, bestPushRange: p.peakRange })),
+        mirrors: Object.keys(mirrorSticky).map((k) => ({ pad: Number(k), mirrorOf: mirrorSticky[k] })),
+      },
+      sticks: { right: stickProfile('right'), left: stickProfile('left') },
+      suggested,
+      unmeasured: [].concat(results.right.rest || results.left.rest ? [] : ['rest']).concat(results.right.flick || results.left.flick ? [] : ['flicks']).concat(results.right.aim || results.left.aim ? [] : ['aim']),
+    };
+  }
+  function stamp() {
+    const d = new Date(), z = (n) => String(n).padStart(2, '0');
+    return d.getFullYear() + z(d.getMonth() + 1) + z(d.getDate()) + '-' + z(d.getHours()) + z(d.getMinutes());
+  }
+  $('save').addEventListener('click', (e) => {
+    e.currentTarget.blur();
+    const text = JSON.stringify(buildProfile(), r4, 2);
+    const name = 'orb-pad-profile-' + stamp() + '.json';
+    let stored = true;
+    try { localStorage.setItem('orb-pad-profile:last', text); localStorage.setItem('orb-pad-profile:lastName', name); } catch (err) { stored = false; }
+    const blob = new Blob([text], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name; a.style.display = 'none';
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1000);
+    setText($('saveMsg'), 'Saved ' + name + ' (your browser puts it in its Downloads folder, or asks where if it is set to ask). ' + (stored ? 'A copy is also kept in this browser\'s storage.' : 'Browser storage is not available here, so only the file was saved.'));
+    $('preview').textContent = text;
+  });
+
+  // ---------------------------------------------------------------- the loop
+  function loop() {
+    const t = performance.now();
+    if (lastT) { dts.push(t - lastT); if (dts.length > 120) dts.shift(); }
+    lastT = t;
+    const pads = readPads();
+    registerSeen(pads);
+    const frame = { t, pads };
+    if (idleRec) hist.idle.push(frame);
+    else { hist.active.push(frame); if (hist.active.length > 8000) hist.active.splice(0, 1000); }
+    if (!idleRec && hist.active.length) {
+      live = C.phantomReport({ active: hist.active.slice(-30) }, { mirrorMinFrames: 4, liveMs: 350 });
+      for (const m of live.mirrors) mirrorSticky[m.pad] = m.of;
+      if (live.moving.leader !== null) { const lp = live.pads.find((p) => p.index === live.moving.leader); if (lp && lp.recentRange > 0.5) { liveSeen.leaders.push(live.moving.leader); if (liveSeen.leaders.length > 2000) liveSeen.leaders.splice(0, 500); } }
+    } else if (idleRec) live = null;
+    if (t - lastReportT > 400 && !idleRec) refreshReport(t);
+    stepTick(t, pads);
+    renderPads(pads);
+    refreshSelect();
+    renderLiveLine();
+    renderStepPanel(t);
+    drawLive(pads);
+    if (results_dirty) renderResults();
+    requestAnimationFrame(loop);
+  }
+
+  // a read-only window for the self-test (it changes nothing)
+  window.__padlab = {
+    state() {
+      const s = STEPS[cur];
+      return JSON.parse(JSON.stringify({
+        fast: FAST, step: cur, kind: s.kind, phase: run ? run.phase : 'idle', tested: { index: tested.index, picked: tested.picked, why: tested.why },
+        frameMs: frameMs(), moving: live ? live.moving : null, leaders: liveSeen.leaders,
+        flicks: run && run.f ? run.f.flicks.length : null, aim: run && run.a ? { i: run.a.i, mode: run.a.mode, target: DIRS[Math.min(run.a.i, 7)].ang } : null,
+        report: report ? { pads: report.pads.map((p) => ({ index: p.index, movesByItself: p.movesByItself, offCenter: p.offCenter, mirrorOf: p.mirrorOf, silent: p.silent, peakRange: p.peakRange, flags: p.flags.map((f) => f.kind) })), summary: report.summary, defaultPad: report.defaultPad } : null,
+        results: { right: slim(results.right), left: slim(results.left) },
+        cards: cards.map((c, i) => ({ i, text: c.root.textContent.slice(0, 200), empty: c.root.classList.contains('empty') })),
+      }));
+    },
+  };
+  function slim(r) {
+    return {
+      rest: r.rest ? { ok: r.rest.ok, offset: r.rest.offset, noise: r.rest.noise, deadzone: r.rest.deadzone } : null,
+      flick: r.flick ? { rise: r.flick.rise, spring: r.flick.spring, overshoot: r.flick.overshoot, n: r.flick.list.length } : null,
+      aim: r.aim ? { ok: r.aim.ok, spreadDeg: r.aim.spreadDeg, biasRmsDeg: r.aim.biasRmsDeg, rmsErrorDeg: r.aim.rmsErrorDeg, worst: r.aim.worst, directionsMeasured: r.aim.directionsMeasured } : null,
+    };
+  }
+
+  buildAxisRow();
+  renderFindings();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

@@ -42,7 +42,10 @@ const argv = process.argv.slice(2);
 const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
 const DIR = opt('--dir'), OUT = opt('--out');
 if (!DIR || !OUT) { console.error('usage: node tools/preview/reel.mjs --dir <built web folder> --out <folder> [--seed N] [--every 30] [--swings 2] [--launches 1] [--cap 6000] [--margin 60]'); process.exit(2); }
+const SCEN = String(opt('--scenario', 'ai')).replace(/[^a-z]/g, '');   // the hook's scene: ai (a real AI match), collapse (AI against AI beside the tallest tower, a blast through a row of buildings every 150 ticks), launchai ...
 const SEED = Number(opt('--seed', 12345)), EVERY = Number(opt('--every', 30)), NSWING = Number(opt('--swings', 2)), NLAUNCH = Number(opt('--launches', 1));
+const HOLD = new Set(String(opt('--hold', '')).split(',').filter(Boolean).map(Number)), HOLD_FOR = Number(opt('--hold-for', 60)), HOLD_EVERY = Math.max(1, Number(opt('--hold-every', 6)));   // pause on a view: the sim is not stepped, a still every HOLD_EVERY s for HOLD_FOR s
+let lastTeach = '';
 const ALSO = new Set(String(opt('--also', '')).split(',').filter(Boolean).map(Number));   // extra ticks to take a still at (the EP names a tick)
 const CAP = Number(opt('--cap', 6000)), MARGIN = Number(opt('--margin', 60));
 const W = Number(opt('--width', 960)), H = Number(opt('--height', 540)), PLANET = Number(opt('--planet', 7));
@@ -54,7 +57,7 @@ if (!exe) { console.error('no chrome found'); process.exit(2); }
 
 mkdirSync(join(OUT, 'stills'), { recursive: true });
 const server = await serve(resolve(DIR));
-const url = `http://127.0.0.1:${server.address().port}/index.html?flashcap=1&preview=1&reel=1&planet=${PLANET}&${QUERY}`;
+const url = `http://127.0.0.1:${server.address().port}/index.html?flashcap=1&preview=1&reel=1${argv.includes('--no-planet') ? '' : `&planet=${PLANET}`}&${QUERY}`;   // --no-planet: the hand-made world (the old default arena), where the hill chapel stands
 let browser = null, page = null, code = 0;
 const record = { url, seed: SEED, every: EVERY, swings: [], launches: [], pictures: [], ticks: 0, planetGen: null, note: '' };
 try {
@@ -70,7 +73,7 @@ try {
   let ready = false;
   while (Date.now() < deadline && !ready) { await sleep(500); ready = await page.eval('Boolean(window.__flashcap && window.__flashcap.ready)').catch(() => false); }
   if (!ready) throw new Error('the page offers no window.__flashcap that becomes ready (is it an export with the capture hook, and ?flashcap=1 allowed?)');
-  await page.eval(`window.__flashcap.start("ai", { reduced: false, seed: ${SEED} })`, true);
+  await page.eval(`window.__flashcap.start("${SCEN}", { reduced: false, seed: ${SEED} })`, true);
   log(`${url}: the hook's ai scenario, seed ${SEED}, ${W}x${H}, until ${NSWING} swing(s) and ${NLAUNCH} launch(es) have been seen`);
   let last = -1, curSwing = null, lastLn = [0, 0], doneAt = -1;
   const KEEP_ALL = argv.includes('--keep-all'), REMATCH = argv.includes('--rematch');
@@ -97,7 +100,7 @@ try {
         const bbNow = await page.eval('JSON.stringify({ q: (window.__bb_q || []).map((e) => ({ over: e.over, ended: e.ended, ticks: e.ticks })), s: window.__bb_state || null })').catch(() => null);
         record.matches.push({ n: matchNo, seed: SEED + matchNo, from: matchStart, to: tick, ended: endedKo ? 'KO' : 'did not end in 7200 ticks', blackBox: bbNow ? JSON.parse(bbNow) : null });
         matchNo++; koSince = -1; matchStart = tick; base = tick; rawPrev = 0;
-        await page.eval(`window.__flashcap.start("ai", { reduced: false, seed: ${SEED + matchNo} })`, true);
+        await page.eval(`window.__flashcap.start("${SCEN}", { reduced: false, seed: ${SEED + matchNo} })`, true);
         curSwing = null; lastLn = [0, 0]; wall.run = [0, 0]; wallAll.run = [0, 0];
         continue;
       }
@@ -120,6 +123,10 @@ try {
       }
     }
     if (pv && Array.isArray(pv.fx) && tick % EVERY === 0) (record.positions = record.positions || []).push([tick, Math.round(pv.fx[0]), Math.round(pv.fx[1]), Math.round(pv.fx[2]), Math.round(pv.fx[3])]);   // where they stand (world x, height), a row per still: for naming a place to Rendering
+    if (pv && Array.isArray(pv.fx)) (record.track = record.track || []).push([tick, Math.round(pv.fx[0] * 10) / 10, Math.round(pv.fx[1] * 10) / 10, Math.round(pv.fx[2] * 10) / 10, Math.round(pv.fx[3] * 10) / 10]);   // every tick: world x of both, then heights (speeds are read from it)
+    if (pv && typeof pv.crn === 'number' && pv.crn !== (record.crn || 0)) { (record.craters = record.craters || []).push({ tick, n: pv.crn, last: pv.cr }); record.crn = pv.crn; }   // each change of the crater list: the count and the newest (x, radius, depth, sim time)
+    if (pv && 'lm' in pv && !record.lmKeyAt) record.lmKeyAt = { tick, n: Array.isArray(pv.lm) ? pv.lm.length : -1 };   // the probe key seen: the first tick and what it held
+    if (pv && Array.isArray(pv.lm) && pv.lm.length && !record.landmarks) record.landmarks = pv.lm;   // every barred landmark (c09: x, depth), read in the first ticks
     if (pv && Array.isArray(pv.ki)) record.kiMax = (record.kiMax || [0, 0]).map((m, k) => Math.max(m, Number(pv.ki[k]) || 0));
     if (pv && pv.bo) {
       record.beamOutcomes = pv.bo;   // CLASH, GUARD, DODGE, HIT ... counted so far
@@ -129,7 +136,9 @@ try {
     if (pv && pv.arcsends) { record.arcSends = pv.arcsends; if (Object.keys(pv.arcsends).length && !(record.arcTicks || []).length) (record.arcTicks = record.arcTicks || []).push(tick); }
     if (pv && Array.isArray(pv.noised)) record.thumbCueTimes = pv.noised;   // each stick cue: its kind and the ticks since the last flick of the synthetic thumb
     if (pv && Array.isArray(pv.noise)) record.thumbNoise = { flicksMade: pv.noise[0], stickCuesAfterAFlick: pv.noise[1], phantomCues: pv.noise[2], note: 'a phantom is a stick cue (start, charge, refused) with no flick of the synthetic thumb in the 45 ticks before it' };
+    if (pv && pv.stkk) { for (const kk of Object.keys(pv.stkk)) if ((record.stickKinds || {})[kk] !== pv.stkk[kk]) (record.stickLog = record.stickLog || []).push({ tick, kind: kk, n: pv.stkk[kk] }); }   // each change of a stick cue's count: the tick and the kind
     if (pv && pv.stkk) record.stickKinds = pv.stkk;   // the cues by kind so far (the last probe read)
+    if (pv && Array.isArray(pv.teach)) { const tk = JSON.stringify([pv.teach, pv.taught]); if (tk !== lastTeach) { (record.teachLog = record.teachLog || []).push({ tick, teach: pv.teach, taught: pv.taught, tnow: pv.tnow }); lastTeach = tk; } }   // the HUD's teaching lines: each change of what a model says, or of the taught flags
     if (pv && pv.ln) { for (let k = 0; k < 2; k++) if (pv.ln[k] > lastLn[k]) record.launches.push({ tick, fighter: k, n: pv.ln[k], states: pv.fst }); lastLn = pv.ln; }
     const sinceClash = (record.clashTicks || []).length ? tick - record.clashTicks[record.clashTicks.length - 1] : 1e9;
     if (tick % EVERY === 0) {   // the flat-face number: a small PNG of this frame, measured in node
@@ -146,6 +155,25 @@ try {
       const file = `still-${String(tick).padStart(6, '0')}.jpg`;
       writeFileSync(join(OUT, 'stills', file), Buffer.from(shot.data, 'base64'));
       shots.set(tick, { file, pv: pv ? { padtxt: pv.padtxt || null, swing: pv.swing || null, swings: pv.swings, fst: pv.fst || null, ln: pv.ln || null, hp: pv.hp || null, pz: pv.pz || null, mv: pv.mv === undefined ? null : pv.mv, stk: pv.stk === undefined ? null : pv.stk, p1h: pv.p1human === undefined ? null : pv.p1human, on: { rs: pv.rightStick, stick: pv.stickOn, swing: pv.swingOn } } : null });
+    }
+    if (HOLD.has(tick) && !(record.holds || []).some((h) => h.tick === tick)) {   // a pause: not stepping, only looking
+      const hold = { tick, fighters: pv && pv.fst || null, swing: pv && pv.swing || null, every: HOLD_EVERY, stills: [], changes: [] };
+      (record.holds = record.holds || []).push(hold); mkdirSync(join(OUT, 'holds'), { recursive: true });
+      let prev = null;
+      for (let k = 0; k * HOLD_EVERY <= HOLD_FOR; k++) {
+        await sleep(k === 0 ? 1500 : HOLD_EVERY * 1000);
+        const sh = await page.send('Page.captureScreenshot', { format: 'jpeg', quality: 80, fromSurface: true });
+        const hf = `hold-${String(tick).padStart(6, '0')}-${String(k).padStart(2, '0')}.jpg`;
+        writeFileSync(join(OUT, 'holds', hf), Buffer.from(sh.data, 'base64')); hold.stills.push(hf);
+        try {
+          const sm = await page.send('Page.captureScreenshot', { format: 'png', fromSurface: true, clip: { x: 0, y: 0, width: W, height: H, scale: 0.25 } });
+          const png = decodePng(Buffer.from(sm.data, 'base64')); const lum = new Uint8Array(png.w * png.h);
+          for (let i = 0; i < lum.length; i++) { const p = i * 4; lum[i] = (png.data[p] * 3 + png.data[p + 1] * 6 + png.data[p + 2]) / 10; }
+          if (prev && prev.length === lum.length) { let s = 0; for (let i = 0; i < lum.length; i++) s += Math.abs(lum[i] - prev[i]); hold.changes.push(Math.round(s / lum.length * 100) / 100); }
+          prev = lum;
+        } catch (e) { hold.error = String(e.message || e).slice(0, 100); }
+      }
+      log(`hold at tick ${tick}: ${hold.stills.length} stills over ${HOLD_FOR} s, the change from still to still ${JSON.stringify(hold.changes)}`);
     }
     const swingsDone = record.swings.filter((s) => s.end !== null).length;
     if (doneAt < 0 && swingsDone >= NSWING && record.launches.length >= NLAUNCH) doneAt = tick;

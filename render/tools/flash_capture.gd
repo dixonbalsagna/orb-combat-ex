@@ -54,7 +54,7 @@ var _load_since: int = 0         # when the wait began (Time.get_ticks_msec)
 func _init(m: Node) -> void:
 	main = m
 	JavaScriptBridge.eval("""window.__flashcap = {
-		ready: false, tick: 0, scenario: '', error: '', in_window: 0, events: [], _req: null, _want: 0, _done: 0, _waiting: [],
+		ready: false, tick: 0, scenario: '', error: '', in_window: 0, events: [], pad: [], _req: null, _want: 0, _done: 0, _waiting: [],
 		start(scenario, opts) { this._req = { scenario: String(scenario), reduced: !!(opts && opts.reduced), seed: (opts && opts.seed) | 0, variant: (opts && opts.variant) | 0, skip: (opts && opts.skip) | 0, slots: (opts && Array.isArray(opts.slots)) ? opts.slots.map(String) : [] }; },
 		step() { return new Promise((res) => { this._waiting.push(res); this._want += 1; }); },
 		_shown(tick, inWindow) { this.tick = tick; this.in_window = inWindow; this._done += 1; const r = this._waiting.shift(); if (r) r(tick); }
@@ -235,6 +235,28 @@ func _log_events(host: SimHost) -> void:
 	if not _ev_buf.is_empty():
 		JavaScriptBridge.eval("window.__flashcap.events.push(...%s);" % JSON.stringify(_ev_buf), true)
 		_ev_buf.clear()
+	var pad: Array = _pad_rows(host)
+	if not pad.is_empty():
+		JavaScriptBridge.eval("(window.__flashcap.pad = window.__flashcap.pad || []).push(...%s);" % JSON.stringify(pad), true)
+
+
+## What each of the first two fighters was fed this tick, for the clip kit's button strip (tools/clips/make.mjs): [tick, slot, stick x * 100, stick y * 100, flags, rsDir, rsLevel, stanceMask] (the stance mask is the shoulders held: 1 LB, 2 RB, 4 RT, 8 LT).
+## flags bits: 0 light (X) 1 heavy (Y) 2 sig (B) 3 dodge 4 guardPress 5 lightHeld 6 heavyHeld 7 sigHeld 8 rsHeld 9 rsStart 10 guard 11 sprint 12 power 13 context (A) 14 contextHeld 15 special 16 powerPress 17 transform. Read only.
+const PAD_BITS: Array = ["light", "heavy", "sig", "dodge", "guardPress", "lightHeld", "heavyHeld", "sigHeld", "rsHeld", "rsStart", "guard", "sprint", "power", "context", "contextHeld", "special", "powerPress", "transform"]
+
+
+func _pad_rows(host: SimHost) -> Array:
+	var rows: Array = []
+	for slot in range(mini(2, host.S.fighters.size())):
+		var it = host.S.fighters[slot].input
+		if it == null:
+			continue
+		var fl: int = 0
+		for b in range(PAD_BITS.size()):
+			if it.get(PAD_BITS[b]):
+				fl |= 1 << b
+		rows.append([host.ticks, slot, int(round(float(it.get("mx")) * 100.0)), int(round(float(it.get("my")) * 100.0)), fl, int(it.get("rsDir")), int(it.get("rsLevel")), int(it.get("stanceMask"))])
+	return rows
 
 
 ## A switch of the page's own URL (`budget=1`, `hold=1`). main.parse_args() keeps only the keys of main.URL_ARGS, so the hook reads location.search itself.

@@ -63,7 +63,7 @@ check('--off surface turns the floor off with it, and says why', R('surface').ac
 check('--off interrupts turns the floor off with it', !R('interrupts').active.includes('floor') && R('interrupts').active.includes('surface'));
 check('--off gen2 turns nothing else off', R('gen2').cascaded.length === 0 && R('gen2').active.length === IDS.length - 1);
 check('swing (DirSwing) is a data flag of data/director/swing.json `enabled`, waits for the file and needs gen3; the top-level key is the one flipped, not the nested ones', (() => { const s = SWITCHES.find((x) => x.id === 'swing'); if (!s || s.file !== 'data/director/swing.json' || s.path.join() !== 'enabled' || !s.optional || s.needs.join() !== 'gen3') return false; const T = '{\n  "enabled": false,\n  "kinds": {\n    "launch": {\n      "enabled": true\n    }\n  },\n  "other": {\n    "enabled": false\n  }\n}\n'; const f = flip(T, s); return f.text === T.replace('"enabled": false,\n  "kinds"', '"enabled": true,\n  "kinds"'); })());
-check('--off with a comma list and --off all', R('water,biome').active.join() === 'gen2,surface,interrupts,floor,calmTurn,turn,rightStick,quickRead,hapticLadder,specialsOff,signatureRtOnly,hapticRefused,hapticIncoming,webRumble,gen3,blackbox,go,meteor,tiles,swing,everywhere,arc,ending,follow,lightStops,grapple,driver,driverOnRb,stances,phrases,craterlook,vsHuman,firstMeteor,beamFront,kick,mixed,struggle,soundTug,soundMoments,soundCarry' && R('all').active.length === 0);
+check('--off with a comma list and --off all', R('water,biome').active.join() === 'gen2,surface,interrupts,floor,calmTurn,turn,rightStick,quickRead,hapticLadder,specialsOff,signatureRtOnly,beamAim,hapticRefused,hapticIncoming,webRumble,settle,splitShare,chaseTap,chargeArmour,powerPace,waterWarm,chargeClose,pressWait,oneRuleB,beamAim2,nodeWarm,stickPend,joltYield,brawlShareCap,gen3,blackbox,go,meteor,tiles,swing,everywhere,arc,ending,follow,lightStops,grapple,driver,driverOnRb,beamMove,stallKeep,hapticImpact,dodgeHeld,hapticStages,refusedCue,strikeStages,beamMoveAi,pushMode,pushUi,pushUi2,airBrake,stances,phrases,craterlook,vsHuman,firstMeteor,beamFront,kick,mixed,struggle,soundTug,soundMoments,soundCarry' && R('all').active.length === 0);
 check('an unknown id is reported, not ignored', R('watr').unknown.join() === 'watr');
 
 // ---- error hints
@@ -168,7 +168,7 @@ try {
     work('docs/controls/pending/right-hand/right-hand-host.patch', hostText);
     const OV = ['data/input', 'sim/input', 'docs/controls/pending/right-hand'];
     const p1 = plan(repo, sha, { overlay: OV, pending: pend.rows });
-    check('with the work overlaid the switch is on, needs the host patch (main.gd has not got it) and brings its probe field', p1.active.includes('rightStick') && p1.hostPatch === hostText && p1.probes.length === 3 && /right_stick_on/.test(p1.probes[2]) && !p1.waiting.some((w) => w.id === 'rightStick'), JSON.stringify(p1));
+    check('with the work overlaid the switch is on, needs the host patch (main.gd has not got it) and brings its probe field', p1.active.includes('rightStick') && p1.hostPatch === hostText && p1.probes.length === 4 && /right_stick_on/.test(p1.probes[3]) && !p1.waiting.some((w) => w.id === 'rightStick'), JSON.stringify(p1));
     check('the overlay is read from the working tree and the commit is not: without it the same switch waits', !plan(repo, sha, { pending: pend.rows }).active.includes('rightStick'));
     work('data/input/timing.json', JSON.stringify({ switches: { rightStick: false } }, null, 2) + '\n');
     const noPatch = plan(repo, sha, { overlay: ['data/input', 'sim/input'], pending: pend.rows });
@@ -177,6 +177,14 @@ try {
     const landed = plan(repo, sha, { overlay: ['data/input', 'sim/input', 'render/core/main.gd'], pending: pend.rows });
     check('a main.gd that already reads the right stick needs no patch', landed.active.includes('rightStick') && landed.hostPatch === null);
     git(repo, 'checkout', 'render/core/main.gd');
+    // pushMode is on only with the host's line beside its data (Controls' host-push.patch): it can never turn on alone
+    work('data/director/interrupts.json', JSON.stringify({ beamStruggle: { enabled: false, pushMode: { enabled: false } } }, null, 2) + '\n');
+    const pm0 = plan(repo, sha, { overlay: ['data/director'], pending: pend.rows });
+    check('pushMode waits, and says why, while the host has no pushModeOf line', !pm0.active.includes('pushMode') && pm0.waiting.some((w) => w.id === 'pushMode' && /pushModeOf/.test(w.why)), JSON.stringify(pm0.waiting.filter((w) => /push/.test(w.id))));
+    work('render/core/sim_host.gd', 'func tick():\n\tvar stick = DirBeam.pushModeOf(S, f) == "stick"\n');
+    const pm1 = plan(repo, sha, { overlay: ['data/director', 'render/core/sim_host.gd'], pending: pend.rows });
+    check('with the host line in the tree pushMode is on, with struggle, and the two UI rows follow it only when the option is there to flip', pm1.active.includes('pushMode') && pm1.active.includes('struggle') && !pm1.active.includes('pushUi') && pm1.waiting.some((w) => w.id === 'pushUi'));
+    for (const f of ['data/director/interrupts.json', 'render/core/sim_host.gd']) { try { git(repo, 'checkout', '--', f); } catch { rmSync(join(repo, f), { force: true }); } }
     work('data/input/timing.json', JSON.stringify({ switches: { rightStick: 7 } }, null, 2) + '\n');
     const stale = plan(repo, sha, { overlay: ['data/input', 'sim/input', 'docs/controls/pending/right-hand'], pending: pend.rows });
     check('a key that holds neither the old nor the new value is stale: it waits and the problem is named', !stale.active.includes('rightStick') && stale.stale.some((s) => /switches\.rightStick is 7/.test(s)), JSON.stringify(stale.stale));
@@ -239,7 +247,7 @@ try {
     const t1 = plan(repo, sha, { overlay: ['render/core', 'sim/world'], pending: pend.rows });
     check('with both in the tree tiles is on and the word is carried on the address', t1.active.includes('tiles') && t1.urlWords.join() === 'tiles=1' && t1.setup.planetGen === 3, JSON.stringify(t1));
     check('--off tiles leaves no word', plan(repo, sha, { overlay: ['render/core', 'sim/world'], off: ['tiles'], pending: pend.rows }).urlWords.length === 0);
-    check('the scratch main.gd\'s URL list is edited at the START of the list, so the tile park\'s own words first do not break the anchor', (() => { const m = MAIN.replace('const URL_ARGS: Array = ["nointro", ', 'const URL_ARGS: Array = ["tiles", "tilerate", "nointro", '); return patchMain(m).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "tiles", "tilerate", "nointro", ') && patchMain(MAIN).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "nointro", '); })());
+    check('the scratch main.gd\'s URL list is edited at the START of the list, so the tile park\'s own words first do not break the anchor', (() => { const m = MAIN.replace('const URL_ARGS: Array = ["nointro", ', 'const URL_ARGS: Array = ["tiles", "tilerate", "nointro", '); return patchMain(m).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "splitshare", "power", "flatout", "circle", "nohud", "tiles", "tilerate", "nointro", ') && patchMain(MAIN).includes('const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "splitshare", "power", "flatout", "circle", "nohud", "nointro", '); })());
     const tb = await buildPreview({ ...opts, overlay: ['render/core', 'sim/world'], rebuild: true, pending: pend });
     check('a build with both overlaid reports the word and flips no file for it', tb.active.includes('tiles') && tb.urlWords.join() === 'tiles=1' && !tb.flips.some((x) => x.id === 'tiles'), JSON.stringify([tb.active, tb.urlWords]));
 

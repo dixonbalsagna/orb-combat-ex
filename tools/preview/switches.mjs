@@ -42,6 +42,9 @@ export const SWITCHES = [
   { id: 'signatureRtOnly', file: 'data/input/timing.json', path: ['switches', 'signatureRtOnly'], from: false, to: true, needs: ['rightStick'], optional: true,
     probe: '"signatureRtOnly": SimInputData.signature_rt_only()', probeIf: { file: 'sim/input/input_data.gd', text: 'func signature_rt_only' },
     what: 'the signature on RT + B only (Controls, round 4): B alone is the big blow, RT + B is the signature, and B with LB, RB or LT held is the heavy of that stance, so a guard or a dodge never fires a beam by accident. timing.json switches.signatureRtOnly. The pad sheet assumes it is on. Waits for docs/controls/pending/stick-feel (round 4)' },
+  { id: 'beamAim', file: 'data/input/timing.json', path: ['switches', 'beamAim'], from: false, to: true, needs: ['rightStick'], optional: true,
+    probe: '"beamAim": SimInputData.beam_aim_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func beam_aim_on' },
+    what: 'the beam aim (Controls, docs/controls/pending/beam-aim, docs/controls/beam-aim-feel.md): the throw carries the aim the stick held at the rim, the shown aim trails the thumb by 4 degrees and at rest the aim is 0, so a beam goes where the thumb threw it. timing.json switches.beamAim. Needs the right hand. Waits for the park' },
   { id: 'hapticRefused', file: 'data/input/timing.json', path: ['switches', 'hapticRefused'], from: false, to: true, needs: ['rightStick'], optional: true,
     probe: '"hapticRefused": SimInputData.haptic_refused_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func haptic_refused_on' },
     what: 'a stick press the game did not answer tells its pad (two dull knocks, 30 live ticks after the request; the audit\'s gap 2). Needs the right hand. timing.json switches.hapticRefused. Waits for docs/controls/pending/stick-feel (round 2)' },
@@ -51,6 +54,38 @@ export const SWITCHES = [
   { id: 'webRumble', file: 'data/input/timing.json', path: ['switches', 'webRumble'], from: false, to: true, needs: [], optional: true,
     probe: '"webRumble": bool(SimInputData.t(["switches", "webRumble"], false))', probeIf: { file: 'sim/input/input_data.gd', text: 'static func t(' },
     what: 'the pad rumble on the page (Controls, docs/controls/pending/stick-feel/web-rumble.patch): the page asks the vibrationActuator of the pad itself (dual-rumble; Chrome, Edge and Opera GX with an Xbox-type or DualSense pad), because the web runtime of Godot has no pad rumble. timing.json switches.webRumble. Waits for haptic-switches.patch and web-rumble.patch' },
+  { id: 'settle', file: 'data/biomes/contact.json', path: ['settle', 'enabled'], from: false, to: true, needs: [], optional: true,
+    probe: '"settle": int(WorldContact.K_MAXC)', probeIf: { file: 'sim/world/contact.gd', text: 'static var K_MAXC' },
+    what: 'a body on the ground digs or stops (Encounter, docs/director/pending/ground-settle): a launched body meets the ground at most 3 times, and 0, 0, 1, 1 bounces by tier, instead of tumbling off it up to 8. data/biomes/contact.json settle.enabled. The read-back is the contact limit (3 on, 8 off). Waits for the patch and its key' },
+  { id: 'splitShare', file: 'data/camera/swing.json', path: ['splitShare'], from: 0, to: 0.7, needs: [], optional: true,
+    probe: '"splitShare": (split_rig.split_share if split_rig != null else -1.0), "leadAhead": (split_rig.lead_ahead if split_rig != null else false)', probeIf: { file: 'data/camera/swing.json', text: 'splitShare' },
+    what: 'against a CPU the player pane takes 0.7 of the split (Camera swing-share, Orb first play asked for about 0.7), instead of 50/50; with tiles on. data/camera/swing.json splitShare. ?splitshare=0.5 on a local page sets it for a comparison. The probe also reads lead_ahead. Waits for swing-share.patch' },
+  { id: 'chaseTap', file: 'data/director/interrupts.json', path: ['chase', 'tap', 'enabled'], from: false, to: true, needs: [], optional: true,
+    probe: '"chaseTap": DirChaseTap.on()', probeIf: { file: 'sim/director/chase_tap.gd', text: 'static func on' },
+    what: 'the chase after a launch by a plain tap (Encounter, docs/director/pending/chase-tap; Orb: the follow-up floats): while the one you sent is in the air, press X, Y or B and you rush him; the blow lands as you catch him and sends him on. The price is free, 20, 30, 45 for X. data/director/interrupts.json chase.tap.enabled. Waits for the park' },
+  { id: 'chargeArmour', file: 'data/director/stick.json', path: ['armour', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
+    probe: '"chargeArmour": DirStick.armourOn()', probeIf: { file: 'sim/director/stick.gd', text: 'static func armourOn' },
+    what: 'a charged attack has the armour of B (Encounter, docs/director/pending/charge-armour; Orb: charged attacks should be much harder to interrupt, especially by light attacks): data/director/stick.json armour.enabled. Needs the right hand. Waits for the park' },
+  { id: 'powerPace', file: 'data/fight/ladder.json', path: ['chargePerSec'], from: 0.5, to: 2, needs: [], optional: true,
+    what: 'the power-up pace for the page (from the idle-match README of Encounter, until QA has read the tier pace): data/fight/ladder.json chargePerSec 0.5 to 2, so a fighter charges four times as fast. It moves the golden and every replay data hash: for the page only' },
+  { id: 'waterWarm', file: 'data/biomes/water.json', path: ['flowWarm', 'cols'], from: 0, to: 48, needs: [], optional: true, presentIf: { file: 'sim/world/water.gd', text: 'warmCols' },
+    what: 'a new flow window reads its span in chunks of 48 columns (World, docs/world/pending/water-window-warm): the first flow step comes 16 ticks later and no tick reads more than 48 columns of a window. data/biomes/water.json flowWarm.cols 0 to 48. IT MOVES EVERY HASH from the first water window: for the page only, and never for a replay proof against an older build (pass --off waterWarm there). Waits for the park' },
+  { id: 'chargeClose', file: 'data/director/interrupts.json', path: ['brawl', 'chargeClose', 'enabled'], from: false, to: true, needs: [], optional: true,
+    what: 'Encounters press-decides charge-close (docs/director/pending/charge-close; Game Design press-decides section 2): a B held and let go at a rival walking away. data/director/interrupts.json brawl.chargeClose.enabled. Waits for the park' },
+  { id: 'pressWait', file: 'data/director/interrupts.json', path: ['brawl', 'pressWait', 'enabled'], from: false, to: true, needs: [], optional: true,
+    what: 'Encounters press-decides press-wait (docs/director/pending/press-wait; Orbs second play: hard to charge an attack when every hit seems to interrupt). data/director/interrupts.json brawl.pressWait.enabled. Waits for the park' },
+  { id: 'oneRuleB', file: 'data/director/interrupts.json', path: ['brawl', 'oneRuleB', 'enabled'], from: false, to: true, needs: [], optional: true,
+    what: 'Encounters press-decides one rule for B (docs/director/pending/b-one-rule; replaces press-send). data/director/interrupts.json brawl.oneRuleB.enabled. Waits for the park' },
+  { id: 'beamAim2', file: 'data/director/interrupts.json', path: ['beamPlays', 'front', 'aim', 'enabled'], from: false, to: true, needs: ['beamFront'], optional: true,
+    what: 'Encounters beam aim cut (docs/director/pending/beam-aim): acts only with the beam fronts stationary, beside Controls beamAim. data/director/interrupts.json beamPlays.front.aim.enabled. Waits for the park' },
+  { id: 'nodeWarm', file: 'data/biomes/field.json', path: ['warm', 'radius'], from: 0, to: 10000, needs: [], optional: true, presentIf: { file: 'sim/world/field.gd', text: 'warmNear' },
+    what: 'the ground\'s nodes round the start are read at the match start (World, docs/world/pending/node-warm): data/biomes/field.json warm.radius 0 to 10,000; about 0.34 s more at match load on a native build (the web load time is in the smoke), the same state hash. Waits for the park' },
+  { id: 'stickPend', file: 'data/director/stick.json', path: ['pendFollow', 'enabled'], from: false, to: true, needs: [], optional: true,
+    what: 'a stick press waits with its request, up to 90 ticks, and is told at once when it is answered or refused (Encounter, docs/director/pending/stick-pend; Game Design stick-lands). data/director/stick.json pendFollow.enabled. The park\'s other switch, flickRun, stays OFF until Game Design sets its points (no row). Waits for the park' },
+  { id: 'joltYield', file: 'data/director/swing.json', path: ['jolt', 'yieldToLaunch'], from: false, to: true, needs: [], optional: true,
+    what: 'a jolt swing yields to a launch swing on the same tick (Encounter, docs/director/pending/swing-pair; QA kept-build row 4). data/director/swing.json jolt.yieldToLaunch. Waits for the park' },
+  { id: 'brawlShareCap', file: 'data/director/swing.json', path: ['brawl', 'shareCap', 'enabled'], from: false, to: true, needs: [], optional: true,
+    what: 'brawl swings are not offered while they would be over 0.4 of the match\'s big swings, once there have been 3 (Encounter, docs/director/pending/swing-pair). data/director/swing.json brawl.shareCap.enabled. Waits for the park' },
   { id: 'gen3', setup: { planetGen: 3 }, presentIf: { file: 'sim/world/field.gd' }, needs: [], optional: true,
     what: 'planet generation 3 (World\'s field world): the match\'s setup says planetGen 3 on a whole ring (no arena key), not a data flag. Waits until the tree has World\'s code (sim/world/field.gd)' },
   { id: 'blackbox', url: 'blackbox=1', presentIf: { file: 'sim/core/replay.gd' }, needs: [], optional: true,
@@ -92,6 +127,35 @@ export const SWITCHES = [
   { id: 'driverOnRb', file: 'data/input/timing.json', path: ['switches', 'driverOnRb'], from: false, to: true, needs: ['signatureRtOnly'], optional: true,
     probe: '"driverOnRb": SimInputData.driver_on_rb()', probeIf: { file: 'sim/input/input_data.gd', text: 'func driver_on_rb' },
     what: 'with signatureRtOnly, RB + B stays a B press for the Driver to read instead of being sent as Y\'s blast (Controls, signature-rt-only.patch). timing.json switches.driverOnRb. Waits for Controls\' stick-feel round 4' },
+  { id: 'beamMove', file: 'data/director/interrupts.json', path: ['beamPlays', 'front', 'ownMove', 'enabled'], from: false, to: true, needs: ['rightStick', 'beamFront'], optional: true,
+    what: 'the beam as its own move (Encounter, docs/director/pending/beam-move): beamPlays.front.ownMove.enabled. It needs the right stick, the beam front (beamFront: beamPlays.front.enabled) and the stationary front (front.stationary, on in the data). Waits for the park' },
+  { id: 'stallKeep', file: 'data/input/timing.json', path: ['switches', 'stallKeep'], from: false, to: true, needs: ['rightStick'], optional: true,
+    probe: '"stallKeep": SimInputData.stall_keep_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func stall_keep_on' },
+    what: 'no input lost in a stall (Controls, docs/controls/pending/impact-haptics, refusals): when the page hitches and several game steps read one pad snapshot, every button press and the stick\'s furthest point since the last step are kept. timing.json switches.stallKeep. Waits for the park' },
+  { id: 'hapticImpact', file: 'data/input/timing.json', path: ['switches', 'hapticImpact'], from: false, to: true, needs: ['rightStick'], optional: true,
+    probe: '"hapticImpact": SimInputData.haptic_impact_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func haptic_impact_on' },
+    what: 'the impact rumble (Controls, docs/controls/impact-haptics.md): landed blows, closes, launches and landings, building breaks on the pad (Orb\'s 2026-10-05 picks). timing.json switches.hapticImpact. Waits for the park' },
+  { id: 'dodgeHeld', file: 'data/input/timing.json', path: ['switches', 'dodgeHeld'], from: false, to: true, needs: ['rightStick'], optional: true,
+    probe: '"dodgeHeld": SimInputData.dodge_held_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func dodge_held_on' },
+    what: 'LT held in the intent\'s second word (Controls, docs/controls/dodge-held.md): the flight strike\'s take-back reads whether LT is still down at the face press. timing.json switches.dodgeHeld. Waits for the park and for Encounter to read it' },
+  { id: 'hapticStages', file: 'data/input/timing.json', path: ['switches', 'hapticStages'], from: false, to: true, needs: ['beamMove', 'hapticLadder'], optional: true,
+    probe: '"hapticStages": SimInputData.haptic_stages_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func haptic_stages_on' },
+    what: 'the stages of a charge on the pad (Controls, docs/controls/pending/stage-pulses): a pulse for each stick_stage cue of Encounter. timing.json switches.hapticStages. Needs beamMove, and the hapticLadder row too (SimInputData.haptic_stages_on() is the ladder AND the flag). With beamMove off a hold is silent. Waits for the park' },
+  { id: 'refusedCue', file: 'data/director/interrupts.json', path: ['press', 'refusedCue'], from: false, to: true, needs: [], optional: true,
+    what: 'every refused press says so with a cue (Encounter, the morning fixes, batch 3): the press refused word at the edge and the knock on the pad, so a press never vanishes in silence. interrupts.json press.refusedCue. Waits for the park' },
+  { id: 'strikeStages', file: 'data/director/stick.json', path: ['strikeStages', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
+    what: 'strike charge stages by power (Encounter, docs/director/pending/strike-stages; beams-own-move-plan step 2): 2 to 6 stages, a held charge that never fires by itself. data/director/stick.json strikeStages.enabled. Waits for the park' },
+  { id: 'beamMoveAi', file: 'data/director/interrupts.json', path: ['beamPlays', 'front', 'ownMove', 'ai'], from: false, to: true, needs: ['beamMove'], optional: true,
+    what: 'the computer fires its beam through the same own move (Encounter, docs/director/pending/beam-ai). beamPlays.front.ownMove.ai. Needs beamMove. Waits for the park' },
+  { id: 'pushMode', file: 'data/director/interrupts.json', path: ['beamStruggle', 'pushMode', 'enabled'], from: false, to: true, needs: ['struggle'], optional: true,
+    alsoIn: { file: 'render/core/sim_host.gd', text: 'pushModeOf', why: 'the host line of Controls (docs/controls/pending/push-stick/host-push.patch): with pushMode on and no stick passed through, nothing pushes in a struggle' },
+    what: 'what pushes in a beam struggle, chosen per player (Encounter, docs/director/pending/push-mode; Game Design: rhythm on the right stick by default, or on the face buttons). beamStruggle.pushMode.enabled; the choice rides in the match setup per slot. Waits for the park and Simulation\'s grant' },
+  { id: 'pushUi', file: 'ui/data/options.json', path: ['options', 'struggle_push', 'default'], from: 'face', to: 'stick', needs: ['pushMode'], optional: true,
+    what: 'the beam struggle push option of player 1 defaults to the right stick only when pushMode is on (UI, ui/data/options.json options.struggle_push.default; the shipped default is face, so a struggle panel never teaches a push the sim does not read). The row is on with pushMode and off without it' },
+  { id: 'pushUi2', file: 'ui/data/options.json', path: ['options', 'struggle_push_p2', 'default'], from: 'face', to: 'stick', needs: ['pushMode'], optional: true,
+    what: 'the same for player 2 (options.struggle_push_p2.default)' },
+  { id: 'airBrake', file: 'data/fight/brake.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
+    what: 'the air brake (Game Design, buildings.md 7.2; sim/core/brake.gd): hold LT to brake while knocked back in the air. data/fight/brake.json enabled; SimCore.newMatch copies it into the match, and the file joins a replay\'s data hash only when on. After Simulation\'s determinism and rollback checks' },
   { id: 'stances', file: 'data/director/interrupts.json', path: ['stances', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
     probe: '"stances": DirStance.on()', probeIf: { file: 'sim/director/stance.gd', text: 'static func on' },
     what: 'LB and LT on a blow (Encounter, docs/director/pending/stances; pad-first-press.md): the check, the push and the rest differ. data/director/interrupts.json stances.enabled. Needs the stick. Waits for the stances park' },
@@ -220,7 +284,8 @@ export function flip(text, sw) {
   if (!loc) throw new Error(`${sw.file}: no key ${sw.path.join('.')} (the switch table in tools/preview/switches.mjs is out of date)`);
   const was = text.slice(loc.start, loc.end);
   const from = JSON.stringify(sw.from), to = JSON.stringify(sw.to);
-  if (was !== from && was !== to) throw new Error(`${sw.file}: ${sw.path.join('.')} is ${was}, not ${from} or ${to} (the switch table in tools/preview/switches.mjs is out of date)`);
+  const sameNum = typeof sw.from === "number" && (Number(was) === sw.from || Number(was) === sw.to);   // 0.0 in the file is the number 0
+  if (was !== from && was !== to && !sameNum) throw new Error(`${sw.file}: ${sw.path.join('.')} is ${was}, not ${from} or ${to} (the switch table in tools/preview/switches.mjs is out of date)`);
   const out = text.slice(0, loc.start) + to + text.slice(loc.end);
   let v = JSON.parse(out.charCodeAt(0) === 0xfeff ? out.slice(1) : out);
   for (const k of sw.path) v = v == null ? undefined : v[k];
@@ -318,8 +383,16 @@ export const PLANET_FUNC = [
   '\t\t_pv_ae_voices["nodes"] = ps.size()',
   '\t\t_pv_ae_voices["withStream"] = withs',
   '\t\t_pv_ae_voices["playingMax"] = maxi(int(_pv_ae_voices["playingMax"]), playing)',
+  '\tif _pv_ae_frames % 60 == 0 and OS.has_feature("web") and audio != null and audio.has_method("status_line"):',
+  '\t\tJavaScriptBridge.eval("window.__audstatus && window.__audstatus(%s)" % JSON.stringify(audio.status_line()), true)',
   '\tif _pv_ae_frames % 30 == 0 and OS.has_feature("web"):',
   '\t\tJavaScriptBridge.eval("window.__audeng && window.__audeng(%s)" % JSON.stringify({"frames": _pv_ae_frames, "maxDb": {"master": snappedf(float(_pv_ae_max[0]), 0.1), "sfx": snappedf(float(_pv_ae_max[1]), 0.1), "voice": snappedf(float(_pv_ae_max[2]), 0.1)}, "voices": _pv_ae_voices, "framesAbove60": {"master": _pv_ae_loud[0], "sfx": _pv_ae_loud[1], "voice": _pv_ae_loud[2]}}), true)',
+  '',
+  '',
+  '## Scratch (tools/preview): ?splitshare=N: the split share for a comparison (Camera swing-share, 0.5 to 1), set each frame on the split rig when the park is in the tree.',
+  'func _pv_split_share() -> void:',
+  '\tif split_rig != null and split_rig.get("split_share") != null:',
+  '\t\tsplit_rig.split_share = float(str(args["splitshare"]))',
   '',
   '',
   '## Scratch (tools/preview): ?script=1 on a LOCAL page: the capture driver\'s script (window.__script: { scene: { distanceUnits }, events: [[tick, op, a, b], ...] }) is fed to a scripted pad before each tick it is due. Ops: b (a button by name, a bool), t (a trigger, 0 to 1), rs and ls (a stick, x and y). Player 1 is pad 0; player 2 is pad 1 and plays nothing. Publishes window.__ps = { t, hold, hp } each frame.',
@@ -602,6 +675,14 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
     '\t\thost.hub.pad_stick_right(0, clampf(out6.x + _pv_drift.x, -1.0, 1.0), clampf(out6.y + _pv_drift.y, -1.0, 1.0))',
     '\tif str(args["sticks"]) == "9":   # ?sticks=9: player 1 is a pad that never presses anything (the black box KO check: the computer finishes him)',
     '\t\treturn',
+    '\tif str(args["sticks"]) == "10":   # ?sticks=10: player 1 holds RB and flicks the right stick for 3 ticks at phase 100 of every 600 (the quick beam of the stick, the line Hold for a beam), and presses nothing else; the computer plays',
+    '\t\tvar p10: int = host.ticks % 600',
+    '\t\thost.hub.pad_button(0, "rb", p10 >= 96 and p10 < 112)',
+    '\t\tif p10 >= 100 and p10 < 103:',
+    '\t\t\thost.hub.pad_stick_right(0, 1.0, 0.0)',
+    '\t\telse:',
+    '\t\t\thost.hub.pad_stick_right(0, 0.0, 0.0)',
+    '\t\treturn',
     '\tvar t: int = host.ticks',
     '\tvar ph: int = t % 240',
     '\tvar dirs: Array = [Vector2(1.0, 0.0), Vector2(0.0, 1.0), Vector2(-1.0, 0.0), Vector2(0.0, -1.0)]',
@@ -749,6 +830,31 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
     '\tif args.has("peak") and str(args["peak"]) != "0" and str(args["peak"]) != "off":',
     '\t\td["startTier"] = 4',
   ];
+  const powerLines = [
+    '\t# ?power=1: one energy model on for this match (Simulation\'s setup key "power": true; data/fight/power.json stays off); ?flatout=N or the page\'s slider (window.__flatout) tries another base for flat-out flight, 3,500 to 7,000',
+    '\tif args.has("power") and str(args["power"]) != "0" and str(args["power"]) != "off":',
+    '\t\td["power"] = true',
+    '\t\tvar fo: float = 0.0',
+    '\t\tif OS.has_feature("web"):',
+    '\t\t\tfo = float(JavaScriptBridge.eval("window.__flatout || 0", true))',
+    '\t\tif fo <= 0.0 and args.has("flatout"):',
+    '\t\t\tfo = float(str(args["flatout"]))',
+    '\t\tif fo > 0.0:',
+    '\t\t\td["flatOut"] = clampf(fo, 3500.0, 7000.0)',
+  ];
+  const circleLines = [
+    '## Scratch (tools/preview): ?circle=1 turns the stance circle (LT + Y in reach; Encounter, docs/director/pending/stance-circle) on for the match: data stances.circle.enabled, off as shipped. Local pages only.',
+    'func _preview_circle() -> void:',
+    '	if not args.has("circle") or str(args["circle"]) == "0" or str(args["circle"]) == "off":',
+    '		return',
+    "\tif OS.has_feature(\"web\") and not bool(JavaScriptBridge.eval(\"location.hostname === '127.0.0.1' || location.hostname === 'localhost'\", true)):",
+    '		return',
+    '	var c: Dictionary = DirStance.cfg()',
+    '	if c.has("circle") and c["circle"] is Dictionary:',
+    '		c["circle"]["enabled"] = true',
+    '',
+    '',
+  ];
   const hitstopLines = [
     '\t# hit-stop by weight (data/fight/hitstop.json: a light 3 ticks, a medium 5, a heavy 8, a launch 12; off as shipped), for a match: ?hitstop=1, ?hitstop=off',
     '\tif args.has("hitstop"):',
@@ -761,6 +867,7 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
     ...(opts.kickWord ? kickLines : []),
     ...(opts.tierWord ? tierLines : []),
     ...(opts.hitstopWord ? hitstopLines : []),
+    ...(opts.powerWord ? powerLines : []),
     '\treturn d',
     '',
     '',
@@ -782,7 +889,12 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
     if (!out.includes(head)) throw new Error('tools/preview/switches.mjs: the planet entry moved (planetFunc is out of date)');
     out = out.replace(head, () => swingsOff + head + '\t_preview_swings_off()\n');
   }
-  if (opts.kickWord || opts.tierWord || opts.hitstopWord) {
+  if (opts.circleWord) {
+    const head = 'func _preview_planet() -> Dictionary:\n';
+    if (!out.includes(head)) throw new Error('tools/preview/switches.mjs: the planet entry moved (planetFunc is out of date)');
+    out = out.replace(head, () => circleLines.join('\n') + head + '\t_preview_circle()\n');
+  }
+  if (opts.kickWord || opts.tierWord || opts.hitstopWord || opts.powerWord) {
     const head = 'func _preview_planet() -> Dictionary:\n';
     if (!out.includes(head)) throw new Error('tools/preview/switches.mjs: the planet entry moved (planetFunc is out of date)');
     out = out.replace(head, () => kickWord + 'func _preview_planet_base() -> Dictionary:\n');
@@ -800,9 +912,9 @@ const EDITS = [
   { name: 'the match setup\'s planet part (no-intro and hook starts)', from: '\t\treturn _planet_next.duplicate()\n', to: '\t\treturn _preview_planet()\n' },
   { name: 'the match setup\'s planet part (the intro start)', from: '\tsu.merge(_planet_next)\n', to: '\tsu.merge(_preview_planet())\n' },
   { name: 'the menu start without intros', from: '\t\tvar su: Dictionary = _planet_next.duplicate()\n', to: '\t\tvar su: Dictionary = _preview_planet()\n' },
-  { name: 'the options the URL may set', from: 'const URL_ARGS: Array = [', to: 'const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", ' },
+  { name: 'the options the URL may set', from: 'const URL_ARGS: Array = [', to: 'const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "splitshare", "power", "flatout", "circle", "nohud", ' },
   { name: 'the menu choices before the HUD loads them', from: '\tui_hud.menu_changed.connect(_on_menu_changed)\n', to: '\t_preview_go()\n\tui_hud.menu_changed.connect(_on_menu_changed)\n' },
-  { name: 'the per-frame hook', from: '\tvar n: int = host.advance(delta, vp.x, vp.y)\n', to: '\tif args.has("audiolog"):\n\t\t_pv_aud_tick()   # the engine\'s own mixer, read only\n\tif args.has("replay"):\n\t\t_preview_replay()   # a saved black box match played again\n\tif args.has("script"):\n\t\t_preview_script()   # the scripted pad: its events for the coming tick are set before it runs\n\tvar n: int = host.advance(delta, vp.x, vp.y)\n\tif args.has("preview"):\n\t\t_preview_probe()\n' },
+  { name: 'the per-frame hook', from: '\tvar n: int = host.advance(delta, vp.x, vp.y)\n', to: '\tif args.has("splitshare"):\n\t\t_pv_split_share()\n\tif args.has("audiolog"):\n\t\t_pv_aud_tick()   # the engine\'s own mixer, read only\n\tif args.has("replay"):\n\t\t_preview_replay()   # a saved black box match played again\n\tif args.has("script"):\n\t\t_preview_script()   # the scripted pad: its events for the coming tick are set before it runs\n\tvar n: int = host.advance(delta, vp.x, vp.y)\n\tif args.has("preview"):\n\t\t_preview_probe()\n' },
 ];
 
 /** A short fingerprint of the scratch patch and the switch table: a cached build is reused only for the same patch. */

@@ -15,6 +15,9 @@ import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { Cdp, launchBrowser, serve, browserExe } from '../machine/browser.mjs';
+import { createRequire } from 'node:module';
+import { analyseGif } from '../flash/analyse-gif.mjs';
+const FLASH_V = createRequire(import.meta.url)('../flash/verdict.js');
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..', '..');
@@ -43,25 +46,84 @@ export function resolveBuild(want, buildsDir = join(ROOT, 'homework', 'Files', '
 
 function pythonCmd() {
   for (const c of [['python'], ['python3'], ['py', '-3']]) {
-    const r = spawnSync(c[0], [...c.slice(1), '--version'], { encoding: 'utf8' });
+    const r = spawnSync(c[0], [...c.slice(1), '--version'], { encoding: 'utf8', timeout: 30000 });
     if (r.status === 0) return c;
   }
   throw new Error('no python on this PC (Pillow is the clip encoder): install nothing, ask Tools');
 }
 
-function encode(framesDir, out, r, format) {
+function encode(framesDir, out, r, format) {   // r.stripFile: the button strip's states (writeStrip), drawn under the picture by encode.py
   const py = pythonCmd();
   const args = [...py.slice(1), join(HERE, 'encode.py'), '--in', framesDir, '--out', out, '--format', format === 'webm' ? 'frames' : format, '--width', String(r.width), '--fps', String(r.fps), '--maxkb', String(r.maxkb), '--blur', String(r.blur || 0), '--tol', String(r.tol || 0)];
   if (r.crop && r.crop.join() !== '0,0,0,0') args.push('--crop', r.crop.join(','));
-  const p = spawnSync(py[0], args, { encoding: 'utf8' });
+  if (r.stripFile) args.push('--strip', r.stripFile);
+  let p = spawnSync(py[0], args, { encoding: 'utf8', timeout: 240000 });
+  if (p.error) p = spawnSync(py[0], args, { encoding: 'utf8', timeout: 240000 });   // a child that did not answer in four minutes is asked once more
   if (p.status !== 0) throw new Error(`encode.py failed: ${(p.stdout || '') + (p.stderr || '')}`.slice(0, 400));
   return JSON.parse(p.stdout.trim().split('\n').pop());
 }
 
+// ---------------------------------------------------------------- the button strip
+// The hook logs what each of the first two fighters was fed every tick: [tick, slot, stick x * 100, stick y * 100, flags, rsDir, rsLevel, stanceMask] (render/tools/flash_capture.gd _pad_rows). The strip turns that into one state per picture:
+// which controls are lit (down at the picture, or pressed since the last one) and a word for each: tap, hold (12 ticks or more) or mash (three presses in 30 ticks). It is drawn by encode.py in a band under the picture, never over it.
+const PAD_BIT = { light: 0, heavy: 1, sig: 2, dodge: 3, guardPress: 4, lightHeld: 5, heavyHeld: 6, sigHeld: 7, rsHeld: 8, rsStart: 9, guard: 10, sprint: 11, power: 12, context: 13, contextHeld: 14, special: 15, powerPress: 16, transform: 17 };
+const pbit = (r, n) => ((r[4] >> PAD_BIT[n]) & 1) === 1;
+const MASK = (r, m) => (r[7] & m) !== 0;
+export const PAD_CONTROLS = {
+  X: { down: (r) => pbit(r, 'lightHeld') || pbit(r, 'light'), edge: (r) => pbit(r, 'light') },
+  Y: { down: (r) => pbit(r, 'heavyHeld') || pbit(r, 'heavy'), edge: (r) => pbit(r, 'heavy') },
+  B: { down: (r) => pbit(r, 'sigHeld') || pbit(r, 'sig'), edge: (r) => pbit(r, 'sig') },
+  A: { down: (r) => pbit(r, 'contextHeld') || pbit(r, 'context'), edge: (r) => pbit(r, 'context') },
+  LT: { down: (r) => MASK(r, 8) || pbit(r, 'sprint'), edge: (r) => pbit(r, 'dodge') },
+  LB: { down: (r) => MASK(r, 1) || pbit(r, 'guard'), edge: (r) => pbit(r, 'guardPress') },
+  RB: { down: (r) => MASK(r, 2), edge: () => false },
+  RT: { down: (r) => MASK(r, 4) || pbit(r, 'power'), edge: (r) => pbit(r, 'powerPress') },
+  RS: { down: (r) => pbit(r, 'rsHeld'), edge: (r) => pbit(r, 'rsStart') },
+};
+
+/** One strip state per tick of `ticks` for the pad of `slot`, from the logged rows. */
+export function stripStates(rows, ticks, slot, step) {
+  const by = new Map();
+  for (const r of rows || []) if (r[1] === slot) by.set(r[0], r);
+  const upTo = (c, t) => { const r = by.get(t); return r ? c.down(r) : false; };
+  const edgeAt = (c, t) => { const r = by.get(t); return !!r && (c.edge(r) || (c.down(r) && !upTo(c, t - 1))); };
+  const word = (c, t) => {
+    let lit = false;
+    for (let u = t - step + 1; u <= t; u++) if (upTo(c, u) || edgeAt(c, u)) { lit = true; break; }
+    if (!lit) return null;
+    let presses = 0; for (let u = t - 29; u <= t; u++) if (edgeAt(c, u)) presses++;
+    let hold = 0; for (let u = t; upTo(c, u); u--) hold++;
+    return presses >= 3 ? 'mash' : hold >= 12 ? 'hold' : 'tap';
+  };
+  return ticks.map((t) => {
+    const st = {}, r = by.get(t);
+    st.LS = r ? [r[2] / 100, r[3] / 100] : [0, 0];
+    for (const k of Object.keys(PAD_CONTROLS)) st[k] = word(PAD_CONTROLS[k], t);
+    let dir = 0, level = 0;
+    for (let u = t - step + 1; u <= t; u++) { const q = by.get(u); if (q) { if (q[5]) dir = q[5]; level = Math.max(level, q[6] || 0); } }
+    st.RS = { dir, level, g: st.RS };
+    return st;
+  });
+}
+
+/** Writes <dir>/strip.json (one state per picture in the folder, in file order) and returns its path; null when the hook logged no pad rows (an older build). */
+export function writeStrip(dir, rows, slot, step) {
+  if (!rows || !rows.length) return null;
+  const ticks = readdirSync(dir).filter((n) => /^t-\d+\.jpg$/.test(n)).sort().map((n) => Number(/^t-(\d+)/.exec(n)[1]));
+  const file = join(dir, 'strip.json');
+  writeFileSync(file, JSON.stringify({ frames: stripStates(rows, ticks, slot, step) }));
+  return file;
+}
+
+const trace = (m) => { if (process.env.CLIPS_TRACE) console.error(`[trace ${new Date().toISOString().slice(11, 19)}] ${m}`); };
+
+/** The flash check of a GIF, run in this process: a child `node tools/flash/analyse-gif.mjs` hung for good about three calls in four on this machine (2026-11-07: it is stuck before it runs anything, with half a second of CPU and no way to attach to it), and a hung child holds a synchronous call for ever. */
 function flashVerdict(gif) {
-  const p = spawnSync(process.execPath, [join(ROOT, 'tools', 'flash', 'analyse-gif.mjs'), gif], { encoding: 'utf8' });
-  const m = /\b(PASS|OVER GATE|FAIL)\b/.exec(p.stdout || '');
-  return m ? m[1] : (p.status === 0 ? 'PASS' : 'CHECK');
+  try {
+    const a = analyseGif(gif);
+    const m = /(PASS|OVER GATE|FAIL)/.exec(FLASH_V.columns(a.result));
+    return m ? m[1] : (a.result.pass ? 'PASS' : 'FAIL');
+  } catch { return 'CHECK'; }
 }
 
 /** Which of the hook's logged events [tick, type, kind, x] is the recipe's event: an alias of clips.json or `type` or `type:kind`. */
@@ -73,15 +135,17 @@ export function eventMatcher(name, aliases) {
 /** One scene run on an open hook page: steps the match tick by tick, takes pictures where the requests ask, returns when every request is done. A request: { name, dir, from, frames, step } or { name, dir, event: { name, nth, before, after }, step }. */
 async function runScene(page, { scene, seed, W, H, requests, aliases, maxTicks, onStep }) {
   await page.eval(`window.__flashcap.start(${JSON.stringify(scene)}, { reduced: false, seed: ${Number(seed)} })`, true);
-  const seen = [];   // every logged event, [tick, type, kind, x]
+  const seen = [];   // every logged event, [tick, type, kind, x]; seen.pad: the pad rows of the button strip
+  const padRows = []; seen.pad = padRows;
   for (const q of requests) { mkdirSync(q.dir, { recursive: true }); q.done = false; q.taken = []; q.hits = 0; q.te = -1; if (q.event) q.match = eventMatcher(q.event.name, aliases); else q.last = q.from + (q.frames - 1) * q.step; }
   let first = true;
   for (let i = 1; i <= maxTicks; i++) {
-    const got = await page.eval('window.__flashcap.step().then((t) => ({ tick: t, ev: (window.__flashcap.events || []).splice(0), noev: !window.__flashcap.events, err: window.__flashcap.error || null }))', true);
+    const got = await page.eval('window.__flashcap.step().then((t) => ({ tick: t, ev: (window.__flashcap.events || []).splice(0), pad: (window.__flashcap.pad || []).splice(0), noev: !window.__flashcap.events, err: window.__flashcap.error || null }))', true);
     if (first && got.noev && requests.some((q) => q.event)) throw new Error("this build's hook does not log the sim's events (an older hook: an event window needs a build made after 2026-11-06); use a tick window (from, frames) instead");
     if (first) { first = false; if (got.err && /no scenario/.test(got.err)) throw new Error(`this build's hook has no scene "${scene}" (${got.err.slice(0, 80)})`); }
     else if (got.err && !/no scenario/.test(got.err)) throw new Error(`the page reported an error: ${got.err}`);
     const t = got.tick;
+    for (const r of got.pad || []) padRows.push(r);
     for (const e of got.ev || []) { seen.push(e); for (const q of requests) if (q.event && !q.done && q.te < 0 && q.match(e) && ++q.hits === (q.event.nth || 1)) q.te = e[0]; }
     let need = false;
     for (const q of requests) {
@@ -120,7 +184,7 @@ async function openPage(web, words, W, H, limitS, extra = {}) {
   const server = await serve(resolve(web));
   const exe = browserExe('chrome');
   if (!exe) throw new Error('no Chrome found for the guarded launcher');
-  const browser = await launchBrowser({ exe, flags: [`--window-size=${W},${H}`], session: process.env.MERIDIAN_SESSION || 'tools-pipeline', purpose: 'clip kit', timeoutS: limitS, cpuPercent: 25, log });
+  const browser = await launchBrowser({ exe, flags: [`--window-size=${W},${H}`, '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows', '--disable-features=CalculateNativeWinOcclusion'], session: process.env.MERIDIAN_SESSION || 'tools-pipeline', purpose: 'clip kit', timeoutS: limitS, cpuPercent: 25, log });
   const page = await Cdp.open(browser.target.webSocketDebuggerUrl);
   await page.send('Page.enable'); await page.send('Runtime.enable');
   await page.send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false });
@@ -161,8 +225,9 @@ function indexLine(outDir, name, info, r, extra = '') {
 /** make.mjs's work, callable by the self-test. opts: { names, build, format, out, limit, keepFrames, dry } */
 export async function make(opts) {
   const R = loadRecipes();
-  const names = opts.names.includes('all') ? Object.keys(R.clips).filter((n) => n !== 'selftest' && !R.clips[n].event) : opts.names;
+  const names = opts.names.includes('all') ? Object.keys(R.clips).filter((n) => n !== 'selftest' && !R.clips[n].event && !R.clips[n].pending) : opts.names;
   for (const n of names) if (!R.clips[n]) throw new Error(`no recipe "${n}" in tools/clips/clips.json (node tools/clips/make.mjs --list)`);
+  for (const n of names) if (R.clips[n].pending) throw new Error(`the slot "${n}" is not filled yet: ${R.clips[n].pending === true ? R.clips[n].needs || 'the move has not landed' : R.clips[n].pending} (when the move lands, give it a scene and words and remove pending)`);
   const b = resolveBuild(opts.build);
   const outDir = resolve(opts.out || join(ROOT, 'homework', 'Files', 'clips', b.name));
   log(`build ${b.name}; clips to ${outDir}`);
@@ -198,14 +263,15 @@ export async function make(opts) {
           const r = R.clips[n], fr = join(work, n);
           const req = { name: n, dir: fr, from: r.from, frames: r.frames, step: r.step, event: r.event ? { ...r.event, nth: r.event.nth || 1 } : null };
           try {
-            await runScene(op.page, { scene: r.scene, seed: r.seed, W, H, requests: [req], aliases: R.events, maxTicks: r.maxTicks || 4000 });
+            const seen = await runScene(op.page, { scene: r.scene, seed: r.seed, W, H, requests: [req], aliases: R.events, maxTicks: r.maxTicks || 4000 });
             if (req.error) throw new Error(req.error);
+            if (opts.strip !== false && r.strip !== false) r.stripFile = writeStrip(fr, seen.pad, r.stripSlot || 0, r.step);
             r.from = req.from; r.upto = req.event ? req.upto : req.last;
             const format = opts.format || r.format;
             const file = join(outDir, format === 'gif' ? `${n}.gif` : n);
             let info;
             if (format === 'webm') { const prep = join(work, n + '-prep'); encode(fr, prep, r, 'webm'); webmJobs.push({ n, r, prep }); continue; }   // the recorder page replaces the hook page: all WebM jobs run after the last scene of the group
-            info = encode(fr, file, r, format); info.file = file; if (format === 'gif') info.flash = flashVerdict(file);
+            info = encode(fr, file, r, format); info.file = file; info.strip = !!r.stripFile; if (format === 'gif') info.flash = flashVerdict(file);
             indexLine(outDir, n, info, r, info.flash ? ` | flash ${info.flash}` : ''); results.push({ name: n, ...info });
           } catch (e) { log(`${n}: FAILED ${e.message}`); results.push({ name: n, error: e.message }); appendFileSync(join(outDir, 'index.txt'), `${n} | FAILED | ${e.message}\n`); }
         }
@@ -214,8 +280,10 @@ export async function make(opts) {
           catch (e) { log(`${j.n}: FAILED ${e.message}`); results.push({ name: j.n, error: e.message }); appendFileSync(join(outDir, 'index.txt'), `${j.n} | FAILED | ${e.message}
 `); }
         }
+        trace('closing the page');
         try { op.page.close(); } catch { /* gone */ }
         try { await op.browser.close(); } catch { /* gone */ }
+        trace('browser closed');
         op.server.close();
         lastPage = null;
       }
@@ -223,7 +291,9 @@ export async function make(opts) {
       if (lastPage) { try { lastPage.page.close(); } catch { /* gone */ } try { await lastPage.browser.close(); } catch { /* gone */ } lastPage.server.close(); }
     }
   }
+  trace('removing the work folder');
   if (!opts.keepFrames) rmSync(work, { recursive: true, force: true });
+  trace('done');
   return results;
 }
 
@@ -253,9 +323,11 @@ export async function fromMatch(opts) {
   const words = String(doc.pageSearch || '').replace(/^\?/, '').split('&').filter((w) => w && !/^(go|blackbox|script|replay|flashcap|preview|reel|sticks|peak|tier)=/.test(w)).concat(['nohud=1']).join('&');
   const op = await openPage(build.web, words, W, H, opts.limit || 3600, { replay: true, script: `window.__replay = ${JSON.stringify(JSON.stringify(rp))};` });
   const results = [];
+  const padCount = {}; for (const i of rp.inputs || []) padCount[i[1]] = (padCount[i[1]] || 0) + 1;
+  const padSlot = Number(Object.entries(padCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 0);   // the pad is the slot with most recorded inputs
   try {
     const maxT = Math.min(Number(rp.ticks) || 20000, Math.max(...requests.map((q) => q.last)));
-    await runScene(op.page, { scene: 'ai', seed: Number(rp.seed), W, H, requests, aliases: R.events, maxTicks: maxT, onStep: (t) => { if (t % 1200 === 0) log(`replay tick ${t} of ${maxT}`); } });
+    const seen = await runScene(op.page, { scene: 'ai', seed: Number(rp.seed), W, H, requests, aliases: R.events, maxTicks: maxT, onStep: (t) => { if (t % 1200 === 0) log(`replay tick ${t} of ${maxT}`); } });
     const cp = JSON.parse(await op.page.eval('JSON.stringify(window.__pr_cp || [])') || '[]'), want = new Map((rp.checkpoints || []).map((c) => [Number(c[0]), String(c[1])]));
     let bad = -1, compared = 0; for (const [t, h] of cp) { if (!want.has(t)) continue; compared++; if (want.get(t) !== h && bad < 0) bad = t; }
     log(compared ? (bad < 0 ? `the replay is the match that was played (${compared} checkpoints equal)` : `THE REPLAY DIFFERS from tick ${bad}: the build is not the one the match was played on`) : 'no checkpoint to compare');
@@ -263,6 +335,7 @@ export async function fromMatch(opts) {
     for (const q of requests) {
       if (q.error) { results.push({ name: q.name, error: q.error }); appendFileSync(join(outDir, 'index.txt'), `${q.name} | FAILED | ${q.error}\n`); continue; }
       const r = { ...R.defaults, fps: 12, step: q.step, width: 480, maxkb: 560, scene: 'match', seed: rp.seed, from: q.from, upto: q.last };
+      if (opts.strip !== false) r.stripFile = writeStrip(q.dir, seen.pad, padSlot, q.step);
       if (q.fmt === 'webm') {
         const rr = { ...r, fps: Math.round(60 / q.step) }, prep = join(work, q.name + '-prep'); encode(q.dir, prep, rr, 'webm'); webmJobs.push({ name: q.name, rr, prep });
       } else {
@@ -278,11 +351,11 @@ export async function fromMatch(opts) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const argv = process.argv.slice(2);
   const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
-  const flags = new Set(['--keep-frames', '--dry', '--list']);
+  const flags = new Set(['--keep-frames', '--dry', '--list', '--no-strip']);
   const names = []; for (let i = 0; i < argv.length; i++) { if (argv[i].startsWith('--')) { if (!flags.has(argv[i])) i++; } else names.push(argv[i]); }
   try {
-    if (argv.includes('--list')) { const R = loadRecipes(); for (const [n, r] of Object.entries(R.clips)) console.log(`${n.padEnd(36)} ${r.mockup ? 'mockup' : r.event ? 'event ' : 'window'}  ${r.desc || ''}${r.needs ? `  [needs ${r.needs}]` : ''}`); process.exit(0); }
-    const common = { build: opt('--build'), format: opt('--format'), out: opt('--out'), limit: Number(opt('--limit', 0)) || 0, keepFrames: argv.includes('--keep-frames') };
+    if (argv.includes('--list')) { const R = loadRecipes(); for (const [n, r] of Object.entries(R.clips)) console.log(`${n.padEnd(36)} ${r.mockup ? 'mockup' : r.event ? 'event ' : 'window'}  ${r.desc || ''}${r.pending ? `  [SLOT, not filled: ${r.pending === true ? r.needs || '' : r.pending}]` : r.needs ? `  [needs ${r.needs}]` : ''}`); process.exit(0); }
+    const common = { build: opt('--build'), format: opt('--format'), out: opt('--out'), limit: Number(opt('--limit', 0)) || 0, keepFrames: argv.includes('--keep-frames'), strip: argv.includes('--no-strip') ? false : undefined };
     let res;
     if (opt('--from-match')) res = await fromMatch({ ...common, fromMatch: opt('--from-match') });
     else if (names.length) res = await make({ ...common, names, dry: argv.includes('--dry') });
