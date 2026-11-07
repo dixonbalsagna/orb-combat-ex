@@ -168,7 +168,7 @@ Costs are at about 1M tokens per director session, including the look gate's cli
 | 2 | **Every press answered** (section 5) | You always know whether the game heard you | Encounter, UI, Audio, Controls | 2M |
 | 3 | **Flight strikes** (section 2) | Your three circle moves as one toolset you choose and chain | Encounter, Simulation grant, Game Design, Controls, Animation, VFX, Camera, QA | 5M to 7M |
 | 4 | **Hitches, crackle, and no input lost in a stall** | Smooth at the big moments, and no flick lost to a hitch | Rendering, Controls, Audio, Performance | 3M |
-| 5 | **Clash made obvious** | You know how to win a beam struggle in the first second | UI, Audio, Controls, Encounter, Game Design | 1.5M |
+| 5 | **Clash made obvious, with a choice of how you push** (section 8) | You know how to win a beam struggle in the first second, with the input you prefer | UI, Audio, Controls, Encounter, Game Design | 2M |
 | 6 | **Pressing into the city, step one** (section 4) | A wall slam turns the world and gives you a moment to follow through | World, Encounter, Camera, QA, Legal | 2M |
 | 7 | **The rumble you picked, still missing** | Every hit, landing and building break felt in your hands | Controls, Audio | 1M |
 | 8 | **Charge stages by power, and the swat** | You feel each stage build, hold as long as you like, and can time a release against a beam | Encounter, Controls, Audio, Animation, VFX | 2.5M |
@@ -190,6 +190,17 @@ Costs are at about 1M tokens per director session, including the look gate's cli
 | 5 | **Scheme gauntlet:** scripted players play many matches against each computer level for each scheme | Proves a stick player isn't stuck losing before you feel it | 2M plus machine hours |
 | 6 | **Record every pad's right stick** in the black box | A phantom pad can't hide your real stick again | 0.2M |
 
-## 8. One question for Orb
+## 8. What pushes in a beam struggle: an option (Orb, 2026-11-06)
 
-**What pushes in a beam struggle?** Today it's X, Y or B on the beat, while your rule is that beams belong to the right stick. My pick: **flick the right stick toward them on the beat, however you fired**, whether that was RB, your signature or a walk-in. It's one thing to learn, and it's the hand that fires beams. The other choice is to keep the face buttons, which work today and are easy to mash by mistake. Picking the stick means Game Design re-rules its "in a struggle the stick does nothing" row and the walk-in's presses.
+Orb's answer: "Put it in options, let players choose whether they want rhythm on right stick (easiest), rhythm on face buttons (hard), or another undecided mode potentially."
+
+| Mode | What you press | Notes |
+| :--- | :--- | :--- |
+| **Right stick (easiest), the default** | Flick the right stick toward them on the beat, however you fired | Game Design re-rules its "in a struggle the stick does nothing" row and the walk-in's presses |
+| **Face buttons (hard)** | X, Y or B on the beat, as today | A on the beat still lets go |
+| **A third mode, undecided** | Stand-in's suggestion, for Orb to judge: **hold steady**. Hold the right stick toward them with no rhythm, and your push comes from your charge stages and energy. It's an accessibility mode in the spirit of Orb's "Simple controls: all of the spectacle, chosen for them" | Not built; Orb's call later |
+
+The stand-in's calls on the details:
+- **Every mode pushes equally hard.** The option changes only what you press, never how strong you are, so it stays fair in versus and over LAN.
+- **The setting is per player,** and each pad keeps its own. The first three clashes of a match teach whichever mode that player has chosen.
+- **Owners and cost:** UI adds the option and its words, Encounter reads the mode, and Controls checks the claw law for the stick mode. About 0.5M on top of item 5.
