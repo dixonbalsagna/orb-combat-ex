@@ -188,7 +188,7 @@ Two PCs, two pads, two humans against two AI. The full globe if Simulation's num
 
 **The cradle and the brace** wait on Orb's word on friendly fire, which the EP is asking for. Nothing from me until then.
 
-## The last event in a 2v2 (2026-11-07, Simulation's stage cap, `docs/architecture/pending/stage-cap/`)
+## The last event in a 2v2 (2026-11-07, Simulation's stage cap, `docs/architecture/cross-fights.md`, "2v2's time cap")
 
 | | Ruling |
 | :--- | :--- |

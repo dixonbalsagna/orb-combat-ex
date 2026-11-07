@@ -22,7 +22,7 @@ Simulation, 2026-11-02, the EP's brief: blows, shots and beams across fights, re
 
 **A shot inside another fight's beam is eaten:** a beam struggle stays two fighters.
 
-**A shot from outside that meets a building or the ground is its shooter's there** (parked: `pending/outside-shots/`). His tier sets what it does, and he's its cause: the dead, his menace, his anguish and, with forms, his Witness are counted as for his own shot. `SimShots.outsider` hands him to World's blast, which reads him in place of a slot. **Open, for Game Design:** the fight it lands in counts those dead as someone else's (`anguishOther`), and an enemy's kills across fill nobody's Witness, since Witness fills from your own rival's kills. World's events name no slot for him (owner -1), as for anything a body of another fight causes. Before the fix, a building read the fight's last body by Godot's negative index, and the ground blasted nothing.
+**A shot from outside that meets a building or the ground is its shooter's there.** His tier sets what it does, and he's its cause: the dead, his menace, his anguish and, with forms, his Witness are counted as for his own shot. `SimShots.outsider` hands him to World's blast, which reads him in place of a slot. **Open, for Game Design:** the fight it lands in counts those dead as someone else's (`anguishOther`), and an enemy's kills across fill nobody's Witness, since Witness fills from your own rival's kills. World's events name no slot for him (owner -1), as for anything a body of another fight causes. Before the fix, a building read the fight's last body by Godot's negative index, and the ground blasted nothing.
 
 ## Beams (Game Design's 4)
 
@@ -48,13 +48,13 @@ What's on its way is in the hash, the digest and a rollback's snapshot.
 
 A setup can set both of these for its match, over the data's switches. They're read only in a match of two fights, so a 1v1 never sees them.
 - **`"cross"`:** hits across fights, over `cross.json`'s `enabled` (`S.stage.cross`).
-- **`"outside"`:** blows from outside, over `interrupts.json`'s `outside.enabled` (`S.stage.outside`: 1 on, 0 off, -1 the data's), parked in `pending/coop-switches/`. `DirOutside` reads it both where a blow starts and where it lands. It does nothing without hits across.
+- **`"outside"`:** blows from outside, over `interrupts.json`'s `outside.enabled` (`S.stage.outside`: 1 on, 0 off, -1 the data's). `DirOutside` reads it both where a blow starts and where it lands. It does nothing without hits across.
 
 Neither is hashed: each is a constant of the setup, and replays and the LAN's handshake carry the setup.
 
-## 2v2's time cap (parked: `pending/coop-switches/`)
+## 2v2's time cap
 
-**With hits across on, both fights reach the time cap and the ending's last event on the same tick.** They're `cross.json`'s `timeCapAt` (840, Game Design's 14:00) and `lastAt` (900: a 1v1's minute after the cap, a first value). Both are read on the stage's clock, `S.stage.clock`: the longer of the two fights' clocks as a tick starts (`SimStage.clockTick`). A fight that's held on that tick (a hit-stop or a pause) reaches them on its next live tick.
+**With hits across on, both fights reach the time cap and the ending's last event on the same tick.** They're `cross.json`'s `timeCapAt` (840, Game Design's 14:00) and `lastAt` (900: a 1v1's minute after the cap, confirmed by Game Design in `docs/design/two-v-two.md`, "The last event in a 2v2", along with this one clock). Who wins at 900 is decided by team, not fight by fight: Game Design's ruling, which Encounter builds in `DirEnding`. Both are read on the stage's clock, `S.stage.clock`: the longer of the two fights' clocks as a tick starts (`SimStage.clockTick`). A fight that's held on that tick (a hit-stop or a pause) reaches them on its next live tick.
 
 A 1v1, and two fights with hits across off, keep `finishers.json`'s 660 on each fight's own clock.
 
@@ -67,13 +67,13 @@ The clock isn't hashed: it's remade from the fights' clocks (which are hashed) a
 ## For the picture: a fight's events
 
 **A fight's events (`out.fx`, and its feed) stay as its step left them until that fight's next tick.** The sim never clears, drains or reuses them in between:
-- It clears fight i's list (i past 0) at the start of fight i's own next tick, and nowhere else.
+- It clears each fight's list at the start of that fight's own next tick, and nowhere else. **The exception is the fight S held as the step began:** its list is the host's to drain. That's fight 0's for a host that holds nothing, and its player's for NetLan's fight-1 PC. Before that fix (a8bc66e2), a host holding fight 1 left fight 0's list to grow, and the picture replayed its old events every tick.
 - Each event is a new object.
 - A step of one fight never touches another fight's list.
 
 So a host can read `S.stage.fights[i].out.fx` any time between ticks without swapping the fight into S (Rendering's `SimHost.other_events()`).
 
-- **Fight 0's list** is `S.out` between ticks, the host's to drain, as ever.
+- **The list of the fight the host holds** is `S.out` between ticks, the host's to drain: fight 0's, as ever, for a host that doesn't swap.
 - **A rollback's restore gives every fight a new, empty list.** Lists aren't in a snapshot (`Fight`'s `SNAPSHOT` skips `out`), and the restore makes the stage and its fights anew. So a host must read `S.stage.fights[i].out` again after a restore, never through a list it kept from before.
 - **Netcode's `NetSession._run` clears the lists** on a re-run tick, whose events were drawn the first time, and on a tick it doesn't present. On a new tick it presents, it keeps every fight's list for the picture, and clears only fight 0's from the last tick shown. `NetLan` clears nothing.
 

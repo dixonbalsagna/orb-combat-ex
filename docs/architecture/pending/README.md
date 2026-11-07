@@ -2,7 +2,23 @@
 
 Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator, the sim or Godot (`docs/` is hidden from Godot). It holds slices that are built and proven in a scratch copy and wait for the sim slot.
 
-**Parked:** `spawn-floor/` starts a fighter on the floor of a lake or the sea, by every door into a match, with Game Design's row 13 on entrance craters. Its README has the proof.
+**Nothing is parked.** `clock-by-body/` is a prototype, not for landing; its README has the proof.
+
+Landed in the morning batch (a8bc66e2), their folders deleted, for co-op 2v2: `outside-key/` (A1, a setup's `"outside"`), `stage-cap/` (A6, 2v2's time cap on one stage clock), `event-lists/` (the picture's lists on NetLan's fight-1 PC), `outside-shots/` (a shot from outside meets a building or the ground as its shooter's), with Encounter's and World's grants; and `brake-parity/` (parity's air brake rows with the switch either way). The page is `../cross-fights.md`.
+
+Landed in d5582dbd, their folders deleted: `loop-path/`, `ceil-reach/`, `power-core/` (page `../power-core.md`, not yet committed).
+
+Landed in the overnight batch (3c9005ac), their folders deleted: `field-place/`, `field-static/`, `ceil-table/`, `places-records/`, `cross-fights/` (page `../cross-fights.md`), `cross-end/` (page `../cross-end.md`), `fights-check-turn/`, `swing-check-page/`.
+
+Landed, their folders deleted: `kick-keep-top/`, `refactor-1-point-at/`, `refactor-3-clock/`, `refactor-6-view-clock/`, `refactor-2-pair/`, `ring-warm/`, `hash-beat-lists/`, `ending-forward/`, `fight-swap/` (page `../fight-swap.md`), `places-check-front/`.
+
+A plan's coarser reads, the match key's fresh sample (`field-frame-2/`) and a building's base at its own point, a standing fighter keeping the floor, `groundCeilAt`, the narrower pose pass and the marks laid at rest (`field-pads/`) were applied in 0af72600; their folders are deleted.
+
+A field world's line and the turntable (`field-frame/`) was applied in 59e671ed; its folder is deleted.
+
+The intent's second word in the hash and the replay and the struggle flag (`right-word/`) was applied in 58a49f5c; its folder is deleted.
+
+Spawn-floor (a fighter starts on the floor of a lake or the sea, with Game Design's row 13 on entrance craters) was applied in aff21131; its folder is deleted.
 
 The computer's level in the replay header from the match's setup (`ai-level-hash/`, UI's patch with one line of mine in `sim.gd`) was applied in 0ba71199 with Encounter's review, the cross-process replay check (`replay-xproc/`, `../determinism.md` section 10) in bed20962 with Tools' CI steps, Netcode's two lines for a past snapshot's hash (`simhash-past-roots/`) in 8591e30a, a planet's data in the header (`density-hash/`) in 6a993bd8, and the rest of it (`planet-header/`: `lakes.json` and `ground.json` for gen 2, `rings.json`'s `turn` while the turn is on) in 43c4d272 with World's lake-floor, and parity's fixtures in a folder of the run's (`parity-fixtures/`) in 39cf9233; their folders are deleted.
 
