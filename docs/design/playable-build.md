@@ -69,6 +69,18 @@ Owner: Game Design. 2026-11-06, ruling the stand-in's `docs/ep/proposals/control
 - **The same path and button three times running in a chain** gets a full tell again on the third, so a repeat can be read.
 - **No energy:** the pad knocks, "No energy" shows at the edge the first three times, and nothing starts. **It never drains you to zero.**
 
+**QA's band (2026-11-07): at most 25% of blows stands, for the whole family of twelve, chains included.** It replaces four systems, but the brawl stays the core (at least 50% of time in a brawl), and a flight strike is slower and dearer than a brawl blow, so 25% is still generous.
+
+| | Ruling |
+| :--- | :--- |
+| **What counts** | The same count on both sides: blows thrown, landed or not. **Each link of a chain is one blow.** A "No energy" refusal and a take-back that didn't happen are none |
+| **Whose blows** | **The computer's own choice,** across a batch, when it throws them. **It isn't a cap on a player.** Someone who loves flight strikes and uses them half the time is fine, as long as it isn't the strongest way to play |
+| **The dominance check, for QA's scripted arms** | At `fsmix` 1 (every press a flight strike), the bot's win rate against the medium AI stays **inside the masher's band, 35 to 50%.** Spamming them must not beat mashing X. Energy is meant to do this: "No energy" knocks are reported |
+| **Variety** | Across a batch, **no one path** (zip, line, arc, parting shot) is **over half** of flight strikes, and no one button is over 60%. Per bearing and button, as QA's harness already splits them |
+| **If it's over** | First, the chain's `kiMul` goes from 1.5 to 1.75. Then the base price, X 10 to 12. Never a cooldown and never a cap on the count, as Orb picked |
+
+Until the computer chooses flight strikes for itself, QA reports the scripted arms: the share, the dominance check and the variety rows.
+
 ### Counters
 
 | What meets it | Result |

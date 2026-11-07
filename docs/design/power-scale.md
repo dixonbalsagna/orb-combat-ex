@@ -85,7 +85,104 @@ Even the thinnest beam stays just under a full send's crater at the same level: 
 
 **A repeat launch doesn't go as far as the first** (Encounter's question). **Simulation reports this has no effect yet with the switch on, so it's still to do.** Freshness stays, and it works inside the model: it multiplies the launch's **share** by `fresh²`, with `fresh` worked out as it is today (×0.9 for each launch of that kind on him in the last 60 s, ×0.97 for any kind, never under 0.7). So its speed falls by `fresh`, exactly as today, and everything else follows from the energy spent: at the floor, the speed and crater radius fall to 0.7 and the energy to 0.49. **So `fresh.destruction` goes:** there's now one path, and a slower body breaks less. The meteor's and the high arc's curves are fixed shapes, so freshness doesn't touch them, and their budget limits them instead.
 
-**The lit launcher, on Simulation's measure.** At a share of 0.25 it carried only 1,150 across at base: a building half the time and little else, and less than a charged knock-back's share, for the reward of an opening. **Raised to 0.5,** which should be about 2,300 across at base, reaching most of a town and nothing beyond it. **A full B at base only just clearing the long haul (3,200) is what I want:** the far planet opens up with power. So a charged knock-back and a lit launcher spend the same: one's earned by waiting, the other by an opening.
+**The lit launcher, on Simulation's measure.** At a share of 0.25 it carried only 1,150 across at base: a building half the time and little else, and less than a charged knock-back's share, for the reward of an opening. **Raised to 0.5.** Simulation measured about 1,800 across at base (2,300 is the far end of its spread). **That's fine:** it's the next building or two along the street, and it keeps base fights local, which the chase depends on. If QA's base-tier rows show sends reaching nothing, this share is the first lever. **A full B at base only just clearing the long haul (3,200) is what I want:** the far planet opens up with power. So a charged knock-back and a lit launcher spend the same: one's earned by waiting, the other by an opening.
+
+## Where a beam struggle does its damage (2026-11-02)
+
+Orb, on Camera's clash clip: "the center where the beams collide would have the biggest shockwave, possibly causing a crater underneath", not the building by the fighter on the left. **Agreed. In a struggle, the damage goes where the beams meet.** One ruling, on VFX's sketch (`docs/vfx/clash-shockwave.md`) and World's plan (`docs/world/struggle-meeting-point.md`). First values, unplayed.
+
+**What World found today:** a struggle does nothing while it runs. Only a detonation (37%) digs at the middle, and time endings (60%) dig nothing at all. **So most struggles leave no mark,** and the one building that fell was most likely the winner's beam carving outward from his own hand.
+
+**The rule:**
+- **The beams carve as normal until their fronts meet, then stop.** While locked, neither beam damages anything along its length, so all the energy goes into the meeting point.
+- **While it runs:** VFX's ground ring grows from 1 body height to 3, with at most one ring every 2 s. Under it, World's scorch, dust and ring events, so it's seen building. Buildings inside that small ring take the beam's building damage, under Legal's ×1.5 cap. **World's groove under the moving point:** yes, as a shallow scorch only, on its own switch, after the crater's in.
+- **At the end, once, every ending:** one wave, one rise and one fall, and the crater dug in a single step under the point.
+
+**World's four numbers, in the energy model:**
+
+| | Ruling |
+| :--- | :--- |
+| **The energy, E** | Both beams' energy from the model, each its stage share. **Not World's ×9 on both, unless one of them is a signature,** since a signature's own hit already has ×9, and the meeting point shouldn't be smaller than a signature's hit. Two plain beams use the model alone |
+| **f_end, the share dug** | **Detonation 0.5. Time 0.25. Overwhelm and letting go: 0.25 × how much of the 5 s it ran.** So every ending digs, a detonation most. In radius terms, the clash factor k is 0.71 and 0.5, as VFX asked |
+| **heightReach** | **Twice the crater's own radius,** with the energy reduced by `1 − height ÷ heightReach`, taking the point's lowest height in the last second. Above that it's a burst in the air: the ring and a scorch, no bowl |
+| **An overwhelm's carve** | **From the meeting point outward, not from his hand.** The stretch between his hand and the point was spent in the struggle. So the winner's beam carves from the point, through the loser, and blasts him where he lands |
+
+- **The wave's radius matches the crater's.** Inside it, tower glass blows out and buildings take the release's damage, through the crater's fall rule, falling off from the centre. **So the middle takes the most, and a building beside a shooter only falls if the wave reaches it.** The dust dome stays local, at most 6 body heights across.
+
+| Both at | Two plain beams: time, detonation | One a signature: time, detonation |
+| :--- | :--- | :--- |
+| Base | 250, 356 | 750, 1,066 |
+| Tier 3 | 577, 816 | 1,731, 2,448 |
+| **Maximum** | **880, 1,244** | **2,640, 3,733** |
+
+These are crater radii, at ground level. The biggest, two signatures detonating at maximum, matches a signature's own hit at the top, so it's the biggest mark of the exchange, as Orb pictured.
+
+**For the builders:** Encounter's grant lines and its end-of-struggle event. World's `struggleMeet`, off. VFX's ring, wave and dust, through the look gate and both flash modes. **Legal sees it before it's built,** as World says: a bigger central blast in a street brings down more buildings, through RL-232, RL-242 and RL-243. QA re-reads the civilian band at the top tier with it on, never tuned toward.
+
+### By stage, as data for World (2026-11-07)
+
+The rule above stands. **What's new is the size by each beam's stage**, now that beams have the stage ladder (`beam-answers-2.md` §1).
+
+**Size.**
+- **Each beam brings its fighter's energy times its stage share:** `E(level) × stage ÷ stageCount`. The top stage spends all of it, as the ladder rules.
+- **E_meet is the two added,** ×9 only if either is a signature.
+- **The dug energy** is `E_meet × f_end × f_height`.
+- **Radius** is `160 × √(dug energy)`, with depth 0.22 of it, dug once under the point by `WorldCrater.dig`.
+
+**When.**
+
+| Phase | What happens |
+| :--- | :--- |
+| **Fronts meeting** | The beams have carved their paths up to here, as normal. From this tick neither beam damages anything along its length |
+| **During the struggle** | **No digging** (`perPulse` 0). VFX's ground ring grows from 1 to 3 bh, at most one every 2 s, with World's scorch and dust under it. Buildings inside that ring take the beam's building damage each ring, under Legal's ×1.5 cap. The groove under a moving point is a scorch only, on its own switch, after the crater's in |
+| **At the end, every ending, once** | One wave and the crater, in a single step |
+
+**Buildings.**
+
+| Where | During | At the end |
+| :--- | :--- | :--- |
+| **Within the ring at the point** | The beam's building damage each ring | The release's damage through the crater's fall rule, **falling off from the centre,** within the wave |
+| **Within the wave's radius** (the crater's radius from the point, on the ground below it) | Nothing | The release's damage through the fall rule, using the dug energy, so the height cut applies. **Tower glass blows out** out to the radius before the height cut, so an air burst shatters windows and fells nothing |
+| **Beside the shooters, outside the wave** | **Nothing.** The beams stopped carving at the meeting | **Nothing,** unless the wave reaches them |
+| **On the loser's side, after an overwhelm** | | The winner's beam carves **from the point outward,** through the loser, and blasts him where he lands. The stretch from the winner's hand to the point gets nothing new |
+
+- **Structures only,** with no people term and no reward, under RL-232, RL-242, RL-243 and RL-246.
+- **The dust dome:** at most 6 bh across.
+
+**Crater radius by the two stages, at ground level.** Overwhelm and let-go are `0.25 × run ÷ 5 s`, so after a full 5 s they equal time, and after 1 s they're under half of it.
+
+| Both beams | E_meet | Time | Detonation | Overwhelm after 1 s | With a signature: time, detonation |
+| :--- | ---: | ---: | ---: | ---: | :--- |
+| Base, stage 1 of 2 each | 4.9 | 178 | 251 | **80: a scorch only** | 533, 754 |
+| Base, both full | 9.9 | 251 | 356 | 112 | 754, 1,067 |
+| Tier 3 at 65%, stage 3 of 5 each | 31.2 | 447 | 632 | 200 | 1,341, 1,896 |
+| Tier 3 at 65%, both full | 52.0 | 577 | 816 | 258 | 1,731, 2,448 |
+| Maximum, stage 2 of 6 each | 40.3 | 508 | 719 | 227 | 1,524, 2,156 |
+| Maximum, one full against a base full | 65.5 | 647 | 915 | 289 | 1,942, 2,746 |
+| **Maximum, both full** | **121** | **880** | **1,245** | 394 | **2,640, 3,734** |
+
+- **The biggest, two full signatures detonating at maximum, still equals a signature's own hit at the top.** So the meeting point is the biggest mark of the exchange, and never bigger than the biggest hit.
+- **A bowl smaller than about 1.5 bh (110 units)** would read as a dent. It's a scorch and the ring instead: `minE` 0.47 on the dug energy.
+
+```json
+{
+  "struggleMeet": {
+    "enabled": false,
+    "energy": { "perBeam": "levelEnergyTimesStageShare", "sigMul": 9, "sigMulIf": "either" },
+    "fEnd": { "detonate": 0.5, "time": 0.25, "overwhelm": 0.25, "letGo": 0.25 },
+    "fEndByRun": { "endings": ["overwhelm", "letGo"], "fullRunSec": 5 },
+    "radius": { "k": 160, "depthShare": 0.22 },
+    "heightReach": { "ofRadius": 2.0, "heightFrom": "lowestInLastSec" },
+    "minE": 0.47,
+    "perPulse": 0,
+    "during": { "ringFromBh": 1, "ringToBh": 3, "ringMinGapSec": 2, "ringBuildingDamage": "beam", "carveAlongBeams": false },
+    "wave": { "radiusOfCrater": 1.0, "fallOff": "fromCentre", "glassRadius": "beforeHeightCut", "dustMaxBh": 6 },
+    "overwhelmCarve": "fromPointOutward"
+  }
+}
+```
+
+World's own keys stay where World put them (`data/biomes/craters.json`). This block is the numbers. **This replaces World's first draft:** the ×9 on both beams, and f_end of 1.0, 0.6 and 0.5.
 
 ## In the data
 
@@ -197,6 +294,8 @@ The AI treats it as it treats a B winding up. This should also open the meteor's
 | **At base** | **A chase's blow holds him up, whatever his energy.** A catch gives him at least a set time in the air before he lands. It's a hit's hang, not more energy: he still goes a short way, so it's a small fight in the air, and the planet doesn't open up | At least **40 ticks** in the air after each catch, unless it's B driving him down. Aim: 2 or 3 catches at base, 3 or 4 at the top, as ki allows |
 | **The meteor** | It's a chapter break, so **no chain from it, as ruled.** Chains belong to ordinary sends: a lit launcher at the top flies 4,950 and has plenty of air. **Camera re-reads the top on a lit launcher** | |
 | **A tap that reaches a landing** | **It's a blow, not just an arrival.** Your press lands as he gets up, as an ordinary blow he can guard, so Orb's follow-up always hits something. It replaces "for the first move", and it's the stand-in until the apex spike is built | As he rises, after his usual 0.35 s down |
+
+**The hang's floor (2026-11-02): `chase.tap.hangMinPace` 0.25.** The 40-tick hang must never be a near-still float: that's what Orb disliked. With the floor, the bodies always move at least a quarter of the send's own pace, so a low catch whose send would land at once hangs only about 5 ticks and lands. Then the next tap is the blow as he rises. The 40 ticks still holds for any catch with real air under it.
 
 **The meteor's peak shot, with the fighter 3 to 4 pixels high at 720p: acceptable for that moment.** The picture is the planet and the trail. **The conditions:** under 6 pixels for no longer than about 2 s around the top, the trail unbroken and in frame, and the view back in before he lands, with the fighter easy to see in the last second. Orb's eye decides, from the clip.
 
