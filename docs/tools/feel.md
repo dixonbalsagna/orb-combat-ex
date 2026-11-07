@@ -51,7 +51,7 @@ node tools/feel/gauntlet.mjs --scheme "hand=data/input/timing.json:switches.sign
 
 Scripted pads play whole seeded matches against the computer at each level (easy, medium, hard), once for the shipped rules and once for each scheme you name. A **scheme** is a named set of data overrides (`name=file:dotted.path=value;file:dotted.path=value`, or `--schemes-file schemes.json`). They are written into a scratch copy of the tree, so a rule in the input hub counts here, which a replay of recorded intents cannot show. Every scheme plays the same seeds, so the comparison is paired and a scheme equal to the shipped rules gives exactly the shipped result.
 
-The five arms are one scripted pad on the real hub each: **stick-only** (a right-stick flick every 8 to 24 ticks), **masher** (X every 8 ticks), **timing** (LB as his blow winds up, then X), **beam-first** (RB and the right stick held toward him, let go to fire, X to build energy meanwhile), **circle-first** (LT with the left stick toward, up, down, away or neutral, and a face button). Each walks at the rival with the left stick.
+The five arms are one scripted pad on the real hub each: **stick-only** (a right-stick flick every 8 to 24 ticks), **masher** (X every 8 ticks), **timing** (LB for 10 ticks on any wind-up cue of his, lights too, then X; X every 8 ticks otherwise), **beam-first** (RB and the right stick held toward him, let go to fire, X to build energy meanwhile), **circle-first** (LT with the left stick toward, up, down, away or neutral, and a face button). Each walks at the rival with the left stick.
 
 Per scheme, arm and level the table gives **win %** (with a plain 95% interval, because ten matches say little: about plus or minus 31 points at 50%), **refusals per 100 presses**, **seconds without control per minute** and **beams a match**; a scheme's rows show the change from the shipped rows in brackets. `--json` keeps the raw counts and the refusals by reason.
 
@@ -66,3 +66,5 @@ Per scheme, arm and level the table gives **win %** (with a plain 95% interval, 
 ## Where things are
 
 `tools/feel/feel.gd` (the replay, run by Godot), `gauntlet.gd` (the five scripted pads), `lib.mjs`, `feel.mjs`, `ledger.mjs`, `gauntlet.mjs`, `feel-selftest.mjs`, `gauntlet-selftest.mjs`. The shared base is `qa/godot/trace_replay.gd` and `ai_compare.gd` (read, not changed).
+
+**2026-11-07 gauntlet fixes.** `press_refused` with reason `stun_limit` (a landed blow on a stunned rival) is not counted as a refusal; the timing pad guards on the rival's `windup` start cue and taps X every 8 ticks; `set_struggle` gets the push word (`DirBeam.pushModeOf == "stick"`, looked up by name so an older tree still runs). Results on the morning page: `docs/tools/gauntlet-e80b8e3d.md`.

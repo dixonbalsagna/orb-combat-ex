@@ -4,7 +4,7 @@ extends SceneTree
 ## The arms (the pad is slot 0 in every match, so a spawn side effect is in all alike; every arm walks at the rival with the left stick):
 ##   stick   a right-stick flick in one of the four directions every 8 to 24 ticks (nothing else)
 ##   masher  X every 8 ticks (nothing else)
-##   timing  LB for 10 ticks when his blow winds up (the perfect block's window), then X straight after; X every 20 ticks otherwise
+##   timing  LB for 10 ticks when his blow winds up (a heavy's wind-up or any "windup" start cue, lights too; the perfect block's window), then X straight after; X every 8 ticks otherwise
 ##   beam    RB held and the right stick held toward him for 40 ticks, then let go to fire, then RB off; X every 8 ticks to build energy while it cannot pay
 ##   circle  LT held, the left stick toward, up, down, away or neutral, and a face button (X 60%, Y 25%, B 15%) every 8 to 16 ticks (the flight strike's grammar)
 ## Reads, for the pad: the match won or lost, presses made, refusals (every cue that says a press was not honoured) by reason, ticks without control (locked, launched, down, stunned, reeling), beams fired, hits landed and taken.
@@ -14,6 +14,8 @@ const NOT_HONOURED: Array = ["refused", "double", "zip", "lapsed", "stunned", "c
 
 var hub: SimInputHub
 var held: Dictionary = {}
+var _bm = null
+var _foe_windup_t: int = -100   # the tick of the rival's last "windup" start cue (every wound blow, lights included): the timing pad guards on it
 
 
 func _init() -> void:
@@ -183,20 +185,20 @@ func _drive(arm: String, S: SimState, t: int, st: Dictionary, rng: RandomNumberG
 				_tap(st, t, ["west"])
 				st.next = t + 8
 		"timing":
-			var winding: bool = not DirBrawl.winding(S, foe).is_empty()
+			var winding: bool = (not DirBrawl.winding(S, foe).is_empty()) or (t - _foe_windup_t <= 3)   # a heavy's wind-up, or any "windup" start cue of the rival's (the lights too)
 			if int(st.lbTo) >= 0:
 				if t >= int(st.lbTo):
 					_btn("lb", false)
 					st.lbTo = -1
 					_tap(st, t, ["west"])
-					st.next = t + 20
+					st.next = t + 8
 			elif winding and t >= int(st.next):
 				_btn("lb", true)
 				st.lbTo = t + 10
 				st.presses = int(st.presses) + 1
 			elif t >= int(st.next):
 				_tap(st, t, ["west"])
-				st.next = t + 20
+				st.next = t + 8
 		"beam":
 			var b: int = int(st.beam)
 			if b == 0:
@@ -244,6 +246,8 @@ func _refusal(e) -> bool:
 	var k: String = str(e.kind)
 	if k == "press_ack":
 		return NOT_HONOURED.has(str(e.text))
+	if k == "press_refused" and (str(e.source) == "stun_limit" or str(e.text) == "stun_limit"):
+		return false   # a blow that landed on an already stunned rival (about 700 a match): it is a landed hit, not a refusal (the EP, 2026-11-07)
 	return k.ends_with("_refused")
 
 
@@ -260,7 +264,15 @@ func _reason(e) -> String:
 ## One tick in the host's order (render/core/sim_host.gd tick), read as it goes.
 func _step(S: SimState, t: int, tot: Dictionary, by: Dictionary) -> void:
 	hub.set_humans(S.fighters[0].ai == null, S.fighters[1].ai == null)
-	hub.set_struggle(0, SimDir.inStruggle(S, S.fighters[0]))
+	# The push word, as the host passes it (sim_host.gd): in a stick-push struggle the right stick pushes. Called by name, so an older tree (no pushModeOf, a two-argument set_struggle) still runs.
+	if _bm == null:
+		_bm = load("res://sim/director/beam.gd")
+	var hb: Object = hub
+	var in_s: bool = SimDir.inStruggle(S, S.fighters[0])
+	if _bm != null and _bm.has_method("pushModeOf"):
+		hb.call("set_struggle", 0, in_s, str(_bm.call("pushModeOf", S, S.fighters[0])) == "stick")
+	else:
+		hb.call("set_struggle", 0, in_s)
 	var it: SimIntent = hub.intent(0)
 	var pausing: bool = S.pause.left > 0
 	if SimCore.step(S, [it, null]):
@@ -274,6 +286,8 @@ func _step(S: SimState, t: int, tot: Dictionary, by: Dictionary) -> void:
 		if e.type == "cue":
 			var who: int = int(e.actor)
 			var k: String = str(e.kind)
+			if k == "windup" and who == 1 and str(e.text) == "start":
+				_foe_windup_t = t
 			if k == "beam_fire":
 				tot["beams" if who == 0 else "foeBeams"] += 1
 			elif who == 0 and _refusal(e):
