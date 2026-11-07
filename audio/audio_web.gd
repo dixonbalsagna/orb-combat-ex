@@ -45,9 +45,46 @@ const JS_SOURCE := """
     if (e && e.isTrusted === false) { return; }
     if (ctx.state !== 'running' && ctx.state !== 'closed') { try { var p = ctx.resume(); if (p && p.catch) { p.catch(function (err) { W.last = 'resume refused: ' + (err && err.name || err); }); } } catch (x) { W.last = String(x); } }
   }
-  ['pointerdown', 'mousedown', 'keydown', 'touchend', 'click'].forEach(function (ev) { window.addEventListener(ev, wake, true); });
+  ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'keydown', 'keyup', 'touchend', 'click'].forEach(function (ev) { window.addEventListener(ev, wake, true); });
   document.addEventListener('visibilitychange', function () { if (!document.hidden) { wake(null); } });
-  ctx.addEventListener('statechange', function () { W.running = ctx.state === 'running'; });
+  // A pad is not a gesture the browser has always counted, and the engine only listens to the mouse, the keys and touch, so a start with the pad alone
+  // left this context suspended (Orb, 2026-11-07: silent for 178 s until a key). While the context is not running, the pad's buttons and sticks are
+  // polled and any press asks it to run; whether the browser lets a pad press unlock sound is read back in W.pad (asks, woke, last).
+  var P = W.pad = { asks: 0, woke: 0, seen: 0, last: '' }, padTimer = 0, padDown = false, padAt = -1e9;
+  function padPressed() {
+    var gp = null, i, j, g;
+    try { gp = navigator.getGamepads ? navigator.getGamepads() : null; } catch (x) { return false; }
+    if (!gp) { return false; }
+    for (i = 0; i < gp.length; i++) {
+      g = gp[i];
+      if (!g || g.connected === false) { continue; }
+      for (j = 0; j < g.buttons.length; j++) { if (g.buttons[j].pressed || g.buttons[j].value > 0.5) { return true; } }
+      for (j = 0; j < g.axes.length; j++) { if (Math.abs(g.axes[j]) > 0.6) { return true; } }
+    }
+    return false;
+  }
+  function padAsk() {
+    if (ctx.state === 'running' || ctx.state === 'closed') { return; }
+    P.asks++; padAt = performance.now();
+    try {
+      var p = ctx.resume();
+      if (p && p.catch) { p.catch(function (err) { P.last = 'pad resume refused: ' + (err && err.name || err); }); }
+    } catch (x) { P.last = String(x); }
+    setTimeout(function () { if (ctx.state === 'running') { P.woke++; } else { P.last = 'a pad press did not start the context (state ' + ctx.state + ')'; } }, 400);
+  }
+  function padTick() {
+    var d = padPressed();
+    if (d) { P.seen++; }
+    if (d && (!padDown || performance.now() - padAt > 1500)) { padAsk(); }
+    padDown = d;
+  }
+  function padWatch() {
+    if (ctx.state === 'running' || ctx.state === 'closed') { if (padTimer) { clearInterval(padTimer); padTimer = 0; } return; }
+    if (!padTimer) { padTimer = setInterval(padTick, 80); }
+  }
+  window.addEventListener('gamepadconnected', function () { padAsk(); });
+  ctx.addEventListener('statechange', function () { W.running = ctx.state === 'running'; padWatch(); });
+  padWatch();
   W.running = ctx.state === 'running';
   W.ready = true;
   W.bus = function (name, lin) {
@@ -110,7 +147,7 @@ const JS_SOURCE := """
     return n;
   };
   W.status = function () {
-    return ctx.state + ' t=' + ctx.currentTime.toFixed(2) + ' ' + ctx.sampleRate + ' Hz out ' + (ctx.outputLatency || 0).toFixed(3) + ' s | web voices started ' + W.started + ' not running ' + W.notrunning + ' missing ' + W.missing + ' buffers ' + W.uploads + (W.last ? ' | ' + W.last : '');
+    return ctx.state + ' t=' + ctx.currentTime.toFixed(2) + ' ' + ctx.sampleRate + ' Hz out ' + (ctx.outputLatency || 0).toFixed(3) + ' s | web voices started ' + W.started + ' not running ' + W.notrunning + ' missing ' + W.missing + ' buffers ' + W.uploads + ' | pad seen ' + P.seen + ' asked ' + P.asks + ' woke ' + P.woke + (P.last ? ' (' + P.last + ')' : '') + (W.last ? ' | ' + W.last : '');
   };
   // Tests only: record the end of the graph on the audio thread (an AudioWorklet), so a stalled page does not make a hole in the recording.
   W.record = function () {

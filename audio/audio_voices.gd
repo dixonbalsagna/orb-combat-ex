@@ -18,6 +18,8 @@ var played: int = 0
 var dropped: int = 0
 var web: AudioWeb = null       # the browser-direct one-shots (audio_web.gd): on the web only, null everywhere else and with ?webvoices=0
 var _web_db: Dictionary = {}   # bus name -> the last level (dB) sent to the page
+var _shell_at: int = -100000      # web_blocked(): when the page shell was last asked, and what it said
+var _shell_blocked: bool = false
 var _lowpass: Dictionary = {}  # bus name -> its low-pass (Hz) from mix.json, for the page's muffled voices
 const WEB_TRIM_DB := -3.0      # measured: with no trim the page's one-shots sit 5.5 to 6 dB above the same cues through Godot's mixer (docs/audio/crackle.md), +3 dB were wrong; -3 puts them within 1 dB
 static var _inst: AudioVoices = null
@@ -270,6 +272,22 @@ func status_line() -> String:
 			s += " | web: " + web.status()
 		s += " | ctx " + str(JavaScriptBridge.eval("(function(){try{return window.__audioShell&&window.__audioShell.state?window.__audioShell.state():'no shell hook'}catch(e){return 'error ('+e+')'}})()"))
 	return s
+
+
+## True on the web while the browser is holding the sound back: the page player's context is not running, or (asked at most twice a second,
+## from the page shell's hook) one of the page's other contexts is suspended or interrupted. A browser lets sound start only after a key, a
+## click or a touch (whether a pad counts is what the pad counters in status_line answer), so a player who has only used a pad can have a
+## silent game. Read-only; false off the web. UI can use it to tell the player ("press a key or click to turn the sound on"); nothing else reads it.
+func web_blocked() -> bool:
+	if not OS.has_feature("web"):
+		return false
+	if web != null and web.ok and not web.running():
+		return true
+	var now: int = Time.get_ticks_msec()
+	if now - _shell_at >= 500:
+		_shell_at = now
+		_shell_blocked = bool(JavaScriptBridge.eval("(function(){try{var s=window.__audioShell;if(!s){return false}return s.contexts.some(function(c){return c.state==='suspended'||c.state==='interrupted'})}catch(e){return false}})()"))
+	return _shell_blocked
 
 
 ## Level in dB for a sound this far (world units) from the camera; below the floor means inaudible.
