@@ -20,7 +20,7 @@ if (opt('--serve-only')) {   // serve a kept copy again, as it is: no copy, no w
   await new Promise(() => {});
 }
 if (!DIR) { console.error('usage: node tools/preview/handover.mjs --dir <built web folder> [--out <folder>] [--repo <repository>] [--serve [--port 8766]]'); process.exit(2); }
-const repo = resolve(opt('--repo') || new URL('../..', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+const repo = resolve(opt('--repo') || decodeURIComponent(new URL('../..', import.meta.url).pathname).replace(/^\/([A-Za-z]:)/, '$1'));   // decoded: the folder "Claude Proj" has a space, and an encoded %20 made the homework check refuse a copy from the repository's own tools (2026-11-07)
 const BUILDS = join(repo, 'homework', 'Files', 'builds');
 const out = resolve(opt('--out') || BUILDS);
 if (out === repo || out.startsWith(repo + sep)) {

@@ -2,42 +2,6 @@
   "_about": "The parks of the stack, in the order they must land (tools/preview/stack.mjs, docs/tools/preview.md). Tools keeps this file from each park's README: add a park here when its folder appears, move it when its order changes, set \"ready\": false while its owner says it is unfinished (it is left out unless --include-unready). Steps: patch (git apply of a file in the working tree), copy ({from, to}, \"replace\": true to take the park's file), overlay (working-tree folders an owner has not committed yet, laid over the commit; a folder that already equals the commit counts as landed), manual (a note; an apply script is never run). needs: {park}, {file}, {grep: {in, text}}, {note, owner} (a known gap that is not in the tree: it stays listed as missing until it is taken out of this file). switches: rows {id, file, path, from, to, needs, what} for flags a park adds that the stack should turn on.",
   "parks": [
     {
-      "id": "ui-working-tree",
-      "owner": "ui-ux",
-      "notes": "UI's working tree (the quiet legend, the versus flow, the hints and how-to cards): uncommitted in the repository, laid over the commit so the page is what the tree plays. It is the tree as it stands when the page is built.",
-      "steps": [
-        {
-          "overlay": [
-            "ui"
-          ]
-        }
-      ],
-      "needs": [
-        {
-          "note": "the code is overlaid from the working tree: it is UI's and not committed; the park lands with it",
-          "owner": "ui-ux"
-        }
-      ]
-    },
-    {
-      "id": "controls-layouts",
-      "owner": "controls-feel",
-      "notes": "Controls' data/input/layouts.json (the arena pad's layout), uncommitted in the repository, laid over the commit; sim/input comes with controls-quick-read's overlay.",
-      "steps": [
-        {
-          "overlay": [
-            "data/input/layouts.json"
-          ]
-        }
-      ],
-      "needs": [
-        {
-          "note": "the file is overlaid from the working tree: it is Controls' and not committed; the park lands with it",
-          "owner": "controls-feel"
-        }
-      ]
-    },
-    {
       "id": "art-biomes-working-tree",
       "owner": "art-direction",
       "notes": "Art's working-tree edits to data/art/biomes.json (the warmer tundra rock: lit #8c8270, mid #777472, shade #504d4e), uncommitted: laid over the commit. It reads as landed once it is committed.",
@@ -95,124 +59,6 @@
       "ready": false
     },
     {
-      "id": "controls-quick-read",
-      "owner": "controls-feel",
-      "notes": "The quick read (responsiveness): Controls' code is in the working tree and not committed (sim/input: input_data, hub, layout, left_hand, strike_read, its test and probes), so it is laid over the commit as an OVERLAY; then quick-read.patch (timing.json switches.quickRead, strike.settleQuick and preAt, and the schema). The stack's quickRead switch turns it on.",
-      "steps": [
-        {
-          "overlay": [
-            "sim/input"
-          ]
-        },
-        {
-          "patch": "docs/controls/pending/quick-read/quick-read.patch"
-        }
-      ],
-      "needs": [
-        {
-          "note": "the code is overlaid from the working tree: it is Controls' and not committed (frozen until the EP's gate); the park lands with it",
-          "owner": "controls-feel"
-        }
-      ]
-    },
-    {
-      "id": "controls-stick-feel",
-      "owner": "controls-feel",
-      "notes": "The stick's feel: five haptic kinds (the strike charge's ladder, and the incoming cue on the defender's pad), the host's two lines in render/core/main.gd, and switches.hapticLadder and hapticIncoming (haptic-switches.patch). On top of quick-read. Controls' input-buffer pair (round 3) is left out: its stick_feel_test.gd hunk clashes with signature-rt-only in either order, it is off by default and changes nothing on a real-fight soak (Controls). Plus web-rumble.patch (Controls, 2026-11-01): the page asks the pad's vibrationActuator itself (JavaScriptBridge), behind timing.json switches.webRumble.",
-      "steps": [
-        {
-          "patch": "docs/controls/pending/stick-feel/stick-feel.patch"
-        },
-        {
-          "patch": "docs/controls/pending/stick-feel/responsive-2.patch"
-        },
-        {
-          "patch": "docs/controls/pending/stick-feel/first-press.patch"
-        },
-        {
-          "patch": "docs/controls/pending/stick-feel/signature-rt-only.patch"
-        },
-        {
-          "patch": "docs/controls/pending/stick-feel/stick-feel-host.patch"
-        },
-        {
-          "patch": "docs/controls/pending/stick-feel/haptic-switches.patch"
-        },
-        {
-          "patch": "docs/controls/pending/stick-feel/web-rumble.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "controls-quick-read"
-        }
-      ]
-    },
-    {
-      "id": "controls-beam-aim",
-      "owner": "controls-feel",
-      "notes": "The beam's aim holds and the throw carries it (Controls, 2026-11-01; docs/controls/beam-aim-feel.md): the release step carries the sector of the mean of the last 3 rim ticks, the shown aim trails the thumb by 4 degrees, at rest the aim is 0. Behind data/input/timing.json switches.beamAim (the beamAim switch turns it on for the page). After quick-read, stick-feel (responsive-2, first-press, haptic-switches); independent of first-pad. Includes sim/input tests, orb_aim_probe and the schema key.",
-      "steps": [
-        {
-          "patch": "docs/controls/pending/beam-aim/beam-aim.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "controls-stick-feel"
-        }
-      ]
-    },
-    {
-      "id": "controls-stage-haptics",
-      "owner": "controls-feel",
-      "notes": "Stage haptics (Controls, docs/controls/pending/stage-haptics): after stick-feel, first-press and haptic-switches; hapticLadder is on for the page.",
-      "steps": [
-        {
-          "patch": "docs/controls/pending/stage-haptics/stage-haptics.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "controls-stick-feel"
-        }
-      ]
-    },
-    {
-      "id": "controls-queue-20",
-      "owner": "controls-feel",
-      "notes": "Controls' queue life (2026-11-01): strike.queueTicks 36 to 20 and the gate test that proves it (docs/controls/pending/queue-20). After quick-read and the stick feel. input-buffer stays out (the EP).",
-      "steps": [
-        {
-          "patch": "docs/controls/pending/queue-20/queue-20.patch"
-        }
-      ],
-      "needs": [
-        {
-          "park": "controls-stick-feel"
-        }
-      ]
-    },
-    {
-      "id": "controls-first-pad",
-      "owner": "controls-feel",
-      "notes": "The seat fix (Controls, 2026-11-01, Orb's pad joined as player two): one person's first press takes player one; hub only (sim/input/hub.gd, +12 lines), no change to render/core/main.gd. Independent of the other parks.",
-      "steps": [
-        {
-          "patch": "docs/controls/pending/first-pad/first-pad.patch",
-          "exclude": [
-            "sim/input/test/pad_first_press_test.gd"
-          ],
-          "why": "the overlay of the working tree's sim/input (controls-quick-read) already lays Controls' copy of this test (byte for byte the patch's own); the patch would create it again"
-        }
-      ],
-      "needs": [
-        {
-          "park": "controls-queue-20"
-        }
-      ]
-    },
-    {
       "id": "camera-damage-inset",
       "owner": "camera-cinematography",
       "ready": false,
@@ -247,18 +93,6 @@
       "needs": [
         {
           "park": "rendering-2026-10-30i-crowd-bend"
-        }
-      ]
-    },
-    {
-      "id": "audio-host-check",
-      "owner": "audio-music",
-      "notes": "Audio's working-tree copy of audio/tools/host_check.gd (the gain floor for a bed is -40 dB), laid over the commit: the tug and moment sets need it. Uncommitted.",
-      "steps": [
-        {
-          "overlay": [
-            "audio/tools/host_check.gd"
-          ]
         }
       ]
     },

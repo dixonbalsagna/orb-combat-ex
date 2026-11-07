@@ -1,0 +1,76 @@
+gen2             ON       data/biomes/climate.json gen
+biome            ON       data/combat/launch_biome.json biome.enabled
+water            ON       data/biomes/water.json enabled
+surface          ON       data/biomes/water.json surface.enabled
+interrupts       ON       data/director/interrupts.json water.enabled
+floor            ON       data/biomes/water.json floor.enabled
+calmTurn         ON       data/director/interrupts.json calmTurn.enabled
+turn             ON       data/biomes/rings.json turn.on
+rightStick       ON       data/input/timing.json switches.rightStick
+quickRead        ON       data/input/timing.json switches.quickRead
+hapticLadder     ON       data/input/timing.json switches.hapticLadder
+specialsOff      ON       data/input/timing.json switches.specialsOff
+signatureRtOnly  ON       data/input/timing.json switches.signatureRtOnly
+beamAim          ON       data/input/timing.json switches.beamAim
+hapticRefused    ON       data/input/timing.json switches.hapticRefused
+hapticIncoming   ON       data/input/timing.json switches.hapticIncoming
+webRumble        ON       data/input/timing.json switches.webRumble
+settle           ON       data/biomes/contact.json settle.enabled
+splitShare       ON       data/camera/swing.json splitShare
+chaseTap         ON       data/director/interrupts.json chase.tap.enabled
+chargeArmour     ON       data/director/stick.json armour.enabled
+powerPace        ON       data/fight/ladder.json chargePerSec
+waterWarm        ON       data/biomes/water.json flowWarm.cols
+chargeClose      ON       data/director/interrupts.json brawl.chargeClose.enabled
+pressWait        ON       data/director/interrupts.json brawl.pressWait.enabled
+oneRuleB         ON       data/director/interrupts.json brawl.oneRuleB.enabled
+beamAim2         ON       data/director/interrupts.json beamPlays.front.aim.enabled
+nodeWarm         ON       data/biomes/field.json warm.radius
+stickPend        ON       data/director/stick.json pendFollow.enabled
+joltYield        ON       data/director/swing.json jolt.yieldToLaunch
+brawlShareCap    ON       data/director/swing.json brawl.shareCap.enabled
+gen3             ON       (page word)
+blackbox         ON       (page word)
+go               ON       (page word)
+meteor           ON       (page word)
+tiles            ON       (page word)
+swing            ON       data/director/swing.json enabled
+everywhere       ON       data/biomes/field.json plans.everywhere
+arc              ON       data/director/launch.json arc.enabled
+ending           ON       data/director/interrupts.json ending.enabled
+follow           ON       data/director/interrupts.json bands.follow.enabled
+lightStops       ON       data/director/stick.json lightStops
+grapple          ON       data/director/interrupts.json grapple.enabled
+driver           ON       data/director/interrupts.json blast.driver.enabled
+driverOnRb       ON       data/input/timing.json switches.driverOnRb
+beamMove         ON       data/director/interrupts.json beamPlays.front.ownMove.enabled
+stallKeep        ON       data/input/timing.json switches.stallKeep
+hapticImpact     ON       data/input/timing.json switches.hapticImpact
+dodgeHeld        ON       data/input/timing.json switches.dodgeHeld
+hapticStages     ON       data/input/timing.json switches.hapticStages
+refusedCue       ON       data/director/interrupts.json press.refusedCue
+strikeStages     ON       data/director/stick.json strikeStages.enabled
+beamMoveAi       ON       data/director/interrupts.json beamPlays.front.ownMove.ai
+pushMode         ON       data/director/interrupts.json beamStruggle.pushMode.enabled
+pushUi           ON       ui/data/options.json options.struggle_push.default
+pushUi2          ON       ui/data/options.json options.struggle_push_p2.default
+wallPush         OFF (waiting on QA city read) data/director/launch.json walk.enabled
+wallPushAi       OFF (waiting on QA city read) data/director/launch.json walk.ai.enabled
+slamTurn         OFF (waiting on QA city read) data/director/swing.json slam.enabled
+cityHold         OFF (waiting on QA city read) data/biomes/brunt.json lodgeHold (+wallRebound, +wallStop, +wallDepthHold, +repeatMarks)
+flightStrikes    OFF (held for the next batch's page (EP)) data/director/interrupts.json zip.flightStrikes.enabled (+timing.json switches.flightStrikeB, +timing.json switches.dodgeHeld)
+aimCuts          OFF (held for the next batch's page (EP)) data/director/launch.json aimCuts.enabled
+stickLungeLight  OFF (held for the next batch's page (EP)) data/director/stick.json lungeLight.enabled
+airBrake         ON       data/fight/brake.json enabled
+stances          ON       data/director/interrupts.json stances.enabled
+phrases          ON       data/combat/phrases.json enabled
+craterlook       ON       (page word)
+vsHuman          ON       data/director/ai.json vsHuman.enabled
+firstMeteor      ON       data/director/launch.json arc.firstMeteor
+beamFront        ON       data/director/interrupts.json beamPlays.front.enabled
+kick             ON       data/fight/kick.json enabled
+mixed            ON       data/combat/mixed.json enabled
+struggle         ON       data/director/interrupts.json beamStruggle.enabled
+soundTug         ON       audio/data/tug_cues.json enabled
+soundMoments     ON       audio/data/moment_cues.json enabled
+soundCarry       ON       audio/data/carry_cues.json enabled
