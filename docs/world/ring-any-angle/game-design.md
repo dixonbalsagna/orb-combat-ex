@@ -612,3 +612,46 @@ On `docs/qa/cloud-reports/2026-11-02-kept-build.md`. First values, unplayed.
 - **Legal confirms the new denominator** against RL-214 and RL-228 before RL-232's maximum-tier read uses it. Until then, the slices' band stands for that read.
 
 **3. Match length: fine.** A median of 7.4 to 7.7 minutes, AI against AI, is inside "five minutes or more". **The p90 limit becomes 11:00,** the time cap, in place of 10:00. The cap ends a match there anyway, so a p90 just over 10 isn't a fault. The p10 stays at least 5:00. A player who doesn't fight back losing in about 3.4 minutes is also fine: the AI simply won.
+
+**Collateral reading lower on the whole ring (info, RL-214, RL-244).** People in reached places came to 7.7%, and 4.0% of the whole planet. **Nothing tunes toward that share.** If fights feel too clean on the globe, the answer is in **structures and ground,** read on the whole ring:
+- **§15's rows by tier:** time near a building (20 to 35%), sends from a town (4 to 8), places visited (2 to 4), and felled at least two thirds.
+- **The open sea's share** (at most 25%): a fight at sea is clean by nature.
+- **Destruction you can see:** buildings broken and craters made **in frame** per minute, by tier, from Camera's in-frame read, since damage off screen doesn't read as damage.
+- **The energy model's base tier:** it lowers base destruction on purpose, so the opening minutes are where "too clean" would show first.
+
+If those come back low, the levers are §15's: sends that aim for buildings, and the town and wall levers. **Never the people.** A fight that wrecks a town the people have left still reads as damage.
+
+## Addendum, 2026-11-06: QA's city step one read
+
+On `docs/qa/cloud-reports/2026-11-06-city-step-one.md`. First values, unplayed. The masher row is ruled in `press-decides.md`.
+
+**1. Sends into a building: in band, and the AI uses the wall push.**
+- **3.95 is inside its band.** QA doesn't restrict where a fight starts (`clean-rows.js` says so), so the row is my 2026-11-01 one **from any start: 3 to 6.** The 4 to 8 band is **from a start in town** only. QA reads both rows, the town one on the matches that start in a place.
+- **Neither band moves.**
+- **Yes, the AI leans for the wall push, by personality,** with the same stick a player has. A player should see the computer do the move they can do. It reads standing buildings only, never who is inside, as every building term does (RL-213, RL-217).
+- **How often:** in strings with a standing building in reach, as often as that fighter's launches take a building (`balance-targets.md`). That's 40 to 60% for a fighter who feeds on destruction and 20 to 35% for the protector.
+- **First, Encounter checks the push fires.** The human push arm didn't raise sends (0.87 to 0.78), and wall slams read 0 in every arm. So either the bot's lean misses the lever, or the lever or the record's class is broken. The wall-slam row (2 to 5 a match, `buildings.md` §4) is the check, for the human slot before the AI's lean is read.
+- **`playable-build.md` §4's follow-through** (B toward drives him into the next building) counts as a send when it lands there. It's read again when it's built.
+
+**2. What a visit and "near" mean.**
+
+| Row | Definition | Band |
+| :--- | :--- | :--- |
+| **Places visited a match** | A place counts once it's visited, **first ring and far ones alike,** each counted once a match. **Visited means the fight broke at least one of its buildings by contact:** a body, a blow, a slam, or a crater or blast made by a fighter within 1,500 units of that building. A beam or blast from further away doesn't count | **2 to 4 stands.** Under 2 is the fault. Over 4 is information unless time near a building is over too |
+| **Time near a building** | The pair's midpoint is within **1,500 units of a standing building's footprint, by true distance across the ground** (wrap math on both axes, depth included). It's also no higher than **1,500 units above the building's top.** Sampled twice a second while the match is live | **20 to 35% stands** |
+
+- **World's "reached" is the right test for the civilian band and the wrong one for a visit.** A far place is reached once a fighter comes within 9,000 units of it (`docs/world/places-reached.md`). That's generous on purpose, so every person who could have been at risk counts (RL-244). It counts the places a fight flew past, which is why it reads 23.5. Both stay: reached for the people, visited for the destruction.
+- **As I read `records.gd`, QA's "near" sample takes every structure in a 3,000-unit span along the line, at any depth and height.** On a whole planet that counts places off to the side, and fights flying high above a town. That likely explains most of 55 to 75%. QA re-reads with the definition above before anything is ruled on the number.
+- **If the true-distance read is still over 35%** with sends at about 4, the fight is near buildings and isn't converting. The lever is then sends that aim for buildings and the wall push above, never a pull away from towns. "At least 25% of fight time outside every settlement" stays as the check that the fight isn't pinned.
+
+**3. The civilians-removed row stands: swings within one.**
+- **It fails at +1.87, so RL-215 stays open, and the swing's timing terms that read the fight's tension stay behind their switch, off by default.**
+- **The run has to say which term carries it.** Two causes are possible, and only one is a fault:
+  - **The hero's lure.** It reads people under RL-214's grandfathering. Removing people moves his fights, and a moved fight swings differently.
+  - **A swing term that reads people,** directly or through anguish or menace. That breaks the one-way rule, and Encounter's lint should have caught it.
+- **QA re-runs the pair with the lure off in both arms, and again with the timing switch off.**
+  - If the gap goes with the lure, it's the grandfathered term, and it goes to Legal through the EP.
+  - If it stays with both off, a term reads people. Encounter finds it, and the lint gets the name it missed.
+- **The row doesn't widen.** Timing moves a swing earlier or later and never raises the total. A gap of two a match says that isn't true in the build.
+
+**4. The civilian base, noted as a result.** AI against AI, the people lost in the places reached read **8.0%** (7.1 to 8.8), with the levers 4.4 to 7.2%. That's under the band's 12% floor before any lever. **It's a result, not a fault, and nothing tunes toward it** (RL-214, RL-247). Nothing about bystanders changes. The band's top stays the guard: no match went over 30% in 360. If fights feel too clean, the answer stays structures and ground, as ruled on 2026-11-02, **never the people.**

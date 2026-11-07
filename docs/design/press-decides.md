@@ -108,3 +108,11 @@ Half of Orb's B presses came while a blow of theirs was still going. **If you pr
 | Stick-only against the AI | 1 of 30 | Within 10 points of the X mash | Encounter's fix for refused late flicks first. A flick's run stays 1.5 |
 
 **Nothing else moves.** The steal's shape stays as ruled.
+
+## The masher on medium again (2026-11-06, QA's city step one read)
+
+**52 against 35 to 50: the band holds, and nothing moves yet.**
+
+- **On 100 matches, 52 can't be told from 50.** The 95% interval is about ±10 points, and this row has read 36, 38, 46 and 52 on recent builds. **QA reads it on 300 matches (about ±6) before anything moves.**
+- **If it's still over 50 on 300, the AI's answer moves, not the band.** Encounter's lever, by its smallest step, on medium only. A masher shouldn't beat the middle AI half the time, and the band has said so since it was set.
+- **The answer has to key on the same button pressed again and again, not on pressing a lot.** The stick-only player already loses far more than the X mash (about 20 points on medium, against a band of 10), so an answer to busy hands would widen that gap. QA reads the stick-only row in the same batch.
