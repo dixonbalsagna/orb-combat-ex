@@ -265,3 +265,18 @@ Orb's hold to brake stands (`agency-pass.md` §4, on LT). Here it is re-ruled so
 | The inside chain's slabs, by effective tier | As the table (hard) |
 | A sent body's path the same on every replay, ragdoll or not | Every time (hard) |
 | Inside chains a match, in matches with three or more fights in town at tier 3 and up | 0.3 to 1.5 |
+
+## 8. The launch's cheaper choices (2026-11-07, Encounter's launch-cost park)
+
+Encounter's answer-keeping cuts take the launch tick from 11.5 to 10.8 ms. These five would save more but change which building gets chosen. **The golden moving is fine. A worse choice isn't.** Sends are at the bottom of their band (3.95 against 3 to 6 from any start), so no cut may cost them.
+
+| Cut | Ruling | Why |
+| :--- | :--- | :--- |
+| **Aim at most 3 buildings** | **Yes.** The 3 with the best cheap score, keeping **at least one a side** when each side has one, so a player's stick always has a building to choose | Only 3 launches in 12 aimed more, and the 4th to 6th in the cheap order rarely win |
+| **World's preselect, 2 a side to 1** | **No** | It takes away each side's fallback when its best building has no arc, which is exactly the send that's short |
+| **One flight across the aim arcs** | **Yes,** if it plans as many buildings as today | Which arc carries him matters less than whether it hits. **The check:** on QA's city seeds, the share of aimed buildings that get a plan, and buildings crossed per send, hold within noise |
+| **The haul force estimated, not flown again** | **No** | The landing is what the plan scores: a town visit, sea to land, a cliff. An estimate that lands somewhere else means the feed explains a launch that didn't happen. 0.6 ms on some launches isn't worth that |
+| **Reject buildings by the cheap score before aim** | **Yes, only as a bound that can't change a pick.** A building is dropped only when its cheap score plus the largest noise it could draw (the uniform 0 to 8) can't beat the best candidate already in hand. **It counts as offered for the pity counter,** as it was in reach and lost, so the drought clock runs as today | The pick is the same. Only the random stream from then on moves, which isn't a design change |
+
+- **The three yeses land behind one switch** for a single QA read of the city rows, off then on, on the same seeds. The rows are sends into a building, places visited, and buildings crossed per send. If none falls beyond noise, the switch goes on and then goes away.
+- **Simulation regenerates the golden** when they land.
