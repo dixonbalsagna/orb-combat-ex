@@ -1,0 +1,22 @@
+diff --git a/render/core/planet_view.gd b/render/core/planet_view.gd
+index 3d3940d..8ce322b 100644
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -805,9 +805,15 @@ func _startle(S: SimState) -> void:
+ 		if seen.has(key):
+ 			continue
+ 		seen[key] = true
+-		for bi in range(S.buildings.size()):
++		var cand := PackedInt32Array()
++		if _xs.size() == S.buildings.size():
++			_along(bx, R + _wmax + RenderLook.CROWD_SPREAD, cand)   # the sweep's sorted index: only the buildings near the blow (the same set the full scan keeps)
++		else:
++			for q in range(S.buildings.size()):
++				cand.append(q)
++		for bi in cand:
+ 			var b = S.buildings[bi]
+-			if absf(SimWrap.sdx(bx, b.x)) > R + b.w + RenderLook.CROWD_SPREAD or _shown[bi] <= 0:
++			if _shown[bi] <= 0 or absf(SimWrap.sdx(bx, b.x)) > R + b.w + RenderLook.CROWD_SPREAD:
+ 				continue
+ 			for j in range(_shown[bi]):
+ 				var ci: int = _crowd_first[bi] + j
