@@ -1,6 +1,6 @@
 Orb Combat EX: a match between your two PCs
 
-What this is: one fight between your two PCs, with one pad on each, or two fights at once, one on each PC, each against the computer. This game opens a network link between the two PCs, over your home network only. It's a private test and it has rough edges.
+What this is: one fight between your two PCs, with one pad on each, or two fights at once, one on each PC, against two computer fighters: as a team ("2v2 together") or apart. This game opens a network link between the two PCs, over your home network only. It's a private test and it has rough edges.
 
 WHO PLAYS: Only Orb plays and watches, on both PCs, with nobody else in the room. This build has a flashing-effects warning; read it first. Don't copy, record, share or post this folder, the screens or the main PC's address. Two fights share one globe, so craters and damage from the other fight can appear in the world. Fighters in the other fight can hit you, and your partner's fight isn't shown on your screen.
 
@@ -36,7 +36,7 @@ We haven't been able to test whether step 1 stops it. If "Windows Security Alert
 
 WHAT DOESN'T WORK YET
 - One match only. When the top of the window says "The match is over", close both windows, and start again for another. In 2v2, if your fighter is knocked out while your partner still stands, the top says "You're out" and your screen follows your partner's fight.
-- Don't pause. If you do, the other PC freezes until you come back.
+- A pause holds both PCs. The other PC's window says "Paused by the other player" and waits until you come back.
 - If the top of the window says "OUT OF STEP" or "The other PC has gone", or it stays on "Waiting" for over a minute, close both and tell the EP.
 - If a PC's address has changed from {HOST_IP}, "Couldn't connect" shows at the top. Tell the EP.
 
