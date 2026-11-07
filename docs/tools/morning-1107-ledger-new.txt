@@ -1,0 +1,502 @@
+REFUSAL LEDGER  homework/Files/orb-first-play-20261106-1934.json
+tree C:/Users/itsha/AppData/Local/Temp/meridian-feel/orb-first-play-a8bc66e2-dee2fb35-b8b59f/; the pad is slot 0
+recorded match: NOT reproduced on this tree: the rows are the replay on this tree; 22551 ticks (6:15.9)
+1264 presses of the pad; 460 not honoured (36%)
+
+by press:
+  dodge        110 presses: 61 honoured, 3 refused, 0 partly, 46 silent
+  heavy        446 presses: 336 honoured, 35 refused, 3 partly, 72 silent
+  light        121 presses: 86 honoured, 14 refused, 2 partly, 19 silent
+  sig          425 presses: 248 honoured, 69 refused, 8 partly, 100 silent
+  rsStart       85 presses: 47 honoured, 8 refused, 22 partly, 8 silent
+  guardPress    31 presses: 10 honoured, 3 refused, 0 partly, 18 silent
+  powerPress    14 presses: 8 honoured, 0 refused, 0 partly, 6 silent
+  context       31 presses: 7 honoured, 1 refused, 2 partly, 21 silent
+  transform      1 presses: 1 honoured, 0 refused, 0 partly, 0 silent
+
+by reason:
+    27  driver_refused
+    25  press_refused/queue_expired
+    22  press_refused/y
+    19  press_refused/b
+    13  press_refused/x
+    12  press_stunned/b
+     9  press_chase_no_ki/y
+     6  press_stunned/y
+     6  stick/close
+     6  driver_refused/ki
+     5  stick/0
+     5  stick/replaced
+     5  press_chase_no_ki/b
+     4  stick/late
+     4  stick/taken
+     3  stick/hit
+     3  grapple_refused/busy
+     2  press_refused/block_lockout
+     2  stick/answered
+     2  stick/soon
+     1  stick/8
+     1  stick/ki
+     1  stick/chase
+
+the presses not honoured (when, press, what it was, why):
+  0:08.3  t498    dodge      silent   in free, ki 66: no answer at all
+  0:14.7  t882    heavy      refused  in free, ki 36: press_chase_no_ki/y
+  0:15.1  t908    heavy      partly   in free, ki 38: press_chase_no_ki/y
+  0:16.0  t959    dodge      silent   in free, ki 42: no answer at all
+  0:18.4  t1101   rsStart    refused  in locked, ki 29 rs dir 3 level 0: stick/0
+  0:21.0  t1258   rsStart    partly   in free, ki 40 rs dir 3 level 0: stick/replaced
+  0:22.2  t1331   sig        silent   in locked, ki 42: no answer at all
+  0:22.2  t1332   sig        silent   in locked, ki 42: no answer at all
+  0:22.2  t1333   sig        silent   in locked, ki 42: no answer at all
+  0:22.2  t1334   sig        silent   in locked, ki 42: no answer at all
+  0:22.3  t1335   sig        silent   in locked, ki 42: no answer at all
+  0:22.9  t1375   sig        silent   in locked, ki 34: no answer at all
+  0:24.9  t1492   sig        refused  in locked, ki 32: press_refused/queue_expired
+  0:25.8  t1545   dodge      silent   in free, ki 17: no answer at all
+  0:25.8  t1546   heavy      silent   in free, ki 17: no answer at all
+  0:25.8  t1546   dodge      silent   in free, ki 17: no answer at all
+  0:25.8  t1547   heavy      silent   in free, ki 17: no answer at all
+  0:25.8  t1547   dodge      silent   in free, ki 17: no answer at all
+  0:28.5  t1708   dodge      silent   in locked, ki 20: no answer at all
+  0:29.0  t1738   heavy      silent   in locked, ki 22: no answer at all
+  0:29.0  t1739   heavy      silent   in locked, ki 22: no answer at all
+  0:33.1  t1985   sig        silent   in locked, ki 4: no answer at all
+  0:33.3  t1998   heavy      silent   in locked, ki 6: no answer at all
+  0:33.6  t2015   light      refused  in launched, ki 6: press_refused/x
+  0:33.9  t2032   heavy      refused  in launched, ki 6: press_refused/y, press_refused/queue_expired
+  0:34.1  t2046   heavy      silent   in launched, ki 6: no answer at all
+  0:34.1  t2046   sig        refused  in launched, ki 6: press_refused/y
+  0:34.4  t2066   light      refused  in launched, ki 6: press_refused/x
+  0:34.7  t2083   heavy      refused  in launched, ki 6: press_refused/y
+  0:35.0  t2098   light      refused  in down, ki 6: press_refused/x
+  0:35.0  t2099   light      refused  in down, ki 6: press_refused/x
+  0:35.0  t2100   light      refused  in down, ki 6: press_refused/x
+  0:35.6  t2137   light      refused  in free, ki 9: press_refused/x
+  0:35.6  t2138   light      refused  in locked, ki 9: press_refused/x
+  0:36.3  t2178   light      silent   in locked, ki 12: no answer at all
+  0:36.4  t2184   light      refused  in locked, ki 13: press_refused/queue_expired
+  0:36.5  t2193   light      partly   in locked, ki 13: press_refused/queue_expired
+  0:36.7  t2200   light      partly   in locked, ki 14: press_refused/queue_expired
+  0:37.3  t2235   heavy      silent   in locked, ki 1: no answer at all
+  0:38.4  t2304   sig        refused  in locked, ki 5: driver_refused
+  0:43.9  t2632   dodge      silent   in locked, ki 5: no answer at all
+  0:43.9  t2633   dodge      silent   in locked, ki 5: no answer at all
+  0:43.9  t2634   dodge      silent   in locked, ki 5: no answer at all
+  0:43.9  t2635   dodge      silent   in locked, ki 5: no answer at all
+  0:43.9  t2636   dodge      silent   in locked, ki 5: no answer at all
+  0:44.0  t2637   dodge      silent   in locked, ki 5: no answer at all
+  0:44.0  t2639   heavy      refused  in locked, ki 5: press_stunned/y
+  0:44.6  t2675   guardPress silent   in locked, ki 7: no answer at all
+  0:44.6  t2676   guardPress silent   in locked, ki 7: no answer at all
+  0:45.4  t2725   guardPress silent   in locked, ki 18: no answer at all
+  0:46.1  t2767   guardPress silent   in locked, ki 21: no answer at all
+  0:46.1  t2768   guardPress silent   in locked, ki 21: no answer at all
+  0:47.2  t2834   heavy      silent   in locked, ki 30: no answer at all
+  0:47.3  t2835   heavy      silent   in locked, ki 30: no answer at all
+  0:47.3  t2836   heavy      silent   in locked, ki 30: no answer at all
+  0:47.3  t2837   heavy      silent   in locked, ki 30: no answer at all
+  0:47.3  t2838   heavy      silent   in locked, ki 30: no answer at all
+  0:47.5  t2853   sig        silent   in locked, ki 31: no answer at all
+  0:47.6  t2859   guardPress silent   in locked, ki 32: no answer at all
+  0:48.5  t2908   heavy      silent   in locked, ki 36: no answer at all
+  0:52.7  t3163   guardPress silent   in locked, ki 43: no answer at all
+  0:52.7  t3164   guardPress silent   in locked, ki 43: no answer at all
+  0:57.1  t3424   rsStart    partly   in locked, ki 29 rs dir 2 level 0: stick/replaced, stick/hit, stick/late
+  1:03.2  t3790   guardPress silent   in locked, ki 42: no answer at all
+  1:03.2  t3791   guardPress silent   in locked, ki 42: no answer at all
+  1:03.2  t3792   guardPress refused  in locked, ki 42: press_refused/block_lockout
+  1:03.8  t3827   guardPress silent   in locked, ki 43: no answer at all
+  1:03.8  t3828   guardPress silent   in locked, ki 43: no answer at all
+  1:04.0  t3842   guardPress silent   in locked, ki 44: no answer at all
+  1:04.3  t3859   guardPress refused  in locked, ki 45: press_refused/block_lockout
+  1:04.7  t3883   guardPress silent   in locked, ki 46: no answer at all
+  1:05.4  t3926   heavy      silent   in locked, ki 50: no answer at all
+  1:05.7  t3942   sig        silent   in launched, ki 51: no answer at all
+  1:05.8  t3951   sig        silent   in launched, ki 51: no answer at all
+  1:05.9  t3955   guardPress refused  in launched, ki 51: press_refused/queue_expired
+  1:06.1  t3966   heavy      refused  in launched, ki 51: press_refused/y
+  1:06.1  t3967   heavy      refused  in launched, ki 51: press_refused/y
+  1:06.3  t3977   sig        silent   in launched, ki 51: no answer at all
+  1:06.3  t3978   sig        refused  in launched, ki 51: press_refused/queue_expired
+  1:06.5  t3993   sig        refused  in launched, ki 51: press_refused/b
+  1:06.8  t4010   heavy      refused  in down, ki 52: press_refused/y
+  1:07.2  t4034   light      refused  in free, ki 54: press_refused/x
+  1:08.5  t4110   heavy      silent   in free, ki 60: no answer at all
+  1:14.0  t4439   sig        silent   in locked, ki 52: no answer at all
+  1:14.0  t4440   heavy      silent   in locked, ki 52: no answer at all
+  1:14.0  t4440   sig        silent   in locked, ki 52: no answer at all
+  1:14.0  t4441   heavy      silent   in locked, ki 52: no answer at all
+  1:14.0  t4441   sig        silent   in locked, ki 52: no answer at all
+  1:14.4  t4465   sig        silent   in locked, ki 57: no answer at all
+  1:14.6  t4474   powerPress silent   in locked, ki 58: no answer at all
+  1:16.3  t4576   sig        silent   in free, ki 66: no answer at all
+  1:16.5  t4587   sig        silent   in free, ki 67: no answer at all
+  1:16.5  t4588   sig        silent   in free, ki 67: no answer at all
+  1:16.5  t4589   sig        silent   in free, ki 67: no answer at all
+  1:16.5  t4590   sig        silent   in free, ki 67: no answer at all
+  1:16.5  t4591   sig        silent   in free, ki 67: no answer at all
+  1:16.5  t4592   sig        silent   in free, ki 67: no answer at all
+  1:16.7  t4599   sig        silent   in free, ki 68: no answer at all
+  1:20.1  t4805   powerPress silent   in locked, ki 30: no answer at all
+  1:25.4  t5125   context    silent   in locked, ki 31: no answer at all
+  1:25.6  t5138   light      silent   in locked, ki 33: no answer at all
+  1:25.7  t5139   light      silent   in locked, ki 33: no answer at all
+  1:25.8  t5149   heavy      silent   in locked, ki 33: no answer at all
+  1:26.1  t5166   sig        silent   in locked, ki 35: no answer at all
+  1:26.1  t5167   sig        silent   in locked, ki 35: no answer at all
+  1:26.1  t5168   sig        silent   in locked, ki 35: no answer at all
+  1:26.6  t5198   light      silent   in locked, ki 38: no answer at all
+  1:26.7  t5199   light      silent   in locked, ki 38: no answer at all
+  1:26.7  t5200   light      silent   in locked, ki 38: no answer at all
+  1:26.7  t5201   light      silent   in locked, ki 38: no answer at all
+  1:26.7  t5202   light      silent   in locked, ki 38: no answer at all
+  1:26.7  t5203   light      silent   in locked, ki 38: no answer at all
+  1:26.7  t5204   light      silent   in locked, ki 38: no answer at all
+  1:27.1  t5228   heavy      silent   in locked, ki 40: no answer at all
+  1:27.1  t5228   sig        silent   in locked, ki 40: no answer at all
+  1:27.4  t5246   rsStart    silent   in locked, ki 42 rs dir 2 level 0: no answer at all
+  1:28.8  t5325   heavy      silent   in locked, ki 48: no answer at all
+  1:29.2  t5350   sig        silent   in locked, ki 50: no answer at all
+  1:29.4  t5364   sig        silent   in launched, ki 51: no answer at all
+  1:30.3  t5418   sig        refused  in launched, ki 51: press_refused/b
+  1:30.5  t5430   sig        refused  in launched, ki 51: press_refused/b
+  1:30.9  t5452   heavy      refused  in launched, ki 51: press_refused/y
+  1:30.9  t5453   heavy      refused  in launched, ki 51: press_refused/y
+  1:30.9  t5454   heavy      refused  in launched, ki 51: press_refused/y
+  1:30.9  t5455   heavy      refused  in down, ki 51: press_refused/y
+  1:31.6  t5498   heavy      refused  in free, ki 55: press_refused/y
+  1:31.7  t5499   heavy      refused  in free, ki 55: press_refused/y
+  1:31.9  t5512   sig        refused  in free, ki 56: press_refused/b
+  1:32.6  t5554   sig        silent   in locked, ki 58: no answer at all
+  1:33.6  t5618   sig        silent   in locked, ki 58: no answer at all
+  1:33.7  t5619   dodge      silent   in locked, ki 58: no answer at all
+  1:36.3  t5777   sig        silent   in free, ki 55: no answer at all
+  1:37.2  t5834   sig        silent   in locked, ki 60: no answer at all
+  1:37.3  t5835   sig        silent   in locked, ki 60: no answer at all
+  1:37.3  t5836   sig        silent   in locked, ki 60: no answer at all
+  1:37.3  t5837   sig        silent   in locked, ki 60: no answer at all
+  1:37.6  t5858   sig        refused  in locked, ki 62: press_refused/queue_expired, press_refused/queue_expired, press_refused/queue_expired
+  1:38.4  t5903   sig        refused  in free, ki 36: press_stunned/b
+  1:39.6  t5974   rsStart    refused  in locked, ki 34 rs dir 4 level 0: stick/0
+  1:40.9  t6055   rsStart    silent   in locked, ki 38 rs dir 4 level 0: no answer at all
+  1:42.3  t6135   dodge      silent   in free, ki 12: no answer at all
+  1:42.3  t6136   dodge      silent   in free, ki 12: no answer at all
+  1:43.9  t6232   sig        silent   in free, ki 20: no answer at all
+  1:48.3  t6498   sig        silent   in locked, ki 22: no answer at all
+  1:48.3  t6499   sig        silent   in locked, ki 22: no answer at all
+  1:48.8  t6527   heavy      silent   in locked, ki 24: no answer at all
+  1:48.8  t6528   heavy      silent   in locked, ki 24: no answer at all
+  1:48.8  t6529   heavy      silent   in locked, ki 24: no answer at all
+  1:49.7  t6583   heavy      silent   in free, ki 24: no answer at all
+  1:49.7  t6583   sig        silent   in free, ki 24: no answer at all
+  1:49.7  t6584   heavy      silent   in free, ki 25: no answer at all
+  1:49.7  t6584   sig        silent   in free, ki 25: no answer at all
+  1:50.6  t6638   light      silent   in free, ki 15: no answer at all
+  1:50.7  t6639   light      silent   in free, ki 15: no answer at all
+  1:50.9  t6655   heavy      refused  in free, ki 16: press_chase_no_ki/y
+  1:50.9  t6656   heavy      refused  in free, ki 16: press_chase_no_ki/y
+  1:51.0  t6657   heavy      refused  in free, ki 16: press_chase_no_ki/y
+  1:51.1  t6668   sig        refused  in free, ki 17: press_chase_no_ki/b
+  1:51.3  t6679   sig        refused  in free, ki 18: press_chase_no_ki/b
+  1:51.5  t6692   context    silent   in free, ki 19: no answer at all
+  1:52.5  t6753   sig        refused  in free, ki 4: press_chase_no_ki/b
+  1:52.6  t6754   sig        refused  in free, ki 4: press_chase_no_ki/b
+  1:52.6  t6757   sig        silent   in free, ki 4: no answer at all
+  1:52.6  t6757   powerPress silent   in free, ki 4: no answer at all
+  1:53.1  t6784   sig        silent   in free, ki 13: no answer at all
+  1:53.1  t6785   sig        silent   in free, ki 13: no answer at all
+  1:53.1  t6786   sig        refused  in free, ki 13: press_refused/queue_expired, press_refused/queue_expired, press_refused/queue_expired
+  1:55.5  t6927   sig        silent   in locked, ki 6: no answer at all
+  1:57.6  t7057   sig        silent   in locked, ki 5: no answer at all
+  1:57.9  t7073   sig        silent   in locked, ki 0: no answer at all
+  1:59.1  t7148   rsStart    refused  in locked, ki 7 rs dir 2 level 0: stick/answered
+  2:00.8  t7248   rsStart    partly   in locked, ki 15 rs dir 2 level 0: stick/0
+  2:02.8  t7368   sig        silent   in locked, ki 26: no answer at all
+  2:03.3  t7399   dodge      refused  in free, ki 13: press_refused/queue_expired
+  2:03.4  t7403   heavy      silent   in free, ki 14: no answer at all
+  2:03.8  t7426   heavy      silent   in locked, ki 11: no answer at all
+  2:04.7  t7482   heavy      silent   in locked, ki 12: no answer at all
+  2:05.1  t7504   sig        refused  in locked, ki 14: driver_refused
+  2:08.6  t7714   rsStart    silent   in locked, ki 29 rs dir 4 level 0: no answer at all
+  2:08.9  t7737   context    partly   in locked, ki 31: grapple_refused/busy
+  2:09.2  t7751   sig        refused  in locked, ki 32: press_stunned/b
+  2:09.8  t7790   sig        silent   in locked, ki 26: no answer at all
+  2:09.8  t7791   heavy      silent   in locked, ki 26: no answer at all
+  2:18.4  t8307   sig        silent   in locked, ki 20: no answer at all
+  2:18.9  t8337   sig        silent   in free, ki 23: no answer at all
+  2:20.3  t8418   heavy      silent   in locked, ki 21: no answer at all
+  2:21.6  t8497   sig        silent   in locked, ki 9: no answer at all
+  2:21.9  t8514   sig        silent   in locked, ki 11: no answer at all
+  2:22.3  t8537   sig        silent   in locked, ki 12: no answer at all
+  2:22.6  t8556   sig        silent   in locked, ki 14: no answer at all
+  2:22.6  t8557   sig        silent   in locked, ki 14: no answer at all
+  2:22.6  t8558   sig        silent   in locked, ki 14: no answer at all
+  2:22.7  t8559   sig        silent   in locked, ki 14: no answer at all
+  2:22.7  t8560   sig        refused  in locked, ki 14: driver_refused
+  2:22.7  t8561   sig        refused  in locked, ki 15: driver_refused, press_refused/queue_expired
+  2:23.1  t8583   rsStart    partly   in free, ki 16 rs dir 4 level 0: stick/soon
+  2:24.1  t8644   sig        partly   in free, ki 21: press_refused/queue_expired
+  2:24.4  t8663   heavy      refused  in free, ki 21: press_refused/queue_expired, press_refused/queue_expired
+  2:24.7  t8683   light      silent   in free, ki 23: no answer at all
+  2:24.7  t8684   light      silent   in free, ki 23: no answer at all
+  2:24.9  t8693   heavy      refused  in free, ki 24: stick/late
+  2:25.2  t8710   dodge      refused  in free, ki 6: press_refused/queue_expired
+  2:26.1  t8766   sig        silent   in locked, ki 10: no answer at all
+  2:26.1  t8767   heavy      silent   in locked, ki 10: no answer at all
+  2:26.1  t8767   sig        silent   in locked, ki 10: no answer at all
+  2:26.5  t8788   sig        silent   in free, ki 12: no answer at all
+  2:26.6  t8794   dodge      silent   in free, ki 12: no answer at all
+  2:26.6  t8795   dodge      silent   in free, ki 12: no answer at all
+  2:26.8  t8807   heavy      silent   in free, ki 12: no answer at all
+  2:27.1  t8826   heavy      silent   in free, ki 12: no answer at all
+  2:27.1  t8827   heavy      silent   in free, ki 12: no answer at all
+  2:27.1  t8828   heavy      silent   in free, ki 12: no answer at all
+  2:27.2  t8829   heavy      silent   in free, ki 12: no answer at all
+  2:27.2  t8830   heavy      silent   in free, ki 12: no answer at all
+  2:27.4  t8844   heavy      silent   in free, ki 12: no answer at all
+  2:27.4  t8845   heavy      silent   in free, ki 12: no answer at all
+  2:27.8  t8867   light      silent   in free, ki 12: no answer at all
+  2:27.8  t8871   dodge      silent   in free, ki 12: no answer at all
+  2:27.9  t8872   dodge      silent   in free, ki 12: no answer at all
+  2:28.0  t8881   heavy      silent   in free, ki 12: no answer at all
+  2:28.3  t8896   heavy      silent   in free, ki 12: no answer at all
+  2:28.3  t8897   heavy      silent   in free, ki 12: no answer at all
+  2:28.3  t8898   heavy      silent   in free, ki 12: no answer at all
+  2:28.6  t8914   sig        silent   in free, ki 12: no answer at all
+  2:28.8  t8926   heavy      silent   in free, ki 12: no answer at all
+  2:28.8  t8927   heavy      silent   in free, ki 12: no answer at all
+  2:29.0  t8939   dodge      silent   in free, ki 12: no answer at all
+  2:29.0  t8942   heavy      silent   in free, ki 12: no answer at all
+  2:29.3  t8958   heavy      refused  in free, ki 12: press_refused/queue_expired
+  2:32.3  t9137   rsStart    partly   in free, ki 18 rs dir 2 level 0: stick/answered
+  2:32.3  t9138   rsStart    refused  in locked, ki 14 rs dir 2 level 0: stick/replaced
+  2:32.3  t9139   rsStart    refused  in locked, ki 14 rs dir 2 level 0: stick/replaced, stick/0
+  2:36.4  t9387   dodge      silent   in free, ki 23: no answer at all
+  2:37.4  t9442   rsStart    silent   in free, ki 33 rs dir 2 level 0: no answer at all
+  2:38.8  t9531   guardPress silent   in free, ki 39: no answer at all
+  2:39.4  t9562   guardPress silent   in free, ki 41: no answer at all
+  2:40.6  t9635   heavy      silent   in free, ki 48: no answer at all
+  2:40.9  t9655   sig        silent   in free, ki 49: no answer at all
+  2:40.9  t9656   sig        silent   in free, ki 49: no answer at all
+  2:40.9  t9657   sig        silent   in free, ki 49: no answer at all
+  2:41.0  t9658   sig        silent   in free, ki 49: no answer at all
+  2:41.0  t9659   sig        silent   in free, ki 50: no answer at all
+  2:41.1  t9663   sig        silent   in free, ki 50: no answer at all
+  2:41.3  t9676   sig        silent   in free, ki 51: no answer at all
+  2:41.7  t9699   heavy      silent   in locked, ki 49: no answer at all
+  2:41.9  t9714   heavy      silent   in locked, ki 51: no answer at all
+  2:42.8  t9766   sig        partly   in locked, ki 37: driver_refused
+  2:43.9  t9832   sig        silent   in locked, ki 37: no answer at all
+  2:44.2  t9852   powerPress silent   in locked, ki 38: no answer at all
+  2:56.1  t10564  rsStart    silent   in locked, ki 20 rs dir 4 level 0: no answer at all
+  2:56.6  t10595  rsStart    partly   in locked, ki 22 rs dir 4 level 0: stick/close
+  2:56.9  t10613  rsStart    partly   in locked, ki 23 rs dir 4 level 0: stick/taken
+  2:57.9  t10677  sig        silent   in locked, ki 27: no answer at all
+  2:58.3  t10696  sig        silent   in locked, ki 28: no answer at all
+  3:00.4  t10825  rsStart    partly   in locked, ki 28 rs dir 2 level 0: stick/late
+  3:03.3  t11000  rsStart    partly   in locked, ki 34 rs dir 2 level 0: stick/hit
+  3:12.5  t11549  dodge      silent   in locked, ki 18: no answer at all
+  3:14.6  t11676  heavy      silent   in locked, ki 14: no answer at all
+  3:14.6  t11676  dodge      silent   in locked, ki 14: no answer at all
+  3:15.0  t11699  heavy      silent   in locked, ki 16: no answer at all
+  3:15.2  t11712  sig        refused  in locked, ki 16: press_stunned/b
+  3:23.8  t12231  dodge      silent   in free, ki 10: no answer at all
+  3:24.8  t12291  dodge      silent   in free, ki 15: no answer at all
+  3:25.9  t12353  heavy      silent   in locked, ki 13: no answer at all
+  3:26.7  t12402  dodge      silent   in free, ki 17: no answer at all
+  3:26.7  t12403  dodge      silent   in free, ki 17: no answer at all
+  3:26.7  t12404  dodge      silent   in free, ki 17: no answer at all
+  3:27.4  t12442  guardPress silent   in locked, ki 20: no answer at all
+  3:27.4  t12443  guardPress silent   in locked, ki 21: no answer at all
+  3:28.9  t12537  dodge      silent   in locked, ki 35: no answer at all
+  3:29.1  t12547  rsStart    refused  in locked, ki 36 rs dir 4 level 0: stick/8
+  3:30.9  t12657  context    silent   in launched, ki 39: no answer at all
+  3:31.0  t12658  light      refused  in launched, ki 39: press_refused/x
+  3:31.0  t12659  light      refused  in launched, ki 39: press_refused/x
+  3:31.0  t12660  light      refused  in launched, ki 39: press_refused/x
+  3:31.3  t12676  heavy      refused  in launched, ki 39: press_refused/y
+  3:31.5  t12691  heavy      refused  in launched, ki 39: press_refused/y
+  3:31.8  t12707  sig        refused  in launched, ki 39: press_refused/b
+  3:32.0  t12721  sig        refused  in launched, ki 39: press_refused/b
+  3:32.4  t12746  sig        refused  in launched, ki 39: press_refused/b
+  3:32.4  t12747  powerPress silent   in launched, ki 39: no answer at all
+  3:40.2  t13214  sig        silent   in free, ki 19: no answer at all
+  3:41.0  t13258  sig        refused  in free, ki 2: driver_refused/ki
+  3:41.3  t13280  sig        refused  in free, ki 6: driver_refused/ki
+  3:41.5  t13288  sig        refused  in free, ki 7: driver_refused/ki
+  3:41.6  t13295  sig        partly   in free, ki 8: driver_refused/ki
+  3:41.8  t13309  sig        refused  in free, ki 1: driver_refused/ki
+  3:41.9  t13317  sig        refused  in free, ki 2: driver_refused/ki
+  3:46.7  t13603  heavy      silent   in locked, ki 9: no answer at all
+  3:46.7  t13603  sig        silent   in locked, ki 9: no answer at all
+  3:46.7  t13604  heavy      silent   in locked, ki 9: no answer at all
+  3:46.7  t13604  sig        silent   in locked, ki 9: no answer at all
+  3:46.8  t13605  heavy      silent   in locked, ki 9: no answer at all
+  3:46.8  t13605  sig        silent   in locked, ki 9: no answer at all
+  3:46.8  t13606  heavy      silent   in locked, ki 9: no answer at all
+  3:46.8  t13606  sig        silent   in locked, ki 9: no answer at all
+  3:46.8  t13607  heavy      silent   in locked, ki 10: no answer at all
+  3:46.8  t13607  sig        silent   in locked, ki 10: no answer at all
+  3:47.1  t13626  context    partly   in locked, ki 11: grapple_refused/busy
+  3:50.1  t13807  rsStart    partly   in locked, ki 19 rs dir 2 level 0: stick/late
+  3:52.1  t13925  rsStart    partly   in locked, ki 5 rs dir 2 level 0: stick/hit
+  3:55.0  t14100  heavy      silent   in locked, ki 12: no answer at all
+  3:55.8  t14145  rsStart    refused  in free, ki 0 rs dir 2 level 0: stick/ki
+  3:58.7  t14320  rsStart    silent   in locked, ki 5 rs dir 2 level 0: no answer at all
+  4:00.9  t14454  heavy      refused  in locked, ki 14: press_stunned/y
+  4:03.7  t14621  heavy      silent   in free, ki 7: no answer at all
+  4:03.7  t14622  heavy      silent   in free, ki 7: no answer at all
+  4:03.7  t14623  sig        silent   in free, ki 7: no answer at all
+  4:03.9  t14636  heavy      silent   in free, ki 7: no answer at all
+  4:03.9  t14637  sig        silent   in free, ki 7: no answer at all
+  4:04.1  t14647  sig        silent   in free, ki 7: no answer at all
+  4:05.2  t14713  sig        silent   in free, ki 7: no answer at all
+  4:05.2  t14714  sig        silent   in free, ki 7: no answer at all
+  4:05.3  t14715  sig        silent   in free, ki 7: no answer at all
+  4:05.9  t14755  heavy      silent   in free, ki 7: no answer at all
+  4:06.3  t14780  sig        silent   in free, ki 7: no answer at all
+  4:07.4  t14847  dodge      silent   in locked, ki 11: no answer at all
+  4:15.6  t15338  heavy      silent   in launched, ki 14: no answer at all
+  4:15.9  t15357  sig        refused  in launched, ki 14: press_refused/b, press_refused/queue_expired
+  4:16.4  t15382  rsStart    refused  in launched, ki 14 rs dir 2 level 0: stick/0
+  4:17.5  t15449  heavy      refused  in down, ki 16: press_refused/y
+  4:17.7  t15463  heavy      refused  in down, ki 17: press_refused/y
+  4:17.7  t15464  heavy      silent   in down, ki 18: no answer at all
+  4:17.7  t15464  sig        refused  in down, ki 18: press_refused/y
+  4:17.9  t15476  sig        refused  in free, ki 19: press_refused/b
+  4:17.9  t15477  sig        refused  in free, ki 19: press_refused/b
+  4:18.1  t15487  dodge      silent   in free, ki 19: no answer at all
+  4:18.1  t15488  heavy      refused  in free, ki 20: press_refused/y
+  4:18.4  t15503  heavy      partly   in free, ki 21: press_refused/y
+  4:19.1  t15544  rsStart    silent   in locked, ki 24 rs dir 3 level 0: no answer at all
+  4:20.1  t15605  heavy      refused  in locked, ki 28: press_stunned/y
+  4:20.1  t15606  heavy      refused  in locked, ki 28: press_stunned/y
+  4:20.1  t15607  heavy      refused  in locked, ki 28: press_stunned/y
+  4:21.3  t15676  powerPress silent   in locked, ki 26: no answer at all
+  4:23.2  t15792  rsStart    partly   in locked, ki 36 rs dir 3 level 0: stick/taken
+  4:24.4  t15864  sig        refused  in locked, ki 41: driver_refused
+  4:25.4  t15922  rsStart    partly   in locked, ki 42 rs dir 3 level 0: stick/close
+  4:27.8  t16070  rsStart    partly   in free, ki 45 rs dir 3 level 0: stick/chase
+  4:28.6  t16115  heavy      refused  in free, ki 25: press_chase_no_ki/y
+  4:28.6  t16116  heavy      refused  in free, ki 25: press_chase_no_ki/y
+  4:28.6  t16117  heavy      refused  in free, ki 25: press_chase_no_ki/y
+  4:28.9  t16135  sig        refused  in free, ki 26: press_chase_no_ki/b
+  4:29.3  t16160  rsStart    partly   in free, ki 28 rs dir 3 level 0: stick/soon
+  4:30.4  t16221  heavy      partly   in free, ki 24: press_chase_no_ki/y
+  4:34.2  t16453  rsStart    partly   in locked, ki 19 rs dir 3 level 0: stick/taken
+  4:35.1  t16503  sig        silent   in locked, ki 18: no answer at all
+  4:37.0  t16621  sig        silent   in locked, ki 26: no answer at all
+  4:37.4  t16641  dodge      silent   in locked, ki 27: no answer at all
+  4:37.4  t16642  heavy      silent   in locked, ki 27: no answer at all
+  4:37.4  t16642  dodge      silent   in locked, ki 27: no answer at all
+  4:37.4  t16643  heavy      silent   in locked, ki 27: no answer at all
+  4:37.4  t16643  dodge      silent   in locked, ki 27: no answer at all
+  4:38.9  t16735  dodge      silent   in free, ki 12: no answer at all
+  4:40.8  t16849  dodge      silent   in free, ki 21: no answer at all
+  4:43.9  t17033  dodge      silent   in locked, ki 21: no answer at all
+  4:45.1  t17105  dodge      silent   in locked, ki 26: no answer at all
+  4:45.9  t17155  sig        refused  in locked, ki 30: driver_refused
+  4:46.1  t17167  sig        partly   in locked, ki 31: driver_refused
+  4:46.3  t17178  sig        refused  in locked, ki 31: press_stunned/b
+  4:46.5  t17188  sig        refused  in locked, ki 32: driver_refused
+  4:48.1  t17283  rsStart    partly   in locked, ki 30 rs dir 2 level 0: stick/taken
+  4:48.4  t17305  rsStart    partly   in locked, ki 32 rs dir 3 level 0: stick/close
+  4:50.5  t17430  context    silent   in locked, ki 35: no answer at all
+  4:50.5  t17431  context    silent   in locked, ki 35: no answer at all
+  4:50.5  t17432  context    silent   in locked, ki 35: no answer at all
+  4:50.7  t17442  context    silent   in locked, ki 36: no answer at all
+  4:50.7  t17443  context    silent   in locked, ki 36: no answer at all
+  4:50.7  t17444  context    silent   in locked, ki 36: no answer at all
+  4:51.1  t17463  context    silent   in locked, ki 38: no answer at all
+  4:51.3  t17476  context    silent   in locked, ki 39: no answer at all
+  4:51.4  t17487  context    silent   in locked, ki 39: no answer at all
+  4:51.6  t17497  context    silent   in locked, ki 40: no answer at all
+  4:51.6  t17498  context    silent   in locked, ki 40: no answer at all
+  4:51.8  t17507  context    silent   in locked, ki 41: no answer at all
+  4:51.9  t17517  context    silent   in locked, ki 41: no answer at all
+  4:53.7  t17624  context    silent   in locked, ki 44: no answer at all
+  4:53.9  t17634  context    silent   in locked, ki 45: no answer at all
+  4:54.1  t17644  context    silent   in locked, ki 46: no answer at all
+  4:54.3  t17655  context    silent   in locked, ki 46: no answer at all
+  4:55.8  t17747  context    silent   in locked, ki 53: no answer at all
+  4:57.4  t17845  sig        silent   in locked, ki 41: no answer at all
+  4:57.6  t17858  sig        refused  in launched, ki 41: press_refused/queue_expired, press_refused/queue_expired, press_refused/queue_expired
+  4:57.9  t17872  sig        refused  in launched, ki 41: press_refused/b
+  4:58.1  t17889  sig        refused  in launched, ki 41: press_refused/b
+  4:58.2  t17890  sig        refused  in launched, ki 41: press_refused/b
+  4:58.2  t17891  sig        refused  in launched, ki 41: press_refused/b
+  4:58.2  t17892  sig        refused  in launched, ki 41: press_refused/b
+  4:58.4  t17905  sig        refused  in launched, ki 41: press_refused/b
+  4:58.6  t17919  sig        refused  in launched, ki 41: press_refused/b
+  4:58.9  t17935  sig        refused  in launched, ki 41: press_refused/b
+  4:59.1  t17949  sig        refused  in launched, ki 41: press_refused/b
+  5:00.0  t18002  light      refused  in launched, ki 41: press_refused/x
+  5:00.1  t18003  light      refused  in launched, ki 41: press_refused/x
+  5:00.9  t18056  heavy      refused  in free, ki 44: press_refused/y
+  5:01.2  t18070  heavy      refused  in free, ki 46: press_refused/y
+  5:01.2  t18071  heavy      refused  in free, ki 46: press_refused/y
+  5:01.8  t18108  light      silent   in locked, ki 49: no answer at all
+  5:03.6  t18213  sig        refused  in locked, ki 56: driver_refused
+  5:05.5  t18328  light      silent   in locked, ki 48: no answer at all
+  5:11.7  t18701  context    refused  in locked, ki 65: grapple_refused/busy
+  5:14.1  t18847  rsStart    partly   in locked, ki 76 rs dir 3 level 0: stick/close
+  5:14.7  t18884  heavy      refused  in locked, ki 77: press_stunned/y
+  5:15.4  t18922  heavy      silent   in locked, ki 79: no answer at all
+  5:26.7  t19603  rsStart    silent   in locked, ki 57 rs dir 3 level 0: no answer at all
+  5:27.2  t19633  heavy      silent   in locked, ki 60: no answer at all
+  5:27.5  t19650  dodge      silent   in free, ki 61: no answer at all
+  5:27.6  t19657  heavy      silent   in free, ki 62: no answer at all
+  5:27.8  t19669  sig        silent   in free, ki 63: no answer at all
+  5:28.1  t19687  heavy      silent   in free, ki 64: no answer at all
+  5:28.1  t19687  sig        silent   in free, ki 64: no answer at all
+  5:28.5  t19712  dodge      refused  in free, ki 66: press_refused/queue_expired
+  5:28.8  t19726  heavy      silent   in free, ki 67: no answer at all
+  5:30.4  t19825  dodge      silent   in locked, ki 63: no answer at all
+  5:30.5  t19828  sig        refused  in locked, ki 64: driver_refused
+  5:30.5  t19829  sig        refused  in locked, ki 64: driver_refused
+  5:30.5  t19830  sig        refused  in locked, ki 64: driver_refused
+  5:31.8  t19908  rsStart    partly   in free, ki 47 rs dir 2 level 0: stick/replaced
+  5:35.3  t20119  sig        silent   in locked, ki 53: no answer at all
+  5:37.1  t20226  sig        partly   in locked, ki 61: driver_refused
+  5:37.3  t20239  sig        partly   in locked, ki 62: press_stunned/b
+  5:37.5  t20249  sig        silent   in launched, ki 62: no answer at all
+  5:37.7  t20261  sig        refused  in launched, ki 62: press_stunned/b
+  5:37.9  t20273  sig        refused  in launched, ki 62: driver_refused
+  5:38.2  t20293  sig        silent   in launched, ki 62: no answer at all
+  5:38.4  t20302  sig        refused  in launched, ki 62: press_stunned/b
+  5:38.5  t20312  sig        refused  in launched, ki 62: press_stunned/b
+  5:38.7  t20323  sig        refused  in launched, ki 62: press_stunned/b
+  5:38.9  t20332  sig        refused  in launched, ki 62: press_stunned/b
+  5:39.3  t20356  sig        refused  in launched, ki 62: driver_refused
+  5:42.7  t20563  sig        refused  in locked, ki 37: driver_refused
+  5:43.0  t20579  sig        refused  in locked, ki 38: driver_refused
+  5:43.1  t20589  sig        refused  in locked, ki 38: driver_refused
+  5:43.3  t20597  sig        refused  in locked, ki 39: driver_refused
+  5:43.4  t20605  sig        refused  in locked, ki 40: driver_refused
+  5:43.9  t20636  sig        refused  in locked, ki 28: driver_refused
+  5:44.1  t20646  sig        partly   in locked, ki 29: driver_refused
+  5:44.3  t20655  sig        refused  in locked, ki 30: driver_refused
+  5:44.6  t20678  sig        refused  in locked, ki 33: driver_refused
+  5:45.3  t20720  dodge      silent   in free, ki 36: no answer at all
+  5:48.6  t20915  rsStart    partly   in free, ki 16 rs dir 3 level 0: stick/close
+  5:49.5  t20970  rsStart    partly   in locked, ki 19 rs dir 3 level 0: stick/close
+  5:53.8  t21229  heavy      silent   in locked, ki 7: no answer at all
+  5:54.3  t21255  sig        refused  in locked, ki 7: press_stunned/b
+  5:54.4  t21267  sig        refused  in locked, ki 8: press_stunned/b
+  5:55.7  t21344  sig        partly   in locked, ki 8: driver_refused
+  5:56.0  t21360  sig        refused  in locked, ki 6: driver_refused
+  5:56.8  t21407  sig        silent   in locked, ki 9: no answer at all
+  5:57.0  t21419  dodge      silent   in locked, ki 5: no answer at all
+  5:57.0  t21420  dodge      silent   in locked, ki 5: no answer at all
+  5:57.0  t21421  dodge      silent   in locked, ki 5: no answer at all
+  5:57.0  t21422  dodge      silent   in locked, ki 6: no answer at all
+  5:57.1  t21423  dodge      silent   in locked, ki 6: no answer at all
+  6:00.1  t21608  light      silent   in locked, ki 12: no answer at all
+  6:00.3  t21617  light      silent   in locked, ki 13: no answer at all
+  6:09.5  t22169  sig        silent   in locked, ki 21: no answer at all
+  6:13.2  t22394  sig        silent   in free, ki 36: no answer at all
+  6:13.3  t22395  sig        silent   in free, ki 37: no answer at all
+  6:13.3  t22396  sig        silent   in free, ki 37: no answer at all
+  6:13.3  t22397  sig        silent   in free, ki 37: no answer at all
+  6:13.5  t22410  sig        silent   in free, ki 38: no answer at all
