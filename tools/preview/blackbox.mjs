@@ -264,10 +264,10 @@ export const PAGE_SCRIPT = String.raw`
   window.__bbm = function (tick, kind) { if (lastBmTick > tick + 5) lastBm = {}; lastBmTick = tick; if (lastBm[kind] !== undefined && tick - lastBm[kind] < 60) return; lastBm[kind] = tick; if (M.length < 600) M.push({ tick: tick, kind: kind }); };
   window.addEventListener('keydown', function (e) { if (e.isTrusted && e.key === 'F9' && !e.repeat) { e.preventDefault(); markNow(); } }, true);
   setInterval(function () { try { var g = navigator.getGamepads ? navigator.getGamepads() : [], on = false; for (var i = 0; i < g.length; i++) { var q = g[i]; if (q && q.buttons && q.buttons[8] && q.buttons[5] && q.buttons[8].pressed && q.buttons[5].pressed) on = true; } if (on && !padHeld) markNow(); padHeld = on; } catch (e) { /* none */ } }, 80);
-  function fReset() { F = { n: 0, over33: 0, over50: 0, over100: 0, away: 0, worst: 0, worstTick: 0, slow: [], last: 0, t0: performance.now(), rs: [], rsLast: false, rsPad: '' }; }
+  function fReset() { F = { n: 0, over33: 0, over50: 0, over100: 0, away: 0, worst: 0, worstTick: 0, slow: [], last: 0, t0: performance.now(), rs: [], rsLast: false, rsPad: '', rb: [], rbLast: {}, rt: [], rtLast: {}, ls: [], lsLast: {}, pads: {} }; }
   fReset();
   window.__bbf_reset = fReset;
-  window.__bbf_snap = function (lean) { return { threshold: 33.4, n: F.n, over33: F.over33, over50: F.over50, over100: F.over100, away: F.away, worst: Math.round(F.worst * 10) / 10, worstTick: F.worstTick, seconds: Math.round((performance.now() - F.t0) / 100) / 10, kept: F.slow.length, slow: F.slow.slice(), rsPad: F.rsPad, rs: lean ? undefined : F.rs.slice(), rsCount: F.rs.length }; };
+  window.__bbf_snap = function (lean) { return { threshold: 33.4, n: F.n, over33: F.over33, over50: F.over50, over100: F.over100, away: F.away, worst: Math.round(F.worst * 10) / 10, worstTick: F.worstTick, seconds: Math.round((performance.now() - F.t0) / 100) / 10, kept: F.slow.length, slow: F.slow.slice(), rsPad: F.rsPad, rs: lean ? undefined : F.rs.slice(), rsCount: F.rs.length, rb: lean ? undefined : F.rb.slice(), rbCount: F.rb.length, rt: lean ? undefined : F.rt.slice(), rtCount: F.rt.length, ls: lean ? undefined : F.ls.slice(), lsCount: F.ls.length, pads: lean ? undefined : JSON.parse(JSON.stringify(F.pads)) }; };
   // The raw right stick (the EP's stand-in, 2026-11-01): the first connected pad's axes 2 and 3 (the standard mapping's right stick) as the browser hands them over, a sample each frame while the stick is off centre
   // and the frame it comes back: [tick, ms, x, y]. It only READS the pad; it is saved in the same local file so a flick that did nothing can be told apart: the thumb not reading, or the rules refusing. Nothing leaves the PC.
   function readRightStick(now) {
@@ -281,8 +281,34 @@ export const PAGE_SCRIPT = String.raw`
       F.rsLast = act;
     } catch (e) { /* the box must never break the page */ }
   }
+  // The rest of the raw pad (Controls, 2026-11-06), recorded the way the right stick is: only READ from every connected pad (up to four, each row says which), only changes, saved in the same local file as rawPad.
+  // So "I let go but it kept attacking" can be told apart: a stuck button, a trigger that does not come back or a noisy stick (in the record) against the game (a clean record), and a phantom or second pad is seen.
+  //   buttons: [tick, ms, pad, mask] when that pad's set of pressed buttons changes, one bit per standard-mapping button (bit 0 A, 1 B, 2 X, 3 Y, 4 LB, 5 RB, 6 LT, 7 RT, 8 Back, 9 Start, 10 L3, 11 R3, 12 to 15 the D-pad up, down, left, right, 16 Home); a pad's first frame is always recorded
+  //   triggers: [tick, ms, pad, lt, rt] (0 to 1, two places) when either moves by 0.04 or more or leaves or returns to zero; a pad's first frame is always recorded
+  //   leftStick: [tick, ms, pad, x, y] each frame it is off centre (over 0.02) and the frame it comes back, like the right stick
+  //   pads: every pad the browser showed (index, id, mapping, button and axis counts, the tick it was first seen)
+  function readRawPad(now) {
+    try {
+      var pads = navigator.getGamepads ? navigator.getGamepads() : [], t = window.__bb_t || 0, ms = Math.round(now), n = 0;
+      for (var i = 0; i < pads.length && n < 4; i++) {
+        var p = pads[i];
+        if (!p || !p.connected) continue;
+        n++;
+        if (!F.pads[i] && Object.keys(F.pads).length < 8) F.pads[i] = { id: String(p.id || "").slice(0, 80), mapping: String(p.mapping || ""), buttons: p.buttons ? p.buttons.length : 0, axes: p.axes ? p.axes.length : 0, firstTick: t };
+        var b = p.buttons || [], mask = 0, k;
+        for (k = 0; k < b.length && k < 31; k++) if (b[k] && b[k].pressed) mask |= (1 << k);
+        if (mask !== F.rbLast[i] && F.rb.length < 20000) { F.rb.push([t, ms, i, mask]); F.rbLast[i] = mask; }
+        var lt = b[6] ? Math.round((b[6].value || 0) * 100) / 100 : 0, rt = b[7] ? Math.round((b[7].value || 0) * 100) / 100 : 0, tl = F.rtLast[i];
+        if (!tl || Math.abs(lt - tl[0]) >= 0.04 || Math.abs(rt - tl[1]) >= 0.04 || (lt === 0) !== (tl[0] === 0) || (rt === 0) !== (tl[1] === 0)) { if (F.rt.length < 20000) { F.rt.push([t, ms, i, lt, rt]); F.rtLast[i] = [lt, rt]; } }
+        var a = p.axes || [], x = a[0] || 0, y = a[1] || 0, act = Math.abs(x) > 0.02 || Math.abs(y) > 0.02;
+        if ((act || F.lsLast[i]) && F.ls.length < 40000) F.ls.push([t, ms, i, Math.round(x * 100) / 100, Math.round(y * 100) / 100]);
+        F.lsLast[i] = act;
+      }
+    } catch (e) { /* the box must never break the page */ }
+  }
   function onFrame(now) {
     readRightStick(now);
+    readRawPad(now);
     if (F.last && !document.hidden) {
       var d = now - F.last;
       if (d > 1000) F.away++;
@@ -303,7 +329,7 @@ export const PAGE_SCRIPT = String.raw`
   function css(el, o) { for (var k in o) el.style[k] = o[k]; return el; }
   function stamp() { var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()); }
   function save(replayText, answers, matchOver, frames) {
-    var obj = { kind: 'orb-first-play', marks: (window.__bb_lastMarks || M).slice(0, 600), note: 'Recorded on this PC by the private page. Nothing was sent anywhere. The replay plays back through the game\'s own replay path. frames: the slow frames of that play (tick, ms, seconds in).', savedAt: new Date().toISOString(), pageSearch: String(location.search || ''), build: window.__build || null, audio: window.__audio_snap ? window.__audio_snap(true) : null, matchOver: matchOver, answers: answers, frames: frames ? Object.assign({}, frames, { rs: undefined }) : null, rawRightStick: frames && frames.rs ? { pad: frames.rsPad, axes: 'the standard mapping, axes 2 and 3 (x, y)', note: 'a sample [tick, ms, x, y] each frame the stick was off centre, and the frame it came back; only read from the pad, nothing sent', samples: frames.rs } : null, replay: JSON.parse(replayText) };
+    var obj = { kind: 'orb-first-play', marks: (window.__bb_lastMarks || M).slice(0, 600), note: 'Recorded on this PC by the private page. Nothing was sent anywhere. The replay plays back through the game\'s own replay path. frames: the slow frames of that play (tick, ms, seconds in).', savedAt: new Date().toISOString(), pageSearch: String(location.search || ''), build: window.__build || null, audio: window.__audio_snap ? window.__audio_snap(true) : null, matchOver: matchOver, answers: answers, frames: frames ? Object.assign({}, frames, { rs: undefined, rb: undefined, rt: undefined, ls: undefined, pads: undefined }) : null, rawPad: frames && frames.rb ? { pad: frames.rsPad, mapping: 'the standard mapping', note: 'read from the pad, only changes, nothing sent. buttons: [tick, ms, pad, mask] on a change (bit 0 A, 1 B, 2 X, 3 Y, 4 LB, 5 RB, 6 LT, 7 RT, 8 Back, 9 Start, 10 L3, 11 R3, 12 to 15 the D-pad up, down, left, right, 16 Home); triggers: [tick, ms, pad, lt, rt] when either moves by 0.04 or leaves or returns to zero; leftStick: [tick, ms, pad, x, y] each frame off centre and the frame it came back (y down is positive); pad is the browser pad index; pads: every pad the browser showed', pads: frames.pads || {}, buttons: frames.rb, triggers: frames.rt, leftStick: frames.ls } : null, rawRightStick: frames && frames.rs ? { pad: frames.rsPad, axes: 'the standard mapping, axes 2 and 3 (x, y)', note: 'a sample [tick, ms, x, y] each frame the stick was off centre, and the frame it came back; only read from the pad, nothing sent', samples: frames.rs } : null, replay: JSON.parse(replayText) };
     var blob = new Blob([JSON.stringify(obj)], { type: 'application/json' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = 'orb-first-play-' + stamp() + '.json';
@@ -336,7 +362,7 @@ export const PAGE_SCRIPT = String.raw`
         window.__bb_lastMarks = M.splice(0);   // the match that ended keeps its marks; the next one starts with none
         if (seen[eid] === 1) continue;
         seen[eid] = 1;
-        try { var L = JSON.parse(localStorage.getItem(K + '-list') || '[]'); L.push({ at: e.at, over: !!e.over, replay: e.replay, frames: e.frames ? Object.assign({}, e.frames, { rs: undefined }) : null }); while (L.length > 5) L.shift(); localStorage.setItem(K + '-list', JSON.stringify(L)); } catch (x) { /* storage full or private: the card still offers it */ }
+        try { var L = JSON.parse(localStorage.getItem(K + '-list') || '[]'); L.push({ at: e.at, over: !!e.over, replay: e.replay, frames: e.frames ? Object.assign({}, e.frames, { rs: undefined, rb: undefined, rt: undefined, ls: undefined, pads: undefined }) : null }); while (L.length > 5) L.shift(); localStorage.setItem(K + '-list', JSON.stringify(L)); } catch (x) { /* storage full or private: the card still offers it */ }
         card(e.over ? 'That match was recorded' : 'The match you left was recorded', 'Your presses and the match\'s seed were saved on this PC. Three questions, if you feel like answering, then save the file to send.', true, e.replay, !!e.over, e.frames || null);
       }
       var s = window.__bb_state, r = window.__bb_replay;
