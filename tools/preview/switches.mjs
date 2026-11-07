@@ -168,6 +168,8 @@ export const SWITCHES = [
     what: 'the flight strikes (Encounter): three keys as one row, across two files: interrupts.json zip.flightStrikes.enabled, timing.json switches.flightStrikeB and switches.dodgeHeld (the same key as the dodgeHeld row; either row turns it on). Needs rightStick and signatureRtOnly. Held off in the morning build; for the next batch\'s page' },
   { id: 'aimCuts', file: 'data/director/launch.json', path: ['aimCuts', 'enabled'], from: false, to: true, needs: [], optional: true, held: 'held for the next batch\'s page (EP)',
     what: 'the aim cuts (Encounter): data/director/launch.json aimCuts.enabled. Held off in the morning build; for the next batch\'s page' },
+  { id: 'stickLungeLight', file: 'data/director/stick.json', path: ['lungeLight', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true, held: 'held for the next batch\'s page (EP)',
+    what: 'the light lunge on the stick (Encounter): data/director/stick.json lungeLight.enabled. Needs rightStick. Held off in the morning build; for the next batch\'s page' },
   { id: 'airBrake', file: 'data/fight/brake.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
     what: 'the air brake (Game Design, buildings.md 7.2; sim/core/brake.gd): hold LT to brake while knocked back in the air. data/fight/brake.json enabled; SimCore.newMatch copies it into the match, and the file joins a replay\'s data hash only when on. After Simulation\'s determinism and rollback checks' },
   { id: 'stances', file: 'data/director/interrupts.json', path: ['stances', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
