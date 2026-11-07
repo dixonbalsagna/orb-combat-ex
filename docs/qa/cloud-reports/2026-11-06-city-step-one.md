@@ -20,7 +20,7 @@ EP brief of 2026-11-06. Numbers are from clean exports of HEAD b33b5c9c in scrat
 | Structures lost a match | 100 (89 to 112) | 96 (84 to 108) | 49 (41 to 58) | 52 (45 to 59) | 57 (49 to 65) | 62 (53 to 70) | |
 | Sends into a building a match | 3.95 (3.42 to 4.48) | 3.60 (3.13 to 4.08) | 0.80 | 0.87 (0.65 to 1.08) | 0.78 (0.55 to 1.02) | 0.78 (0.57 to 1.00) | 4 to 8 (GD) |
 | Time near a building, % of samples | 57.6 | 55.0 | 61.1 | 75.3 | 75.1 | 75.3 | 20 to 35 (GD) |
-| Big swings a match | 5.7 | 5.8 | 3.0 | 3.2 | 3.2 | 3.3 | 6 to 12 |
+| Swings of 30 degrees or more a match (not the swing rows' own count, over 15 degrees: see 2026-11-07) | 5.7 | 5.8 | 3.0 | 3.2 | 3.2 | 3.3 | 6 to 12 |
 
 **What it says, plainly.**
 - **Match length: both AI-vs-AI columns are inside the band,** and the town visit moves the median by 3 s and the p90 by 35 s (still under 660). The human columns are about 235 s because the scripted human is knocked out in about two matches in three (it wins 15 to 21 of 60), so their absolute length is not a read of the band. **Compared with each other the human columns do not move with the levers** (235, 235, 247).
@@ -72,6 +72,6 @@ Nothing to read yet (the park is not in a build). Harness built and proved on HE
 | Wall push is invisible to AI-vs-AI (human slot only) | Encounter / Game Design: decide whether the AI should lean for it |
 | The civilian band floor: base 8.0% against 12% | Game Design (a result, not a QA target) |
 | Whole-ring brawl swings are 44.9% of big swings against the 40% cap | Encounter |
-| Black box lacks raw buttons, triggers and the left stick (playtest 2026-11-06) | Controls |
+| ~~Black box lacks raw buttons, triggers and the left stick~~ | Struck 2026-11-06 (EP): already recorded (fcd2cf58; every pad's right stick in ea5dbeb1) |
 | Hero-relief rows (RL-219 3 to 5) need a firing cue and per-landing population | Encounter |
 | RL-232 (power scale) and RL-246 (meeting-point crater) civilian re-reads | Wait for the parks; EP says when |

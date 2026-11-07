@@ -141,8 +141,35 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	if hub != null:
 		hub.set_pad_has_right_stick(0, true)
 	var hs := {"x": false}
+	var visited := {}   # place id -> true (see the loop below)
 	if QaPlanet.fellBack(S, seed):   # the slice failed and the match is the hand-made world: stop, never play it as a ring
 		return {}
+	if start_mode == "town":   # a start in town (Game Design 2026-11-06: sends 4 to 8 from a town start): both fighters start in a first-ring place of three buildings or more, the seed picking which; --start=crossing does nothing on a planet ring (59 of 60 matches identical to no start, 2026-11-07)
+		var tn: int = S.buildings.size()
+		if not S.fieldRecs.is_empty():
+			var tinfo: Array = WorldCollateral._farInfo(S)
+			if int(tinfo[0]) >= 0:
+				tn = int(tinfo[0])
+		var tpl: Dictionary = {}
+		for tbi in range(tn):
+			var tb = S.buildings[tbi]
+			var tid: int = int(tb.place)
+			if not tpl.has(tid):
+				tpl[tid] = []
+			tpl[tid].append(tb.x)
+		var tids: Array = []
+		for tid in tpl:
+			if tpl[tid].size() >= 3:
+				tids.append(tid)
+		tids.sort()
+		if tids.size() > 0:
+			var txs: Array = tpl[tids[seed % tids.size()]]
+			var tsum: float = 0.0
+			for tx in txs:
+				tsum += SimWrap.sdx(txs[0], tx)
+			var tx0: float = SimWrap.wrap(txs[0] + tsum / float(txs.size()))
+			S.fighters[0].x = tx0
+			S.fighters[1].x = SimWrap.wrap(tx0 + 300.0)
 	if start_mode == "city":   # both fighters start in a city (Encounter's wall kick probe does the same): the seed picks the spot, so wall slams are common
 		var cxs := []
 		var cx := 0.0
@@ -246,6 +273,19 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 		else:
 			SimCore.step(S)
 		ticks += 1
+		for e in S.out.fx:   # a place is VISITED once a fighter within 1,500 units of one of its buildings (true ground distance over the footprint, depth included) was there as it fell (Game Design 2026-11-06: broken by contact)
+			if e.type == "building_fall":
+				var fb = S.buildings[int(e.b)]
+				var near_f: bool = false
+				for fi in range(2):
+					var fdx: float = maxf(absf(SimWrap.sdx(fs[fi].x, fb.x)) - fb.w * 0.5, 0.0)
+					var fdz: float = maxf(absf(float(fs[fi].z) - float(fb.z)) - fb.d * 0.5, 0.0)
+					if sqrt(fdx * fdx + fdz * fdz) <= 1500.0:
+						near_f = true
+				if near_f:
+					visited[int(fb.place)] = true
+				else:
+					rec["fallsFar"] = int(rec.get("fallsFar", 0)) + 1
 		var dT: float = S.T - prev_t
 		prev_t = S.T
 		if S.game.ko != null and rec.koAt < 0.0:
@@ -273,6 +313,22 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 					rec.nearN = int(rec.get("nearN", 0)) + 1
 					if not WorldStructures.along(S, SimWrap.wrap(nmid - 1500.0), SimWrap.wrap(nmid + 1500.0), 0.0).is_empty():
 						rec.nearHit = int(rec.get("nearHit", 0)) + 1
+					# Game Design 2026-11-06: the pair midpoint within 1,500 units of a standing building's footprint by true ground distance (x wrapped, depth z), and no higher than 1,500 above its top
+					var nz: float = (float(fs[0].z) + float(fs[1].z)) * 0.5
+					var ny: float = (fs[0].y + fs[1].y) * 0.5
+					rec.nearN2 = int(rec.get("nearN2", 0)) + 1
+					var hit2: bool = false
+					for nbi in WorldStructures.near(S, nmid, 3000.0):
+						var nb = S.buildings[nbi]
+						if not nb.alive:
+							continue
+						var ndx: float = maxf(absf(SimWrap.sdx(nmid, nb.x)) - nb.w * 0.5, 0.0)
+						var ndz: float = maxf(absf(nz - float(nb.z)) - nb.d * 0.5, 0.0)
+						if sqrt(ndx * ndx + ndz * ndz) <= 1500.0 and ny - (WorldStructures.baseY(S, nb) + WorldStructures.curH(nb)) <= 1500.0:
+							hit2 = true
+							break
+					if hit2:
+						rec.nearHit2 = int(rec.get("nearHit2", 0)) + 1
 				if f.hidden:
 					rec.hiddenSec[i] += dT
 				if f.y < 0.0 and b == "ocean":
@@ -755,6 +811,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	if not ring.is_empty():
 		rec.ring = ring
 	rec.structs = S.world.structuresLost
+	rec["visited"] = visited.size()
 	rec.nStructs = S.buildings.size()
 	var rows := {}
 	for b in S.buildings:
