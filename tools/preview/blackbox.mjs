@@ -384,7 +384,7 @@ export const PAGE_SCRIPT = String.raw`
 export function injectPage(html, meta = null, shellSnippet = '') {
   if (html.includes('orb-blackbox-last')) return html;
   const stamp = meta ? `<script>window.__build = ${JSON.stringify(meta).replace(/</g, '\u003c')};</script>` : '';
-  const shell = shellSnippet ? `<script>
+  const shell = shellSnippet ? `<script data-orb-shell>
 ${shellSnippet.split('</script').join('<\\/script')}
 </script>
 ` : '';   // Audio's web shell snippet (docs/audio/pending/audio-resume): first, before the engine script

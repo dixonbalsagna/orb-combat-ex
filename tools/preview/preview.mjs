@@ -22,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { exportRevision } from '../flash/head-export.mjs';
 import { scriptErrors } from '../gate.mjs';
 import { patchHost, injectPage } from './blackbox.mjs';
+import { shellSnippet, injectShell } from '../lib/audio-shell.mjs';
 import { IDS, SWITCHES, KICK_SAMPLES, HITSTOP_SAMPLES, PEAK_SAMPLES, EDITS_FINGERPRINT, flip, parts, locate, present, patchMain, resolve as resolveSwitches, tableWith, loadPending } from './switches.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
@@ -226,7 +227,7 @@ export async function buildPreview(o) {
   log('exporting Web (standard template, single-threaded)');
   code = await runGodot(g, ['--headless', '--path', tree, '--export-release', 'Web', join(web, 'index.html')], exportLog, 25 * 60 * 1000);
   if (code !== 0 || !existsSync(join(web, 'index.html'))) throw new Error(`Godot --export-release Web exited ${code}; the end of ${exportLog}:\n${tail(exportLog)}`);
-  if (pl.active.includes('blackbox')) { const ix = join(web, 'index.html'); writeFileSync(ix, injectPage(readFileSync(ix, 'utf8'))); log('the black box: the questions and the save are in the page'); }
+  { const ix = join(web, 'index.html'); const snip = shellSnippet(repo); const h0 = readFileSync(ix, 'utf8'); const h1 = pl.active.includes('blackbox') ? injectPage(h0, null, snip) : injectShell(h0, snip); writeFileSync(ix, h1); if (pl.active.includes('blackbox')) log('the black box: the questions and the save are in the page'); log(h1.includes('data-orb-shell') ? 'the audio shell snippet is in the page head (a pad press wakes the engine\'s audio)' : 'WARNING: no audio shell snippet in this page (docs/audio/shell-snippet.js is not in the checkout)'); }
   out.scriptErrors = scriptErrors(`${tail(importLog, 4000)}\n${tail(exportLog, 4000)}`).slice(0, 6);
   if (!o.keepTree) rmSync(tree, { recursive: true, force: true });
   out.seconds = Math.round((Date.now() - t0) / 1000);

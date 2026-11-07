@@ -15,6 +15,7 @@ const HELD = SWITCHES.filter((x) => x.held).map((x) => x.id);   // rows held off
 const ON = IDS.filter((i) => !HELD.includes(i));
 import { expectations, probeProblems } from './smoke.mjs';
 import { browserExe } from '../machine/browser.mjs';
+import { shellSnippet, injectShell } from '../lib/audio-shell.mjs';
 
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
@@ -94,6 +95,18 @@ check('an --on that names no row is unknown', resolve([], SWITCHES, ['nope']).un
   const L = switchList(b);
   const line = (id) => L.find((x) => x.startsWith(id + ' '));
   check('the final switch list says ON, WAITING (with why) or OFF (with why) and the data key for every row', L.length === IDS.length && /^rightStick +ON +data\/input\/timing\.json switches\.rightStick/.test(line('rightStick')) && /WAITING \(brake\.json is not in this tree yet\)/.test(line('airBrake')) && /OFF \(waiting on QA city read\) +data\/biomes\/brunt\.json lodgeHold \(\+wallRebound, \+wallStop, \+wallDepthHold, \+repeatMarks\)/.test(line('cityHold')) && /OFF \(held for the next batch's page \(EP\)\) +data\/director\/interrupts\.json zip\.flightStrikes\.enabled \(\+timing\.json switches\.flightStrikeB, \+timing\.json switches\.dodgeHeld\)/.test(line('flightStrikes')) && /\(page word\)/.test(line('tiles')));
+}
+{   // Audio's shell snippet is in the head of EVERY web build (the EP, 2026-11-07): the helper, and the three places that build pages call it
+  const REPO_ROOT = decodeURIComponent(new URL('../..', import.meta.url).pathname).replace(/^\/([A-Za-z]:)/, '$1');
+  const snip = shellSnippet(REPO_ROOT);
+  const page = '<!DOCTYPE html>\n<html><head>\n<script src="index.js"></script></head><body></body></html>';
+  const once1 = injectShell(page, 'var a = 1; /* </script> */');
+  check('the audio shell snippet is in the repository (docs/audio/shell-snippet.js, or the park until it lands)', snip.length > 500 && /AudioContext/.test(snip));
+  check('injectShell puts the snippet in its own marked script as the first thing in head, before the engine script, and a </script inside it cannot end it', /<head>\n<script data-orb-shell>\nvar a = 1;/.test(once1) && once1.indexOf('data-orb-shell') < once1.indexOf('index.js') && once1.includes('<\\/script') && once1.split('</script>').length === 3);
+  check('injectShell twice is the same page, an empty snippet leaves the page as it was, and a head-less page gets it first', injectShell(once1, 'var b = 2;') === once1 && injectShell(page, '') === page && injectShell('<p>x</p>', 'var c;').startsWith('<script data-orb-shell>'));
+  check('the black box places the same marker, so the snippet is never in a page twice', (() => { const o = BB.injectPage(page, null, 'var d = 1;'); return o.includes('data-orb-shell') && injectShell(o, 'var e = 1;') === o; })());
+  const src = (f) => readFileSync(new URL(f, import.meta.url), 'utf8');
+  check('the three builders call it: preview.mjs (preview pages), stack-preview.mjs (kept builds) and build-site.mjs (the public /play/ and /bench/)', /injectShell\(h0, snip\)/.test(src('./preview.mjs')) && /injectShell\(readFileSync\(ix, 'utf8'\), snip\)/.test(src('./stack-preview.mjs')) && (src('../build-site.mjs').match(/injectShell\((play|bench), SHELL\)/g) || []).length === 2);
 }
 check('--off with a comma list and --off all', R('water,biome').active.join() === 'gen2,surface,interrupts,floor,calmTurn,turn,rightStick,quickRead,hapticLadder,specialsOff,signatureRtOnly,beamAim,hapticRefused,hapticIncoming,webRumble,settle,splitShare,chaseTap,chargeArmour,powerPace,waterWarm,chargeClose,pressWait,oneRuleB,beamAim2,nodeWarm,stickPend,joltYield,brawlShareCap,gen3,blackbox,go,meteor,tiles,swing,everywhere,arc,ending,follow,lightStops,grapple,driver,driverOnRb,beamMove,stallKeep,hapticImpact,dodgeHeld,hapticStages,strikeStages,beamMoveAi,pushMode,pushUi,pushUi2,airBrake,stances,phrases,craterlook,vsHuman,firstMeteor,beamFront,kick,mixed,struggle,soundTug,soundMoments,soundCarry' && R('all').active.length === 0);
 check('an unknown id is reported, not ignored', R('watr').unknown.join() === 'watr');

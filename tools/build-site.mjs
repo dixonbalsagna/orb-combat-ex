@@ -25,6 +25,7 @@ import { siteNotice } from './site-notice.mjs';
 import { verify as verifyReleasePass, interimOf } from './flash/release-pass.mjs';
 import { aboutPage, gateOverlay, GATE_SCRIPT } from './site-interim.mjs';
 import { CRUMBS_PRIVACY } from './site-crumbs.mjs';
+import { shellSnippet, injectShell } from './lib/audio-shell.mjs';
 
 const args = process.argv.slice(2);
 const opt = (name) => {
@@ -33,6 +34,7 @@ const opt = (name) => {
 };
 const web = opt('--web');
 const commit = (opt('--commit') || 'unknown').slice(0, 7);
+const SHELL = shellSnippet(decodeURIComponent(new URL('..', import.meta.url).pathname).replace(/^\/([A-Za-z]:)/, '$1'));   // '' when docs/audio/shell-snippet.js is not in the checkout: the page is then built as before
 const out = opt('--out');
 if (!web || !out) {
   console.error('usage: node tools/build-site.mjs --web <godot web export dir> --out <site dir>');
@@ -127,6 +129,7 @@ if (config.interim) {
   play = replaceOnce(play, '\t\t}, displayFailureNotice);\n\t}\n}());', '\t\t}, displayFailureNotice);\n\t\t};\n\t}\n}());');
   play = replaceOnce(play, '\t<body>\n', `\t<body>\n${gateOverlay(text, { holding: '../', about: '../about/' }, { noteSlot: config.crumbs === true })}\n`);
   play = replaceOnce(play, '\t</body>', `\t\t${GATE_SCRIPT}\n\t</body>`);
+  play = injectShell(play, SHELL);   // Audio's snippet: a pad press wakes the engine's audio (the EP, 2026-11-07)
   writeFileSync(join(outDir, 'play', 'index.html'), play);
   const put = (where, html) => { mkdirSync(join(outDir, where, '..'), { recursive: true }); writeFileSync(join(outDir, where), html); };
   // the holding page (the plain notice) is /, /bench/, /band/ and /404.html: no game, no link, and where "Not now" goes
@@ -253,6 +256,7 @@ bench = replaceOnce(bench, '</body>', `		<div id="bench-panel" style="position:f
 })();
 		</script>
 	</body>`);
+bench = injectShell(bench, SHELL);
 writeFileSync(join(outDir, 'bench', 'index.html'), bench);
 
 // ---- /band/: Research's band prototype, reusing /play/'s engine files when they are identical ----

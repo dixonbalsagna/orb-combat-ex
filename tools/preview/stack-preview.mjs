@@ -19,6 +19,7 @@ import { HOST_PATCH, applyPatchText, godotExe, plan, readPending, runGodot, save
 import { describeReport, loadManifest, runStack, stackKey } from './stack.mjs';
 import { patchMain, EDITS_FINGERPRINT } from './switches.mjs';
 import { patchHost, patchAudio, patchHaptics, injectPage, BB_FINGERPRINT } from './blackbox.mjs';
+import { shellSnippet, injectShell } from '../lib/audio-shell.mjs';
 import { setWebCustomTemplate } from '../flash/web-preset.mjs';
 import { fetchTemplate } from '../site-template.mjs';
 
@@ -150,7 +151,9 @@ export async function buildStackPreview(o) {
   log(`exporting Web (${tz ? 'custom' : 'standard'} template, single-threaded)`);
   code = await runGodot(g, ['--headless', '--path', tree, '--export-release', 'Web', join(web, 'index.html')], exportLog, 25 * 60 * 1000);
   if (code !== 0 || !existsSync(join(web, 'index.html'))) throw new Error(`Godot --export-release Web exited ${code}; the end of ${exportLog}:\n${tail(exportLog)}`);
-  if (pl.active.includes('blackbox')) { const ix = join(web, 'index.html'); const snipFile = join(repo, 'docs', 'audio', 'pending', 'audio-resume', 'shell-snippet.js'); const snip = existsSync(snipFile) ? readFileSync(snipFile, 'utf8') : ''; writeFileSync(ix, injectPage(readFileSync(ix, 'utf8'), { commit: r.commit, subject: r.subject, stackKey: r.key, parks: parksIn, switches: pl.active, tools: BB_FINGERPRINT, folder: key, shell: snip ? createHash('sha1').update(snip).digest('hex').slice(0, 8) : null }, snip)); log('the black box: the questions and the save are in the page'); }
+  const snip = shellSnippet(repo);   // Audio's snippet goes in EVERY page (2026-11-07), the black box's script only with blackbox
+  if (!pl.active.includes('blackbox')) { const ix = join(web, 'index.html'); writeFileSync(ix, injectShell(readFileSync(ix, 'utf8'), snip)); }
+  if (pl.active.includes('blackbox')) { const ix = join(web, 'index.html'); writeFileSync(ix, injectPage(readFileSync(ix, 'utf8'), { commit: r.commit, subject: r.subject, stackKey: r.key, parks: parksIn, switches: pl.active, tools: BB_FINGERPRINT, folder: key, shell: snip ? createHash('sha1').update(snip).digest('hex').slice(0, 8) : null }, snip)); log('the black box: the questions and the save are in the page'); }
   writeReplayTree(tree, join(dir, 'replay-tree'), r);   // the kept build keeps what replays a saved match exactly
   out.scriptErrors = scriptErrors(`${tail(importLog, 4000)}\n${tail(exportLog, 4000)}`).slice(0, 6);
   if (!o.keepTree) rmSync(join(base, 'stack', `${r.commit.slice(0, 8)}-${r.key}`), { recursive: true, force: true });
