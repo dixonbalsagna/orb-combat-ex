@@ -71,6 +71,19 @@ if (!outsideBySetup) {
   writeFileSync(f, s.replace(from, '$1true'));
   if (JSON.parse(readFileSync(f, 'utf8')).outside.enabled !== true) stop('the blows from outside did not turn on');
 }
+// 2v2 together: hear and see a brink in either fight (the EP, 2026-11-07). Audio's co-op sounds (audio/audio_coop.gd: the brink's call, and with it the refusal knock, the push and the
+// charge stages, which a 1v1 would hear too) go on only in a game started with --lan-2v2-together: sound is the PC's own, never the sim's, so the plain pair stays as it is. UI's brink_mark and
+// outside_words act only on the co-op cues, so this copy turns them on for every shortcut.
+{
+  const af = join(tree, 'audio/audio_coop.gd');
+  if (existsSync(af)) patch('audio/audio_coop.gd', [['func enabled() -> bool:\n\treturn bool(cfg.get("enabled", false))\n', 'func enabled() -> bool:\n\treturn bool(cfg.get("enabled", false)) or OS.get_cmdline_user_args().has("--lan-2v2-together")   # the private LAN kit: on for 2v2 together only\n']]);
+  else console.log('no audio/audio_coop.gd in this tree: the brink call is not in this build');
+  const ff = join(tree, 'ui/data/features.json');
+  const fj = JSON.parse(readFileSync(ff, 'utf8'));
+  fj.features = fj.features ?? {};
+  for (const k of ['brink_mark', 'outside_words']) fj.features[k] = true;
+  writeFileSync(ff, JSON.stringify(fj, null, 2) + '\n');
+}
 // Only this copy's presets: the network code goes in, its tools stay out.
 patch('export_presets.cfg', [
   ['name="Windows Desktop"', 'name="Windows Desktop"'],
