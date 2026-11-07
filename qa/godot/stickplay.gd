@@ -4,12 +4,14 @@ extends SceneTree
 ## (X 45%, Y 17%, B 6%, flick 20%, RB + X 9%), the cadence and mix of Combat's own read (docs/combat/pending/stick-directions/stick_bands.gd), which this borrows. A win is the AI being the one knocked out.
 ## Bots for Game Design's rows of docs/design/stick-lands.md (After Combat's read): react = a flick only as the foe's Y or B winds up; idle = that, or no light of his in the last 20 ticks; lb = LB held, a flick on a foe who is not
 ## guarding and 40 ticks after the last flick; x = X every 8 ticks; afk = no input at all (the idle player of the match ending); holdx, holdy, holdb = that button pressed at tick 60 and never released (a stuck button: the web gamepad path can drop a release), nothing else touched; stuck = the right stick held up from tick 60 to the end and nothing else touched (a stale or drifting stick); padidle = the pad mix for 2,400 ticks, then every control let go for the rest of the match, counting the blows and flicks the idle pad still makes after 180 ticks (a stuck-input check: the playtest of 2026-11-06 reports a fighter that kept attacking with the controller let go); meteor = the meteor route: X mash and the transform chord (LT + RT held 40 ticks) whenever a form is ready, and once both fighters are at tier 4 and close, the stick held up for 56 ticks (level 3), let go, then B held 36 ticks inside the stun (the ignition, launch.json arc.bankFull); driver = RB + B held 90 ticks (level 3) and let go, standing off at range while it charges. Counts: flicks, stick_hit cues (a stun when n is over 0), and the trade breaks (closes) by each side.
-##   godot --headless --path . --script res://qa/godot/stickplay.gd -- <matches> <baseSeed> --arm=stick|buttons|pad|x|react|idle|lb|driver|afk|meteor|padidle|stuck|holdx|holdy|holdb --level=easy|medium|hard [--capsec=900] [--wall=300] [--budget=3600]
+## flight = the flight-strike share read (EP 2026-11-06; docs/design/playable-build.md section 1): a press is, with chance --fsmix (default 1.0 = every press, the ceiling), LT held for 8 ticks, the left stick at one of five bearings to the foe (neutral, toward, up, down, away) and X (60%), Y (25%) or B (15%); otherwise X. Counts: fsPress:<bearing> the presses, fsBlows the flight-strike blows by the cues in --fscues (default zip_light,zip_heavy: today's zip; Encounter's park names its own, pass them), blowAll the blow cues of slot 0, and each fscue by kind.
+##   godot --headless --path . --script res://qa/godot/stickplay.gd -- <matches> <baseSeed> --arm=stick|buttons|pad|x|react|idle|lb|driver|afk|meteor|padidle|stuck|holdx|holdy|holdb|flight --level=easy|medium|hard [--capsec=900] [--wall=300] [--budget=3600] [--fsmix=1.0] [--fscues=zip_light,zip_heavy]
 ## The pad takes slot 0 in every match (the hub's pad 0), so a spawn-side effect is in all arms alike. Read-only with respect to sim/. Prints one JSON line.
 const QaPlanet = preload("res://qa/godot/qa_planet.gd")
 
 var hub: SimInputHub
 var held: Dictionary = {}
+var fscues: Array = ["zip_light", "zip_heavy"]
 
 
 func _init() -> void:
@@ -19,6 +21,7 @@ func _init() -> void:
 	var capsec: float = 900.0
 	var wall: float = 300.0
 	var budget: float = 3600.0
+	var fsmix: float = 1.0
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--arm="):
 			arm = a.substr(6)
@@ -30,6 +33,10 @@ func _init() -> void:
 			wall = float(a.substr(7))
 		elif a.begins_with("--budget="):
 			budget = float(a.substr(9))
+		elif a.begins_with("--fsmix="):
+			fsmix = float(a.substr(8))
+		elif a.begins_with("--fscues="):
+			fscues = Array(a.substr(9).split(",", false))
 		else:
 			pos.append(a)
 	var n: int = int(pos[0]) if pos.size() > 0 else 20
@@ -72,6 +79,8 @@ func _init() -> void:
 		var mtLast: int = -1000
 		var mtTf: int = -1
 		var rsTo: int = -1
+		var fsTo: int = -1
+		var fsStick := Vector2.ZERO
 		var aim := Vector2.ZERO
 		var off: Dictionary = {2: ["west"]}
 		_btn("west", true)
@@ -135,7 +144,9 @@ func _init() -> void:
 				_btn({"holdx": "west", "holdy": "north", "holdb": "east"}[arm], true)
 			if arm == "stuck" and t >= 60:
 				hub.pad_stick_right(0, 0.0, 1.0)
-			if drvTo < 0 and arm != "afk" and arm != "stuck" and not arm.begins_with("hold") and not idleNow and not (arm == "meteor" and mtState >= 1 and mtState != 4):
+			if fsTo >= t:
+				hub.pad_stick(0, fsStick.x, fsStick.y)
+			elif drvTo < 0 and arm != "afk" and arm != "stuck" and not arm.begins_with("hold") and not idleNow and not (arm == "meteor" and mtState >= 1 and mtState != 4):
 				_walk(S)
 			else:
 				hub.pad_stick(0, 0.0, 0.0)
@@ -167,6 +178,10 @@ func _init() -> void:
 						press = "x"
 						gapMin = 8
 						gapMax = 8
+					"flight":
+						press = "f" if rng.randf() < fsmix else "x"
+						gapMin = 8
+						gapMax = 16
 					"react":
 						press = "s" if (winding and t - lastFlick > 20) else ""
 						gapMin = 1
@@ -191,6 +206,15 @@ func _init() -> void:
 						names = ["east"]
 					"ex":
 						names = ["rb", "west"]
+					"f":
+						var side: float = 1.0 if SimWrap.sdx(S.fighters[0].x, S.fighters[1].x) >= 0.0 else -1.0
+						var bi: int = rng.randi_range(0, 4)
+						fsStick = [Vector2.ZERO, Vector2(side, 0.0), Vector2(0.0, 1.0), Vector2(0.0, -1.0), Vector2(-side, 0.0)][bi]
+						cnt["fsPress:" + ["neutral", "toward", "up", "down", "away"][bi]] = int(cnt.get("fsPress:" + ["neutral", "toward", "up", "down", "away"][bi], 0)) + 1
+						fsTo = t + 8
+						hub.pad_trigger(0, "lt", 1.0)
+						hub.pad_stick(0, fsStick.x, fsStick.y)
+						names = ["west" if r < 0.6 else ("north" if r < 0.85 else "east")]
 					"d":
 						_btn("rb", true)
 						_btn("east", true)
@@ -215,6 +239,9 @@ func _init() -> void:
 				if t >= drvTo + 4:
 					_btn("rb", false)
 					drvTo = -1
+			if fsTo >= 0 and t > fsTo:
+				hub.pad_trigger(0, "lt", 0.0)
+				fsTo = -1
 			if lbTo >= 0 and t >= lbTo:
 				_btn("lb", false)
 				lbTo = -1
@@ -322,6 +349,9 @@ func _step(S: SimState, cnt: Dictionary, t: int, lastLight: int) -> int:
 		if e.type != "cue":
 			continue
 		var who: int = int(e.actor)
+		if who == 0 and str(e.kind) in fscues:
+			cnt["fsBlows"] = int(cnt.get("fsBlows", 0)) + 1
+			cnt["fs:" + str(e.kind)] = int(cnt.get("fs:" + str(e.kind), 0)) + 1
 		match str(e.kind):
 			"stick_start":
 				if who == 0:
@@ -346,6 +376,7 @@ func _step(S: SimState, cnt: Dictionary, t: int, lastLight: int) -> int:
 				if who == 1 and str(e.text) == "light":
 					lastLight = t
 				elif who == 0:
+					cnt["blowAll"] = int(cnt.get("blowAll", 0)) + 1
 					cnt["blow:" + str(e.text)] = int(cnt.get("blow:" + str(e.text), 0)) + 1
 					if cnt.has("idleFrom") and t >= int(cnt.idleFrom):
 						cnt["idleBlows"] = int(cnt.get("idleBlows", 0)) + 1

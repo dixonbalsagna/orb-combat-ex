@@ -59,6 +59,11 @@ func _init() -> void:
 	if level != "":
 		var dai = load("res://sim/director/ai.gd")   # loaded as a resource: a typed class reference would not parse on a sim before step 3 (no level)
 		dai.set("level", level)
+	for part in OS.get_environment("QA_FORCE").split(";", false):   # QA_FORCE=walk=1;visit=1: the tools switches of DirWalk and DirVisit (-1 the data, 0 off, 1 on), read once; the record carries them
+		var kv: PackedStringArray = part.split("=")
+		if kv.size() == 2:
+			var sc = load({"walk": "res://sim/director/walk.gd", "visit": "res://sim/director/visit.gd"}.get(kv[0].strip_edges(), "res://sim/director/walk.gd"))
+			sc.call("setForce", int(kv[1]))
 	var recs: Array = []
 	var t_proc: int = Time.get_ticks_msec()
 	for i in range(n):
@@ -75,9 +80,67 @@ func _init() -> void:
 	quit(0)
 
 
+## One tick of the scripted human of QA_HUMAN (the host's order, as stickplay.gd does it). mash: left stick toward the foe, X every 8 ticks. push: the same, but the stick leans toward the nearest standing building
+## within 6,000 units of the pair's midpoint when there is one (the wall-push lever reads this lean: data/director/launch.json walk).
+func _human_step(S, hub: SimInputHub, mode: String, t: int, hs: Dictionary) -> void:
+	var me = S.fighters[0]
+	var foe = S.fighters[1]
+	var dx: float = SimWrap.sdx(me.x, foe.x)
+	var dy: float = foe.y - me.y
+	var sx: float = signf(dx) if absf(dx) > 110.0 else 0.0
+	if mode == "push":
+		var mid: float = SimWrap.wrap(me.x + dx * 0.5)
+		var best: int = -1
+		var bd: float = 6000.0
+		for bi in WorldStructures.near(S, mid, 6000.0):
+			var b = S.buildings[bi]
+			if not b.alive:
+				continue
+			var d: float = absf(SimWrap.sdx(mid, b.x)) - b.w * 0.5
+			if d < bd:
+				bd = d
+				best = bi
+		if best >= 0:
+			var tx: float = SimWrap.sdx(me.x, S.buildings[best].x)
+			sx = signf(tx) if absf(tx) > 110.0 else sx
+	hub.pad_stick(0, sx, signf(dy) if absf(dy) > 40.0 else 0.0)
+	var m8: int = t % 8
+	if m8 == 0 and not hs.x:
+		hs.x = true
+		hub.pad_button(0, "west", true)
+	elif m8 == 4 and hs.x:
+		hs.x = false
+		hub.pad_button(0, "west", false)
+	hub.set_humans(me.ai == null, foe.ai == null)
+	hub.set_struggle(0, SimDir.inStruggle(S, me))
+	var it: SimIntent = hub.intent(0)
+	var pausing: bool = S.pause.left > 0
+	if SimCore.step(S, [it, null]):
+		hub.consumed()
+	elif pausing:
+		if S.pause.left > 0:
+			hub.drop_edges()
+		else:
+			hub.resume()
+	hub.on_events(S.out.fx)
+
+
 func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 300000, start_mode: String = "") -> Dictionary:
 	var S := SimCore.createSim()
-	SimCore.newMatch(S, seed, {}, QaPlanet.setup(seed, ({"start": start_mode} if start_mode == "crossing" else {})))   # QA_PLANET: a planet ring (qa_planet.gd); unset, the hand-made world
+	var hum: String = OS.get_environment("QA_HUMAN")   # QA_HUMAN=mash|push: slot 0 is a scripted human on the real input hub (X every 8 ticks, the left stick toward the foe; push: toward the nearest standing building by the pair), the AI is slot 1. DirWalk reads only a human slot (f.ai != null returns), so the wall-push lever needs one
+	var hub: SimInputHub = null
+	var hbase: Dictionary = ({"start": start_mode} if start_mode == "crossing" else {})
+	var ai0: Dictionary = {}
+	if hum != "":
+		hub = SimInputHub.new()
+		hbase = hub.setup().duplicate()
+		if start_mode == "crossing":
+			hbase["start"] = "crossing"
+		ai0 = {"p1": false, "p2": true}
+	SimCore.newMatch(S, seed, ai0, QaPlanet.setup(seed, hbase))   # QA_PLANET: a planet ring (qa_planet.gd); unset, the hand-made world
+	if hub != null:
+		hub.set_pad_has_right_stick(0, true)
+	var hs := {"x": false}
 	if QaPlanet.fellBack(S, seed):   # the slice failed and the match is the hand-made world: stop, never play it as a ring
 		return {}
 	if start_mode == "city":   # both fighters start in a city (Encounter's wall kick probe does the same): the seed picks the spot, so wall slams are common
@@ -107,7 +170,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	var rec := {"seed": seed, "arm": arm, "names": [fs[0].name, fs[1].name], "attacks": {"light": 0, "heavy": 0, "sig": 0}, "ambush": 0,
 		"launches": {}, "melee": {}, "beams": [], "parries": [0, 0], "chains": [], "hides": [0, 0], "found": 0, "seam": 0, "maxMove": 0.0,
 		"bad": "", "koAt": -1.0, "winner": -1, "maxTier": [1, 1], "lowSec": 0.0, "lowCas": 0.0, "casByTier": [0.0, 0.0, 0.0, 0.0, 0.0],
-		"fightSec": {}, "dmgVictim": [0.0, 0.0], "batteredIn": 0.0, "breathWear": 0.0, "casTimeline": [], "slides": [], "landings": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "landingsAll": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "cues": {}, "bh": {}, "cueText": {}, "doubleHits": 0, "doubles": [], "brawl": {"ends": {}, "blows": {}, "staggers": {}, "tradeBreaks": 0, "lens": [], "nblows": []}, "strTimeline": [], "dmgByKind": {}, "maxPlayGap": 0.0, "exEnds": {}, "exEndEvents": {}, "flowMax": [0, 0], "flowTo3": [0, 0], "firstContact": {}, "liftsSeen": {}, "reachFlat": [], "reach": {"buried": 0, "n": 0, "far": 0, "maxD": 0.0, "tall": 0, "tallFlat": 0, "maxDy": 0.0}, "heavyLanded": [0, 0], "heavyClashWins": [0, 0], "slideShort": 0, "slideShortPl": 0, "lips": 0, "journeys": {"durSeen": false, "halted": 0, "tumbleSeen": 0, "jn": 0, "tumbledEnd": 0, "jbounced": 0, "jbounces": 0, "n": 0, "capped": 0, "long": 0, "anyBounce": 0, "bounced": 0, "bounces": 0, "tumbled": 0, "lips": 0}, "impactCraters": 0, "skims": 0, "longHaul": 1500.0 * SimConst.TRAV_LAUNCH, "dmgByRegion": {}, "underSec": 0.0, "tierT": [0.0, -1.0, -1.0, -1.0, -1.0], "flights": [], "hiddenSec": [0.0, 0.0], "exLens": [], "exGaps": [], "fxCounts": {}, "swings": [], "events": [], "pow": {"has": false, "n": [0, 0], "full": [0, 0]}, "fronts": 0, "care": [float(fs[0].care), float(fs[1].care)], "start": start_mode, "rally": {"has": false, "dazes": 0, "dazeSrc": {}, "sells": 0, "sellKinds": {}, "opens": 0, "techs": 0, "autoTechs": 0, "ends": [], "seqs": []}}
+		"fightSec": {}, "dmgVictim": [0.0, 0.0], "batteredIn": 0.0, "breathWear": 0.0, "casTimeline": [], "slides": [], "landings": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "landingsAll": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "cues": {}, "bh": {}, "cueText": {}, "doubleHits": 0, "doubles": [], "brawl": {"ends": {}, "blows": {}, "staggers": {}, "tradeBreaks": 0, "lens": [], "nblows": []}, "strTimeline": [], "dmgByKind": {}, "maxPlayGap": 0.0, "exEnds": {}, "exEndEvents": {}, "flowMax": [0, 0], "flowTo3": [0, 0], "firstContact": {}, "liftsSeen": {}, "reachFlat": [], "reach": {"buried": 0, "n": 0, "far": 0, "maxD": 0.0, "tall": 0, "tallFlat": 0, "maxDy": 0.0}, "heavyLanded": [0, 0], "heavyClashWins": [0, 0], "slideShort": 0, "slideShortPl": 0, "lips": 0, "journeys": {"durSeen": false, "halted": 0, "tumbleSeen": 0, "jn": 0, "tumbledEnd": 0, "jbounced": 0, "jbounces": 0, "n": 0, "capped": 0, "long": 0, "anyBounce": 0, "bounced": 0, "bounces": 0, "tumbled": 0, "lips": 0}, "impactCraters": 0, "skims": 0, "longHaul": 1500.0 * SimConst.TRAV_LAUNCH, "dmgByRegion": {}, "underSec": 0.0, "tierT": [0.0, -1.0, -1.0, -1.0, -1.0], "flights": [], "hiddenSec": [0.0, 0.0], "exLens": [], "exGaps": [], "fxCounts": {}, "swings": [], "events": [], "pow": {"has": false, "n": [0, 0], "full": [0, 0]}, "fronts": 0, "care": [float(fs[0].care), float(fs[1].care)], "start": start_mode, "human": hum, "force": OS.get_environment("QA_FORCE"), "rally": {"has": false, "dazes": 0, "dazeSrc": {}, "sells": 0, "sellKinds": {}, "opens": 0, "techs": 0, "autoTechs": 0, "ends": [], "seqs": []}}
 	var prev_x: Array = [fs[0].x, fs[1].x]
 	# the zip (docs/design/melee-press-feel.md section 2c; docs/director/brawl-plan.md section 7.4): one record a zip, from the zip_light or zip_heavy cue to its zip_end;
 	# the build may not have it yet, and then the list stays empty
@@ -178,7 +241,10 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 		if (ticks & 255) == 0 and Time.get_ticks_msec() - wall0 > wall_ms:
 			walled = true
 			break
-		SimCore.step(S)
+		if hub != null:
+			_human_step(S, hub, hum, ticks, hs)
+		else:
+			SimCore.step(S)
 		ticks += 1
 		var dT: float = S.T - prev_t
 		prev_t = S.T
@@ -202,6 +268,11 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 			if S.game.ko == null:
 				var b: String = WorldBiomes.biomeAt(f.x)
 				rec.fightSec[b] = rec.fightSec.get(b, 0.0) + dT
+				if i == 0 and S.tick % 30 == 0:   # time near a building (Game Design 2026-11-02, the too-clean read): the pair midpoint with a standing structure within 1,500 units, sampled twice a second; QA's definition
+					var nmid: float = SimWrap.wrap(fs[0].x + SimWrap.sdx(fs[0].x, fs[1].x) * 0.5)
+					rec.nearN = int(rec.get("nearN", 0)) + 1
+					if not WorldStructures.along(S, SimWrap.wrap(nmid - 1500.0), SimWrap.wrap(nmid + 1500.0), 0.0).is_empty():
+						rec.nearHit = int(rec.get("nearHit", 0)) + 1
 				if f.hidden:
 					rec.hiddenSec[i] += dT
 				if f.y < 0.0 and b == "ocean":
@@ -659,6 +730,28 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 		rec.koAt = S.T
 	rec.civPct = S.world.casualties / S.world.pop0 * 100.0
 	rec.pop0 = S.world.pop0
+	# the people in the places the fight reached (World's WorldCollateral.placesReached, Legal's RL-244 and RL-245): a pure read at the end of the match; absent on a build without it
+	var prc := Callable(WorldCollateral, "placesReached")
+	if prc.is_valid():
+		var pr: Dictionary = prc.call(S)
+		var fpd: Dictionary = WorldField.data().get("plans", {})
+		rec.farPeople = bool(fpd.get("farPeople", false))
+		rec.reachedPop = float(pr.get("pop", 0.0))
+		rec.reachedLost = float(pr.get("lost", 0.0))
+		rec.reachedPct = rec.reachedLost / maxf(rec.reachedPop, 1.0) * 100.0
+		rec.wholePop = float(pr.get("whole", 0.0))
+		rec.wholeLost = float(pr.get("wholeLost", 0.0))
+		var prp: Array = pr.get("places", [])
+		rec.nPlaces = prp.size()
+		var nfar := 0
+		var nreached := 0
+		for pl in prp:
+			if bool(pl.get("far", false)):
+				nfar += 1
+			if bool(pl.get("reached", false)):
+				nreached += 1
+		rec.nFarPlaces = nfar
+		rec.nReachedPlaces = nreached
 	if not ring.is_empty():
 		rec.ring = ring
 	rec.structs = S.world.structuresLost
