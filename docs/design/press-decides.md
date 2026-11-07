@@ -49,6 +49,8 @@ A quarter of Orb's presses were thrown away, because a press only waited 10 tick
 - **It isn't sooner or weaker.** That was my first idea, and I've kept it as a lever, as this alone may be enough.
 - **QA reads the masher row:** a mash becomes a steadier string, and Y's mash has to stay in the band of 35 to 50%.
 
+**2026-11-06: the flight strikes in `playable-build.md` replace this circle.** Its numbers fold into the arc.
+
 ## 4. The circle: the input waits for Orb
 
 Orb loved a tight circle that they couldn't cause on purpose. Encounter's exact replay says the loop is the computer's dodge exchange, and Combat's corrected page now agrees. **Three clips are going to Orb: the dodge loop, the step strike and the zip. Their pick settles it.** On the near band, LT + Y is also wanted for a near zip, so I won't fix the input first. Encounter's build is behind a switch, off.
@@ -90,3 +92,19 @@ Half of Orb's B presses came while a blow of theirs was still going. **If you pr
 ## The meteor's widest shot
 
 **Fine, and the camera doesn't hold closer.** The fighter's a few pixels, the trail carries him, and Legal bars an aura, which I wouldn't ask them to change. The picture is the planet and the trail. As I've already ruled, it lasts about 2 s at most, with the view back in before he lands. **If Orb loses him in the clip,** the next rung in, 32,000 wide, is the lever. Their eye decides.
+
+## QA's read with all five on (2026-11-02)
+
+| Row | Read | Band | Ruling |
+| :--- | ---: | :--- | :--- |
+| Masher against medium | 42% to **52%** | 35 to 50% | **Move:** the press wait is for **Y and B only.** X keeps its 10-tick wait. Orb's lost presses were Y and B, and the masher bot mashes X, so this takes the masher's gain without giving back the fix |
+| Match length, median | 464 to **514 s** | 360 to 480 s | **Hold** until the X change and Encounter's stick fix are read, as both may move it. If it's still over, wear's k goes 0.045 to 0.05, inside QA's tuning range. The band doesn't widen |
+| Match length, p90 | 658 s | 660 s | Fine |
+| Launches, AI v AI | 14.3 to 13.1 a match | | Fine |
+| Civilians, slices | 28.8% | 12 to 30% | Fine, and never tuned toward (RL-214) |
+| Pad mix against easy | 8 to 15 of 30 | | Read again after the stick fix |
+| Steal on: closes on the stick player | 4.6 to 1.3 a minute | Fewer | **Met** |
+| Steal on: the stick player's own closes | 0 to 3 a minute | | Good |
+| Stick-only against the AI | 1 of 30 | Within 10 points of the X mash | Encounter's fix for refused late flicks first. A flick's run stays 1.5 |
+
+**Nothing else moves.** The steal's shape stays as ruled.
