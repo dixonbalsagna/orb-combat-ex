@@ -87,12 +87,12 @@ Until the computer chooses flight strikes for itself, QA reports the scripted ar
 
 | | Target |
 | :--- | :--- |
-| **Share of the computer's blows** | **15%,** inside 10 to 20%, across a batch. Easy sits at the low end, Hard at the high end. That's under QA's 25% ceiling, with room for chains |
+| **Share of the computer's blows** | **Re-ruled the same day on Encounter's probe: easy 1 to 2%, medium 2 to 4% (aim 3), hard 4 to 6%,** or every chance if that's lower. The 15% first written here was the wrong unit: a brawl throws blows several times a second, a flight strike takes as long as several of them, and every chance taken gives about 6% at medium. What I want is that the computer shows the move often enough to be seen and countered: **about 2 or 3 a minute at medium.** QA reports flight strikes a minute next to the share, since the share moves with how dense the brawl is |
 | **Where it throws them** | From the middle band, as today, but **a rival who's pressing no longer stops it**: a flight strike is how it closes in, not only a punish. **From a brawl**, when it's losing the run, the rival has guarded for a second or more (the line or an arc gets round a guard), or it wants out (the parting shot). **A chain link** only when it can pay the next link in full and keep 20 ki back |
 | **Buttons** | **It picks B too.** About half X, 30% Y, 20% B. No button over 60% |
 | **Paths** | Start with the even draw over `ai.paths`. No path over half. Skew by situation only after the even draw has been read |
 | **Never** | A press it can't pay for (no "No energy" from the computer), or a chain past its 20 in reserve |
-| **Still true** | At least 50% of fight time in a brawl, with flight strikes on |
+| **Still true** | **The computer against itself keeps its own brawl band's floor, 30% of fight time** (`melee-press-feel.md` §9e). The 50% first written here is the pressing player's floor (QA's scripted pad, `rule-of-cool-map.md`), and it stays that player's row. A flight strike from a brawl still counts as out of the brawl, and the brawl's chances aren't widened. Measured: medium at every chance is 47.6% |
 | **Order of levers** | `zipShare` first, then the conditions above. Never the price, which is the player's too |
 
 ### Counters
@@ -118,7 +118,7 @@ A B thrown that meets nothing is a 28-tick wind-up, and the brawl punishes it. T
 
 | Reading | Ruling |
 | :--- | :--- |
-| **1. It starts from a brawl, from contact,** ending the brawl (`brawl_end flight`) when his line is free. LT held with no fresh press stays the brawl's own blow. A dodge-cancel out of a brawl, then a face press within 4 ticks, converts with the cancel's cost back | **Confirmed.** It's what replacing the stances' LT lane and the circle means. QA watches that brawl time stays at least 50% |
+| **1. It starts from a brawl, from contact,** ending the brawl (`brawl_end flight`) when his line is free. LT held with no fresh press stays the brawl's own blow. A dodge-cancel out of a brawl, then a face press within 4 ticks, converts with the cancel's cost back | **Confirmed.** It's what replacing the stances' LT lane and the circle means. QA watches brawl time: at least 30% for the computer against itself, and 50% for a pressing player |
 | **2. LT is read first on a shared tick:** during his own lunge, LT and a button together call the lunge off and start the flight strike | **Confirmed.** LT's own move (the dodge-cancel) happens, and the take-back turns it into the strike, as ruled |
 | **3. An arc's blow lands at the top or bottom of the loop,** in reach a tick either side, and the loop flies on to its end behind him | **Confirmed,** as the twelve moves' table says |
 | **4. A dodge is a miss:** he stops where he is, open for 20 ticks. His presses wait, and in a brawl his guard doesn't hold | **Confirmed.** It's what keeps the parting shot a gamble rather than a safe exit (pillar 3). A press held through the 20 ticks is the latest one only, by the brawl's held-press rule |
@@ -149,13 +149,22 @@ A B thrown that meets nothing is a 28-tick wind-up, and the brawl punishes it. T
     "travel": { "minTicks": 4, "bhPerTick": 3 },
     "chain": { "lateTicks": 12, "afterTicks": 10, "tellMul": 0.5, "tellMin": 4, "kiMul": 1.5, "worthMul": 0.85, "worthFloor": 0.5, "repeatFullTell": 3 },
     "counter": { "heavyBefore": 6, "heavyThrownBefore": 6, "mul": 1.25, "reelTicks": 8 },
-    "ai": { "share": 0.15, "shareBand": [0.10, 0.20], "buttons": { "x": 0.5, "y": 0.3, "b": 0.2 }, "kiReserve": 20, "brawlGuardSec": 1.0 },
+    "ai": { "shareByLevel": { "easy": [0.01, 0.02], "medium": [0.02, 0.04], "hard": [0.04, 0.06] }, "brawlFloorAiVsAi": 0.30, "buttons": { "x": 0.5, "y": 0.3, "b": 0.2 }, "kiReserve": 20, "brawlGuardSec": 1.0 },
     "missOpenTicks": 20
   }
 }
 ```
 
 It replaces `stances.circle` and the LT lane of `stances`, and lets the zip start up close. `zip.band.minBh` goes from 3 to 0.
+
+### The stick's flick at range (2026-11-07, Encounter's `docs/director/pending/stick-lunge/`)
+
+**Confirmed: at range the flick lands as a light, 8.6, with the stick's own level-0 stun and carry.** Up close it stays the stick's medium blow, 21.4.
+- **What you see is a light lunge, so it's worth a light.**
+- **The ladder stays clear:** the free flick from range is the quick poke that opens something. The paid X flight strike from the same range is worth a medium (2.5 lights, about the same 21.4). If a free flick were worth a medium too, it would undercut the flight strike.
+- **It keeps the pull toward the brawl.** The full blow is the one up close.
+- **It still lands 5 ticks sooner:** 17 against 22 at 6 bh. The vision's 11 isn't reached, because the lunge's 6-tick crouch is the tell Orb asked to read. That stays.
+- **Lever:** if Orb's play shows the range flick as a slap that does nothing, its worth goes to 1.5 lights (about 12.9). Never the medium's full 21.4.
 
 ## 2. Beams (the vision's section 3)
 
