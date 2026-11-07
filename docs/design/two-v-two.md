@@ -106,10 +106,84 @@ Orb's order is versus on the globe with the structure tuned for LAN co-op, the t
 
 **QA's rows:** all four within about 15,000 units for 25 to 50% of a match, and 2 to 4 rescue flights a match. If the fights never meet, this is two 1v1s, and that's the failure to watch for. **All on one line stays,** with swings resting while the pairs are apart, as above.
 
-## The smallest version worth playing
+## Hits across fights (2026-11-02)
+
+For Simulation's build of two fights on one globe, behind its switch. First values, unplayed. **A 1v1 doesn't change.**
+
+**1. Who strikes across, and when.**
+- **Your focus picks the target.** Focus works as above: whoever you last hit, else the nearest in front, and the stick toward someone moves it. If your focus is in a fight with your partner, your attack press is **a single blow from outside,** not a way into their brawl.
+- **It lands only on an opening:** a stagger, a stun or daze, the open time after a whiff, the recovery after his own blow, or a beam's stuck time. If he's open as you arrive, it lands. If not, you hover in reach and it lands on his next opening inside 0.5 s. If none comes, it's a whiff, and you're open for 20 ticks like anyone. **Outside a brawl, that whiff is an opening to every enemy, not just a pause in your own line:** no guard for those 20 ticks, and any enemy's blow then counts as landing on an opening, including the one you swung at.
+- **His guard works against everyone,** whoever's focus he is.
+- **One blow from outside per opening, for your whole team.** So two partners can't both hit the same opening.
+
+**2. What it does to the fight it lands in.**
+
+| Lands on | What happens |
+| :--- | :--- |
+| **A fighter landing a finisher** | **It breaks the finisher.** His victim is free, still on the brink, and the finisher's lost. It's the best rescue there is, and it costs you whatever you were doing |
+| **A fighter in the middle of a string** | **His string ends.** A blow he'd already thrown still lands, as the brawl's rule says. His run is gone, so your partner's free |
+| **A fighter your partner is stringing** | Damage and a reel only. **It adds nothing to your partner's run or close** |
+| **Anyone** | **No send, no knock-back,** and no stun of its own. A send from outside is the pass, and that's not in the first version |
+
+- **One stun a string, across a team:** once he's stunned, nobody on your team can stun him again until he's been free of all your team's blows for a string's lapse (24 ticks). So partners can't take turns locking him.
+- **The blow's own hit-stop** holds only the striker and the fighter struck, and their own exchange. The other fight runs on.
+
+**3. Shots from outside.** As any shot: it hits the first enemy it meets and passes through a partner. **Guard, dodge and the deflect all work, whoever fired it.** It's still energy spent, and a shot that hits a brawler mid-blow lands, since he isn't guarding.
+
+**4. A beam stops at the first enemy on its line,** even if he isn't who it was aimed at, and passes through the shooter's partner. **Whoever is first on the line when the front's coming gets the warning,** from the moment he's first. So diving onto the line (Cover your partner) gives you less time, and that's the price of the rescue. A beam struggle is still between two fighters: whoever fires back. **If that's an enemy from the other fight, the struggle moves him into the shooter's fight,** for its length, since the struggle is the game's big shot and the rescue earns it. The shooter's own foe is left free. No outside blow lands on either of the two while it runs. When it ends, the fights form again by focus, which usually means the two have swapped opponents.
+
+## Encounter's three questions (2026-11-02)
+
+1. **Should a human winner's focus move across by itself?** **Yes, once the finisher has played out and he's had his moment standing in the wreckage,** easing over about 12 ticks. A held press then pursues. The stick toward someone still overrides. Focus never needs a button, as ruled.
+2. **A rejoined 1v1: where does wear start?** **Where it stood, for both,** as you'd keep it. The brink isn't reset.
+3. **Do the sends pull while it's two on one?** **No,** as you say. The fights have already met.
+4. **The winner between his KO and joining the other fight** (Simulation's `cross-end.md`): **he never waits with half a kit.** During his winner's moment, up to the 2.2 s, he can't act, and nothing from outside lands on him. After that he has everything back at once, forms, the last stand and the rally included, with nothing gated on a KO that's done. If he can be hit, he can answer.
+
+## Ready for QA's read: the two on one (2026-11-02)
+
+Encounter's two-match smoke: all four within 15,000 for 36% of a match (in the 25 to 50% band), 4 rescue flights a match (just over 2 to 4), **12 to 14 minutes a match, and 127 blows from outside in one.** No action until QA's 60. This is what I'll look at, and the levers I'd reach for.
+
+**What I want from a two on one:** it's the endgame, and it should be frightening and short, with a real chance of a comeback.
+
+| Row | First band |
+| :--- | :--- |
+| Time from the first KO to the end | Median at most 90 s |
+| The lone fighter wins from two on one | 10 to 20% |
+| Blows from outside while two on one | Read, no band yet |
+| **A 2v2 match's length** | **8 to 12 minutes, with the time cap at 14:00.** It has two fights in it, so 1v1's 11:00 is too short. The ending's rungs apply to each fight, and the cap puts all four on the brink |
+
+**If the lone fighter is simply overrun:**
+1. **The last stand** (feature 23) is for this: he gets it when he's alone, if he hasn't already.
+2. **Blows from outside on a lone fighter count half** for wear. The one opening each still stands.
+3. **Never** a cap on blows, and never a pause.
+
+**If two on one drags instead:** the lone fighter's brink comes sooner, and a finisher on him can come from either enemy.
+
 
 Two PCs, two pads, two humans against two AI. The full globe if Simulation's number allows it, where a rescue's at most about 5 to 6 seconds away. All four on one line, with no swings while apart. Focus picks itself, with the D-pad as override. Rescue by flying in, per-pair hit-stop, the map and the plate. No assists, no revive, no pass at first, and no meteor.
 
 **What it answers:** when your friend calls, do you drop your fight and fly? And is that the best moment of the match? If so, the rest is worth it.
 
 **It doesn't touch the first playable,** and it should wait until the arena and the pad are in Orb's hands.
+
+## Co-op calls (2026-11-07, on `docs/ep/proposals/co-op-2v2.md` §5 and §8)
+
+**1. The arrival: the long strike across fights.** Flying to your partner's rescue is the best payoff flight has, and Orb asked for flying to pay off. So it's the long strike, not a plain blow from outside, with one exception to the outside rules.
+
+| | Ruling |
+| :--- | :--- |
+| **What counts as an arrival** | The long strike as `rule-of-cool-map.md` row 3 has it: flat out with LT held toward an enemy of the other fight, then B or a right-stick flick. A press from outside that isn't flat out stays a plain blow from outside, as before |
+| **Where it lands** | **Only on an opening,** as every outside blow does. The defender has seconds and a visible line to answer, which is the long strike's design |
+| **What it does** | **It keeps its speed on arrival and sends up to ×1.25,** in the direction he was flying. **It's the only blow from outside that sends,** once a flight. Every other outside blow is still no send and no knock-back |
+| **A miss** | The long strike's whiff: he carries about 1 s past, and he's open |
+| **Afterwards** | Who's in which fight goes by `fight-swap.md`, unchanged. The arrival moves bodies, not the rules of pairs |
+| **The flight is read at the press** | Stored in a `dirI` slot inside `takes()`, before `_toward()` zeroes it, as the proposal says. Both PCs play it through the striker's `arrival` cue |
+| **The striker is held with his hit** | A send's pause is 12 to 14 ticks. A striker flying on through a frozen target is the weightless look Orb would spot first. So **the arrival needs the body clock, or that one case of it,** before Orb plays it (see 3) |
+
+`playable-build.md`'s "from outside another fight" row now points here for the arrival. QA's rows: 2 to 4 rescue flights a match stands, and **at most half of arrivals miss.** If more miss, openings are too rare for it, and it comes back to me.
+
+**2. The Unison line: the pick is still open, and it's Orb's.** `systems-sketch.md` §3 asked Orb "Tandem, Unison line, both, or something else?", and it was never answered. `modes.md` wrote both in as if they'd been picked, which I've corrected. **When it goes to Orb, I'd recommend Unison later, not in the first co-op builds.** It's the one beam two people fire together, which is co-op's showpiece. But it needs a struggle of three, re-rules the two-fighter struggle and the equal push, costs about 6.5M, and goes to Legal near fusion. The arrival and the relay are cheaper, and they test whether co-op is fun first. **Tandem's own question is now partly Orb's pride kit:** the Anti-hero's choice between pride and help may already live in his forms, so Orb's pick should cover whether Tandem survives it.
+
+**3. A13: holds per fight, accepted for the first match.** The first match is there to find out whether co-op is fun. A body clock at about 2M before anyone has played is the wrong order. A plain outside blow's pause is 2 to 8 ticks, which is small enough for a first try. **But the body clock, or its one case of holding the arrival's striker with his hit, comes before the arrival is played** (1 above). If Orb notices outside blows feeling weightless in the first match, it comes sooner.
+
+**The cradle and the brace** wait on Orb's word on friendly fire, which the EP is asking for. Nothing from me until then.

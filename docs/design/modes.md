@@ -75,7 +75,7 @@ The modes, their stable ids, what each one is, and the 1.0 scope. Orb set the 1.
   - the cut-in cannot be parried and cannot chain;
   - Combat authors the beats.
 - **Teammates.** No friendly fire on fighters. Collateral stays shared.
-- **Tandem and the Unison line.** The Protagonist and the Anti-hero on the same team get the Tandem offer, and two players can fire the Unison line. A true fusion is deferred (`systems-sketch.md` §3).
+- **Tandem and the Unison line: pending Orb's pick** (`systems-sketch.md` §3, still open; `two-v-two.md`, co-op calls, 2026-11-07). If picked: the Protagonist and the Anti-hero on the same team get the Tandem offer, or two players fire the Unison line together. A true fusion is deferred.
 - **The Tyrant's minions.** They count as the Tyrant's fighters, not as extra team members.
 - **Camera.** It frames both teams with shortest-arc bounds. When the spread is more than half the planet, it reframes to the most recent exchange (Camera).
 - **Accept:**

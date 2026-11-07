@@ -59,7 +59,7 @@ Owner: Game Design. 2026-11-06, ruling the stand-in's `docs/ep/proposals/control
 | Charging a beam or a stick strike, or in a beam struggle | Not read. The charge's own rules hold |
 | LB held too (LB + LT is the vanish) | The vanish |
 | Past 12.5 bh, flying flat out | Today's long strike and trail spike |
-| From outside another fight (2v2) | An outside blow: it lands only on an opening (`two-v-two.md`) |
+| From outside another fight (2v2) | An outside blow: it lands only on an opening (`two-v-two.md`). **Flat out, it's the arrival:** the long strike across fights, the one outside blow that sends (`two-v-two.md`, co-op calls) |
 
 ### Chaining and price
 
