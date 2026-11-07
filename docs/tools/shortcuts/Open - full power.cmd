@@ -1,7 +1,8 @@
 @echo off
 title Orb Combat EX - private playable, START AT FULL POWER (the kept build)
-rem The KEPT folder is the build Orb is handed: a copy made by tools\preview\handover.mjs, named by its commit, outside the repository and never rebuilt. Tools fills the name in at the handover.
-set "KEPT=C:\Users\itsha\Documents\Claude Proj\orb-first-play-COMMIT8-KEY8"
+rem The KEPT folder is the build Orb is handed: a copy made by tools\preview\handover.mjs, named by its commit, kept in the repository's homework\Files\builds (git-ignored; the path below is relative to this shortcut's folder, homework\<a folder>\, so renaming the project folder breaks nothing) and never rebuilt.
+set "KEPT=%~dp0..\Files\builds\orb-first-play-018b4edf-fddd34b4"
+for %%I in ("%KEPT%") do set "KEPT=%%~fI"
 set "ADDR=http://127.0.0.1:8766/index.html?planet=7&meteor=loud&tiles=1&go=1&blackbox=1&peak=1"
 echo.
 echo Warning: this build has a camera move (the launch swing and the meteor shot) that flashes
