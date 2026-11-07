@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "note": "The sounds the co-op 2v2 and the controller plan asked for (the EP's brief of 2026-11-07; docs/audio/coop-sound.md): the brink's call, a good push in a beam clash, the pad's refusal knock and the charge stages rising. EXISTING SOUNDS ONLY, each at its own pitch and level (the lower, chunkier family, Orb 2026-10-16). PARKED behind `enabled`: false: off, nothing here runs and audio is byte-for-byte what it was. Needs a schema from Tools (a warning until then).",
+  "enabled": false,
+  "brink": {
+    "gap_ticks": 240,
+    "sting": {"sound": "form.ready", "gain_db": -6.0, "pitch": 0.84, "bus": "Alert", "priority": 88, "cls": "coop.brink", "cap": 1, "caption": "[%s on the brink]"},
+    "voice": {"gesture": "pain.head", "gain_db": -4.0, "far_db": -6.0, "priority": 82, "cls": "coop.brink.voice", "cap": 1}
+  },
+  "refuse": {"sound": "grip.refuse", "gain_db": -4.0, "pitch": 1.0, "gap_ticks": 12, "quiet_texts": ["replaced", "answered"], "quiet_db": -6.0, "priority": 58, "cls": "grip.refuse", "cap": 1},
+  "stage": {
+    "sound": "charge.tick.light", "gain_db": -8.0, "semitones": [0, 2, 4, 7, 9, 12],
+    "down_db": -4.0, "down_semitones": -3, "restart_ticks": 240,
+    "top": {"sound": "tug.tock", "gain_db": -5.0, "pitch": 0.9},
+    "capped": {"sound": "grip.refuse", "gain_db": -4.0, "pitch": 1.0},
+    "priority": 64, "cls": "coop.stage", "cap": 2
+  },
+  "clash": {"push": {"sound": "perfect.tok", "gain_db": -6.0, "pitch": 1.0, "priority": 74, "cls": "tug.surge", "cap": 2}}
+}

@@ -159,8 +159,9 @@ func _validate(all: Array, bank: AudioBank, cfg: Dictionary) -> String:
 			return "a cue has a non-finite number: " + c.sound
 		if c.pitch < 0.4 or c.pitch > 2.0:
 			return "pitch %.2f outside 0.4 to 2.0 for %s" % [c.pitch, c.sound]
-		if c.gain_db < -20.0 or c.gain_db > 8.0:
-			return "gain %.1f dB outside -20 to +8 for %s" % [c.gain_db, c.sound]
+		var floor_db: float = -40.0 if (c.loop or c.ambient) else -20.0      # a bed sits well under the hits (tug_cues.json bed.hi goes to -28 on purpose)
+		if c.gain_db < floor_db or c.gain_db > 8.0:
+			return "gain %.1f dB outside %.0f to +8 for %s" % [c.gain_db, floor_db, c.sound]
 		if c.x < 0.0 or c.x >= SimConst.W:
 			return "x %.1f is outside the planet for %s" % [c.x, c.sound]
 	return ""

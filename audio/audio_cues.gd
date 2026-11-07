@@ -47,6 +47,7 @@ var brawl: AudioBrawl                 # the brawl's cues (audio_brawl.gd)
 var carry: AudioCarry                   # what the HUD no longer draws (audio_carry.gd), parked behind data/carry_cues.json `enabled`
 var world: AudioWorld                   # biome sound: the beds and the surfaces (audio_world.gd), parked behind data/world_cues.json `enabled`
 var tug: AudioTug                     # the beam struggle's (audio_tug.gd), parked behind data/tug_cues.json `enabled`
+var coop: AudioCoop                   # the brink's call, the clash push, the pad's refusal knock, the charge stages (audio_coop.gd), parked behind data/coop_cues.json `enabled`
 var moments: AudioMoments             # a beam's charge and fire, the KO, the big blows, a launch, the meteor's landing (audio_moments.gd), parked behind data/moment_cues.json `enabled`
 
 
@@ -58,6 +59,7 @@ func _init(p_bank: AudioBank = null) -> void:
 	carry = AudioCarry.new(self)
 	world = AudioWorld.new(self)
 	moments = AudioMoments.new(self)
+	coop = AudioCoop.new(self)
 	reset(1)
 
 
@@ -71,6 +73,7 @@ func reset(p_seed: int) -> void:
 	carry.reset()
 	world.reset()
 	moments.reset()
+	coop.reset()
 
 
 ## One tick's events, in order. Returns the cues to play.
@@ -85,6 +88,7 @@ func consume(S: SimState, events: Array) -> Array:
 				brawl.on_cue(S, e, out)
 				tug.on_cue(S, e, out)
 				carry.on_cue(S, e, out)
+				coop.on_cue(S, e, out)
 			"crater":
 				_crater(S, e, out)
 			"flash":
@@ -102,6 +106,15 @@ func consume(S: SimState, events: Array) -> Array:
 	tug.after(S, out)
 	carry.after(S, out)
 	world.consume(S, events, out)
+	return out
+
+
+## The other fights' events (2v2): lists[j] is the j-th fight that is not the one in S, in fight order (SimHost.other_events()). Only the
+## brink's call is read there today. Returns the cues; nothing when the set is off or the match has one fight.
+func consume_others(S: SimState, lists: Array) -> Array:
+	var out: Array = []
+	if coop.enabled() and S.stage != null:
+		coop.consume_others(S, lists, out)
 	return out
 
 

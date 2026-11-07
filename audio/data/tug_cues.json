@@ -60,8 +60,8 @@
     "cap": 2
   },
   "stray": {
-    "sound": "perfect.break",
-    "gain_db": -2.0,
+    "sound": "grip.refuse",
+    "gain_db": -5.0,
     "gap_ticks": 20,
     "priority": 60,
     "cls": "tug.stray",

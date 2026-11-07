@@ -144,10 +144,10 @@ func _struggle() -> void:
 	# strays: a mash is never a buzz
 	var droops: int = 0
 	for i in range(10):
-		droops += with_sound(tick(t + 100 + i, [cue("beam_stray", "", 0)]), "perfect.break").size()
-	ok(droops == 1, "ten strays in ten ticks make one droop (%d)" % droops)
-	ok(with_sound(tick(t + 125, [cue("beam_stray", "", 0)]), "perfect.break").size() == 1, "and the next after 20 ticks is heard")
-	ok(with_sound(tick(t + 125, [cue("beam_stray", "", 1)]), "perfect.break").size() == 1, "each fighter has his own")
+		droops += with_sound(tick(t + 100 + i, [cue("beam_stray", "", 0)]), "grip.refuse").size()
+	ok(droops == 1, "ten strays in ten ticks make one knock (%d)" % droops)
+	ok(with_sound(tick(t + 125, [cue("beam_stray", "", 0)]), "grip.refuse").size() == 1, "and the next after 20 ticks is heard")
+	ok(with_sound(tick(t + 125, [cue("beam_stray", "", 1)]), "grip.refuse").size() == 1, "each fighter has his own")
 	# determinism
 	var d1: String = _digest()
 	var d2: String = _digest()

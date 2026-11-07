@@ -473,6 +473,8 @@ func tick(vw: float, vh: float) -> void:
 	impact.ejecta_marks = not (vfx.enabled and vfx.earth_enabled)
 	impact.consume(S, S.out.fx)
 	pending_cues.append_array(audio_cues.consume(S, S.out.fx))
+	if S.stage != null:
+		pending_cues.append_array(audio_cues.consume_others(S, other_events()))   # 2v2: the brink's call from the other fights (Audio, parked behind coop_cues.json)
 	drained.emit(S.out.fx, lines)
 	vfx.consume(S, S.out.fx)
 	if draw_others and S.stage != null and vfx.has_method("consume_others"):
