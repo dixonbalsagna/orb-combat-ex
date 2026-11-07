@@ -396,7 +396,18 @@ static func _knockDecisive(S: SimState, ex, att, tgt, setup: String = "") -> voi
 ## longOnly: a break or finisher launch, chosen among the long-haul candidates only (no "no launch").
 ## args (the launch beat's own): "ends" and "sends" are Combat's hooks (alchemist-content.md): a piece that ends "level"
 ## never sends the rival away, and "sends" keeps only the launch candidates in that direction.
+## A launch beat's share: the caller's, the launcher's by its power, or its template's.
+static func _powerShare(ex, args, lpow: float, force: float) -> float:
+	var key: String = String(args.get("share", "")) if args != null else ""
+	if key != "":
+		return SimPower.share(key)
+	if lpow >= 0.0:
+		return SimPower.shareBetween("brawl.launchAnywhere", lpow)
+	return SimPower.templateShare(String(ex.tpl), String(ex.kind), force)
+
+
 static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool = false, args = null) -> void:
+	var authored: float = force   # what the move says, ahead of any multiplier: a share reads this
 	if ex.cancel or S.game.ko != null:
 		return
 	var ends: String = String(args.get("ends", "")) if args != null else ""
@@ -442,8 +453,11 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 	var pt: int = DirLaunch.phrase(S, ex, att) if (att.ai == null and not longOnly and not DirData.contact().is_empty()) else -1
 	var tilt: int = int(args.get("tilt", 0)) if forced else ((pt >> 4) & 15 if pt >= 0 else 0)
 	var lpow: float = float(args.get("power", -1.0)) if args != null else -1.0   # the brawl's launcher (launch anywhere); -1 for any other launch
+	if S.powerOn:
+		force = SimPower.speed(att, _powerShare(ex, args, lpow, authored))   # one energy model: the share Combat gave the move, of what he has
 	if lpow >= 0.0:
-		force *= lpow
+		if not S.powerOn:
+			force *= lpow
 		if "launchPower" in tgt:
 			tgt.launchPower = lpow * (DirBrawl.freshMul(S, tgt, 4) if DirBrawl.freshHurts() else 1.0)   # for World's building aim (when granted)
 	DirRally.openNoDown(S, att, tgt, lpow, longOnly, tilt)   # 10-26 item 22(b): a rally's opening send is never down on a neutral stick

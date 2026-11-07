@@ -339,6 +339,8 @@ static func damageMul(S: SimState, f) -> float:
 
 ## Launch force's tier factor (the director's launch planner and doLaunch). Without steps, today's.
 static func launchMul(S: SimState, f) -> float:
+	if S.powerOn:
+		return 1.0   # one energy model: a send's force is already his speed
 	if not has(S, f):
 		return 1.0 + f.ld.launch * (f.tier - 1.0)
 	return _g(f, f.fd.gLaunch) * (1.0 + (f.fd.wLaunch if f.form.branch == "witness" else 0.0))

@@ -23,6 +23,90 @@ extends RefCounted
 ## from the beam struggle's first cue).
 
 const DEFAULTS: Dictionary = {
+	# The strike stick's charge ladder (pitch 1): a tick, a knock, a thud as each rung is reached. Each has a low motor in it, so none is the brake's tick.
+	"ladder_1": {
+		"pad": [{"at": 0, "weak": 0.35, "strong": 0.15, "ms": 20}],
+		"handheld": [{"at": 0, "ms": 12}],
+		"gapMs": 120,
+	},
+	"ladder_2": {
+		"pad": [{"at": 0, "weak": 0.3, "strong": 0.45, "ms": 25}],
+		"handheld": [{"at": 0, "ms": 22}],
+		"gapMs": 120,
+	},
+	"ladder_3": {
+		"pad": [{"at": 0, "weak": 0.25, "strong": 0.8, "ms": 45}, {"at": 70, "weak": 0.2, "strong": 0.3, "ms": 25}],
+		"handheld": [{"at": 0, "ms": 40}, {"at": 70, "ms": 15}],
+		"gapMs": 160,
+	},
+	# The throw of a charged strike or beam (docs/controls/beam-aim-feel.md section 5): one low push, then a short roll-off, on the low motor with only a trace of the high one.
+	# Soft and chunky: nothing brighter than a thud, so the lift of the thumb is answered by weight, not a buzz. The thrower only; scaled by the charge reached.
+	"release_thump": {
+		"pad": [{"at": 0, "weak": 0.1, "strong": 0.65, "ms": 40}, {"at": 55, "weak": 0.0, "strong": 0.25, "ms": 30}],
+		"handheld": [{"at": 0, "ms": 30}, {"at": 55, "ms": 14}],
+		"gapMs": 160,
+	},
+	# Orb's 2026-10-05 picks, the five that were missing (docs/controls/impact-haptics.md; switches.hapticImpact). Soft and low, none brighter than a thud; every one has its own gap so a brawl
+	# never buzzes. A landed blow, felt by the one who landed it, scaled by the blow's strength.
+	"blow_land": {
+		"pad": [{"at": 0, "weak": 0.15, "strong": 0.6, "ms": 30}],
+		"handheld": [{"at": 0, "ms": 23}],
+		"gapMs": 90,
+	},
+	# A blow taken: the same weight, lower and a little longer, felt by the one it hit.
+	"hit_taken": {
+		"pad": [{"at": 0, "weak": 0.1, "strong": 0.7, "ms": 40}],
+		"handheld": [{"at": 0, "ms": 29}],
+		"gapMs": 90,
+	},
+	# A close: an attack carries the fighter across the gap. One short surge on both motors.
+	"close_surge": {
+		"pad": [{"at": 0, "weak": 0.3, "strong": 0.25, "ms": 40}],
+		"handheld": [{"at": 0, "ms": 24}],
+		"gapMs": 200,
+	},
+	# Sent flying: the launched fighter's own pad. A heavy push, then a roll-off.
+	"launch_felt": {
+		"pad": [{"at": 0, "weak": 0.2, "strong": 0.8, "ms": 80}, {"at": 100, "weak": 0.0, "strong": 0.4, "ms": 60}],
+		"handheld": [{"at": 0, "ms": 42}, {"at": 100, "ms": 18}],
+		"gapMs": 300,
+	},
+	# Touchdown after a launch: a thud with a short tail, scaled by the speed it came down at.
+	"landing_thud": {
+		"pad": [{"at": 0, "weak": 0.1, "strong": 0.65, "ms": 50}, {"at": 70, "weak": 0.0, "strong": 0.25, "ms": 30}],
+		"handheld": [{"at": 0, "ms": 34}, {"at": 70, "ms": 16}],
+		"gapMs": 200,
+	},
+	# A building breaks (it falls): both pads, two low pushes, scaled by its height. Over inside 160 ms like every kind.
+	"building_break": {
+		"pad": [{"at": 0, "weak": 0.2, "strong": 0.6, "ms": 70}, {"at": 90, "weak": 0.0, "strong": 0.4, "ms": 70}],
+		"handheld": [{"at": 0, "ms": 45}, {"at": 90, "ms": 40}],
+		"gapMs": 600,
+	},
+	# A rival's stick strike has started (pitch 3), on the defender's pad: two light taps for a blow from above or toward, one low knock for below or away.
+	"incoming_high": {
+		"pad": [{"at": 0, "weak": 0.55, "strong": 0.12, "ms": 20}, {"at": 45, "weak": 0.3, "strong": 0.1, "ms": 20}],
+		"handheld": [{"at": 0, "ms": 14}, {"at": 45, "ms": 10}],
+		"gapMs": 200,
+	},
+	# A beam is on its way and the receiver may still answer (row 40, Encounter's `beam_window`): one firm pulse, played again and again at a rising scale through the
+	# window (a crescendo to arrival, see beam_window). Both motors, no longer than a heavy's snap.
+	"incoming_beam": {
+		"pad": [{"at": 0, "weak": 0.4, "strong": 0.5, "ms": 40}],
+		"handheld": [{"at": 0, "ms": 26}],
+		"gapMs": 100,
+	},
+	# A stick press the game did not answer (the audit's gap 2): two short dull knocks on the low motor, the sound of a press that went nowhere. The presser only.
+	"stick_refused": {
+		"pad": [{"at": 0, "weak": 0.05, "strong": 0.35, "ms": 30}, {"at": 70, "weak": 0.0, "strong": 0.3, "ms": 30}],
+		"handheld": [{"at": 0, "ms": 20}, {"at": 70, "ms": 12}],
+		"gapMs": 200,
+	},
+	"incoming_low": {
+		"pad": [{"at": 0, "weak": 0.1, "strong": 0.55, "ms": 30}],
+		"handheld": [{"at": 0, "ms": 18}],
+		"gapMs": 200,
+	},
 	# A thump with a ring after it: the pluck and the head snap, then the ring (Audio's shape, 150 ms in all). The launcher only.
 	"launch_open": {
 		"pad": [{"at": 0, "weak": 0.3, "strong": 0.7, "ms": 80}, {"at": 90, "weak": 0.2, "strong": 0.0, "ms": 60}],
@@ -80,6 +164,148 @@ const GRIP_STEPS: int = 5
 const SHARP_BOOST: float = 0.25
 const MAX_STEPS: int = 4
 const MAX_AT_MS: int = 1000
+
+
+## The beam-answer window (row 40). Encounter's cue `beam_window` (UI's contract): text "start" or "end", actor = the shooter, target = the receiver, `n` = the ticks from
+## the hand to the front's arrival, `k` = the beam's level, and an optional `dodge_from`; the host passes `text` and `n` (as `ticks`). "start" opens it, "end" closes it. Returns {} when the switch is off or the cue is
+## not a window; else {slot: the receiver, open: bool, pulses: [{at: ms after the cue, scale: 0 to 1}]}: a crescendo of `incoming_beam` pulses, one per 200 ms of the window
+## (1 to 5), spaced evenly inside it and rising from 0.3 to 1.0, the last well before arrival. Pure; the host plays them on its timers and drops the rest when the window closes.
+static func beam_window(actor: int, target: int, text: String, ticks: float) -> Dictionary:
+	if not SimInputData.haptic_beam_on():
+		return {}
+	var slot: int = target if (target >= 0 and target <= 1 and target != actor) else (1 - actor if (actor >= 0 and actor <= 1) else -1)
+	if slot < 0:
+		return {}
+	if text != "start" or ticks < 1.0:
+		return {"slot": slot, "open": false, "pulses": []}
+	var length_ms: int = int(ticks * 1000.0 / 60.0)
+	var n: int = clampi(int(float(length_ms) / 200.0), 1, 5)
+	var pulses: Array = []
+	for k in range(1, n + 1):
+		pulses.append({"at": int(float(length_ms * k) / float(n + 1)), "scale": 0.3 + 0.7 * float(k) / float(n)})
+	return {"slot": slot, "open": true, "pulses": pulses}
+
+
+## The ladder's pulses (pitch 1): the rungs a held strike's charge has newly reached, from `from_level` to `to_level` (0 to 3). The hub keeps the levels
+## it saw and calls this when one rises; nothing here reads the sim.
+static func ladder_requests(slot: int, from_level: int, to_level: int) -> Array:
+	var out: Array = []
+	for rung in range(maxi(from_level, 0) + 1, mini(to_level, 3) + 1):
+		out.append({"slot": slot, "kind": "ladder_%d" % rung, "scale": 1.0})
+	return out
+
+
+## The pulse for a charge that has reached stage `n` of `of` (UI's `charge_stage` cue, docs/ui/charge-stages.md; docs/controls/beam-aim-feel.md section 5): the first stage is the
+## tick (ladder_1), the last the thud with its ring (ladder_3), those between the knock (ladder_2) rising from 0.7 to 1.0 of its strength, so a six-stage charge climbs without any
+## pulse louder than the top. [] for stage 0 or a stage outside 1..of. A two-stage charge is the tick, then the thud. Needs switches.hapticLadder.
+static func stage_requests(slot: int, n: int, of: int) -> Array:
+	if not SimInputData.haptic_ladder_on() or slot < 0 or slot > 1 or of < 1 or n < 1 or n > of:
+		return []
+	if n == of:
+		return [{"slot": slot, "kind": "ladder_3", "scale": 1.0}]
+	if n == 1:
+		return [{"slot": slot, "kind": "ladder_1", "scale": 1.0}]
+	var rise: float = float(n - 2) / float(maxi(1, of - 3))
+	return [{"slot": slot, "kind": "ladder_2", "scale": 0.7 + 0.3 * clampf(rise, 0.0, 1.0)}]
+
+
+## The thump that answers a throw: the thrower's pad, scaled by the charge reached (level 1 to `of`; 0.4 at the first rung up to 1.0 at the last). A flick (level 0) throws no thump,
+## so a mashed quick strike never buzzes. Needs switches.hapticLadder.
+static func release_requests(slot: int, level: int, of: int = 3) -> Array:
+	if not SimInputData.haptic_ladder_on() or slot < 0 or slot > 1 or level < 1 or of < 1:
+		return []
+	return [{"slot": slot, "kind": "release_thump", "scale": 0.4 + 0.6 * clampf(float(level) / float(of), 0.0, 1.0)}]
+
+
+## Every press answered (docs/controls/refusals.md): the reason codes of the presses the game lets go of, which UI can show ("a word at the edge, the first few times") and which ride on the `reason` key of a
+## stick_refused request. `word` is a suggested English word for the edge (UI owns the final string), `owner` says whose drop it is, `what` what happened. The pad's knock is the same for all: a press that went nowhere.
+const REFUSALS: Dictionary = {
+	"face_late": {"word": "Too late", "owner": "controls", "what": "a face press waited behind the stick for longer than strike.queueTicks and went"},
+	"face_overflow": {"word": "Too many", "owner": "controls", "what": "a fourth face press behind the stick: the oldest went (strike.queueDepth)"},
+	"no_answer": {"word": "No answer", "owner": "controls", "what": "a stick request the director never started inside strike.refuseTicks"},
+	"no_energy": {"word": "No energy", "owner": "encounter", "what": "the press would cost more energy than he has (the director's stick_refused text ki)"},
+	"hit": {"word": "Hit", "owner": "encounter", "what": "the charge was lost to a hit (text taken)"},
+	"too_late": {"word": "Too late", "owner": "encounter", "what": "the request waited too long for the fighter to act (text late)"},
+	"replaced": {"word": "Replaced", "owner": "encounter", "what": "a newer press took the buffered one's place (text replaced)"},
+	"no_reach": {"word": "Out of reach", "owner": "encounter", "what": "it cannot reach him in the air (text chase)"},
+	"answered": {"word": "Answered", "owner": "encounter", "what": "a planned exchange took the request: his rival's answer (text answered)"},
+	"dodged": {"word": "Dodged", "owner": "encounter", "what": "the request was dodged out of (text dodged)"},
+	"cancelled": {"word": "Cancelled", "owner": "encounter", "what": "the guard or the dodge ended the charge (text cancel)"},
+	"not_yours": {"word": "Not yours", "owner": "encounter", "what": "the first move belongs to his rival (text refused)"},
+	"busy": {"word": "Busy", "owner": "encounter", "what": "the fighter could not act: a state number as the text"},
+	"stun_limit": {"word": "One a string", "owner": "encounter", "what": "a stick stun held back by the one-a-string rule"},
+	"queue_expired": {"word": "Too slow", "owner": "encounter", "what": "the director's attack queue ran out before it could start the blow"},
+	"block_lockout": {"word": "Block cooling", "owner": "encounter", "what": "the perfect block's anti-mash lockout held the press"},
+	"other": {"word": "Not now", "owner": "controls", "what": "a refusal whose text this table does not know"},
+}
+## The director's stick_refused cue texts, as codes.
+const REFUSAL_TEXT: Dictionary = {"ki": "no_energy", "taken": "hit", "late": "too_late", "replaced": "replaced", "chase": "no_reach", "answered": "answered", "dodged": "dodged", "cancel": "cancelled", "refused": "not_yours"}
+
+
+## The reason code for a refusal cue's text: a known code passes through, the director's words map (REFUSAL_TEXT), a number (a state mask) is "busy", anything else "other".
+static func refusal_code(text: String) -> String:
+	if REFUSALS.has(text):
+		return text
+	if REFUSAL_TEXT.has(text):
+		return String(REFUSAL_TEXT[text])
+	if text != "" and text.is_valid_int():
+		return "busy"
+	return "other"
+
+
+## The suggested edge word for a code (UI owns the final string); "Not now" for an unknown code.
+static func refusal_word(code: String) -> String:
+	return String(REFUSALS.get(code, REFUSALS["other"])["word"])
+
+
+## What the five impact kinds are scaled by.
+const BLOW_STRENGTH: Dictionary = {"light": 0.3, "medium": 0.6, "heavy": 1.0, "bolt": 0.3, "blast": 0.7, "guard": 0.2}
+const LAND_SPEED_REF: float = 1400.0
+const LAUNCH_SPEED_REF: float = 1500.0
+const BUILDING_H_REF: float = 300.0
+
+
+## The rumble for one sim event, read from the event itself (an SimState.FxEvent; docs/controls/impact-haptics.md). Orb's 2026-10-05 picks that were missing:
+##   damage (light, medium, heavy, bolt, blast, guard)  the attacker feels blow_land and the one hit feels hit_taken, scaled by the strength (a guarded blow is dull: 0.2); beams, impacts and
+##                                                     hazards (kind beam, impact, anything else) rumble nothing here: the struggle has its own kinds and a landing its own event
+##   rush        actor = the fighter closing the gap     -> close_surge
+##   launch      actor = the one sent, target = the launcher (the launcher's own cue is UI's launcher_open)  -> launch_felt on the sent one, scaled by speed
+##   land        actor = the one touching down, spd      -> landing_thud, scaled by the speed
+##   building_fall  (no fighter)                         -> building_break on both pads, scaled by the height
+## [] for any other event, and for all of them with switches.hapticImpact off. Pure: nothing is read or written but the event.
+static func event_requests(e) -> Array:
+	if not SimInputData.haptic_impact_on():
+		return []
+	match String(e.type):
+		"damage":
+			var strength: float = float(BLOW_STRENGTH.get(String(e.kind), -1.0))
+			if strength < 0.0:
+				return []
+			var out: Array = []
+			var a: int = int(e.attacker)
+			var v: int = int(e.victim)
+			if a >= 0 and a <= 1 and a != v:
+				out.append({"slot": a, "kind": "blow_land", "scale": strength})
+			if v >= 0 and v <= 1 and a != v:
+				out.append({"slot": v, "kind": "hit_taken", "scale": strength})
+			return out
+		"rush":
+			var r: int = int(e.actor)
+			return [{"slot": r, "kind": "close_surge", "scale": 1.0}] if r >= 0 and r <= 1 else []
+		"launch":
+			var s: int = int(e.actor)
+			if s < 0 or s > 1:
+				return []
+			return [{"slot": s, "kind": "launch_felt", "scale": clampf(float(e.amount) / LAUNCH_SPEED_REF, 0.3, 1.0)}]
+		"land":
+			var l: int = int(e.actor)
+			if l < 0 or l > 1:
+				return []
+			return [{"slot": l, "kind": "landing_thud", "scale": clampf(float(e.spd) / LAND_SPEED_REF, 0.25, 1.0)}]
+		"building_fall":
+			var sc: float = clampf(float(e.depth) / BUILDING_H_REF, 0.3, 1.0)
+			return [{"slot": 0, "kind": "building_break", "scale": sc}, {"slot": 1, "kind": "building_break", "scale": sc}]
+	return []
 
 
 ## The kinds this knows.
@@ -209,6 +435,26 @@ static func push_share(point: float, pusher_is_firer: bool) -> float:
 ## host keeps; -1 if unknown (the surge's actor is then taken as the firer). A beam_stray and every other cue rumble nothing.
 static func requests(name: String, actor: int, target: int, text: String, amount: float, firer: int = -1) -> Array:
 	match name:
+		"stick_refused":
+			# Encounter's cue when it drops a stick request it cannot start (busy, stunned, in a struggle): actor = the presser. The truth, told as soon as the director knows.
+			if not SimInputData.haptic_refused_on() or actor < 0 or actor > 1:
+				return []
+			return [{"slot": actor, "kind": "stick_refused", "scale": 1.0, "reason": refusal_code(text)}]
+		"press_refused":
+			# The director's (or the block's) cue for a press that is not a stick request and was let go of: actor = the presser, text = a reason code (stun_limit, queue_expired, block_lockout).
+			if not SimInputData.refusal_cues_on() or actor < 0 or actor > 1:
+				return []
+			return [{"slot": actor, "kind": "stick_refused", "scale": 1.0, "reason": refusal_code(text)}]
+		"stick_start":
+			# Encounter's cue when a stick strike's request begins: actor = the striker, text = its direction as the defender faces it. The defender feels it (switches.hapticIncoming).
+			if not SimInputData.haptic_incoming_on() or actor < 0 or actor > 1:
+				return []
+			match text:
+				"toward", "up":
+					return [{"slot": 1 - actor, "kind": "incoming_high", "scale": 1.0}]
+				"away", "down":
+					return [{"slot": 1 - actor, "kind": "incoming_low", "scale": 1.0}]
+			return []
 		"launcher_open":
 			return [{"slot": actor, "kind": "launch_open", "scale": 1.0}] if actor >= 0 else []
 		"transform_ready":

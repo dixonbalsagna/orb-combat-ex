@@ -740,6 +740,10 @@
       "schema": "fight-kick.schema.json"
     },
     {
+      "match": "data/fight/power.json",
+      "schema": "fight-power.schema.json"
+    },
+    {
       "match": "audio/data/carry_cues.json",
       "schema": "audio-carry-cues.schema.json"
     },

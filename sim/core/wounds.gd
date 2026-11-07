@@ -171,6 +171,8 @@ static func addGuardWear(S: SimState, f, damage: float, how: int = BLOCK_HEAVY) 
 static func step(S: SimState, f) -> void:
 	if f.stunTicks > 0:
 		f.stunTicks -= 1
+		if f.wallZ > 0:
+			f.wallZ -= 1   # World: the wall's depth hold runs down with the stun (brunt.json wallDepthHold)
 	if f.rallyCool > 0:
 		f.rallyCool -= 1
 	var ex = S.dirS.ex

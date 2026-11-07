@@ -2155,7 +2155,7 @@ static func kindOfSend(k: Dictionary) -> int:
 ## The marks of a kind on o still inside anywhere.fresh.windowS of fight time (none with the switch off).
 static func freshMarks(S: SimState, o, kind: int) -> int:
 	var fr: Dictionary = la().get("fresh", {})
-	if not anywhere() or fr.is_empty() or kind < 0 or kind > 4:
+	if not (anywhere() or S.powerOn) or fr.is_empty() or kind < 0 or kind > 4:
 		return 0
 	var win: int = int(round(float(fr.windowS) * DirData.TICKS_PER_SEC))
 	var now: int = _now(S)
@@ -2169,9 +2169,14 @@ static func freshMarks(S: SimState, o, kind: int) -> int:
 
 ## Freshness: x factor for each mark of that kind on o in the window, x general for each mark of any kind, never under
 ## floor (Game Design, ff68e994). A fighter not launched in the window is full.
+## One energy model: a repeat launch spends fresh squared of its share, so its speed falls by fresh, on the plan and on the send. A curve's a fixed shape and sets its own velocity after this.
+static func planFresh(S: SimState, o, plan: Dictionary) -> float:
+	return freshMul(S, o, kindOfSend(plan)) if S.powerOn else 1.0
+
+
 static func freshMul(S: SimState, o, kind: int) -> float:
 	var fr: Dictionary = la().get("fresh", {})
-	if not anywhere() or fr.is_empty():
+	if not (anywhere() or S.powerOn) or fr.is_empty():
 		return 1.0
 	var m: float = 1.0
 	for q in range(freshMarks(S, o, kind)):
@@ -2193,7 +2198,7 @@ static func freshHurts() -> bool:
 
 ## Each launch marks its kind on the fighter it sends (DirMelee.launchBeat): the oldest of that kind's four marks goes.
 static func markKind(S: SimState, o, kind: int) -> void:
-	if not anywhere() or kind < 0 or kind > 4 or la().get("fresh", {}).is_empty():
+	if not (anywhere() or S.powerOn) or kind < 0 or kind > 4 or la().get("fresh", {}).is_empty():
 		return
 	var at: int = 0
 	var oldest: int = 1 << 30
@@ -2757,6 +2762,16 @@ static func _send(S: SimState, ex, f, o, aim: int, why: String, mul: float, extr
 	elif aim == 2:
 		tilt = 3 if SimWrap.sdx(f.x, o.x) >= 0.0 else 7
 	var la: Dictionary = {"forced": true, "tilt": tilt, "why": why}
+	match why:   # one energy model: the send's share. A launcher with a power reads its power (DirMelee._powerShare)
+		"a heavy charged to full":
+			la["share"] = "fullB"
+		"the sell's send":
+			la["share"] = "brawl.rallySell"
+		"the turn":
+			la["share"] = "brawl.rallyTurn"
+		_:
+			if _lg(f, LA_POW) <= 0:
+				la["share"] = "launcher"
 	la.merge(extra, true)   # (23d: the sell's send is sold and decisive)
 	if _lg(f, LA_POW) > 0:
 		la["power"] = float(_lg(f, LA_POW)) / 1000.0   # the launcher's power: freshness is applied once the send is picked

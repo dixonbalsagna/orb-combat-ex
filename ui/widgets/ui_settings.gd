@@ -33,10 +33,26 @@ static func data() -> Dictionary:
 ## flag; without it the row is listed but disabled. An id with no option in options.json is skipped.
 ## Options whose rows are listed only once their feature flag is on (features.json): the three-strength charge settings, and Reduce flashing until Legal approves its words.
 const HIDE_UNTIL := {"latch_charge": "three_strengths", "latch_charge_p2": "three_strengths", "charges_off": "three_strengths", "charges_off_p2": "three_strengths", "reduce_flashing": "reduce_flashing", "planet_map": "planet_map", "world_turning": "swing"}
-## The right-hand attacks' settings (Controls' hand_layout, D-pad mirror, strike style, brace style and the pad's second stick): listed only while Controls' switch is on (the feature "right_hand"). Each has a player-two row.
-const RIGHT_HAND := ["hand_layout", "dpad_mirror", "strike_style", "brace_style", "pad_right_stick"]
+## The right-hand attacks' settings (Controls' hand_layout, D-pad mirror, strike style, brace style, the pad's second stick and the beam struggle push): listed only while Controls' switch is on (the feature "right_hand"). Each has a player-two row.
+const RIGHT_HAND := ["hand_layout", "dpad_mirror", "strike_style", "brace_style", "pad_right_stick", "struggle_push"]
 ## Player two's hold-or-toggle rows (Controls' hold_style: guard, manoeuvre, charging, transform): listed only while two people play, like energy_style_p2.
 const HOLD_STYLE_P2 := ["guard_style_p2", "manoeuvre_style_p2", "charge_style_p2", "transform_style_p2"]
+
+
+## The beam alert's rows (docs/ui/beam-answer-alert.md): listed only while the feature answer_alert is on, and the families another director supplies (the glint and air: VFX; the sound: Audio; the
+## rumble: Controls) only once their own flag says it is live, so a row never does nothing. Each has a player-two row.
+const ALERT_LIVE := {"alert_glint": "alert_vfx", "alert_air": "alert_vfx", "alert_sound": "alert_audio", "alert_sound_volume": "alert_audio", "alert_rumble": "alert_rumble", "alert_rumble_strength": "alert_rumble"}
+
+
+static func _alert_hidden(key: String) -> bool:
+	var base: String = key.trim_suffix("_p2")
+	if not UiAnswerAlert.FAMILIES.has(base):
+		return false
+	if not UiData.feature("answer_alert"):
+		return true
+	if ALERT_LIVE.has(base) and not UiData.feature(str(ALERT_LIVE[base])):
+		return true
+	return key.ends_with("_p2") and not two_humans
 
 
 static func _right_hand_key(key: String) -> bool:
@@ -49,6 +65,7 @@ static func rows() -> Array:
 	var out: Array = []
 	var needs: Dictionary = d.get("needs", {})
 	for sec in d.get("sections", []):
+		var heading_at: int = out.size()
 		out.append({"kind": HEADING, "key": "", "label": str(sec.get("title", "")), "help": "", "enabled": false, "section": str(sec.get("id", ""))})
 		for it in sec.get("items", []):
 			if it is Dictionary:
@@ -64,6 +81,8 @@ static func rows() -> Array:
 				continue
 			if _right_hand_key(key) and not UiData.feature("right_hand"):
 				continue   # the right-hand attacks are off: no row for them
+			if _alert_hidden(key):
+				continue
 			if HIDE_UNTIL.has(key) and not UiData.feature(str(HIDE_UNTIL[key])):
 				continue   # a row for something that is not live yet is not listed
 			if key == "reduce_flashing" and UiData.rf_locked():
@@ -71,6 +90,8 @@ static func rows() -> Array:
 			var kind: String = TOGGLE if o["default"] is bool else (SLIDER if o.has("min") else CHOICE)
 			var need2: String = str(needs.get(key, ""))
 			out.append({"kind": kind, "key": key, "label": str(o.get("label", key)), "help": str(o.get("help", "")), "enabled": need2 == "" or UiData.feature(need2), "o": o})
+		if out.size() == heading_at + 1:
+			out.pop_back()   # every row of the section is hidden for now: no heading over nothing
 	return out
 
 

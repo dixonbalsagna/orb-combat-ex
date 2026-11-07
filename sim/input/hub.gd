@@ -46,6 +46,7 @@ var latch_charge_pref: Array = [false, false]
 var sent_pref: Array = [false, false]
 var charges_off_pref: Array = [false, false]
 var _was: Array = [false, false]
+var _pad_used: Dictionary = {}    # device id -> true once that pad has pressed a button, pulled a trigger or pushed a stick past 0.5: the start menu's guess at player one's pad is only a guess until then
 ## Each player's hold styles (accessibility, layout only; docs/controls/hold-toggles.md): action ("guard", "dodge", "power", "transform") ->
 ## "hold" (the default) or "toggle". Energy has its own, `mode_styles`.
 const HOLD_ACTIONS: Array = ["guard", "dodge", "power", "transform"]
@@ -56,6 +57,10 @@ var hand_pref: Array = ["standard", "standard"]   # hand_layout: "standard" or "
 var brace_style_pref: Array = ["", ""]            # the brace's assist: "" the data default (flick), "flick" or "press" (the button alone)
 var strike_style_pref: Array = ["", ""]
 var mirror_pref: Array = ["auto", "auto"]
+var _ladder_prev: Array = [0, 0]             # the strike charge's rung each slot's pad last felt (take_haptics)
+var _haptic_pending: Array = []
+var _refusals: Array = []                  # every press the game let go of with no sign, for UI: [{slot, code, tick, button}] (take_refusals)
+var _stick_wait: Array = [-1, -1]           # per slot: live ticks since a stick request began with no strike started, -1 when none is waiting             # the rumble the hub asked for since the host last took it
 var struggle_pref: Array = [false, false]   # the host's word each tick that the slot's fighter is in a struggle (set_struggle)
 var _pad_no_right_stick: Dictionary = {}   # device id -> true: the host says this pad has no right stick
 
@@ -260,6 +265,15 @@ func _pad_slot(dev: int) -> int:
 	for s in range(2):
 		if slot_pad[s] == dev and claimed[s]:
 			return s
+	# One person's first press takes player one. The start menu puts player one on "the first connected pad", which on a PC with a phantom or a second device (a virtual pad, a headset
+	# dongle) is not the pad in the person's hands; if that pad has never been used, a different pad's first press is the person, not a second player, and takes the slot.
+	if slot_device[0] == "pad" and claimed[0] and slot_pad[0] != dev and not _pad_used.get(slot_pad[0], false) and not (slot_device[1] == "pad" and slot_pad[1] == dev):
+		if pads.has(slot_pad[0]):
+			pads[slot_pad[0]].release_all()
+			pads.erase(slot_pad[0])
+		slot_pad[0] = dev
+		_claim(0, "pad")
+		return 0
 	var s2: int = _assign("pad")
 	if s2 < 0:
 		return -1
@@ -294,6 +308,7 @@ func pad_stick_right(dev: int, x: float, y: float) -> void:
 		if slot_pad[s] == dev and claimed[s]:
 			_pad(dev, s).axis("pad:rs", x, y)
 			if absf(x) > 0.5 or absf(y) > 0.5:
+				_pad_used[dev] = true
 				_claim(s, "pad")
 			return
 
@@ -305,6 +320,7 @@ func pad_button(dev: int, name: String, down: bool) -> void:
 		if s < 0:
 			return
 		_pad(dev, s).press("pad:" + name)
+		_pad_used[dev] = true
 		_claim(s, "pad")
 	elif pads.has(dev):
 		pads[dev].release("pad:" + name)
@@ -317,6 +333,7 @@ func pad_trigger(dev: int, name: String, v: float) -> void:
 		if s < 0:
 			return
 		_pad(dev, s).analog("pad:" + name, v)
+		_pad_used[dev] = true
 		_claim(s, "pad")
 	elif pads.has(dev):
 		pads[dev].analog("pad:" + name, v)
@@ -328,6 +345,7 @@ func pad_stick(dev: int, x: float, y: float) -> void:
 		if slot_pad[s] == dev and claimed[s]:
 			_pad(dev, s).axis("pad:ls", x, y)
 			if absf(x) > 0.5 or absf(y) > 0.5:
+				_pad_used[dev] = true
 				_claim(s, "pad")
 			return
 
@@ -359,6 +377,7 @@ func touch_up(id: int) -> void:
 
 ## The intent v2 for a human slot this tick, canonical, from whichever device holds the slot. Call once per slot per tick.
 func intent(slot: int) -> SimIntent:
+	var drops: Array = []
 	var i: SimIntent
 	var style: String = mode_style_of(slot)
 	match slot_device[slot]:
@@ -378,6 +397,7 @@ func intent(slot: int) -> SimIntent:
 				if float(trigger_pref[slot]) > 0.0:
 					pads[d].set_trigger_threshold(float(trigger_pref[slot]))
 				i = pads[d].build()
+				drops = pads[d].take_dropped()
 			else:
 				i = SimIntent.new()
 		"touch":
@@ -399,11 +419,41 @@ func intent(slot: int) -> SimIntent:
 			kl.set_brace_flick(brace_style_of(slot) == "flick")
 			_apply_hold_styles(kl, slot)
 			i = kl.build()
-	return SimIntent.canon(i)
+			drops = kl.take_dropped()
+	var out: SimIntent = SimIntent.canon(i)
+	_note_ladder(slot, out)
+	_note_refusal(slot, out)
+	_note_drops(slot, drops)
+	return out
 
 
 ## SimCore.step took the intents: every device's edges are spent.
+## Every press answered (docs/controls/refusals.md): the face presses the strike law let go of (one that waited behind the stick past its life, or the oldest of a full queue) knock the pad of their slot,
+## once for the tick whatever number went, and are kept for UI with their reason code: take_refusals(). Needs switches.hapticRefused.
+func _note_drops(slot: int, drops: Array) -> void:
+	if drops.is_empty() or not SimInputData.refusal_cues_on():
+		return
+	for d in drops:
+		_refusals.append({"slot": slot, "code": str(d["why"]), "tick": int(d["t"]), "button": str(d["k"])})
+	_haptic_pending.append({"slot": slot, "kind": "stick_refused", "scale": 1.0, "reason": str(drops[0]["why"])})
+
+
+## The presses the hub saw the game let go of since the last call, for UI to say why ("a word at the edge, the first few times"): [{slot, code, tick, button}]. Codes: see SimHaptics.REFUSALS.
+func take_refusals() -> Array:
+	var out: Array = _refusals
+	_refusals = []
+	return out
+
+
 func consumed() -> void:
+	var refuse: int = SimInputData.ti(["strike", "refuseTicks"], 30)
+	for s in range(2):
+		if int(_stick_wait[s]) >= 0:
+			_stick_wait[s] += 1
+			if int(_stick_wait[s]) > refuse:
+				_stick_wait[s] = -1
+				_haptic_pending.append({"slot": s, "kind": "stick_refused", "scale": 1.0, "reason": "no_answer"})
+				_refusals.append({"slot": s, "code": "no_answer", "tick": 0, "button": "stick"})
 	for l in layouts.values():
 		l.consumed()
 	for l in pads.values():
@@ -419,6 +469,7 @@ func reset_claims() -> void:
 	slot_device = ["kb", "kb"]
 	slot_pad = [-1, -1]
 	pads.clear()
+	_pad_used.clear()
 	_joins.clear()
 	_leaves.clear()
 	notes.clear()
@@ -788,6 +839,57 @@ func rumble_target(slot: int) -> Dictionary:
 
 
 ## The preset id a slot plays with now: "kb-solo", "kb-shared-p1" or "kb-shared-p2", its pad preset, or the touch preset.
+## The strike stick's pre-read for a slot's pose (the quick read, timing.json switches.quickRead; render-only): {"dir", "depth"} or {}. See SimLayout.strike_pre.
+func strike_pre(slot: int) -> Dictionary:
+	match slot_device[slot]:
+		"pad":
+			var d: int = slot_pad[slot]
+			return pads[d].strike_pre() if pads.has(d) else {}
+		"touch":
+			return {}
+		_:
+			return _kb_layout(slot).strike_pre()
+
+
+## The rumble the hub itself asks for (switches.hapticLadder): the host calls this once a tick after the intents and plays each {slot, kind, scale} as it plays
+## a cue's. Empty with the switch off. A pulse is never the only cue.
+## The host's word that the director started a slot's stick strike (Encounter's `stick_start` cue): the request was answered, so no refusal. Call it from the cue loop.
+func note_stick_started(slot: int) -> void:
+	if slot >= 0 and slot <= 1:
+		_stick_wait[slot] = -1
+
+
+func take_haptics() -> Array:
+	var out: Array = _haptic_pending
+	_haptic_pending = []
+	return out
+
+
+## The ladder's rumble (pitch 1): one pulse as each rung of a held strike's charge is reached, once. Called with each slot's intent as it is built.
+func _note_refusal(slot: int, i: SimIntent) -> void:
+	if not SimInputData.haptic_refused_on():
+		_stick_wait[slot] = -1
+		return
+	if i.rsCancel:
+		_stick_wait[slot] = -1
+	elif i.rsStart:
+		_stick_wait[slot] = 0
+
+
+func _note_ladder(slot: int, i: SimIntent) -> void:
+	if not SimInputData.haptic_ladder_on():
+		_ladder_prev[slot] = 0
+		return
+	if i.rsRelease:
+		for r in SimHaptics.release_requests(slot, i.rsLevel):
+			_haptic_pending.append(r)
+	var lv: int = i.rsLevel if i.rsHeld else 0
+	if lv > int(_ladder_prev[slot]):
+		for r in SimHaptics.ladder_requests(slot, int(_ladder_prev[slot]), lv):
+			_haptic_pending.append(r)
+	_ladder_prev[slot] = lv
+
+
 func layout_of(slot: int) -> String:
 	match slot_device[slot]:
 		"pad":

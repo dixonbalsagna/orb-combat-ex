@@ -1,0 +1,113 @@
+{
+  "_note": "One energy model (docs/design/power-scale.md, Game Design; sim/core/power.gd). Off until Orb's build. Simulation and the director read level, energy, speedUnit, share, flight and launchTravel; World and VFX read the rest as they're built.",
+  "schema": "fight.power/1",
+  "enabled": false,
+  "level": {"tierShare": 0.8, "powerShare": 0.2},
+  "energy": {"base": 4.94, "topOverBase": 12.25},
+  "speedUnit": 900.0,
+  "_speedUnit": "a launch's speed is this x the root of energy x share",
+  "popForce": 700.0,
+  "_popForce": "a launch beat at or under this force is a style's small pop: stylePop",
+  "_share": "Combat's shares for every launching move (docs/combat/pending/power-shares)",
+  "share": {
+    "fullB": 1.0,
+    "launcher": 0.5,
+    "_launcher": "a lit launcher, Game Design on the first reach read. It was 0.25",
+    "tap": 0.125,
+    "_tap": "a tap of B: a stagger (docs/design/press-decides.md). It sends nobody, so it sets no speed: for what it does to what it hits",
+    "firstFlash": 0.5,
+    "_firstFlash": "B past the first flash: a knock-back. Its length stays as ruled, so it sets no speed either",
+    "unlisted": 0.25,
+    "_unlisted": "a launch beat of a template with no row",
+    "driverLevel3": 1.0,
+    "chase": 0.25,
+    "knock": 0.125,
+    "brawl": {
+      "launchAnywhere": {
+        "least": 0.25,
+        "most": 0.5,
+        "_about": "By its existing power. 0.5 only for a full string on a sure, perfect link"
+      },
+      "rallyTurn": 0.5,
+      "rallySell": 0.5
+    },
+    "driver": {
+      "tap": 0.125,
+      "level1": 0.25,
+      "level2": 0.5
+    },
+    "beam": {
+      "guarded": 0.25,
+      "struggleWon": 1.0,
+      "levels": [
+        0.25,
+        0.5,
+        1.0
+      ],
+      "signature": 1.0
+    },
+    "breakLaunch": 1.0,
+    "finisher": {
+      "break": 1.0,
+      "fixed": 0.5
+    },
+    "koFallback": 0.5,
+    "meteor": 1.0,
+    "apexSpike": 0.25,
+    "stylePop": 0.125,
+    "chainLink": 0.5,
+    "templates": {
+      "charge_interrupt": {
+        "light": 0.25,
+        "heavy": 0.5
+      },
+      "pursuit": {
+        "light": 0.25,
+        "heavy": 0.5
+      },
+      "riposte": {
+        "light": 0.25,
+        "heavy": 0.5
+      },
+      "dodge": 0.25,
+      "trade_blows": 0.25,
+      "clean_hit_heavy": 0.5,
+      "heavy_clash": 0.5,
+      "guard_break": 0.5
+    },
+    "grapple": {
+      "across": 0.25
+    },
+    "mixedLobInTheWay": 0.25,
+    "kits": {
+      "grab": {
+        "slam": 0.25,
+        "throw": 0.25
+      },
+      "trap": 0.125,
+      "_about": "One row for all four fighters. The yank and the bind send nobody, and the stick never sends, so none of them has a share."
+    }
+  },
+  "kitFields": {
+    "_about": "Not shares: the two places a fighter's kit differs, both already in its design.",
+    "protagonist": {
+      "driverLevel2": {
+        "craterMul": 0.6
+      }
+    },
+    "rival": {
+      "driverLevel2": {
+        "ignoresFirstAbsorb": true
+      }
+    }
+  },
+  "absorb": {"house": 1, "lowTower": 5, "tallTower": 15},
+  "contact": {"maxTerrainBounces": 1},
+  "burn": {"glow": 4500, "full": 6000},
+  "beam": {"halfWidth": 300, "depthShare": 0.1, "levels": [0.25, 0.5, 1.0], "signature": 1.0},
+  "flight": {"flatOut": 5000.0, "growth": 2.305, "min": 3500.0, "max": 7000.0},
+  "_flight": "flat out, plain stance: flatOut x growth^level. min and max hold a setup's flatOut, the page's slider",
+  "launchTravel": 2.0,
+  "meteorSpeed": 7000.0,
+  "_meteorSpeed": "the meteor and the high arc are authored curves. They count as this for their crater, buildings and energy, and their trail burns in full for the whole curve (power-scale.md)"
+}

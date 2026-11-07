@@ -964,6 +964,58 @@
           "type": "boolean",
           "description": "SimPressRead.a_read drops the shove and the clinch-by-mash; the grapple's catch_read and brace_read replace them (off)."
         },
+        "hapticLadder": {
+          "type": "boolean",
+          "description": "The strike stick's charge ladder rumbles: one pulse as each rung is reached (docs/controls/rule-of-cool-pitches.md pitch 1; sim/input/haptics.gd ladder_1 to ladder_3). Needs rightStick. Off."
+        },
+        "hapticIncoming": {
+          "type": "boolean",
+          "description": "A rival's stick strike rumbles on the defender's pad as it starts: high for toward and up, low for away and down (pitch 3; incoming_high, incoming_low). Needs rightStick. Off."
+        },
+        "hapticRefused": {
+          "type": "boolean",
+          "description": "A stick press the director never started a strike for tells its pad: the stick_refused knocks, refuseTicks live ticks after the request or as soon as Encounter's stick_refused cue says so (the audit's gap 2). Needs rightStick. Off."
+        },
+        "webRumble": {
+          "type": "boolean",
+          "description": "On a web page the pad's rumble is asked of the browser directly (the pad's vibrationActuator, dual-rumble), because the Godot web runtime has no pad rumble of its own. Chromium browsers support it; Firefox and Safari do nothing. Render side only: never the sim. Off."
+        },
+        "driverOnRb": {
+          "type": "boolean",
+          "description": "With signatureRtOnly: RB + B is left as the B press for the Driver (data/director/interrupts.json blast.driver.enabled) instead of being sent as Y's blast. Set together with the Driver's switch. Off."
+        },
+        "signatureRtOnly": {
+          "type": "boolean",
+          "description": "The signature is RT + B only (docs/design/energy-overhaul.md E121): B with LB, RB or LT held is the heavy of that stance (B with RB is Y's blast until the Driver exists), so a guard or a dodge never fires a beam by accident. B alone stays the big blow. Off."
+        },
+        "specialsOff": {
+          "type": "boolean",
+          "description": "The power specials are off (docs/design/pad-first-press.md): with RT held, X, Y and A are the plain blows of their base buttons and the charge drops. Off."
+        },
+        "beamAim": {
+          "type": "boolean",
+          "description": "The beam's aim (docs/controls/beam-aim-feel.md; needs rightStick): the strike stick's aim trails the thumb by strike.aimTrail degrees, and the throw carries the aim the stick held at the rim instead of the zero of a stick that has sprung home. Off."
+        },
+        "dodgeHeld": {
+          "type": "boolean",
+          "description": "LT held, in the intent's second word, bit 26 (docs/controls/dodge-held.md; needs rightStick): the intent says whether the dodge control is physically down this tick, so the flight strike's take-back (a face press within 4 ticks of LT, LT still held) can be read. Off."
+        },
+        "hapticImpact": {
+          "type": "boolean",
+          "description": "Orb's 2026-10-05 rumble picks that were missing (docs/controls/impact-haptics.md): a landed blow felt by the one who landed it (blow_land) and by the one it hit (hit_taken), a close (close_surge), a launch felt by the one sent (launch_felt), a landing (landing_thud) and a building breaking (building_break, both pads). Independent of rightStick. Off."
+        },
+        "stallKeep": {
+          "type": "boolean",
+          "description": "No input lost in a stall (docs/controls/stall-keep.md; needs rightStick): the layout keeps the strike stick's furthest point (and a strike key's press) since its last build and reads it once, so a flick that came and went between two steps (the page hitched and several steps read one snapshot) is still a flick. Off."
+        },
+        "hapticIncomingBeam": {
+          "type": "boolean",
+          "description": "The beam-answer window rumbles on the receiver's pad: a crescendo of incoming_beam pulses from Encounter's beam_window cue to the front's arrival (docs/design/rule-of-cool-map.md row 40). Independent of rightStick. Off."
+        },
+        "quickRead": {
+          "type": "boolean",
+          "description": "The quick read (docs/controls/responsiveness.md; needs rightStick): the strike and the brace settle strike.settleQuick ticks after the crossing, the vanish resolves on the second press + leftHand.vanishSettle, and the layout publishes the stick's pre-read for the pose (render only). Off."
+        },
         "rightStick": {
           "type": "boolean",
           "description": "The right-hand attacks (docs/controls/right-hand-attacks.md): the strike stick, the left hand's brace and vanish, hybrids 3 and 10 (stances.json withRightStick), R3 freed (off)."
@@ -1006,6 +1058,47 @@
           "type": "integer",
           "minimum": 0,
           "description": "Ticks from the crossing to the request's start; the direction is taken then (2)."
+        },
+        "bufferTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60,
+          "description": "The stick's input buffer (docs/controls/responsiveness.md section 8): a request that finds the fighter unable to act (the host's set_can_act) waits this many ticks for him, the newest flick only, and is dropped and told if he cannot in time. 0 is off (the default); 9 is the smallest useful version."
+        },
+        "refuseTicks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120,
+          "description": "Live ticks a stick request may wait for the director to start its strike before the pad is told it was refused (30)."
+        },
+        "aimTrail": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 20,
+          "description": "While switches.beamAim is on, the degrees the shown aim trails the stick before it moves (4): the thumb's wobble inside the band does not walk the sector."
+        },
+        "aimLatchTicks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12,
+          "description": "While switches.beamAim is on, the throw's aim is the mean of this many of the last rim ticks (3)."
+        },
+        "aimLatchPeak": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 1,
+          "description": "While switches.beamAim is on, a tick counts as the rim when its deflection is at least this fraction of the hold's peak (0.85)."
+        },
+        "settleQuick": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The settle while switches.quickRead is on (1). 0 and 1 start on the same tick: the request starts at the build after the crossing at the soonest."
+        },
+        "preAt": {
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMaximum": 1,
+          "description": "The quick read's pre-read of the strike stick begins at this rescaled deflection (0.25), while the stick leans in, before strike.on. For the pose only: never in the intent."
         },
         "dwell": {
           "type": "integer",

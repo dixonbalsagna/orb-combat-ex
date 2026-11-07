@@ -152,4 +152,4 @@ static func ko(S: SimState, D, A) -> void:
 		SimDir.endEx(S, S.dirS.ex)
 	A.state = "free" if A.state == "locked" else A.state
 	if D.state != "launched":
-		SimDir.doLaunch(S, A, D, {"ux": A.face * 0.9, "uy": 0.5}, 1800.0)
+		SimDir.doLaunch(S, A, D, {"ux": A.face * 0.9, "uy": 0.5}, SimPower.sendForce(S, A, 1800.0, "koFallback"))

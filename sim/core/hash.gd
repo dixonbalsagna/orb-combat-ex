@@ -102,6 +102,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 	_obj(out, S.mood, ["t", "sec", "v", "band", "cand", "candT", "act", "beats", "onceMask", "cause", "aggression", "crowd", "casGiven", "lastCombo", "breaks"])
 	_obj(out, S.pause, ["left", "kind", "version", "actor", "bank", "acc", "sinceEnd", "seen", "total", "count"])   # Q10
 	out.append(S.depthOn)   # fight lanes (L0)
+	if S.powerOn:   # one energy model: only when on, so a match without it hashes as before
+		out.append(S.powerFlat)
 	if S.cata != null:   # the catastrophe's state: only once a blast cloud set it, so a match without one hashes as before
 		_obj(out, S.cata, ["ash", "ashFrom", "ashTo", "ashLeft"])
 	if S.hitstopOn:   # hit-stop by weight's freeze budget: only when on, so a match without it hashes as before
@@ -160,6 +162,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 		elif r.tgt != null:
 			out.append("tgt"); out.append(_idx(fs, r.tgt)); out.append(r.off); out.append(r.end)
 			out.append(r.arc); out.append(r.x0); out.append(r.y0); out.append(r.dur)
+			if r.loop != 0:   # a loop round its target (SimFighter.loopRush; none in a match that doesn't ask for one)
+				out.append(float(r.loop)); out.append(r.lr); out.append(r.lm); out.append(r.lu); out.append(r.ls)
 		else:
 			out.append("pt"); out.append(r.px); out.append(r.py); out.append(r.end); out.append(r.pz)
 			out.append(r.arc); out.append(r.x0); out.append(r.y0); out.append(r.dur)
@@ -175,6 +179,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 			out.append(float(f.stage[ri]))
 		out.append(f.brink)
 		out.append(float(f.stunTicks))
+		if f.wallZ != 0:
+			out.append(float(f.wallZ))   # World: the wall's depth hold (only with brunt.json wallDepthHold on, so a match without it hashes as before)
 		out.append(f.rally); out.append(float(f.rallied)); out.append(float(f.rallies)); out.append(float(f.rallyCool))
 		out.append(float(f.breathWear)); out.append(f.id)
 		out.append(f.sigReadyT)

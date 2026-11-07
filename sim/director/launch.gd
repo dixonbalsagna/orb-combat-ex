@@ -173,7 +173,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 	# targets on the far side of the rival are offered.
 	var fwdOnly: bool = not DirData.contact().is_empty()
 	for bi in WorldBrunt.candidates(S, D):
-		var plan = WorldBrunt.aim(S, A, D, S.buildings[bi], force * (DirBrawl.freshMul(S, D, 4) if fresh else 1.0), tierF, longOnly)   # fresh: the launcher's send into a building, x its freshness
+		var plan = WorldBrunt.aim(S, A, D, S.buildings[bi], force * (DirBrawl.freshMul(S, D, 4) if fresh or S.powerOn else 1.0), tierF, longOnly)   # fresh: the launcher's send into a building, x its freshness
 		if plan != null and fwdOnly and float(plan.ux) * f < 0.0:
 			plan = null
 		if plan != null:
@@ -182,7 +182,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 			if tilt == 0 and not town.is_empty() and A.tier >= float(town.get("bruntFromTier", 99.0)):
 				plan.s += float(town.get("bruntPrefer", 0.0))   # a building on the line, no stick held: preferred from this tier
 			c.append(plan)
-		var ip = _insideAim(S, A, D, S.buildings[bi], force * (DirBrawl.freshMul(S, D, 4) if fresh else 1.0), tierF, longOnly, plan)
+		var ip = _insideAim(S, A, D, S.buildings[bi], force * (DirBrawl.freshMul(S, D, 4) if fresh or S.powerOn else 1.0), tierF, longOnly, plan)
 		if ip != null and not (fwdOnly and float(ip.ux) * f < 0.0):
 			hadBrunt = true
 			ip.s = bruntScore(S, A, ip) + _insideScore(A)
@@ -194,13 +194,13 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 			continue
 		# The nearest mountainside ahead, out to MOUNTAIN_REACH: near slopes give a short throw, far ones a long haul.
 		var md: float = MOUNTAIN_STEP
-		while md <= MOUNTAIN_REACH:
+		while md <= MOUNTAIN_REACH * SimPower.distScale():
 			if WorldBiomes.biomeAt(D.x + sign * md) == "mountains":
 				c.append({"name": "MOUNTAINSIDE", "ux": sign, "uy": 0.05, "s": 24.0, "land": D.x + sign * md})
 				break
 			md += MOUNTAIN_STEP
 	if bon:
-		_biomeCands(S, A, D, c, longOnly, fwdOnly, force * (DirBrawl.freshMul(S, D, 1) if fresh else 1.0) * tierF, fresh)
+		_biomeCands(S, A, D, c, longOnly, fwdOnly, force * (DirBrawl.freshMul(S, D, 1) if fresh or S.powerOn else 1.0) * tierF, fresh)
 	if not longOnly and not noKnock:
 		c.append({"name": "KNOCK BACK", "ux": 0.0, "uy": 0.0, "s": float(data().knockBack.score)})   # "no launch": a scored outcome (it was NONE)
 	if sends != "":
@@ -246,26 +246,29 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 				k.s -= REPEAT_2
 			continue
 		var fm: float = (k.fm if k.has("fm") else 1.0) * (DirBrawl.freshMul(S, D, DirBrawl.kindOfSend(k)) if fresh else 1.0)   # fresh: each candidate x its own kind's freshness
-		var p: Dictionary = predictFlight(S, D.x, D.y, WorldSlide.launchVX(k.ux, k.uy, force * fm * tierF), k.uy * force * fm * tierF, WorldSlide.launchTravel(k.ux, k.uy))
+		var fa: float = SimPower.fit(S, force, k.ux, k.uy)   # one energy model: what doLaunch will fly
+		var fb: float = SimPower.fm(S, fm) * DirBrawl.planFresh(S, D, k)
+		var p: Dictionary = predictFlight(S, D.x, D.y, WorldSlide.launchVX(k.ux, k.uy, fa * fb * tierF), k.uy * fa * fb * tierF, WorldSlide.launchTravel(k.ux, k.uy))
+		var ds: float = SimPower.distScale()   # the plan's distances were written for x6 along the line
 		var street: bool = false
 		if k.name == "SMASH ACROSS" and inTown and not longOnly and float(town.get("haulTarget", 0.0)) > 0.0 and not k.has("arrive"):
 			# A launch along a street stays in the street: the force is set (once, square-root rule) so the flight carries
 			# him town.haulTarget and no further. It is kept while he still lands inside the settlement, town.haulMin on at
 			# least; where the street does not run that far it is the long haul, below.
 			var fmT: float = clampf(fm * sqrt(float(town.haulTarget) / SimMathx.jmax(p.travel, 1.0)), 0.05, HAUL_FM_MAX)
-			var pT: Dictionary = predictFlight(S, D.x, D.y, WorldSlide.launchVX(k.ux, k.uy, force * fmT * tierF), k.uy * force * fmT * tierF, WorldSlide.launchTravel(k.ux, k.uy))
-			if pT.travel >= float(town.get("haulMin", 0.0)) and not pT.water and (town.biomes as Array).has(WorldBiomes.biomeAt(pT.x)):
+			var pT: Dictionary = p if S.powerOn else predictFlight(S, D.x, D.y, WorldSlide.launchVX(k.ux, k.uy, force * fmT * tierF), k.uy * force * fmT * tierF, WorldSlide.launchTravel(k.ux, k.uy))   # with the switch on no multiplier moves the flight: it's the one just read
+			if pT.travel >= float(town.get("haulMin", 0.0)) * ds and not pT.water and (town.biomes as Array).has(WorldBiomes.biomeAt(pT.x)):
 				street = true
 				fm = fmT
 				k.fm = fm
 				k.street = true
 				p = pT
-		if k.name == "SMASH ACROSS" and not street and p.travel < HAUL_TARGET and not fresh and not k.has("arrive"):   # a launcher's length is its power's: no long-haul boost
+		if k.name == "SMASH ACROSS" and not street and p.travel < HAUL_TARGET and not fresh and not k.has("arrive") and not S.powerOn:   # a launcher's length is its power's: no long-haul boost
 			# The long haul: raise the force (once, square-root rule, capped) so the predicted flight reaches HAUL_TARGET.
 			fm = SimMathx.jmin(HAUL_FM_MAX, fm * sqrt(HAUL_TARGET / SimMathx.jmax(p.travel, 1.0)))
 			k.fm = fm
 			p = predictFlight(S, D.x, D.y, WorldSlide.launchVX(k.ux, k.uy, force * fm * tierF), k.uy * force * fm * tierF, WorldSlide.launchTravel(k.ux, k.uy))
-		if k.name == "SMASH ACROSS" and not street and p.travel < HAUL_MIN and not longOnly and not k.has("arrive"):
+		if k.name == "SMASH ACROSS" and not street and p.travel < HAUL_MIN * ds and not longOnly and not k.has("arrive"):
 			# SMASH ACROSS is the long haul or nothing: when it cannot carry the target HAUL_MIN, it is not offered.
 			k.s -= HAUL_SHORT
 		k.p = p
@@ -276,7 +279,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 		k.s += DirVisit.cost(S, D, lx)
 		# Distance and new ground only count when the landing is open ground: long hauls carry the fight to empty land.
 		if popL <= OPEN_POP:
-			k.s += DIST_W * SimMathx.jmin(k.travel, DIST_CAP) / DIST_UNIT * (float(town.get("distMul", 1.0)) if inTown else 1.0) * (float(biome().get("distMul", {}).get(WorldBiomes.fineNameAt(lx), 1.0)) if bon else 1.0)   # from a settlement the haul out is worth less; biome on: open country more, closed less
+			k.s += DIST_W * SimMathx.jmin(k.travel, DIST_CAP * ds) / (DIST_UNIT * ds) * (float(town.get("distMul", 1.0)) if inTown else 1.0) * (float(biome().get("distMul", {}).get(WorldBiomes.fineNameAt(lx), 1.0)) if bon else 1.0)   # from a settlement the haul out is worth less; biome on: open country more, closed less
 		var lb: String = WorldBiomes.biomeAt(lx)
 		if lb != bio and lb != "ocean" and popL <= OPEN_POP and _newBiomeDue(S, town):
 			k.s += NEW_BIOME_W
@@ -756,7 +759,8 @@ static func _predictFlightRead(S: SimState, x0: float, y0: float, vx0: float, vy
 ## special marks a signature, a finisher or a break launch: its ground impact may leave a big crater (world/crater.gd).
 static func doLaunch(S: SimState, att, tgt, plan: Dictionary, force: float, special: bool = false) -> void:
 	var fm: float = plan.fm if plan.has("fm") else 1.0
-	var f: float = force * fm * SimForms.launchMul(S, att)   # D1b: ladder.json (forms: his own steps)
+	var whole: bool = plan.has("dist")   # one energy model: a knock's length is ruled
+	var f: float = SimPower.fit(S, force, 0.0 if whole else plan.ux, 0.0 if whole else plan.uy) * SimPower.fm(S, fm) * SimForms.launchMul(S, att) * (1.0 if whole else DirBrawl.planFresh(S, tgt, plan))   # D1b: ladder.json (forms: his own steps)
 	if S.dirS.ex != null and String(plan.get("name", "")) != "KNOCK BACK":
 		DirInterrupt.si(S.dirS.ex.A, DirInterrupt.LAST_END, DirInterrupt.END_LAUNCH)
 	tgt.state = "launched"

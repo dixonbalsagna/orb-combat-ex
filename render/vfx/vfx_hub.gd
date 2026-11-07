@@ -590,7 +590,7 @@ static func _g(e, key: String, dflt = null):
 ## traversal factor (TRAV_LAUNCH, up to 6), so a flat launch is several times faster than spd says.
 static func _real_speed(spd: float, ux: float, uy: float) -> float:
 	var h: float = absf(ux) / maxf(absf(ux) + absf(uy), 0.001)
-	return spd * (1.0 + (SimConst.TRAV_LAUNCH - 1.0) * h)
+	return spd * (1.0 + (SimPower.trav - 1.0) * h)
 
 
 ## A launched fighter went into a building (building_hit, docs/architecture/fx-events.md: b, x y z at the near face, outcome,

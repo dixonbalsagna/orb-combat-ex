@@ -627,7 +627,7 @@ static func _restSec() -> float:
 static func _launchPick(S: SimState, A, D, force: float):
 	var c: Dictionary = cfg()
 	var t: float = force * float(c.fit.secPerForce)
-	var reach: float = force * float(c.fit.reachPerForce)
+	var reach: float = force * float(c.fit.reachPerForce) * SimPower.distScale()
 	var cap: float = minf(float(c.maxDeg), SimSwing.mostFor(t - _restSec(), "launch"))
 	if cap < float(c.bigMin):
 		_explain(S, "launch", [], false, "", 0)

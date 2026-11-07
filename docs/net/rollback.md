@@ -371,11 +371,11 @@ In both, every confirmed tick from the decision to 60 ticks after the swap is co
 
 ## 14. The intent's second word
 
-The right-hand attacks add a second packed word (`SimIntent.pack2`, 26 bits, behind `switches.rightStick`), because the first word has no room. It travels beside the first, tick for tick.
+The right-hand attacks add a second packed word (`SimIntent.pack2`, 27 bits, behind `switches.rightStick`), because the first word has no room. It travels beside the first, tick for tick.
 
 - **In the session.** `advance(p, w)` and `addInput(k, t, p, w)` take it, `words` holds it only where it isn't 0, and a tick's `usedW` keeps what it ran with. A late word that differs rolls back even when the first word agrees.
-- **A prediction** (`predictWord`) keeps a strike being held: `rsHeld`, `rsDir`, `rsLevel`, `rsMask`, `rsAim`. It drops the edges (`rsStart`, `rsRelease`, `rsCancel`, `rsLag`, `brace`, `braceDir`). Once `rsHeld` is off, the word was a throw's or a cancel's last tick, and the next is 0, because the layout writes nothing with no strike active. A held strike's level and aim steps are mispredictions, as a press is.
-- **On the wire.** A packet with any word that isn't 0 is kind byte 3: one u32 per input, right after the inputs, so 4 bytes an unacknowledged input in that packet only. A packet with none is kind 1, the bytes it always was. A word past 26 bits is refused.
+- **A prediction** (`predictWord`) keeps a strike being held: `rsHeld`, `rsDir`, `rsLevel`, `rsMask`, `rsAim`, and `dodgeHeld` (bit 26, LT down; behind `switches.dodgeHeld`), which it keeps with or without a strike. It drops the edges (`rsStart`, `rsRelease`, `rsCancel`, `rsLag`, `brace`, `braceDir`). Once `rsHeld` is off, the word was a throw's or a cancel's last tick, and the next is 0, because the layout writes nothing with no strike active. A held strike's level and aim steps are mispredictions, as a press is.
+- **On the wire.** A packet with any word that isn't 0 is kind byte 3: one u32 per input, right after the inputs, so 4 bytes an unacknowledged input in that packet only. A packet with none is kind 1, the bytes it always was. A word past 27 bits is refused.
 - **Spectators** get the words in the relay's packet.
 - **The digest** reads `pack2` of each fighter's intent with the switch on. The sim doesn't read the word yet, so nothing else would show a lost one. With the switch off, a digest is what it always was.
 - **A desync report's replay** uses `SimReplay`'s fifth number, and `replayState` reads it.

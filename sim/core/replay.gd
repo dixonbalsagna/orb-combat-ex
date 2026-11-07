@@ -12,7 +12,7 @@ extends RefCounted
 ##                integer for the whole record, written as two numbers (split: its low 32 bits, and the bits above
 ##                them), because a JSON number is exact only below 2^53 and the record may grow past that. Both are null
 ##                for no intent. With switches.rightStick on, an entry whose second word is not 0 carries it as a fifth number
-##                (SimIntent.pack2, 26 bits), and the header's data says the switch was on. Off, no entry has one.
+##                (SimIntent.pack2, 27 bits), and the header's data says the switch was on. Off, no entry has one.
 ##   toggles      [tick, slot]: toggleAI before that tick
 ##   checkpoints  [tick, gameplay hash] every CHECK_EVERY ticks; final: the gameplay hash at the end
 ## Intents, not raw keys, are recorded, so a replay does not depend on the key mapping or the layout. The recorder steps
@@ -190,6 +190,8 @@ static func dataHash(setup: Dictionary = {}) -> String:
 		h.text(SimBoons.dataHash())
 	if setup.get("brake", SimBrake.enabled()) == true:   # the air brake: data/fight/brake.json, only for a match with it on
 		h.text(SimBrake.dataHash())
+	if setup.get("power", SimPower.enabled()) == true:   # one energy model: data/fight/power.json, only for a match with it on
+		h.text(SimPower.dataHash())
 	if setup.get("kick", SimKick.enabled()) == true:   # the kick and the coin turn: data/fight/kick.json, only for a match with them on
 		h.text(SimKick.dataHash())
 	if setup.get("flight", SimFlight.enabled()) == true:   # the launch's curve: data/fight/flight.json, only for a match with it on

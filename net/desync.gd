@@ -93,6 +93,8 @@ static func _digest(S: SimState) -> String:
 	for s in S.shots:
 		v.append(s.x); v.append(s.y); v.append(s.left)
 	v.append(S.beams.size()); v.append(S.craters.size()); v.append(S.slides.size())
+	if S.powerOn:   # one energy model, as SimHash reads it
+		v.append(S.powerFlat)
 	if S.kickOn:   # the kick and the coin turn, as SimHash reads them
 		for f in S.fighters:
 			_fields(v, md, f.kik, SimKick.HASHED)

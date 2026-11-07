@@ -39,6 +39,7 @@ const CHARGE_READY := "#c8e6ff"
 const TIER_PIP := "#ffe9a8"
 const HIDDEN := "#bedcff"
 const WARN := "#ffd45a"
+const BEAT := "#c6f24a"             # the clash teaching's ring on the beat (RL-248): a colour of its own, so the warning gold keeps its meanings and this ring means nothing else
 const EGO: Dictionary = {
 	"respect": "#6fd1a8", "pride": "#c9a8ff", "wrath": "#ff9a5c", "hunger": "#e0c14a",
 	"menace": "#b05cff", "anguish": "#3fd6c5",

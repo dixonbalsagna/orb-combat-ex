@@ -162,7 +162,7 @@ static func opBeamImpact(S: SimState, ex, args) -> void:
 	_blast(S, A, D.x, D.y + 30.0, 60.0 + A.tier * 30.0)
 	if S.game.ko == null:
 		D.state = "locked"
-		var force: float = 1300.0 if out == "GUARD" else 2600.0
+		var force: float = SimPower.sendForce(S, A, 1300.0 if out == "GUARD" else 2600.0, "beam.guarded" if out == "GUARD" else "beam.signature")
 		var kind: String = String(tw.get("kind", ""))
 		var twisted: bool = false
 		if kind == "under":
@@ -451,7 +451,7 @@ static func _resolveStruggle(S: SimState, ex, args) -> void:
 			SimEvents.feed(S, Ls.name + " OVERWHELMED", "the meeting point reached him")
 			if S.game.ko == null:
 				var aim: float = Wn.input.my * float(ov.stickUy) if Wn.ai == null else 0.0   # up or down aims the overwhelm
-				DirLaunch.doLaunch(S, Wn, Ls, {"ux": ux, "uy": uy * 0.6 + 0.12 + aim}, 2600.0, true)
+				DirLaunch.doLaunch(S, Wn, Ls, {"ux": ux, "uy": uy * 0.6 + 0.12 + aim}, SimPower.sendForce(S, Wn, 2600.0, "beam.struggleWon"), true)
 				DirExchange.decisive(S, ex, Wn, Ls, "beam_clash")
 	elif absf(mid - 0.5) <= float(bs.drawBand):
 		var hi = A if A.tier >= D.tier else D
@@ -503,7 +503,7 @@ static func opClashResolve(S: SimState, ex, args) -> void:
 	SimDamage.hit(S, ex, Wn, Ls, 260.0 * sigDamageMul(), {"ignoreStance": true, "stop": 0.16, "shake": 18.0, "big": true})
 	_blast(S, Wn, Ls.x, Ls.y + 30.0, (70.0 + Wn.tier * 32.0) * SimConst.WS)
 	if S.game.ko == null:
-		DirLaunch.doLaunch(S, Wn, Ls, {"ux": ux, "uy": uy * 0.6 + 0.12}, 2600.0, true)
+		DirLaunch.doLaunch(S, Wn, Ls, {"ux": ux, "uy": uy * 0.6 + 0.12}, SimPower.sendForce(S, Wn, 2600.0, "beam.struggleWon"), true)
 		DirExchange.decisive(S, ex, Wn, Ls, "beam_clash")
 
 

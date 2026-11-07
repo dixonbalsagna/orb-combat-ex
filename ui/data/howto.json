@@ -33,7 +33,8 @@
         { "action": "brace_key", "col": 1, "text": "Brace (press with the direction of the blow you expect held)" },
         { "icon": "rh_brace", "col": 1, "text": "Brace: hold guard and flick the move stick toward the blow you expect. Settings can make it a button." },
         { "icon": "rh_vanish", "col": 1, "text": "Vanish: guard and dodge together, then a direction. It is an escape." },
-        { "action": "signature", "col": 0, "text": "Signature (45 Charge)" },
+        { "action": "signature", "col": 0, "text": "Big blow" },
+        { "icon": "rh_beam", "col": 0, "text": "Beam: hold Energy, push the strike stick; hold it out to charge, let go to fire." },
         { "action": "context", "col": 0, "text": "Action (grab, throw: it depends on your stance)" },
         { "action": "mode", "col": 0, "text": "Energy (hold; Settings can make it a toggle)", "text_toggle": "Energy (toggle; Settings can make it hold)" },
         { "action": "guard", "col": 1, "text": "Guard (hold)", "text_toggle": "Guard (toggle)" },
@@ -70,7 +71,7 @@
       "title": "Reading the fight",
       "items": [
         { "icon": "crown", "col": 0, "text": "A ring flashes when part of a body is hurt more, and a card says which." },
-        { "icon": "brink", "col": 0, "text": "A faint ring: he is nearly beaten. A finishing move can end it." },
+        { "icon": "brink", "col": 0, "text": "Nearly beaten: a mark by the name says so, and a finishing move can end it." },
         { "icon": "reads", "col": 0, "text": "Watch your rival: his stance and his finishing move." },
         { "icon": "launch_info", "col": 0, "text": "Get an opening, then press launch. It recharges; until then it only hits hard." },
         { "icon": "struggle", "col": 1, "text": "Finishing-move rings: hold or slip. Guard a launch, dodge a close-up attack, press to answer a beam." },

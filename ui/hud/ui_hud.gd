@@ -106,6 +106,8 @@ var _swapped := false          # slot 0 is on the right (sigma < 0); applied aft
 var _last_swapped := false
 var _swap_fade := 1.0          # the plates' opacity while the columns swap sides
 var _anchors: Array = [{}, {}]
+var _anchor_prev: Array = [Vector2.ZERO, Vector2.ZERO]   # chip_clear: where each fighter was last frame on the screen, and his smoothed flight
+var _anchor_vel: Array = [Vector2.ZERO, Vector2.ZERO]
 var _chips: Array = []
 var _chip_text: Array = ["", ""]
 var _chip_text_t: Array = [-1.0, -1.0]
@@ -173,6 +175,9 @@ var _l_you: UiLayer
 const LEGEND_HOLD := 3.0
 const LEGEND_REST := 2.0
 const LEGEND_FADE := 1.0
+const LEGEND_CLEAR_HOLD := 0.6   # legend_clear: once a body has left the legend's box it stays hidden this long, so a fighter at its edge does not make it blink
+var _lc_on: Array = [false, false]
+var _lc_t: Array = [0.0, 0.0]
 var _legend_g: Array = [{"a": 0.0, "on": false, "t": -1.0e9}, {"a": 0.0, "on": false, "t": -1.0e9}]   # the legend's own gate (asked for only on a keyboard or a pad, upright)
 var _you_g: Array = [{"a": 0.0, "on": false, "t": -1.0e9}, {"a": 0.0, "on": false, "t": -1.0e9}]      # and the YOU pill's and the touch captions' (asked for on every screen)
 var _cap_open_left: float = 0.0        # seconds the "He is open" caption stays after the launch closes (so it cannot blink)
@@ -255,6 +260,10 @@ var _l_ring_base: UiLayer
 var _l_chips: Array = []       # one small node per pane: an edge pointer chip, moved by position
 var _l_ring: UiLayer
 var _l_globe: UiLayer
+var _l_alert: UiLayer              # the beam answer alert's edge line and caption (UiAnswerAlert)
+var _alert_d: Dictionary = {}
+var _alert_eff: Dictionary = {}
+var _alert_applying := false       # a preset is being applied: its rows must not turn it to Custom
 var _pm_state: Dictionary = {}     # the planet map's trail (UiPlanetMap.sample)
 var _pm_feed: Dictionary = {}
 var _l_tug: UiLayer           # the beam struggle's track, meeting point and beat (UiTug), only while one is on
@@ -319,6 +328,7 @@ func _ready() -> void:
 	_l_ring_base = _layer(_paint_ring_base)
 	_l_ring = _layer(_paint_ring)
 	_l_globe = _layer(_paint_globe)
+	_l_alert = _layer(_paint_alert)
 	_l_many = _layer(_paint_many)
 	_l_tug = _layer(_paint_tug)
 	_l_events = _layer(_paint_events)
@@ -399,7 +409,7 @@ func _chip_layer(slot: int) -> UiLayer:
 
 
 func _all_layers() -> Array:
-	return [_l_caption, _l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_globe, _l_many, _l_tug, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_loading, _l_notice, _l_gate_back]
+	return [_l_caption, _l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_globe, _l_alert, _l_many, _l_tug, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_loading, _l_notice, _l_gate_back]
 
 
 ## Total redraws of every layer so far, for the perf counters.
@@ -440,6 +450,13 @@ func consume(e) -> void:
 	hub.consume(e)
 
 
+## The input hub's refusals for the frame, as SimInputHub.take_refusals() returns them ([{slot, code, tick, button}]); the host calls this once a frame. Each says its word at the edge the first three times per reason
+## per match (docs/ui/hud-spec.md section 85); the pad's knock is Controls'.
+func refusals(list: Array) -> void:
+	for r in list:
+		hub.refusal(int(r.get("slot", 0)), str(r.get("code", "")))
+
+
 func consume_all(events: Array) -> void:
 	hub.consume_all(events)
 
@@ -471,6 +488,9 @@ func advance(dt: float) -> void:
 func _advance(dt: float) -> void:
 	_sync_lane_colors()
 	hub.keep_hints = bool(opts["keep_hints"])
+	for pm in hub.models:
+		pm.beat_steady = bool(opts["reduce_flashing"])   # Reduce flashing: the beat ring holds steady for the whole struggle (RL-248)
+		pm.push_mode = str(opts["struggle_push_p2" if pm.slot == 1 else "struggle_push"]) if UiData.feature("right_hand") else "face"   # struggle_teach: each person's own push mode (with the right-hand attacks off there is no stick push: the face buttons)
 	_t += dt
 	_dt = dt
 	for idx in _tl_down:
@@ -481,9 +501,9 @@ func _advance(dt: float) -> void:
 	_split = split_fn.call() if split_fn.is_valid() else {}
 	_step_swap(dt)
 	hub.advance(dt)
-	if hub.match_over and not _menu_last_cfg.is_empty():   # only in a session that came through the menu
+	if hub.match_over and (not _menu_last_cfg.is_empty() or (UiData.feature("versus_flow") and _humans() >= 1)):   # a session that came through the menu, or (versus_flow) any match a human played: the computer-only demo stays quiet
 		_over_t += dt
-		if _over_t >= MATCH_OVER_DELAY and not _over_shown and not (_notice_open or _pm_open or _howto_open or _set_open or _fb_open or _turn_open):
+		if _over_t >= (0.0 if hub.no_contest else MATCH_OVER_DELAY) and not _over_shown and not (_notice_open or _pm_open or _howto_open or _set_open or _fb_open or _turn_open):
 			_over_shown = true
 			show_pause_menu(true)
 	elif not hub.match_over:
@@ -549,8 +569,13 @@ func _sides_busy() -> bool:
 	return false
 
 
+## split_fit: a 70/30 split is on (Camera's record carries `share`, 0.7 against the computer).
+func _share_on() -> bool:
+	return UiData.feature("split_fit") and float(_split.get("share", 0.0)) > 0.0
+
+
 func _step_swap(dt: float) -> void:
-	if str(opts["hud_sides"]) == "follow" and _humans() < 2:
+	if (str(opts["hud_sides"]) == "follow" or _share_on()) and _humans() < 2:   # split_fit: the plates ride their pane
 		var side: int = _fighters_side()
 		if side < 0 or (side == 1) == _side_goal:
 			_side_hold = 0.0
@@ -564,7 +589,7 @@ func _step_swap(dt: float) -> void:
 	else:
 		_side_goal = false
 		_side_hold = 0.0
-	var rate: float = 1000.0 if bool(opts["reduced_motion"]) else 10.0
+	var rate: float = 1000.0 if (bool(opts["reduced_motion"]) or _share_on()) else 10.0   # split_fit: the plates change sides in one cut
 	if _want_swapped() != _swapped:
 		_swap_fade = maxf(0.0, _swap_fade - dt * rate)
 		if _swap_fade <= 0.0:
@@ -592,6 +617,8 @@ func set_option(key: String, value) -> void:
 	opts[key] = value
 	if changed:
 		option_changed.emit(key, value)
+		if key.begins_with("alert_") and not _alert_applying:
+			_alert_changed(key, value)
 	if key == "force_redraw":
 		for l in _all_layers():
 			if l != null:
@@ -702,6 +729,14 @@ func _o(plate_alpha: float = 1.0) -> Dictionary:
 func _update_layers() -> void:
 	if hub.models.is_empty() or _l_letter == null:
 		return
+	var want_cap: float = UiSplit.col_cap(layout) if (_share_on() and not layout.portrait) else 0.0
+	if not is_equal_approx(want_cap, layout.col_cap):
+		layout.col_cap = want_cap   # split_fit: the columns narrow to the small pane while the share is on, widen back when it is off
+		_last_size = Vector2.ZERO
+		_relayout()
+		for l in _all_layers():
+			if l != null:
+				l.invalidate()
 	_relayout()
 	var reduced: bool = bool(opts["reduced_motion"])
 	var cin: bool = hub.mode == UiEventHub.Mode.CINEMATIC
@@ -728,7 +763,7 @@ func _update_layers() -> void:
 		if m.slot >= _l_plate.size():
 			continue
 		var full: bool = m.charge >= m.sig_cost
-		var pulse: int = int(_t * 8.0) if (not reduced and m.brink) else 0
+		var pulse: int = int(_t * 8.0) if (not reduced and m.brink and not UiData.feature("brink_read")) else 0   # brink_read: the mark is steady, so the plate does not redraw to pulse it
 		_l_plate[m.slot].update_sig([m.name, m.ai, m.stance, m.tier, int(m.momentum), int(m.charge), int(m.ego), m.hidden, m.lost_trail,
 			m.charging, m.chain_n if m.chain_t >= 0.0 else 0, m.brink, m.shame, full, _plate_alpha(m), pulse, m.you_label,
 			m.weight, (m.blow_kind if (UiStance.three() and m.blow_t < UiPlate.BLOW_HOLD) else ""), m.open_left > 0.0, (m.land_kind if m.land_t < UiPlate.LAND_HOLD else ""),
@@ -763,10 +798,19 @@ func _update_layers() -> void:
 	_l_ring_base.update_sig(1 if ring_on else null)
 	_l_ring.update_sig(UiSplit.ring_sig(_split) if ring_on else null)
 	_update_globe()
+	_update_alert()
 	var chips: Array = []
 	if not _split.is_empty() and anchor_fn.is_valid() and _lb < 0.5:
 		for i in range(mini(2, hub.models.size())):
 			_anchors[i] = _anchor(i)
+			if UiData.feature("chip_clear") and not (_anchors[i] as Dictionary).is_empty():
+				var ap: Vector2 = (_anchors[i] as Dictionary).get("pos", Vector2.ZERO)
+				if _anchor_prev[i] != Vector2.ZERO and ap != Vector2.ZERO:
+					_anchor_vel[i] = (_anchor_vel[i] as Vector2).lerp(ap - (_anchor_prev[i] as Vector2), 0.25)   # the fighter's flight on the screen, smoothed over a few frames
+				_anchor_prev[i] = ap
+				var with_vel: Dictionary = (_anchors[i] as Dictionary).duplicate()
+				with_vel["vel"] = _anchor_vel[i]
+				_anchors[i] = with_vel
 		var bh: float = UiSplit.distance_bh(_split)
 		_chip_big = bh >= UiSplit.BIG_FROM or (_chip_big and bh >= UiSplit.BIG_UNTIL)   # a far rival gets the larger chip, with a margin so it does not flicker
 		chips = UiSplit.pointers(layout, _split, _anchors, layout.s, _chip_big)
@@ -862,7 +906,9 @@ func _update_layers() -> void:
 				var ea: Dictionary = UiHints.edge_arrow(an, layout.safe, layout.s)
 				if not (ea.is_empty() and UiData.feature("minimal_hud")):   # the label over the head is cut under minimal_hud; the arrow at the screen's edge (the fighter is off screen) is not
 					you_sig.append([m.slot, m.you_label, int(ap.x * 0.5), int(ap.y * 0.5), int(float(an.get("h", 0.0)) * 0.5), int(float(yk["a"]) * 10.0), bool(an.get("visible", true)), bool(yk["compact"]), m.aura.to_html(false), int((ea.get("pos", Vector2.ZERO) as Vector2).x * 0.5), int((ea.get("pos", Vector2.ZERO) as Vector2).y * 0.5)])
-			_l_hints[m.slot].update_sig(UiHints.sig(m, ha, UiHints.preset_id(m, _o()), UiHints.energy_style(m, _o()), bool(opts["reduced_motion"]), _legend_compact(m), UiHints.styles(m, _o())) if (ha > 0.01 and layout.hints[m.slot].size.y > 0.0) else null)
+			_quiet_step(m)
+			var covered: bool = (UiData.feature("legend_clear") and ha > 0.01 and _legend_covers(m)) or bool(_quiet_on[clampi(m.slot, 0, 1)])   # a body is under the legend: it is not drawn (a clean cut, never a dissolve)
+			_l_hints[m.slot].update_sig(null if covered else UiHints.sig(m, ha, UiHints.preset_id(m, _o()), UiHints.energy_style(m, _o()), bool(opts["reduced_motion"]), _legend_compact(m), UiHints.styles(m, _o())) if (ha > 0.01 and layout.hints[m.slot].size.y > 0.0) else null)
 	_l_you.update_sig(you_sig if not you_sig.is_empty() else null)
 	_join_step(hub.t_now - _join_prev_t, _dt)
 	_join_prev_t = hub.t_now
@@ -876,7 +922,7 @@ func _update_layers() -> void:
 		_l_touchctl.update_sig(null)
 	for m in hub.models:
 		if m.slot < _l_prompts.size():
-			_l_prompts[m.slot].update_sig(UiPrompts.sig(m, prompts_on, touch_on, UiHints.preset_id(m, _o())) if (UiPrompts.has_content(m, prompts_on, touch_on) and layout.prompts[m.slot].size.y > 0.0 and not (m.slot == 1 and not _join_note.is_empty())) else null)
+			_l_prompts[m.slot].update_sig(UiPrompts.sig(m, prompts_on, touch_on, UiHints.preset_id(m, _o())) if (UiPrompts.has_content(m, prompts_on, touch_on) and layout.prompts[m.slot].size.y > 0.0 and not (m.slot == 1 and not _join_note.is_empty()) and not bool(_quiet_on[clampi(m.slot, 0, 1)])) else null)
 		_l_pause.update_sig([layout.pause_btn, layout.touch_ui] if layout.pause_btn.size.y > 0.0 else null)
 	_update_form(reduced)
 	_update_launch()
@@ -982,6 +1028,48 @@ func _update_globe() -> void:
 		return
 	UiPlanetMap.sample(_pm_state, _pm_feed)
 	_l_globe.update_sig(UiPlanetMap.sig(_pm_state, _pm_feed))
+
+
+## The beam answer alert (docs/ui/beam-answer-alert.md): the edge line and the caption for the target of a beam that is gathering or has left a hand, behind the feature answer_alert. View only.
+func _update_alert() -> void:
+	var a: Dictionary = hub.alert
+	if not UiData.feature("answer_alert") or a.is_empty() or _lb >= 0.5 or not anchor_fn.is_valid():
+		_l_alert.update_sig(null)
+		return
+	var t: int = int(a["target"])
+	var sh: int = int(a["shooter"])
+	if t < 0 or t >= hub.models.size() or sh < 0 or sh >= hub.models.size() or hub.models[t].ai:
+		_l_alert.update_sig(null)
+		return
+	var eff: Dictionary = UiAnswerAlert.effective(opts, t)
+	if not UiAnswerAlert.wanted(a, eff):
+		_l_alert.update_sig(null)
+		return
+	_alert_eff = eff
+	_alert_d = UiAnswerAlert.side(_anchor(t), _anchor(sh), layout.vp, hub.models[sh].left_side)
+	_l_alert.update_sig(UiAnswerAlert.sig(a, eff, _alert_d, bool(opts["reduced_motion"])))
+
+
+func _paint_alert(ci: CanvasItem) -> void:
+	var a: Dictionary = hub.alert
+	if a.is_empty() or _alert_eff.is_empty():
+		return
+	var t: int = int(a["target"])
+	var sh: int = int(a["shooter"])
+	if t < 0 or t >= hub.models.size() or sh < 0 or sh >= hub.models.size():
+		return
+	var bodies: Array = []
+	for i in range(mini(2, hub.models.size())):
+		var bb: Rect2 = UiHints.body_box(_anchor(i), layout.vp)
+		if bb.size.x > 0.0:
+			bodies.append(bb)
+	var m: UiFighterModel = hub.models[t]
+	UiAnswerAlert.draw(ci, layout, a, _alert_eff, _alert_d, hub.models[sh].aura, bodies, bool(opts["reduced_motion"]), UiHints.preset_id(m, _o()), t, m.device)
+
+
+## What a player chose for the beam alert, with Reduce flashing's limit applied: the host (VFX for the glint and the air, Audio for the note, Controls for the rumble) reads it for its own family.
+func alert_for(slot: int) -> Dictionary:
+	return UiAnswerAlert.effective(opts, slot)
 
 
 func _paint_globe(ci: CanvasItem) -> void:
@@ -1194,7 +1282,69 @@ func _paint_howto(ci: CanvasItem) -> void:
 	UiHowto.draw(ci, howto_plan(), _howto_device(), _howto_slot(), str(opts["glyph_style"]), bool(opts["touch_ui"]))
 
 
+## versus_flow: the left stick moves through the start menu and How to play the way the D-pad does (the pause, Settings and Remap cards already read it): one step a push (it must come back to rest before the next), as the D-pad has no repeat.
+var _stick_nav: Dictionary = {}
+
+## legend_quiet: the legend and the prompt row go quiet. Never during a beam struggle; and after the opening seconds, once nothing about the fighter's buttons has changed for QUIET_AFTER seconds
+## (a stance held, a press answered, a charge, a lit button), until something does. A clean cut either way.
+const QUIET_AFTER := 4.0
+var _quiet_key: Array = [null, null]
+var _quiet_t: Array = [0.0, 0.0]
+var _quiet_on: Array = [false, false]
+
+
+func _quiet_step(m: UiFighterModel) -> void:
+	var s: int = clampi(m.slot, 0, 1)
+	if not UiData.feature("legend_quiet"):
+		_quiet_on[s] = false
+		return
+	if not m.beat_rows.is_empty():
+		_quiet_on[s] = false   # one of the first beam struggles of a match: the clash rows (what to press on the beat) stay up for the whole struggle, before the rule below
+		_quiet_t[s] = 0.0
+		return
+	if not hub.tug.is_empty() and str(hub.tug.get("end", "")) == "":
+		_quiet_on[s] = true   # a beam struggle: the picture is the beams
+		return
+	if hub.t_now - float(_hint_t0[s]) < float(UiHints.data().get("intro_seconds", 12)):
+		_quiet_on[s] = false
+		_quiet_t[s] = 0.0
+		return
+	if UiData.feature("legend_beam") and m.stance_kind != 0:
+		_quiet_on[s] = false   # a stance button is held: the legend is for that moment, and stays
+		_quiet_t[s] = 0.0
+		return
+	var key: Array = [m.teach, m.stance_kind, m.stance_armed > 0.0, m.press_ack_kind, m.charge_on, m.charge_cell, m.launcher_open, m.gauge_full, bool(m.avail["transform"]), m.punish_left > 0.0, m.flurry_dots, m.open_left > 0.0, m.sig_queued]
+	if key != _quiet_key[s]:
+		_quiet_key[s] = key
+		_quiet_t[s] = 0.0
+	else:
+		_quiet_t[s] = float(_quiet_t[s]) + _dt
+	_quiet_on[s] = float(_quiet_t[s]) > QUIET_AFTER
+
+
+func _stick_to_dpad(event: InputEventJoypadMotion) -> void:
+	if event.axis != JOY_AXIS_LEFT_X and event.axis != JOY_AXIS_LEFT_Y:
+		return
+	var dir: int = 0 if absf(event.axis_value) < 0.6 else (1 if event.axis_value > 0.0 else -1)
+	var key: String = "%d:%d" % [event.device, event.axis]
+	var was: int = int(_stick_nav.get(key, 0))
+	_stick_nav[key] = dir
+	if dir == 0 or dir == was:
+		return
+	var b := InputEventJoypadButton.new()
+	b.device = event.device
+	b.pressed = true
+	if event.axis == JOY_AXIS_LEFT_X:
+		b.button_index = JOY_BUTTON_DPAD_RIGHT if dir > 0 else JOY_BUTTON_DPAD_LEFT
+	else:
+		b.button_index = JOY_BUTTON_DPAD_DOWN if dir > 0 else JOY_BUTTON_DPAD_UP
+	_unhandled_input(b)
+
+
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventJoypadMotion and UiData.feature("versus_flow") and (_notice_open or _howto_open) and not (_pm_open or _set_open or _rm_open):   # the pause, Settings and Remap cards already read the stick
+		_stick_to_dpad(event)
+		return
 	if is_loading():
 		_loading_input(event)   # the planet is being made: nothing is pressed into a match that does not exist yet, but Back answers from the first frame
 		return
@@ -1422,8 +1572,11 @@ func hide_photo_notice(open_settings: bool = false) -> void:
 
 # --- The start menu (docs/ui/start-menu.md) ---------------------------------------------------------------------------------------------
 
+var _pads_test: int = -1   # a check's own count of connected pads (-1: ask the engine)
+
+
 func _pads_connected() -> int:
-	return Input.get_connected_joypads().size()
+	return _pads_test if _pads_test >= 0 else Input.get_connected_joypads().size()
 
 
 ## The choices as the menu shows them: what was saved, else the defaults (one player, a controller if one is plugged in, Intros on, Reduce flashing ON, the rest as the options are).
@@ -1577,6 +1730,10 @@ func _menu_press(h: Dictionary) -> void:
 
 ## Start: the checkboxes take effect and are remembered, the choices are filed in the prefs, the host is told, and the menu goes (the match is released by the hold's end).
 func _menu_start() -> void:
+	if UiData.feature("versus_flow") and int(_menu_cfg.get("players", 1)) == 2 and str(_menu_cfg.get("p2", "kb")) == "pad" and _pads_connected() < (2 if str(_menu_cfg.get("p1", "kb")) == "pad" else 1):
+		_menu_cfg["players"] = 1   # Player 2 chose a controller there is none for: the page starts against the computer, never with a body standing still
+	if UiData.feature("versus_flow") and _menu_via_pad and int(_menu_cfg.get("players", 1)) == 1 and str(_menu_cfg.get("p1", "kb")) == "kb" and _pads_connected() > 0:
+		_menu_cfg["p1"] = "pad"   # Start was pressed on a pad with Player 1 still on the keyboard (a saved choice): the person is on the pad, and slot 1 must not be left to nobody
 	var cfg: Dictionary = _menu_cfg.duplicate()
 	if UiData.rf_locked():
 		cfg["reduce_flashing"] = true   # locked on (Legal's addendum 10): the box is not offered, and nothing saved or sent can say Off
@@ -1593,9 +1750,13 @@ func _menu_start() -> void:
 	hide_photo_notice(false)
 
 
+var _menu_via_pad := false   # the last press in the start menu came from a pad (a key clears it)
+
+
 func _menu_input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		if event.pressed and not event.echo:
+			_menu_via_pad = false
 			match event.keycode:
 				KEY_UP, KEY_W:
 					menu_action("up")
@@ -1611,9 +1772,14 @@ func _menu_input(event: InputEvent) -> void:
 					menu_action("back")
 	elif event is InputEventJoypadButton:
 		if event.pressed:
+			_menu_via_pad = true
 			match event.button_index:
 				JOY_BUTTON_DPAD_UP:
-					menu_action("up")
+					if UiData.feature("versus_flow") and _menu_focus <= 0 and _menu_kind and _notice_open:
+						_menu_focus = _menu_rows().size() - 1   # up from the top wraps to the last row (Start), so a pad reaches it in one press
+						_menu_invalidate()
+					else:
+						menu_action("up")
 				JOY_BUTTON_DPAD_DOWN:
 					menu_action("down")
 				JOY_BUTTON_DPAD_LEFT:
@@ -1883,9 +2049,14 @@ func toggle_pause_menu() -> void:
 
 ## What the match-over card says the fight cost (civilian_bar on): the exact counts the chip no longer shows during the fight. Plain words, one line each.
 func over_facts() -> Array:
+	var wins: Array = []
+	if UiData.feature("versus_flow") and hub.no_contest:
+		wins = [UiData.t("prompt.over_no_contest")]
+	elif UiData.feature("versus_flow") and hub.win_line() != "":
+		wins = [hub.win_line()]   # the KO banner names him for three seconds; the card keeps it (a 2v2 names the winning team, cross_end)
 	if not UiData.feature("civilian_bar"):
-		return []
-	return [UiData.fmt("prompt.over_civilians", {"n": int(hub.toll["civilians"]), "total": int(hub.toll["pop0"])}),
+		return wins
+	return wins + [UiData.fmt("prompt.over_civilians", {"n": int(hub.toll["civilians"]), "total": int(hub.toll["pop0"])}),
 		UiData.fmt("prompt.over_structures", {"n": int(hub.toll["structures"])}),
 		UiData.fmt("prompt.over_craters", {"n": int(hub.toll["craters"])})]
 
@@ -1957,7 +2128,10 @@ func pause_menu_choose(id: String) -> void:
 			if _menu_last_cfg.is_empty():
 				new_match_requested.emit()
 			else:
-				menu_started.emit(_menu_last_cfg)   # the same choices, a new match
+				var again_cfg: Dictionary = _menu_last_cfg.duplicate()
+				if UiData.feature("versus_flow"):
+					again_cfg["intros"] = false   # a rematch is one press from the next fight: no intro (the saved choice stays as it was for the menu)
+				menu_started.emit(again_cfg)   # the same choices, a new match
 		"new_yes":
 			_pm_close("new")
 			new_match_requested.emit()
@@ -1990,6 +2164,8 @@ func pause_menu_action(act: String) -> void:
 		"back":
 			if _pm_confirm:
 				pause_menu_choose("new_no")
+			elif _pm_over and UiData.feature("versus_flow"):
+				_pm_focus = maxi(list.find("again"), 0)   # the match is over: there is nothing to resume, and the card is shown once. Back brings the focus to Play again
 			else:
 				_pm_close("resume")
 	_l_pmenu.invalidate()
@@ -3421,6 +3597,21 @@ func set_slot_layout(slot: int, layout_id: String) -> void:
 		_slot_presets[slot] = layout_id
 
 
+## A beam alert row changed: choosing a set (Minimal, Standard, Full) writes its rows for that player; changing any other row turns the set to Custom.
+func _alert_changed(key: String, value) -> void:
+	var sfx: String = "_p2" if key.ends_with("_p2") else ""
+	var base: String = key.trim_suffix("_p2")
+	_alert_applying = true
+	if base == "alert_preset":
+		if UiAnswerAlert.PRESETS.has(str(value)):
+			var bundle: Dictionary = UiAnswerAlert.PRESETS[str(value)]
+			for k in bundle:
+				set_option(str(k) + sfx, bundle[k])
+	elif str(opts.get("alert_preset" + sfx, "standard")) != "custom":
+		set_option("alert_preset" + sfx, "custom")
+	_alert_applying = false
+
+
 func _humans() -> int:
 	var n := 0
 	for m in hub.models:
@@ -3441,10 +3632,11 @@ func _legend_step(m: UiFighterModel, prompts_on: bool) -> void:
 	_gate_step(_you_g[s], raw, mode != "auto" or m.ai)
 	var upright_kbd: bool = not (bool(opts["touch_ui"]) or layout.portrait)
 	# The legend is for a keyboard or a pad; on touch (or upright) it is simply never asked for, and the gate takes it away the way it takes any other.
-	_gate_step(_legend_g[s], raw if upright_kbd else 0.0, mode != "auto" or m.ai)
+	var beam: bool = UiData.feature("legend_beam")   # legend_beam: the legend follows the held button, with a one second hold and rest (the mash rule: no layer changes state twice inside a second) instead of three and two
+	_gate_step(_legend_g[s], raw if upright_kbd else 0.0, mode != "auto" or m.ai, UiData.feature("legend_clear"), 1.0 if beam else LEGEND_HOLD, 1.0 if beam else LEGEND_REST)
 
 
-func _gate_step(g: Dictionary, raw: float, bypass: bool) -> void:
+func _gate_step(g: Dictionary, raw: float, bypass: bool, cut: bool = false, hold: float = LEGEND_HOLD, rest: float = LEGEND_REST) -> void:
 	if bypass:
 		g["a"] = raw
 		g["on"] = raw > 0.5
@@ -3453,9 +3645,12 @@ func _gate_step(g: Dictionary, raw: float, bypass: bool) -> void:
 	var want: bool = raw > 0.5
 	if want != bool(g["on"]):
 		var since: float = _t - float(g["t"])
-		if since >= (LEGEND_REST if want else LEGEND_HOLD):
+		if since >= (rest if want else hold):
 			g["on"] = want
 			g["t"] = _t
+	if cut:
+		g["a"] = 1.0 if bool(g["on"]) else 0.0   # legend_clear: no fade, the legend is up or it is not
+		return
 	g["a"] = move_toward(float(g["a"]), 1.0 if bool(g["on"]) else 0.0, _dt / LEGEND_FADE)
 
 
@@ -3672,6 +3867,8 @@ func _touch_pulse_step() -> int:
 
 
 func _transform_avail() -> bool:
+	if not UiData.feature("forms_live"):
+		return false   # forms are off: the touch button does not light for a press that does nothing
 	for m in hub.models:
 		if not m.ai and bool(m.avail["transform"]):
 			return true
@@ -3702,6 +3899,36 @@ func _paint_hints(ci: CanvasItem, slot: int) -> void:
 	UiHints.draw(ci, m, hr, layout.s, lo, _hint_alpha(m))
 
 
+## legend_clear: whether this player's legend would sit on a fighter's body. True from the first frame a body is under its box until LEGEND_CLEAR_HOLD seconds after the last. Nothing fades: the legend is drawn or it is not.
+func _legend_covers(m: UiFighterModel) -> bool:
+	var s: int = clampi(m.slot, 0, 1)
+	var over := false
+	var hr: Rect2 = layout.hints[s]
+	if anchor_fn.is_valid() and hr.size.y > 0.0:
+		if m.form_shown and layout.form[s].size.y > 0.0:
+			var top: float = layout.form[s].end.y + 12.0 * layout.s
+			hr = Rect2(hr.position.x, top, hr.size.x, maxf(hr.end.y - top, 0.0))
+		var bodies: Array = []
+		for i in range(mini(2, hub.models.size())):
+			var bb: Rect2 = UiHints.body_box(_anchor(i), layout.vp)
+			if bb.size.x > 0.0 and bb.intersects(hr):   # a body outside the column cannot be under the box: the plan is built only for the rest
+				bodies.append(bb)
+		if not bodies.is_empty():
+			var lo: Dictionary = _o()
+			lo["legend_compact"] = _legend_compact(m)
+			var box: Rect2 = UiHints.screen_box(m, hr, layout.s, lo)
+			for bb2 in bodies:
+				over = over or (box.size.x > 0.0 and box.intersects(bb2))
+	if over:
+		_lc_on[s] = true
+		_lc_t[s] = 0.0
+	elif bool(_lc_on[s]):
+		_lc_t[s] = float(_lc_t[s]) + _dt
+		if float(_lc_t[s]) >= LEGEND_CLEAR_HOLD:
+			_lc_on[s] = false
+	return bool(_lc_on[s])
+
+
 ## Whether this fighter's legend is the compact one (only the rows that matter now): minimal_hud, after the first intro, not paused, Control hints not "always".
 func _legend_compact(m: UiFighterModel) -> bool:
 	if not UiData.feature("minimal_hud") or str(opts["control_hints"]) == "always" or hub.sim_paused:
@@ -3730,6 +3957,14 @@ func _update_launch() -> void:
 ## the first charge held to the click, and the first miss by the rival (the lit button is the medium's, so only where the three strengths light it).
 func _update_teach() -> void:
 	_cap_open_left = maxf(0.0, _cap_open_left - _dt)
+	if UiData.feature("beam_teach") and hub.t_now >= 45.0 and not UiPrefs.get_bool("taught_beam") and not UiPrefs.get_bool("taught_beam_nudge") and str(opts["control_hints"]) != "off":
+		for bm in hub.models:
+			if not bm.ai and bm.teach == "" and bm.stance_kind != UiStance.ENERGY:
+				bm.teach = UiData.t("prompt.teach_beam") if (bm.device != "" and bm.device != "kbd") else UiData.t("prompt.teach_beam_keys")
+				bm.teach_acts = ["strike"]
+				bm.teach_left = 6.0
+				UiPrefs.set_bool("taught_beam_nudge", true)   # said once on its own after 45 s with no beam, then not again
+				break
 	for hm in hub.models:
 		if hm.launcher_open and not hm.ai:
 			_cap_open_left = 0.8
@@ -3741,6 +3976,13 @@ func _update_teach() -> void:
 			hub.hint = {"id": "demo", "key": "demo", "text": UiData.t("prompt.demo_hint"), "kind": "hint", "age": 0.0, "plain": true}
 		elif mine and not demo:
 			hub.hint = {}
+	if UiData.feature("quiet_hints") and str(hub.hint.get("id", "")) == "full_charge":
+		# The full-charge line stays while the heavy is held full, for 2.5 s at most, and goes the moment it is let go (a minimal HUD: nothing stays up for long).
+		var still_full := false
+		for fm in hub.models:
+			still_full = still_full or (not fm.ai and fm.charge_on and fm.charge_cell == "b")
+		if not still_full or float(hub.hint.get("age", 0.0)) > 2.5:
+			hub.hint = {}
 	if str(opts["control_hints"]) == "off" or not hub.hint.is_empty() or hub.sim_paused or overlay:
 		return
 	for m in hub.models:
@@ -3749,9 +3991,13 @@ func _update_teach() -> void:
 			var launching: bool = m.launcher_ready
 			var key: String = "taught_charge_launch" if launching else "taught_charge"
 			var line: String = UiData.t("prompt.hint_full_launch" if launching else "prompt.hint_full")
-			if line != "prompt.hint_full_launch" and not UiPrefs.get_bool(key):
+			var shown_n: int = 2 if UiPrefs.get_bool(key) else int(UiPrefs.get_value(key + "_n", 0))
+			var limit: int = 2 if UiData.feature("quiet_hints") else 1   # quiet_hints: the line shows the first two times, then not
+			if line != "prompt.hint_full_launch" and shown_n < limit:
 				hub.hint = {"id": "full_charge", "key": "full_charge", "text": line, "kind": "hint", "age": 0.0, "plain": true}
-				UiPrefs.set_bool(key, true)
+				UiPrefs.set_value(key + "_n", shown_n + 1)
+				if shown_n + 1 >= limit:
+					UiPrefs.set_bool(key, true)
 				return
 		if m.ai and m.open_left > 0.0 and _humans() >= 1 and UiStance.three() and not UiPrefs.get_bool("taught_miss"):
 			hub.hint = {"id": "first_miss", "key": "first_miss", "text": UiData.t("prompt.hint_miss"), "kind": "hint", "age": 0.0, "plain": true}

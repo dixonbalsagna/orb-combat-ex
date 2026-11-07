@@ -4,6 +4,8 @@ extends RefCounted
 ## input the plate, crown and silhouette draw from. It never writes anywhere, draws no random numbers, and holds no
 ## numeric health: regions are stages, and the optional `wear` is used only to animate a smooth thinning.
 
+const BEAT_RAMP := 0.1   # seconds for the beat ring to go on or off (RL-248: at least 0.1)
+
 var slot: int = 0
 var id: String = "default"         # readout profile id ("protagonist", "anti_hero", "empress", "cyborg", or a placeholder)
 var profile: Dictionary = {}
@@ -30,6 +32,15 @@ var facade_age: float = 99.0       # seconds since the Proud front cracked (anim
 
 var stance_mask: int = 0           # the held stance buttons (the intent's stanceMask: LB 1, RB 2, RT 4, LT 8; 0 martial arts)
 var stance_armed: float = 0.0      # an armed stance (Full touch: a tap arms it for the next blow): the share of its 90 ticks left, 0 when none or held. The host patches it from Controls' state
+var teach: String = ""              # beam_teach: a line the legend says for a moment (Hold for a beam, Needs energy, fire back), with the actions whose glyphs go beside it
+var teach_acts: Array = []
+var teach_left: float = 0.0
+var beat_rows: Array = []           # struggle_teach: while one of the first three beam struggles of a match is on, the rows that say what to press on the beat ({acts, label}); empty otherwise
+var push_mode: String = "stick"    # the player's beam-struggle push (the option struggle_push: stick, the right stick, or face, the face buttons; the HUD keeps it)
+var beat_hold: float = 0.0          # seconds the beat ring is still wanted lit (set by each beat: BEAT_LIT, or longer when the next beat is near, so it stays lit across beats)
+var beat_gap_t: float = 99.0        # seconds since the last beat
+var beat_ring: float = 0.0          # the ring's opacity, 0 to 1, moved by a ramp (BEAT_RAMP) toward lit or not lit
+var beat_steady: bool = false       # Reduce flashing: the ring holds steady for the whole struggle, with no change per beat (the HUD keeps it from the option)
 var stance_kind_t: float = 99.0    # seconds since the stance (stance_kind) last changed (the legend and the prompt row show for 3 s)
 var stance_kind: int = 0           # the stance the badge shows (UiStance: 0 martial, 1 defensive, 2 energy, 3 charging, 4 manoeuvre)
 var beats: Array = []              # seconds to contact of each pending blow that will land on THIS fighter (the beat ring; UiSimBridge.beat_windows)
@@ -64,10 +75,11 @@ var cue: float = 99.0              # seconds since the last grunt cue (drives th
 var cue_intensity: int = 1
 var cinematic: String = ""         # "" or the kind of respected cinematic this fighter is in
 var ko: bool = false
+var out: bool = false              # cross_end (2v2): knocked out for the match while his team fights on (the sim's `ko` event with `over` false)
 var device: String = "kbd"          # the family of the device that last sent input for this slot: kbd, xbox, ps, switch, deck, generic
 var ack_result: String = ""         # the last press-acknowledged result (a small mark for a moment)
 var ack_t: float = 99.0
-var press_ack_kind: String = ""        # the last press the director did not turn into a blow: refused, energy, held, lapsed or empty (a cell with no move)
+var press_ack_kind: String = ""        # the last press the director did not turn into a blow: refused, energy, held, lapsed, empty (a cell with no move) or stunned (pressed in a stun)
 var press_ack_cell: String = ""        # ... and which face button it was (x, y, a or b)
 var press_ack_t: float = 99.0          # seconds since
 var charge_cell: String = ""           # the wind-up of a medium (y) or a heavy (b) now: which face button (the director's `windup` cue)
@@ -153,6 +165,11 @@ func reset_wounds() -> void:
 	chip_stage = 0
 	hatch_open = false
 	ko = false
+	out = false
+	beat_rows = []
+	beat_hold = 0.0
+	beat_gap_t = 99.0
+	beat_ring = 0.0
 	stance_prompt_t = 0.0
 	ack_t = 99.0
 	press_ack_kind = ""
@@ -271,6 +288,15 @@ func advance(dt: float, sim_dt: float = -1.0) -> void:
 	sig_note_t += sdt
 	stance_flash_t += sdt
 	stance_kind_t += sdt
+	beat_gap_t += sdt
+	beat_hold = maxf(0.0, beat_hold - sdt)
+	var ring_to: float = 1.0 if (not beat_rows.is_empty() and (beat_steady or beat_hold > 0.0)) else 0.0
+	beat_ring = move_toward(beat_ring, ring_to, sdt / BEAT_RAMP)   # a ramp of 0.1 s, the shortest Legal allows (RL-248): never a hard blink
+	if teach_left > 0.0:
+		teach_left = maxf(0.0, teach_left - sdt)
+		if teach_left <= 0.0:
+			teach = ""
+			teach_acts = []
 	if last_stand_left > 0.0:
 		last_stand_left = maxf(0.0, last_stand_left - sdt)   # a host that patches the sim's own count (the bridge) overwrites this every tick
 	# The signature's cap (180 ticks, 3 s) runs while the intent is funded and the director's clock is running.

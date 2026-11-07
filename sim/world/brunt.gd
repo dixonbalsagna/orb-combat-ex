@@ -36,6 +36,9 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
 	"keepHi": 0.8, "keepK": 0.45, "keepRef": 3000.0, "keepMin": 0.35, "keepFree": 0.95, "heavyKeep": 0.7,
 	# the wall slam (buildings.md section 2): twice the building's hit, a stagger at the wall
 	"wallSlamMul": 2.0, "wallStaggerTicks": 24,
+	# the wall for pressing the fight into the city (Orb 2026-11-06): the share of his speed that comes back off the face (0.25 today, 0 none); the share of the hit-stop a wall freezes the whole fight for (1 today, 0 none: only he is held);
+	# whether his depth stays at the face for the hold, with lodgeHold body (0 off, 1 on)
+	"wallRebound": 0.25, "wallStop": 1.0, "wallDepthHold": 0,
 	# the chain inside a tower (buildings.md section 7.3, world/interior.gd): 0 off (today's behaviour) or 1 on; the send's angle (tangents of 15 and 60 degrees),
 	# the speed kept through a ceiling and through a slab or face that breaks, the contact and bounce caps, the face's stop in ticks, the cap in seconds,
 	# the effective tier that reaches the ceiling and the tier whose far face breaks, the share of a hit's damage a slab does him
@@ -601,7 +604,8 @@ static func _aimBy(S: SimState, A, D, b, force: float, tierF: float, special: bo
 	var sign_: float = 1.0 if SimWrap.sdx(D.x, b.x) >= 0.0 else -1.0
 	for uy in uys:
 		var trav: float = WorldSlide.launchTravel(sign_, uy)
-		var fr: Dictionary = flightTo(S, D.x, D.y, WorldSlide.launchVX(sign_, uy, force * tierF), uy * force * tierF, trav, b, D.z)
+		var fa: float = SimPower.fit(S, force, sign_, uy)   # what doLaunch will fly
+		var fr: Dictionary = flightTo(S, D.x, D.y, WorldSlide.launchVX(sign_, uy, fa * tierF), uy * fa * tierF, trav, b, D.z)
 		if fr.ok and fr.spN >= AIM_MIN_SP and (not inside or WorldInterior.fits(S, b, fr.vx / trav, fr.vy)):
 			var chain: Array = chainPlan(S, tierOf(A, D), special, b, fr, trav)
 			var edge: float = SimWrap.wrap(b.x - sign_ * b.w * 0.5)
@@ -662,6 +666,8 @@ static func zAt(x0: float, z0: float, z1: float, d: float, x: float) -> float:
 static func stepZ(S: SimState, f, dt: float) -> void:
 	if f.aimB >= 0:
 		f.z = zAt(f.aimX0, f.aimZ0, f.aimZ1, f.aimD, f.x)
+	elif f.wallZ > 0:
+		pass   # held at a wall's face (wallDepthHold): his depth stays for the hold (wounds.gd counts it down with the stun)
 	elif f.z != 0.0:
 		f.z *= SimDetMath.pow(0.001, dt)
 		if absf(f.z) < 0.5:
@@ -812,7 +818,10 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 	SimFx.debris(S, f.x, y + 20.0, 6, "#77808f", 500.0)
 	if not inside:
 		var stop: float = STOP_FIRST if link == 1 else STOP_LINK
-		SimClock.hold(S, minf(stop, STOP_TOTAL), f, by)
+		if not passes:
+			stop *= float(cm.wallStop)   # a face that holds him: the wall's share of the hit-stop (wallStop)
+		if stop > 0.0:
+			SimClock.hold(S, minf(stop, STOP_TOTAL), f, by)
 	else:
 		WorldInterior.begin(S, f, b, y, edge, dir, by, tierB, keep, broke)   # the face's stop is the data's ticks; the rest is the chain's (interior.gd step)
 		return
@@ -870,7 +879,8 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 			endFlight(S, f)
 	else:
 		# a rebound: a quarter of the speed backward, outside the near face; the chain ends
-		f.vx = -dir * absf(f.vx) * 0.25
+		var rb: float = float(cm.wallRebound)
+		f.vx = -dir * absf(f.vx) * rb if rb > 0.0 else 0.0   # wallRebound 0: none (and never a -0 in the hash)
 		f.vy *= 0.85
 		f.x = SimWrap.wrap(edge - dir * 18.0)
 		# the stagger (wallStaggerTicks): stunTicks counts down on every live tick, flight included, and not in the hit-stop, so it is set to the flight
@@ -928,6 +938,8 @@ static func _flightTicks(S: SimState, f) -> int:
 static func _hold(S: SimState, f, seconds: float) -> void:
 	if str(cfg().lodgeHold) == "body":
 		f.stunTicks = maxi(f.stunTicks, int(ceil(seconds * 60.0)))
+		if int(cfg().wallDepthHold) > 0:
+			f.wallZ = int(ceil(seconds * 60.0))   # his depth stays where it is, at the face, for the hold (stepZ, DirPlane; wounds.gd counts it down with the stun)
 	else:
 		SimClock.hold(S, seconds, f)
 

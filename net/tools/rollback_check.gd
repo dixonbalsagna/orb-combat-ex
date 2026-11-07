@@ -72,6 +72,7 @@ const SETUPS: Dictionary = {
 	"field": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false},   # a field world (sim/core/field.gd): its line and store, in the hash
 	"fights": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "fights": 2},   # two AI fights on one line (sim/core/stage.gd): the bots play the first
 	"fights2": NetLan.SETUP2,   # two fights with a player in each (--lan-2v2): the bots play slots 0 and 2, the sim's AI plays 1 and 3
+	"power": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true},   # one energy model (sim/core/power.gd)
 	"kick": {"kick": true},   # the kick and the coin turn (sim/core/kick.gd): six numbers a fighter, in the hash while on
 }
 
@@ -165,6 +166,9 @@ func _init() -> void:
 			sparse = maxi(1, int(a.substr(9)))
 		elif a == "--right-stick":
 			NetBot.setRightStick(true)
+		elif a == "--dodge-held":
+			NetBot.setRightStick(true)
+			NetBot.setDodgeHeld(true)
 		elif a == "--negative-control":
 			sabotage = "on"
 		elif a == "--ai" or a == "--ai=sim":

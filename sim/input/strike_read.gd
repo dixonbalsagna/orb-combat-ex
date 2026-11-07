@@ -42,6 +42,7 @@ var _start_tick: int = 0
 var _start_live: int = 0
 var _peak: Vector2 = Vector2.ZERO
 var _peak_r: float = -1.0
+var _prev_r: float = 0.0               # last build's deflection: the pre-read follows a rising stick only
 var _edge_tick: int = -1
 var _rest_seen: bool = false           # toggle style: the stick rested after the start, so the next push throws
 
@@ -55,6 +56,16 @@ var dwell: int
 var ladder: Array
 var beam_ladder: Array
 var toggle: bool = false               # strike_style "toggle": a push starts the charge, the NEXT push throws it
+var pre_at: float                      # the quick read: the pre-read begins at this rescaled deflection (before `on`)
+var pre_dir: int = NONE                # the quick read, for the pose only (never in the intent): the quadrant the stick is leaning to, before the request; NONE at rest
+var pre_depth: float = 0.0             # ... and how far toward `on` it has got, 0 to 1
+var aim_trail: float                   # the beam's aim (switches.beamAim): the radians the shown aim trails the stick before it moves
+var aim_latch: int                     # ... the rim ticks the throw's aim is the mean of
+var aim_peak: float                    # ... the fraction of the hold's peak deflection that counts as the rim
+var _aim_angle: float = 0.0
+var _aim_seen: bool = false
+var _hold_peak: float = 0.0
+var _rim: Array = []                   # the last rim vectors of the hold
 
 
 func _init() -> void:
@@ -62,7 +73,11 @@ func _init() -> void:
 	quant = float(SimInputData.ti(["strike", "quant"], 16))
 	on_at = SimInputData.tf(["strike", "on"], 0.60)
 	off_at = SimInputData.tf(["strike", "off"], 0.35)
-	settle = SimInputData.ti(["strike", "settle"], 2)
+	settle = SimInputData.ti(["strike", "settleQuick"], 1) if SimInputData.quick_on() else SimInputData.ti(["strike", "settle"], 2)
+	pre_at = SimInputData.tf(["strike", "preAt"], 0.25)
+	aim_trail = SimInputData.tf(["strike", "aimTrail"], 4.0) / 180.0 * SimMathx.PI
+	aim_latch = maxi(1, SimInputData.ti(["strike", "aimLatchTicks"], 3))
+	aim_peak = SimInputData.tf(["strike", "aimLatchPeak"], 0.85)
 	dwell = SimInputData.ti(["strike", "dwell"], 12)
 	ladder = _ints(SimInputData.t(["strike", "levels"], [12, 30, 50]), [12, 30, 50])
 	beam_ladder = _ints(SimInputData.t(["strike", "beamLevels"], [12, 30, 54]), [12, 30, 54])
@@ -142,6 +157,15 @@ func step(x: float, y: float, mask: int, tick: int, live: int, floor_tick: int =
 		down = false
 	var crossing: bool = down and not was_down
 	aim = sector(x, y) if (r > 0.0 and (x != 0.0 or y != 0.0)) else 0
+	if SimInputData.beam_aim_on():
+		_aim_step(x, y, r, crossing)
+	if (phase == IDLE or phase == CROSSED) and r >= pre_at and r >= _prev_r and not inert:   # leaning in, not falling back
+		pre_dir = quadrant(x, y)
+		pre_depth = minf(1.0, r / on_at)
+	else:
+		pre_dir = NONE
+		pre_depth = 0.0
+	_prev_r = r
 	match phase:
 		IDLE:
 			if crossing and inert:
@@ -152,6 +176,8 @@ func step(x: float, y: float, mask: int, tick: int, live: int, floor_tick: int =
 				layer = mask
 				_peak = Vector2(x, y)
 				_peak_r = r
+				if settle <= 0:
+					_try_start(x, y, tick, live, floor_tick)   # the quick read at settle 0: the direction is taken on the crossing tick itself (docs/controls/responsiveness.md)
 		CROSSED:
 			if r > _peak_r:
 				_peak = Vector2(x, y)
@@ -172,6 +198,58 @@ func step(x: float, y: float, mask: int, tick: int, live: int, floor_tick: int =
 				phase = IDLE
 	if phase == IDLE and not down:
 		_peak_r = -1.0
+
+
+## The beam's aim (docs/controls/beam-aim-feel.md). While the stick is down the shown aim follows it through a trailing dead band (it moves only once the stick is
+## more than `aim_trail` from it, then stays that far behind), so a thumb that is holding still does not walk the sector; the rim vectors of the hold are kept for the throw.
+func _aim_step(x: float, y: float, r: float, crossing: bool) -> void:
+	if crossing:
+		_rim.clear()
+		_hold_peak = 0.0
+		_aim_seen = false
+	if not down:
+		aim = 0
+		return
+	if r > _hold_peak:
+		_hold_peak = r
+	if r >= aim_peak * _hold_peak and (x != 0.0 or y != 0.0):
+		_rim.append(Vector2(x, y))
+		if _rim.size() > aim_latch:
+			_rim.pop_front()
+	if x == 0.0 and y == 0.0:
+		return
+	var a: float = WorldPlanet.atan2f(y, x)
+	if not _aim_seen:
+		_aim_angle = a
+		_aim_seen = true
+	else:
+		var e: float = a - _aim_angle
+		if e > SimMathx.PI:
+			e -= SimMathx.TAU
+		elif e < -SimMathx.PI:
+			e += SimMathx.TAU
+		if e > aim_trail:
+			_aim_angle = a - aim_trail
+		elif e < -aim_trail:
+			_aim_angle = a + aim_trail
+	var t: float = _aim_angle
+	while t < 0.0:
+		t += SimMathx.TAU
+	while t >= SimMathx.TAU:
+		t -= SimMathx.TAU
+	aim = int(floor(t / SimMathx.TAU * 32.0 + 0.5)) % 32
+
+
+## The throw's aim: the sector of the mean of the last rim vectors (the thumb's last steady direction), or the peak of a flick that never had a rim.
+func _latched_aim() -> int:
+	var v: Vector2 = Vector2.ZERO
+	for p in _rim:
+		v += p
+	if v == Vector2.ZERO:
+		v = _peak
+	if v == Vector2.ZERO:
+		return aim
+	return sector(v.x, v.y)
 
 
 func _try_start(x: float, y: float, tick: int, live: int, floor_tick: int) -> void:
@@ -195,6 +273,8 @@ func _try_start(x: float, y: float, tick: int, live: int, floor_tick: int) -> vo
 func _throw(tick: int, live: int) -> void:
 	level = level_at(live - _start_live, is_beam_layer(layer))
 	release = true
+	if SimInputData.beam_aim_on():
+		aim = _latched_aim()   # the stick has sprung home by the tick it is read: the throw carries the aim it held (docs/controls/beam-aim-feel.md)
 	_mark(tick)
 	phase = SPENT
 	_rest_seen = false
@@ -260,6 +340,12 @@ func reset() -> void:
 	dir = NONE
 	level = 0
 	aim = 0
+	pre_dir = NONE
+	pre_depth = 0.0
+	_prev_r = 0.0
 	_peak_r = -1.0
 	_rest_seen = false
+	_rim.clear()
+	_hold_peak = 0.0
+	_aim_seen = false
 	clear_edges()

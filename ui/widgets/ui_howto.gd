@@ -165,6 +165,14 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 			if not UiGlyphs.bound(preset, first, slot):
 				continue
 		var icon_name: String = str(it.get("icon", ""))
+		if (it.has("action") or it.has("actions")) and not UiHints.press_live((it["actions"] as Array) if it.has("actions") else [str(it["action"])]):
+			continue   # a line for a press that does nothing in this build
+		if icon_name == "rh_brace" and not UiData.feature("brace_live"):
+			continue
+		if icon_name == "rh_beam" and not UiData.feature("legend_beam"):
+			continue
+		if icon_name == "rh_vanish" and not UiData.feature("vanish_live"):
+			continue   # the vanish is off the first press (it is only the dodge today): no line for it
 		if icon_name.begins_with("rh_") and (not UiData.feature("right_hand") or device == "kbd" or touch):
 			continue   # a line about the controller's right-hand attacks: only while Controls' switch is on, and only for a controller
 		if it.has("action") and UiHints.RIGHT_HAND_ACTIONS.has(str(it["action"])) and not UiData.feature("right_hand"):
@@ -185,6 +193,8 @@ static func _layout(card: Rect2, cs: float, tm: float, touch: bool, page: Dictio
 		var y: float = body.position.y + float(heights[col])
 		var rec: Dictionary = {"item": it, "col": col, "fs": fs_body, "fs_small": fs_small}
 		var text: String = str(it.get("text", ""))
+		if icon_name == "plan" and not UiData.feature("forms_live"):
+			text = UiData.t("prompt.howto_plan_noforms")   # the first line without its transform sentences while forms are off
 		var styles: Dictionary = extra.get("styles", {})
 		var is_toggle: bool = it.has("action") and str(styles.get("strike" if str(it["action"]).begins_with("strike") else str(it["action"]), "hold")) == "toggle"   # this player's guard, power, manoeuvre or energy is a toggle: the page says so
 		if is_toggle and it.has("text_toggle"):
@@ -694,6 +704,10 @@ static func _icon(ci: CanvasItem, name: String, c: Vector2, sz: float, cs: float
 			ci.draw_arc(c + Vector2(0.0, r * 0.15), r, PI * 1.1, PI * 1.9, 14, ink, w * 1.3, true)
 			ci.draw_circle(c + Vector2(-r * 0.25, r * 0.45), sz * 0.12, dim)
 			ci.draw_line(c + Vector2(-r * 0.25, r * 0.45), c + Vector2(r * 0.55, r * 0.45), ink, w)
+		"rh_beam":
+			# A line that thickens to a point: hold Energy, push the stick out, let go to fire.
+			ci.draw_line(c + Vector2(-r, 0.0), c + Vector2(r * 0.4, 0.0), ink, w * 1.8)
+			UiIcons.chevron(ci, c + Vector2(r * 0.85, 0.0), sz * 0.3, 1.0, w, ink)
 		"rh_vanish":
 			# Two marks joined by a plus, then an arrow's chevron: guard and dodge together, then a direction.
 			ci.draw_circle(c + Vector2(-r * 0.7, 0.0), sz * 0.11, ink)

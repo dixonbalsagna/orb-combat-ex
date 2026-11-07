@@ -169,6 +169,80 @@ static func right_stick_on() -> bool:
 	return bool(t(["switches", "rightStick"], false))
 
 
+## The strike charge's rumble, one pulse as each rung of the ladder is reached (docs/controls/rule-of-cool-pitches.md pitch 1; switches.hapticLadder, off). Needs the right-hand switch.
+static func haptic_ladder_on() -> bool:
+	return right_stick_on() and bool(t(["switches", "hapticLadder"], false))
+
+
+## The signature is RT + B only (docs/design/energy-overhaul.md E121; the EP's decision of 2026-11-01): B with LB, RB or LT held is the heavy of that stance (B with RB is Y's blast until the Driver
+## has its own job), so a guard or a dodge can never fire a beam by accident. B alone stays the big blow. switches.signatureRtOnly, off.
+static func signature_rt_only() -> bool:
+	return bool(t(["switches", "signatureRtOnly"], false))
+
+
+## The Driver is on RB + B (docs/director/pending/driver; data/director/interrupts.json blast.driver.enabled): with switches.signatureRtOnly, RB + B is then left as the B press for the Driver
+## to read, instead of being sent as Y's blast. Set together with the Driver's own switch. switches.driverOnRb, off.
+static func driver_on_rb() -> bool:
+	return bool(t(["switches", "driverOnRb"], false))
+
+
+## The power specials are off (docs/design/pad-first-press.md: RT + X, Y, A are not built; a press is the plain blow and the charge drops). switches.specialsOff, off.
+static func specials_off() -> bool:
+	return bool(t(["switches", "specialsOff"], false))
+
+
+## A stick press that never started a strike is told to its pad (the audit's gap 2; switches.hapticRefused, off). Needs the right-hand switch.
+static func haptic_refused_on() -> bool:
+	return right_stick_on() and bool(t(["switches", "hapticRefused"], false))
+
+
+## The beam-answer window's rumble on the receiver's pad (docs/design/rule-of-cool-map.md row 40; switches.hapticIncomingBeam, off). Independent of the right-hand
+## switch: a signature beam warns too.
+static func haptic_beam_on() -> bool:
+	return bool(t(["switches", "hapticIncomingBeam"], false))
+
+
+## The incoming strike's rumble on the defender's pad (pitch 3; switches.hapticIncoming, off). Needs the right-hand switch.
+static func haptic_incoming_on() -> bool:
+	return right_stick_on() and bool(t(["switches", "hapticIncoming"], false))
+
+
+## The quick read (docs/controls/responsiveness.md): the strike and brace settle one tick sooner, the vanish resolves on the second press, and the layout
+## publishes the stick's pre-read for the pose. Needs the right-hand switch; off, every number is the one it always was.
+static func quick_on() -> bool:
+	return right_stick_on() and bool(t(["switches", "quickRead"], false))
+
+
+## LT held, in the second word (docs/controls/dodge-held.md; switches.dodgeHeld, off): the intent says whether the dodge control is physically down this tick, so the flight strike's take-back can ask
+## "LT still held at the face press". Needs the right-hand switch (the second word is its); off, every record is the one it always was.
+static func dodge_held_on() -> bool:
+	return right_stick_on() and bool(t(["switches", "dodgeHeld"], false))
+
+
+## No input lost in a stall (docs/controls/stall-keep.md; switches.stallKeep, off): when the page hitches, several steps read the one pad snapshot the events left, so a flick that rose and fell between two
+## steps was never seen. With it on the layout keeps the strike stick's furthest point (and a strike key's press) since its last build and reads it once.
+## Needs the right-hand switch; off, every record is the one it always was.
+static func stall_keep_on() -> bool:
+	return right_stick_on() and bool(t(["switches", "stallKeep"], false))
+
+
+## Every press answered (docs/controls/refusals.md): a press the game let go of with no sign knocks the pad of the one who made it and is listed for UI with a reason code. The same switch as the stick's
+## refused knock (switches.hapticRefused, off); this is the form that needs no right-hand switch (a perfect block's lockout, a stun limit and the director's queue are not the stick's).
+static func refusal_cues_on() -> bool:
+	return bool(t(["switches", "hapticRefused"], false))
+
+
+## The hits, closes, launches, landings and building breaks on the pad (Orb's 2026-10-05 rumble picks; docs/controls/impact-haptics.md; switches.hapticImpact, off). Independent of the right-hand switch.
+static func haptic_impact_on() -> bool:
+	return bool(t(["switches", "hapticImpact"], false))
+
+
+## The beam's aim (docs/controls/beam-aim-feel.md): the strike stick's aim trails the thumb by a small dead band, and the throw carries the aim the stick held at the rim,
+## not the zero of a stick that has already sprung home. Needs the right-hand switch (switches.beamAim, off); off, every record is the one it always was.
+static func beam_aim_on() -> bool:
+	return right_stick_on() and bool(t(["switches", "beamAim"], false))
+
+
 ## A preset with its parked strike bindings (`strikeBindings`, the same shape as `bindings`) joined to its bindings while the right-hand switch is on, so the
 ## layout, the remap screen and the checks see one list. With the switch off, or no strike bindings, the preset comes back as it is.
 static func _with_strike(p: Dictionary) -> Dictionary:

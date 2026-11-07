@@ -61,6 +61,11 @@ static func _read(path: String) -> Dictionary:
 
 
 ## A term by dotted path, e.g. "stance.press" or "card.heat.2". Missing: the path itself.
+## Whether `path` names a word (t() returns the path itself for one that is missing).
+static func has_term(path: String) -> bool:
+	return t(path) != path
+
+
 static func t(path: String) -> String:
 	ensure()
 	var cur = _terms

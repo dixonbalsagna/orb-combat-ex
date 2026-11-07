@@ -6,7 +6,7 @@
       "default": true,
       "group": "display",
       "label": "[ÎÎñföö fĺáášĥéš]",
-      "help": "[Šmááĺĺ fĺáášĥééš öövééŕ áá fííĝĥţééŕ'š ĥééááď ţĥááţ šĥööŵ ŵĥááţ ĥéé šééñšééš: ďááñĝééŕ, špööţţééď ýýööüü, šééááŕçĥííñĝ. Ţüüŕñííñĝ ţĥííš ööff ĥííďééš ööñĺýý ţĥééšéé. ~~~~~~~~~~~~]"
+      "help": "[Šmááĺĺ fĺáášĥééš öövééŕ áá fííĝĥţééŕ'š ĥééááď ţĥááţ šĥööŵ ŵĥááţ ţĥéé fííĝĥţééŕ šééñšééš: ďááñĝééŕ, špööţţééď ýýööüü, šééááŕçĥííñĝ. Ţüüŕñííñĝ ţĥííš ööff ĥííďééš ööñĺýý ţĥééšéé. ~~~~~~~~~~~~~~]"
     },
     "silhouette": {
       "default": false,
@@ -38,6 +38,302 @@
         "auto",
         "full",
         "cut"
+      ]
+    },
+    "alert_preset": {
+      "default": "standard",
+      "group": "controls",
+      "label": "[Bééáám ááĺééŕţ šéţ]",
+      "help": "[Šţááŕţ fŕööm áá šééţ, ţĥééñ çĥááñĝéé ááñýýţĥííñĝ. Çááĺm šĥööŵš ööñéé qüüííééţ çáápţííööñ ááñď ţĥéé ĝééñţĺééšţ šööüüñď ááñď büüžž, Šţááñďááŕď ííš ţĥéé üüšüüááĺ, Füüĺĺ ţééĺĺš ýýööüü éévééŕýýţĥííñĝ. Çĥááñĝííñĝ áá ŕööŵ bééĺööŵ mááķééš ííţ Çüüšţööm. ~~~~~~~~~~~~~~~~~~]",
+      "accessibility": true,
+      "choices": [
+        "calm",
+        "standard",
+        "full",
+        "custom"
+      ]
+    },
+    "alert_preset_p2": {
+      "default": "standard",
+      "group": "controls",
+      "label": "[Bééáám ááĺééŕţ šééţ, pĺááýýééŕ 2]",
+      "help": "[Ţĥéé šááméé fööŕ pĺááýýééŕ ţŵöö ŵĥééñ ţŵöö pééööpĺéé pĺááýý. Pĺááýýééŕ ööñéé'š ííš ţĥéé ööñéé ááböövéé. ]",
+      "accessibility": true,
+      "choices": [
+        "calm",
+        "standard",
+        "full",
+        "custom"
+      ]
+    },
+    "alert_edge": {
+      "default": "offscreen",
+      "group": "controls",
+      "label": "[Šçŕééééñ éďĝéé ĺííñé]",
+      "help": "[ÅÅ ţĥííñ ĺííñéé ááţ ţĥéé šçŕééééñ'š ééďĝéé ööñ ţĥéé šííďéé áá bééáám çöömééš fŕööm. ÖÖff šçŕééééñ ööñĺýý šĥööŵš ííţ ĵüüšţ ŵĥééñ ţĥéé šĥööööţééŕ ííš ööüüţ ööf šííĝĥţ. ~~~~~~~~~~]",
+      "accessibility": true,
+      "choices": [
+        "off",
+        "offscreen",
+        "always"
+      ]
+    },
+    "alert_edge_p2": {
+      "default": "offscreen",
+      "group": "controls",
+      "label": "[Šçŕééééñ ééďĝéé ĺííñéé, pĺááýýéŕ 2]",
+      "help": "[Ţĥéé šááméé fööŕ pĺááýýééŕ ţŵöö ŵĥééñ ţŵöö pééööpĺéé pĺááýý. Pĺááýýééŕ ööñéé'š ííš ţĥéé ööñéé ááböövéé. ]",
+      "accessibility": true,
+      "choices": [
+        "off",
+        "offscreen",
+        "always"
+      ]
+    },
+    "alert_edge_width": {
+      "default": "medium",
+      "group": "controls",
+      "label": "[ÉÉďĝéé ĺííñéé ţĥííçķñééšš]",
+      "help": "[Ĥööŵ ţĥííçķ ţĥéé ĺííñéé ááţ ţĥéé šçŕééééñ'š ééďĝéé ííš. ~~]",
+      "accessibility": true,
+      "choices": [
+        "thin",
+        "medium",
+        "thick"
+      ]
+    },
+    "alert_edge_width_p2": {
+      "default": "medium",
+      "group": "controls",
+      "label": "[ÉÉďĝéé ĺííñéé ţĥííçķñééšš, pĺááýýééŕ 2 ]",
+      "help": "[Ţĥéé šááméé fööŕ pĺááýýééŕ ţŵöö ŵĥééñ ţŵöö pééööpĺéé pĺááýý. Pĺááýýééŕ ööñéé'š ííš ţĥéé ööñéé ááböövéé. ]",
+      "accessibility": true,
+      "choices": [
+        "thin",
+        "medium",
+        "thick"
+      ]
+    },
+    "alert_caption": {
+      "default": false,
+      "group": "controls",
+      "label": "[Bééáám çápţííöñ]",
+      "help": "[Ŵööŕďš ááñď büüţţööñš ááţ ţĥéé šçŕééééñ'š ééďĝéé: BÉÉÅÅM ÎÎÑÇÖÖMÎÎÑĜ, ţĥééñ FÎÎŔÉÉ BÅÅÇĶ ööŕ ĎÖÖĎĜÉÉ, ŵííţĥ áá bááŕ ţĥááţ ŕüüñš ďööŵñ ţöö ţĥéé möömééñţ ííţ ááŕŕíívééš. ~~~~~~~~~~~~~]",
+      "accessibility": true
+    },
+    "alert_caption_p2": {
+      "default": false,
+      "group": "controls",
+      "label": "[Bééáám çáápţííööñ, pĺááýýéŕ 2]",
+      "help": "[Ţĥéé šááméé fööŕ pĺááýýééŕ ţŵöö ŵĥééñ ţŵöö pééööpĺéé pĺááýý. Pĺááýýééŕ ööñéé'š ííš ţĥéé ööñéé ááböövéé. ]",
+      "accessibility": true
+    },
+    "alert_caption_size": {
+      "default": "medium",
+      "group": "controls",
+      "label": "[Çáápţííöñ šíížé]",
+      "help": "[Ĥööŵ bííĝ ţĥéé çáápţííööñ ííš.]",
+      "accessibility": true,
+      "choices": [
+        "small",
+        "medium",
+        "large"
+      ]
+    },
+    "alert_caption_size_p2": {
+      "default": "medium",
+      "group": "controls",
+      "label": "[Çáápţííööñ šíížéé, pĺááýýéŕ 2]",
+      "help": "[Ţĥéé šááméé fööŕ pĺááýýééŕ ţŵöö ŵĥééñ ţŵöö pééööpĺéé pĺááýý. Pĺááýýééŕ ööñéé'š ííš ţĥéé ööñéé ááböövéé. ]",
+      "accessibility": true,
+      "choices": [
+        "small",
+        "medium",
+        "large"
+      ]
+    },
+    "alert_caption_pos": {
+      "default": "side",
+      "group": "controls",
+      "label": "[Çáápţííöñ pĺááçé]",
+      "help": "[Ŵĥééŕéé ţĥéé çáápţííööñ šííţš: ööñ ţĥéé šííďéé ţĥéé bééáám çöömééš fŕööm, ööŕ ááţ ţĥéé bööţţööm çééñţŕéé üüñďééŕ ţĥéé fííĝĥţ, ŵĥééŕéé ííţ ííš ááĺŵááýýš ííñ ţĥéé šááméé pĺááçéé. ~~~~~~~~~~]",
+      "accessibility": true,
+      "choices": [
+        "side",
+        "bottom"
+      ]
+    },
+    "alert_caption_pos_p2": {
+      "default": "side",
+      "group": "controls",
+      "label": "[Çáápţííööñ pĺááçéé, pĺááýýéŕ 2]",
+      "help": "[Ţĥéé šááméé fööŕ pĺááýýééŕ ţŵöö ŵĥééñ ţŵöö pééööpĺéé pĺááýý. Pĺááýýééŕ ööñéé'š ííš ţĥéé ööñéé ááböövéé. ]",
+      "accessibility": true,
+      "choices": [
+        "side",
+        "bottom"
+      ]
+    },
+    "alert_early": {
+      "default": false,
+      "group": "controls",
+      "label": "[ÉÉááŕĺý ŵááŕñíñĝ]",
+      "help": "[ÅÅĺšöö šĥööŵš BÉÉÅÅM ÇĤÅÅŔĜÎÎÑĜ ŵĥííĺéé ţĥéé ŕíívááĺ ĝááţĥééŕš áá bééáám, bééfööŕéé ííţ ííš fííŕééď. ÎÎţ šĥööŵš ŵĥááţ ţĥéé ĺííţ ĥááñď ááĺŕééááďýý šĥööŵš. ~~~~~~~~~]",
+      "accessibility": true
+    },
+    "alert_early_p2": {
+      "default": false,
+      "group": "controls",
+      "label": "[ÉÉááŕĺýý ŵááŕñííñĝ, pĺááýýéŕ 2]",
+      "help": "[Ţĥéé šááméé fööŕ pĺááýýééŕ ţŵöö ŵĥééñ ţŵöö pééööpĺéé pĺááýý. Pĺááýýééŕ ööñéé'š ííš ţĥéé ööñéé ááböövéé. ]",
+      "accessibility": true
+    },
+    "alert_which": {
+      "default": "all",
+      "group": "controls",
+      "label": "[Ŵĥííçĥ bééáámš ŵááŕñ]",
+      "help": "[ÅÅĺĺ bééáámš, çĥááŕĝééď bééáámš ööñĺýý, ööŕ ţĥéé šííĝñááţüüŕéé ööñĺýý. ~]",
+      "accessibility": true,
+      "choices": [
+        "all",
+        "charged",
+        "signature"
+      ]
+    },
+    "alert_which_p2": {
+      "default": "all",
+      "group": "controls",
+      "label": "[Ŵĥííçĥ bééáámš ŵááŕñ, pĺááýýééŕ 2 ]",
+      "help": "[Ţĥéé šááméé fööŕ pĺááýýééŕ ţŵöö ŵĥééñ ţŵöö pééööpĺéé pĺááýý. Pĺááýýééŕ ööñéé'š ííš ţĥéé ööñéé ááböövéé. ]",
+      "accessibility": true,
+      "choices": [
+        "all",
+        "charged",
+        "signature"
+      ]
+    },
+    "alert_glint": {
+      "default": "normal",
+      "group": "controls",
+      "label": "[Ĝĺííñţ ááţ ţĥéé šĥööööţééŕ'š ĥááñď ~]",
+      "help": "[ÅÅ bŕííĝĥţ špááŕķ ááţ ţĥéé ĥááñď ááš ţĥéé bééáám ííš ĝááţĥééŕééď. ~~~]",
+      "accessibility": true,
+      "choices": [
+        "off",
+        "normal",
+        "bright"
+      ]
+    },
+    "alert_glint_p2": {
+      "default": "normal",
+      "group": "controls",
+      "label": "[Ĝĺííñţ ááţ ţĥéé šĥööööţééŕ'š ĥááñď, pĺááýýééŕ 2 ~~]",
+      "help": "[Ţĥéé šááméé fööŕ pĺááýýééŕ ţŵöö ŵĥééñ ţŵöö pééööpĺéé pĺááýý. Pĺááýýééŕ ööñéé'š ííš ţĥéé ööñéé ááböövéé. ]",
+      "accessibility": true,
+      "choices": [
+        "off",
+        "normal",
+        "bright"
+      ]
+    },
+    "alert_air": {
+      "default": "subtle",
+      "group": "controls",
+      "label": "[ÅÅííŕ ááñď ĺííĝĥţ ááĺööñĝ ţĥéé bééáám]",
+      "help": "[Ţĥéé ááííŕ ŕííppĺééš ááĥééááď ööf ţĥéé bééáám, ííţš çööĺööüüŕ šŵéééépš ááĺööñĝ ţĥéé ĝŕööüüñď ááñď ďüüšţ ĺíífţš üüñďééŕ ííţ. ~~~~~~]",
+      "accessibility": true,
+      "choices": [
+        "off",
+        "subtle",
+        "strong"
+      ]
+    },
+    "alert_air_p2": {
+      "default": "subtle",
+      "group": "controls",
+      "label": "[ÅÅííŕ ááñď ĺííĝĥţ ááĺööñĝ ţĥéé bééáám, pĺááýýééŕ 2 ]",
+      "help": "[Ţĥéé šááméé fööŕ pĺááýýééŕ ţŵöö ŵĥééñ ţŵöö pééööpĺéé pĺááýý. Pĺááýýééŕ ööñéé'š ííš ţĥéé ööñéé ááböövéé. ]",
+      "accessibility": true,
+      "choices": [
+        "off",
+        "subtle",
+        "strong"
+      ]
+    },
+    "alert_sound": {
+      "default": true,
+      "group": "controls",
+      "label": "[ÎÎñçöömííñĝ bééáám šööüñď]",
+      "help": "[ÅÅ ĺööŵ ŕííšííñĝ ñööţéé ţĥááţ çĺíímbš üüñţííĺ ţĥéé bééáám ááŕŕíívééš. ~~]",
+      "accessibility": true
+    },
+    "alert_sound_p2": {
+      "default": true,
+      "group": "controls",
+      "label": "[ÎÎñçöömííñĝ bééáám šööüüñď, pĺááýýééŕ 2]",
+      "help": "[Ţĥéé šááméé fööŕ pĺááýýééŕ ţŵöö ŵĥééñ ţŵöö pééööpĺéé pĺááýý. Pĺááýýééŕ ööñéé'š ííš ţĥéé ööñéé ááböövéé. ]",
+      "accessibility": true
+    },
+    "alert_sound_volume": {
+      "default": "normal",
+      "group": "controls",
+      "label": "[ÎÎñçöömííñĝ béáám vööĺüümé]",
+      "help": "[Ĥööŵ ĺööüüď ţĥéé ñööţéé íš.]",
+      "accessibility": true,
+      "choices": [
+        "low",
+        "normal",
+        "loud"
+      ]
+    },
+    "alert_sound_volume_p2": {
+      "default": "normal",
+      "group": "controls",
+      "label": "[ÎÎñçöömííñĝ bééáám vööĺüüméé, pĺááýýéŕ 2]",
+      "help": "[Ţĥéé šááméé fööŕ pĺááýýééŕ ţŵöö ŵĥééñ ţŵöö pééööpĺéé pĺááýý. Pĺááýýééŕ ööñéé'š ííš ţĥéé ööñéé ááböövéé. ]",
+      "accessibility": true,
+      "choices": [
+        "low",
+        "normal",
+        "loud"
+      ]
+    },
+    "alert_rumble": {
+      "default": true,
+      "group": "controls",
+      "label": "[ÎÎñçöömííñĝ bééáám ŕüümbĺé]",
+      "help": "[ÅÅ büüžž ööñ ýýööüüŕ çööñţŕööĺĺééŕ ţĥááţ ĝŕööŵš üüñţííĺ ţĥéé bééáám ááŕŕíívééš. ~~]",
+      "accessibility": true
+    },
+    "alert_rumble_p2": {
+      "default": true,
+      "group": "controls",
+      "label": "[ÎÎñçöömííñĝ bééáám ŕüümbĺéé, pĺááýýééŕ 2]",
+      "help": "[Ţĥéé šááméé fööŕ pĺááýýééŕ ţŵöö ŵĥééñ ţŵöö pééööpĺéé pĺááýý. Pĺááýýééŕ ööñéé'š ííš ţĥéé ööñéé ááböövéé. ]",
+      "accessibility": true
+    },
+    "alert_rumble_strength": {
+      "default": "medium",
+      "group": "controls",
+      "label": "[ÎÎñçöömííñĝ bééáám ŕüümbĺéé šţŕééñĝţĥ ~]",
+      "help": "[Ĥööŵ ĥááŕď ţĥéé büüžž ííš. ]",
+      "accessibility": true,
+      "choices": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "alert_rumble_strength_p2": {
+      "default": "medium",
+      "group": "controls",
+      "label": "[ÎÎñçöömííñĝ bééáám ŕüümbĺéé šţŕééñĝţĥ, pĺááýýééŕ 2 ~~]",
+      "help": "[Ţĥéé šááméé fööŕ pĺááýýééŕ ţŵöö ŵĥééñ ţŵöö pééööpĺéé pĺááýý. Pĺááýýééŕ ööñéé'š ííš ţĥéé ööñéé ááböövéé. ]",
+      "accessibility": true,
+      "choices": [
+        "low",
+        "medium",
+        "high"
       ]
     },
     "brink_cue": {
@@ -295,6 +591,28 @@
         "toggle"
       ]
     },
+    "struggle_push": {
+      "default": "stick",
+      "group": "controls",
+      "label": "[Bééáám šţŕüüĝĝĺéé püüšĥ]",
+      "help": "[Ĥööŵ ýýööüü püüšĥ ííñ áá bééáám šţŕüüĝĝĺéé, ööñ ţĥéé bééááţ. Ŕííĝĥţ šţííçķ: fĺííçķ ííţ ţööŵááŕď ţĥéém (ţĥéé ééáášííééšţ). Fááçéé büüţţööñš: pŕééšš X, ÝÝ ööŕ B (ĥááŕďééŕ). Pĺááýýééŕ ööñéé'š; pĺááýýééŕ ţŵöö'š ííš ţĥéé ñééxţ ŕööŵ. ~~~~~~~~~~~~~~~~~~~]",
+      "accessibility": true,
+      "choices": [
+        "stick",
+        "face"
+      ]
+    },
+    "struggle_push_p2": {
+      "default": "stick",
+      "group": "controls",
+      "label": "[Bééáám šţŕüüĝĝĺéé püüšĥ, pĺááýýééŕ 2 ]",
+      "help": "[Ţĥéé šááméé fööŕ pĺááýýééŕ ţŵöö ŵĥééñ ţŵöö pééööpĺéé pĺááýý. Pĺááýýééŕ ööñéé'š ííš ţĥéé ööñéé ááböövéé. ]",
+      "accessibility": true,
+      "choices": [
+        "stick",
+        "face"
+      ]
+    },
     "strike_style_p2": {
       "default": "hold",
       "group": "controls",
@@ -468,7 +786,7 @@
       "default": false,
       "group": "controls",
       "label": "[Bééááţ ŕíñĝ]",
-      "help": "[ÅÅ ŕííñĝ ööñ ţĥéé fííĝĥţééŕ áábööüüţ ţöö béé šţŕüüçķ, çĺööšííñĝ ööñ ţĥéé möömééñţ ţĥéé bĺööŵ ĺááñďš: ööñ ţĥéé ŕíívááĺ fööŕ ýýööüüŕ bĺööŵš, ööñ ýýööüü fööŕ ĥííš. Fööŕ ţíímííñĝ ýýööüüŕ pŕééššééš, áá pááŕŕýý ööŕ áá çööüüñţééŕ. ÖÖff býý ďééfááüüĺţ. ~~~~~~~~~~~~~~~]",
+      "help": "[ÅÅ ŕííñĝ ööñ ţĥéé fííĝĥţééŕ áábööüüţ ţöö béé šţŕüüçķ, çĺööšííñĝ ööñ ţĥéé möömééñţ ţĥéé bĺööŵ ĺááñďš: ööñ ţĥéé ŕíívááĺ fööŕ ýýööüüŕ bĺööŵš, ööñ ýýööüü fööŕ ţĥéé ŕíívááĺ'š. Fööŕ ţíímííñĝ ýýööüüŕ pŕééššééš, áá pááŕŕýý ööŕ áá çööüüñţééŕ. ÖÖff býý ďééfááüüĺţ. ~~~~~~~~~~~~~~~~]",
       "accessibility": true
     },
     "touch_preset": {

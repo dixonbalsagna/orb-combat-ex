@@ -16,7 +16,7 @@ const VERSION: int = 4
 ## pack(): bit widths, least significant first.
 const BITS: int = 53
 ## pack2(): the second word's width.
-const BITS2: int = 26
+const BITS2: int = 27
 
 var mx: float = 0.0          # the stick, -1 to 1; canonical values are k / 127 (canon())
 var my: float = 0.0
@@ -50,7 +50,7 @@ var stanceMask: int = 0
 var contextHeld: bool = false   # held: a Context button is down (A's hold: the martial channel, the zip tackle). Bit 51
 var sigHeld: bool = false       # held: a Signature button is down, on any layer (B's held reading). Bit 52
 ## The second word (switches.rightStick, off): the right stick's strike and the left hand's brace (docs/controls/right-hand-attacks.md section 1,
-## sim/input/strike_read.gd). All neutral while the switch is off, and pack() does not carry them: pack2() does, in 26 bits of its own, so a
+## sim/input/strike_read.gd). All neutral while the switch is off, and pack() does not carry them: pack2() does, in 27 bits of its own, so a
 ## replay recorded with the switch off is the same integer it always was. Directions are SCREEN directions (1 up, 2 down, 3 left, 4 right); the
 ## director turns them into toward and away with the fighter's facing at the throw.
 var rsHeld: bool = false     # held: a strike is in the sim's hands (from its start until it is thrown or cancelled)
@@ -64,6 +64,7 @@ var rsAim: int = 0           # the stick's sector now, 0 to 31 (the beam's sweep
 var rsLag: int = 0           # 0 to 15: ticks the oldest strike edge waited, because the sim was frozen
 var brace: bool = false      # edge: LB and a left flick set a read (the old v2 read, on the left thumb)
 var braceDir: int = 0        # which read: 1 up (his heavy), 2 down (his flurry), 3 and 4 the two sides (his grab / his shot, by facing)
+var dodgeHeld: bool = false  # held: the dodge control (LT) is physically down this tick (switches.dodgeHeld, off); the flight strike's take-back needs LT still held at the face press (Game Design, playable-build.md section 1)
 # Today's fields, until I3:
 var dash: bool = false
 var charge: bool = false
@@ -115,6 +116,7 @@ static func clear2(i: SimIntent) -> void:
 	i.rsLag = 0
 	i.brace = false
 	i.braceDir = 0
+	i.dodgeHeld = false
 
 
 ## Overwrite every field of dst from src, as humanInput overwrote f.in for a human fighter.
@@ -157,6 +159,7 @@ static func applyIntent(dst: SimIntent, src: SimIntent) -> void:
 	dst.rsLag = src.rsLag
 	dst.brace = src.brace
 	dst.braceDir = src.braceDir
+	dst.dodgeHeld = src.dodgeHeld
 
 
 ## The whole record as one integer (53 bits; the sim keeps it as one integer and only the replay's JSON splits it): mx and my as 8 bits each (k + 127 for k / 127), mode + 1 in
@@ -239,8 +242,8 @@ static func unpack(p: int) -> SimIntent:
 	return i
 
 
-## The second word as one integer (26 bits): rsHeld, rsStart, rsRelease, rsCancel in bits 0 to 3, rsDir in 4 to 6, rsLevel in 7 and 8, rsMask in
-## 9 to 12, rsAim in 13 to 17, rsLag in 18 to 21, brace in 22, braceDir in 23 to 25. 0 for a record with none of it, which is every record while
+## The second word as one integer (27 bits): rsHeld, rsStart, rsRelease, rsCancel in bits 0 to 3, rsDir in 4 to 6, rsLevel in 7 and 8, rsMask in
+## 9 to 12, rsAim in 13 to 17, rsLag in 18 to 21, brace in 22, braceDir in 23 to 25, dodgeHeld in 26. 0 for a record with none of it, which is every record while
 ## switches.rightStick is off.
 static func pack2(i: SimIntent) -> int:
 	var p: int = 0
@@ -260,6 +263,8 @@ static func pack2(i: SimIntent) -> int:
 	if i.brace:
 		p |= 1 << 22
 	p |= clampi(i.braceDir, 0, 4) << 23
+	if i.dodgeHeld:
+		p |= 1 << 26
 	return p
 
 
@@ -282,6 +287,7 @@ static func unpack2(p: int, i: SimIntent) -> bool:
 	i.rsLag = (p >> 18) & 15
 	i.brace = ((p >> 22) & 1) != 0
 	i.braceDir = bd
+	i.dodgeHeld = ((p >> 26) & 1) != 0
 	return true
 
 

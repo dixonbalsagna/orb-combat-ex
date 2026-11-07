@@ -513,7 +513,7 @@ static func onBlow(S: SimState, ex, f, o, a, how: int) -> void:
 		return
 	if rd == 2:
 		# The held zip heavy: a knock-back. The exchange ends with it, and he leaves from where he stands.
-		DirMelee.launchBeat(S, ex, f, o, float(bc.heavy.force), false, null)
+		DirMelee.launchBeat(S, ex, f, o, float(bc.heavy.force), false, {"share": "chase"})
 		if S.dirS.ex == ex and not DirBrawl._setPiece(ex):
 			DirBrawl.end(S, ex, "zip")
 		return

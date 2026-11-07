@@ -20,6 +20,7 @@ const NONE: int = 0
 var flick_on: bool = true         # the flick read of the brace (the assist brace_style "press" turns it off; the brace BUTTON is the layout's)
 var brace: bool = false          # edge: set a read
 var brace_dir: int = 0           # screen direction, SimStrikeRead.UP.. RIGHT
+var early: bool = false           # the quick read: the vanish resolves on the second press + vanishSettle, not when the window closes
 var vanish: bool = false         # edge: the vanish resolved
 var vanish_vec: Vector2 = Vector2.ZERO
 
@@ -60,7 +61,8 @@ func _init() -> void:
 	rest_level = SimInputData.tf(["leftHand", "restLevel"], 0.2)
 	window = SimInputData.ti(["leftHand", "vanishWindow"], SimInputData.ti(["tapHold", "chordWindow"], 6))
 	v_settle = SimInputData.ti(["leftHand", "vanishSettle"], 2)
-	settle = SimInputData.ti(["strike", "settle"], 2)
+	settle = SimInputData.ti(["strike", "settleQuick"], 1) if SimInputData.quick_on() else SimInputData.ti(["strike", "settle"], 2)
+	early = SimInputData.quick_on()
 	on_at = SimInputData.tf(["strike", "on"], 0.60)
 	off_at = SimInputData.tf(["strike", "off"], 0.35)
 
@@ -165,7 +167,10 @@ func _vanish(x: float, y: float, m: float, guard_down: bool, dodge_down: bool, g
 	if not (guard_down and dodge_down):
 		_gather = false   # one of them was let go before it resolved: a dodge and a guard, no vanish
 		return
-	if tick >= maxi(_g_first + window, _g_second + v_settle):
+	# The quick read: no wait for the window to close, and no settle when the stick is already out at the second press (its direction is known: only a flick that
+	# comes after the read is lost, which is the neutral default and safe).
+	var known: bool = early and _g_peak_m >= on_at
+	if tick >= (_g_second + (0 if known else v_settle) if early else maxi(_g_first + window, _g_second + v_settle)):
 		vanish = true
 		vanish_vec = _g_peak
 		_gather = false

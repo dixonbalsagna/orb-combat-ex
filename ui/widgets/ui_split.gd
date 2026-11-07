@@ -169,6 +169,14 @@ static func rival_side(sp: Dictionary, slot: int) -> int:
 	return held
 
 
+## split_fit: the width the edge columns may have while the split gives one pane 30%: the narrowest that pane is at the plates' row (the line leans up to 30 degrees, so it is 30% of the width less the lean's
+## shift over half the screen's height up), less a margin, and never under 170 px (the phone-landscape plate). One value per screen size, so the HUD lays out once when the share turns on.
+static func col_cap(lay: UiLayout) -> float:
+	var py: float = lay.plate[0].position.y + lay.plate[0].size.y * 0.5
+	var narrow: float = lay.vp.x * 0.3 - (lay.vp.y * 0.5 - py) * tan(deg_to_rad(30.0)) - 24.0 * lay.s
+	return maxf(170.0, narrow)
+
+
 ## Farther than this (fighter heights) the chip grows and its number settles, so the distance reads at a glance.
 const BIG_FROM := 100.0
 const BIG_UNTIL := 85.0   # and it stays big until the distance falls below this
@@ -289,9 +297,24 @@ static func _dodge(pos: Vector2, along: Vector2, lay: UiLayout, anchors: Array, 
 	for an in anchors:
 		if not an.is_empty():
 			reach = maxf(reach, float(an.get("h", 0.0)) * 2.5 + psz.y)
+	if UiData.feature("chip_clear"):
+		reach = maxf(reach, psz.x + psz.y * 2.0)   # far enough to clear a chip's own width and the set distance beside a fighter drawn a few pixels high
+	# chip_clear: the chip slides to the side away from where the fighter it is nearest is flying (the anchors carry a screen `vel`), so it never leads a fighter into itself.
+	var first: float = 1.0
+	if UiData.feature("chip_clear"):
+		var near_v := Vector2.ZERO
+		var near_d := 1.0e9
+		for an in anchors:
+			if not an.is_empty() and an.has("vel") and an.has("pos"):
+				var dd: float = (an["pos"] as Vector2).distance_to(pos)
+				if dd < near_d:
+					near_d = dd
+					near_v = an["vel"]
+		if absf(along.dot(near_v)) > 0.5:
+			first = -1.0 if along.dot(near_v) > 0.0 else 1.0
 	var k := 1
 	while float(k) * step <= reach:
-		for sgn in [1.0, -1.0]:
+		for sgn in [first, -first]:
 			var cand: Vector2 = _clamp_to(pos + along * (sgn * float(k) * step), lay, big)
 			if _chip_free(cand, psz, lay, anchors):
 				return cand
@@ -318,7 +341,10 @@ static func _chip_clear(pos: Vector2, psz: Vector2, anchors: Array) -> bool:
 			continue
 		var q: Vector2 = an["pos"]
 		var d := Vector2(maxf(maxf(r.position.x - q.x, 0.0), q.x - r.end.x), maxf(maxf(r.position.y - q.y, 0.0), q.y - r.end.y))
-		if d.length() < float(an.get("h", 0.0)):
+		var need: float = float(an.get("h", 0.0))
+		if UiData.feature("chip_clear"):
+			need = maxf(need, psz.y)   # chip_clear: a set distance, one chip's height, so a far fighter of a few pixels is not covered by the chip beside it
+		if d.length() < need:
 			return false
 	return true
 

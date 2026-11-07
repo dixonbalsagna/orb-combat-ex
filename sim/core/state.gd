@@ -83,6 +83,8 @@ var mood := MoodState.new()           # M1 (sim/core/mood.gd): the fight's mood,
 var pause := PauseState.new()         # Q10 (sim/core/pause.gd): the pausing set pieces' bank and the running pause
 var intro := IntroState.new()         # the intro phase (sim/core/intro.gd): the pre-clock ticks of a match that asks for it
 var depthOn: bool = false             # fight lanes: depth is physical (the director's depth.json switch, or the setup's "depth"); off until L4
+var powerOn: bool = false             # one energy model (sim/core/power.gd): data/fight/power.json's switch or the setup's
+var powerFlat: float = 5000.0         # ... flat-out flight's base for this match
 var kickOn: bool = false              # the kick and the coin turn (sim/core/kick.gd): data/fight/kick.json's switch, or the setup's "kick"
 var kickInstant: float = 0.8          # ... its share of top speed on the first tick: the data's, or the setup's "instant"
 var kickClimb: int = 8                # ... and its ticks to top speed: the data's, or the setup's "climbTicks"
@@ -1132,6 +1134,7 @@ class Fighter:
 	var slideDmg: float = 0.0      # damage still to take by speed lost
 	var slideAcc: float = 0.0      # damage earned by speed lost, not yet taken
 	var aimB: int = -1               # B2: the building this launch is aimed at, or -1 (world/brunt.gd)
+	var wallZ: int = 0               # World (brunt.json wallDepthHold): ticks his depth is held at a wall's face after a slam; 0 when none (world/brunt.gd stepZ)
 	var aimX0: float = 0.0           # x at the last waypoint (the launch, or the far face of the last building hit)
 	var aimZ0: float = 0.0           # depth at that waypoint
 	var aimZ1: float = 0.0           # depth of the aimed building's near face
@@ -1188,6 +1191,11 @@ class Rush:
 	var x0: float = 0.0      # where the rush began; the core takes these three on every rush's first step (SimFighter.rushAt reads them)
 	var y0: float = 0.0
 	var dur: float = 0.0     # ... and how long it had left then (0: it has not taken a step)
+	var loop: int = 0        # a loop round its target (SimFighter.loopRush): 1 over, -1 under; 0 for any other rush
+	var lr: float = 0.0      # ... the circle's radius
+	var lm: float = 0.0      # ... its centre's height over the target's feet, where it ends
+	var lu: float = 0.0      # ... the share of the path that comes straight to the circle
+	var ls: float = 0.0      # ... the target's side he started on: 1 on his +x, -1 on his -x
 
 
 class AiState:

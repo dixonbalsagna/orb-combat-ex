@@ -179,6 +179,24 @@
       "maximum": 240,
       "description": "The ticks a body held at a wall is staggered (input gated)."
     },
+    "wallRebound": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "The share of his speed that comes back off a face that holds him: 0.25 today, 0 for none (he stays at the face; Orb 2026-11-06, no ping-pong)."
+    },
+    "wallStop": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "The share of the building hit-stop a wall freezes the whole fight for: 1 today, 0 for none (only he is held, by lodgeHold body)."
+    },
+    "wallDepthHold": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "1: with lodgeHold body his depth stays at the wall face for the hold (Fighter.wallZ); 0: it eases back as today."
+    },
     "lodgeHold": {
       "enum": [
         "world",

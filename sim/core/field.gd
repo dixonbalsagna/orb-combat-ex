@@ -551,7 +551,8 @@ static func _boxKey(ix: int, iy: int, iz: int) -> int:
 
 
 ## An upper bound on the same far reads as groundCeilAt, on any line, with no read of the ground: a flight above this is above all of them, whatever line the plan is on. INF where
-## it can't say: the table not built yet, near a face's edge, or World's water near (a read's water depends on the ground there). Whether it can say changes nothing: it's only ever
+## it can't say: the table not built yet, or a river near (its water follows the ground there). Near a face's edge it takes the tiles of every face the reads reach, and a lake
+## its water's level. Whether it can say changes nothing: it's only ever
 ## asked first, and a flight under it asks groundCeilAt, so a match is the same to the bit with it or without it.
 ## The ground of a far read is a triangle of bake nodes, then World's records, then the store: the most of the nodes near, the most the records can make it, and all the rims that reach.
 static func planetCeilAt(S: SimState, col_: int) -> float:
@@ -568,19 +569,31 @@ static func planetCeilAt(S: SimState, col_: int) -> float:
 	var qy: float = oy
 	var qz: float = oz
 	var nb: int = _F.N / _F.stride
-	WorldField._locate(qx, qy, qz, nb)
-	var face: int = WorldField._lf
-	var a: float = WorldField._la
-	var b: float = WorldField._lb
 	var t: float = float(_ctT)
-	if a < t or b < t or a > float(nb) - t or b > float(nb) - t:
-		return INF
-	var ti: int = mini(int(a) / _ctT, _ctN - 1)
-	var tj: int = mini(int(b) / _ctT, _ctN - 1)
 	var hi: float = -1.0e18
-	for j in range(maxi(tj - 1, 0), mini(tj + 2, _ctN)):
-		for i in range(maxi(ti - 1, 0), mini(ti + 2, _ctN)):
-			hi = maxf(hi, _ct[(face * _ctN + j) * _ctN + i])
+	# Each face the stretch's reads can reach: the middle put on that face by its own map (WorldField._locate's, the face forced), and the tiles round it. A read is within
+	# _ctT cells of the middle on any face's map, so a face whose put middle is further out than that isn't reached, and on one that is, the tiles round the nearest
+	# hold every read that falls on it. Near no edge that's the middle's own face alone, as before.
+	var p4: float = SimMathx.PI / 4.0
+	for face in range(6):
+		var fc: Array = WorldField.FACES[face]
+		var nn: Array = fc[0]
+		var e1: Array = fc[1]
+		var e2: Array = fc[2]
+		var w: float = nn[0] * qx + nn[1] * qy + nn[2] * qz
+		if w <= 0.0:
+			continue
+		var a: float = (WorldPlanet.atanf((e1[0] * qx + e1[1] * qy + e1[2] * qz) / w) / p4 + 1.0) * 0.5 * float(nb)
+		var b: float = (WorldPlanet.atanf((e2[0] * qx + e2[1] * qy + e2[2] * qz) / w) / p4 + 1.0) * 0.5 * float(nb)
+		if a < -t or b < -t or a > float(nb) + t or b > float(nb) + t:
+			continue
+		var ti: int = clampi(int(floor(a / t)), 0, _ctN - 1)
+		var tj: int = clampi(int(floor(b / t)), 0, _ctN - 1)
+		for j in range(maxi(tj - 1, 0), mini(tj + 2, _ctN)):
+			for i in range(maxi(ti - 1, 0), mini(ti + 2, _ctN)):
+				hi = maxf(hi, _ct[(face * _ctN + j) * _ctN + i])
+	if hi == -1.0e18:
+		return INF
 	if _riseH != S.storeHash:
 		_riseBuild(S)
 	var r: float = _R_BOX()
@@ -721,6 +734,11 @@ static func _ceilRec(rec: Dictionary) -> void:
 	elif kind == "lot":
 		top = float(rec.h) + absf(float(rec.get("gt", 0.0))) * float(rec.hl) + absf(float(rec.get("gs", 0.0))) * float(rec.hd)
 		reach = float(rec.hl) + float(rec.hd) + float(rec.blend) + float(rec.get("bs", rec.blend))
+	elif kind == "lake":   # it changes no ground, and its water stands no higher than its level (WorldWaterRec.lakeDepth), where the index lists it
+		top = float(rec.level)
+		reach = float(rec.r) + float(rec.get("blend", 0.0))
+		if not rec.has("c"):
+			c = [rec.get("px", 0.0), rec.get("py", 0.0), rec.get("pz", 0.0)]
 	else:
 		reach = float(rec.get("r", 1.0e18))   # a lake, a river, a kind not known here: this ground isn't the table's to say
 	if reach >= 2.0 * R:

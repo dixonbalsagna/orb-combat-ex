@@ -903,6 +903,8 @@ func _on_drained(events: Array, lines: Array) -> void:
 	if barks != null:
 		ui_hud.consume_all(barks.step(host.S, events))
 	_haptics_from_events(events)
+	for r in host.hub.take_haptics():   # Controls: the strike charge's ladder rungs (timing.json switches.hapticLadder; empty while it is off)
+		_on_haptic(int(r["slot"]), String(r["kind"]), float(r["scale"]))
 	UiSimBridge.feed(ui_hud, lines)
 
 
@@ -946,6 +948,7 @@ func _on_form_prompt(slot: int, _device: String) -> void:
 ## the first now, the rest on host timers. Host time only; nothing here reads or writes the sim.
 var _haptic_last_ms: Array = [-100000, -100000]
 var _haptic_last_kind: Array = [{}, {}]   # per slot, the host time each kind last played: a kind's own gap (a mashed button never buzzes the pad)
+var _beam_window_id: Array = [0, 0]       # per receiver, bumped by every beam_window cue: a timer from an older window drops its pulse
 var _haptic_firer: int = -1               # the slot that fired the beam struggle's first beam (the beam_struggle cue's actor)
 
 
@@ -978,15 +981,49 @@ func _haptics_from_events(events: Array) -> void:
 		if name == "beam_struggle":
 			_haptic_firer = int(e.actor)
 			continue
+		if name == "beam_window":
+			_beam_window_rumble(e)
+			continue
+		if name == "stick_start":
+			host.hub.note_stick_started(int(e.actor))   # Controls: the request was answered, so no refusal cue (timing.json switches.hapticRefused)
 		for r in SimHaptics.requests(name, int(e.actor), int(e.target), String(e.text), float(e.amount), _haptic_firer):
 			_on_haptic(int(r["slot"]), String(r["kind"]), float(r["scale"]))
+		for r in SimHaptics.event_requests(e):   # Controls: the blows, closes, launches, landings and building breaks (timing.json switches.hapticImpact; empty while it is off)
+			_on_haptic(int(r["slot"]), String(r["kind"]), float(r["scale"]))
+
+
+## Row 40's crescendo (timing.json switches.hapticIncomingBeam; Controls' SimHaptics.beam_window): the receiver's pad gets rising `incoming_beam` pulses through the answer
+## window, on host timers; a later beam_window cue for that receiver (its "start" or "end") makes the pulses still waiting drop. View only.
+func _beam_window_rumble(e) -> void:
+	var w: Dictionary = SimHaptics.beam_window(int(e.actor), int(e.target), String(e.text), float(e.n))
+	if w.is_empty():
+		return
+	var slot: int = int(w["slot"])
+	_beam_window_id[slot] += 1
+	if not bool(w["open"]):
+		return
+	var id: int = int(_beam_window_id[slot])
+	for p in w["pulses"]:
+		var scale: float = float(p["scale"])
+		get_tree().create_timer(float(p["at"]) / 1000.0).timeout.connect(func() -> void:
+			if int(_beam_window_id[slot]) == id:
+				_on_haptic(slot, "incoming_beam", scale))
 
 
 func _play_haptic_step(plan: Dictionary, s: Dictionary) -> void:
 	if str(plan["via"]) == "handheld":
 		Input.vibrate_handheld(int(s["ms"]))
+	elif OS.has_feature("web") and bool(SimInputData.t(["switches", "webRumble"], false)):   # Controls: the page asks the pad itself (timing.json switches.webRumble, off)
+		_web_rumble(int(plan["id"]), float(s["weak"]), float(s["strong"]), float(s["seconds"]))
 	else:
 		Input.start_joy_vibration(int(plan["id"]), float(s["weak"]), float(s["strong"]), float(s["seconds"]))
+
+
+## The browser build has no pad rumble in Godot's own runtime (the 4.7.2 web template exports only navigator.vibrate, for phones), so Input.start_joy_vibration does nothing on a page.
+## The pad's own vibrationActuator is asked through the page instead: Chromium browsers (Chrome, Edge, Opera GX) offer "dual-rumble" on Xbox-type and DualSense pads; Firefox and Safari do
+## not, and nothing happens there. The pad's index in navigator.getGamepads() is Godot's joypad id. Never the only cue; the Vibration option still switches it off.
+func _web_rumble(id: int, weak: float, strong: float, seconds: float) -> void:
+	JavaScriptBridge.eval("(function(i,w,s,d){try{var g=navigator.getGamepads&&navigator.getGamepads()[i];var a=g&&g.vibrationActuator;if(a&&a.playEffect){a.playEffect('dual-rumble',{startDelay:0,duration:Math.round(d*1000),weakMagnitude:w,strongMagnitude:s});}}catch(e){}})(%d,%f,%f,%f)" % [id, weak, strong, seconds], true)
 
 
 ## The pause menu handed player two back to the AI: the hub frees their device (it can join again), and the slot

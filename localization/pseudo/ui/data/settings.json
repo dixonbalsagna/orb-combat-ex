@@ -23,6 +23,8 @@
         "dpad_mirror_p2",
         "strike_style",
         "strike_style_p2",
+        "struggle_push",
+        "struggle_push_p2",
         "brace_style",
         "brace_style_p2",
         "touch_preset",
@@ -61,6 +63,40 @@
           "help": "[Çĥááñĝéé ŵĥííçĥ büüţţööñ ööŕ ķééýý ďööééš ŵĥááţ fööŕ pĺááýýééŕ ţŵöö, ŵĥééñ ţŵöö pééööpĺéé pĺááýý. ~~~~]",
           "needs": "remap"
         }
+      ]
+    },
+    {
+      "id": "alerts",
+      "title": "[Bééám ááĺéŕţš]",
+      "items": [
+        "alert_preset",
+        "alert_preset_p2",
+        "alert_edge",
+        "alert_edge_p2",
+        "alert_edge_width",
+        "alert_edge_width_p2",
+        "alert_caption",
+        "alert_caption_p2",
+        "alert_caption_size",
+        "alert_caption_size_p2",
+        "alert_caption_pos",
+        "alert_caption_pos_p2",
+        "alert_early",
+        "alert_early_p2",
+        "alert_which",
+        "alert_which_p2",
+        "alert_glint",
+        "alert_glint_p2",
+        "alert_air",
+        "alert_air_p2",
+        "alert_sound",
+        "alert_sound_p2",
+        "alert_sound_volume",
+        "alert_sound_volume_p2",
+        "alert_rumble",
+        "alert_rumble_p2",
+        "alert_rumble_strength",
+        "alert_rumble_strength_p2"
       ]
     },
     {
@@ -142,6 +178,14 @@
       "arena": "[Åŕéñá]",
       "simple-pad": "[Šímpĺé]"
     },
+    "struggle_push": {
+      "stick": "[Ŕííĝĥţ šţííçķ]",
+      "face": "Face buttons"
+    },
+    "struggle_push_p2": {
+      "stick": "[Ŕííĝĥţ šţííçķ]",
+      "face": "Face buttons"
+    },
     "energy_style": {
       "hold": "[Ĥöĺď]",
       "toggle": "[Ţöĝĝĺé]"
@@ -181,6 +225,106 @@
     "transform_style_p2": {
       "hold": "[Ĥöĺď]",
       "toggle": "[Ţöĝĝĺé]"
+    },
+    "alert_preset": {
+      "calm": "[Çáĺm]",
+      "standard": "[Šţááñďáŕď]",
+      "full": "[Füĺĺ]",
+      "custom": "[Çüšţöm]"
+    },
+    "alert_preset_p2": {
+      "calm": "[Çáĺm]",
+      "standard": "[Šţááñďáŕď]",
+      "full": "[Füĺĺ]",
+      "custom": "[Çüšţöm]"
+    },
+    "alert_edge": {
+      "off": "[Öff]",
+      "offscreen": "[ÖÖff šçŕééééñ ööñĺý]",
+      "always": "[Åĺŵáýš]"
+    },
+    "alert_edge_p2": {
+      "off": "[Öff]",
+      "offscreen": "[ÖÖff šçŕééééñ ööñĺý]",
+      "always": "[Åĺŵáýš]"
+    },
+    "alert_edge_width": {
+      "thin": "[Ţĥíñ]",
+      "medium": "[Méďíüm]",
+      "thick": "[Ţĥíçķ]"
+    },
+    "alert_edge_width_p2": {
+      "thin": "[Ţĥíñ]",
+      "medium": "[Méďíüm]",
+      "thick": "[Ţĥíçķ]"
+    },
+    "alert_caption_size": {
+      "small": "[Šmáĺĺ]",
+      "medium": "[Méďíüm]",
+      "large": "[Ĺáŕĝé]"
+    },
+    "alert_caption_size_p2": {
+      "small": "[Šmáĺĺ]",
+      "medium": "[Méďíüm]",
+      "large": "[Ĺáŕĝé]"
+    },
+    "alert_caption_pos": {
+      "side": "[Šĥööööţééŕ'š šííďé]",
+      "bottom": "[Bööţţööm çééñţŕé]"
+    },
+    "alert_caption_pos_p2": {
+      "side": "[Šĥööööţééŕ'š šííďé]",
+      "bottom": "[Bööţţööm çééñţŕé]"
+    },
+    "alert_which": {
+      "all": "[ÅÅĺĺ bééámš]",
+      "charged": "[Çĥááŕĝééď bééámš]",
+      "signature": "[Šííĝñááţüŕéé ööñĺý]"
+    },
+    "alert_which_p2": {
+      "all": "[ÅÅĺĺ bééámš]",
+      "charged": "[Çĥááŕĝééď bééámš]",
+      "signature": "[Šííĝñááţüŕéé ööñĺý]"
+    },
+    "alert_glint": {
+      "off": "[Öff]",
+      "normal": "[Ñöŕmáĺ]",
+      "bright": "[Bŕíĝĥţ]"
+    },
+    "alert_glint_p2": {
+      "off": "[Öff]",
+      "normal": "[Ñöŕmáĺ]",
+      "bright": "[Bŕíĝĥţ]"
+    },
+    "alert_air": {
+      "off": "[Öff]",
+      "subtle": "[Šübţĺé]",
+      "strong": "[Šţŕöñĝ]"
+    },
+    "alert_air_p2": {
+      "off": "[Öff]",
+      "subtle": "[Šübţĺé]",
+      "strong": "[Šţŕöñĝ]"
+    },
+    "alert_sound_volume": {
+      "low": "[Ĺöŵ]",
+      "normal": "[Ñöŕmáĺ]",
+      "loud": "[Ĺöüď]"
+    },
+    "alert_sound_volume_p2": {
+      "low": "[Ĺöŵ]",
+      "normal": "[Ñöŕmáĺ]",
+      "loud": "[Ĺöüď]"
+    },
+    "alert_rumble_strength": {
+      "low": "[Ĺöŵ]",
+      "medium": "[Méďíüm]",
+      "high": "[Ĥíĝĥ]"
+    },
+    "alert_rumble_strength_p2": {
+      "low": "[Ĺöŵ]",
+      "medium": "[Méďíüm]",
+      "high": "[Ĥíĝĥ]"
     },
     "pad_preset_p2": {
       "arena": "[Åŕéñá]",

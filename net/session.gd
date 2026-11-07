@@ -32,6 +32,8 @@ const EDGE_MASK: int = (3 << 18) | (7 << 20) | (1 << 24) | (1 << 25) | (1 << 28)
 ## The second word's held fields (SimIntent.pack2's layout): rsHeld, rsDir, rsLevel, rsMask, rsAim. A prediction keeps them while rsHeld is on; once it is off the
 ## word was a throw's or a cancel's last tick, and the next is 0 (the layout writes nothing of it with no strike active).
 const WORD_HELD: int = 1 | (7 << 4) | (3 << 7) | (15 << 9) | (31 << 13)
+## LT held (dodgeHeld, bit 26): a held state like the first word's held fields, so a prediction keeps it with or without a strike (a player who holds LT keeps holding it).
+const WORD_DODGE_HELD: int = 1 << 26
 const NEVER: int = 0x3FFFFFFF   # a slot's contig once the AI plays it: it needs no more inputs (contig is 32-bit)
 
 var S: SimState
@@ -238,7 +240,8 @@ func wordFor(k: int, t: int) -> int:
 
 ## What a prediction makes of a slot's last confirmed second word.
 static func predictWord(w: int) -> int:
-	return w & WORD_HELD if (w & 1) != 0 else 0
+	var keep: int = w & WORD_DODGE_HELD
+	return (w & WORD_HELD) | keep if (w & 1) != 0 else keep
 
 
 ## The intent a packed pair stands for: what every run of a tick, a spectator and a straight run step the sim with.

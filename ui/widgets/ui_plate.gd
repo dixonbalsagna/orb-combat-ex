@@ -145,12 +145,23 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 			var tcol: Color = dim if m.ai else ink
 			UiText.draw(ci, tag, Vector2(tx, _base(ry, rh, afs)), afs, tcol, -1)
 			ci.draw_rect(Rect2(tx, ry + rh - maxf(2.0, 2.0 * s), tw_box, maxf(2.0, 2.0 * s)), tcol)
+	var brink_word_late: bool = false   # brink_read: the words did not fit beside the mark on the name's row; the pips' row says them
 	if bool(r1["brink"]):
 		# Icon only, after the tag (the crown ring, the card and the silhouette say the rest).
-		var bcol2: Color = _c(Color(UiLook.col(UiLook.STAGE_BROKEN), 1.0 if reduced else (0.6 + 0.4 * (0.5 + 0.5 * sin(t * UiLook.HZ_BRINK * TAU)))))
+		var steady: bool = UiData.feature("brink_read")   # the brink read: a steady mark and, where there is room, the words (the pulse made it easy to miss)
+		var bcol2: Color = _c(Color(UiLook.col(UiLook.STAGE_BROKEN), 1.0 if (reduced or steady) else (0.6 + 0.4 * (0.5 + 0.5 * sin(t * UiLook.HZ_BRINK * TAU)))))
 		var isz2: float = float(r1["brink_sz"])
 		var bx2: float = (x0 + float(r1["brink_x"])) if left else (x1 - float(r1["brink_x"]) - isz2)
 		UiIcons.brink(ci, Vector2(bx2 + isz2 * 0.5, ry + rh * 0.5), isz2, bcol2)
+		if steady and minimal:
+			var bw2: String = UiData.t("state.brink")
+			var bfs2: int = int(pm["fs_state"])
+			var tw2: float = UiText.width(bw2, bfs2)
+			var room2: float = (x1 - (bx2 + isz2 + 6.0 * s)) if left else ((bx2 - 6.0 * s) - x0)   # minimal has no stance badge: the rest of the row is free
+			if tw2 <= room2:
+				UiText.draw(ci, bw2, Vector2((bx2 + isz2 + 6.0 * s) if left else (bx2 - 6.0 * s), _base(ry, rh, bfs2)), bfs2, bcol2, -1 if left else 1, 1.5)
+			else:
+				brink_word_late = true
 	if m.brink and not combined:
 		var bfs: int = int(pm["fs_state"])
 		var bt: String = UiData.t("state.brink")
@@ -376,6 +387,25 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 	if not combined and pips_w + 12.0 * s + name_w + (sig_w + 8.0 * s if sig_show else 0.0) <= inner_w:
 		var nx: float = (x0 + pips_w + 12.0 * s) if left else (x1 - pips_w - 12.0 * s)
 		UiText.draw(ci, tname, Vector2(nx, _base(ry, rh, tfs)), tfs, dim, -1 if left else 1)
+	if m.brink and minimal and UiData.feature("brink_read") and (not bool(r1["brink"]) or brink_word_late):
+		# The narrowest plates drop the mark from the name's row (or keep it without its words); the brink read keeps it, on the pips' row between the pips and SIGNATURE: the words if they fit, the mark alone if not.
+		var kfs: int = int(pm["fs_state"])
+		var kword: String = UiData.t("state.brink")
+		var kisz: float = rh * 0.86
+		var kroom: float = inner_w - pips_w - 10.0 * s - (sig_w + 8.0 * s if sig_show else 0.0)
+		var kfull: float = kisz + 6.0 * s + UiText.width(kword, kfs)
+		var kcol: Color = _c(Color(UiLook.col(UiLook.STAGE_BROKEN), 1.0))
+		var kword_only: float = UiText.width(kword, kfs)
+		if brink_word_late:
+			# The mark is already on the name's row: only the words go here, and only if they fit.
+			if kword_only <= kroom:
+				var wx: float = (x0 + pips_w + 10.0 * s) if left else (x1 - pips_w - 10.0 * s)
+				UiText.draw(ci, kword, Vector2(wx, _base(ry, rh, kfs)), kfs, kcol, -1 if left else 1, 1.5)
+		elif kisz <= kroom:
+			var kx: float = (x0 + pips_w + 10.0 * s) if left else (x1 - pips_w - 10.0 * s - (kfull if kfull <= kroom else kisz))
+			UiIcons.brink(ci, Vector2(kx + kisz * 0.5, ry + rh * 0.5), kisz, kcol)
+			if kfull <= kroom:
+				UiText.draw(ci, kword, Vector2(kx + kisz + 6.0 * s, _base(ry, rh, kfs)), kfs, kcol, -1, 1.5)
 	if sig_show:
 		var chh: float = rh
 		# On a narrow plate (a phone) the chip shrinks to its star, so it never covers the pips.

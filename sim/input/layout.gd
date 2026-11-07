@@ -118,7 +118,12 @@ var _brace_was: bool = false
 var _brace_peak: Vector2 = Vector2.ZERO
 var _brace_pending: bool = false    # a brace read (from the flick or the button) waits for a step to take it
 var _rs: Vector2 = Vector2.ZERO     # the pad's strike stick, x right and y up
+var dodge_held: bool = false        # switches.dodgeHeld: the intent's dodgeHeld says the dodge control is physically down
+var stall_keep: bool = false        # switches.stallKeep: keep the strike stick's furthest point between two builds (see _note_peak)
+var _peak_rs: Vector2 = Vector2.ZERO    # the strike vector at its furthest, as the events reported it, since the last build
+var _peak_pressed: bool = false         # a strike key was down at some moment since the last build
 var in_struggle: bool = false       # the host says this slot's fighter is in a struggle (a beam clash, a finisher): the stick does nothing and the faces are free
+var _b_hold_prev: bool = false      # B was held in the energy layer on the last build (E131: the stick is inert while it is)
 var _inert_masks: Array = []        # the stance masks on which the strike stick does nothing (pure 4a: the power layer, and the lay), from data
 var _brace_dir: int = 0             # a brace read waiting for a step to take it
 var _vanish_pending: bool = false   # the vanish resolved and waits for a step to take it
@@ -179,6 +184,8 @@ func _init(p_preset: Dictionary = {}) -> void:
 	deadzone = SimInputData.tf(["stick", "deadzone"], 0.2)
 	full_at = SimInputData.tf(["stick", "fullAt"], 0.9)
 	quant = float(SimInputData.ti(["stick", "quant"], 16))
+	stall_keep = SimInputData.stall_keep_on()
+	dodge_held = SimInputData.dodge_held_on()
 	trig_on = SimInputData.tf(["stick", "triggerOn"], 0.35)
 	trig_off = SimInputData.tf(["stick", "triggerOff"], 0.25)
 	if not p_preset.is_empty():
@@ -283,6 +290,8 @@ func release_all() -> void:
 	_special_edge = 0
 	_stick = Vector2.ZERO
 	_rs = Vector2.ZERO
+	_peak_rs = Vector2.ZERO
+	_peak_pressed = false
 	_analog_down.clear()
 	_power_voided = false
 	_chorded.clear()
@@ -437,6 +446,12 @@ func _hold_del(action: String, c: String) -> void:
 ## is the finger's under the "hold" style, and the toggle's under "toggle": the press that starts a toggled hold goes in as a press, the next
 ## press as the release (docs/controls/hold-toggles.md). A press that cancels a toggled transform goes in as nothing.
 func press(c: String) -> bool:
+	var r: bool = _press(c)
+	_note_peak()
+	return r
+
+
+func _press(c: String) -> bool:
 	if not has_control(c):
 		return false
 	if _phys.get(c, false):
@@ -455,6 +470,11 @@ func press(c: String) -> bool:
 
 ## A control went up. A toggled control that is on stays down: the finger's release changes nothing.
 func release(c: String) -> void:
+	_release(c)
+	_note_peak()
+
+
+func _release(c: String) -> void:
 	if not _phys.get(c, false):
 		return
 	_phys[c] = false
@@ -485,10 +505,17 @@ func _real_press(c: String) -> bool:
 		var power_layer: bool = _is_down("power") or _armed.has(SimStance.CHARGING)   # the layer IS the charging stance, held or armed
 		var took_layer: bool = false
 		if power_layer:
+			var dropped: bool = false
 			for b in _single[c]:
 				if b["layer"] == "power":
+					var act: String = str(b["action"])
+					if SimInputData.specials_off() and (act == "special1" or act == "special2" or act == "special3" or act == "special_auto"):
+						dropped = true   # the specials are off: this press is the plain blow of its base binding, and it drops the charge (docs/design/pad-first-press.md)
+						continue
 					took_layer = true
-					_layer_press(str(b["action"]), c)
+					_layer_press(act, c)
+			if dropped and not took_layer:
+				_held.erase("power")
 		if took_layer:
 			_as[c] = "layer"
 		else:
@@ -564,6 +591,39 @@ func axis(c: String, x: float, y: float) -> void:
 		_stick = Vector2(x, y)
 	elif rs_on and c == _strike_control:
 		_rs = Vector2(x, y)
+	_note_peak()
+
+
+## No input lost in a stall (switches.stallKeep). Every event that can change the strike stick calls this: it keeps the furthest point the events reported (the strike vector as the layout sees it: the
+## pad stick, the D-pad mirror, the arrow keys, a strike key) and whether a strike key was down, since the last build. The build reads it once, so a flick that rose and fell between two steps
+## (a page that hitched, the steps after it reading one snapshot) is still a flick. Only events count: a stick held still across builds has no event, so its live value is read as it always was.
+func _note_peak() -> void:
+	if not stall_keep or not rs_on or _strike == null:
+		return
+	var sv: Array = _strike_vector()
+	var v: Vector2 = sv[0]
+	if _strike.deflection(v.x, v.y) > _strike.deflection(_peak_rs.x, _peak_rs.y):
+		_peak_rs = v
+	if sv[1]:
+		_peak_pressed = true
+
+
+## This build's strike vector, or the furthest point the events reported since the last build when that was past the request line and the stick is back under the release line now: a flick that
+## came and went. A stick that is still out, or only wobbling, is read as it is.
+func _take_peak(sv: Array) -> Array:
+	var v: Vector2 = sv[0]
+	var pressed: bool = sv[1]
+	if _strike.deflection(_peak_rs.x, _peak_rs.y) >= _strike.on_at and _strike.deflection(v.x, v.y) < _strike.off_at:
+		v = _peak_rs
+	if _peak_pressed:
+		pressed = true
+	return [v, pressed]
+
+
+## The build has read it: what comes next is what the next events report.
+func _reset_peak() -> void:
+	_peak_rs = Vector2.ZERO
+	_peak_pressed = false
 
 
 func _layer_press(action: String, c: String) -> void:
@@ -919,6 +979,14 @@ func build() -> SimIntent:
 	for_mask &= ~_chord_stance_bits()   # a pending transform chord changes no stance
 	var mask: int = SimStance.resolve(for_mask, SimStance.newest_of(for_mask, since), SimStance.hybrids())
 	i.stanceMask = mask
+	if SimInputData.signature_rt_only() and (mask & SimStance.CHARGING) == 0 and (mask != 0 or i.mode == 1) and not (SimInputData.driver_on_rb() and ((mask & SimStance.ENERGY) != 0 or i.mode == 1)):
+		# The signature is RT + B only: with any other stance held, B is the heavy of that stance (its edge and its level), so a guard or a dodge never fires a beam by accident.
+		if i.sig:
+			i.sig = false
+			i.heavy = true
+		if i.sigHeld:
+			i.sigHeld = false
+			i.heavyHeld = true
 	# Exclusive: a stance button that is not the reported stance reports nothing of its own (its edges to RT's burst, and the dodge
 	# edge, always report).
 	i.guard = i.guard and (mask & SimStance.DEFENSIVE) != 0
@@ -943,6 +1011,14 @@ func build() -> SimIntent:
 	i.charge = channel
 	i.stance = -1.0
 	return i
+
+
+## The quick read's pre-read of the strike stick, for the pose and nothing else (never in the intent, never in the hash): {"dir": 1 up, 2 down, 3 left,
+## 4 right, "depth": 0 to 1 toward the request} while the stick leans before its request starts; {} otherwise, or with the quick read off. Render-only.
+func strike_pre() -> Dictionary:
+	if _strike == null or not SimInputData.quick_on() or _strike.pre_dir == SimStrikeRead.NONE:
+		return {}
+	return {"dir": _strike.pre_dir, "depth": _strike.pre_depth}
 
 
 ## Make the readers the preset asks for. The right-hand attacks need the switch AND a strike control in the preset (a Simple preset has none, so Simple
@@ -985,6 +1061,9 @@ func set_strike_style(style: String) -> void:
 
 
 func set_mirror_dpad(on: bool) -> void:
+	if on != mirror_dpad:
+		_peak_rs = Vector2.ZERO   # a peak the D-pad mirror made belongs to the setting it was made under (switches.stallKeep)
+		_peak_pressed = false
 	mirror_dpad = on
 
 
@@ -1005,6 +1084,7 @@ func set_struggle(on: bool) -> void:
 
 func _right_hand_reset() -> void:
 	_rs = Vector2.ZERO
+	_b_hold_prev = false
 	in_struggle = false
 	_brace_pending = false
 	_brace_t0 = -1000
@@ -1066,10 +1146,29 @@ func _strike_vector() -> Array:
 	return [v, pressed]
 
 
+## The face presses the strike law let go of since the last call, [{k, why, t}], and the list starts again (docs/controls/refusals.md). [] when the right-hand switch is off.
+func take_dropped() -> Array:
+	if _law == null:
+		return []
+	var d: Array = _law.dropped
+	_law.dropped = []
+	return d
+
+
 ## The right hand and the left hand's upgrades for one build (switches.rightStick). The order matters, and is the law: the left hand's guard or dodge
 ## cancels a charge first; the faces are filtered by what the strike was BEFORE this build's step (so a face press on the crossing tick wins, K1); then
 ## the strike steps with the law's floor (R after a face press) and the layer is this build's stance mask (K6).
+## Whether a control that is the dodge (LT, or a key) is physically down: the finger's own state, so a toggled dodge that is on with the finger up reads false, and a tap that came and went between two builds reads false.
+func _dodge_phys_down() -> bool:
+	for c in _held.get("dodge", []):
+		if _phys.get(c, false):
+			return true
+	return false
+
+
 func _right_hand(i: SimIntent, mask: int) -> void:
+	if dodge_held:
+		i.dodgeHeld = _dodge_phys_down()
 	var digital: bool = (_stick_control == "")
 	var lv: Vector2 = Vector2(i.mx, i.my) if digital else _stick
 	if in_struggle:
@@ -1093,7 +1192,16 @@ func _right_hand(i: SimIntent, mask: int) -> void:
 	_law.filter(i, tick, busy)
 	var was_down: bool = _strike.down
 	var sv: Array = _strike_vector()
-	_strike.step(sv[0].x, sv[0].y, mask, tick, live, _law.floor_tick(), sv[1], in_struggle or _inert_masks.has(mask))
+	if stall_keep:
+		sv = _take_peak(sv)
+		_reset_peak()
+	# E131: while B is held in the energy layer (the Driver's bank) the stick is inert, so no grip can bank a Driver and draw a beam together; the release
+	# counts as a face event (R from it). The stick strikes first and B is stripped by the law above (one charge at a time).
+	var b_hold: bool = (mask & SimStance.ENERGY) != 0 and i.sigHeld
+	if _b_hold_prev and not b_hold:
+		_law.note_hold_release(tick)
+	_b_hold_prev = b_hold
+	_strike.step(sv[0].x, sv[0].y, mask, tick, live, _law.floor_tick(), sv[1], in_struggle or _inert_masks.has(mask) or b_hold)
 	if was_down and not _strike.down:
 		_law.note_stick_end(tick)   # the thumb left the stick: the faces are free L later (a throw, a cancel or a toggled charge's rest alike)
 	if _strike.is_active():
@@ -1134,6 +1242,8 @@ func transform_hold() -> float:
 ## ends) so a pile of presses is not released at once.
 func drop_edges() -> void:
 	_clear_edges()
+	if stall_keep and rs_on and _strike != null:
+		_reset_peak()   # what was kept during a pause is not carried out of it
 	if rs_on:
 		_law.reset()
 		if _strike.phase != SimStrikeRead.IDLE:

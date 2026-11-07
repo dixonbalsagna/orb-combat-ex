@@ -496,7 +496,7 @@ static func runBeat(S: SimState, ex, b) -> void:
 		"fixedLaunch":
 			var fw2 = A if a.w == "A" else D
 			var fl2 = D if a.w == "A" else A
-			DirLaunch.doLaunch(S, fw2, fl2, {"ux": a.ux * (fw2.face if a.get("faceRelative", false) else 1.0), "uy": a.uy}, a.force, true)
+			DirLaunch.doLaunch(S, fw2, fl2, {"ux": a.ux * (fw2.face if a.get("faceRelative", false) else 1.0), "uy": a.uy}, SimPower.sendForce(S, fw2, a.force, "finisher.fixed"), true)
 		"separate":
 			var sw = A if a.w == "A" else D
 			var sl = D if a.w == "A" else A
@@ -513,7 +513,7 @@ static func runBeat(S: SimState, ex, b) -> void:
 			fw.rush = fr
 			SimFx.rush(S, fw, fr.tgt, S.tick + int(a.dur / SimConst.DT))
 		"breakLaunch":
-			DirMelee.launchBeat(S, ex, A if a.w == "A" else D, D if a.w == "A" else A, a.force, true)
+			DirMelee.launchBeat(S, ex, A if a.w == "A" else D, D if a.w == "A" else A, a.force, true, {"share": "breakLaunch"})
 		"contest":
 			if a.get("mode", "ko_now") == "branch":
 				_opContestBranch(S, ex, a)
@@ -557,7 +557,7 @@ static func chain(S: SimState, ex) -> void:
 	var chk = null
 	if planCheck.is_valid():
 		chk = _planByCode(S, ex, "chain")
-	DirData.planChain(ex)
+	DirData.planChain(ex, S.powerOn)
 	if chk != null:
 		planCheck.call(chk, ex, S.rng.a, "chain")
 	DirBlur.onLink(S, ex, before)   # in a blur string the link's blow lands on the cadence
@@ -587,7 +587,7 @@ static func _blurEnder(S: SimState, ex) -> void:
 	var chk = null
 	if planCheck.is_valid():
 		chk = _planByCode(S, ex, "chain")
-	DirData.planChain(ex)
+	DirData.planChain(ex, S.powerOn)
 	if chk != null:
 		planCheck.call(chk, ex, S.rng.a, "chain")
 	DirRecipe.dress(S, ex, true)   # the blur's own ender takes its piece
@@ -1164,7 +1164,7 @@ static func _opFinalBlow(S: SimState, ex, a) -> void:
 	DirMelee.strike(S, ex, W, L, float(a.dmg), fo)
 	var ln: Dictionary = a.launch
 	if ln.get("mode", "") == "fixed":
-		DirLaunch.doLaunch(S, W, L, {"ux": float(ln.ux) * (W.face if ln.get("faceRelative", false) else 1.0), "uy": float(ln.uy)}, float(ln.force), true)
+		DirLaunch.doLaunch(S, W, L, {"ux": float(ln.ux) * (W.face if ln.get("faceRelative", false) else 1.0), "uy": float(ln.uy)}, SimPower.sendForce(S, W, float(ln.force), "finisher.fixed"), true)
 	else:
-		DirMelee.launchBeat(S, ex, W, L, float(ln.force), true)
+		DirMelee.launchBeat(S, ex, W, L, float(ln.force), true, {"share": "finisher.break"})
 	SimDamage.ko(S, L, W)

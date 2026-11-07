@@ -53,6 +53,15 @@ static func setRightStick(on: bool) -> void:
 	SimInputData.invalidate()
 
 
+## --dodge-held (docs/controls/dodge-held.md): the bots also hold LT in runs (the word's bit 26), so a check carries it on the wire, in every hash and through every rollback. Needs the right stick on.
+static func setDodgeHeld(on: bool) -> void:
+	SimInputData.ensure()
+	var sw: Dictionary = SimInputData.timing.get("switches", {})
+	sw["dodgeHeld"] = on
+	SimInputData.timing["switches"] = sw
+	SimInputData.invalidate()
+
+
 ## The packed intent for the next tick.
 func next() -> int:
 	tick += 1
@@ -191,4 +200,6 @@ func _word() -> int:
 	if r2.next() < 0.004:
 		i.brace = true
 		i.braceDir = 1 + int(floor(r2.next() * 4.0))
+	if SimInputData.dodge_held_on():
+		i.dodgeHeld = (tick / 17) % 3 == 1   # LT held for 17 ticks in every 51, from the bot's own tick: no stream of its own, so the other words are as they were
 	return SimIntent.pack2(i)

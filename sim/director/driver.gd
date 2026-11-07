@@ -147,7 +147,7 @@ static func landed(S: SimState, sh, by, f, outcome: String, brink0: bool) -> boo
 	if DirBands.pending(f):
 		DirBands.drop(S, f, "a Driver knocked him back")
 	if lv >= int(c.sendAt):
-		var force: float = float(c.sendForce)
+		var force: float = SimPower.sendForce(S, by, float(c.sendForce), "driverLevel3")
 		DirLaunch.doLaunch(S, by, f, DirLaunch.chooseLaunch(S, by, f, force, false, "", 0, true).best, force)   # never the knock-back: it's a full send
 		SimEvents.feed(S, "DRIVER: A FULL SEND", by.name + " sends " + f.name + ": decisive")
 	else:

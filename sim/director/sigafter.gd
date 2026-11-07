@@ -99,7 +99,7 @@ static func under(S: SimState, A, D) -> bool:
 	var w: float = WorldWater.surfaceAt(S, D.x)
 	if w <= DirWater.DRY * 0.5 or w <= WorldTerrain.groundY(S, D.x) + 1.0:
 		return false
-	DirLaunch.doLaunch(S, A, D, {"ux": 0.0, "uy": -1.0}, 2600.0, true)
+	DirLaunch.doLaunch(S, A, D, {"ux": 0.0, "uy": -1.0}, SimPower.sendForce(S, A, 2600.0, "beam.signature"), true)
 	_told(S, A, D, "under")
 	return true
 

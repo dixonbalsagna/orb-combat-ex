@@ -4,7 +4,7 @@ extends Control
 ##
 ## Run:  godot --path . res://ui/demo/hud_demo.tscn
 ## Options after "--": --scenario=hero_vs_proud|empress_vs_cyborg|placeholders|stress|controls   --shot=file.png (save a frame)
-##   --at=SECONDS (fast-forward the feed to that time before the shot)   --frames=N   --portrait (start portrait-shaped)   --sil --crown --clear --nofeed --nolegend --reduced --split --flip --prompts --dp=2.6 --touch[=press|ready] --left --device=xbox --preset=arena|simple-pad|kb-solo|kb-shared-p2 --ready --rh (the right-hand attacks) --pm (the planet map) --mirror --strike=toggle --stance=N --target=github|mailto|form --p2[=kbd] --joinnote=joined|left --pause[=N] [--pconfirm] --remap[=LAYOUT] [--rcapture=ACTION] [--rtry=kb:KeyK] [--rfocus=ACTION] --settings[=FOCUS_STEPS] [--pad] [--sscroll=PX] --howto[=PAGE] [--firstrun] [--notice] --ack=KIND[:CELL] --three --charge=CELL[:FRACTION] --launcher --launchready --rf --ko --feedback[=copied|review]
+##   --at=SECONDS (fast-forward the feed to that time before the shot)   --frames=N   --portrait (start portrait-shaped)   --sil --crown --clear --nofeed --nolegend --reduced --split --flip --prompts --dp=2.6 --touch[=press|ready] --left --device=xbox --preset=arena|simple-pad|kb-solo|kb-shared-p2 --ready --brink --alert[=window|charge] --alertn=TICKS --alertset=SET (the beam alert) --rh (the right-hand attacks) --pm (the planet map) --mirror --strike=toggle --stance=N --target=github|mailto|form --p2[=kbd] --joinnote=joined|left --pause[=N] [--pconfirm] --remap[=LAYOUT] [--rcapture=ACTION] [--rtry=kb:KeyK] [--rfocus=ACTION] --settings[=FOCUS_STEPS] [--pad] [--sscroll=PX] --howto[=PAGE] [--firstrun] [--notice] --ack=KIND[:CELL] --refuse=CODE --push=face|stick --pulse (with --struggle) --three --charge=CELL[:FRACTION] --launcher --launchready --rf --ko --feedback[=copied|review]
 ## Keys: Tab scenario | Space pause | R restart | S silhouette | F4 feed | C captions | M reduced motion | K crown always on | B brink ring | T arc thickness
 ##       Z clear zones | L region label | V viewport size | +/- fighter size | H hide this legend
 
@@ -130,6 +130,25 @@ func _ready() -> void:
 			hud.set_option("pad_preset", str(args["preset"]))
 		else:
 			hud.set_option("control_scheme", str(args["preset"]))
+	if args.has("alert"):
+		# --alert[=window|charge] [--alertn=TICKS] [--alertset=minimal|standard|full]: the beam answer alert on, a beam at the first fighter from the rival (docs/ui/beam-answer-alert.md)
+		UiData.set_feature("answer_alert", true)
+		hud.set_option("alert_preset", str(args.get("alertset", "full")))
+		hud.hub.consume({"type": "cue", "kind": "beam_charge" if str(args["alert"]) == "charge" else "beam_window", "text": "start", "actor": 1, "target": 0, "n": int(args.get("alertn", "300")), "k": 1})
+	if args.has("brink"):
+		hud.hub.consume({"type": "brink_enter", "actor": 0})   # --brink: the first fighter is on the brink (the plate's steady mark and words)
+	if args.has("noquiet"):
+		UiData.set_feature("legend_quiet", false)   # --noquiet: the legend as it was (before the quiet legend)
+	if args.has("push"):
+		hud.set_option("struggle_push", str(args["push"]))
+		hud.hub.model(0).push_mode = str(args["push"])   # --push=face|stick: the first fighter's beam-struggle push mode (before --struggle; the default is the stick)
+	if args.has("struggle"):
+		hud.hub.consume({"type": "cue", "kind": "beam_struggle", "text": "start", "actor": 0, "target": 1, "n": 600})   # --struggle: a beam struggle is on
+		hud.hub.set_clash_mid(0.5)
+	if args.has("pulse"):
+		hud.hub.consume({"type": "cue", "kind": "beam_pulse", "actor": 1, "target": 0, "k": 1})   # --pulse: a beat has just landed (the glyphs of the clash rows are ringed)
+	if args.has("refuse"):
+		hud.hub.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "right", "source": str(args["refuse"])})   # --refuse=CODE: that refusal's word (ki, hit, soon, cooling, late, chase)
 	if args.has("mirror"):
 		hud.set_option("dpad_mirror", "on")   # --mirror: the D-pad strikes
 	if args.has("strike"):
@@ -269,6 +288,8 @@ func _split_fn() -> Dictionary:
 
 
 func _process(delta: float) -> void:
+	if args.has("pulse"):
+		hud.hub.model(0).beat_hold = 1.0   # --pulse holds the beat's ring on for the still (in play it follows the beats)
 	if args.has("charge"):
 		var m0: UiFighterModel = hud.hub.model(0)
 		var cpp: PackedStringArray = str(args["charge"]).split(":")

@@ -101,14 +101,21 @@ static func format_time(sec: float) -> String:
 
 
 ## The player-facing options as "key=value", sorted: booleans as on or off, numbers to two places.
+## Only the options changed from their defaults (the full list of about ninety no longer fits a GitHub link, which dropped the line whole); "defaults" when none is.
 static func settings_line(opts: Dictionary) -> String:
 	var keys: Array = (UiData.options() as Dictionary).keys()
 	keys.sort()
+	var defaults: Dictionary = UiData.option_defaults()
 	var parts: PackedStringArray = []
 	for k in keys:
 		if not opts.has(k):
 			continue
 		var v = opts[k]
+		if defaults.has(k):
+			var dv = defaults[k]
+			var same: bool = (float(dv) == float(v)) if ((dv is int or dv is float) and (v is int or v is float)) else (typeof(dv) == typeof(v) and dv == v)
+			if same:
+				continue
 		var vs: String
 		if v is bool:
 			vs = "on" if v else "off"
@@ -117,7 +124,7 @@ static func settings_line(opts: Dictionary) -> String:
 		else:
 			vs = str(v)
 		parts.append("%s=%s" % [k, vs])
-	return ", ".join(parts)
+	return ", ".join(parts) if not parts.is_empty() else "defaults"
 
 
 ## The report. ctx: {commit, date, seed, setup, time, ended}; env: {screen: Vector2, dp, touch, platform: Dictionary, settings: String}.

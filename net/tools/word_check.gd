@@ -100,7 +100,7 @@ func wire() -> void:
 	var dp = NetTransport.decode(plain)
 	ok(dp != null and not dp.has("words"), "a packet without a word comes back without one")
 	var withW: Dictionary = pk.duplicate()
-	var w0: int = (1 << 26) - 1
+	var w0: int = (1 << SimIntent.BITS2) - 1
 	withW["words"] = PackedInt32Array([0, w0])
 	var b: PackedByteArray = NetTransport.encode(withW)
 	ok(b[0] == 3 and b.size() == plain.size() + 8, "a packet with a word: kind 3, 4 bytes an input (%d, %d)" % [b[0], b.size()])
@@ -111,15 +111,15 @@ func wire() -> void:
 	var da = NetTransport.decode(NetTransport.encode(withAi))
 	ok(da != null and da.words == withW.words and da.ai == [[1, 44]], "words and a takeover in one packet")
 	var high: PackedByteArray = b.duplicate()
-	high[1 + 1 + 4 + 4 + 4 + 1 + 16 + 4 + 3] = 0x04   # the second word's top byte: bit 26
-	ok(NetTransport.decode(high) == null, "a word past 26 bits on the wire is refused")
+	high[1 + 1 + 4 + 4 + 4 + 1 + 16 + 4 + 3] = 0x08   # the second word's top byte: bit 27
+	ok(NetTransport.decode(high) == null, "a word past 27 bits on the wire is refused")
 	ok(NetTransport.decode(b.slice(0, b.size() - 30)) == null, "a truncated kind 3 packet is refused")
 	var kind1: PackedByteArray = b.duplicate()
 	kind1[0] = 1
 	ok(NetTransport.decode(kind1) == null, "kind 1 with kind 3's body is refused")
 	var over: Dictionary = pk.duplicate()
-	over["words"] = PackedInt32Array([0, 1 << 26])
-	ok(NetTransport.encode(over)[0] == 2, "a word past 26 bits isn't a game packet")
+	over["words"] = PackedInt32Array([0, 1 << SimIntent.BITS2])
+	ok(NetTransport.encode(over)[0] == 2, "a word past 27 bits isn't a game packet")
 	var short: Dictionary = pk.duplicate()
 	short["words"] = PackedInt32Array([1])
 	ok(NetTransport.encode(short)[0] == 2, "words and inputs of different lengths aren't a game packet")
@@ -146,6 +146,21 @@ func prediction() -> void:
 	i.rsHeld = false
 	ok(NetSession.predictWord(SimIntent.pack2(i)) == 0, "after a throw's last tick, the next is 0")
 	ok(NetSession.predictWord(0) == 0, "no word predicts no word")
+	var d := SimIntent.new()
+	d.dodgeHeld = true
+	ok(NetSession.predictWord(SimIntent.pack2(d)) == SimIntent.pack2(d) and SimIntent.pack2(d) == (1 << 26), "LT held with no strike is bit 26 and a prediction keeps it")
+	d.rsHeld = true
+	d.rsDir = 4
+	d.rsStart = true
+	d.rsLag = 3
+	var dp: int = NetSession.predictWord(SimIntent.pack2(d))
+	var dq := SimIntent.new()
+	SimIntent.unpack2(dp, dq)
+	ok(dq.dodgeHeld and dq.rsHeld and dq.rsDir == 4 and not dq.rsStart and dq.rsLag == 0, "with a strike held a prediction keeps LT held and the strike's held fields and drops its edges")
+	d.rsHeld = false
+	d.rsStart = false
+	d.rsLag = 0
+	ok(NetSession.predictWord(SimIntent.pack2(d)) == (1 << 26), "after the strike's last tick LT held is still predicted, the rest is 0")
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, SEED, {"p1": false, "p2": false}, {})
 	var sess := NetSession.new(S, 0, DELAY)

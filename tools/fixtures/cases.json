@@ -295104,6 +295104,67 @@
       }
     },
     {
+      "id": "fight-power-valid",
+      "schema": "fight-power.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/power.json",
+          "set": {
+            "/schema": "fight.power/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-power-key-required-enabled",
+      "schema": "fight-power.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/power.json",
+          "del": [
+            "/enabled"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-power-share-too-big",
+      "schema": "fight-power.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/power.json",
+          "set": {
+            "/level/tierShare": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/level/tierShare"
+      }
+    },
+    {
+      "id": "fight-power-travel-too-low",
+      "schema": "fight-power.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/power.json",
+          "set": {
+            "/launchTravel": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/launchTravel"
+      }
+    },
+    {
       "id": "fight-kick-valid",
       "schema": "fight-kick.schema.json",
       "mutate": [

@@ -693,3 +693,98 @@ static func nearestBuilding(S: SimState, x: float, sign: float, maxD: float, y: 
 			bd = d
 			best = b
 	return {"b": best, "d": bd} if best != null else null
+
+
+## ===================================================================== the street's axes against the fight's line
+## Which way the street a building stands on runs, against the fight's line, for Encounter's turn on impact (docs/world/street-axis.md). A pure read: it writes nothing, not even SimField's scratch, and the same state
+## answers the same. On a field world (a frame) the building's lot (S.fieldRecs, k "lot": the footprint of one street's run of buildings, with its along-street axis t and across-street axis s on the planet) gives the
+## street's axes; each is carried to the building's own point and read in the fight's strip there (along the line, and toward the camera: the great circle's normal n = t x p of the frame, the side z above 0 is on)
+## as a signed sine, positive toward the camera (toward the street, for the across axis: below):
+##   alongSin  the along-street axis t, turned to face along the line (its cosine to T not negative; square to it, toward the camera): 0 when the street runs along the line (no turn needed), toward +1 or -1 as it
+##             runs across it. The sign says which way the line would turn to run down the street. It jumps from +1 to -1 as a street crosses square to the line (the turn is then either way).
+##   lineSin   the across-street axis s, turned to point from the line toward the street (away from the camera when the street lies behind it, toward it otherwise): its component toward the camera, so +1 for a
+##             street in front and along the line, -1 for one behind it and along the line, and 0 when s runs along the line (the street runs across it). Continuous in the street's turn.
+##   side      which side of the line the street lies: 1 toward the camera, -1 behind, 0 on the line (within one unit of depth)
+##   found     false when there is no lot to read (a world with no frame, or a building no lot holds): lineSin 1, alongSin 0, as a street along the line, side from the building's own depth
+static func streetAxis(S: SimState, bi: int) -> Dictionary:
+	var out: Dictionary = {"lineSin": 1.0, "alongSin": 0.0, "side": 0, "found": false}
+	if bi < 0 or bi >= S.buildings.size():
+		return out
+	var b = S.buildings[bi]
+	var zb: float = float(b.z)
+	if S.frame == null or S.fieldRecs.is_empty() or bi * 3 + 2 >= S.bDir.size():
+		out.side = 0 if absf(zb) <= 1.0 else (1 if zb > 0.0 else -1)
+		return out
+	var R: float = SimField.R
+	var fr = S.frame
+	var qx: float = S.bDir[bi * 3]
+	var qy: float = S.bDir[bi * 3 + 1]
+	var qz: float = S.bDir[bi * 3 + 2]
+	# the lot that holds him: his offset from its centre, along and across, inside its half lengths (and a sidewalk) by the least share
+	var best = null
+	var bs: float = 1.0e30
+	for rec in S.fieldRecs:
+		if rec.k != "lot":
+			continue
+		var dx: float = (qx - rec.c[0]) * R
+		var dy: float = (qy - rec.c[1]) * R
+		var dz: float = (qz - rec.c[2]) * R
+		var al: float = absf(dx * rec.t[0] + dy * rec.t[1] + dz * rec.t[2])
+		var ac: float = absf(dx * rec.s[0] + dy * rec.s[1] + dz * rec.s[2])
+		if al > float(rec.hl) + 40.0 or ac > float(rec.hd) + 40.0:
+			continue
+		var share: float = maxf(al / maxf(float(rec.hl), 1.0), ac / maxf(float(rec.hd), 1.0))
+		if share < bs or (share == bs and best != null and int(rec.id) < int(best.id)):
+			bs = share
+			best = rec
+	# the strip's own orthonormal pair at his point: toward the camera m (the frame's normal n = t x p, carried to his point) and along the line ex = q x n (the way x grows at his depth; the line's tangent only on the line)
+	var nx: float = fr.ty * fr.pz - fr.tz * fr.py
+	var ny: float = fr.tz * fr.px - fr.tx * fr.pz
+	var nz: float = fr.tx * fr.py - fr.ty * fr.px
+	var nq: float = nx * qx + ny * qy + nz * qz
+	var mx: float = nx - nq * qx
+	var my: float = ny - nq * qy
+	var mz: float = nz - nq * qz
+	var ml: float = sqrt(mx * mx + my * my + mz * mz)
+	zb = R * WorldPlanet.asinf(clampf(nq, -1.0, 1.0))
+	out.side = 0 if absf(zb) <= 1.0 else (1 if zb > 0.0 else -1)
+	if best == null or ml < 1.0e-9 or absf(nq) > 0.999999:
+		return out
+	mx /= ml
+	my /= ml
+	mz /= ml
+	var ex0: float = qy * nz - qz * ny
+	var ey0: float = qz * nx - qx * nz
+	var ez0: float = qx * ny - qy * nx
+	var el: float = sqrt(ex0 * ex0 + ey0 * ey0 + ez0 * ez0)
+	ex0 /= el
+	ey0 /= el
+	ez0 /= el
+	out.found = true
+	out.alongSin = _axisSine(best.t, qx, qy, qz, ex0, ey0, ez0, mx, my, mz, 1)
+	out.lineSin = _axisSine(best.s, qx, qy, qz, ex0, ey0, ez0, mx, my, mz, 0, int(out.side))
+	return out
+
+
+## One axis (a unit vector of the planet) at the point q: carried into the tangent plane there and its component toward the camera side m, signed by its orientation. mode 1: turned to face along the line (a cosine under 1e-5 is
+## square: toward the camera). mode 0: turned to point toward the street's side (side -1: away from the camera; otherwise toward it).
+static func _axisSine(ax: Array, qx: float, qy: float, qz: float, ex: float, ey: float, ez: float, mx: float, my: float, mz: float, mode: int, side: int = 0) -> float:
+	var d: float = ax[0] * qx + ax[1] * qy + ax[2] * qz
+	var px: float = ax[0] - d * qx
+	var py: float = ax[1] - d * qy
+	var pz: float = ax[2] - d * qz
+	var l: float = sqrt(px * px + py * py + pz * pz)
+	if l < 1.0e-9:
+		return 0.0
+	px /= l
+	py /= l
+	pz /= l
+	var sn: float = px * mx + py * my + pz * mz
+	if mode == 1:
+		var c: float = px * ex + py * ey + pz * ez
+		if c < -1.0e-5 or (absf(c) <= 1.0e-5 and sn < 0.0):
+			sn = -sn
+	else:
+		if (side < 0 and sn > 0.0) or (side >= 0 and sn < 0.0):
+			sn = -sn
+	return sn

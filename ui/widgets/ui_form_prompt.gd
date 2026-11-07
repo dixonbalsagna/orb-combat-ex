@@ -19,7 +19,7 @@ const PULSE_ALPHA_LOW := 0.78
 
 ## Whether the prompt is wanted now for this fighter (the HUD adds the pause and the option).
 static func wanted(m: UiFighterModel) -> bool:
-	return not m.ai and bool(m.avail["transform"]) and m.form_free and not m.ko and m.cinematic == ""
+	return UiData.feature("forms_live") and not m.ai and bool(m.avail["transform"]) and m.form_free and not m.ko and m.cinematic == ""   # forms_live: no chip for a press that does nothing (Game Design, pad-first-press.md)
 
 
 ## The chip's height at scale s: two lines of text and a little padding.

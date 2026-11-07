@@ -73,6 +73,7 @@ var feed: Array = []             # {t, tag, sub}
 var banner: Dictionary = {}      # {text, col, dur, age} or empty
 var struggle: Dictionary = {}    # the finisher struggle on the brink fighter: {actor, beats, half, resolve, t, res, end_t, last}
 var telegraph: Dictionary = {}   # the finisher's kind while it winds up: {actor, target, kind, age, end}; the read that answers it is a stance
+var alert: Dictionary = {}       # the beam answer alert (Encounter's beam_charge and beam_window cues, docs/ui/beam-answer-alert.md): {phase "charge" or "window", shooter, target, level, dur (seconds, hand to arrival), dodge_from (ticks before arrival the dodge opens), age}
 var tug: Dictionary = {}         # the beam struggle (Encounter's beam_struggle, beam_pulse, beam_surge, beam_stray and beam_end cues, and Clash.mid): {a, d, end_n, k, pulse_t, age, mid (0 at a's hands to 1 at d's, -1 unknown), marks: [{slot, kind, age}], end, end_t}
 const TUG_MARK_LIFE := 0.45      # seconds a surge or a stray mark stays at the meeting point
 ## The cue caption (the accessibility option edge_captions): {text, left} where `left` is seconds, or -1 until the cue ends. The HUD draws it only when the option is on.
@@ -87,6 +88,11 @@ const TUG_END_HOLD := 1.0        # seconds the end of a struggle stays drawn
 var hint: Dictionary = {}        # the tutorial's hint line: {id, key, text, kind (hint, nudge, done), age}
 var beats: Dictionary = {}       # tutorial beat id to state (start, done, skipped)
 var keep_hints: bool = false     # accessibility: a hint stays up after its beat is done, until the next one
+var no_contest: bool = false     # Encounter's match ending (docs/director/pending/match-ending): the planet gave way with nobody having touched anything: no KO, straight to the rematch card
+var winner: int = -1             # the slot that won the KO (-1 until there is one), for the match-over card
+var refuse_n: Dictionary = {}    # refusal_words: how many times each reason has been said to each slot this match ("slot:code" to count)
+var struggle_n: int = 0          # struggle_teach: the beam struggles of this match so far (the first three teach the push)
+var winners: Array = []          # cross_end (2v2): the winning team's starting slots, from the last KO's `winners` (empty in a 1v1 or when the host sends none)
 var match_over: bool = false     # a KO has happened: the match-end feedback button shows
 var act: int = 1                 # the director's invisible act (nothing shows it; the feed names it)
 var mood_band: String = ""       # the fight's mood band: calm, tense or frenzied (the feed names it)
@@ -130,8 +136,14 @@ func reset() -> void:
 	telegraph = {}
 	hint = {}
 	tug = {}
+	alert = {}
 	beats = {}
 	match_over = false
+	no_contest = false
+	winner = -1
+	winners = []
+	refuse_n = {}
+	struggle_n = 0
 	act = 1
 	mood_band = ""
 	toll = {"civilians": 0, "pop0": 0, "structures": 0, "craters": 0}
@@ -294,6 +306,10 @@ func consume(e) -> void:
 		"last_stand_end":
 			if m != null:
 				m.last_stand_left = 0.0
+		"brink_open":
+			# The rival has won the set-up against the fighter on the brink (actor): the finisher is next. The brink read repeats the card, with a line that says what it means (UiData brink_read).
+			if m != null and m.brink and UiData.feature("brink_read"):
+				_card(m.slot, "brink", UiData.t("card.brink"), UiData.t("card.brink_open_sub"), "", -1, "state", PRIO_BREAK)
 		"brink_exit":
 			if m != null:
 				m.brink = false
@@ -372,10 +388,23 @@ func consume(e) -> void:
 				telegraph = {"actor": actor, "target": int(d.get("target", -1)) if d.has("target") else -1, "kind": fk, "age": 0.0, "end": -1.0}
 		"ko":
 			telegraph = {}
-			match_over = true
+			# cross_end (2v2, Simulation's cross-end): the `ko` event carries `over`, false for a first KO (his team still has someone standing). Absent, it is true: a 1v1 and every older host read as before.
+			var ko_over: bool = bool(d.get("over", true)) or not UiData.feature("cross_end")
 			var lo: UiFighterModel = model(int(d.get("loser", -1)))
 			if lo != null:
 				lo.ko = true
+			if ko_over:
+				match_over = true   # the match-over card waits for the last KO (SimCore.ended), never a first one
+				winner = int(d.get("winner", -1))
+				winners = []
+				if UiData.feature("cross_end") and d.get("winners") is Array:
+					for w in d["winners"]:
+						winners.append(int(w))
+			elif lo != null:
+				lo.out = true
+				if not lo.ai:
+					_teach(lo, UiData.t("prompt.cross_out"), [], 3600.0)   # "You're out. Your partner fights on": in the legend for as long as the match goes on
+					_world("out", UiData.t("prompt.cross_out"))
 			_cinematic(int(d.get("winner", -1)), "ko", _dur(d, 3.0))
 		"pause_start":
 			# Q10: the sim is frozen for dur seconds. The HUD's fight-time windows, prompts and timers hold until pause_end.
@@ -428,6 +457,28 @@ func consume(e) -> void:
 				m.launcher_open = false
 			elif ck == "blow":
 				_on_blow(m, d)
+			elif ck == "stick_release":
+				if UiData.feature("beam_teach") and m != null and not m.ai and str(d.get("text", "")) == "beam" and str(d.get("source", "")) == "0":
+					var flicks: int = int(UiPrefs.get_value("taught_flick_n", 0))
+					if flicks < 3:
+						_teach(m, UiData.t("prompt.teach_flick"), ["strike"], 1.5)   # a flick with RB fires the quick beam (level 0): only a hold is a charged one (the first three times)
+						UiPrefs.set_value("taught_flick_n", flicks + 1)
+			elif ck == "chase_ready":
+				if UiData.feature("beam_teach") and m != null and not m.ai:
+					var chases: int = int(UiPrefs.get_value("taught_chase_n", 0))
+					if chases < 3:
+						_teach(m, UiData.t("prompt.teach_chase"), ["light", "heavy", "signature"], 3.0)   # a send a press can chase (Encounter's chase-tap): the first three times, with the attack buttons beside it
+						UiPrefs.set_value("taught_chase_n", chases + 1)
+			elif ck == "press_refused":
+				_refusal(m, str(d.get("source", "")))   # Encounter's director-side drops (docs/controls/refusals.md): source stun_limit, queue_expired or block_lockout
+			elif ck == "stick_refused":
+				_refusal(m, str(d.get("source", "")))   # the sim's cue: text the stick's direction, source the reason
+			elif ck == "no_contest":
+				if UiData.feature("versus_flow"):
+					no_contest = true
+					match_over = true   # there is no KO, so the match-over card is the next screen: it opens at once (UiHud), with no winner
+			elif ck == "beam_charge" or ck == "beam_window":
+				_on_alert_cue(ck, d)
 			elif ck.begins_with("beam_"):
 				_on_tug_cue(ck, d)
 			elif ck == "miss":
@@ -480,6 +531,8 @@ func consume(e) -> void:
 			if cn >= 2 and not UiData.feature("minimal_hud"):   # a chain counter is withdrawn (docs/design/minimal-hud.md)
 				banner = {"text": UiData.fmt("state.chain", {"n": cn}), "col": UiLook.WARN, "dur": 1.2, "age": 0.0}
 		"banner":
+			if UiData.feature("quiet_hints") and _quiet_banner(str(d.get("text", ""))):
+				return   # a refusal or a power-up in letters across the sky: the plate says it (the signature chip, the tier pips) and the pad knocks
 			if move_names.has(UiData.display_text(str(d.get("text", ""))).strip_edges().to_upper()):   # the sim's banner is the move's key from the rename on: compare the words a player reads
 				stats["banners_move_name"] += 1   # a move's name is shouted by the fighter, not carded
 				return
@@ -502,6 +555,13 @@ func consume(e) -> void:
 			pass
 		_:
 			pass
+
+
+## quiet_hints: the sim's banners that are the plate's job. A refused signature or blast (NEED 45 KI, SIGNATURE RECHARGING) is answered by the pad's knock and the signature chip; a power-up (LOUPE POWERS UP  TIER 2) by the
+## tier pips filling. The result words (PARRY, DODGED, a KO) stay.
+func _quiet_banner(text: String) -> bool:
+	var t: String = text.strip_edges().to_upper()
+	return t.begins_with("NEED ") or t == "SIGNATURE RECHARGING" or t.contains(" POWERS UP ")
 
 
 var _lost_trail_left: Dictionary = {}
@@ -729,7 +789,9 @@ func _on_press_ack(m: UiFighterModel, d: Dictionary) -> void:
 			_sig_state(m, "expired")
 		"sig_fired":
 			_sig_state(m, "fired")
-		"refused", "energy", "held", "lapsed", "empty":
+		"chase_no_ki", "chase_late":
+			_refusal(m, str(d.get("kind", "")))   # Encounter's press-wait: a chase press with no energy, or one that ran out
+		"refused", "energy", "held", "lapsed", "empty", "stunned":   # stunned: a press made in a stun, cleared by Encounter's press-wait; it shows as a refused press does
 			# A press that did not become a blow: a short grey mark on the button's glyph (docs/ui/hud-spec.md section 47). The signature that cannot start is B, a
 			# light spent by the energy family is X; the others name their button (`cell`), or default to X.
 			var kind: String = str(d.get("kind", ""))
@@ -739,6 +801,8 @@ func _on_press_ack(m: UiFighterModel, d: Dictionary) -> void:
 			m.press_ack_kind = kind
 			m.press_ack_cell = cell
 			m.press_ack_t = 0.0
+			if kind == "stunned":
+				_refusal(m, kind)   # a press made in a stun: the cross on its button, and the word
 
 
 static func _weight_name(v) -> String:
@@ -793,11 +857,87 @@ func _on_blow(m: UiFighterModel, d: Dictionary) -> void:
 			tm.run_t = 0.0
 
 
+## refusal_words: a press or release that could not do what it asked says why in a short word at the edge (the legend's teaching row), the first REFUSE_FIRST_N times per reason per match; after that the pad's knock
+## (Controls) is all. `code` is the sim's reason: `stick_refused`'s source, or a `press_ack` kind. A reason with no word in `prompt.refuse_<code>` is silent and counted (stats refusal_unread_<code>).
+const REFUSE_FIRST_N := 3
+const REFUSE_SECONDS := 1.5
+
+
+## The input hub's refusals (docs/controls/refusals.md: SimInputHub.take_refusals() gives [{slot, code, tick, button}]): the host passes each one here. Controls' codes are the word keys.
+func refusal(slot: int, code: String) -> void:
+	_refusal(model(slot), code)
+
+
+func _refusal(m: UiFighterModel, code: String) -> void:
+	if m == null or m.ai or code == "" or not UiData.feature("refusal_words"):
+		return
+	var key: String = "prompt.refuse_" + code
+	if not UiData.has_term(key):
+		var uk: String = "refusal_unread_" + code
+		stats[uk] = int(stats.get(uk, 0)) + 1
+		return
+	var k: String = "%d:%s" % [m.slot, code]
+	var n: int = int(refuse_n.get(k, 0))
+	if n >= REFUSE_FIRST_N:
+		return
+	refuse_n[k] = n + 1
+	_teach(m, UiData.t(key), [], REFUSE_SECONDS)
+
+
+## The match-over card's line naming who won: a 2v2's winning team ("A and B win"), else the one who struck the last blow ("A wins"), "" while there is no winner.
+## A team slot with no model (a host with fewer plates) is left out; a team of one reads as a single winner.
+func win_line() -> String:
+	var names: Array = []
+	for w in winners:
+		var wi: int = int(w)
+		if wi >= 0 and wi < models.size() and str(models[wi].name) != "":
+			names.append(str(models[wi].name))
+	if names.size() >= 2:
+		return UiData.fmt("prompt.over_wins_team", {"a": names[0], "b": names[1]})
+	if names.size() == 1:
+		return UiData.fmt("prompt.over_wins", {"name": names[0]})
+	if winner >= 0 and winner < models.size():
+		return UiData.fmt("prompt.over_wins", {"name": models[winner].name})
+	return ""
+
+
+## A line for the legend to say for a moment (beam_teach). The legend shows while it is up and puts it in a row with the glyphs of `acts`.
+func _teach(m: UiFighterModel, text: String, acts: Array, secs: float) -> void:
+	m.teach = text
+	m.teach_acts = acts
+	m.teach_left = secs
+
+
+## The beam answer alert's two cues. `beam_charge` text start or end: the shooter (`actor`) gathers a beam at the target, a warning and not the window. `beam_window` text start or end: the beam has left
+## his hand; `n` is the ticks until the front arrives, `k` the beam's level (0 the snap, 1 to 3 the levels, 4 the signature), `amount` the ticks before arrival the dodge opens (14 by default; Encounter's cue has no `dodge_from` field). The window
+## closes at arrival, so `end` clears it at once. Read only: nothing here writes the sim.
+const ALERT_DODGE_FROM := 14
+const ALERT_RAMP := 6.0 / 60.0   # RL-227: the screen-edge line ramps in and out over at least 6 ticks
+func _on_alert_cue(kind: String, d: Dictionary) -> void:
+	var start: bool = str(d.get("text", "start")).to_lower() != "end"
+	if not start:
+		if (kind == "beam_window" or str(alert.get("phase", "")) == "charge") and not alert.is_empty():
+			alert["end_t"] = 0.0   # the window closed (the front arrived or it was answered), or the gathering stopped: the caption goes at once, the edge line ramps out over ALERT_RAMP (Legal's RL-227)
+		return
+	if kind == "beam_window" and UiData.feature("beam_teach"):
+		var shooter: UiFighterModel = model(int(d.get("actor", 0)))
+		var target: UiFighterModel = model(int(d.get("target", 1)))
+		if shooter != null and not shooter.ai:
+			UiPrefs.set_bool("taught_beam", true)   # a beam has been fired by a person: the 45 s reminder is gone for good
+		elif shooter != null and shooter.ai and target != null and not target.ai and not UiPrefs.get_bool("taught_fire_back"):
+			_teach(target, UiData.t("prompt.teach_fire_back"), ["mode", "strike"], 4.0)   # the computer's first beam teaches the answer, once
+			UiPrefs.set_bool("taught_fire_back", true)
+	alert = {"phase": "window" if kind == "beam_window" else "charge", "shooter": int(d.get("actor", 0)), "target": int(d.get("target", 1)), "level": int(d.get("k", 1)),
+		"dur": maxf(float(d.get("n", 30)), 1.0) / 60.0, "dodge_from": int(d.get("amount", ALERT_DODGE_FROM)) if float(d.get("amount", 0.0)) > 0.0 else ALERT_DODGE_FROM, "age": 0.0}
+
+
 ## The beam struggle's five cues (docs/director/pending/beam-struggle/README.md): `beam_struggle` text start (actor the beam's owner, target the other, `n` the tick it ends by at the latest),
 ## `beam_pulse` (`k` the pulse, `n` its tick), `beam_surge` (text surge or sharp), `beam_stray`, and `beam_end` (text overwhelmed, detonate or time; `x` the point). The meeting point itself
 ## comes each tick from the bridge (`set_clash_mid`). Read-only: nothing here writes the sim.
 func _on_tug_cue(kind: String, d: Dictionary) -> void:
 	if kind == "beam_struggle":
+		struggle_n += 1
+		_struggle_teach_on(int(d.get("actor", 0)), int(d.get("target", 1)))
 		_cap(UiData.t("prompt.cap_struggle"), -1.0)
 		tug = {"a": int(d.get("actor", 0)), "d": int(d.get("target", 1)), "end_n": int(d.get("n", 0)), "k": 0, "pulse_t": 99.0, "age": 0.0, "mid": 0.5, "marks": [], "end": "", "end_t": 0.0}
 		return
@@ -807,17 +947,52 @@ func _on_tug_cue(kind: String, d: Dictionary) -> void:
 		"beam_pulse":
 			tug["k"] = int(d.get("k", 0))
 			tug["pulse_t"] = 0.0
+			for bm in models:
+				if not bm.beat_rows.is_empty():
+					bm.beat_hold = BEAT_HOLD_NEAR if bm.beat_gap_t < BEAT_NEAR else BEAT_LIT   # the beat: the glyphs are ringed; with the last beat under 0.5 s ago the ring stays lit across beats (no more than two changes a second)
+					bm.beat_gap_t = 0.0
 		"beam_surge", "beam_stray":
+			if kind == "beam_stray":
+				var sm: UiFighterModel = model(int(d.get("actor", 0)))
+				if sm != null and not sm.beat_rows.is_empty() and UiData.feature("struggle_teach"):
+					_refusal(sm, "off_beat")   # a press off the beat, in the first three struggles: "Off the beat" (the first three times)
 			var marks: Array = tug["marks"]
 			marks.append({"slot": int(d.get("actor", 0)), "kind": ("stray" if kind == "beam_stray" else ("sharp" if str(d.get("text", "")) == "sharp" else "surge")), "age": 0.0})
 			if marks.size() > 8:
 				marks.pop_front()
 		"beam_end":
+			for bm in models:
+				bm.beat_rows = []
 			_cap("", 0.0)
 			tug["end"] = str(d.get("text", "time"))
 			tug["end_t"] = 0.0
 			if d.has("x"):
 				tug["mid"] = clampf(float(d["x"]), 0.0, 1.0)
+
+
+## struggle_teach: in the first STRUGGLE_TEACH_N beam struggles of a match, each person in it gets the rows that say what to press on the beat in the legend (the edge, never over a fighter):
+## the player's own mode (the option struggle_push, per player): the strike stick's flick toward the foe (stick, the default) or X, Y and B (face).
+const STRUGGLE_TEACH_N := 3
+const BEAT_LIT := 0.25        # seconds the ring is wanted after a lone beat
+const BEAT_NEAR := 0.5        # a beat this close after the last: the ring stays lit across them
+const BEAT_HOLD_NEAR := 0.6   # and is held this long after each, past the next beat
+
+
+func _struggle_teach_on(a: int, d: int) -> void:
+	if not UiData.feature("struggle_teach") or struggle_n > STRUGGLE_TEACH_N:
+		return
+	for s in [a, d]:
+		var m: UiFighterModel = model(int(s))
+		if m == null or m.ai:
+			continue
+		var rows: Array = []
+		if m.push_mode == "face":
+			rows.append({"acts": ["light", "heavy", "signature"], "label": UiData.t("prompt.struggle_buttons")})
+		else:
+			rows.append({"acts": ["strike"], "label": UiData.t("prompt.struggle_stick")})   # the right stick (the default)
+		m.beat_rows = rows
+		m.beat_gap_t = 99.0
+		m.beat_hold = 0.0
 
 
 ## The meeting point of the beams, 0 at the first fighter's hands to 1 at the second's, from the bridge each tick (-1: none).
@@ -1224,6 +1399,14 @@ func advance(dt: float) -> void:
 			hint = {}
 		elif str(hint["id"]) == "launch" and float(hint["age"]) > 6.0:
 			hint = {}   # the launch hint is shown once and goes by itself
+	if not alert.is_empty():
+		alert["age"] = float(alert["age"]) + sdt
+		if alert.has("end_t"):
+			alert["end_t"] = float(alert["end_t"]) + sdt
+			if float(alert["end_t"]) >= ALERT_RAMP:
+				alert = {}
+		elif float(alert["age"]) > (float(alert["dur"]) + 0.5 if str(alert["phase"]) == "window" else 6.0):
+			alert = {}   # an end cue that never came: the alert does not stay drawn
 	if not tug.is_empty():
 		tug["age"] = float(tug["age"]) + sdt
 		tug["pulse_t"] = float(tug["pulse_t"]) + sdt

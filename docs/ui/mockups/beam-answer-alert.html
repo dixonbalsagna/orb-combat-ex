@@ -7,7 +7,7 @@
 <style>
 :root {
   --bg: #f4f1ea; --panel: #ffffff; --panel2: #ece8dd; --ink: #1b1d26; --dim: #5d6070; --edge: #c9c4b4; --accent: #1f5fbf; --accent-ink: #fff;
-  --sky1: #7d8fc4; --sky2: #e9b28e; --ground: #7a9a55; --you: #3f7da3; --rival: #7a5d9a; --beam: #b04adf; --alert: #fff4b8; --alert-ink: #14161f;
+  --sky1: #7d8fc4; --sky2: #e9b28e; --ground: #7a9a55; --you: #3f7da3; --rival: #7a5d9a; --beam: #b04adf;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) { --bg: #0e1018; --panel: #181b27; --panel2: #222637; --ink: #f1eee6; --dim: #a7a9b8; --edge: #3a3f55; --accent: #7fb2ff; --accent-ink: #0b0d14; }
@@ -19,12 +19,13 @@ main { max-width: 900px; margin: 0 auto; padding: 16px 16px 60px; }
 h1 { font-size: 1.35rem; margin: 4px 0; } h2 { font-size: 1.12rem; margin: 22px 0 6px; } h3 { font-size: 1rem; margin: 0; }
 p { margin: 6px 0; } .dim { color: var(--dim); } .small { font-size: .88rem; }
 .note { background: var(--panel2); border: 1px solid var(--edge); border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-size: .9rem; }
-button { font: inherit; color: inherit; cursor: pointer; }
+button, select { font: inherit; color: inherit; cursor: pointer; }
 .btn { border: 2px solid var(--edge); background: var(--panel); border-radius: 10px; padding: 8px 14px; min-height: 48px; font-weight: 600; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.seg { display: inline-flex; border: 2px solid var(--edge); border-radius: 10px; overflow: hidden; }
+.seg { display: inline-flex; border: 2px solid var(--edge); border-radius: 10px; overflow: hidden; flex-wrap: wrap; }
 .seg button { border: 0; background: transparent; padding: 8px 12px; min-height: 44px; font-weight: 600; border-right: 2px solid var(--edge); }
 .seg button:last-child { border-right: 0; }
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
@@ -32,36 +33,39 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* The stage: a stand-in scene (flat shapes, no art). */
 .stagewrap { position: relative; border-radius: 12px; overflow: hidden; border: 2px solid var(--edge); }
 .stagewrap.f-protan { filter: url(#protan); } .stagewrap.f-deutan { filter: url(#deutan); } .stagewrap.f-tritan { filter: url(#tritan); }
-.stage { position: relative; width: 100%; aspect-ratio: 16 / 9; background: linear-gradient(var(--sky1), var(--sky2) 62%, var(--ground) 62%); container-type: size; }
+.stage { position: relative; width: 100%; aspect-ratio: 16 / 9; background: linear-gradient(var(--sky1), var(--sky2) 62%, var(--ground) 62%); container-type: size; overflow: hidden; }
 .body { position: absolute; bottom: 18%; width: 6%; height: 26%; border-radius: 6px; }
 .body::before { content: ""; position: absolute; left: 20%; top: -26%; width: 60%; aspect-ratio: 1; border-radius: 50%; background: #f0c9a2; }
 .you { left: 22%; background: var(--you); } .rival { right: 16%; background: var(--rival); }
 .tag { position: absolute; bottom: 8%; font-size: .72rem; font-weight: 700; color: #fff; text-shadow: 0 1px 2px #000; }
-.beam { position: absolute; right: 22%; bottom: 33%; width: 52%; height: 5%; background: linear-gradient(90deg, rgba(176,74,223,.2), var(--beam)); border-radius: 4px; transform-origin: right center; }
 .hud { position: absolute; left: 3%; top: 4%; font-size: .72rem; color: #fff; background: rgba(10,12,20,.7); border-radius: 8px; padding: 4px 8px; }
 .hud.r { left: auto; right: 3%; }
+.front { position: absolute; bottom: 33%; height: 5%; right: 22%; width: 0; background: linear-gradient(90deg, rgba(176,74,223,.15), var(--beam)); border-radius: 4px; }
+.air { position: absolute; bottom: 30%; height: 11%; right: 22%; width: 0; border-left: 3px solid rgba(255,255,255,.55); border-radius: 50%; }
+.ground-sweep { position: absolute; bottom: 37.5%; height: 2%; right: 22%; width: 0; background: rgba(176,74,223,.45); }
+.glint { position: absolute; right: 21%; bottom: 33%; width: 4.5%; aspect-ratio: 1; }
+.edgeline { position: absolute; top: 33%; height: 34%; background: var(--beam); box-shadow: 0 0 0 2px rgba(10,12,20,.9); }
+.edgemark { position: absolute; width: 0; height: 0; border-top: 14px solid transparent; border-bottom: 14px solid transparent; top: calc(50% - 14px); }
+.cap { position: absolute; background: rgba(10,12,20,.92); color: #f1eee6; border: 2px solid #e8e4d8; border-radius: 9px; padding: 8px 10px; font-weight: 700; line-height: 1.2; min-width: 11em; }
+.cap .t { font-size: .74em; letter-spacing: .04em; }
+.cap .a { display: flex; gap: 12px; align-items: center; margin-top: 4px; font-size: .86em; }
+.cap .a .off { opacity: .45; }
+.key { display: inline-block; border: 2px solid #e8e4d8; border-radius: 6px; padding: 0 6px; margin-right: 4px; font-size: .85em; }
+.cap .bar { position: relative; height: 7px; background: rgba(255,255,255,.2); border-radius: 4px; margin-top: 7px; }
+.cap .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: #f1eee6; border-radius: 4px; }
+.cap .bar b { position: absolute; top: -4px; bottom: -4px; width: 2px; background: #e8e4d8; }
 .hidden { display: none !important; }
-/* The alerts. All steady: they appear and they go, no fade, no flash. */
-.a { position: absolute; color: var(--alert-ink); background: var(--alert); border: 3px solid #14161f; border-radius: 10px; font-weight: 800; line-height: 1.1; }
-.a.hc { outline: 3px solid #fff; }
-.pad { display: inline-block; vertical-align: middle; margin-right: 4px; }
-.bar { height: 7px; background: rgba(0,0,0,.25); border-radius: 4px; overflow: hidden; margin-top: 4px; }
-.bar i { display: block; height: 100%; background: #14161f; width: 100%; }
-.edge { display: flex; align-items: center; gap: 6px; padding: 6px 10px; }
-.edge .chev { width: 18px; height: 22px; flex: none; }
-.chip { padding: 6px 10px; }
-.glint { position: absolute; width: 5%; aspect-ratio: 1; }
 .card { background: var(--panel); border: 2px solid var(--edge); border-radius: 14px; padding: 14px; margin: 10px 0; }
-.grid { display: grid; gap: 12px; grid-template-columns: 1fr; } @media (min-width: 760px) { .grid.two { grid-template-columns: 1fr 1fr; } }
+.grid { display: grid; gap: 10px; grid-template-columns: 1fr; } @media (min-width: 760px) { .grid.two { grid-template-columns: 1fr 1fr; } }
 .setrow { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--edge); }
-.setrow:first-child { border-top: 0; }
+.setrow.first { border-top: 0; }
 .setrow .lbl { font-weight: 700; } .setrow .help { grid-column: 1 / -1; color: var(--dim); font-size: .86rem; }
 .sw { position: relative; width: 56px; height: 32px; border-radius: 16px; border: 2px solid var(--edge); background: var(--panel2); }
 .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); }
 .sw[aria-checked="true"] { background: var(--accent); border-color: var(--accent); } .sw[aria-checked="true"]::after { left: 27px; background: var(--accent-ink); }
 .swl { display: flex; align-items: center; gap: 8px; } .swl .w { font-size: .86rem; font-weight: 700; min-width: 2.2em; }
 .pill { display: inline-block; border: 1.5px solid var(--edge); border-radius: 999px; padding: 1px 9px; font-size: .78rem; font-weight: 700; }
-.pattern { display: flex; gap: 4px; align-items: flex-end; height: 26px; } .pattern i { display: block; width: 10px; background: var(--ink); border-radius: 2px; }
+.sub { font-weight: 800; margin-top: 12px; font-size: .95rem; }
 </style>
 </head>
 <body>
@@ -71,163 +75,174 @@ button { font: inherit; color: inherit; cursor: pointer; }
   <filter id="tritan"><feColorMatrix type="matrix" values="0.95 0.05 0 0 0  0 0.433 0.567 0 0  0 0.475 0.525 0 0  0 0 0 1 0"/></filter>
 </svg>
 <main>
-  <h1>Beam answer alert: mockups</h1>
-  <p class="dim">Orb's ask: tell the player on the receiving end, without getting in the way, that there is a moment to fire their own beam back or dodge. Stand-in shapes only; nothing is drawn over the fighters.</p>
-  <div class="note">Everything on screen here is a steady shape and a word. It appears and it goes: no fade, no flash, no pulsing. The numbers (how long the chance lasts) are made up; Game Design is setting the real window. Button words follow your layout.</div>
+  <h1>Beam answer alert: mockups (second version)</h1>
+  <p class="dim">Orb's ask: tell the player on the receiving end, without getting in the way, that there is a moment to fire their own beam back or dodge. This version follows Game Design's ruling: the beam travels, the chance opens when it leaves the hand and closes when it arrives. Stand-in shapes only.</p>
+  <div class="note">Every mark here is steady: it appears and it goes, with no fade, no flash and no pulsing. Nothing is drawn over a fighter. The times are made up; the real ones are Game Design's (a beam takes about a tenth of a second to a full second to arrive, longer at range). Button words follow your layout.</div>
 
   <h2>The scene</h2>
-  <p class="small dim">You are on the left. The rival has just fired a beam at you. Press Show it to see the alert for a moment, as it would last for the real chance.</p>
+  <p class="small dim">You are on the left. The rival fires a beam at you. Press Show it: the beam travels from his hand to you, and the alerts you have switched on appear for the length of the chance.</p>
   <div class="row" style="margin-bottom:8px">
     <button class="btn primary" id="play">Show it</button>
-    <button class="btn" id="hold" aria-pressed="false">Keep it up</button>
+    <button class="btn" id="offscreen" aria-pressed="false">Rival is off screen</button>
+    <button class="btn" id="charge" aria-pressed="false">Show the gathering first</button>
     <span class="pill" id="state">idle</span>
   </div>
   <div class="stagewrap" id="wrap">
     <div class="stage" id="stage">
       <div class="hud">YOU</div><div class="hud r">RIVAL</div>
-      <div class="body you"></div><div class="body rival"></div>
-      <span class="tag" style="left:21%">you</span><span class="tag" style="right:15%">rival</span>
-      <div class="beam hidden" id="beam"></div>
-      <div class="a edge hidden" id="aEdge" role="status"></div>
-      <div class="a chip hidden" id="aChip" role="status"></div>
-      <div class="a glint hidden" id="aGlint" aria-hidden="true"></div>
+      <div class="body you"></div><div class="body rival" id="rival"></div>
+      <span class="tag" style="left:21%">you</span><span class="tag" id="rtag" style="right:15%">rival</span>
+      <div class="ground-sweep hidden" id="sweep"></div>
+      <div class="air hidden" id="air"></div>
+      <div class="front hidden" id="front"></div>
+      <svg class="glint hidden" id="glint" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 0l4 16 16 4-16 4-4 16-4-16L0 20l16-4z" fill="#fff4b8" stroke="#14161f" stroke-width="2" stroke-linejoin="round"/></svg>
+      <div class="edgeline hidden" id="edge"></div><div class="edgemark hidden" id="mark"></div>
+      <div class="cap hidden" id="cap" role="status"></div>
     </div>
   </div>
-  <p class="small dim" id="caption"></p>
+  <p class="small dim" id="caption">Press Show it.</p>
 
-  <h2>The four alerts</h2>
+  <h2>What tells you</h2>
+  <p class="small dim">Seven things, and you choose how much of each. The first three are in the picture itself; the screen edge line and the caption are the only parts added on top, and they stay at the screen's edge.</p>
   <div class="grid two">
-    <div class="card"><h3>1. Edge mark <span class="pill">on screen</span></h3>
-      <p class="small">A small tag on the screen's edge on the side the beam comes from, with an arrow pointing at the rival, the words FIRE BACK or DODGE, and the button. A bar under it runs down as the chance runs out.</p>
-      <p class="small dim">Best for: players who watch the middle of the screen. It never reaches the fighters because it lives at the edge.</p></div>
-    <div class="card"><h3>2. Your plate <span class="pill">on screen</span></h3>
-      <p class="small">A tag under your own name plate (top corner): YOUR CHANCE, then the same buttons and bar. Nothing moves about the screen; it is always in the same place.</p>
-      <p class="small dim">Best for: players who check the plate often, and for a split screen, where each player has their own plate.</p></div>
-    <div class="card"><h3>3. Glint in the world <span class="pill">in the scene</span></h3>
-      <p class="small">A bright four-point sparkle on the beam, a little way out from the rival's hands (never on a body), for as long as the chance lasts. It is part of the picture, so it reads without looking away.</p>
-      <p class="small dim">Needs Rendering and VFX to draw it. Size and strength are yours to set.</p></div>
-    <div class="card"><h3>4. Buzz and sound <span class="pill">feel</span></h3>
-      <p class="small">Two short buzzes on a controller and two quick rising notes. Nothing on screen.</p>
-      <div class="row"><div class="pattern" aria-label="Two short buzzes"><i style="height:20px"></i><i style="height:0;width:6px"></i><i style="height:20px"></i></div>
-        <button class="btn" id="testFeel">Try the sound and buzz</button></div>
-      <p class="small dim">Best for: players who look at the fighters and nothing else. The browser only buzzes on some phones; a controller always can.</p></div>
+    <div class="card"><h3>The shooter's glint</h3><p class="small">A bright spark at his hand while the beam is gathered, in his own colour. It is part of the fight. Visual effects draw it.</p></div>
+    <div class="card"><h3>The beam itself</h3><p class="small">It leaves the hand and travels. This is the game, and it is always there.</p></div>
+    <div class="card"><h3>Air and light</h3><p class="small">The air ripples ahead of the beam, its colour sweeps along the ground. Off, subtle or strong.</p></div>
+    <div class="card"><h3>Sound</h3><p class="small">A low rising note that climbs until the beam arrives, and comes from the side the shooter is on. Off or on, its own volume.</p></div>
+    <div class="card"><h3>Rumble</h3><p class="small">A buzz on your controller that grows until the beam arrives.</p></div>
+    <div class="card"><h3>Screen edge line</h3><p class="small">A thin steady line in the shooter's colour at the edge of the screen on his side, with a small arrow pointing in. It comes in over about a tenth of a second and never blinks. It is never white, gold or red (a shooter in one of those gets a violet line). Only for the player being fired at. By default it appears only when the shooter is off screen.</p></div>
+    <div class="card"><h3>Caption</h3><p class="small">Small words at the edge: BEAM INCOMING, then your answers as your own buttons: FIRE BACK, and DODGE, which looks dim until the moment a dodge works. A bar runs down to arrival, with a notch where the dodge opens, and the glyphs are your own buttons. It sits on a solid plate so it reads on any sky. Off by default; for players who cannot hear the sound.</p></div>
   </div>
+  <p class="small dim">The chance: you can fire back at any time before it arrives (answering late means the beams meet closer to you), and a dodge only works in the last moments, so the caption shows the dodge as ready only then.</p>
 
   <h2>The settings page</h2>
-  <p class="small dim">Every row changes the scene above as you press it. Defaults are marked.</p>
+  <p class="small dim">Every row changes the scene as you press it. Each player sets their own, and each controller remembers its own.</p>
   <div class="card" id="settings">
-    <h3>Answer alert</h3>
-    <div class="setrow"><div class="lbl">Edge mark</div><div class="swl"><span class="w" data-w="edge">On</span><button class="sw" role="switch" aria-checked="true" aria-label="Edge mark" data-k="edge"></button></div><div class="help">The tag at the screen's edge pointing to the rival. On by default.</div></div>
-    <div class="setrow"><div class="lbl">Plate tag</div><div class="swl"><span class="w" data-w="chip">On</span><button class="sw" role="switch" aria-checked="true" aria-label="Plate tag" data-k="chip"></button></div><div class="help">The tag under your name plate. On by default.</div></div>
-    <div class="setrow"><div class="lbl">Glint in the world</div><div class="swl"><span class="w" data-w="glint">On</span><button class="sw" role="switch" aria-checked="true" aria-label="Glint in the world" data-k="glint"></button></div><div class="help">The sparkle on the beam. On by default.</div></div>
-    <div class="setrow"><div class="lbl">Sound</div><div class="swl"><span class="w" data-w="sound">On</span><button class="sw" role="switch" aria-checked="true" aria-label="Sound" data-k="sound"></button></div><div class="help">Two quick rising notes. On by default.</div></div>
-    <div class="setrow"><div class="lbl">Buzz</div><div class="swl"><span class="w" data-w="buzz">On</span><button class="sw" role="switch" aria-checked="true" aria-label="Buzz" data-k="buzz"></button></div><div class="help">Two short buzzes on a controller. On for a controller, off on the web, where phones and browsers disagree.</div></div>
-    <div class="setrow"><div class="lbl">Size</div><div class="seg" data-seg="size"><button aria-pressed="false" data-v="s">Small</button><button aria-pressed="true" data-v="m">Medium</button><button aria-pressed="false" data-v="l">Large</button></div><div class="help">How big the marks are. Never bigger than a small part of the screen; they cannot reach the fighters.</div></div>
-    <div class="setrow"><div class="lbl">Strength</div><div class="seg" data-seg="strength"><button aria-pressed="false" data-v="subtle">Subtle</button><button aria-pressed="true" data-v="normal">Normal</button><button aria-pressed="false" data-v="strong">Strong</button></div><div class="help">How loud the sound, how hard the buzz, and how bright the marks.</div></div>
-    <div class="setrow"><div class="lbl">Where the edge mark sits</div><div class="seg" data-seg="pos"><button aria-pressed="true" data-v="toward">Toward the rival</button><button aria-pressed="false" data-v="corner">Bottom corner</button><button aria-pressed="false" data-v="plate">Beside my plate</button></div><div class="help">Toward the rival is the side the beam comes from. The other two stay in one place.</div></div>
-    <div class="setrow"><div class="lbl">How long it stays up</div><div class="seg" data-seg="len"><button aria-pressed="true" data-v="exact">Until the chance ends</button><button aria-pressed="false" data-v="linger">A little longer</button></div><div class="help">A little longer keeps the tag up for half a second after the chance, so you can see it ended. It never changes your chance.</div></div>
-    <div class="setrow"><div class="lbl">Colour-blind safe</div><div class="seg" data-seg="cvd"><button aria-pressed="true" data-v="none">Normal view</button><button aria-pressed="false" data-v="protan">Red-green (1)</button><button aria-pressed="false" data-v="deutan">Red-green (2)</button><button aria-pressed="false" data-v="tritan">Blue-yellow</button></div><div class="help">Previews the scene as someone with that colour vision sees it. The alerts use a shape and a word as well as a colour, so they read the same in every view.</div></div>
-    <div class="setrow"><div class="lbl">Strong outline</div><div class="swl"><span class="w" data-w="hc">Off</span><button class="sw" role="switch" aria-checked="false" aria-label="Strong outline" data-k="hc"></button></div><div class="help">A white line round every mark, for a bright or busy scene.</div></div>
-    <div class="setrow"><div class="lbl">Wider chance <span class="pill">waiting for a ruling</span></div><div class="seg"><button disabled aria-pressed="false">Off</button><button disabled aria-pressed="false">A little</button><button disabled aria-pressed="false">More</button></div><div class="help">A longer time to answer would change how a fight plays out, so Game Design and Orb decide if it can exist, and if it counts in online play. Shown here so you can see where it would go.</div></div>
+    <div class="setrow first"><div class="lbl">Alert set</div><div class="seg" data-seg="preset"><button aria-pressed="false" data-v="calm">Calm</button><button aria-pressed="true" data-v="standard">Standard</button><button aria-pressed="false" data-v="full">Full</button><button aria-pressed="false" data-v="custom" disabled>Custom</button></div><div class="help">Pick a starting set. Changing any row below turns it into Custom. Calm is one quiet caption at a fixed place with the gentlest sound and buzz. Standard is the usual. Full tells you everything.</div></div>
+    <div class="sub">On screen</div>
+    <div class="setrow"><div class="lbl">Screen edge line</div><div class="seg" data-seg="edge"><button aria-pressed="false" data-v="off">Off</button><button aria-pressed="true" data-v="offscreen">Off screen only</button><button aria-pressed="false" data-v="always">Always</button></div><div class="help">The thin line at the edge on the shooter's side. Off screen only shows it just when you cannot see him.</div></div>
+    <div class="setrow"><div class="lbl">Edge line thickness</div><div class="seg" data-seg="width"><button aria-pressed="false" data-v="thin">Thin</button><button aria-pressed="true" data-v="medium">Medium</button><button aria-pressed="false" data-v="thick">Thick</button></div></div>
+    <div class="setrow"><div class="lbl">Caption</div><div class="swl"><span class="w" data-w="caption">Off</span><button class="sw" role="switch" aria-checked="false" aria-label="Caption" data-k="caption"></button></div><div class="help">Words and buttons at the edge, with the bar.</div></div>
+    <div class="setrow"><div class="lbl">Caption size</div><div class="seg" data-seg="capsize"><button aria-pressed="false" data-v="s">Small</button><button aria-pressed="true" data-v="m">Medium</button><button aria-pressed="false" data-v="l">Large</button></div><div class="help">Large is clearly larger, and the words also follow the game's Text size.</div></div>
+    <div class="setrow"><div class="lbl">Caption place</div><div class="seg" data-seg="cappos"><button aria-pressed="true" data-v="side">Shooter's side</button><button aria-pressed="false" data-v="bottom">Bottom centre</button></div><div class="help">Bottom centre is one fixed place under the fight, for players who do not want a mark that moves with the rival.</div></div>
+    <div class="setrow"><div class="lbl">Early warning</div><div class="swl"><span class="w" data-w="early">Off</span><button class="sw" role="switch" aria-checked="false" aria-label="Early warning" data-k="early"></button></div><div class="help">Also shows BEAM CHARGING while the rival gathers a beam, before it is fired. It is the same mark, and it turns into the answers when the beam leaves his hand.</div></div>
+    <div class="sub">In the picture</div>
+    <div class="setrow"><div class="lbl">Glint at the shooter's hand</div><div class="seg" data-seg="glint"><button aria-pressed="false" data-v="off">Off</button><button aria-pressed="true" data-v="normal">Normal</button><button aria-pressed="false" data-v="bright">Bright</button></div></div>
+    <div class="setrow"><div class="lbl">Air and light along the beam</div><div class="seg" data-seg="air"><button aria-pressed="false" data-v="off">Off</button><button aria-pressed="true" data-v="subtle">Subtle</button><button aria-pressed="false" data-v="strong">Strong</button></div></div>
+    <div class="sub">Sound and feel</div>
+    <div class="setrow"><div class="lbl">Incoming beam sound</div><div class="swl"><span class="w" data-w="sound">On</span><button class="sw" role="switch" aria-checked="true" aria-label="Incoming beam sound" data-k="sound"></button></div></div>
+    <div class="setrow"><div class="lbl">Sound volume</div><div class="seg" data-seg="vol"><button aria-pressed="false" data-v="low">Low</button><button aria-pressed="true" data-v="normal">Normal</button><button aria-pressed="false" data-v="loud">Loud</button></div><div class="help"><button class="btn" id="tryfeel">Try the sound and the buzz</button></div></div>
+    <div class="setrow"><div class="lbl">Incoming beam rumble</div><div class="swl"><span class="w" data-w="rumble">On</span><button class="sw" role="switch" aria-checked="true" aria-label="Incoming beam rumble" data-k="rumble"></button></div><div class="help">Only on a controller. The row is hidden for a keyboard.</div></div>
+    <div class="setrow"><div class="lbl">Rumble strength</div><div class="seg" data-seg="rstr"><button aria-pressed="false" data-v="low">Low</button><button aria-pressed="true" data-v="medium">Medium</button><button aria-pressed="false" data-v="high">High</button></div></div>
+    <div class="sub">Which beams, and how it looks</div>
+    <div class="setrow"><div class="lbl">Which beams warn</div><div class="seg" data-seg="which"><button aria-pressed="true" data-v="all">All</button><button aria-pressed="false" data-v="charged">Charged beams</button><button aria-pressed="false" data-v="signature">Signature only</button></div></div>
+    <div class="setrow"><div class="lbl">Colour-blind view</div><div class="seg" data-seg="cvd"><button aria-pressed="true" data-v="none">Normal view</button><button aria-pressed="false" data-v="protan">Red-green (1)</button><button aria-pressed="false" data-v="deutan">Red-green (2)</button><button aria-pressed="false" data-v="tritan">Blue-yellow</button></div><div class="help">Previews the scene as someone with that colour vision sees it. The marks use a shape and a word as well as a colour, and the game's colour-blind setting colours them.</div></div>
+    <div class="setrow"><div class="lbl">Reduce flashing</div><div class="swl"><span class="w" data-w="rf">On</span><button class="sw" role="switch" aria-checked="true" aria-label="Reduce flashing" data-k="rf"></button></div><div class="help">The game's own setting. While it is on, Strong air, Bright glint and Thick lines come down one step.</div></div>
+    <div class="setrow"><div class="lbl">More time to answer <span class="pill">only if the match allows it</span></div><div class="seg"><button disabled aria-pressed="false">Off</button><button disabled aria-pressed="false">A little</button><button disabled aria-pressed="false">More</button></div><div class="help">A longer time to answer changes how a fight plays out, so it is not just a display choice. It can be set in solo, co-op and training. In a versus match it is only there if the match setup allows it, and then both players can see that it is on.</div></div>
   </div>
   <div class="row small dim"><button class="btn" id="theme">Light / dark</button></div>
 </main>
 <script>
 "use strict";
-var S = { edge: true, chip: true, glint: true, sound: true, buzz: true, hc: false, size: "m", strength: "normal", pos: "toward", len: "exact", cvd: "none" };
-var WINDOW = 2400;      // the made-up length of the chance, in ms
-var timer = null, started = 0, holdOn = false;
+var PRESETS = {
+  calm: { edge: "off", width: "medium", caption: true, capsize: "m", cappos: "bottom", early: true, which: "all", glint: "normal", air: "off", sound: true, vol: "low", rumble: true, rstr: "low" },
+  standard: { edge: "offscreen", width: "medium", caption: false, capsize: "m", cappos: "side", early: false, which: "all", glint: "normal", air: "subtle", sound: true, vol: "normal", rumble: true, rstr: "medium" },
+  full: { edge: "always", width: "thick", caption: true, capsize: "m", cappos: "side", early: true, which: "all", glint: "bright", air: "strong", sound: true, vol: "loud", rumble: true, rstr: "high" }
+};
+var S = Object.assign({ cappos: "side", preset: "standard", cvd: "none", rf: true, off: false, gather: false }, PRESETS.standard);
+var WINDOW = 2600, GATHER = 900, DODGE_TICKS = 14, TRAVEL_PX = 56;
+var raf = null, started = 0, running = false;
 var $ = function (id) { return document.getElementById(id); };
 var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-function pad(btn) {   // the neutral position diamond; the pressed place filled
-  var d = { N: [14, 5], E: [23, 14], S: [14, 23], W: [5, 14] }, on = { B: "E", LT: "" }[btn], s = '<svg class="pad" width="26" height="24" viewBox="0 0 28 28" aria-hidden="true">';
-  if (btn === "LT") return '<span class="pad" style="border:2px solid #14161f;border-radius:7px;padding:0 5px;font-size:.8rem">LT</span>';
-  Object.keys(d).forEach(function (k) { s += k === on ? '<circle cx="' + d[k][0] + '" cy="' + d[k][1] + '" r="4" fill="#14161f"/>' : '<circle cx="' + d[k][0] + '" cy="' + d[k][1] + '" r="3" fill="none" stroke="#14161f" stroke-width="1.6"/>'; });
-  return s + '</svg>';
+function eff(k) {   // Reduce flashing brings the strong settings down one step
+  var v = S[k];
+  if (S.rf) { if (k === "air" && v === "strong") return "subtle"; if (k === "glint" && v === "bright") return "normal"; if (k === "width" && v === "thick") return "medium"; }
+  return v;
 }
-function scale() { return { s: 0.82, m: 1, l: 1.3 }[S.size]; }
-function bright() { return { subtle: 0.78, normal: 1, strong: 1 }[S.strength]; }
-function bw() { return { subtle: 2, normal: 3, strong: 5 }[S.strength]; }
-function content(withBar) {
-  return pad("B") + '<span>FIRE BACK</span> <span style="font-weight:600">or</span> ' + pad("LT") + '<span>DODGE</span>' + (withBar ? '<div class="bar"><i class="barfill"></i></div>' : "");
+function setPreset(name) { S.preset = name; if (PRESETS[name]) Object.assign(S, PRESETS[name]); sync(); }
+function sync() {
+  document.querySelectorAll("[data-seg]").forEach(function (seg) { var k = seg.dataset.seg; seg.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", String(S[k]) === b.dataset.v ? "true" : "false"); }); });
+  document.querySelectorAll(".sw").forEach(function (b) { var k = b.dataset.k; b.setAttribute("aria-checked", !!S[k]); var w = document.querySelector('[data-w="' + k + '"]'); if (w) w.textContent = S[k] ? "On" : "Off"; });
+  var cust = document.querySelector('[data-seg="preset"] [data-v="custom"]'); cust.disabled = S.preset !== "custom";
+  $("wrap").className = "stagewrap" + (S.cvd === "none" ? "" : " f-" + S.cvd);
+  $("offscreen").setAttribute("aria-pressed", S.off); $("charge").setAttribute("aria-pressed", S.gather);
+  frame(running ? (performance.now() - started) : -1);
 }
-function applyStyle(e) {
-  e.style.fontSize = (0.8 * scale()) + "rem";
-  e.style.borderWidth = bw() + "px";
-  e.style.opacity = bright();   // a steady level, never changing in time
-  e.classList.toggle("hc", S.hc);
-}
-function layout() {
-  var e = $("aEdge"), c = $("aChip"), g = $("aGlint");
-  e.innerHTML = '<svg class="chev" viewBox="0 0 18 22" aria-hidden="true"><path d="M5 2l9 9-9 9" fill="none" stroke="#14161f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><div>' + content(true) + '</div>';
-  if (S.pos === "toward") { e.style.cssText = "right:1.5%;top:34%;left:auto;bottom:auto"; }
-  else if (S.pos === "corner") { e.style.cssText = "right:1.5%;bottom:3%;left:auto;top:auto"; }
-  else { e.style.cssText = "left:3%;top:38%;right:auto;bottom:auto"; }
-  c.innerHTML = '<div style="font-size:.7em;font-weight:700;letter-spacing:.04em">YOUR CHANCE</div>' + content(true);
-  c.style.cssText = "left:3%;top:15%";
-  g.style.cssText = "right:" + (22 + 52 * 0.12) + "%;bottom:" + (33 - 1) + "%;width:" + (5 * scale()) + "%";
-  g.style.background = "none"; g.style.border = "0";
-  g.innerHTML = '<svg viewBox="0 0 40 40" width="100%" aria-hidden="true"><path d="M20 0l4 16 16 4-16 4-4 16-4-16L0 20l16-4z" fill="#fff4b8" stroke="#14161f" stroke-width="' + (S.strength === "strong" ? 3 : 2) + '" stroke-linejoin="round"/></svg>';
-  g.style.opacity = bright();
-  applyStyle(e); applyStyle(c);
-  e.style.fontSize = (0.8 * scale()) + "rem"; c.style.fontSize = (0.8 * scale()) + "rem";
-}
-function show(on) {
-  $("beam").classList.toggle("hidden", !on);
-  $("aEdge").classList.toggle("hidden", !(on && S.edge));
-  $("aChip").classList.toggle("hidden", !(on && S.chip));
-  $("aGlint").classList.toggle("hidden", !(on && S.glint));
-  $("state").textContent = on ? "the chance is open" : (holdOn ? "kept up" : "idle");
-  var parts = [];
-  if (on) {
-    if (S.edge) parts.push("edge mark" + (S.pos === "toward" ? " on the rival's side" : S.pos === "corner" ? " in the bottom corner" : " beside your plate"));
-    if (S.chip) parts.push("plate tag");
-    if (S.glint) parts.push("glint on the beam");
-    if (S.sound) parts.push("two rising notes");
-    if (S.buzz) parts.push("two buzzes");
+function custom() { if (S.preset !== "custom") S.preset = "custom"; }
+
+function keys(open) { return '<span class="key">RB</span>FIRE BACK'; }
+function frame(el) {
+  var stage = $("stage"), W = stage.clientWidth, H = stage.clientHeight;
+  var live = el >= 0, gath = live && S.gather && el < GATHER, inwin = live && el >= (S.gather ? GATHER : 0) && el < (S.gather ? GATHER : 0) + WINDOW;
+  var t = inwin ? (el - (S.gather ? GATHER : 0)) / WINDOW : 0, level = 1;
+  var wanted = S.which === "all" || S.which === "charged" || (S.which === "signature" && false);
+  $("rival").style.right = S.off ? "-12%" : "16%"; $("rtag").style.right = S.off ? "-12%" : "15%";
+  // the shooter's glint: while gathering and at the moment of firing
+  var gl = eff("glint"); $("glint").classList.toggle("hidden", !((gath || (inwin && t < 0.12)) && gl !== "off" && !S.off));
+  $("glint").style.width = (gl === "bright" ? 6.5 : 4.5) + "%"; $("glint").style.right = "20%";
+  // the front travels from the hand toward you; arrival is the end of the window
+  var fw = inwin ? Math.max(0.02, t) * 56 : 0;
+  $("front").classList.toggle("hidden", !inwin); $("front").style.width = fw + "%";
+  var air = eff("air"); $("air").classList.toggle("hidden", !(inwin && air !== "off")); $("sweep").classList.toggle("hidden", !(inwin && air !== "off"));
+  $("air").style.right = (22 + fw) + "%"; $("air").style.borderLeftWidth = (air === "strong" ? 6 : 3) + "px"; $("sweep").style.width = fw + "%"; $("sweep").style.opacity = air === "strong" ? 1 : 0.55;
+  // the screen edge line (the rival is on the right)
+  var edge = S.edge, showEdge = (inwin || (gath && S.early)) && wanted && (edge === "always" || (edge === "offscreen" && S.off));
+  var wpx = { thin: 3, medium: 6, thick: 10 }[eff("width")];
+  $("edge").classList.toggle("hidden", !showEdge); $("mark").classList.toggle("hidden", !showEdge);
+  var ramp = inwin ? Math.min(1, (el - (S.gather ? GATHER : 0)) / 100) : 1;   // it ramps in over 6 ticks (0.1 s) and never blinks
+  $("edge").style.opacity = ramp; $("mark").style.opacity = ramp;
+  $("edge").style.width = wpx + "px"; $("edge").style.right = "0"; $("edge").style.background = "#b04adf";
+  $("mark").style.right = wpx + "px"; $("mark").style.borderRight = "20px solid #b04adf"; $("mark").style.borderLeft = "0";
+  // the caption
+  var showCap = S.caption && wanted && (inwin || (gath && S.early));
+  var cap = $("cap"); cap.classList.toggle("hidden", !showCap);
+  if (showCap) {
+    var sz = { s: 0.75, m: 0.95, l: 1.45 }[S.capsize], leftTicks = inwin ? (1 - t) * (WINDOW / 1000 * 60) : 0, dodge = inwin && leftTicks <= DODGE_TICKS;
+    var zone = DODGE_TICKS / (WINDOW / 1000 * 60);
+    var frac = inwin ? (reduce ? Math.floor((1 - t) * 4) / 4 : 1 - t) : 1;
+    cap.style.fontSize = sz + "rem";
+    if (S.cappos === "bottom") { cap.style.right = "auto"; cap.style.left = "50%"; cap.style.transform = "translateX(-50%)"; cap.style.top = "auto"; cap.style.bottom = "4%"; }
+    else { cap.style.left = "auto"; cap.style.transform = "none"; cap.style.right = (wpx + 8) + "px"; cap.style.top = "40%"; cap.style.bottom = "auto"; }
+    cap.innerHTML = '<div class="t">' + (inwin ? "BEAM INCOMING" : "BEAM CHARGING") + '</div>' + (inwin ? '<div class="a"><span><span class="key">RB</span>FIRE BACK</span><span class="' + (dodge ? "" : "off") + '"><span class="key">LT</span>DODGE</span></div><div class="bar"><i style="width:' + (frac * 100) + '%"></i><b style="left:' + (zone * 100) + '%"></b></div>' : "");
   }
-  $("caption").textContent = on ? "Showing: " + (parts.join(", ") || "nothing (every alert is off)") + "." : "Press Show it.";
+  var parts = [];
+  if (live) {
+    if (!wanted) parts.push("nothing: this beam is not one you asked to be told of");
+    if (showEdge) parts.push("edge line"); if (showCap) parts.push("caption");
+    if (inwin && eff("glint") !== "off") parts.push("glint at the hand"); if (inwin && eff("air") !== "off") parts.push("air and light"); if (inwin && S.sound) parts.push("rising note"); if (inwin && S.rumble) parts.push("buzz");
+  }
+  $("caption").textContent = live ? "Showing: " + (parts.join(", ") || "only the beam itself") + "." : "Press Show it.";
+  $("state").textContent = !live ? "idle" : gath ? "the rival is gathering a beam" : inwin ? "the chance is open" : "idle";
 }
-function bars(frac) { document.querySelectorAll(".barfill").forEach(function (b) { b.style.width = Math.max(0, frac * 100) + "%"; }); }
-function play() {
-  clearInterval(timer); layout(); show(true); started = performance.now();
-  if (S.sound) feel(true);
-  timer = setInterval(function () {
-    var el = performance.now() - started, left = 1 - el / WINDOW;
-    bars(left);
-    if (el >= WINDOW + (S.len === "linger" ? 500 : 0) && !holdOn) { clearInterval(timer); show(false); }
-    if (el >= WINDOW && S.len === "linger" && !holdOn) { /* the tag stays, the bar is empty: it shows the chance has ended */ }
-  }, 50);
+function loop() {
+  var el = performance.now() - started, total = (S.gather ? GATHER : 0) + WINDOW;
+  if (el >= total) { running = false; clearInterval(raf); frame(-1); return; }
+  frame(el);
 }
+function play() { clearInterval(raf); started = performance.now(); running = true; if (S.sound) feel(true); loop(); raf = setInterval(loop, 33); }
 function feel(soundOnly) {
   if (S.sound) try {
-    var A = new (window.AudioContext || window.webkitAudioContext)(), g = A.createGain(), vol = { subtle: 0.04, normal: 0.09, strong: 0.16 }[S.strength];
-    g.gain.value = vol; g.connect(A.destination);
-    [[660, 0], [880, 0.14]].forEach(function (n) { var o = A.createOscillator(); o.type = "triangle"; o.frequency.value = n[0]; o.connect(g); o.start(A.currentTime + n[1]); o.stop(A.currentTime + n[1] + 0.11); });
+    var A = new (window.AudioContext || window.webkitAudioContext)(), g = A.createGain(), vol = { low: 0.03, normal: 0.07, loud: 0.14 }[S.vol], o = A.createOscillator();
+    g.gain.value = vol; g.connect(A.destination); o.type = "triangle"; o.frequency.setValueAtTime(140, A.currentTime); o.frequency.linearRampToValueAtTime(330, A.currentTime + 0.9); o.connect(g); o.start(); o.stop(A.currentTime + 0.9);
   } catch (e) {}
-  if (!soundOnly && S.buzz && navigator.vibrate) navigator.vibrate({ subtle: [40, 60, 40], normal: [70, 60, 70], strong: [120, 60, 120] }[S.strength]);
+  if (!soundOnly && S.rumble && navigator.vibrate) navigator.vibrate({ low: [30, 40, 50, 40, 70], medium: [40, 40, 70, 40, 110], high: [60, 40, 110, 40, 180] }[S.rstr]);
 }
 $("play").onclick = play;
-$("hold").onclick = function () { holdOn = !holdOn; this.setAttribute("aria-pressed", holdOn); this.textContent = holdOn ? "Let it go" : "Keep it up"; if (holdOn) { clearInterval(timer); layout(); show(true); bars(1); } else show(false); };
-$("testFeel").onclick = function () { feel(false); };
+$("tryfeel").onclick = function () { feel(false); };
+$("offscreen").onclick = function () { S.off = !S.off; sync(); };
+$("charge").onclick = function () { S.gather = !S.gather; sync(); };
 document.querySelectorAll(".sw").forEach(function (b) {
-  b.onclick = function () { var k = b.dataset.k; S[k] = !S[k]; b.setAttribute("aria-checked", S[k]); document.querySelector('[data-w="' + k + '"]').textContent = S[k] ? "On" : "Off"; layout(); if (holdOn) show(true); else if (!$("beam").classList.contains("hidden")) show(true); };
+  b.onclick = function () { var k = b.dataset.k; S[k] = !S[k]; if (k !== "rf") custom(); sync(); };
 });
 document.querySelectorAll("[data-seg]").forEach(function (seg) {
   var key = seg.dataset.seg;
-  if (!key) return;
   seg.querySelectorAll("button:not([disabled])").forEach(function (b) {
-    b.onclick = function () {
-      S[key] = b.dataset.v;
-      seg.querySelectorAll("button").forEach(function (o) { o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
-      if (key === "cvd") $("wrap").className = "stagewrap" + (S.cvd === "none" ? "" : " f-" + S.cvd);
-      layout(); if (!$("beam").classList.contains("hidden")) show(true);
-    };
+    b.onclick = function () { if (key === "preset") setPreset(b.dataset.v); else { S[key] = b.dataset.v; if (key !== "cvd") custom(); sync(); } };
   });
 });
 $("theme").onclick = function () { var r = document.documentElement, dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches; r.dataset.theme = dark ? "light" : "dark"; };
-layout(); show(false);
+sync();
 </script>
 </body>
 </html>

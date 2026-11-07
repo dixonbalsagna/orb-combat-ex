@@ -45,11 +45,11 @@ func _with(block, f: Callable) -> void:
 
 func _data() -> void:
 	var ks: Array = SimHaptics.kinds()
-	var want: Array = ["launch_open", "form_prompt", "brake_ready", "charge_full", "clinch_pulse", "struggle_push", "struggle_pushed", "struggle_lose"]
+	var want: Array = ["launch_open", "form_prompt", "brake_ready", "charge_full", "clinch_pulse", "struggle_push", "struggle_pushed", "struggle_lose", "ladder_1", "ladder_2", "ladder_3", "incoming_high", "incoming_low", "incoming_beam", "stick_refused", "release_thump", "blow_land", "hit_taken", "close_surge", "launch_felt", "landing_thud", "building_break"]
 	var has_all: bool = ks.size() == want.size()
 	for w in want:
 		has_all = has_all and ks.has(w)
-	ok(has_all, "data: the eight kinds (the six asked for, the struggle's push and being pushed, and the loser's end)")
+	ok(has_all, "data: the twenty-two kinds (the eight, and the strike stick's three ladder rungs and two incoming cues, and the beam window's, switches.hapticLadder, hapticIncoming and hapticIncomingBeam)")
 	ok(not ks.has("struggle_pulse") and not ks.has("struggle_surge"), "data: the beat-aligned struggle kinds are retired (Orb: not on the beat)")
 	ok(SimHaptics.min_gap_ms() == 80, "data: requests for one slot are at least 80 ms apart")
 	# The data file and the code defaults agree.

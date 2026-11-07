@@ -533,10 +533,16 @@ static func _args(b: Dictionary, ctx: Dictionary, w: String):
 
 # ---------------------------------------------------------------- chain link, signature, finisher
 
-static func planChain(ex) -> void:
+static func planChain(ex, powerOn: bool = false) -> void:
 	_ensure()
 	var cl: Dictionary = _tpl.chainLink
+	var had: Array = ex.beats.duplicate() if powerOn else []
 	_scheduleList(ex, cl[tplProfile()], {"heavy": false}, ex.t, "")
+	if powerOn:   # one energy model: a chain link's send is its own share, whichever template it's running on
+		for b in ex.beats:
+			if b.op == "launch" and not had.has(b):
+				b.args = b.args.duplicate()
+				b.args["share"] = "chainLink"
 
 
 ## Plans a signature: outcome by the beam rules (their draws), the tag, and the beams' plan beats.

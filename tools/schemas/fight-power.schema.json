@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/fight-power",
+  "title": "fight-power (schema \"fight.power/1\")",
+  "description": "data/fight/power.json: one energy model's switch and numbers (docs/design/power-scale.md). Policy: closed; a key starting with _ is a comment.",
+  "type": "object",
+  "required": [
+    "schema",
+    "enabled",
+    "level",
+    "energy",
+    "speedUnit",
+    "popForce",
+    "share",
+    "kitFields",
+    "absorb",
+    "contact",
+    "burn",
+    "beam",
+    "flight",
+    "launchTravel",
+    "meteorSpeed"
+  ],
+  "properties": {
+    "schema": {
+      "const": "fight.power/1"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "level": {
+      "type": "object",
+      "required": [
+        "tierShare",
+        "powerShare"
+      ],
+      "properties": {
+        "tierShare": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "powerShare": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "energy": {
+      "type": "object",
+      "required": [
+        "base",
+        "topOverBase"
+      ],
+      "properties": {
+        "base": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "topOverBase": {
+          "type": "number",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "speedUnit": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "share": {
+      "type": "object",
+      "required": [
+        "fullB",
+        "launcher",
+        "driverLevel3",
+        "chase",
+        "knock",
+        "brawl",
+        "beam",
+        "breakLaunch",
+        "finisher",
+        "koFallback",
+        "stylePop",
+        "templates"
+      ]
+    },
+    "kitFields": {
+      "type": "object"
+    },
+    "popForce": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "absorb": {
+      "type": "object",
+      "required": [
+        "house",
+        "lowTower",
+        "tallTower"
+      ],
+      "properties": {
+        "house": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "lowTower": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "tallTower": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "contact": {
+      "type": "object",
+      "required": [
+        "maxTerrainBounces"
+      ],
+      "properties": {
+        "maxTerrainBounces": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "burn": {
+      "type": "object",
+      "required": [
+        "glow",
+        "full"
+      ],
+      "properties": {
+        "glow": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "full": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "beam": {
+      "type": "object",
+      "required": [
+        "halfWidth",
+        "depthShare",
+        "levels",
+        "signature"
+      ],
+      "properties": {
+        "halfWidth": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "depthShare": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "levels": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "signature": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "flight": {
+      "type": "object",
+      "required": [
+        "flatOut",
+        "growth",
+        "min",
+        "max"
+      ],
+      "properties": {
+        "flatOut": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "growth": {
+          "type": "number",
+          "minimum": 1
+        },
+        "min": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "max": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "launchTravel": {
+      "type": "number",
+      "minimum": 1
+    },
+    "meteorSpeed": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

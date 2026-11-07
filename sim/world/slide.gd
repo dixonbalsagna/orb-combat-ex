@@ -47,7 +47,7 @@ const LIST_MAX: int = 200              # persistent slide records (S.slides)
 static func launchTravel(ux: float, uy: float) -> float:
 	var ax: float = absf(ux)
 	var s: float = ax / (ax + absf(uy) + 1e-9)
-	return 1.0 + (SimConst.TRAV_LAUNCH - 1.0) * s
+	return 1.0 + (SimPower.trav - 1.0) * s
 
 
 ## The launch velocity for a plan direction and force: the horizontal part carries the traversal factor.

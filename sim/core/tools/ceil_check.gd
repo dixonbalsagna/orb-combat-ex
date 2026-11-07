@@ -1,6 +1,7 @@
 extends SceneTree
 ## The planet's height ceiling (SimField.planetCeilAt): godot --headless --path . --script res://sim/core/tools/ceil_check.gd
-## It must be a true upper bound: never under groundCeilAt on any line, and never under a far read of the ground or the sea it stands for. Tried in AI fights on the line and on turned
+## It must be a true upper bound: never under a far read of the ground or the sea it stands for, on any line (the launch plan's reads). groundCeilAt adds a stretch's highest
+## ground to its deepest water, from different columns, so beside a lake it stands above any read and the table's lake level can be under it, still true: that's reported. Tried in AI fights on the line and on turned
 ## lines, after craters with rims, across a rollback and on a second state. A match hashes the same with the table on or off. --negative-control breaks the bound three ways and the
 ## comparison must see each.
 
@@ -115,8 +116,9 @@ func _fights(su: Dictionary) -> void:
 				slack += r[5]
 				walks += 1
 	print("fight planet %d: %d of %d stretches said, %d under the read's ceiling, %d under a far read, worst %.3f; it stands %.0f above the read's ceiling on average; %d records" % [int(su.planet), said, all, underC, underR, worst, slack / float(maxi(walks, 1)), S.storeN])
-	ok(underC == 0 and underR == 0, "planet %d: a true upper bound in a fight (%d, %d, worst %.3f)" % [int(su.planet), underC, underR, worst])
+	ok(underR == 0, "planet %d: a true upper bound on every far read in a fight (%d under it; %d stretches under the read's own ceiling, worst %.3f)" % [int(su.planet), underR, underC, worst])
 	ok(said > all / 2, "planet %d: it says something over most of the planet (%d of %d)" % [int(su.planet), said, all])
+	ok(said * 10 >= all * 9, "planet %d: near a face's edge and beside a lake too, it says something over nine in ten (%d of %d)" % [int(su.planet), said, all])
 	SimCore.dispose(S)
 	DirSwing.setForce(-1)
 
@@ -135,23 +137,23 @@ func _craters() -> void:
 	for rim in [40.0, 400.0, 900.0, 900.0, 2500.0]:
 		WorldStore.add(S, q[0], q[1], q[2], 500.0, 100.0, rim, 1.0, 0, 0, 0.0, 0)
 		var r: Array = _walk(S, 4)
-		ok(r[1] == 0 and r[2] == 0, "true after a rim of %.0f (%d, %d, worst %.3f)" % [rim, r[1], r[2], r[3]])
+		ok(r[2] == 0, "true after a rim of %.0f (%d under a read; %d under the read's ceiling, worst %.3f)" % [rim, r[2], r[1], r[3]])
 	var b1: float = SimField.planetCeilAt(S, col)
 	ok(b1 > b0 + 4000.0, "the rims lift it (%.0f to %.0f)" % [b0, b1])
 	NetSnapshot.restore(S, snap)
 	ok(SimField.planetCeilAt(S, col) == b0, "a rollback takes them off (%.0f, %.0f)" % [SimField.planetCeilAt(S, col), b0])
 	var r2: Array = _walk(S, 4)
-	ok(r2[1] == 0 and r2[2] == 0, "true after the rollback (%d, %d)" % [r2[1], r2[2]])
+	ok(r2[2] == 0, "true after the rollback (%d, %d)" % [r2[2], r2[1]])
 	WorldStore.add(S, q[0], q[1], q[2], 500.0, 100.0, 1500.0, 1.0, 0, 0, 0.0, 0)
 	var r3: Array = _walk(S, 4)
-	ok(r3[1] == 0 and r3[2] == 0, "true after a crater on the rolled back store (%d, %d)" % [r3[1], r3[2]])
+	ok(r3[2] == 0, "true after a crater on the rolled back store (%d, %d)" % [r3[2], r3[1]])
 	# a second state, its store its own
 	var B := _new(false)
 	_ready_(B)
 	var r4: Array = _walk(B, 8)
-	ok(r4[1] == 0 and r4[2] == 0, "true on a second state (%d, %d)" % [r4[1], r4[2]])
+	ok(r4[2] == 0, "true on a second state (%d, %d)" % [r4[2], r4[1]])
 	var r5: Array = _walk(S, 8)
-	ok(r5[1] == 0 and r5[2] == 0, "and on the first, read after it (%d, %d)" % [r5[1], r5[2]])
+	ok(r5[2] == 0, "and on the first, read after it (%d, %d)" % [r5[2], r5[1]])
 	SimCore.dispose(S)
 	SimCore.dispose(B)
 

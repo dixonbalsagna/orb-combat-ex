@@ -24,6 +24,7 @@ func _initialize() -> void:
 func _run() -> void:
 	_terms()
 	UiData.set_feature("minimal_hud", false)   # minimal_hud is on as shipped (features.json); the older rules look at the full HUD, and _minimal_hud_rules runs the shipped default and the rest explicitly
+	_live_on()
 	_layouts()
 	_bark_timing()
 	_hub_rules()
@@ -91,6 +92,19 @@ func _run() -> void:
 	await _right_hand_rules()
 	await _planet_map_rules()
 	await _acc_rules()
+	await _legend_clear_rules()
+	await _answer_alert_rules()
+	await _brink_read_rules()
+	await _versus_flow_rules()
+	_first_press_words_rules()
+	await _legend_quiet_rules()
+	_quiet_banner_rules()
+	await _chip_clear_rules()
+	await _legend_beam_rules()
+	await _beam_teach_rules()
+	await _cross_end_rules()
+	await _refusal_struggle_rules()
+	await _refusal_take_rules()
 	await _pause_menu_rules()
 	await _faces_rules()
 	await _two_player_rules()
@@ -350,11 +364,648 @@ func _acc_rules() -> void:
 	_rh_switch(false)
 
 
+# --- legend_clear: the control legend never sits on a fighter's body (a clean cut, no fade) --------------------------------------------------------------
+
+func _legend_clear_rules() -> void:
+	UiData.set_feature("legend_clear", false)
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = false
+	hud.set_option("control_hints", "always")
+	var spot := [Vector2.ZERO, Vector2.ZERO]
+	var hr: Rect2 = hud.layout.hints[1]
+	hud.anchor_fn = func(slot: int) -> Dictionary:
+		return {"pos": spot[slot], "h": hud.layout.vp.y * 0.12, "visible": true}
+	var mid: Vector2 = hud.layout.vp * 0.5
+	spot[0] = mid
+	spot[1] = mid + Vector2(40.0, 0.0)
+	var step := func(n: int) -> void:
+		for i in range(n):
+			hud.advance(1.0 / 60.0)
+			await process_frame
+	await step.call(6)
+	_ok(hr.size.y > 0.0 and hud._l_hints[1].sig != null, "legend clear: with no body near it the legend is drawn")
+	var lbox: Rect2 = UiHints.screen_box(hud.hub.model(1), hr, hud.layout.s, hud._o())
+	spot[1] = lbox.get_center()   # the rival stands under the legend
+	await step.call(4)
+	var flag_off: bool = hud._l_hints[1].sig != null
+	UiData.set_feature("legend_clear", true)
+	await step.call(4)
+	var hidden_on: bool = hud._l_hints[1].sig == null
+	var other_ok: bool = hud._l_hints[0].sig != null
+	spot[1] = mid + Vector2(40.0, 0.0)
+	await step.call(20)   # 0.33 s clear: still held hidden
+	var held: bool = hud._l_hints[1].sig == null
+	await step.call(30)   # past 0.6 s: back
+	var back: bool = hud._l_hints[1].sig != null
+	# The legend's comings and goings are cuts: no ramp in the intro's last seconds, in a stance's pop, or in the gate.
+	var mm: UiFighterModel = hud.hub.model(0)
+	UiData.set_feature("legend_clear", false)
+	var ramp_off: float = UiHints.visible_alpha(mm, "auto", false, 11.0)
+	UiData.set_feature("legend_clear", true)
+	var cut_ok: bool = UiHints.visible_alpha(mm, "auto", false, 11.0) == 1.0 and UiHints.visible_alpha(mm, "auto", false, 11.9) == 1.0 and UiHints.visible_alpha(mm, "auto", false, 12.1) == 0.0
+	mm.stance_kind_t = 2.9
+	var pop_on: float = UiHints.legend_alpha(mm, "auto", false, 40.0)
+	mm.stance_kind_t = 3.2
+	var pop_off: float = UiHints.legend_alpha(mm, "auto", false, 40.0)
+	var g := {"a": 0.0, "on": false, "t": -1.0e9}
+	hud._gate_step(g, 1.0, false, true)
+	var up_a: float = float(g["a"])
+	g["t"] = -1.0e9
+	hud._gate_step(g, 0.0, false, true)
+	var down_a: float = float(g["a"])
+	_ok(is_equal_approx(ramp_off, 0.5) and cut_ok and pop_on == 1.0 and pop_off == 0.0 and up_a == 1.0 and down_a == 0.0, "legend clear: with the switch on the legend is up for the intro and then gone, a stance's pop likewise, and the gate cuts instead of fading (off keeps the old ramp)")
+	UiData.set_feature("legend_clear", null)
+	_ok(flag_off, "legend clear: with the switch off the legend is as it was, over a body or not")
+	_ok(hidden_on and other_ok, "legend clear: with the switch on a legend over a body is not drawn, and the other player's is untouched")
+	_ok(held and back, "legend clear: it stays hidden until the body has been clear for 0.6 s, then comes back (no blinking, no fade)")
+	hud.queue_free()
+	await process_frame
+
+
+# --- The beam answer alert (docs/ui/beam-answer-alert.md): cues, settings, sets, the line and the caption, behind the feature answer_alert ---------------------------
+
+func _answer_alert_rules() -> void:
+	var hub := _hub()
+	# The cues. beam_window and beam_charge are the alert's, not the struggle's.
+	hub.consume({"type": "cue", "kind": "beam_charge", "text": "start", "actor": 1, "target": 0})
+	var charge_ok: bool = str(hub.alert.get("phase", "")) == "charge" and int(hub.alert["shooter"]) == 1 and int(hub.alert["target"]) == 0 and hub.tug.is_empty()
+	hub.consume({"type": "cue", "kind": "beam_window", "text": "start", "actor": 1, "target": 0, "n": 30, "k": 2})
+	var win: Dictionary = hub.alert.duplicate()
+	hub.consume({"type": "cue", "kind": "beam_charge", "text": "end", "actor": 1, "target": 0})
+	var still: bool = str(hub.alert.get("phase", "")) == "window"   # the gathering's end does not close the window
+	hub.consume({"type": "cue", "kind": "beam_window", "text": "end", "actor": 1, "target": 0})
+	var ending: bool = hub.alert.has("end_t")
+	for i in range(10):
+		hub.advance(1.0 / 60.0)   # the edge line ramps out over 6 ticks (RL-227), and the alert is gone after that
+	_ok(charge_ok and str(win["phase"]) == "window" and is_equal_approx(float(win["dur"]), 0.5) and int(win["level"]) == 2 and int(win["dodge_from"]) == 14 and still and ending and hub.alert.is_empty() and hub.tug.is_empty(), "beam alert: the charge and window cues set the alert, the end starts the 6-tick ramp out and then it is gone, and neither is a struggle")
+	hub.consume({"type": "cue", "kind": "beam_window", "text": "start", "actor": 1, "target": 0, "n": 40, "k": 1, "amount": 10.0})
+	var amt_ok: bool = int(hub.alert["dodge_from"]) == 10
+	hub.consume({"type": "cue", "kind": "beam_window", "text": "end", "actor": 1, "target": 0})
+	hub.advance(0.2)
+	_ok(amt_ok, "beam alert: the dodge's tick count comes in the cue's amount (14 when it is missing)")
+	# The dodge opens in the last 14 ticks; the bar runs down, in quarters under reduced motion.
+	var a30 := {"phase": "window", "dur": 0.5, "age": 0.0, "dodge_from": 14, "level": 1}
+	var early: bool = UiAnswerAlert.dodge_open(a30)
+	a30["age"] = 16.0 / 60.0
+	var late: bool = UiAnswerAlert.dodge_open(a30)
+	a30["age"] = 0.2
+	var steps: bool = is_equal_approx(UiAnswerAlert.run_frac(a30, true), 0.25) and UiAnswerAlert.run_frac(a30, false) > 0.39 and UiAnswerAlert.run_frac(a30, false) < 0.41
+	_ok(not early and late and steps, "beam alert: the dodge is open only in the last 14 ticks, and the bar steps in quarters under reduced motion")
+	# Sets, and the limit of Reduce flashing.
+	UiData.set_feature("answer_alert", true)
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.set_option("alert_preset", "full")
+	var full_ok: bool = hud.opts["alert_edge"] == "always" and bool(hud.opts["alert_caption"]) and hud.opts["alert_air"] == "strong" and hud.opts["alert_edge_width"] == "thick" and str(hud.opts["alert_preset"]) == "full" and hud.opts["alert_edge_p2"] == "offscreen"
+	hud.set_option("alert_edge", "off")
+	var custom_ok: bool = str(hud.opts["alert_preset"]) == "custom" and hud.opts["alert_caption"] == true and str(hud.opts["alert_preset_p2"]) == "standard"
+	hud.set_option("alert_preset_p2", "calm")
+	var p2_ok: bool = hud.opts["alert_caption_pos_p2"] == "bottom" and hud.opts["alert_edge_p2"] == "off" and bool(hud.opts["alert_caption_p2"]) and hud.opts["alert_caption_pos"] == "side"
+	_ok(full_ok and custom_ok and p2_ok, "beam alert: a set writes its rows for its player, a changed row makes it Custom, and player two's set is their own")
+	hud.set_option("reduce_flashing", true)
+	var capped: Dictionary = hud.alert_for(0)
+	hud.set_option("reduce_flashing", false)
+	var free: Dictionary = hud.alert_for(0)
+	hud.set_option("reduce_flashing", true)
+	_ok(capped["air"] == "subtle" and capped["glint"] == "normal" and capped["edge_width"] == "medium" and free["air"] == "strong" and free["glint"] == "bright" and free["edge_width"] == "thick", "beam alert: Reduce flashing brings the strong air, the bright glint and the thick line down a step, and the host reads that")
+	# Which beams warn, and the early warning.
+	var snap := {"phase": "window", "level": 0}
+	var l1 := {"phase": "window", "level": 1}
+	var sig4 := {"phase": "window", "level": 4}
+	var gath := {"phase": "charge", "level": 1}
+	_ok(UiAnswerAlert.wanted(snap, {"which": "all"}) and not UiAnswerAlert.wanted(snap, {"which": "charged"}) and UiAnswerAlert.wanted(l1, {"which": "charged"}) and not UiAnswerAlert.wanted(l1, {"which": "signature"}) and UiAnswerAlert.wanted(sig4, {"which": "signature"}) and not UiAnswerAlert.wanted(gath, {"which": "all", "early": false}) and UiAnswerAlert.wanted(gath, {"which": "all", "early": true}), "beam alert: Which beams warn picks by level, and a gathering shows only with Early warning")
+	# The side, the line's rectangle and the rule that nothing goes over a fighter.
+	var lay: UiLayout = hud.layout
+	var sd: Dictionary = UiAnswerAlert.side({"pos": Vector2(300, 400), "visible": true}, {"pos": Vector2(lay.vp.x + 500.0, 380), "visible": false}, lay.vp, false)
+	var sd2: Dictionary = UiAnswerAlert.side({"pos": Vector2(900, 400), "visible": true}, {"pos": Vector2(200, 380), "visible": true}, lay.vp, false)
+	var lr: Rect2 = UiAnswerAlert.line_rect(lay, 1, 400.0, {"edge_width": "thick"})
+	var lt: Rect2 = UiAnswerAlert.line_rect(lay, 1, 400.0, {"edge_width": "thin"})
+	var on_body: Rect2 = Rect2(lr.position + Vector2(-20.0, 10.0), Vector2(60, 80))
+	_ok(int(sd["dir"]) == 1 and bool(sd["off"]) and int(sd2["dir"]) == -1 and not bool(sd2["off"]) and lr.end.x == lay.vp.x and lr.size.x > lt.size.x and UiAnswerAlert._meets(lr, [on_body]) and not UiAnswerAlert._meets(lr, [Rect2(Vector2(100, 100), Vector2(60, 80))]), "beam alert: the line sits at the edge on the shooter's side, grows with its setting, and a mark that would meet a body is held back")
+	# Off: nothing is drawn, and Settings lists nothing. On: the section, per player.
+	UiData.set_feature("answer_alert", false)
+	var rows_off: PackedStringArray = _rh_keys(true)
+	var any_off := false
+	for k in rows_off:
+		any_off = any_off or k.begins_with("alert_")
+	var head_off := false
+	UiSettings.two_humans = false
+	for r in UiSettings.rows():
+		head_off = head_off or str(r.get("label", "")) == "Beam alerts"
+	UiData.set_feature("answer_alert", true)
+	var rows_one: PackedStringArray = _rh_keys(false)
+	var rows_two: PackedStringArray = _rh_keys(true)
+	var head_on := false
+	for r in UiSettings.rows():
+		head_on = head_on or str(r.get("label", "")) == "Beam alerts"
+	_ok(not any_off and not head_off and rows_one.has("alert_preset") and rows_one.has("alert_edge") and rows_one.has("alert_caption") and not rows_one.has("alert_edge_p2") and rows_two.has("alert_edge_p2") and not rows_one.has("alert_glint") and not rows_one.has("alert_sound") and not rows_one.has("alert_rumble"), "beam alert: with the feature off Settings has no section and no row; on, the rows list (player two's only with two people), and the glint, sound and rumble rows wait for their own flags")
+	UiData.set_feature("alert_vfx", true)
+	UiData.set_feature("alert_audio", true)
+	UiData.set_feature("alert_rumble", true)
+	var rows_live: PackedStringArray = _rh_keys(false)
+	UiData.set_feature("alert_vfx", null)
+	UiData.set_feature("alert_audio", null)
+	UiData.set_feature("alert_rumble", null)
+	_ok(head_on and rows_live.has("alert_glint") and rows_live.has("alert_air") and rows_live.has("alert_sound") and rows_live.has("alert_sound_volume") and rows_live.has("alert_rumble") and rows_live.has("alert_rumble_strength"), "beam alert: the glint, air, sound and rumble rows appear once VFX, Audio and Controls say their part is live")
+	# In the HUD: the target's alert draws, the computer's does not, the end clears it, the feature off draws nothing.
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	hud.set_option("alert_preset", "full")
+	var spot := [Vector2(300, 400), Vector2(1900, 380)]
+	hud.anchor_fn = func(slot: int) -> Dictionary:
+		return {"pos": spot[slot], "h": hud.layout.vp.y * 0.12, "visible": slot == 0}
+	var run := func(n: int) -> void:
+		for i in range(n):
+			hud.advance(1.0 / 60.0)
+			await process_frame
+	await run.call(3)
+	_ok(hud._l_alert.sig == null, "beam alert: no beam, no alert")
+	hud.hub.consume({"type": "cue", "kind": "beam_window", "text": "start", "actor": 1, "target": 0, "n": 90, "k": 1})
+	await run.call(4)
+	var shown: bool = hud._l_alert.sig != null
+	hud.hub.consume({"type": "cue", "kind": "beam_window", "text": "end", "actor": 1, "target": 0})
+	await run.call(12)
+	var cleared: bool = hud._l_alert.sig == null
+	hud.hub.consume({"type": "cue", "kind": "beam_window", "text": "start", "actor": 0, "target": 1, "n": 90, "k": 1})
+	await run.call(3)
+	var ai_quiet: bool = hud._l_alert.sig == null   # the computer is the target: it gets no alert
+	hud.hub.consume({"type": "cue", "kind": "beam_window", "text": "end", "actor": 0, "target": 1})
+	await run.call(12)
+	hud.hub.consume({"type": "cue", "kind": "beam_window", "text": "start", "actor": 1, "target": 0, "n": 90, "k": 1})
+	UiData.set_feature("answer_alert", false)
+	await run.call(3)
+	var off_quiet: bool = hud._l_alert.sig == null
+	UiData.set_feature("answer_alert", true)
+	hud.hub.consume({"type": "cue", "kind": "beam_window", "text": "end", "actor": 1, "target": 0})
+	await run.call(12)
+	_ok(shown and cleared and ai_quiet and off_quiet, "beam alert: the target's alert draws while the window is open and is gone at the end cue; the computer as target and the feature off draw nothing")
+	# RL-227: the edge line ramps over 6 ticks, is never white, gold or red, and the caption is at a fixed place on request and Large is clearly larger.
+	var ramp_in: bool = is_equal_approx(UiAnswerAlert.line_alpha({"age": 0.05}), 0.5) and UiAnswerAlert.line_alpha({"age": 1.0}) == 1.0
+	var ramp_out: bool = is_equal_approx(UiAnswerAlert.line_alpha({"age": 1.0, "end_t": 0.05}), 0.5) and UiAnswerAlert.line_alpha({"age": 1.0, "end_t": 0.1}) == 0.0
+	var col_ok: bool = UiAnswerAlert.safe_colour(Color("#ff2020")) != Color("#ff2020") and UiAnswerAlert.safe_colour(Color("#ffffff")) != Color("#ffffff") and UiAnswerAlert.safe_colour(Color("#f4c430")) != Color("#f4c430") and UiAnswerAlert.safe_colour(Color("#7a5d9a")) == Color("#7a5d9a") and UiAnswerAlert.safe_colour(Color("#3f7da3")) == Color("#3f7da3")
+	var side_r: Rect2 = UiAnswerAlert.caption_rect(lay, 1, 400.0, {"caption_pos": "side", "caption_size": "medium"}, 150.0, 150.0)
+	var bot_r: Rect2 = UiAnswerAlert.caption_rect(lay, 1, 400.0, {"caption_pos": "bottom", "caption_size": "medium"}, 150.0, 150.0)
+	var big_r: Rect2 = UiAnswerAlert.caption_rect(lay, 1, 400.0, {"caption_pos": "side", "caption_size": "large"}, 150.0, 150.0)
+	var small_r: Rect2 = UiAnswerAlert.caption_rect(lay, 1, 400.0, {"caption_pos": "side", "caption_size": "small"}, 150.0, 150.0)
+	_ok(ramp_in and ramp_out and col_ok, "beam alert: RL-227: the edge line ramps in and out over 6 ticks and is never white, gold or red")
+	_ok(side_r.end.x <= lay.safe.end.x and absf(bot_r.get_center().x - lay.vp.x * 0.5) < 1.0 and bot_r.end.y <= lay.safe.end.y and big_r.size.y > small_r.size.y * 1.6 and big_r.size.x > small_r.size.x, "beam alert: the caption sits on the shooter's side or at the bottom centre, and Large is clearly larger than Small")
+	UiData.set_feature("answer_alert", null)
+	hud.queue_free()
+	await process_frame
+
+
+# --- The brink read (docs/ui/hud-spec.md section 75): a steady mark and the words on the plate, kept on narrow plates, and the card again at the rival's opening ----------
+
+func _brink_read_rules() -> void:
+	var hub := _hub()
+	hub.consume({"type": "brink_enter", "actor": 0})
+	UiData.set_feature("brink_read", false)
+	hub.consume({"type": "brink_open", "actor": 0, "target": 1})
+	var off_card: bool = false
+	for c in hub.cards:
+		off_card = off_card or str(c.sub) == UiData.t("card.brink_open_sub")
+	UiData.set_feature("brink_read", true)
+	hub.consume({"type": "brink_open", "actor": 0, "target": 1})
+	var on_card: bool = false
+	for c in hub.cards:
+		on_card = on_card or (c.slot == 0 and c.key == "brink" and str(c.sub) == "A finishing move can end it.")
+	for c in hub.waiting:
+		on_card = on_card or (c.slot == 0 and c.key == "brink" and str(c.sub) == "A finishing move can end it.")
+	var not_brink := _hub()
+	not_brink.consume({"type": "brink_open", "actor": 0, "target": 1})
+	var quiet: bool = true
+	for c in not_brink.cards:
+		quiet = quiet and str(c.sub) != "A finishing move can end it."
+	_ok(not off_card and on_card and quiet, "brink read: the card repeats with its line when the rival's set-up opens a fighter on the brink, only with the switch on and only for a fighter who is on the brink")
+	# The plate draws at wide and narrow sizes with the brink on (no error), and no longer redraws to pulse.
+	for sz in [Vector2(1280, 720), Vector2(844, 390), Vector2(360, 640)]:
+		var hud := UiHud.new()
+		hud.size = sz
+		root.add_child(hud)
+		await process_frame
+		hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+		hud.hub.consume({"type": "brink_enter", "actor": 0})
+		for i in range(4):
+			hud.advance(1.0 / 60.0)
+			await process_frame
+		var s0: Variant = hud._l_plate[0].sig
+		for i in range(20):
+			hud.advance(1.0 / 60.0)
+			await process_frame
+		var s1: Variant = hud._l_plate[0].sig
+		_ok(s0 != null and s0 == s1, "brink read: at %dx%d the plate with the brink on is drawn and steady (its signature no longer changes with time)" % [int(sz.x), int(sz.y)])
+		hud.queue_free()
+		await process_frame
+
+
+# --- Versus flow on a pad (docs/ui/hud-spec.md section 76): the match-over card, the stick in the cards, the start menu on a pad ---------------------------------------
+
+func _versus_flow_rules() -> void:
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	var run := func(n: int, dt: float = 1.0 / 60.0) -> void:
+		for i in range(n):
+			hud.advance(dt)
+			await process_frame
+	# The card opens for a human's match without the menu, and not for the computer-only demo; the winner is named; Back goes to Play again.
+	hud.hub.consume({"type": "ko", "winner": 0, "loser": 1})
+	await run.call(220, 1.0 / 30.0)   # a little over 3 s of match-over time at 30 fps steps
+	var opened: bool = hud._pm_open and hud._pm_over
+	var facts: Array = hud.over_facts()
+	var named: bool = facts.size() >= 1 and str(facts[0]).contains("wins") and str(facts[0]).contains(str(hud.hub.models[0].name))
+	var list: Array = UiPause.ids(false, false, true)
+	hud._pm_focus = list.find("feedback")
+	hud.pause_menu_action("back")
+	var back_ok: bool = hud._pm_open and hud._pm_focus == list.find("again")
+	UiData.set_feature("versus_flow", false)
+	hud.pause_menu_action("back")
+	var back_old: bool = not hud._pm_open   # the old way: Back resumes (closes) the card
+	UiData.set_feature("versus_flow", null)
+	_ok(opened and named and back_ok and back_old, "versus flow: the match-over card opens for a human's match without the menu, names the winner, and Back on it goes to Play again (off: it closed the card)")
+	var demo := UiHud.new()
+	demo.size = Vector2(1280, 720)
+	root.add_child(demo)
+	await process_frame
+	demo.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	demo.hub.model(0).ai = true
+	demo.hub.model(1).ai = true
+	demo.hub.consume({"type": "ko", "winner": 0, "loser": 1})
+	for i in range(220):
+		demo.advance(1.0 / 30.0)
+		await process_frame
+	_ok(not demo._pm_open, "versus flow: the computer-only demo shows no match-over card")
+	demo.queue_free()
+	# The left stick steps an open card like the D-pad: once a push, and it must come back to rest.
+	hud.show_start_menu(false)
+	hud._menu_focus = 0
+	var mv := func(v: float) -> void:
+		var ev := InputEventJoypadMotion.new()
+		ev.device = 0
+		ev.axis = JOY_AXIS_LEFT_Y
+		ev.axis_value = v
+		hud._unhandled_input(ev)
+	mv.call(0.9)
+	var f1: int = hud._menu_focus
+	mv.call(0.95)
+	var f2: int = hud._menu_focus
+	mv.call(0.0)
+	mv.call(0.9)
+	var f3: int = hud._menu_focus
+	UiData.set_feature("versus_flow", false)
+	mv.call(0.0)
+	mv.call(0.9)
+	var f4: int = hud._menu_focus
+	UiData.set_feature("versus_flow", null)
+	_ok(f1 == 1 and f2 == 1 and f3 == 2 and f4 == 2, "versus flow: the left stick steps the start menu once a push, and it must come back to rest first (with the switch off it does nothing)")
+	hud.hide_photo_notice(false)
+	# The start menu on a pad: Up from the top reaches Start in one press; Start pressed on a pad with Player 1 on the keyboard plays as the controller.
+	hud._pads_test = 1
+	hud.show_start_menu(false)
+	hud._menu_cfg["players"] = 1
+	hud._menu_cfg["p1"] = "kb"
+	hud._menu_focus = 0
+	var up := InputEventJoypadButton.new()
+	up.device = 0
+	up.button_index = JOY_BUTTON_DPAD_UP
+	up.pressed = true
+	hud._unhandled_input(up)
+	var rows: Array = hud._menu_rows()
+	var at_start: bool = str(rows[hud._menu_focus]) == "start"
+	var got := {"cfg": {}}
+	hud.menu_started.connect(func(c: Dictionary) -> void: got["cfg"] = c)
+	var a := InputEventJoypadButton.new()
+	a.device = 0
+	a.button_index = JOY_BUTTON_A
+	a.pressed = true
+	hud._unhandled_input(a)
+	hud._menu_last_cfg = {"players": 1, "p1": "pad", "intros": true}
+	var again_cfgs := []
+	hud.menu_started.connect(func(c: Dictionary) -> void: again_cfgs.append(c))
+	hud.show_pause_menu(true)
+	hud.pause_menu_choose("again")
+	UiData.set_feature("versus_flow", false)
+	hud.show_pause_menu(true)
+	hud.pause_menu_choose("again")
+	UiData.set_feature("versus_flow", null)
+	_ok(again_cfgs.size() == 2 and again_cfgs[0]["intros"] == false and again_cfgs[1]["intros"] == true and hud._menu_last_cfg["intros"] == true, "versus flow: Play again starts the rematch without the intro, and the saved choice of intros is kept (off: the intro again)")
+	_ok(at_start and str(got["cfg"].get("p1", "")) == "pad", "versus flow: Up from the top of the start menu reaches Start, and Start on a pad with Player 1 on the keyboard sends the controller")
+	hud._pads_test = -1
+	hud.queue_free()
+	await process_frame
+	# Encounter's no_contest cue (nobody touched anything, no KO): the card opens at once, says so, and with the switch off nothing happens.
+	var nc := UiHud.new()
+	nc.size = Vector2(1280, 720)
+	root.add_child(nc)
+	await process_frame
+	nc.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	nc.hub.model(0).ai = false
+	nc.hub.model(1).ai = true
+	UiData.set_feature("versus_flow", false)
+	nc.hub.consume({"type": "cue", "kind": "no_contest", "text": ""})
+	for i in range(30):
+		nc.advance(1.0 / 30.0)
+		await process_frame
+	var off_quiet: bool = not nc._pm_open and not nc.hub.match_over
+	UiData.set_feature("versus_flow", null)
+	nc.hub.consume({"type": "cue", "kind": "no_contest", "text": ""})
+	nc.advance(1.0 / 30.0)
+	await process_frame
+	nc.advance(1.0 / 30.0)
+	await process_frame
+	var facts_nc: Array = nc.over_facts()
+	_ok(off_quiet and nc._pm_open and nc._pm_over and nc.hub.no_contest and facts_nc.size() >= 1 and str(facts_nc[0]).begins_with("No contest"), "versus flow: a no_contest cue opens the rematch card at once and says no contest (off: nothing)")
+	nc.queue_free()
+	await process_frame
+
+
+# --- The words in play against pad-first-press.md: no hint for a press that does nothing (forms, specials, brace off) --------------------------------------------
+
+func _live_on() -> void:
+	UiData.set_feature("legend_quiet", false)   # the older legend and glyph rules look at the words and the letters, as before
+	UiData.set_feature("legend_beam", false)    # and at the legend's old timing (cut 3 s after a stance change)
+	UiData.set_feature("beam_teach", false)     # and without the beam teaching lines (the older rules look at the old words)
+	UiData.set_feature("struggle_teach", false)  # and without the clash rows and the refusal words (the older rules look at the legend as it was)
+	UiData.set_feature("refusal_words", false)
+	for k in ["forms_live", "specials_live", "brace_live", "vanish_live"]:
+		UiData.set_feature(k, true)   # the older rules look at the full set of words, as before
+
+
+func _first_press_words_rules() -> void:
+	for k in ["forms_live", "specials_live", "brace_live", "vanish_live"]:
+		UiData.set_feature(k, null)
+	var shipped_off: bool = not UiData.feature("forms_live") and not UiData.feature("specials_live") and not UiData.feature("brace_live") and not UiData.feature("vanish_live")
+	var hub := _hub()
+	var m: UiFighterModel = hub.model(0)
+	m.ai = false
+	m.device = "xbox"
+	m.avail["transform"] = true
+	var acts := func(rows: Array) -> Array:
+		var out: Array = []
+		for r in rows:
+			for a in (r["acts"] as Array):
+				out.append(str(a))
+		return out
+	var legend_off: Array = acts.call(UiHints.rows(m, "arena"))
+	var no_chip: bool = not UiFormPrompt.wanted(m)
+	var plan_off: Dictionary = UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 0, "xbox", 0, "arena")
+	var plan_ctl_off: Dictionary = UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 1, "xbox", 0, "arena")
+	var first_off := ""
+	for rec in plan_off["items"]:
+		if str((rec["item"] as Dictionary).get("icon", "")) == "plan":
+			first_off = " ".join(rec["lines"] as PackedStringArray)
+	var ctl_off: Array = []
+	var rh_icons_off := false
+	UiData.set_feature("right_hand", true)
+	var plan_rh_off: Dictionary = UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 1, "xbox", 0, "arena")
+	UiData.set_feature("right_hand", null)
+	for rec in plan_rh_off["items"]:
+		rh_icons_off = rh_icons_off or str((rec["item"] as Dictionary).get("icon", "")) in ["rh_brace", "rh_vanish"]
+	for rec in plan_ctl_off["items"]:
+		ctl_off.append(str((rec["item"] as Dictionary).get("action", "")))
+	_ok(shipped_off and no_chip and not legend_off.has("transform") and not legend_off.has("special1") and not ctl_off.has("transform") and not ctl_off.has("specials") and not rh_icons_off and not first_off.to_lower().contains("transform") and first_off.begins_with("You are the fighter"), "first press words: with forms, specials and brace off there is no Transform chip, no Transform, Specials or Brace line in the legend or in How to play, and the first line has no transform sentences")
+	_live_on()
+	var legend_on: Array = acts.call(UiHints.rows(m, "arena"))
+	var chip_on: bool = UiFormPrompt.wanted(m)
+	var plan_on: Dictionary = UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 0, "xbox", 0, "arena")
+	var first_on := ""
+	for rec in plan_on["items"]:
+		if str((rec["item"] as Dictionary).get("icon", "")) == "plan":
+			first_on = " ".join(rec["lines"] as PackedStringArray)
+	_ok(legend_on.has("transform") and legend_on.has("special1") and chip_on and first_on.to_lower().contains("transform"), "first press words: with each switched on, the words come back")
+
+
+# --- legend_quiet: the legend and the prompt row go quiet in a struggle and when nothing changes; no "not yet" rows; the face glyph is the diamond alone ------------------
+
+func _legend_quiet_rules() -> void:
+	UiData.set_feature("legend_quiet", null)   # the shipped state (on)
+	var hub := _hub()
+	var m: UiFighterModel = hub.model(0)
+	m.ai = false
+	m.device = "xbox"
+	m.stance_kind = UiStance.CHARGING
+	var shown_rows: Array = UiHints.rows(m, "arena")
+	var any_dim := false
+	for r in shown_rows:
+		any_dim = any_dim or bool(r["dim"]) or str(r["note"]) == UiData.t("prompt.not_yet")
+	UiData.set_feature("legend_quiet", false)
+	var old_rows: Array = UiHints.rows(m, "arena")
+	var old_dim := false
+	for r in old_rows:
+		old_dim = old_dim or bool(r["dim"])
+	UiData.set_feature("legend_quiet", null)
+	var face := {"kind": "face", "pos": "west", "label": "W"}
+	var w_on: float = UiGlyphs.width_spec(face, 24.0)
+	UiData.set_feature("legend_quiet", false)
+	var w_off: float = UiGlyphs.width_spec(face, 24.0)
+	UiData.set_feature("legend_quiet", null)
+	_ok(not any_dim and old_dim and shown_rows.size() < old_rows.size(), "legend quiet: no row is listed for a press that does nothing (the greyed 'not yet' rows are gone; off, they are back)")
+	_ok(is_equal_approx(w_on, 24.0) and w_off > w_on, "legend quiet: the pad's face glyph is the diamond alone (no W or N beside it; off, the letter is back)")
+	# In a struggle both are cut; after the opening seconds they go quiet after 4 s unchanged and come back on a change.
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	hud.hub.model(0).device = "xbox"
+	hud.set_option("control_hints", "always")
+	hud.set_option("show_prompts", true)
+	var run := func(n: int, dt: float = 1.0 / 30.0) -> void:
+		for i in range(n):
+			hud.advance(dt)
+			await process_frame
+	await run.call(12)
+	var shown_early: bool = hud._l_hints[0].sig != null
+	hud.hub.consume({"type": "cue", "kind": "beam_struggle", "text": "start", "actor": 0, "target": 1, "n": 600})
+	await run.call(4)
+	var cut_struggle: bool = hud._l_hints[0].sig == null and hud._l_prompts[0].sig == null
+	hud.hub.consume({"type": "cue", "kind": "beam_end", "text": "time", "x": 0.5})
+	await run.call(200, 0.1)   # 20 s: past the struggle's end, the opening seconds (12 s) and 4 s of nothing changing
+	var back_after: bool = hud._l_hints[0].sig == null   # the opening seconds are over and nothing has changed for a while: quiet
+	var qs: bool = bool(hud._quiet_on[0])
+	hud.hub.model(0).charge_on = true
+	hud.hub.model(0).charge_cell = "y"
+	await run.call(4)
+	var woke: bool = not bool(hud._quiet_on[0])
+	_ok(shown_early and cut_struggle, "legend quiet: the legend and the prompt row show in the opening seconds and are cut in a beam struggle")
+	_ok(back_after and qs and woke, "legend quiet: after the opening seconds, 4 s with nothing changed makes both quiet, and a change (a charge) brings them back")
+	hud.queue_free()
+	await process_frame
+	_live_on()
+
+
+# --- quiet_hints: banners that are the plate's job are not drawn across the sky -------------------------------------------------------------------------------
+
+func _quiet_banner_rules() -> void:
+	var shown := func(text: String, flag) -> bool:
+		UiData.set_feature("quiet_hints", flag)
+		var hub := _hub()
+		hub.consume({"type": "banner", "text": text, "col": "#9fb4ff", "dur": 0.6})
+		var out: bool = not hub.banner.is_empty()
+		UiData.set_feature("quiet_hints", null)
+		return out
+	_ok(not shown.call("NEED 45 KI", null) and not shown.call("SIGNATURE RECHARGING", null) and not shown.call("LOUPE POWERS UP  TIER 2", null) and shown.call("PARRY", null) and shown.call("NEED 45 KI", false) and shown.call("LOUPE POWERS UP  TIER 2", false), "quiet banners: NEED 45 CHARGE, SIGNATURE RECHARGING and POWERS UP are not drawn across the sky (the signature chip, the tier pips and the pad's knock say them), PARRY still is, and with the switch off all are as they were")
+
+
+# --- chip_clear: the distance chip keeps a set distance from a far fighter, on the side away from his flight --------------------------------------------------------------
+
+func _chip_clear_rules() -> void:
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	var lay: UiLayout = hud.layout
+	var psz: Vector2 = UiSplit.pointer_size(lay.s)
+	var q := Vector2(lay.vp.x * 0.5, lay.vp.y * 0.5)
+	var far := {"pos": q, "h": 5.0, "visible": true}
+	var pos := q + Vector2(psz.x * 0.5 + 18.0, 0.0)   # the chip's near edge 18 px from a fighter of 5 px: clear of his box, but sitting on him as the eye sees it
+	UiData.set_feature("chip_clear", false)
+	var old_free: bool = UiSplit._chip_clear(pos, psz, [far])
+	UiData.set_feature("chip_clear", null)
+	var new_free: bool = UiSplit._chip_clear(pos, psz, [far])
+	_ok(old_free and not new_free, "chip clear: a chip 18 px from a 5 px fighter is not clear (a chip's height is the least), as it was only when the fighter was drawn large")
+	var fly_right := {"pos": q, "h": 5.0, "visible": true, "vel": Vector2(12.0, 0.0)}
+	var fly_left := {"pos": q, "h": 5.0, "visible": true, "vel": Vector2(-12.0, 0.0)}
+	var p1: Vector2 = UiSplit._dodge(q, Vector2(1.0, 0.0), lay, [fly_right])
+	var p2: Vector2 = UiSplit._dodge(q, Vector2(1.0, 0.0), lay, [fly_left])
+	var p3: Vector2 = UiSplit._dodge(q, Vector2(1.0, 0.0), lay, [far])
+	_ok(p1.x < q.x and p2.x > q.x and absf(p1.x - q.x) >= psz.y and absf(p2.x - q.x) >= psz.y and p3.x > -1.0e8, "chip clear: the chip slides to the side away from the fighter's flight (flying right: it goes left; flying left: right), at least a chip's height off")
+	hud.queue_free()
+	await process_frame
+
+
+# --- legend_beam: the legend stays while a stance button is held; RB's layer names the beam; split_fit: the columns fit the small pane --------------------------------
+
+func _legend_beam_rules() -> void:
+	UiData.set_feature("legend_beam", null)   # the shipped state (on)
+	var m := UiFighterModel.new()
+	m.setup(0, "protagonist", "ONE")
+	m.ai = false
+	m.device = "xbox"
+	var at := func(kind: int, held_for: float) -> float:
+		m.stance_kind = kind
+		m.stance_kind_t = held_for
+		return UiHints.legend_alpha(m, "auto", false, 60.0)
+	var held_on: float = at.call(UiStance.ENERGY, 12.0)
+	var after_short: float = at.call(0, 0.3)
+	var after_long: float = at.call(0, 0.6)
+	UiData.set_feature("legend_beam", false)
+	var held_off: float = at.call(UiStance.ENERGY, 12.0)
+	UiData.set_feature("legend_beam", null)
+	_ok(held_on == 1.0 and after_short == 1.0 and after_long == 0.0 and held_off == 0.0, "legend beam: the legend stays up for as long as a stance button is held and goes 0.5 s after it is let go (off: it was cut at 3 s)")
+	# The rows: Energy held names the beam on the stick and a blast on its flick; B reads Driver; Power held has no stick row and no Signature.
+	SimInputData.ensure()
+	var sw: Dictionary = SimInputData.timing.get("switches", {})
+	sw["rightStick"] = true
+	SimInputData.timing["switches"] = sw
+	SimInputData.clear_overrides()
+	SimInputData.invalidate()
+	UiData.set_feature("right_hand", null)
+	var words := func(kind: int) -> Array:
+		m.stance_kind = kind
+		var out: Array = []
+		for r in UiHints.rows(m, "arena", "hold", UiHints.styles(m, {})):
+			out.append(str(r["label"]))
+		return out
+	var energy: Array = words.call(UiStance.ENERGY)
+	var power: Array = words.call(UiStance.CHARGING)
+	var nothing: Array = words.call(0)
+	var power_sig := false
+	for w in power:
+		power_sig = power_sig or str(w).contains("Signature")
+	_ok(energy.has("Beam (hold to charge)") and energy.has("Blast (flick)") and energy.has("Driver") and not energy.has("Strike (hold to charge)") and not power_sig and not power.has("Strike (hold to charge)") and nothing.has("Strike (hold to charge)"), "legend beam: with Energy held the stick row says Beam and its flick Blast and B says Driver; with Power held the stick has no row and nothing says Signature; with nothing held it says Strike")
+	# How to play has the beam line for a controller with the right-hand attacks on, and not for a keyboard or with it off.
+	var has_beam := func(dev: String, preset: String) -> bool:
+		var pl: Dictionary = UiHowto.plan(Vector2(1920, 1080), 1.0, 1.0, false, 1, dev, 0, preset)
+		for rec in pl["items"]:
+			if str((rec["item"] as Dictionary).get("icon", "")) == "rh_beam":
+				return true
+		return false
+	var beam_pad: bool = has_beam.call("xbox", "arena")
+	var beam_kbd: bool = has_beam.call("kbd", "kb-solo")
+	UiData.set_feature("legend_beam", false)
+	var beam_off: bool = has_beam.call("xbox", "arena")
+	UiData.set_feature("legend_beam", null)
+	_ok(beam_pad and not beam_kbd and not beam_off, "legend beam: How to play says how to fire the beam for a controller (off: no line)")
+	UiData.set_feature("legend_beam", null)
+	sw["rightStick"] = false
+	SimInputData.timing["switches"] = sw
+	SimInputData.clear_overrides()
+	SimInputData.invalidate()
+	# The columns and the lanes fit a 30% pane; 50/50 is as it was.
+	var lay := UiLayout.new()
+	lay.compute(Vector2(1280, 720), false)
+	var full_w: float = lay.plate[0].size.x
+	var cap: float = UiSplit.col_cap(lay)
+	var lane_full: float = lay.bark[0].size.x
+	lay.col_cap = cap
+	lay.compute(Vector2(1280, 720), false)
+	_ok(is_equal_approx(full_w, 253.3) or absf(full_w - 253.0) < 1.5, "split fit: without a share the plate is as wide as it was (%.0f)" % full_w)
+	_ok(cap > 190.0 and cap < 215.0 and absf(lay.plate[0].size.x - cap) < 0.5 and lay.bark[0].size.x < lane_full and lay.bark[0].size.x <= 1280.0 * 0.28 + 0.5 and lay.prompts[0].size.x <= cap + 0.5, "split fit: with a share the plate, the cards' column and the prompt row are capped to the small pane (%.0f px at 1280x720) and the speech lane is no wider than 28%% of the screen" % cap)
+	var lay2 := UiLayout.new()
+	lay2.compute(Vector2(1024, 768), false)
+	_ok(UiSplit.col_cap(lay2) >= 170.0, "split fit: the cap never goes under 170 px")
+	# In the HUD: the share narrows the columns and widens them back; the plates ride their pane in one cut.
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	var share := [0.0]
+	hud.anchor_fn = func(slot: int) -> Dictionary:
+		return {"pos": Vector2(hud.layout.vp.x * (0.3 if slot == 0 else 0.7), hud.layout.vp.y * 0.55), "h": hud.layout.vp.y * 0.12, "visible": true}
+	hud.split_fn = func():
+		return {"sep": 1.0, "c": Vector2(640.0, 360.0), "n": Vector2(0.95, -0.3), "gap": 3.0, "fade": 1.0, "sigma": 1.0, "pointer": "split", "share": share[0],
+			"ring": {"angle_A": 1.0, "angle_B": 2.0, "sigma": 1.0, "arc_A": 0.3, "arc_B": 0.3, "swing": 0.0, "sep": 1.0}}
+	for i in range(4):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	var w0: float = hud.layout.plate[0].size.x
+	share[0] = 0.7
+	for i in range(4):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	var w1: float = hud.layout.plate[0].size.x
+	var on1: bool = hud._share_on()
+	share[0] = 0.0
+	for i in range(4):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	var w2: float = hud.layout.plate[0].size.x
+	UiData.set_feature("split_fit", false)
+	share[0] = 0.7
+	for i in range(4):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	var w3: float = hud.layout.plate[0].size.x
+	UiData.set_feature("split_fit", null)
+	_ok(w1 < w0 - 20.0 and on1 and is_equal_approx(w2, w0) and is_equal_approx(w3, w0), "split fit: the HUD narrows the plate when the split gives a share and widens it back when it does not (off: never)")
+	hud.queue_free()
+	await process_frame
+	_live_on()
+
+
 # --- Terms ---------------------------------------------------------------------------------------------------------
 
 func _terms() -> void:
 	UiData.reload()
 	UiData.set_feature("minimal_hud", false)   # reload() drops every override: the older rules look at the full HUD
+	_live_on()
 	var must: Array = ["stance.press", "stance.guard", "stance.dodge", "stance.escape", "meter.respect", "meter.pride", "meter.wrath",
 		"meter.hunger", "meter.charge", "region.head", "region.core", "region.arms", "region.legs", "region.mantle", "stage.bruised",
 		"stage.battered", "stage.broken", "card.brink", "card.rally.protagonist", "card.heat.1", "card.heat.2", "card.heat.3",
@@ -452,6 +1103,521 @@ func _bark_timing() -> void:
 			if (bb as UiEventHub.Bark).chained:
 				chained_seen = true
 	_ok(chained_seen and dark_ticks == 0, "bark chain: the second line takes the first's place at once and is marked chained (no tick with no panel in between: %d)" % dark_ticks)
+
+
+# --- beam_teach: Game Design's teaching of the beam (power-scale.md section 5) -------------------------------------------------------------------------------------
+
+func _beam_teach_rules() -> void:
+	UiData.set_feature("legend_beam", null)
+	UiData.set_feature("beam_teach", null)   # the shipped state (on)
+	UiData.set_feature("refusal_words", null)   # "No energy" is a refusal word
+	for k in ["taught_beam", "taught_beam_nudge", "taught_fire_back"]:
+		UiPrefs.set_bool(k, false)
+	UiPrefs.set_value("taught_flick_n", 0)
+	SimInputData.ensure()
+	var sw: Dictionary = SimInputData.timing.get("switches", {})
+	sw["rightStick"] = true
+	SimInputData.timing["switches"] = sw
+	SimInputData.clear_overrides()
+	SimInputData.invalidate()
+	var hub := _hub()
+	var h0: UiFighterModel = hub.model(0)
+	var h1: UiFighterModel = hub.model(1)
+	h0.ai = false
+	h1.ai = true
+	h0.device = "xbox"
+	# 1. With RB held the panel says it; the keys' words for a keyboard.
+	h0.stance_kind = UiStance.ENERGY
+	var pad_words: Array = []
+	for r in UiHints.rows(h0, "arena", "hold", UiHints.styles(h0, {})):
+		pad_words.append(str(r["label"]))
+	h0.device = ""
+	var key_words: Array = []
+	for r in UiHints.rows(h0, "kb-solo", "hold", UiHints.styles(h0, {})):
+		key_words.append(str(r["label"]))
+	h0.device = "xbox"
+	h0.stance_kind = 0
+	_ok(pad_words.has("Hold right stick: beam. Let go to fire.") and pad_words.has("Blast (flick)") and key_words.has("Hold the arrows: beam. Let go to fire."), "beam teach: with RB held the panel says Hold right stick: beam. Let go to fire. (Hold the arrows on a keyboard), and the flick is a blast")
+	# 3. A flick with RB: Hold for a beam, the first three times only.
+	var seen := 0
+	for i in range(5):
+		h0.teach = ""
+		h0.teach_left = 0.0
+		hub.consume({"type": "cue", "kind": "stick_release", "actor": 0, "text": "beam", "source": "0"})
+		if h0.teach == "Hold for a beam":
+			seen += 1
+	h0.teach = ""
+	h0.teach_left = 0.0
+	hub.consume({"type": "cue", "kind": "stick_release", "actor": 0, "text": "beam", "source": "2"})   # a charged beam (level 2) is not a flick
+	hub.consume({"type": "cue", "kind": "stick_release", "actor": 0, "text": "right", "source": "0"})   # a stick strike is not a beam
+	var charged_quiet: bool = h0.teach == ""
+	h0.teach = ""
+	h0.teach_left = 0.0
+	# 4. No energy.
+	hub.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "right", "source": "ki"})
+	var needs: bool = h0.teach == "No energy" and h0.teach_left > 1.0
+	h0.teach = ""
+	hub.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "", "source": "replaced"})
+	var late_quiet: bool = h0.teach == ""
+	_ok(seen == 3 and charged_quiet and needs and late_quiet, "beam teach: a flick with RB (the stick's quick beam) says Hold for a beam the first three times, and an empty energy says No energy (a replaced press says nothing on screen)")
+	# 5. The computer's first beam teaches the answer, once; a beam of the person's own ends the 45 s reminder.
+	hub.consume({"type": "cue", "kind": "beam_window", "text": "start", "actor": 1, "target": 0, "n": 40, "k": 1})
+	var fb1: bool = h0.teach == "RB + right stick: fire back" and h0.teach_acts == ["mode", "strike"]
+	h0.teach = ""
+	hub.consume({"type": "cue", "kind": "beam_window", "text": "end", "actor": 1, "target": 0})
+	hub.consume({"type": "cue", "kind": "beam_window", "text": "start", "actor": 1, "target": 0, "n": 40, "k": 1})
+	var fb2: bool = h0.teach == ""
+	var no_beam_yet: bool = not UiPrefs.get_bool("taught_beam")
+	hub.consume({"type": "cue", "kind": "beam_window", "text": "start", "actor": 0, "target": 1, "n": 40, "k": 1})
+	_ok(fb1 and fb2 and no_beam_yet and UiPrefs.get_bool("taught_beam"), "beam teach: the computer's first beam says RB + right stick: fire back, once; a beam fired by the person is remembered")
+	# The chase hint: Encounter's chase_ready (a send a press can chase), the first three times, with the attack buttons beside it.
+	UiPrefs.set_value("taught_chase_n", 0)
+	var chased := 0
+	var chase_words := "Tap an attack to chase. It lands as you catch them."
+	for i in range(5):
+		h0.teach = ""
+		h0.teach_left = 0.0
+		hub.consume({"type": "cue", "kind": "chase_ready", "actor": 0, "text": "", "source": ""})
+		if h0.teach == chase_words and h0.teach_acts == ["light", "heavy", "signature"] and h0.teach_left > 2.5:
+			chased += 1
+	h0.teach = ""
+	h0.teach_left = 0.0
+	hub.consume({"type": "cue", "kind": "chase_ready", "actor": 1, "text": "", "source": ""})   # the computer's send teaches nothing
+	_ok(chased == 3 and h0.teach == "", "beam teach: the chase hint says Tap an attack to chase. It lands as you catch them. on the first three chaseable sends of a person, with the attack buttons")
+	# A sentence is longer than a column: the legend wraps it to the column, glyphs on the first line, and puts it first.
+	h0.teach = chase_words
+	h0.teach_left = 3.0
+	h0.teach_acts = ["light", "heavy", "signature"]
+	var wide_ok := true
+	var sentence_ok := true
+	var cut_short := true   # a short column (a small window) must not cut the sentence: every wrapped line is shown and the box is as tall as its rows
+	for hh in [30.0, 70.0, 120.0]:
+		for width in [140.0, 190.0, 253.0]:
+			for sc in [0.5, 0.667, 1.0]:
+				var ps: Dictionary = UiHints.plan(h0, Rect2(0.0, 0.0, width, hh), sc, {})
+				var pj := ""
+				for r in ps["rows"]:
+					if str(r["label"]) != "" and not str(r["label"]).begins_with("Guard"):
+						pj += (" " if pj != "" else "") + str(r["label"])
+				var tall: float = (ps["box"] as Rect2).size.y
+				if pj != chase_words or tall < float((ps["rows"] as Array).size()) * float(ps["row_h"]) - 0.01:
+					cut_short = false
+	_ok(cut_short, "beam teach: the whole chase sentence shows at any column size (140 to 253 px wide, 30 to 120 px tall, three scales): the legend grows to hold every wrapped line")
+	for width in [204.0, 253.0, 380.0]:
+		var pl: Dictionary = UiHints.plan(h0, Rect2(0.0, 0.0, width, 400.0), 0.667, {})
+		var prow: Array = pl["rows"]
+		var joined := ""
+		for k in range(mini(prow.size(), 8)):
+			if str(prow[k]["label"]) != "":
+				joined += (" " if joined != "" else "") + str(prow[k]["label"])
+		if not joined.begins_with(chase_words):
+			sentence_ok = false
+		for r in prow:
+			if float(pl["label_x"]) + UiText.width(str(r["label"]), int(pl["fs"])) > width + 1.0:
+				wide_ok = false
+		if prow.is_empty() or (prow[0]["specs"] as Array).is_empty():
+			sentence_ok = false
+		var labels_all: Array = prow.map(func(r): return str(r["label"]))
+		var guard_kept := false
+		var others_hidden := true
+		for lb in labels_all:
+			guard_kept = guard_kept or str(lb).begins_with("Guard")
+			others_hidden = others_hidden and not ["Fly", "Light", "Heavy", "Energy (hold)", "Power (hold)"].has(str(lb))
+		if not (guard_kept and others_hidden):
+			sentence_ok = false
+	_ok(wide_ok and sentence_ok, "beam teach: a teaching sentence wraps inside the legend column at 204, 253 and 380 px, glyphs on its first line, goes first, and leaves only Guard's row beside it")
+	h0.teach = ""
+	h0.teach_left = 0.0
+	# The legend is up for a teaching line even with nothing held.
+	h0.teach = "x"
+	h0.teach_left = 1.0
+	var up: float = UiHints.legend_alpha(h0, "auto", false, 60.0)
+	h0.teach = ""
+	h0.teach_left = 0.0
+	var down: float = UiHints.legend_alpha(h0, "auto", false, 60.0)
+	_ok(up == 1.0 and down == 0.0, "beam teach: the panel is up while a line teaches and is not otherwise")
+	# 2. After 45 s with no beam, the panel says it once on its own; never after a beam; and the menu starts against the computer when Player 2 has no controller.
+	UiPrefs.set_bool("taught_beam", false)
+	UiPrefs.set_bool("taught_beam_nudge", false)
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	hud.hub.model(0).device = "xbox"
+	for i in range(5):
+		hud.advance(1.0 / 30.0)
+		await process_frame
+	var early: String = hud.hub.model(0).teach
+	hud.advance(46.0)
+	await process_frame
+	var at45: String = hud.hub.model(0).teach
+	hud.hub.model(0).teach = ""
+	hud.hub.model(0).teach_left = 0.0
+	hud.advance(1.0)
+	await process_frame
+	var again: String = hud.hub.model(0).teach
+	_ok(early == "" and at45 == "Hold right stick: beam. Let go to fire." and again == "" and UiPrefs.get_bool("taught_beam_nudge"), "beam teach: after 45 s with no beam the panel says it once on its own, and not again")
+	hud._pads_test = 1
+	hud.show_start_menu(false)
+	hud._menu_cfg["players"] = 2
+	hud._menu_cfg["p1"] = "pad"
+	hud._menu_cfg["p2"] = "pad"
+	var started := {"cfg": {}}
+	hud.menu_started.connect(func(c: Dictionary) -> void: started["cfg"] = c)
+	hud._menu_start()
+	var fell_back: bool = int(started["cfg"].get("players", 0)) == 1
+	hud._menu_cfg["players"] = 2
+	hud._menu_cfg["p1"] = "kb"
+	hud._menu_cfg["p2"] = "pad"
+	hud._menu_start()
+	var kept: bool = int(started["cfg"].get("players", 0)) == 2   # a keyboard for one and the one controller for two is a real game
+	_ok(fell_back and kept, "versus flow: Player 2 on a controller there is none for starts against the computer (never a body standing still); one pad for two on a keyboard stays two players")
+	hud._pads_test = -1
+	hud.queue_free()
+	await process_frame
+	sw["rightStick"] = false
+	SimInputData.timing["switches"] = sw
+	SimInputData.clear_overrides()
+	SimInputData.invalidate()
+	_live_on()
+
+
+# --- cross_end: 2v2's first KO does not end the match (docs/architecture/cross-end.md) -----------------------------------------------------------------------------
+
+func _cross_end_rules() -> void:
+	UiData.set_feature("cross_end", null)   # the shipped state (on)
+	UiData.set_feature("beam_teach", null)
+	var hub := _hub()
+	hub.models[0].ai = false
+	hub.models[1].ai = true
+	# No `over` key (a 1v1, an older host): the KO is the end, as before.
+	hub.consume({"type": "ko", "winner": 1, "loser": 0})
+	var plain: bool = hub.match_over and hub.winner == 1 and hub.model(0).ko and not hub.model(0).out
+	# A first KO of a 2v2 (`over` false): he is out, the match goes on, the legend says so; the card does not open.
+	var hub2 := _hub()
+	hub2.models[0].ai = false
+	hub2.models[1].ai = true
+	hub2.consume({"type": "ko", "winner": 1, "loser": 0, "over": false})
+	var m2: UiFighterModel = hub2.model(0)
+	var first_ok: bool = not hub2.match_over and hub2.winner == -1 and m2.ko and m2.out and m2.teach == "You're out. Your partner fights on" and m2.teach_left > 100.0 and m2.teach_acts.is_empty()
+	var rows: Array = UiHints.rows(m2, "arena", "hold", UiHints.styles(m2, {}))
+	var pl: Dictionary = UiHints.plan(m2, Rect2(0.0, 0.0, 253.0, 300.0), 0.667, {})
+	var joined := ""
+	var guard_shown := false
+	for r in pl["rows"]:
+		joined += (" " if joined != "" else "") + str(r["label"])
+		guard_shown = guard_shown or str(r["label"]).begins_with("Guard")
+	var legend_ok: bool = rows.size() > 0 and joined == "You're out. Your partner fights on" and not guard_shown
+	# The last KO (`over` true) is the end, and names the winner.
+	hub2.consume({"type": "ko", "winner": 1, "loser": 1, "over": true})
+	var last_ok: bool = hub2.match_over and hub2.winner == 1
+	# A computer fighter knocked out says nothing to anyone, and the switch off reads every KO as the end.
+	var hub3 := _hub()
+	hub3.models[0].ai = true
+	hub3.consume({"type": "ko", "winner": 1, "loser": 0, "over": false})
+	var ai_quiet: bool = not hub3.match_over and hub3.model(0).out and hub3.model(0).teach == ""
+	# The card names the winning team (the last KO's `winners`: starting slots), a 1v1 or a host sending none names the one who struck, and a first KO names nobody.
+	var hub5 := UiEventHub.new()
+	hub5.setup_fighters(["protagonist", "anti_hero", "protagonist", "anti_hero"], ["Grist", "Loupe", "Bolus", "Empress Orza"])
+	hub5.consume({"type": "ko", "winner": 1, "loser": 0, "over": false})
+	var none_yet: bool = hub5.win_line() == "" and hub5.winners.is_empty()
+	hub5.consume({"type": "ko", "winner": 1, "loser": 2, "over": true, "winners": [1, 3]})
+	var team_line: bool = hub5.win_line() == "Loupe and Empress Orza win" and hub5.winners == [1, 3]
+	var hub6 := UiEventHub.new()
+	hub6.setup_fighters(["protagonist", "anti_hero"], ["Grist", "Loupe"])
+	hub6.consume({"type": "ko", "winner": 1, "loser": 0, "over": true, "winners": [1]})
+	var one_line: bool = hub6.win_line() == "Loupe wins"
+	var hub7 := UiEventHub.new()
+	hub7.setup_fighters(["protagonist", "anti_hero"], ["Grist", "Loupe"])
+	hub7.consume({"type": "ko", "winner": 0, "loser": 1})
+	var plain_line: bool = hub7.win_line() == "Grist wins"
+	_ok(none_yet and team_line and one_line and plain_line, "cross end: the match-over card names the winning team from the last KO's winners (Loupe and Empress Orza win), the one who struck when there are none (Grist wins), and nobody on a first KO")
+	UiData.set_feature("cross_end", false)
+	var hub4 := _hub()
+	hub4.consume({"type": "ko", "winner": 1, "loser": 0, "over": false})
+	var off_ok: bool = hub4.match_over
+	UiData.set_feature("cross_end", null)
+	_ok(plain and first_ok and legend_ok and last_ok and ai_quiet and off_ok, "cross end: a first KO of a 2v2 (over false) marks him out, says You're out. Your partner fights on in the legend (no Guard row) and leaves the match-over card shut; the last KO (over true), a KO with no over key and the switch off are the end as before")
+	_live_on()
+
+
+# --- refusal_words and struggle_teach: what a refused press says at the edge, and what to press on the beat (docs/ui/hud-spec.md section 84) ---------------------------
+
+func _refusal_rules_hub() -> UiEventHub:
+	var hub := _hub()
+	hub.models[0].ai = false
+	hub.models[1].ai = true
+	return hub
+
+
+func _refusal_struggle_rules() -> void:
+	UiData.set_feature("refusal_words", null)
+	UiData.set_feature("struggle_teach", null)
+	UiData.set_feature("struggle_teach_buttons", null)
+	UiData.set_feature("struggle_teach_stick", null)
+	UiData.set_feature("beam_teach", null)
+	# The first three times per reason per match; separate counts per reason; the cue forms of the sim and of Encounter's press-wait.
+	var hub := _refusal_rules_hub()
+	var m: UiFighterModel = hub.model(0)
+	var said: Array = []
+	for i in range(5):
+		m.teach = ""
+		m.teach_left = 0.0
+		hub.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "right", "source": "ki"})
+		said.append(m.teach)
+	m.teach = ""
+	hub.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "beam", "source": "hit"})
+	var hit_word: String = m.teach
+	m.teach = ""
+	hub.consume({"type": "cue", "kind": "press_ack", "actor": 0, "text": "stunned", "source": "x"})
+	var stunned_word: String = m.teach
+	m.teach = ""
+	hub.consume({"type": "press_ack", "actor": 0, "kind": "chase_no_ki"})
+	var chase_word: String = m.teach
+	_ok(said == ["No energy", "No energy", "No energy", "", ""] and hit_word == "Hit" and stunned_word == "Stunned" and chase_word == "No energy", "refusal words: a refusal says its reason at the edge the first three times per reason (No energy, Hit, Stunned, No energy for a chase press), then only the pad knock")
+	m.teach = ""
+	hub.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "", "source": "zzz"})
+	hub.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "up", "source": "3"})
+	hub.consume({"type": "cue", "kind": "stick_refused", "actor": 1, "text": "up", "source": "ki"})   # the computer says nothing to anyone
+	var quiet: bool = m.teach == "" and hub.model(1).teach == "" and int(hub.stats.get("refusal_unread_zzz", 0)) == 1 and int(hub.stats.get("refusal_unread_3", 0)) == 1
+	hub.reset()
+	hub.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "right", "source": "ki"})
+	var fresh: bool = hub.model(0).teach == "No energy"   # a new match counts again
+	UiData.set_feature("refusal_words", false)
+	var hub_off := _refusal_rules_hub()
+	hub_off.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "right", "source": "ki"})
+	var off_quiet: bool = hub_off.model(0).teach == ""
+	UiData.set_feature("refusal_words", null)
+	_ok(quiet and fresh and off_quiet, "refusal words: an unknown reason, a mask number and the computer are silent (the unknown counted), a new match counts again, and with the switch off nothing is said")
+	# The clash: the first three struggles of a match put the push and the beat in the legend of each person in it; a ring on the glyphs at each beat; Off the beat for a stray press.
+	var h2 := _refusal_rules_hub()
+	var p0: UiFighterModel = h2.model(0)
+	p0.push_mode = "face"   # this person pushes with the face buttons (the option's other value); the default, the stick, is checked below
+	var struggle := func(hb: UiEventHub) -> void:
+		hb.consume({"type": "cue", "kind": "beam_struggle", "actor": 1, "target": 0, "text": "start", "n": 600})
+	struggle.call(h2)
+	var rows1: Array = p0.beat_rows
+	var row_ok: bool = rows1.size() == 1 and rows1[0]["label"] == "Press on the beat" and rows1[0]["acts"] == ["light", "heavy", "signature"] and h2.model(1).beat_rows.is_empty()
+	var alpha_up: float = UiHints.legend_alpha(p0, "auto", false, 60.0)
+	var sig_a: Array = UiHints.sig(p0, 1.0, "arena")
+	h2.consume({"type": "cue", "kind": "beam_pulse", "actor": 1, "target": 0, "k": 1})
+	var lit: bool = p0.beat_hold > 0.0
+	_step(h2, 0.12)
+	var sig_b: Array = UiHints.sig(p0, 1.0, "arena")   # the ring has ramped on: the signature changes so the legend redraws
+	_step(h2, 0.4)
+	var unlit: bool = p0.beat_hold == 0.0 and p0.beat_ring == 0.0
+	var pl: Dictionary = UiHints.plan(p0, Rect2(0.0, 0.0, 253.0, 300.0), 0.667, {})
+	var first_label: String = str(pl["rows"][0]["label"]) if not (pl["rows"] as Array).is_empty() else ""
+	var beat_flag: bool = not (pl["rows"] as Array).is_empty() and bool(pl["rows"][0].get("beat", false))   # the planned row carries the flag the draw reads to ring its glyphs
+	row_ok = row_ok and beat_flag
+	_ok(row_ok and alpha_up == 1.0 and lit and unlit and sig_a != sig_b and first_label == "Press on the beat", "struggle teach: the first struggle puts Press on the beat with X, Y and B in the legend of a person on the face buttons (not the computer), rings the glyphs at each beat for a moment, raises the legend and changes its signature so it redraws")
+	# Legal's RL-248 on the ring: a ramp of at least 0.1 s; at most two changes a second (beats under 0.5 s apart keep it lit across them); steady under Reduce flashing; a shape of its own; a colour of its own; the first three struggles only.
+	var ring_hub := _refusal_rules_hub()
+	var rm: UiFighterModel = ring_hub.model(0)
+	rm.push_mode = "face"
+	ring_hub.consume({"type": "cue", "kind": "beam_struggle", "actor": 1, "target": 0, "text": "start", "n": 600})
+	var ramp_t := 0.0
+	ring_hub.consume({"type": "cue", "kind": "beam_pulse", "actor": 1, "target": 0, "k": 1})
+	while rm.beat_ring < 1.0 and ramp_t < 1.0:
+		ring_hub.advance(1.0 / 120.0)
+		ramp_t += 1.0 / 120.0
+	var ramp_ok: bool = ramp_t >= 0.099 and ramp_t < 0.2   # from off to fully on in 0.1 s: never a hard blink, never slower than a beat
+	# Beats every 20 ticks (three a second): the ring stays lit across them.
+	var dips := 0
+	var rises := 0
+	var was_on: bool = rm.beat_ring > 0.5
+	for beat in range(10):
+		ring_hub.consume({"type": "cue", "kind": "beam_pulse", "actor": 1, "target": 0, "k": 1})
+		for i in range(20):
+			ring_hub.advance(1.0 / 60.0)
+			var on_now: bool = rm.beat_ring > 0.5
+			if beat >= 2 and not on_now:
+				dips += 1
+			if on_now and not was_on:
+				rises += 1
+			was_on = on_now
+	var across_ok: bool = dips == 0 and rises <= 2 * 4   # lit the whole run of close beats; well under two switch-ons a second
+	# Slow beats (0.6 s apart): it goes off between them, and still no more than two switch-ons a second.
+	var slow := _refusal_rules_hub()
+	var sm: UiFighterModel = slow.model(0)
+	slow.consume({"type": "cue", "kind": "beam_struggle", "actor": 1, "target": 0, "text": "start", "n": 600})
+	var slow_rises := 0
+	var slow_off := false
+	var was_on2 := false
+	for beat in range(6):
+		slow.consume({"type": "cue", "kind": "beam_pulse", "actor": 1, "target": 0, "k": 1})
+		for i in range(36):
+			slow.advance(1.0 / 60.0)
+			var on2: bool = sm.beat_ring > 0.5
+			if on2 and not was_on2:
+				slow_rises += 1
+			if not on2 and beat >= 1:
+				slow_off = true
+			was_on2 = on2
+	var slow_ok: bool = slow_off and float(slow_rises) / 3.6 <= 2.0
+	# Reduce flashing: steady for the whole struggle, no change per beat.
+	var steady := _refusal_rules_hub()
+	var tm: UiFighterModel = steady.model(0)
+	tm.beat_steady = true
+	steady.consume({"type": "cue", "kind": "beam_struggle", "actor": 1, "target": 0, "text": "start", "n": 600})
+	for i in range(12):
+		steady.advance(1.0 / 60.0)
+	var steady_changes := 0
+	var last_ring: float = tm.beat_ring
+	for beat in range(5):
+		steady.consume({"type": "cue", "kind": "beam_pulse", "actor": 1, "target": 0, "k": 1})
+		for i in range(40):
+			steady.advance(1.0 / 60.0)
+			if absf(tm.beat_ring - last_ring) > 0.001:
+				steady_changes += 1
+			last_ring = tm.beat_ring
+	steady.consume({"type": "cue", "kind": "beam_end", "actor": 1, "target": 0, "text": "time"})
+	for i in range(20):
+		steady.advance(1.0 / 60.0)
+	var steady_ok: bool = steady_changes == 0 and last_ring == 1.0 and tm.beat_ring == 0.0   # on for the whole window, off when the struggle ends
+	var shape_ok: bool = UiHints.BEAT_TICKS >= 5 and UiHints.BEAT_TICKS != 4 and UiHints.BEAT_TICKS != 3   # a shape of its own beside the launcher's four ticks and the open window's three
+	var colour_ok: bool = UiLook.BEAT != UiLook.WARN
+	_ok(ramp_ok and across_ok and slow_ok and steady_ok and shape_ok and colour_ok, "struggle teach: the beat ring ramps in 0.1 s, stays lit across beats under 0.5 s apart, switches on at most twice a second for slow ones, holds steady under Reduce flashing, has six ticks as its own shape and its own colour (RL-248)")
+	var strays: Array = []
+	for i in range(4):
+		p0.teach = ""
+		p0.teach_left = 0.0
+		h2.consume({"type": "cue", "kind": "beam_stray", "actor": 0, "target": 1, "text": ""})
+		strays.append(p0.teach)
+	h2.consume({"type": "cue", "kind": "beam_end", "actor": 1, "target": 0, "text": "time"})
+	var ended: bool = p0.beat_rows.is_empty()
+	struggle.call(h2)
+	var second: bool = not p0.beat_rows.is_empty()
+	h2.consume({"type": "cue", "kind": "beam_end", "actor": 1, "target": 0, "text": "time"})
+	struggle.call(h2)
+	var third: bool = not p0.beat_rows.is_empty()
+	h2.consume({"type": "cue", "kind": "beam_end", "actor": 1, "target": 0, "text": "time"})
+	struggle.call(h2)
+	var fourth_none: bool = p0.beat_rows.is_empty()
+	_ok(strays == ["Off the beat", "Off the beat", "Off the beat", ""] and ended and second and third and fourth_none, "struggle teach: a stray press says Off the beat the first three times, the rows go when the struggle ends, and only the first three struggles of a match teach")
+	# The default is the right stick; the option is per player; a computer in the fight is not taught; and the master switch off shows nothing.
+	var h3 := _refusal_rules_hub()
+	struggle.call(h3)
+	var by_stick: Array = h3.model(0).beat_rows
+	var stick_ok: bool = by_stick.size() == 1 and by_stick[0]["acts"] == ["strike"] and by_stick[0]["label"] == "Flick toward them on the beat"
+	var h4 := UiEventHub.new()
+	h4.setup_fighters(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	h4.models[0].ai = false
+	h4.models[1].ai = false
+	h4.models[0].push_mode = "stick"
+	h4.models[1].push_mode = "face"
+	struggle.call(h4)
+	var each_ok: bool = h4.model(0).beat_rows[0]["acts"] == ["strike"] and h4.model(1).beat_rows[0]["acts"] == ["light", "heavy", "signature"]
+	UiData.set_feature("struggle_teach", false)
+	var h5 := _refusal_rules_hub()
+	struggle.call(h5)
+	var off: bool = h5.model(0).beat_rows.is_empty()
+	UiData.set_feature("struggle_teach", null)
+	_ok(stick_ok and each_ok and off, "struggle teach: the default is the right stick's flick, each person is taught their own mode (stick or face buttons), and the master switch off shows nothing")
+	# The option: two choices in plain words, per player, in Controls; the HUD gives each model its person's choice.
+	var o1: Dictionary = UiData.options()["struggle_push"]
+	var o2: Dictionary = UiData.options()["struggle_push_p2"]
+	var setd: Dictionary = UiData.settings()
+	var in_controls := false
+	for sec in setd["sections"]:
+		if str(sec["id"]) == "controls" and (sec["items"] as Array).has("struggle_push") and (sec["items"] as Array).has("struggle_push_p2"):
+			in_controls = true
+	var words_ok: bool = setd["labels"]["struggle_push"]["stick"] == "Right stick" and setd["labels"]["struggle_push"]["face"] == "Face buttons"
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	UiData.set_feature("right_hand", true)   # the right-hand attacks on: the stick push exists
+	var def_ok: bool = hud.hub.model(0).push_mode == "stick" and hud.hub.model(1).push_mode == "stick"
+	hud.set_option("struggle_push_p2", "face")
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	var synced: bool = hud.hub.model(0).push_mode == "stick" and hud.hub.model(1).push_mode == "face"
+	UiData.set_feature("right_hand", false)   # with them off there is no stick push: everyone is taught the face buttons, and the row is not listed
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	var no_stick: bool = hud.hub.model(0).push_mode == "face" and hud.hub.model(1).push_mode == "face"
+	var listed_off := false
+	for r in UiSettings.rows():
+		listed_off = listed_off or str(r["key"]) == "struggle_push" or str(r["key"]) == "struggle_push_p2"
+	UiData.set_feature("right_hand", null)
+	synced = synced and no_stick and not listed_off
+	# The quiet legend must not hide the clash rows: after the opening seconds the legend goes quiet when nothing changes, but not while one of the first struggles teaches.
+	UiData.set_feature("legend_quiet", null)   # the shipped state (on)
+	var hq := UiHud.new()
+	hq.size = Vector2(1280, 720)
+	root.add_child(hq)
+	await process_frame
+	hq.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hq.hub.model(0).ai = false
+	hq.hub.model(1).ai = true
+	hq.hub.model(0).device = "xbox"
+	hq.set_option("control_hints", "always")
+	hq.set_option("show_prompts", true)
+	for i in range(60):
+		hq.advance(0.5)
+		await process_frame
+	var quiet_before: bool = bool(hq._quiet_on[0])
+	hq.consume({"type": "cue", "kind": "beam_struggle", "actor": 1, "target": 0, "text": "start", "n": 600})
+	for i in range(20):
+		hq.advance(0.5)
+		await process_frame
+	var up_in_struggle: bool = not bool(hq._quiet_on[0]) and not hq.hub.model(0).beat_rows.is_empty()
+	hq.queue_free()
+	await process_frame
+	_ok(quiet_before and up_in_struggle, "struggle teach: the legend that had gone quiet stays up for the whole of one of the first struggles (quiet before %s, up in the struggle %s)" % [str(quiet_before), str(up_in_struggle)])
+	hud.queue_free()
+	await process_frame
+	_ok(str(o1["default"]) == "stick" and str(o2["default"]) == "stick" and (o1["choices"] as Array) == ["stick", "face"] and in_controls and words_ok and def_ok and synced, "struggle teach: Beam struggle push is a Controls row for each player (Right stick by default, or Face buttons), and the HUD gives each fighter their person's choice")
+	_live_on()
+
+
+# --- Controls' refusal codes (docs/controls/refusals.md): the host's take_refusals() list and the director's press_refused cue ----------------------------------------------
+
+func _refusal_take_rules() -> void:
+	UiData.set_feature("refusal_words", null)
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	var m: UiFighterModel = hud.hub.model(0)
+	# The input hub's codes through the host's call, and the director's cue: each says its word, the first three times per reason.
+	var words := {"face_late": "Too late", "no_answer": "Didn't start", "stun_limit": "Already stunned", "queue_expired": "Too slow", "block_lockout": "Block cooling", "no_energy": "No energy", "no_reach": "Tap to chase"}
+	var said := {}
+	for code in words:
+		m.teach = ""
+		hud.refusals([{"slot": 0, "code": code, "tick": 100, "button": "x"}])
+		said[code] = m.teach
+	var all_words: bool = true
+	for code in words:
+		all_words = all_words and said[code] == words[code]
+	_ok(all_words, "refusal codes: Controls' codes read through the host's refusals() each say their word at the edge (Too late, Didn't start, Already stunned, Too slow, Block cooling, No energy, Tap to chase)")
+	var fresh := _hub()
+	fresh.models[0].ai = false
+	var seen: Array = []
+	for i in range(5):
+		fresh.models[0].teach = ""
+		fresh.consume({"type": "cue", "actor": 0, "kind": "press_refused", "text": "", "source": "stun_limit"})
+		seen.append(fresh.models[0].teach)
+	_ok(seen == ["Already stunned", "Already stunned", "Already stunned", "", ""], "refusal codes: the director's press_refused cue says its word the first three times per reason, then only the pad's knock")
+	# Silent codes (the pad's knock alone): a mashed fourth press, the player's own newer press, an answered or dodged strike, and an unknown one; the computer is never told.
+	var quiet := true
+	for code in ["face_overflow", "replaced", "answered", "dodged", "cancelled", "not_yours", "busy", "other"]:
+		m.teach = ""
+		hud.refusals([{"slot": 0, "code": code, "tick": 1, "button": ""}])
+		quiet = quiet and m.teach == ""
+	hud.refusals([{"slot": 1, "code": "face_late", "tick": 1, "button": "y"}])
+	_ok(quiet and hud.hub.model(1).teach == "", "refusal codes: the codes that are only the pad's knock, and the computer's, say nothing")
+	hud.queue_free()
+	await process_frame
+	_live_on()
 
 
 # --- Hub rules -----------------------------------------------------------------------------------------------------
@@ -611,7 +1777,9 @@ func _hub_rules() -> void:
 	ev.type = "banner"
 	ev.text = "NEED 45 KI"
 	ev.dur = 1.0
+	UiData.set_feature("quiet_hints", false)   # this check is of the object path and the rename; the quiet banners have their own check
 	hub.consume(ev)
+	UiData.set_feature("quiet_hints", null)
 	_ok(str(hub.banner.get("text", "")) == "NEED 45 CHARGE", "objects: an FxEvent is consumed like a Dictionary")
 	# Unknown fields on an object do not crash it.
 	var ev2 := SimState.FxEvent.new()
@@ -1901,8 +3069,8 @@ func _feedback_rules() -> void:
 	_ok(UiFeedback.browser_from_ua(chrome) == "Chrome 126" and UiFeedback.browser_from_ua(edge) == "Edge 126" and UiFeedback.browser_from_ua(ff) == "Firefox 127" and UiFeedback.browser_from_ua(safari) == "Safari 17" and UiFeedback.browser_from_ua("curl/8") == "unknown browser", "feedback: the browser is a family and a major version")
 	_ok(UiFeedback.os_from_ua(chrome) == "Windows" and UiFeedback.os_from_ua(ff) == "Linux" and UiFeedback.os_from_ua(safari) == "iOS" and UiFeedback.os_from_ua("... Android 14; Pixel ...") == "Android" and UiFeedback.os_from_ua("Macintosh; Intel Mac OS X 10_15") == "macOS", "feedback: the OS is a family word, with no version or device model")
 	_ok(UiFeedback.format_time(222.4) == "03:42" and UiFeedback.format_time(-3.0) == "00:00" and UiFeedback.format_time(3725.0) == "62:05", "feedback: the match time is minutes and seconds")
-	var sl: String = UiFeedback.settings_line({"captions": true, "reduced_motion": false, "camera_shake": 4.0, "glyph_style": "neutral", "not_an_option": 1})
-	_ok(sl == "camera_shake=4.00, captions=on, glyph_style=neutral, reduced_motion=off", "feedback: the settings are the player options, sorted, on or off")
+	var sl: String = UiFeedback.settings_line({"captions": false, "reduced_motion": true, "camera_shake": 4.0, "glyph_style": "neutral", "not_an_option": 1})
+	_ok(sl == "camera_shake=4.00, captions=off, reduced_motion=on" and UiFeedback.settings_line(UiData.option_defaults()) == "defaults", "feedback: the settings are the player options changed from their defaults, sorted, on or off (all at their defaults: defaults)")
 	# The report.
 	var env := {"screen": Vector2(1920, 1080), "dp": 1.0, "touch": false, "platform": {"os": "Windows", "browser": "Chrome 126", "web": true, "mobile": false, "engine": "Godot 4.7.2"}, "settings": sl}
 	var ctx := {"commit": "abc1234", "date": "2026-09-30", "seed": 987654, "setup": "ONE (player, xbox) vs TWO (AI)", "time": 222.0, "ended": true}
@@ -3167,8 +4335,8 @@ func _key_help_rules() -> void:
 			if (r["acts"] as Array)[0] in ["light", "heavy", "context", "signature"] and (r["acts"] as Array).size() == 1:
 				out.append(r["label"])
 		return out
-	var want := {0: ["Light strikes", "Heavy strikes", "Grab and throw", "Signature"], 1: ["Check", "Push", "Reversal", "Counter"], 2: ["Bolts", "Charged shot", "Mine", "Beam"], 3: ["Quick special", "Strong special", "Utility special", "Ultimate (hold)"], 4: ["Zip strike", "Zip heavy", "Zip tackle", "Terrain art"]}
-	var old_words := ["Light", "Heavy", "Action", "Signature"]
+	var want := {0: ["Light strikes", "Heavy strikes", "Grab and throw", "Signature"], 1: ["Check", "Push", "Reversal", "Counter"], 2: ["Bolts", "Charged shot", "Mine", "Driver"], 3: ["Quick special", "Strong special", "Utility special", "Ultimate (hold)"], 4: ["Zip strike", "Zip heavy", "Zip tackle", "Terrain art"]}
+	var old_words := ["Light", "Heavy", "Action", "Big blow"]
 	var head_ok := true
 	for k in want:
 		for preset in ["arena", "kb-solo", "kb-shared-p2"]:
@@ -3221,7 +4389,7 @@ func _key_help_rules() -> void:
 	var alpha_at := func(t: float, stance_t: float) -> float:
 		m.stance_kind_t = stance_t
 		return UiHints.legend_alpha(m, "auto", false, t)
-	_ok(alpha_at.call(40.0, 99.0) == 0.0 and alpha_at.call(40.0, 0.0) == 1.0 and alpha_at.call(40.0, 2.4) == 1.0 and alpha_at.call(40.0, 2.75) > 0.0 and alpha_at.call(40.0, 2.75) < 1.0 and alpha_at.call(40.0, 3.2) == 0.0, "legend: a stance change shows it for 3 s (the last half second fades), when it had faded after its first twelve")
+	_ok(alpha_at.call(40.0, 99.0) == 0.0 and alpha_at.call(40.0, 0.0) == 1.0 and alpha_at.call(40.0, 2.4) == 1.0 and alpha_at.call(40.0, 2.75) == 1.0 and alpha_at.call(40.0, 3.2) == 0.0, "legend: a stance change shows it for 3 s and then it is gone (a clean cut, no fade), when it had gone after its first twelve")
 	_ok(UiHints.legend_alpha(m, "off", false, 0.0) == 0.0 and (func() -> float:
 		m.stance_kind_t = 0.0
 		return UiHints.legend_alpha(m, "off", false, 40.0)).call() == 0.0, "legend: the control hints option 'off' still hides it")
@@ -3301,7 +4469,7 @@ func _stances_page_rules() -> void:
 			if int(c["kind"]) == kind:
 				out.append(" ".join(c["lines"]))
 		return out
-	_ok(cell_words.call(st, 2) == ["Bolts", "Charged shot", "Mine", "Beam"] and cell_words.call(st, 0) == ["Light", "Heavy", "Action", "Signature"] and cell_words.call(st, 4) == ["Light", "Heavy", "Action", "Signature"], "stances page: the live stance (energy) shows its four names and a not-live stance shows what the buttons really do today, at normal weight, with no tag")
+	_ok(cell_words.call(st, 2) == ["Bolts", "Charged shot", "Mine", "Driver"] and cell_words.call(st, 0) == ["Light", "Heavy", "Action", "Big blow"] and cell_words.call(st, 4) == ["Light", "Heavy", "Action", "Big blow"], "stances page: the live stance (energy) shows its four names and a not-live stance shows what the buttons really do today, at normal weight, with no tag")
 	var tags := false
 	for hd in st["heads"]:
 		tags = tags or str(hd.get("enter", "")).contains("soon")
@@ -3355,7 +4523,7 @@ func _stances_page_rules() -> void:
 		narrow_info += "%s:%s " % [cs[0], sn["mode"]]
 	_ok(narrow_ok, "stances page narrow (360x640, 390x844, 750x1334, 1170x2532): five tabs of at least a touch target, the held stance's tab selected, its four rows, and it fits (%s)" % narrow_info)
 	var pt: Dictionary = _stances_plan(Vector2(360, 640), 1.0, false, "kb-solo", {"held": 0, "tab": 4})
-	_ok(int(pt["stances"]["sel"]) == 4 and cell_words.call(pt["stances"], 4) == ["Light", "Heavy", "Action", "Signature"] and (pt["stances"]["title"] as Dictionary)["text"] == "Manoeuvre", "stances page narrow: choosing a tab shows that stance (its full name, and its real words while it is not live)")
+	_ok(int(pt["stances"]["sel"]) == 4 and cell_words.call(pt["stances"], 4) == ["Light", "Heavy", "Action", "Big blow"] and (pt["stances"]["title"] as Dictionary)["text"] == "Manoeuvre", "stances page narrow: choosing a tab shows that stance (its full name, and its real words while it is not live)")
 	set_live.call([true, true, true, true, true])
 	var pt2: Dictionary = _stances_plan(Vector2(360, 640), 1.0, false, "kb-solo", {"held": 0, "tab": 4})
 	_ok(cell_words.call(pt2["stances"], 4) == ["Zip strike", "Zip heavy", "Zip tackle", "Terrain art"] and str((pt2["stances"]["notes"] as Array)[0]["lines"][0]).begins_with("Dodge, boost"), "stances page narrow: a live stance shows its names and its one line")
@@ -3777,7 +4945,7 @@ func _hints_rules() -> void:
 	_ok(UiHints.you_label(hub.models, hub.model(0)) == "", "hints: nobody is labelled in an AI against AI demo")
 	var m: UiFighterModel = hub.model(0)
 	m.ai = false
-	_ok(UiHints.visible_alpha(m, "auto", false, 0.0) == 1.0 and UiHints.visible_alpha(m, "auto", false, 9.0) == 1.0 and is_equal_approx(UiHints.visible_alpha(m, "auto", false, 11.0), 0.5) and UiHints.visible_alpha(m, "auto", false, 12.5) == 0.0, "hints: auto shows for the first 12 s of a match and fades over the last two")
+	_ok(UiHints.visible_alpha(m, "auto", false, 0.0) == 1.0 and UiHints.visible_alpha(m, "auto", false, 9.0) == 1.0 and UiHints.visible_alpha(m, "auto", false, 11.0) == 1.0 and UiHints.visible_alpha(m, "auto", false, 11.9) == 1.0 and UiHints.visible_alpha(m, "auto", false, 12.5) == 0.0, "hints: auto shows for the first 12 s of a match and then is gone (a clean cut)")
 	_ok(UiHints.visible_alpha(m, "auto", true, 60.0) == 1.0 and UiHints.visible_alpha(m, "always", false, 60.0) == 1.0 and UiHints.visible_alpha(m, "off", true, 0.0) == 0.0, "hints: prompts on or 'always' keep them up, 'off' hides them")
 	m.ai = true
 	_ok(UiHints.visible_alpha(m, "always", true, 0.0) == 0.0, "hints: an AI fighter never gets a legend")
@@ -3837,6 +5005,8 @@ func _hints_rules() -> void:
 		hud.advance(1.0 / 30.0)
 		steps += 1
 	_ok(steps > 300 and hud._l_hints[0].sig == null and hud._l_you.sig != null, "hints: the legend is gone after the first 12 s (%d half-frames), and my fighter keeps its small steady marker (Mark my fighter: Always)" % steps)
+	for i in range(90):
+		hud.advance(1.0 / 30.0)   # the legend is cut at once; the marker over the head settles to its small steady form over the next seconds
 	var yk_late: Dictionary = hud._you_marker(hud.hub.model(0))
 	_ok(bool(yk_late["compact"]) and float(yk_late["a"]) > 0.5 and float(hud._you_marker(hud.hub.model(1))["a"]) == 0.0, "hints: the steady marker is the pointer only, and only over the human")
 	hud.set_option("you_marker", "intro")
@@ -4997,7 +6167,9 @@ func _display_name_rules() -> void:
 	UiText.trace = []
 	UiText.tracing = true
 	# The match: sim-written banners and feed lines naming the roster names, a bark from each fighter, a KO.
+	UiData.set_feature("quiet_hints", false)
 	hud.consume({"type": "banner", "text": "PROTAGONIST POWERS UP  TIER 2", "col": "#ffffff", "dur": 1.4})
+	UiData.set_feature("quiet_hints", null)
 	hud.consume({"type": "bark", "speaker": 1, "text": "Not like this.", "priority": 3})
 	hud.consume({"type": "bark", "speaker": 0, "text": "PROTAGONIST!", "priority": 3})
 	hud.hub.feed_line(1.0, "RIVAL goes to ground", "PROTAGONIST found")
@@ -5248,7 +6420,9 @@ func _rename_rules() -> void:
 		hud.consume({"type": "banner", "text": "Keeper's Lance", "col": "#ffffff", "dur": 1.4})
 		hud.consume({"type": "banner", "text": "RIVAL.SIG", "col": "#ffffff", "dur": 1.4})
 		_ok(hud.hub.banner.is_empty() and int(hud.hub.stats.get("banners_move_name", 0)) - dropped0 == 4, "%s: the signature's banner is dropped whether it arrives as the key or as the name (4 of 4 dropped, none carded, none twice)" % tag)
+		UiData.set_feature("quiet_hints", false)
 		hud.consume({"type": "banner", "text": "RIVAL POWERS UP  TIER 2", "col": "#ffffff", "dur": 1.4})
+		UiData.set_feature("quiet_hints", null)
 		_ok(str(hud.hub.banner.get("text", "")) == "LOUPE POWERS UP  TIER 2", "%s: the sim's banner names the fighter by its display name, in capitals" % tag)
 		hud.consume({"type": "banner", "text": "PROTAGONIST.SIG scores", "col": "#ffffff", "dur": 1.4})
 		_ok(str(hud.hub.banner.get("text", "")) == "KEEPER'S LANCE SCORES", "%s: a banner with the signature's key reads as its name, in capitals (%s)" % [tag, str(hud.hub.banner.get("text", ""))])
@@ -5332,7 +6506,7 @@ func _press_mark_rules() -> void:
 	hud.hub.model(0).ai = false
 	hud.hub.model(1).ai = true
 	var m0: UiFighterModel = hud.hub.model(0)
-	var cases: Array = [["refused", "", "b"], ["energy", "", "x"], ["held", "", "x"], ["lapsed", "y", "y"], ["empty", "a", "a"], ["empty", "x", "x"]]
+	var cases: Array = [["refused", "", "b"], ["energy", "", "x"], ["held", "", "x"], ["lapsed", "y", "y"], ["empty", "a", "a"], ["empty", "x", "x"], ["stunned", "", "x"], ["stunned", "b", "b"]]
 	var ack_ok := true
 	for cs in cases:
 		hud.consume({"type": "press_ack", "actor": 0, "kind": cs[0], "cell": cs[1]})
@@ -5343,7 +6517,7 @@ func _press_mark_rules() -> void:
 		var form2: bool = m0.press_ack_kind == cs[0] and m0.press_ack_cell == cs[2] and m0.press_ack_t == 0.0
 		if not (form1 and form2):
 			ack_ok = false
-	_ok(ack_ok, "press marks: refused, energy, held, lapsed and empty each mark their button (refused is B, energy X, the rest name theirs or are X), from the HUD's own event and from the brawl's cue")
+	_ok(ack_ok, "press marks: refused, energy, held, lapsed, empty and stunned (a press made in a stun) each mark their button (refused is B, energy X, the rest name theirs or are X), from the HUD's own event and from the brawl's cue")
 	m0.press_ack_kind = ""
 	hud.consume({"type": "cue", "actor": 0, "kind": "taunt_start", "text": "x"})
 	hud.consume({"type": "press_ack", "actor": 0, "kind": "something_else"})
@@ -5359,6 +6533,9 @@ func _press_mark_rules() -> void:
 	m0.press_ack_t = 0.2
 	m0.stance_kind_t = 99.0
 	var hidden_t := 60.0   # a minute in: the legend is normally gone
+	m0.press_ack_kind = "stunned"
+	_ok(UiHints.legend_alpha(m0, "auto", false, hidden_t) == 1.0, "press marks: a press made in a stun raises the legend like a refused one, so the cross on its button is seen")
+	m0.press_ack_kind = "empty"
 	var la_empty: float = UiHints.legend_alpha(m0, "auto", false, hidden_t)
 	m0.press_ack_kind = "held"
 	var la_held: float = UiHints.legend_alpha(m0, "auto", false, hidden_t)
@@ -5472,7 +6649,7 @@ func _three_strength_rules() -> void:
 			bad.append("%s chord row %s" % [preset, str(mart.keys())])
 		if chrg.get("light") != ["Light", true] or chrg.get("heavy") != ["Medium", true] or chrg.get("context") != ["Action", true] or chrg.get("signature") != ["Signature (hold)", false] or chrg.has("power,signature"):
 			bad.append("%s charging %s" % [preset, str(chrg)])
-		if enrg.get("signature") == null or str(enrg["signature"][0]) != "Beam" or str(enrg["light"][0]) != "Bolts":
+		if enrg.get("signature") == null or str(enrg["signature"][0]) != "Driver" or str(enrg["light"][0]) != "Bolts":
 			bad.append("%s energy %s" % [preset, str(enrg)])
 	_ok(bad.is_empty(), "three strengths: the legend on Arena, the solo keyboard and the shared keyboard reads Light, Medium, Heavy, with Context greyed (martial), a Signature (hold) chord row, and under the power button Light, Medium and Context greyed with B as the signature; the energy stance keeps its own words %s" % str(bad.slice(0, 2)))
 	var simple: Dictionary = labels_of.call(0, "simple-pad")
@@ -5505,7 +6682,7 @@ func _three_strength_rules() -> void:
 	for rec in hp["items"]:
 		if str(rec["kind"]) == "action":
 			howto_text += " | " + " ".join(PackedStringArray(rec["lines"]))
-	_ok(howto_text.contains("Medium") and howto_text.contains("Heavy (hold the power button with it for your signature, 45 Charge)") and not howto_text.contains("Signature (45 Charge)"), "three strengths: the controls page names Medium and Heavy and says where the signature is")
+	_ok(howto_text.contains("Medium") and howto_text.contains("Heavy: the big blow") and not howto_text.contains("Signature (45 Charge)") and not howto_text.contains("45 Charge"), "three strengths: the controls page names Medium and Heavy and says where the signature is")
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	hud.size = Vector2(1280, 720)
 	root.add_child(hud)
@@ -5639,6 +6816,7 @@ func _launcher_rules() -> void:
 	var mb: UiFighterModel = hud.hub.model(1)
 	hud.hub.patch(0, {"launcher_ready": true, "launcher_rest_left": 0.0})
 	hud.hub.patch(1, {"launcher_ready": false, "launcher_rest_left": 22.0})
+	UiData.set_feature("quiet_hints", false)   # the three checks below are of the words as they were (recharging said)
 	UiData.set_feature("launch_marks", false)
 	_ok(note_of.call(ma) == "" and note_of.call(mb) == "", "launcher: with launch_marks and three_strengths off the heavy row says nothing about it")
 	UiData.set_feature("launch_marks", true)
@@ -5652,6 +6830,11 @@ func _launcher_rules() -> void:
 	var n_rest0: String = note_of.call(ma)
 	hud.hub.patch(0, {"launcher_ready": true, "launcher_rest_left": 0.0})
 	_ok(n_rest0 == "launch recharging" and note_of.call(ma) == "launch ready", "launcher: the words follow the state and carry no countdown (the rest time left is not drawn)")
+	UiData.set_feature("quiet_hints", null)
+	hud.hub.patch(0, {"launcher_ready": false, "launcher_rest_left": 38.0})
+	var n_quiet_rest: String = note_of.call(ma)
+	hud.hub.patch(0, {"launcher_ready": true, "launcher_rest_left": 0.0})
+	_ok(n_quiet_rest == "" and note_of.call(ma) == "launch ready", "launcher: with quiet_hints the legend says launch ready when a launch can be pressed and says nothing while it recharges (nothing a player can act on)")
 	var fresh_m := UiFighterModel.new()
 	fresh_m.setup(0, "protagonist", "ONE")
 	_ok(note_of.call(fresh_m) == "", "launcher: nothing shows until the director sends it")
@@ -6510,11 +7693,11 @@ func _minimal_hud_rules() -> void:
 	hud.hub.consume({"type": "cue", "actor": 0, "kind": "launcher_open", "target": 1})
 	hud.advance(1.0 / 60.0)
 	await process_frame
-	_ok(hud.caption_text() == "He is open: press B" and hud._l_caption.sig != null, "minimal hud: an open launch for a human is named at the bottom edge")
+	_ok(hud.caption_text() == "Open: press B" and hud._l_caption.sig != null, "minimal hud: an open launch for a human is named at the bottom edge")
 	hud.hub.consume({"type": "cue", "actor": 0, "kind": "launcher_close"})
 	hud.advance(0.3)
 	await process_frame
-	var held_on: bool = hud.caption_text() == "He is open: press B"   # the caption holds 0.8 s after the launch closes, so a relit B cannot make it blink
+	var held_on: bool = hud.caption_text() == "Open: press B"   # the caption holds 0.8 s after the launch closes, so a relit B cannot make it blink
 	hud.advance(0.8)
 	await process_frame
 	var keys := PackedStringArray()
@@ -6579,18 +7762,27 @@ func _minimal_teach_rules() -> void:
 	m0.launcher_ready = false
 	hud.advance(1.0 / 60.0)
 	await process_frame
-	_ok(not hud.hub.hint.is_empty() and str(hud.hub.hint["text"]) == "Full! Let go to knock him back." and UiPrefs.get_bool("taught_charge"), "minimal hud: a heavy held to the click with the launcher resting says Full! Let go to knock him back. (it knocks him back)")
+	_ok(not hud.hub.hint.is_empty() and str(hud.hub.hint["text"]) == "Full! Let go to knock your rival back." and int(UiPrefs.get_value("taught_charge_n", 0)) == 1, "minimal hud: a heavy held to the click with the launcher resting says Full! Let go to knock him back. (it knocks him back)")
 	hud.hub.hint = {}
-	m0.charge_t = 0.7
 	hud.advance(1.0 / 60.0)
 	await process_frame
-	_ok(hud.hub.hint.is_empty(), "minimal hud: and only once")
+	var second_show: bool = not hud.hub.hint.is_empty() and int(UiPrefs.get_value("taught_charge_n", 0)) == 2   # quiet_hints: the line shows the first two times
+	hud.hub.hint = {}
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(second_show and hud.hub.hint.is_empty(), "minimal hud: the full-charge line shows twice and then not")
+	hud.hub.hint = {"id": "full_charge", "key": "full_charge", "text": "x", "kind": "hint", "age": 0.0, "plain": true}
+	m0.charge_on = false
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(hud.hub.hint.is_empty(), "minimal hud: the full-charge line goes the moment the heavy is let go")
+	m0.charge_t = 0.7
 	m0.charge_on = false
 	UiData.set_feature("three_strengths", true)
 	m1.open_left = 0.5
 	hud.advance(1.0 / 60.0)
 	await process_frame
-	_ok(not hud.hub.hint.is_empty() and str(hud.hub.hint["text"]) == "He's open. Hit the lit button." and UiPrefs.get_bool("taught_miss"), "minimal hud: the first miss by the rival says He's open. Hit the lit button.")
+	_ok(not hud.hub.hint.is_empty() and str(hud.hub.hint["text"]) == "Open! Hit the lit button." and UiPrefs.get_bool("taught_miss"), "minimal hud: the first miss by the rival says He's open. Hit the lit button.")
 	hud.hub.hint = {}
 	m1.open_left = 0.0
 	hud.advance(1.0 / 60.0)
@@ -7214,7 +8406,7 @@ func _civilian_bar_rules() -> void:
 ## Narrative's plain words (docs/narrative/plain-words.md, merged 2026-10-16) fit where they are drawn, the Cyborg's WEAK SPOT card included; a run needs a length (run_to above 0).
 func _plain_words_rules() -> void:
 	var want := {"card.facade_crack": "RATTLED", "card.hatch_open": "ARMOUR OPEN: {station}", "card.chip_stage": "WEAK SPOT: {stage}", "card.revision": "NEW FORM", "state.brink": "NEARLY BEATEN",
-		"card.brink": "NEARLY BEATEN", "card.boil_over": "CORE: OVERHEATED", "state.lost_trail": "LOST HIM", "state.chain": "COMBO \u00d7{n}", "state.finisher_melee": "BLOWS",
+		"card.brink": "NEARLY BEATEN", "card.boil_over": "CORE: OVERHEATED", "state.lost_trail": "LOST SIGHT", "state.chain": "COMBO \u00d7{n}", "state.finisher_melee": "BLOWS",
 		"prompt.full_signature": "SIGNATURE", "prompt.full_context": "ACTION", "prompt.full_transform": "TRANSFORM"}
 	var bad := PackedStringArray()
 	for k in want:
@@ -8412,6 +9604,7 @@ func _bark_obj(slot: int, prio: int = 2, style: String = "caption", kind: String
 func _faces_rules() -> void:
 	UiData.reload()
 	UiData.set_feature("minimal_hud", false)   # reload() drops every override: the older rules look at the full HUD
+	_live_on()
 	var fd: Dictionary = UiData.faces()
 	var slots_ok := true
 	for id in ["default", "protagonist", "anti_hero", "empress", "cyborg"]:
@@ -8665,6 +9858,7 @@ func key_event_for(code: int) -> InputEventKey:
 func _two_player_rules() -> void:
 	UiData.reload()
 	UiData.set_feature("minimal_hud", false)   # reload() drops every override: the older rules look at the full HUD
+	_live_on()
 	for id in ["join", "join_short", "join_key", "join_key_short", "joined", "left", "pause_p2_leave", "pause_p2_join"]:
 		_ok(UiData.t("prompt." + id) != "prompt." + id, "two players: the word %s exists" % id)
 	var od: Dictionary = UiData.options()

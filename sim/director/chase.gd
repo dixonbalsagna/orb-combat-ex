@@ -281,7 +281,7 @@ static func _catch(S: SimState, A, D) -> void:
 	if D.state != "launched" and D.state != "free" and D.state != "down":
 		_end(S, A, D, "catch")
 		return
-	var force: float = float(c.get("sendForce", 1600.0))
+	var force: float = SimPower.sendForce(S, A, float(c.get("sendForce", 1600.0)), "chase")
 	var tilt: int = _tilt(A)
 	if kind == "spike":
 		tilt = 5   # straight down

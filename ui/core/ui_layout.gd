@@ -398,8 +398,13 @@ func _fits() -> bool:
 	return true
 
 
+var col_cap: float = 0.0   # split_fit: the edge columns (plates, cards, prompts, legend) are no wider than this while a 70/30 split is on (0: no cap)
+
+
 func _landscape() -> void:
 	var col_w: float = 380.0 * s
+	if col_cap > 0.0:
+		col_w = minf(col_w, col_cap)
 	var ph: float = float(pm["h"])
 	var gap: float = 12.0 * s
 	plate[0] = Rect2(safe.position.x, safe.position.y, col_w, ph)
@@ -451,6 +456,8 @@ func _landscape() -> void:
 	var strip_w: float = minf(safe.size.x * 0.46, 900.0 * s)
 	strip = Rect2(vp.x * 0.5 - strip_w * 0.5, safe.end.y - strip_h, strip_w, strip_h)
 	var lane_w: float = minf(safe.size.x * 0.34, 640.0 * s)
+	if col_cap > 0.0:
+		lane_w = minf(lane_w, vp.x * 0.28)   # a speech line is no wider than the small pane
 	var lane_h: float = bark_height(s)
 	var lane_bottom: float = strip.position.y - gap * 1.2
 	bark[0] = Rect2(safe.position.x, lane_bottom - lane_h, lane_w, lane_h)

@@ -203,6 +203,8 @@ static func rushAt(S: SimState, f, u: float) -> PackedFloat64Array:
 	var r = f.rush
 	if r == null:
 		return PackedFloat64Array([f.x, f.y])
+	if r.loop != 0:
+		return _loopAt(S, f, r, u)
 	var tx: float = r.tgt.x + r.off if r.tgt != null else r.px
 	var ty: float = r.tgt.y if r.tgt != null else r.py
 	var sx: float = r.x0 if r.dur > 0.0 else f.x
@@ -225,6 +227,76 @@ static func rushAt(S: SimState, f, u: float) -> PackedFloat64Array:
 	return PackedFloat64Array([SimWrap.wrap(x), y])
 
 
+## A loop's place at u, from 0 (where it began) to 1 (the circle's far side), round its target as he is now. The way in is
+## straight, from where it began to the circle's near side at its centre's height; the rest is half the circle, over (loop 1)
+## or under, at an even speed along the whole path. Held by the ground and the ceiling, so a loop under a fighter on the ground
+## is a low sweep round him.
+static var loopBlind: bool = false   # tests only: a loop with no half circle, straight through him (loop_check's negative control)
+
+
+static func _loopAt(S: SimState, f, r, u: float) -> PackedFloat64Array:
+	var uu: float = SimMathx.jclamp(u, 0.0, 1.0)
+	if loopBlind:
+		var bx: float = r.x0 if r.dur > 0.0 else f.x
+		var by: float = r.y0 if r.dur > 0.0 else f.y
+		var fx: float = r.tgt.x - r.ls * r.lr
+		return PackedFloat64Array([SimWrap.wrap(bx + SimWrap.sdx(bx, fx) * uu), by + (r.tgt.y + r.lm - by) * uu])
+	var cx: float = r.tgt.x
+	var cy: float = r.tgt.y + r.lm
+	var x: float
+	var y: float
+	if uu < r.lu:
+		var sx: float = r.x0 if r.dur > 0.0 else f.x
+		var sy: float = r.y0 if r.dur > 0.0 else f.y
+		var ex: float = cx + r.ls * r.lr
+		var k: float = uu / r.lu
+		x = sx + SimWrap.sdx(sx, ex) * k
+		y = sy + (cy - sy) * k
+	else:
+		var th: float = SimMathx.PI * (uu - r.lu) / maxf(1.0e-9, 1.0 - r.lu)
+		x = cx + r.ls * r.lr * SimDetMath.cos(th)
+		y = cy + float(r.loop) * r.lr * SimDetMath.sin(th)
+	x = SimWrap.wrap(x)
+	y = SimMathx.jclamp(y, floorFor(S, f, x, f.z), SimConst.CEILING)
+	return PackedFloat64Array([x, y])
+
+
+## The flight strike's arc (Game Design, docs/design/playable-build.md): f makes a loop round tgt, over (over true) or under,
+## and ends at its far side, behind him. The circle's top (or bottom) is top over tgt's feet and its centre mid over them, so
+## its radius is top - mid; it ends at mid. It follows tgt as he moves, as a fighter rush does. ticks is the whole path's,
+## raised to Legal's floor (RL-076): at least minTicks, and the path's length now over maxStep a tick. Returns the ticks it
+## takes; the director makes the blow at loopApex. Nothing in the sim asks for one until a director does.
+static func loopRush(S: SimState, f, tgt, over: bool, top: float, mid: float, ticks: int, minTicks: int, maxStep: float) -> int:
+	var r := SimState.Rush.new()
+	r.tgt = tgt
+	r.loop = 1 if over else -1
+	r.lr = maxf(1.0, top - mid)
+	r.lm = mid
+	var dx: float = SimWrap.sdx(tgt.x, f.x)
+	r.ls = 1.0 if dx > 0.0 or (dx == 0.0 and f.face < 0.0) else -1.0   # from his side, or the way the mover faces when on top of him
+	var ex: float = SimWrap.sdx(f.x, SimWrap.wrap(tgt.x + r.ls * r.lr))
+	var ey: float = tgt.y + mid - f.y
+	var way: float = SimDetMath.hypot(ex, ey)
+	var round_: float = SimMathx.PI * r.lr
+	r.lu = way / (way + round_)
+	var n: int = maxi(ticks, maxi(minTicks, int(ceil((way + round_) / maxf(maxStep, 1.0)))))
+	r.x0 = f.x
+	r.y0 = f.y
+	r.dur = float(n) * SimConst.DT
+	r.end = S.T + r.dur + 0.5 * SimConst.DT   # the nth step from now ends it, whichever stage of a tick it's made in
+	r.pz = f.z
+	f.rush = r
+	return n
+
+
+## When f's loop is at its top (or bottom), on his fight's clock: where the arc's blow lands. -1 with no loop.
+static func loopApex(f) -> float:
+	var r = f.rush
+	if r == null or r.loop == 0:
+		return -1.0
+	return r.end - 0.5 * SimConst.DT - r.dur + r.dur * (r.lu + (1.0 - r.lu) * 0.5)
+
+
 ## How far along his rush f is now, from 0 to 1: after a tick's step it is where that step put him, so rushAt(S, f,
 ## rushU(S, f)) is his place on a bowed rush. 0 for a rush that has not taken a step; 1 with no rush.
 static func rushU(S: SimState, f) -> float:
@@ -233,6 +305,8 @@ static func rushU(S: SimState, f) -> float:
 		return 1.0
 	if r.dur <= 0.0:
 		return 0.0
+	if r.loop != 0:   # a loop's own clock: its end is half a tick past its last step
+		return SimMathx.jclamp(1.0 - (r.end - S.T - 0.5 * SimConst.DT) / r.dur, 0.0, 1.0)
 	return SimMathx.jclamp(1.0 - (r.end - S.T - SimConst.DT) / r.dur, 0.0, 1.0)
 
 
@@ -244,6 +318,10 @@ static func stepRush(S: SimState, f, dt: float) -> void:
 	var ty: float = r.tgt.y if r.tgt != null else r.py
 	var rem: float = r.end - S.T
 	var tz: float = (r.tgt.z + r.offZ) if r.tgt != null else r.pz   # L2: the rush's depth (used only when S.depthOn); offZ puts him a little to one side of his target
+	if r.loop != 0 and rem <= dt:   # a loop ends at the circle's far side
+		var fin: PackedFloat64Array = _loopAt(S, f, r, 1.0)
+		tx = fin[0]
+		ty = fin[1]
 	if rem <= dt:
 		f.x = SimWrap.wrap(tx)
 		f.y = SimMathx.jmax(ty, floorFor(S, f, tx, 0.0))
@@ -263,7 +341,13 @@ static func stepRush(S: SimState, f, dt: float) -> void:
 		r.x0 = f.x
 		r.y0 = f.y
 		r.dur = rem
-	if r.arc != 0.0:
+	if r.loop != 0:
+		# A loop (Rush.loop): its n steps each go 1/n of its path, worked out from its start (rushAt), so nothing drifts and
+		# it arrives on its nth step (its end is half a tick past it).
+		var lp: PackedFloat64Array = rushAt(S, f, 1.0 - (rem - 0.5 * dt) / r.dur)
+		f.x = lp[0]
+		f.y = lp[1]
+	elif r.arc != 0.0:
 		# A bowed rush (Rush.arc): each step is worked out from the rush's start (rushAt), so nothing drifts, and it
 		# arrives with the straight rush, on the same tick.
 		var at: PackedFloat64Array = rushAt(S, f, 1.0 - (rem - dt) / r.dur)
@@ -540,7 +624,11 @@ static func flightSpeed(S: SimState, f, dash: bool) -> float:
 		# Traversal: flat out and far from the opponent, the dash is TRAV_FREE times faster (a lap of the planet in about
 		# 15 s); close in, it is the melee dash it always was.
 		var sep: float = absf(SimWrap.sdx(f.x, SimRoster.opp(S, f).x))
-		sp *= 1.0 + (SimConst.TRAV_FREE - 1.0) * SimMathx.jclamp((sep - SimConst.BOOST_NEAR) / (SimConst.BOOST_FAR - SimConst.BOOST_NEAR), 0.0, 1.0)
+		var ramp: float = SimMathx.jclamp((sep - SimConst.BOOST_NEAR) / (SimConst.BOOST_FAR - SimConst.BOOST_NEAR), 0.0, 1.0)
+		if S.powerOn:
+			sp = SimPower.flatSpeed(S, f, sp, ramp)   # one energy model: the same closeness, the far end by his level
+		else:
+			sp *= 1.0 + (SimConst.TRAV_FREE - 1.0) * ramp
 	if f.y < WorldWater.seaTop(S, f.x) and not WorldFill.floorOn():   # in the sea or a deep lake: below its surface (with the floor on a fighter under his own control is never below it: rulings 2026-10-30 row 2)
 		sp *= 0.55
 	return sp

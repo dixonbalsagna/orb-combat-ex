@@ -68,7 +68,7 @@ static func _stop(f) -> void:
 ## True while he is held where he is: buried, in a hold, or in a set piece (a signature, a finisher, a burial's follow-up,
 ## a brawl's break launch).
 static func _held(S: SimState, f, ex) -> bool:
-	if S.game.ko != null or DirBury.buried(f) or DirGrapple.holds(f):
+	if S.game.ko != null or DirBury.buried(f) or DirGrapple.holds(f) or f.wallZ > 0:   # (wallZ: World, brunt.json wallDepthHold: pinned at a wall's face for the hold)
 		return true
 	if ex == null or (f != ex.A and f != ex.D):
 		return false

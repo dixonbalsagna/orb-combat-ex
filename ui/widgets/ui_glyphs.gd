@@ -180,7 +180,7 @@ static func width_spec(sp: Dictionary, h: float) -> float:
 		"key":
 			return maxf(h, UiText.width(sp["label"], fs) + h * 0.5)
 		"face":
-			return h + h * 0.12 + UiText.width(sp["label"], fs)
+			return h if UiData.feature("legend_quiet") else h + h * 0.12 + UiText.width(sp["label"], fs)   # the diamond shows the place; the letter beside it (W, N) read as a keyboard key
 		"pad":
 			return maxf(h * 1.1, UiText.width(sp["label"], fs) + h * 0.5)
 		"plus":
@@ -235,7 +235,8 @@ static func draw_spec(ci: CanvasItem, sp: Dictionary, at: Vector2, h: float, alp
 					ci.draw_circle(p, r * 1.15, ink)
 				else:
 					ci.draw_arc(p, r, 0.0, TAU, 12, edge, 1.5, true)
-			UiText.draw(ci, sp["label"], Vector2(at.x + h + h * 0.12, cy + float(fs) * 0.35), fs, ink, -1)
+			if not UiData.feature("legend_quiet"):
+				UiText.draw(ci, sp["label"], Vector2(at.x + h + h * 0.12, cy + float(fs) * 0.35), fs, ink, -1)
 		"pad":
 			UiIcons.rrect(ci, Rect2(at.x, cy - h * 0.5, w, h), h * 0.3, back, edge, 1.5)
 			UiText.draw(ci, sp["label"], Vector2(at.x + w * 0.5, cy + float(fs) * 0.35), fs, ink, 0)

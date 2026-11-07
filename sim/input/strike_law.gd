@@ -21,6 +21,7 @@ var expiry: int = 36
 var last_face: int = -1000000   # the tick a face press last went through
 var stick_until: int = -1000000 # the first tick the faces are free after a stick command
 var queue: Array = []           # [{k, v, t}]: a pressed face button waiting for the stick to be quiet
+var dropped: Array = []         # [{k, why, t}]: the face presses the law let go of with no sign (docs/controls/refusals.md): "face_late" (older than `expiry`), "face_overflow" (the oldest of a full queue)
 
 
 func _init(swapped: bool = false) -> void:
@@ -33,6 +34,12 @@ func _init(swapped: bool = false) -> void:
 ## The earliest tick a strike request may start, after the last face press that went through (R). 0 for none.
 func floor_tick() -> int:
 	return 0 if last_face < 0 else last_face + reverse_lockout
+
+
+## B was held in the energy layer (the Driver's bank, docs/design/energy-overhaul.md E129 to E131) and has just been let go at `tick`: it counts as the last face
+## event, so a strike request waits R from the release, as a thumb moving from B to the stick would.
+func note_hold_release(tick: int) -> void:
+	last_face = maxi(last_face, tick)
 
 
 ## A struggle: the faces are free now, and nothing waiting from before goes out as a surge.
@@ -66,6 +73,8 @@ func filter(i: SimIntent, tick: int, busy: bool) -> void:
 	for q in queue:
 		if tick - int(q["t"]) <= expiry:
 			keep.append(q)
+		else:
+			dropped.append({"k": q["k"], "why": "face_late", "t": tick})
 	queue = keep
 	if inert:
 		_strip(i, true)
@@ -88,7 +97,8 @@ func filter(i: SimIntent, tick: int, busy: bool) -> void:
 func _enqueue(e: Dictionary) -> void:
 	queue.append(e)
 	while queue.size() > depth:
-		queue.pop_front()   # newest wins
+		var gone: Dictionary = queue.pop_front()   # newest wins
+		dropped.append({"k": gone["k"], "why": "face_overflow", "t": int(e["t"])})
 
 
 ## The held levels of the face buttons are off while a strike is in the sim's hands.
@@ -130,5 +140,6 @@ func _put(i: SimIntent, e: Dictionary) -> void:
 ## Everything let go (a pause, a new match).
 func reset() -> void:
 	queue.clear()
+	dropped.clear()
 	last_face = -1000000
 	stick_until = -1000000
