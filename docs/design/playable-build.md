@@ -1,6 +1,6 @@
 # The playable build: rulings for Encounter
 
-Owner: Game Design. 2026-11-06, ruling the stand-in's `docs/ep/proposals/controller-vision.md` (51ab2001), which builds on `beams-third-play.md`. **Every number is a first value, as data, and nothing is played.** The claw-law check on the LT take-back is Controls', and point 3 is Orb's to pick.
+Owner: Game Design. 2026-11-06, ruling the stand-in's `docs/ep/proposals/controller-vision.md` (51ab2001), which builds on `beams-third-play.md`. **Every number is a first value, as data, and nothing is played.** Controls' claw check on the LT take-back found no claw gain, and its window is ruled in §1. Orb picked point 3.
 
 ## 1. Flight strikes (the vision's section 2)
 
@@ -32,7 +32,22 @@ Owner: Game Design. 2026-11-06, ruling the stand-in's `docs/ep/proposals/control
 ### LT's other jobs, and the take-back
 
 - **LT alone does what it does today:** a tap and the left stick is the slip, the stick away up close is the dodge-cancel, and held while moving away is the escape stance.
-- **The take-back:** a face press within **8 ticks** of LT's press turns it into the flight strike. **The slip or dodge-cancel is undone,** with its energy and cooldown (the dodge-cancel's 15 ki and 3 s) refunded. The body carries on from where it is, and the slip's protection frames end at once. **Controls checks the claw law.** LT and the face buttons are on different hands, so it should hold, but the gate decides.
+- **The take-back:** a face press **0 to 4 ticks after LT's press, with LT still held at the face press,** turns it into the flight strike. **The slip or dodge-cancel is undone,** with its energy and cooldown (the dodge-cancel's 15 ki and 3 s) refunded. The body carries on from where it is, and the slip's protection frames end at once.
+
+**Ruled 2026-11-06 on Controls' claw check (`docs/controls/lt-take-back-claw.md`): no claw gain, and both of its fixes (its option 3).**
+
+| | Ruling |
+| :--- | :--- |
+| **The window** | **4 ticks,** down from 8. In Orb's four files, everything past a few ticks only added mash: at 8, 47% of LT presses would convert against 37% by chance, so about four in five would be accidents. A deliberate LT-then-button is two hands, and lands inside 2 or 3 ticks. 4 keeps a tick to spare |
+| **LT held at the press** | **Required.** It's the grammar Orb was shown: hold LT, point, press. A tapped LT that's already let go stays the slip, and the button is its own blow. This needs one new intent bit, `dodgeHeld` |
+| **Same tick** | **Converts.** It's the one offset where intent clearly shows (twice chance). LT is read first |
+| **The button first, then LT** | **Never converts,** at any gap. A blow starts on the tick it's pressed, and taking back one that's started would either undo a blow already showing or make every face button wait to see if LT follows. A symmetric chord would also double the accidents (Orb's spike at 3 ticks). The blow lands as pressed, and LT then does its own job |
+| **Past the window, LT still held** | Not a flight strike. The button is its own blow, and LT's slip or escape carries on, so holding escape while mashing never turns into parting shots |
+| **Which press counts** | The face press as the sim sees it, after the strike law, not the raw press. A button held behind a strike stick is never a take-back, which is what keeps the claw verdict true |
+
+- **What the hint says:** "Hold LT, then press." LT first, as the strip and the first-play card show it.
+- **Read next:** the next play files with the black box's `rawPad.triggers`. Controls counts how many old-rule conversions had LT already let go (what the held rule removes) and the conversions at 4 against chance.
+- **Levers:** the window goes 4 to 3 if accidents stay well over chance. It goes back toward 6 if the held rule alone clears them and deliberate pairs are being missed. A one-tick grace for the button first is a lever only if the files show deliberate pairs landing a tick early.
 - **If you can't pay for the flight strike,** the take-back doesn't happen. LT's own move carries on, and the pad knocks once.
 
 ### When it isn't read
@@ -74,7 +89,7 @@ Owner: Game Design. 2026-11-06, ruling the stand-in's `docs/ep/proposals/control
     "enabled": false,
     "rangeBh": [0, 12.5],
     "bearing": { "deadzone": 0.5, "towardDeg": 45, "awayDeg": 45 },
-    "takeBackTicks": 8,
+    "takeBack": { "ticks": 4, "needsLtHeld": true, "faceFirst": false },
     "blows": {
       "x": { "tell": 6, "worth": 2.5, "ki": 10 },
       "y": { "tell": 10, "damage": 132, "ki": 15 },
