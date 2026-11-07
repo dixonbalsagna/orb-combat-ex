@@ -108,11 +108,26 @@ It replaces `stances.circle` and the LT lane of `stances`, and lets the zip star
 | **The beam's own move, no lock, the 0.3 s rule, the computer on the same path, and every refusal said** | **As ruled in `beams-third-play.md`** |
 | **The incoming-beam rumble** | **On** |
 
-## 3. Pushing in a beam struggle: both versions, for Orb's pick
+## 3. Pushing in a beam struggle: an option for each player
 
-**Not decided.** Both are written so either can be built at once. **Shared by both:** a pulse every 20 ticks, a window of 4 ticks either side (2 for a sharp push), a push of 0.1 (sharp 0.15), a press off the beat cancels your next good one, 15 pulses. Walking into a beam is a struggle: your steps count double. The computer hits pulses at its level's rate, as now.
+**Orb's pick (2026-11-06):** "Put it in options, let players choose whether they want rhythm on right stick (easiest), rhythm on face buttons (hard), or another undecided mode potentially." With the stand-in's calls (`controller-vision.md` section 8):
 
-### Version A: flick the right stick toward them on the beat (the stand-in's pick)
+| | Ruling |
+| :--- | :--- |
+| **The setting** | **`struggle.pushMode`: `"stick"` (version A, the default) or `"face"` (version B).** A third value is reserved and not built (below) |
+| **Whose** | **Each player's own,** in their options, kept with their controls. It's carried in the match's setup for each slot, so replays, LAN and 2v2 all read it. The computer isn't affected |
+| **Strength** | **Every mode pushes equally hard:** the same window, the same push of 0.1 (sharp 0.15), and the same stray rule. A mode changes only what you press, never how much it counts |
+| **Teaching** | The first three clashes of a match show the push for **your** mode in the left panel: a stick arrow for `stick`, X, Y and B for `face` |
+| **Re-ruled** | **`right-hand-attacks-rulings.md` §3's "in a struggle the stick does nothing"** now holds only in `face` mode. In `stick` mode the stick pushes and the face buttons do nothing. **The walk-in's steps** are your mode's push: a flick toward in `stick`, X, Y or B in `face` |
+| **The third mode** | **A stub:** the key's third value is reserved, with nothing behind it until Orb names it. Choosing it isn't offered yet |
+
+```json
+{ "struggle": { "pushMode": { "default": "stick", "values": ["stick", "face"], "reserved": ["third"], "perPlayer": true } } }
+```
+
+**Shared by both:** a pulse every 20 ticks, a window of 4 ticks either side (2 for a sharp push), a push of 0.1 (sharp 0.15), a press off the beat cancels your next good one, 15 pulses. Walking into a beam is a struggle: your steps count double. The computer hits pulses at its level's rate, as now.
+
+### Version A, `stick`, the default: flick the right stick toward them on the beat
 
 | | |
 | :--- | :--- |
@@ -125,7 +140,7 @@ It replaces `stances.circle` and the LT lane of `stances`, and lets the zip star
 | **Teaching** | The left panel shows a stick arrow pulsing toward them on each beat |
 | **Its case** | One thing to learn, on the hand that fires beams |
 
-### Version B: X, Y or B on the beat (today's)
+### Version B, `face`, an option: X, Y or B on the beat
 
 | | |
 | :--- | :--- |
