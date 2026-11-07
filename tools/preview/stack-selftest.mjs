@@ -159,6 +159,20 @@ try {
   put('data/d.json', '{\n  "flag": false\n}\n', tree);
   const fb = flipAll(tree, [{ id: 'flag', file: 'data/d.json', path: ['flag'], from: false, to: true, what: 'x' }]);
   check('a switch in the tree is flipped in the scratch text', fb.on.includes('flag') && readFileSync(join(tree, 'data/d.json'), 'utf8').includes('"flag": true'));
+  {   // a HELD row is not flipped in the built data (Netcode, 2026-11-07: the loop flipped every row, and only the page's list said the held ones were off)
+    put('data/director/interrupts.json', '{\n  "press": {\n    "refusedCue": false\n  }\n}\n', tree);
+    put('data/director/launch.json', '{\n  "walk": {\n    "enabled": false,\n    "ai": {\n      "enabled": false\n    }\n  }\n}\n', tree);
+    put('data/director/swing.json', '{\n  "slam": {\n    "enabled": false\n  }\n}\n', tree);
+    put('data/biomes/brunt.json', '{\n  "lodgeHold": "world",\n  "wallRebound": 0.25,\n  "wallStop": 1,\n  "wallDepthHold": 0,\n  "repeatMarks": 0\n}\n', tree);
+    const rd = (p) => JSON.parse(readFileSync(join(tree, p), 'utf8'));
+    const fh = flipAll(tree, []);
+    check('held rows stay at the commit\'s values in the built data: refusedCue false, the city rows (walk, walk.ai, slam, lodgeHold and its four) as they were, each waiting with its reason', rd('data/director/interrupts.json').press.refusedCue === false && rd('data/director/launch.json').walk.enabled === false && rd('data/director/launch.json').walk.ai.enabled === false && rd('data/director/swing.json').slam.enabled === false && rd('data/biomes/brunt.json').lodgeHold === 'world' && rd('data/biomes/brunt.json').wallStop === 1 && !fh.on.includes('refusedCue') && !fh.on.includes('wallPush') && fh.waiting.some((w) => w.id === 'refusedCue' && /held off: knocks on landed hits/.test(w.why)) && fh.waiting.some((w) => w.id === 'cityHold' && /held off: waiting on QA city read/.test(w.why)), JSON.stringify(fh.waiting.filter((w) => /held/.test(w.why))));
+    const fo = flipAll(tree, [], null, { on: ['refusedCue', 'wallPush'] });
+    check('--on turns a held row on in the data (refusedCue and walk.enabled true, the other held rows still off)', rd('data/director/interrupts.json').press.refusedCue === true && rd('data/director/launch.json').walk.enabled === true && rd('data/director/launch.json').walk.ai.enabled === false && rd('data/biomes/brunt.json').lodgeHold === 'world' && fo.on.includes('refusedCue'));
+    put('data/director/interrupts.json', '{\n  "press": {\n    "refusedCue": false\n  },\n  "water": {\n    "enabled": false\n  }\n}\n', tree);
+    flipAll(tree, [], null, { off: ['interrupts'] });
+    check('--off leaves the row\'s key at the commit\'s value in the built data', rd('data/director/interrupts.json').water.enabled === false);
+  }
   put('tools/validate.js', "console.log('error  data/d.json:2 /flag [type] flag must be a boolean'); console.log('warning  ui/x.json:1 /a [xref:r] note'); console.log('3 files checked, 1 errors, 1 warnings'); process.exit(1);\n", tree);
   const rv = runValidate(tree);
   check('validate is run in the scratch tree and its findings and count are read', rv.summary && rv.summary.errors === 1 && rv.summary.warnings === 1 && rv.findings.length === 2 && rv.findings[0].file === 'data/d.json' && rv.findings[0].rule === 'type');

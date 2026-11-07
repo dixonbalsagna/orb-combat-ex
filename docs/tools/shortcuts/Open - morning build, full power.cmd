@@ -1,7 +1,7 @@
 @echo off
 title Orb Combat EX - the morning build, START AT FULL POWER
 rem The KEPT folder is the morning build (main a8bc66e2): a copy made by tools\preview\handover.mjs, kept in the repository's homework\Files\builds and never rebuilt. It is served on its own port, 8768, so it never meets the earlier kept builds on 8766 and 8767.
-set "KEPT=%~dp0..\Files\builds\orb-first-play-a8bc66e2-e7d38b88"
+set "KEPT=%~dp0..\Files\builds\orb-first-play-a8bc66e2-e80b8e3d"
 for %%I in ("%KEPT%") do set "KEPT=%%~fI"
 set "ADDR=http://127.0.0.1:8768/index.html?planet=7&meteor=loud&tiles=1&go=1&blackbox=1&audiolog=1&peak=1"
 echo.

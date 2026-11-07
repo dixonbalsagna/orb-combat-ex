@@ -75,7 +75,7 @@ export async function buildStackPreview(o) {
   if (pend.problems.length) throw new Error(`tools/preview/switches-pending.json: ${pend.problems.join('; ')}`);
   const base = resolve(o.out || join(tmpdir(), 'meridian-stack-preview'));
   // the stack: applied and switched, no Godot; its tree kept
-  const s = await runStack({ repo, manifest: o.manifest, rev: o.rev || 'main', only: o.only, skip: o.skip, noGodot: true, keepTree: true, force: true, out: join(base, 'stack'), state: join(base, 'stack-last.json'), log });
+  const s = await runStack({ repo, manifest: o.manifest, rev: o.rev || 'main', only: o.only, skip: o.skip, noGodot: true, keepTree: true, force: true, off: o.off || [], on: o.on || [], out: join(base, 'stack'), state: join(base, 'stack-last.json'), log });
   const r = s.report;
   const tree = join(base, 'stack', `${r.commit.slice(0, 8)}-${r.key}`, 'tree');
   if (!existsSync(join(tree, 'render', 'core', 'main.gd'))) throw new Error(`the stack tree is not where it should be: ${tree}`);
@@ -91,7 +91,7 @@ export async function buildStackPreview(o) {
   const parksIn = r.parks.filter((p) => p.status === 'applied').map((p) => p.id);
   const tz = templateZip(o.template, repo);
   const tzKey = tz ? `-t${createHash('sha1').update(readFileSync(tz)).digest('hex').slice(0, 8)}` : '';
-  const keyFull = `${r.key}-${pl.active.join('+')}${pl.hostPatch ? '-host' : ''}${o.film ? '-film' : ''}${tzKey}-e${EDITS_FINGERPRINT}-s${createHash('sha1').update(['switches.mjs', 'blackbox.mjs', 'preview.mjs'].map((f) => readFileSync(new URL('./' + f, import.meta.url), 'utf8')).join('\u0000')).digest('hex').slice(0, 6)}-p${createHash('sha1').update(JSON.stringify([pl.probes, pl.setup, pl.urlWords || null])).digest('hex').slice(0, 6)}`.replace(/[^A-Za-z0-9+._-]/g, '_');
+  const keyFull = `${r.key}-${pl.active.join('+')}${pl.hostPatch ? '-host' : ''}${o.film ? '-film' : ''}${tzKey}-e${EDITS_FINGERPRINT}-s${createHash('sha1').update(['switches.mjs', 'blackbox.mjs', 'preview.mjs', 'stack.mjs'].map((f) => readFileSync(new URL('./' + f, import.meta.url), 'utf8')).join('\u0000')).digest('hex').slice(0, 6)}-p${createHash('sha1').update(JSON.stringify([pl.probes, pl.setup, pl.urlWords || null])).digest('hex').slice(0, 6)}`.replace(/[^A-Za-z0-9+._-]/g, '_');
   // the key is long (the stack's key leads it, the switches follow): a tail cut dropped the stack's key and two different stacks shared a folder, so the whole is hashed and a readable tail kept
   const key = createHash('sha1').update(keyFull).digest('hex').slice(0, 16) + '-' + keyFull.slice(-60);
   const dir = join(base, 'build', key), web = join(dir, 'web'), metaFile = join(dir, 'preview.json');

@@ -20,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 import { exportRevision } from '../flash/head-export.mjs';
 import { scriptErrors } from '../gate.mjs';
 import { godotExe, readPending, runGodot } from './preview.mjs';
-import { SWITCHES, flip, parts, locate, present, tableWith } from './switches.mjs';
+import { SWITCHES, flip, parts, locate, present, tableWith, resolve as resolveSwitches } from './switches.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const REPO = resolve(HERE, '..', '..');
@@ -283,11 +283,15 @@ export function missingNeeds(parks, results, tree) {
 
 // ---------------------------------------------------------------------------------------------------- switches, validate, errors
 /** Turns on every switch of the preview table, of the pending rows and of the parks (`switches` rows of the manifest) whose key is in the tree. Returns { on: [id], waiting: [{id, why}], problems }. */
-export function flipAll(tree, extraRows = [], only = null) {
+export function flipAll(tree, extraRows = [], only = null, { off = [], on: wantOn = [] } = {}) {
   const on = [], waiting = [], problems = [];
   const table = tableWith([...readPending().rows, ...extraRows]);
+  // What is turned on is what resolve() says (2026-11-07 fix: this loop used to flip EVERY row, so a held row and every --off row was still on in the built data and only the page's list said otherwise).
+  const r0 = resolveSwitches(off, table, wantOn);
+  const heldWhy = new Map(r0.held.map((h) => [h.id, h.why]));
+  if (!only) only = r0.active;
   for (const sw of table) {
-    if (only && !only.includes(sw.id)) { waiting.push({ id: sw.id, why: 'left off by the caller (the bisect\'s switch list)' }); continue; }
+    if (only && !only.includes(sw.id)) { waiting.push({ id: sw.id, why: heldWhy.has(sw.id) ? `held off: ${heldWhy.get(sw.id)}` : 'left off by the caller (--off, a row that needs one that is off, or the bisect\'s switch list)' }); continue; }
     if (sw.setup || sw.url) {   // a key of the match's setup (gen3) or a page word (tiles): on when the tree has the code; the smoke match asks for it
       if (existsSync(join(tree, ...sw.presentIf.file.split('/')))) on.push(sw.id); else waiting.push({ id: sw.id, why: `${sw.presentIf.file} is not in the tree` });
       continue;
@@ -446,7 +450,7 @@ export async function runStack(o) {
   const t0 = Date.now();
   const applied = applyStack({ repo, tree, parks, owners });
   const extraRows = parks.flatMap((p) => p.switches || []);
-  const flips = flipAll(tree, extraRows, o.switches || null);
+  const flips = flipAll(tree, extraRows, o.switches || null, { off: o.off || [], on: o.on || [] });
   const missing = missingNeeds(parks, applied, tree);
   const report = {
     at: new Date().toISOString().slice(0, 16), key, commit: sha, subject, left, firstConflict: applied.firstConflict,
