@@ -20,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 import { exportRevision } from '../flash/head-export.mjs';
 import { scriptErrors } from '../gate.mjs';
 import { godotExe, readPending, runGodot } from './preview.mjs';
-import { SWITCHES, flip, locate, present, tableWith } from './switches.mjs';
+import { SWITCHES, flip, parts, locate, present, tableWith } from './switches.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const REPO = resolve(HERE, '..', '..');
@@ -292,11 +292,19 @@ export function flipAll(tree, extraRows = [], only = null) {
       if (existsSync(join(tree, ...sw.presentIf.file.split('/')))) on.push(sw.id); else waiting.push({ id: sw.id, why: `${sw.presentIf.file} is not in the tree` });
       continue;
     }
-    const f = join(tree, ...sw.file.split('/'));
-    if (!existsSync(f)) { waiting.push({ id: sw.id, why: `${sw.file} is not in the tree` }); continue; }
-    const text = readFileSync(f, 'utf8');
-    if (!present(text, sw)) { waiting.push({ id: sw.id, why: `${sw.replace ? sw.replace.from : sw.path.join('.')} is not in ${sw.file}` }); continue; }
-    try { const r = flip(text, sw); if (r.text !== text) writeFileSync(f, r.text); on.push(sw.id); } catch (e) { problems.push(e.message); waiting.push({ id: sw.id, why: 'its key holds neither value' }); }
+    const ps = parts(sw);   // a row of several files (flightStrikes) is on only if every part can be
+    let why = null;
+    for (const p of ps) {
+      const pf = join(tree, ...p.file.split('/'));
+      if (!existsSync(pf)) { why = `${p.file} is not in the tree`; break; }
+      if (!present(readFileSync(pf, 'utf8'), p.sw)) { why = `${p.sw.replace ? p.sw.replace.from : p.sw.path.join('.')} is not in ${p.file}`; break; }
+    }
+    if (why) { waiting.push({ id: sw.id, why }); continue; }
+    try {
+      const writes = ps.map((p) => { const pf = join(tree, ...p.file.split('/')); const t0 = readFileSync(pf, 'utf8'); return { pf, t0, r: flip(t0, p.sw) }; });
+      for (const w of writes) if (w.r.text !== w.t0) writeFileSync(w.pf, w.r.text);
+      on.push(sw.id);
+    } catch (e) { problems.push(e.message); waiting.push({ id: sw.id, why: 'its key holds neither value' }); }
   }
   for (const r of readPending().rows.filter((x) => !x.file)) waiting.push({ id: r.id, why: `no key yet (${r.owner})` });
   return { on, waiting, problems };

@@ -11,7 +11,7 @@ import { cpSync, createReadStream, existsSync, mkdirSync, readFileSync, rmSync, 
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { cpus, tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { scriptErrors } from '../gate.mjs';
 import { patchHook } from './film-hook.mjs';
@@ -21,6 +21,16 @@ import { patchMain, EDITS_FINGERPRINT } from './switches.mjs';
 import { patchHost, patchAudio, patchHaptics, injectPage, BB_FINGERPRINT } from './blackbox.mjs';
 import { setWebCustomTemplate } from '../flash/web-preset.mjs';
 import { fetchTemplate } from '../site-template.mjs';
+
+/** The final list of the page's switch rows, one line each, with ON, WAITING (and why) or OFF (and why) and the data key: what a build is checked against. */
+export function switchList(b) {
+  const key = (s) => (s.path ? `${s.file} ${s.path.join('.')}${s.more ? ' (+' + s.more.map((m) => (m.file && m.file !== s.file ? m.file.split('/').pop() + ' ' : '') + m.path.join('.')).join(', +') + ')' : ''}` : '(page word)');
+  return b.table.map((s) => {
+    const w = (b.waiting || []).find((x) => x.id === s.id), h = (b.held || []).find((x) => x.id === s.id), c = (b.cascaded || []).find((x) => x.id === s.id);
+    const st = b.active.includes(s.id) ? 'ON' : w ? `WAITING (${w.why})` : h ? `OFF (${h.why})` : c ? `OFF (needs ${c.because.join('+')})` : 'OFF';
+    return `${s.id.padEnd(16)} ${st.padEnd(8)} ${key(s)}`;
+  });
+}
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const REPO = resolve(HERE, '..', '..');
@@ -75,8 +85,8 @@ export async function buildStackPreview(o) {
     if (p === HOST_PATCH && existsSync(join(repo, ...p.split('/')))) return readFileSync(join(repo, ...p.split('/')), 'utf8');   // an owner's pending file, in the working tree and not in the commit
     return null;
   };
-  const pl = plan(repo, r.commit, { off: o.off || [], pending: pend.rows, read });
-  const out = { sha: r.commit, subject: r.subject, report: r, stackLines: describeReport(r), active: pl.active, waiting: pl.waiting, cascaded: pl.cascaded, urlWords: pl.urlWords, alts: pl.alts, table: pl.table, unknown: pl.unknown, hostPatched: !!pl.hostPatch, cached: false, seconds: 0, dir: null, web: null, meta: null, scriptErrors: [] };
+  const pl = plan(repo, r.commit, { off: o.off || [], on: o.on || [], pending: pend.rows, read });
+  const out = { sha: r.commit, subject: r.subject, report: r, stackLines: describeReport(r), active: pl.active, waiting: pl.waiting, held: pl.held, cascaded: pl.cascaded, urlWords: pl.urlWords, alts: pl.alts, table: pl.table, unknown: pl.unknown, hostPatched: !!pl.hostPatch, cached: false, seconds: 0, dir: null, web: null, meta: null, scriptErrors: [] };
   if (pl.unknown.length) throw new Error(`unknown switch ${pl.unknown.join(', ')}`);
   const parksIn = r.parks.filter((p) => p.status === 'applied').map((p) => p.id);
   const tz = templateZip(o.template, repo);
@@ -152,7 +162,7 @@ export async function buildStackPreview(o) {
 
 async function main() {
   const a = process.argv.slice(2);
-  const known = new Set(['--template', '--watch', '--every', '--min-gap', '--max-load', '--planet', '--port', '--off', '--skip', '--only', '--rebuild', '--no-smoke', '--no-serve', '--open', '--repo', '--rev', '--manifest', '--godot', '--godot-node', '--browser-path', '--out', '--keep-tree', '--tree-only', '--film', '--help']);
+  const known = new Set(['--template', '--watch', '--every', '--min-gap', '--max-load', '--planet', '--port', '--off', '--on', '--skip', '--only', '--rebuild', '--no-smoke', '--no-serve', '--open', '--repo', '--rev', '--manifest', '--godot', '--godot-node', '--browser-path', '--out', '--keep-tree', '--tree-only', '--film', '--help']);
   for (const x of a) if (x.startsWith('--') && !known.has(x)) { console.error(`unknown option ${x}; node tools/preview/stack-preview.mjs --help`); process.exit(2); }
   const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
   const has = (n) => a.includes(n);
@@ -160,7 +170,7 @@ async function main() {
   if (has('--help')) { console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').filter((l) => l.startsWith('//')).slice(0, 10).map((l) => l.slice(3)).join('\n')); return; }
   const planet = Number(opt('--planet', 7));
   if (!Number.isInteger(planet) || planet < 1) { console.error('--planet is a positive whole number (the planet\'s seed)'); process.exit(2); }
-  const o = { repo: opt('--repo'), rev: opt('--rev'), manifest: opt('--manifest'), planet, off: list('--off'), skip: list('--skip'), only: list('--only'), out: opt('--out'), godot: opt('--godot'), godotNode: opt('--godot-node'), template: opt('--template', 'custom'), rebuild: has('--rebuild'), keepTree: has('--keep-tree'), treeOnly: opt('--tree-only'), film: has('--film'), log: (m) => console.error(`[stack-preview] ${m}`) };
+  const o = { repo: opt('--repo'), rev: opt('--rev'), manifest: opt('--manifest'), planet, off: list('--off'), on: list('--on'), skip: list('--skip'), only: list('--only'), out: opt('--out'), godot: opt('--godot'), godotNode: opt('--godot-node'), template: opt('--template', 'custom'), rebuild: has('--rebuild'), keepTree: has('--keep-tree'), treeOnly: opt('--tree-only'), film: has('--film'), log: (m) => console.error(`[stack-preview] ${m}`) };
   let b;
   try { b = await buildStackPreview(o); } catch (e) { console.error(`stack-preview: ${e.message}`); process.exit(1); }
   console.log(`\nOrb Combat EX private preview of the STACK on ${b.sha.slice(0, 8)}: ${b.subject}`);
@@ -171,6 +181,8 @@ async function main() {
   console.log(`  switches ON        : ${b.active.join(', ')}`);
   console.log(`  switches OFF       : ${b.table.map((s) => s.id).filter((i) => !b.active.includes(i) && !b.waiting.some((w) => w.id === i)).join(', ') || '(none)'}`);
   for (const w of b.waiting) console.log(`  WAITING, not in this build: ${w.id} (${w.why})`);
+  for (const h of b.held || []) console.log(`  HELD OFF           : ${h.id} (${h.why})`);
+  { const lines = switchList(b); try { writeFileSync(join(dirname(b.web), 'switch-list.txt'), lines.join(String.fromCharCode(10)) + String.fromCharCode(10)); console.log(`  switch list        : ${lines.length} rows with ON, WAITING or OFF each, in ${join(dirname(b.web), 'switch-list.txt')}`); } catch { /* the folder is gone */ } }
   if (b.hostPatched) console.log('  host patch: the pad\'s right stick is read through Controls\' right-hand-host.patch, applied to the scratch main.gd');
   console.log(`  build: ${b.cached ? 'cached' : `built in ${Math.floor(b.seconds / 60)} m ${b.seconds % 60} s`}, ${b.web}`);
   if (b.scriptErrors && b.scriptErrors.length) { console.log(`  WARNING: the Godot logs hold ${b.scriptErrors.length}+ script errors, the first:`); for (const l of b.scriptErrors.slice(0, 3)) console.log(`    ${l.trim().slice(0, 200)}`); }

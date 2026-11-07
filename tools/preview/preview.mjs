@@ -22,7 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { exportRevision } from '../flash/head-export.mjs';
 import { scriptErrors } from '../gate.mjs';
 import { patchHost, injectPage } from './blackbox.mjs';
-import { IDS, SWITCHES, KICK_SAMPLES, HITSTOP_SAMPLES, PEAK_SAMPLES, EDITS_FINGERPRINT, flip, locate, present, patchMain, resolve as resolveSwitches, tableWith, loadPending } from './switches.mjs';
+import { IDS, SWITCHES, KICK_SAMPLES, HITSTOP_SAMPLES, PEAK_SAMPLES, EDITS_FINGERPRINT, flip, parts, locate, present, patchMain, resolve as resolveSwitches, tableWith, loadPending } from './switches.mjs';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const REPO = resolve(HERE, '..', '..');
@@ -104,9 +104,9 @@ export function readAt(repo, sha, overlay, path) {
  * What a build of `sha` (with `overlay`) will have: the switches that can be on, those that WAIT (their key is not in the tree, or what they need to be played is missing) and the extra probe fields.
  * `pending`: the rows of switches-pending.json. Returns { table, active, cascaded, waiting: [{ id, why }], stale: [problem], probes, hostPatch }.
  */
-export function plan(repo, sha, { off = [], overlay = [], pending = [], read: readFrom = null } = {}) {
+export function plan(repo, sha, { off = [], on = [], overlay = [], pending = [], read: readFrom = null } = {}) {
   const table = tableWith(pending);
-  const r = resolveSwitches(off, table);
+  const r = resolveSwitches(off, table, on);
   const read = readFrom || ((p) => readAt(repo, sha, overlay, p));   // readFrom: a tree that is not a commit (the stack's scratch tree)
   const waiting = [], stale = [];
   let active = [...r.active];
@@ -119,9 +119,12 @@ export function plan(repo, sha, { off = [], overlay = [], pending = [], read: re
       if (pf === null || (sw.presentIf.text && !pf.includes(sw.presentIf.text))) wait(sw.id, `${sw.presentIf.file}${sw.presentIf.text ? ' (' + sw.presentIf.text + ')' : ''} is not in this tree yet`);
       continue;   // the setup and the page words are collected below, after what waits has turned off what needs it
     }
-    const text = read(sw.file);
-    if (text === null || !present(text, sw)) wait(sw.id, `${sw.file} ${sw.replace ? sw.replace.from : sw.path.join('.')} is not in this tree yet`);
-    else { try { flip(text, sw); } catch (e) { stale.push(e.message); wait(sw.id, 'its key holds neither the old nor the new value'); } }
+    for (const part of parts(sw)) {   // a row of several files (flightStrikes) waits if any one of its keys is not there yet
+      if (!active.includes(sw.id)) break;
+      const text = read(part.file);
+      if (text === null || !present(text, part.sw)) wait(sw.id, `${part.file} ${part.sw.replace ? part.sw.replace.from : part.sw.path.join('.')} is not in this tree yet`);
+      else { try { flip(text, part.sw); } catch (e) { stale.push(e.message); wait(sw.id, 'its key holds neither the old nor the new value'); } }
+    }
     if (active.includes(sw.id) && sw.alsoIn) {   // a row that is safe only with a line of code beside its data (pushMode: the host's line): without it the row waits, it is never turned on alone
       const af = read(sw.alsoIn.file);
       if (af === null || !af.includes(sw.alsoIn.text)) wait(sw.id, `${sw.alsoIn.file} (${sw.alsoIn.text}) is not in this tree yet: ${sw.alsoIn.why || 'the row needs it'}`);
@@ -152,7 +155,7 @@ export function plan(repo, sha, { off = [], overlay = [], pending = [], read: re
   const more = table.filter((s) => active.includes(s.id) && Array.isArray(s.probeMore)).flatMap((s) => s.probeMore.filter((m) => { const x = read(m.probeIf.file); return x !== null && x.includes(m.probeIf.text); }).map((m) => m.line));
   const occProbe = '"occ": (pane.occluded if pane != null and pane.occluded.size() >= 2 else []), "occAll": _pv_occ_all(), "aud": _pv_aud(), "ko": (host.S != null and host.S.game.ko != null), "fx": [host.S.fighters[0].x, host.S.fighters[1].x, host.S.fighters[0].y, host.S.fighters[1].y]', kiProbe = '"ki": [host.S.fighters[0].ki, host.S.fighters[1].ki]', uiProbe = '"teach": ([str(ui_hud.hub.models[0].teach), str(ui_hud.hub.models[1].teach)] if ui_hud != null and ui_hud.hub.models.size() >= 2 else []), "taught": [UiPrefs.get_bool("taught_beam"), UiPrefs.get_bool("taught_beam_nudge"), UiPrefs.get_bool("taught_fire_back")], "tnow": (ui_hud.hub.t_now if ui_hud != null else -1.0)';
   const probes = [occProbe, kiProbe, uiProbe].concat(sticksOk ? ['"stk": _pv_stick_n', '"stkk": _pv_stick_kinds', '"bo": _pv_beam_kinds', '"padtxt": _pv_padtxt', '"noise": [_pv_intended, _pv_real, _pv_phantom]', '"noised": _pv_nd', '"arcsends": _pv_arc_kinds', '"p1human": (host.S.fighters[0].ai == null)'] : []).concat(powerWord ? ['"powerOn": host.S.powerOn', '"flatOut": snappedf(host.S.powerFlat, 1.0)', '"crn": host.S.craters.size()', '"cr": ([snappedf(host.S.craters[-1].x, 1.0), snappedf(host.S.craters[-1].r, 1.0), snappedf(host.S.craters[-1].depth, 1.0), host.S.craters[-1].t] if host.S.craters.size() > 0 else [])'] : []).concat(circleWord ? ['"circleOn": DirStance.circleOn()'] : []).concat((() => { const x = read('sim/world/settlements.gd'); return x !== null && x.includes('static func noTarget') ? ['"lm": (host.S.buildings.filter(func(b): return b.alive and WorldSettle.noTarget(b.landmark)).map(func(b): return [snappedf(b.x, 1.0), snappedf(float(b.z), 1.0)]) if host.ticks % 150 == 1 else [])'] : []; })()).concat((() => { const x = read('data/director/interrupts.json'); return x !== null && x.includes('chargeClose') ? ['"press": [bool(DirInterrupt.data().get("brawl", {}).get("chargeClose", {}).get("enabled", false)), bool(DirInterrupt.data().get("brawl", {}).get("pressWait", {}).get("enabled", false)), bool(DirInterrupt.data().get("brawl", {}).get("oneRuleB", {}).get("enabled", false)), bool(DirInterrupt.data().get("beamPlays", {}).get("front", {}).get("aim", {}).get("enabled", false)), bool(DirInterrupt.data().get("stances", {}).get("circle", {}).get("enabled", false))]'] : []; })()).concat(more).concat(table.filter((s) => active.includes(s.id) && s.probe && s.probeIf && read(s.probeIf.file) !== null && read(s.probeIf.file).includes(s.probeIf.text)).map((s) => s.probe));
-  return { table, active: table.map((s) => s.id).filter((id) => active.includes(id)), cascaded: r.cascaded, waiting, stale, probes, hostPatch, unknown: r.unknown, setup, urlWords, alts, swingsOff, sticksOk, kickWord, tierWord, hitstopWord, powerWord, circleWord };
+  return { table, held: r.held, active: table.map((s) => s.id).filter((id) => active.includes(id)), cascaded: r.cascaded, waiting, stale, probes, hostPatch, unknown: r.unknown, setup, urlWords, alts, swingsOff, sticksOk, kickWord, tierWord, hitstopWord, powerWord, circleWord };
 }
 
 /** Applies a git patch to a scratch tree (git apply, whitespace-tolerant: a CRLF checkout must not refuse it). Throws with git's first line when it does not fit. */
@@ -174,7 +177,7 @@ export async function buildPreview(o) {
   const ov = overlayFiles(repo, overlay);
   const pend = o.pending || readPending();
   if (pend.problems.length) throw new Error(`tools/preview/switches-pending.json: ${pend.problems.join('; ')}`);
-  const pl = plan(repo, sha, { off: o.off || [], overlay, pending: pend.rows });
+  const pl = plan(repo, sha, { off: o.off || [], on: o.on || [], overlay, pending: pend.rows });
   const r = { active: pl.active, cascaded: pl.cascaded, unknown: pl.unknown };
   if (r.unknown.length) throw new Error(`unknown switch ${r.unknown.join(', ')}: the switches are ${pl.table.map((s) => s.id).join(', ')} (or all)`);
   const subject = git(repo, ['log', '-1', '--format=%s', sha]).slice(0, 110);
@@ -202,11 +205,13 @@ export async function buildPreview(o) {
   writeFileSync(join(tree, 'build_info.json'), `${JSON.stringify({ commit: sha.slice(0, 7), date, overlay: ov.files.length ? overlay : undefined })}\n`);
   for (const sw of pl.table) {
     if (!r.active.includes(sw.id) || sw.setup || sw.url) continue;
-    const f = join(tree, ...sw.file.split('/'));
-    const res = flip(readFileSync(f, 'utf8'), sw);
-    if (res.text !== readFileSync(f, 'utf8')) writeFileSync(f, res.text);
-    const nowText = sw.replace ? sw.replace.to : JSON.stringify(sw.to);
-    out.flips.push({ id: sw.id, file: sw.file, key: sw.replace ? 'text' : sw.path.join('.'), was: res.was, now: nowText, alreadyOn: res.was === nowText });
+    for (const part of parts(sw)) {
+      const f = join(tree, ...part.file.split('/'));
+      const res = flip(readFileSync(f, 'utf8'), part.sw);
+      if (res.text !== readFileSync(f, 'utf8')) writeFileSync(f, res.text);
+      const nowText = sw.replace ? sw.replace.to : JSON.stringify(part.sw.to);
+      out.flips.push({ id: sw.id, file: part.file, key: sw.replace ? 'text' : part.sw.path.join('.'), was: res.was, now: nowText, alreadyOn: res.was === nowText });
+    }
   }
   const mainFile = join(tree, 'render', 'core', 'main.gd');
   if (pl.hostPatch) { applyPatchText(tree, pl.hostPatch); log('applied the right-hand host patch to the scratch main.gd (the pad\'s right stick)'); }
@@ -273,10 +278,12 @@ export function checkTree(repo, rev, { overlay = [], pending = readPending(), no
   const pl = plan(repo, sha, { overlay: ov, pending: pending.rows });
   for (const sw of pl.table) {
     if (sw.setup || sw.url) continue;   // a key of the setup or a page word: nothing in a file to check (its presence is in the notes of the plan)
-    const text = read(sw.file);
-    if (text === null) { if (!sw.optional) problems.push(`${sw.file}: not in ${rev}`); continue; }
-    if (sw.optional && !present(text, sw)) continue;   // waiting (listed in the notes), not an error
-    try { flip(text, sw); } catch (e) { problems.push(e.message); }
+    for (const part of parts(sw)) {
+      const text = read(part.file);
+      if (text === null) { if (!sw.optional) problems.push(`${part.file}: not in ${rev}`); continue; }
+      if (sw.optional && !present(text, part.sw)) continue;   // waiting (listed in the notes), not an error
+      try { flip(text, part.sw); } catch (e) { problems.push(e.message); }
+    }
   }
   for (const w of pl.waiting) notes.push(`waiting, not on: ${w.id} (${w.why})`);
   for (const r of pending.rows.filter((x) => !x.file)) notes.push(`waiting, no key yet: ${r.id} (${r.owner}: ${r.what})`);
@@ -294,7 +301,7 @@ export function checkTree(repo, rev, { overlay = [], pending = readPending(), no
 
 async function main() {
   const a = process.argv.slice(2);
-  const known = new Set(['--off', '--planet', '--port', '--rev', '--no-smoke', '--no-serve', '--rebuild', '--bisect', '--list', '--check', '--godot', '--out', '--keep-tree', '--repo', '--godot-node', '--browser-path', '--overlay', '--open', '--help']);
+  const known = new Set(['--off', '--on', '--planet', '--port', '--rev', '--no-smoke', '--no-serve', '--rebuild', '--bisect', '--list', '--check', '--godot', '--out', '--keep-tree', '--repo', '--godot-node', '--browser-path', '--overlay', '--open', '--help']);
   for (const x of a) if (x.startsWith('--') && !known.has(x)) { console.error(`unknown option ${x}; node tools/preview/preview.mjs --help`); process.exit(2); }
   const opt = (n, d) => { const i = a.indexOf(n); return i >= 0 && i + 1 < a.length ? a[i + 1] : d; };
   const all = (n) => a.flatMap((x, i) => (x === n && i + 1 < a.length ? [a[i + 1]] : []));
@@ -318,7 +325,7 @@ async function main() {
   }
   const planet = Number(opt('--planet', 7));
   if (!Number.isInteger(planet) || planet < 1) { console.error('--planet is a positive whole number (the planet\'s seed)'); process.exit(2); }
-  const o = { repo, rev: opt('--rev', 'main'), off: all('--off'), planet, out: opt('--out'), godot: opt('--godot'), godotNode: opt('--godot-node'), rebuild: has('--rebuild'), keepTree: has('--keep-tree'), overlay: all('--overlay').flatMap((x) => x.split(',')).filter(Boolean), log: (m) => console.log(`[preview] ${m}`) };
+  const o = { repo, rev: opt('--rev', 'main'), off: all('--off'), on: all('--on'), planet, out: opt('--out'), godot: opt('--godot'), godotNode: opt('--godot-node'), rebuild: has('--rebuild'), keepTree: has('--keep-tree'), overlay: all('--overlay').flatMap((x) => x.split(',')).filter(Boolean), log: (m) => console.log(`[preview] ${m}`) };
   let b;
   try { b = await buildPreview(o); } catch (e) { console.error(`preview: ${e.message}`); process.exit(1); }
   console.log(`\nOrb Combat EX private preview of ${b.sha.slice(0, 8)}: ${b.subject}`);

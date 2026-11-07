@@ -154,6 +154,20 @@ export const SWITCHES = [
     what: 'the beam struggle push option of player 1 defaults to the right stick only when pushMode is on (UI, ui/data/options.json options.struggle_push.default; the shipped default is face, so a struggle panel never teaches a push the sim does not read). The row is on with pushMode and off without it' },
   { id: 'pushUi2', file: 'ui/data/options.json', path: ['options', 'struggle_push_p2', 'default'], from: 'face', to: 'stick', needs: ['pushMode'], optional: true,
     what: 'the same for player 2 (options.struggle_push_p2.default)' },
+  { id: 'wallPush', file: 'data/director/launch.json', path: ['walk', 'enabled'], from: false, to: true, needs: [], optional: true, held: 'waiting on QA city read',
+    what: 'the wall push (Encounter, docs/director/pending/city-push): a landed blow carries the pair toward the nearest standing building, so a slam can happen. launch.json walk.enabled (walk.reachWalked stays off: it is on Orb bystander hold, RL-247). Held off until QA city read' },
+  { id: 'wallPushAi', file: 'data/director/launch.json', path: ['walk', 'ai', 'enabled'], from: false, to: true, needs: ['wallPush'], optional: true, held: 'waiting on QA city read',
+    what: 'the computer leans for the wall push by its personality (Encounter, city-push). launch.json walk.ai.enabled. Needs wallPush. Held off until QA city read' },
+  { id: 'slamTurn', file: 'data/director/swing.json', path: ['slam', 'enabled'], from: false, to: true, needs: ['swing'], optional: true, held: 'waiting on QA city read',
+    what: 'a wall slam or a lodge turns the world: it can start a big swing, cause slam (Encounter, city-push). data/director/swing.json slam.enabled. Needs swing. Held off until QA city read' },
+  { id: 'cityHold', file: 'data/biomes/brunt.json', path: ['lodgeHold'], from: 'world', to: 'body', needs: [], optional: true, held: 'waiting on QA city read',
+    more: [{ path: ['wallRebound'], from: 0.25, to: 0 }, { path: ['wallStop'], from: 1, to: 0 }, { path: ['wallDepthHold'], from: 0, to: 1 }, { path: ['repeatMarks'], from: 0, to: 2 }],
+    what: 'the wall hold of World (docs/design/playable-build.md section 4): a body that meets a wall is held by it, no rebound, no stop, held at its depth, and repeat marks 2. data/biomes/brunt.json lodgeHold body, wallRebound 0, wallStop 0, wallDepthHold 1, repeatMarks 2, as one row. Held off until QA city read' },
+  { id: 'flightStrikes', file: 'data/director/interrupts.json', path: ['zip', 'flightStrikes', 'enabled'], from: false, to: true, needs: ['rightStick', 'signatureRtOnly'], optional: true, held: 'held for the next batch\'s page (EP)',
+    more: [{ file: 'data/input/timing.json', path: ['switches', 'flightStrikeB'], from: false, to: true }, { file: 'data/input/timing.json', path: ['switches', 'dodgeHeld'], from: false, to: true }],
+    what: 'the flight strikes (Encounter): three keys as one row, across two files: interrupts.json zip.flightStrikes.enabled, timing.json switches.flightStrikeB and switches.dodgeHeld (the same key as the dodgeHeld row; either row turns it on). Needs rightStick and signatureRtOnly. Held off in the morning build; for the next batch\'s page' },
+  { id: 'aimCuts', file: 'data/director/launch.json', path: ['aimCuts', 'enabled'], from: false, to: true, needs: [], optional: true, held: 'held for the next batch\'s page (EP)',
+    what: 'the aim cuts (Encounter): data/director/launch.json aimCuts.enabled. Held off in the morning build; for the next batch\'s page' },
   { id: 'airBrake', file: 'data/fight/brake.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
     what: 'the air brake (Game Design, buildings.md 7.2; sim/core/brake.gd): hold LT to brake while knocked back in the air. data/fight/brake.json enabled; SimCore.newMatch copies it into the match, and the file joins a replay\'s data hash only when on. After Simulation\'s determinism and rollback checks' },
   { id: 'stances', file: 'data/director/interrupts.json', path: ['stances', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
@@ -268,11 +282,31 @@ export function locate(text, path) {
 /** Whether a switch's key is in a file's text: its path in JSON, or (a switch that is a constant in a script) its text, as it is off or on. */
 export function present(text, sw) {
   if (sw.replace) return text.includes(sw.replace.from) || text.includes(sw.replace.to);
-  return !!locate(text, sw.path);
+  return !!locate(text, sw.path) && (sw.more || []).every((m) => !!locate(text, m.path));
+}
+
+/** The files a row touches, each with the row as it reads for that file: [{ file, sw }]. A row's `more` keys belong to the row's own file unless one names a `file` of its own (flightStrikes: one key in interrupts.json and two in timing.json), so one row can flip keys across files. Every caller loops over these, and a row is on only if every part is. */
+export function parts(sw) {
+  if (!sw.more || !sw.more.some((m) => m.file && m.file !== sw.file)) return [{ file: sw.file, sw }];
+  const keys = [{ file: sw.file, path: sw.path, from: sw.from, to: sw.to }, ...sw.more.map((m) => ({ file: m.file || sw.file, path: m.path, from: m.from, to: m.to }))];
+  const out = [];
+  for (const f of [...new Set(keys.map((k) => k.file))]) {
+    const ks = keys.filter((k) => k.file === f);
+    out.push({ file: f, sw: { ...sw, file: f, path: ks[0].path, from: ks[0].from, to: ks[0].to, more: ks.length > 1 ? ks.slice(1).map((k) => ({ path: k.path, from: k.from, to: k.to })) : undefined } });
+  }
+  return out;
 }
 
 /** The text with a switch turned on. Returns { text, was }: was is the old literal. Throws, naming the file and key, when the key is not there or holds neither the old nor the new value (the table is stale). */
 export function flip(text, sw) {
+  if (!sw.more) return flipOne(text, sw);
+  let out = flipOne(text, sw);   // a row of several keys of one file (cityHold): the first key is the row's own, the others follow it, each from its own old value to its own new one
+  const was = out.was;
+  let t = out.text;
+  for (const m of sw.more) t = flipOne(t, { ...sw, path: m.path, from: m.from, to: m.to, more: undefined }).text;
+  return { text: t, was };
+}
+function flipOne(text, sw) {
   if (sw.replace) {   // a constant in a script: its text appears exactly once, off or on
     const { from, to } = sw.replace;
     const nFrom = text.split(from).length - 1, nTo = text.split(to).length - 1;
@@ -294,11 +328,15 @@ export function flip(text, sw) {
 }
 
 /** Which switches are on, given the ids turned off ("all" turns every one off). Turning one off turns off what needs it. Returns { active, cascaded: [{ id, because }], unknown }. */
-export function resolve(off = [], table = SWITCHES) {
+export function resolve(off = [], table = SWITCHES, on = []) {
   const IDS = table.map((s) => s.id);
   const want = new Set(off.flatMap((o) => String(o).split(',')).map((s) => s.trim()).filter(Boolean));
-  const unknown = [...want].filter((id) => id !== 'all' && !IDS.includes(id));
-  const active = new Set(want.has('all') ? [] : IDS.filter((id) => !want.has(id)));
+  const wantOn = new Set(on.flatMap((o) => String(o).split(',')).map((s) => s.trim()).filter(Boolean));
+  const unknown = [...want, ...wantOn].filter((id) => id !== 'all' && !IDS.includes(id));
+  // a row with `held` (a reason) is off in a build unless asked for with --on: it is on the list, off, with its reason (the city rows wait on QA's read)
+  const held = table.filter((s) => s.held && !wantOn.has(s.id)).map((s) => ({ id: s.id, why: s.held }));
+  const heldIds = new Set(held.map((h) => h.id));
+  const active = new Set(want.has('all') ? [] : IDS.filter((id) => !want.has(id) && !heldIds.has(id)));
   const cascaded = [];
   for (let again = true; again;) {
     again = false;
@@ -308,7 +346,7 @@ export function resolve(off = [], table = SWITCHES) {
       if (missing.length) { active.delete(sw.id); cascaded.push({ id: sw.id, because: missing }); again = true; }
     }
   }
-  return { active: IDS.filter((id) => active.has(id)), cascaded, unknown };
+  return { active: IDS.filter((id) => active.has(id)), cascaded, unknown, held };
 }
 
 /** Which switch a load error or console line is about, by the file or module it names. A hint for the report, not a proof. */

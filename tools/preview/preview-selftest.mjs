@@ -10,7 +10,9 @@ import { join } from 'node:path';
 import { buildPreview, buildKey, serveLocal, checkTree, plan, overlayPaths, overlayFiles, applyPatchText } from './preview.mjs';
 import * as BB from './blackbox.mjs';
 import { rawPadProblems } from './blackbox-rawpad-check.mjs';
-import { SWITCHES, KICK_SAMPLES, HITSTOP_SAMPLES, PEAK_SAMPLES, IDS, locate, flip, resolve, errorSwitch, patchMain, tableWith, loadPending, planetFunc, present } from './switches.mjs';
+import { SWITCHES, KICK_SAMPLES, HITSTOP_SAMPLES, PEAK_SAMPLES, IDS, locate, flip, resolve, errorSwitch, patchMain, tableWith, loadPending, planetFunc, present, parts } from './switches.mjs';
+const HELD = SWITCHES.filter((x) => x.held).map((x) => x.id);   // rows held off by default (the city rows): on the list, off, with their reason
+const ON = IDS.filter((i) => !HELD.includes(i));
 import { expectations, probeProblems } from './smoke.mjs';
 import { browserExe } from '../machine/browser.mjs';
 
@@ -57,12 +59,42 @@ check('locate finds nothing in a file that is not an object', locate('[1,2]', ['
 
 // ---- the cascade
 const R = (...off) => resolve(off);
-check('by default every switch is on', R().active.join() === IDS.join() && R().cascaded.length === 0);
-check('--off floor turns off only the floor', R('floor').active.join() === IDS.filter((i) => i !== 'floor').join());
+check('by default every switch is on', R().active.join() === ON.join() && R().cascaded.length === 0);
+check('--off floor turns off only the floor', R('floor').active.join() === ON.filter((i) => i !== 'floor').join());
 check('--off surface turns the floor off with it, and says why', R('surface').active.includes('floor') === false && R('surface').cascaded[0].id === 'floor' && R('surface').cascaded[0].because.join() === 'surface');
 check('--off interrupts turns the floor off with it', !R('interrupts').active.includes('floor') && R('interrupts').active.includes('surface'));
-check('--off gen2 turns nothing else off', R('gen2').cascaded.length === 0 && R('gen2').active.length === IDS.length - 1);
+check('--off gen2 turns nothing else off', R('gen2').cascaded.length === 0 && R('gen2').active.length === ON.length - 1);
 check('swing (DirSwing) is a data flag of data/director/swing.json `enabled`, waits for the file and needs gen3; the top-level key is the one flipped, not the nested ones', (() => { const s = SWITCHES.find((x) => x.id === 'swing'); if (!s || s.file !== 'data/director/swing.json' || s.path.join() !== 'enabled' || !s.optional || s.needs.join() !== 'gen3') return false; const T = '{\n  "enabled": false,\n  "kinds": {\n    "launch": {\n      "enabled": true\n    }\n  },\n  "other": {\n    "enabled": false\n  }\n}\n'; const f = flip(T, s); return f.text === T.replace('"enabled": false,\n  "kinds"', '"enabled": true,\n  "kinds"'); })());
+check('the city rows are held off by default, with their reason, and --on turns one on', HELD.join() === 'wallPush,wallPushAi,slamTurn,cityHold,flightStrikes,aimCuts' && resolve([]).held.filter((h) => !/next batch/.test(h.why)).every((h) => /QA city read/.test(h.why)) && resolve([]).held.filter((h) => /next batch/.test(h.why)).map((h) => h.id).join() === 'flightStrikes,aimCuts' && resolve([], SWITCHES, ['wallPush']).active.includes('wallPush') && !resolve([], SWITCHES, ['wallPush']).active.includes('slamTurn') && resolve([], SWITCHES, ['wallPush']).held.length === HELD.length - 1);
+{
+  const fs = SWITCHES.find((x) => x.id === 'flightStrikes');
+  const INT = JSON.stringify({ zip: { flightStrikes: { enabled: false } }, other: { enabled: false } }, null, 2);
+  const TIM = JSON.stringify({ switches: { flightStrikeB: false, dodgeHeld: false, rightStick: false } }, null, 2);
+  const ps = parts(fs);
+  check('flightStrikes is one row of three keys over two files, needing rightStick and signatureRtOnly, held for the next batch', ps.length === 2 && ps[0].file === 'data/director/interrupts.json' && ps[1].file === 'data/input/timing.json' && ps[1].sw.more.length === 1 && fs.needs.join() === 'rightStick,signatureRtOnly' && /next batch/.test(fs.held));
+  const a = JSON.parse(flip(INT, ps[0].sw).text), b = JSON.parse(flip(TIM, ps[1].sw).text);
+  check('flipping each part turns all three keys on and leaves the rest', a.zip.flightStrikes.enabled === true && a.other.enabled === false && b.switches.flightStrikeB === true && b.switches.dodgeHeld === true && b.switches.rightStick === false);
+  check('a part whose key is missing is not present (the row waits)', present(INT, ps[0].sw) && !present(JSON.stringify({ switches: { dodgeHeld: false } }), ps[1].sw));
+  check('a one-file row has one part (the city row, a plain row)', parts(SWITCHES.find((x) => x.id === 'cityHold')).length === 1 && parts(SWITCHES.find((x) => x.id === 'aimCuts')).length === 1);
+  check('--on flightStrikes without rightStick off turns it on; with rightStick off it cascades off', resolve([], SWITCHES, ['flightStrikes']).active.includes('flightStrikes') && !resolve(['rightStick'], SWITCHES, ['flightStrikes']).active.includes('flightStrikes'));
+}
+check('a held row that needs another held row stays off with it (wallPushAi needs wallPush)', !resolve([], SWITCHES, ['wallPushAi']).active.includes('wallPushAi') && resolve([], SWITCHES, ['wallPush', 'wallPushAi']).active.includes('wallPushAi'));
+check('an --on that names no row is unknown', resolve([], SWITCHES, ['nope']).unknown.join() === 'nope');
+{
+  const city = SWITCHES.find((x) => x.id === 'cityHold');
+  const brunt = JSON.stringify({ lodgeHold: 'world', wallRebound: 0.25, wallStop: 1, wallDepthHold: 0, repeatMarks: 0, other: 5 }, null, 2);
+  const f = flip(brunt, city);
+  const v = JSON.parse(f.text);
+  check('a row of several keys flips them all (cityHold: lodgeHold body, no rebound, no stop, depth hold, two marks) and leaves the rest', v.lodgeHold === 'body' && v.wallRebound === 0 && v.wallStop === 0 && v.wallDepthHold === 1 && v.repeatMarks === 2 && v.other === 5 && present(brunt, city) && !present(JSON.stringify({ lodgeHold: 'world' }), city));
+  check('flipping a multi-key row twice reads the same (the second is already on)', flip(f.text, city).text === f.text);
+}
+{
+  const { switchList } = await import('./stack-preview.mjs');
+  const b = { table: tableWith([]), active: ON.filter((i) => i !== 'airBrake'), waiting: [{ id: 'airBrake', why: 'brake.json is not in this tree yet' }], held: resolve([]).held, cascaded: [] };
+  const L = switchList(b);
+  const line = (id) => L.find((x) => x.startsWith(id + ' '));
+  check('the final switch list says ON, WAITING (with why) or OFF (with why) and the data key for every row', L.length === IDS.length && /^rightStick +ON +data\/input\/timing\.json switches\.rightStick/.test(line('rightStick')) && /WAITING \(brake\.json is not in this tree yet\)/.test(line('airBrake')) && /OFF \(waiting on QA city read\) +data\/biomes\/brunt\.json lodgeHold \(\+wallRebound, \+wallStop, \+wallDepthHold, \+repeatMarks\)/.test(line('cityHold')) && /OFF \(held for the next batch's page \(EP\)\) +data\/director\/interrupts\.json zip\.flightStrikes\.enabled \(\+timing\.json switches\.flightStrikeB, \+timing\.json switches\.dodgeHeld\)/.test(line('flightStrikes')) && /\(page word\)/.test(line('tiles')));
+}
 check('--off with a comma list and --off all', R('water,biome').active.join() === 'gen2,surface,interrupts,floor,calmTurn,turn,rightStick,quickRead,hapticLadder,specialsOff,signatureRtOnly,beamAim,hapticRefused,hapticIncoming,webRumble,settle,splitShare,chaseTap,chargeArmour,powerPace,waterWarm,chargeClose,pressWait,oneRuleB,beamAim2,nodeWarm,stickPend,joltYield,brawlShareCap,gen3,blackbox,go,meteor,tiles,swing,everywhere,arc,ending,follow,lightStops,grapple,driver,driverOnRb,beamMove,stallKeep,hapticImpact,dodgeHeld,hapticStages,refusedCue,strikeStages,beamMoveAi,pushMode,pushUi,pushUi2,airBrake,stances,phrases,craterlook,vsHuman,firstMeteor,beamFront,kick,mixed,struggle,soundTug,soundMoments,soundCarry' && R('all').active.length === 0);
 check('an unknown id is reported, not ignored', R('watr').unknown.join() === 'watr');
 
