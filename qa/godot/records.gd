@@ -88,7 +88,8 @@ func _human_step(S, hub: SimInputHub, mode: String, t: int, hs: Dictionary) -> v
 	var dx: float = SimWrap.sdx(me.x, foe.x)
 	var dy: float = foe.y - me.y
 	var sx: float = signf(dx) if absf(dx) > 110.0 else 0.0
-	if mode == "push":
+	var aimed: bool = false   # push: a standing building is in reach of the pair, so the stick leans to it and (mode push, not pushx) a string ends in B
+	if mode == "push" or mode == "pushx":
 		var mid: float = SimWrap.wrap(me.x + dx * 0.5)
 		var best: int = -1
 		var bd: float = 6000.0
@@ -103,14 +104,31 @@ func _human_step(S, hub: SimInputHub, mode: String, t: int, hs: Dictionary) -> v
 		if best >= 0:
 			var tx: float = SimWrap.sdx(me.x, S.buildings[best].x)
 			sx = signf(tx) if absf(tx) > 110.0 else sx
+			aimed = true
 	hub.pad_stick(0, sx, signf(dy) if absf(dy) > 40.0 else 0.0)
+	# push (EP 2026-11-07, Encounter's city diagnosis): the lean only carries a blow; the slam needs a knock-back, so with a building aimed at the string is three X presses, then B held 46 ticks and let go
+	# (the send, as sim/director/tools/walk_check.gd throws it), then the send's flight is left alone until the cycle (150 ticks) comes round. Without a building in reach it is the plain mash. pushx is the X-only lean of the first read.
+	var cyc: int = t % 150
+	var withB: bool = mode == "push" and (aimed or hs.b)
+	var xOk: bool = (not withB) or cyc < 24
 	var m8: int = t % 8
-	if m8 == 0 and not hs.x:
+	if m8 == 0 and not hs.x and xOk:
 		hs.x = true
 		hub.pad_button(0, "west", true)
-	elif m8 == 4 and hs.x:
+	elif hs.x and (m8 == 4 or not xOk):
 		hs.x = false
 		hub.pad_button(0, "west", false)
+	if withB:
+		if cyc == 30 and not hs.b:
+			hs.b = true
+			hs.bn = int(hs.bn) + 1
+			hub.pad_button(0, "east", true)
+		elif hs.b and cyc >= 76:
+			hs.b = false
+			hub.pad_button(0, "east", false)
+	elif hs.b:
+		hs.b = false
+		hub.pad_button(0, "east", false)
 	hub.set_humans(me.ai == null, foe.ai == null)
 	hub.set_struggle(0, SimDir.inStruggle(S, me))
 	var it: SimIntent = hub.intent(0)
@@ -140,7 +158,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	SimCore.newMatch(S, seed, ai0, QaPlanet.setup(seed, hbase))   # QA_PLANET: a planet ring (qa_planet.gd); unset, the hand-made world
 	if hub != null:
 		hub.set_pad_has_right_stick(0, true)
-	var hs := {"x": false}
+	var hs := {"x": false, "b": false, "bn": 0}
 	var visited := {}   # place id -> true (see the loop below)
 	if QaPlanet.fellBack(S, seed):   # the slice failed and the match is the hand-made world: stop, never play it as a ring
 		return {}
@@ -270,6 +288,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 			break
 		if hub != null:
 			_human_step(S, hub, hum, ticks, hs)
+			rec["humanB"] = int(hs.bn)
 		else:
 			SimCore.step(S)
 		ticks += 1
@@ -520,6 +539,12 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 				rec.drops[str(e.type).substr(5)] = int(rec.drops.get(str(e.type).substr(5), 0)) + 1
 			if e.type == "building_hit" or e.type == "lodge" or e.type == "floor_hit":   # World's brunt events by outcome (wall, crack, pass ...): counts, the building's damage and the launch speed fraction
 				var bo: String = e.type if e.type != "building_hit" else str(e.get("outcome"))
+				if bo == "wall":   # a wall slam is World's building_hit with outcome "wall" (the face held him); landingsAll.wall is the terrain-wall journey end and files a building slam as "brunt"
+					rec["wallSlams"] = int(rec.get("wallSlams", 0)) + 1
+					rec["wallSlamsBy"] = rec.get("wallSlamsBy", [0, 0])
+					var wb: int = int(e.get("actor"))
+					if wb >= 0 and wb < 2:
+						rec["wallSlamsBy"][wb] = int(rec["wallSlamsBy"][wb]) + 1
 				var bh: Dictionary = rec.bh.get(bo, {"n": 0, "amount": 0.0, "spd": 0.0})
 				bh.n = int(bh.n) + 1
 				if e.type == "building_hit":
