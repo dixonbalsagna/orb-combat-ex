@@ -1,6 +1,6 @@
 # The playable build: rulings for Encounter
 
-Owner: Game Design. 2026-11-06, ruling the stand-in's `docs/ep/proposals/controller-vision.md` (51ab2001), which builds on `beams-third-play.md`. **Every number is a first value, as data, and nothing is played.** Controls' claw check on the LT take-back found no claw gain, and its window is ruled in §1. Orb picked point 3.
+Owner: Game Design. 2026-11-06, ruling the stand-in's `docs/ep/proposals/controller-vision.md` (51ab2001), which builds on `beams-third-play.md`. **Every number is a first value, as data, and nothing is played.** Controls' claw check on the LT take-back found no claw gain, and its window is ruled in §1. Orb picked point 3. Encounter's flight-strike park was ruled in §1 on 2026-11-07: the counter, hit-stop, the computer's share and its readings.
 
 ## 1. Flight strikes (the vision's section 2)
 
@@ -20,9 +20,11 @@ Owner: Game Design. 2026-11-06, ruling the stand-in's `docs/ep/proposals/control
 
 | Button | The blow | Its tell | Worth | Hit-stop |
 | :--- | :--- | ---: | :--- | :--- |
-| **X** | Quick | 6 ticks | A medium's (2.5) | Medium (3) |
-| **Y** | Heavy | 10 ticks | The zip heavy's (today's 132) | Heavy (8) |
-| **B** | Biggest | 14 ticks | A tapped B: **a stagger,** by the one rule for B | Heavy (8) |
+| **X** | Quick | 6 ticks | A medium's (2.5) | A brawl medium's (today 2) |
+| **Y** | Heavy | 10 ticks | The zip heavy's (today's 132) | A brawl heavy's (today 6) |
+| **B** | Biggest | 14 ticks | A tapped B: **a stagger,** by the one rule for B | A brawl heavy's (today 6) |
+
+**Hit-stop (re-ruled 2026-11-07):** a flight strike's blow holds exactly as a brawl blow of its weight does, under whichever table is live (the brawl's own 2 and 6, or Simulation's table by weight when that switch is on). The 3 and 8 first written here were stale, and changing the brawl's to match would move every brawl blow. One weight, one feel, flown or stood.
 
 - **B in a flight strike is never a send.** A held B isn't read inside one, so the one rule for B stays true.
 - **The range is from contact to 12.5 bh,** the middle band's edge. Past that, LT + a face button is what it is today (the long strike, the spike off a trail).
@@ -81,17 +83,50 @@ Owner: Game Design. 2026-11-06, ruling the stand-in's `docs/ep/proposals/control
 
 Until the computer chooses flight strikes for itself, QA reports the scripted arms: the share, the dominance check and the variety rows.
 
+**The computer's own flight strikes (2026-11-07, Encounter's park: it threw none in 60 s).** What Encounter tunes toward:
+
+| | Target |
+| :--- | :--- |
+| **Share of the computer's blows** | **15%,** inside 10 to 20%, across a batch. Easy sits at the low end, Hard at the high end. That's under QA's 25% ceiling, with room for chains |
+| **Where it throws them** | From the middle band, as today, but **a rival who's pressing no longer stops it**: a flight strike is how it closes in, not only a punish. **From a brawl**, when it's losing the run, the rival has guarded for a second or more (the line or an arc gets round a guard), or it wants out (the parting shot). **A chain link** only when it can pay the next link in full and keep 20 ki back |
+| **Buttons** | **It picks B too.** About half X, 30% Y, 20% B. No button over 60% |
+| **Paths** | Start with the even draw over `ai.paths`. No path over half. Skew by situation only after the even draw has been read |
+| **Never** | A press it can't pay for (no "No energy" from the computer), or a chain past its 20 in reserve |
+| **Still true** | At least 50% of fight time in a brawl, with flight strikes on |
+| **Order of levers** | `zipShare` first, then the conditions above. Never the price, which is the player's too |
+
 ### Counters
 
 | What meets it | Result |
 | :--- | :--- |
-| **A heavy timed to land in its tell or travel** (within 6 ticks of its arrival, the zip's existing `heavyBefore`), or **a charged stick strike** | **It stops where it's reached.** The striker takes the counter's blow at ×1.25 and reels for 8 ticks, **never knocked down or launched,** and he's free after that. His energy's spent |
+| **A B (the brawl's heavy) thrown or landing in the window:** from 6 ticks before its arrival until his blow. **Thrown** means its wind-up starts then (re-ruled 2026-11-07); **landing** is the zip's existing `heavyBefore`, for a B already on its way. Or **a charged stick strike** | **It stops where it's reached.** The striker takes the counter's blow at ×1.25 and reels for 8 ticks, **never knocked down or launched,** and he's free after that. His energy's spent |
 | A light, or a medium | It doesn't stop. They land as normal |
 | A guard | Blocks the blow, with chip as usual. The path completes |
 | A perfect block | A reversal, as for any blow |
 | A dodge | A miss: he's open for 20 ticks |
 
 **The computer's dodge exchange:** you only follow it round if you're still pressing toward it (`beams-third-play.md`).
+
+**Why a B thrown in the window counts (2026-11-07).** B's wind-up is 28 ticks, and a flight strike arrives 10 to 19 ticks after its press, so a B timed only to land was almost never possible. Counting Y instead would make the counter a mash button (a light or a medium never stops one), and Y's 12 ticks would still need a guess against X. Counting a B thrown in the window keeps the counter your biggest, most committed blow, and the time you get follows the strike's size:
+- X from contact gives you about 4 to 12 ticks after its start, so you have to read it coming;
+- Y gives 8 to 16 and B 12 to 20, which you can react to;
+- an arc adds up to 12 more, because the flashy path is the one you can see coming.
+
+A B thrown that meets nothing is a 28-tick wind-up, and the brawl punishes it. The face press counts as the sim sees it, after the strike law, and his line must be free to throw it. **QA reads** the medium AI's counter rate against the scripted flight arm, by button: more of B than of X, and about 10 to 25% overall. **Lever:** if it's over, the press window starts 4 ticks before the arrival, not 6.
+
+### Encounter's other readings, ruled (2026-11-07, `docs/director/pending/flight-strikes/`)
+
+| Reading | Ruling |
+| :--- | :--- |
+| **1. It starts from a brawl, from contact,** ending the brawl (`brawl_end flight`) when his line is free. LT held with no fresh press stays the brawl's own blow. A dodge-cancel out of a brawl, then a face press within 4 ticks, converts with the cancel's cost back | **Confirmed.** It's what replacing the stances' LT lane and the circle means. QA watches that brawl time stays at least 50% |
+| **2. LT is read first on a shared tick:** during his own lunge, LT and a button together call the lunge off and start the flight strike | **Confirmed.** LT's own move (the dodge-cancel) happens, and the take-back turns it into the strike, as ruled |
+| **3. An arc's blow lands at the top or bottom of the loop,** in reach a tick either side, and the loop flies on to its end behind him | **Confirmed,** as the twelve moves' table says |
+| **4. A dodge is a miss:** he stops where he is, open for 20 ticks. His presses wait, and in a brawl his guard doesn't hold | **Confirmed.** It's what keeps the parting shot a gamble rather than a safe exit (pillar 3). A press held through the 20 ticks is the latest one only, by the brawl's held-press rule |
+| **5. No held reading inside a flight strike.** The zip's tech reading stays: a second press on the arrival's beat, ×1.25 and the floor on the way out | **Confirmed.** B is never a send, and Y's held knock-back would be a second send. **One press is one reading:** a press on the beat is the tech, not also a chain press. The next press can chain |
+| **6. "It never drains you to zero"** means the price is paid in full or refused | **Confirmed** |
+| **7. LT held** is Controls' `dodgeHeld` when its switch is on, otherwise the stance mask's LT bit with the layout's release grace | **Confirmed, as a fallback only.** `dodgeHeld` goes on with flight strikes, so LT held is the finger, not the grace |
+| **The computer never picks B** | **Overturned:** it picks B about 20% of the time (the computer's share, above) |
+| **A light or a medium doesn't stop it,** and a guard blocks while the path completes | **Confirmed,** as the counters table says |
 
 ### Data, for Encounter
 
@@ -113,7 +148,8 @@ Until the computer chooses flight strikes for itself, QA reports the scripted ar
     "parting": { "addBh": 3, "minBh": 6, "maxBh": 12.5 },
     "travel": { "minTicks": 4, "bhPerTick": 3 },
     "chain": { "lateTicks": 12, "afterTicks": 10, "tellMul": 0.5, "tellMin": 4, "kiMul": 1.5, "worthMul": 0.85, "worthFloor": 0.5, "repeatFullTell": 3 },
-    "counter": { "heavyBefore": 6, "mul": 1.25, "reelTicks": 8 },
+    "counter": { "heavyBefore": 6, "heavyThrownBefore": 6, "mul": 1.25, "reelTicks": 8 },
+    "ai": { "share": 0.15, "shareBand": [0.10, 0.20], "buttons": { "x": 0.5, "y": 0.3, "b": 0.2 }, "kiReserve": 20, "brawlGuardSec": 1.0 },
     "missOpenTicks": 20
   }
 }

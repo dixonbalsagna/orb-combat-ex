@@ -280,3 +280,5 @@ Encounter's answer-keeping cuts take the launch tick from 11.5 to 10.8 ms. These
 
 - **The three yeses land behind one switch** for a single QA read of the city rows, off then on, on the same seeds. The rows are sends into a building, places visited, and buildings crossed per send. If none falls beyond noise, the switch goes on and then goes away.
 - **Simulation regenerates the golden** when they land.
+
+**2026-11-07, on Encounter's launch-cuts park: the cheap-score bound is dropped.** It dropped no building in 72 launches (360 aims), crowded hero launches included, because the most a building could score carries the drama cap, the pity ramp, the stick's and town's bonuses and the noise's 8, and the villain has no bound at all. A cut that never fires buys nothing for its code and the keyed noise. **The cap of 3 and the one flight stay,** and the noise stays as it is (not keyed by candidate). The pity counter is as today. QA's off-then-on city read is unchanged.

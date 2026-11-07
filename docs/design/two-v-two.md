@@ -187,3 +187,15 @@ Two PCs, two pads, two humans against two AI. The full globe if Simulation's num
 **3. A13: holds per fight, accepted for the first match.** The first match is there to find out whether co-op is fun. A body clock at about 2M before anyone has played is the wrong order. A plain outside blow's pause is 2 to 8 ticks, which is small enough for a first try. **But the body clock, or its one case of holding the arrival's striker with his hit, comes before the arrival is played** (1 above). If Orb notices outside blows feeling weightless in the first match, it comes sooner.
 
 **The cradle and the brace** wait on Orb's word on friendly fire, which the EP is asking for. Nothing from me until then.
+
+## The last event in a 2v2 (2026-11-07, Simulation's stage cap, `docs/architecture/pending/stage-cap/`)
+
+| | Ruling |
+| :--- | :--- |
+| **`lastAt` 900** | **Confirmed.** It's the 1v1's minute after the cap (840 + 60). At the cap all four are on the brink, Rallies are off and both fights run at once, so a minute gives each fight its chance at a finisher |
+| **The one clock** | **Confirmed as Simulation read it:** fight time, the longer of the two fights' clocks. Holds and slow motion don't count, as in a 1v1. A wall clock would also count the intro and both fights' holds |
+| **Who wins at 900** | **By team, not fight by fight.** Decided fight by fight, each fight's less-worn fighter gets his finisher, so one KO on each side leaves one fighter a team standing, outside any fight, with no rung left to end the match. So the team ahead wins: **more fighters standing first, then less wear across its standing fighters,** then by seed with anyone playing, as in a 1v1. Each standing fighter on the other team gets his finisher from the nearest standing opponent (the one in his fight, else the nearest by shortest arc), with no contest. They play at once, framed as Camera frames two KOs |
+| **Nobody's played** | As a 1v1: no input from any player for the 60 s since the cap is a no-contest, straight to the rematch |
+| **QA** | The last event is a backstop. **Under 5% of AI v AI 2v2 matches reach it.** If more do, the lever is the cap's time (840), not 900 |
+
+This replaces "the ending's rungs apply to each fight" above for rung 4 only. Rungs 1 to 3 stay per fight. **Encounter** builds the team decision in `DirEnding` once the stage cap lands, with hits across on. A 1v1, and two fights with hits across off, are unchanged.
