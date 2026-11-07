@@ -1,0 +1,80 @@
+extends SceneTree
+## What B does, alone and with each shoulder held, at several distances (Tools' finding: B alone started no beam at 800 units; RT + B did). The real hub into the sim, a standing opponent.
+##   godot --headless --path . --script res://sim/input/tools/b_probe.gd
+
+
+func _init() -> void:
+	SimInputData.load_and_apply()
+	SimInputData.clear_overrides()
+	var sw: Dictionary = SimInputData.timing.get("switches", {})
+	sw["rightStick"] = true
+	sw["quickRead"] = true
+	SimInputData.timing["switches"] = sw
+	SimInputData.clear_overrides()
+	SimInputData.invalidate()
+	var layers: Array = [["B alone", []], ["LB + B", [["b", "lb"]]], ["RB + B", [["b", "rb"]]], ["LT + B", [["t", "lt"]]], ["RT + B", [["t", "rt"]]]]
+	for rt_only in [false, true]:
+		sw["signatureRtOnly"] = rt_only
+		SimInputData.timing["switches"] = sw
+		SimInputData.clear_overrides()
+		SimInputData.invalidate()
+		print("== B on the Arena pad, signatureRtOnly = %s: the player's events, damage to the standing rival, ki change, 120 ticks ==" % str(rt_only))
+		for dist in ([80.0, 250.0, 800.0, 2000.0] if not rt_only else [80.0, 800.0]):
+			print("-- %d units" % int(dist))
+			for lay in layers:
+				for kind in ["tap", "hold24"]:
+					print("   %-9s %-7s %s" % [lay[0], kind, _run(dist, lay[1], kind)])
+	quit(0)
+
+
+func _run(dist: float, pre: Array, kind: String) -> String:
+	var hub := SimInputHub.new()
+	hub.set_humans(true, false)
+	hub.pad_button(7, "south", true)
+	hub.pad_button(7, "south", false)
+	hub.take_joins()
+	hub.set_humans(true, false)
+	var su: Dictionary = hub.setup()
+	su["intro"] = false
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, su)
+	var a = S.fighters[0]
+	var b = S.fighters[1]
+	b.x = SimWrap.wrap(a.x + dist)
+	b.y = a.y
+	var quiet := SimIntent.new()
+	for t in range(30):
+		SimCore.step(S, [hub.intent(0), quiet])
+		hub.consumed()
+		S.out.fx.clear()
+	for e in pre:
+		if e[0] == "b":
+			hub.pad_button(7, e[1], true)
+		else:
+			hub.pad_trigger(7, e[1], 1.0)
+	for t in range(10):
+		SimCore.step(S, [hub.intent(0), quiet])
+		hub.consumed()
+		S.out.fx.clear()
+	var hp0: float = float(b.hp)
+	var ki0: float = float(a.ki)
+	var names: Dictionary = {}
+	hub.pad_button(7, "east", true)
+	for t in range(120):
+		if t == (3 if kind == "tap" else 24):
+			hub.pad_button(7, "east", false)
+		SimCore.step(S, [hub.intent(0), quiet])
+		hub.consumed()
+		for e in S.out.fx:
+			var nm: String = String(e.kind) if String(e.type) == "cue" else String(e.type)
+			if nm != "press_ack" and int(e.actor) == 0:
+				names[nm] = true
+		S.out.fx.clear()
+	var ev: Array = names.keys()
+	ev.sort()
+	var interesting: Array = []
+	for n in ev:
+		if n in ["beam_fire", "beam_outcome", "taunt_start", "blow", "rush", "lunge_heavy", "launch", "windup", "blast_charge", "shot_fire"]:
+			interesting.append(n)
+	SimCore.dispose(S)
+	return "dmg %6.1f  ki %+6.1f  %s" % [hp0 - float(b.hp), float(a.ki) - ki0, ",".join(interesting)]
