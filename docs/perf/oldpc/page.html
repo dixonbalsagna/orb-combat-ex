@@ -33,10 +33,12 @@
 (function () {
   'use strict';
   // ---- what runs, in order: look at this computer; time a small fixed job; load the game; wait for the one click; watch the frames for MEASURE_S seconds; send the report.
-  var MEASURE_S = Math.max(10, Math.min(600, parseInt((location.search.match(/[?&]m=(\d+)/) || [0, 120])[1], 10))), GAME = '/game/index.html?planet=7&preview=1&tiles=1&meteor=loud';
+  var MEASURE_S = Math.max(10, Math.min(600, parseInt((location.search.match(/[?&]m=(\d+)/) || [0, 120])[1], 10))), GAMES = ((location.search.match(/[?&]games=([a-z0-9,]+)/) || [0, 'game'])[1]).split(',').slice(0, 3), GI = 0;
+  function gameUrl(i) { return '/' + GAMES[i] + '/index.html?planet=7&preview=1&tiles=1&meteor=loud&blackbox=off'; }
+  function gameLabel(i) { return GAMES[i] === 'game2' ? 'TWO FIGHTS (four fighters, the computer plays three)' : 'ONE FIGHT (the game as Orb plays it)'; }
   var $ = function (id) { return document.getElementById(id); };
   var t0 = performance.now(), R = { when: new Date().toISOString(), page: location.href, steps: [] };
-  var phase = 'start', measureFrom = 0, rafT = [], tickS = [], longTasks = [], iframeLoadAt = 0, probeAt = 0, tickAt = 0, lastProbe = null, doneSent = false;
+  var runs = [], phase = 'start', measureFrom = 0, rafT = [], tickS = [], longTasks = [], iframeLoadAt = 0, probeAt = 0, tickAt = 0, lastProbe = null, doneSent = false;
 
   function fmt(s) { s = Math.round(s); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
   function say(m, act) { $('msg').textContent = m; $('msg').className = act ? 'act' : ''; }
@@ -88,7 +90,7 @@
   function loadGame() {
     var f = $('game');
     f.addEventListener('load', function () { iframeLoadAt = performance.now(); step('game page loaded'); });
-    f.src = GAME; phase = 'loading';
+    f.src = gameUrl(0); phase = 'loading';
     setInterval(poll, 1000);
     setTimeout(function () { if (phase === 'loading' || phase === 'waitclick') $('skip').style.display = 'inline-block'; }, 120000);
     $('skip').addEventListener('click', function () { if (phase !== 'measure' && phase !== 'done') beginMeasure('by button'); });
@@ -102,7 +104,7 @@
     if (phase === 'loading') {
       if (p && p.tick > 0) { tickAt = performance.now(); }
       var s = Math.round((performance.now() - t0) / 1000);
-      if (p) { phase = 'waitclick'; say('The game is up. Click START in the game window once, close any card, then leave the mouse alone.', true); }
+      if (p) { phase = 'waitclick'; say((GAMES.length > 1 ? 'Run ' + (GI + 1) + ' of ' + GAMES.length + ': ' + gameLabel(GI) + '. ' : '') + 'The game is up. Click START in the game window once, close any card, then leave the mouse alone.', true); }
       else say('Loading the game... ' + fmt(s));
     } else if (phase === 'waitclick') {
       // the match is held behind the how-to-play card and the flashing-effects notice until someone clicks; its tick starts counting afterwards
@@ -112,7 +114,7 @@
     } else if (phase === 'measure') {
       var el = (performance.now() - measureFrom) / 1000;
       tickS.push([Math.round(el * 10) / 10, p ? p.tick : -1]);
-      say('Measuring: ' + Math.round(el) + ' of ' + MEASURE_S + ' s. Keep this window in front and leave the mouse alone.');
+      say((GAMES.length > 1 ? 'Run ' + (GI + 1) + ' of ' + GAMES.length + ' ' : '') + 'Measuring: ' + Math.round(el) + ' of ' + MEASURE_S + ' s. Keep this window in front and leave the mouse alone.');
       if (el >= MEASURE_S) finish();
     }
   }
@@ -178,10 +180,31 @@
     verdict(s, m).forEach(function (v) { L.push(v); });
     return L.join('\n');
   }
+  function runBlock(r) {
+    var L = ['', '== ' + gameLabel(r.i) + ' ==', 'fights in the match the game reported: ' + (r.probe && r.probe.fights !== undefined ? r.probe.fights : '1 (this page does not report it)')];
+    L.push('FRAMES over ' + r.frames.seconds + ' s: ' + r.frames.frames + ' frames, ' + r.frames.fps + ' per second; ms p50 ' + r.frames.p50 + ', p95 ' + r.frames.p95 + ', p99 ' + r.frames.p99 + ', max ' + r.frames.max);
+    L.push('frames over 20 ms: ' + r.frames.over20 + ', over 34: ' + r.frames.over34 + ', over 50: ' + r.frames.over50 + ', over 100: ' + r.frames.over100);
+    L.push('worst frames: ' + r.frames.worst.map(function (w) { return w.ms + ' ms at ' + w.atS + ' s'; }).join('; '));
+    if (r.tickRate) L.push('sim ticks per second: mean ' + r.tickRate.meanPerS + ', slowest second ' + r.tickRate.minPerS + ', seconds under 50: ' + r.tickRate.secondsBelow50 + ' of ' + r.tickRate.n);
+    else L.push('sim ticks: the page did not publish them (no probe)');
+    if (r.longTasks.length) L.push('long tasks (over 50 ms): ' + r.longTasks.length + ', longest ' + Math.max.apply(null, r.longTasks.map(function (x) { return x[1]; })) + ' ms');
+    L.push(verdict(r.frames, R.machine).join(' | '));
+    return L.join(String.fromCharCode(10));
+  }
   function finish() {
-    if (phase === 'done') return; phase = 'done';
-    var s = stats(), m = R.machine, tr = tickRate();
-    R.probe = lastProbe; R.frames = s; R.tickRate = tr; R.longTasks = longTasks.slice(0, 60); R.text = textReport(s, m, tr); R.verdict = verdict(s, m);
+    if (phase === 'done' || phase === 'switching') return;
+    runs.push({ i: GI, game: GAMES[GI], frames: stats(), tickRate: tickRate(), probe: lastProbe, longTasks: longTasks.slice(0, 60) });
+    if (GI + 1 < GAMES.length) {   // the next game: the frame window and the probes start again, the page and its clock stay
+      phase = 'switching'; GI++; step('run ' + GI + ' done; loading ' + GAMES[GI]);
+      rafT = []; tickS = []; longTasks = []; probeAt = 0; tickAt = 0; lastProbe = null; measureFrom = 0;
+      say('Run ' + GI + ' of ' + GAMES.length + ' is done. Loading the next game (' + gameLabel(GI) + '). Do not touch anything.');
+      var f2 = $('game'); f2.src = gameUrl(GI); phase = 'loading';
+      return;
+    }
+    phase = 'done';
+    var s = runs[0].frames, m = R.machine, tr = runs[0].tickRate;
+    R.runs = runs; R.probe = runs[0].probe; R.frames = s; R.tickRate = tr; R.longTasks = runs[0].longTasks; R.text = textReport(s, m, tr); R.verdict = verdict(s, m);
+    if (runs.length > 1) { var NL = String.fromCharCode(10); R.text += NL + NL + '--- run by run ---' + runs.map(runBlock).join(NL); }
     $('game').style.visibility = 'hidden';
     $('panel').className = 'show'; say('Done.');
     var b = $('panelBody');

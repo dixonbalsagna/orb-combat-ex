@@ -13,6 +13,7 @@ const REPO = resolve(HERE, '..', '..', '..', '..');
 const argv = process.argv.slice(2);
 const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
 const SITE = opt('--site') && resolve(opt('--site'));
+const SITE2 = opt('--site2') && resolve(opt('--site2'));   // a two-fights kit: the web build whose match is two fights on one line (the second game folder, game2\)
 const TREE = resolve(opt('--tree', REPO));
 const GODOT = resolve(opt('--godot-dir', 'C:/Users/itsha/AppData/Local/Programs/Godot/4.7.2'));
 let BUILD = opt('--build', '');
@@ -20,6 +21,7 @@ if (!BUILD) { try { BUILD = execFileSync('git', ['-C', TREE, 'rev-parse', '--sho
 if (!/^[A-Za-z0-9._-]+$/.test(BUILD)) { console.error('--build <name> is required (letters, digits, dot, dash, underscore): both PCs must run ONE kit, and the two-PC check refuses reports of different builds'); process.exit(2); }
 const OUT = resolve(opt('--out', join(REPO, 'homework', 'Files', `oldpc-kit-${BUILD}`)));   // default: homework/Files/oldpc-kit-<build> inside the repo folder (nothing of the project lives outside it)
 const die = (m) => { console.error(m); process.exit(2); };
+if (SITE2 && !existsSync(join(SITE2, 'index.html'))) die('--site2 <folder with the two-fights page\'s index.html>: index.html not found');
 if (!SITE || !existsSync(join(SITE, 'index.html'))) die('--site <folder with the game\'s index.html> is required');
 if (existsSync(OUT) && readdirSync(OUT).length) die(`${OUT} is not empty`);
 for (const d of ['sim', 'data', 'net']) if (!existsSync(join(TREE, d))) die(`${TREE} has no ${d}/`);
@@ -29,6 +31,7 @@ for (const e of exes) if (!existsSync(join(GODOT, e))) die(`${join(GODOT, e)} no
 
 mkdirSync(OUT, { recursive: true });
 cpSync(SITE, join(OUT, 'game'), { recursive: true });
+if (SITE2) cpSync(SITE2, join(OUT, 'game2'), { recursive: true });
 mkdirSync(join(OUT, 'project'));
 for (const d of ['sim', 'data', 'net']) cpSync(join(TREE, d), join(OUT, 'project', d), { recursive: true, filter: (s) => !/[\\/]\.godot([\\/]|$)/.test(s) });
 copyFileSync(join(TREE, 'project.godot'), join(OUT, 'project', 'project.godot'));
@@ -44,17 +47,17 @@ const page = readFileSync(join(HERE, '..', 'page.html'), 'utf8').replace(/\r\n/g
 if (/^'@/m.test(page)) die('page.html has a line starting with \'@ (it would end the here-string)');
 const tpl = readFileSync(join(HERE, 'run-test.template.cmd'), 'utf8').replace(/\r\n/g, '\n');
 if (!tpl.includes('@@PAGE@@')) die('the template has no @@PAGE@@');
-writeFileSync(join(OUT, 'RUN-TEST.cmd'), tpl.replace('@@BUILD@@', BUILD).replace('@@PAGE@@', () => page.replace(/\n$/, '')).replace(/\n/g, '\r\n'));
+writeFileSync(join(OUT, 'RUN-TEST.cmd'), tpl.replaceAll('@@BUILD@@', BUILD).replaceAll('@@TWO@@', SITE2 ? '1' : '0').replace('@@PAGE@@', () => page.replace(/\n$/, '')).replace(/\n/g, '\r\n'));
 
 writeFileSync(join(OUT, 'README.txt'), [
-  'Orb Combat EX - old PC test kit',
+  `Orb Combat EX - old PC test kit, build ${BUILD}`,
   '',
   '1. Copy this whole folder to the old PC (USB stick). Do not copy it to a shared or public place.',
   '2. Close games and other browser windows. Plug the PC in the wall. Only you watch the screen; no photos, screenshots or recordings.',
   '3. Double-click RUN-TEST.cmd and press Enter when it asks. The first part has no window and takes a minute or two.',
   '   The second part opens your browser: press Start, read the game\'s flashing-effects warning (Reduce flashing is there), click "I understand, start",',
-  '   then leave the mouse and keyboard alone for two minutes.',
-  '4. When it says Done, bring back the ONE file it names (oldpc-result-....json). Delete the folder afterwards if you like.',
+  SITE2 ? '   then leave the mouse and keyboard alone for two minutes. Then the page loads the game a SECOND time (two fights at once): press Start again, close any card, leave it alone for two minutes.' : '   then leave the mouse and keyboard alone for two minutes.',
+  `4. When it says Done, bring back the ONE file it names (oldpc-result-${BUILD}-....json). Delete the folder afterwards if you like.`,
   '',
   'It listens only on this PC (127.0.0.1), opens no network port, installs nothing and uploads nothing. It is a speed reading, not a flash reading.',
   'If you want it on the built-in graphics as well: move the monitor cable to the board\'s video port and run RUN-TEST.cmd a second time (the result file names the graphics it ran on).',

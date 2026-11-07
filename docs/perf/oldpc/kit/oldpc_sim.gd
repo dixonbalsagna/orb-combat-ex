@@ -12,6 +12,7 @@ var ticks: int = 7200
 var every: int = 120
 var reps: int = 2
 var cases: Array = [[7, 77], [12, 5], [21, 77]]
+var fights: int = 1   # --fights=2: two fights on one line with hits across and blows from outside (the co-op 2v2 sim, four AI bodies); ticks are timed for BOTH fights
 
 
 func _init() -> void:
@@ -20,6 +21,8 @@ func _init() -> void:
 			outp = a.substr(6)
 		elif a.begins_with("--ticks="):
 			ticks = int(a.substr(8))
+		elif a.begins_with("--fights="):
+			fights = 2 if int(a.substr(9)) == 2 else 1
 		elif a.begins_with("--every="):
 			every = maxi(1, int(a.substr(8)))
 		elif a.begins_with("--reps="):
@@ -32,7 +35,7 @@ func _init() -> void:
 					cases.append([int(pr[0]), int(pr[1])])
 	var t0: int = Time.get_ticks_usec()
 	var out := {"kit": "oldpc_sim", "when": Time.get_datetime_string_from_system(false, true), "godot": Engine.get_version_info().string, "os": OS.get_name(),
-		"cpu": OS.get_processor_name(), "threads": OS.get_processor_count(), "ticks": ticks, "every": every, "cases": []}
+		"cpu": OS.get_processor_name(), "threads": OS.get_processor_count(), "ticks": ticks, "every": every, "fights": fights, "cases": []}
 	print("Orb Combat EX old-PC kit, native half   %s   %s, %d threads   %d cases x %d matches x %d ticks" % [out.godot, out.cpu, out.threads, cases.size(), reps, ticks])
 	out["job_ms"] = _job()
 	print("  fixed float64 job: %.0f ms" % out.job_ms)
@@ -68,8 +71,14 @@ func _job() -> float:
 func _play(planet: int, seed_: int, rep: int) -> Dictionary:
 	var S := SimCore.createSim()
 	var setup := {"planet": planet, "touch": 1, "planetGen": 3, "intro": false}
+	var ai := {"p1": true, "p2": true}
+	if fights == 2:
+		setup["fights"] = 2
+		setup["cross"] = true
+		setup["outside"] = true
+		ai = {"p1": true, "p2": true, "p3": true, "p4": true}
 	var a: int = Time.get_ticks_usec()
-	SimCore.newMatch(S, seed_, {"p1": true, "p2": true}, setup)
+	SimCore.newMatch(S, seed_, ai, setup)
 	var new_ms: float = float(Time.get_ticks_usec() - a) / 1000.0
 	a = Time.get_ticks_usec()
 	if SimField._F != null:

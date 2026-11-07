@@ -2,11 +2,12 @@
 // Tries the kit's browser half on THIS PC with a headless Chrome from Tools' launcher (Performance and Platform, 2026-11-01): waits for RUN-TEST.cmd's loopback server, opens its page, clicks the page's
 // Start, then the game's own flashing-effects notice and how-to card (only this trial clicks them; the real page never does), and waits for the page to say Done. Nothing leaves the PC.
 //   set OLDPC_NO_OPEN=1 and start the kit:   cmd /c "<kit>\RUN-TEST.cmd"          (a second window of this session; the kit opens no browser of its own with that variable set)
-//   node docs/perf/oldpc/kit/kit-trial.mjs [--port 8790] [--measure 20] [--seconds 420]
+//   node docs/perf/oldpc/kit/kit-trial.mjs [--port 8790] [--measure 20] [--seconds 420] [--games game,game2]
 import { Cdp, launchBrowser, browserExe } from '../../../../tools/machine/browser.mjs';
 const argv = process.argv.slice(2);
 const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
 const PORT = Number(opt('--port', 8790)), MEASURE = Number(opt('--measure', 20)), SECONDS = Number(opt('--seconds', 420));
+const GAMES = opt('--games', '');   // a two-fights kit: --games game,game2 (the kit's own page address carries it)
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const click = async (page, x, y) => { await page.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y }); await page.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 }); await page.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 }); };
 const t0 = Date.now();
@@ -22,7 +23,7 @@ const page = await Cdp.open(b.target.webSocketDebuggerUrl);
 let out = {};
 try {
   await page.send('Page.enable'); await page.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 720, deviceScaleFactor: 1, mobile: false });
-  await page.send('Page.navigate', { url: `http://127.0.0.1:${PORT}/oldpc/?m=${MEASURE}` });
+  await page.send('Page.navigate', { url: `http://127.0.0.1:${PORT}/oldpc/?m=${MEASURE}${GAMES ? '&games=' + GAMES : ''}` });
   await sleep(2500);
   console.log('gate shown:', await page.eval('document.getElementById("panel").className'));
   await page.eval('document.getElementById("begin").click()');

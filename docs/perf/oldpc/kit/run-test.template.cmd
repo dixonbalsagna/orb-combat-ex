@@ -13,6 +13,7 @@ exit /b
 
 $ErrorActionPreference = 'Stop'
 $kit = $env:KIT.TrimEnd('\')
+$two = ('@@TWO@@' -eq '1')   # a two-fights kit: part 1 also times one and two fights side by side, part 2 runs the game twice (one fight, then two)
 $parts = Join-Path $kit 'parts'
 New-Item -ItemType Directory -Force -Path $parts | Out-Null
 $log = New-Object System.Collections.ArrayList
@@ -20,10 +21,10 @@ function Say([string]$s) { Write-Host $s; [void]$log.Add($s) }
 function J([string]$s) { return ($s | ConvertTo-Json -Compress) }
 
 Write-Host ''
-Write-Host '  Orb Combat EX - old PC test (a speed reading, never a flash reading)'
+Write-Host '  Orb Combat EX - old PC test, build @@BUILD@@ (a speed reading, never a flash reading)'
 Write-Host '  -----------------------------------------------------------------'
 Write-Host '  What this does: (1) plays a match and a rematch, then three short matches, all with no window, to check this processor and time it;'
-Write-Host '  (2) opens the game in your browser for two minutes, to time the graphics.'
+if ($two) { Write-Host '  (2) opens the game in your browser twice, two minutes each (one fight, then two fights at once), to time the graphics.' } else { Write-Host '  (2) opens the game in your browser for two minutes, to time the graphics.' }
 Write-Host '  It listens only on THIS PC (127.0.0.1), opens no network port, changes nothing, installs nothing,'
 Write-Host '  and writes ONE result file next to this one, which you bring back. Nothing is uploaded.'
 Write-Host ''
@@ -48,6 +49,7 @@ Say ("graphics: $gpus")
 $simPath = Join-Path $parts 'sim.json'
 $godot = Join-Path $kit 'godot\Godot_v4.7.2-stable_win64_console.exe'
 $simText = 'null'
+$simPair = @{}
 $twopcText = 'null'
 $twopcExit = -1
 $build = '@@BUILD@@'
@@ -80,6 +82,18 @@ if (Test-Path -LiteralPath $godot) {
   & $godot @args1 2>&1 | ForEach-Object { Say ([string]$_) }
   $ErrorActionPreference = 'Stop'
   if (Test-Path -LiteralPath $simPath) { $simText = [System.IO.File]::ReadAllText($simPath, [System.Text.Encoding]::UTF8) } else { Say 'Part 1 wrote no result (see the lines above).' }
+  if ($two) {
+    # 1c: the same match with one fight and with two fights (four computer fighters, hits across, blows from outside), back to back in the same state of the PC
+    foreach ($nf in 1, 2) {
+      Say ('  1c: the sim with ' + $nf + ' fight' + $(if ($nf -eq 2) { 's' } else { '' }) + ' (about a minute)...')
+      $pp = Join-Path $parts ('sim-fights' + $nf + '.json')
+      if (Test-Path -LiteralPath $pp) { Remove-Item -LiteralPath $pp -Force }
+      $ErrorActionPreference = 'Continue'
+      & $godot @('--headless', '--path', (Join-Path $kit 'project'), '--script', 'res://oldpc_sim.gd', '--', ('--out=' + $pp), ('--fights=' + $nf), '--cases=7:77', '--reps=2', '--ticks=3600') 2>&1 | ForEach-Object { Say ([string]$_) }
+      $ErrorActionPreference = 'Stop'
+      if (Test-Path -LiteralPath $pp) { $simPair[[string]$nf] = [System.IO.File]::ReadAllText($pp, [System.Text.Encoding]::UTF8) } else { Say ('1c with ' + $nf + ' fights wrote no result.') }
+    }
+  }
 } else {
   Say 'Part 1 skipped: godot\Godot_v4.7.2-stable_win64_console.exe is not in this folder.'
 }
@@ -89,12 +103,13 @@ $pageText = @'
 @@PAGE@@
 '@
 $site = Join-Path $kit 'game'
+$site2 = Join-Path $kit 'game2'
 $browserText = 'null'
 if (-not (Test-Path -LiteralPath (Join-Path $site 'index.html'))) {
   Say 'Part 2 skipped: game\index.html is not in this folder.'
 } else {
   Say ''
-  Say 'Part 2 of 2: the game in your browser (about four minutes). A page opens; follow it.'
+  Say $(if ($two) { 'Part 2 of 2: the game in your browser, twice (about seven minutes). A page opens; follow it. It says when to click START, once for each run.' } else { 'Part 2 of 2: the game in your browser (about four minutes). A page opens; follow it.' })
   $mime = @{ '.html' = 'text/html; charset=utf-8'; '.js' = 'text/javascript; charset=utf-8'; '.wasm' = 'application/wasm'; '.pck' = 'application/octet-stream'; '.png' = 'image/png'; '.json' = 'application/json'; '.css' = 'text/css'; '.webmanifest' = 'application/manifest+json'; '.svg' = 'image/svg+xml'; '.ogg' = 'audio/ogg'; '.wav' = 'audio/wav'; '.mp3' = 'audio/mpeg' }
   $listener = $null; $port = 0
   foreach ($p in 8790..8799) {
@@ -105,6 +120,7 @@ if (-not (Test-Path -LiteralPath (Join-Path $site 'index.html'))) {
     $pageBytes = [System.Text.Encoding]::UTF8.GetBytes($pageText.Replace("`r`n", "`n"))
     $siteFull = [System.IO.Path]::GetFullPath($site).TrimEnd('\') + '\'
     $url = "http://127.0.0.1:$port/oldpc/"
+    if ($two) { $url = $url + '?games=game,game2' }
     Say ("Open this page if it does not open by itself:  $url")
     if (-not $env:OLDPC_NO_OPEN) { Start-Process $url }   # OLDPC_NO_OPEN is for trying the kit without a browser window
     $end = (Get-Date).AddMinutes(25); $stopAt = $null; $got = $false
@@ -127,10 +143,12 @@ if (-not (Test-Path -LiteralPath (Join-Path $site 'index.html'))) {
         if ($req.HttpMethod -ne 'GET' -and $req.HttpMethod -ne 'HEAD') { $res.StatusCode = 405; $res.Close(); continue }
         if ($path -eq '/oldpc' -or $path -eq '/oldpc/') { $res.ContentType = $mime['.html']; $res.ContentLength64 = $pageBytes.Length; if ($req.HttpMethod -ne 'HEAD') { $res.OutputStream.Write($pageBytes, 0, $pageBytes.Length) }; $res.Close(); continue }
         if ($path -eq '/oldpc/ping') { $b = [System.Text.Encoding]::UTF8.GetBytes('ok'); $res.ContentType = 'text/plain'; $res.OutputStream.Write($b, 0, $b.Length); $res.Close(); continue }
-        if ($path.StartsWith('/game/')) {
-          $rel = $path.Substring(6); if ($rel -eq '') { $rel = 'index.html' }
-          $file = [System.IO.Path]::GetFullPath((Join-Path $site ($rel.Replace('/', '\'))))
-          if (-not $file.StartsWith($siteFull) -or -not (Test-Path -LiteralPath $file -PathType Leaf)) { $res.StatusCode = 404; $res.Close(); continue }
+        if ($path.StartsWith('/game/') -or ($two -and $path.StartsWith('/game2/'))) {
+          $isG2 = $path.StartsWith('/game2/')
+          $root = $(if ($isG2) { $site2 } else { $site }); $rootFull = [System.IO.Path]::GetFullPath($root).TrimEnd('\') + '\'
+          $rel = $path.Substring($(if ($isG2) { 7 } else { 6 })); if ($rel -eq '') { $rel = 'index.html' }
+          $file = [System.IO.Path]::GetFullPath((Join-Path $root ($rel.Replace('/', '\'))))
+          if (-not $file.StartsWith($rootFull) -or -not (Test-Path -LiteralPath $file -PathType Leaf)) { $res.StatusCode = 404; $res.Close(); continue }
           $ext = [System.IO.Path]::GetExtension($file).ToLowerInvariant()
           $res.ContentType = $(if ($mime.ContainsKey($ext)) { $mime[$ext] } else { 'application/octet-stream' })
           $fi = Get-Item -LiteralPath $file
@@ -153,11 +171,11 @@ if (-not (Test-Path -LiteralPath (Join-Path $site 'index.html'))) {
 
 # ---------- the one result file
 $stamp = (Get-Date).ToString('yyyyMMdd-HHmm')
-$resultPath = Join-Path $kit ("oldpc-result-$stamp.json")
+$resultPath = Join-Path $kit ("oldpc-result-$build-$stamp.json")
 $summary = ($log -join "`n")
 # RL-230: the headless report names CPU, OS and numbers only; nothing in the file may carry a path, a user name or the PC's name
 foreach ($pair in @(@($kit, '<kit folder>'), @($env:USERPROFILE, '<profile>'), @($env:USERNAME, '<user>'), @($env:COMPUTERNAME, '<pc>'))) { if ($pair[0] -and $pair[0].Length -ge 3) { $summary = $summary.Replace($pair[0], $pair[1]) } }
-$json = '{"kit":"oldpc-kit","when":' + (J (Get-Date).ToString('o')) + ',"cpu":' + (J $cpu) + ',"ram":' + (J $ram) + ',"os":' + (J $os) + ',"graphics":' + (J $gpus) + ',"summary":' + (J $summary) + ',"twopc_exit":' + $twopcExit + ',"twopc":' + $twopcText + ',"sim":' + $simText + ',"browser":' + $browserText + '}'
+$json = '{"kit":"oldpc-kit-' + $build + '","when":' + (J (Get-Date).ToString('o')) + ',"cpu":' + (J $cpu) + ',"ram":' + (J $ram) + ',"os":' + (J $os) + ',"graphics":' + (J $gpus) + ',"summary":' + (J $summary) + ',"twopc_exit":' + $twopcExit + ',"twopc":' + $twopcText + ',"sim":' + $simText + ',"sim_pair":' + $(if ($simPair.Count) { '{' + (($simPair.Keys | Sort-Object | ForEach-Object { '"fights' + $_ + '":' + $simPair[$_] }) -join ',') + '}' } else { 'null' }) + ',"browser":' + $browserText + '}'
 [System.IO.File]::WriteAllText($resultPath, $json, (New-Object System.Text.UTF8Encoding($false)))
 Write-Host ''
 Write-Host '  Done. Bring this ONE file back:'
