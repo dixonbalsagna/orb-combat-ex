@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { INTERIM_WAIVES } from './flash/release-pass.mjs';
 import { scanPack, unallowed } from './site-name-scan.mjs';
 import { CRUMBS_PRIVACY } from './site-crumbs.mjs';
-import { aboutPage } from './site-interim.mjs';
+import { aboutPage, gateOverlay } from './site-interim.mjs';
 
 const here = import.meta.dirname;
 let ran = 0, failed = 0;
@@ -638,6 +638,8 @@ try {
     const offlineWords = JSON.stringify(JSON.parse(readFileSync(join(here, 'site-notice-offline.json'), 'utf8')).blocks);
     check("the About page carries Legal's engine line (the version, a custom web build) and never calls the engine official outside the licence texts", /Built with the Godot Engine \(version 4\.\d+\.\d+\), in a custom web build\./.test(html) && !/official/i.test(html.replace(/<pre>[\s\S]*?<\/pre>/g, '')), (html.match(/Built with[^<]*/) || [''])[0]);
     check('the About page carries the long contact route and the offline notice the short form (Legal RL-256: the public issues page, no personal address)', /github\.com\/dixonbalsagna\/orb-combat-ex\/issues/.test(html) && /open an issue on our public GitHub page/.test(html) && offlineWords.includes('open an issue at github.com/dixonbalsagna/orb-combat-ex/issues'));
+    { const gp = gateOverlay(words, { holding: '../', about: '../about/' }); const SHORT = 'open an issue at github.com/dixonbalsagna/orb-combat-ex/issues';
+      check('the live-mode /play/ gate and the /about/ footer carry the short contact form (Legal RL-256), from the owner words', gp.includes('id="gate-contact"') && gp.includes(SHORT) && html.includes('<p class="small">Questions, problems or requests') && html.includes(SHORT)); }
   }
 } finally {
   rmSync(tmp, { recursive: true, force: true });

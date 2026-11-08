@@ -163,8 +163,9 @@ try {
       } catch (e) { record.flatFaceError = String(e.message || e).slice(0, 120); }
     }
     if (tick % EVERY === 0 || ALSO.has(tick) || tick <= refUntil || (sinceClash >= 0 && sinceClash <= 150 && tick % 10 === 0)) {
-      const shot = await page.send('Page.captureScreenshot', { format: 'jpeg', quality: 72, fromSurface: true });
-      const file = `still-${String(tick).padStart(6, '0')}.jpg`;
+      const PNG = argv.includes('--png');   // --png: lossless stills (a look-gate side-by-side needs PNG frames)
+      const shot = await page.send('Page.captureScreenshot', PNG ? { format: 'png', fromSurface: true } : { format: 'jpeg', quality: 72, fromSurface: true });
+      const file = `still-${String(tick).padStart(6, '0')}.${PNG ? 'png' : 'jpg'}`;
       writeFileSync(join(OUT, 'stills', file), Buffer.from(shot.data, 'base64'));
       shots.set(tick, { file, pv: pv ? { padtxt: pv.padtxt || null, swing: pv.swing || null, swings: pv.swings, fst: pv.fst || null, ln: pv.ln || null, hp: pv.hp || null, pz: pv.pz || null, mv: pv.mv === undefined ? null : pv.mv, stk: pv.stk === undefined ? null : pv.stk, p1h: pv.p1human === undefined ? null : pv.p1human, on: { rs: pv.rightStick, stick: pv.stickOn, swing: pv.swingOn } } : null });
     }

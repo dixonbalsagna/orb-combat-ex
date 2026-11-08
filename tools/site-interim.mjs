@@ -73,6 +73,7 @@ export function aboutPage(text, lic, links) {
     if (name === 'OFL-1.1') continue;
     parts.push(`<h2>${esc(name)}</h2>\n<pre>${esc(lic.licenses[name])}</pre>`);
   }
+  if (text.about.contact) parts.push(`<p class="small">${esc(text.about.contact)}</p>`);   // Legal's short contact form as the page's footer (RL-256)
   return page(text.title, parts.join('\n'));
 }
 
@@ -106,7 +107,8 @@ ${blocksHtml(text.gate.blocks)}
 <a id="gate-notnow" href="${esc(hrefs.holding)}" style="margin-left:1rem;color:#aab1be;font-size:.95rem">${esc(text.gate.not_now)}</a></p>
 <p id="gate-under" style="${small}">${esc(text.gate.under)}</p>
 <p id="gate-ai" style="${small}">${esc(text.gate.ai)}</p>
-<p style="font-size:.85rem"><a style="color:#8fb8ff" href="${esc(hrefs.about)}">${esc(text.gate.about)}</a></p>${opts.noteSlot ? '\n<div id="ocx-note-slot"></div>' : ''}
+${text.gate.contact ? `<p id="gate-contact" style="${small}">${esc(text.gate.contact)}</p>
+` : ''}<p style="font-size:.85rem"><a style="color:#8fb8ff" href="${esc(hrefs.about)}">${esc(text.gate.about)}</a></p>${opts.noteSlot ? '\n<div id="ocx-note-slot"></div>' : ''}
 </div>
 </div>`;
 }

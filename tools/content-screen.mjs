@@ -123,6 +123,12 @@ export function screen(root, rules) {
       }
     }
   }
+  // the public pages must carry Legal's words (a text that is not there is a hit)
+  for (const m of rules.mustContain || []) {
+    let body = null; try { body = readFileSync(join(root, ...m.file.split('/')), 'utf8'); } catch { /* missing */ }
+    if (body === null) add('must-contain', m.severity || 'fail', m.file, 0, `the file is missing: ${m.text}`, m.why);
+    else if (!body.includes(m.text)) add('must-contain', m.severity || 'fail', m.file, 0, `does not carry: ${m.text}`, m.why);
+  }
   return { hits, files: files.length, scanned };
 }
 

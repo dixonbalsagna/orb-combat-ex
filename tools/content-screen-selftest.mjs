@@ -10,7 +10,8 @@ import { loadRules, screen } from './content-screen.mjs';
 const BS = String.fromCharCode(92);   // a backslash, built so no escaping layer can change it
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
-const rules = loadRules();
+const fullRules = loadRules();
+const rules = { ...fullRules, mustContain: [] };   // the fixtures below are not the repository's pages; the must-contain rule has its own check
 const tmp = mkdtempSync(join(tmpdir(), 'content-screen-'));
 const put = (f, text) => { const p = join(tmp, ...f.split('/')); mkdirSync(dirname(p), { recursive: true }); writeFileSync(p, text); };
 const rulesHit = (r, id, file) => r.hits.filter((h) => h.rule === id && (!file || h.file === file));
@@ -86,6 +87,19 @@ try {
   check('"open source" in CLAUDE.md is a warning, not a fail', pw.some((h) => h.rule === 'public-words:open-source-claim' && h.severity === 'warn' && h.file === 'CLAUDE.md'));
   check('only fails make the screen fail', r.hits.some((h) => h.severity === 'fail') && r.hits.some((h) => h.severity === 'warn'));
 
+  // the public pages must carry Legal's words
+  {
+    const must = { ...rules, mustContain: [{ file: 'tools/page.json', text: 'orb-combat-ex/issues', why: 'contact', severity: 'fail' }] };
+    r = screen(tmp, must);
+    check('a page file that is missing, or lacks the contact route, is a must-contain hit', rulesHit(r, 'must-contain', 'tools/page.json').length === 1, JSON.stringify(r.hits));
+    put('tools/page.json', '{ "small": "open an issue at github.com/x/orb-combat-ex/issues" }\n');
+    r = screen(tmp, must);
+    check('the same page with the route in it passes', rulesHit(r, 'must-contain').length === 0, JSON.stringify(r.hits));
+    put('tools/page.json', '{ "small": "nothing" }\n');
+    check('and a page without the text is a hit again', rulesHit(screen(tmp, must), 'must-contain').length === 1);
+    rmSync(join(tmp, 'tools', 'page.json'));
+  }
+
   // binary and large files are skipped, and a hit-free tree passes again
   rmSync(join(tmp, 'README.md')); rmSync(join(tmp, 'CLAUDE.md'));
   writeFileSync(join(tmp, 'blob.bin'), Buffer.concat([Buffer.from([0, 1, 2]), Buffer.from(win('realperson'))]));
@@ -98,7 +112,7 @@ try {
 
 // the repository itself must pass (a CI check that fails on the first real hit)
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const real = screen(repo, rules);
+const real = screen(repo, fullRules);
 check('the repository has no failing hit', real.hits.filter((h) => h.severity === 'fail').length === 0, JSON.stringify(real.hits.filter((h) => h.severity === 'fail').slice(0, 5)));
 console.log(failed ? `content screen self-test FAILED: ${failed} of ${ran} checks` : `content screen self-test ok: ${ran} checks`);
 process.exit(failed ? 1 : 0);

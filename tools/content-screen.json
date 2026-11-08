@@ -1,23 +1,110 @@
 {
   "_why": "The rules of tools/content-screen.mjs, the public-repo content screen (corrective directive CD-27, CD-07, CD-08; Tools, 2026-11-07). The repository is public, so a push must not carry a personal path, a secret, a console SDK path, a franchise word in what ships, a gold-haired fighter (Legal RL-014) or a public sentence that is not true. Every rule is data: a change to a word list is a change to this file, reviewed by Legal for the words. 'fail' stops the push's check; 'warn' is printed and counted but does not fail (a line that someone else owns and has not yet changed).",
-  "skipDirs": [".git", "node_modules", "homework", "audit", ".godot"],
-  "skipExt": ["png", "jpg", "jpeg", "gif", "webp", "ogg", "wav", "mp3", "pck", "wasm", "zip", "gz", "tar", "ttf", "otf", "woff", "woff2", "ico", "icns", "exe", "dll", "so", "dylib", "res", "ctex", "import", "mp4", "webm", "pdf", "glb", "obj"],
+  "skipDirs": [
+    ".git",
+    "node_modules",
+    "homework",
+    "audit",
+    ".godot"
+  ],
+  "skipExt": [
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "webp",
+    "ogg",
+    "wav",
+    "mp3",
+    "pck",
+    "wasm",
+    "zip",
+    "gz",
+    "tar",
+    "ttf",
+    "otf",
+    "woff",
+    "woff2",
+    "ico",
+    "icns",
+    "exe",
+    "dll",
+    "so",
+    "dylib",
+    "res",
+    "ctex",
+    "import",
+    "mp4",
+    "webm",
+    "pdf",
+    "glb",
+    "obj"
+  ],
   "maxBytes": 4194304,
   "profilePath": {
     "severity": "fail",
     "_about": "a user-profile path: Windows C:\\Users\\<name> (any slash form), macOS /Users/<name>, Linux /home/<name>. The placeholder words below are not a person.",
-    "names": ["<user>", "<name>", "<you>", "Public", "Default", "Default User", "All Users", "runner", "runneradmin", "USERNAME", "%USERNAME%", "user", "you", "name", "YourName", "yourname", "example", "me", "ubuntu", "$USER", "${USER}", "<username>", "{user}", "{name}", "someone", "jdoe", "username"]
+    "names": [
+      "<user>",
+      "<name>",
+      "<you>",
+      "Public",
+      "Default",
+      "Default User",
+      "All Users",
+      "runner",
+      "runneradmin",
+      "USERNAME",
+      "%USERNAME%",
+      "user",
+      "you",
+      "name",
+      "YourName",
+      "yourname",
+      "example",
+      "me",
+      "ubuntu",
+      "$USER",
+      "${USER}",
+      "<username>",
+      "{user}",
+      "{name}",
+      "someone",
+      "jdoe",
+      "username"
+    ]
   },
   "secrets": {
     "severity": "fail",
     "patterns": [
-      { "id": "github-token", "re": "\\bgh[pousr]_[A-Za-z0-9]{36,}\\b" },
-      { "id": "github-fine-grained-token", "re": "\\bgithub_pat_[A-Za-z0-9_]{50,}\\b" },
-      { "id": "aws-access-key", "re": "\\bAKIA[0-9A-Z]{16}\\b" },
-      { "id": "private-key", "re": "-----BEGIN (?:[A-Z]+ )*PRIVATE KEY-----" },
-      { "id": "slack-token", "re": "\\bxox[abprs]-[A-Za-z0-9-]{10,}\\b" },
-      { "id": "google-api-key", "re": "\\bAIza[0-9A-Za-z_-]{35}\\b" },
-      { "id": "assigned-secret", "re": "(?:api[_-]?key|secret|token|passwd|password)[\"']?\\s*[:=]\\s*[\"'][A-Za-z0-9/+_=-]{24,}[\"']" }
+      {
+        "id": "github-token",
+        "re": "\\bgh[pousr]_[A-Za-z0-9]{36,}\\b"
+      },
+      {
+        "id": "github-fine-grained-token",
+        "re": "\\bgithub_pat_[A-Za-z0-9_]{50,}\\b"
+      },
+      {
+        "id": "aws-access-key",
+        "re": "\\bAKIA[0-9A-Z]{16}\\b"
+      },
+      {
+        "id": "private-key",
+        "re": "-----BEGIN (?:[A-Z]+ )*PRIVATE KEY-----"
+      },
+      {
+        "id": "slack-token",
+        "re": "\\bxox[abprs]-[A-Za-z0-9-]{10,}\\b"
+      },
+      {
+        "id": "google-api-key",
+        "re": "\\bAIza[0-9A-Za-z_-]{35}\\b"
+      },
+      {
+        "id": "assigned-secret",
+        "re": "(?:api[_-]?key|secret|token|passwd|password)[\"']?\\s*[:=]\\s*[\"'][A-Za-z0-9/+_=-]{24,}[\"']"
+      }
     ]
   },
   "consoleSdk": {
@@ -28,23 +115,111 @@
   "franchise": {
     "severity": "fail",
     "_about": "Legal's franchise words (docs/legal/never-use-words.md, name-longlist stage 0): in what SHIPS or is shown to the public. The notes in docs/ (the screening records, Legal's own lists, the vision file) name them on purpose and are outside this scope.",
-    "scope": ["data/", "ui/", "render/", "sim/", "audio/", "net/", "art/", "tools/site", "tools/desktop-package", "README.md", "export_presets.cfg", "project.godot"],
-    "skip": ["ui/tools/hud_check.gd", "tools/content-screen.json", "tools/content-screen.mjs", "tools/content-screen-selftest.mjs", "tools/site-name-scan.json"],
-    "words": ["Saiyan", "Kamehameha", "Dragon Ball", "DragonBall", "scouter", "Lemming Ball", "Madness Combat", "Goku", "Vegeta", "Kakarot", "Namek", "Budokai", "Tenkaichi", "Xenoverse", "FighterZ"]
+    "scope": [
+      "data/",
+      "ui/",
+      "render/",
+      "sim/",
+      "audio/",
+      "net/",
+      "art/",
+      "tools/site",
+      "tools/desktop-package",
+      "README.md",
+      "export_presets.cfg",
+      "project.godot"
+    ],
+    "skip": [
+      "ui/tools/hud_check.gd",
+      "tools/content-screen.json",
+      "tools/content-screen.mjs",
+      "tools/content-screen-selftest.mjs",
+      "tools/site-name-scan.json"
+    ],
+    "words": [
+      "Saiyan",
+      "Kamehameha",
+      "Dragon Ball",
+      "DragonBall",
+      "scouter",
+      "Lemming Ball",
+      "Madness Combat",
+      "Goku",
+      "Vegeta",
+      "Kakarot",
+      "Namek",
+      "Budokai",
+      "Tenkaichi",
+      "Xenoverse",
+      "FighterZ"
+    ]
   },
   "rl014": {
     "severity": "fail",
     "_about": "Legal RL-014 (docs/legal/review-log.md): no golden hair as a power cue. The shipped fighter files' hair colours must not read as gold or yellow (hue 38 to 65 degrees, saturation over 0.45, value over 0.55).",
-    "files": ["data/fighters/"],
+    "files": [
+      "data/fighters/"
+    ],
     "key": "hair"
   },
   "publicWords": {
     "_about": "Public sentences that must not come back (CD-08): README.md and CLAUDE.md. README.md is held to Legal's RL-171 words; CLAUDE.md's 'open source' line is the EP's and warns until it is changed.",
-    "files": ["README.md", "CLAUDE.md"],
+    "files": [
+      "README.md",
+      "CLAUDE.md"
+    ],
     "phrases": [
-      { "id": "we-are-fixing-them", "re": "We are fixing them", "severity": "fail", "why": "Legal RL-171: a promise to fix the flashing scenes is untrue while the flash work is paused" },
-      { "id": "open-source-claim", "re": "open[- ]source", "severity": "warn", "why": "Legal's never-use list: 'open source' for the whole project is a claim the record does not support while no licence is chosen" },
-      { "id": "official-engine", "re": "\\(official\\)", "severity": "fail", "why": "the public web build uses a custom engine build; 'official' is not true of it" }
+      {
+        "id": "we-are-fixing-them",
+        "re": "We are fixing them",
+        "severity": "fail",
+        "why": "Legal RL-171: a promise to fix the flashing scenes is untrue while the flash work is paused"
+      },
+      {
+        "id": "open-source-claim",
+        "re": "open[- ]source",
+        "severity": "warn",
+        "why": "Legal's never-use list: 'open source' for the whole project is a claim the record does not support while no licence is chosen"
+      },
+      {
+        "id": "official-engine",
+        "re": "\\(official\\)",
+        "severity": "fail",
+        "why": "the public web build uses a custom engine build; 'official' is not true of it"
+      }
     ]
-  }
+  },
+  "mustContain": [
+    {
+      "file": "tools/site-notice-offline.json",
+      "text": "github.com/dixonbalsagna/orb-combat-ex/issues",
+      "why": "Legal RL-256: the offline notice (and so takedown.yml's page) carries the contact route",
+      "severity": "fail"
+    },
+    {
+      "file": "tools/site-notice.json",
+      "text": "github.com/dixonbalsagna/orb-combat-ex/issues",
+      "why": "Legal RL-256: the holding page carries the contact route",
+      "severity": "fail"
+    },
+    {
+      "file": "tools/site-interim-owner.json",
+      "text": "github.com/dixonbalsagna/orb-combat-ex/issues",
+      "why": "Legal RL-256: the /play/ gate and /about/ carry the contact route",
+      "severity": "fail"
+    },
+    {
+      "file": "tools/site-interim-owner.json",
+      "text": "open an issue on our public GitHub page",
+      "why": "Legal RL-256: the long form on /about/",
+      "severity": "fail"
+    },
+    {
+      "file": "tools/site-interim.mjs",
+      "text": "in a custom web build",
+      "why": "Legal CD-08: the engine line says 'in a custom web build' and never 'official'",
+      "severity": "fail"
+    }
+  ],
+  "_mustContain": "Texts a public page file must carry (CD-02, CD-08): a missing file or a missing text is a hit. Legal wrote the words (docs/legal/public-contact-wording.md)."
 }

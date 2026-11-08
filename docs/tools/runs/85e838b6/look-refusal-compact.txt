@@ -1,0 +1,12 @@
+Look gate for UI's refusal-compact park (docs/ui/pending/refusal-compact), Tools, 2026-11-07
+
+Method: two web builds of the same commit through stack-preview (reference: no park; test: HEAD + refusal-compact.patch, which applies cleanly), the same page words (planet 7, sticks=10: a scripted pad holding RB and flicking the right stick), the same seed, 2,400 ticks each through the reel (reel.mjs --png --after-words "Too close,Hit" --after-refused 60). Both runs agree tick for tick on the sim: the HUD's teaching line of player 1 changes at the same ticks in both (106 "Hold for a beam", 705, 1305, 1903 "Hit" held to 1994).
+Window captured: a lossless still on every tick from 1903 to 1963 (the word "Hit" is held by the HUD from 1903), in both builds: 65 pairs with the periodic stills.
+
+Result:
+- In the legend's place (the left column, x < 260, y 190 to 350) all 65 pairs are pixel-identical (0 pixels differ by more than 24 in the summed channels). The word "Hit" is drawn in NEITHER build in this scene.
+- Elsewhere 64 of the 65 pairs differ by about 500 pixels (and 10 to 33,000 on the three periodic stills), in the rubble and the red building's edge: render noise that is also there between two runs of one build (the pair at tick 600 differs too). Nothing near the HUD.
+- Stills for the eye: docs/tools/img/look-refusal-compact/reference-t1912.png and with-park-t1912.png (tick 1912, 9 ticks after the word).
+
+So the look gate is NOT passed with a picture of the word: the park changes no pixel in a real match here. What the park's own proof shows (the demo build's mock feed, "?at=20&refuse=close") is not reproduced by a real match with this pad. Possible reasons, not tested: the first match is not the compact legend ("from the second match on"), the scripted pad has no device kind so the legend plan keeps no rows, or the word needs a reason the HUD maps differently than the teach text I read. UI should say which; a second-match capture (reel --rematch) is the quick test.
+No new UI is drawn over a fighter in either build (the gate's rule), because nothing new is drawn at all in this scene.
