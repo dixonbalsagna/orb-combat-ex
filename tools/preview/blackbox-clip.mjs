@@ -1,7 +1,7 @@
 // Plays a black box file back as a clip (the EP, 2026-11-01: "plays Orb's real match back as a clip through the existing replay path"). The page's `replay=1` word starts the recorded match again and steps it with the recorded intents exactly as SimReplay.play does;
 // the capture hook films it one tick per frame (every --every ticks a picture). The recorded checkpoints are compared with the page's own hashes as it goes, so the clip says whether it IS the match that was played.
 //
-//   node tools/preview/blackbox-clip.mjs --file <orb-first-play-....json> --dir <built web folder> --out <folder> [--every 2] [--scale 0.5] [--max 20000] [--from N --to N] [--hold-at N [--hold-for 60] [--hold-every 6]]
+//   node tools/preview/blackbox-clip.mjs --file <orb-first-play-....json> --dir <built web folder> --out <folder> [--every 2] [--scale 0.5] [--max 20000] [--width 960 --height 540] [--from N --to N] [--hold-at N [--hold-for 60] [--hold-every 6]]
 //
 // Output: <out>/frames/f-000001.jpg ..., <out>/index.html (a player: Space pauses, arrows step, a slider), <out>/clip.json (the ticks, the checkpoints compared: ok or the first tick that differs, the answers Orb gave). Private.
 // The file's replay needs the build it was recorded on: a replay carries a data hash, and the page refuses a different one (the clip then says so).
@@ -13,7 +13,7 @@ const argv = process.argv.slice(2);
 const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
 const FILE = opt('--file'), DIR = opt('--dir'), OUT = opt('--out');
 if (!FILE || !DIR || !OUT) { console.error('usage: node tools/preview/blackbox-clip.mjs --file <saved match.json> --dir <built web folder> --out <folder> [--every 2]'); process.exit(2); }
-const EVERY = Math.max(1, Number(opt('--every', 2))), SCALE = Number(opt('--scale', 0.5)), MAXT = Number(opt('--max', 20000)), W = 960, H = 540;
+const EVERY = Math.max(1, Number(opt('--every', 2))), SCALE = Number(opt('--scale', 0.5)), MAXT = Number(opt('--max', 20000)), W = Math.max(240, Math.round(Number(opt('--width', 960)))), H = Math.max(135, Math.round(Number(opt('--height', 540))));   // the page's size: 960x540 by default; --width 2000 --height 1125 matches Orb's framing (the picture is taken at --scale of it)
 const doc = JSON.parse(readFileSync(FILE, 'utf8'));
 const rp = doc.replay || doc;
 const fr = doc.frames || null;   // the slow frames of the real play (the page's own frame gaps): [tick, ms, seconds in]
@@ -30,7 +30,7 @@ const words = String(opt('--query', doc.pageSearch || '')).replace(/^\?/, '').sp
 const url = `http://127.0.0.1:${server.address().port}/index.html?flashcap=1&preview=1&reel=1&replay=1&blackbox=off${words.length ? `&${words.join('&')}` : ''}`;
 const OVERLAY_JS = `(() => { const d = document.createElement('div'); d.id = 'ov'; Object.assign(d.style, { position: 'fixed', left: '0', right: '0', bottom: '0', zIndex: 99999, background: 'rgba(0,0,0,0.6)', color: '#fff', font: 'bold 18px sans-serif', padding: '4px 12px' }); const add = () => document.body && document.body.appendChild(d); if (document.body) add(); else window.addEventListener('DOMContentLoaded', add); })();`;
 let browser = null, page = null, code = 0;
-const record = { build: doc.build || null, source: FILE, seed: rp.seed, ticks: rp.ticks, played: 0, every: EVERY, answers: doc.answers || null, checkpoints: { recorded: (rp.checkpoints || []).length, compared: 0, firstBad: -1 }, ok: null };
+const record = { build: doc.build || null, source: FILE, seed: rp.seed, ticks: rp.ticks, played: 0, every: EVERY, page: { width: W, height: H, scale: SCALE }, answers: doc.answers || null, checkpoints: { recorded: (rp.checkpoints || []).length, compared: 0, firstBad: -1 }, ok: null };
 try {
   browser = await launchBrowser({ exe, flags: [`--window-size=${W},${H}`], session: process.env.MERIDIAN_SESSION || 'tools-pipeline', purpose: 'black box clip', timeoutS: 3600, cpuPercent: 25, log });
   page = await Cdp.open(browser.target.webSocketDebuggerUrl);
