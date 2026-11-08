@@ -11,7 +11,7 @@ const QaPlanet = preload("res://qa/godot/qa_planet.gd")
 
 var hub: SimInputHub
 var held: Dictionary = {}
-var fscues: Array = ["zip_light", "zip_heavy"]
+var fscues: Array = ["zip_light", "zip_heavy"]   # Encounter's park (2026-11-07): pass --fscues=zip_light,zip_heavy,zip_big
 
 
 func _init() -> void:
@@ -352,6 +352,14 @@ func _step(S: SimState, cnt: Dictionary, t: int, lastLight: int) -> int:
 		if who == 0 and str(e.kind) in fscues:
 			cnt["fsBlows"] = int(cnt.get("fsBlows", 0)) + 1
 			cnt["fs:" + str(e.kind)] = int(cnt.get("fs:" + str(e.kind), 0)) + 1
+			var fpk: String = "fsPath:" + str(e.get("text"))   # Encounter's cues: text is the path (zip, line, over, under, parting), source the button
+			cnt[fpk] = int(cnt.get(fpk, 0)) + 1
+		if who == 0 and str(e.kind) == "zip_end":   # the reason is its text (missed and countered among them)
+			var zk: String = "fsEnd:" + str(e.get("text"))
+			cnt[zk] = int(cnt.get(zk, 0)) + 1
+		if who == 0 and str(e.kind) == "press_refused":   # no energy is press_refused with text ki
+			var rk: String = "pressRefused:" + str(e.get("text"))
+			cnt[rk] = int(cnt.get(rk, 0)) + 1
 		match str(e.kind):
 			"stick_start":
 				if who == 0:
