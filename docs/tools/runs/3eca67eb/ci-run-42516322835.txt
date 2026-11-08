@@ -1,0 +1,15 @@
+CI RUN 42516322835 on main 3eca67eb (job limits raised: flash 45, godot-parity 75, net 60, world 45), 2026-11-08. Read with gh, read-only.
+Result: success, all eight jobs green (CD-01).
+
+Job                                      Result   Started   Ended   Minutes
+Frozen JS core                           success  19:41:53  19:43:48  2
+Data validation                          success  19:41:53  19:43:06  1
+Build site (Godot web export)            success  19:41:53  19:42:53  1
+QA regression suite                      success  19:41:53  19:43:10  2
+Flash count                              success  19:41:53  20:03:46  22
+World checks                             success  19:41:53  20:05:02  23
+Network checks                           success  19:41:53  20:10:56  29
+Godot headless checks (parity etc.)      success  19:41:54  20:45:12  63 (limit 75; the old 30 would have cancelled it)
+
+Earlier red runs, for the record: eb170778 (run 42477690201) failed on the SCRIPT ERROR gate in parity.gd (Godot headless, 4 min) and in the LAN --ticks=1200 --negative-control (Network, 22 min); both fixed in 091dfac9. 091dfac9 and 12c1b2ed were cancelled by the old limits before reaching them.
+Headroom: Godot headless uses 63 of 75 minutes (84 percent); the next batch of checks should raise that limit again or split the job.
