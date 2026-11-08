@@ -8,7 +8,7 @@ The project's public GitHub Issues page: `https://github.com/dixonbalsagna/orb-c
 
 Two limits, stated plainly so nobody oversells it:
 - **It is public.** Anyone can read what is posted. The wording below tells people not to post personal details, and to say if they need a private reply.
-- **A reader is needed.** The EP names who reads it and how often (once a day while a public page is up is enough); until someone is named the route is a label with nobody behind it. Orb may later add a project-only mailbox; that is Orb's choice and not needed for this fix.
+- **A reader is named (2026-11-07):** the EP reads the Issues page daily while any public page is up. If that stops, the route is withdrawn from the pages rather than left as a label with nobody behind it. Orb may later add a project-only mailbox; that is Orb's choice and not needed for this fix.
 
 ## The words (American spelling, plain, no promises we cannot keep)
 
