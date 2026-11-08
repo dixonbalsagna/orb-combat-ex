@@ -12,7 +12,7 @@ Status: **have** (exists today), **need** (not made yet), **Orb's call**.
 | Header capsule 920x430, small capsule 462x174, main capsule 1232x706, vertical capsule 748x896 (all required) | need | Art, with Marketing | Valve "Graphical assets" page. Made from one real capture plus a plain wordmark in a licensed font (`store-copy-draft.md` C) |
 | Wordmark font | Orb's call | Orb | Licensed font, one row in `licence-register.md` (Legal) |
 | Page background 1438x810 | optional | Art | Valve page marks it optional |
-| Screenshots: at least 5, at least 1920x1080, 16:9, gameplay only (no concept art, no marketing text) | need | Marketing, from real captures | Valve page. At least 4 must be marked suitable for all ages: Legal's call, since the game shows violence |
+| Screenshots: at least 5, at least 1920x1080, 16:9, gameplay only (no concept art, no marketing text) | need | Marketing, from real captures | Valve page. At least 4 should be marked suitable for all ages, for visibility (Valve says "should"): Legal's call, since the game shows violence |
 | Trailer: .mp4/.mov/.wmv, H.264 preferred, up to 1920x1080, 30 or 60 fps, 5,000+ Kbps, 16:9. Valve recommends the first trailer be mostly gameplay | need | Marketing, Audio for the track | Valve "Trailers" page. A trailer is required for release; whether one is required for Coming Soon is **unconfirmed**. Real captures only (`store-copy-draft.md` C) |
 | Short and long description | have (skeleton) | Marketing | `store-copy-draft.md` A2. Written to be true of the build on the day; Legal reviews |
 | Tags | have (draft list) | Marketing | `store-copy-draft.md` B. Tags follow the game as it is at the time, not the plan |

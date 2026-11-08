@@ -109,7 +109,7 @@ World and terrain: `wrap`, `sdx`, `biomeAt`, `genWorld`, `groundY`, `seaAt`. Des
 ## Conventions and definition of done
 
 - Every change keeps the sim deterministic: seeded RNG, fixed step, no rendering state in the sim.
-- Numbers live in data, not code. A change to a data file's shape updates its schema in tools/schemas/ in the same commit; CI's data job gates the deploy.
+- Numbers live in data, not code. A change to a data file's shape updates its schema in tools/schemas/ in the same commit; CI's data job gates the deploy. It checks HEAD's data only, and it ran nothing from 2026-11-06 to 2026-11-07 while ci.yml failed to parse, so read CI after every push.
 - A task is done when it meets its acceptance criteria, the headless sim still runs clean, and the deliverable is documented in the owning director's docs folder.
 - Suggested layout (adjust with the engine ADR): `sim/`, `data/`, `render/`, `ui/`, `audio/`, `net/`, `tools/`, `art/`, `qa/`, `research/`, `docs/`.
 - **The look gate (ADR 0010).** A change that alters what the player sees ships with a side-by-side against the reference build (docs/ep/taste.md; node tools/flash/side-by-side.mjs), and no test result justifies a worse look. Dissolves, fades, slow wipes, full-screen blur and markers over the fighters are rejected (Orb, 2026-10-18).
