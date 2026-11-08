@@ -13,6 +13,21 @@ Reports come from Combat and Choreography (their IDs `CC-nnn` are in `docs/comba
 | KB-005 | A dodged signature freezes the defender 300 units up for 0.87 s | Combat (CC-005) | confirmed | feel | 0.40 s a match, 0.7% of match time |
 | KB-006 | The rush flies through terrain, and through standing buildings | Combat (CC-006) | confirmed, broader | feel, collision | 15% of rushes clip terrain, 6.7% pass through a building |
 
+**Horizon tag and closing step (audit CD-23, added 2026-11-07).** Every entry below, and the table that follows, carries two fields. **Horizon** is the earliest release the bug blocks, in the review log's words: `private` (Orb's own PC, the LAN and private tests), `web` (a public page or the public pin) or `store` (a store page, a desktop download or internet play); `none` where it blocks no release (a fact about the pinned prototype only). **Closing step** is what ends the entry: (1) open the thing the entry names (the code, data or file) at its pin and at HEAD, not the entry's own words; (2) if it is met, mark it fixed with the date and the commit or file and line that shows it; (3) if only partly met, leave it open with what is left; (4) at each baseline (a pin move, a store step, or the audit's own re-check) QA reads every open entry against the code again, and nothing stays open because nobody looked. A fix that QA has not seen in play is marked "fixed, not re-verified". The horizons in the table are QA's first reading; the owner of an entry confirms or changes its tag.
+
+| ID | Status at 2026-11-07 | Horizon | Closing step |
+| :--- | :--- | :--- | :--- |
+| KB-001 to KB-006 | open as coded: the prototype is pinned at `7233c96` and "nothing here is fixed in the prototype" | none (the pinned prototype ships nowhere; they bear on parity with the Godot sim) | The Godot sim is checked for each behaviour at the next parity read; each entry then closes as "not present in the port" or opens as a GB entry. Until then the checks keep asserting the bug is present |
+| GB-001 | **fixed 658c95b1**, read at HEAD (`split_view.gd` `attach()`) | private (closed) | done |
+| GB-002 | fixed 8fd6aba, reopened, fixed again 632f6c9; not re-verified in play | web | QA reads `render/shaders/sky.gdshader` and `_sky_react` at HEAD (reaction off by default), then Orb or a clip on a current build confirms; then closed |
+| GB-003 | open, with Camera | web | Camera names the commit; QA reads it at HEAD and closes it, or asks for a camera-motion band |
+| GB-004 | open, a design call, not a fault | private | Game Design rules; closed as "ruled" with the row |
+| GB-005 | open, with World | web | World names the commit; QA's `5c.bounces` and `5c.long` rows read it at HEAD |
+| GB-006 | fixed cce8a59; not re-verified in play | web | Animation's `lead_scan` passing at HEAD plus a clip of a launch; then closed |
+| GB-007 | open, with VFX and Rendering; not reproduced | web | VFX names the commit (shorter fade or world-space pieces) or shows it does not reproduce; QA reads `rocks.gd` at HEAD |
+| GB-008 | **fixed fd381c6**, confirmed df05b9f | private (closed) | done |
+| GB-009 | finish fixed in df05b9f; the blaster's balance is open | private | Game Design rules whether any shot counts at the brink; closed when E4, E5 are inside their bands or the rule is written |
+
 **Checks.** `qa/tests/known-bugs.test.js` has one check per bug asserting that it is still present. It passes today. When a behaviour changes it fails with "KB-00x appears fixed", and the fix is to set the verdict below to `fixed` (with the commit), then turn the check into a regression test for the corrected behaviour. A last check keeps this register and the test file in step.
 
 **Reproduce and measure.**
@@ -147,7 +162,9 @@ Separate from the prototype register above (and from its test). IDs are `GB-nnn`
 ### GB-001: F9 pressed twice leaves the game grey (split screen re-attach)
 
 **Reported by:** Orb, playing the Godot game, 2026-09-30 (screenshot: the diagonal split divider still draws, both halves flat grey, action carries on underneath, pause menu works).
-**Verdict:** confirmed by reading the code; not yet reproduced in Godot.
+**Verdict:** **fixed in 658c95b1** (Rendering, 2026-10-01, ADR 0009; CD-16, closed by QA 2026-11-07). Read at HEAD: `render/camera/split_view.gd` `attach()` makes the panes once (`if viewports[0] == null`) and takes the ones it has on a second attach, with a comment naming this bug. Not re-run in a window (Godot runs here are headless only); a Godot scene test for attach, detach, attach is still the check to add.
+**Horizon:** private (closed). **Closing step:** done, with the commit above.
+**Was:** confirmed by reading the code; not yet reproduced in Godot.
 **Cause.** `render/core/main.gd` (F9) calls `split_view.detach()` then, on the next press, `split_view.attach(self)`. `detach()` leaves pane 0 inside its old SubViewport, but `attach()` has no re-entry guard beyond `_attached`: it calls `main.move_pane0()` again (`remove_child(pane)` on a node that is no longer main's child, then `add_child` on a node that already has a parent, so both fail and the new SubViewport is empty) and `main.make_pane()` again (a third pane is appended to `panes`). The compositor then masks two empty viewports: flat grey with the divider. Owner of the fix: Camera (`render/camera/split_view.gd`), with Rendering for `move_pane0` / `make_pane`.
 **Suggested fix.** Make `attach()` re-use `viewports` when they exist (set `main.compositor = self`, `_attached = true`, restore the update modes) instead of creating new panes; or make F9 toggle only the mask and keep the panes.
 **Effect.** Any session where F9 is pressed an even number of times after the first press (detach, attach) ends grey for good; restart is the only way out. Not a sim bug: determinism and the baseline are unaffected.
