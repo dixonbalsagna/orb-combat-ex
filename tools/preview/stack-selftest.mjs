@@ -173,6 +173,18 @@ try {
     flipAll(tree, [], null, { off: ['interrupts'] });
     check('--off leaves the row\'s key at the commit\'s value in the built data', rd('data/director/interrupts.json').water.enabled === false);
   }
+  {   // Sunday's rows (2026-11-07): flickKeep, flickRun, and fullSend with UI's slam_hint in the same row over two files
+    put('data/director/stick.json', '{\n  "flickKeep": { "enabled": false },\n  "flickRun": { "enabled": false, "points": 3 },\n  "fullSend": { "enabled": false }\n}\n', tree);
+    put('ui/data/features.json', '{\n  "features": { "slam_hint": false, "other": true }\n}\n', tree);
+    const rd = (f) => JSON.parse(readFileSync(join(tree, f), 'utf8'));
+    const fs3 = flipAll(tree, []);
+    const sj = rd('data/director/stick.json'), fj = rd('ui/data/features.json');
+    check('flickKeep, flickRun and fullSend are turned on, and fullSend takes UI\'s slam_hint with it (two files, one row); the rest of both files is left alone', sj.flickKeep.enabled === true && sj.flickRun.enabled === true && sj.flickRun.points === 3 && sj.fullSend.enabled === true && fj.features.slam_hint === true && fj.features.other === true, JSON.stringify([sj, fj]));
+    put('data/director/stick.json', '{\n  "flickKeep": { "enabled": false },\n  "flickRun": { "enabled": false },\n  "fullSend": { "enabled": false }\n}\n', tree);
+    put('ui/data/features.json', '{\n  "features": { "other": true }\n}\n', tree);
+    const fs4 = flipAll(tree, []);
+    check('fullSend waits when UI\'s slam_hint key is not in the tree yet, and flips neither file (the slam without its hint is not shipped)', !fs4.on.includes('fullSend') && fs4.waiting.some((w) => w.id === 'fullSend' && /slam_hint/.test(w.why)) && rd('data/director/stick.json').fullSend.enabled === false && fs3.on.includes('fullSend'), JSON.stringify(fs4.waiting.filter((w) => w.id === 'fullSend')));
+  }
   put('tools/validate.js', "console.log('error  data/d.json:2 /flag [type] flag must be a boolean'); console.log('warning  ui/x.json:1 /a [xref:r] note'); console.log('3 files checked, 1 errors, 1 warnings'); process.exit(1);\n", tree);
   const rv = runValidate(tree);
   check('validate is run in the scratch tree and its findings and count are read', rv.summary && rv.summary.errors === 1 && rv.summary.warnings === 1 && rv.findings.length === 2 && rv.findings[0].file === 'data/d.json' && rv.findings[0].rule === 'type');

@@ -61,7 +61,7 @@ There is no Apple developer account, so the app is not signed with a certificate
 
 ## What changed in the repo, and what lives outside Tools' paths
 
-In Tools' paths: `.github/workflows/desktop-builds.yml` (new), `.github/actions/setup-godot/action.yml` (a new `desktop-templates` input: the same pinned `.tpz` and SHA-512, unpacking only the Windows, Linux and macOS release templates), `tools/desktop-package.mjs` and `tools/desktop-package-selftest.mjs` (new, in CI's data job), this page. `linux-export.yml` stays as it is: the cheap Linux-only run for the Deck work.
+In Tools' paths: `.github/workflows/desktop-builds.yml` (new), `.github/actions/setup-godot/action.yml` (a new `desktop-templates` input: the same pinned `.tpz` and SHA-512, unpacking only the Windows, Linux and macOS release templates), `tools/desktop-package.mjs` and `tools/desktop-package-selftest.mjs` (new, in CI's data job), this page. `linux-export.yml`, the cheap Linux-only run for the Deck work, was folded into this workflow later (CD-12, 2026-11-07): the Linux export, the bench and the hash check are here, behind the same lock and route scan, and the file is gone.
 
 Outside them, parked as `docs/tools/pending/desktop-builds/export-presets-macos.patch` for the EP to apply: `export_presets.cfg` gets (a) a fourth preset, **macOS** (universal, bundle id `io.github.dixonbalsagna.orbcombatex` and app name "Orb Combat EX", RL-205; ad-hoc signing, no notarization), and (b) `net/*` at the front of the **exclude filter of the Windows, Linux and macOS presets** (not the Web preset, so the demo's export and the flash-set rule are unchanged: RL-197). The workflow's routes check fails without (b).
 

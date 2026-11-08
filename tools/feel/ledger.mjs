@@ -41,6 +41,7 @@ export function text(res, { all = false } = {}) {
   out.push(`tree ${res.tree}; the pad is slot ${res.slot}`);
   out.push(`recorded match: ${!res.recorded.checked ? 'cut short (no final hash to compare)' : res.recorded.exact ? 'reproduced exactly' : 'NOT reproduced on this tree: the rows are the replay on this tree'}; ${res.ticks} ticks (${mmss(res.ticks)})`);
   out.push(`${s.total} presses of the pad; ${s.notHonoured} not honoured (${s.total ? Math.round((100 * s.notHonoured) / s.total) : 0}%)`);
+  if (typeof res.merged === 'number') out.push(`counting rule (2026-11-07): a press of one kind on consecutive ticks is ONE press (a hit-stop offers it again each tick): ${res.merged} such repeats were not counted as presses; a guard held up or a dodge open reads as honoured`);
   out.push('');
   out.push('by press:');
   for (const [k, v] of Object.entries(s.byPress)) out.push(`  ${k.padEnd(11)} ${String(v.total).padStart(4)} presses: ${v.honoured} honoured, ${v.refused} refused, ${v.partly} partly, ${v.silent} silent`);

@@ -423,10 +423,17 @@ func _ledger() -> Dictionary:
 	var look: int = 12
 	var presses: Array = []        # {t, press, ...}
 	var open: Array = []
+	var lastEdge: Dictionary = {}  # press kind to the last tick it was offered: a press on consecutive ticks is ONE press (a hit-stop offers it again each tick)
+	var merged: int = 0
 	var n: int = int(rp.ticks)
 	for t in range(n):
 		var edges: Array = _feed_to(S, fd, t)
 		for k in edges:
+			if int(lastEdge.get(k, -99)) == t - 1:   # the same press offered again (a freeze): not a new press
+				lastEdge[k] = t
+				merged += 1
+				continue
+			lastEdge[k] = t
 			var row: Dictionary = {"t": t, "press": k, "state": S.fighters[SLOT].state, "ki": int(S.fighters[SLOT].ki), "cues": [], "refused": [], "acts": 0}
 			var fme = S.fighters[SLOT]
 			var ffoe = S.fighters[1 - SLOT]
@@ -446,6 +453,16 @@ func _ledger() -> Dictionary:
 					_credit(open, str(e.kind))
 			elif e.type == "damage" and int(e.attacker) == SLOT:
 				_credit(open, "")
+		var me2 = S.fighters[SLOT]
+		var freeBody: bool = me2.state != "down" and me2.state != "launched"
+		for row in open:   # a guard held up, or a dodge open, is the answer to its press (it makes no cue of its own)
+			if int(row.acts) == 0 and row.refused.is_empty() and freeBody:
+				if row.press == "guardPress" and float(me2.stance) == 1.0:
+					row.acts += 1
+					row.cues.append("guard_held")
+				elif row.press == "dodge" and int(S.tick) - int(me2.act.dodgeTick) >= 0 and int(S.tick) - int(me2.act.dodgeTick) < int(SimAct.dodgeWindow):
+					row.acts += 1
+					row.cues.append("dodge_open")
 		var still: Array = []
 		for row in open:
 			if t - int(row.t) <= look:
@@ -467,5 +484,5 @@ func _ledger() -> Dictionary:
 		elif row.acts == 0:
 			verdict = "silent"
 		rows.append({"t": row.t, "press": row.press, "verdict": verdict, "reasons": row.refused, "cues": row.cues.slice(0, 4), "state": row.state, "ki": row.ki, "rs": row.get("rs", []), "air": row.get("air", [])})
-	return {"mode": "ledger", "presses": rows, "recorded": _recorded(final)}
+	return {"mode": "ledger", "presses": rows, "merged": merged, "recorded": _recorded(final)}
 

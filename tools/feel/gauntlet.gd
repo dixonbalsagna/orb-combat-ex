@@ -3,7 +3,7 @@ extends SceneTree
 ##   godot --headless --path <tree copy with qa/godot/qa_planet.gd> --script <this file> -- <matches> <baseSeed> --arm=stick|masher|timing|beam|circle|orbs --level=easy|medium|hard [--capsec=900] [--wall=300] [--budget=3600]
 ## The arms (the pad is slot 0 in every match, so a spawn side effect is in all alike; every arm walks at the rival with the left stick):
 ##   stick   a right-stick flick in one of the four directions every 8 to 24 ticks (nothing else)
-##   orbs    (asked for by name, not in the default five) Orb's scheme: a right-stick flick every 30 to 48 ticks (thumb pace) and LB for 10 ticks on every wind-up of his; nothing else
+##   orbs    (asked for by name, not in the default five) Orb's scheme: a right-stick flick every 30 to 48 ticks (thumb pace) and LB HELD from the rival's wind-up until contact (his windup end cue, a blow on player 1, or 90 ticks); nothing else
 ##   masher  X every 8 ticks (nothing else)
 ##   timing  LB for 10 ticks when his blow winds up (a heavy's wind-up or any "windup" start cue, lights too; the perfect block's window), then X straight after; X every 8 ticks otherwise
 ##   beam    RB held and the right stick held toward him for 40 ticks, then let go to fire, then RB off; X every 8 ticks to build energy while it cannot pay
@@ -16,6 +16,7 @@ const NOT_HONOURED: Array = ["refused", "double", "zip", "lapsed", "stunned", "c
 var hub: SimInputHub
 var held: Dictionary = {}
 var _bm = null
+var _foe_windup_open: bool = false   # the rival has a wind-up open: from his "windup" start cue to his "end" cue, a blow on player 1, or 90 ticks (the orbs pad holds LB while it is)
 var _foe_windup_t: int = -100   # the tick of the rival's last "windup" start cue (every wound blow, lights included): the timing pad guards on it
 
 
@@ -62,6 +63,8 @@ func _init() -> void:
 			return
 		var rng := RandomNumberGenerator.new()
 		rng.seed = seed_
+		_foe_windup_open = false   # a new match: no wind-up is open and none has been seen
+		_foe_windup_t = -100
 		var st := {"next": 20, "rel": {}, "rsTo": -1, "aim": Vector2.ZERO, "ltTo": -1, "stk": Vector2.ZERO, "beam": 0, "bTo": 0, "cool": 0, "lbTo": -1, "xAt": -1, "gNext": 0, "presses": 0}
 		_btn("west", true)       # as the stick player of qa/godot/stickplay.gd begins: one X, so the pad is the human
 		st.rel[2] = ["west"]
@@ -192,16 +195,16 @@ func _drive(arm: String, S: SimState, t: int, st: Dictionary, rng: RandomNumberG
 				hub.pad_stick_right(0, st.aim.x, st.aim.y)
 			elif t == int(st.rsTo):
 				hub.pad_stick_right(0, 0.0, 0.0)
-			var wound: bool = (not DirBrawl.winding(S, foe).is_empty()) or (t - _foe_windup_t <= 3)
-			if int(st.lbTo) >= 0:
-				if t >= int(st.lbTo):
-					_btn("lb", false)
-					st.lbTo = -1
-			elif wound and t >= int(st.gNext):
+			# the guard is HELD from the wind-up until contact, not tapped
+			var open: bool = _foe_windup_open and t - _foe_windup_t <= 90
+			var guard: bool = open or (not DirBrawl.winding(S, foe).is_empty())
+			if guard and int(st.lbTo) < 0:
 				_btn("lb", true)
-				st.lbTo = t + 10
-				st.gNext = t + 14
+				st.lbTo = t   # held from now
 				st.presses = int(st.presses) + 1
+			elif not guard and int(st.lbTo) >= 0:
+				_btn("lb", false)
+				st.lbTo = -1
 		"masher":
 			if t >= int(st.next):
 				_tap(st, t, ["west"])
@@ -310,6 +313,9 @@ func _step(S: SimState, t: int, tot: Dictionary, by: Dictionary) -> void:
 			var k: String = str(e.kind)
 			if k == "windup" and who == 1 and str(e.text) == "start":
 				_foe_windup_t = t
+				_foe_windup_open = true
+			elif k == "windup" and who == 1 and str(e.text) == "end":
+				_foe_windup_open = false
 			if k == "beam_fire":
 				tot["beams" if who == 0 else "foeBeams"] += 1
 			elif who == 0 and _refusal(e):
@@ -321,6 +327,7 @@ func _step(S: SimState, t: int, tot: Dictionary, by: Dictionary) -> void:
 				tot.hits += 1
 			elif int(e.victim) == 0 and int(e.attacker) != 0:
 				tot.hitsTaken += 1
+				_foe_windup_open = false   # contact: the guard goes down
 	var f = S.fighters[0]
 	if f.state == "locked" or f.state == "launched" or f.state == "down" or f.stunTicks > 0 or f.embedT > 0:
 		tot.noControl += 1
