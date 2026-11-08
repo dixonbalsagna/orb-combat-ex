@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Combat Variety Plan</title>
+<style>
+:root{
+  --bg:#f7f5f0; --panel:#ffffff; --ink:#1d1b18; --muted:#5e5a52; --line:#d9d4c8;
+  --accent:#b4471f; --accent2:#2364a8; --good:#2f7d4a; --warn:#a8741a; --code:#f0ece3; --chip:#efe9dc;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16171a; --panel:#1f2125; --ink:#ebe8e1; --muted:#a29d93; --line:#34373d;
+    --accent:#e2774d; --accent2:#6aa6e8; --good:#5fbf80; --warn:#d9a54a; --code:#26292e; --chip:#2a2d33;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16171a; --panel:#1f2125; --ink:#ebe8e1; --muted:#a29d93; --line:#34373d;
+  --accent:#e2774d; --accent2:#6aa6e8; --good:#5fbf80; --warn:#d9a54a; --code:#26292e; --chip:#2a2d33;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:28px 16px 80px}
+h1{font-size:2rem;line-height:1.2;margin:.2em 0 .3em}
+h2{font-size:1.4rem;margin:2.2em 0 .6em;padding-top:.6em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.6em 0 .4em}
+p{margin:.6em 0}
+.lede{font-size:1.1rem;color:var(--muted)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.goal{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:10px 12px}
+.goal b{display:block;font-size:1.05rem}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:.95rem}
+th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600}
+.num{text-align:right;white-space:nowrap}
+code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:.88em}
+pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px;overflow-x:auto;font-size:.84rem;line-height:1.45}
+details{margin:10px 0}
+summary{cursor:pointer;color:var(--accent2);font-weight:600}
+.note{color:var(--muted);font-size:.92rem}
+.fig{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;margin:16px 0}
+.fig svg{width:100%;height:auto;display:block}
+.fig .cap{color:var(--muted);font-size:.9rem;margin-top:6px}
+.toy{display:grid;grid-template-columns:minmax(220px,300px) 1fr;gap:14px}
+@media (max-width:720px){.toy{grid-template-columns:1fr}}
+.toy label{display:block;margin:4px 0;font-size:.95rem}
+.toy select,.toy button{font:inherit;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.toy button{cursor:pointer;margin-top:6px}
+.bar{height:10px;background:var(--accent);border-radius:5px;display:inline-block;vertical-align:middle}
+.bar.neg{background:var(--muted)}
+.pick td{background:color-mix(in srgb, var(--good) 14%, transparent)}
+.svgtext{fill:var(--ink);font:13px system-ui,sans-serif}
+.svgmuted{fill:var(--muted);font:12px system-ui,sans-serif}
+.svgbox{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
+.svgarrow{fill:var(--muted)}
+ol li,ul li{margin:.25em 0}
+</style>
+</head>
+<body>
+<main>
+
+<p class="note">Orb's stand-in, 2026-11-07, written during quiet time. Document work only: nothing was run, built or briefed. <b>For Orb's review first.</b> It goes to the EP only after you've read it. This is version 3: six read-only checkers went through two earlier versions against the code, the rulings, Animation's costs and your ask, and their findings are folded in.</p>
+<h1>Every press, a different blow</h1>
+<p class="lede">A plan to make movesets varied, dynamic, emergent, and responsive. It covers what's there today, what's already decided, what's new, pseudocode, increments with goals and how each is measured, and what each costs.</p>
+
+<div class="card">
+<b>The short version</b>
+<ol>
+<li><b>Your main attack input is the thinnest part of the moveset.</b> The right stick has one quick and one charged blow per direction, so a quick flick down is the same blow every time. A fair test player using your scheme lost every match, easy included, mostly because its flicks were thrown away while it couldn't act. In your own play, though, the silence sat in heavy, signature, dodge and guard presses, not the stick.</li>
+<li><b>Two big pieces are already decided today, on your play.</b>
+  <ul>
+  <li><b>The slam:</b> a stick strike held to its top stage now sends, and down on a fighter in the air slams.</li>
+  <li><b>Never thrown away:</b> a flick that can't start yet is held and becomes your first blow out. A planned exchange folds it in. Every refusal gets a word.</li>
+  </ul>
+  This plan builds on both rather than re-deciding them.</li>
+<li><b>What's new here is composing each blow.</b> Variety today is rotation: pick from a list, avoid the last two. Your press keeps deciding what a blow <i>is</i>: its weight, worth and direction. The game decides which blow of that kind you <i>see</i>, by scoring every candidate against the moment (his body, the world, the string and what you've just seen), then fitting it with a small bend. It's the "grammar, not a move list" answer I gave you on November 4, built.</li>
+<li><b>Six increments, responsiveness first,</b> each with a number that says it worked and the tool that measures it. A scope table says plainly what's left for later: signatures and beams, forms and tiers, the other four stances, and 2v2.</li>
+<li><b>About 48M tokens for the six increments,</b> a bit under half a week, spread over several builds. Four questions for you are at the end, one at a time.</li>
+</ol>
+</div>
+
+<h2>1. Your four words, as goals you can measure</h2>
+<div class="grid">
+<div class="goal"><b>Responsive</b>Every press shows on the body within 3 ticks, and no press vanishes without a word. Measured in real presses, each counted once, with the computer's pace held fixed, so a slower computer can't pass it. Game Design's target for your-scheme test player: at least 70% on easy once its guard is fixed, read at 40 matches a cell. Your own silent presses, roughly 16 to 19% today, fall by press kind.</div>
+<div class="goal"><b>Varied</b>The same press in the same kind of moment shows at least 4 different blows over a few matches, the stick included. A blow's family repeats one of your last 3 under 10% of the time. The existing bands hold: the same three-blow series in under 10% of strings, and you can still name which cell a blow came from 80% of the time.</div>
+<div class="goal"><b>Dynamic</b>Blows visibly use the moment: a lean on a slope, a pin on the wall behind him, a send-off that matches the launch's direction. In staged pairs (a wall behind him or not, crouched or not), the fitting family wins most of the time, and the body or world term changes the pick in at least a quarter of blows. A launch reads at camera distance.</div>
+<div class="goal"><b>Emergent</b>The world joins the fight on its own, inside Game Design's bands: ricochets 2 to 8 a match, wall kicks 1 to 4, plus new wall pins and slope sweeps inside the brawl, and phrase finishes you can actually see. None of it is scripted. It happens because the moment offered it and your press took it.</div>
+</div>
+
+<h2>2. What's there today</h2>
+<p>Five read-only readers mapped the moveset generator, the animation system, the path from press to blow, the design rulings and the parked work. Then four checkers tested this packet against the code and the rulings.</p>
+<table>
+<tr><th>Finding</th><th>What it means</th><th>Where</th></tr>
+<tr><td><b>The stick has one quick and one charged blow per direction,</b> for both fighters. On the Protagonist, a quick down is always <code>scythe_sweep</code>, in the air <code>spike_heel</code>, and charged <code>plunge_blade</code>. The guard and move lanes already hold 2 to 4 per direction</td><td>Your main input repeats. The anti-repeat rule has nothing to rotate. The move lanes' existing pieces are free stand-ins for more depth</td><td><code>data/combat/stick.json</code>; <code>recipe.gd:148-183</code></td></tr>
+<tr><td><b>Face buttons have depth:</b> 70 to 75 distinct pieces a fighter over 28 lists. A bot read a repeat of one of the last 4 at 6 to 8% with the whole pad, and 17% mashing X</td><td>X, Y and B already vary. Your play agreed: "the attack variation keeps getting better"</td><td><code>recipes.json</code>; the repetition README (a bot on the November 1 tree, not your play)</td></tr>
+<tr><td><b>A blow's limb, height and angle come fixed with it.</b> The pick reads only "not the gut twice", whether it sends, and whether he's high in the air</td><td>Blows rotate but don't react: nothing aims for the wall behind him, the slope, or a crouch</td><td><code>brawl.gd:1095</code>, <code>_cellPiece</code></td></tr>
+<tr><td><b>The close fight's animation is rich.</b> About 80 strike rows a fighter, 18 hit reactions, and contact that already pins the striking limb onto his real body, with a lunge and step-in</td><td>Aiming at his real height already happens for every blow in reach. New work should go elsewhere</td><td><code>anim_fighter.gd:4271-4339</code></td></tr>
+<tr><td><b>Launches have more than they seem to:</b> the body turns head-first along its flight, 6 flail families scale with launch speed (a full send is 2.6 times a light pop), and there are ground bounces, lip launches and climbs out of buildings. The <b>gaps:</b> the striker's send-off doesn't change with the launch's direction, the four planned slam looks exist only on paper, and at camera distance the difference between hits is "real but small"</td><td>The problem is mostly reading the big moments at speed, which ties to your "too fast". A missing library is a smaller part of it</td><td><code>anim_fighter.gd:1440-1525, 1938-1992</code>; <code>ragdoll-families.md</code>; <code>warping-rules.md</code> §3</td></tr>
+<tr><td><b>Presses go silent, but not where you'd guess.</b> For the test player, flicks made while it couldn't act were kept 9 ticks, then dropped with no word, the largest reason at every level. <b>In your own play the stick was silent only 14 of 101 times.</b> The silence sat in heavy (150 of 467), signature (104 of 358), dodge (32 of 64) and guard presses (28 of 47). Your play had 363 silent rows of 1,159, but many were one press offered again across a hit-stop. Counted once per press, it's roughly 16 to 19%, until Tools recounts. Other causes: held presses during a chord, presses the host drops during a pause, and the ledger reading held guards as silent</td><td>Fixing the stick helps the test player most. Your silence needs owners for heavy, signature, dodge and guard presses too</td><td><code>stick.gd:412-509</code>; <code>orb-play-1229-report.md</code>; the orbs-scheme README</td></tr>
+<tr><td><b>"Forced into switching sides" is traced.</b> Game Design found two causes on your save: the computer's point-blank signature charge, and its dodge exchange carrying you round (16 of 31 swaps). That loop is the one you asked to keep as part of your toolset</td><td>Ruled fix: the dodge exchange no longer locks you and carries you round unless you're still pressing toward him. The dodger's own step-around still lands him on the other side, so whether that swap should stop too is an open question for Game Design. The loop stays for anyone who asks for it</td><td><code>beams-third-play.md:43-52</code></td></tr>
+<tr><td><b>What's built and off isn't all ready.</b>
+  <ul>
+  <li><b>Ready:</b> flight strikes and the stick lunge.</li>
+  <li><b>Built but unread or weak:</b> recoil flips haven't been read on the computer's current shares (the old 1.12 a minute was on earlier shares, and Encounter's probe reads about 1.4, inside 1.2 to 6), wall kicks pass only the lowered band, and ricochets have never been read.</li>
+  <li><b>Needs work:</b> the generator's other four stances have 29 rows a fighter waiting for poses and need sim actions that don't exist. The mixed string has no code.</li>
+  </ul></td><td>"Switch it on" is cheap only for the first group</td><td><code>docs/director/pending</code>; QA's switch reads; the movegen README</td></tr>
+</table>
+
+<div class="card"><b>Your missing slam.</b> Game Design has already changed the rule on your play (<code>docs/design/slam-and-pace.md</code>, today). A stick strike held to its top stage sends in its direction. Down on a fighter in the air is the slam: he's driven into the ground, and the crater comes from the hit's energy. Down on a fighter on the ground pounds him in. <b>A quick flick still never sends,</b> so the brawl stays in your hands.
+<br><br><b>One thing isn't settled: what your hands actually did.</b> The readings disagree. Game Design counted 19 downs, 7 of them holds of 0.75 to 2.4 s, which you'd think of as charging. Tools' ledger counted 34 down starts, all quick and thrown from high in the air. One reader found 11 episodes held a median of 57 ticks. If you were holding, the new rule gives you the slam. If you were flicking, it still won't, and that's question 2 at the end. Tools should settle the trace from your save before anyone builds more.</div>
+
+<h2>3. What's new: compose the blow, don't just pick it</h2>
+<div class="fig">
+<svg viewBox="0 0 940 300" role="img" aria-label="Pipeline from press to body">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="svgarrow"/></marker></defs>
+  <rect x="10" y="40" width="160" height="150" rx="10" class="svgbox"/>
+  <text x="90" y="66" text-anchor="middle" class="svgtext" font-weight="700">1. Your press</text>
+  <text x="90" y="92" text-anchor="middle" class="svgmuted">weight: X, Y, B, stick</text>
+  <text x="90" y="112" text-anchor="middle" class="svgmuted">style: tap, mash, hold</text>
+  <text x="90" y="132" text-anchor="middle" class="svgmuted">direction and lane</text>
+  <text x="90" y="152" text-anchor="middle" class="svgmuted">charge stage</text>
+  <text x="90" y="178" text-anchor="middle" class="svgmuted">decides WHAT</text>
+  <line x1="172" y1="115" x2="200" y2="115" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="202" y="40" width="160" height="150" rx="10" class="svgbox"/>
+  <text x="282" y="66" text-anchor="middle" class="svgtext" font-weight="700">2. The rules</text>
+  <text x="282" y="92" text-anchor="middle" class="svgmuted">the cell's worth, fixed:</text>
+  <text x="282" y="112" text-anchor="middle" class="svgmuted">damage, timing, reach,</text>
+  <text x="282" y="132" text-anchor="middle" class="svgmuted">stun, send or not</text>
+  <text x="282" y="178" text-anchor="middle" class="svgmuted">never changed by a look</text>
+  <line x1="364" y1="115" x2="392" y2="115" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="394" y="20" width="190" height="190" rx="10" class="svgbox" style="stroke:var(--accent);stroke-width:2.5"/>
+  <text x="489" y="46" text-anchor="middle" class="svgtext" font-weight="700">3. The composer (new)</text>
+  <text x="489" y="72" text-anchor="middle" class="svgmuted">candidates of this cell, scored:</text>
+  <text x="489" y="94" text-anchor="middle" class="svgtext">fit to his body</text>
+  <text x="489" y="114" text-anchor="middle" class="svgtext">fit to the world</text>
+  <text x="489" y="134" text-anchor="middle" class="svgtext">place in the string</text>
+  <text x="489" y="154" text-anchor="middle" class="svgtext">freshness of the family</text>
+  <text x="489" y="174" text-anchor="middle" class="svgtext">his school</text>
+  <text x="489" y="198" text-anchor="middle" class="svgmuted">decides WHICH, deterministically</text>
+  <line x1="586" y1="115" x2="614" y2="115" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="616" y="40" width="150" height="150" rx="10" class="svgbox"/>
+  <text x="691" y="66" text-anchor="middle" class="svgtext" font-weight="700">4. A small bend</text>
+  <text x="691" y="92" text-anchor="middle" class="svgmuted">lean on a slope</text>
+  <text x="691" y="112" text-anchor="middle" class="svgmuted">hold on a wall pin</text>
+  <text x="691" y="132" text-anchor="middle" class="svgmuted">send-off (with the sim)</text>
+  <text x="691" y="178" text-anchor="middle" class="svgmuted">aim and lunge: built</text>
+  <line x1="768" y1="115" x2="796" y2="115" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="798" y="40" width="132" height="150" rx="10" class="svgbox"/>
+  <text x="864" y="66" text-anchor="middle" class="svgtext" font-weight="700">5. His body</text>
+  <text x="864" y="92" text-anchor="middle" class="svgmuted">reactions: built</text>
+  <text x="864" y="116" text-anchor="middle" class="svgmuted">flight read at</text>
+  <text x="864" y="134" text-anchor="middle" class="svgmuted">camera distance</text>
+  <text x="864" y="158" text-anchor="middle" class="svgmuted">new landings</text>
+  <rect x="394" y="232" width="536" height="52" rx="8" class="svgbox"/>
+  <text x="662" y="254" text-anchor="middle" class="svgtext">The debug feed explains every choice:</text>
+  <text x="662" y="274" text-anchor="middle" class="svgmuted">COMPOSE Rival plate_drop  body 6 / world 9 / string 3 / fresh -2 / school 4</text>
+  <line x1="489" y1="210" x2="489" y2="230" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3"/>
+</svg>
+<div class="cap">Your press keeps deciding what the blow is worth. The composer only chooses among blows of that cell, which share its timing and result, and never adds force, damage or reach.</div>
+</div>
+
+<p><b>How it answers the four words.</b></p>
+<ul>
+<li><b>Varied,</b> because freshness is scored on the blow's <i>family</i> (its key set and its silhouette), not its name. A re-aimed or hand-swapped copy counts as the same blow, as Animation found players read it.</li>
+<li><b>Dynamic,</b> because his body and the world are in the score. A crouched foe draws a rising blow, a foe on a wall draws a pin, and on a slope the sweep goes downhill.</li>
+<li><b>Emergent,</b> because nobody wrote "wall plus heavy equals pin". The world term made the pin the best fit at that moment, and your press asked for a heavy.</li>
+<li><b>Responsive,</b> because it runs on the press tick and never delays your press or swaps it for a different kind of blow.</li>
+</ul>
+
+<p><b>The worth stays fixed, and here's how that holds in the code.</b> In the brawl, timing belongs to the cell today: a light makes contact 2 ticks after the press, whichever piece plays. The generator's per-path beat points are unused. Two things do read the piece and could move worth: launch-anywhere's power reads the target region, and its ender reads the blow's family and path. Both are off today. Before they go on, either they read the cell's class instead of the piece, or the composer only swaps within the same target region and family. That's Game Design's call, and it's in section 9. <b>Also kept:</b> your rule that each press is one blow, the hard last-two and gut rules, the keyed randomness so replays and LAN stay exact, and your identity split: the Protagonist's palms, blade hands and arcs, and the Rival's fists, plates and straight lines.</p>
+
+<h3>Try it: same press, different moment</h3>
+<div class="fig">
+<div class="toy">
+  <div>
+    <label>Fighter <select id="who"><option value="prot">Protagonist (palms, blades, arcs)</option><option value="rival">Rival (fists, plates, straight lines)</option></select></label>
+    <label>Your press <select id="press"><option value="down">Right stick down, quick</option><option value="toward">Right stick toward, quick</option><option value="heavy">B tapped (heavy)</option></select></label>
+    <label>Foe is <select id="foe"><option value="stand">standing</option><option value="low">crouched or guarding low</option><option value="air">in the air above you</option><option value="stagger">staggered</option></select></label>
+    <label>Behind him <select id="wall"><option value="open">open ground</option><option value="wall">a wall or building</option><option value="drop">a drop or cliff edge</option></select></label>
+    <label>Ground <select id="slope"><option value="flat">flat</option><option value="down">sloping down toward him</option><option value="water">shallow water</option></select></label>
+    <label>Place in the string <select id="pos"><option value="open">opener</option><option value="mid">middle</option><option value="end">ender</option></select></label>
+    <button id="go" type="button">Press it</button> <button id="reset" type="button">Forget recent blows</button>
+    <p class="note">A toy with made-up scores, to show the idea. "today" pieces exist now, "move lane" pieces exist in another lane, and "new" pieces don't exist yet. His last two blows are never allowed again; beyond that, freshness lowers recent ones. The quick-down lists are the ground cell: a down flick thrown from the air is a different cell (question 2).</p>
+  </div>
+  <div id="out"></div>
+</div>
+</div>
+
+<h2>4. The plan in six increments</h2>
+<p>Each increment lands as its own build behind switches, in the order the parked work already stacks. Costs assume about 1M tokens a session, including checks.</p>
+<table>
+<tr><th>#</th><th>Increment</th><th>What you'd feel</th><th>Says it worked (and the tool)</th><th class="num">Tokens</th></tr>
+<tr><td>1</td><td><b>Responsive.</b>
+  <ul>
+  <li>Finish and gate Game Design's rulings in its order (section 5): run points for a landed flick, the hold, the fold and the words, each read alone at 40 a cell. Easy against a guard only if easy is still lost.</li>
+  <li>Your silence: heavy, signature, dodge and guard presses, chords, and the host's pause drop.</li>
+  <li>Flight strikes and the stick lunge land on top, as their parks stack.</li>
+  </ul></td><td>Every press does something or says why. Your circle moves become a toolset</td><td>Your-scheme player at least 70% on easy (Game Design), at 40 a cell. Silent presses per 100 real presses, each counted once, fall by press kind. Press-to-motion within 3 ticks, from a new render-side counter</td><td class="num">8M</td></tr>
+<tr><td>2</td><td><b>The stick's depth and the slam:</b>
+  <ul>
+  <li>First, Animation's own advice: read a pool built from the existing library with you, and count reskins, before drawing new.</li>
+  <li>Then 6 quick and 2 to 3 charged blows per direction, per fighter, within each school.</li>
+  <li>Game Design's full-hold send and slam.</li>
+  <li>The computer uses the stick too.</li>
+  </ul></td><td>A quick flick down doesn't look the same twice, and a full hold slams</td><td>The same direction in the same kind of moment shows at least 4 blows. The stick is 10 to 30% of blows (ruled). The variety meter reads it from piece cues, with a baseline taken today. The slam's builders, as Game Design named them: Encounter, Simulation, World, Camera, Animation, Controls, Tools, and Legal for the craters</td><td class="num">13M</td></tr>
+<tr><td>3</td><td><b>The composer</b> for every button. Every piece tagged with limb, path, target class, wall use, school and family, and freshness by family</td><td>Blows use what's around him, and strings stop feeling like a playlist</td><td>A family repeats one of your last 3 under 10%. In staged pairs, the fitting family wins at least 60% of the time, and the body or world term changes the winner in at least 25% of blows (read from the COMPOSE feed). Cells still named 80% blind. The fighters share fewer shapes than today's 97%. Composer cost per tick inside Performance's budget</td><td class="num">8M</td></tr>
+<tr><td>4</td><td><b>Big moments you can read:</b>
+  <ul>
+  <li>Game Design's readable launch pace (a slow-in, a held moment, slow-out, a camera hold).</li>
+  <li>The striker's send-off by the launch's direction, keyed on the planner's launch names and the stick's families. Encounter and Simulation (with a grant) add the launch's share as a view field and announce it before the follow, and Animation draws.</li>
+  <li>Slam looks in each fighter's school.</li>
+  <li>The missing landings: water, roof and a crater embed.</li>
+  </ul></td><td>You can follow a launch, see where he lands, and tell a heavy hit from a light one</td><td>Cruise median at most 1.5 s, and a fighter never under 0.06 of the screen (Game Design's bands). Each launch family has its own send-off, judged by you in a side-by-side</td><td class="num">7M</td></tr>
+<tr><td>5</td><td><b>The rhythm between brawls:</b>
+  <ul>
+  <li>The cause, per Combat: the computer's stance after a send and the launch planner's scores, both Encounter's. The computer stops taking the evasive stance after almost every send, and the planner stops choosing "stays in reach" or a knock back for 75 to 80% of launches.</li>
+  <li>Game Design's ruled fix for being carried round: no lock or carry unless you press toward.</li>
+  <li>Recoil flips: a QA re-read on the current shares first, tuned only if it fails. Wall kicks, ricochets and rally with page rows. Ricochets read against your "ping pong ball" remark first.</li>
+  </ul></td><td>The fight stops going launch, dodge, launch. You aren't dragged round</td><td>Launch-then-dodge under 30% of transitions (Combat's <code>fight_tally</code>, baselined on your save). Not locked or carried by a dodge exchange unless pressing toward. Flips 1.2 to 6 a minute in the computer's play</td><td class="num">5M</td></tr>
+<tr><td>6</td><td><b>The world in the moveset:</b> wall pins, slope sweeps, splashes and building-face blows inside a brawl, and phrase finishes that show. Nine of Combat's phrases finished in one of your matches and nothing told you</td><td>Where you fight changes how you fight</td><td>World-linked brawl blows inside a band Game Design sets (asked for here), and ricochets and wall kicks inside theirs. Every phrase finish has a cue UI shows, checked in clips. Includes the world-using face-button key sets and their stills (palm pin, plate pin, splash and downhill pieces): about 1 to 1.5 Animation sessions plus Combat's cell wiring</td><td class="num">7M</td></tr>
+<tr><td></td><td><b>All six</b></td><td></td><td></td><td class="num"><b>48M</b></td></tr>
+</table>
+<p class="note">Each increment's cost includes its Tools and QA work (the meter, the counters, the gauntlet and ledger runs). Not counted here: the readable pace's Simulation build (<code>slam-and-pace.md</code> §2, its own budget), the physics model, and the creative rulebook's move from Legal (CD-15).</p>
+
+<h3>What's left for later, said plainly</h3>
+<table>
+<tr><th>Area</th><th>Why it's not in these six</th><th>Where it goes</th></tr>
+<tr><td><b>Signatures and beams</b> (31% of your presses; pillar 7's variants by biome, altitude and stance)</td><td>The beam fix is its own stream, just landed and being played</td><td>A follow-on packet once your beam notes are in</td></tr>
+<tr><td><b>Forms and power tiers</b> (your transform and power presses were nearly all silent)</td><td>They ride on the physics model, which waits for your go</td><td>With the physics model</td></tr>
+<tr><td><b>The other four stances</b> (the generator's 128 rows)</td><td>29 rows a fighter need poses, about 58 drawn pieces, plus sim actions that don't exist. LT is now the flight strikes' lane</td><td>Its own increment, after Game Design settles LT</td></tr>
+<tr><td><b>2v2</b></td><td>The composer is written against each fighter's own fight (the roster helpers, never <code>S.dirS.ex</code>), so it doesn't grow the two-fighter count. Its context includes "others near him" for blows from outside</td><td>A 2v2 row on the meter, through <code>two_fights_read</code>, from increment 3</td></tr>
+<tr><td><b>Reduced motion</b></td><td>The new bends, send-offs and landings follow the option: smaller leans and no extra camera hold</td><td>In each increment's acceptance</td></tr>
+</table>
+
+<h2>5. Responsive first: already ruled today, now finished</h2>
+<p>From the four levers I sent this morning, Game Design ruled the same day (<code>gauntlet-plan.md</code> §5), and Encounter's parked <code>orbs-scheme</code> and <code>refusal-reasons</code> work is most of the build. This increment finishes and gates that work. It doesn't re-decide it.</p>
+<div class="fig">
+<svg viewBox="0 0 940 230" role="img" aria-label="Timeline of a flick made while stunned, before and after">
+  <text x="10" y="24" class="svgtext" font-weight="700">Before</text>
+  <line x1="120" y1="50" x2="920" y2="50" stroke="var(--line)" stroke-width="2"/>
+  <rect x="140" y="38" width="300" height="24" rx="5" fill="var(--chip)"/>
+  <text x="290" y="55" text-anchor="middle" class="svgmuted">he's stunned: can't act</text>
+  <circle cx="200" cy="50" r="7" fill="var(--accent2)"/><text x="200" y="85" text-anchor="middle" class="svgmuted">you flick</text>
+  <line x1="200" y1="50" x2="290" y2="50" stroke="var(--accent2)" stroke-width="2"/>
+  <text x="290" y="85" text-anchor="middle" class="svgmuted">kept 9 ticks</text>
+  <text x="300" y="30" class="svgtext" fill="var(--accent)">✕ dropped, no word</text>
+  <text x="560" y="55" class="svgmuted">free again… nothing happens</text>
+  <text x="10" y="134" class="svgtext" font-weight="700">Ruled</text>
+  <line x1="120" y1="160" x2="920" y2="160" stroke="var(--line)" stroke-width="2"/>
+  <rect x="140" y="148" width="300" height="24" rx="5" fill="var(--chip)"/>
+  <text x="290" y="165" text-anchor="middle" class="svgmuted">he's stunned: can't act</text>
+  <circle cx="200" cy="160" r="7" fill="var(--accent2)"/><text x="200" y="195" text-anchor="middle" class="svgmuted">you flick</text>
+  <text x="200" y="215" text-anchor="middle" class="svgmuted">taken quietly, no knock</text>
+  <line x1="200" y1="160" x2="440" y2="160" stroke="var(--accent2)" stroke-width="2"/>
+  <circle cx="446" cy="160" r="8" fill="var(--good)"/>
+  <text x="446" y="140" text-anchor="middle" class="svgtext" fill="var(--good)">fires on his first free tick</text>
+  <text x="640" y="165" class="svgmuted">held up to 90 ticks; 20 after a knock-back</text>
+</svg>
+<div class="cap">Your rule, "each press is a blow", applied to the moments when he can't act yet. Game Design, today.</div>
+</div>
+<table>
+<tr><th>Ruled today (Game Design)</th><th>What it does</th></tr>
+<tr><td><b>The hold</b> (today)</td><td>A flick he can't start yet is held, the newest only, up to 90 ticks, and fires on his first free tick. After a knock-back it must be at most 20 ticks old when he's free, otherwise "Recovering". During a set piece it's refused at once, with a word. If held flicks fire when you no longer want them, the lever is 45 ticks</td></tr>
+<tr><td><b>The fold</b> (today)</td><td>If his request started a planned exchange, his flick becomes its first strike, with the flick's direction piece where the template allows. If a window of his is open, it's his press for that window. If none is open, it's held. All count as honoured</td></tr>
+<tr><td><b>The words</b> (today)</td><td>The wordless refusals go, and each press is told once. One event was being told twice</td></tr>
+<tr><td><b>Run points</b> (ruled 2026-11-02, never given a page row)</td><td>A landed flick counts 1.5 toward the trade break. Without it the stick never closes a string</td></tr>
+<tr><td><b>Easy against a guard</b> (today, conditional)</td><td>Only if your-scheme player still loses on easy once the rest is on. Encounter reads easy's blows against a guard first, and the lever is easy's B into a held guard at half its rate. Easy isn't made less aggressive overall, so the parked easy-pace change (half the tapping) comes out of the stack</td></tr>
+</table>
+<p><b>What this packet adds to those rulings,</b> so the silence actually goes, not just the stick's share of it:</p>
+<ul>
+<li><b>Chords:</b> presses held during a two-button chord go silent (Controls, <code>control.gd</code>).</li>
+<li><b>Pause:</b> the host drops presses during a pause (<code>sim_host.gd</code>, Rendering).</li>
+<li><b>Heavy, signature, dodge and guard presses:</b> where your play's silence sat (Encounter, Controls). In the free state, 61 of 134 presses of all kinds were silent.</li>
+<li><b>The ledger:</b> it reads held guards and dodges as silent, and counts signature presses the replay never applied (Tools).</li>
+<li><b>Measuring right:</b> count each press once, report in real presses by kind, hold the computer's pace fixed when judging responsiveness, read each lever alone in Game Design's order, and run 40 matches a cell. A new render-side counter times press to first visible motion.</li>
+</ul>
+
+<h2>6. The stick: depth, the slam, and when the blow is chosen</h2>
+<div class="fig">
+<svg viewBox="0 0 940 240" role="img" aria-label="Stick families per fighter">
+  <text x="10" y="22" class="svgtext" font-weight="700">Today, each fighter: one quick blow per direction</text>
+  <text x="10" y="46" class="svgmuted">Protagonist down → scythe_sweep · Rival down → skid_kick · the same blow every flick</text>
+  <text x="10" y="84" class="svgtext" font-weight="700">Proposed: a family per direction, in each fighter's school</text>
+  <rect x="10" y="98" width="455" height="128" rx="8" class="svgbox"/>
+  <text x="22" y="120" class="svgtext" font-weight="700">Protagonist (palms, blade hands, arcs)</text>
+  <text x="22" y="144" class="svgmuted">down: scythe sweep · axe heel · blade drop · knee drop</text>
+  <text x="22" y="166" class="svgmuted">up: palm lift · rising knee · arc kick up</text>
+  <text x="22" y="188" class="svgmuted">toward: double palm · blade thrust · shoulder pop</text>
+  <text x="22" y="210" class="svgmuted">away: spinning heel · arc turn · sweep past</text>
+  <rect x="475" y="98" width="455" height="128" rx="8" class="svgbox"/>
+  <text x="487" y="120" class="svgtext" font-weight="700">Rival (fists, plates, straight lines)</text>
+  <text x="487" y="144" class="svgmuted">down: skid kick · hammer · dropping elbow · plate drop</text>
+  <text x="487" y="166" class="svgmuted">up: straight uppercut · rising elbow · knee lift</text>
+  <text x="487" y="188" class="svgmuted">toward: straight drive · plate shove · step-in elbow</text>
+  <text x="487" y="210" class="svgmuted">away: back elbow · turn-out fist · pivot check</text>
+</svg>
+<div class="cap">Names are illustrative except where they already exist: the Rival's hammer, dropping elbow and plate drop are in his move lane today. Every blow in a direction keeps that direction's job: up floats him, down drives him down, toward pushes him back, away turns him past you.</div>
+</div>
+<ul>
+<li><b>The press decides the direction and its job, as now. The composer decides which blow of that family you see.</b> On a crouched foe, down becomes the hammer. Against a wall, toward becomes a shove into it. On a slope, the sweep goes downhill.</li>
+<li><b>When the blow is chosen.</b>
+  <ul>
+  <li><b>Quick blows are chosen on the press tick.</b> The pre-read crossfades into the chosen blow's own 7-tick wind-up, so a quick family can mix limbs and paths. A held flick is chosen on his first free tick, since he shows no chamber while he can't act.</li>
+  <li><b>Charged blows share their direction's charge stance.</b> A charge holds its pose for up to 68 ticks, so the held layer draws the direction's charge stance (a render change, Animation's), and every charged candidate starts from that stance. The composer picks among them at release, using the moment as it is then.</li>
+  </ul></li>
+<li><b>The slam is Game Design's ruling:</b> a full hold sends, down in the air slams, and down on the ground pounds him in. Its looks start from the down charge stance (the arm cocked beside the head) in each fighter's school: a blade drive or a two-hand palm drive for the Protagonist, a hammer or plate drop for the Rival. Encounter's parked quick-flick slam goes against the ruling and should be re-cut, not landed.</li>
+<li><b>The computer uses the stick too.</b> Today it never throws stick strikes.</li>
+<li><b>The content, honestly sized.</b> Spins and charged pieces are hand-drawn. First, Animation's own advice: read a pool built from the existing library with you, and count reskins, before drawing new. Then fill to 6 quick and 2 to 3 charged per direction. The Rival's move-lane pieces (hammer, dropping elbow, plate drop) need re-timing to the stick's 7-tick wind-up. His "away" has few legal shapes in his school, so his count may be lower. That's about 4 to 5 Animation sessions for the pair, inside the grammar's cap of about 175 to 180 shapes a fighter.</li>
+</ul>
+
+<h2>7. The composer, in pseudocode</h2>
+<details open><summary>Choosing the blow (sim, deterministic, explainable)</summary>
+<pre>
+# DirCompose (new). Called inside brawl.gd's _cellPiece, and stick.gd's piece choice at release,
+# behind alchemy.json "compose": {"enabled": false}. With it off, today's keyed walk runs unchanged.
+# On main: DirRecipe.pickWhere, SimRng.keyed, SimEvents.feed, SimWrap.sdx, DirBrawl._g(f, BLOWS), the roster helpers.
+# New: DirCompose and its helpers, DirRecipe.tags, cfg weights in alchemy.json, and the family ring in dirI slots
+# past DirBrawl's END, sized only when compose is on, so with it off the hash and the golden don't move.
+# It chooses only among pieces of the cell (same timing and result). It never reads or writes worth.
+
+static func compose(S, A, D, cell: String, pool: Array, chamber: int) -&gt; String:
+    var ctx = _context(S, A, D)                        # read-only facts, float64, his own fight only
+    var best = ""
+    var bestS = -INF
+    var parts = {}
+    for i in range(pool.size()):
+        var p = pool[i]
+        var t = DirRecipe.tags(p)                      # (new) limb, path, target, wallUse, school, family, chamber
+        if not _allowed(S, A, t, ctx, chamber): continue   # HARD: not his last two pieces, not the gut twice,
+                                                       # downAir, a broken limb moves the blow, a charged blow
+                                                       # shares the direction's charge stance, same target/family
+                                                       # where launch anywhere reads them (section 9), and the
+                                                       # stick's send first: t.sends.has(want) while any piece
+                                                       # has it, then '' (today's fallback order, brawl.gd:1105)
+        var b = _fitBody(t, ctx)                       # crouch, guard side, stagger, in the air above
+        var w = _fitWorld(t, ctx)                      # wall or building behind him, slope, water, edge
+        var g = _fitString(t, ctx)                     # opener, builder, ender; flow unlocks showpieces
+        var r = _fresh(A, t)                           # family memory, below
+        var y = _school(A, t)                          # his school; mood, injury, form later
+        var s = b + w + g + r + y
+        var key = S.dirS.exN * 4096 + DirBrawl._g(A, DirBrawl.BLOWS) * 16 + _slot(S, A)
+        s += cfg.noise * SimRng.keyed(S.game.seed, "compose", key * 64 + i)   # per candidate, per fighter
+        if s &gt; bestS:
+            bestS = s
+            best = p
+            parts = {"body": b, "world": w, "string": g, "fresh": r, "school": y}
+    if best == "":
+        return ""                                      # caller falls back to today's _cellPiece, unchanged
+    _remember(A, DirRecipe.tags(best).family)          # undone wherever PIECE_1 and GUT are undone today
+    SimEvents.feed(S, "COMPOSE", "%s %s %s" % [A.name, best, parts])
+    return best
+
+# Freshness by FAMILY: a key set and its re-aimed or hand-swapped variants share one family,
+# because players read the silhouette and the path, not the hand or the height.
+static func _fresh(A, t) -&gt; float:
+    var s = 0.0
+    for k in range(FAMILY_RING):                       # his last 6 families
+        if _ring(A, k) == t.family:
+            s -= cfg.familyW * (1.0 - float(k) / FAMILY_RING)
+    return s
+
+static func _fitWorld(t, ctx) -&gt; float:
+    var s = 0.0
+    if ctx.wallBehindFoe and t.wallUse == WALL_PIN: s += cfg.pinW
+    if ctx.slopeToward &lt; -0.15 and (t.path == "arc_in" or t.path == "line") and t.target == LOW:
+        s += cfg.slopeW                                # a low line or arc goes downhill
+    if ctx.water and t.splash: s += cfg.waterW
+    if ctx.edgeBehindFoe and t.sends.has("across"): s += cfg.edgeW
+    return s
+
+# _context reads only what the sim already holds: range by SimWrap.sdx, body heights, his guard and stun,
+# the string's count and flow (DirAlchemy), World's ground and building queries near him (the launch
+# planner asks the same), the stick's five-way lean the generator defines, and other fighters near him (2v2).
+</pre>
+</details>
+
+<details><summary>The bend (render only, a post-solve layer next to the contact solve)</summary>
+<pre>
+# AnimFighter (render, never writes the sim). Contact IK already aims the blow at his real body and does
+# the lunge and step-in inside sockets.json lunge_max and step_max. The bend adds only what's new.
+# The slope lean goes in the 5a slot, BEFORE the contact solve, so the blow still reaches him from the
+# leaned stance (anim_fighter.gd:2647). The wall-pin hold builds on the existing held-beat latch (_ci_latch).
+# A gap check after all layers catches any later layer that pulls a contact off his body.
+# New: slope_lean_5a, the pin flag on _ci_latch, the send_off wave tables, a post-layer gap check.
+
+func slope_lean_5a(beat, ground):                              # runs with the feet, before _contact_ik
+    if ground.slope_toward_foe &lt; -0.15:
+        hips_and_spine_lean(beat, ground.slope * 0.4)         # lean with the ground, a few degrees
+    if reduced_motion: scale_lean(0.5)                        # the option halves it
+# wall pin: when beat.wall_use == WALL_PIN, _ci_latch holds the landed point 3 more ticks.
+
+# The send-off needs the sim (Encounter and Simulation, with a grant). launch_plan already carries the chosen
+# launch's name and fires in launchBeat before the launch. What's missing is the share, as a view-only field
+# outside the hash (as the tier field is), and timing early enough for the follow key to match.
+func send_off(fighter, launch):                               # launch.name from launch_plan; launch.share: new
+    return fighter.waves.send_off[family_of(launch.name)][band(launch.share)]
+# family_of maps the planner's names (UPPERCUT, DRIVE DOWN, CRATER SLAM, SMASH ACROSS, BUILDING SMASH,
+# MOUNTAINSIDE, KNOCK BACK) and the stick's full-send families (skyward, across, acrossBehind, slamDown, bury).
+</pre>
+</details>
+
+<details><summary>The rhythm between brawls (sim)</summary>
+<pre>
+# Combat's read: the rhythm comes from the computer's stance after a send and the planner's scores, both
+# Encounter's. Each attack kind against each stance matches exactly one template (data.gd:168), and every
+# branch of the dodge template is a dodge, so changing templates or branches alone can't stop launch-then-dodge.
+# 1. The computer's stance after a send (ai.gd), behind ai.json "afterSend": {"enabled": false}:
+var w = {"evasive": cfg.evasiveW, "defensive": cfg.defW, "aggressive": cfg.aggW}
+w[lastStanceAfterSend(f)] -= cfg.repeatW                 # don't take the same stance after every send
+w["aggressive"] += cfg.hurtW * (1.0 - f.hpShare)        # by situation, not habit
+stance = keyedPick(S, w, "afterSend", S.dirS.exN * 16 + _slot(S, f))   # keyed draw, never S.rng
+# 2. The planner: lower "stays in reach" and KNOCK BACK when they've been 2 of the last 3 launches,
+#    as the existing REPEAT terms already do for named launches (launch.gd:23-53).
+# More templates per pair would need a coded selection step with its own keyed draw, behind a switch.
+# A penalty on the dodge's branches is NOT proposed: read favours the attacker and counter the defender,
+# so it would change who wins, not how it looks.
+# New: afterSend config, lastStanceAfterSend, keyedPick.
+
+# Being carried round: Game Design's ruled fix (beams-third-play.md:52), Encounter's to build.
+# Gate the attacker's follow rush (the dodge branches' {op: rush, side: own}, run by exchange.gd)
+# on still pressing toward. The dodger's own step-around (melee.gd:173, opDodgeLand) still swaps sides;
+# whether that should stop too is Game Design's open question. The computer's own loop stays.
+</pre>
+</details>
+
+<h2>8. How we'll know</h2>
+<table>
+<tr><th>Measure</th><th>Tool</th><th>Baseline</th></tr>
+<tr><td>Wins for your-scheme player, by level</td><td>Tools' gauntlet, 40 a cell, the computer's pace fixed when judging responsiveness</td><td>0 / 0 / 0 (10 a cell, before its guard fix)</td></tr>
+<tr><td>Silent and refused presses per 100 real presses, by kind</td><td>Tools' ledger, counting each press once</td><td>Roughly 19% silent on your save (to be recounted)</td></tr>
+<tr><td>Press to first visible motion</td><td>A new render-side counter, or the clip kit's frame times</td><td>None yet</td></tr>
+<tr><td>Distinct blows per press kind and moment; family repeats in the last 3</td><td>A small variety meter reading piece and stick cues, plus the manifests' tags. It works today, before the composer</td><td>Taken in increment 2's first step</td></tr>
+<tr><td>Context changes the pick</td><td>The COMPOSE feed: the share of blows whose winner changed because of the body or world term, and staged pairs (wall or not, crouched or not) where the fitting family must win</td><td>Taken when increment 3 starts</td></tr>
+<tr><td>Bends shown</td><td>A render-side counter (the feed can't see drawing)</td><td>None yet</td></tr>
+<tr><td>Phrase finishes seen</td><td>UI's phrase cue counted against the feed's phrase ends, checked in clips</td><td>Nine finished unseen in one match</td></tr>
+<tr><td>Launch-then-dodge; carried round</td><td>Combat's <code>fight_tally</code>, and the replay with "was he pressing toward?" added</td><td>41 to 50% (a bot); your save to be read</td></tr>
+<tr><td>World moments by event</td><td>QA's switch reads, against Game Design's bands, plus world-linked brawl blows against the band asked for in increment 6</td><td>Ricochets unread; wall kicks 0.26 a match</td></tr>
+<tr><td>Composer and bend cost</td><td>Performance's tick bench and frame bench, by their recipe</td><td>Before increment 3</td></tr>
+<tr><td>The look</td><td>Clips with the button strip, and the side-by-side, with no dissolves, fades, blur or markers. New big looks also pass the flash register, which now counts camera cuts (CD-04)</td><td>Your eye</td></tr>
+</table>
+
+<h2>9. What changes in the rules</h2>
+<table>
+<tr><th>Rule today</th><th>The change</th><th>Whose call</th></tr>
+<tr><td>A stick direction throws its one quick and one charged piece</td><td>A family per direction, chosen to the moment, sharing one chamber. The direction's job is unchanged</td><td>Game Design (inside "a variant may change how a press is delivered, and never what it is worth")</td></tr>
+<tr><td>Launch-anywhere's power reads the blow's target region, and its ender reads its family and path</td><td>Either they read the cell's class, or the composer swaps only within the same target and family while launch anywhere is on</td><td>Game Design</td></tr>
+<tr><td>A flick he can't act on is dropped after 9 ticks</td><td>Held and folded in; easy's guard lever only if needed</td><td>Done (Game Design, <code>gauntlet-plan.md</code> §5)</td></tr>
+<tr><td>The stick never sends</td><td>A full hold sends, and down in the air slams</td><td>Done (Game Design, <code>slam-and-pace.md</code>)</td></tr>
+<tr><td>The dodge exchange carries you round</td><td>Not locked or carried unless you press toward. Whether the dodger's own step-around should stop swapping sides is still open</td><td>Done (Game Design, <code>beams-third-play.md</code>); the open part is Game Design's</td></tr>
+<tr><td>The computer's stance after a send, and the planner's "stays in reach" share</td><td>Stance varied by situation and recent stances, with a keyed draw; the planner's repeat terms widened</td><td>Encounter, with Game Design's bands</td></tr>
+<tr><td>Pose and look limits filed as Legal gates</td><td>The creative rulebook under you (CD-15). The composer's school term reads it</td><td>Done (your ruling today)</td></tr>
+</table>
+
+<h2>10. Four questions, one at a time</h2>
+<ol>
+<li><b>Same flick, different blow by the moment.</b> The press decides the direction and its job, and the moment decides which blow you see. Is that what you want? I think it is, from "near limitless sets of attacks… not going to see the same exact series of attacks twice". But it's the plan's core, so it's yours to confirm.</li>
+<li><b>A quick down flick on a fighter in the air:</b> should it slam too? Game Design kept the slam for a full hold, so a quick flick never takes the brawl out of your hands. If Tools finds your downs were quick flicks, the new rule still won't give you the slam you reached for.</li>
+<li><b>How flashy an ordinary exchange is.</b> You rated an ordinary exchange of lights "4 of 10", and for a perfect timed string's payoff you said "keep it subtle". Later you asked for combos that are "spectacular and look choreographed". My suggestion: showpieces come with the string's length and cleanness, so an ordinary exchange stays near 4 and a long clean string earns more. Does your "keep it subtle" still stand?</li>
+<li><b>Juggle and stun caps.</b> Juggles stop at 5, your own pick, and there's one stun a string. You said: "I don't necessarily like the idea of an 'upper limit' to chained combos though I can understand how they could be necessary. Give the choreographer leeway to dynamically decide combo enders and chains based on the environment and other factors." The composer is that leeway for which blow you see. Should the caps stay while it lands, and be revisited once you've played it?</li>
+</ol>
+
+<div class="card"><b>Decided.</b> Orb, 2026-11-07, 18:29: "with regards to the four questions, I defer to your judgment". So these are the stand-in's calls on Orb's delegation. Orb's own word overrides any of them.
+<ol>
+<li><b>Yes: same flick, different blow by the moment.</b> The press decides the direction, its job and its worth, and the composer decides which blow you see. This is the plan's core.</li>
+<li><b>No quick-flick slam. The slam stays a full hold, as Game Design ruled, and it's taught.</b> At base power the top stage is stage 2, reached in about half a second (28 ticks), so a slam is a short, deliberate hold, not a long wait. The first time a quick down flick lands on a fighter in the air, a one-time hint says "Hold to slam", under the once-only hint rules, and the down charge's pulses and its top-stage haptic make the hold readable. The quick flick keeps its in-air drop, so the brawl stays in your hands.</li>
+<li><b>Showpieces come with the string, never extra flash.</b> An ordinary exchange stays near 4 of 10. A long, clean string lets the composer choose showier blows: bigger arcs, spins, the school's signature shapes. The payoff for a perfect string is the better blow choice, which keeps it "subtle" as you asked. It adds no extra effects, glow or camera, so nothing new is asked of the flash register.</li>
+<li><b>The caps stay for now: juggles at 5 and one stun a string.</b> The composer is the leeway you asked for in choosing enders and chains by the environment. They're revisited after your first play with the composer on, from the gauntlet and your notes.</li>
+</ol></div>
+
+<h2>11. What this packet cost</h2>
+<p>About 3.6M tokens: five read-only map readers (1.1M), four checkers of version 1 (0.8M), two checkers of version 2 (0.4M), and my own reading and writing (about 1.3M). Nothing was run on your PC beyond reading files. The fixes from the second check round were made after it and weren't checked a third time. The EP's directors will see them against their own code when this is routed.</p>
+
+</main>
+<script>
+(function(){
+  const P = {
+    prot: {
+      down: [
+        {n:"scythe_sweep", tag:"today", t:{low:3, stand:2, air:-6, slope:4, water:2, open:2}},
+        {n:"axe heel", tag:"new", t:{stand:3, low:2, air:2, end:3, open:1}},
+        {n:"blade drop", tag:"new", t:{low:6, stagger:3, wall:2, end:2}},
+        {n:"knee drop", tag:"new", t:{stagger:5, low:2, air:-4, end:3}}
+      ],
+      toward: [
+        {n:"palm push", tag:"today's kind", t:{stand:3, edge:3, open:2}},
+        {n:"double palm", tag:"new", t:{stand:3, stagger:4, edge:5, end:3}},
+        {n:"blade thrust", tag:"new", t:{stand:4, low:2, mid:2}},
+        {n:"shoulder pop", tag:"new", t:{stand:2, wall:8, end:2}},
+        {n:"arc kick", tag:"new", t:{stand:2, air:2, edge:4, mid:1}}
+      ],
+      heavy: [
+        {n:"rising palm", tag:"today's kind", t:{low:6, stand:2, mid:2}},
+        {n:"spinning heel", tag:"today's kind", t:{stand:4, open:2, end:2}},
+        {n:"palm pin", tag:"new", t:{stand:2, wall:9, end:2}},
+        {n:"downhill arc sweep", tag:"new", t:{low:3, slope:8, stand:1}},
+        {n:"splash arc kick", tag:"new", t:{water:8, low:2, stand:1}}
+      ]
+    },
+    rival: {
+      down: [
+        {n:"skid_kick", tag:"today", t:{low:3, stand:2, air:-6, slope:4, water:2, open:2}},
+        {n:"hammer", tag:"move lane", t:{low:6, stagger:3, wall:2, end:2}},
+        {n:"dropping_elbow", tag:"move lane", t:{stagger:5, low:2, air:-3, end:3}},
+        {n:"plate_drop", tag:"move lane", t:{low:4, wall:4, slope:1, mid:2}}
+      ],
+      toward: [
+        {n:"straight drive", tag:"today's kind", t:{stand:3, edge:3, open:2}},
+        {n:"plate shove", tag:"new", t:{stand:2, wall:9, end:2}},
+        {n:"step-in elbow", tag:"new", t:{stand:4, low:2, mid:2}},
+        {n:"straight knee", tag:"new", t:{stagger:5, stand:1, edge:3}},
+        {n:"headbutt", tag:"new", t:{stagger:5, wall:3, mid:2}}
+      ],
+      heavy: [
+        {n:"straight uppercut", tag:"today's kind", t:{low:6, stand:2, air:2, mid:2}},
+        {n:"plate drive", tag:"today's kind", t:{stand:4, edge:4, end:2}},
+        {n:"wall plate pin", tag:"new", t:{stand:2, wall:9, end:2}},
+        {n:"low straight", tag:"new", t:{low:3, slope:7, stand:1}},
+        {n:"splash stomp", tag:"new", t:{water:8, low:2, stand:1}}
+      ]
+    }
+  };
+  const recent = [];
+  const $ = id => document.getElementById(id);
+  const ctx = () => ({who:$("who").value, press:$("press").value, foe:$("foe").value, wall:$("wall").value, slope:$("slope").value, pos:$("pos").value});
+  function score(p, c){
+    const t = p.t;
+    const body = t[c.foe] || 0;
+    let world = 0;
+    if (c.wall === "wall") world += t.wall || 0;
+    if (c.wall === "drop") world += t.edge || 0;
+    if (c.slope === "down") world += t.slope || 0;
+    if (c.slope === "water") world += t.water || 0;
+    const str = t[c.pos] || 0;
+    let fresh = 0;
+    const key = c.who + ":" + p.n;               // in the toy each piece is its own family
+    const last2 = recent.slice(-2);
+    if (last2.includes(key)) return {body, world, str, fresh: -Infinity, total: -Infinity, banned: true};
+    const i = recent.lastIndexOf(key);
+    if (i >= 0) { const age = recent.length - 1 - i; fresh = -Math.max(0, 8 - age * 2.5); }
+    return {body, world, str, fresh, total: body + world + str + fresh};
+  }
+  function ranked(){
+    const c = ctx();
+    return P[c.who][c.press].map(p => ({p, s: score(p, c)})).sort((a, b) => b.s.total - a.s.total);
+  }
+  function render(pickName){
+    const list = ranked();
+    const max = Math.max(1, ...list.filter(x => !x.s.banned).map(x => Math.abs(x.s.total)));
+    let h = '<table><tr><th>Candidate</th><th>body</th><th>world</th><th>string</th><th>fresh</th><th style="width:30%">total</th></tr>';
+    for (const x of list) {
+      if (x.s.banned) { h += '<tr><td>' + x.p.n + '<br><span class="note">' + x.p.tag + '</span></td><td colspan="5" class="note">not allowed: one of his last two blows</td></tr>'; continue; }
+      const w = Math.round(Math.abs(x.s.total) / max * 100);
+      h += '<tr class="' + (x.p.n === pickName ? 'pick' : '') + '"><td>' + x.p.n + '<br><span class="note">' + x.p.tag + '</span></td><td>' + x.s.body + '</td><td>' + x.s.world + '</td><td>' + x.s.str + '</td><td>' + x.s.fresh.toFixed(0) + '</td><td><span class="bar ' + (x.s.total < 0 ? 'neg' : '') + '" style="width:' + w + '%"></span> ' + x.s.total.toFixed(0) + '</td></tr>';
+    }
+    h += '</table>';
+    if (pickName) h += '<p><b>Composed:</b> ' + pickName + '. Press again in the same moment and freshness moves it on.</p>';
+    $("out").innerHTML = h;
+  }
+  $("go").addEventListener("click", () => {
+    const pick = ranked()[0].p.n;
+    recent.push($("who").value + ":" + pick);
+    if (recent.length > 6) recent.shift();
+    render(pick);
+  });
+  $("reset").addEventListener("click", () => { recent.length = 0; render(null); });
+  ["who","press","foe","wall","slope","pos"].forEach(id => $(id).addEventListener("change", () => render(null)));
+  render(null);
+})();
+</script>
+</body>
+</html>
