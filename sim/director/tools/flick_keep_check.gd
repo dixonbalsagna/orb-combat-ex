@@ -7,6 +7,8 @@ extends SceneTree
 ##   refused "recovering"; still launched past pendFollow.maxTicks, refused once, with why
 ## - on, stunned: held past recoverTicks, it goes when the stun ends (the 20 is for recovering only), its direction read then
 ## - on: a request a planned exchange of his rival's takes is held, not told "answered", and goes when he's free
+## - on: a request of his own that starts a planned exchange is its first strike: told it started (stick_start), nothing kept, no
+##   refusal, nothing goes again when it ends, and nothing's refused while it runs past pendFollow.maxTicks; a hold the same
 ## - on: in a set piece (a finisher planned) it's refused at once, "set_piece"
 ## - a stick press the first move refuses is told once: stick_refused not_yours, and no press_ack refused (no face button crossed)
 ## Ends on the verdict line.
@@ -30,6 +32,8 @@ func _init() -> void:
 	_setPiece()
 	sc.pendFollow.enabled = true
 	_answered()
+	_ownExchange(false)
+	_ownExchange(true)
 	sc.pendFollow.enabled = pf0
 	sc.flickKeep.enabled = keep0
 	DirStick.setForce(-1)
@@ -156,6 +160,41 @@ func _answered() -> void:
 	said.append_array(_wait(S, A, 1))
 	print("      on, answered: pending %s, said %s, kept %s, went %s" % [str(pend), str(said), str(kept), str(_went(S, A))])
 	_expect(pend and said.is_empty() and kept and _went(S, A), "on: a request the rival's planned exchange took is kept, not told answered, and goes when he's free")
+	SimCore.dispose(S)
+
+
+
+## His own request starts the planned exchange (he's its attacker): the flick is its first strike (ruling 2). held: the stick still held.
+func _ownExchange(held: bool) -> void:
+	var S := _fresh(1200.0)
+	var A = S.fighters[0]
+	var D = S.fighters[1]
+	DirStick._go(S, A, DirStick.TOWARD, 0)
+	_said(S)
+	var pend: bool = DirStick._g(A, DirStick.ST_PEND) != 0
+	S.dirS.ex = null
+	var ex = DirExchange.newEx(A, D, "heavy")   # his own request's planned exchange
+	S.dirS.ex = ex
+	A.state = "locked"
+	D.state = "locked"
+	A.input = SimIntent.new()
+	A.input.rsHeld = held
+	DirStick._followed(S, A, DirBrawl._now(S))
+	var started: bool = false
+	for e in S.out.fx:
+		if String(e.type) == "cue" and int(e.actor) == 0 and String(e.kind) == "stick_start" and String(e.text) == DirStick.NAMES[DirStick.TOWARD]:
+			started = true
+	var said: Array = _said(S)
+	var kept: bool = DirStick._g(A, DirStick.ST_BUF) != 0 or DirStick._g(A, DirStick.ST_PEND) != 0
+	said.append_array(_wait(S, A, int(DirStick.cfg().pendFollow.maxTicks) + 4))   # the exchange runs long: nothing's refused "locked"
+	S.dirS.ex = null
+	A.state = "free"
+	D.state = "free"
+	A.input.rsHeld = false
+	said.append_array(_wait(S, A, 1))
+	var again: bool = _went(S, A)
+	print("      on, his own exchange%s: pending %s, started %s, said %s, kept %s, went again %s" % [" (held)" if held else "", str(pend), str(started), str(said), str(kept), str(again)])
+	_expect(pend and started and said.is_empty() and not kept and not again, "on: a request of his own that starts a planned exchange%s is its first strike: told it started, nothing kept, no refusal, nothing goes again" % (", the stick held," if held else ""))
 	SimCore.dispose(S)
 
 

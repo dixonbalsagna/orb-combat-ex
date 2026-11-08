@@ -4235,8 +4235,7 @@ const WIRED: Array = [
 	["RIVAL/meters.json", ["meters", "menace", "effects", 2, "perPoint"], 50.0, "beam"],
 	["RIVAL/meters.json", ["meters", "menace", "decay", "rate"], 3.0, "vorrTick"],
 	["RIVAL/meters.json", ["meters", "menace", "decay", "delayTicks"], 30, "vorrQuiet"],
-	["RIVAL/meters.json", ["meters", "menace", "sources", 0, "amount"], 5.0, "feedOther"],
-	["RIVAL/meters.json", ["meters", "menace", "sources", 1, "amount"], 5.0, "evac"],
+	["RIVAL/meters.json", ["meters", "menace", "sources", 0, "amount"], 5.0, "evac"],   # the evacuee source: the casualty one is gone (CD-05, World's no-casualty-feed)
 	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["fillPerSec"], 2.0, "ladderTick"],
 	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["thresholds"], [10.0, 50.0, 75.0], "ladderTick"],
 	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["chargePerSec"], 7.0, "chargeTick"],
@@ -4254,6 +4253,24 @@ const WIRED: Array = [
 ]
 
 
+## A WIRED row's path is in a data file: each step a key of an object or an index into an array. A row whose file changed
+## shape fails by name here, not by a script error mid-walk.
+func _hasPath(d, path: Array) -> bool:
+	var node = d
+	for k in range(path.size()):
+		var key = path[k]
+		if node is Dictionary:
+			if not node.has(key):
+				return false
+		elif node is Array:
+			if not (key is int) or key < 0 or key >= node.size():
+				return false
+		else:
+			return false
+		node = node[key]
+	return true
+
+
 func _wiredNumbers() -> String:
 	var files := {}
 	for id in ["PROTAGONIST", "RIVAL"]:   # the wired probes play the default pairing, in a roster of the two
@@ -4269,6 +4286,13 @@ func _wiredNumbers() -> String:
 	FighterData.quiet = true
 	for i in range(WIRED.size()):
 		var c: Array = WIRED[i]
+		var missing: String = ""
+		for key in (c[0] if c[0] is Array else [c[0]]):
+			if not files.has(key) or not _hasPath(JSON.parse_string(files[key]), c[1]):
+				missing = str(key)
+		if missing != "":
+			bad.append("%s %s: no such path in %s (the file's shape changed under the row)" % [str(c[0]), str(c[1]), missing])
+			continue
 		var dir: String = fixtures + "d1b_wired/%d/" % i
 		for id in ["PROTAGONIST", "RIVAL"]:
 			DirAccess.make_dir_recursive_absolute(dir + id)

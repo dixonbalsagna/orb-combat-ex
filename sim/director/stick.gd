@@ -585,6 +585,7 @@ static func carrying(f) -> bool:
 ## flickKeep.recoverTicks old when he's free, or it's refused "recovering". A set piece (a finisher, the KO, a set piece in a brawl, a beam
 ## struggle): refused at once, "set_piece". One a planned exchange of his rival's took is held the same way, never told "answered".
 ## Off, bufferTicks and "answered" as before.
+## A request of his own that started a planned exchange is that exchange's first strike: nothing's kept, and the hub hears it started.
 static func keepOn() -> bool:
 	return on() and bool(cfg().get("flickKeep", {}).get("enabled", false))
 
@@ -651,7 +652,10 @@ static func _fullSend(S: SimState, ex, f, o, dir: int) -> void:
 	if dir == DOWN and not _airborne(S, o):
 		fam = String(c.get("downOnGround", "bury"))
 	SimFx.cue(S, f, "stick_full_send", NAMES[dir], fam)
-	DirBrawl._send(S, ex, f, o, aim, "the stick's full hold", float(c.get("share", 1.0)), {"sends": sends, "share": "fullB"})
+	var extra: Dictionary = {"sends": sends, "share": "fullB"}
+	if dir == DOWN and fam != String(c.get("downOnGround", "bury")) and bool(c.get("craterSlam", false)):
+		extra["crater"] = true   # the slam: CRATER SLAM at every tier, past the planner's crater gates (DirLaunch.chooseLaunch)
+	DirBrawl._send(S, ex, f, o, aim, "the stick's full hold", float(c.get("share", 1.0)), extra)
 
 
 static func pendFollow() -> bool:
@@ -660,7 +664,8 @@ static func pendFollow() -> bool:
 
 ## pendFollow: a request still on its way keeps the stick's blow waiting with it, and one his rival answered is told at once (QA's meteor
 ## bot found both said "late"). While his request is queued it waits, up to pendFollow.maxTicks. True when this tick is handled, so the
-## usual lapse doesn't run.
+## usual lapse doesn't run. With flickKeep, one his own request started (he's its attacker) is its first strike: honoured, and nothing's
+## kept (ruling 2); one his rival's took is held for his first free tick.
 static func _followed(S: SimState, f, pat: int) -> bool:
 	var ex = DirBrawl.exOf(S)
 	if ex != null and not DirBrawl.isBrawl(ex) and (ex.A == f or ex.D == f):
@@ -668,6 +673,9 @@ static func _followed(S: SimState, f, pat: int) -> bool:
 		_s(f, ST_PEND, 0)
 		if (_g(f, ST_RL) & RL_SWEPT) != 0:
 			return true   # the swept hold's own go, answered again: its press was told once, and it's over
+		if keepOn() and ex.A == f:
+			SimFx.cue(S, f, "stick_start", NAMES[pend & 7], str(((pend >> 3) & 511) - 1))   # his own exchange: the flick started it, so the hub hears it did
+			return true   # and nothing's kept: kept, it would ask again when the exchange ends (or be refused "locked" past maxTicks)
 		if keepOn():
 			if f.input.rsHeld:
 				sweep(S, f, pend)   # a hold: the charge on his first free tick, as ever (a flick let go by then goes as a flick)

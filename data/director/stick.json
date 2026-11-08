@@ -73,6 +73,8 @@
     "families": {"down": "slamDown", "up": "skyward", "toward": "across", "away": "acrossBehind"},
     "downOnGround": "bury",
     "airBh": 1.0,
+    "craterSlam": true,
+    "_craterSlam": "true: down at the top on a foe in the air is always CRATER SLAM, the straight-down send that digs a crater, at every tier: the planner's crater gates (launch.json craterSlam below and setPiece) are skipped for it and nothing else in the down family competes (the sunday-build review: at tier 1 and 2 it was DRIVE DOWN, down and forward into a skid). false: the planner's down family, as before.",
     "_note": "Game Design, slam-and-pace.md section 1: a stick strike held to his top stage sends when it lands, in the family of its direction, at share of a full B: down on a foe in the air the slam (more than airBh body heights over the ground), down on the ground the down send from where he stands (World's embed), up skyward, toward across, away across (behind him once the turning send exists). A quick flick or a hold short of the top never sends. bendDeg is the planner's own bend (not read here yet). Off: as before."
   },
   "flickKeep": {

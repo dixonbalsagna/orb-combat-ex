@@ -1,0 +1,34 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+  ok    ground.json is clean and has a profile for each of the 15 fine biomes ([])
+  ok    the profiles follow climate.json's order; plains, forest, desert and mountains keep their old surfaces; grip/absorb/rough/furrow: ocean 1.00/1.00/1.00/1.00, plains 1.00/1.00/1.00/1.00, forest 1.10/0.90/1.15/1.00, desert 1.00/0.85/1.00/1.25, mountains 1.00/1.00/1.30/0.60, ice_sheet 0.45/0.90/1.00/0.35, sea_ice 0.40/0.90/1.00/0.30, jungle 1.25/0.80/1.30/1.10, savanna 0.95/0.95/1.00/1.05, tundra 1.05/1.05/1.00/0.80, taiga 1.15/0.85/1.15/1.00, wetland 1.50/0.55/1.00/1.50, beach 1.00/0.70/1.00/1.30, highland 0.90/1.00/1.25/0.70, volcanic 0.85/1.05/1.50/0.50
+  ok    gen 1 planet matches (seeds 7, 3, 25, 11; rings of 2400, 1200, 4800, 2400) hash as they did before window 2
+  ok    the hand-made world and a gen 1 turn hash as before (turn: n=1 988ea85fd0ae96f6)
+  ok    a gen 1 planet has no fine columns and no trees, as before
+  ok    a gen 2 planet match (seed 7, touch 0, 2400 columns) grows trees (37) and was built in 1057 ms with the tries before it
+  ok    the stored columns are the fine ones' aliases (a town's or a city's ground aside); 12 fine biomes on this ring
+  ok    every tree stands on dry, treed ground of its column's fine biome, at a height inside that biome's range
+  ok    a gen 2 match is a pure function of its setup (the same hash and trees twice)
+  ok    ...and two gen 2 matches stay the same for 240 ticks
+  ok    contact's surface on natural ground is the fine biome's profile surface 
+  ok    the brake on each fine biome is the surface's own times the profile's grip and rough (wetland 1.95, ice sheet 0.36, plains 1.30)
+  ok    the bounce's keep, the tumble band and the trench read each fine biome's absorb, rough and furrow
+  ok    a city column keeps the old rule and a multiplier of 1
+  ok    WorldContact.lookAt gives each fine biome's look class (ice_sheet snow, wetland mud, jungle litter, volcanic crust, beach shingle, a city column its paving)
+  ok    WorldBiomes.fineNameAt gives the fine name of a column (a city column reads city: the stored 8 is not the fine 8, savanna)
+  ok    rough ground never lengthens a skid: the same launch on each fine biome runs no farther than with rough set to 1 (jungle runs 1560, 1683 with rough 1)
+  ok    cover on gen 2 ground: jungle bare <null>, jungle with a tree canopy, jungle above 90 <null>, highland low ridge, highland above 40 <null>, savanna <null>
+  ok    the cover finder on gen 2 ground names a forest, a mountain or the ocean from its cover profiles: { "off": -3200.0, "b": "forest" }
+  ok    a hand-made match built after a gen 2 one starts with no fine columns (newMatch clears them), so live() is false
+  ok    a gen 1 planet match after a gen 2 one resets the fine columns, has no trees and the data's generation
+  ok    layTrees is a pure function of the columns, the ground and the seed (43 trees; another seed makes 39)
+  ok    props are laid per column from a keyed draw, each of a kind its fine biome lists, inside its column, the same twice (184 on this ring)
+  (layTrees over 2400 columns: 683 us; 43 trees)
+  (fast skid distance / slow launch's first contact / steep launch's bounces x its distance, over flat ground of each biome: ocean 1790/skid/1 x 256, plains 1790/skid/1 x 256, forest 1676/skid/1 x 243, desert 1790/skid/1 x 252, mountains 1899/skid/1 x 266, ice_sheet 2398/skid/1 x 346, sea_ice 2447/skid/1 x 358, jungle 1560/skid/1 x 228, savanna 1814/skid/1 x 257, tundra 1767/skid/1 x 256, taiga 1657/skid/1 x 238, wetland 1598/skid/1 x 219, beach 1790/skid/1 x 250, highland 1973/skid/1 x 274, volcanic 1910/skid/1 x 269)
+  ok    over the same flat ground a fast skid runs 2398 on ice, 1790 on plains and 1598 in a wetland
+  ok    no biome makes a tumble: a slow launch's first contact is a skid on all 15 fine biomes, rough ground included (jungle skid, volcanic skid, plains skid); a tumble stays what the knocked-about rules make it (Game Design, rulings 2026-10-23b item 11)
+  ok    soft ground eats a bounce (the steep launch goes 219 over a wetland, 250 on a beach, 256 on plains)
+  ok    a gen 2 match turns its arena (the swap landed)
+  ok    after the turn the fine columns are the new ring's, and S.planetRing carries them
+  ok    after the turn the stored columns are still the fine ones' aliases and every tree stands on dry, treed ground of the new fine biomes (13 trees)
+  ok    the gen 2 turn is a pure function of the setup (the same hash twice, 30650b53d516c109)
+GROUND: 0 check(s) failed

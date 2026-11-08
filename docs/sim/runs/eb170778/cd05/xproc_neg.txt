@@ -1,0 +1,6 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+-- break nolevel (the header leaves the level out): caught: the levels' headers are not all different: Hard 8d68c6455d5e5d7f, Easy 8d68c6455d5e5d7f, Medium 8d68c6455d5e5d7f
+-- break firstmatch (the header takes the level of the process's first match): caught: Hard's header depends on what the process ran first: a6e87d80c96f7d75 as its first match, 8940ca7de8cf4e74 after Easy
+-- break dropplay (the playback drops the level): caught: r1_0 (hard, recorded in r1) was refused as other data in a fresh process: header a6e87d80c96f7d75, the process's 8d68c6455d5e5d7f
+-- break runmedium (the match runs at the data's own level under its setup's header): caught: the levels' matches are not all different (the level does not reach the match): finals Hard 288efc28af84d38f, Easy 288efc28af84d38f, Medium 288efc28af84d38f
+PASS negative control: 4 of 4 breaks caught (45.5 s)

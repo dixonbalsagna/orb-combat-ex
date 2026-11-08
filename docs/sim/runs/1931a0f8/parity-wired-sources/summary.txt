@@ -1,0 +1,17 @@
+import 0
+p1_committed: gate exit 1 in 272 s; SCRIPT ERROR lines 3; FAIL lines 0; golden check passed
+24:SCRIPT ERROR: Invalid access of index '1' on a base object of type: 'Array'.
+29:ok    wired numbers change a match
+102:gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: 1 SCRIPT ERROR line(s) in the output (allowed 0); the first:
+103:  SCRIPT ERROR: Invalid access of index '1' on a base object of type: 'Array'.
+parity.gd: the rival's evacuee row, and _hasPath
+control: the old two rows back, with the new walk
+p2_control: gate exit 1 in 279 s; SCRIPT ERROR lines 1; FAIL lines 1; golden check FAILED
+24:FAIL  wired numbers change a match: RIVAL/meters.json ["meters", "menace", "sources", 0, "amount"]: no effect on probe feedOther; RIVAL/meters.json ["meters", "menace", "sources", 1, "amount"]: no such path in RIVAL/meters.json (the file's shape changed und
+97:gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines
+fix re-applied
+p3_fixed: gate exit 0 in 279 s; SCRIPT ERROR lines 1; FAIL lines 0; golden check passed
+24:ok    wired numbers change a match
+97:gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines
+parity-wired-sources sha1 064c0a7bfd10506eb9423e741effe73c6e2c0265 sha256 9a6e7374f008
+done

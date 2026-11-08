@@ -302,7 +302,7 @@ func _fromBrawl() -> void:
 	A.ki = 3.0
 	cues.clear()
 	_step(S, _press("x"), null)
-	var poor: bool = bool(r[1]) and String(_find(["press_refused"]).get("text", "")) == "ki" and _find(STARTS).is_empty() and DirBrawl.isBrawl(S.dirS.ex)
+	var poor: bool = bool(r[1]) and String(_find(["press_refused"]).get("src", "")) == "ki" and _find(STARTS).is_empty() and DirBrawl.isBrawl(S.dirS.ex)
 	SimCore.dispose(S)
 	print("      from a brawl: started %s (the brawl ended %s); LT held with no fresh press stays a blow %s; no energy refused %s" % [str(go), ended, str(stays), str(poor)])
 	_expect(go, "in a brawl, LT and X on one tick end it (brawl_end flight) and start the flight strike")
@@ -334,7 +334,7 @@ func _noKi() -> void:
 	var r: Dictionary = _find(["press_refused"])
 	var none: bool = _find(STARTS).is_empty()
 	var slip: bool = A.act.dodgeTick > 0
-	_expect(none and String(r.get("text", "")) == "ki" and String(r.get("src", "")) == "x" and slip, "no energy: press_refused ki (the knock), nothing starts, and LT's slip carries on")
+	_expect(none and String(r.get("src", "")) == "ki" and String(r.get("text", "")) == "x" and slip, "no energy: press_refused ki in its source, where UI's word and the pad's knock read it (its text the button), nothing starts, and LT's slip carries on")
 	SimCore.dispose(S)
 
 

@@ -3,6 +3,7 @@
 //   node tools/preview/power-page-check.mjs --dir <the build's web folder> [--out <file>] [--limit 600]
 // Expectations (Simulation's README): no word: setup.power true, travel 2, flatOut 5000, both sliders on the page; ?power=0 or ?power=off: setup.power false, no travel or flatOut key, no slider;
 // ?travel=1.5 and ?flatout=6000: the setup carries them; out-of-range words are clamped by the page (travel 1.25 to 2, flatOut 3500 to 7000); a slider moved sets window.__travel / __flatout and is remembered.
+// --only <text> runs the cases whose name contains it; --extra <words> adds page words to every address (the expectations are for the plain addresses: a shortcut's own words change what is read, so read the printed setup).
 // Exit 1 on any miss. Node built-ins only. One browser at a time, below-normal, with a time limit.
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -35,7 +36,7 @@ try {
     const page = await Cdp.open(browser.target.webSocketDebuggerUrl);
     await page.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 720, deviceScaleFactor: 1, mobile: false });
     await page.send('Runtime.enable');
-    const url = `http://127.0.0.1:${server.address().port}/index.html?${BASE}${c.words ? '&' + c.words : ''}`;
+    const url = `http://127.0.0.1:${server.address().port}/index.html?${BASE}${c.words ? '&' + c.words : ''}${opt('--extra') ? '&' + opt('--extra') : ''}`;   // --extra: more page words on every address (the shortcut's own words: meteor=loud&tiles=1&audiolog=1&travel=1.5)
     await page.send('Page.navigate', { url });
     const deadline = Date.now() + 240 * 1000;
     let rec = null;

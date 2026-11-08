@@ -171,7 +171,9 @@ static func craterOffered(S: SimState, A, D) -> bool:
 ## force is the template's launch force; the prediction uses it with the tier scaling doLaunch applies.
 ## longOnly (break and finisher launches, spec-wounds.md §1): only the long-haul candidates (SMASH ACROSS, BUILDING SMASH,
 ## MOUNTAINSIDE), SMASH ACROSS always offered, and no "no launch".
-static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false, sends: String = "", tilt: int = 0, noKnock: bool = false, fresh: bool = false) -> Dictionary:
+## crater (the stick's slam, stick.json fullSend.craterSlam): CRATER SLAM is offered whatever its gates say, and it is the only
+## candidate: the slam digs a crater at every tier.
+static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false, sends: String = "", tilt: int = 0, noKnock: bool = false, fresh: bool = false, crater: bool = false) -> Dictionary:
 	_gBegin()
 	chooseN += 1
 	var g: float = WorldTerrain.groundY(S, D.x)
@@ -189,7 +191,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 		var dv: Array = driveDir(alt)
 		var dB: float = float(biome().get("downBonus", {}).get(WorldBiomes.fineNameAt(D.x), 0.0)) if bon else (8.0 if bio == "forest" else 0.0)   # biome on: the downBonus table (forest keeps its 8)
 		c.append({"name": "DRIVE DOWN", "ux": dv[0] * f, "uy": dv[1], "s": (18.0 if alt > 140.0 else 0.0) + A.tier * 4.0 + dB})
-		if craterOffered(S, A, D):
+		if crater or craterOffered(S, A, D):
 			var cs: Dictionary = data().craterSlam
 			c.append({"name": "CRATER SLAM", "ux": float(cs.ux) * f, "uy": float(cs.uy), "s": float(cs.score.base) + float(cs.score.perTier) * A.tier + (float(cs.score.high) if alt > float(cs.score.highAlt) else 0.0)})
 	c.append({"name": "SMASH ACROSS", "ux": f, "uy": ACROSS_UY, "fm": ACROSS_FORCE, "s": 8.0})
@@ -245,6 +247,8 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 		# Combat's hook (alchemist-content.md): a piece that names where it sends the rival keeps only those candidates.
 		var keep: Array = SENDS.get(sends, []) + ((biome().get("sends", {}).get(sends, []) as Array) if bon else [])   # biome on: its candidates join their kind
 		c = c.filter(func(k): return k.name == "KNOCK BACK" or keep.has(k.name))
+	if crater and not longOnly:
+		c = c.filter(func(k): return k.name == "CRATER SLAM")   # the slam: the straight-down send, nothing else
 	if tilt > 0:
 		# The stick's tilt (1 up, then clockwise by eighths): only candidates within TILT_CONE of it compete. A tilt back
 		# through the launcher is not a direction a launch can take (the turning throw is M0): it keeps its up or down part.

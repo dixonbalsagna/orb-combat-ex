@@ -381,10 +381,10 @@ static func _takeBack(S: SimState, A, refund: float) -> void:
 	_cue(S, A, "take_back", was, "")
 
 
-## A press the flight strike refuses: the pad knocks and nothing starts. press_refused's text is the reason (ki: "No energy" at the
-## edge, by UI's rule; stunned; busy), its source the button's cell.
+## A press the flight strike refuses: the pad knocks and nothing starts. press_refused's source is the reason (ki: "No energy" at the
+## edge, by UI's rule; stunned; busy), where UI and the pad read it, as for every press_refused; its text the button's cell.
 static func _refused(S: SimState, A, kind: String, why: String) -> void:
-	_cue(S, A, "press_refused", why, DirBrawl._cell(kind)).n = S.tick
+	_cue(S, A, "press_refused", DirBrawl._cell(kind), why).n = S.tick
 
 
 ## A press inside a flight strike: in its last chain.lateTicks, LT held, it's kept, and the next link starts as this one ends.

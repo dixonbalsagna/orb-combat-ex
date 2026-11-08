@@ -64,6 +64,7 @@ var _aiDone: Dictionary = {}  # with aiOnce: slots already switched once
 var fillWrong: bool = false   # tests only: dropSlot fills with neutral inputs instead of the ones the ticks ran with
 var fillDiff: int = 0         # dropSlot's filled ticks whose fill differs from what they ran with (0 unless fillWrong)
 var takeoverLate: int = 0     # takeovers that arrived for a tick already run (each rolled back to it)
+var takeoverRefused: int = 0  # takeovers of a slot this session doesn't have, refused (a bad packet that got past the host's checks, or with them off)
 
 # desync detection (NetDesync): a digest of the confirmed state every checkEvery ticks, exchanged with the other peers
 var checkEvery: int = 60      # ticks between checkpoints; 0 turns detection off
@@ -286,6 +287,9 @@ func _walk(k: int, from: int) -> void:
 ## to it, as a late input does: with t at least the proposer's frame + delay, the proposer's own input for t travels with
 ## the record or after it, so no peer can have confirmed tick t without knowing it.
 func takeover(k: int, t: int) -> void:
+	if k < 0 or k >= players:   # not a slot of this match: refused here too, so nothing indexes past the players whatever reaches it
+		takeoverRefused += 1
+		return
 	if aiFrom.has(k) and int(aiFrom[k]) <= t:
 		return
 	aiFrom[k] = t
@@ -415,6 +419,8 @@ static func slotNow(S: SimState, s: int) -> int:
 ## so the state before tick t is the same in every run and in a straight run that toggles before tick t).
 func _switch(t: int) -> void:
 	for k in aiFrom:
+		if int(k) < 0 or int(k) >= players:
+			continue   # not a slot of this match (takeover() refuses one; this is the second guard, so nothing here indexes past the players)
 		if t != int(aiFrom[k]) + aiLate or (aiOnce and _aiDone.has(k)):
 			continue
 		var slot: int = slotNow(S, int(slotOf[k])) if not slotOf.is_empty() and S.stage != null else int(k)   # with two fights a player's slot is the sim's, where his body is now

@@ -1,0 +1,23 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+      down at 8.0 bh, level 3, top, tier 1: cue stick_full_send/slamDown, plan CRATER SLAM, brawl ended true, launched true, rose -601, moved 94; craters where he landed 1 (r 407)
+      down at 8.0 bh, level 3, top, tier 2: cue stick_full_send/slamDown, plan CRATER SLAM, brawl ended true, launched true, rose -569, moved 123; craters where he landed 1 (r 537)
+      down at 8.0 bh, level 3, top, tier 1, craterSlam off: cue stick_full_send/slamDown, plan DRIVE DOWN, brawl ended true, launched true, rose -490, moved 716; craters where he landed 0 (r 0)
+      down at 0.0 bh, level 3, top, tier 1: cue stick_full_send/bury, plan DRIVE DOWN, brawl ended true, launched true, rose 376, moved 469; craters where he landed 0 (r 0)
+      up at 0.0 bh, level 3, top, tier 1: cue stick_full_send/skyward, plan UPPERCUT, brawl ended true, launched true, rose 593, moved 176; craters where he landed 0 (r 0)
+      toward at 0.0 bh, level 3, top, tier 1: cue stick_full_send/across, plan SMASH ACROSS, brawl ended true, launched true, rose 382, moved 495; craters where he landed 0 (r 0)
+      down at 8.0 bh, level 2, tier 1: cue , plan , brawl ended false, launched false, rose -143, moved 5; craters where he landed 0 (r 0)
+      down at 8.0 bh, level 0, tier 1: cue slam_hint/, plan , brawl ended false, launched false, rose -180, moved 5; craters where he landed 0 (r 0)
+      down at 8.0 bh, level 3, top, tier 1: cue , plan , brawl ended false, launched false, rose -294, moved 4; craters where he landed 1 (r 258)
+ok    on: down at the top on a foe in the air is the slam: he's sent down (-601)
+ok    on: at tier 1 the slam is CRATER SLAM and digs a crater where he lands (r 407)
+ok    on: at tier 2 the slam is CRATER SLAM and digs a crater where he lands (r 537)
+ok    negative control, craterSlam off: the planner's DRIVE DOWN, and no crater where he lands
+ok    on: down at the top on a foe on the ground: the down send from where he stands (bury)
+ok    on: up at the top sends him up (593)
+ok    on: toward at the top sends him across (495)
+ok    on: a hold short of the top never sends
+ok    on: a quick down flick on a foe in the air doesn't send, and gives UI's hint cue
+ok    off: as before, no send
+ok    the top, with the plain hold's stages off, is level 3
+FULL SEND: 0 check(s) failed

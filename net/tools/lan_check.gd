@@ -31,7 +31,7 @@ extends SceneTree
 ## to its player's fight must be caught holding the wrong one, and with no map of players to slots the second player's fighter must never act, and with inputs left on the slot after a trade the traded player
 ## must stop acting, and with the session clearing its output nothing of the other fight's must stay for the picture, and a PC that keeps showing its out player's fight must be caught, and a pause that
 ## doesn't put the view back after its rollback must be caught showing fight 0 while the player stands; with CD-10's checks off, the huge wait must be taken, the bad
-## slot must reach the session and the flood must fill it; and with the hand-over off, a gone PC must freeze the match; and a LAN setup without its "power" word
+## slot must reach the session (which refuses it, with no script error) and the flood must fill it; and with the hand-over off, a gone PC must freeze the match; and a LAN setup without its "power" word
 ## must be caught starting with the model off.
 ## Each must be caught.
 ## Verdict line: LAN: N check(s) failed
@@ -375,9 +375,9 @@ func _init() -> void:
 		ticks = 600
 		NetHost.check = false
 		r = _run("lan", true, true, 0, false, true, true, -1, true, [], false, false, -1, 0, {"hostile": "slot", "hostileFrom": 200})
-		var badSlot: bool = r.lans[0].net.session != null and r.lans[0].net.session.aiFrom.has(200)
-		print("control, CD-10, a takeover of slot 200 with the checks off: it reached the session: %s" % str(badSlot))
-		ok(badSlot, "with the checks off, the bad slot must reach the session")
+		var refusedThere: int = r.lans[0].net.session.takeoverRefused if r.lans[0].net.session != null else 0
+		print("control, CD-10, a takeover of slot 200 with the host's checks off: it reached the session, which refused it %d time(s) (slot 200 taken: %s)" % [refusedThere, str(r.lans[0].net.session.aiFrom.has(200))])
+		ok(refusedThere > 0, "with the host's checks off, the bad slot must reach the session (which refuses it)")
 		_close(r)
 		r = _run("lan", true, true, 0, false, true, true, -1, true, [], false, false, -1, 0, {"hostile": "flood", "hostileFrom": 200, "floodN": 4})
 		NetHost.check = true
@@ -564,7 +564,7 @@ func _init() -> void:
 		ok(ha != null and hb != null and ha.frame > ticks - 100 and ha.desync.is_empty() and hb.desync.is_empty() and ha.checksMatched > 0, "CD-10, %s: the match went on in step (frames %d, checks matched %d)" % [mode, ha.frame if ha else -1, ha.checksMatched if ha else -1])
 		ok(hr.lans[0].net.rejected >= 1 and hr.lans[0].net.rejected >= hr.hostile.bad - 2 * maxi(1, hr.hostile.floodN), "CD-10, %s: every bad packet that arrived was dropped (%d dropped, %d sent, the last frame's still on the way)" % [mode, hr.lans[0].net.rejected, hr.hostile.bad])
 		if mode == "slot":
-			ok(ha.aiFrom.is_empty(), "CD-10, a takeover of slot 200: nothing reached the session (%s)" % str(ha.aiFrom))
+			ok(ha.aiFrom.is_empty() and ha.takeoverRefused == 0, "CD-10, a takeover of slot 200: the host dropped it, so nothing reached the session (%s, refused there %d)" % [str(ha.aiFrom), ha.takeoverRefused])
 		else:
 			ok(ha.inputs[1].size() < ha.frame + 400, "CD-10, a flood of far-ahead inputs: the first PC holds %d of the second's inputs after %d ticks" % [ha.inputs[1].size(), ha.frame])
 		print("  CD-10 %-5s: dropped %d of %d bad packets, frames %d, checks matched %d, the second's inputs held %d" % [mode, hr.lans[0].net.rejected, hr.hostile.bad, ha.frame, ha.checksMatched, ha.inputs[1].size()])

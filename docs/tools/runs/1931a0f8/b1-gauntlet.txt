@@ -1,0 +1,16 @@
+tree C:\Users\<user>\Documents\Claude Proj\Breakers-Like\homework\Files\builds\orb-first-play-1931a0f8-7a5a2d2c\tree; 40 matches a cell from seed 1; the same seeds in every scheme
+SCHEME shipped (the reference)
+arm          level   n   win % (95% +/-)   refusals/100 presses s without control/min  beams/match
+orb's scheme easy    40  5% +/-8           14                  56.2                   0
+orb's scheme medium  40  0% +/-4           9.6                 55.5                   0
+orb's scheme hard    40  0% +/-4           14.5                53.5                   0
+timing       easy    40  70% +/-14         13                  54.4                   0
+timing       medium  40  25% +/-13         9.6                 54.8                   0
+timing       hard    40  0% +/-4           21.3                47.3                   0
+stick-only   easy    40  3% +/-6           16.2                56.3                   0
+stick-only   medium  40  0% +/-4           14                  56.4                   0
+stick-only   hard    40  0% +/-4           16.8                54.4                   0
+masher       easy    40  70% +/-14         11.2                54.7                   0
+masher       medium  40  25% +/-13         11.4                54.7                   0
+masher       hard    40  0% +/-4           27                  46.2                   0
+

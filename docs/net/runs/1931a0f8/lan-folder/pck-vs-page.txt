@@ -1,0 +1,42 @@
+pack versions 4 4; files 1408 and 1382; compared 1382: same 1369, differ 13
+DIFFER .godot/exported/133200997/export-6f35ef313037a0334f9b5e07252255a1-main.scn
+DIFFER .godot/exported/133200997/export-90799a372ca45de604c828270749e625-audio_demo.scn
+DIFFER .godot/exported/133200997/export-a6c0bb223a07c7e8fd30e8a5689240b4-ui_hud.scn
+DIFFER .godot/exported/133200997/export-c9421ec42f51d5575fe88757ce73a640-boot_entry.scn
+DIFFER .godot/exported/133200997/export-d6d2a64687280e4967430497328cf9cb-hud_demo.scn
+DIFFER .godot/global_script_class_cache.cfg
+DIFFER .godot/uid_cache.bin
+DIFFER audio/audio_coop.gdc
+DIFFER build_info.json
+DIFFER render/core/main.gdc
+DIFFER render/core/sim_host.gdc
+DIFFER render/vfx/meteor.gdc
+DIFFER ui/data/features.json
+ONLY KEPT net/tools/delay_check.gd.remap
+ONLY KEPT net/tools/delay_check.gdc
+ONLY KEPT net/tools/desync_check.gd.remap
+ONLY KEPT net/tools/desync_check.gdc
+ONLY KEPT net/tools/enet_check.gd.remap
+ONLY KEPT net/tools/enet_check.gdc
+ONLY KEPT net/tools/enet_peer.gd.remap
+ONLY KEPT net/tools/enet_peer.gdc
+ONLY KEPT net/tools/lan_check.gd.remap
+ONLY KEPT net/tools/lan_check.gdc
+ONLY KEPT net/tools/net_straight.gd.remap
+ONLY KEPT net/tools/net_straight.gdc
+ONLY KEPT net/tools/rollback_bench.gd.remap
+ONLY KEPT net/tools/rollback_bench.gdc
+ONLY KEPT net/tools/rollback_check.gd.remap
+ONLY KEPT net/tools/rollback_check.gdc
+ONLY KEPT net/tools/spectator_check.gd.remap
+ONLY KEPT net/tools/spectator_check.gdc
+ONLY KEPT net/tools/swing_check.gd.remap
+ONLY KEPT net/tools/swing_check.gdc
+ONLY KEPT net/tools/transport_check.gd.remap
+ONLY KEPT net/tools/transport_check.gdc
+ONLY KEPT net/tools/two_pc_check.gd.remap
+ONLY KEPT net/tools/two_pc_check.gdc
+ONLY KEPT net/tools/word_check.gd.remap
+ONLY KEPT net/tools/word_check.gdc
+only in the kept page 26
+only in the new pack 0

@@ -1,0 +1,88 @@
+2:Orb Combat EX golden check   Godot 4.7.2-stable (official)   res://sim/core/test/golden.json
+3:ok    long float literals
+4:ok    constants
+5:ok    cosmetic stream seeds
+6:ok    rng
+7:ok    wrap
+8:ok    sin/cos
+9:ok    pow/exp/log/hypot
+10:ok    tick-0 state
+11:ok    wounds (forced hits)
+12:ok    rally (forced)
+13:ok    crippling (forced)
+14:ok    mood and style (forced)
+15:ok    fight data
+16:ok    roster data
+17:ok    roster loader rejects bad data
+18:ok    the game's wounds and ladder files, and a fighter's differences
+19:ok    the training dummy in the roster
+20:ok    a match's slots name two fighters the data has
+21:ok    one versus many: a match of three to five bodies
+22:ok    one versus many: what the core counts of a guard
+23:SCRIPT ERROR: Invalid access of index '1' on a base object of type: 'Array'.
+27:ok    wired numbers change a match
+28:ok    keyed draws
+29:ok    arm setups
+30:ok    intent pack
+31:ok    exp past its scaling's reach
+32:ok    a stun ends the held states
+33:ok    action state
+34:ok    pausing set pieces
+35:ok    act rule and time cap
+36:ok    the break
+37:ok    the form impulse
+38:ok    blocked blows and the arms
+39:ok    blocked shots and the arms
+40:ok    the second breath waits for quiet
+41:ok    a bowed rush
+42:ok    a drop
+43:ok    the mood by a blow's form
+44:ok    the free-flight speed and the locked damping, as reads
+45:ok    the stick as held, through a stun
+46:ok    a medium blow, rule by rule
+47:ok    a blow that names its region
+48:ok    no tier past the ladder's last
+49:ok    the view's particles carry their depth
+50:ok    depth in the core
+51:ok    a fighter's depth outside a flight, and the contact rule
+52:ok    the intro phase
+53:ok    composed intros
+54:ok    the intro's default facts and the take
+55:ok    the last stand
+56:ok    a hidden fighter is found when he charges or is launched
+57:ok    shots
+58:ok    shots: buildings, wild deflects, the spray, mines
+59:ok    agency lines
+60:ok    a clash's meeting point
+61:ok    SimMathx.PI and TAU
+62:ok    the blow cue's run stays out of the hash
+63:ok    the run's rare boons
+64:ok    the catastrophe's blast cloud and ash
+65:ok    the launch's curve
+66:ok    hit-stop by weight
+67:ok    the ricochet's glance
+68:ok    the replay header covers a planet's data
+69:ok    the intent's second word in the hash and the replay
+70:ok    a struggle, as the host reads it
+71:ok    a match starts on the floor of a lake or the sea
+72:ok    the run's ground
+73:ok    the run's state and carry
+74:ok    the campaign's arc and episode
+75:ok    the planet's load
+76:ok    the calm turn on gen 2
+77:ok    the match's start in pieces
+78:ok    the aftermaths
+79:ok    the curve's shared functions, the brake's control back, the camera feed
+80:ok    the air brake
+81:ok    forms: five steps and the slingshot
+82:ok    forms: Witness and Trial
+83:ok    Animation's view fields: a launch's tier, a hit's stop and tier
+84:ok    the intro phase (golden)
+85:ok    composed intros (golden)
+86:ok    replay module
+88:ok    matches
+89:ok    human-input replays
+91:ok    planet worlds (golden)
+96:golden check passed
+97:gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: 1 SCRIPT ERROR line(s) in the output (allowed 0); the first:
+98:  SCRIPT ERROR: Invalid access of index '1' on a base object of type: 'Array'.

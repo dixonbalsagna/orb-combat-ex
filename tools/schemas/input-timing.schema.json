@@ -996,6 +996,10 @@
           "type": "boolean",
           "description": "The beam's aim (docs/controls/beam-aim-feel.md; needs rightStick): the strike stick's aim trails the thumb by strike.aimTrail degrees, and the throw carries the aim the stick held at the rim instead of the zero of a stick that has sprung home. Off."
         },
+        "flickKept": {
+          "type": "boolean",
+          "description": "Set together with the director's flickKeep (data/director/stick.json): the director holds a flick it cannot start yet, quietly, up to 90 ticks, so the hub waits strike.refuseTicksKept instead of strike.refuseTicks before it calls a stick request unanswered (docs/controls/flick-kept.md). Off: refuseTicks, as before."
+        },
         "chordPick": {
           "type": "boolean",
           "description": "Two attack presses on one tick (B with X or Y, or Y with X) are one blow, the biggest (signature over heavy over light), and the smaller is let go of and told with the refusal code chord (docs/controls/chord-pick.md). Before, the director took the light, then the heavy, then the signature, so a B pressed with an X was dropped with no word. Off."
@@ -1082,6 +1086,12 @@
           "minimum": 1,
           "maximum": 120,
           "description": "Live ticks a stick request may wait for the director to start its strike before the pad is told it was refused (30)."
+        },
+        "refuseTicksKept": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 240,
+          "description": "With switches.flickKept: the live ticks a stick request may wait before the pad is told it was unanswered (120: above the director's 90-tick keep, pendFollow.maxTicks, and the longest answer the probe saw, 113). Without the switch, refuseTicks."
         },
         "aimTrail": {
           "type": "number",

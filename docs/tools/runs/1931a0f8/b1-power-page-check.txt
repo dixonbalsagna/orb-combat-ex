@@ -1,0 +1,41 @@
+--- no power word  (/index.html?planet=7&go=1&blackbox=1&preview=1)
+    black box setup: {"power":true,"travel":2,"flatOut":5000,"planet":7}; sliders on page: 2; window.__travel 2, __flatout 5000
+    ok   setup.power is true
+    ok   setup.travel is 2
+    ok   setup.flatOut is 5000
+    ok   both sliders are on the page (flat-out base, how far a launch carries)
+    sliders moved: {"flat":6200,"travel":1.55,"remembered":["6200","1.55"]}
+    ok   the flat-out slider sets window.__flatout and is remembered as orb_flatout
+    ok   the travel slider sets window.__travel and is remembered as orb_travel
+    ok   the labels read "how far a launch carries x1.55" and "flat-out flight base speed 6200"
+--- ?power=1 (the same as no word)  (/index.html?planet=7&go=1&blackbox=1&preview=1&power=1)
+    black box setup: {"power":true,"travel":2,"flatOut":5000,"planet":7}; sliders on page: 2; window.__travel 2, __flatout 5000
+    ok   setup.power is true
+    ok   setup.travel is 2
+    ok   setup.flatOut is 5000
+    ok   both sliders are on the page (flat-out base, how far a launch carries)
+--- ?power=0  (/index.html?planet=7&go=1&blackbox=1&preview=1&power=0)
+    black box setup: {"power":false,"planet":7}; sliders on page: 0; window.__travel undefined, __flatout undefined
+    ok   setup.power is false
+    ok   no travel key in the setup with power off
+    ok   no flatOut key in the setup with power off
+    ok   no slider on the page with power off
+--- ?power=off  (/index.html?planet=7&go=1&blackbox=1&preview=1&power=off)
+    black box setup: {"power":false,"planet":7}; sliders on page: 0; window.__travel undefined, __flatout undefined
+    ok   setup.power is false
+    ok   no travel key in the setup with power off
+    ok   no flatOut key in the setup with power off
+    ok   no slider on the page with power off
+--- ?travel=1.5&flatout=6000  (/index.html?planet=7&go=1&blackbox=1&preview=1&travel=1.5&flatout=6000)
+    black box setup: {"power":true,"travel":1.5,"flatOut":6000,"planet":7}; sliders on page: 2; window.__travel 1.5, __flatout 6000
+    ok   setup.power is true
+    ok   setup.travel is 1.5
+    ok   setup.flatOut is 6000
+    ok   both sliders are on the page (flat-out base, how far a launch carries)
+--- ?travel=9&flatout=100 (out of range)  (/index.html?planet=7&go=1&blackbox=1&preview=1&travel=9&flatout=100)
+    black box setup: {"power":true,"travel":2,"flatOut":5000,"planet":7}; sliders on page: 2; window.__travel 2, __flatout 5000
+    ok   setup.power is true
+    ok   setup.travel is 2
+    ok   setup.flatOut is 5000
+    ok   both sliders are on the page (flat-out base, how far a launch carries)
+power page check: ok

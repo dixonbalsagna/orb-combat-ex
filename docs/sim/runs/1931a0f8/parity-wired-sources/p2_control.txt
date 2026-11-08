@@ -1,0 +1,86 @@
+2:Orb Combat EX golden check   Godot 4.7.2-stable (official)   res://sim/core/test/golden.json
+3:ok    long float literals
+4:ok    constants
+5:ok    cosmetic stream seeds
+6:ok    rng
+7:ok    wrap
+8:ok    sin/cos
+9:ok    pow/exp/log/hypot
+10:ok    tick-0 state
+11:ok    wounds (forced hits)
+12:ok    rally (forced)
+13:ok    crippling (forced)
+14:ok    mood and style (forced)
+15:ok    fight data
+16:ok    roster data
+17:ok    roster loader rejects bad data
+18:ok    the game's wounds and ladder files, and a fighter's differences
+19:ok    the training dummy in the roster
+20:ok    a match's slots name two fighters the data has
+21:ok    one versus many: a match of three to five bodies
+22:ok    one versus many: what the core counts of a guard
+23:FAIL  wired numbers change a match: RIVAL/meters.json ["meters", "menace", "sources", 0, "amount"]: no effect on probe feedOther; RIVAL/meters.json ["meters", "menace", "sources", 1, "amount"]: no such path in RIVAL/meters.json (the file's shape changed under the row)
+24:ok    keyed draws
+25:ok    arm setups
+26:ok    intent pack
+27:ok    exp past its scaling's reach
+28:ok    a stun ends the held states
+29:ok    action state
+30:ok    pausing set pieces
+31:ok    act rule and time cap
+32:ok    the break
+33:ok    the form impulse
+34:ok    blocked blows and the arms
+35:ok    blocked shots and the arms
+36:ok    the second breath waits for quiet
+37:ok    a bowed rush
+38:ok    a drop
+39:ok    the mood by a blow's form
+40:ok    the free-flight speed and the locked damping, as reads
+41:ok    the stick as held, through a stun
+42:ok    a medium blow, rule by rule
+43:ok    a blow that names its region
+44:ok    no tier past the ladder's last
+45:ok    the view's particles carry their depth
+46:ok    depth in the core
+47:ok    a fighter's depth outside a flight, and the contact rule
+48:ok    the intro phase
+49:ok    composed intros
+50:ok    the intro's default facts and the take
+51:ok    the last stand
+52:ok    a hidden fighter is found when he charges or is launched
+53:ok    shots
+54:ok    shots: buildings, wild deflects, the spray, mines
+55:ok    agency lines
+56:ok    a clash's meeting point
+57:ok    SimMathx.PI and TAU
+58:ok    the blow cue's run stays out of the hash
+59:ok    the run's rare boons
+60:ok    the catastrophe's blast cloud and ash
+61:ok    the launch's curve
+62:ok    hit-stop by weight
+63:ok    the ricochet's glance
+64:ok    the replay header covers a planet's data
+65:ok    the intent's second word in the hash and the replay
+66:ok    a struggle, as the host reads it
+67:ok    a match starts on the floor of a lake or the sea
+68:ok    the run's ground
+69:ok    the run's state and carry
+70:ok    the campaign's arc and episode
+71:ok    the planet's load
+72:ok    the calm turn on gen 2
+73:ok    the match's start in pieces
+74:ok    the aftermaths
+75:ok    the curve's shared functions, the brake's control back, the camera feed
+76:ok    the air brake
+77:ok    forms: five steps and the slingshot
+78:ok    forms: Witness and Trial
+79:ok    Animation's view fields: a launch's tier, a hit's stop and tier
+80:ok    the intro phase (golden)
+81:ok    composed intros (golden)
+82:ok    replay module
+84:ok    matches
+85:ok    human-input replays
+87:ok    planet worlds (golden)
+92:golden check FAILED
+93:gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines

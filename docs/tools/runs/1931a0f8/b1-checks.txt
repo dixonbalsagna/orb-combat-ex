@@ -1,0 +1,46 @@
+BUILD 1 PAGE CHECKS (kept folder orb-first-play-1931a0f8-7a5a2d2c, main 1931a0f8), 2026-11-08 about 04:00, headless Chrome through the guarded launcher, one browser at a time
+
+## Moving minute (sticks=3, 3,600 ticks, wall check, sound log)
+[reel] FLAT FACE: the largest single flat face filled 12% of the frame (tick 2160); 0 of 120 stills over 35%
+[reel] WALL CHECK (drawn): the longest stretch behind a building at its DRAWN height was 0 ticks for fighter 1 (ending at tick 0) and 0 for fighter 2 (tick 0); in all 0 and 0 of 3600 ticks: ok
+[reel] WALL CHECK: the longest stretch behind a building was 0 ticks for fighter 1 (ending at tick 0) and 0 for fighter 2 (tick 0); in all 0 and 0 of 3600 ticks; the limit is 180 (3 s): ok
+[reel] PAGE ERRORS: none
+[reel] sound: 273 cues (150 taken), rumble requests 243, output peak 0, engine mixer {"master":-200,"sfx":-200,"voice":-200}
+[reel] 3600 ticks played: 5 swing(s), 2 launch(es), 36 stills kept of 120
+
+## Struggle (sticks=7, a clash at point blank)
+[reel] PAGE ERRORS: none
+[reel] 398 ticks played: 0 swing(s), 0 launch(es), 23 stills kept of 23
+clash at tick 248; the HUD holds "Locked in" from 251; the stills show BEAM STRUGGLE, the clash panel with "Flick toward them on the beat" on both sides, and the travel slider bottom right (docs/tools/img/b1-clash/stills/still-000300.jpg)
+
+## Refusal words (sticks=10, a lossless still every tick for 60 ticks after each word)
+[reel] PAGE ERRORS: none
+[reel] 1964 ticks played: 4 swing(s), 1 launch(es), 3 stills kept of 125
+words held by the HUD: "Too close" at tick 1305 and "Hit" at tick 1903; both are DRAWN in the legend column (docs/tools/img/b1-refusal/stills/still-001312.png and still-001912.png)
+
+## Sound, the pad wake (two runs)
+Run A, the cards clicked through with a mouse (docs/tools/img/b1-wake-clickstart): [playtest] audio ctx suspended@1282,running@18200, gesture {"at":17489,"kind":"pointerdown"}, first sound 25431 ms, peak 0.723, loud windows 345/1272, cues 126 (taken 126, dropped 0), rumble requests from the game 0, browser calls: navigator.vibrate 0 playEffect undefined pulse 0
+  -> the mouse click at 17,489 ms was a real activation: the audio woke at 18,200 ms, before any pad press. This run cannot test a pad on its own.
+[playtest] audio ctx suspended@1257, gesture null, first sound null ms, peak 0, loud windows 0/0, cues 0 (taken 0, dropped 0), rumble requests from the game 0, browser calls: navigator.vibrate 0 playEffect undefined pulse 0
+[playtest] audio ctx suspended@1257, gesture null, first sound null ms, peak 0, loud windows 0/0, cues 0 (taken 0, dropped 0), rumble requests from the game 0, browser calls: navigator.vibrate 0 playEffect undefined pulse 0
+[playtest] audio ctx suspended@1257,running@39165, gesture {"at":39060,"kind":"keydown"}, first sound null ms, peak 0, loud windows 0/156, cues 0 (taken 0, dropped 0), rumble requests from the game 0, browser calls: navigator.vibrate 0 playEffect undefined pulse 0
+  audio status line, after the pad taps: "pad seen 15 asked 7 woke 0 (a pad press did not start the context)"; after a second pad press: "pad seen 19 asked 8 woke 0"; after the key: web context running, 105 ms after the key (suspended@1257, running@39165, gesture keydown at 39,060).
+  PROVED in headless Chrome: the page sees the pad (15 then 19 presses), asks the contexts to run on a pad press (7 then 8 asks), and a key wakes them 105 ms later. NOT PROVED: a REAL pad press waking audio (a scripted pad press is not a browser activation, and woke stays 0); that is read from Orb's next play file (the same counters in its audio status line). The scripted taps did not get past the intro menu (tick 0), which does not matter for the wake.
+
+## Power page, six addresses (power-page-check.mjs)
+--- no power word  (/index.html?planet=7&go=1&blackbox=1&preview=1)
+    black box setup: {"power":true,"travel":2,"flatOut":5000,"planet":7}; sliders on page: 2; window.__travel 2, __flatout 5000
+--- ?power=1 (the same as no word)  (/index.html?planet=7&go=1&blackbox=1&preview=1&power=1)
+    black box setup: {"power":true,"travel":2,"flatOut":5000,"planet":7}; sliders on page: 2; window.__travel 2, __flatout 5000
+--- ?power=0  (/index.html?planet=7&go=1&blackbox=1&preview=1&power=0)
+    black box setup: {"power":false,"planet":7}; sliders on page: 0; window.__travel undefined, __flatout undefined
+--- ?power=off  (/index.html?planet=7&go=1&blackbox=1&preview=1&power=off)
+    black box setup: {"power":false,"planet":7}; sliders on page: 0; window.__travel undefined, __flatout undefined
+--- ?travel=1.5&flatout=6000  (/index.html?planet=7&go=1&blackbox=1&preview=1&travel=1.5&flatout=6000)
+    black box setup: {"power":true,"travel":1.5,"flatOut":6000,"planet":7}; sliders on page: 2; window.__travel 1.5, __flatout 6000
+--- ?travel=9&flatout=100 (out of range)  (/index.html?planet=7&go=1&blackbox=1&preview=1&travel=9&flatout=100)
+    black box setup: {"power":true,"travel":2,"flatOut":5000,"planet":7}; sliders on page: 2; window.__travel 2, __flatout 5000
+power page check: ok
+
+## The shortcut's own address (no power word, travel=1.5)
+see b1-shortcut-address.txt: setup power true, travel 1.5, flatOut 5000, both sliders on the page.

@@ -1,0 +1,5 @@
+05:41:50 parity exit 0: golden check passed
+05:42:24 validate: 321 files checked, 0 errors, 2 warnings; selftest: self-test: 10093 of 10093 checks passed
+05:42:24 ratchet exit 0: two-fighter ratchet ok: 365 against a baseline of 365
+06:11:06 loader_check exit 0: loader check passed
+06:11:06 lane sim done

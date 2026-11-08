@@ -197,6 +197,12 @@ static func flight_strike_b() -> bool:
 	return bool(t(["switches", "flightStrikeB"], false))
 
 
+## The director keeps a flick it cannot start yet (data/director/stick.json flickKeep, up to pendFollow.maxTicks = 90 ticks, with no cue while it waits), so the hub's wait for an answer is strike.refuseTicksKept (120)
+## and not refuseTicks (30), or the pad knocks "Didn't start" at 31 ticks and the held flick then fires anyway (docs/controls/flick-kept.md). Set together with flickKeep. switches.flickKept, off.
+static func flick_kept_on() -> bool:
+	return bool(t(["switches", "flickKept"], false))
+
+
 ## Two attack presses on one tick are one blow, the biggest (docs/controls/chord-pick.md; switches.chordPick, off): B with X or Y, or Y with X, goes as the bigger press and the smaller is told "chord".
 ## Independent of the right-hand switch (a keyboard chords too).
 static func chord_pick_on() -> bool:
@@ -258,7 +264,7 @@ static func haptic_impact_on() -> bool:
 ## Reads the data as it is, sets the switches in memory and drops the caches; nothing is written.
 static func pin_switches_off() -> void:
 	var sw: Dictionary = timing.get("switches", {})
-	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
+	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "flickKept", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
 		sw[k] = false
 	timing["switches"] = sw
 	clear_overrides()

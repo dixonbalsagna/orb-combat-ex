@@ -1,0 +1,14 @@
+[
+  { "at": 5, "do": "connect", "name": "the pad connects" },
+  { "at": 2, "do": "tap", "button": 0, "name": "pad A 1", "shot": false },
+  { "at": 2, "do": "tap", "button": 0, "name": "pad A 2", "shot": false },
+  { "at": 2, "do": "tap", "button": 0, "name": "pad A 3", "shot": false },
+  { "at": 2, "do": "tap", "button": 0, "name": "pad A 4", "shot": false },
+  { "at": 2, "do": "tap", "button": 0, "name": "pad A 5", "shot": false },
+  { "at": 2, "do": "tap", "button": 0, "name": "pad A 6" },
+  { "at": 8, "do": "audio", "name": "pad-only-start" },
+  { "at": 1, "do": "tap", "button": 2, "name": "pad X" },
+  { "at": 3, "do": "audio", "name": "pad-only-after-x" },
+  { "at": 1, "do": "key", "key": "Enter", "code": "Enter", "vk": 13, "name": "a key (a real activation)" },
+  { "at": 3, "do": "audio", "name": "pad-only-after-key" }
+]

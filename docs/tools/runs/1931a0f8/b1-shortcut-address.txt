@@ -1,0 +1,13 @@
+Build 1 (kept folder orb-first-play-1931a0f8-7a5a2d2c), the shortcut's own address words (no power word, travel=1.5): the black box's record of the match setup.
+(the FAIL line is the plain-address expectation travel 2; the shortcut asks for 1.5, which is what was read)
+--- no power word  (/index.html?planet=7&go=1&blackbox=1&preview=1&meteor=loud&tiles=1&audiolog=1&travel=1.5)
+    black box setup: {"power":true,"travel":1.5,"flatOut":5000,"planet":7}; sliders on page: 2; window.__travel 1.5, __flatout 5000
+    ok   setup.power is true
+    FAIL setup.travel is 2
+    ok   setup.flatOut is 5000
+    ok   both sliders are on the page (flat-out base, how far a launch carries)
+    sliders moved: {"flat":6200,"travel":1.55,"remembered":["6200","1.55"]}
+    ok   the flat-out slider sets window.__flatout and is remembered as orb_flatout
+    ok   the travel slider sets window.__travel and is remembered as orb_travel
+    ok   the labels read "how far a launch carries x1.55" and "flat-out flight base speed 6200"
+power page check: FAILED, 1 miss(es)

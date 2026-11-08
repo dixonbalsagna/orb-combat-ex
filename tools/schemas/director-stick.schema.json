@@ -317,6 +317,10 @@
           "type": "number",
           "minimum": 0
         },
+        "craterSlam": {
+          "type": "boolean",
+          "description": "Down at the top on a foe in the air is always CRATER SLAM, past the planner's crater gates (DirLaunch.chooseLaunch crater)."
+        },
         "families": {
           "type": "object",
           "additionalProperties": {

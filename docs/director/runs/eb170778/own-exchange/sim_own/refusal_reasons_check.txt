@@ -1,0 +1,12 @@
+ok    a flick while launched is refused once, and says launched (not a number)
+ok    a flick while down is refused once, and says down (not a number)
+ok    a flick while stunned is refused once, and says stunned (not a number)
+ok    a flick while locked is refused once, and says locked (not a number)
+ok    flicks buffered while launched say nothing yet, and the second replaces the first with no knock
+ok    the buffer ends with one refusal for the burst, with the hold's reason: launched
+ok    a newer flick replaces one still on its way, and nothing knocks for the one it replaced
+ok    locked, a mash on the full queue is one knock, with why (locked), and the next after a pause
+ok    free with three waiting, it says queue_full, once a burst (the drain has started one of his by the second)
+ok    never the computer's
+ok    with press.refusedCue off, nothing
+REFUSAL REASONS: 0 check(s) failed

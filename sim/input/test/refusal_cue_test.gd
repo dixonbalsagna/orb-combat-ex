@@ -120,12 +120,76 @@ func _hub_run(answer: String) -> Array:
 	return [refusals, knocks]
 
 
+## switches.flickKept: the hub waits refuseTicksKept (120), above the director's 90-tick keep. Before the first knock it says nothing, so a held flick that fires at tick 60 is told nothing; one nothing ever
+## answers is still told, at 96. The director's own refusals (stick_refused, press_refused) end the wait at once, so their knocks do not move. Off, the wait is refuseTicks (30) as ever.
+func _kept() -> void:
+	var sw: Dictionary = SimInputData.timing.get("switches", {})
+	sw["flickKept"] = true
+	SimInputData.timing["switches"] = sw
+	SimInputData.invalidate()
+	var k: int = SimInputData.ti(["strike", "refuseTicksKept"], 120)
+	ok(k >= 91 and SimInputData.flick_kept_on(), "kept: refuseTicksKept is above the director's 90-tick keep (%d) and the switch reads on" % k)
+	var held: Array = _kept_run(60, "start")
+	ok((held[0] as Array).is_empty() and int(held[1]) == 0, "kept: a flick the director held for 60 ticks and then started is told nothing (no 'Didn't start'): %s" % str(held))
+	var late: Array = _kept_run(112, "start")
+	ok((late[0] as Array).is_empty() and int(late[1]) == 0, "kept: held 112 ticks, the longest answer the probe saw (113),  it is still told nothing: %s" % str(late))
+	var cue: Array = _kept_run(60, "stick_refused")
+	ok((cue[0] as Array).is_empty() and int(cue[1]) == 0, "kept: a refusal the director says at 60 is the director's knock alone, the hub adds none: %s" % str(cue))
+	var none: Array = _kept_run(-1, "")
+	ok((none[0] as Array).size() == 1 and str(none[0][0]["code"]) == "no_answer" and int(none[1]) == 1, "kept: a flick nothing ever answers is still told 'no answer', once: %s" % str(none))
+	ok(int(none[2]) >= 10 + k and int(none[2]) <= 10 + k + 6, "kept: ... at refuseTicksKept live ticks after the request (request about tick 12, told at %d)" % int(none[2]))
+	sw["flickKept"] = false
+	SimInputData.timing["switches"] = sw
+	SimInputData.invalidate()
+	var off: Array = _kept_run(-1, "")
+	var r: int = SimInputData.ti(["strike", "refuseTicks"], 30)
+	ok((off[0] as Array).size() == 1 and int(off[2]) >= 10 + r and int(off[2]) <= 10 + r + 6, "kept off (the control): the unanswered flick is told at refuseTicks = %d, told at %d: %s" % [r, int(off[2]), str(off)])
+	var held_off: Array = _kept_run(60, "start")
+	ok((held_off[0] as Array).size() == 1 and str(held_off[0][0]["code"]) == "no_answer", "kept off (the control): the same held flick is told 'Didn't start' at %d, then it fires anyway: %s" % [r, str(held_off)])
+
+
+## One flick on a pad through the hub (request at tick 10), answered by `answer` at `at` ticks after the request (-1: never); run 200 ticks. Returns [refusals, knocks, the tick of the first knock].
+func _kept_run(at: int, answer: String) -> Array:
+	var hub := SimInputHub.new()
+	hub.set_humans(true, false)
+	hub.pad_button(7, "south", true)
+	hub.pad_button(7, "south", false)
+	hub.take_joins()
+	hub.set_humans(true, false)
+	var refusals: Array = []
+	var knocks: int = 0
+	var first: int = -1
+	var req: int = -1
+	for t in range(200):
+		if t == 10:
+			hub.pad_stick_right(7, 1.0, 0.0)
+		if t == 14:
+			hub.pad_stick_right(7, 0.0, 0.0)
+		var i: SimIntent = hub.intent(0)
+		if i.rsStart and req < 0:
+			req = t
+		if req >= 0 and at >= 0 and t == req + at:
+			if answer == "start":
+				hub.note_stick_started(0)
+			else:
+				hub.note_press_answered(0)
+		for h in hub.take_haptics():
+			if str(h.get("kind", "")) == "stick_refused":
+				knocks += 1
+				if first < 0:
+					first = t
+		refusals.append_array(hub.take_refusals())
+		hub.consumed()
+	return [refusals, knocks, first]
+
+
 func _hub() -> void:
 	var none: Array = _hub_run("")
 	ok((none[0] as Array).size() == 1 and str(none[0][0]["code"]) == "no_answer" and int(none[1]) == 1, "hub: an unanswered flick is one 'no answer' and one knock after refuseTicks (the control): %s" % str(none))
 	for a in ["start", "stick_refused", "press_refused"]:
 		var r: Array = _hub_run(a)
 		ok((r[0] as Array).is_empty() and int(r[1]) == 0, "hub: answered by %s, the hub's wait ends: no 'no answer', no second knock: %s" % [a, str(r)])
+	_kept()
 	# An answer for the other slot, or none, changes nothing for this one.
 	var hub := SimInputHub.new()
 	hub.note_press_answered(-1)

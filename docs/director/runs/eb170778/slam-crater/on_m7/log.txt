@@ -1,0 +1,24 @@
+04:06:56 page page_sun.json: flipped 70
+04:09:21 determinism on (field) exit 0: determinism passed
+04:12:30 rollback on (field) exit 0: PASS  2 sessions, 4800 confirmed-tick hash comparisons, 0 failure(s)
+04:15:25 two_states on exit 0: PASS  0 failure(s)
+04:15:33 a_press_check on exit 0: A PRESS: 0 check(s) failed
+04:15:46 arc_check on exit 0: ARC: 0 check(s) failed
+04:21:36 bark_reads_check on exit 0: bark_reads_check: passed
+04:21:42 beam_ai_check on exit 0: BEAM AI: 0 check(s) failed
+04:21:49 beam_front_check on exit 0: FRONT: 0 check(s) failed
+04:21:55 beam_move_check on exit 0: BEAM MOVE: 0 check(s) failed
+04:22:02 chase_tap_check on exit 0: CHASE: 0 check(s) failed
+04:22:14 city_push_check on exit 0: CITY PUSH: 0 check(s) failed
+04:22:26 driver_check on exit 0: DRIVER: 0 check(s) failed
+04:22:37 ending_check on exit 0: ENDING: 0 check(s) failed
+04:22:42 ending_team_check on exit 0: ENDING TEAM: 0 check(s) failed
+04:22:46 flick_keep_check on exit 0: FLICK KEEP: 0 check(s) failed
+04:22:53 flight_strike_check on exit 0: FLIGHT STRIKE: 0 check(s) failed
+04:23:17 floorlift_check on exit 0: FLOORLIFT: 0 check(s) failed
+04:23:35 follow_check on exit 0: FOLLOW: 0 check(s) failed
+04:23:41 full_send_check on exit 0: FULL SEND: 0 check(s) failed
+04:23:51 knock_wall_check on exit 1: KNOCK WALL: 1 check(s) failed
+04:30:28 launch_cost_check on exit 0: LAUNCH COST: 0 check(s) failed
+04:30:38 launch_cuts_check on exit 0: LAUNCH CUTS: 0 check(s) failed
+04:4x: stopped here by Encounter (loader_check on had run 15 minutes) so item 3's gates fit the 06:15 cut; the rest of this lane's checks pass switches off in ../sim_m7/

@@ -1,0 +1,14 @@
+[playtest] browser tools-pipeline-playtest-: time limit 1500 s of work (hard end 04:28:45, with 180 s allowed for a busy machine's start), CPU cap 25% of the machine, below-normal priority, profile C:\Users\<user>\AppData\Local\Temp\cap-tools-pipeline-playtest-e7cede
+[playtest] http://127.0.0.1:63378/index.html?planet=7&go=1&blackbox=1&audiolog=1&preview=1&preview=1 at 1280x720; the pad is connected only when a step says so
+[playtest] 6.0s shot (load)
+[playtest] 16.2s click (close the How to play card)
+[playtest] 20.6s click (start from the flashing notice) {"tick":0,"hp":[1600,1600],"p1human":false,"swing":false,"fst":["intro","intro"]}
+[playtest] audio ctx suspended@1282,running@18200, gesture {"at":17489,"kind":"pointerdown"}, first sound 25431 ms, peak 0.723, loud windows 345/1272, cues 126 (taken 126, dropped 0), rumble requests from the game 0, browser calls: navigator.vibrate 0 playEffect undefined pulse 0
+[playtest] 49.5s audio (before-any-pad) {"tick":1513,"hp":[844.1,1600],"p1human":true,"swing":false,"fst":["locked","locked"]}
+[playtest] 50.6s connect (the pad connects) {"tick":1582,"hp":[781.5,1600],"p1human":true,"swing":false,"fst":["locked","locked"]}
+[playtest] 52.7s tap 0 (pad A, nothing else pressed yet) {"tick":1721,"hp":[676.4,1600],"p1human":true,"swing":false,"fst":["locked","locked"]}
+[playtest] audio ctx suspended@1282,running@18200, gesture {"at":17489,"kind":"pointerdown"}, first sound 25431 ms, peak 0.723, loud windows 435/1600, cues 156 (taken 156, dropped 0), rumble requests from the game 4, browser calls: navigator.vibrate 0 playEffect undefined pulse 0
+[playtest] 56.0s audio (after-pad) {"tick":1903,"hp":[676.4,1600],"p1human":true,"swing":false,"fst":["free","free"]}
+[playtest] 57.1s key (a key (a real activation)) {"tick":1977,"hp":[676.4,1600],"p1human":true,"swing":false,"fst":["free","free"]}
+[playtest] audio ctx suspended@1282,running@18200, gesture {"at":17489,"kind":"pointerdown"}, first sound 25431 ms, peak 0.723, loud windows 435/1815, cues 156 (taken 156, dropped 0), rumble requests from the game 4, browser calls: navigator.vibrate 0 playEffect undefined pulse 0
+[playtest] 60.3s audio (after-key) {"tick":2168,"hp":[676.4,1600],"p1human":true,"swing":false,"fst":["free","free"]}

@@ -465,7 +465,7 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 			tgt.launchPower = lpow * (DirBrawl.freshMul(S, tgt, 4) if DirBrawl.freshHurts() else 1.0)   # for World's building aim (when granted)
 	DirRally.openNoDown(S, att, tgt, lpow, longOnly, tilt)   # 10-26 item 22(b): a rally's opening send is never down on a neutral stick
 	DirSwing.atLaunch(S, att, tgt, force)   # the swing is decided first, on one line; the plan runs on the line it ends on
-	var r: Dictionary = DirLaunch.chooseLaunch(S, att, tgt, force, longOnly, String(args.get("sends", "")) if args != null else "", tilt, forced or (gate.get("enabled", false) and not DirData.contact().is_empty()), lpow >= 0.0)
+	var r: Dictionary = DirLaunch.chooseLaunch(S, att, tgt, force, longOnly, String(args.get("sends", "")) if args != null else "", tilt, forced or (gate.get("enabled", false) and not DirData.contact().is_empty()), lpow >= 0.0, args != null and bool(args.get("crater", false)))
 	DirRally.clearNoDown()
 	DirSwing.atPlanned(S, r.best)
 	var parts: PackedStringArray = []

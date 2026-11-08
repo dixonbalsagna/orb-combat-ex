@@ -1,0 +1,38 @@
+ok    at a match's start the sky is the sunset key to the bit: the four colours and the stars' strength it always had (data read: true)
+ok    each of the 5 keys is its own colours on its place of the lap, and the stars follow the key
+ok    the world takes the key at WORLD_LIGHT 0.0: on each key its light is the data's own scaled by the knob, none at noon; the data's night has the ground at 0.10 of noon and the bodies at 0.58 (they dim about half as much)
+ok    ... the mood rides on top: full ruin at noon is the ruin's own multiply on the ground (scaled by the knob), and the bodies are untouched
+ok    ... and the pane hands it on: the ground, the water, the buildings, the trees, the crowd and each fighter's body hold the start's (sunset) light (1.0, 1.0, 1.0) (none at WORLD_LIGHT 0)
+ok    between the keys and at the mood's extremes the port agrees with Art's reference code (off by 0.50 and 0.61 of 255 at most)
+ok    one lap at the limit takes 48.7 s (the reference: 48.7)
+ok    the place alone, under that drive: no band changes by more than 0.035 in a second (worst 0.0350) and their mean by no more than 0.015 (0.0142)
+ok    with the mood and the damage slammed on and off, and a driver that jumps: no band changes by more than 0.05 in a second (worst 0.0500) and their mean by no more than 0.02 (0.0188)
+ok    asked for all at once, frenzy is full after 30.0 s, ruin after 120.0 s and a wrecked town's glow after 50.0 s (Art's least: 30, 120, 50); 2 towns
+ok    with reduced motion the drift and the mood hold, and the place blend stays
+ok    without it the sky drifts 0.0125 of a cycle a minute
+ok    --staticsky keeps the sunset everywhere, --sky holds a key (night's colours at the spawn), and the web page's URL may name them
+ok    a town's glow comes into view over at least a second, whatever the camera's speed: it rises by at most 0.0167 a tick (a sixtieth is 0.0167), is 0.10 when the camera arrives after 12 ticks and full after 65
+ok    a pane's sky costs 44 microseconds a frame while it moves, on this machine, and is worked out on 40 frames of 600 while it stands
+ok    by default the reaction is off (main, with no --skyreact)
+ok    --skyreact turns it on
+ok    ... and off again without it; the web page's URL may name it
+ok    camera 0 up, default: nothing parts at tier 4 (weights 0.00 0.00, parting 0)
+ok    camera 0 up, reaction on: full at tier 4 (1.00 1.00)
+ok    camera 0 up, reaction on: half at tier 3, nothing at tier 1 (0.50 0.00)
+ok    camera 0 up, reaction on: with reduced motion the shader's parting is off
+ok    camera 0 up, reaction on: nothing for a tier 4 fighter off the screen (0.00 0.00)
+ok    camera 3000 up, default: nothing parts at tier 4 (weights 0.00 0.00, parting 0)
+ok    camera 3000 up, reaction on: full at tier 4 (1.00 1.00)
+ok    camera 3000 up, reaction on: half at tier 3, nothing at tier 1 (0.50 0.00)
+ok    camera 3000 up, reaction on: with reduced motion the shader's parting is off
+ok    camera 3000 up, reaction on: nothing for a tier 4 fighter off the screen (0.00 0.00)
+ok    camera 9000 up, default: nothing parts at tier 4 (weights 0.00 0.00, parting 0)
+ok    camera 9000 up, reaction on: full at tier 4 (1.00 1.00)
+ok    camera 9000 up, reaction on: half at tier 3, nothing at tier 1 (0.50 0.00)
+ok    camera 9000 up, reaction on: with reduced motion the shader's parting is off
+ok    camera 9000 up, reaction on: nothing for a tier 4 fighter off the screen (0.00 0.00)
+ok    the cloud pattern moves the same for the same camera travel, across the planet's seam too (worst error 0.0000000 cells)
+ok    with reduced motion the clouds stand still (no wind in the pattern's place)
+sky check passed
+WARNING: 274 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+ERROR: 9 resources still in use at exit (run with --verbose for details).

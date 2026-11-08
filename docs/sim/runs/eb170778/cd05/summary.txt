@@ -1,0 +1,32 @@
+HEAD eb170778
+parity-wired-sources committed in scratch
+mine: fighter.gd, state.gd, hash.gd, forms.gd, replay.gd, PROTAGONIST/forms.json (perMass 16.0, ownMass 32.0), parity.gd, cross_check.gd
+grants: World structures.gd (+2) and collateral.gd (-2); Tools fighters-forms.schema.json
+import 0; parse errors 0
+ground_pins: exit 0 in 8 s; script errors 0; GROUND: 2 check(s) failed
+6:  FAIL  gen 1 planet matches (seeds 7, 3, 25, 11; rings of 2400, 1200, 4800, 2400) hash as they did before window 2
+7:  FAIL  the hand-made world and a gen 1 turn hash as before (turn: n=1 988ea85fd0ae96f6)
+pinned: {'planet7/2400': '86b12da67f8805a5', 'planet3/1200': '844d219bcbb9d2c1', 'planet25/4800': '6d4ac05dab55a8a6', 'planet11/2400': 'ffebed04b37ee210', 'handmade': 'd51ad87b4669fc23', 'turn': 'n=1 988ea85fd0ae96f6'}
+ground_check: exit 0 in 8 s; script errors 0; GROUND: 0 check(s) failed
+golden: exit 0 in 118 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (176002 ticks), 2 replays
+fightHash  same
+RESULT: light digests and tick counts identical
+cd05-sim sha1 28c8974910b28712f47344d6aa37ad3ab263bbe6 sha256 4c94ec86f8fc 8 files
+golden-regen sha1 c94918a0c9bc6579bb2925a772e13a2e1f1ed714 sha256 857072eac559 1 files
+grant-world-witness sha1 f22cf10246aa75571a488b967529083454e7aee7 sha256 2ebc6e5eb101 2 files
+grant-world-ground-pins sha1 182f8557c69e502b1d1a1465fc93dade53e921a6 sha256 b81cc2614a74 1 files
+grant-tools-forms sha1 86a313c7cf07608b78a03c4611fdd38c4cc6842a sha256 b81645e7fbf7 1 files
+validate 0; 321 files checked, 0 errors, 2 warnings
+parity through gate.mjs: exit 0 in 271 s; golden check passed gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/core/tools/parity.gd: no SCRIPT ERROR lines 
+24:ok    wired numbers change a match
+79:ok    forms: Witness and Trial
+80:ok    menace at the cap decays after its delay, whatever the dead (CD-05)
+cross: exit 0 in 122 s; script errors 0; CROSS: 0 check(s) failed
+two_states: exit 0 in 53 s; script errors 0; PASS  0 failure(s)
+casualty_feed: exit 0 in 4 s; script errors 0; CASUALTYFEED: 0 check(s) failed
+xproc: exit 0 in 40 s; script errors 0; PASS  6 replays from 2 recording processes, each played in a fresh process: Hard a6e87d80c96f7d75, Easy 8940ca7de8cf4e74
+xproc_neg: exit 0 in 49 s; script errors 0; PASS negative control: 4 of 4 breaks caught (45.5 s)
+desync: exit 0 in 18 s; script errors 0; PASS  14 runs, 18 checkpoints matched, 0 failure(s)
+lan: exit 0 in 53 s; script errors 0; LAN: 0 check(s) failed
+det: exit 0 in 132 s; script errors 0; determinism passed
+done

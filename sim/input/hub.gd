@@ -447,7 +447,7 @@ func take_refusals() -> Array:
 
 
 func consumed() -> void:
-	var refuse: int = SimInputData.ti(["strike", "refuseTicks"], 30)
+	var refuse: int = SimInputData.ti(["strike", "refuseTicksKept"], 120) if SimInputData.flick_kept_on() else SimInputData.ti(["strike", "refuseTicks"], 30)   # flickKept: the director holds a flick up to 90 ticks and says nothing while it does
 	for s in range(2):
 		if int(_stick_wait[s]) >= 0:
 			_stick_wait[s] += 1
