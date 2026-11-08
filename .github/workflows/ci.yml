@@ -148,6 +148,8 @@ jobs:
         run: node tools/preview/preview-selftest.mjs --require-browser
       - name: Stack self-test (HEAD plus parks in order in a scratch tree, the first conflict by file and owner, what is missing; no Godot, no browser)
         run: node tools/preview/stack-selftest.mjs
+      - name: "Pack verify self-test (a built pack's data keys against the build's list: a held or off row that is on in the data is found; no Godot, no browser)"
+        run: node tools/preview/pck-verify-selftest.mjs
       - name: Pixel pipeline self-test (headless Chrome, mock page)
         run: node tools/flash/pixel-selftest.mjs --require-browser
       - name: Clip identity self-test (a clip records its seed and pairing; two different matches are not shown side by side)

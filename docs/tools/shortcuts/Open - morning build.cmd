@@ -1,6 +1,6 @@
 @echo off
-title Orb Combat EX - the morning build (main a8bc66e2)
-rem The KEPT folder is the morning build (main a8bc66e2): a copy made by tools\preview\handover.mjs, kept in the repository's homework\Files\builds and never rebuilt. It is served on its own port, 8768, so it never meets the earlier kept builds on 8766 and 8767.
+title Orb Combat EX - morning build
+rem The KEPT folder is a build made by tools\preview\stack-preview.mjs and copied by tools\preview\handover.mjs into the repository's homework\Files\builds (git-ignored), never rebuilt. It is served on its own port, 8768, so it never meets the builds before it.
 set "KEPT=%~dp0..\Files\builds\orb-first-play-a8bc66e2-e80b8e3d"
 for %%I in ("%KEPT%") do set "KEPT=%%~fI"
 set "ADDR=http://127.0.0.1:8768/index.html?planet=7&meteor=loud&tiles=1&go=1&blackbox=1&audiolog=1"
@@ -26,7 +26,7 @@ if not exist "%KEPT%\serve.mjs" (
   exit /b 1
 )
 echo The page is not running, so its server is started in a new window that stays open.
-start "Orb Combat EX - the game server (morning build, port 8768)" node "%KEPT%\serve.mjs" 8768
+start "Orb Combat EX - the game server (port 8768)" node "%KEPT%\serve.mjs" 8768
 powershell -NoProfile -Command "$ok=$false; for ($i=0; $i -lt 30 -and -not $ok; $i++) { try { (Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 'http://127.0.0.1:8768/index.html').StatusCode | Out-Null; $ok=$true } catch { Start-Sleep 1 } }; if ($ok) { exit 0 } else { exit 1 }"
 if %errorlevel%==0 (
   start "" "%ADDR%"

@@ -190,6 +190,17 @@ async function main() {
   console.log(`  build: ${b.cached ? 'cached' : `built in ${Math.floor(b.seconds / 60)} m ${b.seconds % 60} s`}, ${b.web}`);
   if (b.scriptErrors && b.scriptErrors.length) { console.log(`  WARNING: the Godot logs hold ${b.scriptErrors.length}+ script errors, the first:`); for (const l of b.scriptErrors.slice(0, 3)) console.log(`    ${l.trim().slice(0, 200)}`); }
   let failed = false;
+  // The proof from the built pack (2026-11-07): every data row's key read out of index.pck itself and compared with the list; a held or off row that is on in the data fails the build.
+  let pckBad = false;
+  try {
+    const { verifyPack } = await import('./pck-verify.mjs');
+    const pv = verifyPack(readFileSync(join(b.web, 'index.pck')), b.table, b.active);
+    const nl = String.fromCharCode(10);
+    try { writeFileSync(join(dirname(b.web), 'pck-verify.txt'), [...pv.lines, ...pv.problems.map((x) => `PROBLEM ${x}`), `pck verify: ${pv.checked} keys read from the pack, ${b.active.length} rows on, ${pv.problems.length} problem(s)`].join(nl) + nl); } catch { /* the folder is gone */ }
+    console.log(`  pck verify         : ${pv.checked} keys read from the built pack, ${pv.problems.length} problem(s)${pv.ok ? '' : ' (the build is NOT what its list says)'}`);
+    for (const x of pv.problems) console.log(`  PROBLEM (pack): ${x}`);
+    pckBad = !pv.ok;
+  } catch (e) { console.log(`  pck verify could not run: ${e.message}`); pckBad = true; }
   if (has('--no-smoke')) console.log('  smoke check: skipped (--no-smoke)');
   else if (b.cached && b.meta.smoke && b.meta.smoke.ok) console.log(`  smoke check: passed when this build was made (${b.meta.smoke.at})`);
   else {
@@ -202,6 +213,7 @@ async function main() {
       failed = !r.ok;
     } catch (e) { console.log(`  smoke check could not run: ${e.message}`); failed = true; }
   }
+  if (pckBad) failed = true;
   if (failed && !has('--no-serve')) console.log('  NOTE: the smoke check failed (above); the build is served anyway so it can be looked at.');
   if (has('--no-serve')) process.exit(failed ? 1 : 0);
   const want = opt('--port');
