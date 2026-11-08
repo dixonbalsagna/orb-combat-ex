@@ -68,7 +68,7 @@ More characters must be addable after launch (see the Modding and Extensibility 
 | Endings | KO, or the planet is destroyed |
 | Procedural planets | Vary in size, biomes and settlements; seeds are shareable. The planet can be destroyed at top tiers |
 | Mobile controls | Both virtual stick and simplified tap, player's choice |
-| Copyright holder | Curtis A |
+| Copyright holder | Orb (the legal name is kept off the repository) |
 | Repo | Renamed to wraparound-fighter, then to orb-combat-ex when the title was picked |
 | Token plan | Approved (ADR 0005) |
 | Lemming Ball Z provenance | Unknown; nothing carries over |
@@ -1400,7 +1400,7 @@ What follows from it:
 - The public page when the build returns: three short versions to choose from. "these need to be high quality before you show me, don't be afraid to iterate on it until it reads perfectly."
 - A store home: not yet, our call, meaning "I'd like honest recommendations, steps to follow, all written for a beginner to this type of business. I've never sold a game before so I need guidance in order that I don't spin my wheels, so to speak."
 - The licence: Orb wants Legal's one-page rundown.
-- Individual or company: not yet; "give recommendations for starting a company for the purposes of selling the game more effectively, state of oregon, USA".
+- Individual or company: not yet; "give recommendations for starting a company for the purposes of selling the game more effectively" (state kept off the repository).
 - A stomp on a downed opponent's head: our call, but "I kind of understand that there are contexts, like a brutal curb stomp versus over-the-top crashing down from the sky should be judged differently, definitely give me more context on this before it affects any rulings."
 
 ## Orb answers homework 22, 22b, 23 and 26 (2026-10-16 evening)
@@ -1665,3 +1665,5 @@ Orb, on the camera: "No, we were standing by the same hill, and I looked at both
 **The second player, Orb's ruling (2026-11-07):** "My official ruling on the multiplayer tests is that I have someone trusted and involved in the project whose input is necessary. They were the player on the Old PC and they bypass all flash and other safety concerns at the same level I do. just think of them as Orb 2." The project calls them Orb 2: private builds and tests Orb may see, Orb 2 may see too. Public builds are unchanged.
 
 **The public test build, Orb (2026-11-07, after the independent audit, CD-03):** Orb chose to delegate the decision, and named the EP as owner under five written conditions: (1) the nightly check runs on the public build every day; (2) the take-down works without the game checks; (3) the build comes down at once if any scene reads over 3, or anyone reports a problem; (4) the owner reconfirms in writing every two weeks; (5) it ends on 15 November unless the owner renews it on fresh facts. Until the nightly runs and the take-down works, the EP keeps /play/ down. The EP took it down the same day.
+
+**Personal details in the repository, Orb (2026-11-07, CD-07):** "orb" is a pseudonym and the account folder name gives nothing away; Orb chose the EP's recommendation: remove the legal name and the state from the current files and move the state-specific company guide off the repository (to .private/), with no history rewrite.

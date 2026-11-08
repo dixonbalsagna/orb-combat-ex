@@ -37,11 +37,11 @@ Title; a one-sentence pitch; a longer description; **the AI statement near the t
 - **itch.io** does not require a rating; it uses content tags and warnings.
 - **Your game:** graphic violence is the working target, so expect the top of the scale (see `guide-stomp-and-ratings.md`). **Answer from the real build**, and do it before you open a store page, so nothing surprises you.
 
-## 5. Tax basics for a US individual (Oregon)
+## 5. Tax basics for a US individual
 - **You owe tax on what you earn from the game**, even a small amount. If you work for yourself you pay **self-employment tax of 15.3%** on net profit on top of income tax (IRS rules; I did not re-read them today).
 - **Keep records from the first dollar:** every sale report, every cost (the Steam fee, subscriptions such as Suno, domain, software). Costs reduce your profit.
-- **Quarterly estimates:** once you expect to owe a few hundred dollars, the IRS and Oregon expect payments during the year, not only in April.
-- **Sales tax:** Oregon has none. Steam and itch.io's collecting mode handle sales tax and VAT for you. If you let itch.io pass sales straight to your own PayPal or Stripe, **you** become the seller and own VAT and chargebacks, so pick the collecting mode.
+- **Quarterly estimates:** once you expect to owe a few hundred dollars, the IRS and the state expect payments during the year, not only in April.
+- **Sales tax:** Steam and itch.io's collecting mode handle sales tax and VAT for you. If you let itch.io pass sales straight to your own PayPal or Stripe, **you** become the seller and own VAT and chargebacks, so pick the collecting mode.
 - **The tax interview** on Steam and itch.io asks for your name, address, tax ID and a form (a W-9 for a US person). Have your Social Security number or EIN ready; **never** type them anywhere except those official forms.
 - **When to pay for help:** a CPA or an enrolled agent for one hour before your first sale, and again at tax time in the first year. It is usually worth it.
 
@@ -49,7 +49,7 @@ Title; a one-sentence pitch; a longer description; **the AI statement near the t
 Use the same words everywhere: `go-to-market.md` section 1 and `writing-note.md`. Steam's survey: pre-generated AI content yes; live-generated no (no AI model runs while you play). itch.io: tick graphics, text and dialogue, and code (and sound when the Suno music ships). Never call anything human-made unless the record shows it.
 
 ## 6. Costs you should expect (rough, first year)
-Steam $100 (recouped at $1,000 of sales); itch.io $0; a company (optional) about $200 to $450 in Oregon the first year; an accountant about $200 to $500; Suno about $8 to $24 a month while you make music; a domain about $15 a year. You can start for $0.
+Steam $100 (recouped at $1,000 of sales); itch.io $0; a company (optional) about $200 to $450, depending on the state, the first year; an accountant about $200 to $500; Suno about $8 to $24 a month while you make music; a domain about $15 a year. You can start for $0.
 
 ## 7. Traps to avoid
 Taking money before the flashing is fixed or the title is checked; putting your legal name where you want a pseudonym (the bank and the store need your legal name; the public page can say "Orb"); copying another game's words into your tags; promising features; buying or trading for reviews; a mailing list before you know how to run one.
