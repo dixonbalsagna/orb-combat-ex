@@ -65,9 +65,9 @@ Send it to Legal through the EP with the answers to these.
 5. Dialogue: no catchphrases or plot beats. Search the boldest lines in quotes.
 6. Audio: original, or a licence on file. Never "in the style of" a named theme. No samples from shows or games.
 7. Third-party items (font, library, asset, music): a row in `licence-register.md` before it is merged.
-8. Any doubt, or "it reminds me of...": stop and send it to Legal. Nothing flagged ships.
+8. Any doubt about a name, a whole character, a trademark or a copied asset, or "it reminds me of a specific character or work": stop and send it to Legal. Doubts about a pose, a gesture or a look (hand shape, arm angle, glow strength, how many marks) are creative direction and go to the creative rulebook's owners, Art and Animation under Orb (Orb's ruling of 2026-11-07, audit CD-15); they are never a Legal flag.
 
-Legal answers GO, CONDITIONAL or NO-GO in `review-log.md`. A flagged item cannot be locked or shipped until it is closed, and no flag stays open at a phase gate.
+Legal answers GO, CONDITIONAL or NO-GO in `review-log.md` for the items in Legal's scope (names, whole-character likeness, trademarks, copied assets and licences, and player safety: flash and light, data and privacy, ratings and stores). A flag in that scope cannot be locked or shipped until it is closed, but only at the gate its horizon tag names (private, web or store): a flag tagged for a later release does not hold an earlier gate. Pose, gesture and look rows are advice from the creative rulebook, are tagged Moved in the log, and **never block a phase gate or a release**. See "How to read it" in `review-log.md`.
 
 ## Words we use in public
 
