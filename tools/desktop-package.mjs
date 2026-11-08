@@ -26,9 +26,10 @@ export const LOCK_ON = /"lock_reduce_flashing"\s*:\s*true/;
 export const LOCK_OFF = /"lock_reduce_flashing"\s*:\s*false/;
 
 /** The notice file the site uses (tools/site.json interim.notice, default site-interim.json), parsed; a draft is an error. */
-export function activeNotice(toolsDir = HERE) {
-  let notice = 'site-interim.json';
-  try { const c = JSON.parse(readFileSync(join(toolsDir, 'site.json'), 'utf8')); if (c.interim && c.interim.notice) notice = c.interim.notice; } catch { /* the default */ }
+export function activeNotice(toolsDir = HERE, noticeFile = null) {   // noticeFile: a notice named by the caller (the self-test names the owner notice, so it does not depend on whether the site is offline: 2026-11-07, the take-down set interim to null and the self-test read the draft default)
+  if (!noticeFile && toolsDir === HERE && process.env.ORB_PACKAGE_NOTICE) noticeFile = process.env.ORB_PACKAGE_NOTICE;   // a test hook: the self-test and its child processes name the owner notice; a real package build never sets it
+  let notice = noticeFile || 'site-interim.json';
+  if (!noticeFile) { try { const c = JSON.parse(readFileSync(join(toolsDir, 'site.json'), 'utf8')); if (c.interim && c.interim.notice) notice = c.interim.notice; } catch { /* the default */ } }
   const f = join(toolsDir, notice);
   const t = JSON.parse(readFileSync(f, 'utf8'));
   if (t.draft !== false) throw new Error(`${f} is still a draft: Legal's words are not in, so no download is packed with them`);

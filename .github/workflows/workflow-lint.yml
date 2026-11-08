@@ -1,0 +1,32 @@
+# The workflow lint (corrective directive CD-01, Tools, 2026-11-07): the one workflow that must keep working when ci.yml does not.
+# 2026-10-27 an unquoted ': ' in a step name made ci.yml unparseable and CI silently stopped running for days; a workflow that fails to parse never shows
+# a red mark of its own. This file is small, has one job and no dependency on any other workflow file, so a broken ci.yml fails HERE, on the push that
+# broke it, with the file and the line named. It runs on every push and every pull request, on every branch.
+# Docs: docs/tools/ci-guards.md
+name: Workflow lint
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Every workflow file parses (node tools/check-workflows.mjs)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+      # The lint's own self-test first: a lint that cannot fail proves nothing.
+      - name: The lint catches what it is written to catch (self-test)
+        run: node tools/check-workflows-selftest.mjs
+      - name: Every file under .github/workflows and .github/actions parses
+        run: node tools/check-workflows.mjs

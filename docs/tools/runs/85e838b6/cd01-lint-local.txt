@@ -1,0 +1,9 @@
+# CD-01 proof, local half: the lint catches a ci.yml with an unquoted ': ' in a step name (base 85e838b6 plus the working tree)
+$ node tools/check-workflows.mjs .github/workflows/ci.yml   # the committed-shape file
+check-workflows ok: 1 files
+exit 0
+
+$ node tools/check-workflows.mjs <ci.yml with step name "node qa/run-all.js: the broken step">
+C:\Users\itsha\AppData\Local\Temp\broken-ci.yml:42: the plain value of "name" holds ": " (a mapping value is not allowed here): quote it
+check-workflows FAILED: 1 problem in 1 files
+exit 1

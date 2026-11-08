@@ -247,43 +247,6 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=fights2 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control'
       - name: Two-fights rollback check, a trade at tick 0
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=fights2 --trade-at=0 --seeds=1 --ticks=300 --profiles=lan,p120'
-      # The field's memos by place (docs/architecture/field-ground.md, determinism rule 3; Simulation's field-place): a record joining the store forgets only the columns and buildings it can reach, and everything the memos hold must equal a fresh read, to the bit. Lands with field-place (memo_check.gd is its file).
-      - name: Memo check (the field's memos by place hold what a fresh read gives, to the bit, for records of each kind, size and place, AI fights, a rollback and two states)
-        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/memo_check.gd'
-      - name: Memo check, negative control (stale columns and stale buildings put back must be seen)
-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/memo_check.gd -- --negative-control'
-      - name: Chase tap check (a launch chased by a plain tap, the catch, the price, the blow and the landing, two runs and one hash)
-        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/chase_tap_check.gd'
-      - name: Chase rush check (a rush at a body in the air keeps the split open and the pane follows him, no flapping, the picture's step and jolt inside their limits)
-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/camera/tests/chase_rush_check.gd'
-      - name: Power check (one energy model, the shares of every launching move, flat-out flight, two runs one hash and a rollback across launches)
-        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/power_check.gd'
-      - name: Power check, negative control (a send past what he has must be seen)
-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/power_check.gd -- --negative-control'
-      - name: 'Press check (Game Design press-decides: a held B and a stance circle, the stops and the prices, the one rule for B, the steal, two runs one hash)'
-        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/press_decides_check.gd'
-      - name: Rec check (the ground's records and water by the coarse grid against every big record scanned, the place table against the plain walk; Simulation places-records)
-        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/rec_check.gd'
-      - name: Rec check, negative control (an emptied coarse grid must be seen)
-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/rec_check.gd -- --negative-control'
-      - name: Cross check (teams by starting slot, shots from outside, replays; Simulation cross-fights)
-        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_check.gd'
-      - name: Cross check, negative control (a lost shot, a double landing and a lost shot going over must be seen)
-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_check.gd -- --negative-control'
-      - name: Field static check (the second memo and the split of the field give what a fresh read gives, on planets 7 and 12; Simulation field-static)
-        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/field_static_check.gd'
-      - name: Field static check, negative control (a kept ground without the store's delta must be seen)
-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/field_static_check.gd -- --negative-control'
-      - name: 'Cross end check (how a fight ends in a match of two fights: the fallen body, rejoinAfter; Simulation cross-end)'
-        run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_end_check.gd'
-      - name: Cross end check, negative control (a fallen body left standing must be seen)
-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_end_check.gd -- --negative-control'
-      - name: Two-fights rollback check (four slots, lan, p120 and far; Netcode two-fights)
-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=fights2 --seeds=1 --ticks=300 --profiles=lan,p120,far'
-      - name: Two-fights rollback check, negative control
-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=fights2 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control'
-      - name: Two-fights rollback check, a trade at tick 0
-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --setup=fights2 --trade-at=0 --seeds=1 --ticks=300 --profiles=lan,p120'
       # The rollback core (docs/net/rollback.md section 6): two peers over the loopback must match a straight run's gameplay hash at every confirmed tick; about a minute.
       - name: Rollback check (two peers over the loopback match the straight run, LAN and two lossy profiles)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/rollback_check.gd -- --seeds=1 --ticks=300 --profiles=lan,p80j,p200'
@@ -413,8 +376,6 @@ jobs:
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/enet_check.gd -- --ticks=1800 --profiles=lan,p200'
       - name: Two-process ENet match, negative control (a perturbed joiner must be caught)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/enet_check.gd -- --ticks=1800 --profiles=lan,p200 --negative-control'
-      - name: Two-process ENet match, a late host (the PC that joins started 40 s first; Netcode two-fights; CI only, it opens a port)
-        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/enet_check.gd -- --ticks=600 --profiles=lan --late-host=40000'
       - name: Two-process ENet match, a late host (the PC that joins started 40 s first; Netcode two-fights; CI only, it opens a port)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/enet_check.gd -- --ticks=600 --profiles=lan --late-host=40000'
 

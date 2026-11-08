@@ -11,7 +11,8 @@ let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
 const here = import.meta.dirname;
 const lic = JSON.parse(readFileSync(join(here, 'site-licences.json'), 'utf8'));
-const notice = activeNotice();
+process.env.ORB_PACKAGE_NOTICE = 'site-interim-owner.json';   // the children below inherit it (see activeNotice)
+const notice = activeNotice();   // the owner notice by name: the self-test must not depend on whether the site is offline right now
 const info = { commit: 'abc1234', date: '2026-10-28' };
 const tmp = mkdtempSync(join(tmpdir(), 'desktop-pkg-'));
 const MIN = { minBytes: 64 };
