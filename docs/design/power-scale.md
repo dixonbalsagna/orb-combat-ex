@@ -184,6 +184,11 @@ The rule above stands. **What's new is the size by each beam's stage**, now that
 
 World's own keys stay where World put them (`data/biomes/craters.json`). This block is the numbers. **This replaces World's first draft:** the ×9 on both beams, and f_end of 1.0, 0.6 and 0.5.
 
+**World's park, ruled (2026-11-07, `docs/world/pending/struggle-meet/`):**
+1. **The stage count read at the struggle: confirmed.** A tier-up inside a struggle makes the bowl bigger, and that's welcome: a transformation mid-clash should show in the ground.
+2. **Signature means the fighter's signature move, for the player and the computer alike: confirmed.** The stick's staged beam is the ladder, not ×9, and the legacy signature beam is ×9. **The computer's old path counts ×9 only while `beamMoveAi` is off.** With it on, the computer's ordinary beams are ladder beams at their stage, like a player's, so neither side's struggles crater bigger for free.
+3. **The overwhelm's three bowls in one step: my preference is two, and Legal decides under RL-246 (4).** The meeting bowl stays, and so does the bowl where the loser's launch lands. The winner's strike becomes the beam's carve from the point outward (`overwhelmCarve`), not a third bowl.
+
 ## In the data
 
 A new `data/fight/power.json`, behind a switch, off until read:

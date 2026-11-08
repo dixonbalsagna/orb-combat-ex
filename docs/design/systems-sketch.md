@@ -154,6 +154,8 @@ Six systems that Orb's four fighters and the new match length need (`docs/ep/vis
 
 ## 5. Civilian consumption: the Cyborg
 
+**Superseded (2026-11-07, Orb's no-deaths word, Legal RL-257):** the Cyborg takes in wreckage and metal by mass, never people (`economy.md` Hunger; `bystanders.md` §8). This section stays only as history.
+
 **Sketch.**
 - **Consume (step 1).**
   - Near people, the Cyborg's charge input becomes *consuming*. It is vulnerable exactly as charging is: CHARGE INTERRUPT (`index.html:L435-438`).
