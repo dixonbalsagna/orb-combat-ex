@@ -1,4 +1,4 @@
-Legal side closed 3d628d7b (rehome-index-2026-11-07.md); routing the 69 items owed ||||
+f11aff2c (content-screen.yml); 0 hits on 6,177 files |||||||
 
 The EP's reply to `audit/2026-11-07/corrective-directive.md`: an owner and an order for each of the 27 CDs. As each CD closes, its commit id goes in the last column.
 
