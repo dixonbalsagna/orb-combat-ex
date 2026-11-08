@@ -75,7 +75,7 @@
         { "icon": "reads", "col": 0, "text": "Watch your rival: his stance and his finishing move." },
         { "icon": "launch_info", "col": 0, "text": "Get an opening, then press launch. It recharges; until then it only hits hard." },
         { "icon": "struggle", "col": 1, "text": "Finishing-move rings: hold or slip. Guard a launch, dodge a close-up attack, press to answer a beam." },
-        { "icon": "toll", "col": 1, "text": "The box at the top counts the damage to the world." },
+        { "icon": "damage", "col": 1, "text": "The box at the top counts the damage to the world." },
         { "icon": "strip", "col": 1, "text": "The strip is the whole planet. It wraps." },
         { "note": "reopen", "col": 1, "text": "" },
         { "icon": "first_run_about", "col": 1, "text": "About this game and its licenses: Pause, then About." }

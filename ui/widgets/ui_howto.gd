@@ -3,7 +3,7 @@ extends RefCounted
 ## The How to play card (docs/ui/hud-spec.md section 17): three short pages, shown on the first run and from the pause menu.
 ##   1. What you control                 (the core idea and the four held states: press, guard, dodge, escape)
 ##   2. Controls                         (the keys, pad glyphs or touch controls of the player's own device)
-##   3. Reading the fight                (the few HUD reads: crown, cards, brink, windows, finisher rings, toll, strip)
+##   3. Reading the fight                (the few HUD reads: crown, cards, brink, windows, finisher rings, damage chip, strip)
 ## Every word is data (ui/data/howto.json). `plan` is pure geometry, so hud_check can prove that every page fits at every size and
 ## that every button is a real touch target; `draw` paints from a plan. The card scales with the screen and its density (text is at
 ## least the HUD's floor, 12 dp on a phone) and shrinks its type until a page fits, rather than clipping.
@@ -720,7 +720,7 @@ static func _icon(ci: CanvasItem, name: String, c: Vector2, sz: float, cs: float
 			ci.draw_arc(c, r * 0.45, 0.0, TAU, 20, ink, w, true)
 			ci.draw_arc(c, r * 0.75, 0.0, TAU, 24, dim, w, true)
 			ci.draw_arc(c, r, 0.0, TAU, 28, Color(dim, 0.45), w, true)
-		"toll":
+		"damage":
 			var tr := Rect2(c - Vector2(r * 1.2, r * 0.55), Vector2(r * 2.4, r * 1.1))
 			UiIcons.rrect(ci, tr, r * 0.25, Color(UiLook.col(UiLook.SCRIM), 0.9), Color(UiLook.col(UiLook.EDGE), 0.7), w * 0.8)
 			ci.draw_line(tr.position + Vector2(r * 0.3, r * 0.4), tr.position + Vector2(r * 1.6, r * 0.4), dim, w)

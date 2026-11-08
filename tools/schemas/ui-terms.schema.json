@@ -4,7 +4,7 @@
   "title": "ui terms (schema 1)",
   "description": "ui/data/terms.json: every player-facing word the HUD draws (docs/narrative/glossary.md). Version field: schema. Policy: the top level is closed; each table is a map of stable keys to non-empty text, so a tone change or a translation is a data swap. Text values may hold {placeholders}. Stance ids and stance texts must agree (checked by tools/lib/xref.js).",
   "type": "object",
-  "required": ["schema", "stance_ids", "stance", "tier", "meter", "region", "stage", "internal_stage", "card", "chip_stage", "station", "state", "toll", "banner_rename", "caption", "prompt", "planet", "places"],
+  "required": ["schema", "stance_ids", "stance", "tier", "meter", "region", "stage", "internal_stage", "card", "chip_stage", "station", "state", "damage", "banner_rename", "caption", "prompt", "planet", "places"],
   "properties": {
     "schema": { "const": 1 },
     "note": { "type": "string" },
@@ -19,7 +19,7 @@
     "chip_stage": { "$ref": "#/$defs/texts" },
     "station": { "$ref": "#/$defs/texts" },
     "state": { "$ref": "#/$defs/texts" },
-    "toll": { "$ref": "#/$defs/texts" },
+    "damage": { "$ref": "#/$defs/texts" },
     "banner_rename": { "$ref": "#/$defs/texts" },
     "caption": { "$ref": "#/$defs/texts" },
     "prompt": { "$ref": "#/$defs/texts" },

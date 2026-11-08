@@ -302,6 +302,8 @@ func _process(delta: float) -> void:
 		hud.hub.alert["until"] = float(hud.hub.alert["age"]) + 1.0   # --warn holds the warning on for the still (in play it is held for 1.5 s)
 	if args.has("stage"):
 		hud.hub.model(0).cstage_t = 0.0
+	if args.has("refuse"):
+		hud.hub.model(0).teach_left = maxf(hud.hub.model(0).teach_left, 1.0)   # --refuse holds the word up for the still (in play it is up for 1.5 s)
 	if args.has("pulse"):
 		hud.hub.model(0).beat_hold = 1.0   # --pulse holds the beat's ring on for the still (in play it follows the beats)
 	if args.has("charge"):
@@ -311,18 +313,16 @@ func _process(delta: float) -> void:
 		m0.charge_t = m0.charge_dur * (float(cpp[1]) if cpp.size() > 1 else 0.6)   # hold the ring where it is
 	if args.has("ack"):
 		hud.hub.model(0).press_ack_t = 0.08   # the mark lasts half a second: hold it in view
-	if args.has("toll"):
-		# A still of the toll chip with something on it: toll=civilians:population:structures:craters (e.g. toll=61:425:9:14), held there every frame.
-		var tp: PackedStringArray = str(args["toll"]).split(":")
-		if tp.size() >= 4:
-			hud.hub.toll["civilians"] = int(tp[0])
-			hud.hub.toll["pop0"] = int(tp[1])
-			hud.hub.toll["structures"] = int(tp[2])
-			hud.hub.toll["craters"] = int(tp[3])
+	if args.has("damage"):
+		# A still of the damage chip with something on it: damage=structures:craters (e.g. damage=9:14), held there every frame.
+		var tp: PackedStringArray = str(args["damage"]).split(":")
+		if tp.size() >= 2:
+			hud.hub.damage["structures"] = int(tp[0])
+			hud.hub.damage["craters"] = int(tp[1])
 	if args.has("public"):
-		# A picture meant for a public page never shows a toll above zero (Legal, 2026-10-12): the chip is pinned at its start.
-		for k in ["civilians", "structures", "craters"]:
-			hud.hub.toll[k] = 0
+		# A picture meant for a public page never shows damage above zero (Legal, 2026-10-12): the chip is pinned at its start.
+		for k in ["structures", "craters"]:
+			hud.hub.damage[k] = 0
 	# The brawl's small marks last a second or two: hold them in view for a still (docs/ui/brawl-teaching.md).
 	if args.has("blow"):
 		hud.hub.model(0).blow_t = 0.1

@@ -62,7 +62,7 @@ ORDER = [
     'Plates: names, tiers and meters',
     'Plates: state chips and badges',
     'Wound cards, the body figure and set-piece cards',
-    'Banners and the toll chip',
+    'Banners and the damage chip',
     'Button prompts and touch captions',
     'The control legend',
     'Reads: telegraphs, hints and the finisher struggle',
@@ -98,7 +98,7 @@ def where(f, path):
             return ORDER[5]
         if g in ('region', 'stage', 'internal_stage', 'card', 'station'):
             return ORDER[6]
-        if g in ('toll', 'banner_rename'):
+        if g in ('damage', 'banner_rename'):
             return ORDER[7]
         if g == 'caption':
             return ORDER[11]

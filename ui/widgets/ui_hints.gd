@@ -259,6 +259,8 @@ static func compact_rows(m: UiFighterModel, all_rows: Array) -> Array:
 				or (UiStance.three() and m.punish_left > 0.0 and cell == "y") or (UiStance.three() and m.flurry_dots > 0 and cell == "x")
 		if not keep and m.cstage > 0 and ["strike", "strike_mirror"].has(_act0(r)) and not bool(r.get("teach", false)):
 			keep = true   # a stick charge is at a stage: the strike stick's rows stay, with the digit on the glyph
+		if bool(r.get("teach", false)):
+			keep = true   # a teaching line (a refusal word, a beam line, the clash rows) is the legend's reason to be up for its moment: the compact legend drops the buttons that do not matter, never the line that is being said (the refusal words were cut here from the second match, and after the opening 12 s, on every build with minimal_hud)
 		if keep:
 			out.append(r)
 	return out

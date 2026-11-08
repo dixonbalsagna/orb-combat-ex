@@ -124,9 +124,9 @@ static func patch(hud: UiHud, S, input_hub = null) -> void:
 	hud.hub.set_clash_mid(clash_mid(S))   # the beam struggle's meeting point (-1 until Encounter's park is applied)
 	var w = S.world
 	if UiFast.on:
-		hud.hub.set_toll(int(round(float(w.casualties))), int(w.pop0), int(w.structuresLost), int(w.craters))
+		hud.hub.set_damage(int(w.structuresLost), int(w.craters))
 	else:
-		hud.hub.consume({"type": "world", "civilians": int(round(float(w.casualties))), "pop0": int(w.pop0), "structures": int(w.structuresLost), "craters": int(w.craters)})
+		hud.hub.consume({"type": "world", "structures": int(w.structuresLost), "craters": int(w.craters)})
 	patch_input(hud, input_hub)   # the arming, when the host passes its input hub (SimHost.hub)
 
 

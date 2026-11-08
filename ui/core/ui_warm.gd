@@ -5,7 +5,7 @@ extends Control
 ## reaches the screen (VFX's finding: tick 36 of the city beam scene, the first signature wind-up, where the banner's text is drawn at its size for the first time).
 ## So at boot, behind the flashing-effects notice, one line of the common glyphs is drawn once at every size and outline the HUD uses, in a node nobody sees
 ## (1% opaque for three frames), and the node frees itself. Presentation only: it reads no sim state, writes none, and draws nothing a player can read.
-## Sizes are the HUD's own: the design sizes its widgets pass to UiText.px (the plates 24, 20 and 18, the legend, the cards, the barks, the hints, the toll), and the banner's
+## Sizes are the HUD's own: the design sizes its widgets pass to UiText.px (the plates 24, 20 and 18, the legend, the cards, the barks, the hints, the damage chip), and the banner's
 ## own fit, each at the layout's scale. Outlines are the ones UiText.draw asks for (2 px for barks and card titles, and the banner's 9% of its size).
 
 const DESIGN_SIZES: Array = [14.0, 15.0, 16.0, 18.0, 19.0, 20.0, 22.0, 23.0, 24.0, 28.0, 30.0, 34.0, 36.0, 38.0]

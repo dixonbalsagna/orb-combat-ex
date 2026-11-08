@@ -1,5 +1,7 @@
 # The civilian bar: no running count in the fight (UI, 2026-10-16)
 
+> **RETIRED, 2026-11-07 (Legal RL-257, lint row c11; the EP's brief).** Nothing a player sees counts or names people now: the bar, the CIVILIANS LOST words, the match-over card's civilians line and the strings are gone. The chip is one steady line of the buildings and craters lost, and the card says the same two counts. What replaced it is in docs/ui/damage-chip.md. The rest of this page is kept as history and no longer describes the game.
+
 Owner: UI & UX. Orb's homework 5 left the civilian count to us; the EP's decision: **no running number during the fight, a small steady bar for the share of the city's civilians lost, and the exact count on the results screen.** **Applied to the tree on 2026-10-16 with `civilian_bar` ON** (the EP's go; the card only for menu sessions and "Buildings" accepted). The park is kept in `docs/ui/pending/civilian-bar/` as the record. Stills with a toll above zero (134 of 425, 9 buildings, 14 craters): `img/civilian-bar-1280.png`, `img/civilian-bar-844.png`.
 
 ## What the player sees

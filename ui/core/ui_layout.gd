@@ -19,7 +19,7 @@ var plate: Array = [Rect2(), Rect2()]        # the nameplate of each fighter
 var silhouette: Array = [Rect2(), Rect2()]   # the silhouette panel (zero size when off)
 var cards: Array = [Rect2(), Rect2()]        # the wound-card column of each fighter
 var card_h := 56.0                           # one card's height, real pixels
-var toll := Rect2()                          # the world-toll chip
+var damage_chip := Rect2()                          # the world-damage chip
 var banner_c := Vector2()                    # banner centre (the world card shares this slot)
 var world_card := Rect2()
 var bark: Array = [Rect2(), Rect2()]         # each fighter's bark lane
@@ -49,7 +49,7 @@ var read_slot := Rect2()                     # the telegraph chip and the tutori
 var feedback_label := ""                     # the pill's words (SEND FEEDBACK, or FEEDBACK where the room is tight) and their size
 var feedback_fs := 14
 var feedback_btn := Rect2()                  # the match-end SEND FEEDBACK pill: beside the ring map (landscape) or at the clear zone's foot (portrait)
-var pause_btn := Rect2()                     # touch only: the pause button (48 dp), beside the toll chip
+var pause_btn := Rect2()                     # touch only: the pause button (48 dp), beside the damage chip
 var dp := 1.0                                # device pixels per dp (CSS pixel on the web): 1 on a desktop, 2 to 3.5 on a phone. The host sets it before compute
 var touch_ui := false                        # touch is the last input device: targets are at least 48 dp and the prompt row is the stance ring
 var text_floor := UiLook.MIN_TEXT_PX         # the smallest text, real pixels: 14, or 12 dp on a dense screen
@@ -117,7 +117,7 @@ func compute(p_vp: Vector2, p_silhouette: bool = true, insets: Vector4 = Vector4
 	# Dense screens (phones: dp above 1.25). Text is never under 12 dp (about 2 mm), and a touch target never under 48 dp. In
 	# landscape the whole HUD grows so its smallest text (18 design px) meets that floor, as far as the two columns may take
 	# 30% of the width each; then it steps down until the fight keeps its middle, no column meets a bark lane and (on touch)
-	# the pause button fits beside the toll chip. Portrait grows its fonts only.
+	# the pause button fits beside the damage chip. Portrait grows its fonts only.
 	text_floor = UiLook.MIN_TEXT_PX
 	touch_min = maxf(48.0 * dp, 44.0)
 	var s_fit: float = s
@@ -134,9 +134,9 @@ func compute(p_vp: Vector2, p_silhouette: bool = true, insets: Vector4 = Vector4
 			break
 		s_try = maxf(s_fit, s_try - 0.04)
 	if touch_ui and not portrait and pause_btn.size.y <= 0.0:
-		# A very small screen: under the toll chip, where it fits best.
+		# A very small screen: under the damage chip, where it fits best.
 		var bs: float = maxf(touch_min, 44.0)
-		pause_btn = Rect2(vp.x * 0.5 - bs * 0.5, toll.end.y + 4.0, bs, bs)
+		pause_btn = Rect2(vp.x * 0.5 - bs * 0.5, damage_chip.end.y + 4.0, bs, bs)
 	if swapped:
 		# Slot 0 is on the right of the screen (the shortest way puts the rival to its left): mirror every per-slot column.
 		for arr in [plate, silhouette, cards, bark, prompts, hints]:
@@ -147,18 +147,18 @@ func compute(p_vp: Vector2, p_silhouette: bool = true, insets: Vector4 = Vector4
 	_place_forms()
 
 
-## The lowest edge of the nameplates, the toll chip and the pause button, plus a gap: Camera's top panel band should start at or below this (the
+## The lowest edge of the nameplates, the damage chip and the pause button, plus a gap: Camera's top panel band should start at or below this (the
 ## band is 19% to 39% of the height; on a short or small screen the plates reach into its first few pixels).
 func panel_floor() -> float:
 	var y: float = maxf(plate[0].end.y, plate[1].end.y)
-	y = maxf(y, toll.end.y)
+	y = maxf(y, damage_chip.end.y)
 	if pause_btn.size.y > 0.0:
 		y = maxf(y, pause_btn.end.y)
 	return y + 6.0 * s
 
 
 ## The docked face squares (UiFaces): each in its speaker's column, bottom on the bark lane's top, as large as `desired` allows without touching a
-## nameplate, a card row, the silhouette, the prompt row, the legend's three rows, the toll chip, the pause button, the match-end pill, the ring map,
+## nameplate, a card row, the silhouette, the prompt row, the legend's three rows, the damage chip, the pause button, the match-end pill, the ring map,
 ## the strip, the read slot or a touch button. None fits (a portrait phone, the one-lane touch landscape, a tiny window): the rect stays empty and the
 ## face is embedded in the bark panel instead. The legend then ends where the face begins.
 func _place_faces() -> void:
@@ -172,7 +172,7 @@ func _place_faces() -> void:
 	var row_h: float = maxf(gh, float(UiText.px(18.0, s)) * 1.4) + 4.0 * s
 	var legend_min: float = 3.0 * row_h + 2.0 * maxf(8.0 * s, 5.0)
 	var legend_full: float = 12.0 * row_h + 2.0 * maxf(8.0 * s, 5.0)
-	var fixed: Array = [plate[0], plate[1], toll, strip, ring, read_slot, pause_btn, feedback_btn, cards[0], cards[1], silhouette[0], silhouette[1], prompts[0], prompts[1]]
+	var fixed: Array = [plate[0], plate[1], damage_chip, strip, ring, read_slot, pause_btn, feedback_btn, cards[0], cards[1], silhouette[0], silhouette[1], prompts[0], prompts[1]]
 	fixed.append(Rect2(vp.x * UiFaces.CENTRE_FROM, 0.0, vp.x * (UiFaces.CENTRE_TO - UiFaces.CENTRE_FROM), vp.y))   # Camera's panel strip owns the centre 56% of the width
 	if touch_ui and not touch_ctrl.is_empty():
 		for k in touch_keys():
@@ -210,7 +210,7 @@ func _place_faces() -> void:
 
 ## The form-ready chip's slot in each column (UiFormPrompt): directly under the prompt row (on touch, under the cards), as wide as the column, as
 ## tall as the chip. It takes the top of the legend's space; the legend starts under it while it shows. It must clear the bark lane, the docked face,
-## the toll chip, the strip, the ring map, the pause button, the feedback pill and every touch button; if any of them is in the way the slot stays
+## the damage chip, the strip, the ring map, the pause button, the feedback pill and every touch button; if any of them is in the way the slot stays
 ## empty and the prompt row's own Transform chip carries it (and, on touch, the lit button). Portrait has no column room: the touch button carries it.
 func _place_forms() -> void:
 	form = [Rect2(), Rect2()]
@@ -218,7 +218,7 @@ func _place_forms() -> void:
 		return
 	var gap: float = 12.0 * s
 	var fh: float = UiFormPrompt.height(s)
-	var obstacles: Array = [bark[0], bark[1], toll, strip, ring, read_slot, pause_btn, feedback_btn, face[0], face[1]]
+	var obstacles: Array = [bark[0], bark[1], damage_chip, strip, ring, read_slot, pause_btn, feedback_btn, face[0], face[1]]
 	if touch_ui and not touch_ctrl.is_empty():
 		for k in touch_keys():
 			var c: Dictionary = touch_ctrl[k]
@@ -426,29 +426,29 @@ func _landscape() -> void:
 		# No stance ring on touch any more (Controls' bridge has no stance taps; the buttons are the controls): the row is empty there.
 		var prow: float = 0.0 if touch_ui else maxf(40.0 * s, 30.0)
 		prompts[i] = Rect2(p.position.x, maxf(cards[i].end.y, silhouette[i].end.y) + gap, col_w, prow)
-	var toll_w: float = 380.0 * s
-	# The toll chip grows to hold four-digit counts (the population is whole people, about 1,800) where the plates leave room.
+	var chip_w: float = 380.0 * s
+	# The damage chip grows to hold four-digit counts where the plates leave room.
 	var fs_t: int = UiText.px(20.0, s)
-	var need_w: float = maxf(UiText.width("%s 9999 / 9999" % UiData.t("toll.civilians"), fs_t), UiText.width("%s 9999    %s 9999" % [UiData.t("toll.structures"), UiData.t("toll.craters")], fs_t)) + maxf(24.0 * s, 10.0)
+	var need_w: float = UiText.width("%s 9999    %s 9999" % [UiData.t("damage.structures"), UiData.t("damage.craters")], fs_t) + maxf(24.0 * s, 10.0)
 	var room_w: float = plate[1].position.x - plate[0].end.x - 2.0 * gap - (2.0 * (maxf(touch_min, 44.0) + gap) if touch_ui else 0.0)
-	toll_w = minf(maxf(toll_w, need_w), maxf(room_w, 200.0))
-	toll = Rect2(vp.x * 0.5 - toll_w * 0.5, safe.position.y, toll_w, 2.0 * float(UiText.px(20.0, s)) + 18.0)
-	banner_c = Vector2(vp.x * 0.5, toll.end.y + gap + 28.0 * s)
+	chip_w = minf(maxf(chip_w, need_w), maxf(room_w, 200.0))
+	damage_chip = Rect2(vp.x * 0.5 - chip_w * 0.5, safe.position.y, chip_w, 2.0 * float(UiText.px(20.0, s)) + 18.0)
+	banner_c = Vector2(vp.x * 0.5, damage_chip.end.y + gap + 28.0 * s)
 	pause_btn = Rect2()
 	if touch_ui:
-		# The pause button: a touch screen has no P key. Beside the toll chip, on the side with room (never over a plate).
+		# The pause button: a touch screen has no P key. Beside the damage chip, on the side with room (never over a plate).
 		var bs: float = maxf(touch_min, 44.0)
-		var right := Rect2(toll.end.x + gap, safe.position.y, bs, bs)
-		var left := Rect2(toll.position.x - gap - bs, safe.position.y, bs, bs)
+		var right := Rect2(damage_chip.end.x + gap, safe.position.y, bs, bs)
+		var left := Rect2(damage_chip.position.x - gap - bs, safe.position.y, bs, bs)
 		if right.end.x <= plate[1].position.x - gap:
 			pause_btn = right
 		elif left.position.x >= plate[0].end.x + gap:
 			pause_btn = left
-	# The read slot (the telegraph chip and the tutorial hint): from under the toll chip to the clear zone's top edge, between the plates.
-	var rs_y: float = toll.end.y + gap * 0.5
+	# The read slot (the telegraph chip and the tutorial hint): from under the damage chip to the clear zone's top edge, between the plates.
+	var rs_y: float = damage_chip.end.y + gap * 0.5
 	read_slot = Rect2(plate[0].end.x + gap, rs_y, plate[1].position.x - plate[0].end.x - 2.0 * gap, banner_c.y + 34.0 * s - rs_y)
 	if pause_btn.size.y > 0.0:
-		# The button sits beside the toll chip and reaches below it: the slot narrows to the toll's width so a centred line never meets it.
+		# The button sits beside the damage chip and reaches below it: the slot narrows to the damage_chip's width so a centred line never meets it.
 		var half: float = absf(pause_btn.get_center().x - vp.x * 0.5) - pause_btn.size.x * 0.5 - gap
 		read_slot = Rect2(vp.x * 0.5 - half, rs_y, 2.0 * half, read_slot.size.y)
 	world_card = Rect2(vp.x * 0.5 - 200.0 * s, banner_c.y - 26.0 * s, 400.0 * s, 52.0 * s)
@@ -504,10 +504,10 @@ func _portrait() -> void:
 	cards[0] = Rect2(inner_l, row_top, cw, card_h)
 	cards[1] = Rect2(inner_r - cw, row_top, cw, card_h)
 	var row_h: float = maxf(card_h, sil_h if silhouette_on else 0.0)
-	toll = Rect2(safe.position.x, row_top + row_h + gap, safe.size.x, float(UiText.px(20.0, s)) + 12.0)
-	banner_c = Vector2(vp.x * 0.5, toll.end.y + gap + 22.0 * s)
+	damage_chip = Rect2(safe.position.x, row_top + row_h + gap, safe.size.x, float(UiText.px(20.0, s)) + 12.0)
+	banner_c = Vector2(vp.x * 0.5, damage_chip.end.y + gap + 22.0 * s)
 	world_card = Rect2(vp.x * 0.5 - 180.0 * s, banner_c.y - 22.0 * s, 360.0 * s, 44.0 * s)
-	var rs_y2: float = toll.end.y + gap * 0.5
+	var rs_y2: float = damage_chip.end.y + gap * 0.5
 	read_slot = Rect2(safe.position.x, rs_y2, safe.size.x, banner_c.y + 30.0 * s - rs_y2)
 	var reserve_top: float = vp.y * 0.78
 	if touch_ui and not touch_ctrl.is_empty():
@@ -530,7 +530,7 @@ func _portrait() -> void:
 
 ## Every persistent HUD rectangle (for the fighter-clear check). Transient ones (cards, barks) sit inside their columns and lanes.
 func hud_rects() -> Array:
-	var out: Array = [plate[0], plate[1], toll, strip]
+	var out: Array = [plate[0], plate[1], damage_chip, strip]
 	if pause_btn.size.y > 0.0:
 		out.append(pause_btn)
 	if ring.size.y > 0.0:
@@ -547,9 +547,9 @@ func hud_rects() -> Array:
 
 # --- Split screen (docs/camera/split-screen.md section 10) --------------------------------------------------------------
 
-## The vertical range the divider may span: it stops under the toll chip and above the ring map and the planet strip.
+## The vertical range the divider may span: it stops under the damage chip and above the ring map and the planet strip.
 func divider_band() -> Vector2:
-	var top: float = toll.end.y + 6.0 * s
+	var top: float = damage_chip.end.y + 6.0 * s
 	var bottom: float = (ring.position.y if ring.size.y > 0.0 else strip.position.y) - 6.0 * s
 	return Vector2(top, bottom)
 

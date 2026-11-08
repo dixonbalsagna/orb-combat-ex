@@ -1,6 +1,6 @@
 extends SceneTree
 ## The HUD's per-frame savings change nothing the player sees (docs/ui/frame-cost.md). The same seeded match is played twice through the real sim host, with UiFast off (the cost the HUD had) and on, and after
-## every frame's UiSimBridge.patch and UiHud.advance a digest of what the HUD would draw is taken: every layer's signature, visibility, position and size, every fighter model's fields, the toll, the planet strip's
+## every frame's UiSimBridge.patch and UiHud.advance a digest of what the HUD would draw is taken: every layer's signature, visibility, position and size, every fighter model's fields, the world damage, the planet strip's
 ## data and the feed's size. The two runs' digests must be equal on every frame. Gen 1 and a gen 2 coast, with and without the touch buttons, plus the cases the savings are careful about (a planet turn or the
 ## campaign's wear changing the fallen buildings without a loss being counted: the strip's marks catch up within a quarter second). Headless; run from the repo root:
 ##   godot --headless --path . --script res://ui/tools/frame_cost_check.gd [-- --ticks=900]
@@ -46,8 +46,8 @@ func _digest(hud: UiHud) -> String:
 			parts.append("%s@%s/%s/%s" % [var_to_str(l.sig), str(l.visible), str(l.position), str(l.size)])
 	for m in hud.hub.models:
 		parts.append(_model_digest(m))
-	parts.append(var_to_str(hud.hub.toll))
-	parts.append(str(hud.hub.toll_age))
+	parts.append(var_to_str(hud.hub.damage))
+	parts.append(str(hud.hub.damage_age))
 	parts.append(str(hud.hub.feed.size()))
 	parts.append("%s %s %s %s %s" % [str(hud.hub.cards.size()), str(hud.hub.barks.size()), str(hud.hub.mode), str(hud.hub.t_now), str(hud._t)])
 	parts.append("%s %s %s %s %s" % [var_to_str(hud.hub.banner), var_to_str(hud.hub.hint), var_to_str(hud.hub.telegraph), var_to_str(hud.hub.caption), var_to_str(hud.hub.tug)])
@@ -122,11 +122,11 @@ func _run() -> void:
 			if gen == 1 and not touch:
 				var again: Array = await _play(false, gen, touch, ticks)
 				_ok(_first_diff(off, again) == -1, "the digest is repeatable: the same run twice, savings off, is the same on every frame")
-				# Negative controls: the digest does see a changed field, a changed layer and a changed toll.
+				# Negative controls: the digest does see a changed field, a changed layer and a changed world damage.
 				var nudged: Array = await _play(false, gen, touch, 200, func(_h, hud: UiHud, i: int): if i == 150: hud.hub.models[1].tier = 3)
 				_ok(_first_diff(off.slice(0, 200), nudged) == 150, "the digest sees a fighter's field change on the frame it changes (frame %d)" % _first_diff(off.slice(0, 200), nudged))
-				var toll_n: Array = await _play(false, gen, touch, 200, func(_h, hud: UiHud, i: int): if i == 120: hud.hub.toll["craters"] = 99)
-				_ok(_first_diff(off.slice(0, 200), toll_n) == 120, "the digest sees the toll change (frame %d)" % _first_diff(off.slice(0, 200), toll_n))
+				var damage_n: Array = await _play(false, gen, touch, 200, func(_h, hud: UiHud, i: int): if i == 120: hud.hub.damage["craters"] = 99)
+				_ok(_first_diff(off.slice(0, 200), damage_n) == 120, "the digest sees the damage change (frame %d)" % _first_diff(off.slice(0, 200), damage_n))
 			var on: Array = await _play(true, gen, touch, ticks)
 			if dump != "":
 				var lines := PackedStringArray()

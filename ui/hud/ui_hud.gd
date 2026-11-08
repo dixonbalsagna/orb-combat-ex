@@ -251,7 +251,7 @@ var _l_crown: UiLayer
 var _l_beat: UiLayer                 # the beat ring (UiBeatRing): an option, off by default
 var _l_plate: Array = []
 var _l_sil: Array = []
-var _l_toll: UiLayer
+var _l_damage: UiLayer
 var _l_strip_marks: UiLayer
 var _div_dark: ColorRect       # the divider's two bars: transforms only, no draw commands
 var _div_light: ColorRect
@@ -323,7 +323,7 @@ func _ready() -> void:
 		_l_plate.append(_layer(_paint_plate.bind(i)))
 	for i in range(2):
 		_l_sil.append(_layer(_paint_sil.bind(i)))
-	_l_toll = _layer(_paint_toll)
+	_l_damage = _layer(_paint_damage)
 	_l_strip_marks = _layer(_paint_strip_marks)
 	_l_ring_base = _layer(_paint_ring_base)
 	_l_ring = _layer(_paint_ring)
@@ -409,7 +409,7 @@ func _chip_layer(slot: int) -> UiLayer:
 
 
 func _all_layers() -> Array:
-	return [_l_caption, _l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_globe, _l_alert, _l_many, _l_tug, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_loading, _l_notice, _l_gate_back]
+	return [_l_caption, _l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_damage, _l_strip_marks, _l_ring_base, _l_ring, _l_globe, _l_alert, _l_many, _l_tug, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_loading, _l_notice, _l_gate_back]
 
 
 ## Total redraws of every layer so far, for the perf counters.
@@ -772,14 +772,14 @@ func _update_layers() -> void:
 			0 if reduced else int(clampf(1.0 - m.stance_flash_t / 0.8, 0.0, 1.0) * 5.0), int(m.last_stand_left * 6.0), int(m.last_stand_dur), m.energy, m.stance_kind, int(clampf(m.stance_armed, 0.0, 1.0) * 12.0) if (m.stance_armed > 0.0 and not reduced) else (1 if m.stance_armed > 0.0 else 0)])
 		_l_sil[m.slot].update_sig(_sil_sig(m, reduced) if layout.silhouette_on else null)
 
-	var a_toll: float = lerpf(UiLook.TOLL_REST_ALPHA, 1.0, clampf(1.0 - hub.toll_age / UiLook.TOLL_SHOW, 0.0, 1.0)) * (0.45 if cin else 1.0)
+	var a_damage: float = lerpf(UiLook.DAMAGE_REST_ALPHA, 1.0, clampf(1.0 - hub.damage_age / UiLook.DAMAGE_SHOW, 0.0, 1.0)) * (0.45 if cin else 1.0)
 	if UiData.feature("minimal_hud"):
-		_l_toll.update_sig(null)   # minimal_hud: the toll is on the pause screen and the results, not in play
-	elif UiData.feature("civilian_bar"):
-		# The bar: whole percents, and one opacity (no brightening when it grows): the layer redraws only when the share's percent, the structures or the craters change.
-		_l_toll.update_sig([int(UiCenter.civilian_share(hub) * 100.0), hub.toll["structures"], hub.toll["craters"], int(UiCenter.BAR_ALPHA * (0.45 if cin else 1.0) * 20.0), true])
+		_l_damage.update_sig(null)   # minimal_hud: the damage counts are on the pause screen and the results, not in play
+	elif UiData.feature("damage_facts"):
+		# One steady opacity (no brightening when the damage grows): the layer redraws only when the structures or the craters change.
+		_l_damage.update_sig([hub.damage["structures"], hub.damage["craters"], int(UiCenter.STEADY_ALPHA * (0.45 if cin else 1.0) * 20.0), true])
 	else:
-		_l_toll.update_sig([hub.toll["civilians"], hub.toll["pop0"], hub.toll["structures"], hub.toll["craters"], int(a_toll * 20.0)])
+		_l_damage.update_sig([hub.damage["structures"], hub.damage["craters"], int(a_damage * 20.0)])
 
 	if strip_fn.is_valid() and _lb < 0.5 and not UiData.feature("minimal_hud"):   # minimal_hud: no planet strip in play
 		_strip_data = strip_fn.call()
@@ -1010,8 +1010,8 @@ func _paint_sil(ci: CanvasItem, slot: int) -> void:
 	UiSilhouette.draw(ci, m, layout.silhouette[slot], _t, layout.s, _o(_plate_alpha(m)))
 
 
-func _paint_toll(ci: CanvasItem) -> void:
-	UiCenter.draw_toll(ci, hub, layout, layout.s, _o(0.45 if hub.mode == UiEventHub.Mode.CINEMATIC else 1.0))
+func _paint_damage(ci: CanvasItem) -> void:
+	UiCenter.draw_chip(ci, hub, layout, layout.s, _o(0.45 if hub.mode == UiEventHub.Mode.CINEMATIC else 1.0))
 
 
 ## The planet map (docs/ui/planet-map.md): behind the feature planet_map and the Planet map option, in the ring's slot. It samples the trail from the feed's tick and redraws only when the globe has turned.
@@ -1308,6 +1308,10 @@ func _quiet_step(m: UiFighterModel) -> void:
 		return
 	if not m.beat_rows.is_empty():
 		_quiet_on[s] = false   # one of the first beam struggles of a match: the clash rows (what to press on the beat) stay up for the whole struggle, before the rule below
+		_quiet_t[s] = 0.0
+		return
+	if m.teach != "" and m.teach_left > 0.0:
+		_quiet_on[s] = false   # a teaching line is being said (a refusal word, a beam line): the legend is up for it, in a struggle too (its one-line box at the edge; the clear rule still cuts it under a body), before the struggle's own cut below
 		_quiet_t[s] = 0.0
 		return
 	if not hub.tug.is_empty() and str(hub.tug.get("end", "")) == "":
@@ -2055,18 +2059,17 @@ func toggle_pause_menu() -> void:
 		show_pause_menu()
 
 
-## What the match-over card says the fight cost (civilian_bar on): the exact counts the chip no longer shows during the fight. Plain words, one line each.
+## What the match-over card says the fight did to the world (damage_facts on): the exact counts the chip no longer shows during the fight. Plain words, one line each. Nothing here counts people (RL-257).
 func over_facts() -> Array:
 	var wins: Array = []
 	if UiData.feature("versus_flow") and hub.no_contest:
 		wins = [UiData.t("prompt.over_no_contest")]
 	elif UiData.feature("versus_flow") and hub.win_line() != "":
 		wins = [hub.win_line()]   # the KO banner names him for three seconds; the card keeps it (a 2v2 names the winning team, cross_end)
-	if not UiData.feature("civilian_bar"):
+	if not UiData.feature("damage_facts"):
 		return wins
-	return wins + [UiData.fmt("prompt.over_civilians", {"n": int(hub.toll["civilians"]), "total": int(hub.toll["pop0"])}),
-		UiData.fmt("prompt.over_structures", {"n": int(hub.toll["structures"])}),
-		UiData.fmt("prompt.over_craters", {"n": int(hub.toll["craters"])})]
+	return wins + [UiData.fmt("prompt.over_structures", {"n": int(hub.damage["structures"])}),
+		UiData.fmt("prompt.over_craters", {"n": int(hub.damage["craters"])})]
 
 
 func show_pause_menu(over: bool = false) -> void:
@@ -3582,7 +3585,7 @@ func _sync_lane_colors() -> void:
 		lane_colors_changed.emit(c[0], c[1])
 
 
-## Where Camera's panel strip may start at the top: the lowest edge of the plates, the toll chip and the pause button, in pixels from the top.
+## Where Camera's panel strip may start at the top: the lowest edge of the plates, the damage chip and the pause button, in pixels from the top.
 func panel_floor_y() -> float:
 	return layout.panel_floor()
 
@@ -3890,6 +3893,8 @@ func _paint_touchctl(ci: CanvasItem) -> void:
 func _hint_alpha(m: UiFighterModel) -> float:
 	if bool(opts["touch_ui"]) or layout.portrait:
 		return 0.0
+	if UiData.feature("legend_clear"):
+		return float((_legend_g[clampi(m.slot, 0, 1)] as Dictionary)["a"])   # legend_clear: the legend is painted with its own cut gate (drawn or not, nothing fades), the one that decides the layer; the YOU pill's gate fades in over a second and rests two, which left a 1.5 s refusal word faint or never there
 	return _you_alpha(m)
 
 

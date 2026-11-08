@@ -62,7 +62,7 @@ func _run() -> void:
 	await _howto_rules()
 	await _reads_hud()
 	await _feedback_rules()
-	_toll_rules()
+	_damage_chip_rules()
 	await _hints_rules()
 	await _form_prompt_rules()
 	await _intro_laststand_rules()
@@ -83,7 +83,8 @@ func _run() -> void:
 	await _rival_pointer_rules()
 	await _many_marker_rules()
 	await _lost_rival_rules()
-	await _civilian_bar_rules()
+	await _damage_facts_rules()
+	await _retired_words_rules()
 	await _plain_words_rules()
 	await _launch_marks_rules()
 	await _tug_rules()
@@ -128,6 +129,7 @@ func _run() -> void:
 	await _refusal_take_rules()
 	await _coop_marks_rules()
 	_first_ko_object_rules()
+	await _refusal_compact_rules()
 	await _pause_menu_rules()
 	await _faces_rules()
 	await _two_player_rules()
@@ -1034,7 +1036,7 @@ func _terms() -> void:
 		"meter.hunger", "meter.charge", "region.head", "region.core", "region.arms", "region.legs", "region.mantle", "stage.bruised",
 		"stage.battered", "stage.broken", "card.brink", "card.rally.protagonist", "card.heat.1", "card.heat.2", "card.heat.3",
 		"card.boil_over", "card.facade_crack", "card.drop_act", "card.fold_flicker", "state.hidden", "state.lost_trail",
-		"state.signature", "toll.civilians", "station.hip", "chip_stage.2", "internal_stage.battered"]
+		"state.signature", "damage.structures", "station.hip", "chip_stage.2", "internal_stage.battered"]
 	for k in must:
 		_ok(UiData.t(k) != k, "term exists: " + k)
 	_ok(UiData.t("stance.press") == "PRESS", "glossary: stance press")
@@ -1077,7 +1079,7 @@ func _layouts() -> void:
 			_ok(lay.clear_zone.size.x > sz.x * (0.30 if not lay.portrait else 0.6), "%s: the clear zone is wide enough (%d px)" % [tag, int(lay.clear_zone.size.x)])
 			_ok(lay.clear_zone.size.y > sz.y * (0.45 if not lay.portrait else 0.22), "%s: the clear zone is tall enough (%d px)" % [tag, int(lay.clear_zone.size.y)])
 			_ok(lay.plate[0].size.y > 0.0 and not lay.plate[0].intersects(lay.plate[1]), "%s: plates do not overlap" % tag)
-			_ok(not lay.toll.intersects(lay.plate[0]) and not lay.toll.intersects(lay.plate[1]), "%s: the toll chip clears the plates" % tag)
+			_ok(not lay.damage_chip.intersects(lay.plate[0]) and not lay.damage_chip.intersects(lay.plate[1]), "%s: the damage chip clears the plates" % tag)
 			_ok(not lay.strip.intersects(lay.bark[0]) or lay.portrait, "%s: the strip clears the bark lane" % tag)
 			if lay.portrait:
 				_ok(not lay.clear_zone.intersects(lay.touch_reserve), "%s: portrait: touch controls keep their reserve" % tag)
@@ -1960,6 +1962,64 @@ func _coop_marks_rules() -> void:
 	_live_on()
 
 
+# --- A refusal word in the compact legend (minimal_hud, after the opening seconds or in a later match): the line is drawn, then the legend goes quiet again ------------------------------------
+
+func _refusal_compact_rules() -> void:
+	for k in ["legend_quiet", "legend_beam", "beam_teach", "struggle_teach", "refusal_words", "minimal_hud", "legend_clear"]:
+		UiData.set_feature(k, null)   # the shipped state
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	hud.hub.model(0).device = "xbox"
+	hud.set_option("control_hints", "auto")
+	var run := func(n: int, dt: float = 1.0 / 30.0) -> void:
+		for i in range(n):
+			hud.advance(dt)
+			await process_frame
+	await run.call(240, 0.1)   # 24 s: past the opening 12 s, the legend quiet
+	var m: UiFighterModel = hud.hub.model(0)
+	var lo: Dictionary = hud._o()
+	lo["legend_compact"] = hud._legend_compact(m)
+	var compact: bool = bool(lo["legend_compact"])
+	var quiet_before: bool = bool(hud._quiet_on[0]) and hud._l_hints[0].sig == null
+	hud.hub.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "right", "source": "close"})
+	await run.call(2)
+	var solid: bool = hud._hint_alpha(m) > 0.99   # two frames in: painted at full strength, not fading in
+	var plan: Dictionary = UiHints.plan(m, hud.layout.hints[0], hud.layout.s, lo)
+	var said: bool = false
+	for r in plan["rows"]:
+		said = said or str((r as Dictionary).get("label", "")).find("Too close") >= 0 or str(r).find("Too close") >= 0
+	var drawn: bool = hud._l_hints[0].sig != null and (plan["box"] as Rect2).size.x > 0.0 and said
+	var inside: bool = hud.layout.hints[0].grow(2.0).encloses(plan["box"])
+	await run.call(60)   # two seconds on: the line has had its 1.5 s
+	var gone: bool = hud._l_hints[0].sig == null or (UiHints.plan(m, hud.layout.hints[0], hud.layout.s, lo)["rows"] as Array).is_empty()
+	_ok(compact and quiet_before and drawn and gone, "refusal word, compact legend (compact %s, quiet before %s, drawn %s, gone after %s): in the shipped HUD, after the opening seconds, the word 'Too close' is drawn in the legend's column and goes with its 1.5 s (it was cut by the compact legend)" % [compact, quiet_before, drawn, gone])
+	_ok(solid, "refusal word, compact legend: the line is painted at full strength from the first frames (the legend's own cut gate, not the YOU pill's one-second fade)")
+	_ok(inside, "refusal word, compact legend: the line's box is inside the legend's column at the screen's edge (never over a fighter: the legend-clear rule still applies)")
+	var keep_rows: Array = UiHints.compact_rows(m, [{"acts": [], "label": "Hold for a beam", "held": false, "dim": false, "note": "", "cell": "", "teach": true}, {"acts": ["guard"], "label": "Guard", "held": false, "dim": false, "note": "", "cell": ""}])
+	_ok(keep_rows.size() == 1 and str(keep_rows[0]["label"]) == "Hold for a beam", "compact legend: a teaching row (a refusal word, a beam line, the clash rows) is kept; a plain row that is not held or lit is still dropped")
+	# In a beam struggle the legend is cut (the picture is the beams), but a refusal word still shows for its 1.5 s and the cut comes back after it (the real game's struggle held quiet on, and the word was never drawn).
+	await run.call(45)   # the legend's gate rests a second between changes (no flicker): as in the real match, where it has been off for many seconds
+	UiData.set_feature("struggle_teach", false)   # the first three struggles of a match keep the legend up for the clash rows; this is the plain cut
+	hud.hub.consume({"type": "cue", "kind": "beam_struggle", "text": "start", "actor": 0, "target": 1, "n": 600})
+	await run.call(4)
+	var cut_first: bool = hud._l_hints[0].sig == null and bool(hud._quiet_on[0])
+	hud.hub.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "down", "source": "hit"})
+	await run.call(2)
+	var said_in_struggle: bool = hud._l_hints[0].sig != null and not bool(hud._quiet_on[0]) and m.teach == "Hit"
+	await run.call(60)
+	var cut_after: bool = hud._l_hints[0].sig == null and bool(hud._quiet_on[0])
+	UiData.set_feature("struggle_teach", null)
+	_ok(cut_first and said_in_struggle and cut_after, "refusal word, in a beam struggle (cut first %s, word drawn %s, cut again after %s): the word shows for its 1.5 s and the struggle's cut comes back" % [cut_first, said_in_struggle, cut_after])
+	hud.queue_free()
+	await process_frame
+	_live_on()
+
+
 # --- A first KO in a 2v2, as the sim's own event object: not the match's end (norm() must carry `over` and `winners` from an FxEvent; the dictionary tests above could not see it) ---------------
 
 func _ko_event(winner: int, loser: int, over: bool, winners: Array) -> SimState.FxEvent:
@@ -2287,7 +2347,7 @@ func _bridge() -> void:
 	_ok(m0.name == "Grist" and m0.tier >= 1 and m0.charge >= 0.0, "bridge: reads name, tier and charge from the sim")
 	var sig_name0: String = UiData.display_text(str(host.S.fighters[0].sigName)).strip_edges().to_upper()   # the move's name, or from the rename on its key read as the name
 	_ok(sig_name0 != "" and hud.hub.move_names.has(sig_name0), "bridge: the fighters' signature names are known to the hub (a banner that is only a move name is dropped)")
-	_ok(hud.hub.toll["pop0"] > 0, "bridge: reads the world counters")
+	_ok(hud.hub.damage.has("structures") and hud.hub.damage.has("craters") and hud.hub.damage.size() == 2, "bridge: reads the world's damage counters and no people counter (RL-257)")
 	var sd: Dictionary = UiSimBridge.strip_data(host.S, host.cam.x, 2000.0)
 	_ok((sd["segs"] as Array).size() == 11 and (sd["fighters"] as Array).size() == 2, "bridge: builds the planet strip's data")
 	_ok(bool(seen["damage"]), "bridge: the live sim emits damage events (S1): " + str(seen))
@@ -2432,13 +2492,13 @@ func _crown_rules() -> void:
 	bi.actor = 0.0
 	hub.consume(bi)
 	_ok(hub.model(0).brink, "crown: a brink_enter object sets the brink")
-	# The toll chip brightens for a moment after a change, then dims.
+	# The damage chip brightens for a moment after a change, then dims.
 	hub = _hub()
 	_step(hub, 1.0)
-	hub.consume({"type": "world", "civilians": 3, "pop0": 425, "structures": 0, "craters": 0})
-	_ok(hub.toll_age == 0.0, "toll: a change resets the chip's brightness")
-	_step(hub, UiLook.TOLL_SHOW + 0.1)
-	_ok(hub.toll_age > UiLook.TOLL_SHOW, "toll: and it dims again")
+	hub.consume({"type": "world", "structures": 1, "craters": 0})
+	_ok(hub.damage_age == 0.0, "damage chip: a change resets the chip's brightness")
+	_step(hub, UiLook.DAMAGE_SHOW + 0.1)
+	_ok(hub.damage_age > UiLook.DAMAGE_SHOW, "damage chip: and it dims again")
 	# The mock hero scenario: how much of the time is any crown showing? Now only for wear.
 	var f: Array = UiMockFeed.fighters("hero_vs_proud")
 	hub = UiEventHub.new()
@@ -2548,13 +2608,13 @@ func _anchor_for(lay: UiLayout, c: Vector2, n: Vector2, slot: int) -> Vector2:
 
 func _split_rules() -> void:
 	UiData.set_feature("ring_map", true)   # the ring map's own rules run with it on (it is cut as shipped; _cut_rules runs the default)
-	# Geometry: the divider stops under the toll chip and above the ring map; the ring map sits between the bark lanes.
+	# Geometry: the divider stops under the damage chip and above the ring map; the ring map sits between the bark lanes.
 	for sz in [Vector2(1920, 1080), Vector2(1366, 768), Vector2(1280, 720), Vector2(2560, 1080)]:
 		var lay := UiLayout.new()
 		lay.compute(sz, false)
 		var tag: String = "%dx%d" % [int(sz.x), int(sz.y)]
 		var band: Vector2 = lay.divider_band()
-		_ok(band.x >= lay.toll.end.y and band.y <= lay.ring.position.y and band.y < lay.strip.position.y, "%s split: the divider band is under the toll chip and above the ring map and the strip" % tag)
+		_ok(band.x >= lay.damage_chip.end.y and band.y <= lay.ring.position.y and band.y < lay.strip.position.y, "%s split: the divider band is under the damage chip and above the ring map and the strip" % tag)
 		_ok(lay.ring.size.y > 0.0 and not lay.ring.intersects(lay.clear_zone) and not lay.ring.intersects(lay.bark[0]) and not lay.ring.intersects(lay.bark[1]) and not lay.ring.intersects(lay.strip), "%s split: the ring map is clear of the fight, the bark lanes and the strip" % tag)
 		var c: Vector2 = sz * 0.5
 		var seg: Array = lay.divider_segment(c, Vector2(1.0, 0.0))
@@ -3138,7 +3198,7 @@ func _responsive() -> void:
 			if touch:
 				var tm: float = lay.touch_min
 				_ok(is_equal_approx(tm, maxf(48.0 * dpv, 44.0)) and lay.pause_btn.size.x >= tm - 0.01 and lay.pause_btn.size.y >= tm - 0.01, "%s: the pause button is a 48 dp target (%d px)" % [tag, int(lay.pause_btn.size.x)])
-				_ok(lay.pause_btn.size.y > 0.0 and not lay.pause_btn.intersects(lay.plate[0]) and not lay.pause_btn.intersects(lay.plate[1]) and not lay.pause_btn.intersects(lay.toll), "%s: the pause button clears the plates and the toll chip" % tag)
+				_ok(lay.pause_btn.size.y > 0.0 and not lay.pause_btn.intersects(lay.plate[0]) and not lay.pause_btn.intersects(lay.plate[1]) and not lay.pause_btn.intersects(lay.damage_chip), "%s: the pause button clears the plates and the damage chip" % tag)
 				_ok(lay.prompts[0].size.y <= 0.0 and lay.prompts[1].size.y <= 0.0 and lay.hints[0].size.y <= 0.0, "%s: no stance ring or legend on touch (the buttons are the controls)" % tag)
 	# A narrow phone (800 wide at dp 1) still keeps its floor and the fight.
 	var lay2 := UiLayout.new()
@@ -3352,7 +3412,7 @@ func _reads_hud() -> void:
 		var slot: Rect2 = lay.read_slot
 		var tag := "reads %dx%d" % [int(sz.x), int(sz.y)]
 		_ok(slot.size.x > 0.0 and slot.size.y > 0.0 and Rect2(Vector2.ZERO, sz).encloses(slot), "%s: the read slot is on screen" % tag)
-		_ok(not slot.intersects(lay.clear_zone) and not slot.intersects(lay.toll) and (lay.portrait or (not slot.intersects(lay.plate[0]) and not slot.intersects(lay.plate[1]))), "%s: the read slot is clear of the fight, the toll chip and the plates" % tag)
+		_ok(not slot.intersects(lay.clear_zone) and not slot.intersects(lay.damage_chip) and (lay.portrait or (not slot.intersects(lay.plate[0]) and not slot.intersects(lay.plate[1]))), "%s: the read slot is clear of the fight, the damage chip and the plates" % tag)
 		_ok(lay.pause_btn.size.y <= 0.0 or not slot.intersects(lay.pause_btn), "%s: and of the pause button" % tag)
 		_ok(slot.size.y >= 24.0 and slot.size.x >= 200.0, "%s: and big enough for a line (%d by %d)" % [tag, int(slot.size.x), int(slot.size.y)])
 	UiLook.text_floor = UiLook.MIN_TEXT_PX
@@ -3677,18 +3737,17 @@ func _feedback_rules() -> void:
 	await process_frame
 
 
-## The toll chip with the population as about 1,800 whole people: four-digit counters fit the chip at every size, phone width included.
-func _toll_rules() -> void:
-	var l1 := "%s %d / %d" % [UiData.t("toll.civilians"), 1799, 1800]
-	var l2 := "%s %d    %s %d" % [UiData.t("toll.structures"), 1234, UiData.t("toll.craters"), 1999]
+## The damage chip: four-digit counters fit the chip at every size, phone width included.
+func _damage_chip_rules() -> void:
+	var l2 := "%s %d    %s %d" % [UiData.t("damage.structures"), 1234, UiData.t("damage.craters"), 1999]
 	for cs in [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 576), 1.0], [Vector2(800, 480), 1.0], [Vector2(2400, 1080), 2.6], [Vector2(1560, 720), 2.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0], [Vector2(1080, 1920), 1.0]]:
 		var lay := UiLayout.new()
 		lay.dp = cs[1]
 		lay.compute(cs[0], false)
-		var fs: int = UiCenter.toll_fs(lay, lay.s, l1, l2)
-		var wide: float = UiText.width(l1, fs) if lay.portrait else maxf(UiText.width(l1, fs), UiText.width(l2, fs))
-		var tag := "toll %dx%d dp %.1f" % [int(cs[0].x), int(cs[0].y), cs[1]]
-		_ok(wide <= lay.toll.size.x - 8.0 + 0.5, "%s: four-digit counts fit the chip (%d px in %d, type %d)" % [tag, int(wide), int(lay.toll.size.x), fs])
+		var fs: int = UiCenter.chip_fs(lay, lay.s, l2)
+		var wide: float = UiText.width(l2, fs)
+		var tag := "damage chip %dx%d dp %.1f" % [int(cs[0].x), int(cs[0].y), cs[1]]
+		_ok(wide <= lay.damage_chip.size.x - 8.0 + 0.5, "%s: four-digit counts fit the chip (%d px in %d, type %d)" % [tag, int(wide), int(lay.damage_chip.size.x), fs])
 		_ok(fs >= int(UiLook.text_floor), "%s: and the type stays at or above the floor" % tag)
 	UiLook.text_floor = UiLook.MIN_TEXT_PX
 
@@ -3717,7 +3776,7 @@ func _form_prompt_rules() -> void:
 			lay.dp = dpv
 			lay.touch_ui = touch
 			lay.compute(sz, false)
-			var others: Array = [lay.plate[0], lay.plate[1], lay.silhouette[0], lay.silhouette[1], lay.cards[0], lay.cards[1], lay.prompts[0], lay.prompts[1], lay.bark[0], lay.bark[1], lay.face[0], lay.face[1], lay.toll, lay.strip, lay.ring, lay.pause_btn, lay.feedback_btn]
+			var others: Array = [lay.plate[0], lay.plate[1], lay.silhouette[0], lay.silhouette[1], lay.cards[0], lay.cards[1], lay.prompts[0], lay.prompts[1], lay.bark[0], lay.bark[1], lay.face[0], lay.face[1], lay.damage_chip, lay.strip, lay.ring, lay.pause_btn, lay.feedback_btn]
 			if touch and not lay.touch_ctrl.is_empty():
 				for k in lay.touch_keys():
 					var c: Dictionary = lay.touch_ctrl[k]
@@ -3743,7 +3802,7 @@ func _form_prompt_rules() -> void:
 				var pl: Dictionary = UiFormPrompt.plan(mm, fr, lay.s, {"touch": touch, "glyph_style": "neutral"})
 				if pl.is_empty() or not fr.grow(0.5).encloses(pl["rect"] as Rect2):
 					bad_plan += 1
-	_ok(bad_clear == 0, "form prompt: the chip's slot clears the plates, cards, silhouette, prompt row, bark lane, face, toll chip, strip, ring map, buttons, touch controls and the centre strip at 15 sizes, touch off and on (%d overlaps)" % bad_clear)
+	_ok(bad_clear == 0, "form prompt: the chip's slot clears the plates, cards, silhouette, prompt row, bark lane, face, damage chip, strip, ring map, buttons, touch controls and the centre strip at 15 sizes, touch off and on (%d overlaps)" % bad_clear)
 	_ok(bad_plan == 0 and shown_n > 0, "form prompt: the chip always plans into the slot it was given (%d slots, %d plans failed)" % [shown_n, bad_plan])
 	_ok(desktop_missing == 0, "form prompt: a desktop window has a slot in both columns (%d missing)" % desktop_missing)
 	# The words and the control per layout.
@@ -3946,7 +4005,7 @@ func _intro_laststand_rules() -> void:
 	hud.consume({"type": "intro_start", "dur": 5.0, "delay": 0.5})
 	await _frames(hud, 3)
 	var hidden_ok := true
-	for l in [hud._l_plate[0], hud._l_plate[1], hud._l_toll, hud._l_strip_base, hud._l_crown, hud._l_hints[0], hud._l_prompts[0], hud._l_you, hud._l_touchctl]:
+	for l in [hud._l_plate[0], hud._l_plate[1], hud._l_damage, hud._l_strip_base, hud._l_crown, hud._l_hints[0], hud._l_prompts[0], hud._l_you, hud._l_touchctl]:
 		hidden_ok = hidden_ok and is_equal_approx((l as Control).modulate.a, 0.0)
 	_ok(hidden_ok and is_equal_approx(hud._l_pmenu.modulate.a, 1.0) and is_equal_approx(hud._l_fb.modulate.a, 1.0) and is_equal_approx(hud._l_events.modulate.a, 1.0), "intro: the fight's HUD is hidden through the intro (the menus and the events layer, which carries the captions of the spoken lines, are not)")
 	_ok(hud.intro_skip_text() == "" and hud._l_intro.sig == null, "intro: no skip hint until a press can skip (the data's delay)")
@@ -5458,12 +5517,12 @@ func _touch_controls_rules() -> void:
 						clash += 1
 			_ok(clash == 0, "%s: the buttons do not overlap each other" % tag)
 			var over: PackedStringArray = []
-			var obstacles: Array = [["plate0", lay.plate[0]], ["plate1", lay.plate[1]], ["toll", lay.toll], ["pause", lay.pause_btn], ["pill", lay.feedback_btn], ["read slot", lay.read_slot], ["ring", lay.ring], ["strip", lay.strip], ["clear zone", lay.clear_zone], ["cards0", lay.cards[0]], ["cards1", lay.cards[1]], ["bark", lay.bark[0]]]
+			var obstacles: Array = [["plate0", lay.plate[0]], ["plate1", lay.plate[1]], ["damage", lay.damage_chip], ["pause", lay.pause_btn], ["pill", lay.feedback_btn], ["read slot", lay.read_slot], ["ring", lay.ring], ["strip", lay.strip], ["clear zone", lay.clear_zone], ["cards0", lay.cards[0]], ["cards1", lay.cards[1]], ["bark", lay.bark[0]]]
 			for n in names:
 				for o in obstacles:
 					if (rects[n] as Rect2).intersects(o[1]) and (o[1] as Rect2).size.y > 0.0:
 						over.append("%s>%s" % [n, o[0]])
-			_ok(over.is_empty(), "%s: nothing in the HUD (plates, toll, pause, pill, ring, strip, cards, barks) or the fight is under a button %s" % [tag, str(over)])
+			_ok(over.is_empty(), "%s: nothing in the HUD (plates, damage chip, pause, pill, ring, strip, cards, barks) or the fight is under a button %s" % [tag, str(over)])
 			if lay.portrait:
 				var inside := true
 				for n in names:
@@ -7899,7 +7958,7 @@ func _many_marker_rules() -> void:
 
 
 ## The minimal HUD (ADR 0010, docs/design/minimal-hud.md), behind `minimal_hud` (off): nothing on, over or between the fighters; the edge HUD keeps the two plates (name, ki, the power pips with
-## SIGNATURE), the legend and the hint; the toll is on the pause screen; the optional cue captions are at the bottom edge.
+## SIGNATURE), the legend and the hint; the damage counts are on the pause screen; the optional cue captions are at the bottom edge.
 func _plate_words(hud: UiHud) -> String:
 	UiText.tracing = true
 	UiText.trace = []
@@ -7935,31 +7994,31 @@ func _minimal_hud_rules() -> void:
 	hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_struggle", "text": "start", "target": 1, "n": 600})
 	hud.hub.set_clash_mid(0.5)
 	hud.hub.models[1].beats = [0.3]
-	hud.hub.consume({"type": "world", "civilians": 30, "pop0": 100, "structures": 2, "craters": 3})
+	hud.hub.consume({"type": "world", "structures": 2, "craters": 3})
 	for i in range(8):
 		hud.advance(1.0 / 60.0)
 		await process_frame
 	var words_full: String = await _plate_words(hud)
-	var full_ok: bool = hud._l_tug.sig != null and hud._l_crown.sig != null and hud._l_toll.sig != null and hud._l_strip_base.sig != null
-	_ok(full_ok and words_full.contains("MARTIAL") and words_full.contains("CHARGE"), "minimal hud: with the switch off the HUD is as it was (tug, crown, toll chip, strip, the stance chip on the plate)")
+	var full_ok: bool = hud._l_tug.sig != null and hud._l_crown.sig != null and hud._l_damage.sig != null and hud._l_strip_base.sig != null
+	_ok(full_ok and words_full.contains("MARTIAL") and words_full.contains("CHARGE"), "minimal hud: with the switch off the HUD is as it was (tug, crown, damage chip, strip, the stance chip on the plate)")
 	UiData.set_feature("minimal_hud", true)
 	for i in range(8):
 		hud.advance(1.0 / 60.0)
 		await process_frame
 	_ok(hud._l_crown.sig == null and hud._l_beat.sig == null and hud._l_tug.sig == null and hud._l_struggle.sig == null and hud._l_you.sig == null, "minimal hud: the crown, the beat ring, the tug, the finisher's rings and the YOU label draw nothing")
-	_ok(hud._l_toll.sig == null and hud._l_strip_base.sig == null and hud._l_strip_marks.sig == null and hud._l_ring.sig == null, "minimal hud: the toll chip, the planet strip and the ring map are not in play")
+	_ok(hud._l_damage.sig == null and hud._l_strip_base.sig == null and hud._l_strip_marks.sig == null and hud._l_ring.sig == null, "minimal hud: the damage chip, the planet strip and the ring map are not in play")
 	var words_min: String = await _plate_words(hud)
 	var wl := words_min.to_lower()
 	_ok(words_min.contains("ONE") and words_min.contains("CHARGE") and not words_min.contains("MARTIAL") and not words_min.contains("ANGUISH") and not words_min.contains("MENACE") and not wl.contains("hit") and not wl.contains("open"), "minimal hud: the plate keeps the name and ki; the stance chip, the ego meter and the state chips are gone (%s)" % words_min.substr(0, 80))
-	# The toll is on the pause screen, as a count and the planet's state (Legal c08), and never celebrated.
+	# The damage counts (buildings and craters, never people: RL-257) are on the pause screen, and never celebrated.
 	hud.show_pause_menu(false)
 	var pm: Dictionary = hud.pause_menu_plan()
 	var facts := " ".join(PackedStringArray(pm["facts_lines"]))
-	_ok(not (pm["facts_lines"] as PackedStringArray).is_empty() and facts.to_lower().contains("civilians"), "minimal hud: the pause screen carries the toll (%s)" % facts.substr(0, 60))
+	_ok(not (pm["facts_lines"] as PackedStringArray).is_empty() and facts.to_lower().contains("buildings") and not facts.to_lower().contains("civilian"), "minimal hud: the pause screen carries the damage counts (%s)" % facts.substr(0, 60))
 	hud._pm_close("test")
 	UiData.set_feature("minimal_hud", false)
 	hud.show_pause_menu(false)
-	_ok((hud.pause_menu_plan()["facts_lines"] as PackedStringArray).is_empty(), "minimal hud: with the switch off the plain pause screen has no toll, as before")
+	_ok((hud.pause_menu_plan()["facts_lines"] as PackedStringArray).is_empty(), "minimal hud: with the switch off the plain pause screen has no damage counts, as before")
 	hud._pm_close("test")
 	# A chain counter is withdrawn.
 	hud.hub.banner = {}
@@ -8659,89 +8718,74 @@ func _lost_rival_rules() -> void:
 	await process_frame
 
 
-## The civilian bar and the match-over card's facts (docs/ui/civilian-bar.md), behind features.json civilian_bar.
-func _civilian_bar_rules() -> void:
-	UiPrefs.path = "user://ui_prefs_test_bar.json"
+## The damage chip and the match-over card's facts (docs/ui/damage-chip.md), behind features.json damage_facts. The chip is one steady line of the structures and craters lost; the card says the same two counts; nothing counts people (RL-257).
+func _damage_facts_rules() -> void:
+	UiPrefs.path = "user://ui_prefs_test_damage.json"
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	hud.size = Vector2(1280, 720)
 	root.add_child(hud)
 	await process_frame
 	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
-	var world := func(civ: int, pop: int, st: int, cr: int) -> void:
-		hud.consume({"type": "world", "civilians": civ, "pop0": pop, "structures": st, "craters": cr})
+	var world := func(st: int, cr: int) -> void:
+		hud.consume({"type": "world", "structures": st, "craters": cr, "civilians": 999, "pop0": 425})   # a host or an older feed that still sends people counters: they are ignored
 	var words := func():
 		UiText.tracing = true
 		UiText.trace = []
-		hud._l_toll.invalidate()
+		hud._l_damage.invalidate()
 		for i in range(2):
 			await process_frame
 		UiText.tracing = false
 		var seen: Array = UiText.trace.duplicate()
 		UiText.trace = []
 		return seen
-	_ok(UiData.feature("civilian_bar"), "civilian bar: on by default")
-	UiData.set_feature("civilian_bar", false)
-	world.call(120, 425, 3, 9)
+	_ok(UiData.feature("damage_facts"), "damage chip: the steady chip and the card's facts are on by default")
+	UiData.set_feature("damage_facts", false)
+	world.call(3, 9)
 	hud.advance(1.0 / 60.0)
-	var off_words: Array = await words.call()
-	_ok(" ".join(PackedStringArray(off_words)).contains("120 / 425"), "civilian bar: with the switch off the chip still says CIVILIANS LOST 120 / 425")
-	UiData.set_feature("civilian_bar", true)
+	var off_words: String = " ".join(PackedStringArray(await words.call()))
+	_ok(off_words.contains("STRUCTURES LOST 3") and off_words.contains("CRATERS 9") and not off_words.to_upper().contains("CIVILIAN") and not off_words.contains("999"), "damage chip: with the switch off the chip still says the two counts and nothing about people (%s)" % off_words.substr(0, 80))
+	UiData.set_feature("damage_facts", true)
 	hud.advance(1.0 / 60.0)
-	var on_words: Array = await words.call()
-	var joined := " ".join(PackedStringArray(on_words))
-	_ok(joined.contains("CIVILIANS LOST") and not joined.contains("/ 425") and not joined.contains("120"), "civilian bar: with it on the chip has the words and no count (%s)" % joined.substr(0, 90))
-	# The share is in whole percents, and the bar redraws only when the percent, the structures or the craters change.
-	hud.hub.toll_age = 99.0
-	world.call(0, 425, 0, 0)
+	var on_words: String = " ".join(PackedStringArray(await words.call()))
+	_ok(on_words.contains("STRUCTURES LOST 3") and on_words.contains("CRATERS 9") and not on_words.to_upper().contains("CIVILIAN") and not on_words.contains("999") and not on_words.contains("425"), "damage chip: with it on the chip is the same one line (%s)" % on_words.substr(0, 80))
+	_ok(hud.hub.damage.size() == 2 and not hud.hub.damage.has("civilians"), "damage chip: the people counters a feed sends are not kept")
+	# One steady opacity: a fresh change does not brighten it, and a rise redraws only for its own numbers.
+	hud.hub.damage_age = 99.0
+	world.call(3, 9)
 	hud.advance(1.0 / 60.0)
-	_ok(UiCenter.civilian_share(hud.hub) == 0.0 and absf(UiCenter.civilian_share(hud.hub) - 0.0) < 0.0001, "civilian bar: empty at zero")
-	world.call(212, 425, 0, 0)
+	var sig_a: Variant = hud._l_damage.sig
+	world.call(4, 9)
+	hud.hub.damage_age = 0.0
 	hud.advance(1.0 / 60.0)
-	var sig_a: Variant = hud._l_toll.sig
-	_ok(is_equal_approx(UiCenter.civilian_share(hud.hub), 0.49), "civilian bar: 212 of 425 is 49 percent (whole percents, rounded down)")
-	world.call(211, 425, 0, 0)
-	hud.advance(1.0 / 60.0)
-	var sig_b: Variant = hud._l_toll.sig
-	_ok(sig_a == sig_b, "civilian bar: one fewer person inside the same percent redraws nothing")
-	world.call(240, 425, 0, 0)
-	hud.advance(1.0 / 60.0)
-	var sig_c: Variant = hud._l_toll.sig
-	_ok(sig_c != sig_b and (sig_c as Array)[3] == (sig_b as Array)[3], "civilian bar: a rise changes the picture by its percent only, and the opacity does not change (no brightening, no blink)")
-	hud.hub.toll_age = 0.0
-	hud.advance(1.0 / 60.0)
-	_ok((hud._l_toll.sig as Array)[3] == (sig_c as Array)[3], "civilian bar: and a fresh change of the toll does not brighten it either")
-	# At the sizes (one view and the split share the chip's rectangle): the bar is inside the chip and wide enough to read.
+	var sig_b: Variant = hud._l_damage.sig
+	_ok(sig_a != sig_b and (sig_a as Array)[2] == (sig_b as Array)[2], "damage chip: a rise changes the picture by its numbers only; the opacity does not change (no brightening, no blink)")
+	# At the sizes the line is inside the chip (four-digit counts; the very small 667 by 375 is not asked: real counts are tens, and the four-digit fit test above has its own sizes).
 	var bad := PackedStringArray()
-	for cs in [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(844, 390), 1.0], [Vector2(667, 375), 1.0], [Vector2(2532, 1170), 3.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0], [Vector2(1170, 2532), 3.0]]:
+	for cs in [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(844, 390), 1.0], [Vector2(2532, 1170), 3.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0], [Vector2(1170, 2532), 3.0]]:
 		var lay := UiLayout.new()
 		lay.dp = cs[1]
 		lay.compute(cs[0], false)
-		var bp: Dictionary = UiCenter.bar_plan(lay, lay.s)
-		var tr: Rect2 = bp["track"]
-		if not lay.toll.encloses(tr) or tr.size.x < 50.0 or float(bp["x0"]) < lay.toll.position.x or float(bp["x0"]) + float(bp["lw"]) > tr.position.x:
-			bad.append("%s track %s" % [str(cs[0]), str(tr)])
-	_ok(bad.is_empty(), "civilian bar: at eight sizes (phone landscape and upright, desktop) the words and the bar are inside the chip, the bar at least 50 px (%d bad %s)" % [bad.size(), str(bad.slice(0, 3))])
-	# The anguish and menace link is not touched: the toll events change no fighter's meter, with the switch on or off.
+		var line := "%s %d    %s %d" % [UiData.t("damage.structures"), 9999, UiData.t("damage.craters"), 9999]
+		if UiText.width(line, UiCenter.chip_fs(lay, lay.s, line)) > lay.damage_chip.size.x - 8.0 + 0.5:
+			bad.append(str(cs[0]))
+	_ok(bad.is_empty(), "damage chip: at seven sizes the one line fits the chip (%d bad %s)" % [bad.size(), str(bad.slice(0, 3))])
+	# The anguish and menace link is not touched: the damage events change no fighter's meter.
 	var m0: UiFighterModel = hud.hub.model(0)
 	var m1: UiFighterModel = hud.hub.model(1)
 	hud.hub.patch(0, {"ego": 37.0})
 	hud.hub.patch(1, {"ego": 61.0})
-	world.call(300, 425, 5, 12)
+	world.call(5, 12)
 	hud.advance(0.5)
-	UiData.set_feature("civilian_bar", false)
-	world.call(310, 425, 5, 12)
-	hud.advance(0.5)
-	UiData.set_feature("civilian_bar", true)
-	_ok(is_equal_approx(m0.ego, 37.0) and is_equal_approx(m1.ego, 61.0), "civilian bar: the toll events change no meter (the anguish and menace link is the sim's, unchanged)")
-	# The results card: the exact counts, in plain words, only with the switch on.
-	world.call(123, 425, 12, 40)
+	_ok(is_equal_approx(m0.ego, 37.0) and is_equal_approx(m1.ego, 61.0), "damage chip: the damage events change no meter")
+	# The results card: the two counts, in plain words, only with the switch on.
+	world.call(12, 40)
 	hud.advance(1.0 / 60.0)
 	var facts: Array = hud.over_facts()
-	_ok(facts == ["Civilians lost: 123 of 425", "Buildings lost: 12", "Craters: 40"], "civilian bar: the match-over card's facts (%s)" % str(facts))
-	UiData.set_feature("civilian_bar", false)
-	_ok(hud.over_facts().is_empty(), "civilian bar: and none with the switch off")
-	UiData.set_feature("civilian_bar", true)
+	_ok(facts == ["Buildings lost: 12", "Craters: 40"], "damage facts: the match-over card says the two counts (%s)" % str(facts))
+	UiData.set_feature("damage_facts", false)
+	_ok(hud.over_facts().is_empty(), "damage facts: and none with the switch off")
+	UiData.set_feature("damage_facts", true)
 	var bad2 := PackedStringArray()
 	for cs in [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(844, 390), 1.0], [Vector2(667, 375), 1.0], [Vector2(2532, 1170), 3.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0], [Vector2(1170, 2532), 3.0], [Vector2(568, 320), 1.0]]:
 		var lay := UiLayout.new()
@@ -8749,10 +8793,9 @@ func _civilian_bar_rules() -> void:
 		lay.compute(cs[0], false)
 		for touch in [false, true]:
 			var p: Dictionary = UiPause.plan(cs[0], lay.s, cs[1], touch, {"focus": 0, "over": true, "facts": facts})
-			if not bool(p["fits"]) or (p["facts_lines"] as PackedStringArray).size() < 3:
+			if not bool(p["fits"]) or (p["facts_lines"] as PackedStringArray).size() < 2:
 				bad2.append("%s touch %s" % [str(cs[0]), str(touch)])
-	_ok(bad2.is_empty(), "civilian bar: the match-over card with its three facts fits at nine sizes, touch off and on, every button a 48 dp target inside it (%d bad %s)" % [bad2.size(), str(bad2.slice(0, 3))])
-	# In the HUD, the card draws the facts.
+	_ok(bad2.is_empty(), "damage facts: the match-over card with its two facts fits at nine sizes, touch off and on, every button a 48 dp target inside it (%d bad %s)" % [bad2.size(), str(bad2.slice(0, 3))])
 	hud._menu_last_cfg = {"players": 1}
 	hud.show_pause_menu(true)
 	hud.advance(1.0 / 60.0)
@@ -8764,12 +8807,33 @@ func _civilian_bar_rules() -> void:
 	UiText.tracing = false
 	var card_words := " ".join(PackedStringArray(UiText.trace))
 	UiText.trace = []
-	_ok(card_words.contains("Civilians lost: 123 of 425") and card_words.contains("Buildings lost: 12") and card_words.contains("MATCH OVER"), "civilian bar: the open card draws MATCH OVER and the exact counts")
-	UiData.set_feature("civilian_bar", null)
+	_ok(card_words.contains("Buildings lost: 12") and card_words.contains("MATCH OVER") and not card_words.to_lower().contains("civilian"), "damage facts: the open card draws MATCH OVER and the two counts, nothing about people")
+	UiData.set_feature("damage_facts", null)
 	hud.queue_free()
 	await process_frame
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path)) if FileAccess.file_exists(UiPrefs.path) else null
 	UiPrefs.path = "user://ui_prefs.json"
+
+
+## Legal's lint row c11 (RL-257): no people-harm word or counter in anything a player sees. Every file in ui/data has none of the retired words (civilians lost, casualties, toll, kill count, death count, body count),
+## and the shipped HUD's chip, card and pause facts carry none either.
+func _retired_words_rules() -> void:
+	var rx := RegEx.create_from_string("(?i)civilians? lost|casualt|\\btoll\\b|kill count|death count|body count")
+	var hits := PackedStringArray()
+	var dir := DirAccess.open("res://ui/data")
+	var n_files := 0
+	for f in dir.get_files():
+		if not f.ends_with(".json"):
+			continue
+		n_files += 1
+		var text: String = FileAccess.get_file_as_string("res://ui/data/" + f)
+		for m in rx.search_all(text):
+			hits.append("%s: %s" % [f, m.get_string()])
+	_ok(n_files >= 10 and hits.is_empty(), "retired words: none of the retired people-harm words in %d ui/data files (%s)" % [n_files, str(hits.slice(0, 4))])
+	var hub := _refusal_rules_hub()
+	hub.consume({"type": "world", "structures": 7, "craters": 21, "civilians": 80, "pop0": 425})
+	var line: String = UiCenter.chip_line(hub)
+	_ok(not rx.search(line) and not line.to_lower().contains("civilian") and not line.contains("80") and not line.contains("425"), "retired words: the chip's line says buildings and craters only (%s)" % line)
 
 
 ## Narrative's plain words (docs/narrative/plain-words.md, merged 2026-10-16) fit where they are drawn, the Cyborg's WEAK SPOT card included; a run needs a length (run_to above 0).
@@ -9060,9 +9124,9 @@ func _phone_rules() -> void:
 		for n in lay2.touch_keys():
 			var cc: Dictionary = UiTouchControls.circle(lay2, n)
 			var rr: Rect2 = UiTouchControls.rect_of(cc)
-			if not vw.encloses(rr) or float(cc.r) * 2.0 < 48.0 * 3.0 - 0.01 or rr.intersects(lay2.plate[0]) or rr.intersects(lay2.plate[1]) or rr.intersects(lay2.toll) or rr.intersects(lay2.pause_btn):
+			if not vw.encloses(rr) or float(cc.r) * 2.0 < 48.0 * 3.0 - 0.01 or rr.intersects(lay2.plate[0]) or rr.intersects(lay2.plate[1]) or rr.intersects(lay2.damage_chip) or rr.intersects(lay2.pause_btn):
 				short_bad.append("%s %s %s" % [str(cs2[0]), "full" if cs2[1] else "simple", n])
-	_ok(short_bad.is_empty(), "short phone landscape: Simple passes down to 360 CSS px of height and Full down to 300, at phone density, nothing under a plate, the toll or the pause button %s" % str(short_bad.slice(0, 4)))
+	_ok(short_bad.is_empty(), "short phone landscape: Simple passes down to 360 CSS px of height and Full down to 300, at phone density, nothing under a plate, the damage chip or the pause button %s" % str(short_bad.slice(0, 4)))
 
 
 ## What may skip the gate (docs/ui/hud-spec.md section 51): whole parameter names only, and on the web only from a local host.
@@ -9655,7 +9719,7 @@ func _touch_full_rules() -> void:
 			var small := 0
 			var clash := 0
 			var over: PackedStringArray = []
-			var obstacles: Array = [["plate0", lay.plate[0]], ["plate1", lay.plate[1]], ["toll", lay.toll], ["pause", lay.pause_btn], ["pill", lay.feedback_btn], ["read slot", lay.read_slot], ["ring", lay.ring], ["strip", lay.strip], ["clear zone", lay.clear_zone], ["cards0", lay.cards[0]], ["cards1", lay.cards[1]], ["bark", lay.bark[0]]]
+			var obstacles: Array = [["plate0", lay.plate[0]], ["plate1", lay.plate[1]], ["damage", lay.damage_chip], ["pause", lay.pause_btn], ["pill", lay.feedback_btn], ["read slot", lay.read_slot], ["ring", lay.ring], ["strip", lay.strip], ["clear zone", lay.clear_zone], ["cards0", lay.cards[0]], ["cards1", lay.cards[1]], ["bark", lay.bark[0]]]
 			var names: Array = UiTouchControls.FULL_NAMES
 			for i in range(names.size()):
 				var a: Dictionary = lay.touch_ctrl[names[i]]
@@ -9917,7 +9981,7 @@ func _sim_pause_rules() -> void:
 	for i in range(60):
 		hub.advance(1.0 / 60.0)
 	_ok(is_equal_approx(hub.t_now, t0) and is_equal_approx(m.stance_prompt_t, 0.0) and is_equal_approx(m.parry_t, pt0), "sim pause: the match clock, the stance prompt and the parry window stand still for a second of it")
-	_ok(hub.cinematic_left < 2.1 and hub.cinematic_left > 1.9 and hub.toll_age > 90.0, "sim pause: what is only drawn (the cinematic mode) runs on in real time")
+	_ok(hub.cinematic_left < 2.1 and hub.cinematic_left > 1.9 and hub.damage_age > 90.0, "sim pause: what is only drawn (the cinematic mode) runs on in real time")
 	hub.consume({"type": "pause_end", "kind": "transform"})
 	for i in range(30):
 		hub.advance(1.0 / 60.0)
@@ -10111,7 +10175,7 @@ func _faces_rules() -> void:
 					lay.compute(sz, false, Vector4.ZERO, swapped)
 					var tag := "faces %dx%d dp %.1f touch=%s %s%s" % [int(sz.x), int(sz.y), dpv, str(touch), "left-handed " if lh else "", "swapped" if swapped else "normal"]
 					var view := Rect2(Vector2.ZERO, sz)
-					var fixed: Array = [["plate0", lay.plate[0]], ["plate1", lay.plate[1]], ["toll", lay.toll], ["strip", lay.strip], ["ring", lay.ring], ["read", lay.read_slot], ["pause", lay.pause_btn], ["pill", lay.feedback_btn],
+					var fixed: Array = [["plate0", lay.plate[0]], ["plate1", lay.plate[1]], ["damage", lay.damage_chip], ["strip", lay.strip], ["ring", lay.ring], ["read", lay.read_slot], ["pause", lay.pause_btn], ["pill", lay.feedback_btn],
 						["cards0", lay.cards[0]], ["cards1", lay.cards[1]], ["sil0", lay.silhouette[0]], ["sil1", lay.silhouette[1]], ["prompts0", lay.prompts[0]], ["prompts1", lay.prompts[1]], ["bark0", lay.bark[0]], ["bark1", lay.bark[1]]]
 					if touch:
 						for k in lay.touch_keys():
@@ -10173,10 +10237,10 @@ func _faces_rules() -> void:
 				var inter: Rect2 = (lay2.plate[i] as Rect2).intersection(top_band)
 				if inter.size.x > 0.0 and inter.size.y > 0.0:
 					plate_top_sliver = maxf(plate_top_sliver, inter.size.y)
-				if lay2.panel_floor() < (lay2.plate[i] as Rect2).end.y or lay2.panel_floor() < lay2.toll.end.y:
+				if lay2.panel_floor() < (lay2.plate[i] as Rect2).end.y or lay2.panel_floor() < lay2.damage_chip.end.y:
 					floor_bad.append("%dx%d" % [int(sz2.x), int(sz2.y)])
 	_ok(centre_bad.is_empty(), "faces: no face, docked or embedded, is in the centre 56 percent of the width at any of the 14 sizes %s" % str(centre_bad))
-	_ok(plate_bottom_bad.is_empty() and plate_top_sliver <= 50.0 and floor_bad.is_empty(), "faces: no nameplate is in the panel strip's bottom band, the plates reach at most %d px into the top band, and panel_floor() clears every plate and the toll chip %s" % [int(plate_top_sliver), str(plate_bottom_bad)])
+	_ok(plate_bottom_bad.is_empty() and plate_top_sliver <= 50.0 and floor_bad.is_empty(), "faces: no nameplate is in the panel strip's bottom band, the plates reach at most %d px into the top band, and panel_floor() clears every plate and the damage chip %s" % [int(plate_top_sliver), str(plate_bottom_bad)])
 	UiLook.text_floor = UiLook.MIN_TEXT_PX
 	# In the HUD: a docked face and an embedded one are drawn, and a swap carries the face to the new side.
 	root.size = Vector2i(1920, 1080)

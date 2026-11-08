@@ -172,5 +172,5 @@ const CROWN_HOLD_MAJOR := 0.90        # a break, the brink, a Rally, a boil-over
 ## Brink is the one persistent cue: a thin, faint, slow ring (alpha range and rate).
 const BRINK_RING_A_MIN := 0.16
 const BRINK_RING_A_MAX := 0.38
-const TOLL_REST_ALPHA := 0.5          # the world toll chip dims at rest and brightens for TOLL_SHOW seconds after a change
-const TOLL_SHOW := 2.5
+const DAMAGE_REST_ALPHA := 0.5          # the world damage chip dims at rest and brightens for DAMAGE_SHOW seconds after a change
+const DAMAGE_SHOW := 2.5

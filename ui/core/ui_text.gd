@@ -10,7 +10,7 @@ const ARROW := "→"
 const _ASCII: Dictionary = {"×": "x", "—": "-", "·": "-", "…": "...", "’": "'", "“": "\"", "”": "\"", "•": "*"}
 
 static var font: Font = null   # a bundled font may replace the fallback later (needs Legal's licence row first)
-## Text on a scrim (the plates, the toll chip) skips the outline: half the draw commands, and it needs none there.
+## Text on a scrim (the plates, the damage chip) skips the outline: half the draw commands, and it needs none there.
 static var no_outline: bool = false
 ## Batching: with `defer` on, draw() queues the text, and flush() draws it all after the shapes. Text uses the font atlas
 ## texture and shapes use none, so interleaving them breaks the renderer's batches; a plate drawn shapes-first costs

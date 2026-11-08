@@ -99,7 +99,7 @@ var winners: Array = []          # cross_end (2v2): the winning team's starting 
 var match_over: bool = false     # a KO has happened: the match-end feedback button shows
 var act: int = 1                 # the director's invisible act (nothing shows it; the feed names it)
 var mood_band: String = ""       # the fight's mood band: calm, tense or frenzied (the feed names it)
-var toll: Dictionary = {"civilians": 0, "pop0": 0, "structures": 0, "craters": 0}
+var damage: Dictionary = {"structures": 0, "craters": 0}   # the world's damage, for the chip and the match-over card (docs/ui/damage-chip.md); the sim's people counters are not read here (RL-257)
 var mode: int = Mode.NORMAL
 var cinematic_left: float = 0.0
 var cinematic_kind: String = ""
@@ -116,7 +116,7 @@ var intro_since: float = 99.0      # real seconds since clock_start (the HUD fad
 var sim_pause_left: float = 0.0    # real seconds the pause may still last (pause_start's dur): the safety if its pause_end is lost
 var face_times: Array = []         # fight-time starts of the cut-ins the rate cap counts (UiFaces, faces.json rate)
 var move_names: Dictionary = {}    # upper-case move names (a fighter's signature): a banner that is only a move name is dropped (Orb: the fighter shouts it, there is no name card)
-var toll_age: float = 99.0       # seconds since the world toll last changed (the chip dims at rest)
+var damage_age: float = 99.0       # seconds since the world damage last changed (the chip dims at rest)
 var stats: Dictionary = {}       # counters for the readability tests and the demo's status line
 var captions_on: bool = true
 var reduced_motion: bool = false
@@ -152,8 +152,8 @@ func reset() -> void:
 	struggle_n = 0
 	act = 1
 	mood_band = ""
-	toll = {"civilians": 0, "pop0": 0, "structures": 0, "craters": 0}
-	toll_age = 99.0
+	damage = {"structures": 0, "craters": 0}
+	damage_age = 99.0
 	mode = Mode.NORMAL
 	cinematic_left = 0.0
 	cinematic_kind = ""
@@ -559,13 +559,11 @@ func consume(e) -> void:
 			if float(d.get("k", 0.0)) >= UiLook.HAZARD_SHAKE_K:
 				hazard_left = UiLook.HAZARD_HOLD
 		"world":
-			var before: Array = [toll["civilians"], toll["structures"], toll["craters"]]
-			toll["civilians"] = int(d.get("civilians", toll["civilians"]))
-			toll["pop0"] = int(d.get("pop0", toll["pop0"]))
-			toll["structures"] = int(d.get("structures", toll["structures"]))
-			toll["craters"] = int(d.get("craters", toll["craters"]))
-			if before != [toll["civilians"], toll["structures"], toll["craters"]] and t_now > 0.0:
-				toll_age = 0.0
+			var before: Array = [damage["structures"], damage["craters"]]
+			damage["structures"] = int(d.get("structures", damage["structures"]))
+			damage["craters"] = int(d.get("craters", damage["craters"]))
+			if before != [damage["structures"], damage["craters"]] and t_now > 0.0:
+				damage_age = 0.0
 		# Events the HUD deliberately does not draw (docs/ui/hud-spec.md section 9): the Empress's paperwork is diegetic
 		# only (Orb), the Encore's mend gauge reads through her posture, damage numbers would be a health bar in disguise.
 		"revision_fill_reset", "encore_start", "encore_end", "guard_fall", "spark", "ring", \
@@ -586,15 +584,13 @@ var _lost_trail_left: Dictionary = {}
 
 
 ## The "world" event's effect without the event: what the bridge hands over every frame (the sim's counters), applied as consume() would. The count of events is kept as consume() keeps it.
-func set_toll(civilians: int, pop0: int, structures: int, craters: int) -> void:
+func set_damage(structures: int, craters: int) -> void:
 	stats["events"] += 1
-	var changed: bool = civilians != toll["civilians"] or structures != toll["structures"] or craters != toll["craters"]
-	toll["civilians"] = civilians
-	toll["pop0"] = pop0
-	toll["structures"] = structures
-	toll["craters"] = craters
+	var changed: bool = structures != damage["structures"] or craters != damage["craters"]
+	damage["structures"] = structures
+	damage["craters"] = craters
 	if changed and t_now > 0.0:
-		toll_age = 0.0
+		damage_age = 0.0
 
 
 const _PATCH_KEYS: Array = ["stance", "tier", "charge", "momentum", "ego", "hidden", "charging", "sig_cost", "name", "title", "ai", "chip_station", "device", "form_free", "form_cue_left", "last_stand_left", "energy", "recipe", "stance_armed", "launcher_ready", "launcher_rest_left", "launcher_rest_total"]
@@ -1493,7 +1489,7 @@ func advance(dt: float) -> void:
 			sim_pause_kind = ""
 			sdt = dt
 	t_now += sdt
-	toll_age += dt
+	damage_age += dt
 	_step_struggle(sdt)
 	if not telegraph.is_empty():
 		telegraph["age"] = float(telegraph["age"]) + sdt

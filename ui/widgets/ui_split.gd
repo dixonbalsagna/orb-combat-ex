@@ -1,6 +1,6 @@
 class_name UiSplit
 ## HUD support for Camera's dynamic split screen (docs/camera/split-screen.md, docs/ui/hud-spec.md section 10):
-##   - the divider's styling (thin, neutral, stopping under the toll chip and above the ring map and the strip),
+##   - the divider's styling (thin, neutral, stopping under the damage chip and above the ring map and the strip),
 ##   - the planet ring map (both fighters on the wrapped planet, each pane's viewed arc, the held shortest arc),
 ##   - an edge pointer chip in each pane toward the rival, with the distance in fighter heights.
 ## All of it is fed by one record from Camera each frame (UiHud.split_fn), and all of it draws only while it has something
@@ -42,7 +42,7 @@ static func divider_visible(lay: UiLayout, sp: Dictionary, s: float) -> bool:
 
 ## The divider as a rotated bar: {mid, len, angle, w, a, slam}, or {} when the line misses the band. The HUD draws it with
 ## two ColorRect nodes (a dark edge under a light line) whose transform it sets, so a moving divider costs no redraw and no
-## draw command at all. Thin, neutral, never a fighter's accent; it stops under the toll chip and above the ring map and
+## draw command at all. Thin, neutral, never a fighter's accent; it stops under the damage chip and above the ring map and
 ## the strip, and where it swings through the horizontal it spans the width inside that band.
 static func divider_geometry(lay: UiLayout, sp: Dictionary, s: float) -> Dictionary:
 	var seg: Array = lay.divider_segment(sp["c"], sp["n"])

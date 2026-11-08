@@ -104,8 +104,8 @@ func _build() -> void:
 	_i = 0
 
 
-func _world(time: float, civ: int, structures: int, craters: int) -> void:
-	_e(time, {"type": "world", "civilians": civ, "pop0": 425, "structures": structures, "craters": craters})
+func _world(time: float, structures: int, craters: int) -> void:
+	_e(time, {"type": "world", "structures": structures, "craters": craters})
 
 
 func _build_hero_proud() -> void:
@@ -113,7 +113,7 @@ func _build_hero_proud() -> void:
 	_e(0.0, {"type": "match_start"})
 	_st(0.0, 0, {"stance": 0, "tier": 1, "charge": 30.0, "momentum": 20.0, "ego": 12.0, "aura": "#8fd6ff", "ai": false})
 	_st(0.0, 1, {"stance": 1, "tier": 1, "charge": 40.0, "momentum": 45.0, "ego": 78.0, "aura": "#c9a8ff", "ai": true})
-	_world(0.0, 0, 0, 0)
+	_world(0.0, 0, 0)
 	_bark(0.8, 0, "Good. You came. Now show me everything.", "effort.light", 1)
 	_bark(2.2, 1, "You were something once. Let me see what's left.", "scoff", 1)
 	# A parry window on the Anti-hero, then a chain window on the Protagonist.
@@ -176,7 +176,7 @@ func _build_hero_proud() -> void:
 	_e(37.0, {"type": "finisher_start", "actor": 0, "target": 1, "dur": 3.0})
 	_bark(37.2, 0, "Best fight of my year. Rest. I'll carry you home.", "laugh.long", 2, 5, true, 26, "sigh")
 	_e(40.0, {"type": "ko", "winner": 0, "loser": 1, "dur": 3.0})
-	_world(40.0, 61, 9, 14)
+	_world(40.0, 9, 14)
 	_e(40.2, {"type": "banner", "text": "K.O.  PROTAGONIST WINS", "col": "#ffffff", "dur": 2.4})
 
 
@@ -185,7 +185,7 @@ func _build_empress_cyborg() -> void:
 	_e(0.0, {"type": "match_start"})
 	_st(0.0, 0, {"stance": 0, "tier": 1, "charge": 50.0, "momentum": 30.0, "ego": 40.0, "aura": "#ff9ad0", "ai": true})
 	_st(0.0, 1, {"stance": 2, "tier": 1, "charge": 35.0, "momentum": 10.0, "ego": 20.0, "aura": "#e0c14a", "ai": true})
-	_world(0.0, 0, 0, 0)
+	_world(0.0, 0, 0)
 	_bark(1.0, 0, "You struck us! Do you know what revision this is?", "shriek", 2, 2, false, 24, "snort")
 	_bark(2.4, 1, "Welcome. Your order is you.", "chirp", 1)
 	_rs(4.0, 0, "mantle", "bruised")
@@ -233,7 +233,7 @@ func _build_placeholders() -> void:
 	_e(0.0, {"type": "match_start"})
 	_st(0.0, 0, {"stance": 0, "tier": 1, "charge": 60.0, "momentum": 40.0, "ego": 20.0, "aura": "#8fd6ff", "ai": true})
 	_st(0.0, 1, {"stance": 1, "tier": 1, "charge": 60.0, "momentum": 40.0, "ego": 35.0, "aura": "#ff5a3c", "ai": true})
-	_world(0.0, 0, 0, 0)
+	_world(0.0, 0, 0)
 	_rs(3.0, 0, "head", "bruised")
 	_rs(5.0, 1, "arms", "battered")
 	_rs(8.0, 0, "legs", "broken")
@@ -283,7 +283,7 @@ func _build_controls() -> void:
 	_e(0.0, {"type": "match_start"})
 	_st(0.0, 0, {"stance": 0, "tier": 1, "charge": 30.0, "momentum": 30.0, "ego": 20.0, "aura": "#8fd6ff", "ai": false, "device": "xbox", "weight": "light"})
 	_st(0.0, 1, {"stance": 2, "tier": 1, "charge": 60.0, "momentum": 45.0, "ego": 50.0, "aura": "#c9a8ff", "ai": true, "weight": "light"})
-	_world(0.0, 0, 0, 0)
+	_world(0.0, 0, 0)
 	_e(1.0, {"type": "availability", "actor": 0, "action": "special", "available": true})
 	# The guided first match: each beat's hint, the done line, a nudge.
 	_e(0.5, {"type": "tutorial_beat", "id": "b1", "state": "start"})

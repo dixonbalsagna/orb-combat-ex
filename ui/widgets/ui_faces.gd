@@ -7,7 +7,7 @@ extends RefCounted
 ## give one face a side.
 ##
 ## Where it goes: DOCKED, a square in the speaker's column just above the bark lane (UiLayout.face[slot], placed so it never touches the
-## nameplates, the cards, the prompt row, the legend's three rows, the toll chip, the pause button, the touch buttons or the other HUD parts);
+## nameplates, the cards, the prompt row, the legend's three rows, the damage chip, the pause button, the touch buttons or the other HUD parts);
 ## or EMBEDDED, a square at the outer end of the bark's own panel (portrait, touch landscape where one lane stacks the lines, and any screen too
 ## small for a docked one). The portrait is a placeholder drawn from the fighter's aura colour for now; `faces.json` has a slot per fighter
 ## and expression (neutral, smirk, strain, hurt) where Art's textures go.
