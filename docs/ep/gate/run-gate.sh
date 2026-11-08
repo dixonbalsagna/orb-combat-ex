@@ -43,5 +43,7 @@ node tools/world-checks.mjs --run 2>&1 | tail -n1 | cut -c1-140 >> "$O/r.txt"
 cmp sim/core/test/golden.json "$R/sim/core/test/golden.json" && echo "golden_cmp 0 same" >> "$O/r.txt"
 echo ALLDONE >> "$O/r.txt"
 # Everything else CI runs as a Godot script: a check added to CI and not listed above must not reach main unrun (places_check, 2026-11-01).
-grep -oE "script res://[^']*" .github/workflows/ci.yml | grep -v enet_check | sed 's/^script //' | sort -u | while read -r line; do set -- $line; s=$1; shift; tag=ci_$(basename "$s" .gd)_$(echo "$*" | tr -c 'a-zA-Z0-9' '_' | cut -c1-40); "$G" --headless --path . --script "$s" "$@" > "$O/$tag.log" 2>&1; echo "$tag $? $(tail -n1 "$O/$tag.log" | cut -c1-100)" >> "$O/r.txt"; done
+grep -oE "script res://[^']*" .github/workflows/ci.yml | grep -v enet_check | sed 's/^script //' | sort -u | while read -r line; do set -- $line; s=$1; shift; tag=ci_$(basename "$s" .gd)_$(echo "$*" | tr -c 'a-zA-Z0-9' '_' | cut -c1-40); "$G" --headless --path . --script "$s" "$@" > "$O/$tag.log" 2>&1; rc=$?; se=$(grep -c "SCRIPT ERROR" "$O/$tag.log"); [ "$se" -gt 0 ] && rc="$rc SCRIPT_ERROR_x$se"; echo "$tag $rc $(tail -n1 "$O/$tag.log" | cut -c1-100)" >> "$O/r.txt"; done
+# CI runs each script through tools/gate.mjs, which fails on any SCRIPT ERROR line even when the check passes (4890bdd9: parity and a LAN control); the mirror flags them the same way.
+grep -l "SCRIPT ERROR" "$O"/*.log 2>/dev/null | sed "s#.*/#script_error_in #" >> "$O/r.txt"
 echo CIDONE >> "$O/r.txt"
