@@ -1,0 +1,39 @@
+diff --git a/pa/sim/core/field.gd b/pb/sim/core/field.gd
+index 9e9fadd..3115814 100644
+--- a/pa/sim/core/field.gd
++++ b/pb/sim/core/field.gd
+@@ -203,6 +203,19 @@ static func bindStep(S: SimState) -> void:
+ 
+ 
+ ## The memo is the frame's and the store's, or it is laid again.
++## Is the memo laid for exactly this frame and this store? Asked just before the line is re-anchored (swing.gd _anchorAtRest).
++static func keyedTo(S: SimState) -> bool:
++	var fr = S.frame
++	return _nc == SimConst.NC and fr.seed == _kSeed and S.storeHash == _sh and fr.px == _kp[0] and fr.py == _kp[1] and fr.pz == _kp[2] and fr.tx == _kp[3] and fr.ty == _kp[4] and fr.tz == _kp[5] and fr.x0 == _kp[6]
++
++
++## The line was re-anchored on the same great circle (x0 moved to the pair, the point and heading with it): the memos stand, only their key moves.
++## NOT hash-neutral: a column read under the new anchor can differ in the last bits from the one memoised under the old (Performance, docs/perf/late-ticks-2026-11-07.md).
++static func rekey(S: SimState) -> void:
++	var fr = S.frame
++	_kp[0] = fr.px; _kp[1] = fr.py; _kp[2] = fr.pz; _kp[3] = fr.tx; _kp[4] = fr.ty; _kp[5] = fr.tz; _kp[6] = fr.x0
++
++
+ static func _fresh(S: SimState) -> void:
+ 	var fr = S.frame
+ 	if fr.tx != _kp[3] or fr.ty != _kp[4] or fr.tz != _kp[5] or fr.px != _kp[0] or fr.py != _kp[1] or fr.pz != _kp[2] or fr.x0 != _kp[6] or fr.seed != _kSeed or S.storeHash != _sh or _nc != SimConst.NC:
+diff --git a/pa/sim/core/swing.gd b/pb/sim/core/swing.gd
+index 193911c..d814771 100644
+--- a/pa/sim/core/swing.gd
++++ b/pb/sim/core/swing.gd
+@@ -527,7 +527,10 @@ static func _anchorAtRest(S: SimState) -> void:
+ 	var pair: Array = _pair(S)
+ 	var a = pair[0]
+ 	if absf(SimWrap.sdx(fr.x0, a.x)) > SimConst.W * 0.125:
++		var synced: bool = SimField.keyedTo(S)
+ 		_applyTurn(fr, SimWrap.wrap(a.x + SimWrap.sdx(a.x, pair[1].x) * 0.5), 0.0)
++		if synced:
++			SimField.rekey(S)
+ 
+ 
+ ## ===================================================================== for the planners

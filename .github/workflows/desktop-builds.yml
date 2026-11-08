@@ -1,7 +1,10 @@
 # Desktop builds for Windows, Linux and macOS (docs/tools/desktop-builds.md). By hand only (workflow_dispatch): exports the three desktop presets of a commit headless with the pinned Godot
 # and templates from setup-godot, packs each as a folder with README.txt, NOTICES.txt and build_info.json, proves what a Linux runner can prove, and uploads three artifacts.
-#   - DESKTOP TEST BUILDS ONLY (Legal RL-203, RL-204): a run waits for Orb's yes naming desktop test builds (the input below is that sentence's date; the first step refuses without it), keeps its
+#   - DESKTOP TEST BUILDS ONLY (Legal RL-203, RL-204): a run needs Orb's yes naming desktop test builds RECORDED in the commit it builds (docs/ep/approvals/desktop-test-builds.txt, three lines: `date:`,
+#     `scope:` naming desktop test builds, `recorded-by:`; the input below must equal that date and the date must be at most 30 days old; CD-12), keeps its
 #     files ONE day, and the EP deletes the run once the testers have them. No link, post or mention anywhere. Nothing from a run is a release, a Legal pass or a store build.
+#   - This is the ONLY workflow that uploads a game binary (the Linux-only linux-export.yml was folded into it: the Linux export, bench and hash check are below, behind the same lock and route scan; CD-12).
+#   - Every run step uses bash with `-eo pipefail` (the workflow default below), so a piped `gate.mjs ... | tee` fails when gate.mjs fails.
 #   - Reduce flashing is always LOCKED ON in these builds (the same one-word edit the site's export makes, Legal RL-156); there is no input to turn it off. The run refuses unless the lock is true, the
 #     capture hook is off, the route scan is clean and no command-line flag can reach normal mode (tools/desktop-package.mjs routes), and unless online play is out of the package.
 #   - Linux is also played: the exported binary runs the game's bench headless and must print the project's own gameplay hash. Windows and macOS cannot be started on a Linux runner,
@@ -21,12 +24,16 @@ on:
         required: false
         default: '2400'
       orbs_yes:
-        description: 'Date (YYYY-MM-DD) of Orb saying yes to desktop test builds, in one sentence naming them (Legal RL-203). The run refuses without it.'
+        description: 'Date (YYYY-MM-DD) of Orb saying yes to desktop test builds (Legal RL-203). It must equal the date in docs/ep/approvals/desktop-test-builds.txt at the commit built; the run refuses otherwise.'
         required: true
         type: string
 
 permissions:
   contents: read
+
+defaults:
+  run:
+    shell: bash   # GitHub's `bash` is `bash --noprofile --norc -eo pipefail {0}`: the default shell on Linux is `bash -e {0}`, which loses a pipe's exit code (the tee'd gate.mjs steps; CD-12)
 
 jobs:
   desktop:
@@ -37,17 +44,23 @@ jobs:
       FRAMES: ${{ inputs.frames }}
       ORBS_YES: ${{ inputs.orbs_yes }}
     steps:
-      - name: Refuse without Orb's yes (Legal RL-203)
-        run: |
-          if ! printf '%s' "${ORBS_YES}" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
-            echo "no run without Orb's yes: pass the date of the sentence naming desktop test builds as orbs_yes (Legal RL-203)"
-            exit 1
-          fi
-          echo "Orb's yes of ${ORBS_YES}"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.ref }}
           persist-credentials: false
+      # A recorded approval, not a date typed into a form (CD-12): a committed file of the commit being built names the yes, and the typed date must match it.
+      - name: Refuse without Orb's recorded yes (Legal RL-203)
+        run: |
+          f=docs/ep/approvals/desktop-test-builds.txt
+          if ! printf '%s' "${ORBS_YES}" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then echo "orbs_yes must be a date, YYYY-MM-DD"; exit 1; fi
+          if ! git ls-files --error-unmatch "$f" >/dev/null 2>&1; then echo "no run without Orb's yes recorded in $f (committed in the commit being built; Legal RL-203, CD-12)"; exit 1; fi
+          d=$(sed -n 's/^date: *//p' "$f" | head -n1)
+          if ! grep -Eiq '^scope:.*desktop test builds' "$f"; then echo "$f does not name desktop test builds in a scope: line"; exit 1; fi
+          if ! grep -Eq '^recorded-by: *[^ ]' "$f"; then echo "$f has no recorded-by: line"; exit 1; fi
+          if [ "$d" != "${ORBS_YES}" ]; then echo "orbs_yes (${ORBS_YES}) is not the recorded date (${d:-none}) in $f"; exit 1; fi
+          age=$(( ( $(date -u +%s) - $(date -u -d "$d" +%s) ) / 86400 ))
+          if [ "$age" -lt 0 ] || [ "$age" -gt 30 ]; then echo "the recorded yes of ${d} is ${age} days old (0 to 30 allowed): ask Orb again and record the new date"; exit 1; fi
+          echo "Orb's recorded yes of ${d} (${age} days old)"
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24.19.0'

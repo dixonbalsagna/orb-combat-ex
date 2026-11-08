@@ -1,0 +1,77 @@
+# outputs of the late-tick runs (Performance, 2026-11-07, sim of build a8bc66e2, native, below normal, load 20-60%); regenerate with docs/perf/tools/preplay/long_2v2.gd + docs/perf/tools/scratch-hooks/make-late-tree.py
+
+## 1. per-minute tick times, two-fights together setup, seeds 2 to 5 (first round, hook-simtimers only)
+-- seed 2
+ticks 40000 endedAt -1
+min  0.0 mean 1.36 p99 2.7 max 10.5 >10ms 1 >25ms 0
+min  1.0 mean 1.55 p99 5.4 max 12.5 >10ms 6 >25ms 0
+min  2.0 mean 1.66 p99 4.5 max 13.7 >10ms 5 >25ms 0
+min  3.0 mean 1.52 p99 4.6 max 41.9 >10ms 3 >25ms 1
+min  4.0 mean 1.46 p99 3.9 max 6.7 >10ms 0 >25ms 0
+min  5.0 mean 1.46 p99 5.0 max 10.6 >10ms 1 >25ms 0
+min  6.0 mean 1.49 p99 4.4 max 7.5 >10ms 0 >25ms 0
+min  7.0 mean 1.46 p99 4.1 max 14.5 >10ms 1 >25ms 0
+min  8.0 mean 1.94 p99 8.7 max 36.4 >10ms 22 >25ms 5
+min  9.0 mean 1.77 p99 7.4 max 20.7 >10ms 13 >25ms 0
+min 10.0 mean 1.92 p99 8.3 max 17.6 >10ms 13 >25ms 0
+min 11.0 mean 1.14 p99 3.5 max 4.9 >10ms 0 >25ms 0
+-- seed 3
+ticks 40000 endedAt -1
+min  0.0 mean 1.49 p99 3.1 max 13.5 >10ms 2 >25ms 0
+min  1.0 mean 1.68 p99 4.8 max 16.6 >10ms 1 >25ms 0
+min  2.0 mean 1.63 p99 4.4 max 9.0 >10ms 0 >25ms 0
+min  3.0 mean 1.68 p99 3.9 max 15.6 >10ms 6 >25ms 0
+min  4.0 mean 1.73 p99 7.2 max 15.5 >10ms 6 >25ms 0
+min  5.0 mean 1.37 p99 3.1 max 13.8 >10ms 2 >25ms 0
+min  6.0 mean 1.45 p99 3.1 max 8.8 >10ms 0 >25ms 0
+min  7.0 mean 1.75 p99 6.4 max 21.9 >10ms 6 >25ms 0
+min  8.0 mean 1.71 p99 5.6 max 31.3 >10ms 6 >25ms 1
+min  9.0 mean 1.90 p99 9.1 max 33.0 >10ms 24 >25ms 2
+min 10.0 mean 1.20 p99 6.6 max 16.2 >10ms 7 >25ms 0
+min 11.0 mean 1.23 p99 5.9 max 14.3 >10ms 1 >25ms 0
+-- seed 4
+ticks 40000 endedAt -1
+min  0.0 mean 1.33 p99 3.1 max 9.9 >10ms 0 >25ms 0
+min  1.0 mean 1.37 p99 2.8 max 9.2 >10ms 0 >25ms 0
+min  2.0 mean 1.53 p99 5.8 max 24.5 >10ms 4 >25ms 0
+min  3.0 mean 1.26 p99 2.9 max 14.2 >10ms 2 >25ms 0
+min  4.0 mean 1.17 p99 2.6 max 10.9 >10ms 1 >25ms 0
+min  5.0 mean 1.27 p99 3.6 max 10.1 >10ms 1 >25ms 0
+min  6.0 mean 1.23 p99 3.6 max 13.9 >10ms 1 >25ms 0
+min  7.0 mean 1.43 p99 4.3 max 6.4 >10ms 0 >25ms 0
+min  8.0 mean 1.87 p99 8.0 max 15.0 >10ms 13 >25ms 0
+min  9.0 mean 2.49 p99 12.6 max 50.7 >10ms 81 >25ms 5
+min 10.0 mean 1.76 p99 7.9 max 32.2 >10ms 16 >25ms 1
+min 11.0 mean 1.09 p99 2.5 max 4.5 >10ms 0 >25ms 0
+-- seed 5
+ticks 33252 endedAt 33251
+min  0.0 mean 1.47 p99 3.0 max 10.4 >10ms 1 >25ms 0
+min  1.0 mean 1.38 p99 2.8 max 7.5 >10ms 0 >25ms 0
+min  2.0 mean 1.39 p99 3.0 max 39.2 >10ms 3 >25ms 1
+min  3.0 mean 1.74 p99 5.2 max 13.6 >10ms 2 >25ms 0
+min  4.0 mean 1.56 p99 5.0 max 11.7 >10ms 3 >25ms 0
+min  5.0 mean 1.31 p99 3.3 max 11.6 >10ms 2 >25ms 0
+min  6.0 mean 1.57 p99 3.7 max 19.5 >10ms 5 >25ms 0
+min  7.0 mean 2.21 p99 9.3 max 49.1 >10ms 27 >25ms 2
+min  8.0 mean 1.66 p99 5.6 max 14.5 >10ms 10 >25ms 0
+min  9.0 mean 1.16 p99 2.7 max 4.7 >10ms 0 >25ms 0
+
+## 2. what the 51 ticks over 10 ms are (seeds 4,2,5, second layer of timers; stage with over 60% of the tick, else unattributed)
+water           30 ticks   598 ms
+unattributed    10 ticks   113 ms
+dirUpdate        7 ticks    88 ms
+stepFighter      2 ticks    35 ms
+beamStep         2 ticks    24 ms
+
+## 3. the water step split (seed 2, ticks with flowloop over 8 ms)
+ticks 15 flowloop 357 ms = baseRead 337 + flux 4 + apply 2
+
+## 4. why the column memos are wiped (seed 2, 40000 ticks)
+{'bind': 2205, 'chg_point0_tangent1_x00': 224, 'chg_point1_tangent0_x00': 1, 'chg_point1_tangent1_x00': 2, 'chg_point1_tangent1_x01': 1978, 'local_k0': 31, 'local_k2': 1993, 'local_k3': 281, 'whole_bigReach_k0': 1, 'why_frame1_store0': 2205}
+swing planner _planOn calls: 1
+
+## 5. the three scratch fixes against the baseline (seed 2, same 40000 ticks)
+baseline                           mean 1.259 p99 4.18 max 43.8  >10ms  21 >20ms 13 >30ms 4  final hash da4281e47f7d
+rekey on re-anchor (hash changes)  mean 1.177 p99 3.99 max 22.4  >10ms   5 >20ms  1 >30ms 0  final hash 2b7d659ebdb0
+warm windows 200/tick (hash same)  mean 1.480 p99 7.54 max 43.3  >10ms 145 >20ms 22 >30ms 7  final hash da4281e47f7d
+binds: baseline 2205 rekey 395 (rekeys 1891 )

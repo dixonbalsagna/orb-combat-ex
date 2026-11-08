@@ -1,0 +1,33 @@
+# Why two-fights ticks get dearer late in a match (Performance and Platform, 2026-11-07)
+
+EP brief from Netcode's 2v2 report: a two-fights tick averages 1.46 ms but the worst ticks reach 25 to 48 ms five to nine minutes in. Outputs are saved in `docs/perf/runs/a8bc66e2/late-ticks/` (`outputs.txt`, `rekey-on-reanchor.patch`; CD-22). Sim of build a8bc66e2, native, below-normal, machine load 20 to 60%: **shapes and ratios, not milliseconds.**
+
+## The answer, in four lines
+1. **The 25 to 45 ms ticks are the water flow step, and 95% of each is ground reads, not water.** In 15 ticks over 8 ms (seed 2) the flow loop costs 357 ms: 337 ms re-reading each window column's ground (`WorldTerrain.baseAt` → `SimField.col`, 10 to 21 microseconds a column, cold), 4 ms the flow arithmetic, 2 ms applying it. Five open windows span about 1,960 columns; one step re-reads all of them.
+2. **They are late because the windows are late.** Water windows open when a crater or beam trench changes ground below sea level and stay open until they settle (up to 900 steps). In seed 1 they number 0 until minute 4, 3 at minute 6, 5 at minute 8 and 6 at minute 11 (seed 2's heavy ticks show 5 windows over 1,963 columns from minute 8 on), so the span a cold step must read grows from 0 to about 2,000 columns. Not records, wrecks or fire: the match's counters stay small (seed 1 at 11 minutes: 20 craters, 126 of 3,835 buildings down, 6 windows). The store's serial grows (118 at minute 1, 2,280 at 11) but the store is not what wipes the memos (below).
+3. **The memos are wiped about every 18 ticks, by the line re-anchoring.** All 2,205 whole-memo wipes in 40,000 ticks (seed 2) are a frame change with no store change (`_fresh` → `_bind`: 1,978 of them move the point, the heading and x0 together, 224 only the heading). The writer is `SimSwing._anchorAtRest` (`sim/core/swing.gd:523`): at rest, once the pair is more than an eighth of the arena from x0, x0 moves to the pair's midpoint ("the same line, so nothing anyone reads changes"). It is the same great circle, but `SimField`'s column memos are keyed on the frame's seven numbers, so every re-anchor drops them all, and the next water step re-reads the windows cold. Records are not the cause: `storeGrew` clears only the columns a record reaches (1,993 scorch, 281 trench, 31 crater joins: local clears; one whole clear). The swing planner is not the cause either (`_planOn` runs once in 40,000 ticks, an earlier suspicion of mine).
+4. **Fix: stop re-anchoring from costing the memos, or accept a one-time hash change.** Measured on seed 2, 40,000 ticks (`outputs.txt` §5):
+
+| | mean | p99 | worst | ticks over 10 / 20 / 30 ms | final hash |
+| :--- | ---: | ---: | ---: | :--- | :--- |
+| baseline | 1.26 ms | 4.2 | 43.8 ms | 21 / 13 / 4 | da4281e47f7d |
+| **keep the memos across a re-anchor** (`rekey-on-reanchor.patch`) | 1.18 | 4.0 | **22.4 ms** | **5 / 1 / 0** | **2b7d659ebdb0 (changes)** |
+| warm the windows' columns, 200 a tick (hash-neutral, tried) | 1.48 | 7.5 | 43.3 ms | 145 / 22 / 7 | da4281e47f7d (same) |
+
+   - **Keep-the-memos** cuts the wipes from 2,205 to 395 and the worst tick by half, and the 20 to 30 ms ticks nearly vanish. **It is not bit-neutral:** a column read under the new anchor differs in the last bits from the one memoised under the old, so the match diverges (first checkpoint equal at 5,000 ticks, different at 10,000). The same would be true of any fix that changes when the anchor moves. So it is a **one-time golden/hash change for Simulation and the EP to rule on** (saved matches of older builds replay on their kept trees; anything pinned to today's field-world hashes would be re-pinned). A bit-neutral version would compute strip→planet point from a fixed reference, not from the moving anchor: that also changes every hash once, then removes the problem for good.
+   - **Warm the windows ahead (hash-neutral by construction, and it did hold the hash) does not work:** the wipes come in bursts of a few ticks apart while the pair travels, so 200 columns a tick never finishes a 2,000-column span before the next wipe, and its own 3 ms a tick adds 145 ticks over 10 ms. Not a fix; do not build it.
+   - Other hash-neutral ideas, **not tried:** read each window's columns once per window and share them across ticks only while the frame is unchanged (helps only between wipes, not after); spread one window's step across ticks (changes water timing, so not neutral); a cheaper cold `SimField.col` (10 to 20 microseconds each: World's profile).
+
+## The other slow ticks
+Over the three seeds with the finer timers (51 ticks over 10 ms, 858 ms in all): **water 30 ticks / 598 ms**, outside the timed stages 10 / 113 ms, launch planning (`dirUpdate`: `chooseLaunch` 8.7 ms, `atLaunch`, `candidates`, `_launchPick`, `scored`) 7 / 88 ms, `stepFighter` 2 / 35 ms, `beamStep` 2 / 24 ms. The launch ticks are the known list (`impact-stutter.md`, Encounter and Simulation). **The first round's single 24 to 62 ms ticks in `control` and `stepFighter` did not reproduce in the clean runs** (the same seeds, finer timers): I read them as the loaded PC (35 to 60% from other sessions), not the sim. They are not in the table.
+
+## Owners and what to do
+| Path | Owner | Do |
+| :--- | :--- | :--- |
+| Re-anchor wipes every column memo (`swing.gd:523` `_anchorAtRest`, `field.gd` `_fresh`/`_bind`) | **Simulation** (swing, frame), **World** (SimField memo) | Rule on a one-time hash change and take `rekey-on-reanchor.patch` (or the fixed-reference version) |
+| Water windows re-read their whole span each step (`water.gd` `step`) | **World** | After the rekey, the remaining cold steps are the first read of a new or grown window (flowWarm handles new ones); worth a second look at a window's growth by 6 columns a step (`PAD_COLS`), each growth reads 12 new columns |
+| Launch ticks | Encounter, Simulation | As in `impact-stutter.md` |
+
+**Effect on the LAN stutter:** the 25 to 48 ms ticks are what push the other PC past its two-tick wait (33 ms) and cause rollback. Keeping the memos takes the worst tick from 44 to 22 ms in this match, under a three-tick wait; the plain LAN shortcut with the longer wait covers it today.
+
+**Limits:** one seed (2) for the fix table, three (4, 2, 5) for the stage table, five for the minute table; computer fighters only; planet 7; the timers cost a little themselves; hash comparison is one match. Native, not the web (ground reads are 2 to 3 times slower there). Recipe: `docs/perf/tools/scratch-hooks/make-late-tree.py <kept tree> <new folder>`, import, then `docs/perf/tools/preplay/long_2v2.gd` below normal priority.
