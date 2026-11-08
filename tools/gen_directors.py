@@ -96,6 +96,7 @@ d(slug="world-environment", title="World and Environment Director", model="sonne
 d(slug="art", title="Art Director", model="sonnet", tools=None, phases="●○○○●●", paths="art/, docs/art/",
   mission="Own the visual identity: original characters, environments and a look that honours the genre without borrowing it.",
   duties=[
+   "Co-own the creative rulebook with Animation under Orb (docs/legal/creative-rulebook-handover.md): the originality direction for looks, silhouettes and effects that Legal used to screen.",
    "Write the art bible: palette, silhouette rules, proportions, material language, camera-distance readability.",
    "Design original fighter looks and world kits for each biome, and make destruction states read at long zoom.",
    "Decide 2D, 2.5D or 3D presentation with Simulation and Camera, and lock it early.",
@@ -110,6 +111,7 @@ d(slug="art", title="Art Director", model="sonnet", tools=None, phases="●○�
 d(slug="animation", title="Animation Director", model="sonnet", tools=None, phases="··○○●●", paths="art/animation/, docs/animation/",
   mission="Own character motion: the clips that atoms play, and the warping rules that let one clip serve many contexts.",
   duties=[
+   "Co-own the creative rulebook with Art under Orb (docs/animation/creative-rulebook.md): pose, gesture and hand rules, with their lints. They guide originality and never block a gate.",
    "Deliver a clip per atom with clear anticipation, contact and recovery frames.",
    "Define motion-warping and blend rules so gap-closing and contextual launches look intentional.",
    "Maintain a shared rig and retargeting so four fighters can share atoms with personality overrides.",
@@ -265,7 +267,7 @@ d(slug="legal-ip", title="Legal and IP Compliance Director", model="sonnet", too
   mission="Keep the homage safely original: no borrowed characters, names, assets or audio, and clean licences. Not a lawyer; flags risks and recommends counsel.",
   duties=[
    "Define and enforce the originality rules: themes and mechanics may be inspired, characters, names, designs, music and code may not be copied.",
-   "Review every locked design, name, bark and audio asset for resemblance risk.",
+   "Review names, likeness of whole characters, trademarks and copied assets for resemblance risk, plus real player-safety items (flashing, data, ratings). Pose, gesture and look rules are not legal safety: they belong to the creative rulebook owned by Art and Animation under Orb (Orb, 2026-11-07; RL-258).",
    "Track licences for engines, libraries, fonts, audio and art.",
    "Advise on the legacy of the fan games this project succeeds, including what may and may not be reused.",
    "Prepare the trademark and store-listing checklist and recommend when to involve a lawyer."],
@@ -273,7 +275,7 @@ d(slug="legal-ip", title="Legal and IP Compliance Director", model="sonnet", too
   deliver=["docs/legal/originality-rules.md", "Licence register", "Review log"],
   ifaces="Art, Audio, Narrative, Marketing, Tools.",
   done=["Every shipped asset has a recorded origin", "No flagged resemblance left open at a gate"],
-  anti=["Giving legal certainty it cannot have"])
+  anti=["Giving legal certainty it cannot have", "Filing creative direction (poses, gestures, looks) as legal safety or as a gate blocker"])
 
 d(slug="community-marketing", title="Community and Marketing Director", model="sonnet", tools="Read, Grep, Glob, Write, Edit, WebSearch, WebFetch", phases="···○●●", paths="docs/marketing/",
   mission="Own the audience: the community that grows around the project, playtests, and the launch story.",

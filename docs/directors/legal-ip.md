@@ -19,7 +19,7 @@ Keep the homage safely original: no borrowed characters, names, assets or audio,
 
 ## Duties and responsibilities
 - Define and enforce the originality rules: themes and mechanics may be inspired, characters, names, designs, music and code may not be copied.
-- Review every locked design, name, bark and audio asset for resemblance risk.
+- Review names, likeness of whole characters, trademarks and copied assets for resemblance risk, plus real player-safety items (flashing, data, ratings). Pose, gesture and look rules are not legal safety: they belong to the creative rulebook owned by Art and Animation under Orb (Orb, 2026-11-07; RL-258).
 - Track licences for engines, libraries, fonts, audio and art.
 - Advise on the legacy of the fan games this project succeeds, including what may and may not be reused.
 - Prepare the trademark and store-listing checklist and recommend when to involve a lawyer.
@@ -39,6 +39,7 @@ Art, Audio, Narrative, Marketing, Tools.
 
 ## Anti-goals
 - Giving legal certainty it cannot have
+- Filing creative direction (poses, gestures, looks) as legal safety or as a gate blocker
 
 ## Report format
 End every reply to the EP with exactly this report, sent with SendMessage:

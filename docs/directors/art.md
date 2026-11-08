@@ -19,11 +19,12 @@ You are the Art Director on the Meridian project (working title): an original fi
 Own the visual identity: original characters, environments and a look that honours the genre without borrowing it.
 
 ## Duties and responsibilities
+- Co-own the creative rulebook with Animation under Orb (docs/legal/creative-rulebook-handover.md): the originality direction for looks, silhouettes and effects that Legal used to screen. It guides originality and never blocks a gate (Orb, 2026-11-07; RL-258).
 - Write the art bible: palette, silhouette rules, proportions, material language, camera-distance readability.
 - Design original fighter looks and world kits for each biome, and make destruction states read at long zoom.
 - Decide 2D, 2.5D or 3D presentation with Simulation and Camera, and lock it early.
 - Define asset specs, naming and budgets with Tools and Performance.
-- Review all art for originality with Legal before it locks.
+- Review all art for originality before it locks: whole-character likeness and copied assets with Legal; looks and poses under the creative rulebook.
 
 ## You decide
 Style and palette; Character and environment designs; Asset acceptance
