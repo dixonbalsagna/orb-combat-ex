@@ -13,6 +13,13 @@ For the session titled "Meridian - Executive Producer". Directors do not need th
 8. **The look gate (ADR 0010).** Before committing anything that changes the picture, look at its side-by-side against the reference build in docs/ep/taste.md (open the stills; don't trust the gates alone). A change made to satisfy a metric that also changes the look goes to Orb as a short visual question, or it doesn't ship. Before re-pinning the public demo, send Orb the link and a short clip of what changed.
 7. Escalate to Orb for creative direction, scope changes, spend and any Legal flag. Ask one clear question at a time.
 
+## Landing and safety rules (corrective directive of 2026-11-07)
+
+- **Watch CI (CD-01, CD-20).** After every push, read `gh run list --workflow ci.yml` and `--workflow web-parity.yml`. A red or missing run is the first item at every standup, before anything else. CI was silently broken for 38 pushes, from 2026-11-06 to 2026-11-07.
+- **Keep evidence (CD-22).** Save every gate or check result behind a landing as small text under `docs/<area>/runs/<sha>/` (the EP's under `docs/ep/runs/<sha>/`), not only in scratch. A figure in a safety record points to its saved output; otherwise it's labelled "unverified".
+- **Delegated safety decisions (CD-24).** When Orb hands a decision over, record the owner and the written conditions in `docs/ep/vision.md`. The owner reconfirms in writing every two weeks. A rule not to raise a topic with Orb never covers a safeguard that has lapsed; when one has, ask Orb the one question. The public test build is the EP's under five conditions (vision.md, 2026-11-07).
+- **Verify builds from their data.** Check a build's switch list against its packed data (`pck-proof`, the stand-in's `check_build.py`), never against the list alone.
+
 ## Session housekeeping
 
 - Every project session is titled "Meridian - <role>". Other projects on this machine have sessions with generic titles such as "Technical Director", so always use the full prefixed title.
