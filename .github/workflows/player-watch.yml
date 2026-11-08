@@ -1,0 +1,36 @@
+# The daily player watch (corrective directive CD-19; Tools, 2026-11-07): what players get, not what HEAD says. Reads the LIVE /play/ and compares it with tools/site.json (offline or live,
+# the pin), the interim's and the custom engine allowance's end dates, and the age of the nightly seed run. A failure turns the run red, and GitHub emails the repository owner about a
+# failed scheduled run; the EP also reads `gh run list --workflow player-watch.yml` daily. It posts nothing publicly: no issue, no comment. Its own file and job: independent of ci.yml.
+# Run it now: Actions tab, Run workflow, or `gh workflow run player-watch.yml`. Docs: docs/tools/ci-guards.md
+name: Player watch
+
+on:
+  schedule:
+    - cron: '17 14 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  watch:
+    name: What /play/ serves, the end dates and the nightly's age (node tools/player-watch.mjs)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+      - name: The reading's self-test (each way the live site can disagree with the repository)
+        run: node tools/player-watch-selftest.mjs
+      - name: Read the live site and compare it with the repository
+        run: |
+          set -o pipefail
+          node tools/player-watch.mjs | tee "${RUNNER_TEMP}/player-watch.txt"
+      - name: Put the reading on the run's summary page
+        if: always()
+        run: |
+          { echo '### Player watch'; echo '```'; cat "${RUNNER_TEMP}/player-watch.txt" 2>/dev/null || echo 'no reading was written'; echo '```'; } >> "${GITHUB_STEP_SUMMARY}"

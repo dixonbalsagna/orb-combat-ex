@@ -1,0 +1,11 @@
+CD-19 first reading (local run, 2026-11-07 evening, base 85e838b6 plus the working tree)
+$ node tools/player-watch.mjs
+OK    live /play/ reads "offline"; tools/site.json says offline: the take-down holds
+OK    the pin on record is 257a766 (nothing is served from it while the site is offline)
+OK    the custom engine allowance (RL-202) ends 2026-11-15 (7 day(s) left); the site is offline, so no game is exposed to it
+WARN  the last nightly is 2026-10-30, 9 day(s) old; not needed while the site is offline, needed again before it returns
+player watch 2026-11-08: /play/ reads "offline" (the repository says offline); ok with warnings
+exit 0
+
+$ node tools/player-watch-selftest.mjs
+player watch self-test ok: 18 checks

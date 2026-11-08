@@ -1,0 +1,6 @@
+{
+  "_why": "The settings of tools/player-watch.mjs (CD-19): the live address it reads, and its limits. The address is the public Pages site of the repository; the nightly's limit is two days while a game is live (the nightly seed run is the take-down trigger, Legal RL-137); an end date inside warnDays days is a warning.",
+  "base": "https://dixonbalsagna.github.io/orb-combat-ex/",
+  "nightlyMaxDays": 2,
+  "warnDays": 3
+}

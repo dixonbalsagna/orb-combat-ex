@@ -1,0 +1,12 @@
+CD-27 proof: the screen fails on a planted profile path (scratch folder with one file; the name is not printed)
+$ node tools/content-screen.mjs --root <scratch>
+FAIL  profile-path  notes.md:1  C:\Users\<redacted>
+content screen: 1 text files of 1 scanned, 1 failing hit(s), 0 warning(s)
+exit 1
+
+$ node tools/content-screen.mjs   # the repository
+content screen: 6155 text files of 20527 scanned, 0 failing hit(s), 0 warning(s)
+exit 0
+
+$ node tools/content-screen-selftest.mjs
+content screen self-test ok: 16 checks

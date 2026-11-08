@@ -1,0 +1,30 @@
+# The public-repo content screen (corrective directive CD-27, with CD-07 and CD-08; Tools, 2026-11-07). The repository is public, so every push is screened for a user-profile path,
+# a secret, a console SDK path, a franchise word in what ships, a gold-haired fighter (Legal RL-014) and the public sentences that must not come back. Its own workflow and its own
+# small job: it does not wait for, or depend on, ci.yml. Rules: tools/content-screen.json. Docs: docs/tools/ci-guards.md
+name: Content screen
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  screen:
+    name: Public-repo content screen (node tools/content-screen.mjs)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+      # The screen's own self-test first: each thing it hunts is planted and must be found (a screen that cannot fail proves nothing).
+      - name: The screen finds what it hunts and leaves the rest alone (self-test)
+        run: node tools/content-screen-selftest.mjs
+      - name: Screen the repository
+        run: node tools/content-screen.mjs

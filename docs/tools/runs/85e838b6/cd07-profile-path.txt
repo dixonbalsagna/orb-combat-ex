@@ -1,0 +1,8 @@
+CD-07, the profile-path replacement (Tools, 2026-11-07; Orb's ruling: remove from current files, no history rewrite)
+
+- Before: 53 committed files and 7 of my own new files held the account's Windows profile path (68 lines in the committed ones).
+- Change: every "Users" + separator + <account name> became "Users" + separator + "<user>" (all slash forms, the escaped JSON form and the percent-encoded form), in 60 files, 81 replacements. Text only, line endings kept.
+- Checked after: the 23 changed .json files parse; the 8 changed .mjs/.js files pass node --check. A recursive search for the account name after "Users" now finds no file (tracked or untracked).
+- The screen that keeps it that way: tools/content-screen.mjs, rule profile-path (see cd27-content-screen.txt); it fails a push that carries a new one, and never prints a name (it prints "<redacted>").
+- A fixture in tools/machine/selftest.mjs used a second account name with a space; it now uses a "<user> two" placeholder.
+- Not covered, by Orb's ruling: git history still holds the old paths. A history rewrite is Orb's call alone.
