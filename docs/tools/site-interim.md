@@ -21,6 +21,34 @@ node tools/site-offline.mjs
 ```
 Sets `"offline": true`, `"approved": null` and `"interim": null` in `tools/site.json`; the next build is the holding page and nothing else, **with the offline words**: the offline build and its check read `tools/site-notice-offline.json` (Legal's RL-171 text, 2026-10-22, docs/legal/page-fixed-lines.md: "The playable build is offline for now.", "... they are not fixed yet.", "There is no date for its return."), not `tools/site-notice.json`, so the words come back by being offline and cannot be forgotten (the command refuses if that file lacks any of the three sentences; the self-test builds the result and reads them) (the interim self-test runs this command, builds the result and passes `tools/check-site-offline.mjs`). `--check` only reports the state. Then commit and push `tools/site.json`.
 
+## Taking /play/ down when the game checks are red (corrective directive CD-02; Tools, 2026-11-07)
+
+Three routes, fastest and safest first. Each ends on the same check. The take-down never waits for the game, a flash check or ci.yml.
+
+**1. The take-down workflow (needs no game job).** `.github/workflows/takedown.yml` writes only the offline notice (`tools/site-takedown.mjs`, Legal's RL-171 words from `tools/site-notice-offline.json`), checks it with `tools/check-site-offline.mjs`, and deploys it. Run it from the repository's Actions tab ("Take the site down (offline notice only)", Run workflow, branch main), or from a shell with the project's GitHub login:
+
+```
+gh workflow run takedown.yml --repo dixonbalsagna/orb-combat-ex --ref main
+gh run list --workflow takedown.yml --repo dixonbalsagna/orb-combat-ex -L 1
+```
+
+It worked on 2026-11-07 (run 42430593567). It needs the repository's Pages source to be "GitHub Actions" (it is) and Actions to be running.
+
+**2. Unpublish by hand (when Actions itself is down, or the workflow fails).** In the browser, signed in as the repository's owner: repository Settings, Pages; next to "Your site is live at ..." open the "..." menu and choose "Unpublish site". From a shell with admin rights the same thing is `gh api -X DELETE repos/dixonbalsagna/orb-combat-ex/pages`. Either one removes the site at once (the address then answers 404) and it stays down until Pages is switched on again (Settings, Pages, Source "GitHub Actions", then run the take-down workflow or a deploy). Not exercised: unpublishing takes the live site down, so these steps are written from GitHub's own documentation and the REST endpoint's name, not from a rehearsal. Do the rehearsal once on a throwaway repository before relying on them.
+
+**3. The last resort (Orb's call, never Tools' or the EP's alone):** make the repository private (Settings, General, Danger zone). A private repository on a free account does not serve Pages. This also hides the source, so it is for a legal emergency only.
+
+**The check after any route** (the page must say the build is offline and carry no game):
+
+```
+curl -s https://dixonbalsagna.github.io/orb-combat-ex/play/ | grep -c "offline for now"     # 1, or the address answers 404 after route 2
+curl -sI https://dixonbalsagna.github.io/orb-combat-ex/play/index.pck | head -1              # 404: no game file is served
+```
+
+Put the time and the route in the EP's log. To bring the site back only by the rule below ("To switch it on"): approval, the recorded pass, and the EP's word.
+
+**A way to reach the project (CD-02 item 3):** /about/ must name a contact route, in Legal's words. Legal has not given them yet; Tools adds the line to the About page (`aboutPage` in `tools/site-interim.mjs`) and to the offline notice page the day they arrive. Until then the offline pages carry none.
+
 ## To switch it on (the EP's word)
 
 1. Frozen commit: `bash tools/flash/interim-run.sh <commit> <from date> <expires date>` (below) records the pass and builds and checks the interim site locally.

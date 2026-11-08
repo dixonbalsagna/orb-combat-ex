@@ -44,6 +44,12 @@
         "p": "This game contains flashing effects. Our own automated check found some scenes that go over the recommended limit of three flashes a second, and they are not fixed yet. No independent analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version. Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes."
       },
       {
+        "h2": "Contact"
+      },
+      {
+        "p": "This is a small free project. To report a problem, ask a question, or ask us to change or remove something, open an issue on our public GitHub page: github.com/dixonbalsagna/orb-combat-ex/issues. Issues there are public, so please do not post personal details. If you need a private reply, say so in the issue and give no more than that; we will answer there and suggest a way. If a scene in the game bothered you or made you unwell, stop playing and tell us what you saw so we can fix it."
+      },
+      {
         "h2": "Notices"
       },
       {

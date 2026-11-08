@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { INTERIM_WAIVES } from './flash/release-pass.mjs';
 import { scanPack, unallowed } from './site-name-scan.mjs';
 import { CRUMBS_PRIVACY } from './site-crumbs.mjs';
+import { aboutPage } from './site-interim.mjs';
 
 const here = import.meta.dirname;
 let ran = 0, failed = 0;
@@ -629,6 +630,14 @@ try {
     check('after the kill switch the holding page says the build is offline again (Legal RL-171: "The playable build is offline for now." and "they are not fixed yet.")', page.includes('The playable build is offline for now.') && page.includes('they are not fixed yet.') && page.includes('There is no date for its return.') && !/fix them|fixing them/.test(page) && !page.includes('limited test build'));
     check('the shipped words file is an empty draft, so a build from it is refused (the RL-136 text must not be used by accident)', real.draft === true && real.gate.blocks.length === 0 && !JSON.stringify(real).includes('fixing them') && build(join(tmp, 'site-realwords'), cfg({ notice: join(here, 'site-interim.json') }), []).status === 1);
     check('the same holding page is /bench/, /band/, /404.html and /play/ (no game, no link)', ['bench/index.html', 'band/index.html', '404.html', 'play/index.html'].every((p) => existsSync(join(out, p)) && readFileSync(join(out, p), 'utf8') === page));
+  }
+  {   // CD-08 (2026-11-07): the About page does not call the engine "official" (the public site runs a custom build of it)
+    const words = JSON.parse(readFileSync(join(here, 'site-interim-owner.json'), 'utf8'));
+    const lic = JSON.parse(readFileSync(join(here, 'site-licences.json'), 'utf8'));
+    const html = aboutPage(words, lic, { play: '../play/', privacy: null });
+    const offlineWords = JSON.stringify(JSON.parse(readFileSync(join(here, 'site-notice-offline.json'), 'utf8')).blocks);
+    check("the About page carries Legal's engine line (the version, a custom web build) and never calls the engine official outside the licence texts", /Built with the Godot Engine \(version 4\.\d+\.\d+\), in a custom web build\./.test(html) && !/official/i.test(html.replace(/<pre>[\s\S]*?<\/pre>/g, '')), (html.match(/Built with[^<]*/) || [''])[0]);
+    check('the About page carries the long contact route and the offline notice the short form (Legal RL-256: the public issues page, no personal address)', /github\.com\/dixonbalsagna\/orb-combat-ex\/issues/.test(html) && /open an issue on our public GitHub page/.test(html) && offlineWords.includes('open an issue at github.com/dixonbalsagna/orb-combat-ex/issues'));
   }
 } finally {
   rmSync(tmp, { recursive: true, force: true });

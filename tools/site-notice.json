@@ -46,6 +46,9 @@
     },
     {
       "small": "This page collects and sends no personal data. It is hosted on GitHub Pages, which keeps its own server logs."
+    },
+    {
+      "small": "Questions, problems or requests (including a request to take something down): open an issue at github.com/dixonbalsagna/orb-combat-ex/issues."
     }
   ]
 }

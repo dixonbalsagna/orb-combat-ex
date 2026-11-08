@@ -1,0 +1,5 @@
+CD-02 live check, 2026-11-07, after the take-down (base 85e838b6)
+$ curl -s https://dixonbalsagna.github.io/orb-combat-ex/play/ | grep -c "offline for now"
+1
+$ curl -sI https://dixonbalsagna.github.io/orb-combat-ex/play/index.pck | head -1
+HTTP/1.1 404 Not Found

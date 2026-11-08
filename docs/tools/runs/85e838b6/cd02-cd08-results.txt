@@ -1,0 +1,12 @@
+CD-02 and CD-08 results, 2026-11-07 (base 85e838b6 plus the working tree; Tools)
+
+CD-02
+- docs/tools/site-interim.md: new section "Taking /play/ down when the game checks are red": route 1 the take-down workflow (gh workflow run takedown.yml; worked in run 42430593567), route 2 unpublish by hand (Settings, Pages, Unpublish site; or gh api -X DELETE .../pages; written from documentation, not rehearsed), route 3 private repository (Orb's call), the check after any route.
+- Live check right now (cd02-live-check.txt): /play/ answers the offline notice ("offline for now" found once) and /play/index.pck is 404.
+- Contact route (Legal's RL-256 words, docs/legal/public-contact-wording.md): the short form is the last small line of tools/site-notice-offline.json and tools/site-notice.json (so the offline pages /, /play/, /bench/, /band/ and 404 carry it); the long form is a "Contact" section of the About page words (tools/site-interim-owner.json). A take-down site built with tools/site-takedown.mjs passes tools/check-site-offline.mjs and holds the issues address once on /play/. Not done: the footer of the LIVE /play/ gate (the gate's text is Legal's fixed lines; placing the contact line there needs Legal's placement word).
+
+CD-08
+- README.md line 7: "The hosted build is offline for now. There is no date for its return (see below)." (Legal's RL-171 words; it is offline today.) Line 9: "We are fixing them." became "They are not fixed yet." (RL-171: a promise to fix is untrue while flash work is paused.)
+- About page engine line, Legal's words: "Built with the Godot Engine (version 4.7.2), in a custom web build." (tools/site-interim.mjs aboutPage); "official" no longer appears outside the licence texts.
+- Self-tests: tools/site-interim-selftest.mjs 253 checks ok (2 new: the engine line and no "official"; the contact route in About and in the offline notice); site-pin 34, site-template 113, release-pass 112, pin-child ok. check-site-offline ok on a take-down site.
+- Not mine: CLAUDE.md "Free and open source" (the EP's line); the live pin's in-game notice "We are fixing them" (the strings-only child or a pin move, a Legal and EP call).

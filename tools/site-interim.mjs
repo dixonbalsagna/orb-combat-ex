@@ -52,7 +52,9 @@ export function aboutPage(text, lic, links) {
   parts.push(blocksHtml(blocks));
   parts.push(`<p><a href="${esc(links.play)}">${esc(text.gate.button)}: the game's first screen</a></p>`);
   parts.push('<h2>Godot Engine</h2>');
-  parts.push(`<p>This game runs on the Godot Engine ${esc(lic.godot_version)} (godotengine.org), under its MIT License:</p>`);
+  // the engine string of site-licences.json is the binary's own ("4.7.2-stable (official)"); the public site runs a custom build of the engine (tools/web-template.json), so the word "official" is not said here (CD-08, 2026-11-07)
+  const engineVersion = String(lic.godot_version).replace(/-stable.*$/i, '').trim();   // "4.7.2"
+  parts.push(`<p>Built with the Godot Engine (version ${esc(engineVersion)}), in a custom web build. Godot's MIT License:</p>`);   // Legal's words (docs/legal/public-contact-wording.md, CD-08)
   parts.push(`<pre>${esc(lic.license_text)}</pre>`);
   parts.push('<h2>Open Sans</h2>');
   for (const c of (lic.copyright || []).filter((x) => /open sans/i.test(x.name))) for (const p of c.parts) {
