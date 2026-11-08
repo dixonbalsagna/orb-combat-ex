@@ -1,0 +1,6 @@
+G4 review of Simulation's grant-tools-travel.patch (sha1 89125318a7469a8a3f2473ab12048a3cbe65fdce), in a scratch copy of HEAD ba87218e (data, tools, ui):
+- HEAD alone: node tools/validate.js: 299 files checked, 0 errors, 0 warnings
+- power-travel.patch's data change alone (travel in data/fight/power.json, no schema change): 1 error: data/fight/power.json:111 /travel [additionalProperties] unknown property "travel"
+- the data change plus grant-tools-travel.patch: 299 files checked, 0 errors, 0 warnings; data/fight/power.json travel {min 1.25, max 2}, enabled false, launchTravel 2
+- the page patch clamps ?travel= to 1.25 to 2.0 and sends it as the setup key "travel": the same key and range the schema allows
+Verdict: APPROVE (needed: without it the data fails validation; enough: with it validation is clean). The schema makes travel required, so the data change, the grant and the page patch land together.

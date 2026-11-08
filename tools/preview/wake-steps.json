@@ -1,0 +1,11 @@
+[
+  { "at": 6, "do": "shot", "name": "load" },
+  { "at": 10, "do": "click", "x": 1099, "y": 195, "name": "close the How to play card" },
+  { "at": 2, "do": "click", "x": 640, "y": 503, "name": "start from the flashing notice" },
+  { "at": 25, "do": "audio", "name": "before-any-pad" },
+  { "at": 1, "do": "connect", "name": "the pad connects" },
+  { "at": 2, "do": "tap", "button": 0, "name": "pad A, nothing else pressed yet" },
+  { "at": 3, "do": "audio", "name": "after-pad" },
+  { "at": 1, "do": "key", "key": "Enter", "code": "Enter", "vk": 13, "name": "a key (a real activation)" },
+  { "at": 3, "do": "audio", "name": "after-key" }
+]

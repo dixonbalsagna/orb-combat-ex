@@ -19,10 +19,12 @@ extends RefCounted
 
 const PORT: int = 47100
 const SEED: int = 77
-const SETUP: Dictionary = {"v2": [true, true], "assists": [[], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false}   # every key the hub's own setup has, so a saved layout can't make two PCs differ
+## The energy model on for the LAN as the page has it (its setup word, sim/core/power.gd: the data stays off), with the page's launch travel of 1.5 (the stand-in's
+## pre-play review, 2026-11-08: launches at top power outrun the camera at the data's 2.0). Both PCs read the same setup, and the match key holds it.
+const SETUP: Dictionary = {"v2": [true, true], "assists": [[], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.5}   # every key the hub's own setup has, so a saved layout can't make two PCs differ
 const AI: Dictionary = {"p1": false, "p2": false}
-const SETUP2X: Dictionary = {"v2": [true, true, true, true], "assists": [[], [], [], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "fights": 2, "cross": true, "outside": true}   # --lan-2v2-together: hits across the two fights (sim/core/cross.gd) and Encounter's blows from outside (Simulation's per-setup key, S.stage.outside), a team against a team
-const SETUP2: Dictionary = {"v2": [true, true, true, true], "assists": [[], [], [], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "fights": 2}
+const SETUP2X: Dictionary = {"v2": [true, true, true, true], "assists": [[], [], [], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.5, "fights": 2, "cross": true, "outside": true}   # --lan-2v2-together: hits across the two fights (sim/core/cross.gd) and Encounter's blows from outside (Simulation's per-setup key, S.stage.outside), a team against a team
+const SETUP2: Dictionary = {"v2": [true, true, true, true], "assists": [[], [], [], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.5, "fights": 2}
 const AI2: Dictionary = {"p1": false, "p2": true, "p3": false, "p4": true}
 const SLOTS2: Array = [0, 2]   # the sim's slot each PC's player plays
 const FOREVER: int = 1 << 30

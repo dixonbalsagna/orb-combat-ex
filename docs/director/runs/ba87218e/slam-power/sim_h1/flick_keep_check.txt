@@ -1,0 +1,10 @@
+ok    off: a flick while launched is refused as the buffer runs out, with why
+ok    a stick press the first move refuses is told once: stick_refused not_yours, and no press_ack refused
+ok    on: launched, kept past the buffer, and it goes on his first free tick, with no refusal
+ok    on: made early in his flight, it's too old when he's free: refused recovering
+ok    on: still launched past pendFollow.maxTicks, it's refused once, with why
+ok    on: stunned past recoverTicks, it's held and goes when the stun ends
+ok    on: its direction is read as it goes: the rival crossed over, so the same stick is away
+ok    on: in a set piece it's refused at once, set_piece, and not held
+ok    on: a request the rival's planned exchange took is kept, not told answered, and goes when he's free
+FLICK KEEP: 0 check(s) failed

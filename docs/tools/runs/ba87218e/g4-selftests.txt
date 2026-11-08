@@ -1,0 +1,4 @@
+G4 self-tests in the patched scratch copy of HEAD ba87218e (the grant plus the extra patch), through the guarded launcher:
+preview self-test --require-browser: preview self-test ok: 151 checks
+stack self-test ok
+pck verify self-test ok: 10 checks

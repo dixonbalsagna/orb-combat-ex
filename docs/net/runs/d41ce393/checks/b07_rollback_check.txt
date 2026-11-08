@@ -1,0 +1,12 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX rollback check   Godot 4.7.2-stable (official)   setup default   600 ticks   delay 2   hash every 60   verify mode
+fighter AI on every slot (NetAiDriver), cap 600 ticks, tail 120
+  caught impure     seed 1 lan     delay 2  peer 0: the state's digest differs from the straight run after tick 31
+  caught impure     seed 1 p120    delay 2  peer 0: the state's digest differs from the straight run after tick 30
+  caught impure     seed 1 far     delay 2  peer 0: the state's digest differs from the straight run after tick 30
+  caught restore    seed 1 p120    delay 2  peer 0: the state's digest differs from the straight run after tick 3
+  caught restore    seed 1 far     delay 2  peer 0: the state's digest differs from the straight run after tick 3
+  caught norollback seed 1 p120    delay 2  peer 0: the state's digest differs from the straight run after tick 3
+  caught norollback seed 1 far     delay 2  peer 0: the state's digest differs from the straight run after tick 3
+PASS  AI negative control: 7 break(s) caught, 0 missed

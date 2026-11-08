@@ -1,0 +1,197 @@
+extends SceneTree
+## Controls' refuse-wait probe (scratch): one scripted pad on the real input hub plays seeded matches against the computer with the Sunday page's director rows on (flickKeep, pendFollow, press.refusedCue),
+## and every right-stick request is timed from the hub's rsStart to the director's first answer cue (stick_start, stick_refused, press_refused), against strike.refuseTicks.
+##   godot --headless --path <tree> --script res://tools/feel/refuse_wait_probe.gd -- <matches> <baseSeed> --refuse=30 --level=easy|medium|hard [--keep=0|1] [--gap=30,60] [--wall=150]
+## Counts: requests; answered (and the delay histogram: max, p50, p95, over 30, over 95); hub no_answer knocks; of those, FALSE alarms (the director answered the same request later, i.e. "Didn't start" then it fired);
+## real no_answers (never answered inside 300 live ticks); and how late the real ones knock. Wired as the host wires it (render/core/main.gd): every cue of the three answers the hub's wait.
+const QaPlanet = preload("res://qa/godot/qa_planet.gd")
+
+var hub: SimInputHub
+var held: Dictionary = {}
+
+
+func _init() -> void:
+	var pos: Array = []
+	var level: String = "easy"
+	var wall: float = 150.0
+	var refuse: int = 30
+	var keep: bool = true
+	var kept: bool = false
+	var keptTicks: int = 95
+	var gap: Array = [30, 60]
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--level="):
+			level = a.substr(8)
+		elif a.begins_with("--wall="):
+			wall = float(a.substr(7))
+		elif a.begins_with("--refuse="):
+			refuse = int(a.substr(9))
+		elif a.begins_with("--keptticks="):
+			keptTicks = int(a.substr(12))
+		elif a.begins_with("--kept="):
+			kept = a.substr(7) == "1"
+		elif a.begins_with("--keep="):
+			keep = a.substr(7) == "1"
+		elif a.begins_with("--gap="):
+			var p: PackedStringArray = a.substr(6).split(",")
+			gap = [int(p[0]), int(p[1])]
+		else:
+			pos.append(a)
+	var n: int = int(pos[0]) if pos.size() > 0 else 3
+	var base: int = int(pos[1]) if pos.size() > 1 else 1
+	SimInputData.load_and_apply()
+	var tm: Dictionary = SimInputData.timing
+	tm["strike"]["refuseTicks"] = refuse
+	tm["strike"]["refuseTicksKept"] = keptTicks
+	tm["switches"]["flickKept"] = kept   # the Controls switch that goes with flickKeep: the hub waits refuseTicksKept (95) instead of refuseTicks
+	SimInputData.invalidate()
+	var sc: Dictionary = DirStick.cfg()
+	sc["flickKeep"]["enabled"] = keep
+	sc["pendFollow"]["enabled"] = keep
+	DirExchange.pressCfg()["refusedCue"] = keep   # keep 1 is the Sunday page (flickKeep + pendFollow + refusedCue); keep 0 is main as shipped (all three off)
+	var dai = load("res://sim/director/ai.gd")
+	dai.set("level", level)
+	var acc := {"refuse": refuse, "keep": keep, "level": level, "n": n, "requests": 0, "answered": 0, "delays": [], "noAnswer": 0, "falseAlarm": 0, "realNoAnswer": 0, "alarmLate": [], "answerCues": {}, "falseAfter": [], "alarmCtx": {}, "alarmDelays": []}
+	for m in range(n):
+		var seed_: int = base + m
+		var S := _make(seed_)
+		if QaPlanet.fellBack(S, seed_):
+			quit(3)
+			return
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_
+		var st := {"next": 20, "rsTo": -1, "aim": Vector2.ZERO, "req": -1, "alarm": -1, "live": 0}
+		var t0: int = Time.get_ticks_msec()
+		var koSeen: int = -1
+		for t in range(int(900.0 * 60.0)):
+			_drive(S, t, st, rng, gap)
+			_step(S, st, acc)
+			if S.game.ko != null and koSeen < 0:
+				koSeen = t
+			if koSeen >= 0 and S.game.koT > 3.0:
+				break
+			if (Time.get_ticks_msec() - t0) / 1000.0 > wall:
+				break
+		if int(st.req) >= 0 and int(st.live) - int(st.req) > 300:
+			acc.realNoAnswer += 1
+		for k in held.keys():
+			_btn(k, false)
+		SimCore.dispose(S)
+	var d: Array = acc.delays
+	d.sort()
+	var out := {"refuse": refuse, "keep": keep, "level": level, "n": n, "requests": acc.requests, "answered": acc.answered, "noAnswerKnocks": acc.noAnswer, "falseAlarms": acc.falseAlarm,
+		"realNoAnswer": acc.realNoAnswer, "falseAnswerAfterTicks": acc.falseAfter, "answerCues": acc.answerCues, "alarmCtx": acc.alarmCtx, "kept": kept, "keptTicks": keptTicks, "alarmDelayMin": (acc.alarmDelays.min() if acc.alarmDelays.size() > 0 else -1), "alarmDelayMax": (acc.alarmDelays.max() if acc.alarmDelays.size() > 0 else -1)}
+	if d.size() > 0:
+		out["delayMax"] = d[d.size() - 1]
+		out["delayP50"] = d[d.size() / 2]
+		out["delayP95"] = d[int(d.size() * 0.95)]
+		out["delayOver30"] = d.filter(func(x): return x > 30).size()
+		out["delayOver95"] = d.filter(func(x): return x > 95).size()
+		out["delayOver180"] = d.filter(func(x): return x > 180).size()
+	print("REFUSEWAIT " + JSON.stringify(out))
+	quit()
+
+
+func _make(seed_: int) -> SimState:
+	hub = SimInputHub.new()
+	held = {}
+	var su: Dictionary = QaPlanet.setup(seed_, hub.setup())
+	su["intro"] = false
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, seed_, {"p1": false, "p2": true}, su)
+	hub.set_pad_has_right_stick(0, true)
+	return S
+
+
+func _btn(name: String, down: bool) -> void:
+	if down == held.has(name):
+		return
+	if down:
+		held[name] = true
+	else:
+		held.erase(name)
+	hub.pad_button(0, name, down)
+
+
+func _walk(S: SimState) -> void:
+	var dx: float = SimWrap.sdx(S.fighters[0].x, S.fighters[1].x)
+	var dy: float = S.fighters[1].y - S.fighters[0].y
+	hub.pad_stick(0, signf(dx) if absf(dx) > 110.0 else 0.0, signf(dy) if absf(dy) > 40.0 else 0.0)
+
+
+func _aim(S: SimState, dir: int) -> Vector2:
+	var side: float = 1.0 if SimWrap.sdx(S.fighters[0].x, S.fighters[1].x) >= 0.0 else -1.0
+	match dir:
+		1:
+			return Vector2(0.0, 1.0)
+		2:
+			return Vector2(0.0, -1.0)
+		3:
+			return Vector2(side, 0.0)
+	return Vector2(-side, 0.0)
+
+
+func _drive(S: SimState, t: int, st: Dictionary, rng: RandomNumberGenerator, gap: Array) -> void:
+	if t == 0:
+		_btn("west", true)   # the pad joins slot 0 (as knock_audit does); its one light is the only face press
+	elif t == 2:
+		_btn("west", false)
+	if t >= int(st.next):
+		st.aim = _aim(S, rng.randi_range(1, 4))
+		st.rsTo = t + 3
+		st.next = t + rng.randi_range(int(gap[0]), int(gap[1]))
+	if t < int(st.rsTo):
+		hub.pad_stick_right(0, st.aim.x, st.aim.y)
+	elif t == int(st.rsTo):
+		hub.pad_stick_right(0, 0.0, 0.0)
+	_walk(S)
+
+
+func _step(S: SimState, st: Dictionary, acc: Dictionary) -> void:
+	hub.set_humans(S.fighters[0].ai == null, S.fighters[1].ai == null)
+	hub.set_struggle(0, SimDir.inStruggle(S, S.fighters[0]), DirBeam.pushModeOf(S, S.fighters[0]) == "stick")
+	var it: SimIntent = hub.intent(0)
+	if it.rsStart:
+		acc.requests += 1
+		if int(st.alarm) >= 0:
+			acc.realNoAnswer += 1   # the previous request knocked "no answer" and was never answered before this one
+			st.alarm = -1
+		st.req = int(st.live)
+	var pausing: bool = S.pause.left > 0
+	if SimCore.step(S, [it, null]):
+		hub.consumed()
+		st.live = int(st.live) + 1
+	elif pausing:
+		if S.pause.left > 0:
+			hub.drop_edges()
+		else:
+			hub.resume()
+	for e in S.out.fx:
+		if str(e.type) != "cue" or int(e.actor) != 0:
+			continue
+		var k: String = str(e.kind)
+		if k == "stick_start" or k == "stick_refused" or k == "press_refused":
+			var key: String = k + "/" + str(e.source)
+			acc.answerCues[key] = int(acc.answerCues.get(key, 0)) + 1
+			if int(st.req) >= 0:
+				var dl: int = int(st.live) - int(st.req)
+				acc.answered += 1
+				acc.delays.append(dl)
+				if int(st.alarm) >= 0:
+					acc.falseAlarm += 1
+					acc.falseAfter.append(dl)
+					st.alarm = -1
+				st.req = -1
+			hub.note_press_answered(0)
+	for h in hub.take_haptics():
+		if str(h.get("kind", "")) == "stick_refused" and str(h.get("reason", "")) == "no_answer" and int(h.get("slot", -1)) == 0:
+			acc.noAnswer += 1
+			acc.alarmDelays.append(int(st.live) - int(st.req))
+			st.alarm = int(st.live)
+			var f0 = S.fighters[0]
+			var ctx: String = ("buf" if DirStick._g(f0, DirStick.ST_BUF) != 0 else "-") + "/" + ("pend" if DirStick._g(f0, DirStick.ST_PEND) != 0 else "-") + "/" + str(f0.state) + ("/stun" if f0.stunTicks > 0 else "") + ("/ex" if DirBrawl.exOf(S) != null else "")
+			acc.alarmCtx[ctx] = int(acc.alarmCtx.get(ctx, 0)) + 1
+	hub.take_refusals()
+	hub.on_events(S.out.fx)
+	S.out.fx.clear()
+	S.out.feed.clear()

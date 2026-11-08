@@ -1,0 +1,7 @@
+1161:GROUND: 2 check(s) failed
+1165:gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/world/tools/ground_check.gd: verdict: GROUND: 2 check(s) failed
+1167:::error::World check ground_check failed (exit 1)
+1191:GROUNDPROPS: 0 check(s) failed
+2036:CASUALTYFEED: 9 kills over 3 worlds, 81.0 people died in them
+2037:CASUALTYFEED: 0 check(s) failed
+2067:world-checks: 1 of 84 failed: ground_check

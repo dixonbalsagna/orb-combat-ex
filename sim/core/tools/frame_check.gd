@@ -60,6 +60,7 @@ func _init() -> void:
 	_warm()
 	_layNearCheck()
 	_key()
+	_anchor()
 	print("frame_check: %d checks, %d failed" % [checks, fails])
 	print("PASS" if fails == 0 else "FAILED")
 	quit(0 if fails == 0 else 1)
@@ -993,6 +994,38 @@ func _key() -> void:
 
 
 ## Each break must be caught: the checks above can see it.
+## The line re-anchors at rest once the pair's midpoint is past an eighth of the arena from x0, and then holds. Fighter a held
+## 0.35 W from where x0 started and fighter b 0.30 W behind him, drifting 50 units a tick: the midpoint starts 0.2 W out, so
+## x0 moves once, and a stays 0.15 W from it. The old test on fighter a moved x0 on every tick, each move wiping SimField's
+## memos (Performance's late-match ticks). Returns how often x0 moved in 60 ticks.
+func _anchorMoves(old: bool) -> int:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 77, {"p1": false, "p2": false}, setup3())
+	SimSwing.anchorOld = old
+	var W: float = SimConst.W
+	var base: float = S.frame.x0
+	var a = S.fighters[0]
+	var b = S.fighters[1]
+	var moves: int = 0
+	var rest: bool = true
+	for t in range(60):
+		a.x = SimWrap.wrap(base + 0.35 * W)
+		b.x = SimWrap.wrap(base + 0.05 * W - 50.0 * float(t))
+		var x0: float = S.frame.x0
+		step(S, 1)
+		rest = rest and not S.swing.active
+		if S.frame.x0 != x0:
+			moves += 1
+	SimSwing.anchorOld = false
+	SimCore.dispose(S)
+	return moves if rest else -1
+
+
+func _anchor() -> void:
+	var n: int = _anchorMoves(false)
+	ok(n == 1, "anchor: a pair apart, at rest, moves x0 once in 60 ticks, not every tick (%d)" % n)
+
+
 func _negative() -> void:
 	var S := start3()
 	var x: float = S.fighters[0].x
@@ -1028,3 +1061,5 @@ func _negative() -> void:
 	var fresh: float = SimField.col(S, 1234)
 	ok(fresh != c0, "break 4: a frame that turned reads its own columns (%.2f, %.2f)" % [c0, fresh])
 	SimCore.dispose(S)
+	var n: int = _anchorMoves(true)
+	ok(n > 30, "break 5: the old test on fighter a moves x0 on every tick with the pair apart (%d of 60)" % n)

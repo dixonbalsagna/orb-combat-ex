@@ -20,10 +20,10 @@ ON THE OLD PC
 ON BOTH PCs
 5. The game shows its flashing-effects warning on each PC. Each of you reads it on your own PC first: don't click through it for the other. Either of you may stop at any moment. Flashing stays reduced in this build, and you can't turn that off.
 6. Choose a controller on the start menu and press Start. Do this on each PC, one after the other, in any order.
-7. Look at the top of the window. It says "Waiting for the other PC", then "Connected, input wait 2 ticks". The PC that started first just waits, however long you take. Then fight. Your fighter is yours on each PC: the main PC plays the first, the old PC the second.
+7. Look at the top of the window. It says "Waiting for the other PC", then "Connected, input wait 2 ticks". The PC that started first just waits, however long you take. Then fight. Your fighter is yours on each PC: in a 1v1 the main PC plays the first fighter and the old PC the second; in 2v2 each PC plays the hero in its own fight.
 
 TWO OF YOU AGAINST TWO: "2v2 together"
-Close both, then use "Host 2v2 together (main PC)" in step 2 and "Join 2v2 together (old PC)" in step 4. You and your partner are a team against two computer fighters, one fight on each PC, on the same planet. Hits cross between the fights: shots and beams can reach an enemy in the other fight, and near one you can land a single blow on his opening, as his fighters can on yours. Your partner's fight isn't shown on your screen. A knocked-out fighter is out, and the match ends when a team has nobody standing. Both PCs must use the "together" shortcuts.
+Close both, then use "Host 2v2 together (main PC)" in step 2 and "Join 2v2 together (old PC)" in step 4. You and your partner are a team against two computer fighters, one fight on each PC, on the same planet. The two screens look alike: both show the same hero against the same rival, and each PC shows only its own fight. A hit from the pair you can't see says "Hit from the other fight". Hits cross between the fights: shots and beams can reach an enemy in the other fight, and near one you can land a single blow on his opening, as his fighters can on yours. Your partner's fight isn't shown on your screen. A knocked-out fighter is out, and the match ends when a team has nobody standing. Both PCs must use the "together" shortcuts.
 
 TWO FIGHTS AT ONCE, APART
 Close both, then use "Host 2v2 (main PC)" in step 2 and "Join 2v2 (old PC)" in step 4. Each PC now has its own fight against a computer fighter, on the same planet. The main PC's fight starts where the 1v1 does, and the old PC's half a world away. In this one nothing crosses between the fights, but their craters and broken buildings stay where they fall. If the two PCs use different shortcuts, the top of the window says "Couldn't start".
@@ -35,7 +35,7 @@ IF A WINDOWS FIREWALL BOX APPEARS ANYWAY
 We haven't been able to test whether step 1 stops it. If "Windows Security Alert" appears on the main PC, click "Allow access", and tell the EP it appeared. Don't click Cancel: that blocks the game until the rule's removed. Step 8 takes away what that box adds as well.
 
 WHAT DOESN'T WORK YET
-- One match only. When the top of the window says "The match is over", close both windows, and start again for another. In 2v2, if your fighter is knocked out while your partner still stands, the top says "You're out" and your screen follows your partner's fight.
+- One match only. When MATCH OVER shows, or the top of the window says "The match is over", close both windows, and start again for another. MATCH OVER may show on one PC only: close both anyway. In 2v2, if your fighter is knocked out while your partner still stands, the top says "You're out" and your screen follows your partner's fight.
 - A pause holds both PCs. The other PC's window says "Paused by the other player" and waits until you come back.
 - If one PC goes (closed, crashed, or its network dropped), the other says THE OTHER PC HAS GONE on the screen and the computer plays the gone PC's fighter, so the match goes on. Tell the EP afterwards.
 - If the top of the window says "OUT OF STEP", or it stays on "Waiting" for over a minute, close both and tell the EP.

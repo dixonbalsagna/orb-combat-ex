@@ -71,6 +71,7 @@ const SETUPS: Dictionary = {
 	"planet2depth": {"planet": 7, "touch": 3, "arena": {"cols": 2400}, "planetGen": 2, "intro": false, "depth": true},
 	"field": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false},   # a field world (sim/core/field.gd): its line and store, in the hash
 	"fights": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "fights": 2},   # two AI fights on one line (sim/core/stage.gd): the bots play the first
+	"lan": NetLan.SETUP,   # the LAN 1v1 exactly as the folder plays it (the energy model on, travel 1.5)
 	"fights2": NetLan.SETUP2,   # two fights with a player in each (--lan-2v2): the bots play slots 0 and 2, the sim's AI plays 1 and 3
 	"together": NetLan.SETUP2X,   # the same with hits across the fights on (--lan-2v2-together)
 	"power": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true},   # one energy model (sim/core/power.gd)

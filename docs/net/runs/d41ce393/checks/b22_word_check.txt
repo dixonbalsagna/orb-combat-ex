@@ -1,0 +1,7 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX word check   Godot 4.7.2-stable (official)   600 ticks   protocol 5
+  lan    bad ticks 0   rollbacks    0   mispredicted    0   deepest  0   words held  401   wire 403908 bytes
+  p120   bad ticks 0   rollbacks  384   mispredicted  525   deepest  4   words held  400   wire 479160 bytes
+  far    bad ticks 0   rollbacks  333   mispredicted  579   deepest 13   words held  401   wire 694092 bytes
+word check passed: 623 checks, 0 failed

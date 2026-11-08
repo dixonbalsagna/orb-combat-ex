@@ -1,0 +1,12 @@
+ANCHOR seed 4 fights 2 ticks 40000: x0 or heading moved 9 times (9 at rest, 0 in a swing); median gap 3819 ticks; W 153600
+TICKS mean 0.86 ms, worst 25.5 ms, over 10 ms 6, over 20 ms 1; final hash 17606125577c
+MEMO whole-frame wipes (SimField._fs) 10, binds of any kind (SimField._serial) 10
+t 4464 rest x0 moved 19214 (W/8 19200) bodies from old x0 [19701, 18758, -62153, -62211]
+t 8846 rest x0 moved 19235 (W/8 19200) bodies from old x0 [22384, 16158, -75274, -75332]
+t 20367 rest x0 moved 19261 (W/8 19200) bodies from old x0 [31872, 6882, 49868, 52291]
+t 23563 rest x0 moved 19203 (W/8 19200) bodies from old x0 [19555, 18876, 39120, 39366]
+t 27189 rest x0 moved -19218 (W/8 19200) bodies from old x0 [7444, -46829, -47678, -47620]
+t 27230 rest x0 moved -19281 (W/8 19200) bodies from old x0 [-12187, -27195, -28377, -28319]
+t 31049 rest x0 moved -19276 (W/8 19200) bodies from old x0 [-25456, -13272, -25340, -25398]
+t 35369 rest x0 moved -19246 (W/8 19200) bodies from old x0 [-36953, -1749, -1807, -12557]
+t 37325 rest x0 moved 19227 (W/8 19200) bodies from old x0 [22732, 15863, 16345, 6689]

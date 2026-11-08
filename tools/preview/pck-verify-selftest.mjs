@@ -35,6 +35,7 @@ const table = [
   { id: 'multi', file: 'data/b.json', path: ['lodge'], from: 'world', to: 'body', more: [{ path: ['stop'], from: 1, to: 0 }, { path: ['hold'], from: 0, to: 1 }], needs: [] },
   { id: 'two', file: 'data/a.json', path: ['z', 'enabled'], from: false, to: true, more: [{ file: 'data/c.json', path: ['sw', 'k1'], from: false, to: true }, { file: 'data/c.json', path: ['sw', 'shared'], from: false, to: true }], needs: [] },
   { id: 'sharedRow', file: 'data/c.json', path: ['sw', 'shared'], from: false, to: true, needs: [] },
+  { id: 'tol', file: 'data/a.json', path: ['x', 'enabled'], from: false, to: true, more: [{ file: 'data/c.json', path: ['sw', 'later'], from: false, to: true, ifPresent: true }], needs: [] },
   { id: 'word', url: 'tiles=1', needs: [] },
   { id: 'const', file: 'sim/x.gd', replace: { from: 'A', to: 'B' }, needs: [] },
 ];
@@ -75,6 +76,11 @@ check('an ON row whose file is not in the pack is a problem; the rows that are o
 r = verifyPack(good, table, []);
 check('with nothing on, every key must hold its "from" value (the multi row reads "body": a problem each)', !r.ok && r.problems.length >= 3, JSON.stringify(r.problems));
 check('page words and constants in a script are not read (no problem for them)', !verifyPack(good, table, ['plain', 'multi', 'sharedRow']).lines.some((l) => /^(word|const)/.test(l)));
+r = verifyPack(good, table, ['plain', 'multi', 'sharedRow', 'tol']);
+check('an ifPresent key that is not in the pack is not a problem, ON or off (the key lands later)', r.ok && r.lines.some((l) => /^tol .*sw\.later: key not in the pack \(ifPresent/.test(l)), JSON.stringify(r.problems));
+const laterOff = makePack({ 'res://data/a.json': J({ x: { enabled: true }, y: { enabled: false }, z: { enabled: false } }), 'res://data/b.json': J({ lodge: 'body', stop: 0, hold: 1 }), 'res://data/c.json': J({ sw: { k1: false, shared: true, later: false } }) });
+r = verifyPack(laterOff, table, ['plain', 'multi', 'sharedRow', 'tol']);
+check('when the ifPresent key IS in the pack and the row is ON, it must hold its on value', !r.ok && r.problems.some((p) => /^tol: ON but data\/c\.json sw\.later holds false/.test(p)), JSON.stringify(r.problems));
 let bad = null; try { verifyPack(Buffer.from('not a pack at all'.repeat(10)), table, []); } catch (e) { bad = e.message; }
 check('a file that is not a pack throws, it is not read as clean', bad !== null && /GDPC|pack/.test(bad), String(bad));
 

@@ -1,0 +1,9 @@
+ok    the setup's modes: by slot (face, stick), one for all (face), none is the default (stick), the reserved third is the default (stick)
+ok    a signature answered by the stick's fire-back: a struggle
+ok    on stick, his flick toward on the beat pushes (2 surges)
+ok    on stick, his face press does nothing: no surge, no stray
+ok    on face, her X on the beat pushes (1)
+ok    in the struggle his flick starts no strike and no beam
+ok    each is told his mode as it starts: [[0, "face"], [1, "stick"]]
+ok    off, face for everyone, whatever the setup says (face)
+PUSH MODE: 0 check(s) failed

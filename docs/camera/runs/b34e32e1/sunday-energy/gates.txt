@@ -1,0 +1,17 @@
+# Sunday's camera gates: main b34e32e1 + docs/camera/pending/vkeep/vkeep.patch (246e9415) + docs/camera/pending/land-release/land-release.patch (e12e44b5), headless, Godot 4.7.2
+chase_rush_check     chase_rush_check: 130 checks passed 
+split_sweep          split sweep passed 
+flight_shots_check   flight_shots_check: 778 checks passed 
+launch_shots_check   launch_shots_check: 1029 checks passed 
+cross_ko_check       cross_ko_check: 21 checks passed 
+peak_shot_check      peak_shot_check: 24 checks passed 
+peak_retry_check     peak_retry_check: 1 check passed 
+split_vision_check   split_vision_check: 11 checks passed 
+split_share_check    split_share_check: 26 checks passed 
+swing_shot_check     swing_shot_check: 164 checks passed 
+swing_places_check   swing_places_check: 33 checks passed 
+swing_real_check     swing_real_check: 48 checks passed 
+swing_read_check     swing_read_check: 14420 checks passed 
+
+# the same chase_rush_check on main b34e32e1 alone
+chase_rush_check     FAIL energy model, base, seed 1, 8 after the send, 1 taps, share 0.0: the view flapped: ["split", "closing", "merged", "opening", "split"] chase_rush_check: 130 checks, 3 failed 

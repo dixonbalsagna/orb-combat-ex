@@ -1,0 +1,8 @@
+ok    one decision for the stage: every body carries team 1's (3), and both of team 2's finishers started (5)
+ok    by team: team 1's fighters finish team 2's in both fights, p4 too though he had the less wear of his fight
+ok    more standing first: two to one, team 1 wins though team 2 has the less wear
+ok    nobody's played and the teams level: a no-contest in both fights, said once
+ok    with hits across off each fight goes by its own pair, as a 1v1: p4 finishes p3
+ok    alone in his fight, the losing fighter's finisher waits (both marked 3)
+ok    the rejoin brings p3 to him, and p3 finishes him: team 2 is out
+ENDING TEAM: 0 check(s) failed

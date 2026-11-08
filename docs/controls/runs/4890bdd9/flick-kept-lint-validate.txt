@@ -1,0 +1,5 @@
+﻿determinism lint ok: no engine trig, PI/TAU, random numbers or clock in sim/core, sim/director, sim/world, sim/input
+warning  audio/data/coop_cues.json  [no-schema] no schema for this folder (see tools/schemas/map.json); not validated
+warning  audio/data/moment_cues.json  [no-schema] no schema for this folder (see tools/schemas/map.json); not validated
+321 files checked, 0 errors, 2 warnings
+(node tools/lint-determinism.mjs and node tools/validate.js in a clean 4890bdd9 export with pending/flick-kept/flick-kept.patch applied; the result files equal the tested tree byte for byte after tr -d CR)

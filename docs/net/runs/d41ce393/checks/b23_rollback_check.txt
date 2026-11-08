@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX rollback check   Godot 4.7.2-stable (official)   setup together   900 ticks   delay 2   hash every 1   verify mode
+seed 1  blows from outside in the straight run: { "start": 4, "whiff": 1, "hit": 2 }
+seed 1  delay 2  straight: 7 exchanges, 900 ticks with feed or fx, replay verified, KO false, aliases none
+  ok   lan     delay 2  hashes  1800  outs  1800  rollbacks     0  resim      0  max depth  0  stalls    0  lost    0/1800  
+  ok   p120    delay 2  hashes  1800  outs  1800  rollbacks   518  resim   1127  max depth  4  stalls    0  lost   57/1804  
+seed 2  blows from outside in the straight run: { "start": 4, "whiff": 1 }
+seed 2  delay 2  straight: 10 exchanges, 900 ticks with feed or fx, replay verified, KO false, aliases none
+  ok   lan     delay 2  hashes  1800  outs  1800  rollbacks     0  resim      0  max depth  0  stalls    0  lost    0/1800  
+  ok   p120    delay 2  hashes  1800  outs  1800  rollbacks   577  resim   1223  max depth  4  stalls    0  lost   54/1806  
+objects alive before 1718, after 1734
+PASS  4 sessions, 7200 confirmed-tick hash comparisons, 0 failure(s)

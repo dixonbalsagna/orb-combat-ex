@@ -1,0 +1,16 @@
+      down at 8.0 bh, level 3, top: cue stick_full_send/slamDown, brawl ended true, launched true, rose -599, moved 2193
+      down at 0.0 bh, level 3, top: cue stick_full_send/bury, brawl ended true, launched true, rose 11, moved 1790
+      up at 0.0 bh, level 3, top: cue stick_full_send/skyward, brawl ended true, launched true, rose 795, moved 385
+      toward at 0.0 bh, level 3, top: cue stick_full_send/across, brawl ended true, launched true, rose 488, moved 7372
+      down at 8.0 bh, level 2: cue , brawl ended false, launched false, rose -150, moved 0
+      down at 8.0 bh, level 0: cue slam_hint/, brawl ended false, launched false, rose -188, moved 0
+      down at 8.0 bh, level 3, top: cue , brawl ended false, launched false, rose -300, moved 0
+ok    on: down at the top on a foe in the air is the slam: he's sent down (-599)
+ok    on: down at the top on a foe on the ground: the down send from where he stands (bury)
+ok    on: up at the top sends him up (795)
+ok    on: toward at the top sends him across (7372)
+ok    on: a hold short of the top never sends
+ok    on: a quick down flick on a foe in the air doesn't send, and gives UI's hint cue
+ok    off: as before, no send
+ok    the top, with the plain hold's stages off, is level 3
+FULL SEND: 0 check(s) failed

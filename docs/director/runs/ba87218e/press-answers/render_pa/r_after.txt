@@ -1,0 +1,10 @@
+ok    seed 7, 900 ticks: at most 5 after-images are drawn round a fighter on any tick ([1, 5]; the limit is 5), and VFX's tally takes one to be shown 5 ticks
+ok    the match has a rush in it: the five are reached (5), so the limit is tried
+ok    on every tick the number drawn round each fighter is the number VFX's tally reads for him (its peaks [1, 5])
+ok    eight alive round one fighter: 5 are drawn, and the three left out are the oldest
+ok    one within 24 units of its fighter is not drawn and takes no place: the five off him are all drawn (5)
+ok    a short beam's tail is where it always was (900 units at half a pixel a unit and wider views, bright), and a calm beam's at any size
+ok    a planet-crossing beam (32,058 units): its bright tail uncovers at most 1000 pixels a tick at any zoom (the cap is 1000; it was 34087 in one tick at 0.85 pixels a unit), only ever moves away, and its calm tail is where it always was
+after check passed
+WARNING: 274 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+ERROR: 9 resources still in use at exit (run with --verbose for details).

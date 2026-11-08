@@ -1,0 +1,25 @@
+  ok    a heap never lands on a standing building's footing
+  ok    a building's footing is the highest ground under its footprint (188)
+== G1: rims as ramps, gentle heaps, structure reach by tier (docs/world/ground-contact.md, structure-reach.md) ==
+  E 0.5: R 113 depth 25, crest 7.9 (0.32 d), steepest slope into the crest 0.49, rim and apron area / bowl area 0.44
+  E 1.0: R 160 depth 35, crest 11.7 (0.33 d), steepest slope into the crest 0.51, rim and apron area / bowl area 0.43
+  E 2.0: R 226 depth 50, crest 16.9 (0.34 d), steepest slope into the crest 0.50, rim and apron area / bowl area 0.45
+  E 4.0: R 320 depth 70, crest 27.1 (0.39 d), steepest slope into the crest 0.54, rim and apron area / bowl area 0.51
+  E 8.0: R 453 depth 100, crest 39.7 (0.40 d), steepest slope into the crest 0.56, rim and apron area / bowl area 0.53
+  E 16.0: R 600 depth 132, crest 52.8 (0.40 d), steepest slope into the crest 0.56, rim and apron area / bowl area 0.53
+  E 30.0: R 600 depth 132, crest 52.8 (0.40 d), steepest slope into the crest 0.56, rim and apron area / bowl area 0.53
+  ok    a crater's inner slope up to the lip is at most 0.6 at every energy (largest 0.56)
+  ok    the rim crest is at most RIM_DEPTH_MAX of the depth
+  ok    the rim and apron hold no more than the bowl (the 1D profile)
+  ok    a heap is a ramp: its steepest slope is at most 0.60 (largest 0.60)
+  structure reach hits (tier, distance in old radii): [[3.0, 1.05], [3.0, 1.5], [4.0, 1.05], [4.0, 1.5], [4.0, 1.7]]
+  ok    a blast reaches a building out to the tier's factor times the old radius and no further (data: [1.0, 1.0, 1.6, 1.8])
+  ok    a beam's path sample (reach 1.0) is not widened by the tier
+== G2: ground contact: the journey function against the played journey (docs/world/ground-contact.md) ==
+  contact data enabled: true (these checks force the flag on for the sim they use)
+  240 launches: the predicted end is within 60 units of the played one in 194, the same contact count in 185, journey end kinds { "water": 65, "slam": 46, "stop": 111, "tumble": 4, "wall": 14 } (largest end difference 4531)
+  ok    no NaN in 240 journeys
+  ok    no journey has more than 8 contacts
+  open ground: 102 of 107 within 60 units; near a town (buildings within 9,000 units, whose collapse raises heaps ahead of a skid): 92 of 133
+  ok    on open ground the journey function predicts the played end within 60 units for at least 90 percent of launches
+probe: 0 check(s) failed

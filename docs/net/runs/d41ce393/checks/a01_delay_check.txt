@@ -1,0 +1,14 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX adaptive input delay check   Godot 4.7.2-stable (official)
+  profile   ping  jitter   ref x1   x2   x4   (delay in ticks; * = does not fit)
+  lan         0      0       2    2    2
+  p40        40      8       2    2    2
+  p80j       80     24       2    3    3
+  p120      120     40       2    5    5
+  p160      160     50       3    6    6
+  p200      200     60       4    7    7
+  p200c     200      0       3    6    6
+  asym      140     80       3    6    6
+  far       400     80      8*   8*   8*
+PASS  0 failure(s)

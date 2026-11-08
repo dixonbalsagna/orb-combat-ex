@@ -1,0 +1,13 @@
+G4 pack verify on the dry-run build (HEAD ba87218e + the grant + Tools' extra patch; scratch tools)
+dodgeHeld        ON  data/input/timing.json switches.dodgeHeld = true
+refusedCue       off data/director/interrupts.json press.refusedCue = false
+wallPush         off data/director/launch.json walk.enabled = false
+wallPushAi       off data/director/launch.json walk.ai.enabled = false
+slamTurn         off data/director/swing.json slam.enabled = false
+cityHold         off data/biomes/brunt.json lodgeHold = "world"
+flightStrikes    off data/input/timing.json switches.dodgeHeld = true (a key of a row that is on)
+flickKeep        off data/director/stick.json flickKeep.enabled: key not in the pack
+fullSend         off data/director/stick.json fullSend.enabled: key not in the pack
+fullSend         off ui/data/features.json features.slam_hint: key not in the pack
+chordPick        off data/input/timing.json switches.chordPick: key not in the pack
+pck verify: 73 keys read from the pack, 69 rows on, 0 problem(s)

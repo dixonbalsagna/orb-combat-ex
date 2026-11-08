@@ -1,0 +1,5 @@
+ok    on: a lit launcher holds 14, a full send 18
+ok    on: a share at or under the launcher's holds the least (14)
+ok    on: with the freeze budget over and hit-stop by weight on, it isn't cut (14)
+ok    off: as before (hit-stop by weight off, a send holds nothing)
+LAUNCH HOLD: 0 check(s) failed

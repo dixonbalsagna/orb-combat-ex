@@ -42,7 +42,7 @@ export function verifyPack(buf, table, activeIds) {
     const isOn = on.has(sw.id);
     for (const part of parts(sw)) {
       const json = getJson(part.file);
-      const keys = [{ path: part.sw.path, from: part.sw.from, to: part.sw.to }, ...(part.sw.more || [])];
+      const keys = [{ path: part.sw.path, from: part.sw.from, to: part.sw.to, ifPresent: !!part.sw.ifPresentPrimary }, ...(part.sw.more || [])];
       if (json === null) {
         if (isOn) problems.push(`${sw.id}: ON, but ${part.file} is not readable in the pack`);
         continue;
@@ -51,6 +51,7 @@ export function verifyPack(buf, table, activeIds) {
         const got = at(json, k.path);
         const where = `${part.file} ${k.path.join('.')}`;
         if (!got.found) {
+          if (k.ifPresent) { lines.push(`${sw.id.padEnd(16)} ${isOn ? 'ON ' : 'off'} ${where}: key not in the pack (ifPresent: not a problem)`); continue; }
           if (isOn) problems.push(`${sw.id}: ON, but ${where} is not in the pack`);
           lines.push(`${sw.id.padEnd(16)} ${isOn ? 'ON ' : 'off'} ${where}: key not in the pack`);
           continue;

@@ -161,29 +161,32 @@ try {
   check('a switch in the tree is flipped in the scratch text', fb.on.includes('flag') && readFileSync(join(tree, 'data/d.json'), 'utf8').includes('"flag": true'));
   {   // a HELD row is not flipped in the built data (Netcode, 2026-11-07: the loop flipped every row, and only the page's list said the held ones were off)
     put('data/director/interrupts.json', '{\n  "press": {\n    "refusedCue": false\n  }\n}\n', tree);
-    put('data/director/launch.json', '{\n  "walk": {\n    "enabled": false,\n    "ai": {\n      "enabled": false\n    }\n  }\n}\n', tree);
+    put('data/director/launch.json', '{\n  "aimCuts": {\n    "enabled": false\n  },\n  "walk": {\n    "enabled": false,\n    "ai": {\n      "enabled": false\n    }\n  }\n}\n', tree);
     put('data/director/swing.json', '{\n  "slam": {\n    "enabled": false\n  }\n}\n', tree);
     put('data/biomes/brunt.json', '{\n  "lodgeHold": "world",\n  "wallRebound": 0.25,\n  "wallStop": 1,\n  "wallDepthHold": 0,\n  "repeatMarks": 0\n}\n', tree);
     const rd = (p) => JSON.parse(readFileSync(join(tree, p), 'utf8'));
     const fh = flipAll(tree, []);
-    check('held rows stay at the commit\'s values in the built data: refusedCue false, the city rows (walk, walk.ai, slam, lodgeHold and its four) as they were, each waiting with its reason', rd('data/director/interrupts.json').press.refusedCue === false && rd('data/director/launch.json').walk.enabled === false && rd('data/director/launch.json').walk.ai.enabled === false && rd('data/director/swing.json').slam.enabled === false && rd('data/biomes/brunt.json').lodgeHold === 'world' && rd('data/biomes/brunt.json').wallStop === 1 && !fh.on.includes('refusedCue') && !fh.on.includes('wallPush') && fh.waiting.some((w) => w.id === 'refusedCue' && /held off: knocks on landed hits/.test(w.why)) && fh.waiting.some((w) => w.id === 'cityHold' && /held off: waiting on QA city read/.test(w.why)), JSON.stringify(fh.waiting.filter((w) => /held/.test(w.why))));
-    const fo = flipAll(tree, [], null, { on: ['refusedCue', 'wallPush'] });
-    check('--on turns a held row on in the data (refusedCue and walk.enabled true, the other held rows still off)', rd('data/director/interrupts.json').press.refusedCue === true && rd('data/director/launch.json').walk.enabled === true && rd('data/director/launch.json').walk.ai.enabled === false && rd('data/biomes/brunt.json').lodgeHold === 'world' && fo.on.includes('refusedCue'));
+    check('held rows stay at the commit\'s values in the built data: aimCuts and the city rows (walk, walk.ai, slam, lodgeHold and its four) as they were, each waiting with its reason; refusedCue, no longer held, is on', rd('data/director/launch.json').aimCuts.enabled === false && rd('data/director/launch.json').walk.enabled === false && rd('data/director/launch.json').walk.ai.enabled === false && rd('data/director/swing.json').slam.enabled === false && rd('data/biomes/brunt.json').lodgeHold === 'world' && rd('data/biomes/brunt.json').wallStop === 1 && !fh.on.includes('aimCuts') && !fh.on.includes('wallPush') && fh.on.includes('refusedCue') && rd('data/director/interrupts.json').press.refusedCue === true && fh.waiting.some((w) => w.id === 'aimCuts' && /held off: held for the next batch/.test(w.why)) && fh.waiting.some((w) => w.id === 'cityHold' && /held off: waiting on QA city read/.test(w.why)), JSON.stringify(fh.waiting.filter((w) => /held/.test(w.why))));
+    const fo = flipAll(tree, [], null, { on: ['aimCuts', 'wallPush'] });
+    check('--on turns a held row on in the data (aimCuts and walk.enabled true, the other held rows still off)', rd('data/director/launch.json').aimCuts.enabled === true && rd('data/director/launch.json').walk.enabled === true && rd('data/director/launch.json').walk.ai.enabled === false && rd('data/biomes/brunt.json').lodgeHold === 'world' && fo.on.includes('aimCuts'));
     put('data/director/interrupts.json', '{\n  "press": {\n    "refusedCue": false\n  },\n  "water": {\n    "enabled": false\n  }\n}\n', tree);
     flipAll(tree, [], null, { off: ['interrupts'] });
     check('--off leaves the row\'s key at the commit\'s value in the built data', rd('data/director/interrupts.json').water.enabled === false);
   }
   {   // Sunday's rows (2026-11-07): flickKeep, flickRun, and fullSend with UI's slam_hint in the same row over two files
-    put('data/director/stick.json', '{\n  "flickKeep": { "enabled": false },\n  "flickRun": { "enabled": false, "points": 3 },\n  "fullSend": { "enabled": false }\n}\n', tree);
+    put('data/director/stick.json', '{\n  "flickKeep": { "enabled": false },\n  "pendFollow": { "enabled": false },\n  "flickRun": { "enabled": false, "points": 3 },\n  "fullSend": { "enabled": false }\n}\n', tree);
+    put('data/input/timing.json', '{\n  "switches": { "rightStick": false, "flickKept": false }\n}\n', tree);
     put('ui/data/features.json', '{\n  "features": { "slam_hint": false, "other": true }\n}\n', tree);
     const rd = (f) => JSON.parse(readFileSync(join(tree, f), 'utf8'));
     const fs3 = flipAll(tree, []);
-    const sj = rd('data/director/stick.json'), fj = rd('ui/data/features.json');
-    check('flickKeep, flickRun and fullSend are turned on, and fullSend takes UI\'s slam_hint with it (two files, one row); the rest of both files is left alone', sj.flickKeep.enabled === true && sj.flickRun.enabled === true && sj.flickRun.points === 3 && sj.fullSend.enabled === true && fj.features.slam_hint === true && fj.features.other === true, JSON.stringify([sj, fj]));
-    put('data/director/stick.json', '{\n  "flickKeep": { "enabled": false },\n  "flickRun": { "enabled": false },\n  "fullSend": { "enabled": false }\n}\n', tree);
+    const sj = rd('data/director/stick.json'), fj = rd('ui/data/features.json'), tj = rd('data/input/timing.json');
+    check('flickKeep (with pendFollow and Controls\' flickKept in timing.json), flickRun and fullSend are turned on, and fullSend takes UI\'s slam_hint with it (two files, one row); the rest of both files is left alone', sj.flickKeep.enabled === true && sj.pendFollow.enabled === true && tj.switches.flickKept === true && tj.switches.rightStick === true && sj.flickRun.enabled === true && sj.flickRun.points === 3 && sj.fullSend.enabled === true && fj.features.slam_hint === true && fj.features.other === true, JSON.stringify([sj, fj]));
+    put('data/director/stick.json', '{\n  "flickKeep": { "enabled": false },\n  "pendFollow": { "enabled": false },\n  "flickRun": { "enabled": false },\n  "fullSend": { "enabled": false }\n}\n', tree);
+    put('data/input/timing.json', '{\n  "switches": { "rightStick": false }\n}\n', tree);
     put('ui/data/features.json', '{\n  "features": { "other": true }\n}\n', tree);
     const fs4 = flipAll(tree, []);
     check('fullSend waits when UI\'s slam_hint key is not in the tree yet, and flips neither file (the slam without its hint is not shipped)', !fs4.on.includes('fullSend') && fs4.waiting.some((w) => w.id === 'fullSend' && /slam_hint/.test(w.why)) && rd('data/director/stick.json').fullSend.enabled === false && fs3.on.includes('fullSend'), JSON.stringify(fs4.waiting.filter((w) => w.id === 'fullSend')));
+    check('before the key lands (no switches.flickKept in timing.json) flickKeep still turns on, and no flickKept key is added to timing.json (build 1 and build 2 come from the same table)', fs4.on.includes('flickKeep') && rd('data/director/stick.json').flickKeep.enabled === true && rd('data/director/stick.json').pendFollow.enabled === true && !('flickKept' in rd('data/input/timing.json').switches) && rd('data/input/timing.json').switches.rightStick === true);   // no flickKept key added; rightStick is its own row's
   }
   put('tools/validate.js', "console.log('error  data/d.json:2 /flag [type] flag must be a boolean'); console.log('warning  ui/x.json:1 /a [xref:r] note'); console.log('3 files checked, 1 errors, 1 warnings'); process.exit(1);\n", tree);
   const rv = runValidate(tree);

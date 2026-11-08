@@ -21,6 +21,8 @@ extends SceneTree
 ##     own player's fight before every tick, where the game draws, all the time he stands, and NetLan never finds S moved between ticks;
 ##   - the LAN's tuning with the second PC hitching: the first PC's deepest rollback stays within NetLan.LAN_AHEAD (and one save), and time sync never waits more than NetLan.SYNC_MAX_WAIT frames in a row;
 ##   - the log line has the frames and the view;
+##   - NetLan's own setups (SETUP, SETUP2, SETUP2X: the folder's 1v1, 2v2 apart and together) start both PCs with the energy model on and the page's travel of 1.5,
+##     and a short match on each stays in step;
 ##   - CD-10 (the audit's F-10), a hostile second PC: a hello asking for an input wait of 100,000 ticks fails the handshake (no session, the title says why); one
 ##     packet handing slot 200 to the AI is dropped whole and the match goes on in step; a flood of far-ahead inputs is dropped and the first PC's inputs stay
 ##     bounded; and a gone second PC (nothing from it after frame 600): its seat goes to the computer, the match goes on, the title says so and the game gets a banner;
@@ -29,7 +31,8 @@ extends SceneTree
 ## to its player's fight must be caught holding the wrong one, and with no map of players to slots the second player's fighter must never act, and with inputs left on the slot after a trade the traded player
 ## must stop acting, and with the session clearing its output nothing of the other fight's must stay for the picture, and a PC that keeps showing its out player's fight must be caught, and a pause that
 ## doesn't put the view back after its rollback must be caught showing fight 0 while the player stands; with CD-10's checks off, the huge wait must be taken, the bad
-## slot must reach the session and the flood must fill it; and with the hand-over off, a gone PC must freeze the match.
+## slot must reach the session and the flood must fill it; and with the hand-over off, a gone PC must freeze the match; and a LAN setup without its "power" word
+## must be caught starting with the model off.
 ## Each must be caught.
 ## Verdict line: LAN: N check(s) failed
 
@@ -388,6 +391,11 @@ func _init() -> void:
 		ok(r.lans[0].net.session.frame < 600 + 2 * NetLan.LAN_AHEAD + 10, "with the hand-over off, a gone PC must freeze the match")
 		_close(r)
 		ticks = savedN
+		var bare: Dictionary = NetLan.SETUP.duplicate(true)
+		bare.erase("power")
+		var bp: Array = _setupPower(bare)
+		print("control, a LAN setup without its power word: the model on %s, travel %.2f" % [str(bp[0]), bp[1]])
+		ok(not bp[0], "a LAN setup without its power word must be caught with the model off")
 		r = _run("lan", true, true, 0, true, false)
 		print("control, two fights, S not moved to the player's fight: %d frames held the wrong one" % r.wrongFight)
 		ok(r.wrongFight > 0, "with S not moved, a PC must be caught holding the wrong fight")
@@ -537,6 +545,11 @@ func _init() -> void:
 	print("  log: %s" % logText.strip_edges().get_slice("\n", 1).get_slice("; ", 3).left(160))
 	_close(lr)
 	DirAccess.remove_absolute(logPath)
+	for nm in ["SETUP", "SETUP2", "SETUP2X"]:
+		var su: Dictionary = {"SETUP": NetLan.SETUP, "SETUP2": NetLan.SETUP2, "SETUP2X": NetLan.SETUP2X}[nm]
+		var pr: Array = _setupPower(su)
+		ok(pr[0] and is_equal_approx(pr[1], 1.5) and pr[2], "NetLan.%s: both PCs start with the energy model on and travel 1.5, and 300 ticks stay in step (on %s, travel %.2f, in step %s)" % [nm, str(pr[0]), pr[1], str(pr[2])])
+		print("  NetLan.%s: the energy model on %s, travel %.2f, 300 ticks in step %s" % [nm, str(pr[0]), pr[1], str(pr[2])])
 	var keep: int = ticks
 	ticks = 240
 	var hd := _run("lan", true, true, 0, false, true, true, -1, true, [], false, false, -1, 0, {"hostile": "delay"})
@@ -586,3 +599,22 @@ func _init() -> void:
 	_close(asked)
 	print("LAN: %d check(s) failed" % fails)
 	quit(0 if fails == 0 else 1)
+
+
+## A setup's energy model on two PCs: [on, travel, in step]. Each PC starts its match from the setup and plays 300 ticks of the computer against the
+## computer; in step means the two SimHashes agree after (the same seed, the same setup), as two PCs' do.
+func _setupPower(su: Dictionary) -> Array:
+	var ai: Dictionary = {"p1": true, "p2": true, "p3": true, "p4": true} if su.has("fights") else {"p1": true, "p2": true}
+	var hs: Array = []
+	var on: bool = true
+	var trav: float = -1.0
+	for k in range(2):
+		var S: SimState = SimCore.createSim()
+		SimCore.newMatch(S, NetLan.SEED, ai, su)
+		on = on and S.powerOn
+		trav = S.powerTravel
+		for t in range(300):
+			SimCore.step(S, null)
+		hs.append(SimHash.stateHash(S).gameplay)
+		SimCore.dispose(S)
+	return [on, trav, hs[0] == hs[1]]

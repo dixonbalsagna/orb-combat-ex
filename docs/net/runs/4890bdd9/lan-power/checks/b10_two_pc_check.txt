@@ -1,0 +1,8 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  caught one ulp of a fighter's hit points    DIFFERENT: AMD Ryzen 7 9800X3D 8-Core Processor and AMD Ryzen 7 9800X3D 8-Core Processor first disagree in match A at tick 540, in: digest, state hash
+  caught a number changed in the data         NOT COMPARABLE: data differs (78e26f28a1362f12, 216dc27b080709f2). Run both from the same kit.
+  caught one digit changed in a report        DIFFERENT: AMD Ryzen 7 9800X3D 8-Core Processor and AMD Ryzen 7 9800X3D 8-Core Processor first disagree in match B at tick 180, in: digest
+  caught a report cut short                   DIFFERENT: a report is cut short (24 and 17 lines)
+  caught a report from another build          NOT COMPARABLE: build differs (selftest, other). Run both from the same kit.
+TWO_PC: 0 check(s) failed

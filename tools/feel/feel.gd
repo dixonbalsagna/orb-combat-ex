@@ -10,6 +10,7 @@ var SLOT: int = 0               # the pad's slot: the one with most input record
 ## press_ack texts that mean the press was not honoured as pressed (the others, chase and held, are the press being answered or kept).
 const NOT_HONOURED: Array = ["refused", "double", "zip", "lapsed", "stunned", "chase_no_ki", "chase_late"]
 ## Intent edges a press is read from, and the name each gets in the ledger.
+const POWER_ANSWERS: Array = ["power_start", "power_burst", "transform"]   # Encounter's press-answers (the transform is an event, not a cue): answers to a power press or a transform; press_refused not_ready is read from the refusal reasons
 const EDGES: Array = ["light", "heavy", "sig", "special", "dodge", "guardPress", "rsStart", "transform", "context", "powerPress"]
 
 var rp: Dictionary = {}
@@ -411,6 +412,8 @@ func _credit(open: Array, kind: String) -> void:
 	target.acts += 1
 	if kind != "":
 		target.cues.append(kind)
+	if POWER_ANSWERS.has(kind):
+		target["pa"] = int(target.get("pa", 0)) + 1   # answered by a power or transform answer
 
 
 ## Every press of the pad and what came of it: honoured (an answer within `look` ticks), refused (the game said no, with the reason) or silent (nothing at all).
@@ -453,6 +456,8 @@ func _ledger() -> Dictionary:
 					_credit(open, str(e.kind))
 			elif e.type == "damage" and int(e.attacker) == SLOT:
 				_credit(open, "")
+			elif e.type == "transform" and int(e.actor) == SLOT:
+				_credit(open, "transform")   # he took the transform: the press was answered
 		var me2 = S.fighters[SLOT]
 		var freeBody: bool = me2.state != "down" and me2.state != "launched"
 		for row in open:   # a guard held up, or a dodge open, is the answer to its press (it makes no cue of its own)
@@ -483,6 +488,6 @@ func _ledger() -> Dictionary:
 			verdict = "partly"
 		elif row.acts == 0:
 			verdict = "silent"
-		rows.append({"t": row.t, "press": row.press, "verdict": verdict, "reasons": row.refused, "cues": row.cues.slice(0, 4), "state": row.state, "ki": row.ki, "rs": row.get("rs", []), "air": row.get("air", [])})
+		rows.append({"t": row.t, "press": row.press, "verdict": verdict, "reasons": row.refused, "cues": row.cues.slice(0, 4), "state": row.state, "ki": row.ki, "rs": row.get("rs", []), "air": row.get("air", []), "pa": int(row.get("pa", 0)), "paOnly": int(row.get("pa", 0)) > 0 and int(row.acts) == int(row.get("pa", 0)), "notReady": row.refused.any(func(x): return str(x).ends_with("not_ready"))})
 	return {"mode": "ledger", "presses": rows, "merged": merged, "recorded": _recorded(final)}
 

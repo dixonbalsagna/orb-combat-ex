@@ -1,0 +1,48 @@
+extends SceneTree
+## Scratch probe (Netcode's review of Simulation's grant, 2026-11-07): NetDesync's checkpoint digest sees the setup's "travel" when
+## the energy model is on, as SimHash does, and not when it's off.
+##   godot --headless --path <tree> --script res://net/tools/zz_travel_probe.gd
+
+const BASE: Dictionary = {"planet": 7, "touch": 3, "planetGen": 3, "intro": false}
+
+
+func _mk(power: bool, travel) -> Array:
+	var su: Dictionary = BASE.duplicate(true)
+	if power:
+		su["power"] = true
+	if travel != null:
+		su["travel"] = travel
+	var S: SimState = SimCore.createSim()
+	SimCore.newMatch(S, 77, {"p1": true, "p2": true}, su)
+	for i in range(30):
+		SimCore.step(S, [null, null])
+	var r: Array = [NetDesync.digest(S), SimHash.stateHash(S).gameplay, S.powerTravel]
+	SimCore.dispose(S)
+	return r
+
+
+func _init() -> void:
+	var fails: int = 0
+	var a := _mk(true, 1.25)
+	var b := _mk(true, null)
+	var c := _mk(true, 1.25)
+	var d := _mk(false, 1.25)
+	var e := _mk(false, null)
+	print("power on, travel 1.25: travel %.2f digest %s hash %s" % [a[2], str(a[0]).left(16), str(a[1]).left(16)])
+	print("power on, no travel:   travel %.2f digest %s hash %s" % [b[2], str(b[0]).left(16), str(b[1]).left(16)])
+	print("power on, travel 1.25 again: digest %s" % str(c[0]).left(16))
+	print("power off, travel 1.25: digest %s; power off, none: digest %s" % [str(d[0]).left(16), str(e[0]).left(16)])
+	var checks: Array = [
+		[a[0] != b[0], "with the model on, the digest sees travel (1.25 against the data's 2.0)"],
+		[a[1] != b[1], "... as SimHash does"],
+		[a[0] == c[0], "the same match, the same digest"],
+		[d[0] == e[0] and d[1] == e[1], "with the model off, travel changes neither"],
+	]
+	for ck in checks:
+		if not ck[0]:
+			fails += 1
+			print("FAIL  " + ck[1])
+		else:
+			print("ok    " + ck[1])
+	print("TRAVEL_PROBE: %d check(s) failed" % fails)
+	quit(0 if fails == 0 else 1)

@@ -1,0 +1,18 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX swing check   Godot 4.7.2-stable (official)   600 ticks   protocol 5   right stick true   negative control
+straight: swings asked 14, ticks with one running 439 of 600, store length at most 64
+  control swing      p120  bad hashes  290, first at 24, digests off the straight run 18
+  control frame      p120  bad hashes  290, first at 24, digests off the straight run 18
+  control store      p120  bad hashes  278, first at 36, digests off the straight run 18
+  control norollback p120  bad hashes  296, first at 8, digests off the straight run 18
+  control swing      far   bad hashes  292, first at 16, digests off the straight run 18
+  control frame      far   bad hashes  292, first at 16, digests off the straight run 18
+  control store      far   bad hashes  285, first at 32, digests off the straight run 18
+  control norollback far   bad hashes  298, first at 8, digests off the straight run 18
+  control motion     far   peers on full and slow reported at tick 60
+  control slow cap   far   top rate 60.0 against 30
+  control uncapped   far   worst 171.9 degrees against the bound 40
+apart: a straight run has a swing on 310 ticks and the pairs apart on 80 of 600
+  control apart, a body of the other fight moved on one peer only: desync true
+swing check passed: 149 checks, 0 failed

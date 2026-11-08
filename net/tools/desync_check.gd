@@ -29,6 +29,7 @@ const SETUPS: Dictionary = {
 	"planet": {"planet": 7, "touch": 3},
 	"field": {"planet": 7, "touch": 1, "planetGen": 3, "intro": false},
 	"kick": {"kick": true},
+	"lan": NetLan.SETUP,   # the LAN 1v1 exactly as the folder plays it (the energy model on, travel 1.5)
 	"fights2": NetLan.SETUP2,
 	"together": NetLan.SETUP2X,
 }
@@ -106,6 +107,8 @@ func _init() -> void:
 			print("FAIL  --setup=kick tests nothing unless the bots kick")
 			quit(1)
 			return
+	if setupName == "lan":   # the LAN 1v1 on the planet with the energy model: an ulp of x heals before the next checkpoint (seeds 1 and 2), so the fighter's change is a whole unit here
+		INJECT["fighter_x"] = func(S: SimState) -> void: S.fighters[1].x = S.fighters[1].x + 1.0
 	if setup.has("fights"):
 		aiFlags = NetLan.AI2
 		if setup.get("outside", false) and not NetLan.outsideKeyed():

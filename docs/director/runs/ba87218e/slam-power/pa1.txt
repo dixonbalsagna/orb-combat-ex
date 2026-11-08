@@ -1,0 +1,9 @@
+      power: charge ["cue/power_start"], burst ["cue/power_burst"], launched ["press_refused/launched"], locked ["press_refused/locked"], free []; transform: not ready ["press_refused/not_ready"], ready []; computer []; off []
+ok    a power press that begins a charge is told: power_start
+ok    a power press whose burst fired is told: power_burst
+ok    a power press while launched or locked is refused, with why
+ok    free, with nothing to say: nothing (no false knock)
+ok    a transform press with no form ready is refused: not_ready
+ok    a transform press that transforms is told by its own event, with no refusal
+ok    never the computer's, and nothing with refusedCue off
+PRESS ANSWERS: 0 check(s) failed

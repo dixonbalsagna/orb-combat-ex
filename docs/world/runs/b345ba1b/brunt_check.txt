@@ -1,0 +1,15 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+  ok    brunt.json loads clean ([])
+  ok    the city has a tower of 8 floors and a house in row 1 (20 floors, hp 3375; a house hp 231)
+  ok    a tier-1 body never goes through an intact tower (0 of 90 speed and height pairs pass)
+  ok    at tier 2 a second tower holds him (the first may be punched: 90 of 90)
+  ok    at tier 3 a tower the body has the strength to punch lets him through, and one it cannot holds him (90 of 90)
+  ok    at tier 4 the same (90 of 90)
+  ok    a house is gone through at every tier and speed, at houseKeep, and the hit kills it (12 of 12)
+  ok    a tier-1 tower of 10 floors and 1125 hit points gives way after 3 walls at speed 1400 (the data's giveWay 2.0; a median tower of 13 floors: about 3)
+  ok    229 flights touched a building
+  ok    every flight ends held at a wall or lodged in its last building (229 of 229; 143 held, 86 lodged)
+  ok    the last hit holds the body for the tier's seconds (229 of 229)
+  ok    no chain uses more links than its tier's cap, a house half (229 of 229)
+  ok    a tier-1 flight never punches an unmarked tower (0 did)
+BRUNT: 0 check(s) failed

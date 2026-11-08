@@ -1,0 +1,21 @@
+a01|lan_check.gd|--ticks=1200
+a02|rollback_check.gd|--setup=power --seeds=1 --ticks=300 --profiles=lan,p120,far
+a03|rollback_check.gd|--setup=lan --seeds=1 --ticks=300 --profiles=lan,p120,far
+a04|rollback_check.gd|--setup=fights2 --seeds=1 --ticks=300 --profiles=lan,p120,far
+a05|rollback_check.gd|--setup=together --near=150 --seeds=1,2 --ticks=900 --profiles=lan,p120
+a06|desync_check.gd|--seeds=1 --ticks=600 --profiles=lan,p120
+a07|desync_check.gd|--setup=lan --seeds=1,2 --ticks=600 --profiles=lan,p120
+a08|desync_check.gd|--setup=together --seeds=1,2 --ticks=600 --profiles=lan,p120
+a09|two_pc_check.gd|--self-test --ticks=900 --setup=together
+b01|lan_check.gd|--ticks=1200 --negative-control
+b02|rollback_check.gd|--setup=power --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control
+b03|rollback_check.gd|--setup=lan --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control
+b04|rollback_check.gd|--setup=fights2 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control
+b05|rollback_check.gd|--setup=together --near=150 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control
+b06|desync_check.gd|--seeds=1 --ticks=600 --profiles=lan,p120 --negative-control
+b07|desync_check.gd|--setup=lan --seeds=1,2 --ticks=600 --profiles=lan,p120 --negative-control
+b08|desync_check.gd|--setup=together --seeds=1,2 --ticks=600 --profiles=lan,p120 --negative-control
+b09|two_pc_check.gd|--self-test --ticks=900
+b10|two_pc_check.gd|--negative-control --ticks=900
+c01|desync_check.gd|--setup=lan --seeds=1,2 --ticks=600 --profiles=lan,p120
+d01|desync_check.gd|--setup=lan --seeds=1,2 --ticks=600 --profiles=lan,p120 --negative-control

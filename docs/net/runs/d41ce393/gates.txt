@@ -1,0 +1,50 @@
+a01_delay_check exit 0, errors 0 :: PASS  0 failure(s)
+a02_desync_check exit 0, errors 0 :: PASS  AI timers: 0 failure(s)
+a03_desync_check exit 0, errors 0 :: PASS  14 runs, 18 checkpoints matched, 0 failure(s)
+a04_desync_check exit 0, errors 0 :: PASS  28 runs, 36 checkpoints matched, 0 failure(s)
+a05_desync_check exit 0, errors 0 :: PASS  28 runs, 36 checkpoints matched, 0 failure(s)
+a06_lan_check exit 0, errors 1 :: LAN: 0 check(s) failed
+a07_rollback_check exit 0, errors 0 :: PASS  3 AI sessions, 0 reached a KO, 1 also matched the AI's own straight run, 3600 confirmed-tick digest and 60 SimHash comparisons (every 60 ticks), 0 failure(s)
+a08_rollback_check exit 0, errors 0 :: PASS  3 AI sessions, 0 reached a KO, 1 also matched the AI's own straight run, 3600 confirmed-tick digest and 60 SimHash comparisons (every 60 ticks), 0 failure(s)
+a09_rollback_check exit 0, errors 0 :: PASS  3 sessions, 900 confirmed-tick digest and 900 SimHash comparisons, 0 failure(s)
+a10_rollback_check exit 0, errors 0 :: PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+a11_rollback_check exit 0, errors 0 :: PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+a12_rollback_check exit 0, errors 0 :: PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+a13_rollback_check exit 0, errors 0 :: PASS  2 sessions, 1200 confirmed-tick hash comparisons, 0 failure(s)
+a14_rollback_check exit 0, errors 0 :: PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+a15_rollback_check exit 0, errors 0 :: PASS  2 sessions, 1200 confirmed-tick hash comparisons, 0 failure(s)
+a16_rollback_check exit 0, errors 0 :: 
+a17_rollback_check exit 0, errors 0 :: 
+a18_rollback_check exit 0, errors 0 :: 
+a19_spectator_check exit 0, errors 0 :: 
+a20_swing_check exit 0, errors 1 :: swing check passed: 315 checks, 0 failed
+a21_transport_check exit 0, errors 1 ::   caught  a handshake that takes the smaller proposal: 23 failing case(s) |   caught  a match key without the data hash: 1 failing case(s) |   caught  time sync turned off: 3 failing case(s) |   caught  the LAN's tuning with waits of up to 8 frames: 2 failing case(s)
+a22_two_pc_check exit 0, errors 0 :: TWO_PC: 0 check(s) failed
+a23_word_check exit 0, errors 0 :: word check passed: 9 checks, 0 failed
+a24_rollback_check exit 0, errors 0 :: 
+a25_desync_check exit 0, errors 0 :: 
+b01_delay_check exit 0, errors 0 ::   caught  ignores the device: 4 failing case(s) |   caught  reads one sample: 1 failing case(s)
+b02_desync_check exit 0, errors 0 :: 
+b03_desync_check exit 0, errors 0 :: 
+b04_desync_check exit 0, errors 0 :: 
+b05_desync_check exit 0, errors 0 :: 
+b06_lan_check exit 0, errors 5 :: LAN: 0 check(s) failed
+b07_rollback_check exit 0, errors 0 :: 
+b08_rollback_check exit 0, errors 0 :: 
+b09_rollback_check exit 0, errors 0 :: 
+b10_rollback_check exit 0, errors 0 :: 
+b11_rollback_check exit 0, errors 0 :: PASS  3 sessions, 3600 confirmed-tick hash comparisons, 0 failure(s)
+b12_rollback_check exit 0, errors 0 :: 
+b13_rollback_check exit 0, errors 0 :: 
+b14_rollback_check exit 0, errors 0 :: 
+b15_rollback_check exit 0, errors 0 :: PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+b16_rollback_check exit 0, errors 0 :: PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+b17_rollback_check exit 0, errors 0 :: PASS  6 sessions, 3600 confirmed-tick hash comparisons, 0 failure(s)
+b18_spectator_check exit 0, errors 0 :: PASS  3 spectated sessions, 180 spectator hash comparisons, 0 failure(s)
+b19_swing_check exit 0, errors 1 :: swing check passed: 149 checks, 0 failed
+b20_transport_check exit 0, errors 1 :: PASS  0 failure(s)
+b21_two_pc_check exit 0, errors 0 :: TWO_PC: 0 check(s) failed
+b22_word_check exit 0, errors 0 :: word check passed: 623 checks, 0 failed
+b23_rollback_check exit 0, errors 0 :: PASS  4 sessions, 7200 confirmed-tick hash comparisons, 0 failure(s)
+b24_desync_check exit 0, errors 0 :: PASS  28 runs, 36 checkpoints matched, 0 failure(s)
+b25_two_pc_check exit 0, errors 0 :: TWO_PC: 0 check(s) failed

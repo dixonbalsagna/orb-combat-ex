@@ -1,0 +1,9 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX rollback check   Godot 4.7.2-stable (official)   setup planet2   300 ticks   delay 2   hash every 1   verify mode
+seed 1  delay 2  straight: 4 exchanges, 300 ticks with feed or fx, replay verified, KO false, aliases none
+  caught restore    p120    delay 2  peer 0: SimHash differs from the straight run after tick 3
+  caught restore    far     delay 2  peer 0: SimHash differs from the straight run after tick 3
+  caught norollback p120    delay 2  peer 0: SimHash differs from the straight run after tick 3
+  caught norollback far     delay 2  peer 0: SimHash differs from the straight run after tick 3
+PASS  negative control: 4 break(s) caught, 0 missed

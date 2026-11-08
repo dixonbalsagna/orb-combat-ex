@@ -1,0 +1,25 @@
+ok    the run's ground
+ok    the run's state and carry
+ok    the campaign's arc and episode
+ok    the planet's load
+ok    the calm turn on gen 2
+ok    the match's start in pieces
+ok    the aftermaths
+ok    the curve's shared functions, the brake's control back, the camera feed
+ok    the air brake
+ok    forms: five steps and the slingshot
+ok    forms: Witness and Trial
+ok    Animation's view fields: a launch's tier, a hit's stop and tier
+ok    the intro phase (golden)
+ok    composed intros (golden)
+ok    replay module
+      9 matches, 175363 ticks: every per-tick digest and full-state checkpoint identical
+ok    matches
+ok    human-input replays
+      3 slices, 3 tick-0 states, a planet match of 3600 ticks: identical
+ok    planet worlds (golden)
+      (matches and replays: 110.1 s)
+time  sim tick:  mean 305.4 us, p50 327, p99 812, p99.9 1240, max 6903 us over 179990 ticks of 10 matches
+time  cosmetic consumer and camera (render side): mean 39.1 us, p50 32, p99 147, p99.9 266, max 797 us over 179990 ticks of 10 matches
+time  264.5 s
+golden check passed

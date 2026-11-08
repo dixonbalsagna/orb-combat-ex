@@ -1,0 +1,6 @@
+  ok    a gen 2 match turns its arena (the swap landed)
+  ok    after the turn the fine columns are the new ring's, and S.planetRing carries them
+  ok    after the turn the stored columns are still the fine ones' aliases and every tree stands on dry, treed ground of the new fine biomes (13 trees)
+  ok    the gen 2 turn is a pure function of the setup (the same hash twice, 30650b53d516c109)
+GROUND: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).

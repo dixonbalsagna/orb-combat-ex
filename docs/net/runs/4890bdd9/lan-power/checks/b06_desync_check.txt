@@ -1,0 +1,9 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX desync check   Godot 4.7.2-stable (official)   setup default   600 ticks   checkpoint every 60   delay 2
+  caught blind rng         lan     divergence missed (peer 0 did not, peer 1 did not)
+  caught blind building_hp lan     divergence missed (peer 0 did not, peer 1 did not)
+  caught blind rng         p120    divergence missed (peer 0 did not, peer 1 did not)
+  caught blind building_hp p120    divergence missed (peer 0 did not, peer 1 did not)
+  caught stale p120    false alarm: desync at checkpoint 60
+PASS  negative control: 5 break(s) caught, 0 missed

@@ -1,0 +1,41 @@
+# The EP's two questions on the vkeep look stills (2026-11-07 night)
+# Method: the same real match (flash_worst's "ai", seed 38) replayed through the main scene headless (clip_digest's harness), with the energy model
+# on (data/fight/power.json enabled, scratch only, as Sunday's page sets it), main b34e32e1 + vkeep + land-release, with the rig's vkeep switch off
+# (= main) and on. Each fighter's screen position and drawn height (px at 720p) every tick, 700 to 1250. "Off his picture" = outside the 1280x720 view.
+
+## 1. t00902: the rival is not in vkeep's frame
+Yes: in vkeep the rival (fighter 1) is off the screen from tick 851 to 976 (126 ticks, 2.1 s), with no split open.
+- What runs then: a TRANSFORMATION shot on the blue fighter (solo "transform", from tick 848): push in on the gather, the break, the hold on
+  his pose, and the pull back that frames both on the settle. The shot is about the one transforming.
+- Why main shows a sliver: main's split was already open when the transformation began (CINE_SLIVER, 0.14 of the screen, keeps the other
+  fighter in a sliver only while the split is open). It was open because main had LOST the blue fighter off its one view: off his
+  picture for 67 ticks (749 to 815: in the one view, then through the split's opening, T_OPEN 0.45 s) before his pane showed him,
+  against launch_shots_check's 15-tick "off" limit (which counts only once the split is fully open, so no check caught it). vkeep keeps
+  him: off for 7 ticks (791 to 797). So in vkeep the transformation started in one view, and a shot that
+  starts in one view takes the whole of it, as it does on main whenever a transformation begins in one view.
+- The rules: launch_shots_check's "off" limit (15 ticks; "the player always sees himself") and the readable rule exempt the fighter who is
+  not the subject of a running shot (solo_kind == "" or solo_slot == i). cross_ko_check and chase_rush_check read the same way. So it is within
+  the rules. It is a look difference worth a word to Orb: with vkeep, more transformations start in one view, so the other fighter is out of
+  the shot for its 2 s instead of in a sliver. Giving the one-view transformation shot a sliver too would be a change to the shot (CINE_SLIVER
+  is "Orb decides"), not to vkeep.
+
+## 2. t00848: the fighters are small in vkeep's one view
+In vkeep's one view both are drawn at 35 to 43 px at 720p (about 26 to 32 px in the 960-wide still) for ticks 824 to 842, and into the
+transformation's first ticks (to 931), while the pair is far apart in height and the one view holds both.
+- Limits: R_FLOOR (no fighter shown smaller than 0.032 of the height, 23 px at 720p, anywhere): kept (smallest 35 px). One-v-many's
+  principal floor (32 px): kept. READ_FAST (0.06, 43 px) is the readable rule's least for a FAST body in his own pane (the scroll governor's
+  floor), not the one view's; the one view's readable zoom is the tighter fit capped at the readable size, so it may go under it to hold both.
+- Main stays at 43 px or more here because it had split (after losing the blue fighter for 67 ticks, above): vkeep trades a
+  smaller pair for keeping both in the picture.
+- Within the framing limits.
+
+## The counts
+== main (vkeep off)
+  fighter 0: off his picture 67 ticks in 1 runs; longest 67; drawn height min 43 px, p10 45 px
+     ticks 749 to 815 (67): modes ['merged', 'opening']
+  fighter 1: off his picture 0 ticks in 0 runs; longest 0; drawn height min 49 px, p10 51 px
+== vkeep
+  fighter 0: off his picture 7 ticks in 1 runs; longest 7; drawn height min 35 px, p10 44 px
+     ticks 791 to 797 (7): modes ['merged']
+  fighter 1: off his picture 126 ticks in 1 runs; longest 126; drawn height min 35 px, p10 48 px
+     ticks 851 to 976 (126): modes ['solo']

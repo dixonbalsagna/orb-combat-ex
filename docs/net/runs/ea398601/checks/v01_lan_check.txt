@@ -1,0 +1,30 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+  lan   peer 0: pressed 52, went 52, on a frozen tick 1, fx to the game 1663, rollbacks 0
+  lan   peer 1: pressed 52, went 52, on a frozen tick 1, fx to the game 1663, rollbacks 0
+  p120  peer 0: pressed 52, went 52, on a frozen tick 2, fx to the game 1538, rollbacks 88
+  p120  peer 1: pressed 52, went 52, on a frozen tick 2, fx to the game 1502, rollbacks 78
+  lan   two fights, peer 0: the other fight's events, 1181 ticks compared, 0 differ, 1712 events
+  lan   two fights, peer 1: the other fight's events, 1181 ticks compared, 0 differ, 1812 events
+  lan   two fights, peer 0: pressed 52, went 52, fx to the game 1813, rollbacks 0, checks matched 19
+  lan   two fights, peer 1: pressed 52, went 52, fx to the game 1713, rollbacks 0, checks matched 19
+  p120  two fights, peer 0: pressed 52, went 52, fx to the game 1761, rollbacks 88, checks matched 19
+  p120  two fights, peer 1: pressed 52, went 52, fx to the game 1648, rollbacks 79, checks matched 19
+  lan   a trade at tick 1: the PCs now hold fights 1 and 0, rollbacks 0, 0
+  p120  a trade at tick 1: the PCs now hold fights 1 and 0, rollbacks 1, 78
+  lan   hits across, the first player out at tick 100: his PC shows fight 1 from tick 463 (his fight's KO clock read 1.8 at tick 461), says "You're out. Your partner fights on"; the other says "Connected, input wait 2 ticks"
+  p120  hits across, the first player out at tick 100: his PC shows fight 1 from tick 463 (his fight's KO clock read 1.8 at tick 461), says "You're out. Your partner fights on"; the other says "Connected, input wait 2 ticks"
+  lan   a 60 s pause on the second PC: the first said { "Paused by the other player": 3540 }, the paused one sent 7200 packets, the first moved 9 ticks; after it frames 1182 and 1182, checks matched 19
+  p120  a 60 s pause on the second PC: the first said { "Paused by the other player": 3540 }, the paused one sent 7200 packets, the first moved 9 ticks; after it frames 1169 and 1169, checks matched 19
+  lan   2v2 together: rollbacks 0, 0, checks matched 19, blows from outside { "start": 13, "hit": 4 }
+  p120  2v2 together: rollbacks 88, 79, checks matched 19, blows from outside { "start": 3, "whiff": 2, "hit": 3 }
+  lan   2v2 together, the second PC stuck 100 frames in all, paused 0: off its own fight 0 and 0, deepest rollbacks 6 and 0, longest wait 2, rollbacks 9 and 0
+  p120  2v2 together, the second PC stuck 100 frames in all, paused 228: off its own fight 0 and 0, deepest rollbacks 9 and 4, longest wait 2, rollbacks 72 and 5
+  log: frames: worst 17 ms, over 50 ms 0, over 100 ms 0, ticks dropped 0, most re-run in a frame 0, waits 0, stalls 0
+  CD-10 a huge wait asked for: Couldn't start: the other PC asked for an input wait of 100000 ticks; at most 8
+  CD-10 slot : dropped 1 of 1 bad packets, frames 1182, checks matched 19, the second's inputs held 1183
+  CD-10 flood: dropped 3928 of 3932 bad packets, frames 1182, checks matched 19, the second's inputs held 1183
+  CD-10 1v1, the second PC gone at frame 600: the computer from tick 594, frame 1430 at the end, banners 6, title "The other PC has gone: the computer plays its fighter"
+  CD-10 2v2 together, the second PC gone at frame 600: the computer from tick 594, frame 1430 at the end, banners 6, title "The other PC has gone: the computer plays its fighter"
+  wait: 2 by the chooser, 3 when one PC asks
+LAN: 0 check(s) failed

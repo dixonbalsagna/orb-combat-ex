@@ -1,0 +1,18 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+  ok    collateral.json loads clean ([])
+  ok    budget and ceiling are today's numbers (the constants they replace)
+  ok    the four set-piece allowances are today's numbers
+  ok    the catastrophe kind is there, zero below tier 5
+  ok    eventAllow reads a tier, the last entry past the table, 0 for an unknown kind
+  ok    a match starts with present equal to pop0 and no limit (1800 people)
+  ok    the budget is a share of the people present (270.0)
+  ok    with half the people present, the budget and the ceiling are half
+  ok    the meters' norm is pop0 by data (a casualty is worth the same in ruins)
+  ok    and present when the data says so
+  ok    ceilingLeft takes the lower of the tier's ceiling and peopleLeft (100)
+  ok    a match with peopleLeft 100 never loses more than 100 people (100.0 died; the rest sheltered)
+  ok    every building has a place and a plan index, and the pair is unique (118 buildings in 4 places)
+  ok    a building has the same place and plan index in every match (the plan is seeded)
+  ok    present and peopleLeft join the hash only when they differ from versus's (a versus hash is as it was)
+  ok    no call of damageBuilding, damageArea, explode, collapse or startFail passes a literal null owner (29 calls scanned; [])
+COLLATERAL: 0 check(s) failed

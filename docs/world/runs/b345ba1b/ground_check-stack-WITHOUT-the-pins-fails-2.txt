@@ -1,0 +1,4 @@
+  FAIL  gen 1 planet matches (seeds 7, 3, 25, 11; rings of 2400, 1200, 4800, 2400) hash as they did before window 2
+  FAIL  the hand-made world and a gen 1 turn hash as before (turn: n=1 988ea85fd0ae96f6)
+  ok    cover on gen 2 ground: jungle bare <null>, jungle with a tree canopy, jungle above 90 <null>, highland low ridge, highland above 40 <null>, savanna <null>
+GROUND: 2 check(s) failed

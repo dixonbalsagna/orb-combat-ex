@@ -1,0 +1,9 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX word check   Godot 4.7.2-stable (official)   600 ticks   protocol 5   negative control
+  control lost        lan   bad ticks 1148, first at 3
+  control lost        p120  bad ticks 1148, first at 3
+  control no rollback p120  bad ticks 1132, first at 13
+  control lost        far   bad ticks 1148, first at 3
+  control no rollback far   bad ticks 1133, first at 13
+word check passed: 9 checks, 0 failed

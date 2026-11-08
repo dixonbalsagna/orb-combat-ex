@@ -2067,7 +2067,7 @@ func _slam_hint_rules() -> void:
 
 func _refusal_reason_words_rules() -> void:
 	UiData.set_feature("refusal_words", null)
-	var want := {"locked": "Locked in", "launched": "In flight", "down": "Knocked down", "stunned": "Stunned", "queue_full": "Too many presses", "not_yours": "Their move", "recovering": "Recovering", "set_piece": "In a move", "chord": "One at a time", "busy": "Busy"}
+	var want := {"locked": "Locked in", "launched": "In flight", "down": "Knocked down", "stunned": "Stunned", "queue_full": "Too many presses", "not_yours": "Their move", "recovering": "Recovering", "set_piece": "In a move", "chord": "One at a time", "busy": "Busy", "not_ready": "Not ready"}
 	var words_ok := true
 	var bad := PackedStringArray()
 	for code in want:
@@ -2079,6 +2079,9 @@ func _refusal_reason_words_rules() -> void:
 	var hp := _refusal_rules_hub()
 	hp.consume({"type": "cue", "kind": "press_refused", "actor": 0, "source": "queue_full"})
 	var press_ok: bool = hp.model(0).teach == "Too many presses"
+	var hn := _refusal_rules_hub()
+	hn.consume({"type": "cue", "kind": "press_refused", "actor": 0, "source": "not_ready"})   # Encounter's press-answers: a transform with no form ready, sent as press_refused
+	press_ok = press_ok and hn.model(0).teach == "Not ready" and int(hn.stats.get("refusal_unread_not_ready", 0)) == 0
 	var hl := _refusal_rules_hub()
 	for i in range(5):
 		hl.advance(1.0 / 60.0)
@@ -2091,7 +2094,7 @@ func _refusal_reason_words_rules() -> void:
 	var hc := _refusal_rules_hub()
 	hc.consume({"type": "cue", "kind": "stick_refused", "actor": 1, "text": "down", "source": "locked"})
 	var computer_quiet: bool = hc.model(1).teach == ""
-	_ok(words_ok and press_ok, "refusal reasons: each new code says its word (locked, launched, down, stunned, queue_full, not_yours, recovering, set_piece, chord, busy), press_refused queue_full too, and only the first three times (%s)" % str(bad))
+	_ok(words_ok and press_ok, "refusal reasons: each new code says its word (locked, launched, down, stunned, queue_full, not_yours, recovering, set_piece, chord, busy, not_ready), press_refused queue_full and not_ready too, and only the first three times (%s)" % str(bad))
 	_ok(computer_quiet, "refusal reasons: the computer is never told")
 
 

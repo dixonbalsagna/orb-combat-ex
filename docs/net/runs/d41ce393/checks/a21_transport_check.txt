@@ -1,0 +1,8 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX transport check   Godot 4.7.2-stable (official)   seed 1   900 ticks   negative control
+  caught  a handshake that takes the smaller proposal: 23 failing case(s)
+  caught  a match key without the data hash: 1 failing case(s)
+  caught  time sync turned off: 3 failing case(s)
+  caught  the LAN's tuning with waits of up to 8 frames: 2 failing case(s)
+PASS  negative control: 4 of 4 breaks caught

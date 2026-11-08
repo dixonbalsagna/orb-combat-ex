@@ -1,0 +1,11 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+power on, travel 1.25: travel 1.25 digest f653b9a6331a7ba8 hash 9717a384008ab8a2
+power on, no travel:   travel 2.00 digest f8ad22d9a85be4e3 hash ff23a384cceeed1f
+power on, travel 1.25 again: digest f653b9a6331a7ba8
+power off, travel 1.25: digest e7cb4c7c0773bdb5; power off, none: digest e7cb4c7c0773bdb5
+ok    with the model on, the digest sees travel (1.25 against the data's 2.0)
+ok    ... as SimHash does
+ok    the same match, the same digest
+ok    with the model off, travel changes neither
+TRAVEL_PROBE: 0 check(s) failed

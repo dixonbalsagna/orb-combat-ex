@@ -1,0 +1,9 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX rollback check   Godot 4.7.2-stable (official)   setup default   600 ticks   delay 2   hash every 60   verify mode
+fighter AI on every slot (P1 NetAiDriver, P2 the sim's own AI), cap 600 ticks, tail 120
+  ok   seed 1 lan     delay 2  KO none  ticks   600  exchanges    3  digests  1200  hashes   20  rollbacks     0  resim      0  max depth  0  stalls    0  lost    0/1200  AI straight same  7 s  
+  ok   seed 1 p120    delay 2  KO none  ticks   600  exchanges    3  digests  1200  hashes   20  rollbacks   110  resim    235  max depth  3  stalls    0  lost   35/1204  AI straight -  4 s  
+  ok   seed 1 far     delay 2  KO none  ticks   600  exchanges    3  digests  1200  hashes   20  rollbacks    84  resim    875  max depth 13  stalls    0  lost  132/1224  AI straight -  5 s  
+objects alive before 1718, after 1729
+PASS  3 AI sessions, 0 reached a KO, 1 also matched the AI's own straight run, 3600 confirmed-tick digest and 60 SimHash comparisons (every 60 ticks), 0 failure(s)

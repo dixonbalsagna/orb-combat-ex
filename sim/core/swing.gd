@@ -519,15 +519,21 @@ static func _riseBackstop(S: SimState, px: float, deg1: float, k: float) -> floa
 static var anchorBlind: bool = false   # tests only: the line's numbers stay where they are at rest (stage_check)
 
 
-## The line's seam stays far from the fight at rest: past an eighth of the arena from x0, x0 moves to the pair's midpoint. The same line, so nothing anyone reads changes.
+## The line's seam stays far from the fight at rest: once the pair's midpoint is past an eighth of the arena from x0, x0 moves
+## to it. The same line, so nothing anyone reads changes but the last bits of a column read through it, and SimField's
+## memos are laid again. The test is on the midpoint, where x0 goes: on fighter a, a pair more than a quarter of the
+## arena apart left a past an eighth from the midpoint for good, and the line re-anchored on every tick at rest
+## (Performance's late-match ticks, docs/perf/late-ticks-2026-11-07.md; anchorOld puts the old test back, for tests).
+static var anchorOld: bool = false   # tests only: the test on fighter a
 static func _anchorAtRest(S: SimState) -> void:
 	if anchorBlind:
 		return
 	var fr = S.frame
 	var pair: Array = _pair(S)
 	var a = pair[0]
-	if absf(SimWrap.sdx(fr.x0, a.x)) > SimConst.W * 0.125:
-		_applyTurn(fr, SimWrap.wrap(a.x + SimWrap.sdx(a.x, pair[1].x) * 0.5), 0.0)
+	var m: float = SimWrap.wrap(a.x + SimWrap.sdx(a.x, pair[1].x) * 0.5)
+	if absf(SimWrap.sdx(fr.x0, a.x if anchorOld else m)) > SimConst.W * 0.125:
+		_applyTurn(fr, m, 0.0)
 
 
 ## ===================================================================== for the planners

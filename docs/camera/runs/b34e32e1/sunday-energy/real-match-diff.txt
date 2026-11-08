@@ -1,0 +1,6 @@
+ai38: 400 frames, 50 over 1%
+   ticks 734 to 884, most 0.44 at 848
+   ticks 902 to 920, most 0.14 at 902
+   ticks 944 to 974, most 0.02 at 968
+   ticks 1130 to 1208, most 0.03 at 1154
+ai4: 400 frames, 0 over 1%

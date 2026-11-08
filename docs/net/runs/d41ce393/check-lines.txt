@@ -1,0 +1,50 @@
+a01|delay_check.gd|
+a02|desync_check.gd|--ai-timers --seeds=1 --ticks=600 --profiles=lan,p120
+a03|desync_check.gd|--seeds=1 --ticks=600 --profiles=lan,p120
+a04|desync_check.gd|--setup=field --seeds=1,2 --ticks=600 --profiles=lan,p120
+a05|desync_check.gd|--setup=kick --seeds=1,2 --ticks=600 --profiles=lan,p120
+a06|lan_check.gd|--ticks=1200
+a07|rollback_check.gd|--ai --seeds=1 --ticks=600 --profiles=lan,p120,far
+a08|rollback_check.gd|--ai=sim --seeds=1 --ticks=600 --profiles=lan,p120,far
+a09|rollback_check.gd|--drop=150 --seeds=1 --ticks=300 --profiles=lan,p120,far
+a10|rollback_check.gd|--right-stick --seeds=1 --ticks=300 --profiles=lan,p80j,p200
+a11|rollback_check.gd|--seeds=1 --ticks=300 --profiles=lan,p80j,p200
+a12|rollback_check.gd|--setup=depth --seeds=1 --ticks=300 --profiles=lan,p120,far
+a13|rollback_check.gd|--setup=field --seeds=1 --ticks=300 --profiles=lan,p120
+a14|rollback_check.gd|--setup=fights2 --seeds=1 --ticks=300 --profiles=lan,p120,far
+a15|rollback_check.gd|--setup=fights2 --trade-at=0 --seeds=1 --ticks=300 --profiles=lan,p120
+a16|rollback_check.gd|--setup=kick --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control
+a17|rollback_check.gd|--setup=planet2 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control
+a18|rollback_check.gd|--takeover=150 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control
+a19|spectator_check.gd|--seeds=1 --ticks=600 --profiles=lan,p120,far --negative-control
+a20|swing_check.gd|--right-stick
+a21|transport_check.gd|--negative-control
+a22|two_pc_check.gd|--self-test --ticks=900
+a23|word_check.gd|--negative-control
+a24|rollback_check.gd|--setup=together --near=150 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control
+a25|desync_check.gd|--setup=together --seeds=1,2 --ticks=600 --profiles=lan,p120 --negative-control
+b01|delay_check.gd|--negative-control
+b02|desync_check.gd|--ai-timers --seeds=1 --ticks=600 --profiles=lan,p120 --negative-control
+b03|desync_check.gd|--seeds=1 --ticks=600 --profiles=lan,p120 --negative-control
+b04|desync_check.gd|--setup=field --seeds=1,2 --ticks=600 --profiles=lan,p120 --negative-control
+b05|desync_check.gd|--setup=kick --seeds=1,2 --ticks=600 --profiles=lan,p120 --negative-control
+b06|lan_check.gd|--ticks=1200 --negative-control
+b07|rollback_check.gd|--ai --seeds=1 --ticks=600 --profiles=lan,p120,far --negative-control
+b08|rollback_check.gd|--ai=sim --seeds=1 --ticks=600 --profiles=lan,p120,far --negative-control
+b09|rollback_check.gd|--drop=150 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control
+b10|rollback_check.gd|--seeds=1 --ticks=240 --profiles=lan,p80j,p200 --negative-control
+b11|rollback_check.gd|--setup=calm --turn-at=300 --seeds=1 --ticks=600 --profiles=lan,p120,far
+b12|rollback_check.gd|--setup=depth --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control
+b13|rollback_check.gd|--setup=field --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control
+b14|rollback_check.gd|--setup=fights2 --seeds=1 --ticks=300 --profiles=lan,p120,far --negative-control
+b15|rollback_check.gd|--setup=kick --seeds=1 --ticks=300 --profiles=lan,p120,far
+b16|rollback_check.gd|--setup=planet2 --seeds=1 --ticks=300 --profiles=lan,p120,far
+b17|rollback_check.gd|--takeover=150 --seeds=1 --ticks=300 --profiles=lan,p120,far
+b18|spectator_check.gd|--seeds=1 --ticks=600 --profiles=lan,p120,far
+b19|swing_check.gd|--negative-control
+b20|transport_check.gd|
+b21|two_pc_check.gd|--negative-control --ticks=900
+b22|word_check.gd|
+b23|rollback_check.gd|--setup=together --near=150 --seeds=1,2 --ticks=900 --profiles=lan,p120
+b24|desync_check.gd|--setup=together --seeds=1,2 --ticks=600 --profiles=lan,p120
+b25|two_pc_check.gd|--self-test --ticks=900 --setup=together

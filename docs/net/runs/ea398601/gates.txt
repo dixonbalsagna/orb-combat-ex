@@ -1,0 +1,2 @@
+v01_lan_check exit 0 :: LAN: 0 check(s) failed   (lan_check.gd -- --ticks=1200)
+n01_lan_check exit 0 :: LAN: 0 check(s) failed   (lan_check.gd -- --ticks=1200 --negative-control)

@@ -1,0 +1,11 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX rollback check   Godot 4.7.2-stable (official)   setup default   300 ticks   delay 2   hash every 1   verify mode
+takeover: slot 1 becomes the sim's AI at tick 150, proposed by its own peer, then the other
+  caught late   seed 1 lan     delay 2  tick 150 live  peer 0: the state's digest differs from the straight run after tick 151
+  caught late   seed 1 p120    delay 2  tick 150 live  peer 0: the state's digest differs from the straight run after tick 151
+  caught late   seed 1 far     delay 2  tick 150 live  peer 0: the state's digest differs from the straight run after tick 151
+  n/a    once   seed 1 lan     delay 2  (no rollback ran tick 150 again on the proposer)
+  n/a    once   seed 1 p120    delay 2  (no rollback ran tick 150 again on the proposer)
+  caught once   seed 1 far     delay 2  tick 150 live  peer 1: the state's digest differs from the straight run after tick 151
+PASS  takeover negative control: 4 break(s) caught, 0 missed, 2 not applicable

@@ -1,0 +1,8 @@
+ok    the data as it is has no foreground row: no patch is made and nothing is lowered
+ok    a small skirmish behind a foreground house: one patch holds both fighters in its solid part, its radius 2.2 of a fighter's height, 24 square heights (under the 40 that lowers a building), and the house stands whole
+ok    a fighter moved 760 units off: the patch reaches him in 13 ticks, growing at most 9358 pixels a tick (16000 allowed, the analyser's area threshold is 21,824); at 61 square heights the house under it has sunk 79%, never faster than 0.4
+ok    a reach asked for and dropped (a speed of 2,400 for eight ticks): 61.2 to 90.3 square heights, held for 0.75 s, then let go (61.2)
+ok    the fight small again: the house does not stand again inside the hold (0.75 s), then rises over 0.8 s at the fastest and stands whole
+patch check passed
+WARNING: 274 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+ERROR: 9 resources still in use at exit (run with --verbose for details).

@@ -1,0 +1,83 @@
+HEAD ba87218e
+swing.gd: the re-anchor tests the midpoint
+frame_check.gd: _anchor and break 5
+import 0; parse errors 0
+golden: exit 0 in 117 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (175363 ticks), 2 replays
+  golden.json byte-identical
+anchor-midpoint sha1 8d4fa4fa946e sha256 7a76f055cb66 2 files
+golden-regen sha1 da39a3ee5e6b sha256 e3b0c44298fc 0 files
+lint 0
+parity: exit 0 in 269 s; script errors 0; golden check passed
+frame: exit 0 in 35 s; script errors 0; PASS
+frame_neg: exit 0 in 6 s; script errors 0; PASS
+== the late ticks, Performance's together setup, 40,000 ticks: the old test (anchorOld, same tree) against the midpoint
+old seed 2: x0 or heading moved 373 times (373 at rest, 0 in a swing); median gap 1 ticks; W 153600
+   TICKS mean 0.89 ms, worst 12.6 ms, over 10 ms 3, over 20 ms 0; final hash e6053960563d
+   MEMO whole-frame wipes (SimField._fs) 374, binds of any kind (SimField._serial) 375
+mid seed 2: x0 or heading moved 14 times (14 at rest, 0 in a swing); median gap 665 ticks; W 153600
+   TICKS mean 0.85 ms, worst 19.2 ms, over 10 ms 3, over 20 ms 0; final hash 3dcbb1cbfcd7
+   MEMO whole-frame wipes (SimField._fs) 15, binds of any kind (SimField._serial) 15
+old seed 4: x0 or heading moved 165 times (165 at rest, 0 in a swing); median gap 1 ticks; W 153600
+   TICKS mean 0.91 ms, worst 41.2 ms, over 10 ms 54, over 20 ms 21; final hash 4c1c54b77fcf
+   MEMO whole-frame wipes (SimField._fs) 166, binds of any kind (SimField._serial) 166
+mid seed 4: x0 or heading moved 9 times (9 at rest, 0 in a swing); median gap 3819 ticks; W 153600
+   TICKS mean 0.86 ms, worst 25.5 ms, over 10 ms 6, over 20 ms 1; final hash 17606125577c
+   MEMO whole-frame wipes (SimField._fs) 10, binds of any kind (SimField._serial) 10
+old seed 5: x0 or heading moved 231 times (231 at rest, 0 in a swing); median gap 1 ticks; W 153600
+   TICKS mean 0.87 ms, worst 37.4 ms, over 10 ms 7, over 20 ms 2; final hash 20e4c0eb9343
+   MEMO whole-frame wipes (SimField._fs) 232, binds of any kind (SimField._serial) 234
+mid seed 5: x0 or heading moved 5 times (5 at rest, 0 in a swing); median gap 7763 ticks; W 153600
+   TICKS mean 0.81 ms, worst 19.6 ms, over 10 ms 7, over 20 ms 0; final hash 13b50bbe6c58
+   MEMO whole-frame wipes (SimField._fs) 6, binds of any kind (SimField._serial) 6
+== gates
+fork: exit 0 in 50 s; script errors 0; FORK: 0 check(s) failed
+fork_neg: exit 0 in 50 s; script errors 0; negative control: 3 of 3 planets caught
+memo: exit 0 in 39 s; script errors 0; MEMO: 0 check(s) failed
+memo_neg: exit 0 in 6 s; script errors 0; MEMO negative control: 0 check(s) failed
+places: exit 0 in 21 s; script errors 0; PLACES: 0 check(s) failed
+field_static: exit 0 in 147 s; script errors 0; FIELDSTATIC: 0 check(s) failed
+rec: exit 0 in 47 s; script errors 0; REC: 0 check(s) failed
+kick: exit 0 in 36 s; script errors 0; KICK: 0 check(s) failed
+ceil: exit 0 in 54 s; script errors 0; CEIL: 0 check(s) failed
+two_states: exit 0 in 53 s; script errors 0; PASS  0 failure(s)
+two_states_neg: exit 0 in 100 s; script errors 0; PASS  negative control: 3 of 3 breaks caught
+xproc: exit 0 in 39 s; script errors 0; PASS  6 replays from 2 recording processes, each played in a fresh process: Hard f1d0245fc0a5b3f3, Easy c0def03e19f9d176
+det: exit 0 in 131 s; script errors 0; determinism passed
+det_fights: exit 0 in 195 s; script errors 0; determinism passed
+rb_field: exit 0 in 43 s; script errors 0; PASS  2 sessions, 1200 confirmed-tick hash comparisons, 0 failure(s)
+rb_field_neg: exit 0 in 21 s; script errors 0; PASS  negative control: 4 break(s) caught, 0 missed
+rb_calm: exit 0 in 54 s; script errors 0; PASS  3 sessions, 3600 confirmed-tick hash comparisons, 0 failure(s)
+rb_planet2: exit 0 in 35 s; script errors 0; PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+rb_fights2: exit 0 in 104 s; script errors 0; PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+rb_kick: exit 0 in 48 s; script errors 0; PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+desync_field: exit 0 in 79 s; script errors 0; PASS  28 runs, 36 checkpoints matched, 0 failure(s)
+desync_field_neg: exit 0 in 30 s; script errors 0; PASS  negative control: 10 break(s) caught, 0 missed
+lan: exit 0 in 39 s; script errors 0; LAN: 0 check(s) failed
+d_swing: exit 0 in 32 s; script errors 0; SWING: 0 check(s) failed
+d_swing_legal: exit 0 in 59 s; script errors 0; SWING LEGAL: 0 check(s) failed
+net_swing: exit 0 in 156 s; script errors 0; swing check passed: 315 checks, 0 failed
+cross: exit 0 in 120 s; script errors 0; CROSS: 0 check(s) failed
+cross_end: exit 0 in 156 s; script errors 0; CROSSEND: 0 check(s) failed
+fights: exit 0 in 175 s; script errors 0; FIGHTS: 0 check(s) failed
+coop: exit 0 in 17 s; script errors 0; COOP: 0 check(s) failed
+load_split: exit 0 in 4 s; script errors 0; ok: the director is a load of its own, SimDir's calls are all in their scripts, and the core and the world call it by na
+seam_sweep: exit 0 in 11 s; script errors 0; seam sweep passed
+sweep: exit 0 in 123 s; script errors 0; sweep check passed
+after_check: exit 0 in 12 s; FAIL lines 0; script errors 0; after check passed
+cue_check: exit 0 in 49 s; FAIL lines 0; script errors 0; cue check passed
+depth_check: exit 0 in 13 s; FAIL lines 0; script errors 0; depth check passed
+flash_check: exit 0 in 42 s; FAIL lines 0; script errors 0; flash check passed
+flash_reg_check: exit 0 in 39 s; FAIL lines 0; script errors 0; flash register check passed
+flight_check: exit 0 in 47 s; FAIL lines 0; script errors 0; flight check passed
+ground_check: exit 0 in 48 s; FAIL lines 0; script errors 0; ground check passed
+hud_words_check: exit 0 in 7 s; FAIL lines 0; script errors 0; hud words check passed
+lane_check: exit 0 in 10 s; FAIL lines 0; script errors 0; lane check passed
+open_check: exit 0 in 19 s; FAIL lines 0; script errors 0; open check passed
+pane_check: exit 0 in 20 s; FAIL lines 0; script errors 0; pane check passed
+patch_check: exit 0 in 12 s; FAIL lines 0; script errors 0; patch check passed
+shape_check: exit 0 in 11 s; FAIL lines 0; script errors 0; shape check passed
+sky_check: exit 0 in 13 s; FAIL lines 0; script errors 0; sky check passed
+stage_check: exit 0 in 10 s; FAIL lines 0; script errors 0; stage check passed
+render gates done
+world: exit 0 in 1007 s; world-checks: all 83 passed
+done

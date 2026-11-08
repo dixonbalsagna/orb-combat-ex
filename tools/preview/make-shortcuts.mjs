@@ -1,6 +1,6 @@
 // Writes the two "Open" shortcuts (the plain page and the full-power page) for a kept build, into homework/1 Urgent and docs/tools/shortcuts (Tools, 2026-11-07: this was a scratch script
 // for the morning build; the Sunday build needs it again, so it is a tool). CRLF, the flashing warning, the server started in its own window on its own port.
-//   node tools/preview/make-shortcuts.mjs --kept orb-first-play-<commit8>-<key8> [--port 8768] [--label "morning build"] [--title-note "main a8bc66e2"] [--no-homework]
+//   node tools/preview/make-shortcuts.mjs --kept orb-first-play-<commit8>-<key8> [--port 8768] [--label "morning build"] [--words "travel=1.5"] [--no-homework]
 // It refuses a port that is already listening, a kept folder that is not in homework/Files/builds, and never overwrites a shortcut of another label (it overwrites its own label's pair).
 // Node built-ins only.
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -11,8 +11,9 @@ import { fileURLToPath } from 'node:url';
 const REPO = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 
 /** The text of one shortcut (CRLF). `kept` is the folder name under homework/Files/builds. */
-export function shortcutText({ kept, port, title, peak }) {
-  const addr = `http://127.0.0.1:${port}/index.html?planet=7&meteor=loud&tiles=1&go=1&blackbox=1&audiolog=1${peak ? '&peak=1' : ''}`;
+export function shortcutText({ kept, port, title, peak, words = '' }) {
+  if (words && !/^[A-Za-z0-9=._&-]+$/.test(words)) throw new Error('--words may hold letters, digits and = . _ & - only');
+  const addr = `http://127.0.0.1:${port}/index.html?planet=7&meteor=loud&tiles=1&go=1&blackbox=1&audiolog=1${peak ? '&peak=1' : ''}${words ? '&' + words.replace(/^&/, '') : ''}`;
   const L = [
     '@echo off',
     `title ${title}`,
@@ -64,6 +65,7 @@ async function main() {
   const kept = opt('--kept');
   const port = Number(opt('--port', 8768));
   const label = opt('--label', 'morning build');
+  const words = opt('--words', '');
   if (!kept || !/^orb-first-play-[0-9a-f]{8}-[0-9a-zA-Z]{8}$/.test(kept)) { console.error('usage: node tools/preview/make-shortcuts.mjs --kept orb-first-play-<commit8>-<key8> [--port 8768] [--label "morning build"] [--no-homework]'); process.exit(2); }
   if (!existsSync(join(REPO, 'homework', 'Files', 'builds', kept, 'serve.mjs'))) { console.error(`refused: homework/Files/builds/${kept}/serve.mjs is not there (hand the build over first: node tools/preview/handover.mjs --dir <web>)`); process.exit(2); }
   if (!/^[A-Za-z0-9 ,'-]+$/.test(label)) { console.error('refused: the label may hold letters, digits, spaces, commas, apostrophes and hyphens only'); process.exit(2); }
@@ -72,7 +74,7 @@ async function main() {
   const files = [[`Open - ${label}.cmd`, false], [`Open - ${label}, full power.cmd`, true]];
   for (const d of dirs) {
     if (!existsSync(d)) { console.error(`skipped: ${d} is not there`); continue; }
-    for (const [name, peak] of files) { writeFileSync(join(d, name), shortcutText({ kept, port, title: `Orb Combat EX - ${label}${peak ? ', START AT FULL POWER' : ''}`, peak })); console.log(`wrote ${join(d, name)}`); }
+    for (const [name, peak] of files) { writeFileSync(join(d, name), shortcutText({ kept, port, title: `Orb Combat EX - ${label}${peak ? ', START AT FULL POWER' : ''}`, peak, words })); console.log(`wrote ${join(d, name)}`); }
   }
   console.log(`kept ${kept}, port ${port}`);
 }

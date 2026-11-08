@@ -1,0 +1,35 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX desync check   Godot 4.7.2-stable (official)   setup together   600 ticks   checkpoint every 60   delay 2
+seed 1  straight: 10 checkpoints, digest 590 us mean, SimHash.stateHash 41780 us
+  ok   clean   lan     checkpoints matched   9  rollbacks    0  
+  ok   clean   p120    checkpoints matched   9  rollbacks  328  
+  ok   rng         lan     desync at 240 (agreed to 180): first field S.rng.a (1361248536 vs 1361248535), 1 field(s) listed
+  ok   rng         p120    desync at 240 (agreed to 180): first field S.rng.a (1361248536 vs 1361248535), 1 field(s) listed
+  ok   building_hp lan     desync at 240 (agreed to 180): first field S.bHp[0] (143.673060158297 (bits 4061f589b5750401) vs 144.673060158297 (bits 40621589b5750401)), 1 field(s) listed
+  ok   building_hp p120    desync at 240 (agreed to 180): first field S.bHp[0] (143.673060158297 (bits 4061f589b5750401) vs 144.673060158297 (bits 40621589b5750401)), 1 field(s) listed
+  ok   terrain     lan     desync at 240 (agreed to 180): first field S.deform[1600] (0.0010000000475 (bits 3f50624de0000000) vs 0.0), 1 field(s) listed
+  ok   terrain     p120    desync at 240 (agreed to 180): first field S.deform[1600] (0.0010000000475 (bits 3f50624de0000000) vs 0.0), 1 field(s) listed
+  ok   mood        lan     desync at 240 (agreed to 180): first field S.mood.casGiven (1 vs 0), 1 field(s) listed
+  ok   mood        p120    desync at 240 (agreed to 180): first field S.mood.casGiven (1 vs 0), 1 field(s) listed
+  ok   director    lan     desync at 240 (agreed to 180): first field S.dirS.cool (-0.00333233333333 (bits bf6b4c68d5f403da) vs -0.00333333333333 (bits bf6b4e81b4e81a98)), 1 field(s) listed
+  ok   director    p120    desync at 240 (agreed to 180): first field S.dirS.cool (-0.00333233333333 (bits bf6b4c68d5f403da) vs -0.00333333333333 (bits bf6b4e81b4e81a98)), 1 field(s) listed
+  ok   other_fight lan     desync at 240 (agreed to 180): first field S.stage.fights[1].rng.a (3511731021 vs 3511731020), 5 field(s) listed
+  ok   other_fight p120    desync at 240 (agreed to 180): first field S.stage.fights[1].rng.a (3511731021 vs 3511731020), 5 field(s) listed
+seed 2  straight: 10 checkpoints, digest 591 us mean, SimHash.stateHash 46303 us
+  ok   clean   lan     checkpoints matched   9  rollbacks    0  
+  ok   clean   p120    checkpoints matched   9  rollbacks  376  
+  ok   rng         lan     desync at 240 (agreed to 180): first field S.rng.a (1489130931 vs 1489130930), 1 field(s) listed
+  ok   rng         p120    desync at 240 (agreed to 180): first field S.rng.a (1489130931 vs 1489130930), 1 field(s) listed
+  ok   building_hp lan     desync at 240 (agreed to 180): first field S.bHp[0] (143.673060158297 (bits 4061f589b5750401) vs 144.673060158297 (bits 40621589b5750401)), 1 field(s) listed
+  ok   building_hp p120    desync at 240 (agreed to 180): first field S.bHp[0] (143.673060158297 (bits 4061f589b5750401) vs 144.673060158297 (bits 40621589b5750401)), 1 field(s) listed
+  ok   terrain     lan     desync at 240 (agreed to 180): first field S.deform[1600] (0.0010000000475 (bits 3f50624de0000000) vs 0.0), 1 field(s) listed
+  ok   terrain     p120    desync at 240 (agreed to 180): first field S.deform[1600] (0.0010000000475 (bits 3f50624de0000000) vs 0.0), 1 field(s) listed
+  ok   mood        lan     desync at 240 (agreed to 180): first field S.mood.casGiven (88 vs 87), 1 field(s) listed
+  ok   mood        p120    desync at 240 (agreed to 180): first field S.mood.casGiven (88 vs 87), 1 field(s) listed
+  ok   director    lan     desync at 240 (agreed to 180): first field S.dirS.cool (-0.01666566666667 (bits bf9110cdf5328e39) vs 0.0), 1 field(s) listed
+  ok   director    p120    desync at 240 (agreed to 180): first field S.dirS.cool (-0.01666566666667 (bits bf9110cdf5328e39) vs 0.0), 1 field(s) listed
+  ok   other_fight lan     desync at 240 (agreed to 180): first field S.stage.fights[1].T (3.29999999999999 (bits 400a666666666657) vs 3.26666666666666), 8 field(s) listed
+  ok   other_fight p120    desync at 240 (agreed to 180): first field S.stage.fights[1].T (3.29999999999999 (bits 400a666666666657) vs 3.26666666666666), 8 field(s) listed
+objects alive before 1718, after 1734
+PASS  28 runs, 36 checkpoints matched, 0 failure(s)

@@ -1,0 +1,9 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX spectator check   Godot 4.7.2-stable (official)   setup default   600 ticks   lag 6   relay peer 0   delay 2   hash every 10
+  caught flip      lan     spectator: SimHash differs from the straight run after tick 310
+  caught predicted p120    spectator: tick 7's feed and fx differ from the straight run
+  caught flip      p120    spectator: SimHash differs from the straight run after tick 310
+  caught predicted far     spectator: tick 7's feed and fx differ from the straight run
+  caught flip      far     spectator: SimHash differs from the straight run after tick 310
+PASS  negative control: 5 break(s) caught, 0 missed

@@ -1,0 +1,21 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+M 1 picks [2:trial:0.0:10.1 3:trial:0.0:0.0 4:trial:0.0:5.0] witnessTaken 0 ticks 14400 lost 6 deaths 36.0 power 69/69 tier 3/3
+M 2 picks [2:trial:2.0:2.5 3:trial:2.0:5.0] witnessTaken 0 ticks 14400 lost 6 deaths 26.9 power 69/68 tier 2/3
+M 3 picks [2:trial:4.0:10.0 3:trial:4.0:10.0] witnessTaken 0 ticks 14400 lost 2 deaths 80.8 power 53/52 tier 2/2
+M 4 picks [2:trial:0.0:5.8 3:trial:0.0:6.1] witnessTaken 0 ticks 14400 lost 6 deaths 36.0 power 61/61 tier 2/2
+M 5 picks [2:trial:0.0:10.0 3:trial:0.0:0.0 4:trial:0.0:9.7] witnessTaken 0 ticks 14400 lost 9 deaths 36.0 power 78/76 tier 3/3
+M 6 picks [2:witness:8.0:5.0 3:witness:0.0:5.0 4:trial:0.0:5.0] witnessTaken 1 ticks 14400 lost 17 deaths 36.8 power 78/77 tier 3/3
+M 7 picks [2:witness:18.0:10.0 3:witness:0.0:15.0] witnessTaken 1 ticks 14400 lost 11 deaths 36.0 power 74/72 tier 2/2
+M 8 picks [2:witness:18.0:0.0 3:witness:0.0:0.0] witnessTaken 1 ticks 14400 lost 19 deaths 78.7 power 57/56 tier 2/2
+M 9 picks [2:trial:0.0:5.7] witnessTaken 0 ticks 14400 lost 3 deaths 50.0 power 50/50 tier 2/2
+M 10 picks [2:trial:4.0:28.6 3:trial:4.0:0.0] witnessTaken 0 ticks 14400 lost 5 deaths 57.0 power 58/57 tier 2/2
+M 11 picks [2:trial:0.0:5.0 3:trial:0.0:5.0] witnessTaken 0 ticks 14400 lost 11 deaths 101.3 power 66/66 tier 2/2
+M 12 picks [2:trial:2.0:126.0 3:trial:2.0:0.0 4:trial:2.0:5.0] witnessTaken 0 ticks 14400 lost 4 deaths 179.9 power 68/67 tier 3/3
+M 13 picks [2:trial:0.0:5.0 3:trial:0.0:0.0] witnessTaken 0 ticks 14400 lost 20 deaths 77.8 power 66/66 tier 2/2
+M 14 picks [2:trial:0.0:10.3 3:trial:16.0:5.0] witnessTaken 0 ticks 14400 lost 18 deaths 107.9 power 53/53 tier 2/2
+M 15 picks [2:witness:26.0:0.0 3:witness:0.0:5.0] witnessTaken 1 ticks 14400 lost 14 deaths 107.9 power 53/51 tier 2/2
+M 16 picks [2:trial:0.0:0.0] witnessTaken 0 ticks 14400 lost 5 deaths 92.2 power 49/47 tier 2/2
+WITNESS per 2.000 setup p7: matches with a pick 16 of 16; Witness taken in 4; picks 34, Witness 8
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

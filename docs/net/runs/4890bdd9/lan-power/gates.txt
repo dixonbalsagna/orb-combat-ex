@@ -1,0 +1,22 @@
+a01_lan_check exit 0, errors 1 :: LAN: 0 check(s) failed
+a02_rollback_check exit 0, errors 0 :: PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+a03_rollback_check exit 0, errors 0 :: PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+a04_rollback_check exit 0, errors 0 :: PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+a05_rollback_check exit 0, errors 0 :: PASS  4 sessions, 7200 confirmed-tick hash comparisons, 0 failure(s)
+a06_desync_check exit 0, errors 0 :: PASS  14 runs, 18 checkpoints matched, 0 failure(s)
+a07_desync_check exit 1, errors 0 :: FAIL  injection fighter_x healed every time: it tested nothing | FAIL  28 runs, 36 checkpoints matched, 1 failure(s)
+a08_desync_check exit 0, errors 0 :: PASS  28 runs, 36 checkpoints matched, 0 failure(s)
+a09_two_pc_check exit 0, errors 0 :: TWO_PC: 0 check(s) failed
+b01_lan_check exit 0, errors 5 :: LAN: 0 check(s) failed
+b02_rollback_check exit 0, errors 0 :: 
+b03_rollback_check exit 0, errors 0 :: 
+b04_rollback_check exit 0, errors 0 :: 
+b05_rollback_check exit 0, errors 0 :: 
+b06_desync_check exit 0, errors 0 :: 
+b07_desync_check exit 0, errors 0 :: 
+b08_desync_check exit 0, errors 0 :: 
+b09_two_pc_check exit 0, errors 0 :: TWO_PC: 0 check(s) failed
+b10_two_pc_check exit 0, errors 0 :: TWO_PC: 0 check(s) failed
+--- after the lan setup's fighter injection became a whole unit:
+c01_desync_check exit 0 :: PASS  28 runs, 36 checkpoints matched, 0 failure(s)   (--setup=lan --seeds=1,2 --ticks=600 --profiles=lan,p120)
+d01_desync_check exit 0 ::   (the same, --negative-control)

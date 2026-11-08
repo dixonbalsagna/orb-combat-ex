@@ -1,0 +1,13 @@
+      6.0 bh, off: lands in 22 ticks, 21.44 of damage, stunned 16; ["lunge_heavy", "press_ack", "brawl_start", "stick_start", "blow", "windup", "stick_hit"]
+      6.0 bh, on: lands in 17 ticks, 8.58 of damage, stunned 16; ["lunge_light", "press_ack", "brawl_start", "stick_start", "blow", "stick_hit"]
+      9.0 bh, on: lands in 21 ticks, 8.58 of damage, stunned 16; ["lunge_light", "press_ack", "brawl_start", "stick_start", "blow", "stick_hit"]
+      1.0 bh, off: lands in 10 ticks, 21.44 of damage, stunned 16; ["brawl_start", "stick_start", "blow", "windup", "press_ack", "stick_hit"]
+      1.0 bh, on: lands in 10 ticks, 21.44 of damage, stunned 16; ["brawl_start", "stick_start", "blow", "windup", "press_ack", "stick_hit"]
+      6.0 bh, on: lands in 32 ticks, 36.88 of damage, stunned 26; ["lunge_light", "press_ack", "brawl_start", "stick_start", "blow", "stick_stage", "stick_release", "stick_hit"]
+ok    from the middle band the flick asks for the light lunge (off, the heavy one)
+ok    it lands sooner: 17 ticks against 22 at 6 bh
+ok    it's still the stick's strike: its cues and its stun
+ok    it lands as a light: 8.58 against the medium's 21.44 (a light unit is 8.06)
+ok    up close it's the stick's own blow, as before
+ok    held through the arrival it's the stick's charge, and it lands on the release (32 ticks, 36.88)
+STICK LUNGE: 0 check(s) failed

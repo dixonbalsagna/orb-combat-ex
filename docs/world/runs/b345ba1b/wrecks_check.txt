@@ -1,0 +1,22 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+  ok    wrecks.json is clean ([])
+  ok    no wreck stands where nothing has fallen: the query returns nothing
+  houses 83: wreckMass 0.50 to 5.98 (median 1.08); towers 35: 2.06 to 56.86 (median 16.15); lifts [2.0, 6.0, 16.0, 57.0]
+  ok    the city has a house in the front row (hp 108, 241 wide)
+  ok    a house that falls is a wreck, and empty
+  ok    beside it, the query returns the wreck's id and mass (id 108, mass 0.72)
+  ok    a lift under its mass returns nothing, and says heavy
+  ok    within 2 body heights of its box it is found; past it, sideways or above, it is not
+  ok    with people in a building beside it (there are) the wreck is not offered (RL-183)
+  ok    RL-186: while a district flight runs (people of 10 building(s) still to leave, on the street) the wreck is not offered, though no building beside it holds anyone
+  ok    when the flight is over, it is offered again
+  ok    a fighter standing at the wreck does not refuse it (RL-186: combatants are not counted)
+  ok    a wreck with anyone in it is not offered
+  ok    tier 1: landing on a tower the scrap takes 135 hp off the structures (0 levelled) and the wreck is spent
+  ok    tier 2: landing on a tower the scrap takes 303 hp off the structures (0 levelled) and the wreck is spent
+  ok    tier 3: landing on a tower the scrap takes 527 hp off the structures (0 levelled) and the wreck is spent
+  ok    tier 4: landing on a tower the scrap takes 819 hp off the structures (0 levelled) and the wreck is spent
+  ok    a spent wreck cannot be hurled again or offered
+  ok    the scrap does more to structures as the tier rises (hp taken: [134.649106587749, 302.960489822421, 527.375667468674, 819.115398408801])
+  ok    the burst is the same twice, and changes the state (hashed through the spent wreck's mark and the damage)
+WRECKS: 0 check(s) failed

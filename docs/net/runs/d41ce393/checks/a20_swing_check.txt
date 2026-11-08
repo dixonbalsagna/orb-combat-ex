@@ -1,0 +1,14 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX swing check   Godot 4.7.2-stable (official)   600 ticks   protocol 5   right stick true
+straight: swings asked 14, ticks with one running 439 of 600, store length at most 64
+  lan   rollbacks    0  deepest  0   line changed on    0 re-run ticks, on or off   0, reversed   0   at a rollback's end, degrees: moved 0 of 0, p50 0.000, p99 0.000, worst 0.000
+  p120  rollbacks  376  deepest  4   line changed on   29 re-run ticks, on or off   3, reversed   0   at a rollback's end, degrees: moved 21 of 376, p50 0.000, p99 0.036, worst 0.558
+  far   rollbacks  315  deepest 13   line changed on  336 re-run ticks, on or off  20, reversed   5   at a rollback's end, degrees: moved 41 of 315, p50 0.000, p99 2.478, worst 4.009
+  motion slow  far   rollbacks  315  deepest 13   swings 13, top rate 30.0, worst correction 2.500 degrees
+  motion off   far   rollbacks  315  deepest 13   swings 0, top rate 0.0, worst correction 0.000 degrees
+apart: a straight run has a swing on 466 ticks and the pairs apart on 80 of 600
+  apart lan   rollbacks    0, re-runs that landed on the other side of the rule   0
+  apart p120  rollbacks  202, re-runs that landed on the other side of the rule   0
+  apart far   rollbacks  188, re-runs that landed on the other side of the rule  13
+swing check passed: 315 checks, 0 failed

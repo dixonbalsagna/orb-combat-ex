@@ -1,0 +1,17 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+frame: the read against the laid strip: 557 of 686 the same, worst 79.4
+frame_check digest 58040247eda24e02
+swing: 30 asked, turned 30.00 in 45 ticks; peak 60.0
+swing: an early landing: 60.0 to 1.07 deg/s in one tick
+poses: at the first frame, against the laid plan: worst x 0.000, z 0.000
+store: at its old x after the swing 557.1; field there alone 559.7
+bases: 110 of 200 buildings stand more than 50 units from the line's ground under them
+ceil: planet 3, about 1473 us a call; the closest a read came under it: 0.00
+ceil: planet 7, about 1354 us a call; the closest a read came under it: 0.00
+lay: 49 ticks to the whole ring; worst slice 641 us
+lay: World's whole lay in one tick, for the record: 32419 us
+both ways: [258, 258, 258, 258] ticks
+water hold: 45 ticks turning, worst reads in a tick of the warm-up 27
+lay near: 30 ticks, mean 480 us a tick, worst 1599 us; wrong columns at the end 0, 15 if it had ridden
+frame_check: 204 checks, 0 failed
+PASS

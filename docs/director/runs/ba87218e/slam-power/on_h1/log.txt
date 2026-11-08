@@ -1,0 +1,45 @@
+20:43:01 page page_next.json: flipped 66
+20:46:01 determinism on (field) exit 0: determinism passed
+20:49:58 rollback on (field) exit 0: PASS  2 sessions, 4800 confirmed-tick hash comparisons, 0 failure(s)
+20:53:34 two_states on exit 0: PASS  0 failure(s)
+20:53:42 a_press_check on exit 0: A PRESS: 0 check(s) failed
+20:53:58 arc_check on exit 0: ARC: 0 check(s) failed
+21:00:46 bark_reads_check on exit 0: bark_reads_check: passed
+21:00:54 beam_front_check on exit 0: FRONT: 0 check(s) failed
+21:01:00 chase_tap_check on exit 0: CHASE: 0 check(s) failed
+21:01:12 driver_check on exit 0: DRIVER: 0 check(s) failed
+21:01:23 ending_check on exit 0: ENDING: 0 check(s) failed
+21:01:31 flight_strike_check on exit 0: FLIGHT STRIKE: 0 check(s) failed
+21:01:59 floorlift_check on exit 0: FLOORLIFT: 0 check(s) failed
+21:02:19 follow_check on exit 0: FOLLOW: 0 check(s) failed
+21:02:29 knock_wall_check on exit 1: KNOCK WALL: 1 check(s) failed
+21:02:38 location_check on exit 0: LOCATION: 0 check(s) failed
+21:02:44 outside_check on exit 0: OUTSIDE: 0 check(s) failed
+21:02:50 phrase_check on exit 0: PHRASE: 0 check(s) failed
+21:02:55 plane_check on exit 0: PLANE: 0 check(s) failed
+21:03:01 press_decides_check on exit 0: PRESS: 0 check(s) failed
+21:03:07 reads_check on exit 0: reads_check: 16 of 16 passed
+21:03:11 relief_check on exit 0: RELIEF: 0 check(s) failed
+21:04:09 sigvariants_check on exit 0: sigvariants check passed
+21:04:18 stance_check on exit 0: STANCE: 0 check(s) failed
+21:04:30 stick_check on exit 1: STICK: 14 check(s) failed
+21:04:35 sure_reach_check on exit 0: sure_reach_check: passed
+21:05:24 swing_check on exit 0: SWING: 0 check(s) failed
+21:06:55 swing_legal_check on exit 0: SWING LEGAL: 0 check(s) failed
+21:07:34 walk_check on exit 0: WALK: 0 check(s) failed
+21:07:39 stick_lunge_check on exit 1: STICK LUNGE: 1 check(s) failed
+21:07:51 launch_cuts_check on exit 0: LAUNCH CUTS: 0 check(s) failed
+21:08:06 city_push_check on exit 0: CITY PUSH: 0 check(s) failed
+21:16:28 launch_cost_check on exit 0: LAUNCH COST: 0 check(s) failed
+21:16:34 beam_move_check on exit 0: BEAM MOVE: 0 check(s) failed
+21:16:40 strike_stages_check on exit 0: STRIKE STAGES: 0 check(s) failed
+21:16:47 beam_ai_check on exit 0: BEAM AI: 0 check(s) failed
+21:16:51 push_mode_check on exit 0: PUSH MODE: 0 check(s) failed
+21:16:56 morning_fixes_check on exit 0: MORNING FIXES: 0 check(s) failed
+21:17:01 refusal_reasons_check on exit 0: REFUSAL REASONS: 0 check(s) failed
+21:17:06 ending_team_check on exit 0: ENDING TEAM: 0 check(s) failed
+21:17:11 flick_keep_check on exit 0: FLICK KEEP: 0 check(s) failed
+21:17:16 full_send_check on exit 0: FULL SEND: 0 check(s) failed
+21:17:20 launch_hold_check on exit 0: LAUNCH HOLD: 0 check(s) failed
+21:17:21 data put back: 0 changed
+21:17:21 lane on done

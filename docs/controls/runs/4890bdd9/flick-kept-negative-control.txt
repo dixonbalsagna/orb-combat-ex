@@ -1,0 +1,6 @@
+﻿negative control: refusal_cue_test on the same tree with sim/input/hub.gd put back to HEAD's (the wait stays refuseTicks); the flickKept checks must fail:
+FAIL  kept: a flick the director held for 60 ticks and then started is told nothing (no 'Didn't start'): [[{ "slot": 0, "code": "no_answer", "tick": 0, "button": "stick" }], 1, 42]
+FAIL  kept: held 112 ticks, the longest answer the probe saw (113),  it is still told nothing: [[{ "slot": 0, "code": "no_answer", "tick": 0, "button": "stick" }], 1, 42]
+FAIL  kept: a refusal the director says at 60 is the director's knock alone, the hub adds none: [[{ "slot": 0, "code": "no_answer", "tick": 0, "button": "stick" }], 1, 42]
+FAIL  kept: ... at refuseTicksKept live ticks after the request (request about tick 12, told at 42)
+refusal_cue_test: 52 checks, 4 failed

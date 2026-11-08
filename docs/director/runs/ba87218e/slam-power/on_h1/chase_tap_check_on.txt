@@ -1,0 +1,51 @@
+ok    a send says a chase is ready (1)
+ok    ... and a knock-back doesn't
+ok    a far tap with no LT and no ki chases: the first of a send is free
+ok    ... it cost nothing (2.6, what comes back by itself)
+ok    ... it ends with a blow on him (100000 to 99975)
+ok    ... inside arriveTicks (58)
+ok    ... and sends him on
+ok    pressed as the send starts, in reach: it chases
+ok    its start eases: [2002.64558709732, 4524.03474198945, 5977.11679627089, 8230.61044857886, 6405.76806596829]
+ok    the rush never jumps (11004)
+ok    ... and the blow lands
+ok    he comes down first: the blow waits, and lands as he gets up (140)
+ok    ... an ordinary blow: his guard takes it (48 against 140)
+ok    free, 20, 30, 45: the price rises 1.5 times each
+ok    from a full bar he runs out at about the fifth
+ok    X pays 20
+ok    Y during the rush takes the blow, and pays the difference (29.8)
+ok    the newest press is the blow
+ok    X again gives it back
+ok    ... and it's the strike
+ok    no press ends it or queues another
+ok    B during the rush is the drive
+ok    ... and it sends him down (vy -1226)
+ok    a short send is held up to minAirTicks, and he lands where he would
+ok    B's drive isn't held up
+ok    after a real catch he's up at least minAirTicks (127)
+ok    the catch doesn't stop him dead: no tick falls more than a third (2787 of 9752)
+ok    no ki for the second: he doesn't go
+ok    ... and the press says why (["chase_no_ki"])
+ok    a press just after the blow starts the next
+ok    ... and it doesn't land at once, in the blow's own hit-stop (13 live ticks)
+ok    no press: he peels off, and nothing carries him
+ok    a knock-back isn't a send: no chase
+ok    a stick strike at him in the air: no chase, and it never sends
+ok    ... and it says so (["stick_refused:toward"])
+ok    a tap on the curve goes
+ok    ... free
+ok    ... he's at the landing as he lands (113)
+ok    ... with no catch on the way
+ok    ... and the tap lands as he gets up
+ok    ... and it's over
+ok    pressed while he can't act: it waits
+ok    ... not yet
+ok    ... it goes when he's free, the newest (6 ticks)
+ok    ... and if he's held too long it lapses, and says so
+ok    with the far follow on, he doesn't ride along
+ok    ... keepOn is off
+ok    two runs, one hash (d97ae5998aa92882)
+ok    off: a tap is what it was
+ok    off: no slot is sized (614)
+CHASE: 0 check(s) failed

@@ -55,6 +55,8 @@ None of it changes what the sim does or the packets: only when a PC waits, what 
 
 `lan_check` plays a hostile second PC through the codec (a hello asking for 100,000 ticks, one packet handing slot 200 to the AI, a flood of inputs far ahead) and a gone one, with a negative control for each. Before any internet play: encryption (ENet DTLS) and a security review (CD-10, not in this).
 
+**The energy model (Sunday's play-test, 2026-11-08).** Only the page turned the energy model on, through its setup word, so the LAN round played the old launches and flight. NetLan's three setups (`SETUP`, `SETUP2`, `SETUP2X`) now carry `"power": true` and the page's `"travel": 1.5`; the data stays off. Both PCs read the same setup and the match key holds it. `rollback_check` and `desync_check` gain a `lan` setup (the 1v1 exactly), and their `fights2` and `together` setups are NetLan's own, so they play it too.
+
 ## Making the folder
 
 ```

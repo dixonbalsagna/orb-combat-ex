@@ -1,0 +1,22 @@
+ok    the stage count by tier and power, 2 + round(4 x level): [2, 3, 3, 5, 6, 5] (base 2, base at full power 3, tier 2 at 35% 3, tier 3 at 65% 5, the top 6)
+ok    a top fighter's hold climbs six stages by the clock (12 to 120 ticks): [1, 2, 3, 4, 5, 6]
+ok    nobody is locked while he charges: no exchange, his rival is free (free)
+ok    the release starts the beam's exchange at once, for stage 6's 50 (paid 50.0), with no signature wait (ready at 0.00)
+ok    it fires on the release: 8 ticks after it
+ok    stage 6's hit is 96 x 3.6 = 345.6, its guarded hit the same share of the guard's (300.5)
+ok    with 27.6 energy, under stage 3's 32, the stages stop at 2 as the clock reaches 3, told once: stage 2, told 1
+ok    at the top (2 of 2) with less than its price, it steps down a stage: 2 to 1
+ok    held for 6 s, it never fires by itself
+ok    a second at the top costs 4, with no refill while he holds it (4.00); the same hold without the move refills (-5.00)
+ok    his rival's light starts a brawl on the charger: he isn't locked out of it
+ok    a plain strike's hold doesn't refill with the move on (+0.00 in 40 ticks), and does off (+3.33)
+ok    in a brawl the charge doesn't end the brawl
+ok    the release ends the brawl and starts the beam's exchange (point blank)
+ok    the firing throws him back the way he already was, never through: 58 to 675
+ok    a target held when the release came: the lit hand waits till he's been free 0.3 s (fired 17 ticks after he was free)
+ok    and it says why as it starts waiting, once: soon (1)
+ok    held past its wait, it's refused and says so, and costs nothing (1 told)
+ok    with armour's own switch off, a beam's hold is armoured from its first tick by the move (true), and not without it (false)
+ok    a jab on a beam's hold in a brawl, armour's switch off: it holds
+ok    off, the stick's beam is the signature's request: 45 and its wait (paid 45.0)
+BEAM MOVE: 0 check(s) failed

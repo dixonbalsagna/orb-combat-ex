@@ -141,7 +141,7 @@ export const SWITCHES = [
   { id: 'hapticStages', file: 'data/input/timing.json', path: ['switches', 'hapticStages'], from: false, to: true, needs: ['beamMove', 'hapticLadder'], optional: true,
     probe: '"hapticStages": SimInputData.haptic_stages_on()', probeIf: { file: 'sim/input/input_data.gd', text: 'func haptic_stages_on' },
     what: 'the stages of a charge on the pad (Controls, docs/controls/pending/stage-pulses): a pulse for each stick_stage cue of Encounter. timing.json switches.hapticStages. Needs beamMove, and the hapticLadder row too (SimInputData.haptic_stages_on() is the ladder AND the flag). With beamMove off a hold is silent. Waits for the park' },
-  { id: 'refusedCue', file: 'data/director/interrupts.json', path: ['press', 'refusedCue'], from: false, to: true, needs: [], optional: true, held: 'knocks on landed hits; Encounter',
+  { id: 'refusedCue', file: 'data/director/interrupts.json', path: ['press', 'refusedCue'], from: false, to: true, needs: [], optional: true,
     what: 'every refused press says so with a cue (Encounter, the morning fixes, batch 3): the press refused word at the edge and the knock on the pad, so a press never vanishes in silence. interrupts.json press.refusedCue. Waits for the park' },
   { id: 'strikeStages', file: 'data/director/stick.json', path: ['strikeStages', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
     what: 'strike charge stages by power (Encounter, docs/director/pending/strike-stages; beams-own-move-plan step 2): 2 to 6 stages, a held charge that never fires by itself. data/director/stick.json strikeStages.enabled. Waits for the park' },
@@ -171,6 +171,7 @@ export const SWITCHES = [
   { id: 'stickLungeLight', file: 'data/director/stick.json', path: ['lungeLight', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
     what: 'the light lunge on the stick (Encounter): data/director/stick.json lungeLight.enabled. Needs rightStick. ON in the next build (the EP, 2026-11-07); it waits, naming the key, until the park that adds it lands' },
   { id: 'flickKeep', file: 'data/director/stick.json', path: ['flickKeep', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
+    more: [{ path: ['pendFollow', 'enabled'], from: false, to: true }, { file: 'data/input/timing.json', path: ['switches', 'flickKept'], from: false, to: true, ifPresent: true }],
     what: 'a stick flick that cannot start now is kept (Encounter, docs/director/pending/refusal-reasons; Game Design ruling 1): held, the newest only, quietly, and his first blow out. data/director/stick.json flickKeep.enabled. ON in Sunday\'s build (the EP, 2026-11-07); it waits, naming the key, until the park lands. The new refusal knocks ride press.refusedCue, which stays held' },
   { id: 'flickRun', file: 'data/director/stick.json', path: ['flickRun', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
     what: 'a landed quick flick counts in its striker\'s run, with the steal on top (Game Design, stick-lands.md; the refusal-reasons park sets its points to 1.5). data/director/stick.json flickRun.enabled. ON in Sunday\'s build (the EP, 2026-11-07)' },
@@ -293,28 +294,34 @@ export function locate(text, path) {
 /** Whether a switch's key is in a file's text: its path in JSON, or (a switch that is a constant in a script) its text, as it is off or on. */
 export function present(text, sw) {
   if (sw.replace) return text.includes(sw.replace.from) || text.includes(sw.replace.to);
-  return !!locate(text, sw.path) && (sw.more || []).every((m) => !!locate(text, m.path));
+  return (sw.ifPresentPrimary || !!locate(text, sw.path)) && (sw.more || []).every((m) => m.ifPresent || !!locate(text, m.path));
 }
 
 /** The files a row touches, each with the row as it reads for that file: [{ file, sw }]. A row's `more` keys belong to the row's own file unless one names a `file` of its own (flightStrikes: one key in interrupts.json and two in timing.json), so one row can flip keys across files. Every caller loops over these, and a row is on only if every part is. */
 export function parts(sw) {
   if (!sw.more || !sw.more.some((m) => m.file && m.file !== sw.file)) return [{ file: sw.file, sw }];
-  const keys = [{ file: sw.file, path: sw.path, from: sw.from, to: sw.to }, ...sw.more.map((m) => ({ file: m.file || sw.file, path: m.path, from: m.from, to: m.to }))];
+  const keys = [{ file: sw.file, path: sw.path, from: sw.from, to: sw.to }, ...sw.more.map((m) => ({ file: m.file || sw.file, path: m.path, from: m.from, to: m.to, ifPresent: !!m.ifPresent }))];
   const out = [];
   for (const f of [...new Set(keys.map((k) => k.file))]) {
     const ks = keys.filter((k) => k.file === f);
-    out.push({ file: f, sw: { ...sw, file: f, path: ks[0].path, from: ks[0].from, to: ks[0].to, more: ks.length > 1 ? ks.slice(1).map((k) => ({ path: k.path, from: k.from, to: k.to })) : undefined } });
+    out.push({ file: f, sw: { ...sw, file: f, path: ks[0].path, from: ks[0].from, to: ks[0].to, ifPresentPrimary: !!ks[0].ifPresent, more: ks.length > 1 ? ks.slice(1).map((k) => ({ path: k.path, from: k.from, to: k.to, ifPresent: !!k.ifPresent })) : undefined } });
   }
   return out;
 }
 
 /** The text with a switch turned on. Returns { text, was }: was is the old literal. Throws, naming the file and key, when the key is not there or holds neither the old nor the new value (the table is stale). */
 export function flip(text, sw) {
+  if (sw.ifPresentPrimary && !locate(text, sw.path)) return flipRest(text, sw, '(absent)');   // the file group's own first key is an ifPresent key the file does not have: only the rest of the group (none, or more ifPresent keys)
   if (!sw.more) return flipOne(text, sw);
   let out = flipOne(text, sw);   // a row of several keys of one file (cityHold): the first key is the row's own, the others follow it, each from its own old value to its own new one
   const was = out.was;
   let t = out.text;
-  for (const m of sw.more) t = flipOne(t, { ...sw, path: m.path, from: m.from, to: m.to, more: undefined }).text;
+  for (const m of sw.more) { if (m.ifPresent && !locate(t, m.path)) continue; t = flipOne(t, { ...sw, path: m.path, from: m.from, to: m.to, more: undefined, ifPresentPrimary: false }).text; }
+  return { text: t, was };
+}
+function flipRest(text, sw, was) {
+  let t = text;
+  for (const m of sw.more || []) { if (m.ifPresent && !locate(t, m.path)) continue; t = flipOne(t, { ...sw, path: m.path, from: m.from, to: m.to, more: undefined, ifPresentPrimary: false }).text; }
   return { text: t, was };
 }
 function flipOne(text, sw) {

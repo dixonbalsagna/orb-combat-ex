@@ -1,0 +1,5 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+two clean runs: THE SAME: AMD Ryzen 7 9800X3D 8-Core Processor and AMD Ryzen 7 9800X3D 8-Core Processor agree on all 23 lines
+a rematch against the same match first in a fresh process: the same
+TWO_PC: 0 check(s) failed

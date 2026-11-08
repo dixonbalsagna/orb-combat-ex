@@ -31,7 +31,10 @@ export function summarise(res) {
   }
   const total = res.presses.length;
   const not = res.presses.filter((p) => p.verdict !== 'honoured').length;
-  return { total, notHonoured: not, byPress, byReason };
+  // Encounter's press-answers (power_start, power_burst, the transform event, press_refused not_ready): the presses answered ONLY by them were silent before those cues existed
+  const paOnly = res.presses.filter((p) => p.paOnly && p.verdict === 'honoured').length;
+  const notReady = res.presses.filter((p) => p.notReady).length;
+  return { total, notHonoured: not, byPress, byReason, paOnly, notReady, notHonouredOldRule: not + paOnly };
 }
 
 export function text(res, { all = false } = {}) {
@@ -41,6 +44,7 @@ export function text(res, { all = false } = {}) {
   out.push(`tree ${res.tree}; the pad is slot ${res.slot}`);
   out.push(`recorded match: ${!res.recorded.checked ? 'cut short (no final hash to compare)' : res.recorded.exact ? 'reproduced exactly' : 'NOT reproduced on this tree: the rows are the replay on this tree'}; ${res.ticks} ticks (${mmss(res.ticks)})`);
   out.push(`${s.total} presses of the pad; ${s.notHonoured} not honoured (${s.total ? Math.round((100 * s.notHonoured) / s.total) : 0}%)`);
+  if (res.presses.length && typeof res.presses[0].paOnly === 'boolean') out.push(`counting rule (2026-11-08): power_start, power_burst, the transform event and press_refused not_ready count as answers to a power press or a transform (Encounter press-answers). ${s.paOnly} presses were answered ONLY by power_start, power_burst or a transform (honoured); ${s.notReady} presses got not_ready (a refusal with its reason, not silent). The build the 15% figure was read on (e80b8e3d) had none of these cues, so for a like-for-like reading take those ${s.paOnly} as not answered: ${s.notHonouredOldRule} not honoured (${s.total ? Math.round((100 * s.notHonouredOldRule) / s.total) : 0}%) under the old rule, ${s.notHonoured} (${s.total ? Math.round((100 * s.notHonoured) / s.total) : 0}%) with them`);
   if (typeof res.merged === 'number') out.push(`counting rule (2026-11-07): a press of one kind on consecutive ticks is ONE press (a hit-stop offers it again each tick): ${res.merged} such repeats were not counted as presses; a guard held up or a dodge open reads as honoured`);
   out.push('');
   out.push('by press:');

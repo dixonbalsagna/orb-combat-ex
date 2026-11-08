@@ -705,6 +705,7 @@ static func _update(S: SimState, dt: float) -> void:
 	DirEnding.tick(S)   # how a match always ends (docs/design/spec-wounds.md 1b-end)
 	DirDriver.tick(S)   # RB + B
 	_transforms(S)
+	DirRefuse.presses(S)   # every press answered: the power press and the transform, after the director's own
 	if S.dirS.cool > 0.0:
 		S.dirS.cool -= dt
 	DirBands.tick(S)   # the approach before an exchange: it counts down, and the exchange starts at its end
