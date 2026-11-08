@@ -1,0 +1,16 @@
+Look gate, second film, for UI's refusal-compact re-cut (docs/ui/pending/refusal-compact/refusal-compact.patch, sha1 fb768b0ddf3c; applies to HEAD ea398601). Tools, 2026-11-07.
+
+Method (as the first film, docs/tools/runs/85e838b6/look-refusal-compact.txt): two web builds of the same commit through stack-preview, one plain and one with the patch (both pass the pack verify, 72 keys, 0 problems, and the smoke check); the same page words (planet 7, sticks=10: a scripted pad holding RB and flicking the right stick), the same seed; 2,400 ticks each through the reel with a lossless still on every tick from 1903 to 1963. The sim agrees tick for tick: the HUD's teaching line of player 1 is "Hit" from tick 1903 to 1994 in both.
+
+Result: THE WORD NOW DRAWS.
+- With the patch, "Hit" is drawn in the legend column under the compact legend row (the six button icons), at the left edge, from the first tick of the word (1903) to the last still (1963). The plain build draws neither the word nor the legend row in the same ticks.
+- Legend column (x < 260, y 190 to 350), pair by pair: it differs in 61 of 65 pairs: every tick 1903 to 1963; the other four are the periodic stills (600, 1200, 1800, 2400), where no word is held. The diff box is x 37 to 194, y 215 to 281: the icon row and the word, nothing else.
+- The legend is at the left edge; both fighters stand at x 440 to 520 in these stills: nothing is drawn over a fighter, between them or on the picture's middle (the look gate's rule).
+- Outside the legend column the pairs differ by at most 3,285 pixels, the rubble and the building edge (render noise, present between two runs of the same build; the first film saw about 500 at most, and a few ticks are larger here); nothing near the HUD.
+- Stills: docs/tools/img/look-refusal-compact/reference-t1903.png and with-park-t1903.png (the word's first tick), reference-t1912.png and with-park-t1912.png (9 ticks in), with-park-t1963.png (the window's end, the word still up).
+
+pixel comparison (tools output, scratch script pixdiff3):
+65 pairs; the legend column differs in 61
+first tick 1903, last 1963; widest box x 37-194 y 215-281; most pixels 2448
+outside the legend column the pairs differ by at most 3285 pixels (render noise, as in the first run)
+ticks in the legend diff: 1903 1904 1905 1906 1907 1908 1909 1910 1911 1912 1913 1914 1915 1916 1917 1918 1919 1920 1921 1922 1923 1924 1925 1926 1927 1928 1929 1930 1931 1932 1933 1934 1935 1936 1937 1938 1939 1940 1941 1942 1943 1944 1945 1946 1947 1948 1949 1950 1951 1952 1953 1954 1955 1956 1957 1958 1959 1960 1961 1962 1963
