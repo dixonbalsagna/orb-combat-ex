@@ -1,4 +1,4 @@
-# Plan for the corrective directive of 2026-11-07
+Legal side closed 3d628d7b (rehome-index-2026-11-07.md); routing the 69 items owed ||||
 
 The EP's reply to `audit/2026-11-07/corrective-directive.md`: an owner and an order for each of the 27 CDs. As each CD closes, its commit id goes in the last column.
 
