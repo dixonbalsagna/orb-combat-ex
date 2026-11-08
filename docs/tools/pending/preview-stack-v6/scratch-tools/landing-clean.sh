@@ -1,7 +1,7 @@
 #!/bin/bash
 # Rebuilds the clean landing tree at a NEW path (landing-clean-<name>), applies the v6 ci.yml steps, runs validate and the two-fighter ratchet, writes the changed-file list. Usage: bash landing-clean.sh <name>
 S="$TEMP/claude/C--Users-itsha-Documents-Claude-Proj-Breakers-Like/f4930939-92a3-468f-86d1-efe5cc11ac6a/scratchpad"
-R="C:/Users/itsha/Documents/Claude Proj/Breakers-Like"
+R="C:/Users/<user>/Documents/Claude Proj/Breakers-Like"
 N="$1"; OUT="$TEMP/meridian-stack-preview/landing-clean-$N"
 SKIP=ui-working-tree,controls-layouts,art-biomes-working-tree,controls-quick-read,audio-host-check,controls-stick-feel,controls-beam-aim,controls-stage-haptics,controls-queue-20,controls-first-pad
 [ -e "$OUT" ] && { echo "refused: $OUT exists"; exit 1; }

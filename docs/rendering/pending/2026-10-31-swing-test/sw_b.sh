@@ -2,7 +2,7 @@
 # SCRATCH: the pass lines that are readings: frame cost (1) and flash (6). One browser at a time, below normal; a run marks itself invalid if the machine was saturated.
 LN="$(cd "$(dirname "$0")" && pwd)"
 LW="$(cd "${LN:?}" && pwd -W)"
-R="C:/Users/itsha/Documents/Claude Proj/Breakers-Like"
+R="C:/Users/<user>/Documents/Claude Proj/Breakers-Like"
 powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'" 2>/dev/null
 cd "$R" || exit 1
 rm -rf "${LN:?}/swb" "${LN:?}/swf"

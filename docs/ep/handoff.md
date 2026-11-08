@@ -210,4 +210,4 @@ S0 menace fixes (Simulation, active), S1 wear core, then SC world scale plus W-R
 ## Practical notes
 - **Messaging.** Send messages with SendMessage to exact session titles ("Meridian - <role>"). Directors reply the same way. Don't subscribe to idle notices.
 - **Git.** Only the EP commits. The QA suite is `node qa/run-all.js` on Node 24.19.0.
-- **Godot.** 4.7.2 is at C:\Users\itsha\AppData\Local\Programs\Godot\4.7.2\, with export templates installed.
+- **Godot.** 4.7.2 is at C:\Users\<user>\AppData\Local\Programs\Godot\4.7.2\, with export templates installed.

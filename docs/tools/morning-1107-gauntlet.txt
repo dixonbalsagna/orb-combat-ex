@@ -1,4 +1,4 @@
-tree C:\Users\itsha\Documents\Claude Proj\Breakers-Like\homework\Files\builds\orb-first-play-a8bc66e2-dee2fb35\tree; 10 matches a cell from seed 1; the same seeds in every scheme
+tree C:\Users\<user>\Documents\Claude Proj\Breakers-Like\homework\Files\builds\orb-first-play-a8bc66e2-dee2fb35\tree; 10 matches a cell from seed 1; the same seeds in every scheme
 SCHEME shipped (the reference)
 arm          level   n   win % (95% +/-)   refusals/100 presses s without control/min  beams/match
 stick-only   easy    10  20% +/-23         76.2                57.9                   0

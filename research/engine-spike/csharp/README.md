@@ -32,7 +32,7 @@ Options:
 - `--golden <path>` points at a different golden.json. By default the program finds `research/engine-spike/shared/golden.json` by walking up from the binary and the working directory.
 - The JIT can be switched through the environment, for example `DOTNET_TieredCompilation=0`. The SIMBENCH line records any such variables in `jitEnv`.
 
-**Probe**: needs the Godot 4.7.2 .NET editor. Its console exe is at `C:\Users\itsha\AppData\Local\Programs\Godot\4.7.2-mono\Godot_v4.7.2-stable_mono_win64\`, and it runs self-contained because of the `_sc_` marker file.
+**Probe**: needs the Godot 4.7.2 .NET editor. Its console exe is at `C:\Users\<user>\AppData\Local\Programs\Godot\4.7.2-mono\Godot_v4.7.2-stable_mono_win64\`, and it runs self-contained because of the `_sc_` marker file.
 ```
 cd research/engine-spike/csharp/godot-web-probe
 dotnet build WebProbe.csproj                        # offline: nuget.config points only at the editor's bundled nupkgs

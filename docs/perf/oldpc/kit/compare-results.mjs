@@ -81,7 +81,7 @@ if (argv[0] === '--selftest') {
     const dir = mkdtempSync(join(tmpdir(), 'oldpc-twopc-'));
     const fa = join(dir, 'report-A.txt'), fb = join(dir, 'report-B.txt');
     writeFileSync(fa, A.twopc); writeFileSync(fb, B.twopc);
-    const project = opt('--project', ''), godot = opt('--godot', 'C:/Users/itsha/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe');
+    const project = opt('--project', ''), godot = opt('--godot', 'C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe');
     const cmd = [godot, '--headless', '--path', project || '<a tree with net/tools/two_pc_check.gd>', '--script', 'res://net/tools/two_pc_check.gd', '--', `--compare=${fa},${fb}`];
     if (!project) console.log("\nNetcode's two-PC reports are in both files. Compare them with:\n  " + cmd.map((x) => (/\s/.test(x) ? `"${x}"` : x)).join(' '));
     else {

@@ -17,7 +17,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 SHORT=$(git -C "$ROOT" rev-parse --short "$COMMIT") || exit 2
 FULL=$(git -C "$ROOT" rev-parse "$COMMIT") || exit 2
 W=${4:-"${TEMP:-/tmp}/interim-$SHORT"}
-G=${GODOT:-"C:/Users/itsha/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"}
+G=${GODOT:-"C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"}
 export MSYS_NO_PATHCONV=1
 export MERIDIAN_SESSION=${MERIDIAN_SESSION:-tools}
 mkdir -p "$W" || exit 2

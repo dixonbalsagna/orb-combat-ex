@@ -49,5 +49,5 @@ Then report to Orb: engine recommendation, open questions, P0 status.
 
 ## Machine notes
 
-- Godot 4.7.2 (checksum-verified): `C:\Users\itsha\AppData\Local\Programs\Godot\4.7.2\`, not on PATH. Use `Godot_v4.7.2-stable_win64_console.exe` for command-line runs.
+- Godot 4.7.2 (checksum-verified): `C:\Users\<user>\AppData\Local\Programs\Godot\4.7.2\`, not on PATH. Use `Godot_v4.7.2-stable_win64_console.exe` for command-line runs.
 - Python runs as `python` (not `python3`). Node 24 and the .NET 10 SDK are installed.

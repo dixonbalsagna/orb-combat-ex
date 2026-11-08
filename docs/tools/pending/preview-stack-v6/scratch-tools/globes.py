@@ -3,7 +3,7 @@ import sys, math
 sys.path.insert(0, 't')
 from PIL import Image, ImageDraw, ImageFont
 from mkgif import encode
-SRC = r'C:/Users/itsha/Documents/Claude Proj/Breakers-Like/docs/world/img/overhaul-b/map-today-vs-b.png'
+SRC = r'C:/Users/<user>/Documents/Claude Proj/Breakers-Like/docs/world/img/overhaul-b/map-today-vs-b.png'
 im = Image.open(SRC).convert('RGB')
 maps = [im.crop((0, 0, 720, 360)), im.crop((732, 0, 1452, 360))]
 # the red touch-down crosses are not terrain: replace each red pixel by a neighbour that is not red

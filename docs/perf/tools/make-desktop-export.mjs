@@ -14,7 +14,7 @@ const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv
 const OUT = opt('--out');
 if (!OUT) { console.error('usage: node docs/perf/tools/make-desktop-export.mjs --out <folder> [--rev <commit>] [--marks] [--godot <exe>]'); process.exit(2); }
 const REV = opt('--rev', 'HEAD'), MARKS = argv.includes('--marks');
-const GODOT = opt('--godot', 'C:/Users/itsha/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe');
+const GODOT = opt('--godot', 'C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe');
 const out = resolve(OUT);
 const dir = join(out, 'src');
 if (existsSync(join(dir, 'project.godot'))) { console.error('already there: ' + dir); process.exit(1); }

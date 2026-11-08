@@ -53,7 +53,7 @@ const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv
 const OUT = opt('--out');
 if (!OUT) { console.error('usage: node docs/perf/tools/make-audit-sites.mjs --out <folder> [--only a,b] [--godot <exe>] [--no-export]'); process.exit(2); }
 const only = opt('--only') ? opt('--only').split(',') : ['base', 'vfx', 'anim', 'both', 'baseprof', 'bothprof', 'depthprof', 'layerprof', 'lowprof', 'anim8'];
-const GODOT = opt('--godot', 'C:\\Users\\itsha\\AppData\\Local\\Programs\\Godot\\4.7.2\\Godot_v4.7.2-stable_win64_console.exe');
+const GODOT = opt('--godot', 'C:\\Users\\<user>\\AppData\\Local\\Programs\\Godot\\4.7.2\\Godot_v4.7.2-stable_win64_console.exe');
 const NOEXP = argv.includes('--no-export');
 const TEMPLATE = opt('--template');   // a custom web template zip for the Web preset, written into the scratch copy's export_presets.cfg only (never the repo's)
 const REV = opt('--rev', 'HEAD');   // any commit: the audit of two builds (for example a build Orb played and the one after it) builds each into its own --out folder

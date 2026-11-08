@@ -15,7 +15,7 @@
     "pairing": "default",
     "variant": 0
   },
-  "leftDir": "C:/Users/itsha/AppData/Local/Temp/claude/C--Users-itsha-Documents-Claude-Proj-Breakers-Like/05957d46-0365-4cdf-9d56-3ccee4ed1af8/scratchpad/sbs_main",
-  "rightDir": "C:/Users/itsha/AppData/Local/Temp/claude/C--Users-itsha-Documents-Claude-Proj-Breakers-Like/05957d46-0365-4cdf-9d56-3ccee4ed1af8/scratchpad/sbs_after",
+  "leftDir": "C:/Users/<user>/AppData/Local/Temp/claude/C--Users-itsha-Documents-Claude-Proj-Breakers-Like/05957d46-0365-4cdf-9d56-3ccee4ed1af8/scratchpad/sbs_main",
+  "rightDir": "C:/Users/<user>/AppData/Local/Temp/claude/C--Users-itsha-Documents-Claude-Proj-Breakers-Like/05957d46-0365-4cdf-9d56-3ccee4ed1af8/scratchpad/sbs_after",
   "sameMatch": true
 }

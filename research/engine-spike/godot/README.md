@@ -14,7 +14,7 @@ check the harness. They are not results. The Research director runs the final ti
 ## How to run
 
 ```
-set G=C:\Users\itsha\AppData\Local\Programs\Godot\4.7.2
+set G=C:\Users\<user>\AppData\Local\Programs\Godot\4.7.2
 set P=<repo>\research\engine-spike\godot
 ```
 Use `Godot_v4.7.2-stable_win64_console.exe` when you want stdout in a terminal. The GUI exe behaves the same but

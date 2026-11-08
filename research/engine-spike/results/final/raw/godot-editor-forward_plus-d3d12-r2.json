@@ -80,7 +80,7 @@
   "label": "quiet window (EP, 2026-09-29: most sessions idle); load recorded per run",
   "runArgs": [
     "--path",
-    "C:\\Users\\itsha\\Documents\\Claude Proj\\Breakers-Like\\research\\engine-spike\\godot",
+    "C:\\Users\\<user>\\Documents\\Claude Proj\\Breakers-Like\\research\\engine-spike\\godot",
     "--resolution",
     "1920x1080",
     "--disable-vsync",

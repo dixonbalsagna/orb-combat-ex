@@ -2,7 +2,7 @@
 # SCRATCH: after edit 9: World's canonical ground stills, and Orb's small fast swings: stills and flash readings at both sizes. Reduced is the same picture in this scene: proved once by bytes.
 LN="$(cd "$(dirname "$0")" && pwd)"
 LW="$(cd "${LN:?}" && pwd -W)"
-R="C:/Users/itsha/Documents/Claude Proj/Breakers-Like"
+R="C:/Users/<user>/Documents/Claude Proj/Breakers-Like"
 powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'" 2>/dev/null
 S="${LN:?}/sw_shot.sh"
 for x in "fine 0 2600" "fine 0 1000" "bare 1 2600" "bare 1 1000" "coast 2 2600" "coast 2 1000"; do

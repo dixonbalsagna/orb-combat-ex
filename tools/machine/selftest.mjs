@@ -41,7 +41,7 @@ async function waitGone(profile, ms) {
 
 // 0
 {
-  const prof = 'C:\\Users\\Old PC\\AppData\\Local\\Temp\\cap-selftest-quote-000000';
+  const prof = 'C:\\Users\\<user> two\\AppData\\Local\\Temp\\cap-selftest-quote-000000';   // a profile folder with a space in its name (a placeholder: the content screen allows <user>)
   const CASES = {
     'the launcher\'s own flags': [`--user-data-dir=${prof}`, '--remote-debugging-port=0', '--headless=new', '--no-first-run', 'about:blank'],
     'a profile path with a space': [`--user-data-dir=${prof}`, '--remote-debugging-port=0', 'about:blank'],

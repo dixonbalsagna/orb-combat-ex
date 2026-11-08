@@ -1,5 +1,5 @@
 REFUSAL LEDGER  homework/Files/orb-first-play-20261107-1229.json
-tree C:/Users/itsha/AppData/Local/Temp/meridian-feel/orb-first-play-a8bc66e2-e80b8e3d-e15444/; the pad is slot 0
+tree C:/Users/<user>/AppData/Local/Temp/meridian-feel/orb-first-play-a8bc66e2-e80b8e3d-e15444/; the pad is slot 0
 recorded match: reproduced exactly; 19280 ticks (5:21.3)
 1159 presses of the pad; 422 not honoured (36%)
 

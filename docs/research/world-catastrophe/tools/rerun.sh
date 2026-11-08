@@ -7,7 +7,7 @@
 #    of the cost; the in-page update time (cpuUpdateUs) is the GDScript work per frame on the web build.
 set -u
 HEAD_DIR="$1"; OUT="$2"
-GODOT="/c/Users/itsha/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+GODOT="/c/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
 mkdir -p "$OUT" "$HEAD_DIR/scratch_probe"
 cp docs/research/world-catastrophe/sim_probe.gd "$HEAD_DIR/scratch_probe/"
 echo "load before: $(powershell -NoProfile -Command "(Get-Counter '\Processor(_Total)\% Processor Time' -SampleInterval 1 -MaxSamples 3).CounterSamples | Measure-Object CookedValue -Average | % { [math]::Round(\$_.Average,1) }")% cpu" | tee "$OUT/load.txt"

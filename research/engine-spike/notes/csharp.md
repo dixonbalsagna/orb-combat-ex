@@ -107,7 +107,7 @@ This is a hard check in the .NET build of the editor, and it fires before any te
 ```
 ERROR: Cannot export project with preset "Windows Desktop" due to configuration errors:
 No export template found at the expected path:
-C:/Users/itsha/AppData/Local/Programs/Godot/4.7.2-mono/Godot_v4.7.2-stable_mono_win64/editor_data/export_templates/4.7.2.stable.mono/windows_debug_x86_64.exe
+C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2-mono/Godot_v4.7.2-stable_mono_win64/editor_data/export_templates/4.7.2.stable.mono/windows_debug_x86_64.exe
 No export template found at the expected path:
 .../4.7.2.stable.mono/windows_release_x86_64.exe
 ERROR: Project export for preset "Windows Desktop" failed.
@@ -217,10 +217,10 @@ Rollback caveats specific to Godot C#:
 
 | File | Source | Size | SHA-512 verified |
 |---|---|---|---|
-| `Godot_v4.7.2-stable_mono_win64.zip` | https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_mono_win64.zip | 116,582,061 bytes | **Yes.** `79229fd112b0c9cbeab82363a4ef7be18ea70f1caf86bf912789335b136fbe7e01db0053a33461438c5da1c680c17bbb10040bd09bedc51221cd4423d0367757` matches the entry in `C:\Users\itsha\AppData\Local\Programs\Godot\4.7.2\SHA512-SUMS.txt`. Re-hashed with `sha512sum` on 2026-09-29. |
+| `Godot_v4.7.2-stable_mono_win64.zip` | https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_mono_win64.zip | 116,582,061 bytes | **Yes.** `79229fd112b0c9cbeab82363a4ef7be18ea70f1caf86bf912789335b136fbe7e01db0053a33461438c5da1c680c17bbb10040bd09bedc51221cd4423d0367757` matches the entry in `C:\Users\<user>\AppData\Local\Programs\Godot\4.7.2\SHA512-SUMS.txt`. Re-hashed with `sha512sum` on 2026-09-29. |
 
 Notes on the ledger:
-- The zip was downloaded on 2026-09-28 by the earlier, interrupted run of this task, and is stored outside the repo at `C:\Users\itsha\AppData\Local\Programs\Godot\4.7.2-mono\`.
+- The zip was downloaded on 2026-09-28 by the earlier, interrupted run of this task, and is stored outside the repo at `C:\Users\<user>\AppData\Local\Programs\Godot\4.7.2-mono\`.
 - It was extracted to `...\4.7.2-mono\Godot_v4.7.2-stable_mono_win64\`. Since then this task has added a `_sc_` marker file and an `editor_data\` folder there, to keep the .NET editor self-contained.
 - **Not downloaded:** `Godot_v4.7.2-stable_mono_export_templates.tpz` (SUMS entry `bb5c41d7…`), because the docs say C# web export is unsupported.
 - **No NuGet downloads.**

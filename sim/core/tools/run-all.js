@@ -28,7 +28,7 @@ const STAGES = [
   { name: 'soak', cmd: [process.execPath, path.join(here, 'soak.js'), quick ? '100' : '1000'] },
   { name: 'golden', cmd: [process.execPath, path.join(here, 'golden.js'), '--check'] },
 ];
-const GODOT = process.env.GODOT || 'C:/Users/itsha/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe';
+const GODOT = process.env.GODOT || 'C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe';
 if (fs.existsSync(GODOT)) STAGES.push({ name: 'godot', pre: [GODOT, '--headless', '--path', path.resolve(simDir, '..'), '--import'], cmd: [GODOT, '--headless', '--path', path.resolve(simDir, '..'), '--script', 'res://sim/core/tools/parity.gd'] });
 else console.log(`note: Godot not found at ${GODOT} (set GODOT to run the GDScript parity stage)`);
 

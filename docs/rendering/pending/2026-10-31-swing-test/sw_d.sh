@@ -2,7 +2,7 @@
 # SCRATCH: after the flight's follow and a wider bake (a missing tile stops a split, which left two levels side by side): seams, flight, open ground on the canonical spacing, a final solid turn and bench.
 LN="$(cd "$(dirname "$0")" && pwd)"
 LW="$(cd "${LN:?}" && pwd -W)"
-R="C:/Users/itsha/Documents/Claude Proj/Breakers-Like"
+R="C:/Users/<user>/Documents/Claude Proj/Breakers-Like"
 powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'" 2>/dev/null
 S="${LN:?}/sw_shot.sh"
 rm -rf "${LN:?}/swst/seam60" "${LN:?}/swst/seam98" "${LN:?}/swst/seamfl" "${LN:?}/swst/seamco" "${LN:?}/swst/fl15" "${LN:?}/swst/fl4" "${LN:?}/swst/fl0" "${LN:?}/swst/solid60b"

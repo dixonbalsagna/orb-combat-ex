@@ -15,7 +15,7 @@ const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv
 const SITE = opt('--site') && resolve(opt('--site'));
 const SITE2 = opt('--site2') && resolve(opt('--site2'));   // a two-fights kit: the web build whose match is two fights on one line (the second game folder, game2\)
 const TREE = resolve(opt('--tree', REPO));
-const GODOT = resolve(opt('--godot-dir', 'C:/Users/itsha/AppData/Local/Programs/Godot/4.7.2'));
+const GODOT = resolve(opt('--godot-dir', 'C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2'));
 let BUILD = opt('--build', '');
 if (!BUILD) { try { BUILD = execFileSync('git', ['-C', TREE, 'rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim(); } catch { BUILD = ''; } }
 if (!/^[A-Za-z0-9._-]+$/.test(BUILD)) { console.error('--build <name> is required (letters, digits, dot, dash, underscore): both PCs must run ONE kit, and the two-PC check refuses reports of different builds'); process.exit(2); }

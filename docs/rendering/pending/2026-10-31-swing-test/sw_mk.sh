@@ -2,8 +2,8 @@
 # SCRATCH: the swing test's tree: HEAD plus swing/, its main scene swapped, bake, import, web export. Below normal; one Godot at a time.
 LN="$(cd "$(dirname "$0")" && pwd)"
 LW="$(cd "${LN:?}" && pwd -W)"
-R="C:/Users/itsha/Documents/Claude Proj/Breakers-Like"
-GD="C:/Users/itsha/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
+R="C:/Users/<user>/Documents/Claude Proj/Breakers-Like"
+GD="C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe"
 powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'" 2>/dev/null
 if [ ! -d "${LN:?}/sw/render" ]; then
 	mkdir -p "${LN:?}/sw" && git -C "$R" archive HEAD | tar -x -C "${LN:?}/sw" || exit 1

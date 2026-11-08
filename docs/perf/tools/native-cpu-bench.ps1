@@ -7,7 +7,7 @@ param(
   [int]$Seed = 4,
   [int]$Frames = 3600,
   [Parameter(Mandatory = $true)][string]$Out,
-  [string]$Godot = 'C:\Users\itsha\AppData\Local\Programs\Godot\4.7.2\Godot_v4.7.2-stable_win64_console.exe',
+  [string]$Godot = 'C:\Users\<user>\AppData\Local\Programs\Godot\4.7.2\Godot_v4.7.2-stable_win64_console.exe',
   [int]$LimitS = 900
 )
 $before = (Get-Counter '\Processor(_Total)\% Processor Time' -SampleInterval 1 -MaxSamples 3 | ForEach-Object { $_.CounterSamples[0].CookedValue } | Measure-Object -Average).Average

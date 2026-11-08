@@ -6,7 +6,7 @@ The main scene runs the GDScript sim (`sim/`) as a 60 Hz fixed-step loop and dra
 
 ## Run it
 
-Godot 4.7.2 (`C:\Users\itsha\AppData\Local\Programs\Godot\4.7.2\`; use `_console.exe` for headless runs). On a fresh clone, import once so the `class_name` scripts register:
+Godot 4.7.2 (`C:\Users\<user>\AppData\Local\Programs\Godot\4.7.2\`; use `_console.exe` for headless runs). On a fresh clone, import once so the `class_name` scripts register:
 
 ```
 godot --headless --path . --import

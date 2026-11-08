@@ -2,7 +2,7 @@
 # SCRATCH: stills of the swing scene: sw_shot.sh <scene> <out name> <first> <count> <every> [page words] [width height]
 LN="$(cd "$(dirname "$0")" && pwd)"
 LW="$(cd "${LN:?}" && pwd -W)"
-R="C:/Users/itsha/Documents/Claude Proj/Breakers-Like"
+R="C:/Users/<user>/Documents/Claude Proj/Breakers-Like"
 powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'" 2>/dev/null
 START="(window.__flashcap && window.__flashcap.ready && (window.__psStarted || (window.__flashcap.start(\"$1\", {}), window.__psStarted = true)))"
 cd "$R" || exit 1

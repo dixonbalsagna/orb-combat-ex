@@ -2,7 +2,7 @@
 # SCRATCH: the real frame's readings with today's ground truly gone (the split's culling had put it back at the merge). One browser at a time, below normal.
 LN="$(cd "$(dirname "$0")/.." && pwd)"
 LW="$(cd "${LN:?}" && pwd -W)"
-R="C:/Users/itsha/Documents/Claude Proj/Breakers-Like"
+R="C:/Users/<user>/Documents/Claude Proj/Breakers-Like"
 powershell -NoProfile -Command "(Get-Process -Id $(cat /proc/$$/winpid)).PriorityClass = 'BelowNormal'" 2>/dev/null
 S="${LN:?}/sg/sg_shot.sh"
 C="pgen=2&pplanet=7&pbiome=city&swset=city"

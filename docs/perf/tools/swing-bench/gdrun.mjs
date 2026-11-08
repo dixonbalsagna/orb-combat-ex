@@ -3,7 +3,7 @@ import { spawn } from 'node:child_process';
 import { closeSync, openSync, writeFileSync } from 'node:fs';
 import { constants as osConstants, setPriority } from 'node:os';
 const [tree, out, tmo, script, ...rest] = process.argv.slice(2);
-const godot = 'C:/Users/itsha/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe';
+const godot = 'C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe';
 const fd = openSync(out, 'w');
 const child = spawn(godot, ['--headless', '--path', tree, '--script', script, '--', ...rest], { stdio: ['ignore', fd, fd], windowsHide: true });
 writeFileSync(out + '.pid', String(child.pid));

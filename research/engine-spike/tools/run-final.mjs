@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 
 const SPIKE = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const GODOT_DIR = 'C:\\Users\\itsha\\AppData\\Local\\Programs\\Godot\\4.7.2';
+const GODOT_DIR = 'C:\\Users\\<user>\\AppData\\Local\\Programs\\Godot\\4.7.2';
 const GODOT = join(GODOT_DIR, 'Godot_v4.7.2-stable_win64.exe');
 const GODOT_CON = join(GODOT_DIR, 'Godot_v4.7.2-stable_win64_console.exe');
 const RELEASE = join(SPIKE, 'godot', 'build', 'win', 'spike.exe');
