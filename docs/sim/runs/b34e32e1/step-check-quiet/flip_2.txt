@@ -1,0 +1,14 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+  ok    a gen 2 planet made by the job at a budget of 250, 37 and the whole is the one make gives, bit for bit: 250 (227 calls, longest 6.4 ms) 37 (1452 calls, longest 1.2 ms) whole (1 calls, longest 801.8 ms)
+  ok    at the read's budget (250 units, about 5 ms) no call of the job is long: the longest 6.4 ms (the grid's carry, the flow field and a try-set were 17 to 140 ms in one call)
+  ok    a gen 2 planet with rivers made by the job at a budget of 250, 37 and the whole is the one make gives, bit for bit: 250 (256 calls, longest 6.0 ms) 37 (1650 calls, longest 1.7 ms) whole (1 calls, longest 906.7 ms)
+  ok    at the read's budget (250 units, about 5 ms) no call of the job is long: the longest 6.0 ms (the grid's carry, the flow field and a try-set were 17 to 140 ms in one call)
+  ok    a gen 1 planet made by the job at a budget of 40 is make's (812 calls)
+  ok    touch 1: the ring read in steps of 250 units (20 calls, the longest 5.1 ms) is sliceFor's slice, bit for bit, and sliceFor then returns it from the memo
+  ok    touch 2: the ring read in steps of 250 units (20 calls, the longest 5.6 ms) is sliceFor's slice, bit for bit, and sliceFor then returns it from the memo
+  ok    touch 3: the ring read in steps of 250 units (20 calls, the longest 5.5 ms) is sliceFor's slice, bit for bit, and sliceFor then returns it from the memo
+  ok    a touch-down's match started after the host's load (248 frames at the read's budget, the longest 5.5 ms) is the cold one, bit for bit; its start then takes 9 ms
+  ok    the B plates made at 250 units a call (9 calls, the longest 4.0 ms; it was one call of 46 ms) are the whole make's, bit for bit
+  ok    a gen 2 planet with the B plates on made by the job at 250 units is the one make gives, bit for bit (494 calls, the longest 5.2 ms)
+  ok    an eighth planet evicts the oldest only: seed 1 is gone, seeds 2 to 8 stay (7 kept)
+STEP: 0 check(s) failed

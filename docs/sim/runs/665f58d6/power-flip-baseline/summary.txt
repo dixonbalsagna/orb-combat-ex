@@ -1,0 +1,23 @@
+HEAD 665f58d6
+tree base 36041dc
+import 0
+== lane A
+brunt_check: exit 0 in 14 s; BRUNT: 0 check(s) failed
+deepencheck: exit 0 in 4 s; DEEPEN: 0 check(s) failed
+ground_check: exit 0 in 8 s; GROUND: 0 check(s) failed
+interior_check: exit 0 in 10 s; INTERIOR: 0 check(s) failed
+repeat_check: exit 0 in 4 s; REPEAT: 0 check(s) failed
+== lane B
+step_check: exit 0 in 27 s; STEP: 0 check(s) failed
+meteor_crater_check: exit 0 in 14 s; METEORCRATER: 0 check(s) failed
+wrecks_check: exit 0 in 4 s; WRECKS: 0 check(s) failed
+wall_hold_check: exit 0 in 12 s; WALLHOLD: 0 check(s) failed
+chase_rush: exit 1 in 14 s; chase_rush_check: 130 checks, 3 failed
+spectator_neg: exit 0 in 14 s; PASS  negative control: 5 break(s) caught, 0 missed
+== lane C
+arc: exit 0 in 11 s; ARC: 0 check(s) failed
+floorlift: exit 1 in 21 s; FLOORLIFT: 1 check(s) failed
+follow: exit 0 in 12 s; FOLLOW: 0 check(s) failed
+loader: exit 0 in 1775 s; loader check passed
+flash_worst: exit 0, check-log exit 0 in 631 s; flash count passed: in no window of 60 ticks does the weighted register grant more than 2.5 of weight (1 under reduced flashing), more than 3 flashes of weight 
+done

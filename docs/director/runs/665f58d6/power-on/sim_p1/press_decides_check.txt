@@ -1,0 +1,22 @@
+ok    charge close on, held 36: it reaches him
+ok    charge close on, held 46: it reaches him
+ok    past fullBh it doesn't travel to him
+ok    press wait off: the press lapses and the hold comes to nothing
+ok    press wait on: the hold built since the press, so the flash comes on time (44)
+ok    a stun clears the waiting press, and says so
+ok    a press in a stun is told, not silent
+ok    a tapped B in a brawl is a stagger (["stagger:heavy"])
+ok    a tapped B starting an exchange isn't a knock-back
+ok    past the first flash: a knock-back
+ok    the full flash: a send (DRIVE DOWN)
+ok    10 ki, then x1.5 each inside 3 s
+ok    a light doesn't stop it
+ok    a quick flick takes his run
+ok    pendFollow off: a refused flick is told at once too, as not_yours (one report, with its knock)
+ok    pendFollow on: a refused flick is told at once, as not_yours (the first move is his rival's)
+ok    a swept hold goes on his first free tick
+ok    ... and its level counts from then, not from the first press (1)
+ok    a swept hold goes once: no refusal every tick (0)
+ok    flickRun off: a flick builds no run of his own
+ok    flickRun on: a landed flick adds flickRun.points to his run
+PRESS: 0 check(s) failed

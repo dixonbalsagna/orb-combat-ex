@@ -1,0 +1,9 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Orb Combat EX two-states check   Godot 4.7.2-stable (official)   seeds [1, 2]   600 ticks   setups default,power,travel
+default  seed 1  ok    600 ticks  85 rollbacks  589 snapshots read late (20 hashed)  C from tick 289 at 301  118 buildings 66 trees
+default  seed 2  ok    600 ticks  85 rollbacks  589 snapshots read late (20 hashed)  C from tick 289 at 301  118 buildings 66 trees
+power    seed 1  ok    600 ticks  85 rollbacks  589 snapshots read late (20 hashed)  C from tick 289 at 301  255 buildings 74 trees
+power    seed 2  ok    600 ticks  85 rollbacks  589 snapshots read late (20 hashed)  C from tick 289 at 301  255 buildings 74 trees
+travel   seed 1  ok    600 ticks  85 rollbacks  589 snapshots read late (20 hashed)  C from tick 289 at 301  255 buildings 74 trees
+travel   seed 2  ok    600 ticks  85 rollbacks  589 snapshots read late (20 hashed)  C from tick 289 at 301  255 buildings 74 trees
+PASS  0 failure(s)

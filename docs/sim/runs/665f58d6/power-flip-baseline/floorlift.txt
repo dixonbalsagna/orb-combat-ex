@@ -1,0 +1,20 @@
+PASS  moves: spike: under his floor 12 ticks, largest lift 7.50 a tick, limit 7.5
+PASS  moves: thrown apart: under his floor 17 ticks, largest lift 2.61 a tick, limit 7.5
+PASS  moves: step in: under his floor 8 ticks, largest lift 7.50 a tick, limit 7.5
+PASS  moves: heavy recoil: under his floor 10 ticks, largest lift 7.50 a tick, limit 7.5
+PASS  moves: pop flip: under his floor 4 ticks, largest lift 0.00 a tick, limit 7.5; its own height 20.69
+PASS  moves: recoil flip: under his floor 4 ticks, largest lift 0.00 a tick, limit 7.5; its own height 20.69
+PASS  moves: knock-back: under his floor 13 ticks, largest lift 2.17 a tick, limit 7.5
+PASS  moves: contact: under his floor 8 ticks, largest lift 7.50 a tick, limit 7.5
+PASS  moves: dodge: under his floor 7 ticks, largest lift 7.50 a tick, limit 7.5
+PASS  moves: meet: under his floor 39 ticks, largest lift 7.50 a tick, limit 7.5
+PASS  moves: zip's way out: under his floor 9 ticks, largest lift 7.50 a tick, limit 7.5
+PASS  moves: a brawl's pull: under his floor 10 ticks, largest lift 7.50 a tick, limit 7.5
+PASS  moves: the control sees it: with riseTicks 1 the largest lift is 59.44 a tick, 9 ticks over 7.5
+FAIL  fight: 20160 AI ticks on the bed, 32190 of them under his floor, 1007 reposes in a brawl: largest lift 32.67 a tick, 9 over the limit 7.5 (PROTAGONIST locked at 48761 (moved -23), from 2082.7 to 2115.4 (floor 2191.5, ground 1953.8) on a rush, exchange dodge DODGE & READ); a move's own height up to 97.24 (RIVAL locked at 48172 (moved -230), from 2146.3 to 2243.5 (floor 2180.5, ground 2180.5) on a rush, exchange dodge DODGE & READ)
+PASS  fight: the control sees it: with riseTicks 1 the largest lift is 75.00 a tick (PROTAGONIST locked at 48784 (moved 0), from 2107.0 to 2182.0 (floor 2195.6, ground 2107.0) no rush, exchange signature PROTAGONIST.SIG over plains (FIELD SCAR))
+PASS  throw: shallow: flat on his floor (0.000 off it), open 20 ticks, 1 splash, the ground moved 0.00
+PASS  throw: shoulder: flat on his floor (0.000 off it), open 20 ticks, 1 splash, the ground moved 0.00
+PASS  throw: sheet: flat on his floor (0.000 off it), open 20 ticks, 1 splash, the ground moved 0.00
+PASS  offer: MARSH SWALLOW at mud 38.2 deep: offered true with the floor off, false with it on; at mud 0.0 deep: true and true (planet 42, touch 0)
+FLOORLIFT: 1 check(s) failed

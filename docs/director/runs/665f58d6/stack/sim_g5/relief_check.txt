@@ -1,0 +1,21 @@
+ok    the relief doesn't read casualt
+ok    the relief doesn't read toll
+ok    the relief doesn't read popAlive
+ok    the relief doesn't read popNear
+ok    the relief doesn't read popHist
+ok    the relief doesn't read pop_mult
+ok    the relief doesn't read crowd
+ok    the relief doesn't read menace
+ok    the relief doesn't read anguish
+ok    the data's floor is at least half (0.50)
+ok    off: no slot is sized
+ok    off: the factor is 1
+ok    under minSends: the factor is 1
+ok    short of his share: one factor (0.60)
+ok    it fired once
+ok    and asking again doesn't fire it again
+ok    a fighter with no care: the factor is 1
+ok    a player: the factor is 1
+ok    at his share: it goes off
+ok    no people anywhere: the factor is the same
+RELIEF: 0 check(s) failed

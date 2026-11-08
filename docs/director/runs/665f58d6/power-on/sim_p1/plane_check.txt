@@ -1,0 +1,22 @@
+ok    the data's number is 20 (20.0)
+ok    from 1200, home in 60 ticks (60)
+ok    from 1200, he only ever comes closer
+ok    from 1200, it eases in: the first step is 0.99 of a peak of 30.0
+ok    from 1200, the most in a tick is 30.0: a smoothstep's 1.5 x 20, no snap
+ok    from 300, home in 15 ticks (15)
+ok    from 300, he only ever comes closer
+ok    from 300, it eases in: the first step is 3.82 of a peak of 30.0
+ok    from 300, the most in a tick is 30.0: a smoothstep's 1.5 x 20, no snap
+ok    from -1200, home in 60 ticks (60)
+ok    from -1200, he only ever comes closer
+ok    from -1200, it eases in: the first step is 0.99 of a peak of 30.0
+ok    from -1200, the most in a tick is 30.0: a smoothstep's 1.5 x 20, no snap
+ok    in a flight, the flight has him: the ease waits
+ok    buried, he waits
+ok    let go, he eases (-296.18)
+ok    a rush arrives at his target's depth, and his own ease has just begun (a -598.0, d -600.0)
+ok    locked, the one nearer the plane follows in at the close's limit (-45.0)
+ok    ... until the two are level (-284.8, -284.8, from a gap of 1200)
+ok    then they come home together
+ok    the number at 0: he stays, as main does
+PLANE: 0 check(s) failed

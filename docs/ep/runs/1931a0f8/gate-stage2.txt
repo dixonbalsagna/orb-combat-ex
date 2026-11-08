@@ -1,0 +1,19 @@
+apply Claude 0 error: repository lacks the necessary blob to perform 3-way merge. Falling back to direct application... error: repository lacks the necessary blob to perform 3
+apply Claude 0 Applied patch to 'docs/net/lan-v1.md' cleanly. Applied patch to 'net/lan.gd' cleanly. Applied patch to 'net/tools/desync_check.gd' cleanly. Applied patch to 'ne
+apply Claude 0 Applied patch to 'net/tools/lan_words.txt' cleanly. 
+e13869c4fbe6 c57e3867e3e8 ba8352058eef 
+parity 0 golden check passed
+validate 0 321 files checked, 0 errors, 2 warnings
+pseudo_check 0 pseudo-locale is current (10 files)
+hud_check 0 hud_check: 7776 checks, 0 failed
+n2_lan_check 0 LAN: 0 check(s) failed
+n2_lan_check_--_--negative-control 0 LAN: 0 check(s) failed
+n2_rollback_check_--_--setup_power_--seeds_1_--ticks_300_--prof 0 PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+n2_rollback_check_--_--setup_lan_--seeds_1_--ticks_300_--profil 0 PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+n2_rollback_check_--_--setup_fights2_--seeds_1_--ticks_300_--pr 0 PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+n2_rollback_check_--_--setup_lan_--seeds_1_--ticks_240_--negati 0 PASS  negative control: 14 break(s) caught, 0 missed
+n2_desync_check_--_--setup_lan_--seeds_1_2_--ticks_600_--profil 0 PASS  28 runs, 36 checkpoints matched, 0 failure(s)
+n2_desync_check_--_--setup_lan_--seeds_1_--ticks_600_--profiles 0 PASS  negative control: 5 break(s) caught, 0 missed
+render 19 passed; DONE 
+content screen: 5581 text files of 6789 scanned, 0 failing hit(s), 0 warning(s)
+ALLDONE2

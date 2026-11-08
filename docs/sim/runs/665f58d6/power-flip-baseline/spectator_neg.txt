@@ -1,0 +1,3 @@
+  caught predicted far     spectator: tick 7's feed and fx differ from the straight run
+  caught flip      far     spectator: SimHash differs from the straight run after tick 310
+PASS  negative control: 5 break(s) caught, 0 missed

@@ -1,0 +1,17 @@
+ok    off: it isn't the Driver's
+ok    level 0 lands
+ok    level 0 moves him (85)
+ok    level 1 lands
+ok    level 1 moves him (96)
+ok    level 2 lands
+ok    level 2 moves him (154)
+ok    level 3 lands
+ok    level 3 moves him (13797)
+ok    each level hits harder ([80.9576640683663, 101.145695476545, 126.838881476215, 166.639452523945])
+ok    level 3 is a full send (launched)
+ok    and goes far further than a tap (13797 against 85)
+ok    level 3 breaks a guard, a tap doesn't
+ok    a dodge drops it for nothing
+ok    no ki: refused, and it says so
+DRIVER: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).

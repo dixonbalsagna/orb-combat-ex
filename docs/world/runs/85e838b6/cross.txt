@@ -1,0 +1,16 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+  director's blast rules: on
+  bolt clean, no press: the plain rule: across 13.00, inside 13.00
+  bolt clean: across 13.83, inside 13.83
+  bolt guarded: across 4.69, inside 4.69
+  bolt dodged: across 0.00, inside 0.00
+  a shot from outside at the building: 27.0000 across, 27.0000 inside; his menace 0.000000 and 0.000000; casualties 0.7760 and 0.7760
+  a shot from outside at the ground: 12.4176 across, 12.4176 inside; his menace 0.000000 and 0.000000; casualties 0.0000 and 0.0000
+  a shot from outside at the building: 27.0000 across, 27.0000 inside; his anguish 0.164890 and 0.164890; casualties 0.7760 and 0.7760
+  a shot from outside at the building: 27.0000 across, 27.0000 inside; his witness -0.366421 and -0.366421; casualties 0.7760 and 0.7760
+  deflect: the shot went wild (scatter on); p1 took 0.00
+  beam: 218.5, stopped at 800.0
+  blow: 40 sent, 42.56 landed
+  ai together: within 2,000 for 833 of 2,400 ticks; sent {  }, landed {  }
+CROSS: 0 check(s) failed
+EXIT 0

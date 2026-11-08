@@ -1,0 +1,8 @@
+Orb Combat EX golden check   Godot 4.7.2-stable (official)   res://sim/core/test/golden.json
+FAIL  roster data: the roster data hash differs (data/fighters/ changed): c0f981623e350862 vs golden 1f127fcc32218996; regenerate the goldens if the edit is meant
+FAIL  the intro phase (golden): differs
+FAIL  composed intros (golden): differs
+FAIL  matches: default seed 1: per-tick digest 7d23cec0136dd3f8, golden ec847fabee4d663d (checkpoints agree: the difference is between checkpoints, in the feed text or in the fx events); swap seed 1: per-tick digest e8542c8604cf4ea6, golden 0fb1ae33d426ef89 (c
+FAIL  human-input replays: replay seed 11: per-tick digest 246e5a3a40790ef1, golden 0f48c68fc4348242 (checkpoints agree: the difference is between checkpoints, in the feed text or in the fx events)
+FAIL  planet worlds (golden): the planet match {"planet":7,"touch":3} seed 1: first full-state difference by tick 2880 (checkpoint 24): 9e69c6932b3ca0c7:e7d82486e1673b58:949b7bb7c091e702 vs golden d7bd5da9afbd3860:e7d82486e1673b58:949b7bb7c091e702
+golden check FAILED

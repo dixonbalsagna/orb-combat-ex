@@ -1,0 +1,4 @@
+determinism lint ok: no engine trig, PI/TAU, random numbers or clock in sim/core, sim/director, sim/world, sim/input
+warning  audio/data/coop_cues.json  [no-schema] no schema for this folder (see tools/schemas/map.json); not validated
+warning  audio/data/moment_cues.json  [no-schema] no schema for this folder (see tools/schemas/map.json); not validated
+319 files checked, 0 errors, 2 warnings

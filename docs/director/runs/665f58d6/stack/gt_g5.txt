@@ -1,0 +1,16 @@
+[gauntlet] 1/3 shipped orbs easy: win 3%, refusals 30/100, no control 56.7 s/min
+[gauntlet] 2/3 run orbs easy: win 3%, refusals 30/100, no control 56.7 s/min
+[gauntlet] 3/3 runkeep orbs easy: win 3%, refusals 11.1/100, no control 56.9 s/min
+tree C:\Users\<user>\AppData\Local\Temp\claude\bb5aa63790efa20b\eb896954-cae4-4e38-a830-e1f1ec7e3853\scratchpad\g5g; 40 matches a cell from seed 1; the same seeds in every scheme
+SCHEME shipped (the reference)
+arm          level   n   win % (95% +/-)   refusals/100 presses s without control/min  beams/match
+orb's scheme easy    40  3% +/-6           30                  56.7                   0
+
+SCHEME run
+arm          level   n   win % (95% +/-)   refusals/100 presses s without control/min  beams/match
+orb's scheme easy    40  3% +/-6 (+0)      30 (+0)             56.7 (+0)              0
+
+SCHEME runkeep
+arm          level   n   win % (95% +/-)   refusals/100 presses s without control/min  beams/match
+orb's scheme easy    40  3% +/-6 (+0)      11.1 (-18.9)        56.9 (+0.2)            0
+

@@ -1,0 +1,20 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+  ok   off: no far record, no far building
+  ok   on: the far record names the first far building (1002 of 3899)
+  ok   the far buildings hold 5129 people, all asleep
+  ok   pop0 (1799) and the lure buckets are the first ring's
+  ok   47 far places
+  ok   no far place is within 100 units of a fighter: none is posed
+  ok   within reach every place is posed (47)
+  ok   a posed place's people are awake
+  ok   posing places leaves pop0 (what menace, mood and Witness read) the first ring's
+  ok   a casualty in a far building is 1 people
+  ok   the hero's anguish rose (0.000 to 0.075)
+  ok   casualties, the budget, menace and power did not move
+  ok   a place of 57 people lost whole costs the hero 30.357, a place of 407 costs 30.283: the same, whatever its size
+  ok   the far branch touches none of the sinks (menace, power from casualties, Witness, mood's aggression, the budget, the lure buckets) []
+  ok   every far building's landmark index resolves in the data, so the director's no-target filter (WorldSettle.noTarget) reads the new towns as it does the first ring's (0 far buildings carry a no-target landmark on this planet)
+FARPEOPLE: 0 check(s) failed
+WARNING: 10 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+EXIT 0

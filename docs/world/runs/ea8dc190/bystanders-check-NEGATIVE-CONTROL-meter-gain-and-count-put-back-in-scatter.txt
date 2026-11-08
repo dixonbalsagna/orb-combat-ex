@@ -1,0 +1,20 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+  FAIL: seed 1 cause 0: nothing counted (casualties 0.500)
+  FAIL: seed 1 cause 0: no meter rose ["fighter 0 menace 10.0000 -> 11.0000", "fighter 0 power 10.0000 -> 11.0000"]
+  FAIL: seed 1 cause 1: nothing counted (casualties 0.500)
+  FAIL: seed 1 cause 1: no meter rose ["fighter 1 menace 10.0000 -> 11.0000", "fighter 1 power 10.0000 -> 11.0000"]
+  FAIL: seed 2 cause 0: nothing counted (casualties 0.500)
+  FAIL: seed 2 cause 0: no meter rose ["fighter 0 menace 10.0000 -> 11.0000", "fighter 0 power 10.0000 -> 11.0000"]
+  FAIL: seed 2 cause 1: nothing counted (casualties 0.500)
+  FAIL: seed 2 cause 1: no meter rose ["fighter 1 menace 10.0000 -> 11.0000", "fighter 1 power 10.0000 -> 11.0000"]
+  FAIL: seed 3 cause 0: nothing counted (casualties 0.500)
+  FAIL: seed 3 cause 0: no meter rose ["fighter 0 menace 10.0000 -> 11.0000", "fighter 0 power 10.0000 -> 11.0000"]
+  FAIL: seed 3 cause 1: nothing counted (casualties 0.500)
+  FAIL: seed 3 cause 1: no meter rose ["fighter 1 menace 10.0000 -> 11.0000", "fighter 1 power 10.0000 -> 11.0000"]
+  FAIL: it killed no one and left no one inside (casualties 0.500, inside 0.0)
+  FAIL: its fall raised no meter ["fighter 1 menace 10.0000 -> 11.0000", "fighter 1 power 10.0000 -> 11.0000"]
+  FAIL: a whole world brought down by the villain (118 buildings): the count is 0
+  FAIL: no meter rose for it ["fighter 1 menace 10.0000 -> 100.0000", "fighter 1 power 10.0000 -> 100.0000"]
+  FAIL: collateral.gd has no kill, no feed, and writes no casualties, menace, power or anguish (3 lines)
+BYSTANDERS: 81.0 people ran in the scatter runs, none died
+BYSTANDERS: 17 check(s) failed

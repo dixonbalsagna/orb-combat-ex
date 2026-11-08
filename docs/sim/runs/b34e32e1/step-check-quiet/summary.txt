@@ -1,0 +1,4 @@
+step_check on a quiet machine (0 to 20% load, no other Godot), 2026-11-08 02:15 PST, one job, normal priority:
+ flip_1, flip_2: the flip tree (b34e32e1 + power-travel + power-flip): STEP 0 failed, longest job call 4.6 and 6.4 ms
+ head_1: clean HEAD (665f58d6 export): STEP 0 failed, longest 5.8 ms
+The earlier failure (3d628d7b, 28 to 33 ms) ran with three lanes of gates on the machine.

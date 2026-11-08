@@ -1,0 +1,18 @@
+  ok    a tier-1 flight never punches an unmarked tower (0 did)
+BRUNT: 0 check(s) failed
+  ok    a bump at 870 speed costs 5.2 hp
+DEEPEN: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+  ok    bounces happen in the random chains
+INTERIOR: 0 check(s) failed
+  ok    off: a second impact beside it is today's (the same size or too dented to dig)
+REPEAT: 0 check(s) failed
+WARNING: 64 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+WARNING: 19 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+  ok    the burst is the same twice, and changes the state (hashed through the spent wreck's mark and the damage)
+WRECKS: 0 check(s) failed
+  ok   the building remembers: repeats break it (0 fall off, 24 of 24 with repeatMarks 2)
+WALLHOLD: 0 check(s) failed

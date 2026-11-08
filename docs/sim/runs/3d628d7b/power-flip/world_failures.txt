@@ -1,0 +1,48 @@
+261:  FAIL  at tier 3 a tower the body has the strength to punch lets him through, and one it cannot holds him (60 of 90)
+262:  FAIL  at tier 4 the same (42 of 90)
+263:  FAIL  a house is gone through at every tier and speed, at houseKeep, and the hit kills it (0 of 12)
+264:  FAIL  a tier-1 tower of 10 floors and 1125 hit points gives way after 12 walls at speed 1400 (the data's giveWay 2.0; a median tower of 13 floors: about 3)
+267:  FAIL  the last hit holds the body for the tier's seconds (98 of 166)
+268:  FAIL  no chain uses more links than its tier's cap, a house half (153 of 166)
+270:BRUNT: 6 check(s) failed
+272:gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/world/tools/brunt_check.gd: verdict: BRUNT: 6 check(s) failed
+274:::error::World check brunt_check failed (exit 1)
+475:  FAIL  a bowl at the radius cap is deepened (704 to 154; a second dig made 154)
+480:DEEPEN: 1 check(s) failed
+482:gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/world/tools/deepencheck.gd: verdict: DEEPEN: 1 check(s) failed
+484:::error::World check deepencheck failed (exit 1)
+1133:  FAIL  gen 1 planet matches (seeds 7, 3, 25, 11; rings of 2400, 1200, 4800, 2400) hash as they did before window 2
+1134:  FAIL  the hand-made world and a gen 1 turn hash as before (turn: n=1 7a4569cb2356c067)
+1163:GROUND: 2 check(s) failed
+1167:gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/world/tools/ground_check.gd: verdict: GROUND: 2 check(s) failed
+1169:::error::World check ground_check failed (exit 1)
+1243:  FAIL  tier 3 down: from tier 3 the ceiling is reached (or he left first: capped)
+1251:  FAIL  tier 4 down: from tier 3 the ceiling is reached (or he left first: capped)
+1285:  FAIL  a fast steep send at tier 1 bounces off the held floor (face! floor15 END:lodge)
+1297:INTERIOR: 3 check(s) failed
+1299:gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/world/tools/interior_check.gd: verdict: INTERIOR: 3 check(s) failed
+1301:::error::World check interior_check failed (exit 1)
+1494:  FAIL  the same send does 1.00x, 1.00x, then 1.00x the first one's damage (the ladder's 1.74 and 2.70, capped)
+1503:REPEAT: 1 check(s) failed
+1505:gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/world/tools/repeat_check.gd: verdict: REPEAT: 1 check(s) failed
+1507:::error::World check repeat_check failed (exit 1)
+1699:  FAIL  at the read's budget (250 units, about 5 ms) no call of the job is long: the longest 33.0 ms (the grid's carry, the flow field and a try-set were 17 to 140 ms in one call)
+1701:  FAIL  at the read's budget (250 units, about 5 ms) no call of the job is long: the longest 28.9 ms (the grid's carry, the flow field and a try-set were 17 to 140 ms in one call)
+1708:  FAIL  a gen 2 planet with the B plates on made by the job at 250 units is the one make gives, bit for bit (494 calls, the longest 30.3 ms)
+1710:STEP: 3 check(s) failed
+1714:gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/world/tools/step_check.gd: verdict: STEP: 3 check(s) failed
+1716:::error::World check step_check failed (exit 1)
+1738:  FAIL an ordinary dig of that energy is held to 8 bh (2015)
+1747:METEORCRATER: 1 check(s) failed
+1751:gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/world/tools/meteor_crater_check.gd: verdict: METEORCRATER: 1 check(s) failed
+1753:::error::World check meteor_crater_check failed (exit 1)
+1839:  FAIL  the scrap does more to structures as the tier rises (hp taken: [134.649106587749, 134.649106587749, 134.649106587749, 134.649106587749])
+1841:WRECKS: 1 check(s) failed
+1843:gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/world/tools/wrecks_check.gd: verdict: WRECKS: 1 check(s) failed
+1845:::error::World check wrecks_check failed (exit 1)
+1971:  FAIL today the fight freezes at the hit and he is thrown off the face (0 of 16)
+1977:  FAIL the building remembers: repeats break it (0 fall off, 0 of 24 with repeatMarks 2)
+1978:WALLHOLD: 2 check(s) failed
+1980:gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/world/tools/wall_hold_check.gd: verdict: WALLHOLD: 2 check(s) failed
+1982:::error::World check wall_hold_check failed (exit 1)
+2060:world-checks: 9 of 83 failed: brunt_check, deepencheck, ground_check, interior_check, repeat_check, step_check, meteor_crater_check, wrecks_check, wall_hold_check

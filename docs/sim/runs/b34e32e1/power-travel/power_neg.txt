@@ -1,0 +1,28 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+  past it: tier 1 power 2, 4262 against 2009, BUILDING SMASH, launchT 1.95
+  past it: tier 1 power 4, 4282 against 2019, SMASH ACROSS, launchT 1.76
+  past it: tier 2 power 40, 7749 against 3088, , launchT 1.48
+  past it: tier 2 power 36, 6054 against 3061, , launchT 1.58
+  past it: tier 2 power 37, 6502 against 3065, UPPERCUT, launchT 1.20
+  past it: tier 2 power 38, 5694 against 3075, UPPERCUT, launchT 1.20
+  past it: tier 2 power 41, 9278 against 3093, BUILDING SMASH, launchT 1.80
+  past it: tier 2 power 41, 8925 against 3099, BUILDING SMASH, launchT 1.97
+  past it: tier 3 power 67, 11769 against 4613, , launchT 1.79
+  past it: tier 3 power 66, 13798 against 4599, BUILDING SMASH, launchT 1.80
+  past it: tier 3 power 67, 13330 against 4618, BUILDING SMASH, launchT 1.96
+  past it: tier 3 power 69, 9830 against 4634, UPPERCUT, launchT 1.20
+  past it: tier 3 power 67, 9792 against 4616, UPPERCUT, launchT 1.20
+  past it: tier 4 power 100, 14852 against 7001, BUILDING SMASH, launchT 1.89
+  past it: tier 4 power 100, 10187 against 7001, DRIVE DOWN, launchT 1.59
+  past it: tier 4 power 100, 19762 against 7001, MOUNTAINSIDE, launchT 1.95
+trips tier 1: 1, median 2536, longest 2536
+trips tier 2: 4, median 5858, longest 7703
+trips tier 3: 5, median 4724, longest 8083
+trips tier 4: 2, median 10429, longest 10429
+shares asked for last before a launch: { "0.500": 8, "1.000": 8, "0.250": 1 }
+sends: 17 launches; fastest at tiers 1 to 4: 4282, 9278, 13798, 19762; along the line 8311, 17566, 26104, 38536; 16 past the cap, 6 that glow at tier 2 or under
+FAIL  the page's x1.25 along the line (2.00); straight up, once
+FAIL  the factor is in the hash
+FAIL  a send: the same rise (609.7), sideways by the factor (3348.5 against 3348.5)
+FAIL  x0.50 held to the data's range: x2.00
+POWER negative control: 0 check(s) failed

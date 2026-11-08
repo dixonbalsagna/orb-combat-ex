@@ -1,0 +1,14 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+pair bake: 276 ms, 809 poses
+seed 12345: 90 checkpoints to tick 5400, final adcd6fc4e1e6de08
+  60 Hz        same as the sim alone
+  144 Hz       same as the sim alone
+  jitter       same as the sim alone
+  jitter again same as the sim alone
+seed 4: 90 checkpoints to tick 5400, final 0ed7d3eec49b9611
+  60 Hz        same as the sim alone
+  144 Hz       same as the sim alone
+  jitter       same as the sim alone
+  jitter again same as the sim alone
+determinism passed
+ERROR: 9 resources still in use at exit (run with --verbose for details).

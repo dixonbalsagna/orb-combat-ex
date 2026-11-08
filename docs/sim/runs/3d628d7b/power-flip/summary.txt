@@ -1,0 +1,218 @@
+HEAD 3d628d7b
+tree base 4a5b52b
+mine: power.json, power.gd, state.gd, hash.gd, sim.gd, power_check.gd
+grants: net/desync.gd, tools/schemas/fight-power.schema.json, tools/fixtures/virtual/data/fight/power.json
+import 0; parse errors 0
+golden: exit 0 in 173 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (163648 ticks),
+  golden.json regenerated
+match 0  ticks 18000 (same)  light DIFFERENT  checkpoints equal 0 of 151 (first part equal 0)
+match 1  ticks 18000 (same)  light DIFFERENT  checkpoints equal 0 of 151 (first part equal 0)
+match 2  ticks 18000 (same)  light DIFFERENT  checkpoints equal 0 of 151 (first part equal 0)
+match 3  ticks 18000 (same)  light DIFFERENT  checkpoints equal 0 of 151 (first part equal 0)
+match 4  ticks 18000 (same)  light DIFFERENT  checkpoints equal 0 of 151 (first part equal 0)
+match 5  ticks 18000 (same)  light DIFFERENT  checkpoints equal 0 of 151 (first part equal 0)
+match 6  ticks 18000 (same)  light DIFFERENT  checkpoints equal 0 of 151 (first part equal 0)
+match 7  ticks 18000 (same)  light DIFFERENT  checkpoints equal 0 of 151 (first part equal 0)
+match 8  ticks 31363 (DIFFERENT: 19648)  light DIFFERENT  checkpoints equal 0 of 262 (first part equal 0)
+replay 0  ticks 3000 (same)  light DIFFERENT  checkpoints equal 0 of 26 (first part equal 0)
+replay 1  ticks 2400 (same)  light DIFFERENT  checkpoints equal 0 of 21 (first part equal 0)
+tick0      different
+wounds     same
+rally      same
+cripple    same
+mood       same
+keyed      same
+rosterHash same
+fightHash  same
+RESULT: 11 DIFFER
+power-on 5ed6ecf56f69 7 files
+grant-netcode-travel 809a6d8e6733 1 files
+grant-tools-travel ccffdfde368c 2 files
+validate self-test 0;   parser 324 files + 7 text cases; engine 46 cases + 6 unsupported; schemas 193;
+validate 0; 319 files checked, 0 errors, 2 warnings
+lint 0
+ratchet 0; two-fighter ratchet ok: 365 against a baseline of 365
+power: exit 1 in 155 s; script errors 0; POWER: 1 check(s) failed
+28:FAIL  no word: the data's x2.00
+24:flight tier 1: flat out 5000 (off 10320), close 1023 (off 1023)
+25:flight tier 2: flat out 6624 (off 11352), close 1125 (off 1125)
+26:flight tier 3: flat out 8701 (off 12384), close 1228 (off 1228)
+27:flight tier 4: flat out 11525 (off 13416), close 1330 (off 1330)
+power_neg: exit 0 in 27 s; script errors 0; POWER negative control: 0 check(s) failed
+25:FAIL  no word: the data's x2.00
+26:FAIL  the page's x1.25 along the line (2.00); straight up, once
+27:FAIL  the factor is in the hash
+28:FAIL  a send: the same rise (609.7), sideways by the factor (3348.5 against 3348.5)
+29:FAIL  x0.50 held to the data's range: x2.00
+== copies for lanes B and C
+== lane A
+parity: exit 1 in 419 s; script errors 0; golden check FAILED
+24:FAIL  wired numbers change a match: ["PROTAGONIST/ladder.json", "RIVAL/ladder.json"] ["tiers", "launch"]: no effect on probe launch
+41:FAIL  the free-flight speed and the locked damping, as reads: tier 4.0, stance 0.0, dash true: one step from rest gave a speed of 4946.18860139058, and flightSpeed says 4946.18278427826
+78:FAIL  forms: five steps and the slingshot: the launch or recovery gain at five steps
+79:FAIL  forms: Witness and Trial: a Witness form's extras
+load_split: exit 0 in 8 s; script errors 0; ok: the director is a load of its own, SimDir's calls are all in their scripts, and the core and the world cal
+load_split_neg: exit 0 in 5 s; script errors 0; PASS  negative control: 3 of 3 breaks caught
+6:FAIL: SimDir calls flightHookGone in launch.gd with 2 arguments, which is not a static function of it that takes them
+9:FAIL: res://sim/world/contact.gd calls SimDir.propBroke, which res://sim/core/dir.gd does not define
+12:FAIL: res://sim/world/contact.gd calls the director by SimDir._d: give the call a named forward in res://sim/core/dir.gd
+det: exit 0 in 216 s; script errors 0; determinism passed
+det_fights: exit 0 in 336 s; script errors 0; determinism passed
+two_states: exit 0 in 85 s; script errors 0; PASS  0 failure(s)
+two_states_neg: exit 0 in 173 s; script errors 0; PASS  negative control: 3 of 3 breaks caught
+two_states_fights: exit 0 in 49 s; script errors 0; PASS  0 failure(s)
+xproc: exit 0 in 63 s; script errors 0; PASS  6 replays from 2 recording processes, each played in a fresh process: Hard 1e13c20734edfb80, Easy 257b72
+xproc_neg: exit 0 in 73 s; script errors 0; PASS negative control: 4 of 4 breaks caught (67.3 s)
+places: exit 0 in 33 s; script errors 0; PLACES: 0 check(s) failed
+kick: exit 0 in 45 s; script errors 0; KICK: 0 check(s) failed
+fork: exit 0 in 67 s; script errors 0; FORK: 0 check(s) failed
+fork_neg: exit 0 in 64 s; script errors 0; negative control: 3 of 3 planets caught
+memo: exit 0 in 57 s; script errors 0; MEMO: 0 check(s) failed
+memo_neg: exit 0 in 9 s; script errors 0; MEMO negative control: 0 check(s) failed
+frame: exit 0 in 44 s; script errors 0; PASS
+frame_neg: exit 0 in 7 s; script errors 0; PASS
+field_static: exit 0 in 216 s; script errors 0; FIELDSTATIC: 0 check(s) failed
+field_static_neg: exit 0 in 52 s; script errors 0; FIELDSTATIC negative control: 0 check(s) failed
+rec: exit 0 in 58 s; script errors 0; REC: 0 check(s) failed
+rec_neg: exit 0 in 8 s; script errors 0; REC negative control: 0 check(s) failed
+cross: exit 0 in 155 s; script errors 0; CROSS: 0 check(s) failed
+cross_neg: exit 0 in 6 s; script errors 0; CROSS negative control: 0 check(s) failed
+4:FAIL  a blow sent across waits on the stage, once (0)
+5:FAIL  ... and lands on the next tick (0.00)
+6:FAIL  ... holding his fight and not the striker's
+8:FAIL  a blow sent across waits on the stage, once (2)
+10:FAIL  a shot from outside, clean, no press: the plain rule, lands as from inside (0.000 against 13.000)
+11:FAIL  a shot from outside, clean, lands as from inside (0.000 against 13.832)
+cross_end: exit 0 in 175 s; script errors 0; CROSSEND: 0 check(s) failed
+cross_end_neg: exit 0 in 7 s; script errors 0; CROSSEND negative control: 0 check(s) failed
+3:FAIL  a first KO: he's out and the match goes on
+4:FAIL  a blow for the out body is refused
+5:FAIL  the match ends when a team has nobody standing (over -1)
+6:FAIL  ... the last KO's event says so, and names the winning team's slots ([])
+fights: exit 0 in 220 s; script errors 0; FIGHTS: 0 check(s) failed
+coop: exit 0 in 19 s; script errors 0; COOP: 0 check(s) failed
+coop_neg: exit 0 in 21 s; script errors 0; COOP negative control: 0 check(s) failed
+4:FAIL  with hits across on, both fights reach the cap on one tick of the stage's clock, fight 1 at 700 of its own (ticks -1, -1; clock 0.00)
+5:FAIL  ... whichever fight's clock is the longer (ticks -1, -1)
+6:FAIL  the ending's last event comes to both fights on one tick of the stage's clock (ticks -1, -1)
+7:FAIL  a rollback across the cap: 30 ticks, 0 differ (both capped false)
+9:FAIL  the setup's "outside": true lets a blow from outside land, with interrupts.json's switch off (0)
+10:FAIL  ... "outside": false keeps it out, with interrupts.json's switch on (28)
+loop: exit 0 in 10 s; script errors 0; LOOP: 0 check(s) failed
+ceil: exit 0 in 56 s; script errors 0; CEIL: 0 check(s) failed
+chase_rush: exit 1 in 15 s; script errors 0; chase_rush_check: 130 checks, 6 failed
+4:FAIL seed 1, 0 after the send, 1 taps, share 0.7: the view flapped: ["split", "closing", "merged", "opening", "split", "closing", "merged"]
+6:FAIL seed 1, 8 after the send, 1 taps, share 0.7: the view flapped: ["split", "closing", "merged", "opening", "split"]
+9:FAIL seed 1, 8 after the send, 1 taps, share 0.0: the view flapped: ["split", "closing", "merged", "opening", "split"]
+12:FAIL energy model, base, seed 1, 0 after the send, 1 taps, share 0.7: the view flapped: ["split", "closing", "merged", "opening", "split", "closing", "merged"]
+14:FAIL energy model, base, seed 1, 8 after the send, 1 taps, share 0.7: the view flapped: ["split", "closing", "merged", "opening", "split"]
+17:FAIL energy model, base, seed 1, 8 after the send, 1 taps, share 0.0: the view flapped: ["split", "closing", "merged", "opening", "split"]
+seam_sweep: exit 0 in 15 s; script errors 0; seam sweep passed
+sweep: exit 0 in 139 s; script errors 0; sweep check passed
+props: exit 0 in 26 s; script errors 0; props check passed
+cover_water: exit 0 in 19 s; script errors 0; cover water check passed
+lake_water: exit 0 in 20 s; script errors 0; lake water check passed
+== lane B
+lan: exit 0 in 76 s; script errors 0; LAN: 0 check(s) failed
+lan_neg: exit 0 in 28 s; script errors 0; LAN: 0 check(s) failed
+rb_ai: exit 0 in 25 s; script errors 0; PASS  3 AI sessions, 0 reached a KO, 1 also matched the AI's own straight run, 3600 confirmed-tick digest and 
+rb_ai_neg: exit 0 in 40 s; script errors 0; PASS  AI negative control: 7 break(s) caught, 0 missed
+rb_aisim: exit 0 in 23 s; script errors 0; PASS  3 AI sessions, 0 reached a KO, 1 also matched the AI's own straight run, 3600 confirmed-tick digest and 
+rb_aisim_neg: exit 0 in 37 s; script errors 0; PASS  AI negative control: 7 break(s) caught, 0 missed
+rb_drop: exit 0 in 86 s; script errors 0; PASS  3 sessions, 900 confirmed-tick digest and 900 SimHash comparisons, 0 failure(s)
+rb_drop_neg: exit 0 in 84 s; script errors 0; PASS  takeover negative control: 3 break(s) caught, 0 missed, 0 not applicable
+rb_rs: exit 0 in 79 s; script errors 0; PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+rb_plain: exit 0 in 83 s; script errors 0; PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+rb_plain_neg: exit 0 in 18 s; script errors 0; PASS  negative control: 4 break(s) caught, 0 missed
+rb_calm: exit 0 in 89 s; script errors 0; PASS  3 sessions, 3600 confirmed-tick hash comparisons, 0 failure(s)
+rb_depth: exit 0 in 109 s; script errors 0; PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+rb_depth_neg: exit 0 in 26 s; script errors 0; PASS  negative control: 4 break(s) caught, 0 missed
+rb_field: exit 0 in 73 s; script errors 0; PASS  2 sessions, 1200 confirmed-tick hash comparisons, 0 failure(s)
+rb_field_neg: exit 0 in 35 s; script errors 0; PASS  negative control: 4 break(s) caught, 0 missed
+rb_fights2: exit 0 in 172 s; script errors 0; PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+rb_fights2_neg: exit 0 in 57 s; script errors 0; PASS  negative control: 4 break(s) caught, 0 missed
+rb_fights2_trade: exit 0 in 142 s; script errors 0; PASS  2 sessions, 1200 confirmed-tick hash comparisons, 0 failure(s)
+rb_kick: exit 0 in 81 s; script errors 0; PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+rb_kick_neg: exit 0 in 21 s; script errors 0; PASS  negative control: 4 break(s) caught, 0 missed
+rb_planet2: exit 0 in 55 s; script errors 0; PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+rb_planet2_neg: exit 0 in 19 s; script errors 0; PASS  negative control: 4 break(s) caught, 0 missed
+rb_takeover: exit 0 in 108 s; script errors 0; PASS  6 sessions, 3600 confirmed-tick hash comparisons, 0 failure(s)
+rb_takeover_neg: exit 0 in 160 s; script errors 0; PASS  takeover negative control: 4 break(s) caught, 0 missed, 2 not applicable
+desync: exit 0 in 33 s; script errors 0; PASS  14 runs, 18 checkpoints matched, 0 failure(s)
+desync_neg: exit 0 in 13 s; script errors 0; PASS  negative control: 5 break(s) caught, 0 missed
+desync_ait: exit 0 in 23 s; script errors 0; PASS  AI timers: 0 failure(s)
+desync_ait_neg: exit 0 in 19 s; script errors 0; PASS  AI timers negative control: 10 break(s) caught, 0 missed
+desync_field: exit 0 in 120 s; script errors 0; PASS  28 runs, 36 checkpoints matched, 0 failure(s)
+desync_field_neg: exit 0 in 43 s; script errors 0; PASS  negative control: 10 break(s) caught, 0 missed
+desync_kick: exit 0 in 49 s; script errors 0; PASS  28 runs, 36 checkpoints matched, 0 failure(s)
+desync_kick_neg: exit 0 in 18 s; script errors 0; PASS  negative control: 10 break(s) caught, 0 missed
+spectator: exit 0 in 19 s; script errors 0; PASS  3 spectated sessions, 180 spectator hash comparisons, 0 failure(s)
+spectator_neg: exit 1 in 22 s; script errors 0; FAIL  negative control: 2 break(s) caught, 3 missed
+9:FAIL  negative control: 2 break(s) caught, 3 missed
+swing_rs: exit 0 in 183 s; script errors 0; swing check passed: 315 checks, 0 failed
+swing_neg: exit 0 in 195 s; script errors 0; swing check passed: 149 checks, 0 failed
+transport: exit 0 in 18 s; script errors 0; PASS  0 failure(s)
+transport_neg: exit 0 in 21 s; script errors 0; PASS  negative control: 3 of 3 breaks caught
+two_pc: exit 0 in 39 s; script errors 0; TWO_PC: 0 check(s) failed
+two_pc_neg: exit 0 in 37 s; script errors 0; TWO_PC: 0 check(s) failed
+word: exit 0 in 109 s; script errors 0; word check passed: 623 checks, 0 failed
+word_neg: exit 0 in 164 s; script errors 0; word check passed: 9 checks, 0 failed
+delay: exit 0 in 5 s; script errors 0; PASS  0 failure(s)
+delay_neg: exit 0 in 4 s; script errors 0; PASS  negative control: 2 of 2 broken choosers caught
+== lane C
+world: exit 1 in 1745 s; gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --script res://sim/world/tools/floor_walk_probe.gd: the verdict line reports no failures world-checks: 9 o
+a_press: exit 0 in 8 s; script errors 0; A PRESS: 0 check(s) failed
+arc: exit 1 in 11 s; script errors 0; ARC: 1 check(s) failed
+53:FAIL  the meteor's own bowl (4571)
+bark_reads: exit 0 in 241 s; script errors 0; bark_reads_check: passed
+beam_ai: exit 0 in 7 s; script errors 0; BEAM AI: 0 check(s) failed
+beam_front: exit 0 in 8 s; script errors 0; FRONT: 0 check(s) failed
+beam_move: exit 0 in 6 s; script errors 0; BEAM MOVE: 0 check(s) failed
+chase_tap: exit 0 in 8 s; script errors 0; CHASE: 0 check(s) failed
+city_push: exit 0 in 8 s; script errors 0; CITY PUSH: 0 check(s) failed
+driver: exit 0 in 10 s; script errors 0; DRIVER: 0 check(s) failed
+ending: exit 0 in 11 s; script errors 0; ENDING: 0 check(s) failed
+floorlift: exit 1 in 26 s; script errors 0; FLOORLIFT: 1 check(s) failed
+24:FAIL  fight: 20160 AI ticks on the bed, 32094 of them under his floor, 1065 reposes in a brawl: largest lift 7.81 a tick, 1 over the limit 7.5 (PROTAGONIST locked at 48820 (moved 36), from 2194.9 to 2202.7 (floor 2202
+follow: exit 1 in 14 s; script errors 0; FOLLOW: 3 check(s) failed
+6:FAIL  off, 60 after the send: the taunt
+15:FAIL  60 after the send: the tap flies after him
+16:FAIL  60 after the send: and the blow lands (-1)
+knock_wall: exit 0 in 8 s; script errors 0; KNOCK WALL: 0 check(s) failed
+launch_cost: exit 0 in 420 s; script errors 0; LAUNCH COST: 0 check(s) failed
+loader: exit 1 in 15 s; script errors 0; loader check FAILED
+location: exit 0 in 9 s; script errors 0; LOCATION: 0 check(s) failed
+morning_fixes: exit 0 in 5 s; script errors 0; MORNING FIXES: 0 check(s) failed
+outside: exit 0 in 6 s; script errors 0; OUTSIDE: 0 check(s) failed
+phrase: exit 0 in 7 s; script errors 0; PHRASE: 0 check(s) failed
+plane: exit 0 in 5 s; script errors 0; PLANE: 0 check(s) failed
+press_decides: exit 0 in 7 s; script errors 0; PRESS: 0 check(s) failed
+push_mode: exit 0 in 5 s; script errors 0; PUSH MODE: 0 check(s) failed
+reads: exit 0 in 6 s; script errors 0; reads_check: 16 of 16 passed
+relief: exit 0 in 4 s; script errors 0; RELIEF: 0 check(s) failed
+sigvariants: exit 0 in 44 s; script errors 0; sigvariants check passed
+stance: exit 0 in 7 s; script errors 0; STANCE: 0 check(s) failed
+stick: exit 0 in 12 s; script errors 0; STICK: 0 check(s) failed
+strike_stages: exit 0 in 5 s; script errors 0; STRIKE STAGES: 0 check(s) failed
+sure_reach: exit 0 in 5 s; script errors 0; sure_reach_check: passed
+dswing: exit 0 in 35 s; script errors 0; SWING: 0 check(s) failed
+swing_legal: exit 0 in 66 s; script errors 0; SWING LEGAL: 0 check(s) failed
+walk: exit 0 in 19 s; script errors 0; WALK: 0 check(s) failed
+after_check: exit 0 in 16 s; FAIL lines 0; script errors 0; after check passed
+cue_check: exit 0 in 55 s; FAIL lines 0; script errors 0; cue check passed
+depth_check: exit 0 in 14 s; FAIL lines 0; script errors 0; depth check passed
+flash_check: exit 0 in 48 s; FAIL lines 0; script errors 0; flash check passed
+flash_reg_check: exit 0 in 44 s; FAIL lines 0; script errors 0; flash register check passed
+flight_check: exit 0 in 52 s; FAIL lines 0; script errors 0; flight check passed
+ground_check: exit 0 in 51 s; FAIL lines 0; script errors 0; ground check passed
+hud_words_check: exit 0 in 8 s; FAIL lines 0; script errors 0; hud words check passed
+lane_check: exit 0 in 11 s; FAIL lines 0; script errors 0; lane check passed
+open_check: exit 0 in 19 s; FAIL lines 0; script errors 0; open check passed
+pane_check: exit 0 in 20 s; FAIL lines 0; script errors 0; pane check passed
+patch_check: exit 0 in 13 s; FAIL lines 0; script errors 0; patch check passed
+shape_check: exit 0 in 11 s; FAIL lines 0; script errors 0; shape check passed
+sky_check: exit 0 in 13 s; FAIL lines 0; script errors 0; sky check passed
+stage_check: exit 0 in 10 s; FAIL lines 0; script errors 0; stage check passed
+render gates done
+flash_worst: exit 0, check-log exit 1 in 621 s;  flash count FAILED (0 runs over the cap, 2 problems) 
+done

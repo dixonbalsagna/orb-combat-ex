@@ -1,0 +1,136 @@
+apply Claude 0 Applied patch to 'data/director/stick.json' cleanly. Applied patch to 'sim/director/launch.gd' cleanly. Applied patch to 'sim/director/melee.gd' cleanly. Applie
+apply Claude 0 Applied patch to 'sim/core/tools/parity.gd' cleanly. 
+apply Claude 0 Applied patch to 'net/session.gd' cleanly. Applied patch to 'net/tools/lan_check.gd' cleanly. 
+apply Claude 0 Applied patch to 'data/input/timing.json' cleanly. Applied patch to 'sim/input/hub.gd' cleanly. Applied patch to 'sim/input/input_data.gd' cleanly. Applied patc
+lint 0
+validate 0 321 files checked, 0 errors, 2 warnings
+selftest 0 self-test: 10093 of 10093 checks passed
+render 19 passed; DONE 
+input agency_input_test 0 se=0 agency_input_test: 105 checks, 0 failed
+input aim_test 0 se=0 aim_test: 233 checks, 0 failed
+input beam_aim_test 0 se=0 beam_aim_test: 31 checks, 0 failed
+input brake_grapple_test 0 se=0 brake_grapple_test: 66 checks, 0 failed
+input brake_ready_test 0 se=0 brake_ready_test: 15 checks, 0 failed
+input charge_test 0 se=0 charge_test: 97 checks, 0 failed
+input chord_pick_test 0 se=0 chord_pick_test: 15 checks, 0 failed
+input dodge_held_test 0 se=0 dodge_held_test: 47 checks, 0 failed
+input flight_strike_b_test 0 se=0 flight_strike_b_test: 29 checks, 0 failed
+input full_send_haptic_test 0 se=0 full_send_haptic_test: 14 checks, 0 failed
+input haptics_test 0 se=0 haptics_test: 80 checks, 0 failed
+input hold_toggle_test 0 se=0 hold_toggle_test: 88 checks, 0 failed
+input hub_test 0 se=0 hub_test: 60 checks, 0 failed
+input impact_haptics_test 0 se=0 impact_haptics_test: 58 checks, 0 failed
+input join_test 0 se=0 join_test: 53 checks, 0 failed
+input layout_test 0 se=0 layout_test: 131 checks, 0 failed
+input left_hand_test 0 se=0 left_hand_test: 27 checks, 0 failed
+input mode_test 0 se=0 mode_test: 55 checks, 0 failed
+input pad_first_press_test 0 se=0 pad_first_press_test: 23 checks, 0 failed
+input params_cache_test 0 se=0 params_cache_test: 36 checks, 0 failed
+input press_read_test 0 se=0 press_read_test: 439 checks, 0 failed
+input push_stick_test 0 se=0 push_stick_test: 34 checks, 0 failed
+input quick_read_test 0 se=0 quick_read_test: 30 checks, 0 failed
+input refusal_cue_test 0 se=0 refusal_cue_test: 52 checks, 0 failed
+input refusals_test 0 se=0 refusals_test: 92 checks, 0 failed
+input remap_test 0 se=0 remap_test: 147 checks, 0 failed
+input stage_cue_test 0 se=0 stage_cue_test: 25 checks, 0 failed
+input stage_haptics_test 0 se=0 stage_haptics_test: 30 checks, 0 failed
+input stall_keep_test 0 se=0 stall_keep_test: 29 checks, 0 failed
+input stance_test 0 se=0 stance_test: 186 checks, 0 failed
+input stick_feel_test 0 se=0 stick_feel_test: 142 checks, 0 failed
+input strike_gate_test 0 se=0 strike_gate_test: 268 checks, 0 failed
+input strike_hub_test 0 se=0 strike_hub_test: 63 checks, 0 failed
+input strike_read_test 0 se=0 strike_read_test: 61 checks, 0 failed
+input struggle_test 0 se=0 struggle_test: 105 checks, 0 failed
+input t1_latency_test 0 se=0 t1_latency_test: 62 checks, 0 failed
+input take_back_claw_test 0 se=0 take_back_claw_test: 55 checks, 0 failed
+input touch_full_test 0 se=0 touch_full_test: 848 checks, 0 failed
+input touch_glue_test 0 se=0    at: clear (core/io/resource.cpp:822)
+input touch_test 0 se=0 touch_test: 181 checks, 0 failed
+ci_delay_check__ 0 
+ci_delay_check______negative_control_ 0 
+ci_desync_check______ai_timers___seeds_1___ticks_600___p 0 
+ci_desync_check______ai_timers___seeds_1___ticks_600___p 0 
+ci_desync_check______seeds_1___ticks_600___profiles_lan_ 0 
+ci_desync_check______seeds_1___ticks_600___profiles_lan_ 0 
+ci_desync_check______setup_field___seeds_1_2___ticks_600 0 
+ci_desync_check______setup_field___seeds_1_2___ticks_600 0 
+ci_desync_check______setup_kick___seeds_1_2___ticks_600_ 0 
+ci_desync_check______setup_kick___seeds_1_2___ticks_600_ 0 
+ci_lan_check______ticks_1200_ 0 
+ci_lan_check______ticks_1200___negative_control_ 0 
+ci_rollback_check______ai___seeds_1___ticks_600___profiles 0 
+ci_rollback_check______ai___seeds_1___ticks_600___profiles 0 
+ci_rollback_check______ai_sim___seeds_1___ticks_600___prof 0 
+ci_rollback_check______ai_sim___seeds_1___ticks_600___prof 0 
+ci_rollback_check______drop_150___seeds_1___ticks_300___pr 0 
+ci_rollback_check______drop_150___seeds_1___ticks_300___pr 0 
+ci_rollback_check______right_stick___seeds_1___ticks_300__ 0 
+ci_rollback_check______seeds_1___ticks_240___profiles_lan_ 0 
+ci_rollback_check______seeds_1___ticks_300___profiles_lan_ 0 
+ci_rollback_check______setup_calm___turn_at_300___seeds_1_ 0 
+ci_rollback_check______setup_depth___seeds_1___ticks_300__ 0 
+ci_rollback_check______setup_depth___seeds_1___ticks_300__ 0 
+ci_rollback_check______setup_field___seeds_1___ticks_300__ 0 
+ci_rollback_check______setup_field___seeds_1___ticks_300__ 0 
+ci_rollback_check______setup_fights2___seeds_1___ticks_300 0 
+ci_rollback_check______setup_fights2___seeds_1___ticks_300 0 
+ci_rollback_check______setup_fights2___trade_at_0___seeds_ 0 
+ci_rollback_check______setup_kick___seeds_1___ticks_300___ 0 
+ci_rollback_check______setup_kick___seeds_1___ticks_300___ 0 
+ci_rollback_check______setup_planet2___seeds_1___ticks_300 0 
+ci_rollback_check______setup_planet2___seeds_1___ticks_300 0 
+ci_rollback_check______takeover_150___seeds_1___ticks_300_ 0 
+ci_rollback_check______takeover_150___seeds_1___ticks_300_ 0 
+ci_spectator_check______seeds_1___ticks_600___profiles_lan_ 0 
+ci_spectator_check______seeds_1___ticks_600___profiles_lan_ 0 
+ci_swing_check______negative_control_ 0 
+ci_swing_check______right_stick_ 0 
+ci_transport_check__ 0 
+ci_transport_check______negative_control_ 0 
+ci_two_pc_check______negative_control___ticks_900_ 0 
+ci_two_pc_check______self_test___ticks_900_ 0 
+ci_word_check__ 0 
+ci_word_check______negative_control_ 0 
+ci_chase_rush_check__ 0 
+ci_cover_water_check__ 0 
+ci_determinism__ 0 
+ci_lake_water_check__ 0 
+ci_props_check__ 0 
+ci_seam_sweep______size_1280x720_ 0 
+ci_sweep_check__ 0 
+ci_cross_check__ 0 
+ci_cross_check______negative_control_ 0 
+ci_cross_end_check__ 0 
+ci_cross_end_check______negative_control_ 0 
+ci_field_static_check__ 0 
+ci_field_static_check______negative_control_ 0 
+ci_fork_check__ 0 
+ci_fork_check______negative_control_ 0 
+ci_frame_check__ 0 
+ci_frame_check______negative_control_ 0 
+ci_kick_check__ 0 
+ci_load_split__ 0 
+ci_load_split______negative_control_ 0 
+ci_memo_check__ 0 
+ci_memo_check______negative_control_ 0 
+ci_parity__ 0 
+ci_places_check__ 0 
+ci_power_check__ 0 
+ci_power_check______negative_control_ 0 
+ci_rec_check__ 0 
+ci_rec_check______negative_control_ 0 
+ci_replay_xproc_check__ 0 
+ci_replay_xproc_check______negative_control_ 0 
+ci_two_states_check__ 0 
+ci_two_states_check______negative_control_ 0 
+ci_bark_reads_check__ 0 
+ci_chase_tap_check__ 0 
+ci_floorlift_check__ 0 
+ci_plane_check__ 0 
+ci_press_decides_check__ 0 
+ci_flash_worst______only_mash___ticks_300___negative_co 1 
+ci_flash_worst______out____RUNNER_TEMP__flash__ 1 
+world-checks 0 world-checks: all 85 passed
+golden_cmp 0 same
+content screen: 5901 text files of 7109 scanned, 0 failing hit(s), 0 warning(s)
+ALLDONE

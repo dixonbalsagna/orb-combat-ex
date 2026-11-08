@@ -1,0 +1,37 @@
+ok    seed 12345, 3600 ticks: in every second the granted weights sum to at most 2.5 (worst 1.00) and the low class's to 1.5 (0.00), with at most 3 flashes of half weight or more (1) and 6 of any (2); 13 granted, 483 refused
+ok    seed 4, 3600 ticks: in every second the granted weights sum to at most 2.5 (worst 1.00) and the low class's to 1.5 (0.00), with at most 3 flashes of half weight or more (1) and 6 of any (2); 7 granted, 526 refused
+ok    seed 7, 3600 ticks: in every second the granted weights sum to at most 2.5 (worst 1.00) and the low class's to 1.5 (0.00), with at most 3 flashes of half weight or more (1) and 6 of any (3); 15 granted, 408 refused
+ok    a close brawl, 80 hits in 4 seconds on two bodies: a body is tinted at most 3 times in a second (1 and 2) and the two together at most 4 (3); 9 tints in all
+ok    ... every hit lights the outline (477 frames), a granted one tints the body 60% of the way to white and no further, and the register's limits hold (weights 0.64, 5 flashes in the worst second)
+ok    UI's Reduce flashing on, 80 hits in 4 seconds on two bodies: neither is tinted, the outlines light (477 frames), and the reduced limits hold (weights 0.00, 0 flashes in the worst second)
+ok    the camera's scale reaches the register every frame: 0.48 pixels a world unit at 1024 by 768 (the reference camera's 0.50)
+ok    at the close framing a body's white weighs 0.17, a head flash 0.07 and a guard flash 0.19 (VFX's estimates: 0.17, 0.07, 0.2); a tier 4 beam weighs 1, a short one 0.14, and a beam seen from far 0.27
+ok    by weight: the low class takes 1.5 and no more, a perfect block's guard flash takes what the low class may not, a full flash over the budget of 2.5 is refused, and a step under a tenth costs nothing (true false true false true false t
+ok    by count: six small flashes in a second and no seventh; three of half weight or more and no fourth ([true, true, true, true, true, true, false], [true, true, true, false])
+ok    a red flare is refused and a cyan one is granted
+ok    the register lists the body's white, head flashes, cue flares and the divider's slam as low, and not the guard flash or a beam
+ok    a head flash asks for each of its pulses ([3]); with none granted it shows once, calm
+ok    with two of three granted it swells twice
+ok    UI's Reduce flashing option puts the register in its reduced mode: no body white, head flash or cue flare, and one big flash a second (a guard flash granted, then a beam and a clash refused)
+ok    ... and the register is back to its full budget with the option off
+ok    under it a groove's glow and char are drawn calm ([0.0, 0.35] of their strength), and at full strength again with it off
+ok    under it a new crater's colours spread in over 3.0 s (the ground shader's calm ease is on and its clock is the match's time); with it off they are there at once, as ever
+ok    with depth off the camera's distance is not given, a flash off the plane is weighed as on it, and VFX's clear query is not set
+ok    with depth on Rendering's flashes are weighed by the pixels they cover at their fighter's depth (the camera is 2724 units from the plane: a head flash in the middle street is 0.54 of its size on the plane, one at the near kerb 1.11), 
+ok    ... and both are unset again in the next match without depth
+ok    the divider's slam flash asks the register through the HUD's flash_fn: all of it with room in the second, none with the second full (1.0, 0.0); both asks are in the register's log
+ok    Latched charge and Charges off go from UI's options to the hub for the player who set them, and off again ([true, false, false, true], [false, true, true, false])
+ok    a beam's strength rises once and falls once (1 turn, peak 1.00, 0.07 on its first tick, nothing at its end)
+ok    a clash's flare and beams rise once and fall once (1 turn, peak 1.00)
+ok    a new beam asks the register with its own weight and is granted its bright form; under UI's Reduce flashing it does not ask and is drawn calm ([1, true, 0.49780159971599, 0.49780159971599], [0, false, 0.0, 0.54564147502184])
+ok    the pan haze ships off: a game started with no switch has none
+ok    the pan haze: none at a fifth of a screen width a second, full within 6 ticks of two a second, and the materials have it (0.00, 1.00)
+ok    ... a cut leaves it as it was (1.00), and it clears in one fall once the camera stands (0.42 after 20 ticks, 0.00 after 60)
+ok    ... and with its switch off there is none
+ok    the whip haze is off (2026-10-18): none in a rush, in a whip of four screen widths a second or after a cut (0.00), and the materials have none
+ok    ... and both building materials (the front row's and the other rows') hold RenderLook.PAN_WHIP_MIX
+ok    on a public page the capture hook, the study route, nointro and the sky's debug holds are dropped from the arguments and the look switches stay (["skyreact", "panhaze", "nopanhaze"]); on a local host all are kept
+ok    UI's rule for a local host, which the filter follows: 127.0.0.1 and localhost are, another address is not
+flash register check passed
+WARNING: 274 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+ERROR: 9 resources still in use at exit (run with --verbose for details).

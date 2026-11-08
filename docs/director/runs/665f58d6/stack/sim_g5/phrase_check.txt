@@ -1,0 +1,15 @@
+ok    every piece of the 258 read has its fighter's key set
+ok    a phrase that starts with taps
+ok    its first press takes its piece
+ok    and its second
+ok    a phrase that starts with a mash
+ok    a mash reaches its part's blows by the third press (2 of 4)
+ok    a press leaves phrases alive
+ok    and it has narrowed them
+ok    a pause breaks it, and the next blow starts over
+ok    same presses, same pieces
+ok    two runs, one hash
+ok    worth doesn't move (99901.38 against 99901.38)
+ok    off: the pool's
+ok    off: no slot
+PHRASE: 0 check(s) failed

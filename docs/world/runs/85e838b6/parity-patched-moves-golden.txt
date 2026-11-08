@@ -1,0 +1,60 @@
+ok    the form impulse
+ok    blocked blows and the arms
+ok    blocked shots and the arms
+ok    the second breath waits for quiet
+ok    a bowed rush
+ok    a drop
+ok    the mood by a blow's form
+ok    the free-flight speed and the locked damping, as reads
+ok    the stick as held, through a stun
+ok    a medium blow, rule by rule
+ok    a blow that names its region
+ok    no tier past the ladder's last
+ok    the view's particles carry their depth
+ok    depth in the core
+ok    a fighter's depth outside a flight, and the contact rule
+ok    the intro phase
+ok    composed intros
+ok    the intro's default facts and the take
+ok    the last stand
+ok    a hidden fighter is found when he charges or is launched
+ok    shots
+ok    shots: buildings, wild deflects, the spray, mines
+ok    agency lines
+ok    a clash's meeting point
+ok    SimMathx.PI and TAU
+ok    the blow cue's run stays out of the hash
+ok    the run's rare boons
+ok    the catastrophe's blast cloud and ash
+ok    the launch's curve
+ok    hit-stop by weight
+ok    the ricochet's glance
+ok    the replay header covers a planet's data
+ok    the intent's second word in the hash and the replay
+ok    a struggle, as the host reads it
+ok    a match starts on the floor of a lake or the sea
+ok    the run's ground
+ok    the run's state and carry
+ok    the campaign's arc and episode
+ok    the planet's load
+ok    the calm turn on gen 2
+ok    the match's start in pieces
+ok    the aftermaths
+ok    the curve's shared functions, the brake's control back, the camera feed
+ok    the air brake
+ok    forms: five steps and the slingshot
+ok    forms: Witness and Trial
+ok    Animation's view fields: a launch's tier, a hit's stop and tier
+ok    the intro phase (golden)
+ok    composed intros (golden)
+ok    replay module
+FAIL  matches: swap-flip seed 2: first full-state difference by tick 14640 (checkpoint 122): 329af3286fcdee7d:3f3c22c5279fcd61:e41cfa669941183c vs golden 727f02e873b7613a:3f3c22c5279fcd61:e41cfa669941183c; mirror-villain-flip seed 2: first full-state difference by tick 16680 (checkpoint 139): 397b56bbdee6cc19:30d481f6c0a3a7d2:50576ed8409edab8 vs golden eaf298a467d1f11e:30d481f6c0a3a7d2:50576ed8409edab8; default seed 11: first full-state difference by tick 17640 (checkpoint 147): 8588dfe7e52b4599:58bf6aae00e879f5:d74cee5c564f66ce vs golden aee3d3e4959bd810:58bf6aae00e879f5:d74cee5c564f66ce
+ok    human-input replays
+      3 slices, 3 tick-0 states, a planet match of 3600 ticks: identical
+ok    planet worlds (golden)
+      (matches and replays: 145.3 s)
+time  251.5 s
+golden check FAILED
+WARNING: 25 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+EXIT 1

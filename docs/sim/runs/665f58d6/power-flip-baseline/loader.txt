@@ -1,0 +1,20 @@
+   10644  chain
+     213  finisher
+      18  melee:CHARGE INTERRUPT
+    1782  melee:CLASH SHOCKWAVE
+    5232  melee:DODGE & COUNTER
+    4339  melee:DODGE & READ
+    2846  melee:GUARD BREAK
+    3172  melee:HEAVY CLASH — COUNTERED
+    2557  melee:HEAVY CLASH — WON
+    2650  melee:PRESSURE — GUARD HOLDS
+    1844  melee:PRESSURE — GUARD HOLDS → COUNTER
+    1438  melee:PURSUIT — CAUGHT
+    1645  melee:PURSUIT — TARGET SLIPS AWAY
+   12303  melee:TRADE BLOWS
+     428  sig:CLASH
+     110  sig:DODGE
+      25  sig:ESCAPE
+     173  sig:GUARD
+     115  sig:HIT
+loader check passed

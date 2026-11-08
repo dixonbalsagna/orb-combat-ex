@@ -1,0 +1,15 @@
+  signature   normal   body flashes starting in 60 ticks: fighter 0 1, fighter 1 2
+  signature   reduced  body flashes starting in 60 ticks: fighter 0 1, fighter 1 2
+  signaturecity normal   body flashes starting in 60 ticks: fighter 0 2, fighter 1 3
+  signaturecity reduced  body flashes starting in 60 ticks: fighter 0 2, fighter 1 3
+  signaturedummy normal   body flashes starting in 60 ticks: fighter 0 2, fighter 1 3
+  signaturedummy normal   body flashes starting in 60 ticks: fighter 0 2, fighter 1 3
+  signaturedummy reduced  body flashes starting in 60 ticks: fighter 0 2, fighter 1 3
+  signaturedummy reduced  body flashes starting in 60 ticks: fighter 0 2, fighter 1 3
+  transform   normal   body flashes starting in 60 ticks: fighter 0 5, fighter 1 3
+  transform   reduced  body flashes starting in 60 ticks: fighter 0 5, fighter 1 3
+  (advisory: a body is a small part of the frame, and whether a flash that size counts is what the pixel analyser, half 2, decides)
+PROBLEM: scenario ring seed 12345 (normal) did not show damage (45, needs 60): a run that does not play the case proves nothing
+PROBLEM: scenario ring seed 12345 (reduced) did not show damage (45, needs 60): a run that does not play the case proves nothing
+
+flash count FAILED (0 runs over the cap, 2 problems)

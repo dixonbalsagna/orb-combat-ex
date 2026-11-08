@@ -1,0 +1,34 @@
+      off, 18 after the send, 2036 away: flying false, taunts 1, closest 2036, struck at -1, D free
+ok    off, 18 after the send: the taunt
+      off, 60 after the send, 4465 away: flying false, taunts 1, closest 4373, struck at -1, D free
+ok    off, 60 after the send: the taunt
+      off, 120 after the send, 4431 away: flying false, taunts 1, closest 4373, struck at -1, D free
+ok    off, 120 after the send: the taunt
+      off, 240 after the send, 4373 away: flying false, taunts 1, closest 4373, struck at -1, D free
+ok    off, 240 after the send: the taunt
+      on, 18 after the send, 2036 away: flying true, taunts 0, closest 188, struck at 136, D down
+ok    18 after the send: the tap flies after him
+ok    18 after the send: and the blow lands (136)
+      on, 60 after the send, 4465 away: flying true, taunts 0, closest 191, struck at 70, D down
+ok    60 after the send: the tap flies after him
+ok    60 after the send: and the blow lands (70)
+      on, 120 after the send, 4431 away: flying true, taunts 0, closest 59, struck at 81, D locked
+ok    120 after the send: the tap flies after him
+ok    120 after the send: and the blow lands (81)
+      on, 240 after the send, 4373 away: flying false, taunts 1, closest 4373, struck at -1, D free
+ok    on, 240 after the send: the taunt
+ok    no send: a far tap is the taunt
+      the masher: closest 51, 14 blows landed
+ok    a masher closes on a sent rival (51)
+      on, 18 after the send, 2214 away: flying true, taunts 0, closest 58, struck at 390, D locked
+ok    18 after the send: the tap flies after him
+ok    18 after the send: and the blow lands (390)
+      on, 60 after the send, 9127 away: flying true, taunts 0, closest 58, struck at 348, D locked
+ok    60 after the send: the tap flies after him
+ok    60 after the send: and the blow lands (348)
+      on, 120 after the send, 15768 away: flying true, taunts 0, closest 58, struck at 288, D locked
+ok    120 after the send: the tap flies after him
+ok    120 after the send: and the blow lands (288)
+      on, 240 after the send, 22404 away: flying false, taunts 1, closest 22404, struck at -1, D free
+ok    on, 240 after the send: the taunt
+FOLLOW: 0 check(s) failed

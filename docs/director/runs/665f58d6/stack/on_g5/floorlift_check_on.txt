@@ -1,0 +1,29 @@
+PASS  a ring with every band of depth: planet 7, touch 1
+PASS  table: on the bed about 20.4 deep: drop's largest lift 0.00, launch's 0.00, limit 7.5; control (riseTicks 1, no limit) 0.00 and 0.00
+PASS  table: on the bed about 45.4 deep: drop's largest lift 0.00, launch's 0.00, limit 7.5; control (riseTicks 1, no limit) 15.81 and 0.00
+PASS  table: on the bed about 64.1 deep: drop's largest lift 0.00, launch's 0.00, limit 7.5; control (riseTicks 1, no limit) 53.17 and 0.00
+PASS  table: on the bed about 77.2 deep: drop's largest lift 0.00, launch's 0.00, limit 7.5; control (riseTicks 1, no limit) 75.00 and 0.00
+PASS  table: on the bed about 100.0 deep: drop's largest lift 0.00, launch's 0.00, limit 7.5; control (riseTicks 1, no limit) 0.00 and 0.00
+PASS  table: the control sees the pop: a drop about 45.4 deep lifts 15.81 in one tick, about 64.1 deep 53.17 (first measured at 15.81 and 53.17)
+PASS  moves: pop: under his floor 5 ticks, largest lift 0.00 a tick, limit 7.5
+PASS  moves: spike: under his floor 12 ticks, largest lift 7.50 a tick, limit 7.5
+PASS  moves: thrown apart: under his floor 17 ticks, largest lift 2.61 a tick, limit 7.5
+PASS  moves: step in: under his floor 8 ticks, largest lift 7.50 a tick, limit 7.5
+PASS  moves: heavy recoil: under his floor 10 ticks, largest lift 7.50 a tick, limit 7.5
+PASS  moves: pop flip: under his floor 4 ticks, largest lift 0.00 a tick, limit 7.5; its own height 20.69
+PASS  moves: recoil flip: under his floor 4 ticks, largest lift 0.00 a tick, limit 7.5; its own height 20.69
+PASS  moves: knock-back: under his floor 13 ticks, largest lift 2.17 a tick, limit 7.5
+PASS  moves: contact: under his floor 8 ticks, largest lift 7.50 a tick, limit 7.5
+PASS  moves: dodge: under his floor 7 ticks, largest lift 7.50 a tick, limit 7.5
+PASS  moves: meet: under his floor 39 ticks, largest lift 7.50 a tick, limit 7.5
+PASS  moves: zip's way out: under his floor 9 ticks, largest lift 7.50 a tick, limit 7.5
+PASS  moves: a brawl's pull: under his floor 10 ticks, largest lift 7.50 a tick, limit 7.5
+PASS  moves: the control sees it: with riseTicks 1 the largest lift is 59.44 a tick, 9 ticks over 7.5
+PASS  fight: 20160 AI ticks on the bed, 32651 of them under his floor, 952 reposes in a brawl: largest lift 7.50 a tick, 0 over the limit 7.5; a move's own height up to 138.89 (RIVAL free at 48657 (moved -163), from 2192.4 to 2331.3 (floor 
+PASS  fight: the control sees it: with riseTicks 1 the largest lift is 75.00 a tick (PROTAGONIST locked at 48784 (moved 0), from 2108.5 to 2183.5 (floor 2195.6, ground 2108.5) no rush, exchange signature PROTAGONIST.SIG over plains (FIELD S
+PASS  throw: shallow: flat on his floor (0.000 off it), open 20 ticks, 1 splash, the ground moved 0.00
+PASS  throw: shoulder: flat on his floor (0.000 off it), open 20 ticks, 1 splash, the ground moved 0.00
+PASS  throw: sheet: flat on his floor (0.000 off it), open 20 ticks, 1 splash, the ground moved 0.00
+PASS  offer: MARSH SWALLOW at mud 38.2 deep: offered true with the floor off, false with it on; at mud 0.0 deep: true and true (planet 42, touch 0)
+FLOORLIFT: 0 check(s) failed
+WARNING: 10 ObjectDB instances were leaked at exit (run with `--verbose` for details).

@@ -1,0 +1,41 @@
+      charge close false, held 36, rival stepping back: sent '', missed true, 0 taken
+      charge close false, held 46, rival stepping back: sent '', missed true, 0 taken
+      charge close true, held 36, rival stepping back: sent 'KNOCK BACK', missed false, 83 taken
+ok    charge close on, held 36: it reaches him
+      charge close true, held 46, rival stepping back: sent 'SMASH ACROSS', missed false, 86 taken
+ok    charge close on, held 46: it reaches him
+      8 bh away: sent '', 0 taken
+ok    past fullBh it doesn't travel to him
+      press wait false: B held from during Y's wind-up: lapsed true, full charge -1 ticks after the B
+ok    press wait off: the press lapses and the hold comes to nothing
+      press wait true: B held from during Y's wind-up: lapsed false, full charge 44 ticks after the B
+ok    press wait on: the hold built since the press, so the flash comes on time (44)
+ok    a stun clears the waiting press, and says so
+ok    a press in a stun is told, not silent
+ok    a tapped B in a brawl is a stagger (["stagger:heavy"])
+      a tapped B starting an exchange from 160: sent '', his stun 0
+ok    a tapped B starting an exchange isn't a knock-back
+      held 36: sent 'KNOCK BACK'
+ok    past the first flash: a knock-back
+      held 46: sent 'SMASH ACROSS'
+ok    the full flash: a send (SMASH ACROSS)
+      three in a row: paid [9.9, 14.9, 22.4]
+ok    10 ki, then x1.5 each inside 3 s
+      a light at him as he rises: he's on side 58, his medium landed true
+ok    a light doesn't stop it
+      the steal: took '3', his run now 0, mine 12
+ok    a quick flick takes his run
+      pendFollow false, refused by the first move: { "stick_refused:": 0, "refused/not_yours": 0 }
+ok    pendFollow off: a refused flick is told at once too, as not_yours (one report, with its knock)
+      pendFollow true, refused by the first move: { "stick_refused:": 0, "refused/not_yours": 0 }
+ok    pendFollow on: a refused flick is told at once, as not_yours (the first move is his rival's)
+      a swept hold: it went at 19 (his stun was 20), released at 39; the level kept 1
+ok    a swept hold goes on his first free tick
+ok    ... and its level counts from then, not from the first press (1)
+      a swept hold, the stick held 90 ticks from 400 away: it went at 0; refusals said 0, press acks 1
+ok    a swept hold goes once: no refusal every tick (0)
+      flickRun false: the flick landed true; his run 0 to 0 quarters
+ok    flickRun off: a flick builds no run of his own
+      flickRun true: the flick landed true; his run 0 to 6 quarters
+ok    flickRun on: a landed flick adds flickRun.points to his run
+PRESS: 0 check(s) failed

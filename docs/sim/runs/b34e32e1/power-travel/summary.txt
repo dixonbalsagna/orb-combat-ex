@@ -1,0 +1,37 @@
+import 0; parse errors 0
+validate self-test 0
+validate 0; 319 files checked, 0 errors, 2 warnings
+lint 0
+ratchet 0; two-fighter ratchet ok: 365 against a baseline of 365
+golden: exit 0 in 134 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (175363 ticks), 2 replays
+  golden.json byte-identical
+parity: exit 0 in 335 s; script errors 0; golden check passed
+power: exit 0 in 123 s; script errors 0; POWER: 0 check(s) failed
+power_neg: exit 0 in 23 s; script errors 0; POWER negative control: 0 check(s) failed
+25:FAIL  the page's x1.25 along the line (2.00); straight up, once
+26:FAIL  the factor is in the hash
+27:FAIL  a send: the same rise (609.7), sideways by the factor (3348.5 against 3348.5)
+28:FAIL  x0.50 held to the data's range: x2.00
+two_states: exit 0 in 57 s; script errors 0; PASS  0 failure(s)
+two_states_neg: exit 0 in 118 s; script errors 0; PASS  negative control: 3 of 3 breaks caught
+rb_power: exit 0 in 69 s; script errors 0; PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+desync: exit 0 in 20 s; script errors 0; PASS  14 runs, 18 checkpoints matched, 0 failure(s)
+xproc: exit 0 in 43 s; script errors 0; PASS  6 replays from 2 recording processes, each played in a fresh process: Hard f1d0245fc0a5b3f3, Easy c0def03e19f9d176
+det: exit 0 in 153 s; script errors 0; determinism passed
+load_split: exit 0 in 5 s; script errors 0; ok: the director is a load of its own, SimDir's calls are all in their scripts, and the core and the world call it by na
+after_check: exit 0 in 14 s; FAIL lines 0; script errors 0; after check passed
+cue_check: exit 0 in 58 s; FAIL lines 0; script errors 0; cue check passed
+depth_check: exit 0 in 14 s; FAIL lines 0; script errors 0; depth check passed
+flash_check: exit 0 in 49 s; FAIL lines 0; script errors 0; flash check passed
+flash_reg_check: exit 0 in 48 s; FAIL lines 0; script errors 0; flash register check passed
+flight_check: exit 0 in 58 s; FAIL lines 0; script errors 0; flight check passed
+ground_check: exit 0 in 60 s; FAIL lines 0; script errors 0; ground check passed
+hud_words_check: exit 0 in 8 s; FAIL lines 0; script errors 0; hud words check passed
+lane_check: exit 0 in 12 s; FAIL lines 0; script errors 0; lane check passed
+open_check: exit 0 in 22 s; FAIL lines 0; script errors 0; open check passed
+pane_check: exit 0 in 23 s; FAIL lines 0; script errors 0; pane check passed
+patch_check: exit 0 in 14 s; FAIL lines 0; script errors 0; patch check passed
+shape_check: exit 0 in 13 s; FAIL lines 0; script errors 0; shape check passed
+sky_check: exit 0 in 16 s; FAIL lines 0; script errors 0; sky check passed
+stage_check: exit 0 in 12 s; FAIL lines 0; script errors 0; stage check passed
+render gates done

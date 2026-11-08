@@ -1,0 +1,26 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+plans compared: 45 over 200 matches (default from seed 1)
+      10  chain
+       5  melee:DODGE & COUNTER
+       6  melee:DODGE & READ
+       4  melee:GUARD BREAK
+       1  melee:HEAVY CLASH — COUNTERED
+       3  melee:HEAVY CLASH — WON
+       1  melee:PRESSURE — GUARD HOLDS
+       4  melee:PRESSURE — GUARD HOLDS → COUNTER
+       2  melee:PURSUIT — CAUGHT
+       1  melee:PURSUIT — TARGET SLIPS AWAY
+       7  melee:TRADE BLOWS
+       1  sig:HIT
+DIFF chain tag DODGE & READ: beat 8 code launch t=3ff488888888888f { "force": 1500.0, "rev": false }, data launch t=3ff488888888888f { "force": 1500.0, "rev": false, "share": "chainLink" }
+DIFF chain tag DODGE & READ: beat 13 code launch t=3fffbbbbbbbbbbb7 { "force": 1500.0, "rev": false }, data launch t=3fffbbbbbbbbbbb7 { "force": 1500.0, "rev": false, "share": "chainLink" }
+DIFF chain tag GUARD BREAK: beat 11 code launch t=3ff6aaaaaaaaaaaf { "force": 1500.0, "rev": false }, data launch t=3ff6aaaaaaaaaaaf { "force": 1500.0, "rev": false, "share": "chainLink" }
+DIFF chain tag HEAVY CLASH — WON: beat 8 code launch t=3ff5111111111117 { "force": 1500.0, "rev": false }, data launch t=3ff5111111111117 { "force": 1500.0, "rev": false, "share": "chainLink" }
+DIFF chain tag DODGE & READ: beat 9 code launch t=3ff3333333333338 { "force": 1500.0, "rev": false }, data launch t=3ff3333333333338 { "force": 1500.0, "rev": false, "share": "chainLink" }
+DIFF chain tag DODGE & READ: beat 8 code launch t=3ff6222222222227 { "force": 1500.0, "rev": false }, data launch t=3ff6222222222227 { "force": 1500.0, "rev": false, "share": "chainLink" }
+DIFF chain tag DODGE & READ: beat 13 code launch t=4001555555555551 { "force": 1500.0, "rev": false }, data launch t=4001555555555551 { "force": 1500.0, "rev": false, "share": "chainLink" }
+DIFF chain tag TRADE BLOWS: beat 12 code launch t=3ffbbbbbbbbbbbbb { "force": 1500.0, "rev": false }, data launch t=3ffbbbbbbbbbbbbb { "force": 1500.0, "rev": false, "share": "chainLink" }
+DIFF chain tag TRADE BLOWS: beat 17 code launch t=4004ccccccccccc5 { "force": 1500.0, "rev": false }, data launch t=4004ccccccccccc5 { "force": 1500.0, "rev": false, "share": "chainLink" }
+DIFF chain tag HEAVY CLASH — WON: beat 8 code launch t=3ff6222222222227 { "force": 1500.0, "rev": false }, data launch t=3ff6222222222227 { "force": 1500.0, "rev": false, "share": "chainLink" }
+NOT EXERCISED: melee:CHARGE INTERRUPT, melee:CLASH SHOCKWAVE, finisher, sig:CLASH, sig:GUARD, sig:DODGE, sig:ESCAPE
+loader check FAILED

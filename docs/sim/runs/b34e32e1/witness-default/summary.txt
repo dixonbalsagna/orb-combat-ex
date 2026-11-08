@@ -1,0 +1,11 @@
+w_today: exit 0 in 138 s; script errors 0; WITNESS per -1.000 setup default: matches with a pick 24 of 24; Witness taken in 0; picks 62, Witness 0
+WITNESS per -1.000 setup default: matches with a pick 24 of 24; Witness taken in 0; picks 62, Witness 0
+c1 import 0; parse errors 0
+w_per1: exit 0 in 138 s; script errors 0; WITNESS per 1.000 setup default: matches with a pick 24 of 24; Witness taken in 0; picks 62, Witness 0
+WITNESS per 1.000 setup default: matches with a pick 24 of 24; Witness taken in 0; picks 62, Witness 0
+w_per3: exit 0 in 141 s; script errors 0; WITNESS per 3.000 setup default: matches with a pick 24 of 24; Witness taken in 0; picks 62, Witness 0
+WITNESS per 3.000 setup default: matches with a pick 24 of 24; Witness taken in 0; picks 62, Witness 0
+w_per6: exit 0 in 140 s; script errors 0; WITNESS per 6.000 setup default: matches with a pick 24 of 24; Witness taken in 0; picks 62, Witness 0
+WITNESS per 6.000 setup default: matches with a pick 24 of 24; Witness taken in 0; picks 62, Witness 0
+w_per12: exit 0 in 139 s; script errors 0; WITNESS per 12.000 setup default: matches with a pick 24 of 24; Witness taken in 0; picks 62, Witness 0
+WITNESS per 12.000 setup default: matches with a pick 24 of 24; Witness taken in 0; picks 62, Witness 0

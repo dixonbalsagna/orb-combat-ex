@@ -1,0 +1,39 @@
+ok    the path by the stick's bearing: neutral the zip, toward the line, away the parting shot, the halves over and under (10 of 10)
+ok    the start cue's source is the button
+ok    X, Y and B: zip_light, zip_heavy and zip_big, tells of 6, 10 and 14
+ok    the price: X 10, Y 15, B 20, plus up to 10 rising from 3 bh to 12.5 bh
+ok    the range: at 1 bh it starts, at 13 bh it doesn't (today's long strike)
+ok    the take-back: the same tick and 4 ticks after LT's press convert, 5 doesn't
+ok    the button first never converts, nor a press with LT already let go
+ok    LT and a face button on one tick during his own lunge: LT calls it off first, and the flight strike starts
+ok    in a brawl, LT and X on one tick end it (brawl_end flight) and start the flight strike
+ok    in a brawl, LT held with no fresh LT press is the brawl's blow, and no energy is refused while the brawl goes on
+ok    the take-back of a paid dodge-cancel gives its 15 ki and its cooldown back, and ends the slip's protection
+ok    no energy: press_refused ki (the knock), nothing starts, and LT's slip carries on
+ok    a press in a flight strike's last ticks starts the next link as it ends
+ok    a link's tell is halved (at least 4), and the third same path and button has its full tell
+ok    each link costs 1.5 times the one before
+ok    X is worth a medium's 2.5, and a link 0.85 of it
+ok    a press 6 ticks after a flight strike ends links; 16 ticks after, with no LT press, it's the button's own blow
+ok    a B timed to land at its arrival stops it: the striker takes 1.25 of it and reels, never sent
+ok    a B whose wind-up starts in the window before the arrival counters, and sends nothing
+ok    a B thrown in the ticks in reach before his blow stops him at once, and he reels
+ok    a charged stick strike stops it
+ok    a light doesn't stop it: his blow lands and the path completes
+ok    a guard blocks the blow, and the path completes
+ok    a dodge makes it a miss: he's open for 20 ticks, his presses wait, and the latest is thrown as it ends
+ok    the line ends where it should
+ok    the over ends where it should
+ok    the under ends where it should
+ok    the parting ends where it should
+ok    the zip ends where it should
+ok    X reels him
+ok    Y staggers him; B staggers him by the one rule for B, never a send
+ok    with flight strikes on, LT + X in a brawl isn't the step strike (off, it is)
+ok    the computer picks every path, and every button, B included (about half X, 30% Y, 20% B)
+ok    at a rival who's pressing it still flies one, on the path it picked (zip)
+ok    never a press it can't pay for with its 20 ki kept back; a dearer button gives way to one it can
+ok    from a brawl: round a guard of a second the line or an arc, nothing with no reason, and the parting shot when it wants out
+ok    a chain link only when it can pay the next link and keep 20 back (full ki true; 30 ki false)
+ok    off: LT + X is today's zip (its cue as it was), and not inside 3 bh
+FLIGHT STRIKE: 0 check(s) failed

@@ -1,0 +1,4 @@
+FAIL energy model, base, seed 1, 0 after the send, 1 taps, share 0.7: the view flapped: ["split", "closing", "merged", "opening", "split", "closing", "merged"]
+FAIL energy model, base, seed 1, 8 after the send, 1 taps, share 0.7: the view flapped: ["split", "closing", "merged", "opening", "split"]
+FAIL energy model, base, seed 1, 8 after the send, 1 taps, share 0.0: the view flapped: ["split", "closing", "merged", "opening", "split"]
+chase_rush_check: 130 checks, 3 failed

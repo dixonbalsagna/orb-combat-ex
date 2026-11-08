@@ -1,0 +1,5 @@
+  transform   normal   body flashes starting in 60 ticks: fighter 0 4, fighter 1 2
+  transform   reduced  body flashes starting in 60 ticks: fighter 0 4, fighter 1 2
+  (advisory: a body is a small part of the frame, and whether a flash that size counts is what the pixel analyser, half 2, decides)
+
+flash count passed: in no window of 60 ticks does the weighted register grant more than 2.5 of weight (1 under reduced flashing), more than 3 flashes of weight 0.5 or more (1 reduced) or more than 6 flashes (3 reduced) in 82 runs. This is the register's count of the sources that ask it; it is not a luminance measurement and not a clearance.

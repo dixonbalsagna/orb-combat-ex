@@ -1,0 +1,22 @@
+ok    off, 18 after the send: the taunt
+FAIL  off, 60 after the send: the taunt
+ok    off, 120 after the send: the taunt
+ok    off, 240 after the send: the taunt
+ok    18 after the send: the tap flies after him
+ok    18 after the send: and the blow lands (136)
+FAIL  60 after the send: the tap flies after him
+FAIL  60 after the send: and the blow lands (-1)
+ok    120 after the send: the tap flies after him
+ok    120 after the send: and the blow lands (81)
+ok    on, 240 after the send: the taunt
+ok    no send: a far tap is the taunt
+ok    a masher closes on a sent rival (51)
+ok    18 after the send: the tap flies after him
+ok    18 after the send: and the blow lands (387)
+ok    60 after the send: the tap flies after him
+ok    60 after the send: and the blow lands (345)
+ok    120 after the send: the tap flies after him
+ok    120 after the send: and the blow lands (285)
+ok    on, 240 after the send: the taunt
+FOLLOW: 3 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).

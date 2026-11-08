@@ -1,0 +1,30 @@
+ok    one send (1)
+ok    and flies it (296)
+ok    startTier: both at tier 4 (4, 4)
+ok    from a training start, on a stunned foe: the meteor (["METEOR"])
+ok    and he's flying
+ok    no swing during the shot
+ok    a level 3 upward stick strike banks the charge
+      ignition: stun left at B 34; ["METEOR"]
+ok    and B, inside the stun, is the meteor (["METEOR"])
+ok    stunned: the meteor
+ok    one crater, on land (1)
+      the bowl: radius 4571, depth 1006
+FAIL  the meteor's own bowl (4571)
+      in the bowl's middle: 0 down, 0 standing
+ok    the blast takes what's in it
+ok    the second, on the first value: the high arc
+      the meteor's landings from the start: this way -8.0, that way 0.0
+ok    a landing's score doesn't read popAlive
+ok    a landing's score doesn't read popNear
+ok    a landing's score doesn't read casualt
+ok    a landing's score doesn't read crowd
+ok    a landing's score doesn't read menace
+ok    a landing's score doesn't read anguish
+ok    the landing's energy is at the cap (158.7 of 158.8)
+      after the landing: down, hp 55, 1 crater events, 373 ticks
+ok    a landing doesn't end the match
+      the brake left the curve at tick 251 of 372 (0.67), sideways 3295
+ok    a held brake leaves the curve only from the end of the hang (0.67)
+ok    on its heading
+ARC: 1 check(s) failed

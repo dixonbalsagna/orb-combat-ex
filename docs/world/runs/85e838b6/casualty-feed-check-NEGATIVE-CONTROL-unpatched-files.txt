@@ -1,0 +1,12 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+  FAIL: seed 1 cause 1: no fighter's menace or power rose from a kill ["fighter 1 menace 10.0000 -> 11.9125", "fighter 1 power 10.0000 -> 10.1913"]
+  FAIL: seed 2 cause 1: no fighter's menace or power rose from a kill ["fighter 1 menace 10.0000 -> 11.9125", "fighter 1 power 10.0000 -> 10.1913"]
+  FAIL: seed 3 cause 1: no fighter's menace or power rose from a kill ["fighter 1 menace 10.0000 -> 11.9125", "fighter 1 power 10.0000 -> 10.1913"]
+  FAIL: a whole world's buildings killed by the villain (36.0 died, 2182.0 evacuated): menace rose by no more than the evacuees' share (90.000 of 231.838 allowed) and power did not rise ["fighter 1 menace 10.0000 -> 100.0000", "fighter 1 power 10.0000 -> 10.7650"]
+  FAIL: the levelled building raised power not at all and menace by no more than the evacuees' share
+  FAIL: _feed names neither menace nor power
+  FAIL: collateral.gd's only write to menace or power is the evacuation one (3 writes)
+  FAIL: the villain's meters.json has the evacuation source and no casualty source
+  FAIL: control: a menace casualty source (the old row) is rejected as not wired
+CASUALTYFEED: 9 kills over 3 worlds, 81.0 people died in them; no menace or power rose
+CASUALTYFEED: 9 check(s) failed

@@ -1,0 +1,6 @@
+import 0; parse errors 0
+validate 0; 319 files checked, 0 errors, 2 warnings
+golden: exit 0 in 127 s; script errors 0; wrote res://sim/core/test/golden.json: 60 constants, 8 rng streams, 6 tick-0 states, 9 matches (163648 ticks), 2 replays
+parity: exit 0 in 321 s; script errors 0; golden check passed
+power: exit 0 in 123 s; script errors 0; POWER: 0 check(s) failed
+two_states: exit 0 in 38 s; script errors 0; PASS  0 failure(s)

@@ -1,0 +1,47 @@
+slam check swapped 0
+apply Claude 0 Applied patch to 'sim/director/stick.gd' cleanly. Applied patch to 'sim/director/tools/flick_keep_check.gd' cleanly. 
+apply Claude 0 Applied patch to 'sim/director/tools/flight_strike_check.gd' cleanly. Applied patch to 'sim/director/zip.gd' cleanly. 
+6904e3513dec 1fff292731f1 bc4e0c834ac1 
+validate 0 321 files checked, 0 errors, 2 warnings
+lint 0
+s2_cross_check__ 0 
+s2_cross_check______negative_control_ 0 
+s2_cross_end_check__ 0 
+s2_cross_end_check______negative_control_ 0 
+s2_field_static_check__ 0 
+s2_field_static_check______negative_control_ 0 
+s2_fork_check__ 0 
+s2_fork_check______negative_control_ 0 
+s2_frame_check__ 0 
+s2_frame_check______negative_control_ 0 
+s2_kick_check__ 0 
+s2_load_split__ 0 
+s2_load_split______negative_control_ 0 
+s2_memo_check__ 0 
+s2_memo_check______negative_control_ 0 
+s2_parity__ 0 
+s2_places_check__ 0 
+s2_power_check__ 0 
+s2_power_check______negative_control_ 0 
+s2_rec_check__ 0 
+s2_rec_check______negative_control_ 0 
+s2_replay_xproc_check__ 0 
+s2_replay_xproc_check______negative_control_ 0 
+s2_two_states_check__ 0 
+s2_two_states_check______negative_control_ 0 
+s2_bark_reads_check__ 0 
+s2_chase_tap_check__ 0 
+s2_floorlift_check__ 0 
+s2_plane_check__ 0 
+s2_press_decides_check__ 0 
+d2_flick_keep_check 0 gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --scri
+d2_full_send_check 0 gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --scri
+d2_flight_strike_check 0 gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --scri
+d2_refusal_reasons_check 0 gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --scri
+d2_press_answers_check 0 gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --scri
+d2_stick_check 0 gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --scri
+d2_stick_lunge_check 0 gate: C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe --scri
+render 19 passed; DONE 
+golden_cmp 0 same
+content screen: 5901 text files of 7109 scanned, 0 failing hit(s), 0 warning(s)
+ALLDONE2

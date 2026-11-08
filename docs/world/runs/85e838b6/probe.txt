@@ -1,0 +1,60 @@
+  ok    evacuees feed the causer's menace at 0.45 times 425 / pop0 and nobody's anguish
+== B2: aimed launches, chains, floors (docs/world/b2-plan.md) ==
+  217 of 229 launches with a candidate were aimable; chain lengths (buildings hit): { 4: 16, 1: 132, 2: 31, 3: 37, 5: 1 }; plan differed from the outcome in 0; hits off the plan 0; over the tier cap 0; aim or token left open 0
+  ok    the aim search finds launches into the city
+  ok    the planned chain is the chain that happens (buildings and order)
+  ok    no building is hit outside the plan
+  ok    the aim and the chain token are closed after every flight
+  ok    no chain is longer than its tier's cap
+  ok    the aim search and the chain lookahead draw nothing from the match RNG
+  ok    an unaimed launch never collides with a building (0 hits in 120 launches through the city)
+  ok    the city has a tower of at least 12 floors
+  a tower of 20 floors, height 3000, hp 3375, people 4.0
+  speed 1800, tier 2: high hit ratio 1.48 (punch), low hit ratio 0.25 (dent)
+  ok    a higher floor is weaker than a lower one
+  a punch through the top: pancake false, collapse false, floors standing 18 of 20, people 4.0 -> 3.6, height now 2700
+  ok    a punch through the top leaves a shorter tower (nothing above to fall)
+  ok    the tower is shorter after the punch
+  a hard punch at floor 2 of 20 (punch): pancake false, collapse false, floors standing 18, people 4.0 -> 3.6
+  ok    a long cleared span pancakes the stack above it, a short one is a tunnel
+  ok    people only fall
+  ok    an area blast still levels a skyscraper whole
+== terrain fixes T1 to T4 (docs/world/terrain-audit.md) ==
+  a 7-column wall of 450: largest step 41.9 after relaxing (limit 40), volume 3150 -> 3150, rubble 3150
+  ok    a wall relaxes to the angle of repose
+  ok    the relaxation conserves volume
+  ok    and its rubble
+  ok    a crater's bowl and rim are already inside the angle of repose (relaxing moves 0.00 units in all)
+  a slide over a 200 heap: lowest column 200; over flat ground: -30
+  ok    a slide never cuts a slot through a heap
+  ok    and still carves a trench in open ground
+  ok    a beam groove across a heap leaves no step over the limit (largest 5.1)
+  a tower of 2453 units in row 3 leaves 0 of heap on the ground; one in row 1 leaves a crest of 117, largest step 19.1, change under standing footings 0.0
+  ok    a back-row building leaves no heap on the fighter plane's ground
+  ok    a front-row building leaves a heap no steeper than the angle of repose
+  ok    a heap never lands on a standing building's footing
+  ok    a building's footing is the highest ground under its footprint (188)
+== G1: rims as ramps, gentle heaps, structure reach by tier (docs/world/ground-contact.md, structure-reach.md) ==
+  E 0.5: R 113 depth 25, crest 7.9 (0.32 d), steepest slope into the crest 0.49, rim and apron area / bowl area 0.44
+  E 1.0: R 160 depth 35, crest 11.7 (0.33 d), steepest slope into the crest 0.51, rim and apron area / bowl area 0.43
+  E 2.0: R 226 depth 50, crest 16.9 (0.34 d), steepest slope into the crest 0.50, rim and apron area / bowl area 0.45
+  E 4.0: R 320 depth 70, crest 27.1 (0.39 d), steepest slope into the crest 0.54, rim and apron area / bowl area 0.51
+  E 8.0: R 453 depth 100, crest 39.7 (0.40 d), steepest slope into the crest 0.56, rim and apron area / bowl area 0.53
+  E 16.0: R 600 depth 132, crest 52.8 (0.40 d), steepest slope into the crest 0.56, rim and apron area / bowl area 0.53
+  E 30.0: R 600 depth 132, crest 52.8 (0.40 d), steepest slope into the crest 0.56, rim and apron area / bowl area 0.53
+  ok    a crater's inner slope up to the lip is at most 0.6 at every energy (largest 0.56)
+  ok    the rim crest is at most RIM_DEPTH_MAX of the depth
+  ok    the rim and apron hold no more than the bowl (the 1D profile)
+  ok    a heap is a ramp: its steepest slope is at most 0.60 (largest 0.60)
+  structure reach hits (tier, distance in old radii): [[3.0, 1.05], [3.0, 1.5], [4.0, 1.05], [4.0, 1.5], [4.0, 1.7]]
+  ok    a blast reaches a building out to the tier's factor times the old radius and no further (data: [1.0, 1.0, 1.6, 1.8])
+  ok    a beam's path sample (reach 1.0) is not widened by the tier
+== G2: ground contact: the journey function against the played journey (docs/world/ground-contact.md) ==
+  contact data enabled: true (these checks force the flag on for the sim they use)
+  240 launches: the predicted end is within 60 units of the played one in 194, the same contact count in 185, journey end kinds { "water": 65, "slam": 46, "stop": 111, "tumble": 4, "wall": 14 } (largest end difference 4531)
+  ok    no NaN in 240 journeys
+  ok    no journey has more than 8 contacts
+  open ground: 102 of 107 within 60 units; near a town (buildings within 9,000 units, whose collapse raises heaps ahead of a skid): 92 of 133
+  ok    on open ground the journey function predicts the played end within 60 units for at least 90 percent of launches
+probe: 0 check(s) failed
+EXIT 0

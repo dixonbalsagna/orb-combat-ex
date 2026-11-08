@@ -1,0 +1,23 @@
+Verdict lines of the other World checks run on the window-1 tree (HEAD ea8dc190 + the park, before the rebase onto no-casualty-feed; none of these files differ between the two):
+campaign_check: CAMPAIGN: 0 check(s) failed
+epoch_check: EPOCH: 0 check(s) failed
+everywhere_check: EVERYWHERE: 0 check(s) failed
+field_plan_check: FIELDPLAN: 0 check(s) failed
+fill_check: FILL: 0 check(s) failed
+fire_check: FIRE: 0 check(s) failed
+interior_check: INTERIOR: 0 check(s) failed
+planet_world_check: PLANETWORLD: 0 check(s) failed
+repeat_check: REPEAT: 0 check(s) failed
+struggle_meet_check: STRUGGLEMEET: 0 check(s) failed
+wrecks_check: WRECKS: 3 check(s) failed
+lane_check: LANES: 0 check(s) failed
+props_wet_check: PROPSWET: 0 check(s) failed
+after_check: AFTER: 0 check(s) failed
+floor_check: FLOOR: 0 check(s) failed
+burial_check: BURIAL: 0 check(s) failed
+arena_check: ARENA: 0 check(s) failed
+blastcheck: BLAST: 0 check(s) failed
+blockcheck: BLOCK: 0 check(s) failed
+b_check: B: 0 check(s) failed
+
+wrecks_check had 3 failures there (the always-on flight); the park fixes the check and it passes in c1 (wrecks_check.txt)

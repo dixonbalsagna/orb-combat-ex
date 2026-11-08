@@ -1,0 +1,25 @@
+ok    swing.gd doesn't name crowd
+ok    swing.gd doesn't name popAlive
+ok    swing.gd doesn't name popNear
+ok    swing.gd doesn't name popHist
+ok    swing.gd doesn't name pop_mult
+ok    swing.gd doesn't name toll
+ok    swing.gd doesn't name casualt
+ok    the direction function is there
+ok    the direction function doesn't name mood
+ok    the direction function doesn't name menace
+ok    the nudge's scorer is there
+ok    the nudge's scorer doesn't name care
+ok    the nudge's scorer doesn't name anguish
+ok    the nudge's scorer doesn't name menace
+ok    the nudge's scorer doesn't name mood
+ok    timing's scalar anguish is the one listed by name
+ok    timing's scalar menace is the one listed by name
+ok    timing's scalar mood is the one listed by name
+ok    planet 7: 189 asks read for their words and picks
+ok    planet 3: 139 asks read for their words and picks
+ok    planet 11: 163 asks read for their words and picks
+ok    planet 25: 145 asks read for their words and picks
+ok    excluded kinds: 0 stood on these worlds, 0 candidates beside them read
+SWING LEGAL: 0 check(s) failed
+WARNING: 16 ObjectDB instances were leaked at exit (run with `--verbose` for details).

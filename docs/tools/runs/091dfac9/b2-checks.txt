@@ -1,0 +1,27 @@
+BUILD 2 CHECKS (kept folder orb-first-play-091dfac9-a34be195, main 091dfac9), 2026-11-08 about 07:05, headless Chrome through the guarded launcher, one browser at a time
+
+## Pack verify and smoke (stack-preview)
+  parks in the build : art-biomes-working-tree
+  build: built in 0 m 35 s, C:/Users/<user>/AppData/Local/Temp/meridian-stack-preview/build/a34be195ddcec5d1-ug+soundMoments+soundCarry-tb28ef5e9-e8ce119-s94bbba-p939f0e/web
+  pck verify         : 83 keys read from the built pack, 0 problem(s)
+  smoke check: booting the build in the guarded browser and playing it ...
+  smoke check passed
+
+pack verify of the kept copy: 83 keys, 75 rows on, 0 problems; switches.flickKept in timing.json reads true (flickKeep flips flickKeep.enabled, pendFollow.enabled and flickKept); press.refusedCue true.
+
+## Struggle (sticks=7, point blank)
+[reel] PAGE ERRORS: none
+[reel] 398 ticks played: 0 swing(s), 0 launch(es), 23 stills kept of 23
+clash at tick 248; the HUD holds "Locked in" from 251 (stills local: docs/tools/img/b2-clash, not committed)
+
+## Refusal words (sticks=10, a lossless still every tick for 60 ticks after each word)
+[reel] PAGE ERRORS: none
+[reel] 2400 ticks played: 5 swing(s), 1 launch(es), 4 stills kept of 126
+words held by the HUD: "Too close" at tick 1305 and "Hit" at tick 1903; "Too close" is DRAWN in the legend column with the RB Energy (hold) hint at tick 1312 (stills local: docs/tools/img/b2-refusal, not committed)
+
+## Power page, the default address (the shortcut's own words: no power word, travel=1.5)
+--- no power word  (/index.html?planet=7&go=1&blackbox=1&preview=1&meteor=loud&tiles=1&audiolog=1&travel=1.5)
+    black box setup: {"power":true,"travel":1.5,"flatOut":5000,"planet":7}; sliders on page: 2; window.__travel 1.5, __flatout 5000
+    FAIL setup.travel is 2
+power page check: FAILED, 1 miss(es)
+(the FAIL line is the plain-address expectation, travel 2; the shortcut asks for 1.5, which is what was read: power true, travel 1.5, flatOut 5000, both sliders on the page)

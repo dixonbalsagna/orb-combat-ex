@@ -1,0 +1,45 @@
+REFUSAL LEDGER  homework/Files/orb-first-play-20261107-1229.json
+tree C:/Users/<user>/AppData/Local/Temp/meridian-feel/scratchpad-d84c69/; the pad is slot 0
+recorded match: NOT reproduced on this tree: the rows are the replay on this tree; 19280 ticks (5:21.3)
+1159 presses of the pad; 469 not honoured (40%)
+
+by press:
+  dodge         64 presses: 29 honoured, 3 refused, 2 partly, 30 silent
+  sig          358 presses: 214 honoured, 53 refused, 7 partly, 84 silent
+  heavy        467 presses: 305 honoured, 58 refused, 5 partly, 99 silent
+  light        110 presses: 74 honoured, 12 refused, 1 partly, 23 silent
+  rsStart      101 presses: 52 honoured, 2 refused, 12 partly, 35 silent
+  guardPress    47 presses: 14 honoured, 2 refused, 2 partly, 29 silent
+  powerPress     8 presses: 1 honoured, 0 refused, 0 partly, 7 silent
+  transform      3 presses: 0 honoured, 0 refused, 0 partly, 3 silent
+  context        1 presses: 1 honoured, 0 refused, 0 partly, 0 silent
+
+by reason:
+    40  press_refused/locked
+    21  press_refused/queue_expired
+    19  press_refused/y
+    15  press_refused/b
+    13  press_stunned/y
+    13  press_stunned/b
+    11  driver_refused
+     8  press_refused/queue_full
+     8  press_refused/x
+     7  press_stunned/x
+     6  stick/late
+     3  stick/hit
+     2  press_zip/y
+     1  stick/recovering
+     1  stick/ki
+     1  press_refused/launched
+     1  stick/close
+
+the presses not honoured (when, press, what it was, why):
+  0:08.9  t535    dodge      silent   in free, ki 64: no answer at all
+  0:09.9  t592    dodge      silent   in free, ki 68: no answer at all
+  0:14.6  t874    heavy      silent   in locked, ki 17: no answer at all
+  0:14.6  t875    heavy      silent   in locked, ki 17: no answer at all
+  0:14.6  t876    heavy      refused  in locked, ki 17: press_stunned/y
+  0:14.8  t886    heavy      silent   in locked, ki 18: no answer at all
+  0:14.8  t888    heavy      refused  in locked, ki 18: press_stunned/y
+  0:15.0  t900    light      silent   in locked, ki 19: no answer at all
+  0:15.8  t949    sig        silent   in locked, ki 17: no answer at all

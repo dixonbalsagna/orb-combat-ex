@@ -1,0 +1,6 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Orb Combat EX two-states check   Godot 4.7.2-stable (official)   seeds [1, 2]   600 ticks   setups default,planet,calm,turn,field,fights   negative control
+  caught  a snapshot read through its records: 12 failing run(s)
+  caught  a restore that leaves the records on their old arrays: 12 failing run(s)
+  caught  a snapshot restored into another state that keeps the first state's records: 12 failing run(s)
+PASS  negative control: 3 of 3 breaks caught
