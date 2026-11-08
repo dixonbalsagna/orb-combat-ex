@@ -1,0 +1,39 @@
+== pad presets HEAD
+arena simple-pad
+== pad presets pin 257a766c
+arena simple-pad
+== brawler anywhere in input data?
+(end)
+== ADR 0008 status lines
+3:Status: accepted, 2026-09-30. Decided by Orb after friends' playtest feedback (vision.md, questionnaire 8). Work is on hold until Orb gives the go; Orb may want more consulting first.
+== KB_RESERVED
+const PAD_RESERVED: Array = ["pad:start", "pad:back"]
+const KB_RESERVED: Array = ["KeyN", "KeyT", "KeyY", "KeyP", "Escape"]
+== features remap
+7:    "remap": true,
+== render/core/main.gd:1601-1617 (any key takes over; N new match, T P2 AI, Y P1 AI, P pause)
+			if not e.ctrl_pressed and not e.meta_pressed:
+				take_over()
+			match code:
+				"KeyN":
+					start_match(fresh_seed())
+					return
+				"KeyT":
+					# A person playing P2 leaves through the input hub (it frees their device to join again); else T
+					# makes P2 human, and the next unused device to press a button plays it.
+					if host.S.fighters[1].ai != null or not host.hub.leave(1):
+						host.toggle_ai(1)
+					return
+				"KeyY":
+					host.toggle_ai(0)
+					return
+				"KeyP":
+					_toggle_pause()
+== pause and start-menu routes (ui/data/terms.json)
+"pause_resume": "Resume
+"menu_players": "Players
+"menu_one": "1 player
+"menu_two": "2 players
+"pause_new": "New match
+== options pad_preset choices
+"choices": ["arena", "simple-pad"]

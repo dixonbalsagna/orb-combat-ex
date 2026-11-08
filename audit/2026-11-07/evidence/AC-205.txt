@@ -1,0 +1,32 @@
+AC-205 proof (independent reviewer, 2026-11-07). Read-only commands run in this pass.
+
+== ls LICENSE / FUNDING.yml at repo root
+ls: cannot access 'LICENSE*': No such file or directory
+ls: cannot access '.github/FUNDING.yml': No such file or directory
+
+== gh api repos/dixonbalsagna/orb-combat-ex (license, homepage, visibility)
+{"homepage":"https://dixonbalsagna.github.io/orb-combat-ex/","license":null,"private":false,"visibility":"public"}
+
+== releases (only asset sets)
+{"assets":["4.7.2-lazy-specializations.patch","web_nothreads_release.zip","web_nothreads_release.zip.sha512"],"tag_name":"web-template-4.7.2-lazy-1"}
+
+== live / and /play/ grep tip|donat|ko-fi|patreon|sponsor|wishlist|buy|steam|itch (count)
+/: 0
+/play/: 0
+/about/: 1
+
+== git ls-files audio/music
+audio/music/NOTICE.txt
+audio/music/README.md
+audio/music/incoming/.gdignore
+audio/music/sidecar-template.txt
+
+== campaign switch
+4:  "enabled": false,
+257a766c has data/fight/campaign.json: no
+
+== External (accessed 2026-11-07)
+Google Patents US10926179B2: Warner Bros Entertainment Inc; filed 2016-03-25; granted 2021-02-23; Active; adjusted expiration 2036-08-11.
+suno.com/terms (effective 2026-09-03): free tier 'lawful, personal and non-commercial purposes'; paid tiers commercial use only for a permitted download.
+35 U.S.C. 271(a) (law.cornell.edu): 'whoever without authority makes, uses, offers to sell, or sells'.
+Note: the one /about/ match is the SIL OFL text ('sponsored, endorsed, or granted official status by'), not a sponsor link.

@@ -1,0 +1,8 @@
+# AC-036 evidence
+## sg01 is stated (docs/legal/movegen-banned.json:679-680)
+      "id": "sg01",
+      "rule": "the barrage signature: three volleys, each one motion of one hand and each different (a sweep fanning five shards, a thrust sending three in a line, a flick sending one shot that splits), thrown from an upright, unhurried walk with the hands open and low between volleys; never both palms in turn, never one hand pumping, no shouted syllable repeated across the three (e05, e06, f03); the hand lit as a thin edge, never a ball; no aura, no crouch, no charge pose in the walk (k01, k02,
+## docs/combat/barrage-signature.md:3
+Owner: Combat and Choreography. Date: 2026-10-12. A sketch on paper, half a page, no build. The signatures are a question with Orb; this is what a yes would ask of Encounter and VFX.
+## no barrage-signature kind in fighter data (grep signature kinds)
+(end)

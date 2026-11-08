@@ -1,0 +1,16 @@
+AC-044 evidence (verifier v04, 2026-11-07, read-only)
+## HEAD qa/known-bugs.md:173,179
+| GB-003 | The split-screen camera jolts when a player is knocked away. | Camera | open, with Camera |
+QA has no band for any of the three yet. For GB-005 the harness already counts bounces per bounced journey and journeys longer than 4,000 units (`5c.bounces`, `5c.long`); a per-journey momentum or speed-gain row would need a field from World's journey events. For GB-003 a camera-motion metric would need Camera's rig output; ask the EP when a band is wanted.
+
+## git log: GB-003 added, and Camera's jolt pass
+965cdbc2 2026-10-02 02:19:11 -0700 QA: GB-002 closed against 8fd6aba
+d7323551 2026-10-02 04:22:21 -0700 Camera: split-screen jolt pass (hand-overs cut, the slam's zoom smoothed, an urgent split when a fighter is knocked out of view); a jolt scan in the sweep
+
+## HEAD docs/camera/split-screen.md:352-360,406 (jolt scan exists in split_sweep)
+## 21. The jolt scan (Orb's two-player playtest, 2026-10-02)
+
+Orb: "during split screen the camera had some jolts, it would jolt left and right under some circumstances like when one of us got knocked away." The sweep now scans every real match, per tick and per pane the player sees (a pane with at least 20% of the screen in both frames, not a cut, not a cut-in, not the slam's door):
+- **camera:** how much the camera's motion relative to the fighter it follows changed since the last tick, in screen widths (a camera that keeps pace with a fast fighter is not a jolt; one that changes velocity under him is). Over 0.05.
+**Counts, before and after (all 13 matches):** 4,636 jolts before, 1,572 after.
+**Still jolting (Orb's complaint), 13 matches, HEAD bf4ef3c:** 1,546 camera jerks (zoom and divider: none).

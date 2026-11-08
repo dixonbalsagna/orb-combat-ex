@@ -1,0 +1,12 @@
+# AC-293 proof, run 2026-11-07 on HEAD 53b6df82 (read-only); live pin 257a766c
+  for (const r of results) {
+    const dec = r.aWins + r.bWins, w = dec ? r.aWins / dec : NaN, ci = dec ? S.wilson(r.aWins, dec) : [NaN, NaN];
+    const band = r.lo === null ? '' : `${r.lo} to ${r.hi}%`;
+    const fin = (r.aWins + r.bWins) / r.n * 100, finOk = r.finMin == null || fin >= r.finMin;
+    let verdict = r.lo === null ? 'reported' : (w * 100 >= r.lo && w * 100 <= r.hi ? (ci[0] * 100 >= r.lo - 2 && ci[1] * 100 <= r.hi + 2 ? 'PASS' : 'in band, interval wide') : 'FAIL');
+    if (r.finMin != null) verdict = finOk ? (verdict === 'reported' ? 'PASS' : verdict) : 'FAIL (finish)';
+    const [a, b] = r.stats;
+    // A scripted player that pressed almost nothing was blind (its beat source is gone, as in a brawl before the beat read exists): the row is not a reading.
+    const blind = [[r.a, a], [r.b, b]].filter(([spec, st]) => !String(spec).startsWith('ai') && st.pressesPerMatch < 100).map(([spec]) => spec);
+    if (blind.length) verdict = 'SCRIPT BLIND (not a reading: fewer than 100 presses a match)';
+    lines.push(`| ${r.id} | ${r.what} | ${pct(w)} (${r.aWins} of ${dec}) | ${pct(ci[0])} to ${pct(ci[1])} | ${band}${r.finMin != null ? ' and finish at least ' + r.finMin + '%' : ''} | ${fin.toFixed(0)}% | ${verdict} | ${a.damagePerExchange} / ${b.damagePerExchange} | ${a.launchesEarnedPerMatch} / ${b.launchesEarnedPerMatch} | ${pct(r.alternationShare)} | ${pct(a.onBeatShare)} | ${a.blurLocked} of

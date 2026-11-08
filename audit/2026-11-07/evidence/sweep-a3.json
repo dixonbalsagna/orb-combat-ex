@@ -1,0 +1,126 @@
+{
+  "domain": "A3 privacy and A6 store/consumer compliance (sweep a3, blind; baseline 8d9b98a2, HEAD 53b6df82, live site deployed from 72a4d1e4 with the game pinned to 257a766c)",
+  "risks": [
+    {
+      "title": "README says the hosted build is offline, but a playable build is live at /play/",
+      "player_impact": "Someone reading the public README, such as a parent checking for flashing risk, is told no build is hosted, while a flashing build is served at /play/ behind a gate and the holding page says the opposite.",
+      "where": ["README.md:7", "audit/2026-11-07/evidence/live-site-index.html:22", "https://dixonbalsagna.github.io/orb-combat-ex/play/"],
+      "evidence": "README.md:7 (committed, unchanged since 72a4d1e4) says 'The hosted build is offline for now'. A curl GET of /play/ returned 200 with the gated Godot page, index.wasm (38,450,604 bytes) and index.pck (9,034,688 bytes) were last modified 2026-11-05, and the pck holds build_info commit 257a766.",
+      "horizon": "already-public",
+      "severity_guess": "S3",
+      "likelihood": "high",
+      "evidence_strength": "reproduced",
+      "needs_outside_expert": "none",
+      "external_sources": ["https://dixonbalsagna.github.io/orb-combat-ex/play/", "https://dixonbalsagna.github.io/orb-combat-ex/play/index.pck", "https://dixonbalsagna.github.io/orb-combat-ex/play/index.wasm"]
+    },
+    {
+      "title": "The interim flashing build cannot be retired at its 2026-11-15 expiry by the normal path",
+      "player_impact": "The gated flashing build stays public after the owner's approved end date. The page's line 'may be taken down without notice' now relies on someone changing a GitHub setting by hand.",
+      "where": ["tools/site.json:8", "tools/check-site-interim.mjs:78", ".github/workflows/ci.yml:528"],
+      "evidence": "The expiry is checked only when a new deploy runs: check-site-interim.mjs:78 fails that deploy and never removes the live site. Deploy needs every CI job (ci.yml:528), and CI has not run, so even tools/site-offline.mjs plus a push cannot change the site. A read-only gh api call shows Pages build_type 'workflow'.",
+      "horizon": "already-public",
+      "severity_guess": "S3",
+      "likelihood": "high",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "none",
+      "external_sources": ["https://api.github.com/repos/dixonbalsagna/orb-combat-ex/pages"]
+    },
+    {
+      "title": "Civilian deaths are simulated, with no age rating, content descriptor or age gate anywhere",
+      "player_impact": "Before a store release, rating questionnaires need violence against civilians disclosed. Today neither the page nor the game tells players or parents about it, and nothing gates by age.",
+      "where": ["sim/world/collateral.gd:4", "sim/world/collateral.gd:294", "ui/data/howto.json", "tools/site-notice.json"],
+      "evidence": "collateral.gd:4 says every civilian death goes through kill() (line 294), with caps by tier. A grep of ui/data/*.json and the site notice files found no age, child or parental text. I did not check whether deaths are drawn on screen.",
+      "horizon": "store",
+      "severity_guess": "S3",
+      "likelihood": "medium",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "A ratings specialist for the IARC and Steam content surveys (and for regional boards if sold where they apply).",
+      "external_sources": []
+    },
+    {
+      "title": "The About page calls the engine 'official' 4.7.2-stable, but the served engine is a custom patched build",
+      "player_impact": "A small factual error in the licence notice. The licence texts themselves are complete.",
+      "where": ["https://dixonbalsagna.github.io/orb-combat-ex/about/ (line 33)", "tools/web-template.json:15"],
+      "evidence": "The live about page says 'Godot Engine 4.7.2-stable (official)'. The served index.wasm has SHA-512 ae2abcc2..., equal to the pinned custom template's wasmSha512 (web-template.json:15), and contains the string 'Godot Engine v4.7.2.stable.custom_build'. The patch is published as a GitHub release asset.",
+      "horizon": "already-public",
+      "severity_guess": "S4",
+      "likelihood": "high",
+      "evidence_strength": "reproduced",
+      "needs_outside_expert": "none",
+      "external_sources": ["https://dixonbalsagna.github.io/orb-combat-ex/about/", "https://dixonbalsagna.github.io/orb-combat-ex/play/index.wasm", "https://api.github.com/repos/dixonbalsagna/orb-combat-ex/releases"]
+    },
+    {
+      "title": "The public repo exposes the owner's Windows account name, local paths and a probable home LAN address",
+      "player_impact": "This is not player data. It weakens the pseudonymous owner's privacy: 52 committed files contain C:/Users/<account> paths, and a 10.x home address appears as a worked example.",
+      "where": ["tools/flash/interim-run.sh:20", "docs/tools/morning-1107-ledger-new.json:3", "net/lan.gd:231", "net/tools/lan_kit.mjs:3"],
+      "evidence": "A git grep for 'Users/<account>' at HEAD matched 52 files. lan.gd:231 and lan_kit.mjs:3 use 10.0.0.135 as the host example. That address is private and not routable from outside the home network. Commit identities use a GitHub noreply address, which is fine.",
+      "horizon": "already-public",
+      "severity_guess": "S4",
+      "likelihood": "high",
+      "evidence_strength": "reproduced",
+      "needs_outside_expert": "none",
+      "external_sources": []
+    },
+    {
+      "title": "The privacy notices say nothing about on-device storage",
+      "player_impact": "The game keeps settings, tutorial flags and (at HEAD) up to 24 planet-cache files in the browser's IndexedDB or user://. None of it is personal, but 'collects and sends no personal data' is the only privacy statement.",
+      "where": ["ui/core/ui_prefs.gd:3", "sim/input/remap.gd:13", "sim/world/field_cache.gd:6", "data/biomes/field.json:24"],
+      "evidence": "ui_prefs.gd writes user://ui_prefs.json (keys such as howto_seen, options and menu are set in ui_hud.gd). remap.gd writes user://input.json. field_cache is enabled with keep 24 (field.json:25-26). The live build 257a766c has ui_prefs but not field_cache.",
+      "horizon": "already-public",
+      "severity_guess": "S4",
+      "likelihood": "medium",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "EU/UK privacy counsel, on whether the strictly-necessary storage exemption covers this or a one-line disclosure is advisable before a store release.",
+      "external_sources": []
+    },
+    {
+      "title": "The Web export preset does not exclude net/ (LAN and ENet code), unlike the desktop presets",
+      "player_impact": "The next public web build will carry unused LAN networking code. It is not wired into the game, but it contradicts the stated rule that public builds exclude net/.",
+      "where": ["export_presets.cfg:11", "export_presets.cfg:55", "net/lan.gd:3"],
+      "evidence": "Line 11 (Web) has no 'net/*' in exclude_filter; lines 55, 101 and 132 (desktop) do. Shipped render/ui/sim code mentions NetLan only in comments. The live pck has no net/ files, because net/ did not exist at 257a766c.",
+      "horizon": "web",
+      "severity_guess": "S4",
+      "likelihood": "high",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "none",
+      "external_sources": []
+    },
+    {
+      "title": "Desktop presets lack store basics: unsigned Windows exe with blank publisher and version, macOS ad-hoc only and not notarized",
+      "player_impact": "A store or public desktop release would trigger OS 'unknown publisher' or Gatekeeper warnings and carry no copyright or version info.",
+      "where": ["export_presets.cfg:74", "export_presets.cfg:79-85", "export_presets.cfg:164-169"],
+      "evidence": "Windows has codesign/enable=false and empty file_version, product_version, company_name and copyright. macOS has codesign identity '' and notarization=0. No desktop build is published: the only unexpired Actions artifact is a web template, and no desktop-builds runs are listed.",
+      "horizon": "store",
+      "severity_guess": "S4",
+      "likelihood": "medium",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "none",
+      "external_sources": ["https://api.github.com/repos/dixonbalsagna/orb-combat-ex/actions/artifacts"]
+    }
+  ],
+  "checked_ok": [
+    {"area": "Outbound network calls in shipped code", "where": "git grep at HEAD over sim/render/ui/audio/net (tools excluded); live index.js", "why": "No HTTPRequest, HTTPClient, WebSocket, WebRTC, fetch, sendBeacon, analytics, crash reporting or update check. The only sockets are LAN-only ENet in net/, which main code does not call. The live index.js fetch and XHR calls load only its own pck and wasm."},
+    {"area": "External resources on the live site", "where": "live /, /play/, /about/, /404.html, /bench/ (curl)", "why": "Every page loads only same-origin files (index.js, wasm, pck, icons, manifest) with inline CSS and JS. There are no fonts, CDNs or trackers, the pages are noindex, and no service worker is served (404)."},
+    {"area": "Web shell additions at HEAD", "where": "export_presets.cfg:31; tools/lib/audio-shell.mjs:17-21; docs/audio/pending/audio-resume/shell-snippet.js:7-80; tools/build-site.mjs:132", "why": "head_include handles fullscreen, wake lock and key handling only. The audio snippet only resumes AudioContexts. Neither has a network call or storage."},
+    {"area": "Cookies, localStorage and breadcrumbs", "where": "tools/site.json (no crumbs key); tools/site-crumbs.mjs:1-3; live /play/ source", "why": "Crumbs are off, so the page has no localStorage use or cookie. Engine user:// uses IndexedDB only for game files."},
+    {"area": "Feedback report and send target", "where": "ui/widgets/ui_feedback.gd:34-78,132-166; ui/data/send.json:4; live pck '_target': 'none'", "why": "The report holds coarse platform, browser family and major version, screen size, settings and the player's notes. The send target is 'none', so it only reaches the clipboard. The github/mailto options are off and show a review screen first."},
+    {"area": "LAN play and IP addresses", "where": "net/lan.gd:220,263-284; net/enet_transport.gd:15,111", "why": "The window title and --lan-log never include an IP, the failure text drops the address, and the host accepts only its own /24. The host IP appears only in the private kit's .cmd shortcuts."},
+    {"area": "Live claim: fight director is ordinary code, not an AI model", "where": "git grep for onnx/tflite/neural/llm/api keys, and model or binary files, at HEAD", "why": "No model files, GDExtensions or AI API calls ship. The opponent is tuned by data (data/director/ai.json). Gemini-suggested numbers are offline authoring, which the disclosure covers."},
+    {"area": "Live claims: beams gouge trenches, buildings break in stages, scars persist", "where": "sim/director/beam.gd:618-619; sim/world/structures.gd:98-100; sim/world/store.gd:14,22; same functions at 257a766c", "why": "Beams scorch grooves, buildings have stages 0-4, and the scar store refuses rather than evicts at MAX, keeping the deform write. No terrain healing was found. All of this is present in the live pinned build."},
+    {"area": "Live claims: wrap, biomes, light/medium/heavy", "where": "sim/core/wrap.gd:7,12; data/biomes/*.json (city, desert, ocean, mountain); data/combat/recipes.json:316", "why": "The world wraps, the four named biomes exist, and the moveset has a medium class next to light and heavy."},
+    {"area": "Live claims: 'a limited test build is up' and 'page collects and sends no personal data'", "where": "live-site-index.html:22,34; curl of /play/ assets", "why": "A gated playable build is served at /play/, unlinked from /. The holding page has no script or external resource."},
+    {"area": "Flash notice versus the live build's lock", "where": "live /play/ gate text; live pck 'lock_reduce_flashing': true; ui/data/options.json:45-46", "why": "The gate's statement that Reduce flashing is locked on matches the served pck. The README's 'Reduced motion' setting exists."},
+    {"area": "Licence notices (Godot MIT, third-party, font)", "where": "live /about/ (Godot MIT, OFL-1.1, full component list, FTL and others); ui/widgets/ui_licences.gd:5,19-27; ui/data/howto.json:96-112", "why": "The web build links its notices from the gate. The game shows engine-supplied licence text in-game, which covers desktop builds. No font files are bundled beyond the engine's own."},
+    {"area": "Bundled third-party media", "where": "audio/preview/.gdignore; audio/music (NOTICE.txt only); art/animation/.gdignore", "why": "The AI-generated reference music and review images are excluded from export, and no music tracks are committed."},
+    {"area": "Child-directed signals", "where": "ui/data/*.json, tools/site-notice*.json (grep)", "why": "No child-directed copy and no data collection, so no children's-privacy obligations are triggered by the current builds."},
+    {"area": "README file pointers", "where": "README.md:13-30", "why": "Every listed path exists at HEAD."}
+  ],
+  "limits": [
+    "I did not run the game, Godot, Chrome or any capture, so runtime behaviour (what is drawn, what reaches IndexedDB, desktop engine log contents) is from code reading, not observation.",
+    "project.godot sets no logging option. I did not verify what the engine's default desktop file log records (likely GPU and OS names), and it stays local.",
+    "I did not verify the accuracy of the flash statement. The recorded full-set pass is for d3f1ca0e, not the live 257a766c, and flash measurement belongs to another domain.",
+    "My grep-based inspection of the live pck may miss strings inside compressed binary-token scripts (script_export_mode=2). File paths and JSON data were readable.",
+    "The private LAN and kept builds given to Orb and Orb 2 are not in the repo, so I judged them only from the kit scripts (net/tools/lan_kit.mjs, tools/preview/blackbox.mjs).",
+    "As instructed, I did not read docs/legal, docs/ep, docs/net, docs/qa, docs/production, docs/accessibility, homework or audit (apart from the named live-site-index.html)."
+  ]
+}

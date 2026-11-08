@@ -1,0 +1,2 @@
+AC-204 proof, run 2026-11-07: tracked files matching Steamworks SDK or GodotSteam names at HEAD
+(end of list; empty means none tracked)

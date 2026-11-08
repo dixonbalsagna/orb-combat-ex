@@ -1,0 +1,8 @@
+# AC-190 evidence
+$ git ls-files | grep -i mega
+(none tracked)
+$ git status --short | grep -i mega
+?? art/concepts/megastructures/
+?? docs/art/megastructures.md
+$ git grep megastruct in sim data render ui
+(none)

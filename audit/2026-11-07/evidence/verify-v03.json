@@ -1,0 +1,343 @@
+{
+  "verdicts": [
+    {
+      "id": "AC-028",
+      "claim": "Effect-level flash limits for beams, explosions, marks, catastrophe light, magma, sun and moon discs, facade tones and bolt streams (w04, w05, fx03-fx05, fx08, c02-c04).",
+      "key_sources": [
+        "docs/legal/movegen-banned.json:3",
+        "docs/legal/movegen-banned.json:623-631",
+        "docs/legal/movegen-banned.json:696-723",
+        "docs/legal/movegen-banned.json:743-755",
+        "docs/legal/energy-overhaul-screen.md:39",
+        "docs/legal/catastrophe-and-city-screen.md:12",
+        "docs/legal/review-log.md:160-166"
+      ],
+      "verdict": "CONFIRMED",
+      "severity": "S2",
+      "horizon": "already-public",
+      "likelihood": "medium",
+      "evidence_strength": "traced in code",
+      "what_is_true": "The danger is real and beams and explosions are in /play/. Only part is in force: the register's catastrophe class (flash_registry.gd:59-61), beam_ripple 2 Hz and the fx04 rates in data/vfx/energy.json, and w05 in city-looks.json (worst pair 0.083, since 2e41d4f8, so the 0.14 note is stale). Not met: the release set was never re-run after RL-141 (last full set d3f1ca0e, 2026-10-15); VFX's own clips read per-ground beam scenes at 4.5 reduced on main (2026-10-27, documented only); the build-fail line at movegen-banned.json:3 covers strike rows only; muzzle rings are throttled to one per 4 ticks, not a steady light; the discs and the catastrophe tier are not built.",
+      "proof": [
+        "evidence/AC-028.txt",
+        "render/vfx/flash_registry.gd:59-61",
+        "data/vfx/energy.json:176-181",
+        "data/art/city-looks.json:4",
+        "render/tools/city_check.gd:82",
+        "render/vfx/shots.gd:32,256",
+        "tools/flash/wcag.js:9-10,34-36",
+        "tools/flash/nightly-seeds.json:115",
+        "docs/vfx/pending/biome-fx/README.md:17-24"
+      ],
+      "external": [
+        "WCAG 2.2, https://www.w3.org/TR/WCAG22/, accessed 2026-11-07, note 3 on red flash: \"R/(R + G + B) that is greater than or equal to 0.8\"; the text does not say linear or gamma-encoded, so fx05's 'the standard's own test on linear values' is a conservative reading, not the standard's wording."
+      ],
+      "cost_of_false_alarm": "Not a false alarm. Stale parts (the w05 row still open after the data asserts it; disc and catastrophe rows for features that do not exist) keep RL-138 and RL-144 open and invite re-work.",
+      "fix": "Re-run the release set on the pin and on main in reduced mode, with explosions and per-ground beams. Close RL-144 (w05 asserted). Reword fx05 as a conservative reading. Either enforce movegen-banned.json:3 for non-strike rows or drop that sentence. Make the stream muzzle a steady light, or have Legal accept the 4-tick ring.",
+      "belongs_to": "Legal (rules); VFX and Rendering (enforcement); Tools (release set)"
+    },
+    {
+      "id": "AC-029",
+      "claim": "Catastrophe boss and run (c01-c07): each planet-scale effect joins the flash set, at most one flash per 2 s, rise at least 0.3 s, fall at least 1 s, calm form, red 0, bombardment at most 2/s; originality echoes and mushroom-cloud wording; storyboards and clips before it ships.",
+      "key_sources": [
+        "docs/legal/review-log.md:167",
+        "docs/legal/catastrophe-and-city-screen.md:15-30"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S3",
+      "horizon": "none",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "The threshold figures are correct WCAG numbers (21,824 px is 25% of 341 x 256). c02's envelope is already in force in the runtime register (CAT_GAP 120, CAT_RISE_MIN 18, CAT_FALL_MIN 60, calm form in ask_cat) at HEAD and in the pin. Nothing calls blastCloud in play (cata.gd:8-9), so the tier is dormant in every build. The 2/s bombardment limit is not a coded rule, and the originality echoes and mushroom-cloud words are not photosensitivity. effects_check was not run (needs Godot).",
+      "proof": [
+        "evidence/AC-029.txt",
+        "render/vfx/flash_registry.gd:54-61,241-266",
+        "sim/core/cata.gd:8-9",
+        "data/fight/catastrophe.json:2",
+        "docs/legal/catastrophe-and-city-screen.md:19-24"
+      ],
+      "external": [
+        "WCAG 2.2, https://www.w3.org/TR/WCAG22/, accessed 2026-11-07: \"using a 341 x 256 pixel rectangle anywhere on the displayed screen area\" (at 1024 x 768)."
+      ],
+      "cost_of_false_alarm": "Low. The 'store' horizon is fair, but a condition on a dormant tier can read as live risk. Carrying originality items in a flash record blurs which gate owns them.",
+      "fix": "Keep it as a condition on the catastrophe tier and note that the register already enforces c02. Move c06 and c07 to the originality record. Add the 2/s bombardment cap to the register when the tier is built.",
+      "belongs_to": "Legal and VFX (photosensitivity); Orb's creative direction (c06, c07 echoes and wording)"
+    },
+    {
+      "id": "AC-030",
+      "claim": "Each struggle ending is one catastrophe-class light event with one rise and one fall; the VFX wave offset stays within 12 ticks; window-out at night falls inside it; ending clips in both modes over a city at night before live.",
+      "key_sources": [
+        "docs/legal/review-log.md:268",
+        "docs/legal/review-log.md:273",
+        "docs/legal/review-log.md:274",
+        "docs/legal/review-log.md:276"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S3",
+      "horizon": "none",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "The rulings exist at review-log.md:268, 273, 274 and 276. The inventory's cites (465, 466, 468) point at a list of outside links. Everything they govern is off: struggleMeet.enabled is false (craters.json:28), CLASH_WAVE_DEFAULT is false, and the end-wave park is still pending, so nothing reaches players. The 12-tick limit is Legal's own reading of 'one envelope', not an outside standard. No code stops a switch-on without the clips. VFX's clip figures were not reproduced.",
+      "proof": [
+        "evidence/AC-030.txt",
+        "data/biomes/craters.json:27-28",
+        "render/vfx/vfx_look.gd:175",
+        "docs/vfx/pending/struggle-ring/README.md"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "Low. The wrong line cites send readers to the wrong place. The 'store' label overstates a feature that is switched off.",
+      "fix": "Correct the inventory cites to 268/273/274/276. Make switching on depend on the clips: a check that refuses struggleMeet.enabled or CLASH_WAVE_DEFAULT set to true without a recorded combined night clip in both modes.",
+      "belongs_to": "Legal (rule); World and VFX (clips); Tools (switch check)"
+    },
+    {
+      "id": "AC-031",
+      "claim": "Custom web template under the grandfathered pin allowed only if every reading is no worse than the standard build, tag and hash pinned in signature-gate.json, roll-back kept, full 76-clip set before any release or restore; ends at the pin move (extended to 2026-11-15).",
+      "key_sources": [
+        "docs/legal/review-log.md:221",
+        "docs/legal/review-log.md:224",
+        "tools/flash/signature-gate.json:10-18"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S3",
+      "horizon": "already-public",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "engineFlip names RL-202, the pin, the tag, the SHA-512 and an end date of 2026-11-15, and site.json serves 'custom'. node tools/site-template.mjs --check exits 0, and the code would fail it after that date or on another pin or engine. The extension is RL-207, recorded as 'Orb's decision, not a Legal pass'. By its own readings the waiver adds no harm (custom equals standard), but those readings are the project's own: reduced 3/3/3, at WCAG's count limit with no margin. The 76-clip run is owed only at release or restore. With CI dead, the date check cannot stop anything after 11-15.",
+      "proof": [
+        "evidence/AC-031.txt",
+        "tools/flash/signature-gate.json:10-17",
+        "tools/site.json",
+        "tools/site-template.mjs:46-55",
+        "docs/legal/review-log.md:229"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "Small. The waiver is real and enforced as written. The risk sits in the pin's own readings, not in the engine swap.",
+      "fix": "No change to the waiver. Because CI is dead, the EP should write down what happens at 2026-11-15 (a take-down or a renewal), since the date check alone will not act.",
+      "belongs_to": "Tools (site gate); Legal (waiver)"
+    },
+    {
+      "id": "AC-032",
+      "claim": "A non-web export preset change may skip the full flash set only if the hash covers the Web preset and global lines; any Linux or Windows build that ships to players needs its own flash reading.",
+      "key_sources": [
+        "docs/legal/review-log.md:219"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "store",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "which-set.mjs and release-pass.mjs count only the Web preset's block and the global lines in export_presets.cfg (web-preset.mjs), and self-test cases cover Linux-only and Windows-only changes (release-pass-selftest.mjs:146-148; not run by me). No desktop build has shipped publicly. The LAN desktop kits went to Orb and Orb 2 with no flash reading, which RL-253's private standing covers. The desktop condition is sound because a desktop render path is a different picture.",
+      "proof": [
+        "evidence/AC-032.txt",
+        "tools/flash/which-set.mjs:13,18-19",
+        "tools/flash/release-pass.mjs:64-65",
+        "tools/flash/release-pass-selftest.mjs:146-148",
+        "net/tools/lan_kit.mjs:123"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "None material. The EP's wrong cite (RL-128) is a process slip recorded in the row.",
+      "fix": "None for the rule. Add a desktop flash reading to the store checklist so it does not depend on memory.",
+      "belongs_to": "Tools"
+    },
+    {
+      "id": "AC-033",
+      "claim": "Biome plumes weigh any puff step of 10% or more fully, embers red 0, staged clips in both modes before any public pin (fx07); ambient and scars never blink; one ambient and one beam clip per ground before any public pin (fx10).",
+      "key_sources": [
+        "docs/legal/review-log.md:198",
+        "docs/legal/review-log.md:209"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S3",
+      "horizon": "web",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "Biome effects are absent from the live pin (no data/vfx/biome.json at 257a766c) but on by default at HEAD and in the LAN builds. Ambient is off. The burst star asks the register as a low source and never repeats within 60 ticks (biome.gd:421-427). The plume readings are tabled with commit 6daac9c0 (README.md:34-41), not as raw output. VFX's per-ground beam clips read 3 to 4.5, NOT PASS, in both modes (blamed on the base signature scene), so fx10's beam-clip condition is unmet. The signature gate already keeps main off the public pin.",
+      "proof": [
+        "evidence/AC-033.txt",
+        "render/vfx/vfx_look.gd:81,85",
+        "render/vfx/biome.gd:421-427",
+        "docs/vfx/pending/biome-fx/README.md:15-22,34-41",
+        "tools/flash/signature-gate.json:6"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "Low. RL-187's 'open for the ambient and beam clips' understates that the beam clips were run and failed.",
+      "fix": "Record the failed per-ground beam clips against fx10, and keep the row open until they pass in reduced mode. Save the raw run-pixels summaries next to the README tables.",
+      "belongs_to": "VFX (clips); Legal (rule)"
+    },
+    {
+      "id": "AC-034",
+      "claim": "Energy-in-reach light and flash: analysis owed (RL-113, RL-114), then RL-115 found k05 met in the recording with 9 full flashes in 3 s and a max change of 0.052.",
+      "key_sources": [
+        "docs/legal/review-log.md:135",
+        "docs/legal/review-log.md:136",
+        "docs/legal/review-log.md:137"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "none",
+      "likelihood": "low",
+      "evidence_strength": "documented only",
+      "what_is_true": "reach.md:47 gives 9 flashes 21 ticks apart, so never more than 3 in any 60 ticks: inside WCAG's count, at the limit. The 0.052 is the mean change over one crop, and reach.md calls it 'not the accessibility analysis'. RL-115's 'k05 met' is stronger than photosensitivity-note.md:13 ('a good sign and not a pass'). The register and analyser RL-115 asked for now exist, so its 'Open until registry and checks exist' is stale. This is a 2026-10-06 recording, superseded.",
+      "proof": [
+        "evidence/AC-034.txt",
+        "docs/vfx/reach.md:47,49",
+        "docs/legal/photosensitivity-note.md:13",
+        "render/vfx/flash_registry.gd:29-31"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "An open row for a condition already met reads as an outstanding blocker. 'Met' wording on a crude crop could be quoted as a pass.",
+      "fix": "Close RL-115, pointing at flash_registry.gd and wcag.js, and mark the recording superseded. Reword 'met' to 'a good sign, not a pass', as the note says.",
+      "belongs_to": "Legal (record upkeep)"
+    },
+    {
+      "id": "AC-035",
+      "claim": "Frame analyser reading: flash area is 25% of the 341 x 256 field, red formula yet to be named, red variant labelled conservative, public wording approved with limits.",
+      "key_sources": [
+        "docs/legal/review-log.md:138"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "none",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "The 25% of 341 x 256 at 1024 x 768 is WCAG 2.2's own stated estimate, so the inventory's 'no derivation' note is wrong. The analyser now names the red formula (R/(R+G+B) >= 0.8 with u'v' change > 0.2, on stored or linear values, whichever is red) and counts a quarter of a one-third window (wcag.js:9-15,34-38). The register's AREA_FULL is 21,824 (flash_registry.gd:31). RL-116's 'Open until Tools recounts' is stale. The public wording was not checked here.",
+      "proof": [
+        "evidence/AC-035.txt",
+        "tools/flash/wcag.js:9-15,34-38",
+        "render/vfx/flash_registry.gd:31"
+      ],
+      "external": [
+        "WCAG 2.2, https://www.w3.org/TR/WCAG22/, accessed 2026-11-07: \"25% of any 10 degree visual field on the screen\"."
+      ],
+      "cost_of_false_alarm": "Minor. A stale open row and a wrong inventory note suggest an unspecified red test that is in fact specified.",
+      "fix": "Close RL-116 with pointers to wcag.js and flash_registry.gd. Correct the inventory note.",
+      "belongs_to": "Tools; Legal (record upkeep)"
+    },
+    {
+      "id": "AC-036",
+      "claim": "Barrage as the Anti-hero's signature passes on paper with conditions (sg01), one full flash on the last volley, to be seen drawn first.",
+      "key_sources": [
+        "docs/legal/review-log.md:157"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "none",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "RL-135 is a paper pass. sg01 is stated in full at movegen-banned.json:679-680 and roster-sketches-screen.md:26, so the inventory's 'not stated' note is wrong. barrage-signature.md:3 says 'no build', and no fighter data carries a barrage signature. The flash plan (one full flash on the last of three volleys in a second) stays inside the 3-a-second count, and the runtime register would cap it anyway. Most of sg01 is pose and originality.",
+      "proof": [
+        "evidence/AC-036.txt",
+        "docs/legal/movegen-banned.json:679-680",
+        "docs/legal/roster-sketches-screen.md:26",
+        "docs/combat/barrage-signature.md:3"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "Negligible. The 'store' horizon labels a paper idea that is not built.",
+      "fix": "Keep it open until drawn. Correct the inventory note. File the pose items under the originality rules.",
+      "belongs_to": "Legal (flash plan); Orb's creative direction (poses, originality)"
+    },
+    {
+      "id": "AC-037",
+      "claim": "Beam answers 2: volleys and Bolus's pump glow rate-limited to 3 light events a second whatever the thumb does; RT power-up binds the two-marks cap; lock-on to the opposing fighter only with no reticle; co-op achievement celebrates no destruction and carries no personal data.",
+      "key_sources": [
+        "docs/legal/review-log.md:260",
+        "docs/legal/review-log.md:261"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "none",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "RL-238 and RL-239 are paper rulings. Bolus and Loupe appear only in tools files (effects_check.gd, stoke_probe.gd), so none of this is built. The 3-a-second cap on a glow driven by button presses is a sound guard, since a glow that never asks the register would escape its cap. The marks cap and the no-reticle lock-on (ADR 0010) are Orb's creative direction and look. The achievement's personal-data line is a trivial privacy note. RL-238 (7) admits its source note 'was not located'.",
+      "proof": [
+        "evidence/AC-037.txt",
+        "docs/legal/review-log.md:260-261"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "Low. Bundling look and originality rules with a flash cap makes a creative row look like a safety gate.",
+      "fix": "Keep the press-driven glow cap as a VFX condition with a mashed-pump clip in both modes. Move the marks, reticle and achievement items to the creative and look records.",
+      "belongs_to": "VFX and Legal (glow rate limit); Orb's creative direction (marks, lock-on look, achievement)"
+    },
+    {
+      "id": "AC-038",
+      "claim": "Flying into night: the sky follows place and the fixed sun only, is slew-limited, windows light gradually, and the collapse, signature and beam clips run at night in both modes before it ships.",
+      "key_sources": [
+        "docs/legal/review-log.md:245"
+      ],
+      "verdict": "CONFIRMED",
+      "severity": "S2",
+      "horizon": "already-public",
+      "likelihood": "medium",
+      "evidence_strength": "traced in code",
+      "what_is_true": "Night by place is not a future feature: the live pin (2026-10-19) already runs it. The sky is driven by place, with a night key at phase 0.58 from a sunset start at 0.32, a lap is about 15 s flat out, and the sky is updated every frame. That is 13 days before RL-223 (2026-11-01) set 'before it ships' conditions. No night clip is recorded for the pin, and neither the flash capture nor the nightly stages night, so beams and explosions over a dark sky (larger steps) are unmeasured on /play/. Separately, the sky reads the toll and the mood band (sky_drive.gd:452,454; pin 435,437), against RL-223 (1) as written, but eased over 30 to 120 s, so it is no flash risk.",
+      "proof": [
+        "evidence/AC-038.txt",
+        "257a766c:data/art/sky.json:61,139",
+        "257a766c:sim/core/constants.gd:16",
+        "257a766c:render/core/pane_world.gd:154",
+        "render/core/sky_drive.gd:18,452,454"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "Not a false alarm. Closing the row 'on the ruling' hid the fact that the feature had already shipped publicly with no night clips.",
+      "fix": "Run the signature, collapse and beam clips at night on the pin in reduced mode now, or hold the interim build's sky at day until they pass. Record that night already ships. Reconcile RL-223 (1) with the sky's mood and ruin drivers.",
+      "belongs_to": "Tools (night clips); Legal (record); Orb's creative direction (sky reacting to mood and ruin)"
+    },
+    {
+      "id": "AC-039",
+      "claim": "3D auras: one transient mark, no flame or spikes, rates at or under 2 Hz, alpha 0.5, calm form, off by default (fx06); strokes across the body are VFX's open fix.",
+      "key_sources": [
+        "docs/legal/review-log.md:192"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "none",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "Commit 63c078a5 exists and touches only docs/vfx/pending/aura3d. No aura3d code, data or schema is on main, and the closed schema (2 Hz, alpha 0.5) exists only inside the park's patch. The numbers are margins under WCAG. 'No flame or spikes' is originality. The aura that does ship is a different, flat one (data/vfx/aura.json: alpha 0.4, pulse every 50 ticks), which fx06 does not cover.",
+      "proof": [
+        "evidence/AC-039.txt",
+        "docs/vfx/pending/aura3d/README.md:16,26",
+        "data/vfx/aura.json"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "Negligible. A parked effect carried as an open safety condition.",
+      "fix": "None until the park lands. When it does, land the closed schema with it and read the flash clips.",
+      "belongs_to": "VFX and Legal; Orb's creative direction (shape)"
+    },
+    {
+      "id": "AC-040",
+      "claim": "The meteor shot zooms the whole picture about 20 times in about 3 s, a whole-field motion trigger; under the setting it is cut, held, cut back; the default zoom needs a tester read, as a data number.",
+      "key_sources": [
+        "docs/accessibility/swing-motion.md:10",
+        "docs/accessibility/swing-motion.md:32-36"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "private",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "The figures match the code: from the 2,700 margin to the 53,000 top is 19.6 times (2.98 e-folds), capped at peakRate 3.0 e-folds a second in data/camera/swing.json:6, which is already the data number the doc asks for. The motion setting exists (world_turning auto/cut, split_rig.gd:5516-5517). The shot runs only with --tiles: off in the public pin, on in the LAN kits (lan_kit.mjs:123). This is a motion-comfort risk, not a seizure risk. The tester read is still owed, and 'about 3 s' was not checked.",
+      "proof": [
+        "evidence/AC-040.txt",
+        "render/camera/camera_params.gd:354,365",
+        "data/camera/swing.json:6",
+        "render/camera/split_rig.gd:5208-5211,5516-5517",
+        "render/core/main.gd:243-245",
+        "net/tools/lan_kit.mjs:123"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "Low. Filed under flash (A1), so it could be read as a photosensitivity gate.",
+      "fix": "Refile as a motion-comfort item. Mark the data-number ask as done (peakRate). Keep the tester read before the swing leaves private builds.",
+      "belongs_to": "Accessibility"
+    }
+  ],
+  "batch_notes": [
+    "Night by place already ships in the live /play/ pin (2026-10-19), predating RL-223's 'before it ships' conditions; no night flash clip exists for the pin (AC-038). This is the one new public-horizon gap in this slice.",
+    "VFX's own tables (docs/vfx/pending/biome-fx/README.md:17-24, project analyser, not re-measured) read per-ground beam scenes at 4 to 4.5 in reduced mode on main 2026-10-27. That affects the private LAN builds (a8bc66e2 descends from it) and is why main cannot take the pin.",
+    "Dormant rules: the catastrophe tier (blastCloud is called only by tools), sun and moon discs (no 'moon' in render/), the 3D aura (parked), the barrage signature and beam answers 2 (paper) are not in any build. Their conditions are sound but guard nothing live.",
+    "Inventory errors: AC-030's cites review-log.md:465/466/468 point at outside links (the rulings are at 268, 273, 274, 276); AC-028's 0.14 facade note is stale (w05 asserted by 2e41d4f8); AC-035's 'no derivation' is WCAG's own estimate; AC-036's 'sg01 not stated' is wrong (movegen-banned.json:679).",
+    "WCAG 2.2 note 3 does not say linear or gamma-encoded for the red share. The analyser's 'either' reading is a conservative margin; fx05 calls it 'the standard's own test on linear values', which overstates the text.",
+    "Stale open rows whose conditions are met: RL-115 (register and checks exist), RL-116 (area and red formula implemented), RL-144 (w05 asserted in data).",
+    "Not run: Godot checks (effects_check, city_check, hud_check), pixel captures, any browser. Ran: node tools/site-template.mjs --check (exit 0). External source: https://www.w3.org/TR/WCAG22/ read 2026-11-07."
+  ]
+}

@@ -1,0 +1,8 @@
+# AC-075 proof, 2026-11-07, HEAD 53b6df82
+CLAUDE.md:5 -> The Protagonist's collectible artefacts must not be orbs (Legal).
+fighter-concepts-review.md:5 -> Its orb constraints replace the earlier line that the protagonist's items must not be orbs.
+name-screening.md:170 -> 3. **Keep the artefacts un-orb-like.** The protagonist's gathered items must not be orbs. Keep to the Keystones replacement.
+name-screening.md:188 -> 4. Keep the rest of the earlier conditions: no orb-shaped artefacts for the Protagonist, distance from the web series, "
+q3-screen.md:33 -> **Tripwires.** If any of these appears, Legal returns NO-GO: exactly seven of anything; star or numeral markings; a sens
+## held fragments / keystones / collectibles in shipped code or data at HEAD (sim, data, ui, render):
+0

@@ -1,0 +1,16 @@
+# AC-002 evidence (auditor helper, 2026-11-07): committed flash readings on the live pin 257a766c
+## tools/web-template.json measured (Performance, 2026-10-28, pin exported with the custom template, hook and lock)
+signature {"primary":2.5,"area15":2.5,"twoSec":3} {"primary":3,"area15":3,"twoSec":3}
+collapse {"primary":2,"area15":3.5,"twoSec":1} {"primary":2,"area15":2.5,"twoSec":2}
+nightly 2026-10-28 257a766c max 3.5 ai-1047-reduced limit 3.5 over []
+## tools/flash/nightly-seeds.json runs on the pin
+2026-10-22 max 3.5 ai-1029-normal over [{"id":"ai-1029-normal","primary":3.5}]
+2026-10-23 max 3 ai-1035-normal over []
+2026-10-30 max 3.5 ai-1049-normal over []
+## f00357f7 message: reduced max 2.5 on 2026-10-22
+Flash: the nightly seeds on the pinned 257a766c (seeds 1024-1031, both modes, 16 of 16 read): max 3.5 on the primary reading (ai-1029-normal), none over the owner interim's 3.5; with Reduce flashing on (locked on the page) max 2.5. The tool wrote 'over' against 3 because the site was offline when it ran
+## 2026-10-06 figures are from older builds: docs/ep/orb-review-list.md:179-181 heading dated 2026-10-06
+## Flashing effects and the public page (2026-10-06): a decision for Orb
+## Orb 2026-10-18 (docs/ep/vision.md:1458) asks to keep working on the fix
+stop spinning your wheels on this flickering issue, absolutely try to fix it and leave safeguards in place, and it very well may be something to tackle vigilantly before release but I want the public page back up with a disclaimer.
+keep working on it until it gets solved

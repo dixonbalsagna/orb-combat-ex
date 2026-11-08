@@ -1,0 +1,12 @@
+# AC-153: the Anti-hero (RIVAL) aura colour in data (run 2026-11-07)
+$ sed -n 64p docs/legal/review-log.md
+| RL-042 | Last stand B, the rival bravado line, Anti-hero aura colour | Game Design | Low | Clear; aura red-orange changed to the orchid lane | Open until the data changes |
+$ git show HEAD:data/fighters/RIVAL/fighter.json | grep aura
+8:    "col": "#a52a2a", "aura": "#9a80d8", "hair": "#181818"
+$ git show a8bc66e2:data/fighters/RIVAL/fighter.json | grep aura
+8:    "col": "#a52a2a", "aura": "#9a80d8", "hair": "#181818"
+$ git show 257a766c:data/fighters/RIVAL/fighter.json | grep aura
+8:    "col": "#a52a2a", "aura": "#9a80d8", "hair": "#181818"
+$ prototype VORR aura (old red-orange)
+186:  {name:'VORR', title:'Calamity Sovereign', role:'villain', col:'#a52a2a', aura:'#ff5a3c', hair:'#181818', care:-0.8, dmgMul:1.0, spd:0.95, maxhp:1600, sigName:'Calamity Wave'}
+CIE L* (D65, sRGB): #9a80d8 L* 59.2 (a violet)

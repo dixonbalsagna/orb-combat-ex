@@ -1,0 +1,15 @@
+# AC-089 evidence
+## review-log.md (HEAD) :233 (first 400 chars)
+| RL-211 | Orb's locked core four names: Grist (Protagonist), Loupe (Rival), Empress Orza (Empress), Bolus (Cyborg), from a Gemini naming session (model unconfirmed, 2026-10-30), as in-game names (core-four-names-screen.md) | Narrative, EP | Low | All four CLEAR as in-game names (Loupe with a low flag: a minor named character in a hunter manga shares the word); conditions: names are proper nouns o
+## core-four-names-screen.md (HEAD) :18 and :25
+1. **Proper nouns only (the directive's rule 1 stands).** No line, caption or note plays on what a name means: Grist as milling, Loupe as a lens, Orza as fabric or a jar or a sailing term, Bolus as chewed food or a medical dose. The Cyborg's hunger lines (RL-181, RL-210) must never connect to his name. The craft anchors stay behind the scenes: they are not written in any player-facing text, store text, caption or the in-game credits.
+These are four ordinary words, and each is already used as a product or organization name: a spreadsheet and database tool and a climate news site (Grist), an image viewer app and optics products (Loupe), medical products and calculators (Bolus). None is a conflict for a character's in-game name. **None should become the game's title, a subtitle, an app or store tag, a DLC or a merchandise line without a formal search (name-screening.md stage 2).** Orza had no use found. The game's own title sta
+## names in shipped data (HEAD ui/data/fighter_names.json):
+    "protagonist": { "name": "Grist", "title": "Martial Artist", "sigName": "Keeper's Lance" },
+    "rival": { "name": "Loupe", "title": "Challenger", "sigName": "The Barrage" },
+    "empress": { "name": "Empress Orza" },
+    "cyborg": { "name": "Bolus" }
+## names in pinned public build 257a766c (count):
+0
+## pun search in HEAD shipped dirs (name near chew|swallow|dose|lens|magnif|mill|grind|jar|fabric|food|bite|eat):
+(none)

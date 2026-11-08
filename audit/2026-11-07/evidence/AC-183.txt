@@ -1,0 +1,11 @@
+# AC-183: swing score people terms and check wiring (run 2026-11-07)
+## people words in sim/director/swing.gd at HEAD
+0
+## the check
+HEAD:sim/director/tools/swing_legal_check.gd:9:const BARRED := ["crowd", "popAlive", "popNear", "popHist", "pop_mult", "toll", "casualt"]
+## files referencing swing_legal_check (no CI or gate script)
+HEAD:docs/world/ring-any-angle/encounter.md
+HEAD:docs/world/ring-any-angle/game-design.md
+HEAD:sim/director/tools/swing_legal_check.gd
+## swing.gd at the live pin
+absent

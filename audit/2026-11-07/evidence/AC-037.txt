@@ -1,0 +1,11 @@
+# AC-037 evidence
+## named features in shipped code? files naming Bolus or Loupe under sim/ render/ data/
+render/vfx/tools/effects_check.gd
+sim/input/tools/stoke_probe.gd
+## RL-239 (5) wording (review-log.md:261 excerpt)
+(5) RT powering up (A, B or C, and RT + B), (6) the aim lock-on | EP, Game Design | Medium | All six fine with limits;
+(5) RT powering up (A, my read of the table): fine, and it is the franchise's best-known scene, so the stacking cap is binding: at most two of the seven marks at any moment (k01). The ground cracking is one (a gentle lift with weight, not a ring of rocks with wind round him);
+## RL-238 (7) wording
+(the note itself was not located, so this is the rule)
+## RL-238 (7) wording (fixed grep)
+the note itself was not located, so this is the rule

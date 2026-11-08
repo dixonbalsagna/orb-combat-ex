@@ -1,0 +1,12 @@
+# AC-034 evidence
+## docs/vfx/reach.md:47,49
+- Counter log: 9 full flashes, at ticks 302, 323, 344, 365, 386, 407, 428, 449 and 470 (21 apart): never more than 3 in any 60 ticks, which is 3 a second.
+- Crude luminance check on the same crop (mean relative luminance, linear sRGB, Rec. 709): the biggest change from one frame to the next is 0.052 (0.236 to 0.433 range over the run), and no frame pair changes by 0.10 or more; one pair changes by 0.05 or more. The crop is a small part of the screen, so the full-screen change is smaller. This is not the accessibility analysis.
+## docs/legal/photosensitivity-note.md:13 (good sign, not a pass)
+Both fighters mashing at the design's rate: 9 full flashes in 3 seconds, never more than 3 in any 60 ticks; the largest frame-to-frame luminance change in a crop round the fighters 0.052, which is under the 10% threshold. The other landings give small sparks and a low-contrast rim at up to 20 landings a second, which is in the sensitive rate range but below the luminance threshold. **That is a good sign and not a pass:** the check is crude (one crop, not the standard's windows), staged at the design's rate rather than the sim's, and counts only this one effect.
+## the register RL-115 asked for now exists (render/vfx/flash_registry.gd:29-31, caps)
+const AREA_FULL: float = 21824.0         # px: 25% of the standard's 341 by 256 window at 1024 by 768
+const STEP_MIN: float = 0.10             # a luminance swing under this is not a flash
+const BUDGET: float = 2.5                # the sum of weights in any WINDOW ticks (Legal's gate)
+## counter ticks: max flashes in any 60-tick window
+3

@@ -1,0 +1,20 @@
+# AC-136 proof
+$ git show 257a766c:data/fighters/PROTAGONIST/fighter.json | sed -n 8p
+    "col": "#3d8fdc", "aura": "#8fd6ff", "hair": "#22c7a9"
+$ git show 257a766c:render/vfx/react.gd | sed -n 106,119p (worn-aura flicker)
+static func flicker(f, tick: int, slot: int, reduced: bool) -> float:
+	var w: float = worn(f)
+	if w <= 0.0:
+		return 1.0
+	var amp: float = p("flicker", "amp")
+	if reduced:
+		return 1.0 - 0.5 * amp * w
+	# At most one dropout of `drop_ticks` in each `period_ticks` (1.5 a second a fighter at the defaults), so two worn fighters together stay inside the screen's three flashes a second
+	# (Legal's k05, docs/vfx/flash-registry.md). The old pattern dropped out up to 20 times a second.
+	var per: int = maxi(int(p("flicker", "period_ticks")), 1)
+	var n: int = tick / per
+	var ph: int = (tick + slot * (per / 2)) % per
+	var gate: bool = _h(n, slot) < p("flicker", "density") * (0.5 + 0.5 * w) and ph < DROP_TICKS
+	return 1.0 - amp * w * (1.0 if gate else 0.12)
+$ DEFAULTS flicker
+14:	"flicker": {"min_stage": 2, "amp": 0.8, "brink_add": 0.25, "density": 0.55, "period_ticks": 40, "shape_jitter": 0.03},

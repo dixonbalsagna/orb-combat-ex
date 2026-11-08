@@ -1,0 +1,25 @@
+$ sed -n '57p;279p' docs/legal/review-log.md | cut -c1-260
+| RL-035 | Marked plus Aura character style (sigils, dome mask, flashes) | Art | Low to Medium | GO with conditions; Anti-hero pride flash uses the round-tipped fallback | Open until Art runs the checks |
+Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
+
+$ sed -n '189p;195p;206p;221p' docs/legal/q3-screen.md | cut -c1-300
+Screens `docs/art/marked-aura.md` and `art/concepts/marked-aura/`. **Limit:** I reviewed the written descriptions, the data and the fallback notes. I cannot view the rendered SVG sheets, so Art must run the thumbnail and silhouette checks below on the sheets themselves.
+| Anti-hero pride flash (tall blades) | **CONDITIONAL**: use the round-tipped fallback |
+**Dome mask.** A smooth pale dome with hair and one mark can recall a well-known white mask with purple markings from an animated film. Conditions: the mask stays a designed shape (a dome, not a plain egg or mannequin head), has no eye or mouth slots or dots, and the sigil does not sit in an eye or 
+From Art's written descriptions only (I cannot view SVGs). All conditions above are applied as described. Verdicts on the two flags and the new sigils:
+
+$ sed -n '12p;41p;143p;144p' docs/art/marked-aura.md | cut -c1-300
+- `ma-5-legal-checks.svg`: the checks Legal asked Art to run, because Legal cannot view SVGs (masks in three flat colours and silhouette, each sigil beside the generic patterns to avoid, the flashes beside the two patterns to avoid, the dome, and the Coil's chest).
+**The Protagonist's dome** is a designed shape and not an egg: a faceted crown, a raised brow ridge, a jaw plane and a crown seam, with no eye or mouth slots or dots. The hair is a swept-back teal cap, never upswept, never gold, and its fringe sits high so the temple ring shows.
+| Dome: a designed shape, no eye or mouth slots or dots, sigil not as eyes or mouth | A faceted dome with brow ridge, jaw plane and crown seam. The ring is a lone temple mark | `ma-5` sections 1 and 4 |
+| Anti-hero pride: the round-tipped fallback | Round tips are now the default for his pride, triumph, surge and danger sense | `ma-5` section 4, `ma-4` |
+
+$ git log --format='%h %ad %s' --date=short -- art/concepts/marked-aura/ma-5-legal-checks.svg | tail -1
+fe43bd47 2026-09-29 Art: Legal's Marked plus Aura conditions applied (sigils, faceted dome, round tips, low crest, directional danger sense) with a check sheet
+
+$ sed -n '476p' docs/ep/vision.md | cut -c1-300
+- **Art direction.** "the mask aesthetic, broken masks should be part of an upcoming character, not the game's overall art style." The masks are parked as a seed for a future fighter. Orb likes the fighters' faces, and the silhouettes "kind of grew on me"; both are to be refined. The Cyborg is "the 
+
+$ git grep -n -i 'mask' -- render/anim/anim_rig.gd render/core/fighter_view.gd | head -3
+render/anim/anim_rig.gd:187:			pc.a = 0.0   # the lane colour's parts (the forearms, the sashes) carry a 0 alpha: the body's tint mask (AnimBody.set_tint), which leaves the lane colour untinted; the body shader ignores the alpha otherwise
+

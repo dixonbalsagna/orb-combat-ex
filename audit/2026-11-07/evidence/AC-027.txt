@@ -1,0 +1,42 @@
+# AC-027 evidence
+## RL-227 (HEAD:249)
+| RL-227 | Game Design row 40 alerts (docs/design/rule-of-cool-map.md, section 3, the alerts): the 'air and light' family before a beam (air ripples ahead of the front, colour sweeps along the ground, dust lifts, water shivers) against feature 12's 'the sky never darkens', and a screen-edge light in the shooter's colour for the target | EP, Game Design | Medium | Yes, with conditions. Feature 12's rule was about a power-up scene (mark 4 stacking) and a darkening sky; this family darkens nothing and sits at the beam's front, not on a fighter, so it does not touch it. Terms: (1) air and light never dims or tints the sky, never darkens any part of the frame, and is never a screen-wide wash: it is a local effect around the front and along the ground under the beam's path; (2) the ripple is a local distortion band at the front, never a full-screen blur or warp (ADR 0010) and never over a fighter; (3) the ground colour sweep is the shooter's lane colour, thin, moving at the front's speed with no pulse or strobe, never gold, white or red (k03), and no brighter than the beam itself; (4) dust lifts as a light drift at the front, not a rubble ring, crack and wind at a fighter (stacking mark 4, k01); (5) the screen-edge light is a steady thin line that ramps in and out over at least 6 ticks, never blinks, flickers or pulses, never white or red, never wider than the thickness cap Game Design names, and sits at the screen's edge only, never over or between the fighters; (6) Reduce flashing turns the strong setting and any ramp faster than (5) off, and the family obeys the flash rules like any glow: flash clips run with it on at Standard and Full, in both modes, and in the night sky (RL-223); (7) colour-vision presets keep the line readable without gold, white or red; (8) the caption is plain text and needs no ruling; (9) it ships through the look gate with a side-by-side. Nothing here reads people or the toll. | Open until the look gate and the flash clips for Standard and Full | 
+
+## beam-alert-review.md:50; lan-v1.md:98
+- **Flash.** Small, steady, no pulse is right. Repeated alerts in a trading of beams can still come two or three a second, so the analyser should read a clip of that, in both flash modes. The early-warning mark appearing and then switching to the alert should be one continuous mark, not an appear-disappear-appear.
+| RL-249: the beam warning from the other fight (`beam_warn`) steady, thin, a 6-tick ramp (RL-227) | UI's and VFX's: the edge alert that shows it |
+
+## code: ui/widgets/ui_answer_alert.gd:8, 27-40, 66-72
+## Nothing here fades, pulses or moves: a mark is drawn or it is not, and nothing is drawn over a fighter (a mark that would meet a body is not drawn).
+## What a player chose, one value per family, with Reduce flashing's limit applied: the strong air, the bright glint, the thick line and the loudest, hardest answers come down a step.
+## The host (VFX, Audio, Controls) reads this through UiHud.alert_for(slot); UI reads it for the line and the caption.
+static func effective(opts: Dictionary, slot: int) -> Dictionary:
+	var sfx: String = suffix(slot)
+	var out := {}
+	for k in FAMILIES:
+		out[k.trim_prefix("alert_")] = opts.get(k + sfx, null)
+	if bool(opts.get("reduce_flashing", true)):
+		if out["air"] == "strong":
+			out["air"] = "subtle"
+		if out["glint"] == "bright":
+			out["glint"] = "normal"
+		if out["edge_width"] == "thick":
+			out["edge_width"] = "medium"
+## The edge line's strength, 0 to 1: it ramps in over 6 ticks when the alert starts and out over the same when it ends (RL-227: never blinks, never faster than 6 ticks). Steady between.
+static func line_alpha(alert: Dictionary) -> float:
+	var ramp: float = 6.0 / 60.0
+	var a_in: float = clampf(float(alert.get("age", 0.0)) / ramp, 0.0, 1.0)
+	var a_out: float = 1.0
+	if alert.has("end_t"):
+		a_out = 1.0 - clampf(float(alert["end_t"]) / ramp, 0.0, 1.0)
+
+## beam_warn path
+HEAD:sim/director/outside.gd:290:	SimFx.cue(S, f, "beam_warn", String(b.A.keys) if b.A != null else "", "")
+HEAD:ui/core/ui_event_hub.gd:486:			elif ck == "beam_warn":
+HEAD:ui/core/ui_event_hub.gd:487:				_on_beam_warn(m, d)   # a beam from the other fight of a 2v2 is on this fighter's line (text the shooter's slot, source the side when the sim says it)
+HEAD:ui/core/ui_event_hub.gd:942:## A beam of the other fight is on this fighter's line (`beam_warn`, once, from the moment the line is his). It rides the beam answer alert as a phase of its own: only
+HEAD:ui/core/ui_event_hub.gd:946:func _on_beam_warn(m: UiFighterModel, d: Dictionary) -> void:
+
+## present in builds?
+not in live pin 257a766c
+in private LAN build a8bc66e2

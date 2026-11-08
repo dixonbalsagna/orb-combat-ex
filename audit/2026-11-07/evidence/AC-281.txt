@@ -1,0 +1,11 @@
+# AC-281 proof, run 2026-11-07 on HEAD 53b6df82 (read-only)
+## test line
+  ok    KB-002 present: the 1.35x damage against a charging defender never applies  (defender is "locked" when hit; light 36.4 = 26 x 1.4, signature 230, no x1.35)
+  ok    qa/known-bugs.md and these checks list the same bugs  (KB-001 confirmed, KB-002 confirmed, KB-003 confirmed, KB-004 confirmed, KB-005 confirmed, KB-006 confirmed)
+## 7233c96 lines 326, 411, 437
+  if (!o.ignoreStance){ sm = [1.12,0.38,1.0,1.25][D.stance]; if (D.state === 'charging') sm = 1.35; }
+  A.state = 'locked'; D.state = 'locked'; D.dPrev = dState;
+    S(t, A, D, base*1.4, {noParry:true, ignoreStance:true, big:true});
+## effects kb2
+{"hits":43573,"hitsOnChargingDefender":118,"perMatch":0.118,"hitsWhereStateWasCharging":0,"hitsThatBypassStance":118,"damage":11197.631224770834,"shareOfAllDamage":0.004967266842539257,"missingDamagePerMatch":3.9191709286697916}
+## full run: AC-280.txt

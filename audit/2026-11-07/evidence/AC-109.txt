@@ -1,0 +1,13 @@
+$ sed -n '75p;80p' docs/legal/review-log.md | cut -c1-260
+| RL-053 | "Blow for Blow" name and staging | Game Design, Combat | Medium (staging) | Name GO as a label; staging CONDITIONAL on twelve rules (tightened 2026-10-02) | Open until built to the rules |
+| RL-058 | Blow for Blow set piece and charge poses vs the twelve rules | Combat | Low | GO; all twelve met | Closed |
+
+$ sed -n '7p;8p;17p;19p' docs/legal/agency-pass-screen.md | cut -c1-300
+| "Blow for Blow" as a name | **GO** as a working label | RL-053 |
+| "Blow for Blow" staging | **CONDITIONAL**: the twelve rules below | RL-053 |
+**The scene.** Orb's inspiration is a well-known anime scene of two evenly matched fighters standing toe to toe and trading stomach punches in turn, each doubling over and straining. The names are kept out of committed files. The shape of our set piece (two fighters planted, heavy body blows in turn
+**Staging rules for Combat (and Camera, Animation, Audio):** twelve, with 3, 9, 10 and 11 added or tightened on 2026-10-02.
+
+$ git grep -n -i -E 'blow.for.blow|blow_for_blow' -- data sim ui render/core render/vfx | cut -c1-160
+sim/director/brawl.gd:4030:	# as a trade starts. It matches his pace for that trade, blow for blow, until the trade breaks or the double hit lands.
+

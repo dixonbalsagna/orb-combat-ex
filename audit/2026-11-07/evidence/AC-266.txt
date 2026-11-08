@@ -1,0 +1,15 @@
+# AC-266: CLAUDE.md lines 13 and 19 (working tree = HEAD, no diff)
+CLAUDE.md unchanged vs HEAD
+- **Messages.** Briefs and reports travel with SendMessage between session titles. Text written in your own session is not seen by any other session. Every session runs in Auto permission mode so messages are not held for approval.
+- **Never put a prompt in front of Orb (rule of 2026-10-28).** Every session runs in bypass mode, but a built-in safety check still stops for Orb's approval on some shell patterns, and Orb can't judge them. So write commands that never trip it:
+  - Guard every variable in a delete: `rm -rf "${S:?}/${o:?}"`, never `rm -rf "$S/$o"`. Better still, delete a literal path under your scratchpad.
+  - Never `rm -rf` a path built from a command's output, a glob that could be empty, or `~`.
+  - Don't chain `cd` into a destructive command.
+  - If a command needs approval anyway, stop and tell the EP instead of waiting for Orb.
+# DIRECTORS.md:7 / playbook.md:19
+- **Every director is its own Claude Code session.** Orb opens one session per director in the project folder, in Auto permission mode, with the model listed for it, and sends `/director <slug>` as the first message. The session reads its charter in 
+- All sessions run in Auto permission mode; a session in another mode holds messages until Orb approves them.
+# ADR 0002:11
+- A director session starts with `/director <slug>`. Briefs and reports travel by SendMessage. Every session runs in Auto permission mode.
+# commit adding the rule
+9631fc75 2026-10-27 CLAUDE.md: never put a prompt in front of Orb (guard every variable in rm -rf with ${VAR:?}; ask the EP instead of waiting on Orb)

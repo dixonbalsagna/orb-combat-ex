@@ -1,0 +1,24 @@
+$ sed -n '58p' docs/legal/review-log.md
+| RL-036 | Turnarounds (Protagonist, Empress, Cyborg) and flashes Hazard, Primed, Respect | Art | Low | GO; front-view ring and Empress crescent checks | Open until Art confirms |
+
+$ sed -n '241p;246p;247p' docs/legal/q3-screen.md | cut -c1-400
+| Protagonist: temple ring, collar trim, belt and buckle, sash apron, back knot disc | **GO** for play views. **CONDITIONAL** for the face-on front view (see below) |
+- **Protagonist ring.** In play the fighter is three-quarter, where the ring sits at the temple and reads as a mark. Face-on it can read as one eye. The front view is for modelling only, so: do not use the face-on view in key art, icons or store images unless the ring is changed to an open arc (a "C" with a gap) or moved onto the crown seam. The rest is generic martial-arts gear in a dark teal and
+- **Empress.** Check the collar crescent in the 12 px silhouette: it must not read as horns or antennae (the pale horned emperor rule). The nine-blade hem, tabard and plumed guard are fine. Keep it not pale overall, with no purple.
+
+$ sed -n '63p' docs/art/protagonist-turnaround.md
+- The sigil is an open arc at the temple, above the brow ridge, with no dot and no second one. Legal asked for the open arc so the face-on view cannot read as an eye; it is worth a look on the real model.
+
+$ grep -n -i 'crescent' docs/art/empress-turnaround.md | cut -c1-200
+60:The base design was drawn in three-quarter. The turnaround adds a front (tunic panel, tabard, belt, bracers, the mantle behind) and a back (the mantle as a closed cape-train, the collar crescent an
+
+$ git ls-files data/fighters
+data/fighters/PROTAGONIST/fighter.json
+data/fighters/PROTAGONIST/forms.json
+data/fighters/PROTAGONIST/meters.json
+data/fighters/REFERENCE/fighter.json
+data/fighters/RIVAL/fighter.json
+data/fighters/RIVAL/meters.json
+data/fighters/bench.json
+data/fighters/roster.json
+

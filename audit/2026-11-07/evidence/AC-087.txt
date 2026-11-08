@@ -1,0 +1,22 @@
+# AC-087 evidence
+## vision.md (HEAD) :3 :75 :199
+Orb's answers to the first scope-and-vision questionnaire, summarised by the EP. Every director reads this before working on anything it touches. Orb's full notes on the fighters are kept locally in .private/orb-answers-2026-09-28.md. They name franchise inspirations, so never quote them into a committed file.
+| Feel reference | A well-known series of flash action animations (named in .private/) for its choreography and brutality |
+**Character art direction (Orb, 2026-09-29).** F, the Coil, is 'a good start' for the Anti-hero. Orb isn't happy with the character designs yet and wants them **striking and recognizable**, with more style passes. Faceless or blank heads could be a style choice if the style is distinct enough. Art proposes several overall character art directions. Legal's note stands: nothing borrowed from [web-series title]'s look.
+## .gitignore:10
+.private/
+## .private in any commit (git log --all -- .private):
+(empty = never committed)
+## committed files naming the flash-series feel reference:
+HEAD:docs/ep/vision.md:199:**Character art direction (Orb, 2026-09-29).** F, the Coil, is 'a good start' for the Anti-hero. Orb isn't happy 
+HEAD:docs/legal/name-screening.md:164:| [web-series title] | Krinkels' flash series. We found no published fan-game or trademark policy. Fan gam
+HEAD:docs/legal/name-screening.md:171:4. **Keep distance from [web-series title].** No borrowed art style elements, character designs, catchphra
+HEAD:docs/legal/name-screening.md:176:**Stage 5 (counsel) brief, for the final title.** Ask counsel to: (a) run a formal search in the US, E
+HEAD:docs/legal/never-use-words.md:8:- Fan-game and web-series names: "[fan-game title]", "[web-series title]" (and the word "Madness" as a title 
+HEAD:docs/legal/q3-screen.md:198:| Anything from [web-series title]'s look | **GO**, none found; keep the exclusions |
+HEAD:docs/legal/q3-screen.md:202:- **Slash:** on its own it is generic. Never combine the ring and the slash (that is the "prohibited" sign)
+HEAD:docs/legal/q3-screen.md:215:**[web-series title].** Nothing found in the descriptions. Keep the exclusions: no grey faceless heads, no gogg
+HEAD:docs/legal/review-log.md:432:Results and conditions are in `name-screening.md`, "Title screen: Orb Combat EX". Rating Medium, CONDITION
+HEAD:docs/narrative/title-pitch.md:107:- **"[Word] Combat"** nods to the [web-series title] series.
+## count of committed files naming the main franchise:
+9

@@ -1,0 +1,23 @@
+# AC-096 evidence
+## review-log.md (HEAD) :25, :286-290 (RL-003)
+| RL-003 | VORR | villain name (placeholder) | Low | CONDITIONAL: working name only, re-screen at name lock | Closed |
+### RL-003 VORR (villain name, placeholder)
+- **Searched:** web search for "Vorr" as a character; Steam and itch.io search; App Store search API; the .com domain record; USPTO trademark search.
+- **Found:** A minor villain, Vorr the Insane, appears in the Heroes Chronicles spin-offs of Heroes of Might and Magic (a war god turned villain). No [franchise title] link. Steam shows one unrelated result, and the App Store no app of that name. The itch.io search returned nothing, but that search is not reliable from here. USPTO shows one record: VÓRR, class 5 (dietary supplements), an application wi
+- **Rating:** Low.
+- **Recommendation:** OK as a working name. If it survives to name lock, run the full `name-screening.md` process. The .com is taken.
+## sim/core/roster.js (HEAD) :6 (JS parity oracle)
+  Object.freeze({name:'VORR', title:'Calamity Sovereign', role:'villain', col:'#a52a2a', aura:'#ff5a3c', hair:'#181818', care:-0.8, dmgMul:1.0, spd:0.95, maxhp:1600, sigName:'Calamity Wave'})
+## render/vfx/glare.gd (HEAD) :23
+const WEARERS: Array = ["VORR", "RIVAL", "antihero", "rival"]   # roster ids and names: the Anti-hero replaces VORR, and the roster may rename him
+## player-visible names in pinned public build 257a766c ui/data/fighter_names.json:
+  "names": {
+    "protagonist": { "name": "PROTAGONIST", "title": "Martial Artist", "sigName": "Keeper's Lance" },
+    "rival": { "name": "RIVAL", "title": "Challenger", "sigName": "The Barrage" }
+  }
+## player-visible names at HEAD:
+    "protagonist": { "name": "Grist", "title": "Martial Artist", "sigName": "Keeper's Lance" },
+    "rival": { "name": "Loupe", "title": "Challenger", "sigName": "The Barrage" },
+    "empress": { "name": "Empress Orza" },
+    "cyborg": { "name": "Bolus" }
+## RDAP https://rdap.verisign.com/com/v1/domain/vorr.com (accessed 2026-11-07): registered 2003-05-09, registrar GoDaddy.com, LLC

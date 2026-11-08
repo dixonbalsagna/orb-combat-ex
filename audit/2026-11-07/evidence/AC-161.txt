@@ -1,0 +1,23 @@
+# AC-161: stick class (run 2026-11-07)
+$ git merge-base --is-ancestor 7de33ae4 a8bc66e2 / 257a766c
+stick class (7de33ae4) is in LAN build a8bc66e2
+not in live pin 257a766c
+$ strike targets in data/anim/waves/protag13.manifest.json and rival10.manifest.json
+protag13 pz.flick_rise jaw
+protag13 pz.scythe_sweep shins
+protag13 pz.heel_thrust gut
+protag13 pz.wheel_blade chest
+protag13 pz.lifting_heave chest
+protag13 pz.plunge_blade chest
+protag13 pz.drive_palm chest
+protag13 pz.turning_edge chest
+protag13 pz.spike_heel chest
+rival10 rz.lift_fist jaw
+rival10 rz.skid_kick legs
+rival10 rz.short_ram gut
+rival10 rz.swing_plate chest
+rival10 rz.knee_launch chest
+rival10 rz.hammer_drop chest
+rival10 rz.plate_ram chest
+rival10 rz.swing_elbow chest
+rival10 rz.spike_knee chest

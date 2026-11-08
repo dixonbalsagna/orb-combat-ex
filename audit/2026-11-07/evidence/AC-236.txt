@@ -1,0 +1,19 @@
+# AC-236 proof (curl GET of the public site, 2026-11-07)
+$ curl https://dixonbalsagna.github.io/orb-combat-ex/play/
+200, 13112 bytes, byte-identical to evidence/live-play-index.html
+$ grep -c -i 'first start\|look stuck\|Starting' play.html
+0
+$ grep phone note
+This demo is made for a computer with a keyboard or a controller. It may not run well on a phone.
+$ curl -I index.wasm / index.pck
+HTTP/1.1 200 OK
+Content-Length: 38450604
+HTTP/1.1 200 OK
+Content-Length: 9034688
+$ sed -n 20,21p;25p docs/perf/phone-freeze-2026-10-26.md
+| **The card is on screen at** | **22.8** | **40.9** | **57.0** | 7.1 |
+| The one long task | 22.5 | 40.3 | 56.3 | 6.9 |
+- **A mid-range phone's CPU is plausibly 5 to 8 times slower than this one**, so the x6 column (57 s with a frozen splash) is the middle estimate and 1.5 to 2.5 minutes is possible on a low-end phone. Nothing is drawn after the splash's last paint until the ca
+index.js live: 0 matches for the start line
+$ grep -n crumbs tools/site.json
+(no crumbs key in tools/site.json: switch off)

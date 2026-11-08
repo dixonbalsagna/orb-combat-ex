@@ -1,0 +1,20 @@
+== pin 257a766c ui/widgets/ui_settings.gd:192 and 466-474 (help capped at 2 lines, rest cut with ...)
+	# At most two lines, and never more than a fifth of the card: a short phone screen gives its height to the rows. A longer help ends in "...".
+	var nl: int = int(p["help_lines"])
+	for k in range(nl):
+		if k < hl.size():
+			var ln: String = hl[k]
+			if k == nl - 1 and hl.size() > nl:
+				while ln.length() > 3 and UiText.width(ln + "...", fs_small) > foot.size.x:
+					ln = ln.substr(0, ln.length() - 1)
+				ln = ln.strip_edges() + "..."
+			UiText.draw(ci, ln, Vector2(foot.position.x, fy), fs_small, ink, -1)
+== HEAD ui/widgets/ui_settings.gd:229-232 (foot grows/scrolls; never cut)
+	# The small print at the foot: the focused row's help. The foot keeps the height it always had (as many lines as the longest help needs,
+	# up to two, and never more than a fifth of the card: a short phone screen gives its height to the rows). Only while the focused help
+	# is longer than that does the foot grow, by the lines it lacks, and only while the body keeps HELP_BODY_ROWS rows; past that the help
+	# scrolls by whole lines (help_scroll). It is never cut with "...". The caller re-anchors the focused row when the foot changes.
+== fix commit
+9979146a 2026-10-28 04:47:08 -0700 UI: Settings gets Master, Effects and Voice volume and Mono sound (Godot's buses, through Audio's new trim hook); a help longer than two lines grows the foot only wh
+fix NOT in pin 257a766c
+fix in LAN a8bc66e2

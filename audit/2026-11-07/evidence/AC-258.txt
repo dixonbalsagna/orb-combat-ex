@@ -1,0 +1,10 @@
+== tts_ calls in committed .gd (HEAD)
+(end tts)
+== accessibility_ node properties (AccessKit) in .gd/.tscn
+(end ak)
+== settings menu draws on a CanvasItem
+469:	ci.draw_rect(Rect2(Vector2.ZERO, vp), Color(0.02, 0.03, 0.06, 0.78))
+472:	UiText.draw(ci, str(p["title"]), p["title_pos"], int(p["fs_title"]), ink, -1)
+487:				UiText.draw(ci, str(rec["label_lines"][0]), Vector2(float(rec["label_x"]), float(rec["label_y"])), fs_body, dim, -1)
+== engine version in project.godot
+10:config/features=PackedStringArray("4.7")

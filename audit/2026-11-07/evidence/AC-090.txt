@@ -1,0 +1,44 @@
+# AC-090 evidence
+## review-log.md (HEAD) :95
+| RL-073 | Moveset banned rows (movegen-banned.json) and the rule for later stances and signature slots | Combat | Medium | Delivered: 13 shape rows, 7 sequence rules; a person screens every signature frame, new vocabulary and stance tell | Open; rows only grow |
+## movegen-banned.json (HEAD) row counts by group:
+banned 14 b01..b14
+bannedSequences 9 s01..s09
+motion 12 m01..m12
+energy 16 e01..e16
+grabs 8 g01..g08
+held 10 h01..h10
+stacking 6 k01..k06
+flurry 5 f01..f05
+world 5 w03..w07
+withdrawn 2 w01..w02
+public 4 p01..p04
+signature 1 sg01..sg01
+effects 10 fx01..fx10
+catastrophe 10 c01..c10
+lines 10 ai01..ln09
+mechanics 6 mc01..mc06
+names 1 n01..n01
+## _about tail:
+apes, not sources. The generator must refuse to emit a piece, or a string, that matches a row, and the build must fail if one slips through.",
+## tools/movegen/lib/legal.mjs :8-10 (new rows refuse nothing until given a machine form)
+/**
+ * Returns { added, changed, text }: the rows added (a new row carries no `kind`, so it refuses nothing and is a condition for
+ * its owner until Combat gives it a machine form), the rows whose words changed (their machine form needs a look), and the new
+## generator refusal (generator.mjs :103-104, :494-496)
+/** How a shape row bears on a move: 'match' (refuse), 'ask' (every named part matches and its flags are unknown), or null. */
+export function bannedHit(row, m, forms, arms, flags) {
+    const hits = shapeRows(parts).map((r) => [r.id, bannedHit(r, m, m._strike_forms, m._arms, m._flags)]);
+    if (hits.some(([, h]) => h === 'match')) {
+      refused.push({ shape: fp(m), rows: hits.filter(([, h]) => h === 'match').map(([i]) => i) });
+## parts.json location (pending, not landed):
+docs/combat/pending/movegen/parts.json
+## CI data job steps ci.yml:78-79
+      - name: "Moveset generator tests (the port matches the reference; Legal's names screen holds)"
+        run: node tools/movegen/test/run.mjs
+## held lint scope (render/anim/anim_held_lint.gd:3-4)
+## Held-pose lint (Legal's held rules h01 to h03 as scoped by RL-087: docs/legal/movegen-banned.json `held` and `heldScope`): every pose a fighter holds for 12 ticks or more is checked against the
+## scope's tests. Beside joint_scan: `tools/held_scan.gd` is the command line (`--strict` exits 1 on any failure) and anim_check's `_test_held` is the gate.
+## anim_check / held lint referenced by any workflow? (git grep in .github):
+(none)
+## CI dead: see ci-dead-root-cause.txt (no job on 37 pushes since 3c9005ac)

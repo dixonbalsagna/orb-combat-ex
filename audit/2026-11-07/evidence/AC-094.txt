@@ -1,0 +1,12 @@
+# AC-094 evidence
+## review-log.md (HEAD) :117
+| RL-095 | Capsule art and trailer plan; Suno track in a trailer | Marketing, Art, Audio | Medium | CLEAR with conditions: logo look-alike screen, stacking rule per frame, no placeholder names; Suno track allowed on paid plan with originals kept, disclosure, no Content ID | Open |
+## store-copy-draft.md (HEAD) :104 :118 :119
+| Capsule art (header, small, main, vertical), library hero and logo | One real capture, plus a **plain wordmark in a licensed font** | Orb picks the font; one row in `licence-register.md`. If an AI-made logo is used instead, it needs its own look-alike screen | Font: a register row. Any AI-made lettering: tool, model, date, prompt location, what Orb changed | Store-page statement covers it, and **Steam's survey must also cover AI-assisted marketing assets** (capsule, trailer), not only the game
+- **Wordmark:** plain, in a licensed font. No chrome-bevelled or gold-and-orange 3D letters, no star or dragon motif, no letters that echo a franchise logo.
+- **Key art and thumbnails:** the stacking rule applies to any single frame or thumbnail: at most two of the seven marks (no body flame aura plus a scream, no rubble ring with cracks and lightning together), no hero holding a sphere aloft, no hair colour change.
+## store-copy-screen.md (HEAD) :51-52
+- **Logo and lettering:** if the logo is AI-made it has no copyright, and a trademark does not need one, but a logo needs its own screen against look-alikes: **no chrome-bevelled or gold-and-orange 3D letters, no star or dragon motif, no letters that echo a franchise logo.** A plain wordmark in a licensed font (one row in `licence-register.md`) is the safest and cheapest.
+- **Key art and thumbnails:** the stacking rule applies to **any single frame or thumbnail**: at most two of the seven marks (no body flame aura plus a scream, no rubble ring with cracks and lightning together), no hero holding a sphere aloft, no hair colour change. Check moment 4 (a crater) and any beam frame.
+## capsule or logo files in HEAD:
+(end)

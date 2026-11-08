@@ -1,0 +1,29 @@
+$ sed -n '63p;105p' docs/legal/review-log.md | cut -c1-300
+| RL-041 | Rule-of-cool plan (25 features), On the Chin, transformation staging | Game Design | Medium | CLEAR or CONSTRAINT; feature 12 changed; the two-marks stacking cap | Open until first builds are reviewed |
+| RL-083 | Five signature frames; travel kinds and directions of the four generated stances | Combat | Medium | Frames clear as generic; each fighter's version needs a person screen; k01 at every tick of a 45-tick charge | Open per fighter |
+
+$ sed -n '9p;27p;49p' docs/legal/rule-of-cool-screen.md | cut -c1-400
+The franchise's power-up scene is a stack of marks: **(1)** a crouch with fists clenched at the sides, **(2)** a scream or a drawn-out chant, **(3)** a flame-shaped body aura streaming upward, **(4)** rubble rising in a ring, ground cracking and wind under a changing sky, **(5)** crackling lightning on the body, **(6)** hair rising or changing colour, **(7)** a gold, white or red flash with a form
+| 12 | The world reacts from tier 3 | **Change (partly)** | Each element is fine alone. Together with a charge crouch, a scream and a body aura it is the franchise's power-up scene (marks 1 to 4). Rubble rises as a gentle lift with weight, not a ring of rocks around the fighter. No lightning. The sky pales or parts and never darkens. No fighter stands screaming in the middle of it. |
+3. Re-screen features 12, 20, 22 and the aura when Art's and VFX's first versions exist. Legal reviews the first transformation cinematic.
+
+$ sed -n '463p' docs/ep/vision.md
+- **Legal's stacking rule:** accepted. No single moment shows more than two of the seven power-up marks; the charging aura is a thin outline in our own shapes.
+
+$ sed -n '1,9p' render/anim/tools/stacking_lint.gd | cut -c1-200
+extends SceneTree
+## Legal's stacking rule as a lint (docs/design/rule-of-cool.md section 1 rule 9, docs/legal/rule-of-cool-screen.md). A known
+## franchise's power-up scene is a stack of seven marks: (1) a crouch with fists clenched at the sides, (2) a scream or a drawn-out
+## chant, (3) a flame-shaped body aura streaming upward, (4) rubble rising in a ring, the ground cracking and wind under a
+## changing sky, (5) crackling lightning on the body, (6) hair rising or changing colour, (7) a gold, white or red flash with a
+## form name shouted. No single moment in our game may show more than two. This lint takes the moments of data/anim/moments.json
+## (each lists the poses it plays and the marks the other systems declare for it: VFX, Audio, World, Camera, Art), adds the one
+## mark a pose can show by itself (mark 1, found from the pose's sketch: crouched, both hands fists, hands low and at the sides),
+## plus any `_marks` a pose declares, and flags every moment over two (a moment at two is a warning: it has no room left).
+
+$ git grep -l stacking_lint -- .github render/anim/tools/review.mjs render/anim/tools/anim_check.gd
+render/anim/tools/review.mjs
+
+$ grep -c k01 docs/legal/review-log.md
+7
+

@@ -1,0 +1,24 @@
+# AC-231 proof
+$ git grep -n dropSlot a8bc66e2 -- net/ (callers)
+a8bc66e2:net/session.gd:24:## one that arrives for a tick already run rolls back to it, exactly as a late input does. dropSlot is the same when the
+a8bc66e2:net/session.gd:60:var dropped: Array = []       # slots this peer took from a peer that was gone (dropSlot), for a host's notice
+a8bc66e2:net/session.gd:64:var fillWrong: bool = false   # tests only: dropSlot fills with neutral inputs instead of the ones the ticks ran with
+a8bc66e2:net/session.gd:65:var fillDiff: int = 0         # dropSlot's filled ticks whose fill differs from what they ran with (0 unless fillWrong)
+a8bc66e2:net/session.gd:328:func dropSlot(k: int) -> int:
+$ git show a8bc66e2:net/lan.gd | sed -n 237,247p
+func _report(now: float) -> void:
+	var sess: NetSession = net.session
+	if net.hs.failed != "":
+		_say("Couldn't start: " + net.hs.failed)
+	elif sess == null:
+		_say("Waiting for the other PC")
+	elif not sess.desync.is_empty():
+		_say("OUT OF STEP at tick %d. Close both and tell the EP" % int(sess.desync.get("tick", -1)))
+	elif not net.tr.isOpen():
+		_say("The other PC has gone")
+	elif net.paused:
+$ git show a8bc66e2:net/lan.gd | sed -n 3,4p
+## A match between two PCs on a home network (docs/net/lan-v1.md): the game's own loop steps the sim through a NetHost, and the local pad is the host's "bot". Private builds only: the public desktop
+## builds exclude net/ (Legal RL-204), and net/tools/lan_kit.mjs patches the two lines that call this into a scratch copy.
+$ git show a8bc66e2:net/lan.gd | sed -n 17p
+const SETUP2X: Dictionary = {"v2": [true, true, true, true], "assists": [[], [], [], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "fights": 2, "cross": true, "outside": true}   # --la

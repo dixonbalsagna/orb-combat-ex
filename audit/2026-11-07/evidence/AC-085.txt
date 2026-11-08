@@ -1,0 +1,29 @@
+# AC-085 evidence (run 2026-11-07, read-only)
+## review-log.md (HEAD) lines 41 and 434-435
+| RL-019 | Orb's four fighter concepts | design review | Medium | CONDITIONAL: replace the listed signatures | Open |
+### RL-019 Orb's four fighter concepts
+See `fighter-concepts-review.md`. All four are CONDITIONAL: staples kept, signatures replaced with original mechanisms. Open until Orb picks the replacements and Art's designs pass the checklist.
+## fighter-concepts-review.md (HEAD) verdict table lines 16-24
+| Fighter | Verdict | Why |
+|---|---|---|
+| 1. Protagonist | CONDITIONAL | The character is staples. The item-collecting wish, the beast stage, the hair change and the named multiplier stage are signatures. |
+| 2. Anti-hero | CONDITIONAL | The rival is a staple. Two fighters fusing through an item thrown from one to the other is a signature beat. |
+| 3. Galactic tyrant | CONDITIONAL | Minions, tail and cutting beams are staples. A many-form emperor whose forms echo the franchise's is a signature. |
+| 4. Demon cyborg | CONDITIONAL | Consuming, molting and portals are staples. Beam-turns-people-into-food, absorbing a sidekick for the final form, and a spherical core are signatures. |
+
+Each becomes GO once the replacements below are chosen and the final designs pass the checklist in `originality-rules.md`.
+
+## Signature devices searched in shipped dirs (sim data render ui): fusion|keystone|wish|great.?ape|tandem
+== 257a766c
+257a766c:data/combat/finishers.json:210:      "generative": ["barrage pattern and angles", "the hand finisher's strike shapes", "the fusion form's variant (Tandem, if accepted)"],
+257a766c:sim/director/brawl.gd:1013:## have. A send nobody has is the stick's wish and not a rule: it is dropped before a press goes without a piece.
+257a766c:sim/director/test/combat-parity/finishers.json:192:      "generative": ["barrage pattern and angles", "the hand finisher's strike shapes", "the fusion form's variant (Tandem, if accepted)"],
+257a766c:ui/core/ui_event_hub.gd:10:## as a wish-list in docs/ui/hud-spec.md section 10 so the sim can match or the HUD can adapt):
+== HEAD
+HEAD:data/combat/finishers.json:211:      "generative": ["barrage pattern and angles", "the hand finisher's strike shapes", "the fusion form's variant (Tandem, if accepted)"],
+HEAD:sim/director/brawl.gd:1094:## have. A send nobody has is the stick's wish and not a rule: it is dropped before a press goes without a piece.
+HEAD:sim/director/test/combat-parity/finishers.json:192:      "generative": ["barrage pattern and angles", "the hand finisher's strike shapes", "the fusion form's variant (Tandem, if accepted)"],
+HEAD:ui/core/ui_event_hub.gd:10:## as a wish-list in docs/ui/hud-spec.md section 10 so the sim can match or the HUD can adapt):
+(only a pending-variant note in finishers.json and two unrelated comments; no signature device is implemented)
+## CLAUDE.md:133
+- Legal's review of the fighter concepts.

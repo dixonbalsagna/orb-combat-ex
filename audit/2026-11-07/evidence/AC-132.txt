@@ -1,0 +1,3 @@
+# AC-132 proof
+| RL-107 | The 16 super-heavy key sets, drawn (super-heavy-screen.md) | Animation | Medium | PASS 10; NUDGE 6 (follow-through arms raised above the head on plate, hook, hammer, elbow heave, blade jaw; hands together on ball heave); no redraw | Open until nudges drawn |
+| RL-112 | The six nudges (super-heavy) with numbers and new sheets | Animation | Low | Closed: all six pass | Closed |

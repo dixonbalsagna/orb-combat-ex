@@ -1,0 +1,30 @@
+AC-045 evidence (verifier v04, 2026-11-07, read-only)
+## HEAD render/camera/split_rig.gd:255-256,714,5515-5517
+var playback: float = 1.0                  # how fast this is being watched: above 1 every swing is a cut, whatever the setting (Accessibility)
+var world_turning: String = "auto"         # UI's option: auto follows Reduced motion, full turns, cut cuts
+## Re-seat everything on the fighters at once (a relocation or a replay seek).
+## Whether swings show as cuts: UI's world_turning (auto follows Reduced motion), or any playback above 1x (Accessibility, docs/accessibility/swing-motion.md).
+func _swing_cuts() -> bool:
+	return playback > 1.0 or world_turning == "cut" or (world_turning == "auto" and reduced_motion)
+
+## HEAD render/camera/split_view.gd:207-210
+## How fast this is being watched: above 1x every swing is a cut, whatever the setting (Accessibility). A replay viewer calls it.
+func set_playback(rate: float) -> void:
+	if main != null:
+		main.split_rig.playback = rate
+
+## callers of set_playback in shipped code (none outside pending patches)
+HEAD:docs/camera/pending/swing/swing-5-real.patch:384:+func set_playback(rate: float) -> void:
+HEAD:docs/camera/pending/swing/swing-7-director.patch:346:@@ -210,6 +210,12 @@ func set_playback(rate: float) -> void:
+HEAD:docs/camera/swing-view.md:51:**Cuts instead of swings** (`docs/accessibility/swing-motion.md`): UI's `world_turning`, where auto follows Reduced motion, fu
+HEAD:render/camera/split_view.gd:208:func set_playback(rate: float) -> void:
+
+## NetSpectator used only by the loopback harness
+HEAD:net/loopback.gd:107:var spectator: NetSpectator = null
+HEAD:net/loopback.gd:176:func addSpectator(matchSeed: int, setup: Dictionary, profile: Dictionary, lag: int, relay_: int, linkSeed: int) -> NetSpectator:
+HEAD:net/loopback.gd:179:	spectator = NetSpectator.new(S, 2, lag)
+HEAD:net/spectator.gd:1:class_name NetSpectator
+HEAD:net/spectator.gd:72:		push_error("NetSpectator: a takeover of slot %d at tick %d, after it ran (%d)" % [k, t, frame])
+
+## world swing in the public pin?
+no swing checks at 257a766c

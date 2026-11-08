@@ -1,0 +1,31 @@
+# AC-265: HEAD docs/legal/review-log.md line 270 and status of each listed row (git show HEAD:docs/legal/review-log.md)
+Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
+RL-001 |  Meridian  | decision: CONDITIONAL: working name only  | status: Open 
+RL-002 |  KAI  | decision: NO-GO as a shipped name  | status: Open 
+RL-012 |  Breakers-Like / Breakerslike  | decision: CONDITIONAL: rename before public  | status: Open 
+RL-014 |  KAI's golden hair  | decision: Do not carry into art  | status: Open 
+RL-016 |  Skyburden  | decision: GO to counsel stage  | status: Open until Orb picks 
+RL-017 |  Splendid Wreckage  | decision: GO to counsel stage  | status: Open until Orb picks 
+RL-018 |  Glorious Ruin  | decision: CONDITIONAL  | status: Open until Orb picks 
+RL-019 |  Orb's four fighter concepts  | decision: CONDITIONAL: replace the listed signatures  | status: Open 
+RL-020 |  Public-readiness scan  | decision: Must-fix list before public  | status: Open 
+RL-021 |  Sunburners  | decision: CONDITIONAL  | status: Open until Orb picks 
+RL-022 |  Sky Arsonists  | decision: GO to the next stage  | status: Open until Orb picks 
+RL-023 |  Redline Sky  | decision: GO to the next stage  | status: Open until Orb picks 
+RL-024 |  Orb Combat EX  | decision: CONDITIONAL: resolve the OrbCombat name clash  | status: Open 
+RL-025 |  Held fragments (orbs)  | decision: CONDITIONAL: orb constraints in `q3-screen.md`  | status: Open 
+RL-027 |  Pass-Through  | decision: CONDITIONAL  | status: Open 
+RL-028 |  Transformation ladders (Protagonist, Tyrant)  | decision: CONDITIONAL (final-form looks)  | status: Open 
+RL-029 |  Full Circle fusion  | decision: CONDITIONAL (look)  | status: Open 
+RL-030 |  Orb takes O1 to O4, The Bloom (O2)  | decision: O2 CONDITIONAL, others GO. Met by the round 4 storyboard (RL-034)  | status: Closed until final art 
+RL-035 |  Marked plus Aura character style (sigils, dome ma | decision: GO with conditions; Anti-hero pride flash uses the round-tipped fallb | status: Open until Art runs the checks 
+RL-036 |  Turnarounds (Protagonist, Empress, Cyborg) and fl | decision: GO; front-view ring and Empress crescent checks  | status: Open until Art confirms 
+# RL-020 detail:
+### RL-020 Public-readiness scan
+See `public-readiness-edits.md`. Open until the Must edits are made and the repo is renamed.
+# gate records: ls docs/production/
+risk-register.md
+# docs/ep/handoff.md:6
+- P0 is in progress. Line references into the prototype are pinned to commit 7233c96.
+# repo remote:
+origin	https://github.com/dixonbalsagna/orb-combat-ex.git (fetch)

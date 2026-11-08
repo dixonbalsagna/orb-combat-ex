@@ -1,0 +1,36 @@
+AC-212 proof (independent reviewer, 2026-11-07). Commands run read-only.
+
+## gh api repos/dixonbalsagna/orb-combat-ex
+{"has_issues":true,"homepage":"https://dixonbalsagna.github.io/orb-combat-ex/","open_issues_count":0,"private":false}
+
+## gh api .../pages
+{"build_type":"workflow","status":"built"}
+
+## latest ci.yml push runs (name = file path means the workflow file failed to parse)
+.github/workflows/ci.yml failure 53b6df82 2026-11-07T22:07:19Z
+.github/workflows/ci.yml failure 8d9b98a2 2026-11-07T22:00:14Z
+.github/workflows/ci.yml failure c3de110a 2026-11-07T21:59:03Z
+
+## last two Pages deployments
+72a4d1e4 2026-11-05T03:48:45Z github-pages
+62fc4637 2026-11-03T03:04:09Z github-pages
+
+## links on live pages (curl GET, 2026-11-07)
+/c/Users/<account>/AppData/Local/Temp/claude/358e699345ebf2d8/8c2a5df4-4d48-454a-94c7-48e2633fa129/scratchpad/live_play.html:href="../"
+/c/Users/<account>/AppData/Local/Temp/claude/358e699345ebf2d8/8c2a5df4-4d48-454a-94c7-48e2633fa129/scratchpad/live_play.html:href="../about/"
+/c/Users/<account>/AppData/Local/Temp/claude/358e699345ebf2d8/8c2a5df4-4d48-454a-94c7-48e2633fa129/scratchpad/live_play.html:href="index.apple-touch-icon.png"
+/c/Users/<account>/AppData/Local/Temp/claude/358e699345ebf2d8/8c2a5df4-4d48-454a-94c7-48e2633fa129/scratchpad/live_play.html:href="index.icon.png"
+
+## contact/mailto/email on live /, /play/, /about/ (excluding third-party licence texts)
+/c/Users/<account>/AppData/Local/Temp/claude/358e699345ebf2d8/8c2a5df4-4d48-454a-94c7-48e2633fa129/scratchpad/live_about.html:eedback button copies a report to your clipboard for you to paste to Orb; nothing is sent by the game.</p>
+
+## ui/data/send.json feedback target at HEAD and at pin 257a766c
+4:  "_target": "none",
+7:      "to": "",
+15:      "url": "",
+4:  "_target": "none",
+7:      "to": "",
+15:      "url": "",
+
+## real email addresses in tracked non-JSON/SVG files (test/example hosts filtered)
+0

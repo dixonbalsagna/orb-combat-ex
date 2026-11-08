@@ -1,0 +1,11 @@
+# AC-083 proof, 2026-11-07
+## gh api repos/dixonbalsagna/orb-combat-ex/pulls?state=all count:
+0
+## open issues count / has_issues:
+open_issues_count=0 has_issues=true forks=0
+## authors of commits on main (distinct author emails, domain only):
+   2744 @users.noreply.github.com
+## .github at HEAD has no CONTRIBUTING or PR template:
+none
+## External (accessed 2026-11-07) https://developercertificate.org/ : version 1.1; clause (a) 'created in whole or in part by me'.
+## distinct author emails on origin/main: 1

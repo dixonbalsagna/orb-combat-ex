@@ -1,0 +1,14 @@
+# AC-084 proof, 2026-11-07
+## repo name and Pages domain:
+dixonbalsagna/orb-combat-ex homepage=https://dixonbalsagna.github.io/orb-combat-ex/
+## 'Meridian' on live pages (/, /play/, /about/):
+/ 0
+/play/ 0
+/about/ 0
+## live pack: Meridian only in allowlisted test fixture (from site-name-scan run):
+Meridian	sim/core/test/frozen/golden-js.json
+1052 files, 6 hits, 0 outside the allowlist
+## README.md (HEAD) Meridian mention:
+"Meridian" is the team's internal codename.
+## review-log.md:23 (row still Open):
+| RL-001 | Meridian | game title (placeholder) | High as a public title | CONDITIONAL: working name only | Open |

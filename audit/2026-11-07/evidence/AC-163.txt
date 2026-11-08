@@ -1,0 +1,40 @@
+# AC-162 / AC-163: flight strikes and air-brake looks (run 2026-11-07)
+$ ls docs/animation/pending/
+README.md
+air-brake-looks-schema.patch
+air-brake-looks.patch
+beam-shove.patch
+flight-strikes-schema.patch
+flight-strikes.patch
+stick-pre-ratchet.patch
+stick-pre-schema.patch
+stick-pre.patch
+$ git log --grep flight-strike/air-brake (no Animation apply commit)
+5211375f Game Design: the computer's flight-strike share in the right unit (medium 2 to 4% of blows), its brawl floor 30%; the stick's flick at range is worth a light
+7e83d4e1 Game Design: flight-strike counter (a B thrown or landing in the window), hit-stop follows the brawl, the computer's 15% share, the launch bound dropped, and the 2v2 last event by team
+41448443 Legal: RL-250 clears the flight-strike looks with conditions; RL-251 fits the beam-clash crater to RL-246 (4)
+822a83cd Game Design: the beam struggle's meeting-point crater by stage (one wave and crater at the end, the biggest at the centre); the flight-strike band holds at 25% of blows
+a846dfcf Animation: the flight strikes look plan: a loop layer for the arcs, two new blows a fighter, flight tells
+8d9b98a2 Legal: RL-255 clears the air-brake looks with conditions
+ed91803c Animation: plan for readable air-brake, regain and skid-landing looks
+41ff7b8f Controls: phone controls feasibility (sound on paper; four risks on glass: a two-finger right thumb, the light firing on the lift, no air brake on a phone, nothing moving at touch-down), with a five-minute on-device test for Orb
+167a10a2 Simulation: the air brake applied by the EP behind its switch, which is off (Game Design's fullSpeed 5,000 and hardSpeed 7,000), with World's brakeEnd and Tools' brake schema in the same commit; brake.py's view/fx.gd anchor adapted to the interior chain's pass list (one line); all render gates, parity's 5 stages, the self-test and the flash count pass; golden byte-identical
+b328017b Animation: the 18 parked patches applied by the EP in order (N bodies, the runs' look, the tenth round, Combat's pieces, Orb's homework 4 fixes, the pulled joints and bend scans, the guard pass, the hammer's join, the ragdoll's variety and weight, the out-of-plane joints behind rd_oop which is off for Orb's eye, the air brake's skid, the chain's poses, the clinch's C0 and C1, the study's scenarios), with closed schemas for brake, chain, guard_pass and throws from Tools' infer-schema helper; anim_check, joint, lead, held and guard scans, all render gates and validate pass on a clean export; render side only, no sim hash moves
+$ git show HEAD:data/fight/brake.json | grep enabled
+4:  "enabled": false,
+$ git show a8bc66e2:data/fight/brake.json | grep enabled
+4:  "enabled": false,
+$ git ls-files docs/animation/flight-strikes.md docs/animation/air-brake-looks.md (no output = not committed)
+docs/animation/flight-strikes.md
+
+# Correction: the flight-strike build doc and poses ARE committed (pending folder is stale)
+$ git log -- docs/animation/flight-strikes.md
+a8bc66e2 2026-11-07 07:25:02 -0800
+$ git merge-base --is-ancestor a8bc66e2 a8bc66e2: the LAN build itself carries it
+$ strike targets in data/anim/waves/protag14 and rival11 manifests
+protag14 pl.skim_heel legs
+protag14 pl.trail_backhand chest
+rival11 rl.slide_knee legs
+rival11 rl.trail_elbow chest
+$ git ls-files docs/animation/air-brake-looks.md (no output = air-brake looks not committed)
+(no output above = no ax.* air-brake poses in data)

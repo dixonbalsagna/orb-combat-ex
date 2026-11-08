@@ -1,0 +1,9 @@
+$ sed -n '96p' docs/legal/review-log.md
+| RL-074 | Five stance tells and shoulder-button stances | Combat, Controls | Low | Clear; energy-arts lit hand and charging aura conditional | Re-screen with the first render |
+
+$ sed -n '7p' render/vfx/reach.gd
+##   lit hand      a bolt's palm comes up with the blow: a small hollow ring and two short streaks forward, never a filled disc and never held (it is gone at the contact)
+
+$ sed -n '463p' docs/ep/vision.md
+- **Legal's stacking rule:** accepted. No single moment shows more than two of the seven power-up marks; the charging aura is a thin outline in our own shapes.
+

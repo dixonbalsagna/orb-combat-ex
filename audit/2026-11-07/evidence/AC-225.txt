@@ -1,0 +1,9 @@
+AC-225 evidence (HEAD)
+== docs/ep/orb-review-list.md:145
+3. Selling as an individual or a company? (PlayStation needs a legal entity.) Country and whether you own a Mac decide which consoles and iOS are open; answer only what you are comfortable with.
+== docs/marketing/go-to-market-plan.md:309
+- A PlayStation release is a Stage 5 question, not a promise. Platform says PlayStation has the strictest entry rule (a legal entity, with sole traders accepted in Europe only), then Sony's approval and a paid porting layer. Do not tell anyone it is coming.
+== docs/perf/stores-and-consoles.md:5 (source key) and :47 (entity rule marked [S] secondary)
+Source quality is marked in section 9: **[O]** official page read today, **[S]** secondary (press, forum, search-result excerpt, not an official page), **[G]** repo document. Treat every price as "as of 2026-10-05" and re-check before paying.
+1. **Can Orb apply at all?** Applicants must be a legal entity such as a corporation, company or partnership. Sole traders are accepted in Europe, if over 18 [S]. Orb's country and legal status are unknown to me. **Costs money first if Orb has no company**: forming one is the first paid step, and its price depends on the country (not researched).
+== External (accessed 2026-11-07): https://partners.playstation.net/ shows only its heading without login; web searches found no primary page stating the entity or sole-trader rule. Unverified.

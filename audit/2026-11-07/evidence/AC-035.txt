@@ -1,0 +1,16 @@
+# AC-035 evidence
+## tools/flash/wcag.js:11-14,34-38 (area and red formula as implemented)
+//   red         a pair of opposing transitions where one state is a saturated red (R/(R+G+B) >= 0.8) and the two states differ by more than 0.2 in CIE 1976 u'v' chromaticity,
+//               per pixel. "Saturated red" is taken on the stored (sRGB) values or on the linear ones, whichever is red (the more conservative of two readings of the text)
+//   area        a change counts only if, in one 341 x 256 window at 1024 x 768 (the standard's estimate of a 10-degree field; scaled to the frame: a third of its width and of
+//               its height), at least a quarter of the window's pixels change together, the window slid to every position (an integral image over the changed-pixel mask).
+//               At 1024 x 768 that is 25% of 87,296 = 21,824 pixels. A fade that takes several frames is one change: the pixels that turn the same way on consecutive frames are
+//               pooled before the window is tried
+  darkBelow: 0.80,       // general flash: the darker state must be below this relative luminance
+  redShare: 0.80,        // red flash: R/(R+G+B) at or above this is a saturated red
+  redSpace: 'either',    // 'stored', 'linear' or 'either': which values the saturated-red share is taken on
+  redUv: 0.20,           // red flash: the two states must differ by more than this in CIE 1976 u'v'
+  windowW: 341 / 1024,   // the area window, as a fraction of the frame's width ...
+## render/vfx/flash_registry.gd:31
+const BUDGET: float = 2.5                # the sum of weights in any WINDOW ticks (Legal's gate)
+## WCAG 2.2 https://www.w3.org/TR/WCAG22/ (read 2026-11-07): 341 x 256 at 1024 x 768 estimates a 10-degree field; note 3 gives R/(R+G+B) >= 0.8 with u'v' change > 0.2; it does not say linear or gamma-encoded.

@@ -1,0 +1,26 @@
+# AC-152 / AC-156: label exception and move labels (run 2026-11-07)
+$ sed -n 92p docs/legal/name-screening.md
+**Labels are screened more lightly.** The drop rules in stages 0 and 1 (single common word, crowded, a well-known brand word) apply to game titles, fighter names and anything that will be marketed. A move or mechanic label that players read inside the game may use an ordinary word, or a word that is also someone else's brand, if it passes the franchise-echo check, is never used in a title, logo, store text, tag or fighter name, and Legal records the exception in `review-log.md`. FIRESTORM (a DC hero's name) and HORIZON CLEAVE (a Sony brand word) are logged this way (RL-006, RL-008). Labels get stage 0 and a web and Steam look, not stages 2 to 5.
+
+$ git grep -n -E 'HORIZON CLEAVE|FIRESTORM' HEAD -- data/combat/sigvariants.json
+HEAD:data/combat/sigvariants.json:30:      "fineId": 0, "name": "HORIZON CLEAVE", "asBuilt": true, "_rename": "TIDE CLEAVE: Legal cleared it for adoption (RL-175; RL-006 found 'Horizon' a brand) and Game Design has no objection (23b item 8); it waits on Orb's 
+HEAD:data/combat/sigvariants.json:53:      "fineId": 2, "name": "FIRESTORM", "asBuilt": true, "_rename": "CANOPY BURN proposed (RL-008)",
+
+$ git grep in the live pin 257a766c (data and render)
+257a766c:data/combat/templates.json:969:      "ocean": "HORIZON CLEAVE",
+257a766c:data/combat/templates.json:972:      "forest": "FIRESTORM",
+257a766c:render/vfx/debris.gd:373:		if _ember_area + sz * (2.2 if variant == "FIRESTORM" else 1.4) * 9.0 > ember_area_cap:
+257a766c:render/vfx/debris.gd:382:			"HORIZON CLEAVE":
+257a766c:render/vfx/debris.gd:395:		b.sx = sz * (2.2 if variant == "FIRESTORM" else 1.4)
+
+$ review-log rows RL-004..RL-013 (status column)
+| RL-004 | Calamity Wave | VORR's signature | Low | GO | Closed |
+| RL-005 | Meridian Lance | KAI's signature | Low | GO | Closed |
+| RL-006 | HORIZON CLEAVE | ocean beam | Low | GO | Closed |
+| RL-007 | BOULEVARD RAZE | city and village beam | Low | GO | Closed |
+| RL-008 | FIRESTORM | forest beam | Low (watch) | GO, as a label only | Closed |
+| RL-009 | RIDGE BORE | mountain beam | Low | GO | Closed |
+| RL-010 | GLASS TRENCH | desert beam | Low | GO | Closed |
+| RL-011 | MERIDIAN SCAR | plains beam | Low | GO | Closed |
+| RL-012 | Breakers-Like / Breakerslike | repo and folder name | Medium if public (Low while private) | CONDITIONAL: rename before public | Open |
+| RL-013 | Meridian Warden, Calamity Sovereign | hero and villain titles | Low | GO | Closed |

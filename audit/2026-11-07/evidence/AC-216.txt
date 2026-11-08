@@ -1,0 +1,18 @@
+AC-216 evidence (HEAD)
+== docs/legal/store-copy-screen.md:23
+5. **"[Title] is a trademark of [holder]"** (A2): use "™" only once the title is settled and in use, and **never "®" or "registered"** until a registration exists (a false ® is a deceptive mark). Say "[Title] and its logo are trademarks of [holder]" only when the holder line is decided.
+== docs/legal/never-use-words.md:19
+- "open source" for the whole project; "official", "licensed" or "exclusive" for the music; "first" and "best" claims; "balanced" or "fair"; "registered" or the ® symbol before a registration; "Steam Deck Verified" before the badge; "approved by", "in partnership with" or "powered by" for any platform, engine or AI tool.
+== docs/legal/pre-store-checklist.md:13
+- **Registering:** you can apply at the US trademark office yourself for the title, and later the logo, in the classes for game software and entertainment. A lawyer makes it smoother. Until then, use the ™ mark. The trademark is what protects the name and logo, and it does not depend on who drew them.
+== docs/marketing/store-copy-draft.md:65
+> [Only once the title is settled and in use: "[Title]" with the ™ mark. Then, once the holder line is decided: "[Title] and its logo are trademarks of [holder]." Never ® or "registered" until a registration exists.] [System requirements: Platform.]
+== docs/marketing/store-copy-draft.md:163
+| C20 | [Title]™ / "[Title] and its logo are trademarks of [holder]" | A2 | after the title is settled and in use; holder line decided | never ® or "registered" without a registration | do not claim until true |
+== git grep for the registration and TM symbols outside docs/ and audit/ (empty = none used):
+(end)
+== files under docs/ holding the registration symbol:
+docs/legal/never-use-words.md
+docs/legal/store-copy-screen.md
+docs/marketing/store-copy-draft.md
+== External: https://www.uspto.gov/trademarks/basics/what-trademark (accessed 2026-11-07): 'You may only use the registration symbol with the trademark for the goods or services listed in the federal trademark registration.' and TM may be used 'even if you haven't filed an application'.

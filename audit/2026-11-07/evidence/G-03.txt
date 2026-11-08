@@ -1,0 +1,32 @@
+# G-03 proof (independent reviewer, 2026-11-07). Commands run read-only.
+## HEAD render/camera/camera_params.gd
+102:const TRAVEL_MAX: float = 0.045          # the pane's displayed camera: its step at its zoom, in widths, plus half its zoom's change, a tick
+103:const TRAVEL_MAX_REDUCED: float = 0.03   # under reduced flashing or reduced motion
+109:const GOV_HEADROOM: float = 0.9          # the zoom governor aims at this share of the budget (SCROLL_MAX is the budget's number), so the displayed camera can catch up
+144:const SCROLL_CAP: float = 0.045          # the limiter: a pane's focus moves at most this much of the width a tick (SCROLL_MAX_REDUCED under reduced motion) ...
+147:const SCROLL_MAX: float = 0.045          # the scroll governor: the scenery crosses the screen no faster than this much of its width a tick ...
+148:const SCROLL_MAX_REDUCED: float = 0.045   # ... and this much under reduced motion or reduced flashing (0.03 for Tools' flash analyser until director step 1, 2026-10-22: the flash work is paused and the shipped mode zoomed fighters out to 25 px)
+## 257a766c (live pin)
+93:const TRAVEL_MAX: float = 0.045          # the pane's displayed camera: its step at its zoom, in widths, plus half its zoom's change, a tick
+94:const TRAVEL_MAX_REDUCED: float = 0.03   # under reduced flashing or reduced motion
+100:const GOV_HEADROOM: float = 0.9          # the zoom governor aims at this share of the budget (SCROLL_MAX is the budget's number), so the displayed camera can catch up
+135:const SCROLL_CAP: float = 0.045          # the limiter: a pane's focus moves at most this much of the width a tick (SCROLL_MAX_REDUCED under reduced motion) ...
+138:const SCROLL_MAX: float = 0.045          # the scroll governor: the scenery crosses the screen no faster than this much of its width a tick ...
+139:const SCROLL_MAX_REDUCED: float = 0.03   # ... and this much under reduced motion or reduced flashing (Tools' flash analyser: collapse, 4.5 flashes a second)
+## a8bc66e2 (LAN build)
+144:const SCROLL_CAP: float = 0.045          # the limiter: a pane's focus moves at most this much of the width a tick (SCROLL_MAX_REDUCED under reduced motion) ...
+148:const SCROLL_MAX_REDUCED: float = 0.045   # ... and this much under reduced motion or reduced flashing (0.03 for Tools' flash analyser until director step 1, 2026-10-22: the flash work is paused and the shipped mode zoomed fighters out to 25 px)
+## git log -G 'SCROLL_MAX_REDUCED: float'
+5fe08207 2026-10-22 02:11:43 -0700 VFX, Camera and Rendering applied by the EP after their pictures were looked at: power-up rings as one thin ground ring, beam
+8d4e6ee3 2026-10-06 12:42:44 -0700 Camera: the brawl's drift framed from its centre; the double hit's close-up, rationed; a camera cut's dip too shallow to be a
+## uses (HEAD)
+1224:## than SCROLL_MAX of the width a tick (SCROLL_MAX_REDUCED under reduced motion or reduced flashing). A charge or a pursuit at
+1284:	var lim: float = (CamParams.SCROLL_MAX_REDUCED if (reduced_motion or flash_reduced) else CamParams.SCROLL_MAX) * headroom
+3963:				var floor_u: float = (CamParams.SCROLL_MAX_REDUCED if calm_c else CamParams.SCROLL_CAP) * vw / zc
+## travel budget switch (HEAD; only flash tools turn it on)
+render/camera/split_rig.gd:3481:var travel_budget: bool = false                        # the rule is a switch until the flash set has measured it (SplitView.set_travel_budget); its constants and the governor's headroom stay
+render/camera/split_view.gd:264:func set_travel_budget(on: bool) -> void:
+render/tools/flash_capture.gd:150:		main.split_view.set_travel_budget(true)
+tools/flash/flash_worst.gd:99:		sv.set_travel_budget(true)
+## Reduce flashing default (HEAD)
+53:	"reduce_flashing": true,  # fewer and gentler flashes (VFX's register; the divider's slam flash); a row in Settings once the feature flag is on

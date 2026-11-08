@@ -1,0 +1,52 @@
+# AC-028 evidence (run 2026-11-07, HEAD 53b6df82)
+## movegen-banned.json:3 (build-fail claim)
+  "_about": "Legal's banned rows for the moveset generator (docs/legal/movegen-screen.md). For Combat to merge into parts.json as `strike.banned` and `strike.bannedSequences`. A row matches when every field it names matches; a field with a list matches if any value in it matches. Fields are the grammar's own: limb, tip, path, target, weight, form, arms, plus `flags` for a property of how a piece is posed. The rows describe shapes, not sources. The generator must refuse to emit a piece, or a string, that matches a row, and the build must fail if one slips through.",
+## analyser red reading (tools/flash/wcag.js:9-10,34-36)
+//   red         a pair of opposing transitions where one state is a saturated red (R/(R+G+B) >= 0.8) and the two states differ by more than 0.2 in CIE 1976 u'v' chromaticity,
+//               per pixel. "Saturated red" is taken on the stored (sRGB) values or on the linear ones, whichever is red (the more conservative of two readings of the text)
+  darkBelow: 0.80,       // general flash: the darker state must be below this relative luminance
+  redShare: 0.80,        // red flash: R/(R+G+B) at or above this is a saturated red
+  redSpace: 'either',    // 'stored', 'linear' or 'either': which values the saturated-red share is taken on
+## fx04 rate list in data (data/vfx/energy.json rates)
+struggle_beat 3 1.5
+struggle_surge 3 1.5
+struggle_stray 1.5 1.5
+opening_ring 0 0
+shine 0 0
+chase_trail 0 0
+beam_ripple 2 2
+## w05 asserted in data (data/art/city-looks.json budget and worst neighbour pair)
+budget 0.085 max neighbour diff 0.083
+3:## (7c), against the contrast budget (RenderLook.PATTERN_BUDGET, 0.085 of relative luminance) between neighbouring
+33:	return clampf(x, wall - RenderLook.PATTERN_BUDGET, wall + RenderLook.PATTERN_BUDGET)
+44:	var budget: float = RenderLook.PATTERN_BUDGET
+82:		_expect(float(wst[0]) <= budget + 1e-6, "%s: no two neighbouring tones differ by more than the budget (the widest step %.3f of relative luminance, %s, %s; the budget %.3f)" % [key, float(wst[0]),
+## w04 sun/moon discs: occurrences of moon in render/ (none = not built)
+0
+## catastrophe class in runtime register (render/vfx/flash_registry.gd:59-61); pin too:
+const CAT_GAP: int = 120                  # ticks (2 s) between two catastrophe light events, whatever the pane
+const CAT_RISE_MIN: int = 18              # ticks (0.3 s)
+const CAT_FALL_MIN: int = 60              # ticks (1 s)
+59:const CAT_GAP: int = 120                  # ticks (2 s) between two catastrophe light events, whatever the pane
+## catastrophe tier reachable? callers of blastCloud outside tools:
+sim/core/cata.gd:57:static func blastCloud(S: SimState, f, x: float, y: float, n: int) -> void:
+sim/core/cata.gd:59:	SimFx.blastCloud(S, f, x, y, radius, n)
+sim/core/fx.gd:237:static func blastCloud(S: SimState, f, x: float, y: float, amount: float, n: int) -> void:
+## per-bolt: muzzle ring throttle (render/vfx/shots.gd:32,256)
+const MUZZLE_GAP: int = 4              # a spray's bolts leave a few ticks apart: at most one muzzle ring in this many ticks a fighter
+				if String(VfxHub._g(e, "kind", "")) != "mine" and (ma < 0 or ma > 1 or clock - int(_last_muzzle[ma]) >= MUZZLE_GAP):
+## nightly runs on the pin (tools/flash/nightly-seeds.json last 3)
+2026-10-22 257a766c max 3.5 ai-1029-normal over [{"id":"ai-1029-normal","primary":3.5}] 
+2026-10-23 257a766c max 3 ai-1035-normal over [] 
+2026-10-30 257a766c max 3.5 ai-1049-normal over [] {"primary":3,"area15":3,"twoSec":3}
+## VFX's own beam-clip readings on main (docs/vfx/pending/biome-fx/README.md:15-24)
+| beamdesert | normal | 3 | 0 | 0 | 3 | 4 | NOT PASS (the 120-frame memory reads 4) |
+| beamdesert | reduced | 4.5 | 0 | 0 | 4.5 | 4 | NOT PASS |
+| beamice | normal | 4 | 0 | 0 | 4 | 4 | NOT PASS |
+| beamice | reduced | 4.5 | 0 | 0 | 4.5 | 4 | NOT PASS |
+| beamvolc | normal | 4 | 0 | 0 | 4 | 3 | NOT PASS |
+| beamvolc | reduced | 4.5 | 0 | 0 | 4.5 | 4 | NOT PASS |
+
+**They are not this window's.** The same scene with the biome effects switched off (`BIOMEFX_DEFAULT` false) reads 4 (normal) and 4.5 (reduced) over 3: the effects make it no worse (desert normal reads 3 with them, 4 without). And the **existing `signature` clip fails on its own on unmodified HEAD 3
+## release-pass record commit
+d3f1ca0e22f39110d69feceb4913ff799d11db5d 

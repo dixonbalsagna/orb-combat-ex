@@ -1,0 +1,9 @@
+# AC-227 proof
+$ grep -n Orb's LAN/2v2 report lines in docs/ep/vision.md
+1654:**Third play, Orb (2026-11-06 evening, build 10d8b8cf, planet 7, easy foe; homework/Files/orb-first-play-20261106-1934.json):** "someti
+1660:**Morning build and the first LAN match, Orb (2026-11-07 midday; homework/Files/orb-first-play-20261107-1229.json, LAN log in orb-lan-a
+1662:**The first 2v2, Orb (2026-11-07):** "the 2v2 together was the only 2v2 test we performed. there were some stuttering issues, inconsist
+1663:Orb, on the camera: "No, we were standing by the same hill, and I looked at both PC monitors and they were only showing the fighters fr
+$ homework/Files play files (git-ignored)
+orb-first-play-20261106-1934.json build 10d8b8cf | sound: "Did the hits sound right?":"during high speed impacts the frames stuttered and the audio sounded crackly"
+orb-first-play-20261107-1229.json build a8bc66e2 | sound: "Did the hits sound right?":"sound effects weren't audible until i paused the game the first time"

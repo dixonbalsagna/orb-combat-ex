@@ -1,0 +1,7 @@
+AC-223 evidence (HEAD)
+== docs/marketing/steam-readiness.md:15
+| Screenshots: at least 5, at least 1920x1080, 16:9, gameplay only (no concept art, no marketing text) | need | Marketing, from real captures | Valve page. At least 4 must be marked suitable for all ages: Legal's call, since the game shows violence |
+== External (accessed 2026-11-07): https://partner.steamgames.com/doc/store/assets/standard
+  'you should mark at least four screenshots as indicated in the picture below' (a should, not a must);
+  'By default, your screenshots are not marked as suitable for all ages'; if none are flagged the game may be left out of some placements (e.g. front-page hover); violent or suggestive shots should not be flagged.
+  'You must provide at least 5 screenshots of your product.' '1920x1080 minimum. 16:9 aspect ratio.'

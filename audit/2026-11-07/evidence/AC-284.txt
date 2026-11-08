@@ -1,0 +1,8 @@
+# AC-284 proof, run 2026-11-07 on HEAD 53b6df82 (read-only)
+  ok    KB-005 present: a dodged signature teleports the defender up 300 units and leaves it frozen for about 0.9 s  (seed 4: +300 units in one step at 0.82 s, then motionless for 0.87 s (52 steps))
+  ok    qa/known-bugs.md and these checks list the same bugs  (KB-001 confirmed, KB-002 confirmed, KB-003 confirmed, KB-004 confirmed, KB-005 confirmed, KB-006 confirmed)
+## 7233c96 lines 616, 620
+      B(ex, ex.t + 0.02, () => { afterimage(D); D.y += 300; D.vx = 0; D.vy = 0; banner('DODGED', '#9fe0ff', 0.7); });
+    B(ex, ex.t + 0.9, () => {});
+## effects kb5
+{"dodgedBeams":457,"perMatch":0.457,"shareOfBeams":0.12527412280701755,"frozenSecondsPerMatch":0.39608190000000004,"shareOfMatchTime":0.007155391026297464}

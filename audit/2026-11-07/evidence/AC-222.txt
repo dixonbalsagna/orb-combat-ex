@@ -1,0 +1,15 @@
+AC-222 evidence (HEAD)
+== docs/accessibility/l10n-plan.md:75
+- **Legal's cleared lines are not translated by volunteers.** The flash notice, the lock line, the two buttons, the AI line and the privacy line (`docs/legal/page-fixed-lines.md`) show in English in every language until Legal clears a translation of each, per language. The tools keep them byte-identical.
+== docs/accessibility/cloud-reports/2026-10-28-foundation.md:19
+- Legal's cleared lines stay English in every locale until Legal clears a translation; the tools keep them byte-identical (`pseudo.mjs` self-test checks it).
+== node tools/l10n/pseudo.mjs --self-test (run 2026-11-07, read-only):
+pseudo self-test: all passed
+exit 0
+== self-test byte-identity assertion covers two terms.json lines only (tools/l10n/pseudo.mjs:142-145):
+  ok(b.kept.includes('terms:prompt.menu_notice'), 'Legal\'s notice is kept');
+  const terms = JSON.parse(b.files['terms.json']);
+  const src = JSON.parse(fs.readFileSync(path.join(ROOT, 'ui/data/terms.json'), 'utf8'));
+  ok(terms.prompt.menu_notice === src.prompt.menu_notice && terms.prompt.photo_start === src.prompt.photo_start, 'Legal\'s lines are byte-identical');
+== committed real-locale files outside docs/audit/research (empty = none):
+(end)

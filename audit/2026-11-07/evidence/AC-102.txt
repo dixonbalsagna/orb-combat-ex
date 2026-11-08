@@ -1,0 +1,12 @@
+$ sed -n '52p;56p;279p' docs/legal/review-log.md | cut -c1-260
+| RL-030 | Orb takes O1 to O4, The Bloom (O2) | Q3 round 2 | Medium (O2) | O2 CONDITIONAL, others GO. Met by the round 4 storyboard (RL-034) | Closed until final art |
+| RL-034 | The fold beat (reason, lines, storyboard) | Q3 round 4 | Low | GO (meets the O2 conditions) | Closed until final art |
+Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
+
+$ sed -n '118p' docs/legal/q3-screen.md | cut -c1-400
+- **O2 The Bloom: CONDITIONAL.** The ignition of orbiting fragments in unison is fine. A "column of light" is the franchise's summoning image. So: (1) no vertical pillar into the sky. The fold opens inward or sideways: the horizon curls, the ground peels, space collapses towards him. (2) No sky darkening, thunder or storm build-up. (3) Nothing emerges, speaks or answers. (4) The fragments stay orb
+
+$ git grep -n -i -E 'bloom|the fold\b' -- data/combat data/fight data/director sim/core sim/director | cut -c1-160 | head
+data/combat/finishers.json:204:      "generative": ["teleport angles from terrain and the loser's position", "strike shapes from his vocabulary", "blast path fr
+sim/director/test/combat-parity/finishers.json:185:      "generative": ["teleport angles from terrain and the loser's position", "strike shapes from his vocabul
+

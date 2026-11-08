@@ -1,0 +1,23 @@
+# AC-040 evidence
+## widths (render/camera/camera_params.gd:354,365) and zoom cap (data/camera/swing.json:6)
+const PEAK_LADDER: Array = [4200.0, 8000.0, 16000.0, 53000.0]   # by the lower of the two tiers (tier 4's sim-side send decides 32,000 or 53,000 by its height)
+const PEAK_MARGIN_W: float = 2700.0      # the launch framing's margin
+  "peakRate": 3.0,
+## ln(53000/2700) e-folds and ratio
+2.977 19.6
+## rate clamp (render/camera/split_rig.gd:5208-5211)
+	var rate_top: float = float(CamPlaces.data().get("peakRate", 3.0))
+	_pk_rate = minf(rate_top, _pk_rate + rate_top / CamParams.PEAK_START_TICKS)
+	var dl: float = log(maxf(want_w, 1.0) / maxf(_pk_w, 1.0))
+	var step_w: float = clampf(dl * CamParams.PEAK_EASE * DT, -_pk_rate * DT, _pk_rate * DT)
+## motion setting: cut under auto+reduced motion or cut (split_rig.gd:5516-5517); option row (ui/data/options.json:9)
+func _swing_cuts() -> bool:
+	return playback > 1.0 or world_turning == "cut" or (world_turning == "auto" and reduced_motion)
+    "world_turning": { "default": "auto", "group": "display", "label": "World turning", "help": "When the fight turns to face somewhere new, the world can swing round behind the fighters. Cut jumps to
+## peak shot only with --tiles (render/core/main.gd:243-245); LAN kits pass --tiles=1 (net/tools/lan_kit.mjs:123)
+	RenderTileGround.on = args.has("tiles")   # the tile ground: off; --tiles, ?tiles=1 on a local page (rendering.md)
+	split_rig.swing_view = RenderTileGround.on   # the camera's swing and peak launch go with the true globe (docs/camera/swing-view.md)
+	split_rig.peak_launch = RenderTileGround.on
+  `start "" "${exeName}" -- --lan-host=${a['host-ip']} --lan-log="%~dp0lan-log-main.txt" --tiles=1`,
+## not in the live pin:
+0

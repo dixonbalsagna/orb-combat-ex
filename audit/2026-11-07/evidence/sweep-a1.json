@@ -1,0 +1,229 @@
+{
+  "domain": "A1 player health: photosensitivity (flashes, red flashes, warning, reduce-flashing, motion and shake options) in the committed tree, the live public site and the private LAN kit",
+  "risks": [
+    {
+      "title": "Live /play/ build reads at or over 3 flashes a second on the team's own analyser",
+      "player_impact": "A photosensitive player who clicks through the warning at /play/ can meet scenes the project's own check reads at 3 to 3.5 flashes a second; the signature clip in the shipped reduced mode reads 3/3/3, at the limit with no margin.",
+      "where": [
+        "https://dixonbalsagna.github.io/orb-combat-ex/play/",
+        "tools/site.json:6,11 (at 72a4d1e4: owner-approved interim, pin 257a766c)",
+        "tools/site-pin.mjs:30 (at 72a4d1e4: owner path reads no recorded pass)",
+        "tools/flash/nightly-seeds.json:70-89,115-130",
+        "tools/flash/signature-gate.json:6-8",
+        "tools/flash/release-pass.json:3,898,1881 (at 72a4d1e4)"
+      ],
+      "evidence": "curl: /play/ serves a 9.0 MB index.pck whose build_info is commit 257a766 with lock_reduce_flashing true, behind a click-through. Nightly runs on 257a766c recorded worst seconds of 3.5 (normal clips); the signature clip reads reduced 3/3/3; the last full recorded pass (d3f1ca0e, waivers expired 2026-10-22) has FAIL rows in reduced mode too.",
+      "horizon": "already-public",
+      "severity_guess": "S2",
+      "likelihood": "low",
+      "evidence_strength": "documented only",
+      "needs_outside_expert": "A recognised photosensitivity analysis (the kind WCAG's Understanding page lists, e.g. Harding FPA or PEAT) of the live build's worst scenes at full screen; it would be S1 if the gate were missing or skippable.",
+      "external_sources": [
+        "https://www.w3.org/TR/WCAG22/#three-flashes-or-below-threshold",
+        "https://www.w3.org/WAI/WCAG22/Understanding/three-flashes-or-below-threshold.html"
+      ]
+    },
+    {
+      "title": "Main's Reduce flashing no longer slows the scenery sweep (regression since 2026-10-22)",
+      "player_impact": "In builds made from main (the private LAN builds for Orb and Orb 2, and any future public pin), the locked-on reduced mode lets scenery cross the screen as fast as full effects, the mitigation tied to the collapse fly-past reading of 4.5 flashes a second.",
+      "where": [
+        "render/camera/camera_params.gd:147-148",
+        "render/camera/camera_params.gd:139 (at 257a766c: 0.03 'collapse, 4.5 flashes a second')",
+        "render/camera/split_rig.gd:1284",
+        "render/core/look.gd:891-896 (pan haze ships off)",
+        "net/tools/lan_kit.mjs:3"
+      ],
+      "evidence": "HEAD sets SCROLL_MAX_REDUCED = 0.045, equal to SCROLL_MAX, with the comment that flash work is paused; the live pin had 0.03 with the comment citing 4.5 flashes a second on the collapse clip. The facade pan haze that would soften window-grid sweeps ships off. Introduced in 5fe08207 (2026-10-22).",
+      "horizon": "private",
+      "severity_guess": "S2",
+      "likelihood": "medium",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "A recognised analyser run of a fast city pursuit and collapse on a main-built locked export.",
+      "external_sources": []
+    },
+    {
+      "title": "The flash limiter cannot see several large-change sources, so it does not bound total flashes",
+      "player_impact": "Hard camera cuts, split-screen swaps, scenery sweeping past a moving camera, collapses, the calm-form beam body and the worn-aura flicker are not counted, so a second can exceed 3 flashes even when the register is within budget.",
+      "where": [
+        "render/vfx/flash_registry.gd:24",
+        "render/camera/split_view.gd:144,393",
+        "render/camera/split_rig.gd:2290",
+        "render/core/sim_host.gd:373,377",
+        "render/vfx/transform_view.gd:84,178",
+        "render/core/look.gd:896"
+      ],
+      "evidence": "The register's own header says it cannot see scenery sweeping past a moving camera unless the maker asks; camera asks only for cut_dip, cut_in_panel and transform_cut. In reduced mode beams and clashes skip the ask entirely, so their remaining body is uncounted. The aura flicker stops only for reduced_motion, not for Reduce flashing.",
+      "horizon": "already-public",
+      "severity_guess": "S2",
+      "likelihood": "medium",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "A recognised analyser on captured full-screen play; the in-game counter is a design aid, not proof.",
+      "external_sources": [
+        "https://www.w3.org/TR/WCAG22/#dfn-general-flash-and-red-flash-thresholds"
+      ]
+    },
+    {
+      "title": "The off switch and the 2026-11-15 expiry cannot take the playable build down while CI is broken",
+      "player_impact": "If a worse flash is found, or when the owner-set expiry passes, running the documented kill switch and pushing will not remove /play/, because deploy needs every CI job and none run; only a manual Pages unpublish would.",
+      "where": [
+        "tools/site-offline.mjs:1-4",
+        ".github/workflows/ci.yml:528",
+        "tools/check-site-interim.mjs:78 (at 72a4d1e4)",
+        "tools/site.json:8"
+      ],
+      "evidence": "site-offline.mjs says to commit and push the file to publish it; the deploy job needs qa, sim, data, flash, godot-parity, net, world and site. The expiry is only a CI failure message, not an automatic takedown, and nothing scheduled redeploys Pages.",
+      "horizon": "already-public",
+      "severity_guess": "S2",
+      "likelihood": "medium",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "none",
+      "external_sources": []
+    },
+    {
+      "title": "LAN builds switch on the meteor trail's 'loud' profile, which never asks the flash register",
+      "player_impact": "Orb and Orb 2's LAN builds draw the meteor ribbon with wide bright spans kept at full strength on planet-scale launches, an effect the main game ships off and which is not budgeted against other flashes.",
+      "where": [
+        "net/tools/lan_kit.mjs:57-60",
+        "render/vfx/meteor.gd:30-53",
+        "render/vfx/vfx_hub.gd:101",
+        "data/vfx/meteor.json:64-66"
+      ],
+      "evidence": "The kit patches _word to 'loud' ahead of the web check, so page_word() returns 'loud' on the desktop build, which turns meteor_burn_enabled on; meteor.gd and meteor_view.gd contain no register ask. The profile is described as a set for Orb to judge in a private preview.",
+      "horizon": "private",
+      "severity_guess": "S3",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "none",
+      "external_sources": []
+    },
+    {
+      "title": "In a drawn 2v2, each other fight gets its own flash register, so the screen budget is not shared",
+      "player_impact": "If other fights are drawn (dev flag now, planned per HEAD's 2v2 plan), two registers each grant their own budget on one screen, roughly doubling the allowed flashes.",
+      "where": [
+        "render/vfx/stage_feed.gd:68",
+        "render/vfx/vfx_hub.gd:83",
+        "render/core/main.gd:242"
+      ],
+      "evidence": "stage_feed creates VfxHub.new() per other fight and each hub constructs a fresh VfxFlashRegistry; _sync copies switches but not the register. Off by default (--others or a local page word).",
+      "horizon": "private",
+      "severity_guess": "S3",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "none",
+      "external_sources": []
+    },
+    {
+      "title": "The public README says the hosted build is offline while /play/ is live",
+      "player_impact": "A parent or player reading the public repo is told there is no playable build, while one is reachable from the About page and by URL, which weakens the safety message.",
+      "where": [
+        "README.md:7",
+        "https://dixonbalsagna.github.io/orb-combat-ex/about/"
+      ],
+      "evidence": "README.md:7 says the hosted build is offline for now; the live root says a limited test build is up, /about/ links ../play/, and /play/ serves the engine.",
+      "horizon": "already-public",
+      "severity_guess": "S3",
+      "likelihood": "medium",
+      "evidence_strength": "reproduced",
+      "needs_outside_expert": "none",
+      "external_sources": []
+    },
+    {
+      "title": "Red-flash refusal is a colour heuristic applied only to sources that ask",
+      "player_impact": "A dark saturated red (red channel 0.55 or less) passes the test, and red-orange effects that never ask (fire, embers, scorch) are not checked at all; no red screen tint was found.",
+      "where": [
+        "render/vfx/flash_registry.gd:121-122",
+        "render/vfx/shots.gd:217"
+      ],
+      "evidence": "is_red() requires r > 0.55 with g and b under 0.45 r on stored values, whereas WCAG's working definition is R/(R+G+B) >= 0.8 plus a u'v' change over 0.2. The project's own recorded clips all read red 0.",
+      "horizon": "already-public",
+      "severity_guess": "S4",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "A recognised analyser's red-flash channel would settle it.",
+      "external_sources": [
+        "https://www.w3.org/TR/WCAG22/#dfn-general-flash-and-red-flash-thresholds"
+      ]
+    },
+    {
+      "title": "Anyone building from the public source gets an unlocked build with full effects selectable",
+      "player_impact": "A self-built copy defaults to Reduce flashing on but lets the player turn it off (normal budget 2.5 weight, 3 big, 6 flashes a second) and honours the notice-skipping command-line words on desktop.",
+      "where": [
+        "ui/data/features.json:12",
+        "ui/data/options.json:45",
+        "ui/hud/ui_hud.gd:1508-1512"
+      ],
+      "evidence": "The committed lock_reduce_flashing is false; only the site, desktop and LAN packaging steps flip it to true. bypass_allowed() returns true off the web when unlocked.",
+      "horizon": "already-public",
+      "severity_guess": "S4",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "none",
+      "external_sources": []
+    }
+  ],
+  "checked_ok": [
+    {
+      "area": "Runtime flash register exists and is conservative for the sources that ask",
+      "where": "render/vfx/flash_registry.gd:29-45,121,179-215",
+      "why": "Area weight uses 21,824 px (25% of 341x256 at 1024x768, matching WCAG Note 1), sums across the whole screen, refuses red, and in reduced mode allows at most 1.0 weight, 1 big and 3 flashes per 60 ticks."
+    },
+    {
+      "area": "Register runs every tick in shipped builds, with no switch to disable it",
+      "where": "render/vfx/vfx_hub.gd:302; render/core/sim_host.gd:487",
+      "why": "begin_tick runs from the VFX hub, or from the host when VFX is off; no feature flag or preview switch was found that bypasses it."
+    },
+    {
+      "area": "Reduce flashing is locked on in every player build path",
+      "where": "live index.pck (lock_reduce_flashing true); tools/site-pin.mjs:85-91 at 72a4d1e4; net/tools/lan_kit.mjs:106-111; .github/workflows/desktop-builds.yml:64-69",
+      "why": "Site, LAN and desktop packaging flip the lock and refuse if it fails; the menu forces it true and the F8 legacy key is refused when locked (ui/hud/ui_hud.gd:1746-1748; render/core/main.gd:1587)."
+    },
+    {
+      "area": "Web warning gate on the live /play/ page",
+      "where": "live /play/ index.html lines 108-112 and 242-250",
+      "why": "An opaque dialog states the finding and says do not play if photosensitive; the engine starts only from 'I understand, start' on every load (no autoplay, no remembered skip), with 'Not now' leading away."
+    },
+    {
+      "area": "In-game warning, desktop and web",
+      "where": "ui/hud/ui_hud.gd:431-436,1508-1548; ui/widgets/ui_menu.gd:8-9; live pck menu_notice text",
+      "why": "The start menu carries the notice once per session before any play, with no timeout and no default focus; URL bypass words are ignored on a public host and on locked builds."
+    },
+    {
+      "area": "Beams and clashes in reduced mode",
+      "where": "render/core/sim_host.gd:373,377; render/vfx/shaders/beam_core.gdshaderinc:15",
+      "why": "Under Reduce flashing they never get the bright white form, and the beam's two-tint ripple is 2 Hz or slower."
+    },
+    {
+      "area": "UI flashes and pulses",
+      "where": "ui/widgets/ui_form_prompt.gd:15; ui/hud/ui_hud.gd:172-177; ui/core/ui_fighter_model.gd:309; render/core/main.gd:1264",
+      "why": "The prompt pulse is 1.4 Hz, the large legend holds 3 s and rests 2 s, the beat ring ramps instead of blinking, and the divider slam asks the register (refused in reduced mode)."
+    },
+    {
+      "area": "No lightning, full-screen white or red screen tint",
+      "where": "grep over render/, ui/, data/ (lightning, whiteout, screen_flash, strobe, vignette, low_hp)",
+      "why": "Only comments forbidding lightning and white flashes were found; data/art/auras.json:9 and data/vfx/transform.json:3 rule out white or lightning flashes."
+    },
+    {
+      "area": "Catastrophe light events and slow effects",
+      "where": "render/vfx/flash_registry.gd (CAT_GAP, CAT_RISE_MIN, CAT_FALL_MIN); data/vfx/clash.json:29-33; data/vfx/react.json:4",
+      "why": "World-scale light is one event per 2 s with at least a 0.3 s rise and 1 s fall; clash bursts come at most 1.33 a second; the worn-aura dropout is at most 1.5 a second per fighter."
+    },
+    {
+      "area": "Camera shake and motion options",
+      "where": "ui/data/options.json:46,57; render/core/main.gd:1162-1165; ui/widgets/ui_menu.gd:8-9",
+      "why": "Shake defaults to 2 of 10 and has an on/off box on the first screen plus a 0-10 slider in Settings; Reduced motion (default off, in Settings only) quarters the shake and calms cuts, swings and the sky."
+    },
+    {
+      "area": "What else the public site serves",
+      "where": "curl of /, /bench/, /band/, /404.html, /about/",
+      "why": "/, /bench/, /band/, /404.html and unknown paths share one holding page with no links and no game; /play/ is noindex. GitHub shows no releases, and the only Actions artifact is a web template."
+    }
+  ],
+  "limits": [
+    "I did not run the game or any analyser; every flash count above comes from the project's own recorded readings of its own unrecognised tool (tools/flash/wcag.js says it is not Harding or PEAT).",
+    "WCAG 2.3.1 can't be certified from code: the register follows the general-flash area rule for the sources that ask, but whether the screen as a whole meets 2.3.1 needs a recognised analyser on full-screen captures (technique G15).",
+    "The 21,824 px threshold is a fraction of a 1024x768 reference frame; the Understanding page notes that viewers closer than the reference distance are affected by flashes that pass, which matters for TVs, a docked Steam Deck and large monitors. Not assessed.",
+    "Excluded folders (docs/legal, docs/accessibility, docs/qa, docs/ep, audit, homework) were not read, so the source table of what each refused flash still draws is unverified.",
+    "For the live pin 257a766c I checked the register constants, the notice and bypass code, the scroll cap and the menu rows; the rest of its camera and cut code was assumed to match HEAD.",
+    "I did not inspect the LAN builds themselves, only net/tools/lan_kit.mjs. I did not re-verify the ci.yml YAML breakage (that is the auditor's established fact), only that deploy needs every job."
+  ]
+}

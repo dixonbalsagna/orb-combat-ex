@@ -1,0 +1,28 @@
+# AC-015 evidence
+## ADR 0010 lines 10, 11, 18
+3. **No metric overrides the look.** A change made to satisfy a test (flash, performance, a band) that also changes the look is a creative decision. It goes to Orb as a short visual question (clips, not numbers) before it ships, or it doesn't ship. Safety concerns are met with warnings and settings, not by degrading the default look.
+4. **The taste list** in `docs/ep/taste.md` names what Orb has rejected and what Orb wants. Briefs and reviews check against it. Banned outright: screen dissolves and cross-fades between shots, slow slide-style wipes, fade-to-black transitions in play, full-screen blur or haze, persistent rings or markers drawn over the fighters, and anything that costs frame rate for presentation.
+- The flash work is paused (Orb, 2026-10-18). The warning, the Reduce flashing lock and the nightly seeds stay as safeguards.
+
+## ci.yml triggers (lines 15-18)
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+## schedule/cron in any workflow
+.github/workflows/web-parity.yml:28:  schedule:
+.github/workflows/web-parity.yml:29:    - cron: '17 3 * * *'   # every night, 03:17 UTC
+
+## tools/flash/nightly-seeds.mjs:2 (how the nightly runs)
+// reading only the primary reading, and any clip over 3 on it is the take-down trigger (RL-136 item 3). Run by hand or by the machine's own scheduler; no CI cost.
+
+## nightly history tools/flash/nightly-seeds.json: run count and dates
+runs 6
+2026-10-16 d3f1ca0e max 3 ai-1005-normal
+2026-10-17 d3f1ca0e max 4 ai-1009-reduced
+2026-10-19 5c46feca max 3.5 ai-1017-reduced
+2026-10-22 257a766c max 3.5 ai-1029-normal
+2026-10-23 257a766c max 3 ai-1035-normal
+2026-10-30 257a766c max 3.5 ai-1049-normal
+last commit to history: b83782fa 2026-10-30 19:10:29 -0700

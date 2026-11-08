@@ -1,0 +1,43 @@
+# AC-237 proof
+$ sed -n 25,38p sim/core/sim.gd
+static func dispose(S: SimState, keepWorld: bool = false) -> void:
+	if SimField.cur == S:
+		SimField.cur = null   # the field match's reference (a static) doesn't keep a disposed state alive
+	if S.stage != null:
+		SimStage.dispose(S)
+	for f in S.fighters:
+		f.launchBy = null
+		f.rush = null
+	S.game.ko = null
+	S.game.clash = null
+	S.dirS.ex = null
+	S.beams.clear()
+	if not keepWorld:
+		WorldEpoch.release(S)   # World's derived data for this sim (the calm turn's ring jobs and preparations, and the worlds it left) lives in static dictionaries; a restored state keeps its own (a rollback restore)
+$ sed -n 204,210p;236,249p sim/world/epoch.gd
+static func _dropWorld(wid: int) -> void:
+	_owners.erase(wid)
+	_plans.erase(wid)
+	var pre: String = "%d/" % wid
+	for k in _jobs.keys():
+		if String(k).begins_with(pre):
+			_jobs.erase(k)
+## A sim is disposed (SimCore.dispose): its world's jobs and preparation and every world it retired go with it. They are derived data in static dictionaries, so nothing else would drop them.
+static func release(S: SimState) -> void:
+	var me: int = S.get_instance_id()
+	var keep: Array = []
+	for r in _retired:
+		if int(r[1]) == me:
+			_dropWorld(int(r[0]))
+		else:
+			keep.append(r)
+	_retired = keep
+	for wid in _owners.keys():
+		if int(_owners[wid]) == me:
+			_dropWorld(int(wid))
+	_dropWorld(S.worldId)
+$ git log -S'WorldEpoch.release' -- sim/core/sim.gd
+fbdbe7b6 2026-10-30 World: a swap's ring job and preparation kept 21 ticks, so a rolled-back re-run of the swap costs about 2 ms, not 60; cold and unprep out of the hashed state; a disposed sim's entr
+257a766c lacks fbdbe7b6
+a8bc66e2 includes fbdbe7b6
+no sim/world/epoch.gd at the public pin 257a766c

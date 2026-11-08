@@ -1,0 +1,41 @@
+# AC-003 evidence (auditor helper, 2026-11-07)
+## tools/site.json (HEAD) interim and pin
+  "offline": false,
+  "approved": "2026-10-18",
+  "interim": {
+    "owner": "Orb 2026-10-18",
+    "approved": "2026-10-18",
+    "expires": "2026-11-15",
+    "notice": "site-interim-owner.json"
+  },
+  "pin": "257a766c26f8766fb09b063864c41c5d8ba64dc0",
+  "template": "custom"
+## pin at last deployed commit 72a4d1e4
+    "expires": "2026-11-15",
+  "pin": "257a766c26f8766fb09b063864c41c5d8ba64dc0",
+## nightly history (tools/flash/nightly-seeds.json), last runs
+2026-10-16 d3f1ca0e max 3 ai-1005-normal over [] 
+2026-10-17 d3f1ca0e max 4 ai-1009-reduced over [{"id":"ai-1009-reduced","primary":4}] 
+2026-10-19 5c46feca max 3.5 ai-1017-reduced over [] 
+2026-10-22 257a766c max 3.5 ai-1029-normal over [{"id":"ai-1029-normal","primary":3.5}] 
+2026-10-23 257a766c max 3 ai-1035-normal over [] 
+2026-10-30 257a766c max 3.5 ai-1049-normal over [] signature {"normal":{"primary":2.5,"area15":2.5,"twoSec":3},"reduced":{"primary":3,"area15":3,"twoSec":3},"missing":[],"worse":["primary 3 (over 2.5)","twoSec 3 (over 2)"]}
+## git log tools/flash/nightly-seeds.json
+b83782fa 2026-10-30 19:10:29 -0700 Tools: the nightly on the live pin with the custom template: 16 of 16 read, none over 3.5; RL-207 condition met
+2ddcd360 2026-10-23 08:39:59 -0700 Tools: nightly seeds 2026-10-23 on the pin 257a766c (seeds 1032 to 1039, both modes): 16 of 16 read, largest primary 3, none over the owner limit of 3.5
+f00357f7 2026-10-22 01:59:38 -0700 Flash: the nightly seeds on the pinned 257a766c (seeds 1024-1031, both modes, 16 of 16 read): max 3.5 on the primary reading (ai-1029-normal), none over the owner interim's 3.5; with Re
+86d44e54 2026-10-22 00:43:36 -0700 Site: taken offline with the kill switch (Legal's addendum 11, RL-161): the published commit changed to 257a766c on 2026-10-19 without the nightly re-run on it, which is a take-down tri
+## kill switch publishes only through a push and CI deploy (tools/site-offline.mjs:4)
+// offline for now.", "... they are not fixed yet.", "There is no date for its return.": Legal's RL-171 words, restored by being offline, not by an edit) and nothing else (the full-set path and the interim both end). Commit and push the file to publish it. --check only reports the state (exit 0 when the site is offline, 1 when it is not). Idempotent.
+## expiry is a CI failure message only (tools/check-site-interim.mjs:78); ci.yml has no schedule trigger
+else if (today > I.expires) bad(`the interim expired on ${I.expires} (today is ${today}): take the playable site down (node tools/site-offline.mjs) or have Legal renew it`);
+0
+## live /play/ gate start only on button (live-play-index.html:242-248) and noindex (:7)
+		<meta name="robots" content="noindex">
+  var button = document.getElementById('gate-start');
+  var started = false;
+  button.addEventListener('click', function () {
+    if (started) return;
+    started = true;
+    gate.parentNode.removeChild(gate);
+    if (typeof window.__startGame === 'function') window.__startGame();

@@ -1,0 +1,26 @@
+# AC-287 proof, run 2026-11-07 on HEAD 53b6df82 (read-only); live pin 257a766c
+cce8a591 2026-10-02 Animation: a launched body flies head first once its spin dies (GB-006); a feet-first scan; the match reel's mirrored positions fixed
+0c1d39f7 2026-10-02 VFX: levitating rocks let go in world space when a fighter speeds up or leaves the state (GB-007)
+## rocks.gd at HEAD: release on speed-up (GB-007)
+## out of the ground as he reaches the state (0.8 s). **When he leaves the state or speeds up, they are let go in world space** (GB-007,
+## qa/known-bugs.md): each piece keeps the place it had, falls under gravity and fades (`loose`, 0.9 s; 0.45 s when it is a transformation
+## or a charge that takes him out of the state), so nothing rides along beside a fast mover or stays locked to a fighter who has left.
+		var limit: float = p("rocks", "max_speed_bh")
+		var spd: float = float(speed_bh[i])
+		# Still: below the limit, and (to come back) below two thirds of it, so a speed hovering about the limit does not flicker.
+		var slow: bool = spd <= (limit if _active[i] else limit * ENTER_SPEED_K)
+		var on: bool = tier >= int(p("rocks", "min_tier")) and not busy and near and slow
+		if on:
+			level[i] = minf(level[i] + 1.0 / maxf(p("rocks", "ease_in_s") * 60.0, 1.0), 1.0)
+		else:
+			# He has left the state (or sped up): every piece that was up is let go where it is, and nothing stays attached.
+			if level[i] > 0.0:
+				_release(S, i, f, tier, qshare, p("rocks", "ease_out_s") if not busy else FORM_OUT_S)
+			level[i] = 0.0
+			prev[i] = 0.0
+## rocks.gd history
+0c1d39f7 VFX: levitating rocks let go in world space when a fighter speeds up or leaves the state (GB-007)
+9e2cbab0 VFX: the tier-scaled blast on power-up craters, at the break only
+6118858a VFX: levitating rocks on, blasts scaled by the causer's tier, pressure rings built (not yet drawn)
+## lead_scan exists
+render/anim/tools/lead_scan.gd

@@ -1,0 +1,54 @@
+AC-052 evidence (verifier v04, 2026-11-07, read-only)
+## HEAD docs/legal/review-log.md:165
+| RL-143 | UI's launch marks: the recharging ring (1 Hz) and the tug ring (3 Hz) as moving marks | UI | Low | Pass; listed under fx04 and k06 | Closed |
+
+## HEAD docs/legal/movegen-banned.json fx04 and k06
+      "id": "k06",
+      "rule": "a persistent HUD cue (a battered or low-state stroke, a pulse, a ring) changes no faster than 3 times a second and by preference 2 or fewer, is static under reduced motion and Reduce flashing, and counts in the flash check's frame like any other effect (the HUD is part of the screen); below the area threshold it is not a standard flash, but a flicker that runs for a whole match in a fixed place is held to the rate anyway",
+      "why": "UI's crown at 4 Hz in thin arcs under 8,000 px"
+      "id": "fx04",
+      "rule": "moving marks that repeat while a state lasts, listed with their rates and held to k06: the recharging ring steps once a second (1 Hz); the beam struggle's thin rings and lines and UI's tug ring pulse on a 20-tick beat (3 Hz, at the limit): they stay steady or at 1.5 Hz or slower under Reduce flashing (the shipped default) and Reduced motion, are strokes only with no brightness change, and are in the HUD and effects rate lists that hud_check and the flash set read",
+      "why": "persistent repeating marks"
+
+## HEAD ui/widgets/ui_tug.gd:6-7,10,42,91-103 (under Reduce flashing the beat is a bar filled for 0.12 s after each pulse, every 20 ticks)
+##   - the beat: a thin ring round the point that closes over the 20 ticks between pulses (`beam_pulse`) and meets the point on the next one: press as it closes. Under Reduced motion or Reduce
+##     flashing the ring does not move: the point has a short bar above it that is filled for the instant after each pulse (the steady double ring it once had is behind the switch tug_rings, off);
+## All strokes, no filled area that changes: under any block threshold, and nothing changes state more than three times a second (the pulse is every 20 ticks). Nothing here is read by the sim.
+		"marks": marks, "ended": str(tug.get("end", "")) != "", "beat": pulse_t < 0.12}
+	if bool(p["steady"]):
+		# Steady (Reduce flashing or Reduced motion): the two rings that sat round the point for the whole struggle read as a grey circle in the middle of the fight (Orb, 2026-10-18), so they are
+		# off (tug_rings) and the beat is the bar alone, which fills for the instant after each pulse, just above the diamond.
+		var rings: bool = UiData.feature("tug_rings")
+		if rings:
+			for rr in [r1, r1 * 1.7]:
+				ci.draw_arc(pm, float(rr), 0.0, TAU, 32, key, w + 2.0, true)
+				ci.draw_arc(pm, float(rr), 0.0, TAU, 32, Color(ink, 0.8 * a), w, true)
+		var bw: float = r1 * 1.4
+		var br := Rect2(pm + Vector2(-bw * 0.5, -r1 * (2.5 if rings else 1.45)), Vector2(bw, maxf(4.0 * s, 4.0)))
+		ci.draw_rect(br, Color(ink, 0.8 * a), false, 1.6)
+		if bool(p["beat"]):
+			ci.draw_rect(br, Color(ink, 0.9 * a))
+
+## HEAD ui/tools/hud_check.gd steady-mode assertions (2 pictures, beat <= 3/s; no 1.5 Hz check)
+	_ok(moving.size() <= UiTug.RING_STEPS + 2 and steady_sigs.size() == 2, "tug: a second of beat is %d pictures with the ring closing (at most %d) and 2 when steady (the bar filled or not)" % [moving.size(), UiTug.RING_STEPS + 2])
+	_ok(UiTug.PERIOD >= 1.0 / 3.0 - 0.001, "tug: the beat is no faster than three a second (%.3f s)" % UiTug.PERIOD)
+
+## feature flags HEAD / LAN a8bc66e2 / pin 257a766c
+HEAD: {"tug_rings":false}
+a8bc66e2: {"tug_rings":false}
+257a766c: {"tug_rings":false}
+
+## beam struggle (beam_pulse) emitted by the sim? HEAD / a8bc66e2 / 257a766c
+HEAD: 1 emitter line(s) in sim/director/beam.gd
+a8bc66e2: 1 emitter line(s) in sim/director/beam.gd
+257a766c: 0 emitter line(s) in sim/director/beam.gd
+
+## WCAG 2.2 SC 2.3.1 threshold (primary source, accessed 2026-11-07): https://www.w3.org/WAI/WCAG22/Understanding/three-flashes-or-below-threshold.html
+quote: "no more than three general flashes and / or no more than three red flashes"
+area estimate: 341 x 256 px at 1024 x 768
+
+## beamStruggle.enabled in data (HEAD data/director/interrupts.json:272; a8bc66e2 same) and the sim gate (HEAD sim/director/beam.gd:239-240)
+HEAD: beamStruggle.enabled=false
+a8bc66e2: beamStruggle.enabled=false
+static func struggleOn() -> bool:
+	return bool(_bs().get("enabled", false))

@@ -1,0 +1,19 @@
+# AC-074 proof, 2026-11-07, HEAD 53b6df82
+## gh api license field:
+
+## README.md:7 (HEAD):
+Every fighter, move and planet here is original. **Licence:** not chosen yet, so all rights are reserved for now. Please do not copy or redistribute this code or content until a licence is added. The hosted build is offline for now while its flashing effects are fixed (see below); when it returns you may play it. "Meridian" is the team's internal codename.
+## 'open source' / 'open-source' in README, CLAUDE.md, live pages:
+HEAD:CLAUDE.md:3:An original fighting game in the anime energy-brawler tradition: free flight, beam struggles, transformations and planet-scale destruction, with every character, name and asset our ow
+live-site-index.html: 0
+live-play-index.html: 0
+## record contradiction:
+licence-recommendation.md:13: **Status, 2026-09-29:** Orb accepted pairing 1 (relayed by the EP). Ready-to-place files are in `drafts/`. Option B (GPL
+docs/ep/vision.md:43: | Licence | As Legal recommends: MIT for code, CC BY 4.0 for assets, DCO for contributors |
+docs/ep/vision.md:81: | Licence | Undecided: Orb may want to keep commercial rights. LICENSE and LICENSE-ASSETS were removed from the repo root on 2026-09-29 (all
+steam-readiness.md:37: | D2 | **Licence:** shape A (MIT code; art, music, writing and name all rights reserved) recommended; Orb has not chosen. Place the LICENSE files, and the third-party notices (Godot MIT, fonts). | **O
+## live /play/ is serving a playable build while README:7 says offline:
+play page: 13112 bytes; matches for gate-ai/game files:
+      1 gate-ai
+      1 index.js
+      1 index.pck

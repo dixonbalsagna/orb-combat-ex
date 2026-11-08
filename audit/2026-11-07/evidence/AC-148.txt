@@ -1,0 +1,10 @@
+# AC-148 proof (external, accessed 2026-11-07)
+USCO NewsNet 1060 https://www.copyright.gov/newsnet/2025/1060.html : 'but not the mere provision of prompts.'
+Thaler v. Perlmutter No. 25-449: cert denied 2026-03-02 per SCOTUSblog docket https://www.scotusblog.com/cases/case-files/thaler-v-perlmutter (via search result summary)
+Anthropic Consumer Terms https://www.anthropic.com/legal/consumer-terms : effective Oct 8, 2025; 'we assign to you all of our right, title, and interest—if any—in Outputs'; user indemnifies Anthropic
+$ last edit of licence-recommendation.md (where re-check was asked)
+1a6d62af 2026-09-30
+$ git grep 'consumer terms' docs (any re-check record)
+8d9b98a2:docs/art/ai-prompt-policy.md:103:| Claude, through Claude Code (Pro plan, consumer terms) | In use | Writes generator code and concept sheets. Consumer
+8d9b98a2:docs/legal/licence-recommendation.md:138:- **Anthropic (Claude).** The Consumer Terms (effective 8 October 2025) assign Anthropic's rights in Outputs, 
+8d9b98a2:docs/legal/licence-recommendation.md:179:- Anthropic: [Consumer Terms](https://www.anthropic.com/legal/consumer-terms), [Commercial Terms](https://www.

@@ -1,0 +1,20 @@
+# AC-071 proof, 2026-11-07, commit 53b6df82
+## root tree at HEAD (no LICENSE, LICENSE-ASSETS, NOTICE):
+.claude .gitattributes .github .gitignore CLAUDE.md DIRECTORS.md README.md art audio data docs export_presets.cfg localization net project.godot prototype qa render research sim tools ui 
+## .github files at HEAD (no CONTRIBUTING or PR template):
+.github/actions/setup-godot/action.yml .github/workflows/ci.yml .github/workflows/desktop-builds.yml .github/workflows/flash-pixels-dryrun.yml .github/workflows/linux-export.yml .github/workflows/web-parity.yml .github/workflows/web-template.yml 
+## licence files history:
+31664705 2026-09-29 Remove licence files while Orb decides; all rights reserved by default
+701c76a0 2026-09-29 Add MIT and CC BY 4.0 licence files; rename repo; record questionnaire 2
+## gh api repo: visibility/license/created
+visibility=public license=null created_at=2026-09-29T00:38:38Z name=orb-combat-ex
+## gh api pulls state=all count:
+0
+## Must M1-M5 residue at HEAD: files with the franchise name (term withheld) outside docs/legal, counts:
+(empty above = none)
+## fan-game name (term withheld) in README/CLAUDE.md:
+(empty = none)
+## old repo name in docs/setup:
+(empty = none)
+## README.md:7 at HEAD:
+Every fighter, move and planet here is original. **Licence:** not chosen yet, so all rights are reserved for now. Please do not copy or redistribute this code or content until a licence is added. The hosted build is offline for now while its flashing effects are fixed (see below); when it returns you may play it. "Meridian" is the team's internal codename.

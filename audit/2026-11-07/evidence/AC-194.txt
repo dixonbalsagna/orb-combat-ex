@@ -1,0 +1,6 @@
+# AC-194/AC-195 evidence, run 2026-11-07 at HEAD 53b6df82
+$ grep -n line-lint .github/workflows/*.yml  (no hits = not in CI)
+$ python docs/narrative/line-lint.py --live data/narrative/live_barks.json | grep -iE 'c10|glass|failing'
+data/narrative/live_barks.json: 355 lines, 10 exempt as Orb's own words, 8 rule breaks waived by id, 0 failing
+$ git log -S c10_tiers -- docs/narrative/line-lint.json (first)
+a3e1a37c 2026-10-16 Narrative: names pitched for the hero's two branches, sixty 

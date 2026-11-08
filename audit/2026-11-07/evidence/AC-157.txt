@@ -1,0 +1,5 @@
+# AC-157 (run 2026-11-07)
+| RL-026 | Overcommit, Rail chip, Stylus tail | Q3 design | Low | GO | Closed |
+| RL-033 | Anti-hero pride options (Drop the Act, Humbled, B1 to B4) | Q3 round 4 | Low | GO | Closed |
+A chip moving between armour hatches. Keep the chip in a slot or carrier, never inside a translucent sphere or orb (the sphere core is a signature). The hatches are mechanical. Routine checklist applies.
+$ git grep -i -E 'rail.?chip|stylus' HEAD -- data sim render ui (no output = not in the game)

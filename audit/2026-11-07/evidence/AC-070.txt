@@ -1,0 +1,20 @@
+# AC-070 proof, 2026-11-07, HEAD 53b6df82
+## repo created / visibility (gh api):
+created_at=2026-09-29T00:38:38Z visibility=public
+## Orb's ruling docs/ep/vision.md:80:
+| Repo visibility | Stays public so Orb can share the prototype with friends |
+## any record that counsel or a lawyer has read anything (git grep over docs/legal and docs/ep for read/reviewed by counsel/lawyer):
+HEAD:docs/legal/drafts/LICENSE-ASSETS:5:Draft by Legal and IP Compliance. Not legal advice. Have counsel read the final text before the repo goes public.
+HEAD:docs/legal/drafts/README.md:3:Orb chose pairing 1 from `licence-recommendation.md` (relayed by the EP, 2026-09-29): MIT for code, CC BY 4.0 for content, DC
+HEAD:docs/legal/go-to-market.md:245:| **Console SDK terms** | **Behind NDA; I cannot read them.** What is known publicly: console SDKs, headers and documentatio
+HEAD:docs/legal/guide-licence-rundown.md:3:Owner: Legal and IP Compliance. 2026-10-16. General information, not legal advice. Have a lawyer read the final files
+HEAD:docs/legal/guide-licence-rundown.md:32:3. When you plan to sell, a lawyer reads the files once.
+HEAD:docs/legal/homework-renewal-note.md:30:Someone reports a seizure or a complaint, a store or a platform asks about the warning, or you plan to sell the game
+HEAD:docs/legal/licence-recommendation.md:3:Owner: Legal and IP Compliance. 2026-09-28. For Orb, who decides, and the EP. Not legal advice. Have a lawyer read t
+HEAD:docs/legal/pre-store-checklist.md:37:- **Before the store page:** place the licence files (they are out of the repo now), decide the holder name, and have 
+HEAD:docs/legal/suno-music.md:3:Owner: Legal and IP Compliance. 2026-10-04. Answers the questions in `docs/audio/suno-direction.md` section 9. A screen, not leg
+(only forward-looking 'Have counsel read...' lines exist; none records a review)
+## where Legal later places the counsel read:
+guide-licence-rundown.md:3: Owner: Legal and IP Compliance. 2026-10-16. General information, not legal advice. Have a lawyer read the final files once before the first sale (about an hour). Longer n
+pre-store-checklist.md:37: - **Before the store page:** place the licence files (they are out of the repo now), decide the holder name, and have counsel read them, the README wording and the store text.
+steam-readiness.md:52: 1. A lawyer's one sitting (about an hour, before the first sale, not before the page): the licence files, the title, the

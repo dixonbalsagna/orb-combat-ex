@@ -1,0 +1,49 @@
+AC-043 evidence (verifier v04, 2026-11-07, read-only)
+## HEAD docs/qa/three-strength-qa-plan.md:143 (row still marked Paper)
+| no more than three full flashes in any second | at most 3 | hard | **Paper** | a mashed RB + X for 10 s; needs a `flash` cue with a full or spark text (the harness already reads `rec.cueText['flash:<text>']`) |
+
+## HEAD qa/godot/masher.js:601-602
+      const fl = en.flashes || 0;
+      rows.push({ id: 'energy.flash', ref: '§5b second pass', what: 'No more than three full flashes in any second, and one blow in 20 ticks at most may take one (hard test; a mashed RB + X)', status: fl ? (en.flashMax60 <= 3 && en.flashMinGap >= 20 ? 'PASS' : 'FAIL') : 'PENDING', value: fl ? `${fl} full flashes; the most in 60 ticks ${en.flashMax60}; the shortest gap ${en.flashMinGap} ticks` : '
+
+## HEAD qa/godot/players.gd:1214-1219 (counts energy_land cues with k == 1, game events not pixels)
+					elif ck == "energy_land":
+						var elt: String = str(e.get("text"))
+						var esrc: String = elt + ":" + str(e.get("source"))
+						g.energy.src[esrc] = int(g.energy.src.get(esrc, 0)) + 1
+						if _ei(e, "k") == 1:
+							g.energy.flashTicks.append(S.tick)
+
+## HEAD sim/director/brawl.gd:2722-2737 (sim gives k=1 at most once per flashEveryTicks)
+## An energy art in reach lands, or doesn't (brawl-second-pass.md section 5b). what: bolt, blast. how: hit, guard,
+## armour, miss. k is 1 on the one landing in energy.reach.flashEveryTicks that may take the full flash, for both
+## fighters together; the rest get sparks at the hand.
+static func _eLand(S: SimState, ex, f, o, what: String, how: String, ender: bool = false) -> void:
+	var e = _ev(S, f, "energy_land", what, how)
+	if ender:
+		e.amount = 1.0   # a blast that lands as a string's ender: its own knock-back follows on this tick
+	e.target = float(S.fighters.find(o))
+	e.n = S.tick
+	e.x = f.input.mx
+	e.y = f.input.my
+	var last: int = maxi(_g(ex.A, FLASH_AT), _g(ex.D, FLASH_AT))
+	if how != "miss" and (last == 0 or S.tick - last >= int(cfg().energy.reach.flashEveryTicks)):
+		e.k = 1.0
+		_s(ex.A, FLASH_AT, S.tick)
+		_s(ex.D, FLASH_AT, S.tick)
+
+## HEAD data/director/interrupts.json:548
+        "flashEveryTicks": 20
+
+## HEAD render/vfx/reach.gd:279-284 (render: no full flash when reduced; k and the register gate it)
+		l.life = p("land_life")
+		# Encounter's `k` on the cue is 1 on the one blow in 20 ticks that may take the full flash; the register still decides. Without it, the 1-in-20 pace is ours.
+		var kk: float = float(VfxHub._g(e, "k", -1.0))
+		l.big = (not reduced) and (not guard or blast) and (kk < 0.0 or kk >= 1.0) and allow_full(S, col.lightened(0.3), kk < 0.0, 28.0 if blast else 19.0, fv.z)
+		fx.append(l)
+		made["land"] = int(made.get("land", 0)) + 1
+
+## QA runs of the row
+HEAD:docs/qa/c2-chain-2e0f3b2.md:274:| PASS | energy.flash | No more than three full flashes in any second, and one blow in 20 ticks at most may take one (hard test; a mashed RB + X) | 20907 full flashes; the most in 60 ticks 3; the shortest gap 20 ticks | at 
+HEAD:docs/qa/c2-followup-b1b2ed6a.md:343:| PASS | energy.flash | No more than three full flashes in any second, and one blow in 20 ticks at most may take one (hard test; a mashed RB + X) | 22833 full flashes; the most in 60 ticks 3; the shortest gap 20 ticks |
+HEAD:docs/qa/c2-second-round-f9469f8a.md:359:| PASS | energy.flash | No more than three full flashes in any second, and one blow in 20 ticks at most may take one (hard test; a mashed RB + X) | 24168 full flashes; the most in 60 ticks 3; the shortest gap 20 tic

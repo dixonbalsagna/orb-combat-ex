@@ -1,0 +1,32 @@
+$ sed -n '98p' docs/legal/review-log.md | cut -c1-300
+| RL-076 | LT zip: tech reading with 2 ticks of travel (zip-screen.md) | VFX, Combat | Medium | AVOID as built; CLEAR at 4+ drawn ticks, body visible every tick, echoes trail behind, far-side exit drawn | Open until VFX and Encounter set the tick floor |
+
+$ sed -n '236,252p' sim/director/zip.gd
+## The ticks of the way in: the table's range by distance, never under Legal's floor (max(floor.minTicks, the
+## distance in bh over floor.bhPerTick, rounded up)). A tech zip flies in on the floor.
+static func _inTicks(k: Dictionary, dBh: float, tech: bool) -> int:
+	var c: Dictionary = cfg()
+	var fl: int = _floor(dBh)
+	if tech:
+		return fl
+	var lo: int = int(k.inTicks[0])
+	var hi: int = int(k.inTicks[1])
+	var t: float = clampf((dBh - float(c.band.minBh)) / maxf(0.001, float(c.band.maxBh) - float(c.band.minBh)), 0.0, 1.0)
+	return maxi(lo + roundi(t * float(hi - lo)), fl)
+
+
+## Legal's floor on travel (RL-076), for a path of dBh body heights.
+static func _floor(dBh: float) -> int:
+	var c: Dictionary = cfg()
+	return maxi(int(c.floor.minTicks), int(ceil(dBh / float(c.floor.bhPerTick))))
+
+$ node -e "const j=require('./data/director/interrupts.json');const f=(o)=>{for(const[k,v]of Object.entries(o)){if(k==='zip'&&v&&v.floor){console.log('HEAD zip.enabled',v.enabled,'floor',JSON.stringify(v.floor))}else if(v&&typeof v==='object'&&!Array.isArray(v))f(v)}};f(j)"
+HEAD zip.enabled true floor {"minTicks":4,"bhPerTick":3}
+
+$ git show 257a766c:data/director/interrupts.json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);const f=(o)=>{for(const[k,v]of Object.entries(o)){if(k==='zip'&&v&&v.floor){console.log('257a766c zip.enabled',v.enabled,'floor',JSON.stringify(v.floor))}else if(v&&typeof v==='object'&&!Array.isArray(v))f(v)}};f(j)})"
+257a766c zip.enabled true floor {"minTicks":4,"bhPerTick":3}
+
+$ git show 257a766c:sim/director/zip.gd | grep -n 'floor.minTicks'
+234:## The ticks of the way in: the table's range by distance, never under Legal's floor (max(floor.minTicks, the
+250:	return maxi(int(c.floor.minTicks), int(ceil(dBh / float(c.floor.bhPerTick))))
+

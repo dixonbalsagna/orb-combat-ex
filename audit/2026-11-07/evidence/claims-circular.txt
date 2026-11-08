@@ -1,0 +1,33 @@
+Circular citations in the safety-claim record (audit 2026-11-07, baseline 8d9b98a2, HEAD 53b6df82)
+Each line is a record that rests on itself, on a sibling record from the same author, or on an auditee's relay, with no primary artefact. Bracketed ids are the raw local_ids; each appears in the members list of one entry in audit/2026-11-07/evidence/claims-inventory.json.
+
+From the raw harvest
+1. RL-030 is closed by RL-034, a Legal row that says it meets RL-030's own conditions; neither cites an artefact. (RLA-019)
+2. RL-053 is conditioned on twelve rules in agency-pass-screen.md, and RL-058 declares all twelve met by reference to the same Legal doc. (RLA-034)
+3. RL-084 clears energy hands 'as written (RL-041 to RL-052)', which are Legal's own earlier rows. (RLA-053, EPX-039)
+4. RL-115 and RL-120 cite photosensitivity-note.md, Legal's own file, for figures (9 flashes in 3 s, max change 0.052) that the log does not reproduce. (RLA-069)
+5. RL-124/127/128/129 carry amendments that rest on RL-132, and RL-132 cites those rows back as what it withdrew. (RLA-082, RLB-002, LEG-051, EPX-053)
+6. RL-209: Orb delegated ('let's go with your judgment'), the EP's own judgement was logged as 'ORB'S DECISION (delegated)' and Legal concurred, so an auditee's call stands as the owner's waiver. (RLB-025)
+7. RL-172, RL-207, RL-209: every renewal and read-back answer reaches Legal only as an EP relay; no row cites Orb's own text in a file. (RLB-009, LEG-005, EPX-003)
+8. RL-249 and RL-251 (HEAD) cite 'the RL-247 hold', which exists only in the uncommitted working copy of review-log.md and the untracked bystander-comedy-screen.md. (RLB-032, RLB-096)
+9. RL-213 to RL-217 are cited as standing 'design guards' by RL-219, RL-228, RL-231 to RL-246 and RL-249, while their own QA batches (no association, civilians-removed run) are never recorded as run. (RLB-041, RLB-043, RLB-044)
+10. c08 as first written (catastrophe-and-city-screen.md:33) calls menace 'a power meter, not a score'; RL-217 sharpens c08 and finds the same unchanged menace code in breach. (RLB-035, RLB-036)
+11. Orb's choice of licence pairing 1 rests only on 'relayed by the EP' (licence-recommendation.md:13); drafts/README.md:3 and licence-register.md:86 cite each other and that relay, while go-to-market.md:290 says no licence is chosen. (LEG-020, RLA-059, EPX-030)
+12. k05 (movegen-banned.json:536) says the evidence needed is in photosensitivity-note.md, and photosensitivity-note.md:3 names k05 as its flash limit: two Legal records citing each other as the authority. (LEG-001, RLA-068)
+13. store-copy-screen.md:22 tells Marketing to use go-to-market 9.1's privacy line verbatim, but go-to-market.md:236 marks 9.1 as superseded by 11.3, and store-copy-screen was not updated. (LEG-053, RLA-062, EPX-018)
+14. CLAUDE.md attributes 'the Protagonist's collectible artefacts must not be orbs' to Legal (name-screening.md:170), while Legal's fighter-concepts-review.md:5 says that line was replaced on 2026-09-29. (EPX-026, LEG-030, RLA-015)
+15. docs/net/lan-v1.md:7 points to docs/net/two-v-two-lan.md for 2v2, and two-v-two-lan.md:12 and :121 point back to lan-v1.md for the firewall words and steps. Neither re-checks the other.
+16. docs/net/pending/lan-n4/README.md:23 says lan-v1.md's Legal section 'says the same' as RL-253, but the committed lan-v1.md:89 still says 'Orb alone'. (QAN-053, RLB-033)
+17. docs/net/two-v-two-lan.md:117 ('ENet tested in CI') and docs/net/lan-v1.md:79 ('enet_check covers the same transport... in CI') support each other, yet CI has run nothing since 3c9005ac and the --late-host step has never run. (QAN-061)
+18. docs/accessibility/swing-motion.md:54 closes rows of docs/accessibility/right-hand-controls.md (same author), which cites docs/accessibility/audit-2026-10-28.md (same author). It is one author's chain with no second reader. (QAN-022)
+19. docs/net/two-pc-check.md:74 ('only ever run on this PC') against docs/net/lan-v1.md:83 ('ran ... on both'), which cites docs/perf/oldpc-result-2026-11-01.md (not read). (QAN-060)
+20. store-copy-draft.md:161 (C18): the evidence for the privacy claim is Legal's own wording (go-to-market 9.1), not a check of the build. (EPX-018)
+21. holding-page-copy.md:80 (H4): the evidence that the fight director is "ordinary game code, not an AI model" is Legal's clarifier, which is the claim text itself.
+22. store-copy-draft.md:158 (C15): the AI statement is rated "clear (Legal's own text)", so Legal clears its own wording. (EPX-034)
+23. orb-review-list.md:181/183: the flash figures come from Tools' analyser via Legal's note, and "fixed" is defined as the same analyser passing, so the tool marks its own result with no independent check. (EPX-001)
+
+Noticed during the merge (from the harvest's own notes; not re-opened in this step)
+24. tools/flash/signature-gate.json's engineFlip entry names RL-202 as its authority, while RL-202 (review-log.md:221/224 at HEAD) makes that pinned entry in signature-gate.json its own condition: each record cites the other. (RLB-018)
+25. docs/net/lan-v1.md:20-22 asserts RL-204 condition 1 (public builds exclude net/) is met by pointing at tools/desktop-package.mjs, whose guard (desktop-package.mjs:215-219) checks only the three desktop presets; the Web preset that serves the public site (export_presets.cfg:11) does not exclude net/*, so the cited check cannot prove the claim. (QAN-051, RLB-015, LEG-055)
+26. RL-253 (review-log.md:467 at HEAD) rests Orb 2's adulthood and absence of photosensitivity on Orb's vouching while barring anyone from asking Orb, so its premise can never be re-checked; the EP rule that every Legal flag goes to Orb (CLAUDE.md:12, EPX-073) cannot reach it. (RLB-033, EPX-010, EPX-011)
+27. The owner interim (RL-161) is renewed by sessions that review-log.md:248 and RL-253 (:467) tell not to raise flash topics with Orb, so each renewal cites an EP relay of a decision whose facts are withheld from the person deciding. (RLB-027, EPX-011, RLB-009)

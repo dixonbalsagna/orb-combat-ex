@@ -1,0 +1,41 @@
+# AC-017 evidence
+## RL-201 (HEAD:223)
+| RL-201 | Words for a phone note on the browser demo (ADR 0011, PC first, mobile parked): heading, body, continue button | Tools, UI, Community | Low | Cleared: 'Best on a computer' / 'This demo is made for a computer with a keyboard or a controller. It may not run well on a phone.' / 'Continue anyway'. Conditions: shown before the flashing notice, never replacing or skipping it; no promise, platform, date, 'supported', 'optimized', 'tested' or price; phones only; button always continues; pin rule applies. Update: the note lives in the site wrapper (build-site.mjs, from HEAD), not in the pinned game 257a766c, so condition 4 does not apply to it; the wrapper deploy check (words word for word, order notice-after-note) must pass every deploy, and Tools confirms once at phone width that the notice and lock line show in full after the button | Closed |
+
+## served /play/ page (live-play-index.html): offsets
+id="phone-note" 5082
+Best on a computer 5517
+Continue anyway 5860
+id="gate" 5908
+This game contains flashing effects 6318
+var note = document.getElementById('phone-note');
+  var go = document.getElementById('phone-note-continue');
+  var gate = document.getElementById('gate');
+  if (!note || !go) return;
+  var phone = false;
+  try { phone = window.matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) <= 500; } catch (e) { phone = false; }
+  if (!phone) { note.parentNode.removeChild(note); return; }
+  note.hidden = false;
+  if (gate) gate.setAttribute('inert', '');
+  go.addEventListener('click', function () {
+    note.parentNode.removeChild(note);
+    if (gate) gate.removeAttribute('inert');
+    var start = document.getElementById('gate-start');
+    if (start) start.focus();
+  });
+  go.focus();
+}());
+/* end phone note */
+</script>
+	</body>
+</html>
+
+
+
+## deploy check
+HEAD:tools/check-site-interim.mjs:44:const PHONE_HEADING = 'Best on a computer';
+HEAD:tools/check-site-interim.mjs:166:  if (noteAt < 0) bad('/play/ has no phone note (Legal RL-201: a phone sees "Best on a computer" before the flashing notice)');
+514:          node tools/check-site-interim.mjs --site "${RUNNER_TEMP}/site" --root "$ROOT"
+
+## last Pages deployment (from ci-and-deploy-state.txt)
+{"created_at":"2026-11-05T03:48:45Z","environment":"github-pages","sha":"72a4d1e4aaac58ab359b50b2b18726342b5b47aa"}

@@ -1,0 +1,34 @@
+# AC-026 evidence
+## DIRECTORS.md:304, 314; camera.md:29, 45
+- Prevent camera sickness: smoothing, shake limits, zoom rate limits.
+**Done when:** Both fighters always readable at any separation up to half the planet; No pop at the wrap seam; Shake capped and user-adjustable
+- Prevent camera sickness: smoothing, shake limits, zoom rate limits.
+- Shake capped and user-adjustable
+
+## options.json:5, 46, 57
+    "info_flashes": { "default": true, "group": "display", "label": "Info flashes", "help": "Small flashes over a fighter's head that show what the fighter senses: danger, spotted you, searching. Turning this off hides only these." },
+    "reduced_motion": { "default": false, "group": "accessibility", "label": "Reduced motion", "help": "Removes flicker, shimmer and shrinking rings. The split screen changes sides in one step instead of sweeping across, and screen shake is cut to a quarter. Everything keeps its shape.", "accessibility": true },
+    "camera_shake": { "default": 2, "group": "accessibility", "label": "Camera shake", "help": "How hard the camera shakes on hits and blasts, from 0 (none) to 10 (most). Reduced motion caps it at a quarter.", "accessibility": true, "min": 0, "max": 10, "step": 1 },
+
+## shake wiring: render/core/main.gd:1111, 1162-1165; render/camera/split_view.gd:442
+		split_view.set_shake_pref(float(o.get("camera_shake", CamParams.SHAKE_PREF_DEFAULT)))
+func _shake() -> float:
+	var o: Dictionary = ui_hud.opts
+	var pref: float = clampf(float(o.get("camera_shake", CamParams.SHAKE_PREF_DEFAULT)), 0.0, 10.0)
+	return pref / 10.0 * CamParams.SHAKE_PREF_TOP * (0.25 if bool(o.get("reduced_motion", false)) else 1.0)
+	return shake_scale * (shake_pref / 10.0 * CamParams.SHAKE_PREF_TOP) * (0.25 if reduced_motion else 1.0)
+
+## zoom rate caps (render/camera/camera_params.gd:28, 203-204)
+const SLAM_ZOOM_RATE: float = 3.0       # the slam's zoom rate cap, e-folds a second (it was unlimited: 17 and more)
+const ZOOM_RATE: float = 1.2           # e-folds a second, ordinary
+const ZOOM_RATE_TRANS: float = 2.4     # in a transition
+
+## reduced motion near-cut (render/camera/split_rig.gd:952, 1071)
+	var slam_time: float = CamParams.SLAM_TIME_REDUCED if reduced_motion else CamParams.SLAM_TIME   # reduced motion: a near-cut
+			_swing_dur = CamParams.T_SWING_REDUCED if reduced_motion else CamParams.T_SWING
+
+## promised framing-rules.md
+ls: cannot access 'docs/camera/framing-rules.md': No such file or directory
+docs/camera/lunge-framing.md
+docs/camera/rally-framing.md
+docs/camera/zip-framing.md

@@ -1,0 +1,4 @@
+# AC-288 proof, run 2026-11-07 on HEAD 53b6df82 (read-only); live pin 257a766c
+df05b9f6 2026-10-03 Encounter: agency slice 12, the barrage counts every clean shot of any kind, window 120 (GB-009)
+44:  ['E4', 'tapper' + BLAST, P.timed, 'a mixed blaster against a timed melee player: must finish at least 95% before the cap (win share reported)', null, null, 95],
+47:  ['E5', 'tapper' + BLAST, P.timed, 'a blast-heavy timed script against a rush-heavy timed script (agency pass 15.6: 40 to 60%; and finishes at least 95%)', 40, 60, 95],

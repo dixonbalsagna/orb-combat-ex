@@ -1,0 +1,19 @@
+# AC-088 evidence
+## vision.md (HEAD) :844-850 and :1399
+On the draft holding page, which used a strip of Art's sky concept sheet showing the fighters' new designs:
+
+> pick a different set of landscape screenshots or create eye-catching brand new ones in a test environment, I don't want any in-progress character art to be out. the fighters in past builds are fine but not in-progress stuff please.
+Standing from this: no in-progress character art on any public page; fighters as they appeared in past builds are fine. Pictures for the holding page are to be landscape screenshots, re-chosen or newly staged, when work resumes. All directors are on hold after their current step until Orb says to resume.
+- Public pictures: city diagrams and stills without fighters may be public; stills of the two fighters as they are in the build may be public; **HUD mock sheets stay private**. (In-progress character art stays private as before.)
+## steam-readiness.md (HEAD) :21
+**Orb's rule on character art.** Every screenshot, capsule and trailer frame shows the build as it ships on the day. No in-progress character art, no concept art as a screenshot (Valve forbids it too), and no frame with the placeholder names or the working title. Until the fighters are final, the page waits (see section 5).
+## images on the live holding page (saved live-site-index.html):
+0
+## committed concept files under art/concepts (count) and fighter close-ups (sample):
+351
+art/concepts/closeups/README.md
+art/concepts/closeups/anti-hero-A.svg
+art/concepts/closeups/anti-hero-B-blank.svg
+art/concepts/closeups/anti-hero-B.svg
+art/concepts/closeups/anti-hero-C.svg
+## Steam rule: https://partner.steamgames.com/doc/store/assets/standard (accessed 2026-11-07): 'Screenshots should exclusively show the gameplay of your game.'

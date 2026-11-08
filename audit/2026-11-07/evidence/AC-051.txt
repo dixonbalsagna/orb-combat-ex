@@ -1,0 +1,22 @@
+AC-051 evidence (verifier v04, 2026-11-07, read-only)
+## HEAD docs/legal/review-log.md:128 (amendment)
+| RL-106 | Heave and fall contact crops seen; f01 ceiling clarified (tech echoes meet it) | Animation, VFX | Low | Closed: pu.su_drive and ru.su_ram pass; double hammer 22 apart and ram wrists 25.9 and 31.0 apart accepted; f01 is a ceiling by instant | Closed **Amended 2026-10-06:** the f01 half of this ruling was passed on VFX's claim that a tech blow's three wire echoes were never more than two alive at once. That was wrong for a perfect timed blow (all three were drawn together for about 2.5 ticks). Fixed in 868c15ee: two echoes, under the counter. A staggered third is acceptable if a tick-by-tick strip shows at most two alive at every tick. The pose rulings of RL-106 stand |
+
+## git show --stat 868c15ee
+868c15ee 2026-10-06 11:23:38 -0700
+VFX: the three-strength brawl's looks ahead of the sim (wind-up rings, a per-instant limb-ghost counter, the burst's thinning smear, the double hit, a whiff, 'B now' on the launcher's cue); a perfect timed blow draws two echoes, not three
+
+
+## HEAD docs/legal/movegen-banned.json f01 (rule and why)
+      "id": "f01",
+      "rule": "a flurry's or burst's blur follows each striking limb's real path: at any instant at most 2 ghosts of any limb and at most 4 limb-ghosts on screen in all; never extra arms, legs or fists drawn at once, never a fan of limbs round the target. This replaces the 'two ghosts per blow' wording, which does not hold at 15 blows a second. The numbers are ceilings on what is alive at one instant, not counts that must be drawn: fewer is always fine, reduced motion draws fewer, and a tech blow's 3 wire echoes that pop off in turn with never more than 2 alive at once meet it. Body ghosts of a zip fall under m05 (at most 5)",
+      "why": "the many-armed barrage blur, by instant rather than by blow"
+    },
+
+## HEAD render/vfx/ghost_tally.gd:1-6
+class_name VfxGhostTally
+extends RefCounted
+## The ghost count and budget (Legal's RL-122 and RL-125, rows f01, m05 and m12 of movegen-banned.json): every after-image on a screen, whoever draws it, counted at every instant, and
+## VFX's own whole-figure ghosts held to what is left of the fighter's budget.
+##
+## Who draws what (2026-10-06 audit; Animation draws no ghost at all, it hands `press_pose(k)` and `press.ghosts` to VFX and keeps only the lab's path dots):

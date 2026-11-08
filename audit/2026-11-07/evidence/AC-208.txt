@@ -1,0 +1,43 @@
+AC-208 proof (independent reviewer, 2026-11-07)
+
+$ git show 257a766c:render/camera/split_rig.gd | grep -n "var panel_flash_off\|var panel_mode"
+165:var panel_mode: String = "full"          # the player's setting: "full", "still" (a frozen strip) or "off"; reduced motion means still
+166:var panel_flash_off: Array = []   # [] since 2026-10-19 (the strips play as in d3f1ca0e); ["signature"] was: the strips that do not open while Reduce flashing is on (CamParams.PANEL_KINDS names): 
+
+$ git show 257a766c:render/camera/split_rig.gd | sed -n 1506,1509p
+	if panel_mode == "off" or slot < 0 or slot > 1 or fold_active or solo_kind == "transform" or intro_active:
+		return
+	if flash_reduced and panel_flash_off.has(kind):
+		return
+
+$ git grep set_panel_flash_off 257a766c (non-docs callers)
+257a766c:render/camera/split_view.gd:292:func set_panel_flash_off(kinds: Array) -> void:
+257a766c:render/camera/tests/clip_digest.gd:70:		sv.set_panel_flash_off([] if panel_flash_off == "" else Array(panel_flash_off.split("+")))
+257a766c:render/tools/flash_capture.gd:120:			main.split_view.set_panel_flash_off([] if _page_kv("pfo") == "none" else Array(_page_kv("pfo").split("+")))
+
+$ git log -S"panel_flash_off: Array = []" -- render/camera/split_rig.gd
+10267f51 2026-10-19 Camera: feel step 3 applied by the EP (under Reduce flashing a launched body is chased again as in the build Orb liked, not held then cut; the signature strip opens again; the flas
+
+$ git merge-base --is-ancestor 10267f51 257a766c
+yes: the strip-back commit is in the pinned public build
+
+$ git show 257a766c:ui/data/options.json | grep camera_panels (default)
+"camera_panels": { "default": "full"
+
+$ grep RL-160 / signature strip in docs/legal after RL-160
+docs/legal/review-log.md:182:| RL-160 | Interim without a signature close-up (Camera) | Camera, Tools | Low | No objection; page copy must not describe it; meas
+docs/legal/rewards-and-lock-screen.md:1:# The Reduce flashing lock wording, the keepsakes and temptation lines, the finisher styles, and the interim without a s
+docs/legal/rewards-and-lock-screen.md:3:Owner: Legal and IP Compliance. 2026-10-18. Screens `docs/ui/reduce-flashing-lock.md` (UI), `docs/narrative/rewards-word
+docs/legal/rewards-and-lock-screen.md:31:## 4. The interim without a signature close-up (RL-160): **No objection**
+docs/legal/rewards-and-lock-screen.md:33:1. **Truthful copy:** the interim page, About and any feature list must not describe a signature close-up (or any effec
+docs/legal/rewards-and-lock-screen.md:34:2. **Say so internally:** the release pass records that the signature close-up is absent under Reduce flashing and, whe
+
+$ curl live pages, count close-up|cut-in|panel|strip
+live_.html: 0
+live_play_.html: 0
+live_about.html: 0
+
+$ lock_reduce_flashing: committed trees false; tools/site-pin.mjs rewrites it to true for the interim export
+    if (!/"lock_reduce_flashing"\s*:/.test(txt)) throw new Error('ui/data/features.json has no lock_reduce_flashing: the pinned commit is older than UI\'s rf-lock');
+    writeFileSync(ff, txt.replace(/"lock_reduce_flashing"\s*:\s*false/, '"lock_reduce_flashing": true'));
+12:    "lock_reduce_flashing": false,

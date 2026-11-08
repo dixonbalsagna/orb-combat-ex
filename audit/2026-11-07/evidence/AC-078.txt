@@ -1,0 +1,8 @@
+# AC-078 proof, 2026-11-07
+## live play/index.pck (curl GET, 9034688 bytes): file count by extension, read with packFiles() from tools/site-name-scan.mjs:
+{"scn":6,"cfg":1,"bin":1,"remap":389,"gdc":383,"json":236,"binary":1,"gdshader":27,"gdshaderinc":8}
+(no font, audio, image or model file in the shipped pack; the second pass printed no media paths)
+## asset-origins.md:47 (file log stopped) and :43 (fake row):
+The file-by-file log above stopped at 2026-09-29 while the project kept shipping. These rows record the origin of each **class** of shipped content, which is wh
+| EXAMPLE-000 (fake, delete when real rows exist) | art/example/tree.svg | art |
+## asset-origins file-log rows dated after 2026-09-29: none (log ends at line 36; class rows at 49-58)

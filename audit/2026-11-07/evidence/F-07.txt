@@ -1,0 +1,32 @@
+# F-07 evidence (auditor, 2026-11-08T00:11:50Z). Counts only: no personal values are reproduced here.
+
+git grep -l -I -i -E 'users[/\]+<account>' HEAD | wc -l
+52
+lines:
+67
+
+By folder:
+     13 docs/tools
+     11 docs/rendering
+      7 research/engine-spike
+      7 docs/perf
+      5 docs/animation
+      3 docs/world
+      2 docs/ep
+      1 tools/flash
+      1 sim/core
+      1 docs/vfx
+      1 docs/research
+
+docs/ep/vision.md:71 holds a 'Copyright holder' row with a first name and a surname initial (masked):
+| C* h* | C* A |
+docs/ep/vision.md:1403 names a US state of residence (masked):
+- I* o* c*: n* y*; "g* r* f* s* a c* f* t* p* o* s* t* g* m* e*, s* o* o*, U*".
+
+Public history: commit 701c76a0 (2026-09-29) LICENSE blob copyright line (masked):
+C* (c) 2026 C* A
+T* a* c* n* a* t* p* n* s* b* i* i* a* c* o* s* p* o* t* S*.
+T* S* I* P* "A* I*", W* W* O* A* K*, E* O* I*, I* B* N* L* T* T* W* O* M*, F* F* A P* P* A* N*. I* N* E* S* T* A* O* C* H* B* L* F* A* C*, D* O* O* L*, W* I* A* A* O* C*, T* O* O*, A* F*, O* O* O* I* C* W* T* S* O* T* U* O* O* D* I* T* S*.
+701c76a0 is an ancestor of origin/main (public).
+
+Public filename naming the state: 1 file under docs/legal/ (guide-company-or-individual-<state>.md)

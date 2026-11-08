@@ -1,0 +1,20 @@
+# AC-241 evidence (verifier v17, 2026-11-07)
+## tools/site.json pin at each commit that touched it (git log -8 -- tools/site.json)
+9b293cce 2026-10-30 pin=257a766c26f8766fb09b063864c41c5d8ba64dc0 offline=false
+c623c1fa 2026-10-28 pin=257a766c26f8766fb09b063864c41c5d8ba64dc0 offline=false
+0d3bd491 2026-10-22 pin=257a766c26f8766fb09b063864c41c5d8ba64dc0 offline=false
+14c284ff 2026-10-22 pin=257a766c26f8766fb09b063864c41c5d8ba64dc0 offline=false
+86d44e54 2026-10-22 pin=257a766c26f8766fb09b063864c41c5d8ba64dc0 offline=true
+45869fac 2026-10-19 pin=257a766c26f8766fb09b063864c41c5d8ba64dc0 offline=false
+9cfed831 2026-10-18 pin=728596d0a6ce22dcab6fae5f36eff6c883bc28ac offline=false
+b912744e 2026-10-18 pin=5c46feca5fa6da70d793cdceef7a2b0d9329ab96 offline=false
+## subject of the last re-pin commit
+45869fac Site: re-pinned on Orb's word ("go ahead and republish, I didn't see anything wrong in the before-and-afters"): the minimal HUD, the crisp beam and its burned trail, no rings or markers over 
+## pin at the 2026-11-05 deployed commit 72a4d1e4
+257a766c26f8766fb09b063864c41c5d8ba64dc0
+## ci.yml pinned deploy (site job exports the pinned commit when online)
+476:      # PINNED DEPLOY (docs/tools/site-interim.md): when the site is online (an interim, or a full release pass) its /play/ is the Web build of the commit the pass file RECORDED, not of
+482:          PIN=$(node tools/site-pin.mjs)
+486:        run: node tools/site-pin.mjs --export "${RUNNER_TEMP}/pinned-web" --tree "${RUNNER_TEMP}/pinned-tree"
+## 07f5652 is the 2026-10-05 retune
+07f5652a 2026-10-05 21:49:12 -0700 Simulation: retune after the in-brawl riposte (arms 54% of limb breaks, the mood and the acts back in band, second breath wai

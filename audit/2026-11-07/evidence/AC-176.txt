@@ -1,0 +1,17 @@
+# AC-176: Cyborg presence and devour finisher (run 2026-11-07)
+## roster HEAD
+["PROTAGONIST", "RIVAL", "REFERENCE"]
+
+PROTAGONIST
+REFERENCE
+RIVAL
+bench.json
+roster.json
+## finishers.json HEAD and pin
+HEAD:data/combat/finishers.json:223:      "kind": "portal blitz and devour",
+HEAD:data/combat/finishers.json:224:      "fixed": ["blitz from several portals", "seize", "contest", "landed: the devour finisher (graphic, Mature rating; Game Design's food mechanic)"],
+257a766c:data/combat/finishers.json:222:      "kind": "portal blitz and devour",
+257a766c:data/combat/finishers.json:223:      "fixed": ["blitz from several portals", "seize", "contest", "landed: the devour finisher (graphic, Mature rating; Game Design's food mechanic)"],
+## loader
+HEAD:sim/director/data.gd:10:const FINISHERS_PATH: String = "res://data/combat/finishers.json"
+HEAD:sim/director/data.gd:30:	var ft: String = FileAccess.get_file_as_string(FINISHERS_PATH)

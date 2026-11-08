@@ -1,0 +1,7 @@
+# AC-167: EU AI Act Article 50, primary sources read 2026-11-07 (WebFetch; no command output)
+- docs/legal/go-to-market.md:30 (the record) cites only secondary summaries.
+- EUR-Lex OJ L 2024/1689 (https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=OJ:L_202401689), Art. 50(2): providers of generative systems must mark outputs machine-readably; 50(4): deployers of deep fakes disclose; for evidently artistic, creative, satirical or fictional works the duty is limited to disclosing the content exists without hampering the work.
+- Commission AI Act Service Desk, consolidated text with Digital Omnibus markings:
+  Art. 50 (https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-50): paragraphs 2 and 4 unmarked (unchanged); only para 7 AMENDED.
+  Art. 113 (https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-113): general application from 2 August 2026.
+  Art. 111(4) NEW (https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-111): providers already on the market comply with 50(2) by 2 December 2026.

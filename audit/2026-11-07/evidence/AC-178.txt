@@ -1,0 +1,12 @@
+# AC-178: places-reached rule in data and sim at HEAD (run 2026-11-07)
+## every committed file naming placesReached
+HEAD:docs/legal/review-log.md
+HEAD:docs/world/places-reached.md
+HEAD:qa/godot/records.gd
+## farReach in data
+HEAD:data/biomes/field.json:21:    "farReach": 9000,
+## parked, not landed (working copy)
+README.md
+places-reached.diff
+data/biomes/field.json:0
+sim/world/collateral.gd:0

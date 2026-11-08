@@ -1,0 +1,9 @@
+# AC-165: the Driver (run 2026-11-07)
+$ HEAD data/director/interrupts.json blast.driver.enabled
+false
+$ a8bc66e2 data/director/interrupts.json blast.driver.enabled
+false
+$ first commit of sim/director/driver.gd
+6c492086 2026-11-01 08:51:01 -0800
+not in live pin 257a766c
+$ grep people/level-2 words in sim/director/driver.gd (no output = none)

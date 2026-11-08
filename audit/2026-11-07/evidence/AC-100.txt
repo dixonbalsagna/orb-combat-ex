@@ -1,0 +1,49 @@
+$ git rev-parse HEAD
+53b6df820b23934617b2f1b2aed01ddba015b69c
+
+$ sed -n '50p;279p' docs/legal/review-log.md | cut -c1-300
+| RL-028 | Transformation ladders (Protagonist, Tyrant) | Q3 design | Medium | CONDITIONAL (final-form looks) | Open |
+Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
+
+$ git blame -L279,279 --date=short docs/legal/review-log.md | cut -c1-60
+998b1291d (dixonbalsagna 2026-09-29 279) Open flags for the 
+
+$ sed -n '62,63p;70p' docs/legal/q3-screen.md
+- The final reveal ("Open Hand") must not change hair colour or hair shape, and must not go white, gold or spiky and upswept. Show it with markings, eyes, posture and the proving-ground setting.
+- No "x" multiplier callouts on the Pressure track, and no stage named with a "Super", "Ultra" or "God" style prefix.
+- The real revisions (9 to 12) must not echo the franchise emperor's forms. The final form must not be a sleek, pale, slender humanoid with a purple accent and horns. Art picks a different palette and silhouette. Rev 9 and 10 armour must not recall a specific form of his.
+
+$ grep -n '"enabled"' data/fight/forms.json; git show 257a766c:data/fight/forms.json | grep -n '"enabled"'
+4:  "enabled": false,
+4:  "enabled": false,
+
+$ grep -n '"id"' data/fighters/PROTAGONIST/forms.json | cut -c1-200
+5:    {"power": 20.0, "tier": 1, "kind": "live", "id": "marks_base"},
+6:    {"power": 35.0, "tier": 2, "kind": "pausing", "id": "form_ii", "branch": true},
+7:    {"power": 50.0, "tier": 2, "kind": "live", "id": "marks_ii"},
+8:    {"power": 65.0, "tier": 3, "kind": "pausing", "id": "form_iv", "branch": true},
+9:    {"power": 100.0, "tier": 4, "kind": "pausing", "id": "top"}
+
+$ grep -n 'hair' data/fighters/PROTAGONIST/fighter.json data/fighters/RIVAL/fighter.json
+data/fighters/PROTAGONIST/fighter.json:8:    "col": "#3d8fdc", "aura": "#8fd6ff", "hair": "#22c7a9"
+data/fighters/RIVAL/fighter.json:8:    "col": "#a52a2a", "aura": "#9a80d8", "hair": "#181818"
+
+$ grep -n 'Placeholder poses' data/anim/forms.json | cut -c1-80
+3:  "_about": "Animation A2: the transformation's three beats per version (docs/
+
+$ git grep -n -E '"hair"' -- render/core render/anim/anim_rig.gd render/anim/anim_fighter.gd | cut -c1-160
+render/anim/anim_rig.gd:85:	p.append(["head", Vector3(0, 6.5, 0), up, 6.5, [[0.0, 6.7, 5.7], [0.5, 6.3, 5.4], [1.0, 2.5, 2.2]], 8, "hair"])
+render/anim/anim_rig.gd:170:	for k in ["body", "legs", "arms", "skin", "gear", "accent", "hair"]:
+render/core/fighter_view.gd:221:		"accent": _aura_col, "hair": RenderLook.col(f.hair),
+
+$ git ls-files art/concepts/forms | grep svg; git ls-files --error-unmatch art/concepts/forms/hero-forms.svg 2>&1 | head -1
+art/concepts/forms/anti-hero-forms.svg
+error: pathspec 'art/concepts/forms/hero-forms.svg' did not match any file(s) known to git
+
+$ sed -n '353p;463p' docs/ep/vision.md | cut -c1-260
+- Orb asked where the project stands legally when a transformation or motif comes close to existing works, and how far public-domain folklore can be used. Orb wants originality, as a love letter to the genre, not a copy of any series.
+- **Legal's stacking rule:** accepted. No single moment shows more than two of the seven power-up marks; the charging aura is a thin outline in our own shapes.
+
+$ git grep -n -E '\.hair\s*=' -- sim render | cut -c1-200
+sim/core/roster.gd:14:	f.hair = def.hair
+

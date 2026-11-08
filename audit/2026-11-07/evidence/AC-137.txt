@@ -1,0 +1,9 @@
+# AC-137 proof
+$ git ls-tree 257a766c data/anim/waves | grep fin  (none expected)
+(no output = not in live pin)
+$ git log -- data/anim/waves/fin1.poses.json
+b36f5fe6 2026-10-22 Animation: the anim_check fix (the blow gap on the plane; main's two reds since b328017b gone), ragdoll perf trims, fini
+$ fin1.mjs:3-5
+// h10: OPEN PALM one hand only, fingers together and still, the palm toward the fallen rival or sideways and never at the camera, held low (hip height or below) with the forearm out and never drawn to the hip, no smirk,
+// never both arms. HELD BREATH nothing to taunt: the head bowed, looking back over the shoulder for the people. BOTH ROADS one open hand, palm out like a pledge, at shoulder height or lower (never above 82 and never above the head),
+// fingers together, no light, glow or ring in or above the hand, no ball, one hand only. Prefix fn. Parked; originality: no franchise pose; every pose has an _orig line.

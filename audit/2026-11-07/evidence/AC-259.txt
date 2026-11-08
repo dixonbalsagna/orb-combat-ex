@@ -1,0 +1,19 @@
+== swapped presets in layouts.json
+arena simple-pad kb-solo kb-solo-swapped kb-shared-p1 kb-shared-p2 touch-simple touch-full
+== SimSwap
+HEAD:sim/input/swap.gd:1:class_name SimSwap
+== claw gate on swapped (tests)
+HEAD:sim/input/test/strike_gate_test.gd:2:## The claw-bot gate for the right-hand attacks (docs/controls/right-hand-attacks.md section 6.4, rows J to R, and the swap), run on the real layout with
+HEAD:sim/input/test/strike_gate_test.gd:14:##   S  the swap: the same script on a mirrored pad with mirrored controls gives the identical intent stream
+HEAD:sim/input/test/strike_gate_test.gd:23:var rig_swapped: bool = false   # the whole pad battery runs twice: on the standard preset and on the swapped one (Accessibility's rule 8)
+HEAD:sim/input/test/strike_gate_test.gd:44:		rig_swapped = sw
+HEAD:sim/input/test/strike_gate_test.gd:45:		tag = "[swapped pad] " if sw else ""
+== 'Left thumb' in howto
+HEAD:ui/data/howto.json:50:        { "icon": "touch_move", "col": 0, "text": "Left thumb: the stick. Flick to dodge, push out to sprint." },
+(end)
+== hand_layout/brace_style rows
+62:    "hand_layout": { "default": "standard", "group": "con
+64:    "dpad_mirror": { "default": "auto", "group": "control
+66:    "strike_style": { "default": "hold", "group": "contro
+70:    "brace_style": { "default": "flick", "group": "contro
+72:    "pad_right_stick": { "default": true, "group": "contr

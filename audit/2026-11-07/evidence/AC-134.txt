@@ -1,0 +1,11 @@
+# AC-134 proof
+| RL-133 | Four sketched movesets and cards (Press, Courier, Hopper, Empress) (roster-sketches-screen.md) | Combat | Low | Pass; row 48 'both arms' contradicts D5 (one arm); Hopper's hop allowed for knee or foot to the gut, chest or legs (b14); grabs and the mantle screened when drawn | Open until drawn |
+**The correction:** sheet row 48 (the Protagonist's "falling palm to the chest (both arms)") contradicts D5, L3 and h05: the fall is **one arm**, and `pu.su_drive` was redrawn as one arm. Either the label is stale or the key set still reads as two hands. Fix the label or the data; if the contact really uses both hands they stay apart, below shoulder height until the last 6 ticks, never clasped.
+## does any review sheet still label the falling palm 'both arms'?
+(no lines above = none)
+807:| 08 | falling palm to the chest | hand | palm | drop | chest | quick, charged, launch | down | 26 | posed: `pu.su_drive` | posed | L2, L3, L6, W1, D5; carries: hands open or claw, no held raise, 
+830:| 02 | falling palm to the chest | hand | palm | drop | chest | quick, charged, launch | down | 26 | posed: `pu.su_drive` | posed | L2, L3, L6, W1, D5; carries: hands open or claw, no held raise, 
+1968:| 44 | falling palm to the chest (`martial.b.08`) | Empress | a heavy: hand palm on a drop path, with the drive `fall` | L2, L3, L6, W1, D5 | passes |
+1973:| 49 | falling palm to the chest (`martial.b.02`) | Protagonist | a heavy: hand palm on a drop path, with the drive `fall` | L2, L3, L6, W1, D5 | passes |
+## b14 row
+{"id":"b14","match":{"flags":["leap"],"limb":["hand","elbow","head"]},"rule":"a leap is allowed for a knee or a foot to the gut, chest or legs (the Hopper's hop; the cleared drop kick); never with a hand, elbow or the head as the striking limb, and never to the jaw or head by any limb (b03); one body height at most, the landing drawn, no hover or held flight pose, a single turn at most (b04)","why":"the jumping rising uppercut and its kin; ruled 2026-10-12 for the Hopper"}

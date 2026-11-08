@@ -1,0 +1,32 @@
+# AC-091 evidence
+## review-log.md (HEAD) :88
+| RL-066 | Anti-hero glasses and glare (rules in advance) | Art, VFX | Low to Medium | GO on the rules; frames screened 2026-10-02: five GO, chamfer plates change or drop | Open until frame 3 is changed or dropped |
+## glasses-rules.md (HEAD) :5 :24-27 :46 :54
+**Verdict: GO.** Glasses that flash opaque with glare are a stock anime trope, free to use. Several well-known characters own particular versions of it, so the rules below keep ours generic and ours.
+1. **Shape:** a hard-edged glint cut in his blade language, a flat wedge or a sweeping slash across the lens, never a round white disc with a star twinkle. The lens goes opaque for a beat, then clears.
+2. **Colour:** a pale tint of his own violet, not pure white, and never gold, orange or red. Normal lenses are a dark violet tint, not orange.
+3. **Timing:** short. A quick attack and a hold of 0.4 s at most. At key moments only: reading a move, pride, a taunt, the seal break (cracked lens). Never every exchange.
+4. **Never at a transformation break,** and never with a shouted form name. That is how a white flash becomes mark 7 of the stacking rule.
+| 3 Chamfer plates | **CHANGE** or drop |
+- **Chamfer plates (3):** wide, near-rectangular lenses with clipped corners are the closest to a plain tinted rectangle, which the rules keep out. Keep it only if the chamfers are deep enough to read as plates and not a rectangle at 24 px. Otherwise drop it. The other five are clear.
+## render/vfx/glare.gd (HEAD) :3-6, :16-23, :101, :123-139 key lines
+## The rival's glasses glare (Orb's pick, 2026-10-04: frame C, the bare wedge lens; the glare hides his eyes completely). Rules: docs/legal/glasses-rules.md
+## (RL-066): one hard-edged pale-violet wedge, in his own violet (never pure white, gold, orange or red), short (an attack of a few ticks and a hold of
+## 0.4 s at most), at key moments only, never at a transformation break, and not beside a crouch-and-scream charge or a rubble ring (it may sit beside one
+## other mark, never two). Face-local and brief, so in this tint it counts as no mark.
+## It runs only for a wearer (data/vfx/glare.json `wearers`: fighter names), only while he is not in a transformation or a charge or inside a rubble ring,
+## and a wearer's own glares are at least `cooldown` ticks apart. Presentation only: it reads cues and fighters, and draws no random number.
+	"glare": {"attack": 3.0, "hold": 16.0, "hold_glint": 8.0, "release": 6.0, "cooldown": 200.0, "hold_max": 24.0, "rocks_max": 0.25,
+		"w": 10.0, "h": 4.8, "up": 1.0, "fwd": 4.0, "alpha": 0.96, "glint_fill": 0.45},
+}
+const WEARERS: Array = ["VORR", "RIVAL", "antihero", "rival"]   # roster ids and names: the Anti-hero replaces VORR, and the roster may rename him
+	return p("attack") + minf(s.hold, p("hold_max")) + p("release")
+			blocked["transform"] = int(blocked.get("transform", 0)) + 1
+			blocked["charge"] = int(blocked.get("charge", 0)) + 1
+			blocked["rocks"] = int(blocked.get("rocks", 0)) + 1
+			blocked["cooldown"] = int(blocked.get("cooldown", 0)) + 1
+		s.cool = p("cooldown")
+## glare.gd present in pinned public build 257a766c:
+yes
+## data/vfx/glare.json in HEAD:
+absent (DEFAULTS used: hold 16, hold_max 24 ticks = 0.4 s at 60 Hz, cooldown 200 ticks)

@@ -1,0 +1,45 @@
+G-90: read-only commands run by the checks-review helper, 2026-11-07 (repo path shortened to <repo>; the local user name is not written here)
+
+$ node tools/check-workflows.mjs
+<repo>\.github\workflows\ci.yml:226: the plain value of "name" holds ": " (a mapping value is not allowed here): quote it
+<repo>\.github\workflows\ci.yml:240: the plain value of "name" holds ": " (a mapping value is not allowed here): quote it
+<repo>\.github\workflows\ci.yml:263: the plain value of "name" holds ": " (a mapping value is not allowed here): quote it
+<repo>\.github\workflows\ci.yml:277: the plain value of "name" holds ": " (a mapping value is not allowed here): quote it
+check-workflows FAILED: 4 problems in 7 files
+exit 1
+
+$ gh api repos/dixonbalsagna/orb-combat-ex --jq '{vis, secret_scanning, push_protection}'
+{"pp":"disabled","ss":"disabled","vis":"public"}
+
+$ gh api repos/dixonbalsagna/orb-combat-ex/branches/main/protection
+{"message":"Branch not protected", "status":"404"}
+
+$ gh run list --workflow ci.yml --limit 3
+42419094149 failure 2026-11-07T22:07:19Z 53b6df82
+42418503868 failure 2026-11-07T22:00:14Z 8d9b98a2
+42418413405 failure 2026-11-07T21:59:03Z c3de110a
+
+$ git grep -l -i -F -e '<user-profile path, backslash>' -e '<user-profile path, slash>' HEAD -- . | wc -l
+44
+
+$ git ls-files | grep -i -c -E "steam_api|steamworks|godotsteam"
+0
+
+$ git ls-files docs/accessibility/checklist.md | wc -l
+0
+
+$ git check-ignore -q homework/x && echo ignored
+ignored
+
+$ git grep -n -E "bytes_to_var_with_objects|allow_objects *= *true" -- net sim render
+(only the comment at net/transport.gd:20 matches, which says bytes_to_var is used, not the object variant)
+
+$ git grep -n -i -E "pck-proof|pck_proof|pckProof"   ;   git grep -n -l "check_build.py"
+(no matches: the packed-data read named in the EP's disclosure is not in git)
+
+$ grep -c -E "lock|routes" .github/workflows/linux-export.yml
+0
+
+External sources (accessed 2026-11-07):
+- WCAG 2.2, SC 2.3.1, https://www.w3.org/TR/WCAG22/ : "does not contain anything that flashes more than three times in any one second period"
+- GitHub Actions workflow syntax, https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions : default shell when unspecified is "bash -e {0}"; explicit bash is "bash --noprofile --norc -eo pipefail {0}"

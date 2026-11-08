@@ -1,0 +1,12 @@
+# AC-282 proof, run 2026-11-07 on HEAD 53b6df82 (read-only)
+  ok    KB-003 present: a parried exchange still opens a chain window; the chain costs ki, shows a banner and deals nothing  (seed 1: parried, then "2 HIT CHAIN", -6.0 ki, 0 damage, feed "CHAIN x2 ended")
+  ok    qa/known-bugs.md and these checks list the same bugs  (KB-001 confirmed, KB-002 confirmed, KB-003 confirmed, KB-004 confirmed, KB-005 confirmed, KB-006 confirmed)
+## 7233c96 lines 544-546 (openWindow ignores ex.cancel) and 572-574
+function openWindow(ex){
+  ex.ext = {start:T, until:T + 0.6};
+  if (ex.A.ai && rng() < clamp(0.62 - 0.14*ex.combo, 0.05, 0.6)) B(ex, ex.t + R(0.12, 0.35), () => { ex.A.lastAtkT = T; });
+  if (ex.ext && T < ex.ext.until){
+    const A = ex.A;
+    if (A.lastAtkT >= ex.ext.start && ex.combo < 5 && A.ki >= 6 && A.hp > 0 && ex.D.hp > 0) chain(ex);
+## effects kb3
+{"chainLinks":5381,"phantomLinks":720,"phantomLinkShare":0.13380412562720684,"chainEvents":3817,"phantomEvents":499,"phantomEventShare":0.13073094052921141,"phantomEventsPerMatch":0.499,"chainEventsPerMatchReported":3.817,"chainEventsPerMatchReal":3.318,"kiWastedPerMatch":4.32,"parriesPerMatch":1.46,"meanLengthReal":2.4047619047619047,"meanLengthPhantom":2.4428857715430863,"chainPerMeleeReported":0.23823492697540885,"chainPerMeleeReal":0.20709025090500563}

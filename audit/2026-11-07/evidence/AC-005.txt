@@ -1,0 +1,60 @@
+AC-005 proof (independent reviewer, 2026-11-07). Commands run read-only at HEAD 53b6df82.
+
+## node tools/flash/release-pass.mjs --verify --commit 257a766c (live /play/ pin) : first 6 of N lines, exit code
+release pass: the interim expired on 2026-10-22 (today is 2026-11-07): the waivers no longer hold and the full set must pass
+release pass: contentHash differs: the pass was recorded for other game content (what the player runs changed since)
+release pass: requiredSetHash differs: the pass was recorded for other required set (tools/flash/sources.json changed)
+release pass: hookHash differs: the pass was recorded for other capture staging (render/tools/flash_capture.gd changed)
+release pass: the record has no row for required clip mashdummy-PROTAGONIST-REFERENCE-normal
+release pass: the record has no row for required clip mashdummy-PROTAGONIST-REFERENCE-reduced
+lines: 162
+
+## same against HEAD
+release pass: the interim expired on 2026-10-22 (today is 2026-11-07): the waivers no longer hold and the full set must pass
+release pass: contentHash differs: the pass was recorded for other game content (what the player runs changed since)
+release pass: requiredSetHash differs: the pass was recorded for other required set (tools/flash/sources.json changed)
+release pass: hookHash differs: the pass was recorded for other capture staging (render/tools/flash_capture.gd changed)
+lines: 168
+
+## git log -- tools/flash/release-pass.json (every pass record ever committed)
+88d13195 Tools: the pass record notes why the page's gate and the pinned game's menu word the notice differently (RL-137)
+5fd0c7e7 Tools: the flash pass for d3f1ca0e recorded under Legal's interim (RL-136, 2026-10-15 to 2026-10-22): 56 clips, none over 3 on the primary reading; 43 pass the combined rule, the rest waived and named
+
+## tools/flash/release-pass.json: commit, interim, non-PASS rows
+d3f1ca0e22f39110d69feceb4913ff799d11db5d 2026-10-15 interim RL-136 2026-10-15 -> 2026-10-22 hookFixed undefined
+  rushcity-normal FAIL 2.5/3.5/1
+  rushcity-reduced FAIL 2.5/3.5/1.5
+  ai-7-normal OVER GATE 3/3/2.5
+  ai-7-reduced OVER GATE 3/3/3
+  ai-39-normal FAIL 3/3.5/3
+  ai-39-reduced FAIL 3/3.5/3.5
+  ai-9-reduced OVER GATE 3/3/2
+  ai-89-normal OVER GATE 3/3/3
+  ai-89-reduced OVER GATE 3/3/2.5
+  ai-97-normal OVER GATE 3/3/3
+  ai-97-reduced OVER GATE 3/3/3
+  ai-104-normal FAIL 2.5/3.5/2
+  ai-104-reduced FAIL 2.5/3.5/2.5
+
+## tools/site.json (live config)
+{"offline":false,"approved":"2026-10-18","interim":{"owner":"Orb 2026-10-18","approved":"2026-10-18","expires":"2026-11-15","notice":"site-interim-owner.json"},"pin":"257a766c26f8766fb09b063864c41c5d8ba64dc0"}
+
+## tools/build-site.mjs:106-111 (owner path is report-only)
+  if (owner) {
+    // report only: what the recorded run says about this commit is printed, and never stops the build
+    let rep = [];
+    try { rep = verifyReleasePass(undefined, opt('--commit') || 'HEAD'); } catch (e) { rep = [`the recorded pass could not be checked: ${e.message}`]; }
+    console.log(`OWNER-APPROVED (${owner}): no recorded run is required; report only, the record says ${rep.length ? rep.length + ' thing(s):' : 'nothing against this commit'}`);
+    for (const r of rep.slice(0, 12)) console.log(`  report-only: ${r}`);
+
+## tools/flash/signature-gate.json (live pin readings, primary/area-15%/2s)
+257a766c26f8766fb09b063864c41c5d8ba64dc0 reduced {"primary":3,"area15":3,"twoSec":3} normal {"primary":2.5,"area15":2.5,"twoSec":3} grandfathered true
+
+## ci.yml:101-104 (pixel half not in CI)
+  # Photosensitivity check, half 1 (docs/tools/flash-check.md; Legal's condition for the public web build, WCAG 2.2 criterion 2.3.1): plays the worst cases
+  # (a mash, a beam clash, a signature, the transformation, a building collapse, real AI matches) in normal and in reduced-flashing mode, headless, and recounts
+  # the flash register's log: more than 3 granted flashes in any 60 ticks (1 under reduced flashing) fails. It is a count of the sources that ask the register,
+  # not a luminance measurement and not a clearance; the pixel half runs over captured frames (tools/flash/analyse-frames.js) and is not in CI yet.
+
+## curl https://dixonbalsagna.github.io/orb-combat-ex/play/ (notice text)
+Our own automated check found some scenes that go over the recommended limit of three flashes a second, and they are not fixed yet. No independent analyzer has been run. If you or someone in your family has photosensitive e

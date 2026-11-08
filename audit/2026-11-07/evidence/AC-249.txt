@@ -1,0 +1,9 @@
+# AC-249 evidence (verifier v17, 2026-11-07)
+## webrtc or .gdextension files in the tree
+0
+## GDScript using WebRTC classes
+0
+## licence-register rows mentioning webrtc
+0
+## Godot docs (accessed 2026-11-07): https://docs.godotengine.org/en/stable/tutorials/networking/webrtc.html
+"require an external GDExtension plugin on native (non-HTML5) platforms"

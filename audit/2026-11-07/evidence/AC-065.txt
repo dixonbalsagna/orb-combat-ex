@@ -1,0 +1,30 @@
+# AC-065 / AC-067 / AC-068 / AC-069 proof (run 2026-11-07)
+## writeReport callers
+HEAD:net/desync.gd:5:## report (writeReport): the tick, both digests, and the first differing fields a field walk finds.
+HEAD:net/desync.gd:364:static func writeReport(rep: Dictionary, path: String) -> int:
+HEAD:net/tools/desync_check.gd:338:		if NetDesync.writeReport(r, path) != OK:
+## LAN log line and address kept out
+87:		_say("Couldn't connect: " + failed)
+220:			failed = "this PC's address has changed, or the port's in use"   # the address stays out of the log (Legal RL-230)
+240:		_say("Couldn't start: " + net.hs.failed)
+242:		_say("Waiting for the other PC")
+244:		_say("OUT OF STEP at tick %d. Close both and tell the EP" % int(sess.desync.get("tick", -1)))
+246:		_say("The other PC has gone")
+248:		_say("Paused. The other PC waits for you")
+250:		_say("Paused by the other player")
+252:		_say("The match is over. Close both windows")
+254:		_say("You're out. Your partner fights on")
+256:		_say("Connected, input wait %d ticks" % sess.delay)
+276:	var line: String = "%s; %s" % [Time.get_datetime_string_from_system(), _state]
+## two-PC report fields
+96:		"cpu %s" % OS.get_processor_name(),
+97:		"cores %d" % OS.get_processor_count(),
+98:		"os %s" % OS.get_name(),
+35:  `start "" /belownormal /wait /b "${exe}" --headless --path game --script res://net/tools/two_pc_check.gd -- --out="%~dp0report-%RANDOM%.txt" --build=${a.build} --ticks=${ticks} --timeout=900`,
+## homework ignore
+.gitignore:29:homework/	homework
+tracked: 0
+commits touching homework (all refs): 0
+## mod loading code
+0
+0

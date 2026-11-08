@@ -1,0 +1,21 @@
+# AC-280 proof, run 2026-11-07 on HEAD 53b6df82 (read-only)
+## prototype/index.html last changed at:
+7233c967 Reset launch history per match (QA-001); hero hair no longer gold (RL-014)
+## node qa/tests/known-bugs.test.js (TEMP set to scratchpad)
+== known-bugs
+  ok    the instrumented scratch copy plays out bit-for-bit like the real prototype
+  ok    KB-001 present: a signature vs an ESCAPE defender hits LESS often as the attacker out-tiers it  (attacker leads by 3: 36.4% hit, trails by 3: 65.8%)
+  ok    KB-002 present: the 1.35x damage against a charging defender never applies  (defender is "locked" when hit; light 36.4 = 26 x 1.4, signature 230, no x1.35)
+  ok    KB-003 present: a parried exchange still opens a chain window; the chain costs ki, shows a banner and deals nothing  (seed 1: parried, then "2 HIT CHAIN", -6.0 ki, 0 damage, feed "CHAIN x2 ended")
+  ok    KB-004 present: the chain strike after GUARD HOLDS ignores the guard  (seed 1: guarded hits 9.88 each, chain strike 73.92 (x7.5, no x0.38))
+  ok    KB-005 present: a dodged signature teleports the defender up 300 units and leaves it frozen for about 0.9 s  (seed 4: +300 units in one step at 0.82 s, then motionless for 0.87 s (52 steps))
+  ok    KB-006 present: a rush flies through mountains and through standing buildings  (mountains: 25 of 36 steps up to 547 units inside the ground; city: 25 of 38 steps inside towers, up to 473 units deep)
+  ok    qa/known-bugs.md and these checks list the same bugs  (KB-001 confirmed, KB-002 confirmed, KB-003 confirmed, KB-004 confirmed, KB-005 confirmed, KB-006 confirmed)
+known-bugs: 8 passed, 0 failed
+exit 0
+## 7233c96 prototype line 589 and 588, 441
+    const pEsc = clamp(0.5 + 0.07*(D.tier - A.tier) + (dist > 800 ? 0.12 : 0) - (A.ambush ? 1 : 0), 0.05, 0.88);
+  else if (ds === 2) out = (rng() < clamp(0.55 - 0.06*(A.tier - D.tier), 0.2, 0.8) && !A.ambush) ? 'DODGE' : 'HIT';
+  else if (ds === 3) out = (rng() < clamp(0.5 - 0.05*(A.tier - D.tier) + (dist < 500 ? 0.3 : 0), 0.15, 0.9)) ? 'HIT' : 'ESCAPE';
+## qa/known-bugs-effects.json kb1
+{"beams":3648,"vsEscape":504,"perMatch":0.504,"shareOfBeams":0.13815789473684212,"meanTierGap":0.007936507936507936,"hitRate":0.7242063492063492,"meanPActual":0.740674603174608,"meanPCorrect":0.741468253968259,"hitsPerMatchShift":0.0004000000000001105,"meanAbsShift":0.013492063492063482,"beamsWithTierGap":0.13095238095238096}

@@ -1,0 +1,27 @@
+# AC-097 evidence
+## review-log.md (HEAD) :37, :358-362, :403
+| RL-015 | "ki" | resource word in code and UI | Low (grey zone) | GO: "Charge" (glossary screen above) | Closed |
+### RL-015 "ki" (resource word in code and UI)
+- **Where:** the `ki` resource and its labels in the prototype ("NEED 45 KI", the signature costs 45 ki).
+- **Found:** An everyday martial-arts word used across many games, and not ownable. It is also the genre's signature word for energy. On its own it is fine, but next to other franchise-coded words (aura, power up, scanner) it adds to an impression of copying.
+- **Rating:** Low, listed because it is a grey zone.
+- **Recommendation:** Keep it internally. Narrative proposes a game-specific name for players. Orb decides.
+Limits: US-only search, Steam only, no other stores or registers. RL-015 is closed for the picks. It still needs the UI change that replaces "ki".
+## sim banners still say KI; the UI renames them before drawing:
+== 257a766c
+257a766c:sim/director/exchange.gd:201:			SimFx.banner(S, "NEED 45 KI", "#9fb4ff", 0.6)
+257a766c:ui/core/ui_data.gd:103:## Rename a prototype banner to the glossary's wording ("NEED 45 KI" becomes "NEED 45 CHARGE"). Unknown text passes through.
+257a766c:ui/core/ui_data.gd:109:	return text.replace(" KI", " CHARGE")
+257a766c:ui/core/ui_event_hub.gd:475:			banner = {"text": UiData.banner(str(d.get("text", ""))).to_upper(), "col": str(d.get("col", UiLook.INK)), "dur": float(d.get("dur", 1.4)), "age": 0.0}
+257a766c:ui/data/terms.json:78:    "NEED 45 KI": "NEED 45 CHARGE",
+== HEAD
+HEAD:sim/director/exchange.gd:267:			SimFx.banner(S, "NEED 45 KI", "#9fb4ff", 0.6)
+HEAD:ui/core/ui_data.gd:126:## Rename a prototype banner to the glossary's wording ("NEED 45 KI" becomes "NEED 45 CHARGE"). Unknown text passes through.
+HEAD:ui/core/ui_data.gd:132:	return text.replace(" KI", " CHARGE")
+HEAD:ui/core/ui_event_hub.gd:557:			banner = {"text": UiData.banner(str(d.get("text", ""))).to_upper(), "col": str(d.get("col", UiLook.INK)), "dur": float(d.get("dur", 1.4)), "age": 0.0}
+HEAD:ui/core/ui_event_hub.gd:578:## quiet_hints: the sim's banners that are the plate's job. A refused signature or blast (NEED 45 KI, SIGNATURE RECHARGING) is answered by the pad's knock and the sign
+HEAD:ui/data/terms.json:79:    "NEED 45 KI": "NEED 45 CHARGE",
+## tier labels (HEAD ui/data/terms.json:6):
+  "tier": ["TREMOR", "QUAKE", "UPHEAVAL", "CATACLYSM"],
+## prototype (in repo, not served on Pages) still shows KI:
+395:banner('NEED 45 KI'

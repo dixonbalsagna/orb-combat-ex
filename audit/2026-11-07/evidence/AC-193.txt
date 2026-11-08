@@ -1,0 +1,11 @@
+# AC-193 evidence, HEAD 53b6df82
+$ ln05 in the line lint
+67:CY = LINT["cyborg_ln04_ln05"]
+71:    """Legal ln04 and ln05: a Cyborg line never names people, a toll or a casualty. Returns (hard, soft)."""
+75:            hard.append(f"ln05: '{w}' is a people, toll or casualty word, banned in any Cyborg line")
+$ people/toll reads in sim/world/ringpick.gd (ground picker)
+0
+$ legal_ln04 note in data/narrative/opponent_grounds.json
+4:  "legal_ln04": "The picker scores a place's WEAR STATE (damaged or fallen), never the casualty count. No line, captio
+$ beat_templates wired into sim or data?
+(none: docs/narrative/pending/beat_templates.json only)

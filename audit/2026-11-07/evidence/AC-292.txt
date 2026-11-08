@@ -1,0 +1,8 @@
+# AC-292 proof, run 2026-11-07 on HEAD 53b6df82 (read-only); live pin 257a766c
+fd381c6e 2026-10-03 Simulation: shots fuse by cause, chainR fixed across tiers, wild flight at 0.8 speed, arc near and far; a hidden fighter who charges or is launched announces found. Tools: shots an
+HEAD:sim/core/fighter.gd:730:				SimHiding.regainLock(S, f)   # charging gives him away: the lock comes back announced (found, and no new break for a while)
+HEAD:sim/director/launch.gd:926:		SimHiding.regainLock(S, tgt)   # a launch gives him away: the lock comes back announced (found, and no new break for a while)
+## other direct clears
+HEAD:sim/core/hiding.gd:38:			f.hidden = false
+HEAD:sim/core/hiding.gd:75:	f.hidden = false
+HEAD:sim/director/exchange.gd:313:			A.hidden = false

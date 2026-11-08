@@ -1,0 +1,7 @@
+# AC-283 proof, run 2026-11-07 on HEAD 53b6df82 (read-only)
+  ok    KB-004 present: the chain strike after GUARD HOLDS ignores the guard  (seed 1: guarded hits 9.88 each, chain strike 73.92 (x7.5, no x0.38))
+  ok    qa/known-bugs.md and these checks list the same bugs  (KB-001 confirmed, KB-002 confirmed, KB-003 confirmed, KB-004 confirmed, KB-005 confirmed, KB-006 confirmed)
+## 7233c96 line 554
+  B(ex, t + 0.26, () => strike(ex, A, D, 52 + ex.combo*7, {noParry:true, ignoreStance:true, big:true, stop:0.08}));
+## effects kb4
+{"guardedExtraDamagePerMatch":76.53747768861486,"shareOfAllDamage":0.1854861768827397,"perMatch":4.659}

@@ -1,0 +1,15 @@
+# AC-120 proof
+| RL-081 | Ten new intro gestures (stances-and-gestures-screen.md) | Animation | Low | Clear; pi.claim (no crouch, aura, shake, shout) and ri.check (no readout) conditional | Open until seen live |
+- **`pi.claim`** (feet widened, chest up, hands open and away from the body at waist height, 2.6 shoulder widths apart, a breath out): the nearest thing to the power-up stance. Clear **if** he does not crouch, the hands do not clench, nothing rises or shakes round him (no aura, no cracking ground, no wind), no shouted line and no flash goes with it, and it stays a 14-tick peak that plays only as t
+- **`ri.check`** (a glance down at his own forearm plate, the forearm raised to chest height): clear **if** nothing is drawn on or over the plate: no readout, numbers, display or lens flash (no scanner look). Chest height, never to the eyes.
+7. `pi.claim` and `ri.check` in the live intro (no aura or readout).
+## the gestures exist in the public pinned build 257a766c (parked, played by an intro_gesture event)
+257a766c:render/anim/tools/waves/protag9.mjs:3:// and outside the hip zone, nothing pointed, no fist, no beckon, nothing that reads as a taunt (the claim and the dismiss are a breath and a turned head
+257a766c:render/anim/tools/waves/protag9.mjs:30:  claim: { dur: 24, legal: L, phases: [
+257a766c:render/anim/tools/waves/protag9.mjs:35:  check: { dur: 16, legal: L, phases: [
+257a766c:render/anim/tools/waves/rival6.mjs:3:// fist, no beckon, no crossed forearms, hands out of the hip zone; the defer's plate hand is laid on the coat, one hand only. Parked (--waves); played on
+257a766c:render/anim/tools/waves/rival6.mjs:23:  check: { dur: 18, legal: L, phases: [
+257a766c:render/anim/render_anim.gd:3
+257a766c:sim/core/fx.gd:2
+## originality-rules.md grey zone basis
+| "Power level" readouts | A scanner reading out a number is a signature gag. | No scanner device and no numeric "power level" text. Tiers show as bars or pips. Avoid the phrase "power level". |

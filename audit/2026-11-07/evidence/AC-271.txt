@@ -1,0 +1,9 @@
+# AC-271: docs/net/cloud-reports/2026-10-28-ai-takeover.md
+- **I went over the CPU cap:** about 4 CPU-hours against 3 (RISKS).
+4. **The EP's ruling:** whether the 1-hour overrun of the CPU cap needs anything more from me.
+- **The CPU cap was exceeded.** About 4 CPU-hours were used (3.6 to 4.7 by two ways of counting; each job's CPU time was within a second of its wall time) against 3. The full gate set on the clean export alone was about 2.5. Three things added to it:
+  - one run started without its arguments (my wrapper dropped the `--`) and played the full default set for about 9 minutes before I stopped it;
+  - early on, `npm test` found Godot on its own and ran `parity.gd` for about 5 minutes at normal priority, a 4th Godot job beside my three;
+  - after the gates I started a full net rerun for the digest change, then stopped my three jobs, checked by parent and path, and reverted the change.
+  Every other job ran at below-normal priority, at most 3 at once, and nothing of mine is still running.
+9b111d15 2026-10-29 Netcode: an AI takeover at an agreed tick (either peer hands a slot to the sim's own AI, the record 

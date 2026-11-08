@@ -1,0 +1,6 @@
+# AC-149 proof
+$ PRs on the public repo (gh api, all states)
+0
+$ translation files (only pseudo-locale)
+localization/pseudo/ui/data
+Weblate libre hosting https://weblate.org/news/archive/weblate-even-more-open-now/ (accessed 2026-11-07): 'a license approved as libre by OSI or recognized as libre by FSF'

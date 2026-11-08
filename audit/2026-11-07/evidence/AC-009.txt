@@ -1,0 +1,14 @@
+# AC-009 evidence (auditor helper, 2026-11-07)
+## camera cut dip at the live pin: git show 257a766c:render/camera/camera_params.gd (CUT_DIM under the 0.10 flash step)
+98:const TRAVEL_COOL: float = 1.0           # a pane cuts for the budget at most once in this many seconds (a cut and its dip are a flash)
+99:const TRAVEL_COOL_MORPH: float = 0.1     # (a pane that is opening or closing cuts at most once in this many: its target settles, and the fighter it opens for must be seen)
+208:# The dip's depth is chosen so that no pixel can change by 10% of the maximum relative luminance (WCAG 2.2 criterion 2.3.1's
+210:# is 0.21; it is under 0.10 now whatever is on the screen, so even unasked it cannot be a general flash. The register is
+212:const CUT_DIM: float = 0.09
+213:const REDUCED_CUT_DIM: float = 0.06    # reduced motion: shallower still, and a slow one-way ease back
+## collapse (fly-past) clip on the pin, tools/web-template.json measured (primary/area15/twoSec)
+normal {"primary":2,"area15":3.5,"twoSec":1} reduced {"primary":2,"area15":2.5,"twoSec":2} Performance, 2026-10-28, on the pin 257a766c exported with this template (hook and lock, as the nightly exports it), 1500-tick clips, seed 12345
+## README.md:9 still names the fly-past
+**Flashing effects.** This game contains flashing effects. Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are 
+## Orb's ban on dissolves (CLAUDE.md look gate) vs photosensitivity-note.md:127
+**On Camera's causes (for the fix, not a ruling):** a whole-frame cut after a bright event is a second whole-screen luminance change in the same second as the blast; treat it as a counted event, prefer a dissolve of at least 0.3 s, and a camera inset that open

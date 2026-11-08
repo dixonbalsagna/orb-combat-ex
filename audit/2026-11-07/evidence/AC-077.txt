@@ -1,0 +1,16 @@
+# AC-077 proof, 2026-11-07
+## fixed line 'Orb directs it and builds it with AI tools' / 'AI tools' on each public surface (count of lines):
+README.md (HEAD): 1
+live / : 2
+live /play/ gate (gate-ai): 1
+live /about/: 1
+pinned 257a766c ui/data/howto.json: 2
+## 'AI opponent', 'human-made' claims, 'no AI' on public surfaces:
+live-site-index.html: 
+live-play-index.html: 
+about.html: 
+README.md:       1 human-made 
+(README's 'human-made' is the sentence: No part of this game is described as human-made unless this page says so.)
+## External (accessed 2026-11-07):
+Steam https://partner.steamgames.com/doc/gettingstarted/contentsurvey : pre-generated = 'Any kind of content that ships with your game and is consumed by players'
+itch.io https://itch.io/docs/creators/quality-guidelines : 'strictly enforcing disclosure for all game asset, soundtrack, physical game, comic, and book pages'; games: 'We ask that you accurately tag your project'.

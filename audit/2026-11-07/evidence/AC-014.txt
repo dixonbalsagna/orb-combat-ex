@@ -1,0 +1,18 @@
+# AC-014 evidence
+## RL-226 at HEAD:248
+| RL-226 | For the record, from Orb (owner), 2026-11-01 via the EP: Orb is not convinced the flash readings are real ('I need you to prove these flash numbers aren't margin of error... I've never even seen it'), so flash warnings go on the back burner: Tools tests the analyser's repeatability and accuracy (docs/tools/flash-proof.md when done); flash reads pause on private, switched-off work; the EP no longer raises flash warnings to Orb in chat or on clips for their own eyes; nothing changes for anything public (the demo pin stays; no pin, tester, stream or trailer without the existing gates); the launcher warning on Orb's private build and RL-224's conditions stay | EP | Low | Recorded; no new exposure beyond Orb's own screen. What Orb does on their own screen with their own build is theirs to decide. Standing items that do not move: the release gate (primary at most 2.5 in both modes), the interim take-down triggers (a scene over 3.5 on the primary, any report, a build swap without a nightly run), the pin-move rule, RL-207's renewal (due 2026-11-15), RL-200's strings-only child (due 2026-11-08), RL-209's two sizes and two scales, RL-212's tripwire, and the warning on the public page. Two points for the proof, so it can settle the question: (1) repeatability shows the numbers are stable, not that they are right: accuracy needs a comparison with an independent reference method for the published threshold (the same clips read a second way), and a bias found there is recorded by Legal as a recalibration before any public gate moves; (2) the analyser's readings are one safeguard among others and not the only reason for the warning: anyone other than Orb who sees any build (a tester, a household member, a stream, a trailer) still gets the warning and the Reduce flashing option, whatever the proof shows. Flash reads on the public pin and any build headed for a public pin continue by the existing gates | Closed as a record; the proof's result is logged here when it exists |
+
+## Orb's quote appears only in RL-226 (git grep HEAD, excluding audit/)
+HEAD:docs/legal/review-log.md:248:| RL-226 | For the record, from Orb (owner), 2026-11-01 via the EP: Orb is not convinc
+
+## docs/tools/flash-proof.md exists, last commit
+47668c30 2026-10-31 23:42:26 -0700 Tools: flash proof so far, with its gaps marked
+# Are the flash numbers real? (Tools, 2026-11-01; unfinished, gaps marked)
+
+**The short answer, for Orb: the numbers are real, not luck, but they measure one picture size, and they are not an independent check.**
+
+## RL-212 (4) at HEAD:234 asks Orb's renewal to name the seed
+(4) Orb's next renewal (due 2026-11-15) names this seed and the area reading
+
+## homework line 7
+   - The demo stays on its 19 October build, and the custom web engine is live under it. Tools is building a version with only the corrected notice words, due by 8 November. Main can't go public yet because its beam scene flashes too much at 16:9. Flash work stays paused, by the decision you delegated.

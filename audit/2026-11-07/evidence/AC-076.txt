@@ -1,0 +1,11 @@
+# AC-076 proof, 2026-11-07, HEAD 53b6df82. Franchise term withheld; counted with git grep -i on the franchise's two-word name.
+files naming it inside docs/legal: 5
+files naming it elsewhere in the tree: 4
+those files:
+docs/ep/briefs/wave1/legal-ip.md
+docs/narrative/glossary.md
+docs/narrative/hero-name-longlist.md
+docs/narrative/name-longlist.md
+player-facing data in live pin 257a766c (ui/data, data) naming it: 0
+'power level' in 257a766c ui/data: 0
+## originality-rules.md:9 states a fan-recognition test (term withheld) and :68 'Nothing flagged ships'; risk-register.md:5 rates it Medium/High.

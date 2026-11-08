@@ -1,0 +1,26 @@
+# AC-226 proof (auditor helper v16, 2026-11-07)
+$ git status --short docs/net/pending/
+?? docs/net/pending/
+$ git show a8bc66e2:net/host.gd | grep -n 'func idle' -A4
+142:func idle(now: float) -> void:
+143-	paused = true
+144-	frame(now, session.frame if session != null else 0)
+145-	tr.send(now, {"hs": "pause", "on": true})
+146-
+$ git show a8bc66e2:net/host.gd | sed -n 77,79p  (frame(): until<=session.frame -> session.sync())
+	else:
+		session.sync()
+	tr.send(now, _packet(now))
+$ git show a8bc66e2:net/lan.gd | grep -n '_follow(\|func idle\|func tick'
+81:func tick(i: SimIntent) -> bool:
+99:		_follow(S)
+123:func _follow(S: SimState) -> void:
+153:func idle() -> void:
+$ git show a8bc66e2:net/session.gd | sed -n 188,192p
+func sync() -> void:
+	if _rollTo >= 0:
+		_rollback(_rollTo)
+		_rollTo = -1
+	_confirm()
+$ git show 257a766c:net/lan.gd
+absent at the public pin

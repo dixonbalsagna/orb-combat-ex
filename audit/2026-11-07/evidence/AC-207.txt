@@ -1,0 +1,44 @@
+AC-207 proof, run 2026-11-07
+-- 'one large flash' / 'one flash a second' in the pin tree (ui, data, tools, web shell) and live pages:
+257a766c:data/director/launch.json:28:      "_note": "gate 2, the crater set piece. minTier: the launcher's power tier, an integer 1 to 4. everySec: seconds of match time, 0 or more; at most one CRATER SLAM per fighter in that time"
+257a766c:render/anim/tools/waves/protag2.mjs:8:// Legal: the air roll is a tumble that opens into the blow, the limbs extended through it, at most one revolution, never a tight spinning ball; hands open or flat, never
+257a766c:render/camera/tests/split_sweep.gd:1273:## then 1,000) engages and ends when he slows (6 ticks under 0.8 of the threshold): at most one cut, and no pan, no hold at
+257a766c:render/camera/tests/split_sweep.gd:1316:		_check(_rig.launch_hold_cuts <= 1, "%s: %d hold cuts (at most one)" % [_label, _rig.launch_hold_cuts])
+257a766c:render/core/look.gd:287:## at most one per CROWD_FACE units of its face and at most CROWD_MAX, evenly spaced along it with a seeded jitter. The
+257a766c:render/vfx/reach.gd:16:## Flash limit (Â§5b point 8): at most one FULL flash (the soft disc at the contact) in each `flash_every` ticks across both fighters, so three in a second at most however fast the
+257a766c:render/vfx/react.gd:113:	# At most one dropout of `drop_ticks` in each `period_ticks` (1.5 a second a fighter at the defaults), so two worn fighters together stay inside the screen's three flashes a second
+257a766c:render/vfx/shots.gd:32:const MUZZLE_GAP: int = 4              # a spray's bolts leave a few ticks apart: at most one muzzle ring in this many ticks a fighter
+257a766c:render/vfx/transform.gd:63:var forms: Array = []          # Form, at most one per slot
+257a766c:render/vfx/vfx_hub.gd:650:## crack web of the level's size (a crater-style set at the middle of the pair, on the cracks layer and its caps: at most one set in 30 ticks, dry ground that takes cracks only).
+257a766c:tools/fixtures/virtual/data/director/launch.json:27:      "_note": "gate 2, the crater set piece. minTier: the launcher's power tier, an integer 1 to 4. everySec: seconds of match time, 0 or more; at most one CRATER SLAM per fighte
+257a766c:tools/flash/flash_worst.gd:20:## Exit 0 when every run was played and written (the verdict is check-log.js's), 1 on a tool error. At most one Godot process; the scenes run one after another.
+257a766c:tools/schemas/combat-recipes.schema.json:1065:              "description": "The free arm takes a bolt now and then: at most one in this many, at least one in this many, and on no regular count.",
+257a766c:tools/schemas/director-launch.schema.json:123:          "description": "Gate 2, the crater set piece: the launcher is at minTier or above, and throws at most one CRATER SLAM in everySec seconds of match time.",
+257a766c:ui/tools/hud_check.gd:1278:	_ok(all_redraws <= frames, "split cost: the whole moving split redraws at most one layer a frame on average (%d in %d)" % [all_redraws, frames])
+-- same at HEAD ui/data:
+-- pin's menu_rf_locked:
+Reduce flashing is on. It lowers some effects but does not remove the flagged scenes.
+-- lock flag check in tools/check-site-interim.mjs at HEAD:
+2:// With no "interim" block it says so and passes (the offline check and the full-set release path are other gates). With one, it FAILS if:
+16://   - the game's own strings (ui/data/*.json, Legal's RL-192 condition 2): the in-game notice (ui/data/terms.json prompt.menu_notice, photo_title, photo_body_a, photo_body_b, menu_rf_locked), the help of the settings
+53:// Legal's fixed lines for the owner-approved page, word for word (docs/legal/page-fixed-lines.md, RL-166, 2026-10-22): the flash notice (the gate and the About page carry the same words) and the lock line
+55:const OWNER_LOCK = 'Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes.';
+64:  menu_rf_locked: OWNER_LOCK,
+91:  if (!rec) bad(`${rf} does not record the interim (an "interim" block with the ruling, the dates and the waivers)`);
+157:  if (OWNER && words && words.gate && words.gate.blocks && words.gate.blocks[0] && !gateText.includes(words.gate.blocks[0].p)) bad("/play/: the gate does not carry the owner-approved paragraph of the interim words");
+160:  if (OWNER && !gateText.includes(OWNER_LOCK)) bad("/play/: the gate's lock line is not Legal's fixed line word for word");
+280:    if (OWNER && words && words.gate && words.gate.blocks && words.gate.blocks[0] && !t.includes(words.gate.blocks[0].p)) bad("/about/'s flashing-effects paragraph does not carry the owner-approved paragraph");
+282:    if (OWNER && !t.includes(OWNER_LOCK)) bad("/about/'s lock line is not Legal's fixed line word for word");
+349:const wrap = rf && Object.keys(rf).find((k) => rf[k] && typeof rf[k] === 'object' && rf[k].reduce_flashing);
+350:const optDefault = rf && (wrap ? rf[wrap].reduce_flashing : rf.reduce_flashing);
+351:if (!optDefault || optDefault.default !== true) bad(`"Reduce flashing" is not on by default: ui/data/options.json reduce_flashing.default is ${JSON.stringify(optDefault && optDefault.default)}`);
+354:  if (!(feat.features && feat.features.reduce_flashing === true)) bad('"Reduce flashing" has no row: ui/data/features.json features.reduce_flashing is not true');
+355:  // Legal's addendum 10 (RL-156): until full effects have a recorded pass, the interim build must not offer them: UI's lock (docs/ui/reduce-flashing-lock.md) hides the row and ignores an Off. One word in the
+-- 257a766c:ui/data/features.json lock/reduce keys:
+3:  "note": "Feature flags for HUD code that is written but not part of the base game. hiding: Orb removed hiding from the base game and holds it for a future stealth-specialist fighter (docs/ep/vision.md). With it off the HUD ignores the hidden state and the lost-trail cue everywhere (plate chips, the eye-slash marker, the strip's ping and last-seen mark, the silhouette's fading); the code stays for that fighter. Turn it on in a fighter's data when that fighter exists. touch_full and remap: the Settings screen lists the Full touch layout and the Remap controls entry, dimmed and marked Soon, until Controls' touch-full layout and the remap screen exist; both are on now. about_music and about_voice: the About page's two sentences that are true only once they are (the music was generated with Suno; there is no voice acting) are shown only while their flag is on; both are off until the music ships and Orb confirms the voice sentence (docs/legal/go-to-market.md section 1). A page item whose icon is named about_music or about_voice is that sentence. three_strengths: the martial face buttons are X light, Y medium, B heavy and the signature is the power button held with B (docs/design/brawl-second-pass.md, docs/ui/hud-spec.md section 48); flipped with Encounter's slice C2a, and with it the legend, the Full touch words, the Remap and How to play words, the weight mark's third value and the latched-charge and charges-off settings follow. civilian_bar: no running civilian count in the fight (EP decision on Orb's homework 5): the top chip shows a small steady bar for the share of the city's people lost, the structures and craters line stops brightening, and the exact counts are on the match-over card (docs/ui/civilian-bar.md); off, the chip is the count as before. launch_marks: the marks that teach the launch without the three-strength button names (docs/ui/launch-teaching.md): the run of four pips on the rival, the plate's LAUNCH or RESTING chip with the rest's ring, OPEN, a full gauge that lights B with the word LAUNCH, the once-only hint and the pad's pulse at an opening; on since Game Design's ruling of 2026-10-16; the run's pips, the full gauge and the hint stay dark until the blow cue carries run and run_to. three_strengths turns these on too. reduce_flashing: the Reduce flashing setting row and the flashing notice's reworded line (VFX's register); on when Legal has approved the words.",
+11:    "reduce_flashing": true,
+12:    "lock_reduce_flashing": false,
+-- 257a766c:ui/data/options.json reduce_flashing default:
+{"default":true,"group":"accessibility","label":"Reduce flashing","help":"Fewer and gentler flashes. Turning it off restores full effects, which flash more. Reduced motion is a separate setting.","acc
+-- live /play/ gate lock line:
+112:Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes.

@@ -1,0 +1,50 @@
+# AC-169: menace fed by casualties, at HEAD 53b6df82 and live pin 257a766c (run 2026-11-07)
+## HEAD data/fighters/RIVAL/meters.json sources and effects
+11:      "visible": true,
+14:          "event": "casualty",
+15:          "amount": 0.9,
+20:          "event": "evacuee",
+21:          "amount": 0.45,
+33:          "key": "regen_bonus",
+34:          "perPoint": 0.01,
+35:          "cap": 1.0,
+39:          "key": "damage_mul",
+40:          "cap": 0.05,
+44:          "key": "beam_power",
+45:          "perPoint": 0.08,
+## HEAD sim greps
+HEAD:sim/core/damage.gd:51:		m *= 1.0 + A.md.menaceDmgCap * (A.menace / 100.0)
+HEAD:sim/director/beam.gd:208:	return f.tier * 10.0 + f.ki * 0.35 + S.rng.range_(0.0, 16.0) + (f.menace * f.md.menaceBeam if f.hasMenace else 0.0) + DirExchange.flowEdge(f)   # D1b: meters.json beam_power; section 22: his flow
+HEAD:sim/director/beam.gd:245:	return f.tier * 10.0 + f.ki * 0.35 + (f.menace * f.md.menaceBeam if f.hasMenace else 0.0) + DirExchange.flowEdge(f)
+HEAD:sim/world/collateral.gd:339:			cause.menace = SimMathx.jmin(100.0, cause.menace + evac * cause.md.menaceEvac * POP_REF / normPeople(S))   # D1b: meters.json
+HEAD:sim/world/collateral.gd:357:		cause.menace = SimMathx.jmin(100.0, cause.menace + n * cause.md.menaceCas * norm)   # D1b: meters.json
+HEAD:sim/core/fighter.gd:685:		var bonus: float = f.menace * f.md.menaceRegen
+HEAD:sim/core/fighter.gd:686:		if f.md.menaceRegenCap >= 0.0:
+HEAD:sim/core/fighter.gd:687:			bonus = SimMathx.jmin(f.md.menaceRegenCap, bonus)
+## PIN 257a766c
+14:          "event": "casualty",
+15:          "amount": 0.9,
+20:          "event": "evacuee",
+21:          "amount": 0.45,
+34:          "perPoint": 0.01,
+35:          "cap": 1.0,
+40:          "cap": 0.05,
+45:          "perPoint": 0.08,
+257a766c:sim/core/damage.gd:51:		m *= 1.0 + A.md.menaceDmgCap * (A.menace / 100.0)
+257a766c:sim/core/fighter_data.gd:85:	var menaceDmgCap: float = 0.0     # damage_mul.cap: damage x (1 + this x menace / 100)
+257a766c:sim/core/fighter_data.gd:86:	var menaceBeam: float = 0.0       # beam_power.perPoint: beam clash power + this x menace
+257a766c:sim/core/fighter_data.gd:89:	var menaceCas: float = 0.0        # sources casualty/self: per casualty it caused (x 425 / pop0)
+257a766c:sim/core/fighter_data.gd:90:	var menaceEvac: float = 0.0       # sources evacuee/self: per person its blows forced to flee (x 425 / pop0)
+257a766c:sim/core/fighter_data.gd:563:					d.menaceCas = amt
+257a766c:sim/core/fighter_data.gd:565:					d.menaceEvac = amt
+257a766c:sim/core/fighter_data.gd:580:					d.menaceDmgCap = float(e.get("cap", 0.0))
+257a766c:sim/core/fighter_data.gd:582:					d.menaceBeam = float(e.get("perPoint", 0.0))
+257a766c:sim/director/beam.gd:184:	return f.tier * 10.0 + f.ki * 0.35 + S.rng.range_(0.0, 16.0) + (f.menace * f.md.menaceBeam if f.hasMenace else 0.0) + DirExchange.flowEdge(f)   # D1b: meters.json beam_power; section 22: his flow
+257a766c:sim/world/collateral.gd:253:			cause.menace = SimMathx.jmin(100.0, cause.menace + evac * cause.md.menaceEvac * POP_REF / normPeople(S))   # D1b: meters.json
+257a766c:sim/world/collateral.gd:271:		cause.menace = SimMathx.jmin(100.0, cause.menace + n * cause.md.menaceCas * norm)   # D1b: meters.json
+## children in data at pin (expect none)
+0
+## casualties also feed the causer's power (hard-coded 0.09/person) when it has menace
+358:		cause.power = SimMathx.jmin(100.0, cause.power + n * 0.09 * norm)
+272:		cause.power = SimMathx.jmin(100.0, cause.power + n * 0.09 * norm)
+555:		if f.power >= th:

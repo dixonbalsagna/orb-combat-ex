@@ -1,0 +1,160 @@
+{
+  "domain": "A4 legal and IP at release (names and text, look-alikes, music and audio, title, licence notices, AI disclosure, contributors)",
+  "risks": [
+    {
+      "title": "Title is near-identical to an earlier Godot game called OrbCombat",
+      "player_impact": "A store release under 'Orb Combat EX' could meet a prior-use or confusion complaint and force a rename after launch; no player harm.",
+      "where": ["export_presets.cfg:82", "project.godot:8", "https://github.com/Cascachu/OrbCombat"],
+      "evidence": "gh search/repositories 'orbcombat' returns Cascachu/OrbCombat (Godot 4 Android battle game, GPL-3.0, created 2026-04-13, before this project) and Cascachu/OrbCombatWebPage (its download site); web searches found no store game named exactly 'Orb Combat' but an 'Orbital Combat' sold on Steam and several 'Orb ...' indie games, and no 'ORB COMBAT' registration surfaced (only 'ORB' marks in other classes).",
+      "horizon": "store",
+      "severity_guess": "S3",
+      "likelihood": "low",
+      "evidence_strength": "reproduced",
+      "needs_outside_expert": "A trademark attorney should run a real clearance (USPTO, EUIPO and app-store searches in classes 9 and 41); this was a screening only.",
+      "external_sources": ["https://github.com/Cascachu/OrbCombat", "https://github.com/Cascachu/OrbCombatWebPage", "https://gg.deals/game/orbital-combat/", "https://aitken.itch.io/orbital-combat"]
+    },
+    {
+      "title": "Planned Suno music would ship as a re-encode that drops Suno's metadata, which Suno's terms forbid removing",
+      "player_impact": "No music ships yet; when it does, a re-encoded track without Suno's metadata could breach Suno's terms and put the commercial-use grant in doubt, and Suno disclaims any copyright in the output.",
+      "where": ["audio/music/README.md:14", "audio/music/README.md:18", "audio/music/NOTICE.txt:1", "audio/music/sidecar-template.txt:4"],
+      "evidence": "README.md:18 says 'the shipped copy may not carry' the original's metadata (only copied into a sidecar); Suno's terms (last revised 2026-08-10, effective 2026-09-03) say 'You agree not to remove, alter, obscure or circumvent any fingerprint, watermark or metadata Suno appends to an Output' and 'Suno makes no representation or warranty to you that any copyright will vest in any Output'; Pro/Premier outputs are assigned to the user and commercially usable only if downloaded via an approved channel, Basic outputs are personal and non-commercial only.",
+      "horizon": "web",
+      "severity_guess": "S3",
+      "likelihood": "medium",
+      "evidence_strength": "documented only",
+      "needs_outside_expert": "A music or IP lawyer, or Suno support in writing, should confirm whether an OGG encode that keeps the original and copies its metadata to a sidecar satisfies the metadata clause.",
+      "external_sources": ["https://suno.com/terms"]
+    },
+    {
+      "title": "Store AI disclosures will be required, and the current wording says AI only 'drafted' dialogue that ships as AI-generated lines",
+      "player_impact": "Steam's content survey asks for AI content that ships and players consume (art, sound, narrative, localization) plus a promise of non-infringing content; itch.io asks for an accurate AI tag; an understated answer risks a store correction, not player harm.",
+      "where": ["data/narrative/live_barks.json:7644", "data/narrative/live_barks.json:7645", "README.md:5", "ui/data/howto.json:88"],
+      "evidence": "live_barks.json records 242 Gemini rewrites and 80 Claude drafts kept as final lines, while README.md:5 and howto.json:88 say AI tools 'drafted' dialogue; Steam's survey page says it is 'concerned with the use of AI in creating content that ships with your game, and is consumed by players' (code is not listed, efficiency tools are 'not the focus'), live-generated AI needs guardrails (none here: the director is ordinary code); itch.io asks creators to 'accurately tag your project if it contains materials produced by generative AI', strictly enforced with possible delisting only for asset, soundtrack, physical, comic and book pages, and exempts procedural generation and traditional game AI.",
+      "horizon": "store",
+      "severity_guess": "S4",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "None for the disclosure itself; whoever files the Steam survey must attest to non-infringement and should name Gemini and Claude for dialogue and Suno for music if it ships.",
+      "external_sources": ["https://partner.steamgames.com/doc/gettingstarted/contentsurvey", "https://itch.io/docs/creators/quality-guidelines"]
+    },
+    {
+      "title": "Builds use the Godot logo as the game's icon and leave copyright and company fields blank",
+      "player_impact": "The public web build's favicon and app icon is the Godot robot logo (CC-BY-4.0, credited on /about/), and desktop exe/app metadata carries no copyright owner; it looks unfinished and blurs whose product it is, but harms no player.",
+      "where": ["export_presets.cfg:29", "export_presets.cfg:76", "export_presets.cfg:81", "export_presets.cfg:84", "export_presets.cfg:149", "project.godot:6"],
+      "evidence": "Fetched https://dixonbalsagna.github.io/orb-combat-ex/play/index.icon.png (128x128) and it is the Godot logo; project.godot sets no config/icon, html/export_icon=true, and application/icon, company_name and copyright are empty strings.",
+      "horizon": "already-public",
+      "severity_guess": "S4",
+      "likelihood": "low",
+      "evidence_strength": "reproduced",
+      "needs_outside_expert": "None; a store build should carry the game's own icon and an owner line.",
+      "external_sources": ["https://dixonbalsagna.github.io/orb-combat-ex/play/index.icon.png", "https://dixonbalsagna.github.io/orb-combat-ex/about/"]
+    },
+    {
+      "title": "Some committed lines echo a well-known franchise's villain and rival speech habits",
+      "player_impact": "Insults like 'insect' (4 lines) and 'third-rate' (5 lines), a royal-'we' empress with joke revision forms, and a teleport-then-blitz signature called 'Portal Blitz' read as genre nods; these are generic words and tropes, not protectable expression.",
+      "where": ["data/narrative/live_barks.json:301", "data/narrative/live_barks.json:448", "data/narrative/live_barks.json:5380", "data/narrative/opponent_grounds.json:77", "data/narrative/combat_barks.json:19", "data/combat/finishers.json"],
+      "evidence": "Read the extracted strings of data/narrative, data/combat, data/fight, data/director and ui/data; no franchise names or move names found, only these habits; live_barks.json and opponent_grounds.json are not in the live web build's pack (only combat_barks.json and hints_fix.json are), but they are readable in the public repo.",
+      "horizon": "already-public",
+      "severity_guess": "S4",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "None.",
+      "external_sources": []
+    },
+    {
+      "title": "The title uses 'Orb', a word the project's own name screen avoided as a sound-alike of the franchise's core word",
+      "player_impact": "In a game of the same genre, 'Orb' plus an anime energy-brawler pitch may invite comparison with the franchise; confusion is unlikely and no player harm follows.",
+      "where": ["docs/narrative/name-longlist.md:26", "render/vfx/energy_head.gd:4"],
+      "evidence": "name-longlist.md:26 lists orb, sphere and globe as words avoided as franchise sound-alikes, and energy heads are 'never a ball, a disc or a hoop', yet the shipped and live title is 'Orb Combat EX' (Orb is also the owner's pseudonym).",
+      "horizon": "already-public",
+      "severity_guess": "S4",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "Could be folded into the trademark clearance above.",
+      "external_sources": []
+    },
+    {
+      "title": "No LICENSE at the repo root while the project is described internally as free and open source",
+      "player_impact": "Nobody may lawfully reuse the public code or content, which is consistent with what players see ('All rights reserved for now'); if a licence is picked later, how far it reaches over AI-generated code, art and text is uncertain.",
+      "where": ["README.md:7", "ui/data/howto.json:98", "CLAUDE.md:3", "audio/music/NOTICE.txt:1"],
+      "evidence": "git ls-tree HEAD shows no LICENSE or COPYING at the root (only docs/legal/drafts/LICENSE, not read); README.md:7 and howto.json:98 say all rights reserved, and no live public page claims open source.",
+      "horizon": "already-public",
+      "severity_guess": "S4",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "An IP lawyer on copyright in AI-assisted works before a licence is chosen.",
+      "external_sources": []
+    }
+  ],
+  "checked_ok": [
+    {
+      "area": "Shipped names, signature and move names",
+      "where": "ui/data/fighter_names.json:5-8; data/combat/sigvariants.json; data/combat/templates.json; data/narrative/combat_barks.json:19-36",
+      "why": "Fighters are Grist, Loupe, Empress Orza and Bolus, signatures are 'Keeper's Lance' and 'The Barrage', and beam variants are place-plus-effect labels (HORIZON CLEAVE, GLASS TRENCH and others); a word-bounded grep of data, render, ui, sim, audio, net, localization and art/prompts found no franchise character, technique or catchphrase terms."
+    },
+    {
+      "area": "UI glossary and placeholder names",
+      "where": "ui/data/terms.json; ui/tools/hud_check.gd:1045-1046; ui/tools/hud_check.gd:6493",
+      "why": "Player-facing terms are generic (GUARD, CHARGE, MENACE, LAST STAND) and a UI test bans genre giveaway words and the KAI/VORR placeholders from anything drawn (tests read, not run)."
+    },
+    {
+      "area": "Look-alikes: what art actually ships",
+      "where": "export_presets.cfg:9-11; art/concepts/.gdignore; art/animation/.gdignore; live play/index.pck",
+      "why": "Parsed the live web pack (Godot 4.7.2, 1,052 entries): only scripts, scenes, JSON data and engine files, with no images, models, fonts, sound files or art/ folder; no image or model file exists in the repo outside ignored or excluded folders."
+    },
+    {
+      "area": "Look-alikes: fighter design data",
+      "where": "render/anim/anim_rig.gd:51; render/anim/anim_rig.gd:85; data/fighters/PROTAGONIST/fighter.json; data/art/auras.json:3; render/vfx/energy_head.gd:4",
+      "why": "Fighters are procedural capsule rigs coloured from data (hero blue body and teal hair), auras are held to a 260-320 degree hue with no gold, flame or upward streaming, and energy heads are never balls; nothing reproduces a known character design."
+    },
+    {
+      "area": "Controller prompt glyphs",
+      "where": "ui/data/glyphs.json:3; ui/data/glyphs.json:41-44",
+      "why": "The default glyph style is neutral and the PlayStation family shows compass letters and L1/R2 text, not the platform's trademarked face symbols."
+    },
+    {
+      "area": "Shipped audio provenance",
+      "where": "audio/README.md:5; audio/synth/; audio/preview/.gdignore; ui/data/features.json:8",
+      "why": "All game sound is synthesised at runtime from the project's own recipes with no recorded or third-party sample; the 108 committed WAVs are the project's own renders and are not exported; no music is committed, and the 'music was generated with Suno' About line is switched off at HEAD and at the live commit 72a4d1e4."
+    },
+    {
+      "area": "Godot and third-party licence notices in builds",
+      "where": "ui/widgets/ui_licences.gd:14-34; ui/widgets/ui_howto.gd:16; ui/widgets/ui_howto.gd:269-300; ui/data/howto.json:81; ui/data/howto.json:98-112",
+      "why": "The in-game Third-party licenses page (pause, About) prints the engine's own licence text, component copyrights and every licence text from Engine.get_license_text, get_copyright_info and get_license_info, so desktop and web builds carry Godot's MIT notice and its component notices (traced in code, not run)."
+    },
+    {
+      "area": "Licence notices on the live web page",
+      "where": "https://dixonbalsagna.github.io/orb-combat-ex/about/ ; https://dixonbalsagna.github.io/orb-combat-ex/play/",
+      "why": "The /play/ gate links to /about/, which carries Godot 4.7.2's MIT text, the Open Sans OFL-1.1 notice and full text, and component notices including FreeType (FTL), HarfBuzz and Brotli."
+    },
+    {
+      "area": "Fonts",
+      "where": "git ls-files (no .ttf/.otf/.woff/.woff2); ui/core/ui_text.gd:42; render/core/hud.gd:27; ui/data/howto.json:100",
+      "why": "The repo contains no font files; the game uses ThemeDB.fallback_font (Godot's built-in Open Sans), credited in-game with its OFL-1.1 licence, and the site pages use system fonts only."
+    },
+    {
+      "area": "AI disclosure on public surfaces",
+      "where": "README.md:5; ui/data/howto.json:88; ui/data/howto.json:105; live index, /play/ and /about/ pages",
+      "why": "Every public surface says AI tools wrote the code and drafted the art, animation, dialogue and design documents, and that nothing is generated by AI during play."
+    },
+    {
+      "area": "Contributors and vendored code",
+      "where": "git shortlog -sne HEAD; prototype/package.json; prototype/package-lock.json; sim/package.json",
+      "why": "All 2,744 commits are by one author (dixonbalsagna), 2,695 with a Claude co-author trailer; no addons, vendor or third-party source sits in the shipped tree, and the only package dependency is @napi-rs/canvas (MIT, an optional dev tool for the prototype, not exported)."
+    },
+    {
+      "area": "Title screening coverage",
+      "where": "gh api search/repositories; web searches",
+      "why": "GitHub has 2 'orbcombat' repos (one game) and 9 'orb combat' hits, mostly 'Orbital Combat'; the web shows a crowded 'Orb ...' indie space but no exact-name store listing was found."
+    }
+  ],
+  "limits": [
+    "Per the blind-sweep rule I did not read docs/legal, docs/accessibility, docs/qa, qa/known-bugs, docs/net, docs/ep, docs/production, homework or audit, so docs/legal/drafts/LICENSE was seen by filename only.",
+    "Godot and Chrome were not run: the in-game licences page and display-name tests are traced in code, and the desktop LAN builds given to Orb and Orb 2 were not inspected; only the live web pack's file list (commit 72a4d1e4) was parsed, not its contents.",
+    "The title check is a screening (GitHub API plus three web searches); no USPTO, EUIPO, JPO, Play Store or App Store database was searched.",
+    "Suno, Steam and itch.io wording came through a summarising fetch tool, so quotes should be checked on the live pages; the Steam page shows no date, and itch.io's sub-tags (graphics, sound, text, code) and its 2026-11-03 expansion appear only in secondary sources, not verified on a primary page.",
+    "Gemini's and Anthropic's output-ownership terms and the copyright status of AI-generated code, art and text were not researched from primary sources.",
+    "Look-alike judgement is from data and code only; no rendered frame or concept sheet was viewed.",
+    "Out of A4 scope but noticed: 57 committed files in the public repo contain the owner's local Windows username in file paths; worth passing to the privacy sweep."
+  ]
+}

@@ -1,0 +1,21 @@
+# AC-186 evidence
+  "relief": {
+    "enabled": false,
+    "share": 0.25,
+    "minSends": 4,
+    "scale": 0.6,
+    "floor": 0.5,
+    "_note": "One factor on an AI hero's mark-down on a building send (docs/world/ring-any-angle/game-design.md section 15 lever 5; docs/legal/review-log.md RL-219, open until QA reads its conditions 
+        "scale": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 1
+        },
+        "floor": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 1
+        }
+58:static func factor(S: SimState, A) -> float:
+59:	if not on() or A.ai == null or float(A.care) <= 0.0:
+70:	return maxf(float(c.scale), float(c.floor)) if short else 1.0

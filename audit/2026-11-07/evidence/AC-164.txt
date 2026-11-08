@@ -1,0 +1,26 @@
+# AC-164: Orza (Empress) (run 2026-11-07)
+$ git ls-files data/fighters | cut -d/ -f3 | sort -u
+PROTAGONIST
+REFERENCE
+RIVAL
+bench.json
+roster.json
+$ sed -n 142,152p data/vfx/meteor.json
+    "empress": {
+      "_source": "docs/vfx/meteor-trail.md section 5 (parked kit): a taut wire arc with a gold rim. A row only: she is not on the roster",
+      "front": "wire",
+      "texture": "none",
+      "width_k": 0.9,
+      "scale": 120,
+      "fl_rim": "#c9a227",
+      "fl_rim_k": 0.9,
+      "fl_w_cool": 0.55,
+      "fl_w_smoulder": 0.3,
+      "fl_settle": 0.9
+$ data/art/flashes.json row E
+    "E": {
+      "light": "#dfe8a8",
+      "mid": "#b8c96a",
+      "shadow": "#6d7d30"
+    },
+CIE L* (D65, sRGB, computed with a node one-liner): #dfe8a8 90.0, #b8c96a 77.9, #6d7d30 49.7, #c9a227 68.3

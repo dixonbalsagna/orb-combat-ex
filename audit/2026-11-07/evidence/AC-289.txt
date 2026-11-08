@@ -1,0 +1,4 @@
+# AC-289 proof, run 2026-11-07 on HEAD 53b6df82 (read-only); live pin 257a766c
+| C5 | The brawl never passes through a building face, and a drifting brawl never damages a building | none | hard | the centre against `WorldStructures.blockedAt`; building damage events during a brawl with no throw, tackle, launch or blast | the nudging script flown at a building |
+| C2 (the stick does nothing in a knock-back, launch, lift, hold, buried, a set piece, a stagger) and C5 (building faces) | not built: they need a script that holds a stick in each state | with C2a or after |
+HEAD:sim/world/structures.gd:143:static func blockedAt(S: SimState, x: float, y: float, z: float = 0.0, margin: float = 75.0) -> bool:

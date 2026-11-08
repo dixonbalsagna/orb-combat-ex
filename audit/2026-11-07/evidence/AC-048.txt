@@ -1,0 +1,34 @@
+AC-048 evidence (verifier v04, 2026-11-07, read-only)
+## HEAD docs/legal/review-log.md:144
+| RL-122 | Heave half step drawn (h08 closed); staggered echo strip (f01 ceiling met, count Animation's after-images too); body white on a hit held lower for comfort; the dynamic sky (ember glow, ruin darkening) | Animation, VFX, Art, Rendering | Low | Closed or pass: sky passes (slow, 0.05 a band a second, no pulse); towns' glow fades in over 1 s or more; sky included in the required flash-check clips | Open for the sky's inclusion in the set |
+
+## HEAD render/core/look.gd:687,859-866
+const SKY_GLOW_IN_S: float = 1.0         # a town's glow comes into a pane's view over at least this long, however fast the camera brings the town in (Legal's RL-122)
+## A granted hit (Legal's RL-122): the body takes a strong light tint of its own colours, HIT_TINT of the way to white,
+## with the outline lit, where it went pure white. One body is tinted at most HIT_TINT_BODY times in a second and
+## the two together at most HIT_TINT_ALL, beside the register's own budget; the hits past that light the outline.
+const HIT_TINT: float = 0.6
+const HIT_TINT_BODY: int = 3
+const HIT_TINT_ALL: int = 4
+## What Rendering's flashes cover, for the flash register's weights (VfxFlashRegistry weighs a flash by its area against
+## a quarter of the standard's 341 by 256 window, and counts none whose luminance step is under a tenth). Sizes are in
+
+## HEAD render/core/sim_host.gd:382-384
+## Beside the register's budget, Legal's ceilings (RL-122): one body is tinted at most RenderLook.HIT_TINT_BODY times
+## in a second and the two together at most HIT_TINT_ALL. A hit past a ceiling does not ask.
+func _ask_hits() -> void:
+
+## HEAD render/tools/sky_check.gd:13-18
+## - nothing is fast: with the camera flying a quarter of a lap a second and turning back every 3 seconds for 3
+##   minutes, no band's luminance changes by more than the place budget in any second; with the mood and the damage
+##   slammed on and off as well, and with a driver that jumps, none by more than 0.05 and their weighted mean by no
+##   more than 0.02;
+## - the mood eases over Art's least durations, and with reduced motion the drift and the mood hold;
+## - a town's glow comes into a pane's view over at least a second, however fast the camera arrives (Legal's RL-122);
+
+## where sky_check and flash_reg_check run
+HEAD:docs/ep/gate/render-gates.sh:11:( run sky_check; run flash_reg_check; run depth_check; run open_check; run after_check; run hud_words_check; run stage_check ) &
+
+## in the public pin 257a766c
+467:const SKY_GLOW_IN_S: float = 1.0         # a town's glow comes into a pane's view over at least 
+642:const HIT_TINT: float = 0.6

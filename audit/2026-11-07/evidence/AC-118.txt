@@ -1,0 +1,38 @@
+# AC-118 proof (run 2026-11-07, read-only)
+## review-log rows 74, 99, 147
+| RL-052 | Dash afterimage (Rendering) | Rendering | Low | GO with three constraints | Closed |
+| RL-077 | LT zip: filled stacked ghosts (amends RL-052 for zips) | VFX | Medium | CONDITIONAL: flat lane colour, 0.35 or less, 5 or fewer, real path and overlapping, never a ring, gone in 8 ticks, body on top | Open |
+| RL-125 | Body ghost budget: 11 on screen against m05 | VFX, Rendering | Medium | 5 per fighter from all sources together (10 on screen) is a hard gate, revisable on evidence; m12 added | Open until the per-tick breakdown |
+## movegen-banned.json m05 and m12
+{"id":"m05","rule":"a zip ghost is a flat single tint in the fighter's lane colour (never the body's own colours or face), opacity 0.35 or less and fainter for older ones, at most 5 per zip, on the body's real recent path, each overlapping the next by about a third so they read as a smear, never in a ring, fan or spread round the target, gone within 8 ticks of the zip's end","why":"filled ghosts are allowed as a blur, not as a lineup of body copies"}
+{"id":"m12","rule":"body ghosts (whole-figure copies from any source: zip, press styles, tech echoes, Animation's after-images) are budgeted per fighter at any instant: at most 5 round one fighter from all sources together, so at most 10 on screen with two fighters; limb ghosts stay under f01 (2 of one limb, 4 in all per fighter). Every ghost keeps m05: a flat lane tint, 0.35 opacity or less, on the fighter's own recent path, overlapping along it as a smear, never placed round the target or in a ring, gone within 8 ticks, the body on top. The 5 is a bright line for the build's gate, not a legal cliff, and may be revised on evidence (stills and the per-tick breakdown) from VFX and Rendering","why":"m05 and m09 made explicit per fighter and across sources"}
+## enforcement in code at HEAD
+render/vfx/ghost_tally.gd:16:const LIMB_MAX: int = 2         # f01: of any one limb
+render/vfx/ghost_tally.gd:17:const LIMB_ALL_MAX: int = 4     # f01: on the screen in all
+render/vfx/ghost_tally.gd:18:const BUDGET: int = 5           # m12: whole-figure ghosts of one fighter, all sources together
+render/vfx/ghost_tally.gd:21:var enforce: bool = true        # VFX's own whole-figure ghosts yield to the budget (the hub sets it; off, they draw as they always did and the tally only counts)
+render/core/look.gd:807:## same five. AFTER_MAX holds the five whatever sends them: past it the oldest are not drawn (ParticleView).
+render/core/look.gd:808:const AFTER_LIFE: float = 5.5 / 60.0
+render/core/look.gd:809:const AFTER_MAX: int = 5
+render/core/look.gd:811:const AFTER_ALPHA: float = 0.5
+render/core/particle_view.gd:7:## he has moved off the spot, and is gone in RenderLook.AFTER_LIFE (it used to be a flat block in front of him).
+render/core/particle_view.gd:16:var after_count := PackedInt32Array()   # per fighter of this pane: the after-images drawn round him this frame (at most RenderLook.AFTER_MAX)
+render/core/particle_view.gd:75:## Legal's m12: at most RenderLook.AFTER_MAX after-images round one fighter at once. A rush sends one a tick and each
+render/core/particle_view.gd:86:		if p.type != "after" or p.age >= minf(p.life, RenderLook.AFTER_LIFE):
+render/core/particle_view.gd:96:		if a.size() > RenderLook.AFTER_MAX:
+render/core/particle_view.gd:98:			for k in range(RenderLook.AFTER_MAX, a.size()):
+render/core/particle_view.gd:156:				var shown: float = minf(p.life, RenderLook.AFTER_LIFE)
+render/core/particle_view.gd:182:				c.a = RenderLook.AFTER_ALPHA * (1.0 - p.age / shown) * away
+## gates
+render/vfx/tools/effects_check.gd:5413:	_check(int(hb.ghosts.over["body"]) == 0 and int(hb.ghosts.total_peak[0]) <= VfxGhostTally.BUDGET, "and never more than five on him in any tick (peak %d)" % int(hb.ghosts.total_peak[0]))
+render/vfx/tools/hash_check.gd:103:	ok = ok and ran and stats["flash_worst"] <= 6 and stats["flash_weight"] <= 2.5001 and stats["gh_over_limb"] == 0 and stats["gh_over_body"] - stats["gh_over_rendering"] <= 0
+## pinned public build 257a766c
+589:const AFTER_MAX: int = 5
+591:const AFTER_ALPHA: float = 0.5
+18:const BUDGET: int = 5           # m12: whole-figure ghosts of one fighter, all sources together
+21:var enforce: bool = true        # VFX's own whole-figure ghosts yield to the budget (the hub sets it; off, they draw as they always did and the tally only counts)
+## VFX's own record of after-image opacity and spacing
+- The worst tick: seed 7, `ai` scenario, tick 307, the rival (slot 1) tumbling after a launch. Six after-images of Rendering's, ages 0 to 5, opacity 0.50, 0.42, 0.33, 0.25, 0.17, 0.08, standing 60, 122, 184, 248, 314 and 380 units behind him along his own path (about 65 apart). VFX asked for 3 flying-target ghosts and 2 zip-smear ghosts on top (11); the budget gave them 0.
+- **A spread, not an overlapped smear**: the six are one chain along his own recent path, one a tick, each a full figure length apart, so they do not overlap each other; they never stand round the target or in a ring.
+## CI: is effects_check/hash_check wired in ci.yml?
+0

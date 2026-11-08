@@ -1,0 +1,14 @@
+# AC-270: committed LAN docs vs Orb's LAN play
+Netcode, 2026-11-01. **Ready, not started. It has never connected two programs, and it must not be run until Orb says so,** because the firewall step needs Orb's real yes.
+- **Two pieces are ready to use now:** a check that the two PCs' processors agree, with no network (`docs/net/two-pc-check.md`), and a plain 1v1 between them that's built but has never run (`docs/net/lan-v1.md`). The firewall click needs Orb's real yes.
+| **1. Plain 1v1 between the two PCs, on the globe** | The firewall step, the link, the feel | **Built, not run.** Waits for step 0 and Orb's yes |
+a8bc66e2 2026-11-07 EP: land the morning batch: Controls' and UI's switches on (main matches Orb's page), the four beam 
+# lan-v1.md firewall rows:
+| `Allow through the firewall (main PC, once).cmd` | Adds one inbound rule, after Windows' one approval box: this game, UDP 47100, addresses in the host's /24 only, so ZeroTier members can't reach it | Main PC |
+| `Remove the firewall rule (main PC, afterwards).cmd` | Takes the rule away, and any Windows added | Main PC |
+# docs/ep/vision.md (Orb, 2026-11-07):
+1660:**Morning build and the first LAN match, Orb (2026-11-07 midday; homework/Files/orb-first-play-20261107-1229.json, LAN log in orb-lan-a8bc66e2-c):** "both lan tests worked right out of the box." Best: "the beams are a lot easier to shoot now, the attack v
+1662:**The first 2v2, Orb (2026-11-07):** "the 2v2 together was the only 2v2 test we performed. there were some stuttering issues, inconsistent, not sure what triggered them. the old PC player's camera would lock onto my player I think, only two fighters were 
+# untracked docs/net/pending/lan-n4/README.md:1
+# Parked, UNFINISHED: the LAN after Orb's first 2v2 together (N1 to N4, the view, RL-253)
+?? docs/net/pending/

@@ -1,0 +1,38 @@
+changed_since_baseline: 4
+ M 450a76d3e4c112187ea44b405d938ef32227d147 -> 20d3328d982fd40d501a4727987af4ea84256006 docs/vfx/clash-shockwave.md
+?? f977ea20c886fcba3f3bb80ee77cf1718a3eaad2 -> f2484bf541b8875a0cfa6ab309a17634b75cd5e3 docs/director/pending/orbs-scheme/README.md
+?? da9316552e5e50c32f983e7c8f4e2bbaf6b5787e -> 2355041367817b353629299af723b09107d76517 docs/director/pending/stick-slam/README.md
+?? 96f3df5a2187bbdd2c9315d3858ce184f81f7778 -> c3fc5d988ee86fe49ba438c7371a511b2cb25fbb docs/vfx/pending/shared-register/README.md
+
+vanished: 2
+?? 4ccabb3eaca666299fe0ee6f6a253bc95bb53be8 -> (gone) docs/tools/pending/shell-snippet-everywhere/README.md
+?? 6b78f99a5246bd08b6bec491d6dc5a0e061244a6 -> (gone) docs/tools/pending/shell-snippet-everywhere/shell.patch
+
+reappeared(deleted at baseline, exist now): 0
+
+
+new_uncommitted_paths_not_in_baseline: 24
+?? docs/director/pending/orbs-scheme/s16-stack/0001-main-rows-the-step-around-under-a-lake-floor-the-wal.patch
+?? docs/director/pending/orbs-scheme/s16-stack/0002-main-rows-2-the-knock-under-a-lake-floor-the-kite-wi.patch
+?? docs/director/pending/orbs-scheme/s16-stack/0003-refusal-reasons.patch
+?? docs/director/pending/orbs-scheme/s16-stack/0004-easy-s-brawl-pace-a-tap-every-24-to-30-ticks.patch
+?? docs/director/pending/orbs-scheme/s16-stack/0005-flight-strikes-on-a8bc66e2.patch
+?? docs/director/pending/orbs-scheme/s16-stack/0006-launch-cuts-on-a8bc66e2.patch
+?? docs/director/pending/orbs-scheme/s16-stack/0007-stick-lunge-on-a8bc66e2.patch
+?? docs/director/pending/orbs-scheme/s16-stack/0008-2v2-last-event-by-team.patch
+?? docs/director/pending/orbs-scheme/s16-stack/0009-2v2-last-event-marks-on-every-body-the-rejoin-case.patch
+?? docs/director/pending/orbs-scheme/s16-stack/0010-the-stick-s-slam-a-down-flick-on-a-foe-in-the-air-se.patch
+?? docs/director/pending/stick-slam/stick-slam.diff
+?? docs/net/pending/lan-n4/README.md
+?? docs/net/pending/lan-n4/lan-n4.patch
+?? docs/rendering/pending/crater-store/README.md
+?? docs/rendering/pending/crater-store/crater_store.diff
+?? docs/rendering/pending/fore-profile/README.md
+?? docs/rendering/pending/fore-profile/fore_profile.diff
+?? docs/rendering/pending/others-near/README.md
+?? docs/rendering/pending/others-near/others_near.diff
+?? docs/vfx/img/shared-register/analyser-readings.txt
+?? docs/vfx/img/shared-register/duo-night-normal-frame300.png
+?? docs/vfx/img/shared-register/duocat-night-normal-both-clouds-frame150.png
+?? docs/vfx/pending/struggle-ring-shape/README.md
+?? docs/vfx/pending/struggle-ring-shape/apply.patch

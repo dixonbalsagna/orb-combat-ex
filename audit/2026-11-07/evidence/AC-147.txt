@@ -1,0 +1,11 @@
+# AC-147 proof (external rules, accessed 2026-11-07)
+17 USC 401(b)(3) https://www.law.cornell.edu/uscode/text/17/401 : 'the name of the owner of copyright in the work, or an abbreviation'
+Steamworks onboarding https://partner.steamgames.com/doc/gettingstarted/onboarding : 'Do not enter an alias or nickname.' / 'account holder name on your bank account must match'
+$ docs/legal/drafts/LICENSE:3
+Copyright (c) 2026 [COPYRIGHT HOLDER: Orb decides. Options: legal name; "Orb"; "<Game name> contributors"]
+$ root LICENSE present?
+(none)
+$ export_presets copyright fields
+84:application/copyright=""
+158:application/copyright=""
+17 USC 512(c)(3)(A) https://www.law.cornell.edu/uscode/text/17/512 (accessed 2026-11-07): 'under penalty of perjury, that the complaining party is authorized'

@@ -1,0 +1,30 @@
+# AC-013 evidence, run 2026-11-07 (HEAD 53b6df82)
+## docs/ep/vision.md last line (1665)
+**The second player, Orb's ruling (2026-11-07):** "My official ruling on the multiplayer tests is that I have someone trusted and involved in the project whose input is necessary. They were the player on the Old PC and they bypass all flash and other safety concerns at the same level I do. just think of them as Orb 2." The project calls them Orb 2: private builds and tests Orb may see, Orb 2 may see too. Public builds are unchanged.
+
+## RL-253 at HEAD (docs/legal/review-log.md:467), first 900 chars
+| RL-253 | Orb's own ruling, 2026-11-07 (docs/ep/vision.md, last block, checked there): the multiplayer tests need a trusted person involved in the project, the one who played on the Old PC, who bypasses flash and other safety concerns at the same level Orb does; the project calls them Orb 2, no real name recorded; private builds and tests Orb may see, Orb 2 may see too, public builds unchanged. Does this answer the second-human question in RL-230 (2), RL-241 (4) and RL-249 (10), and what else in RL-226, RL-230, RL-241 and RL-249 changes | EP | Low | Yes: Orb 2 is the named second person, and for private builds and tests they stand where Orb stands. It is what RL-230 (2) asked for (a named adult, told in plain words, who sees the warning, may stop, with the network and removal terms kept); the name is the label Orb gave and the real name stays out of every file. Conditions: (1) The row r
+
+## git show --stat c5b42dc1
+c5b42dc1 2026-11-07 13:46:49 -0800 Legal: RL-253, Orb 2 stands where Orb stands for private builds and tests, on Orb's ruling as given
+
+ docs/legal/review-log.md | 1 +
+ 1 file changed, 1 insertion(+)
+
+## committed lan-v1.md:89
+**Orb alone, on both PCs.** A second person isn't covered: Orb names them first and Legal rules on that name. In 2v2, Orb plays one seat on each PC, or both.
+
+## committed two-v-two-lan.md:157
+2. **Who's the second player?** Legal's RL-230 clears step 1 for Orb alone, on both PCs. A second person has to be named to Legal first, who rules on that name. Likely yes for one named adult at Orb's home, on Orb's own network, told beforehand.
+
+## net/tools/lan_kit.mjs:191-192 (HEAD)
+// Legal RL-230's words, checked: its WHO PLAYS line as it stands, a plain word that a link opens, and the public build's privacy line nowhere.
+if (!words.includes("WHO PLAYS: Only Orb plays and watches, on both PCs, with nobody else in the room. This build has a flashing-effects warning; read it first. Don't copy, record, share or post this folder, the screens or the main PC's address.")) stop('lan_words.txt: the WHO PLAYS line is not RL-230\'s');
+
+## net/tools/lan_words.txt WHO PLAYS line, HEAD and a8bc66e2
+WHO PLAYS: Only Orb plays and watches, on both PCs, with nobody else in the room. This build has a flashing-effects warning; read it first. Don't copy, record, share or post this folder, the screens or the main PC's address. Two fights share one globe, so craters and damage from the other fight can appear in the world. Fighters in the other fight can hit you, and your partner's fight isn't shown on your screen.
+WHO PLAYS: Only Orb plays and watches, on both PCs, with nobody else in the room. This build has a flashing-effects warning; read it first. Don't copy, record, share or post this folder, the screens or the main PC's address. Two fights share one globe, so craters and damage from the other fight can appear in the world. Fighters in the other fight can hit you, and your partner's fight isn't shown on your screen.
+
+## docs/net/pending tracked?
+0
+?? docs/net/pending/

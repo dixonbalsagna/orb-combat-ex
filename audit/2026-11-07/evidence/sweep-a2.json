@@ -1,0 +1,114 @@
+{
+  "domain": "A2 security of the shipped and private builds (net/, settings and caches, resource loading, web bridge and URL hooks, OS calls, CI and publishing)",
+  "risks": [
+    {
+      "title": "A connected LAN peer can freeze or exhaust memory on the other PC with one crafted packet",
+      "player_impact": "In the private LAN build the game on Orb's or Orb 2's PC hangs or runs out of memory; no code execution is possible.",
+      "where": ["net/handshake.gd:84", "net/handshake.gd:93", "net/host.gd:83", "net/session.gd:128-129", "net/transport.gd:65-69", "net/host.gd:108", "net/host.gd:120-130", "net/session.gd:288-300"],
+      "evidence": "The peer's hello 'delay' is never capped (handshake.gd:84, :93) and NetSession._init loops range(delay) filling dicts (session.gd:128-129). Kind-2 Variant packets skip the binary layout's 255 caps and reach NetHost._take, where an integer 'inputs' makes 'for p in ...' run that many addInput calls (host.gd:126) and an unchecked takeover slot can hand any fighter, the victim's included, to the AI (host.gd:120-121).",
+      "horizon": "private",
+      "severity_guess": "S3",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "No for the LAN test; a networking security review before any online mode ships.",
+      "external_sources": ["https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_basics.html", "https://docs.godotengine.org/en/stable/classes/class_%40globalscope.html"]
+    },
+    {
+      "title": "LAN link is unauthenticated and unencrypted; first device on the /24 takes the seat",
+      "player_impact": "Another device on the home network that connects first can join or disrupt the match; traffic is readable on the LAN.",
+      "where": ["net/enet_transport.gd:38", "net/enet_transport.gd:109-114", "net/lan.gd:223", "net/lan.gd:232-233", "net/handshake.gd:104-106"],
+      "evidence": "Plain ENet with no DTLS setup; the listener accepts the first peer whose address starts with the host's /24 prefix, and the match key is built from public seed, setup and data hash. Godot's ENetConnection offers dtls_server_setup, which is unused.",
+      "horizon": "private",
+      "severity_guess": "S4",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "No for a home LAN test; yes before internet play.",
+      "external_sources": ["https://docs.godotengine.org/en/stable/classes/class_enetconnection.html"]
+    },
+    {
+      "title": "LAN kit's firewall rule applies on every network profile and persists until removed",
+      "player_impact": "On another network with the same common subnet (for example 10.0.0.x) the host PC still admits inbound UDP 47100 to the game while hosting.",
+      "where": ["net/tools/lan_kit.mjs:177", "net/tools/lan_kit.mjs:156-171", "net/tools/lan_kit.mjs:185-186"],
+      "evidence": "netsh rule uses profile=any with remoteip set to the /24 and stays until the removal script is run; the scripts self-elevate with ExecutionPolicy Bypass. The bind to one fixed IP (lan.gd:218) limits exposure.",
+      "horizon": "private",
+      "severity_guess": "S4",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "No.",
+      "external_sources": []
+    },
+    {
+      "title": "Live public web build packs 259 test and tool files it does not need",
+      "player_impact": "No direct player harm found; the public pck carries debug routes and process-spawning test scripts, a larger surface than needed.",
+      "where": ["https://dixonbalsagna.github.io/orb-combat-ex/play/index.pck", "tools/site.json (HEAD) pin 257a766c", "export_presets.cfg@257a766c:11", "render/core/main.gd@257a766c:1204-1205", "render/core/main.gd@257a766c:1242", "ui/hud/ui_hud.gd@257a766c:1238-1243"],
+      "evidence": "I parsed the live pck's file table (build_info says commit 257a766): it holds render/tools/flash_capture, render/anim/tools/*_study scenes and sim/core/tools/batch, because the pinned preset excluded only prototype, qa, research, docs, tools and .github. At that commit, study and flashcap are dropped on a non-local host and lock_reduce_flashing is true, so the routes stay closed.",
+      "horizon": "already-public",
+      "severity_guess": "S4",
+      "likelihood": "low",
+      "evidence_strength": "reproduced",
+      "needs_outside_expert": "No.",
+      "external_sources": []
+    },
+    {
+      "title": "Committed Web preset does not exclude net/ and has no network-class guard like the desktop packager",
+      "player_impact": "If the site pin moves past net/'s arrival, the public web pck will carry the LAN code as dead weight, contradicting any no-network claim.",
+      "where": ["export_presets.cfg:11", "export_presets.cfg:55", "tools/desktop-package.mjs:146", "tools/desktop-package.mjs:210-218"],
+      "evidence": "Desktop presets exclude net/* and desktop-package.mjs refuses network classes, but the Web preset (line 11) also omits render/tools/*. Nothing outside net/ references Net* classes, and Godot's web export has no low-level networking, so the code would be unreachable.",
+      "horizon": "web",
+      "severity_guess": "S4",
+      "likelihood": "medium",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "No.",
+      "external_sources": ["https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html"]
+    },
+    {
+      "title": "Public play page can be framed (no anti-framing), so the HTML flashing gate could be clickjacked",
+      "player_impact": "A hostile site could frame /play/ and trick a visitor into clicking 'I understand, start' without seeing the flashing warning.",
+      "where": ["https://dixonbalsagna.github.io/orb-combat-ex/play/index.html"],
+      "evidence": "curl -I shows no X-Frame-Options or CSP frame-ancestors (only Access-Control-Allow-Origin: *), and the gate is a page overlay with a start button. GitHub Pages cannot set headers; a frame-busting check in the page would be needed.",
+      "horizon": "already-public",
+      "severity_guess": "S4",
+      "likelihood": "low",
+      "evidence_strength": "reproduced",
+      "needs_outside_expert": "No.",
+      "external_sources": []
+    },
+    {
+      "title": "A home LAN address is committed to the public repo",
+      "player_impact": "Reveals a private (non-routable) home-network address; no practical attack found.",
+      "where": ["net/lan.gd:231", "net/tools/lan_kit.mjs:3", "net/tools/lan_check.gd:382"],
+      "evidence": "10.0.0.135 appears in comments and a test; it is an RFC 1918 address. A pattern scan found no keys or tokens in the committed tree.",
+      "horizon": "already-public",
+      "severity_guess": "S4",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "No.",
+      "external_sources": []
+    }
+  ],
+  "checked_ok": [
+    {"area": "No decoder can create Objects", "where": "net/transport.gd:68; sim/world/plan.gd:99; grep of all .gd", "why": "Only bytes_to_var is used, which Godot documents as not decoding objects. No bytes_to_var_with_objects, str_to_var, JSON.to_native or Expression appears in shipped code."},
+    {"area": "Binary game-packet decode bounds", "where": "net/transport.gd:62-115", "why": "Counts are u8 and available bytes are checked before each read; the tail length is validated, so malformed packets return null."},
+    {"area": "Bind address and peer gate", "where": "net/enet_transport.gd:34-41, 109-123; net/lan.gd:216-223; net/tools/lan_kit.mjs:13-20", "why": "The host binds the kit's own private IP (not all interfaces) with one peer slot and a /24 filter, and drops packets from non-peers before decoding."},
+    {"area": "No discovery service", "where": "grep for PacketPeerUDP, UDPServer, set_broadcast in all .gd; net/lan.gd:215-218", "why": "No broadcast or discovery responder exists; the joiner dials a fixed address."},
+    {"area": "Net code absent from public builds", "where": "export_presets.cfg:55,101,132; live pck file table; git ls-tree 257a766c net/ (0 files); net/tools/lan_kit.mjs:24,43-56,88-97", "why": "Desktop presets exclude net/*; the live web pck has no net/ entries; NetLan is wired in only by the kit patching a scratch copy, and nothing outside net/ references Net* classes."},
+    {"area": "Spectator not network-reachable", "where": "net/spectator.gd:49-63; net/loopback.gd:176-187", "why": "It is fed in-process by the loopback relay; there is no socket path."},
+    {"area": "Settings and remap files", "where": "ui/core/ui_prefs.gd:10-17; sim/input/remap.gd:412-417", "why": "They use JSON.parse_string with a Dictionary type check, and Godot JSON yields no objects. A crafted local file can at worst cause script errors in remap.apply_file (remap.gd:435-443)."},
+    {"area": "Caches", "where": "sim/world/field_cache.gd:78-108, 240-262; sim/world/plan.gd:94-100", "why": "Magic, key text, length and SHA-256 are checked before use, and the payload goes through bytes_to_var with no objects."},
+    {"area": "Replays and resource loading", "where": "sim/core/replay.gd (no file IO); render/core/main.gd:1650-1659; render/camera/cam_places.gd:43", "why": "The game loads no replay files. Every load() and scene change uses res:// data, and the study route needs a valid identifier under res://render/anim/tools and is local-only."},
+    {"area": "Web URL arguments", "where": "render/core/main.gd:1643-1644,1676-1691; ui/hud/ui_hud.gd:1499-1515; render/vfx/meteor.gd:43-44; render/vfx/stage_feed.gd:25-26; render/vfx/energy_head.gd:39-40", "why": "On a public host only skyreact, panhaze, nopanhaze and keyhelp survive; study, flashcap and debug words are dropped by a hostname check, and the live pinned build gates them the same way."},
+    {"area": "JavaScriptBridge.eval and window hooks", "where": "ui/core/ui_web_clip.gd:89-140; ui/hud/ui_hud.gd:1644; render/core/main.gd:299,755,1748", "why": "Evaluated text is constant or JSON.stringify-escaped engine and data values; no page or URL text is evaluated. The capture hook (window.__flashcap) attaches only on a local host or a capture_hook build."},
+    {"area": "OS calls and HTTP", "where": "ui/widgets/ui_feedback.gd:264-288; ui/data/send.json _target none; grep for HTTPRequest, OS.execute, create_process", "why": "shell_open gets only the data-defined feedback URL with uri_encoded user text, and the send target is none. OS.execute and create_process appear only in tool scripts, and there is no HTTPRequest, HTTPClient or WebSocket in shipped code."},
+    {"area": "CI and supply chain", "where": ".github/workflows/ci.yml:19-20,451-453,526-541; .github/actions/setup-godot/action.yml:35-36,54-55; tools/site-template.mjs:84-86,178-184", "why": "Read-only token by default, actions pinned by SHA, persist-credentials false, deploy only on main and not for pull requests; Godot, the templates and the custom web template are checked by SHA-512."},
+    {"area": "Public downloads", "where": "gh api releases and actions/artifacts; .github/workflows/desktop-builds.yml:143-166", "why": "The only public release and artifact is the web template; no desktop or LAN build is published, and desktop artifacts keep for one day."},
+    {"area": "Other public paths", "where": "curl of /band/, /bench/ and /", "why": "/band/ and /bench/ serve the holding page, so no prototype build is exposed."},
+    {"area": "Project settings", "where": "project.godot:9", "why": "There are no autoloads; the main scene is boot_entry."}
+  ],
+  "limits": [
+    "I did not run Godot, so the hang paths and how a release export behaves after a GDScript runtime error are traced, not reproduced.",
+    "I could not confirm Godot 4.7.2's bytes_to_var recursion cap or ENet maximum packet size; the depth check I saw is in a master-branch source mirror (cocalc.com/github/godotengine/godot/blob/master/core/io/marshalls.cpp).",
+    "I inspected the live site through curl of its pages, the pck file table and two small data files in it; the custom index.wasm was not examined.",
+    "The LAN folders actually given to Orb and Orb 2 are not in the repo; I judged them from net/tools/lan_kit.mjs, and a kept-build tree may differ.",
+    "Per the independence rule I did not read docs/legal, docs/net, docs/qa, docs/ep or audit/, so Legal rows that code comments cite are unverified."
+  ]
+}

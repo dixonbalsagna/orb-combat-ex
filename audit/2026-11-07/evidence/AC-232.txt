@@ -1,0 +1,16 @@
+# AC-232 proof
+$ sed -n 10,11p qa/run-godot.js
+// Exit code: 0 unless the run itself broke (no Godot, NaN, a fighter outside the world, a non-deterministic seed) or a
+// hard test failed (soft tuning tests such as W3 and W5 only report). Band FAILs are the point of a baseline, so they exit 1 only with --fail.
+$ sed -n 61,62p;98,99p qa/run-godot.js
+  const bad = Object.values(A).flat().filter(r => r.bad);
+  if (bad.length) { for (const r of bad.slice(0, 5)) console.log(`FAIL  seed ${r.seed} (${r.arm}): ${r.bad}`); process.exit(1); }
+  if (val('md', null)) fs.writeFileSync(path.resolve(val('md')), toMarkdown(result));
+  process.exit(hardFail || (flag('fail') && fails) ? 1 : 0);
+$ grep -n 'skipped:' qa/run-godot.js | cut -c1-120
+72:      try { const feel = require('./godot/feel'); rows.push(...feel.feelRows(await feel.runFeel({ matches: FEEL, base
+75:      try { const { levelRows } = require('./godot/bands'); const byLevel = {}; for (const lv of ['easy', 'hard']) by
+78:      try { const { crossingRows } = require('./godot/bands'); const X = await runRecords({ arm: 'default', base: BAS
+81:      try { const m = require('./godot/masher'); rows.push(...m.masherRows(await m.runMasher({ n: MASHER, base: BASE,
+$ grep -n run-godot .github/workflows/*.yml
+(no workflow runs qa/run-godot.js)

@@ -1,0 +1,11 @@
+AC-215 evidence
+== docs/ep/vision.md:951
+- **Writing:** Orb finds the forward-facing writing shown so far (web pages, in-game dialogue) rushed and bizarre. Forward-facing text is to be written with care and seen by Orb before it is used.
+== docs/marketing/public-page-drafts.md:3
+Status: draft, private. The fixed lines were replaced on 2026-10-22 by Legal's `docs/legal/page-fixed-lines.md` (RL-166), word for word, in American spelling; the description is Orb's chosen version A. Nothing here is live: the demo is offline until Tools' change to the gate lands. Written 2026-10-16 by Marketing for the EP's brief; Orb sees every public line before it is used. Orb's note: "high quality before you show me, don't be afraid to iterate until it reads perfectly."
+== README.md:7 (public, says hosted build offline)
+Every fighter, move and planet here is original. **Licence:** not chosen yet, so all rights are reserved for now. Please do not copy or redistribute this code or content until a licence is added. The hosted build is offline for now while its flashing effects are fixed (see below); when it returns you may play it. "Meridian" is the team's internal codename.
+== README last commit
+92c9c94f 2026-10-12 The About statement no longer says Orb edits the dialogue by hand (none is in the build or marked yet); it returns when it is true
+== tools/site.json pin
+11:  "pin": "257a766c26f8766fb09b063864c41c5d8ba64dc0",

@@ -1,0 +1,14 @@
+# AC-135 proof (run 2026-11-07)
+$ git grep -n orbcombatex 8d9b98a2 -- export_presets.cfg
+8d9b98a2:export_presets.cfg:153:application/bundle_identifier="io.github.dixonbalsagna.orbcombatex"
+$ grep title/h1 in live pages (captured earlier by auditor)
+7:<title>Orb Combat EX (working title)</title>
+19:<h1>Orb Combat EX (working title)</h1>
+		<title>Orb Combat EX</title>
+$ name-screening.md:83,186-188
+For the final one or two names, a trademark lawyer runs a formal search in the countries where we will sell, gives an opinion, and advises whether to file. Do this before any public reveal, logo, domain purchase or store page. **Orb decides** whether to file a trademark, and where.
+2. **Before any store page, itch.io page or the first promotion:** run the formal search (US, EU, UK, Japan; classes 9, 28 and 41; exact phrase and near matches), re-check GitHub, Steam, Google Play and the App Store on the day, and record the result here. A lawyer's one-sitting review can do it (go
+3. **The visible heading** may keep "(working title)" until then. See the report of 2026-10-11 (RL-124).
+4. Keep the rest of the earlier conditions: no orb-shaped artefacts for the Protagonist, distance from the web series, "Orb" as a pseudonym against the copyright-holder line.
+$ git log -S RL-205
+0ca0c6a9 2026-10-28 Legal: RL-203 to RL-205, desktop test builds (a run only with Orb's yes, 1-day retention, pin-move b

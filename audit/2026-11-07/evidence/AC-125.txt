@@ -1,0 +1,6 @@
+# AC-125 proof
+| RL-127 | The re-laid city and seven landmarks (city-and-open-floors-screen.md) | World, Rendering | Low | Pass; crown tower nudge (short corner stubs, not pale horns); w03 | Open until redrawn **Amended 2026-10-12: the 'no falling-towers wording' guard rested on the withdrawn sensitivity rule (the EP's over-literal reading of a sarcastic remark); withdrawn.** |
+## RL-144 (later row)
+166:| RL-144 | Art's city tints, facade types and the crown stubs (catastrophe-and-city-screen.md) | Art, Rendering | Low | Pass; w05: neighbouring-element contrast at most 0.085 (glass against sun-side fin is 0.14 as drawn); RL-127 closed | Open until the data asserts w05 |
+## w03 row
+{"id":"w03","rule":"a landmark has no clock face, no red and white striping, no stripes or beams of light, no antenna mast on a stepped tower, no multicolour night lighting on a tower top, and no pair of thin pale spires on a dark tower that reads as horns","why":"originality: no real landmark's likeness and none of the earlier look-alike conditions (clock face, red and white striping, stripes or beams of light); the horns reading is a recommendation, not a condition. Kept on its own grounds; not from the withdrawn sensitivity rule"}

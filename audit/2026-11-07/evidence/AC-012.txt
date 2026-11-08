@@ -1,0 +1,23 @@
+# AC-012 evidence (auditor helper, 2026-11-07)
+## RL-247 has a row in the committed log, and RL-249 sits in the summary table (before ## Detail at 281 and ## Sources at 460)
+269:| RL-247 | Orb's own decisions (2026-11-02, owner, in a private discussion released to
+271:| RL-249 | The drawn case of RL-241 (EP's ask from the co-op 2v2 packet, docs/ep/propo
+281:## Detail
+460:## Sources (checked 2026-09-28)
+## review-log.md:463 (cited by the inventory) is a Sources line
+- Meridian titles: [Meridian 59](https://store.steampowered.com/app/893390/Meridian_59/), [Meridian](https://store.steam
+## ?otherfights=1 honoured only where bypass_allowed (render/vfx/stage_feed.gd:21-31; ui/hud/ui_hud.gd:1508-1515)
+		return _word == "1"
+static func bypass_allowed() -> bool:
+	if UiData.rf_locked() and not UiData.feature("capture_hook"):
+		return false
+	if not OS.has_feature("web"):
+		return true
+	var hp = JavaScriptBridge.eval("location.hostname + '|' + location.protocol", true)
+	var parts: PackedStringArray = str(hp).split("|")
+	return parts.size() == 2 and page_is_local(parts[0], parts[1])
+## live pin and live pack carry no otherfights word
+0
+0
+## LAN folder does not draw the other fight (docs/net/lan-v1.md:103)
+| No flash number from it counts | It reads none. **When either PC draws the other fight, RL-241 wants both fights' light counted together on one screen, and the 2v2 flash clips run, before anyone but Orb sees it** |

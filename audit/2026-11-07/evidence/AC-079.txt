@@ -1,0 +1,13 @@
+# AC-079 proof, 2026-11-07, HEAD 53b6df82
+## Gemini provenance records at HEAD (committed, so public; both under pending/):
+docs/narrative/pending/provenance_hw11.json
+docs/narrative/pending/provenance_mc.json
+gemini mentions: HEAD:docs/narrative/pending/provenance_hw11.json:57 HEAD:docs/narrative/pending/provenance_mc.json:244 
+provenance_hw11.json fields: date / counts / generator:
+  "date": "2026-10-16",
+    "gemini_rewrites": 26
+      "generator": "Google Gemini ('Argon'), prompted by Orb",
+## Gemini-session names in player data:
+257a766c (live web pin): files with Grist/Loupe = 0
+HEAD: HEAD:ui/data/fighter_names.json 
+## External (accessed 2026-11-07): https://policies.google.com/terms (effective 2026-07-30), 'Your content': 'Google won't claim ownership over that content.' https://ai.google.dev/gemini-api/terms now 301-redirects to https://aistudio.google.com/docs/terms (not fetched).

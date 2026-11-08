@@ -1,0 +1,41 @@
+# AC-055 / AC-056 / AC-061 proof (run 2026-11-07)
+## HEAD export_presets exclude filters
+3:name="Web"
+11:exclude_filter="prototype/*, qa/*, research/*, docs/*, tools/*, .github/*, sim/core/tools/*, sim/director/tools/*, sim/world/tools/*, audio/tools/*, ui/tools/*, render/anim/tools/*, render/vfx/tools/*"
+15:encryption_exclude_filters=""
+47:name="Windows Desktop"
+55:exclude_filter="net/*, prototype/*, qa/*, research/*, docs/*, tools/*, .github/*, sim/core/tools/*, sim/director/tools/*, sim/world/tools/*, audio/tools/*, ui/tools/*, render/anim/tools/*, render/vfx/tools/*"
+59:encryption_exclude_filters=""
+93:name="Linux"
+101:exclude_filter="net/*, prototype/*, qa/*, research/*, docs/*, tools/*, .github/*, sim/core/tools/*, sim/director/tools/*, sim/world/tools/*, audio/tools/*, ui/tools/*, render/anim/tools/*, render/vfx/tools/*"
+105:encryption_exclude_filters=""
+124:name="macOS"
+132:exclude_filter="net/*, prototype/*, qa/*, research/*, docs/*, tools/*, .github/*, sim/core/tools/*, sim/director/tools/*, sim/world/tools/*, audio/tools/*, ui/tools/*, render/anim/tools/*, render/vfx/tools/*"
+136:encryption_exclude_filters=""
+## net/ files in pin 257a766c (count)
+0
+## references to Net* classes outside net/ at HEAD (count)
+0
+## LAN kit firewall rule, filters, lock, words
+19:  if (/zerotier|vpn|tailscale|wireguard|hamachi|tap|tun|virtual|vethernet|loopback/i.test(owner[0])) stop(`--host-ip: ${owner[0]} is a member or virtual network, which RL-230 rules out`);
+27:const subnet = a['host-ip'].split('.').slice(0, 3).join('.') + '.0/24';
+109:  if (f.lock_reduce_flashing !== true) stop('Reduce flashing did not lock on (RL-230)');
+110:  if (f.capture_hook === true) stop('the capture hook is on (RL-230)');
+177:  `netsh advfirewall firewall add rule name="Orb Combat LAN test" dir=in action=allow program="$exe" protocol=UDP localport=47100 remoteip=${subnet} profile=any enable=yes`,
+185:  'netsh advfirewall firewall delete rule name="Orb Combat LAN test"',
+186:  'netsh advfirewall firewall delete rule name=all program="$exe"',
+191:// Legal RL-230's words, checked: its WHO PLAYS line as it stands, a plain word that a link opens, and the public build's privacy line nowhere.
+195:if (!/opens a network link between the two PCs/.test(words)) stop('lan_words.txt: it must say a link opens');
+196:if (/collects|sends nothing|no accounts/i.test(words)) stop('lan_words.txt: RL-204\'s privacy line stays out of the kit');
+## ENet host-side prefix filter
+15:var allowPrefix: String = ""   # a listener's: only a peer whose address starts with this may connect ("" is anyone). Legal RL-230's home network filter, on top of the firewall rule's
+58:static func allowed(addr: String, prefix: String) -> bool:
+59:	return prefix == "" or addr.begins_with(prefix)
+111:				if allowed(ev[1].get_remote_address(), allowPrefix):
+## snapshot runtime compile
+215:		var g := GDScript.new()
+216:		g.source_code = _genSrc
+217:		_gen = g if g.reload() == OK else false
+219:			push_error("NetSnapshot: the generated copier did not compile; the reflective copy is used")
+## desktop package net check
+218:    else if (!p.exclude.includes('net/*')) out.push(`export_presets.cfg: the "${name}" preset does not exclude net/* (online play stays out of the package: RL-204 condition 1)`);

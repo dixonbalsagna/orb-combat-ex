@@ -1,0 +1,17 @@
+AC-053 evidence (verifier v04, 2026-11-07, read-only)
+## HEAD docs/legal/review-log.md:462 (RL-248; working tree line differs, committed line is 462)
+| RL-248 | UI's clash teaching (docs/ui/pending/refusals-clash/README.md, stills docs/ui/img/refusals-clash/clash-*-beat.png): the button glyphs in the legend are ringed in gold, the launcher's warning colour, for 0.25 s on each beat, at the screen edge, in a match's first three beam struggles only; confirm against RL-227's colour rule and the flash register, or name another colour | EP, UI | Low | Gold is fine for this ring. RL-227's and k03's gold bar is for effects in the world and on or by the fighters (the shooter's colour sweep, the screen-edge light, charge rings); this is a small UI ri
+
+## code
+const BEAT := "#c6f24a"             # the clash teaching's ring on the beat (RL-248): a colour of its own, so the warning gold keeps its meanings and this ring means nothing else
+const BEAT_RAMP := 0.1   # seconds for the beat ring to go on or off (RL-248: at least 0.1)
+	var ring_to: float = 1.0 if (not beat_rows.is_empty() and (beat_steady or beat_hold > 0.0)) else 0.0
+	beat_ring = move_toward(beat_ring, ring_to, sdt / BEAT_RAMP)   # a ramp of 0.1 s, the shortest Legal allows (RL-248): never a hard blink
+					bm.beat_hold = BEAT_HOLD_NEAR if bm.beat_gap_t < BEAT_NEAR else BEAT_LIT   # the beat: the glyphs are ringed; with the last beat under 0.5 s ago the ring stays lit across beats (no more than two changes a second)
+		pm.beat_steady = bool(opts["reduce_flashing"])   # Reduce flashing: the beat ring holds steady for the whole struggle (RL-248)
+## The clash teaching's ring on a legend glyph at the beat (RL-248): a ring with six ticks, in its own colour (UiLook.BEAT), inside the legend and nowhere else.
+
+## HEAD ui/tools/hud_check.gd:1442,1508 (local check; not in a workflow)
+	# Legal's RL-248 on the ring: a ramp of at least 0.1 s; at most two changes a second (beats under 0.5 s apart keep it lit across them); steady under Reduce flashing; a shape of its own; a colour of its own; the first three struggles only.
+	_ok(ramp_ok and across_ok and slow_ok and steady_ok and shape_ok and colour_ok, "struggle teach: the beat ring ramps in 0.1 s, stays lit across beats under 0.5 s apart, switches on at most twice a second for slow ones, holds steady under Reduce flashing, has six ticks as its own shape and its own c
+hud_check in .github: 0 file(s)

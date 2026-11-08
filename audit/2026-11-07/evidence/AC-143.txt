@@ -1,0 +1,10 @@
+# AC-143 proof
+$ movegen-banned.json:875
+      "rule": "the word 'ball' stays banned in a move's name or title (e11); the one allowed phrase is 'ball of the foot' as the plain anatomical name of a foot strike's striking surface (movegen parts.json nameScreen.allow), never as a title word, never beside an energy, light or hand word, and never 'ball of the hand' or 'ball of light'; any further allowed phrase is added here by Legal, not by 
+$ movegen and proposals live only under docs/ (excluded from export)
+docs/combat/pending/movegen/README.md
+docs/combat/pending/movegen/c2t-content.md
+docs/combat/pending/movegen/cells.json
+docs/combat/pending/movegen/coverage.md
+docs/combat/pending/movegen/gen_moveset.py
+proposals bytes: 331275

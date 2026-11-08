@@ -1,0 +1,12 @@
+== HEAD options text_size
+92:    "text_size": { "default": 1.0, "group": "accessibility", "label": "Text size", "help": "How big the words are in 
+== HEAD ui_hud text_size wiring
+62:	"text_size": 1.0,          # the text-size multiplier (Normal 1.0, Large 1.25, Larger 1.5): UiText.size_mult, set in set_option
+295:	UiText.size_mult = float(opts["text_size"])   # so is the text size
+629:	if key == "text_size":
+== pin 257a766c text_size
+0
+== HEAD hud-spec contrast row
+398:| Contrast | Text outline; light panel scrims (50 to 55%); arc under-stroke | Set minimum contrast per role. The scrims are lighter now, so this matters more |
+== any contrast measurement in ui/tools or tools/l10n
+(end)

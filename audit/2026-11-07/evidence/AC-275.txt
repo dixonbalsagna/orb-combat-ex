@@ -1,0 +1,13 @@
+# AC-275: phase-gate rule and absence of gate records
+6. A phase does not close until its exit criteria are met and QA, Production and Legal have signed off (`/gate`).
+- Run phase gates: check exit criteria with QA, Production and Legal before opening the next phase.
+- No flagged resemblance left open at a gate
+# docs/legal/originality-rules.md:70
+Legal answers GO, CONDITIONAL or NO-GO in `review-log.md`. A flagged item cannot be locked or shipped until it is closed, and no flag stays open at a phase gate.
+# ls docs/production (roadmap.md and gate packets named as deliverables at DIRECTORS.md:510):
+**Deliverables:** docs/production/roadmap.md; risk-register.md; status digests; gate packets
+risk-register.md
+# grep 'gate packet|P0 gate' in docs:
+docs/directors/production-ops.md
+# HEAD review-log:270
+Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.

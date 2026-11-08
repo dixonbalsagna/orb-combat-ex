@@ -1,0 +1,25 @@
+protan lanes P vs R dE00 = 34.9 | art says 34.9 | min stage-stage 26.1 | min stage-lane 31.1
+deutan lanes P vs R dE00 = 36.6 | art says 36.8 | min stage-stage 20.8 | min stage-lane 19.6
+tritan lanes P vs R dE00 = 31.0 | art says 30.9 | min stage-stage 23.1 | min stage-lane 28.4
+default auras, normal vision dE00 = 28.5
+ default auras under protan = 20.5
+ default auras under deutan = 17.2
+ default auras under tritan = 31.1
+== HEAD readers of colour_vision
+HEAD:render/core/look.gd
+HEAD:render/vfx/aura.gd
+HEAD:render/vfx/vfx_hub.gd
+HEAD:ui/core/ui_data.gd
+HEAD:ui/core/ui_look.gd
+HEAD:ui/demo/hud_demo.gd
+HEAD:ui/hud/ui_hud.gd
+== pin 257a766c readers
+257a766c:render/core/look.gd
+257a766c:render/vfx/aura.gd
+257a766c:render/vfx/vfx_hub.gd
+257a766c:ui/core/ui_data.gd
+257a766c:ui/core/ui_look.gd
+257a766c:ui/demo/hud_demo.gd
+257a766c:ui/hud/ui_hud.gd
+== UI note's own deutan number (claims >=20)
+protan 26.1, deutan 19.9, tritan 22.0

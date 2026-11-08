@@ -1,0 +1,16 @@
+== git ls-files docs/accessibility
+docs/accessibility/audit-2026-10-28.md
+docs/accessibility/beam-alert-review.md
+docs/accessibility/cloud-reports/2026-10-28-foundation.md
+docs/accessibility/l10n-plan.md
+docs/accessibility/right-hand-controls.md
+docs/accessibility/swing-motion.md
+== checklist.md in HEAD?
+no: HEAD:docs/accessibility/checklist.md does not exist
+== ever committed?
+== gate skill mentions of accessibility
+== hold-to-flurry built?
+HEAD:data/input/timing.json:307:    "flurryGapX": 12,
+HEAD:data/input/timing.json:308:    "flurryGapY": 16,
+HEAD:data/input/timing.json:309:    "flurryGapB": 34,
+HEAD:data/input/timing.json:310:    "flurryNeedSlow": 2,

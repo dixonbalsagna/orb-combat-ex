@@ -1,0 +1,30 @@
+# AC-025 evidence
+## audit-2026-10-28.md:88 and :92
+- `options.json` `reduced_motion` (off by default): no flicker, shimmer or shrinking rings in the HUD (`ui/widgets/ui_crown.gd` `_still`), the split screen swaps with a quick fade instead of a swing (`render/camera/split_rig.gd` `reduced_motion`, `T_SWING_REDUCED`, `SLAM_TIME_REDUCED`), VFX trims (`render/vfx/vfx_hub.gd` and the views it drives), shake capped at a quarter.
+**Missing.** No option for the camera's fast pans on a launch beyond `camera_launch_follow` (Orb's whip-pan haze decision, `docs/ep/vision.md` 2026-10-15) — *unverified* how fast the remaining pans are. The fade used by reduced motion is a dissolve, which Orb rejects for the default look (CLAUDE.md, ADR 0010); as an opt-in accessibility path it should stay, and that exception is worth writing down.
+
+## swing-motion.md:20
+  1. It is a **plain cut**, never a dissolve or fade. Today's `CUT_DISSOLVE_S` under Reduce flashing must not be used (Orb, 2026-10-18; Camera already says so).
+
+## ADR 0010:11
+4. **The taste list** in `docs/ep/taste.md` names what Orb has rejected and what Orb wants. Briefs and reviews check against it. Banned outright: screen dissolves and cross-fades between shots, slow slide-style wipes, fade-to-black transitions in play, full-screen blur or haze, persistent rings or markers drawn over the fighters, and anything that costs frame rate for presentation.
+
+## RL-229 (HEAD:251)
+| RL-229 | EP for Camera (2026-11-01): the reduced-motion cross-dissolve on cuts is not live (SplitView.cut_dissolve defaults to false, off on Orb's word 2026-10-18, ADR 0010); is Legal's 0.3 s ask (photosensitivity-note.md, addendum 10, 'On Camera's causes') still a requirement, for which builds, and does anything else satisfy it | EP, Camera | Low | It was never a requirement: addendum 10 labelled it 'for the fix, not a ruling' and said 'prefer'. Withdrawn as a preference. What stands is the rule under it: a whole-frame cut after a bright event is a counted whole-screen step in the flash registry and is read by the clips as played, so a plain hard cut is satisfied by the readings alone (public gates, primary at most 2.5 in both modes; interim triggers unchanged). Nothing else is needed for it. Camera's rule: no cut inside about 1 s of a catastrophe or signature flash is welcome, not required. The old dip (whole-screen dip) stays gone. Private builds: no change (RL-224, RL-226). Fix the stale 'default on' comment in split_view.gd and panel-flash.md line 49. No question for Orb. | Closed on the ruling; the cut's readings are read in the next release set | 
+
+## code: split_view.gd:47 (HEAD), :313-316, the pin's line 47, and every caller of set_cut_dissolve
+var cut_dissolve: bool = false        # a cut under Reduce flashing or reduced motion is a cross-dissolve of CamParams.CUT_DISSOLVE_S (a build-time switch; false: the old dip; OFF on Orb's word 2026-10-18: "the dissolve is terrible... don't dissolve the screen")
+
+## A cut under Reduce flashing or reduced motion cross-dissolves (default on); false keeps the old dip. Build-time switch.
+func set_cut_dissolve(on: bool) -> void:
+	cut_dissolve = on
+var cut_dissolve: bool = false        # a cut under Reduce flashing or reduced motion is a cross-dissolve of CamParams.CUT_DISSOLVE_S (a build-time switch; false: the old dip; OFF on Orb's word 2026-10-18: "the dissolve is terrible... don't dissolve the screen")
+HEAD:render/camera/split_view.gd:315:func set_cut_dissolve(on: bool) -> void:
+HEAD:render/camera/split_view.gd:316:	cut_dissolve = on
+HEAD:render/tools/flash_capture.gd:167:			main.split_view.set_cut_dissolve(false)
+
+## camera_params.gd:226 (stale 'Legal asks at least 0.3')
+const CUT_DISSOLVE_S: float = 0.40     # a cut under Reduce flashing or reduced motion cross-dissolves over this (the compositor; Legal asks at least 0.3)
+
+## options.json reduced_motion help (one step, no fade)
+    "reduced_motion": { "default": false, "group": "accessibility", "label": "Reduced motion", "help": "Removes flicker, shimmer and shrinking rings. The split screen changes sides in one step instead of sweeping across, and screen shake is cut to a quarter. Everything keeps its shape.", "accessibility": true },

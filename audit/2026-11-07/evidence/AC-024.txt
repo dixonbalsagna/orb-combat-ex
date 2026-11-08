@@ -1,0 +1,56 @@
+# AC-024 evidence
+## RL-213 (7) at HEAD:235
+(7) a swing is a camera and ground motion, so Accessibility reviews it for motion sensitivity (a setting that turns the swing to a cut or a still) before it ships; it adds no flash, and any look change still runs the collapse and signature clips both modes 
+
+## swing-motion.md:3, 16-30
+For the EP, to meet Legal's RL-213 condition 7: "Accessibility reviews it for motion sensitivity (a setting that turns the swing to a cut or a still) before it ships". Paper only. Read: `docs/world/ring-any-angle/game-design.md` §9 to §13, `camera.md` §5, `docs/camera/swing-view.md`, UI's uncommitted right-hand settings words in `ui/data/` and Controls' `docs/controls/right-hand-attacks.md`.
+### 1. A view-side cut or still as the first answer: **yes**
+- **Why.** It never touches the sim, so online play, rollback and the other player are unaffected, and a sensitive player gets relief without anyone's match changing. Camera's per-shot table (`camera.md` §5, "Legal's RL-213") is the right shape.
+- **A separate setting from Reduce flashing.** Reduce flashing is about luminance; this is about turning. Someone may need one and not the other.
+- **Conditions.**
+  1. It is a **plain cut**, never a dissolve or fade. Today's `CUT_DISSOLVE_S` under Reduce flashing must not be used (Orb, 2026-10-18; Camera already says so).
+  2. A cut counts in the flash register. A lone cut is not a flash by count; the risk is a cut stacked with the blow's flash, the whip and the explosion inside one second. The analyser reads each shot with the setting on, in **both** flash modes, at 16:9 and 4:3. If a stack fails, the cut moves off the blow, or that swing is not taken (rule 2).
+  3. **Cuts are rationed.** First value, mine: view-side cuts no closer than 4 s apart outside a launch's own cut and its whip, and small swings (under 15°) are never cut but folded into the next cut. QA counts cuts a match and reports the shortest gap.
+  4. The held-heading limit is **Rendering's and Simulation's** to state. I accept Camera's foot limit (`r × 0.5 × angle > 10` units) as the bound for this review, and I require that a catch-up cut falls on a hit-stop or another cut on action, never on its own.
+  5. **No roll, bank or tilt under this setting, ever,** even if clip 7 passes for the default. Roll is the worst case for sensitive players.
+
+### 2. `swingReduced` at 30°/s as the backstop: **acceptable as an internal backstop, not as a promise to the player**
+- 30°/s is still a swing (a half turn in 3 s). It is a reasonable limit for the case where a shown heading cannot be held, and it is wrong to describe it in any text as "reduced" or "safe".
+- **Needed for a second case Camera did not list:** a swing whose cut fails the analyser (rule 1.2). The view cannot dissolve it and cannot hold it, so the only remaining answer is to take no swing, or a slower one, in that match. **I recommend the sim flag become three-valued in data (full, slow, off) even if the first build ships only full and slow.** *Off* is the clean answer for a sensitive player: no turning, no parting of shown and sim ground, and the fight plays as it did before the swing (QA's existing baseline). Game Design and Orb decide whether *off* is offered.
+- **Online.** Each player's setting crosses in the lobby and the strongest wins (on if either has it on). That is right here: the sensitive player's need outranks the other's preference. It goes in the match header with the other flags. I recommend it is allowed in ranked and online play, since it gives no advantage: Orb decides.
+- **Player-facing.** The view-side setting is the row. The sim flag is set by it (reduced motion on, or the lobby), not by a second row, so players meet one idea.
+
+## the setting exists and is wired
+    "world_turning": { "default": "auto", "group": "display", "label": "World turning", "help": "When the fight turns to face somewhere new, the world can swing round behind the fighters. Cut jumps to the new view on the blow instead. Auto follows Reduced motion.", "accessibility": true, "choices": ["auto", "full", "cut"] },
+## Whether swings show as cuts: UI's world_turning (auto follows Reduced motion), or any playback above 1x (Accessibility, docs/accessibility/swing-motion.md).
+func _swing_cuts() -> bool:
+	return playback > 1.0 or world_turning == "cut" or (world_turning == "auto" and reduced_motion)
+	split_rig.world_turning = String(o.get("world_turning", "auto"))
+	rig.world_turning = "cut"
+	for _t in range(30):
+		_tick(S, rig)
+	SimSwing.ask(S, {"deg": 40.0, "cause": "launch"})
+	_tick(S, rig)
+	_ok(rig.current().cut, "world_turning cut didn't cut")
+	S = _match()
+	rig = _rig(S, true)
+	rig.world_turning = "full"
+	for _t in range(30):
+		_tick(S, rig)
+	SimSwing.ask(S, {"deg": 40.0, "cause": "launch"})
+	var cf: int = 0
+	for _t in range(60):
+		_tick(S, rig)
+		cf += 1 if rig.current().cut else 0
+	_ok(cf == 0 and rig.swing_shown == 0.0, "world_turning full didn't turn: %d cuts" % cf)
+
+## the swing switch is off (HEAD, a8bc66e2) and absent from the pin's options
+22:    "swing": false,
+22:    "swing": false,
+pin options world_turning count: 0
+
+## ADR 0012 item 3
+10:3. **The sim is shared.** A setting may change what is drawn, never what the sim computes, so players on different settings can still play each other and replays stay valid.
+
+## no sim swing flag implemented
+0

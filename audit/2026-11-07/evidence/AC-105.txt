@@ -1,0 +1,14 @@
+$ sed -n '60p' docs/legal/review-log.md
+| RL-038 | Animation data rule and pose screen (section 3.7) | Animation | Medium (beam release) | GO, except the beam release: CONDITIONAL | Open until the beam release changes |
+
+$ sed -n '32p;38p;40p' docs/legal/animation-data-rule.md | cut -c1-500
+| Beam release | **CONDITIONAL** | One arm out, palm forward, the other hand gripping the wrist is a well-known anime beam stance, and it appears in the franchise. Change one part: fire from a fist or forearm instead of the palm, or brace the elbow or forearm from below instead of the wrist. |
+Logged as RL-038. The beam release stays open until Animation changes it.
+**RL-038 closed 2026-10-16.** The beam release's condition was the well-known stance of one arm out, palm forward, with the other hand gripping the wrist. Animation's casts (`bm.hold.*`) have no wrist grip: the free hand is open and at least a shoulder width away. A palm-forward one-arm release with that brace removed is an ordinary energy-in-reach hand (R1, e10). The condition is met.
+
+$ grep -n -o -E '"bm\.hold\.fire_protagonist".{0,330}' data/anim/waves/beam1.poses.json
+7:"bm.hold.fire_protagonist": {"family":"upright_lunge","lean":14,"hip_twist":18,"hips":[16,-8,0],"spine":{"lean":6,"twist":16},"head":{"pitch":0,"yaw":4},"hand_r":[58,62,9],"pole_hand_r":[4,2,8],"hand_l":[10,48,-12],"foot_r":[-12,2.5,10],"foot_l":[24,2.5,-8],"hands":{"r":"open","l":"open"},"_legal":["hands_open_or_claw","not_at_hip","wrists_apart"],"_orig
+
+$ git show 257a766c:data/anim/waves/beam1.poses.json | grep -o -E '"bm\.hold\.fire_protagonist".{0,330}'
+"bm.hold.fire_protagonist": {"family":"upright_lunge","lean":14,"hip_twist":18,"hips":[16,-8,0],"spine":{"lean":6,"twist":16},"head":{"pitch":0,"yaw":4},"hand_r":[58,62,9],"pole_hand_r":[4,2,8],"hand_l":[10,48,-12],"foot_r":[-12,2.5,10],"foot_l":[24,2.5,-8],"hands":{"r":"open","l":"open"},"_legal":["hands_open_or_claw","not_at_hip","wrists_apart"],"_orig
+

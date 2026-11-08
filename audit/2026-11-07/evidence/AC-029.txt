@@ -1,0 +1,28 @@
+# AC-029 evidence (HEAD 53b6df82)
+## catastrophe-and-city-screen.md:19-24 (c01-c04 text)
+- **At most one flash per two seconds** from any catastrophe light event, counted across everything on the screen (the registry), **rising over at least 0.3 s and falling over at least 1 s**, with a **calm form** under Reduce flashing (a lower peak, a slower rise, no repeats) measured in the set (c0
+- **Red and magma (c03):** magma is amber-orange with slow change; no saturated-red flash; **bubbling is low contrast (under a 10% step), 2 Hz or slower, irregular and unsynchronised**, never a regular spot or stripe pattern over a large area (a regular pattern is its own test, apart from flashes). 
+- **The bombardment (c04):** explosions far below are small in screen area or fired no faster than two a second within any one screen window, never in step with each other; the fighters' exosphere glow is a steady edge.
+- **The darkening sky (c05):** minutes long, under the sky's slew limit; fighters keep their lane-colour contrast in the darkest sky.
+- **Between stages:** story beats, fades and wipes follow the same rules (a cut or a fade is a whole-screen change).
+
+## runtime register catastrophe class (flash_registry.gd:59-61, 245-262)
+const CAT_GAP: int = 120                  # ticks (2 s) between two catastrophe light events, whatever the pane
+const CAT_RISE_MIN: int = 18              # ticks (0.3 s)
+const CAT_FALL_MIN: int = 60              # ticks (1 s)
+		out["ok"] = ask("far_impact", col, tick, area_px)
+		out["why"] = String(log.back()["why"])
+	elif cat_last >= 0 and now - cat_last < (CAT_REPEAT_QUIET if reduced else CAT_GAP):
+		out["why"] = "cat_calm_repeat" if reduced else "cat_gap"
+		_record(source, false, String(out["why"]), tick, w, false)
+## sim/core/cata.gd:8-9 (not called in play)
+## until a blast cloud, and hashed only once it is not, so a match without one is the same to the bit. Nothing calls
+## blastCloud until the catastrophe tier is built. data/fight/catastrophe.json.
+## callers of blastCloud( outside tools
+sim/core/cata.gd:57:static func blastCloud(S: SimState, f, x: float, y: float, n: int) -> void:
+sim/core/cata.gd:59:	SimFx.blastCloud(S, f, x, y, radius, n)
+sim/core/fx.gd:237:static func blastCloud(S: SimState, f, x: float, y: float, amount: float, n: int) -> void:
+## data/fight/catastrophe.json _note
+The catastrophe tier's sky (run-mode.md section 3.2; sim/core/cata.gd; docs/architecture/run-core.md section 6): the blast cloud's cue and the world's ash. Nothing reads this file until the catastrophe tier calls a blast cloud.
+## WCAG 2.2 (https://www.w3.org/TR/WCAG22/, read 2026-11-07): 341 x 256 at 1024 x 768 estimates a 10-degree field; 25% of it = 0.25*341*256 =
+21824

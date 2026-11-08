@@ -1,0 +1,11 @@
+# AC-235 proof
+$ sed -n 13,17p docs/ep/first-press-list.md
+7. **It doesn't break.** Ten minutes of the sim natively, through the real input hub, on several seeds: no script errors, stuck states or hangs. Then a few minutes of the moving reel on the page, for what only the page can break.
+8. **The frame.** On a quiet PC, one scripted fight with a clash and a collapse: median frame under 16.7 ms on this PC, and the slowest moments are named. A hitch Orb would stop over stops the handover.
+8a. **Sound and rumble.** Sound plays in the browser after the first click, and the hits, launches and clash fire their cues, checked by a log of cues played and the output's level. The pad rumbles where the browser allows it. The handover 
+9. **The warning and the black box.** The warning shows first, and the match record saves, including from a match cut short.
+10. **The right build.** Orb gets exactly the build that passed the quiet read: nothing running on the PC, no watch to swap it mid-match. That build is copied to a folder named by its commit, outside the repo, and kept, so Orb's recording c
+$ git grep -n -i 'median frame' HEAD -- docs/ep
+HEAD:docs/ep/first-press-list.md:14:8. **The frame.** On a quiet PC, one scripted fight with a clash and a collapse: median frame under 16.7 ms on this PC, and 
+$ photo notice words in a8bc66e2 ui/data/terms.json
+"photo_title": "This game contains flashing effects."

@@ -1,0 +1,20 @@
+# AC-006 evidence (auditor helper, 2026-11-07)
+## ci.yml:101-104 (flash job is a register count; pixel half not in CI)
+  # Photosensitivity check, half 1 (docs/tools/flash-check.md; Legal's condition for the public web build, WCAG 2.2 criterion 2.3.1): plays the worst cases
+  # (a mash, a beam clash, a signature, the transformation, a building collapse, real AI matches) in normal and in reduced-flashing mode, headless, and recounts
+  # the flash register's log: more than 3 granted flashes in any 60 ticks (1 under reduced flashing) fails. It is a count of the sources that ask the register,
+  # not a luminance measurement and not a clearance; the pixel half runs over captured frames (tools/flash/analyse-frames.js) and is not in CI yet.
+## tools/site-pin.mjs:29-32 owner path: no recorded pass read or required
+  if (config.offline === true) return { pin: '', problems };
+  // OWNER-APPROVED (Orb's order, 2026-10-18): the pin is site.json's own "pin" (a full SHA); no recorded pass is read or required
+  if (config.interim && typeof config.interim.owner === 'string' && config.interim.owner.trim()) {
+    if (!/^[0-9a-f]{40}$/.test(String(config.pin))) problems.push('the owner-approved site needs "pin": the full SHA of the commit to publish, in tools/site.json');
+## tools/check-site-interim.mjs:442-447 owner path checks only the signature gate record
+// ---- the pin only moves to a commit whose signature clip, reduced, reads no worse than 2.5 / 3 / 2 (Legal's RL-195 condition (a); tools/flash/signature-gate.mjs)
+if (OWNER) {
+  let rec = null;
+  try { rec = JSON.parse(readFileSync(resolve(opt('--signature-gate') || SIGNATURE_GATE), 'utf8')); } catch { /* reported by gateProblems */ }
+  for (const m of gateProblems(rec, config.pin)) bad(`the signature gate: ${m}`);
+}
+## the pin once moved unmeasured
+86d44e54 2026-10-22 00:43:36 -0700 Site: taken offline with the kill switch (Legal's addendum 11, RL-161): the published commit changed to 257a766c on 2026-10-19 without the nightly re-run on it, which is a take-down trigger; the nightly seeds re-run on the pin now, and the 2026-10-19 run on 5c46feca (16 clips, max 3.5, none over) is recorded

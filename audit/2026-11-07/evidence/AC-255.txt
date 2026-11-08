@@ -1,0 +1,26 @@
+== HEAD main.gd ai level
+
+
+## The computer's level, from the start menu's choice (UI: the menu config's ai_level). It is part of every match's setup after the menu has run ("aiLevel", read by SimCore), so New match
+## and Play again keep it; "" until then, when the setup carries none and the match runs at the data's own level.
+var _ai_level: String = ""
+
+
+func _ai_part() -> Dictionary:
+	return {"aiLevel": _ai_level} if _ai_level != "" else {}
+
+
+== HEAD sim.gd aiLevel
+HEAD:sim/core/sim.gd:153:	if setup.has("aiLevel"):   # the computer's level for this match, the start menu's choice (UI): a level of data/director/ai.json. The file's own level is "" (as a match with no key runs), so a match at it is the same as ever; the replay header names the level by the same rule (SimReplay.dataHash: DirAI.levelOf)
+== HEAD start menu level row
+HEAD:ui/hud/ui_hud.gd:1604:		"ai_level": UiMenu.level_of(s.get("ai_level", UiMenu.DEFAULT_LEVEL)),
+HEAD:ui/hud/ui_hud.gd:1683:				_menu_cfg["ai_level"] = UiMenu.level_step(str(_menu_cfg.get("ai_level", UiMenu.DEFAULT_LEVEL)), d, false)
+HEAD:ui/hud/ui_hud.gd:1692:				_menu_cfg["ai_level"] = UiMenu.level_step(str(_menu_cfg.get("ai_level", UiMenu.DEFAULT_LEVEL)), 1, true)
+HEAD:ui/hud/ui_hud.gd:1718:				_menu_cfg["ai_level"] = UiMenu.level_of(str(h["value"]))
+HEAD:ui/widgets/ui_menu.gd:10:## The computer's level: the choices are the levels of data/director/ai.json (Encounter's), the default is the level that file runs a match at. Saved with the menu choices as `ai_level`;
+HEAD:ui/widgets/ui_menu.gd:305:	return [int(c.size.x), int(c.size.y), int(c.position.x), int(c.position.y), int(p["focus"]), int(p["fs"]), int(cfg.get("players", 1)), str(cfg.get("p1", "")), str(cfg.get("p2", "")), str(cfg.get("ai_level", "")),
+HEAD:ui/widgets/ui_menu.gd:348:	var chosen := {"players": str(int(cfg.get("players", 1))), "p1": str(cfg.get("p1", "kb")), "p2": str(cfg.get("p2", "kb")), "ai": level_of(cfg.get("ai_level", DEFAULT_LEVEL))}
+== pin 257a766c: any ai level choice
+(end pin grep)
+== a8bc66e2 contains b6df7059?
+yes

@@ -1,0 +1,49 @@
+# AC-228 proof
+$ git log -S"QA's GB-001" -- render/camera/split_view.gd
+658c95b1 2026-10-01 Rendering: split screen attaches every run again; occlusion hole and stubs, camera pitch, inset pane, pad preset and camera settings wired; 
+$ sed -n 94,103p render/camera/split_view.gd
+func attach(m) -> void:
+	if _attached:
+		return
+	main = m
+	# The panes are made once. Attaching again after a detach (F9 twice) takes the ones it has: making them again left
+	# two empty viewports on screen (QA's GB-001).
+	if viewports[0] == null:
+		var sz := Vector2i(maxi(2, int(get_viewport().get_visible_rect().size.x)), maxi(2, int(get_viewport().get_visible_rect().size.y)))
+		viewports = [main.move_pane0(sz), main.make_pane(sz)]
+		add_child(viewports[0])
+$ sed -n 1560,1571p render/core/main.gd
+			if code == "F9":
+				if e.alt_pressed:
+					var steps: Array = RenderLook.PITCH_STEPS
+					cam_pitch = float(steps[(steps.find(cam_pitch) + 1) % steps.size()])
+				elif e.ctrl_pressed:
+					occlusion = PaneWorld.OCCL_STUB if occlusion == PaneWorld.OCCL_HOLE else PaneWorld.OCCL_HOLE
+				elif split_view != null:
+					if split_view.is_attached():
+						split_view.detach()
+					else:
+						split_view.attach(self)
+				return
+$ sed -n 189,200p render/tools/pane_check.gd
+	# 8: Camera's own compositor attached, detached and attached again (F9 twice; QA's GB-001) keeps the two panes.
+	main.compositor = null
+	main.remove_child(sv0)
+	main.remove_child(sv1)
+	var view := SplitView.new()
+	main.add_child(view)
+	view.attach(main)
+	view.detach()
+	view.attach(main)
+	_expect(main.panes.size() == 2 and view.viewports[0] == sv0 and view.viewports[1] == sv1, "attaching again made new panes (%d panes)" % main.panes.size())
+	_expect(main.panes[0].get_parent() == view.viewports[0] and main.panes[1].get_parent() == view.viewports[1], "after attaching again the panes are not in the compositor's viewports")
+	_expect(main.compositor == view and view.is_attached(), "after attaching again the compositor is not attached")
+257a766c split_view.gd GB-001 guard lines: 1
+a8bc66e2 split_view.gd GB-001 guard lines: 1
+$ git log -1 -- qa/known-bugs.md
+7bcd4a49 2026-10-03
+$ sed -n 150,153p qa/known-bugs.md
+**Verdict:** confirmed by reading the code; not yet reproduced in Godot.
+**Cause.** `render/core/main.gd` (F9) calls `split_view.detach()` then, on the next press, `split_view.attach(self)`. `detach()` leaves pane 0 inside its old SubViewport, but `attach()` has no re-entr
+**Suggested fix.** Make `attach()` re-use `viewports` when they exist (set `main.compositor = self`, `_attached = true`, restore the update modes) instead of creating new panes; or make F9 toggle only
+**Effect.** Any session where F9 is pressed an even number of times after the first press (detach, attach) ends grey for good; restart is the only way out. Not a sim bug: determinism and the baseline 

@@ -1,0 +1,18 @@
+AC-200 proof, run 2026-11-07
+-- live / claims (evidence/live-site-index.html, identical to live per AC-201.txt) lines 25, 29, 31-34:
+<p>No combo lists to memorise. Press a button, land a blow. The fight director is designed to chain your light, medium and heavy strikes into combos on the fly, shaped by where you stand and how the fight is going. No two exchanges are meant to play out the same way twice. The fight director is ordi
+<p>No walls, no side to be cornered on. Fly one way and you come back round the other: city, desert, ocean, mountains. Planned: a sky that turns from noon to night as you cross it.</p>
+<p>Beams gouge trenches into the ground. Buildings crack and break apart in stages. The world keeps every scar until the match ends.</p>
+<p class="small">Features described here are in development and may change.</p>
+<p class="small">Orb Combat EX is a one-person project: Orb directs it and builds it with AI tools. AI tools wrote the game's code and drafted its art, animation data, dialogue, UI text and design documents. Its procedural systems (planets, fight choreography, the computer-controlled opponent) are o
+<p class="small">This page collects and sends no personal data. It is hosted on GitHub Pages, which keeps its own server logs.</p>
+-- pin 257a766c: beams carve a groove (sim/director/beam.gd:272-273):
+		# Scorch: a groove carved to a target depth along the ground, not a crater per sample (sim quirk 7 is gone).
+		WorldCrater.scorch(S, x, P, b.variant, A)
+-- pin 257a766c: building stages (sim/world/structures.gd:99):
+## The stage of a building, 0 to 4: 0 intact, 1 windows out, 2 a part gone, 3 a shell, 4 rubble (not alive). A pure function of its hit points and its
+-- README.md (public) lines 7 and 9 on the hosted build:
+The hosted build is offline for now while its flashing effects are fixed (see below); when it returns you may play it.
+We are fixing them.
+-- /play/ status:
+200

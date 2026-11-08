@@ -1,0 +1,8 @@
+# AC-192 evidence
+305:| MC-255 | Cyborg | He lands an authored finisher. | Done! Fighter's flattened, protein secured! | Done! Flattened! Protein secured! | Fixed robotic fragment. | "Target flattened and tenderized! Time to pack up the l
+387:8. **Legal screen (Cyborg hunger and relish of injury):** the Cyborg's food-for-an-opponent lines have grown more graphic (MC-047 to MC-049 "meat grinder", "soft, chewy muscle", MC-126, MC-148, MC-149, MC-255, MC-257
+6116:            "text": "Target flattened and tenderized! Time to pack up the leftovers!",
+HEAD live_barks.enabled= false
+beat: finisher_landed | a finisher lands (the bark trigger on the finisher's last_look cue); the winner speaks
+a8bc66e2 enabled= false
+pin lacks live_barks

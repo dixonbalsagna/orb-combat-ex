@@ -1,0 +1,17 @@
+# AC-098 evidence
+## review-log.md (HEAD) :34, :340-344
+| RL-012 | Breakers-Like / Breakerslike | repo and folder name | Medium if public (Low while private) | CONDITIONAL: rename before public | Open |
+### RL-012 Repo and folder name: Breakers-Like / Breakerslike
+- **Searched:** [franchise title]: The Breakers (publisher pages and Steam); "Breakerslike" and "Breakers-like"; Steam store search for "breakers"; GitHub repository search.
+- **Found:** [franchise title]: The Breakers is a live [franchise rights holder] game (developed by Dimps, released 14 October 2022 on PC through Steam, PlayStation 4, Xbox One, Xbox Series X|S and Nintendo Switch), in the franchise this project is a homage to. "-like" is how genres are named after a game ("roguelike"), so "Breakers-like" reads as "a game like The Breakers". Breakers is also a common word: Steam sho
+- **Rating:** Medium as a public name. Low while the repo is private (the rating scale applies to public use).
+- **Decision:** CONDITIONAL. **Recommendation:** Fine while private. Before the repo goes public, rename it (GitHub redirects the old address) to the final game name or a neutral slug, and keep "Breakers" out of the public name, description, topics and README. The local folder name is not public, so leave it. When renaming, update `docs/setup/git-and-github.md`.
+## gh api repos/dixonbalsagna/orb-combat-ex (2026-11-07):
+{"description":null,"name":"orb-combat-ex","topics":[],"visibility":"public"}
+## README.md (HEAD) mentions of Breakers:
+0
+## old name lookup gh api repos/dixonbalsagna/Breakers-Like:
+{"message":"Not Found","documentation_url":"https://docs.github.com/rest/repos/repos#get-a-repository","status":"404"}gh: Not Found (HTTP 404)
+## committed files containing 'breakers' (mostly local temp paths with the folder name):
+38
+HEAD:docs/animation/img/water-stance/d20-clips.json:18:de/C--Users-<account>-Documents-Claude-Proj-Breakers-Like/0595

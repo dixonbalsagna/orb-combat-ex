@@ -1,0 +1,6 @@
+# AC-146 proof
+$ git grep -l 'bl_info|import bpy' 8d9b98a2
+(none)
+$ any blender file
+(none)
+Blender licence page https://www.blender.org/about/license/ (accessed 2026-11-07): 'requires that such scripts (if published) are being shared under a GPL compliant license.'

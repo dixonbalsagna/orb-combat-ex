@@ -1,0 +1,374 @@
+{
+ "verdicts": [
+  {
+   "id": "AC-184",
+   "claim": "Swing timing may read anguish, menace and mood within budget; direction may not read menace; crowd barred; QA must show no toll-swing link and a civilians-removed run swings the same within one.",
+   "key_sources": [
+    "docs/legal/review-log.md:237",
+    "sim/director/swing.gd:20",
+    "sim/director/swing.gd:459-462",
+    "sim/director/swing.gd:467",
+    "sim/director/tools/swing_legal_check.gd:9-10",
+    "data/director/swing.json:36",
+    "docs/qa/cloud-reports/2026-10-31-swing-rows.md:7,18-19"
+   ],
+   "verdict": "MISFILED",
+   "severity": "-",
+   "horizon": "none",
+   "likelihood": "low",
+   "evidence_strength": "traced in code",
+   "what_is_true": "The rule is in the code: timing reads the three scalars behind a tension switch (off), _direction names no menace or mood, and a source lint bars crowd and pop terms. The swing is off at HEAD and a8bc66e2 and absent from the public pin. QA's toll-association and civilians-removed rows exist but read PENDING, so the batch has never run. This is the pillar-5 design invariant (the villain never feeds on deaths), not a law or rating rule.",
+   "proof": [
+    "audit/2026-11-07/evidence/AC-184.txt",
+    "swing.json enabled false and tension.enabled false at HEAD and a8bc66e2; pin lacks swing.gd",
+    "swing_legal_check.gd:9-10 BARRED and NOT_IN_DIRECTION lists"
+   ],
+   "external": [],
+   "cost_of_false_alarm": "Holds a QA statistical batch and an open Legal row over a design invariant, and it reads to Orb as a legal blocker on the swing.",
+   "fix": "Move to Game Design as a pillar-5 invariant, with QA's swing.toll.assoc and swing.civless rows kept as design checks. Retire it from Legal's open list.",
+   "belongs_to": "Game Design (pillar 5, Orb's creative direction); QA for the batch"
+  },
+  {
+   "id": "AC-185",
+   "claim": "Landmark nudge reads structures only, same for every fighter, input wins; Cyborg meter fed only by objects by mass, never people or c09 places; labs unmanned; no real station, agency, flag or company named.",
+   "key_sources": [
+    "docs/legal/review-log.md:238",
+    "sim/director/swing.gd:994-1008",
+    "sim/director/swing.gd:1049",
+    "data/narrative/combat_barks.json:101"
+   ],
+   "verdict": "MISFILED",
+   "severity": "-",
+   "horizon": "none",
+   "likelihood": "low",
+   "evidence_strength": "traced in code",
+   "what_is_true": "nudgeList scores places by placeBuildings[kind] and turn angle only, the same for every fighter, and any stick change ends a nudge (swing.gd:1049). The Cyborg's hunger exists only as a +5 taunt entry in combat_barks.json, with no hunger stat in sim/, so the object-only feed is unbuilt. The rule is pillar-5 and tone design. Only 'no real company or agency named' has a real (trademark) kernel, and nothing names one yet; labs were not checked because none are built.",
+   "proof": [
+    "audit/2026-11-07/evidence/AC-185.txt",
+    "git grep hunger -- sim data: only data/narrative/combat_barks.json:101"
+   ],
+   "external": [],
+   "cost_of_false_alarm": "Keeps an open Legal row and a QA batch over a design rule for a meter that does not exist, and Narrative and Game Design wait on Legal's sign-off.",
+   "fix": "Move the nudge and fuel rules to Game Design and Narrative as pillar-5 design rules. Keep only a one-line trademark check (no real agency or company names) for Legal.",
+   "belongs_to": "Game Design and Narrative (pillar 5); Legal only for real-entity names"
+  },
+  {
+   "id": "AC-186",
+   "claim": "Hero care-relief lever: trigger counts sends only, one factor with a data floor of at least half, hero's populated landings stay below villain's, 30% band binds, never reaches c09 places.",
+   "key_sources": [
+    "docs/legal/review-log.md:241",
+    "sim/director/relief.gd:1-70",
+    "data/director/launch.json:137-143",
+    "tools/schemas/director-launch.schema.json:650-659"
+   ],
+   "verdict": "MISFILED",
+   "severity": "-",
+   "horizon": "none",
+   "likelihood": "low",
+   "evidence_strength": "traced in code",
+   "what_is_true": "DirRelief is built and off (relief.enabled false). The trigger counts building sends only, applies to AI fighters with care only, and returns max(scale, floor) with floor 0.5. The schema holds scale and floor at 0.5 or more. QA's rows (3) to (5) have not been read. This is AI tuning under pillar 5, and the 12 to 30% band is the team's own band, not a rating rule.",
+   "proof": [
+    "audit/2026-11-07/evidence/AC-186.txt",
+    "launch.json relief: enabled false, floor 0.5; schema minimum 0.5"
+   ],
+   "external": [],
+   "cost_of_false_alarm": "Gates an AI tuning lever behind a Legal row and three QA batch rows, and it frames ordinary hero-AI tuning as legal exposure.",
+   "fix": "Move to Game Design as a balance and pillar-5 check, with QA's rows as design checks. Close the Legal row.",
+   "belongs_to": "Game Design (AI tuning, pillar 5); QA"
+  },
+  {
+   "id": "AC-187",
+   "claim": "Far-town people feed only the hero's anguish, no counter, no menace/power/Witness/aggression sink; QA reads band over places reached and tour total, repeats civilians-removed run.",
+   "key_sources": [
+    "docs/legal/review-log.md:250",
+    "sim/world/collateral.gd:300-315",
+    "data/biomes/field.json:15-23"
+   ],
+   "verdict": "MISFILED",
+   "severity": "-",
+   "horizon": "none",
+   "likelihood": "low",
+   "evidence_strength": "traced in code",
+   "what_is_true": "The far branch in WorldCollateral.kill writes only anguish, and only on fighters with hasAnguish, then returns before the budget, popHist and _feed paths. It is behind plans.farPeople and farAnguish, both false. No QA band read was found. This is pillar-5 design (the hero is pressured by losses, the villain gains nothing).",
+   "proof": [
+    "audit/2026-11-07/evidence/AC-187.txt",
+    "field.json farPeople false, farAnguish false"
+   ],
+   "external": [],
+   "cost_of_false_alarm": "An open Legal row and two QA reads gate a World feature that is a design choice.",
+   "fix": "Move to Game Design and World as a pillar-5 rule. QA's band and civilians-removed reads stay as design checks.",
+   "belongs_to": "Game Design and World (pillar 5); QA"
+  },
+  {
+   "id": "AC-188",
+   "claim": "Power scale: block collapse reads no occupancy, no one shown dying, no ceremony; its light one catastrophe-class event; burning trail never chars the body; beam building damage capped at x1.5; QA re-reads band at max tier.",
+   "key_sources": [
+    "docs/legal/review-log.md:254",
+    "docs/design/power-scale.md:61,243",
+    "data/fight/ladder.json:31-35",
+    "data/fight/power.json:3-4,106",
+    "sim/world/structures.gd:655-666"
+   ],
+   "verdict": "MISFILED",
+   "severity": "-",
+   "horizon": "none",
+   "likelihood": "low",
+   "evidence_strength": "traced in code",
+   "what_is_true": "The block collapse into the crater is not built (no levelIn in sim at HEAD), and power.json, which holds the burn glow, is off. The x1.5 is already the tier-4 beam.structure value in ladder.json at HEAD and in the public pin. The schema bounds it only at a minimum of 0, so the 'cap' lives in Legal's record alone. Most of the claim is tone (no ceremony, no charring). The light condition is already covered by the general flash rules and gates.",
+   "proof": [
+    "audit/2026-11-07/evidence/AC-188.txt",
+    "ladder.json beam.structure [0.25,0.5,1.0,1.5] at HEAD and 257a766c; schema items minimum 0 only; power.json enabled false"
+   ],
+   "external": [],
+   "cost_of_false_alarm": "It adds a Legal sign-off to a number that has shipped since the pin, and it pulls tone choices into the safety records.",
+   "fix": "Move the tone limits to Game Design and the light limit to the existing flash checks (Accessibility, VFX). If the 1.5 matters, add a schema maximum.",
+   "belongs_to": "Game Design (tone); Accessibility for the light event"
+  },
+  {
+   "id": "AC-189",
+   "claim": "Struggle meeting crater: QA reads band at every tier with overwhelm endings as own row, over 30% numbers come down, barred places spared and not hovering, at most three special craters per step.",
+   "key_sources": [
+    "docs/legal/review-log.md:268",
+    "docs/legal/review-log.md:465",
+    "docs/legal/review-log.md:468",
+    "sim/world/struggle_meet.gd:1-30,155,180",
+    "data/biomes/craters.json:27-29"
+   ],
+   "verdict": "MISFILED",
+   "severity": "-",
+   "horizon": "none",
+   "likelihood": "low",
+   "evidence_strength": "traced in code",
+   "what_is_true": "WorldStruggleMeet is built and off (struggleMeet.enabled false at HEAD and a8bc66e2) and is absent from the public pin. It skips barred landmarks at lines 155 and 180. No code caps special craters at three: that is a 'come back to Legal' rule. The 30% band is the team's own design band. The 'not hovering' dig and the band reads were not checked.",
+   "proof": [
+    "audit/2026-11-07/evidence/AC-189.txt"
+   ],
+   "external": [],
+   "cost_of_false_alarm": "An every-tier band batch plus an overwhelm row are held as Legal gates over a crater-size tuning question.",
+   "fix": "Move the band and crater limits to Game Design, World and QA as tuning checks. Keep only the flash envelope (RL-246 (4)) in the safety records, under the flash gates.",
+   "belongs_to": "Game Design and World (tuning); QA"
+  },
+  {
+   "id": "AC-190",
+   "claim": "Megastructures: no real-tower outlines, no matched twin towers with a bridge, no pancake collapse with figures, no aircraft-shaped strike, no 'ground zero'; unpopulated; no blinking beacons or red-white stripes; dim static lights fading slowly; Anchor and Heat Wall fixes outstanding.",
+   "key_sources": [
+    "docs/legal/review-log.md:255-259"
+   ],
+   "verdict": "MISFILED",
+   "severity": "-",
+   "horizon": "none",
+   "likelihood": "low",
+   "evidence_strength": "traced in code",
+   "what_is_true": "Megastructures exist only as untracked concept files (art/concepts/megastructures/, docs/art/megastructures.md): not committed, not public, and absent from sim, data, render and ui. The limits are mostly originality and real-disaster sensitivity (Orb's creative direction) plus a light margin stricter than the flash standard. Only 'no outline copied from a real tower' has a genuine IP kernel.",
+   "proof": [
+    "audit/2026-11-07/evidence/AC-190.txt",
+    "git ls-files | grep -i mega: none; git status: ?? art/concepts/megastructures/"
+   ],
+   "external": [],
+   "cost_of_false_alarm": "Five Legal rows of screening over unbuilt concept art, which hold Art's sheet open on drawing details.",
+   "fix": "Move to Art as originality and look direction. Keep a one-line real-structure IP check with Legal, and put the light limits under the flash gates when built.",
+   "belongs_to": "Art (originality, Orb's creative direction); Legal only for real-tower likeness"
+  },
+  {
+   "id": "AC-191",
+   "claim": "Wreck Toss counts every living civilian within 3 bh, indoors or out, and never aims a landing near people.",
+   "key_sources": [
+    "docs/legal/review-log.md:208",
+    "sim/world/wrecks.gd:117-132,189-190",
+    "data/biomes/wrecks.json:3"
+   ],
+   "verdict": "MISFILED",
+   "severity": "-",
+   "horizon": "none",
+   "likelihood": "low",
+   "evidence_strength": "traced in code",
+   "what_is_true": "The query is built: nearBh is 3, and livingNear counts standing buildings' popAlive plus a running district flight. No gameplay code calls WorldWrecks (tools only), so Wreck Toss and its aiming planner are not wired. 'Never aim near people' is the pillar-5 design rule, not a legal one.",
+   "proof": [
+    "audit/2026-11-07/evidence/AC-191.txt",
+    "no WorldWrecks. callers outside /tools/"
+   ],
+   "external": [],
+   "cost_of_false_alarm": "An open Legal row on an unwired move, which makes a design rule look like a legal requirement.",
+   "fix": "Move to Game Design and World as a pillar-5 rule for the planner when it is built.",
+   "belongs_to": "Game Design and World (pillar 5)"
+  },
+  {
+   "id": "AC-192",
+   "claim": "MC-255 'pack up the leftovers' reads as remains and is swapped or never plays after a KO; the Empress's threats only target a fighter; all lines go into the ratings answers.",
+   "key_sources": [
+    "docs/legal/review-log.md:232",
+    "docs/narrative/voice-lab/mid-combat-lines.md:305",
+    "data/narrative/live_barks.json:6113-6134"
+   ],
+   "verdict": "MISFILED",
+   "severity": "-",
+   "horizon": "none",
+   "likelihood": "low",
+   "evidence_strength": "traced in code",
+   "what_is_true": "MC-255 is unchanged in live_barks.json on the finisher_landed beat (the winner speaks), so the condition is unmet. Live barks are off at HEAD and a8bc66e2 and absent from the pin. The issue is tone in a Mature-target game. Accurate ratings answers are a store-release process step, not a reason to hold a line.",
+   "proof": [
+    "audit/2026-11-07/evidence/AC-192.txt",
+    "live_barks.enabled false (HEAD, a8bc66e2); pin lacks live_barks"
+   ],
+   "external": [],
+   "cost_of_false_alarm": "A Legal row holds a writing choice open alongside the real provenance item in RL-210.",
+   "fix": "Hand MC-255 to Narrative and Orb as a writing call. Move 'lines into the ratings answers' to the store-release checklist.",
+   "belongs_to": "Narrative (Orb's creative direction); store-release checklist for ratings answers"
+  },
+  {
+   "id": "AC-193",
+   "claim": "Cyborg ground claims and co-op beat lines read wear state, never casualty counts, no people, no remains, no toll-scaled advantage (ln04), enforced in picker and lint (ln05).",
+   "key_sources": [
+    "docs/legal/review-log.md:187",
+    "docs/legal/review-log.md:195",
+    "docs/narrative/line-lint.py:67-78",
+    "data/narrative/opponent_grounds.json:4",
+    "sim/world/ringpick.gd"
+   ],
+   "verdict": "MISFILED",
+   "severity": "-",
+   "horizon": "none",
+   "likelihood": "low",
+   "evidence_strength": "traced in code",
+   "what_is_true": "The line lint already carries ln04 and ln05 for Cyborg lines (line-lint.py:67-78). The ground picker (ringpick.gd) names no people or toll term. The beat templates are pending only and not wired into sim or data, so that picker is unbuilt. The 'until the lint carries ln05' part of the record is stale, and the rule itself is pillar-5 tone.",
+   "proof": [
+    "audit/2026-11-07/evidence/AC-193.txt"
+   ],
+   "external": [],
+   "cost_of_false_alarm": "Two Legal rows stay open, one on a condition already met.",
+   "fix": "Close the lint part. Move the remaining picker rule to Narrative as a pillar-5 writing rule.",
+   "belongs_to": "Narrative (pillar 5)"
+  },
+  {
+   "id": "AC-194",
+   "claim": "The line lint carries sensitive words in block and review tiers, matched whole-word (c10).",
+   "key_sources": [
+    "docs/legal/review-log.md:170",
+    "docs/narrative/line-lint.json:159-208",
+    "docs/narrative/line-lint.py:31-51"
+   ],
+   "verdict": "CONFIRMED-MINOR",
+   "severity": "S4",
+   "horizon": "store",
+   "likelihood": "low",
+   "evidence_strength": "reproduced",
+   "what_is_true": "The lint has carried c10 block and review tiers with whole-word matching since a3e1a37c (2026-10-16). It runs clean on live_barks.json (355 lines, 0 failing). RL-148 still says 'Open until the lint carries c10', so the record is stale. The lint is not wired into CI.",
+   "proof": [
+    "audit/2026-11-07/evidence/AC-194.txt",
+    "line-lint.py:34-36 whole-word regex; output '355 lines ... 0 failing'"
+   ],
+   "external": [],
+   "cost_of_false_alarm": "",
+   "fix": "Close RL-148. Optionally run line-lint.py --live in CI once CI is repaired.",
+   "belongs_to": "Narrative (tool); Tools for CI wiring"
+  },
+  {
+   "id": "AC-195",
+   "claim": "'glass' is review-tier, so the approved Cyborg line 'Glass the whole street' has its word swapped or is kept at review tier; area threats play only on their own trigger (ln01).",
+   "key_sources": [
+    "docs/legal/review-log.md:176",
+    "homework/2 Up Next/09 Business - Legal's open questions (10 min).md:16",
+    "docs/legal/gemini-lines-screen.md:20",
+    "data/narrative/live_barks.json:7610",
+    "docs/narrative/line-lint.json:185"
+   ],
+   "verdict": "MISFILED",
+   "severity": "-",
+   "horizon": "none",
+   "likelihood": "low",
+   "evidence_strength": "traced in code",
+   "what_is_true": "The line is the Empress's, not the Cyborg's: the Legal screen, the provenance file and live_barks excluded_lines all say Empress, and only the EP's homework says 'a Cyborg line'. It is excluded from live barks pending Orb's swap, and 'glass' is in the lint's review tier. Legal calls the swap 'Caution, not a rule'.",
+   "proof": [
+    "audit/2026-11-07/evidence/AC-195.txt",
+    "gemini-lines-screen.md:20 'Empress: ...glass the whole street'; live_barks.json:7610 hw11.19 excluded"
+   ],
+   "external": [],
+   "cost_of_false_alarm": "It puts a wording choice in front of Orb as Legal homework, with the wrong speaker named.",
+   "fix": "Correct the homework item to the Empress and hand it to Narrative and Orb as a writing choice. Retire it from Legal's open list.",
+   "belongs_to": "Narrative (Orb's creative direction)"
+  },
+  {
+   "id": "AC-196",
+   "claim": "Open floors are conditional: sturdy regular columns, a deep beam and a lit lobby; the 'never on a damaged building' and 'never in public with debris' (w01) limits were later withdrawn.",
+   "key_sources": [
+    "docs/legal/review-log.md:150",
+    "docs/legal/review-log.md:154",
+    "docs/legal/city-and-open-floors-screen.md:12"
+   ],
+   "verdict": "MISFILED",
+   "severity": "-",
+   "horizon": "none",
+   "likelihood": "-",
+   "evidence_strength": "documented only",
+   "what_is_true": "Legal's revised screen says open floors carry 'No Legal condition', and that the columns, beam and lobby are Orb's own design requirement. RL-128's row still prints all five conditions, including the withdrawn ones, beside an amendment that names only the wording guard. Whether open floors are built was not checked.",
+   "proof": [
+    "audit/2026-11-07/evidence/AC-196.txt",
+    "city-and-open-floors-screen.md:12 'No Legal condition ... Design, not Legal'"
+   ],
+   "external": [],
+   "cost_of_false_alarm": "A stale Legal row with withdrawn limits can be read as live and block Rendering's open floors.",
+   "fix": "Correct RL-128 to strike the withdrawn limits and mark the rest as Orb's design requirement. Close it as Legal.",
+   "belongs_to": "Orb's creative direction (Rendering and Art)"
+  },
+  {
+   "id": "AC-197",
+   "claim": "Places barred by c09 (school, hospital, place of worship) take no damage from any blast, fall or unaimed body hit, with no shield, glow or marker shown.",
+   "key_sources": [
+    "docs/legal/review-log.md:264",
+    "docs/legal/review-log.md:265",
+    "sim/director/arc.gd:125",
+    "sim/world/structures.gd:466-471,606",
+    "sim/world/brunt.gd:789,818,853,992,1048",
+    "sim/core/shots.gd:383-384,466-489,771-774",
+    "sim/world/blast.gd:114,144",
+    "data/biomes/settlements.json:74"
+   ],
+   "verdict": "MISFILED",
+   "severity": "-",
+   "horizon": "none",
+   "likelihood": "low",
+   "evidence_strength": "traced in code",
+   "what_is_true": "At HEAD the noTarget spare covers the meteor blast, area damage, brunt splash, body strikes and the struggle crater. A straight or lobbed energy shot that hits the chapel still damages it, because shots.gd and blast.gd shotBuilding have no noTarget check and shots.structures is true at HEAD and a8bc66e2. The public pin has no noTarget at all. Legal itself says c09 does not need the spare ('one rule beats two') and accepts incidental hits (RL-243), so this is a World consistency rule.",
+   "proof": [
+    "audit/2026-11-07/evidence/AC-197.txt",
+    "grep -c noTarget sim/core/shots.gd sim/world/blast.gd = 0 and 0; shots.json structures true"
+   ],
+   "external": [],
+   "cost_of_false_alarm": "A closed Legal row claims 'any blast' coverage the code does not have, so a later audit or the look gate may treat a shot hit on the chapel as a legal breach.",
+   "fix": "Move to World. Either add the noTarget check to shots._building, or record direct shot hits as accepted incidental hits under RL-243.",
+   "belongs_to": "World (consistency rule)"
+  },
+  {
+   "id": "AC-198",
+   "claim": "Run endings meet c07/c08; the two rival lines after deaths are no legal block, but alternates are recommended as a caution and it is Orb's call.",
+   "key_sources": [
+    "docs/legal/review-log.md:168",
+    "docs/legal/review-log.md:169",
+    "docs/legal/homework8-review-screen.md:7-8,14-18",
+    "docs/narrative/pending/story_beats.json:381,433"
+   ],
+   "verdict": "MISFILED",
+   "severity": "-",
+   "horizon": "none",
+   "likelihood": "-",
+   "evidence_strength": "documented only",
+   "what_is_true": "Legal's screen itself says the two rival lines are 'a writing choice, not a legal condition'. They sit only in docs/narrative/pending/story_beats.json, not in shipped data. The run-ending pass (RL-146) is a screen of paper lines against Legal's own c07 and c08 cautions.",
+   "proof": [
+    "audit/2026-11-07/evidence/AC-198.txt",
+    "homework8-review-screen.md:18 'a writing choice, not a legal condition'"
+   ],
+   "external": [],
+   "cost_of_false_alarm": "RL-147 stays open on Legal's list waiting for Orb over a writing choice.",
+   "fix": "Close RL-147 as Legal and hand the line pick to Narrative and Orb.",
+   "belongs_to": "Narrative (Orb's creative direction)"
+  }
+ ],
+ "batch_notes": [
+  "All 15 are Legal conditions on pillar-5 design ethics (the villain never feeds on deaths, the hero is pressured by losses) or on tone. None of the features is in the public pin 257a766c. Most are built and off in main (swing, relief, far towns, struggle crater), and some are unbuilt (block collapse, Wreck Toss planner, megastructures, Cyborg hunger stat).",
+  "The basis Legal gives for c08 and c09 is a rating caution, 'general knowledge, not checked today' (catastrophe-and-city-screen.md:32). No law or written platform rule requires the statistical toll-association or 12 to 30% band gates, which are the team's own design checks.",
+  "Stale records: RL-148 (c10 in the lint since a3e1a37c) and the ln05 lint part of RL-173 are met but still open, and RL-128 still prints withdrawn limits.",
+  "Gap found: energy shots damage the noTarget chapel at HEAD and a8bc66e2 (sim/core/shots.gd and sim/world/blast.gd have no noTarget check), against RL-242's 'out of every blast'.",
+  "The EP's homework misnames the 'glass the whole street' speaker as the Cyborg; it is the Empress's line.",
+  "The line lint (docs/narrative/line-lint.py) is not wired into CI. I ran it once read-only on live_barks.json: 0 failing."
+ ]
+}

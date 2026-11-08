@@ -1,0 +1,23 @@
+# AC-238 evidence (verifier v17, 2026-11-07)
+## HEAD
+53b6df820b23934617b2f1b2aed01ddba015b69c
+## ci.yml deploy needs (line 528)
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: [qa, sim, data, flash, godot-parity, net, world, site]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+## node tools/check-workflows.mjs at HEAD
+C:\Users\<account>\Documents\Claude Proj\Breakers-Like\.github\workflows\ci.yml:226: the plain value of "name" holds ": " (a mapping value is not allowed here): quote it
+C:\Users\<account>\Documents\Claude Proj\Breakers-Like\.github\workflows\ci.yml:240: the plain value of "name" holds ": " (a mapping value is not allowed here): quote it
+C:\Users\<account>\Documents\Claude Proj\Breakers-Like\.github\workflows\ci.yml:263: the plain value of "name" holds ": " (a mapping value is not allowed here): quote it
+C:\Users\<account>\Documents\Claude Proj\Breakers-Like\.github\workflows\ci.yml:277: the plain value of "name" holds ": " (a mapping value is not allowed here): quote it
+check-workflows FAILED: 4 problems in 7 files
+exit=1
+## gh run list --workflow ci.yml --limit 3
+[{"conclusion":"failure","createdAt":"2026-11-07T22:07:19Z","databaseId":42419094149,"headSha":"53b6df820b23934617b2f1b2aed01ddba015b69c"},{"conclusion":"failure","createdAt":"2026-11-07T22:00:14Z","databaseId":42418503868,"headSha":"8d9b98a242f925458da9063529ca7a8be96597b1"},{"conclusion":"failure","createdAt":"2026-11-07T21:59:03Z","databaseId":42418413405,"headSha":"c3de110af3aa89a1af616c1f25275d926888faec"}]
+## jobs in latest run 42419094149
+0
+## grep validate tools/site-pin.mjs (pinned tree data not re-validated)
+0
+## tools/site.json pin
+257a766c26f8766fb09b063864c41c5d8ba64dc0

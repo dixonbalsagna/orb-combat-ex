@@ -1,0 +1,30 @@
+# AC-276: QA hard caps, HEAD
+// A backstop for every Godot child (the GDScript runners end themselves by --capsec, --wall and --budget; this is for a child that does not):
+// after QA_PROC_MS (default 100 minutes) the child and its engine process are killed by PID, and the run fails with a message that says so.
+const PROC_MS = parseInt(process.env.QA_PROC_MS || String(100 * 60 * 1000), 10);
+function guard(p, ms = PROC_MS) {
+  const t = setTimeout(() => {
+    p.killedByGuard = true;
+    process.stderr.write(`  QA guard: pid ${p.pid} ran over ${Math.round(ms / 60000)} minutes; killed
+`);
+    try { if (process.platform === 'win32') spawnSync('taskkill', ['/PID', String(p.pid), '/T', '/F']); else p.kill('SIGKILL'); } catch (e) { /* already gone */ }
+  }, ms);
+  p.on('close', () => clearTimeout(t));
+  return p;
+}
+function runRecords({ arm = 'default', base = 1, count = 100, jobs = Math.max(1, Math.min(6, os.cpus().length - 1)), capSec = 900, quiet = false, level = '', startMode = '' }) {
+# guard() wraps in masher.js:
+14:    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/masher.gd', '--', String(
+32:    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String
+50:    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/players.gd', '--', String
+68:    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/' + script, '--', ...args
+# jobs default masher.js / timing-edge.js:
+jobs = 3
+jobs=3
+# wall/budget refs:
+players.gd: 16 wall, 9 budget
+masher.gd: 8 wall, 7 budget
+records.gd: 22 wall, 6 budget
+		while S.T < 900.0 and not (S.game.ko != null and S.game.koT > 3.0) and ticks < 400000:
+			if (ticks & 255) == 0 and Time.get_ticks_msec() - wall0 > 300000:   # a match may take 5 real minutes at most
+# note: godot.js runRecords default jobs = min(6, cpus-1), not 3

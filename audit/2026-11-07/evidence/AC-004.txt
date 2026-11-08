@@ -1,0 +1,23 @@
+# AC-004/AC-005/AC-008 evidence (auditor helper, 2026-11-07)
+## shared flash register exists at the live pin (render/vfx/flash_registry.gd)
+28:const WINDOW: int = 60
+29:const AREA_FULL: float = 21824.0         # px: 25% of the standard's 341 by 256 window at 1024 by 768
+30:const STEP_MIN: float = 0.10             # a luminance swing under this is not a flash
+31:const BUDGET: float = 2.5                # the sum of weights in any WINDOW ticks (Legal's gate)
+32:const BUDGET_REDUCED: float = 1.0
+42:const BIG_CAP: int = 3
+43:const BIG_CAP_REDUCED: int = 1
+## The honest limit: this makes the register limit something closer to what the analyser measures, but it cannot see scenery sweeping past a moving camera, a panel wiping open or a
+## whole-screen dip unless the system that makes it asks (Camera's dip and panel, Rendering's beam). The analyser on the recorded clips stays the test.
+## release pass rule in code: tools/flash/verdict.js:1-3, release-pass.mjs (canary, read-back, PASS rows)
+// analyse-frames.js and run-pixels.mjs. PASS, OVER GATE or FAIL: FAIL when the worst second is over 3 on the primary reading (one-second memory), with the area threshold 15% lower,
+// or with a two-second memory (general or red); OVER GATE when the primary reading is over 2.5 and nothing is over 3; PASS otherwise.
+158:export const CANARY = 'blastdummy-PROTAGONIST-REFERENCE';   // a clip whose two modes are known to differ measurably (a blast: the calm ground and the soft flames against the full ones)
+167:    if (typeof r.reduceFlashing !== 'boolean' || typeof r.flashCalm !== 'boolean') out.push(`${r.id} has no Reduce flashing state read back from the running game (Legal addendum 10)`);
+229:  if (record.hookFixed !== true) out.push("the record was measured before the capture hook set the game's Reduce flashing from the clip's mode (2026-10-17): every clip of it is the calm look, so i
+## owner path skips the recorded pass (tools/site-pin.mjs:29-32; tools/build-site.mjs:82)
+  if (config.offline === true) return { pin: '', problems };
+  // OWNER-APPROVED (Orb's order, 2026-10-18): interim.owner names who decided. The build then needs no Legal ruling id, no expiry and no recorded run: the record's verdicts are printed, report only.
+## CI flash job is a register count (ci.yml:101-104)
+  # the flash register's log: more than 3 granted flashes in any 60 ticks (1 under reduced flashing) fails. It is a count of the sources that ask the register,
+  # not a luminance measurement and not a clearance; the pixel half runs over captured frames (tools/flash/analyse-frames.js) and is not in CI yet.

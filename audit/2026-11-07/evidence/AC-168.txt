@@ -1,0 +1,18 @@
+# AC-168: fonts (run 2026-11-07)
+$ git ls-files | grep -i -E '\.(ttf|otf|woff2?|fnt|fontdata)$' (no output = no font file committed)
+$ git show HEAD:project.godot | grep -i font (no output = no project font)
+$ sed -n 12p ui/core/ui_text.gd
+static var font: Font = null   # a bundled font may replace the fallback later (needs Legal's licence row first)
+$ licence-register LR-004 / LR-004a
+| LR-004 | Fonts | none bundled | n/a | The prototype's CSS names Barlow, Barlow Condensed, Segoe UI, Arial Narrow and Impact but bundles none of them, so players see system fonts. If a font is bundled later, register it first. Barlow is published under the SIL Open Font Licence (verify when registering). | No obligation today | not checked; verify if a font is bundled |
+| LR-004a | Open Sans (Godot's built-in fallback font, `thirdparty/fonts/OpenSans*.woff2`) | as bundled with 4.7.2 | OFL-1.1, "2020, The Open Sans Project Authors" | Covered by LR-001 and LR-002. It is the only font in a build until a font is bundled. Do not sell the font on its own, and keep its notice with it. | Accepted. Read from Godot's COPYRIGHT.txt on 2026-09-29; the fetched text did not sh
+$ gh api repos/godotengine/godot/contents/thirdparty/fonts (Open Sans entries)
+LICENSE.OpenSans.txt
+OpenSans_SemiBold.woff2
+$ curl -s https://dixonbalsagna.github.io/orb-combat-ex/about/ (2026-11-07 23:40Z): Open Sans and OFL lines
+<p>Open Sans: Copyright 2020 The Open Sans Project Authors. Released under the SIL 
+Project Authors. Licensed under the SIL Open Font License, Version 1.1 (OFL-1.1):</p>
+
+$ font files in the live pin 257a766c and LAN build a8bc66e2
+257a766c: 0
+a8bc66e2: 0

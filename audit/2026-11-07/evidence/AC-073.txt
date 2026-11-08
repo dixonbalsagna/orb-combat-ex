@@ -1,0 +1,13 @@
+# AC-073 proof, 2026-11-07
+## gh api repos/Cascachu/OrbCombat
+{"archived":false,"created_at":"2026-04-13T08:25:33Z","description":"Mobile game for simulating fights between orbs with different weapons/powers","full_name":"Cascachu/OrbCombat","language":"GDScript","license":"GPL-3.0","private":false,"pushed_at":"2026-06-16T21:10:51Z","stargazers_count":0}
+## our repo name/description:
+dixonbalsagna/orb-combat-ex description=null topics=[]
+## live titles: / and /play/ <title>
+audit/2026-11-07/evidence/live-site-index.html:<title>Orb Combat EX (working title)</title>
+audit/2026-11-07/evidence/live-play-index.html:<title>Orb Combat EX</title>
+## name-screening.md:182 (formal registers):
+formal registers (USPTO exact phrase, EUIPO, UK, Japan) have **still not been run**.
+## licence commit 701c76a0 (public, ancestor of origin/main) carries a real-name copyright holder line; name withheld here:
+701c76a0 is an ancestor of origin/main
+Copyright (c) 2026 <real name withheld>

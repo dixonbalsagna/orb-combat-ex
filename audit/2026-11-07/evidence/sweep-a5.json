@@ -1,0 +1,222 @@
+{
+  "domain": "A5 content and ratings; A9 accessibility",
+  "risks": [
+    {
+      "title": "The villain grows stronger from civilian deaths it causes, against Orb's stated vision",
+      "player_impact": "Each civilian the RIVAL (role villain) kills adds menace (more ki regen, damage and beam power) and raw power toward his next tier, so the game rewards killing civilians, and his AI heads for towns at tier 2 and above.",
+      "where": [
+        "data/fighters/RIVAL/fighter.json:7",
+        "data/fighters/RIVAL/meters.json:14",
+        "data/fighters/RIVAL/meters.json:15",
+        "sim/world/collateral.gd:330",
+        "sim/world/collateral.gd:357",
+        "sim/world/collateral.gd:358",
+        "sim/core/damage.gd:50",
+        "sim/director/beam.gd:208",
+        "data/director/location.json:14",
+        "data/director/location.json:19",
+        "data/biomes/collateral.json"
+      ],
+      "evidence": "In the committed tree, _feed adds `n * md.menaceCas` (0.9 per casualty) to menace and a hardcoded `n * 0.09` to power for the fighter who caused the deaths. The casualty budget allows deaths at every tier (2 to 15 percent of the population per 60 s, up to 90 percent in total), and the public /play/ pin 257a766c (tools/site.json:11) has the same casualty source and the same power line (collateral.gd:272 at that commit).",
+      "horizon": "already-public",
+      "severity_guess": "S2",
+      "likelihood": "high",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "A ratings consultant should say whether a game mechanic that rewards killing innocents changes the IARC, ESRB or PEGI outcome; the public questionnaires I could reach do not show the exact question.",
+      "external_sources": [
+        "https://pegi.info/what-do-the-labels-mean",
+        "https://www.esrb.org/ratings-guide/"
+      ]
+    },
+    {
+      "title": "Civilian deaths are counted on screen, and a running count sits one keypress away",
+      "player_impact": "Pausing, and the match-over card, show 'Civilians lost: N of TOTAL'. F2, which works in the shipped build with no debug gate, swaps in a greybox HUD that shows a running 'CIVILIANS LOST N / M' count and the villain's MENACE bar during play.",
+      "where": [
+        "ui/hud/ui_hud.gd:2067",
+        "ui/hud/ui_hud.gd:2104",
+        "ui/data/terms.json:94",
+        "render/core/main.gd:1546",
+        "render/core/hud.gd:66",
+        "render/core/hud.gd:229",
+        "ui/data/features.json:20"
+      ],
+      "evidence": "Because minimal_hud is on, the pause menu always shows these facts (facts_always); the F2 handler has no OS or debug-build check. The same F2 path and greybox HUD exist at the public pin 257a766c (main.gd:1113, hud.gd:66). That contradicts the features.json note that there is no running civilian count in the fight.",
+      "horizon": "already-public",
+      "severity_guess": "S3",
+      "likelihood": "medium",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "none",
+      "external_sources": []
+    },
+    {
+      "title": "A store release must declare implied violence against humans, AI-made content, and inaccessible content in the build",
+      "player_impact": "The game shows fantasy violence between humanlike fighters with bruises and torn clothes, city destruction, implied civilian deaths with no bodies or blood, and fleeing crowds. There are no purchases, gambling or player chat, and AI tools made the code, art drafts and dialogue.",
+      "where": [
+        "render/core/damage_look.gd:14",
+        "render/core/crowd_flight.gd:8",
+        "data/narrative/live_barks.json:4",
+        "data/narrative/live_barks.json:1699",
+        "export_presets.cfg:11",
+        "ui/data/features.json:20"
+      ],
+      "evidence": "Steamworks says to disclose all adult content in your builds 'even if it's not accessible' and has separate General, Mature and Generative AI sections. The exported data/ folder includes switched-off bark lines such as 'now you die for it!'. IARC assigns content descriptors plus interactive elements (purchases, user interaction, location sharing, internet access); the honest answers are 'none' for all four except possibly internet access on the web build.",
+      "horizon": "store",
+      "severity_guess": "S3",
+      "likelihood": "high",
+      "evidence_strength": "documented only",
+      "needs_outside_expert": "The questionnaires are visible only inside the Steam partner portal and IARC storefront portals; Orb or Legal must answer them there.",
+      "external_sources": [
+        "https://partner.steamgames.com/doc/gettingstarted/contentsurvey",
+        "https://www.globalratings.com/?p=18",
+        "https://globalratings.com/faq/",
+        "https://www.esrb.org/ratings-guide/",
+        "https://pegi.info/what-do-the-labels-mean"
+      ]
+    },
+    {
+      "title": "Sounds in play have no captions by default: the captions setting only covers barks, and barks are switched off",
+      "player_impact": "A deaf or hard-of-hearing player gets no text for pain and effort cries or other sounds, even though the 'Captions' setting is on by default. Cue captions are off by default and only name beam struggles and open launches.",
+      "where": [
+        "data/narrative/live_barks.json:4",
+        "ui/widgets/ui_barks.gd:159",
+        "ui/widgets/ui_barks.gd:180",
+        "audio/audio_cues.gd:245",
+        "ui/hud/ui_hud.gd:4106",
+        "ui/data/options.json:39",
+        "ui/data/options.json:40",
+        "ui/data/features.json"
+      ],
+      "evidence": "hub.captions_on is read only inside UiBarks. The voice cues play on the Voice bus whether or not barks are on. The beam answer alert, which has its own caption, is behind answer_alert=false.",
+      "horizon": "store",
+      "severity_guess": "S3",
+      "likelihood": "high",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "none",
+      "external_sources": []
+    },
+    {
+      "title": "The 'Hit pause' accessibility setting does nothing",
+      "player_impact": "The Accessibility menu offers a Hit pause slider (0.5 to 1.0), but nothing reads it and hit-stop is switched off, so moving it changes nothing.",
+      "where": [
+        "ui/data/settings.json:56",
+        "ui/data/options.json:50",
+        "ui/hud/ui_hud.gd:72",
+        "data/fight/hitstop.json:4",
+        "ui/widgets/ui_settings.gd:35"
+      ],
+      "evidence": "A grep of render/, sim/, ui/ and audio/ code finds no consumer of hitstop_scale; the HUD comment says it 'only carries it'. The row is not in the HIDE_UNTIL list, so it is shown.",
+      "horizon": "store",
+      "severity_guess": "S4",
+      "likelihood": "high",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "none",
+      "external_sources": []
+    },
+    {
+      "title": "No assist beyond the computer's level",
+      "player_impact": "There is no game-speed or slow mode and no auto-guard or similar in-match assist; the only accessibility lever is easy, medium or hard for the computer opponent.",
+      "where": [
+        "ui/widgets/ui_menu.gd:9",
+        "data/director/ai.json",
+        "ui/data/options.json"
+      ],
+      "evidence": "None of the 95 option keys in options.json is a speed or assist option (I listed them all); the start menu offers the AI levels from data/director/ai.json.",
+      "horizon": "store",
+      "severity_guess": "S4",
+      "likelihood": "medium",
+      "evidence_strength": "traced in code",
+      "needs_outside_expert": "none",
+      "external_sources": []
+    }
+  ],
+  "checked_ok": [
+    {
+      "area": "Blood and gore",
+      "where": "render/core/damage_look.gd:14; data/art/damage.json:46",
+      "why": "Fighters show scuffs, bruises and tears; the blood decals are 'behind the graphic dial and are not drawn'."
+    },
+    {
+      "area": "Civilian deaths depicted",
+      "where": "render/core/crowd_flight.gd:8; render/core/planet_view.gd:1710",
+      "why": "No bodies or remains: killed figures simply vanish, and people who flee run off and fade."
+    },
+    {
+      "area": "Civilian screams or panic audio",
+      "where": "audio/ (grep for crowd, civilian, evacuat, people, flee)",
+      "why": "No matches: civilians make no sound. The only cries are the fighters' own synthesised grunts."
+    },
+    {
+      "area": "Evacuation-fed menace",
+      "where": "sim/world/collateral.gd:77-79, :338-339; data/fighters/RIVAL/meters.json:20",
+      "why": "Menace from people forced to flee (0.45 each) matches the vision's 'terror and mass evacuation'; only the casualty source conflicts."
+    },
+    {
+      "area": "Hero rewarded by deaths (Witness)",
+      "where": "sim/core/forms.gd:399-410; data/fight/forms.json:4",
+      "why": "The opponent's kills would fill the Protagonist's Witness form, but forms are off in the shipped data."
+    },
+    {
+      "area": "Language and crude humour",
+      "where": "data/narrative/, ui/data/, audio/data/grunts.json (word grep)",
+      "why": "No profanity found; 'bloody' and some mild threats appear only in live_barks.json, which is switched off (enabled false, narrative_barks.gd:46)."
+    },
+    {
+      "area": "Gambling, loot boxes, purchases",
+      "where": "sim/, ui/, data/, render/ grep; ui/data/options.json:89",
+      "why": "No currency, shop or random rewards; 'Unlock all cosmetics' is an option with no cosmetic system behind it."
+    },
+    {
+      "area": "Text or voice chat (CVAA)",
+      "where": "net/host.gd:91-137; net/lan.gd:1-3; export_presets.cfg:55,171; ui/data/send.json; ui/widgets/ui_feedback.gd:4",
+      "why": "LAN packets carry only inputs, acks, checks and pause, and net/ is excluded from the desktop presets. There is no microphone use, and feedback only copies text to the clipboard. With no messages 'between individuals', the CVAA electronic-messaging rules (47 CFR 14.10(i)) are not triggered."
+    },
+    {
+      "area": "Button remapping",
+      "where": "ui/data/settings.json:49; ui/data/features.json (remap true); ui/core/ui_remap_model.gd:8,182",
+      "why": "Keyboard and pad remap for both players, with conflict checks, saved to user://input.json."
+    },
+    {
+      "area": "Hold versus toggle",
+      "where": "ui/data/options.json:66,74-82; render/core/main.gd:1134,1637",
+      "why": "Strike, energy, guard, manoeuvre, charging and transform can each be set to hold or toggle, per player, and are wired to the input hub."
+    },
+    {
+      "area": "Colour-blind support and text size",
+      "where": "ui/data/options.json:91-92; ui/hud/ui_hud.gd:294-295,627-631",
+      "why": "Protanopia, deuteranopia and tritanopia presets, and text at 1.0, 1.25 or 1.5 times, applied live."
+    },
+    {
+      "area": "Screen shake, motion and cut-ins",
+      "where": "ui/data/options.json:46,57,59; render/core/main.gd:1164-1165",
+      "why": "A 0 to 10 shake slider (default 2), quartered by Reduced motion, plus panel cut-ins Full, Still or Off."
+    },
+    {
+      "area": "Flash options",
+      "where": "ui/data/options.json:45; render/core/main.gd:778; ui/widgets/ui_notice.gd:3",
+      "why": "Reduce flashing is on by default and wired to VFX, and an opaque notice gates the first start; the public /play/ page shows the notice and says Reduce flashing is locked on."
+    },
+    {
+      "area": "Audio accessibility",
+      "where": "ui/data/options.json:96-99; ui/hud/ui_hud.gd:633-635",
+      "why": "Master, effects and voice volumes, and mono sound, are wired to the audio buses."
+    },
+    {
+      "area": "Pause anywhere and saved settings",
+      "where": "render/core/main.gd:1321-1326,1616; ui/hud/ui_hud.gd:2425,2432",
+      "why": "P, a pad's Start and a touch button pause and freeze the sim; options persist in user://ui_prefs.json."
+    },
+    {
+      "area": "Difficulty",
+      "where": "ui/widgets/ui_menu.gd:9-11; data/director/ai.json",
+      "why": "The start menu offers easy, medium and hard for the computer (default medium)."
+    }
+  ],
+  "limits": [
+    "I did not run the game or open the deployed .pck; I read source at HEAD and at the /play/ pin 257a766c only.",
+    "The Steam content survey questions are partner-only and the IARC questionnaire is reachable only through storefront portals, so I list the declarations from Steamworks', IARC's, ESRB's and PEGI's public pages, not from the questions themselves.",
+    "fcc.gov and ecfr.gov returned 403 or a block page, so I read 47 CFR 14.10 through Cornell LII's copy.",
+    "I did not check whether the EU Accessibility Act or any other non-US accessibility law reaches this game.",
+    "Following the independence rule, I did not read docs/legal, docs/accessibility, docs/qa, docs/net, docs/ep, docs/production, homework or audit/.",
+    "The web export preset does not exclude net/ (export_presets.cfg:11); I left that for the security sweep."
+  ]
+}

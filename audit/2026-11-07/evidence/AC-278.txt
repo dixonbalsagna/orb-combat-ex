@@ -1,0 +1,12 @@
+# AC-278: token discipline still in force vs Orb's 2026-11-06 order
+- **Token discipline (ADR 0005).** The project runs on a Pro plan with zero budget. Don't use workflows or ultracode unless the EP says Orb approved it for the task. Read only the files your task needs, and keep reports short.
+Status: accepted (EP, 2026-09-29; Orb asked for a reasonable distribution)
+- **No standing ultracode.** Workflows run only when Orb approves a specific task: a bounded, high-stakes check of at most five agents. A workflow that was interrupted may be resumed from its journal to finish; it is not restarted.
+## Amendment, 2026-10-23 (Orb)
+
+For the end-of-week push on planet generation, biomes, fighter animation and camera work, Orb authorised workflows: "Workflows sounds good, why haven't we authorized this yet?" For those four areas, until the weekly window resets, directors may run workflows of up to about 10 agents for their briefed tasks. The machine rules still hold. Workflow agents author and analyse. Godot runs and browser ca
+| Budget | Zero; Pro plan only (ADR 0005) |
+| Token plan | Approved (ADR 0005) |
+Standing order: "PURGE ALL FLOATING TOKEN-RELATED LIMITS. I AM ON THE ULTRA SUBSCRIPTION, UNLIMITED 5-HOUR SESSIONS, I WANT TO MAXIMIZE TOKEN USE EFFICIENTLY SO A QUALITY PRODUCT IS ACHIEVED, INSTRUCT AGENTIC SWARMS WHERE NECESSARY, SUGGEST PROJECT-SPECIFIC TOOLS THAT CAN BE BUILT TO ACHIEVE OUR GOALS."
+Orb upgraded the subscription ('more tokens to play with, keep going'). More directors may work in parallel on non-sim tracks. Workflows and ultracode still need Orb's per-task OK (ADR 0005). Newly active: Art (look v0 and the Anti-hero concept), UI & UX (the no-health-bar HUD in ui/), QA (move to batch.gd, Wounds test skeletons), Audio (direction and grunt palettes). Ping Orb whenever a new playable build is live.
+9fd30d33 2026-10-23

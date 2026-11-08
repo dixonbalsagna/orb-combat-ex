@@ -1,0 +1,48 @@
+# AC-229 proof: node qa/run-all.js --quick, then --only=soak,determinism (full 1000-match soak), TMP pointed at the scratchpad
+Meridian regression suite   node v24.19.0   2026-11-07
+summary
+  PASS  tables       0.9s 
+  PASS  determinism  1.8s 
+  PASS  seam         0.5s 
+  PASS  soak         1.6s 
+  PASS  diff         9.2s 
+  PASS  known-bugs   0.5s 
+  PASS  selftest     8.5s 
+
+all 7 test files passed
+exit=0
+
+Meridian regression suite   node v24.19.0   2026-11-07
+== soak
+  ok    1000 matches, arm default, seeds 1..1000  (P1 41%, avg 58s, 0 timeouts, 771 crossed the seam)
+  ok    100 matches, arm swap, seeds 20001..20100  (P1 51%, avg 57s, 0 timeouts, 69 crossed the seam)
+  ok    100 matches, arm mirror-villain, seeds 30001..30100  (P1 53%, avg 47s, 0 timeouts, 37 crossed the seam)
+  ok    100 matches, arm mirror-hero, seeds 40001..40100  (P1 48%, avg 56s, 0 timeouts, 90 crossed the seam)
+soak: 4 passed, 0 failed
+
+== determinism
+  ok    same seed twice in one process gives identical records  (8 seeds)
+  ok    a match does not depend on the ones played before it (newMatch resets all carry-over state)  (12 seeds)
+  ok    different seeds give different matches  (30 distinct)
+  ok    adjacent seeds 2k and 2k+1 are not merged (old clock seeding forced the low bit)
+  ok    the game reports the seed it was given
+  ok    unseeded newMatch() is the same code path as newMatch(clockSeed)  (3 clock values)
+  ok    every arm is deterministic
+  ok    golden hashes match (simulation behaviour unchanged)  (11 matches)
+determinism: 8 passed, 0 failed
+
+summary
+  PASS  soak         14.0s 
+  PASS  determinism  2.1s 
+
+all 2 test files passed
+exit=0
+$ grep -n 'node-version\|run-all' .github/workflows/ci.yml
+40:          node-version: '24.19.0'
+42:      - name: node qa/run-all.js
+43:        run: node qa/run-all.js
+57:          node-version: '24.19.0'
+75:          node-version: '24.19.0'
+116:          node-version: '24.19.0'
+$ sed -n 2p qa/run-all.js
+// LEGACY prototype suite (the GDScript sim is measured by qa/run-godot.js, see docs/qa/README.md). From the repo root:   node qa/run-all.js

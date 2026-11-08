@@ -1,0 +1,27 @@
+$ sed -n '79p;81p' docs/legal/review-log.md | cut -c1-260
+| RL-057 | Levitating rocks, motes, desaturation (VFX) | VFX | Medium (rocks) | Rocks GO on conditions; motes GO; desaturation CONDITIONAL | Open until the rocks are seen in motion |
+| RL-059 | Blast amplification for power-up craters; rocks drift frames | VFX | Low | GO on eight conditions; rocks motion re-check passes | Open until the first transformation cinematic |
+
+$ sed -n '57,62p' docs/legal/agency-pass-screen.md | cut -c1-260
+| Levitating rocks (idea 1), flag on | **GO**, with conditions |
+| Motes (idea 14) | **GO**, with one condition |
+| Desaturating the world near him (idea 18) | **CONDITIONAL**, low priority |
+
+**Rocks can be switched on** under these conditions, most of which are already built in:
+1. **Keep it as built:** few (5 at tier 3, 10 at tier 4), small, uneven distances and heights, each drifting its own way and slowly, never a ring and never turning as one cloud. They hang and bob. They do not spiral, rise in a column or get pulled upward.
+
+$ grep -n ROCKS_DEFAULT render/vfx/vfx_look.gd; git show 257a766c:render/vfx/vfx_look.gd | grep -n ROCKS_DEFAULT
+70:const ROCKS_DEFAULT: bool = true         # levitating rocks round a tier 3 or 4 fighter (docs/vfx/power-language.md); Legal cleared them under five conditions (RL-057)
+70:const ROCKS_DEFAULT: bool = true         # levitating rocks round a tier 3 or 4 fighter (docs/vfx/power-language.md); Legal cleared them under five conditions (RL-057)
+
+$ sed -n '16p' render/vfx/rocks.gd | cut -c1-200
+	"rocks": {"min_tier": 3, "count_t3": 5, "count_t4": 10, "r_min_bh": 0.8, "r_max_bh": 2.6, "h_min_bh": -0.1, "h_max_bh": 1.9, "drift_min": 0.05, "drift_max": 0.22, "bob_bh": 0.07, "bob_hz": 0.35, "siz
+
+$ sed -n '5,8p' render/vfx/rocks.gd | cut -c1-200
+## ground, not charging, not transforming, not hidden and not moving fast, has pieces of the ground's own earth hanging about him:
+## a loose, uneven cloud at different distances and heights, drifting very slowly and bobbing a little, never an even ring (Legal's
+## rule for rubble: gentle, with weight, not a ring of rocks round the fighter, docs/legal/rule-of-cool-screen.md row 12). They rise
+## out of the ground as he reaches the state (0.8 s). **When he leaves the state or speeds up, they are let go in world space** (GB-007,
+
+$ git grep -n -i desaturat -- data/vfx render/vfx render/core | head -3
+

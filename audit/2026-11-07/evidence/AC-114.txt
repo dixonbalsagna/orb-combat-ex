@@ -1,0 +1,13 @@
+$ sed -n '91p' docs/legal/review-log.md
+| RL-069 | Protagonist sheet: big fists, forelock | Art | Medium | CONDITIONAL: fists solid and plated, forelock a swept tuft | Open until Art revises |
+
+$ sed -n '178p;179p' docs/legal/agency-pass-screen.md | cut -c1-300
+- **The big fists must not be pale glowing balls.** On the pick sheet they are drawn as light circles at the end of the arms, which read as energy balls in his hands (the lit-fist rule says plate edges, never a ball of light round the fist). Make them solid, dark and plated, with the same value as h
+- **The forelock** must be a swept tuft, never a curled "spit curl" on the forehead (a famous hero's mark). Keep it flat and angular.
+
+$ sed -n '3p' art/concepts/refine/approved.mjs
+// Approved by Orb (2026-10-04): the Protagonist (broad body, dark plated fists, short swept tuft) and the rival (slim, long tail, flat coat plates, glasses frame C, the bare wedge).
+
+$ sed -n '15p' art/concepts/refine/README.md | cut -c1-300
+| `approved-protagonist-turnaround.svg` | **Approved by Orb (2026-10-04).** The Protagonist's turnaround (front, three-quarter, side, back), the stance in play at gameplay size and flat, parts and colours, with the Legal conditions (dark plated fists, a swept tuft, never a curl) | None: approved. Re
+

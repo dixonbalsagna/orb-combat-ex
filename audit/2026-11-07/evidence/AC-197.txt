@@ -1,0 +1,42 @@
+# AC-197 evidence, HEAD 53b6df82
+$ noTarget guards
+sim/director/arc.gd:125:		if not b.alive or WorldSettle.noTarget(b.landmark) or SimDetMath.hypot(SimWrap.sdx(x, b.x), fl
+sim/director/arc.gd:329:		if not b.alive or _g(f, A_LASTB) == bi + 1 or WorldSettle.noTarget(b.landmark):
+sim/director/launch.gd:1227:		if not b.alive or WorldSettle.noTarget(b.landmark):
+sim/director/swing.gd:248:		if not b.alive or WorldSettle.noTarget(b.landmark):
+sim/director/swing.gd:304:		if not b.alive or WorldSettle.noTarget(b.landmark):
+sim/director/walk.gd:51:		if not b.alive or WorldSettle.noTarget(b.landmark):
+sim/world/brunt.gd:523:		if not nb.alive or nb == b or WorldSettle.noTarget(nb.landmark):
+sim/world/brunt.gd:642:		if WorldSettle.noTarget(b.landmark):
+sim/world/brunt.gd:789:	if not b.alive or WorldSettle.noTarget(b.landmark):   # RL-243: a landmark barred by c09 is not 
+sim/world/brunt.gd:818:	list = list.filter(func(i): return not WorldSettle.noTarget(S.buildings[i].landmark))   # RL-243
+sim/world/brunt.gd:853:	if WorldSettle.noTarget(b.landmark):   # RL-243 (a belt for the paths above): a barred landmark 
+sim/world/brunt.gd:992:	if WorldSettle.noTarget(b.landmark):   # RL-243: the meteor passes a barred landmark as it passe
+sim/world/brunt.gd:1048:		if not nb.alive or nb == b or _splashN(f) >= SPLASH_CAP or WorldSettle.noTarget(nb.landmark): 
+sim/world/structures.gd:606:		if not b.alive or WorldSettle.noTarget(b.landmark):   # RL-242: a landmark barred by c09 (
+sim/world/struggle_meet.gd:11:##   nothing here reads a building's people (the glass is local: no one is counted), a bar
+sim/world/struggle_meet.gd:155:		if not b.alive or WorldSettle.noTarget(b.landmark):
+sim/world/struggle_meet.gd:180:		if not b.alive or b.kind != "tower" or WorldSettle.noTarget(b.landmark):
+$ data: noTarget landmarks
+data/biomes/settlements.json:74:      "noTarget": true
+$ pin 257a766c: any noTarget in sim or data?
+(none)
+$ shots stop at buildings? data/fight/shots.json structures at HEAD and a8bc66e2
+HEAD true
+a8bc66e2 true
+$ shot path: shots.gd _building / hitStructure / blast.gd shotBuilding (no noTarget)
+383:static func hitStructure(S: SimState, sh, b) -> bool:
+384:	WorldBlast.shotBuilding(S, sh.owner, sh.kind, sh.power, b, sh.x, sh.y, sh.z, sh.vx, sh.vy, WorldBlast.chargeOf(sh), outsider(S, sh))   
+466:static func _building(S: SimState, sh, mx: float, my: float, rad: float) -> int:
+489:		if absf(sh.z - b.z) - b.d * 0.5 > zr or not b.alive or bi == sh.lastB:
+114:static func shotBuilding(S: SimState, slot: int, kind: String, power: float, b, x: float, y: float, z: float, vx: float, vy: float, charge: float = 1.0, shooter = null) -> Dictionary:
+144:		WorldStructures.damageBuilding(S, b, dmg, by, "burst", x, 0.0)
+sim/core/shots.gd:0
+sim/world/blast.gd:0
+$ damageBuilding has no guard
+static func damageBuilding(S: SimState, b, d: float, cause, mode: String = "burst", cx: float = 0.0, evt: float = 0.0, local: bool = false, keep: float = 0.0) -> void:
+	# keep (the beam tier gate, balance-targets.md §15): the blow leaves the building standing at keep x maxhp at least.
+	if keep > 0.0:
+		d = SimMathx.jmin(d, b.hp - keep * b.maxhp)
+	if not b.alive or d <= 0.0:
+		return

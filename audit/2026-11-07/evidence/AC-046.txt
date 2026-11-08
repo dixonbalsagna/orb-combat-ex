@@ -1,0 +1,10 @@
+AC-046 evidence (verifier v04, 2026-11-07, read-only)
+## HEAD docs/accessibility/swing-motion.md:61,68
+5. **Defaults.** Seed `reduced_motion` from the platform's own preference where one exists (the web build can read it). Ask Legal whether a motion line and its own two buttons may sit beside the flash notice on first run. **Tools, UI, Legal through the EP.**
+- **Legal:** may a motion line sit beside the flash notice on first run?
+
+## platform reduced-motion seeding anywhere in ui/render/tools/sim/net (prefers-reduced-motion)
+matches: 0
+
+## Legal answer on a motion line beside the notice (grep review-log)
+matches: 0

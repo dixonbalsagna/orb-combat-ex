@@ -1,0 +1,10 @@
+# AC-010 evidence (auditor helper, 2026-11-07)
+## DirSwing master switch, HEAD and LAN build commit a8bc66e2
+36:  "enabled": false,
+36:  "enabled": false,
+## pin 257a766c has data/director/swing.json?
+no
+## readings source is a scratch copy (docs/world/ring-any-angle/rendering.md:332-336, 359, 362)
+**Real terrain colours, real buildings, real fighters and HUD, in a scratch copy of the game, on planet 7's real gen 2 ground: the tile frame costs no more than today's on the Radeon, and the seams are closed. The flash reading is the open problem: a continuous 360° at 60°/s over a city or open gr
+| **City, 360° at 60°/s** | **3.5 (3.5) FAIL** | **3.5 (3.5) FAIL** | **3 (3) over gate** | **3 (3) over gate** |
+| **Open ground, 360° at 60°/s** | **3 (4) FAIL** | | **3.5 (3.5) FAIL** | |

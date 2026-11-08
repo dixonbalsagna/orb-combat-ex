@@ -1,0 +1,20 @@
+# AC-233 proof
+$ grep -n runs-on .github/workflows/*.yml
+.github/workflows/ci.yml:32:    runs-on: ubuntu-24.04
+.github/workflows/ci.yml:49:    runs-on: ubuntu-24.04
+.github/workflows/ci.yml:67:    runs-on: ubuntu-24.04
+.github/workflows/ci.yml:108:    runs-on: ubuntu-24.04
+.github/workflows/ci.yml:178:    runs-on: ubuntu-24.04
+.github/workflows/ci.yml:319:    runs-on: ubuntu-24.04
+.github/workflows/ci.yml:426:    runs-on: ubuntu-24.04
+.github/workflows/ci.yml:448:    runs-on: ubuntu-24.04
+.github/workflows/ci.yml:530:    runs-on: ubuntu-24.04
+.github/workflows/desktop-builds.yml:34:    runs-on: ubuntu-24.04
+.github/workflows/flash-pixels-dryrun.yml:31:    runs-on: ubuntu-24.04
+.github/workflows/linux-export.yml:21:    runs-on: ubuntu-24.04
+.github/workflows/web-parity.yml:43:    runs-on: ubuntu-24.04
+.github/workflows/web-template.yml:21:    runs-on: ubuntu-24.04
+$ sed -n 29p docs/decisions/0006-gdscript-source-of-truth.md
+- **Cross-platform determinism** now rests on the GDScript sim alone. Windows (local) and Linux (CI) check the same golden file. The web build and macOS/ARM are not yet checked in CI; add them before those platforms ship.
+$ sed -n 8p docs/decisions/0011*.md
+1. **The launch platforms are PC:** Windows, Linux (Steam Deck included) and macOS, plus the browser on a computer. Mobile (Android and iOS, native or touch-first) is **parked until after the PC launc

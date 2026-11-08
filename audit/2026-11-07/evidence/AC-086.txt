@@ -1,0 +1,24 @@
+AC-086 proof, commands run 2026-11-07
+
+$ gh api repos/dixonbalsagna/orb-combat-ex
+{"created_at":"2026-09-29T00:38:38Z","homepage":"https://dixonbalsagna.github.io/orb-combat-ex/","name":"orb-combat-ex","visibility":"public"}
+
+$ gh api repos/Cascachu/OrbCombat
+{"license":"GPL-3.0","name":"OrbCombat","private":false,"pushed_at":"2026-06-16T21:10:51Z","stargazers_count":0}
+
+$ curl https://dixonbalsagna.github.io/orb-combat-ex/ | grep title/robots
+<meta name="robots" content="noindex">
+<title>Orb Combat EX (working title)</title>
+
+$ curl https://dixonbalsagna.github.io/orb-combat-ex/play/ | grep title/robots
+<title>Orb Combat EX</title>
+<meta name="robots" content="noindex">
+
+$ grep formal-register status
+160:| USPTO | 1,943 records for the two words, dominated by the single word ORB (many dead, some live, none in games seen). No combined ORB COMBAT mark among the top hits. The search does not match the exact phrase. |
+161:| EUIPO, UK, Japan | Not run. |
+182:**Re-checked 2026-10-11** (GitHub and Steam APIs): `Cascachu/OrbCombat` is unchanged (last pushed 2026-06-16, public, no stars, GDScript, GPL-3.0, issues enabled, no discussions); the user profile has no email or website. Steam search for "orb combat" still returns only "Orbital Combat". The formal registers (USPTO exact phrase, EUIPO, UK, Japan) have **still not been run**.
+454:- The search tool is US-only. Some sites blocked automated fetching (Justia, IndieDB), so they were not used. The itch.io search page is not reliable from here.
+455:- Only the USPTO register was searched, and only for VORR and KAI. Not checked: the EU, UK, Japan and WIPO registers, and the USPTO for the other names (including MERIDIAN, where thousands of records are expected).
+456:- Domain and handle checks were run only for vorr.com. Social handles were not checked.
+457:- Results are a snapshot of 2026-09-28. Re-screen a name before it is locked or announced.

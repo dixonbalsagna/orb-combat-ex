@@ -1,0 +1,31 @@
+$ sed -n '73p' docs/legal/review-log.md
+| RL-051 | Combat wave 7: the Anti-hero first kit (specials, signatures, showcases) | Combat | Medium (barrage gather) | GO; barrage volley gather CONDITIONAL change | Open until the gather changes |
+
+$ sed -n '191p;200p' docs/legal/rule-of-cool-screen.md | cut -c1-500
+| Barrage volley | **CONDITIONAL: change the gather** |
+- **Barrage volley, the gather.** "Both arms drawn to one side at shoulder height, the body coiled away" is close to the franchise's best-known wind-up (both hands drawn to one side, body coiled, then thrust). Shoulder height is not enough on its own. Change it: the arms start **crossed over the chest** and open through the half turn, or the arms stay **apart, one high and one low, a forearm-length gap**, as in the channel rules. Never both hands together at one side. The sweep itself (a fan of 
+
+$ sed -n '12p;30p' docs/combat/pending/wave7-first-kit.md | cut -c1-300
+- **Legal** screened this sheet: GO, with one change, the barrage volley's gather (`docs/legal/rule-of-cool-screen.md`, the wave 7 section). The stacking rule applies to every charge and every crouch.
+| Gather | 20 | the wind-up: the arms apart, one forearm high and one low with a forearm's length between them, the body turned a quarter away, the forearm plates lit |
+
+$ git log --format='%h %ad %s' --date=short -- docs/combat/pending/wave7-first-kit.md
+e7e64462 2026-10-01 Combat: go-live step 1 for wave 1 (parked pick lists), wave 7 rulings applied, canonical contact rule
+7105a7f4 2026-10-01 Combat: wave 1 carries measured reaches; wave 7, the first kit (3 specials, 2 place signatures, 6 showcases)
+
+$ sed -n '3p' docs/combat/pending/kit.antihero.wave7.json | cut -c1-200
+  "_about": "PARKED. The first kit of ../m0-rich.md (wave 6 in its table; the EP's wave 7): 3 specials, 2 place signatures and 6 showcases. Not loaded, not hashed. Working labels throughout. Legal scr
+
+$ git ls-files data/combat
+data/combat/depth.json
+data/combat/enders.json
+data/combat/finishers.json
+data/combat/launch_biome.json
+data/combat/mixed.json
+data/combat/phrases.json
+data/combat/recipes.json
+data/combat/sigvariants.json
+data/combat/stick.json
+data/combat/styles.json
+data/combat/templates.json
+

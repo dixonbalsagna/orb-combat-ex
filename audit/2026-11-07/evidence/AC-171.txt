@@ -1,0 +1,21 @@
+# AC-171: civilian count in the live pin 257a766c and HEAD (run 2026-11-07)
+10:  "pop0": 1800,
+3:  "note": "Feature flags for HUD code that is written but not part of the base game. hiding: Orb removed hiding from the base game and holds it for a future stealth-specialist fighter (docs/ep/vision.md). With it off the HUD ignores the hidden state and the lost-trail cue everywhere (plate chips, the eye-slash marker, the strip's ping and last-seen mark, the silhouette's fading); the code stays for that fighter. Turn it on in a fighter's data when that fighter exists. touch_full and remap: the Settings screen lists the Full touch layout and the Remap controls entry, dimmed and marked Soon, until Controls' touch-full layout and the remap screen exist; both are on now. about_music and about_voice: the About page's two sentences that are true only once they are (the music was generated with Suno; there is no voice acting) are shown only while their flag is on; both are off until the music ships and Orb confirms the voice sentence (docs/legal/go-to-market.md section 1). A page item whose icon is named about_music or about_voice is that sentence. three_strengths: the martial face buttons are X light, Y medium, B heavy and the signature is the power button held with B (docs/design/brawl-second-pass.md, docs/ui/hud-spec.md section 48); flipped with Encounter's slice C2a, and with it the legend, the Full touch words, the Remap and How to play words, the weight mark's third value and the latched-charge and charges-off settings follow. civilian_bar: no running civilian count in the fight (EP decision on Orb's homework 5): the top chip shows a small steady bar for the share of the city's people lost, the structures and craters line stops brightening, and the exact counts are on the match-over card (docs/ui/civilian-bar.md); off, the chip is the count as before. launch_marks: the marks that teach the launch without the three-strength button names (docs/ui/launch-teaching.md): the run of four pips on the rival, the plate's LAUNCH or RESTING chip with the rest's ring, OPEN, a full gauge that lights B with the word LAUNCH, the once-only hint and the pad's pulse at an opening; on since Game Design's ruling of 2026-10-16; the run's pips, the full gauge and the hint stay dark until the blow cue carries run and run_to. three_strengths turns these on too. reduce_flashing: the Reduce flashing setting row and the flashing notice's reworded line (VFX's register); on when Legal has approved the words.",
+14:    "minimal_hud": true,
+18:    "civilian_bar": true
+257a766c:ui/data/terms.json:93:    "join": "P2: press any button to join", "join_short": "P2: press a button", "join_key": "P2: press T to join", "join_key_short": "P2: T to join", "form_hold": "Hold", "form_tap": "Tap",
+257a766c:ui/hud/ui_hud.gd:664:		_l_toll.update_sig(null)   # minimal_hud: the toll is on the pause screen and the results, not in play
+257a766c:ui/hud/ui_hud.gd:1721:	return [UiData.fmt("prompt.over_civilians", {"n": int(hub.toll["civilians"]), "total": int(hub.toll["pop0"])}),
+257a766c:render/core/hud.gd:66:	_text("CIVILIANS LOST %d / %d" % [int(round(w.casualties)), int(w.pop0)], Vector2(vw * 0.5, 24), 12, Color(1, 1, 1, 0.92), 0)
+5:## numbers, the director's feed and the planet strip, shown only when `legacy` is on (F2) now that UI's HUD is hosted;
+15:	"F6 cracks (Shift: destruction, Ctrl: embers)", "F7 flashes", "F8 legacy shapes",
+21:var legacy: bool = false   # the full greybox HUD (F2), instead of UI's
+32:## Everything _draw reads, so main.gd asks for a redraw only when it changes: the full greybox HUD (legacy) and the perf
+37:	if legacy or show_perf:
+## HEAD
+HEAD:ui/hud/ui_hud.gd:2067:	return wins + [UiData.fmt("prompt.over_civilians", {"n": int(hub.toll["civilians"]), "total": int(hub.toll["pop0"])}),
+## w02 withdrawn (movegen-banned.json)
+650:      "id": "w02",
+651-      "withdrawn": "2026-10-12",
+652-      "why": "rested on the withdrawn rule; destruction may be shown and described in public. The casualty-count point is replaced by the ratings and platform notes (p01, p02)"
+653-    }

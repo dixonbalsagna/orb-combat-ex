@@ -1,0 +1,30 @@
+# AC-138 proof
+$ git show --stat 2c954dfa (files)
+2c954dfa 2026-10-23
+ docs/combat/energy-movesets.md                     | 158 +++++++
+ docs/combat/pending/energy/README.md               | 110 +++++
+ .../pending/energy/combat-energy.schema.json       | 456 +++++++++++++++++++++
+ docs/combat/pending/energy/cyborg.md               |  64 +++
+ docs/combat/pending/energy/empress.md              |  62 +++
+ docs/combat/pending/energy/energy.cyborg.json      | 353 ++++++++++++++++
+ docs/combat/pending/energy/energy.empress.json     | 391 ++++++++++++++++++
+ docs/combat/pending/energy/energy.protagonist.json | 380 +++++++++++++++++
+ docs/combat/pending/energy/energy.rival.json       | 355 ++++++++++++++++
+ docs/combat/pending/energy/protagonist.md          |  81 ++++
+ docs/combat/pending/energy/rival.md                |  67 +++
+$ energy kit data under data/ at HEAD and live pin
+-- 257a766c
+data/anim/waves/energy1.poses.json
+data/anim/waves/energy1.sequences.json
+data/vfx/energy.json
+-- 8d9b98a2
+data/anim/waves/energy1.poses.json
+data/anim/waves/energy1.sequences.json
+data/art/energy-lanes.json
+data/vfx/energy.json
+$ export exclude filter (preset 0)
+11:exclude_filter="prototype/*, qa/*, research/*, docs/*, tools/*, .github/*, sim/core/tools/*, sim/director/tools/*, sim/world/tools/*, audio/tools/*, ui/tools/*, render/anim/tools/*, render/vfx/tool
+15:encryption_exclude_filters=""
+$ barrage flash in register (HEAD)
+				# A barrage landing: a thin ring on the rival's chest; on the last volley, if the register granted it, one soft flash of 3 ticks (a disc of 0.4 of the threshold at most).
+	_check(int(hl.flashes.granted_by.get("energy", 0)) == 1 and hl.flashes.worst_weight <= 0.5, "the last volley takes the barrage's one full flash, a disc of at most 0.5 of the register's weight (%.2f)" % hl.flashes.worst_weight)

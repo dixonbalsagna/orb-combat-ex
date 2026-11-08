@@ -1,0 +1,10 @@
+# AC-174: hazard hard tests (run 2026-11-07, HEAD)
+74:  { id: 'H1', spec: '§11 hard test', title: 'Hazards never break a region: hazard wear stops at 89', slice: 'LD1 with Wounds S1', needs: ['hazard*', 'region_broken'],
+80:  { id: 'H2', spec: '§11 hard test', title: 'Zero casualties from living-destruction effects while the higher tier is 1', slice: 'LD1', needs: ['hazard*'],
+86:  { id: 'H3', spec: '§11 hard test', title: 'At most 3 active hazard fronts inside the camera framing at once', slice: 'LD1 (needs S.frontsInFrame from the view side)', needs: ['hazard*'],
+92:  { id: 'H4', spec: '§11', title: 'Effects are credited to the fighter whose event started them; knock-on effects keep the cause; no hazard starts during a finisher or a cinematic', slice: 'LD1 an
+102:  { id: 'H5', spec: '§5b hard tests', title: 'A chain never exceeds the launcher\'s tier cap (2 at tiers 1 and 2, 3 at tier 3, 4 at tier 4; 5 only for a scripted finisher) and the planner drops a
+92:  { id: 'H4', spec: '§11', title: 'Effects are credited to the fighter whose
+102:  { id: 'H5', spec: '§5b hard tests', title: 'A chain never exceeds the lau
+## a hazard* event now exists in the sim (prefix match on needs 'hazard*')
+HEAD:sim/core/fx.gd:632:	var e := _ev(S, "hazard_telegraph")

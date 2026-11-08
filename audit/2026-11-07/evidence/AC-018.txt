@@ -1,0 +1,29 @@
+# AC-018 evidence
+## photosensitivity-note.md:21, 27, 32-34
+| **A store release (Steam, consoles)** | The public-web items plus an **independent analyser report**: the **Harding Flash and Pattern Analyser** (the proprietary tool broadcasters and game publishers use; a test house runs it for a fee) or an equivalent recognised tool, on the same worst-case recordings. The free **PEAT** from the Trace Center is the older free option but is dated; a recognised tool or a documented test by a service is the standard. Each console maker has its own accessibility or photosensitivity expectations, **behind its agreement**; ask the platform when in the programme |
+3. **Adequate evidence:** the table above. For a free web build: the registry, an automated WCAG 2.3.1 check on worst-case recordings, a reduced-flash setting, a notice. For a store release: add an independent Harding-style analyser report.
+- Reports on the Harding Flash and Pattern Analyser and its use for broadcast and games (secondary).
+- Not read: the console makers' accessibility requirements (behind their agreements), and any national rule on flashing content. Ask a lawyer for any country where the game is sold.
+
+
+## steam-readiness.md:39 (D4)
+| D4 | **Photosensitivity:** the interim is Orb's owner decision (RL-172, to 2026-11-01), not a Legal pass. A store release needs the **release gate**: primary reading at most 2.5, no sensitivity run above 3, margin rule, second captures, an independent analyzer or the honest "none has been run" line, and the notice on the store page in the page's words. The `signature` clip finding (normal mode 3.5) must be explained first. | Open | Tools, Legal | photosensitivity-note.md |
+
+## orb-review-list.md:188
+3. Later, before any store release: an independent analyser report (a paid test house, or the dated free tool).
+
+## README.md:9
+**Flashing effects.** This game contains flashing effects. Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them. The "Reduced motion" setting (pause menu, Settings) changes a few effects but does not fix these scenes. No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version.
+
+## flash-proof.md (own analyser not independent)
+**The short answer, for Orb: the numbers are real, not luck, but they measure one picture size, and they are not an independent check.**
+- **It is our own analyser, not a recognised one.** Nothing outside has checked it (see the last section).
+
+## An outside check (searched, nothing downloaded)
+
+- **PEAT** (the Trace Center's Photosensitive Epilepsy Analysis Tool, made with Dr Harding): free, Windows only. I could not confirm its download link, size or licence, and one university page says it was retired. Its method is the same standard we use (more than three flashes a second over a quarter of a 341 x 256 area at 1024 x 768). **I have no file and size to give you yet.**
+- **Harding FPA** (the commercial one video sites use): licensed, no free download found.
+- **FlashDetect** (a small free Python package, MIT licence): does not say which standard it follows. Not a real answer.
+
+## External (fetched 2026-11-07): https://www.w3.org/WAI/WCAG22/Understanding/three-flashes-or-below-threshold.html lists Harding FPA and PEAT as resources 'for information only' and does not endorse them.
+## External search 2026-11-07: no Steamworks rule requiring a photosensitivity analyser report was found (Steamworks partner docs not reached).

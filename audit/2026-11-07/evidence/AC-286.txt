@@ -1,0 +1,14 @@
+# AC-286 proof, run 2026-11-07 on HEAD 53b6df82 (read-only); live pin 257a766c
+8fd6abad 2026-10-02 Rendering: the sky reaction is a gap in the clouds with a lit edge, never a pale pillar (GB-002)
+632f6c92 2026-10-02 Rendering: the sky reaction is off by default; cloud shimmer at height fixed (GB-002)
+## sky reaction default at HEAD and pin
+HEAD:render/core/main.gd:794:	PaneWorld.sky_react_on = args.has("skyreact")   # the clouds parting at tier 3 and 4: off unless asked for (QA's GB-002)
+HEAD:render/core/main.gd:1644:const URL_ARGS: Array = ["craterlook", "others", "tiles", "flat", "tilerate", "tilequick", "nearmode", "tileshare", "tilegen", "nofore", "nointro", "skyreact", "study", "
+HEAD:render/core/pane_world.gd:74:static var sky_react_on: bool = false      # the clouds part for a fighter at tier 3 or more: off unless asked for (main's --skyreact; QA's GB-002)
+257a766c:render/core/main.gd:487:	PaneWorld.sky_react_on = args.has("skyreact")   # the clouds parting at tier 3 and 4: off unless asked for (QA's GB-002)
+257a766c:render/core/main.gd:1205:const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp"]
+257a766c:render/core/pane_world.gd:68:static var sky_react_on: bool = false      # the clouds part for a fighter at tier 3 or more: off unless asked for (main's --skyreact; QA's GB-002)
+## shimmer fix line in sky.gdshader at pin
+112:		vec2 cp = vec2(p.x * 2.2 + cloud_shift, (q - horizon) / sky_tan * 5.0);   // the plain height: see the header
+## 4,800 in 632f6c9 docs
+from 4,800 units up

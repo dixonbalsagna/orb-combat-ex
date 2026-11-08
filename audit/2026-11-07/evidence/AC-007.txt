@@ -1,0 +1,49 @@
+# AC-007 evidence (auditor helper, 2026-11-07): in-game flash notice strings in ui/data/terms.json
+## git show 257a766c:ui/data/terms.json (live /play/ pin, tools/site.json pin)
+.prompt.photo_title: This game contains flashing effects.
+.prompt.photo_body_a: Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them.
+.prompt.photo_settings_line: The "Reduced motion" setting (pause menu, Settings) changes a few effects but does not fix these scenes.
+.prompt.photo_settings_line_rf: The "Reduced motion" setting (pause menu, Settings) changes a few effects but does not fix these scenes.
+.prompt.photo_body_b: No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version.
+.prompt.photo_start: I understand, start
+.prompt.photo_settings: Open Settings
+.prompt.photo_more: Scroll for more
+.prompt.menu_notice: This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.
+.prompt.menu_rf_on: Reduce flashing: on. Turning it off restores full effects, which flash more.
+.prompt.menu_rf_locked: Reduce flashing is on. It lowers some effects but does not remove the flagged scenes.
+.prompt.menu_rf_off: Reduce flashing: off. Full effects are on, and they flash more.
+.prompt.photo_close: Close
+
+## HEAD 53b6df82 ui/data/terms.json
+.prompt.photo_title: This game contains flashing effects.
+.prompt.photo_body_a: Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second, and they are not fixed yet.
+.prompt.photo_settings_line: The "Reduced motion" setting (pause menu, Settings) changes a few effects but does not fix these scenes.
+.prompt.photo_settings_line_rf: The "Reduced motion" setting (pause menu, Settings) changes a few effects but does not fix these scenes.
+.prompt.photo_body_b: No independent photosensitivity analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.
+.prompt.photo_start: I understand, start
+.prompt.photo_settings: Open Settings
+.prompt.photo_more: Scroll for more
+.prompt.menu_notice: This game contains flashing effects. Our own automated check found some scenes that go over the recommended limit of three flashes a second, and they are not fixed yet. No independent analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.
+.prompt.menu_rf_on: Reduce flashing: on. Turning it off restores full effects, which flash more.
+.prompt.menu_rf_locked: Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes.
+.prompt.menu_rf_off: Reduce flashing: off. Full effects are on, and they flash more.
+.prompt.photo_close: Close
+
+## README.md at HEAD lines 7 and 9
+Every fighter, move and planet here is original. **Licence:** not chosen yet, so all rights are reserved for now. Please do not copy or redistribute this code or content until a licence is added. The hosted build is offline for now while its flashing effects are fixed (see below); when it returns you may play it. "Meridian" is the team's internal codename.
+**Flashing effects.** This game contains flashing effects. Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them. The "Reduced motion" setting (pause menu, Settings) changes a few effects but does not fix these scenes. No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version.
+
+## git log -1 README.md
+92c9c94f 2026-10-12 14:34:38 -0700 The About statement no longer says Orb edits the dialogue by hand (none is in the build or marked yet); it returns when it is true
+
+## live /play/ pack (fetched 2026-11-07, sha256 723ec9fc...): in-game strings
+      1 We are fixing them, and no independent
+      1 We are fixing them.
+## live /play/ wrapper gate words (live-play-index.html:109,112)
+<p>This game contains flashing effects. Our own automated check found some scenes that go over the recommended limit of three flashes a second, and they are not fixed yet. No independent analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.</p>
+<p id="gate-under" style="font-size:.85rem;color:#aab1be">Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes.</p>
+## tools/site-ui-excuse.json until
+  "ruling": "RL-200, kept by RL-207",
+  "until": "2026-11-08",
+## banned-word grep (safe|tested|compliant|certified|seizure-safe|no flashing) over README, live pages, interim words: no output means none
+(end)

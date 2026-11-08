@@ -1,0 +1,37 @@
+# AC-240 evidence (verifier v17, 2026-11-07)
+## workflows
+ci.yml
+desktop-builds.yml
+flash-pixels-dryrun.yml
+linux-export.yml
+web-parity.yml
+web-template.yml
+## desktop-builds.yml: refusal step only checks a date format (lines 39-45)
+    steps:
+      - name: Refuse without Orb's yes (Legal RL-203)
+        run: |
+          if ! printf '%s' "${ORBS_YES}" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+            echo "no run without Orb's yes: pass the date of the sentence naming desktop test builds as orbs_yes (Legal RL-203)"
+            exit 1
+          fi
+## desktop-builds.yml retention
+150:          retention-days: 1
+158:          retention-days: 1
+166:          retention-days: 1
+## linux-export.yml: uploads a Linux game binary, 14-day retention, no Orb's-yes refusal, no lock step
+58:      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+63:          retention-days: 14
+## gh run list desktop-builds.yml
+[]
+## gh run list linux-export.yml
+[]
+## every artifact the repo holds (gh api actions/artifacts)
+1
+[{"created_at":"2026-10-28T03:19:21Z","expired":false,"expires_at":"2027-01-26T02:59:02Z","name":"web-template-4.7.2-a08b8fa9f412e4acdf81bdea4cb580161e7d43ea"}]
+## GitHub docs (accessed 2026-11-07): https://docs.github.com/en/actions/how-tos/manage-workflow-runs/download-workflow-artifacts
+"Read access to the repository is required to perform these steps."
+## (added) desktop-builds.yml never checks the nightly/pin-move readings (RL-203 condition 2): grep nightly|site-pin|reading
+0
+## (added) ui/data/features.json in the tree: the lock is off unless a build step flips it, and linux-export.yml has no lock step
+12:    "lock_reduce_flashing": false,
+0

@@ -1,0 +1,9 @@
+AC-201 proof, run 2026-11-07
+GET / -> 200
+GET /play/ -> 200
+GET /robots.txt -> 404
+live / identical to evidence/live-site-index.html
+grep og/twitter/link/a in live /:
+6:<meta name="robots" content="noindex">
+repo homepage field:
+https://dixonbalsagna.github.io/orb-combat-ex/

@@ -1,0 +1,9 @@
+# AC-151 proof
+$ links to vision.md or docs/legal on live pages
+audit/2026-11-07/evidence/live-site-index.html:0
+audit/2026-11-07/evidence/live-play-index.html:0
+$ README links
+17:- `docs/ep/playbook.md` how the Executive Producer session runs the project
+$ vision.md in the public tree
+100644 blob a7739b30342e7569f9b2cb01a4180fd652060f71	docs/ep/vision.md
+vision.md:71 holds a personal name (copyright holder row) and :1403 a US state of residence; :199 names a web series; :74 names the predecessor fan game (contents not reproduced here)

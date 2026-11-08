@@ -1,0 +1,5 @@
+# AC-145 proof
+$ power-up-ideas.md:1
+# Powering up on RT: three answers of our own (VFX, paper, 2026-11-01)
+$ grep implementation of sky opens / takes notice in render sim data ui
+(none)

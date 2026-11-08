@@ -1,0 +1,386 @@
+{
+  "verdicts": [
+    {
+      "id": "AC-054",
+      "claim": "Two debug routes (?flashcap=1 with a console call, and F8 flash_legacy) bypass the Reduce flashing lock on the live pin; the fix needs a build-time capture_hook gate, F8 refused under the lock, debug URL words dropped on public hosts, the six desktop bypass words gated, and a standing route scan.",
+      "key_sources": [
+        "257a766c:render/core/main.gd:1155-1159",
+        "257a766c:render/core/main.gd:1204,1248-1252",
+        "257a766c:ui/hud/ui_hud.gd:1231-1243",
+        "HEAD:render/core/main.gd:299",
+        "HEAD:render/core/main.gd:1588",
+        "HEAD:ui/hud/ui_hud.gd:1508-1510",
+        "docs/legal/photosensitivity-note.md:153-160",
+        ".github/workflows/ci.yml:517"
+      ],
+      "verdict": "OVERSTATED",
+      "severity": "-",
+      "horizon": "already-public",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "On the live pin, gate_args drops flashcap on any public hostname, so route 1 is shut on /play/; only F8 is live, and it switches the flashes to their older shapes with no lock check while Reduce flashing stays on (Tools' reading of no change was not re-measured here). HEAD has every fix in code (capture_hook gate, F8 refused under the lock, bypass words refused under the lock), but the exported-build hook check sits in the dead CI and the fix reaches /play/ only when the pin moves.",
+      "proof": [
+        "evidence/AC-054.txt: pin main.gd:1155 'if code == \"F8\":' toggles flash_legacy with no lock test",
+        "evidence/AC-054.txt: pin gate_args erases LOCAL_ONLY_ARGS (incl. flashcap) when bypass_allowed() is false; pin bypass_allowed() is true on the web only for localhost/127.0.0.1/[::1]/file:",
+        "evidence/AC-054.txt: HEAD main.gd:1588 'if code == \"F8\" and not UiData.rf_locked()'; HEAD bypass_allowed returns false when locked and capture_hook is off",
+        "evidence/AC-054.txt: gh run list shows ci.yml failing on 8d9b98a2 and 53b6df82"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "RL-196 stays open as a High blocker covering a route (?flashcap) that the code already shuts on the live host. That drives more route-scan tooling while the one real live route (F8) just waits on a pin move.",
+      "fix": "Correct the record: route 1 is shut at run time on the live host, and F8 is the only live route, fixed at HEAD. Close RL-196 when the pin moves, and get CI running so the export hook check actually runs.",
+      "belongs_to": "Legal (record), Tools (pin move and CI)"
+    },
+    {
+      "id": "AC-055",
+      "claim": "LAN tests (RL-230) stay on the home network: one inbound firewall rule for the game only (UDP 47100) scoped to the host's /24 with the host also refusing others, no guest Wi-Fi/ZeroTier/forwarding/tunnel, the rule removed afterwards, the warning on both PCs, Reduce flashing locked, nothing recorded, and kit words saying a network link opens.",
+      "key_sources": [
+        "net/tools/lan_kit.mjs:19,106-110,177,181-186,191-196",
+        "HEAD:net/enet_transport.gd:15,58-59,111",
+        "net/tools/lan_words.txt:3,5,35,44",
+        "docs/net/lan-v1.md:95-106",
+        "HEAD:export_presets.cfg:11,55"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "private",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "The kit builds these terms in. One netsh rule for the game's exe, UDP 47100, remoteip set to the host's /24; virtual and ZeroTier adapters refused; a host-side prefix filter; a removal script; the lock on and the capture hook off; the required words checked. Two things could not be checked here: whether the rule was removed after the 2026-11-07 tests, and whether the filter works over a real link. The checked WHO PLAYS line still says 'Only Orb plays' although Orb 2 now plays (RL-253).",
+      "proof": [
+        "evidence/AC-055.txt: lan_kit.mjs:177 'add rule ... protocol=UDP localport=47100 remoteip=${subnet}'; :185-186 delete rules",
+        "evidence/AC-055.txt: enet_transport.gd:58-59 allowed() = prefix empty or addr.begins_with(prefix); used at :111",
+        "evidence/AC-055.txt: lan_kit.mjs:109-110 stop unless lock_reduce_flashing true and capture_hook not true"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "n/a (confirmed): private-test terms, no release harm.",
+      "fix": "Keep these as private-test terms. Have the kit or Orb record that the rule was removed after each session. Update the WHO PLAYS line (and the kit's exact-string check) for Orb 2 as RL-253 rules.",
+      "belongs_to": "Netcode"
+    },
+    {
+      "id": "AC-056",
+      "claim": "The snapshot copier compiles GDScript at run time, which is untested in exported builds, the web included.",
+      "key_sources": [
+        "HEAD:net/snapshot.gd:178-221",
+        "docs/net/cloud-reports/2026-10-28-rollback-core.md:67"
+      ],
+      "verdict": "MISFILED",
+      "severity": "-",
+      "horizon": "private",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "snapshot.gd:212-221 compiles a GDScript generated from the engine's own property list and falls back to a reflective copy if compiling fails. No outside input reaches that source, so it is no code-execution path. It runs only in LAN builds: the live pin has no net/, and nothing outside net/ calls it. So it is a speed and robustness risk, not a safety one.",
+      "proof": [
+        "evidence/AC-055.txt: snapshot.gd GDScript.new / source_code / reload() with 'the reflective copy is used' fallback",
+        "evidence/AC-055.txt: 0 net/ files in 257a766c; 0 references to Net* classes outside net/ at HEAD"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "Filed as an A2 security risk, it suggests run-time code injection in the web build, and no such path exists.",
+      "fix": "Move it to Netcode's engineering risks. Make the LAN log record whether the generated copier compiled in the exported build.",
+      "belongs_to": "Netcode"
+    },
+    {
+      "id": "AC-057",
+      "claim": "Handshake packets decode with bytes_to_var, never the object-decoding variant, so a hostile packet cannot instantiate anything, and malformed bytes decode to null.",
+      "key_sources": [
+        "HEAD:net/transport.gd:20,64-70",
+        "docs/net/rollback.md:235"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "private",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "transport.gd:68 decodes handshake packets with bytes_to_var and returns null for anything that is not a Dictionary or is under 9 bytes. No object-decoding call exists anywhere in net/. Game packets (kinds 1 and 3) are parsed by hand with StreamPeerBuffer, and their bounds handling was not checked. Only LAN builds carry this code.",
+      "proof": [
+        "evidence/AC-057.txt: git grep finds bytes_to_var only at transport.gd:68 and no bytes_to_var_with_objects / str_to_var / dict_to_inst in net/"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "n/a (confirmed).",
+      "fix": "Keep. Before any internet play, fuzz the hand-parsed game packets in transport_check.",
+      "belongs_to": "Netcode"
+    },
+    {
+      "id": "AC-058",
+      "claim": "The handshake refuses a peer on another protocol version or match key (which includes the data hash and AI level), so mismatched builds can't play and desync.",
+      "key_sources": [
+        "HEAD:net/handshake.gd:19,79-82,104-106",
+        "docs/net/rollback.md:240,308,349",
+        "HEAD:.gitattributes:2"
+      ],
+      "verdict": "MISFILED",
+      "severity": "-",
+      "horizon": "private",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "handshake.gd:79-82 fails on a protocol mismatch (PROTO 5) or a match-key mismatch, and keyOf adds SimReplay.dataHash to the key. That is a guard against desyncs, not a safety control. .gitattributes forces LF line endings, which narrows the cross-platform line-ending risk for git checkouts.",
+      "proof": [
+        "evidence/AC-057.txt: handshake.gd:79 'protocol %s, this peer speaks %d'; :81 match key compare; :106 key + SimReplay.dataHash(setup)"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "Listing a correctness check under security makes the security record look broader than it is.",
+      "fix": "Move it to Netcode's netplay correctness notes.",
+      "belongs_to": "Netcode"
+    },
+    {
+      "id": "AC-059",
+      "claim": "The desync digest 'is not a security hash' since 'a peer that lies can lie about anything': there is no trust boundary or anti-cheat between peers.",
+      "key_sources": [
+        "docs/net/rollback.md:127"
+      ],
+      "verdict": "MISFILED",
+      "severity": "-",
+      "horizon": "store",
+      "likelihood": "low",
+      "evidence_strength": "documented only",
+      "what_is_true": "rollback.md:127 says the MD5 digest is for catching desyncs and 'is not a security hash'. Cheating between peers is a game-integrity question for future internet play, which doesn't exist yet (Orb: online after launch). Hostile-packet safety is covered by the decoder (AC-057).",
+      "proof": [
+        "grep of docs/net/rollback.md:127 shows 'It is not a security hash and does not need to be'"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "Small: it is filed as an accepted security risk but asks for no work.",
+      "fix": "Move it to Netcode's online-play design list (trust model, anti-cheat) for when internet play is planned.",
+      "belongs_to": "Netcode"
+    },
+    {
+      "id": "AC-060",
+      "claim": "Mods load under defined format, loading and validation rules.",
+      "key_sources": [
+        "DIRECTORS.md:683,685",
+        "docs/directors/modding-extensibility.md:28,31"
+      ],
+      "verdict": "MISFILED",
+      "severity": "-",
+      "horizon": "none",
+      "likelihood": "low",
+      "evidence_strength": "documented only",
+      "what_is_true": "The charter lines list mod format, loading and validation rules as deliverables still to be written. No docs/modding/ or mods/ exists, and no code loads packs or user content (no load_resource_pack). Nothing loads mods, so there is no release risk; the claim turns a charter line into a rule in force.",
+      "proof": [
+        "evidence/AC-065.txt: 0 hits for load_resource_pack|user://mods|res://mods in HEAD .gd; 0 files under docs/modding or mods"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "It suggests a mod security surface that rules already govern, when there is no surface and no rule.",
+      "fix": "Retire it from the safety records. Add to the Modding charter that any mod loading must treat packed scripts as code execution and go to Legal and Tools before it ships.",
+      "belongs_to": "process (Modding director charter)"
+    },
+    {
+      "id": "AC-061",
+      "claim": "Public builds must exclude net/ so the desktop README privacy line stays true (RL-204 condition 1); online play, cloud saves or Steam features change the privacy text first, and online play carrying IP addresses brings GDPR duties.",
+      "key_sources": [
+        "HEAD:export_presets.cfg:11,55,101,132",
+        "tools/desktop-package.mjs:41,210-219",
+        "docs/net/lan-v1.md:45-47",
+        "docs/legal/go-to-market.md:155-156",
+        "docs/legal/review-log.md:226"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "web",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "The three desktop presets exclude net/*, and desktop-package.mjs refuses a preset that doesn't. The Web preset does not, contrary to lan-v1.md's 'The public builds don't change. They exclude net/'. The live pin has no net/ folder, and at HEAD nothing outside net/ references it, so a web export would pack unreachable code and the privacy line stays true. GDPR Recital 30 names IP addresses as online identifiers, so the online-play caution rests on the real text.",
+      "proof": [
+        "evidence/AC-055.txt: Web exclude_filter lacks net/*; Windows, Linux, macOS include it",
+        "evidence/AC-055.txt: 0 net/ files in 257a766c; 0 references to Net* outside net/ at HEAD",
+        "evidence/AC-055.txt: desktop-package.mjs 'does not exclude net/*' refusal"
+      ],
+      "external": [
+        "https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng (accessed 2026-11-07), Recital 30: \"such as internet protocol addresses, cookie identifiers\""
+      ],
+      "cost_of_false_alarm": "n/a (confirmed).",
+      "fix": "Add net/* to the Web preset's exclude filter and to the site check, and correct lan-v1.md.",
+      "belongs_to": "Tools"
+    },
+    {
+      "id": "AC-062",
+      "claim": "The privacy line must be true, verbatim and match the feedback target ('This game collects and sends no personal data'; GitHub Pages keeps logs; feedback only copies to the clipboard); no analytics, crash upload or accounts at launch; network-log re-check before each store build; RL-097 found the earlier line false.",
+      "key_sources": [
+        "257a766c:ui/data/send.json (_target \"none\")",
+        "257a766c:ui/widgets/ui_feedback.gd:3-6,189-198",
+        "README.md:11",
+        "docs/legal/review-log.md:119",
+        "docs/legal/store-copy-screen.md:22",
+        "tools/check-site-interim.mjs:288-300"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "already-public",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "The line is true today. The pin's feedback target is 'none', so the panel only copies; no HTTP, WebSocket or beacon call is in the pin's shipped scripts; live /play/ loads only same-origin files, and /about/ carries the clipboard wording. RL-097's 'false' finding is fixed but the row is still Open. store-copy-screen.md:22 still prescribes the GitHub-issue wording, which would be false with the target at none. The site check tying the line to the target runs only in the dead CI.",
+      "proof": [
+        "evidence/AC-062.txt: _target \"none\" at 257a766c and HEAD; 0 network API hits in pin shipped .gd",
+        "evidence/AC-062.txt: curl of live /play/ lists only index.js, index.png and icons; /about/ shows 'This game collects and sends no personal data...'"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "n/a (confirmed).",
+      "fix": "Close RL-097 with the live check saved. Change store-copy-screen.md:22 to the target-none line. Get CI running so the line-to-target check runs.",
+      "belongs_to": "Legal"
+    },
+    {
+      "id": "AC-063",
+      "claim": "Feedback goes to a private target, never Orb's personal email or public issues; any form is anonymous, 16+ and deleted after write-up; no mailing list at Stages 1a/1b; the itch.io page says 'not made for children under 13', and children's privacy rules apply if a store rates it for young players.",
+      "key_sources": [
+        "HEAD:ui/data/send.json (_target \"none\", issue.repo set)",
+        "docs/legal/go-to-market.md:157",
+        "docs/legal/review-log.md:114",
+        "docs/legal/store-copy-screen.md:22"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "store",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "No feedback form, list or private target exists: _target is 'none' at the pin and at HEAD. Nothing is collected, so COPPA's trigger (personal information collected by a child-directed service) is not met. send.json still holds the public GitHub issues target as a ready option, one data edit away from breaking 'never public issues'. The under-13 line is in no non-doc file. GDPR Art. 8 (the basis for 16) was not reached on EUR-Lex.",
+      "proof": [
+        "evidence/AC-062.txt: _target \"none\", issue.repo https://github.com/dixonbalsagna/orb-combat-ex; 0 'under 13' hits outside docs/"
+      ],
+      "external": [
+        "https://www.govinfo.gov/content/pkg/CFR-2024-title16-vol1/xml/CFR-2024-title16-vol1-sec312-2.xml (accessed 2026-11-07; eCFR redirected to a block page), 16 CFR 312.2: \"a commercial Web site or online service, or portion thereof\""
+      ],
+      "cost_of_false_alarm": "n/a (confirmed).",
+      "fix": "Keep these as store-stage conditions. Make the site check refuse a github target while the rule stands, and settle one age line before any store page.",
+      "belongs_to": "Legal"
+    },
+    {
+      "id": "AC-064",
+      "claim": "The local freeze record (off by default) holds no identifiers or clock timestamps, is shown before copying and is never sent; switched on it needs replacement privacy words, automatic sending stops for Legal, EU/UK promotion triggers a counsel question on device storage; the click-through stays the gate.",
+      "key_sources": [
+        "docs/perf/web-shell/ocx-crumbs.js:5,13-17,50,69-74",
+        "tools/site-crumbs.mjs:1-4,23",
+        "tools/site.json (no crumbs key)",
+        "docs/legal/review-log.md:210-211"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "web",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "The breadcrumbs are off: tools/site.json has no crumbs key, and live /play/ carries no crumbs script. The parked script takes its times from performance.now (no clock), keeps one localStorage record that includes the browser string, and makes no network call. Switching it on swaps the privacy paragraph. ePrivacy Art. 5(3) restricts storing information on a device, so the counsel question rests on the real text (the 2009 amended wording was not fetched).",
+      "proof": [
+        "evidence/AC-062.txt: site.json crumbs undefined; live /play/ 'ocx.crumbs' count 0; crumbs script uses performance.now and localStorage, no fetch/sendBeacon/XMLHttp"
+      ],
+      "external": [
+        "https://eur-lex.europa.eu/eli/dir/2002/58/oj/eng (accessed 2026-11-07), Art. 5(3): \"only allowed on condition that the subscriber or user concerned\""
+      ],
+      "cost_of_false_alarm": "n/a (confirmed).",
+      "fix": "Keep. Legal re-reads Marketing's words before the switch is turned on.",
+      "belongs_to": "Legal"
+    },
+    {
+      "id": "AC-065",
+      "claim": "On a desync each peer writes a JSON report (replay, snapshots, field walk) to disk; an online upload to a crash-report bucket needs a place at zero budget and is not built.",
+      "key_sources": [
+        "HEAD:net/desync.gd:364-370",
+        "HEAD:net/tools/desync_check.gd:338",
+        "docs/net/rollback.md:134,209"
+      ],
+      "verdict": "MISFILED",
+      "severity": "-",
+      "horizon": "store",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "writeReport writes JSON to whatever path it is given, but only test tools call it (desync_check.gd:338); the LAN game writes no desync report. The report holds sim state and field paths, no identifiers, and no upload exists.",
+      "proof": [
+        "evidence/AC-065.txt: writeReport callers at HEAD are desync.gd (definition) and net/tools/desync_check.gd only"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "It suggests peers write files on desync in the shipped LAN build, which they don't, and it files a missing upload as a privacy risk.",
+      "fix": "Correct the record: only test tools write the report. Send any future upload design to Legal for a privacy review.",
+      "belongs_to": "Netcode"
+    },
+    {
+      "id": "AC-066",
+      "claim": "Internet play needs outside services (STUN, plus paid TURN, or a forwarded port), so a ruling is required under ADR 0005 before any internet play.",
+      "key_sources": [
+        "docs/net/rollback.md:206,263",
+        "docs/net/cloud-reports/2026-10-28-transport.md:89",
+        "docs/decisions/0005-lean-team-and-token-discipline.md:1-12"
+      ],
+      "verdict": "MISFILED",
+      "severity": "-",
+      "horizon": "store",
+      "likelihood": "low",
+      "evidence_strength": "documented only",
+      "what_is_true": "Netcode is right that internet play needs STUN, sometimes a paid TURN relay, or a reachable port, and ADR 0005 records the zero-budget and token-discipline decision. That is a budget and scope call for Orb, not safety. The privacy point, that a third-party STUN or TURN host sees player IP addresses, is not named.",
+      "proof": [
+        "rollback.md:206 'a TURN relay, which costs money (ADR 0005: zero budget)'"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "Small: it parks a budget question in the safety record and misses the real privacy duty.",
+      "fix": "Move it to the EP's scope list for Orb. Add a Legal item: any STUN, TURN or relay host sees player IP addresses, which are personal data.",
+      "belongs_to": "process (EP; Orb's scope and spend call)"
+    },
+    {
+      "id": "AC-067",
+      "claim": "Nothing is recorded or shared: the LAN logs hold no address or PC name, handing them over is Orb's choice, and RL-204's privacy line stays out of the LAN words.",
+      "key_sources": [
+        "HEAD:net/lan.gd:87-256,220,272-286",
+        "net/tools/lan_kit.mjs:196",
+        "docs/net/lan-v1.md:101,105"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "private",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "lan.gd:272-286 writes the local date and time, a state string and session counters. None of the state strings carries an address, and the one failure text that would include it is replaced (lan.gd:220). The kit refuses words that contain RL-204's privacy line.",
+      "proof": [
+        "evidence/AC-065.txt: lan.gd _say strings listed; line 220 'the address stays out of the log (Legal RL-230)'"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "n/a (confirmed).",
+      "fix": "Keep.",
+      "belongs_to": "Netcode"
+    },
+    {
+      "id": "AC-068",
+      "claim": "Legal RL-230 clears the two-PC check while it stays headless and its report names no person, account or address, only CPU, OS and numbers; the file name is random.",
+      "key_sources": [
+        "docs/net/two-pc-check.md:9",
+        "HEAD:net/tools/two_pc_check.gd:89-102",
+        "net/tools/two_pc_kit.mjs:35"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "private",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "The report header holds build, engine, protocol, data hash, setup, processor name, core count and OS, then timing numbers. It has no user, host name or address. The kit runs it with --headless and names the file report-%RANDOM%.txt.",
+      "proof": [
+        "evidence/AC-065.txt: two_pc_check.gd cpu/cores/os lines; two_pc_kit.mjs:35 --headless ... report-%RANDOM%.txt"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "n/a (confirmed).",
+      "fix": "Keep.",
+      "belongs_to": "Netcode"
+    },
+    {
+      "id": "AC-069",
+      "claim": "The homework folder, which holds Orb's play files and test builds, stays on Orb's PC and is never pushed.",
+      "key_sources": [
+        "homework/START-HERE.md:3",
+        ".gitignore:29"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "private",
+      "likelihood": "low",
+      "evidence_strength": "reproduced",
+      "what_is_true": ".gitignore:29 ignores homework/. No file under it is tracked, and no commit on any ref touches it, so Orb's play files and private builds stay out of the public repo as stated.",
+      "proof": [
+        "evidence/AC-065.txt: git check-ignore -v -> .gitignore:29 homework/; tracked 0; git log --all -- homework: 0 commits"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "n/a (confirmed).",
+      "fix": "Keep.",
+      "belongs_to": "process (EP)"
+    }
+  ],
+  "batch_notes": [
+    "The live pin 257a766c has no net/ folder (net/ first arrives at 2afeda13, 2026-10-28, which is not an ancestor of the pin), so the public build holds no network code. 'net/ may be packed in the web build' applies only to a future web export from HEAD, where nothing outside net/ references it.",
+    "Committed ui/data/features.json has lock_reduce_flashing false at both the pin and HEAD. The export tools (site-pin, desktop-package lock, the LAN kit) switch the lock on, so every lock-keyed fix (F8, bypass words) depends on the export path being used.",
+    "CI is dead, so the checks that tie the privacy line to the feedback target (check-site-interim.mjs:288-300) and the exported-build hook check (ci.yml:517) are not running now.",
+    "Not verified here because Godot and browsers were not run: F8's older-shape flash reading on the live pin, the firewall rule's removal on Orb's PC, and the LAN prefix filter over a real link.",
+    "Inventory citation drift: review-log.md:467 (cited for RL-253) is a different line; RL-253 is at review-log.md:275."
+  ]
+}

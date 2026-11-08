@@ -1,0 +1,19 @@
+# AC-184 evidence, 2026-11-07, HEAD 53b6df82
+$ switches (data/director/swing.json) at HEAD and a8bc66e2
+HEAD swing.enabled= false tension.enabled= false
+a8bc66e2 swing.enabled= false tension.enabled= false
+$ pin 257a766c has sim/director/swing.gd?
+no
+$ grep -n TENSION/_tension/_direction reads in sim/director/swing.gd
+20:const TENSION: Array = ["f.anguish", "f.menace", "S.mood.v"]   # the scalars timing may read (RL-215), by name
+459:static func _tension(S: SimState, A, D) -> float:
+462:	return clampf((maxf(float(A.anguish), float(D.anguish)) + maxf(float(A.menace), float(D.menace))) / 200.0 + float(S.mood.v) / 3600.0, 0.0, 1.0)
+467:static func _direction(S: SimState, cand: Dictionary, A, side: int, reach: float, fitDeg: float, P, fr: Dictionary) -> Dictionary:
+$ lint lists in sim/director/tools/swing_legal_check.gd
+9:const BARRED := ["crowd", "popAlive", "popNear", "popHist", "pop_mult", "toll", "casualt"]
+10:const NOT_IN_DIRECTION := ["mood", "menace"]
+$ QA rows status (docs/qa/cloud-reports/2026-10-31-swing-rows.md)
+7:`records.gd` keeps every `swing_*` and `nudge*` event or cue (and `arena_turn`) as `rec.swings`. The rows read it and are **PENDING until the sim sends those events** (no `DirSwing` yet; `simulation
+18:| `swing.toll.assoc` | civilian toll against big swing count and swing time: fails if either 95% interval of r is wholly above 0 (RL-215) | section 11 |
+19:| `swing.civless` | civilians removed swings the same number of times, within one; needs an arm `nocivs` | section 11 |
+52:SUMMARY: The turntable, nudge, toll-association, arena-turn and stick rows are built and tested, PENDING until the sim sends swing events. On what stacks now the table is the 10-30 read at the edge

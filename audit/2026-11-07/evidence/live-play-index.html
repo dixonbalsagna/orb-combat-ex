@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+		<title>Orb Combat EX</title>
+		<meta name="robots" content="noindex">
+		<style>
+html, body, #canvas {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+body {
+	color: white;
+	background-color: black;
+	overflow: hidden;
+	touch-action: none;
+}
+
+#canvas {
+	display: block;
+}
+
+#canvas:focus {
+	outline: none;
+}
+
+#status, #status-splash, #status-progress {
+	position: absolute;
+	left: 0;
+	right: 0;
+}
+
+#status, #status-splash {
+	top: 0;
+	bottom: 0;
+}
+
+#status {
+	background-color: #242424;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	visibility: hidden;
+}
+
+#status-splash {
+	max-height: 100%;
+	max-width: 100%;
+	margin: auto;
+}
+
+#status-splash.show-image--false {
+	display: none;
+}
+
+#status-splash.fullsize--true {
+	height: 100%;
+	width: 100%;
+	object-fit: contain;
+}
+
+#status-splash.use-filter--false {
+	image-rendering: pixelated;
+}
+
+#status-progress, #status-notice {
+	display: none;
+}
+
+#status-progress {
+	bottom: 10%;
+	width: 50%;
+	margin: 0 auto;
+}
+
+#status-notice {
+	background-color: #5b3943;
+	border-radius: 0.5rem;
+	border: 1px solid #9b3943;
+	color: #e0e0e0;
+	font-family: 'Noto Sans', 'Droid Sans', Arial, sans-serif;
+	line-height: 1.3;
+	margin: 0 2rem;
+	overflow: hidden;
+	padding: 1rem;
+	text-align: center;
+	z-index: 1;
+}
+		</style>
+		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+<style>#canvas{touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}body{overscroll-behavior:none}</style><script>addEventListener('contextmenu',function(e){if(e.target&&e.target.id==='canvas')e.preventDefault()},true)</script><script>addEventListener('keydown',function(e){var t=e.target;if(t&&t.id==='canvas')return;if(e.ctrlKey||e.altKey||e.metaKey)return;var n=t&&t.tagName;if(n==='INPUT'||n==='TEXTAREA'||n==='SELECT'||n==='BUTTON'||n==='A'||(t&&t.isContentEditable))return;var k=e.key;if(k===' '||k==='PageUp'||k==='PageDown'||k==='Home'||k==='End'||k.indexOf('Arrow')===0)e.preventDefault()},true)</script><!--ocx:begin--><meta name='theme-color' content='#000000'><meta name='mobile-web-app-capable' content='yes'><meta name='apple-mobile-web-app-capable' content='yes'><link rel='manifest' href='manifest.webmanifest'><style>html,body{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;margin:0;overflow:hidden;overscroll-behavior:none;background:#000;touch-action:none}html{-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}</style><script>(function () { var w = window, d = document, s = w.screen, o = { v: 1, fs: 'off', locked: false, awake: false }; function mm(q) { try { return w.matchMedia(q).matches; } catch (e) { return false; } } o.touch = mm('(pointer: coarse)') || ('ontouchstart' in w); o.phone = o.touch && Math.min(s.width, s.height) < 600; o.canFullscreen = !!(d.fullscreenEnabled && d.documentElement.requestFullscreen); function update() { o.w = w.innerWidth; o.h = w.innerHeight; o.portrait = o.h > o.w * 1.05; o.standalone = w.navigator.standalone === true || mm('(display-mode: standalone)') || mm('(display-mode: fullscreen)'); o.fullscreen = !!d.fullscreenElement; if (!o.fullscreen && o.fs === 'on') { o.fs = 'off'; o.locked = false; } } update(); ['resize', 'orientationchange', 'fullscreenchange'].forEach(function (ev) { w.addEventListener(ev, update); }); w.addEventListener('gesturestart', function (e) { e.preventDefault(); }, { passive: false }); o.enterFullscreen = function () { if (!o.canFullscreen) { o.fs = 'unsupported'; return o.fs; } if (o.fullscreen) { return 'on'; } var c = d.getElementById('canvas') || d.documentElement; try { o.fs = 'pending'; Promise.resolve(c.requestFullscreen({ navigationUI: 'hide' })).then(function () { o.fs = 'on'; o.fullscreen = true; o.lockLandscape(); }, function () { o.fs = 'denied'; }); } catch (e) { o.fs = 'denied'; } return o.fs; }; o.lockLandscape = function () { try { var so = s.orientation; if (so && so.lock) { so.lock('landscape').then(function () { o.locked = true; }, function () { o.locked = false; }); } } catch (e) { o.locked = false; } }; o.exitFullscreen = function () { try { if (s.orientation && s.orientation.unlock) { s.orientation.unlock(); } } catch (e) { } o.locked = false; try { if (d.fullscreenElement) { d.exitFullscreen(); } } catch (e) { } }; var lock = null; function grab() { try { if (!w.navigator.wakeLock || d.visibilityState !== 'visible') { return; } w.navigator.wakeLock.request('screen').then(function (l) { lock = l; o.awake = true; l.addEventListener('release', function () { lock = null; o.awake = false; }); }, function () { o.awake = false; }); } catch (e) { o.awake = false; } } o.keepAwake = function () { o.wantAwake = true; grab(); }; d.addEventListener('visibilitychange', function () { if (o.wantAwake && !lock) { grab(); } }); w.__ocx = o; }());</script><!--ocx:end-->
+	</head>
+	<body>
+<div id="phone-note" role="dialog" aria-modal="true" aria-labelledby="phone-note-title" hidden style="position:fixed;left:0;top:0;right:0;bottom:0;z-index:100001;overflow:auto;background:#0e1015;color:#e6e9ef;font:18px/1.55 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+<div style="max-width:36rem;margin:0 auto;padding:1.5rem 1.25rem 3rem">
+<h1 id="phone-note-title" style="font-size:1.5rem;line-height:1.25;margin:1rem 0 1.5rem">Best on a computer</h1>
+<p>This demo is made for a computer with a keyboard or a controller. It may not run well on a phone.</p>
+<p style="margin:1.25rem 0 .5rem"><button id="phone-note-continue" type="button" style="font:inherit;font-weight:600;padding:.7rem 1.1rem;color:#0e1015;background:#e6e9ef;border:0;border-radius:6px;cursor:pointer">Continue anyway</button></p>
+</div>
+</div>
+<div id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title" style="position:fixed;left:0;top:0;right:0;bottom:0;z-index:100000;overflow:auto;background:#0e1015;color:#e6e9ef;font:18px/1.55 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
+<div style="max-width:36rem;margin:0 auto;padding:1.5rem 1.25rem 3rem">
+<h1 id="gate-title" style="font-size:1.5rem;line-height:1.25;margin:1rem 0 1.5rem">This game contains flashing effects</h1>
+<p>This game contains flashing effects. Our own automated check found some scenes that go over the recommended limit of three flashes a second, and they are not fixed yet. No independent analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.</p>
+<p style="margin:1.25rem 0 .5rem"><button id="gate-start" type="button" style="font:inherit;font-weight:600;padding:.7rem 1.1rem;color:#0e1015;background:#e6e9ef;border:0;border-radius:6px;cursor:pointer">I understand, start</button>
+<a id="gate-notnow" href="../" style="margin-left:1rem;color:#aab1be;font-size:.95rem">Not now</a></p>
+<p id="gate-under" style="font-size:.85rem;color:#aab1be">Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes.</p>
+<p id="gate-ai" style="font-size:.85rem;color:#aab1be">Orb Combat EX is a one-person project. Orb directs it, and AI tools write the code and draft the art, animation, dialogue and design documents. Nothing in the game is generated by AI while you play: the fight director and the world are ordinary game code.</p>
+<p style="font-size:.85rem"><a style="color:#8fb8ff" href="../about/">Licenses, notices and privacy</a></p>
+</div>
+</div>
+		<canvas id="canvas">
+			Your browser does not support the canvas tag.
+		</canvas>
+
+		<noscript>
+			Your browser does not support JavaScript.
+		</noscript>
+
+		<div id="status">
+			<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="index.png" alt="">
+			<progress id="status-progress"></progress>
+			<div id="status-notice"></div>
+		</div>
+
+		<script src="index.js"></script>
+		<script>
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":true,"fileSizes":{"index.pck":9034688,"index.wasm":38450604},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_THREADS_ENABLED = false;
+const engine = new Engine(GODOT_CONFIG);
+
+(function () {
+	const statusOverlay = document.getElementById('status');
+	const statusProgress = document.getElementById('status-progress');
+	const statusNotice = document.getElementById('status-notice');
+
+	let initializing = true;
+	let statusMode = '';
+
+	function setStatusMode(mode) {
+		if (statusMode === mode || !initializing) {
+			return;
+		}
+		if (mode === 'hidden') {
+			statusOverlay.remove();
+			initializing = false;
+			return;
+		}
+		statusOverlay.style.visibility = 'visible';
+		statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
+		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
+		statusMode = mode;
+	}
+
+	function setStatusNotice(text) {
+		while (statusNotice.lastChild) {
+			statusNotice.removeChild(statusNotice.lastChild);
+		}
+		const lines = text.split('\n');
+		lines.forEach((line) => {
+			statusNotice.appendChild(document.createTextNode(line));
+			statusNotice.appendChild(document.createElement('br'));
+		});
+	}
+
+	function displayFailureNotice(err) {
+		console.error(err);
+		if (err instanceof Error) {
+			setStatusNotice(err.message);
+		} else if (typeof err === 'string') {
+			setStatusNotice(err);
+		} else {
+			setStatusNotice('An unknown error occurred.');
+		}
+		setStatusMode('notice');
+		initializing = false;
+	}
+
+	const missing = Engine.getMissingFeatures({
+		threads: GODOT_THREADS_ENABLED,
+	});
+
+	if (missing.length !== 0) {
+		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
+			let serviceWorkerRegistrationPromise;
+			try {
+				serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
+			} catch (err) {
+				serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
+			}
+			// There's a chance that installing the service worker would fix the issue
+			Promise.race([
+				serviceWorkerRegistrationPromise.then((registration) => {
+					if (registration != null) {
+						return Promise.reject(new Error('Service worker already exists.'));
+					}
+					return registration;
+				}).then(() => engine.installServiceWorker()),
+				// For some reason, `getRegistration()` can stall
+				new Promise((resolve) => {
+					setTimeout(() => resolve(), 2000);
+				}),
+			]).then(() => {
+				// Reload if there was no error.
+				window.location.reload();
+			}).catch((err) => {
+				console.error('Error while registering service worker:', err);
+			});
+		} else {
+			// Display the message as usual
+			const missingMsg = 'Error\nThe following features required to run Godot projects on the Web are missing:\n';
+			displayFailureNotice(missingMsg + missing.join('\n'));
+		}
+	} else {
+		window.__startGame = function () {
+		setStatusMode('progress');
+		engine.startGame({
+			'onProgress': function (current, total) {
+				if (current > 0 && total > 0) {
+					statusProgress.value = current;
+					statusProgress.max = total;
+				} else {
+					statusProgress.removeAttribute('value');
+					statusProgress.removeAttribute('max');
+				}
+			},
+		}).then(() => {
+			setStatusMode('hidden');
+		}, displayFailureNotice);
+		};
+	}
+}());
+		</script>
+		<script>
+(function () {
+  var gate = document.getElementById('gate');
+  var button = document.getElementById('gate-start');
+  var started = false;
+  button.addEventListener('click', function () {
+    if (started) return;
+    started = true;
+    gate.parentNode.removeChild(gate);
+    if (typeof window.__startGame === 'function') window.__startGame();
+  });
+  button.focus();
+}());
+/* phone note */
+(function () {
+  // A PHONE is a device whose main pointer is coarse (a finger) and whose smaller screen side is 500 CSS pixels or less. A tablet (smaller side 600 or more), a touch laptop (its main pointer is fine)
+  // and a desktop window of any size are not phones and never see the note. The note's button takes the note away and nothing else: the gate under it, with the flashing notice, is untouched.
+  var note = document.getElementById('phone-note');
+  var go = document.getElementById('phone-note-continue');
+  var gate = document.getElementById('gate');
+  if (!note || !go) return;
+  var phone = false;
+  try { phone = window.matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) <= 500; } catch (e) { phone = false; }
+  if (!phone) { note.parentNode.removeChild(note); return; }
+  note.hidden = false;
+  if (gate) gate.setAttribute('inert', '');
+  go.addEventListener('click', function () {
+    note.parentNode.removeChild(note);
+    if (gate) gate.removeAttribute('inert');
+    var start = document.getElementById('gate-start');
+    if (start) start.focus();
+  });
+  go.focus();
+}());
+/* end phone note */
+</script>
+	</body>
+</html>
+

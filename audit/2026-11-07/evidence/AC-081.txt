@@ -1,0 +1,9 @@
+# AC-081 proof, 2026-11-07, HEAD 53b6df82
+## data/fight/campaign.json enabled switch:
+4:  "enabled": false,
+## sim/core/campaign.gd:19-21 (mc01/mc06 claim in the header):
+##                mc02: whole numbers, no personal data).
+## No fighter reads any of it (Legal mc01 and mc06): the arc block is in the run state; a stage's setup carries the
+## planet, the ring, the wear and the slots only; and the parity check holds that no fighter, director or input file
+## campaign.gd in live pin 257a766c: absent
+## External (accessed 2026-11-07) https://patents.google.com/patent/US10926179B2/en : title 'Nemesis characters, nemesis forts, social vendettas and followers in computer games'; assignee Warner Bros Entertainment Inc; granted 2021-02-23; status Active; anticipated expiration 2036-08-11 (Google's assumption, not a legal conclusion).

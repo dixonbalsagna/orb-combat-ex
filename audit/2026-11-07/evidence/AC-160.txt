@@ -1,0 +1,19 @@
+# AC-160 (run 2026-11-07)
+| RL-060 | Agency 15.1 to 15.4: explosions, wild deflect, buildings, spray cone | Game Design, VFX | Low | GO with look rules | Closed |
+## Section 15: Orb's energy direction (2026-10-02)
+
+Screens `docs/design/agency-pass.md` section 15. From the written plan. A screen, not legal advice.
+
+| Item | Verdict | Log |
+|---|---|---|
+| 15.1 Explosions on every shot | **GO** | RL-060 |
+| 15.2 A deflect sends the shot wild | **GO** | RL-060 |
+| 15.3 Shots damage and level buildings | **GO** | RL-060 |
+| 15.4 Spray cone for rapid bolts | **GO** | RL-060 |
+**15.1 Explosions.** A staple. The flame, smoke and sparks are environmental, so they may be fire-coloured. The shot's own core stays in the shooter's lane colour. Rules: the fully charged shot's "column of flame" is a local column in proportion to the blast, never a pillar into the sky and never a darkening sky; no mushroom cloud staged like a known scene; no sphere-shaped planet-scale blast; no shouted name with it.
+
+**15.2 The wild deflect.** The swat uses the plated forearm, as screened. No open palm held out, no casual backhand flick, and no line shouted.
+
+**15.3 Buildings.** Fine. Buildings are our fictional landmarks (screened). No real landmark is ever the target.
+
+**15.4 Spray cone.** The rules from the volley stand: no both-palms-pumping, no open-mouth scream.

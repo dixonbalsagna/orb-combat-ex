@@ -1,0 +1,17 @@
+$ sed -n '51p;279p' docs/legal/review-log.md | cut -c1-200
+| RL-029 | Full Circle fusion | Q3 design | Medium | CONDITIONAL (look) | Open |
+Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
+
+$ sed -n '76,81p' docs/legal/q3-screen.md | cut -c1-200
+The trigger is original: flying opposite ways round a wrapped planet and merging when they meet, with no item and no pose. Fusion as an idea is common. The look needs care:
+1. **No synchronised pose or dance,** and no mirrored matching poses before the merge.
+2. **The merged fighter is its own design.** Not a mix of the two outfits and hair shapes of the pair (for example half of each hairstyle, or a vest that is the two costumes combined). A new silhouett
+3. **Rings, not a halo.** Counter-rotating rings around the body are fine. Avoid a halo shape above the head.
+4. **No earrings, no accessory** in any part of the trigger or the look.
+5. **The timed merge** (a pride crash afterwards) is fine as a drain state. Do not call it by a franchise-style fusion name.
+
+$ git grep -n -i -E '\bfusion\b|full.circle' -- data sim render ui | cut -c1-200
+data/combat/finishers.json:211:      "generative": ["barrage pattern and angles", "the hand finisher's strike shapes", "the fusion form's variant (Tandem, if accepted)"],
+sim/director/test/combat-parity/finishers.json:192:      "generative": ["barrage pattern and angles", "the hand finisher's strike shapes", "the fusion form's variant (Tandem, if accepted)"],
+ui/widgets/ui_beat_ring.gd:70:## A ring or an arc of it: solid, or dashed (eight dashes round a full circle) when the blow is the AI's. `shadow` draws the dark underlay.
+

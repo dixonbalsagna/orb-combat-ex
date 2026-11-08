@@ -1,0 +1,18 @@
+# AC-279 proof (2026-11-07, HEAD 53b6df82; pin 257a766c)
+## tools/check-site-interim.mjs BRITISH regex and where applied
+57:const BRITISH = /\b(colour|behaviour|grey|centre|artefact|programme|catalogue|neighbour|organis|recognis|licence|analyser)/i;
+331:for (const p of htmls) { const m = BRITISH.exec(visibleText(read(p))); if (m) bad(`${p} uses the British spelling "${m[0]}" (the public text is American English: docs/legal/page-fixed-lines.md)`); }
+389:    const m = BRITISH.exec(s);
+454:  const br = BRITISH.exec(all); if (br) bad(`the interim words use the British spelling "${br[0]}"`);
+## code strings in ui/widgets/ui_licences.gd at the live pin 257a766c
+1:class_name UiLicences
+24:			parts.append("Copyright %s. Licence: %s." % [", ".join(PackedStringArray(p["copyright"])), str(p["license"])])
+26:	out.append([true, "Licence texts"])
+## manoeuvre/armour at pin
+"name": "MANOEUVRE"
+33:    "hatch_open": "ARMOUR OPEN: {station}",
+## README.md at HEAD
+7:**Licence:**
+9:photosensitivity analyser
+## allowlist
+[]

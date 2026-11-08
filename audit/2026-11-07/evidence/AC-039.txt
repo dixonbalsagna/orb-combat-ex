@@ -1,0 +1,12 @@
+# AC-039 evidence
+## commit 63c078a5 touches only the park folder
+63c078a5 2026-10-22 02:06:24 -0700
+
+ docs/vfx/pending/aura3d/README.md                |   5 +-
+ docs/vfx/pending/aura3d/apply.patch              | 335 +++++++++++------------
+ docs/vfx/pending/aura3d/grant-fighter-view.patch |  30 ++
+## no aura3d code on main outside docs (git grep -l aura3d -- render/ data/ tools/schemas/)
+(end)
+## park status (docs/vfx/pending/aura3d/README.md:16, 26)
+Status: **parked, not applied; off by default** (`hub.aura3d_enabled` is false, `hub.set_aura3d(true)` turns it on and the old flat standing aura off). One patch, `apply.patch`, on HEAD 77ca29a4 (checked with `git apply --check` in a scratch export, not in the tree). `docs/vfx/aura3d.md` (in the pat
+| `data/vfx/aura3d.json`, `tools/schemas/vfx-aura3d.schema.json`, `tools/schemas/map.json` | new, new, changed | the numbers, their closed schema (rates capped at 2 Hz, alpha at 0.5), the map entry |

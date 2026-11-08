@@ -1,0 +1,58 @@
+# AC-144 proof
+$ sim/director/beamplay.gd swat target rule (HEAD 8d9b98a2:488-533)
+
+## The swat: the beam is turned aside from where he stands, and the director picks where it goes. A fighter pressured by
+## collateral sends it at the sky; one who feeds on collateral sends it at the nearest standing building in reach; anyone
+## else, or with no building near, into the ground beyond him. It is the swatter's: it counts against the beam's own cap
+## and what it does is credited to him.
+static func _swat(S: SimState, b, A, D) -> void:
+	SimField.far()
+	_swatRead(S, b, A, D)
+	SimField.near()
+
+
+static func _swatRead(S: SimState, b, A, D) -> void:
+	var c: Dictionary = data().swat
+	var len: float = float(c.lenBh) * DirInterrupt.BH
+	var away: float = -SimDamage.jor(SimMathx.jsign(SimWrap.sdx(D.x, A.x)), D.face)
+	var oy: float = D.y + 36.0
+	var g: float = float(c.groundDeg) * SimMathx.PI / 180.0
+	var ux: float = away * SimDetMath.cos(g)
+	var uy: float = -SimDetMath.sin(g)
+	var where: String = "into the ground"
+	if D.hasAnguish:
+		var s: float = float(c.skyDeg) * SimMathx.PI / 180.0
+		ux = away * SimDetMath.cos(s)
+		uy = SimDetMath.sin(s)
+		where = "at the sky"
+	elif D.hasMenace:
+		var best = null
+		var bestD: float = len
+		var nearBy: Array = WorldStructures.near(S, D.x, len)
+		nearBy.sort()   # in index order: a tie goes to the same building as a walk of them all
+		for bi in nearBy:
+			var bd = S.buildings[bi]
+			if not bd.alive:
+				continue
+			var dx: float = absf(SimWrap.sdx(D.x, bd.x))
+			if dx < bestD and dx > bd.w * 0.5:
+				bestD = dx
+				best = bd
+		if best != null:
+			var tx: float = SimWrap.sdx(D.x, best.x)
+			var ty: float = WorldTerrain.groundY(S, best.x) + best.h * 0.5 - oy
+			var l: float = SimDamage.jor(SimDetMath.hypot(tx, ty), 1.0)
+			ux = tx / l
+			uy = ty / l
+			where = "at a building"
+	SimEvents.feed(S, D.name + " SWATS IT", where)
+$ live pin has the same rule
+264:	if D.hasAnguish:
+269:	elif D.hasMenace:
+$ any school/hospital/worship building kind in sim/data/world
+8d9b98a2:sim/director/arc.gd:125:		if not b.alive or WorldSettle.noTarget(b.landmark) or SimDetMath.hypot(SimWrap.sdx(x, b.x), float(b.z) - z) > r:   # RL-242: a landmark barred by c09 (school, hospital, place of worship) is out of every blast and fall
+8d9b98a2:sim/director/tools/swing_legal_check.gd:11:const WORDS := ["people", "person", "civilian", "crowd", "casualt", "victim", "dead", "death", "kill", "school", "hospital", "church", "temple", "mosque", "chapel"]
+8d9b98a2:sim/world/structures.gd:606:		if not b.alive or WorldSettle.noTarget(b.landmark):   # RL-242: a landmark barred by c09 (school, hospital, place of worship) takes no area damage: out of every blast and fall, a data fact and nothing to see
+(none)
+$ beam-answers.md:3
+Owner: Game Design. 2026-11-01, with Combat's notes (`docs/combat/beam-answers-moves.md`) and Controls' fit check (`docs/controls/beam-answers-input.md`) folded in. For Orb's order: "there should be a brief window where the second player can dodge, powerful block, or fire a beam of their own. In add

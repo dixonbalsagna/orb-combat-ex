@@ -1,0 +1,9 @@
+# AC-273: Legal store gate sources
+| E4 | **Store-page words:** Legal reads the page, trailer, screenshots and capsules before they go live (franchise lookalikes, "tested/safe", photosensitivity notice, AI line, "working title"). | Open | Community, Legal | store-copy-screen.md; never-use-words.md |
+Written 2026-09-30. Plain language, one screen. Not legal advice. Legal reviews the store page, trailer and screenshots before they go live.
+- **Origin rows:** every asset gets its `asset-origins.md` row before it goes on a page (the plan says so; I add them on receipt).
+- [ ] My pre-store review (`pre-store-checklist.md`) run on the final page and builds
+# docs/legal/asset-origins.md: file-level log and class-level note
+
+The file-by-file log above stopped at 2026-09-29 while the project kept shipping. These rows record the origin of each **class** of shipped content, which is what a store page and the AI statement need. File-level rows are still required before a store build. **Human-made: none of these classes.** A "human contribution" is stated only where a record exists.
+0f137cac 2026-10-05 Legal: screen of Marketing's claims, the unlicensed public repo, tips, the pseudonym and feedback (R

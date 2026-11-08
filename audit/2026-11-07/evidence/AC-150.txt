@@ -1,0 +1,32 @@
+# AC-150 proof
+$ predecessor fan game's title stem in shipped/code paths
+(none)
+$ files that mention it (docs only)
+8d9b98a2:docs/art/ai-prompt-policy.md
+8d9b98a2:docs/ep/briefs/wave1/legal-ip.md
+8d9b98a2:docs/ep/briefs/wave1/production-ops.md
+8d9b98a2:docs/ep/handoff.md
+8d9b98a2:docs/ep/vision.md
+8d9b98a2:docs/legal/licence-recommendation.md
+8d9b98a2:docs/legal/licence-register.md
+8d9b98a2:docs/legal/never-use-words.md
+8d9b98a2:docs/legal/originality-rules.md
+8d9b98a2:docs/legal/public-readiness-edits.md
+8d9b98a2:docs/legal/review-log.md
+$ first commit contents
+f9ec6ac6 2026-09-28 Import Meridian handoff package
+
+ .claude/commands/gate.md                     |    5 +
+ .claude/commands/standup.md                  |    4 +
+ CLAUDE.md                                    |  127 +++
+ DIRECTORS.md                                 |  637 ++++++++++++++
+ README.md                                    |   24 +
+ docs/decisions/0001-engine-choice.md         |   19 +
+ docs/production/risk-register.md             |   14 +
+ prototype/index.html                         | 1200 ++++++++++++++++++++++++++
+ prototype/package.json                       |   11 +
+ prototype/tools/headless.js                  |   43 +
+ prototype/tools/screenshot.js                |   10 +
+ prototype/tools/sim-stats.js                 |   33 +
+ tools/gen_directors.py                       |  443 ++++++++++
+ 35 files changed, 3698 insertions(+)

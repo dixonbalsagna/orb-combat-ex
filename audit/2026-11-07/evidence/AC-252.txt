@@ -1,0 +1,30 @@
+arena pad NO brace_key
+simple-pad pad NO brace_key
+kb-solo kb strikeBindings:["kb:KeyX"]
+kb-solo-swapped kb strikeBindings:["kb:Period"]
+kb-shared-p1 kb strikeBindings:["kb:KeyZ"]
+kb-shared-p2 kb strikeBindings:["kb:BracketRight"]
+touch-simple touch NO brace_key
+touch-full touch NO brace_key
+a8bc66e2 arena pad NO brace_key
+a8bc66e2 simple-pad pad NO brace_key
+a8bc66e2 kb-solo kb strikeBindings:["kb:KeyX"]
+a8bc66e2 kb-solo-swapped kb strikeBindings:["kb:Period"]
+a8bc66e2 kb-shared-p1 kb strikeBindings:["kb:KeyZ"]
+a8bc66e2 kb-shared-p2 kb strikeBindings:["kb:BracketRight"]
+a8bc66e2 touch-simple touch NO brace_key
+a8bc66e2 touch-full touch NO brace_key
+== a8bc66e2 brace_style help
+70:    "brace_style": { "default": "flick", "group": "controls", "label": "Brace style", "help": "Flick: guard and flick the stick, or press the brace button. Button only: only the brace button braces, so no flick speed is needed. The button is L3 on Arena (R3 if swapped); change it in Remap controls.", "accessibility": true, "choices": ["flick", "press"] },
+== HEAD timing switches.rightStick
+41:    "rightStick": true,
+== a8bc66e2 rightStick
+41:    "rightStick": true,
+== pin rightStick
+none
+== remap.gd:23
+const OPTIONAL: Dictionary = {"pad": ["strike_key", "brace_key", "escape"]}
+== layout.gd:1112-1114
+func _brace_button(lv: Vector2, tick: int) -> void:
+	if _brace_key == "":
+		return

@@ -1,0 +1,17 @@
+$ sed -n '84p' docs/legal/review-log.md
+| RL-062 | Agency 15.5 kinds: splitting, rain, curving, ricochet GO; burning wake, shield orb CONDITIONAL | Game Design | Medium | see agency-pass-screen.md | Open |
+
+$ sed -n '105,106p;126p;128p' docs/legal/agency-pass-screen.md | cut -c1-300
+| Burning wake | **CONDITIONAL** | RL-062 |
+| Shield orb | **CONDITIONAL** | RL-062 |
+**Burning wake: CONDITIONAL.** A scattered burning trail that fades in 3 s, drawn as heat shimmer and embers behind him, is fine. It must not be a solid straight neon line or wall that destroys on touch.
+**Shield orb: CONDITIONAL.** A single hovering shield, built in our hexagonal or faceted family (a faceted dome or crystal), not a smooth glowing sphere. One at a time. Never a set, never several orbiting him, never seven, and never with a face or markings.
+
+$ grep -n -E '^const (LINE|SEEK|LOB|MINE)' sim/core/shots.gd
+24:const LINE: int = 0
+25:const SEEK: int = 1
+26:const LOB: int = 2
+27:const MINE: int = 3
+
+$ git grep -n -i -E 'burning.?wake|shield.?orb|shield_orb' -- data sim render ui | head -3
+

@@ -1,0 +1,12 @@
+# AC-243 evidence (verifier v17, 2026-11-07)
+## ci.yml GDScript parity step (HEAD)
+188:      - name: GDScript parity
+189:        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/parity.gd'
+## last green run 41956488028 (72a4d1e4, 2026-11-05)
+Godot headless checks (parity, determinism, seam)
+success
+success  GDScript parity
+## commits touching sim/core/test/golden.json since 72a4d1e4 (unchecked by CI)
+a8bc66e2 2026-11-07
+3c9005ac 2026-11-06
+## ci.yml runs since 2026-11-06: all failure with 0 jobs (see ci-dead-root-cause.txt and AC-238.txt)

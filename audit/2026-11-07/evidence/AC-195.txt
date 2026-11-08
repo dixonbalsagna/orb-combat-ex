@@ -1,0 +1,7 @@
+# AC-195 evidence
+5. **"Glass the whole street"** (a Cyborg line you approved): swap "glass" for "burn" or "flatten", or keep it and accept it as a review-tier word (`docs/legal/gemini-lines-screen.md`, section 2).
+20:| Empress: "…we'll just glass the whole street!" | **Pass with a swap recommended.** Not banned, but "glass" as a v
+41:Narrative: apply the ai01 provenance record to the line files, treat "glass" as review-tier (c10), keep the casualty-
+7610:    "hw11.19": "Empress, 'Dance, little rat! We'll just glass the whole street!': 'dance' is on Orb's banned list and 'glass' is review-tier; waits for Orb's swap (burn or flatten).",
+185:      "glass"
+206:      "glass"

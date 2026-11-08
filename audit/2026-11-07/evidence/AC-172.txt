@@ -1,0 +1,30 @@
+# AC-172: chapel and bell tower at HEAD vs pin (run 2026-11-07)
+HEAD:data/biomes/settlements.json:36:      "key": "clock_tower",
+HEAD:data/biomes/settlements.json:68:      "key": "hill_chapel",
+HEAD:data/biomes/settlements.json:74:      "noTarget": true
+HEAD:data/biomes/settlements.json:530:              "key": "clock_tower",
+HEAD:data/biomes/settlements.json:886:              "key": "hill_chapel",
+HEAD:sim/director/launch.gd:1227:		if not b.alive or WorldSettle.noTarget(b.landmark):
+HEAD:sim/director/swing.gd:248:		if not b.alive or WorldSettle.noTarget(b.landmark):
+HEAD:sim/director/swing.gd:304:		if not b.alive or WorldSettle.noTarget(b.landmark):
+HEAD:sim/world/brunt.gd:523:		if not nb.alive or nb == b or WorldSettle.noTarget(nb.landmark):
+HEAD:sim/world/brunt.gd:642:		if WorldSettle.noTarget(b.landmark):
+HEAD:sim/world/brunt.gd:789:	if not b.alive or WorldSettle.noTarget(b.landmark):   # RL-243: a landmark barred by c09 is not struck: he flies on, nothing shown
+HEAD:sim/world/brunt.gd:818:	list = list.filter(func(i): return not WorldSettle.noTarget(S.buildings[i].landmark))   # RL-243: a barred landmark is not struck: 
+HEAD:sim/world/brunt.gd:853:	if WorldSettle.noTarget(b.landmark):   # RL-243 (a belt for the paths above): a barred landmark is never struck
+HEAD:sim/world/brunt.gd:992:	if WorldSettle.noTarget(b.landmark):   # RL-243: the meteor passes a barred landmark as it passes air
+HEAD:sim/world/brunt.gd:1048:		if not nb.alive or nb == b or _splashN(f) >= SPLASH_CAP or WorldSettle.noTarget(nb.landmark):   # RL-242: a barred landmark takes
+## PIN
+36:      "key": "bell_tower",
+68:      "key": "hill_chapel",
+529:              "key": "bell_tower",
+885:              "key": "hill_chapel",
+## people terms in launch planner
+HEAD:sim/director/launch.gd:37:const OPEN_POP: float = 0.2         # popNear(landing, CARE_R) at or below this is open ground
+HEAD:sim/director/launch.gd:266:			k.s += (-A.care) * CARE_W * WorldStructures.popNear(S, D.x, CARE_R)
+HEAD:sim/director/launch.gd:310:		var popL: float = WorldStructures.popNear(S, lx, CARE_R)
+HEAD:sim/director/launch.gd:817:		pers += (-A.care) * CARE_W * clampf(cb.popAlive / WorldStructures.buildingPopRef(S), 0.0, 1.0)
+257a766c:sim/director/launch.gd:37:const OPEN_POP: float = 0.2         # popNear(landing, CARE_R) at or below this is open ground
+257a766c:sim/director/launch.gd:193:			k.s += (-A.care) * CARE_W * WorldStructures.popNear(S, D.x, CARE_R)
+257a766c:sim/director/launch.gd:233:		var popL: float = WorldStructures.popNear(S, lx, CARE_R)
+257a766c:sim/director/launch.gd:282:		pers += (-A.care) * CARE_W * clampf(cb.popAlive / WorldStructures.buildingPopRef(S), 0.0, 1.0)

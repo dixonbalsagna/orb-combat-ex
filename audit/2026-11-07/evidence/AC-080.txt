@@ -1,0 +1,12 @@
+# AC-080 proof, 2026-11-07
+## live play/index.pck: extensions (no audio file shipped):
+{"scn":6,"cfg":1,"bin":1,"remap":389,"gdc":383,"json":236,"binary":1,"gdshader":27,"gdshaderinc":8}
+## audio files tracked at HEAD outside audio/preview (none = no music committed):
+(end)
+## audio/music at HEAD:
+audio/music/NOTICE.txt
+audio/music/README.md
+audio/music/incoming/.gdignore
+audio/music/sidecar-template.txt
+(end)
+## External (accessed 2026-11-07) https://suno.com/terms: 'Effective Date: September 3, 2026'; free/basic: 'personal and non-commercial purposes'; 'You may not commercially exploit Output that has not been downloaded'; 'not to remove, alter, obscure or circumvent any fingerprint, watermark or metadata'.

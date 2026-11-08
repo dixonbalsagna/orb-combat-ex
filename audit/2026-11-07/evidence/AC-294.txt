@@ -1,0 +1,18 @@
+# AC-294 proof, run 2026-11-07 on HEAD 53b6df82 (read-only); live pin 257a766c
+static func launch(S: SimState, f, by, speed: float, dir: float, n: int = 0) -> void:
+	var e := _ev(S, "launch")
+	e.actor = float(S.fighters.find(f)); e.target = float(S.fighters.find(by)) if by != null else -1.0
+				elif e.type == "launch":
+					# SimFx.launch(S, f, by): the event's actor is the body that was SENT and its target the one who launched him. Up to 2026-10-17 this read the actor as the launcher, so every "launches by him",
+					# "on him" and "first launch" figure of the route (and from 2026-10-16 the newcomer) was the other way round: they counted the launches OF the route's player, not by him.
+					var lsent: int = int(e.actor)
+					var lby: int = int(e.target)
+					if m_fb >= 0 and lby >= 0 and lby < 2 and Pl.counts_as_route(by_slot[lby].kind):
+						m_rby += 1
+						if m_fl < 0:
+							m_fl = S.tick
+						if m_ft < 0:
+							m_ft = S.tick
+					if lsent >= 0 and lsent < 2 and Pl.counts_as_route(by_slot[lsent].kind):
+						m_ron += 1
+docs/qa/launch-rerun-f15d7de3.md

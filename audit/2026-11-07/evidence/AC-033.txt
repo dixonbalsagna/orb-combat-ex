@@ -1,0 +1,34 @@
+# AC-033 evidence
+## biome FX in the live pin 257a766c? (data/vfx/biome.json in its tree; empty = absent)
+(end)
+## defaults at HEAD and LAN commit a8bc66e2
+81:const BIOMEFX_DEFAULT: bool = true       # what an impact and a landing throw up depends on the biome's material (biome.gd; Orb, 2026-10-23)
+83:const AFTER_DEFAULT: bool = true           # what a beam leaves in the ground (World's aftermaths) draws its flames, embers, powder, spray and mist (after.gd
+85:const BIOME_AMBIENT_DEFAULT: bool = false  # and a light ambient drift in each biome's air (biome.gd `ambient`): OFF until Orb has seen it (EP, 2026-10-27)
+81:const BIOMEFX_DEFAULT: bool = true       # what an impact and a landing throw up depends on the biome's material (bio
+85:const BIOME_AMBIENT_DEFAULT: bool = false  # and a light ambient drift in each biome's air (biome.gd `ambient`): OFF 
+## star once a second and registered (render/vfx/biome.gd:418-427)
+	var col: Color = (sp["lit"] as Color).lightened(0.15)
+	if tick - _last_star_tick < 60:      # never twice within a second (Legal's fx07)
+		return
+	if flashes != null:
+		var area: float = VfxFlashRegistry.disc_px(r * 0.5, flashes.ppu_at(z))
+		if not flashes.ask("biome_star", col, tick, area):
+			stars_refused += 1
+## plume and beam clip tables (docs/vfx/pending/biome-fx/README.md:15-22, 34-41)
+| Clip | Mode | Primary | General | Red | Area-15% | 2 s memory | Verdict |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| beamdesert | normal | 3 | 0 | 0 | 3 | 4 | NOT PASS (the 120-frame memory reads 4) |
+| beamdesert | reduced | 4.5 | 0 | 0 | 4.5 | 4 | NOT PASS |
+| beamice | normal | 4 | 0 | 0 | 4 | 4 | NOT PASS |
+| beamice | reduced | 4.5 | 0 | 0 | 4.5 | 4 | NOT PASS |
+| beamvolc | normal | 4 | 0 | 0 | 4 | 3 | NOT PASS |
+| beamvolc | reduced | 4.5 | 0 | 0 | 4.5 | 4 | NOT PASS |
+| Clip | Mode | Primary | General | Red | Area-15% | 2 s memory | Margin | Dips | Verdict |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| plumedesert | normal | 2 | 0 | 0 | 2 | 2 | 0/4 | 0 | PASS |
+| plumedesert | reduced | 2 | 0 | 0 | 2 | 2 | 0/4 | 0 | PASS |
+| plumeice | normal | 2 | 0 | 0 | 2 | 2 | 0/4 | 0 | PASS |
+| plumeice | reduced | 2 | 0 | 0 | 2 | 2 | 0/4 | 0 | PASS |
+| plumevolc | normal | 2 | 0 | 0 | 2 | 2 | 0/4 | 0 | PASS |
+| plumevolc | reduced | 2 | 0 | 0 | 3 | 2 | 0/4 | 0 | PASS (the sensitivity run is at 3, not over it) |

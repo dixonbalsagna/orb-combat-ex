@@ -1,0 +1,22 @@
+# AC-119 proof (run 2026-11-07, read-only)
+| RL-080 | Four signature sketches and hip-zone width | Animation | Medium | CONDITIONAL: tell poses need hands apart and the wide zone; zone 8 for closed-fist transients, 14 for open hands and held poses | Open |
+## originality-rules.md: iconic poses are a grey zone, Orb decides
+## Grey zones: Orb decides
+
+Until Orb decides, the default in the last column applies.
+| Iconic poses | [pose list elided] | Animation designs original charge and fire poses. Generic poses (arm out, palm forward) are fine. |
+## enforcement: held lint and wave flags
+render/anim/anim_held_lint.gd:22:const PAIR_APART := 10.0          # pair test: both hands within this of each other, both in the hip zone
+render/anim/anim_held_lint.gd:24:const HIP_X := 14.0               # the hip zone: x this or less, height 24 to 44
+render/anim/anim_held_lint.gd:25:const EMIT_WRIST_X := 8.0         # emitter test: an open hand in the hip zone with its wrist at x this or less
+render/anim/tools/waves/flags.mjs:2:// shapes name). Read off the three key poses' geometry with the same numbers pose_lint.gd's Legal rules use (hip zone: x 8 or less for a closed fist and 14 or less for an open hand, height 24 to 44 (see 
+render/anim/tools/waves/flags.mjs:20:// the hand drawn back to the hip (Legal, RL-076 and docs/legal/movegen-banned.json): the zone is x 8 or less for a closed fist in a transient wind-up and x 14 or less for an open hand, a palm or any
+## gate in anim_check (not in ci.yml)
+render/anim/tools/anim_check.gd:6718:func _test_held() -> void:
+render/anim/tools/anim_check.gd:6719:	var r: Dictionary = AnimHeldLint.scan()
+0
+## the screen's own label
+1:# The LT zip, its looks, Animation's 23 poses and 4 sketches: originality screen
+3:Owner: Legal and IP Compliance. 2026-10-05. Screens `docs/vfx/zip.md` and its stills (`docs/vfx/img/zip-*.jpg`), `docs/design/melee-press-feel.md` section 2c, Orb's 2026-10-05 notes, `docs/animation
+## US Copyright Office Circular 52 (https://www.copyright.gov/circs/circ52.pdf, fetched 2026-11-07, text extracted locally)
+Individual movements or dance steps by themselves are not copyrightable, such as the basic waltz step, the hustle step, the grapevine, or the second position in classical ballet. The U.S. Copyright Office cannot register short dance routines consisting of only a few movements or steps with minor linear or spatial variations, eve

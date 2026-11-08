@@ -1,0 +1,17 @@
+# AC-230 proof
+$ sed -n 74p docs/net/two-pc-check.md
+- **It has only ever run on this PC.** Nobody has seen two different processors agree yet. That's the point of running it.
+$ sed -n 83p docs/net/lan-v1.md
+The two processors already agree: Performance's old PC test ran Netcode's two-PC check on both (`docs/perf/oldpc-result-2026-11-01.md`).
+$ sed -n 86p docs/net/two-v-two-lan.md
+3. The two-PC check's result, on both PCs. If they disagree, everything else here waits.
+$ last commits
+two-pc-check.md dafc348f 2026-11-01
+lan-v1.md a8bc66e2 2026-11-07
+$ homework/Files/oldpc-result-20261101-1813.json (git-ignored, in the repo folder)
+cpu: Intel(R) Core(TM) i5-6600K CPU @ 3.50GHz | when: 2026-11-01T18:13:41.5223759-08:00 | twopc_exit: 0
+format 1
+build dafc348f
+godot 4.7.2-stable (official)
+proto 5
+data 7303efb405a2f585

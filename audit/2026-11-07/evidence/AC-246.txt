@@ -1,0 +1,12 @@
+# AC-246 evidence (verifier v17, 2026-11-07)
+## HEAD tree: Steam SDK-like paths (git ls-tree -r HEAD | grep steam_api|steamworks|godotsteam|libsteam|redistributable_bin|steam_appid)
+0
+## all history, every ref (git log --all --name-only)
+0
+## GDScript calling a Steam singleton
+0
+## automated guard: .gitignore or tools/.github mention of steam_api/redistributable_bin
+0
+0
+## Valve Steamworks SDK Access Agreement (accessed 2026-11-07): https://partner.steamgames.com/documentation/sdk_access_agreement
+s1.1(b): "reproduce and distribute the part of the SDK provided inside the folder named redistributable_bin"

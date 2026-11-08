@@ -1,0 +1,23 @@
+AC-041 evidence (verifier v04, 2026-11-07, read-only)
+## HEAD docs/legal/review-log.md:161
+| RL-139 | Training dummy joins the roster (pairings: Protagonist v dummy, Anti-hero v dummy) | Tools | Low | Release rules need only: each new pairing at least 3 captures, and a mash-on-the-dummy scene per fighter in both modes (hit white at the maximum rate) | Open |
+
+## HEAD tools/flash/sources.json: dummy scenes and pairings
+scene mashdummy [["PROTAGONIST","REFERENCE"],["RIVAL","REFERENCE"]]
+scene signaturedummy [["PROTAGONIST","REFERENCE"],["RIVAL","REFERENCE"]]
+scene blastdummy [["PROTAGONIST","REFERENCE"],["RIVAL","REFERENCE"]]
+pairing PROTAGONIST v RIVAL seeds 7
+pairing PROTAGONIST v REFERENCE seeds 7
+pairing RIVAL v REFERENCE seeds 6
+
+## HEAD tools/flash/selftest.js:245,249 (per-entry seed floor is 1; per-fighter floor 5)
+  check('every AI-match entry names two distinct roster fighters, at least 1 seed, and needs the signatures of fighters in it', pr.every((p) => p.slots.length === 2 && p.slots[0] !== p.slots[1] && p.slots.every((s) => roster.includes(s)) && new Set(p.seeds).si
+  check('every roster fighter is in at least 5 of the picked AI matches (re-run tools/flash/pick-seeds.mjs when a fighter joins): ' + (thin.join(', ') || 'none short'), thin.length === 0);
+
+## HEAD tools/flash/release-pass.json: commit, date, any dummy rows
+  "commit": "d3f1ca0e22f39110d69feceb4913ff799d11db5d",
+  "recorded": "2026-10-15",
+dummy rows: 0
+
+## pin roster 257a766c:data/fighters/roster.json
+["PROTAGONIST", "RIVAL", "REFERENCE"]

@@ -1,0 +1,21 @@
+AC-221 evidence
+== docs/legal/review-log.md:212-213
+| RL-190 | Perf's lost-graphics page notice ('The game lost its graphics.' with a 'Reload' button) and the next-load note placed inside the click-through below its buttons | Perf, Tools | Low | Pass; the note stays below the buttons and outside the notice's words, never above the warning, never pushes the buttons off a small phone, never changes the gate's state; the interim page check still passes | Closed |
+| RL-191 | Rendering's boot line ('Preparing the graphics', a 240 by 2 px bar, static, under UI's layer; 2026-10-27b park) | Rendering | Low | Pass with conditions: the bar moves forward only in whole percents and never pulses or loops, it shows real progress or none, the line stays under the notice and the click-through, no promise words; no flash or waiver issue Two bars on a no-notice start (UI's loading screen, then the boot line) pass: each labeled, each forward-only | Closed |
+== tools/site.json crumbs key (HEAD and 72a4d1e4; empty = off):
+(end)
+== tools/site-interim.mjs:103-107 (note slot after buttons, AI line and About link)
+<p style="margin:1.25rem 0 .5rem"><button id="gate-start" type="button" style="font:inherit;font-weight:600;padding:.7rem 1.1rem;color:#0e1015;background:#e6e9ef;border:0;border-radius:6px;cursor:pointer">${esc(text.gate.button)}</button>
+<a id="gate-notnow" href="${esc(hrefs.holding)}" style="margin-left:1rem;color:#aab1be;font-size:.95rem">${esc(text.gate.not_now)}</a></p>
+<p id="gate-under" style="${small}">${esc(text.gate.under)}</p>
+<p id="gate-ai" style="${small}">${esc(text.gate.ai)}</p>
+<p style="font-size:.85rem"><a style="color:#8fb8ff" href="${esc(hrefs.about)}">${esc(text.gate.about)}</a></p>${opts.noteSlot ? '\n<div id="ocx-note-slot"></div>' : ''}
+== live https://dixonbalsagna.github.io/orb-combat-ex/play/ count of ocx-note-slot|ocx.crumbs (2026-11-07):
+0
+== render/core/boot.gd:26,141-142,314 (progress = jobs done / jobs, whole percent)
+var progress: float = 0.0              # the share of the jobs drawn, 0 to 1
+	progress = float(_next) / float(maxi(jobs.size(), 1))
+	_set_line(progress)
+	var w: float = floor(p * 100.0) / 100.0 * _bar_size.x   # a whole percent: nothing redraws between
+== boot.gd at pin 257a766c:
+fatal: path 'render/core/boot.gd' exists on disk, but not in '257a766c'

@@ -1,0 +1,31 @@
+# AC-019 evidence
+## RL-208 (HEAD:230)
+| RL-208 | Moving the pin to main (RL-207 condition 3): (1) normal-mode readings on a locked pin, (2) which open rows (RL-177, 179, 180, 183, 187) must be read first, (3) the public pack with role names, main's look, no art/ or docs/ | EP, Tools, VFX, Rendering | High | (1) Only reduced is the take-down trigger (over 3.5 primary, the mode players get). A normal clip over 3.5 is a finding, not a trigger, while the same run's exported-build route check passes (lock flag true, capture_hook off, F8 refused, the sixteen debug words local-only, no command-line word reaches normal); if that check fails, or the lock ever becomes reachable, main's normal 3.5 / 5 / 3 is a trigger on its own (addendum 12(c)); the nightly keeps reading normal for the record, because a restore or a release needs it, and its exit code is 'finding' for normal, 'take-down' for reduced. (2) One batch: signature and collapse both modes with reduced within 2.5 / 3 / 2 on the signature clip and no clip's reduced primary above the live pin's 3 (RL-195); the nightly of 16 clips on main; RL-187's one ambient clip and one beam clip per ground, reduced mode read, normal recorded if cheap. RL-177, 179, 180, 183 (energy kits, grab call-outs, rally links) apply only to content that is on in the exported build; Tools prints each switch's state (kits, rapid fire, snare and mine, grab call-outs, rally) in the nightly's build info, and for any that is ON the row's own clips join the batch (flash register, 3 white bursts a second, rally cap), for any OFF the row stays open and reopens on the day it is switched on, with the nightly checking the switch has not flipped. (3) Role names Protagonist and Rival: clear. The pack is checked for no art/ or docs/ (concept sheets and provenance stay out), the names scan and the banned rows over ui/ and data/, no work-in-progress character art on any public page, the page's cleared notice, lock line, AI line and licenses/privacy screen unchanged, the phone note kept, RL-200's excuse file removed in the same commit as the move, and the signature gate re-recorded for main (limits applied, not grandfathered) | Open until the batch is read |
+
+## export_presets.cfg Web preset filters, HEAD and live pin 257a766c
+export_filter="all_resources"
+include_filter="build_info.json"
+exclude_filter="prototype/*, qa/*, research/*, docs/*, tools/*, .github/*, sim/core/tools/*, sim/director/tools/*, sim/world/tools/*, audio/tools/*, ui/tools/*, render/anim/tools/*, render/vfx/tools/*"
+export_filter="all_resources"
+include_filter="build_info.json"
+exclude_filter="prototype/*, qa/*, research/*, docs/*, tools/*, .github/*"
+
+## .gdignore under art/ (HEAD and pin)
+art/animation/.gdignore
+art/concepts/.gdignore
+art/animation/.gdignore
+art/concepts/.gdignore
+
+## art/ files outside gdignored folders at the pin, by extension
+     23 md
+
+## nightly exit codes (tools/flash/nightly-seeds.mjs header lines 17-19)
+//      get) over the limit, or a normal one while the route check failed or did not run, or the route check failed (node tools/site-offline.mjs and tell the EP); 2 the run itself failed (a clip not read,
+//      the signature clip included: a missing clip is not a pass); 3 the signature clip reads, reduced, worse than 2.5 / 3 / 2 (RL-195: tell the EP; not a take-down by itself); 4 FINDING: a NORMAL clip over
+//      the limit while the route check passed (recorded, not a trigger); 5 a watched switch is not as Legal reviewed it (its row's own clips join the batch).
+
+## site pin
+257a766c26f8766fb09b063864c41c5d8ba64dc0 2026-11-15
+
+## nightly-seeds.mjs:16 (start of the exit-code list)
+//   4. ONE report line, a build info line, the route check, the switches and a verdict, and an appended row in the history. EXIT CODES (Legal RL-208): 0 clean; 1 TAKE DOWN: a REDUCED clip (the mode players

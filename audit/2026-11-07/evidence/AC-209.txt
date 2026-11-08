@@ -1,0 +1,15 @@
+AC-209 proof, run 2026-11-07: never-use words on public surfaces
+-- README.md:
+3:and the game choreographs the exchange. Inspired by the classic anime energy-brawlers.
+5:e. No part of this game is described as human-made unless this page says so.
+7:ved for now. Please do not copy or redistribute this code or content until a licence is
+7:low); when it returns you may play it. "Meridian" is the team's internal codename.
+-- audit/2026-11-07/evidence/live-site-index.html:
+no matches
+-- audit/2026-11-07/evidence/live-play-index.html:
+228:					statusProgress.removeAttribute('value');
+229:					statusProgress.removeAttribute('max');
+264:  if (gate) gate.setAttribute('inert', '');
+267:    if (gate) gate.removeAttribute('inert');
+-- repo description/topics:
+{"description":null,"topics":[]}

@@ -1,0 +1,13 @@
+AC-199 proof, run 2026-11-07
+-- CLAUDE.md:3
+An original fighting game in the anime energy-brawler tradition: free flight, beam struggles, transformations and planet-scale destruction, with every character, name and asset our own. Free and open source. Owner and creative lead: Orb.
+-- README.md:7
+Every fighter, move and planet here is original. **Licence:** not chosen yet, so all rights are reserved for now. Please do not copy or redistribute this code or content until a licence is added. The hosted build is offline for now while its flashing effects are fixed (see below); when it returns you may play it. "Meridian" is the team's internal codename.
+-- LICENSE files at repo root:
+ls: cannot access 'LICENSE*': No such file or directory
+-- GitHub repo metadata:
+{"description":null,"license":null,"topics":[],"visibility":"public"}
+-- 'open source' on live / and /play/ (saved copies identical to live):
+no matches
+-- docs/ep/vision.md:79
+| README line | "A free, open-source fighting game about wrecking a planet. No combo lists: pick a stance and the game choreographs the exchange. Inspired by the classic anime energy-brawlers." (Orb's blend; final wording waits on the licence) |

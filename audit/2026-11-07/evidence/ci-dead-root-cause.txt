@@ -1,0 +1,27 @@
+# CI dead since 3c9005ac: evidence (auditor, 2026-11-07T22:46:55Z)
+
+## Unquoted ': ' inside plain-scalar step names (invalid YAML: a mapping value inside a plain scalar)
+226:      - name: Press check (Game Design press-decides: a held B and a stance circle, the stops and the prices, the one rule for B, the steal, two runs one hash)
+240:      - name: Cross end check (how a fight ends in a match of two fights: the fallen body, rejoinAfter; Simulation cross-end)
+263:      - name: Press check (Game Design press-decides: a held B and a stance circle, the stops and the prices, the one rule for B, the steal, two runs one hash)
+277:      - name: Cross end check (how a fight ends in a match of two fights: the fallen body, rejoinAfter; Simulation cross-end)
+
+## Introduced by
+85884449 2026-11-07 03:21:11 -0800 Tools: feel replays, a refusal ledger, a button strip on every clip, a pad lab and a scheme gauntlet; the page's switch rows (69) and pruned stack on main; the clip kit's hang worked around
+3c9005ac 2026-11-06 12:15:55 -0800 EP: land the overnight batch (133 parks, Tools' clean tree landing-clean-1106, no page flips), with golden regenerated, the two-fighter baseline down to 367, and three fixes: swing_read_check uses the sim hash, landmark_spare_check skips the crater part until crater-collapse lands, world-checks lists only checks that exist
+
+## Last ci.yml success, and first failure after it
+[{"conclusion":"cancelled","createdAt":"2026-11-05T02:30:49Z","headSha":"dfe7fac9b08744c002d19891b7b8b1ce0b5fab75"},{"conclusion":"success","createdAt":"2026-11-05T02:38:04Z","headSha":"72a4d1e4aaac58ab359b50b2b18726342b5b47aa"},{"conclusion":"cancelled","createdAt":"2026-11-06T18:04:21Z","headSha":"0208852ead3c5f4c51cb7430e0548c8da47a1e24"},{"conclusion":"failure","createdAt":"2026-11-06T20:16:03Z","headSha":"3c9005ac4f70d45f6c5b597dbed2b7efdb66ff43"}]
+
+## ci.yml runs since 2026-11-06 by conclusion
+{"failure":37}
+
+## deploy job: ci.yml:526-529
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: [qa, sim, data, flash, godot-parity, net, world, site]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+
+## Last github-pages deployment
+{"created_at":"2026-11-05T03:48:45Z","environment":"github-pages","sha":"72a4d1e4aaac58ab359b50b2b18726342b5b47aa"}

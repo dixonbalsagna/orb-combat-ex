@@ -1,0 +1,35 @@
+# AC-158 / AC-159 / AC-166: the bundled rows (run 2026-11-07)
+| RL-040 | Five landmark ideas (district looks) | Art | Low | GO, with light conditions | Closed |
+| RL-043 | Narrative placeholders: signature shouts, Chin Up and alternates, taunt and last-stand lines, DRIVE DOWN, CRATER SLAM | Narrative | Low | GO | Closed |
+| RL-046 | Guard arc (Rendering) and round 9 Cyborg A mask | Rendering, Art | Low | GO | Closed |
+| RL-048 | Combat wave 2 entries (15) and the two-hand channel pose | Combat | Low | GO; seven Legal lines confirmed; channel pose tightened | Closed |
+| RL-049 | Combat wave 3 (ping-pong rally) and wave 4 (grabs and throws) | Combat | Low | GO; Legal lines confirmed and tightened | Closed |
+| RL-050 | Combat wave 5 (clashes, beam answers) and wave 6 (energy shapes and hands) | Combat | Low | GO; Legal lines confirmed, additions noted | Closed |
+| RL-052 | Dash afterimage (Rendering) | Rendering | Low | GO with three constraints | Closed |
+| RL-054 | Far taunt challenge, two charges, range-band icon | Game Design | Low | GO | Closed |
+| RL-055 | First energy slice | Game Design | Low | GO | Closed |
+| RL-058 | Blow for Blow set piece and charge poses vs the twelve rules | Combat | Low | GO; all twelve met | Closed |
+| RL-063 | Launch pair: Protagonist strikes, entries, identity | Combat | Low | GO; air roll never a spinning ball | Closed |
+| RL-064 | Launch pair: six On the Chin poses | Combat | Low | GO; not a flat cross, no head thrown back | Closed |
+| RL-065 | Launch pair: energy kinds per fighter | Combat | Low | GO | Closed |
+| RL-067 | Protagonist far taunts: nod, bounce, fist to palm | Combat | Low | Clear; fist to palm and the close taunt have conditions | Closed |
+| RL-068 | Glasses compare: A, B, C clear; D avoid | Art | Low | Clear; D avoid | Closed |
+| RL-070 | Rival sheet: tail, coat blades, glasses | Art | Low | Clear | Closed |
+| RL-075 | Identity split: Protagonist palms and arcs, rival fists behind plates, glasses always on | Combat | Low | Clear | Closed |
+| RL-079 | Animation's 23 parked strike poses (rival4, protag7) | Animation | Low | Clear by eye; full-size look at fist_drop, plate_hammer, palm_heave before live | Closed. The full-size look was done: all three Clear (stances-and-gestures-screen.md, A3), and RL-082 closes it too. They must lower at once and never be held, a tell, victory or a taunt (zip-screen.md); no stills needed |
+| RL-082 | Far-side pass, check guard layer, push style | Animation | Low | Clear: m01 to m04, dash rule on the arc dive, no held cross guard, P1 | Closed. Also closes RL-079's full-size look at fist_drop, plate_hammer, palm_heave |
+| RL-108 | Heave kneel read | Animation | Low | No legal reason to ease; grounded rise to chest or gut is an ordinary uppercut | Closed |
+| RL-112 | The six nudges (super-heavy) with numbers and new sheets | Animation | Low | Closed: all six pass | Closed |
+| RL-118 | The double hit's mark and VFX's br-* stills: wind-up rings, burst smear, flurry under the ghost counter, whiff | VFX | Low | Pass: two cracks and two hollow rings stand under k04 as contact-point marks; the faint tall oval round the Protagonist in the burst is a thin outline (k02), one mark | Closed |
+| RL-142 | Animation's eight pieces, the beam casts (RL-038 closed: no wrist grip, e10), the launch opening | Animation | Low | Pass; RL-038 closed; opening is a 7-tick reaction | Closed |
+
+$ AnimHeldLint header (h02/h05 thresholds in code)
+## Held-pose lint (Legal's held rules h01 to h03 as scoped by RL-087: docs/legal/movegen-banned.json `held` and `heldScope`): every pose a fighter holds for 12 ticks or more is checked against the
+const PAIR_WRISTS := 7.0          # pair test: both wrists forward and within this (wrists_together)
+const HIP_X := 14.0               # the hip zone: x this or less, height 24 to 44
+const EMIT_WRIST_X := 8.0         # emitter test: an open hand in the hip zone with its wrist at x this or less
+const HAND_TOP := 82.0            # emitter test: any hand above this (80 and a tolerance of 2)
+const ARM_STRAIGHT := 25.0        # h02: elbows within this many degrees of straight
+const ARM_WIDE := 32.0            # h02: both hands this far out to opposite sides
+const SHRUG_BEND := 40.0          # h02: a bend this much or more is a shrug, not arms wide
+const WIND_TOP := 80.0            # h05: no limb above this before the last 6 ticks of a wind-up; a chamber above it is judged on the real wind-up (anim_check), the lint lists it

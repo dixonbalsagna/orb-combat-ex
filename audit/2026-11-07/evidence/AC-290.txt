@@ -1,0 +1,9 @@
+# AC-290 proof, run 2026-11-07 on HEAD 53b6df82 (read-only); live pin 257a766c
+3. **The sim is shared.** A setting may change what is drawn, never what the sim computes, so players on different settings can still play each other and replays stay valid.
+4. **Settings stay.** The range from a performance mode to maximum graphics stands, as does ADR 0012's rule that a setting changes only what is drawn.
+- **Online.** Each player's setting crosses in the lobby and the strongest wins (on if either has it on). That is right here: the sensitive player's need outranks the other's preference. It goes in the match header with the other flags. I recommend it is allowed in ranked and online play, since it g
+## sim reads no setting (grep reduced_motion|reduce_flashing|quality in sim/*.gd, tools excluded)
+(end of grep)
+## swingReduced only in render
+HEAD:render/camera/camera_params.gd:175:const T_SWING_REDUCED: float = 0.15
+HEAD:render/camera/split_rig.gd:1071:			_swing_dur = CamParams.T_SWING_REDUCED if reduced_motion else CamParams.T_SWING

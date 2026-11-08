@@ -1,0 +1,17 @@
+# AC-244 evidence (verifier v17, 2026-11-07)
+## sim/world/tools/step_check.gd ends on a plain quit() whatever it found
+	print("STEP: %d check(s) failed" % fails)
+	quit()
+## step_check is listed in tools/world-checks.json
+11:"step_check"
+## ci.yml world job runs every listed check through gate.mjs --verdict
+438:        run: node tools/world-checks.mjs --run
+      const r = spawnSync(process.execPath, [join(root, 'tools', 'gate.mjs'), '--verdict', '--', godot, '--headless', '--path', root, '--script', `res://sim/world/tools/${n}.gd`], { stdio: 'inherit', 
+## tools/gate.mjs verdictProblems on step_check's failing and passing lines
+["verdict: STEP: 1 check(s) failed"]
+[]
+## commit that put world-checks --run and step_check into CI
+0ca00c3e 2026-10-30
+## step_check's failing lines are wall-clock budgets (line 63, 137)
+		ok(worst250 < 25.0, "at the read's budget (250 units, about 5 ms) no call of the job is long: the longest %.1f ms (the
+	ok(samePlanet(refB, rb[2]) and rb[1] < 25.0, "a gen 2 planet with the B plates on made by the job at 250 units is the o

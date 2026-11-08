@@ -1,0 +1,18 @@
+# AC-030 evidence
+## inventory cites review-log.md:465,466,468: these lines are a list of outside reference links (first 12 chars shown), not rulings:
+- Vorr: [Vil
+- Calamity: 
+- Breakers: 
+## the real rows: RL-246 at 268, RL-251 at 273, RL-252 at 274, RL-254 at 276
+| RL-246 | The beam struggle's meeting point (Orb: the centre where the beams co
+| RL-251 | World's beam-clash crater and its RL-246 (4) fit (docs/world/struggle
+| RL-252 | VFX's beam-clash end wave (docs/vfx/pending/struggle-ring/README.md, 
+| RL-254 | With World's struggle crater on (docs/world/pending/struggle-meet/REA
+## World's meeting crater switch (data/biomes/craters.json:27-28)
+  "struggleMeet": {
+    "enabled": false,
+## VFX clash wave default (render/vfx/vfx_look.gd)
+175:const CLASH_WAVE_DEFAULT: bool = false       # the beam clash's shockwave at the meeting point (clash_wave.gd; docs/vfx/clash-shockwave.md): off until Orb has seen it
+## the end-wave park is pending, not on main:
+README.md
+apply.patch

@@ -1,0 +1,21 @@
+# AC-173: RL-247 committed state (run 2026-11-07)
+## RL-247 at HEAD (expect only citations)
+463:RL-247 hold is untouched. (9) Who is who: A4's second palette is b
+465:RL-247 hold on the toll's meaning is untouched. (2) The band: QA r
+## working copy
+269:| RL-247 | Orb's own decisions (2026-11-02, owner, in a private discussion released to the EP): bystanders, scientists and bystander soldiers hit by collateral are flung and bounce harmlessly, at 
+ M docs/legal/review-log.md
+?? docs/legal/bystander-comedy-screen.md
+## HEAD rows after Sources
+451:## Sources (checked 2026-09-28)
+461:- Registers and records: [USPTO trademark search](https://tmsearch.uspto.gov
+462:| RL-248 | UI's clash teaching (docs/ui/pending/refusals-clash/README.md, st
+463:| RL-249 | The drawn case of RL-241 (EP's ask from the co-op 2v2 packet, doc
+464:| RL-250 | Animation's flight-strike looks (docs/animation/flight-strikes-pl
+465:| RL-251 | World's beam-clash crater and its RL-246 (4) fit (docs/world/stru
+466:| RL-252 | VFX's beam-clash end wave (docs/vfx/pending/struggle-ring/README.
+467:| RL-253 | Orb's own ruling, 2026-11-07 (docs/ep/vision.md, last block, chec
+468:| RL-254 | With World's struggle crater on (docs/world/pending/struggle-meet
+469:| RL-255 | Animation's air-brake looks (docs/animation/air-brake-looks.md, i
+## Orb bystander decisions in vision.md
+0

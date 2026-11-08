@@ -1,0 +1,22 @@
+# AC-291 proof, run 2026-11-07 on HEAD 53b6df82 (read-only); live pin 257a766c
+- Needs a ruling from Game Design and Controls: a human can switch stance while locked in an exchange and take 0.38x damage (sim/README.md, bug 3).
+| 3 | `core/fighter.js`, `input/control.js` | A human can switch stance at any time, including while locked in an exchange that was planned against the old stance, and `hit()` applies the stance at hit time (0.38x in defensive). The AI only switches when free. | A human can plan-dodge damage mid-exc
+## GDScript sim: stance frozen at requestAttack
+	# S3b (R8): inside an exchange the stances are the ones frozen at requestAttack; outside, the live stance.
+	var dStance: float = D.stance
+	if ex != null and (D == ex.D or D == ex.A):
+		dStance = ex.sD if D == ex.D else ex.sA
+	var sm: float = 1.0
+	if not o.get("ignoreStance", false):
+		sm = STANCE_MUL[int(dStance)]
+159:	ex.sD = D.stance
+340:	ex.sD = D.stance
+343:		ex.sD = float(planDefStance)
+853:	ex.sD = L.stance
+## same at live pin
+70:	# S3b (R8): inside an exchange the stances are the ones frozen at requestAttack; outside, the live stance.
+73:		dStance = ex.sD if D == ex.D else ex.sA
+## JS oracle still live stance
+  if (!o.ignoreStance){ sm = [1.12,0.38,1.0,1.25][D.stance]; if (D.state === 'charging') sm = 1.35; }
+## landed
+7fdfbe75 2026-09-29 S3b checkpoint 2: spaced exchanges, authored finishers with the struggle, stage penalties, stance freeze, clean parry, k 0.065, no 10 s gaps (goldens regenerated)

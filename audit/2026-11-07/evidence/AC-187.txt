@@ -1,0 +1,16 @@
+# AC-187 evidence
+    "everywhere": false,
+    "farPeople": false,
+    "farAnguish": false,
+    "maxFootSlope": 0.7,
+    "indexFrontBH": -2.0,
+    "indexBackBH": 45.0,
+    "farReach": 9000,
+    "farShare": 1.0
+  },
+300:	if bi >= 0 and isFar(S, bi):   # --- far branch begin: a far town's people: the hero's anguish only, as a fraction of their place's own base; nothing else is read or written here ---
+311:				if f.hasAnguish:
+313:			if cause != null and not S.fighters.has(cause) and cause.hasAnguish:   # a body of another fight (a shot from outside, Simulation's cross-fights): his own dead cost him as at home
+315:		return want   # --- far branch end ---
+360:		if f.hasAnguish:
+362:	if cause != null and not S.fighters.has(cause) and cause.hasAnguish:   # a body of another fight (a shot from outside, Simulation's cross-fights): his own dead cost him as at home

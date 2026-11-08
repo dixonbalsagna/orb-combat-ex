@@ -1,0 +1,14 @@
+# AC-179: place names and blocklist (run 2026-11-07)
+## files at HEAD carrying the blocklisted names
+HEAD:docs/legal/homework8-review-screen.md
+HEAD:docs/legal/movegen-banned.json
+HEAD:docs/narrative/pending/place_names.json
+HEAD:docs/narrative/place-names.md
+HEAD:docs/world/scratch-build/small-circles/canon_names.py
+HEAD:docs/world/scratch-build/small-circles/place_names_banks.json
+## blocklist_start anywhere in data/sim
+0
+## line-lint wired into CI workflows?
+0
+## c10 tiers in the lint data
+4

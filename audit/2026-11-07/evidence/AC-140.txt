@@ -1,0 +1,28 @@
+# AC-140 proof
+$ clinch/pair waves in live pin and HEAD
+-- 257a766c
+data/anim/waves/pair1.poses.json
+data/anim/waves/pair1.sequences.json
+data/anim/waves/pair2.poses.json
+data/anim/waves/pair2.sequences.json
+data/anim/waves/pair3.poses.json
+data/anim/waves/pair3.sequences.json
+-- 8d9b98a2
+data/anim/waves/cl1.poses.json
+data/anim/waves/cl1.sequences.json
+data/anim/waves/cl2.poses.json
+data/anim/waves/cl2.sequences.json
+data/anim/waves/pair1.poses.json
+data/anim/waves/pair1.sequences.json
+data/anim/waves/pair2.poses.json
+data/anim/waves/pair2.sequences.json
+data/anim/waves/pair3.poses.json
+data/anim/waves/pair3.sequences.json
+$ anim_check.gd g06 lint (HEAD)
+## C2 of the clinch (docs/animation/clinch-sizing.md): the grip layer. Two fighters tied up (the read the sim will send, handed to both by the scan): each hand lands on its region of the other (the shortfall within the data's gap
+## budget), no joint is past a limit, the bodies do not pass through one another (pair_clear: the bone capsules of one against the other's, the gripping forearms apart, to within 1.5 units: two arms crossing in a hold touch), the hands never lace (g02: 8 or mo
+## and the other's), and the heads and torsos keep a forearm's length of air (g06). It also scans the spacing from 26 to 46 units and prints, for each grade of the grip, the least spacing at which all of that holds: the
+## table Simulation holds the pair to.
+			var ok: bool = float(r.gap) <= float(AnimData.clinch.get("gap_budget", 3.0)) and float(r.clear) >= -1.5 and float(r.laced) >= 8.0 and float(r.g06) >= 15.0
+$ sockets.json:22
+    "back": {"bone": "spine_1", "offset": [-5, 4, 0], "surface": 5.0, "_note": "the pin's side: the back against a vertical surface (Legal g07)"}

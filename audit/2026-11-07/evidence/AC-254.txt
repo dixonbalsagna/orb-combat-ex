@@ -1,0 +1,36 @@
+== pin 257a766c: audio code present?
+audio/audio_babble.gd
+audio/audio_babble_player.gd
+audio/audio_bank.gd
+audio/audio_brawl.gd
+audio/audio_carry.gd
+audio/audio_cues.gd
+audio/audio_tug.gd
+audio/audio_voices.gd
+audio/demo/audio_demo.gd
+audio/synth/babble_synth.gd
+== pin main.gd audio hosts
+99:var audio: AudioVoices            # Audio's voice pool
+210:	audio = AudioVoices.new(host.audio_cues.bank)
+212:	host.audio_cues.bank.warm()   # render every sound now, so none renders in the middle of a fight (headless too: a tool times first plays as the game has them)
+376:	var c = host.audio_cues.flash(host.S, actor, id)
+== pin options volume/mono keys
+0
+== HEAD options volume/mono
+96:    "volume_master": { "default": 1.0, "group": "accessibility", "label": "Ma
+97:    "volume_effects": { "default": 1.0, "group": "accessibility", "label": "E
+98:    "volume_voice": { "default": 1.0, "group": "accessibility", "label": "Voi
+99:    "mono_audio": { "default": false, "group": "accessibility", "label": "Mon
+== fix commit
+9979146a 2026-10-28 04:47:08 -0700 UI: Settings gets Master, Effects and Voice volume and Mono sound (Godot's buses, through Audio's new trim hook); a help long
+== audit file last commit
+7c9f9c12 2026-10-28 00:09:07 -0700
+HEAD:ui/hud/ui_hud.gd:604:const VOLUME_GROUPS := {"volume_master": "master", "volume_effects": "effects", "volume_voice": "voice"}
+HEAD:ui/hud/ui_hud.gd:634:	elif key == "mono_audio":
+HEAD:ui/tools/hud_check.gd:5735:	_ok(keys.has("volume_master") and keys.has("volume_effects") and keys.has("volume_voice") and keys.has("mono_audio") and od["volume_master"]["default"] == 1.0 and od["mono_audio"]["default"] == false, "settings access: Master, Effects and Voice volume and Mono sound are on the screen, at 100% and off by default")
+HEAD:ui/tools/hud_check.gd:5755:	var want := {"volume_master": 0.6, "volume_effects": 0.35, "volume_voice": 0.0, "mono_audio": true}
+HEAD:ui/tools/hud_check.gd:5780:	for k in ["volume_master", "volume_effects", "volume_voice"]:
+HEAD:ui/tools/hud_check.gd:5782:	hud2.settings_set("mono_audio", false)
+== external (WebFetch 2026-11-07) https://gameaccessibilityguidelines.com/basic/
+Basic list includes: "Provide separate volume controls or mutes for effects, speech and background / music"
+Basic list includes: "Offer a wide choice of difficulty levels"; no screen-reader item in the Basic list.

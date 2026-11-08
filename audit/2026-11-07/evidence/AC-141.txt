@@ -1,0 +1,11 @@
+# AC-141 proof
+$ Ring Hold in parked rally
+      "id": "rally.rival.ring_hold",
+      "name": "Ring Hold",
+$ grep casualty/toll/civilian/people/occupant in sim/director/rally.gd (HEAD)
+(no output = no such read)
+$ ring hang anywhere outside docs/legal
+8d9b98a2:docs/combat/pending/rally/README.md:107:- **Narrative:** the twelve link names (Legal renamed Ring Hang to Ring Hold; Narrative renamed Guard's Wall to
+8d9b98a2:docs/narrative/pending/rally_names.json:37:        "combat_label": "Ring Hang",
+8d9b98a2:docs/narrative/rally-names.md:7:Nine of Combat's twelve labels already follow my place-plus-verb rule and are kept as they are. **Three change.** First
+8d9b98a2:docs/narrative/rally-names.md:12:| **The Anti-hero (the rival)** | **Plate Chase** (was Plated Ram)<br>*Straight line. No bend. No escape.*<br>alt: Str

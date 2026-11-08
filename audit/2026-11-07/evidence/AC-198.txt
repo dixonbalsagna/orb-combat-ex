@@ -1,0 +1,6 @@
+# AC-198 evidence
+docs/narrative/anguish-branches.md:38:| The Protagonist goes quiet | "There it is. That's the look I wanted." |
+docs/narrative/pending/story_beats.json:381:          "text": "Finally. Now you look like you mean it."
+docs/narrative/pending/story_beats.json:433:          "text": "Good. That's the look I wanted."
+docs/narrative/story-beats.md:107:- **Two lines for Legal to read** (the rival's replies after deaths): "Good. That's the look I wanted." (`
+(only docs/narrative and pending json; none in data/)

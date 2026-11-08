@@ -1,0 +1,15 @@
+# AC-248 evidence (verifier v17, 2026-11-07)
+## pull requests ever (gh pr list --state all)
+0
+## commits on main / merge commits / commits with a Claude co-author line
+2744
+0
+2695
+## branch protection on main
+{"message":"Branch not protected","documentation_url":"https://docs.github.com/rest/branches/branch-protection#get-branch-protection","status":"404"}gh: Branch not protected (HTTP 404)
+## licence-scanner tooling in tools/.github/qa (scancode, licensee, reuse, fossology, license-checker)
+0
+## foreign licence headers in shipped code dirs (GPL/AGPL text, SPDX, 'Copyright (c)' other than Godot's notice)
+0
+## Doe v. GitHub, No. 24-7700 (9th Cir., filed 2026-09-16), primary: https://cdn.ca9.uscourts.gov/datastore/opinions/2026/09/16/24-7700.pdf (accessed 2026-11-07)
+summary text extracted: "plaintiffs did not state a claim under the DMCA"

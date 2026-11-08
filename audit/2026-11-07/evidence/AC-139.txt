@@ -1,0 +1,11 @@
+# AC-139 proof
+$ git grep -n -i 'scrap jaw|drill fan' 8d9b98a2 outside docs/legal and audit
+8d9b98a2:docs/narrative/energy-names.md:42:- **Legal:** a screen. Points to look at: the Cyborg's set (wreckage and hunger only, never people). **His beam is described as vented from the stomach, whic
+8d9b98a2:docs/narrative/energy-names.md:43:- **Legal RL-178, applied:** Scrap Jaw is now Scrap Pit (alternate Wired Heap), with the flavour "Block, and the scrap behind me clamps shut." and no teeth; 
+(only the rename note above)
+$ Scrap Pit in parked kit
+    "trap": "Scrap Pit",
+    "Scrap Pit is machinery: plates and clamps on the torso, no teeth, no chewing, no biting, no swallowing (e14)",
+$ Legal's own reasons
+| **Scrap Jaw** (Cyborg trap: a field that drags a passer down) | **Rename to Scrap Pit** (already the alternate). "Jaw" and the flavour "grows teeth" describe a mouth closing on a fighter, which breaches ln02 until the rating decision. Draw the field as **clamps, plates and a pit that holds and dro
+| **Lance Sheaf** (his beam: thin lances bundled) | CLEAR as a name. **"Drilling" must not be drawn as a drill:** the lances are straight, parallel, thin lines bundled in a sheaf, with no rotation, spiral or corkscrew (e07, e11). "They drill, not cut" is a flavour line about boring forward; keep the

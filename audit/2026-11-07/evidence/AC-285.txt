@@ -1,0 +1,13 @@
+# AC-285 proof, run 2026-11-07 on HEAD 53b6df82 (read-only)
+  ok    KB-006 present: a rush flies through mountains and through standing buildings  (mountains: 25 of 36 steps up to 547 units inside the ground; city: 25 of 38 steps inside towers, up to 473 units deep)
+  ok    qa/known-bugs.md and these checks list the same bugs  (KB-001 confirmed, KB-002 confirmed, KB-003 confirmed, KB-004 confirmed, KB-005 confirmed, KB-006 confirmed)
+## 7233c96 stepRush 745-751
+function stepRush(f, dt){
+  const r = f.rush; if (!r) return;
+  const tx = r.tgt ? r.tgt.x + r.off : r.px, ty = r.tgt ? r.tgt.y : r.py, rem = r.end - T;
+  if (rem <= dt){ f.x = wrap(tx); f.y = Math.max(ty, groundY(tx)); f.rush = null; f.vx = 0; f.vy = 0; return; }
+  const k = dt/rem;
+  P({type:'after', x:f.x, y:f.y, life:0.16, col:f.aura, face:f.face});
+  f.x = wrap(f.x + sdx(f.x, tx)*k); f.y += (ty - f.y)*k;
+## effects kb6
+{"shareOfRushes":0.1476986946628877,"shareOfRushesThroughBuildings":0.06714302822242625}

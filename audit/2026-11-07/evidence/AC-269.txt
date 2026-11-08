@@ -1,0 +1,8 @@
+# AC-269: register-agreement logic of qa/tests/known-bugs.test.js:89-99 replayed on qa/known-bugs.md at HEAD (read-only, no harness run)
+entries [{"id":"KB-001","v":"confirmed"},{"id":"KB-002","v":"confirmed"},{"id":"KB-003","v":"confirmed"},{"id":"KB-004","v":"confirmed"},{"id":"KB-005","v":"confirmed"},{"id":"KB-006","v":"confirmed"}]
+wanted(no check) [] stale []
+=> agreement check PASSES today; it fails only once KB-007+ entries are added without checks
+# CC-007..013 mentions in qa/known-bugs.md:
+200:Combat's CC-007 to CC-013 and Game Design's other notes were not in this brief. CC-009 (a dodge parry window that can never parry) and CC-010 (signature never parries) would be quick to confirm. A
+# subject line:
+Owner: QA and Balance. Subject: `prototype/index.html` at commit `7233c96`, pinned until the port proves parity. Nothing here is fixed in the prototype; each entry says whether the report is true, how

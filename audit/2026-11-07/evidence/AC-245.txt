@@ -1,0 +1,28 @@
+# AC-245 evidence (verifier v17, 2026-11-07)
+## actions used by the workflows (HEAD)
+      9 uses: ./.github/actions/setup-godot
+     13 uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      1 uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
+      8 uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+      5 uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      1 uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
+## register rows naming actions
+48:| LR-020 | actions/checkout v7.0.1 @ 3d3c42e5aac5ba805825da76410c181273ba90b1 (CI only) | MIT | accepted, dev only. L
+49:| LR-021 | actions/setup-node v7.0.0 @ 820762786026740c76f36085b0efc47a31fe5020 (CI only) | MIT | accepted, dev only.
+## licences per GitHub API (gh api repos/actions/<name>/license)
+upload-artifact MIT
+upload-pages-artifact MIT
+deploy-pages MIT
+checkout MIT
+setup-node MIT
+## lockfile committed and pinned (register Part D item 2 says still to confirm)
+prototype/package-lock.json
+prototype/package.json:9:    "@napi-rs/canvas": "1.0.9"
+prototype/package-lock.json:9:        "@napi-rs/canvas": "1.0.9"
+prototype/package-lock.json:12:        "@napi-rs/canvas": "1.0.9"
+2. `@napi-rs/canvas` is now pinned to 1.0.9 (LR-023). Still to confirm: that a lockfile is committed, and whether a JSON Schema validator (LR-022) is used.
+## GPL/AGPL licence text or SPDX headers outside docs (git grep)
+tools/site-licences.json
+(tools/site-licences.json is Godot's third-party licence texts for the in-game licences screen)
+## gdextension/addons in tree
+0

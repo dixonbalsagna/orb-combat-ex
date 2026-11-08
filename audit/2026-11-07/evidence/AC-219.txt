@@ -1,0 +1,10 @@
+AC-219 evidence (HEAD)
+== docs/legal/review-log.md:174
+| RL-152 | Four guides for Orb: licence rundown, selling, company or individual (<state>), the stomp and ratings | EP, Orb | Low | Written; general information; <state> and tax figures unverified (sos.<state>.gov unreachable) | Open until a lawyer and an accountant confirm |
+== docs/legal/guide-company-or-individual-<state>.md:3,7
+Owner: Legal and IP Compliance. 2026-10-16. Written for Orb, a beginner. **General information, not legal or tax advice.** I could not open <state>'s own fee pages (sos.<state>.gov) today, so **every dollar figure below is from memory or secondary sources and must be checked on the state's site before you pay**. Where a professional is worth paying, it says so.
+2. **An LLC is not a magic shield.** It limits what a customer's or a copyright claimant's lawsuit can take to what the company holds, but only if you keep the money and records separate. It does **not** protect you from your own illegal acts, and it does not remove the need for the licence and AI rules in the other guides. Insurance is a separate (later) question.
+== guide table rows (fees)
+16:| Cost to start | About $0 (up to about $100 if you register a business name) | **About $100 filing fee** (check the state's page) |
+17:| Yearly cost | None to the state | **An annual report, about $100** (check the state's page); you must keep it filed or the company is dissolved |
+== External (accessed 2026-11-07): https://sos.<state>.gov/business/pages/dont-be-misled.aspx : 'The required state fee for an <state> corporation or limited liability company (LLC) annual report is only $100.' Articles fee $100 seen only in search snippets of sos.<state>.gov PDFs (not opened; the fee schedule PDF did not parse).

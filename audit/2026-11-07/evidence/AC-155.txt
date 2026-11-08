@@ -1,0 +1,14 @@
+# AC-154 / AC-155: superseded title rows still Open (run 2026-11-07)
+| RL-016 | Skyburden | title candidate (Narrative top 3) | Low (watch Skybound) | GO to counsel stage | Open until Orb picks |
+| RL-017 | Splendid Wreckage | title candidate | Low (crowded word) | GO to counsel stage | Open until Orb picks |
+| RL-018 | Glorious Ruin | title candidate | Medium | CONDITIONAL | Open until Orb picks |
+| RL-019 | Orb's four fighter concepts | design review | Medium | CONDITIONAL: replace the listed signatures | Open |
+| RL-020 | Public-readiness scan | repo text | Medium | Must-fix list before public | Open |
+| RL-021 | Sunburners | title candidate, round 2 | Medium | CONDITIONAL | Open until Orb picks |
+| RL-022 | Sky Arsonists | title candidate, round 2 | Low | GO to the next stage | Open until Orb picks |
+| RL-023 | Redline Sky | title candidate, round 2 | Low (watch) | GO to the next stage | Open until Orb picks |
+| RL-024 | Orb Combat EX | title (Orb's pick) | Medium | CONDITIONAL: resolve the OrbCombat name clash | Open |
+$ sed -n 279p docs/legal/review-log.md
+Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
+$ sed -n 111p docs/legal/go-to-market.md
+**Fallback:** if the clash or the search is bad, take a title from the screened list in `name-screening.md` (the screened candidates were Sky Arsonists, then Redline Sky, with Sunburners last because of near-identical live games), or run the stage 1 to 3 screen on any three new candidates. I can do that in an hour. Whatever the title, keep "Meridian" off any public page: it is only the working codename and is taken by older games.

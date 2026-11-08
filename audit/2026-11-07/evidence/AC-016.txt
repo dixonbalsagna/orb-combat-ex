@@ -1,0 +1,18 @@
+# AC-016 evidence
+## photosensitivity-note.md:19, 22, 141
+| **Orb's private playtest (friends)** | The 3-second recording and the counter are enough. Tell the testers in the invitation that the game has flashing effects and that they should not play if they are photosensitive. No further test |
+| **Never** | A person with photosensitive epilepsy as the test. Use tools, not people |
+**Safeguards that stay (not waived):** click-through with no autoplay and nothing playing behind it, fitting small screens; Reduce flashing locked on, toggle hidden, and the export check that fails if the lock is off; noindex, no social card, no promotion and no public posting of the link by us; the pinned, measured commit recorded with its hashes; the kill switch tested and one command; the AI line and About, the Godot and Open Sans notices, the privacy line; the placeholder-name scan on the published build; the extra nightly seeds continuing, **with any new scene over 3.5 on the primary reading, any report from anyone, or any change of the published commit without a re-run as the take-down trigger.** When the link is sent to people, send the same warning in the message itself, so it is read before the page opens.
+
+## RL-168 (HEAD:190)
+| RL-168 | Orb's four GIFs shared privately by MMS (one planet diagram, three past-build clips, no WIP character art) | Orb | Low | No issue; a looping GIF has no warning, so tell the friend if a clip is blast-heavy; public posting follows the page rules | Closed |
+
+## holding-page-screen.md:35,37
+- **No autoplay and no loop.** A GIF cannot be paused, so **do not inline the GIF.** Use a `<video controls preload="none" poster="...">` (an MP4 or WebM encoded from the clip) with **no autoplay and no loop**, which also needs no script. It plays once, on a click, and the viewer can pause.
+- **The encoded file as served** (its size and frame rate, not the source) goes through Tools' analyser under the combined rule (primary at most 2.5, no sensitivity run above 3, whole-screen dips capped) and **passes** before it ships. Record the result with the hashes.
+
+## live pages: any video/GIF/autoplay (captured live-site-index.html, live-play-index.html)
+audit/2026-11-07/evidence/live-play-index.html:<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="index.png" alt="">
+
+## LAN kit words carry a flash warning (lan_words.txt)
+This build has a flashing-effects warning; read it first.

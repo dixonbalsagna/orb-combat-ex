@@ -1,0 +1,12 @@
+{
+  "_why": "Verdicts the auditor changed after a cold review or a re-check. Each entry gives the verifier's verdict, the cold reviewer's read, and the reason.",
+  "AC-028": {"verdict": "CONFIRMED", "severity": "S3", "was": "CONFIRMED S2", "cold": "partly S3", "reason": "The seizure danger itself is carried by F-01; this claim is the effect-level in-house margins, only partly in force. Agreed with the cold read."},
+  "AC-038": {"verdict": "CONFIRMED", "severity": "S3", "was": "CONFIRMED S2", "cold": "partly S3", "reason": "Night by place ships in the live pin without a night clip; a coverage gap in the flash set, not a measured exceedance. Folded into F-09."},
+  "AC-085": {"verdict": "CONFIRMED-MINOR", "severity": "S4", "was": "CONFIRMED S2", "cold": "partly S4", "reason": "None of the listed concept devices is built; the open condition guards nothing that ships."},
+  "AC-093": {"verdict": "CONFIRMED", "severity": "S3", "was": "CONFIRMED S2", "cold": "yes S3", "reason": "The provenance controls are real but partial; the harm is weak copyright protection, not exposure."},
+  "AC-170": {"verdict": "CONFIRMED", "severity": "S3", "was": "CONFIRMED S2", "cold": "partly S3", "reason": "A future store step with nothing yet to answer; the real issue (records disagree on the target rating) is a planning gap."},
+  "AC-205": {"verdict": "CONFIRMED-MINOR", "severity": "S4", "was": "CONFIRMED S2", "cold": "partly S4", "reason": "The gate is in force and nothing is breached."},
+  "AC-273": {"verdict": "CONFIRMED", "severity": "S3", "was": "CONFIRMED S2", "cold": "partly S3", "reason": "Store-horizon gate; the origin-row backlog is real but no store asset exists yet."},
+  "AC-208": {"verdict": "CONFIRMED-MINOR", "severity": "S4", "was": "HALLUCINATED", "cold": "partly S4", "reason": "Re-checked: the rule (RL-160) is real and its copy condition is met; only its premise (an interim with no signature close-up) went stale when the strip came back in 10267f51 before the pin. Stale, not invented: the record should be closed."},
+  "AC-169": {"verdict": "CONFIRMED", "severity": "S2", "was": "CONFIRMED S2", "cold": "yes S3 (and G-06 yes S3)", "reason": "Both cold reviewers confirm the facts and rate S3. The auditor keeps S2: Orb's written pillar is broken in the public build, Orb was not told the public build has it, and a store's content questionnaire would have to declare a reward for killing civilians, so it must be fixed or declared before a store. Both reads recorded."}
+}

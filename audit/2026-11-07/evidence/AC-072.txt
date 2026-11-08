@@ -1,0 +1,26 @@
+# AC-072 proof, 2026-11-07
+## curl GET https://dixonbalsagna.github.io/orb-combat-ex/play/index.pck (9034688 bytes, Last-Modified Thu, 05 Nov 2026 03:48:55 GMT), then: node tools/site-name-scan.mjs --pck index.pck --allow tools/site-name-scan.json
+KAI	data/combat/recipes.json
+VORR	data/combat/recipes.json
+KAI	sim/core/test/frozen/golden-js.json
+Meridian	sim/core/test/frozen/golden-js.json
+VORR	sim/core/test/frozen/golden-js.json
+Calamity	sim/core/test/frozen/golden-js.json
+1052 files, 6 hits, 0 outside the allowlist
+exit=0
+## live pages: placeholder words in served HTML (/, /play/, /about/ excluding licence pre blocks counted raw):
+/ 0
+/play/ 0
+/about/ 0
+## images on holding page / (img tags):
+0
+## /prototype/ on live site:
+404
+## pinned build display names 257a766c:ui/data/fighter_names.json:
+5:    "protagonist": { "name": "PROTAGONIST", "title": "Martial Artist", "sigName": "Keeper's Lance" },
+6:    "rival": { "name": "RIVAL", "title": "Challenger", "sigName": "The Barrage" }
+## source residue at HEAD: sim/core/roster.js:5-6 and prototype/index.html:185-186
+  Object.freeze({name:'KAI',  title:'Meridian Warden',    role:'hero',    col:'#3d8fdc', aura:'#8fd6ff', hair:'#22c7a9',
+  Object.freeze({name:'VORR', title:'Calamity Sovereign', role:'villain', col:'#a52a2a', aura:'#ff5a3c', hair:'#181818',
+  {name:'KAI',  title:'Meridian Warden',    role:'hero',    col:'#3d8fdc', aura:'#8fd6ff', hair:'#22c7a9', care:1.0,  dm
+  {name:'VORR', title:'Calamity Sovereign', role:'villain', col:'#a52a2a', aura:'#ff5a3c', hair:'#181818', care:-0.8, dm

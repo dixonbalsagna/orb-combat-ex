@@ -1,0 +1,14 @@
+# AC-032 evidence
+## which-set.mjs:13,18-19
+// export_presets.cfg is not here: the Web preset's block and the lines outside every preset decide it (setFor, Legal's RL-197)
+/** { set: 'FULL' | 'AI' | 'NONE', why: [{ file, set }] } for a list of changed paths. `opts.presetsChanged`: whether the Web preset or a line outside the presets differs in export_presets.cfg
+ *  (Legal's RL-197: a change to another preset, the Windows or Linux build's, is NONE); not given, the file is FULL, as it was. */
+## release-pass.mjs:64-65
+    // export_presets.cfg counts by the WEB preset's block and the lines outside any preset only (Legal RL-197): another preset (Windows, Linux) changes nothing the web page shows
+    if (e.name === 'export_presets.cfg') { try { return `${e.name} web-preset-${webPresetHash(showAt(root, sha, e.name))}`; } catch { /* not readable: the blob id, as before */ } }
+## release-pass-selftest.mjs:146-148
+  check('a Linux preset added after the Web and Windows ones leaves the Web view alone (the Linux preset patch)', !webPresetChanged(cfg({ lin: '' }), cfg()));
+  check('a change inside the Linux preset leaves it alone', !webPresetChanged(cfg(), cfg({ lin: LIN.replace('x86_64"', 'arm64"') })));
+  check('a change inside the Windows preset leaves it alone', !webPresetChanged(cfg(), cfg({ win: WIN.replace('embed_pck=false', 'embed_pck=true') })));
+## LAN kits launch desktop builds (net/tools/lan_kit.mjs:123)
+  `start "" "${exeName}" -- --lan-host=${a['host-ip']} --lan-log="%~dp0lan-log-main.txt" --tiles=1`,

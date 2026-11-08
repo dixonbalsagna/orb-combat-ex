@@ -1,0 +1,7 @@
+# AC-188 evidence: beam structure multiplier per tier
+HEAD:
+32:    "structure": [0.25, 0.5, 1.0, 1.5],
+pin 257a766c:
+32:    "structure": [0.25, 0.5, 1.0, 1.5],
+schema beam.structure: {"type":"array","minItems":4,"maxItems":4,"items":{"type":"number","minimum":0}}
+power.json enabled= false

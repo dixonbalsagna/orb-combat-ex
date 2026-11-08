@@ -1,0 +1,402 @@
+{
+  "verdicts": [
+    {
+      "id": "AC-013",
+      "claim": "Orb ruled that Orb 2 has Orb's standing on flash and safety for private builds; RL-253 attaches conditions (warning on Orb 2's PC, lock on, adulthood by vouching, stop if minor/photosensitive/symptomatic, nobody else present, network terms unchanged).",
+      "key_sources": [
+        "docs/ep/vision.md:1665",
+        "docs/legal/review-log.md:467 (HEAD)",
+        "net/tools/lan_kit.mjs:192",
+        "net/tools/lan_words.txt (WHO PLAYS line)",
+        "docs/net/lan-v1.md:89 (HEAD)",
+        "docs/net/two-v-two-lan.md:157 (HEAD)"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "private",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "Orb's quote (vision.md:1665) and RL-253's conditions are as stated (commit c5b42dc1). But the committed kit still enforces RL-230's 'Only Orb plays and watches' line (lan_kit.mjs:192, lan_words.txt, same at a8bc66e2), so the folder Orb 2 played told them only Orb plays; lan-v1.md:89 and two-v-two-lan.md:157 still say Orb alone, and the new wording sits only in untracked docs/net/pending. Adulthood and non-photosensitivity rest on vouching; the warning and lock (AC-022) are the real screen.",
+      "proof": [
+        "audit/2026-11-07/evidence/AC-013.txt"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "-",
+      "fix": "Netcode lands RL-253's WHO PLAYS line in lan_words.txt and lan_kit.mjs:192 and updates lan-v1.md:89 and two-v-two-lan.md:157; Legal notes the landing in RL-253.",
+      "belongs_to": "Legal (record) and Netcode (kit words); private-build process"
+    },
+    {
+      "id": "AC-014",
+      "claim": "Flash warnings and photosensitivity questions are not put to Orb; private flash reads pause pending Tools' proof; calls go through the EP and Legal on Orb's delegation; public gates unchanged and anyone but Orb still gets the warning and Reduce flashing.",
+      "key_sources": [
+        "docs/legal/review-log.md:248 (HEAD)",
+        "docs/legal/review-log.md:234 (HEAD)",
+        "docs/legal/review-log.md:467 (HEAD)",
+        "docs/tools/flash-proof.md:3",
+        "homework/2 Up Next/09 Business - Legal's open questions (10 min).md:7"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S3",
+      "horizon": "private",
+      "likelihood": "medium",
+      "evidence_strength": "documented only",
+      "what_is_true": "RL-226 records the waiver as claimed and keeps the public gates and the warning for anyone but Orb; Orb's words exist only as relayed there. Tools' proof exists but stopped unfinished (flash-proof.md, 2026-11-01: repeatable at one size, not independent) and RL-226 has not logged it. Conflict: RL-212 (4) requires Orb's 2026-11-15 renewal of the public interim to name seed 1049's readings, while RL-226 and RL-253 bar raising flash with Orb.",
+      "proof": [
+        "audit/2026-11-07/evidence/AC-014.txt"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "-",
+      "fix": "Legal logs flash-proof.md's partial result in RL-226; the EP and Legal settle how the 2026-11-15 renewal gives Orb the RL-212 (4) facts, or record that the renewal is not informed consent.",
+      "belongs_to": "process (EP and Legal); Tools for the proof"
+    },
+    {
+      "id": "AC-015",
+      "claim": "Look gate (ADR 0010): no test result justifies a worse look, dissolves/fades/blur banned, safety met by warnings and settings; the warning, Reduce flashing lock and nightly seeds stay as safeguards while flash work is paused.",
+      "key_sources": [
+        "docs/decisions/0010-look-gate.md:10",
+        "docs/decisions/0010-look-gate.md:11",
+        "docs/decisions/0010-look-gate.md:18",
+        "CLAUDE.md:115",
+        ".github/workflows/ci.yml:15-18",
+        "tools/flash/nightly-seeds.mjs:2",
+        "tools/flash/nightly-seeds.json",
+        "docs/legal/review-log.md:248 (HEAD)"
+      ],
+      "verdict": "MISFILED",
+      "severity": "-",
+      "horizon": "web",
+      "likelihood": "-",
+      "evidence_strength": "traced in code",
+      "what_is_true": "ADR 0010 says this and the six charters carry it; it is Orb's look direction and does not lower the release gate (RL-226 keeps primary at most 2.5 in both modes), so main stays blocked rather than shipping worse. Of its safeguards, the warning and locked Reduce flashing are live on /play/, but the 'nightly seeds' are run by hand (nightly-seeds.mjs:2), with no schedule in ci.yml and 6 runs ever, the last on 2026-10-30.",
+      "proof": [
+        "audit/2026-11-07/evidence/AC-015.txt"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "Filing the look gate as a safety waiver suggests Orb traded safety for looks and invites re-arguing taste, while the real gap (a 'nightly' that has not run for a week) hides behind the word.",
+      "fix": "Take the look gate out of the safety records, keeping only the clause that safety is met by warnings and settings; Tools schedules the nightly or ADR 0010:18 is corrected to 'run by hand, last run 2026-10-30'.",
+      "belongs_to": "Orb's creative direction; the nightly safeguard to Tools"
+    },
+    {
+      "id": "AC-016",
+      "claim": "Private testers are told about flashing in the invitation and link message; private looping GIFs carry no warning so Orb warns; public clips are controlled videos with no autoplay or loop, read first; a photosensitive person is never a test.",
+      "key_sources": [
+        "docs/legal/photosensitivity-note.md:19",
+        "docs/legal/photosensitivity-note.md:22",
+        "docs/legal/photosensitivity-note.md:141",
+        "docs/legal/names-grounds-and-gifs-screen.md:41",
+        "docs/legal/holding-page-screen.md:35",
+        "docs/legal/review-log.md:190 (HEAD)",
+        "net/tools/lan_words.txt"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "private",
+      "likelihood": "low",
+      "evidence_strength": "documented only",
+      "what_is_true": "The conditions exist as stated. The LAN kit's words carry a flash warning (lan_words.txt) and neither live page has a video, GIF or autoplay; whether invitations or Orb's MMS GIFs carried a warning cannot be checked from the repo.",
+      "proof": [
+        "audit/2026-11-07/evidence/AC-016.txt"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "-",
+      "fix": "None needed for release; keep any invitation text beside the kit if proof is wanted.",
+      "belongs_to": "Legal (private-share guidance)"
+    },
+    {
+      "id": "AC-017",
+      "claim": "Phones see a 'Best on a computer' note before the flashing notice; it never replaces or skips the notice, makes no promise, and Tools' wrapper deploy check holds its exact words on every deploy.",
+      "key_sources": [
+        "audit/2026-11-07/evidence/live-play-index.html (served /play/)",
+        "tools/check-site-interim.mjs:44",
+        "tools/check-site-interim.mjs:166",
+        "tools/check-site-interim.mjs:175",
+        ".github/workflows/ci.yml:514",
+        "docs/legal/review-log.md:223 (HEAD)"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "web",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "The served /play/ page shows RL-201's words verbatim, to phones only, above the gate; its button removes only the note and un-inerts the gate. check-site-interim.mjs tests the words in the deploy job (ci.yml:514), which cannot run while ci.yml is dead, but nothing else can deploy either, so the live words stay as last checked.",
+      "proof": [
+        "audit/2026-11-07/evidence/AC-017.txt"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "-",
+      "fix": "None for safety; the check resumes when CI is fixed.",
+      "belongs_to": "Tools (site wrapper), Legal (words)"
+    },
+    {
+      "id": "AC-018",
+      "claim": "A store release needs an independent photosensitivity analyser report (Harding FPA, an equivalent or a test house), console requirements must be asked for, and the public notices say none has been run.",
+      "key_sources": [
+        "docs/legal/photosensitivity-note.md:21",
+        "docs/legal/photosensitivity-note.md:27",
+        "docs/legal/photosensitivity-note.md:32",
+        "docs/legal/steam-readiness.md:39",
+        "docs/ep/orb-review-list.md:188",
+        "README.md:9",
+        "docs/tools/flash-proof.md:3"
+      ],
+      "verdict": "OVERSTATED",
+      "severity": "-",
+      "horizon": "store",
+      "likelihood": "-",
+      "evidence_strength": "documented only",
+      "what_is_true": "The kernel is sound: the own analyser is unvalidated (flash-proof.md: 'not an independent check') and console terms are unread, so an outside check before a store release is prudent, and the notices do say none has been run. But no standard or store found requires a Harding report: WCAG lists it for information only and no Steamworks rule turned up, yet photosensitivity-note.md:21 calls a recognised tool 'the standard'; steam-readiness.md:39 already accepts the honest 'none has been run' line instead, with no ruling reconciling the two.",
+      "proof": [
+        "audit/2026-11-07/evidence/AC-018.txt"
+      ],
+      "external": [
+        "https://www.w3.org/WAI/WCAG22/Understanding/three-flashes-or-below-threshold.html (accessed 2026-11-07): Harding FPA and PEAT listed as resources \"for information only\"",
+        "WebSearch 2026-11-07: no Steamworks photosensitivity-analyser requirement found; the Steamworks partner docs themselves were not reached"
+      ],
+      "cost_of_false_alarm": "A paid test house becomes a hard store gate under a zero budget, and two contradictory Legal records leave the store gate undefined.",
+      "fix": "Correct the record: state the independent check as Legal's recommended margin, reconcile it with steam-readiness D4, and have Tools finish flash-proof.md's accuracy comparison (PEAT or equivalent); ask console makers only if a console port is planned.",
+      "belongs_to": "Legal, with Tools for the comparison"
+    },
+    {
+      "id": "AC-019",
+      "claim": "Pin move to main: only a reduced clip over 3.5 primary triggers a take-down, a normal one over 3.5 is a finding while the route check passes; one batch of clips; the public pack has no art/ or docs/ and keeps the notice, lock line, AI line and licences screen.",
+      "key_sources": [
+        "docs/legal/review-log.md:230 (HEAD)",
+        "tools/flash/nightly-seeds.mjs:16-19",
+        "export_presets.cfg:9-11 (HEAD and 257a766c)",
+        "art/animation/.gdignore",
+        "art/concepts/.gdignore",
+        "tools/site.json (pin)"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "web",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "RL-208 says this and nightly-seeds.mjs implements it (reduced over the limit = take-down, normal over while the route check passes = finding, exit 4). docs/ is excluded; art/animation and art/concepts carry .gdignore at HEAD and the pin, and the only other art files are 23 .md prompts, which an all_resources export does not pack (not verified by an export). The move has not happened (pin 257a766c) and RL-209 blocks it.",
+      "proof": [
+        "audit/2026-11-07/evidence/AC-019.txt"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "-",
+      "fix": "None now; when a move is tried, keep a listing of the .pck contents as the proof of no art/ or docs/.",
+      "belongs_to": "Tools, Legal"
+    },
+    {
+      "id": "AC-020",
+      "claim": "The worse of two sizes and two scales counts; the move to main does not stand (main reduced 3.5/3.5/3 at 16:9 vs the pin's 3/3/3), so the demo stays on a strings-only child and flash work stays paused on Orb's delegation.",
+      "key_sources": [
+        "docs/legal/review-log.md:231 (HEAD)",
+        "tools/site.json (pin)",
+        "docs/tools/pin-child.md:7",
+        "docs/tools/pin-child.md:38",
+        "docs/tools/load-and-captures.md:20-29"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "web",
+      "likelihood": "low",
+      "evidence_strength": "documented only",
+      "what_is_true": "RL-209 says this and the gate holds: site.json still pins 257a766c. But the demo is on the pin itself, not a child (built only in scratch, due 2026-11-08, undeployable while ci.yml is dead); the readings come from Tools' docs with no saved output; and the 0.91/1.23 margin RL-209 gives for main's signature clip is Tools' collapse-normal first-blast figure (load-and-captures.md:29).",
+      "proof": [
+        "audit/2026-11-07/evidence/AC-020.txt"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "-",
+      "fix": "Correct RL-209's margin sentence; save Tools' four-reading tables as output files; record that the child cannot deploy until CI is fixed, so RL-200's ride to 2026-11-15 is the real path.",
+      "belongs_to": "Legal (record), Tools (readings and child)"
+    },
+    {
+      "id": "AC-021",
+      "claim": "New tripwire: the interim take-down also fires on an area-15% reading over 4.5 on any reduced clip or a primary over 3.5 at either size; a reduced clip at 3.5 primary at 16:9 blocks any pin move until explained.",
+      "key_sources": [
+        "docs/legal/review-log.md:234 (HEAD)",
+        "tools/flash/nightly-seeds.mjs:54-55",
+        "tools/flash/nightly-seeds.mjs:167",
+        "tools/flash/nightly-selftest.mjs:102-114",
+        "tools/flash/nightly-seeds.json",
+        "docs/tools/pin-child.md:39-41"
+      ],
+      "verdict": "CONFIRMED",
+      "severity": "S3",
+      "horizon": "already-public",
+      "likelihood": "medium",
+      "evidence_strength": "traced in code",
+      "what_is_true": "The tripwire is in code and self-tested, but it fires only when someone runs the nightly by hand: no schedule exists and the last of 6 runs was 2026-10-30. The second capture of ai-1049-reduced and seed 1055 are not done (pin-child.md:41), and a take-down cannot deploy while ci.yml is dead. The live pin's only mode already reads 3.5 primary on seeds 1049 and 1050 at 960x540, at the line.",
+      "proof": [
+        "audit/2026-11-07/evidence/AC-021.txt"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "-",
+      "fix": "Tools runs the nightly on a schedule at below-normal priority, or Legal records the tripwire as dormant; fix ci.yml so tools/site-offline.mjs can deploy.",
+      "belongs_to": "Tools (runs it); process (CI)"
+    },
+    {
+      "id": "AC-022",
+      "claim": "The flash warning shows before play on both PCs with no bypass, and the LAN kit locks Reduce flashing on, stopping if the flag or capture hook is wrong.",
+      "key_sources": [
+        "net/tools/lan_kit.mjs:105-111",
+        "net/tools/lan_kit.mjs:55",
+        "ui/hud/ui_hud.gd:1508-1510",
+        "docs/net/lan-v1.md:80 (HEAD)",
+        "docs/net/lan-v1.md:93-94 (HEAD)"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "private",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "lan_kit.mjs locks Reduce flashing and stops if the lock is off or the capture hook on; its patch skips the start menu only for --lan-loop on a headless display, and bypass_allowed() returns false in a locked build, so the menu's warning shows. Nobody on the team has observed it in a window (lan-v1.md:80, 93).",
+      "proof": [
+        "audit/2026-11-07/evidence/AC-022.txt"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "-",
+      "fix": "None for release.",
+      "belongs_to": "Netcode"
+    },
+    {
+      "id": "AC-023",
+      "claim": "Flash rule k06: a persistent HUD cue changes no faster than 3 a second (2 preferred), is static under Reduce flashing and Reduced motion and counts in the flash check; the UI's 4 Hz crown stroke must drop to 3 Hz or less.",
+      "key_sources": [
+        "docs/legal/review-log.md:152 (HEAD)",
+        "docs/legal/movegen-banned.json:541",
+        "ui/core/ui_look.gd:87-90",
+        "ui/tools/hud_check.gd:7452-7458",
+        "ui/widgets/ui_crown.gd:36-39",
+        "ui/widgets/ui_crown.gd:158-160",
+        "ui/hud/ui_hud.gd:983"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "web",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "The 4 Hz stroke is gone: HZ_BATTERED is 2.0 at HEAD and at the live pin since 18d05091 (2026-10-12), and hud_check asserts every HUD rate at most 3 Hz and the whole-match ones at most 2, yet RL-130 still reads Open. Residual: the stroke goes static only under Reduced motion, not Reduce flashing (the crown reads only reduced_motion), so k06's wording is not fully met, at 2 Hz in thin arcs.",
+      "proof": [
+        "audit/2026-11-07/evidence/AC-023.txt"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "-",
+      "fix": "Close RL-130 citing 18d05091; UI makes the stroke static under Reduce flashing too, or Legal narrows k06 to Reduced motion.",
+      "belongs_to": "UI; Legal (record)"
+    },
+    {
+      "id": "AC-024",
+      "claim": "The world swing needs an Accessibility motion-sensitivity review before it ships (RL-213 (7)); the review sets a setting that turns the swing into a plain cut or still, cuts counted in the flash register, at least 4 s apart, no roll under the setting.",
+      "key_sources": [
+        "docs/legal/review-log.md:235 (HEAD)",
+        "docs/accessibility/swing-motion.md:3",
+        "docs/accessibility/swing-motion.md:16-30",
+        "ui/data/options.json:9",
+        "render/camera/split_rig.gd:5515-5517",
+        "render/camera/tests/swing_real_check.gd:241-257",
+        "ui/data/features.json:22",
+        "docs/decisions/0012-turntable-and-quality-range.md:12"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "web",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "The review is paper with no motion-sensitive tester, and the 4 s spacing is its author's first value. The setting exists and is wired and tested (world_turning auto/full/cut; split_rig.gd:5517; main.gd:1107). The swing switch is off at HEAD and a8bc66e2 and absent from the live pin. swing-motion.md:28-30 proposes a lobby-set sim flag against ADR 0012 item 3, but none is built.",
+      "proof": [
+        "audit/2026-11-07/evidence/AC-024.txt"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "-",
+      "fix": "Legal records world_turning as RL-213 (7)'s setting; Accessibility reshapes the sim-flag idea to fit ADR 0012; a motion-sensitive read before the swing goes public.",
+      "belongs_to": "Accessibility, Camera"
+    },
+    {
+      "id": "AC-025",
+      "claim": "The records conflict on a reduced-motion dissolve: the accessibility audit wants it kept as an opt-in and camera_params.gd:226 cites a Legal 0.3 s minimum, while the swing review says plain cut, ADR 0010 bans dissolves and Legal withdrew the 0.3 s ask.",
+      "key_sources": [
+        "docs/accessibility/audit-2026-10-28.md:92",
+        "docs/accessibility/swing-motion.md:20",
+        "docs/decisions/0010-look-gate.md:11",
+        "docs/legal/review-log.md:251 (HEAD)",
+        "render/camera/split_view.gd:47",
+        "render/camera/split_view.gd:313-316",
+        "render/camera/camera_params.gd:226",
+        "render/tools/flash_capture.gd:167"
+      ],
+      "verdict": "MISFILED",
+      "severity": "-",
+      "horizon": "none",
+      "likelihood": "-",
+      "evidence_strength": "traced in code",
+      "what_is_true": "The records disagree, but no build dissolves: cut_dissolve is false at HEAD and the pin, and the only caller of set_cut_dissolve passes false. What is left is stale text: camera_params.gd:226 still says 'Legal asks at least 0.3', split_view.gd:314 still says '(default on)' though RL-229 asked for that fix, and audit-2026-10-28.md:88-92 describes a fade the help text now calls 'one step'.",
+      "proof": [
+        "audit/2026-11-07/evidence/AC-025.txt"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "Reviewers chase a conflict with no player effect, and the stale comment could be used to revive a dissolve Orb banned on the strength of a withdrawn Legal ask.",
+      "fix": "Camera fixes the two code comments, Accessibility corrects the audit lines, and the item leaves the safety records.",
+      "belongs_to": "Camera (comments), Accessibility (audit doc); process"
+    },
+    {
+      "id": "AC-026",
+      "claim": "The camera must prevent motion sickness with smoothing and limits on shake and zoom rate; Reduced motion (off by default) removes flicker and rings, makes the split swing a near-cut and quarters shake; shake runs 0-10 (default 2); head flashes can be turned off.",
+      "key_sources": [
+        "DIRECTORS.md:304",
+        "docs/directors/camera.md:29",
+        "ui/data/options.json:5",
+        "ui/data/options.json:46",
+        "ui/data/options.json:57",
+        "render/core/main.gd:1162-1165",
+        "render/camera/split_view.gd:442",
+        "render/camera/camera_params.gd:28",
+        "render/camera/camera_params.gd:203-204",
+        "render/camera/split_rig.gd:952",
+        "render/camera/split_rig.gd:1071"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "web",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "The options exist and are wired: the shake setting reaches the camera and Reduced motion quarters it; zoom is capped at 1.2, 2.4 and 3.0 e-folds a second; reduced motion gives near-cuts; head flashes have an off switch. docs/camera/framing-rules.md does not exist, the audit's 'quick fade' is stale, and nobody has tested the limits with motion-sensitive players.",
+      "proof": [
+        "audit/2026-11-07/evidence/AC-026.txt"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "-",
+      "fix": "Camera writes the promised framing-rules doc or drops the reference; Accessibility updates the audit wording.",
+      "belongs_to": "Camera, Accessibility"
+    },
+    {
+      "id": "AC-027",
+      "claim": "Beam 'air and light' alerts stay small, steady and unpulsed: no sky dimming, wash or blur, a thin edge light with a 6-tick ramp that never blinks (also for 2v2 beam_warn), Reduce flashing turns the strong setting off, and alert bursts need analyser clips at Standard and Full, both modes, day and night.",
+      "key_sources": [
+        "docs/legal/review-log.md:249 (HEAD)",
+        "docs/accessibility/beam-alert-review.md:50",
+        "docs/net/lan-v1.md:98 (HEAD)",
+        "ui/widgets/ui_answer_alert.gd:8",
+        "ui/widgets/ui_answer_alert.gd:34-40",
+        "ui/widgets/ui_answer_alert.gd:66-72",
+        "ui/core/ui_event_hub.gd:486-487"
+      ],
+      "verdict": "CONFIRMED-MINOR",
+      "severity": "S4",
+      "horizon": "web",
+      "likelihood": "low",
+      "evidence_strength": "traced in code",
+      "what_is_true": "The edge line ramps over 6 ticks and never blinks, Reduce flashing steps strong air, bright glint and thick line down, and beam_warn feeds the same alert. Not checked: the air-and-light VFX themselves; the Standard and Full clips have not been run. The alert is in the private a8bc66e2 build but not the live pin, so the pin-move batch would catch it.",
+      "proof": [
+        "audit/2026-11-07/evidence/AC-027.txt"
+      ],
+      "external": [],
+      "cost_of_false_alarm": "-",
+      "fix": "Run the alert clips before any pin move that carries the alert, as RL-227 (6) requires; nothing now.",
+      "belongs_to": "UI and VFX; Legal for the clip gate"
+    }
+  ],
+  "batch_notes": [
+    "docs/legal/review-log.md is modified in the working tree (rows moved into the table), so every RL citation uses HEAD line numbers (git show HEAD:...), which match the inventory's '(HEAD)' lines.",
+    "Cross-cutting: the 'nightly seeds' that ADR 0010:18, RL-212 and photosensitivity-note.md:141 rely on are hand-run (nightly-seeds.mjs:2), have no CI schedule, and last ran 2026-10-30 (6 runs ever); with ci.yml dead, no take-down can deploy either.",
+    "Cross-cutting: RL-226 and RL-253 bar raising flash with Orb, while RL-212 (4) requires Orb's 2026-11-15 renewal of the public interim to name seed 1049's readings; nobody has reconciled the two.",
+    "Pointer for the interim slice (not verified here): Tools' docs record the live pin's reduced mode, the only mode players get, at primary 3.5 on seeds 1049 and 1050 at 960x540 (pin-child.md:39), above WCAG 2.3.1's three flashes a second.",
+    "Pointer for another slice: work-in-progress character art (art/concepts/anti-hero, closeups) is committed to the PUBLIC repo; RL-208 (3) only screens pages and the pack.",
+    "Not done: no Godot, export or capture was run; the .pck contents (AC-019), the swing's sim path (AC-024) and the air-and-light VFX (AC-027) were checked from source only."
+  ]
+}

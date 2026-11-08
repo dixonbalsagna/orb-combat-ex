@@ -1,0 +1,2 @@
+AC-211 proof, run 2026-11-07: purchase / paid-reward code in shipped dirs at HEAD
+(end; empty means none)

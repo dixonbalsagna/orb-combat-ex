@@ -1,0 +1,4 @@
+# AC-196 evidence
+| RL-128 | Open floors | Rendering | Medium | Conditional: sturdy regular columns, deep beam, lit lobby, never on a damaged building, never in public with debris; w01 | Open until seen **Amended 2026-10-12: the 'no falling-towers wording' guard rested on the w
+d writing-note.md) | EP, Marketing | Medium | Withdrawn: w01, w02, RL-124 guard words, RL-127 and RL-128 public-picture limits, 'never on a damaged building'. Stand: originality (w03), truthful claims, AI disclosure, phot
+| Open floors | **No Legal condition.** Sturdy columns, a visible beam and a lit lobby stay as **Orb's own design requirement** (structural believability: "gaps between floors without realistic looking supports will make players lose their suspension of disbelief") | Design, not Legal |

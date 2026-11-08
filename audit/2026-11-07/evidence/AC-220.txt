@@ -1,0 +1,25 @@
+AC-220 evidence (HEAD)
+== docs/legal/review-log.md:180
+| RL-158 | Narrative's keepsakes, titles and temptation lines (rewards-words.md) | Narrative | Low | Pass; rename Jar of Ash; Fused Sand Chip keeps 'blast' only; no paid hidden rewards (ln03) | Open until renamed |
+== docs/legal/rewards-and-lock-screen.md:16-17
+- **Jar of Ash** ("Ash from the dark sky, sealed before it settled.", `boss_beaten`): **rename.** A jar of ash reads as an urn, and it is a souvenir of the blast that darkened the sky (c07's sensitivity). Suggested: **"Sky Jar"** or **"Dark Sky in a Jar"**, line about the dark sky without "ash".
+- **Fused Sand Chip** ("Sand that melted in the blast, then cooled."): **pass with a caution.** Fused sand from a blast is the glass that forms at a nuclear test; the line says only "blast", so keep it so (no "test", "glass from", "ground zero").
+== docs/narrative/rewards-words.md:3 and :73 (rename done 2026-10-18)
+Owner: Narrative and Fighter Identity. Version 2, 2026-10-18 (Legal's renames RL-158; Game Design's 6a to 6c: titles confirmed, four keepsake triggers swapped, two boon names changed). Asked by Game Design's reward economy (`docs/design/run-mode.md` section 4.4; `docs/design/unlocks.md`): "about 40 titles ... (Narrative words them)", the keepsake names, and wording for UI's run and boons screens. The data is `pending/titles.json`, `pending/keepsakes.json` and `pending/run_screens.json`; **nothing is marked by Orb, so none is final and none has moved to `data/`**. Lines follow the voice bibles (`voice-bibles.md`) and the lint. Claude-written. Original; no franchise echoes.
+| Sky Jar | A jar of the dark sky, sealed before it settled. | `boss_beaten` |
+last commit 2c493910 2026-10-18
+== docs/narrative/pending/keepsakes.json (PARKED DRAFT, not shipped):
+    {
+      "id": "keepsake.boss_beaten",
+      "trigger": "boss_beaten",
+      "name": "Sky Jar",
+      "line": "A jar of the dark sky, sealed before it settled.",
+      "never_from_a_death": true
+43:      "name": "Blast Sand Chip",
+== old names anywhere outside docs/legal and docs/design (empty = none):
+docs/narrative/pending/keepsakes.json:3:  "_about": "PARKED DRAFT. 30 keepsakes: a small trophy of what happened in a won fight, shown in the haul and on the menu shelf. The trigger names an event the fight log already has or Game Design adds; none is a death (Legal c08). {place} is the fight's place name. Claude-written; not marked by Orb. Re-cut 2026-10-18: Jar of Ash is Sky Jar, Fused Sand Chip is Blast Sand Chip (Legal RL-158); four triggers swapped to events the sim has (Game Design 6b).",
+(end)
+== docs/legal/movegen-banned.json ln03
+      "id": "ln03",
+      "rule": "boons, keepsakes, temptations and any hidden-outcome reward are never sold or unlocked with real money, and nothing paid gives a random or hidden reward, without asking Legal first (paid random rewards are treated as gambling-like by several stores and countries); a keepsake is an object and never a body part, ash or remains; no keepsake or title is earned by a death or a toll; the saved may speak, the lost are only a count",
+      "why": "RL-158; c08"

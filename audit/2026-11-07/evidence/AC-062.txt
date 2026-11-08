@@ -1,0 +1,29 @@
+# AC-062 / AC-063 / AC-064 proof (run 2026-11-07)
+## feedback send target at pin and HEAD
+257a766c _target: "none" issue.repo= https://github.com/dixonbalsagna/orb-combat-ex
+HEAD _target: "none" issue.repo= https://github.com/dixonbalsagna/orb-combat-ex
+## network APIs / URLs in pin shipped .gd (outside tools/demo)
+0
+## live /play/ resources (curl)
+href="../"
+href="../about/"
+href="index.apple-touch-icon.png"
+href="index.icon.png"
+src="index.js"
+src="index.png"
+## live /play/ crumbs script present (count)
+0
+## live /about/ privacy line
+This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button copies a report to your clipboard for you to paste to Orb; nothing is sent by the game.
+## tools/site.json crumbs
+undefined
+## crumbs script: clock and network
+5://  - LOCAL ONLY. It keeps ONE small record in this browser's localStorage (key ocx.crumbs.v1) and nothing else. No network, no cookie (nothing here touches o
+50:  function now() { return Math.round(w.performance.now()); }
+69:  function store() { try { return w.localStorage; } catch (e) { return null; } }
+128:  var last = w.performance.now(), lastStage = c.stage;
+130:    var t = w.performance.now(), gap = t - last;
+## under-13 line in non-doc files at HEAD
+0
+## store-copy-screen.md:22
+4. **Privacy paragraph** ("This game collects no personal data"): replace with the line from `go-to-market.md` 9.1, verbatim: "This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button opens a public GitHub issue page only when you click it." "Not made for children under 13" stays.

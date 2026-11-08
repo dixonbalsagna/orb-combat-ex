@@ -1,0 +1,9 @@
+# AC-142 proof
+$ git grep -n -i 'long way round' 8d9b98a2 -- data ui (shipped)
+(none)
+$ live pages
+audit/2026-11-07/evidence/live-site-index.html:0
+audit/2026-11-07/evidence/live-play-index.html:0
+$ rule in force
+      "rule": "planet and home names are in-game names and pass the GeoNames and web screen (RL-164); a name used as a public product name (a store page, a mode title, merchandise) gets the formal trademark search first; 'The Long Way Round' is not used as a public name (a known documentary series a
+    "The Long Way Round": "Legal, 2026-10-22: not a public name; fine as something a character says."

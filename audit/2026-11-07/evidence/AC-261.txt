@@ -1,0 +1,7 @@
+== sim/core/act.gd:13-14
+## Setup "assists" names, as bit flags in act.assist: they let the sim act where an input is absent (Simple layout, mobile).
+const ASSISTS: Array = ["autoBurst", "specialAuto", "perfectBlockAssist", "autoCharge"]
+== sim/core/replay.gd:43 (setup copied into header)
+	rec.replay = {"format": FORMAT, "v": V, "intent": SimIntent.VERSION, "data": dataHash(setup), "seed": seed, "setup": setup.duplicate(true),
+== late-answer grace / chord-window assist in data or sim?
+(end)

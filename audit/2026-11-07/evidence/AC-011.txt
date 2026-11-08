@@ -1,0 +1,9 @@
+# AC-011 evidence (auditor helper, 2026-11-07)
+86d44e54 2026-10-22 00:43:36 -0700 Site: taken offline with the kill switch (Legal's addendum 11, RL-161): the published commit changed to 257a766c on 2026-10-19 without the nightly re-run on it, which is a take-down trigger; the nightly seeds re-run on the pin now, and the 2026-10-19 run on 5c46fec
+f00357f7 2026-10-22 01:59:38 -0700 Flash: the nightly seeds on the pinned 257a766c (seeds 1024-1031, both modes, 16 of 16 read): max 3.5 on the primary reading (ai-1029-normal), none over the owner interim's 3.5; with Reduce flashing on (locked on the page) max 2.5. The tool wrote 'over' against 3 b
+14c284ff 2026-10-22 05:53:35 -0700 Site: restored on the pinned 257a766c under Orb's owner interim of 2026-10-18 (to 2026-10-25), after the nightly on that pin read clean (f00357f7) and the gate carries Legal's true words (RL-169's three conditions met)
+2ddcd360 2026-10-23 08:39:59 -0700 Tools: nightly seeds 2026-10-23 on the pin 257a766c (seeds 1032 to 1039, both modes): 16 of 16 read, largest primary 3, none over the owner limit of 3.5
+b83782fa 2026-10-30 19:10:29 -0700 Tools: the nightly on the live pin with the custom template: 16 of 16 read, none over 3.5; RL-207 condition met
+## RL-169 and RL-171 rows still read Open (review-log.md:191,193, last column)
+191:  RL-169  | status: Open until restored or kept down 
+193:  RL-171  | status: Open until applied and the decision renewed or lapsed 

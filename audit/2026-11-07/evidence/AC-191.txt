@@ -1,0 +1,6 @@
+# AC-191 evidence
+nearBh= 3
+121:static func livingNear(S: SimState, b) -> float:
+190:			why = "living"
+$ callers of WorldWrecks outside tools
+(none)

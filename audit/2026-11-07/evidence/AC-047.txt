@@ -1,0 +1,23 @@
+AC-047 evidence (verifier v04, 2026-11-07, read-only)
+## HEAD docs/legal/review-log.md:81
+| RL-059 | Blast amplification for power-up craters; rocks drift frames | VFX | Low | GO on eight conditions; rocks motion re-check passes | Open until the first transformation cinematic |
+
+## HEAD docs/legal/agency-pass-screen.md:82-90 (the eight conditions)
+**Blast amplification for ground-level power-up craters: GO, under these conditions.** At the break beat the moment holds one mark (mark 4, the crater, ring, rim chunks and dust as one bundle) plus the break's flat ring, so it stays at or under two marks as lo
+1. **Only at the break,** the one-off snap of the transformation. Nothing in the gather or while charging (the gather draws dust inward; that stays).
+2. **No scream and no fists-at-sides crouch** in the gather, as the transformation staging already bans. If any fighter's gather has a scream, keep the flag off for him.
+3. **No lightning, no flame aura, no hair change, and no gold, white or red flash.** The flash stays in his own colour. No darkening or storm in the sky.
+4. **Thrown, not levitating.** The rim chunks fly out and fall as a crater event. They never hang or rise in a ring round him.
+5. **The ring is a flat, thin ring on the ground,** never a cracked sky.
+6. **One crater per transformation,** scaled by tier. The scar stays as terrain. The rocks stay stood down through the transformation and return after the settle, as built.
+7. **Mid-air power-ups and entrance craters stay without it,** as built.
+8. **Re-screen at the first transformation cinematic,** since crater, ring, camera and sound will meet for the first time.
+
+## HEAD docs/vfx/power-language.md:110
+**Ground-level power-up craters** (cause `powerup`, the transformation's break) are cleared by Legal under eight conditions (RL-059) and `blast_powerup_enabled` is **on by default**. Each condition as built and tested (`effects_check.gd` `_blast()`):
+
+## code
+HEAD:render/vfx/blast.gd:24:static var POWERUP_OFF: Array = []      # roster ids of fighters whose gather has a scream or a fists-at-sides crouch: no power-up blast for them (nobody now)
+HEAD:render/vfx/vfx_hub.gd:66:var blast_powerup_enabled: bool = VfxLook.BLAST_POWERUP_DEFAULT   # ... also for ground-level power-up craters, at the transformation's break only (Legal, RL-059)
+	_check(hoffp.blast.made == 0, "blast_powerup_enabled off: none")
+	_check(VfxBlast.POWERUP_OFF.is_empty(), "no fighter's gather has a scream or a crouch now: the off list is empty")

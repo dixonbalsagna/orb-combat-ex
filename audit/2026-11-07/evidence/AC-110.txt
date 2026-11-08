@@ -1,0 +1,29 @@
+$ sed -n '78p' docs/legal/review-log.md
+| RL-056 | 208 draft taunt lines | Narrative | Not rated | Pending Orb's edit; lean search protocol agreed | Open |
+
+$ sed -n '43,48p' docs/legal/agency-pass-screen.md | cut -c1-200
+## 4. The 208 taunt lines: a lean protocol
+No search yet, as asked. When Orb's edit is in:
+1. Skip lines of four words or fewer and plain taunts. They cannot carry an owner.
+2. Group the rest by fighter and search exact phrases in batches of four per query (US-only).
+3. Flag only lines that match a work, a quote or a catchphrase. Narrative rewrites those.
+4. Re-run any line whose wording changes. Legal logs the batch as one entry.
+
+$ git ls-files docs/narrative/voice-lab/taunts-draft.csv docs/narrative/taunts.draft.json
+docs/narrative/taunts.draft.json
+docs/narrative/voice-lab/taunts-draft.csv
+
+$ git grep -l -E 'taunts-draft|taunts.draft' -- data sim render ui
+
+$ node -e "console.log('live_barks enabled', require('./data/narrative/live_barks.json').enabled)"
+live_barks enabled false
+
+$ git cat-file -e 257a766c:data/narrative/live_barks.json 2>&1 | head -1
+fatal: path 'data/narrative/live_barks.json' exists on disk, but not in '257a766c'
+
+$ git show 257a766c:data/narrative/combat_barks.json | grep -c -i 'taunt'; grep -c -i taunt data/narrative/combat_barks.json
+27
+27
+
+shipped taunt lines at 257a766c: 24 ; also found in the 208-line draft csv: 1
+draft csv rows: 208

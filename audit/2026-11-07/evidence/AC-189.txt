@@ -1,0 +1,7 @@
+# AC-189 evidence
+HEAD struggleMeet.enabled= false
+a8bc66e2 struggleMeet.enabled= false
+pin lacks struggle_meet.gd
+11:##   nothing here reads a building's people (the glass is local: no one is counted), a barred landmark (WorldSettle.noTarget) takes nothing, and nothing aims
+155:		if not b.alive or WorldSettle.noTarget(b.landmark):
+180:		if not b.alive or b.kind != "tower" or WorldSettle.noTarget(b.landmark):

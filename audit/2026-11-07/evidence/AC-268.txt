@@ -1,0 +1,34 @@
+# AC-268: rule sources
+- A director session starts with `/director <slug>`. Briefs and reports travel by SendMessage. Every session runs in Auto permission mode.
+- All sessions share the project folder. Directors edit only their owned paths and never change git state; the EP reviews, commits and pushes.
+- **Files and git.** All sessions share this folder. Directors edit only their owned paths and never change git state. The EP reviews each deliverable, commits it and records significant decisions as ADRs in `docs/decisions/`.
+- **The Executive Producer is the session titled "Meridian - Executive Producer".** It plans, briefs, reviews and integrates, and it is the only session that changes git state.
+- **One folder, owned paths.** All sessions share the project folder. Each director edits only its owned paths. Shared files (CLAUDE.md, DIRECTORS.md, README.md, docs/decisions/, docs/ep/) belong to the EP.
+4. Other sessions share this folder. Never run git commands that change files, the index or history (add, commit, checkout, restore, reset, stash, merge, pull, push); read-only git such as status, diff and log is fine. The EP reviews and commits your work.
+| 11 | Director sessions sharing one folder overwrite each other's work | Medium | Medium | Executive Producer | Owned paths per director, only the EP changes git state, shared files owned by the EP (ADR 0002) |
+# git diff --stat HEAD -- docs/legal/review-log.md
+ docs/legal/review-log.md | 17 +++++++++--------
+ 1 file changed, 9 insertions(+), 8 deletions(-)
+# rows RL-246..255 line numbers in HEAD vs working tree
+268:| RL-246 | The beam strugg
+462:| RL-248 | UI's clash teac
+463:| RL-249 | The drawn case 
+464:| RL-250 | Animation's fli
+465:| RL-251 | World's beam-cl
+466:| RL-252 | VFX's beam-clas
+467:| RL-253 | Orb's own rulin
+468:| RL-254 | With World's st
+469:| RL-255 | Animation's air
+--- working tree
+268:| RL-246 | The beam strugg
+269:| RL-247 | Orb's own decis
+270:| RL-248 | UI's clash teac
+271:| RL-249 | The drawn case 
+272:| RL-250 | Animation's fli
+273:| RL-251 | World's beam-cl
+274:| RL-252 | VFX's beam-clas
+275:| RL-253 | Orb's own rulin
+276:| RL-254 | With World's st
+277:| RL-255 | Animation's air
+# RL-247 status in working tree:
+ Open until Orb's follow-up and the new toll meaning 

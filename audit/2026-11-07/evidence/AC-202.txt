@@ -1,0 +1,14 @@
+AC-202 proof, run 2026-11-07
+-- pin in tools/site.json:
+257a766c26f8766fb09b063864c41c5d8ba64dc0
+-- tools/site-ui-excuse.json until:
+2026-11-08
+-- in-game notice strings at the pin (git show 257a766c:ui/data/terms.json):
+photo_body_a: Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them.
+menu_notice: This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.
+-- commits mentioning a strings/words-only child since 2026-10-30:
+2cdd13a8 Legal: RL-209: the worst of four readings counts, 16:9 primary; main stays blocked at the signature clip; a words-only child of the pin keeps the demo up, due 8 November
+-- refs:
+main 53b6df82
+pause-snapshot-2026-10-30 da5a8170
+web-template-4.7.2-lazy-1 a08b8fa9

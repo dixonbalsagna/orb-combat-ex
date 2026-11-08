@@ -1,0 +1,35 @@
+# AC-250 evidence (verifier v17, 2026-11-07)
+## every 'uses:' in .github (HEAD)
+      9 uses: ./.github/actions/setup-godot
+     13 uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      1 uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
+      8 uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+      5 uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      1 uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
+## pinned SHA vs the tag's commit (gh api repos/actions/<name>/git/ref/tags/<tag>, annotated tags dereferenced)
+checkout v7.0.1 pinned=3d3c42e5aac5ba805825da76410c181273ba90b1 tag->3d3c42e5aac5ba805825da76410c181273ba90b1 match=yes
+setup-node v7.0.0 pinned=820762786026740c76f36085b0efc47a31fe5020 tag->820762786026740c76f36085b0efc47a31fe5020 match=yes
+upload-artifact v7.0.1 pinned=043fb46d1a93c77aae656e7c1c64a875d1fc6a0a tag->043fb46d1a93c77aae656e7c1c64a875d1fc6a0a match=yes
+upload-pages-artifact v5.0.0 pinned=fc324d3547104276b827a68afc52ff2a11cc49c9 tag->fc324d3547104276b827a68afc52ff2a11cc49c9 match=yes
+deploy-pages v5.0.1 pinned=368f82528645a54fb793d4d04e342629a3f51346 tag->368f82528645a54fb793d4d04e342629a3f51346 match=yes
+## local action setup-godot: downloads are SHA-512 checked
+36:        echo "${GODOT_ZIP_SHA512}  godot.zip" | sha512sum -c -
+55:        echo "${TEMPLATES_SHA512}  templates.tpz" | sha512sum -c -
+74:        echo "${TEMPLATES_SHA512}  templates-linux.tpz" | sha512sum -c -
+93:        echo "${TEMPLATES_SHA512}  templates-desktop.tpz" | sha512sum -c -
+## register rows for actions
+48:| LR-020 | actions/checkout v7.0.1 @ 3d3c42e5aac5ba805825da76410c181273ba90b1 (CI only) | MIT | accepted, d
+49:| LR-021 | actions/setup-node v7.0.0 @ 820762786026740c76f36085b0efc47a31fe5020 (CI only) | MIT | accepted,
+## workflow token scope
+.github/workflows/ci.yml:20:permissions:
+.github/workflows/ci.yml-21-  contents: read
+.github/workflows/desktop-builds.yml:28:permissions:
+.github/workflows/desktop-builds.yml-29-  contents: read
+.github/workflows/flash-pixels-dryrun.yml:25:permissions:
+.github/workflows/flash-pixels-dryrun.yml-26-  contents: read
+.github/workflows/linux-export.yml:15:permissions:
+.github/workflows/linux-export.yml-16-  contents: read
+.github/workflows/web-parity.yml:32:permissions:
+.github/workflows/web-parity.yml-33-  contents: read
+.github/workflows/web-template.yml:16:permissions:
+.github/workflows/web-template.yml-17-  contents: read

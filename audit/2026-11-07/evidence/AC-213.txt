@@ -1,0 +1,52 @@
+AC-213 evidence (HEAD 53b6df82)
+== docs/net/lan-v1.md:102-104
+| Private preview, never the public pin | Built only by this kit, and the public builds' guard refuses it |
+| No flash number from it counts | It reads none. **When either PC draws the other fight, RL-241 wants both fights' light counted together on one screen, and the 2v2 flash clips run, before anyone but Orb sees it** |
+| The words say the game opens a link | The first line, and the kit stops if it's gone |
+== net/tools/lan_kit.mjs:106-117 (export happens first)
+run(process.execPath, [join(tree, 'tools', 'desktop-package.mjs'), 'lock', '--root', tree]);
+{
+  const f = JSON.parse(readFileSync(join(tree, 'ui', 'data', 'features.json'), 'utf8')).features ?? {};
+  if (f.lock_reduce_flashing !== true) stop('Reduce flashing did not lock on (RL-230)');
+  if (f.capture_hook === true) stop('the capture hook is on (RL-230)');
+}
+mkdirSync(out, { recursive: true });
+writeFileSync(join(tree, 'build_info.json'), JSON.stringify({ commit: a.build, lan: true }));
+if (a['no-export'] === undefined) {
+  run(resolve(a.godot), ['--headless', '--path', tree, '--import']);
+  run(resolve(a.godot), ['--headless', '--path', tree, '--export-release', 'Windows Desktop', join(out, exeName)]);
+}
+== net/tools/lan_kit.mjs:190-197 (words check after export)
+const words = readFileSync(join(tree, 'net', 'tools', 'lan_words.txt'), 'utf8').replaceAll('{HOST_IP}', a['host-ip']);
+// Legal RL-230's words, checked: its WHO PLAYS line as it stands, a plain word that a link opens, and the public build's privacy line nowhere.
+if (!words.includes("WHO PLAYS: Only Orb plays and watches, on both PCs, with nobody else in the room. This build has a flashing-effects warning; read it first. Don't copy, record, share or post this folder, the screens or the main PC's address.")) stop('lan_words.txt: the WHO PLAYS line is not RL-230\'s');
+if (!words.includes("Two fights share one globe, so craters and damage from the other fight can appear in the world.")) stop('lan_words.txt: RL-241\'s sentence must be in the words before the 2v2 shortcuts go in');
+if (!words.includes("Fighters in the other fight can hit you, and your partner's fight isn't shown on your screen.")) stop('lan_words.txt: RL-249\'s sentence must be in the words before the together shortcuts go in');
+if (!/opens a network link between the two PCs/.test(words)) stop('lan_words.txt: it must say a link opens');
+if (/collects|sends nothing|no accounts/i.test(words)) stop('lan_words.txt: RL-204\'s privacy line stays out of the kit');
+writeFileSync(join(out, 'READ ME FIRST.txt'), words.replace(/\r?\n/g, '\r\n'));
+== a8bc66e2 lan_kit same check
+182:if (!/opens a network link between the two PCs/.test(words)) stop('lan_words.txt: it must say a link opens');
+== net/tools/lan_words.txt:1-3
+Orb Combat EX: a match between your two PCs
+
+What this is: one fight between your two PCs, with one pad on each, or two fights at once, one on each PC, against two computer fighters: as a team ("2v2 together") or apart. This game opens a network link between the two PCs, over your home network only. It's a private test and it has rough edges.
+== export_presets.cfg exclude_filter (Web preset.0 line 11 lacks net/*; desktop presets have it)
+11:exclude_filter="prototype/*, qa/*, research/*, docs/*, tools/*, .github/*, sim/core/tools/*, sim/director/tools/*, sim/world/tools/*, audio/tools/*, ui/tools/*, render/anim/tools/*, render/vfx/tools/*"
+55:exclude_filter="net/*, prototype/*, qa/*, research/*, docs/*, tools/*, .github/*, sim/core/tools/*, sim/director/tools/*, sim/world/tools/*, audio/tools/*, ui/tools/*, render/anim/tools/*, render/vfx/tools/*"
+101:exclude_filter="net/*, prototype/*, qa/*, research/*, docs/*, tools/*, .github/*, sim/core/tools/*, sim/director/tools/*, sim/world/tools/*, audio/tools/*, ui/tools/*, render/anim/tools/*, render/vfx/tools/*"
+132:exclude_filter="net/*, prototype/*, qa/*, research/*, docs/*, tools/*, .github/*, sim/core/tools/*, sim/director/tools/*, sim/world/tools/*, audio/tools/*, ui/tools/*, render/anim/tools/*, render/vfx/tools/*"
+== tools/desktop-package.mjs:210-218
+  // 5. no network, no online play in what is packed (RL-204 condition 1): no network class in any packed script, nothing from res://net, net/ excluded from every desktop preset
+  for (const rel of files) { const t = read(rel); if (t === null) continue; t.split(String.fromCharCode(10)).forEach((l, i) => { if (!/^\s*#/.test(l) && NET_TOKENS.test(l)) out.push(`${rel}:${i + 1} names a network class or res://net (${l.trim().slice(0, 60)}): the privacy line says the game makes no network connection`); }); }
+  const proj = read('project.godot');
+  if (proj && /res:\/\/net\b/.test(proj)) out.push('project.godot names res://net (an autoload or a setting): online play would be loaded at start');
+  const presets = presetsOf(o.presets ?? read('export_presets.cfg') ?? '');
+  for (const name of ['Windows Desktop', 'Linux', 'macOS']) {
+    const p = presets.find((x) => x.name === name);
+    if (!p) out.push(`export_presets.cfg has no "${name}" preset`);
+    else if (!p.exclude.includes('net/*')) out.push(`export_presets.cfg: the "${name}" preset does not exclude net/* (online play stays out of the package: RL-204 condition 1)`);
+== res://net/ referenced from .gd outside net/ at HEAD (empty = none):
+(end)
+== net/ at pin 257a766c (count):
+0

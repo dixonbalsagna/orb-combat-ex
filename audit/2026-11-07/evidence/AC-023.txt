@@ -1,0 +1,41 @@
+# AC-023 evidence
+## RL-130 (HEAD:152) still Open
+| RL-130 | Release margin and the required flash set grown; UI's 4 Hz crown stroke (k06) | Tools, UI | Medium | Margin rules and the new scenes added (addendum 6); stroke to 3 Hz or less, preferably 2, static under reduced motion | Open |
+
+## k06 (movegen-banned.json)
+541:      "id": "k06",
+542-      "rule": "a persistent HUD cue (a battered or low-state stroke, a pulse, a ring) changes no faster than 3 times a second and by preference 2 or fewer, is static under reduced motion and Reduce flashing, and counts in the flash check's frame like any other effect (the HUD is part of the screen); below the area threshold it is not a standard flash, but a flicker that runs for a whole match in a fixed place is held to the rate anyway",
+543-      "why": "UI's crown at 4 Hz in thin arcs under 8,000 px"
+
+## rates at HEAD (ui/core/ui_look.gd:87-90) and at the pin
+## Flicker and pulse rates, Hz.
+const HZ_BATTERED := 2.0              # Legal's rule k06: a flicker that runs a whole match is no faster than 3 a second, preferably 2 or fewer
+const HZ_BRINK := 1.2
+const HZ_HEAT := 2.0
+const HZ_BATTERED := 2.0              # Legal's rule k06: a flicker that runs a whole match is no faster than 3 a second, preferably 2 or fewer
+const HZ_BRINK := 1.2
+const HZ_HEAT := 2.0
+
+## commit that set 2 Hz
+18d05091 2026-10-12 UI: no HUD flicker above 3 a second (the crown and the core's swell at 2; Legal k06); the signature chip yields to a brawl mark; a demo switch that pins the toll at zero for public pictures
+
+## hud_check asserts (ui/tools/hud_check.gd:7452-7458)
+	var rates := {"battered stroke": UiLook.HZ_BATTERED, "brink ring": UiLook.HZ_BRINK, "heat swell": UiLook.HZ_HEAT, "form prompt pulse": UiFormPrompt.PULSE_HZ}
+	var bad := PackedStringArray()
+	for k in rates:
+		if float(rates[k]) > 3.0:
+			bad.append("%s %.1f Hz" % [k, float(rates[k])])
+	_ok(bad.is_empty(), "rate rule: no flicker or pulse constant is above 3 Hz %s" % str(bad))
+	_ok(UiLook.HZ_BATTERED <= 2.0 and UiLook.HZ_HEAT <= 2.0, "rate rule: and the two that run a whole match (the battered stroke, the heat swell) are 2 Hz or slower")
+
+## the stroke is still only under reduced_motion, not Reduce flashing (ui/widgets/ui_crown.gd:34-39, 158-160; ui/hud/ui_hud.gd:983)
+## Two things stay: a thin faint ring on the brink (the one persistent state, and the one the player must be able to
+## find at a glance), and the parry and chain windows (short, and useful only while they last).
+## o: reduced_motion, thickness, crown_always (accessibility: keep the crown up), brink_cue (default true).
+static func draw(ci: CanvasItem, m: UiFighterModel, c: Vector2, R: float, t: float, s: float, o: Dictionary) -> void:
+	var reduced: bool = bool(o.get("reduced_motion", false))
+	_still = reduced
+		2:
+			if not _still:
+				fl = 0.6 + 0.4 * (0.5 + 0.5 * sin((t + phase) * UiLook.HZ_BATTERED * TAU))
+		UiCrown.draw(ci, m, a["pos"], R, _t, layout.s, o)

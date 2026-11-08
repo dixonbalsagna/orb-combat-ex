@@ -1,0 +1,25 @@
+# AC-242 evidence (verifier v17, 2026-11-07)
+## commits that added enet_check / --late-host to ci.yml
+85884449 2026-11-07
+3c9005ac 2026-11-06
+cf90189c 2026-10-28
+late-host:
+85884449 2026-11-07
+3c9005ac 2026-11-06
+## last green ci.yml run 41956488028 (72a4d1e4, 2026-11-05): net job ENet steps
+Network checks (desync, spectator, delay, transport, two-process ENet)
+success
+success  Two-process ENet match on 127.0.0.1 (both processes match each other and the straight run, LAN and p200)
+success  Two-process ENet match, negative control (a perturbed joiner must be caught)
+## net/enet_transport.gd changed after the last green run, before the LAN build a8bc66e2
+ net/enet_transport.gd | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+3c9005ac 2026-11-06
+## ci.yml HEAD: the --late-host step appears twice (lines 417-420)
+417:        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/enet_check.gd -- --ticks=600 --profiles=lan --late-host=40000'
+419:        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://net/tools/enet_check.gd -- --ticks=600 --profiles=lan --late-host=40000'
+## callers of enet_check outside docs
+.github/workflows/ci.yml
+net/tools/enet_check.gd
+net/tools/enet_peer.gd
+net/tools/net_straight.gd

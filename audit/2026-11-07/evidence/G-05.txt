@@ -1,0 +1,19 @@
+G-05 proof (independent reviewer, 2026-11-07, read-only commands)
+
+.github/workflows/ci.yml:15-18  on: push / pull_request / workflow_dispatch  (no schedule)
+.github/workflows/ci.yml:528-529 deploy: needs: [qa, sim, data, flash, godot-parity, net, world, site]
+grep: deploy-pages / pages: write / upload-pages-artifact appear only in ci.yml (no other workflow can deploy)
+ci.yml:226,240,263,277 unquoted "- name:" values containing ": " (invalid YAML plain scalar)
+
+gh api actions/runs/42419094149 (HEAD 53b6df82): name ".github/workflows/ci.yml", conclusion failure, jobs total_count 0
+gh run list ci.yml: every run from 3c9005ac (2026-11-06T20:16Z) to 53b6df82 named by path, conclusion failure
+last CI success: 72a4d1e4 2026-11-05T02:38Z; last github-pages deployment: 72a4d1e4 2026-11-05T03:48:45Z
+gh api pages: build_type "workflow", status "built" (Pages is fed only by the Actions deploy)
+curl -I /play/ and /play/index.pck: 200, Last-Modified Thu, 05 Nov 2026 03:48:55 GMT, pck 9034688 bytes
+curl /play/ page: no expiry/date logic in the page (only fullscreen/orientation script + index.js loader)
+
+tools/check-site-interim.mjs:78  else if (today > I.expires) bad(...take the playable site down (node tools/site-offline.mjs)...)
+  -> the expiry only fails the CI site job; a failed site job skips deploy, so the old /play/ stays live even with working CI
+docs/tools/site-interim.md:103  "expires is optional, but while it is set CI fails the day after it."
+tools/site-offline.mjs: only edits tools/site.json; "Commit and push tools/site.json to publish it."
+tools/site.json: offline false, interim.owner "Orb 2026-10-18", expires 2026-11-15, pin 257a766c

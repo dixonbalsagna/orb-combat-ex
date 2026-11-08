@@ -1,0 +1,44 @@
+# AC-234 proof (a8bc66e2)
+$ git grep -n named statics
+a8bc66e2:sim/director/alchemy.gd:343:static var _rdS: int = 0
+a8bc66e2:sim/director/alchemy.gd:344:static var _rdTick: int = -1
+a8bc66e2:sim/director/alchemy.gd:345:static var _rdKey := PackedInt32Array()
+a8bc66e2:sim/director/alchemy.gd:346:static var _rdOut: Dictionary = {}
+a8bc66e2:sim/director/beamplay.gd:38:static var _frontForce: int = -1   # tools: -1 the data's switch, 0 off, 1 on
+a8bc66e2:sim/director/brawl.gd:163:static var _inTick: bool = false
+a8bc66e2:sim/director/brawl.gd:1571:static var _frOn: bool = false
+a8bc66e2:sim/director/brawl.gd:1572:static var _frX: float = 0.0      # the pair's middle as the frame opened: along the street, and in depth
+a8bc66e2:sim/director/brawl.gd:1573:static var _frZ: float = 0.0
+a8bc66e2:sim/director/brawl.gd:1574:static var _frCos: float = 1.0    # the line's direction: along the street, and in depth (the sine with its side)
+a8bc66e2:sim/director/brawl.gd:1575:static var _frSin: float = 0.0
+a8bc66e2:sim/director/brawl.gd:1576:static var _frVz: float = 0.0     # the pair's speed in depth for this tick, units a second
+a8bc66e2:sim/director/brawl.gd:1577:static var _frA = null
+a8bc66e2:sim/director/brawl.gd:1578:static var _frD = null
+a8bc66e2:sim/director/brawl.gd:1579:static var _frP: PackedFloat64Array = PackedFloat64Array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])   # where each stood as it opened
+a8bc66e2:sim/director/brawl.gd:2367:static var _enderStep: int = 0
+a8bc66e2:sim/director/brawl.gd:3623:static var holding: bool = false
+a8bc66e2:sim/director/exchange.gd:136:static var planEntry: int = 0
+a8bc66e2:sim/director/rally.gd:540:static var _noDown: bool = false
+a8bc66e2:sim/director/stick.gd:51:static var _rd = null         # Controls' reader, for its numbers and its ladder; holds no one's stick
+$ exchange.gd 201-205 (planEntry set before _start, reset after)
+			planEntry = int(SimAct.peek(f)[2])   # step 2b: the direction held at the press, for the plan's atkEntry
+			planTick = int(SimAct.peek(f)[3])
+			var r: int = _start(S, f, KIND[int(SimAct.peek(f)[0])])
+			planEntry = 0
+			planTick = -1
+$ alchemy.gd 326-339 (memo keyed by S id, tick and the log bits)
+static func read(S: SimState, f) -> Dictionary:
+	_size(f)
+	var key: PackedInt32Array = f.act.dirI.slice(P0, FLASH0 + RING)   # the packed presses, their ticks, the count, up, beat, flash
+	key.append_array(f.act.dirI.slice(LDOWN0, SIZE))   # ... and the live ticks down and up
+	for k in range(RING):
+		key[k] &= LOG_BITS   # (a packed press's rhythm, intent, entry and tilt are not in the log)
+	if S.get_instance_id() == _rdS and S.tick == _rdTick and key == _rdKey:
+		return _rdOut.duplicate(true)
+	var out: Dictionary = SimPressRead.classify(logOf(f), S.tick, {})
+	_rdS = S.get_instance_id()   # (its id, not the sim: the memo must not keep a finished sim alive)
+	_rdTick = S.tick
+	_rdKey = key
+	_rdOut = out.duplicate(true)
+	return out
+static var count in sim/ (non-tools) at a8bc66e2: 948

@@ -1,0 +1,27 @@
+== HEAD hold-style options
+74:"energy_style"
+76:"guard_style"
+78:"manoeuvre_style"
+80:"charge_style"
+82:"transform_style"
+== HEAD hub _apply_hold_styles
+626:func _apply_hold_styles(l: SimLayout, slot: int) -> void:
+627-	for a in HOLD_ACTIONS:
+628-		l.set_hold_style(a, hold_style_of(a, slot))
+629-
+630-
+631-## The strike stick's style for a slot, "hold" or "toggle" (the data default when the player has not chosen).
+632-func strike_style_of(slot: int) -> String:
+633-	var st: String = str(strike_style_pref[slot])
+634-	if st == "":
+== pin 257a766c hold-style options
+"energy_style"
+== pin settings.json guard/transform helps
+"guard": "Guard
+"transform": "Transform
+"guard": "Hold to guard.
+"transform": "Takes a form that is ready: hold it for half a second.
+== first commit adding guard_style
+5d26c626 2026-10-28 15:37:29 -0700 Controls: hold or toggle per player for guard, dodge, power and transform (default hold; the layout feeds a toggle to the sam
+52:const HOLD_ACTIONS: Array = ["guard", "dodge", "power", "transform"]
+596:	if not HOLD_ACTIONS.has(action):

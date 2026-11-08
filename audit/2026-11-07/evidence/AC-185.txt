@@ -1,0 +1,8 @@
+# AC-185 evidence
+1:994:static func nudgeList(S: SimState, x: float, heading: int) -> Array:
+10:1003-		if absf(t) > float(c.limitDeg) or _isOff(S, int(pl.id)):
+12:1005-		var s: float = float(cfg().placeBuildings.get(pl.kind, 0.0)) / float(cfg().direction.buildingRef) - absf(t) * float(c.deg)
+14:1007-	out.sort_custom(func(a, b): return float(a.s) > float(b.s) or (float(a.s) == float(b.s) and int(a.id) < int(b.id)))
+1049:	if _g(S, N_SINCE) == 0 or _stickMoved(f, word):
+$ hunger in sim and data
+data/narrative/combat_barks.json:101:        "meter": "hunger", "amount": 5,

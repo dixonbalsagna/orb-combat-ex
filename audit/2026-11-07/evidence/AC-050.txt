@@ -1,0 +1,23 @@
+AC-050 evidence (verifier v04, 2026-11-07, read-only)
+## HEAD docs/legal/review-log.md:100
+| RL-078 | LT zip: heavy wind-up ring, counter, caught, guard-broken marks | VFX | Low | Clear: hollow thin shrinking ring; no text, no face marks, no gold/white/red flash | Closed |
+
+## HEAD docs/legal/zip-screen.md:39-40
+- **Heavy wind-up ring (40 to 12 units onto the fist): clear.** It is not one of the seven marks, and there is no pose with it. Conditions (m07): hollow, thin, lane colour, shrinks only (never grows or holds), the wind-up only (10 ticks or fewer), never fills or becomes a ball at the hand. With the stance tell's aura and a shout it would count towards the two-mark limit, so no scream on a heavy zip.
+- **Counter bar, counter diamond and double ring, caught ring and brackets, guard-broken fragments: clear** (the stills are small, hard-edged, lane-coloured). Conditions (m08): no text or numbers on the brackets (a lock-on is fine, a readout is not), nothing on the eyes or face, and no full-screen or body-wide gold, white or red flash from the guard-broken ring or the double ring.
+
+## HEAD docs/legal/movegen-banned.json m07, m08 (rule and why)
+      "id": "m07",
+      "rule": "a heavy's wind-up ring is hollow, thin, in the lane colour, shrinks onto the striking fist and never grows or holds, lasts the wind-up only (10 ticks or fewer), and never fills or becomes a ball at the hand",
+      "why": "a charging-pose cue under the stacking rule"
+    },
+    {
+      "id": "m08",
+      "rule": "outcome marks (counter bar, closing ring, brackets, guard fragments) carry no text or numbers, never sit on the eyes or face, and are never a full-screen or body-wide gold, white or red flash",
+      "why": "no readout or scanner look, no mark 7"
+    },
+
+## code
+HEAD:render/vfx/shots_view.gd:708:		# Hollow, thin, lane colour, shrinking only, and only in the last 10 ticks of the wind-up (Legal m07).
+HEAD:render/vfx/tools/effects_check.gd:3937:	_check(quads_at.call(hh) == 1, "then it is one thin hollow ring shrinking onto the fist (Legal m07)")
+HEAD:render/vfx/tools/effects_check.gd:4232:	_check(below, "the outcome marks sit at or below the chest, never on the face (Legal m08)")

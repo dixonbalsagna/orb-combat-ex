@@ -1,0 +1,11 @@
+# AC-170: ratings records vs primary sources (run 2026-11-07)
+## repo positions
+| Violence | Graphic, including the Cyborg's consumption. Rating target: Mature |
+> [Content note matching the Content Survey: cartoon violence, destruction, civilian casualties.]
+### Age ratings
+| E1 | **Ratings:** Valve's General Content survey generates ratings for several regional boards, shown on the store page; you must disclose all mature content that players may encounter, even in the build but not shown. Answer honestly **with the stomp and the finishers in it** and keep a copy of the answers. A real rating may bar a German release or raise the age gate. Not confirmed: which boards and which tiers Valve covers today (**unconfirmed**; IARC's own questionnaire is separate, for itc
+## WebFetch https://partner.steamgames.com/doc/gettingstarted/contentsurvey/germany (accessed 2026-11-07):
+  'Starting on November 15, 2024, Steam will no longer display games to customers in Germany' ... 'if the game is missing a valid age rating.'
+  'Your game cannot receive a content review rating from Valve if you have not filled in the game's content survey.'
+## WebFetch https://pegi.info/what-do-the-labels-mean (accessed 2026-11-07): PEGI 18 covers 'violence towards defenceless characters'.
+## no questionnaire answers saved in the repo

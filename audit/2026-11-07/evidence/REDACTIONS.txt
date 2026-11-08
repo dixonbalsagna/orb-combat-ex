@@ -1,0 +1,2 @@
+Franchise and fan-game titles that appeared in helper output were replaced with [franchise title], [fan-game title], [web-series title] and [franchise rights holder] on 2026-11-07, under CLAUDE.md's rule against committing franchise names. The original terms are in Legal's own files (docs/legal/never-use-words.md).
+The owner's Windows account name and US state were replaced with <account> and <state> in every audit file on 2026-11-07 (finding F-07). File paths that contain them are cited in that redacted form.

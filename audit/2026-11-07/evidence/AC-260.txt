@@ -1,0 +1,19 @@
+== HEAD ui/data/features.json answer_alert/alert_* flags
+    "answer_alert": false,
+    "alert_vfx": false,
+    "alert_audio": false,
+    "alert_rumble": false
+== HEAD ui/widgets/ui_answer_alert.gd: presets, plate, notch
+##   the CAPTION: BEAM INCOMING (or BEAM CHARGING), the answers that are open as the player's own buttons and words, and a bar that runs down to arrival with a notch where the dodge opens.
+## The three sets. A row the player changes afterwards turns the set to Custom.
+const PRESETS := {
+	UiIcons.rrect(ci, cr, 8.0 * lay.s, Color(UiLook.col(UiLook.SCRIM), 0.92), Color(UiLook.col(UiLook.EDGE), 0.9), 2.0)   # a solid backing plate, so it reads on any sky
+	# The bar: what is left of the window, with a notch where the dodge opens.
+== first added
+d5582dbd 2026-11-07 01:32:45 -0800
+== contrast measurement of alert text?
+none
+== alert sound caption in audio data?
+(end)
+== external (WebFetch 2026-11-07) https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html
+SC 1.4.3 (Level AA): "contrast ratio of at least 4.5:1" for text; 3:1 for large text.

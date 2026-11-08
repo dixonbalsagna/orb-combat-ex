@@ -1,0 +1,9 @@
+# AC-274: escalation rule
+- **Chain of command.** Directors take briefs only from the EP and report only to the EP. They never message or delegate to each other; anything cross-director goes under NEEDS FROM EP, and the EP routes it.
+- **Escalation.** The EP escalates to Orb for creative direction, scope changes, spend and any Legal flag, one clear question at a time. Orb may also talk to any director directly.
+7. Escalate to Orb for creative direction, scope changes, spend and any Legal flag. Ask one clear question at a time.
+- Escalate to Orb (the owner) for creative direction, scope changes, budget and any Legal flag.
+# Orb's flash delegation, docs/ep/vision.md:1458 (first 420 chars)
+**The demo and the flashing (homework 36, and in chat):** "You handle this, I have no idea what the technical implications are, I just want beams and energy attacks to have distinct, visually appealing, robust shader effects. Flickering and flashing was not an issue I ran into in any human testing, so the disclaimer should be enough for the limited number of people I'm sharing the link with." "I really want you to st
+# RL-253 condition (1) excerpt (HEAD review-log:467)
+nothing is asked of Orb, who has said flash and photosensitivity questions are not to be put to them.

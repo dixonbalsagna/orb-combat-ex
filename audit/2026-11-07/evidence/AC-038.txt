@@ -1,0 +1,31 @@
+AC-038 proof (independent reviewer, 2026-11-07). Commands run read-only.
+
+## Dynamic sky history
+a06f6920 2026-10-22 The shifting arena's calm-moment turn applied by the EP, off by default: World's window 3 (the ring turns about the pair
+0ca6f670 2026-10-16 Rendering: the sky, haze and mountains tightened (haze by depth behind the fighter plane, ridges as silhouettes, stars o
+955ce1b1 2026-10-06 Rendering: the dynamic sky (by place round the planet, a slow drift, the fight's mood and damage; rate-limited so it can
+955ce1b1 (dynamic sky) IS an ancestor of public pin 257a766c
+RL-223 added in 424acbf9 2026-11-01
+
+## Sky data at the pin (257a766c:data/art/sky.json)
+keys noon@0 golden@0.18 sunset@0.32 night@0.58 dawn@0.84 | drift cycles/min 0.0125 | start 0.32 | place_and_time {"mean":0.015,"band":0.035} | total {"mean":0.02,"band":0.05} | mood min s {"frenzy":30,"ruin":120,"glow":50}
+
+## WORLD_LIGHT (world darkening and window lighting) at pin, LAN, HEAD
+257a766c: 447:const WORLD_LIGHT: float = 0.0
+a8bc66e2: 667:const WORLD_LIGHT: float = 0.0
+HEAD: 667:const WORLD_LIGHT: float = 0.0
+
+## Sky drivers on HEAD (render/core/sky_drive.gd)
+451:	drift += drift_per_s * dt
+452:	var want_f: float = float(RenderLook.SKY_FRENZY_BY_BAND[clampi(int(S.mood.band), 0, 2)])
+454:	var want_r: float = clampf(0.5 * float(S.world.casualties) / pop + 0.5 * float(S.world.structuresLost) / maxf(float(S.buildings.size()), 1.0), 0.0, 1.0)
+455:	frenzy = move_toward(frenzy, want_f, dt / float(ease_s.frenzy))
+456:	ruin = move_toward(ruin, want_r, dt / float(ease_s.ruin))
+499:	return fposmod(start_phase + SimWrap.sdx(spawn_x, SimWrap.wrap(cam_x)) / SimConst.W + drift, 1.0)
+
+## Sim/net never reads the sky
+0
+
+## Flash pipeline: any clip held at night?
+0
+58:export const FIXED_CLIPS = ['clash-normal', 'clash-reduced'];

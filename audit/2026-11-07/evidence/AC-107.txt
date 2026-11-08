@@ -1,0 +1,33 @@
+$ sed -n '66p;67p;68p' docs/legal/review-log.md | cut -c1-260
+| RL-044 | Close-up face directions A, B, C and the blank fallback | Art | Medium | CONDITIONAL: lit shapes may stay; Protagonist A and the Cyborg split face change | Open until Art revises |
+| RL-045 | Close-ups round 8 (capsule eyes, seam, Cyborg split and display cluster, diadem) | Art | Low to Medium | GO; Cyborg display cluster CONDITIONAL (remove scan bars and pips, paler peach) | Open until Art revises |
+| RL-046 | Guard arc (Rendering) and round 9 Cyborg A mask | Rendering, Art | Low | GO | Closed |
+
+$ sed -n '265p;270p;271p;315p' docs/legal/q3-screen.md | cut -c1-260
+Screens `docs/art/closeup-directions.md`. **I rendered and looked at the sheets** (comparison, Anti-hero B, the others B and the two blank-mask fallbacks) with headless Chrome. A screen, not legal advice.
+| Direction A (the mask as a face) | **CONDITIONAL**: the Protagonist's A must change |
+| Direction C (no mask) | **CONDITIONAL**: same split-face check on the Cyborg |
+| Round 9 Cyborg A mask (pale rectangle pair, stair of squares, brow bars) | **GO** |
+
+$ sed -n '49p;65p;67p' docs/art/closeup-directions.md | cut -c1-300
+## Round 8: Legal's constraints applied (RL-044, `docs/legal/q3-screen.md`)
+## Round 9: Legal's two round 8 conditions (RL-045), and damage for direction A
+- **The Cyborg's lit eye** is now a plain lit rectangle in a pale cream-peach (high lightness, low colour). The scan bars, pips and halo are gone from the eye. The lit brow is the same pale tone (dark steel on the steel half in direction C), and every lit edge, crack and scuff on him is the same pal
+
+$ sed -n '476p' docs/ep/vision.md | cut -c1-200
+- **Art direction.** "the mask aesthetic, broken masks should be part of an upcoming character, not the game's overall art style." The masks are parked as a seed for a future fighter. Orb likes the fi
+
+$ git ls-files art/concepts/closeups | grep -c svg
+162
+
+$ git ls-files art/concepts/closeups/rounds | cut -d/ -f5 | sort | uniq -c
+      1 NOTES.md
+      7 round-1
+      7 round-2
+      7 round-3
+      7 round-4
+      8 round-5
+     11 round-6
+     14 round-7
+     15 round-8
+     16 round-9

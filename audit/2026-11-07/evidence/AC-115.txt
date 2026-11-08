@@ -1,0 +1,18 @@
+$ sed -n '94p;95p' docs/legal/review-log.md | cut -c1-300
+| RL-072 | Generated movesets: the 36 new and derived shapes (movegen-screen.md) | Combat | Low | Clear, with conditions on rising and palm strikes, drops, spins, held heavies | Open until Combat merges the banned rows |
+| RL-073 | Moveset banned rows (movegen-banned.json) and the rule for later stances and signature slots | Combat | Medium | Delivered: 13 shape rows, 7 sequence rules; a person screens every signature frame, new vocabulary and stance tell | Open; rows only grow |
+
+$ git ls-files docs/legal/movegen-banned.json docs/combat/pending/movegen/parts.json data/combat/parts.json
+docs/combat/pending/movegen/parts.json
+docs/legal/movegen-banned.json
+
+$ sed -n '191p' docs/combat/pending/movegen/README.md | cut -c1-300
+`parts.json` holds Legal's file whole (`docs/legal/movegen-banned.json`, through its screen of the three strengths, `bb6fc1e`), and `--check` fails if any row there is missing from it or differs. The merge takes every group of rows in Legal's file, whatever its name, so a new group no longer needs a
+
+$ grep -n -o -E 'breaks none of Legal.{0,160}' data/combat/recipes.json
+551:breaks none of Legal's string rules, which count the whole string whatever buttons made it (docs/legal/movegen-banned.json s01, s02, s04, s05, f02). The steps are tried in order. L
+
+$ grep -n -E "Legal's rule" sim/director/recipe.gd sim/director/brawl.gd | cut -c1-200
+sim/director/recipe.gd:145:## his last two picks, unless `again`; never to the gut when `noGut` (Legal's rule: no two blows running to the gut);
+sim/director/brawl.gd:67:const GUT: int = BASE + 16      # bit 1: his last pick went to the gut (Legal's rule: no two blows running to the gut); bit 2: the pick before it did, for a blow that is lost 
+

@@ -1,0 +1,16 @@
+AC-203 proof, run 2026-11-07
+-- HEAD ui/data/glyphs.json note:
+The prompt glyph tables (docs/controls/prompt-glyphs.md sections 2, 3 and 5), as data. Controls owns the bindings and this map; UI draws the glyphs. The default style is NEUTRAL: our own position diamond with a letter mark for the face buttons, and plain text marks for the rest; no console maker's icon art is reproduced, and no platform's face symbols are used until Legal answers (prompt-glyphs.md rule 7). The 'family' style, which prints each family's own letters, exists in the data but is off until then. Keyboard glyphs are a keycap with the label on the player's layout (the host may replace the label with DisplayServer.keyboard_get_label_from_physical).
+neutral face: {"south":"S","east":"E","west":"W","north":"N"}
+deck face: {"south":"A","east":"B","west":"X","north":"Y"}
+ps face: {"south":"S","east":"E","west":"W","north":"N"}
+top-level keys: schema,note,families,neutral,family_labels,actions
+-- PlayStation shape words in ui/data/glyphs.json and ui/widgets/ui_glyphs.gd at HEAD:
+HEAD:ui/widgets/ui_glyphs.gd:6:## marks for triggers and bumpers, a small cross for the D-pad, a keycap for the keyboard. No console maker's icon art and no
+HEAD:ui/widgets/ui_glyphs.gd:129:			return [{"kind": "dpad", "dir": "all", "label": ""}]   # the D-pad's four directions as one axis (the strike mirror): the whole cross, not a chord
+HEAD:ui/widgets/ui_glyphs.gd:235:					ci.draw_circle(p, r * 1.15, ink)
+HEAD:ui/widgets/ui_glyphs.gd:258:			ci.draw_circle(c3, h * 0.14, ink)
+HEAD:ui/widgets/ui_glyphs.gd:276:##   late, miss and stray  a cross         locked a small square with a bar through it (the action was locked out)
+(end)
+-- Steam Deck claims on live pages:
+no matches

@@ -1,0 +1,29 @@
+# AC-092 evidence
+## review-log.md (HEAD) :69
+| RL-047 | Combat wave 1 strikes (38) and energy hands | Combat | Medium (two_finger_point) | GO; two_finger_point NO-GO as an energy hand | Open until it is replaced |
+## rule-of-cool-screen.md (HEAD) :86 :98
+| `two_finger_point` as an energy hand | **NO-GO** |
+**`two_finger_point`: NO-GO as an energy hand.** Two extended fingers aimed to emit energy is the franchise's best-known beam signature (and two fingers to the forehead is its teleport pose). Replace it. Safe alternatives that are not a pointing finger: a **pinch** (thumb to forefinger), a **snap** 
+## movegen-banned.json b10 (HEAD :158-171)
+    {
+      "id": "b10",
+      "match": {
+        "limb": [
+          "hand"
+        ],
+        "flags": [
+          "two_fingers",
+          "pointing_finger",
+          "to_forehead"
+        ]
+      },
+      "why": "two fingers or a pointing finger, or a hand to the forehead: the franchise's beam and teleport poses"
+    },
+## two_finger_point / forehead in shipped dirs:
+== HEAD
+== 257a766c
+(none in either)
+## repo-wide mentions of two_finger_point (HEAD):
+HEAD:docs/legal/review-log.md:69:| RL-047 | Combat wave 1 strikes (38) and energy hands | 
+HEAD:docs/legal/rule-of-cool-screen.md:86:| `two_finger_point` as an energy hand | **NO-GO
+HEAD:docs/legal/rule-of-cool-screen.md:98:**`two_finger_point`: NO-GO as an energy hand.**

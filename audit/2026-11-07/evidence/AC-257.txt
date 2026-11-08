@@ -1,0 +1,28 @@
+== HEAD live_barks enabled
+4:  "enabled": false,
+== a8bc66e2 live_barks enabled
+4:  "enabled": false,
+== pin 257a766c narrative_barks exists?
+no
+== HEAD main.gd barks
+	barks = NarrativeBarks.make(host.S, host.setup_used)
+	return true
+
+== HEAD features about_voice
+9:    "about_voice": false,
+== grunts: audio_cues caption?
+HEAD:audio/audio_cues.gd:29:	var caption: String = ""     # for muted or deaf players; UI's captions read it
+HEAD:audio/audio_cues.gd:142:	cue.caption = ""
+HEAD:audio/audio_cues.gd:177:func make_cue(sound: String, x: float, y: float, gain_db: float, pitch: float, priority: int, bus: String, cls: String, cap: int, caption: String, S: SimState) -> Cue:
+HEAD:audio/audio_cues.gd:190:	cue.caption = caption
+HEAD:audio/audio_cues.gd:210:	cue.caption = String(meta.get("caption", ""))
+(end)
+== callers of hub _cap
+HEAD:ui/core/ui_event_hub.gd:83:func _cap(text: String, secs: float) -> void:
+HEAD:ui/core/ui_event_hub.gd:1046:		_cap(UiData.t("prompt.cap_struggle"), -1.0)
+HEAD:ui/core/ui_event_hub.gd:1071:			_cap("", 0.0)
+HEAD:ui/core/ui_event_hub.gd:1534:			_cap("", 0.0)
+== readers of an audio cue's caption outside audio/
+(end)
+== grunts.json captions in data (count)
+16

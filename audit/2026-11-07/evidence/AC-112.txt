@@ -1,0 +1,27 @@
+$ sed -n '83p' docs/legal/review-log.md
+| RL-061 | Agency 15.5: mines | Game Design | Low to Medium | GO; hexagonal plate, no sphere set, never surround | Open until looks exist |
+
+$ sed -n '118p' docs/legal/agency-pass-screen.md | cut -c1-400
+**15.5 Mines.** Fine, with look rules. A mine is a **hexagonal plate or faceted caltrop**, not a perfect glowing sphere, so it does not read as a ki ball or the orb signature. Never a set of seven, never in a ring of matching spheres (the cap of 6 is fine, but do not display them as a numbered set), never with markings or stars. Mines hover and wait, and never close in or surround on command (Comb
+
+$ grep -n -E '^const (LINE|SEEK|LOB|MINE)' sim/core/shots.gd
+24:const LINE: int = 0
+25:const SEEK: int = 1
+26:const LOB: int = 2
+27:const MINE: int = 3
+
+$ sed -n '1839,1844p' render/vfx/shots_view.gd | cut -c1-200
+## The mines, each fighter's own look, and never a sphere (Legal, RL-062): the others' is a hexagonal plate (a flat hexagon with a raised
+## inner hexagon, a thin ring round it), the Anti-hero's a faceted caltrop (three tapering spikes round a small hexagonal hub). A hovering
+## one bobs, with a faint line down to a flat shadow on the ground, face-on; a ground one lies flat (the plate squashed) or stands on its
+## spikes. Arming: the plate's ring and the spikes close in from far out while they fade up (dim, then bright); armed: a slow breathing
+## of the inner hexagon; the fuse (about to go): a quick blink, the inner hexagon swelling, and one thin warning ring running out to the
+## blast's radius. One mine at a time per spot: no row of matching shapes is staged. The lane colour only, never white, gold or red.
+
+$ git show 257a766c:render/vfx/shots_view.gd | grep -n -i 'hexagonal plate' | head -2
+1690:## The mines, each fighter's own look, and never a sphere (Legal, RL-062): the others' is a hexagonal plate (a flat hexagon with a raised
+1785:		# A hexagonal plate with a raised inner hexagon and a thin ring round it (flat on the ground, face-on in the air).
+
+$ grep -n '_mine' data/director/ai.json | cut -c1-200
+34:  "_mine": "Per level, mineShare: the chance its attack beat in the far band lays a mine instead (it needs mineMinKi of ki). It does not avoid mines",
+

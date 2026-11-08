@@ -1,0 +1,34 @@
+# AC-054 proof (run 2026-11-07)
+## pin 257a766c F8 handler (no lock check)
+1155:			if code == "F8":
+1156-				flash_legacy = not flash_legacy
+1157-				for v in fighter_views:
+1158-					v.flash_view.legacy = flash_legacy
+## pin gate_args / LOCAL_ONLY_ARGS
+1201:## The options a web page's URL may set (parse_args): off unless the URL names them. Those in LOCAL_ONLY_ARGS start
+1204:const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood"]
+1242:	return gate_args(out, UiHud.bypass_allowed())
+1248:static func gate_args(a: Dictionary, allowed: bool) -> Dictionary:
+1250:		for k in LOCAL_ONLY_ARGS:
+## pin bypass_allowed (hostname test)
+1238:static func bypass_allowed() -> bool:
+1239-	if not OS.has_feature("web"):
+1240-		return true
+1241-	var hp = JavaScriptBridge.eval("location.hostname + '|' + location.protocol", true)
+1242-	var parts: PackedStringArray = str(hp).split("|")
+1243-	return parts.size() == 2 and page_is_local(parts[0], parts[1])
+1244-
+## HEAD F8 refused under lock
+1588:			if code == "F8" and not UiData.rf_locked():   # the flashes' shapes before Legal's conditions: refused while Reduce flashing is locked on (RL-196)
+## HEAD capture hook gate
+	if args.has("flashcap") and not manual and OS.has_feature("web") and get_parent() == get_tree().root and (UiData.feature("capture_hook") or not UiData.rf_locked()):
+## HEAD bypass_allowed
+1508:static func bypass_allowed() -> bool:
+1509-	if UiData.rf_locked() and not UiData.feature("capture_hook"):
+1510-		return false
+1511-	if not OS.has_feature("web"):
+## features lock flag in committed data
+257a766c: "lock_reduce_flashing": false
+HEAD: "lock_reduce_flashing": false
+## CI latest runs
+[{"conclusion":"failure","createdAt":"2026-11-07T22:07:19Z","headSha":"53b6df820b23934617b2f1b2aed01ddba015b69c"},{"conclusion":"failure","createdAt":"2026-11-07T22:00:14Z","headSha":"8d9b98a242f925458da9063529ca7a8be96597b1"}]

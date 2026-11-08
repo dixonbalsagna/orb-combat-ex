@@ -1,0 +1,70 @@
+# AC-239 evidence (verifier v17, 2026-11-07). Personal details redacted.
+## tracked files at HEAD containing the local Windows user-profile path (git grep -l -i -E 'Users[\/]+<account>' HEAD)
+52
+## lines
+67
+## same at pinned 257a766c
+18
+## files
+docs/animation/img/look-gate/chain-ragdoll-clips.json
+docs/animation/img/water-stance/d120-clips.json
+docs/animation/img/water-stance/d20-clips.json
+docs/animation/img/water-stance/d60-clips.json
+docs/animation/img/water-stance/d600-clips.json
+docs/ep/handoff.md
+docs/ep/playbook.md
+docs/perf/oldpc-kit-2026-11-01.md
+docs/perf/oldpc/kit/build-kit.mjs
+docs/perf/oldpc/kit/compare-results.mjs
+docs/perf/tools/make-audit-sites.mjs
+docs/perf/tools/make-desktop-export.mjs
+docs/perf/tools/native-cpu-bench.ps1
+docs/perf/tools/swing-bench/gdrun.mjs
+docs/rendering/README.md
+docs/rendering/img/lookgate/draw-others/draw-others-clips.json
+docs/rendering/img/lookgate/inside-rooms/inside-rooms-clips.json
+docs/rendering/pending/2026-10-31-swing-test/real-frame/sg_mk.sh
+docs/rendering/pending/2026-10-31-swing-test/real-frame/sg_run3.sh
+docs/rendering/pending/2026-10-31-swing-test/real-frame/sg_shot.sh
+docs/rendering/pending/2026-10-31-swing-test/sw_b.sh
+docs/rendering/pending/2026-10-31-swing-test/sw_c.sh
+docs/rendering/pending/2026-10-31-swing-test/sw_d.sh
+docs/rendering/pending/2026-10-31-swing-test/sw_mk.sh
+docs/rendering/pending/2026-10-31-swing-test/sw_shot.sh
+docs/research/world-catastrophe/tools/rerun.sh
+docs/tools/gauntlet-e80b8e3d.json
+docs/tools/gauntlet-orbs-scheme-e80b8e3d.json
+docs/tools/morning-1107-gauntlet.json
+docs/tools/morning-1107-gauntlet.txt
+docs/tools/morning-1107-ledger-new.json
+docs/tools/morning-1107-ledger-new.txt
+docs/tools/morning-1107-ledger-old.json
+docs/tools/morning-1107-ledger-old.txt
+docs/tools/orb-play-1229-ledger.json
+docs/tools/orb-play-1229-ledger.txt
+docs/tools/pending/preview-stack-v6/scratch-tools/clean-tree.mjs
+docs/tools/pending/preview-stack-v6/scratch-tools/globes.py
+docs/tools/pending/preview-stack-v6/scratch-tools/landing-clean.sh
+docs/vfx/img/biome-fx/plumedesert-clips.json
+docs/world/scratch-build/lanes-window/apply_lanes_window.sh
+docs/world/scratch-build/stage1/mk_hv2.sh
+docs/world/scratch-build/staged/mk_hv.sh
+research/engine-spike/csharp/README.md
+research/engine-spike/godot/README.md
+research/engine-spike/notes/csharp.md
+research/engine-spike/results/final/raw/godot-editor-forward_plus-d3d12-r1.json
+research/engine-spike/results/final/raw/godot-editor-forward_plus-d3d12-r2.json
+research/engine-spike/results/final/raw/godot-editor-forward_plus-d3d12-r3.json
+research/engine-spike/tools/run-final.mjs
+sim/core/tools/run-all.js
+tools/flash/interim-run.sh
+## docs/ep/vision.md:71 row label (value redacted: a first name and surname initial)
+| Copyright holder | [REDACTED personal name] |
+## vision.md:1403 contains a US state name:
+1
+## commit that added the copyright-holder row
+701c76a0 2026-09-29
+## commit authors (all)
+   2744 dixonbalsagna <6009840+dixonbalsagna@users.noreply.github.com>
+## homework file is git-ignored
+.gitignore:29:homework/	homework/2 Up Next/09 Business - Legal's open questions (10 min).md

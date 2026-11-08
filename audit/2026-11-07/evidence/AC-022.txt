@@ -1,0 +1,27 @@
+# AC-022 evidence
+## lan-v1.md:20, 80, 93, 94 (HEAD)
+**The public builds don't change.** They exclude `net/`, and `tools/desktop-package.mjs routes` refuses otherwise (Legal RL-204). So the kit patches the game's calls into its scratch copy: `render/core/sim_host.gd` (3 edits), `render/core/main.gd` (6), the meteor trail's page word in `render/vfx/meteor.gd` (1, if it's there), and `export_presets.cfg`'s exclude becomes `net/tools/*`. It stops if a line no longer fits. It also locks Reduce flashing on, as the desktop builds do. **It fits both main and the tree Tools' stack exports for a kept build,** whose host steps through the black box's `_bb_step`.
+3. **The start menu, the warning and the pads in a real window.** Headless runs skip the menu, and nothing here has drawn a window.
+| The warning before play on both PCs, not bypassed | The game's own start menu carries it, and the shortcuts pass no skip word. `--lan-loop` skips the menu only with no window. Asked of the game's own rule on the kit's tree, for all three shortcuts: locked, no bypass, the warning shows. **Nobody has seen it in a window** |
+| Reduce flashing locked on | `desktop-package lock`, and the kit stops if the flag isn't on or the capture hook is |
+
+## kit lock and stop (net/tools/lan_kit.mjs:105-111)
+// The interim's terms hold here too: Reduce flashing locked on, as the desktop builds.
+run(process.execPath, [join(tree, 'tools', 'desktop-package.mjs'), 'lock', '--root', tree]);
+{
+  const f = JSON.parse(readFileSync(join(tree, 'ui', 'data', 'features.json'), 'utf8')).features ?? {};
+  if (f.lock_reduce_flashing !== true) stop('Reduce flashing did not lock on (RL-230)');
+  if (f.capture_hook === true) stop('the capture hook is on (RL-230)');
+}
+
+## kit menu patches (lan_kit.mjs:51, 55): the menu is skipped only headless
+  ['func _on_menu_started(cfg: Dictionary) -> void:\n', 'func _on_menu_started(cfg: Dictionary) -> void:\n\tif host.lan != null:\n\t\treturn\n'],
+  ['\tstart_match(int(args["seed"]) if args.has("seed") else fresh_seed())\n', '\tstart_match(int(args["seed"]) if args.has("seed") else fresh_seed())\n\tif args.has("lan-loop") and DisplayServer.get_name() == "headless":\n\t\t_on_menu_started({})   # no window, no menu, so no warning to show: a test only\n'],
+
+## no bypass in a locked build (ui/hud/ui_hud.gd:1508-1510)
+static func bypass_allowed() -> bool:
+	if UiData.rf_locked() and not UiData.feature("capture_hook"):
+		return false
+
+## a8bc66e2 has the same kit
+ 1 file changed, 13 insertions(+)
