@@ -1,0 +1,39 @@
+# The take-down (corrective directive CD-02): publishes only the offline notice to GitHub Pages, with no game job, so it works even when ci.yml is red.
+# Run it from the Actions tab (Run workflow) or: gh workflow run takedown.yml
+name: Take the site down (offline notice only)
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  takedown:
+    name: Publish the offline notice
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+      - name: "Write the offline notice (no game files)"
+        run: node tools/site-takedown.mjs --out "${RUNNER_TEMP}/site"
+      - name: "Check the site holds no game"
+        run: node tools/check-site-offline.mjs --site "${RUNNER_TEMP}/site"
+      - name: "Upload the notice"
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: ${{ runner.temp }}/site
+      - name: "Deploy"
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

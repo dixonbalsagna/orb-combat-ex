@@ -223,7 +223,7 @@ jobs:
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/power_check.gd'
       - name: Power check, negative control (a send past what he has must be seen)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/power_check.gd -- --negative-control'
-      - name: Press check (Game Design press-decides: a held B and a stance circle, the stops and the prices, the one rule for B, the steal, two runs one hash)
+      - name: 'Press check (Game Design press-decides: a held B and a stance circle, the stops and the prices, the one rule for B, the steal, two runs one hash)'
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/press_decides_check.gd'
       - name: Rec check (the ground's records and water by the coarse grid against every big record scanned, the place table against the plain walk; Simulation places-records)
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/rec_check.gd'
@@ -237,7 +237,7 @@ jobs:
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/field_static_check.gd'
       - name: Field static check, negative control (a kept ground without the store's delta must be seen)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/field_static_check.gd -- --negative-control'
-      - name: Cross end check (how a fight ends in a match of two fights: the fallen body, rejoinAfter; Simulation cross-end)
+      - name: 'Cross end check (how a fight ends in a match of two fights: the fallen body, rejoinAfter; Simulation cross-end)'
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_end_check.gd'
       - name: Cross end check, negative control (a fallen body left standing must be seen)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_end_check.gd -- --negative-control'
@@ -260,7 +260,7 @@ jobs:
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/power_check.gd'
       - name: Power check, negative control (a send past what he has must be seen)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/power_check.gd -- --negative-control'
-      - name: Press check (Game Design press-decides: a held B and a stance circle, the stops and the prices, the one rule for B, the steal, two runs one hash)
+      - name: 'Press check (Game Design press-decides: a held B and a stance circle, the stops and the prices, the one rule for B, the steal, two runs one hash)'
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/director/tools/press_decides_check.gd'
       - name: Rec check (the ground's records and water by the coarse grid against every big record scanned, the place table against the plain walk; Simulation places-records)
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/rec_check.gd'
@@ -274,7 +274,7 @@ jobs:
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/field_static_check.gd'
       - name: Field static check, negative control (a kept ground without the store's delta must be seen)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/field_static_check.gd -- --negative-control'
-      - name: Cross end check (how a fight ends in a match of two fights: the fallen body, rejoinAfter; Simulation cross-end)
+      - name: 'Cross end check (how a fight ends in a match of two fights: the fallen body, rejoinAfter; Simulation cross-end)'
         run: 'node tools/gate.mjs --verdict -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_end_check.gd'
       - name: Cross end check, negative control (a fallen body left standing must be seen)
         run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/cross_end_check.gd -- --negative-control'
