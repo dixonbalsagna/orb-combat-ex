@@ -29,6 +29,32 @@ One fight on the globe (planet 7, `planetGen` 3), one player on each PC, over th
 
 A press lands 2 ticks later, and a frozen tick reads no input. So while the freeze lasts past the delay, `NetLan` sends the held controls only and keeps the press, as the hub already does offline. It goes once, when it can land. With two fights it reads this PC's own fight's freeze.
 
+## After the first 2v2 together (2026-11-07)
+
+Orb's first real 2v2 together stuttered in bursts, and for a stretch the old PC seemed to show the main PC's fight. The logs said the old PC dropped real time in heavy late-match moments (frames past the game loop's 100 ms catch-up), the main PC waited for it and then rolled back 16 to 20 ticks, and a 20-tick rollback of two fights costs about 45 ms on the main PC. So, in `net/lan.gd`:
+
+| What | Why |
+| :--- | :--- |
+| A PC runs at most 8 ticks past what the other has confirmed (`LAN_AHEAD`; 20 elsewhere) | On a LAN, past 133 ms the other PC has stalled, not the link. Holding costs less than re-running 20 ticks afterwards: a rollback's worst drops from 20 ticks to 8, its mean cost from 45 ms to 19 |
+| Time sync waits a frame or two at a time, deciding every 10 frames (`SYNC_MAX_WAIT`, `SYNC_EVERY`; 8 and 30 elsewhere) | Catching up is a skipped tick, not a visible hold |
+| A snapshot every second predicted tick (`SAVE_EVERY`; every tick elsewhere) | A re-run tick is its step and half a save |
+| Every ten seconds the log says how the frames went: the worst, those over 50 and 100 ms, the ticks the game loop dropped, the most re-run in one frame, time sync's waits, the stalls | The next test says which PC hitches, and whether it's the picture, the sim or a rollback |
+| S holds this PC's fight before every tick, through a pause, and at the end of every frame (`view()`, which the kit's `SimHost.advance` calls). Every change of the view, and S ever found holding another fight at the start of a tick, gets a line in the log with the tick and why | A pause's rollback re-runs ticks, and a step leaves fight 0 in S: until now a PC paused while the other's late inputs arrived showed fight 0. The log will say if anything else ever does |
+| A PC whose player is out shows his partner's fight 2 sim ticks after the tick on which his fight's KO clock first reads 1.8 (`PARTNER_AT`, from Camera's `CamParams.WRECK_AT` in the game, and `PARTNER_TICKS`). That clock runs slowed through the KO's slow motion | The camera's KO close-up plays out on his own fight first (Camera's rule) |
+
+None of it changes what the sim does or the packets: only when a PC waits, what a rollback costs and what it shows.
+
+**The link hardened (the audit's CD-10, finding F-10).** The other PC could freeze or exhaust this one, and a gone PC froze the match:
+
+| What | Where |
+| :--- | :--- |
+| A peer asking for an input wait past 8 ticks fails the handshake: the title says "Couldn't start" and why (the wait sizes the session's first inputs) | `NetHandshake.MAX_DELAY` |
+| Every game packet is checked before anything in it is used: its fields of the right kinds, at most 128 inputs from a tick no more than 240 past this PC's frame, takeovers of a real slot at a tick not already final, at most 16 checkpoints. One that fails is dropped whole and counted | `NetHost.valid`, `rejected` |
+| When the link closes, or nothing comes from the other PC for 8 s, the computer plays its seat from the next untaken tick (`NetSession.dropSlot`) and the match goes on. The title says "The other PC has gone: the computer plays its fighter", the log gets a line, and the game shows a banner, THE OTHER PC HAS GONE, then THE COMPUTER PLAYS ITS FIGHTER, now and again for 15 s | `NetLan._checkDrop`, `_notice` |
+| With two fights, a takeover hands over the player's body where it is now (slot 2 for the old PC's player), not the session's index | `NetSession._switch` |
+
+`lan_check` plays a hostile second PC through the codec (a hello asking for 100,000 ticks, one packet handing slot 200 to the AI, a flood of inputs far ahead) and a gone one, with a negative control for each. Before any internet play: encryption (ENet DTLS) and a security review (CD-10, not in this).
+
 ## Making the folder
 
 ```
@@ -84,15 +110,16 @@ The two processors already agree: Performance's old PC test ran Netcode's two-PC
 
 **Known rough edges, all in the words:** one match only, no rematch; a pause holds the other PC, which says so, and the link stays up; a lost link just stops. In 2v2 the other fight isn't drawn; together, it can still reach you. The first try's log gives real ping and rollback numbers.
 
-## Legal's terms (RL-230, RL-241, RL-249)
+## Legal's terms (RL-230, RL-241, RL-249, RL-253)
 
-**Orb alone, on both PCs.** A second person isn't covered: Orb names them first and Legal rules on that name. In 2v2, Orb plays one seat on each PC, or both.
+**Orb and Orb 2, one on each PC (RL-253).** Orb 2, the old PC's player, stands where Orb stands for private builds and tests, on Orb's ruling; no real name is recorded anywhere. Each reads the flashing-effects warning on their own PC, either may stop at any moment, and any report of a symptom stops the tests and goes to Legal through the EP. A third person is a new name for Legal.
 
 | Term | Where it's met |
 | :--- | :--- |
 | The warning before play on both PCs, not bypassed | The game's own start menu carries it, and the shortcuts pass no skip word. `--lan-loop` skips the menu only with no window. Asked of the game's own rule on the kit's tree, for all three shortcuts: locked, no bypass, the warning shows. **Nobody has seen it in a window** |
 | Reduce flashing locked on | `desktop-package lock`, and the kit stops if the flag isn't on or the capture hook is |
-| Orb alone, nobody else in either room | The WHO PLAYS line, verbatim, and the kit stops if it isn't |
+| Orb and Orb 2, one on each PC, nobody else in either room (RL-253) | The WHO PLAYS line, verbatim, and the kit stops if it isn't |
+| Each reads the warning on their own PC and either may stop (RL-253 (2), (3)) | Step 5 of the words |
 | RL-241's sentence for two fights | In WHO PLAYS. The kit stops without it, and the 2v2 shortcuts go in only with it |
 | RL-249's sentence for 2v2 together, the partner's fight not drawn | In WHO PLAYS. The kit stops without it. The together shortcuts don't pass `--others` |
 | RL-249: the beam warning from the other fight (`beam_warn`) steady, thin, a 6-tick ramp (RL-227) | UI's and VFX's: the edge alert that shows it |

@@ -8,7 +8,9 @@ extends RefCounted
 ## READ ONLY. It never swaps a fight into S and assigns nothing to S or to a fight's record. The state a fight's hub reads is Animation's one view of another fight, `RenderAnim.fight_view(S, k)` (docs/animation/fight-view.md):
 ## a SimState whose per-fight fields are fight k's record and whose every other field is S's own by reference. A pane that shows fight k draws its hub (`hubs[k]`) with that view as the state.
 ##
-## Off by default (`VfxHub.other_fights_enabled`, `?otherfights=1` on a local page), and a hub only takes the push when the host has said it will (`VfxHub.host_pushes`).
+## ONE REGISTER (RL-249 (1); docs/vfx/shared-register.md): every other hub holds the main hub's flash register and asks it on its own channel, so the limits apply to the sum.
+##
+## Off by default (`VfxHub.other_fights_enabled`, `?otherfights=1` on a local page, `--otherfx` on a desktop run), and a hub only takes the push when the host has said it will (`VfxHub.host_pushes`).
 
 var hubs: Array = []              # hubs[i] is fight i's hub (null for the fight in S, S.stage.cur: the main hub is that one's)
 var fed: int = 0                  # calls that fed at least one other fight (for the tests)
@@ -31,6 +33,22 @@ static func page_word() -> bool:
 			if kv[0] == "otherfights" and kv.size() > 1 and kv[1] != "" and kv[1] != "0" and kv[1] != "false":
 				_word = "1"
 	return _word == "1"
+
+
+## The desktop switch: `--otherfx` (or `--otherfx=1`) on the command line of a desktop run, the private 2v2 LAN setup. Off by default; never read on the web, so no public page or pin can turn it on; with it on the hub locks
+## Reduce flashing on (`VfxHub.reduced_flashing`) and the UI shows the warning (UI's). Orb alone sees the drawn effects until the clips pass (Legal RL-249 (6), (7)).
+static var _dword: String = "?"
+
+
+static func desktop_word() -> bool:
+	if _dword != "?":
+		return _dword == "1"
+	_dword = ""
+	if not OS.has_feature("web"):
+		for a in OS.get_cmdline_user_args():
+			if a == "--otherfx" or (a.begins_with("--otherfx=") and not a.ends_with("=0") and not a.ends_with("=false") and not a.ends_with("=")):
+				_dword = "1"
+	return _dword == "1"
 
 
 func reset() -> void:
@@ -68,7 +86,9 @@ func feed(S: SimState, main: VfxHub, lists: Array) -> void:
 			hb = VfxHub.new()
 			hb.other_fights_enabled = false      # never feeds a third
 			hb.is_other = true
+			hb.shares_register = true      # reset leaves the register alone
 			hb.reset(v, main.seed + 7919 * i)
+			hb.adopt_register(main.flashes, i + 1)      # one register for the screen: this hub is a feeder on channel i + 1
 			hubs[i] = hb
 			do_sync = true
 		if do_sync:

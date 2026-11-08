@@ -201,12 +201,17 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 	# Contact (contact-spacing.md section 5.1): no launch goes back through the launcher. With a contact block only the
 	# targets on the far side of the rival are offered.
 	var fwdOnly: bool = not DirData.contact().is_empty()
-	var cands: Array = WorldBrunt.candidates(S, D)
-	var walked: Array = DirWalk.wall(S, A, f) if DirWalk.reachWalked() else []   # the building he walked him to: B reaches for it too (walk.reachWalked, rule-of-cool-map row 2)
-	if not walked.is_empty() and not cands.has(int(walked[0])):
-		cands.append(int(walked[0]))
+	var cuts: bool = cutsOn()   # buildings.md section 8: at most aimMax buildings aimed, and one flight an arc for them
+	var all: Array = WorldBrunt.candidates(S, D)
+	var cands: Array = all
+	if cuts:
+		cands = _capAimed(S, D, all)
+	var walked: Array = DirWalk.wall(S, A, f) if (DirWalk.reachWalked() or cuts) else []   # the building he walked him to: B reaches for it too (walk.reachWalked, rule-of-cool-map row 2)
+	if not walked.is_empty() and not cands.has(int(walked[0])) and (DirWalk.reachWalked() or all.has(int(walked[0]))):
+		cands.append(int(walked[0]))   # (and the cap never drops it: with the cuts off it's in World's list, and aimed)
+	var shared: Dictionary = _sharedAims(S, A, D, cands, force * (DirBrawl.freshMul(S, D, 4) if fresh or S.powerOn else 1.0), tierF, longOnly) if cuts else {}
 	for bi in cands:
-		var plan = WorldBrunt.aim(S, A, D, S.buildings[bi], force * (DirBrawl.freshMul(S, D, 4) if fresh or S.powerOn else 1.0), tierF, longOnly)   # fresh: the launcher's send into a building, x its freshness
+		var plan = shared[bi] if shared.has(bi) else WorldBrunt.aim(S, A, D, S.buildings[bi], force * (DirBrawl.freshMul(S, D, 4) if fresh or S.powerOn else 1.0), tierF, longOnly)   # fresh: the launcher's send into a building, x its freshness
 		if plan != null and fwdOnly and float(plan.ux) * f < 0.0:
 			plan = null
 		if plan != null:
@@ -388,6 +393,62 @@ static func _gy(S: SimState, x: float) -> float:
 		_gSeen[j] = _gStamp
 	var fa: float = _gH[i]
 	return fa + (_gH[j] - fa) * f
+
+
+## The launch cuts (docs/design/buildings.md section 8; launch.json aimCuts, off), for one QA read of the city rows off and on:
+##  - at most aimCuts.aimMax buildings aimed, the best by World's cheap score, at least one a side when each side has one;
+##  - with oneFlight, one flight an arc a side for all of them (World's WorldBrunt.aimShared, when its grant is in).
+## The cheap-score bound was dropped (Game Design, 2026-11-07): as a bound that can't change a pick it never fired.
+static var _cutsForce: int = -1   # tools: -1 the data's switch, 0 off, 1 on
+
+
+static func setCutsForce(v: int) -> void:
+	_cutsForce = v
+
+
+static func cutsCfg() -> Dictionary:
+	return data().get("aimCuts", {})
+
+
+static func cutsOn() -> bool:
+	return bool(cutsCfg().get("enabled", false)) if _cutsForce < 0 else _cutsForce == 1
+
+
+## The buildings aimed: World's list cut to aimMax by the cheap score (World's own, WorldBrunt._cheap), ties by World's order, keeping
+## at least one a side when each side has one. They're aimed in World's order. (A building he was walked to is added after the cap.)
+static func _capAimed(S: SimState, D, cands: Array) -> Array:
+	var n: int = int(cutsCfg().get("aimMax", 3))
+	if cands.size() <= n:
+		return cands
+	var popRef: float = WorldStructures.buildingPopRef(S)
+	var rows: Array = []
+	for i in range(cands.size()):
+		var b = S.buildings[cands[i]]
+		rows.append([WorldBrunt._cheap(b, popRef), i, 0 if SimWrap.sdx(D.x, b.x) < 0.0 else 1])
+	rows.sort_custom(func(p, q): return p[0] > q[0] or (p[0] == q[0] and p[1] < q[1]))
+	var keep: Array = rows.slice(0, n)
+	for sd in [0, 1]:
+		if n >= 2 and not keep.any(func(r): return r[2] == sd):
+			for r in rows:
+				if r[2] == sd:
+					keep[n - 1] = r   # the other side's best takes the last place
+					break
+	keep.sort_custom(func(p, q): return p[1] < q[1])
+	var out: Array = []
+	for r in keep:
+		out.append(cands[r[1]])
+	return out
+
+
+## One flight an arc a side for all the buildings kept (World's aimShared, when its grant is in): {building: plan or null}. Empty
+## without it, and each building is aimed alone as today.
+static func _sharedAims(S: SimState, A, D, cands: Array, force: float, tierF: float, special: bool) -> Dictionary:
+	if not bool(cutsCfg().get("oneFlight", true)):
+		return {}
+	var f := Callable(WorldBrunt, "aimShared")
+	if not f.is_valid():
+		return {}
+	return f.call(S, A, D, cands, force, tierF, special)
 
 
 ## Biomes W3 (docs/combat/biomes.md section 3; data/combat/launch_biome.json): the eight candidates that use the ground,
@@ -1184,6 +1245,7 @@ static func knock(S: SimState, att, tgt, mul: float = 1.0, ox: float = NAN) -> v
 			bumpKind = maxi(1, BUMP_KINDS.find(String(ob.get("kind", "wall"))))
 			DirInterrupt.si(tgt, DirInterrupt.BUMP_AT, S.tick + int(ticks))
 			DirInterrupt.si(tgt, DirInterrupt.BUMP_REQ, bumpKind | (int(dist / (ticks * SimConst.DT)) << 4))
+	r.py = DirWater.rushTop(S, tgt, r.py, ticks)   # under a lake's floor, up a rising bed: no faster than the floor brings him (floorlift_check)
 	r.end = S.T + ticks * SimConst.DT
 	tgt.rush = r
 	SimFx.knockback(S, tgt, att, "bump" if bumpKind > 0 else ("slideShort" if slide else "drift"), dist, S.tick + int(ticks))
@@ -1216,6 +1278,7 @@ static func _wall(S: SimState, att, tgt, s: float, dist: float):
 	var reach: float = minf(float(w.reach), dist * float(w.distMul))   # so a short ender with a wall far off stays a short ender
 	var best = null
 	var bd: float = 1.0e18
+	var walls: Array = []   # [distance, building], nearest first (the first found on a tie)
 	if not walked.is_empty():
 		var wb = S.buildings[int(walked[0])]
 		var wd: float = SimWrap.sdx(tgt.x, wb.x) * s - wb.w * 0.5
@@ -1235,12 +1298,29 @@ static func _wall(S: SimState, att, tgt, s: float, dist: float):
 		if d <= 0.0:
 			continue
 		var dz: float = float(b.z) - float(tgt.z)
-		if d <= reach and d < bd and dz <= WorldBrunt.BR_Z_FRONT and -dz <= WorldBrunt.BR_Z_BACK and tgt.y <= WorldStructures.baseY(S, b) + WorldStructures.curH(b):
-			bd = d
-			best = b
-	if best == null:
+		if d <= reach and dz <= WorldBrunt.BR_Z_FRONT and -dz <= WorldBrunt.BR_Z_BACK and tgt.y <= WorldStructures.baseY(S, b) + WorldStructures.curH(b):
+			var at: int = walls.size()
+			while at > 0 and float(walls[at - 1][0]) > d:
+				at -= 1
+			walls.insert(at, [d, b])
+	if best != null:
+		walls = [[bd, best]]   # the building he walked him to
+	if walls.is_empty():
 		return null
 	wallSeen += 1
+	# The nearest wall first. One no flight reaches (far back in depth with buildings everywhere, or over the ground's rise) gives way to
+	# the next, up to three (knock_wall_check).
+	for wi in range(mini(walls.size(), 3)):
+		bd = float(walls[wi][0])
+		best = walls[wi][1]
+		var plan = _wallPlan(S, att, tgt, s, w, best, bd)
+		if plan != null:
+			return plan
+	return null
+
+
+## The knock's flight to one wall: its speed all the way to it, the first arc that meets its face clear of the ground. Null with none.
+static func _wallPlan(S: SimState, att, tgt, s: float, w: Dictionary, best, bd: float):
 	var sp: float = maxf(float(w.speed[clampi(int(att.tier) - 1, 0, 3)]), bd * float(w.perUnit))   # all the way to it, whatever his tier
 	for uy in w.uy:
 		var fr: Dictionary = WorldBrunt.flightTo(S, tgt.x, tgt.y, s * sp, float(uy) * sp, 1.0, best, tgt.z)

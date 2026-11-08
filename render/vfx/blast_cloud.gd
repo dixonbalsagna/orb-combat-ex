@@ -28,6 +28,7 @@ static var _loaded: bool = false
 var runs: Array = []
 var now: int = 0
 var asks_made: int = 0              # for the tests
+var _reg: VfxFlashRegistry = null     # the screen's register, kept to bound an other fight's light by the room the own fight's leaves (cat_room)
 
 
 static func warm() -> void:
@@ -117,6 +118,7 @@ static func ramp(h: float, lit: bool = true) -> Color:
 ## Once a tick, from the hub (after the registry's begin_tick): the clock, the landing of each cloud (its ground read and its one ask of the register), and the finished clouds dropped.
 func step(S: SimState, flashes: VfxFlashRegistry, ash: float) -> void:
 	now += 1
+	_reg = flashes
 	var i: int = 0
 	while i < runs.size():
 		var r: Dictionary = runs[i]
@@ -145,6 +147,7 @@ func _ask(S: SimState, flashes: VfxFlashRegistry, ash: float, r: Dictionary) -> 
 	r["peak"] = float(ans["peak"])
 	r["rise"] = int(ans["rise"])
 	r["fall"] = int(ans["fall"])
+	r["ch"] = flashes.channel      # an other fight's event: its light is bounded (light())
 
 
 ## The `blast_cloud` cue: `x` (the blast's x), `amount` (its size), `n` the tick it lands (the sim's tick; a cue at or after it lands at once).
@@ -175,4 +178,7 @@ func age_s(r: Dictionary, frac: float = 0.0) -> float:
 func light(r: Dictionary, frac: float = 0.0) -> float:
 	if not bool(r["asked"]) or not bool(r["ok"]):
 		return 0.0
-	return VfxFlashRegistry.cat_level(float(now - int(r["land"])) + frac, int(r["rise"]), int(r["fall"])) * float(r["peak"])
+	var v: float = VfxFlashRegistry.cat_level(float(now - int(r["land"])) + frac, int(r["rise"]), int(r["fall"])) * float(r["peak"])
+	if int(r.get("ch", 0)) > 0 and _reg != null:
+		v = minf(v, _reg.cat_room())      # one envelope over both fights: never the own fight's light and the other's stacked
+	return v

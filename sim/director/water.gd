@@ -66,6 +66,15 @@ static func held(S: SimState, f, y: float, z: float = 0.0) -> float:
 	return minf(y, f.y)
 
 
+## A rush's end height for f over ticks: py; but with f below his floor, no more above him than the floor's rate over those ticks, so a
+## slide or a drift up a rising bed is carried no faster than the floor would bring him (Game Design rulings 2026-10-30 row 9). With the
+## floor off, py.
+static func rushTop(S: SimState, f, py: float, ticks: float, z: float = 0.0) -> float:
+	if not WorldFill.floorOn() or f.y >= WorldWater.floorAt(S, f.x, z):
+		return py
+	return minf(py, f.y + WorldWater.riseMax(riseTicks()) * maxf(1.0, ticks - 1.0))   # (its first step comes the tick after it's made)
+
+
 ## True while f is under after a drop, or rising from it: not landed yet.
 static func under(f) -> bool:
 	return _g(f, WT_IN) > 0 or _g(f, WT_UP) == 1

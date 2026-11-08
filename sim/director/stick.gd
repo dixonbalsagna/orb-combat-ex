@@ -34,6 +34,9 @@ const ST_SOFT: int = 20   # a light has landed on this flick: it still lands, at
 const ST_GUARD: int = 21  # this flick is on the guard layer: his guard holds through its wind-up and drops for its recovery (lightStops false)
 const ST_N: int = 22
 const SWEPT: int = 4096  # on ST_BUF: a hold a planned exchange swept up, waiting for his first free tick (pendFollow)
+const RAW: int = 1024    # on ST_BUF (flickKeep): its direction is the stick's own, read relative to the rival when it goes
+const RECOV: int = 2048  # on ST_BUF (flickKeep): made while he was launched, down or dropped, so it must be young when he's free
+const LUNGE: int = 8192  # on ST_PEND: this request asked for the light lunge from the middle band (lungeLight)
 const RL_SWEPT: int = 16  # on ST_RL: this strike is that swept hold, so its level counts from its own request
 
 const UP: int = 1
@@ -129,24 +132,34 @@ static func overlay(S: SimState, f, o, args: Dictionary, o2: Dictionary, lead: i
 	if not on():
 		return lead
 	var pend: int = _g(f, ST_PEND)
-	if pend == 0 or int(args.get("bk", 0)) != DirBrawl.MEDIUM or args.has("energy"):
+	var light: bool = (pend & LUNGE) != 0 and int(args.get("bk", 0)) == DirBrawl.LIGHT   # a light lunge's arrival (lungeLight)
+	if pend == 0 or (int(args.get("bk", 0)) != DirBrawl.MEDIUM and not light) or args.has("energy"):
 		return lead
 	_s(f, ST_PEND, 0)
 	var c: Dictionary = cfg()
 	var lv: Dictionary = c.levels[0]
 	var dir: int = pend & 7
-	var mask: int = (pend >> 3) - 1
+	var mask: int = ((pend >> 3) & 511) - 1
 	args["stick"] = dir
 	args["stickMask"] = mask
 	args["stickL"] = 0
 	var dr: Dictionary = _dirRow(S, f, dir, 0)
 	args["stickReach"] = float(lv.reachBh) * float(dr.get("reachMul", 1.0))
-	args["dmg"] = float(lv.worth) * DirBrawl._unit()
-	args["wind"] = true
+	if not light:
+		args["dmg"] = float(lv.worth) * DirBrawl._unit()   # (the medium's keys in their old order)
+		args["wind"] = true
 	o2["stick"] = true
-	var more: float = float(lv.ki) - float(DirBrawl.cfg().medium.ki)
+	var more: float = float(lv.ki) - (0.0 if light else float(DirBrawl.cfg().medium.ki))
 	if more > 0.0:
 		f.ki = maxf(0.0, f.ki - more)
+	if light:
+		# Thrown as a light: the light's own time and worth, with the stick's direction, its stun and its carry (landed) and its cues.
+		_s(f, ST_ON, 1)
+		_s(f, ST_DIR, dir)
+		_s(f, ST_SOFT, 0)
+		_s(f, ST_GUARD, 1 if (mask & LB) != 0 else 0)
+		SimFx.cue(S, f, "stick_start", NAMES[dir], str(mask))
+		return lead
 	var wind: int = _wind()
 	DirBrawl._s(f, DirBrawl.HOLD_AT, DirBrawl._now(S) + close)
 	DirBrawl._s(f, DirBrawl.CHG, 3)   # the medium's own button doesn't decide it: the stick does, below
@@ -192,6 +205,22 @@ static func setArmourForce(v: int) -> void:
 
 static func armourOn() -> bool:
 	return on() and (bool(cfg().get("armour", {}).get("enabled", false)) if _armourForce < 0 else _armourForce == 1)
+
+
+## True while he holds the stick for a strike or a beam: a flight strike isn't read (DirZip).
+static func holding(f) -> bool:
+	return on() and _g(f, ST_ON) != 0
+
+
+## True when his stick strike, pressed and still held, has charged by now (past the quick flick's dwell): it counters a flight strike.
+static func chargedAt(S: SimState, f) -> bool:
+	return on() and _g(f, ST_PEND) != 0 and f.input.rsHeld and heldFor(S, f) >= int(_reader().dwell)
+
+
+## The charge is spent on a flight strike's counter: nothing is left to throw.
+static func spendCharge(f) -> void:
+	_s(f, ST_PEND, 0)
+	_clear(f)
 
 
 ## How long this hold has run, in live ticks.
@@ -315,9 +344,13 @@ static func landed(S: SimState, ex, f, o, a: Dictionary) -> void:
 	_steal(S, f, o, a, lvl)   # first: the stun that follows breaks his run
 	_flickRun(S, f, o, lvl)
 	var trade: bool = DirBrawl._g(o, DirBrawl.LINE) == 1 and DirBrawl._g(o, DirBrawl.CONTACT) == now
+	if fullSendOn() and not trade:
+		if bool(a.get("top", false)):
+			_fullSend(S, ex, f, o, dir)
+			return
+		if lvl == 0 and dir == DOWN and _airborne(S, o):
+			SimFx.cue(S, f, "slam_hint", NAMES[dir], "")   # a quick down flick on a foe in the air: UI's once-only "Hold to slam" (the combat-variety packet)
 	var stuns: bool = not trade and _g(o, ST_STUN) == 0 and not (lvl == 0 and _g(f, ST_SOFT) == 1)
-	if not trade and _g(o, ST_STUN) != 0:
-		DirExchange.refused(S, f, "stun_limit")   # one stun a string: this one's held back
 	if lvl == 0 and _g(f, ST_GUARD) == 1 and not lightStops():
 		stun = int(c.guardStun)
 	if lvl == 0:
@@ -435,12 +468,16 @@ static func _start(S: SimState, f, i) -> void:
 		SimFx.cue(S, f, "stick_start", NAMES[dir], str(mask))
 		return
 	if _cant(S, f):
-		if int(cfg().bufferTicks) <= 0:
-			SimFx.cue(S, f, "stick_refused", NAMES[dir], str(mask))   # no press is silent (docs/design/pad-first-press.md)
+		if keepOn() and _showing(S, f):
+			SimFx.cue(S, f, "stick_refused", NAMES[dir], "set_piece")   # the show: a blow out of it would be stale (gauntlet-plan.md section 5, ruling 1)
 			return
-		if _g(f, ST_BUF) != 0:
-			SimFx.cue(S, f, "stick_refused", NAMES[_g(f, ST_BUF) & 7], "replaced")
-		_s(f, ST_BUF, dir | ((mask + 1) << 3))   # the newest only
+		if int(cfg().bufferTicks) <= 0 and not keepOn():
+			SimFx.cue(S, f, "stick_refused", NAMES[dir], DirExchange.cantWhy(S, f))   # no press is silent (docs/design/pad-first-press.md), and it says why
+			return
+		if keepOn():
+			_s(f, ST_BUF, (int(i.rsDir) & 7) | ((mask + 1) << 3) | RAW | (RECOV if _recovering(f) else 0))   # held quietly, the newest only (ruling 1)
+		else:
+			_s(f, ST_BUF, dir | ((mask + 1) << 3))   # the newest only: what becomes of it answers the burst (it goes, or it's refused once, with why)
 		_s(f, ST_BAT, DirBrawl._now(S) + 1)
 		return
 	_go(S, f, dir, mask)
@@ -456,22 +493,31 @@ static func _go(S: SimState, f, dir: int, mask: int, quiet: bool = false) -> voi
 		if not quiet:
 			SimFx.cue(S, f, "stick_refused", NAMES[dir], "ki")   # the press would throw a lighter blow: it never becomes another
 		return
-	if _g(f, ST_PEND) != 0:
-		SimFx.cue(S, f, "stick_refused", NAMES[_g(f, ST_PEND) & 7], "replaced")   # the newest only: the one it replaces is told
-	_s(f, ST_RL, 0)
-	_s(f, ST_PEND, dir | ((mask + 1) << 3))
+	_s(f, ST_RL, 0)   # (a request still on its way gives way to the newest, which answers for both: no knock for the one it replaces)
+	var lunge: bool = _lungeLight(S, f)
+	_s(f, ST_PEND, dir | ((mask + 1) << 3) | (LUNGE if lunge else 0))
 	_s(f, ST_PAT, DirBrawl._now(S) + 1)
 	_s(f, ST_AT, DirBrawl._now(S) + 1)
 	DirBeamMove.strikeBegan(S, f)   # the plain hold's ladder: its count is taken now
-	DirExchange.requestAttack(S, f, "heavy")
-	if pendFollow() and _g(f, ST_PEND) != 0:
-		var slot: int = S.fighters.find(f)
-		for e in S.out.fx:
-			if String(e.type) == "cue" and String(e.kind) == "press_ack" and String(e.text) == "refused" and int(e.actor) == slot:
-				_s(f, ST_PEND, 0)
-				if not quiet:
-					SimFx.cue(S, f, "stick_refused", NAMES[dir], "refused")   # (the first move is his rival's): told now, not as late
-				return
+	asking = true
+	askRefused = false
+	DirExchange.requestAttack(S, f, "light" if lunge else "heavy")   # from the middle band with lungeLight, the light lunge: it lands as a light
+	asking = false
+	if askRefused:
+		askRefused = false
+		_s(f, ST_PEND, 0)
+		if not quiet:
+			SimFx.cue(S, f, "stick_refused", NAMES[dir], "not_yours")   # the first move is his rival's: told now and once (DirBrawl.moveRefused stays quiet for the stick)
+		return
+
+
+## lungeLight (stick.json, off; docs/ep/proposals/controller-vision.md section 5): a quick strike asked for from the middle band, out of
+## any exchange, asks for the light lunge rather than the heavy one, and lands as a light on arrival. Up close and in a brawl it's the
+## stick's own blow as before.
+static func _lungeLight(S: SimState, f) -> bool:
+	if not on() or not bool(cfg().get("lungeLight", {}).get("enabled", false)) or f.act.mode == 1 or DirBrawl.exOf(S) != null:
+		return false
+	return DirBands.band(f, DirBrawl.rivalOf(S, f)) == DirBands.MID
 
 
 ## A press he couldn't act on: it goes on his first tick free inside bufferTicks; past that it's refused, said once.
@@ -480,16 +526,28 @@ static func _waiting(S: SimState, f) -> void:
 	if b == 0:
 		return
 	var swept: bool = (b & SWEPT) != 0
-	if not _cant(S, f) and not (swept and _planned(S, f)):
-		_s(f, ST_BUF, 0)
-		if not swept or f.input.rsHeld:
-			_go(S, f, b & 7, ((b >> 3) & 511) - 1, swept)   # (a swept hold goes only if he's still holding it, and quietly: its press was told)
-			if swept:
-				_s(f, ST_RL, _g(f, ST_RL) | RL_SWEPT)
-	elif DirBrawl._now(S) - (_g(f, ST_BAT) - 1) >= (int(cfg().pendFollow.maxTicks) if swept else int(cfg().bufferTicks)):
+	var age: int = DirBrawl._now(S) - (_g(f, ST_BAT) - 1)
+	var d: int = relative(S, f, b & 7) if (b & RAW) != 0 else b & 7   # (a held flick's direction is read now, relative to the rival)
+	if keepOn() and _showing(S, f):
 		_s(f, ST_BUF, 0)
 		if not swept:
-			SimFx.cue(S, f, "stick_refused", NAMES[b & 7], str(((b >> 3) & 511) - 1))
+			SimFx.cue(S, f, "stick_refused", NAMES[d], "set_piece")   # a set piece began while it was held: not held through the show (ruling 1)
+		return
+	if not _cant(S, f) and not (swept and _planned(S, f)):
+		_s(f, ST_BUF, 0)
+		if (b & RECOV) != 0 and age > int(cfg().flickKeep.get("recoverTicks", 20)):
+			SimFx.cue(S, f, "stick_refused", NAMES[d], "recovering")   # made early in his flight: too old to be his first blow out (ruling 1)
+			return
+		if not swept or f.input.rsHeld:
+			_go(S, f, d, ((b >> 3) & 511) - 1, swept and not keepOn())   # (a swept hold goes only if he's still holding it, and quietly: its press was told; with flickKeep it wasn't)
+			if swept:
+				_s(f, ST_RL, _g(f, ST_RL) | RL_SWEPT)
+		elif keepOn():
+			_go(S, f, d, ((b >> 3) & 511) - 1)   # flickKeep: a flick the answer swept up while still out, let go by now, goes as a flick
+	elif age >= (int(cfg().pendFollow.maxTicks) if swept else _bufTicks()):
+		_s(f, ST_BUF, 0)
+		if not swept or keepOn():
+			SimFx.cue(S, f, "stick_refused", NAMES[d], DirExchange.cantWhy(S, f))   # what still holds him
 
 
 ## A planned exchange holds him, window or no window: a swept hold waits for the end of it, his first free tick.
@@ -521,6 +579,81 @@ static func carrying(f) -> bool:
 	return on() and _g(f, ST_CT) > 0
 
 
+## flickKeep (stick.json, off; Game Design's rulings, docs/design/gauntlet-plan.md section 5): a flick that can't start now is held, the
+## newest only, quietly, and becomes his first blow out, its direction read then. Stunned, reeling or in a planned exchange with no window of
+## his open (a chain window of his own counts as free): up to pendFollow.maxTicks. Launched, down or dropped: it must be at most
+## flickKeep.recoverTicks old when he's free, or it's refused "recovering". A set piece (a finisher, the KO, a set piece in a brawl, a beam
+## struggle): refused at once, "set_piece". One a planned exchange of his rival's took is held the same way, never told "answered".
+## Off, bufferTicks and "answered" as before.
+static func keepOn() -> bool:
+	return on() and bool(cfg().get("flickKeep", {}).get("enabled", false))
+
+
+## A set piece is playing: the show, which holds no flick (ruling 1).
+static func _showing(S: SimState, f) -> bool:
+	if S.game.ko != null or DirBeam.inClash(S, f):
+		return true
+	var ex = DirBrawl.exOf(S)
+	return ex != null and (DirExchange.finisherPlanned(ex) or (DirBrawl.isBrawl(ex) and DirBrawl._setPiece(ex)))
+
+
+## Launched, knocked down or dropped: recovering.
+static func _recovering(f) -> bool:
+	return f.state == "launched" or f.state == "down" or f.state == "dropped"
+
+
+## How long a press he couldn't act on waits for him.
+static func _bufTicks() -> int:
+	return maxi(int(cfg().bufferTicks), int(cfg().pendFollow.maxTicks)) if keepOn() else int(cfg().bufferTicks)
+
+
+static var asking: bool = false       # not state: true while _go asks for its request (DirBrawl.moveRefused then stays quiet)
+static var askRefused: bool = false   # not state: ... and the first move refused it
+
+
+## fullSend (stick.json, off; Game Design, docs/design/slam-and-pace.md section 1): a stick strike held to his top stage (with the plain
+## hold's stages, his stage at its count; without them, level 3) sends when it lands, not as a trade, in the family of its direction, at
+## a full B's share: down on a foe in the air the slam, down on a foe on the ground the down send from where he stands (World's embed
+## pounds him in), up skyward, toward across, away across (behind him once the turning send exists). It's the brawl's own send kept to
+## the family's sends (DirBrawl._send), and the brawl ends with it. A quick flick or a hold short of the top never sends.
+static func fullSendOn() -> bool:
+	return on() and bool(cfg().get("fullSend", {}).get("enabled", false))
+
+
+## Held to his top stage, at the release.
+static func _atTop(f, l: int) -> bool:
+	if DirBeamMove.strikeOn():
+		var n: int = DirBeamMove._g(f, DirBeamMove.M_COUNT)
+		return n > 0 and DirBeamMove.stage(f) >= n
+	return l >= 3
+
+
+## In the air: more than fullSend.airBh body heights over the ground under him.
+static func _airborne(S: SimState, o) -> bool:
+	return o.y - WorldTerrain.groundY(S, o.x, o.z) > float(cfg().get("fullSend", {}).get("airBh", 1.0)) * DirInterrupt.BH
+
+
+static func _fullSend(S: SimState, ex, f, o, dir: int) -> void:
+	var c: Dictionary = cfg().fullSend
+	var aim: int = 3
+	var sends: String = "down"
+	match dir:
+		UP:
+			aim = 1
+			sends = "up"
+		TOWARD:
+			aim = 2
+			sends = "across"
+		AWAY:
+			aim = 4
+			sends = "across"   # (acrossBehind waits for the turning send)
+	var fam: String = String(c.get("families", {}).get(NAMES[dir], ""))
+	if dir == DOWN and not _airborne(S, o):
+		fam = String(c.get("downOnGround", "bury"))
+	SimFx.cue(S, f, "stick_full_send", NAMES[dir], fam)
+	DirBrawl._send(S, ex, f, o, aim, "the stick's full hold", float(c.get("share", 1.0)), {"sends": sends, "share": "fullB"})
+
+
 static func pendFollow() -> bool:
 	return on() and bool(cfg().get("pendFollow", {}).get("enabled", false))
 
@@ -535,6 +668,13 @@ static func _followed(S: SimState, f, pat: int) -> bool:
 		_s(f, ST_PEND, 0)
 		if (_g(f, ST_RL) & RL_SWEPT) != 0:
 			return true   # the swept hold's own go, answered again: its press was told once, and it's over
+		if keepOn():
+			if f.input.rsHeld:
+				sweep(S, f, pend)   # a hold: the charge on his first free tick, as ever (a flick let go by then goes as a flick)
+			else:
+				_s(f, ST_BUF, pend & 511)   # flickKeep: kept, and it goes on his first free tick (it's told then, by what it does)
+				_s(f, ST_BAT, DirBrawl._now(S) + 1)
+			return true
 		SimFx.cue(S, f, "stick_refused", NAMES[pend & 7], "answered")   # a planned exchange took the request: his rival's answer, not lateness
 		if f.input.rsHeld:
 			sweep(S, f, pend)
@@ -585,6 +725,7 @@ static func _release(S: SimState, ex, f, b, lvl: int) -> void:
 	f.ki = maxf(0.0, f.ki - (float(c.levels[l].ki) - float(c.levels[0].ki)))
 	var lv: Dictionary = c.levels[l]
 	b.args["stickL"] = l
+	b.args["top"] = _atTop(f, l)   # held to his top stage: with fullSend it sends (slam-and-pace.md section 1)
 	var dir: int = int(b.args.stick)
 	var dr: Dictionary = _dirRow(S, f, dir, l)
 	b.args["dmg"] = float(lv.worth) * DirBrawl._unit()
@@ -640,7 +781,7 @@ static func tick(S: SimState, dt: float) -> void:
 			if DirBeamPlay.stationary() and (f.state == "launched" or f.state == "down" or f.state == "dropped" or f.stunTicks > 0):
 				_holdLost(S, f)   # something took him
 				continue
-			if DirBeamMove.on():
+			if DirBeamMove.on() and not (DirBeamPlay.stationary() and f.beamCharge == null):   # (the kite's hold isn't a charge: no stages, and its release is the quick blast)
 				if DirBeamMove.pending(f):
 					if DirBeamMove.tryFire(S, f):
 						_clear(f)   # it fired, or it was refused and said why

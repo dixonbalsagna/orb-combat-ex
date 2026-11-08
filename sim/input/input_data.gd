@@ -191,6 +191,18 @@ static func driver_on_rb() -> bool:
 	return bool(t(["switches", "driverOnRb"], false))
 
 
+## The flight strike's B (docs/controls/flight-strike-b.md; data/director/interrupts.json zip.flightStrikes.enabled): with switches.signatureRtOnly, LT + B is left as the B press for the flight strike to read (its biggest blow),
+## instead of being sent as Y's heavy. LT + LB + B (the vanish), LB + B and RB + B are as they were. Set together with the flight strikes' own switch and dodgeHeld. switches.flightStrikeB, off.
+static func flight_strike_b() -> bool:
+	return bool(t(["switches", "flightStrikeB"], false))
+
+
+## Two attack presses on one tick are one blow, the biggest (docs/controls/chord-pick.md; switches.chordPick, off): B with X or Y, or Y with X, goes as the bigger press and the smaller is told "chord".
+## Independent of the right-hand switch (a keyboard chords too).
+static func chord_pick_on() -> bool:
+	return bool(t(["switches", "chordPick"], false))
+
+
 ## The power specials are off (docs/design/pad-first-press.md: RT + X, Y, A are not built; a press is the plain blow and the charge drops). switches.specialsOff, off.
 static func specials_off() -> bool:
 	return bool(t(["switches", "specialsOff"], false))
@@ -246,7 +258,7 @@ static func haptic_impact_on() -> bool:
 ## Reads the data as it is, sets the switches in memory and drops the caches; nothing is written.
 static func pin_switches_off() -> void:
 	var sw: Dictionary = timing.get("switches", {})
-	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
+	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
 		sw[k] = false
 	timing["switches"] = sw
 	clear_overrides()

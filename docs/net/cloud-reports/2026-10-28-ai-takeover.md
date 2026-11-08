@@ -149,7 +149,7 @@ All exit 0.
 2. **World: keep the swapped ring's job and preparation for a while after the swap**, at least `maxAhead` + 1 = 21 ticks, or until the next pick.
    - Today `swap()` drops them (`_dropJobs`). A rollback that runs the swap again then reads the ring cold on the rollback frame: World's own notes put the swap tick at 8.7 ms, and 38 to 46 ms at x4, before the warm-up spread it. It also leaves `S.epoch.cold` and `S.epoch.unprep` at 1 where a straight run has 0.
    - Moving those two counters out of the state, as process diagnostics like the caches, would make a re-run state identical.
-   - Related: `SimCore.dispose` leaves a disposed sim's `_plans` and `_jobs`, a small leak for a host that plays many planet matches in one process. The check clears them and reports them.
+   - Related: `SimCore.dispose` leaves a disposed sim's `_plans` and `_jobs`, a small leak for a host that plays many planet matches in one process. The check clears them and reports them. **Fixed in fbdbe7b6** (2026-10-30): a disposed sim's entries are released (Simulation's line in `sim.gd` and Netcode's in `snapshot.gd`). Closed for the audit's CD-16.
 3. **Tools (CI)**: add to the `net` job, a minute or two each:
    - `rollback_check.gd -- --takeover=150 --seeds=1 --ticks=300 --profiles=lan,p120,far`, plus the same with `--negative-control`;
    - `--drop=150` with the same arguments, plus the same with `--negative-control`;

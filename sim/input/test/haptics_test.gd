@@ -45,7 +45,7 @@ func _with(block, f: Callable) -> void:
 
 func _data() -> void:
 	var ks: Array = SimHaptics.kinds()
-	var want: Array = ["launch_open", "form_prompt", "brake_ready", "charge_full", "clinch_pulse", "struggle_push", "struggle_pushed", "struggle_lose", "ladder_1", "ladder_2", "ladder_3", "incoming_high", "incoming_low", "incoming_beam", "stick_refused", "release_thump", "blow_land", "hit_taken", "close_surge", "launch_felt", "landing_thud", "building_break"]
+	var want: Array = ["launch_open", "form_prompt", "brake_ready", "charge_full", "clinch_pulse", "struggle_push", "struggle_pushed", "struggle_lose", "ladder_1", "ladder_2", "ladder_3", "incoming_high", "incoming_low", "incoming_beam", "stick_refused", "release_thump", "full_send", "blow_land", "hit_taken", "close_surge", "launch_felt", "landing_thud", "building_break"]
 	var has_all: bool = ks.size() == want.size()
 	for w in want:
 		has_all = has_all and ks.has(w)

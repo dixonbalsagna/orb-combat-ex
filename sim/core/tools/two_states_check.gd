@@ -36,6 +36,7 @@ const SETUPS: Dictionary = {   # rollback_check.gd's
 	"turn": {"planet": 7, "touch": 3, "arena": {"cols": 2400, "turn": true}},   # calm, with a turn decided at tick TURN_AT
 	"field": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false},   # a field world, with a swing asked every SWING_EVERY ticks
 	"power": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true},   # one energy model (sim/core/power.gd)
+	"travel": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.25},   # ... with the page's slider at x1.25 along the line
 	"fights": {"planet": 7, "touch": 3, "planetGen": 3, "intro": false, "fights": 2},   # two AI fights on one line (sim/core/stage.gd)
 }
 const EVERY: int = 7         # a rollback every this many ticks

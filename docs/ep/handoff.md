@@ -37,7 +37,7 @@ This file is for a fresh Executive Producer session. Read it first, then docs/ep
 - Next for Simulation:
   - the QA-002 split and the QA-004 event log, after Netcode's requests;
   - an N-fighter state model, when the roster work starts. sim/README.md lists every place that assumes two fighters.
-- Needs a ruling from Game Design and Controls: a human can switch stance while locked in an exchange and take 0.38x damage (sim/README.md, bug 3).
+- Settled: a human could switch stance while locked in an exchange and take 0.38x damage (sim/README.md, bug 3). Fixed at 7fdfbe75 (R8, docs/director/s3b-data-and-penalties.md): both fighters' stances are frozen per exchange, and `hit()` reads the frozen ones.
 - For ADR 0001: docs/architecture/determinism.md recommends deterministic binary64 floats with our own trig functions. It advises against C# for the sim while Godot C# can't export to the browser.
 
 ## GDScript port and fx split (2026-09-29)

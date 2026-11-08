@@ -64,6 +64,8 @@ const MERGED_TAU: float = 0.2557       # the reference camera's ease: 1 - 0.02^d
 const CAM_Y_MIN: float = -3200.0       # below the deepest sea floor (the reference camera's -180 predates the scaled world)
 const CAM_Y_TOP: float = 200.0         # camera y is clamped to CEILING - this
 const PLANE_Y: float = 0.7             # the fighter plane on screen in the reference camera, times vh
+const VKEEP_TOP: float = 0.08          # the one view keeps both fighters' chests below this fraction of the height ...
+const VKEEP_BOT: float = 0.88          # ... and above this one (the split opens at once past 0.04 and 0.96)
 
 # --- opening, merging, the slam (sections 6 and 7) ---
 const T_OPEN: float = 0.45

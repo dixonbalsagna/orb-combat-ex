@@ -415,8 +415,12 @@ static func slotNow(S: SimState, s: int) -> int:
 ## so the state before tick t is the same in every run and in a straight run that toggles before tick t).
 func _switch(t: int) -> void:
 	for k in aiFrom:
-		if t == int(aiFrom[k]) + aiLate and S.fighters[k].ai == null and not (aiOnce and _aiDone.has(k)):
-			SimCore.toggleAI(S, k)
+		if t != int(aiFrom[k]) + aiLate or (aiOnce and _aiDone.has(k)):
+			continue
+		var slot: int = slotNow(S, int(slotOf[k])) if not slotOf.is_empty() and S.stage != null else int(k)   # with two fights a player's slot is the sim's, where his body is now
+		var f = SimStage.bodies(S)[slot] if S.stage != null else S.fighters[slot]
+		if f.ai == null:
+			SimCore.toggleAI(S, slot)
 			_aiDone[k] = true
 
 

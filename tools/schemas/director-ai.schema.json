@@ -624,6 +624,12 @@
                 "^_": true
               }
             },
+            "flightShare": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Flight strikes (zip.flightStrikes): the computer's share of its chances, the lever for its 15% of blows (Encounter's batch); the zip's zipShare stays the zip's."
+            },
             "zipShare": {
               "type": "number",
               "minimum": 0,
@@ -1269,6 +1275,12 @@
                 "^_": true
               }
             },
+            "flightShare": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Flight strikes (zip.flightStrikes): the computer's share of its chances, the lever for its 15% of blows (Encounter's batch); the zip's zipShare stays the zip's."
+            },
             "zipShare": {
               "type": "number",
               "minimum": 0,
@@ -1913,6 +1925,12 @@
               "patternProperties": {
                 "^_": true
               }
+            },
+            "flightShare": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Flight strikes (zip.flightStrikes): the computer's share of its chances, the lever for its 15% of blows (Encounter's batch); the zip's zipShare stays the zip's."
             },
             "zipShare": {
               "type": "number",

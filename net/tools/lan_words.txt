@@ -2,7 +2,7 @@ Orb Combat EX: a match between your two PCs
 
 What this is: one fight between your two PCs, with one pad on each, or two fights at once, one on each PC, against two computer fighters: as a team ("2v2 together") or apart. This game opens a network link between the two PCs, over your home network only. It's a private test and it has rough edges.
 
-WHO PLAYS: Only Orb plays and watches, on both PCs, with nobody else in the room. This build has a flashing-effects warning; read it first. Don't copy, record, share or post this folder, the screens or the main PC's address. Two fights share one globe, so craters and damage from the other fight can appear in the world. Fighters in the other fight can hit you, and your partner's fight isn't shown on your screen.
+WHO PLAYS: Only Orb and Orb 2 play and watch, one on each PC, with nobody else in either room. This build has a flashing-effects warning; each of you reads it first. Don't copy, record, share or post this folder, the screens or the main PC's address. Two fights share one globe, so craters and damage from the other fight can appear in the world. Fighters in the other fight can hit you, and your partner's fight isn't shown on your screen.
 
 BEFORE YOU START: ONE WINDOWS QUESTION, ONCE
 This is the only approval it needs, and only on the main PC. Windows blocks programs from being reached over the network unless you say so. So you're allowing this one game, on one network port, from addresses on your home network only (not ZeroTier). It's only for this test: step 8 takes it away, so don't skip that.
@@ -18,7 +18,7 @@ ON THE OLD PC
 4. Double-click "Join (old PC)". If Windows says it protected your PC because the program isn't recognised, click More info, then Run anyway. That's because the build isn't signed.
 
 ON BOTH PCs
-5. The game shows its flashing-effects warning on each PC. Read it first. Flashing stays reduced in this build, and you can't turn that off.
+5. The game shows its flashing-effects warning on each PC. Each of you reads it on your own PC first: don't click through it for the other. Either of you may stop at any moment. Flashing stays reduced in this build, and you can't turn that off.
 6. Choose a controller on the start menu and press Start. Do this on each PC, one after the other, in any order.
 7. Look at the top of the window. It says "Waiting for the other PC", then "Connected, input wait 2 ticks". The PC that started first just waits, however long you take. Then fight. Your fighter is yours on each PC: the main PC plays the first, the old PC the second.
 
@@ -37,7 +37,8 @@ We haven't been able to test whether step 1 stops it. If "Windows Security Alert
 WHAT DOESN'T WORK YET
 - One match only. When the top of the window says "The match is over", close both windows, and start again for another. In 2v2, if your fighter is knocked out while your partner still stands, the top says "You're out" and your screen follows your partner's fight.
 - A pause holds both PCs. The other PC's window says "Paused by the other player" and waits until you come back.
-- If the top of the window says "OUT OF STEP" or "The other PC has gone", or it stays on "Waiting" for over a minute, close both and tell the EP.
+- If one PC goes (closed, crashed, or its network dropped), the other says THE OTHER PC HAS GONE on the screen and the computer plays the gone PC's fighter, so the match goes on. Tell the EP afterwards.
+- If the top of the window says "OUT OF STEP", or it stays on "Waiting" for over a minute, close both and tell the EP.
 - If a PC's address has changed from {HOST_IP}, "Couldn't connect" shows at the top. Tell the EP.
 
 AFTERWARDS

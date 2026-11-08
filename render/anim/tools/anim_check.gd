@@ -4494,6 +4494,145 @@ func _ar_run(who: String, speed: float, height: float, off: bool) -> Dictionary:
 	return res
 
 
+## The air brake's looks (docs/animation/air-brake-looks-plan.md): the plant, the regain and the skid landing, on the real solve, both fighters. The plant is the fighter's own (fists for the Anti-hero, open blades for the Protagonist); control back in the air unwinds
+## the lean over six ticks or more (never the two it took), keeps the face on the foe the whole recovery (never the way he drifts), and tucks and opens; a landing out of the brake eases off the plant (no snap) and plays its own slide pose, every other slide the shared one.
+func _test_air_brake_looks() -> void:
+	AnimData.load_every_wave()
+	var run := func(who: String, mode: String, brake: bool) -> Dictionary:
+		main.start_match(4, {"p1": false, "p2": false})
+		for i in range(10):
+			main.frame(1.0 / 60.0)
+		var S: SimState = main.host.S
+		var f0 = S.fighters[0]
+		var f1 = S.fighters[1]
+		RenderAnim._fighters.clear()
+		f0.id = who
+		f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
+		var gy: float = WorldWater.floorAt(S, 2000.0, 0.0)
+		f0.x = 2000.0
+		f1.x = 2300.0
+		f0.y = gy + (300.0 if mode == "air" else 150.0)
+		f1.y = gy
+		f0.vx = -1600.0
+		f0.vy = 0.0
+		f0.state = "launched"
+		f0.slide = 0.0
+		f0.face = 1.0
+		f1.face = -1.0
+		var res := {"nan": 0, "viol": 0, "faces": [], "ld": [], "hipy": [], "abw_land": -1.0, "slide_id": "", "slide_id_late": "", "ctl": -1}
+		for k in range(150):
+			S.tick = 2000 + k
+			S.T = 300.0 + float(k) / 60.0
+			if brake and (k == 30 or (k == 60 and mode == "air")):
+				var ev := SimState.FxEvent.new()
+				ev.type = "air_brake"
+				ev.actor = 0.0
+				ev.text = "start" if k == 30 else "end"
+				ev.kind = "held" if k == 30 else "speed"
+				ev.amount = 1600.0
+				RenderAnim.consume(S, [ev])
+			if brake and k >= 30 and k < 60 and f0.state == "launched":
+				f0.vx = minf(f0.vx + 40.0, 0.0)
+			if k == 60 and mode == "air":
+				f0.state = "free"
+				res.ctl = k
+			if k > 60 and f0.state == "free":
+				f0.vx *= 0.94
+			if mode == "land" and k >= 40 and f0.state == "launched":
+				f0.vy = -380.0
+			f0.x += f0.vx / 60.0
+			f0.y += f0.vy / 60.0
+			if mode == "land" and f0.y <= gy + 2.0 and f0.state == "launched" and f0.slide == 0.0:
+				f0.y = gy
+				f0.vy = 0.0
+				f0.slide = 1.0
+				res.ctl = k
+				if brake:
+					# the sim's brake ends on the ground on the tick he lands (SimBrake._end "ground")
+					var ev3 := SimState.FxEvent.new()
+					ev3.type = "air_brake"
+					ev3.actor = 0.0
+					ev3.text = "end"
+					ev3.kind = "ground"
+					ev3.amount = 1600.0
+					RenderAnim.consume(S, [ev3])
+			if mode == "land" and f0.slide > 0.0:
+				f0.vx *= 0.97
+			var te := SimState.FxEvent.new()
+			te.type = "tick"
+			te.dt = 1.0 / 60.0
+			te.frozen = false
+			RenderAnim.consume(S, [te])
+			var a0: AnimFighter = RenderAnim.solve(S, f0)
+			RenderAnim.solve(S, f1)
+			for i in range(AnimRig.N):
+				if is_nan(a0.q[i].x) or is_nan(a0.q[i].w):
+					res.nan += 1
+			res.viol += AnimJoints.violations(a0.q, a0._rd.shape_key).size()
+			(res.faces as Array).append(a0.vface)
+			(res.ld as Array).append(absf(a0._lead_d))
+			(res.hipy as Array).append(a0.hips.y)
+			if mode == "land" and f0.slide > 0.0 and int(res.ctl) >= 0:
+				if k == int(res.ctl) + 1:
+					res.abw_land = a0._ab_w
+					res.slide_id = a0.slide_pose_id(S)
+				if k == int(res.ctl) + 70:
+					res.slide_id_late = a0.slide_pose_id(S)
+		return res
+	var bad: Array = []
+	var seen: Array = []
+	for who in ["PROTAGONIST", "RIVAL"]:
+		var pl: Dictionary = AnimData.brake.get("fighters", {}).get(who, {})
+		var ids: Array = []
+		for k in ["enter", "hold", "exit"]:
+			ids.append(String(pl.get("poses", {}).get(k, "")))
+		ids.append(String(pl.get("land", "")))
+		for tk in ["tuck", "open"]:
+			ids.append(String(AnimData.locomotion.get("recover", {}).get("fighters", {}).get(who, {}).get("poses", {}).get(tk, "")))
+		for id in ids:
+			if not AnimData.pose_exists(id):
+				bad.append("%s: pose '%s' is not there" % [who, id])
+			elif who == "RIVAL":
+				# the Anti-hero keeps no open hand on any of these (RL-218 (2))
+				var hands: Dictionary = AnimData.raw.get(id, {}).get("hands", {})
+				if String(hands.get("r", "fist")) == "open" or String(hands.get("l", "fist")) == "open":
+					bad.append("RIVAL: '%s' has an open hand" % id)
+		var air: Dictionary = run.call(who, "air", true)
+		var land: Dictionary = run.call(who, "land", true)
+		var plain: Dictionary = run.call(who, "land", false)
+		if int(air.nan) + int(land.nan) != 0 or int(air.viol) + int(land.viol) != 0:
+			bad.append("%s: NaN %d/%d or joint past a limit %d/%d" % [who, int(air.nan), int(land.nan), int(air.viol), int(land.viol)])
+		# the face: on the foe's side (+1) every tick of the recovery, never the way he drifts
+		var flips := 0
+		for k in range(60, 100):
+			if float((air.faces as Array)[k]) != 1.0:
+				flips += 1
+		if flips > 0:
+			bad.append("%s: the face turned away from the foe on %d ticks of the recovery" % [who, flips])
+		# the unwind: from the lean at the tick before control back to under a fifth of it takes six ticks or more
+		var l0: float = float((air.ld as Array)[59])
+		var n_unwind := 0
+		while n_unwind < 60 and float((air.ld as Array)[60 + n_unwind]) > 0.2 * l0:
+			n_unwind += 1
+		if l0 < 0.2 or n_unwind < 6:
+			bad.append("%s: the lean (%.2f rad) unwinds in %d ticks (6 or more wanted)" % [who, l0, n_unwind])
+		# the tuck and the open show: the pelvis sinks in the recovery against where it ends
+		var hmin: float = 99.0
+		for k in range(62, 100):
+			hmin = minf(hmin, float((air.hipy as Array)[k]))
+		var hend: float = float((air.hipy as Array)[140])
+		if hend - hmin < 1.0:
+			bad.append("%s: the tuck sinks the pelvis only %.2f units" % [who, hend - hmin])
+		# the landing: the plant still has weight on the first tick of the slide, its own slide pose for a while, the shared one later and for a landing that was not out of the brake
+		if float(land.abw_land) < 0.3:
+			bad.append("%s: the plant has weight %.2f on the first tick of the landing (0.3 or more: no snap)" % [who, float(land.abw_land)])
+		if String(land.slide_id) != String(pl.get("land", "?")) or String(land.slide_id_late) != "slide.brake" or String(plain.slide_id) != "slide.brake":
+			bad.append("%s: slide poses '%s', later '%s', without a brake '%s'" % [who, String(land.slide_id), String(land.slide_id_late), String(plain.slide_id)])
+		seen.append("%s unwind %d ticks (lean %.2f), tuck %.1f, plant %.2f on landing" % [who.substr(0, 1), n_unwind, l0, hend - hmin, float(land.abw_land)])
+	_expect(bad.is_empty(), "air brake looks: %s" % str(bad))
+	print("air brake looks: %d problems; %s" % [bad.size(), "; ".join(seen)])
+
+
 func _test_air_recover() -> void:
 	AnimData.load_every_wave()
 	var bad: Array = []
@@ -4509,8 +4648,10 @@ func _test_air_recover() -> void:
 		for k in range(60, 100):
 			var d: float = (Vector2(on.head[k]) - Vector2(off.head[k])).length()
 			peak = maxf(peak, d)
-			step = maxf(step, absf(d - prev))
 			prev = d
+		# no pop: the head's own step from tick to tick (the lean now unwinds over 8 ticks, so the track is compared with itself, not with the old snap)
+		for k in range(61, 100):
+			step = maxf(step, (Vector2(on.head[k]) - Vector2(on.head[k - 1])).length())
 		var tail: float = 0.0
 		for k in range(120, 150):
 			tail = maxf(tail, (Vector2(on.head[k]) - Vector2(off.head[k])).length())
@@ -4520,8 +4661,8 @@ func _test_air_recover() -> void:
 		seen.append("%s catch %.1f, step %.2f, tail %.2f" % [who.substr(0, 1), peak, step, tail])
 		if peak < 2.5:
 			bad.append("%s: the air recovery moves the head only %.2f units (2.5 wanted)" % [who, peak])
-		if step > 2.0:
-			bad.append("%s: the recovery moves the head %.2f units a tick against none (2 at most)" % [who, step])
+		if step > 8.0:
+			bad.append("%s: the recovery moves the head %.2f units in a tick (8 at most)" % [who, step])
 		if tail > 0.3:
 			bad.append("%s: the recovery has not let go 1 s on (%.2f)" % [who, tail])
 		if before > 0.05:
@@ -7694,6 +7835,7 @@ func _run() -> void:
 	_test_ground_motion()
 	_test_reactions()
 	_test_air_recover()
+	_test_air_brake_looks()
 	_test_secondary()
 	_test_pop()
 	_test_struggle()

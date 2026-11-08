@@ -148,6 +148,8 @@ static func aiInput(S: SimState, f) -> void:
 		i.light = true
 	elif za == 4:
 		i.heavy = true
+	elif za == 5:
+		i.sig = true   # B with no stance held: the heavy, a flight strike's counter
 	if f.state == "free" and (DirRecoil.aiPress(S, f) == 1 or DirWallKick.aiPress(S, f) == 1):
 		i.light = true   # its counter-rush out of a recoil flip (DirRecoil), or its rush blow off a wall kick (DirWallKick)
 	if a.st == 3.0 and DirRally.noEscape(S, f):

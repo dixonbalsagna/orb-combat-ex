@@ -996,6 +996,14 @@
           "type": "boolean",
           "description": "The beam's aim (docs/controls/beam-aim-feel.md; needs rightStick): the strike stick's aim trails the thumb by strike.aimTrail degrees, and the throw carries the aim the stick held at the rim instead of the zero of a stick that has sprung home. Off."
         },
+        "chordPick": {
+          "type": "boolean",
+          "description": "Two attack presses on one tick (B with X or Y, or Y with X) are one blow, the biggest (signature over heavy over light), and the smaller is let go of and told with the refusal code chord (docs/controls/chord-pick.md). Before, the director took the light, then the heavy, then the signature, so a B pressed with an X was dropped with no word. Off."
+        },
+        "flightStrikeB": {
+          "type": "boolean",
+          "description": "With signatureRtOnly: LT + B is left as the B press for the flight strike to read (data/director/interrupts.json zip.flightStrikes.enabled; its biggest blow) instead of being sent as Y's heavy. LB + B and RB + B are unchanged. Set together with the flight strikes' switch and dodgeHeld. Off."
+        },
         "dodgeHeld": {
           "type": "boolean",
           "description": "LT held, in the intent's second word, bit 26 (docs/controls/dodge-held.md; needs rightStick): the intent says whether the dodge control is physically down this tick, so the flight strike's take-back (a face press within 4 ticks of LT, LT still held) can be read. Off."

@@ -84,7 +84,9 @@ var flashes := VfxFlashRegistry.new()          # the shared flash register: ever
 var clear_query: Callable = Callable()          # Rendering's read of what an opened floor and the see-through patch leave visible: (x, y, z) -> 0..1, set each frame with depth on (docs/vfx/depth.md). Invalid: all of it
 var cam_dist: float = 0.0                       # the camera's distance to the fighters' plane (units), set by the host each frame; 0 = unknown: effects off the plane are sized as on it (depth off)
 var px_per_unit: float = 1.3                    # pixels per world unit at 1024 by 768 on the fighters' plane (the host sets it from the camera): the size of a flash for the register's weights
-var reduced_flashing: bool = false              # UI's reduced-flashing setting: the register's cap drops to 1 a second and the low-priority flashes (energy, blocks, hit rings) are not drawn
+var reduced_flashing: bool = false:             # UI's reduced-flashing setting: the register's cap drops to 1 a second and the low-priority flashes (energy, blocks, hit rings) are not drawn. LOCKED ON while the other fights' effects are (RL-249 (6))
+	set(v):
+		reduced_flashing = v or (other_fights_enabled and calm_lock)
 var inreach := VfxReach.new()                   # energy arts in reach and the launcher's marks (reach.gd), behind the same flag
 var tremor := VfxTremor.new()                  # the catastrophe tier's tremor: dust curtains and rubble (tremor.gd, dust_view.gd), on its cue
 var blastcloud := VfxBlastCloud.new()          # the catastrophe tier's blast cloud: stem, cap, dust wall and the one fireball light (blast_cloud.gd, cloud_view.gd), on its cue
@@ -94,9 +96,16 @@ var scars := VfxBeamScar.new()                    # the scar each beam leaves in
 var scar_enabled: bool = true
 var energy_heads_enabled: bool = VfxLook.HEADS_DEFAULT or VfxEnergyHeads.page_on()   # the blasts' heads and impacts in the beam's language (energy_head.gd; docs/vfx/energy-language.md): off by default (a local preview page can turn it on with ?heads=1)
 var meteor := VfxMeteor.new()                     # the meteor trail: a fighter's own burn, laid in the ring's coordinates (meteor.gd, meteor_view.gd; docs/vfx/meteor-trail.md; Orb 2026-10-31)
-var other_fights_enabled: bool = VfxLook.OTHER_FIGHTS_DEFAULT or VfxStageFeed.page_word()   # 2v2: the other fight's hits, sparks, dust, beams and shots, each fight with a hub of its own (stage_feed.gd): off by default
+var other_fights_enabled: bool = VfxLook.OTHER_FIGHTS_DEFAULT or VfxStageFeed.page_word() or VfxStageFeed.desktop_word():   # 2v2: the other fight's hits, sparks, dust, beams and shots, each fight with a hub of its own (stage_feed.gd): off by default; on, Reduce flashing is locked on
+	set(v):
+		other_fights_enabled = v
+		if v and calm_lock:
+			reduced_flashing = true
 var stage_feed := VfxStageFeed.new()
 var host_pushes: bool = false     # the host calls consume_others each tick with the other fights' events (Rendering's host.other_events()): the only way the other fights' events reach their hubs
+var calm_lock: bool = true       # Reduce flashing is locked on while the other fights' effects are (RL-249 (6)). Only Tools' measurement run lifts it, to read the normal-mode register for Legal's clips; never a player's setting
+var flash_ch: int = 0            # the register's channel for this hub: 0 the screen's own fight, 1 and up an other fight (stage_feed.gd)
+var shares_register: bool = false   # this hub is a feeder of the main hub's register (adopt_register): it never resets, clocks or sizes it
 var is_other: bool = false      # an other fight's hub (stage_feed.gd): it reads Animation's view of that fight (RenderAnim.fight_view), and leaves the shared colour-blind table to the main hub
 var meteor_burn_enabled: bool = VfxLook.METEOR_DEFAULT or VfxMeteor.page_word() != ""   # the meteor burn: off by default (a local preview page can turn it on with the word ?meteor=1, =quiet or =loud): with it off nothing here runs and nothing draws
 var flight_enabled: bool = VfxLook.FLIGHT_DEFAULT or VfxMeteor.flight_word() != ""   # the flight lines (docs/vfx/flight-lines.md): off by default; a local preview page turns them on with ?flight=1, =quiet or =loud. They use the meteor trail's ribbon
@@ -181,7 +190,8 @@ func reset(S: SimState, p_seed: int) -> void:
 	struggle.reset()
 	ghosts.reset()
 	_vision_sig = ""
-	flashes.reset()
+	if not shares_register:
+		flashes.reset()
 	press.flash_sink = flashes
 	inreach.registry = flashes
 	zip.flashes = flashes
@@ -244,11 +254,27 @@ func consume(S: SimState, events: Array) -> void:
 	if not enabled:
 		return
 	var t0: int = Time.get_ticks_usec()
+	if shares_register:
+		flashes.channel = flash_ch      # every flash this hub asks is the other fight's, in the one register
 	_consume(S, events)
+	if shares_register:
+		flashes.channel = 0
 	var dt_us: int = Time.get_ticks_usec() - t0
 	stat_consume_usec += dt_us
 	stat_consume_n += 1
 	stat_consume_max = maxi(stat_consume_max, dt_us)
+
+
+## An other fight's hub feeds the screen's register (RL-249 (1)): it holds the main hub's object in place of one of its own and asks it on channel `ch`. Called once, after reset, by stage_feed.gd.
+func adopt_register(reg: VfxFlashRegistry, ch: int) -> void:
+	flashes = reg
+	flash_ch = ch
+	shares_register = true
+	press.flash_sink = flashes
+	inreach.registry = flashes
+	zip.flashes = flashes
+	shots.flashes = flashes
+	biomefx.flashes = flashes
 
 
 ## The host's push (2v2): one fx list for each fight past the first, as Rendering's host reads them (`host.other_events()`), into that fight's own hub, once a tick after `consume`. The only way in: `consume` never reads the other fights itself.
@@ -288,8 +314,9 @@ func _sync_vision(S: SimState) -> void:
 func _consume(S: SimState, events: Array) -> void:
 	if not enabled:
 		return
-	flashes.ppu = px_per_unit
-	flashes.cam_dist = cam_dist
+	if not shares_register:
+		flashes.ppu = px_per_unit
+		flashes.cam_dist = cam_dist
 	debris.clear_query = clear_query
 	if perf_level != debris.perf:
 		debris.perf = perf_level
@@ -299,7 +326,8 @@ func _consume(S: SimState, events: Array) -> void:
 			fxs.append(f.x)
 		debris.far_x = fxs
 		debris.far_half = 512.0 / maxf(px_per_unit, 0.05) * VfxPerf.p("far", "reach_k") + VfxPerf.p("far", "margin")
-	flashes.begin_tick(reduced_motion or reduced_flashing)
+	if not shares_register:
+		flashes.begin_tick(reduced_motion or reduced_flashing)      # the screen's register has one clock: the main hub's
 	if catastrophe_enabled:
 		tremor.step(reduced_motion or reduced_flashing)
 		tremor.on_events(S, events)

@@ -348,14 +348,12 @@ static func kill(S: SimState, bi: int, want: float, cause, evt: float, cx: float
 	return granted
 
 
-## The meters: the villain feeds on casualties it caused; every fighter with an anguish meter is pressured by all of them.
+## The meters: every fighter with an anguish meter is pressured by the casualties. No fighter gains anything from them (Orb, 2026-11-07, "no civilian
+## deaths going forward": CD-05): no menace and no power. The villain feeds on evacuation (kill's evac branch), not on the dead.
 ## Everything is times 425 / pop0, so the meters read the share of the population lost and planets are equivalent.
 static func _feed(S: SimState, n: float, cause) -> void:
 	var norm: float = POP_REF / normPeople(S)
 	S.world.casualties += n
-	if cause != null and cause.hasMenace:
-		cause.menace = SimMathx.jmin(100.0, cause.menace + n * cause.md.menaceCas * norm)   # D1b: meters.json
-		cause.power = SimMathx.jmin(100.0, cause.power + n * 0.09 * norm)
 	for f in S.fighters:
 		if f.hasAnguish:
 			f.anguish = SimMathx.jmin(100.0, f.anguish + n * (f.md.anguishCasSelf if cause == f else SimForms.anguishOther(S, f)) * norm)   # D1b: meters.json

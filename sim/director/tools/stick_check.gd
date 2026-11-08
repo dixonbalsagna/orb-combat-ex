@@ -10,6 +10,13 @@ var failed: int = 0
 func _init() -> void:
 	DirStick.setForce(1)
 	DirStick.setArmourForce(0)
+	DirBeamMove.setStrikeForce(0)   # the plain hold's stages off: they set a held strike's level by the ladder (strike_stages_check has that)
+	var fk0: bool = bool(DirStick.cfg().get("flickKeep", {}).get("enabled", false))
+	if DirStick.cfg().has("flickKeep"):
+		DirStick.cfg().flickKeep.enabled = false   # the 9-tick buffer and its refusals, as built (flick_keep_check has the keep)
+	var fs0: bool = bool(DirStick.cfg().get("fullSend", {}).get("enabled", false))
+	if DirStick.cfg().has("fullSend"):
+		DirStick.cfg().fullSend.enabled = false   # with it on a top-stage hold sends (full_send_check has that): here the stick's blow, as built
 	_quick()
 	_charged()
 	_guarded()
@@ -37,6 +44,11 @@ func _init() -> void:
 	DirStick.setArmourForce(-1)
 	DirStick.setForce(-1)
 	print("STICK: %d check(s) failed" % failed)
+	if DirStick.cfg().has("flickKeep"):
+		DirStick.cfg().flickKeep.enabled = fk0
+	DirBeamMove.setStrikeForce(-1)
+	if DirStick.cfg().has("fullSend"):
+		DirStick.cfg().fullSend.enabled = fs0
 	quit(1 if failed > 0 else 0)
 
 

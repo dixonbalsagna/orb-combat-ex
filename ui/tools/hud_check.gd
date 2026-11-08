@@ -129,6 +129,8 @@ func _run() -> void:
 	await _refusal_take_rules()
 	await _coop_marks_rules()
 	_first_ko_object_rules()
+	_refusal_reason_words_rules()
+	_slam_hint_rules()
 	await _refusal_compact_rules()
 	await _pause_menu_rules()
 	await _faces_rules()
@@ -1643,9 +1645,9 @@ func _refusal_take_rules() -> void:
 		seen.append(fresh.models[0].teach)
 		fresh.advance(1.0 / 60.0)
 	_ok(seen == ["Already stunned", "Already stunned", "Already stunned", "", ""], "refusal codes: the director's press_refused cue says its word the first three times per reason, then only the pad's knock")
-	# Silent codes (the pad's knock alone): a mashed fourth press, the player's own newer press, an answered or dodged strike, and an unknown one; the computer is never told.
+	# Silent codes (the pad's knock alone): a mashed fourth press, the player's own newer press, an answered or dodged strike, and an unknown one; the computer is never told. (not_yours and busy are not here any more: Encounter's refusal reasons give them words, docs/ui/refusal-reasons.md.)
 	var quiet := true
-	for code in ["face_overflow", "replaced", "answered", "dodged", "cancelled", "not_yours", "busy", "other"]:
+	for code in ["face_overflow", "replaced", "answered", "dodged", "cancelled", "other"]:
 		m.teach = ""
 		hud.refusals([{"slot": 0, "code": code, "tick": 1, "button": ""}])
 		quiet = quiet and m.teach == ""
@@ -2018,6 +2020,79 @@ func _refusal_compact_rules() -> void:
 	hud.queue_free()
 	await process_frame
 	_live_on()
+
+
+# --- slam_hint: "Hold to slam" on Encounter's slam_hint cue, the first three times ----------------------------------------------------------------------------------------------------
+
+func _slam_cue(hub: UiEventHub, slot: int) -> void:
+	hub.consume({"type": "cue", "kind": "slam_hint", "actor": slot, "text": "down", "source": ""})
+
+
+func _slam_hint_rules() -> void:
+	UiPrefs.path = "user://ui_prefs_test_slam.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	UiData.set_feature("beam_teach", null)
+	UiData.set_feature("slam_hint", null)   # the shipped state (off until Encounter's slam is on)
+	var hub := _refusal_rules_hub()
+	var m: UiFighterModel = hub.model(0)
+	_slam_cue(hub, 0)
+	var shipped_off: bool = m.teach == "" and int(UiPrefs.get_value("taught_slam_n", 0)) == 0
+	UiData.set_feature("slam_hint", true)
+	_slam_cue(hub, 0)
+	var said: bool = m.teach == "Hold to slam" and m.teach_acts == ["strike"] and is_equal_approx(m.teach_left, 1.5) and int(UiPrefs.get_value("taught_slam_n", 0)) == 1
+	m.teach = ""
+	_slam_cue(hub, 1)   # the computer is never told
+	var computer_quiet: bool = hub.model(1).teach == "" and int(UiPrefs.get_value("taught_slam_n", 0)) == 1
+	_slam_cue(hub, 0)
+	m.teach = ""
+	_slam_cue(hub, 0)
+	var third_ok: bool = int(UiPrefs.get_value("taught_slam_n", 0)) == 3
+	m.teach = ""
+	_slam_cue(hub, 0)   # the fourth time: nothing (three is the limit)
+	var limit_ok: bool = m.teach == "" and int(UiPrefs.get_value("taught_slam_n", 0)) == 3
+	UiData.set_feature("beam_teach", false)
+	UiPrefs.set_value("taught_slam_n", 0)
+	_slam_cue(hub, 0)
+	var needs_teach: bool = m.teach == ""   # it rides the teaching lines: with them off it is quiet
+	_ok(shipped_off and said, "slam hint: off as shipped (no word, no count); on, Encounter's slam_hint cue says 'Hold to slam' with the stick's glyph for 1.5 s")
+	_ok(computer_quiet and third_ok and limit_ok and needs_teach, "slam hint: not for the computer, only the first three times, and not with the teaching lines off")
+	UiData.set_feature("slam_hint", null)
+	UiData.set_feature("beam_teach", null)
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+
+
+# --- Encounter's refusal reasons (docs/director/pending/refusal-reasons): a word for what holds a press ----------------------------------------------------------------------------------------
+
+func _refusal_reason_words_rules() -> void:
+	UiData.set_feature("refusal_words", null)
+	var want := {"locked": "Locked in", "launched": "In flight", "down": "Knocked down", "stunned": "Stunned", "queue_full": "Too many presses", "not_yours": "Their move", "recovering": "Recovering", "set_piece": "In a move", "chord": "One at a time", "busy": "Busy"}
+	var words_ok := true
+	var bad := PackedStringArray()
+	for code in want:
+		var hub := _refusal_rules_hub()
+		hub.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "down", "source": code})
+		if hub.model(0).teach != want[code]:
+			words_ok = false
+			bad.append("%s: '%s'" % [code, hub.model(0).teach])
+	var hp := _refusal_rules_hub()
+	hp.consume({"type": "cue", "kind": "press_refused", "actor": 0, "source": "queue_full"})
+	var press_ok: bool = hp.model(0).teach == "Too many presses"
+	var hl := _refusal_rules_hub()
+	for i in range(5):
+		hl.advance(1.0 / 60.0)
+		hl.model(0).teach = ""
+		hl.consume({"type": "cue", "kind": "stick_refused", "actor": 0, "text": "down", "source": "locked"})
+		if i < 3 and hl.model(0).teach != "Locked in":
+			words_ok = false
+		if i >= 3 and hl.model(0).teach != "":
+			words_ok = false
+	var hc := _refusal_rules_hub()
+	hc.consume({"type": "cue", "kind": "stick_refused", "actor": 1, "text": "down", "source": "locked"})
+	var computer_quiet: bool = hc.model(1).teach == ""
+	_ok(words_ok and press_ok, "refusal reasons: each new code says its word (locked, launched, down, stunned, queue_full, not_yours, recovering, set_piece, chord, busy), press_refused queue_full too, and only the first three times (%s)" % str(bad))
+	_ok(computer_quiet, "refusal reasons: the computer is never told")
 
 
 # --- A first KO in a 2v2, as the sim's own event object: not the match's end (norm() must carry `over` and `winners` from an FxEvent; the dictionary tests above could not see it) ---------------

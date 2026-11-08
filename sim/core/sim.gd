@@ -47,7 +47,8 @@ static func dispose(S: SimState, keepWorld: bool = false) -> void:
 ## "names": [name, name] renames them (the mirror arms), "flip": true swaps the spawn sides. {} is the default match.
 ## Fight lanes: "depth": true makes depth physical for this match (S.depthOn).
 ## The air brake: "brake": true turns it on for this match (S.brakeOn).
-## One energy model: "power": true turns it on for this match (S.powerOn); "flatOut" tries another base for flat-out flight, in the data's range.
+## One energy model: "power" turns it on or off for this match (S.powerOn); "flatOut" tries another base for flat-out flight, in the data's range, and "travel" another
+## factor along the line for a send (S.powerTravel, the page's ?travel= slider), in the data's range.
 ## The kick and the coin turn: "kick": true turns them on for this match (S.kickOn); "instant" and "climbTicks" try other values of the takeoff.
 ## Forms: "forms": true turns on the Protagonist's five steps and the slingshot for this match (S.formsOn).
 ## The intro phase: "intro": true plays the entrance before the clock; "intro": "skip" (the default) applies its effects at
@@ -259,7 +260,7 @@ static func _mSetupsA(J: MatchJob) -> void:
 	S.depthOn = setup.get("depth", SimDepth.enabled()) == true   # fighters in depth: the data's switch (data/combat/depth.json), or the setup's own for this match
 	S.brakeOn = setup.get("brake", SimBrake.enabled()) == true   # the air brake: the data's switch (data/fight/brake.json), or the setup's own for this match
 	SimBrake.setup(S)   # each fighter's brake state while the brake is on
-	SimPower.setup(S, setup)   # one energy model: the data's switch (data/fight/power.json), or the setup's "power"; "flatOut" tries another base
+	SimPower.setup(S, setup)   # one energy model: the data's switch (data/fight/power.json), or the setup's "power"; "flatOut" tries another base, "travel" another factor along the line
 	S.kickOn = setup.get("kick", SimKick.enabled()) == true   # the kick and the coin turn: the data's switch (data/fight/kick.json), or the setup's
 	SimKick.setup(S, setup)
 	J.phase = 4

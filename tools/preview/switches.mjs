@@ -882,16 +882,25 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
     '\t\td["startTier"] = 4',
   ];
   const powerLines = [
-    '\t# ?power=1: one energy model on for this match (Simulation\'s setup key "power": true; data/fight/power.json stays off); ?flatout=N or the page\'s slider (window.__flatout) tries another base for flat-out flight, 3,500 to 7,000',
-    '\tif args.has("power") and str(args["power"]) != "0" and str(args["power"]) != "off":',
-    '\t\td["power"] = true',
+    '\t# one energy model, on for the page whatever the data says (Simulation\'s setup key "power"; Game Design\'s slam-and-pace.md section 2, step 1): ?power=0 or ?power=off puts "power": false for this match (the web\'s parse_args drops a word valued 0, so the page reads its own address for it). While it is on, ?flatout=N or the page\'s slider (window.__flatout) tries another base for flat-out flight, 3,500 to 7,000, and ?travel=N or its slider (window.__travel) how far a launch carries along the line (Simulation\'s "travel"), 1.25 to 2.0',
+    '\tvar pw_off: bool = args.has("power") and (str(args["power"]) == "0" or str(args["power"]) == "off")',
+    '\tif OS.has_feature("web"):',
+    '\t\tpw_off = pw_off or bool(JavaScriptBridge.eval("/[?&]power=(0|off)(&|$)/.test(location.search)", true))',
+    '\td["power"] = not pw_off',
+    '\tif not pw_off:',
     '\t\tvar fo: float = 0.0',
+    '\t\tvar tv: float = 0.0',
     '\t\tif OS.has_feature("web"):',
     '\t\t\tfo = float(JavaScriptBridge.eval("window.__flatout || 0", true))',
+    '\t\t\ttv = float(JavaScriptBridge.eval("window.__travel || 0", true))',
     '\t\tif fo <= 0.0 and args.has("flatout"):',
     '\t\t\tfo = float(str(args["flatout"]))',
     '\t\tif fo > 0.0:',
     '\t\t\td["flatOut"] = clampf(fo, 3500.0, 7000.0)',
+    '\t\tif tv <= 0.0 and args.has("travel"):',
+    '\t\t\ttv = float(str(args["travel"]))',
+    '\t\tif tv > 0.0:',
+    '\t\t\td["travel"] = clampf(tv, 1.25, 2.0)',
   ];
   const circleLines = [
     '## Scratch (tools/preview): ?circle=1 turns the stance circle (LT + Y in reach; Encounter, docs/director/pending/stance-circle) on for the match: data stances.circle.enabled, off as shipped. Local pages only.',
@@ -963,7 +972,7 @@ const EDITS = [
   { name: 'the match setup\'s planet part (no-intro and hook starts)', from: '\t\treturn _planet_next.duplicate()\n', to: '\t\treturn _preview_planet()\n' },
   { name: 'the match setup\'s planet part (the intro start)', from: '\tsu.merge(_planet_next)\n', to: '\tsu.merge(_preview_planet())\n' },
   { name: 'the menu start without intros', from: '\t\tvar su: Dictionary = _planet_next.duplicate()\n', to: '\t\tvar su: Dictionary = _preview_planet()\n' },
-  { name: 'the options the URL may set', from: 'const URL_ARGS: Array = [', to: 'const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "splitshare", "power", "flatout", "circle", "nohud", ' },
+  { name: 'the options the URL may set', from: 'const URL_ARGS: Array = [', to: 'const URL_ARGS: Array = ["planet", "touch", "preview", "reel", "sticks", "kick", "instant", "climbTicks", "go", "tier", "peak", "hitstop", "blackbox", "script", "replay", "audiolog", "splitshare", "power", "flatout", "travel", "circle", "nohud", ' },
   { name: 'the menu choices before the HUD loads them', from: '\tui_hud.menu_changed.connect(_on_menu_changed)\n', to: '\t_preview_go()\n\tui_hud.menu_changed.connect(_on_menu_changed)\n' },
   { name: 'the per-frame hook', from: '\tvar n: int = host.advance(delta, vp.x, vp.y)\n', to: '\tif args.has("splitshare"):\n\t\t_pv_split_share()\n\tif args.has("audiolog"):\n\t\t_pv_aud_tick()   # the engine\'s own mixer, read only\n\tif args.has("replay"):\n\t\t_preview_replay()   # a saved black box match played again\n\tif args.has("script"):\n\t\t_preview_script()   # the scripted pad: its events for the coming tick are set before it runs\n\tvar n: int = host.advance(delta, vp.x, vp.y)\n\tif args.has("preview"):\n\t\t_preview_probe()\n' },
 ];

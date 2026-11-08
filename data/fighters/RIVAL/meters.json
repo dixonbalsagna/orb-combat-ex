@@ -11,12 +11,6 @@
       "visible": true,
       "sources": [
         {
-          "event": "casualty",
-          "amount": 0.9,
-          "whose": "self",
-          "_note": "casualties this fighter caused"
-        },
-        {
           "event": "evacuee",
           "amount": 0.45,
           "whose": "self",

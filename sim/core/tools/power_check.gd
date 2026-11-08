@@ -1,7 +1,7 @@
 extends SceneTree
 ## One energy model, Simulation's part (sim/core/power.gd): godot --headless --path . --script res://sim/core/tools/power_check.gd
 ## The numbers against docs/design/power-scale.md's table; no send past what he has, and none by a base or tier 2 fighter glows; flat-out and close flight; a match's switch keeps to its match;
-## Combat's shares; two runs one hash and a rollback across launches. --negative-control lets a send past what he has, and the hard test must see it.
+## Combat's shares; two runs one hash and a rollback across launches; the page's travel. --negative-control lets a send past what he has, and leaves a setup's "travel" unread, and each must be seen.
 
 var fails: int = 0
 const FIELD: Dictionary = {"intro": false, "planet": 7, "touch": 3, "planetGen": 3, "power": true}
@@ -104,6 +104,44 @@ func _flight() -> void:
 	ok(S3.powerFlat == 7000.0, "held to the data's range (%.0f)" % S3.powerFlat)
 	ok(str(SimHash.stateHash(S3).gameplay) != h1, "the base is in the hash")
 	SimCore.dispose(S3)
+
+
+## The page's slider for a send's speed (Orb's ?travel=, x1.25 to x2): a setup's "travel" is the factor along the line, held to the data's range and hashed. A send's rise is the same,
+## its sideways speed goes by the factor. A match with no word takes the data's; with the model off the word does nothing and it's x6 as ever.
+func _travel() -> void:
+	var a: Dictionary = FIELD.duplicate()
+	var S0 := _new(a)
+	SimPower.bindStep(S0)
+	ok(S0.powerTravel == SimPower.launchTravel and near(WorldSlide.launchTravel(1.0, 0.0), SimPower.launchTravel, 1.0e-6), "no word: the data's x%.2f" % S0.powerTravel)
+	var h0: String = str(SimHash.stateHash(S0).gameplay)
+	_send(S0)
+	var d0 = S0.fighters[1]
+	var sent0: Array = [d0.vx, d0.vy, d0.launchT]
+	SimCore.dispose(S0)
+	a["travel"] = 1.25
+	var S1 := _new(a)
+	SimPower.bindStep(S1)
+	ok(S1.powerTravel == 1.25 and near(WorldSlide.launchTravel(1.0, 0.0), 1.25, 1.0e-6) and WorldSlide.launchTravel(0.0, 1.0) == 1.0, "the page's x1.25 along the line (%.2f); straight up, once" % S1.powerTravel)
+	ok(str(SimHash.stateHash(S1).gameplay) != h0, "the factor is in the hash")
+	_send(S1)
+	var d1 = S1.fighters[1]
+	var s: float = 1.0 / (1.0 + 0.32 + 1.0e-9)
+	ok(d1.vy == sent0[1] and near(d1.launchT, 1.0 + 0.25 * s, 1.0e-9) and near(d1.vx / sent0[0], d1.launchT / sent0[2], 1.0e-9), "a send: the same rise (%.1f), sideways by the factor (%.1f against %.1f)" % [d1.vy, d1.vx, sent0[0]])
+	SimCore.dispose(S1)
+	for row in [[0.5, SimPower.travelMin], [9.0, SimPower.travelMax]]:
+		a["travel"] = row[0]
+		var S2 := _new(a)
+		ok(S2.powerTravel == row[1], "x%.2f held to the data's range: x%.2f" % [row[0], S2.powerTravel])
+		SimCore.dispose(S2)
+	a["travel"] = 1.25
+	a["power"] = false
+	var O := _new(a)
+	SimPower.bindStep(O)
+	ok(not O.powerOn and near(WorldSlide.launchTravel(1.0, 0.0), 6.0, 1.0e-6), "off: the word does nothing, x6 as ever")
+	SimCore.dispose(O)
+	var D := _new({"intro": false, "planet": 7, "touch": 3, "planetGen": 3})
+	ok(D.powerOn == SimPower.enabled(), "a match with no key of its own takes the data's switch")
+	SimCore.dispose(D)
 
 
 ## Each real route to a send, and the share it ends up with: through DirBrawl._send, the rally's turn, a chain link's own beat and a launch beat with the earned gate's multiplier. Reading a
@@ -464,6 +502,13 @@ func _init() -> void:
 	if neg:
 		var r: Array = _sends(true)
 		ok(r[1] > 0, "a send past its cap is seen (%d)" % r[1])
+		var f0: int = fails
+		SimPower.blindTravel = true
+		_travel()
+		SimPower.blindTravel = false
+		var seen: int = fails - f0
+		fails = f0
+		ok(seen > 0, "a setup's travel left unread is seen (%d)" % seen)
 		print("POWER negative control: %d check(s) failed" % fails)
 		quit(1 if fails > 0 else 0)
 		return
@@ -473,6 +518,7 @@ func _init() -> void:
 	_fresh()
 	_meteor()
 	_flight()
+	_travel()
 	var r2: Array = _sends()
 	ok(r2[0] > 0, "there were launches")
 	ok(r2[1] == 0, "no send past what he has (%d)" % r2[1])

@@ -195,7 +195,7 @@ static func load_all() -> void:
 			for fn in da.get_files():
 				if fn.ends_with(".poses.json"):
 					var wn0: String = fn.trim_suffix(".poses.json")
-					if load_waves or OS.get_cmdline_user_args().has("--waves") or (live_flag and wn0 == "wave1") or (s3_flag and wn0 == "step3") or (g_flag and wn0 == "ground1") or (i_flag and wn0 == "intro1") or (l_flag and wn0 == "laststand1") or (a_flag and wn0 == "agency1") or (b_flag and wn0 == "brake1") or (c_flag and (wn0 == "chain1" or wn0 == "lodge1")) or (k_flag and wn0 == "cl1") or (r_flag and wn0 == "recoil1") or (p_flag and wn0 == "ack1") or (q_flag and (wn0 == "cl2" or wn0 == "pair3")):   # the live flag loads wave 1 only, the step 3 flag its own cues
+					if load_waves or OS.get_cmdline_user_args().has("--waves") or (live_flag and wn0 == "wave1") or (s3_flag and wn0 == "step3") or (g_flag and wn0 == "ground1") or (i_flag and wn0 == "intro1") or (l_flag and wn0 == "laststand1") or (a_flag and wn0 == "agency1") or (b_flag and (wn0 == "brake1" or wn0 == "brake2")) or (c_flag and (wn0 == "chain1" or wn0 == "lodge1")) or (k_flag and wn0 == "cl1") or (r_flag and wn0 == "recoil1") or (p_flag and wn0 == "ack1") or (q_flag and (wn0 == "cl2" or wn0 == "pair3")):   # the live flag loads wave 1 only, the step 3 flag its own cues
 						names.append(wn0)
 			names.sort()
 			for wn in names:

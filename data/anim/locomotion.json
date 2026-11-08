@@ -7,7 +7,9 @@
   "dash": {"dash_ticks": 8, "lean_back": 0.5, "dip": 2.4},
   "bank": {"roll_deg": 12.0, "omega_ref": 3.2, "min_speed": 280.0, "lean_in": 0.35},
   "hover": {"still_speed": 140.0, "rate_hz": 0.3, "chest_deg": 2.4, "shoulder_deg": 3.0, "bob": 1.2, "off_ground": 8.0},
-  "recover": {"pose": "ab.skid.enter", "w": 0.55, "ticks": 28, "rock": 0.4, "min_air": 40.0, "min_speed": 250.0, "ref_speed": 1500.0},
+  "recover": {"pose": "ab.skid.enter", "w": 0.55, "ticks": 28, "rock": 0.4, "min_air": 40.0, "min_speed": 250.0, "ref_speed": 1500.0,
+    "p_min": 0.6, "tuck_w": 0.8, "open_w": 0.7,
+    "fighters": {"PROTAGONIST": {"poses": {"tuck": "ax.regain_p.tuck", "open": "ax.regain_p.open"}}, "RIVAL": {"poses": {"tuck": "ax.regain_r.tuck", "open": "ax.regain_r.open"}}}},
   "fighters": {
     "PROTAGONIST": {"rate": 1.0, "depth": 1.0, "lean": 1.0, "damp": 0.85},
     "RIVAL": {"rate": 1.45, "depth": 0.7, "lean": 1.0, "damp": 1.0}

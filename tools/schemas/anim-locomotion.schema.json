@@ -338,6 +338,57 @@
           "exclusiveMinimum": 0,
           "maximum": 100000,
           "description": "The speed that gives the full catch."
+        },
+        "p_min": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The least strength of the recovery (it scales by speed; the floor keeps a slow regain readable)."
+        },
+        "tuck_w": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How far the tuck pose is mixed in."
+        },
+        "open_w": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How far the sweep pose is mixed in."
+        },
+        "fighters": {
+          "type": "object",
+          "description": "A fighter's own tuck and sweep poses (docs/animation/air-brake-looks-plan.md), by fighter id; a fighter with no row uses `pose`.",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "poses"
+            ],
+            "properties": {
+              "poses": {
+                "type": "object",
+                "required": [
+                  "tuck",
+                  "open"
+                ],
+                "properties": {
+                  "tuck": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+                    "description": "The knees drawn up, the hands in."
+                  },
+                  "open": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+                    "description": "The arms swept out and down, the legs dropped under him."
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false,

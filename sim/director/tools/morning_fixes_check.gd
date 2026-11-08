@@ -5,7 +5,7 @@ extends SceneTree
 ## - a short hold fires releaseTell after its release; let go and waiting on the gate, he moves at full speed
 ## - a quick RB flick in a brawl says "close"; out of one it's the heavy blast
 ## - a working fire-back is answered (stick_start), one it can't pay says "ki", and it costs the smallest stage's 12
-## - press_refused: stun_limit on a stick stun held back, queue_expired on a request that runs out; the stick's "hit" when a blow ends its
+## - press_refused: none for a stick stun held back (the flick lands: it's no refusal), queue_expired on a request that runs out; the stick's "hit" when a blow ends its
 ##   wind-up. Off (press.refusedCue false), none of the new cues
 ## Ends on the verdict line.
 
@@ -194,7 +194,7 @@ func _stunLimit() -> void:
 		_step(S, r)
 		for _k in range(14):
 			_step(S)
-	_expect(_count("press_refused", "stun_limit", 0) >= 1, "a second stick stun in one string is held back, and said: stun_limit (%d)" % _count("press_refused", "stun_limit", 0))
+	_expect(_count("press_refused", "stun_limit", 0) == 0 and _count("stick_hit", "", 0) >= 2, "a second stick stun in one string is held back, and the flick lands: no refusal (stun_limit %d, hits %d)" % [_count("press_refused", "stun_limit", 0), _count("stick_hit", "", 0)])
 	SimCore.dispose(S)
 
 

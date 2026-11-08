@@ -110,6 +110,23 @@
       "type": "integer",
       "minimum": 0
     },
+    "lungeLight": {
+      "type": "object",
+      "required": [
+        "enabled"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The quick strike at range as a light lunge (controller-vision section 5), off.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "The switch."
+        }
+      }
+    },
     "repeatSec": {
       "type": "number",
       "minimum": 0
@@ -242,6 +259,69 @@
         "reelPer": {
           "type": "integer",
           "minimum": 0
+        }
+      }
+    },
+    "flickKeep": {
+      "type": "object",
+      "required": [
+        "enabled"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "A flick that can't start now is held until his first free tick (DirStick.keepOn; gauntlet-plan.md section 5).",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "recoverTicks": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "fullSend": {
+      "type": "object",
+      "required": [
+        "enabled"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "A stick strike held to his top stage sends, in its direction's family (DirStick.fullSendOn; slam-and-pace.md section 1).",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "atStage": {
+          "type": "string",
+          "enum": [
+            "top"
+          ]
+        },
+        "share": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bendDeg": {
+          "type": "number",
+          "minimum": 0
+        },
+        "downOnGround": {
+          "type": "string"
+        },
+        "airBh": {
+          "type": "number",
+          "minimum": 0
+        },
+        "families": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         }
       }
     }

@@ -32,6 +32,7 @@
     "legend_beam": true,
     "split_fit": true,
     "chip_clear": true,
+    "slam_hint": false,
     "legend_quiet": true,
     "quiet_hints": true,
     "forms_live": false,

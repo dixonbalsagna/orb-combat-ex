@@ -3873,6 +3873,548 @@
           "type": "integer",
           "minimum": 1,
           "description": "How many ticks a dodge may turn into a zip."
+        },
+        "flightStrikes": {
+          "type": "object",
+          "required": [
+            "enabled",
+            "rangeBh",
+            "bearing",
+            "takeBack",
+            "blows",
+            "kiByDistance",
+            "line",
+            "arc",
+            "parting",
+            "travel",
+            "chain",
+            "counter",
+            "missOpenTicks"
+          ],
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "The flight strikes switch (off): LT held with X, Y or B is a flight strike."
+            },
+            "rangeBh": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minItems": 2,
+              "maxItems": 2,
+              "description": "From and to, in body heights. Past it, today's long strike."
+            },
+            "bearing": {
+              "type": "object",
+              "required": [
+                "deadzone",
+                "towardDeg",
+                "awayDeg"
+              ],
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "properties": {
+                "deadzone": {
+                  "type": "number",
+                  "description": "Under this stick length, the zip.",
+                  "minimum": 0
+                },
+                "towardDeg": {
+                  "type": "number",
+                  "description": "Within this of toward: the line.",
+                  "minimum": 0
+                },
+                "awayDeg": {
+                  "type": "number",
+                  "description": "Within this of away: the parting shot.",
+                  "minimum": 0
+                }
+              },
+              "description": "The path from the left stick on the press's tick."
+            },
+            "takeBack": {
+              "type": "object",
+              "required": [
+                "ticks",
+                "needsLtHeld",
+                "faceFirst"
+              ],
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "properties": {
+                "ticks": {
+                  "type": "integer",
+                  "description": "A face press up to this many ticks after LT's press converts.",
+                  "minimum": 0
+                },
+                "needsLtHeld": {
+                  "type": "boolean",
+                  "description": "LT must still be held at the face press."
+                },
+                "faceFirst": {
+                  "type": "boolean",
+                  "const": false,
+                  "description": "The button first never converts (only false is built)."
+                }
+              },
+              "description": "The take-back (Game Design's ruling of 2026-11-06)."
+            },
+            "blows": {
+              "type": "object",
+              "required": [
+                "x",
+                "y",
+                "b"
+              ],
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "properties": {
+                "x": {
+                  "type": "object",
+                  "required": [
+                    "tell",
+                    "worth",
+                    "ki"
+                  ],
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "properties": {
+                    "tell": {
+                      "type": "integer",
+                      "description": "Ticks.",
+                      "minimum": 1
+                    },
+                    "worth": {
+                      "type": "number",
+                      "description": "In brawl light units.",
+                      "exclusiveMinimum": 0
+                    },
+                    "ki": {
+                      "type": "number",
+                      "description": "Its price before distance.",
+                      "minimum": 0
+                    }
+                  },
+                  "description": "X, the quick blow."
+                },
+                "y": {
+                  "type": "object",
+                  "required": [
+                    "tell",
+                    "damage",
+                    "ki"
+                  ],
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "properties": {
+                    "tell": {
+                      "type": "integer",
+                      "description": "Ticks.",
+                      "minimum": 1
+                    },
+                    "damage": {
+                      "type": "number",
+                      "description": "Its damage before the brawl's damageMul.",
+                      "exclusiveMinimum": 0
+                    },
+                    "ki": {
+                      "type": "number",
+                      "description": "Its price before distance.",
+                      "minimum": 0
+                    }
+                  },
+                  "description": "Y, the heavy blow."
+                },
+                "b": {
+                  "type": "object",
+                  "required": [
+                    "tell",
+                    "ki",
+                    "result"
+                  ],
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "properties": {
+                    "tell": {
+                      "type": "integer",
+                      "description": "Ticks.",
+                      "minimum": 1
+                    },
+                    "ki": {
+                      "type": "number",
+                      "description": "Its price before distance.",
+                      "minimum": 0
+                    },
+                    "result": {
+                      "type": "string",
+                      "enum": [
+                        "stagger"
+                      ],
+                      "description": "A tapped B: a stagger, never a send."
+                    }
+                  },
+                  "description": "B, the biggest blow."
+                }
+              },
+              "description": "The three blows."
+            },
+            "kiByDistance": {
+              "type": "object",
+              "required": [
+                "fromBh",
+                "toBh",
+                "add"
+              ],
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "properties": {
+                "fromBh": {
+                  "type": "number",
+                  "description": "Distance where the extra starts.",
+                  "minimum": 0
+                },
+                "toBh": {
+                  "type": "number",
+                  "description": "Distance where it is all added.",
+                  "minimum": 0
+                },
+                "add": {
+                  "type": "number",
+                  "description": "The most added.",
+                  "minimum": 0
+                }
+              },
+              "description": "The price rises with distance."
+            },
+            "line": {
+              "type": "object",
+              "required": [
+                "pastBh",
+                "reachTicks"
+              ],
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "properties": {
+                "pastBh": {
+                  "type": "number",
+                  "description": "He ends this far past him, on his other side.",
+                  "minimum": 0
+                },
+                "reachTicks": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "description": "Ticks in reach before his blow and after it."
+                }
+              },
+              "description": "The line through him."
+            },
+            "arc": {
+              "type": "object",
+              "required": [
+                "ticks",
+                "riseBh",
+                "endUpBh",
+                "reachTicks"
+              ],
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "properties": {
+                "ticks": {
+                  "type": "integer",
+                  "description": "The loop's ticks at least.",
+                  "minimum": 1
+                },
+                "riseBh": {
+                  "type": "number",
+                  "description": "Its top over his head.",
+                  "minimum": 0
+                },
+                "endUpBh": {
+                  "type": "number",
+                  "description": "It ends this far up, behind him.",
+                  "minimum": 0
+                },
+                "reachTicks": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "description": "Ticks in reach before his blow and after it."
+                }
+              },
+              "description": "The arcs over and under him (SimFighter.loopRush)."
+            },
+            "parting": {
+              "type": "object",
+              "required": [
+                "addBh",
+                "minBh",
+                "maxBh"
+              ],
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "properties": {
+                "addBh": {
+                  "type": "number",
+                  "description": "He ends this much further than he started.",
+                  "minimum": 0
+                },
+                "minBh": {
+                  "type": "number",
+                  "description": "At least this far from him.",
+                  "minimum": 0
+                },
+                "maxBh": {
+                  "type": "number",
+                  "description": "Never further.",
+                  "minimum": 0
+                }
+              },
+              "description": "The parting shot."
+            },
+            "travel": {
+              "type": "object",
+              "required": [
+                "minTicks",
+                "bhPerTick"
+              ],
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "properties": {
+                "minTicks": {
+                  "type": "integer",
+                  "description": "At least.",
+                  "minimum": 1
+                },
+                "bhPerTick": {
+                  "type": "number",
+                  "description": "At most (RL-076).",
+                  "exclusiveMinimum": 0
+                }
+              },
+              "description": "Travel's floor."
+            },
+            "chain": {
+              "type": "object",
+              "required": [
+                "lateTicks",
+                "afterTicks",
+                "tellMul",
+                "tellMin",
+                "kiMul",
+                "worthMul",
+                "worthFloor",
+                "repeatFullTell"
+              ],
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "properties": {
+                "lateTicks": {
+                  "type": "integer",
+                  "description": "A press in its last ticks is kept.",
+                  "minimum": 0
+                },
+                "afterTicks": {
+                  "type": "integer",
+                  "description": "A press this soon after it starts the next.",
+                  "minimum": 0
+                },
+                "tellMul": {
+                  "type": "number",
+                  "description": "A link's tell.",
+                  "exclusiveMinimum": 0
+                },
+                "tellMin": {
+                  "type": "integer",
+                  "description": "Never under.",
+                  "minimum": 1
+                },
+                "kiMul": {
+                  "type": "number",
+                  "description": "Each link's price on the one before.",
+                  "exclusiveMinimum": 0
+                },
+                "worthMul": {
+                  "type": "number",
+                  "description": "Each link's worth.",
+                  "exclusiveMinimum": 0
+                },
+                "worthFloor": {
+                  "type": "number",
+                  "description": "Never under.",
+                  "minimum": 0
+                },
+                "repeatFullTell": {
+                  "type": "integer",
+                  "description": "The same path and button this many times running has its full tell.",
+                  "minimum": 1
+                }
+              },
+              "description": "Chaining."
+            },
+            "counter": {
+              "type": "object",
+              "required": [
+                "heavyBefore",
+                "mul",
+                "reelTicks",
+                "heavyThrownBefore"
+              ],
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "properties": {
+                "heavyBefore": {
+                  "type": "integer",
+                  "description": "A heavy that lands from this many ticks before the arrival counters.",
+                  "minimum": 0
+                },
+                "mul": {
+                  "type": "number",
+                  "description": "The counter's blow.",
+                  "exclusiveMinimum": 0
+                },
+                "reelTicks": {
+                  "type": "integer",
+                  "description": "He reels this long.",
+                  "minimum": 0
+                },
+                "heavyThrownBefore": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A B whose wind-up starts this many ticks before the arrival, until his blow, counters (re-ruled 2026-11-07)."
+                }
+              },
+              "description": "The counter."
+            },
+            "missOpenTicks": {
+              "type": "integer",
+              "description": "A dodge's miss leaves him open this long.",
+              "minimum": 0
+            },
+            "ai": {
+              "type": "object",
+              "required": [
+                "share",
+                "shareBand",
+                "buttons",
+                "kiReserve",
+                "brawlGuardSec",
+                "paths"
+              ],
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "properties": {
+                "paths": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "minItems": 5,
+                  "maxItems": 5,
+                  "description": "Weights: zip, line, over, under, parting."
+                },
+                "share": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The computer's target share of its blows (read by QA; its lever is ai.json flightShare)."
+                },
+                "shareBand": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "description": "The band around it."
+                },
+                "buttons": {
+                  "type": "object",
+                  "required": [
+                    "x",
+                    "y",
+                    "b"
+                  ],
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "The computer's button weights.",
+                  "properties": {
+                    "x": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "y": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "b": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  }
+                },
+                "kiReserve": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "It never presses one, nor a chain link, without this much left after."
+                },
+                "brawlGuardSec": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "From a brawl: a rival who has guarded this long gets the line or an arc."
+                }
+              },
+              "description": "The computer's picks."
+            }
+          },
+          "description": "Game Design's flight strikes on the zip (docs/design/playable-build.md section 1)."
         }
       },
       "description": "The zip as a move in the brawl's reach (Encounter's zip slice).",
@@ -4548,6 +5090,11 @@
         },
         "refusedCue": {
           "type": "boolean"
+        },
+        "refusedBurstTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Presses the director lets go of no more than this many ticks apart are one burst, told once (DirRefuse)."
         },
         "ackQueued": {
           "type": "boolean",

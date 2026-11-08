@@ -98,15 +98,18 @@ func _track(S: SimState, n: int, into: Dictionary = {}) -> Dictionary:
 			if f.y <= WorldTerrain.groundY(S, f.x, f.z) + EPS:
 				continue
 			var at: String = "%s %s at %.0f (moved %.0f), from %.1f to %.1f (floor %.1f, ground %.1f) %s rush, %s" % [f.name, String(f.state), f.x, SimWrap.sdx(float(p[0]), f.x), float(p[1]), f.y, WorldWater.floorAt(S, f.x, f.z), WorldTerrain.groundY(S, f.x, f.z), "on a" if bool(p[6]) else "no", _last(S)]
-			if bool(p[7]) or f.state == "down" or ((f.state == "free" or f.state == "locked") and rise <= maxf(f.vy, float(p[8])) * SimConst.DT + 1.0e-3):   # a launch's last tick, ending down off the ground; his own flight or the pair's drift (he keeps the stick, row 9)
+			if bool(p[7]) or f.state == "down" or ((f.state == "free" or f.state == "locked") and rise <= maxf(maxf(f.vy, float(p[8])), _flown(S, f, p)) * SimConst.DT + 1.0e-3):   # a launch's last tick, ending down off the ground; his own flight or the pair's drift (he keeps the stick, row 9)
 				if rise > float(r.own):
 					r.own = rise
 					r.ownAt = at
 				continue
-			if rise > float(r.lift) and f.y <= WorldWater.floorAt(S, f.x, f.z) + EPS:
+			var fl1: float = WorldWater.floorAt(S, f.x, f.z)
+			if f.y >= fl1 - EPS:
+				rise -= maxf(0.0, fl1 - float(p[5]))   # he ends on his floor: what the floor rose by under his step is walking along it, not a lift
+			if rise > float(r.lift) and f.y <= fl1 + EPS:
 				r.lift = rise
 				r.at = at
-			if rise > LIMIT + EPS and f.y <= WorldWater.floorAt(S, f.x, f.z) + EPS:
+			if rise > LIMIT + EPS and f.y <= fl1 + EPS:
 				r.over += 1
 	return r
 
@@ -256,6 +259,15 @@ func _fight(matches: int, riseTicks: int) -> Dictionary:
 		_floor(false)
 		SimCore.dispose(S)
 	return r
+
+
+## The most his own flight can climb at in a tick he started free and on no rush: the core moves him before the director's lines run,
+## and a lock on the same tick zeroes his speed, so neither the speed before nor after it tells. His flight's top climb, the dash's
+## (and the kick's overspeed when it's on): the kick leaves at most of that on its first tick.
+func _flown(S: SimState, f, p: Array) -> float:
+	if String(p[3]) != "free" or bool(p[6]):
+		return 0.0
+	return SimFighter.flightSpeed(S, f, true) * 0.85 * (SimKick.topShare if (S.kickOn and SimKick.overOn) else 1.0)
 
 
 ## Row 11: the down throw at a column about that deep: [his height less his floor, the opening's ticks, splashes, the ground's change].

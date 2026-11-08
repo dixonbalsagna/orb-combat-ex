@@ -104,6 +104,7 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 	out.append(S.depthOn)   # fight lanes (L0)
 	if S.powerOn:   # one energy model: only when on, so a match without it hashes as before
 		out.append(S.powerFlat)
+		out.append(S.powerTravel)
 	if S.cata != null:   # the catastrophe's state: only once a blast cloud set it, so a match without one hashes as before
 		_obj(out, S.cata, ["ash", "ashFrom", "ashTo", "ashLeft"])
 	if S.hitstopOn:   # hit-stop by weight's freeze budget: only when on, so a match without it hashes as before

@@ -282,6 +282,13 @@ static func _startStruggle(S: SimState, ex, variant: String, dAdd: float) -> voi
 				var j: int = mini(offs.size() - 1, int(SimRng.keyed(int(S.game.seed), "beam.struggle.at", key) * float(offs.size())))
 				at.append(k * pt + int(offs[j]))
 		st["ai" + side] = at
+	if WorldStruggleMeet.on():
+		# World's meeting point (docs/world/struggle-meet.md): the beams carve as they did until now, then stop where their fronts are; the point's heights for the end, and the ring clock
+		st["ys"] = []
+		st["lastRing"] = -1
+		for b in S.beams:
+			if b.A == A or b.A == D:
+				b.stopAt = b.p * b.len if b.stopAt < 0.0 else minf(b.stopAt, b.p * b.len)
 	DirExchange.schedule(ex, ex.t + c.dur, "clashResolve", {"aw": c.aw, "variant": variant, "bs": st})
 	var e = _cue(S, A, D, "beam_struggle", "start", c.mid)
 	e.n = S.tick + endTicks
@@ -298,12 +305,50 @@ static func _cue(S: SimState, f, o, name: String, text: String, mid: float, sour
 	return e
 
 
+## The struggle's point in the world with A's hands at 0 and D's at 1: [x, y, z] (the cue's formula; arrays, not a Vector3, to stay in float64).
+static func _meetPoint(A, D, mid: float) -> Array:
+	return [SimWrap.wrap(A.x + SimWrap.sdx(A.x, D.x) * mid), A.y + 38.0 + (D.y - A.y) * mid, A.z + (D.z - A.z) * mid]
+
+
+## One side of WorldStruggleMeet's event: his slot, and what his beam brought. A beam of the stick's own move (DirBeamMove) brings its stage of its
+## count; any other (a signature's beam, the computer's old path) says nothing, which is all of his energy, and counts as a signature when its variant is one
+## (x9 in World's meeting). `variant` is the attacker's beam's; the defender's is his live beam's.
+static func _meetSide(S: SimState, f, variant: String) -> Dictionary:
+	var out := {"slot": S.fighters.find(f)}
+	var stg: int = DirBeamMove.fired(f)
+	if stg > 0:
+		out["stage"] = stg
+		out["count"] = DirBeamMove.stageCount(f)
+		out["sig"] = false
+		return out
+	var vn: String = variant
+	if vn == "":
+		for b in S.beams:
+			if b.A == f:
+				vn = b.variant
+	out["sig"] = not DirData.sigByName(vn).is_empty()
+	return out
+
+
+## The end-of-struggle event of World's meeting point (docs/world/struggle-meet.md), built the same way for the ring and the end: the point, how it ended,
+## the seconds it ran, the point's lowest height in the last second, and both sides.
+static func _meetEvent(S: SimState, ex, st: Dictionary, how: String, mid: float, variant: String) -> Dictionary:
+	var p: Array = _meetPoint(ex.A, ex.D, mid)
+	var low: float = float(p[1])
+	for y in st.get("ys", []):
+		low = minf(low, float(y))
+	return {"x": p[0], "y": p[1], "z": p[2], "how": how, "run": maxf(0.0, ex.t - float(st.t0)), "lowY": low,
+		"a": _meetSide(S, ex.A, variant), "d": _meetSide(S, ex.D, "")}
+
+
 ## The struggle's end, for VFX's shockwave and World's crater (beamStruggle.endEvent; Orb's note): the cue beam_clash_end. text the
 ## outcome (win: overwhelmed or run out on his side; break: he let go; draw: they detonated), x, y, z the meeting point in the world,
 ## amount the point (0 at A's hands to 1 at D's), energy the clash's (both beams' damage at the pair's mean tier), winner and loser
 ## their slots (-1 at a draw), n the surges it took, source the ending as beam_end names it (time, overwhelmed, letgo, detonate). Called
 ## once for any ending. Off, nothing is emitted. (World's struggle-meeting-point call goes here, ahead of the switch: its own.)
-static func _clashEnd(S: SimState, A, D, W, L, outcome: String, how: String, mid: float, st: Dictionary) -> void:
+## With World's meeting point on (`res`, WorldStruggleMeet.meet's return, made at the top of _resolveStruggle), the cue also carries r (the bowl's radius, 0 for a scorch
+## or an air burst), rGlass (the wave's radius before the height cut), shape ("bowl", "scorch" or "air") and dug (the energy dug).
+static func _clashEnd(S: SimState, A, D, W, L, outcome: String, how: String, mid: float, st: Dictionary, res: Dictionary = {}) -> void:
 	if not bool(_bs().get("endEvent", false)):
 		return
 	SimFx.cue(S, W if W != null else A, "beam_clash_end", outcome, how)
@@ -316,6 +361,11 @@ static func _clashEnd(S: SimState, A, D, W, L, outcome: String, how: String, mid
 	e.winner = float(S.fighters.find(W)) if W != null else -1.0
 	e.loser = float(S.fighters.find(L)) if L != null else -1.0
 	e.n = int(st.surgesA) + int(st.surgesD)
+	if bool(res.get("on", false)):
+		e.r = float(res.r)
+		e.rGlass = float(res.glassR)
+		e.shape = String(res.kind)
+		e.dug = float(res.dug)
 
 
 ## struggle.pushMode (Game Design, playable-build.md section 3): what a player presses to push in a beam struggle, his own option, by slot from
@@ -405,6 +455,16 @@ static func clashTick(S: SimState, ex) -> void:
 		elif what == "surge":
 			_press(S, ex, f, side, rel - DirBrawl._waited(f), st, bs)
 	var mid: float = float(st.mid)
+	if st.has("ys"):
+		# World's meeting point: the point's height for the last second (the end reads its lowest), and a ring at the point at most every ringMinGapSec
+		var ys: Array = st.ys
+		ys.append(float(_meetPoint(ex.A, ex.D, mid)[1]))
+		if ys.size() > 60:
+			ys.pop_front()
+		if rel > 0 and WorldStruggleMeet.ringDue(int(st.lastRing), S.tick):
+			var total: float = float(pt * int(bs.pulses) + int(bs.surgeTicks))
+			WorldStruggleMeet.ring(S, _meetEvent(S, ex, st, "time", mid, ""), clampf(float(rel) / total, 0.0, 1.0))
+			st.lastRing = S.tick
 	if mid >= 1.0 or mid <= 0.0 or st.letGo != "" or rel >= pt * int(bs.pulses) + int(bs.surgeTicks):
 		rb.t = ex.t   # it ends: the resolve beat runs on the next tick
 
@@ -474,6 +534,12 @@ static func _resolveStruggle(S: SimState, ex, args) -> void:
 		return
 	var beam: float = 260.0 * sigDamageMul()
 	var slip: bool = st.letGo != ""
+	var res: Dictionary = {"on": false}   # World's meeting point (docs/world/struggle-meet.md): the wave and the crater, once, for any ending, before what the ending does
+	var ev: Dictionary = {}
+	if WorldStruggleMeet.on():
+		var how: String = "letgo" if slip else ("overwhelmed" if (mid >= 1.0 or mid <= 0.0) else ("detonate" if absf(mid - 0.5) <= float(bs.drawBand) else "time"))
+		ev = _meetEvent(S, ex, st, how, mid, String(args.variant))
+		res = WorldStruggleMeet.meet(S, ev)
 	if slip or mid >= 1.0 or mid <= 0.0:
 		var Wn = (D if st.letGo == "A" else A) if slip else (A if mid >= 1.0 else D)
 		var Ls = A if Wn == D else D
@@ -483,12 +549,21 @@ static func _resolveStruggle(S: SimState, ex, args) -> void:
 		var ux: float = dxs / L
 		var uy: float = dyy / L
 		var len: float = SimMathx.jmin(4200.0 * SimConst.WS, L + float(Wn.ld.beamOvershoot[_tierIx(Wn)]) * SimConst.WS)
-		fireBeam(S, Wn, Wn.x, Wn.y + 38.0, ux, uy, len, String(args.variant))
+		if bool(res.on) and not slip:
+			# overwhelmed: the winner's beam carves from the meeting point on through the loser (the stretch from his hand to the point had its carve; it is not made again)
+			var fx0: float = float(ev.x)
+			var fy0: float = float(ev.y)
+			var pdx: float = SimWrap.sdx(fx0, Ls.x)
+			var pdy: float = (Ls.y + 36.0) - fy0
+			var pl: float = SimDamage.jor(SimDetMath.hypot(pdx, pdy), 1.0)
+			fireBeam(S, Wn, fx0, fy0, pdx / pl, pdy / pl, SimMathx.jmin(4200.0 * SimConst.WS, pl + float(Wn.ld.beamOvershoot[_tierIx(Wn)]) * SimConst.WS), String(args.variant))
+		else:
+			fireBeam(S, Wn, Wn.x, Wn.y + 38.0, ux, uy, len, String(args.variant))
 		if slip:
 			SimFx.afterimage(S, Ls)
 			SimDamage.hit(S, ex, Wn, Ls, beam * float(bs.timeLoss.share), {"ignoreStance": true, "stop": 0.12, "shake": 12.0, "big": true})
 			_cue(S, Wn, Ls, "beam_end", "time", mid, "letgo")
-			_clashEnd(S, A, D, Wn, Ls, "break", "letgo", mid, st)
+			_clashEnd(S, A, D, Wn, Ls, "break", "letgo", mid, st, res)
 			SimEvents.feed(S, Ls.name + " LETS GO", "he slips aside and the beam carries on past him")
 			if S.game.ko == null:
 				DirExchange.decisive(S, ex, Wn, Ls, "beam_clash")
@@ -498,7 +573,7 @@ static func _resolveStruggle(S: SimState, ex, args) -> void:
 			SimDamage.hit(S, ex, Wn, Ls, beam * (float(ov.winnerBeam) + float(ov.ownBeam)), {"ignoreStance": true, "stop": 0.16, "shake": 18.0, "big": true})
 			_blast(S, Wn, Ls.x, Ls.y + 30.0, (70.0 + Wn.tier * 32.0) * SimConst.WS)
 			_cue(S, Wn, Ls, "beam_end", "overwhelmed", mid)
-			_clashEnd(S, A, D, Wn, Ls, "win", "overwhelmed", mid, st)
+			_clashEnd(S, A, D, Wn, Ls, "win", "overwhelmed", mid, st, res)
 			SimEvents.feed(S, Ls.name + " OVERWHELMED", "the meeting point reached him")
 			if S.game.ko == null:
 				var aim: float = Wn.input.my * float(ov.stickUy) if Wn.ai == null else 0.0   # up or down aims the overwhelm
@@ -506,7 +581,8 @@ static func _resolveStruggle(S: SimState, ex, args) -> void:
 				DirExchange.decisive(S, ex, Wn, Ls, "beam_clash")
 	elif absf(mid - 0.5) <= float(bs.drawBand):
 		var hi = A if A.tier >= D.tier else D
-		_blast(S, hi, SimWrap.wrap(A.x + SimWrap.sdx(A.x, D.x) * mid), A.y + 38.0 + (D.y - A.y) * mid - 8.0, (70.0 + hi.tier * 32.0) * SimConst.WS)
+		if not bool(res.on):   # with World's meeting point the wave and the crater above are this blast
+			_blast(S, hi, SimWrap.wrap(A.x + SimWrap.sdx(A.x, D.x) * mid), A.y + 38.0 + (D.y - A.y) * mid - 8.0, (70.0 + hi.tier * 32.0) * SimConst.WS)
 		var share: float = float(bs.detonate.otherBeam)
 		SimDamage.hit(S, ex, D, A, beam * share, {"ignoreStance": true, "stop": 0.16, "shake": 18.0, "big": true})
 		if S.game.ko == null:
@@ -516,14 +592,14 @@ static func _resolveStruggle(S: SimState, ex, args) -> void:
 			DirLaunch.knockBack(S, A, D)
 		ex.loser = -1
 		_cue(S, null, null, "beam_end", "detonate", mid)
-		_clashEnd(S, A, D, null, null, "draw", "detonate", mid, st)
+		_clashEnd(S, A, D, null, null, "draw", "detonate", mid, st, res)
 		SimEvents.feed(S, "THE BEAMS DETONATE", "the struggle ran out in the middle")
 	else:
 		var Wn2 = A if mid > 0.5 else D
 		var Ls2 = D if mid > 0.5 else A
 		SimDamage.hit(S, ex, Wn2, Ls2, beam * float(bs.timeLoss.share), {"ignoreStance": true, "stop": 0.12, "shake": 12.0, "big": true})
 		_cue(S, Wn2, Ls2, "beam_end", "time", mid)
-		_clashEnd(S, A, D, Wn2, Ls2, "win", "time", mid, st)
+		_clashEnd(S, A, D, Wn2, Ls2, "win", "time", mid, st, res)
 		SimEvents.feed(S, Ls2.name + " GIVES WAY", "the struggle ran out on his side")
 		if S.game.ko == null:
 			DirExchange.decisive(S, ex, Wn2, Ls2, "beam_clash")

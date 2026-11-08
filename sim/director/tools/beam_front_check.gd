@@ -167,7 +167,7 @@ func _fireBack() -> void:
 	_expect(not DirBeamPlay.windowOpen(S, S.fighters[0]), "and not on the shooter")
 	_expect(DirBeamPlay.fireBack(S, S.fighters[1]), "the stick's fire-back, at level 1's ki")
 	_expect(S.game.clash != null, "and that's a struggle")
-	_expect(S.fighters[1].ki == 100.0 - float(DirBeamPlay.frontCfg().answerKi), "at its price")
+	_expect(S.fighters[1].ki == 100.0 - DirBeamPlay.answerCost(), "at its price (%.0f: the smallest stage's with the beam's own move on)" % DirBeamPlay.answerCost())
 	SimCore.dispose(S)
 
 

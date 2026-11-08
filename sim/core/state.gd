@@ -85,6 +85,7 @@ var intro := IntroState.new()         # the intro phase (sim/core/intro.gd): the
 var depthOn: bool = false             # fight lanes: depth is physical (the director's depth.json switch, or the setup's "depth"); off until L4
 var powerOn: bool = false             # one energy model (sim/core/power.gd): data/fight/power.json's switch or the setup's
 var powerFlat: float = 5000.0         # ... flat-out flight's base for this match
+var powerTravel: float = 2.0          # ... a send's factor along the line for this match: launchTravel, or the setup's "travel" (the page's slider)
 var kickOn: bool = false              # the kick and the coin turn (sim/core/kick.gd): data/fight/kick.json's switch, or the setup's "kick"
 var kickInstant: float = 0.8          # ... its share of top speed on the first tick: the data's, or the setup's "instant"
 var kickClimb: int = 8                # ... and its ticks to top speed: the data's, or the setup's "climbTicks"
@@ -843,6 +844,9 @@ class FxEvent:
 	var dt: float = 0.0
 	var frozen: bool = false
 	var r: float = 0.0           # crater: bowl radius
+	var rGlass: float = 0.0      # beam_clash_end: the meeting wave's radius before the height cut (the towers' glass reaches this far), WorldStruggleMeet
+	var dug: float = 0.0         # beam_clash_end: the energy the meeting crater dug (the wave's strength)
+	var shape: String = ""       # beam_clash_end: what the ground took, "bowl", "scorch" or "air" ("ground" is the float above: a debris event's floor)
 	var depth: float = 0.0       # crater: bowl depth
 	var rim: float = 0.0         # crater: rim height
 	var energy: float = 0.0      # crater: impact-energy scalar

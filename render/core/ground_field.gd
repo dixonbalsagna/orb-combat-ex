@@ -24,6 +24,12 @@ extends RefCounted
 ## records go to an RGBAF texture, a column per S.craters entry: (x, r, depth, rim) and (skid, sdepth, energy, t).
 ## Everything is rebuilt from state (S.craters, S.deform, S.scorch, S.water), incrementally when the crater list
 ## only grew, fully otherwise (a new match, a replay seek, a snapshot restore); events are never needed.
+## On the tile ground of a field world (tile_field and S.frame set) a crater World's store holds is left out of the rows
+## (held): the tile ground draws it, its bowl and its colours, from the store, where it lies on the planet
+## (RenderTileGround._bowls, tile_read.gdshaderinc bowl_new; WorldStore.heightDelta in ground_at). Its S.craters entry keeps
+## the strip x it was dug at, which a swing of the line doesn't move, and the sim's deform doesn't carry its bowl: in the
+## rows it rode with the line after a swing and, past the residual's spread, doubled the store's bowl. A crater the store
+## didn't take (at its cap) digs S.deform as ever and stays in the rows.
 ## Reads the sim only; never writes it.
 
 const ROW_BASE := 0
@@ -64,6 +70,8 @@ var htex: ImageTexture               # change them every tick; the whole field a
 var g := PackedFloat32Array()        # residual per column
 var lists := PackedFloat32Array()    # K rows of NC: crater index or -1
 var cdata := PackedFloat32Array()    # LIST_W x 2 texels x 4
+var held := PackedByteArray()        # per S.craters entry: 1 when World's store holds it on the tile ground (_store_holds): not in the rows
+var _claimed: Dictionary = {}        # the store's crater records an entry has claimed (record index -> true)
 var dirty := PackedByteArray()       # columns whose ground changed since the props last looked
 var any_dirty: bool = false
 var full_rebuilds: int = 0           # for tests
@@ -123,6 +131,8 @@ func rebuild(S: SimState) -> void:
 	full_rebuilds += 1
 	lists.fill(-1.0)
 	cdata.fill(0.0)
+	held.resize(0)
+	_claimed.clear()
 	for idx in range(S.craters.size()):
 		_add(S, idx)
 	for i in range(SimConst.NC):
@@ -492,9 +502,12 @@ func _add(S: SimState, idx: int) -> void:
 	var reach: float = c.r * (1.0 + WorldCrater.RIM_OUT) + absf(c.skid)
 	var c0: int = int(floor(c.x / SimConst.COL))
 	var n: int = int(ceil(reach / SimConst.COL)) + 1
+	var keep: bool = not _store_holds(S, idx)
 	for kk in range(-n, n + 1):
 		var i: int = (c0 + kk + nc) % nc
 		dirty[i] = 1
+		if not keep:
+			continue   # the store's: the tile ground draws it where it lies (the columns still look again: the ground there changed)
 		var slot: int = -1
 		for k in range(K):
 			var cur: int = int(lists[k * nc + i])
@@ -506,6 +519,26 @@ func _add(S: SimState, idx: int) -> void:
 		for k in range(K - 1, slot, -1):
 			lists[k * nc + i] = lists[(k - 1) * nc + i]
 		lists[slot * nc + i] = float(idx)
+
+
+## Is S.craters[idx] World's store's, on the tile ground of a field world: a crater record in the store of the same time
+## and radius that no earlier entry has claimed (an entry and its record are made by the same dig, WorldCrater). Sets held[idx].
+func _store_holds(S: SimState, idx: int) -> bool:
+	if held.size() <= idx:
+		held.resize(idx + 1)
+	held[idx] = 0
+	if tile_field == null or S.frame == null or int(S.storeN) == 0:
+		return false
+	var c = S.craters[idx]
+	for k in range(int(S.storeN)):
+		var o: int = k * WorldStore.STRIDE
+		if int(S.store[o]) != WorldStore.KIND_CRATER or _claimed.has(k):
+			continue
+		if absf(S.store[o + 8] - float(c.t)) < 1.0e-6 and absf(S.store[o + 4] - float(c.r)) < 1.0e-3:
+			_claimed[k] = true
+			held[idx] = 1
+			return true
+	return false
 
 
 ## The residual at column i: the sim's deform minus what the listed craters and furrows give on the fighter plane.

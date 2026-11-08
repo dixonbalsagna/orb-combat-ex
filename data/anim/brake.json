@@ -6,7 +6,12 @@
   "decel_ref": 3000,
   "min_w": 0.5,
   "enter_ticks": 4,
-  "exit_ticks": 8,
+  "exit_ticks": 5,
   "lead_rate": 18,
-  "whip": 3.2, "judder": 0.1, "judder_hz": 9.0
+  "whip": 3.2, "judder": 0.1, "judder_hz": 9.0,
+  "unwind_rate": 9, "land_s": 0.6,
+  "fighters": {
+    "PROTAGONIST": {"poses": {"enter": "ax.plant_p.dig", "hold": "ax.plant_p.hold", "exit": "ax.plant_p.exit"}, "land": "ax.land_p.hold"},
+    "RIVAL": {"poses": {"enter": "ax.plant_r.dig", "hold": "ax.plant_r.hold", "exit": "ax.plant_r.exit"}, "land": "ax.land_r.hold"}
+  }
 }

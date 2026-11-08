@@ -45,12 +45,13 @@ patch('render/core/sim_host.gd', [
   [`\tif ${stepCall}:`, `\tif (lan.tick(inputs[lan.hubSlot]) if lan != null else ${stepCall}):`],
   ['func advance(frame_dt: float, vw: float, vh: float) -> int:\n\tif paused:\n', 'func advance(frame_dt: float, vw: float, vh: float) -> int:\n\tif paused:\n\t\tif lan != null:\n\t\t\tlan.idle()   # the link and the packets go on through a pause, so the other PC waits instead of losing the link\n'],
   ['func toggle_ai(idx: int) -> void:\n', 'func toggle_ai(idx: int) -> void:\n\tif lan != null:\n\t\treturn   # a pad leaving must not hand one PC\'s fighter to its AI: the PCs would part\n'],
+  ['\t_read_ahead(frame_dt, Time.get_ticks_usec() - t0)\n\treturn n\n', '\t_read_ahead(frame_dt, Time.get_ticks_usec() - t0)\n\tif lan != null:\n\t\tlan.view()   # the picture is of this PC\'s fight, whatever ran since the last tick\n\treturn n\n'],
 ]);
 patch('render/core/main.gd', [
   ['func start_match(seed: int, ai: Dictionary = {}, setup = null) -> void:\n', 'func start_match(seed: int, ai: Dictionary = {}, setup = null) -> void:\n\tif host.lan != null:\n\t\treturn   # one match in the private LAN test\n'],
   ['func _on_menu_started(cfg: Dictionary) -> void:\n', 'func _on_menu_started(cfg: Dictionary) -> void:\n\tif host.lan != null:\n\t\treturn\n'],
   ['\tvar ai := {"p1": false, "p2": not two}\n', '\tvar ai := {"p1": false, "p2": not two}\n\tvar lan_on: bool = args.has("lan-host") or args.has("lan-join") or args.has("lan-loop")\n\tif lan_on:\n\t\tai = NetLan.aiFor(args)\n'],
-  ['\tif bool(cfg.get("intros", true)):\n\t\tstart_match(sd, ai)\n', '\tif lan_on:\n\t\tstart_match(NetLan.SEED, ai, NetLan.setupFor(args))\n\t\thost.lan = NetLan.new(host, args)\n\t\tsplit_rig.test_human_slot = -2 if host.lan.two else host.lan.hubSlot   # this PC\'s player is the human, for the camera: their pane is the bigger, as against the computer (with two fights, the one with no AI in the fight S holds)\n\telif bool(cfg.get("intros", true)):\n\t\tstart_match(sd, ai)\n'],
+  ['\tif bool(cfg.get("intros", true)):\n\t\tstart_match(sd, ai)\n', '\tif lan_on:\n\t\tstart_match(NetLan.SEED, ai, NetLan.setupFor(args))\n\t\thost.lan = NetLan.new(host, args)\n\t\thost.lan.partnerAt = CamParams.WRECK_AT   # the KO close-up plays on his own fight; his partner\'s two sim ticks after (Camera)\n\t\tsplit_rig.test_human_slot = -2 if host.lan.two else host.lan.hubSlot   # this PC\'s player is the human, for the camera: their pane is the bigger, as against the computer (with two fights, the one with no AI in the fight S holds)\n\telif bool(cfg.get("intros", true)):\n\t\tstart_match(sd, ai)\n'],
   ['\t\thost.hub.claimed[s] = true\n\tstarted = true\n', '\t\thost.hub.claimed[s] = true\n\tif lan_on and host.lan.hubSlot == 1:   # the joiner plays the second fighter, so its pad is the hub\'s second slot: its rumble and its struggle follow that fighter\n\t\tNetLan.moveHub(host.hub, 0, 1)\n\tstarted = true\n'],
   ['\tstart_match(int(args["seed"]) if args.has("seed") else fresh_seed())\n', '\tstart_match(int(args["seed"]) if args.has("seed") else fresh_seed())\n\tif args.has("lan-loop") and DisplayServer.get_name() == "headless":\n\t\t_on_menu_started({})   # no window, no menu, so no warning to show: a test only\n'],
 ]);
@@ -188,8 +189,8 @@ writeFileSync(join(out, 'firewall-remove.ps1'), crlf([
   'Start-Sleep -Seconds 4',
 ]));
 const words = readFileSync(join(tree, 'net', 'tools', 'lan_words.txt'), 'utf8').replaceAll('{HOST_IP}', a['host-ip']);
-// Legal RL-230's words, checked: its WHO PLAYS line as it stands, a plain word that a link opens, and the public build's privacy line nowhere.
-if (!words.includes("WHO PLAYS: Only Orb plays and watches, on both PCs, with nobody else in the room. This build has a flashing-effects warning; read it first. Don't copy, record, share or post this folder, the screens or the main PC's address.")) stop('lan_words.txt: the WHO PLAYS line is not RL-230\'s');
+// Legal's words, checked: RL-253's WHO PLAYS line as it stands (Orb and Orb 2, RL-230's terms otherwise), a plain word that a link opens, and the public build's privacy line nowhere.
+if (!words.includes("WHO PLAYS: Only Orb and Orb 2 play and watch, one on each PC, with nobody else in either room. This build has a flashing-effects warning; each of you reads it first. Don't copy, record, share or post this folder, the screens or the main PC's address.")) stop('lan_words.txt: the WHO PLAYS line is not RL-253\'s');
 if (!words.includes("Two fights share one globe, so craters and damage from the other fight can appear in the world.")) stop('lan_words.txt: RL-241\'s sentence must be in the words before the 2v2 shortcuts go in');
 if (!words.includes("Fighters in the other fight can hit you, and your partner's fight isn't shown on your screen.")) stop('lan_words.txt: RL-249\'s sentence must be in the words before the together shortcuts go in');
 if (!/opens a network link between the two PCs/.test(words)) stop('lan_words.txt: it must say a link opens');

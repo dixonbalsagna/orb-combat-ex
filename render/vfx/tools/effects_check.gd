@@ -232,6 +232,7 @@ func _run() -> void:
 	_energy_heads()
 	_beam_front()
 	_other_fights()
+	_shared_register()
 	_clash_wave()
 	_shot_from_outside()
 	_crack_heights()
@@ -7232,7 +7233,7 @@ func _shot_from_outside() -> void:
 
 
 ## The clash's shockwave (docs/vfx/clash-shockwave.md; docs/world/struggle-meet.md; Legal RL-246): the growth rings come from World's cue `struggle_ring`, at most one in 2 s whatever arrives, rising over at least 6 ticks, behind the fighters,
-## and none for a pulse; ONE release at the end (`beam_clash_end` with r, rGlass, dug and the ground's shape): one rise of at least 0.3 s and one fall of at least 1 s, a ring out to the bowl, or a thin ring at the glass radius with the burn
+## and none for a pulse; ONE release at the end (`beam_clash_end` with r, rGlass, dug and `shape`): one rise of at least 0.3 s and one fall of at least 1 s, a ring out to the bowl, or a thin ring at the glass radius with the burn
 ## in the air for scorch and air, a dust dome at most 6 body heights across, started after the cue's own tick, never two in one tick; a cue without the fields reads the crater by tier; off with the switch.
 func _clash_wave() -> void:
 	print("the clash's shockwave")
@@ -7272,7 +7273,7 @@ func _clash_wave() -> void:
 	_check(ring_bit != null and ring_bit.rise >= 0.1 - 1e-6, "a growth ring rises over at least 6 ticks (%.2f s)" % (ring_bit.rise if ring_bit != null else -1.0))
 	# the release over a bowl
 	var end := func(r: float, glass: float, dug: float, ground: String, y: float) -> Dictionary:
-		return {"actor": 0, "kind": "beam_clash_end", "text": "draw", "source": "detonate", "x": mid_x, "y": y, "z": 0.0, "r": r, "rGlass": glass, "dug": dug, "ground": ground}
+		return {"actor": 0, "kind": "beam_clash_end", "text": "draw", "source": "detonate", "x": mid_x, "y": y, "z": 0.0, "r": r, "rGlass": glass, "dug": dug, "shape": ground}
 	var ring_before: int = int(h.clash_wave.made.get("ring", 0))
 	h.debris.bits.clear()
 	_tick(S, h, [VfxMock.ev("cue", end.call(1200.0, 1500.0, 300.0, "bowl", g + 150.0)), VfxMock.ev("cue", end.call(1200.0, 1500.0, 300.0, "bowl", g + 150.0))])
@@ -7339,6 +7340,7 @@ func _other_fights() -> void:
 		h.reset(S, 5)
 		h.other_fights_enabled = on
 		h.host_pushes = on
+		h.reduced_flashing = true      # the switch locks Reduce flashing on, so the off run is calm too: the comparison is the switch's work and nothing else
 		var kept_ok: bool = true
 		var cur_ok: bool = true
 		for t in range(900):
@@ -7374,6 +7376,247 @@ func _other_fights() -> void:
 	var vw: SimState = RenderAnim.fight_view(S2, 1)
 	_check(vw.fighters == fighters1 and vw.fighters != fighters0 and vw.out == out1 and is_equal_approx(vw.T, rec1.T) and vw.stage == null and vw.get_meta("root") == S2 and vw.buildings == S2.buildings and S2.fighters == fighters0 and S2.stage.fights[1].fighters == fighters1 and S2.stage.cur == 0 and S2.stage.fights[1].out == out1, "Animation's view of fight 1 (RenderAnim.fight_view), which the other hub reads, holds fight 1's own bodies, events and clock and S's shared world by reference; S, the fight's record and the current fight are as they were")
 	SimCore.dispose(S2)
+
+## One register for a screen with two fights on it (docs/vfx/shared-register.md; Legal RL-249 (1) to (6)): the other fight's hub feeds the main hub's register on its own channel, the limits apply to the sum, the own fight is never
+## made to give way, calm forms count, an off-screen fight counts for nothing until it is on screen, and one catastrophe envelope covers both fights.
+func _shared_register() -> void:
+	print("the shared register")
+	var white := Color(1.0, 1.0, 1.0)
+	var A: float = VfxFlashRegistry.AREA_FULL
+	# 1. the other fight's full flashes are held to OTHER_CAP; the refused one draws calm and is counted; the own fight's weight-1 flash still fits
+	var R := VfxFlashRegistry.new()
+	R.begin_tick(false)
+	var o1: bool = R.ask_in(1, "beam", white, 1, A, 0.6)
+	var o2: bool = R.ask_in(1, "beam", white, 1, A, 0.6)
+	var own1: bool = R.ask("beam", white, 1, A, 0.6)
+	_check(o1 and not o2 and own1 and R.calm_noted == 1 and R.calm_unfit == 0, "normal: the other fight's first beam is granted, its second gives way and its calm form is counted; the own fight's beam is not refused (%s %s %s, calm %d)" % [o1, o2, own1, R.calm_noted])
+	var sm: Dictionary = R.summary()
+	var bc: Dictionary = sm["by_channel"]
+	_check(R.sum_in_window() <= VfxFlashRegistry.TOTAL_GATE + 1e-9 and absf(R.sum_in_window() - (1.0 + 1.0 + VfxFlashRegistry.OTHER_CALM_K)) < 1e-9 and int(bc[1]["calm"]) == 1 and int(bc[0]["granted"]) == 1 and int(sm["own_total_refused"]) == 0, "the sum is the own beam, the other's beam and the other's calm form (%.2f), under the %.1f gate; the channels are counted apart" % [R.sum_in_window(), VfxFlashRegistry.TOTAL_GATE])
+	# the calm forms are bounded: a hundred refused asks never count more than OTHER_CALM_CAP
+	var Rc := VfxFlashRegistry.new()
+	Rc.begin_tick(false)
+	Rc.ask_in(1, "beam", white, 1, A, 0.6)
+	for k in range(100):
+		Rc.ask_in(1, "explosion", white, 1, A, 0.6)
+	_check(VfxFlashRegistry._ch_sum(Rc.grants, 1, true) <= VfxFlashRegistry.OTHER_CALM_CAP + 1e-9 and Rc.calm_unfit > 0, "a hundred refused asks never hold more than %.1f of calm weight (%.2f), the rest are left to the source's calm form and counted in calm_unfit (%d)" % [VfxFlashRegistry.OTHER_CALM_CAP, VfxFlashRegistry._ch_sum(Rc.grants, 1, true), Rc.calm_unfit])
+	# 2. under Reduce flashing the other fight has calm forms only, and the own fight keeps its whole 1.0
+	var Rr := VfxFlashRegistry.new()
+	Rr.begin_tick(true)
+	var r1: bool = Rr.ask_in(1, "beam", white, 1, A, 0.6)
+	var rown: bool = Rr.ask("beam", white, 1, A, 0.6)
+	_check(not r1 and rown and Rr.calm_noted == 1 and Rr.sum_in_window() <= 1.0 + VfxFlashRegistry.OTHER_CALM_K + 1e-9, "reduced: the other fight's beam is calm and counted (%.2f), the own fight's weight-1 beam is granted (%s)" % [Rr.sum_in_window(), rown])
+	# the own fight's asks give the same answers with the other fight there as without it, over a long hashed run of mixed asks
+	var Ra := VfxFlashRegistry.new()
+	var Rb := VfxFlashRegistry.new()
+	var rng := SimRng.new(77)
+	var same: bool = true
+	var srcs: Array = ["energy", "block", "shot_hit", "body_hit", "beam", "explosion", "guard_flash", "cue_flare", "transform"]
+	var diffs: int = 0
+	var gap_ok: bool = true
+	for t in range(4000):
+		Ra.begin_tick(t % 1200 > 600)
+		Rb.begin_tick(t % 1200 > 600)
+		for k in range(int(rng.next() * 3.0)):
+			var src: String = srcs[int(rng.next() * float(srcs.size()))]
+			var ar: float = rng.next() * A
+			var a_ok: bool = Ra.ask(src, white, t, ar, 0.5)
+			var b_ok: bool = Rb.ask(src, white, t, ar, 0.5)
+			if a_ok != b_ok:
+				diffs += 1
+				same = false
+		if rng.next() < 0.5:
+			var src2: String = srcs[int(rng.next() * float(srcs.size()))]
+			Rb.ask_in(1, src2, white, t, rng.next() * A, 0.5)
+		same = same and Rb.sum_in_window() <= VfxFlashRegistry.TOTAL_GATE + 1e-9
+	# (the own asks are drawn from one stream and ask both registers alike; the other fight's asks are made on Rb only. A refusal of the own fight by the sum would show as a difference or in own_total_refused.)
+	# Under a heavy random load the gate over the sum can refuse an own ask the other fight's light has taken the room of (and the two runs then drift apart): the own fight is not starved (it keeps most of what it gets alone), and the refusals are counted in own_total_refused; the 2v2 scene below has none.
+	var ga: int = int(Ra._by_channel()[0]["granted"])
+	var gb: int = int(Rb._by_channel()[0]["granted"])
+	_check(gb >= int(0.6 * float(ga)), "4,000 ticks of saturating random asks (the own fight at its caps all the time, the other fight asking on half the ticks: far more than any fight makes): the own fight keeps %d of the %d flashes it gets alone beside the other fight's (%d differences, %d refused by the gate over the sum, counted)" % [gb, ga, diffs, Rb.own_total_refused])
+	_check(Rb.worst_weight_from_log() <= VfxFlashRegistry.TOTAL_GATE + 1e-9, "the log's worst sum over any second, both fights together, is %.2f: under the %.1f gate" % [Rb.worst_weight_from_log(), VfxFlashRegistry.TOTAL_GATE])
+	# 3. off screen counts for nothing; it is counted from the tick it comes into view
+	var Rv := VfxFlashRegistry.new()
+	Rv.begin_tick(false)
+	Rv.set_visible(1, false)
+	var s_ok: bool = Rv.ask_in(1, "beam", white, 1, A, 0.6)
+	var before: float = Rv.sum_in_window()
+	var gl: int = Rv.grants.size()
+	Rv.begin_tick(false)
+	Rv.set_visible(1, true)
+	_check(s_ok and before == 0.0 and gl == 0 and Rv.shadow.is_empty() and absf(Rv.sum_in_window() - 1.0) < 1e-9, "an other fight off screen counts for nothing (%.1f); the tick it swings into view its last second is counted (%.1f)" % [before, Rv.sum_in_window()])
+	var Rw := VfxFlashRegistry.new()
+	Rw.begin_tick(false)
+	Rw.set_visible(1, false)
+	for k in range(5):
+		Rw.ask_in(1, "beam", white, 1, A, 0.6)
+	var w_in: int = Rw.shadow.size()
+	for k in range(70):
+		Rw.begin_tick(false)
+	Rw.set_visible(1, true)
+	_check(w_in >= 1 and Rw.grants.is_empty() and Rw.sum_in_window() == 0.0, "what happened off screen more than a second before it comes into view is not counted (%d kept, %d counted)" % [w_in, Rw.grants.size()])
+	# 4. one catastrophe envelope over both fights
+	var Rk := VfxFlashRegistry.new()
+	Rk.begin_tick(false)
+	var oa: Dictionary = Rk.ask_cat_in(1, "cat_blast", 5, white, A, 18, 60, 1.0, 0.0, 1)
+	var own_a: Dictionary = Rk.ask_cat("cat_blast", 5, white, A, 18, 60, 1.0, 0.0, 1)
+	_check(bool(oa["ok"]) and bool(own_a["ok"]), "two catastrophe events with the same counter, one in each fight, are two events (ids are made per channel), the second not refused for the first")
+	# the other fight's event cannot start in the gap of any event; the own fight's is never held by the other's
+	var Rg := VfxFlashRegistry.new()
+	Rg.begin_tick(false)
+	var g_own: Dictionary = Rg.ask_cat("cat_blast", 1, white, A, 18, 60, 1.0, 0.0, 1)
+	for k in range(30):
+		Rg.begin_tick(false)
+	var g_oth: Dictionary = Rg.ask_cat_in(1, "cat_blast", 2, white, A, 18, 60, 1.0, 0.0, 31)
+	var Rh := VfxFlashRegistry.new()
+	Rh.begin_tick(false)
+	var h_oth: Dictionary = Rh.ask_cat_in(1, "cat_blast", 1, white, A, 18, 60, 1.0, 0.0, 1)
+	for k in range(30):
+		Rh.begin_tick(false)
+	var h_own: Dictionary = Rh.ask_cat("cat_blast", 2, white, A, 18, 60, 1.0, 0.0, 31)
+	_check(bool(g_own["ok"]) and not bool(g_oth["ok"]) and String(g_oth["why"]) == "cat_gap" and bool(h_oth["ok"]) and bool(h_own["ok"]), "the other fight's catastrophe event waits out the gap of the own fight's (%s); the own fight's is not held by the other's (%s)" % [g_oth["why"], h_own["why"]])
+	# the worst case: both fights' events in the same second, in both modes. The light drawn (the own envelope plus the other's, bounded by cat_room) never passes one peak, and no tick steps more than the floor's.
+	for mode in [false, true]:
+		var Rm := VfxFlashRegistry.new()
+		Rm.begin_tick(mode)
+		var own_ev: Dictionary = {}
+		var oth_ev: Dictionary = {}
+		var peak_sum: float = 0.0
+		var step_max: float = 0.0
+		var prev: float = 0.0
+		var oth_run: Dictionary = {}
+		for t in range(260):
+			Rm.begin_tick(mode)
+			if t == 20:
+				oth_ev = Rm.ask_cat_in(1, "cat_blast", 9, white, A, 18, 60, 1.0, 0.0, t)
+			if t == 50:
+				own_ev = Rm.ask_cat("cat_blast", 9, white, A, 18, 60, 1.0, 0.0, t)
+			var o_light: float = 0.0
+			if not own_ev.is_empty() and bool(own_ev["ok"]):
+				o_light = VfxFlashRegistry.cat_level(float(t - 50), int(own_ev["rise"]), int(own_ev["fall"])) * float(own_ev["peak"])
+			var x_light: float = 0.0
+			if not oth_ev.is_empty() and bool(oth_ev["ok"]):
+				x_light = minf(VfxFlashRegistry.cat_level(float(t - 20), int(oth_ev["rise"]), int(oth_ev["fall"])) * float(oth_ev["peak"]), Rm.cat_room())
+			var tot: float = o_light + x_light
+			peak_sum = maxf(peak_sum, tot)
+			if t > 0:
+				step_max = maxf(step_max, absf(tot - prev))
+			prev = tot
+		var cap: float = VfxFlashRegistry.CAT_CALM_PEAK if mode else 1.0
+		var granted_both: bool = not oth_ev.is_empty() and not own_ev.is_empty() and bool(own_ev["ok"])
+		_check(granted_both and peak_sum <= cap + 1e-9 and step_max <= 1.875 / float(VfxFlashRegistry.CAT_RISE_MIN) * cap + 0.01, "%s: both fights' catastrophe events in the same second: the light on screen peaks at %.2f of one event's %.2f and the steepest tick is %.3f (the floor's is %.3f)" % ["calm" if mode else "normal", peak_sum, cap, step_max, 1.875 / float(VfxFlashRegistry.CAT_RISE_MIN) * cap])
+	# 5. the hub: the other fight's hub holds the main hub's register, the switch is off by default, and with it on Reduce flashing is locked on
+	_check(VfxLook.OTHER_FIGHTS_DEFAULT == false and VfxStageFeed.desktop_word() == false, "the other fights' effects are off by default, on a desktop run and on the page")
+	var Hlock := VfxHub.new()
+	Hlock.reduced_flashing = false
+	var was: bool = Hlock.reduced_flashing
+	Hlock.other_fights_enabled = true
+	Hlock.reduced_flashing = false
+	_check(not was and Hlock.reduced_flashing and Hlock.other_fights_enabled, "switching the other fights on locks Reduce flashing on, whatever the setting is written as")
+	var run := func(on: bool) -> Dictionary:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 12345, {"p1": true, "p2": true, "p3": true, "p4": true}, {"fights": 2, "intro": false})
+		var h := VfxHub.new()
+		h.reset(S, 5)
+		h.other_fights_enabled = on
+		h.host_pushes = on
+		h.reduced_flashing = true
+		var worst_gate: bool = true
+		for t in range(1500):
+			SimCore.step(S)
+			h.consume(S, S.out.fx.duplicate())
+			if on:
+				h.consume_others(S, [S.stage.fights[1].out.fx.duplicate()])
+			worst_gate = worst_gate and h.flashes.sum_in_window() <= VfxFlashRegistry.TOTAL_GATE + 1e-9
+			S.out.fx.clear()
+			S.out.feed.clear()
+		var hb = h.stage_feed.hubs[1] if h.stage_feed.hubs.size() > 1 else null
+		var out: Dictionary = {"sum": h.flashes.summary(), "log": h.flashes.log.duplicate(), "shared": hb != null and hb.flashes == h.flashes and hb.flash_ch == 2 and hb.shares_register, "gate": worst_gate, "hash": str(SimHash.stateHash(S).gameplay), "now": h.flashes.now, "ticks": h.ticks}
+		SimCore.dispose(S)
+		return out
+	var off: Dictionary = run.call(false)
+	var on: Dictionary = run.call(true)
+	var own_rows_off: int = 0
+	var own_rows_on: int = 0
+	var other_rows: int = 0
+	for r in off["log"]:
+		if int(r.get("ch", 0)) == 0:
+			own_rows_off += 1
+	for r in on["log"]:
+		if int(r.get("ch", 0)) == 0:
+			own_rows_on += 1
+		else:
+			other_rows += 1
+	_check(bool(on["shared"]) and int(on["now"]) == int(off["now"]), "the other fight's hub holds the main hub's register on channel 2 (fight 1 + 1), and the register has one clock: the main hub's (%d ticks on, %d off)" % [int(on["now"]), int(off["now"])])
+	_check(own_rows_on == own_rows_off and int(on["sum"]["own_total_refused"]) == 0 and on["hash"] == off["hash"], "with the other fight drawn, the own fight's asks are the same rows as without it (%d against %d), none refused by the sum, and the sim's hash is the same" % [own_rows_on, own_rows_off])
+	_check(bool(on["gate"]) and float(on["sum"]["worst_weight"]) <= VfxFlashRegistry.TOTAL_GATE + 1e-9 and other_rows > 0, "1,500 ticks of two computer fights: the sum over both stays under %.1f (worst %.2f), with %d rows from the other fight in the one register (%s)" % [VfxFlashRegistry.TOTAL_GATE, float(on["sum"]["worst_weight"]), other_rows, str(on["sum"]["by_channel"])])
+	_hard_cuts_and_forms()
+
+
+## What Rendering and Camera ask the register in a word (docs/vfx/shared-register.md): `ask_form` (full, calm, later) for the other fight's drawn effects, and `ask_cut` for a hard cut that changes most of the screen (CD-04).
+func _hard_cuts_and_forms() -> void:
+	var white := Color(1.0, 1.0, 1.0)
+	var A: float = VfxFlashRegistry.AREA_FULL
+	# ask_form: the own fight is "full" or "calm", the other fight "full", "calm" (counted) or "later" (the calm form does not fit)
+	var R := VfxFlashRegistry.new()
+	R.begin_tick(false)
+	var f1: String = R.ask_form(1, "beam", white, 1, A, 0.6)
+	var f2: String = R.ask_form(1, "beam", white, 1, A, 0.6)
+	var f3: String = ""
+	for k in range(5):
+		f3 = R.ask_form(1, "explosion", white, 1, A, 0.6)
+	var f4: String = R.ask_form(0, "beam", white, 1, A, 0.6)
+	_check(f1 == "full" and f2 == "calm" and f3 == "later" and f4 == "full", "the other fight's beam is told full, then calm (counted), then later when the calm form does not fit; the own fight's beam is still full (%s %s %s %s)" % [f1, f2, f3, f4])
+	_check(R.ticks_until_room(2.0) > 0 and R.ticks_until_room(0.01, false) >= 0, "a flash that does not fit is told how long to wait (%d ticks for one of weight 2)" % R.ticks_until_room(2.0))
+	# ticks_until_room is honest: wait that long, and the flash is granted
+	var Rw := VfxFlashRegistry.new()
+	Rw.begin_tick(false)
+	Rw.ask("beam", white, 1, A, 0.6)
+	Rw.ask("beam", white, 1, A, 0.6)
+	var wait: int = Rw.ticks_until_room(1.0)
+	var ok_before: bool = Rw.ticks_until_room(1.0) == wait
+	for k in range(wait):
+		Rw.begin_tick(false)
+	_check(wait > 0 and wait <= VfxFlashRegistry.WINDOW and Rw.ask("beam", white, 1, A, 0.6) and ok_before, "after the wait it asked for (%d ticks) the whole flash is granted" % wait)
+	# hard cuts: a full-screen cut with a real step is one event; a second inside the second is told to ease or wait; under the step threshold costs nothing; Reduce flashing eases the second
+	var Rc := VfxFlashRegistry.new()
+	Rc.begin_tick(false)
+	var c1: Dictionary = Rc.ask_cut("side_swap", 1.0, 0.4, 1)
+	Rc.begin_tick(false)
+	var c2: Dictionary = Rc.ask_cut("relocate", 1.0, 0.4, 2)
+	Rc.begin_tick(false)
+	var c3: Dictionary = Rc.ask_cut("insert", 1.0, 0.4, 3)
+	var cheap: Dictionary = Rc.ask_cut("angle", 1.0, 0.05, 4)
+	_check(c1["form"] == "cut" and c2["form"] == "cut" and c3["form"] != "cut" and cheap["form"] == "cut" and Rc.sum_in_window() <= VfxFlashRegistry.BUDGET + 1e-9, "normal: two whole-screen cuts in a second are cut, the third is told %s (wait %d); a cut under the step threshold costs nothing; the sum stays under %.1f (%.1f)" % [c3["form"], int(c3["wait"]), VfxFlashRegistry.BUDGET, Rc.sum_in_window()])
+	var Rr := VfxFlashRegistry.new()
+	Rr.begin_tick(true)
+	var r1: Dictionary = Rr.ask_cut("side_swap", 1.0, 0.4, 1)
+	Rr.begin_tick(true)
+	var r2: Dictionary = Rr.ask_cut("relocate", 1.0, 0.4, 2)
+	_check(r1["form"] == "cut" and r2["form"] != "cut" and Rr.sum_in_window() <= VfxFlashRegistry.BUDGET_REDUCED + 1e-9, "reduced: one whole-screen cut a second; the second is told %s (wait %d): the frame eases or holds, never a dissolve" % [r2["form"], int(r2["wait"])])
+	# a small cut (a tenth of the screen) is a small weight: several fit
+	var Rs := VfxFlashRegistry.new()
+	Rs.begin_tick(false)
+	var small_ok: int = 0
+	for k in range(4):
+		Rs.begin_tick(false)
+		if Rs.ask_cut("insert", 0.01, 0.4, k)["form"] == "cut":
+			small_ok += 1
+	_check(small_ok == 4, "cuts that change a hundredth of the frame are weighed by their area: all %d fit in a second" % small_ok)
+	# the hard cut is never counted twice by the other fight's channel and never takes it
+	var Rx := VfxFlashRegistry.new()
+	Rx.begin_tick(false)
+	Rx.channel = 2
+	var x1: Dictionary = Rx.ask_cut("side_swap", 1.0, 0.4, 1)
+	_check(x1["form"] == "cut" and int(Rx.log.back()["ch"]) == 0 and Rx.channel == 2, "a hard cut is the screen's own whatever channel was set around it, and the channel is put back")
+	# a 600-tick run of cuts at the camera's worst rate (a cut every 20 ticks) in both modes: the log's worst second is under the gate
+	for mode in [false, true]:
+		var Rm := VfxFlashRegistry.new()
+		for t in range(600):
+			Rm.begin_tick(mode)
+			if t % 20 == 0:
+				Rm.ask_cut("insert", 1.0, 0.3, t)
+		_check(Rm.worst_weight_from_log() <= (VfxFlashRegistry.BUDGET_REDUCED if mode else VfxFlashRegistry.BUDGET) + 1e-9 and int(Rm.summary()["refused"]) > 0, "%s: a whole-screen cut every 20 ticks for 10 s: the worst second weighs %.2f (limit %.1f), %d cuts eased or held" % ["reduced" if mode else "normal", Rm.worst_weight_from_log(), VfxFlashRegistry.BUDGET_REDUCED if mode else VfxFlashRegistry.BUDGET, int(Rm.summary()["refused"])])
 
 ## The front of a beam that travels (docs/vfx/beam-front.md; Game Design row 40): while a beam's head is on its way out (`Beam.p` under 1) the head is drawn as the fighter's own energy head in the beam's language, on the tip of the body; a finished one draws none.
 func _beam_front() -> void:

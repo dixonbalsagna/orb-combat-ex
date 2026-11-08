@@ -363,6 +363,34 @@
       ],
       "additionalProperties": false
     },
+    "aimCuts": {
+      "type": "object",
+      "required": [
+        "enabled",
+        "aimMax",
+        "oneFlight"
+      ],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The launch cuts (buildings.md section 8), one switch, off.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "The switch."
+        },
+        "aimMax": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "At most this many buildings aimed."
+        },
+        "oneFlight": {
+          "type": "boolean",
+          "description": "One flight an arc a side for all of them."
+        }
+      }
+    },
     "knockBack": {
       "type": "object",
       "required": [

@@ -454,7 +454,7 @@ static func blowAt(S: SimState, ex, f, kind: int, lead: int, dmg: float, extra: 
 
 
 ## The brawl is over, and why: knockback, launch, apart, idle, left, burst, perfect_block, reversal, break, finisher,
-## signature, walk (both held away), double (the double hit). The event goes out once; the lines stop. A set piece that took it over plays on in the same exchange.
+## signature, flight (a flight strike from it), walk (both held away), double (the double hit). The event goes out once; the lines stop. A set piece that took it over plays on in the same exchange.
 static func over(S: SimState, ex, why: String) -> void:
 	if not isBrawl(ex) or ex.branch != "":
 		return
@@ -701,6 +701,12 @@ static func takes(S: SimState, f, kind: String) -> bool:
 		var za = _ev(S, f, "press_ack", "zip", _cell(kind))   # a zipper in reach: his one blow is on its way, and a press is spent
 		za.n = S.tick
 		return true
+	var fly: int = DirZip.fromBrawl(S, f, kind)
+	if fly == 2:
+		return true   # a flight strike he can't pay for: refused with the knock, and the press is spent
+	if fly == 1:
+		end(S, ex, "flight")   # a flight strike from the brawl (zip.flightStrikes): it gives way, and the press goes on to start it (DirZip.takes)
+		return false
 	var b: bool = isB(f, kind)
 	if kind == "sig" and not b:
 		# A stance's signature is its own exchange: the brawl gives way when it can start, and the request then starts it.
@@ -956,6 +962,9 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 		rp.n = S.tick + lead
 	if quiet(ex) and f == ex.D:
 		DirZip.markAnswer(S, ex, f, kind, p, args)
+		if args.has("lead"):
+			lead = int(args.lead)   # a flight strike's counter meets him at once (DirZip.markAnswer)
+			args.erase("lead")
 	# The piece, by the blow's cell (docs/combat/brawl-hook.md). A bolt that follows a bolt in his string is the next
 	# of his run, with its arm; the launcher's is one that sends where his stick's quarter says.
 	var toward: bool = ((pp >> 2) & 3) == 2
@@ -3590,6 +3599,9 @@ static func pursues(S: SimState, A, D) -> bool:
 
 ## A press of his that would have started an approach while the first move is the rival's: it is spent, and says so.
 static func moveRefused(S: SimState, f, kind: String) -> void:
+	if DirStick.asking:
+		DirStick.askRefused = true   # the stick's own press: it tells it once, with its knock (stick_refused not_yours), and no face button is crossed
+		return
 	var a = _ev(S, f, "press_ack", "refused", _cell(kind))
 	a.n = _g(f, MOVE_AT)
 
@@ -3733,6 +3745,8 @@ static func _aiPick(S: SimState, ex, f, bl: Dictionary) -> int:
 ## energy family held. Its next choice comes when the blow has had its pace. A heavy that isn't a tap is charged at
 ## its level's share: the button stays down to the flash, and it lets go within charge.aiReleaseTicks of it.
 static func _aiPress(S: SimState, f, i: SimIntent, st: int, bl: Dictionary, tap: bool = false) -> void:
+	if not tap and DirZip.aiBrawl(S, f, i, st):
+		return   # flight strikes: one in this blow's place (losing the run, or round a guard)
 	var c: Dictionary = cfg()
 	if (st & 4) != 0:
 		i.mode = 1
@@ -3984,6 +3998,7 @@ static func aiInput(S: SimState, f) -> void:
 		i.lightHeld = true   # ... or X, for its burst
 		return
 	if _aiPart(S, ex, f, o, bl):
+		DirZip.aiOut(S, f, i, _g(f, AI_PART))   # (flight strikes: the parting shot in place of the walk, at its share)
 		return   # it holds away with the rival, to walk out
 	var gap: int = int(bl.get("tapGap", 10))
 	if DirRally.aiSell(S, ex, f, o, i, bl):

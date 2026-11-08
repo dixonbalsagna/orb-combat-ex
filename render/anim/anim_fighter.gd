@@ -168,6 +168,7 @@ var _lo_flare: float = 0.0
 var _lo_bank: float = 0.0
 var _lo_dash: bool = false
 var _lo_dash_t0: float = -10.0
+var _ab_last_t: float = -10.0         # when the sim's air brake was last on (a skid landing out of it reads its own pose)
 var _ab_on: bool = false                # the sim's air brake is on (an air_brake event)
 var _ab_w: float = 0.0                 # the skid's weight now: in over enter_ticks, out over exit_ticks
 var _ab_str: float = 0.0               # how hard it is from the deceleration he shows (0 to 1)
@@ -863,6 +864,19 @@ func _pop_layer(S: SimState, f, dt: float) -> void:
 	debug["pop_w"] = _pop_pw.size()
 
 
+## True while the air recovery runs, or on the tick it starts (the lead layer asks before the recovery layer has set its clock): control back in the air, well off the ground, at speed (the recovery's own conditions).
+func _recovering(S: SimState, f) -> bool:
+	var Rc: Dictionary = AnimData.locomotion.get("recover", {})
+	if Rc.is_empty() or not RenderAnim.air_recover:
+		return false
+	if _ar_t0 > -5.0:
+		return true
+	if f.state == "free" and (_ar_prev == "launched" or _ar_prev == "dropped") and f.rush == null:
+		var g: float = WorldWater.floorAt(S, f.x, f.z)
+		return f.y - g > float(Rc.get("min_air", 40.0)) and maxf(Vector2(f.vx, f.vy).length(), _ar_speed) > float(Rc.get("min_speed", 250.0))
+	return false
+
+
 ## The air recovery (docs/animation/air-recovery.md; data/anim/locomotion.json `recover`). When control comes back in the air (he was launched or dropped and is free again, well off the ground), the body catches itself: the arms fling wide and
 ## the legs come under (the brake skid's entry pose, a part weight), and the torso rocks once past upright and settles, by how fast he was going. Read from the sim's state and speed; nothing is written. Ramps are 6 ticks or more (the snappy
 ## profile solves on twos); it stands aside while he is busy and ends over `ticks`.
@@ -877,7 +891,7 @@ func _air_recover_layer(S: SimState, f, dt: float) -> void:
 		spd = maxf(spd, _ar_speed)
 		if f.y - g > float(Rc.get("min_air", 40.0)) and spd > float(Rc.get("min_speed", 250.0)):
 			_ar_t0 = T
-			_ar_p = clampf(spd / float(Rc.get("ref_speed", 1500.0)), 0.3, 1.0)
+			_ar_p = clampf(spd / float(Rc.get("ref_speed", 1500.0)), float(Rc.get("p_min", 0.3)), 1.0)
 			_ar_side = 1.0 if f.spin >= 0.0 else -1.0
 	if st == "launched" or st == "dropped":
 		_ar_speed = maxf(_ar_speed * pow(0.95, dt * 60.0), Vector2(f.vx, f.vy).length())
@@ -898,7 +912,17 @@ func _air_recover_layer(S: SimState, f, dt: float) -> void:
 	var env: float = smoothstep(0.0, 0.25, u) * (1.0 - smoothstep(0.25, 1.0, u))
 	var calm: float = 0.6 if RenderAnim.reduced_motion else 1.0
 	var pid: String = String(Rc.get("pose", ""))
-	if AnimData.pose_exists(pid):
+	var rfo: Dictionary = Rc.get("fighters", {}).get(_fid, {})
+	if rfo.has("poses"):
+		# the three beats (docs/animation/air-brake-looks-plan.md): the tuck (the knees up, the hands in), then the sweep (the arms out and down, the legs dropped under him), and the sweep lets go into the guard
+		var rp: Dictionary = rfo.poses
+		var wt: float = smoothstep(0.0, 0.14, u) * (1.0 - smoothstep(0.26, 0.42, u))
+		var wo: float = smoothstep(0.26, 0.42, u) * (1.0 - smoothstep(0.55, 1.0, u))
+		if AnimData.pose_exists(String(rp.get("tuck", ""))):
+			_mix_pose(AnimData.pose(String(rp.tuck)), float(Rc.get("tuck_w", 0.8)) * wt * _ar_p * calm)
+		if AnimData.pose_exists(String(rp.get("open", ""))):
+			_mix_pose(AnimData.pose(String(rp.open)), float(Rc.get("open_w", 0.7)) * wo * _ar_p * calm)
+	elif AnimData.pose_exists(pid):
 		_mix_pose(AnimData.pose(pid), float(Rc.get("w", 0.5)) * env * _ar_p * calm)
 	# the torso rocks once past upright and settles
 	var rock: float = float(Rc.get("rock", 0.2)) * sin(u * TAU) * (1.0 - u) * _ar_p * calm
@@ -1376,6 +1400,14 @@ func on_air_brake(phase: String, _reason: String, _speed: float, _T: float) -> v
 		_ab_on = false
 
 
+## The pose a sliding fighter's feet-first skid is drawn from: his own landing out of the air brake (docs/animation/air-brake-looks-plan.md) for `land_s` seconds after the brake was last on, every other slide the shared `slide.brake`.
+func slide_pose_id(S: SimState) -> String:
+	var lfo: Dictionary = AnimData.brake.get("fighters", {}).get(_fid, {})
+	if RenderAnim.air_brake and lfo.has("land") and S.T - _ab_last_t < float(AnimData.brake.get("land_s", 0.6)) and AnimData.pose_exists(String(lfo.land)):
+		return String(lfo.land)
+	return "slide.brake"
+
+
 ## True while the skid is drawn (the lead scan reads it: feet leading is right for these frames).
 func braking() -> bool:
 	return _ab_w > 0.05
@@ -1400,6 +1432,8 @@ func _air_brake_layer(S: SimState, f, dt: float) -> void:
 		v = vmv
 	var sp: float = v.length()
 	var want: float = 1.0 if (_ab_on and flying) else 0.0
+	if _ab_on:
+		_ab_last_t = S.T
 	var step: float = dt * 60.0 / maxf(float(B.get("enter_ticks", 4)) if want > _ab_w else float(B.get("exit_ticks", 8)), 1.0)
 	var was: float = _ab_w
 	_ab_w = move_toward(_ab_w, want, step)
@@ -1415,6 +1449,9 @@ func _air_brake_layer(S: SimState, f, dt: float) -> void:
 		_ab_str = float(B.get("min_w", 0.35))
 	_ab_str += (target - _ab_str) * (1.0 - exp(-dt * 12.0))
 	var ids: Dictionary = B.get("poses", {})
+	var fo: Dictionary = B.get("fighters", {}).get(_fid, {})   # a fighter's own plant (docs/animation/air-brake-looks-plan.md): open blades or fists
+	if fo.has("poses"):
+		ids = fo.poses
 	var w: float = _ab_w * _ab_str
 	if RenderAnim.reduced_motion:
 		w *= 0.6
@@ -1423,6 +1460,8 @@ func _air_brake_layer(S: SimState, f, dt: float) -> void:
 			_mix_pose(AnimData.pose(String(ids.enter)), w * (1.0 - _ab_w))
 		if AnimData.pose_exists(String(ids.get("hold", ""))):
 			_mix_pose(AnimData.pose(String(ids.hold)), w * _ab_w)
+	elif f.slide > 0.0 and AnimData.pose_exists(String(ids.get("hold", ""))):
+		_mix_pose(AnimData.pose(String(ids.hold)), w)   # a landing out of the brake: the plant eases off over the exit ramp, not a snap into the skid
 	elif AnimData.pose_exists(String(ids.get("exit", ""))):
 		_mix_pose(AnimData.pose(String(ids.exit)), w)
 	# the judder of the skid: the arms and the head shudder against the air (friction made visible), more the harder he brakes
@@ -1509,7 +1548,10 @@ func _lead_layer(S: SimState, f, dt: float) -> void:
 			var g: float = smoothstep(float(spd2[0]), float(spd2[1]), spm) * smoothstep(-0.1, -0.5, dot0)
 			want_d = g * (clampf(a0, -cap, cap) - a0)
 			gain = g
-		_lead_d += (want_d - _lead_d) * (1.0 - exp(-dt * float(L.get("tilt_rate", 45.0))))   # (quick: a knockback is over in a few frames)
+		var trate: float = float(L.get("tilt_rate", 45.0))   # (quick: a knockback is over in a few frames)
+		if AnimData.brake.has("unwind_rate") and _recovering(S, f):
+			trate = minf(trate, float(AnimData.brake.unwind_rate))   # a body that has the air back unwinds from its lean over a few ticks, not in two
+		_lead_d += (want_d - _lead_d) * (1.0 - exp(-dt * trate))
 	_lead_d = wrapf(_lead_d, -PI, PI)
 	_lead_w = gain
 	debug["lead_probe"] = [rad_to_deg(beta), rad_to_deg(f.rot), rad_to_deg(aim), rad_to_deg(net), gain, f.slide]
@@ -2466,6 +2508,9 @@ func _wanted_face(S: SimState, f) -> float:
 	var dx: float = SimWrap.sdx(f.x, opp.x) if opp != null else 0.0
 	var ex = S.dirS.ex
 	var engaged: bool = (ex != null and (ex.A == f or ex.D == f)) or f.state == "locked" or f.beamCharge != null
+	if not engaged and _ar_t0 > -5.0 and RenderAnim.air_recover and f.state == "free" and absf(dx) > FACE_DEAD:
+		# the air regained: he faces the foe the whole recovery (never the way he is still drifting); a turn waits until the lean has unwound (a mirror of a leaning body is a pop), then it is one clean turn
+		return vface if absf(_lead_d) > 0.15 else signf(dx)
 	if engaged:
 		return signf(dx) if absf(dx) > FACE_DEAD else 0.0
 	if f.state == "free" and absf(f.vx) > TRAVEL_FACE:
@@ -2900,7 +2945,7 @@ func _target_base(S: SimState, f, T: float) -> void:
 	_tq_curl = sp.curl
 	match mode:
 		1:
-			_blend_target("slide.brake", 1.0)
+			_blend_target(slide_pose_id(S), 1.0)
 			_blend_target("skid.back", w12)
 			_blend_target("skid.front", w13)
 		2:

@@ -55,7 +55,7 @@
     "easy": {
       "forms": {"holdS": 0}, "brawl": {"tapGap": 12, "tapGapMax": 12, "string": [2, 4], "guardShare": 0.2, "guardTicks": [20, 60], "grapple": {"catch": 0.02, "pummel": 0.4, "tech": 0.15}, "anywhere": {"launcher": 0.15, "inString": 0.05, "answer": 0.25}, "recoil": {"flip": 0.3, "counter": 0.5}, "perfectMul": 0.21, "nudgeShare": 0.35, "walkOut": 0.1, "mixMedium": 0.002, "mixHeavy": 0.001, "heavyIntoFlurry": 0.01, "mediumIntoHeavy": 0, "burst": 0.05, "digIn": 0.3, "giveGround": 0.1, "follow": 0.3, "launcher": 0.15, "charge": 0.15, "energy": 0.06, "breakGuard": 0.06, "mediumVsHeavies": 0.15, "perfectVsHeavy": 0.05, "perfectVsMash": 0.01},
       "vsShooter": {"guardShare": 0, "enderShare": 0.5, "heavyApproachShare": 0.05},
-      "zipShare": 0.08, "zipHeavyShare": 0.2, "zipCounter": 0, "zipDodge": 0, "zipPunish": 0.2, "zipExit": 0,
+      "zipShare": 0.08, "flightShare": 0.12, "zipHeavyShare": 0.2, "zipCounter": 0, "zipDodge": 0, "zipPunish": 0.2, "zipExit": 0,
       "beamAnswer": 0.15, "wallKick": 0.15,
       "perfectBlockMul": 0.32,
       "guardRepeat": 2,
@@ -88,7 +88,7 @@
     "medium": {
       "forms": {"holdS": 10, "whenAbove": true}, "brawl": {"tapGap": 8, "tapGapMax": 11, "string": [3, 5], "guardShare": 0.4, "guardTicks": [20, 60], "grapple": {"catch": 0.04, "pummel": 0.65, "tech": 0.3}, "anywhere": {"launcher": 0.35, "inString": 0.12, "answer": 0.25}, "recoil": {"flip": 0.6, "counter": 0.7}, "perfectMul": 0.15, "nudgeShare": 0.3, "walkOut": 0.2, "mixMedium": 0.004, "mixHeavy": 0.002, "heavyIntoFlurry": 0.01, "mediumIntoHeavy": 0.2, "burst": 0.08, "digIn": 0.55, "giveGround": 0.45, "follow": 0.6, "launcher": 0.25, "charge": 0.15, "energy": 0.12, "breakGuard": 0.1, "mediumVsHeavies": 0.4, "perfectVsHeavy": 0.15, "perfectVsMash": 0.02},
       "vsShooter": {"guardShare": 0, "enderShare": 0.45, "heavyApproachShare": 0.1},
-      "zipShare": 0.25, "zipHeavyShare": 0.3, "zipCounter": 0.2, "zipDodge": 0.1, "zipPunish": 0.75, "zipExit": 0.3,
+      "zipShare": 0.25, "flightShare": 0.65, "zipHeavyShare": 0.3, "zipCounter": 0.2, "zipDodge": 0.1, "zipPunish": 0.75, "zipExit": 0.3,
       "beamAnswer": 0.35, "wallKick": 0.35,
       "perfectBlockMul": 0.45,
       "guardRepeat": 6.5,
@@ -121,7 +121,7 @@
     "hard": {
       "forms": {"holdS": 75, "whenAbove": true, "coilUnder": 60, "untilBattered": true}, "brawl": {"tapGap": 6, "tapGapMax": 6, "string": [3, 5], "guardShare": 0.4, "guardTicks": [20, 60], "grapple": {"catch": 0.06, "pummel": 0.85, "tech": 0.45}, "anywhere": {"launcher": 0.6, "inString": 0.2, "answer": 0.4}, "recoil": {"flip": 0.85, "counter": 0.9}, "perfectMul": 0.45, "nudgeShare": 0.65, "walkOut": 0.3, "mixMedium": 0.006, "mixHeavy": 0.003, "heavyIntoFlurry": 0.05, "mediumIntoHeavy": 0.5, "burst": 0.08, "digIn": 0.75, "giveGround": 0.7, "follow": 0.9, "launcher": 0.6, "charge": 0.45, "energy": 0.15, "breakGuard": 0.18, "mediumVsHeavies": 0.7, "perfectVsHeavy": 0.3, "perfectVsMash": 0.04},
       "vsShooter": {"guardShare": 0, "enderShare": 0.3, "heavyApproachShare": 0.3},
-      "zipShare": 0.4, "zipHeavyShare": 0.35, "zipCounter": 0.35, "zipDodge": 0.15, "zipPunish": 0.95, "zipExit": 0.6,
+      "zipShare": 0.4, "flightShare": 1.0, "zipHeavyShare": 0.35, "zipCounter": 0.35, "zipDodge": 0.15, "zipPunish": 0.95, "zipExit": 0.6,
       "beamAnswer": 0.6, "wallKick": 0.55,
       "perfectBlockMul": 0.55,
       "guardRepeat": 20,

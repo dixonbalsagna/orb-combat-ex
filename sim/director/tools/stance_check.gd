@@ -6,6 +6,7 @@ var failed: int = 0
 
 
 func _init() -> void:
+	DirZip.setFsForce(0)   # the flight strikes off: with them on, LT pressed and a face button inside 4 ticks is a flight strike (flight_strike_check has that)
 	DirStick.setForce(1)
 	DirStance.setForce(0)
 	var off: Array = _run("x", "x", 1)
@@ -14,6 +15,7 @@ func _init() -> void:
 	DirStance.setForce(-1)
 	DirStick.setForce(-1)
 	print("STANCE: %d check(s) failed" % failed)
+	DirZip.setFsForce(-1)
 	quit(1 if failed > 0 else 0)
 
 

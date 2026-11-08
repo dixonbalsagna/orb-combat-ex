@@ -189,6 +189,7 @@ func _refillStrike() -> void:
 	var got: Array = []
 	for force in [1, 0]:
 		DirBeamMove.setForce(force)
+		DirBeamMove.setStrikeForce(0)   # the plain hold's stages off (the page turns them on: their top drains): this is the move's refill rule
 		var S := _fresh(58.0, 60.0)
 		var A = S.fighters[0]
 		var light := SimIntent.new()
@@ -210,6 +211,7 @@ func _refillStrike() -> void:
 		got.append(A.ki - ki0)
 		SimCore.dispose(S)
 	DirBeamMove.setForce(1)
+	DirBeamMove.setStrikeForce(-1)
 	_expect(absf(float(got[0])) < 0.001 and float(got[1]) > 2.0, "a plain strike's hold doesn't refill with the move on (%+.2f in 40 ticks), and does off (%+.2f)" % [got[0], got[1]])
 
 
@@ -296,7 +298,8 @@ func _late() -> void:
 
 
 func _armour() -> void:
-	# Unforced: armour's own switch is off in the data, as on the page; the beam's hold is armoured by the move alone.
+	# Armour's own switch held off (the page turns it on as chargeArmour): the beam's hold is armoured by the move alone.
+	DirStick.setArmourForce(0)
 	var S := _fresh(1200.0)
 	var A = S.fighters[0]
 	_hold(S, 2)
@@ -304,7 +307,9 @@ func _armour() -> void:
 	DirBeamMove.setForce(0)
 	var off: bool = DirStick.armoured(S, A)
 	DirBeamMove.setForce(1)
-	_expect(on and not off and not DirStick.armourOn(), "with armour's own switch off, a beam's hold is armoured from its first tick by the move (%s), and not without it (%s)" % [str(on), str(off)])
+	var aOff: bool = not DirStick.armourOn()
+	DirStick.setArmourForce(-1)
+	_expect(on and not off and aOff, "with armour's own switch off, a beam's hold is armoured from its first tick by the move (%s), and not without it (%s)" % [str(on), str(off)])
 	SimCore.dispose(S)
 	# A light on a beam's hold in a brawl, armour's switch off: the hold goes on.
 	var S2 := _fresh(58.0)

@@ -15,15 +15,59 @@ extends SceneTree
 ##     with every press going once and the checkpoints matching;
 ##   - 2v2 together (NetLan's --lan-2v2-together, with the blows from outside on as the kit has them, the pairs started side by side): the peers agree under rollbacks, each player's presses go
 ##     once, and blows from outside happened;
-##   - with hits across fights, KOs staged on both peers on every run of the tick: one player out doesn't end the match, his PC says so and shows his partner's fight; with both out it's over, and both say so.
+##   - with hits across fights, KOs staged on both peers on every run of the tick: one player out doesn't end the match, his PC says so and shows his partner's fight once the camera's KO close-up has
+##     played, NetLan.PARTNER_TICKS sim ticks after the tick on which his fight's KO clock first reads NetLan.PARTNER_AT, not before; with both out it's over, and both say so;
+##   - the view, 2v2 together with the second PC hitching (frames with no tick, then the game loop's catch-up of up to six), and with a pause on p120 whose rollback re-runs ticks: each PC holds its
+##     own player's fight before every tick, where the game draws, all the time he stands, and NetLan never finds S moved between ticks;
+##   - the LAN's tuning with the second PC hitching: the first PC's deepest rollback stays within NetLan.LAN_AHEAD (and one save), and time sync never waits more than NetLan.SYNC_MAX_WAIT frames in a row;
+##   - the log line has the frames and the view;
+##   - CD-10 (the audit's F-10), a hostile second PC: a hello asking for an input wait of 100,000 ticks fails the handshake (no session, the title says why); one
+##     packet handing slot 200 to the AI is dropped whole and the match goes on in step; a flood of far-ahead inputs is dropped and the first PC's inputs stay
+##     bounded; and a gone second PC (nothing from it after frame 600): its seat goes to the computer, the match goes on, the title says so and the game gets a banner;
+##     in 2v2 together it's the second player's body (p3) the computer takes.
 ## --negative-control: with the freeze rule off, at least three presses must land on frozen ticks; with the session clearing its output, the game must get none; with two fights, a PC that doesn't move S
 ## to its player's fight must be caught holding the wrong one, and with no map of players to slots the second player's fighter must never act, and with inputs left on the slot after a trade the traded player
-## must stop acting, and with the session clearing its output nothing of the other fight's must stay for the picture, and a PC that keeps showing its out player's fight must be caught.
+## must stop acting, and with the session clearing its output nothing of the other fight's must stay for the picture, and a PC that keeps showing its out player's fight must be caught, and a pause that
+## doesn't put the view back after its rollback must be caught showing fight 0 while the player stands; with CD-10's checks off, the huge wait must be taken, the bad
+## slot must reach the session and the flood must fill it; and with the hand-over off, a gone PC must freeze the match.
 ## Each must be caught.
 ## Verdict line: LAN: N check(s) failed
 
 var fails: int = 0
 var ticks: int = 1200
+
+
+## The second PC's transport playing a broken or hostile peer (CD-10): a huge delay in its hello, one packet handing a slot that doesn't exist to
+## the AI, or a flood of inputs far ahead. Through the codec, as a real link's bytes.
+class Hostile extends NetLinkTransport:
+	var mode: String = ""
+	var fromFrame: int = 0
+	var floodN: int = 0
+	var bad: int = 0
+
+	func send(now: float, pk: Dictionary) -> void:
+		if mode == "delay" and str(pk.get("hs", "")) == "hello":
+			pk = pk.duplicate()
+			pk["delay"] = 100000
+			bad += 1
+		elif pk.has("from") and int(pk.get("frame", 0)) >= fromFrame:
+			if mode == "slot" and bad == 0:
+				pk = pk.duplicate()
+				pk["ai"] = [[200, int(pk.frame) + 4]]
+				bad += 1
+			elif mode == "flood":
+				super.send(now, pk)
+				for i in range(floodN):
+					var f: Dictionary = pk.duplicate()
+					var ins := PackedInt64Array()
+					ins.resize(255)
+					f["inputs"] = ins
+					f.erase("words")
+					f["first"] = int(pk.frame) + 5000 + bad * 255
+					bad += 1
+					super.send(now, f)
+				return
+		super.send(now, pk)
 
 
 class Stand:
@@ -58,7 +102,13 @@ func ok(c: bool, s: String) -> void:
 		print("FAIL  " + s)
 
 
-func _run(pname: String, freezeRule: bool, keepOut: bool, askDelay: int = 0, twoFights: bool = false, entered: bool = true, slots: bool = true, tradeAt: int = -1, follow: bool = true, kos: Array = [], watch: bool = true, together: bool = false, pauseAt: int = -1, pauseFor: int = 0) -> Dictionary:
+func _run(pname: String, freezeRule: bool, keepOut: bool, askDelay: int = 0, twoFights: bool = false, entered: bool = true, slots: bool = true, tradeAt: int = -1, follow: bool = true, kos: Array = [], watch: bool = true, together: bool = false, pauseAt: int = -1, pauseFor: int = 0, opts: Dictionary = {}) -> Dictionary:
+	var stallEvery: int = int(opts.get("stallEvery", 0))   # the second PC hitches: the last stallFor frames of every stallEvery run no tick, then the game loop catches up (up to 6 ticks a frame)
+	var stallFor: int = int(opts.get("stallFor", 0))
+	var pauseEvery: int = int(opts.get("pauseEvery", 0))   # the second PC's game paused pauseLen frames in every pauseEvery (idle() each frame), so some pause meets a late input
+	var pauseLen: int = int(opts.get("pauseLen", 0))
+	var goneAt: int = int(opts.get("goneAt", -1))   # the second PC is gone from this frame: no tick, nothing sent
+	var hostile: Hostile = null
 	var prof: Dictionary = NetLoopback.PROFILES[pname]
 	var ab := NetLoopback.Link.new(float(prof.ping) * 0.5, float(prof.jitter), float(prof.loss), 21)
 	var ba := NetLoopback.Link.new(float(prof.ping) * 0.5, float(prof.jitter), float(prof.loss), 23)
@@ -88,10 +138,22 @@ func _run(pname: String, freezeRule: bool, keepOut: bool, askDelay: int = 0, two
 		l.sayTitle = false
 		l.freezeRule = freezeRule
 		l.keepOut = keepOut
+		l.followInIdle = bool(opts.get("followInIdle", true))
+		l.handOver = bool(opts.get("handOver", true))
+		l.dropAfter = float(opts.get("dropAfter", NetLan.DROP_MS))
+		if opts.has("log") and k == 0:
+			l.args["lan-log"] = String(opts["log"])
 		l.clock = func() -> float: return clockMs[0]
 		l.local = k
 		var key: String = NetHandshake.keyOf(NetLan.SEED, aiNow, setup)
-		l.net = NetHost.new(NetLinkTransport.new(ab if k == 0 else ba, ba if k == 0 else ab, true), st.S, k, key, NetDelay.device(1.0), l.pad)
+		var link: NetTransport = NetLinkTransport.new(ab if k == 0 else ba, ba if k == 0 else ab, true)
+		if k == 1 and opts.has("hostile"):
+			hostile = Hostile.new(ba, ab, true)
+			hostile.mode = String(opts["hostile"])
+			hostile.fromFrame = int(opts.get("hostileFrom", 200))
+			hostile.floodN = int(opts.get("floodN", 0))
+			link = hostile
+		l.net = NetHost.new(link, st.S, k, key, NetDelay.device(1.0), l.pad)
 		if askDelay > 0 and k == 1:
 			l.net.hs.opts = {"minDelay": askDelay}
 		var kk: int = k
@@ -128,6 +190,13 @@ func _run(pname: String, freezeRule: bool, keepOut: bool, askDelay: int = 0, two
 	var ownAt: Array = [{}, {}]     # tick -> the events of this PC's own fight that tick, as its game drained them
 	var otherAt: Array = [{}, {}]   # tick -> the events in the other fight's record after the frame that ran it
 	var wrongFight: int = 0
+	var ownLive: Array = [0, 0]      # frames that began (before the tick, where the game draws) with S off the PC's own player's fight while he stands
+	var partnerAt: int = -1          # the first PC's frame when it first held his partner's fight, his player out
+	var crossAt: int = -1            # the first PC's frame when his fight's KO clock first read NetLan.PARTNER_AT, his player out
+	var paused: int = 0
+	var waitRun: Array = [0, 0]      # the first PC's time sync: the current and the longest run of frames in a row that waited
+	var stalled: int = 0
+	var banners: int = 0            # the first PC's game: banners about a gone PC
 	var pause := {"titles": {}, "sentDuring": 0, "frameAt": -1, "frameAfter": -1}   # with pauseAt: what the first PC's title said during the pause, the packets the paused one sent, the first PC's frame at its start and end
 	var outside: Dictionary = {}   # with together: blows from outside seen by the first PC, "start", "hit", "whiff" -> count
 	var actedBefore: float = -1.0e9
@@ -136,7 +205,32 @@ func _run(pname: String, freezeRule: bool, keepOut: bool, askDelay: int = 0, two
 		clockMs[0] += 1000.0 / 60.0
 		for k in range(2):
 			var S: SimState = lans[k].gameHost.S
+			if twoFights and lans[k].net != null and lans[k].net.session != null:
+				var own: int = NetSession.slotNow(S, NetLan.SLOTS2[k])
+				if not NetLan.bodyAt(S, own).out and S.stage.cur != own / 2:
+					ownLive[k] += 1
+				if k == 0 and partnerAt < 0 and NetLan.bodyAt(S, own).out:
+					var g = NetLan.gameOf(S, own / 2)
+					if crossAt < 0 and g != null and g.ko != null and float(g.koT) >= NetLan.PARTNER_AT:
+						crossAt = lans[0].net.session.frame
+					if S.stage.cur != own / 2:
+						partnerAt = lans[0].net.session.frame
+			if k == 1 and pauseEvery > 0 and frame > 60 and frame % pauseEvery < pauseLen:
+				lans[1].idle()
+				paused += 1
+				continue
+			if k == 1 and goneAt >= 0 and frame >= goneAt:
+				continue   # the second PC is gone
+			var reps: int = 1
+			if k == 1 and stallEvery > 0 and stallFor > 0 and frame > 0:
+				var ph: int = frame % stallEvery
+				if ph >= stallEvery - stallFor:
+					stalled += 1
+					continue   # the second PC's frame is stuck: no tick, nothing sent
+				if ph == 0:
+					reps = mini(stallFor + 1, 6)   # the game loop's catch-up after it (SimHost.advance: acc += min(0.1, frame))
 			var before: int = lans[k].net.session.frame if lans[k].net != null and lans[k].net.session != null else -1
+			var w0: int = lans[k].net.waits if lans[k].net != null else 0
 			if k == 1 and pauseAt >= 0 and frame >= pauseAt and frame < pauseAt + pauseFor:
 				var out0: int = lans[1].net.tr.pktOut
 				lans[1].idle()
@@ -148,15 +242,23 @@ func _run(pname: String, freezeRule: bool, keepOut: bool, askDelay: int = 0, two
 				continue
 			if k == 0 and pauseAt >= 0 and frame >= pauseAt + 60 and frame < pauseAt + pauseFor:
 				pause.titles[lans[0]._state] = int(pause.titles.get(lans[0]._state, 0)) + 1
-			if lans[k].tick(players[k].intent()):
-				if players[k].waiting:
-					players[k].waiting = false
-					players[k].sent += 1
+			for rr in range(reps):
+				if lans[k].tick(players[k].intent()):
+					if players[k].waiting:
+						players[k].waiting = false
+						players[k].sent += 1
+			if k == 0 and lans[0].net != null:
+				waitRun[0] = waitRun[0] + 1 if lans[0].net.waits > w0 else 0
+				waitRun[1] = maxi(waitRun[1], waitRun[0])
 			if twoFights and lans[k].net.session != null and S.stage.cur != lans[k].viewSlot(S) / 2:
 				wrongFight += 1
 			if tradeAt >= 0 and k == 0 and traded < 0 and lans[0].net.session != null and NetSession.slotNow(S, 0) != 0:
 				traded = lans[0].net.session.frame
 				actedBefore = S.fighters[lans[0].hubSlot].lastAtkT
+			if k == 0:
+				for e in S.out.fx:
+					if str(e.type) == "banner" and (str(e.text).begins_with("THE OTHER PC") or str(e.text).begins_with("THE COMPUTER PLAYS")):
+						banners += 1
 			fx[k] += S.out.fx.size()
 			var sess: NetSession = lans[k].net.session
 			if together and k == 0 and sess != null and sess.frame > before and before >= 0:
@@ -170,7 +272,9 @@ func _run(pname: String, freezeRule: bool, keepOut: bool, askDelay: int = 0, two
 			S.out.feed.clear()
 			S.out.fx.clear()
 	DirOutside.setForce(-1)
-	return {"lans": lans, "players": players, "fx": fx, "live": live, "wrongFight": wrongFight, "traded": traded, "actedBefore": actedBefore, "ownAt": ownAt, "otherAt": otherAt, "outside": outside, "pause": pause}
+	return {"lans": lans, "players": players, "fx": fx, "live": live, "wrongFight": wrongFight, "traded": traded, "actedBefore": actedBefore, "ownAt": ownAt, "otherAt": otherAt, "outside": outside, "pause": pause,
+		"ownLive": ownLive, "partnerAt": partnerAt, "crossAt": crossAt, "waitRun": waitRun[1], "stalled": stalled, "paused": paused,
+		"banners": banners, "hostile": hostile}
 
 
 ## With two fights and no rollbacks: what each PC found in the other fight's record, tick by tick, against what the other PC's game drained from its own fight. [ticks compared, ticks that differ, events seen]
@@ -252,6 +356,38 @@ func _init() -> void:
 		print("control, two fights, hits across, the first player out, his PC kept on his fight: it holds fight %d, his partner's is %d" % [cl.gameHost.S.stage.cur, SimStage.fightOf(cl.gameHost.S, _body(cl.gameHost.S, "p3"))])
 		ok(cl.gameHost.S.stage.cur != SimStage.fightOf(cl.gameHost.S, _body(cl.gameHost.S, "p3")), "kept on his finished fight, a PC must be caught not showing the partner's")
 		_close(r)
+		r = _run("p120", true, true, 0, true, true, true, -1, true, [], true, true, -1, 0, {"followInIdle": false, "pauseEvery": 61, "pauseLen": 12})
+		print("control, 2v2 together, pauses on p120 that don't put the view back (%d frames paused): the paused PC began %d frames off its standing player's fight" % [r.paused, r.ownLive[1]])
+		ok(r.ownLive[1] > 0, "a pause whose rollback leaves fight 0 in S must be caught showing it while the player stands")
+		_close(r)
+		var savedN: int = ticks
+		ticks = 240
+		NetHandshake.capDelay = false
+		r = _run("lan", true, true, 0, false, true, true, -1, true, [], false, false, -1, 0, {"hostile": "delay"})
+		NetHandshake.capDelay = true
+		var dd: int = r.lans[0].net.session.delay if r.lans[0].net.session != null else -1
+		print("control, CD-10, a hello asking for 100,000 ticks with the cap off: the first PC agreed %d" % dd)
+		ok(dd > NetHandshake.MAX_DELAY, "with the cap off, the huge wait must be taken")
+		_close(r)
+		ticks = 600
+		NetHost.check = false
+		r = _run("lan", true, true, 0, false, true, true, -1, true, [], false, false, -1, 0, {"hostile": "slot", "hostileFrom": 200})
+		var badSlot: bool = r.lans[0].net.session != null and r.lans[0].net.session.aiFrom.has(200)
+		print("control, CD-10, a takeover of slot 200 with the checks off: it reached the session: %s" % str(badSlot))
+		ok(badSlot, "with the checks off, the bad slot must reach the session")
+		_close(r)
+		r = _run("lan", true, true, 0, false, true, true, -1, true, [], false, false, -1, 0, {"hostile": "flood", "hostileFrom": 200, "floodN": 4})
+		NetHost.check = true
+		var held: int = r.lans[0].net.session.inputs[1].size() if r.lans[0].net.session != null else 0
+		print("control, CD-10, a flood of far-ahead inputs with the checks off: the first PC holds %d of the second's inputs after %d ticks" % [held, r.lans[0].net.session.frame])
+		ok(held > 10000, "with the checks off, the flood must fill the session")
+		_close(r)
+		ticks = 1500
+		r = _run("lan", true, true, 0, false, true, true, -1, true, [], false, false, -1, 0, {"goneAt": 600, "dropAfter": 1000.0, "handOver": false})
+		print("control, CD-10, the second PC gone at frame 600 with the hand-over off: the first PC stopped at tick %d" % r.lans[0].net.session.frame)
+		ok(r.lans[0].net.session.frame < 600 + 2 * NetLan.LAN_AHEAD + 10, "with the hand-over off, a gone PC must freeze the match")
+		_close(r)
+		ticks = savedN
 		r = _run("lan", true, true, 0, true, false)
 		print("control, two fights, S not moved to the player's fight: %d frames held the wrong one" % r.wrongFight)
 		ok(r.wrongFight > 0, "with S not moved, a PC must be caught holding the wrong fight")
@@ -336,8 +472,9 @@ func _init() -> void:
 		var g0 = S0.game if S0.stage.cur == 0 else S0.stage.fights[0].game
 		ok(g0.ko != null and a.frame > ticks - 100 and b.frame > ticks - 100, "%s, hits across, one player out: his fight has its KO and both PCs played on past it (KO %s, frames %d, %d)" % [pname, str(g0.ko != null), a.frame, b.frame])
 		ok(S0.stage.cur == SimStage.fightOf(S0, _body(S0, "p3")), "%s, hits across, one player out: his PC shows his partner's fight (%d)" % [pname, S0.stage.cur])
+		ok(r.crossAt > 100 and r.partnerAt - r.crossAt == NetLan.PARTNER_TICKS, "%s, hits across, one player out: his PC keeps his own fight through the KO close-up and shows his partner's %d sim ticks after his fight's KO clock first reads %.1f (it read it at tick %d, the partner's fight at tick %d)" % [pname, NetLan.PARTNER_TICKS, NetLan.PARTNER_AT, r.crossAt, r.partnerAt])
 		ok(l0._state.begins_with("You're out") and r.lans[1]._state.begins_with("Connected"), "%s, hits across, one player out: the titles (%s; %s)" % [pname, l0._state, r.lans[1]._state])
-		print("  %-5s hits across, the first player out at tick 100: his PC shows fight %d, says \"%s\"; the other says \"%s\"" % [pname, S0.stage.cur, l0._state, r.lans[1]._state])
+		print("  %-5s hits across, the first player out at tick 100: his PC shows fight %d from tick %d (his fight's KO clock read %.1f at tick %d), says \"%s\"; the other says \"%s\"" % [pname, S0.stage.cur, r.partnerAt, NetLan.PARTNER_AT, r.crossAt, l0._state, r.lans[1]._state])
 		_close(r)
 		if pname == "lan":   # the same first KO in 2v2 together (hits across and the blows from outside on, the pairs side by side)
 			r = _run(pname, true, true, 0, true, true, true, -1, true, [[100, "p1", "p2"]], true, true)
@@ -379,6 +516,63 @@ func _init() -> void:
 			ok(int(r.outside.get("start", 0)) > 0, "lan, 2v2 together: blows from outside happened (%s)" % str(r.outside))
 		print("  %-5s 2v2 together: rollbacks %d, %d, checks matched %d, blows from outside %s" % [pname, a.rollbacks, b.rollbacks, a.checksMatched, str(r.outside)])
 		_close(r)
+	for pname in ["lan", "p120"]:   # the view, with the second PC hitching (20 frames in every 240: a third of a second) and, on p120, a pause whose rollback re-runs ticks
+		var r := _run(pname, true, true, 0, true, true, true, -1, true, [], true, true, -1, 0, {"stallEvery": 240, "stallFor": 20, "pauseEvery": 61 if pname == "p120" else 0, "pauseLen": 12})
+		var a: NetSession = r.lans[0].net.session
+		var b: NetSession = r.lans[1].net.session
+		ok(a.desync.is_empty() and b.desync.is_empty() and a.checksMatched > 0 and int(r.stalled) > 0, "%s, 2v2 together, the second PC hitching: checkpoints match (desync %s %s, matched %d, frames stuck %d)" % [pname, str(not a.desync.is_empty()), str(not b.desync.is_empty()), a.checksMatched, r.stalled])
+		ok(r.ownLive[0] == 0 and r.ownLive[1] == 0, "%s, 2v2 together, the second PC hitching%s: each PC shows its own fight before every tick while its player stands (%d and %d frames off it)" % [pname, ", pauses" if pname == "p120" else "", r.ownLive[0], r.ownLive[1]])
+		ok(r.lans[0].viewMoves == 0 and r.lans[1].viewMoves == 0 and r.lans[0].ownLiveWrong == 0 and r.lans[1].ownLiveWrong == 0, "%s, 2v2 together, hitching: NetLan never found S moved between ticks, nor ended a tick off its standing player's fight (%d, %d; %d, %d)" % [pname, r.lans[0].viewMoves, r.lans[1].viewMoves, r.lans[0].ownLiveWrong, r.lans[1].ownLiveWrong])
+		ok(a.maxDepth <= NetLan.LAN_AHEAD + NetLan.SAVE_EVERY and b.maxDepth <= NetLan.LAN_AHEAD + NetLan.SAVE_EVERY, "%s, the second PC hitching: the deepest rollback stays within the LAN's lead and a save (%d, %d; at most %d)" % [pname, a.maxDepth, b.maxDepth, NetLan.LAN_AHEAD + NetLan.SAVE_EVERY])
+		ok(int(r.waitRun) <= NetLan.SYNC_MAX_WAIT, "%s, the second PC hitching: time sync waits at most %d frames in a row (%d)" % [pname, NetLan.SYNC_MAX_WAIT, r.waitRun])
+		ok(a.maxAhead == NetLan.LAN_AHEAD and a.saveEvery == NetLan.SAVE_EVERY and r.lans[0].net.sync.maxWait == NetLan.SYNC_MAX_WAIT and r.lans[0].net.sync.every == NetLan.SYNC_EVERY, "%s: the LAN's tuning is set (lead %d, saves every %d, waits %d every %d)" % [pname, a.maxAhead, a.saveEvery, r.lans[0].net.sync.maxWait, r.lans[0].net.sync.every])
+		print("  %-5s 2v2 together, the second PC stuck %d frames in all, paused %d: off its own fight %d and %d, deepest rollbacks %d and %d, longest wait %d, rollbacks %d and %d" % [pname, r.stalled, r.paused, r.ownLive[0], r.ownLive[1], a.maxDepth, b.maxDepth, r.waitRun, a.rollbacks, b.rollbacks])
+		_close(r)
+	var logPath: String = OS.get_user_data_dir().path_join("lan_check_log.txt")
+	if FileAccess.file_exists(logPath):
+		DirAccess.remove_absolute(logPath)
+	var lr := _run("p120", true, true, 0, true, true, true, -1, true, [], true, false, -1, 0, {"stallEvery": 240, "stallFor": 20, "log": logPath})
+	var logText: String = FileAccess.get_file_as_string(logPath)
+	ok(logText.contains("frames: worst ") and logText.contains("over 100 ms") and logText.contains("most re-run in a frame") and logText.contains("view fight 0 (his own)"), "the log line has the frames and the view")
+	print("  log: %s" % logText.strip_edges().get_slice("\n", 1).get_slice("; ", 3).left(160))
+	_close(lr)
+	DirAccess.remove_absolute(logPath)
+	var keep: int = ticks
+	ticks = 240
+	var hd := _run("lan", true, true, 0, false, true, true, -1, true, [], false, false, -1, 0, {"hostile": "delay"})
+	ok(hd.lans[0].net.session == null and hd.lans[0].net.hs.failed.contains("input wait") and hd.lans[0]._state.begins_with("Couldn't start"), "CD-10, a hello asking for an input wait of 100,000 ticks: no session, the title says why (%s)" % hd.lans[0]._state)
+	print("  CD-10 a huge wait asked for: %s" % hd.lans[0]._state)
+	_close(hd)
+	ticks = 1200
+	for mode in ["slot", "flood"]:
+		var hr := _run("lan", true, true, 0, false, true, true, -1, true, [], false, false, -1, 0, {"hostile": mode, "hostileFrom": 200, "floodN": 4})
+		var ha: NetSession = hr.lans[0].net.session
+		var hb: NetSession = hr.lans[1].net.session
+		ok(ha != null and hb != null and ha.frame > ticks - 100 and ha.desync.is_empty() and hb.desync.is_empty() and ha.checksMatched > 0, "CD-10, %s: the match went on in step (frames %d, checks matched %d)" % [mode, ha.frame if ha else -1, ha.checksMatched if ha else -1])
+		ok(hr.lans[0].net.rejected >= 1 and hr.lans[0].net.rejected >= hr.hostile.bad - 2 * maxi(1, hr.hostile.floodN), "CD-10, %s: every bad packet that arrived was dropped (%d dropped, %d sent, the last frame's still on the way)" % [mode, hr.lans[0].net.rejected, hr.hostile.bad])
+		if mode == "slot":
+			ok(ha.aiFrom.is_empty(), "CD-10, a takeover of slot 200: nothing reached the session (%s)" % str(ha.aiFrom))
+		else:
+			ok(ha.inputs[1].size() < ha.frame + 400, "CD-10, a flood of far-ahead inputs: the first PC holds %d of the second's inputs after %d ticks" % [ha.inputs[1].size(), ha.frame])
+		print("  CD-10 %-5s: dropped %d of %d bad packets, frames %d, checks matched %d, the second's inputs held %d" % [mode, hr.lans[0].net.rejected, hr.hostile.bad, ha.frame, ha.checksMatched, ha.inputs[1].size()])
+		_close(hr)
+	ticks = 1500
+	for two in [false, true]:
+		var gr := _run("lan", true, true, 0, two, true, true, -1, true, [], true, two, -1, 0, {"goneAt": 600, "dropAfter": 1000.0})
+		var g0: NetLan = gr.lans[0]
+		var gs: NetSession = g0.net.session
+		var gS: SimState = g0.gameHost.S
+		var seat = _body(gS, "p3") if two else gS.fighters[1]
+		var what: String = "2v2 together" if two else "1v1"
+		ok(g0.droppedAt > 400 and gs.frame > ticks - 200 and gs.desync.is_empty(), "CD-10, %s, the second PC gone at frame 600: its seat went to the computer from tick %d and the match went on (frame %d)" % [what, g0.droppedAt, gs.frame])
+		ok(seat.ai != null, "CD-10, %s: the computer plays the gone PC's fighter (%s)" % [what, "p3" if two else "p2"])
+		if two:
+			ok(_body(gS, "p2").ai != null and _body(gS, "p1").ai == null, "CD-10, 2v2 together: the computer's own fighter is unchanged and the first PC's player is still his")
+		ok(g0._state.begins_with("The other PC has gone: the computer plays") or g0._state.begins_with("You're out") or g0._state.begins_with("The match is over"), "CD-10, %s: the title says so (%s)" % [what, g0._state])
+		ok(int(gr.banners) >= 2, "CD-10, %s: the game got banners about it (%d)" % [what, gr.banners])
+		print("  CD-10 %s, the second PC gone at frame 600: the computer from tick %d, frame %d at the end, banners %d, title \"%s\"" % [what, g0.droppedAt, gs.frame, gr.banners, g0._state])
+		_close(gr)
+	ticks = keep
 	var pre: String = NetLan.prefixOf("10.0.0.135")
 	ok(pre == "10.0.0.", "the /24 of an address (%s)" % pre)
 	ok(NetEnetTransport.allowed("10.0.0.7", pre) and not NetEnetTransport.allowed("10.238.114.20", pre) and not NetEnetTransport.allowed("10.0.01.7", pre) and not NetEnetTransport.allowed("203.0.113.5", pre), "the filter lets in only the /24")

@@ -11,11 +11,15 @@ extends SceneTree
 ##   3. two NetHosts over link transports through the codec, with the second peer's clock 2% fast, a late start and a
 ##      40-frame freeze of the first: every confirmed tick's state digest and feed and fx equal the straight run's at
 ##      the agreed delay, no desync fires, and time sync keeps the peers within --max-lead frames of each other over
-##      the last third of the match (the freeze is at the first third).
+##      the last third of the match (the freeze is at the first third);
+##   4. the same with the LAN's tuning (NetLan.tune: a lead of NetLan.LAN_AHEAD ticks, a save every NetLan.SAVE_EVERY, time sync's
+##      waits at most NetLan.SYNC_MAX_WAIT frames every NetLan.SYNC_EVERY), on lan and p120: the same equalities, the peers as
+##      close, and time sync never waits more than NetLan.SYNC_MAX_WAIT frames in a row.
 ##   godot --headless --path . --script res://net/tools/transport_check.gd -- [--seed=1] [--ticks=900]
 ##     [--profiles=lan,p120,p200] [--max-lead=4] [--negative-control]
-## --negative-control runs parts 2 and 3 against a handshake that takes the smaller proposal, a match key without the
-## data hash and time sync turned off, and passes only if all three are caught.
+## --negative-control runs parts 2 to 4 against a handshake that takes the smaller proposal, a match key without the
+## data hash, time sync turned off, and the LAN's tuning with time sync waiting up to 8 frames at once, and passes only if all
+## four are caught.
 
 const FRAME_MS: float = 1000.0 / 60.0
 const DEVICE_PAIRS: Array = [[1.0, 1.0], [1.0, 4.0], [4.0, 1.0], [2.0, 1.0]]
@@ -24,6 +28,8 @@ var failures: int = 0
 var quiet: bool = false
 var pickLarger: bool = true
 var syncOn: bool = true
+var lanTune: bool = false   # part 4: NetLan.tune on both hosts
+var lanWait: int = -1       # the negative control's time sync wait cap in part 4 (-1: NetLan's)
 
 
 func _init() -> void:
@@ -62,14 +68,26 @@ func _init() -> void:
 			_hosts(seed, ticks, pname, maxLead)
 		print("  %s  time sync turned off: %d failing case(s)" % ["caught" if failures > 0 else "MISSED", failures])
 		caught += 1 if failures > 0 else 0
-		print("%s  negative control: %d of 3 breaks caught" % ["PASS" if caught == 3 else "FAIL", caught])
-		quit(0 if caught == 3 else 1)
+		syncOn = true
+		lanTune = true
+		lanWait = 8
+		failures = 0
+		for pname in ["lan", "p120"]:
+			_hosts(seed, ticks, pname, maxLead)
+		print("  %s  the LAN's tuning with waits of up to 8 frames: %d failing case(s)" % ["caught" if failures > 0 else "MISSED", failures])
+		caught += 1 if failures > 0 else 0
+		print("%s  negative control: %d of 4 breaks caught" % ["PASS" if caught == 4 else "FAIL", caught])
+		quit(0 if caught == 4 else 1)
 		return
 	_codec()
 	_handshakes(seed)
 	_levelKeys(seed)
 	for pname in profiles:
 		_hosts(seed, ticks, pname, maxLead)
+	lanTune = true
+	for pname in ["lan", "p120"]:
+		_hosts(seed, ticks, pname, maxLead)
+	lanTune = false
 	print("%s  %d failure(s)" % ["PASS" if failures == 0 else "FAIL", failures])
 	quit(0 if failures == 0 else 1)
 
@@ -196,6 +214,10 @@ func _hosts(seed: int, ticks: int, pname: String, maxLead: int) -> void:
 		var mine: Array = digests[k]
 		mine.resize(ticks)
 		h.configure = func(sess: NetSession) -> void:
+			if lanTune:
+				NetLan.tune(sess, h)
+				if lanWait > 0:
+					h.sync.maxWait = lanWait
 			sess.verify = true
 			sess.onConfirmed = func(b: int, st, out: String) -> void:
 				if b <= ticks and st != null:
@@ -205,6 +227,8 @@ func _hosts(seed: int, ticks: int, pname: String, maxLead: int) -> void:
 	var wall: int = 0
 	var froze: bool = false
 	var leads: Array = []
+	var waitRun: Array = [0, 0]
+	var waitLongest: int = 0
 	var cap: int = ticks * 3 + 1200
 	while wall < cap:
 		for k in range(2):
@@ -212,7 +236,10 @@ func _hosts(seed: int, ticks: int, pname: String, maxLead: int) -> void:
 				continue
 			var reps: int = 2 if k == 1 and wall % 50 == 49 else 1
 			for r in range(reps):
+				var w0: int = hosts[k].waits
 				hosts[k].frame(now, ticks)
+				waitRun[k] = waitRun[k] + 1 if hosts[k].waits > w0 else 0
+				waitLongest = maxi(waitLongest, waitRun[k])
 		var s0: NetSession = hosts[0].session
 		var s1: NetSession = hosts[1].session
 		if s0 != null and not froze and s0.frame >= ticks / 3:
@@ -249,12 +276,14 @@ func _hosts(seed: int, ticks: int, pname: String, maxLead: int) -> void:
 			lateWorst = maxi(lateWorst, absi(leads[i]))
 	if err == "" and lateWorst > maxLead:
 		err = "the peers drifted %d frames apart over the last third (at most %d)" % [lateWorst, maxLead]
-	_expect(err == "", "hosts %s: %s" % [pname, err])
+	if err == "" and lanTune and waitLongest > NetLan.SYNC_MAX_WAIT:
+		err = "time sync waited %d frames in a row (at most %d with the LAN's tuning)" % [waitLongest, NetLan.SYNC_MAX_WAIT]
+	_expect(err == "", "hosts %s%s: %s" % [pname, " lan-tuned" if lanTune else "", err])
 	if err != "" and not quiet:
 		print("  lead every 30 frames: %s" % str(leads.filter(func(x): return true).slice(0, leads.size(), 30)))
 	if not quiet:
-		print("hosts %-6s %s  delay %d  rtt %.0f/%.0f ms  lead max %d, last third %d  waits %d/%d  stalls %d/%d  rollbacks %d/%d  %d/%d B a packet  %s" % [pname,
-			"ok  " if err == "" else "FAIL", d, hosts[0].rttMs(), hosts[1].rttMs(), worst, lateWorst, hosts[0].waits, hosts[1].waits,
+		print("hosts %-6s %s  delay %d  rtt %.0f/%.0f ms  lead max %d, last third %d  waits %d/%d (longest run %d)  stalls %d/%d  rollbacks %d/%d  %d/%d B a packet  %s" % [pname + ("+lan" if lanTune else ""),
+			"ok  " if err == "" else "FAIL", d, hosts[0].rttMs(), hosts[1].rttMs(), worst, lateWorst, hosts[0].waits, hosts[1].waits, waitLongest,
 			hosts[0].session.stalls if hosts[0].session else -1, hosts[1].session.stalls if hosts[1].session else -1,
 			hosts[0].session.rollbacks if hosts[0].session else -1, hosts[1].session.rollbacks if hosts[1].session else -1,
 			hosts[0].tr.bytesOut / maxi(1, hosts[0].tr.pktOut), hosts[1].tr.bytesOut / maxi(1, hosts[1].tr.pktOut), err])

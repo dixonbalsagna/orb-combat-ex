@@ -107,6 +107,63 @@
       "minimum": 1,
       "maximum": 30,
       "description": "The judder's rate in Hz."
+    },
+    "fighters": {
+      "type": "object",
+      "description": "A fighter's own plant and skid landing (docs/animation/air-brake-looks-plan.md), by fighter id; a fighter with no row uses `poses`.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "poses",
+          "land"
+        ],
+        "properties": {
+          "poses": {
+            "type": "object",
+            "required": [
+              "enter",
+              "hold",
+              "exit"
+            ],
+            "properties": {
+              "enter": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+                "description": "His plant's first bite."
+              },
+              "hold": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+                "description": "His plant."
+              },
+              "exit": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+                "description": "His plant letting go."
+              }
+            },
+            "additionalProperties": false
+          },
+          "land": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+            "description": "His slide pose for a landing out of the brake."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "unwind_rate": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 60,
+      "description": "How fast the body unwinds from the brake's lean when control comes back in the air (1/s; the old snap was 45)."
+    },
+    "land_s": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 2,
+      "description": "Seconds after the brake was last on in which a slide is his own landing pose."
     }
   },
   "additionalProperties": false,

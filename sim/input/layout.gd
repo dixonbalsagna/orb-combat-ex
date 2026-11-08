@@ -119,6 +119,8 @@ var _brace_peak: Vector2 = Vector2.ZERO
 var _brace_pending: bool = false    # a brace read (from the flick or the button) waits for a step to take it
 var _rs: Vector2 = Vector2.ZERO     # the pad's strike stick, x right and y up
 var dodge_held: bool = false        # switches.dodgeHeld: the intent's dodgeHeld says the dodge control is physically down
+var chord_pick: bool = false        # switches.chordPick: two attack edges on one tick are one blow, the biggest, and the smaller is told (docs/controls/chord-pick.md)
+var _chord_dropped: Array = []      # [{k, why, t}]: the attack presses a chord let go of, joined to the strike law's list by take_dropped
 var stall_keep: bool = false        # switches.stallKeep: keep the strike stick's furthest point between two builds (see _note_peak)
 var _peak_rs: Vector2 = Vector2.ZERO    # the strike vector at its furthest, as the events reported it, since the last build
 var _peak_pressed: bool = false         # a strike key was down at some moment since the last build
@@ -188,6 +190,7 @@ func _init(p_preset: Dictionary = {}) -> void:
 	quant = float(SimInputData.ti(["stick", "quant"], 16))
 	stall_keep = SimInputData.stall_keep_on()
 	dodge_held = SimInputData.dodge_held_on()
+	chord_pick = SimInputData.chord_pick_on()
 	trig_on = SimInputData.tf(["stick", "triggerOn"], 0.35)
 	trig_off = SimInputData.tf(["stick", "triggerOff"], 0.25)
 	if not p_preset.is_empty():
@@ -981,7 +984,7 @@ func build() -> SimIntent:
 	for_mask &= ~_chord_stance_bits()   # a pending transform chord changes no stance
 	var mask: int = SimStance.resolve(for_mask, SimStance.newest_of(for_mask, since), SimStance.hybrids())
 	i.stanceMask = mask
-	if SimInputData.signature_rt_only() and (mask & SimStance.CHARGING) == 0 and (mask != 0 or i.mode == 1) and not (SimInputData.driver_on_rb() and ((mask & SimStance.ENERGY) != 0 or i.mode == 1)):
+	if SimInputData.signature_rt_only() and (mask & SimStance.CHARGING) == 0 and (mask != 0 or i.mode == 1) and not (SimInputData.driver_on_rb() and ((mask & SimStance.ENERGY) != 0 or i.mode == 1)) and not (SimInputData.flight_strike_b() and (mask & SimStance.MANOEUVRE) != 0 and (for_mask & (SimStance.DEFENSIVE | SimStance.ENERGY)) == 0 and i.mode != 1):
 		# The signature is RT + B only: with any other stance held, B is the heavy of that stance (its edge and its level), so a guard or a dodge never fires a beam by accident.
 		if i.sig:
 			i.sig = false
@@ -1000,6 +1003,8 @@ func build() -> SimIntent:
 		i.mode = 1 if ((mode_on or _armed.has(SimStance.ENERGY)) and (mask & SimStance.ENERGY) != 0) else 0   # an armed one-shot energy stance makes the next blow energy
 	if rs_on:
 		_right_hand(i, mask)
+	if chord_pick:
+		_pick_chord(i)
 	if not _armed.is_empty() and (i.light or i.heavy or i.sig or i.context or i.special != 0):
 		_armed.clear()
 	_last_mask = mask
@@ -1156,11 +1161,33 @@ func _strike_vector() -> Array:
 
 ## The face presses the strike law let go of since the last call, [{k, why, t}], and the list starts again (docs/controls/refusals.md). [] when the right-hand switch is off.
 func take_dropped() -> Array:
-	if _law == null:
-		return []
-	var d: Array = _law.dropped
-	_law.dropped = []
+	var d: Array = []
+	if _law != null:
+		d = _law.dropped
+		_law.dropped = []
+	if not _chord_dropped.is_empty():
+		d = d + _chord_dropped
+		_chord_dropped = []
 	return d
+
+
+## Two attack edges on one tick (B with X or Y; X with Y) used to reach the director together, and SimControl takes one attack a tick: the light, then the heavy, then the signature, so a B pressed with an X was
+## dropped with no word (14 of Orb's presses). With switches.chordPick the biggest press goes (signature over heavy over light) and each smaller one is let go of and told: the code "chord" in take_dropped, so the hub
+## knocks the pad once and UI can say "One at a time". The held fields are not touched. Resolved here, before the intent is recorded, so a replay carries the pick.
+func _pick_chord(i: SimIntent) -> void:
+	var n: int = (1 if i.light else 0) + (1 if i.heavy else 0) + (1 if i.sig else 0)
+	if n < 2:
+		return
+	if i.sig:
+		if i.heavy:
+			i.heavy = false
+			_chord_dropped.append({"k": "heavy", "why": "chord", "t": tick})
+		if i.light:
+			i.light = false
+			_chord_dropped.append({"k": "light", "why": "chord", "t": tick})
+	elif i.heavy and i.light:
+		i.light = false
+		_chord_dropped.append({"k": "light", "why": "chord", "t": tick})
 
 
 ## The right hand and the left hand's upgrades for one build (switches.rightStick). The order matters, and is the law: the left hand's guard or dodge

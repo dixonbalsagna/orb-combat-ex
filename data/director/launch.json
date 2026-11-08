@@ -70,6 +70,12 @@
     "uy": [0.3, 0.45, 0.65, 0.9],
     "score": {"hero": -8, "villain": 8}
   },
+  "aimCuts": {
+    "enabled": false,
+    "aimMax": 4,
+    "oneFlight": true,
+    "_note": "The launch cuts (docs/design/buildings.md section 8; docs/director/pending/launch-cuts). One switch for one QA read of the city rows, off then on with the same seeds. On: at most aimMax buildings aimed (the best by World's cheap score, at least one a side when each side has one); with oneFlight, one flight an arc a side for all of them (World's aimShared). The cheap-score bound was dropped (Game Design, 2026-11-07)."
+  },
   "knockBack": {
     "score": 25.0,
     "distBh": [3.5, 5.0, 6.5, 8.0],

@@ -2,7 +2,8 @@ class_name SimPower
 extends RefCounted
 ## One energy model (docs/design/power-scale.md, Game Design), Simulation's part: how fast a send leaves, how far along the line it carries, and flat-out flight, from a fighter's level.
 ## The switch is data/fight/power.json "enabled" (off), which SimCore.newMatch copies into S.powerOn unless the setup has its own "power". With it off, nothing here changes a number.
-## A setup's "flatOut" tries another base for flat-out flight, inside the data's range (Orb's slider, a page word). No draw from S.rng anywhere here, and a level is read from what's hashed.
+## A setup's "flatOut" tries another base for flat-out flight, inside the data's range (Orb's slider, a page word), and its "travel" another factor along the line (launchTravel), inside the data's
+## travel range (the page's ?travel= slider, x1.25 to x2). No draw from S.rng anywhere here, and a level is read from what's hashed.
 
 const FILE: String = "res://data/fight/power.json"
 
@@ -21,9 +22,12 @@ static var flatMin: float = 3500.0
 static var flatMax: float = 7000.0
 static var meteorSpeed: float = 7000.0         # what the meteor's and the high arc's curves count as for their crater, buildings and energy: their on-screen speed is pacing (Game Design)
 static var launchTravel: float = 2.0
+static var travelMin: float = 1.25             # a setup's "travel" is held to these (the page's slider)
+static var travelMax: float = 2.0
 static var trav: float = SimConst.TRAV_LAUNCH   # the match stepping now: its factor along the line (WorldSlide.launchTravel). A static, bound each step as the arena's are
 static var popForce: float = 700.0
 static var blind: float = 1.0                  # tests only: a send past what he has
+static var blindTravel: bool = false           # tests only: a setup's "travel" left unread
 static var _shares: Dictionary = {}
 static var lastShare: float = -1.0             # tests only: the share the last send asked for
 
@@ -55,6 +59,9 @@ static func _ensure() -> void:
 	flatMax = float(j.flight.max)
 	meteorSpeed = float(j.meteorSpeed)
 	launchTravel = float(j.launchTravel)
+	var tr: Dictionary = j.travel if j.get("travel") is Dictionary else {}
+	travelMin = float(tr.get("min", launchTravel))
+	travelMax = float(tr.get("max", launchTravel))
 	popForce = float(j.popForce)
 	_shares = {}
 	_flat("", j.share)
@@ -87,17 +94,18 @@ static func errors() -> Array:
 	return _errors
 
 
-## newMatch: the match's switch and its flat-out base.
+## newMatch: the match's switch, its flat-out base and its factor along the line.
 static func setup(S: SimState, su: Dictionary) -> void:
 	_ensure()
 	S.powerOn = su.get("power", on_) == true
 	S.powerFlat = clampf(float(su.get("flatOut", flatOut)), flatMin, flatMax) if S.powerOn else flatOut
+	S.powerTravel = clampf(float(su.get("travel", launchTravel)), travelMin, travelMax) if S.powerOn and not blindTravel else launchTravel
 	bindStep(S)
 
 
 ## This match is the one stepping.
 static func bindStep(S: SimState) -> void:
-	trav = launchTravel if S.powerOn else SimConst.TRAV_LAUNCH
+	trav = S.powerTravel if S.powerOn else SimConst.TRAV_LAUNCH
 
 
 ## What a distance a plan was written for at x6 along the line comes to now: 1 with the switch off.

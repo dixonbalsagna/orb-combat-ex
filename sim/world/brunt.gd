@@ -712,6 +712,113 @@ static func _aimBy(S: SimState, A, D, b, force: float, tierF: float, special: bo
 	return null
 
 
+
+## The kept buildings' aims with one flight an arc a side (Encounter's launch cuts: docs/design/buildings.md section 8): {building index:
+## its plan, or null}, each the plan aim gives it. On a flat world a flight doesn't depend on the building it's asked about (it ends at
+## that building's face, the water or the ground), so each arc is flown once a side and every building's crossing is read from the one
+## flight, by the same steps as flightTo. With depth on each target has its own depth waypoint, so each building is aimed alone.
+static func aimShared(S: SimState, A, D, bis: Array, force: float, tierF: float, special: bool = false) -> Dictionary:
+	var out: Dictionary = {}
+	if S.depthOn:
+		for bi in bis:
+			out[bi] = aim(S, A, D, S.buildings[bi], force, tierF, special)
+		return out
+	for sign_ in [-1.0, 1.0]:
+		var left: Array = []
+		for bi in bis:
+			if (1.0 if SimWrap.sdx(D.x, S.buildings[bi].x) >= 0.0 else -1.0) == sign_:
+				left.append(bi)
+		for uy in AIM_UY:
+			if left.is_empty():
+				break
+			var trav: float = WorldSlide.launchTravel(sign_, uy)
+			var fa: float = SimPower.fit(S, force, sign_, uy)   # what doLaunch will fly
+			var hits: Dictionary = _flightToAll(S, D.x, D.y, WorldSlide.launchVX(sign_, uy, fa * tierF), uy * fa * tierF, trav, left)
+			var still: Array = []
+			for bi in left:
+				var fr: Dictionary = hits[bi]
+				if fr.ok and fr.spN >= AIM_MIN_SP:
+					var b = S.buildings[bi]
+					var chain: Array = chainPlan(S, tierOf(A, D), special, b, fr, trav)
+					var edge: float = SimWrap.wrap(b.x - sign_ * b.w * 0.5)
+					out[bi] = {"ux": sign_, "uy": float(uy), "fm": 1.0, "name": "BUILDING SMASH",
+						"brunt": {"b": b.idx, "hit": fr, "chain": chain, "deaths": chainDeaths(chain), "z1": faceZ(b), "aimD": absf(SimWrap.sdx(D.x, edge))}}
+				else:
+					still.append(bi)
+			left = still
+		for bi in left:
+			out[bi] = null
+	return out
+
+
+## flightTo for several buildings at once on a flat world: one integration, and each building's result as flightTo gives it.
+static func _flightToAll(S: SimState, x0: float, y0: float, vx0: float, vy0: float, trav: float, bis: Array) -> Dictionary:
+	SimField.far()
+	var r: Dictionary = _flightToAllRead(S, x0, y0, vx0, vy0, trav, bis)
+	SimField.near()
+	return r
+
+
+static func _flightToAllRead(S: SimState, x0: float, y0: float, vx0: float, vy0: float, trav: float, bis: Array) -> Dictionary:
+	var dt: float = SimConst.DT
+	var kAir: float = SimDetMath.pow(0.55, dt)
+	var dir: float = -1.0 if vx0 < 0.0 else 1.0
+	var res: Dictionary = {}
+	var live: Array = []
+	for bi in bis:
+		var b = S.buildings[bi]
+		var edge: float = SimWrap.wrap(b.x - dir * b.w * 0.5)
+		var ahead: float = SimWrap.sdx(x0, edge) * dir
+		if ahead < 0.0 or ahead > FLIGHT_X_MAX:
+			res[bi] = {"ok": false}
+			continue
+		var gy: float = WorldStructures.baseY(S, b)
+		live.append([bi, edge, gy, gy + WorldStructures.curH(b), ahead])
+	if live.is_empty():
+		return res
+	if y0 < WorldWater.surfaceAt(S, x0):
+		for e in live:
+			res[e[0]] = {"ok": false}
+		return res
+	var x: float = x0
+	var y: float = y0
+	var vx: float = vx0
+	var vy: float = vy0
+	var t: float = 0.0
+	for n in range(FLIGHT_STEPS):
+		var ox: float = x
+		var oy: float = y
+		t += dt
+		vy -= 1000.0 * dt
+		vx *= kAir
+		x = SimWrap.wrap(x + vx * dt)
+		y += vy * dt
+		if y < WorldWater.surfaceAt(S, x):
+			break   # a flight that enters water is the runtime's, not a brunt's
+		var keep: Array = []
+		for e in live:
+			var fr: float = crossFrac(ox, x, float(e[1]), dir)
+			if fr >= 0.0:
+				var yc: float = oy + (y - oy) * fr
+				if yc > float(e[2]) - 10.0 and yc < float(e[3]):
+					res[e[0]] = {"ok": true, "t": t - dt * (1.0 - fr), "x": float(e[1]), "y": yc, "vx": vx, "vy": vy, "spN": SimDetMath.hypot(vx / trav, vy), "dir": dir, "aimD": float(e[4])}
+				else:
+					res[e[0]] = {"ok": false}
+				continue
+			if SimWrap.sdx(ox, x) * dir > 0.0 and SimWrap.sdx(float(e[1]), x) * dir > 0.0:
+				res[e[0]] = {"ok": false}
+				continue
+			keep.append(e)
+		live = keep
+		if live.is_empty():
+			return res
+		if y <= WorldTerrain.groundY(S, x):
+			break
+	for e in live:
+		res[e[0]] = {"ok": false}
+	return res
+
+
 # ===================================================================== the runtime
 
 ## Give a launched fighter his aim from the plan (doLaunch): the building, the depth waypoints and the chain token.

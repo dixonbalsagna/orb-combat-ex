@@ -4,8 +4,8 @@ extends RefCounted
 ## limits). World's struggle-meet (docs/world/struggle-meet.md) is the sim side and sends the cues; this draws them. Rings and dust on the ground, a burn in the air for an air burst, never a light and never on a fighter:
 ##   * GROWTH: the cue `struggle_ring` (x, y, z, `amount` the ring's radius in units, `n` its size in body heights x 100): a thin flat ring in the pair's mix colour on the ground beneath the point, growing 1 to 3 body heights
 ##     through the struggle as the sim sends it, at most one in `ring_gap_s` (2 s) whatever arrives, rising over at least `ring_rise_s` (6 ticks). No ring and no light per pulse (a struggle pulses 15 times in 5 s): a pulse has no cue here.
-##   * THE RELEASE: the cue `beam_clash_end` with `r` (the crater's radius, 0 for none), `rGlass` (the radius before the height cut), `dug` (the energy dug) and the ground's shape (`ground`: bowl, scorch or air; when the cue has
-##     none it is read from `r` and `dug`). ONE wave, once: one rise of at least `rise_s` (0.3 s) and one fall of at least `fall_s` (1 s), in a ring that runs out to the crater's radius (a bowl) or, with no bowl, a thin ring at
+##   * THE RELEASE: the cue `beam_clash_end` with `r` (the crater's radius, 0 for none), `rGlass` (the radius before the height cut), `dug` (the energy dug) and the ground's shape (`shape`: bowl, scorch or air; `FxEvent.ground` is the
+##     debris floor, a number, so the cue's field is `shape`; when the cue has none it is read from `r` and `dug`). ONE wave, once: one rise of at least `rise_s` (0.3 s) and one fall of at least `fall_s` (1 s), in a ring that runs out to the crater's radius (a bowl) or, with no bowl, a thin ring at
 ##     `rGlass` with the burn drawn in the air at the point (a few smoke puffs; scorch also a small local dust); strength by `dug`. A local dust dome at most 6 body heights across. It starts `release_delay` ticks after the cue so
 ##     it is never in the tick of the winner's beam, its blast and the crater (one envelope, RL-246 4). A cue without the fields reads World's crater by the pair's tier and the ending, as before (the fallback).
 ## No white, gold or red (the mix colour is a hue average), no screen read, no light: the combined step with the blast is measured by the flash clips, not here. Presentation only: it reads the cues, the fighters and the ground, and draws
@@ -147,8 +147,8 @@ func _end(S: SimState, e) -> void:
 	var glass_v = e.get("rGlass")                         # World's fields: absent on a cue from before them
 	var glass: float = float(glass_v) if glass_v != null else -1.0
 	var dug: float = float(VfxHub._g(e, "dug", -1.0))
-	var gv = e.get("ground")                              # the ground's shape as a word (bowl, scorch, air); an event's own `ground` is a number, so only a string counts
-	var shape: String = String(gv) if gv is String else ""
+	var gv = e.get("shape")                               # the ground's shape as a word (World's `shape`: bowl, scorch, air; `ground` is the event's debris floor, a number, and is never read as one)
+	var shape: String = String(gv) if (gv is String and ["bowl", "scorch", "air"].has(String(gv))) else ""
 	if glass_v == null:
 		# a cue from before World's fields: the crater by tier and ending, a half-size ring in the air
 		var how: String = String(e.text)

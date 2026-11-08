@@ -16,7 +16,9 @@ static var rate: float = 0.0            # the view-only test turn, degrees a sec
 static var quick: bool = false          # ... as small swings
 static var near_mode: int = RenderLook.TILE_NEAR_DEFAULT
 static var share: float = 1.0           # 1: the true globe. --tileshare=95: 95 percent at the closest zoom, to compare
-var _cb: Array = []                    # the store's craters so far: [x, y, z, r, depth, rim, t], planet direction first
+var _cb: Array = []                    # the store's craters so far: [x, y, z, r, depth, rim, made], planet direction first; made: when it was first seen, by _clock
+var _cb_fresh: bool = true            # the list is starting (a new match, or a rollback shortened the store): what it reads now is open already
+var _clock: float = 0.0               # the render's own clock (the host's ticks, in seconds) that the bowls open by: S.T stands at 0 through the opening
 var _cb_seen: int = 0                  # the store's records read
 var _cb_due: int = 0
 var _cb_a := PackedVector4Array()
@@ -53,6 +55,10 @@ var _drawn: int = 0
 var _buf := PackedFloat32Array()
 var _prof_wait: int = 0
 var _prof_x: float = 0.0
+var _prof_w: float = -1.0           # the view's width, the store's length, the tiles' version and the heading the sight line was read at
+var _prof_n: int = -1
+var _prof_v: int = -1
+var _prof_hd := Vector3.ZERO
 var _fill_at: int = 0
 var _fill_dt: float = float(RenderLook.TILE_FILL_TARGET_US)
 var _walk_x: float = 1.0e18
@@ -187,8 +193,10 @@ func apply(host: SimHost, cam_x: float, vp: Vector2) -> void:
 	pane.planet._tile_foot_slice(S, _pv)
 	if crater_look:
 		_scar_slice(S)
+	_clock = (float(host.ticks) + host.acc / SimConst.DT) * SimConst.DT
 	_bowls(S)
-	mat.set_shader_parameter("cb_now", S.T)
+	mat.set_shader_parameter("cb_now", _clock)   # by the render's clock: the opening's craters (S.T held at 0) open under the fighters standing in them
+	mat.set_shader_parameter("crater_now", S.T)   # a record's colours open by it (crater_new): every frame, not with the ground's copy every 30
 	_copy_t += 1
 	if _copy_t % 30 == 1:
 		_copy_ground(pane.planet._terrain_mat)
@@ -201,11 +209,24 @@ func apply(host: SimHost, cam_x: float, vp: Vector2) -> void:
 		_walk_z = cam_d
 		_walk_y = cam_h
 		_select(cam_d, cam_h, reff, vp)
-		_prof_wait -= 1
-		if _prof_wait <= 0 or absf(cam_x - _prof_x) > RenderLook.TILE_PROFILE_MOVE or not (S.swing != null and S.swing.active):
-			_prof_wait = RenderLook.TILE_PROFILE_FRAMES
-			_prof_x = cam_x
-			_profile(S, cam_x, width)
+	# The foreground rule's line (_profile). The shader reads it from where the camera is now, so out of a turn it is read again
+	# once the camera has moved FORE_PROFILE_STEP along the line or zoomed by FORE_PROFILE_ZOOM, or the ground or the heading
+	# under it changed. Read only when the tiles were chosen again, it kept an earlier, wider view's line while the camera
+	# eased in, and a fighter landing under it had his feet behind the ground in front (Orb's intro, 2026-11-07). While the
+	# line turns: every TILE_PROFILE_FRAMES frames, or on a move of TILE_PROFILE_MOVE, as before.
+	_prof_wait -= 1
+	var along: float = absf(SimWrap.sdx(_prof_x, cam_x))
+	var due: bool = _prof_wait <= 0 or along > RenderLook.TILE_PROFILE_MOVE
+	if not (S.swing != null and S.swing.active):
+		due = (due and not field.field_world) or along > RenderLook.FORE_PROFILE_STEP or absf(width - _prof_w) > RenderLook.FORE_PROFILE_ZOOM * width or int(S.storeN) != _prof_n or field.version != _prof_v or _hd.dot(_prof_hd) < 0.9999999
+	if due:
+		_prof_wait = RenderLook.TILE_PROFILE_FRAMES
+		_prof_x = cam_x
+		_prof_w = width
+		_prof_n = int(S.storeN)
+		_prof_v = field.version
+		_prof_hd = _hd
+		_profile(S, cam_x, width)
 	_cull_chunks(cam_x, cam_h, reff)
 	# The sky's horizon is the globe's, from the camera's height over the ground below it.
 	var hz: float = -tan(acos(reff / (reff + cam_h)))
@@ -229,17 +250,24 @@ func _fill_slice() -> int:
 
 
 ## The bowls the vertex stage draws: World's store is append-only, so a frame reads only what's new, and the nearest few to the camera are chosen again now and then. A rollback that shortens the store starts the list again.
+## A bowl opens over TILE_BOWL_OPEN from when the render first saw it, by its own clock (_clock): the record's time is the sim's
+## clock, which stands at 0 through the opening, so the first-meteor landing's craters never opened while the fighters stood in
+## them (Orb's play, 2026-11-07; World's docs/world/orb-looks-1107.md). Less the record's own age if the sim's clock ran since it
+## was dug (a pane that came late); one already there when the list starts is open.
 func _bowls(S: SimState) -> void:
 	var fresh: bool = false
 	if S.storeN < _cb_seen:
 		_cb.clear()
 		_cb_seen = 0
+		_cb_fresh = true
 	while _cb_seen < S.storeN:
 		var o: int = _cb_seen * WorldStore.STRIDE
 		if int(S.store[o]) == WorldStore.KIND_CRATER:
-			_cb.append([S.store[o + 1], S.store[o + 2], S.store[o + 3], S.store[o + 4], S.store[o + 5], S.store[o + 6], S.store[o + 8]])
+			var made: float = _clock - RenderLook.TILE_BOWL_OPEN - 1.0 if _cb_fresh else _clock - maxf(S.T - float(S.store[o + 8]), 0.0)
+			_cb.append([S.store[o + 1], S.store[o + 2], S.store[o + 3], S.store[o + 4], S.store[o + 5], S.store[o + 6], made])
 			fresh = true
 		_cb_seen += 1
+	_cb_fresh = false
 	_cb_due -= 1
 	if not fresh and _cb_due > 0:
 		return

@@ -57,10 +57,29 @@
     "topDrainPerSec": 2.0,
     "_note": "The plain hold's stages (docs/director/beams-own-move-plan.md step 2; playable-build.md section 2; beam-answers-2.md section 1). A right-stick strike's hold climbs the beam's ladder: its count is 2 + round(4 x level), taken at the request; stage s comes at stageTicks[s-1] live ticks from the request, no higher than its level's price (levels, over the quick's) affords. It never goes by itself (autoGoTicks is ignored with this on), and at the top it costs topDrainPerSec, stepping down when it can't pay. Its blow lands at the stage up to levelCap: damage and stun stop growing at stage 3, and the stages past it are for the swat and the punch."
   },
+  "lungeLight": {
+    "enabled": false,
+    "_note": "The stick's quick strike at range (docs/ep/proposals/controller-vision.md section 5: a flick lands in about 11 ticks up close and about 25 at range, by the heavy lunge). On: from the middle band, out of any exchange, it asks for the light lunge and lands as a light on arrival: the light's time and worth, with the stick's direction, its stun and its carry. Up close and in a brawl it is the stick's own blow as before."
+  },
   "repeatSec": 3.0,
   "carryTicks": 12,
   "pendTicks": 9,
   "bufferTicks": 9,
+  "fullSend": {
+    "enabled": false,
+    "atStage": "top",
+    "share": 1.0,
+    "bendDeg": 20,
+    "families": {"down": "slamDown", "up": "skyward", "toward": "across", "away": "acrossBehind"},
+    "downOnGround": "bury",
+    "airBh": 1.0,
+    "_note": "Game Design, slam-and-pace.md section 1: a stick strike held to his top stage sends when it lands, in the family of its direction, at share of a full B: down on a foe in the air the slam (more than airBh body heights over the ground), down on the ground the down send from where he stands (World's embed), up skyward, toward across, away across (behind him once the turning send exists). A quick flick or a hold short of the top never sends. bendDeg is the planner's own bend (not read here yet). Off: as before."
+  },
+  "flickKeep": {
+    "enabled": false,
+    "recoverTicks": 20,
+    "_note": "Game Design's rulings (docs/design/gauntlet-plan.md section 5, rulings 1 to 3): a flick that can't start now is held, the newest only, quietly, and becomes his first blow out, its direction read then. Stunned, reeling or in a planned exchange with no window of his open: up to pendFollow.maxTicks. Launched, down or dropped: at most recoverTicks old when he's free (the face queue's 20), or refused recovering. A set piece: refused at once, set_piece. One his rival's planned exchange took is held the same way, never told answered. Off: bufferTicks, and answered."
+  },
   "pendFollow": {
     "enabled": false,
     "maxTicks": 90,
@@ -68,8 +87,8 @@
   },
   "flickRun": {
     "enabled": false,
-    "points": 3,
-    "_note": "A landed quick flick counts in its striker's run, points of it, with the steal on top (Game Design, stick-lands.md, 2026-11-02): a light's 1 first, and a medium's 3 if stick-only still lost every trade break. At 1 it lost all 48 of 48 to the easy AI; at 3 it won 45 of 45. Game Design's to tune."
+    "points": 1.5,
+    "_note": "A landed quick flick counts in its striker's run, points of it, with the steal on top (Game Design, stick-lands.md, 2026-11-02): a light's 1 first, and a medium's 3 if stick-only still lost every trade break. At 1 it lost all 48 of 48 to the easy AI; at 3 it won 45 of 45. 1.5: Game Design's lever 1 for stick-only and Orb's scheme (gauntlet-plan.md sections 3 and 5, 2026-11-07)."
   },  "lightStops": true,
   "softWorth": 1.7,
   "softReel": 6,

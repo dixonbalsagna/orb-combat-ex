@@ -177,6 +177,9 @@ static func opDodge(S: SimState, ex, _args) -> void:
 		var r := SimState.Rush.new()
 		r.px = SimWrap.wrap(A.x + far * DODGE_PAST)
 		r.py = A.y + (rise if over else -rise)
+		var fl: float = WorldWater.floorAt(S, r.px, D.z)
+		if over and r.py <= fl and fl > WorldTerrain.groundY(S, r.px, D.z) + 0.001:
+			r.py = fl + 1.0   # on a lake's floor the hop over him rises out of the water: his own move, never the floor lifting him (floorlift_check)
 		r.end = S.T + leg
 		D.rush = r
 		D.vx = 0.0

@@ -106,6 +106,29 @@ float tile_bowls(vec3 d) {
 	return s;
 }
 
+// A new bowl's colours, where it lies: how much of its own colour the ground keeps at a planet direction, 1 all of it, 0 none, as
+// crater_new (ground.gdshaderinc) has it for the strip's records, which no longer hold the store's craters (GroundField.held). Its
+// age by cb_now (set every frame), over dur; calm: reduced flashing's even fade over the whole bowl. any: a bowl younger than dur
+// reaches here.
+float bowl_new(vec3 d, float dur, float calm, out bool any) {
+	float keep = 1.0;
+	any = false;
+	for (int k = 0; k < cb_n; k++) {
+		float rho = length(d - cb_a[k].xyz) * globe_r / (cb_a[k].w * (1.0 + cb_rim.y));   // 1 at the edge of its apron
+		if (rho >= 1.15) {
+			continue;
+		}
+		float u = (cb_now - cb_b[k].z) / dur;
+		float kk = 0.0;   // an older bowl: its colours are all there
+		if (u >= 0.0 && u < 1.0) {
+			kk = calm > 0.0 ? 1.0 - u : smoothstep(u - 0.08, u + 0.08, rho);
+			any = true;
+		}
+		keep = min(keep, mix(kk, 1.0, smoothstep(1.0, 1.15, rho)));
+	}
+	return keep;
+}
+
 // The foreground rule: in front of the plane nothing stands above the sight line to the line's own ground behind it.
 float tile_fore(float y, vec2 p) {
 	if (p.y <= 0.0) {

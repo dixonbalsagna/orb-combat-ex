@@ -8,6 +8,7 @@ var failed: int = 0
 
 
 func _init() -> void:
+	DirZip.setFsForce(0)   # the flight strikes off: with them on, the computer's own flight strikes are the first brawls it meets
 	var rc: float = float(DirData.contact().reach)
 	var most: int = int(DirBrawl.cfg().give.sureWaitTicks)
 	var r: Dictionary = _case(60.0, false)
@@ -22,6 +23,7 @@ func _init() -> void:
 	DirBrawl.cfg().give.sureWaitTicks = most
 	_expect(int(r.hits) == 1 and float(r.dx) > rc, "negative control, no wait: it lands from too far (%.1f), so this check can see the fault" % float(r.dx))
 	print("sure_reach_check: %s" % ("passed" if failed == 0 else "FAILED (%d)" % failed))
+	DirZip.setFsForce(-1)
 	quit(1 if failed > 0 else 0)
 
 

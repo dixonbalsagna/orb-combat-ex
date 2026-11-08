@@ -2950,6 +2950,17 @@ func _merged_target(S: SimState) -> Vector3:
 		var hi_l: float = minf(da_l, db_l) + half_k
 		if lo_l <= hi_l:
 			mx = SimWrap.wrap(mx + clampf(_mlead, lo_l, hi_l))
+	if _pitch_now == 0.0 and vkeep:
+		# The pair's midpoint sits at 0.7 of the height, and the zoom may be held closer than the fit (the readable size, a push): then a
+		# pair far apart in height put the lower one at 0.93, a hair from the edge that opens the split at once (0.96), and a 39-unit
+		# settle as he landed opened it 19 ticks after it merged (chase_rush_check, the energy model). Both chests are kept inside
+		# VKEEP_TOP to VKEEP_BOT of the height, centred if they can't be; the target moves only as they do, and the camera eases to it.
+		var ch_lo: float = minf(A.y, B.y) + CamParams.CHEST
+		var ch_hi: float = maxf(A.y, B.y) + CamParams.CHEST
+		var my_max: float = ch_lo + (CamParams.VKEEP_BOT - CamParams.PLANE_Y) * vh / maxf(z, 0.001)
+		var my_min: float = ch_hi - (CamParams.PLANE_Y - CamParams.VKEEP_TOP) * vh / maxf(z, 0.001)
+		var my_k: float = clampf(my, my_min, my_max) if my_min <= my_max else (my_min + my_max) * 0.5
+		my = clampf(my_k, CamParams.CAM_Y_MIN, SimConst.CEILING - CamParams.CAM_Y_TOP)
 	if _pitch_now != 0.0:
 		# Put the pair's chest midpoint at 0.7 of the height, as the straight-on camera does: a few Newton steps on cam_y.
 		var cwx: float = SimWrap.wrap(mx)
@@ -3453,6 +3464,7 @@ var _many_pull: Array = [0.0, 0.0]                      # pane i's focus pull to
 var _many_partner: int = 1                              # the one's partner for framing: the nearest of the others, with a hold
 var _many_marks: Array = []                             # the bodies outside the frame this tick, [slot, side]
 var merge_lookahead: bool = true                        # a pair moving apart fast is not merged on its present separation (docs/camera/rushcity.md); on since 2026-10-16 (rushcity: 2.5 / 3.5 / 1 -> 2 / 2 / 1)
+var vkeep: bool = true   # the one view keeps both chests inside VKEEP_TOP..VKEEP_BOT of the height (straight on)
 var struggle_brink: bool = true          # within the struggle framing: at the brink, frame the meeting point and the losing fighter (docs/camera/feel.md step 5)
 var brink_ticks: int = 0
 var _brink_w: float = 0.0

@@ -608,6 +608,7 @@
     "skipOpenCool": true,
     "ackQueued": true,
     "refusedCue": false,
+    "refusedBurstTicks": 2,
     "capTicks": 6,
     "setPieceCapTicks": 12,
     "setPieceTags": ["CLASH"]
@@ -756,6 +757,109 @@
       "mul": 1.25
     },
     "dodgeConvertTicks": 8,
+    "flightStrikes": {
+      "enabled": false,
+      "rangeBh": [
+        0,
+        12.5
+      ],
+      "bearing": {
+        "deadzone": 0.5,
+        "towardDeg": 45,
+        "awayDeg": 45
+      },
+      "takeBack": {
+        "ticks": 4,
+        "needsLtHeld": true,
+        "faceFirst": false
+      },
+      "blows": {
+        "x": {
+          "tell": 6,
+          "worth": 2.5,
+          "ki": 10
+        },
+        "y": {
+          "tell": 10,
+          "damage": 132,
+          "ki": 15
+        },
+        "b": {
+          "tell": 14,
+          "ki": 20,
+          "result": "stagger"
+        }
+      },
+      "kiByDistance": {
+        "fromBh": 3,
+        "toBh": 12.5,
+        "add": 10
+      },
+      "line": {
+        "pastBh": 1.5,
+        "reachTicks": [
+          1,
+          1
+        ]
+      },
+      "arc": {
+        "ticks": 24,
+        "riseBh": 1.3,
+        "endUpBh": 0.5,
+        "reachTicks": [
+          1,
+          1
+        ]
+      },
+      "parting": {
+        "addBh": 3,
+        "minBh": 6,
+        "maxBh": 12.5
+      },
+      "travel": {
+        "minTicks": 4,
+        "bhPerTick": 3
+      },
+      "chain": {
+        "lateTicks": 12,
+        "afterTicks": 10,
+        "tellMul": 0.5,
+        "tellMin": 4,
+        "kiMul": 1.5,
+        "worthMul": 0.85,
+        "worthFloor": 0.5,
+        "repeatFullTell": 3
+      },
+      "counter": {
+        "heavyBefore": 6,
+        "heavyThrownBefore": 6,
+        "mul": 1.25,
+        "reelTicks": 8
+      },
+      "missOpenTicks": 20,
+      "ai": {
+        "share": 0.15,
+        "shareBand": [
+          0.1,
+          0.2
+        ],
+        "buttons": {
+          "x": 0.5,
+          "y": 0.3,
+          "b": 0.2
+        },
+        "kiReserve": 20,
+        "brawlGuardSec": 1.0,
+        "paths": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "_note": "Game Design's flight strikes (docs/design/playable-build.md section 1), Encounter's build (docs/director/pending/flight-strikes/README.md). Off, the zip is as it was. On: LT held with X, Y or B from rangeBh[0] to rangeBh[1] bh is a flight strike, its path from the left stick's bearing on the press's tick and its blow from the button. A player's press counts within takeBack.ticks of LT's press with LT held (Controls' switches.dodgeHeld; with it off, the stance mask's LT), or inside a chain. line.reachTicks and arc.reachTicks: the ticks in reach before the blow and after it, for the paths that pass him (Encounter's numbers). faceFirst: only false is built. ai.paths: the computer's path weights, zip, line, over, under, parting (Encounter's numbers). The zip's band, strike and heavy tables still give the reach and the way out by weight; zip.band.minBh stays 3 for the zip with this off."
+    },
     "_note": "The zip, slice Z1 (sim/director/zip.gd; docs/design/melee-press-feel.md section 2c). LT with X (strike) or Y (heavy) in band: ki paid at the press; tellTicks of tell; inTicks (the range by distance) on the way in; reachBefore ticks in reach before his blow and reachAfter after it; outTicks on the way out, plus 1 for each out.bhPerTick body heights of path past out.freeBh, out.maxTicks at most. heldTicks: the button kept down this long past the tell is the held reading (a zip strike is then in reach heldReachBefore ticks before its blow). floor: no way in or out is under max(minTicks, the distance in bh over bhPerTick, rounded up) (Legal RL-076). exit: awayBh more with the stick straight away, capBh at most from the rival; a blocked point slides slideDeg at a time, probes at most, to a point clear by clearBh. bowBh: the bow of a way out that passes the rival (over him; under him with the stick down and room beneath) or clears the ground. towardDeg, awayDeg, exitSteps: Game Design's stick rules. mul, reel (a zip strike) and stagger (a zip heavy) by reading. counter: a tech strike pressed from techBefore ticks before the arrival, or a heavy landing from heavyBefore ticks before it, until his blow lands, cancels the blow; a tech counter staggers him staggerTicks and is worth a skill strike times mul. knockdownTicks: the drop when a shot hits him on the way out. dodgeConvertTicks: a face press this soon after LT's press takes the dodge back."
   },
   "water": {

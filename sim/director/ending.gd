@@ -6,11 +6,17 @@ extends RefCounted
 ## - The time cap (finishers.json timeCapAt): both go on the brink, Rallies stop, and every decisive win is a finisher (DirExchange.decisive).
 ## - lastAt: the fighter with less wear gets his finisher, with no contest; level wear with anyone playing breaks by seed. Nobody's played
 ##   since the cap, and wear level: a no-contest, and a cue.
+## - 2v2 with hits across (docs/design/two-v-two.md, "The last event in a 2v2"): lastAt is decided by team, not fight by fight. The team
+##   with more fighters standing wins, then the one with less wear across its standing fighters, then by seed with anyone playing. Every
+##   standing fighter of the other team gets his finisher from the standing opponent in his fight, at once, with no contest (one alone in
+##   his fight, from the one Simulation's rejoin brings him). Nobody's played (every fighter a player, none with input since the cap) and
+##   the teams level: a no-contest.
 ## Off, no slot is sized and nothing changes.
 
 const E_IDLE: int = 0   # live ticks with no input from him
 const E_ADD: int = 1    # the wear the cap put on him: it doesn't count at lastAt
-const E_DONE: int = 2   # on the first fighter: 1 the last event has fired, 2 it was a no-contest
+const E_DONE: int = 2   # on the first fighter: 1 the last event has fired, 2 it was a no-contest. 2v2, on every body: 2 the no-contest,
+                        # 3 + the winning team, decided; on a losing fighter, 5 + the team once his finisher's started
 const E_N: int = 3
 
 static var _force: int = -1   # tools: -1 the data's switch, 0 off, 1 on
@@ -113,7 +119,8 @@ static func tick(S: SimState) -> void:
 		return
 	for f in pair:
 		_toBrink(S, f)
-	if _now(S) >= _lastAt(S) and _g(pair[0], E_DONE) == 0:
+	var done: int = _g(pair[0], E_DONE)
+	if _now(S) >= _lastAt(S) and (done == 0 or (done >= 3 and SimCross.on(S))):
 		_last(S, pair)
 
 
@@ -131,6 +138,78 @@ static func _capAt(S: SimState) -> float:
 	return SimCross.timeCap() if SimCross.on(S) else DirData.timeCapAt()
 
 
+
+## 2v2 with hits across: the last event by team (two-v-two.md, 2026-11-07). The first fight to reach lastAt decides for the stage and marks
+## every body (E_DONE 3 + the team), so the decision goes with them through a trade or a rejoin; then each fight, on its own tick, plays
+## its finisher: the winning team's standing fighter in it finishes the losing team's, who is marked 5 + the team once it's started. Two
+## fights play theirs at once; Camera frames two KOs. A losing fighter with no opponent standing in his fight (his fight's won, by him) waits
+## for Simulation's rejoin (SimStage.rejoin), which puts the two standing of different teams in one fight: his nearest opponent finishes him there.
+static func _lastTeam(S: SimState, pair: Array) -> void:
+	var T: int = -1
+	for f in SimStage.bodies(S):
+		var v: int = _g(f, E_DONE)
+		if v == 2:
+			return   # the stage's no-contest
+		if v >= 3:
+			T = (v - 3) % 2
+	if T < 0:
+		var stand: Array = [0, 0]
+		var worn: Array = [0, 0]
+		var players: bool = true
+		var need: int = int((_lastAt(S) - _capAt(S)) * DirData.TICKS_PER_SEC)
+		var quiet: bool = true
+		for f in SimStage.bodies(S):
+			if f.ai != null:
+				players = false
+			elif _g(f, E_IDLE) < need:
+				quiet = false
+			if f.out:
+				continue
+			var t: int = SimCross.team(f)
+			stand[t] += 1
+			worn[t] += _worn(f)
+		if stand[0] == stand[1] and worn[0] == worn[1] and players and quiet:
+			_markAll(S, 2)
+			SimFx.cue(S, null, "no_contest", "", "")
+			SimEvents.feed(S, "NO CONTEST", "nobody's touched anything: straight to the rematch")
+			return
+		if stand[0] != stand[1]:
+			T = 0 if stand[0] > stand[1] else 1
+		elif worn[0] != worn[1]:
+			T = 0 if worn[0] < worn[1] else 1
+		else:
+			T = 0 if SimRng.keyed(int(S.game.seed), "ending.team", 0) < 0.5 else 1
+		_markAll(S, 3 + T)
+		var why: String = "more standing" if stand[0] != stand[1] else ("the less wear" if worn[0] != worn[1] else "the edge")
+		SimEvents.feed(S, "THE PLANET GIVES WAY", "team %d has %s, and the finishers" % [T + 1, why])
+	var W = null
+	var L = null
+	for f in pair:
+		if f.out:
+			continue
+		if SimCross.team(f) == T:
+			W = f
+		else:
+			L = f
+	if W == null or L == null:
+		return   # nobody of the losing team stands in this fight, or he waits for the rejoin to bring him his opponent
+	if _g(L, E_DONE) >= 5:
+		return   # his finisher's started
+	_s(L, E_DONE, 5 + T)
+	var ex = DirBrawl.exOf(S)
+	if ex != null and DirExchange.finisherPlanned(ex):
+		return   # one's already on its way, and at the cap it can't be survived
+	if ex == null:
+		ex = DirExchange.startZip(S, W, L, "heavy")
+	DirExchange.startFinisher(S, ex, W, L)
+
+
+## Every body carries the stage's decision (E_DONE), in every fight.
+static func _markAll(S: SimState, v: int) -> void:
+	for f in SimStage.bodies(S):
+		_s(f, E_DONE, v)
+
+
 ## Nobody's played for the time since the cap: two players with no input.
 static func _nobody(S: SimState, pair: Array) -> bool:
 	var need: int = int((_lastAt(S) - _capAt(S)) * DirData.TICKS_PER_SEC)
@@ -138,6 +217,9 @@ static func _nobody(S: SimState, pair: Array) -> bool:
 
 
 static func _last(S: SimState, pair: Array) -> void:
+	if SimCross.on(S):
+		_lastTeam(S, pair)
+		return
 	var a: int = _worn(pair[0])
 	var b: int = _worn(pair[1])
 	if a == b and _nobody(S, pair):

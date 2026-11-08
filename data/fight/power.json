@@ -108,6 +108,8 @@
   "flight": {"flatOut": 5000.0, "growth": 2.305, "min": 3500.0, "max": 7000.0},
   "_flight": "flat out, plain stance: flatOut x growth^level. min and max hold a setup's flatOut, the page's slider",
   "launchTravel": 2.0,
+  "travel": {"min": 1.25, "max": 2.0},
+  "_travel": "a setup's \"travel\" (the page's ?travel= slider, for Orb's hands) tries another launchTravel, held to min and max. Game Design's lever is 1.5, then 1.25 (slam-and-pace.md section 2)",
   "meteorSpeed": 7000.0,
   "_meteorSpeed": "the meteor and the high arc are authored curves. They count as this for their crater, buildings and energy, and their trail burns in full for the whole curve (power-scale.md)"
 }

@@ -19,6 +19,7 @@
     "beam",
     "flight",
     "launchTravel",
+    "travel",
     "meteorSpeed"
   ],
   "properties": {
@@ -233,6 +234,28 @@
     "launchTravel": {
       "type": "number",
       "minimum": 1
+    },
+    "travel": {
+      "type": "object",
+      "description": "a setup's \"travel\" (the page's ?travel= slider) is held to min and max",
+      "required": [
+        "min",
+        "max"
+      ],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 1
+        },
+        "max": {
+          "type": "number",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
     },
     "meteorSpeed": {
       "type": "number",

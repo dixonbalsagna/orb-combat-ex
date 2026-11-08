@@ -470,6 +470,8 @@ func consume(e) -> void:
 					if flicks < 3:
 						_teach(m, UiData.t("prompt.teach_flick"), ["strike"], 1.5)   # a flick with RB fires the quick beam (level 0): only a hold is a charged one (the first three times)
 						UiPrefs.set_value("taught_flick_n", flicks + 1)
+			elif ck == "slam_hint":
+				_slam_hint(m)   # Encounter's cue: a quick down flick on a foe in the air (docs/ui/slam-hint.md)
 			elif ck == "chase_ready":
 				if UiData.feature("beam_teach") and m != null and not m.ai:
 					var chases: int = int(UiPrefs.get_value("taught_chase_n", 0))
@@ -901,6 +903,19 @@ func _refusal(m: UiFighterModel, code: String) -> void:
 		return
 	refuse_n[k] = n + 1
 	_teach(m, word, [], REFUSE_SECONDS)
+
+
+## slam_hint (docs/ui/slam-hint.md): Game Design's slam (slam-and-pace.md section 1) is a full stick hold. Encounter sends `slam_hint` (text the direction) when a person's quick down flick lands on a foe in the air and so does
+## not send. UI says "Hold to slam" for it, the first SLAM_FIRST_N times ever (a profile count, like the flick and chase lines). A computer is never told.
+const SLAM_FIRST_N := 3
+func _slam_hint(m: UiFighterModel) -> void:
+	if m == null or m.ai or not UiData.feature("slam_hint") or not UiData.feature("beam_teach"):
+		return
+	var n: int = int(UiPrefs.get_value("taught_slam_n", 0))
+	if n >= SLAM_FIRST_N:
+		return
+	UiPrefs.set_value("taught_slam_n", n + 1)
+	_teach(m, UiData.t("prompt.teach_slam"), ["strike"], 1.5)
 
 
 ## co-op 2v2 (docs/ui/pending/coop-marks/README.md). Words for a blow from outside the fight: the first REFUSE_FIRST_N times per kind per match, then nothing (as the refusal words); the computer is never told.

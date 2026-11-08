@@ -11,6 +11,10 @@ var _tapped: Array = []
 
 
 func _init() -> void:
+	var fk0: bool = bool(DirStick.cfg().get("flickKeep", {}).get("enabled", false))
+	if DirStick.cfg().has("flickKeep"):
+		DirStick.cfg().flickKeep.enabled = false   # the 9-tick buffer and its refusals, as built (flick_keep_check has the keep)
+	DirZip.setFsForce(0)   # the flight strikes off: with them on, LT pressed and a face button inside 4 ticks is a flight strike (flight_strike_check has that)
 	DirStick.setForce(1)
 	DirStance.setForce(1)
 	var b: Dictionary = DirBrawl.cfg()
@@ -33,6 +37,9 @@ func _init() -> void:
 	DirStance.setForce(-1)
 	DirStick.setForce(-1)
 	print("PRESS: %d check(s) failed" % failed)
+	if DirStick.cfg().has("flickKeep"):
+		DirStick.cfg().flickKeep.enabled = fk0
+	DirZip.setFsForce(-1)
 	quit(1 if failed > 0 else 0)
 
 
@@ -320,9 +327,9 @@ func _pend(sc: Dictionary, _b: Dictionary) -> void:
 		var when: Dictionary = _flick(S, 30)
 		print("      pendFollow %s, refused by the first move: %s" % [str(on_), str(when)])
 		if on_:
-			_expect(when.get("refused/refused", -1) == 0 and not when.has("refused/late"), "pendFollow on: a refused flick is told at once, as refused")
+			_expect(when.get("refused/not_yours", -1) == 0 and not when.has("refused/late"), "pendFollow on: a refused flick is told at once, as not_yours (the first move is his rival's)")
 		else:
-			_expect(when.has("refused/late"), "pendFollow off: a refused flick says late")
+			_expect(when.get("refused/not_yours", -1) == 0 and not when.has("refused/late"), "pendFollow off: a refused flick is told at once too, as not_yours (one report, with its knock)")
 		SimCore.dispose(S)
 	sc.pendFollow.enabled = false
 

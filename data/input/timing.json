@@ -48,6 +48,8 @@
     "specialsOff": true,
     "signatureRtOnly": true,
     "driverOnRb": false,
+    "flightStrikeB": false,
+    "chordPick": false,
     "stallKeep": true,
     "hapticImpact": true,
     "hapticStages": false,

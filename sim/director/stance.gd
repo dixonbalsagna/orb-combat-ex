@@ -54,9 +54,9 @@ static func note(f, args: Dictionary, st: int) -> void:
 	var kind: int = 0
 	if (m & DirStick.LB) != 0:
 		kind = CHECK if st == 0 else PUSH
-	elif (m & DirStick.LT) != 0 and st == 0:
+	elif (m & DirStick.LT) != 0 and st == 0 and not DirZip.fsOn():   # (the flight strikes replace the LT lane and the circle)
 		kind = STEP
-	elif (m & DirStick.LT) != 0 and st == 1 and circleOn() and not args.has("energy"):
+	elif (m & DirStick.LT) != 0 and st == 1 and circleOn() and not args.has("energy") and not DirZip.fsOn():
 		kind = CIRCLE
 	if kind != 0:
 		args["stanceBlow"] = kind

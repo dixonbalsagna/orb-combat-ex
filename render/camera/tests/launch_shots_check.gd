@@ -96,6 +96,9 @@ func _watch(S: SimState, rig: SplitRig, ticks: int, subject: Callable, stage: Ca
 				if S.fighters[k].state == "launched" or was[k] == "launched":
 					since = 0
 				was[k] = S.fighters[k].state
+		for e in ev:
+			if String(e.type) == "land":
+				since = 0   # a body landing hard is a release too: a skid landing keeps him "launched", and the frame that chased him stops with him, under the impact's own shake and debris
 		if f.cut:
 			var why: String = rig.cut_why
 			if why == "" or not CamParams.CUT_REASONS.has(why):

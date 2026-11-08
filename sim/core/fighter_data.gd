@@ -20,7 +20,7 @@ const PROFILES: Array = ["plain"]
 const METERS: Array = ["anguish", "menace"]
 ## D1b: the (meter, effect) and (meter, source) pairs the code implements; anything else in meters.json is rejected.
 const METER_EFFECTS: Dictionary = {"menace": ["regen_bonus", "damage_mul", "beam_power"], "anguish": ["regen_penalty", "composure", "comeback"]}
-const METER_SOURCES: Dictionary = {"menace": ["casualty/self", "evacuee/self"], "anguish": ["casualty/self", "casualty/opponent"]}
+const METER_SOURCES: Dictionary = {"menace": ["evacuee/self"], "anguish": ["casualty/self", "casualty/opponent"]}
 const PENALTIES: Array = ["coreKiRegen", "legsSpeed", "legsLockBreak", "staggerTicks", "dazeTicks", "armsGuardMul", "armsBrokenMul", "headParryNarrow", "headDefence", "legsSlip", "armsBrokenLightMul", "armsBrokenMediumMul", "legsBrokenGuardScale"]
 const BLOWS: Array = ["heavy", "beam", "guard_break", "chain"]
 
@@ -86,7 +86,6 @@ class MetersDef:
 	var menaceBeam: float = 0.0       # beam_power.perPoint: beam clash power + this x menace
 	var menaceDecay: float = 0.0      # decay.rate per second ...
 	var menaceDelay: int = 0          # ... once it has gone this many ticks without being fed
-	var menaceCas: float = 0.0        # sources casualty/self: per casualty it caused (x 425 / pop0)
 	var menaceEvac: float = 0.0       # sources evacuee/self: per person its blows forced to flee (x 425 / pop0)
 	var anguishRegen: float = 0.0     # regen_penalty.perPoint: ki regen - this x anguish ...
 	var anguishRegenCap: float = -1.0 # ... at most this (regen_penalty.cap; -1: no cap)
@@ -559,8 +558,6 @@ static func _meters(id: String, meters: Dictionary) -> MetersDef:
 				_err(where + ": " + name + " source " + key + ": cap is not wired")
 			var amt: float = float(s.get("amount", 0.0))
 			match name + ":" + key:
-				"menace:casualty/self":
-					d.menaceCas = amt
 				"menace:evacuee/self":
 					d.menaceEvac = amt
 				"anguish:casualty/self":

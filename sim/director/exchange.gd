@@ -89,8 +89,24 @@ static func _request(S: SimState, A, kind: String) -> void:
 		return   # the far band: the press fires on its tick as a taunt, an answer or (held) a charge; it never waits
 	if kind == "sig":
 		DirBeamPlay.answerRefused(S, A)
-	SimAct.push(A, KIND.find(kind), A.act.mode, entry, S.tick)
+	if not SimAct.push(A, KIND.find(kind), A.act.mode, entry, S.tick):
+		var why: String = cantWhy(S, A)
+		DirRefuse.burst(S, A, "queue_full" if why == "busy" else why)   # three wait already: this one goes, and says why, once a burst
 	_drain(S)
+
+
+## Why he can't act on a press now, as a reason code for Controls' table (docs/controls/refusals.md): launched (flying from a launch or
+## a drop), down, stunned, or locked (in an exchange, his or a planned one); busy for anything else.
+static func cantWhy(S: SimState, f) -> String:
+	if f.state == "launched" or f.state == "dropped":
+		return "launched"
+	if f.state == "down":
+		return "down"
+	if f.stunTicks > 0:
+		return "stunned"
+	if f.state == "locked" or DirBrawl.exOf(S) != null:
+		return "locked"
+	return "busy"
 
 
 ## Controls' refusal contract (docs/controls/refusals.md; press.refusedCue): a player's press the director lets go of, said at that tick as

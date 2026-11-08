@@ -14,11 +14,15 @@ extends RefCounted
 ##      Once it holds the other's hello, the delay is the larger of the two proposals, and the handshake is done. A done
 ##      peer stops sending hellos but answers any hello whose `got` is false, so a lost last hello costs a frame, not
 ##      the match.
-## A version or match mismatch fails the handshake (`failed` says why) on both sides.
+## A version or match mismatch fails the handshake (`failed` says why) on both sides, and so does a proposal past MAX_DELAY:
+## the delay sizes the session's first inputs (NetSession._init fills `delay` ticks), so a peer that asks for millions would
+## freeze this one (the audit's F-10). No chooser proposes more than NetDelay's maxDelay.
 
 const PROTO: int = 5   # 2: game packets may carry the AI's takeovers (rollback.md section 13). 3: the digest reads the AI's timers, the match key holds the data hash. 4: game packets may carry the second word (section 14), and the digest reads it. 5: the digest reads a field world's line, swing and store (section 15)
 
 static var keyPlain: bool = false   # tests only: the match key leaves out the data hash (transport_check's negative control)
+static var capDelay: bool = true    # tests only: off for lan_check's negative control (a huge proposal is taken)
+const MAX_DELAY: int = 8            # the most a peer may propose: NetDelay.DEFAULTS.maxDelay, 133 ms
 
 var matchKey: String = ""
 var device: Dictionary = {}
@@ -81,7 +85,11 @@ func take(now: float, pk: Dictionary, tr: NetTransport) -> void:
 			if str(pk.get("match", "")) != matchKey:
 				failed = "the other peer is in another match (%s, this one %s)" % [str(pk.get("match")), matchKey]
 				return
-			theirs = int(pk.get("delay", -1))
+			var asked = pk.get("delay", -1)
+			if not (asked is int or asked is float) or (capDelay and int(asked) > MAX_DELAY):
+				failed = "the other PC asked for an input wait of %s ticks; at most %d" % [str(asked).left(24), MAX_DELAY]
+				return
+			theirs = int(asked)
 			_agree(now)
 			if done() and not bool(pk.get("got", false)):
 				tr.send(now, _hello())

@@ -46,6 +46,13 @@ const DEFAULTS: Dictionary = {
 		"handheld": [{"at": 0, "ms": 30}, {"at": 55, "ms": 14}],
 		"gapMs": 160,
 	},
+	# The stick's full send (docs/controls/full-send-haptic.md; Encounter's stick_full_send cue): the top-stage payoff, a held stick strike sent at a full B's share. The heaviest thing the pad does:
+	# a slam on the low motor with a bite of the high one, a roll-off, then a settle, all inside the 160 ms every kind keeps. The sender only (the one sent has launch_felt). Scaled by the family (the slam 1.0).
+	"full_send": {
+		"pad": [{"at": 0, "weak": 0.3, "strong": 1.0, "ms": 60}, {"at": 65, "weak": 0.0, "strong": 0.55, "ms": 45}, {"at": 115, "weak": 0.0, "strong": 0.25, "ms": 40}],
+		"handheld": [{"at": 0, "ms": 60}, {"at": 65, "ms": 28}],
+		"gapMs": 400,
+	},
 	# Orb's 2026-10-05 picks, the five that were missing (docs/controls/impact-haptics.md; switches.hapticImpact). Soft and low, none brighter than a thud; every one has its own gap so a brawl
 	# never buzzes. A landed blow, felt by the one who landed it, scaled by the blow's strength.
 	"blow_land": {
@@ -232,7 +239,15 @@ const REFUSALS: Dictionary = {
 	"dodged": {"word": "Dodged", "owner": "encounter", "what": "the request was dodged out of (text dodged)"},
 	"cancelled": {"word": "Cancelled", "owner": "encounter", "what": "the guard or the dodge ended the charge (text cancel)"},
 	"not_yours": {"word": "Not yours", "owner": "encounter", "what": "the first move belongs to his rival (text refused)"},
-	"busy": {"word": "Busy", "owner": "encounter", "what": "the fighter could not act: a state number as the text"},
+	"busy": {"word": "Busy", "owner": "encounter", "what": "the fighter could not act: a state number as the text (the old shape; the director now says which of the four below)"},
+	"launched": {"word": "In the air", "owner": "encounter", "what": "he could not act because he was launched (refusal-reasons: DirExchange.cantWhy)"},
+	"down": {"word": "Down", "owner": "encounter", "what": "he could not act because he was down (refusal-reasons)"},
+	"stunned": {"word": "Stunned", "owner": "encounter", "what": "he could not act because he was stunned (refusal-reasons)"},
+	"locked": {"word": "Locked", "owner": "encounter", "what": "he could not act because an exchange held him (refusal-reasons)"},
+	"recovering": {"word": "Recovering", "owner": "encounter", "what": "a flick made early in his flight was too old to be his first blow out (flickKeep.recoverTicks; refusal-reasons)"},
+	"set_piece": {"word": "In a move", "owner": "encounter", "what": "a finisher, the KO, a set piece in a brawl or a beam struggle: the flick would be stale (refusal-reasons)"},
+	"chord": {"word": "One at a time", "owner": "controls", "what": "two attack buttons on one tick: the bigger went, the smaller was let go of (switches.chordPick)"},
+	"queue_full": {"word": "Queue full", "owner": "encounter", "what": "three blows already waiting and the cooldown holds them: one knock a burst (refusal-reasons)"},
 	"stun_limit": {"word": "One a string", "owner": "encounter", "what": "a stick stun held back by the one-a-string rule"},
 	"queue_expired": {"word": "Too slow", "owner": "encounter", "what": "the director's attack queue ran out before it could start the blow"},
 	"block_lockout": {"word": "Block cooling", "owner": "encounter", "what": "the perfect block's anti-mash lockout held the press"},
@@ -279,6 +294,8 @@ const BUILDING_H_REF: float = 300.0
 static func event_requests(e) -> Array:
 	if String(e.type) == "cue" and String(e.kind) == "stick_stage":
 		return stage_event_requests(e)
+	if String(e.type) == "cue" and String(e.kind) == "stick_full_send":
+		return full_send_requests(e)
 	if not SimInputData.haptic_impact_on():
 		return []
 	match String(e.type):
@@ -311,6 +328,20 @@ static func event_requests(e) -> Array:
 			var sc: float = clampf(float(e.depth) / BUILDING_H_REF, 0.3, 1.0)
 			return [{"slot": 0, "kind": "building_break", "scale": sc}, {"slot": 1, "kind": "building_break", "scale": sc}]
 	return []
+
+
+## The stick's full send on the sender's pad (docs/controls/full-send-haptic.md; switches.hapticLadder, with the right stick): Encounter's cue `stick_full_send` (actor the sender, source the family) is one `full_send`,
+## the slam at full strength, the grounded bury a little under, a send up or across lighter. Presentation only, read from the cue and nothing else.
+const FULL_SEND_SCALE: Dictionary = {"slamDown": 1.0, "bury": 0.9, "skyward": 0.8, "across": 0.8, "acrossBehind": 0.8}
+
+
+static func full_send_requests(e) -> Array:
+	if not SimInputData.haptic_ladder_on():
+		return []
+	var slot: int = int(e.actor)
+	if slot < 0 or slot > 1:
+		return []
+	return [{"slot": slot, "kind": "full_send", "scale": float(FULL_SEND_SCALE.get(String(e.source), 0.8))}]
 
 
 ## The charge's stages on the pad (docs/controls/stage-pulses.md; switches.hapticStages, off): Encounter's cue `stick_stage` (actor the charger, `k` the stage, `n` the count, source "capped" when
@@ -472,6 +503,8 @@ static func requests(name: String, actor: int, target: int, text: String, amount
 			# Encounter's cue when it drops a stick request it cannot start (busy, stunned, in a struggle): actor = the presser. The truth, told as soon as the director knows.
 			if not SimInputData.haptic_refused_on() or actor < 0 or actor > 1:
 				return []
+			if source == "hit" and SimInputData.haptic_impact_on():
+				return []   # a blow that stopped the charge is felt as the blow itself (hit_taken, switches.hapticImpact): a second knock on the same tick is the same news twice. The screen word "Hit" stays UI's
 			if source == "soon":
 				return []   # a held release waiting on its target's gate is not a refusal: the screen word is enough (the EP, 2026-11-07)
 			return [{"slot": actor, "kind": "stick_refused", "scale": 1.0, "reason": refusal_code(source if source != "" else text)}]   # the reason is the cue's source (text is the direction); an old caller with the reason in text still reads

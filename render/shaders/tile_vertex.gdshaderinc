@@ -99,6 +99,14 @@ void vertex() {
 	}
 	h += bw0;
 	v_dent += bw0;
+	if (cb_n > 0) {
+		// A new bowl's colours come with its opening where it lies (the store's craters aren't in the strip's rows: GroundField.held).
+		bool bany;
+		float bk = bowl_new(dir, calm_ease > 0.0 ? crater_calm_s : crater_open_s, calm_ease, bany);
+		if (bany) {
+			v_new = v_new > 0.0 ? min(v_new, bk) : bk;
+		}
+	}
 	v_street = street_n > 0 ? street_weight(xw) : 0.0;
 	vec2 p = tile_chart(dir, hd, sd, pv);
 	v_pv = vec2(strip_x + p.x, p.y);

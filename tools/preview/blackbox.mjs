@@ -458,9 +458,13 @@ export const AUDIO_HEAD = String.raw`
     }
   } catch (e) { /* none */ }
   window.__audeng = function (o) { A.eng = o; A.engCalls = (A.engCalls || 0) + 1; };
-  if (/[?&]power(=(?!0|off)[^&]*|&|$)/.test(location.search)) {   // Orb's slider for the base of flat-out flight (Simulation's flatOut, 3,500 to 7,000): read at the start of the next match
+  if (!/[?&]power=(0|off)(&|$)/.test(location.search)) {   // Orb's sliders for the one energy model (on for the page; ?power=0 or ?power=off hides them): the base of flat-out flight (Simulation's flatOut, 3,500 to 7,000) and how far a launch carries (Simulation's travel, 1.25 to 2.0; ?travel=N starts it there), each read at the start of the next match
     var K = 'orb_flatout', v0 = 5000; try { var sv = parseFloat(localStorage.getItem(K)); if (sv >= 3500 && sv <= 7000) v0 = sv; } catch (e) { /* none */ }
+    var mf = /[?&]flatout=([0-9.]+)(&|$)/.exec(location.search); if (mf && parseFloat(mf[1]) >= 3500 && parseFloat(mf[1]) <= 7000) v0 = parseFloat(mf[1]);   // ?flatout=N starts the slider at N (3,500 to 7,000), as ?travel= does
     window.__flatout = v0;
+    var KT = 'orb_travel', tv0 = 2; try { var st = parseFloat(localStorage.getItem(KT)); if (st >= 1.25 && st <= 2) tv0 = st; } catch (e) { /* none */ }
+    var mt = /[?&]travel=([0-9.]+)(&|$)/.exec(location.search); if (mt && parseFloat(mt[1]) >= 1.25 && parseFloat(mt[1]) <= 2) tv0 = parseFloat(mt[1]);
+    window.__travel = tv0;
     document.addEventListener('DOMContentLoaded', function () {
       var box = document.createElement('div');
       box.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:2147483646;font:12px/1.3 sans-serif;color:#fff;background:rgba(0,0,0,.6);padding:4px 8px;border-radius:4px';
@@ -468,8 +472,12 @@ export const AUDIO_HEAD = String.raw`
       sl.type = 'range'; sl.min = '3500'; sl.max = '7000'; sl.step = '100'; sl.value = String(v0); sl.style.cssText = 'vertical-align:middle;width:160px';
       function show() { lab.textContent = 'flat-out flight base speed ' + sl.value + ' (applies at the next match) '; }
       sl.addEventListener('input', function () { window.__flatout = parseFloat(sl.value); try { localStorage.setItem(K, sl.value); } catch (e) { /* none */ } show(); });
-      ['keydown', 'keyup'].forEach(function (ev) { sl.addEventListener(ev, function (e) { e.stopPropagation(); }); });
-      show(); box.appendChild(lab); box.appendChild(sl); document.body.appendChild(box);
+      var labT = document.createElement('span'), slT = document.createElement('input');
+      slT.type = 'range'; slT.min = '1.25'; slT.max = '2'; slT.step = '0.05'; slT.value = String(tv0); slT.style.cssText = 'vertical-align:middle;width:160px';
+      function showT() { labT.textContent = 'how far a launch carries x' + parseFloat(slT.value).toFixed(2) + ' (applies at the next match) '; }
+      slT.addEventListener('input', function () { window.__travel = parseFloat(slT.value); try { localStorage.setItem(KT, slT.value); } catch (e) { /* none */ } showT(); });
+      [sl, slT].forEach(function (s) { ['keydown', 'keyup'].forEach(function (ev) { s.addEventListener(ev, function (e) { e.stopPropagation(); }); }); });
+      show(); showT(); box.appendChild(lab); box.appendChild(sl); box.appendChild(document.createElement('br')); box.appendChild(labT); box.appendChild(slT); document.body.appendChild(box);
     });
   }
   window.__audstatus = function (s) { A.status = String(s); A.statusCalls = (A.statusCalls || 0) + 1; };
