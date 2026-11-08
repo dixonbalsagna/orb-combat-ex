@@ -771,18 +771,23 @@
     },
     {
       "id": "c08",
-      "rule": "civilian deaths across a run: casualties are shown as a count and an environmental result, not as depicted bodies or close-ups; no score, bonus, achievement, trophy or unlock for civilian deaths and no celebratory sound or flourish when the count rises; the menace meter is a power meter, not a score; no schools, hospitals or places of worship as staged targets; children are not shown as victims of graphic violence",
+      "rule": "bystanders (civilians, scientists, VIPs; RL-247, RL-257): nobody is killed or shown hurt, and they bounce harmlessly or scatter; there is no death or kill counter and no count of people lost; no score, bonus, achievement, trophy, unlock or meter gain for a person being hit, thrown or scattered, and no celebratory sound or flourish; the menace meter is a power meter, not a score; no schools, hospitals or places of worship as staged targets; children are not shown as victims of graphic violence",
       "why": "classification boards treat rewarded violence against defenceless people as aggravating; platform achievements are public"
     },
     {
       "id": "c09",
-      "rule": "store and rating: the Mature target is the working assumption; the content survey and IARC are answered from the real build and the run mode (mass destruction, civilian casualties tracked, graphic violence, the Cyborg's consumption); the store descriptors and age gate match; trailers and screenshots use each platform's mature marking; console programmes (behind NDA) may be stricter on mass-casualty and real-world-referencing imagery; GitHub-hosted pages keep graphic imagery off (p01)",
+      "rule": "store and rating: the Mature target stays the planning ceiling until the real build is read, and RL-247 and RL-257 expect Teen or PEGI 12 (cartoon bystanders, bloodless removal of armed enemies); the content survey and IARC are answered from the real build and the run mode (mass destruction, graphic violence if any, the Cyborg's consumption); the store descriptors and age gate match; trailers and screenshots use each platform's mature marking; console programmes (behind NDA) may be stricter on mass-casualty and real-world-referencing imagery; GitHub-hosted pages keep graphic imagery off (p01)",
       "why": "labelling and hosting"
     },
     {
       "id": "c10",
       "rule": "the line lint's sensitive words, whole-word, in two tiers. Block: A-bomb, H-bomb, mushroom cloud, fallout, nuclear, atomic, radiation, and the names of real events and places of mass harm (for example Hiroshima, Nagasaki, Chernobyl, Fukushima, 9/11, ground zero), holocaust, genocide. Review by a human: siren, countdown, bomb, school, hospital, church, mosque, synagogue, chapel, cathedral, temple, kindergarten, nursery, orphanage, meltdown, glass (as a verb for a bombed ground), and child, children or kid near a casualty word (died, dead, gone, lost, killed, victims). The same list guards place names and every generated line",
       "why": "extends c07 and c08, RL-148"
+    },
+    {
+      "id": "c11",
+      "rule": "no people-harm words or counters in anything a player or the public sees (strings, HUD, results, store and page copy): retired are civilians lost, casualties, casualty, kill count, death count, toll, body count, and any line that counts or celebrates people hurt; bystanders bounce or scatter and nobody among them is killed (RL-247, RL-257); hostile armed soldiers may be vaporized cleanly, with no counter, line, achievement or reward (RL-247); no child figure in any thrown or scattered set; no body imprint or shadow of a person on a wall or the ground; no scorched or smoking person; public copy never says nobody gets hurt while soldiers can be vaporized",
+      "why": "Orb's no-civilian-deaths ruling of 2026-11-07; classification boards judge what is depicted; RL-247, RL-257"
     }
   ],
   "lines": [
