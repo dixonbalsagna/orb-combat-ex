@@ -1,4 +1,4 @@
-f11aff2c (content-screen.yml); 0 hits on 6,177 files |||||||
+# Plan for the corrective directive of 2026-11-07
 
 The EP's reply to `audit/2026-11-07/corrective-directive.md`: an owner and an order for each of the 27 CDs. As each CD closes, its commit id goes in the last column.
 
@@ -12,19 +12,19 @@ The EP's reply to `audit/2026-11-07/corrective-directive.md`: an owner and an or
 | 04 Flash limiter against what players see (SCROLL_MAX_REDUCED, hard cuts ask the register) | 2 | Camera; Rendering and VFX for the register | Restore 0.03 or justify it with a saved reading; route the hard cuts through the register with a negative control | No | |
 | 05 The villain feeding on civilian deaths | 2 | Game Design, World, Simulation, after Orb's ruling | Put the ruling to Orb (this also lifts the RL-247 hold for this one item); remove the casualty source and the 0.09 line; add a kill() check | **Yes** | Orb ruled no civilian deaths (vision.md 2026-11-07); build after quiet time |
 | 06 A trademark search before any store page | 3 | Legal (counsel); Orb (spend) | Put the spend to Orb when a store page is planned; keep "(working title)" | **Yes** | |
-| 07 Personal details in the public repo | 1 | EP asks Orb; Tools replaces the paths | Ask Orb; the disclosure README is already redacted (d552ac9e) | **Yes** | Orb: remove from current files, no rewrite (vision.md); name and state removed 8d2ab3f0; profile-path replacement (Tools) owed |
+| 07 Personal details in the public repo | 1 | EP asks Orb; Tools replaces the paths | Ask Orb; the disclosure README is already redacted (d552ac9e) | **Yes** | Orb: remove from current files, no rewrite (vision.md); name and state removed 8d2ab3f0; Windows account path replaced 2ce94aeb |
 | 08 Make the public text true (README, CLAUDE.md, /about/, the pin's notice) | 1 | Tools; Legal for wording; EP for CLAUDE.md | Fix README.md:7 and :9, the CLAUDE.md "open source" line and the /about/ engine line; ship the strings-only child or move the pin | No | README and /about/ 29ad8082, CLAUDE.md 94774fc6; the pin's in-game notice moot while /play/ is down |
 | 09 Repair the flash measurement chain (wcag.js tie, signature-gate wording, scheduled nightly with an alarm, supersede d3f1ca0e, night-sky clip, outside-analyser calibration before store) | 2, with calibration in 3 | Tools; Accessibility | Sub-items one commit each; the self-test fails on the old tie code | No (Orb sets the take-down line only if not 3) | |
 | 10 Harden the LAN link (delay cap, slot and input validation, a dropped-PC notice, the dropped seat handled); DTLS before internet | 2, DTLS in 3 | Netcode | Fold into the parked lan-n4 work with negative controls | No | |
 | 11 Secret scanning, push protection, branch protection | 1 | EP, with Orb's approval of repo settings | Ask Orb; then enable and record | **Yes** | |
-| 12 Desktop workflows can't publish an unlocked build | 2 | Tools; Performance & Platform | Fold linux-export into desktop-builds with the lock; set `shell: bash` on the tee'd steps | No | |
+| 12 Desktop workflows can't publish an unlocked build | 2 | Tools; Performance & Platform | Fold linux-export into desktop-builds with the lock; set `shell: bash` on the tee'd steps | No | linux-export folded into desktop-builds with bash pipefail 090264d7 |
 | 13 One store-readiness list with owners | 3 | Legal; Art, Audio, Performance & Platform | Rebuild pre-store-checklist.md with owners and status | Rating target: **Yes** | |
 | 14 Accessibility (cue captions, Hit pause wired or removed, brace_key on pads, ship main's fixes with the next pin) | 2 | UI; Accessibility, Controls, Audio | hud_check covers cue captions; no option without a consumer | No | |
-| 15 Pose and look rules move to a creative rulebook | 2 | Legal with Art and Animation | Re-tag the rows; change originality-rules.md:70 | No | Orb ruled (vision.md 2026-11-07); move after quiet time |
-| 16 Close the stale rows; commit RL-247 or remove citations to it; RL-248 to 255 back in the table | 2 | Legal; QA; Netcode | One pass with a commit or reason per row. RL-247 itself waits on Orb's bystander follow-up | RL-247: **Yes** | |
-| 17 Correct the overstated records | 2 | Legal | One pass over the listed AC items | No | |
-| 18 Take process and engineering items out of the safety records | 2 | Legal with each owner | Re-home each item with a horizon tag | No | |
-| 19 Check what players get: a daily job on /play/'s pin, the interim end date and the nightly's age | 1 | Tools | A scheduled CI job reporting to the EP | No | |
+| 15 Pose and look rules move to a creative rulebook | 2 | Legal with Art and Animation | Re-tag the rows; change originality-rules.md:70 | No | Legal re-tag cb477edf (RL-258); charters and CLAUDE.md aa3bdfea; rulebook in force f06d1efe |
+| 16 Close the stale rows; commit RL-247 or remove citations to it; RL-248 to 255 back in the table | 2 | Legal; QA; Netcode | One pass with a commit or reason per row. RL-247 itself waits on Orb's bystander follow-up | RL-247: **Yes** | Legal side closed cb477edf (RL-258); RL-247 resolved and committed |
+| 17 Correct the overstated records | 2 | Legal | One pass over the listed AC items | No | 3d628d7b (RL-259) |
+| 18 Take process and engineering items out of the safety records | 2 | Legal with each owner | Re-home each item with a horizon tag | No | Legal side closed 3d628d7b (rehome-index-2026-11-07.md); routing the 69 items owed |
+| 19 Check what players get: a daily job on /play/'s pin, the interim end date and the nightly's age | 1 | Tools | A scheduled CI job reporting to the EP | No | f11aff2c (player-watch.yml, daily) |
 | 20 Someone watches CI: the standup reads `gh run list` first | 1 | EP | Add the step to the standup skill and the playbook | No | |
 | 21 Stop silent passes ("grandfathered", "report only", "CHECK" print as exceptions) | 2 | Tools | build-site.mjs and the clip kit | No | |
 | 22 Keep evidence: gate results saved under docs/<area>/runs/<sha>/ | 1 | EP (playbook), every director (charters) | The next landing saves its run file | No | |
@@ -32,8 +32,8 @@ The EP's reply to `audit/2026-11-07/corrective-directive.md`: an owner and an or
 | 24 Every delegated safety decision has a named owner and written conditions; "don't raise it with Orb" never covers a lapsed safeguard | 1 | EP | Add the rule to the playbook; the flash decision gets its owner through CD-03 | Through CD-03 | |
 | 25 One machine-read list of Legal's clip conditions that blocks a pin | 2 | Tools; Legal | A list beside tools/flash/sources.json, and a self-test where a pin fails on an open condition | No | |
 | 26 Retire prototype suites from the deploy gate; retire flash-pixels-dryrun; rename the CI flash job | 2 | Tools | Deploy no longer needs qa and sim | No | |
-| 27 A public-repo content screen on every push | 1 | Tools | A CI step that fails on a planted profile path | No | |
+| 27 A public-repo content screen on every push | 1 | Tools | A CI step that fails on a planted profile path | No | f11aff2c (content-screen.yml); 0 hits on 6,177 files |
 
 **Questions for Orb, one at a time, in this order:** CD-03 (the public test build), CD-07 (personal details), CD-11 (repo settings), CD-05 (the villain's casualty feed), then CD-13's rating target and CD-06's spend when a store page is planned.
 
-**Directors:** they're paused for quiet time. Wave 1 starts when Orb lifts the pause, or sooner on Orb's word for CD-01 and CD-02, given the 2026-11-15 date.
+**Directors:** wave 1 and the Legal side of wave 2 are under way since quiet time ended; the rest of wave 2 follows Sunday's play-test.
