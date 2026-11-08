@@ -1,6 +1,6 @@
 # Licence drafts (MIT + CC BY 4.0 + DCO)
 
-Orb chose pairing 1 from `licence-recommendation.md` (relayed by the EP, 2026-09-29): MIT for code, CC BY 4.0 for content, DCO for outside contributors. Option B (GPL) is dropped. These are drafts for the EP and Tools to place. Not legal advice. Have counsel read the final text before the repo goes public.
+Orb chose pairing 1 from `licence-recommendation.md` (relayed by the EP, 2026-09-29): MIT for code, CC BY 4.0 for content, DCO for outside contributors. Option B (GPL) is dropped. These are drafts for the EP and Tools to place. Not legal advice. Have counsel read the final text before the first sale or any open-source wording (the repo is already public by Orb's ruling of 2026-09-29).
 
 | Draft | Goes to | Placeholder to fill |
 |---|---|---|
@@ -28,4 +28,4 @@ Headers on every file are optional. A directory-level rule in the licence files 
 2. **The EP** places `LICENSE`, `LICENSE-ASSETS` and `NOTICE` at the repo root, with the holder filled in, and commits them.
 3. **Tools** adds a `license` field (`MIT`) to the root and `prototype/package.json` (if a root one exists), and places `.github/CONTRIBUTING.md` and the PR template from `docs/legal/contributor-rules.md`.
 4. **The EP** makes the Must edits in `public-readiness-edits.md`, renames the repo, and checks the README carries a licence section, an AI note and a trademark note (wording there).
-5. **Legal** checks the placed files against these drafts, then counsel reads them before the repo goes public.
+5. **Legal** checks the placed files against these drafts, then counsel reads them before the first sale or any open-source wording (the repo is already public).

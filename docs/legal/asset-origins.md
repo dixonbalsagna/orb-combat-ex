@@ -3,7 +3,7 @@
 Owner: Legal and IP Compliance. The single origin log for every shipped asset (art, audio, music, data content, fonts, text). Not legal advice.
 
 **Rules.**
-- No asset merges without a row here. Only Legal writes the log.
+- The log runs at two levels (corrected 2026-11-07, audit AC-078): one row per **class** of shipped content (what a store page and the AI statement need), and a row for **any imported third-party file** (font, audio, image, library) before it is merged; file-level rows for everything else are required before a store build. Only Legal writes the log. Tools should fail the site build when the pack holds a font, audio or image file with no register row.
 - Art, Audio and Narrative send proposed rows in their reports to the EP. Legal adds them after review.
 - Procedural assets (made by code) get one row per generator, naming the generator file and its seed rules.
 - AI-assisted assets record the tool, model, date and where the prompt is kept. Prompts never name franchises or characters.
@@ -40,7 +40,6 @@ Owner: Legal and IP Compliance. The single origin log for every shipped asset (a
 
 | Asset ID | Path | Type | Origin | Author or source | If AI | Licence | Status | Review | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| EXAMPLE-000 (fake, delete when real rows exist) | art/example/tree.svg | art | AI-assisted | Example Person | ExampleTool, model-x, 2000-01-01, prompts/example-000.txt | CC-BY-4.0 | proposed | none | Not a real asset |
 
 ## Class-level origin rows (added by Legal, 2026-10-05)
 

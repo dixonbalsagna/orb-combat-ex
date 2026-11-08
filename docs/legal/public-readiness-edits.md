@@ -1,6 +1,6 @@
 # Public-readiness edits
 
-Owner: Legal and IP Compliance. 2026-09-29. What must change before the repo goes public. Orb wants it public now, with MIT, CC BY 4.0 and the DCO. Legal cannot edit these files, so each edit is proposed for the EP or the owning director. **Must** means before the repo is public. **Should** means soon after. Not legal advice. Counsel should read the licence files, the README and the homage line before the switch.
+Owner: Legal and IP Compliance. 2026-09-29. What had to change as the repo went public (it did, on 2026-09-29, by Orb's ruling; M1 to M5 are done and M6 folds into the licence decision, RL-093). Orb wants it public now, with MIT, CC BY 4.0 and the DCO. Legal cannot edit these files, so each edit is proposed for the EP or the owning director. **Must** means before the repo is public. **Should** means soon after. Not legal advice. Counsel should read the licence files, the README and the homage line before the switch.
 
 Scan basis: tracked files at the current head, checked with `git grep`. The scan covered `README.md`, `CLAUDE.md`, `DIRECTORS.md`, `tools/gen_directors.py`, `docs/directors/`, `.claude/`, `docs/setup/`, `docs/ep/`, `docs/decisions/`, `docs/narrative/`, `prototype/index.html`, and `docs/legal/`. It looked for franchise and fan-game names, "Breakers", "KAI", gold-hair references, and internal-process text. Orb's private notes are in `.private/`, which is git-ignored, and never entered history (checked).
 

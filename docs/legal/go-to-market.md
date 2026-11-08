@@ -169,7 +169,7 @@ Pay-what-you-want and paid projects are open to individuals; payout and tax deta
 - **"Official", "licensed", "exclusive" music**, or "first" and "best" claims you cannot prove.
 - **Claims about the AI** that are false or too neat ("the AI wrote everything and Orb did nothing"; "Orb made all of it").
 
-**Testimonials from friends (the US FTC rule on consumer reviews and testimonials, in force since 2024-10-21, primary summary via law firms; civil penalties up to $51,744 per violation, secondary):**
+**Testimonials from friends (the US FTC rule on consumer reviews and testimonials, in force since 2024-10-21, primary summary via law firms; civil penalties up to $53,088 per violation (the FTC's 2025 figure; the older $51,744 is stale), secondary):**
 1. Reviews and testimonials must be **real** and from people who really played it. Never write, buy or trade for reviews, and never gather only the positive ones.
 2. The rule's "insider" reviews cover people tied to the seller, such as employees, agents and immediate family, and the FTC's wider endorsement guidance says any **material connection** (friendship, a free key, a favour) must be disclosed. So a friend's quote is allowed in marketing only if you state the connection ("a friend of the developer"). Do not present it as an independent review.
 3. **Do not ask friends to post positive Steam reviews,** and do not give keys, gifts or favours in exchange for them. A review from a free key is fine if the reviewer says so, honestly, with no instruction on what to say. Steam's own review rules also apply (Valve labels keyed reviews).

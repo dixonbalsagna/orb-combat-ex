@@ -1,6 +1,6 @@
 # Suno music: ruling note for Orb
 
-Owner: Legal and IP Compliance. 2026-10-04. Answers the questions in `docs/audio/suno-direction.md` section 9. A screen, not legal advice. Have counsel read it before the game is sold or the repo goes public with the music in it.
+Owner: Legal and IP Compliance. 2026-10-04. Answers the questions in `docs/audio/suno-direction.md` section 9. A screen, not legal advice. Have counsel read it before the game is sold or any music file is published in the repo or on a page.
 
 ## What I verified, and what I could not
 

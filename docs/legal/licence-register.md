@@ -83,7 +83,7 @@ This assumes the code licence recommended in `licence-recommendation.md` (MIT). 
 
 ## Part D: open items
 
-1. There is no LICENSE file in the repo. The EP placed MIT and CC BY 4.0 files and then removed them (commit 3166470, 2026-09-29) while Orb decides the licence, so the repo is all rights reserved by default. The drafts in `drafts/` are unchanged and still match pairing 1. If Orb picks another licence, Legal redrafts. Do not make the repo public without a licence file.
+1. There is no LICENSE file in the repo. The EP placed MIT and CC BY 4.0 files and then removed them (commit 3166470, 2026-09-29) while Orb decides the licence, so the repo is all rights reserved by default. The drafts in `drafts/` are unchanged and still match pairing 1. If Orb picks another licence, Legal redrafts. The repo is public by Orb's ruling of 2026-09-29, so until Orb picks a licence it stays all rights reserved (the README says so); 'licence first' now applies only to outside contributions and to any 'open source' wording (audit AC-071, AC-074).
 2. `@napi-rs/canvas` is now pinned to 1.0.9 (LR-023). Still to confirm: that a lockfile is committed, and whether a JSON Schema validator (LR-022) is used.
 3. The prototype code and the docs were written with AI assistance. The provenance policy is in `licence-recommendation.md`, section 8.
 4. Godot's licences screen has to be planned into the UI (P5).

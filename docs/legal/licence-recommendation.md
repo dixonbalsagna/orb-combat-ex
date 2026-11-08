@@ -1,6 +1,6 @@
 # Licence recommendation for the free, open-source release
 
-Owner: Legal and IP Compliance. 2026-09-28. For Orb, who decides, and the EP. Not legal advice. Have a lawyer read the final choice before the repo goes public (section 9). Where an answer from Orb changes the advice, it is marked **Orb decides**.
+Owner: Legal and IP Compliance. 2026-09-28. For Orb, who decides, and the EP. Not legal advice. The repo has been public since 2026-09-29 by Orb's ruling (docs/ep/vision.md), so a lawyer reading the final choice is now due before the first sale or any 'open source' wording (section 9). Where an answer from Orb changes the advice, it is marked **Orb decides**.
 
 ## 1. The recommendation in short
 
@@ -158,7 +158,7 @@ How courts will treat mixed human and AI work in games. Other countries' law. Fu
 
 ## 9. When to involve a lawyer
 
-1. **Before the repo goes public.** Confirm the licence choice, the README wording about the homage, the contributor terms and the trademark note. A short review is enough.
+1. **Before the first sale, a tip jar or any 'open source' wording** (the repo is already public by Orb's ruling of 2026-09-29; one counsel sitting before the first sale at the latest, and Orb decides whether it comes before the store page). Confirm the licence choice, the README wording about the homage, the contributor terms and the trademark note. A short review is enough.
 2. **Before the game's name is locked.** A formal trademark search and advice, and a decision on whether to file. Legal's screen (`name-screening.md`) is not a clearance.
 3. **Before a store page or trailer.** Review the homage wording, the screenshots and the final fighter designs against Dragon Ball resemblance.
 4. **If GPL is chosen and Steam or consoles are targets.** A written permission or exception.
