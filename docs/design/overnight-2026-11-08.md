@@ -27,6 +27,19 @@ Owner: Game Design. On the EP's overnight brief, from Orb's Sunday plays and Orb
   - **Encounter:** the director refuses a beam request that came from B, with no other source.
   - **QA's row:** beams from a player's B press, **0**, on Orb's file replayed and on the scripted arms.
 
+**The interim, accepted (2026-11-08, the EP's sequence).** Controls found that the RT + right stick signature isn't built, so closing B entirely would leave the signature out of reach. Until it lands:
+
+| | Rule |
+| :--- | :--- |
+| **B alone, and LT + B** | **Never a beam or a signature,** from tonight. These were Orb's accidental cases |
+| **RT + B** | **Keeps the signature, as a chord only:** B within 12 ticks of RT's press (`tapHold.holdStart`), before RT's hold becomes the channel. **A B pressed while RT is held to channel never fires it,** so a B mashed while powering up can't set off a signature |
+| **When RT + right stick lands** | **RT + B goes in the same build.** No overlap, and no later |
+
+- **Orb is told,** because this goes against Orb's 2026-11-01 "RT + B is out". It's one line on the play page: "Signature: RT + B, this build only."
+- **QA's rows:**
+  - signatures from B alone or LT + B: 0;
+  - signatures from a B pressed during an RT channel: 0.
+
 ## (c) "LT high speed is fast at any range": the target
 
 **What Orb felt** (21:52): "the LT high-speed didn't quite feel fast enough but sped up when we were further apart". **That's what the code does.**
