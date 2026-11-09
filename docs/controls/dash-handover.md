@@ -60,3 +60,22 @@ Flip `switches.dashHandover` (a Tools row, or the landing commit) with Simulatio
 | 400 apart (5.3 bh) | on | 14.8 | 8.9 | 7.8 | 2.8 |
 
 Neither state meets the bound. At 5,000/s the dash is 83 units (1.1 bh) a tick from tick 1, and the speed then decays at about 11% a tick after the release, so even a 2-tick tap leaves a 10 bh tail. Handover on halves a tap's leap at range, but near the rival the shortest taps fly past him (14.8 bh against 5.3 bh away), because the arrival ease (bands.arrive) runs only while the dash is held. The cure is Simulation's and Encounter's: a brake on release (cap the speed to the slip when the dash ends before tick 6) and the ease kept for the decay.
+
+## With Simulation's slip brake (dash-slip park, on 592a807b), 2026-11-09
+
+`runs/592a807b/lt-tap-probe-slip-matrix-592a807b.txt` (Simulation's probe, unchanged; the numbers reproduce theirs). Distance in bh over 60 ticks; the stick alone is 4.98, so the bound is 6.48 (1.5 bh beyond). "Today" is handover off, slip off. "On" is handover on, slip on. Slip alone changes nothing (the 12-tick lunge makes every tap 13 dash ticks, so the brake never fires): the two are one pair.
+
+| Rival | LT let go at | today | on |
+|---|---|---:|---:|
+| 3,000 apart | 1 / 3 / 5 | 31.2 | 9.9 / 12.1 / 14.4 |
+| 3,000 apart | 6 / 8 / 12 | 31.2 | 21.9 / 24.9 / 30.2 |
+| 1,000 apart (13.3 bh) | 1 / 3 / 5 | 15.0 | 9.9 / 12.1 / 14.4 |
+| 1,000 apart | 6 / 8 / 12 | 15.0 | 21.9 / 24.9 / 15.1 |
+| 400 apart (5.3 bh) | 1 / 2 / 3 / 4 / 5 | 6.6 | 9.9 / 10.6 / 10.0 / 8.9 / 8.2 |
+| 400 apart | 6 / 8 / 12 | 6.6 | 7.8 / 7.1 / 6.7 |
+| any | held | 37.5 / 10.8 / 2.8 | the same |
+
+- **Far taps (1 to 5 ticks): better by 17 to 21 bh** (31.2 down to 9.9-14.4), and a held LT is untouched. The bound is still not met (3.4 to 7.9 bh over it).
+- **Near taps: worse.** At 5.3 bh a 1 to 3-tick tap carries him 9.9 to 10.6 bh, 4.6 to 5.3 bh past the rival; today's 13-tick lunge stops at him (6.6 bh, the arrival ease runs while the dash is held). Worse by 3.3 to 4.0 bh at 1 to 3 ticks, by 1.2 to 2.4 at 4 to 6.
+- **Mid-range presses of 6 to 11 ticks: worse.** At 13.3 bh a 6 or 8-tick press flies 21.9 or 24.9 bh (8.6 to 11.6 past him) where today's 13-tick dash lands 1.7 past. The brake only covers 1 to 5 ticks, and the arrival ease stops with the dash.
+- Both ends have the same cause: Encounter's arrival ease runs only while the dash is held. With the dash let go, the 5,000 a second kick's tail (and the brake's 1,125 coast) is not eased into striking distance.
