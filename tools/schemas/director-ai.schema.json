@@ -484,6 +484,20 @@
                   "maximum": 1,
                   "description": "Its perfect block against a heavy it sees wound in a brawl."
                 },
+                "paceMatch": {
+                  "type": "object",
+                  "description": "Easy matches the player's pace (DirPace; gauntlet-plan.md section 6): a string's tap gap is never shorter than the median of his last windowSec seconds of attack presses, between floor and ceiling; noHuman against another computer.",
+                  "required": ["enabled"],
+                  "additionalProperties": false,
+                  "patternProperties": {"^_": true},
+                  "properties": {
+                    "enabled": {"type": "boolean"},
+                    "floor": {"type": "number", "minimum": 0},
+                    "ceiling": {"type": "number", "minimum": 0},
+                    "windowSec": {"type": "number", "exclusiveMinimum": 0},
+                    "noHuman": {"type": "number", "minimum": 0}
+                  }
+                },
                 "tapGapMax": {
                   "type": "number",
                   "minimum": 0,
@@ -1135,6 +1149,20 @@
                   "maximum": 1,
                   "description": "Its perfect block against a heavy it sees wound in a brawl."
                 },
+                "paceMatch": {
+                  "type": "object",
+                  "description": "Easy matches the player's pace (DirPace; gauntlet-plan.md section 6): a string's tap gap is never shorter than the median of his last windowSec seconds of attack presses, between floor and ceiling; noHuman against another computer.",
+                  "required": ["enabled"],
+                  "additionalProperties": false,
+                  "patternProperties": {"^_": true},
+                  "properties": {
+                    "enabled": {"type": "boolean"},
+                    "floor": {"type": "number", "minimum": 0},
+                    "ceiling": {"type": "number", "minimum": 0},
+                    "windowSec": {"type": "number", "exclusiveMinimum": 0},
+                    "noHuman": {"type": "number", "minimum": 0}
+                  }
+                },
                 "tapGapMax": {
                   "type": "number",
                   "minimum": 0,
@@ -1785,6 +1813,20 @@
                   "minimum": 0,
                   "maximum": 1,
                   "description": "Its perfect block against a heavy it sees wound in a brawl."
+                },
+                "paceMatch": {
+                  "type": "object",
+                  "description": "Easy matches the player's pace (DirPace; gauntlet-plan.md section 6): a string's tap gap is never shorter than the median of his last windowSec seconds of attack presses, between floor and ceiling; noHuman against another computer.",
+                  "required": ["enabled"],
+                  "additionalProperties": false,
+                  "patternProperties": {"^_": true},
+                  "properties": {
+                    "enabled": {"type": "boolean"},
+                    "floor": {"type": "number", "minimum": 0},
+                    "ceiling": {"type": "number", "minimum": 0},
+                    "windowSec": {"type": "number", "exclusiveMinimum": 0},
+                    "noHuman": {"type": "number", "minimum": 0}
+                  }
                 },
                 "tapGapMax": {
                   "type": "number",

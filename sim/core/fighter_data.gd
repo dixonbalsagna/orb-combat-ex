@@ -20,7 +20,7 @@ const PROFILES: Array = ["plain"]
 const METERS: Array = ["anguish", "menace"]
 ## D1b: the (meter, effect) and (meter, source) pairs the code implements; anything else in meters.json is rejected.
 const METER_EFFECTS: Dictionary = {"menace": ["regen_bonus", "damage_mul", "beam_power"], "anguish": ["regen_penalty", "composure", "comeback"]}
-const METER_SOURCES: Dictionary = {"menace": ["evacuee/self"], "anguish": ["casualty/self", "casualty/opponent"]}
+const METER_SOURCES: Dictionary = {"menace": ["destroyed/self", "destroyed_power/self", "crater/self", "emptied/self", "region_broken/opponent", "brink/opponent"], "anguish": ["destroyed/opponent", "destroyed/self", "emptied/any", "failed_to_protect/self"]}   # nobody dies (CD-05): the meters read destruction, never a person (docs/design/bystanders.md sections 3 and 4)
 const PENALTIES: Array = ["coreKiRegen", "legsSpeed", "legsLockBreak", "staggerTicks", "dazeTicks", "armsGuardMul", "armsBrokenMul", "headParryNarrow", "headDefence", "legsSlip", "armsBrokenLightMul", "armsBrokenMediumMul", "legsBrokenGuardScale"]
 const BLOWS: Array = ["heavy", "beam", "guard_break", "chain"]
 
@@ -86,12 +86,21 @@ class MetersDef:
 	var menaceBeam: float = 0.0       # beam_power.perPoint: beam clash power + this x menace
 	var menaceDecay: float = 0.0      # decay.rate per second ...
 	var menaceDelay: int = 0          # ... once it has gone this many ticks without being fed
-	var menaceEvac: float = 0.0       # sources evacuee/self: per person its blows forced to flee (x 425 / pop0)
 	var anguishRegen: float = 0.0     # regen_penalty.perPoint: ki regen - this x anguish ...
 	var anguishRegenCap: float = -1.0 # ... at most this (regen_penalty.cap; -1: no cap)
 	var anguishDecay: float = 0.0     # decay.rate per second (no delay)
-	var anguishCasSelf: float = 0.0   # sources casualty/self
-	var anguishCasOther: float = 0.0  # sources casualty/opponent: anyone else's (or no one's)
+	var menaceDestroyed: float = 0.0  # sources destroyed/self: per unit of structure mass he brings down (x the arena's norm, WorldCollateral.norm)
+	var worldPower: float = 0.0       # sources destroyed_power/self: power per unit of structure mass he brings down (x the norm)
+	var menaceCrater: float = 0.0     # sources crater/self: per crater his send or beam digs ...
+	var menaceCraterBh: float = 3.0   # ... at least this many body heights across (crater/self minBh)
+	var menaceEmptied: Array = [0.0, 0.0, 0.0]   # sources emptied/self: per lived-in building his blow empties, by its size: a house, a low tower, a tall tower (x the norm)
+	var menaceBreak: float = 0.0      # sources region_broken/opponent: a region of the opposing fighter broken (combat trauma: not normalised)
+	var menaceBrink: float = 0.0      # sources brink/opponent: the opposing fighter reaches the brink (each time; not normalised)
+	var anguishNear: float = 3000.0   # the `within` of the anguish rows: a fall or an emptied place this near him (shortest arc)
+	var anguishDestroyedOther: float = 0.0   # sources destroyed/opponent: per unit of structure mass anyone else brings down near him (x the norm)
+	var anguishDestroyedSelf: float = 0.0    # sources destroyed/self: ... and what he brings down himself
+	var anguishEmptied: float = 0.0   # sources emptied/any: per lived-in building emptied near him (x the norm)
+	var anguishFailed: float = 0.0    # sources failed_to_protect/self: per unit of mass that falls inside the place he is fighting in while he is the nearest fighter to it (x the norm)
 	var composureBelow: float = 0.0   # composure.below: while anguish is under this ...
 	var composureBonus: float = 0.0   # ... damage x (1 + this) (composure.cap)
 	var comeback: float = 0.0         # comeback.cap: damage x (1 + this x (1 - vitality)^2)
@@ -557,13 +566,34 @@ static func _meters(id: String, meters: Dictionary) -> MetersDef:
 			if s.has("cap"):
 				_err(where + ": " + name + " source " + key + ": cap is not wired")
 			var amt: float = float(s.get("amount", 0.0))
+			if s.has("within"):
+				d.anguishNear = float(s.within)
 			match name + ":" + key:
-				"menace:evacuee/self":
-					d.menaceEvac = amt
-				"anguish:casualty/self":
-					d.anguishCasSelf = amt
-				"anguish:casualty/opponent":
-					d.anguishCasOther = amt
+				"menace:destroyed/self":
+					d.menaceDestroyed = amt
+				"menace:destroyed_power/self":
+					d.worldPower = amt
+				"menace:crater/self":
+					d.menaceCrater = amt
+					d.menaceCraterBh = float(s.get("minBh", 3.0))
+				"menace:emptied/self":
+					var sz = s.get("sizes", [])
+					if not (sz is Array and sz.size() == 3):
+						_err(where + ": menace emptied/self needs sizes, three numbers (house, low tower, tall tower)")
+					else:
+						d.menaceEmptied = [amt * float(sz[0]), amt * float(sz[1]), amt * float(sz[2])]
+				"menace:region_broken/opponent":
+					d.menaceBreak = amt
+				"menace:brink/opponent":
+					d.menaceBrink = amt
+				"anguish:destroyed/opponent":
+					d.anguishDestroyedOther = amt
+				"anguish:destroyed/self":
+					d.anguishDestroyedSelf = amt
+				"anguish:emptied/any":
+					d.anguishEmptied = amt
+				"anguish:failed_to_protect/self":
+					d.anguishFailed = amt
 		for e in m.get("effects", []):
 			var k: String = String(e.get("key", ""))
 			if not METER_EFFECTS[name].has(k):

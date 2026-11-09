@@ -106,6 +106,7 @@ func _init() -> void:
 	check("the air brake", _brake())
 	check("forms: five steps and the slingshot", _forms())
 	check("forms: Witness and Trial", _formBranches())
+	check("menace at the cap decays after its delay, whatever the dead (CD-05)", _menaceCap())
 	check("Animation's view fields: a launch's tier, a hit's stop and tier", _animFields())
 	check("the intro phase (golden)", "" if SimGolden.introHash() == g.get("intro", "") else "differs")
 	check("composed intros (golden)", "" if SimGolden.introComposedHash() == g.get("introComposed", "") else "differs")
@@ -4227,15 +4228,25 @@ const WIRED: Array = [
 	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 1, "cap"], 0.3, "kaiHit"],
 	["PROTAGONIST/meters.json", ["meters", "anguish", "effects", 2, "cap"], 2.0, "kaiHit"],
 	["PROTAGONIST/meters.json", ["meters", "anguish", "decay", "rate"], 3.0, "kaiTick"],
-	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 0, "amount"], 5.0, "feedSelf"],
-	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 1, "amount"], 5.0, "feedOther"],
+	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 0, "amount"], 5.0, "aFell"],
+	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 0, "within"], 10.0, "aWithin"],
+	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 1, "amount"], 5.0, "aFell"],
+	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 2, "amount"], 5.0, "aFell"],
+	["PROTAGONIST/meters.json", ["meters", "anguish", "sources", 3, "amount"], 5.0, "aFell"],
 	["RIVAL/meters.json", ["meters", "menace", "effects", 0, "perPoint"], 0.3, "vorrTick"],
 	["RIVAL/meters.json", ["meters", "menace", "effects", 0, "cap"], 0.01, "vorrTick"],
 	["RIVAL/meters.json", ["meters", "menace", "effects", 1, "cap"], 1.0, "vorrHit"],
 	["RIVAL/meters.json", ["meters", "menace", "effects", 2, "perPoint"], 50.0, "beam"],
 	["RIVAL/meters.json", ["meters", "menace", "decay", "rate"], 3.0, "vorrTick"],
 	["RIVAL/meters.json", ["meters", "menace", "decay", "delayTicks"], 30, "vorrQuiet"],
-	["RIVAL/meters.json", ["meters", "menace", "sources", 0, "amount"], 5.0, "evac"],   # the evacuee source: the casualty one is gone (CD-05, World's no-casualty-feed)
+	["RIVAL/meters.json", ["meters", "menace", "sources", 0, "amount"], 5.0, "mFell"],
+	["RIVAL/meters.json", ["meters", "menace", "sources", 1, "amount"], 5.0, "mFell"],
+	["RIVAL/meters.json", ["meters", "menace", "sources", 2, "amount"], 5.0, "mCrater"],
+	["RIVAL/meters.json", ["meters", "menace", "sources", 2, "minBh"], 5.0, "mCrater"],
+	["RIVAL/meters.json", ["meters", "menace", "sources", 3, "amount"], 5.0, "mEmptied"],
+	["RIVAL/meters.json", ["meters", "menace", "sources", 3, "sizes"], [4.0, 5.0, 6.0], "mEmptied"],
+	["RIVAL/meters.json", ["meters", "menace", "sources", 4, "amount"], 5.0, "mTrauma"],
+	["RIVAL/meters.json", ["meters", "menace", "sources", 5, "amount"], 5.0, "mTrauma"],
 	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["fillPerSec"], 2.0, "ladderTick"],
 	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["thresholds"], [10.0, 50.0, 75.0], "ladderTick"],
 	[["PROTAGONIST/ladder.json", "RIVAL/ladder.json"], ["chargePerSec"], 7.0, "chargeTick"],
@@ -4322,6 +4333,59 @@ func _wiredNumbers() -> String:
 	return "" if bad.is_empty() else "; ".join(bad)
 
 
+## The destruction probes: each returns the meters it moved, as numbers, so an edited data value shows.
+func _destructionProbe(S: SimState, kind: String) -> Array:
+	var kai = S.fighters[0]
+	var vorr = S.fighters[1]
+	var cls: Array = [null, null, null]
+	for b in S.buildings:
+		if b.alive and b.pop > 0.0 and b.hp >= b.maxhp and not WorldCollateral.isFar(S, b.idx) and cls[WorldBrunt.sizeClass(b)] == null:
+			cls[WorldBrunt.sizeClass(b)] = b
+	var house = cls[0]
+	var low = cls[1]
+	var tall = cls[2]
+	if house == null or low == null or tall == null:
+		return ["!no building of every size"]
+	vorr.menace = 0.0
+	vorr.power = 0.0
+	kai.anguish = 0.0
+	var out: Array = []
+	match kind:
+		"mFell":
+			WorldCollateral.fell(S, house, vorr)
+			out = [vorr.menace, vorr.power]
+		"mCrater":
+			WorldCollateral.dug(S, 300.0, "impact", vorr)
+			out = [vorr.menace]
+		"mEmptied":
+			for b in [house, low, tall]:
+				WorldCollateral.emptied(S, b, vorr)
+				out.append(vorr.menace)
+		"mTrauma":
+			SimFx.regionBroken(S, kai, "head")
+			WorldCollateral._trauma(S)
+			out.append(vorr.menace)
+			S.out.fx.clear()
+			SimFx.brinkEnter(S, kai)
+			WorldCollateral._trauma(S)
+			out.append(vorr.menace)
+		"aFell":
+			kai.x = low.x   # at the building: the nearest fighter to it, in its place
+			vorr.x = SimWrap.wrap(low.x + 8000.0)
+			WorldCollateral.fell(S, low, vorr)
+			out.append(kai.anguish)
+			WorldCollateral.fell(S, low, kai)
+			out.append(kai.anguish)
+			WorldCollateral.emptied(S, low, null)
+			out.append(kai.anguish)
+		"aWithin":
+			kai.x = SimWrap.wrap(low.x + 2000.0)   # 2,000 units from it: inside 3,000, outside 10
+			vorr.x = SimWrap.wrap(low.x + 9000.0)
+			WorldCollateral.fell(S, low, vorr)
+			out.append(kai.anguish)
+	return out
+
+
 ## One forced probe on the loaded data: a fresh match (seed 3), the state its number needs, one call into the reader, and
 ## the values it produced as text. A result starting with "!" means the probe could not set its scenario up.
 func _wiredProbe(kind: String) -> String:
@@ -4340,7 +4404,6 @@ func _wiredProbe(kind: String) -> String:
 			vorr.menace = 50.0
 			vorr.menaceSeen = 50.0
 			vorr.menaceQuiet = 1000
-			vorr.casSeen = S.world.casualties
 			vorr.ki = 10.0
 			SimFighter.stepFighter(S, vorr, SimConst.DT)
 			out = [vorr.ki, vorr.menace]
@@ -4348,7 +4411,6 @@ func _wiredProbe(kind: String) -> String:
 			vorr.menace = 50.0
 			vorr.menaceSeen = 50.0
 			vorr.menaceQuiet = 100
-			vorr.casSeen = S.world.casualties
 			SimFighter.stepFighter(S, vorr, SimConst.DT)
 			out = [vorr.menace]
 		"kaiHit", "vorrHit", "tierHit":   # damage: composure and the comeback; menace's damage_mul; the tier's damage step
@@ -4369,19 +4431,8 @@ func _wiredProbe(kind: String) -> String:
 		"beam":         # menace's beam power
 			vorr.menace = 50.0
 			out = [DirBeam._clashScore(S, vorr)]
-		"feedSelf", "feedOther":   # the casualty sources: caused by PROTAGONIST, or by RIVAL
-			WorldCollateral._feed(S, 10.0, kai if kind == "feedSelf" else vorr)
-			out = [kai.anguish, vorr.menace]
-		"evac":         # the evacuee source: RIVAL's blows empty buildings until someone flees
-			for b in S.buildings:
-				if b.alive and b.popAlive > 0.0:
-					WorldCollateral.kill(S, b.idx, b.popAlive, vorr, 0.0, b.x)
-					if S.world.evacuated > 0.0:
-						break
-			if S.world.evacuated <= 0.0:
-				out = ["!no evacuees"]
-			else:
-				out = [vorr.menace, S.world.evacuated]
+		"mFell", "mCrater", "mEmptied", "mTrauma", "aFell", "aWithin":   # the meters read destruction (bystanders.md sections 3 and 4): a fall, a crater, a place emptied, a region broken, the brink
+			out = _destructionProbe(S, kind)
 		"vorrExchange":   # end to end, forced: RIVAL, with menace, attacks PROTAGONIST through the director; what PROTAGONIST took
 			kai.ai = null
 			vorr.ai = null
@@ -4892,8 +4943,30 @@ func _forms() -> String:
 	return ""
 
 
+## Menace at the cap decays after its delay like anywhere else: nothing the dead do holds it (CD-05, Orb's "no civilian
+## deaths going forward"). The world's casualties rising while he sits at 100 used to count as fed.
+func _menaceCap() -> String:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 3)
+	var v = S.fighters[1]
+	if not v.hasMenace:
+		SimCore.dispose(S)
+		return "the rival has no menace"
+	v.menace = 100.0
+	v.menaceSeen = 100.0
+	v.menaceQuiet = v.md.menaceDelay + 1
+	S.world.casualties += 10.0
+	SimFighter.stepFighter(S, v, SimConst.DT)
+	var after: float = v.menace
+	var quiet: int = v.menaceQuiet
+	SimCore.dispose(S)
+	if not (after < 100.0) or quiet <= 0:
+		return "menace at the cap, unfed past its delay, with 10 more dead: %s (quiet %d)" % [str(after), quiet]
+	return ""
+
+
 ## Forms' branches (hero-forms.md section 3; docs/architecture/forms-core.md section 7), with forms on: Witness fills by
-## the opponent's kills near him and never by his own, which take from it; his anguish no longer takes the opponent's
+## the mass of the buildings the opponent brings down near him and never by his own, which take from it, nor by the dead (CD-05); his anguish no longer takes the opponent's
 ## kills; Trial fills by the opponent's forms (more when his own was held), the deficit seconds, his blows of a medium or
 ## more a tier down, the opponent's commitments and the coil; a release picks once, the higher fill, a tie to his branch
 ## and the first tie to Trial, and empties it; a cross is told; the branch's extras reach the gains, his care and the
@@ -4906,22 +4979,51 @@ func _formBranches() -> String:
 	var r = M.fighters[1]
 	if p.fd == null or p.fd.branchAt != [2, 4]:
 		return "the branch steps are not II and IV"
-	var norm: float = WorldCollateral.POP_REF / WorldCollateral.normPeople(M)
-	# Witness
-	SimForms.casualty(M, 3.0, r, SimWrap.wrap(p.x + 100.0))
-	var w1: float = 3.0 * p.fd.wPerPerson * norm
+	# Witness: the city wrecked round him (CD-05), never the dead. A lived-in building stands in for the one that falls
+	var bw = null
+	for c in M.buildings:
+		if bw == null and c.alive and c.popAlive > 1.0:
+			bw = c
+	if bw == null:
+		return "no lived-in building to stand in for a wreck"
+	var bx: float = bw.x
+	var m: float = WorldBrunt.massOf(bw)
+	bw.x = SimWrap.wrap(p.x + 100.0)
+	SimForms.wrecked(M, bw, r)
+	var w1: float = m * p.fd.wPerMass
+	if m <= 0.0 or p.form.witness != w1 or w1 <= 0.0:
+		bw.x = bx
+		return "a building of mass %s the rival brought down near him gave Witness %s, not %s" % [str(m), str(p.form.witness), str(w1)]
+	bw.x = SimWrap.wrap(p.x + p.fd.wRange + 500.0)
+	SimForms.wrecked(M, bw, r)
+	bw.x = p.x
+	SimForms.wrecked(M, bw, null)
+	var dead0: float = M.world.casualties
+	WorldCollateral.scatter(M, bw.idx, 1.0, r, 0.0, bw.x)
+	WorldCollateral.scatter(M, bw.idx, 1.0, p, 0.0, bw.x)
 	if p.form.witness != w1:
-		return "three people the rival killed near him gave Witness %s, not %s" % [str(p.form.witness), str(w1)]
-	SimForms.casualty(M, 3.0, r, SimWrap.wrap(p.x + p.fd.wRange + 500.0))
-	SimForms.casualty(M, 3.0, null, p.x)
-	if p.form.witness != w1:
-		return "a kill beyond the range, or with no killer, filled Witness"
-	SimForms.casualty(M, 1.0, p, p.x)
-	var w2: float = SimMathx.jmax(0.0, w1 - 1.0 * p.fd.wOwnKill * norm)
-	if p.form.witness != w2 or r.form.witness != 0.0 or p.form.trial != 0.0:
-		return "his own kill: Witness %s (want %s); the rival's %s; Trial %s" % [str(p.form.witness), str(w2), str(r.form.witness), str(p.form.trial)]
-	if SimForms.anguishOther(M, p) != 0.0 or SimForms.anguishOther(M, r) != r.md.anguishCasOther:
-		return "his anguish still takes the opponent's kills, or the rival's no longer does"
+		bw.x = bx
+		return "a wreck beyond the range, one with nobody's hand in it, or the dead (%s died) moved Witness to %s" % [str(M.world.casualties - dead0), str(p.form.witness)]
+	p.form.witness = 1000.0   # room under it, so the amount his own wreck takes shows (ownMass is twice perMass: from w1 it would clamp to 0)
+	SimForms.wrecked(M, bw, p)
+	bw.x = bx
+	var w2: float = 1000.0 - m * p.fd.wOwnMass
+	if w2 >= 1000.0 or p.form.witness != w2 or r.form.witness != 0.0 or p.form.trial != 0.0:
+		return "his own wreck: Witness %s (want %s, from 1000); the rival's %s; Trial %s" % [str(p.form.witness), str(w2), str(r.form.witness), str(p.form.trial)]
+	p.form.witness = 0.0
+	SimForms.wrecked(M, bw, p)
+	if p.form.witness != 0.0:
+		return "his own wreck took Witness under 0 (%s)" % str(p.form.witness)
+	# Witness's masses are power.json's absorb (WorldBrunt.massOf): with forms on they're in a replay's and the LAN's data hash, power on or off
+	var dh0: String = SimReplay.dataHash({"forms": true, "power": false})
+	SimPower.dataHash()
+	var ph: String = SimPower._hash
+	SimPower._hash = ph + "x"
+	var dh1: String = SimReplay.dataHash({"forms": true, "power": false})
+	var dh2: String = SimReplay.dataHash({"forms": false, "power": false})
+	SimPower._hash = ph
+	if dh1 == dh0 or dh2 != SimReplay.dataHash({"forms": false, "power": false}):
+		return "with forms on and the energy model off, power.json (Witness's masses) is not in the data hash, or it is with forms off"
 	# Trial: the opponent's form while his tier is no higher; then held
 	M.out.fx.clear()
 	r.power = 40.0

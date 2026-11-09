@@ -1,6 +1,8 @@
 {
   "schema": "director.launch/1",
   "_about": "The launch planner's landing-mix numbers (sim/director/launch.gd, DirLaunch; balance-targets.md section 19; docs/combat/launch-vectors.md). DRIVE DOWN (the old SLAM DOWN) sends the target down and forward, at an angle set by its height above the ground, with no draw. The straight-down slam is its own gated candidate, CRATER SLAM. Heights are in body heights (1 bh is 75 units).",
+  "sideFromBlowOnly": false,
+  "_sideFromBlowOnly": "Game Design's overnight ruling (a), docs/design/overnight-2026-11-08.md: a launch goes the way of the blow, and only the stick picks the far side. On: the curve (arc heavyFull) keeps the punch's way when the stick picks no side (none, up or down), away still sends him back past; and the planner offers no candidate on the far side of the rival (as with the contact block). Off: as before, the curve may turn to the landing score's better arrival and the planner may offer a mountainside or building behind.",
   "drive": {
     "lowDeg": 25.0,
     "highDeg": 50.0,

@@ -42,6 +42,11 @@ static func holdMove(S: SimState, f) -> float:
 	return _d("stick.gd").holdMove(S, f)
 
 
+## DirBands.arrive: LT's high speed eases into striking distance (bands.arrive; Game Design overnight-2026-11-08.md (c)).
+static func arrive(S: SimState, f, dt: float) -> void:
+	_d("bands.gd").arrive(S, f, dt)
+
+
 ## DirBeamMove.refillHeld: while the stick holds a charge, his energy doesn't refill (Game Design, playable-build.md section 2).
 static func refillHeld(f) -> bool:
 	return _d("beam_move.gd").refillHeld(f)

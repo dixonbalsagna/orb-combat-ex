@@ -21,6 +21,9 @@ extends SceneTree
 ##     own player's fight before every tick, where the game draws, all the time he stands, and NetLan never finds S moved between ticks;
 ##   - the LAN's tuning with the second PC hitching: the first PC's deepest rollback stays within NetLan.LAN_AHEAD (and one save), and time sync never waits more than NetLan.SYNC_MAX_WAIT frames in a row;
 ##   - the log line has the frames and the view;
+##   - a saved match (NetLan.save, with the scripted hit-stops off so the inputs are the whole match): both PCs' files play back through SimReplay.play,
+##     every checkpoint and the final hash matching, the two PCs' replays the same, in 1v1 (lan, p120), 2v2 together (p120) and together with the second PC
+##     gone (its seat's toggle on the sim's slot, p3's);
 ##   - NetLan's own setups (SETUP, SETUP2, SETUP2X: the folder's 1v1, 2v2 apart and together) start both PCs with the energy model on and the page's travel of 1.5,
 ##     and a short match on each stays in step;
 ##   - CD-10 (the audit's F-10), a hostile second PC: a hello asking for an input wait of 100,000 ticks fails the handshake (no session, the title says why); one
@@ -32,7 +35,8 @@ extends SceneTree
 ## must stop acting, and with the session clearing its output nothing of the other fight's must stay for the picture, and a PC that keeps showing its out player's fight must be caught, and a pause that
 ## doesn't put the view back after its rollback must be caught showing fight 0 while the player stands; with CD-10's checks off, the huge wait must be taken, the bad
 ## slot must reach the session (which refuses it, with no script error) and the flood must fill it; and with the hand-over off, a gone PC must freeze the match; and a LAN setup without its "power" word
-## must be caught starting with the model off.
+## must be caught starting with the model off; a saved match with one input changed, and one whose dropped seat's toggle names the session's index
+## instead of the sim's slot, must each fail to play back.
 ## Each must be caught.
 ## Verdict line: LAN: N check(s) failed
 
@@ -110,6 +114,7 @@ func _run(pname: String, freezeRule: bool, keepOut: bool, askDelay: int = 0, two
 	var stallFor: int = int(opts.get("stallFor", 0))
 	var pauseEvery: int = int(opts.get("pauseEvery", 0))   # the second PC's game paused pauseLen frames in every pauseEvery (idle() each frame), so some pause meets a late input
 	var pauseLen: int = int(opts.get("pauseLen", 0))
+	var pure: bool = bool(opts.get("pure", false))   # no scripted hit-stops: the inputs are the whole match, so a saved replay can reproduce it
 	var goneAt: int = int(opts.get("goneAt", -1))   # the second PC is gone from this frame: no tick, nothing sent
 	var hostile: Hostile = null
 	var prof: Dictionary = NetLoopback.PROFILES[pname]
@@ -130,7 +135,7 @@ func _run(pname: String, freezeRule: bool, keepOut: bool, askDelay: int = 0, two
 		var st := Stand.new()
 		st.S = SimCore.createSim()
 		SimCore.newMatch(st.S, NetLan.SEED, aiNow, setup)
-		if together:   # crosswise inside the first pair, each enemy of the other fight nearer to a player than his own rival, so the fights meet at once
+		if together and not pure:   # crosswise inside the first pair, each enemy of the other fight nearer to a player than his own rival, so the fights meet at once
 			var way: float = signf(SimWrap.sdx(st.S.fighters[0].x, st.S.fighters[1].x))
 			st.S.stage.fights[1].fighters[1].x = SimWrap.wrap(st.S.fighters[0].x + way * 150.0)
 			st.S.stage.fights[1].fighters[0].x = SimWrap.wrap(st.S.fighters[1].x - way * 150.0)
@@ -143,6 +148,7 @@ func _run(pname: String, freezeRule: bool, keepOut: bool, askDelay: int = 0, two
 		l.keepOut = keepOut
 		l.followInIdle = bool(opts.get("followInIdle", true))
 		l.handOver = bool(opts.get("handOver", true))
+		l.saveDir = String(opts.get("saveDir", ""))
 		l.dropAfter = float(opts.get("dropAfter", NetLan.DROP_MS))
 		if opts.has("log") and k == 0:
 			l.args["lan-log"] = String(opts["log"])
@@ -176,7 +182,7 @@ func _run(pname: String, freezeRule: bool, keepOut: bool, askDelay: int = 0, two
 							SimStage.enter(S, SimStage.fightOf(S, D))
 							SimDamage.ko(S, D, _body(S, String(e[2])))
 							SimStage.enter(S, was)
-				if t % 97 == 50:
+				if t % 97 == 50 and not pure:
 					S.dirS.stop = 12.0 * SimConst.DT   # a hit-stop on both peers on every run of the tick, so the rule has freezes to meet; with two fights, in both, whichever S holds
 					if S.stage != null:
 						for r in S.stage.fights:
@@ -396,6 +402,29 @@ func _init() -> void:
 		var bp: Array = _setupPower(bare)
 		print("control, a LAN setup without its power word: the model on %s, travel %.2f" % [str(bp[0]), bp[1]])
 		ok(not bp[0], "a LAN setup without its power word must be caught with the model off")
+		var saveTo: String = OS.get_user_data_dir().path_join("lan_check_saved")
+		DirAccess.make_dir_recursive_absolute(saveTo)
+		var keepN: int = ticks
+		ticks = 1200
+		r = _run("p120", true, true, 0, false, true, true, -1, true, [], false, false, -1, 0, {"pure": true, "saveDir": saveTo})
+		var bent: Dictionary = _savedPlay(r, saveTo, func(d: Dictionary) -> void:
+			var ins: Array = d.replay.inputs
+			for i in range(ins.size() / 2, ins.size()):   # one input after tick 200 becomes another real one (a valid intent, a different press)
+				if int(ins[i][0]) > 200 and ins[i][2] != null and ins[0][2] != null and (ins[0][2] != ins[i][2] or ins[0][3] != ins[i][3]):
+					ins[i][2] = ins[0][2]
+					ins[i][3] = ins[0][3]
+					break)
+		print("control, a saved match with one input changed: play back %s" % str(bent.reasons))
+		ok(not bool(bent.ok), "a saved match with one input changed must fail to play back")
+		_close(r)
+		r = _run("p120", true, true, 0, true, true, true, -1, true, [], true, true, -1, 0, {"pure": true, "saveDir": saveTo, "goneAt": 600, "dropAfter": 1000.0})
+		var wrongSeat: Dictionary = _savedPlay(r, saveTo, func(d: Dictionary) -> void:
+			for tg in d.replay.toggles:
+				tg[1] = 1.0)   # the session's index of the gone PC's player, as before the fix: a computer's body
+		print("control, a saved 2v2 with the gone seat's toggle on the session's index: play back %s" % str(wrongSeat.reasons))
+		ok(not bool(wrongSeat.ok), "a dropped seat's toggle on the session's index must fail to play back")
+		_close(r)
+		ticks = keepN
 		r = _run("lan", true, true, 0, true, false)
 		print("control, two fights, S not moved to the player's fight: %d frames held the wrong one" % r.wrongFight)
 		ok(r.wrongFight > 0, "with S not moved, a PC must be caught holding the wrong fight")
@@ -586,6 +615,22 @@ func _init() -> void:
 		print("  CD-10 %s, the second PC gone at frame 600: the computer from tick %d, frame %d at the end, banners %d, title \"%s\"" % [what, g0.droppedAt, gs.frame, gr.banners, g0._state])
 		_close(gr)
 	ticks = keep
+	var saveTo: String = OS.get_user_data_dir().path_join("lan_check_saved")
+	DirAccess.make_dir_recursive_absolute(saveTo)
+	var keepT: int = ticks
+	ticks = 1200
+	for row in [["lan", false, -1], ["p120", false, -1], ["p120", true, -1], ["p120", true, 600]]:
+		var sr := _run(String(row[0]), true, true, 0, bool(row[1]), true, true, -1, true, [], true, bool(row[1]), -1, 0, {"pure": true, "saveDir": saveTo, "goneAt": int(row[2]), "dropAfter": 1000.0})
+		var what: String = "%s %s%s" % [String(row[0]), "2v2 together" if bool(row[1]) else "1v1", ", the second PC gone at frame 600" if int(row[2]) >= 0 else ""]
+		var sp: Dictionary = _savedPlay(sr, saveTo)
+		ok(bool(sp.ok) and int(sp.n) > 5, "a saved match, %s: both PCs' files play back to every checkpoint and the final hash (%d checkpoints, %d with a final, %s)" % [what, sp.n, sp.finals, str(sp.reasons)])
+		if int(row[2]) < 0:
+			ok(bool(sp.same), "a saved match, %s: the two PCs saved the same inputs and toggles" % what)
+		else:
+			ok(sr.lans[0].droppedAt > 0 and (sp.toggles as Array).size() >= 1 and int(sp.toggles[0][1]) == 2, "a saved match, %s: the gone PC's seat is a toggle on the sim's slot 2 (%s)" % [what, str(sp.toggles)])
+		print("  saved match, %s: %d checkpoints, finals %d, play %s, same %s, toggles %s" % [what, sp.n, sp.finals, str(sp.reasons), str(sp.same), str(sp.toggles)])
+		_close(sr)
+	ticks = keepT
 	var pre: String = NetLan.prefixOf("10.0.0.135")
 	ok(pre == "10.0.0.", "the /24 of an address (%s)" % pre)
 	ok(NetEnetTransport.allowed("10.0.0.7", pre) and not NetEnetTransport.allowed("10.238.114.20", pre) and not NetEnetTransport.allowed("10.0.01.7", pre) and not NetEnetTransport.allowed("203.0.113.5", pre), "the filter lets in only the /24")
@@ -611,10 +656,49 @@ func _setupPower(su: Dictionary) -> Array:
 	for k in range(2):
 		var S: SimState = SimCore.createSim()
 		SimCore.newMatch(S, NetLan.SEED, ai, su)
-		on = on and S.powerOn
+		on = on and S.powerOn and (S.get("dashOn") == null or bool(S.get("dashOn")))   # the dash too, once the sim has it (Simulation's power-dash)
 		trav = S.powerTravel
 		for t in range(300):
 			SimCore.step(S, null)
 		hs.append(SimHash.stateHash(S).gameplay)
 		SimCore.dispose(S)
 	return [on, trav, hs[0] == hs[1]]
+
+
+## Both PCs save; each file is read back and played through SimReplay.play. mutate (tests): (doc) -> void, applied to each doc before it
+## plays. Returns {ok: every file played back to its checkpoints and final, same: the two replays' inputs and toggles alike, n: checkpoints,
+## finals: how many carried a final hash, reasons: SimReplay.play's reasons, toggles: the first file's toggles, files: the names}.
+func _savedPlay(r: Dictionary, dir: String, mutate: Callable = Callable()) -> Dictionary:
+	var docs: Array = []
+	var files: Array = []
+	for k in range(2):
+		var fn: String = r.lans[k].save("test")
+		files.append(fn)
+		var j = JSON.parse_string(FileAccess.get_file_as_string(dir.path_join(fn))) if fn != "" else null
+		docs.append(j)
+	var out := {"ok": true, "same": true, "n": 0, "finals": 0, "reasons": [], "toggles": [], "files": files}
+	for d in docs:
+		if not (d is Dictionary) or not (d.get("replay") is Dictionary) or String(d.get("kind", "")) != "orb-lan-match":
+			out.ok = false
+			out.reasons.append("no file")
+			continue
+		if mutate.is_valid():
+			mutate.call(d)
+		var rp: Dictionary = d.replay
+		var res: Dictionary = SimReplay.play(rp)
+		out.reasons.append(String(res.reason))
+		out.n = maxi(int(out.n), (rp.checkpoints as Array).size())
+		if String(rp.final) != "":
+			out.finals = int(out.finals) + 1
+		if not bool(res.ok) or (rp.checkpoints as Array).is_empty():
+			out.ok = false
+	if docs.size() == 2 and docs[0] is Dictionary and docs[1] is Dictionary:
+		var a: Dictionary = docs[0].replay
+		var b: Dictionary = docs[1].replay
+		var n: int = mini(int(a.ticks), int(b.ticks))
+		out.same = JSON.stringify((a.inputs as Array).filter(func(e): return int(e[0]) < n)) == JSON.stringify((b.inputs as Array).filter(func(e): return int(e[0]) < n)) and JSON.stringify(a.toggles) == JSON.stringify(b.toggles)
+		out.toggles = a.toggles
+	for fn in files:
+		if fn != "":
+			DirAccess.remove_absolute(dir.path_join(fn))
+	return out

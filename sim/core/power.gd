@@ -28,6 +28,9 @@ static var trav: float = SimConst.TRAV_LAUNCH   # the match stepping now: its fa
 static var popForce: float = 700.0
 static var blind: float = 1.0                  # tests only: a send past what he has
 static var blindTravel: bool = false           # tests only: a setup's "travel" left unread
+static var dashOn_: bool = false               # power.json's dash: LT held is fast at any range (Game Design's overnight-2026-11-08.md (c))
+static var dashAnyRange: bool = true           # (the dash's response, firstTickMin and fullByTicks, is the kick's: kick.json)
+static var blindDash: bool = false             # tests only: the dash switch left unread
 static var _shares: Dictionary = {}
 static var lastShare: float = -1.0             # tests only: the share the last send asked for
 
@@ -59,6 +62,9 @@ static func _ensure() -> void:
 	flatMax = float(j.flight.max)
 	meteorSpeed = float(j.meteorSpeed)
 	launchTravel = float(j.launchTravel)
+	var da: Dictionary = j.dash if j.get("dash") is Dictionary else {}
+	dashOn_ = da.get("enabled") == true
+	dashAnyRange = da.get("anyRange", true) == true
 	var tr: Dictionary = j.travel if j.get("travel") is Dictionary else {}
 	travelMin = float(tr.get("min", launchTravel))
 	travelMax = float(tr.get("max", launchTravel))
@@ -100,7 +106,13 @@ static func setup(S: SimState, su: Dictionary) -> void:
 	S.powerOn = su.get("power", on_) == true
 	S.powerFlat = clampf(float(su.get("flatOut", flatOut)), flatMin, flatMax) if S.powerOn else flatOut
 	S.powerTravel = clampf(float(su.get("travel", launchTravel)), travelMin, travelMax) if S.powerOn and not blindTravel else launchTravel
+	S.dashOn = S.powerOn and su.get("dash", dashOn_) == true and not blindDash
 	bindStep(S)
+
+
+## LT held, with the dash on (Game Design's overnight-2026-11-08.md (c)): its top speed is the level's flat out at any range.
+static func dashAnyRangeOn(S: SimState) -> bool:
+	return S.dashOn and dashAnyRange
 
 
 ## This match is the one stepping.

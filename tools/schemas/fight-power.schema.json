@@ -235,6 +235,51 @@
       "type": "number",
       "minimum": 1
     },
+    "dash": {
+      "type": "object",
+      "description": "LT held is fast at any range (Game Design's overnight-2026-11-08.md (c))",
+      "required": [
+        "enabled",
+        "anyRange",
+        "firstTickMin",
+        "fullByTicks"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "anyRange": {
+          "type": "boolean"
+        },
+        "firstTickMin": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fullByTicks": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "arriveEaseBh": {
+          "type": "number",
+          "minimum": 0
+        },
+        "slipMaxBh": {
+          "type": "number",
+          "minimum": 0
+        },
+        "closeSec": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
     "travel": {
       "type": "object",
       "description": "a setup's \"travel\" (the page's ?travel= slider) is held to min and max",

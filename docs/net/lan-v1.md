@@ -55,7 +55,21 @@ None of it changes what the sim does or the packets: only when a PC waits, what 
 
 `lan_check` plays a hostile second PC through the codec (a hello asking for 100,000 ticks, one packet handing slot 200 to the AI, a flood of inputs far ahead) and a gone one, with a negative control for each. Before any internet play: encryption (ENet DTLS) and a security review (CD-10, not in this).
 
-**The energy model (Sunday's play-test, 2026-11-08).** Only the page turned the energy model on, through its setup word, so the LAN round played the old launches and flight. NetLan's three setups (`SETUP`, `SETUP2`, `SETUP2X`) now carry `"power": true` and the page's `"travel": 1.5`; the data stays off. Both PCs read the same setup and the match key holds it. `rollback_check` and `desync_check` gain a `lan` setup (the 1v1 exactly), and their `fights2` and `together` setups are NetLan's own, so they play it too.
+**The energy model (Sunday's play-test, 2026-11-08).** Only the page turned the energy model on, through its setup word, so the LAN round played the old launches and flight. NetLan's three setups (`SETUP`, `SETUP2`, `SETUP2X`) now carry `"power": true`, the page's `"travel": 1.5` and `"dash": true` (Simulation's power-dash: the dash at any range; a sim without it ignores the word); the data stays off. Both PCs read the same setup and the match key holds it. `rollback_check` and `desync_check` gain a `lan` setup (the 1v1 exactly), and their `fights2` and `together` setups are NetLan's own, so they play it too.
+
+## Saved matches and reports (2026-11-08, after Orb's lost seed-77 match)
+
+Each PC saves the match as `lan-<commit8>-<main|old>-<yyyymmdd-hhmmss>-<reason>.json` in `saved\` beside the game (the build's commit in the name, so files from different builds never mix): at "The match is over", on entering each pause, when the window closes (the kit's hook in `main.gd`), and on a report (F9, or View + RB on a pad, or UI's panel calling `NetLan.report(tag, note)`). `--lan-save=DIR` moves the folder; `--lan-save-at=T` saves once at tick T (tests).
+
+| Field | What it holds |
+| :--- | :--- |
+| `kind`, `pc`, `slot`, `mode`, `build`, `reason`, `savedAt`, `tick` | `orb-lan-match`; main or old; the player's starting slot; 1v1, 2v2 or 2v2-together; the exe's `build_info.json`; over, pause, quit, report or test; the local time; the session's frame |
+| `marks` | every report this match: `{tick, kind: "report", tag, note, at}`, as the page's black box marks |
+| `frames` | `slow`: [tick, ms] of every frame over 50 ms; `rollbacks`: [frame, depth] of every rollback |
+| `net` | delay, rollbacks, deepest, checks matched, round trip, packets dropped by the checks, the tick a gone PC's seat went to the computer |
+| `replay` | SimReplay (`meridian-replay`, v4): every player's confirmed inputs to `finalTo`, the toggles (a dropped seat on its sim slot), SimHash's gameplay hash at each final checkpoint (every 60 ticks; `NetSession.hashChecks`), and the final hash when the confirmed tick is the present (on a LAN, most of the time) |
+
+It plays back through the project's own replay path: `node tools/preview/blackbox-verify.mjs <file> --tree <the LAN folder>	ree` (the folder's tree is the page's). `lan_check` proves both PCs' files play back (1v1, 2v2 together, a dropped seat), with negative controls for a changed input and a toggle on the wrong body.
 
 ## Making the folder
 

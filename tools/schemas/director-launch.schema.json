@@ -18,6 +18,10 @@
     "schema": {
       "const": "director.launch/1"
     },
+    "sideFromBlowOnly": {
+      "type": "boolean",
+      "description": "A launch goes the way of the blow: only the stick picks the far side (DirLaunch.sideFromBlowOnly; Game Design overnight-2026-11-08.md (a))."
+    },
     "drive": {
       "type": "object",
       "description": "The SLAM DOWN drive: the angle below level is lowDeg at lowBh or lower, rising evenly to highDeg at highBh and above.",

@@ -14,7 +14,7 @@
     "wall_hold_check",
     "struggle_meet_check",
     "struggle_dir_check",
-    "casualty_feed_check",
+    "bystanders_check",
     "floor_walk_probe"
   ],
   "leaveOut": {

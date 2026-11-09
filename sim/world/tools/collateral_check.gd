@@ -49,7 +49,7 @@ func scan(dir: String, calls: Array, hits: Array, counted: Array) -> void:
 func _init() -> void:
 	# ---- 1. the tables are today's numbers
 	ok(WorldCollateral.loadErrors.is_empty(), "collateral.json loads clean (%s)" % str(WorldCollateral.loadErrors))
-	ok(WorldCollateral.BUDGET == [0.02, 0.04, 0.08, 0.15] and WorldCollateral.CEILING == [0.10, 0.30, 0.60, 0.90], "budget and ceiling are today's numbers (the constants they replace)")
+	ok(WorldCollateral.BUDGET == [0.02, 0.05, 0.12, 0.30] and WorldCollateral.CEILING == [0.03, 0.10, 0.25, 0.70], "budget and ceiling are the tables measured by tier on structure mass (docs/world/runs)")
 	var ea: Dictionary = WorldCollateral.EVENT_ALLOW
 	ok(ea["slide"] == [0.0, 0.0, 0.05, 0.10] and ea["chain"] == [0.0, 0.0, 0.12, 0.20] and ea["landslide"] == [0.0, 0.0, 0.05, 0.10] and ea["quake"] == [0.0, 0.0, 0.0, 0.10], "the four set-piece allowances are today's numbers")
 	ok(ea.has("catastrophe") and ea["catastrophe"] == [0.0, 0.0, 0.0, 0.0], "the catastrophe kind is there, zero below tier 5")
@@ -61,27 +61,22 @@ func _init() -> void:
 	w.maxTier = 4.0
 	for f in S.fighters:
 		f.tier = 4.0
-	ok(absf(WorldCollateral.budget(S) - 0.15 * w.pop0) < 1.0e-9, "the budget is a share of the people present (%.1f)" % WorldCollateral.budget(S))
-	w.present = w.pop0 * 0.5
-	ok(absf(WorldCollateral.budget(S) - 0.15 * w.pop0 * 0.5) < 1.0e-9 and absf(WorldCollateral.ceilingLeft(S) - 0.90 * w.pop0 * 0.5) < 1.0e-6, "with half the people present, the budget and the ceiling are half")
+	ok(w.mass0 > 100.0 and absf(WorldCollateral.budget(S) - 0.30 * w.mass0) < 1.0e-9 and absf(WorldCollateral.ceilingLeft(S) - 0.70 * w.mass0) < 1.0e-6, "the budget and the ceiling are shares of the arena's structure mass at its start (%.1f of %.0f)" % [WorldCollateral.budget(S), w.mass0])
+	w.massLost = 0.5 * 0.70 * w.mass0
+	ok(absf(WorldCollateral.ceilingLeft(S) - 0.35 * w.mass0) < 1.0e-6, "half the ceiling's mass lost leaves half of it")
+	w.massLost = 0.0
 	ok(absf(WorldCollateral.normPeople(S) - w.pop0) < 1.0e-9, "the meters' norm is pop0 by data (a casualty is worth the same in ruins)")
+	w.present = w.pop0 * 0.5
 	WorldCollateral.METER_NORM = "present"
 	ok(absf(WorldCollateral.normPeople(S) - w.pop0 * 0.5) < 1.0e-9, "and present when the data says so")
 	WorldCollateral.METER_NORM = "pop0"
-	# ---- 3. peopleLeft
+	# ---- 3. nobody dies (CD-05): scattering every building's people leaves the count at 0, whatever the budget and the old limit on the run's losses
 	var S2 := fresh(2)
-	S2.world.maxTier = 4.0
-	for f in S2.fighters:
-		f.tier = 4.0
 	S2.world.peopleLeft = 100.0
-	ok(WorldCollateral.ceilingLeft(S2) <= 100.0 + 1.0e-9, "ceilingLeft takes the lower of the tier's ceiling and peopleLeft (%.0f)" % WorldCollateral.ceilingLeft(S2))
-	var thrown: float = 0.0
+	var ran: float = 0.0
 	for b in S2.buildings:
-		S2.world.cbSum = 0.0   # keep the window open: only the ceiling limits
-		for i in range(WorldCollateral.WINDOW_S):
-			S2.world.cbBuckets[i] = 0.0
-		thrown += WorldCollateral.kill(S2, b.idx, b.popAlive, S2.fighters[0], 0.0, b.x)
-	ok(S2.world.casualties <= 100.0 + 0.001 and S2.world.casualties > 50.0, "a match with peopleLeft 100 never loses more than 100 people (%.1f died; the rest sheltered)" % S2.world.casualties)
+		ran += WorldCollateral.scatter(S2, b.idx, b.popAlive, S2.fighters[0], 0.0, b.x)
+	ok(ran > 50.0 and S2.world.casualties == 0.0, "every building's people scattered (%.1f ran): the count is %.3f" % [ran, S2.world.casualties])
 	# ---- 4. place and plan
 	var S3 := fresh(1)
 	var seen := {}

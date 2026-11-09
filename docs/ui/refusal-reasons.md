@@ -14,6 +14,8 @@ Encounter's park (refusal-reasons) tells a person why a press could not start. T
 | `set_piece` | In a move | a finisher, the KO or another set piece (Controls suggested the word) |
 | `chord` | One at a time | B with X or Y on one tick: Controls' chord pick drops the smaller press and tells it |
 | `busy` | Busy | a state that cannot take the press |
+| `charging` | Charging | with RT held, a right-stick push: RT is the power button, so the stick is charging a signature and does not strike (Controls' inert-knock park) |
+| `warding` | Warding | with LB and RB held, a right-stick push: the ward is up and the stick does not strike (the same park) |
 | `not_ready` | Not ready | a transform with no form ready (Encounter's press-answers, sent as `press_refused`; before this word it was dropped and only counted as unread) |
 
 All placeholder wording, plain words, Narrative's to change. `stun_limit` and `answered` are no longer sent (their words and the silent `answered` stay in the data, harmless). `not_yours` and `busy` were silent in Controls' `take_refusals()` list (hud-spec section 85's table); with a word they now speak from both feeds, and the once-per-frame-per-word rule keeps a press told twice from being said twice.

@@ -15,16 +15,22 @@ extends RefCounted
 ## On a LAN (docs/net/two-v-two-lan.md, Orb's first 2v2 together): a PC runs at most LAN_AHEAD ticks past what the other has confirmed, time sync's waits come a frame or two at a time, and a
 ## snapshot is taken every SAVE_EVERY predicted ticks. When the link closes, or nothing comes from the other PC for DROP_MS, its seat goes to the computer
 ## (NetSession.dropSlot) and the match goes on; the title, the log and a banner in the game say so (the audit's F-10).
+## The match is saved (the EP's brief after Orb's lost seed-77 match): at "The match is over", on entering a pause, when the window closes (the kit)
+## and on a report (report()), each PC writes lan-<commit8>-<main|old>-<yyyymmdd-hhmmss>-<reason>.json to "saved" beside the game (--lan-save=DIR for
+## tests), in the shape of the page's black box:
+## {kind "orb-lan-match", pc, slot, mode, build, reason, savedAt, tick, marks, frames, net, replay}. The replay is SimReplay's, of every player's confirmed
+## inputs, with the gameplay hash at each final checkpoint and, when the confirmed tick is the present, the final hash: it plays back on the folder's tree.
 ## Every ten seconds the log says how the frames went: the worst, those over 50 and 100 ms, the ticks the game loop dropped, the most re-run.
 
 const PORT: int = 47100
 const SEED: int = 77
 ## The energy model on for the LAN as the page has it (its setup word, sim/core/power.gd: the data stays off), with the page's launch travel of 1.5 (the stand-in's
-## pre-play review, 2026-11-08: launches at top power outrun the camera at the data's 2.0). Both PCs read the same setup, and the match key holds it.
-const SETUP: Dictionary = {"v2": [true, true], "assists": [[], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.5}   # every key the hub's own setup has, so a saved layout can't make two PCs differ
+## pre-play review, 2026-11-08: launches at top power outrun the camera at the data's 2.0), and the dash at any range ("dash": Simulation's power-dash, Game
+## Design's overnight ruling (c); a sim without it ignores the word). Both PCs read the same setup, and the match key holds it.
+const SETUP: Dictionary = {"v2": [true, true], "assists": [[], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.5, "dash": true}   # every key the hub's own setup has, so a saved layout can't make two PCs differ
 const AI: Dictionary = {"p1": false, "p2": false}
-const SETUP2X: Dictionary = {"v2": [true, true, true, true], "assists": [[], [], [], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.5, "fights": 2, "cross": true, "outside": true}   # --lan-2v2-together: hits across the two fights (sim/core/cross.gd) and Encounter's blows from outside (Simulation's per-setup key, S.stage.outside), a team against a team
-const SETUP2: Dictionary = {"v2": [true, true, true, true], "assists": [[], [], [], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.5, "fights": 2}
+const SETUP2X: Dictionary = {"v2": [true, true, true, true], "assists": [[], [], [], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.5, "dash": true, "fights": 2, "cross": true, "outside": true}   # --lan-2v2-together: hits across the two fights (sim/core/cross.gd) and Encounter's blows from outside (Simulation's per-setup key, S.stage.outside), a team against a team
+const SETUP2: Dictionary = {"v2": [true, true, true, true], "assists": [[], [], [], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.5, "dash": true, "fights": 2}
 const AI2: Dictionary = {"p1": false, "p2": true, "p3": false, "p4": true}
 const SLOTS2: Array = [0, 2]   # the sim's slot each PC's player plays
 const FOREVER: int = 1 << 30
@@ -39,6 +45,8 @@ const PARTNER_TICKS: int = 2     # ... and a PC whose player is out shows his pa
 const DROP_MS: float = 8000.0    # nothing from the other PC this long: it's gone (a paused one keeps sending; its worst hitch is a fraction of a second)
 const NOTICE_EVERY: float = 2500.0   # the banner again this often...
 const NOTICE_FOR: float = 15000.0    # ... for this long after the drop
+const SAVE_DIR: String = "saved"   # beside the game: what Orb drops into homework
+const SLOW_KEEP: int = 4000         # slow frames a save lists, at most
 const SLOW_MS: Array = [50.0, 100.0]   # a frame over these is counted in the log; past the second the game loop drops time (SimHost.advance: acc += min(0.1, frame))
 
 var gameHost   # SimHost, or a test's stand-in with S and setup_used
@@ -70,6 +78,15 @@ var handOver: bool = true     # tests only: off for the negative control (a gone
 var droppedAt: int = -1        # the tick from which the computer plays the other PC's seat
 var notices: int = 0           # banners shown about it
 var _droppedMs: float = -1.0
+var saveDir: String = ""       # --lan-save=DIR, else SAVE_DIR beside the game
+var marks: Array = []          # this match's reports: {tick, kind, tag, note, at}
+var slowFrames: Array = []     # [tick, ms] of the frames over SLOW_MS[0]
+var saves: Array = []          # the files written
+var saveAt: int = -1           # tests: --lan-save-at=T saves once at tick T ("test")
+var pressAt: int = -1          # tests: --lan-press-f9-at=T sends a real F9 press (down and up) at tick T, through the game's own input
+var reportBanner: bool = true  # the game's own notice of a report; off when UI's report-this shows its own (the kit)
+var _savedOver: bool = false
+var _pauseSaved: bool = false
 var _noticeMs: float = -1.0
 var followInIdle: bool = true # tests only: off for the negative control (a pause's rollback leaves S holding fight 0)
 var viewFight: int = -1        # the fight the last tick, pause or frame end left in S: what the game draws
@@ -99,6 +116,9 @@ func _init(gameHost_, args_: Dictionary) -> void:
 	local = 1 if args.has("lan-join") or String(args.get("lan-as", "0")) == "1" else 0
 	two = args.has("lan-2v2") or args.has("lan-2v2-together")
 	hubSlot = 0 if two else local
+	saveDir = String(args.get("lan-save", ""))
+	saveAt = int(args.get("lan-save-at", -1))
+	pressAt = int(args.get("lan-press-f9-at", -1))
 
 
 ## Whether the sim carries a setup's "outside" into the match (Simulation's per-setup key, S.stage.outside). Until it does, the checks force the blows from outside on for the together setup.
@@ -146,6 +166,17 @@ func tick(i: SimIntent) -> bool:
 		if not bodyAt(S, own).out and S.stage.cur != own / 2:
 			ownLiveWrong += 1
 	_notice(now, S)
+	_pauseSaved = false
+	if pressAt >= 0 and net.session != null and net.session.frame >= pressAt:
+		pressAt = -1
+		for down in [true, false]:
+			var ev := InputEventKey.new()
+			ev.keycode = KEY_F9
+			ev.pressed = down
+			Input.parse_input_event(ev)
+	if saveAt >= 0 and net.session != null and net.session.frame >= saveAt:
+		saveAt = -1
+		save("test")
 	if peer != null:
 		peer.frame(now, FOREVER)
 	_report(now)
@@ -224,6 +255,8 @@ static func moveHub(hub, from: int, to: int) -> void:
 func setUp(sess: NetSession) -> void:
 	sess.presentOut = keepOut
 	tune(sess, net)
+	sess.hashChecks = true   # a saved match's checkpoints
+	sess.logRollbacks = true
 	if two:
 		sess.slotOf = SLOTS2
 
@@ -249,6 +282,9 @@ func idle() -> void:
 	if two and entered and followInIdle:
 		_follow(gameHost.S)   # a pause runs a rollback the other PC's late inputs call for, and the re-run's step leaves fight 0 in S
 	_lastTickAt = -1.0   # a pause isn't a slow frame
+	if not _pauseSaved and net.session != null:
+		_pauseSaved = true
+		save("pause")   # once on entering each pause: Orb pauses to write a note
 	_report(now)
 
 
@@ -348,6 +384,9 @@ func _report(now: float) -> void:
 		_say("Paused by the other player")
 	elif SimCore.ended(gameHost.S):
 		_say("The match is over. Close both windows")
+		if not _savedOver:
+			_savedOver = true
+			save("over")
 	elif two and bodyAt(gameHost.S, NetSession.slotNow(gameHost.S, SLOTS2[local])).out:
 		_say("You're out. Your partner fights on")
 	elif droppedAt >= 0:
@@ -395,6 +434,8 @@ func _frame(now: float) -> void:
 		_fr["worst"] = maxf(float(_fr.get("worst", 0.0)), gap)
 		if gap > float(SLOW_MS[0]):
 			_fr["slow50"] = int(_fr.get("slow50", 0)) + 1
+			if slowFrames.size() < SLOW_KEEP:
+				slowFrames.append([net.session.frame if net != null and net.session != null else -1, int(round(gap))])
 		if gap > float(SLOW_MS[1]):
 			_fr["slow100"] = int(_fr.get("slow100", 0)) + 1
 			_fr["dropped"] = float(_fr.get("dropped", 0.0)) + (gap - float(SLOW_MS[1])) / (1000.0 / 60.0)
@@ -433,3 +474,72 @@ func _notice(now: float, S: SimState) -> void:
 	_noticeMs = now
 	SimFx.banner(S, "THE OTHER PC HAS GONE" if notices % 2 == 0 else "THE COMPUTER PLAYS ITS FIGHTER", "#ffd060", 2.2)
 	notices += 1
+
+
+## A report from this PC (the one press, or UI's panel): a mark at the present tick with a tag and a note, and a save with the replay
+## up to the confirmed tick. Returns the file's name ("" before the match has started).
+func report(tag: String = "", note: String = "") -> String:
+	if net == null or net.session == null:
+		return ""
+	marks.append({"tick": net.session.frame, "kind": "report", "tag": tag.left(80), "note": note.left(2000), "at": Time.get_datetime_string_from_system()})
+	var f: String = save("report")
+	if f != "" and gameHost.S != null and reportBanner:
+		SimFx.banner(gameHost.S, "REPORT SAVED", "#a0e0ff", 1.6)   # the game's own notice; UI owns the words
+	return f
+
+
+## The match as a file (see the top). reason: over, pause, quit, report, test. Returns the file's name, or "".
+func save(reason: String) -> String:
+	if net == null or net.session == null or gameHost.S == null:
+		return ""
+	var sess: NetSession = net.session
+	var S: SimState = gameHost.S
+	var upto: int = sess.finalTo
+	var rp: Dictionary = NetDesync.replayOf(sess, {"seed": SEED, "setup": gameHost.setup_used, "ai": aiFor(args)}, upto)
+	var cps: Array = []
+	for c in sess.hashFinal:
+		if int(c[0]) <= upto:
+			cps.append([int(c[0]), String(c[1])])
+	rp.checkpoints = cps
+	rp.final = SimHash.stateHash(S).gameplay if upto == sess.frame else ""   # S is the state after `frame` ticks: the confirmed one when nothing is predicted
+	var su: Dictionary = gameHost.setup_used
+	var doc := {
+		"kind": "orb-lan-match",
+		"pc": "main" if local == 0 else "old",
+		"slot": int(SLOTS2[local]) if two else local,
+		"mode": ("2v2-together" if su.get("cross", false) else "2v2") if two else "1v1",
+		"build": _buildInfo(),
+		"reason": reason,
+		"savedAt": Time.get_datetime_string_from_system(),
+		"tick": sess.frame,
+		"marks": marks.duplicate(true),
+		"frames": {"slow": slowFrames.duplicate(), "rollbacks": sess.rollbackLog.duplicate()},
+		"net": {"delay": sess.delay, "rollbacks": sess.rollbacks, "deepest": sess.maxDepth, "checksMatched": sess.checksMatched, "rttMs": net.rttMs(), "rejected": net.rejected, "droppedAt": droppedAt},
+		"replay": rp,
+	}
+	var dir: String = saveDir if saveDir != "" else OS.get_executable_path().get_base_dir().path_join(SAVE_DIR)
+	DirAccess.make_dir_recursive_absolute(dir)
+	var stamp: String = Time.get_datetime_string_from_system().replace("-", "").replace(":", "").replace("T", "-")
+	var commit: String = String(doc.build.get("commit", "dev")).left(8).validate_filename()   # the build's commit, so files from different builds never mix (the EP)
+	var name: String = "lan-%s-%s-%s-%s" % [commit if commit != "" else "dev", doc.pc, stamp, reason]
+	var fname: String = name + ".json"
+	var n: int = 2
+	while FileAccess.file_exists(dir.path_join(fname)):
+		fname = "%s-%d.json" % [name, n]
+		n += 1
+	var f := FileAccess.open(dir.path_join(fname), FileAccess.WRITE)
+	if f == null:
+		_note("could not save %s" % fname)
+		return ""
+	f.store_string(JSON.stringify(doc))
+	f.close()
+	saves.append(fname)
+	_note("saved %s: the replay to tick %d, %d checkpoints, final %s" % [fname, upto, cps.size(), "yes" if rp.final != "" else "no (checkpoints only)"])
+	return fname
+
+
+static func _buildInfo() -> Dictionary:
+	if not FileAccess.file_exists("res://build_info.json"):
+		return {}
+	var j = JSON.parse_string(FileAccess.get_file_as_string("res://build_info.json"))
+	return j if j is Dictionary else {}

@@ -189,8 +189,8 @@
           "type": "object",
           "required": [
             "range",
-            "perPerson",
-            "ownKill",
+            "perMass",
+            "ownMass",
             "damage",
             "launch",
             "care"
@@ -200,12 +200,12 @@
               "type": "number",
               "minimum": 0
             },
-            "perPerson": {
+            "perMass": {
               "type": "number",
               "minimum": 0,
               "maximum": 100
             },
-            "ownKill": {
+            "ownMass": {
               "type": "number",
               "minimum": 0,
               "maximum": 100

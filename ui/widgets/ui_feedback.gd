@@ -293,7 +293,7 @@ static func open_url(url: String) -> void:
 ## Rectangles for a viewport. `state` is write, copied or review; `status` and `note` override the second line and the small print of
 ## the copied and review states (the HUD passes the opened and too-long variants). Every control is at least 48 dp; the card is only as
 ## tall as it needs. The buttons flow left to right and wrap, so a phone's narrow card never overlaps them.
-static func plan(vp: Vector2, s: float, dp: float, touch: bool, state: String, status: String = "", note: String = "") -> Dictionary:
+static func plan(vp: Vector2, s: float, dp: float, touch: bool, state: String, status: String = "", note: String = "", lan: bool = false) -> Dictionary:
 	var tm: float = maxf(48.0 * dp, 44.0)
 	var margin: float = maxf(vp.x * 0.03, 12.0)
 	var my: float = maxf(vp.y * 0.04, 10.0)
@@ -305,7 +305,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, state: String, s
 	for rows in ([5, 3] if state == STATE_WRITE else [9, 6, 4, 3]):
 		cs = maxf(s, 0.3)
 		while true:
-			out = _layout(Rect2((vp.x - cw) * 0.5, my, cw, ch_max), cs, tm, state, rows, status, note)
+			out = _layout(Rect2((vp.x - cw) * 0.5, my, cw, ch_max), cs, tm, state, rows, status, note, lan)
 			if out["fits"] or cs <= cs_min + 0.001:
 				break
 			cs = maxf(cs_min, cs - 0.04)
@@ -313,7 +313,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, state: String, s
 			break
 	# Centre the card vertically at the height it needs.
 	var h2: float = minf(ch_max, float(out["need_h"]))
-	out = _layout(Rect2((vp.x - cw) * 0.5, (vp.y - h2) * 0.5, cw, h2), cs, tm, state, int(out["rows"]), status, note)
+	out = _layout(Rect2((vp.x - cw) * 0.5, (vp.y - h2) * 0.5, cw, h2), cs, tm, state, int(out["rows"]), status, note, lan)
 	out["state"] = state
 	out["tm"] = tm
 	return out
@@ -333,7 +333,7 @@ static func _flow(out: Dictionary, pairs: Array, x0: float, y: float, right: flo
 	return by
 
 
-static func _layout(card: Rect2, cs: float, tm: float, state: String, rows: int, status: String, note: String) -> Dictionary:
+static func _layout(card: Rect2, cs: float, tm: float, state: String, rows: int, status: String, note: String, lan: bool = false) -> Dictionary:
 	var pad: float = maxf(24.0 * cs, 10.0)
 	var fs_title: int = UiText.px(34.0, cs)
 	var fs_body: int = UiText.px(22.0, cs)
@@ -350,7 +350,7 @@ static func _layout(card: Rect2, cs: float, tm: float, state: String, rows: int,
 	var fits: bool = inner.position.x + title_w <= close.position.x - pad * 0.5
 	var y: float = inner.position.y + maxf(UiText.height(fs_title), close_sz) + pad * 0.5
 	var out: Dictionary = {"card": card, "inner": inner, "close": close, "cs": cs, "fs_title": fs_title, "fs_body": fs_body, "fs_small": fs_small, "lh": lh, "pad": pad, "rows": rows,
-		"copy": Rect2(), "send": Rect2(), "back": Rect2(), "again": Rect2(), "done": Rect2(), "issue": Rect2()}
+		"copy": Rect2(), "save": Rect2(), "send": Rect2(), "back": Rect2(), "again": Rect2(), "done": Rect2(), "issue": Rect2()}
 	var gap: float = maxf(pad * 0.5, 6.0)
 	if state == STATE_WRITE:
 		var hint_lines: PackedStringArray = UiText.wrap(str(d.get("hint", "")), fs_small, inner.size.x)
@@ -376,7 +376,9 @@ static func _layout(card: Rect2, cs: float, tm: float, state: String, rows: int,
 		out["text_rect"] = Rect2(inner.position.x, y, inner.size.x, box_h)
 		y += box_h + gap * 1.4
 		var wr: Array = [["copy", str(btns.get("copy", "COPY REPORT"))]]
-		if send_target() != "none":
+		if lan:
+			wr.append(["save", UiData.t("prompt.fb_save")])   # a LAN build saves the report to its saved folder (the host's hook)
+		if send_target() != "none" and not lan:   # a LAN build saves to its own folder: the public issue link is not offered there
 			wr.append(["send", str(sbtn.get("send", "SEND"))])
 		wr.append(["done", str(btns.get("close", "CLOSE"))])
 		y = _flow(out, wr, inner.position.x, y, inner.end.x, tm, gap, fs_body, pad)
@@ -459,6 +461,8 @@ static func draw(ci: CanvasItem, p: Dictionary, selected: Dictionary) -> void:
 				ci.draw_arc(Vector2(bx, r.get_center().y), r.size.y * 0.16, 0.0, TAU, 14, Color(ink, 0.6), maxf(1.5, r.size.y * 0.05), true)
 			UiText.draw(ci, str(chip["label"]), Vector2(r.position.x + float(chip["off"]), r.get_center().y - UiText.height(fs_body) * 0.5 + UiText.ascent(fs_body)), fs_body, tcol, -1)
 		_button(ci, p["copy"], str(btns.get("copy", "COPY REPORT")), fs_body, true)
+		if (p["save"] as Rect2).size.x > 0.0:
+			_button(ci, p["save"], UiData.t("prompt.fb_save"), fs_body, false)
 		_button(ci, p["send"], str(sbtn.get("send", "SEND")), fs_body, false)
 		_button(ci, p["done"], str(btns.get("close", "CLOSE")), fs_body, false)
 	else:

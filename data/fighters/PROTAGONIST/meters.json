@@ -1,6 +1,6 @@
 {
   "schema": "meters/1",
-  "_about": "D1b: the meters' numbers, loaded by sim/core/fighter_data.gd into a MetersDef (f.md) and read by fighter.gd (regen, decay), damage.gd (damage_mul, comeback, composure), world/collateral.gd (sources) and director/beam.gd (beam_power). Casualty and evacuee amounts are per person, normalised by 425 / pop0. The range and start are pinned to 0 to 100 and 0 until F1.",
+  "_about": "D1b: the meters' numbers, loaded by sim/core/fighter_data.gd into a MetersDef (f.md) and read by fighter.gd (regen, decay), damage.gd (damage_mul, comeback, composure), world/collateral.gd (sources) and director/beam.gd (beam_power). Sources: the meters read destruction, never a person (CD-05, docs/design/bystanders.md sections 3 and 4; Legal RL-257): structure mass brought down, craters, lived-in buildings emptied, a region broken, the brink. Mass gains are times the arena norm (collateral.json massRef over the arena's structure mass at its start). The range and start are pinned to 0 to 100 and 0 until F1.",
   "meters": {
     "anguish": {
       "range": [
@@ -11,16 +11,29 @@
       "visible": true,
       "sources": [
         {
-          "event": "casualty",
-          "amount": 0.9,
-          "whose": "self",
-          "_note": "casualties this fighter caused"
+          "event": "destroyed",
+          "amount": 0.3,
+          "whose": "opponent",
+          "within": 3000,
+          "_note": "collateral devastation: a building anyone else brings down within `within` units of him (shortest arc), per unit of mass, times the arena norm. `within` is the reach of every row below too (a fall, a place emptied, the failing to protect)"
         },
         {
-          "event": "casualty",
+          "event": "destroyed",
+          "amount": 0.6,
+          "whose": "self",
+          "_note": "... and a building he brings down himself"
+        },
+        {
+          "event": "emptied",
           "amount": 0.5,
-          "whose": "opponent",
-          "_note": "casualties anyone else caused"
+          "whose": "any",
+          "_note": "a lived-in building emptied within `within` of him (its first damage), times the norm"
+        },
+        {
+          "event": "failed_to_protect",
+          "amount": 1,
+          "whose": "self",
+          "_note": "a cost to him, not a reward: a building falls inside the place he is fighting in while he is the nearest fighter to it, per unit of mass, times the norm"
         }
       ],
       "decay": {

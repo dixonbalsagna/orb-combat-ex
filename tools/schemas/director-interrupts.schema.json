@@ -26,6 +26,17 @@
     "schema": {
       "const": "director.interrupts/1"
     },
+    "carryRound": {
+      "type": "object",
+      "description": "You only go round after him if you're still pressing toward him (DirExchange.carryStops; beams-third-play.md, the dodge exchange).",
+      "required": ["enabled"],
+      "additionalProperties": false,
+      "patternProperties": {"^_": true},
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "deadZone": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
     "perfectBlock": {
       "type": "object",
       "required": [
@@ -411,6 +422,19 @@
           "description": "Mid band: to this many body heights; far beyond.",
           "type": "number",
           "exclusiveMinimum": 0
+        },
+        "arrive": {
+          "type": "object",
+          "description": "LT's high speed eases into striking distance (engageBh) over the last easeBh, never through it (DirBands.arrive; Game Design overnight-2026-11-08.md (c)).",
+          "required": ["enabled"],
+          "additionalProperties": false,
+          "patternProperties": {"^_": true},
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "easeBh": {"type": "number", "minimum": 0},
+            "easeK": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+            "floorUnits": {"type": "number", "minimum": 0}
+          }
         },
         "engageBh": {
           "description": "A press from farther off starts only the approach, which ends this far from the rival.",

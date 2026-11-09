@@ -5,7 +5,7 @@ class_name SimHash
 const MASK: int = 0xFFFFFFFF
 const FIGHTER: Array = ["name", "role", "col", "aura", "hair", "care", "dmgMul", "spd", "maxhp", "sigName", "hp", "x", "y", "vx", "vy", "face", "ki", "power", "tier", "stance", "state", "stateT",
 	"hidden", "hideT", "hiddenFor", "menace", "anguish", "ambush", "rot", "spin", "bounces", "lastAtkT", "hurtT", "keys", "beamCharge", "wet", "ambushUntil", "dPrev",
-	"menaceSeen", "menaceQuiet", "casSeen", "hasAnguish", "hasMenace", "launchT", "slide", "slideX0", "slideD", "slideE", "slideDmg", "slideAcc", "slideEvt", "launchSpecial", "hopped", "aimB", "aimX0", "aimZ0", "aimZ1", "aimD", "chainEvt", "z", "zT", "zWay", "jContacts", "jT", "jV0", "tumbleT", "contactT", "launchN", "jLips", "lastStandUsed", "lastStandLeft", "embedT", "embedCool", "slideFeet",
+	"menaceSeen", "menaceQuiet", "hasAnguish", "hasMenace", "launchT", "slide", "slideX0", "slideD", "slideE", "slideDmg", "slideAcc", "slideEvt", "launchSpecial", "hopped", "aimB", "aimX0", "aimZ0", "aimZ1", "aimD", "chainEvt", "z", "zT", "zWay", "jContacts", "jT", "jV0", "tumbleT", "contactT", "launchN", "jLips", "lastStandUsed", "lastStandLeft", "embedT", "embedCool", "slideFeet",
 	"canHide", "lockBackT", "exT", "dropT", "breathT", "heldMx", "heldMy"]
 ## Intent v2 (I1): the v2 fields in the record's order, then today's dash, charge and stance until I3, then the agency fields.
 const INTENT: Array = ["mx", "my", "guard", "guardPress", "dodge", "sprint", "power", "powerPress", "powerTap", "mode", "light", "heavy", "sig", "upgrade", "special", "context", "transform", "dash", "charge", "stance", "lightHeld", "heavyHeld", "escape", "waited", "stanceMask", "contextHeld", "sigHeld"]
@@ -105,6 +105,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 	if S.powerOn:   # one energy model: only when on, so a match without it hashes as before
 		out.append(S.powerFlat)
 		out.append(S.powerTravel)
+		if S.dashOn:   # the dash at any range: only when on, so a match without it hashes as before
+			out.append(1.0)
 	if S.cata != null:   # the catastrophe's state: only once a blast cloud set it, so a match without one hashes as before
 		_obj(out, S.cata, ["ash", "ashFrom", "ashTo", "ashLeft"])
 	if S.hitstopOn:   # hit-stop by weight's freeze budget: only when on, so a match without it hashes as before
@@ -217,7 +219,7 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 				for x in arr:
 					out.append(float(x))
 			_obj(out, st, ["bi", "filled", "label", "leaveT", "shiftAt", "runKind", "runLen", "runMax", "sigLanded"])
-	_obj(out, S.world, ["pop0", "casualties", "structuresLost", "craters", "slides", "evacuated", "cbSec", "cbSum", "maxTier", "evtKind", "evtLeft", "evtToken", "evtDead", "evtEvac", "tokenSeq", "heavyX", "heavyT", "stateT"])
+	_obj(out, S.world, ["pop0", "mass0", "massLost", "casualties", "structuresLost", "craters", "slides", "evacuated", "cbSec", "cbSum", "maxTier", "evtKind", "evtLeft", "evtToken", "evtDead", "evtEvac", "tokenSeq", "heavyX", "heavyT", "stateT"])
 	# present and peopleLeft are set at the stage's start and never change mid-match
 	if S.world.farMask != 0:
 		out.append(float(S.world.farMask & 0xFFFFFFFF))   # the far places posed (World's plans.farPeople), only when any is: two words, since one float keeps 53 bits

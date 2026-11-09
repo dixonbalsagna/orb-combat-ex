@@ -1,17 +1,17 @@
 {
   "schema": "biomes.collateral/1",
-  "_about": "The collateral tables (docs/world/collateral-run.md; WorldCollateral). budget: the casualties a rolling 60 s admits, by tier 1 to 4, as shares of the people present at the stage's start; ceiling: the cumulative total, by tier; eventAllow: what one set piece of each kind may borrow beyond the window's room, by tier. The fifth entry of each (the boss) lives in data/fight/tier5.json. meterNorm: what the per-casualty meter gains (menace, power, anguish) are divided by: pop0 (the arena's people at full: a casualty is worth the same in ruins) or present (the people there now). catastrophe: the mass-collapse set piece (Research); its allowance below tier 5 is zero.",
+  "_about": "The collateral tables (docs/world/collateral-run.md; WorldCollateral), on structure mass since CD-05 (docs/design/bystanders.md section 2: nobody dies, so nothing counts people). budget: the structure mass a rolling 60 s admits to be brought down, by tier 1 to 4, as shares of the arena's structure mass at the stage's start (S.world.mass0, WorldBrunt.massOf summed); ceiling: the cumulative total, by tier; eventAllow: what one set piece of each kind may borrow beyond the window's room, by tier, as shares of the same mass. First values from 22 AI-against-AI matches by highest tier (docs/world/runs/): set above the window's 75th percentile and the total's 90th on the hand-made arena and on planet 7, so only the heaviest matches reach them; nothing is held back by them, they steer the launch planner (a chain that would break more than the room is marked down) and tell the QA band. massRef: the structure mass of the reference arena (the hand-made one), so a gain by mass reads the same on every planet. meterNorm is retired with the people it divided by. catastrophe: the mass-collapse set piece (Research); its allowance below tier 5 is zero.",
   "budget": [
     0.02,
-    0.04,
-    0.08,
-    0.15
+    0.05,
+    0.12,
+    0.3
   ],
   "ceiling": [
+    0.03,
     0.1,
-    0.3,
-    0.6,
-    0.9
+    0.25,
+    0.7
   ],
   "eventAllow": {
     "slide": [
@@ -45,5 +45,7 @@
       0.0
     ]
   },
-  "meterNorm": "pop0"
+  "meterNorm": "pop0",
+  "massRef": 518,
+  "bystanders": {"scatterBh": 8, "flingSpeed": [300, 900], "bouncesMax": 2, "upWithinSec": 3, "throwClearOnFall": true, "_note": "Nobody dies (docs/design/bystanders.md, Legal RL-257): people in the way scatter (run from a blow within scatterBh body heights, a body height being 75 units), or are flung (a hit, a fall, a crater opening under them: a keyed speed in flingSpeed units a second, up to bouncesMax bounces, on their feet within upWithinSec) and are never hurt, removed or counted. The sim decides who and how fast, keyed and seeded; the renderer draws the run and the bounce and never writes the sim."}
 }

@@ -1,15 +1,12 @@
 class_name WorldCollateral
-## The collateral cap and the casualty ramp (docs/world/collateral-caps.md; numbers: docs/design/balance-targets.md 4b).
+## Where a hit reaches people (docs/world/collateral-caps.md, retired in part; docs/design/bystanders.md; Orb's "no civilian deaths going forward", Legal RL-257).
 ##
-## Every civilian death goes through kill(): nothing else may count a casualty (a probe and a parity lint check it). A rolling
-## 60 s budget by the higher fighter's tier limits how many can die; set pieces (a slide, a chain, later a landslide or a
-## quake) may borrow their own allowance at tier 3 and above; a cumulative ceiling by the highest tier reached limits the
-## total. People who would die beyond those limits evacuate instead: they leave the building, never return, and an
-## evacuate event tells the renderer to draw them running. Structures still take their damage. Every per-casualty gain
-## (menace, the villain's power, anguish) is normalised by 425 / pop0, and anguish belongs to every fighter whose profile
-## has the meter, not to the role called "hero".
+## Nobody dies, and nothing counts or pays for a person hit. scatter() is the one place people are moved: a blow, a fall, a crater, a body through the floors makes them
+## leave the building at once and run to a shelter (the population is conserved), or be flung and bounce (a keyed speed and a number of bounces, drawn by the renderer),
+## and an evacuate event tells the renderer to draw it. No fighter's menace, power, anguish or form reads it. The rolling budget, the ceiling and the set-piece tokens
+## below are what held the old death count back; they allow nothing now and wait for the structure-mass budget (bystanders.md section 2).
 ##
-## No draw from S.rng anywhere here.
+## No draw from S.rng anywhere here: the thrown speeds are keyed (SimRng.keyed).
 
 const WS: float = SimConst.WS
 const POP_REF: float = 425.0
@@ -46,6 +43,18 @@ static func _static_init() -> void:
 			a.append(float(v))
 		EVENT_ALLOW[k] = a
 	METER_NORM = str(j.meterNorm)
+	MASS_REF = float(j.get("massRef", MASS_REF_DEFAULT))
+	var bys: Dictionary = j.get("bystanders", {})
+	if bys.is_empty():
+		loadErrors.append("collateral.json: bystanders is missing")
+	else:
+		EVAC_R = float(bys.scatterBh) * BODY_H
+		SHELTER_MIN = EVAC_R
+		SHELTER_MAX = 4.0 * EVAC_R
+		FLING_LO = float(bys.flingSpeed[0])
+		FLING_HI = float(bys.flingSpeed[1])
+		BOUNCES_MAX = int(bys.bouncesMax)
+		UP_WITHIN_S = float(bys.upWithinSec)
 	dataHash = str(text.hash())
 
 
@@ -61,7 +70,7 @@ static func eventAllow(kind: String, tier: int) -> float:
 static func normPeople(S: SimState) -> float:
 	return S.world.present if METER_NORM == "present" and S.world.present > 0.0 else S.world.pop0
 # ---- the district flight: while the window is over budget (or the ceiling is reached) and a heavy event was recent ----
-const EVAC_R: float = 375.0 * WS       # buildings this close to the latest heavy event empty (3,000 units at WS 8)
+static var EVAC_R: float = 600.0           # buildings this close to the latest heavy event empty: bystanders.scatterBh body heights (8 x 75 units), data/biomes/collateral.json
 const EVAC_RATE: float = 0.30          # of a building's remaining people per second
 const FLIGHT_MAX: float = 0.4          # the district flight takes at most this share of a building's people over a match
 const EVAC_ACTIVE_S: float = 8.0       # the flight goes on for this long after the latest heavy event
@@ -71,12 +80,14 @@ const EVAC_MAX_PER_TICK: int = 12
 ## zone (SHELTER_MIN to SHELTER_MAX from the event, at most SHELTER_CAP times its own people), so the population is conserved
 ## and only the budget limits how many die; without it they leave the planet's count for good.
 const RELOCATE: bool = true
-const SHELTER_MIN: float = EVAC_R
-const SHELTER_MAX: float = 4.0 * EVAC_R
+static var SHELTER_MIN: float = 600.0
+static var SHELTER_MAX: float = 2400.0
 const SHELTER_CAP: float = 2.0
-## Evacuees feed the menace of the fighter who caused the blow, if it has a menace meter (Game Design, 2026-09-30): +0.45 per
-## evacuee, times 425 / pop0. Anguish gets nothing from evacuees.
-const EVAC_MENACE: float = 0.45
+const BODY_H: float = 75.0              # a body height in units (the struggle meeting point's too)
+static var FLING_LO: float = 300.0     # bystanders.flingSpeed: the speed range of a person thrown, units a second
+static var FLING_HI: float = 900.0
+static var BOUNCES_MAX: int = 2        # bystanders.bouncesMax
+static var UP_WITHIN_S: float = 3.0    # bystanders.upWithinSec: on their feet again and running
 const HIST_BUCKETS: int = 48           # the lure's population histogram (director/ai.gd LURE_STEP = W / 48)
 
 
@@ -92,7 +103,7 @@ static var _far: Dictionary = {}   # world id -> [first far index, places [{plac
 
 static func _farInfo(S: SimState) -> Array:
 	var hit = _far.get(S.worldId)
-	if hit != null and hit[2] == S.buildings.size():
+	if hit != null and hit[2] == S.buildings.size() and hit[4] == S.fieldRecs.size():   # (a world of the same id and size with another set of records, as a plan switched, is another world)
 		return hit
 	var n: int = -1
 	for r in S.fieldRecs:
@@ -114,7 +125,7 @@ static func _farInfo(S: SimState) -> Array:
 	for bi in range(mini(maxi(n, 0), S.buildings.size())):
 		held[int(S.buildings[bi].place)] = true
 	var w: float = WorldPlan.farShare() * S.world.pop0 / float(maxi(held.size(), 1))
-	hit = [n, places, S.buildings.size(), w]
+	hit = [n, places, S.buildings.size(), w, S.fieldRecs.size()]
 	_far[S.worldId] = hit
 	return hit
 
@@ -176,6 +187,11 @@ static func init(S: SimState) -> void:
 	w.heavyT = -1.0e9
 	w.stateT = 0.0
 	w.evacuated = 0.0
+	w.massLost = 0.0
+	w.mass0 = 0.0
+	for b in S.buildings:
+		if b.alive and not isFar(S, b.idx):
+			w.mass0 += WorldBrunt.massOf(b)   # the arena's structure mass at the start: what the destruction gains are normalised by
 	w.lotAcc = PackedFloat32Array()
 	w.lotAcc.resize(S.buildings.size())
 	w.lotAcc.fill(0.0)
@@ -183,7 +199,7 @@ static func init(S: SimState) -> void:
 	S.popHist.resize(HIST_BUCKETS)
 	S.popHist.fill(0.0)
 	for b in S.buildings:
-		S.popHist[histBucket(b.x)] += b.popAlive
+		S.popHist[histBucket(b.x)] += livedMass(S, b)   # the lure reads the lived-in structure mass, never the people (bystanders.md section 2)
 
 
 ## The higher of the two fighters' tiers, 1 to 4.
@@ -213,23 +229,21 @@ static func _advance(S: SimState) -> void:
 
 
 static func budget(S: SimState) -> float:
-	return BUDGET[tier(S) - 1] * S.world.present
+	return BUDGET[tier(S) - 1] * S.world.mass0
 
 
-## Casualties the window still admits right now (before borrowing).
+## Structure mass the window still admits right now (before borrowing).
 static func room(S: SimState) -> float:
 	_advance(S)
 	return maxf(0.0, budget(S) - S.world.cbSum)
 
 
-## Casualties the cumulative ceiling still admits.
+## Structure mass the cumulative ceiling still admits.
 static func ceilingLeft(S: SimState) -> float:
-	var left: float = CEILING[clampi(int(S.world.maxTier), 1, CEILING.size()) - 1] * S.world.present - S.world.casualties
-	if S.world.peopleLeft >= 0.0:
-		left = minf(left, S.world.peopleLeft - S.world.casualties)   # the run's own limit: past it people shelter, as at the tier's ceiling
-	return maxf(0.0, left)
+	return maxf(0.0, CEILING[clampi(int(S.world.maxTier), 1, CEILING.size()) - 1] * S.world.mass0 - S.world.massLost)
 
 
+## True when the window or the ceiling is spent: the launch planner stops adding chains that would break more (bystanders.md section 2). Nothing is held back by it: structures take their damage.
 static func isOver(S: SimState) -> bool:
 	return room(S) <= 0.000001 or ceilingLeft(S) <= 0.000001
 
@@ -242,7 +256,7 @@ static func beginEvent(S: SimState, kind: String, cause) -> float:
 	w.evtToken = w.tokenSeq
 	w.evtKind = kind
 	var t: int = tier(S)
-	w.evtLeft = eventAllow(kind, t) * w.present
+	w.evtLeft = eventAllow(kind, t) * w.mass0
 	w.evtDead = 0.0
 	w.evtEvac = 0.0
 	return w.evtToken
@@ -288,77 +302,169 @@ static func shelter(S: SimState, cx: float, n: float) -> int:
 	return best
 
 
-## The one place a civilian dies. want is how many would die in building bi (or -1 for people outside any building);
-## they all leave the building; the allowed number are casualties and the rest evacuate. cx is the x of the event that
-## caused it (the crowd flees from it); evt is the caller's set-piece token or 0. Returns the casualties.
-static func kill(S: SimState, bi: int, want: float, cause, evt: float, cx: float, floor_: int = -1) -> float:
+## Nobody dies (Orb, 2026-11-07, CD-05; docs/design/bystanders.md; Legal RL-257). The one place people are moved. want is how many would be in the way in building bi (or -1 for people outside any
+## building); they all leave it at once and run to a shelter, so the population is conserved, and the renderer draws the run. how "flung" is a hit (a body through the floors, a fall, a crater
+## opening under them): the same people thrown clear, with a keyed speed and a number of bounces for the renderer, which draws the arc and never writes the sim. No one is removed, hurt or counted:
+## S.world.casualties is never written, and nothing here touches any fighter's menace, power, anguish or form. cx is the x of the event that caused it (the crowd runs from it); evt is the caller's
+## set-piece token (kept for the callers, it allows nothing now). Returns how many ran.
+static func scatter(S: SimState, bi: int, want: float, cause, evt: float, cx: float, floor_: int = -1, how: String = "scatter") -> float:
 	if want <= 0.0:
 		return 0.0
 	var w: SimState.World = S.world
-	_advance(S)
 	var b = S.buildings[bi] if bi >= 0 else null
-	if bi >= 0 and isFar(S, bi):   # --- far branch begin: a far town's people: the hero's anguish only, as a fraction of their place's own base; nothing else is read or written here ---
-		want = minf(want, b.popAlive)
-		b.popAlive -= want
-		if want > 0.0 and WorldPlan.farAnguish():
-			var finfo: Array = _farInfo(S)
-			var fp: Dictionary = {}
-			for pk in finfo[1]:
-				if int(pk.first) <= bi and bi < int(pk.first) + int(pk.count):
-					fp = pk
-			var eq: float = want * float(finfo[3]) / maxf(float(fp.get("pop", 1.0)), 1.0)
-			for f in S.fighters:
-				if f.hasAnguish:
-					f.anguish = SimMathx.jmin(100.0, f.anguish + eq * (f.md.anguishCasSelf if cause == f else SimForms.anguishOther(S, f)) * POP_REF / normPeople(S))
-			if cause != null and not S.fighters.has(cause) and cause.hasAnguish:   # a body of another fight (a shot from outside, Simulation's cross-fights): his own dead cost him as at home
-				cause.anguish = SimMathx.jmin(100.0, cause.anguish + eq * cause.md.anguishCasSelf * POP_REF / normPeople(S))
-		return want   # --- far branch end ---
+	if bi >= 0 and isFar(S, bi):   # --- far branch begin: a far town's people sleep until it is posed, so nothing is read or moved there ---
+		return 0.0   # --- far branch end ---
+	var ran: float = want
 	if b != null:
-		want = minf(want, b.popAlive)
-		b.popAlive -= want
-		S.popHist[histBucket(b.x)] -= want
-	var rm: float = maxf(0.0, budget(S) - w.cbSum)
-	var borrow: float = w.evtLeft if (evt != 0.0 and evt == w.evtToken) else 0.0
-	var cl: float = ceilingLeft(S)
-	var granted: float = minf(want, minf(rm + borrow, cl))
-	if granted > rm:
-		w.evtLeft -= granted - rm
-	w.cbBuckets[int(w.cbSec) % WINDOW_S] += granted
-	w.cbSum += granted
-	var evac: float = want - granted
-	if granted > 0.0:
-		_feed(S, granted, cause)
-		if S.formsOn:   # forms: where they died and who caused it, for the hero's Witness fill (sim/core/forms.gd)
-			SimForms.casualty(S, granted, cause, b.x if b != null else cx)
-	if evt != 0.0 and evt == w.evtToken:
-		w.evtDead += granted
-		w.evtEvac += evac
-	if evac > 0.000001:
-		w.evacuated += evac
-		if cause != null and cause.hasMenace:
-			cause.menace = SimMathx.jmin(100.0, cause.menace + evac * cause.md.menaceEvac * POP_REF / normPeople(S))   # D1b: meters.json
-		var reason: String = "ceiling" if cl < rm + borrow else "budget"
-		var owner: float = WorldCrater._slot(S, cause)
-		var dest: int = shelter(S, cx, evac)
-		if dest >= 0:
-			S.buildings[dest].popAlive += evac
-			S.popHist[histBucket(S.buildings[dest].x)] += evac
-		SimFx.evacuate(S, bi, b.x if b != null else cx, evac, cx, reason, owner, dest, floor_)
+		ran = minf(want, b.popAlive)
+		b.popAlive -= ran
+	if ran <= 0.000001:
+		return 0.0
+	w.evacuated += ran
+	var dest: int = shelter(S, cx, ran)
+	if dest >= 0:
+		S.buildings[dest].popAlive += ran
+	SimFx.evacuate(S, bi, b.x if b != null else cx, ran, cx, how, WorldCrater._slot(S, cause), dest, floor_)
+	if how == "flung":
+		var e = S.out.fx[S.out.fx.size() - 1]
+		var key: int = (S.tick * 4096 + maxi(bi, 0)) * 8 + (floor_ + 1) % 8
+		e.spd = FLING_LO + (FLING_HI - FLING_LO) * SimRng.keyed(int(S.game.seed), "bystander.fling.speed", key)
+		e.k = float(int(SimRng.keyed(int(S.game.seed), "bystander.fling.bounces", key) * float(BOUNCES_MAX + 1)))
+		e.dur = UP_WITHIN_S
 	heavy(S, cx)
-	return granted
+	return ran
 
 
-## The meters: every fighter with an anguish meter is pressured by the casualties. No fighter gains anything from them (Orb, 2026-11-07, "no civilian
-## deaths going forward": CD-05): no menace and no power. The villain feeds on evacuation (kill's evac branch), not on the dead.
-## Everything is times 425 / pop0, so the meters read the share of the population lost and planets are equivalent.
-static func _feed(S: SimState, n: float, cause) -> void:
-	var norm: float = POP_REF / normPeople(S)
-	S.world.casualties += n
+## ---- what the meters read: destruction, never a person (docs/design/bystanders.md sections 3 and 4; Legal RL-257) ----
+## No decision in the sim reads who or how many are inside a building. A building is lived-in by its own housing (`pop`, a flag of the place: a home, a tower, a lab), and is
+## occupied until its first damage, which empties it. Everything below reads those and the structure mass (WorldBrunt.massOf: a house 1, a low tower 5, a tall tower 15).
+const MASS_REF_DEFAULT: float = 600.0
+
+static var MASS_REF: float = MASS_REF_DEFAULT   # data/biomes/collateral.json massRef: the structure mass of the reference arena, so a gain by mass reads the same on every planet
+
+
+## What a destruction or terror gain is multiplied by: the reference arena's mass over this one's (as people were normalised by pop0).
+static func norm(S: SimState) -> float:
+	return MASS_REF / maxf(S.world.mass0, 1.0)
+
+
+## True when the place is lived-in: its housing, not who is inside.
+static func lived(b) -> bool:
+	return b.pop > 0.0
+
+
+## A far town is read only once its place is posed (a fighter within plans.farReach, wakeFar), as its people were.
+static func _farAwake(S: SimState, bi: int) -> bool:
+	if not isFar(S, bi):
+		return true
+	var info: Array = _farInfo(S)
+	var pl: Array = info[1]
+	for k in range(mini(pl.size(), 62)):
+		if int(pl[k].first) <= bi and bi < int(pl[k].first) + int(pl[k].count):
+			return ((S.world.farMask >> k) & 1) == 1
+	return false
+
+
+## Lived-in, standing and untouched: the people are inside it. Its first damage empties it.
+static var blindPeople: bool = false   # tests only: occupied reads a person (popAlive), the negative control of the civilians-removed identity
+
+
+static func occupied(S: SimState, b) -> bool:
+	if blindPeople:
+		return b.alive and b.popAlive > 0.0 and b.hp >= b.maxhp
+	return b.alive and b.pop > 0.0 and b.hp >= b.maxhp and _farAwake(S, b.idx)
+
+
+## The structure mass a decision sees at b: its mass while it is occupied, else 0.
+static func livedMass(S: SimState, b) -> float:
+	return WorldBrunt.massOf(b) if occupied(S, b) else 0.0
+
+
+## The place at x: the place of the nearest building to it, by the shortest arc (-1 with none within reach).
+static func _placeAt(S: SimState, x: float) -> int:
+	var best: int = -1
+	var bd: float = 1.0e18
+	for bi in WorldStructures.near(S, x, 3000.0):
+		var d: float = absf(SimWrap.sdx(x, S.buildings[bi].x))
+		if d < bd:
+			bd = d
+			best = int(S.buildings[bi].place)
+	return best
+
+
+## A building has fallen (damageBuilding, once): its mass joins the window and the total, and the fighter who brought it down feeds on it, and the one it was brought down near is pressured.
+## menace and the villain's power by `whose: self` rows (his blow, send, beam or body), anguish by `whose: self` (he did it) or `opponent` (anyone else did) within `within` of him, and the
+## failing to protect: a fall inside the place he is fighting in while he is the nearest fighter to it. All times the arena's norm, and capped at 100.
+static func fell(S: SimState, b, cause) -> void:
+	var w: SimState.World = S.world
+	var m: float = WorldBrunt.massOf(b)
+	_advance(S)
+	w.massLost += m
+	w.cbBuckets[int(w.cbSec) % WINDOW_S] += m
+	w.cbSum += m
+	var nm: float = norm(S)
+	if cause != null and cause.hasMenace:
+		cause.menace = SimMathx.jmin(100.0, cause.menace + m * cause.md.menaceDestroyed * nm)
+		cause.power = SimMathx.jmin(100.0, cause.power + m * cause.md.worldPower * nm)
+	var place: int = -2
 	for f in S.fighters:
-		if f.hasAnguish:
-			f.anguish = SimMathx.jmin(100.0, f.anguish + n * (f.md.anguishCasSelf if cause == f else SimForms.anguishOther(S, f)) * norm)   # D1b: meters.json
-	if cause != null and not S.fighters.has(cause) and cause.hasAnguish:   # a body of another fight (a shot from outside, Simulation's cross-fights): his own dead cost him as at home
-		cause.anguish = SimMathx.jmin(100.0, cause.anguish + n * cause.md.anguishCasSelf * norm)
+		if not f.hasAnguish:
+			continue
+		var dx: float = absf(SimWrap.sdx(f.x, b.x))
+		if dx > f.md.anguishNear:
+			continue
+		var g: float = f.md.anguishDestroyedSelf if cause == f else f.md.anguishDestroyedOther
+		if f.md.anguishFailed > 0.0:
+			var nearest: bool = true
+			for o in S.fighters:
+				if o != f and absf(SimWrap.sdx(o.x, b.x)) < dx:
+					nearest = false
+			if nearest:
+				if place == -2:
+					place = int(b.place)
+				if place >= 0 and _placeAt(S, f.x) == place:
+					g += f.md.anguishFailed
+		f.anguish = SimMathx.jmin(100.0, f.anguish + m * g * nm)
+	if cause != null and not S.fighters.has(cause) and cause.hasAnguish:   # a body of another fight (a shot from outside, cross-fights): what he brings down costs him as at home
+		cause.anguish = SimMathx.jmin(100.0, cause.anguish + m * cause.md.anguishDestroyedSelf * nm)
+
+
+## A lived-in building has taken its first damage (damageBuilding, once): whoever is inside streams out, which is terror for the one whose blow it was, by the size of the place, and a cost to the
+## fighter near it. The lure's histogram loses its mass. Nothing here reads who or how many were inside.
+static func emptied(S: SimState, b, cause) -> void:
+	var nm: float = norm(S)
+	if cause != null and cause.hasMenace:
+		cause.menace = SimMathx.jmin(100.0, cause.menace + cause.md.menaceEmptied[WorldBrunt.sizeClass(b)] * nm)
+	for f in S.fighters:
+		if f.hasAnguish and absf(SimWrap.sdx(f.x, b.x)) <= f.md.anguishNear:
+			f.anguish = SimMathx.jmin(100.0, f.anguish + f.md.anguishEmptied * nm)
+	if cause != null and not S.fighters.has(cause) and cause.hasAnguish:   # a body of another fight (a shot from outside): a place his shot empties costs him as at home
+		cause.anguish = SimMathx.jmin(100.0, cause.anguish + cause.md.anguishEmptied * nm)
+	if not isFar(S, b.idx):   # the lure holds the first ring only (a far place never joined it)
+		S.popHist[histBucket(b.x)] = maxf(0.0, S.popHist[histBucket(b.x)] - WorldBrunt.massOf(b))
+
+
+## A crater or a trench has been dug (WorldCrater): by his send or his beam, wide enough (`minBh` body heights across), it feeds the villain; powering up on the ground does not.
+static func dug(S: SimState, across: float, kind: String, cause) -> void:
+	if cause == null or not cause.hasMenace or kind == "powerup":
+		return
+	if across < cause.md.menaceCraterBh * BODY_H:
+		return
+	cause.menace = SimMathx.jmin(100.0, cause.menace + cause.md.menaceCrater * norm(S))
+
+
+## The combat trauma, read from this tick's events (they are never a person struck by the world): a region of the opposing fighter broken, and the opposing fighter reaching the brink. Not normalised.
+static func _trauma(S: SimState) -> void:
+	for e in S.out.fx:
+		if int(e.tick) != S.tick or (e.type != "region_broken" and e.type != "brink_enter"):
+			continue
+		var vi: int = int(e.actor)
+		if vi < 0 or vi >= S.fighters.size():
+			continue
+		var victim = S.fighters[vi]
+		for f in S.fighters:
+			if f.hasMenace and SimCross.team(f) != SimCross.team(victim):   # a foe of his: the other team (by the slot he started in), whatever the roster
+				f.menace = SimMathx.jmin(100.0, f.menace + (f.md.menaceBreak if e.type == "region_broken" else f.md.menaceBrink))
 
 
 ## Once per unfrozen tick: advance the window, report the state once a second, and run the district flight.
@@ -366,13 +472,12 @@ static func tick(S: SimState) -> void:
 	var w: SimState.World = S.world
 	_advance(S)
 	wakeFar(S)
+	_trauma(S)
 	var sec: int = int(floor(S.T))
 	if sec > int(w.stateT):
 		w.stateT = float(sec)
 		SimFx.collateralState(S, room(S), budget(S), ceilingLeft(S), isOver(S))
 	if w.heavyX < 0.0 or S.T - w.heavyT > EVAC_ACTIVE_S:
-		return
-	if not isOver(S):
 		return
 	var dt: float = S.dt
 	var events: int = 0
@@ -389,7 +494,6 @@ static func tick(S: SimState) -> void:
 			continue
 		b.fled += take
 		b.popAlive -= take
-		S.popHist[histBucket(b.x)] -= take
 		w.evacuated += take
 		w.lotAcc[bi] += take
 		moved += take
@@ -399,4 +503,3 @@ static func tick(S: SimState) -> void:
 			events += 1
 	if dest >= 0 and moved > 0.0:
 		S.buildings[dest].popAlive += moved
-		S.popHist[histBucket(S.buildings[dest].x)] += moved

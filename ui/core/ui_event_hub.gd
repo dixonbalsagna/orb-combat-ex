@@ -1024,6 +1024,11 @@ func _teach(m: UiFighterModel, text: String, acts: Array, secs: float) -> void:
 	m.teach_left = secs
 
 
+## A plain line in the legend's teaching row for a moment (the HUD's own confirmations: a report saved). Read only for the sim.
+func say(m: UiFighterModel, text: String, secs: float) -> void:
+	_teach(m, text, [], secs)
+
+
 ## The beam answer alert's two cues. `beam_charge` text start or end: the shooter (`actor`) gathers a beam at the target, a warning and not the window. `beam_window` text start or end: the beam has left
 ## his hand; `n` is the ticks until the front arrives, `k` the beam's level (0 the snap, 1 to 3 the levels, 4 the signature), `amount` the ticks before arrival the dodge opens (14 by default; Encounter's cue has no `dodge_from` field). The window
 ## closes at arrival, so `end` clears it at once. Read only: nothing here writes the sim.

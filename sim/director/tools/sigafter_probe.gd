@@ -393,7 +393,7 @@ func _persona(at: Dictionary) -> void:
 		var S := SimCore.createSim()
 		SimCore.newMatch(S, 1, {}, _setup(sd, 0))
 		for b in S.buildings:
-			if b.alive and WorldStructures.popNear(S, b.x, DirLaunch.CARE_R) > 0.5:
+			if b.alive and WorldStructures.livedNear(S, b.x, DirLaunch.CARE_R) > 0.5:
 				p = [sd, 0, b.x]
 				break
 		SimCore.dispose(S)

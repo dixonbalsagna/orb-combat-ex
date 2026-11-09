@@ -518,7 +518,7 @@ static func _aiThrowQ(S: SimState, f, o, k: int) -> int:
 	var wu: float = float(tw.up) * cash
 	var side: float = 1.0 if SimWrap.sdx(f.x, o.x) >= 0.0 else -1.0
 	var land: float = SimWrap.wrap(o.x + side * float(cfg().throw.acrossBh) * DirInterrupt.BH)
-	var pop: float = clampf(float(WorldStructures.popNear(S, land, float(tw.get("popR", 3.0)) * DirInterrupt.BH)) / maxf(0.001, WorldStructures.popNearRef(S)), 0.0, 1.0)
+	var pop: float = clampf(float(WorldStructures.livedNear(S, land, float(tw.get("popR", 3.0)) * DirInterrupt.BH)) / maxf(0.001, WorldStructures.livedNearRef(S)), 0.0, 1.0)
 	var wa: float = maxf(0.05, float(tw.across) * (1.0 + (-float(f.care)) * float(tw.get("careW", 1.0)) * pop))
 	var x: float = SimRng.keyed(int(S.game.seed), "grapple.throw", _g(f, T0) * 8 + k * 2 + S.fighters.find(f)) * (wd + wu + wa)
 	if x < wd:

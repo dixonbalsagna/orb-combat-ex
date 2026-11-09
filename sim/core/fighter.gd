@@ -625,6 +625,8 @@ static func flightSpeed(S: SimState, f, dash: bool) -> float:
 		# 15 s); close in, it is the melee dash it always was.
 		var sep: float = absf(SimWrap.sdx(f.x, SimRoster.opp(S, f).x))
 		var ramp: float = SimMathx.jclamp((sep - SimConst.BOOST_NEAR) / (SimConst.BOOST_FAR - SimConst.BOOST_NEAR), 0.0, 1.0)
+		if SimPower.dashAnyRangeOn(S):
+			ramp = 1.0   # LT held, the dash on: his level's flat out at any range (Game Design's overnight-2026-11-08.md (c))
 		if S.powerOn:
 			sp = SimPower.flatSpeed(S, f, sp, ramp)   # one energy model: the same closeness, the far end by his level
 		else:
@@ -694,14 +696,13 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 	if f.hasAnguish:
 		f.anguish = SimMathx.jmax(0.0, f.anguish - f.md.anguishDecay * dt)
 	# Menace decays when it is not fed (balance-targets.md section 9, S0): after f.md.menaceDelay ticks without a rise it
-	# falls by f.md.menaceDecay per second. At the cap a casualty cannot raise it, so there a rise in world casualties also
-	# counts as fed. (sim/world stays untouched: menace only ever rises through a casualty.)
-	var fed: bool = f.menace > f.menaceSeen or (f.menace >= 100.0 and S.world.casualties > f.casSeen)
+	# falls by f.md.menaceDecay per second, at the cap as anywhere else. Nothing the dead do holds it there (CD-05, Orb's
+	# "no civilian deaths going forward"): a rise in world casualties no longer counts as fed at the cap.
+	var fed: bool = f.menace > f.menaceSeen
 	f.menaceQuiet = 0 if fed else f.menaceQuiet + 1
 	if f.menaceQuiet > f.md.menaceDelay:
 		f.menace = SimMathx.jmax(0.0, f.menace - f.md.menaceDecay * dt)
 	f.menaceSeen = f.menace
-	f.casSeen = S.world.casualties
 	if SimWounds.battered(f, SimWounds.CORE):
 		regen *= f.wd.coreKiRegen
 	if steps:
@@ -739,6 +740,7 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 			if S.depthOn:   # no stick steers depth: a velocity in depth dies away as his own does with the stick at rest
 				f.vz += (0.0 - f.vz) * k
 				f.vzX += (0.0 - f.vzX) * k
+			SimDir.arrive(S, f, dt)   # Encounter's arrival: the dash eases into striking distance, never through it (bands.arrive, off)
 			f.x = SimWrap.wrap(f.x + f.vx * dt)
 			f.y += f.vy * dt
 			var g: float = floorFor(S, f, f.x, f.z, y0)   # at his depth (the plane's when depth is off); with the floor on, the floor of the water he is over

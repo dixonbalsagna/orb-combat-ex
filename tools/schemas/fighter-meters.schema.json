@@ -70,8 +70,13 @@
             "properties": {
               "event": {
                 "enum": [
-                  "casualty",
-                  "evacuee"
+                  "destroyed",
+                  "destroyed_power",
+                  "crater",
+                  "emptied",
+                  "region_broken",
+                  "brink",
+                  "failed_to_protect"
                 ]
               },
               "amount": {
@@ -83,8 +88,25 @@
               "whose": {
                 "enum": [
                   "self",
-                  "opponent"
+                  "opponent",
+                  "any"
                 ]
+              },
+              "within": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "minBh": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "sizes": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
               }
             },
             "additionalProperties": false,

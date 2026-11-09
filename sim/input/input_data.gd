@@ -197,10 +197,33 @@ static func flight_strike_b() -> bool:
 	return bool(t(["switches", "flightStrikeB"], false))
 
 
+## A player's B never starts a beam (docs/controls/b-no-beam.md; Orb, 2026-11-01: beams come only from the right stick): DirBrawl.isB reads every player's B press as the heavy, not only B with no layer held.
+## The stick's own beam (DirStick.firing) is not a press of B and is unaffected. Needs nothing else. switches.bNoBeam, off.
+static func b_no_beam() -> bool:
+	return bool(t(["switches", "bNoBeam"], false))
+
+
+## The interim of bNoBeam (the EP, 2026-11-08; Game Design's condition): RT + B is still the signature as a chord only, B within tapHold.holdStart ticks of RT's press, until RT + right stick is built, so the signature is never unreachable. A B during an RT channel is the heavy. Needs bNoBeam. switches.bNoBeamKeepRt, off.
+static func b_no_beam_keep_rt() -> bool:
+	return bool(t(["switches", "bNoBeamKeepRt"], false))
+
+
+## A right-stick push on a layer where the strike stick is inert (RT held, or LB + RB: strike.inertMasks) is told, once per push (docs/controls/inert-knock.md): the layout adds a refusal "charging" ("warding")
+## to its dropped list, so the hub knocks the pad once and UI can say "Charging". Needs rightStick and hapticRefused (the hub's refusal cues). switches.inertKnock, off.
+static func inert_knock_on() -> bool:
+	return bool(t(["switches", "inertKnock"], false))
+
+
 ## The director keeps a flick it cannot start yet (data/director/stick.json flickKeep, up to pendFollow.maxTicks = 90 ticks, with no cue while it waits), so the hub's wait for an answer is strike.refuseTicksKept (120)
 ## and not refuseTicks (30), or the pad knocks "Didn't start" at 31 ticks and the held flick then fires anyway (docs/controls/flick-kept.md). Set together with flickKeep. switches.flickKept, off.
 static func flick_kept_on() -> bool:
 	return bool(t(["switches", "flickKept"], false))
+
+
+## LT's dash is on from the press tick and only while LT is held (docs/controls/dash-handover.md; Game Design's ruling of 2026-11-08 (c): LT's high speed is fast from the first tick, and a tapped LT stays the slip):
+## no free 12-tick lunge after a release, so a tap is a tap and a hold is the high speed from tick 1. The sprint bit and the dodge edge are as they were. switches.dashHandover, off.
+static func dash_handover_on() -> bool:
+	return bool(t(["switches", "dashHandover"], false))
 
 
 ## Two attack presses on one tick are one blow, the biggest (docs/controls/chord-pick.md; switches.chordPick, off): B with X or Y, or Y with X, goes as the bigger press and the smaller is told "chord".
@@ -264,7 +287,7 @@ static func haptic_impact_on() -> bool:
 ## Reads the data as it is, sets the switches in memory and drops the caches; nothing is written.
 static func pin_switches_off() -> void:
 	var sw: Dictionary = timing.get("switches", {})
-	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "flickKept", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
+	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "dashHandover", "flickKept", "inertKnock", "bNoBeam", "bNoBeamKeepRt", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
 		sw[k] = false
 	timing["switches"] = sw
 	clear_overrides()

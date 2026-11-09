@@ -371,6 +371,7 @@ static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx
 	if S.craters.size() > LIST_MAX:
 		S.craters.remove_at(0)
 	SimFx.crater(S, rec)
+	WorldCollateral.dug(S, 2.0 * R, kind, cause)   # a crater his send or beam digs, 3 body heights across or more, feeds the villain (bystanders.md section 3)
 	if shape.size() > 0:
 		S.out.fx[S.out.fx.size() - 1].surface = WorldCraters.lookName(shape)   # the material, for the director's crater_shape (WorldCraters.eventFor); not a hashed field of the crater event
 	var cols: int = n + int(ceil(absf(skid) / COL)) + REPOSE_PAD

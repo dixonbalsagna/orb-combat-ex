@@ -144,6 +144,109 @@ func _travel() -> void:
 	SimCore.dispose(D)
 
 
+## LT held, fast at any range (Game Design's overnight-2026-11-08.md (c); power.json's dash, here by the setup's "dash"): its top
+## speed is the level's flat out whatever the gap; it rises to it from rest at least 1,000 a second on its first tick and is
+## at the top by tick 12; Game Design's close times from 1,000, 3,000 and 6,000 at base, and 6,000 at the top, to 1.5 bh, with
+## the other standing still. Off it's the dash as it was, and nothing in the hash moves.
+func _dashAt(su: Dictionary, gap: float, tier: float, power_: float) -> SimState:
+	var s2: Dictionary = su.duplicate()
+	if tier > 1.0:
+		s2["startTier"] = int(tier)
+	var S := _new(s2)
+	var f = S.fighters[0]
+	var o = S.fighters[1]
+	f.power = power_
+	f.x = SimWrap.wrap(o.x - gap)
+	f.y = 6000.0
+	o.y = 6000.0
+	f.vx = 0.0
+	f.vy = 0.0
+	return S
+
+
+## Ticks from the press until he's within 1.5 bh of the other, who stands still; and his speed on ticks 1 to 12.
+func _dashRun(S: SimState, cap: int) -> Array:
+	var f = S.fighters[0]
+	var o = S.fighters[1]
+	var ox: float = o.x
+	var i := SimIntent.new()
+	i.mx = 1.0
+	i.sprint = true
+	i.dash = true
+	var speeds: Array = []
+	for t in range(cap):
+		o.x = ox
+		o.y = 6000.0
+		o.vx = 0.0
+		o.vy = 0.0
+		SimCore.step(S, [i, null])
+		S.out.fx.clear()
+		S.out.feed.clear()
+		if speeds.size() < 12:
+			speeds.append(absf(f.vx))
+		if absf(SimWrap.sdx(f.x, ox)) <= 1.5 * SimDepth.BH:
+			return [t + 1, speeds]
+	return [-1, speeds]
+
+
+func _dash() -> void:
+	var on: Dictionary = FIELD.duplicate()
+	on["dash"] = true
+	var off: Dictionary = FIELD.duplicate()
+	off["dash"] = false
+	# the top speed, by the gap
+	var tops: Array = []
+	for gap in [300.0, 1500.0, 6000.0, 14000.0]:
+		var S := _dashAt(on, gap, 1.0, 0.0)
+		tops.append(SimFighter.flightSpeed(S, S.fighters[0], true))
+		SimCore.dispose(S)
+	var S0 := _dashAt(off, 300.0, 1.0, 0.0)
+	var closeOff: float = SimFighter.flightSpeed(S0, S0.fighters[0], true)
+	SimCore.dispose(S0)
+	ok(near(tops[0], 5000.0, 25.0) and tops[0] == tops[1] and tops[1] == tops[2] and tops[2] == tops[3], "the dash at 300, 1,500, 6,000 and 14,000 apart: %.0f, %.0f, %.0f, %.0f, his level's flat out" % tops)
+	ok(closeOff < 1500.0, "off: the close dash as it was at 300 apart (%.0f)" % closeOff)
+	var SM := _dashAt(on, 300.0, 4.0, 100.0)
+	var fm = SM.fighters[0]
+	var topMax: float = SimFighter.flightSpeed(SM, fm, true)
+	var wantMax: float = 5000.0 * SimDetMath.pow(2.305, SimPower.level(fm)) * fm.spd
+	SimCore.dispose(SM)
+	ok(near(topMax, wantMax, wantMax * 0.01) and topMax > 11000.0, "at the top, at 300 apart: %.0f (his level's flat out %.0f)" % [topMax, wantMax])
+	# the response is the kick's (instant and climb, kick.json; the builds play with it on): the first tick, up close
+	var onK: Dictionary = on.duplicate()
+	onK["kick"] = true
+	var offK: Dictionary = off.duplicate()
+	offK["kick"] = true
+	var SR := _dashAt(onK, 1000.0, 1.0, 0.0)
+	var rr: Array = _dashRun(SR, 12)
+	SimCore.dispose(SR)
+	var S2 := _dashAt(offK, 1000.0, 1.0, 0.0)
+	var r2: Array = _dashRun(S2, 12)
+	SimCore.dispose(S2)
+	ok(rr[1].size() > 0 and rr[1][0] >= 1000.0, "with the kick, 1,000 apart: %.0f on the first tick (off: %.0f)" % [rr[1][0] if rr[1].size() > 0 else -1.0, r2[1][0] if r2[1].size() > 0 else -1.0])
+	# Game Design's close times, the other standing still: asserted with the kick on, as the builds play; printed with it off
+	for row in [[1000.0, 1.0, 0.0, 0.4], [3000.0, 1.0, 0.0, 0.8], [6000.0, 1.0, 0.0, 1.4], [6000.0, 4.0, 100.0, 0.75]]:
+		var got: Array = []
+		for su in [onK, offK, on, off]:
+			var SC := _dashAt(su, row[0], row[1], row[2])
+			got.append(_dashRun(SC, 600)[0])
+			SimCore.dispose(SC)
+		var sec: float = float(got[0]) / 60.0
+		print("dash close from %.0f at tier %d, in ticks: %d with the dash and the kick (%.2f s, target %.2f s); %d the kick alone; %d the dash alone; %d neither" % [row[0], int(row[1]), got[0], sec, row[3], got[1], got[2], got[3]])
+		ok(got[0] > 0 and sec <= row[3], "close from %.0f at tier %d in %.2f s with the kick (at most %.2f)" % [row[0], int(row[1]), sec, row[3]])
+	# off moves nothing, and on is in the hash
+	var A := _new(off)
+	var B := _new(FIELD)
+	ok(str(SimHash.stateHash(A).gameplay) == str(SimHash.stateHash(B).gameplay), "off by its setup, the same hash as with no word")
+	var C := _new(on)
+	ok(str(SimHash.stateHash(C).gameplay) != str(SimHash.stateHash(B).gameplay), "the dash is in the hash")
+	SimCore.dispose(A)
+	SimCore.dispose(B)
+	SimCore.dispose(C)
+	var D := _new({"intro": false, "planet": 7, "touch": 3, "planetGen": 3, "power": false, "dash": true})
+	ok(not D.dashOn, "with the model off the word does nothing")
+	SimCore.dispose(D)
+
+
 ## Each real route to a send, and the share it ends up with: through DirBrawl._send, the rally's turn, a chain link's own beat and a launch beat with the earned gate's multiplier. Reading a
 ## share from the table says nothing about who asks for which.
 func _routes() -> void:
@@ -509,6 +612,13 @@ func _init() -> void:
 		var seen: int = fails - f0
 		fails = f0
 		ok(seen > 0, "a setup's travel left unread is seen (%d)" % seen)
+		var f1: int = fails
+		SimPower.blindDash = true
+		_dash()
+		SimPower.blindDash = false
+		var seenD: int = fails - f1
+		fails = f1
+		ok(seenD > 0, "the dash switch left unread is seen (%d)" % seenD)
 		print("POWER negative control: %d check(s) failed" % fails)
 		quit(1 if fails > 0 else 0)
 		return
@@ -519,6 +629,7 @@ func _init() -> void:
 	_meteor()
 	_flight()
 	_travel()
+	_dash()
 	var r2: Array = _sends()
 	ok(r2[0] > 0, "there were launches")
 	ok(r2[1] == 0, "no send past what he has (%d)" % r2[1])

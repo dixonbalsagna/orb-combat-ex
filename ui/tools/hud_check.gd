@@ -85,6 +85,7 @@ func _run() -> void:
 	await _lost_rival_rules()
 	await _damage_facts_rules()
 	await _retired_words_rules()
+	await _report_this_rules()
 	await _plain_words_rules()
 	await _launch_marks_rules()
 	await _tug_rules()
@@ -767,6 +768,8 @@ func _live_on() -> void:
 	UiData.set_feature("beam_teach", false)     # and without the beam teaching lines (the older rules look at the old words)
 	UiData.set_feature("struggle_teach", false)  # and without the clash rows and the refusal words (the older rules look at the legend as it was)
 	UiData.set_feature("refusal_words", false)
+	UiData.set_feature("report_this", false)   # the first-matches line about reporting and the match-over card's Save this match are newer than the older rules, which look at the teaching row and the card as they were
+	UiData.set_feature("save_match", false)
 	for k in ["forms_live", "specials_live", "brace_live", "vanish_live"]:
 		UiData.set_feature(k, true)   # the older rules look at the full set of words, as before
 
@@ -2067,7 +2070,7 @@ func _slam_hint_rules() -> void:
 
 func _refusal_reason_words_rules() -> void:
 	UiData.set_feature("refusal_words", null)
-	var want := {"locked": "Locked in", "launched": "In flight", "down": "Knocked down", "stunned": "Stunned", "queue_full": "Too many presses", "not_yours": "Their move", "recovering": "Recovering", "set_piece": "In a move", "chord": "One at a time", "busy": "Busy", "not_ready": "Not ready"}
+	var want := {"locked": "Locked in", "launched": "In flight", "down": "Knocked down", "stunned": "Stunned", "queue_full": "Too many presses", "not_yours": "Their move", "recovering": "Recovering", "set_piece": "In a move", "chord": "One at a time", "busy": "Busy", "not_ready": "Not ready", "charging": "Charging", "warding": "Warding"}
 	var words_ok := true
 	var bad := PackedStringArray()
 	for code in want:
@@ -2094,7 +2097,7 @@ func _refusal_reason_words_rules() -> void:
 	var hc := _refusal_rules_hub()
 	hc.consume({"type": "cue", "kind": "stick_refused", "actor": 1, "text": "down", "source": "locked"})
 	var computer_quiet: bool = hc.model(1).teach == ""
-	_ok(words_ok and press_ok, "refusal reasons: each new code says its word (locked, launched, down, stunned, queue_full, not_yours, recovering, set_piece, chord, busy, not_ready), press_refused queue_full and not_ready too, and only the first three times (%s)" % str(bad))
+	_ok(words_ok and press_ok, "refusal reasons: each new code says its word (locked, launched, down, stunned, queue_full, not_yours, recovering, set_piece, chord, busy, not_ready, charging, warding), press_refused queue_full and not_ready too, and only the first three times (%s)" % str(bad))
 	_ok(computer_quiet, "refusal reasons: the computer is never told")
 
 
@@ -8893,6 +8896,162 @@ func _damage_facts_rules() -> void:
 	UiPrefs.path = "user://ui_prefs.json"
 
 
+## Report this (docs/ui/lan-report.md): one press (F9, or View and RB together) saves a report through the host's hook mid-fight, the feedback panel's SAVE REPORT saves one with tags and a note, the pause screen says where
+## saved reports go, and the match-over card's "Save this match" says what happened.
+func _pad_btn(hud: UiHud, button: int, pressed: bool, device: int = 0) -> void:
+	var e := InputEventJoypadButton.new()
+	e.button_index = button
+	e.pressed = pressed
+	e.device = device
+	hud._input(e)
+
+
+func _key_press(hud: UiHud, keycode: int) -> void:
+	var e := InputEventKey.new()
+	e.keycode = keycode
+	e.pressed = true
+	hud._input(e)
+
+
+func _report_this_rules() -> void:
+	UiPrefs.path = "user://ui_prefs_test_report.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	for k in ["report_this", "save_match", "beam_teach", "refusal_words"]:
+		UiData.set_feature(k, null)
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	hud.set_option("control_hints", "auto")
+	var run := func(n: int, dt: float = 1.0 / 30.0) -> void:
+		for i in range(n):
+			hud.advance(dt)
+			await process_frame
+	await run.call(30)   # one second on
+	var m0: UiFighterModel = hud.hub.model(0)
+	_key_press(hud, KEY_F9)   # no host hook, not the web
+	var none_ok: bool = m0.teach == "This build can't save a report yet"
+	var calls: Array = []
+	var good := func(tags: String, note: String) -> String:
+		calls.append([tags, note])
+		return "saved/report-0001.json"
+	hud.lan_report_fn = good
+	await run.call(45)   # past the one-a-second gap
+	m0.teach = ""
+	_key_press(hud, KEY_F9)
+	var hook_ok: bool = calls.size() == 1 and calls[0] == ["", ""] and m0.teach == "Report saved: saved/report-0001.json"
+	_key_press(hud, KEY_F9)   # at once again: one a second
+	var gap_ok: bool = calls.size() == 1
+	await run.call(45)
+	m0.teach = ""
+	_pad_btn(hud, JOY_BUTTON_RIGHT_SHOULDER, true)   # RB alone does nothing
+	var rb_alone: bool = calls.size() == 1
+	_pad_btn(hud, JOY_BUTTON_BACK, true)   # then View: both down
+	var chord_ok: bool = calls.size() == 2 and m0.teach.begins_with("Report saved")
+	_pad_btn(hud, JOY_BUTTON_BACK, false)
+	_pad_btn(hud, JOY_BUTTON_RIGHT_SHOULDER, false)
+	await run.call(45)
+	_pad_btn(hud, JOY_BUTTON_BACK, true)   # View alone does nothing (a menu's Back is never a report)
+	var back_alone: bool = calls.size() == 2
+	_pad_btn(hud, JOY_BUTTON_BACK, false)
+	await run.call(45)
+	hud.lan_report_fn = func(_tg, _nt) -> String: return ""
+	m0.teach = ""
+	_key_press(hud, KEY_F9)
+	var fail_ok: bool = m0.teach == "Could not save the report"
+	hud.lan_report_fn = good
+	await run.call(45)
+	var computer_ok: bool = hud.report_now(1) == ""
+	hud.show_pause_menu()
+	var open_ok: bool = hud.report_now(0) == ""
+	hud._pm_close("test")
+	UiData.set_feature("report_this", false)
+	var before_off: int = calls.size()
+	_key_press(hud, KEY_F9)
+	var off_ok: bool = calls.size() == before_off
+	UiData.set_feature("report_this", null)
+	m0.teach = ""
+	m0.teach_left = 0.0
+	await run.call(5)
+	var hint_ok: bool = int(UiPrefs.get_value("taught_report_n", 0)) >= 1   # the first matches say how to report a problem (once the confirmations have gone)
+	_ok(none_ok and hook_ok and gap_ok and fail_ok, "report this: F9 with no host hook says plainly it cannot; with a host's hook it saves now (tags and note empty), says 'Report saved: <file>' in the legend row, does not save twice inside a second, and says 'Could not save the report' when the host answers nothing (%s %s %s %s)" % [none_ok, hook_ok, gap_ok, fail_ok])
+	_ok(rb_alone and chord_ok and back_alone, "report this: View and RB together save a report; RB alone or View alone do nothing (%s %s %s)" % [rb_alone, chord_ok, back_alone])
+	_ok(computer_ok and open_ok and off_ok and hint_ok, "report this: not for the computer, not with a screen open, not with the switch off; the first matches say how to report a problem (%s %s %s %s)" % [computer_ok, open_ok, off_ok, hint_ok])
+	# The feedback panel: SAVE REPORT on a LAN build, with the ticked tags and the note.
+	hud.show_feedback("pause")
+	var save_btn: bool = (hud.feedback_plan()["save"] as Rect2).size.x > 0.0
+	hud.toggle_feedback_tag("bug")
+	hud._fb_text.text = "The beam froze."
+	hud.feedback_action("save")
+	var panel_ok: bool = calls.back() == ["bug", "The beam froze."] and hud._fb_state == UiFeedback.STATE_COPIED and str(hud._fb_texts()[0]) == "Report saved: saved/report-0001.json" and str(hud._fb_texts()[1]).contains("'saved' folder")
+	hud.feedback_action("back")
+	var back_ok: bool = hud._fb_state == UiFeedback.STATE_WRITE and hud._fb_saved == ""
+	hud.hide_feedback()
+	hud.lan_report_fn = Callable()
+	hud.show_feedback("pause")
+	var no_btn: bool = (hud.feedback_plan()["save"] as Rect2).size.x == 0.0   # a build with no host hook has no SAVE REPORT
+	hud.hide_feedback()
+	hud.lan_report_fn = good
+	_ok(save_btn and panel_ok and back_ok and no_btn, "report this: the feedback panel has SAVE REPORT only on a LAN build, and it hands the host the ticked tags (their ids) and the note and then says where it saved (%s %s %s %s)" % [save_btn, panel_ok, back_ok, no_btn])
+	# The pause screen says where saved reports go (a LAN build only).
+	hud.show_pause_menu()
+	var where_on: bool = " ".join(PackedStringArray(hud.pause_menu_plan()["join_lines"])).contains("'saved' folder")
+	hud._pm_close("test")
+	hud.lan_report_fn = Callable()
+	hud.show_pause_menu()
+	var where_off: bool = not " ".join(PackedStringArray(hud.pause_menu_plan()["join_lines"])).contains("'saved' folder")
+	hud._pm_close("test")
+	hud.lan_report_fn = good
+	# Save this match, on the card that opens after a match.
+	hud.hub.match_over = true
+	hud.hub.winner = 0
+	hud.show_pause_menu(true)
+	var save_listed: bool = UiPause.ids(false, false, true).has("save") and UiPause.label("save") == "Save this match"
+	var rec: Dictionary = hud.match_record()
+	var rec_ok: bool = str(rec["schema"]) == "orb-combat-match-record/1" and rec.has("seed") and rec.has("build") and rec.has("settings") and rec.has("note") and str(rec["winner"]) == "ONE"
+	hud._fb_text.text = "The beam froze."   # the note the player typed
+	hud.pause_menu_choose("save")
+	var status := func() -> String: return " ".join(PackedStringArray(hud.pause_menu_plan()["join_lines"]))
+	var lan_save: bool = str(status.call()).contains("Report saved: saved/report-0001.json") and calls.back() == ["", "The beam froze."]
+	hud.lan_report_fn = Callable()
+	hud.pause_menu_choose("save")
+	var none_save: bool = str(status.call()).contains("can't save a match file")
+	await run.call(300)   # ten seconds on
+	var gone_ok: bool = not str(status.call()).contains("can't save a match file")
+	UiData.set_feature("save_match", false)
+	var flag_ok: bool = not UiPause.ids(false, false, true).has("save")
+	UiData.set_feature("save_match", null)
+	_ok(where_on and where_off, "report this: the pause screen says where saved reports go on a LAN build and says nothing about it otherwise (%s %s)" % [where_on, where_off])
+	_ok(save_listed and rec_ok and lan_save and none_save and gone_ok and flag_ok, "save this match: the match-over card lists it; the record has the schema, build, seed, setup, settings, winner and note; a LAN host's hook saves it and the card says where; with no host and no web it says plainly it cannot; the line goes after a few seconds; off, the entry is gone (%s %s %s %s %s %s)" % [save_listed, rec_ok, lan_save, none_save, gone_ok, flag_ok])
+	# Geometry at nine sizes, touch off and on: the panel with SAVE REPORT (both states), the pause card with its two foot lines, the match-over card with four buttons and a status.
+	var bad := PackedStringArray()
+	var word_where: String = "Saved reports go in the 'saved' folder beside the game."
+	for cs in [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(844, 390), 1.0], [Vector2(667, 375), 1.0], [Vector2(2532, 1170), 3.0], [Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0], [Vector2(1170, 2532), 3.0], [Vector2(568, 320), 1.0]]:
+		var lay := UiLayout.new()
+		lay.dp = cs[1]
+		lay.compute(cs[0], false)
+		for touch in [false, true]:
+			var pf: Dictionary = UiFeedback.plan(cs[0], lay.s, cs[1], touch, UiFeedback.STATE_WRITE, "", "", true)
+			var pf0: Dictionary = UiFeedback.plan(cs[0], lay.s, cs[1], touch, UiFeedback.STATE_WRITE, "", "", false)   # today's panel: the LAN one must fit wherever this one does
+			var pc: Dictionary = UiFeedback.plan(cs[0], lay.s, cs[1], touch, UiFeedback.STATE_COPIED, "Report saved: saved/report-2026-11-08-1432.json", word_where, true)
+			var pp: Dictionary = UiPause.plan(cs[0], lay.s, cs[1], touch, {"focus": 0, "join": true, "where": word_where})
+			var po: Dictionary = UiPause.plan(cs[0], lay.s, cs[1], touch, {"focus": 1, "over": true, "facts": ["ONE wins", "Buildings lost: 1", "Craters: 2"], "status": "Report saved: saved/report-2026-11-08-1432.json", "where": word_where})
+			if (not bool(pf["fits"]) and bool(pf0["fits"])) or not bool(pc["fits"]) or not bool(pp["fits"]) or not bool(po["fits"]) or (po["items"] as Array).size() != 4:
+				bad.append("%s touch %s (%s %s %s %s)" % [str(cs[0]), str(touch), pf["fits"], pc["fits"], pp["fits"], po["fits"]])
+	_ok(bad.is_empty(), "report this: the LAN feedback panel fits wherever today's does, its saved state, the pause card with its foot lines and the match-over card with four buttons and a status all fit at nine sizes, touch off and on (%d bad %s)" % [bad.size(), str(bad.slice(0, 3))])
+	hud._pm_close("test")
+	hud.queue_free()
+	await process_frame
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	UiPrefs.path = "user://ui_prefs.json"
+	_live_on()
+
+
 ## Legal's lint row c11 (RL-257): no people-harm word or counter in anything a player sees. Every file in ui/data has none of the retired words (civilians lost, casualties, toll, kill count, death count, body count),
 ## and the shipped HUD's chip, card and pause facts carry none either.
 func _retired_words_rules() -> void:
@@ -8912,6 +9071,12 @@ func _retired_words_rules() -> void:
 	hub.consume({"type": "world", "structures": 7, "craters": 21, "civilians": 80, "pop0": 425})
 	var line: String = UiCenter.chip_line(hub)
 	_ok(not rx.search(line) and not line.to_lower().contains("civilian") and not line.contains("80") and not line.contains("425"), "retired words: the chip's line says buildings and craters only (%s)" % line)
+	# The overlay HUD the game also draws (render/core/hud.gd, Rendering's) had its own CIVILIANS LOST line, reading the sim's casualties: it must not come back.
+	var overlay_text: String = FileAccess.get_file_as_string("res://render/core/hud.gd")
+	var overlay_hits := PackedStringArray()
+	for m2 in rx.search_all(overlay_text):
+		overlay_hits.append(m2.get_string())
+	_ok(overlay_text != "" and overlay_hits.is_empty(), "retired words: the overlay HUD (render/core/hud.gd) draws no CIVILIANS LOST and reads no casualties (%s)" % str(overlay_hits.slice(0, 3)))
 
 
 ## Narrative's plain words (docs/narrative/plain-words.md, merged 2026-10-16) fit where they are drawn, the Cyborg's WEAK SPOT card included; a run needs a length (run_to above 0).

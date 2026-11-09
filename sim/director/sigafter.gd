@@ -163,14 +163,14 @@ static func _told(S: SimState, A, D, kind: String) -> void:
 
 # ---------------------------------------------------------------- the personality term
 
-## The beam sample's [width factor, bite factor] for the firer's personality at x: near people (popNear over the launch
+## The beam sample's [width factor, bite factor] for the firer's personality at x: near lived-in structures (livedNear over the launch
 ## planner's care radius above whenPopAbove) the carer (care > 0) takes hero's and the villain (care < 0) villain's.
 ## [1, 1] when off, for a fighter of no side, or where nobody is near.
 static func persMul(S: SimState, A, x: float) -> Array:
 	if not persOn() or A.care == 0.0:
 		return [1.0, 1.0]
 	var row: Dictionary = DirData.sigData().byPersonality.get("hero" if A.care > 0.0 else "villain", {})
-	if row.is_empty() or WorldStructures.popNear(S, x, DirLaunch.CARE_R) <= float(row.get("whenPopAbove", 0.0)):
+	if row.is_empty() or WorldStructures.livedNear(S, x, DirLaunch.CARE_R) <= float(row.get("whenPopAbove", 0.0)):
 		return [1.0, 1.0]
 	return [float(row.get("widthMul", 1.0)), float(row.get("structMul", 1.0))]
 

@@ -247,6 +247,8 @@ const REFUSALS: Dictionary = {
 	"recovering": {"word": "Recovering", "owner": "encounter", "what": "a flick made early in his flight was too old to be his first blow out (flickKeep.recoverTicks; refusal-reasons)"},
 	"set_piece": {"word": "In a move", "owner": "encounter", "what": "a finisher, the KO, a set piece in a brawl or a beam struggle: the flick would be stale (refusal-reasons)"},
 	"chord": {"word": "One at a time", "owner": "controls", "what": "two attack buttons on one tick: the bigger went, the smaller was let go of (switches.chordPick)"},
+	"charging": {"word": "Charging", "owner": "controls", "what": "a right-stick push while RT is held: the charge owns the stick, the strike stick is inert (strike.inertMasks; switches.inertKnock)"},
+	"warding": {"word": "Warding", "owner": "controls", "what": "a right-stick push while LB and RB are both held: the strike stick is inert (strike.inertMasks; switches.inertKnock)"},
 	"queue_full": {"word": "Queue full", "owner": "encounter", "what": "three blows already waiting and the cooldown holds them: one knock a burst (refusal-reasons)"},
 	"stun_limit": {"word": "One a string", "owner": "encounter", "what": "a stick stun held back by the one-a-string rule"},
 	"queue_expired": {"word": "Too slow", "owner": "encounter", "what": "the director's attack queue ran out before it could start the blow"},

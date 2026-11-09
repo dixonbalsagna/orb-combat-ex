@@ -48,7 +48,8 @@ static func dispose(S: SimState, keepWorld: bool = false) -> void:
 ## Fight lanes: "depth": true makes depth physical for this match (S.depthOn).
 ## The air brake: "brake": true turns it on for this match (S.brakeOn).
 ## One energy model: "power" turns it on or off for this match (S.powerOn); "flatOut" tries another base for flat-out flight, in the data's range, and "travel" another
-## factor along the line for a send (S.powerTravel, the page's ?travel= slider), in the data's range.
+## factor along the line for a send (S.powerTravel, the page's ?travel= slider), in the data's range; "dash" makes LT held fast at
+## any range (S.dashOn, power.json's dash; only with the model on).
 ## The kick and the coin turn: "kick": true turns them on for this match (S.kickOn); "instant" and "climbTicks" try other values of the takeoff.
 ## Forms: "forms": true turns on the Protagonist's five steps and the slingshot for this match (S.formsOn).
 ## The intro phase: "intro": true plays the entrance before the clock; "intro": "skip" (the default) applies its effects at

@@ -135,6 +135,12 @@ static func show_textarea(r: Rect2, font_px: float, text: String) -> void:
 		JavaScriptBridge.eval("window.__fb && window.__fb.show(%f, %f, %f, %f, %f, %s);" % [r.position.x, r.position.y, r.size.x, r.size.y, font_px, JSON.stringify(text)], true)
 
 
+## Offer a text as a file for the player to keep (the browser's own download, to their Downloads folder). Nothing is sent anywhere. A no-op off the web.
+static func download_text(file_name: String, text: String) -> void:
+	if available():
+		JavaScriptBridge.eval("(function () { try { var b = new Blob([%s], { type: 'application/json' }); var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = %s; a.style.display = 'none'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000); } catch (e) { } })();" % [JSON.stringify(text), JSON.stringify(file_name)], true)
+
+
 static func hide_textarea() -> void:
 	if available():
 		JavaScriptBridge.eval("window.__fb && window.__fb.hide();", true)

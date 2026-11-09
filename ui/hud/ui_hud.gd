@@ -87,6 +87,14 @@ var opts: Dictionary = {
 }
 var insets := Vector4.ZERO     # left, top, right, bottom safe-area insets from the host (phone notches)
 
+var lan_report_fn: Callable = Callable()   # (tags: String, note: String) -> String: the host saves a report now (LAN: host.lan.report, Netcode) and answers the file name, "" on failure; unset, the web page downloads one and anything else says it cannot yet (docs/ui/lan-report.md)
+var _save_status: String = ""
+var _save_until: float = 0.0
+var _report_t: float = -100.0          # the HUD clock at the last report (one a second: a held chord or a second press must not save twice)
+var _pad_down: Dictionary = {}         # pad device -> {back, rb}: the View + RB chord
+var _fb_saved: String = ""             # the feedback panel's second state after SAVE REPORT: what happened
+var _report_hint_done: bool = false
+const REPORT_GAP := 1.0
 var _t := 0.0
 var _lb := 0.0                 # letterbox progress, 0..1
 const LETTERBOX_HOLD := 1.5
@@ -494,6 +502,7 @@ func _advance(dt: float) -> void:
 			pm.push_mode = str(opts["struggle_push_p2" if pm.slot == 1 else "struggle_push"]) if UiData.feature("right_hand") else "face"   # struggle_teach: each person's own push mode (with the right-hand attacks off there is no stick push: the face buttons)
 	_t += dt
 	_dt = dt
+	_report_step(dt)
 	for idx in _tl_down:
 		_tl_down[idx]["t"] = float(_tl_down[idx]["t"]) + dt
 	_frame += 1
@@ -2104,7 +2113,7 @@ func pause_menu_focus() -> int:
 
 
 func pause_menu_plan() -> Dictionary:
-	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "two": _humans() >= 2, "join": join_due(), "over": _pm_over, "facts_always": UiData.feature("minimal_hud"), "facts": over_facts() if (_pm_over or UiData.feature("minimal_hud")) else []})
+	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "two": _humans() >= 2, "join": join_due(), "over": _pm_over, "facts_always": UiData.feature("minimal_hud"), "facts": over_facts() if (_pm_over or UiData.feature("minimal_hud")) else [], "status": _save_status if _t < _save_until else "", "where": UiData.t("prompt.report_where") if lan_report_fn.is_valid() else ""})
 
 
 func _paint_pmenu(ci: CanvasItem) -> void:
@@ -2128,6 +2137,8 @@ func pause_menu_choose(id: String) -> void:
 			show_feedback("pause")
 		"about":
 			show_howto(false, UiHowto.page_index("about"))   # How to play, opened on its About page (how the game was made, the licence line, privacy)
+		"save":
+			save_match()
 		"new":
 			_pm_confirm = true
 			_pm_focus = 1   # Keep playing is where the focus starts: the match is not lost by a stray Enter
@@ -3399,6 +3410,115 @@ func feedback_context() -> Dictionary:
 
 
 ## The report as plain text: the tags and the typed notes, with the platform, the screen and the settings.
+# --- Report this (docs/ui/lan-report.md): one press saves a report now, mid-fight, no pause; the feedback panel can save one with tags and a note --------------------------------------------
+
+## F9 on the keyboard, or View and RB together on a pad, saves a report this moment through the host's hook (LAN: host.lan.report("", "")), and the legend's teaching row says what was saved, at the edge, for 3.5 s.
+## Nothing here pauses or writes the sim.
+func _report_input(event: InputEvent) -> void:
+	if not UiData.feature("report_this"):
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F9:
+		report_now(_report_slot(-1))
+	elif event is InputEventJoypadButton and (event.button_index == JOY_BUTTON_BACK or event.button_index == JOY_BUTTON_RIGHT_SHOULDER):
+		var down: Dictionary = _pad_down.get(event.device, {})
+		down["back" if event.button_index == JOY_BUTTON_BACK else "rb"] = event.pressed
+		_pad_down[event.device] = down
+		if event.pressed and bool(down.get("back", false)) and bool(down.get("rb", false)):
+			report_now(_report_slot(event.device))
+
+
+func _report_step(_dt_: float) -> void:
+	if _save_status != "" and _t >= _save_until:
+		_save_status = ""
+		_l_pmenu.invalidate()
+	if hub.t_now < 1.0:
+		_report_hint_done = false
+	elif not _report_hint_done and hub.t_now >= 6.0 and UiData.feature("report_this") and UiData.feature("beam_teach") and not hub.match_over and str(opts["control_hints"]) != "off":
+		var hn: int = int(UiPrefs.get_value("taught_report_n", 0))
+		if hn >= 2:
+			_report_hint_done = true   # the first two matches only
+		else:
+			for m in hub.models:
+				if not m.ai and m.teach == "":   # another line is showing: try again next frame
+					var line: String = UiData.t("prompt.teach_report_pad") if (m.device != "" and m.device != "kbd") else UiData.t("prompt.teach_report_keys")
+					hub.say(m, line, 4.0)   # how to report a problem
+					UiPrefs.set_value("taught_report_n", hn + 1)
+					_report_hint_done = true
+					break
+
+
+func _report_slot(device: int) -> int:
+	if device >= 0 and pad_slot_fn.is_valid():
+		return int(pad_slot_fn.call(device))
+	for m in hub.models:
+		if not m.ai:
+			return m.slot
+	return 0
+
+
+## Save a report now for this person; returns the file name ("" when nothing was saved or it was not a moment to: a computer, a screen open, loading, or a second press inside a second).
+func report_now(slot: int) -> String:
+	if not UiData.feature("report_this") or is_loading() or _notice_open or _pm_open or _set_open or _howto_open or _fb_open or _rm_open or _t - _report_t < REPORT_GAP:
+		return ""
+	var m: UiFighterModel = hub.model(slot)
+	if m == null or m.ai:
+		return ""
+	_report_t = _t
+	var file: String = ""
+	var line: String
+	if lan_report_fn.is_valid():
+		file = str(lan_report_fn.call("", ""))
+		line = UiData.fmt("prompt.report_saved", {"file": file}) if file != "" else UiData.t("prompt.report_failed")
+	elif UiWebClip.available():
+		file = "orb-combat-report-%s-%d.json" % [str(match_record().get("seed", "x")), int(Time.get_unix_time_from_system())]
+		UiWebClip.download_text(file, JSON.stringify(match_record(), "  "))
+		line = UiData.t("prompt.report_saved_web")
+	else:
+		line = UiData.t("prompt.report_none")
+	hub.say(m, line, 3.5)
+	return file
+
+
+## The panel's SAVE REPORT (a LAN build): the host saves it with the ticked tags (their ids, joined by commas) and the note, and the panel's second state says where.
+func save_report() -> String:
+	if not lan_report_fn.is_valid():
+		return ""
+	var file: String = str(lan_report_fn.call(",".join(PackedStringArray(feedback_selected_tags())), _fb_text.text))
+	_fb_saved = UiData.fmt("prompt.report_saved", {"file": file}) if file != "" else UiData.t("prompt.report_failed")
+	_fb_prev.text = feedback_report()
+	_fb_state = UiFeedback.STATE_COPIED
+	_fb_status_ok = file != ""
+	_fb_place()
+	_l_fb.invalidate()
+	return file
+
+
+## What "Save this match" saves: a small record of this match (the schema is in docs/ui/lan-report.md). Plain text, no network.
+func match_record() -> Dictionary:
+	var ctx: Dictionary = feedback_context()
+	var winner_name: String = ""
+	if hub.winner >= 0 and hub.winner < hub.models.size():
+		winner_name = str((hub.models[hub.winner] as UiFighterModel).name)
+	return {"schema": "orb-combat-match-record/1", "saved_at": Time.get_unix_time_from_system(), "build": {"commit": str(ctx.get("commit", "")), "date": str(ctx.get("date", ""))}, "seed": ctx.get("seed", ""), "setup": str(ctx.get("setup", "")),
+		"match_time": snappedf(hub.t_now, 0.1), "over": hub.match_over, "winner": winner_name, "settings": UiFeedback.settings_line(opts), "note": _fb_text.text}
+
+
+## "Save this match" on the match-over card: the host saves it (LAN: the same report call, with the player's note), else the web page downloads it, else it says plainly that this build cannot. The card stays open and says what happened for a few seconds.
+func save_match() -> String:
+	var rec: Dictionary = match_record()
+	if lan_report_fn.is_valid():
+		var file: String = str(lan_report_fn.call("", _fb_text.text))
+		_save_status = UiData.fmt("prompt.report_saved", {"file": file}) if file != "" else UiData.t("prompt.report_failed")
+	elif UiWebClip.available():
+		UiWebClip.download_text("orb-combat-match-%s.json" % str(rec.get("seed", "x")), JSON.stringify(rec, "  "))
+		_save_status = UiData.t("prompt.save_done_web")
+	else:
+		_save_status = UiData.t("prompt.save_none")
+	_save_until = _t + 8.0
+	_l_pmenu.invalidate()
+	return _save_status
+
+
 func feedback_report() -> String:
 	var env := {"screen": layout.vp, "dp": dp, "touch": bool(opts["touch_ui"]), "platform": UiFeedback.platform_info(), "settings": UiFeedback.settings_line(opts)}
 	return UiFeedback.build_report(feedback_context(), feedback_selected_tags(), _fb_text.text, env)
@@ -3406,6 +3526,7 @@ func feedback_report() -> String:
 
 ## COPY REPORT: put the report on the clipboard and show it in the read-only box too, for a browser that refuses the write.
 func copy_feedback() -> String:
+	_fb_saved = ""
 	var text: String = feedback_report()
 	DisplayServer.clipboard_set(text)
 	UiWebClip.copy(text)   # on the web also from the page itself (see UiWebClip); a no-op elsewhere
@@ -3456,11 +3577,14 @@ func feedback_action(act: String) -> void:
 	match act:
 		"copy", "again":
 			copy_feedback()
+		"save":
+			save_report()
 		"send":
 			send_feedback()
 		"issue":
 			open_issue()
 		"back":
+			_fb_saved = ""
 			_fb_state = UiFeedback.STATE_WRITE
 			_fb_status_ok = false
 			_fb_opened = false
@@ -3483,12 +3607,15 @@ func _fb_texts() -> Array:
 			note = UiFeedback.target_word("opened")
 		elif bool(_fb_issue.get("fallback", false)):
 			note = UiFeedback.target_word("review") + " " + str(sd.get("too_long", ""))
+	if _fb_saved != "" and _fb_state == UiFeedback.STATE_COPIED:
+		status = _fb_saved   # after SAVE REPORT: what happened, and where reports go
+		note = UiData.t("prompt.report_where")
 	return [status, note]
 
 
 func feedback_plan() -> Dictionary:
 	var t: Array = _fb_texts()
-	return UiFeedback.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), _fb_state, str(t[0]), str(t[1]))
+	return UiFeedback.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), _fb_state, str(t[0]), str(t[1]), lan_report_fn.is_valid())
 
 
 ## Keep the web page's copy of the report current, so its pointer listener can copy it inside the user's gesture.
@@ -3538,6 +3665,8 @@ func _fb_click(pos: Vector2) -> void:
 				return
 		if (p["copy"] as Rect2).has_point(pos):
 			copy_feedback()
+		elif (p["save"] as Rect2).has_point(pos):
+			save_report()
 		elif (p["send"] as Rect2).has_point(pos):
 			send_feedback()
 		elif (p["done"] as Rect2).has_point(pos):
@@ -3753,6 +3882,7 @@ func _touch_button_at(pos: Vector2) -> String:
 
 ## Watches the fingers on the touch buttons, only to draw them (the sim's own touch layer still owns the input): the press shows on the frame it lands.
 func _input(event: InputEvent) -> void:
+	_report_input(event)
 	if is_loading() or not bool(opts["touch_ui"]) or not (event is InputEventScreenTouch):
 		return
 	if event.pressed:

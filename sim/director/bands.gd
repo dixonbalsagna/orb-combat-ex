@@ -52,6 +52,42 @@ static func dist(a, b) -> float:
 	return SimDetMath.hypot(SimWrap.sdx(a.x, b.x), b.y - a.y)
 
 
+## The arrival (bands.arrive, off; Game Design's overnight ruling (c), docs/design/overnight-2026-11-08.md): LT's high speed eases into
+## striking distance (engageBh, where an approach ends) over the last arrive.easeBh, never through it. Called from the free flight's step
+## (SimDir.arrive) after his velocity is steered and before he moves: flying with the dash held, the part of his velocity that closes on his
+## rival may close all the room down to the ease's edge, then easeK of what is left of the ease, and at least floorUnits (to the mark). At
+## the mark it closes nothing. The rest of his velocity (up, down, past at another height) is his own.
+static func arriveOn() -> bool:
+	return on() and bool(data().get("arrive", {}).get("enabled", false))
+
+
+static func arrive(S: SimState, f, dt: float) -> void:
+	if not arriveOn() or f.state != "free" or f.rush != null or f.input == null or not f.input.dash or dt <= 0.0:
+		return
+	var o = DirBrawl.rivalOf(S, f)
+	if o == null or o == f:
+		return
+	var c: Dictionary = data().arrive
+	var dx: float = SimWrap.sdx(f.x, o.x)
+	var dy: float = o.y - f.y
+	var d: float = SimDetMath.hypot(dx, dy)
+	if d < 0.001:
+		return
+	var ux: float = dx / d
+	var uy: float = dy / d
+	var vc: float = f.vx * ux + f.vy * uy   # how fast he closes on him
+	if vc <= 0.0:
+		return
+	var ease: float = float(c.get("easeBh", 1.5)) * BH
+	var room: float = maxf(0.0, d - float(data().engageBh) * BH)
+	var step: float = maxf(0.0, room - ease) + float(c.get("easeK", 0.5)) * minf(room, ease)
+	step = minf(room, maxf(step, float(c.get("floorUnits", 4.0))))
+	var cut: float = vc - step / dt
+	if cut > 0.0:
+		f.vx -= cut * ux
+		f.vy -= cut * uy
+
+
 ## The band a press by a on b falls in now. It is held state (both fighters carry it), set once a live tick with
 ## hysteresisBh across each edge, so a pair hovering on a line does not flip between bands. Before the first tick of
 ## a match it is read straight from the distance.

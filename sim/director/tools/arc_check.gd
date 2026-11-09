@@ -24,6 +24,7 @@ func _init() -> void:
 	_sides()
 	_crater()
 	_brake()
+	_stickSide()
 	DirArc.setForce(-1)
 	print("ARC: %d check(s) failed" % failed)
 	quit(1 if failed > 0 else 0)
@@ -341,6 +342,72 @@ func _sides() -> void:
 	for w in ["popAlive", "popNear", "casualt", "crowd", "menace", "anguish"]:
 		_expect(not body.contains(w), "a landing's score doesn't read " + w)
 	SimCore.dispose(S)
+
+
+
+## A launch goes the way of the blow (launch.json sideFromBlowOnly; Game Design's overnight ruling (a)). At a spot where the landing score
+## prefers the far side: on, no stick (and up, down) keeps the punch's way, toward keeps it, away turns it, and the planner offers nothing
+## behind; off, no stick turns it (the old rule).
+func _stickSide() -> void:
+	var S := _fresh()
+	var A = S.fighters[0]
+	var D = S.fighters[1]
+	var gap: float = SimWrap.sdx(A.x, D.x)
+	var punch: float = 0.0
+	var found: bool = false
+	for k in range(0, 300):   # along the ring until the far side's landing scores higher (water this way, buildings that way)
+		D.x = SimWrap.wrap(D.x + 512.0)
+		A.x = SimWrap.wrap(D.x - gap)
+		punch = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(A.x, D.x)), A.face)
+		if DirArc.landingScore(S, D, 0, -punch) > DirArc.landingScore(S, D, 0, punch):
+			found = true
+			break
+	var d: Dictionary = DirLaunch.data()
+	var on0 = d.get("sideFromBlowOnly", null)
+	d["sideFromBlowOnly"] = true
+	var none: float = DirArc.sideFor(S, A, D, 0, 0)
+	var up: float = DirArc.sideFor(S, A, D, 0, 1)
+	var down: float = DirArc.sideFor(S, A, D, 0, 3)
+	var toward: float = DirArc.sideFor(S, A, D, 0, 2)
+	var away: float = DirArc.sideFor(S, A, D, 0, 4)
+	var behindOn: int = _behind()
+	d["sideFromBlowOnly"] = false
+	var old: float = DirArc.sideFor(S, A, D, 0, 0)
+	var behindOff: int = _behind()
+	if on0 == null:
+		d.erase("sideFromBlowOnly")
+	else:
+		d["sideFromBlowOnly"] = on0
+	print("      a spot where the far side lands better (found %s): punch %.0f; on: none %.0f, up %.0f, down %.0f, toward %.0f, away %.0f, planner candidates behind %d; off: none %.0f, behind %d" % [str(found), punch, none, up, down, toward, away, behindOn, old, behindOff])
+	_expect(found and none == punch and up == punch and down == punch, "sideFromBlowOnly on: with no side from the stick (none, up, down) the curve goes the punch's way, whatever the landing score says")
+	_expect(found and toward == punch and away == -punch, "sideFromBlowOnly on: the stick toward keeps the punch's way, away sends him back past")
+	_expect(behindOn == 0, "sideFromBlowOnly on: the planner offers no candidate behind (%d)" % behindOn)
+	_expect(found and old == -punch, "negative control, sideFromBlowOnly off: with no side from the stick the landing score turns the curve (the old rule)")
+	SimCore.dispose(S)
+
+
+## The planner's candidates (any kind but the knock-back) that point back through the launcher, over spots along the classic ring (its
+## mountains offer MOUNTAINSIDE either way), with the parity profile: the shipped profile's contact block already keeps them forward.
+func _behind() -> int:
+	var prof0: String = DirData.templatesProfile
+	DirData.templatesProfile = "parity"
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 11, {"p1": false, "p2": false}, {"intro": false})
+	var A = S.fighters[0]
+	var D = S.fighters[1]
+	var n: int = 0
+	var x0: float = D.x
+	var gap: float = SimWrap.sdx(A.x, D.x)
+	for k in range(0, 48):
+		D.x = SimWrap.wrap(x0 + 200.0 * k)
+		A.x = SimWrap.wrap(D.x - gap)
+		var r: Dictionary = DirLaunch.chooseLaunch(S, A, D, 1400.0)
+		for c in r.get("all", r.get("top", [])):
+			if String(c.name) != "KNOCK BACK" and float(c.ux) * A.face < 0.0:
+				n += 1
+	SimCore.dispose(S)
+	DirData.templatesProfile = prof0
+	return n
 
 
 ## The crater: the landing's energy is at most tier 4's hardest send's times 1.5, and it digs.

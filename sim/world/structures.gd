@@ -2,23 +2,17 @@ class_name WorldStructures
 ## Buildings and civilians: the twin of structures.js (curH, damageBuilding, damageArea, explode, popNear,
 ## nearestBuilding), with a spatial index, depth rows (docs/world/buildings-in-depth.md), blast-levelled buildings that
 ## implode into their footprint and leave rubble heaps (its section 4c), and every death routed through
-## WorldCollateral.kill (docs/world/collateral-caps.md).
+## WorldCollateral.scatter (nobody dies: docs/design/bystanders.md).
 
 const WS: float = SimConst.WS
-## popNear reads 1 at this many living civilians within the radius: the original 70, times WS / PS because the population
-## per building is scaled by that (terrain.gd _row) while the radius callers pass grows with WS.
-const POP_NEAR_REF: float = 70.0 * SimConst.WS / SimConst.PS   # the old absolute reference (35 people at the original 390): kept for the parity oracle; the sim reads popNearRef(S)
+## The reads of "populated" are shares of the arena's lived-in structure mass, not counts of people (bystanders.md section 2; Game Design, balance-targets section 24): within a radius, 9% of the
+## starting mass is "populated" (1.0); a building's own cap for the planner's care is 2% of it. data/biomes/settlements.json pop_refs {near_share, building_share}.
+static func livedNearRef(S: SimState) -> float:
+	return float(WorldSettle.data().get("pop_refs", {}).get("near_share", 0.09)) * maxf(S.world.mass0, 1.0)
 
 
-## The reads of "populated" are shares of the planet's people, not counts (Game Design, balance-targets section 24): within a radius, 9% of the
-## starting population is "populated" (1.0); a building's own cap for the planner's care is 2% of it. At 390 people that is 35 and 8, as before.
-## data/biomes/settlements.json pop_refs {near_share, building_share}.
-static func popNearRef(S: SimState) -> float:
-	return float(WorldSettle.data().get("pop_refs", {}).get("near_share", 0.09)) * S.world.present
-
-
-static func buildingPopRef(S: SimState) -> float:
-	return float(WorldSettle.data().get("pop_refs", {}).get("building_share", 0.02)) * S.world.present
+static func buildingMassRef(S: SimState) -> float:
+	return float(WorldSettle.data().get("pop_refs", {}).get("building_share", 0.02)) * maxf(S.world.mass0, 1.0)
 ## The nearest-building search skips buildings closer than this (the original 60, times WS: a building is WS times wider).
 const NEAR_MIN: float = 60.0 * SimConst.WS
 ## Depth rows (a building's row field): 0 foreground, 1 the front street, 2 mid, 3 back. Until the director-chosen brunt
@@ -469,19 +463,22 @@ static func damageBuilding(S: SimState, b, d: float, cause, mode: String = "burs
 		d = SimMathx.jmin(d, b.hp - keep * b.maxhp)
 	if not b.alive or d <= 0.0:
 		return
-	var before: float = b.hp
 	var s0: int = stage(b)
+	var first: bool = WorldCollateral.occupied(S, b)   # lived-in and untouched: this blow empties it
 	b.hp -= d
-	var frac: float = SimMathx.jmin(before, d) / b.maxhp
-	var dead: float = SimMathx.jmin(b.popAlive, b.pop * frac * 1.3)
-	if dead > 0.0 and not local:
-		WorldCollateral.kill(S, b.idx, dead, cause, evt, cx)
+	if first:
+		WorldCollateral.emptied(S, b, cause)
+	if b.popAlive > 0.0 and not local:
+		WorldCollateral.scatter(S, b.idx, b.popAlive, cause, evt, cx)   # a building's first damage empties it: they stream out and run (docs/design/bystanders.md)
 	var gy: float = baseY(S, b)
 	if b.hp <= 0.0:
 		b.alive = false
 		S.world.structuresLost += 1.0
+		WorldCollateral.fell(S, b, cause)   # the meters read the city wrecked: menace and power, anguish, the budget (bystanders.md sections 3 and 4)
+		if S.formsOn:   # forms: what fell and who brought it down, for the hero's Witness fill (sim/core/forms.gd; CD-05: the city wrecked, not the dead)
+			SimForms.wrecked(S, b, cause)
 		if b.popAlive > 0.0:
-			WorldCollateral.kill(S, b.idx, b.popAlive, cause, evt, cx)
+			WorldCollateral.scatter(S, b.idx, b.popAlive, cause, evt, cx, -1, "flung")   # a building that falls kills no one: whoever is still inside is thrown clear
 		b.popAlive = 0.0
 		SimFx.debris(S, b.x, gy + b.h * 0.5, 14, "#77808f" if b.kind == "tower" else "#8a6a4a", 620.0)
 		SimFx.dust(S, b.x, gy, 5, "#a89f92")
@@ -669,14 +666,14 @@ static func explode(S: SimState, x: float, y: float, r: float, cause, sf: float 
 	return levelled
 
 
-## Living civilians in standing buildings centred within r of x, scaled so popNearRef(S) or more reads 1.
-static func popNear(S: SimState, x: float, r: float) -> float:
+## The lived-in structure mass of the standing, untouched buildings centred within r of x, scaled so livedNearRef(S) or more reads 1. Housing and structure only: nothing here reads a person.
+static func livedNear(S: SimState, x: float, r: float) -> float:
 	var s: float = 0.0
 	for bi in near(S, x, r):
 		var b = S.buildings[bi]
-		if b.alive and absf(SimWrap.sdx(x, b.x)) < r:
-			s += b.popAlive
-	return SimMathx.jclamp(s / popNearRef(S), 0.0, 1.0)
+		if absf(SimWrap.sdx(x, b.x)) < r:
+			s += WorldCollateral.livedMass(S, b)
+	return SimMathx.jclamp(s / livedNearRef(S), 0.0, 1.0)
 
 
 ## Nearest standing building on the front street on one side (sign), more than NEAR_MIN and less than maxD away, whose

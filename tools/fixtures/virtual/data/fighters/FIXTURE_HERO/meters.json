@@ -11,16 +11,29 @@
       "visible": true,
       "sources": [
         {
-          "event": "casualty",
-          "amount": 0.9,
-          "whose": "self",
-          "_note": "casualties this fighter caused"
+          "event": "destroyed",
+          "amount": 0.3,
+          "whose": "opponent",
+          "within": 3000,
+          "_note": "collateral devastation: a building anyone else brings down within `within` units of him (shortest arc), per unit of mass, times the arena norm. `within` is the reach of every row below too (a fall, a place emptied, the failing to protect)"
         },
         {
-          "event": "casualty",
+          "event": "destroyed",
+          "amount": 0.6,
+          "whose": "self",
+          "_note": "... and a building he brings down himself"
+        },
+        {
+          "event": "emptied",
           "amount": 0.5,
-          "whose": "opponent",
-          "_note": "casualties anyone else caused"
+          "whose": "any",
+          "_note": "a lived-in building emptied within `within` of him (its first damage), times the norm"
+        },
+        {
+          "event": "failed_to_protect",
+          "amount": 1,
+          "whose": "self",
+          "_note": "a cost to him, not a reward: a building falls inside the place he is fighting in while he is the nearest fighter to it, per unit of mass, times the norm"
         }
       ],
       "decay": {

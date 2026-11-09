@@ -738,7 +738,7 @@ static func swap(S: SimState) -> void:
 	S.world.lotAcc = lot
 	S.popHist.fill(0.0)
 	for b in S.buildings:
-		S.popHist[WorldCollateral.histBucket(b.x)] += b.popAlive
+		S.popHist[WorldCollateral.histBucket(b.x)] += WorldCollateral.livedMass(S, b)
 	var oldWater: PackedFloat32Array = S.water.duplicate()
 	var oldLakes: Array = S.planetRing.get("lakes", [])
 	WorldWater.init(S)

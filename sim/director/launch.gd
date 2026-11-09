@@ -34,7 +34,7 @@ const HAUL_MIN: float = 1.6 * DIST_UNIT     # below this predicted travel SMASH 
 const HAUL_SHORT: float = 100.0            # the score it loses then
 const MOUNTAIN_STEP: float = 520.0 * SimConst.WS   # the mountainside probe: first step (the old single probe) ...
 const MOUNTAIN_REACH: float = 1560.0 * SimConst.WS # ... and the farthest slope it looks for (12,480 units)
-const OPEN_POP: float = 0.2         # popNear(landing, CARE_R) at or below this is open ground
+const OPEN_POP: float = 0.2         # livedNear(landing, CARE_R) at or below this is open ground
 const NEW_BIOME_W: float = 10.0     # predicted landing in a different biome that is not ocean
 const WATER_W: float = 45.0         # predicted landing in the sea
 const NONE_BASE: float = 25.0       # "no launch" in the old profiles; the knock-back's score is data (launch.json knockBack.score)
@@ -44,7 +44,7 @@ const KNOCKBACK: float = 700.0      # push when no launch is chosen
 ## BUILDING SMASH scoring (B2). The occupancy term saturates at BRUNT_POP_REF living people: at today's scale a building holds
 ## one to five, not the thirteen the first draft assumed.
 const BRUNT_BASE: float = 14.0
-const BRUNT_POP_REF: float = 8.0   # the old absolute cap: WorldStructures.buildingPopRef(S) (2% of the starting population) is what is read
+const BRUNT_POP_REF: float = 8.0   # the old absolute cap: WorldStructures.buildingMassRef(S) (2% of the starting population) is what is read
 const BRUNT_TALL_W: float = 12.0     # the fighter who feeds on collateral seeks tall buildings
 const BRUNT_FRESH: float = 4.0       # an undamaged building
 const BRUNT_ROW_W: float = 2.0       # ... and deeper rows (more dramatic)
@@ -158,6 +158,13 @@ static func _newBiomeDue(S: SimState, town: Dictionary) -> bool:
 	return paid <= 0.0 or S.T - paid >= every
 
 
+## sideFromBlowOnly (launch.json, off; Game Design's overnight ruling (a)): a launch goes the way of the blow, and only the stick picks the
+## far side. On, the planner offers no candidate behind the rival's far side of the launcher, and the curve keeps the punch's way
+## (DirArc.sideFor).
+static func sideFromBlowOnly() -> bool:
+	return bool(data().get("sideFromBlowOnly", false))
+
+
 ## Whether CRATER SLAM is offered: the rival is directly below the launcher, or the launcher is at the set piece's tier
 ## and has not thrown one in the last everySec seconds. (Break and finisher launches keep their authored vectors.)
 static func craterOffered(S: SimState, A, D) -> bool:
@@ -202,7 +209,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 	var hadBrunt: bool = false
 	# Contact (contact-spacing.md section 5.1): no launch goes back through the launcher. With a contact block only the
 	# targets on the far side of the rival are offered.
-	var fwdOnly: bool = not DirData.contact().is_empty()
+	var fwdOnly: bool = not DirData.contact().is_empty() or sideFromBlowOnly()   # sideFromBlowOnly: the stick alone picks the far side, and a launch can't aim back through the launcher
 	var cuts: bool = cutsOn()   # buildings.md section 8: at most aimMax buildings aimed, and one flight an arc for them
 	var all: Array = WorldBrunt.candidates(S, D)
 	var cands: Array = all
@@ -272,7 +279,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 			k.s -= preferW * float(DirBrawl.freshMarks(S, D, DirBrawl.kindOfSend(k)))
 		if k.name == "KNOCK BACK":
 			# Holding back leaves the fight where it is: the same personality term, at the target's position.
-			k.s += (-A.care) * CARE_W * WorldStructures.popNear(S, D.x, CARE_R)
+			k.s += (-A.care) * CARE_W * WorldStructures.livedNear(S, D.x, CARE_R)
 			continue
 		if k.has("brunt"):
 			# A brunt is scored by bruntScore; its flight is WorldBrunt's, so there is nothing to predict here.
@@ -316,7 +323,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 		k.p = p
 		var lx: float = k.land if k.has("land") else p.x
 		k.travel = absf(SimWrap.sdx(D.x, lx)) if k.has("land") else p.travel
-		var popL: float = WorldStructures.popNear(S, lx, CARE_R)
+		var popL: float = WorldStructures.livedNear(S, lx, CARE_R)
 		k.s += (-A.care) * CARE_W * popL
 		k.s += DirVisit.cost(S, D, lx)
 		# Distance and new ground only count when the landing is open ground: long hauls carry the fight to empty land.
@@ -424,11 +431,11 @@ static func _capAimed(S: SimState, D, cands: Array) -> Array:
 	var n: int = int(cutsCfg().get("aimMax", 3))
 	if cands.size() <= n:
 		return cands
-	var popRef: float = WorldStructures.buildingPopRef(S)
+	var popRef: float = WorldStructures.buildingMassRef(S)
 	var rows: Array = []
 	for i in range(cands.size()):
 		var b = S.buildings[cands[i]]
-		rows.append([WorldBrunt._cheap(b, popRef), i, 0 if SimWrap.sdx(D.x, b.x) < 0.0 else 1])
+		rows.append([WorldBrunt._cheap(S, b, popRef), i, 0 if SimWrap.sdx(D.x, b.x) < 0.0 else 1])
 	rows.sort_custom(func(p, q): return p[0] > q[0] or (p[0] == q[0] and p[1] < q[1]))
 	var keep: Array = rows.slice(0, n)
 	for sd in [0, 1]:
@@ -879,7 +886,7 @@ static func bruntScore(S: SimState, A, plan: Dictionary) -> float:
 	var first = S.buildings[chain[0].b]
 	for i in range(chain.size()):
 		var cb = S.buildings[chain[i].b]
-		pers += (-A.care) * CARE_W * clampf(cb.popAlive / WorldStructures.buildingPopRef(S), 0.0, 1.0)
+		pers += (-A.care) * CARE_W * clampf(WorldCollateral.livedMass(S, cb) / WorldStructures.buildingMassRef(S), 0.0, 1.0)
 		if A.care < 0.0:
 			pers += (-A.care) * BRUNT_TALL_W * clampf(cb.h / SimConst.WS / 400.0, 0.0, 1.0)
 	if A.care > 0.0:
@@ -894,8 +901,8 @@ static func bruntScore(S: SimState, A, plan: Dictionary) -> float:
 	if chain.size() > 1:
 		var allow: float = 0.0
 		if A.tier >= 3.0:
-			allow = WorldCollateral.eventAllow("chain", int(A.tier)) * S.world.present
-		if plan.brunt.deaths > WorldCollateral.room(S) + allow:
+			allow = WorldCollateral.eventAllow("chain", int(A.tier)) * S.world.mass0
+		if plan.brunt.mass > WorldCollateral.room(S) + allow:
 			s -= BRUNT_OVER_BUDGET
 	return s
 
@@ -1332,7 +1339,7 @@ static func _wallPlan(S: SimState, att, tgt, s: float, w: Dictionary, best, bd: 
 			var chain: Array = WorldBrunt.chainPlan(S, WorldBrunt.tierOf(att, tgt), false, best, fr, 1.0)
 			var edge: float = SimWrap.wrap(best.x - s * best.w * 0.5)
 			return {"name": "KNOCK BACK", "ux": s, "uy": float(uy), "fm": 1.0, "sp": sp,
-				"brunt": {"b": best.idx, "hit": fr, "chain": chain, "deaths": WorldBrunt.chainDeaths(chain), "z1": WorldBrunt.faceZ(best), "aimD": absf(SimWrap.sdx(tgt.x, edge))}}
+				"brunt": {"b": best.idx, "hit": fr, "chain": chain, "mass": WorldBrunt.chainMass(S, chain), "z1": WorldBrunt.faceZ(best), "aimD": absf(SimWrap.sdx(tgt.x, edge))}}
 	return null
 
 

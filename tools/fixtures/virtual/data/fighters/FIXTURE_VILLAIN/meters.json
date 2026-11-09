@@ -11,16 +11,46 @@
       "visible": true,
       "sources": [
         {
-          "event": "casualty",
-          "amount": 0.9,
+          "event": "destroyed",
+          "amount": 0.8,
           "whose": "self",
-          "_note": "casualties this fighter caused"
+          "_note": "a building his blow, send, beam or body brings down, per unit of its mass (a house 1, a low tower 5, a tall tower 15: power.json absorb), times the arena norm (collateral.json massRef over the structure mass at the start) (bystanders.md section 3)"
         },
         {
-          "event": "evacuee",
-          "amount": 0.45,
+          "event": "destroyed_power",
+          "amount": 0.07,
           "whose": "self",
-          "_note": "people this fighter's blows forced to flee"
+          "_note": "his power from the world: per unit of mass he levels, the same norm. Game Design's first value was 0.22; 0.07 puts a match's power from the world within 20% of what the old 0.09 a person gave (2.5 against 2.6 on the hand-made arena, 5.9 against 5.1 on planet 7, the mean of 16 and 6 AI matches, docs/world/runs/)"
+        },
+        {
+          "event": "crater",
+          "amount": 1,
+          "whose": "self",
+          "minBh": 3,
+          "_note": "a crater his send or beam digs, at least minBh body heights across (powering up on the ground does not count)"
+        },
+        {
+          "event": "emptied",
+          "amount": 1,
+          "whose": "self",
+          "sizes": [
+            1,
+            2,
+            3
+          ],
+          "_note": "terror: a lived-in building his blow empties (its first damage), by its size (a house, a low tower, a tall tower), times the arena norm; the lived-in flag is the building, never who is inside"
+        },
+        {
+          "event": "region_broken",
+          "amount": 8,
+          "whose": "opponent",
+          "_note": "combat trauma: a region of the opposing fighter broken (not normalised)"
+        },
+        {
+          "event": "brink",
+          "amount": 10,
+          "whose": "opponent",
+          "_note": "combat trauma: the opposing fighter reaches the brink (each time; not normalised)"
         }
       ],
       "decay": {

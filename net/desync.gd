@@ -96,6 +96,8 @@ static func _digest(S: SimState) -> String:
 	if S.powerOn:   # one energy model, as SimHash reads it
 		v.append(S.powerFlat)
 		v.append(S.powerTravel)
+		if S.dashOn:   # the dash at any range, as SimHash reads it
+			v.append(1.0)
 	if S.kickOn:   # the kick and the coin turn, as SimHash reads them
 		for f in S.fighters:
 			_fields(v, md, f.kik, SimKick.HASHED)
@@ -160,17 +162,21 @@ static func replayOf(sess: NetSession, info: Dictionary, upto: int) -> Dictionar
 		if int(e[3]) != 0:
 			entry.append(e[3])   # SimReplay's fifth number: the second word, where it is not 0
 		rp.inputs.append(entry)
-	rp.toggles = togglesOf(sess.aiFrom, rp.ai, upto)
+	rp.toggles = togglesOf(sess.aiFrom, rp.ai, upto, sess.slotOf)
 	return rp
 
 
 ## A session's takeovers as a replay's toggles ([tick, slot], toggleAI before that tick, in tick order): the ones below
 ## `upto`, for slots that did not start as the AI (`ai` is newMatch's flags).
-static func togglesOf(aiFrom: Dictionary, ai: Dictionary, upto: int) -> Array:
+## With two fights (slotOf, the session's map of players to the sim's slots) a toggle names the player's starting slot, as his inputs do.
+static func togglesOf(aiFrom: Dictionary, ai: Dictionary, upto: int, slotOf: Array = []) -> Array:
 	var out: Array = []
 	for k in aiFrom:
-		if int(aiFrom[k]) < upto and not bool(ai.get("p%d" % (int(k) + 1), false)):
-			out.append([int(aiFrom[k]), int(k)])
+		if int(k) < 0 or (not slotOf.is_empty() and int(k) >= slotOf.size()):
+			continue
+		var slot: int = int(slotOf[int(k)]) if not slotOf.is_empty() else int(k)
+		if int(aiFrom[k]) < upto and not bool(ai.get("p%d" % (slot + 1), false)):
+			out.append([int(aiFrom[k]), slot])
 	out.sort_custom(func(a, b): return a[0] < b[0] or (a[0] == b[0] and a[1] < b[1]))
 	return out
 

@@ -2,14 +2,16 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "meridian/biomes-collateral",
   "title": "biomes.collateral/1",
-  "description": "data/biomes/collateral.json: the collateral tables (docs/world/collateral-run.md; WorldCollateral). budget and ceiling: four shares by tier; eventAllow: four shares by tier for each set-piece kind (slide, chain, landslide, quake, catastrophe); meterNorm: pop0 or present. Every key required. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "description": "data/biomes/collateral.json: the collateral tables (docs/world/collateral-run.md; WorldCollateral), on the arena's structure mass since CD-05. budget and ceiling: four shares of it by tier; eventAllow: four shares by tier for each set-piece kind (slide, chain, landslide, quake, catastrophe); massRef: the reference arena's structure mass (the meters' mass gains are times this over the arena's own); meterNorm: retired with the people it divided by. Every key required. Version field: schema. Policy: closed except keys starting with an underscore.",
   "type": "object",
   "required": [
     "schema",
     "budget",
     "ceiling",
     "eventAllow",
-    "meterNorm"
+    "meterNorm",
+    "massRef",
+    "bystanders"
   ],
   "properties": {
     "schema": {
@@ -107,6 +109,25 @@
           "description": "What one catastrophe may borrow beyond the window, by tier"
         }
       }
+    },
+    "bystanders": {
+      "type": "object",
+      "required": ["scatterBh", "flingSpeed", "bouncesMax", "upWithinSec", "throwClearOnFall"],
+      "properties": {
+        "scatterBh": {"type": "number", "exclusiveMinimum": 0},
+        "flingSpeed": {"type": "array", "items": {"type": "number", "minimum": 0}, "minItems": 2, "maxItems": 2},
+        "bouncesMax": {"type": "integer", "minimum": 0},
+        "upWithinSec": {"type": "number", "exclusiveMinimum": 0},
+        "throwClearOnFall": {"type": "boolean"}
+      },
+      "additionalProperties": false,
+      "patternProperties": {"^_": true},
+      "description": "Bystanders: how far people scatter, how fast and how often they are flung, how soon they are up (docs/design/bystanders.md)"
+    },
+    "massRef": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "The structure mass of the reference arena: the meters' gains by mass are times this over the arena's own mass at its start"
     },
     "meterNorm": {
       "enum": [

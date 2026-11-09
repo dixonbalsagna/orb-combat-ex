@@ -38,8 +38,9 @@
   "branches": {
     "witness": {
       "range": 3000.0,
-      "perPerson": 4.0,
-      "ownKill": 2.0,
+      "perMass": 16.0,
+      "ownMass": 32.0,
+      "_perMass": "CD-05 (Game Design's bystanders.md section 4): Witness fills by the mass of what his opponent brings down within range of him (a house 1, a low tower 5, a tall one 15: power.json absorb), never by the dead; each unit he brings down himself takes ownMass, twice its worth, off it. Calibrated to the old perPerson 4's fill",
       "damage": 0.04,
       "launch": 0.08,
       "care": 0.5

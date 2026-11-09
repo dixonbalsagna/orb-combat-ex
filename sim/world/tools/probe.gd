@@ -346,93 +346,19 @@ func _init() -> void:
 	check(multi == 0, "no launch leaves more than one crater on the ground")
 
 
-	print("== collateral: the rolling budget, borrowing, the ceiling, evacuation ==")
+	print("== collateral: nobody dies (CD-05): people hit run, none is counted ==")
 	var Sc := fresh()
-	var pop0: float = Sc.world.pop0
 	var bcity: int = -1
 	for b in Sc.buildings:
 		if b.kind == "tower" and b.row == 1.0 and b.pop >= 8.0:
 			bcity = b.idx
 			break
-	var cause = Sc.fighters[1]
-	Sc.fighters[0].tier = 1.0
-	Sc.fighters[1].tier = 1.0
-	var want_total: float = 0.0
-	var granted_total: float = 0.0
+	var ran_sum: float = 0.0
 	for k in range(60):
 		var bb = Sc.buildings[bcity + (k % 20)]
-		var w: float = minf(bb.popAlive, 2.0)
-		want_total += w
-		granted_total += WorldCollateral.kill(Sc, bb.idx, w, cause, 0.0, bb.x)
-	print("  tier 1, T 0: %.1f people would die, %.2f may (budget %.2f = 2 percent of %.0f), evacuated %.2f" % [want_total, granted_total, 0.02 * pop0, pop0, Sc.world.evacuated])
-	check(granted_total <= 0.02 * pop0 + 0.001, "tier 1: no more than 2 percent die in 60 s")
-	check(absf(granted_total + Sc.world.evacuated - want_total) < 0.001, "casualties plus evacuated equal what would have died")
-	Sc.T = 61.0
-	check(WorldCollateral.room(Sc) > 0.019 * pop0, "the window refills after 60 s")
-	# borrowing: only at tier 3 and above, only for the event's own token
-	var Sb := fresh()
-	Sb.fighters[0].tier = 3.0
-	Sb.fighters[1].tier = 1.0
-	var tok: float = WorldCollateral.beginEvent(Sb, "slide", Sb.fighters[1])
-	var g3: float = 0.0
-	var pop3: float = Sb.world.pop0
-	for bb in Sb.buildings:
-		g3 += WorldCollateral.kill(Sb, bb.idx, bb.popAlive, Sb.fighters[1], tok, bb.x)
-	print("  tier 3, one slide: %.2f died (window 8 percent = %.2f plus the slide allowance 5 percent = %.2f)" % [g3, 0.08 * pop3, 0.05 * pop3])
-	check(g3 <= 0.13 * pop3 + 0.001 and g3 > 0.08 * pop3, "tier 3: a slide borrows up to 5 percent beyond the window")
-	var Sn := fresh()
-	Sn.fighters[0].tier = 3.0
-	Sn.fighters[1].tier = 1.0
-	WorldCollateral.beginEvent(Sn, "slide", Sn.fighters[1])
-	var gn: float = 0.0
-	for bb in Sn.buildings:
-		gn += WorldCollateral.kill(Sn, bb.idx, bb.popAlive, Sn.fighters[1], 0.0, bb.x)
-	check(gn <= 0.08 * Sn.world.pop0 + 0.001, "another source (token 0) cannot use the slide allowance")
-	var S1t := fresh()
-	S1t.fighters[0].tier = 1.0
-	WorldCollateral.beginEvent(S1t, "slide", S1t.fighters[1])
-	check(S1t.world.evtLeft == 0.0, "no borrowing at tier 1 or 2")
-	# the ceiling
-	var Sx := fresh()
-	Sx.fighters[0].tier = 4.0
-	Sx.world.maxTier = 1.0
-	Sx.world.casualties = 0.099 * Sx.world.pop0
-	WorldCollateral.kill(Sx, bcity, 5.0, Sx.fighters[1], 0.0, 0.0)
-	check(Sx.world.casualties <= 0.10 * Sx.world.pop0 + 0.001, "the cumulative ceiling holds (10 percent at highest tier 1)")
-	# normalisation and data-driven anguish
-	var Sm1 := fresh()
-	var Sm2 := fresh()
-	Sm2.world.pop0 = Sm1.world.pop0 * 2.0
-	WorldCollateral._feed(Sm1, 0.01 * Sm1.world.pop0, Sm1.fighters[1])
-	WorldCollateral._feed(Sm2, 0.01 * Sm2.world.pop0, Sm2.fighters[1])
-	check(absf(Sm1.fighters[1].menace - Sm2.fighters[1].menace) < 0.001 and absf(Sm1.fighters[0].anguish - Sm2.fighters[0].anguish) < 0.001, "a share of the population lost feeds the meters the same on any planet")
-	var Sa := fresh()
-	Sa.fighters[1].hasAnguish = true
-	WorldCollateral._feed(Sa, 4.0, Sa.fighters[1])
-	var an_ok: bool = true
-	for fi in range(2):
-		var fx = Sa.fighters[fi]
-		var want_an: float = 4.0 * (fx.md.anguishCasSelf if fi == 1 else fx.md.anguishCasOther) * WorldCollateral.POP_REF / Sa.world.pop0
-		print("  fighter %d: anguish %.3f after 4 casualties (data says %.3f)" % [fi, fx.anguish, want_an])
-		if absf(fx.anguish - want_an) > 0.001:
-			an_ok = false
-	check(an_ok, "every fighter with the meter gains anguish at its data rates (meters.json: casualty/self, casualty/opponent)")
-	# the choke point: nothing but collateral.gd feeds casualties. Simulation's forms.gd (SimForms.casualty, the Witness fill, a granted World line) defines a function of that
-	# name: it may be defined there, but it counts nothing (no world.casualties, no _feed), and only collateral.gd may call it
-	var stray: int = 0
-	for sub in ["core", "world", "director", "input"]:
-		var d2 := DirAccess.open("res://sim/" + sub)
-		for fname in d2.get_files():
-			if fname.ends_with(".gd") and fname != "collateral.gd":
-				var txt: String = FileAccess.get_file_as_string("res://sim/" + sub + "/" + fname)
-				if sub == "core" and fname == "forms.gd":
-					txt = txt.replace("static func casualty(", "")
-				var calls: bool = txt.contains("casualty(")
-				if calls or txt.contains("world.casualties +=") or txt.contains("_feed("):
-					stray += 1
-					print("  stray casualty code in " + sub + "/" + fname)
-	check(stray == 0, "no casualty is counted outside collateral.gd (SimForms.casualty is only defined in forms.gd, and called from collateral.gd)")
-	# every source, budget spent: nothing dies, the people flee
+		ran_sum += WorldCollateral.scatter(Sc, bb.idx, minf(bb.popAlive, 2.0), Sc.fighters[1], 0.0, bb.x)
+	check(ran_sum > 0.0 and Sc.world.casualties == 0.0 and Sc.world.evacuated >= ran_sum - 0.001, "people hit run and are counted as no one's death (%.1f ran, count %.3f)" % [ran_sum, Sc.world.casualties])
+	# every source: nothing dies, the people flee
 	var Sd := fresh()
 	Sd.fighters[0].tier = 1.0
 	Sd.fighters[1].tier = 1.0
@@ -466,13 +392,13 @@ func _init() -> void:
 		var rq: float = rg3.range_(500.0, 20000.0)
 		var brute: float = 0.0
 		for b in Sr.buildings:
-			if b.alive and absf(SimWrap.sdx(xq, b.x)) < rq:
-				brute += b.popAlive
-		var viaIdx: float = WorldStructures.popNear(Sr, xq, rq) * WorldStructures.popNearRef(Sr)
-		var cl: float = minf(brute, WorldStructures.popNearRef(Sr))
+			if absf(SimWrap.sdx(xq, b.x)) < rq:
+				brute += WorldCollateral.livedMass(Sr, b)
+		var viaIdx: float = WorldStructures.livedNear(Sr, xq, rq) * WorldStructures.livedNearRef(Sr)
+		var cl: float = minf(brute, WorldStructures.livedNearRef(Sr))
 		if absf(viaIdx - cl) > 0.01:
 			idx_ok = false
-	check(idx_ok, "popNear through the spatial index equals the brute-force sum")
+	check(idx_ok, "livedNear through the spatial index equals the brute-force sum of the lived-in structure mass")
 	var tw = null
 	for b in Sr.buildings:
 		if b.kind == "tower" and b.row == 1.0:
@@ -583,23 +509,6 @@ func _init() -> void:
 	check(dry_connected == 0, "no dry column below the shore limit is connected to the sea")
 	check(init_mismatch == 0, "the start water is the reservoir plus the connected shallows and nothing else")
 	check(max_step <= absf(WorldWater.SHORE_WET) + 1.0, "the step from the sea's surface to the land beside it is at most a quarter of a fighter height")
-	# evacuee menace
-	var Se := fresh()
-	Se.fighters[0].tier = 1.0
-	Se.fighters[1].tier = 1.0
-	Se.world.cbSum = 1000.0
-	Se.world.cbBuckets[0] = 1000.0
-	var m0: float = Se.fighters[1].menace
-	var an0: float = Se.fighters[0].anguish
-	var bt = null
-	for b in Se.buildings:
-		if b.pop >= 3.0:
-			bt = b
-			break
-	WorldCollateral.kill(Se, bt.idx, 3.0, Se.fighters[1], 0.0, bt.x)
-	var expect_m: float = 3.0 * WorldCollateral.EVAC_MENACE * 425.0 / Se.world.pop0
-	print("  three evacuees caused by the villain: menace +%.2f (wanted %.2f), anguish +%.2f" % [Se.fighters[1].menace - m0, expect_m, Se.fighters[0].anguish - an0])
-	check(absf(Se.fighters[1].menace - m0 - expect_m) < 0.001 and Se.fighters[0].anguish == an0, "evacuees feed the causer's menace at 0.45 times 425 / pop0 and nobody's anguish")
 
 	print("== B2: aimed launches, chains, floors (docs/world/b2-plan.md) ==")
 	var aimed: int = 0

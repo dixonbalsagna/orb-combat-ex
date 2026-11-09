@@ -10,13 +10,15 @@ const ENTRIES: Array = ["resume", "howto", "settings", "feedback", "about", "men
 const ENTRIES_TWO: Array = ["resume", "howto", "settings", "feedback", "about", "p2_leave", "menu", "new"]
 ## The card that opens a few seconds after a match ends.
 const ENTRIES_OVER: Array = ["again", "menu", "feedback"]
+## The same with "Save this match" (features.json save_match): a small file of this match, in plain words.
+const ENTRIES_OVER_SAVE: Array = ["again", "save", "menu", "feedback"]
 const CONFIRM: Array = ["new_yes", "new_no"]
 const KEYS: Dictionary = {"resume": "pause_resume_key", "howto": "pause_howto_key", "new": "pause_new_key"}
 
 
 static func ids(confirm: bool, two: bool = false, over: bool = false) -> Array:
 	if over and not confirm:
-		return ENTRIES_OVER
+		return ENTRIES_OVER_SAVE if UiData.feature("save_match") else ENTRIES_OVER
 	return CONFIRM if confirm else (ENTRIES_TWO if two else ENTRIES)
 
 
@@ -31,7 +33,10 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 	var confirm: bool = bool(st.get("confirm", false))
 	var over: bool = bool(st.get("over", false))
 	var list: Array = ids(confirm, bool(st.get("two", false)), over)
-	var join: bool = bool(st.get("join", false)) and not confirm
+	var status: String = str(st.get("status", "")) if not confirm else ""   # a short line under the buttons (Save this match says what happened); it takes the join line's place for its moment
+	var where_text: String = str(st.get("where", "")) if not confirm else ""   # where saved reports go (a LAN build)
+	var p2_join: bool = bool(st.get("join", false)) and not confirm and status == ""
+	var join: bool = (p2_join or status != "" or where_text != "") and not confirm
 	var tm: float = maxf(48.0 * dp, 44.0)
 	var margin: float = maxf(vp.x * 0.03, 12.0)
 	var my: float = maxf(vp.y * 0.04, 10.0)
@@ -53,7 +58,16 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 		var w: float = UiText.width(label(id), fs_body) + (UiText.width(UiData.t("prompt." + str(KEYS[id])) , fs_small) + pad if (not touch and KEYS.has(id)) else 0.0)
 		widest = maxf(widest, w)
 	var bw0: float = maxf(maxf(300.0 * cs, tm * 4.0), widest + tm * 0.9)
-	var join_text: String = UiData.t("prompt.pause_p2_join") if join else ""
+	var foot_texts: Array = []
+	if status != "":
+		foot_texts.append(status)
+	elif p2_join:
+		foot_texts.append(UiData.t("prompt.pause_p2_join"))
+	if where_text != "":
+		foot_texts.append(where_text)
+	for ft3 in foot_texts:
+		for w3 in str(ft3).split(" "):
+			bw0 = maxf(bw0, UiText.width(w3, fs_small) + tm * 0.9)   # a saved file's name is one long word: the card is as wide as it needs (the screen still caps it)
 	var lh_small: float = UiText.height(fs_small) * 1.15
 	var facts_lines := PackedStringArray()
 	for ft in facts:
@@ -62,13 +76,16 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 	var facts_h: float = (float(facts_lines.size()) * lh_small + gap) if facts_lines.size() > 0 else 0.0
 	title_h += facts_h   # the buttons start below the facts
 	var cols: int = 1
-	var join_h1: float = (lh_small * 2.0 + gap) if join else 0.0
+	var join_h1: float = (lh_small * 2.0 * float(foot_texts.size()) + gap) if join else 0.0
 	if title_h + float(list.size()) * (tm + gap) - gap + join_h1 > avail_h:
 		cols = 2
 	var rows_n: int = int(ceil(float(list.size()) / float(cols)))
 	var bw: float = minf(bw0, (avail_w - float(cols - 1) * gap) / float(cols))
 	var cw: float = float(cols) * bw + float(cols - 1) * gap + 2.0 * pad
-	var join_lines: PackedStringArray = UiText.wrap(join_text, fs_small, cw - 2.0 * pad) if join else PackedStringArray()
+	var join_lines := PackedStringArray()
+	if join:
+		for ft2 in foot_texts:
+			join_lines.append_array(UiText.wrap(str(ft2), fs_small, cw - 2.0 * pad))
 	var join_h: float = (float(join_lines.size()) * lh_small + gap) if join else 0.0
 	var chh: float = pad * 2.0 + title_h + float(rows_n) * (tm + gap) - gap + join_h
 	var card := Rect2((vp.x - cw) * 0.5, (vp.y - chh) * 0.5, cw, chh)
@@ -80,6 +97,9 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 		var id: String = str(list[i])
 		items.append({"id": id, "label": label(id), "key": UiData.t("prompt." + str(KEYS[id])) if (KEYS.has(id) and not touch) else "", "rect": r})
 	var fits: bool = Rect2(Vector2.ZERO, vp).encloses(card) and UiText.width(title, fs_title) <= cw - 2.0 * pad
+	for jl in join_lines:
+		if UiText.width(str(jl), fs_small) > cw - 2.0 * pad + 0.5:
+			fits = false   # a foot line (a file name too long for the card) would spill over its edge
 	for it in items:
 		var need: float = UiText.width(str(it["label"]), fs_body) + (UiText.width(str(it["key"]), fs_small) + gap * 2.0 if str(it["key"]) != "" else 0.0) + 16.0
 		if need > bw or not card.encloses(it["rect"]) or (it["rect"] as Rect2).size.y < tm - 0.01:
@@ -117,7 +137,7 @@ static func moved(p: Dictionary, focus: int, dx: int, dy: int) -> int:
 
 
 static func sig(p: Dictionary) -> Array:
-	return [int((p["card"] as Rect2).size.x), int((p["card"] as Rect2).size.y), int(p["cs"] * 100.0), p["touch"], int(p["focus"]), p["confirm"], p["two"], p["join"], str(p["facts_lines"])]
+	return [int((p["card"] as Rect2).size.x), int((p["card"] as Rect2).size.y), int(p["cs"] * 100.0), p["touch"], int(p["focus"]), p["confirm"], p["two"], p["join"], str(p["facts_lines"]), str(p["join_lines"])]
 
 
 static func draw(ci: CanvasItem, p: Dictionary) -> void:

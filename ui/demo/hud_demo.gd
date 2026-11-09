@@ -208,6 +208,8 @@ func _ready() -> void:
 		tg["mailto"]["to"] = "team@example.test"
 		tg["form"]["url"] = "https://forms.example.test/f?t={title}&b={body}"
 		UiFeedback.target_override = str(args["target"])
+	if args.has("lan"):
+		hud.lan_report_fn = func(_tags, _note) -> String: return "saved/report-2026-11-08-1432.json"   # --lan: a LAN host's report hook (Save report in the feedback panel, the pause screen's line, F9)
 	if args.has("ko"):
 		hud.consume({"type": "ko", "winner": 0, "loser": 1})
 		for i in range(240):
@@ -220,6 +222,8 @@ func _ready() -> void:
 		if str(args["feedback"]) == "review":
 			hud.feedback_fn = func(): return {"commit": "02c8fd3", "date": "2026-09-30", "seed": 123456, "time": 222.0}
 			hud.send_feedback()
+		if str(args["feedback"]) == "saved":
+			hud.save_report()   # (with --lan) the panel after SAVE REPORT
 		if str(args["feedback"]) == "copied":
 			hud.feedback_fn = func(): return {"commit": "02c8fd3", "date": "2026-09-30", "seed": 123456, "time": 222.0}
 			hud.copy_feedback()
@@ -245,6 +249,12 @@ func _ready() -> void:
 			hud.pause_menu_action("down")
 		if args.has("pconfirm"):
 			hud.pause_menu_choose("new")
+	if args.has("report"):
+		hud.report_now(0)   # --report (with --lan): F9 pressed: the legend row says what was saved
+	if args.has("over"):
+		hud.show_pause_menu(true)   # --over (with --ko): the match-over card
+		if args.has("saved"):
+			hud.save_match()   # --saved: the card after "Save this match" (with --lan, the host's answer; else what the build can do)
 	if args.has("remap"):
 		UiData.set_feature("remap", true)
 		hud.show_remap("" if str(args["remap"]) == "1" else str(args["remap"]))

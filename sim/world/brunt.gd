@@ -382,6 +382,13 @@ static func massOf(b) -> float:
 	return float(a.lowTower) if b.h < float(cfg().powerLowTowerMaxH) else float(a.tallTower)
 
 
+## The size of a place for the terror gain: 0 a house, 1 a low tower, 2 a tall tower (massOf's own cut).
+static func sizeClass(b) -> int:
+	if isHouse(b):
+		return 0
+	return 1 if b.h < float(cfg().powerLowTowerMaxH) else 2
+
+
 ## The share of the speed a body keeps after a building takes m of its energy E: the root of what is left.
 static func keepAfter(E: float, m: float) -> float:
 	return clampf(sqrt(maxf(E - m, 0.0) / maxf(E, 1.0e-9)), 0.0, 1.0)
@@ -397,8 +404,8 @@ static func _outcomePower(S: SimState, b, y: float, spN: float) -> Dictionary:
 	var keep: float = keepAfter(E, m) if through else 0.0
 	if isHouse(b):
 		if through:
-			return {"floors": false, "dmg": b.hp, "ratio": 999.0, "outcome": "collapse", "pass": true, "keep": keep, "deaths": b.popAlive}
-		return {"floors": false, "dmg": E / m * b.maxhp * 0.5, "ratio": E / m, "outcome": "crack", "pass": false, "keep": 0.0, "deaths": 0.0}
+			return {"floors": false, "dmg": b.hp, "ratio": 999.0, "outcome": "collapse", "pass": true, "keep": keep}
+		return {"floors": false, "dmg": E / m * b.maxhp * 0.5, "ratio": E / m, "outcome": "crack", "pass": false, "keep": 0.0}
 	var probe: Dictionary = outcomeDmg(S, b, y, 1.0)
 	if not probe.floors:   # a tower too short to have floors: the whole building by the energy
 		var w: Dictionary = outcomeDmg(S, b, y, (2.0 if through else E / m) * b.maxhp)
@@ -413,7 +420,6 @@ static func _outcomePower(S: SimState, b, y: float, spN: float) -> Dictionary:
 		oc.pass = false
 		oc.keep = 0.0
 		oc.held = true
-		oc.deaths = floorPop(b) * float(oc.hit.size()) * minf(minf(1.0, oc.ratio * FLOOR_DEATH), float(cfg().heldDeathShare))
 	return oc
 
 
@@ -421,7 +427,7 @@ static func _outcomePower(S: SimState, b, y: float, spN: float) -> Dictionary:
 
 ## What hitting building b at height y with normalised speed spN and launcher tier does, without changing anything.
 ## Returns {"floors": bool, "k", "hit": Array of standing floors covered, "sumS", "dmg", "ratio", "outcome" (punch, crack,
-## dent for floors; collapse, heavy, wreck, crack for whole buildings), "pass": continues through, "keep", "deaths"}.
+## dent for floors; collapse, heavy, wreck, crack for whole buildings), "pass": continues through, "keep"}.
 ##
 ## The ladder (docs/design/buildings.md section 1): a house is always gone through (a collapse, the speed kept houseKeep); a tower the tier's
 ## towerPunches already went through this flight (punched) holds the body, unless its covered floors have already taken giveWay times their
@@ -434,7 +440,7 @@ static func outcomeOf(S: SimState, b, y: float, spN: float, tier: float, punched
 	var dmg: float = spN * float(c.tierFactor[ti]) * float(c.bruntMul)
 	if isHouse(b):
 		var r: float = dmg / b.maxhp
-		return {"floors": false, "dmg": maxf(dmg, b.hp), "ratio": r, "outcome": "collapse", "pass": true, "keep": float(c.houseKeep), "deaths": b.popAlive}
+		return {"floors": false, "dmg": maxf(dmg, b.hp), "ratio": r, "outcome": "collapse", "pass": true, "keep": float(c.houseKeep)}
 	var oc: Dictionary = outcomeDmg(S, b, y, dmg)
 	if oc.outcome == "punch" and oc.hit.size() > 0 and punched >= int(c.towerPunches[ti]) and not _weak(b, oc.hit):
 		var held: Dictionary = oc.duplicate()
@@ -442,7 +448,6 @@ static func outcomeOf(S: SimState, b, y: float, spN: float, tier: float, punched
 		held.pass = false
 		held.keep = 0.0
 		held.held = true
-		held.deaths = floorPop(b) * float(oc.hit.size()) * minf(minf(1.0, oc.ratio * FLOOR_DEATH), float(c.heldDeathShare))
 		return held
 	return oc
 
@@ -473,7 +478,7 @@ static func outcomeDmg(S: SimState, b, y: float, dmg: float) -> Dictionary:
 			if j >= 0 and j < b.floors and isStanding(b, j):
 				hit.append(j)
 		if hit.is_empty():
-			return {"floors": true, "k": k, "hit": hit, "sumS": 0.0, "dmg": dmg, "ratio": 999.0, "outcome": "punch", "pass": true, "keep": float(cfg().keepFree), "deaths": 0.0}
+			return {"floors": true, "k": k, "hit": hit, "sumS": 0.0, "dmg": dmg, "ratio": 999.0, "outcome": "punch", "pass": true, "keep": float(cfg().keepFree)}
 		var sumS: float = 0.0
 		var cm: Dictionary = cfg()
 		var haveD: bool = b.fdmg.size() == b.floors
@@ -483,25 +488,22 @@ static func outcomeDmg(S: SimState, b, y: float, dmg: float) -> Dictionary:
 				st = maxf(st * float(cm.wallMin), st - float(cm.wallMemory) * b.fdmg[j])
 			sumS += st
 		var ratio: float = dmg / sumS
-		var pop: float = floorPop(b)
 		if ratio >= 1.0:
 			var keep: float = clampf(float(cm.keepHi) - float(cm.keepK) * sumS / float(cm.keepRef), float(cm.keepMin), float(cm.keepHi))
-			return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "dmg": dmg, "ratio": ratio, "outcome": "punch", "pass": true, "keep": keep, "deaths": pop * float(hit.size())}
+			return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "dmg": dmg, "ratio": ratio, "outcome": "punch", "pass": true, "keep": keep}
 		if ratio >= 0.4:
-			return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "dmg": dmg, "ratio": ratio, "outcome": "crack", "pass": false, "keep": 0.0, "deaths": pop * float(hit.size()) * minf(1.0, ratio * FLOOR_DEATH)}
-		return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "dmg": dmg, "ratio": ratio, "outcome": "dent", "pass": false, "keep": 0.0, "deaths": 0.0}
+			return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "dmg": dmg, "ratio": ratio, "outcome": "crack", "pass": false, "keep": 0.0}
+		return {"floors": true, "k": k, "hit": hit, "sumS": sumS, "dmg": dmg, "ratio": ratio, "outcome": "dent", "pass": false, "keep": 0.0}
 	var r: float = dmg / b.maxhp
 	var cw: Dictionary = cfg()
 	var keepw: float = clampf(float(cw.keepHi) - float(cw.keepK) * b.maxhp / float(cw.keepRef), float(cw.keepMin), float(cw.keepHi))
-	var frac: float = minf(b.hp, dmg) / b.maxhp
-	var dead: float = minf(b.popAlive, b.pop * frac * 1.3)
 	if r >= 1.0:
-		return {"floors": false, "dmg": dmg, "ratio": r, "outcome": "collapse", "pass": true, "keep": keepw, "deaths": b.popAlive}
+		return {"floors": false, "dmg": dmg, "ratio": r, "outcome": "collapse", "pass": true, "keep": keepw}
 	if r >= 0.6:
-		return {"floors": false, "dmg": dmg, "ratio": r, "outcome": "heavy", "pass": true, "keep": keepw * float(cw.heavyKeep), "deaths": dead}
+		return {"floors": false, "dmg": dmg, "ratio": r, "outcome": "heavy", "pass": true, "keep": keepw * float(cw.heavyKeep)}
 	if r >= 0.4:
-		return {"floors": false, "dmg": dmg, "ratio": r, "outcome": "wreck", "pass": false, "keep": 0.0, "deaths": dead}
-	return {"floors": false, "dmg": dmg, "ratio": r, "outcome": "crack", "pass": false, "keep": 0.0, "deaths": dead}
+		return {"floors": false, "dmg": dmg, "ratio": r, "outcome": "wreck", "pass": false, "keep": 0.0}
+	return {"floors": false, "dmg": dmg, "ratio": r, "outcome": "crack", "pass": false, "keep": 0.0}
 
 
 static func chainCap(tier: float, special: bool, S: SimState = null) -> float:
@@ -537,7 +539,7 @@ static func next(S: SimState, b, y: float, vx: float, vy: float, trav: float) ->
 
 ## The chain a launch would make: starting from the first hit fr (a flightTo result) on building b, by a launcher of the given
 ## tier (special: a finisher may chain up to chainSpecial links, a house half a link). Returns an Array of {"b", "spN", "y", "dmg", "ratio",
-## "outcome", "keep", "deaths", "t", "lodge"}; length 1 is a plain brunt; "lodge" is true on the last link when the body goes through it and
+## "outcome", "keep", "t", "lodge"}; length 1 is a plain brunt; "lodge" is true on the last link when the body goes through it and
 ## ends inside it. A pure lookahead: nothing is changed.
 static func chainPlan(S: SimState, tier: float, special: bool, b, fr: Dictionary, trav: float) -> Array:
 	var out: Array = []
@@ -550,7 +552,7 @@ static func chainPlan(S: SimState, tier: float, special: bool, b, fr: Dictionary
 	var hl: float = float(cfg().houseLink)
 	while true:
 		var oc: Dictionary = outcomeOf(S, cur, r.y, r.spN, tierAt(S, cur, tier), punched, special)
-		var entry: Dictionary = {"b": cur.idx, "spN": r.spN, "y": r.y, "dmg": oc.dmg, "ratio": oc.ratio, "outcome": oc.outcome, "keep": oc.keep, "deaths": oc.deaths, "t": t0, "lodge": false}
+		var entry: Dictionary = {"b": cur.idx, "spN": r.spN, "y": r.y, "dmg": oc.dmg, "ratio": oc.ratio, "outcome": oc.outcome, "keep": oc.keep, "t": t0, "lodge": false}
 		out.append(entry)
 		if out.size() == 1 and WorldInterior.fits(S, cur, r.vx / trav, r.vy):
 			entry.lodge = true   # the chain inside a tower (interior.gd) takes him: the plan ends here (it plans its own exit)
@@ -577,12 +579,13 @@ static func chainPlan(S: SimState, tier: float, special: bool, b, fr: Dictionary
 	return out
 
 
-## Expected deaths of a chain.
-static func chainDeaths(chain: Array) -> float:
-	var d: float = 0.0
+## The structure mass a chain brings down (the planner's read, bystanders.md section 2): the mass of each building it collapses or goes through whole. Nothing here reads a person.
+static func chainMass(S: SimState, chain: Array) -> float:
+	var m: float = 0.0
 	for e in chain:
-		d += e.deaths
-	return d
+		if e.outcome == "collapse":
+			m += massOf(S.buildings[int(e.b)])
+	return m
 
 
 # ===================================================================== candidates and aim (the planner's interface)
@@ -610,9 +613,9 @@ static func lodgeSecondsOf(S: SimState, by, tier: float, special: bool) -> float
 	return lodgeSeconds(tier, special)
 
 
-## A cheap score used to choose which buildings are worth an aim search: tall, occupied, undamaged.
-static func _cheap(b, popCap: float) -> float:
-	return b.h / (BH * WS) + minf(b.popAlive, popCap) + (2.0 if b.hp >= b.maxhp else 0.0)
+## A cheap score used to choose which buildings are worth an aim search: tall, lived-in, undamaged (the housing, never who is inside).
+static func _cheap(S: SimState, b, massCap: float) -> float:
+	return b.h / (BH * WS) + minf(WorldCollateral.livedMass(S, b), massCap) + (2.0 if b.hp >= b.maxhp else 0.0)
 
 
 ## The buildings worth trying for a launch of D by A: alive, BR_MIN to BR_MAX away in x on either side, in any row, with
@@ -628,7 +631,7 @@ static func candidates(S: SimState, D) -> Array:
 static func _candidatesRead(S: SimState, D) -> Array:
 	if S.frame != null and S.swing.active:
 		SimSwing.posesNear(S, D.x)   # a field world mid-swing: this plan looks past the pair's reach
-	var popCap: float = WorldStructures.buildingPopRef(S)
+	var popCap: float = WorldStructures.buildingMassRef(S)
 	var sides: Array = [[], []]
 	for bi in WorldStructures.near(S, D.x, BR_MAX):
 		var b = S.buildings[bi]
@@ -645,7 +648,7 @@ static func _candidatesRead(S: SimState, D) -> Array:
 		var d: float = absf(dx) - b.w * 0.5
 		if d < BR_MIN or d > BR_MAX:
 			continue
-		sides[0 if dx < 0.0 else 1].append([_cheap(b, popCap), bi, d])
+		sides[0 if dx < 0.0 else 1].append([_cheap(S, b, popCap), bi, d])
 	var out: Array = []
 	for s in sides:
 		# Whether his height clears a building is the costly part (its ground), so it's only asked of those the choice reaches: the highest
@@ -683,7 +686,7 @@ static func _clears(S: SimState, D, bi: int, memo: Dictionary) -> bool:
 
 ## The launch that brings the target D (launched by A with the given force and tier factor) into building b, or null:
 ## the first uy in AIM_UY whose flight enters b above the ground and below its top at AIM_MIN_SP or more. The result has
-## the plan fields the launch needs (ux, uy, fm) and "brunt": {"b", "hit", "chain", "deaths", "z1", "aimD"}.
+## the plan fields the launch needs (ux, uy, fm) and "brunt": {"b", "hit", "chain", "mass", "z1", "aimD"}.
 static func aim(S: SimState, A, D, b, force: float, tierF: float, special: bool = false):
 	return _aimBy(S, A, D, b, force, tierF, special, AIM_UY, false)
 
@@ -705,7 +708,7 @@ static func _aimBy(S: SimState, A, D, b, force: float, tierF: float, special: bo
 			var chain: Array = chainPlan(S, tierOf(A, D), special, b, fr, trav)
 			var edge: float = SimWrap.wrap(b.x - sign_ * b.w * 0.5)
 			var plan := {"ux": sign_, "uy": float(uy), "fm": 1.0, "name": "BUILDING SMASH",
-				"brunt": {"b": b.idx, "hit": fr, "chain": chain, "deaths": chainDeaths(chain), "z1": faceZ(b), "aimD": absf(SimWrap.sdx(D.x, edge))}}
+				"brunt": {"b": b.idx, "hit": fr, "chain": chain, "mass": chainMass(S, chain), "z1": faceZ(b), "aimD": absf(SimWrap.sdx(D.x, edge))}}
 			if inside:
 				plan.brunt["inside"] = true
 			return plan
@@ -742,7 +745,7 @@ static func aimShared(S: SimState, A, D, bis: Array, force: float, tierF: float,
 					var chain: Array = chainPlan(S, tierOf(A, D), special, b, fr, trav)
 					var edge: float = SimWrap.wrap(b.x - sign_ * b.w * 0.5)
 					out[bi] = {"ux": sign_, "uy": float(uy), "fm": 1.0, "name": "BUILDING SMASH",
-						"brunt": {"b": b.idx, "hit": fr, "chain": chain, "deaths": chainDeaths(chain), "z1": faceZ(b), "aimD": absf(SimWrap.sdx(D.x, edge))}}
+						"brunt": {"b": b.idx, "hit": fr, "chain": chain, "mass": chainMass(S, chain), "z1": faceZ(b), "aimD": absf(SimWrap.sdx(D.x, edge))}}
 				else:
 					still.append(bi)
 			left = still
@@ -1206,7 +1209,7 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
 			cleared += 1
 			lowest = mini(lowest, j)
 		if cleared > 0:
-			WorldCollateral.kill(S, b.idx, popF * float(cleared), by, evt, cx, lowest)
+			WorldCollateral.scatter(S, b.idx, popF * float(cleared), by, evt, cx, lowest, "flung")
 		SimFx.floorHit(S, f, b, lowest, cleared, "punch", oc.ratio, y, by)
 	elif oc.outcome == "crack":
 		for j in oc.hit:
@@ -1216,7 +1219,7 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
 			share = minf(share, float(cfg().heldDeathShare))
 		var d: float = popF * float(oc.hit.size()) * share
 		if d > 0.0:
-			WorldCollateral.kill(S, b.idx, d, by, evt, cx, oc.hit[0])
+			WorldCollateral.scatter(S, b.idx, d, by, evt, cx, oc.hit[0], "flung")
 		SimFx.floorHit(S, f, b, oc.hit[0], 0, "crack", oc.ratio, y, by)
 	else:
 		for j in oc.hit:
@@ -1285,7 +1288,7 @@ static func pancake(S: SimState, b, by, evt: float, cx: float, f) -> Dictionary:
 				break
 		j2 -= 1
 	res.pancake = true
-	WorldCollateral.kill(S, b.idx, popF * float(lost), by, evt, cx, from_floor)
+	WorldCollateral.scatter(S, b.idx, popF * float(lost), by, evt, cx, from_floor, "flung")
 	SimFx.floorsFall(S, b, from_floor, F - 1, lost + (run_hi - run_lo + 1))
 	if standingCount(b) == 0:
 		res.collapse = true

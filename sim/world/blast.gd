@@ -179,14 +179,14 @@ static func _floors(S: SimState, b, oc: Dictionary, by, cx: float, y: float, slo
 			cleared += 1
 			lowest = mini(lowest, j)
 		if cleared > 0:
-			WorldCollateral.kill(S, b.idx, popF * float(cleared), by, 0.0, cx, lowest)
+			WorldCollateral.scatter(S, b.idx, popF * float(cleared), by, 0.0, cx, lowest, "flung")
 		SimFx.floorHitShot(S, b, lowest, cleared, "punch", oc.ratio, y, slot, ux, uy)
 	elif oc.outcome == "crack":
 		for j in oc.hit:
 			b.fdmg[j] += oc.dmg
 		var d: float = popF * float(oc.hit.size()) * minf(1.0, oc.ratio * WorldBrunt.FLOOR_DEATH)
 		if d > 0.0:
-			WorldCollateral.kill(S, b.idx, d, by, 0.0, cx, oc.hit[0])
+			WorldCollateral.scatter(S, b.idx, d, by, 0.0, cx, oc.hit[0], "flung")
 		SimFx.floorHitShot(S, b, oc.hit[0], 0, "crack", oc.ratio, y, slot, ux, uy)
 	else:
 		for j in oc.hit:

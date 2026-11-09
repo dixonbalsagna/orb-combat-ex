@@ -6,7 +6,7 @@ class_name DirLocation
 ##   again.
 ## - The villain, at prowlTier or above, leads toward towns once they have had less than their share of the fight.
 ## Destinations are costed in world units from data/director/location.json. No random draws. The population histogram is
-## WorldCollateral's (S.popHist, one bucket per STEP).
+## WorldCollateral's (S.popHist: the lived-in structure mass per bucket, never people; one bucket per STEP).
 
 const PATH: String = "res://data/director/location.json"
 ## The biome index order of S.dirS.biomeT (the schema's enum order).
@@ -14,9 +14,9 @@ const BIOMES: Array = ["ocean", "village", "plains", "city", "forest", "desert",
 static var STEP: float = 200.0 * SimConst.PS   # one histogram bucket: SimConst.W / BUCKETS (set in _ensure: the arena's length can change)
 static var _key: String = ""
 const BUCKETS: int = 48                    # WorldCollateral.HIST_BUCKETS
-const WINDOW: int = 2                      # +-2 buckets approximate popNear(x, 900 * WS)
+const WINDOW: int = 2                      # +-2 buckets approximate livedNear(x, 900 * WS)
 const EMPTY: float = 0.1                   # a bucket (or its window) at or below this population is empty ground
-const LURE_START: float = 0.2              # the hero leaves while popNear(f.x, 900) is above this (the old lure's trigger)
+const LURE_START: float = 0.2              # the hero leaves while livedNear(f.x, 900) is above this (the old lure's trigger)
 const MIN_RECORD: float = 20.0             # seconds of recorded fight before the shares count (not in the schema yet)
 
 static var _d = null
@@ -124,7 +124,7 @@ static func _roamRead(S: SimState, f) -> float:
 	var cur: int = BIOMES.find(WorldBiomes.biomeAt(f.x))
 	var hist: PackedFloat32Array = S.popHist
 	if hero:
-		var crowded: bool = _window(hist, i0, WorldStructures.popNearRef(S)) > LURE_START
+		var crowded: bool = _window(hist, i0, WorldStructures.livedNearRef(S)) > LURE_START
 		if not bool(_d.oceanSurface) and (WorldTerrain.seaAt(S, f.x) or BIOMES[cur] == "ocean"):
 			crowded = true   # without sea destinations, the old rule: the hero never stays over the sea
 		var over: bool = total >= MIN_RECORD and bt.size() == BIOMES.size() and bt[cur] / total - _planet[cur] > float(_d.excessStart)
@@ -158,7 +158,7 @@ static func _search(S: SimState, f, hist: PackedFloat32Array, i0: int, cur: int,
 
 
 static func _searchRead(S: SimState, f, hist: PackedFloat32Array, i0: int, cur: int, bt: PackedFloat64Array, total: float, dest: Array, hero: bool, crowded: bool) -> float:
-	var ref: float = WorldStructures.popNearRef(S)
+	var ref: float = WorldStructures.livedNearRef(S)
 	var popW: float = float(_d.popW) * f.care
 	var varW: float = float(_d.varietyW)
 	var keepW: float = float(_d.keepW)
@@ -197,7 +197,7 @@ static func _searchRead(S: SimState, f, hist: PackedFloat32Array, i0: int, cur: 
 	return best
 
 
-## Population within +-WINDOW buckets of bucket i, as popNear reads it (ref, the near reference, or more is 1).
+## Lived-in structure mass within +-WINDOW buckets of bucket i, as livedNear reads it (ref, the near reference, or more is 1).
 static func _window(hist: PackedFloat32Array, i: int, ref: float) -> float:
 	var sum: float = 0.0
 	for k in range(i - WINDOW, i + WINDOW + 1):

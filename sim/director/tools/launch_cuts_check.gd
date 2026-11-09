@@ -68,7 +68,7 @@ func _cap() -> void:
 	var r: Array = _town(11, {"intro": false})
 	var S: SimState = r[0]
 	var D = S.fighters[1]
-	var popRef: float = WorldStructures.buildingPopRef(S)
+	var popRef: float = WorldStructures.buildingMassRef(S)
 	var seen: int = 0
 	var good: int = 0
 	for k in range(40):
@@ -94,14 +94,14 @@ func _cap() -> void:
 		# every building left out scores no better than the worst kept on its own side, or the side rule took its place
 		var worstKept: float = INF
 		for bi in kept:
-			worstKept = minf(worstKept, WorldBrunt._cheap(S.buildings[bi], popRef))
+			worstKept = minf(worstKept, WorldBrunt._cheap(S, S.buildings[bi], popRef))
 		for bi in cands:
 			if not kept.has(bi):
-				var cs: float = WorldBrunt._cheap(S.buildings[bi], popRef)
+				var cs: float = WorldBrunt._cheap(S, S.buildings[bi], popRef)
 				var sideKeptMin: float = INF
 				for bj in kept:
 					if side[bj] == side[bi]:
-						sideKeptMin = minf(sideKeptMin, WorldBrunt._cheap(S.buildings[bj], popRef))
+						sideKeptMin = minf(sideKeptMin, WorldBrunt._cheap(S, S.buildings[bj], popRef))
 				ok = ok and (cs <= sideKeptMin or cs <= worstKept)
 		# the order is World's
 		var last: int = -1

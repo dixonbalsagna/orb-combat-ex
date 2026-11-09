@@ -192,16 +192,22 @@ static func heavyFull(S: SimState, ex, f, o, a: Dictionary) -> bool:
 	var row: int = earned(S, f, o, a)
 	if row < 0:
 		return false
-	var side: float = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(f.x, o.x)), f.face)
-	var aim: int = int(a.get("aim", 0))
-	if aim == 4:
-		side = -side   # the stick picks the side
-	elif aim != 2 and landingScore(S, o, row, -side) > landingScore(S, o, row, side):
-		side = -side   # no side from the stick: the better arrival
-	send(S, f, o, row, side)
+	send(S, f, o, row, sideFor(S, f, o, row, int(a.get("aim", 0))))
 	DirInterrupt.si(ex.A, DirInterrupt.LAST_END, DirInterrupt.END_LAUNCH)
 	DirBrawl.end(S, ex, "launch")
 	return true
+
+
+## The side a full heavy's curve goes: the punch's way, and back past him with the stick away (aim 4). With no side from the stick
+## (none, up or down) and launch.json sideFromBlowOnly on, it keeps the punch's way: only the stick picks the side (Game Design's overnight
+## ruling (a); Orb's second Sunday play: the first meteor went the opposite way of the punch). Off: the landing score's better arrival.
+static func sideFor(S: SimState, f, o, row: int, aim: int) -> float:
+	var side: float = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(f.x, o.x)), f.face)
+	if aim == 4:
+		return -side   # the stick picks the side
+	if aim != 2 and not DirLaunch.sideFromBlowOnly() and landingScore(S, o, row, -side) > landingScore(S, o, row, side):
+		return -side   # sideFromBlowOnly off, no side from the stick: the better arrival
+	return side
 
 
 ## What a landing that way is worth: standing buildings near it, and water or open ground, read from the bake. Never who's there (RL-213).

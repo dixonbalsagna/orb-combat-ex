@@ -496,7 +496,7 @@ func _ai() -> void:
 
 ## A shot from outside that meets a building or the ground does there what the same shot of his would do in his own
 ## fight: his tier sets it and he's its cause ("the same rules as its own shots", cross-fights.md): the dead, his menace,
-## his anguish and, with forms, his Witness. A building used to read the fight's last body by Godot's negative index, and
+## his anguish and, with forms, his Witness (a building he brings down costs him, CD-05). A building used to read the fight's last body by Godot's negative index, and
 ## the ground blasted nothing.
 func _outsideWorld() -> void:
 	for c in [["building", "menace"], ["ground", "menace"], ["building", "anguish"], ["building", "witness"]]:
@@ -504,7 +504,10 @@ func _outsideWorld() -> void:
 		var b: Array = _worldHit(31, false, c[0], c[1])
 		var w: String = "%s, the shooter's %s" % [c[0], c[1]]
 		ok(float(a[0]) > 0.0 and a[0] == b[0], "a shot from outside meets the %s as its shooter's own shot would (%.4f against %.4f)" % [w, a[0], b[0]])
-		ok(a[1] == b[1] and a[2] == b[2], "... his tier sets it and it's his (%s %.6f against %.6f, casualties %.4f against %.4f)" % [c[1], a[1], b[1], a[2], b[2]])
+		if c[1] == "anguish":   # a fall near him, in his own fight, adds the failing to protect that a shooter from outside is not near enough to be charged: the same rows, and at least as much
+			ok(float(a[1]) > 0.0 and float(b[1]) >= float(a[1]) and a[2] == b[2], "... his tier sets it and it's his (%s %.6f across, %.6f inside, casualties %.4f against %.4f)" % [c[1], a[1], b[1], a[2], b[2]])
+		else:
+			ok(a[1] == b[1] and a[2] == b[2], "... his tier sets it and it's his (%s %.6f against %.6f, casualties %.4f against %.4f)" % [c[1], a[1], b[1], a[2], b[2]])
 		if c[1] == "menace":
 			ok(float(a[3]) == 0.0, "... and nobody of the fight it met is its cause (menace %.6f)" % a[3])
 		if c[0] == "building" and c[1] != "menace":
@@ -545,6 +548,8 @@ func _worldHit(seed: int, across: bool, what: String, meter: String) -> Array:
 			if c.alive and c.floors < WorldBrunt.FLOORS_MIN and c.popAlive > 0.0 and (b == null or c.maxhp > b.maxhp):
 				b = c
 		ok(b != null, "a plain building with people in it stands on the line")
+		if b != null and meter == "anguish":
+			A.x = SimWrap.wrap(b.x - 500.0)   # the hero a few body heights from it: within the reach his anguish reads
 		if b == null:
 			SimCore.dispose(S)
 			return [0.0, 0.0, 0.0, 0.0]
@@ -574,10 +579,15 @@ func _worldHit(seed: int, across: bool, what: String, meter: String) -> Array:
 	var did: float = 0.0
 	if b != null:
 		b.wear = -1.0   # it shows already: every hit counts at once
+		if meter == "witness":
+			b.hp = minf(b.hp, 1.0)   # Witness reads what falls (CD-05): this one falls to the bolt
 		var hp0: float = b.hp
 		SimShots.hitStructure(S, sh, b)
 		did = hp0 - b.hp
-		ok(b.alive, "... the building still stands, so its hit points tell the tier (%s)" % ("across" if across else "inside"))
+		if meter == "witness":
+			ok(not b.alive, "... the building falls to it, so his Witness reads its mass (%s)" % ("across" if across else "inside"))
+		else:
+			ok(b.alive, "... the building still stands, so its hit points tell the tier (%s)" % ("across" if across else "inside"))
 	else:
 		SimShots.hitWorld(S, sh, "ground")
 		did = g - WorldTerrain.groundY(S, x, z)

@@ -204,6 +204,8 @@ static func dataHash(setup: Dictionary = {}) -> String:
 		h.text(SimCross.dataHash())
 	if setup.get("forms", SimForms.enabled()) == true:   # forms: data/fight/forms.json and each fighter's forms.json, only for a match with them on
 		h.text(SimForms.dataHash())
+		if setup.get("power", SimPower.enabled()) != true:   # ... and Witness's masses, power.json's absorb (WorldBrunt.massOf, CD-05), when the energy model hasn't folded it above
+			h.text(SimPower.dataHash())
 	if setup.has("wear"):   # a campaign stage's place state: World lays it by data/biomes/campaign.json's bands (campaign-core.md)
 		h.text(WorldCampaign.dataHash())
 	h.text(WorldBrunt.dataHash())          # World's brunt ladder and lodge: data/biomes/brunt.json

@@ -2325,7 +2325,7 @@ static func _aiAim(S: SimState, f, o, i: SimIntent) -> void:
 	var wd: float = float(w.get("down", 0.0))
 	if pers == "hero":
 		var land: float = SimWrap.wrap(o.x + side * float(aw.get("popAtBh", 8.0)) * DirInterrupt.BH)
-		wa *= 1.0 - clampf(float(WorldStructures.popNear(S, land, float(aw.get("popR", 3.0)) * DirInterrupt.BH)) / maxf(0.001, WorldStructures.popNearRef(S)), 0.0, 1.0)
+		wa *= 1.0 - clampf(float(WorldStructures.livedNear(S, land, float(aw.get("popR", 3.0)) * DirInterrupt.BH)) / maxf(0.001, WorldStructures.livedNearRef(S)), 0.0, 1.0)
 	var tot: float = wu + wa + wd
 	if tot <= 0.0:
 		return
@@ -3147,8 +3147,8 @@ static func _aiNudge(S: SimState, ex, f, attack: bool) -> void:
 		return
 	if f.care != 0.0:
 		var r: float = DirLaunch.CARE_R
-		var right: float = WorldStructures.popNear(S, SimWrap.wrap(f.x + r), r)
-		var left: float = WorldStructures.popNear(S, SimWrap.wrap(f.x - r), r)
+		var right: float = WorldStructures.livedNear(S, SimWrap.wrap(f.x + r), r)
+		var left: float = WorldStructures.livedNear(S, SimWrap.wrap(f.x - r), r)
 		if right != left:
 			var people: int = 3 if right > left else 4
 			_s(f, AI_NUDGE, people if f.care < 0.0 else 7 - people)
@@ -3175,6 +3175,8 @@ static func _aiPart(S: SimState, ex, f, o, bl: Dictionary) -> bool:
 ## True when a `sig` press of f's is B, the heavy (brawl-second-pass.md sections 2 and 5): no stance is held. With a
 ## stance held it is that stance's signature, as before.
 static func isB(f, kind: String) -> bool:
+	if kind == "sig" and on() and f.ai == null and not DirStick.firing and SimInputData.b_no_beam() and not (SimInputData.b_no_beam_keep_rt() and (f.input.stanceMask & 4) != 0 and f.state != "charging"):
+		return true   # (bNoBeamKeepRt, the interim: B within tapHold.holdStart ticks of RT's press, before RT's hold is the channel (the fighter is not yet charging), is still the signature until RT + right stick lands; a B during the channel is the heavy) Orb's rule (2026-11-01; switches.bNoBeam): a player's B never starts a beam, with RT held, with LT held when the flight strike does not take it, or in an energy mode; the stick's own beam (DirStick.firing) is not a press of B
 	return kind == "sig" and on() and (f.input.stanceMask & 15) == 0 and f.act.mode != 1   # with the energy family held, B is the beam
 
 
@@ -4152,7 +4154,7 @@ static func aiInput(S: SimState, f) -> void:
 	_s(f, AI_LEFT, int(S.rng.range_(float(n[0]), float(n[1]) + 0.999)) - 1)
 	# Each string has its own pace, between tapGap and tapGapMax: its pace isn't one number to fall short of.
 	var gmax: int = maxi(gap, int(bl.get("tapGapMax", gap)))
-	_s(f, AI_GAP, mini(gmax, gap + int(SimRng.keyed(seed, "brawl.tapgap", S.tick * 2 + slot) * float(gmax - gap + 1))))
+	_s(f, AI_GAP, DirPace.gap(S, o, mini(gmax, gap + int(SimRng.keyed(seed, "brawl.tapgap", S.tick * 2 + slot) * float(gmax - gap + 1))), bl))   # paceMatch: never quicker than his own pace
 	# Against a rival whose last two blows were heavies its string is mediums, at its level's share: the triangle,
 	# played by the AI (a medium that lands on a heavy in its first ticks ends it).
 	_s(f, AI_MEDS, 1 if (_g(o, LAST2) == HEAVY2 and SimRng.keyed(seed, "brawl.meds", S.tick * 2 + slot) < float(bl.get("mediumVsHeavies", 0.0))) else 0)

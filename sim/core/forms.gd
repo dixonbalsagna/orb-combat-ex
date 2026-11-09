@@ -38,9 +38,9 @@ class FormsDef:
 	var maxMul: float = 1.0        # ... at most this, for as long as he is in it
 	# The branches (hero-forms.md section 3): the steps that pick one, the fills' sources and each branch's extras
 	var branchAt: Array = []      # the steps (1-based) at which a release picks a branch: II and IV
-	var wRange: float = 0.0       # Witness: an opponent's kill this near him (shortest arc) fills it ...
-	var wPerPerson: float = 0.0   # ... by this a person, times 425 / pop0 as every gain a person
-	var wOwnKill: float = 0.0     # ... and each person he kills takes this off it
+	var wRange: float = 0.0       # Witness: a building his opponent brings down this near him (shortest arc) fills it ...
+	var wPerMass: float = 0.0     # ... by this a unit of its mass (WorldBrunt.massOf: a house 1, a low tower 5, a tall one 15)
+	var wOwnMass: float = 0.0     # ... and each unit he brings down himself takes this off it
 	var wDamage: float = 0.0      # in a Witness form: damage and launch force x (1 + these), his care + wCare
 	var wLaunch: float = 0.0
 	var wCare: float = 0.0
@@ -392,33 +392,28 @@ static func _pick(S: SimState, f, from: int) -> bool:
 	return cross
 
 
-## A casualty (WorldCollateral.kill, World's line; only while forms are on): n people died at x, and cause did it (a
-## fighter, or none). A fighter with branches fills Witness by his opponent's kills within wRange of him, shortest arc
-## (a guard's kills are his principal's), at wPerPerson a person times 425 / the meters' norm (pop0), as every gain a person; each person he
-## kills himself takes wOwnKill off it. Nothing he does to the world fills it.
-static func casualty(S: SimState, n: float, cause, x: float) -> void:
-	if n <= 0.0 or cause == null or WorldCollateral.normPeople(S) <= 0.0:
+## A building brought down (WorldStructures.damageBuilding, World's line; only while forms are on): b fell, and cause
+## did it (a fighter, or none). Witness fills from the city he's protecting wrecked round him, never from anyone's death
+## (Game Design's bystanders.md section 4; CD-05, Orb's "no civilian deaths going forward"): a fighter with branches
+## fills it by the mass of what his opponent brings down within wRange of him, shortest arc (a guard's wreck is his
+## principal's), at wPerMass a unit of mass (WorldBrunt.massOf); each unit he brings down himself takes wOwnMass off it.
+## The lived-in buildings his opponent empties wait on World's lived-in flag.
+static func wrecked(S: SimState, b, cause) -> void:
+	if b == null or cause == null:
+		return
+	var m: float = WorldBrunt.massOf(b)
+	if m <= 0.0:
 		return
 	var c = cause if SimRoster.isPrincipal(S, cause) else S.fighters[1]
-	var norm: float = WorldCollateral.POP_REF / WorldCollateral.normPeople(S)   # as the meters' gains a person (data/biomes/collateral.json meterNorm)
 	for h in S.fighters:
-		if not has(S, h) or h.fd.wPerPerson <= 0.0:
+		if not has(S, h) or h.fd.wPerMass <= 0.0:
 			continue
 		if c == h:
-			h.form.witness = SimMathx.jmax(0.0, h.form.witness - n * h.fd.wOwnKill * norm)
-		elif c == SimRoster.opp(S, h) and absf(SimWrap.sdx(h.x, x)) <= h.fd.wRange:
-			h.form.witness += n * h.fd.wPerPerson * norm
-	if not S.fighters.has(c) and has(S, c) and c.fd.wPerPerson > 0.0:   # a body of another fight (a shot from outside, cross-fights.md): his own dead cost him as at home
-		c.form.witness = SimMathx.jmax(0.0, c.form.witness - n * c.fd.wOwnKill * norm)
-
-
-## What a casualty someone else caused feeds his anguish (WorldCollateral._feed, World's line). For a fighter with
-## branches, nothing: only his own kills cost him now, and his opponent's go to Witness (hero-forms.md section 7). For
-## anyone else, as today.
-static func anguishOther(S: SimState, f) -> float:
-	if has(S, f) and f.fd.wPerPerson > 0.0:
-		return 0.0
-	return f.md.anguishCasOther
+			h.form.witness = SimMathx.jmax(0.0, h.form.witness - m * h.fd.wOwnMass)
+		elif c == SimRoster.opp(S, h) and absf(SimWrap.sdx(h.x, b.x)) <= h.fd.wRange:
+			h.form.witness += m * h.fd.wPerMass
+	if not S.fighters.has(c) and has(S, c) and c.fd.wPerMass > 0.0:   # a body of another fight (a shot from outside, cross-fights.md): his own wreck costs him as at home
+		c.form.witness = SimMathx.jmax(0.0, c.form.witness - m * c.fd.wOwnMass)
 
 
 ## This tick's events, for the Trial fill (SimCore.step, after the mood; only while forms are on):
@@ -551,8 +546,8 @@ static func _branches(w: String, d: FormsDef, b) -> bool:
 	if d.branchAt.size() != 2:
 		_err(w + ": two steps are branch steps (II and IV)")
 	d.wRange = _num(w + ": branches.witness.range", wi.get("range"), 0.0, 100000.0)
-	d.wPerPerson = _num(w + ": branches.witness.perPerson", wi.get("perPerson"), 0.0, 100.0)
-	d.wOwnKill = _num(w + ": branches.witness.ownKill", wi.get("ownKill"), 0.0, 100.0)
+	d.wPerMass = _num(w + ": branches.witness.perMass", wi.get("perMass"), 0.0, 100.0)
+	d.wOwnMass = _num(w + ": branches.witness.ownMass", wi.get("ownMass"), 0.0, 100.0)
 	d.wDamage = _num(w + ": branches.witness.damage", wi.get("damage"), 0.0, 1.0)
 	d.wLaunch = _num(w + ": branches.witness.launch", wi.get("launch"), 0.0, 1.0)
 	d.wCare = _num(w + ": branches.witness.care", wi.get("care"), 0.0, 2.0)

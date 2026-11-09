@@ -996,9 +996,25 @@
           "type": "boolean",
           "description": "The beam's aim (docs/controls/beam-aim-feel.md; needs rightStick): the strike stick's aim trails the thumb by strike.aimTrail degrees, and the throw carries the aim the stick held at the rim instead of the zero of a stick that has sprung home. Off."
         },
+        "bNoBeam": {
+          "type": "boolean",
+          "description": "A player's B never starts a beam, whatever he holds (docs/controls/b-no-beam.md; Orb's rule of 2026-11-01: beams come only from the right stick). The director reads a player's B press as the heavy (DirBrawl.isB) with RT held, with LT held past the flight strike's take-back window, with an energy mode on, and with no layer held; the right stick's own beam is unaffected. Off: B with RT held, or with LT held when the flight strike does not take it, is the signature beam."
+        },
+        "bNoBeamKeepRt": {
+          "type": "boolean",
+          "description": "The interim of bNoBeam (docs/controls/b-no-beam.md; the EP's decision of 2026-11-08): with bNoBeam on, B pressed within tapHold.holdStart (12) ticks of RT's press (the chord, before RT's hold becomes the channel) is still the signature (the beam), so the signature stays reachable until RT + right stick is built; a B during an RT channel is the heavy; B alone, with LB, RB or LT, and with an energy mode are never a beam. Turn it off when RT + stick lands, and RT + B is the big blow. Needs bNoBeam. Off."
+        },
+        "inertKnock": {
+          "type": "boolean",
+          "description": "A right-stick push on a layer where the strike stick is inert (RT held: strike.inertMasks, the charge owns the stick; LB + RB) is told, once per push: the refusal code charging (or warding), one pad knock and one row for UI (docs/controls/inert-knock.md). Before, it did nothing and said nothing. Needs rightStick and hapticRefused. Off."
+        },
         "flickKept": {
           "type": "boolean",
           "description": "Set together with the director's flickKeep (data/director/stick.json): the director holds a flick it cannot start yet, quietly, up to 90 ticks, so the hub waits strike.refuseTicksKept instead of strike.refuseTicks before it calls a stick request unanswered (docs/controls/flick-kept.md). Off: refuseTicks, as before."
+        },
+        "dashHandover": {
+          "type": "boolean",
+          "description": "LT's dash is on from the press tick and only while LT is held (docs/controls/dash-handover.md; Game Design's ruling of 2026-11-08, section c): the intent's dash is true on the press tick and stays true while the control is down (the stance still LT's), and ends the tick it is let go of. Before, a press gave a free 12-tick lunge (dodge.lungeTicks) whatever the release, so a tap was a 12-tick dash, which would be a leap once the dash is fast at any range. The sprint bit still starts at tapHold.holdStart. A tap is the slip (the dodge edge, unchanged). Off."
         },
         "chordPick": {
           "type": "boolean",

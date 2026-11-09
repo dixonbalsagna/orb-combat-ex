@@ -33,6 +33,8 @@
     "split_fit": true,
     "chip_clear": true,
     "slam_hint": false,
+    "report_this": true,
+    "save_match": true,
     "legend_quiet": true,
     "quiet_hints": true,
     "forms_live": false,

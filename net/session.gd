@@ -68,6 +68,11 @@ var takeoverRefused: int = 0  # takeovers of a slot this session doesn't have, r
 
 # desync detection (NetDesync): a digest of the confirmed state every checkEvery ticks, exchanged with the other peers
 var checkEvery: int = 60      # ticks between checkpoints; 0 turns detection off
+var hashChecks: bool = false  # also keep SimHash's gameplay hash at each checkpoint as it becomes final (hashFinal): a saved match's replay checkpoints (NetLan)
+var hashFinal: Array = []     # [tick, gameplay hash] of the state after that many ticks, at each final checkpoint, in order
+var logRollbacks: bool = false   # keep [frame, depth] of every rollback (rollbackLog), at most ROLLBACK_LOG of them (NetLan's saved match)
+var rollbackLog: Array = []
+const ROLLBACK_LOG: int = 20000
 var matchInfo: Dictionary = {}   # {seed, setup, ai}: the match, for a desync report's replay
 var onDesync: Callable        # (session) -> void: called once, at the first mismatch; `desync` then holds it
 var onCheck: Callable         # (boundary: int, digest: String) -> void: each checkpoint as it becomes final (tests, a log)
@@ -463,6 +468,8 @@ func _rollback(r: int) -> void:
 		onRollback.call(s, frame)
 	var depth: int = frame - s
 	rollbacks += 1
+	if logRollbacks and rollbackLog.size() < ROLLBACK_LOG:
+		rollbackLog.append([frame, depth])
 	resimTicks += depth
 	resimThisFrame += depth
 	maxDepth = maxi(maxDepth, depth)
@@ -502,6 +509,8 @@ func _checkpoint(t: int) -> void:
 	if chkPend.has(t):
 		pool.put(chkPend[t][1])
 	chkPend[t] = [NetDesync.digest(S), NetSnapshot.take(S, pool)]
+	if hashChecks:
+		chkPend[t].append(SimHash.stateHash(S).gameplay)   # on every run of tick t: the last one's is the one that becomes final
 
 
 ## Checkpoint b has become final: its last run's digest is this peer's, to send and to compare.
@@ -518,6 +527,8 @@ func _confirmCheck(b: int) -> void:
 			pool.put(chkPend[t][1])
 			chkPend.erase(t)
 	chkMine[b] = e[0]
+	if hashChecks and e.size() > 2:
+		hashFinal.append([b, e[2]])
 	if onCheck.is_valid():
 		onCheck.call(b, e[0])
 	if desync.is_empty():

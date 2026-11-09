@@ -68,7 +68,7 @@ func _init() -> void:
 		woke += S.buildings[i].popAlive
 	ok(woke > 0.0 and absf(woke - pop_far) < 1.0e-6 or posed < info[1].size(), "a posed place's people are awake")
 	ok(S.world.pop0 == off.world.pop0 and WorldCollateral.normPeople(S) == S.world.pop0, "posing places leaves pop0 (what menace, mood and Witness read) the first ring's")
-	# a far casualty feeds the hero's anguish and nothing else
+	# nobody dies (CD-05): people hit in a far building move nothing and feed nothing: no count, no people moved, no meter
 	var hero = null
 	for f in S.fighters:
 		if f.hasAnguish:
@@ -80,32 +80,13 @@ func _init() -> void:
 			bi += 1
 		var a0: float = hero.anguish
 		var cas0: float = S.world.casualties
-		var cb0: float = S.world.cbSum
 		var men0: float = villain.menace if villain.hasMenace else 0.0
 		var pow0: float = villain.power
-		var got: float = WorldCollateral.kill(S, bi, 5.0, villain, 0.0, S.buildings[bi].x)
-		ok(got > 0.0, "a casualty in a far building is %d people" % int(got))
-		ok(hero.anguish > a0, "the hero's anguish rose (%.3f to %.3f)" % [a0, hero.anguish])
-		ok(S.world.casualties == cas0 and S.world.cbSum == cb0 and (villain.menace if villain.hasMenace else 0.0) == men0 and villain.power == pow0, "casualties, the budget, menace and power did not move")
-	# the share is a fraction of the place's own base (RL-228 term 3): losing a whole small place and a whole large one costs the hero the same
-	if hero != null:
-		var pls: Array = info[1]
-		var small: Dictionary = {}
-		var large: Dictionary = {}
-		for pk in pls:
-			if small.is_empty() or float(pk.pop) < float(small.pop):
-				if float(pk.pop) > 0.0:
-					small = pk
-			if large.is_empty() or float(pk.pop) > float(large.pop):
-				large = pk
-		var costs: Array = []
-		for pk in [small, large]:
-			hero.anguish = 0.0
-			for bi2 in range(int(pk.first), int(pk.first) + int(pk.count)):
-				WorldCollateral.kill(S, bi2, S.buildings[bi2].popAlive, villain, 0.0, S.buildings[bi2].x)
-			costs.append(hero.anguish)
-		ok(float(large.pop) > 2.0 * float(small.pop) and costs[0] > 0.0 and absf(costs[1] - costs[0]) <= 0.01 * costs[0], "a place of %d people lost whole costs the hero %.3f, a place of %d costs %.3f: the same, whatever its size" % [int(small.pop), costs[0], int(large.pop), costs[1]])
-	# the lint (RL-228 term 2): the far branch of WorldCollateral.kill names none of the four sinks that get nothing: menace, power from casualties, Witness, mood's aggression
+		var in0: float = S.buildings[bi].popAlive
+		var got: float = WorldCollateral.scatter(S, bi, 5.0, villain, 0.0, S.buildings[bi].x)
+		ok(got == 0.0 and S.buildings[bi].popAlive == in0, "a far building's people are not read or moved by a hit (%d ran)" % int(got))
+		ok(hero.anguish == a0 and S.world.casualties == cas0 and (villain.menace if villain.hasMenace else 0.0) == men0 and villain.power == pow0, "the hero's anguish, the count, menace and power did not move")
+	# the lint (RL-228 term 2): the far branch of WorldCollateral.scatter names none of the four sinks that get nothing: menace, power from casualties, Witness, mood's aggression
 	var src: String = FileAccess.get_file_as_string("res://sim/world/collateral.gd")
 	var i0: int = src.find("far branch begin")
 	var i1: int = src.find("far branch end")

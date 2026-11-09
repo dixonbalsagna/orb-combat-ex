@@ -44,3 +44,4 @@ WHAT DOESN'T WORK YET
 AFTERWARDS
 8. On the main PC, double-click "Remove the firewall rule (main PC, afterwards)". Click Yes. Do this every time.
 9. If you choose, give the EP the numbers in the files named lan-log-... on each PC: the ping, the step counts and the time.
+10. Your matches are saved on each PC, in the folder "saved" beside the game: at the end, at every pause, and when you close the window. Press F9 on the keyboard, or View and RB together on the pad, to mark a moment you want looked at: that saves a report there too, and the screen says REPORT SAVED. Bring the "saved" folder from both PCs, with the lan-log files.

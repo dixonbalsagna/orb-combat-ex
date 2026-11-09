@@ -59,8 +59,9 @@ func _init() -> void:
 	var saved: Array = []
 	for o in S.buildings:
 		if o != b and o.alive and absf(SimWrap.sdx(b.x, o.x)) - (b.w + o.w) * 0.5 < WorldWrecks.K_NEAR * WorldWrecks.BH + 1.0:
-			saved.append([o, o.popAlive])
-			o.popAlive = 0.0
+			saved.append([o, o.pop])   # the housing: a place is lived-in by it, not by who is inside
+			o.pop = 0.0
+	S.world.heavyX = -1.0   # the fall's own district flight (it runs near every heavy event now, nobody dies) is the RL-186 test below; these are the query's own
 	var pk: Dictionary = WorldWrecks.pick(S, f.x, f.y, f.z, top)
 	ok(not pk.is_empty() and pk.id == b.idx and absf(pk.wreckMass - WorldWrecks.wreckMass(b)) < 1.0e-9 and pk.dist == 0.0, "beside it, the query returns the wreck's id and mass (id %d, mass %.2f)" % [pk.get("id", -1), pk.get("wreckMass", 0.0)])
 	var heavyLift: float = WorldWrecks.wreckMass(b) * 0.5
@@ -80,19 +81,25 @@ func _init() -> void:
 	# a living neighbour: Legal's rule
 	var gotLiving: bool = false
 	for s in saved:
-		s[0].popAlive = s[1]
-		if s[1] > 0.0:
+		s[0].pop = s[1]
+		if WorldCollateral.occupied(S, s[0]):
 			gotLiving = true
 	var pl: Array = WorldWrecks.within(S, f.x, f.y, f.z, top)
 	ok(not gotLiving or (WorldWrecks.pick(S, f.x, f.y, f.z, top).is_empty() and pl[0].why == "living"), "with people in a building beside it (%s) the wreck is not offered (RL-183)" % ("there are" if gotLiving else "there are none here: the check is vacuous"))
 	# Legal RL-186: a civilian in the open counts as much as one indoors. A district flight that is running puts the people of the buildings near a heavy event on the street: while it runs, a wreck within reach of it is not offered
 	for s in saved:
-		s[0].popAlive = 0.0   # (nobody indoors beside the wreck for what follows)
+		s[0].pop = 0.0   # (nobody indoors beside the wreck for what follows)
 	var wkeep: Array = []
-	for o in S.buildings:
-		if o != b and o.alive and absf(SimWrap.sdx(b.x + 1500.0, o.x)) < WorldCollateral.EVAC_R and o.popAlive > 0.0 and absf(SimWrap.sdx(b.x, o.x)) - (b.w + o.w) * 0.5 >= WorldWrecks.K_NEAR * WorldWrecks.BH + 1.0:
-			wkeep.append(o)
-	S.world.heavyX = b.x + 1500.0
+	var woff: float = 1500.0
+	for cand in [1500.0, -1500.0, 500.0, -500.0, 300.0, -300.0, 700.0, -700.0]:   # the flight reaches WorldCollateral.EVAC_R (8 body heights) round a heavy event: find a spot with a lived-in building in reach and beyond the wreck's own near zone
+		wkeep = []
+		for o in S.buildings:
+			if o != b and o.alive and absf(SimWrap.sdx(b.x + cand, o.x)) < WorldCollateral.EVAC_R and WorldCollateral.occupied(S, o) and absf(SimWrap.sdx(b.x, o.x)) - (b.w + o.w) * 0.5 >= WorldWrecks.K_NEAR * WorldWrecks.BH + 1.0:
+				wkeep.append(o)
+		if not wkeep.is_empty() and absf(cand) - b.w * 0.5 <= WorldCollateral.EVAC_R:
+			woff = cand
+			break
+	S.world.heavyX = b.x + woff
 	S.world.heavyT = S.T
 	S.world.cbSum = 1.0e9   # the collateral window is spent: the district flight runs
 	var fleeing: Array = WorldWrecks.within(S, f.x, f.y, f.z, top)
@@ -104,12 +111,16 @@ func _init() -> void:
 	S.fighters[1].y = f.y
 	ok(not WorldWrecks.pick(S, f.x, f.y, f.z, top).is_empty(), "a fighter standing at the wreck does not refuse it (RL-186: combatants are not counted)")
 	# an occupied wreck is never offered (made by hand: the game has none)
-	b.popAlive = 3.0
+	var hp_saved: float = b.hp
+	var pop_saved: float = b.pop
+	b.pop = 3.0
+	b.hp = b.maxhp
 	ok(WorldWrecks.pick(S, f.x, f.y, f.z, top).is_empty() and not WorldWrecks.empty(b), "a wreck with anyone in it is not offered")
-	b.popAlive = 0.0
+	b.hp = hp_saved
+	b.pop = pop_saved
 	# burst
 	for s in saved:
-		s[0].popAlive = 0.0
+		s[0].pop = 0.0
 	var counts: Array = []
 	var tgt0 = null   # where the scrap lands: the toughest tower in the front row (a blast cannot finish a standing building, so only a tower shows the tiers)
 	for o in S.buildings:

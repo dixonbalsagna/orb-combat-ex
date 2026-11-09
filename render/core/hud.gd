@@ -63,8 +63,7 @@ func _draw() -> void:
 	for idx in range(S.fighters.size()):
 		_panel(S.fighters[idx], idx == 1, bw, vw)
 	var w = S.world
-	_text("CIVILIANS LOST %d / %d" % [int(round(w.casualties)), int(w.pop0)], Vector2(vw * 0.5, 24), 12, Color(1, 1, 1, 0.92), 0)
-	_text("STRUCTURES LOST %d   CRATERS %d" % [int(w.structuresLost), int(w.craters)], Vector2(vw * 0.5, 40), 11, Color(1, 1, 1, 0.7), 0)
+	_text("STRUCTURES LOST %d   CRATERS %d" % [int(w.structuresLost), int(w.craters)], Vector2(vw * 0.5, 24), 11, Color(1, 1, 1, 0.7), 0)   # (RL-257: the people counter that was above this line is gone; the line moves up into its place)
 	var ex = S.dirS.ex
 	if ex != null and ex.combo > 1.0:
 		_text("%d CHAIN" % int(ex.combo), Vector2(vw * 0.5, 70), 22, RenderLook.col("#ffd45a"), 0)

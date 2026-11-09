@@ -111,7 +111,7 @@ static func isWreck(b) -> bool:
 
 ## Is the wreck of building b empty? A fallen building's people are gone (WorldStructures.damageBuilding sets popAlive 0 as it falls); the check is the rule's own, kept so a change there cannot make a wreck hold anyone.
 static func empty(b) -> bool:
-	return b.popAlive <= 0.0
+	return not (b.pop > 0.0 and b.hp >= b.maxhp)   # by the housing and the structure, never by who is inside: a place is empty from its first damage (bystanders.md section 2)
 
 
 ## The living civilians near building b's wreck (Legal RL-186: any living civilian within `nearBh` of the wreck's edge, in a building or in the open): the people in the standing buildings whose edge is within it (the
@@ -125,11 +125,11 @@ static func livingNear(S: SimState, b) -> float:
 	var s: float = 0.0
 	for bi in WorldStructures.near(S, b.x, r + b.w * 0.5):
 		var o = S.buildings[bi]
-		if o == b or not o.alive or o.popAlive <= 0.0:
+		if o == b or not WorldCollateral.occupied(S, o):
 			continue
 		var gap: float = absf(SimWrap.sdx(b.x, o.x)) - (b.w + o.w) * 0.5
 		if gap < r:
-			s += o.popAlive
+			s += WorldCollateral.livedMass(S, o)
 	s += _fleeingNear(S, b, r)
 	if K_FIGHTERS:
 		for f in S.fighters:
@@ -149,11 +149,11 @@ static func _fleeingNear(S: SimState, b, r: float) -> float:
 	var n: float = 0.0
 	for bi in WorldStructures.near(S, w.heavyX, WorldCollateral.EVAC_R):
 		var o = S.buildings[bi]
-		if not o.alive or o.popAlive <= 0.0:
+		if not WorldCollateral.occupied(S, o):
 			continue
 		if absf(SimWrap.sdx(w.heavyX, o.x)) - o.w * 0.5 > WorldCollateral.EVAC_R:
 			continue
-		n += minf(o.popAlive, maxf(0.0, WorldCollateral.FLIGHT_MAX * o.pop - o.fled))
+		n += WorldCollateral.livedMass(S, o)
 	return n
 
 

@@ -443,6 +443,11 @@ static func runBeat(S: SimState, ex, b) -> void:
 				return   # a fighter in flight or down makes no closing move
 			if DirMelee.approachOver(S, ex, a):
 				return   # the stick was up or down at the press: he comes in over (or under) the rival and lands on the far side
+			if carryStops(S, ex, A, a):
+				for bb in ex.beats:
+					bb.done = true   # carryRound: he let go of him: he stays where he is, the set piece is over, and he is free
+				SimFx.cue(S, A, "carry_round", "stayed", "")
+				return
 			var r := SimState.Rush.new()
 			r.tgt = D
 			r.off = DirMelee.sideOff(A, D, a.off, String(a.get("side", "own")))
@@ -630,6 +635,28 @@ static func _blurEnder(S: SimState, ex) -> void:
 	DirRecipe.dress(S, ex, true)   # the blur's own ender takes its piece
 
 
+## carryRound (interrupts.json, off; Game Design, beams-third-play.md, the dodge exchange): you only go round after him if you're still
+## pressing toward him. True when this rush is the attacker's follow after the defender stepped round to the far side (a dodge with side
+## cross, then a rush with a side), the attacker is a player, and he isn't pressing toward the defender: the left stick past deadZone
+## toward him, or an attack button or the strike stick still held.
+static func carryStops(S: SimState, ex, A, a) -> bool:
+	var c: Dictionary = DirInterrupt.data().get("carryRound", {})
+	if not bool(c.get("enabled", false)) or A.ai != null or a == null or not a.has("side"):
+		return false
+	var crossed: bool = false
+	for bb in ex.beats:
+		if bb.done and bb.op == "dodge" and bb.args != null and String(bb.args.get("side", "")) == "cross":
+			crossed = true
+			break
+	if not crossed:
+		return false
+	var i = A.input
+	if i == null:
+		return true
+	var toward: bool = i.mx * SimMathx.jsign(SimWrap.sdx(A.x, ex.D.x)) > float(c.get("deadZone", 0.3))
+	return not (toward or i.lightHeld or i.heavyHeld or i.sigHeld or i.rsHeld)
+
+
 static func endEx(S: SimState, ex) -> void:
 	DirBrawl.over(S, ex, "ko" if S.game.ko != null else "ended")   # a brawl that was not closed yet says so (every brawl_start has its brawl_end)
 	if ex.A.state == "locked":
@@ -706,6 +733,7 @@ static func _update(S: SimState, dt: float) -> void:
 	DirDriver.tick(S)   # RB + B
 	_transforms(S)
 	DirRefuse.presses(S)   # every press answered: the power press and the transform, after the director's own
+	DirPace.note(S)   # paceMatch: the player's own pace, for easy's strings
 	if S.dirS.cool > 0.0:
 		S.dirS.cool -= dt
 	DirBands.tick(S)   # the approach before an exchange: it counts down, and the exchange starts at its end

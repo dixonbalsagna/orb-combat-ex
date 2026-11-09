@@ -5,13 +5,13 @@ extends SceneTree
 var fails: int = 0
 
 # gen 1 gameplay hashes at the given ticks, recorded before window 2 (base_hash.gd)
-const BASE: Dictionary = {
-	"planet7/2400": "e13e8a88f58e0b6e",
-	"planet3/1200": "27ebbd771589291f",
-	"planet25/4800": "d22db1eb84d6a3d7",
-	"planet11/2400": "637e82d03ec7fdbc",
-	"handmade": "68c1d089d8a1df92",
-	"turn": "n=1 7e3e4229d57ec017",
+const BASE: Dictionary = {   # re-pinned 2026-11-08 for CD-05 (Simulation: casSeen left the fighter's hash; World: mass0 and massLost joined it): one-time moves, taken from the stack, not a tree with edits
+	"planet7/2400": "d0b2c384410de916",
+	"planet3/1200": "48c10af10d3cd18e",
+	"planet25/4800": "2b648d9136cc9b89",
+	"planet11/2400": "d63f4576c3050146",
+	"handmade": "3d293451a97a0a8c",
+	"turn": "n=1 92eea3dda225b78c",
 }
 
 

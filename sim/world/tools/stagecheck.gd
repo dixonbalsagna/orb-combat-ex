@@ -138,7 +138,7 @@ func _init() -> void:
 		ok(t11.hp >= t11.maxhp * (1.0 - WorldStructures.coreCap()) - 0.01, "one floors hit leaves a tower of %d floors at %.0f%% of its hit points at least (cap %.2f of the core)" % [t11.floors, 100.0 * t11.hp / t11.maxhp, WorldStructures.coreCap()])
 	ok(WorldStructures.coreCap() > 0.0 and WorldStructures.coreCap() <= 1.0, "the core cap is read (%.2f)" % WorldStructures.coreCap())
 	var S12 := fresh()
-	ok(absf(WorldStructures.popNearRef(S12) - 0.09 * S12.world.pop0) < 0.001 and absf(WorldStructures.buildingPopRef(S12) - 0.02 * S12.world.pop0) < 0.001, "the population references are 9%% and 2%% of the starting population (%.1f and %.1f of %.0f)" % [WorldStructures.popNearRef(S12), WorldStructures.buildingPopRef(S12), S12.world.pop0])
+	ok(absf(WorldStructures.livedNearRef(S12) - 0.09 * S12.world.mass0) < 0.001 and absf(WorldStructures.buildingMassRef(S12) - 0.02 * S12.world.mass0) < 0.001, "the structure references are 9%% and 2%% of the starting structure mass (%.1f and %.1f of %.0f)" % [WorldStructures.livedNearRef(S12), WorldStructures.buildingMassRef(S12), S12.world.mass0])
 	if WorldSettle.enabled() and not bool(WorldSettle.data().get("foreground", true)):
 		var r0: int = 0
 		for b in S12.buildings:

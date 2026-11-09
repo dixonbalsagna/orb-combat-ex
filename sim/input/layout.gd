@@ -119,6 +119,9 @@ var _brace_peak: Vector2 = Vector2.ZERO
 var _brace_pending: bool = false    # a brace read (from the flick or the button) waits for a step to take it
 var _rs: Vector2 = Vector2.ZERO     # the pad's strike stick, x right and y up
 var dodge_held: bool = false        # switches.dodgeHeld: the intent's dodgeHeld says the dodge control is physically down
+var inert_knock: bool = false       # switches.inertKnock: a right-stick push on an inert layer (RT held, LB + RB) is told, once (docs/controls/inert-knock.md)
+var _prev_strike_phase: int = 0     # the strike reader's phase last build (for the inert push's edge)
+var dash_handover: bool = false     # switches.dashHandover: the dash is on from LT's press tick and only while it is held, no free lunge after a release (docs/controls/dash-handover.md)
 var chord_pick: bool = false        # switches.chordPick: two attack edges on one tick are one blow, the biggest, and the smaller is told (docs/controls/chord-pick.md)
 var _chord_dropped: Array = []      # [{k, why, t}]: the attack presses a chord let go of, joined to the strike law's list by take_dropped
 var stall_keep: bool = false        # switches.stallKeep: keep the strike stick's furthest point between two builds (see _note_peak)
@@ -191,6 +194,8 @@ func _init(p_preset: Dictionary = {}) -> void:
 	stall_keep = SimInputData.stall_keep_on()
 	dodge_held = SimInputData.dodge_held_on()
 	chord_pick = SimInputData.chord_pick_on()
+	dash_handover = SimInputData.dash_handover_on()
+	inert_knock = SimInputData.inert_knock_on()
 	trig_on = SimInputData.tf(["stick", "triggerOn"], 0.35)
 	trig_off = SimInputData.tf(["stick", "triggerOff"], 0.25)
 	if not p_preset.is_empty():
@@ -1014,7 +1019,11 @@ func build() -> SimIntent:
 		_edge_t0 = tick - 1
 	i.waited = clampi(tick - 1 - _edge_t0, 0, 15) if _edge_t0 >= 0 else 0
 	# Today's fields, until I3: a lunge or a sprint is the dash, the channel is the charge.
-	i.dash = sprinting or tick <= _lunge_until
+	if dash_handover:
+		# Game Design's ruling (2026-11-08, c): LT's high speed is on from the press tick, only while LT is held (the dodge edge is the first tick), and ends when it is let go of: a tap is the slip, not a 12-tick lunge.
+		i.dash = sprinting or ((_is_down("dodge") or i.dodge) and not chord_dodge and (mask & SimStance.MANOEUVRE) != 0)
+	else:
+		i.dash = sprinting or tick <= _lunge_until
 	i.charge = channel
 	i.stance = -1.0
 	return i
@@ -1160,6 +1169,15 @@ func _strike_vector() -> Array:
 
 
 ## The face presses the strike law let go of since the last call, [{k, why, t}], and the list starts again (docs/controls/refusals.md). [] when the right-hand switch is off.
+## A push on a layer where the stick is inert goes to the reader's IGNORED phase (RT held: the charge owns the stick; LB + RB): nothing started and nothing said. With switches.inertKnock the push is told once, on the
+## build the reader goes IGNORED: the refusal "charging" (RT) or "warding" (LB + RB), through the same dropped list the hub knocks from. A struggle's flick, a stick-push struggle and the Driver's bank are not told here.
+func _note_inert(mask: int, push_live: bool, in_struggle: bool) -> void:
+	var now: int = _strike.phase
+	if now == SimStrikeRead.IGNORED and _prev_strike_phase != SimStrikeRead.IGNORED and not push_live and not in_struggle and _inert_masks.has(mask):
+		_chord_dropped.append({"k": "stick", "why": "charging" if mask == SimStance.CHARGING else "warding", "t": tick})
+	_prev_strike_phase = now
+
+
 func take_dropped() -> Array:
 	var d: Array = []
 	if _law != null:
@@ -1243,6 +1261,8 @@ func _right_hand(i: SimIntent, mask: int) -> void:
 	_b_hold_prev = b_hold
 	# A stick-push struggle reads the stick whatever the layer or a held B (nothing else counts there) and with no reverse lockout (the faces mean nothing in it).
 	_strike.step(sv[0].x, sv[0].y, mask, tick, live, 0 if push_live else _law.floor_tick(), sv[1], (in_struggle and not push_live) or (not push_live and (_inert_masks.has(mask) or b_hold)))
+	if inert_knock:
+		_note_inert(mask, push_live, in_struggle)
 	if was_down and not _strike.down:
 		_law.note_stick_end(tick)   # the thumb left the stick: the faces are free L later (a throw, a cancel or a toggled charge's rest alike)
 	if _strike.is_active():
