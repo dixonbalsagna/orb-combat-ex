@@ -51,7 +51,7 @@ This applies to whichever fighter has a menace meter (today `data/fighters/RIVAL
 
 - **Decay and effects as today:** decay 0.4 a second after 240 ticks unfed; regen +0.01 a point, at most +1; damage +5% at full; beam power +0.08 a point.
 - **Destruction and terror are normalised** by the arena's structure mass at the start, as people were by pop0, so planets are equivalent. Combat trauma isn't normalised.
-- **His power from the world:** the old +0.09 per person becomes **+0.22 per unit of mass he levels,** normalised the same way. Simulation calibrates it so that, over a match, his power from the world is within 20% of what the old feed gave.
+- **His power from the world:** the old +0.09 per person becomes **+0.07 per unit of mass he levels,** normalised the same way (World's calibration, 2026-11-08: 0.07 is within 20% of the old feed on both worlds, where my first 0.22 gave 3 to 10 times it). World's budget by tier is .02, .05, .12 and .30, and its ceiling .03, .10, .25 and .70 (22 matches).
 - **Every trigger is a structure's destruction, a wreck or an evacuation event** (RL-257 (3)). The crowd scattering can be a beat of his menace only through the building's evacuation event, never through anyone's body. It goes in `meters.json`, since numbers live in data.
 - **His launch planner seeks structures** (the building smash, wreckage), never people.
 
