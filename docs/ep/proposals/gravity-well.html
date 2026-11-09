@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Gravity Well</title>
+<style>
+  :root {
+    --bg:#f6f5f1; --panel:#ffffff; --ink:#1c1d22; --dim:#5d6070; --line:#dddbd3;
+    --a:#2f6f9f; --b:#c0503f; --gold:#b07a12; --ok:#2e7d4f; --warn:#a4462f; --ground:#8a6a48;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg:#121419; --panel:#1b1e26; --ink:#e8eaf0; --dim:#9aa1b2; --line:#2d3240;
+    --a:#6fb2e0; --b:#ee8a78; --gold:#e8be5a; --ok:#7fd3a0; --warn:#f09a84; --ground:#9a7a58;
+  } }
+  :root[data-theme="dark"] {
+    --bg:#121419; --panel:#1b1e26; --ink:#e8eaf0; --dim:#9aa1b2; --line:#2d3240;
+    --a:#6fb2e0; --b:#ee8a78; --gold:#e8be5a; --ok:#7fd3a0; --warn:#f09a84; --ground:#9a7a58;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 system-ui,Segoe UI,sans-serif; }
+  main { max-width:980px; margin:0 auto; padding:24px 16px 80px; }
+  h1 { font-size:28px; margin:0 0 6px; line-height:1.2; }
+  h2 { font-size:21px; margin:44px 0 8px; padding-top:12px; border-top:1px solid var(--line); }
+  h3 { font-size:17px; margin:22px 0 6px; }
+  p { margin:8px 0; }
+  .dim { color:var(--dim); }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin:12px 0; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; }
+  .find { border-left:3px solid var(--warn); }
+  .new { border-left:3px solid var(--gold); }
+  .rule { border-left:3px solid var(--ok); }
+  blockquote { margin:10px 0; padding:10px 14px; border-left:3px solid var(--a); background:var(--panel); border-radius:0 8px 8px 0; }
+  table { width:100%; border-collapse:collapse; font-size:14px; margin:8px 0; }
+  th, td { border-bottom:1px solid var(--line); padding:7px 6px; text-align:left; vertical-align:top; }
+  th { font-weight:600; color:var(--dim); font-size:13px; }
+  .scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .scroll table { min-width:640px; }
+  .num { font-variant-numeric:tabular-nums; white-space:nowrap; }
+  code { font:13px ui-monospace,Consolas,monospace; background:var(--bg); padding:1px 4px; border-radius:4px; overflow-wrap:anywhere; }
+  pre { font:12.5px/1.45 ui-monospace,Consolas,monospace; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:10px 12px; overflow-x:auto; }
+  pre code { background:none; padding:0; overflow-wrap:normal; }
+  ol li, ul li { margin:4px 0; }
+  nav a { color:var(--a); text-decoration:none; margin-right:12px; font-size:14px; display:inline-block; }
+  .tag { display:inline-block; font-size:12px; padding:1px 7px; border-radius:20px; border:1px solid var(--line); color:var(--dim); margin-left:4px; vertical-align:middle; }
+  .tag.gold { color:var(--gold); border-color:var(--gold); }
+  .v-fixed { color:var(--ok); font-weight:600; }
+  .v-kept { color:var(--gold); font-weight:600; }
+  .v-rejected { color:var(--warn); font-weight:600; }
+  canvas { width:100%; height:220px; display:block; background:var(--panel); border:1px solid var(--line); border-radius:8px; touch-action:manipulation; }
+  .row { display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; margin:10px 0; font-size:14px; }
+  .row label { display:flex; gap:6px; align-items:center; }
+  input[type=range] { width:130px; accent-color:var(--a); }
+  button { font:inherit; font-size:14px; background:var(--panel); color:var(--ink); border:1px solid var(--a); border-radius:6px; padding:6px 12px; cursor:pointer; }
+  .out { font-size:14px; background:var(--bg); border-radius:6px; padding:8px 10px; margin-top:6px; min-height:3.2em; }
+  .cap { font-size:13px; color:var(--dim); margin-top:6px; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>The gravity well</h1>
+<p class="dim">Your stand-in's design packet, 2026-11-08, for Orb and the EP. Design only: nothing is built, every number is a first value for Game Design, and the speed tables model the code's formulas (not a Godot run). References are to main unless a build is named. Revised after three checks (code and rulings, feasibility, Orb's ask): what they changed is in section 8.</p>
+
+<nav>
+  <a href="#ask">1. The ask</a><a href="#why">2. Why it feels wrong</a><a href="#well">3. The well</a><a href="#toy">4. Try it</a><a href="#intent">5. Reading intent</a><a href="#code">6. Pseudocode</a><a href="#plan">7. The plan</a><a href="#checks">8. Checks and changes</a>
+</nav>
+
+<h2 id="ask">1. Orb's words, and the short version</h2>
+<blockquote>"overhaul the magnetic combat: by this I mean there were some instances during the fights where the LT high-speed didn't quite feel fast enough but sped up when we were further apart, and sometimes engaging in close-up fights it felt like we weren't in control of our fighter. make sure the combat choreography system is adaptive to what the player is trying to do with their controller. I have an image in my head of a 'gravity well' where when fighters are in each others 'gravity well' they are drawn together and attacks tend to snap them towards each other, when fighters are outside the influence of another gravity well they have long range attacks, charge attacks, taunts." <span class="dim">(Orb, 2026-11-08 21:52, <code>docs/ep/vision.md</code>)</span></blockquote>
+
+<div class="card rule">
+  <strong>In plain words: what you press and what you see.</strong>
+  <ul>
+    <li><strong>Every fighter carries a gravity well.</strong> It's bigger when he's heavier (transformed), at a higher power tier, or holding a charge.</li>
+    <li><strong>Inside his well, any blow you throw snaps you in to him.</strong> You both drift together a little, gently: never more than a quarter of your flying speed, and he's only drawn to meet your snap if his stick isn't pulling away. Right up close it's the brawl, which keeps its own rules.</li>
+    <li><strong>Outside his well, you get the far kit:</strong> taunts, charges, energy bolts, beams (RB + the right stick), and the long strike (hold LT flat out at him, then B or a flick). A taunt is a challenge: if he answers with a press, you both rush in and meet.</li>
+    <li><strong>Hold LT and you move on the next tick, at the same speed at any distance:</strong> full speed by tick 12, easing only as you arrive (Game Design's ruling (c)). A faster LT inside a well is an option, off until Game Design rules on it and you try it.</li>
+    <li><strong>Your left stick always moves your fighter, and your right hand always throws a blow.</strong> In a brawl the stick moves the brawl as you ruled on 10-06, and the director's pulls never beat it. The director picks how each blow looks and bends it toward what your sticks are saying. It never takes your fighter unless you pressed for a set piece.</li>
+  </ul>
+  <p><strong>What it looks like:</strong> hold LT at him from across the city at full speed, and one press snaps you onto him. Once he transforms his well reaches further: you're inside it sooner and your taps snap in from further off, while he has his taunts, charges, bolts and the long strike across that range.</p>
+</div>
+
+<h2 id="why">2. The two problems, traced to the code</h2>
+<p>Both come from the code doing what it was written to do. The maps read main and the switch list of build 1931a0f8, which Orb played with the kick, flight strikes and the energy model on. On main's data all three are off; the LAN setup turns the energy model on (<code>net/lan.gd:24-27</code>, <code>"power": true</code>).</p>
+
+<div class="card find">
+<h3>Problem 1: "LT high-speed wasn't fast enough, but sped up further apart"</h3>
+<ol>
+  <li><strong>The traversal ramp, the main cause.</strong> Held LT is the dash, about 1,032 u/s at base. Its boost starts only past 1,500 u (20 bh) and is full at 12,000 u, so everything from contact to 20 bh runs at melee-dash speed, slower than the director's own lunge (4,000). <code>sim/core/fighter.gd:622-631</code>; the constants are code, not data (<code>sim/core/constants.gd:16-19</code>).</li>
+  <li><strong>keepTop rewards starting far.</strong> It keeps the most boost reached, drops it at 1,500 u, and the lag pulls him back to 1,032 just as he arrives (<code>sim/core/kick.gd:163-176</code>).</li>
+  <li><strong>The handover.</strong> The dodge's ×1.25 ends on tick 12, the tick the sprint starts (<code>act.gd:21, 82</code>), so high speed begins 20% slower. With the kick off (main), the response reaches 90% only after 19 ticks (<code>fighter.gd:733</code>). In 1931a0f8 the kick was on: from below half speed it starts at 80% of top speed on tick 1 and reaches it by tick 9 (<code>SimKick.move</code>; <code>kick.json</code> instant 0.8, climbTicks 8). But inside 20 bh that top speed is the 1,032 melee dash, so it starts quickly at a slow speed.</li>
+  <li><strong>Flight strikes take a fixed time.</strong> Travel is <code>max(4, ceil(gap ÷ 3 bh))</code> (<code>sim/director/zip.gd:516-518</code>): 4 ticks for any gap up to 12 bh. With the tell (6, 10 or 14 ticks for X, Y and B; <code>interrupts.json</code>) press to contact is 10 to 18 ticks at any gap. So X averages about 1,000 u/s from 3 bh and 5,050 from 12 bh, and the travel alone runs 2,505 to 12,630 u/s. The tell zeroes velocity first (<code>zip.gd:499</code>): a fighter sprinting at 5,000 stops dead. Ruling (c) leaves flight strikes untouched, so this packet does too and puts the question to Game Design (section 7).</li>
+  <li><strong>A dead zone from 12.5 to 20 bh:</strong> no flight strike (it ends at the middle band's edge, <code>zip.gd:256-258</code>), no boost, and a press there is the far band's taunt or charge (<code>DirBands.farOn</code>, <code>bands.taunt</code>).</li>
+  <li><strong>Vertical gaps get no boost</strong> (<code>fighter.gd:626</code>), and <strong>every rush ends at zero velocity</strong> (<code>fighter.gd:335</code>).</li>
+</ol>
+<p><strong>The result</strong> (the speed lane's model of 1931a0f8): closing to 3 bh takes 0.70 s from 1,000 u (1,110 u/s average) and 2.72 s from 12,000 u (4,330 u/s). From far away he closes four times faster.</p>
+</div>
+
+<div class="card find">
+<h3>Problem 2: "Close up, we weren't in control of our fighter"</h3>
+<ol>
+  <li><strong>The stick moves the pair, not you.</strong> In a brawl it moves the pair's centre at 40% of flight speed (24% guarding), carrying the rival along (<code>sim/director/brawl.gd:2865-2992</code>, nudgeMul at :2896). That is Orb's own rule of 10-06 (<code>docs/design/brawl-second-pass.md</code> §1: "nudge the center of attraction"). On top of it, velocities are zeroed at the start (:311), the arrival's carry runs 20 ticks (:296-307, ruled so nobody stops dead), and the step-in and magnet place you (:2666, :3899-3925). You move alone only while he winds a slow blow, as ruled (giving ground, :2517-2545).</li>
+  <li><strong>You can't leave alone, by Orb's rule.</strong> A walk-out needs <em>both</em> sticks apart for 12 ticks (:3029, :3865). Orb: "if both players move their sticks in the opposite direction they should be able to walk out"; Game Design then withdrew its one-sided walk-out: "To leave alone he pays" (the escape, a dodge, a zip away or a burst; <code>brawl-second-pass.md</code> §1). Orb's Sunday play: 27 brawls, 0 walk-outs, 11 flight-strike exits and 14 dodge-cancels at 15 ki (<code>docs/qa/runs/1931a0f8/slot0-cue-summary-orb-play-20261108-1726.txt</code>). Whether one player may now leave alone is Orb's call (section 7, question 2), not this packet's.</li>
+  <li><strong>Set pieces take the body.</strong> A close press against a rival in stance 2 or 3, rushing, not free or giving an opening becomes a locked exchange (<code>brawl.gd:267-272</code>; <code>exchange.gd:179-180, 363-364</code>). "Locked" topped Orb's 11-07 ledger at 47 (<code>docs/tools/runs/1931a0f8/b1-ledger-1229.txt</code>).</li>
+  <li><strong>Side swaps the defender didn't pick.</strong> The meteor flip is ruled out (11-08 (a)). The held "away" flick carrying him past you is the ruled "past you, the sides swap" (<code>docs/design/stick-lands.md</code>; <code>stick.gd:388</code>), the attacker's choice, so it stays.</li>
+  <li><strong>Presses may wait.</strong> In 1931a0f8 a press behind a busy line waited for the blow in hand (pressWait on; <code>brawl.gd:3834-3846</code>). Its 600 ticks are "only a backstop", and a stun or the brawl's end clears it. Sunday's 189 "held" acks against about 200 blows count presses that waited, not how long they waited. A kept flick fires up to 90 ticks later (<code>stick.gd:536-546</code>), as ruled (<code>gauntlet-plan.md</code> §5, lever 1). Increment 0 measures the waits before anyone changes them.</li>
+  <li><strong>The flight strike drives the body</strong> for 30 to 50 ticks, and the take-back undoes the slip without a word (<code>zip.gd:372-381</code>).</li>
+</ol>
+<p><strong>The gauntlet:</strong> Orb's-scheme arm wins 5% on easy and takes 2.6 blows per blow landed (<code>docs/tools/gauntlet-build1.md</code>). The "seconds without control" meter (47 to 58 a minute) counts brawl time as locked (<code>tools/feel/feel.gd:209</code>); increment 0 splits it.</p>
+</div>
+
+<p><strong>What already points the right way:</strong> the bands (close to 3 bh, mid to 12.5; <code>sim/director/bands.gd:60-66</code>) already split near from far. But they're three hard steps by distance alone, blind to weight and power. The well makes them a field.</p>
+
+<h2 id="well">3. The gravity well</h2>
+
+<h3>How big a well is</h3>
+<p>The radius grows with what makes a fighter hit harder in the physics packet's model (§9):</p>
+<pre><code>radius = 12.5 bh × √(heft ÷ 100) × (1 + 0.1 × (tier − 1)) × (1 + 0.25 × charge held)    capped 4.5 to 20 bh</code></pre>
+<ul>
+  <li><strong>12.5 bh at base</strong> is today's mid band edge, where the lunge already reaches. <strong>The 20 bh cap</strong> is today's <code>BOOST_NEAR</code>, closing the dead zone.</li>
+  <li><strong>Heft</strong> is the physics packet's weight, 100 at base and rising with each form. It isn't on main, so until it lands the well reads 100 plus a per-form step.</li>
+  <li><strong>Charge held</strong> runs 0 to 1 from the strike stages, B's hold and a beam's gather.</li>
+</ul>
+<div class="scroll"><table>
+<tr><th>Fighter (first values; heft shown as one form step per tier for illustration)</th><th>Heft</th><th>Well radius</th><th>LT, flat out (ruling (c))</th><th>LT in a well, only with the option (×1.35)</th></tr>
+<tr><td>Base, tier 1</td><td class="num">100</td><td class="num">12.5 bh</td><td class="num">5,000 u/s</td><td class="num">6,750 u/s</td></tr>
+<tr><td>Tier 2</td><td class="num">125</td><td class="num">15.4 bh</td><td>by his level</td><td>by his level</td></tr>
+<tr><td>Tier 3</td><td class="num">150</td><td class="num">18.4 bh</td><td>by his level</td><td>by his level</td></tr>
+<tr><td>Tier 4, maximum</td><td class="num">175</td><td class="num">20 bh (cap)</td><td class="num">11,525 u/s</td><td class="num">13,500 u/s (cap)</td></tr>
+<tr><td>Base, holding a full charge</td><td class="num">100</td><td class="num">15.6 bh</td><td class="num">5,000 u/s</td><td class="num">6,750 u/s</td></tr>
+</table></div>
+<p class="cap">Flat out is <code>power.json</code> flight (5,000, growth 2.305), as in ruling (c), with stance, wounds and water still applying. The last column is the option in "LT high speed" below: the kick's built overspeed share, 1.35, which <code>kick.json</code> keeps off ("Orb asked for the response"), capped at RL-076's 3 bh a tick (13,500 u/s).</p>
+
+<h3>The zones</h3>
+<p>Each fighter asks one thing: <strong>am I inside his well?</strong> If yes, my blows snap. If not, I have the far kit, as Orb's picture has it. Wells differ in size, so the two can be in different zones. The zone is worked out once a tick for every fighter at once, and kept with hysteresis as the band is, so it doesn't flicker on an edge. A press uses the zone held on its tick.</p>
+<div class="scroll"><table>
+<tr><th>Zone (for this fighter)</th><th>Where (base)</th><th>Left stick</th><th>X, Y, B or a flick</th><th>Held LT</th></tr>
+<tr><td><strong>The brawl</strong></td><td>Within 4.5 bh (today's breakBh)</td><td>Moves the brawl's centre, as ruled: 0.4 of flight speed, 0.8 when both push the same way, a tug of war when you oppose. Alone while he winds up (giving ground)</td><td>One blow, as today: your step-in and the cell's contact tick (a light lands 2 ticks after its press). No snap</td><td>As ruled: LT + away is the escape at the dodge-cancel's price. LT + face, flight strikes</td></tr>
+<tr><td><strong>Both wells</strong></td><td>Out to the smaller well's edge</td><td>Full speed, plus a draw toward him of at most a quarter of your flight speed (halved while you hold away)</td><td><strong>The snap:</strong> you fly in flat out. He's drawn to meet it only within the same quarter-speed cap, read from his stick that tick, and not at all while he holds away or guards</td><td>Flat out</td></tr>
+<tr><td><strong>Drawn</strong></td><td>Inside his well, he's outside yours</td><td>His draw is on you (the same cap)</td><td>You snap the whole way in. He doesn't meet you</td><td>Flat out</td></tr>
+<tr><td><strong>Holder</strong></td><td>He's inside yours, you're outside his</td><td>Free</td><td><strong>The far kit</strong>, against a foe being drawn in: tap taunts, hold charges, bolts. Flat out + B or a flick is the long strike, from anywhere in your own well</td><td>Flat out</td></tr>
+<tr><td><strong>Edge band</strong></td><td>Up to 3 bh beyond his well</td><td>Free</td><td>A tap snaps in, a hold charges, flat out + B or a flick is <strong>the long strike</strong></td><td>Flat out</td></tr>
+<tr><td><strong>Outside</strong></td><td>Beyond that</td><td>Free</td><td>Tap taunts: a challenge his press can answer, and you both rush to meet. Hold charges. Bolts and the charged shot (energy family), beams (RB + right stick), the follow after a send (row 42), the Driver</td><td>Flat out for his level, any range (ruling (c))</td></tr>
+</table></div>
+<p><strong>The drawn and holder zones are the rule of cool at work.</strong> A transformed fighter's well reaches an untransformed one first. The small one is inside the big one's well, so the small one's taps snap in from further off. The big one, outside the small one's well, keeps the far kit across that whole range: taunts, charges that fly in, bolts, and the long strike from anywhere in his own well. Neither carries the other: the draw itself is gentle on purpose (Rule 2: about 107 u/s at base, a quarter of free flight, a fiftieth of LT), and at 10 bh from a base well it's about 43 u/s. The well changes what your buttons do; the "drawn together" you see is the snap. Orb's question 3 asks whether that's the trade he wants.</p>
+
+<h3>LT high speed: ruling (c), as ruled</h3>
+<ul>
+  <li><strong>At any range, inside a well or out:</strong> flat out for his level. <code>BOOST_NEAR</code>, <code>BOOST_FAR</code> and keepTop leave the dash. At least 1,000 u/s on the tick after the press, rising steadily to full by tick 12. Guard, battered legs and the sea still slow it, as they slow the far dash today (<code>power.gd:182-185</code>).</li>
+  <li><strong>The arrival</strong> eases over the last 1.5 bh, as ruled: no overshoot, no teleport.</li>
+  <li><strong>Leaving</strong> is flat out, minus the draw while you're inside his well (at most about 107 u/s at base). Chaser and fleer fly at the same speed and the draw tips it a little toward the chaser, so escape stays a gamble (pillar 3).</li>
+  <li><strong>Height counts.</strong> The well reads the full distance with wrap and height, as the bands do (<code>bands.gd:49-52</code>).</li>
+</ul>
+<div class="card new"><strong>The option, off: a faster LT inside a well.</strong> ×1.35 from his well's edge inward (rising across the edge band) and full speed by tick 6 inside. It fits the picture of being drawn together, but it <strong>amends ruling (c)</strong> ("LT's high speed doesn't depend on the distance") and turns on the kick's overspeed, which <code>kick.json</code> keeps off by Orb's ask. So it ships behind its own switch, off: Game Design rules on it, and Orb tries it on the pad before it's ever on by default.</div>
+<div class="scroll"><table>
+<tr><th>Close to 3 bh with LT held, from rest</th><th>From 1,000 u</th><th>From 3,000 u</th><th>From 6,000 u</th><th>From 12,000 u</th></tr>
+<tr><td>Today, build 1931a0f8 (speed lane's model)</td><td class="num">0.70 s (1,110 u/s avg)</td><td class="num">2.03 s (1,370)</td><td class="num">2.60 s (2,220)</td><td class="num">2.72 s (4,330)</td></tr>
+<tr><td>Game Design's targets (ruling c)</td><td class="num">≤ 0.4 s</td><td class="num">≤ 0.8 s</td><td class="num">≤ 1.4 s</td><td>none</td></tr>
+<tr><td><strong>Ruling (c), base</strong> (this packet's default)</td><td class="num"><strong>0.25 s (3,100)</strong></td><td class="num"><strong>0.65 s (4,270)</strong></td><td class="num"><strong>1.25 s (4,620)</strong></td><td class="num"><strong>2.45 s (4,810)</strong></td></tr>
+<tr><td>Ruling (c), maximum level (target ≤ 0.75 s from 6,000)</td><td class="num">0.17 s</td><td class="num">0.33 s</td><td class="num">0.60 s</td><td class="num">1.12 s</td></tr>
+<tr><td>With the option (×1.35 and tick 6 in a well), base</td><td class="num">0.20 s (3,875)</td><td class="num">0.60 s (4,625)</td><td class="num">1.20 s (4,815)</td><td class="num">2.40 s (4,905)</td></tr>
+</table></div>
+<div class="scroll"><table>
+<tr><th>From the middle band to contact, LT held from rest</th><th>From 6 bh</th><th>From 9 bh</th></tr>
+<tr><td>Today, main (kick off: the 1,032 dash, 11% a tick)</td><td class="num">31 ticks</td><td class="num">44 ticks</td></tr>
+<tr><td>Today, 1931a0f8 (kick on: 80% on tick 1)</td><td class="num">24 ticks</td><td class="num">37 ticks</td></tr>
+<tr><td><strong>Ruling (c), base</strong></td><td class="num"><strong>11 ticks</strong></td><td class="num"><strong>14 ticks</strong></td></tr>
+<tr><td>Ruling (c), maximum level</td><td class="num">7 ticks</td><td class="num">9 ticks</td></tr>
+<tr><td>For comparison: X as a flight strike, press to contact (unchanged)</td><td class="num">10 ticks</td><td class="num">10 ticks</td></tr>
+</table></div>
+<p class="cap">Under ruling (c) the speed on each tick after the press is the same at every distance until the arrival's ease. Average closing speed from 12,000 is still 1.55 times that from 1,000 (today about 3.9 times), because a short dash spends more of itself starting from rest. The model: first tick 1,000, a steady rise to full by tick 12 (6 inside a well with the option), a smoothstep ease over the last 1.5 bh with a 1,000 floor, wells of 12.5 and 20 bh. Not a Godot run: QA's rows confirm it.</p>
+<p><strong>Flight strikes stay as ruled.</strong> Ruling (c) leaves them untouched and <code>playable-build.md</code> §1 sets their travel (the tell, then at least 4 ticks and at most 3 bh a tick). That keeps a gap Orb may still feel: LT + X takes 10 ticks from 3 bh or from 12 bh, so it looks about five times faster from far. Closing it means shortening the tell up close or counting its braking toward the travel. Either changes a ruled piece and B's counter window ("arrives 10 to 19 ticks after its press", <code>playable-build.md</code>), so it's Game Design's call, with QA's rows from 3 and 6 bh.</p>
+
+<h3>Control inside the well: four rules</h3>
+<div class="grid">
+  <div class="card rule"><strong>1. The left stick moves you.</strong> Outside the brawl, your own body, always, except in hit-stop, reels, knock-backs and launches. In the brawl it moves the brawl's centre, as Orb ruled on 10-06, and moves you alone while he winds up or charges. Up and down change your height.</div>
+  <div class="card rule"><strong>2. Pulls never beat the stick.</strong> No draw, magnet, carry or snap moves you against a held stick by more than a quarter of your flight speed (about 107 u/s at base). Leaving a brawl alone stays paid, as ruled: the escape, a dodge, a zip away or a burst. A free lone walk-out is Orb's call (question 2).</div>
+  <div class="card rule"><strong>3. The right hand strikes.</strong> A press is a blow on your line's next free tick, or refused with a word ("each press is a blow"). Held presses keep their ruled waits (<code>gauntlet-plan.md</code> §5). Increment 0 measures how long they wait before anyone proposes a cap, and no cap may drop a press queued behind your own B's 28-tick wind-up.</div>
+  <div class="card rule"><strong>4. The director bends, it never takes.</strong> It picks the piece and bends delivery up to 20° toward your sticks. It moves your body only in a set piece you chose: a full hold's send, a flight strike, a finisher, a grapple you started, a beam struggle you entered. Sides change only as ruled: the away flick's "past you" and a send's direction. Never a flipped launch (ruling (a)).</div>
+</div>
+
+<h2 id="toy">4. Try it</h2>
+<div class="card">
+  <canvas id="wellToy" aria-label="Two fighters on a line with their gravity wells drawn as soft rings on the ground"></canvas>
+  <div class="row">
+    <label>Left tier <input type="range" id="wtA" min="1" max="4" step="1" value="1"> <span id="wtAv" class="num">1</span></label>
+    <label>Right tier <input type="range" id="wtB" min="1" max="4" step="1" value="1"> <span id="wtBv" class="num">1</span></label>
+    <label>Gap <input type="range" id="wGap" min="2" max="40" step="0.5" value="8"> <span id="wGapv" class="num">8 bh</span></label>
+    <button id="wStrike" type="button">Left fighter strikes</button>
+  </div>
+  <div class="out" id="wellOut">Set the tiers and the gap, then strike.</div>
+  <p class="cap">A toy on this packet's first values (tier mapped to level evenly, the right fighter's stick at rest, the LT option off), not the game, at about a sixth of game speed. Dashed rings are the edge bands. The rings are a diagram only: the game draws nothing over fighters (ADR 0010).</p>
+</div>
+
+<h2 id="intent">5. Adaptive choreography: reading what the player is trying to do</h2>
+<p>Today a template is chosen by attack kind and the defender's stance alone (<code>sim/director/data.gd:128-176</code>), and the stick picks only a cosmetic piece name (<code>recipe.gd:3-8</code>). The well adds an intent read from both your hands and the distance. Each tick it names one intent, and logs the reason to the debug feed whenever it changes.</p>
+
+<div class="scroll"><table>
+<tr><th>Intent</th><th>Read from (leaky int counters; first values)</th><th>What the director does (delivery only)</th></tr>
+<tr><td><strong>Press in</strong></td><td>Stick toward for 4+ ticks, or presses coming</td><td>Full snap reach, "toward" families preferred, the magnet tight</td></tr>
+<tr><td><strong>Hold ground</strong></td><td>Stick near centre, or LB's guard held</td><td>Blows as authored, magnet at the contact offset. Guarding, no snap draws him</td></tr>
+<tr><td><strong>Circle</strong></td><td>Stick up or down</td><td>Rising and dropping pieces preferred; height follows your stick</td></tr>
+<tr><td><strong>Give ground</strong></td><td>Stick away 4+ ticks</td><td>You back off at your own speed (in the brawl, the ruled giving ground while he winds up); his snap follows, never past his well</td></tr>
+<tr><td><strong>Leave</strong></td><td>Stick away 12 ticks (partTicks), or LT + away</td><td>His draw on you halves. In a brawl: the ruled walk-out if he holds away too, the escape at its price if not</td></tr>
+<tr><td><strong>Chase</strong></td><td>Stick toward while the gap opens</td><td>Blows get the edge band's reach</td></tr>
+<tr><td><strong>Stand off</strong></td><td>Outside his well, not pushing in</td><td>The far kit: tap taunts, hold charges</td></tr>
+</table></div>
+<ul>
+  <li><strong>It turns when you turn.</strong> Pushing one way clears the other side's count at once, so a player who swings from away to toward reads "press in" by tick 4, not after the old count drains.</li>
+  <li><strong>Both hands count, each for its own job.</strong> The right stick names the blow: a flick's direction and hold stage pick its family, as <code>stick-lands.md</code> rules. The left stick moves the body and bends delivery only within that blow's side. When the two disagree, each keeps its job. RB's beam aim stays the beam's own; the read doesn't bend it.</li>
+</ul>
+
+<div class="grid">
+  <div class="card rule"><h3>It may</h3><ul>
+    <li>Choose which blow of the press's cell you see (the composer), reading intent, terrain and the well.</li>
+    <li>Bend a snap or launch up to 20° toward the sticks' intent or a dramatic target, within the blow's side.</li>
+    <li>Set the snap's reach by intent, within the cell's timing. The attacker covers the gap.</li>
+    <li>Schedule beats, windows and the held moment, as today.</li>
+  </ul></div>
+  <div class="card find"><h3>It may never</h3><ul>
+    <li>Change what a press is worth: a variant changes delivery only.</li>
+    <li>Move a fighter against his held stick past the pull cap, or take his body outside physics and the set pieces he chose.</li>
+    <li>Flip a launch's side (ruling (a)), add clout, or fire a beam from B (ruling (b)).</li>
+    <li>Delay a press past its rule, or drop one without a word.</li>
+    <li>Pull civilians. Wells act on fighters only.</li>
+  </ul></div>
+</div>
+
+<h3>Where features collide (the rule of cool)</h3>
+<p>Nothing here is scripted: each outcome is the well's rule meeting a system already built or ruled, each behind its own switch. The three marked "early" ride with the core increments, so Orb's first play has them.</p>
+<div class="scroll"><table>
+<tr><th>Collision</th><th>What happens</th><th>Builds on</th></tr>
+<tr><td><strong>Taunt × answer</strong> <span class="tag gold">early</span></td><td>A tap outside is a challenge. His press answers it and both rush in and meet in the middle, two wells closing. Answered, it pays in full. Ignored, it pays a half, a quarter, an eighth, then nothing until the two trade blows: the guard against farming Orb's ruling asks for</td><td>Orb's ranged-press pick (<code>vision.md</code>, 2026-10-02); the far taunt (built, off: <code>interrupts.json</code> bands far)</td></tr>
+<tr><td><strong>Charge × well</strong> <span class="tag gold">early</span></td><td>A held charge swells your well by up to a quarter. He's in it sooner, so his taps snap in from further, and he must snap in to interrupt you, or leave. Charging in the open is a dare</td><td>Strike stages, B's hold, <code>chargeClose</code></td></tr>
+<tr><td><strong>Sends × wells</strong> <span class="tag gold">early</span></td><td>A launch throws him out of the well. A tap follows him, and back inside his well a tap snaps you after him: you meet him coming (clout adds, no gain, once a send)</td><td>Row 42; "meet him coming"</td></tr>
+<tr><td><strong>Forms × well</strong></td><td>Transforming adds heft and grows the well: the untransformed fighter is in it from further off and snaps in, while the transformed one keeps the far kit and the long strike there</td><td>Physics heft; forms</td></tr>
+<tr><td><strong>Buildings × snap</strong></td><td>Lean the left stick at a tower during a string and each snap bends onto the line to it. The send pins him there, with damage at the sudden stop</td><td>Row 2; physics §9 rule 6</td></tr>
+<tr><td><strong>Terrain × snap</strong></td><td>A downward snap on a grounded foe takes the slam family. A heavy snap into a guard above footing slides him on his heels into a trench (a knock-back, physics, not a pull)</td><td>Slam families; physics §9 rule 1</td></tr>
+<tr><td><strong>Edge × flight strike</strong></td><td>From the edge band, flat out + B or a flick is the long strike: arrival at flying speed, a send up to ×1.25, and a whiff carries him about 1 s past</td><td>Rule-of-cool row 3 (not built)</td></tr>
+<tr><td><strong>Beams × wells</strong></td><td>Gathering a beam swells your well, drawing the target gently toward its mouth (Rule 2's cap): he slips or answers. In a struggle, the walk-in is two wells closing</td><td>Driver levels, struggle walk-in</td></tr>
+<tr><td><strong>2v2 × wells</strong></td><td>Between two rivals you sit in two wells. Your zone is read against the well you're deepest in, and the draws add under one cap, so the sandwich holds tighter but the stick still wins. Teammates don't draw each other (first value). A fighter outside both keeps the far kit: blows from outside</td><td>Composer's "others near him"; <code>two_fights_read</code></td></tr>
+</table></div>
+<p><strong>Reading the edge without a mark.</strong> Because a well grows with tier, heft and charge, the same tap at the same distance can snap in or taunt. Crossing a well's edge, either way, gives a soft pulse on the pad and a low sound (Controls' haptics, Audio), never anything drawn over a fighter. Showing the well in the world stays Orb's question 4.</p>
+
+<h2 id="code">6. Pseudocode</h2>
+<p class="dim">GDScript-shaped, float64 throughout (no Vector2: it's float32). Names not on main are marked (new). The well draws no randomness; the composer keeps its keyed draws. New state lives in its own object, <code>f.wel</code>, made and hashed only while the well's switch is on, as the kick's <code>f.kik</code> is (<code>hash.gd:195-204</code>). Nothing joins the director's always-hashed ints, so a match with the well off hashes as today. One function writes it, once a live tick; every other function is a pure read.</p>
+<pre><code># ---- sim/core/well.gd (new): class_name SimWell (new). No randomness. Off unless S.wellOn (new: data/fight/well.json "enabled", off).
+## State: f.wel, a WellState (new), made only while S.wellOn and hashed only then, like f.kik.
+## One writer: SimWell.tick(S), once a live tick before the fighters step, for every fighter at once (as DirBands._bandTick).
+## Everything else here is a pure read, so the view (meteor.gd:306), the AI (ai.gd:363) and swing.gd:952 may call it freely.
+enum Zone { BRAWL, BOTH, DRAWN, HOLDER, EDGE, OUT }
+const HASHED: Array = ["zone", "of", "r", "prevGap", "open", "toward", "away", "round", "presses", "intent"]
+
+static func radius(S: SimState, f) -> float:                     # pure
+	var c: Dictionary = cfg()                                   # data/fight/well.json (new) + schema
+	var x: float = f.heft / 100.0                               # (new) physics packet; until then 100 + c.formHeft * steps
+	var hs: float = sqrt(x) if float(c.heftExp) == 0.5 else SimDetMath.pow(x, float(c.heftExp))   # IEEE sqrt rounds exactly
+	var r: float = float(c.wellBh) * DirInterrupt.BH * hs       # 12.5
+	r *= 1.0 + float(c.tierStep) * (f.tier - 1.0)               # 0.1
+	r *= 1.0 + float(c.chargeGrow) * chargeShare(S, f)          # (new) 0..1; chargeGrow 0.25
+	return SimMathx.jclamp(r, float(c.minBh) * DirInterrupt.BH, float(c.maxBh) * DirInterrupt.BH)   # 4.5 .. 20
+
+static func _in(d: float, r: float, h: float, was: bool) -> bool:
+	return d &lt;= r + (h if was else -h)                          # hysteresis, as DirBands._bandAt
+
+static func _zoneAt(d: float, rf: float, ro: float, h: float, was: int) -> int:
+	if _in(d, float(DirBrawl.cfg().breakBh) * DirInterrupt.BH, h, was == Zone.BRAWL):
+		return Zone.BRAWL
+	if _in(d, ro, h, was == Zone.BOTH or was == Zone.DRAWN):    # inside his well
+		return Zone.BOTH if _in(d, rf, h, was == Zone.BOTH) else Zone.DRAWN
+	if _in(d, rf, h, was == Zone.HOLDER):                       # he's in mine, I'm not in his: the far kit and the long strike
+		return Zone.HOLDER
+	if _in(d, ro + float(cfg().edgeBh) * DirInterrupt.BH, h, was == Zone.EDGE):   # 3
+		return Zone.EDGE
+	return Zone.OUT
+
+## The one writer. Reads every fighter as the tick began, then writes them all, so slot order changes nothing.
+static func tick(S: SimState) -> void:
+	if not S.wellOn:
+		return
+	var h: float = float(cfg().hysteresisBh) * DirInterrupt.BH * 0.5
+	var n: int = S.fighters.size()
+	var rs := PackedFloat64Array(); rs.resize(n)
+	var zs := PackedInt32Array(); zs.resize(n)
+	var js := PackedInt32Array(); js.resize(n)
+	for i in n:
+		rs[i] = radius(S, S.fighters[i])                        # each radius once a tick
+	for i in n:
+		var f = S.fighters[i]
+		var j: int = _deepest(S, i, rs)                         # (new) the rival whose well he's deepest in, by a loop over S.fighters
+		js[i] = j                                               #   (never SimRoster.opp: 2v2 has its place, and the ratchet holds)
+		if j &lt; 0:
+			zs[i] = Zone.OUT
+		else:
+			var was: int = f.wel.zone if f.wel.of == j else -1  # hysteresis per pair: a new rival starts fresh
+			zs[i] = _zoneAt(DirBands.dist(f, S.fighters[j]), rs[i], rs[j], h, was)
+	for i in n:
+		var f = S.fighters[i]
+		var w = f.wel
+		w.zone = zs[i]
+		w.of = js[i]
+		w.r = roundi(rs[i])
+		var g: int = roundi(DirBands.dist(f, S.fighters[js[i]])) if js[i] >= 0 else 0
+		w.open = _leak(w.open, g > w.prevGap)                   # the gap's trend: one int, not a ring
+		w.prevGap = g
+		DirIntent.step(S, f)                                    # reads only his own pad, his own f.wel and positions
+
+static func zone(f) -> int:                                     # pure
+	return f.wel.zone if f.wel != null else Zone.OUT
+
+## The draw: added to the free branch's steering target in SimFighter.stepFighter. Pure. Every rival whose well
+## holds him adds to it, and the sum is capped once (Rule 2): two rivals hold tighter, and the stick still wins.
+static func drawTarget(S: SimState, f) -> PackedFloat64Array:
+	var out := PackedFloat64Array([0.0, 0.0])
+	if f.wel == null or f.rush != null or f.wel.zone == Zone.BRAWL:
+		return out                                               # the brawl keeps its own rules
+	for g in S.fighters:
+		if g == f or _mates(S, f, g):                           # (new) teammates don't draw each other (first value)
+			continue
+		var d: float = maxf(1.0, DirBands.dist(f, g))
+		var r: float = float(g.wel.r)
+		if d > r:
+			continue
+		var depth: float = SimMathx.jclamp(2.0 * (1.0 - d / r), 0.0, 1.0)   # full by half his radius
+		var mass: float = 2.0 * g.heft / (g.heft + f.heft)      # (new heft) 1 when equal; a heavier rival pulls harder
+		out[0] += SimWrap.sdx(f.x, g.x) / d * depth * mass
+		out[1] += (g.y - f.y) / d * depth * mass
+	var m: float = SimDetMath.hypot(out[0], out[1])
+	if m &lt;= 0.0:
+		return out
+	var cap: float = float(cfg().drawCap) * SimFighter.flightSpeed(S, f, false)   # 0.25: about 107 u/s at base
+	if _awayHeld(S, f):                                         # (new) his stick held away this tick, from his pad, no counter
+		cap *= 0.5
+	var s: float = cap * minf(1.0, m) / m
+	out[0] *= s
+	out[1] *= s
+	return out
+
+# ---- sim/core/fighter.gd: LT by ruling (c) (increment 1; needs no well). Pure, like the flightSpeed it sits in.
+## Replaces the ramp in flightSpeed's dash branch (fighter.gd:622-631). sp is today's speed after his tier, legs, stance
+## and hold, times 2.4. With the energy model off the branch stays as today (the LAN runs it on: net/lan.gd SETUP).
+static func dashTop(S: SimState, f, sp: float) -> float:
+	var top: float = SimPower.flatSpeed(S, f, sp, 1.0)          # ramp 1 at any range: far by his level times close / plain,
+	                                                            #   so guard and battered legs still slow it (power.gd:182-185)
+	if S.wellOn and bool(SimWell.cfg().ltOption.enabled):       # THE OPTION, off: amends ruling (c); Game Design rules, Orb tries
+		var z: int = SimWell.zone(f)
+		if (z == SimWell.Zone.BOTH or z == SimWell.Zone.DRAWN or z == SimWell.Zone.EDGE) and SimWell.toward(S, f):   # (new)
+			top *= 1.0 + (float(SimWell.cfg().ltOption.mul) - 1.0) * SimWell.edgeShare(S, f)   # 1.35; 0..1 across the edge band
+	return minf(top, 3.0 * DirInterrupt.BH / SimConst.DT)      # RL-076: 3 bh a tick. The sea's 0.55 follows, as today
+
+## The held dash's response, in place of free flight's 11% a tick (with the kick on, its instant and climbTicks give this
+## shape). A rate from his own velocity, which is hashed already: no new state, no f.kik, nothing kept from an earlier
+## dash. Returns his speed along the stick; the caller sets vx = mx * v and vy = my * v * 0.85.
+static func dashRise(S: SimState, f, i: SimIntent, top: float, lag: float) -> float:
+	var d: Dictionary = SimPower.cfg().dash                     # power.json "dash" (ruled 11-08, not in data yet)
+	var first: float = float(d.firstTick)                       # 1000
+	var full: int = int(d.fullByTicks)                          # 12
+	if S.wellOn and bool(SimWell.cfg().ltOption.enabled) and SimWell.zone(f) &lt;= SimWell.Zone.DRAWN:
+		full = int(SimWell.cfg().ltOption.fullTicks)            # 6, the option: only the slope changes, so no step mid-dash
+	var n: float = SimDetMath.hypot(i.mx, i.my)
+	var cur: float = (f.vx * i.mx + f.vy * i.my) / n if n > 0.0 else 0.0   # his speed along the stick: a reversal starts from first
+	if cur > top:
+		return cur + (top - cur) * lag                          # above top (the option's well left behind): eases down, never a step
+	return minf(top, maxf(first, cur + (top - first) / float(full - 1)))   # 1000 on tick 1, top by tick 12
+
+# ---- sim/director/snap.gd (new): class_name DirSnap (new). A blow pressed inside his well or the edge band, outside the brawl.
+## Worth and the cell's timing untouched, and the attacker covers the gap. The brawl is left out: its own step-in (2 ticks
+## a body height, at most 4; it moves only the attacker) and its contact ticks (a light: 2) stand.
+static func plan(S: SimState, A, D) -> Dictionary:             # a read; the caller applies it on the press's tick
+	var z: int = SimWell.zone(A)
+	if z != SimWell.Zone.BOTH and z != SimWell.Zone.DRAWN and z != SimWell.Zone.EDGE:
+		return {}                                               # the brawl keeps its own; the holder and outside have the far kit
+	var c: Dictionary = SimWell.cfg()
+	var gap: float = maxf(0.0, DirBands.dist(A, D) - float(DirData.contact().get("offset", 58.0)))   # old profiles have no contact block
+	var speed: float = SimFighter.flightSpeed(S, A, true)       # flat out for his level (increment 1), at most 3 bh a tick
+	var ticks: int = maxi(int(c.minTicks), ceili(gap / (speed * SimConst.DT)))    # RL-076: 4
+	var his: float = 0.0                                        # his share: only inside both wells, only within Rule 2's cap,
+	if z == SimWell.Zone.BOTH and not D.input.guard and SimWell.along(S, D, A) > -0.5:   # (new) read from his stick this tick
+		his = minf(gap * 0.5, float(c.drawCap) * SimFighter.flightSpeed(S, D, false) * float(ticks) * SimConst.DT)
+	var mine: float = gap - his                                 # held away or guarding: none, and the attacker flies it all
+	var bend: float = DirIntent.bendDeg(S, A, float(c.bendMaxDeg))   # at most 20, toward his sticks, inside the blow's side
+	SimEvents.feed(S, A.name + " SNAP", SimMathx.jstr(SimMathx.jround(mine / DirInterrupt.BH)) + " bh in " + str(ticks)
+		+ " ticks; " + D.name + " drawn " + SimMathx.jstr(SimMathx.jround(his / DirInterrupt.BH)) + " bh")
+	return {"mine": mine, "his": his, "ticks": ticks, "bend": bend}
+# QA rows: for every cell and gap, contact tick &lt;= today's; the defender moved against his held stick: 0 ticks;
+# his share never above drawCap times his flight speed; press-to-contact never longer as the gap shrinks.
+
+# ---- sim/director/intent.gd (new): class_name DirIntent (new). Both hands, once a live tick, from SimWell.tick's write pass.
+enum { HOLD, PRESS, CIRCLE, GIVE, LEAVE, CHASE, STANDOFF }
+const NAMES := ["hold", "press in", "circle", "give ground", "leave", "chase", "stand off"]
+
+static func step(S: SimState, f) -> void:
+	var i: SimIntent = f.input
+	var w = f.wel
+	var o = S.fighters[w.of] if w.of >= 0 else null
+	var side: int = 0 if o == null else (1 if SimWrap.sdx(f.x, o.x) >= 0.0 else -1)
+	var along: int = roundi(i.mx * 127.0) * side               # SimIntent.mx is -1..1 (intent.gd:21): + toward him, - away
+	var up: int = absi(roundi(i.my * 127.0))
+	if along > 64:                                              # a reversal clears the other side at once:
+		w.toward = mini(64, w.toward + 4); w.away = 0           #   away to toward reads PRESS by tick 4
+	elif along &lt; -64:
+		w.away = mini(64, w.away + 4); w.toward = 0
+	else:
+		w.toward = maxi(0, w.toward - 1); w.away = maxi(0, w.away - 1)
+	w.round = _leak(w.round, up > 64 and absi(along) &lt; 48)      # +4 when true, -1 when not, held 0..64
+	w.presses = _leak(w.presses, i.light or i.heavy or i.sig or i.rsStart)   # the face buttons and the right stick's strike
+	var it: int = HOLD
+	if w.away >= 48 or (i.dash and along &lt; -64):
+		it = LEAVE                                              # 12 ticks of away (partTicks), or LT + away
+	elif w.away >= 16:
+		it = GIVE
+	elif i.guard:
+		it = HOLD                                               # LB: holding ground behind a guard (no snap share on him)
+	elif w.toward >= 16 and w.open > 0:
+		it = CHASE
+	elif w.toward >= 16 or w.presses >= 8:
+		it = PRESS
+	elif w.round >= 16:
+		it = CIRCLE
+	elif w.zone >= SimWell.Zone.HOLDER:
+		it = STANDOFF
+	# The right stick names the blow: a flick's rsDir and its stage (rsLevel) pick the family, as stick-lands rules.
+	# The left stick moves the body and bends delivery only within that blow's side. When they disagree, each keeps its job.
+	if it != w.intent:
+		SimEvents.feed(S, f.name + " INTENT", NAMES[it] + " (" + _why(w) + ")")   # every decision explainable
+	w.intent = it</code></pre>
+
+<h2 id="plan">7. The plan: increments, measures, owners, cost</h2>
+<p>Each increment ships behind a switch, keeps 1,000 headless matches clean and the hash identical with the switch off (the well's state is its own object, hashed only while on), keeps the two-fighter ratchet at its baseline (no new <code>SimRoster.opp</code>), and runs the render gates. Visible changes get the look gate's side-by-side. About 1M tokens a session, gates included. <strong>Increments 0 to 2 can run tonight in parallel</strong>, as their owners barely overlap. This packet itself cost about 2 to 3M tokens (three readers, a writer, three checkers, an editor).</p>
+<div class="scroll"><table>
+<tr><th>#</th><th>Increment</th><th>Owners</th><th>Measures (pass lines are first values)</th><th>Cost</th></tr>
+<tr><td>0</td><td><strong>Measure first.</strong> A press-to-motion counter (new): ticks from a stick change or press to your own body (or the brawl's centre) moving that way. The no-control meter split into brawl, set piece and stun (new). How long held presses wait, from the press to the throw. The LT rows of ruling (c), plus rows from 6 and 9 bh</td><td>Tools, QA</td><td>Baselines on Orb's 17:26 file and every gauntlet arm. The counter self-tests on a scripted arm. (The LAN already runs the energy model: <code>net/lan.gd</code> SETUP sets <code>"power": true</code>.)</td><td class="num">2 sessions, ~2M</td></tr>
+<tr><td>1</td><td><strong>LT by ruling (c), as ruled.</strong> Flat out for his level at any range through <code>SimPower.flatSpeed</code> with the ramp at 1, the steady rise (rate from his own velocity), the arrival's ease. <code>BOOST_*</code>, <code>TRAV_FREE</code> into data. No well factor</td><td>Simulation, Controls, Encounter, QA</td><td>First tick ≥ 1,000 u/s. Close ≤ 0.4, 0.8, 1.4 s at base; ≤ 0.75 s from 6,000 at maximum. Speed on each tick after the press equal at every distance until the ease. From 6 and 9 bh to contact ≤ 11 and 14 ticks at base (today 31 and 44). Average from 12,000 ≤ 1.6 times that from 1,000 (today about 3.9). Guard and battered legs slow LT as they slow today's far dash. Flee and chase rows hold</td><td class="num">3, ~3M</td></tr>
+<tr><td>2</td><td><strong>Control, within the rulings.</strong> The brawl's centre checked against its ruling (it moves within 2 ticks of a stick and at full rate by 8), giving ground while he winds up, and no magnet or carry moving a fighter against his held stick past Rule 2's cap. If Orb says yes to question 2, own-body movement and a lone walk-out join here</td><td>Encounter, Controls</td><td>Brawl press-to-motion ≤ 2 ticks. Pulls against a held stick over the cap: 0. Orb's-scheme arm on easy ≥ 70% (<code>gauntlet-plan.md</code> §5)</td><td class="num">3, ~3M</td></tr>
+<tr><td>3</td><td><strong>The well.</strong> <code>SimWell.tick</code> as the one writer, radius and zones, the draw, wells replacing the band edges, the edge pulse and sound. Charge × well rides here</td><td>Simulation, Encounter, Game Design, Controls, Audio</td><td>Seam tests at every separation. Hash identical with the switch off. A rendered run hashes as a headless one. Zones identical with the slots swapped. Ratchet at baseline. Time per zone per minute. Match length and collateral bands hold</td><td class="num">4, ~4M</td></tr>
+<tr><td>4</td><td><strong>The snap.</strong> Outside the brawl the attacker flies in flat out; the defender's share stays within Rule 2, from his stick that tick. Sends × wells rides here. Flight strikes untouched</td><td>Encounter, Combat</td><td>Contact tick never later than today's for any cell (the brawl's are unchanged). Defender moved against his held stick: 0. Press-to-contact never longer as the gap shrinks. Worth band holds</td><td class="num">3, ~3M</td></tr>
+<tr><td>5</td><td><strong>Intent and the gate.</strong> <code>DirIntent</code> read by the composer (variety packet increment 3). Close presses against stance 2 or 3 become brawl answers</td><td>Encounter, Combat, Game Design</td><td>"Locked" refusals at most a quarter of today's on the same arm. Set-piece seconds halved. Reversal latency ≤ 4 ticks (away to toward reads "press in" by tick 4). On scripted arms, where the cell has a family matching the sticks, the composer picks it in ≥ 80% of blows</td><td class="num">5, ~5M</td></tr>
+<tr><td>6</td><td><strong>The far kit and the edge.</strong> The long strike (row 3) from the edge band and from anywhere in the holder's own well, far-B hold (one run confirms the suspected bug), the far-flick fix, taunts paying <code>mood.json</code>'s 180 (unapplied today) on the far taunt's built fall-off. Taunt × answer rides here</td><td>Encounter, Controls</td><td>Long-striker arm wins no more than the medium arm. Dead presses at 12.5 to 20 bh: 0. "Too late" after a far flick: 0. Meter from unanswered taunts stops after the fourth until blows are traded</td><td class="num">3, ~3M</td></tr>
+<tr><td>7</td><td><strong>The other collisions</strong> of section 5 (forms, buildings, terrain, edge strike, beams, 2v2), a switch each</td><td>Encounter, Combat, World, Camera</td><td>A row and a look-gate clip each; 2v2 through <code>two_fights_read</code></td><td class="num">4, ~4M</td></tr>
+<tr><td>8</td><td><strong>Orb plays</strong> LAN with the well on</td><td>Orb, QA, Tools</td><td>Ledger, feel replay, the counter and Orb's feel notes</td><td class="num">1, ~1M</td></tr>
+</table></div>
+<p><strong>Total: about 28 sessions, roughly 28M tokens</strong>, on top of this packet's 2 to 3M.</p>
+
+<div class="grid">
+  <div class="card new"><h3>Game Design decides</h3><ul>
+    <li>The first values: well 12.5 bh, edge 3 bh, tier step 0.1, heft exponent 0.5, charge +25%, cap 20 bh, draw cap 0.25, the leaver's half draw, the snap at flat-out speed, the edge pulse.</li>
+    <li>The LT option: ×1.35 and full by tick 6 inside a well. It amends ruling (c) and turns on the kick's overspeed (off by Orb's ask), so Orb tries it before it's on.</li>
+    <li>Flight strikes' fixed press-to-contact time (10 to 18 ticks at any gap): leave it, or shorten the tell up close, which moves B's counter window.</li>
+    <li>Any cap on held presses, once increment 0 has measured the waits. Never below what a press behind his own B's 28-tick wind-up needs.</li>
+    <li>Close presses against stance 2 or 3 as brawl answers.</li>
+    <li>Whether X and Y in a held sprint stay the band's press (row 3 uses B or a flick).</li>
+    <li>The defender's stick live in a rival's set piece outside hit-stop.</li>
+  </ul></div>
+  <div class="card new"><h3>Orb decides (one at a time, through the EP)</h3><ol>
+    <li>After a play: does the well feel like the picture in your head?</li>
+    <li>In a close fight, should your stick move just your own fighter, and should you be able to walk away alone, for free? Today the stick moves both of you and walking away free takes both players pushing apart, your call on 10-06; alone, you pay the escape's 15 ki.</li>
+    <li>Should a transformed fighter's bigger well pull an untransformed one into snap range? The small one then snaps in from up to 20 body heights, while the big one has his taunts, charges, bolts and the long strike across that range.</li>
+    <li>Should the well ever show in the world, say dust drawn toward a big well along the ground, never on fighters? VFX's, behind the look gate.</li>
+  </ol></div>
+</div>
+
+<h2 id="checks">8. Checks and changes</h2>
+<p>Three checks read this packet against the code and the rulings, its feasibility and determinism, and Orb's ask. Every finding was checked against its evidence. All held; one figure was corrected, and one finding is only part-fixed and kept open as a risk.</p>
+<div class="scroll"><table>
+<tr><th>Finding</th><th>Verdict</th><th>What changed</th></tr>
+<tr><td>Code 1: the lone walk-out reverses Orb's both-sticks rule</td><td class="v-fixed">fixed</td><td>Both-sticks walk-out and the centre stay as ruled; own-body move and leaving alone go to Orb as question 2.</td></tr>
+<tr><td>Code 2: the renderer would write hashed state through <code>flightSpeed</code></td><td class="v-fixed">fixed</td><td><code>SimWell.tick</code> writes once a live tick; <code>zone()</code> and every reader are pure; no <code>f.kik</code> read.</td></tr>
+<tr><td>Code 3: ruling (c) changed without saying so</td><td class="v-fixed">fixed</td><td>LT is flat out at any range by default; ×1.35 and the 6-tick rise are a flagged option, off; flight strikes untouched.</td></tr>
+<tr><td>Code 4: increment 4 fails its own contact-tick pass line</td><td class="v-fixed">fixed</td><td>The flight-strike travel change is dropped; the fixed press-to-contact time goes to Game Design.</td></tr>
+<tr><td>Code 5: the snap breaks Rules 1, 2 and 4 on the defender</td><td class="v-fixed">fixed</td><td>The attacker covers the gap; the defender's share stays within Rule 2 from his stick that tick, none held away or guarding.</td></tr>
+<tr><td>Code 6: capping "away" overturns stick-lands</td><td class="v-fixed">fixed</td><td>The cap is gone; the away flick's "past you" stays as ruled.</td></tr>
+<tr><td>Code 7: the new dash ignores stance and wounds</td><td class="v-fixed">fixed</td><td><code>dashTop</code> calls <code>SimPower.flatSpeed</code> with ramp 1, so guard, battered legs and the sea still apply.</td></tr>
+<tr><td>Code 8a: "presses arrive late" overstated; the 20-tick cap drops presses</td><td class="v-fixed">fixed</td><td>"Held" acks reworded, the 20-tick cap dropped, and increment 0 measures the waits.</td></tr>
+<tr><td>Code 8b: "90% after 19 ticks" is true only with the kick off</td><td class="v-fixed">fixed</td><td>The kick's 80% on tick 1 and full by tick 9 in 1931a0f8 are stated.</td></tr>
+<tr><td>Code 8c: the taunt isn't from <code>zip.gd:256-258</code></td><td class="v-fixed">fixed</td><td>Cited <code>DirBands.farOn</code>; the zip lines only end the flight strike's range.</td></tr>
+<tr><td>Code 8d: increment 0's LAN question is already answered</td><td class="v-fixed">fixed</td><td>Removed; <code>net/lan.gd</code> SETUP sets <code>"power": true</code>.</td></tr>
+<tr><td>Feasibility 1: <code>zone()</code> is a getter that writes, reached by the view</td><td class="v-fixed">fixed</td><td>Same fix as Code 2; nothing reads through <code>gi()</code>'s resize.</td></tr>
+<tr><td>Feasibility 2: two new <code>SimRoster.opp</code> break the ratchet; no 2v2 shape</td><td class="v-fixed">fixed</td><td>No <code>opp</code>: <code>tick</code> loops over <code>S.fighters</code> for the deepest well, hysteresis per pair, draws summed under one cap.</td></tr>
+<tr><td>Feasibility 3: "hash identical with the switch off" can't hold with new <code>dirI</code> ints</td><td class="v-fixed">fixed</td><td>State in <code>f.wel</code>, hashed only while on; the 20-int ring became one <code>prevGap</code> int and an opening counter.</td></tr>
+<tr><td>Feasibility 4: slot order decides zones mid-tick</td><td class="v-fixed">fixed</td><td><code>tick</code> reads every fighter, then writes all; a swapped-slots row joins increment 3.</td></tr>
+<tr><td>Feasibility 5: the snap overrides the brawl's 2-tick contact</td><td class="v-fixed">fixed</td><td>The brawl is out of the snap; the toy's brawl now uses the brawl's own step-in data, as the pseudocode says.</td></tr>
+<tr><td>Feasibility 6: <code>dashRise</code> crashes on a null <code>f.kik</code> and brings keepTop back</td><td class="v-fixed">fixed</td><td>The rise is a rate from his hashed velocity: no <code>lastTop</code>, no <code>f.kik</code>; the option changes only the slope.</td></tr>
+<tr><td>Feasibility 7: cost per tick</td><td class="v-fixed">fixed</td><td>Radii and zones once a tick; <code>sqrt</code> for exponent 0.5.</td></tr>
+<tr><td>Feasibility 8: names that don't match main</td><td class="v-fixed">fixed</td><td><code>SimEvents.feed(S, tag, sub)</code>, <code>roundi(mx * 127)</code>, real <code>SimIntent</code> fields, <code>contact().get("offset", 58.0)</code>.</td></tr>
+<tr><td>Feasibility nit: the toy's frame loop never stops</td><td class="v-fixed">fixed</td><td>Frames run only while a strike plays; it redraws on input, resize and theme change.</td></tr>
+<tr><td>Orb's ask 1: the snap takes the defender's body</td><td class="v-fixed">fixed</td><td>Same fix as Code 5; Orb's "locks both fighters" complaint (<code>vision.md</code>) is the test.</td></tr>
+<tr><td>Orb's ask 2: flight strikes slow the far end and leave the close end</td><td class="v-fixed">fixed</td><td>Change dropped; the gap goes to Game Design with rows from 3 and 6 bh. The finding's 14-tick figure is corrected: X takes 10 ticks at any gap.</td></tr>
+<tr><td>Orb's ask 3: the intent read lags and its measure rewards difference</td><td class="v-fixed">fixed</td><td>A reversal clears the other count; LB and the right stick are read; the measures are reversal latency and stick-to-family agreement.</td></tr>
+<tr><td>Orb's ask 4: transforming turns the power fantasy around</td><td class="v-fixed">fixed</td><td>The holder keeps the long strike in his own well; the draw is described as gentle; question 3 states the trade.</td></tr>
+<tr><td>Orb's ask 5: an invisible cliff between a snap and a taunt</td><td class="v-kept">kept</td><td>Part-fixed: a press reads its tick's zone and edge crossings pulse the pad and sound; the moving edge stays a risk for Orb's play.</td></tr>
+<tr><td>Orb's ask 6: well speed brings back distance-dependent LT</td><td class="v-fixed">fixed</td><td>Same fix as Code 3.</td></tr>
+<tr><td>Orb's ask 7: collisions land last; taunt answer and farming guard missing</td><td class="v-fixed">fixed</td><td>Taunt × answer added with the built fall-off; it, charge × well and sends × wells ride with increments 3, 4 and 6.</td></tr>
+</table></div>
+
+</main>
+
+<script>
+(function () {
+  var cv = document.getElementById('wellToy'), out = document.getElementById('wellOut');
+  if (!cv || !cv.getContext || !out) return;
+  var ctx = cv.getContext('2d');
+  if (!ctx) return;
+  function el(id) { return document.getElementById(id); }
+  // CLOSE_PER_BH and CLOSE_MAX: the brawl's step-in (interrupts.json give.closeTicksPerBh 2, closeMaxTicks 4); LIGHT: a brawl light's contact tick.
+  var CONTACT = 58 / 75, CORE = 4.5, EDGE = 3, CAP = 13500, SLOW = 6, H = 220, W = 0, DRAW = 107.5, LIGHT = 2, CLOSE_PER_BH = 2, CLOSE_MAX = 4;
+  var anim = null, failed = false, queued = false;
+  var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function heft(t) { return 100 + 25 * (t - 1); }
+  function radius(t) { return Math.min(20, 12.5 * Math.sqrt(heft(t) / 100) * (1 + 0.1 * (t - 1))); }
+  function flat(t) { return 5000 * Math.pow(2.305, (t - 1) / 3); }
+  function snapSpeed(t) { return Math.min(CAP, flat(t)); }
+  function drift(ticks) { return DRAW * ticks / 60 / 75; }
+  function ticksFor(bh, ups) { return Math.max(4, Math.ceil(bh * 75 / (ups / 60))); }
+  function f1(x) { return (Math.round(x * 10) / 10).toString(); }
+  function n0(x) { return Math.round(x).toLocaleString('en-US'); }
+  function read() {
+    var a = +el('wtA').value || 1, b = +el('wtB').value || 1, g = +el('wGap').value || 8;
+    return { a: a, b: b, g: g, ra: radius(a), rb: radius(b), ha: heft(a), hb: heft(b) };
+  }
+  function plan(s) {
+    var gap = Math.max(0, s.g - CONTACT), p = { mine: 0, his: 0, ticks: 4, bolt: false, shove: 0, kind: 'out' };
+    if (s.g <= CORE) {
+      p.kind = 'brawl'; p.mine = gap; p.ticks = Math.max(LIGHT, Math.min(CLOSE_MAX, Math.ceil(gap * CLOSE_PER_BH)));
+    } else if (s.g <= s.rb && s.g <= s.ra) {
+      p.kind = 'both'; p.ticks = ticksFor(gap, snapSpeed(s.a)); p.his = Math.min(gap / 2, drift(p.ticks)); p.mine = gap - p.his;
+    } else if (s.g <= s.rb) { p.kind = 'drawn'; p.mine = gap; p.ticks = ticksFor(gap, snapSpeed(s.a)); }
+    else if (s.g <= s.ra) { p.kind = 'holder'; p.bolt = true; p.ticks = Math.ceil(s.g * 75 / 4000 * 60); p.his = Math.min(gap / 2, drift(p.ticks)); }
+    else if (s.g <= s.rb + EDGE) { p.kind = 'edge'; p.mine = gap; p.shove = 1.5; p.ticks = ticksFor(gap, snapSpeed(s.a)); }
+    else { p.bolt = true; p.ticks = Math.ceil(s.g * 75 / 4000 * 60); }
+    return p;
+  }
+  function words(s, p) {
+    var head = 'Left well ' + f1(s.ra) + ' bh, right well ' + f1(s.rb) + ' bh, gap ' + f1(s.g) + ' bh. ';
+    var sp = n0(snapSpeed(s.a)) + ' u/s';
+    switch (p.kind) {
+      case 'brawl': return head + 'In the brawl, so no snap. The blow steps you in ' + f1(p.mine) + ' bh on the brawl’s own step-in, about ' + p.ticks + ' ticks, and he isn’t moved: his stick keeps moving the brawl’s centre.';
+      case 'both': return head + 'Inside both wells. The snap: you fly ' + f1(p.mine) + ' bh at ' + sp + ', ' + p.ticks + ' ticks of travel (RL-076’s floor is 4). With his stick at rest he drifts ' + f1(p.his) + ' bh to meet it, never faster than a quarter of his speed, and not at all if he holds away or guards.';
+      case 'drawn': return head + 'You are inside his well, he is outside yours. Your blow snaps you all the way in (' + f1(p.mine) + ' bh at ' + sp + ', ' + p.ticks + ' ticks). He doesn’t come to meet it, and against you he has the far kit and the long strike.';
+      case 'holder': return head + 'He is inside your well, you are outside his. He drifts toward you, gently (' + f1(p.his) + ' bh while it flies). Your press is the far kit: here a bolt. A hold would charge, a tap would taunt, and flat out + B or a flick is the long strike from anywhere in your well.';
+      case 'edge': return head + 'The edge band, just outside his well. Held LT flat out toward him, then B or a flick: the long strike, arriving at ' + sp + ' with a send up to ×1.25. A tap would snap you in instead.';
+      default: return head + 'Outside both wells. A tap taunts (if he answers with a press, you both rush in and meet) and a hold charges. The energy family fires bolts, RB + the right stick aims a beam, and held LT closes at ' + n0(flat(s.a)) + ' u/s from any range.';
+    }
+  }
+  function css(n, d) { var v = getComputedStyle(document.documentElement).getPropertyValue(n); return (v && v.trim()) || d; }
+  function size() {
+    var r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    W = Math.max(260, r.width || 600);
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function ring(x, gy, r, c, sc) {
+    var rx = r * sc, ry = Math.max(10, rx * 0.2);
+    ctx.fillStyle = c;
+    for (var i = 1; i <= 3; i++) { ctx.globalAlpha = 0.07; ctx.beginPath(); ctx.ellipse(x, gy, rx * i / 3, ry * i / 3, 0, 0, Math.PI * 2); ctx.fill(); }
+    ctx.globalAlpha = 0.6; ctx.strokeStyle = c; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(x, gy, rx, ry, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = 0.35; ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.ellipse(x, gy, (r + EDGE) * sc, (r + EDGE) * sc * ry / rx, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+  }
+  function body(x, gy, t, c) {
+    var h = 30 + 4 * t;
+    ctx.fillStyle = c; ctx.fillRect(x - 6, gy - h, 12, h - 8);
+    ctx.beginPath(); ctx.arc(x, gy - h - 6, 6, 0, Math.PI * 2); ctx.fill();
+  }
+  function arrow(x, gy, dir, c) {
+    ctx.strokeStyle = c; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.moveTo(x, gy + 14); ctx.lineTo(x + dir * 12, gy + 14); ctx.lineTo(x + dir * 7, gy + 10);
+    ctx.moveTo(x + dir * 12, gy + 14); ctx.lineTo(x + dir * 7, gy + 18); ctx.stroke();
+  }
+  // Draws one frame; returns true while a strike is still playing (the caller then asks for another frame).
+  function draw(now) {
+    if (!W) size();
+    var A = css('--a', '#2f6f9f'), B = css('--b', '#c0503f'), G = css('--ground', '#8a6a48'), D = css('--dim', '#666'), I = css('--ink', '#222');
+    var s = anim ? anim.s : read(), p = anim ? anim.p : null, k = 0, after = 0;
+    if (anim) {
+      var el2 = now - anim.t0; k = Math.min(1, el2 / anim.dur); after = Math.max(0, el2 - anim.dur);
+      if (after > (still ? 1500 : 900)) { anim = null; p = null; k = 0; after = 0; s = read(); }
+    }
+    var e = k * k * (3 - 2 * k), sc = W / 60, cx = W / 2, gy = H * 0.66;
+    var xa = -s.g / 2, xb = s.g / 2;
+    if (p) { xa += p.mine * e; xb -= p.his * e; if (p.shove && k >= 1) xb += p.shove * Math.min(1, after / 250); }
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = G; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+    var pa = cx + xa * sc, pb = cx + xb * sc;
+    ring(pa, gy, s.ra, A, sc); ring(pb, gy, s.rb, B, sc);
+    if (!p || p.kind === 'holder') {
+      if (s.g <= s.rb) arrow(pa + 10, gy, 1, A);
+      if (s.g <= s.ra) arrow(pb - 10, gy, -1, B);
+    }
+    body(pa, gy, s.a, A); body(pb, gy, s.b, B);
+    if (p && p.bolt && k < 1) { ctx.fillStyle = A; ctx.beginPath(); ctx.arc(pa + (pb - pa) * k, gy - 28, 4, 0, Math.PI * 2); ctx.fill(); }
+    if (p && k >= 1 && after < 400) {
+      var hx = p.bolt ? pb : (pa + pb) / 2; ctx.strokeStyle = I; ctx.lineWidth = 1.5; ctx.beginPath();
+      for (var j = 0; j < 6; j++) { var an = j * Math.PI / 3; ctx.moveTo(hx + Math.cos(an) * 4, gy - 28 + Math.sin(an) * 4); ctx.lineTo(hx + Math.cos(an) * 11, gy - 28 + Math.sin(an) * 11); }
+      ctx.stroke();
+    }
+    ctx.fillStyle = D; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(f1(s.ra) + ' bh', pa, gy + 34); ctx.fillText(f1(s.rb) + ' bh', pb, gy + 34);
+    return anim !== null;
+  }
+  function frame(now) {
+    queued = false;
+    if (failed) return;
+    try { if (draw(now)) kick(); }
+    catch (err) { failed = true; out.textContent = 'The toy stopped: ' + (err && err.message ? err.message : String(err)); }
+  }
+  // Asks for one frame unless one is already on its way: the loop runs only while something changes.
+  function kick() { if (!queued && !failed) { queued = true; window.requestAnimationFrame(frame); } }
+  function sync() {
+    try {
+      el('wtAv').textContent = el('wtA').value; el('wtBv').textContent = el('wtB').value; el('wGapv').textContent = el('wGap').value + ' bh';
+      anim = null; var s = read(); out.textContent = words(s, plan(s));
+    } catch (err) { out.textContent = 'The toy stopped: ' + (err && err.message ? err.message : String(err)); }
+    kick();
+  }
+  ['wtA', 'wtB', 'wGap'].forEach(function (id) { var x = el(id); if (x) x.addEventListener('input', sync); });
+  var btn = el('wStrike');
+  if (btn) btn.addEventListener('click', function () {
+    if (failed) return;
+    var s = read(), p = plan(s);
+    anim = { s: s, p: p, t0: performance.now(), dur: still ? 1 : Math.max(450, p.ticks / 60 * SLOW * 1000) };
+    out.textContent = words(s, p);
+    kick();
+  });
+  window.addEventListener('resize', function () { W = 0; kick(); });
+  if (window.matchMedia) {
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    if (mq.addEventListener) mq.addEventListener('change', kick); else if (mq.addListener) mq.addListener(kick);
+  }
+  if (window.MutationObserver) new MutationObserver(kick).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  sync();
+})();
+</script>
+</body>
+</html>
