@@ -1,0 +1,22 @@
+#!/bin/bash
+S="/c/Users/<user>/AppData/Local/Temp/claude/bb5aa63790efa20b/58be913b-344b-4261-8aee-5312524b990e/scratchpad"
+R="/c/Users/<user>/Documents/Claude Proj/Breakers-Like"
+rm -rf "$S/s419"; mkdir -p "$S/s419"; git -C "$R" archive HEAD | tar -x -C "$S/s419"; cd "$S/s419" || exit 1
+git init -q . && git -c core.autocrlf=false add -A >/dev/null 2>&1 && git -c user.email=a@b -c user.name=x -c core.autocrlf=false commit -qm base
+ap() { git -c core.autocrlf=false -c core.eol=lf apply --3way "$1" >/dev/null 2>"$S/ap.err"; rc=$?; echo "$rc $(basename "$(dirname "$1")")/$(basename "$1") $(grep -v 'lacks the necessary blob\|Falling back' "$S/ap.err" | head -c 200 | tr '\n' ' ')"; }
+P="$R/docs"; A="$P/architecture/pending"
+ap "$A/dash-slip/dash-slip.patch"; ap "$A/dash-slip/grant-netcode-slip.patch"; ap "$A/dash-slip/grant-tools-slip.patch"
+ap "$P/controls/pending/charge-lost/charge-lost.patch"
+ap "$P/tools/pending/charge-lost-row/charge-lost-row.patch"
+if [ "${HITSTOP:-1}" = 1 ]; then ap "$A/hitstop-any/hitstop-any.patch"; ap "$A/hitstop-any/grant-tools-hitstop.patch"; ap "$A/hitstop-any/grant-encounter-hitstop.patch"; fi
+echo "--- unmerged:"; git -c core.autocrlf=false diff --name-only --diff-filter=U | head
+grep -rl '^<<<<<<<' --include=*.gd --include=*.json --include=*.mjs --include=*.js --include=*.md . 2>/dev/null | grep -v '\.godot' | head
+for f in docs/ui/strings.md localization/pseudo/ui/data/terms.json ui/data/features.json ui/data/terms.json ui/demo/hud_demo.gd ui/hud/ui_hud.gd ui/tools/hud_check.gd ui/widgets/ui_menu.gd ui/widgets/ui_pause.gd ui/widgets/ui_settings.gd ui/widgets/ui_rail.gd docs/ui/menus-rail.md; do cp "$R/$f" "$S/s419/$f"; done; git add -A >/dev/null 2>&1; git -c user.email=a@b -c user.name=x commit -qm ui; echo "ui files copied"
+ap "$P/ui/pending/rail-on/rail-rules.patch"
+ap "$P/tools/pending/rail-row/rail-row.patch"; [ -f "$P/tools/pending/hitstop-row/hitstop-row.patch" ] && ap "$P/tools/pending/hitstop-row/hitstop-row.patch"
+echo "--- unmerged2:"; git -c core.autocrlf=false diff --name-only --diff-filter=U | head
+SA="$P/director/pending/slip-arrive"; ap "$SA/slip-arrive.diff"; ap "$SA/grant-simulation-undertick.patch"
+ap "$P/net/pending/lan-slip/lan-slip.patch"
+ap "$P/tools/pending/handover-row/handover-row.patch"
+ap "$P/tools/pending/handover-row/handover-row.patch"
+echo "--- unmerged3:"; git -c core.autocrlf=false diff --name-only --diff-filter=U | head

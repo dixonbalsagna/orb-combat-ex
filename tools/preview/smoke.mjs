@@ -107,7 +107,7 @@ export async function smoke({ dir, on = IDS, planet = 7, timeoutS = 240, shot, s
         await sleep(2500);
         const after = (await read()) || before;
         if (after.tick > before.tick + 30) { notes.push(`the match was running after ${tries} rounds of clicks`); break; }
-        await click(1099, 195); await sleep(1200); await click(640, 503); await sleep(1200);   // each round: close a card if one is up, start if the menu is up (a click on the running game does nothing)
+        await click(1099, 195); await sleep(1200); await click(640, 503); await sleep(1200); await click(1133, 651); await sleep(1200);   // each round: close a card if one is up, start if the menu is up (a click on the running game does nothing); the Rail menus' "I understand, start" sits at the bottom right (1133, 651 of 1280 by 720)
       }
       const t1 = ((await read()) || p).tick;
       const playUntil = Math.min(deadline, Date.now() + 20000);

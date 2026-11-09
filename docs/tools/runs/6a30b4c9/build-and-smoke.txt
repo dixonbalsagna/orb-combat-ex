@@ -1,0 +1,8 @@
+MONDAY AFTERNOON BUILD (batch commit 6a30b4c9c767ba58915d82bcee8d63a245c67176 on local branch batch-1109, not on main at build time; stack key 6627cb9d, kept as orb-first-play-6a30b4c9-6627cb9d), 2026-11-09
+  made from the commit itself (git archive of the sha) with the tools exported from that same sha (the working tree's tools lack the five new rows); one smoke fix: smoke.mjs clicks the Rail start button at (1133, 651), working tree and scratch copy
+  parks in the build : art-biomes-working-tree
+  switches OFF       : wallPush, wallPushAi, slamTurn, cityHold, aimCuts (the held ones, as Monday)
+  ON, per the EP's list: arrive slip dashHandover carryRound paceMatch inertKnock sideFromBlowOnly chargeLostCue menusRail hitstopAny airBrake, plus refusedCue bNoBeam bNoBeamKeepRt kick (87 rows ON, 0 WAITING)
+  build: built in 0 m 35 s (first run); the first smoke FAILED (the match sat at tick 0: the Rail start menu's button is not where the old clicks went), the re-run on the cached build PASSED: tick 1361, 1213 more in the keys' 20 s
+  pck verify (built pack, then the kept copy): 95 keys, 87 rows on, 0 problem(s)
+  shortcuts: Open - Monday afternoon build(.cmd, , full power.cmd), port 8772, travel=1.5, in docs/tools/shortcuts and homework/1 Urgent

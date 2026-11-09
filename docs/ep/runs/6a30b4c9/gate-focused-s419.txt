@@ -1,0 +1,166 @@
+render 19 passed; DONE 
+golden_cmp 0 same
+split_sweep.gd 0 split sweep passed
+sweep_check.gd 0    at: clear (core/io/resource.cpp:822)
+hud_check.gd 0    at: clear (core/io/resource.cpp:822)
+two_states_check.gd 0    at: cleanup (core/object/object.cpp:2536)
+replay_xproc_check.gd 0 PASS  6 replays from 2 recording processes, each played in a fresh process: Hard 484fdc4f949d567f, E
+input agency_input_test 0 agency_input_test: 105 checks, 0 failed
+input aim_test 0 aim_test: 233 checks, 0 failed
+input b_no_beam_layouts_test 0 b_no_beam_layouts_test: 4 checks, 0 failed
+input b_no_beam_test 0 b_no_beam_test: 103 checks, 0 failed
+input beam_aim_test 0 beam_aim_test: 31 checks, 0 failed
+input brake_grapple_test 0 brake_grapple_test: 66 checks, 0 failed
+input brake_ready_test 0 brake_ready_test: 15 checks, 0 failed
+input charge_lost_test 0 charge_lost_test: 45 checks, 0 failed
+input charge_test 0 charge_test: 97 checks, 0 failed
+input chord_pick_test 0 chord_pick_test: 15 checks, 0 failed
+input dash_handover_test 0 dash_handover_test: 15 checks, 0 failed
+input dodge_held_test 0 dodge_held_test: 47 checks, 0 failed
+input flight_strike_b_test 0 flight_strike_b_test: 29 checks, 0 failed
+input full_send_haptic_test 0 full_send_haptic_test: 14 checks, 0 failed
+input haptics_test 0 haptics_test: 80 checks, 0 failed
+input hold_toggle_test 0 hold_toggle_test: 88 checks, 0 failed
+input hub_test 0 hub_test: 60 checks, 0 failed
+input impact_haptics_test 0 impact_haptics_test: 58 checks, 0 failed
+input inert_knock_test 0 inert_knock_test: 11 checks, 0 failed
+input join_test 0 join_test: 53 checks, 0 failed
+input layout_test 0 layout_test: 131 checks, 0 failed
+input left_hand_test 0 left_hand_test: 27 checks, 0 failed
+input mode_test 0 mode_test: 55 checks, 0 failed
+input pad_first_press_test 0 pad_first_press_test: 23 checks, 0 failed
+input params_cache_test 0 params_cache_test: 36 checks, 0 failed
+input press_read_test 0 press_read_test: 439 checks, 0 failed
+input push_stick_test 0 push_stick_test: 34 checks, 0 failed
+input quick_read_test 0 quick_read_test: 30 checks, 0 failed
+input refusal_cue_test 0 refusal_cue_test: 52 checks, 0 failed
+input refusals_test 0 refusals_test: 97 checks, 0 failed
+input remap_test 0 remap_test: 147 checks, 0 failed
+input stage_cue_test 0 stage_cue_test: 25 checks, 0 failed
+input stage_haptics_test 0 stage_haptics_test: 30 checks, 0 failed
+input stall_keep_test 0 stall_keep_test: 29 checks, 0 failed
+input stance_test 0 stance_test: 186 checks, 0 failed
+input stick_feel_test 0 stick_feel_test: 142 checks, 0 failed
+input strike_gate_test 0 strike_gate_test: 268 checks, 0 failed
+input strike_hub_test 0 strike_hub_test: 63 checks, 0 failed
+input strike_read_test 0 strike_read_test: 61 checks, 0 failed
+input struggle_test 0 struggle_test: 105 checks, 0 failed
+input t1_latency_test 0 t1_latency_test: 62 checks, 0 failed
+input take_back_claw_test 0 take_back_claw_test: 55 checks, 0 failed
+input touch_full_test 0 touch_full_test: 848 checks, 0 failed
+input touch_glue_test 0    at: clear (core/io/resource.cpp:822)
+input touch_test 0 touch_test: 181 checks, 0 failed
+ci_delay_check__ 0 PASS  0 failure(s)
+ci_delay_check______negative_control_ 0 PASS  negative control: 2 of 2 broken choosers caught
+ci_desync_check______ai_timers___seeds_1___ticks_600___p 0 PASS  AI timers: 0 failure(s)
+ci_desync_check______ai_timers___seeds_1___ticks_600___p 0 PASS  AI timers negative control: 10 break(s) caught, 0 missed
+ci_desync_check______seeds_1___ticks_600___profiles_lan_ 0 PASS  14 runs, 18 checkpoints matched, 0 failure(s)
+ci_desync_check______seeds_1___ticks_600___profiles_lan_ 0 PASS  negative control: 5 break(s) caught, 0 missed
+ci_desync_check______setup_field___seeds_1_2___ticks_600 0    at: cleanup (core/object/object.cpp:2536)
+ci_desync_check______setup_field___seeds_1_2___ticks_600 0    at: cleanup (core/object/object.cpp:2536)
+ci_desync_check______setup_kick___seeds_1_2___ticks_600_ 0 PASS  28 runs, 36 checkpoints matched, 0 failure(s)
+ci_desync_check______setup_kick___seeds_1_2___ticks_600_ 0 PASS  negative control: 10 break(s) caught, 0 missed
+ci_lan_check______ticks_1200_ 0    at: clear (core/io/resource.cpp:822)
+ci_lan_check______ticks_1200___negative_control_ 0    at: clear (core/io/resource.cpp:822)
+ci_rollback_check______ai___seeds_1___ticks_600___profiles 0 PASS  3 AI sessions, 0 reached a KO, 1 also matched the AI's own straight run, 3600 confirmed-tick d
+ci_rollback_check______ai___seeds_1___ticks_600___profiles 0 PASS  AI negative control: 7 break(s) caught, 0 missed
+ci_rollback_check______ai_sim___seeds_1___ticks_600___prof 0 PASS  3 AI sessions, 0 reached a KO, 1 also matched the AI's own straight run, 3600 confirmed-tick d
+ci_rollback_check______ai_sim___seeds_1___ticks_600___prof 0 PASS  AI negative control: 7 break(s) caught, 0 missed
+ci_rollback_check______drop_150___seeds_1___ticks_300___pr 0 PASS  3 sessions, 900 confirmed-tick digest and 900 SimHash comparisons, 0 failure(s)
+ci_rollback_check______drop_150___seeds_1___ticks_300___pr 0 PASS  takeover negative control: 3 break(s) caught, 0 missed, 0 not applicable
+ci_rollback_check______right_stick___seeds_1___ticks_300__ 0 PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+ci_rollback_check______seeds_1___ticks_240___profiles_lan_ 0 PASS  negative control: 4 break(s) caught, 0 missed
+ci_rollback_check______seeds_1___ticks_300___profiles_lan_ 0 PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+ci_rollback_check______setup_calm___turn_at_300___seeds_1_ 0 PASS  3 sessions, 3600 confirmed-tick hash comparisons, 0 failure(s)
+ci_rollback_check______setup_depth___seeds_1___ticks_300__ 0 PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+ci_rollback_check______setup_depth___seeds_1___ticks_300__ 0 PASS  negative control: 4 break(s) caught, 0 missed
+ci_rollback_check______setup_field___seeds_1___ticks_300__ 0    at: cleanup (core/object/object.cpp:2536)
+ci_rollback_check______setup_field___seeds_1___ticks_300__ 0    at: cleanup (core/object/object.cpp:2536)
+ci_rollback_check______setup_fights2___seeds_1___ticks_300 0    at: cleanup (core/object/object.cpp:2536)
+ci_rollback_check______setup_fights2___seeds_1___ticks_300 0    at: cleanup (core/object/object.cpp:2536)
+ci_rollback_check______setup_fights2___trade_at_0___seeds_ 0    at: cleanup (core/object/object.cpp:2536)
+ci_rollback_check______setup_kick___seeds_1___ticks_300___ 0 PASS  3 sessions, 1800 confirmed-tick hash comparisons, 0 failure(s)
+ci_rollback_check______setup_kick___seeds_1___ticks_300___ 0 PASS  negative control: 4 break(s) caught, 0 missed
+ci_rollback_check______setup_planet2___seeds_1___ticks_300 0    at: cleanup (core/object/object.cpp:2536)
+ci_rollback_check______setup_planet2___seeds_1___ticks_300 0    at: cleanup (core/object/object.cpp:2536)
+ci_rollback_check______takeover_150___seeds_1___ticks_300_ 0 PASS  6 sessions, 3600 confirmed-tick hash comparisons, 0 failure(s)
+ci_rollback_check______takeover_150___seeds_1___ticks_300_ 0 PASS  takeover negative control: 4 break(s) caught, 0 missed, 2 not applicable
+ci_spectator_check______seeds_1___ticks_600___profiles_lan_ 0 PASS  3 spectated sessions, 180 spectator hash comparisons, 0 failure(s)
+ci_spectator_check______seeds_1___ticks_600___profiles_lan_ 0 PASS  negative control: 5 break(s) caught, 0 missed
+ci_swing_check______negative_control_ 0    at: clear (core/io/resource.cpp:822)
+ci_swing_check______right_stick_ 0    at: clear (core/io/resource.cpp:822)
+ci_transport_check__ 0    at: clear (core/io/resource.cpp:822)
+ci_transport_check______negative_control_ 0    at: clear (core/io/resource.cpp:822)
+ci_two_pc_check______negative_control___ticks_900_ 0 TWO_PC: 0 check(s) failed
+ci_two_pc_check______self_test___ticks_900_ 0 TWO_PC: 0 check(s) failed
+ci_word_check__ 0 word check passed: 623 checks, 0 failed
+ci_word_check______negative_control_ 0 word check passed: 9 checks, 0 failed
+ci_chase_rush_check__ 0    at: cleanup (core/object/object.cpp:2536)
+ci_cover_water_check__ 0    at: clear (core/io/resource.cpp:822)
+ci_determinism__ 0    at: clear (core/io/resource.cpp:822)
+ci_lake_water_check__ 0    at: clear (core/io/resource.cpp:822)
+ci_props_check__ 0    at: clear (core/io/resource.cpp:822)
+ci_seam_sweep______size_1280x720_ 0    at: clear (core/io/resource.cpp:822)
+ci_sweep_check__ 0    at: clear (core/io/resource.cpp:822)
+ci_cross_check__ 0 CROSS: 0 check(s) failed
+ci_cross_check______negative_control_ 0 CROSS negative control: 0 check(s) failed
+ci_cross_end_check__ 0 CROSSEND: 0 check(s) failed
+ci_cross_end_check______negative_control_ 0 CROSSEND negative control: 0 check(s) failed
+ci_field_static_check__ 0    at: cleanup (core/object/object.cpp:2536)
+ci_field_static_check______negative_control_ 0    at: cleanup (core/object/object.cpp:2536)
+ci_fork_check__ 0 FORK: 0 check(s) failed
+ci_fork_check______negative_control_ 0 negative control: 3 of 3 planets caught
+ci_frame_check__ 0    at: cleanup (core/object/object.cpp:2536)
+ci_frame_check______negative_control_ 0    at: cleanup (core/object/object.cpp:2536)
+ci_kick_check__ 0 KICK: 0 check(s) failed
+ci_load_split__ 0 ok: the director is a load of its own, SimDir's calls are all in their scripts, and the core and the
+ci_load_split______negative_control_ 0 PASS  negative control: 3 of 3 breaks caught
+ci_memo_check__ 0    at: cleanup (core/object/object.cpp:2536)
+ci_memo_check______negative_control_ 0    at: cleanup (core/object/object.cpp:2536)
+ci_parity__ 0    at: cleanup (core/object/object.cpp:2536)
+ci_places_check__ 0    at: cleanup (core/object/object.cpp:2536)
+ci_power_check__ 0    at: cleanup (core/object/object.cpp:2536)
+ci_power_check______negative_control_ 0    at: cleanup (core/object/object.cpp:2536)
+ci_rec_check__ 0    at: cleanup (core/object/object.cpp:2536)
+ci_rec_check______negative_control_ 0    at: cleanup (core/object/object.cpp:2536)
+ci_replay_xproc_check__ 0 PASS  6 replays from 2 recording processes, each played in a fresh process: Hard 484fdc4f949d567f, E
+ci_replay_xproc_check______negative_control_ 0 PASS negative control: 4 of 4 breaks caught (43.4 s)
+ci_two_states_check__ 0    at: cleanup (core/object/object.cpp:2536)
+ci_two_states_check______negative_control_ 0    at: cleanup (core/object/object.cpp:2536)
+ci_bark_reads_check__ 0 bark_reads_check: passed
+ci_chase_tap_check__ 0 CHASE: 0 check(s) failed
+ci_floorlift_check__ 0    at: cleanup (core/object/object.cpp:2536)
+ci_plane_check__ 0 PLANE: 0 check(s) failed
+ci_press_decides_check__ 0 PRESS: 0 check(s) failed
+ci_flash_worst______only_mash___ticks_300___negative_co 1    at: clear (core/io/resource.cpp:822)
+ci_flash_worst______out____RUNNER_TEMP__flash__ 1    at: clear (core/io/resource.cpp:822)
+lint 0
+selftest 0
+validate 0 321 files checked, 0 errors, 2 warnings
+node_node_tools_check_workflows_selftest_mjs_ 0 check-workflows self-test ok: 17 checks
+node_node_tools_check_workflows_mjs_ 0 check-workflows ok: 10 files
+node_node_tools_desktop_package_selftest_mjs_ 0 desktop package self-test ok: 132 checks
+node_node_tools_flash_compare_frames_selftest_mjs_ 0 compare-frames self-test ok: 19 checks
+node_node_tools_flash_head_export_selftest_mjs_ 0 head export self-test ok: 11 checks
+node_node_tools_flash_nightly_selftest_mjs_ 0 nightly seeds self-test ok: 84 checks
+node_node_tools_flash_readings_selftest_mjs_ 0 readings self-test passed
+node_node_tools_flash_release_pass_selftest_mjs_ 0 release-pass self-test ok: 112 checks
+node_node_tools_flash_run_pixels_selftest_mjs_ 0 run-pixels self-test passed
+node_node_tools_flash_selftest_js_ 0 flash self-test ok: 95 checks
+node_node_tools_flash_signature_gate_selftest_mjs_ 0 signature-gate self-test passed
+node_node_tools_gate_selftest_mjs_ 0 gate self-test ok: 26 checks
+node_node_tools_lint_determinism_selftest_mjs_ 0 determinism lint self-test ok: 67 checks
+node_node_tools_lint_determinism_mjs_ 0 determinism lint ok: no engine trig, PI/TAU, random numbers or clock in sim/core, sim/director, sim/
+node_node_tools_movegen_test_run_mjs_ 0 movegen tests: 38 passed, 0 failed
+node_node_tools_pin_child_selftest_mjs_ 0 pin-child self-test passed
+node_node_tools_preview_pck_verify_selftest_mjs_ 0 pck verify self-test ok: 12 checks
+node_node_tools_preview_stack_selftest_mjs_ 0 stack self-test ok
+node_node_tools_ratchet_two_fighter_selftest_mjs_ 0 ratchet self-test ok
+node_node_tools_ratchet_two_fighter_mjs_ 0 two-fighter ratchet ok: 365 against a baseline of 365
+node_node_tools_site_interim_selftest_mjs_ 0 interim site self-test ok: 254 checks
+node_node_tools_site_pin_selftest_mjs_ 0 site pin self-test ok: 34 checks
+node_node_tools_site_template_selftest_mjs_ 0 site template self-test ok: 113 checks
+node_node_tools_validate_js_ 0 321 files checked, 0 errors, 2 warnings
+node_node_tools_validate_js___self_test_ 0   parser 326 files + 7 text cases; engine 46 cases + 6 unsupported; schemas 193; data cases 8355
+node_node_tools_world_checks_mjs___verify_ 0 world-checks: ok, 85 checks run in CI, 30 scripts left out with a reason
+CIDONE

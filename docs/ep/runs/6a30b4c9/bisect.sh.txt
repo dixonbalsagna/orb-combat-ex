@@ -1,0 +1,12 @@
+#!/bin/bash
+cd "/c/Users/<user>/AppData/Local/Temp/claude/bb5aa63790efa20b/58be913b-344b-4261-8aee-5312524b990e/scratchpad/s415" || exit 1
+A="/c/Users/<user>/Documents/Claude Proj/Breakers-Like/docs/architecture/pending"; G2="/c/Users/<user>/Documents/Claude Proj/Breakers-Like/docs/world/pending/globe-step2"
+ap() { git -c core.autocrlf=false -c core.eol=lf apply "$1" && echo "ok $(basename $1)"; }
+rv() { git -c core.autocrlf=false -c core.eol=lf apply -R "$1" && echo "rev $(basename $1)"; }
+run() { "C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe" --headless --path . --import >/dev/null 2>&1; "C:/Users/<user>/AppData/Local/Programs/Godot/4.7.2/Godot_v4.7.2-stable_win64_console.exe" --headless --path . --script res://render/camera/tests/chase_rush_check.gd > "/c/Users/<user>/AppData/Local/Temp/claude/bb5aa63790efa20b/58be913b-344b-4261-8aee-5312524b990e/scratchpad/s418-$1.log" 2>&1; echo "$1 $? $(grep -E 'checks,' /c/Users/<user>/AppData/Local/Temp/claude/bb5aa63790efa20b/58be913b-344b-4261-8aee-5312524b990e/scratchpad/s418-$1.log | tail -1)"; }
+ap "$A/hitstop-any/hitstop-any.patch"; ap "$A/hitstop-any/grant-encounter-hitstop.patch"
+run hitstop
+rv "$A/hitstop-any/grant-encounter-hitstop.patch"; rv "$A/hitstop-any/hitstop-any.patch"
+ap "$G2/grant-tools-lint.patch"; ap "$G2/globe-step2.diff"; ap "$G2/grant-simulation-field.patch"
+run globe
+echo BISECTDONE
