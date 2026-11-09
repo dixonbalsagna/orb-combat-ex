@@ -20,7 +20,9 @@ import { reportMarks, commitOf, pcOf, groupMarks } from './lan-clip.mjs';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, '../..');
 // Netcode's saved\ file (agreed 2026-11-08): lan-<commit8>-<main|old>-<yyyymmdd-hhmmss>-<over|pause|quit|report>.json, kind "orb-lan-match": a black-box-shaped replay with marks, frames and net.
-export const SAVED = /^lan-([0-9a-f]{8})-(main|old)-(\d{8}-\d{6})-(over|pause|quit|report)\.json$/i;
+// NetLan adds "-2", "-3" ... when two saves land in the same second (two quick presses), so an optional -<n> sits before .json; the later save has the larger n.
+export const SAVED = /^lan-([0-9a-f]{8})-(main|old)-(\d{8}-\d{6})-(over|pause|quit|report)(?:-(\d+))?\.json$/i;
+const savedKey = (name) => { const m = SAVED.exec(name); return m ? m[3] + '-' + String(Number(m[5] || 1)).padStart(6, '0') : ''; };   // the timestamp, then the suffix (none counts as 1, so "-2" is later)
 const KINDS = [
   { dir: 'saved', re: SAVED },
   { dir: 'logs', re: /^lan-log-.+\.txt$/i },
@@ -58,7 +60,7 @@ export function readmeText({ stamp, files, clips, skipped }) {
     `Orb Combat EX: LAN report folder, made ${stamp}`,
     '',
     'This folder stays on Orb\'s PC. Nothing in it was sent anywhere. Give it to the EP by dropping the .zip beside this folder into the chat or the homework folder; do not post it.',
-    'The clips are of a game that flashes more than the safe limit in some scenes: for your own screen only, and keep anyone sensitive to flashing away from them.',
+    'The clips are for your own screen only: don\'t share or post them.',
     '',
     'WHAT IS INSIDE',
     `  saved\\     ${files.saved.length} saved match file(s) from the PCs: each is the match's replay with its "report this" marks, the slow frames and the network numbers`,
@@ -82,7 +84,7 @@ export function cmdText(repo) {
     'rem It never changes or deletes your files: it copies them, films a clip of each report, and zips the lot into homework\\Files\\reports. Nothing is sent anywhere.',
     'echo.',
     'echo Make my report folder: close the game on BOTH PCs first.',
-    'echo The clips are of a game that flashes more than the safe limit: for your own screen only.',
+    'echo The clips are for your own screen only: do not share or post them.',
     'echo.',
     `node "${tool}" --from "%~dp0." --from "%USERPROFILE%\\Downloads"`,   // "%~dp0." not "%~dp0": a path ending in a backslash would swallow the closing quote
     'echo.',
@@ -103,7 +105,7 @@ export function newestPerPc(saved) {
   for (const f of saved) {
     const m = SAVED.exec(f.name); if (!m) continue;
     const pc = m[2].toLowerCase(), cur = best.get(pc);
-    if (!cur || m[3] > SAVED.exec(cur.name)[3]) best.set(pc, f);
+    if (!cur || savedKey(f.name) > savedKey(cur.name)) best.set(pc, f);
   }
   return [...best.values()];
 }
