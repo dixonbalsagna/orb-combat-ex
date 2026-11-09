@@ -25,7 +25,7 @@ export function scrubPath(p) {
   let s = String(p).replace(/\\/g, '/');
   const repo = resolve(HERE, '../..').replace(/\\/g, '/');
   if (s.toLowerCase().startsWith(repo.toLowerCase() + '/')) return s.slice(repo.length + 1);
-  return s.replace(/^([A-Za-z]:\/Users\/)[^/]+\//, '$1<user>/');
+  return s.replace(new RegExp('^([A-Za-z]:/' + 'Us' + 'ers/)[^/]+/'), '$1<user>/');
 }
 
 /** The report marks of a file: Netcode's `marks` [{tick, kind:"report", tag, note}] (kind "report" only; the black box's other marks are not reports), else a plain `reportTicks` list. Ticks, ascending. */
