@@ -1,0 +1,10 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX rollback check   Godot 4.7.2-stable (official)   setup default   300 ticks   delay 2   hash every 1   verify mode
+drop: slot 1's peer vanishes at frame 150; the other drops the slot after 30 frames with no packet
+  ok   seed 1 lan     delay 2  KO none  ticks   300  exchanges    2  digests   300  hashes  300  rollbacks     0  resim      0  max depth  0  stalls    8  lost    0/458  drop, AI at tick 174 (late at 0 peer(s))  21 s  
+  ok   seed 1 p120    delay 2  KO none  ticks   300  exchanges    2  digests   300  hashes  300  rollbacks    75  resim    175  max depth  4  stalls   11  lost   18/461  drop, AI at tick 174 (late at 0 peer(s))  21 s  
+  ok   seed 1 far     delay 2  KO none  ticks   300  exchanges    2  digests   300  hashes  300  rollbacks    71  resim    732  max depth 13  stalls   18  lost   37/468  drop, AI at tick 174 (late at 0 peer(s))  20 s  
+objects alive before 1720, after 1731
+PASS  3 sessions, 900 confirmed-tick digest and 900 SimHash comparisons, 0 failure(s)
+gate: <user>\AppData\Local\Programs\Godot\4.7.2\Godot_v4.7.2-stable_win64_console.exe --ticks=300 --profiles=lan,p120,far: no SCRIPT ERROR lines

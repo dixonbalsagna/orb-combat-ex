@@ -1,0 +1,24 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+control, no freeze rule: 14 presses landed on a frozen tick
+control, the session clears its output: 0 fx events reached the game
+control, two fights, the session clears its output: the other fight's events seen 0 and 0
+control, two fights, hits across, the first player out, his PC kept on his fight: it holds fight 0, his partner's is 1
+control, 2v2 together, pauses on p120 that don't put the view back (228 frames paused): the paused PC began 12 frames off its standing player's fight
+control, CD-10, a hello asking for 100,000 ticks with the cap off: the first PC agreed 100000
+control, CD-10, a takeover of slot 200 with the host's checks off: it reached the session, which refused it 1 time(s) (slot 200 taken: false)
+control, CD-10, a flood of far-ahead inputs with the checks off: the first PC holds 390223 of the second's inputs after 582 ticks
+control, CD-10, the second PC gone at frame 600 with the hand-over off: the first PC stopped at tick 592
+control, a LAN setup without its power word: the model on false, travel 2.00
+control, a LAN setup with its slip word off: the model, dash and slip on false
+control, a saved match with one input changed: play back ["checkpoint", "checkpoint"]
+control, a saved 2v2 with the gone seat's toggle on the session's index: play back ["checkpoint", ""]
+control, two fights, S not moved to the player's fight: 1182 frames held the wrong one
+control, two fights, no map of players to slots: the second player's fighter's last blow is at -99.000
+control, two fights, inputs left on the slot after a trade at tick 1: his last blow at -99.000, the last before the trade at -99.000
+LAN: 0 check(s) failed
+gate: <user>\AppData\Local\Programs\Godot\4.7.2\Godot_v4.7.2-stable_win64_console.exe --ticks=1200 --negative-control: no SCRIPT ERROR lines
+WARNING: 15924 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
+ERROR: 13 resources still in use at exit (run with --verbose for details).
+   at: clear (core/io/resource.cpp:822)

@@ -1,0 +1,4 @@
+kit exit 0
+f9 row: exit 0, script errors 0; files 1 (lan-f9-own-main-20261108-232115-report.json); report files 1
+  lan-f9-own-main-20261108-232115-report.json: reason report, marks 1 (tick 600), replay ticks 600, checkpoints 10
+  log: 2026-11-08T23:21:15; saved lan-f9-own-main-20261108-232115-report.json: the replay to tick 600, 10 checkpoints, final yes; tick 600

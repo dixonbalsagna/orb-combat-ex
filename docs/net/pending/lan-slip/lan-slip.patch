@@ -1,0 +1,75 @@
+diff --git a/docs/net/lan-v1.md b/docs/net/lan-v1.md
+index 864c9cf..dedab8f 100644
+--- a/docs/net/lan-v1.md
++++ b/docs/net/lan-v1.md
+@@ -57,6 +57,8 @@ None of it changes what the sim does or the packets: only when a PC waits, what
+ 
+ **The energy model (Sunday's play-test, 2026-11-08).** Only the page turned the energy model on, through its setup word, so the LAN round played the old launches and flight. NetLan's three setups (`SETUP`, `SETUP2`, `SETUP2X`) now carry `"power": true`, the page's `"travel": 1.5` and `"dash": true` (Simulation's power-dash: the dash at any range; a sim without it ignores the word); the data stays off. Both PCs read the same setup and the match key holds it. `rollback_check` and `desync_check` gain a `lan` setup (the 1v1 exactly), and their `fights2` and `together` setups are NetLan's own, so they play it too.
+ 
++**The slip's brake (2026-11-09).** The three setups also carry `"slip": true` (Simulation's dash-slip: an LT let go before tick 6 of the dash eases to the slip's speed; it needs the dash on, and a sim without it ignores the word). The brake's state is in the desync digest (Simulation's grant to `net/desync.gd`). Controls' `dashHandover`, which the brake needs to do its job, is not a setup word: it is `switches.dashHandover` in `data/input/timing.json`, which each PC's pad layout reads when it turns the pad into the intent it sends. The LAN folder is built from the page's own tree, so it has the page's value. The intent's dash bit is what goes over the wire, so the two PCs can't drift on it (the folder is the same on both anyway). `lan_check`'s setup row reads the slip with the model and the dash, and a setup with `"slip": false` is caught (its control).
++
+ ## Saved matches and reports (2026-11-08, after Orb's lost seed-77 match)
+ 
+ Each PC saves the match as `lan-<commit8>-<main|old>-<yyyymmdd-hhmmss>-<reason>.json` in `saved\` beside the game (the build's commit in the name, so files from different builds never mix): at "The match is over", on entering each pause, when the window closes (the kit's hook in `main.gd`), and on a report (F9, or View + RB on a pad, or UI's panel calling `NetLan.report(tag, note)`). `--lan-save=DIR` moves the folder; `--lan-save-at=T` saves once at tick T (tests).
+diff --git a/net/lan.gd b/net/lan.gd
+index 93f4656..d2fc4ad 100644
+--- a/net/lan.gd
++++ b/net/lan.gd
+@@ -27,10 +27,10 @@ const SEED: int = 77
+ ## The energy model on for the LAN as the page has it (its setup word, sim/core/power.gd: the data stays off), with the page's launch travel of 1.5 (the stand-in's
+ ## pre-play review, 2026-11-08: launches at top power outrun the camera at the data's 2.0), and the dash at any range ("dash": Simulation's power-dash, Game
+ ## Design's overnight ruling (c); a sim without it ignores the word). Both PCs read the same setup, and the match key holds it.
+-const SETUP: Dictionary = {"v2": [true, true], "assists": [[], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.5, "dash": true}   # every key the hub's own setup has, so a saved layout can't make two PCs differ
++const SETUP: Dictionary = {"v2": [true, true], "assists": [[], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.5, "dash": true, "slip": true}   # every key the hub's own setup has, so a saved layout can't make two PCs differ
+ const AI: Dictionary = {"p1": false, "p2": false}
+-const SETUP2X: Dictionary = {"v2": [true, true, true, true], "assists": [[], [], [], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.5, "dash": true, "fights": 2, "cross": true, "outside": true}   # --lan-2v2-together: hits across the two fights (sim/core/cross.gd) and Encounter's blows from outside (Simulation's per-setup key, S.stage.outside), a team against a team
+-const SETUP2: Dictionary = {"v2": [true, true, true, true], "assists": [[], [], [], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.5, "dash": true, "fights": 2}
++const SETUP2X: Dictionary = {"v2": [true, true, true, true], "assists": [[], [], [], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.5, "dash": true, "slip": true, "fights": 2, "cross": true, "outside": true}   # --lan-2v2-together: hits across the two fights (sim/core/cross.gd) and Encounter's blows from outside (Simulation's per-setup key, S.stage.outside), a team against a team
++const SETUP2: Dictionary = {"v2": [true, true, true, true], "assists": [[], [], [], []], "planet": 7, "touch": 3, "planetGen": 3, "intro": false, "power": true, "travel": 1.5, "dash": true, "slip": true, "fights": 2}
+ const AI2: Dictionary = {"p1": false, "p2": true, "p3": false, "p4": true}
+ const SLOTS2: Array = [0, 2]   # the sim's slot each PC's player plays
+ const FOREVER: int = 1 << 30
+diff --git a/net/tools/lan_check.gd b/net/tools/lan_check.gd
+index 33a1c51..041420c 100644
+--- a/net/tools/lan_check.gd
++++ b/net/tools/lan_check.gd
+@@ -24,7 +24,7 @@ extends SceneTree
+ ##   - a saved match (NetLan.save, with the scripted hit-stops off so the inputs are the whole match): both PCs' files play back through SimReplay.play,
+ ##     every checkpoint and the final hash matching, the two PCs' replays the same, in 1v1 (lan, p120), 2v2 together (p120) and together with the second PC
+ ##     gone (its seat's toggle on the sim's slot, p3's);
+-##   - NetLan's own setups (SETUP, SETUP2, SETUP2X: the folder's 1v1, 2v2 apart and together) start both PCs with the energy model on and the page's travel of 1.5,
++##   - NetLan's own setups (SETUP, SETUP2, SETUP2X: the folder's 1v1, 2v2 apart and together) start both PCs with the energy model on, the dash and its slip's brake, and the page's travel of 1.5,
+ ##     and a short match on each stays in step;
+ ##   - CD-10 (the audit's F-10), a hostile second PC: a hello asking for an input wait of 100,000 ticks fails the handshake (no session, the title says why); one
+ ##     packet handing slot 200 to the AI is dropped whole and the match goes on in step; a flood of far-ahead inputs is dropped and the first PC's inputs stay
+@@ -402,6 +402,11 @@ func _init() -> void:
+ 		var bp: Array = _setupPower(bare)
+ 		print("control, a LAN setup without its power word: the model on %s, travel %.2f" % [str(bp[0]), bp[1]])
+ 		ok(not bp[0], "a LAN setup without its power word must be caught with the model off")
++		var noSlip: Dictionary = NetLan.SETUP.duplicate(true)
++		noSlip["slip"] = false
++		var sp: Array = _setupPower(noSlip)
++		print("control, a LAN setup with its slip word off: the model, dash and slip on %s" % str(sp[0]))
++		ok(not sp[0], "a LAN setup with the slip's brake off must be caught")
+ 		var saveTo: String = OS.get_user_data_dir().path_join("lan_check_saved")
+ 		DirAccess.make_dir_recursive_absolute(saveTo)
+ 		var keepN: int = ticks
+@@ -577,8 +582,8 @@ func _init() -> void:
+ 	for nm in ["SETUP", "SETUP2", "SETUP2X"]:
+ 		var su: Dictionary = {"SETUP": NetLan.SETUP, "SETUP2": NetLan.SETUP2, "SETUP2X": NetLan.SETUP2X}[nm]
+ 		var pr: Array = _setupPower(su)
+-		ok(pr[0] and is_equal_approx(pr[1], 1.5) and pr[2], "NetLan.%s: both PCs start with the energy model on and travel 1.5, and 300 ticks stay in step (on %s, travel %.2f, in step %s)" % [nm, str(pr[0]), pr[1], str(pr[2])])
+-		print("  NetLan.%s: the energy model on %s, travel %.2f, 300 ticks in step %s" % [nm, str(pr[0]), pr[1], str(pr[2])])
++		ok(pr[0] and is_equal_approx(pr[1], 1.5) and pr[2], "NetLan.%s: both PCs start with the energy model, the dash and the slip's brake on and travel 1.5, and 300 ticks stay in step (on %s, travel %.2f, in step %s)" % [nm, str(pr[0]), pr[1], str(pr[2])])
++		print("  NetLan.%s: the energy model, dash and slip on %s, travel %.2f, 300 ticks in step %s" % [nm, str(pr[0]), pr[1], str(pr[2])])
+ 	var keep: int = ticks
+ 	ticks = 240
+ 	var hd := _run("lan", true, true, 0, false, true, true, -1, true, [], false, false, -1, 0, {"hostile": "delay"})
+@@ -657,6 +662,7 @@ func _setupPower(su: Dictionary) -> Array:
+ 		var S: SimState = SimCore.createSim()
+ 		SimCore.newMatch(S, NetLan.SEED, ai, su)
+ 		on = on and S.powerOn and (S.get("dashOn") == null or bool(S.get("dashOn")))   # the dash too, once the sim has it (Simulation's power-dash)
++		on = on and S.get("slipOn") == true   # and the slip's brake (Simulation's dash-slip; the setup's "slip"): this row needs it
+ 		trav = S.powerTravel
+ 		for t in range(300):
+ 			SimCore.step(S, null)

@@ -1,0 +1,88 @@
+extends SceneTree
+## Scratch probe (Netcode, 2026-11-08, QA's hypothesis): after a rollback's re-run, does the first PC's drawn state ever show a building that had
+## fallen standing again, or a building's hp going back up? Two NetHosts over the loopback with the LAN's tuning, NetLan.SETUP2X (planet 7, two
+## fights, the computer in all four slots so the fights are busy), the second PC hitching (20 frames in every 240) on p120; the same on lan with
+## no hitch as the control (no rollbacks: nothing can flip).
+##   godot --headless --path <tree> --script res://net/tools/zz_bpop_probe.gd -- [--frames=7200]
+
+func _run(pname: String, hitch: bool, frames: int) -> Dictionary:
+	var prof: Dictionary = NetLoopback.PROFILES[pname]
+	var ls: Array = [NetLoopback.Link.new(float(prof.ping) * 0.5, float(prof.jitter), float(prof.loss), 31), NetLoopback.Link.new(float(prof.ping) * 0.5, float(prof.jitter), float(prof.loss), 37)]
+	var setup: Dictionary = NetLan.SETUP2X.duplicate(true)
+	var ai := {"p1": true, "p2": true, "p3": true, "p4": true}
+	var key: String = NetHandshake.keyOf(NetLan.SEED, ai, setup)
+	var hosts: Array = []
+	for k in range(2):
+		var S: SimState = SimCore.createSim()
+		SimCore.newMatch(S, NetLan.SEED, ai, setup)
+		var h := NetHost.new(NetLinkTransport.new(ls[k], ls[1 - k], true), S, k, key, NetDelay.device(1.0), NetBot.new(NetLan.SEED, k))
+		h.configure = func(sess: NetSession) -> void:
+			NetLan.tune(sess, h)
+			sess.slotOf = NetLan.SLOTS2
+		hosts.append(h)
+	var now: float = 0.0
+	var prevAlive := PackedByteArray()
+	var prevHp := PackedFloat64Array()
+	var out := {"unfall": 0, "hpUp": 0, "fell": 0, "rollbacks": 0, "flipFramesWithRollback": 0, "flipFrames": 0, "first": [], "buildings": 0, "frames": frames}
+	for f in range(frames):
+		now += 1000.0 / 60.0
+		var rb0: int = hosts[0].session.rollbacks if hosts[0].session != null else 0
+		for k in range(2):
+			if k == 1 and hitch and f > 0 and f % 240 == 0:
+				hosts[1].stallFrames = 20
+			hosts[k].frame(now, 1 << 30)
+		var S0: SimState = hosts[0].S
+		var rolled: bool = hosts[0].session != null and hosts[0].session.rollbacks > rb0
+		var n: int = S0.buildings.size()
+		if n != prevAlive.size():
+			prevAlive.resize(n)
+			prevHp.resize(n)
+			for i in range(n):
+				prevAlive[i] = 1 if S0.buildings[i].alive else 0
+				prevHp[i] = float(S0.buildings[i].hp)
+		else:
+			var flips: int = 0
+			for i in range(n):
+				var a: int = 1 if S0.buildings[i].alive else 0
+				var hp: float = float(S0.buildings[i].hp)
+				if a == 1 and prevAlive[i] == 0:
+					out.unfall += 1
+					flips += 1
+					if out.first.size() < 8:
+						out.first.append([hosts[0].session.frame, i, "stood again", rolled])
+				elif a == 0 and prevAlive[i] == 1:
+					out.fell += 1
+				if hp > prevHp[i] + 1.0e-9:
+					out.hpUp += 1
+					flips += 1
+					if out.first.size() < 8:
+						out.first.append([hosts[0].session.frame, i, "hp up %.1f to %.1f" % [prevHp[i], hp], rolled])
+				prevAlive[i] = a
+				prevHp[i] = hp
+			if flips > 0:
+				out.flipFrames += 1
+				if rolled:
+					out.flipFramesWithRollback += 1
+		out.buildings = n
+		for h in hosts:
+			h.S.out.fx.clear()
+			h.S.out.feed.clear()
+	out.rollbacks = hosts[0].session.rollbacks if hosts[0].session != null else 0
+	out["ticks"] = hosts[0].session.frame if hosts[0].session != null else 0
+	out["desync"] = hosts[0].session != null and not hosts[0].session.desync.is_empty()
+	for h in hosts:
+		var S: SimState = h.S
+		h.close()
+		SimCore.dispose(S)
+	return out
+
+
+func _init() -> void:
+	var frames: int = 7200
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--frames="):
+			frames = int(a.substr(9))
+	for row in [["p120", true], ["lan", false]]:
+		var r: Dictionary = _run(row[0], row[1], frames)
+		print("BPOP %s%s: ticks %d, buildings %d, fell %d, rollbacks %d; drawn state: stood again %d, hp up %d, in %d frames (%d of them with a rollback that frame); desync %s; first %s" % [row[0], " hitching" if row[1] else "", r.ticks, r.buildings, r.fell, r.rollbacks, r.unfall, r.hpUp, r.flipFrames, r.flipFramesWithRollback, str(r.desync), str(r.first)])
+	quit(0)

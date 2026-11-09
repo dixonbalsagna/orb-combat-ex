@@ -1,0 +1,38 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Orb Combat EX desync check   Godot 4.7.2-stable (official)   setup together   600 ticks   checkpoint every 60   delay 2
+seed 1  straight: 10 checkpoints, digest 735 us mean, SimHash.stateHash 49124 us
+  ok   clean   lan     checkpoints matched   9  rollbacks    0  
+  ok   clean   p120    checkpoints matched   9  rollbacks  328  
+  ok   rng         lan     desync at 240 (agreed to 180): first field S.rng.a (729412866 vs 729412865), 5 field(s) listed
+  ok   rng         p120    desync at 240 (agreed to 180): first field S.rng.a (729412866 vs 729412865), 5 field(s) listed
+  ok   building_hp lan     desync at 240 (agreed to 180): first field S.bHp[0] (143.673060158297 (bits 4061f589b5750401) vs 144.673060158297 (bits 40621589b5750401)), 1 field(s) listed
+  ok   building_hp p120    desync at 240 (agreed to 180): first field S.bHp[0] (143.673060158297 (bits 4061f589b5750401) vs 144.673060158297 (bits 40621589b5750401)), 1 field(s) listed
+  ok   terrain     lan     desync at 240 (agreed to 180): first field S.deform[1600] (0.0010000000475 (bits 3f50624de0000000) vs 0.0), 1 field(s) listed
+  ok   terrain     p120    desync at 240 (agreed to 180): first field S.deform[1600] (0.0010000000475 (bits 3f50624de0000000) vs 0.0), 1 field(s) listed
+  ok   mood        lan     desync at 240 (agreed to 180): first field S.mood.casGiven (1 vs 0), 1 field(s) listed
+  ok   mood        p120    desync at 240 (agreed to 180): first field S.mood.casGiven (1 vs 0), 1 field(s) listed
+  ok   director    lan     desync at 240 (agreed to 180): first field S.dirS.cool (-0.009999 (bits bf847a5b0ff10eb7) vs -0.01 (bits bf847ae147ae1466)), 1 field(s) listed
+  ok   director    p120    desync at 240 (agreed to 180): first field S.dirS.cool (-0.009999 (bits bf847a5b0ff10eb7) vs -0.01 (bits bf847ae147ae1466)), 1 field(s) listed
+  ok   other_fight lan     desync at 240 (agreed to 180): first field S.stage.fights[1].rng.a (1680165206 vs 1680165207), 1 field(s) listed
+  ok   other_fight p120    desync at 240 (agreed to 180): first field S.stage.fights[1].rng.a (1680165206 vs 1680165207), 1 field(s) listed
+seed 2  straight: 10 checkpoints, digest 686 us mean, SimHash.stateHash 53307 us
+  ok   clean   lan     checkpoints matched   9  rollbacks    0  
+  ok   clean   p120    checkpoints matched   9  rollbacks  376  
+  ok   rng         lan     desync at 240 (agreed to 180): first field S.rng.a (2560978678 vs 2560978679), 1 field(s) listed
+  ok   rng         p120    desync at 240 (agreed to 180): first field S.rng.a (2560978678 vs 2560978679), 1 field(s) listed
+  ok   building_hp lan     desync at 240 (agreed to 180): first field S.bHp[0] (143.673060158297 (bits 4061f589b5750401) vs 144.673060158297 (bits 40621589b5750401)), 1 field(s) listed
+  ok   building_hp p120    desync at 240 (agreed to 180): first field S.bHp[0] (143.673060158297 (bits 4061f589b5750401) vs 144.673060158297 (bits 40621589b5750401)), 1 field(s) listed
+  ok   terrain     lan     desync at 240 (agreed to 180): first field S.deform[1600] (0.0010000000475 (bits 3f50624de0000000) vs 0.0), 1 field(s) listed
+  ok   terrain     p120    desync at 240 (agreed to 180): first field S.deform[1600] (0.0010000000475 (bits 3f50624de0000000) vs 0.0), 1 field(s) listed
+  ok   mood        lan     desync at 240 (agreed to 180): first field S.mood.casGiven (1 vs 0), 1 field(s) listed
+  ok   mood        p120    desync at 240 (agreed to 180): first field S.mood.casGiven (1 vs 0), 1 field(s) listed
+  ok   director    lan     healed: the state equals the straight run's again by checkpoint 240 (SimHash), nothing to detect
+  ok   director    p120    healed: the state equals the straight run's again by checkpoint 240 (SimHash), nothing to detect
+  ok   other_fight lan     desync at 240 (agreed to 180): first field S.stage.fights[1].rng.a (2815954155 vs 352552671), 4 field(s) listed
+  ok   other_fight p120    desync at 240 (agreed to 180): first field S.stage.fights[1].rng.a (2815954155 vs 352552671), 4 field(s) listed
+objects alive before 1719, after 1735
+PASS  28 runs, 36 checkpoints matched, 0 failure(s)
+gate: <user>\AppData\Local\Programs\Godot\4.7.2\Godot_v4.7.2-stable_win64_console.exe --ticks=600 --profiles=lan,p120: no SCRIPT ERROR lines
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)
