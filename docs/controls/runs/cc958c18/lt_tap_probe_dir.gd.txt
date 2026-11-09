@@ -1,0 +1,100 @@
+extends SceneTree
+## Controls' LT tap probe (docs/controls/runs/d240cef1/lt_tap_probe-dash.gd.txt), Simulation's copy for the slip's brake: the real hub into the
+## sim, the model on, travel 1.5, the dash, the kick and Encounter's arrival on as the Monday build plays them, Controls' dashHandover on.
+## A standing rival --sep off, the stick toward him 60 ticks. Rows: LT let go at tick r (0 held; -1 no LT, the control); dash ticks, the
+## distance in body heights (75 units) over the 60 ticks, and his speed on ticks 1 to 12.
+##   godot --headless --path . --script res://sim/input/tools/lt_tap_probe_slip.gd -- --sep=3000 [--slip] [--no-handover]
+
+const BH: float = 75.0
+const RELEASE: Array = [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0]
+
+
+func _init() -> void:
+	SimInputData.load_and_apply()
+	SimInputData.clear_overrides()
+	var sep: float = 3000.0
+	var slip: bool = false
+	var dir: String = "toward"
+	var handover: bool = true
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--sep="):
+			sep = float(a.substr(6))
+		elif a.begins_with("--dir="):
+			dir = a.substr(6)
+		elif a == "--slip":
+			slip = true
+		elif a == "--no-handover":
+			handover = false
+	var sw: Dictionary = SimInputData.timing["switches"]
+	sw["dashHandover"] = handover
+	SimInputData.invalidate()
+	DirBands.data()["arrive"]["enabled"] = true
+	print("handover %s ; slip %s ; arrive %s ; separation %d (%.1f bh)" % [str(handover), str(slip), str(DirBands.arriveOn()), int(sep), sep / BH])
+	print("stick: %s" % dir)
+	print("released at | dash ticks | travelled (bh) in 60 ticks | rival distance at tick 60 (bh) | speed on ticks 1 to 12")
+	for r in RELEASE:
+		var o: Dictionary = _run(sep, r, slip, dir)
+		print("%11s | %10d | %26.2f | %29.2f | %s" % ["no LT" if r < 0 else ("held" if r == 0 else str(r)), o["dash"], o["bh"], o["sep"], o["vs"]])
+	quit(0)
+
+
+func _run(sep: float, release_at: int, slip: bool, dir: String) -> Dictionary:
+	var hub := SimInputHub.new()
+	hub.set_humans(true, false)
+	hub.pad_button(7, "south", true)
+	hub.pad_button(7, "south", false)
+	hub.take_joins()
+	hub.set_humans(true, false)
+	var su: Dictionary = hub.setup()
+	su["intro"] = false
+	su["power"] = true
+	su["travel"] = 1.5
+	su["dash"] = true
+	su["kick"] = true
+	su["slip"] = slip
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, su)
+	var a = S.fighters[0]
+	var b = S.fighters[1]
+	b.x = SimWrap.wrap(a.x + sep)
+	b.y = a.y
+	var quiet := SimIntent.new()
+	for t in range(30):
+		SimCore.step(S, [hub.intent(0), quiet])
+		hub.consumed()
+		S.out.fx.clear()
+	for t in range(40):   # settle: nothing moves him
+		a.vx = 0.0
+		SimCore.step(S, [hub.intent(0), quiet])
+		hub.consumed()
+		S.out.fx.clear()
+	var x0: float = a.x
+	var y0: float = a.y
+	var dash: int = 0
+	var vs := PackedStringArray()
+	if dir == "away":
+		hub.pad_stick(7, -1.0, 0.0)
+	elif dir == "across":
+		hub.pad_stick(7, 0.0, 1.0)
+	else:
+		hub.pad_stick(7, 1.0, 0.0)
+	if release_at >= 0:
+		hub.pad_trigger(7, "lt", 1.0)
+	for t in range(1, 61):
+		if release_at > 0 and t == release_at + 1:
+			hub.pad_trigger(7, "lt", 0.0)
+		var i: SimIntent = hub.intent(0)
+		if i.dash:
+			dash += 1
+		SimCore.step(S, [i, quiet])
+		hub.consumed()
+		S.out.fx.clear()
+		if t <= 12:
+			vs.append("%d" % int(SimDetMath.hypot(a.vx, a.vy)))
+	var dxe: float = SimWrap.sdx(x0, a.x)
+	var dye: float = float(a.y) - float(y0)
+	var sx: float = SimWrap.sdx(a.x, b.x)
+	var sy: float = float(b.y) - float(a.y)
+	var o := {"dash": dash, "bh": SimDetMath.hypot(dxe, dye) / BH, "sep": SimDetMath.hypot(sx, sy) / BH, "vs": " ".join(vs)}
+	SimCore.dispose(S)
+	return o
