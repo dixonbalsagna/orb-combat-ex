@@ -86,6 +86,7 @@ func _run() -> void:
 	await _damage_facts_rules()
 	await _retired_words_rules()
 	await _report_this_rules()
+	await _menus_rail_rules()
 	await _plain_words_rules()
 	await _launch_marks_rules()
 	await _tug_rules()
@@ -8888,7 +8889,7 @@ func _damage_facts_rules() -> void:
 	UiText.tracing = false
 	var card_words := " ".join(PackedStringArray(UiText.trace))
 	UiText.trace = []
-	_ok(card_words.contains("Buildings lost: 12") and card_words.contains("MATCH OVER") and not card_words.to_lower().contains("civilian"), "damage facts: the open card draws MATCH OVER and the two counts, nothing about people")
+	_ok(card_words.contains("Buildings lost: 12") and card_words.to_upper().contains("MATCH OVER") and not card_words.to_lower().contains("civilian"), "damage facts: the open card draws MATCH OVER and the two counts, nothing about people")
 	UiData.set_feature("damage_facts", null)
 	hud.queue_free()
 	await process_frame
@@ -8911,6 +8912,16 @@ func _key_press(hud: UiHud, keycode: int) -> void:
 	e.keycode = keycode
 	e.pressed = true
 	hud._input(e)
+
+
+## The words the pause card says under its buttons: the old card's foot lines, or on the Rail the chip and the detail card's lines (the facts, a save's status, where saved reports go).
+func _foot_text(hud: UiHud) -> String:
+	var p: Dictionary = hud.pause_menu_plan()
+	var parts: Array = []
+	parts.append_array(PackedStringArray(p["join_lines"]))
+	if p.has("rail"):
+		parts.append_array(PackedStringArray(p["facts_lines"]))
+	return " ".join(PackedStringArray(parts))
 
 
 func _report_this_rules() -> void:
@@ -8999,11 +9010,11 @@ func _report_this_rules() -> void:
 	_ok(save_btn and panel_ok and back_ok and no_btn, "report this: the feedback panel has SAVE REPORT only on a LAN build, and it hands the host the ticked tags (their ids) and the note and then says where it saved (%s %s %s %s)" % [save_btn, panel_ok, back_ok, no_btn])
 	# The pause screen says where saved reports go (a LAN build only).
 	hud.show_pause_menu()
-	var where_on: bool = " ".join(PackedStringArray(hud.pause_menu_plan()["join_lines"])).contains("'saved' folder")
+	var where_on: bool = _foot_text(hud).contains("'saved' folder")
 	hud._pm_close("test")
 	hud.lan_report_fn = Callable()
 	hud.show_pause_menu()
-	var where_off: bool = not " ".join(PackedStringArray(hud.pause_menu_plan()["join_lines"])).contains("'saved' folder")
+	var where_off: bool = not _foot_text(hud).contains("'saved' folder")
 	hud._pm_close("test")
 	hud.lan_report_fn = good
 	# Save this match, on the card that opens after a match.
@@ -9015,7 +9026,7 @@ func _report_this_rules() -> void:
 	var rec_ok: bool = str(rec["schema"]) == "orb-combat-match-record/1" and rec.has("seed") and rec.has("build") and rec.has("settings") and rec.has("note") and str(rec["winner"]) == "ONE"
 	hud._fb_text.text = "The beam froze."   # the note the player typed
 	hud.pause_menu_choose("save")
-	var status := func() -> String: return " ".join(PackedStringArray(hud.pause_menu_plan()["join_lines"]))
+	var status := func() -> String: return _foot_text(hud)
 	var lan_save: bool = str(status.call()).contains("Report saved: saved/report-0001.json") and calls.back() == ["", "The beam froze."]
 	hud.lan_report_fn = Callable()
 	hud.pause_menu_choose("save")
@@ -10758,3 +10769,265 @@ func _two_player_rules() -> void:
 	UiLook.text_floor = UiLook.MIN_TEXT_PX
 	hud.queue_free()
 	await process_frame
+
+
+# --- The Rail menus (docs/ui/menus-rail.md) -----------------------------------------------------------------------------------
+
+## Whether a plan is the Rail's.
+func _is_rail(p: Dictionary) -> bool:
+	return p.has("rail")
+
+
+## A pad button or key pressed into the menus (they read `_unhandled_input`; `_input` only watches the report chord).
+func _rail_btn(hud: UiHud, button: int) -> void:
+	var e := InputEventJoypadButton.new()
+	e.button_index = button
+	e.pressed = true
+	hud._unhandled_input(e)
+
+
+func _rail_key(hud: UiHud, keycode: int) -> void:
+	var e := InputEventKey.new()
+	e.keycode = keycode
+	e.pressed = true
+	hud._unhandled_input(e)
+
+
+func _menus_rail_rules() -> void:
+	# The switch ships off; with it off every plan is today's.
+	UiData.set_feature("menus_rail", null)
+	_ok(not UiData.feature("menus_rail"), "menus rail: the switch ships off")
+	for k in ["rail_kicker", "rail_paused", "rail_over", "rail_this_match", "rail_hint_choose", "rail_hint_select", "rail_hint_resume", "rail_hint_keep", "rail_hint_again", "rail_hint_not_now", "rail_hint_tabs", "rail_hint_back",
+			"rail_hint_choose_change", "rail_p2_leave", "rail_start_title", "rail_read_first", "rail_you", "rail_against", "rail_the_computer", "rail_now_default"]:
+		_ok(UiData.t("prompt." + k) != "prompt." + k, "menus rail: the word %s exists" % k)
+	var lay_off := UiLayout.new()
+	lay_off.compute(Vector2(1280, 720), false)
+	var off_pause: Dictionary = UiPause.plan(Vector2(1280, 720), lay_off.s, 1.0, false, {"focus": 0})
+	var off_menu: Dictionary = UiMenu.plan(Vector2(1280, 720), lay_off.s, 1.0, false, {"focus": 0, "cfg": {"players": 1}, "not_now": true})
+	var off_set: Dictionary = UiSettings.plan(Vector2(1280, 720), lay_off.s, 1.0, false, {"focus": 1, "scroll": 0.0}, {})
+	_ok(not _is_rail(off_pause) and not _is_rail(off_menu) and not _is_rail(off_set), "menus rail: with the switch off the pause card, the start menu and Settings are laid out as before")
+	UiData.set_feature("menus_rail", true)
+	# Motion: eases, cuts under Reduce motion, never a fade (a plan carries no opacity).
+	_ok(is_equal_approx(UiRail.slide(0.0, false), 0.0) and is_equal_approx(UiRail.slide(UiRail.SLIDE_SECS, false), 1.0) and UiRail.slide(0.0, true) == 1.0, "menus rail: the rail slides in over %d ms and cuts under Reduce motion" % int(UiRail.SLIDE_SECS * 1000.0))
+	var rows_y: Array = [100.0, 150.0, 200.0]
+	var mid: float = UiRail.bar_y(rows_y, 2, 0, UiRail.BAR_SECS * 0.5, false)
+	_ok(mid > 100.0 and mid < 200.0 and UiRail.bar_y(rows_y, 2, 0, UiRail.BAR_SECS, false) == 200.0 and UiRail.bar_y(rows_y, 2, 0, 0.01, true) == 200.0 and UiRail.bar_y(rows_y, 1, -1, 0.0, false) == 150.0, "menus rail: the lit bar slides to the new row in %d ms and cuts under Reduce motion" % int(UiRail.BAR_SECS * 1000.0))
+	var monotone := true
+	var last := -1.0
+	for i in range(0, 11):
+		var e: float = UiRail.ease_out(float(i) / 10.0)
+		if e < last - 0.0001:
+			monotone = false
+		last = e
+	_ok(monotone and UiRail.ease_out(0.0) == 0.0 and UiRail.ease_out(1.0) == 1.0, "menus rail: the ease only goes forward")
+	# Geometry at every size: wide enough sizes get the Rail and fit; short or narrow ones and touch keep today's card.
+	var cases: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1366, 768), 1.0], [Vector2(1600, 1000), 1.0], [Vector2(3840, 2160), 1.0], [Vector2(2560, 1080), 1.0], [Vector2(1000, 600), 1.0], [Vector2(1024, 576), 1.0],
+		[Vector2(844, 390), 1.0], [Vector2(1170, 2532), 3.0], [Vector2(390, 844), 1.0]]
+	for cse in cases:
+		var sz: Vector2 = cse[0]
+		var dpv: float = cse[1]
+		var lay := UiLayout.new()
+		lay.dp = dpv
+		lay.compute(sz, false)
+		for touch in [false, true]:
+			var want_rail: bool = (not touch) and sz.x >= UiRail.MIN_W and sz.y >= UiRail.MIN_H and sz.x >= sz.y * 1.3
+			for dev in ["kbd", "pad"]:
+				var tag := "menus rail %dx%d touch=%s %s" % [int(sz.x), int(sz.y), str(touch), dev]
+				var base := {"device": dev, "style": "neutral", "since": 1.0, "prev": -1, "bar_since": 1.0, "reduced": false, "win": ""}
+				# Pause, the new-match question, two people with the join line, the match-over card with a saved file.
+				for mode in ["pause", "confirm", "two_join", "over_saved", "lan_pause"]:
+					var st: Dictionary = base.duplicate()
+					st["focus"] = 0
+					match mode:
+						"confirm":
+							st["confirm"] = true
+						"two_join":
+							st["two"] = true
+							st["join"] = true
+						"over_saved":
+							st["over"] = true
+							st["win"] = "Grist and Vorr win"
+							st["facts"] = ["Grist and Vorr win", "Buildings lost: 3", "Craters: 2"]
+							st["status"] = "Match saved: saved/orb-combat-match-1234567890.json"
+						"lan_pause":
+							st["facts"] = ["Buildings lost: 3", "Craters: 2"]
+							st["where"] = "Saved reports go in the 'saved' folder beside the game."
+					var p: Dictionary = UiPause.plan(sz, lay.s, dpv, touch, st)
+					var is_rail := _is_rail(p)
+					var items: Array = p["items"]
+					var hits_ok := true
+					for it in items:
+						if UiPause.hit(p, (it["rect"] as Rect2).get_center()) != it["id"] or (it["rect"] as Rect2).size.y < float(p["tm"]) - 0.01 or not (p["card"] as Rect2).encloses(it["rect"]):
+							hits_ok = false
+					for i in range(items.size()):
+						for j in range(i + 1, items.size()):
+							if (items[i]["rect"] as Rect2).intersects(items[j]["rect"]):
+								hits_ok = false
+					var extra_ok := true
+					if is_rail:
+						var rail_r: Rect2 = p["card"]
+						for e2 in p["hints"]:
+							pass
+						if bool(p["has_card"]) and ((p["detail_card"] as Rect2).position.x < rail_r.end.x or not Rect2(Vector2.ZERO, sz).encloses(p["detail_card"])):
+							extra_ok = false
+						if str(p["chip_text"]) != "" and ((p["chip"] as Rect2).position.x < rail_r.end.x or not Rect2(Vector2.ZERO, sz).encloses(p["chip"])):
+							extra_ok = false
+						if float(p["hint_top"]) < (items.back()["rect"] as Rect2).end.y:
+							extra_ok = false
+					# The rail where the screen allows it, today's card where it does not; always on screen with every button a real target.
+					var wide_ok: bool = (is_rail or not want_rail or mode == "two_join" and sz.y < 700.0 or mode == "over_saved" and sz.y < 700.0)
+					_ok(bool(p["fits"]) and hits_ok and extra_ok and wide_ok and (not is_rail or want_rail), "%s %s: the pause plan fits with every button a target inside the rail, the detail and chip clear of it (%s)" % [tag, mode, "rail" if is_rail else "card"])
+					if is_rail:
+						var kinds: Array = []
+						for ent in p["hints"]:
+							for sp in ent["specs"]:
+								kinds.append(str(sp.get("kind", "")))
+						var pad_only: bool = not kinds.has("key")
+						var kbd_only: bool = kinds.all(func(k): return k == "key")
+						_ok((pad_only if dev == "pad" else kbd_only), "%s %s: the hints show the device's own buttons, never both (%s)" % [tag, mode, str(kinds)])
+				# The start menu.
+				for mode2 in ["one", "two", "mid"]:
+					var cfg := {"players": 1, "p1": "kb", "p2": "pad", "ai_level": "medium", "intros": true, "reduce_flashing": true, "shake": true, "captions": true, "guide": true}
+					if mode2 == "two":
+						cfg["players"] = 2
+					var st3 := {"focus": 0, "cfg": cfg, "mid_match": mode2 == "mid", "not_now": mode2 != "mid", "device": dev, "style": "neutral", "since": 1.0, "prev": -1, "bar_since": 1.0, "reduced": false, "safe": Rect2()}
+					var pm: Dictionary = UiMenu.plan(sz, lay.s, dpv, touch, st3)
+					var m_rail := _is_rail(pm)
+					var m_hits := true
+					for it2 in pm["items"]:
+						var h: Dictionary = UiMenu.hit(pm, (it2["rect"] as Rect2).get_center())
+						if str(h.get("row", "")) != str(it2["row"]) or (it2["rect"] as Rect2).size.y < float(pm["tm"]) - 0.01 or not Rect2(Vector2.ZERO, sz).encloses(it2["rect"]):
+							m_hits = false
+					var notice_ok := true
+					if m_rail and mode2 != "mid":
+						notice_ok = " ".join(pm["notice_lines"]) == UiMenu.notice(cfg)   # Legal's words, word for word (only where they sit changed)
+					_ok(bool(pm["fits"]) and m_hits and notice_ok and (not m_rail or want_rail) and (m_rail or not want_rail or sz.y < 700.0), "%s start menu %s: fits, every control a target, the notice word for word (%s)" % [tag, mode2, "rail" if m_rail else "card"])
+				# Settings.
+				var fo: Array = UiSettings.focusable(UiSettings.rows())
+				var ps: Dictionary = UiSettings.plan(sz, lay.s, dpv, touch, {"focus": int(fo[0]), "scroll": 0.0, "device": dev, "help_scroll": 0, "style": "neutral", "since": 1.0, "reduced": false}, {})
+				var s_rail := _is_rail(ps)
+				var s_ok := bool(ps["fits"]) and (not s_rail or want_rail)
+				if s_rail:
+					var hh: int = 0
+					for tb in ps["tabs"]:
+						if UiSettings.hit(ps, (tb["rect"] as Rect2).get_center()).get("part", "") != "tab" or (tb["rect"] as Rect2).size.y < float(ps["tm"]) - 0.01:
+							s_ok = false
+						hh += 1
+					var heads: int = 0
+					for r in UiSettings.rows():
+						if r["kind"] == UiSettings.HEADING:
+							heads += 1
+					s_ok = s_ok and hh == heads and (ps["footer"] as Rect2).size.y > 0.0 and (ps["help_card"] as Rect2).encloses(ps["footer"]) and int(ps["bad"]) == 0
+				_ok(s_ok, "%s Settings: fits, a tab for every section, every control inside the panel, the help inside its card (%s)" % [tag, "rail" if s_rail else "card"])
+	# The Rail's pause plan: Resume is the lit row, the lit bar sits on it, the focus moves it, a held screen has no animation left.
+	var lay1 := UiLayout.new()
+	lay1.compute(Vector2(1280, 720), false)
+	var pa: Dictionary = UiPause.plan(Vector2(1280, 720), lay1.s, 1.0, false, {"focus": 0, "device": "kbd", "style": "neutral", "since": 1.0, "prev": -1, "bar_since": 1.0, "reduced": false})
+	var pb: Dictionary = UiPause.plan(Vector2(1280, 720), lay1.s, 1.0, false, {"focus": 2, "device": "kbd", "style": "neutral", "since": 1.0, "prev": 0, "bar_since": 0.07, "reduced": false})
+	var pc: Dictionary = UiPause.plan(Vector2(1280, 720), lay1.s, 1.0, false, {"focus": 2, "device": "kbd", "style": "neutral", "since": 1.0, "prev": 0, "bar_since": 0.07, "reduced": true})
+	var ya: float = float((pa["row_ys"] as Array)[0])
+	var y2: float = float((pa["row_ys"] as Array)[2])
+	_ok(_is_rail(pa) and is_equal_approx(float(pa["bar_y"]), ya) and float(pb["bar_y"]) > ya and float(pb["bar_y"]) < y2 and is_equal_approx(float(pc["bar_y"]), y2) and float(pa["slide"]) == 1.0, "menus rail: the lit bar is on the focused row, slides between rows (140 ms) and cuts under Reduce motion")
+	var po: Dictionary = UiPause.plan(Vector2(1280, 720), lay1.s, 1.0, false, {"focus": 0, "device": "kbd", "style": "neutral", "since": 0.0, "prev": -1, "bar_since": 99.0, "reduced": false})
+	_ok(float(po["slide"]) < 0.01 and UiPause.sig(po) != UiPause.sig(pa) and UiPause.sig(pb) != UiPause.sig(pa), "menus rail: a sliding rail and a sliding bar change the redraw key, so the layer repaints each step")
+	_ok(UiPause.sig(UiPause.plan(Vector2(1280, 720), lay1.s, 1.0, false, {"focus": 0, "device": "pad", "style": "neutral", "since": 1.0, "prev": -1, "bar_since": 1.0, "reduced": false})) != UiPause.sig(pa), "menus rail: a change of device repaints the hints")
+	# The start menu's lit row and buttons.
+	var cfgm := {"players": 1, "p1": "kb", "p2": "pad", "ai_level": "medium", "intros": true, "reduce_flashing": true, "shake": true, "captions": true, "guide": true}
+	var ma: Dictionary = UiMenu.plan(Vector2(1280, 720), lay1.s, 1.0, false, {"focus": 0, "cfg": cfgm, "not_now": true, "device": "kbd", "style": "neutral", "since": 1.0, "prev": -1, "bar_since": 1.0, "reduced": false})
+	var rows_n: int = (ma["rail_ids"] as Array).size()
+	var mb: Dictionary = UiMenu.plan(Vector2(1280, 720), lay1.s, 1.0, false, {"focus": rows_n, "cfg": cfgm, "not_now": true, "device": "kbd", "style": "neutral", "since": 1.0, "prev": -1, "bar_since": 1.0, "reduced": false})
+	_ok(_is_rail(ma) and bool(ma["bar_vis"]) and is_equal_approx(float(ma["bar_y"]), float((ma["row_ys"] as Array)[0])) and not bool(mb["bar_vis"]) and str((mb["rows"] as Array)[rows_n]) == "start", "menus rail: the start menu's lit row is the first choice; on a button the bar steps aside and the button gets its own ring")
+	var words: Array = []
+	for it3 in ma["items"]:
+		if str(it3["kind"]) == "button":
+			words.append(str(it3["label"]))
+	_ok(words.has(UiData.t("prompt.menu_start")) and words.has(UiData.t("prompt.menu_not_now")) and UiData.t("prompt.menu_start") == "I understand, start" and UiData.t("prompt.menu_not_now") == "Not now", "menus rail: the buttons say 'I understand, start' and 'Not now', as Legal wrote them")
+	# In the HUD.
+	UiPrefs.path = "user://ui_prefs_test_rail.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	var hud := UiHud.new()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.model(0).ai = false
+	hud.hub.model(1).ai = true
+	var run := func(n: int, dt: float = 1.0 / 60.0) -> void:
+		for i in range(n):
+			hud.advance(dt)
+			await process_frame
+	await run.call(10)
+	hud.show_pause_menu()
+	var opened: Dictionary = hud.pause_menu_plan()
+	await run.call(30)
+	var settled: Dictionary = hud.pause_menu_plan()
+	hud.pause_menu_action("down")
+	var moved1: Dictionary = hud.pause_menu_plan()
+	await run.call(3)
+	var moving: Dictionary = hud.pause_menu_plan()
+	await run.call(30)
+	var rest: Dictionary = hud.pause_menu_plan()
+	var ys: Array = rest["row_ys"]
+	_ok(_is_rail(opened) and float(opened["slide"]) < 0.2 and float(settled["slide"]) == 1.0, "menus rail (hud): the pause rail slides in and then holds still")
+	_ok(float(moved1["bar_y"]) < float(ys[1]) and float(moving["bar_y"]) > float(moved1["bar_y"]) - 0.01 and float(moving["bar_y"]) < float(ys[1]) + 0.01 and is_equal_approx(float(rest["bar_y"]), float(ys[1])), "menus rail (hud): moving the focus down slides the lit bar one row and it comes to rest on it")
+	_rail_btn(hud, JOY_BUTTON_DPAD_DOWN)
+	var padded: Dictionary = hud.pause_menu_plan()
+	_ok(str(padded["device"]) == "pad" and hud.pause_menu_focus() == 2, "menus rail (hud): the D-pad moves the lit row and the hints switch to the pad's buttons")
+	hud._pm_close("test")
+	hud.set_option("reduced_motion", true)
+	hud.show_pause_menu()
+	var red0: Dictionary = hud.pause_menu_plan()
+	hud.pause_menu_action("down")
+	var red1: Dictionary = hud.pause_menu_plan()
+	_ok(float(red0["slide"]) == 1.0 and is_equal_approx(float(red1["bar_y"]), float((red1["row_ys"] as Array)[1])), "menus rail (hud): with Reduce motion on the rail is in place at once and the bar jumps")
+	hud._pm_close("test")
+	hud.set_option("reduced_motion", false)
+	# Settings: tabs by LB and RB or Q and E; a click on a tab; the first row of the section is focused and its heading is at the top.
+	hud.show_settings()
+	await run.call(30)
+	var s0: Dictionary = hud.settings_plan()
+	var tabs: Array = s0["tabs"]
+	_rail_btn(hud, JOY_BUTTON_RIGHT_SHOULDER)
+	var s1: Dictionary = hud.settings_plan()
+	var f1: int = hud.settings_focus()
+	var heading1: int = int(tabs[1]["idx"])
+	_ok(tabs.size() >= 5 and int(s0["tab_active"]) == 0 and int(s1["tab_active"]) == 1 and f1 > heading1 and is_equal_approx(float(s1["scroll"]), clampf(float((s1["rows"][heading1] as Dictionary)["y"]), 0.0, float(s1["max_scroll"]))), "menus rail (hud): RB goes to the next tab, focusing its first row and bringing the section to the top")
+	_rail_key(hud, KEY_E)
+	var s2: Dictionary = hud.settings_plan()
+	_rail_key(hud, KEY_Q)
+	var s2b: Dictionary = hud.settings_plan()
+	_rail_key(hud, KEY_Q)
+	_rail_key(hud, KEY_Q)
+	var s3: Dictionary = hud.settings_plan()
+	_ok(int(s2["tab_active"]) == 2 and int(s2b["tab_active"]) == 1 and int(s3["tab_active"]) == tabs.size() - 1, "menus rail (hud): E goes on, Q goes back, and the tabs wrap round (%d, %d, %d)" % [int(s2["tab_active"]), int(s2b["tab_active"]), int(s3["tab_active"])])
+	var tab3: Rect2 = (hud.settings_plan()["tabs"][3]["rect"] as Rect2)
+	hud._settings_press(tab3.get_center())
+	_ok(int(hud.settings_plan()["tab_active"]) == 3, "menus rail (hud): a click on a tab opens that section")
+	# With the rail off, Q and E do nothing, and LB and RB page through the rows as before.
+	hud.hide_settings()
+	UiData.set_feature("menus_rail", false)
+	hud.show_settings()
+	var off_focus: int = hud.settings_focus()
+	_rail_key(hud, KEY_E)
+	var q_off: bool = hud.settings_focus() == off_focus
+	_rail_btn(hud, JOY_BUTTON_RIGHT_SHOULDER)
+	_ok(q_off and hud.settings_focus() != off_focus and not _is_rail(hud.settings_plan()), "menus rail (hud): with the switch off Q and E do nothing and RB pages down as before")
+	hud.hide_settings()
+	UiData.set_feature("menus_rail", true)
+	# The start menu in the HUD: down moves through the choices to the buttons; Legal's text is the plan's.
+	hud.show_start_menu(false)
+	await run.call(30)
+	var h0: Dictionary = hud.menu_plan()
+	hud.menu_action("down")
+	var h1: Dictionary = hud.menu_plan()
+	for i in range(12):
+		hud.menu_action("down")
+	var hend: Dictionary = hud.menu_plan()
+	_ok(_is_rail(h0) and int(h1["focus"]) == 1 and str((hend["rows"] as Array)[int(hend["focus"])]) in ["start", "not_now"] and not bool(hend["bar_vis"]), "menus rail (hud): down walks the choices to the buttons")
+	hud.menu_action("up")
+	hud.menu_action("up")
+	_ok(true, "menus rail (hud): the start menu answers up and down")
+	hud.hide_photo_notice(false)
+	hud.queue_free()
+	UiData.set_feature("menus_rail", null)

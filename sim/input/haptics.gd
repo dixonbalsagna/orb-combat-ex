@@ -161,6 +161,27 @@ const DEFAULTS: Dictionary = {
 		"handheld": [{"at": 0, "ms": 40}],
 		"gapMs": 300,
 	},
+	# A charge lost (docs/controls/charge-lost.md; switches.chargeLostCue). Low and chunky, no brighter than a thud (Orb), and none a flash of anything: the charger's pad only.
+	# The foe's blow took it: the thud of being hit, cut short, then two dying echoes (a held breath let out). `overrides`: it plays even inside the slot-wide gap of the hit_taken that came with it, and replaces it.
+	"charge_broken": {
+		"pad": [{"at": 0, "weak": 0.15, "strong": 0.9, "ms": 45}, {"at": 75, "weak": 0.0, "strong": 0.5, "ms": 30}, {"at": 125, "weak": 0.0, "strong": 0.25, "ms": 30}],
+		"handheld": [{"at": 0, "ms": 40}, {"at": 75, "ms": 20}, {"at": 125, "ms": 12}],
+		"gapMs": 300,
+		"overrides": true,
+	},
+	# Lost with nobody's blow on it, to a stagger or the brawl's end: no punch, a slow sag on the low motor.
+	"charge_lapsed": {
+		"pad": [{"at": 0, "weak": 0.0, "strong": 0.4, "ms": 60}, {"at": 80, "weak": 0.0, "strong": 0.2, "ms": 60}],
+		"handheld": [{"at": 0, "ms": 30}, {"at": 80, "ms": 25}],
+		"gapMs": 300,
+		"overrides": true,
+	},
+	# A right-stick hold let go of before its first stage: one faint low tap, the least thing the pad says.
+	"hold_short": {
+		"pad": [{"at": 0, "weak": 0.0, "strong": 0.2, "ms": 25}],
+		"handheld": [{"at": 0, "ms": 14}],
+		"gapMs": 400,
+	},
 }
 const MIN_GAP_MS: int = 80
 const PAD_MIN_MS: int = 20
@@ -249,6 +270,9 @@ const REFUSALS: Dictionary = {
 	"chord": {"word": "One at a time", "owner": "controls", "what": "two attack buttons on one tick: the bigger went, the smaller was let go of (switches.chordPick)"},
 	"charging": {"word": "Charging", "owner": "controls", "what": "a right-stick push while RT is held: the charge owns the stick, the strike stick is inert (strike.inertMasks; switches.inertKnock)"},
 	"warding": {"word": "Warding", "owner": "controls", "what": "a right-stick push while LB and RB are both held: the strike stick is inert (strike.inertMasks; switches.inertKnock)"},
+	"charge_broken": {"word": "Charge broken", "owner": "controls", "what": "a heavy's charge, a stick strike's or a beam hold's was taken by the foe's blow (switches.chargeLostCue)"},
+	"charge_lapsed": {"word": "Charge lost", "owner": "controls", "what": "a heavy's charge was lost to a stagger or the brawl's end, with no blow of the foe's on it (switches.chargeLostCue)"},
+	"hold_short": {"word": "Hold longer", "owner": "controls", "what": "a right-stick hold was let go of before its first stage, after strike.shortHoldTicks (switches.chargeLostCue)"},
 	"queue_full": {"word": "Queue full", "owner": "encounter", "what": "three blows already waiting and the cooldown holds them: one knock a burst (refusal-reasons)"},
 	"stun_limit": {"word": "One a string", "owner": "encounter", "what": "a stick stun held back by the one-a-string rule"},
 	"queue_expired": {"word": "Too slow", "owner": "encounter", "what": "the director's attack queue ran out before it could start the blow"},
@@ -298,6 +322,8 @@ static func event_requests(e) -> Array:
 		return stage_event_requests(e)
 	if String(e.type) == "cue" and String(e.kind) == "stick_full_send":
 		return full_send_requests(e)
+	if String(e.type) == "cue" and String(e.kind) == "windup":
+		return charge_lost_requests(e)
 	if not SimInputData.haptic_impact_on():
 		return []
 	match String(e.type):
@@ -329,6 +355,22 @@ static func event_requests(e) -> Array:
 		"building_fall":
 			var sc: float = clampf(float(e.depth) / BUILDING_H_REF, 0.3, 1.0)
 			return [{"slot": 0, "kind": "building_break", "scale": sc}, {"slot": 1, "kind": "building_break", "scale": sc}]
+	return []
+
+
+## A heavy's wind-up or charge that did not get thrown (the director's `windup` cue, text "end", source "b" for the big blow; k 2 stopped by a blow, 3 lost to a stagger or the brawl's end; 1 thrown and 4 a miss are the
+## player's own and say nothing here): the charger's pad gets charge_broken (the foe's blow took it) or charge_lapsed (nobody's). Needs switches.chargeLostCue; reads the cue and nothing else.
+static func charge_lost_requests(e) -> Array:
+	if not SimInputData.charge_lost_cue_on() or String(e.text) != "end" or String(e.source) != "b":
+		return []
+	var slot: int = int(e.actor)
+	if slot < 0 or slot > 1:
+		return []
+	match int(e.k):
+		2:
+			return [{"slot": slot, "kind": "charge_broken", "scale": 1.0, "reason": "charge_broken"}]
+		3:
+			return [{"slot": slot, "kind": "charge_lapsed", "scale": 1.0, "reason": "charge_lapsed"}]
 	return []
 
 
@@ -377,6 +419,12 @@ static func stage_event_requests(e) -> Array:
 ## The kinds this knows.
 static func kinds() -> Array:
 	return DEFAULTS.keys()
+
+
+## True for a kind that plays even inside the slot-wide gap (it replaces what was just playing): a lost charge arrives on the tick of the blow that took it, and the blow's own thud (hit_taken, 80 ms gap) must not
+## shut it out. Its own gapMs still holds, so it can never buzz twice in a row.
+static func overrides_slot_gap(kind: String) -> bool:
+	return DEFAULTS.has(kind) and bool(DEFAULTS[kind].get("overrides", false))
 
 
 ## The minimum gap between two requests for one slot, in milliseconds.
@@ -457,7 +505,7 @@ static func allow(last_ms: int, now_ms: int, gap_ms: int = -1) -> bool:
 ## A keyboard, a slot nobody holds, an unknown kind, the option off, nothing left in the steps, a request too soon after the last or too
 ## soon after the last of its own kind: {}.
 static func plan(kind: String, target: Dictionary, enabled: bool, last_ms: int, now_ms: int, scale: float = 1.0, last_kind_ms: int = -1000000) -> Dictionary:
-	if not enabled or not DEFAULTS.has(kind) or not allow(last_ms, now_ms) or not allow(last_kind_ms, now_ms, kind_gap_ms(kind)):
+	if not enabled or not DEFAULTS.has(kind) or not allow(last_ms, now_ms, 0 if overrides_slot_gap(kind) else -1) or not allow(last_kind_ms, now_ms, kind_gap_ms(kind)):
 		return {}
 	match str(target.get("kind", "none")):
 		"pad":
@@ -503,6 +551,8 @@ static func requests(name: String, actor: int, target: int, text: String, amount
 	match name:
 		"stick_refused":
 			# Encounter's cue when it drops a stick request it cannot start (busy, stunned, in a struggle): actor = the presser. The truth, told as soon as the director knows.
+			if SimInputData.charge_lost_cue_on() and (source == "hit" or source == "taken") and actor >= 0 and actor <= 1:
+				return [{"slot": actor, "kind": "charge_broken", "scale": 1.0, "reason": "charge_broken"}]   # a stick charge or a beam hold the blow of the foe took: the lost charge, which plays over the blow thud
 			if not SimInputData.haptic_refused_on() or actor < 0 or actor > 1:
 				return []
 			if source == "hit" and SimInputData.haptic_impact_on():

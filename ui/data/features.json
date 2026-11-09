@@ -45,6 +45,7 @@
     "answer_alert": false,
     "alert_vfx": false,
     "alert_audio": false,
-    "alert_rumble": false
+    "alert_rumble": false,
+    "menus_rail": false
   }
 }

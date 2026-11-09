@@ -349,7 +349,7 @@ static func launched(S: SimState, tgt) -> void:
 				break
 	if n < 0:
 		return
-	var held: int = SimFx.stopTicks(SimClock.left(S), S.hitstopOn)   # the stop still to run: the flight starts after it (whole with hit-stop by weight on)
+	var held: int = SimFx.stopTicks(SimClock.left(S), S.hs != null)   # the stop still to run: the flight starts after it (whole with the freeze budget's window: hit-stop by weight, or the budget on any table)
 	e.n = S.tick + held + n
 	e.dur = float(n)
 	e.x = lx

@@ -51,7 +51,7 @@ func _step(S: SimState, inputs) -> void:
 		return
 	if S.dirS.stop > 0.0:
 		S.dirS.stop -= dtReal
-		if S.hitstopOn:
+		if S.hs != null:
 			SimHitstop.frozen(S)
 		if S.epoch != null:
 			WorldEpoch.tick(S, false)
@@ -62,7 +62,7 @@ func _step(S: SimState, inputs) -> void:
 	live = true
 	if S.epoch != null:
 		WorldEpoch.tick(S, DirCalm.hold(S))
-	if S.hitstopOn:
+	if S.hs != null:
 		SimHitstop.live(S)
 	SimPause.liveTick(S)
 	if S.game.ko != null:

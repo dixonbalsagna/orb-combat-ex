@@ -24,7 +24,7 @@ extends SceneTree
 ##   - a saved match (NetLan.save, with the scripted hit-stops off so the inputs are the whole match): both PCs' files play back through SimReplay.play,
 ##     every checkpoint and the final hash matching, the two PCs' replays the same, in 1v1 (lan, p120), 2v2 together (p120) and together with the second PC
 ##     gone (its seat's toggle on the sim's slot, p3's);
-##   - NetLan's own setups (SETUP, SETUP2, SETUP2X: the folder's 1v1, 2v2 apart and together) start both PCs with the energy model on and the page's travel of 1.5,
+##   - NetLan's own setups (SETUP, SETUP2, SETUP2X: the folder's 1v1, 2v2 apart and together) start both PCs with the energy model on, the dash and its slip's brake, and the page's travel of 1.5,
 ##     and a short match on each stays in step;
 ##   - CD-10 (the audit's F-10), a hostile second PC: a hello asking for an input wait of 100,000 ticks fails the handshake (no session, the title says why); one
 ##     packet handing slot 200 to the AI is dropped whole and the match goes on in step; a flood of far-ahead inputs is dropped and the first PC's inputs stay
@@ -402,6 +402,11 @@ func _init() -> void:
 		var bp: Array = _setupPower(bare)
 		print("control, a LAN setup without its power word: the model on %s, travel %.2f" % [str(bp[0]), bp[1]])
 		ok(not bp[0], "a LAN setup without its power word must be caught with the model off")
+		var noSlip: Dictionary = NetLan.SETUP.duplicate(true)
+		noSlip["slip"] = false
+		var sp: Array = _setupPower(noSlip)
+		print("control, a LAN setup with its slip word off: the model, dash and slip on %s" % str(sp[0]))
+		ok(not sp[0], "a LAN setup with the slip's brake off must be caught")
 		var saveTo: String = OS.get_user_data_dir().path_join("lan_check_saved")
 		DirAccess.make_dir_recursive_absolute(saveTo)
 		var keepN: int = ticks
@@ -577,8 +582,8 @@ func _init() -> void:
 	for nm in ["SETUP", "SETUP2", "SETUP2X"]:
 		var su: Dictionary = {"SETUP": NetLan.SETUP, "SETUP2": NetLan.SETUP2, "SETUP2X": NetLan.SETUP2X}[nm]
 		var pr: Array = _setupPower(su)
-		ok(pr[0] and is_equal_approx(pr[1], 1.5) and pr[2], "NetLan.%s: both PCs start with the energy model on and travel 1.5, and 300 ticks stay in step (on %s, travel %.2f, in step %s)" % [nm, str(pr[0]), pr[1], str(pr[2])])
-		print("  NetLan.%s: the energy model on %s, travel %.2f, 300 ticks in step %s" % [nm, str(pr[0]), pr[1], str(pr[2])])
+		ok(pr[0] and is_equal_approx(pr[1], 1.5) and pr[2], "NetLan.%s: both PCs start with the energy model, the dash and the slip's brake on and travel 1.5, and 300 ticks stay in step (on %s, travel %.2f, in step %s)" % [nm, str(pr[0]), pr[1], str(pr[2])])
+		print("  NetLan.%s: the energy model, dash and slip on %s, travel %.2f, 300 ticks in step %s" % [nm, str(pr[0]), pr[1], str(pr[2])])
 	var keep: int = ticks
 	ticks = 240
 	var hd := _run("lan", true, true, 0, false, true, true, -1, true, [], false, false, -1, 0, {"hostile": "delay"})
@@ -657,6 +662,7 @@ func _setupPower(su: Dictionary) -> Array:
 		var S: SimState = SimCore.createSim()
 		SimCore.newMatch(S, NetLan.SEED, ai, su)
 		on = on and S.powerOn and (S.get("dashOn") == null or bool(S.get("dashOn")))   # the dash too, once the sim has it (Simulation's power-dash)
+		on = on and S.get("slipOn") == true   # and the slip's brake (Simulation's dash-slip; the setup's "slip"): this row needs it
 		trav = S.powerTravel
 		for t in range(300):
 			SimCore.step(S, null)

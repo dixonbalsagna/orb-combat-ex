@@ -433,7 +433,8 @@
             "enabled": {"type": "boolean"},
             "easeBh": {"type": "number", "minimum": 0},
             "easeK": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
-            "floorUnits": {"type": "number", "minimum": 0}
+            "floorUnits": {"type": "number", "minimum": 0},
+            "slipHoldTicks": {"type": "integer", "minimum": 0, "maximum": 120}
           }
         },
         "engageBh": {

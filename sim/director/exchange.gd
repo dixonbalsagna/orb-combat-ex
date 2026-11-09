@@ -1228,9 +1228,9 @@ static func _opFinalBlow(S: SimState, ex, a) -> void:
 	if S.game.ko != null:
 		return
 	var fo = a.o
-	if S.hitstopOn:
+	if S.hitstopOn or S.hsAny:
 		fo = (a.o as Dictionary).duplicate() if a.o is Dictionary else {}
-		DirMelee.weigh(S, fo, "decisive")   # hit-stop by weight: the finisher's last blow is decisive
+		DirMelee.weigh(S, fo, "decisive")   # hit-stop by weight: the finisher's last blow is decisive (and the budget on any table never cuts it)
 	DirMelee.strike(S, ex, W, L, float(a.dmg), fo)
 	var ln: Dictionary = a.launch
 	if ln.get("mode", "") == "fixed":

@@ -53,6 +53,7 @@
     "dashHandover": false,
     "flickKept": false,
     "inertKnock": false,
+    "chargeLostCue": false,
     "bNoBeam": false,
     "bNoBeamKeepRt": false,
     "stallKeep": true,
@@ -88,7 +89,8 @@
     "style": "hold",
     "mirror": "auto",
     "freeR3": true,
-    "inertMasks": [3, 4]
+    "inertMasks": [3, 4],
+    "shortHoldTicks": 6
   },
   "leftHand": {
     "_note": "The left hand's reads while switches.rightStick is on: LB and a left flick is a brace, LB and LT within vanishWindow ticks (either order) and a direction is the vanish (sends escape).",

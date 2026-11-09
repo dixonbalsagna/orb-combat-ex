@@ -61,9 +61,57 @@ static func arriveOn() -> bool:
 	return on() and bool(data().get("arrive", {}).get("enabled", false))
 
 
+## The slip (power.json dash.slip, Simulation's; only with it on): a dash let go before its underTicks eases to the slip's speed
+## (SimPower.slipping), then free flight takes him on. Its carry eases into striking distance too, never through it: the brake's
+## ticks, and after them any speed above his own flight's top (the plain flight a stick gives him, a diagonal's included). Plain
+## flight is never faster than that, so it is untouched.
+static var blindSlip: bool = false   # tests only: the slip's carry left unread
+## The slip's hold (arrive.slipHoldTicks): one slot after DirPace's on f.act.dirI, the dash's press tick plus 1, written only with
+## the slip on.
+const AH_PRESS: int = 0
+const AH_N: int = 1
+
+
+static func _hb() -> int:
+	return DirPace._b() + DirPace.PC_N
+
+
+static func _hg(f) -> int:
+	var i: int = _hb() + AH_PRESS
+	return f.act.dirI[i] if i < f.act.dirI.size() else 0
+
+
+static func _hs(f, v: int) -> void:
+	DirPlane._size(f)
+	if f.act.dirI.size() < _hb() + AH_N:
+		f.act.dirI.resize(_hb() + AH_N)
+	f.act.dirI[_hb() + AH_PRESS] = v
+
+
+## With the slip on: notes the dash's press (its first held tick: SimPower.slip has counted it as 1), and says the hold is on (the
+## press was less than slipHoldTicks ago).
+static func slipHold(S: SimState, f) -> bool:
+	if not S.slipOn or blindSlip:
+		return false
+	if f.input.dash and f.dashT == 1:
+		_hs(f, S.tick + 1)
+	var at: int = _hg(f) - 1
+	return at >= 0 and S.tick - at < int(data().arrive.get("slipHoldTicks", 0))
+
+
+static func slipCarry(S: SimState, f) -> bool:
+	if not S.slipOn or blindSlip:
+		return false
+	var own: float = SimFighter.flightSpeed(S, f, false) * maxf(1.0, SimDetMath.hypot(f.input.mx, 0.85 * f.input.my))
+	return SimPower.slipping(f) or SimDetMath.hypot(f.vx, f.vy) > own + 1.0
+
+
 static func arrive(S: SimState, f, dt: float) -> void:
-	if not arriveOn() or f.state != "free" or f.rush != null or f.input == null or not f.input.dash or dt <= 0.0:
+	if not arriveOn() or f.state != "free" or f.rush != null or f.input == null or dt <= 0.0:
 		return
+	var hold: bool = slipHold(S, f)   # (it notes the press, so it is asked first)
+	if not f.input.dash and not hold and not slipCarry(S, f):
+		return   # neither the dash held nor its slip's carry: his own flight
 	var o = DirBrawl.rivalOf(S, f)
 	if o == null or o == f:
 		return

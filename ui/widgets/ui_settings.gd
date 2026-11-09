@@ -197,6 +197,10 @@ static func slider_at(row: Dictionary, track: Rect2, x: float):
 ## buttons under the foot), and capture (a row waiting for a control) with capture_word. A row is {idx, kind, key, label_lines, label_x, label_y, rect,
 ## ctl: {part: Rect2}, word, frac, enabled, visible, y (in the content), h}.
 static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary, opts: Dictionary) -> Dictionary:
+	if not st.has("rows") and not st.has("_rail") and UiRail.usable(vp, touch):
+		var rp: Dictionary = rail_plan(vp, s, dp, st, opts)
+		if bool(rp["fits"]):
+			return rp   # the Rail (docs/ui/menus-rail.md); where it does not fit, the card below is laid out as before
 	var d: Dictionary = data()
 	var rws: Array = st["rows"] if st.has("rows") else rows()
 	var tm: float = maxf(48.0 * dp, 44.0)
@@ -257,6 +261,19 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary, 
 		cx += bw0 + gap
 	var body_top: float = inner.position.y + header_h + gap
 	var body := Rect2(inner.position.x, body_top, inner.size.x, footer.position.y - gap - body_top)
+	var rl: Dictionary = st.get("_rail", {})   # the Rail's own rectangles (rail_plan): the rows go in its panel and the help in its card, the rest of this function is the same
+	if not rl.is_empty():
+		card = rl["panel"]
+		inner = rl["body"]
+		body = rl["body"]
+		close = rl["close"]
+		footer = rl["footer"]
+		help_lines = int(rl["help_lines"])
+		foot_lines = help_lines
+		hint_lines = PackedStringArray()
+		hint_text = ""
+		conf_rects = []
+		fits = true
 	var sbw: float = maxf(6.0 * cs, 4.0)
 	var row_w: float = body.size.x - sbw - 4.0
 	# Narrow cards put the control on its own line under the label; so do cards whose control column cannot hold a slider.
@@ -416,6 +433,9 @@ static func scroll_to(p: Dictionary, idx: int, scroll: float) -> float:
 static func hit(p: Dictionary, pos: Vector2) -> Dictionary:
 	if (p["close"] as Rect2).has_point(pos):
 		return {"row": -1, "part": "close"}
+	for tb in p.get("tabs", []):
+		if (tb["rect"] as Rect2).has_point(pos):
+			return {"row": int(tb["idx"]), "part": "tab"}   # the Rail's tabs: the row is the section's heading
 	var cb: Array = p.get("confirm", [])
 	for k in range(cb.size()):
 		if (cb[k] as Rect2).has_point(pos):
@@ -441,6 +461,8 @@ static func sig(p: Dictionary, opts: Dictionary, touch: bool) -> Array:
 	var vals: Array = []
 	for rec in p["rows"]:
 		vals.append(rec["word"])
+	if p.has("rail"):
+		return ["rail", int((p["card"] as Rect2).size.x), int((p["card"] as Rect2).size.y), int(float(p["cs"]) * 100.0), int(p["focus"]), int(p["scroll"]), vals, p["status"], int(p["tab_active"]), p["device"], p["style"], int(p["help_scroll"]), int(p["help_lines"]), int(float(p["slide"]) * 40.0)]
 	return [int((p["card"] as Rect2).size.x), int((p["card"] as Rect2).size.y), int(p["cs"] * 100.0), touch, int(p["focus"]), int(p["scroll"]), vals, p["status"], p["confirm_labels"], str(p["title"]), str(p["hint"]), int(p["help_scroll"]), int(p["help_lines"])]
 
 
@@ -451,31 +473,74 @@ static func _inside(body: Rect2, r: Rect2) -> bool:
 
 
 static func draw(ci: CanvasItem, p: Dictionary, opts: Dictionary) -> void:
+	if p.has("rail"):
+		draw_rail(ci, p, opts)
+		return
 	var vp: Vector2 = ci.size if ci is Control else Vector2(1920, 1080)
 	var ink := Color(UiLook.col(UiLook.INK))
 	var dim := Color(UiLook.col(UiLook.INK_DIM))
-	var dark := Color(UiLook.col(UiLook.INK_DARK))
 	var edge := Color(UiLook.col(UiLook.EDGE), 0.55)
 	var scrim := Color(UiLook.col(UiLook.SCRIM))
 	var card: Rect2 = p["card"]
-	var body: Rect2 = p["body"]
-	var tm: float = p["tm"]
 	var cs: float = p["cs"]
 	var fs_body: int = p["fs_body"]
 	var fs_small: int = p["fs_small"]
-	var lh: float = p["lh"]
-	var w: float = maxf(2.0, tm * 0.04)
 	UiText.no_outline = true
 	ci.draw_rect(Rect2(Vector2.ZERO, vp), Color(0.02, 0.03, 0.06, 0.78))
 	UiIcons.rrect(ci, card, 18.0 * cs, Color(scrim, 0.97), edge, 2.0)
 	# The header: the title and the close cross.
 	UiText.draw(ci, str(p["title"]), p["title_pos"], int(p["fs_title"]), ink, -1)
-	var close: Rect2 = p["close"]
+	_draw_close(ci, p["close"], ink, scrim, edge)
+	_draw_rows(ci, p, opts, Vector2.ZERO)
+	# The foot: the focused row's help (scrolled by whole lines when it is longer than the foot, with a thin bar at the right), then the keys.
+	var foot: Rect2 = p["footer"]
+	var fy: float = foot.position.y + UiText.ascent(fs_small)
+	var hw: Dictionary = help_wrap(p)
+	var hl: PackedStringArray = hw["lines"]
+	var nl: int = int(p["help_lines"])
+	var h0: int = clampi(int(p["help_scroll"]), 0, int(hw["max"]))
+	for k in range(nl):
+		if h0 + k < hl.size():
+			UiText.draw(ci, hl[h0 + k], Vector2(foot.position.x, fy), fs_small, ink, -1)
+		fy += float(p["lh_small"])
+	if int(hw["max"]) > 0:
+		var hb := Rect2(foot.end.x - float(p["sbw"]), foot.position.y, float(p["sbw"]), float(nl) * float(p["lh_small"]))
+		ci.draw_rect(hb, Color(edge, 0.18))
+		var hth: float = hb.size.y * float(nl) / float(hl.size())
+		ci.draw_rect(Rect2(hb.position.x, hb.position.y + (hb.size.y - hth) * float(h0) / float(hw["max"]), hb.size.x, hth), Color(ink, 0.6))
+	for hln in p["hint_lines"]:
+		UiText.draw(ci, str(hln), Vector2(foot.position.x, fy), fs_small, dim, -1)
+		fy += float(p["lh_small"])
+	var cl: Array = p["confirm_labels"]
+	for k in range(cl.size()):
+		var cr3: Rect2 = p["confirm"][k]
+		UiIcons.rrect(ci, cr3, cr3.size.y * 0.3, Color(ink, 0.92) if k == 0 else Color(scrim, 0.8), Color(UiLook.col(UiLook.EDGE), 0.7), 1.8)
+		UiText.draw(ci, str(cl[k]), Vector2(cr3.get_center().x, cr3.get_center().y + float(fs_body) * 0.35), fs_body, Color(UiLook.col(UiLook.INK_DARK)) if k == 0 else ink, 0)
+	UiText.no_outline = false
+
+
+static func _draw_close(ci: CanvasItem, close: Rect2, ink: Color, scrim: Color, edge: Color) -> void:
 	UiIcons.rrect(ci, close, close.size.y * 0.25, Color(scrim, 0.8), edge, 1.6)
 	var cc: Vector2 = close.get_center()
 	var cr: float = close.size.x * 0.22
 	UiIcons.line(ci, cc + Vector2(-cr, -cr), cc + Vector2(cr, cr), maxf(2.0, close.size.x * 0.06), ink)
 	UiIcons.line(ci, cc + Vector2(-cr, cr), cc + Vector2(cr, -cr), maxf(2.0, close.size.x * 0.06), ink)
+
+
+## The rows and the scrollbar, `shift` pixels from their place (the Rail slides its panel in).
+static func _draw_rows(ci: CanvasItem, p: Dictionary, opts: Dictionary, shift: Vector2) -> void:
+	var ink := Color(UiLook.col(UiLook.INK))
+	var dim := Color(UiLook.col(UiLook.INK_DIM))
+	var dark := Color(UiLook.col(UiLook.INK_DARK))
+	var edge := Color(UiLook.col(UiLook.EDGE), 0.55)
+	var scrim := Color(UiLook.col(UiLook.SCRIM))
+	var body: Rect2 = p["body"]
+	var tm: float = p["tm"]
+	var cs: float = p["cs"]
+	var fs_body: int = p["fs_body"]
+	var lh: float = p["lh"]
+	var w: float = maxf(2.0, tm * 0.04)
+	ci.draw_set_transform(shift, 0.0, Vector2.ONE)
 	# The rows: an element is drawn when it is inside the body, so nothing spills over the header or the foot.
 	var focus: int = int(p["focus"])
 	for rec in p["rows"]:
@@ -514,31 +579,7 @@ static func draw(ci: CanvasItem, p: Dictionary, opts: Dictionary) -> void:
 		var th: float = maxf(sb.size.y * frac, tm * 0.5)
 		var ty: float = sb.position.y + (sb.size.y - th) * (float(p["scroll"]) / float(p["max_scroll"]))
 		ci.draw_rect(Rect2(sb.position.x, ty, sb.size.x, th), Color(ink, 0.6))
-	# The foot: the focused row's help (scrolled by whole lines when it is longer than the foot, with a thin bar at the right), then the keys.
-	var foot: Rect2 = p["footer"]
-	var fy: float = foot.position.y + UiText.ascent(fs_small)
-	var hw: Dictionary = help_wrap(p)
-	var hl: PackedStringArray = hw["lines"]
-	var nl: int = int(p["help_lines"])
-	var h0: int = clampi(int(p["help_scroll"]), 0, int(hw["max"]))
-	for k in range(nl):
-		if h0 + k < hl.size():
-			UiText.draw(ci, hl[h0 + k], Vector2(foot.position.x, fy), fs_small, ink, -1)
-		fy += float(p["lh_small"])
-	if int(hw["max"]) > 0:
-		var hb := Rect2(foot.end.x - float(p["sbw"]), foot.position.y, float(p["sbw"]), float(nl) * float(p["lh_small"]))
-		ci.draw_rect(hb, Color(edge, 0.18))
-		var hth: float = hb.size.y * float(nl) / float(hl.size())
-		ci.draw_rect(Rect2(hb.position.x, hb.position.y + (hb.size.y - hth) * float(h0) / float(hw["max"]), hb.size.x, hth), Color(ink, 0.6))
-	for hln in p["hint_lines"]:
-		UiText.draw(ci, str(hln), Vector2(foot.position.x, fy), fs_small, dim, -1)
-		fy += float(p["lh_small"])
-	var cl: Array = p["confirm_labels"]
-	for k in range(cl.size()):
-		var cr3: Rect2 = p["confirm"][k]
-		UiIcons.rrect(ci, cr3, cr3.size.y * 0.3, Color(ink, 0.92) if k == 0 else Color(scrim, 0.8), Color(UiLook.col(UiLook.EDGE), 0.7), 1.8)
-		UiText.draw(ci, str(cl[k]), Vector2(cr3.get_center().x, cr3.get_center().y + float(fs_body) * 0.35), fs_body, Color(UiLook.col(UiLook.INK_DARK)) if k == 0 else ink, 0)
-	UiText.no_outline = false
+	ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
 static func _btn(ci: CanvasItem, r: Rect2, a: float, ink: Color, edge: Color, scrim: Color, glyph: String, w: float) -> void:
@@ -603,3 +644,184 @@ static func _draw_ctl(ci: CanvasItem, rec: Dictionary, ctl: Dictionary, a: float
 				var gx: float = tp.end.x - tw
 				for sp in rec["specs"]:
 					gx += UiGlyphs.draw_spec(ci, sp, Vector2(gx, tp.get_center().y), gh, a, true) + gh * 0.08
+
+
+# --- The Rail skin (docs/ui/menus-rail.md) ------------------------------------------------------------------------------------
+
+## What a row's default shows as ("" for a heading, a button or a row with no option).
+static func default_word(row: Dictionary) -> String:
+	var o: Dictionary = row.get("o", {})
+	if o.is_empty() or not o.has("default"):
+		return ""
+	var d: Dictionary = data()
+	match row["kind"]:
+		TOGGLE:
+			return str(d.get("on", "On")) if bool(o["default"]) else str(d.get("off", "Off"))
+		SLIDER:
+			return slider_word(o, o["default"])
+		CHOICE:
+			return row_word(row, o["default"])
+	return ""
+
+
+## The Rail's Settings: tabs across the top (one per section; LB and RB, or Q and E, step between them), the rows in a dark panel on the left, the focused row's name, help, current value and default in a card on the right, and the
+## buttons for the player's own device along the bottom. The rows, the focus, the scroll and every control are the same as the old card's (one continuous list; a tab is a jump to its section), so input is unchanged. `st` is as for `plan`
+## plus {style, since, reduced}. The result has every key `plan` returns, "rail": true, and tabs [{label, idx (the section's heading row), rect}], tab_active, bar, help_card and the hint strip. `fits` is false when the tabs, the panel
+## or the card do not fit; `plan` then lays the old card out.
+static func rail_plan(vp: Vector2, s: float, dp: float, st: Dictionary, opts: Dictionary) -> Dictionary:
+	var rws: Array = rows()
+	var m: Dictionary = UiRail.metrics(vp, s, dp)
+	var cs: float = float(m["cs"])
+	var tm: float = float(m["tm"])
+	var gap: float = float(m["gap"])
+	var device: String = str(st.get("device", "kbd"))
+	var style: String = str(st.get("style", "neutral"))
+	var reduced: bool = bool(st.get("reduced", false))
+	var margin: float = maxf(vp.x * 0.035, 20.0)
+	var top: float = maxf(vp.y * 0.04, 16.0)
+	var fs_tab: int = UiText.px(20.0, cs)
+	var fs_kicker: int = int(m["fs_kicker"])
+	var fs_s: int = UiText.px(18.0, cs)   # the same size `plan` wraps the help at
+	var lh_small: float = UiText.height(fs_s) * 1.15
+	var tab_h: float = maxf(44.0 * cs, tm)
+	var bpad: float = maxf(6.0 * cs, 4.0)
+	var tpad: float = maxf(18.0 * cs, 12.0)
+	var gh: float = maxf(24.0 * cs, 20.0)
+	var specs: Array = UiRail.hint_specs(device, "tabs", style)
+	var lw: float = UiGlyphs.width_spec(specs[0], gh)
+	var rwid: float = UiGlyphs.width_spec(specs[1], gh)
+	var bar_h: float = tab_h + bpad * 2.0
+	var x: float = margin + bpad * 2.0 + lw + gap * 2.0
+	var tabs: Array = []
+	for i in range(rws.size()):
+		if rws[i]["kind"] != HEADING:
+			continue
+		var tw: float = UiText.width(str(rws[i]["label"]), fs_tab) + tpad * 2.0
+		tabs.append({"label": str(rws[i]["label"]), "idx": i, "rect": Rect2(x, top + bpad, tw, tab_h)})
+		x += tw + gap
+	var bar := Rect2(margin, top, (x - gap + gap * 2.0 + rwid + bpad * 2.0) - margin, bar_h)
+	var close_sz: float = maxf(tm, 40.0 * cs)
+	var close := Rect2(vp.x - margin - close_sz, top + (bar_h - close_sz) * 0.5, close_sz, close_sz)
+	var fits: bool = not tabs.is_empty() and bar.end.x <= close.position.x - gap * 2.0
+	# The rows' panel and the help card.
+	var top2: float = top + bar_h + gap * 2.5
+	var hint_h: float = maxf(56.0 * cs, 44.0)
+	var bottom: float = vp.y - hint_h - gap
+	var pw: float = minf(vp.x * 0.58, 800.0 * maxf(cs, 1.0))
+	var panel := Rect2(margin, top2, pw, bottom - top2)
+	var ppad: float = maxf(12.0 * cs, 8.0)
+	var body := Rect2(panel.position + Vector2(ppad, ppad), panel.size - Vector2(ppad, ppad) * 2.0)
+	var hx: float = panel.end.x + gap * 3.0
+	var hw: float = vp.x - margin - hx
+	var card_h: float = minf(panel.size.y, 440.0 * maxf(cs, 1.0))
+	var cpad: float = maxf(24.0 * cs, 14.0)
+	var kick_h: float = UiText.height(fs_kicker) * 1.5
+	var nd_h: float = lh_small * 2.0 + gap
+	var cap: int = int(floor((card_h - cpad * 2.0 - kick_h - nd_h) / lh_small))
+	var help_card := Rect2(hx, top2, hw, card_h)
+	var footer := Rect2(hx + cpad, top2 + cpad + kick_h, hw - cpad * 2.0, float(maxi(cap, 1)) * lh_small)
+	fits = fits and cap >= 3 and hw >= 200.0 * minf(cs, 1.0) and panel.size.y >= tm * 4.0 and body.size.x >= 360.0 * minf(cs, 1.0)
+	var st2: Dictionary = st.duplicate()
+	st2["_rail"] = {"panel": panel, "body": body, "close": close, "footer": footer, "help_lines": maxi(cap, 1)}
+	var p: Dictionary = plan(vp, s, dp, false, st2, opts)
+	# The hint strip along the bottom edge.
+	var hint_gh: float = maxf(26.0 * cs, 22.0)
+	var pairs: Array = [["move", UiData.t("prompt.rail_hint_choose_change")], ["tabs", UiData.t("prompt.rail_hint_tabs")], ["back", UiData.t("prompt.rail_hint_back")]]
+	var entries: Array = UiRail.hint_entries(device, style, pairs, hint_gh, int(m["fs_small"]))
+	fits = fits and UiRail.hints_width(entries, gap * 3.0) <= vp.x - margin * 2.0
+	var focus: int = int(st.get("focus", -1))
+	var active: int = 0   # the last section that starts at or above the focused row
+	for k in range(tabs.size()):
+		if focus >= 0 and int(tabs[k]["idx"]) <= focus:
+			active = k
+	p["rail"] = true
+	p["tabs"] = tabs
+	p["tab_active"] = active
+	p["bar"] = bar
+	p["bar_specs"] = specs
+	p["bar_gh"] = gh
+	p["bar_lw"] = lw
+	p["fs_tab"] = fs_tab
+	p["help_card"] = help_card
+	p["help_cpad"] = cpad
+	p["fs_kicker"] = fs_kicker
+	p["hints"] = entries
+	p["hint_gh"] = hint_gh
+	p["hint_fs"] = int(m["fs_small"])
+	p["hint_y"] = vp.y - hint_h * 0.5
+	p["hint_x"] = margin
+	p["margin"] = margin
+	p["device"] = device
+	p["style"] = style
+	p["slide"] = UiRail.slide(float(st.get("since", 99.0)), reduced)
+	p["vp_y"] = vp.y
+	p["fits"] = bool(p["fits"]) and fits
+	return p
+
+
+static func draw_rail(ci: CanvasItem, p: Dictionary, opts: Dictionary) -> void:
+	var vp: Vector2 = ci.size if ci is Control else Vector2(1920, 1080)
+	var cs: float = float(p["cs"])
+	var sl: float = float(p["slide"])
+	var ink := Color(UiLook.col(UiLook.INK))
+	var dim := Color(UiLook.col(UiLook.INK_DIM))
+	var dark := Color(UiLook.col(UiLook.INK_DARK))
+	var edge := Color(UiLook.col(UiLook.EDGE), 0.55)
+	var scrim := Color(UiLook.col(UiLook.SCRIM))
+	var bar: Rect2 = p["bar"]
+	var panel: Rect2 = p["card"]
+	var hc: Rect2 = p["help_card"]
+	var up := Vector2(0.0, -(1.0 - sl) * (bar.end.y + float(p["margin"])))   # the tabs slide in from the top edge, the rows from the left edge, the help from the right edge
+	var left := Vector2(-(1.0 - sl) * panel.end.x, 0.0)
+	var right := Vector2((1.0 - sl) * (vp.x - hc.position.x), 0.0)
+	UiText.no_outline = true
+	ci.draw_rect(Rect2(Vector2.ZERO, vp), Color(0.02, 0.03, 0.06, 0.55))
+	# The tabs.
+	var br := Rect2(bar.position + up, bar.size)
+	UiIcons.rrect(ci, br, br.size.y * 0.5, Color(scrim, 0.96), edge, 1.5)
+	var specs: Array = p["bar_specs"]
+	var gh: float = float(p["bar_gh"])
+	UiGlyphs.draw_spec(ci, specs[0], Vector2(br.position.x + float(p["gap"]) * 2.0, br.get_center().y), gh, 1.0, true)
+	UiGlyphs.draw_spec(ci, specs[1], Vector2(br.end.x - float(p["gap"]) * 2.0 - UiGlyphs.width_spec(specs[1], gh), br.get_center().y), gh, 1.0, true)
+	var tabs: Array = p["tabs"]
+	var fs_tab: int = int(p["fs_tab"])
+	for k in range(tabs.size()):
+		var tr: Rect2 = tabs[k]["rect"]
+		var trs := Rect2(tr.position + up, tr.size)
+		var on: bool = k == int(p["tab_active"])
+		if on:
+			UiIcons.rrect(ci, trs, trs.size.y * 0.5, Color(ink, 0.95))
+		UiText.draw(ci, str(tabs[k]["label"]), Vector2(trs.get_center().x, trs.get_center().y + float(fs_tab) * 0.35), fs_tab, dark if on else Color(dim, 0.95), 0)
+	_draw_close(ci, Rect2((p["close"] as Rect2).position + up, (p["close"] as Rect2).size), ink, scrim, edge)
+	# The rows.
+	UiIcons.rrect(ci, Rect2(panel.position + left, panel.size), 18.0 * cs, Color(scrim, 0.96), edge, 1.5)
+	_draw_rows(ci, p, opts, left)
+	# The help card: the focused row's name and words, then what it is now and what it is by default.
+	var rws: Array = p["rows"]
+	var focus: int = int(p["focus"])
+	var kicker: String = ""
+	var row: Dictionary = {}
+	if focus >= 0 and focus < rws.size():
+		var raw: Array = rows()
+		if focus < raw.size():
+			row = raw[focus]
+			kicker = str(row["label"])
+	var hw: Dictionary = help_wrap(p)
+	var hl: PackedStringArray = hw["lines"]
+	var h0: int = clampi(int(p["help_scroll"]), 0, int(hw["max"]))
+	var lines: Array = []
+	for k in range(int(p["help_lines"])):
+		if h0 + k < hl.size():
+			lines.append({"t": hl[h0 + k], "dim": false})
+	var fs_s: int = int(p["fs_small"])
+	UiRail.draw_card(ci, Rect2(hc.position + right, hc.size), kicker, lines, int(p["fs_kicker"]), fs_s, cs)
+	if not row.is_empty() and bool(row.get("enabled", false)) and default_word(row) != "":
+		var nd: String = UiData.fmt("prompt.rail_now_default", {"now": value_word(row, opts), "default": default_word(row)})
+		var foot: Rect2 = p["footer"]
+		var ny: float = foot.end.y + float(p["gap"])
+		for ln in UiText.wrap(nd, fs_s, foot.size.x):
+			UiText.draw(ci, str(ln), Vector2(foot.position.x + right.x, ny + UiText.ascent(fs_s)), fs_s, Color(dim, 0.95), -1)
+			ny += float(p["lh_small"])
+	# The hint strip.
+	UiRail.draw_hints(ci, p["hints"], float(p["hint_x"]), float(p["hint_y"]), float(p["hint_gh"]), int(p["hint_fs"]), float(p["gap"]) * 3.0, 1.0)
+	UiText.no_outline = false

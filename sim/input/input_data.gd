@@ -214,6 +214,17 @@ static func inert_knock_on() -> bool:
 	return bool(t(["switches", "inertKnock"], false))
 
 
+## A lost charge is felt (docs/controls/charge-lost.md; switches.chargeLostCue, off): the heavy's charge, a stick strike's or a beam hold's taken by a blow, a charge lost to a stagger or the brawl's end, and a stick hold
+## let go of before its first stage each get a pad pulse of their own and a refusal code for UI. Independent of the other haptic switches (the hold's tap needs the right stick, which has no hold without it).
+static func charge_lost_cue_on() -> bool:
+	return bool(t(["switches", "chargeLostCue"], false))
+
+
+## The least ticks a right-stick hold lasts for its early release to be told (strike.shortHoldTicks).
+static func short_hold_ticks() -> int:
+	return clampi(ti(["strike", "shortHoldTicks"], 6), 2, 12)
+
+
 ## The director keeps a flick it cannot start yet (data/director/stick.json flickKeep, up to pendFollow.maxTicks = 90 ticks, with no cue while it waits), so the hub's wait for an answer is strike.refuseTicksKept (120)
 ## and not refuseTicks (30), or the pad knocks "Didn't start" at 31 ticks and the held flick then fires anyway (docs/controls/flick-kept.md). Set together with flickKeep. switches.flickKept, off.
 static func flick_kept_on() -> bool:
@@ -287,7 +298,7 @@ static func haptic_impact_on() -> bool:
 ## Reads the data as it is, sets the switches in memory and drops the caches; nothing is written.
 static func pin_switches_off() -> void:
 	var sw: Dictionary = timing.get("switches", {})
-	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "dashHandover", "flickKept", "inertKnock", "bNoBeam", "bNoBeamKeepRt", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
+	for k in ["rightStick", "beamAim", "quickRead", "hapticLadder", "hapticIncoming", "hapticIncomingBeam", "hapticRefused", "specialsOff", "signatureRtOnly", "driverOnRb", "flightStrikeB", "chordPick", "dashHandover", "flickKept", "inertKnock", "chargeLostCue", "bNoBeam", "bNoBeamKeepRt", "webRumble", "stallKeep", "hapticImpact", "dodgeHeld"]:
 		sw[k] = false
 	timing["switches"] = sw
 	clear_overrides()

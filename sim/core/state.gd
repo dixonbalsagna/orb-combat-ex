@@ -87,6 +87,7 @@ var powerOn: bool = false             # one energy model (sim/core/power.gd): da
 var powerFlat: float = 5000.0         # ... flat-out flight's base for this match
 var powerTravel: float = 2.0          # ... a send's factor along the line for this match: launchTravel, or the setup's "travel" (the page's slider)
 var dashOn: bool = false              # ... LT held is fast at any range: power.json's dash, or the setup's "dash" (only with the model on)
+var slipOn: bool = false              # ... the slip's brake: power.json's dash.slip, or the setup's "slip" (only with the dash on)
 var kickOn: bool = false              # the kick and the coin turn (sim/core/kick.gd): data/fight/kick.json's switch, or the setup's "kick"
 var kickInstant: float = 0.8          # ... its share of top speed on the first tick: the data's, or the setup's "instant"
 var kickClimb: int = 8                # ... and its ticks to top speed: the data's, or the setup's "climbTicks"
@@ -94,7 +95,8 @@ var brakeOn: bool = false             # the air brake (sim/core/brake.gd): data/
 var formsOn: bool = false             # forms (sim/core/forms.gd): the Protagonist's five steps and the slingshot (data/fight/forms.json, or the setup's "forms"); off
 var flightOn: bool = false            # the launch's curve (sim/core/flight.gd): data/fight/flight.json's switch, or the setup's "flight"; off
 var hitstopOn: bool = false           # hit-stop by weight (sim/core/hitstop.gd): data/fight/hitstop.json's switch, or the setup's "hitstop"; off
-var hs = null                         # ... its freeze budget: StopState while hitstopOn, null otherwise
+var hsAny: bool = false               # the freeze budget on whichever table is live: hitstop.json's budgetAny, or the setup's "hitstopBudget"
+var hs = null                         # ... the freeze budget: StopState while hitstopOn or hsAny, null otherwise
 var ricOn: bool = false               # the ricochet's glance (sim/core/ricochet.gd): data/fight/ricochet.json's switch, or the setup's "ricochet"; off
 var cata = null                       # the catastrophe's state (sim/core/cata.gd): CataState from the first blast cloud, null before
 var out := Out.new()
@@ -951,7 +953,7 @@ class FlightState:
 	var k: float = 1.0         # this tick's pace: his physics steps by dt x k
 
 
-## The hit-stop's freeze budget while S.hitstopOn (sim/core/hitstop.gd): frozen ticks by live second, for the last minute.
+## The hit-stop's freeze budget while S.hitstopOn or S.hsAny (sim/core/hitstop.gd): frozen ticks by live second, for the last minute.
 class StopState:
 	var sec: Array = []        # frozen ticks in each of the last windowS live seconds (a ring)
 	var i: int = 0             # this second's bucket
@@ -1112,6 +1114,9 @@ class Fighter:
 	var form = null                  # forms: FormState while S.formsOn (sim/core/forms.gd), null otherwise
 	var flt = null                   # the launch's curve: FlightState while S.flightOn (sim/core/flight.gd), null otherwise
 	var rics: int = 0                # ricochets (glances and plants) in this send's row (sim/core/ricochet.gd); hashed only while S.ricOn
+	var dashT: int = 0               # the slip's brake (SimPower.slip): ticks his dash has been held in free flight, up to slipUnder; hashed only while S.slipOn
+	var slipT: int = 0               # ... ticks left of the brake's ease; 0 none
+	var slipV: float = 0.0           # ... his speed on the tick he let go
 	var ricN: int = 0                # ... the launch number the row belongs to (a new send starts a new row)
 	var fd = null                    # forms: his FormsDef while S.formsOn, when his data has steps; not hashed (data)
 	var wd = null                    # D1a: the fighter's FighterData.WoundsDef (data; covered by the data hash, not hashed here)

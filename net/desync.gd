@@ -98,6 +98,10 @@ static func _digest(S: SimState) -> String:
 		v.append(S.powerTravel)
 		if S.dashOn:   # the dash at any range, as SimHash reads it
 			v.append(1.0)
+			if S.slipOn:   # the slip's brake, as SimHash reads it
+				v.append(1.0)
+				for f in S.fighters:
+					_fields(v, md, f, SimPower.SLIP_HASHED)
 	if S.kickOn:   # the kick and the coin turn, as SimHash reads them
 		for f in S.fighters:
 			_fields(v, md, f.kik, SimKick.HASHED)

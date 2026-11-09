@@ -247,6 +247,102 @@ func _dash() -> void:
 	SimCore.dispose(D)
 
 
+## The slip's brake (the EP's brief of 2026-11-09; power.json dash.slip, here by the setup's "slip"): a dash let go before
+## underTicks eases to the slip's speed over easeTicks, never in one step; held underTicks or longer he moves exactly as with
+## it off; a new press ends the brake; off, or without the dash, nothing moves and the hash is as before. The kick on, as the
+## builds play; the stick toward the other, who stands still. A row a tick: distance, speed, vx, vy, the brake's ticks left.
+func _slipRun(su: Dictionary, gap: float, pat: Array, n: int) -> Array:
+	var S := _dashAt(su, gap, 1.0, 0.0)
+	var f = S.fighters[0]
+	var o = S.fighters[1]
+	var ox: float = o.x
+	var x0: float = f.x
+	var rows: Array = []
+	for t in range(n):
+		var i := SimIntent.new()
+		i.mx = 1.0
+		i.dash = t < pat.size() and pat[t] == true
+		o.x = ox
+		o.y = 6000.0
+		o.vx = 0.0
+		o.vy = 0.0
+		SimCore.step(S, [i, null])
+		S.out.fx.clear()
+		S.out.feed.clear()
+		rows.append([absf(SimWrap.sdx(x0, f.x)), SimDetMath.hypot(f.vx, f.vy), f.vx, f.vy, f.slipT])
+	SimCore.dispose(S)
+	return rows
+
+
+func _held(k: int) -> Array:
+	var p: Array = []
+	for t in range(k):
+		p.append(true)
+	return p
+
+
+func _slip() -> void:
+	var on: Dictionary = FIELD.duplicate()
+	on["dash"] = true
+	on["kick"] = true
+	on["slip"] = true
+	var off: Dictionary = on.duplicate()
+	off["slip"] = false
+	var none: Dictionary = on.duplicate()
+	none.erase("slip")
+	var sp: float = SimPower.slipSpeed
+	var ez: int = SimPower.slipEase
+	# taps of 1, 2 and 5 ticks: eased to the slip's speed over easeTicks, never in one step
+	for k in [1, 2, 5]:
+		var r: Array = _slipRun(on, 3000.0, _held(k), 40)
+		var r0: Array = _slipRun(off, 3000.0, _held(k), 40)
+		var vs := PackedStringArray()
+		for t in range(k - 1, k + ez + 1):
+			vs.append("%.0f" % r[t][1])
+		var mono: bool = true
+		for t in range(k, k + ez):
+			mono = mono and r[t][1] <= r[t - 1][1] + 1.0e-9
+		var firstCut: float = (r[k - 1][1] - r[k][1]) / maxf(1.0, r[k - 1][1] - sp)
+		print("slip: a tap of %d at 3,000 apart, his speed from the last held tick: %s (off, %d ticks after: %.0f)" % [k, ", ".join(vs), ez,r0[k + ez - 1][1]])
+		ok(r[k][1] > sp and firstCut < 0.5, "a tap of %d: the first tick after it is still above the slip (%.0f), and takes %.0f%% of the way: no snap" % [k, r[k][1], firstCut * 100.0])
+		ok(mono and r[k + ez - 2][1] > sp and r[k + ez - 1][1] <= sp + 1.0e-6, "a tap of %d: his speed falls to the slip's %.0f on the %dth tick after it, not before" % [k, sp, ez])
+		ok(r0[k + ez - 1][1] > 2.0 * sp, "off: a tap of %d is still at %.0f %d ticks after it" % [k, r0[k + ez - 1][1], ez])
+		ok(r[39][0] < r0[39][0], "a tap of %d carries him less with it on: %.2f bh against %.2f" % [k, r[39][0] / SimDepth.BH, r0[39][0] / SimDepth.BH])
+	ok(_slipRun(off, 3000.0, _held(2), 40) == _slipRun(none, 3000.0, _held(2), 40), "off by its setup, a tap moves him as with no word")
+	# held underTicks or longer: exactly as with it off
+	for k in [SimPower.slipUnder, SimPower.slipUnder + 2, 60]:   # (underTicks is data: 6, then 12 with Encounter's slip-arrive grant)
+		ok(_slipRun(on, 3000.0, _held(k), 60) == _slipRun(off, 3000.0, _held(k), 60), "held %d ticks: every tick the same as off" % k)
+	ok(_slipRun(on, 1000.0, _held(SimPower.slipUnder), 60) == _slipRun(off, 1000.0, _held(SimPower.slipUnder), 60), "held %d ticks at 1,000 apart: the same as off" % SimPower.slipUnder)
+	# a new press ends the brake
+	var pat: Array = [true, true, false, false]
+	pat.append_array(_held(20))
+	var rp: Array = _slipRun(on, 3000.0, pat, 24)
+	ok(rp[2][4] > 0 and rp[4][4] == 0 and rp[10][1] > 2.0 * sp, "a press in the brake ends it (ticks left %d, then %d) and the dash is his again (%.0f)" % [rp[2][4], rp[4][4], rp[10][1]])
+	# how far a tap carries him in 60 ticks, on and off (Controls' probe through the pad is the measure)
+	for gap in [3000.0, 1000.0]:
+		var line := PackedStringArray()
+		for k in [0, 1, 2, 3, 4, 5, 6, 60]:
+			var a: Array = _slipRun(on, gap, _held(k), 60)
+			var b: Array = _slipRun(off, gap, _held(k), 60)
+			line.append("%s %.2f/%.2f" % ["stick" if k == 0 else ("held" if k == 60 else str(k)), a[59][0] / SimDepth.BH, b[59][0] / SimDepth.BH])
+		print("slip: travelled in 60 ticks at %.0f apart (bh, on/off): %s" % [gap, "; ".join(line)])
+	# its scope, and the hash
+	var A := _new(off)
+	var B := _new(none)
+	ok(str(SimHash.stateHash(A).gameplay) == str(SimHash.stateHash(B).gameplay), "slip off by its setup: the same hash as with no word")
+	var C := _new(on)
+	ok(C.slipOn and str(SimHash.stateHash(C).gameplay) != str(SimHash.stateHash(B).gameplay), "the slip's brake is in the hash")
+	SimCore.dispose(A)
+	SimCore.dispose(B)
+	SimCore.dispose(C)
+	var D := _new({"intro": false, "planet": 7, "touch": 3, "planetGen": 3, "power": true, "slip": true})
+	ok(not D.slipOn, "without the dash the word does nothing")
+	SimCore.dispose(D)
+	var E := _new({"intro": false, "planet": 7, "touch": 3, "planetGen": 3, "power": false, "dash": true, "slip": true})
+	ok(not E.slipOn, "with the model off the word does nothing")
+	SimCore.dispose(E)
+
+
 ## Each real route to a send, and the share it ends up with: through DirBrawl._send, the rally's turn, a chain link's own beat and a launch beat with the earned gate's multiplier. Reading a
 ## share from the table says nothing about who asks for which.
 func _routes() -> void:
@@ -619,6 +715,13 @@ func _init() -> void:
 		var seenD: int = fails - f1
 		fails = f1
 		ok(seenD > 0, "the dash switch left unread is seen (%d)" % seenD)
+		var f2: int = fails
+		SimPower.blindSlip = true
+		_slip()
+		SimPower.blindSlip = false
+		var seenS: int = fails - f2
+		fails = f2
+		ok(seenS > 0, "the slip switch left unread is seen (%d)" % seenS)
 		print("POWER negative control: %d check(s) failed" % fails)
 		quit(1 if fails > 0 else 0)
 		return
@@ -630,6 +733,7 @@ func _init() -> void:
 	_flight()
 	_travel()
 	_dash()
+	_slip()
 	var r2: Array = _sends()
 	ok(r2[0] > 0, "there were launches")
 	ok(r2[1] == 0, "no send past what he has (%d)" % r2[1])

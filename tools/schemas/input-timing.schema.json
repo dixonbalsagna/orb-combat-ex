@@ -1008,6 +1008,10 @@
           "type": "boolean",
           "description": "A right-stick push on a layer where the strike stick is inert (RT held: strike.inertMasks, the charge owns the stick; LB + RB) is told, once per push: the refusal code charging (or warding), one pad knock and one row for UI (docs/controls/inert-knock.md). Before, it did nothing and said nothing. Needs rightStick and hapticRefused. Off."
         },
+        "chargeLostCue": {
+          "type": "boolean",
+          "description": "A lost charge is felt (docs/controls/charge-lost.md): the heavy's charge (or a stick strike's or a beam hold's) taken by the foe's blow is one pad buzz (charge_broken), lost to a stagger or the brawl's end another (charge_lapsed), and a right-stick hold let go of before stage 1 after strike.shortHoldTicks a faint tap (hold_short), each with a refusal code for UI's word. The charger's pad only; nothing on screen. Off: the blow's own thud (hit_taken) and nothing else, as before."
+        },
         "flickKept": {
           "type": "boolean",
           "description": "Set together with the director's flickKeep (data/director/stick.json): the director holds a flick it cannot start yet, quietly, up to 90 ticks, so the hub waits strike.refuseTicksKept instead of strike.refuseTicks before it calls a stick request unanswered (docs/controls/flick-kept.md). Off: refuseTicks, as before."
@@ -1211,6 +1215,12 @@
         "freeR3": {
           "type": "boolean",
           "description": "R3 (and L3) bind no Escape while the switch is on (true)."
+        },
+        "shortHoldTicks": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 12,
+          "description": "With switches.chargeLostCue: a right-stick hold of at least this many ticks that is let go of before the charge's first stage (a quick strike or quick beam, level 0) taps the pad once, hold_short (6; stage 1 comes at levels[0], 12). A shorter push is a flick and says nothing."
         },
         "inertMasks": {
           "type": "array",

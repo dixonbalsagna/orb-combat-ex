@@ -198,7 +198,7 @@ static func dataHash(setup: Dictionary = {}) -> String:
 		h.text(SimFlight.dataHash())
 	if setup.get("ricochet", SimRicochet.enabled()) == true:   # the ricochet's glance: data/fight/ricochet.json, only for a match with it on
 		h.text(SimRicochet.dataHash())
-	if setup.get("hitstop", SimHitstop.enabled()) == true:   # hit-stop by weight: data/fight/hitstop.json, only for a match with it on
+	if setup.get("hitstop", SimHitstop.enabled()) == true or setup.get("hitstopBudget", SimHitstop.anyEnabled()) == true:   # hit-stop by weight: data/fight/hitstop.json, only for a match with it on
 		h.text(SimHitstop.dataHash())
 	if SimStage.fightsOf(setup) == 2 and setup.get("cross", SimCross.enabled()) == true:   # 2v2's hits across fights: data/fight/cross.json, only for a match of two fights with it on
 		h.text(SimCross.dataHash())

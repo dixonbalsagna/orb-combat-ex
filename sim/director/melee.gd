@@ -49,10 +49,11 @@ static func opWind(S: SimState, ex, _args) -> void:
 		DirExchange.schedule(ex, ex.t + S.rng.range_(float(pd[0]), float(pd[1])), "press", {"who": "D"})
 
 
-## Hit-stop by weight (Simulation's SimHitstop; rulings-2026-10-19b 4a): the weight a hit names for the table. Only
-## while it is on: a hit's options are often a beat's, and a beat is hashed.
+## Hit-stop by weight (Simulation's SimHitstop; rulings-2026-10-19b 4a): the weight a hit names for the table, and for the
+## freeze budget on any table (S.hsAny), which never cuts the weights in budgetAny.neverCut. Only while one of them is on: a
+## hit's options are often a beat's, and a beat is hashed.
 static func weigh(S: SimState, o, w: String) -> void:
-	if S.hitstopOn and o is Dictionary and not o.has("weight"):
+	if (S.hitstopOn or S.hsAny) and o is Dictionary and not o.has("weight"):
 		o["weight"] = w
 
 

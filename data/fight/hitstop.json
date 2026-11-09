@@ -15,14 +15,16 @@
     "ko": 24,
     "_note": "a hit's stop in ticks by the weight it names (o.weight), Game Design's table of rulings-2026-10-22.md 5b and 6: a mash's later blows flow (light_flow, 0: no stop; Encounter names them, each within 12 ticks of the last), its first blow stops (light_mash, a mashed or burst light, 2), a tapped light 3, a medium 5, a heavy 8, a launch or a close 12, a full launch 14; decisive (a finisher's last, a duel of perfects' send, a blow that breaks a region: the core's) 20; ko the KO, 24 at most. A stop of n ticks freezes n"
   },
-  "cutMul": 0.75,
+  "cutMul": 0.7,
   "cutFloor": 2,
   "cutDeepMul": 0.5,
   "_cut": "Game Design's second step (rulings-2026-10-22.md 5b): over the budget, every stop under a decisive blow is x cutMul, rounded, at least cutFloor, until the share falls back under; over budget.deepShare, x cutDeepMul in place of cutMul, against stutter (7d: no ten-second block over 40% frozen). Decisive blows and the KO are never cut, and a stop of 0 stays 0",
+  "budgetAny": {"enabled": false, "cutFloor": 1, "neverCut": ["decisive", "ko", "launch", "launch_full", "heavy"]},
+  "_budgetAny": "Game Design's gauntlet-plan.md sections 7 and 8: the budget applies to whichever table is live, the brawl's included. With this on, or a setup's \"hitstopBudget\", the window below counts every frozen tick even with hit-stop by weight off, and over it a hit's passed stop is x cutMul (x cutDeepMul over the deep line, the stutter cap), at least this cutFloor. The weights in neverCut (decisive, the KO, a launch's held moment, and a heavy, Game Design's of 2026-11-09) are never cut, and a blow that breaks a region or KOs keeps its stop. Blows name their weight with the budget on (DirMelee.weigh); a blow that names none is read by its exchange's kind (light, medium, heavy)",
   "budget": {
-    "share": 0.18,
+    "share": 0.12,
     "windowS": 10,
     "deepShare": 0.4,
-    "_note": "the frozen time of the last windowS live seconds is at most share of it (18% of 10 s: 108 ticks). Over it, the second step (cutMul) applies; over deepShare of it (40%: 240 ticks), the deep step (cutDeepMul)"
+    "_note": "the frozen time of the last windowS live seconds is at most share of it (12% of 10 s: 72 ticks; Game Design's numbers of 2026-11-09, gauntlet-plan.md section 7, with cutMul 0.7, so with the budget on any table (its floor 1) a 2-tick stop is 1 over it; hit-stop by weight's own floor keeps 2. It was 18% and 0.75). Over it, the second step (cutMul) applies; over deepShare of it (40%: 240 ticks), the deep step (cutDeepMul)"
   }
 }

@@ -49,7 +49,8 @@ static func dispose(S: SimState, keepWorld: bool = false) -> void:
 ## The air brake: "brake": true turns it on for this match (S.brakeOn).
 ## One energy model: "power" turns it on or off for this match (S.powerOn); "flatOut" tries another base for flat-out flight, in the data's range, and "travel" another
 ## factor along the line for a send (S.powerTravel, the page's ?travel= slider), in the data's range; "dash" makes LT held fast at
-## any range (S.dashOn, power.json's dash; only with the model on).
+## any range (S.dashOn, power.json's dash; only with the model on); "slip" makes a dash let go before tick 6 ease to the slip's speed
+## (S.slipOn, power.json's dash.slip; only with the dash on).
 ## The kick and the coin turn: "kick": true turns them on for this match (S.kickOn); "instant" and "climbTicks" try other values of the takeoff.
 ## Forms: "forms": true turns on the Protagonist's five steps and the slingshot for this match (S.formsOn).
 ## The intro phase: "intro": true plays the entrance before the clock; "intro": "skip" (the default) applies its effects at
@@ -285,6 +286,7 @@ static func _mSetupsC(J: MatchJob) -> void:
 	var S: SimState = J.S
 	var setup: Dictionary = J.setup
 	S.hitstopOn = setup.get("hitstop", SimHitstop.enabled()) == true   # hit-stop by weight: the data's switch (data/fight/hitstop.json), or the setup's own
+	S.hsAny = setup.get("hitstopBudget", SimHitstop.anyEnabled()) == true and not SimHitstop.blindAny   # the freeze budget on whichever table is live (hitstop.json's budgetAny, or the setup's own)
 	SimHitstop.setup(S)   # the freeze budget while it is on
 	S.ricOn = setup.get("ricochet", SimRicochet.enabled()) == true   # the ricochet's glance: the data's switch (data/fight/ricochet.json), or the setup's own
 	if S.swing != null:   # a field world's motion (full, slow, off): a setup value, the data's otherwise (sim/core/swing.gd)
@@ -400,7 +402,7 @@ static func _fightTick(S: SimState, inputs, dtReal: float, dt: float) -> bool:
 		return false
 	if S.dirS.stop > 0.0:
 		S.dirS.stop -= dtReal
-		if S.hitstopOn:
+		if S.hs != null:
 			SimHitstop.frozen(S)   # the freeze budget counts every frozen tick of a hit-stop
 		if S.epoch != null:
 			WorldEpoch.tick(S, false)   # ... and the calm turn's warm, as under a pause
@@ -413,7 +415,7 @@ static func _fightTick(S: SimState, inputs, dtReal: float, dt: float) -> bool:
 		SimSwing.tick(S)   # the turntable: the line turns before anyone reads it this tick
 	if S.epoch != null:
 		WorldEpoch.tick(S, DirCalm.hold(S))   # the calm-moment turn: swap when decided, held (Encounter's DirCalm.hold) and calm
-	if S.hitstopOn:
+	if S.hs != null:
 		SimHitstop.live(S)   # ... over the last minute of fight
 	SimPause.liveTick(S)   # Q10: the pause bank accrues on match time
 	if S.game.ko != null:

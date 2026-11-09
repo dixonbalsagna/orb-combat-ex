@@ -719,6 +719,8 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 
 	if S.kickOn:
 		SimKick.note(S, f, f.rush == null and f.state == "free" and not i.charge)
+	if S.slipOn:
+		SimPower.slipNote(f, f.rush == null and f.state == "free" and not i.charge)
 	if f.rush != null:
 		stepRush(S, f, dt)
 	elif f.state == "free":
@@ -740,6 +742,8 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 			if S.depthOn:   # no stick steers depth: a velocity in depth dies away as his own does with the stick at rest
 				f.vz += (0.0 - f.vz) * k
 				f.vzX += (0.0 - f.vzX) * k
+			if S.slipOn:
+				SimPower.slip(f, i.dash)   # the slip's brake: a dash let go before tick 6 eases to the slip's speed (power.json dash.slip, off)
 			SimDir.arrive(S, f, dt)   # Encounter's arrival: the dash eases into striking distance, never through it (bands.arrive, off)
 			f.x = SimWrap.wrap(f.x + f.vx * dt)
 			f.y += f.vy * dt

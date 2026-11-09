@@ -33,6 +33,8 @@ func _ready() -> void:
 	UiHud.notice_auto = args.has("notice")
 	if args.has("three"):
 		UiData.set_feature("three_strengths", true)   # the three-strength HUD (--three)
+	if args.has("rail"):
+		UiData.set_feature("menus_rail", true)   # --rail: the Rail menus (docs/ui/menus-rail.md); --rdevice=pad draws the pad's buttons in the hints, --rdown=N moves the lit row down N rows, --rreduced cuts the motion
 	if args.has("rh"):
 		SimInputData.ensure()
 		var sw: Dictionary = SimInputData.timing.get("switches", {})   # --rh: Controls' right-hand attacks on (timing.json switches.rightStick), for the legend, How to play, Settings and Remap
@@ -272,6 +274,16 @@ func _ready() -> void:
 		if str(args["menu"]) == "2":
 			hud._menu_cfg["players"] = 2
 			hud._menu_invalidate()
+	if args.has("rdevice"):
+		hud._set_device = str(args["rdevice"])
+	if args.has("rreduced"):
+		hud.set_option("reduced_motion", true)
+	if args.has("rdown"):
+		for _i in range(int(args["rdown"])):
+			if hud.is_start_menu_open():
+				hud.menu_action("down")
+			elif hud.is_pause_menu_open():
+				hud.pause_menu_action("down")
 
 
 func _parse_args() -> Dictionary:

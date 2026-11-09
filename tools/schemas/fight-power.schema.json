@@ -267,6 +267,37 @@
           "type": "number",
           "minimum": 0
         },
+        "slip": {
+          "type": "object",
+          "description": "The slip's brake (Simulation, the EP's brief of 2026-11-09): a dash let go before underTicks eases to speed over easeTicks",
+          "required": [
+            "enabled",
+            "underTicks",
+            "speed",
+            "easeTicks"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "underTicks": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "easeTicks": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
         "closeSec": {
           "type": "object",
           "additionalProperties": {

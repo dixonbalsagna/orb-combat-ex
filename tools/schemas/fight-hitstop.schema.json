@@ -113,6 +113,35 @@
       "maximum": 1,
       "description": "over budget.deepShare, a stop under a decisive blow is x this in place of cutMul"
     },
+    "budgetAny": {
+      "type": "object",
+      "description": "the budget on whichever table is live (Game Design's gauntlet-plan.md section 7-8)",
+      "required": [
+        "enabled",
+        "cutFloor",
+        "neverCut"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "cutFloor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "neverCut": {
+          "type": "array",
+          "items": {
+            "enum": ["light_flow", "light_mash", "light", "medium", "heavy", "launch", "launch_full", "decisive", "ko"]
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
     "budget": {
       "type": "object",
       "required": [

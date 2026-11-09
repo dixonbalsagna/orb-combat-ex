@@ -5383,13 +5383,110 @@ func _flight() -> String:
 	return ""
 
 
+## The budget on whichever table is live (Game Design's gauntlet-plan.md section 7-8; hitstop.json's budgetAny, here the setup's
+## "hitstopBudget"), with hit-stop by weight off: a hit's passed stop, under the budget as passed; over it x0.7 (a 2-tick stop is
+## 1), over the deep line x0.5, rounded, at least 1; a named decisive, KO, launch or heavy never cut, and a blow naming no weight
+## read by its exchange's kind (a heavy exchange's blow keeps its 6); a weight DirMelee.weigh names with the budget on first (the finisher's
+## decisive, a throw's heavy); a blow on an empty bar cut like any other (hp is no KO since wounds S2); with hit-stop
+## by weight on too, the floor is 1 and a launch is never cut. Off, nothing: no window, and the stop passed.
+func _hitstopAny() -> String:
+	var O := SimCore.createSim()
+	SimCore.newMatch(O, 5, {"p1": false, "p2": false}, {"hitstop": false, "hitstopBudget": false})
+	var off: bool = O.hs == null and not O.hsAny
+	SimCore.dispose(O)
+	if not off:
+		return "budget on any table, off: a window exists"
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"hitstop": false, "hitstopBudget": true})
+	if S.hs == null or not S.hsAny or S.hitstopOn:
+		SimCore.dispose(S)
+		return "budget on any table: no window with hit-stop by weight off"
+	var a = S.fighters[0]
+	var d = S.fighters[1]
+	var got: Array = []
+	for row in [[{"stop": 0.2}, 12], [{"stop": 0.05}, 3]]:
+		S.dirS.stop = 0.0
+		SimDamage.hit(S, null, a, d, 1.0, row[0])
+		got.append(int(SimMathx.jround(S.dirS.stop / SimConst.DT)))
+	if got != [12, 3]:
+		SimCore.dispose(S)
+		return "budget on any table, under it: a passed stop held %s ticks (want 12 and 3)" % str(got)
+	for i in range(SimHitstop.budgetTicks):
+		SimHitstop.frozen(S)
+	var want: Dictionary = {0.2: 8, 0.05: 2, 0.0333333333333333: 1, 0.0166666666666667: 1}
+	for st in want:
+		var n: int = int(SimMathx.jround(SimHitstop.cutPassed(S, {}, st) / SimConst.DT))
+		if n != want[st]:
+			SimCore.dispose(S)
+			return "budget on any table, over it: a passed %s s stop held %d ticks (want %d: x0.7, rounded, at least 1)" % [str(st), n, want[st]]
+	for w in ["decisive", "ko", "launch", "launch_full", "heavy"]:
+		if SimHitstop.cutPassed(S, {"weight": w}, 0.2) != 0.2:
+			SimCore.dispose(S)
+			return "budget on any table, over it: a %s was cut" % w
+	if SimHitstop.cutPassed(S, {}, 0.1, "heavy") != 0.1 or int(SimMathx.jround(SimHitstop.cutPassed(S, {}, 0.0333333333333333, "light") / SimConst.DT)) != 1 or SimHitstop.cutPassed(S, {"weight": "light"}, 0.1, "heavy") == 0.1:
+		SimCore.dispose(S)
+		return "budget on any table, over it: a blow naming no weight is not read by its exchange's kind (a heavy's 0.1 kept, a light's 2 ticks to 1; a named weight first)"
+	var brawlStops: Array = []
+	for row in [["heavy", 0.1], ["light", 0.0333333333333333], ["medium", 0.0333333333333333]]:
+		S.dirS.stop = 0.0
+		SimDamage.hit(S, DirExchange.newEx(a, d, row[0]), a, d, 1.0, {"stop": row[1]})
+		brawlStops.append(int(SimMathx.jround(S.dirS.stop / SimConst.DT)))
+	if brawlStops != [6, 1, 1]:
+		SimCore.dispose(S)
+		return "budget on any table, over it, through the damage: a brawl heavy, light and medium held %s ticks (want the heavy's whole 6, then 1 and 1)" % str(brawlStops)
+	S.dirS.stop = 0.0
+	d.hp = 0.0
+	SimDamage.hit(S, null, a, d, 50.0, {"stop": 0.2})
+	var onEmpty: int = int(SimMathx.jround(S.dirS.stop / SimConst.DT))
+	if S.game.ko != null or onEmpty != 8:
+		SimCore.dispose(S)
+		return "budget on any table, over it: a blow on an empty bar held %d ticks (want 8: cut, hp is no KO)" % onEmpty
+	d.hp = d.maxhp
+	var named: Array = []
+	for row in [["decisive", 0.3, 18], ["heavy", 0.1, 6]]:
+		var fo: Dictionary = {"stop": row[1]}
+		DirMelee.weigh(S, fo, row[0])
+		S.dirS.stop = 0.0
+		SimDamage.hit(S, DirExchange.newEx(a, d, "light"), a, d, 1.0, fo)
+		named.append([String(fo.get("weight", "")), int(SimMathx.jround(S.dirS.stop / SimConst.DT))])
+	if named != [["decisive", 18], ["heavy", 6]]:
+		SimCore.dispose(S)
+		return "budget on any table, over it: a finisher's and a throw's blow in a light exchange, named by DirMelee.weigh: %s (want decisive 18 and heavy 6, whole)" % str(named)
+	for i in range(SimHitstop.deepTicks - SimHitstop.budgetTicks):
+		SimHitstop.frozen(S)
+	if int(SimMathx.jround(SimHitstop.cutPassed(S, {}, 0.2) / SimConst.DT)) != 6:
+		SimCore.dispose(S)
+		return "budget on any table, over the deep line: a passed 0.2 s stop is not x0.5 (6 ticks)"
+	var hb: String = SimHash.stateHash(S).gameplay
+	SimHitstop.frozen(S)
+	var inHash: bool = SimHash.stateHash(S).gameplay != hb
+	SimCore.dispose(S)
+	if not inHash:
+		return "budget on any table: the window is not in the hash"
+	var B := SimCore.createSim()
+	SimCore.newMatch(B, 5, {"p1": false, "p2": false}, {"hitstop": true, "hitstopBudget": true})
+	for i in range(SimHitstop.deepTicks):
+		SimHitstop.frozen(B)
+	var mash: int = SimHitstop.ticks(B, "light_mash")
+	var launch: int = SimHitstop.ticks(B, "launch")
+	SimCore.dispose(B)
+	if mash != 1 or launch != 12:
+		return "with hit-stop by weight on too, over the deep line: a mash's first blow holds %d (want 1, the floor) and a launch %d (want 12, never cut)" % [mash, launch]
+	if SimReplay.dataHash({"hitstop": false, "hitstopBudget": true}) == SimReplay.dataHash({"hitstop": false, "hitstopBudget": false}):
+		return "budget on any table: a replay does not carry the hit-stop's data"
+	return ""
+
+
 ## Hit-stop by weight (sim/core/hitstop.gd). Off: a hit's stop is the one passed, and a stop's count-down is today's.
 ## On: each weight's ticks; a hit that names none keeps the one passed; stops merge; over the budget every stop under
-## a decisive blow is x0.75 (rounded, at least 2) and decisive blows are not, and 10 s of fight later the budget is
+## a decisive blow is x0.7 (rounded, at least 2) and decisive blows are not, and 10 s of fight later the budget is
 ## back; a stop of n ticks freezes n; a broken region's decisive and the KO's cap (in ko).
 func _hitstop() -> String:
 	if not SimHitstop.errors().is_empty():
 		return "the hit-stop's data: " + "; ".join(SimHitstop.errors())
+	var e: String = _hitstopAny()
+	if e != "":
+		return e
 	if SimReplay.dataHash({"hitstop": true}) == SimReplay.dataHash({"hitstop": false}):
 		return "a replay with hit-stop by weight on does not carry its data"
 	var O := SimCore.createSim()
@@ -5418,22 +5515,22 @@ func _hitstop() -> String:
 	SimDamage.hit(S, null, A, D, 1.0, {"weight": "light"})
 	if S.dirS.stop != 8.0 * SimConst.DT:
 		return "a heavy and a light in one tick held %s ticks (want the heavy's 8: they merge)" % str(S.dirS.stop / SimConst.DT)
-	if SimHitstop.budgetTicks != 108 or SimHitstop.windowS != 10:
-		return "the budget is %d ticks of %d s (want 18%% of 10 s, 108)" % [SimHitstop.budgetTicks, SimHitstop.windowS]
+	if SimHitstop.budgetTicks != 72 or SimHitstop.windowS != 10:
+		return "the budget is %d ticks of %d s (want 12%% of 10 s, 72)" % [SimHitstop.budgetTicks, SimHitstop.windowS]
 	S.dirS.stop = 0.0
 	for i in range(SimHitstop.budgetTicks):
 		SimHitstop.frozen(S)
-	var cut: Dictionary = {"light_flow": 0, "light_mash": 2, "light": 2, "medium": 4, "heavy": 6, "launch": 9, "launch_full": 11, "decisive": 20, "ko": 24}
+	var cut: Dictionary = {"light_flow": 0, "light_mash": 2, "light": 2, "medium": 4, "heavy": 6, "launch": 8, "launch_full": 10, "decisive": 20, "ko": 24}
 	for w in cut:
 		if SimHitstop.ticks(S, w) != cut[w]:
-			return "over the budget, %s holds %d (want %d: x0.75, rounded, at least 2; decisive and the KO never cut)" % [w, SimHitstop.ticks(S, w), cut[w]]
+			return "over the budget, %s holds %d (want %d: x0.7, rounded, at least 2; decisive and the KO never cut)" % [w, SimHitstop.ticks(S, w), cut[w]]
 	# the deep step (Game Design's 7d): over 40% of the window, x0.5, rounded, at least 2
 	if SimHitstop.deepTicks != 240:
 		return "the deep line is %d ticks (want 40%% of 10 s, 240)" % SimHitstop.deepTicks
 	for i in range(SimHitstop.deepTicks - SimHitstop.budgetTicks - 1):
 		SimHitstop.frozen(S)
 	if SimHitstop.ticks(S, "heavy") != 6:
-		return "a tick under the deep line, a heavy holds %d (want 6: x0.75)" % SimHitstop.ticks(S, "heavy")
+		return "a tick under the deep line, a heavy holds %d (want 6: x0.7)" % SimHitstop.ticks(S, "heavy")
 	SimHitstop.frozen(S)
 	var deep: Dictionary = {"light_flow": 0, "light_mash": 2, "light": 2, "medium": 3, "heavy": 4, "launch": 6, "launch_full": 7, "decisive": 20, "ko": 24}
 	for w in deep:

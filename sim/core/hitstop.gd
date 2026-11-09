@@ -12,7 +12,7 @@ extends RefCounted
 ##                a match ends) holds `ko`, the cap.
 ##   hold(S, weight): any other moment of the director's (a launch's send, a perfect's duel), merged the same way.
 ##   the budget:  the frozen ticks of the last windowS (10) seconds of fight (live seconds, in buckets) are counted,
-##                whatever froze them. Over `share` (18%) of it, every stop under a decisive blow is x cutMul (0.75,
+##                whatever froze them. Over `share` (12%) of it, every stop under a decisive blow is x cutMul (0.7,
 ##                rounded, at least cutFloor 2) until the share falls back under (Game Design's rulings-2026-10-22.md
 ##                5b). Decisive blows and the KO are never cut. Stops merge (the longer one holds); they never add.
 ##   the deep step: over `deepShare` (40%) of the window, the step is x cutDeepMul (0.5, rounded, at least cutFloor)
@@ -36,12 +36,16 @@ static var _hash: String = ""
 static var _errors: Array = []
 static var on_: bool = false
 static var ticks_: Dictionary = {}
-static var cutMul: float = 0.75
+static var cutMul: float = 0.7
 static var cutDeepMul: float = 0.5
 static var cutFloor: int = 2
 static var windowS: int = 10
-static var budgetTicks: int = 108   # derived: share x windowS seconds of ticks
+static var budgetTicks: int = 72    # derived: share x windowS seconds of ticks
 static var deepTicks: int = 240     # derived: deepShare x windowS seconds of ticks
+static var anyOn_: bool = false     # budgetAny: the budget on whichever table is live (Game Design's gauntlet-plan.md section 7-8)
+static var anyFloor: int = 1        # ... its floor in place of cutFloor
+static var anyNever: Array = ["decisive", "ko", "launch", "launch_full", "heavy"]   # ... the weights it never cuts
+static var blindAny: bool = false   # tests only: budgetAny left unread
 
 
 static func _ensure() -> void:
@@ -99,6 +103,24 @@ static func _ensure() -> void:
 		_err("budget.deepShare: a share from budget.share to 1")
 		ds = 1.0
 	deepTicks = int(SimMathx.jround(float(ds) * float(windowS) / SimConst.DT))
+	var ba = j.get("budgetAny", {})
+	if not (ba is Dictionary):
+		_err("budgetAny must be an object")
+		ba = {}
+	anyOn_ = ba.get("enabled") == true
+	anyFloor = _int("budgetAny.cutFloor", ba.get("cutFloor", 1), 0, 60)
+	anyNever = []
+	for w in ba.get("neverCut", ["decisive", "ko", "launch", "launch_full", "heavy"]):
+		if WEIGHTS.has(String(w)):
+			anyNever.append(String(w))
+		else:
+			_err("budgetAny.neverCut: %s is not a weight" % str(w))
+
+
+## budgetAny's switch (the setup's "hitstopBudget" is read over it, in SimCore.newMatch).
+static func anyEnabled() -> bool:
+	_ensure()
+	return anyOn_
 
 
 static func enabled() -> bool:
@@ -121,11 +143,11 @@ static func reload() -> void:
 	_d = null
 
 
-## The budget's state for a new match (SimCore.newMatch), while hit-stop by weight is on.
+## The budget's state for a new match (SimCore.newMatch), while hit-stop by weight is on, or the budget on any table.
 static func setup(S: SimState) -> void:
 	_ensure()
 	S.hs = null
-	if S.hitstopOn:
+	if S.hitstopOn or S.hsAny:
 		S.hs = SimState.StopState.new()
 		S.hs.sec.resize(windowS)
 		S.hs.sec.fill(0)
@@ -149,9 +171,38 @@ static func ticks(S: SimState, weight: String) -> int:
 	if not ticks_.has(weight):
 		return -1
 	var n: int = int(ticks_[weight])
-	if n > 0 and over(S) and not NEVER_CUT.has(weight):
-		n = maxi(cutFloor, int(SimMathx.jround(float(n) * (cutDeepMul if deep(S) else cutMul))))
+	if n > 0 and over(S) and not (anyNever if S.hsAny else NEVER_CUT).has(weight):
+		n = maxi(anyFloor if S.hsAny else cutFloor, int(SimMathx.jround(float(n) * (cutDeepMul if deep(S) else cutMul))))
 	return n
+
+
+## With the budget on any table and hit-stop by weight off (Game Design's gauntlet-plan.md section 7-8): a hit's passed stop
+## (the brawl's table, a director's), over the budget x cutMul, over the deep line x cutDeepMul, rounded to whole ticks and
+## at least anyFloor, unless the hit names a weight that's never cut. Under the budget, the stop it passed. kind is the
+## exchange's kind (SimDamage.hit passes ex.kind): a blow that names no weight is read by it, so a heavy exchange's blow
+## keeps its stop when heavy is never cut (Encounter's find). With the budget on, DirMelee.weigh names most blows' weights.
+static func cutPassed(S: SimState, o, passed: float, kind: String = "") -> float:
+	if S.hs == null or passed <= 0.0 or not over(S):
+		return passed
+	var w = o.get("weight") if o is Dictionary else null
+	if not (w is String) or w == "":
+		w = kind
+	if anyNever.has(w):
+		return passed
+	var n: int = int(SimMathx.jround(passed / SimConst.DT))
+	if n <= 0:
+		return passed
+	return float(maxi(anyFloor, int(SimMathx.jround(float(n) * (cutDeepMul if deep(S) else cutMul))))) * SimConst.DT
+
+
+## ... and a blow that breaks a region, or the KO, is never cut: its passed stop is held again, whole (stops merge).
+static func uncutAfter(S: SimState, A, D, stage0: Array, passed: float) -> void:
+	var keep: bool = S.game.ko == D   # a KO called inside the hit. The finisher's last blow names decisive (DirMelee.weigh, with the budget on); hp is only a readout since wounds S2, so a blow on an empty bar is cut like any other
+	for r in range(stage0.size()):
+		if int(stage0[r]) < 3 and int(D.stage[r]) >= 3:
+			keep = true
+	if keep and passed > 0.0:
+		SimClock.hold(S, passed, A, D)
 
 
 ## A hit's stop in seconds (SimDamage.hit): the table's for the weight it names, else the one the director passed.

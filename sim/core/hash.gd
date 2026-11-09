@@ -107,9 +107,11 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 		out.append(S.powerTravel)
 		if S.dashOn:   # the dash at any range: only when on, so a match without it hashes as before
 			out.append(1.0)
+			if S.slipOn:   # the slip's brake: only when on
+				out.append(1.0)
 	if S.cata != null:   # the catastrophe's state: only once a blast cloud set it, so a match without one hashes as before
 		_obj(out, S.cata, ["ash", "ashFrom", "ashTo", "ashLeft"])
-	if S.hitstopOn:   # hit-stop by weight's freeze budget: only when on, so a match without it hashes as before
+	if S.hs != null:   # the freeze budget (hit-stop by weight, or the budget on any table): only when on, so a match without it hashes as before
 		_obj(out, S.hs, ["i", "n", "sum"])
 		for v in S.hs.sec:
 			out.append(float(v))
@@ -205,6 +207,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 			_obj(out, f.flt, SimFlight.HASHED)
 		if S.ricOn:   # the ricochet's row: only when on
 			_obj(out, f, SimRicochet.HASHED)
+		if S.slipOn:   # the slip's brake: only when on
+			_obj(out, f, SimPower.SLIP_HASHED)
 		out.append(float(act.dirI.size())); for v in act.dirI: out.append(float(v))   # the director's per-fighter integers
 		out.append(float(act.queue.size()))
 		for rq in act.queue:

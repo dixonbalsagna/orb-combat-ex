@@ -57,6 +57,7 @@ var hand_pref: Array = ["standard", "standard"]   # hand_layout: "standard" or "
 var brace_style_pref: Array = ["", ""]            # the brace's assist: "" the data default (flick), "flick" or "press" (the button alone)
 var strike_style_pref: Array = ["", ""]
 var mirror_pref: Array = ["auto", "auto"]
+var _hold_age: Array = [0, 0]               # the ticks each slot's right-stick hold has lasted (chargeLostCue: a hold let go of before stage 1 is told)
 var _ladder_prev: Array = [0, 0]             # the strike charge's rung each slot's pad last felt (take_haptics)
 var _haptic_pending: Array = []
 var _refusals: Array = []                  # every press the game let go of with no sign, for UI: [{slot, code, tick, button}] (take_refusals)
@@ -423,6 +424,7 @@ func intent(slot: int) -> SimIntent:
 			drops = kl.take_dropped()
 	var out: SimIntent = SimIntent.canon(i)
 	_note_ladder(slot, out)
+	_note_short_hold(slot, out)
 	_note_refusal(slot, out)
 	_note_drops(slot, drops)
 	return out
@@ -884,6 +886,23 @@ func _note_refusal(slot: int, i: SimIntent) -> void:
 		_stick_wait[slot] = -1
 	elif i.rsStart:
 		_stick_wait[slot] = 0
+
+
+## A right-stick hold let go of before its first stage (switches.chargeLostCue): a hold of at least strike.shortHoldTicks that ends at level 0 is a quick strike the player may have meant as a charge, and the pad taps once
+## (hold_short) with a row for UI. A shorter push is a flick and says nothing; a struggle's push is never a hold. Reads only the intent the hub built.
+func _note_short_hold(slot: int, i: SimIntent) -> void:
+	if not SimInputData.charge_lost_cue_on() or bool(struggle_push_pref[slot]):
+		_hold_age[slot] = 0
+		return
+	if i.rsHeld:
+		_hold_age[slot] += 1
+	if i.rsRelease:
+		if i.rsLevel == 0 and int(_hold_age[slot]) >= SimInputData.short_hold_ticks():
+			_haptic_pending.append({"slot": slot, "kind": "hold_short", "scale": 1.0, "reason": "hold_short"})
+			_refusals.append({"slot": slot, "code": "hold_short", "tick": 0, "button": "stick"})
+		_hold_age[slot] = 0
+	elif not i.rsHeld:
+		_hold_age[slot] = 0
 
 
 func _note_ladder(slot: int, i: SimIntent) -> void:

@@ -227,12 +227,21 @@ var _turn_anyway := false             # "Play upright anyway" was pressed this s
 var _l_turn: UiLayer
 var _menu_kind := false               # the notice slot is showing the start menu (UiMenu), not the gate's text
 var _menu_focus := 0
+var _set_t0 := -99.0                  # the HUD clock when Settings opened (the Rail slides in from it)
+var _menu_t0 := -99.0                 # the HUD clock when the start menu opened (the Rail slides in from it)
+var _menu_seen := 0                   # the focus the Rail last saw, to notice a move
+var _menu_prev := -1                  # the row the lit bar is coming from
+var _menu_bar_t0 := -99.0             # the HUD clock when the focus last moved
 var _menu_cfg: Dictionary = {}
 var _menu_mid := false                # the menu was opened mid-match (from the pause menu): Back returns to the match
 var _menu_last_cfg: Dictionary = {}   # what Start last sent (Play again sends it again)
 var _over_t := 0.0                    # seconds since the match ended (the match-over card opens after the KO has been read)
 var _over_shown := false
 var _pm_over := false                 # the pause card is the match-over card
+var _pm_t0 := -99.0                   # the HUD clock when the pause card opened (the Rail slides in from it)
+var _pm_seen := 0                     # the focus the Rail last saw, to notice a move
+var _pm_prev := -1                    # the row the lit bar is coming from
+var _pm_bar_t0 := -99.0               # the HUD clock when the focus last moved
 var _notice_scroll := 0.0              # the card's text scrolled up by this many pixels, on a screen too short to show it all
 var _notice_drag := false              # a finger or the mouse is dragging the text
 var _l_gate_back: UiLayer
@@ -1630,6 +1639,10 @@ func show_start_menu(mid_match: bool = false) -> void:
 	_menu_kind = true
 	_menu_mid = mid_match
 	_menu_focus = 0
+	_menu_t0 = _t
+	_menu_seen = 0
+	_menu_prev = -1
+	_menu_bar_t0 = -99.0
 	show_photo_notice(true)
 	menu_changed.emit(_menu_cfg.duplicate())
 
@@ -1661,7 +1674,11 @@ func _menu_not_now() -> void:
 
 func menu_plan() -> Dictionary:
 	var missing: bool = _pads_connected() == 0 and (str(_menu_cfg.get("p1", "kb")) == "pad" or (int(_menu_cfg.get("players", 1)) == 2 and str(_menu_cfg.get("p2", "kb")) == "pad"))
-	return UiMenu.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _menu_focus, "cfg": _menu_cfg, "mid_match": _menu_mid, "safe": layout.safe, "pad_missing": missing, "not_now": _menu_not_now_allowed()})
+	if _menu_focus != _menu_seen:   # the Rail's lit bar slides from the row it left (UI state only)
+		_menu_prev = _menu_seen
+		_menu_seen = _menu_focus
+		_menu_bar_t0 = _t
+	return UiMenu.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _menu_focus, "cfg": _menu_cfg, "mid_match": _menu_mid, "safe": layout.safe, "pad_missing": missing, "not_now": _menu_not_now_allowed(), "device": _set_device, "style": str(opts["glyph_style"]), "since": _t - _menu_t0, "prev": _menu_prev, "bar_since": _t - _menu_bar_t0, "reduced": bool(opts["reduced_motion"])})
 
 
 func _menu_rows() -> Array:
@@ -2068,6 +2085,13 @@ func toggle_pause_menu() -> void:
 		show_pause_menu()
 
 
+## The result line for the Rail's match-over title ("Grist wins", or "No contest: nobody played"), or "" when there is none.
+func _over_win_line() -> String:
+	if UiData.feature("versus_flow") and hub.no_contest:
+		return UiData.t("prompt.over_no_contest")
+	return hub.win_line() if UiData.feature("versus_flow") else ""
+
+
 ## What the match-over card says the fight did to the world (damage_facts on): the exact counts the chip no longer shows during the fight. Plain words, one line each. Nothing here counts people (RL-257).
 func over_facts() -> Array:
 	var wins: Array = []
@@ -2089,6 +2113,10 @@ func show_pause_menu(over: bool = false) -> void:
 	_pm_confirm = false
 	_pm_focus = 0
 	_pm_down = ""
+	_pm_t0 = _t
+	_pm_seen = 0
+	_pm_prev = -1
+	_pm_bar_t0 = -99.0
 	_l_pmenu.invalidate()
 	pause_menu_opened.emit()
 
@@ -2113,7 +2141,12 @@ func pause_menu_focus() -> int:
 
 
 func pause_menu_plan() -> Dictionary:
-	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "two": _humans() >= 2, "join": join_due(), "over": _pm_over, "facts_always": UiData.feature("minimal_hud"), "facts": over_facts() if (_pm_over or UiData.feature("minimal_hud")) else [], "status": _save_status if _t < _save_until else "", "where": UiData.t("prompt.report_where") if lan_report_fn.is_valid() else ""})
+	if _pm_focus != _pm_seen:   # the Rail's lit bar slides from the row it left (UI state only)
+		_pm_prev = _pm_seen
+		_pm_seen = _pm_focus
+		_pm_bar_t0 = _t
+	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "two": _humans() >= 2, "join": join_due(), "over": _pm_over, "facts_always": UiData.feature("minimal_hud"), "facts": over_facts() if (_pm_over or UiData.feature("minimal_hud") or UiRail.usable(layout.vp, bool(opts["touch_ui"]))) else [], "status": _save_status if _t < _save_until else "", "where": UiData.t("prompt.report_where") if lan_report_fn.is_valid() else "",
+		"device": _set_device, "style": str(opts["glyph_style"]), "since": _t - _pm_t0, "prev": _pm_prev, "bar_since": _t - _pm_bar_t0, "reduced": bool(opts["reduced_motion"]), "win": _over_win_line() if _pm_over else ""})
 
 
 func _paint_pmenu(ci: CanvasItem) -> void:
@@ -2353,6 +2386,7 @@ func show_settings(focus_key: String = "") -> void:
 		return
 	UiSettings.two_humans = _humans() >= 2
 	_set_open = true
+	_set_t0 = _t
 	_set_scroll = 0.0
 	_set_drag = {}
 	_set_axis = {}
@@ -2403,12 +2437,17 @@ func settings_focus() -> int:
 	return _set_focus
 
 
+## What the Settings plan is asked for: the focus, the scroll and the help's scroll, the last device, and (for the Rail) the glyph style, the time since it opened and Reduce motion.
+func _settings_st() -> Dictionary:
+	return {"focus": _set_focus, "scroll": _set_scroll, "device": _set_device, "help_scroll": _set_help_scroll, "style": str(opts["glyph_style"]), "since": _t - _set_t0, "reduced": bool(opts["reduced_motion"])}
+
+
 func settings_plan() -> Dictionary:
 	UiSettings.two_humans = _humans() >= 2
 	if _set_help_focus != _set_focus:
 		_set_help_focus = _set_focus
 		_set_help_scroll = 0
-	var p: Dictionary = UiSettings.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _set_focus, "scroll": _set_scroll, "device": _set_device, "help_scroll": _set_help_scroll}, opts)
+	var p: Dictionary = UiSettings.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), _settings_st(), opts)
 	# The foot grows for a long help and shrinks back: the body changes height, so the focused row is kept in it (only then, so a scroll by hand stays).
 	var fl: int = int(p["help_lines"])
 	if fl != _set_foot:
@@ -2417,7 +2456,7 @@ func settings_plan() -> Dictionary:
 			var sc: float = UiSettings.scroll_to(p, _set_focus, float(p["scroll"]))
 			if not is_equal_approx(sc, _set_scroll):
 				_set_scroll = sc
-				p = UiSettings.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _set_focus, "scroll": _set_scroll, "device": _set_device, "help_scroll": _set_help_scroll}, opts)
+				p = UiSettings.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), _settings_st(), opts)
 	return p
 
 
@@ -2517,12 +2556,34 @@ func settings_action(act: String) -> void:
 					at = n - 1
 			_set_focus = int(fo[at])
 			_set_scroll = UiSettings.scroll_to(settings_plan(), _set_focus, _set_scroll)
+		"tab_prev", "tab_next":
+			var tp: Dictionary = settings_plan()
+			if (tp.get("tabs", []) as Array).is_empty():
+				settings_action("page_up" if act == "tab_prev" else "page_down")   # the old card has no tabs: LB and RB page through the rows as before
+				return
+			var tabs: Array = tp["tabs"]
+			var nxt: int = posmod(int(tp["tab_active"]) + (1 if act == "tab_next" else -1), tabs.size())
+			_settings_to_tab(int(tabs[nxt]["idx"]))
 		"left":
 			_settings_step(_set_focus, -1)
 		"right":
 			_settings_step(_set_focus, 1)
 		"accept":
 			_settings_accept(_set_focus)
+	_l_settings.invalidate()
+
+
+## The Rail's tabs: focus the first row of a section and scroll its heading to the top of the rows.
+func _settings_to_tab(heading_idx: int) -> void:
+	var p: Dictionary = settings_plan()
+	var fo: Array = UiSettings.focusable(UiSettings.rows())
+	for f in fo:
+		if int(f) > heading_idx:
+			_set_focus = int(f)
+			break
+	var rws: Array = p["rows"]
+	if heading_idx >= 0 and heading_idx < rws.size():
+		_set_scroll = clampf(float((rws[heading_idx] as Dictionary)["y"]), 0.0, float(p["max_scroll"]))
 	_l_settings.invalidate()
 
 
@@ -2556,6 +2617,9 @@ func _settings_press(pos: Vector2) -> void:
 	var part: String = str(h["part"])
 	if part == "close":
 		hide_settings()
+		return
+	if part == "tab":
+		_settings_to_tab(int(h["row"]))
 		return
 	var i: int = int(h["row"])
 	if i >= 0 and part != "off":
@@ -2623,6 +2687,10 @@ func _settings_input(event: InputEvent) -> void:
 					act = "page_up"
 				KEY_PAGEDOWN:
 					act = "page_down"
+				KEY_Q:
+					act = "tab_prev" if (not event.echo and UiRail.usable(layout.vp, bool(opts["touch_ui"]))) else ""   # the Rail's tabs; with the Rail off Q and E do nothing, as before
+				KEY_E:
+					act = "tab_next" if (not event.echo and UiRail.usable(layout.vp, bool(opts["touch_ui"]))) else ""
 				KEY_HOME:
 					act = "home"
 				KEY_END:
@@ -2648,9 +2716,9 @@ func _settings_input(event: InputEvent) -> void:
 				JOY_BUTTON_A:
 					settings_action("accept")
 				JOY_BUTTON_LEFT_SHOULDER:
-					settings_action("page_up")
+					settings_action("tab_prev")   # the Rail's previous tab; without tabs, a page up as before
 				JOY_BUTTON_RIGHT_SHOULDER:
-					settings_action("page_down")
+					settings_action("tab_next")
 				JOY_BUTTON_B, JOY_BUTTON_START:
 					settings_action("close")
 	elif event is InputEventJoypadMotion:

@@ -45,11 +45,11 @@ func _with(block, f: Callable) -> void:
 
 func _data() -> void:
 	var ks: Array = SimHaptics.kinds()
-	var want: Array = ["launch_open", "form_prompt", "brake_ready", "charge_full", "clinch_pulse", "struggle_push", "struggle_pushed", "struggle_lose", "ladder_1", "ladder_2", "ladder_3", "incoming_high", "incoming_low", "incoming_beam", "stick_refused", "release_thump", "full_send", "blow_land", "hit_taken", "close_surge", "launch_felt", "landing_thud", "building_break"]
+	var want: Array = ["launch_open", "form_prompt", "brake_ready", "charge_full", "clinch_pulse", "struggle_push", "struggle_pushed", "struggle_lose", "ladder_1", "ladder_2", "ladder_3", "incoming_high", "incoming_low", "incoming_beam", "stick_refused", "release_thump", "full_send", "blow_land", "hit_taken", "close_surge", "launch_felt", "landing_thud", "building_break", "charge_broken", "charge_lapsed", "hold_short"]
 	var has_all: bool = ks.size() == want.size()
 	for w in want:
 		has_all = has_all and ks.has(w)
-	ok(has_all, "data: the twenty-two kinds (the eight, and the strike stick's three ladder rungs and two incoming cues, and the beam window's, switches.hapticLadder, hapticIncoming and hapticIncomingBeam)")
+	ok(has_all, "data: the twenty-six kinds (the eight, and the strike stick's three ladder rungs and two incoming cues, and the beam window's, switches.hapticLadder, hapticIncoming and hapticIncomingBeam, and the three lost-charge kinds, switches.chargeLostCue)")
 	ok(not ks.has("struggle_pulse") and not ks.has("struggle_surge"), "data: the beat-aligned struggle kinds are retired (Orb: not on the beat)")
 	ok(SimHaptics.min_gap_ms() == 80, "data: requests for one slot are at least 80 ms apart")
 	# The data file and the code defaults agree.

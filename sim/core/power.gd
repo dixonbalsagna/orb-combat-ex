@@ -31,6 +31,13 @@ static var blindTravel: bool = false           # tests only: a setup's "travel" 
 static var dashOn_: bool = false               # power.json's dash: LT held is fast at any range (Game Design's overnight-2026-11-08.md (c))
 static var dashAnyRange: bool = true           # (the dash's response, firstTickMin and fullByTicks, is the kick's: kick.json)
 static var blindDash: bool = false             # tests only: the dash switch left unread
+static var slipOn_: bool = false               # power.json's dash.slip: a dash let go before underTicks eases to the slip's speed (the EP's brief of 2026-11-09)
+static var slipUnder: int = 6                  # ... a dash held fewer ticks than this is a tap
+static var slipSpeed: float = 1125.0           # ... the slip's speed: Game Design's slip bound, 1.5 bh in 6 ticks
+static var slipEase: int = 4                   # ... ticks from his speed on the release to the slip's
+static var blindSlip: bool = false             # tests only: the slip switch left unread
+## The slip's state on a fighter, hashed only while S.slipOn (hash.gd; net/desync.gd).
+const SLIP_HASHED: Array = ["dashT", "slipT", "slipV"]
 static var _shares: Dictionary = {}
 static var lastShare: float = -1.0             # tests only: the share the last send asked for
 
@@ -65,6 +72,11 @@ static func _ensure() -> void:
 	var da: Dictionary = j.dash if j.get("dash") is Dictionary else {}
 	dashOn_ = da.get("enabled") == true
 	dashAnyRange = da.get("anyRange", true) == true
+	var sl: Dictionary = da.slip if da.get("slip") is Dictionary else {}
+	slipOn_ = sl.get("enabled") == true
+	slipUnder = int(sl.get("underTicks", 6))
+	slipSpeed = float(sl.get("speed", 1125.0))
+	slipEase = maxi(1, int(sl.get("easeTicks", 4)))
 	var tr: Dictionary = j.travel if j.get("travel") is Dictionary else {}
 	travelMin = float(tr.get("min", launchTravel))
 	travelMax = float(tr.get("max", launchTravel))
@@ -107,12 +119,53 @@ static func setup(S: SimState, su: Dictionary) -> void:
 	S.powerFlat = clampf(float(su.get("flatOut", flatOut)), flatMin, flatMax) if S.powerOn else flatOut
 	S.powerTravel = clampf(float(su.get("travel", launchTravel)), travelMin, travelMax) if S.powerOn and not blindTravel else launchTravel
 	S.dashOn = S.powerOn and su.get("dash", dashOn_) == true and not blindDash
+	S.slipOn = S.dashOn and su.get("slip", slipOn_) == true and not blindSlip
 	bindStep(S)
 
 
 ## LT held, with the dash on (Game Design's overnight-2026-11-08.md (c)): its top speed is the level's flat out at any range.
 static func dashAnyRangeOn(S: SimState) -> bool:
 	return S.dashOn and dashAnyRange
+
+
+## The slip's brake (the EP's brief of 2026-11-09; Game Design's overnight-2026-11-08.md (c): "a tapped LT is still the slip").
+## Each live tick, before his state moves him: the dash's count and the brake end when his own free flight does.
+static func slipNote(f, flying: bool) -> void:
+	if not flying:
+		f.dashT = 0
+		f.slipT = 0
+
+
+## His free flight this tick, once the stick has set his velocity; held is the intent's dash. Held, the dash's ticks count
+## and any brake ends. Let go after fewer than slipUnder of them while faster than the slip's speed, his speed eases from
+## what it is on that tick to the slip's over slipEase ticks, by a smoothstep: never in one step. Held slipUnder ticks or
+## longer, nothing here touches him. It only caps: his direction is his own, and so is anything slower.
+static func slip(f, held: bool) -> void:
+	if held:
+		f.slipT = 0
+		f.dashT = mini(f.dashT + 1, slipUnder)
+		return
+	if f.dashT > 0 and f.dashT < slipUnder:
+		var v0: float = SimDetMath.hypot(f.vx, f.vy)
+		if v0 > slipSpeed:
+			f.slipT = slipEase
+			f.slipV = v0
+	f.dashT = 0
+	if f.slipT <= 0:
+		return
+	var e: float = float(slipEase - f.slipT + 1) / float(slipEase)
+	var cap: float = f.slipV + (slipSpeed - f.slipV) * e * e * (3.0 - 2.0 * e)
+	f.slipT -= 1
+	var v: float = SimDetMath.hypot(f.vx, f.vy)
+	if v > cap:
+		var k: float = cap / v
+		f.vx *= k
+		f.vy *= k
+
+
+## The slip's brake is easing him now (for Encounter's arrival, if it wants it).
+static func slipping(f) -> bool:
+	return f.slipT > 0
 
 
 ## This match is the one stepping.
