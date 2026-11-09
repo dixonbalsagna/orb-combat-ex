@@ -65,6 +65,8 @@ func _init() -> void:
 						ins.append(k)
 				if absf(it.mx) > 0.1 or absf(it.my) > 0.1:
 					ins.append("move %.1f,%.1f" % [it.mx, it.my])
+				if int(it.stanceMask) != 0 or int(it.rsMask) != 0:
+					ins.append("mask %d rsMask %d" % [int(it.stanceMask), int(it.rsMask)])   # RB is the energy bit (2); LT the manoeuvre bit; 0 is no layer held
 				if int(it.rsDir) != 0:
 					ins.append("rsDir %d lvl %d" % [int(it.rsDir), int(it.rsLevel)])
 			var evs: Array = []

@@ -1,0 +1,93 @@
+BEAM t=3326 beam_charge:start actor=0 | s0 y=1370 z=0 locked tier 1 | s1 dx=212 y=1372 z=0 locked tier 1 | in=[sig, sigHeld, mask 0] since sig 0 held 0 rs 1814
+BEAM t=3373 beam_charge:end actor=0 | s0 y=1370 z=0 locked tier 1 | s1 dx=268 y=1381 z=0 locked tier 1 | in=[mask 0] since sig 47 held 39 rs 1861
+BEAM t=3373 beam_shove: actor=1 | s0 y=1370 z=0 locked tier 1 | s1 dx=268 y=1381 z=0 locked tier 1 | in=[mask 0] since sig 47 held 39 rs 1861
+BEAM t=3373 beam_window:start actor=0 | s0 y=1370 z=0 locked tier 1 | s1 dx=268 y=1381 z=0 locked tier 1 | in=[mask 0] since sig 47 held 39 rs 1861
+BEAM t=3373 beam_fire: actor=0 | s0 y=1370 z=0 locked tier 1 | s1 dx=268 y=1381 z=0 locked tier 1 | in=[mask 0] since sig 47 held 39 rs 1861
+BEAM t=3417 beam_window:end actor=0 | s0 y=1370 z=0 locked tier 1 | s1 dx=675 y=1681 z=0 free tier 1 | in=[mask 0] since sig 28 held 19 rs 1905
+BEAM t=3417 beam_outcome:DODGE actor=0 | s0 y=1370 z=0 locked tier 1 | s1 dx=675 y=1681 z=0 free tier 1 | in=[mask 0] since sig 28 held 19 rs 1905
+BEAM t=3747 beam_aim: actor=0 | s0 y=1490 z=0 locked tier 1 | s1 dx=58 y=1490 z=0 locked tier 1 | in=[rsStart, rsHeld, mask 2] since sig 57 held 51 rs 0
+BEAM t=3751 beam_aim: actor=0 | s0 y=1490 z=0 locked tier 1 | s1 dx=58 y=1490 z=0 locked tier 1 | in=[rsHeld, mask 2] since sig 61 held 55 rs 4
+BEAM t=4388 beam_aim: actor=1 | s0 y=1482 z=0 locked tier 1 | s1 dx=58 y=1482 z=0 locked tier 1 | in=[mask 0] since sig 22 held 17 rs 641
+BEAM t=4431 beam_stage:1 actor=1 | s0 y=1482 z=0 locked tier 1 | s1 dx=58 y=1482 z=0 locked tier 1 | in=[rsHeld, mask 0] since sig 25 held 24 rs 4
+BEAM t=4432 beam_charge:start actor=1 | s0 y=1482 z=0 locked tier 1 | s1 dx=58 y=1482 z=0 locked tier 1 | in=[rsHeld, mask 0] since sig 26 held 25 rs 5
+BEAM t=4438 beam_charge:end actor=1 | s0 y=1482 z=0 locked tier 1 | s1 dx=58 y=1482 z=0 locked tier 1 | in=[mask 0] since sig 32 held 31 rs 11
+BEAM t=4438 beam_fire: actor=1 | s0 y=1482 z=0 locked tier 1 | s1 dx=58 y=1482 z=0 locked tier 1 | in=[mask 0] since sig 32 held 31 rs 11
+BEAM t=4438 beam_wide: actor=1 | s0 y=1482 z=0 locked tier 1 | s1 dx=58 y=1482 z=0 locked tier 1 | in=[mask 0] since sig 32 held 31 rs 11
+BEAM t=5484 beam_aim: actor=0 | s0 y=2241 z=0 free tier 1 | s1 dx=-140 y=480 z=0 free tier 1 | in=[rsStart, rsHeld, mask 2] since sig 467 held 458 rs 0
+BEAM t=5488 beam_aim: actor=0 | s0 y=2241 z=0 free tier 1 | s1 dx=-116 y=500 z=0 free tier 1 | in=[rsHeld, mask 2] since sig 471 held 462 rs 4
+BEAM t=5554 beam_aim: actor=0 | s0 y=2241 z=0 free tier 1 | s1 dx=-63 y=877 z=0 free tier 1 | in=[rsHeld, mask 2] since sig 537 held 528 rs 70
+BEAM t=5561 beam_aim: actor=0 | s0 y=2241 z=0 free tier 1 | s1 dx=-32 y=912 z=0 free tier 1 | in=[rsHeld, mask 0] since sig 544 held 535 rs 77
+BEAM t=5562 beam_stage:2 actor=0 | s0 y=2241 z=0 locked tier 1 | s1 dx=-28 y=917 z=0 locked tier 1 | in=[rsRelease, mask 0] since sig 545 held 536 rs 78
+BEAM t=5563 beam_charge:start actor=0 | s0 y=2241 z=0 locked tier 1 | s1 dx=-23 y=923 z=0 locked tier 1 | in=[mask 0] since sig 546 held 537 rs 79
+BEAM t=5569 beam_charge:end actor=0 | s0 y=2241 z=0 locked tier 1 | s1 dx=-3 y=950 z=0 locked tier 1 | in=[mask 0] since sig 552 held 543 rs 85
+BEAM t=5569 beam_fire: actor=0 | s0 y=2241 z=0 locked tier 1 | s1 dx=-3 y=950 z=0 locked tier 1 | in=[mask 0] since sig 552 held 543 rs 85
+BEAM t=5569 beam_wide: actor=0 | s0 y=2241 z=0 locked tier 1 | s1 dx=-3 y=950 z=0 locked tier 1 | in=[mask 0] since sig 552 held 543 rs 85
+BEAM t=7751 beam_aim: actor=1 | s0 y=1306 z=0 locked tier 1 | s1 dx=58 y=1306 z=0 locked tier 2 | in=[rsStart, rsHeld, mask 0] since sig 41 held 33 rs 0
+BEAM t=8096 beam_charge:start actor=0 | s0 y=1228 z=0 locked tier 1 | s1 dx=-4 y=1212 z=0 locked tier 2 | in=[sig, sigHeld, sprint, mask 8] since sig 0 held 0 rs 101
+BEAM t=8143 beam_charge:end actor=0 | s0 y=1228 z=0 locked tier 1 | s1 dx=-4 y=1223 z=0 locked tier 2 | in=[mask 0] since sig 47 held 42 rs 148
+BEAM t=8143 beam_shove: actor=1 | s0 y=1228 z=0 locked tier 1 | s1 dx=-4 y=1223 z=0 locked tier 2 | in=[mask 0] since sig 47 held 42 rs 148
+BEAM t=8143 beam_window:start actor=0 | s0 y=1228 z=0 locked tier 1 | s1 dx=-4 y=1223 z=0 locked tier 2 | in=[mask 0] since sig 47 held 42 rs 148
+BEAM t=8143 beam_fire: actor=0 | s0 y=1228 z=0 locked tier 1 | s1 dx=-4 y=1223 z=0 locked tier 2 | in=[mask 0] since sig 47 held 42 rs 148
+BEAM t=8187 beam_window:end actor=0 | s0 y=1228 z=0 locked tier 1 | s1 dx=-675 y=1223 z=0 launched tier 2 | in=[mask 0] since sig 91 held 86 rs 192
+BEAM t=8187 beam_outcome:HIT actor=0 | s0 y=1228 z=0 locked tier 1 | s1 dx=-675 y=1223 z=0 launched tier 2 | in=[mask 0] since sig 91 held 86 rs 192
+BEAM t=9165 beam_stage:2 actor=1 | s0 y=1515 z=0 locked tier 1 | s1 dx=58 y=1515 z=0 locked tier 2 | in=[mask 0] since sig 41 held 25 rs 111
+BEAM t=9166 beam_charge:start actor=1 | s0 y=1514 z=0 locked tier 1 | s1 dx=52 y=1515 z=0 locked tier 2 | in=[mask 0] since sig 42 held 26 rs 112
+BEAM t=9172 beam_charge:end actor=1 | s0 y=1509 z=0 locked tier 1 | s1 dx=15 y=1515 z=0 locked tier 2 | in=[mask 0] since sig 48 held 32 rs 118
+BEAM t=9172 beam_fire: actor=1 | s0 y=1509 z=0 locked tier 1 | s1 dx=15 y=1515 z=0 locked tier 2 | in=[mask 0] since sig 48 held 32 rs 118
+BEAM t=9172 beam_wide: actor=1 | s0 y=1509 z=0 locked tier 1 | s1 dx=15 y=1515 z=0 locked tier 2 | in=[mask 0] since sig 48 held 32 rs 118
+BEAM t=11296 beam_aim: actor=1 | s0 y=782 z=0 free tier 2 | s1 dx=-218 y=620 z=0 free tier 2 | in=[mask 8] since sig 118 held 110 rs 148
+BEAM t=11325 beam_stage:2 actor=1 | s0 y=652 z=0 locked tier 2 | s1 dx=-58 y=618 z=0 locked tier 2 | in=[mask 0] since sig 147 held 139 rs 177
+BEAM t=11326 beam_charge:start actor=1 | s0 y=652 z=0 locked tier 2 | s1 dx=-58 y=618 z=0 locked tier 2 | in=[mask 0] since sig 148 held 140 rs 178
+BEAM t=11332 beam_charge:end actor=1 | s0 y=652 z=0 locked tier 2 | s1 dx=-58 y=618 z=0 locked tier 2 | in=[mask 0] since sig 154 held 146 rs 184
+BEAM t=11332 beam_window:start actor=1 | s0 y=652 z=0 locked tier 2 | s1 dx=-58 y=618 z=0 locked tier 2 | in=[mask 0] since sig 154 held 146 rs 184
+BEAM t=11332 beam_fire: actor=1 | s0 y=652 z=0 locked tier 2 | s1 dx=-58 y=618 z=0 locked tier 2 | in=[mask 0] since sig 154 held 146 rs 184
+BEAM t=11370 beam_window:end actor=1 | s0 y=652 z=0 launched tier 2 | s1 dx=-58 y=618 z=0 locked tier 2 | in=[mask 0] since sig 192 held 184 rs 222
+BEAM t=11370 beam_outcome:HIT actor=1 | s0 y=652 z=0 launched tier 2 | s1 dx=-58 y=618 z=0 locked tier 2 | in=[mask 0] since sig 192 held 184 rs 222
+BEAM t=11578 beam_aim: actor=1 | s0 y=1092 z=0 down tier 2 | s1 dx=-2819 y=1169 z=0 free tier 2 | in=[mask 8] since sig 195 held 186 rs 430
+BEAM t=11607 beam_stage:2 actor=1 | s0 y=1822 z=0 locked tier 2 | s1 dx=-2604 y=1177 z=0 locked tier 2 | in=[sprint, mask 8] since sig 224 held 215 rs 459
+BEAM t=11608 beam_charge:start actor=1 | s0 y=1852 z=0 locked tier 2 | s1 dx=-2592 y=1177 z=0 locked tier 2 | in=[sprint, mask 8] since sig 225 held 216 rs 460
+BEAM t=11614 beam_charge:end actor=1 | s0 y=2008 z=0 locked tier 2 | s1 dx=-2527 y=1177 z=0 locked tier 2 | in=[sprint, mask 8] since sig 231 held 222 rs 466
+BEAM t=11614 beam_window:start actor=1 | s0 y=2008 z=0 locked tier 2 | s1 dx=-2527 y=1177 z=0 locked tier 2 | in=[sprint, mask 8] since sig 231 held 222 rs 466
+BEAM t=11614 beam_fire: actor=1 | s0 y=2008 z=0 locked tier 2 | s1 dx=-2527 y=1177 z=0 locked tier 2 | in=[sprint, mask 8] since sig 231 held 222 rs 466
+BEAM t=11672 beam_window:end actor=1 | s0 y=2287 z=0 launched tier 2 | s1 dx=-2409 y=1177 z=0 locked tier 2 | in=[mask 0] since sig 289 held 280 rs 524
+BEAM t=11672 beam_outcome:HIT actor=1 | s0 y=2287 z=0 launched tier 2 | s1 dx=-2409 y=1177 z=0 locked tier 2 | in=[mask 0] since sig 289 held 280 rs 524
+BEAM t=11683 beam_aim: actor=0 | s0 y=2319 z=0 launched tier 2 | s1 dx=-2547 y=1177 z=0 locked tier 2 | in=[rsStart, rsHeld, mask 2] since sig 300 held 291 rs 0
+BEAM t=11844 beam_aim: actor=1 | s0 y=1724 z=0 down tier 2 | s1 dx=-7979 y=1003 z=0 free tier 2 | in=[mask 0] since sig 461 held 452 rs 161
+BEAM t=11922 beam_stage:2 actor=1 | s0 y=2773 z=0 locked tier 2 | s1 dx=-7298 y=1003 z=0 locked tier 2 | in=[sprint, mask 8] since sig 539 held 530 rs 239
+BEAM t=11923 beam_charge:start actor=1 | s0 y=2838 z=0 locked tier 2 | s1 dx=-7253 y=1003 z=0 locked tier 2 | in=[sprint, mask 8] since sig 540 held 531 rs 240
+BEAM t=11929 beam_charge:end actor=1 | s0 y=3165 z=0 locked tier 2 | s1 dx=-7031 y=1003 z=0 locked tier 2 | in=[sprint, mask 8] since sig 546 held 537 rs 246
+BEAM t=11929 beam_window:start actor=1 | s0 y=3165 z=0 locked tier 2 | s1 dx=-7031 y=1003 z=0 locked tier 2 | in=[sprint, mask 8] since sig 546 held 537 rs 246
+BEAM t=11929 beam_fire: actor=1 | s0 y=3165 z=0 locked tier 2 | s1 dx=-7031 y=1003 z=0 locked tier 2 | in=[sprint, mask 8] since sig 546 held 537 rs 246
+BEAM t=11991 beam_window:end actor=1 | s0 y=3853 z=0 launched tier 2 | s1 dx=-6568 y=1003 z=0 locked tier 2 | in=[sprint, mask 8] since sig 608 held 599 rs 308
+BEAM t=11991 beam_outcome:HIT actor=1 | s0 y=3853 z=0 launched tier 2 | s1 dx=-6568 y=1003 z=0 locked tier 2 | in=[sprint, mask 8] since sig 608 held 599 rs 308
+BEAM t=12246 beam_aim: actor=1 | s0 y=2420 z=0 down tier 2 | s1 dx=-4226 y=3014 z=0 free tier 2 | in=[mask 8] since sig 863 held 854 rs 563
+BEAM t=12283 beam_stage:2 actor=1 | s0 y=2426 z=0 locked tier 2 | s1 dx=-3799 y=3014 z=0 locked tier 2 | in=[mask 0] since sig 900 held 891 rs 600
+BEAM t=12284 beam_charge:start actor=1 | s0 y=2426 z=0 locked tier 2 | s1 dx=-3799 y=3014 z=0 locked tier 2 | in=[mask 0] since sig 901 held 892 rs 601
+BEAM t=12290 beam_charge:end actor=1 | s0 y=2444 z=0 locked tier 2 | s1 dx=-3798 y=3014 z=0 locked tier 2 | in=[mask 0] since sig 907 held 898 rs 607
+BEAM t=12290 beam_window:start actor=1 | s0 y=2444 z=0 locked tier 2 | s1 dx=-3798 y=3014 z=0 locked tier 2 | in=[mask 0] since sig 907 held 898 rs 607
+BEAM t=12290 beam_fire: actor=1 | s0 y=2444 z=0 locked tier 2 | s1 dx=-3798 y=3014 z=0 locked tier 2 | in=[mask 0] since sig 907 held 898 rs 607
+BEAM t=12352 beam_window:end actor=1 | s0 y=2445 z=0 launched tier 2 | s1 dx=-3796 y=3014 z=0 locked tier 2 | in=[mask 0] since sig 969 held 960 rs 669
+BEAM t=12352 beam_outcome:HIT actor=1 | s0 y=2445 z=0 launched tier 2 | s1 dx=-3796 y=3014 z=0 locked tier 2 | in=[mask 0] since sig 969 held 960 rs 669
+BEAM t=12443 beam_aim: actor=1 | s0 y=2702 z=0 free tier 2 | s1 dx=-3467 y=2980 z=0 free tier 2 | in=[mask 0] since sig 1060 held 1051 rs 760
+BEAM t=12455 beam_aim: actor=0 | s0 y=2703 z=0 free tier 2 | s1 dx=-3151 y=3003 z=0 free tier 2 | in=[rsStart, rsHeld, mask 2] since sig 1072 held 1063 rs 0
+BEAM t=12456 beam_aim: actor=0 | s0 y=2703 z=0 free tier 2 | s1 dx=-3140 y=3003 z=0 free tier 2 | in=[rsHeld, mask 2] since sig 1073 held 1064 rs 1
+BEAM t=12472 beam_stage:2 actor=1 | s0 y=2703 z=0 locked tier 2 | s1 dx=-3064 y=3003 z=0 locked tier 2 | in=[rsHeld, mask 2] since sig 1089 held 1080 rs 17
+BEAM t=12473 beam_charge:start actor=1 | s0 y=2703 z=0 locked tier 2 | s1 dx=-3063 y=3003 z=0 locked tier 2 | in=[rsHeld, mask 2] since sig 1090 held 1081 rs 18
+BEAM t=12479 beam_charge:end actor=1 | s0 y=2703 z=0 locked tier 2 | s1 dx=-3063 y=3003 z=0 locked tier 2 | in=[rsHeld, mask 2] since sig 1096 held 1087 rs 24
+BEAM t=12479 beam_window:start actor=1 | s0 y=2703 z=0 locked tier 2 | s1 dx=-3063 y=3003 z=0 locked tier 2 | in=[rsHeld, mask 2] since sig 1096 held 1087 rs 24
+BEAM t=12479 beam_fire: actor=1 | s0 y=2703 z=0 locked tier 2 | s1 dx=-3063 y=3003 z=0 locked tier 2 | in=[rsHeld, mask 2] since sig 1096 held 1087 rs 24
+BEAM t=12516 beam_aim: actor=0 | s0 y=2703 z=0 locked tier 2 | s1 dx=-3062 y=3003 z=0 locked tier 2 | in=[rsHeld, mask 2] since sig 1133 held 1124 rs 61
+BEAM t=12540 beam_window:end actor=1 | s0 y=2703 z=0 launched tier 2 | s1 dx=-3062 y=3003 z=0 locked tier 2 | in=[mask 0] since sig 1157 held 1148 rs 85
+BEAM t=12540 beam_outcome:HIT actor=1 | s0 y=2703 z=0 launched tier 2 | s1 dx=-3062 y=3003 z=0 locked tier 2 | in=[mask 0] since sig 1157 held 1148 rs 85
+BEAM t=12621 beam_aim: actor=0 | s0 y=2755 z=0 free tier 2 | s1 dx=-2926 y=2705 z=0 free tier 2 | in=[rsStart, rsHeld, mask 2] since sig 1238 held 1229 rs 0
+BEAM t=12658 beam_aim: actor=1 | s0 y=2755 z=0 free tier 2 | s1 dx=-2633 y=2672 z=0 free tier 2 | in=[rsHeld, mask 2] since sig 1275 held 1266 rs 37
+BEAM t=12673 beam_stage:3 actor=0 | s0 y=2755 z=0 locked tier 2 | s1 dx=-2630 y=2672 z=0 locked tier 2 | in=[rsRelease, mask 0] since sig 1290 held 1281 rs 52
+BEAM t=12674 beam_charge:start actor=0 | s0 y=2755 z=0 locked tier 2 | s1 dx=-2630 y=2672 z=0 locked tier 2 | in=[mask 0] since sig 1291 held 1282 rs 53
+BEAM t=12680 beam_charge:end actor=0 | s0 y=2755 z=0 locked tier 2 | s1 dx=-2629 y=2672 z=0 locked tier 2 | in=[mask 0] since sig 1297 held 1288 rs 59
+BEAM t=12680 beam_window:start actor=0 | s0 y=2755 z=0 locked tier 2 | s1 dx=-2629 y=2672 z=0 locked tier 2 | in=[mask 0] since sig 1297 held 1288 rs 59
+BEAM t=12680 beam_fire: actor=0 | s0 y=2755 z=0 locked tier 2 | s1 dx=-2629 y=2672 z=0 locked tier 2 | in=[mask 0] since sig 1297 held 1288 rs 59
+BEAM t=12738 beam_window:end actor=0 | s0 y=2755 z=0 locked tier 2 | s1 dx=-2629 y=2672 z=0 launched tier 2 | in=[mask 0] since sig 1355 held 1346 rs 117
+BEAM t=12738 beam_outcome:HIT actor=0 | s0 y=2755 z=0 locked tier 2 | s1 dx=-2629 y=2672 z=0 launched tier 2 | in=[mask 0] since sig 1355 held 1346 rs 117
+BEAM t=13083 beam_aim: actor=1 | s0 y=2748 z=0 locked tier 2 | s1 dx=-155 y=2685 z=0 locked tier 2 | in=[mask 0] since sig 1700 held 1691 rs 462
+PRESSES 283 616:sig, 628:sig, 658:sig, 659:sig, 660:sig, 710:rsStart(dir 4 lvl 0), 735:rsStart(dir 4 lvl 0), 792:sig, 802:sig, 847:sig, 1079:rsStart(dir 4 lvl 0), 1101:rsStart(dir 3 lvl 0), 1118:rsStart(dir 3 lvl 0), 1149:sig, 1150:sig, 1193:sig, 1248:sig, 1249:sig, 1250:sig, 1352:sig, 1376:sig, 1406:sig, 1407:sig, 1408:sig, 1409:sig, 1430:sig, 1482:rsStart(dir 2 lvl 0), 1483:rsStart(dir 2 lvl 0), 1484:rsStart(dir 2 lvl 0), 1485:rsStart(dir 2 lvl 0), 1486:rsStart(dir 2 lvl 0), 1512:rsStart(dir 2 lvl 0), 1535:sig, 1553:sig, 1591:sig, 1692:sig, 1872:sig, 1873:sig, 1874:sig, 1935:sig, 1954:sig, 1979:sig, 2030:sig, 2052:sig, 2068:sig, 2085:sig, 2126:sig, 2127:sig, 2151:sig, 2193:sig, 2210:sig, 2280:sig, 2354:sig, 2366:sig, 2397:sig, 2424:sig, 2458:sig, 2482:sig, 2984:sig, 2999:sig, 3027:sig, 3044:sig, 3106:sig, 3120:sig, 3146:sig, 3203:sig, 3296:sig, 3326:sig, 3389:sig, 3571:sig, 3582:sig, 3583:sig, 3600:sig, 3634:sig, 3648:sig, 3674:sig, 3690:sig, 3746:rsStart(dir 4 lvl 0), 3747:rsStart(dir 4 lvl 0), 3782:sig, 3795:sig, 3880:sig, 3956:sig, 3977:sig, 4001:sig, 4011:sig, 4022:sig, 4366:sig, 4389:sig, 4401:sig, 4402:sig, 4403:sig, 4404:sig, 4405:sig, 4406:sig, 4427:rsStart(dir 2 lvl 0), 4452:sig, 4467:sig, 4517:sig, 4531:sig, 4567:sig, 4594:sig, 4595:sig, 4596:sig, 4597:sig, 4598:sig, 4599:sig, 4969:sig, 4970:sig, 4986:sig, 4998:sig, 5017:sig, 5052:rsStart(dir 1 lvl 0), 5484:rsStart(dir 2 lvl 0), 5734:sig, 5752:sig, 5769:sig, 5770:sig, 5800:sig, 5812:sig
+SUMMARY beam events {"beam_aim:":20,"beam_charge:end":11,"beam_charge:start":11,"beam_fire:":11,"beam_outcome:DODGE":1,"beam_outcome:HIT":7,"beam_shove:":2,"beam_stage:1":1,"beam_stage:2":7,"beam_stage:3":1,"beam_wide:":3,"beam_window:end":8,"beam_window:start":8}

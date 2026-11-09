@@ -1,0 +1,8 @@
+PROBE t=2043 sender x 76264 face 1, sent body x 76322 (toward the punch = +1)
+PROBE landing score going WITH the punch +1: -8.0 ; AGAINST it -1: 11.0
+ARC t=2044 launched: from x 76322 y 1356; the curve says it lands at x 50886 (side -1, 372 ticks)
+ARC t=2417 end of the curve: body at x 51511 y 2343 (predicted x 50886, miss 626; ground there 254)
+ARC t=6122 launched: from x 52382 y 1022; the curve says it lands at x 67737 (side +1, 289 ticks)
+ARC t=6412 end of the curve: body at x 67254 y 1839 (predicted x 67737, miss -482; ground there 244)
+ARC t=8995 launched: from x 42531 y 4416; the curve says it lands at x 27176 (side -1, 289 ticks)
+ARC t=9285 end of the curve: body at x 27658 y 1984 (predicted x 27176, miss 482; ground there 283)

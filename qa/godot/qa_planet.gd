@@ -33,6 +33,11 @@ static func setup(seed: int, base: Dictionary = {}) -> Dictionary:
 	var planets: Array = [7]
 	var touches: Array = [0]
 	var cols: int = 2400
+	var swing: String = ""   # swing=off|slow|full sets the match's swing motion (setup.swing); empty leaves the data's
+	var civilians: bool = true   # civilians=0 sets setup.civilians false: World's civilians-removed switch, a run with every person removed (RL-244)
+	var power: int = -1   # power=1|0 sets setup.power: the one energy model on or off for the match, as the page does (-1 leaves the data's switch)
+	var travel: float = 0.0   # travel=1.5 sets setup.travel, the page's ?travel= slider (held to 1.25 .. 2.0 by sim/core/power.gd)
+	var level: String = ""   # level=easy|medium sets setup.aiLevel, the computer's level for the match (a level of data/director/ai.json); empty leaves the data's own
 	for part in spec.split(";", false):
 		var kv: PackedStringArray = part.split("=")
 		if kv.size() != 2:
@@ -42,6 +47,16 @@ static func setup(seed: int, base: Dictionary = {}) -> Dictionary:
 				gen = int(kv[1])
 			"cols":
 				cols = int(kv[1])
+			"swing":
+				swing = kv[1].strip_edges()
+			"civilians":
+				civilians = kv[1].strip_edges() != "0"
+			"power":
+				power = 0 if kv[1].strip_edges() == "0" else 1
+			"travel":
+				travel = float(kv[1].strip_edges())
+			"level":
+				level = kv[1].strip_edges()
 			"planets":
 				planets = Array(kv[1].split(",", false)).map(func(x): return int(x))
 			"touches":
@@ -53,4 +68,14 @@ static func setup(seed: int, base: Dictionary = {}) -> Dictionary:
 	out["arena"] = {"cols": cols}
 	out["planetGen"] = gen
 	out["intro"] = false
+	if swing != "":
+		out["swing"] = swing
+	if not civilians:
+		out["civilians"] = false
+	if power >= 0:
+		out["power"] = power == 1
+	if travel > 0.0:
+		out["travel"] = travel
+	if level != "":
+		out["aiLevel"] = level
 	return out

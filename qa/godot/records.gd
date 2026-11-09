@@ -110,7 +110,11 @@ func _human_step(S, hub: SimInputHub, mode: String, t: int, hs: Dictionary) -> v
 	# (the send, as sim/director/tools/walk_check.gd throws it), then the send's flight is left alone until the cycle (150 ticks) comes round. Without a building in reach it is the plain mash. pushx is the X-only lean of the first read.
 	var cyc: int = t % 150
 	var withB: bool = mode == "push" and (aimed or hs.b)
-	var xOk: bool = (not withB) or cyc < 24
+	# rbeam (EP brief 2026-11-08, the beam baseline): a beam from RB and the right stick toward him, as the scheme has it: every 240 ticks RB goes down at tick 14, the right stick leans toward him from tick 20 to 92 (past stage 3 at about 46 ticks)
+	# and RB comes up at 100; X is left alone in those ticks and mashed (left stick toward him) the rest of the time.
+	var ph: int = t % 240
+	var rbHold: bool = mode == "rbeam" and ph >= 14 and ph < 100
+	var xOk: bool = ((not withB) or cyc < 24) and not rbHold
 	var m8: int = t % 8
 	if m8 == 0 and not hs.x and xOk:
 		hs.x = true
@@ -129,6 +133,16 @@ func _human_step(S, hub: SimInputHub, mode: String, t: int, hs: Dictionary) -> v
 	elif hs.b:
 		hs.b = false
 		hub.pad_button(0, "east", false)
+	if mode == "rbeam":
+		if rbHold and not hs.rb:
+			hs.rb = true
+			hs.rbn = int(hs.rbn) + 1
+			hub.pad_button(0, "rb", true)
+		elif not rbHold and hs.rb:
+			hs.rb = false
+			hub.pad_button(0, "rb", false)
+		var rsx: float = signf(dx) if (rbHold and ph >= 20 and ph < 92 and absf(dx) > 110.0) else 0.0
+		hub.pad_stick_right(0, rsx, 0.0)
 	hub.set_humans(me.ai == null, foe.ai == null)
 	hub.set_struggle(0, SimDir.inStruggle(S, me))
 	var it: SimIntent = hub.intent(0)
@@ -141,6 +155,89 @@ func _human_step(S, hub: SimInputHub, mode: String, t: int, hs: Dictionary) -> v
 		else:
 			hub.resume()
 	hub.on_events(S.out.fx)
+
+
+## One tick of the two reads of the EP's brief of 2026-11-08 (the beam baseline and the close-fight control table). Read-only: nothing here touches the sim.
+## rec.beamGeo: one row a beam fired: t (tick), a (the shooter), ai (shooter is the computer), dai (the target is), rng (true distance at the fire), dx (signed, shooter to target), dy (target minus shooter), dz,
+##   ta/td (tiers), wide (fired wide of him, DirBeamAim), win (ticks hand to arrival from the beam_window cue, -1 none), out (beam_outcome kind: HIT, DODGE, GUARD, CLASH, ESCAPE, DEFLECT; "STRUGGLE" when a late answer
+##   started a struggle instead; "" none seen), ot (the tick of the outcome), dstate (the target's state at the fire).
+## rec.ctl: ticks by category for each fighter, [slot 0, slot 1]; rec.ctlMin: by match minute {n, cant0, cant1}. Categories, first that holds: "launched" (launched or dropped), "down", "stunned" (stunTicks above 0),
+##   "exchange" (in a planned exchange that is not a brawl, or a brawl's set piece: a signature, a beam, a finisher), "queued" (a press waiting in act.queue), "brawl" (in the brawl, where the magnet holds the pair at contact
+##   and every press is a blow), "free". CAN'T ACT on a press = launched + down + stunned + exchange + queued; the brawl is able to act and is listed apart.
+func _qa_tick(S, rec: Dictionary, n: int) -> void:
+	if not rec.has("beamGeo"):
+		rec["beamGeo"] = []
+		rec["ctl"] = {}
+		rec["ctlMin"] = {}
+		rec["_win"] = [-1, -1]
+		rec["launchGeo"] = []   # every launch: t, by (the sender), sent, ux/uy (the direction the sim set), amt (the speed asked of doLaunch: 1.0 is a curve, DirArc.send), side (the sent body's place against the sender, signed), face, plan (the planner's pick within 120 ticks), ai
+	var fs2: Array = S.fighters
+	var beams: Array = rec.beamGeo
+	for e in S.out.fx:
+		if e.type == "beam_outcome":
+			var oa: int = int(e.actor)
+			for bi in range(beams.size() - 1, -1, -1):
+				if int(beams[bi].a) == oa and str(beams[bi].out) == "":
+					beams[bi].out = str(e.kind)
+					beams[bi].ot = n
+					break
+		elif e.type == "launch_plan":
+			rec["_lp"] = [n, str(e.chosen)]
+		elif e.type == "launch":
+			var lb: int = int(e.target)
+			var ls: int = int(e.actor)
+			if lb >= 0 and lb < 2 and ls >= 0 and ls < 2:
+				var lp: Array = rec.get("_lp", [-100000, ""])
+				rec.launchGeo.append({"t": n, "by": lb, "sent": ls, "ux": snappedf(float(e.ux), 0.01), "uy": snappedf(float(e.uy), 0.01), "amt": snappedf(float(e.amount), 0.1), "side": snappedf(SimWrap.sdx(fs2[lb].x, fs2[ls].x), 1.0),
+					"face": float(fs2[lb].face), "plan": str(lp[1]) if n - int(lp[0]) < 120 else "", "ai": fs2[lb].ai != null})
+		elif e.type == "cue":
+			var k: String = str(e.kind)
+			if k == "beam_window" and str(e.text) == "start":
+				rec["_win"][int(e.actor) & 1] = int(e.n)
+			elif k == "beam_fire":
+				var a: int = int(e.actor)
+				if a < 0 or a > 1:
+					continue
+				var A = fs2[a]
+				var D = fs2[1 - a]
+				beams.append({"t": n, "a": a, "ai": A.ai != null, "dai": D.ai != null, "rng": snappedf(absf(SimWrap.sdx(A.x, D.x)), 1.0), "dx": snappedf(SimWrap.sdx(A.x, D.x), 1.0), "dy": snappedf(D.y - A.y, 1.0), "dz": snappedf(float(D.z) - float(A.z), 1.0),
+					"ta": int(A.tier), "td": int(D.tier), "wide": false, "win": int(rec["_win"][a]), "out": "", "ot": -1, "dstate": str(D.state)})
+				rec["_win"][a] = -1
+			elif k == "beam_wide" and not beams.is_empty():
+				beams[beams.size() - 1].wide = true
+			elif k == "beam_struggle" and str(e.text) == "start":
+				for bi in range(beams.size() - 1, -1, -1):
+					if str(beams[bi].out) == "" and n - int(beams[bi].t) < 200:
+						beams[bi].out = "STRUGGLE"
+						beams[bi].ot = n
+						break
+	var ex = DirBrawl.exOf(S)
+	var brawl_on: bool = ex != null and DirBrawl.isBrawl(ex) and ex.branch == "" and not DirBrawl._setPiece(ex)
+	var mn: String = str(n / 3600)
+	var cm: Dictionary = rec.ctlMin
+	var cell: Dictionary = cm.get(mn, {"n": 0, "cant0": 0, "cant1": 0})
+	cell.n = int(cell.n) + 1
+	for i in range(2):
+		var f = fs2[i]
+		var cat: String = "free"
+		if f.state == "launched" or f.state == "dropped":
+			cat = "launched"
+		elif f.state == "down":
+			cat = "down"
+		elif f.stunTicks > 0:
+			cat = "stunned"
+		elif ex != null and (ex.A == f or ex.D == f):
+			cat = "brawl" if brawl_on else "exchange"
+		elif not f.act.queue.is_empty():
+			cat = "queued"
+		if cat == "brawl" and not f.act.queue.is_empty():
+			cat = "brawl"
+		var row: Array = rec.ctl.get(cat, [0, 0])
+		row[i] = int(row[i]) + 1
+		rec.ctl[cat] = row
+		if cat != "free" and cat != "brawl":
+			cell["cant" + str(i)] = int(cell["cant" + str(i)]) + 1
+	cm[mn] = cell
 
 
 func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 300000, start_mode: String = "") -> Dictionary:
@@ -158,7 +255,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	SimCore.newMatch(S, seed, ai0, QaPlanet.setup(seed, hbase))   # QA_PLANET: a planet ring (qa_planet.gd); unset, the hand-made world
 	if hub != null:
 		hub.set_pad_has_right_stick(0, true)
-	var hs := {"x": false, "b": false, "bn": 0}
+	var hs := {"x": false, "b": false, "bn": 0, "rb": false, "rbn": 0}
 	var visited := {}   # place id -> true (see the loop below)
 	if QaPlanet.fellBack(S, seed):   # the slice failed and the match is the hand-made world: stop, never play it as a ring
 		return {}
@@ -289,6 +386,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 		if hub != null:
 			_human_step(S, hub, hum, ticks, hs)
 			rec["humanB"] = int(hs.bn)
+			rec["humanRB"] = int(hs.rbn)
 		else:
 			SimCore.step(S)
 		ticks += 1
@@ -305,6 +403,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 					visited[int(fb.place)] = true
 				else:
 					rec["fallsFar"] = int(rec.get("fallsFar", 0)) + 1
+		_qa_tick(S, rec, ticks)   # EP brief 2026-11-08: every beam with its geometry and outcome, and the ticks each fighter cannot act on a press, by state
 		var dT: float = S.T - prev_t
 		prev_t = S.T
 		if S.game.ko != null and rec.koAt < 0.0:

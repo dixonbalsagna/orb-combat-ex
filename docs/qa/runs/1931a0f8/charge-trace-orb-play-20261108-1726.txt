@@ -1,0 +1,36 @@
+CHARGE stick t=808 (13.5s) held 12 ticks, stages 0 | ended by: the blow landed (stick_hit down) | hits taken in it: 4:light
+CHARGE stick t=1292 (21.5s) held 20 ticks, stages 1 | ended by: the player let go (toward) | hits taken in it: 4:blast, 15:light
+CHARGE stick t=1718 (28.6s) held 69 ticks, stages 4 | ended by: the player let go (toward) | hits taken in it: 59:light
+CHARGE heavy t=1992 (33.2s) held 52 ticks, full at +14 | ended by: the player let go (after 52 ticks of charge) (how 1) | hits taken in it: 5:medium, 19:medium, 24:light, 36:light, 48:light
+CHARGE stick t=4482 (74.7s) held 8 ticks, stages 0 | ended by: the player let go (beam) | hits taken in it: none
+CHARGE stick t=4583 (76.4s) held 28 ticks, stages 2 | ended by: went on as a beam (stage 2) | hits taken in it: none
+CHARGE heavy t=6078 (101.3s) held 44 ticks, full at +12 | ended by: the player let go (after 44 ticks of charge) (how 1) | hits taken in it: 38:light
+CHARGE heavy t=6974 (116.2s) held 43 ticks, full at +16 | ended by: the player let go (after 36 ticks of charge) (how 1) | hits taken in it: 1:light, 13:blast, 25:light, 37:light
+CHARGE stick t=7689 (128.2s) held 91 ticks, stages 5 | ended by: went on as a beam (stage 5) | hits taken in it: none
+CHARGE stick t=8177 (136.3s) held 10 ticks, stages 0 | ended by: the blow landed (stick_hit down) | hits taken in it: 4:light
+CHARGE stick t=8203 (136.7s) held 26 ticks, stages 1 | ended by: the player let go (down) | hits taken in it: 5:light, 14:light, 26:light
+CHARGE heavy t=8319 (138.7s) held 50 ticks, full at +16 | ended by: the player let go (after 50 ticks of charge) (how 1) | hits taken in it: 2:medium, 6:light, 16:light, 28:light
+CHARGE heavy t=8602 (143.4s) held 50 ticks, full at +14 | ended by: the player let go (after 50 ticks of charge) (how 1) | hits taken in it: 9:light, 21:light, 33:light, 45:light
+CHARGE heavy t=8947 (149.1s) held 48 ticks, full at +14 | ended by: the player let go (after 48 ticks of charge) (how 1) | hits taken in it: 3:light, 15:light, 37:medium
+CHARGE stick t=9931 (165.5s) held 8 ticks, stages 0 | ended by: the player let go (beam) | hits taken in it: none
+CHARGE heavy t=10091 (168.2s) held 16 ticks, full at +12 | ended by: stopped by a blow (how 2) | hits taken in it: none
+CHARGE stick t=10220 (170.3s) held 9 ticks, stages 0 | ended by: the player let go (beam) | hits taken in it: 2:medium
+CHARGE stick t=10276 (171.3s) held 12 ticks, stages 1 | ended by: went on as a beam (stage 1) | hits taken in it: none
+CHARGE stick t=10905 (181.8s) held 6 ticks, stages 0 | ended by: the player let go (beam) | hits taken in it: none
+CHARGE stick t=10962 (182.7s) held 10 ticks, stages 0 | ended by: the player let go (beam) | hits taken in it: none
+CHARGE stick t=11082 (184.7s) held 36 ticks, stages 2 | ended by: went on as a beam (stage 2) | hits taken in it: 6:blast
+CHARGE heavy t=12329 (205.5s) held 50 ticks, full at +14 | ended by: the player let go (after 50 ticks of charge) (how 1) | hits taken in it: 4:light, 16:light, 28:light, 40:light
+CHARGE heavy t=14007 (233.4s) held 42 ticks, full at +12 | ended by: the player let go (after 42 ticks of charge) (how 1) | hits taken in it: none
+CHARGE heavy t=14329 (238.8s) held 28 ticks, full at +12 | ended by: lost to a stagger or the brawl's end (how 3) | hits taken in it: none
+CHARGE heavy t=14563 (242.7s) held 22 ticks, full at +12 | ended by: the player let go (after 14 ticks of charge) (how 1) | hits taken in it: 13:light, 19:light
+CHARGE heavy t=16184 (269.7s) held 11 ticks, never full | ended by: a miss (how 4) | hits taken in it: none
+CHARGE heavy t=16238 (270.6s) held 7 ticks, never full | ended by: the player let go (after 1 ticks of charge) (how 1) | hits taken in it: 0:light
+CHARGE heavy t=16355 (272.6s) held 6 ticks, never full | ended by: lost to a stagger or the brawl's end (how 3) | hits taken in it: none
+CHARGE heavy t=16708 (278.5s) held 46 ticks, full at +16 | ended by: the player let go (after 46 ticks of charge) (how 1) | hits taken in it: 0:light, 12:light
+CHARGE heavy t=17084 (284.7s) held 48 ticks, full at +14 | ended by: the player let go (after 48 ticks of charge) (how 1) | hits taken in it: 6:light, 18:light, 30:light
+CHARGE stick t=11931 (198.8s) held 5411 ticks, stages 0 | ended by: a new stick_start | hits taken in it: 25:light, 45:light, 51:light, 57:light, 64:light, 72:light, 82:light, 89:light, 119:light, 131:light, 207:light, 243:light, 251:light, 259:light, 284:light, 296:light, 334:medium, 372:medium, 377:blast, 402:light, 414:light, 426:light, 438:light, 1296:blast, 1340:blast, 1400:light, 1438:light,
+CHARGE stick t=17342 (289.0s) held 113 ticks, stages 5 | ended by: went on as a beam (stage 5) | hits taken in it: none
+CHARGE stick t=17788 (296.5s) held 64 ticks, stages 3 | ended by: went on as a beam (stage 3) | hits taken in it: none
+CHARGE heavy t=18206 (303.4s) held 18 ticks, full at +12 | ended by: the player let go (after 13 ticks of charge) (how 1) | hits taken in it: none
+SUMMARY {"heavy: a miss":1,"heavy: lost to a stagger or the brawl's end":2,"heavy: stopped by a blow":1,"heavy: the player let go (after 1 ticks of charge)":1,"heavy: the player let go (after 13 ticks of charge)":1,"heavy: the player let go (after 14 ticks of charge)":1,"heavy: the player let go (after 36 ticks of charge)":1,"heavy: the player let go (after 42 ticks of charge)":1,"heavy: the playe
+SUMMARY charges 34 (heavy 17, stick 17)

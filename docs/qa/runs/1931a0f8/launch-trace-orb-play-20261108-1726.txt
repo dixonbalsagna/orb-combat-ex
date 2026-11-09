@@ -1,0 +1,26 @@
+LAUNCH t=1099 (18.3s) 1->0 plan=DRIVE DOWN tier 4 speed 6308 | set ux -0.89 uy -0.45 | sent body is left (-x) of the sender (sender faces -x) | moved dx -1074 dy -345 in 24 ticks | slot0: left 1.0,0.0
+LAUNCH t=1564 (26.1s) 0->1 plan=BUILDING SMASH tier 4 speed 7303 | set ux 1.00 uy 0.05 | sent body is right (+x) of the sender (sender faces +x) | moved dx 675 dy 331 in 24 ticks | slot0: left 1.0,-0.1
+LAUNCH t=1591 (26.5s) 0->1 plan=BUILDING SMASH tier 4 speed 4216 | set ux 0.97 uy 0.24 | sent body is right (+x) of the sender (sender faces +x) | moved dx 858 dy 105 in 24 ticks | slot0: face Y
+LAUNCH t=2044 (34.1s) 0->1 plan= tier 4 speed 1 | set ux -0.71 uy 0.71 | sent body is right (+x) of the sender (sender faces +x) | moved dx -1721 dy 2862 in 24 ticks | slot0: none (+93)
+LAUNCH t=2694 (44.9s) 0->1 plan=BUILDING SMASH tier 4 speed 5566 | set ux -1.00 uy 0.05 | sent body is left (-x) of the sender (sender faces -x) | moved dx -1969 dy -8 in 24 ticks | slot0: face Y
+LAUNCH t=2786 (46.4s) 0->1 plan=CRATER SLAM tier 4 speed 3201 | set ux 0.16 uy -0.99 | sent body is right (+x) of the sender (sender faces +x) | moved dx 61 dy -379 in 24 ticks | slot0: none (+90)
+LAUNCH t=4095 (68.3s) 0->1 plan= tier 4 speed 8994 | set ux -1.00 uy 0.10 | sent body is left (-x) of the sender (sender faces -x) | moved dx -1944 dy 114 in 24 ticks | slot0: rsDir 3 lvl 0
+LAUNCH t=4664 (77.7s) 0->1 plan= tier 4 speed 9022 | set ux 1.00 uy 0.09 | sent body is right (+x) of the sender (sender faces +x) | moved dx 2081 dy 106 in 24 ticks | slot0: none (+53)
+LAUNCH t=6122 (102.0s) 0->1 plan= tier 4 speed 1 | set ux 0.71 uy 0.71 | sent body is right (+x) of the sender (sender faces +x) | moved dx 1317 dy 2168 in 24 ticks | slot0: left 0.0,1.0
+LAUNCH t=7017 (117.0s) 0->1 plan=DRIVE DOWN tier 4 speed 7701 | set ux -0.64 uy -0.77 | sent body is left (-x) of the sender (sender faces -x) | moved dx -1433 dy -1562 in 24 ticks | slot0: left 0.0,-1.0
+LAUNCH t=8995 (149.9s) 0->1 plan= tier 4 speed 1 | set ux -0.71 uy 0.71 | sent body is left (-x) of the sender (sender faces -x) | moved dx -1317 dy 1880 in 24 ticks | slot0: left 0.0,-1.0
+LAUNCH t=11284 (188.1s) 0->1 plan=DRIVE DOWN tier 4 speed 5820 | set ux 0.78 uy -0.63 | sent body is right (+x) of the sender (sender faces +x) | moved dx 1066 dy -754 in 24 ticks | slot0: face Y
+LAUNCH t=11305 (188.4s) 0->1 plan=CRATER SLAM tier 4 speed 3061 | set ux 0.16 uy -0.99 | sent body is right (+x) of the sender (sender faces +x) | moved dx 97 dy 43 in 24 ticks | slot0: left 0.9,-0.7
+LAUNCH t=12379 (206.3s) 0->1 plan=UPPERCUT tier 4 speed 6628 | set ux 0.24 uy 0.97 | sent body is right (+x) of the sender (sender faces +x) | moved dx 456 dy 1768 in 24 ticks | slot0: left 0.0,1.0
+LAUNCH t=14049 (234.2s) 0->1 plan=CRATER SLAM tier 4 speed 5185 | set ux -0.16 uy -0.99 | sent body is left (-x) of the sender (sender faces -x) | moved dx -192 dy -520 in 24 ticks | slot0: left 0.0,-1.0
+LAUNCH t=14585 (243.1s) 0->1 plan=BUILDING SMASH tier 4 speed 9143 | set ux -1.00 uy 0.05 | sent body is left (-x) of the sender (sender faces -x) | moved dx -2370 dy 45 in 24 ticks | slot0: left 0.0,1.0
+LAUNCH t=15293 (254.9s) 0->1 plan=DRIVE DOWN tier 4 speed 3812 | set ux 0.64 uy -0.77 | sent body is right (+x) of the sender (sender faces +x) | moved dx 691 dy -759 in 24 ticks | slot0: face Y
+LAUNCH t=15317 (255.3s) 0->1 plan=BUILDING SMASH tier 4 speed 5475 | set ux 1.00 uy 0.05 | sent body is right (+x) of the sender (sender faces +x) | moved dx 1373 dy 11 in 24 ticks | slot0: left 0.0,-1.0
+LAUNCH t=15341 (255.7s) 0->1 plan=DRIVE DOWN tier 4 speed 4093 | set ux 0.79 uy -0.62 | sent body is right (+x) of the sender (sender faces +x) | moved dx 819 dy -513 in 24 ticks | slot0: left 0.0,-1.0
+LAUNCH t=15369 (256.1s) 0->1 plan=UPPERCUT tier 4 speed 3622 | set ux 0.24 uy 0.97 | sent body is right (+x) of the sender (sender faces +x) | moved dx 340 dy 1314 in 24 ticks | slot0: none (+51)
+LAUNCH t=15526 (258.8s) 0->1 plan=DRIVE DOWN tier 4 speed 2695 | set ux 0.64 uy -0.77 | sent body is right (+x) of the sender (sender faces +x) | moved dx 502 dy -574 in 24 ticks | slot0: none (+59)
+LAUNCH t=15548 (259.1s) 0->1 plan=SMASH ACROSS tier 4 speed 3699 | set ux 0.95 uy 0.30 | sent body is right (+x) of the sender (sender faces +x) | moved dx 834 dy 180 in 24 ticks | slot0: face Y
+LAUNCH t=15566 (259.4s) 0->1 plan=SMASH ACROSS tier 4 speed 3303 | set ux 0.95 uy 0.30 | sent body is right (+x) of the sender (sender faces +x) | moved dx 968 dy 191 in 24 ticks | slot0: face X
+LAUNCH t=17209 (286.8s) 0->1 plan=SMASH ACROSS tier 4 speed 6607 | set ux 0.95 uy 0.30 | sent body is right (+x) of the sender (sender faces +x) | moved dx 2278 dy 514 in 24 ticks | slot0: left 0.0,1.0
+LAUNCH t=17921 (298.7s) 0->1 plan= tier 4 speed 6063 | set ux 0.98 uy -0.20 | sent body is right (+x) of the sender (sender faces +x) | moved dx 1386 dy -254 in 24 ticks | slot0: none (+69)
+LAUNCH t=18224 (303.7s) 0->1 plan=DRIVE DOWN tier 4 speed 6236 | set ux 0.89 uy -0.45 | sent body is right (+x) of the sender (sender faces +x) | moved dx 1074 dy 194 in 24 ticks | slot0: none (+57)
