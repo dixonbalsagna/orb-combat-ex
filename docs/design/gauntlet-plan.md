@@ -109,3 +109,42 @@ All three count as honoured, with no refusal cue and no knock. In a window a fli
 4. **Easy against a guard** (ruling 4), only if easy is still lost.
 
 **Read next:** Tools re-runs Orb's scheme first, at 40 a cell: the guard fixed, then each lever as its own scheme, then the arm with holds.
+
+## 6. Easy against Orb's scheme: easy matches your pace (2026-11-08, Encounter's control audit)
+
+**What Encounter found** (build 2's page, the energy model on): Orb's-scheme pad loses 6 of 6 to easy.
+- It takes 171 hits a minute. Easy's lights are 148 of them and about 83% of the damage: flurry lights every 12 ticks with no wind-up, so the held guard blocks 0.8 a minute.
+- Ruling 4's lever (easy's B into a guard) can't move it, at 2.8 heavies a minute.
+- Easy at Saturday's pace (`tapGap` 24 to 30) wins it 5 of 6 for the pad, with hits taken down to 89 a minute.
+
+**Ruling: easy matches the player's own pace** (Encounter's second option), behind a switch. Medium and hard are unchanged.
+
+| | Rule |
+| :--- | :--- |
+| **Easy's gap between blows** | **Never shorter than his recent gap between attack presses,** with a **floor of 12** and a **ceiling of 30** ticks. The recent gap is the median of his last 3 s of attack presses (face buttons and stick strikes; guards don't count) |
+| **The floor** | A masher still meets easy's 12-tick strings, as today. The masher's band against easy (at least 60%) is unchanged |
+| **The ceiling** | A player who barely presses, or only guards, still meets a string every 30 ticks, so easy never goes passive, and a pad that's put down is still the idle rule's to end |
+| **Without a human** (computer against computer, QA's batches) | Easy uses the middle of the old range, 27 |
+
+- **Why the pace and not a flat 24 to 30:** it's what Orb asked for at 21:52, "adaptive to what the player is trying to do". A newcomer meets their own rhythm, and a masher meets mashing.
+- **Why not "unfair" or rubber-banding:** it changes when easy throws, never what its blows are worth, its stats or its reads. The AI still plays by the same rules (`modes.md`).
+- **The bands it answers to:** Orb's scheme at least 70% on easy (§5), the masher at least 60%, and a newcomer beating easy within three tries. Read at 40 a cell.
+- **Data:** `ai.json` easy `brawl.paceMatch: { "enabled": false, "floor": 12, "ceiling": 30, "windowSec": 3, "noHuman": 27 }`.
+
+## 7. Hit-stop's share: yes, it comes down
+
+**Measured:** freeze is 16 to 27% of a match.
+- `data/fight/hitstop.json`, with its 18% budget, is **off.** So it's the brawl's own table (light 2, medium 2, heavy 6) with no budget.
+- With 171 hits a minute, easy's 2-tick lights alone are about 8 s a minute frozen.
+- Orb's 21:52 "weren't in control of our fighter" and Sunday's "charge attacks interrupted arbitrarily" both point at time held still.
+
+| | Ruling |
+| :--- | :--- |
+| **The target** | **At most 15% of a match frozen, on average,** with a player in it |
+| **The ceiling** | **The 18% budget in any rolling 10 s applies to whichever table is live,** the brawl's included (`rulings-2026-10-22.md` 5b). Over it, every stop under a decisive blow is ×0.75, rounded, **at least 1** (a light's 2 goes to 1; the floor was 2, which left lights uncut). Stutter is still capped at 40% in any 10 s |
+| **Never cut** | Decisive blows, the KO, and a launch's held moment (`slam-and-pace.md`) |
+| **Order of levers** | 1. Easy's pace (§6), which roughly halves the hits taken. 2. The budget on the brawl's table. 3. Only then, the flurry light's own stop from 2 to 1 |
+
+## 8. The planned dodge set piece against easy (for the record)
+
+Easy's evasive stance plays the planned dodge set piece for 2 to 3 s a minute. **That's inside §1's limit for time locked by the director** (at most 15%, 9 s a minute), so no new cap. The fix for being carried round is already ruled (`beams-third-play.md`: you only go round after him if you're still pressing toward him). **QA confirms that switch is on in build 2.** If Orb still feels it, easy's evasive stance plays the set piece only against a medium or heavier press, not a light.
