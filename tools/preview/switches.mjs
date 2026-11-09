@@ -182,8 +182,15 @@ export const SWITCHES = [
     what: 'a chord is the biggest press (Controls, docs/controls/pending/chord-full-send; docs/controls/chord-pick.md): when two buttons come together the hub picks the biggest and says what it dropped, and the full send has its own haptic. timing.json switches.chordPick. Needs hapticRefused (the hub needs it to knock and list the drop). ON in Sunday\'s build (the EP, 2026-11-07); it waits, naming the key, until the park lands' },
   { id: 'bNoBeam', file: 'data/input/timing.json', path: ['switches', 'bNoBeam'], from: false, to: true, needs: [], optional: true,
     what: 'B never fires a beam (Orb\'s rule of 2026-11-01: beams come only from the right stick; Controls, docs/controls/pending/b-no-beam, design docs/controls/b-no-beam.md): a player\'s B never starts a beam, alone, with RT held, or with LT held past the flight strike\'s window; the stick\'s own beam is unaffected. timing.json switches.bNoBeam. It reads nothing else. ON in the next build (the EP, 2026-11-08); it waits, naming the key, until the park lands. Note: the park\'s first patch only adds the key, and the switch does nothing until its second patch (director-isb.patch, Encounter\'s DirBrawl.isB) lands too: the row going on is not proof the beam is closed, so read the build\'s own data and the leak check' },
+  { id: 'bNoBeamKeepRt', file: 'data/input/timing.json', path: ['switches', 'bNoBeamKeepRt'], from: false, to: true, needs: ['bNoBeam'], optional: true,
+    what: 'the interim of bNoBeam (the EP, 2026-11-08; Controls\' park docs/controls/pending/b-no-beam): B with RT held is still the signature until RT + right stick is built, so the signature is never unreachable; every other press of B is closed. timing.json switches.bNoBeamKeepRt. Needs bNoBeam (with it off this does nothing). ON in the next build, together with bNoBeam; it waits, naming the key, until the park lands. It goes OFF when the RT + stick signature lands (then B with RT held is closed too)' },
+  { id: 'arrive', file: 'data/director/interrupts.json', path: ['bands', 'arrive', 'enabled'], from: false, to: true, needs: [], optional: true,
+    alsoIn: { file: 'sim/core/fighter.gd', text: 'SimDir.arrive(', why: 'Simulation\'s grant (docs/director/pending/arrive/grant-simulation-arrive.patch): without the hook line in free flight the switch does nothing' },
+    what: 'the arrival (Encounter, docs/director/pending/arrive; Game Design\'s overnight ruling (c)): LT\'s high speed eases into striking distance over the last 1.5 body heights, never through the rival. data/director/interrupts.json bands.arrive.enabled. ON in the next build (the EP, 2026-11-08) and tied to the page\'s "dash": true: the page sends the dash only when this row is on (preview.mjs dashWord), because the flat-out dash at 5,000 a second would fly through the rival without it. It waits, naming what is missing, until BOTH the park (the key) and Simulation\'s grant (the hook line in fighter.gd) have landed' },
   { id: 'inertKnock', file: 'data/input/timing.json', path: ['switches', 'inertKnock'], from: false, to: true, needs: ['rightStick', 'hapticRefused'], optional: true,
     what: 'a right-stick push on a layer where the strike stick is inert (RT held, or LB + RB) is told once: the refusal "charging" ("warding"), one pad knock, one row for UI (Controls, docs/controls/pending/inert-knock; design docs/controls/inert-knock.md). timing.json switches.inertKnock. Needs rightStick and hapticRefused (the hub\'s refusal cues). ON in the next build (the EP, 2026-11-08); it waits, naming the key, until the park lands. UI needs words for charging and warding ("Charging", "Warding"): until it has them the pad knocks and the screen may say nothing' },
+  { id: 'sideFromBlowOnly', file: 'data/director/launch.json', path: ['sideFromBlowOnly'], from: false, to: true, needs: [], optional: true,
+    what: 'a launch goes the way of the blow (Game Design\'s overnight ruling (a), docs/design/overnight-2026-11-08.md; Encounter\'s park docs/director/pending/side-from-blow): the full heavy\'s curve keeps the punch\'s way with the stick at rest, and only the stick picks the far side; the launch planner offers no candidate on the far side. data/director/launch.json sideFromBlowOnly (top level). Off, nothing changes. ON in the next build (the EP, 2026-11-08); it waits, naming the key, until the park lands' },
   { id: 'airBrake', file: 'data/fight/brake.json', path: ['enabled'], from: false, to: true, needs: [], optional: true,
     what: 'the air brake (Game Design, buildings.md 7.2; sim/core/brake.gd): hold LT to brake while knocked back in the air. data/fight/brake.json enabled; SimCore.newMatch copies it into the match, and the file joins a replay\'s data hash only when on. After Simulation\'s determinism and rollback checks' },
   { id: 'stances', file: 'data/director/interrupts.json', path: ['stances', 'enabled'], from: false, to: true, needs: ['rightStick'], optional: true,
@@ -913,6 +920,15 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
     '\t\tif tv > 0.0:',
     '\t\t\td["travel"] = clampf(tv, 1.25, 2.0)',
   ];
+  // the flat-out dash (Simulation's power-dash park, Game Design's overnight ruling (c); the EP, 2026-11-08): with the model on the page sends "dash": true, so LT held is fast at any range in Orb's solo play, unless ?dash=0 or ?dash=off. Only for a tree that has the key (dashWord): the black box records the setup, so a saved match carries it. The web's parse_args drops a word valued 0, so the page reads its own address for it.
+  const dashLines = [
+    '\t\t# the flat-out dash (setup "dash": LT held is fast at any range): on with the model, ?dash=0 or ?dash=off puts none (the address is read for the 0)',
+    '\t\tvar dash_off: bool = args.has("dash") and (str(args["dash"]) == "0" or str(args["dash"]) == "off")',
+    '\t\tif OS.has_feature("web"):',
+    '\t\t\tdash_off = dash_off or bool(JavaScriptBridge.eval("/[?&]dash=(0|off)(&|$)/.test(location.search)", true))',
+    '\t\tif not dash_off:',
+    '\t\t\td["dash"] = true',
+  ];
   const circleLines = [
     '## Scratch (tools/preview): ?circle=1 turns the stance circle (LT + Y in reach; Encounter, docs/director/pending/stance-circle) on for the match: data stances.circle.enabled, off as shipped. Local pages only.',
     'func _preview_circle() -> void:',
@@ -939,6 +955,7 @@ export function planetFunc(extra = [], setup = {}, opts = {}) {
     ...(opts.tierWord ? tierLines : []),
     ...(opts.hitstopWord ? hitstopLines : []),
     ...(opts.powerWord ? powerLines : []),
+    ...(opts.powerWord && opts.dashWord ? dashLines : []),   // inside powerLines' `if not pw_off:` block, so only with the model on
     '\treturn d',
     '',
     '',
