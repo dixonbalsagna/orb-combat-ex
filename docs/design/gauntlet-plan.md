@@ -145,6 +145,16 @@ All three count as honoured, with no refusal cue and no knock. In a window a fli
 | **Never cut** | Decisive blows, the KO, and a launch's held moment (`slam-and-pace.md`) |
 | **Order of levers** | 1. Easy's pace (§6), which roughly halves the hits taken. 2. The budget on the brawl's table. 3. Only then, the flurry light's own stop from 2 to 1 |
 
+**The budget's numbers (2026-11-09, on Simulation's `hitstop-any` park):** `budget.share` **0.12**, `cutMul` **0.7**, and **`heavy` joins `neverCut`.**
+- **Why the park barely moved the share** (20.3% to 19.6% on the default arena, 16.6% to 16.3% on planet 7):
+  - The budget only bit above 18%, which is over the 15% target.
+  - More importantly, **the brawl's stops are mostly 2 ticks** (light 2, medium 2), and ×0.75 rounds back to 2 (`jround(1.5)` is 2), so most frozen ticks were never cut at all.
+- **The fix:**
+  - **At 0.12** the budget sits 3 points under the target, so it pulls the average below 15%, with room for the decisive blows, KOs and launches that are never cut.
+  - **At ×0.7,** a 2-tick light or medium becomes 1 while over budget. That's the bulk of the frozen time.
+  - **Heavies keep their whole 6** (the weight of the big blows, the thing Orb could barely feel), so the cut lands on the volume of light hits, the "every hit seems to interrupt".
+- **Expected:** under 15% on both arenas. QA reads the mean and the worst 10 s on the park's 8 seeds. **Lever,** if it's still over: share 0.10. If light hits stop reading as hits in Orb's play: share back toward 0.15, never `cutMul` above 0.74, because that rounds the 2 back again.
+
 ## 8. The planned dodge set piece against easy (for the record)
 
 Easy's evasive stance plays the planned dodge set piece for 2 to 3 s a minute. **That's inside §1's limit for time locked by the director** (at most 15%, 9 s a minute), so no new cap. The fix for being carried round is already ruled (`beams-third-play.md`: you only go round after him if you're still pressing toward him). **QA found it was never built (2026-11-08):** the rush in `exchange.gd` (lines 448 and 548) carries the player round unconditionally in build 2. **It goes before `paceMatch`.** It's a small condition on the rush, and it's Orb's own complaint (16 of 31 side swaps on 11-06), so the 15% reading only holds once it's in. If Orb still feels it, easy's evasive stance plays the set piece only against a medium or heavier press, not a light.
