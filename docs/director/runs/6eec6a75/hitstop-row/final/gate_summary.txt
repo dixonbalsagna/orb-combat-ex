@@ -1,0 +1,2 @@
+gate final_orbs: hs_final_orbs.txt: no SCRIPT ERROR lines
+gate final_masher: hs_final_masher.txt: no SCRIPT ERROR lines
