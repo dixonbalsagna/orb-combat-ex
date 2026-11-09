@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=1280">
+<title>Menus, direction B: the tiles</title>
+<style>
+:root{--bg:#070a11;--panel:rgba(11,14,22,.96);--ink:#ece9e1;--dim:#9aa0ad;--edge:#2b3243;--gold:#f2c14e}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1280px;height:720px;background:var(--bg);overflow:hidden}
+body{font-family:"Segoe UI","Noto Sans","Helvetica Neue",Arial,sans-serif;color:var(--ink)}
+.stage{position:relative;width:1280px;height:720px;overflow:hidden}
+.world{position:absolute;inset:0;background:url(world-1280x720.png) center/cover;filter:brightness(.5)}
+.plain{position:absolute;inset:0;background:radial-gradient(1200px 700px at 50% 30%,#10172a,#070a11)}
+h1{position:absolute;left:0;right:0;top:44px;text-align:center;font-size:44px;font-weight:600}
+.sub{position:absolute;left:0;right:0;top:104px;text-align:center;font-size:19px;color:var(--dim)}
+.tiles{position:absolute;left:90px;right:90px;top:170px;display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.tile{height:250px;border:1.5px solid var(--edge);border-radius:22px;background:var(--panel);padding:26px 28px;position:relative}
+.tile h2{font-size:30px;font-weight:600;margin-bottom:10px}
+.tile p{font-size:19px;color:#c9c6bd;line-height:1.45}
+.tile .ic{width:64px;height:64px;border-radius:18px;background:#1b2132;margin-bottom:18px;display:flex;align-items:center;justify-content:center;font-size:34px}
+.tile.focus{background:var(--ink);color:#0c0f16;border-color:var(--ink);box-shadow:0 0 0 4px rgba(242,193,78,.55)}
+.tile.focus p{color:#3d4354}.tile.focus .ic{background:#d9d4c6}
+.row2{position:absolute;left:90px;right:90px;top:444px;display:flex;gap:22px}
+.pill{border:1.5px solid #5a6176;border-radius:28px;padding:12px 24px;font-size:20px;background:var(--panel)}
+.pill.on{background:#1b2132;border-color:var(--ink)}
+.notice{position:absolute;left:90px;right:90px;bottom:84px;border:1px solid var(--edge);border-radius:16px;background:var(--panel);padding:16px 24px;font-size:16px;color:#cfccc3;line-height:1.45}
+.notice b{color:var(--ink);letter-spacing:.14em;font-size:13px;text-transform:uppercase;margin-right:10px;color:var(--dim)}
+.hints{position:absolute;left:0;right:0;bottom:0;height:56px;display:flex;align-items:center;justify-content:center;gap:34px;color:var(--dim);font-size:16px}
+.hints span{white-space:nowrap}.hints b{display:inline-block;min-width:26px;height:26px;border-radius:13px;border:1.5px solid #6c7384;color:var(--ink);text-align:center;line-height:23px;font-size:14px;margin-right:8px;padding:0 6px}
+.go{position:absolute;right:90px;top:44px;height:56px;padding:0 28px;border-radius:14px;background:var(--gold);color:#16120a;font-size:21px;font-weight:600;display:flex;align-items:center}
+.badge{display:inline-block;min-width:26px;height:26px;border-radius:13px;background:#2b3243;color:var(--ink);font-size:15px;text-align:center;line-height:26px;margin-left:10px;padding:0 7px}
+.big{position:absolute;left:0;right:0;top:120px;text-align:center}
+.big h2{font-size:64px;font-weight:600}.big p{font-size:21px;color:var(--dim);margin-top:8px}
+.two{position:absolute;left:190px;right:190px;top:300px;display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.two .tile{height:180px}
+.s-start,.s-over{display:none}
+body[data-s="start"] .s-start,body[data-s="over"] .s-over{display:block}
+</style></head>
+<body><div class="stage">
+<div class="s-start">
+  <div class="plain"></div>
+  <h1>Orb Combat EX</h1><div class="sub">Pick how you want to play</div>
+  <div class="tiles">
+    <div class="tile focus"><div class="ic">1</div><h2>1 player</h2><p>You against the computer. Medium.</p></div>
+    <div class="tile"><div class="ic">2</div><h2>2 players</h2><p>Two people, one screen or two controllers.</p></div>
+    <div class="tile"><div class="ic">⚙</div><h2>Comfort</h2><p>Intros, captions, move guide, screen shake, reduce flashing.</p></div>
+  </div>
+  <div class="row2"><span class="pill on">Keyboard</span><span class="pill">Controller</span><span class="pill" style="margin-left:24px">Easy</span><span class="pill on">Medium</span><span class="pill">Hard</span></div>
+  <div class="notice"><b>Read this first</b>This game contains flashing effects. Our own automated check found some scenes that go over the recommended limit of three flashes a second, and they are not fixed yet. No independent analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.</div>
+  <div class="go">I understand, start</div>
+  <div class="hints"><span><b>←→</b>Choose</span><span><b>A</b>Select</span><span><b>B</b>Not now</span></div>
+</div>
+<div class="s-over">
+  <div class="world"></div>
+  <div class="big"><h2>Grist wins</h2><p>Buildings lost 0 &nbsp;·&nbsp; Craters 0</p></div>
+  <div class="two">
+    <div class="tile focus"><h2>Play again</h2><p>Same setup, new seed.</p></div>
+    <div class="tile"><h2>Save this match</h2><p>A small file with this match's seed, settings and your note.</p></div>
+  </div>
+  <div class="row2" style="top:520px;left:190px;right:190px"><span class="pill">Send feedback</span><span class="pill">Main menu</span></div>
+  <div class="hints"><span><b>←→</b>Choose</span><span><b>A</b>Select</span><span><b>B</b>Main menu</span></div>
+</div>
+</div>
+<script>document.body.dataset.s=(new URLSearchParams(location.search).get("s")||"start")</script>
+</body></html>

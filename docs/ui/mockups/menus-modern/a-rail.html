@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=1280">
+<title>Menus, direction A: the rail</title>
+<style>
+:root{--bg:#070a11;--panel:rgba(9,12,19,.95);--ink:#ece9e1;--dim:#9aa0ad;--edge:#2b3243;--gold:#f2c14e;--dark:#10131b}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1280px;height:720px;background:var(--bg);overflow:hidden}
+body{font-family:"Segoe UI","Noto Sans","Helvetica Neue",Arial,sans-serif;color:var(--ink)}
+.stage{position:relative;width:1280px;height:720px;overflow:hidden}
+.world{position:absolute;inset:0;background:url(world-1280x720.png) center/cover;filter:brightness(.55)}
+.plain{background:linear-gradient(180deg,#0a0d16,#070a11)}
+.rail{position:absolute;left:0;top:0;bottom:0;width:380px;background:var(--panel);border-right:1px solid var(--edge);padding:48px 34px 0}
+.rail h1{font-size:15px;letter-spacing:.18em;color:var(--dim);font-weight:600;text-transform:uppercase}
+.rail h2{font-size:42px;line-height:1.1;margin:8px 0 26px;font-weight:600}
+.item{display:flex;align-items:center;justify-content:space-between;height:52px;margin:0 -14px 6px;padding:0 14px 0 20px;border-radius:12px;font-size:25px;color:var(--ink);position:relative}
+.item .v{font-size:19px;color:var(--dim)}
+.item.focus{background:var(--ink);color:#0c0f16}
+.item.focus .v{color:#3b4152}
+.item.focus:before{content:"";position:absolute;left:5px;top:12px;bottom:12px;width:5px;border-radius:3px;background:var(--gold)}
+.item.sub{font-size:21px;height:44px;color:var(--dim)}
+.badge{display:inline-block;min-width:26px;height:26px;border-radius:13px;background:#2b3243;color:var(--ink);font-size:15px;text-align:center;line-height:26px;margin-left:10px;padding:0 7px}
+.hints{position:absolute;left:0;right:0;bottom:0;height:56px;display:flex;align-items:center;gap:26px;padding:0 34px;color:var(--dim);font-size:16px;background:linear-gradient(0deg,rgba(0,0,0,.55),transparent)}
+.hints span{white-space:nowrap}.hints b{display:inline-block;min-width:26px;height:26px;border-radius:13px;border:1.5px solid #6c7384;color:var(--ink);text-align:center;line-height:23px;font-size:14px;margin-right:8px;padding:0 6px}
+.card{position:absolute;background:var(--panel);border:1px solid var(--edge);border-radius:18px;padding:26px 30px}
+.card h3{font-size:14px;letter-spacing:.16em;color:var(--dim);text-transform:uppercase;margin-bottom:12px;font-weight:600}
+.card p{font-size:19px;line-height:1.5;color:#d8d5cd}
+.kv{display:flex;justify-content:space-between;font-size:20px;padding:9px 0;border-bottom:1px solid #1d2230}
+.kv span:last-child{color:var(--dim)}
+.go{position:absolute;right:48px;bottom:48px;height:64px;padding:0 34px;border-radius:14px;background:var(--gold);color:#16120a;font-size:24px;font-weight:600;display:flex;align-items:center;gap:14px;box-shadow:0 0 0 3px rgba(242,193,78,.25)}
+.go.quiet{background:transparent;color:var(--ink);border:1.5px solid #5a6176;box-shadow:none;font-weight:500}
+.chip{display:inline-block;border:1.5px solid #5a6176;border-radius:20px;padding:6px 16px;font-size:17px;color:#d8d5cd}
+.tabs{position:absolute;left:48px;top:30px;display:flex;gap:6px;align-items:center;background:var(--panel);border:1px solid var(--edge);border-radius:34px;padding:8px 14px}
+.tab{padding:10px 20px;border-radius:22px;font-size:20px;color:var(--dim)}
+.tab.on{background:var(--ink);color:#0c0f16}
+.rows{position:absolute;left:48px;top:100px;width:700px;background:var(--panel);border:1px solid var(--edge);border-radius:18px;padding:12px 14px}
+.row{display:flex;justify-content:space-between;align-items:center;height:56px;padding:0 18px;border-radius:12px;font-size:22px}
+.row.focus{background:#1b2030;outline:2px solid var(--ink)}
+.row .ctl{display:flex;align-items:center;gap:14px;color:var(--ink)}
+.arrow{width:34px;height:34px;border:1.5px solid #6c7384;border-radius:9px;text-align:center;line-height:30px;color:var(--ink);font-size:19px}
+.toggle{width:62px;height:32px;border-radius:16px;background:var(--ink);position:relative}
+.toggle:after{content:"";position:absolute;right:4px;top:4px;width:24px;height:24px;border-radius:12px;background:#0c0f16}
+.hide{display:none}
+body[data-s="start"] .s-start,body[data-s="pause"] .s-pause,body[data-s="options"] .s-options,body[data-s="over"] .s-over{display:block}
+.s-start,.s-pause,.s-options,.s-over{display:none}
+.note{position:absolute;left:34px;right:34px;bottom:70px;font-size:15px;color:#7d8494}
+</style></head>
+<body><div class="stage">
+
+<!-- START -->
+<div class="s-start">
+  <div class="plain" style="position:absolute;inset:0"></div>
+  <div class="rail">
+    <h1>Orb Combat EX</h1><h2>Start a match</h2>
+    <div class="item focus">Players<span class="v">1 player &nbsp;›</span></div>
+    <div class="item">Player 1<span class="v">Keyboard &nbsp;›</span></div>
+    <div class="item">Computer<span class="v">Medium &nbsp;›</span></div>
+    <div class="item sub">Intros<span class="v">On</span></div>
+    <div class="item sub">Captions<span class="v">On</span></div>
+    <div class="item sub">Move guide<span class="v">On</span></div>
+    <div class="item sub">Screen shake<span class="v">On</span></div>
+    <div class="item sub">Reduce flashing<span class="v">On</span></div>
+    <div class="hints"><span><b>A</b>Change</span><span><b>B</b>Not now</span><span><b>Y</b>Details</span></div>
+  </div>
+  <div class="card" style="left:430px;top:48px;width:802px;height:248px"><h3>Read this first</h3>
+    <p>This game contains flashing effects. Our own automated check found some scenes that go over the recommended limit of three flashes a second, and they are not fixed yet. No independent analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.</p></div>
+  <div class="card" style="left:430px;top:316px;width:802px;height:176px"><h3>This match</h3>
+    <div class="kv"><span>You</span><span>Keyboard, player 1</span></div>
+    <div class="kv" style="border:none"><span>Against</span><span>The computer, Medium</span></div></div>
+  <div style="position:absolute;left:430px;top:512px;color:#7d8494;font-size:17px;width:640px;line-height:1.5">Reduce flashing: on. Turning it off restores full effects, which flash more.</div>
+  <div class="go quiet" style="right:384px">Not now</div>
+  <div class="go">I understand, start <span style="font-size:16px;font-weight:500;opacity:.7">A</span></div>
+</div>
+
+<!-- PAUSE -->
+<div class="s-pause">
+  <div class="world"></div>
+  <div class="rail">
+    <h1>Paused</h1><h2>Take a breath</h2>
+    <div class="item focus">Resume<span class="v">P</span></div>
+    <div class="item">How to play<span class="v">F1</span></div>
+    <div class="item">Settings</div>
+    <div class="item">Send feedback</div>
+    <div class="item">About</div>
+    <div class="item">Main menu</div>
+    <div class="item">New match<span class="v">N</span></div>
+    <div class="hints"><span><b>A</b>Select</span><span><b>B</b>Resume</span><span><b>Start</b>Resume</span></div>
+  </div>
+  <div class="card" style="right:48px;bottom:84px;width:330px;padding:20px 24px"><h3>This match</h3>
+    <div class="kv"><span>Time</span><span>22.8 s</span></div>
+    <div class="kv"><span>Buildings lost</span><span>0</span></div>
+    <div class="kv" style="border:none"><span>Craters</span><span>0</span></div></div>
+  <div class="chip" style="position:absolute;right:48px;top:120px;background:rgba(9,12,19,.9)">Player two: press any button to join</div>
+</div>
+
+<!-- OPTIONS -->
+<div class="s-options">
+  <div class="world"></div>
+  <div class="tabs"><span class="badge" style="margin:0 6px 0 0">LB</span><span class="tab on">Controls</span><span class="tab">Display</span><span class="tab">Sound</span><span class="tab">Accessibility</span><span class="tab">Camera</span><span class="badge" style="margin-left:6px">RB</span></div>
+  <div class="rows">
+    <div class="row"><span>Controller layout</span><span class="ctl"><span class="arrow">‹</span>Arena<span class="arrow">›</span></span></div>
+    <div class="row focus"><span>Hand layout</span><span class="ctl"><span class="arrow">‹</span>Standard<span class="arrow">›</span></span></div>
+    <div class="row"><span>Controller has a second stick</span><span class="ctl">On<span class="toggle"></span></span></div>
+    <div class="row"><span>Strike on the D-pad</span><span class="ctl"><span class="arrow">‹</span>Auto<span class="arrow">›</span></span></div>
+    <div class="row"><span>Strike style</span><span class="ctl"><span class="arrow">‹</span>Hold<span class="arrow">›</span></span></div>
+    <div class="row"><span>Beam struggle push</span><span class="ctl"><span class="arrow">‹</span>Face buttons<span class="arrow">›</span></span></div>
+    <div class="row"><span>Brace style</span><span class="ctl"><span class="arrow">‹</span>Flick<span class="arrow">›</span></span></div>
+  </div>
+  <div class="card" style="left:780px;top:100px;width:452px;height:330px"><h3>Hand layout</h3>
+    <p>Which hand flies and defends and which hand strikes. <b>Standard</b> is the usual arrangement. <b>Swapped</b> mirrors the whole controller: the stick that flew now strikes, the shoulders trade places, and the face buttons and the D-pad trade places.</p>
+    <p style="margin-top:14px;color:#9aa0ad;font-size:17px">Now: Standard. Default: Standard.</p></div>
+  <div class="hints"><span><b>↑↓</b>Choose</span><span><b>←→</b>Change</span><span><b>Y</b>Reset this page</span><span><b>B</b>Back</span></div>
+</div>
+
+<!-- MATCH OVER -->
+<div class="s-over">
+  <div class="world"></div>
+  <div class="rail">
+    <h1>Match over</h1><h2>Grist wins</h2>
+    <div class="item focus">Play again<span class="v">A</span></div>
+    <div class="item">Save this match</div>
+    <div class="item">Send feedback</div>
+    <div class="item">Main menu</div>
+    <div class="hints"><span><b>A</b>Select</span><span><b>B</b>Main menu</span></div>
+  </div>
+  <div class="card" style="right:48px;bottom:84px;width:430px"><h3>Save this match</h3>
+    <p>A small file with this match's seed, settings and your note. It stays on your computer until you send it to us.</p></div>
+  <div class="card" style="right:48px;top:130px;width:330px;padding:20px 24px"><h3>This match</h3>
+    <div class="kv"><span>Buildings lost</span><span>0</span></div>
+    <div class="kv" style="border:none"><span>Craters</span><span>0</span></div></div>
+</div>
+
+</div>
+<script>document.body.dataset.s=(new URLSearchParams(location.search).get("s")||"start")</script>
+</body></html>
