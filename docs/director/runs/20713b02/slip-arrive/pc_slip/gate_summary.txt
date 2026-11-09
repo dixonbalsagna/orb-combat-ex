@@ -1,0 +1,3 @@
+gate: <scratch>/g/pc_slip/base_on.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/pc_slip/head_off.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/pc_slip/head_on.txt: no SCRIPT ERROR lines

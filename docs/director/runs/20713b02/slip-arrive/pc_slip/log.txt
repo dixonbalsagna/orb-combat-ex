@@ -1,0 +1,4 @@
+10:50:01 head_off exit 0: POWER: 0 check(s) failed; fails: 
+10:52:02 head_on exit 1: POWER: 5 check(s) failed; fails: close from 1000 at tier 1 in -0.02 s with the kick (at|close from 3000 at tier 1 in -0.02 s with the kick (at|close from 6000 at tier 1 in -0.02 s with the kick (at|close from 6000 at tier 4 in -0.02 s with the kick (at|held 12 ticks at 1,000 apart: the same as off|
+10:54:02 base_on exit 1: POWER: 4 check(s) failed; fails: close from 1000 at tier 1 in -0.02 s with the kick (at|close from 3000 at tier 1 in -0.02 s with the kick (at|close from 6000 at tier 1 in -0.02 s with the kick (at|close from 6000 at tier 4 in -0.02 s with the kick (at|
+10:54:02 restored: 0 changed; done

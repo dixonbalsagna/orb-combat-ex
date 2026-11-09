@@ -1,0 +1,6 @@
+FAIL  close from 1000 at tier 1 in -0.02 s with the kick (at most 0.40)
+FAIL  close from 3000 at tier 1 in -0.02 s with the kick (at most 0.80)
+FAIL  close from 6000 at tier 1 in -0.02 s with the kick (at most 1.40)
+FAIL  close from 6000 at tier 4 in -0.02 s with the kick (at most 0.75)
+POWER: 4 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).

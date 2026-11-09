@@ -1,0 +1,5 @@
+10:20:45 arrive on: "arrive": {"enabled": true
+10:21:37 two_states_check on exit 0: PASS  0 failure(s)
+10:21:58 arrive_check on exit 0: ARRIVE: 0 check(s) failed
+10:24:03 power_check on exit 1: POWER: 7 check(s) failed
+10:24:03 data put back: 0 changed; lane on done

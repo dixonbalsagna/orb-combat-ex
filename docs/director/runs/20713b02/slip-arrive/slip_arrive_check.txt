@@ -1,0 +1,43 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+      dash from 600, toward: closest 187.5 (mark 187.5), passed false, at the mark by tick 14, the biggest step 54.7, ticks in the last 1.5 bh 5
+      dash from 1500, toward: closest 187.5 (mark 187.5), passed false, at the mark by tick 26, the biggest step 77.2, ticks in the last 1.5 bh 5
+      dash from 3000, toward: closest 187.5 (mark 187.5), passed false, at the mark by tick 66, the biggest step 60.8, ticks in the last 1.5 bh 5
+      plain from 1500, toward: closest 1.6 (mark 187.5), passed true, at the mark by tick 190, the biggest step 7.2, ticks in the last 1.5 bh 14
+      dash from 1500, away: closest 1501.9 (mark 187.5), passed false, at the mark by tick -1, the biggest step 172.0, ticks in the last 1.5 bh 0
+      dash from 1500, toward, off: closest 1.0 (mark 187.5), passed true, at the mark by tick 23, the biggest step 79.5, ticks in the last 1.5 bh 4
+      plain from 1500, toward, off: closest 1.6 (mark 187.5), passed true, at the mark by tick 190, the biggest step 7.2, ticks in the last 1.5 bh 14
+      dash from 1500, away, off: closest 1501.9 (mark 187.5), passed false, at the mark by tick -1, the biggest step 172.0, ticks in the last 1.5 bh 0
+ok    on: from 600, 1,500 and 3,000 he reaches the mark and never comes closer or passes him
+ok    on: no tick moves him more than 3 bh, and the last 1.5 bh take at least 4 ticks (RL-076)
+ok    on: plain flight (no dash) and flying away are untouched
+ok    negative control, off: at that speed he flies through the mark (closest 1.0, passed true)
+      slip, a tap of 1 at 400 with the stick held 60 ticks: crosses the mark at 48 a second (his own flight 430; unread 1047)
+      slip, a tap of 2 at 400 with the stick held 60 ticks: crosses the mark at 48 a second (his own flight 430; unread 2418)
+      slip, a tap of 3 at 400 with the stick held 60 ticks: crosses the mark at 48 a second (his own flight 430; unread 1613)
+      slip, a tap of 4 at 400 with the stick held 60 ticks: crosses the mark at 48 a second (his own flight 430; unread 1003)
+      slip, a tap of 5 at 400 with the stick held 60 ticks: crosses the mark at 48 a second (his own flight 430; unread 547)
+      slip, travelled in 60 ticks at 400 apart, the stick held (bh): tap 1: 6.57 bh (unread 9.19); tap 2: 6.57 bh (unread 10.05); tap 3: 6.57 bh (unread 9.93); tap 4: 6.57 bh (unread 9.20); tap 5: 6.57 bh (unread 8.22); the stick alone 4.98
+      slip, a tap of 1 at 400 with the stick let go with it: closest 187.5 (mark 187.5), passed false, leap 2.83 bh
+      slip, a tap of 2 at 400 with the stick let go with it: closest 187.5 (mark 187.5), passed false, leap 2.83 bh
+      slip, a tap of 3 at 400 with the stick let go with it: closest 187.5 (mark 187.5), passed false, leap 2.83 bh
+      slip, a tap of 4 at 400 with the stick let go with it: closest 187.5 (mark 187.5), passed false, leap 2.83 bh
+      slip, a tap of 5 at 400 with the stick let go with it: closest 187.5 (mark 187.5), passed false, leap 2.83 bh
+ok    slip on: a tap of 1 to 5 ticks with the stick let go never comes inside the mark or passes him
+ok    slip on: with the stick held toward him, he crosses the mark no faster than his own flight
+ok    far from him (3,000 apart) taps of 1, 2, 5 and holds of 6, 60, and a dash held all the way at 400, move as with the carry unread
+ok    the slip on: plain flight toward him (no LT), straight and on the diagonal, moves as with the carry unread
+ok    the slip off: a tap moves as with the carry unread
+ok    negative control, the carry unread: a tap of 1 passes inside the mark (closest 49.3, passed false)
+      hold 13, travelled in 60 ticks at 400 apart, the stick held (bh): 1: 6.57; 2: 6.57; 3: 6.57; 4: 6.57; 5: 6.57; 6: 6.57; 7: 6.57; 8: 6.57; 9: 6.57; 10: 6.57; 11: 6.57; 12: 6.57; today (a 13-tick dash, the slip off) 6.57
+ok    hold 13: at 400 apart a press of 1 to 12 with the stick held travels no further than today's 13-tick dash (6.57 bh, within 0.01 bh)
+      hold 13, a tap of 1 at 400 with the stick let go with it: closest 187.5 (mark 187.5), passed false
+      hold 13, a tap of 2 at 400 with the stick let go with it: closest 187.5 (mark 187.5), passed false
+      hold 13, a tap of 3 at 400 with the stick let go with it: closest 187.5 (mark 187.5), passed false
+      hold 13, a tap of 4 at 400 with the stick let go with it: closest 187.5 (mark 187.5), passed false
+      hold 13, a tap of 5 at 400 with the stick let go with it: closest 187.5 (mark 187.5), passed false
+ok    hold 13: a tap of 1 to 5 with the stick let go never comes inside the mark or passes him
+ok    negative control, hold 0: a press of 1 with the stick held travels further than today's (7.88 bh against 6.57)
+ARRIVE: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

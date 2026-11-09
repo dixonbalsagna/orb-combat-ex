@@ -1,0 +1,2 @@
+POWER: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).

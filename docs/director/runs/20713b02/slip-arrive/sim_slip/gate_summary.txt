@@ -1,0 +1,17 @@
+gate: <scratch>/g/sim_slip/arrive_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_slip/carry_round_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_slip/chase_tap_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_slip/core_kick_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_slip/core_load_split.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_slip/core_power_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_slip/core_two_states_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_slip/ending_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_slip/flight_strike_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_slip/follow_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_slip/outside_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_slip/pace_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_slip/parity.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_slip/press_decides_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_slip/stick_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_slip/swing_check.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/sim_slip/walk_check.txt: no SCRIPT ERROR lines

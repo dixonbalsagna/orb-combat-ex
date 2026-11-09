@@ -1,0 +1,18 @@
+ok    off: nothing counted (0 slots)
+ok    under the time: wear as ever
+ok    no input for the time: wear x2
+ok    any input ends it at once
+ok    idle on the brink for the wear's time: he isn't pushed yet
+ok    idle on the brink for the push's time, the rival playing: he's open
+ok    both idle: nobody's opened
+ok    an AI's never idle
+ok    the cap is at 11:00 (660)
+ok    the cap fires
+ok    both on the brink, with nobody near it before
+ok    Rallies are off
+ok    lastAt: a finisher, and a KO
+ok    the fighter with the more wear falls
+ok    nobody touched anything: one no-contest cue (1)
+ok    a no-contest, with no KO
+ok    level wear with someone playing: a finisher, no draw
+ENDING: 0 check(s) failed

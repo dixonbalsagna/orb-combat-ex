@@ -1,0 +1,15 @@
+gate: <scratch>/g/render_slip/r_after.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/render_slip/r_cue.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/render_slip/r_depth.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/render_slip/r_flash.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/render_slip/r_flash_reg.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/render_slip/r_flight.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/render_slip/r_ground.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/render_slip/r_hud_words.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/render_slip/r_lane.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/render_slip/r_open.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/render_slip/r_pane.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/render_slip/r_patch.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/render_slip/r_shape.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/render_slip/r_sky.txt: no SCRIPT ERROR lines
+gate: <scratch>/g/render_slip/r_stage.txt: no SCRIPT ERROR lines
