@@ -1,0 +1,110 @@
+golden regen 0
+validate 0 321 files checked, 0 errors, 2 warnings
+node_node_tools_check_workflows_selftest_mjs_ 0 check-workflows self-test ok: 17 checks
+node_node_tools_check_workflows_mjs_ 0 check-workflows ok: 10 files
+node_node_tools_desktop_package_selftest_mjs_ 0 desktop package self-test ok: 132 checks
+node_node_tools_flash_compare_frames_selftest_mjs_ 0 compare-frames self-test ok: 19 checks
+node_node_tools_flash_head_export_selftest_mjs_ 0 head export self-test ok: 11 checks
+node_node_tools_flash_nightly_selftest_mjs_ 0 nightly seeds self-test ok: 84 checks
+node_node_tools_flash_readings_selftest_mjs_ 0 readings self-test passed
+node_node_tools_flash_release_pass_selftest_mjs_ 0 release-pass self-test ok: 112 checks
+node_node_tools_flash_run_pixels_selftest_mjs_ 0 run-pixels self-test passed
+node_node_tools_flash_selftest_js_ 0 flash self-test ok: 95 checks
+node_node_tools_flash_signature_gate_selftest_mjs_ 0 signature-gate self-test passed
+node_node_tools_gate_selftest_mjs_ 0 gate self-test ok: 26 checks
+node_node_tools_lint_determinism_selftest_mjs_ 0 determinism lint self-test ok: 67 checks
+node_node_tools_lint_determinism_mjs_ 0 determinism lint ok: no engine trig, PI/TAU, random numbers or clock in sim/core, sim/director, sim/
+node_node_tools_movegen_test_run_mjs_ 0 movegen tests: 38 passed, 0 failed
+node_node_tools_pin_child_selftest_mjs_ 0 pin-child self-test passed
+node_node_tools_preview_pck_verify_selftest_mjs_ 0 pck verify self-test ok: 12 checks
+node_node_tools_preview_stack_selftest_mjs_ 0 stack self-test ok
+node_node_tools_ratchet_two_fighter_selftest_mjs_ 0 ratchet self-test ok
+node_node_tools_ratchet_two_fighter_mjs_ 0 two-fighter ratchet ok: 365 against a baseline of 365
+node_node_tools_site_interim_selftest_mjs_ 0 interim site self-test ok: 254 checks
+node_node_tools_site_pin_selftest_mjs_ 0 site pin self-test ok: 34 checks
+node_node_tools_site_template_selftest_mjs_ 0 site template self-test ok: 113 checks
+node_node_tools_validate_js_ 0 321 files checked, 0 errors, 2 warnings
+node_node_tools_validate_js___self_test_ 0   parser 326 files + 7 text cases; engine 46 cases + 6 unsupported; schemas 193; data cases 8355
+node_node_tools_world_checks_mjs___verify_ 0 world-checks: ok, 85 checks run in CI, 30 scripts left out with a reason
+render 19 passed; DONE 
+hud_check 0 hud_check: 7784 checks, 0 failed
+ci_delay_check__ 0 
+ci_delay_check______negative_control_ 0 
+ci_desync_check______ai_timers___seeds_1___ticks_600___p 0 
+ci_desync_check______ai_timers___seeds_1___ticks_600___p 0 
+ci_desync_check______seeds_1___ticks_600___profiles_lan_ 0 
+ci_desync_check______seeds_1___ticks_600___profiles_lan_ 0 
+ci_desync_check______setup_field___seeds_1_2___ticks_600 0 
+ci_desync_check______setup_field___seeds_1_2___ticks_600 0 
+ci_desync_check______setup_kick___seeds_1_2___ticks_600_ 0 
+ci_desync_check______setup_kick___seeds_1_2___ticks_600_ 0 
+ci_lan_check______ticks_1200_ 0 
+ci_lan_check______ticks_1200___negative_control_ 0 
+ci_rollback_check______ai___seeds_1___ticks_600___profiles 0 
+ci_rollback_check______ai___seeds_1___ticks_600___profiles 0 
+ci_rollback_check______ai_sim___seeds_1___ticks_600___prof 0 
+ci_rollback_check______ai_sim___seeds_1___ticks_600___prof 0 
+ci_rollback_check______drop_150___seeds_1___ticks_300___pr 0 
+ci_rollback_check______drop_150___seeds_1___ticks_300___pr 0 
+ci_rollback_check______right_stick___seeds_1___ticks_300__ 0 
+ci_rollback_check______seeds_1___ticks_240___profiles_lan_ 0 
+ci_rollback_check______seeds_1___ticks_300___profiles_lan_ 0 
+ci_rollback_check______setup_calm___turn_at_300___seeds_1_ 0 
+ci_rollback_check______setup_depth___seeds_1___ticks_300__ 0 
+ci_rollback_check______setup_depth___seeds_1___ticks_300__ 0 
+ci_rollback_check______setup_field___seeds_1___ticks_300__ 0 
+ci_rollback_check______setup_field___seeds_1___ticks_300__ 0 
+ci_rollback_check______setup_fights2___seeds_1___ticks_300 0 
+ci_rollback_check______setup_fights2___seeds_1___ticks_300 0 
+ci_rollback_check______setup_fights2___trade_at_0___seeds_ 0 
+ci_rollback_check______setup_kick___seeds_1___ticks_300___ 0 
+ci_rollback_check______setup_kick___seeds_1___ticks_300___ 0 
+ci_rollback_check______setup_planet2___seeds_1___ticks_300 0 
+ci_rollback_check______setup_planet2___seeds_1___ticks_300 0 
+ci_rollback_check______takeover_150___seeds_1___ticks_300_ 0 
+ci_rollback_check______takeover_150___seeds_1___ticks_300_ 0 
+ci_spectator_check______seeds_1___ticks_600___profiles_lan_ 0 
+ci_spectator_check______seeds_1___ticks_600___profiles_lan_ 0 
+ci_swing_check______negative_control_ 0 
+ci_swing_check______right_stick_ 0 
+ci_transport_check__ 0 
+ci_transport_check______negative_control_ 0 
+ci_two_pc_check______negative_control___ticks_900_ 0 
+ci_two_pc_check______self_test___ticks_900_ 0 
+ci_word_check__ 0 
+ci_word_check______negative_control_ 0 
+ci_chase_rush_check__ 0 
+ci_cross_check__ 0 
+ci_cross_check______negative_control_ 0 
+ci_cross_end_check__ 0 
+ci_cross_end_check______negative_control_ 0 
+ci_field_static_check__ 0 
+ci_field_static_check______negative_control_ 0 
+ci_fork_check__ 0 
+ci_fork_check______negative_control_ 0 
+ci_frame_check__ 0 
+ci_frame_check______negative_control_ 0 
+ci_kick_check__ 0 
+ci_load_split__ 0 
+ci_load_split______negative_control_ 0 
+ci_memo_check__ 0 
+ci_memo_check______negative_control_ 0 
+ci_parity__ 0 
+ci_places_check__ 0 
+ci_power_check__ 0 
+ci_power_check______negative_control_ 0 
+ci_rec_check__ 0 
+ci_rec_check______negative_control_ 0 
+ci_replay_xproc_check__ 0 
+ci_replay_xproc_check______negative_control_ 0 
+ci_two_states_check__ 0 
+ci_two_states_check______negative_control_ 0 
+ci_bark_reads_check__ 0 
+ci_chase_tap_check__ 0 
+ci_floorlift_check__ 0 
+ci_plane_check__ 0 
+ci_press_decides_check__ 0 
+split_sweep 0 split sweep passed
+world-checks 0 world-checks: all 85 passed
+content screen: 6471 text files of 7680 scanned, 0 failing hit(s), 0 warning(s)
+ALLDONE

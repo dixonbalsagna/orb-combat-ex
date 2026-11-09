@@ -1,0 +1,27 @@
+0 b-no-beam/b-no-beam.patch Applied patch to 'data/input/timing.json' cleanly. Applied patch to 'sim/input/input_data.gd' cleanly. Applied patch to 'tools/schemas/input-timing.schema.json' cleanly. 
+0 b-no-beam/director-isb.patch Applied patch to 'sim/director/brawl.gd' cleanly. 
+0 inert-knock/inert-knock.patch Applied patch to 'data/input/timing.json' cleanly. Applied patch to 'sim/input/haptics.gd' cleanly. Applied patch to 'sim/input/input_data.gd' cleanly. Applied patch to 'sim/input/layout.gd' cleanly. 
+0 dash-handover/dash-handover.patch Applied patch to 'data/input/timing.json' cleanly. Applied patch to 'sim/input/input_data.gd' cleanly. Applied patch to 'sim/input/layout.gd' cleanly. Applied patch to 'tools/schemas/input-timing.sche
+0 side-from-blow/side-from-blow.diff Applied patch to 'data/director/launch.json' cleanly. Applied patch to 'sim/director/arc.gd' cleanly. Applied patch to 'sim/director/launch.gd' cleanly. Applied patch to 'sim/director/tools/arc_check.
+0 arrive/arrive.diff Applied patch to 'data/director/interrupts.json' cleanly. Applied patch to 'sim/director/bands.gd' cleanly. Applied patch to 'tools/schemas/director-interrupts.schema.json' cleanly. 
+0 arrive/grant-simulation-arrive.patch Applied patch to 'sim/core/dir.gd' cleanly. Applied patch to 'sim/core/fighter.gd' cleanly. 
+0 carry-round/carry-round.diff Applied patch to 'data/director/interrupts.json' cleanly. Applied patch to 'sim/director/exchange.gd' cleanly. Applied patch to 'tools/schemas/director-interrupts.schema.json' cleanly. 
+0 pace-match/pace-match.diff Applied patch to 'data/director/ai.json' cleanly. Applied patch to 'sim/director/brawl.gd' cleanly. Applied patch to 'sim/director/exchange.gd' cleanly. Applied patch to 'tools/schemas/director-ai.sch
+0 power-dash/power-dash.patch Applied patch to 'data/fight/power.json' cleanly. Applied patch to 'sim/core/fighter.gd' cleanly. Applied patch to 'sim/core/hash.gd' cleanly. Applied patch to 'sim/core/power.gd' cleanly. Applied pat
+0 power-dash/grant-netcode-dash.patch Applied patch to 'net/desync.gd' cleanly. 
+0 power-dash/grant-tools-dash.patch Applied patch to 'tools/fixtures/virtual/data/fight/power.json' cleanly. Applied patch to 'tools/schemas/fight-power.schema.json' cleanly. 
+0 lan-save/lan-save.patch Applied patch to 'docs/net/lan-v1.md' cleanly. Applied patch to 'net/desync.gd' cleanly. Applied patch to 'net/lan.gd' cleanly. Applied patch to 'net/session.gd' cleanly. Applied patch to 'net/tools/l
+0 lan-save/lan-save-hook.patch Applied patch to 'net/lan.gd' cleanly. Applied patch to 'net/tools/lan_kit.mjs' cleanly. 
+0 report-this/report-this.patch 
+0 cd05-witness/cd05-sim.patch Applied patch to 'data/fighters/PROTAGONIST/forms.json' cleanly. Applied patch to 'sim/core/fighter.gd' cleanly. Applied patch to 'sim/core/forms.gd' cleanly. Applied patch to 'sim/core/hash.gd' clean
+0 cd05-witness/grant-world-witness.patch Applied patch to 'sim/world/collateral.gd' cleanly. Applied patch to 'sim/world/structures.gd' cleanly. 
+0 cd05-witness/grant-world-ground-pins.patch Applied patch to 'sim/world/tools/ground_check.gd' cleanly. 
+0 cd05-witness/grant-tools-forms.patch Applied patch to 'tools/schemas/fighters-forms.schema.json' cleanly. 
+0 bystanders/bystanders.patch 
+0 bystanders/grant-simulation-meters.patch 
+0 bystanders/grant-encounter-people.patch 
+0 bystanders/grant-tools-fixtures.patch 
+0 civilians-line/civilians-line-grant.patch 
+0 civilians-line/civilians-line-ui.patch 
+0 push-cap/push-cap.patch Applied patch to 'render/camera/split_rig.gd' cleanly. 
+--- unmerged:
