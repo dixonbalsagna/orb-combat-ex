@@ -1,0 +1,2 @@
+﻿negative control 1: b_no_beam_test (79 checks) with sim/director/brawl.gd put back to HEAD's (no bNoBeam in isB); the RT + B, LT + B and interim rows must fail:
+b_no_beam_test: 79 checks, 19 failed

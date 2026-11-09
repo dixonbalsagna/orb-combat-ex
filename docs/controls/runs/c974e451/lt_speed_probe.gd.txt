@@ -1,0 +1,107 @@
+extends SceneTree
+## Controls' LT high-speed probe (docs/controls/lt-speed.md): is anything on the pad side slow to start a flight at speed? The real hub into the sim (the energy model on, as the Sunday build ran), a standing rival at a given
+## separation, the pad pressing LT and the left stick toward him; the flier's speed every 6 ticks, set against the same flight driven by a hand-made intent (dash on, the stick at full) so the difference is the pad's alone.
+##   godot --headless --path . --script res://sim/input/tools/lt_speed_probe.gd
+## Rows: separation, then the pad's speed (units a second) at ticks 3, 6, 12, 24, 48, and the hand-made intent's at the same ticks.
+
+const SEPS: Array = [600.0, 1500.0, 3000.0, 6000.0, 12000.0]
+const TICKS: Array = [3, 6, 12, 24, 48]
+
+
+func _init() -> void:
+	SimInputData.load_and_apply()
+	SimInputData.clear_overrides()
+	print("separation | pad: LT + stick 1.0 | pad: LT + stick 0.9 | pad: LT + stick 0.6 | LT pressed with the stick already over | hand-made intent (dash, stick 1.0)  | speeds at ticks %s" % str(TICKS))
+	for sep in SEPS:
+		var a: Array = _pad(sep, 1.0, false)
+		var b: Array = _pad(sep, 0.9, false)
+		var c: Array = _pad(sep, 0.6, false)
+		var d: Array = _pad(sep, 1.0, true)
+		var h: Array = _hand(sep)
+		print("%6d | %s | %s | %s | %s | %s" % [int(sep), _f(a), _f(b), _f(c), _f(d), _f(h)])
+		print("       LT then RB at tick 6: %s   RB held, then LT: %s   LT then LB at tick 6: %s" % [_f(_pad(sep, 1.0, false, "rb", 6)), _f(_pad(sep, 1.0, false, "rb", -1)), _f(_pad(sep, 1.0, false, "lb", 6))])
+	quit(0)
+
+
+func _f(v: Array) -> String:
+	var out: Array = []
+	for x in v:
+		out.append("%5d" % int(x))
+	return " ".join(out)
+
+
+func _make(sep: float, hub) -> SimState:
+	var su: Dictionary = hub.setup() if hub != null else {"v2": [true, true], "assists": [[], []]}
+	su["intro"] = false
+	su["power"] = true
+	su["travel"] = 1.5
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, su)
+	var a = S.fighters[0]
+	var b = S.fighters[1]
+	b.x = SimWrap.wrap(a.x + sep)
+	b.y = a.y
+	return S
+
+
+## `other` is a second button held with LT: "rb" or "lb", pressed `at` ticks after LT (at -1: before LT).
+func _pad(sep: float, stick: float, stick_first: bool, other: String = "", at: int = 0) -> Array:
+	var hub := SimInputHub.new()
+	hub.set_humans(true, false)
+	hub.pad_button(7, "south", true)
+	hub.pad_button(7, "south", false)
+	hub.take_joins()
+	hub.set_humans(true, false)
+	var S := _make(sep, hub)
+	var quiet := SimIntent.new()
+	for t in range(30):
+		SimCore.step(S, [hub.intent(0), quiet])
+		hub.consumed()
+		S.out.fx.clear()
+	if stick_first:
+		hub.pad_stick(7, stick, 0.0)
+		for t in range(4):
+			SimCore.step(S, [hub.intent(0), quiet])
+			hub.consumed()
+		S.fighters[0].vx = 0.0
+	if other != "" and at < 0:
+		hub.pad_button(7, other, true)
+		for t in range(3):
+			SimCore.step(S, [hub.intent(0), quiet])
+			hub.consumed()
+			S.out.fx.clear()
+	hub.pad_trigger(7, "lt", 1.0)
+	if not stick_first:
+		hub.pad_stick(7, stick, 0.0)
+	var out: Array = []
+	for t in range(1, 49):
+		if other != "" and at > 0 and t == at:
+			hub.pad_button(7, other, true)
+		SimCore.step(S, [hub.intent(0), quiet])
+		hub.consumed()
+		S.out.fx.clear()
+		if TICKS.has(t):
+			out.append(absf(float(S.fighters[0].vx)))
+	SimCore.dispose(S)
+	return out
+
+
+func _hand(sep: float) -> Array:
+	var S := _make(sep, null)
+	var quiet := SimIntent.new()
+	for t in range(30):
+		SimCore.step(S, [quiet, quiet])
+		S.out.fx.clear()
+	var out: Array = []
+	for t in range(1, 49):
+		var i := SimIntent.new()
+		i.mx = 1.0
+		i.dash = true
+		i.sprint = true
+		i.stanceMask = 8
+		SimCore.step(S, [i, quiet])
+		S.out.fx.clear()
+		if TICKS.has(t):
+			out.append(absf(float(S.fighters[0].vx)))
+	SimCore.dispose(S)
+	return out

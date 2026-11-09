@@ -1,0 +1,2 @@
+﻿negative control b: b_no_beam_test (103 checks) with isB without the interim (RT + B always the heavy): the 12 RT + B rows fail (6 held-RT, 6 chord-window):
+b_no_beam_test: 103 checks, 12 failed

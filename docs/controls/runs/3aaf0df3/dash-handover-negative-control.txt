@@ -1,0 +1,9 @@
+﻿negative control: dash_handover_test with sim/input/layout.gd put back to HEAD's (the lunge) and switches.dashHandover on; the seven on-checks that expect the handover must fail:
+FAIL  on: a tap (LT let go after 2 ticks) is a dash on the press tick and only while it is down: [true, true, true, true, true, true, true, true, true, true, true, true, true, false]
+FAIL  on: a tap let go after 6 ticks is 6 or 7 dash ticks, none after: [true, true, true, true, true, true, true, true, true, true, true, true]
+FAIL  on: LB pressed after LT (the vanish) ends the dash (a stance that is not LT's): [true, true, true, true, true, true, true, true, true, true, true, true]
+FAIL  on: LT and RT together within the chord window are the transform chord: no dash (13)
+FAIL  on: the keyboard's dodge key is the same (a tap is 13 dash ticks)
+FAIL  on: ... and not on the next
+FAIL  on: a tap let go at tick 4 carries him less than 2 body heights beyond the stick alone (4.33)
+dash_handover_test: 15 checks, 7 failed

@@ -1,0 +1,79 @@
+lt_tap_probe on a scratch copy of the kept build 6eec6a75-62e1fea3's tree (Monday batch): the page's setup power true, dash true, travel 1.5, bands.arrive on (the tree's data); a standing rival; the stick held toward him 60 ticks; distance in body heights (75 units) over 60 ticks; the first row is the stick alone
+
+=== off3000
+handover switch: false ; separation 3000
+released at | dash ticks | sprint ticks | travelled (bh) in 60 ticks | peak speed | speed at tick 1, 6, 12
+      no LT |          0 |            0 |                       4.98 |        429 | 48, 219, 326
+          2 |         13 |            0 |                      31.23 |       6250 | 5000, 5781, 6250
+          4 |         13 |            0 |                      31.23 |       6250 | 5000, 5781, 6250
+          6 |         13 |            0 |                      31.23 |       6250 | 5000, 5781, 6250
+          7 |         13 |            0 |                      31.23 |       6250 | 5000, 5781, 6250
+          8 |         13 |            0 |                      31.23 |       6250 | 5000, 5781, 6250
+         12 |         13 |            1 |                      31.23 |       6250 | 5000, 5781, 6250
+         20 |         20 |            9 |                      38.30 |       6250 | 5000, 5781, 6250
+       held |         60 |           49 |                      37.50 |       6250 | 5000, 5781, 6250
+
+=== on3000
+handover switch: true ; separation 3000
+released at | dash ticks | sprint ticks | travelled (bh) in 60 ticks | peak speed | speed at tick 1, 6, 12
+      no LT |          0 |            0 |                       4.98 |        429 | 48, 219, 326
+          2 |          2 |            0 |                      16.35 |       5156 | 5000, 3409, 1944
+          4 |          4 |            0 |                      19.06 |       5469 | 5000, 4425, 2443
+          6 |          6 |            0 |                      21.90 |       5781 | 5000, 5781, 3107
+          7 |          7 |            0 |                      23.37 |       5938 | 5000, 5781, 3518
+          8 |          8 |            0 |                      24.88 |       6094 | 5000, 5781, 3991
+         12 |         12 |            1 |                      30.22 |       6250 | 5000, 5781, 6250
+         20 |         20 |            9 |                      38.30 |       6250 | 5000, 5781, 6250
+       held |         60 |           49 |                      37.50 |       6250 | 5000, 5781, 6250
+
+=== off1000
+handover switch: false ; separation 1000
+released at | dash ticks | sprint ticks | travelled (bh) in 60 ticks | peak speed | speed at tick 1, 6, 12
+      no LT |          0 |            0 |                       4.98 |        429 | 48, 219, 326
+          2 |         13 |            0 |                      14.98 |       6094 | 5000, 5781, 273
+          4 |         13 |            0 |                      14.98 |       6094 | 5000, 5781, 273
+          6 |         13 |            0 |                      14.98 |       6094 | 5000, 5781, 273
+          7 |         13 |            0 |                      14.98 |       6094 | 5000, 5781, 273
+          8 |         13 |            0 |                      14.98 |       6094 | 5000, 5781, 273
+         12 |         13 |            1 |                      14.98 |       6094 | 5000, 5781, 273
+         20 |         20 |            9 |                      13.90 |       6094 | 5000, 5781, 273
+       held |         60 |           49 |                      10.83 |       6094 | 5000, 5781, 273
+
+=== on1000
+handover switch: true ; separation 1000
+released at | dash ticks | sprint ticks | travelled (bh) in 60 ticks | peak speed | speed at tick 1, 6, 12
+      no LT |          0 |            0 |                       4.98 |        429 | 48, 219, 326
+          2 |          2 |            0 |                      16.35 |       5156 | 5000, 3409, 1944
+          4 |          4 |            0 |                      19.06 |       5469 | 5000, 4425, 2443
+          6 |          6 |            0 |                      21.90 |       5781 | 5000, 5781, 3107
+          7 |          7 |            0 |                      23.37 |       5938 | 5000, 5781, 3518
+          8 |          8 |            0 |                      24.88 |       6094 | 5000, 5781, 3991
+         12 |         12 |            1 |                      15.08 |       6094 | 5000, 5781, 273
+         20 |         20 |            9 |                      13.90 |       6094 | 5000, 5781, 273
+       held |         60 |           49 |                      10.83 |       6094 | 5000, 5781, 273
+
+=== off400
+handover switch: false ; separation 400
+released at | dash ticks | sprint ticks | travelled (bh) in 60 ticks | peak speed | speed at tick 1, 6, 12
+      no LT |          0 |            0 |                       4.98 |        429 | 48, 219, 326
+          2 |         13 |            0 |                       6.57 |       5000 | 5000, 240, 0
+          4 |         13 |            0 |                       6.57 |       5000 | 5000, 240, 0
+          6 |         13 |            0 |                       6.57 |       5000 | 5000, 240, 0
+          7 |         13 |            0 |                       6.57 |       5000 | 5000, 240, 0
+          8 |         13 |            0 |                       6.57 |       5000 | 5000, 240, 0
+         12 |         13 |            1 |                       6.57 |       5000 | 5000, 240, 0
+         20 |         20 |            9 |                       5.90 |       5000 | 5000, 240, 0
+       held |         60 |           49 |                       2.83 |       5000 | 5000, 240, 0
+
+=== on400
+handover switch: true ; separation 400
+released at | dash ticks | sprint ticks | travelled (bh) in 60 ticks | peak speed | speed at tick 1, 6, 12
+      no LT |          0 |            0 |                       4.98 |        429 | 48, 219, 326
+          2 |          2 |            0 |                      14.80 |       5000 | 5000, 2922, 1706
+          4 |          4 |            0 |                       8.92 |       5000 | 5000, 778, 655
+          6 |          6 |            0 |                       7.76 |       5000 | 5000, 240, 391
+          7 |          7 |            0 |                       7.58 |       5000 | 5000, 240, 341
+          8 |          8 |            0 |                       7.14 |       5000 | 5000, 240, 203
+         12 |         12 |            1 |                       6.67 |       5000 | 5000, 240, 0
+         20 |         20 |            9 |                       5.90 |       5000 | 5000, 240, 0
+       held |         60 |           49 |                       2.83 |       5000 | 5000, 240, 0

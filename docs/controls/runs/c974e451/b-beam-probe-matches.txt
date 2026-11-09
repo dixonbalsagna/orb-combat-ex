@@ -1,0 +1,13 @@
+﻿b_beam_probe: a scripted Arena pad taps B every 90 ticks against the computer (4 medium matches); beams started by those presses. 0 everywhere: the leak is a standing-rival case in the first 120 ticks (see the doc), not this random sample
+--- bb_none_easy
+BBEAM {"beamCtx":[],"beams":0,"byState":{},"heavyIntent":0,"layer":"none","level":"easy","presses":178,"sigIntent":305}
+--- bb_none_medium
+BBEAM {"beamCtx":[],"beams":0,"byState":{},"heavyIntent":0,"layer":"none","level":"medium","presses":200,"sigIntent":662}
+--- bb_lt_medium
+BBEAM {"beamCtx":[],"beams":0,"byState":{},"heavyIntent":385,"layer":"lt","level":"medium","presses":274,"sigIntent":0}
+--- bb3_fs_lt30
+BBEAM {"beamCtx":[],"beams":0,"byState":{},"evs":{"attack":123,"blow":9,"brawl_start":2,"brink_open":2,"dodge_cancel":3,"land":1,"last_stand_end":4,"launch":7,"left_ground":1,"mine_trip":1,"region_stage":13,"rush":33,"slide_brace":3,"stagger":17,"take_back":1,"tell":32,"zip_big":1,"zip_out":1},"heavyIntent":0,"layer":"lt","level":"medium","presses":733,"sigIntent":1519}
+--- bb3_fs_none
+BBEAM {"beamCtx":[],"beams":0,"byState":{},"evs":{"attack":141,"blow":117,"brawl_end":1,"brawl_start":115,"brink_open":1,"challenge_answered":6,"charge_stopped":5,"danger":1,"exchange_end":1,"launch":2,"lunge_heavy":48,"overextend":2,"region_stage":1,"return":17,"return_met":2,"rush":152,"slide_brace":2,"stagger":1,"style_label":1,"taunt_start":51,"window_open":1,"windup":139},"heavyIntent":0,"layer":"none","level":"medium","presses":268,"sigIntent":624}
+--- bb3_rt_nofs
+BBEAM {"beamCtx":[],"beams":0,"byState":{},"evs":{"attack":100,"burst_absorbed":1,"land":1,"last_stand_end":4,"launch":4,"region_stage":4,"searching":1,"slide_brace":4},"heavyIntent":0,"layer":"rt","level":"medium","presses":586,"sigIntent":1219}

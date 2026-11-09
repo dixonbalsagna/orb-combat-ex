@@ -1,0 +1,2 @@
+﻿negative control a: b_no_beam_test (103 checks) with isB with the interim clause but not the chord condition (RT held at all): the 18 channel rows fail:
+b_no_beam_test: 103 checks, 18 failed

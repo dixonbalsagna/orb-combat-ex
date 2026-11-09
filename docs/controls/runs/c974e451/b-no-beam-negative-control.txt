@@ -1,0 +1,15 @@
+﻿negative control: b_no_beam_test on the same tree with sim/director/brawl.gd put back to HEAD's (isB as it was) and switches.bNoBeam on; the RT + B and LT + B checks must fail:
+FAIL  on: LT + B (past the take-back window) (tap, 80 units) starts no beam: ["attack", "press_ack", "beam_fire", "beam_outcome"]
+FAIL  on: LT + B (past the take-back window) (tap, 212 units) starts no beam: ["attack", "press_ack", "beam_fire", "beam_outcome"]
+FAIL  on: LT + B (past the take-back window) (tap, 800 units) starts no beam: ["attack", "press_ack", "beam_fire", "beam_outcome"]
+FAIL  on: LT + B (past the take-back window) (held, 80 units) starts no beam: ["attack", "press_ack", "beam_fire", "beam_outcome"]
+FAIL  on: LT + B (past the take-back window) (held, 212 units) starts no beam: ["attack", "press_ack", "beam_fire", "beam_outcome"]
+FAIL  on: LT + B (past the take-back window) (held, 800 units) starts no beam: ["attack", "press_ack", "beam_fire", "beam_outcome"]
+FAIL  on: RT + B (tap, 80 units) starts no beam: ["attack", "press_ack", "beam_fire", "beam_outcome"]
+FAIL  on: RT + B (tap, 212 units) starts no beam: ["attack", "press_ack", "beam_fire", "beam_outcome"]
+FAIL  on: RT + B (tap, 800 units) starts no beam: ["attack", "press_ack", "beam_fire", "beam_outcome"]
+FAIL  on: RT + B (held, 80 units) starts no beam: ["attack", "press_ack", "beam_fire", "beam_outcome"]
+FAIL  on: RT + B (held, 212 units) starts no beam: ["attack", "press_ack", "beam_fire", "beam_outcome"]
+FAIL  on: RT + B (held, 800 units) starts no beam: ["attack", "press_ack", "beam_fire", "beam_outcome"]
+FAIL  on: RT + B is the big blow, not nothing: ["attack", "press_ack", "beam_fire", "beam_outcome"]
+b_no_beam_test: 42 checks, 13 failed

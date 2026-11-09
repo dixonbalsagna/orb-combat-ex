@@ -1,0 +1,23 @@
+--- no power word  (/index.html?planet=7&go=1&blackbox=1&preview=1&meteor=loud&tiles=1&audiolog=1&travel=1.5)
+    black box setup: {"power":true,"travel":1.5,"flatOut":5000,"planet":7}; sliders on page: 2; window.__travel 1.5, __flatout 5000
+    ok   setup.power is true
+    ok   setup.travel is 1.5
+    ok   setup.flatOut is 5000
+    black box setup dash: true
+    ok   setup.dash is true (the flat-out dash)
+    ok   both sliders are on the page (flat-out base, how far a launch carries)
+    sliders moved: {"flat":6200,"travel":1.55,"remembered":["6200","1.55"]}
+    ok   the flat-out slider sets window.__flatout and is remembered as orb_flatout
+    ok   the travel slider sets window.__travel and is remembered as orb_travel
+    ok   the labels read "how far a launch carries x1.55" and "flat-out flight base speed 6200"
+power page check: ok
+
+--- ?dash=0  (/index.html?planet=7&go=1&blackbox=1&preview=1&dash=0&meteor=loud&tiles=1&audiolog=1&travel=1.5)
+    black box setup: {"power":true,"travel":1.5,"flatOut":5000,"planet":7}; sliders on page: 2; window.__travel 1.5, __flatout 5000
+    black box setup dash: undefined
+    ok   no dash key in the setup (the model is off, or ?dash=0 / ?dash=off)
+--- ?dash=off  (/index.html?planet=7&go=1&blackbox=1&preview=1&dash=off&meteor=loud&tiles=1&audiolog=1&travel=1.5)
+    black box setup: {"power":true,"travel":1.5,"flatOut":5000,"planet":7}; sliders on page: 2; window.__travel 1.5, __flatout 5000
+    black box setup dash: undefined
+    ok   no dash key in the setup (the model is off, or ?dash=0 / ?dash=off)
+(the ?dash=0 run read travel 2 against an address that carries travel=1.5: that FAIL was the check's own expectation, fixed in the same session; the dash lines of ?dash=0 and ?dash=off both read no key: ok)

@@ -1,0 +1,18 @@
+MONDAY BUILD (main 6eec6a75, stack key 62e1fea3, kept as orb-first-play-6eec6a75-62e1fea3), 2026-11-09
+  parks in the build : art-biomes-working-tree
+  switches OFF       : wallPush, wallPushAi, slamTurn, cityHold, aimCuts
+  HELD OFF           : wallPush (waiting on QA city read)
+  HELD OFF           : wallPushAi (waiting on QA city read)
+  HELD OFF           : slamTurn (waiting on QA city read)
+  HELD OFF           : cityHold (waiting on QA city read)
+  HELD OFF           : aimCuts (held for the next batch's page (EP))
+  build: built in 0 m 35 s, <home>/AppData/Local/Temp/meridian-stack-preview/build/62e1fea3c13a309f-ug+soundMoments+soundCarry-tb28ef5e9-ebd57ed-sb282bc-p939f0e/web
+  pck verify         : 90 keys read from the built pack, 0 problem(s)
+  smoke check: booting the build in the guarded browser and playing it ...
+  booted at tick 0
+  the match was running after 1 rounds of clicks
+  after play: tick 1362 (1216 more in the keys' 20 s), hp [1096.7,1600], ring turns so far -1, DEFAULTS READ FROM THE RUNNING GAME: right hand true, DirStick true, DirSwing true, swings so far 2 (-1: no swing state, not a field world; DirSwing asks at a launch, a chase, a form's pause, an AI's flight or a brawl) (a turn needs a planet match, 60 s of match time since the last one and a calm moment after a launch has landed: not within this 20 s)
+  picture <home>/AppData/Local/Temp/meridian-stack-preview/build/62e1fea3c13a309f-ug+soundMoments+soundCarry-tb28ef5e9-ebd57ed-sb282bc-p939f0e/smoke.png
+  smoke check passed
+kept copy read again: pck verify: 90 keys read from the pack, 82 rows on, 0 problem(s)
+extra keys read from the built pack: ui features report_this true, save_match true; bNoBeam, bNoBeamKeepRt, inertKnock, sideFromBlowOnly, arrive, carryRound, paceMatch, refusedCue all true

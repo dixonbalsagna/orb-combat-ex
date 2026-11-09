@@ -1,0 +1,6 @@
+﻿negative control: inert_knock_test on the same tree with sim/input/layout.gd put back to HEAD's and switches.inertKnock on; the four on-checks that expect a knock must fail:
+FAIL  on: a push with RT held is told once: one knock and one row, code charging, and no strike started: { "knocks": [], "rows": [], "start": false }
+FAIL  on: the stick held out the whole time is still one: { "knocks": [], "rows": [], "start": false }
+FAIL  on: a second push after the stick rests is a second knock: { "knocks": [], "rows": [], "start": false }
+FAIL  on: a push with LB and RB both held is told once, code warding: { "knocks": [], "rows": [], "start": false }
+inert_knock_test: 11 checks, 4 failed

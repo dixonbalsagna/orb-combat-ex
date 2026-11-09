@@ -25,13 +25,18 @@ const CASES = [
   { name: '?travel=1.5&flatout=6000', words: 'travel=1.5&flatout=6000', power: true, travel: 1.5, flatOut: 6000, sliders: true },
   { name: '?travel=9&flatout=100 (out of range)', words: 'travel=9&flatout=100', power: true, travel: 2, flatOut: 5000, sliders: true, note: 'an out-of-range word is ignored by the page head, so the slider stays at its own value' },
 ];
+const DASH = a.includes('--dash');   // the build has the flat-out dash: also read setup.dash, and run the ?dash=0 and ?dash=off addresses
+if (DASH) CASES.push({ name: '?dash=0', words: 'dash=0', power: true, travel: 2, flatOut: 5000, sliders: true }, { name: '?dash=off', words: 'dash=off', power: true, travel: 2, flatOut: 5000, sliders: true });
 const lines = [];
 const out = (s) => { lines.push(s); console.log(s); };
 let bad = 0;
 const server = await serve(resolve(DIR));
 let browser = null;
 try {
-  for (const c of CASES.filter((x) => !opt('--only') || x.name.includes(opt('--only')))) {
+  // a shortcut's own travel word (--extra "travel=1.5") is what the page must carry in a case that sets no travel of its own, so the expectation follows it
+  const exTravel = /(^|&)travel=([0-9.]+)/.exec(opt('--extra') || '');
+  const follow = (x) => (exTravel && x.power && !/(^|&)travel=/.test(x.words) ? { ...x, travel: Math.min(2, Math.max(1.25, Number(exTravel[2]))) } : x);
+  for (const c of CASES.filter((x) => !opt('--only') || x.name.includes(opt('--only'))).map(follow)) {
     browser = await launchBrowser({ exe, flags: ['--window-size=1280,720'], session: process.env.MERIDIAN_SESSION || 'tools-pipeline', purpose: 'power page check', timeoutS: Number(opt('--limit', 600)), cpuPercent: 25, log: () => {} });
     const page = await Cdp.open(browser.target.webSocketDebuggerUrl);
     await page.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 720, deviceScaleFactor: 1, mobile: false });
@@ -61,6 +66,11 @@ try {
     out('    ' + check(`setup.power is ${c.power}`, got.power === c.power));
     if (c.travel !== undefined) out('    ' + check(`setup.travel is ${c.travel}`, Number(got.travel) === c.travel)); else if (!c.power) out('    ' + check('no travel key in the setup with power off', got.travel === undefined));
     if (c.flatOut !== undefined) out('    ' + check(`setup.flatOut is ${c.flatOut}`, Number(got.flatOut) === c.flatOut)); else if (!c.power) out('    ' + check('no flatOut key in the setup with power off', got.flatOut === undefined)); else out(`    info setup.flatOut is ${JSON.stringify(got.flatOut)} (${c.note || ''})`);
+    if (DASH) {   // a build with Simulation's flat-out dash and Encounter's arrive: the page sends "dash": true with the model on unless ?dash=0 or ?dash=off, and none with it off (2026-11-09)
+      out(`    black box setup dash: ${JSON.stringify(got.dash)}`);
+      const wantDash = c.power && !/(^|&)dash=(0|off)(&|$)/.test(c.words);
+      out('    ' + check(wantDash ? 'setup.dash is true (the flat-out dash)' : 'no dash key in the setup (the model is off, or ?dash=0 / ?dash=off)', wantDash ? got.dash === true : got.dash === undefined));
+    }
     out('    ' + check(c.sliders ? 'both sliders are on the page (flat-out base, how far a launch carries)' : 'no slider on the page with power off', c.sliders ? dom && dom.sliders.length === 2 : dom && dom.sliders.length === 0));
     if (c.name === 'no power word') {   // the sliders: move each, the page's variable follows and is remembered
       const moved = await page.eval('(function () { var r = [].slice.call(document.querySelectorAll("input[type=range]")); if (r.length !== 2) return null; r[0].value = "6200"; r[0].dispatchEvent(new Event("input")); r[1].value = "1.55"; r[1].dispatchEvent(new Event("input")); return { flat: window.__flatout, travel: window.__travel, ls: [localStorage.getItem("orb_flatout"), localStorage.getItem("orb_travel")], text: document.body.innerText.slice(-300) }; })()', true).catch(() => null);

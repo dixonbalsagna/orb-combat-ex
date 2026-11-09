@@ -1,0 +1,3 @@
+﻿determinism lint ok: no engine trig, PI/TAU, random numbers or clock in sim/core, sim/director, sim/world, sim/input
+321 files checked, 0 errors, 2 warnings
+(node tools/lint-determinism.mjs and node tools/validate.js in a clean 4b090e10 export with pending/inert-knock/inert-knock.patch applied; the result files equal the tested tree byte for byte after tr -d CR)

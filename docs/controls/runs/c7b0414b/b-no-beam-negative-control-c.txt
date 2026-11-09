@@ -1,0 +1,2 @@
+﻿negative control c: b_no_beam_test (103 checks) with isB as HEAD has it (no bNoBeam): the RT + B, LT + B and interim rows fail (37):
+b_no_beam_test: 103 checks, 37 failed

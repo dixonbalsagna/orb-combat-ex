@@ -1,0 +1,12 @@
+﻿handover switch: false ; separation 3000
+(the stick is held toward him the whole 60 ticks, so even a tap travels on at the plain flight speed: read the distance against the control row)
+released at | dash ticks | sprint ticks | travelled (bh) in 60 ticks | peak speed | speed at tick 1, 6, 12
+      no LT |          0 |            0 |                       4.98 |        429 | 48, 219, 326
+          2 |         13 |            0 |                       9.31 |       1490 | 223, 1013, 1485
+          4 |         13 |            0 |                       9.31 |       1490 | 223, 1013, 1485
+          6 |         13 |            0 |                       9.31 |       1490 | 223, 1013, 1485
+          7 |         13 |            0 |                       9.31 |       1490 | 223, 1013, 1485
+          8 |         13 |            0 |                       9.31 |       1490 | 223, 1013, 1485
+         12 |         13 |            1 |                       9.31 |       1490 | 223, 1013, 1485
+         20 |         20 |            9 |                      10.94 |       1494 | 223, 1013, 1485
+       held |         60 |           49 |                      17.18 |       1494 | 223, 1013, 1485

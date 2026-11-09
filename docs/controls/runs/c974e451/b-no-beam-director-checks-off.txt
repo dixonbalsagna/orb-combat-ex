@@ -1,0 +1,4 @@
+﻿--- flight_strike_check (switches.bNoBeam off)
+FLIGHT STRIKE: 0 check(s) failed
+--- driver_check (switches.bNoBeam off)
+DRIVER: 0 check(s) failed

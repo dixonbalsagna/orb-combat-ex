@@ -1,0 +1,5 @@
+﻿b_no_beam_layouts_test (504 runs per state: 8 presets x 11 stance combinations x tap/held x 3 distances, flight strikes on): on = 0 beams; interim (bNoBeamKeepRt) = only combinations with RT held; off = 198:
+scanned 504 runs with the switch on
+scanned 504 runs with the interim: 150 beams from B, all with RT held
+scanned 504 runs with the switch off: 198 beams from B (["arena power tap 80", "arena power tap 212", "arena power tap 800", "arena power held 80", "arena power held 212", "arena power held 800", "arena dodge tap 80", "arena dodge tap 212", "arena dodge tap 800", "arena dodge held 80", "arena dodge 
+b_no_beam_layouts_test: 3 checks, 0 failed

@@ -1,0 +1,23 @@
+﻿b_probe2 (a standing rival; the switch not yet written; flight strikes rows nofs): what B did, by layer and distance, HEAD 397a7adf
+== B on the Arena pad, signatureRtOnly = true: the player's events, damage to the standing rival, ki change, 120 ticks ==
+-- 80 units
+   B alone   tap     dmg   51.5  ki   +7.5  blow,rush,windup
+   B alone   hold24  dmg   51.5  ki   +7.5  blow,rush,windup
+   LT + B    tap     dmg   21.4  ki   +6.7  blow,rush,windup
+   LT + B    hold24  dmg   21.4  ki   +6.7  blow,rush,windup
+   RT + B    tap     dmg  159.7  ki  -30.8  beam_fire,beam_outcome
+   RT + B    hold24  dmg  159.7  ki  -30.8  beam_fire,beam_outcome
+-- 212 units
+   B alone   tap     dmg   51.5  ki   +7.5  blow,rush,windup
+   B alone   hold24  dmg   51.5  ki   +7.5  blow,rush,windup
+   LT + B    tap     dmg   21.4  ki   +6.7  blow,rush,windup
+   LT + B    hold24  dmg   21.4  ki   +6.7  blow,rush,windup
+   RT + B    tap     dmg  142.7  ki  -31.8  beam_fire,beam_outcome
+   RT + B    hold24  dmg  142.7  ki  -31.8  beam_fire,beam_outcome
+-- 800 units
+   B alone   tap     dmg   51.5  ki   +7.5  blow,lunge_heavy,rush,windup
+   B alone   hold24  dmg   51.5  ki   +7.5  blow,lunge_heavy,rush,windup
+   LT + B    tap     dmg   43.5  ki  -18.8  blow,rush
+   LT + B    hold24  dmg   43.5  ki  -18.8  blow,rush
+   RT + B    tap     dmg  150.2  ki  -30.8  beam_fire,beam_outcome
+   RT + B    hold24  dmg  150.2  ki  -30.8  beam_fire,beam_outcome

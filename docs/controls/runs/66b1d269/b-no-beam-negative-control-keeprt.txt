@@ -1,0 +1,8 @@
+﻿negative control 2 (the interim): b_no_beam_test with isB as bNoBeam first had it (no bNoBeamKeepRt clause); the six 'RT + B is still the signature beam' interim rows must fail:
+FAIL  interim: RT + B (tap, 80 units) is still the signature beam: ["brawl_start", "blow", "windup", "rush", "attack", "press_ack", "brawl_end", "exchange_end"]
+FAIL  interim: RT + B (tap, 212 units) is still the signature beam: ["brawl_start", "blow", "windup", "rush", "attack", "press_ack", "brawl_end", "exchange_end"]
+FAIL  interim: RT + B (tap, 800 units) is still the signature beam: ["rush", "lunge_heavy", "press_ack", "brawl_start", "blow", "windup", "attack", "brawl_end", "exchange
+FAIL  interim: RT + B (held, 80 units) is still the signature beam: ["brawl_start", "blow", "windup", "rush", "attack", "press_ack", "brawl_end", "exchange_end"]
+FAIL  interim: RT + B (held, 212 units) is still the signature beam: ["brawl_start", "blow", "windup", "rush", "attack", "press_ack", "brawl_end", "exchange_end"]
+FAIL  interim: RT + B (held, 800 units) is still the signature beam: ["rush", "lunge_heavy", "press_ack", "brawl_start", "blow", "windup", "attack", "brawl_end", "exchang
+b_no_beam_test: 79 checks, 6 failed

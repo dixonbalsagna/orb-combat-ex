@@ -1,0 +1,163 @@
+extends SceneTree
+## Controls' B-beam probe (scratch): does a B press with no layer held (or with only the dodge held) ever start a beam? One scripted Arena pad on the real input hub plays seeded matches against the computer; every
+## 90 ticks the pad taps B (alone, or with LT held at the press), and what the intent said (stance mask, mode, sig/heavy) and what the director did (beam_charge, blow, taunt ...) in the next 20 ticks is counted.
+##   godot --headless --path <tree> --script res://tools/feel/b_beam_probe.gd -- <matches> <baseSeed> --layer=none|lt --level=easy|medium [--wall=100]
+const QaPlanet = preload("res://qa/godot/qa_planet.gd")
+
+var hub: SimInputHub
+var held: Dictionary = {}
+
+
+func _init() -> void:
+	var pos: Array = []
+	var layer: String = "none"
+	var level: String = "easy"
+	var wall: float = 100.0
+	var fs: bool = false
+	var lead: int = 0
+	var rt: bool = false
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--layer="):
+			layer = a.substr(8)
+		elif a.begins_with("--fs="):
+			fs = a.substr(5) == "1"
+		elif a.begins_with("--lead="):
+			lead = int(a.substr(7))
+		elif a.begins_with("--level="):
+			level = a.substr(8)
+		elif a.begins_with("--wall="):
+			wall = float(a.substr(7))
+		else:
+			pos.append(a)
+	var n: int = int(pos[0]) if pos.size() > 0 else 3
+	var base: int = int(pos[1]) if pos.size() > 1 else 1
+	SimInputData.load_and_apply()
+	if fs:   # the Sunday build's flightStrikes row: one key in interrupts.json, two in timing.json
+		DirZip.fsCfg()["enabled"] = true
+		var sw: Dictionary = SimInputData.timing["switches"]
+		sw["flightStrikeB"] = true
+		sw["dodgeHeld"] = true
+		SimInputData.invalidate()
+	var dai = load("res://sim/director/ai.gd")
+	dai.set("level", level)
+	var acc := {"layer": layer, "level": level, "presses": 0, "beams": 0, "byState": {}, "beamCtx": [], "sigIntent": 0, "heavyIntent": 0, "evs": {}}
+	for m in range(n):
+		var seed_: int = base + m
+		var S := _make(seed_)
+		if QaPlanet.fellBack(S, seed_):
+			quit(3)
+			return
+		var st := {"next": 60, "rel": {}, "win": -1, "ctx": {}, "beam": false}
+		_btn("west", true)
+		st.rel[2] = ["west"]
+		var t0: int = Time.get_ticks_msec()
+		var koSeen: int = -1
+		for t in range(int(900.0 * 60.0)):
+			_drive(S, t, st, layer, acc, lead)
+			_step(S, t, st, acc)
+			if S.game.ko != null and koSeen < 0:
+				koSeen = t
+			if koSeen >= 0 and S.game.koT > 3.0:
+				break
+			if (Time.get_ticks_msec() - t0) / 1000.0 > wall:
+				break
+		for k in held.keys():
+			_btn(k, false)
+		hub.pad_trigger(0, "lt", 0.0)
+		SimCore.dispose(S)
+	print("BBEAM " + JSON.stringify(acc))
+	quit()
+
+
+func _make(seed_: int) -> SimState:
+	hub = SimInputHub.new()
+	held = {}
+	var su: Dictionary = QaPlanet.setup(seed_, hub.setup())
+	su["intro"] = false
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, seed_, {"p1": false, "p2": true}, su)
+	hub.set_pad_has_right_stick(0, true)
+	return S
+
+
+func _btn(name: String, down: bool) -> void:
+	if down == held.has(name):
+		return
+	if down:
+		held[name] = true
+	else:
+		held.erase(name)
+	hub.pad_button(0, name, down)
+
+
+func _walk(S: SimState) -> void:
+	var dx: float = SimWrap.sdx(S.fighters[0].x, S.fighters[1].x)
+	hub.pad_stick(0, signf(dx) if absf(dx) > 110.0 else 0.0, 0.0)
+
+
+func _drive(S: SimState, t: int, st: Dictionary, layer: String, acc: Dictionary, lead: int) -> void:
+	if st.rel.has(t):
+		for nm in st.rel[t]:
+			if nm == "lt":
+				hub.pad_trigger(0, "lt", 0.0)
+			elif nm == "rt":
+				hub.pad_trigger(0, "rt", 0.0)
+			elif nm == "B!":
+				_btn("east", true)
+				st.rel[t + 2] = ["east"]
+			else:
+				_btn(nm, false)
+		st.rel.erase(t)
+	if t >= int(st.next):
+		var a = S.fighters[0]
+		if a.state == "free" and a.ki >= 45.0 and int(st.win) < 0:
+			if layer == "lt":
+				hub.pad_trigger(0, "lt", 1.0)
+				st.rel[t + lead + 4] = ["lt"]
+			elif layer == "rt":
+				hub.pad_trigger(0, "rt", 1.0)
+				st.rel[t + lead + 4] = ["rt"]
+			if lead > 0:
+				st.rel[t + lead] = ["B!"]
+			else:
+				_btn("east", true)
+				st.rel[t + 2] = ["east"]
+			st.win = t + 20 + lead
+			st.beam = false
+			st.ctx = {"state": str(a.state), "dist": int(absf(SimWrap.sdx(a.x, S.fighters[1].x))), "opp": str(S.fighters[1].state)}
+			acc.presses += 1
+		st.next = t + 90
+	_walk(S)
+
+
+func _step(S: SimState, t: int, st: Dictionary, acc: Dictionary) -> void:
+	hub.set_humans(S.fighters[0].ai == null, S.fighters[1].ai == null)
+	var it: SimIntent = hub.intent(0)
+	if it.sig:
+		acc.sigIntent += 1
+		st.ctx["mask"] = it.stanceMask
+		st.ctx["mode"] = it.mode
+	if it.heavy and int(st.win) >= 0 and t >= int(st.win) - 20:
+		acc.heavyIntent += 1
+	if SimCore.step(S, [it, null]):
+		hub.consumed()
+	for e in S.out.fx:
+		if int(st.win) >= 0 and int(e.actor) == 0:
+			var nm: String = str(e.kind) if str(e.type) == "cue" else str(e.type)
+			if nm != "press_ack":
+				acc.evs[nm] = int(acc.evs.get(nm, 0)) + 1
+		if str(e.type) == "cue" and str(e.kind) == "beam_charge" and int(e.actor) == 0 and int(st.win) >= 0 and not bool(st.beam):
+			st.beam = true
+			acc.beams += 1
+			var c: Dictionary = st.ctx.duplicate()
+			c["actMode"] = S.fighters[0].act.mode
+			c["fsMask"] = S.fighters[0].input.stanceMask
+			if acc.beamCtx.size() < 12:
+				acc.beamCtx.append(c)
+	if int(st.win) >= 0 and t >= int(st.win):
+		st.win = -1
+	hub.take_haptics()
+	hub.take_refusals()
+	hub.on_events(S.out.fx)
+	S.out.fx.clear()
+	S.out.feed.clear()

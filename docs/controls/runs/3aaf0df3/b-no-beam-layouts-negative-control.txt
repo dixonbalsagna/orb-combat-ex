@@ -1,0 +1,5 @@
+﻿negative control: b_no_beam_layouts_test with sim/director/brawl.gd put back to HEAD's and switches.bNoBeam on; the on-scan must find the leaks:
+FAIL  on: no B press starts a beam in any preset, stance, hold or distance (198 leaks: ["arena power tap 80", "arena power tap 212", "arena power tap 800", "arena power held 80", "arena power held 212", "arena power held 800"])
+scanned 504 runs with the switch on
+scanned 504 runs with the switch off: 198 beams from B (["arena power tap 80", "arena power tap 212", "arena power tap 800", "arena power held 80", "arena power held 212", "arena power held 800", "arena dodge tap 80", "arena dodge tap 212", "arena dodge tap 800", "arena dodge held 80", "arena dodge held 212", "arena dodge held 800"])
+b_no_beam_layouts_test: 2 checks, 1 failed

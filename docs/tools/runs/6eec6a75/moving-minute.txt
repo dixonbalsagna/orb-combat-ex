@@ -1,0 +1,11 @@
+MOVING MINUTE on orb-first-play-6eec6a75-62e1fea3 (reel.mjs --sticks3 --wall-check, the hook's ai scenario seed 12345, 3600 ticks, words meteor=loud&tiles=1&audiolog=1&travel=1.5), 2026-11-09, guarded launcher, one browser
+[reel] http://127.0.0.1:41496/index.html?flashcap=1&preview=1&reel=1&planet=7&meteor=loud&tiles=1&audiolog=1&travel=1.5&sticks=3: the hook's ai scenario, seed 12345, 960x540, until 99 swing(s) and 99 launch(es) have been seen
+[reel] CUT CANDIDATES (change vs the still before, median 12.4): tick 1350 61.9 [launched/locked]; tick 1380 60.4 [launched/locked]; tick 1410 56.9 [launched/free]; tick 3120 42.4 [free/free]; tick 390 40.1 [locked/locked]; tick 420 34.9 [free/launched]; tick 450 28.6 [free/launched]; tick 90 28.5 [locked/locked]
+[reel] FLAT FACE: the largest single flat face filled 52% of the frame (tick 3450); 2 of 120 stills over 35%
+[reel] WALL CHECK (drawn): the longest stretch behind a building at its DRAWN height was 0 ticks for fighter 1 (ending at tick 0) and 0 for fighter 2 (tick 0); in all 0 and 0 of 3600 ticks: ok
+[reel] WALL CHECK: the longest stretch behind a building was 0 ticks for fighter 1 (ending at tick 0) and 0 for fighter 2 (tick 0); in all 0 and 0 of 3600 ticks; the limit is 180 (3 s): ok
+[reel] PAGE ERRORS: none
+[reel] sound: 343 cues (141 taken), rumble requests 213, output peak 0, engine mixer {"master":-200,"sfx":-200,"voice":-200}
+[reel] 3600 ticks played: 6 swing(s), 4 launch(es), 62 stills kept of 130
+[reel] wrote 6 contact sheet(s) and reel.json to docs/tools/img/mon-moving
+(stills and contact sheets are local: docs/tools/img/mon-moving, not committed)
