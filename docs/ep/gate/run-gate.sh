@@ -46,4 +46,6 @@ echo ALLDONE >> "$O/r.txt"
 grep -oE "script res://[^']*" .github/workflows/ci.yml | grep -v enet_check | sed 's/^script //' | sort -u | while read -r line; do set -- $line; s=$1; shift; tag=ci_$(basename "$s" .gd)_$(echo "$*" | tr -c 'a-zA-Z0-9' '_' | cut -c1-40); "$G" --headless --path . --script "$s" "$@" > "$O/$tag.log" 2>&1; rc=$?; se=$(grep -c "SCRIPT ERROR" "$O/$tag.log"); [ "$se" -gt 0 ] && rc="$rc SCRIPT_ERROR_x$se"; echo "$tag $rc $(tail -n1 "$O/$tag.log" | cut -c1-100)" >> "$O/r.txt"; done
 # CI runs each script through tools/gate.mjs, which fails on any SCRIPT ERROR line even when the check passes (4890bdd9: parity and a LAN control); the mirror flags them the same way.
 grep -l "SCRIPT ERROR" "$O"/*.log 2>/dev/null | sed "s#.*/#script_error_in #" >> "$O/r.txt"
+# CI's node steps too (2026-11-09: the two-fighter ratchet failed a batch the Godot-only mirror passed). Steps needing a browser, a built site or arguments are left out.
+grep -oE "run: '?node tools/[^'\"]*" .github/workflows/ci.yml | sed -E "s/^run: '?//; s/ +$//" | sort -u | grep -vE -- "--require-browser|--site|--export|--commit|--apply|gate.mjs|check-log|--run$" | while read -r c; do tag=node_$(echo "$c" | tr -c 'a-zA-Z0-9' '_' | cut -c1-50); $c > "$O/$tag.log" 2>&1; echo "$tag $? $(tail -n1 "$O/$tag.log" | cut -c1-100)" >> "$O/r.txt"; done
 echo CIDONE >> "$O/r.txt"
