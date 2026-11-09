@@ -1,0 +1,27 @@
+# Terrain plan step 0, look A (Rendering, 2026-11-08): Orb's 11-08 17:26 play (seed 3687423) on its own build 1931a0f8.
+# 1. Scorch probe (scratch tg/scorch_probe.gd): the play replayed with SimCore.step and its inputs on git archive 1931a0f8 + the kept build's sim, data and net (homework/Files/builds/orb-first-play-1931a0f8-7a5a2d2c/tree); no checkpoints in the file, so by the data hash only.
+seed 3687423, field world true, NC 4800, COL 32
+tick 3860 (S.T 48.7): F0 x 72913 y 1474, F1 x 72855; the struggle true
+  scorch within 200 columns (6400 units) of F0: largest 1.00; 256 columns past the scar threshold, columns -55 to 200 from F0 (8192 units of line); their groove half width 328 to 1002 units
+  craters within 4000 of F0: r 196 depth 43 at +3437 (impact)
+  store: 106 records, 73 scorch records
+tick 3880 (S.T 49.0): F0 x 72913 y 1474, F1 x 72855; the struggle true
+  scorch within 200 columns (6400 units) of F0: largest 1.00; 256 columns past the scar threshold, columns -55 to 200 from F0 (8192 units of line); their groove half width 328 to 1002 units
+  craters within 4000 of F0: r 196 depth 43 at +3437 (impact)
+  store: 106 records, 73 scorch records
+tick 3940 (S.T 50.0): F0 x 72913 y 1474, F1 x 72855; the struggle true
+  scorch within 200 columns (6400 units) of F0: largest 1.00; 256 columns past the scar threshold, columns -55 to 200 from F0 (8192 units of line); their groove half width 328 to 1002 units
+  craters within 4000 of F0: r 196 depth 43 at +3437 (impact)
+  store: 106 records, 73 scorch records
+tick 4000 (S.T 51.0): F0 x 72913 y 1474, F1 x 72855; the struggle true
+  scorch within 200 columns (6400 units) of F0: largest 1.00; 256 columns past the scar threshold, columns -55 to 200 from F0 (8192 units of line); their groove half width 328 to 1002 units
+  craters within 4000 of F0: r 196 depth 43 at +3437 (impact)
+  store: 106 records, 73 scorch records
+tick 4060 (S.T 52.0): F0 x 72913 y 1474, F1 x 72855; the struggle true
+  scorch within 200 columns (6400 units) of F0: largest 1.00; 256 columns past the scar threshold, columns -55 to 200 from F0 (8192 units of line); their groove half width 328 to 1002 units
+  craters within 4000 of F0: r 196 depth 43 at +3437 (impact)
+  store: 106 records, 73 scorch records
+   at: cleanup (core/object/object.cpp:2536)
+
+# 2. Clips (Tools' blackbox-clip.mjs on that build's own web folder, 2000x1125, ticks 3880 to 4120 every 20): left = Tools' as played (docs/tools/img/terrain-step0-a, page words from the file); right = the same with craterlook=1 added (Art's per-pixel scar and crater look). Pixels at the dark fill: #211917 on the left: the scar fill (biome tone row 9, RenderBiomeLook.SCAR_DEFAULT #221c18) under the night light. Stills: docs/rendering/img/lookgate/terrain-a-scar-*.png and .gif (uncommitted: character art from Orb's replay).
+right clip: page {'width': 2000, 'height': 1125, 'scale': 1} played 4120 ticks 18503

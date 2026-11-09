@@ -1,0 +1,67 @@
+# crater-look-default on main d985eb15 (Tools: the clip path scrub's own pattern no longer trips the content sc)
+## 1. An ordinary crater on Orb's 11-08 play (its own build 1931a0f8, web, 2000x1125, ticks 2400 to 2560 every 10), Orb's words with and without craterlook=1
+[blackbox-clip] done: 17 pictures; checkpoints compared 0, none to compare
+converted 17
+[blackbox-clip] done: 17 pictures; checkpoints compared 0, none to compare
+converted 17
+gif: crater.gif, 17 frames of 2003x569, 2345 KB
+## 2. The park on main
+crater_look_default edit applied
+crater_look_default.diff a3bc1b6a, 22 lines
+c0 import 0 errors 0
+c1 import 0 errors 0
+golden.json byte-identical to main's
+tile_check exit 0: tile check passed
+lake_water_check exit 0: lake water check passed
+cover_water_check exit 0: cover water check passed
+sweep_check exit 0: sweep check passed
+ground_check exit 0: ground check passed
+render gates exit 0: 20 of 20
+## 3. Web exports, flash clips on the tile ground, off stills
+c0 Web export exit 0
+c1 Web export exit 0
+### c0 (main): run-pixels, tiles=1, collapse and clash, both modes
+clash-reduced: FAIL, primary 6.5 general 0 red, area-15% 7.5, 2 s memory 6.5, 0 dips, 693s, worst of 4 readings (1024x768 at scale 2)
+clash-normal: FAIL, primary 5.5 general 0 red, area-15% 5.5, 2 s memory 5, 0 dips, 697s, worst of 4 readings (1024x768 at scale 1)
+collapse-normal: OVER GATE, primary 3 general 0 red, area-15% 3, 2 s memory 3, 0 dips, 606s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: OVER GATE, primary 3 general 0 red, area-15% 3, 2 s memory 3, 0 dips, 609s, worst of 4 readings (960x540 at scale 1)
+clip                     ticks  general  red  area-15%  2 s mem  margin  dips  verdict  register web/headless max 
+clash-normal              1500      5.5    0       5.5        5    1/11     0  FAIL: the primary reading counts 5.5 (over 3); with the area threshold 15% lower it counts 5.5 (over 3); with a longer memory it counts 5 (ov
+clash-reduced             1500      6.5    0       7.5      6.5    0/11     0  FAIL: the primary reading counts 6.5 (over 3); with the area threshold 15% lower it counts 7.5 (over 3); with a longer memory it counts 6.5 (
+collapse-normal           1500        3    0         3        3     0/6     0  OVER GATE: the primary reading counts 3 (over our gate of 2.5)  n/a <-- NOT PASS
+collapse-reduced          1500        3    0         3        3     0/6     0  OVER GATE: the primary reading counts 3 (over our gate of 2.5)  n/a <-- NOT PASS
+pixel run: 4 of 4 clips are not PASS by the combined rule (Legal's RL-119 and RL-120: PASS is 2.5 or below on the primary reading and no sensitivity run over 3; frames kept in C:/Users/<user>/AppData/Local/Temp/claude/C--
+### c1 (with the park): run-pixels, tiles=1, collapse and clash, both modes
+clash-reduced: FAIL, primary 6.5 general 0 red, area-15% 7.5, 2 s memory 6.5, 0 dips, 648s, worst of 4 readings (1024x768 at scale 2)
+clash-normal: FAIL, primary 5.5 general 0 red, area-15% 5.5, 2 s memory 5, 0 dips, 652s, worst of 4 readings (1024x768 at scale 1)
+collapse-normal: FAIL, primary 4 general 0 red, area-15% 4, 2 s memory 4, 0 dips, 557s, worst of 4 readings (960x540 at scale 1)
+collapse-reduced: FAIL, primary 4 general 0 red, area-15% 4, 2 s memory 3.5, 0 dips, 560s, worst of 4 readings (960x540 at scale 2)
+clip                     ticks  general  red  area-15%  2 s mem  margin  dips  verdict  register web/headless max 
+clash-normal              1500      5.5    0       5.5        5    1/11     0  FAIL: the primary reading counts 5.5 (over 3); with the area threshold 15% lower it counts 5.5 (over 3); with a longer memory it counts 5 (ov
+clash-reduced             1500      6.5    0       7.5      6.5    0/11     0  FAIL: the primary reading counts 6.5 (over 3); with the area threshold 15% lower it counts 7.5 (over 3); with a longer memory it counts 6.5 (
+collapse-normal           1500        4    0         4        4     0/8     0  FAIL: the primary reading counts 4 (over 3); with the area threshold 15% lower it counts 4 (over 3); with a longer memory it counts 4 (over 3
+collapse-reduced          1500        4    0         4      3.5     0/8     0  FAIL: the primary reading counts 4 (over 3); with the area threshold 15% lower it counts 4 (over 3); with a longer memory it counts 3.5 (over
+pixel run: 4 of 4 clips are not PASS by the combined rule (Legal's RL-119 and RL-120: PASS is 2.5 or below on the primary reading and no sensitivity run over 3; frames kept in C:/Users/<user>/AppData/Local/Temp/claude/C--
+off stills (no tile ground, no words, AI, seed 12345, ticks 1 to 1201 every 100): 13, 0 differ
+## the render gates' summary
+open exit 0
+depth exit 0
+shape exit 0
+patch exit 0
+pane exit 0
+stage exit 0
+lane exit 0
+ground exit 0
+after exit 0
+sky exit 0
+flashreg exit 0
+hudwords exit 0
+seam exit 0
+detintro exit 0
+det exit 0
+flight exit 0
+city exit 0
+cue exit 0
+flash exit 0
+splitsweep exit 0
+gatesdone
