@@ -1,0 +1,6 @@
+gate shipped_orbs exit 0: gate: <scratch>/g/hs_shipped_orbs.txt: no SCRIPT ERROR
+gate shipped_masher exit 0: gate: <scratch>/g/hs_shipped_masher.txt: no SCRIPT ERR
+gate ruled_orbs exit 0: gate: <scratch>/g/hs_ruled_orbs.txt: no SCRIPT ERROR l
+gate ruled_masher exit 0: gate: <scratch>/g/hs_ruled_masher.txt: no SCRIPT ERROR
+gate ruled2_orbs exit 0: gate: <scratch>/g/hs_ruled2_orbs.txt: no SCRIPT ERROR 
+gate ruled2_masher exit 0: gate: <scratch>/g/hs_ruled2_masher.txt: no SCRIPT ERRO

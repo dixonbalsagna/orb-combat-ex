@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+"""The gauntlet's hit-stop row (scratch only): Tools' gauntlet.gd plus a count of ticks frozen by a hit-stop (S.dirS.stop > 0 at the
+tick's start, outside a pause), each match's worst 600-tick (10 s) window, and per-match shares. python fz_build.py <tree>"""
+import sys, os
+p = os.path.join(sys.argv[1], 'tools/feel/gauntlet.gd')
+s = open(p, encoding='utf8', newline='').read()
+crlf = '\r\n' in s
+s = s.replace('\r\n', '\n')
+def rep(a, b):
+    global s
+    assert s.count(a) == 1, a[:80]
+    s = s.replace(a, b)
+rep('var _foe_windup_t: int = -100',
+    'var _fzRing: PackedInt32Array = PackedInt32Array()   # FZ: the last 600 ticks, 1 where frozen by a hit-stop\nvar _fzSum: int = 0\nvar _fzWorst: int = 0\nvar _fzN: int = 0\nvar _foe_windup_t: int = -100')
+rep('"hits": 0, "hitsTaken": 0}', '"hits": 0, "hitsTaken": 0, "frozen": 0, "fzShares": [], "fzWorst": []}')
+rep('\t\tvar t0: int = Time.get_ticks_msec()\n',
+    '\t\t_fzRing = PackedInt32Array(); _fzRing.resize(600); _fzSum = 0; _fzWorst = 0; _fzN = 0\n\t\tvar fz0: int = int(tot.frozen)\n\t\tvar t0: int = Time.get_ticks_msec()\n')
+rep('\t\ttot.ticks += S.tick\n',
+    '\t\ttot.ticks += S.tick\n\t\ttot.fzShares.append(snappedf(float(int(tot.frozen) - fz0) / maxf(1.0, float(S.tick)), 0.0001))\n\t\ttot.fzWorst.append(snappedf(float(_fzWorst) / 600.0, 0.0001))\n')
+rep('\tvar pausing: bool = S.pause.left > 0\n',
+    '\tvar pausing: bool = S.pause.left > 0\n\tvar fz: int = 1 if (S.dirS.stop > 0.0 and not pausing) else 0   # FZ: this tick is held by a hit-stop\n\ttot.frozen += fz\n\tvar ri: int = _fzN % 600\n\t_fzSum += fz - _fzRing[ri]\n\t_fzRing[ri] = fz\n\t_fzN += 1\n\tif _fzN >= 600:\n\t\t_fzWorst = maxi(_fzWorst, _fzSum)\n')
+if crlf:
+    s = s.replace('\n', '\r\n')
+open(p, 'w', encoding='utf8', newline='').write(s)
+print('fz applied')
