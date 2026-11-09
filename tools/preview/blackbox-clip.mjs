@@ -30,7 +30,8 @@ const words = String(opt('--query', doc.pageSearch || '')).replace(/^\?/, '').sp
 const url = `http://127.0.0.1:${server.address().port}/index.html?flashcap=1&preview=1&reel=1&replay=1&blackbox=off${words.length ? `&${words.join('&')}` : ''}`;
 const OVERLAY_JS = `(() => { const d = document.createElement('div'); d.id = 'ov'; Object.assign(d.style, { position: 'fixed', left: '0', right: '0', bottom: '0', zIndex: 99999, background: 'rgba(0,0,0,0.6)', color: '#fff', font: 'bold 18px sans-serif', padding: '4px 12px' }); const add = () => document.body && document.body.appendChild(d); if (document.body) add(); else window.addEventListener('DOMContentLoaded', add); })();`;
 let browser = null, page = null, code = 0;
-const record = { build: doc.build || null, source: FILE, seed: rp.seed, ticks: rp.ticks, played: 0, every: EVERY, page: { width: W, height: H, scale: SCALE }, answers: doc.answers || null, checkpoints: { recorded: (rp.checkpoints || []).length, compared: 0, firstBad: -1 }, ok: null };
+const scrub = (p) => String(p).replace(/\\/g, '/').replace(/^([A-Za-z]:\/Users\/)[^/]+\//, '$1<user>/');   // clip.json is committed with the clips' records: no account name in it (content screen, 2026-11-08)
+const record = { build: doc.build || null, source: scrub(FILE), seed: rp.seed, ticks: rp.ticks, played: 0, every: EVERY, page: { width: W, height: H, scale: SCALE }, answers: doc.answers || null, checkpoints: { recorded: (rp.checkpoints || []).length, compared: 0, firstBad: -1 }, ok: null };
 try {
   browser = await launchBrowser({ exe, flags: [`--window-size=${W},${H}`], session: process.env.MERIDIAN_SESSION || 'tools-pipeline', purpose: 'black box clip', timeoutS: 3600, cpuPercent: 25, log });
   page = await Cdp.open(browser.target.webSocketDebuggerUrl);

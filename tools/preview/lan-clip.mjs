@@ -20,6 +20,14 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
 const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 && i + 1 < argv.length ? argv[i + 1] : d; };
 const FILE = opt('--file'), DIR = opt('--dir'), OUT = opt('--out');
+/** A path for a record that may be committed: forward slashes, no account name (C:/Users/<user>/...), and a path inside the repository made relative to it. */
+export function scrubPath(p) {
+  let s = String(p).replace(/\\/g, '/');
+  const repo = resolve(HERE, '../..').replace(/\\/g, '/');
+  if (s.toLowerCase().startsWith(repo.toLowerCase() + '/')) return s.slice(repo.length + 1);
+  return s.replace(/^([A-Za-z]:\/Users\/)[^/]+\//, '$1<user>/');
+}
+
 /** The report marks of a file: Netcode's `marks` [{tick, kind:"report", tag, note}] (kind "report" only; the black box's other marks are not reports), else a plain `reportTicks` list. Ticks, ascending. */
 export function reportMarks(doc) {
   const m = Array.isArray(doc.marks) ? doc.marks.filter((x) => x && x.kind === 'report' && Number(x.tick) > 0) : [];
@@ -85,7 +93,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (!FILE || !OUT || (!DIR && !argv.includes('--dry'))) { console.error('usage: node tools/preview/lan-clip.mjs --file <lan-report json> --dir <kept web build folder> --out <folder> [--slot N] [--tick N] [--before 1800] [--after 120] [--every 6] [--dry]'); process.exit(2); }
   const out = resolve(OUT);
   mkdirSync(out, { recursive: true });
-  const rec = { source: FILE, dir: DIR || null, made: false, reason: null };
+  const rec = { source: scrubPath(FILE), dir: DIR ? scrubPath(DIR) : null, made: false, reason: null };
   const finish = (code, reason) => { if (reason) rec.reason = reason; writeFileSync(join(out, 'lan-clip.json'), JSON.stringify(rec, null, 2)); if (reason) console.error(`[lan-clip] ${reason}`); process.exit(code); };
   let doc;
   try { doc = JSON.parse(readFileSync(FILE, 'utf8')); } catch (e) { finish(3, `cannot read the report file: ${e.message}`); }

@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { rowOf, rowsFromInputs, pictureTicks, stripFor } from './lan-strip.mjs';
-import { planWindow, html, reportMarks, commitOf, groupMarks } from './lan-clip.mjs';
+import { planWindow, html, reportMarks, commitOf, groupMarks, scrubPath } from './lan-clip.mjs';
 import { findFiles, keptBuildFor, readmeText, cmdText, newestPerPc, clipJobs, SAVED } from './lan-report.mjs';
 
 const HERE = resolve(fileURLToPath(new URL('.', import.meta.url)));
@@ -85,6 +85,9 @@ eq(planWindow({ replay: { ticks: 5000 }, reportTicks: [100] }, { tick: 4000, slo
   ok(pg.includes('"B":"hold"') && !pg.includes('fetch(') && pg.includes('frames/f-'), 'the player page carries the strip inside it (no fetch: it is opened from disk) and loads the pictures');
   ok(html(3, 10, 'x', { a: '</script>' }).split('</script>').length === 2, 'strip data cannot close the script tag');
 }
+eq(scrubPath('C:\\Users\\someone\\Downloads\\x.json'), 'C:/Users/<user>/Downloads/x.json', 'a record path carries no account name');
+eq(scrubPath('C:\\Users\\someone/Downloads/x.json'), 'C:/Users/<user>/Downloads/x.json', 'mixed slashes too');
+eq(scrubPath(join(HERE, '..', '..', 'homework', 'Files', 'builds', 'a', 'web')).startsWith('homework/'), true, 'a path inside the repository is made relative to it');
 // 6. the shortcut: CRLF, quoted trailing dot, no bare "%~dp0" quote trap
 const cmd = cmdText('C:/x/Breakers-Like');
 ok(cmd.includes('\r\n') && !/[^\r]\n/.test(cmd), 'cmd is CRLF throughout');

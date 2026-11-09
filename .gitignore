@@ -33,5 +33,8 @@ docs/ui/img/run/
 docs/ui/mock/
 docs/ui/img/*-mock.png
 
+# Tools' "Make my report folder.cmd" names this PC's repository path: generated per LAN folder by tools/preview/lan-report.mjs --write-cmd, never committed
+docs/tools/shortcuts/Make my report folder.cmd
+
 # Real-thumb captures of the right stick (tools/capture): raw files hold anonymous codes and stick samples; only the summary tables are committed
 tools/capture/raw/
