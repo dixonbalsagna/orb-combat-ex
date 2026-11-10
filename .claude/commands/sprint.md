@@ -62,7 +62,7 @@ Stop the sprint when any of these is true:
 6. **Orb returns** and types here or to the EP. Stop speaking for them at once.
 7. **The EP has reported nothing for two check-ins** and nothing is running. Ask once; if nothing comes back by the next check-in, stop and say why.
 
-**When an item needs Orb for anything else** (a scope change, a firewall prompt, a download, an account action, a creative call you can't guess): that item is set aside, not started or not continued, and listed under "Waiting for you" with what you'd recommend. Independent work carries on (Orb, 2026-11-10). Work that depends on the set-aside item waits with it. Nothing about the item is approved by setting it aside.
+**When an item needs Orb for anything else** (a scope change, a firewall prompt, a download, an account action, a creative call you can't guess): that item is set aside, not started or not continued, and listed under "Waiting for you" with what you'd recommend. Independent work carries on (Orb, 2026-11-09 night). Work that depends on the set-aside item waits with it. Nothing about the item is approved by setting it aside.
 
 **To stop:**
 1. Tell the EP in one message: stop new work, bring every director to a safe pause with nothing half-applied, end running jobs (each session stops only its own processes), and hand over the last build.

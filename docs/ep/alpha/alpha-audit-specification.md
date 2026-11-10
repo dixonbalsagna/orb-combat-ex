@@ -60,7 +60,7 @@ You are an independent auditor working for Orb, the owner and creative lead of t
 
 Orb has never led a project and asked that nothing important be forgotten. If you find an area this specification missed, add it and say so.
 
-**The audit runs as two sessions** (Orb, 2026-11-10: "two separate sessions one for judgment and another for bulk reading"). Orb opens both and picks each one's model.
+**The audit runs as two sessions** (Orb, 2026-11-09 night: "two separate sessions one for judgment and another for bulk reading"). Orb opens both and picks each one's model.
 
 | Session | Model | Started with | Does |
 | --- | --- | --- | --- |
@@ -95,7 +95,7 @@ The two sessions **never message each other.** They coordinate only through file
 - `docs/ep/vision.md`: all of it. The entries of 2026-11-09 at the end decide the scope. Later entries override earlier ones; where two conflict and it matters, log it as a question for Orb.
 - `docs/ep/taste.md`: what Orb wants the game to look and feel like, and what Orb has rejected.
 - `homework/1 Urgent/0 Workshop - the Alpha audit (draft, not sent).md`, if it's still there: the EP's workshop with Orb, in plain words.
-- Orb's answers on this specification (2026-11-10), at the end of `docs/ep/vision.md`: two sessions, the cap, no health bars, reports through Discord.
+- Orb's answers on this specification (2026-11-09 night), at the end of `docs/ep/vision.md`: two sessions, the cap, no health bars, reports through Discord.
 
 **How the project runs:**
 - `CLAUDE.md`: pillars, architecture, rules and the delegation brief template.
@@ -179,7 +179,7 @@ Each line of the definition becomes a criterion with an id. The numbers marked *
 | X-12 | Campaign: decided as minimal or none for Alpha, with the reason written | Your recommendation; Orb's decision | None |
 | X-13 | In one normal match of 6 to 8 minutes, every pillar shows up at least once: a lap of the globe, each stance used, a beam aimed and dodged by moving off its line, both signatures on Orb's inputs, a launch, the gravity well's pull, a crater, a building damaged, bystanders scattering, and a transformation | A checklist read from the match's event feed, on scripted matches and on Orb's saved play files | Alpha match checklist probe (QA, with Encounter) |
 | X-14 | Destruction escalates with tier: the same blow at the top tier makes a measurably bigger mark than at the base tier (*proposed:* at least 3 times the crater width), and no base-tier fight wrecks the planet | World's checks with the tier varied | May exist in `tools/world-checks.json`; confirm |
-| X-15 | Energy, stamina and health: one written page states the model; every number lives in data per fighter; adding a third fighter needs data and art only, no new fighter-specific code; no health bar is on screen, and a fighter's health reads from the fighter (Orb, 2026-11-10) | The page; the two-fighter ratchet (`tools/ratchet-two-fighter.mjs`) passing | The page (Game Design); the ratchet exists |
+| X-15 | Energy, stamina and health: one written page states the model; every number lives in data per fighter; adding a third fighter needs data and art only, no new fighter-specific code; no health bar is on screen, and a fighter's health reads from the fighter (Orb, 2026-11-09 night) | The page; the two-fighter ratchet (`tools/ratchet-two-fighter.mjs`) passing | The page (Game Design); the ratchet exists |
 | X-16 | Beams follow option A: a beam is seen leaving the fighter, travels at a speed, is aimed with the stick, and misses a defender who moves off its line (*proposed:* by more than the beam's width before it arrives) | A scripted defender sidestep at three ranges | Beam escape probe (QA, with Encounter) |
 | X-17 | Beams and signatures fire only from their intended inputs: no beam without the right stick, apart from the signature inputs Orb named | A count over scripted and saved matches of beams started by any other input: 0 | QA's `beam_trace.gd` exists; extend to a count |
 | X-18 | Newcomer step 1: a tester installs and starts the game on a Steam Deck from the tester guide alone, in *proposed* under 10 minutes | A real-Deck test by one of Orb's friends with a scripted checklist | Tester guide and Deck checklist (Performance & Platform, QA) |
@@ -360,7 +360,7 @@ Each area has a code, its owning directors (from `DIRECTORS.md`; "with" names su
 - What exists today: ki or charge, the Wounds damage model (`sim/core/wounds.gd`, `docs/design/damage-model.md`), the power model (`data/fight/power.json`, switched on by the page, not by data), stamina if any.
 - Is there one written model? Does each number live in data per fighter?
 - Does it suit high-speed combat: can a player read their own state without looking away from the fight, with nothing drawn over the fighters?
-- Answered by Orb (2026-11-10): no health bars on screen; health is tracked behind the scenes and shown on the fighters. What's built today, and what does the HUD show? What must change so a fighter's state reads from the fighter?
+- Answered by Orb (2026-11-09 night): no health bars on screen; health is tracked behind the scenes and shown on the fighters. What's built today, and what does the HUD show? What must change so a fighter's state reads from the fighter?
 - The backburnered meters (the hero's and villain's, the ego meters): where do they still act in code or data? Recommend switch off, fold in, or retire, each with the files.
 - What would adding a third fighter need? Run the two-fighter ratchet's own report.
 
@@ -649,7 +649,7 @@ Orb wants "systems in place that there will be some content for comparisons when
 
 ### 10.4 itch.io for Alpha
 
-Plan: a restricted page that only people with a download key can open; one key per tester; a Windows channel and a Linux channel; updates through itch's own upload tool; a short tester guide; and the route reports take back to Orb, which is Orb's private Discord (Orb, 2026-11-10).
+Plan: a restricted page that only people with a download key can open; one key per tester; a Windows channel and a Linux channel; updates through itch's own upload tool; a short tester guide; and the route reports take back to Orb, which is Orb's private Discord (Orb, 2026-11-09 night).
 
 Check against itch.io's current creator documentation and cite it: how restricted pages and download keys work, and how the upload tool's channels and versions work. Creating the account or page, generating keys and installing the upload tool are **Orb's actions**: an account action, something public-facing, and a download.
 
@@ -695,8 +695,8 @@ List each on Orb's page with one recommendation and the reason. You can recommen
 4. The default world, or a random planet each match. *Stand-in:* a random planet each match, with one fixed planet for a newcomer's first match and for tests.
 5. The campaign's size for Alpha: minimal or none. *Stand-in:* none at Alpha; the horde mode carries co-op.
 6. The frame rate targets on Orb's PC and on the Deck. *Stand-in:* 60 on Orb's PC; 30 held on the Deck, with 40 as the aim.
-7. Health: **answered** (Orb, 2026-11-10). No bars on screen; health is tracked behind the scenes and shown on the fighters. Don't put it to Orb again.
-8. The route testers use to send reports: **answered** (Orb, 2026-11-10: "Possibly discord, I do have one that I could convert over to this purpose"). Setting up the server is Orb's action; say what it needs (a private channel for reports, who's invited).
+7. Health: **answered** (Orb, 2026-11-09 night). No bars on screen; health is tracked behind the scenes and shown on the fighters. Don't put it to Orb again.
+8. The route testers use to send reports: **answered** (Orb, 2026-11-09 night: "Possibly discord, I do have one that I could convert over to this purpose"). Setting up the server is Orb's action; say what it needs (a private channel for reports, who's invited).
 9. Whether LAN is offered to outside testers at Alpha, or stays with Orb and Orb 2. *Stand-in:* Orb and Orb 2 only, unless setup becomes one step.
 10. Each of Orb's open "workshop this" items, placed before or after Alpha: close fights where the stick moves just you; the terrain, tessellation and deformable-mesh overhaul; re-entry trails; High Intensity on RT; the signature taunt; walking into a beam; beam stages; picture-in-picture; the audio toolset; planet customisation. *Stand-in:* close fights and beam stages before Alpha, because they shape the core fight; re-entry trails, picture-in-picture and planet customisation as nice to have; the terrain overhaul, High Intensity, the taunt, walking into a beam and the audio toolset after Alpha.
 11. Code signing for Windows, if you recommend it: it costs money. *Stand-in:* not for Alpha; the tester guide explains the warning.
@@ -707,7 +707,7 @@ Keep the list short on Orb's page: lead with the ones that block the first miles
 
 ## 12. Budget, and what to drop first
 
-**Cap: 20 million tokens for both sessions together** (Orb, 2026-11-10: "go with the 20m cap").
+**Cap: 20 million tokens for both sessions together** (Orb, 2026-11-09 night: "go with the 20m cap").
 
 **The cap is measured by tally.** Each session adds up the tokens its workflows and agents report when they finish, plus an estimate for the session itself, and keeps the running total in its own section of `progress.md`. At every phase boundary, read the other session's total and check the sum.
 
