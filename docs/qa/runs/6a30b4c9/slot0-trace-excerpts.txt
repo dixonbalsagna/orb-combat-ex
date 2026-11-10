@@ -1,0 +1,30 @@
+## ticks 5169 to 5225 (the beam at 5220)
+TRACE t=5169 state=free in=[rsStart, rsHeld, mask 2 rsMask 2, rsDir 3 lvl 0] ev=[stick_start:toward, beam_aim:]
+TRACE t=5181 state=locked in=[rsHeld, mask 2 rsMask 2, rsDir 3 lvl 1] ev=[stick_stage:1]
+TRACE t=5185 state=locked in=[rsHeld, mask 0 rsMask 2, rsDir 3 lvl 1] ev=[beam_aim:]
+TRACE t=5186 state=locked in=[rsRelease, mask 0 rsMask 2, rsDir 3 lvl 1] ev=[stick_refused:beam]
+TRACE t=5211 state=locked in=[heavy, lightHeld, heavyHeld] ev=[brawl_start:, blow:medium, windup:start, press_ack:started]
+TRACE t=5212 state=locked in=[lightHeld, heavyHeld] ev=[]
+TRACE t=5213 state=locked in=[lightHeld, heavyHeld] ev=[]
+TRACE t=5214 state=locked in=[lightHeld, heavyHeld] ev=[]
+TRACE t=5215 state=locked in=[lightHeld, heavyHeld] ev=[]
+TRACE t=5216 state=locked in=[lightHeld, heavyHeld] ev=[]
+TRACE t=5217 state=locked in=[lightHeld, heavyHeld] ev=[]
+TRACE t=5218 state=locked in=[lightHeld, heavyHeld] ev=[swing_place:building]
+TRACE t=5219 state=locked in=[] ev=[brawl_end:beam, windup:end, beam_stage:1]
+TRACE t=5220 state=locked in=[] ev=[beam_charge:start]
+TRACE t=5222 state=locked in=[heavy, heavyHeld] ev=[press_ack:queued]
+TRACE t=5223 state=locked in=[heavyHeld] ev=[]
+TRACE t=5224 state=locked in=[heavyHeld, move -0.2,0.0] ev=[]
+TRACE t=5225 state=locked in=[heavyHeld, move -0.6,0.0] ev=[]
+
+## ticks 6575 to 6620, queue and exchange (RT + B at 6597 and 6617)
+Q t=6575 queue  ex=light:brawl/ state=locked mask=8 sig=false sigHeld=false power=false powerPress=false
+Q t=6576 queue  ex=light:brawl/ state=locked mask=0 sig=false sigHeld=false power=false powerPress=false
+Q t=6591 queue  ex=light:brawl/ state=locked mask=4 sig=false sigHeld=false power=true powerPress=true
+Q t=6592 queue  ex=light:brawl/ state=locked mask=4 sig=false sigHeld=false power=true powerPress=false
+Q t=6597 queue  ex=light:brawl/ state=locked mask=4 sig=true sigHeld=true power=true powerPress=false
+Q t=6598 queue  ex=light:brawl/ state=locked mask=4 sig=false sigHeld=true power=true powerPress=false
+Q t=6608 queue  ex=light:brawl/ state=locked mask=4 sig=false sigHeld=false power=true powerPress=false
+Q t=6617 queue  ex=sig:signature/ state=locked mask=4 sig=true sigHeld=true power=true powerPress=false
+Q t=6618 queue  ex=sig:signature/ state=locked mask=4 sig=false sigHeld=true power=true powerPress=false

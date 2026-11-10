@@ -43,6 +43,7 @@ func _init() -> void:
 	var lastSigHeld: int = -100000
 	var lastRs: int = -100000
 	var presses: Array = []
+	var hist: Array = []   # per tick, slot 0: the non-neutral buttons as text, for the 24 ticks before a beam start
 	var kinds := {}
 	for t in range(int(rp.ticks)):
 		while ti < rp.toggles.size() and int(rp.toggles[ti][0]) == t:
@@ -57,6 +58,18 @@ func _init() -> void:
 		var mBefore: int = int(S.fighters[0].act.mode)
 		SimCore.step(S, cur)
 		var itx = cur[0]
+		var hflags: Array = []
+		if itx != null:
+			for hk in ["light", "heavy", "sig", "sigHeld", "dodge", "guard", "guardPress", "power", "powerPress", "powerTap", "context", "transform", "sprint", "rsStart", "rsHeld", "rsRelease"]:
+				if itx.get(hk):
+					hflags.append(hk)
+			if int(itx.stanceMask) != 0:
+				hflags.append("mask%d" % int(itx.stanceMask))
+			if int(itx.special) != 0 or int(itx.upgrade) != 0:
+				hflags.append("special%d/upgrade%d" % [int(itx.special), int(itx.upgrade)])
+		hist.append("%d:%s" % [t, "+".join(hflags) if not hflags.is_empty() else "-"])
+		if hist.size() > 30:
+			hist.pop_front()
 		if itx != null:
 			if itx.sig:
 				lastSig = t
@@ -91,6 +104,11 @@ func _init() -> void:
 							ins.append(k)
 					ins.append("mask %d" % int(itx.stanceMask))
 					ins.append("intent.mode %d, fighter act.mode %d (before the tick %d)" % [int(itx.mode), int(a.act.mode), mBefore])   # -1 auto, 0 physical, 1 energy: was a B beam thrown from the energy layer (EP, 2026-11-08)
+				if kind == "beam_charge" and text == "start" and int(e.get("actor")) == 0:
+					var qs: Array = []
+					for qe in a.act.queue:
+						qs.append("[w%d m%d e%d t%d]" % [int(qe[0]), int(qe[1]), int(qe[2]), int(qe[3])])
+					print("BEAMPRE t=%d queue now %s ; last 24 ticks of slot 0: %s" % [t, " ".join(qs) if not qs.is_empty() else "empty", " ".join(hist.slice(maxi(0, hist.size() - 24)))])
 				if kind == "beam_charge" and text == "start":
 					var exs = DirBrawl.exOf(S)   # what exchange the beam is: kind, template, branch, and the pair's gap in body heights (the close band is 3)
 					print("BEAMEX t=%d exchange kind=%s tpl=%s branch=%s A=%d gap %.2f bh stick-beam move on %s" % [t, str(exs.kind) if exs != null else "none", str(exs.tpl) if exs != null else "", str(exs.branch) if exs != null else "", S.fighters.find(exs.A) if exs != null else -1, DirBands.dist(a, b) / DirInterrupt.BH, str(DirBeamMove.on())])
