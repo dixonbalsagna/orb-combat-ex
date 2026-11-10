@@ -133,7 +133,7 @@ export function eventMatcher(name, aliases) {
 }
 
 /** One scene run on an open hook page: steps the match tick by tick, takes pictures where the requests ask, returns when every request is done. A request: { name, dir, from, frames, step } or { name, dir, event: { name, nth, before, after }, step }. */
-async function runScene(page, { scene, seed, W, H, requests, aliases, maxTicks, onStep }) {
+export async function runScene(page, { scene, seed, W, H, requests, aliases, maxTicks, onStep }) {
   await page.eval(`window.__flashcap.start(${JSON.stringify(scene)}, { reduced: false, seed: ${Number(seed)} })`, true);
   const seen = [];   // every logged event, [tick, type, kind, x]; seen.pad: the pad rows of the button strip
   const padRows = []; seen.pad = padRows;
@@ -180,7 +180,7 @@ async function runScene(page, { scene, seed, W, H, requests, aliases, maxTicks, 
   return seen;
 }
 
-async function openPage(web, words, W, H, limitS, extra = {}) {
+export async function openPage(web, words, W, H, limitS, extra = {}) {
   const server = await serve(resolve(web));
   const exe = browserExe('chrome');
   if (!exe) throw new Error('no Chrome found for the guarded launcher');
@@ -189,12 +189,15 @@ async function openPage(web, words, W, H, limitS, extra = {}) {
   await page.send('Page.enable'); await page.send('Runtime.enable');
   await page.send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false });
   if (extra.script) await page.send('Page.addScriptToEvaluateOnNewDocument', { source: extra.script });
+  // CLIPS_HIDE_OVERLAYS=1 (the MMS clips, 2026-11-10): the private page's own fixed overlays (the energy sliders, the clip note) are not drawn, so nothing but the game is in the picture
+  if (process.env.CLIPS_HIDE_OVERLAYS) await page.send('Page.addScriptToEvaluateOnNewDocument', { source: "(function(){var s=document.createElement('style');s.textContent='div[style*=fixed]{display:none !important}';(document.head||document.documentElement).appendChild(s);})();" });
   const url = `http://127.0.0.1:${server.address().port}/index.html?flashcap=1${extra.replay ? '&replay=1&blackbox=off' : ''}${words ? '&' + words : ''}`;
   await page.send('Page.navigate', { url });
   const deadline = Date.now() + 900 * 1000;
   let ready = false;
   while (Date.now() < deadline && !ready) { await sleep(500); ready = await page.eval('Boolean(window.__flashcap && window.__flashcap.ready)').catch(() => false); }
   if (!ready) throw new Error('the page offers no window.__flashcap that becomes ready (is it an export with the capture hook?)');
+  if (process.env.CLIPS_HIDE_OVERLAYS) await page.eval("document.querySelectorAll('div').forEach(function (d) { if (getComputedStyle(d).position === 'fixed') d.style.display = 'none'; })").catch(() => null);   // the page's fixed overlays, once it is up (the style rule above can miss a head that was not there yet)
   return { server, browser, page, url };
 }
 
@@ -224,7 +227,7 @@ function indexLine(outDir, name, info, r, extra = '') {
 
 /** make.mjs's work, callable by the self-test. opts: { names, build, format, out, limit, keepFrames, dry } */
 export async function make(opts) {
-  const R = loadRecipes();
+  const R = loadRecipes(opts.recipes);
   const names = opts.names.includes('all') ? Object.keys(R.clips).filter((n) => n !== 'selftest' && !R.clips[n].event && !R.clips[n].pending) : opts.names;
   for (const n of names) if (!R.clips[n]) throw new Error(`no recipe "${n}" in tools/clips/clips.json (node tools/clips/make.mjs --list)`);
   for (const n of names) if (R.clips[n].pending) throw new Error(`the slot "${n}" is not filled yet: ${R.clips[n].pending === true ? R.clips[n].needs || 'the move has not landed' : R.clips[n].pending} (when the move lands, give it a scene and words and remove pending)`);
@@ -299,7 +302,7 @@ export async function make(opts) {
 
 /** Every mark and bookmark of a saved match, rendered through the replay in one pass: the match is played once and a window is cut for each. */
 export async function fromMatch(opts) {
-  const R = loadRecipes();
+  const R = loadRecipes(opts.recipes);
   const doc = JSON.parse(readFileSync(opts.fromMatch, 'utf8'));
   const rp = doc.replay || doc;
   const marks = Array.isArray(doc.marks) ? doc.marks : [];
@@ -355,7 +358,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const names = []; for (let i = 0; i < argv.length; i++) { if (argv[i].startsWith('--')) { if (!flags.has(argv[i])) i++; } else names.push(argv[i]); }
   try {
     if (argv.includes('--list')) { const R = loadRecipes(); for (const [n, r] of Object.entries(R.clips)) console.log(`${n.padEnd(36)} ${r.mockup ? 'mockup' : r.event ? 'event ' : 'window'}  ${r.desc || ''}${r.pending ? `  [SLOT, not filled: ${r.pending === true ? r.needs || '' : r.pending}]` : r.needs ? `  [needs ${r.needs}]` : ''}`); process.exit(0); }
-    const common = { build: opt('--build'), format: opt('--format'), out: opt('--out'), limit: Number(opt('--limit', 0)) || 0, keepFrames: argv.includes('--keep-frames'), strip: argv.includes('--no-strip') ? false : undefined };
+    const common = { recipes: opt('--recipes') ? resolve(opt('--recipes')) : undefined, build: opt('--build'), format: opt('--format'), out: opt('--out'), limit: Number(opt('--limit', 0)) || 0, keepFrames: argv.includes('--keep-frames'), strip: argv.includes('--no-strip') ? false : undefined };
     let res;
     if (opt('--from-match')) res = await fromMatch({ ...common, fromMatch: opt('--from-match') });
     else if (names.length) res = await make({ ...common, names, dry: argv.includes('--dry') });

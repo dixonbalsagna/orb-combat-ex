@@ -1,0 +1,135 @@
+diff --git a/data/fight/ricochet.json b/data/fight/ricochet.json
+index 076dcbf..af237eb 100644
+--- a/data/fight/ricochet.json
++++ b/data/fight/ricochet.json
+@@ -1,16 +1,16 @@
+ {
+   "_note": "The ricochet's glance (Game Design's fight-feel.md section 3; rulings-2026-10-22.md 2b; sim/core/ricochet.gd; docs/architecture/ricochet-core.md). Speeds are normalised: a launch's traversal factor divided out, as World's contact reads them.",
+   "schema": "fight.ricochet/1",
+-  "enabled": false,
++  "enabled": true,
+   "_enabled": "the one switch. SimCore.newMatch copies it into S.ricOn unless the match's setup has its own \"ricochet\". Off: no glance, no ricochet state hashed, no ricochet event, and this file is not read into a replay",
+   "line": 1500.0,
+   "_line": "units a second of his whole speed (Game Design's rulings-2026-10-22.md 4: it was the speed along the surface's normal, which no shallow contact reached): at or above it a glancing contact glances; below it is Combat's plant (Encounter's)",
+   "maxAngle": 40.0,
+   "_maxAngle": "degrees to the surface: under it, a glance; at or above it, the wall slam, the lodge or the chain as before",
+-  "keep": 0.7,
++  "keep": 0.85,
+   "_keep": "the share of his speed a glance keeps (angle in equal to angle out)",
+-  "minSlope": 30.0,
++  "minSlope": 12.0,
+   "_minSlope": "degrees: the ground a ricochet comes off is sloped this much or more (a hillside, a ridge, a cliff, a crater's wall); flatter ground keeps the skid, the bounce, the tumble and the slam. Building faces always count",
+-  "maxInRow": 2,
++  "maxInRow": 8,
+   "_maxInRow": "the most ricochets in a row for one send, glances and plants together: then the next surface is a plain contact"
+ }
+diff --git a/render/tools/flash_capture.gd b/render/tools/flash_capture.gd
+index d28e4d3..26ff1ef 100644
+--- a/render/tools/flash_capture.gd
++++ b/render/tools/flash_capture.gd
+@@ -33,7 +33,7 @@ extends RefCounted
+ const SCENARIOS: Array = ["mash", "mashcity", "clash", "signature", "signaturecity", "rushcity", "transform", "collapse", "mashdummy", "ring", "launchai", "clashcity", "signaturedummy", "blastdummy", "plumedesert", "plumeice", "plumevolc", "ai"]
+ const SEED: int = 12345
+ ## Film scenes (clips for people, not Tools' worst cases; tools/clips): not in SCENARIOS, so the flash check's lists stay as sources.json has them (tools/flash/selftest.js). Which slots are the AI's (true) in each.
+-const FILM_SCENES: Dictionary = {"beamduel": [false, false], "chase": [false, true], "chargehold": [false, true], "towers": [false, true]}
++const FILM_SCENES: Dictionary = {"beamduel": [false, false], "chase": [false, true], "chargehold": [false, true], "towers": [false, true], "mmsky": [false, true]}
+ const FORM_TICKS: Array = [300, 1500]
+ ## Which slots are the AI's (true) in each scenario.
+ const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true], "plumedesert": [false, false], "plumeice": [false, false], "plumevolc": [false, false], "mashdummy": [false, true], "ring": [false, true], "launchai": [false, true], "clashcity": [false, false], "signaturedummy": [false, true], "blastdummy": [false, true]}
+@@ -388,6 +388,8 @@ func drive(sc: String, t: int, S: SimState) -> void:
+ 			_chase(t, S)
+ 		"chargehold":   # clip kit: player one closes to within 6 body heights of the rival, holds the right stick toward him for 60 ticks and lets go, every 240 ticks (the stick's charged strike)
+ 			_chargehold(t, S)
++		"mmsky":        # MMS clips (scratch only): both up beside the tallest tower, player one launches the AI at it
++			_mmsky(t, S)
+ 		"towers":       # clip kit: beside the tallest tower, player one launches the AI east through the row of towers (with `peak=1&power=1` words: the top-power launch)
+ 			_towers(t, S)
+ 		"launchai":     # player one launches the AI
+@@ -465,10 +467,69 @@ func _ring(t: int, S: SimState) -> void:
+ func _towers(t: int, S: SimState) -> void:
+ 	if t == 0:
+ 		_to_the_city(S)
++		_mm_cam()
++	_launch_ai(t, S)
++
++
++## MMS clips (scratch only, 2026-11-10): the word mmcam=1 puts a follow camera on a film scene: locked on the midpoint of the two fighters, as close as their gap allows (mmfit, mmzmin, mmzmax, mmpitch).
++func _mm_cam() -> void:
++	if _page_kv("mmcam") == "1":
++		_bd_t0 = -1.0
++		main.set("film_cam", _follow)
++
++
++func _follow(fr: SplitFrame, S: SimState, a: float) -> void:
++	var tt: float = float(main.host.ticks) + a
++	if _bd_t0 < 0.0:
++		_bd_t0 = tt
++	var A = S.fighters[0]
++	var D = S.fighters[1]
++	var dx: float = SimWrap.sdx(A.x, D.x)
++	var span: float = maxf(absf(dx), 200.0)
++	var mid := Vector2(SimWrap.wrap(A.x + dx * 0.5), (float(A.y) + float(D.y)) * 0.5 + CamParams.CHEST)
++	var fz: float = (float(A.z) + float(D.z)) * 0.5
++	var z: float = clampf(fr.vw / (span * _kvf("mmfit", 1.5)), _kvf("mmzmin", 1.0), _kvf("mmzmax", 2.4))
++	_place(fr, mid.x, mid.y, fz, 0.5, _kvf("mmv", 0.55), z, _kvf("mmpitch", 4.0))
++	fr.focus_z[0] = fz
++	fr.mode = "merged"
++	fr.sep = 0.0
++	fr.e = 0.0
++	fr.e_slot = -1
++	fr.share = 0.0
++	fr.sliver = 0.0
++	fr.active = [true, false]
++	fr.panel = {}
++	fr.fade = 0.0
++	fr.flash = 0.0
++	fr.line_alpha = 0.0
++	fr.gap = 0.0
++	fr.shake = PackedFloat64Array([0.0, 0.0])
++	fr.many_off = []
++	fr.cut = tt - _bd_t0 < 1.0
++
++
++func _mmsky(t: int, S: SimState) -> void:
++	if t == 0:
++		_to_the_city(S)
++		_mm_cam()
++		var tall = null
++		for b in S.buildings:
++			if b.alive and (tall == null or b.h > tall.h):
++				tall = b
++		if tall != null:
++			S.fighters[1].x = SimWrap.wrap(tall.x - _kvf("skyfoe", 600.0))
++			S.fighters[0].x = SimWrap.wrap(S.fighters[1].x - _kvf("skygap", 400.0))
++		for i in range(2):
++			var f = S.fighters[i]
++			f.y = WorldTerrain.groundY(S, f.x) + _kvf("skyalt", 400.0)
++			f.vx = 0.0
++			f.vy = 0.0
+ 	_launch_ai(t, S)
+ 
+ 
+ func _chase(t: int, S: SimState) -> void:
++	if t == 0:
++		_mm_cam()
+ 	_launch_ai(t, S)
+ 	_btn(0, "west", String(S.fighters[1].state) == "launched" and _tap(t, 6, 0))
+ 
+@@ -674,7 +735,7 @@ func _film(fr: SplitFrame, S: SimState, a: float) -> void:
+ 		_bd_mid = Vector2(SimWrap.wrap(_bd_mid.x + SimWrap.sdx(_bd_mid.x, mid.x) * 0.06), lerpf(_bd_mid.y, mid.y, 0.06))
+ 	var fz: float = (float(A.z) + float(D.z)) * 0.5
+ 	var u: float = _ss((t - 62.0) / 70.0)   # held on the charge, the move as he fires, settled as the beams lock; the struggle is held still
+-	var fit: float = fr.vw / span
++	var fit: float = fr.vw / span * _kvf("bdz", 1.0)   # MMS clips (scratch only): bdz scales every film shot zoom
+ 	var dir: float = signf(dx) if dx != 0.0 else 1.0
+ 	match _bd_shot:
+ 		1:   # low and side-on, the ground along the bottom, a slow push in and drift
+@@ -713,6 +774,7 @@ func _film(fr: SplitFrame, S: SimState, a: float) -> void:
+ 	fr.flash = 0.0
+ 	fr.line_alpha = 0.0
+ 	fr.gap = 0.0
+-	fr.shake = PackedFloat64Array([0.0, 0.0])
++	var mmsh: float = _kvf("bdshake", 0.0) if (_bd_tb >= 0 and S.beams.size() > 0) else 0.0   # MMS clips (scratch only): a shake while the beams are out
++	fr.shake = PackedFloat64Array([mmsh, mmsh])
+ 	fr.many_off = []
+ 	fr.cut = t < 1.0

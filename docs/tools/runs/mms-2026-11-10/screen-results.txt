@@ -1,0 +1,6 @@
+1-launch-chain-a.gif               60      3.6   480x270        2    0         2      1.5     1/4     0  PASS
+1-launch-chain-b.gif               60      3.6   480x270      2.5    0       2.5      1.5     2/5     0  PASS
+2-skyscraper-a.gif                 45      2.7   480x270      1.5    0       1.5        2     1/3     0  PASS
+2-skyscraper-b.gif                 45      2.7   480x270        2    0       1.5        2     2/4     0  PASS
+3-beam-clash-a.gif                 56      4.5   480x270      1.5    0       1.5      1.5     0/3     0  PASS
+3-beam-clash-b.gif                 56      4.5   480x270      1.5    0       1.5      1.5     0/3     0  PASS

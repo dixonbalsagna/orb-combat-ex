@@ -1,0 +1,6 @@
+[
+ {"id":"d1-s1","scene":"chase","seed":1,"words":"planet=7&meteor=loud&tiles=1&nohud=1&power=1&peak=1&blackbox=off&mmcam=1","from":92,"frames":60,"desc":"chase seed 1, follow cam"},
+ {"id":"d1-s2","scene":"chase","seed":2,"words":"planet=7&meteor=loud&tiles=1&nohud=1&power=1&peak=1&blackbox=off&mmcam=1","from":98,"frames":60,"desc":"chase seed 2, follow cam"},
+ {"id":"d2-t1","scene":"towers","seed":1,"words":"planet=7&meteor=loud&tiles=1&nohud=1&power=1&peak=1&blackbox=off&mmcam=1","from":585,"frames":60,"desc":"towers seed 1, follow cam"},
+ {"id":"d2-sky1","scene":"mmsky","seed":1,"words":"planet=7&meteor=loud&tiles=1&nohud=1&power=1&peak=1&blackbox=off&mmcam=1&skyalt=600","from":322,"frames":60,"desc":"sky seed 1, follow cam"}
+]
