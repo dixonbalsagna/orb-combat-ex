@@ -1733,3 +1733,12 @@ Orb's notes to QA, summarised by QA: ground clipping with the character models, 
 Orb wants an audit of the whole project over the weekend on Fable 5.2, which then sets the formal path to an official Alpha.
 
 **The Alpha directive, Orb's review (2026-11-09 evening, verbatim):** "i think these two could be on the backburner [the hero and villain meters; signature variants by biome], as long as we have a functioning energy and stamina and health system in place the Alpha can tighten up these ideas into real gameplay. these read to me more like holdovers from very early ideas I had for the game. Whatever we implement has to complement high speed combat, so lets keep tuning systems like these in preparation for adding more unique fighters to the roster." "THE REST LOOKS GOOD, i went through the whole document, I still don't quite understand licenses so I want recommendations made for the path this software is going down, otherwise it looks good go ahead and communicate to my stand-in". Orb also wants the Alpha audit run by a fresh auditor session, "similar to the safety audit I ran".
+
+**The Alpha audit specification, Orb's answers (2026-11-10, to the EP, verbatim):**
+1. The audit's model: "recommended, two separate sessions one for judgment and another for bulk reading." (Bulk reading on Opus 5.5, judgment on Fable 5.2; if the Fable meter reaches about 90%, the audit pauses and asks Orb to press a Fable reset.)
+2. The cap: "go with the 20m cap".
+3. Health bars: "go with recommended" (no health bars on screen; health is tracked behind the scenes and shown on the fighters).
+4. How testers send reports: "Possibly discord, I do have one that I could convert over to this purpose".
+5. Command names (/sprint-plan and /sprint, replacing /crunch and /overnight): "that works".
+6. When /sprint needs Orb: "go with recommended" (the item is set aside and the rest carries on; a full stop only for a safety rule, a Legal flag, or anything that would spend money or go public).
+"I briefly read through the specification, I approve it".
