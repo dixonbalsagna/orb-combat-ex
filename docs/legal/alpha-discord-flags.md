@@ -1,0 +1,16 @@
+# Discord for Alpha reports: what needs Orb's attention (not for testers)
+
+Legal, 2026-11-09. A screen, not legal advice. Orb said testers could report through "a Discord server that I could convert over to this purpose". Discord is fine for this if it is set up the right way. These are the things to decide or check, most important first.
+
+1. **Do not convert a server that already has members or history.** An existing server with friends, old channels or public invites is not private. Anyone who is not a tester could see reports, builds or clips. Use a **new server, or a new private channel** locked to a "tester" role, invite-only, with no public invite link and no server discovery.
+2. **Reports can leak testers' personal details.** The earlier audit found the Windows account name inside committed files. A report file that a tester uploads could carry the same thing, so **Tools should check what a report file contains and strip account names and file paths before it is offered for sending.** Until then, the note tells testers to glance at attachments.
+3. **Never let the game post to Discord by itself.** No webhook, no bot link inside the build. A webhook address in a build can be pulled out by anyone and used to spam your server, and it would break the promise that nothing leaves the PC unless the tester sends it.
+4. **Discord is a third party, and the note says so.** It keeps messages, usernames and network details under its own terms. The public privacy line ("this game collects and sends no personal data") stays true because the game sends nothing, but the tester note must keep telling testers that reports go through Discord. Do not edit that sentence out.
+5. **Adults only is something you have to enforce.** Discord cannot check ages for you. Invite only people you know are adults, and ask them to confirm. Do not let a tester bring someone else.
+6. **Keep the private promise real.** Members can screenshot, forward or repost anything in a server. Turn off invites by members, keep the footage and character art in a channel only the testers can read, and remind people in the server rules that it is private. This matters because in-progress character art must never reach a public page (your standing rule).
+7. **Deleting on request is a promise.** The tester note says reports are deleted if a tester asks. Only keep that sentence if you will do it. If testers are in the EU, the UK or California, such a request is also a legal right, and it covers their Discord name and messages.
+8. **You are the server owner.** That means you answer to Discord's rules for what happens in it, you moderate, and you should keep the server small and quiet. Pick one person (you) to read reports on a schedule, as with the Issues page.
+9. **Name it carefully.** Use the working title with "(working title)" or "Alpha testers", not a name that could be mistaken for an official or store channel, and do not use any other project's name. The title search is still open.
+10. **Tell me if the plan changes.** If a tester should ever send recordings, crash dumps or logs automatically, or if the server opens to the public, that needs a fresh read from Legal first.
+
+None of this blocks the Alpha. Items 1, 2 and 3 should be settled before the first tester gets a build.
