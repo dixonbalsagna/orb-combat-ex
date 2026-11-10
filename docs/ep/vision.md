@@ -1720,3 +1720,14 @@ Orb's notes to QA, summarised by QA: ground clipping with the character models, 
   - megastructures: "Of course they need to be destructible, but they are made of the most advanced materials and may contain the latest hardware and components.";
   - see it first: "that looks fantastic, lets keep heading in this direction";
   - world sizes: "lets see how the impact to framerates work,[spitballing: ideally each planet should have a megacity, several large cities, townships, points of interest.... player customization should be allowed so a player might want more cities crammed together on a small planet, or another player might want to have a large desert world with barely any water and no cold climates. Lots of customization for versus mode and custom games, a more tailored but still random planet for the campaign.]".
+
+**The Alpha, Orb's answers (2026-11-09 evening, to the EP, verbatim):**
+1. Who plays: "outside testers will be playing, I have at least two friends with steam decks that are interested".
+2. Fighters: "tentatively: roster of four will be benchmark for beta version".
+3. Modes: "all of the above, least priority on the campaign, if we could have a one or two player co-op horde mode where respawning weak enemies can swarm you I'd be happy".
+4. Platforms: "I don't know what the limitations are".
+5. Looks: "the current characters are fine for first alpha version".
+6. When: "go with the flow".
+7. Resets: two Fable-only limit resets, expiring Mar 8, 2027: "it just resets fable usage ... lets just stick to the plan." Also: "fable tokens do draw down the main pile of tokens."
+8. The two commands (/plan and /run, drafted by the stand-in): "show me how they work and I'll be happy".
+Orb wants an audit of the whole project over the weekend on Fable 5.2, which then sets the formal path to an official Alpha.
