@@ -82,8 +82,8 @@ Copy this into D1 and turn every line into **a measurable exit criterion**: a nu
   - launches;
   - the gravity well;
   - terrain, buildings and bystanders taking damage that escalates with tier;
-  - the hero and villain meters;
-  - signature variants by biome.
+  - **a working energy, stamina and health system** that suits high-speed combat, tuned so new fighters can be added to the roster later.
+- **On the backburner for Alpha** (Orb, 2026-11-09: "holdovers from very early ideas"): the hero and villain meters, and signature variants by biome. The audit doesn't count them as Alpha features. It may say what's left of them in the code and whether to keep it switched off, fold it into the energy, stamina and health system, or retire it. Orb's rule for anything that comes back: "Whatever we implement has to complement high speed combat".
 
 **A newcomer on a Steam Deck can, without help:**
 1. Install and start the game.
@@ -215,7 +215,7 @@ For each area, D1 lists the owner (from `DIRECTORS.md`) and the specific questio
     - The AI disclosure up front (Orb's rule).
     - What a tester agrees to.
     - Privacy: nothing leaves the PC.
-    - The licence decision, still open with Orb.
+    - **The licence, with a recommendation.** Orb: "I still don't quite understand licenses so I want recommendations made for the path this software is going down." The audit asks Legal for a plain-words rundown. It covers the code, the art and the sound separately, and the options from "all rights reserved" through source-available to open licences. It says what each option means for a free game on itch.io and later Steam, for keeping commercial control, and for Orb's friends and future contributors. It ends with one recommendation and the reasons. The code stays all rights reserved until Orb picks.
     - The credits and third-party list (fonts, tools, sound).
     - The title's clash, which must be cleared before any store page.
 16. **Accessibility and localisation:** the baseline for Alpha, and the comfort settings.
@@ -288,7 +288,7 @@ D1 must specify the systems that let marketing material pile up as the game impr
 ## 9. Decisions only Orb makes (D1 lists them, each with a recommendation)
 
 At least these:
-- the licence (open);
+- the licence (open), with Legal's plain-words recommendation (area 15);
 - the $100 Steam fee, and when;
 - the itch.io page's visibility;
 - the default world;
