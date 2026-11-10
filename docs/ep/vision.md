@@ -1688,3 +1688,35 @@ Orb, on the camera: "No, we were standing by the same hill, and I looked at both
 - What to change first: "tuning flight speed down to 3500 felt a lot more manageable than the default, please continue tweaking this, adding dynamic elements to the flight to intertwine it fairly with other gameplay mechanics."
 
 Orb's notes to QA, summarised by QA: ground clipping with the character models, a row of three humps in a crater (leftovers, craters not waves), a pause with no menu, and the start menu's d-pad (up and down inconsistent; left and right change the option underneath). QA's replay (docs/qa/runs/6a30b4c9/) found the stray beam: tick 5220 is a stick beam released and refused, then fired 33 ticks later into a brawl Orb began with Y. A second one, RT + B at 6617, came 26 ticks after RT, because the keep-RT window isn't counted.
+
+**Orb's homework answers of 2026-11-09 (evening, verbatim):**
+- Beams overhaul: "A sounds good" (a beam in space, aimed with the stick).
+- Close fights, your stick moves just you: "workshop this".
+- The black crater: "in the gameplay it definitely looked out of place somehow, we need serious work on textures, terrain geometry, impacts, destructible environments. workshop this, and improve the system. can we create a cheap tesselation engine and combine it with smart, destructible, deformable terrain meshes?"
+- Meteor launch:
+  - top of the arc: "rule of cool decides this, the parabola looks great, make sure it's dynamic, emergent, math-based. I want players to be able to achieve these kinds of hits in a variety of angles and impacts."
+  - 6 seconds: "presumably if the fighter is attacking they will continue to rush attack the fighter they just knocked away into the meteor arc. rule of cool, math-based, emergent, make sure this is a function of gameplay mechanics that synergizes with other mechanics."
+  - glow: "as a placeholder its fine. I want math-based burning trails, smoke particles, glowing "atmospheric re-entry" heat waves around the fighter in motion."
+  - quality: "I like the detail at maximum, level of detail could probably be extended on my hardware, lets continue refining this".
+- The mixed combo: "this looks a long way from finished but right track".
+- Sound:
+  - the crackle fix: "this is not my realm of expertise, the crackles sounded bad and I didn't like them, I really want to keep workshopping new and different sound effects";
+  - new sounds: "at some point I would like to build a unified audio toolset tailored for this game so we can nail down a style and unique sound landscape. I want my game to have identifiable sound qualities, appealing, perhaps a little reminiscient. Keep this in the queue so we can come back to this when the 3d globe arena is ironed out."
+  - Beep test: "the beeps worked". Edge: "I'm not installing Edge I don't like the software. I went through trouble to get it uninstalled from my system in the first place." Old PC made sound in Firefox: "yes".
+- Beams round two:
+  - stages: "I'm not sure, workshop it";
+  - the swat: "it felt like it could be on track";
+  - RT: "Keep workshopping, I like where this is going, A sounds close to what I imagined, a "High Intensity" switch that upgrades everything across the board, [spitballing: this switch could be a unique mechanic for each fighter, incurring a slightly different cost or building some reservoir that differs between each fighter.] and i want to 'workshop how the ki charging ability' currently activated by 'a held RT' functions going forward."
+  - signatures: "RT + RB  + 'Flick Right Stick' is the signature energy move, RT + 'Flick Right Stick' is the signature martial move, [spitball: holding the stick performs a taunt (voice line plus animation) which is followed by a powered  up signature]";
+  - walking into a beam: "workshop this. I want to see it implemented and it could work as the toy demonstrated.";
+  - punching up the beam: "workshop this, may be more suited for another fighter".
+- Split screen:
+  - the merge: "hard line looks better I think, lets try some more sylized versions perhaps";
+  - two PCs: "the bigger screen share against an AI opponent can use some further tuning, PIP for cool moments from your ally, further overhauling and tuning of the camera operations is necessary";
+  - couch: "I agree, PIP needs smart implementation to keep track of your ally especially when they are half the world away, must be unobtrusive and follows 'rule of cool' and minimal impact on framerate".
+- The planet:
+  - real shapes: "math based, procedural terrain, use rules for placing landmarks so planets are recognizable but novel";
+  - Everhold: "I don't have a particular attachment to it, let's talk about deciding on a 'default' world but I like the idea of playing on a randomly generated planet.";
+  - megastructures: "Of course they need to be destructible, but they are made of the most advanced materials and may contain the latest hardware and components.";
+  - see it first: "that looks fantastic, lets keep heading in this direction";
+  - world sizes: "lets see how the impact to framerates work,[spitballing: ideally each planet should have a megacity, several large cities, townships, points of interest.... player customization should be allowed so a player might want more cities crammed together on a small planet, or another player might want to have a large desert world with barely any water and no cold climates. Lots of customization for versus mode and custom games, a more tailored but still random planet for the campaign.]".
