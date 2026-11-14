@@ -1,0 +1,198 @@
+diff --git a/data/director/launch.json b/data/director/launch.json
+index 3cc7459..84d0a7b 100644
+--- a/data/director/launch.json
++++ b/data/director/launch.json
+@@ -101,6 +101,9 @@
+       "speed": [1100.0, 1300.0, 1500.0, 1800.0],
+       "uy": [0.05, 0.12, 0.25, 0.4, 0.6, 0.8],
+       "clear": 20.0,
++      "wallCone": 20.0,
++      "wallBy": "trueDistance",
++      "_wallCone": "Game Design, buildings.md section 10: a knock aims only at a wall inside a cone of wallCone degrees around the blow's own line (in the ground plane; the stick's depth included), nearest by true distance (wallBy trueDistance; line: along the line only, as before). No wall in the cone: no wall aim, he flies his line. 0: no cone. The depth window stays the outer limit",
+       "_note": "A knock-back that aims at a wall (docs/world/ring-any-angle/game-design.md section 15). base less care x this care: the chance it aims when a wall is in reach, so care is a flat weight. reach, distMul: a wall along the line within the lesser of reach and distMul of the knock's own distance, in the band WorldBrunt.candidates reads for depth, and he goes all the way to it. speed: by tier, with no travel boost, a plain send on buildings.md 6.1's ladder; perUnit: at least this many units a second per unit away, so it reaches. uy: the lifts tried, lowest first, so ground rising to a pad can still be cleared. clear: how far above the building's base he must meet the wall; a quarter of it clears the ground on the way."
+     },
+     "_wear": "A knock-back hurts (agency-pass.md section 13, rule 4): a knock-back the director carries (the upright slide, the drift in the air) costs 'wear' of a launch's impact at the speed he is carried: wear x impactPerSpeed x distance over its time. impactPerSpeed is World's single-impact figure (damage per unit a second of the first contact, sim/world/contact.gd). The skid of 4 bh and over is a journey and pays World's own slide wear",
+diff --git a/sim/director/launch.gd b/sim/director/launch.gd
+index edf3b3b..37092bc 100644
+--- a/sim/director/launch.gd
++++ b/sim/director/launch.gd
+@@ -1270,6 +1270,30 @@ static func knock(S: SimState, att, tgt, mul: float = 1.0, ox: float = NAN) -> v
+ 		SimDamage.hurt(S, tgt, wear, att)
+ 
+ 
++## The blow's line in the ground plane, as a depth slope along x: the depth the stick gave the blow. No knock carries a depth of its own
++## today (its flight is along x at the target's depth), so 0; with fighters in depth this is where the blow's depth is read.
++static func _lineSlope(_att, _tgt) -> float:
++	return 0.0
++
++
++## A wall's place against the blow's line (Game Design, buildings.md section 10): [along, off, true distance]. along: its near side's
++## distance along the line; off: the depth from the line to its footprint (0 when the line passes through it).
++static func _wallAt(tgt, b, s: float, slope: float) -> PackedFloat64Array:
++	var along: float = SimWrap.sdx(tgt.x, b.x) * s - b.w * 0.5
++	var zl: float = float(tgt.z) + slope * along
++	var off: float = maxf(0.0, absf(float(b.z) - zl) - float(b.d) * 0.5)
++	return PackedFloat64Array([along, off, SimDetMath.hypot(along, off)])
++
++
++## Inside the knock's cone: off the line at most tan(wallCone) x along it. With wallCone 0 (or no key), every wall is (today's rule).
++static func _inCone(w: Dictionary, at: PackedFloat64Array) -> bool:
++	var cone: float = float(w.get("wallCone", 0.0))
++	if cone <= 0.0:
++		return true
++	var a: float = cone * SimMathx.PI / 180.0
++	return at[1] <= SimDetMath.sin(a) / SimDetMath.cos(a) * at[0] + 1e-9
++
++
+ ## A knock-back that aims at a wall (game-design.md section 15): a standing building on the side he goes, inside the knock's own
+ ## distance in plan. A plain send on buildings.md 6.1's ladder. It reads standing buildings only, and care as a flat weight, never
+ ## who is inside. A player's stick held another way wins. Null when there's none, and always with it off.
+@@ -1290,10 +1314,12 @@ static func _wall(S: SimState, att, tgt, s: float, dist: float):
+ 	var best = null
+ 	var bd: float = 1.0e18
+ 	var walls: Array = []   # [distance, building], nearest first (the first found on a tie)
++	var slope: float = _lineSlope(att, tgt)
++	var byTrue: bool = String(w.get("wallBy", "line")) == "trueDistance"
+ 	if not walked.is_empty():
+ 		var wb = S.buildings[int(walked[0])]
+ 		var wd: float = SimWrap.sdx(tgt.x, wb.x) * s - wb.w * 0.5
+-		if wd > 0.0 and wd <= float(walked[1]):
++		if wd > 0.0 and wd <= float(walked[1]) and _inCone(w, _wallAt(tgt, wb, s, slope)):   # (a walked wall too stays inside the cone)
+ 			best = wb
+ 			bd = wd
+ 	for bi in (WorldStructures.near(S, tgt.x, reach) if best == null else []):
+@@ -1310,10 +1336,14 @@ static func _wall(S: SimState, att, tgt, s: float, dist: float):
+ 			continue
+ 		var dz: float = float(b.z) - float(tgt.z)
+ 		if d <= reach and dz <= WorldBrunt.BR_Z_FRONT and -dz <= WorldBrunt.BR_Z_BACK and tgt.y <= WorldStructures.baseY(S, b) + WorldStructures.curH(b):
++			var wa: PackedFloat64Array = _wallAt(tgt, b, s, slope)
++			if not _inCone(w, wa):
++				continue   # outside the blow's cone: a wall deep in the background is not his way (the background ricochet of Orb's ping-pong)
++			var key: float = wa[2] if byTrue else d   # the order: true distance (Game Design), or along the line (today's)
+ 			var at: int = walls.size()
+-			while at > 0 and float(walls[at - 1][0]) > d:
++			while at > 0 and float(walls[at - 1][2]) > key:
+ 				at -= 1
+-			walls.insert(at, [d, b])
++			walls.insert(at, [d, b, key])
+ 	if best != null:
+ 		walls = [[bd, best]]   # the building he walked him to
+ 	if walls.is_empty():
+diff --git a/sim/director/tools/knock_wall_check.gd b/sim/director/tools/knock_wall_check.gd
+index a511b8b..95f5773 100644
+--- a/sim/director/tools/knock_wall_check.gd
++++ b/sim/director/tools/knock_wall_check.gd
+@@ -10,6 +10,7 @@ var failed: int = 0
+ 
+ func _init() -> void:
+ 	_rows()
++	_cone()
+ 	_visit()
+ 	DirLaunch.setWallForce(-1)
+ 	DirVisit.setForce(-1)
+@@ -62,14 +63,72 @@ func _firstWall(S: SimState, A, D) -> int:
+ 		var gap: float = absf(dx) - q.w * 0.5
+ 		var dz: float = float(q.z) - float(D.z)
+ 		if dx * s > 0.0 and gap > 0.0 and gap <= reach and dz <= WorldBrunt.BR_Z_FRONT and -dz <= WorldBrunt.BR_Z_BACK and D.y <= WorldStructures.baseY(S, q) + WorldStructures.curH(q):
+-			cands.append([gap, bi])
++			var wa: PackedFloat64Array = DirLaunch._wallAt(D, q, s, DirLaunch._lineSlope(A, D))
++			if DirLaunch._inCone(wd, wa):   # (Game Design, buildings.md section 10: inside the blow's cone, nearest by true distance)
++				cands.append([wa[2] if String(wd.get("wallBy", "line")) == "trueDistance" else gap, bi, gap])
+ 	cands.sort()
+ 	for ci in range(mini(cands.size(), 3)):
+-		if DirLaunch._wallPlan(S, A, D, s, wd, S.buildings[int(cands[ci][1])], float(cands[ci][0])) != null:
++		if DirLaunch._wallPlan(S, A, D, s, wd, S.buildings[int(cands[ci][1])], float(cands[ci][2])) != null:
+ 			return int(cands[ci][1])
+ 	return -1
+ 
+ 
++## Game Design's QA row (buildings.md section 10): knocks staged along the street, beside each indexed building near the start in turn,
++## each aim measured against the blow's line: none more than wallCone off it. Negative control: the cone off and the order along the line
++## (today's rule) aims some far off it, into the background.
++func _coneRun(cone: float, by: String) -> Array:
++	var wd: Dictionary = DirLaunch.data().knockBack.wall
++	var keep: Array = [wd.get("wallCone", 0.0), wd.get("wallBy", "line")]
++	wd["wallCone"] = cone
++	wd["wallBy"] = by
++	DirLaunch.setWallForce(1)
++	var S := _start()
++	var ids: Array = WorldStructures.near(S, S.fighters[0].x, 6000.0)
++	SimCore.dispose(S)
++	var aims: int = 0
++	var wide: int = 0
++	var worst: float = 0.0
++	var k: int = 0
++	for bi in ids:
++		if k >= 24:
++			break
++		S = _start()
++		var b = S.buildings[bi]
++		if not b.alive or WorldSettle.noTarget(b.landmark):
++			SimCore.dispose(S)
++			continue
++		k += 1
++		_place(S, bi, 300.0, 1.0, false)
++		var A = S.fighters[0]
++		var D = S.fighters[1]
++		A.tier = 4.0
++		var tx: float = D.x
++		var tz: float = D.z
++		var s: float = SimMathx.jsign(SimWrap.sdx(A.x, D.x))
++		DirLaunch.knock(S, A, D)
++		if int(D.aimB) >= 0:
++			aims += 1
++			var q = S.buildings[int(D.aimB)]
++			var along: float = SimWrap.sdx(tx, q.x) * s - q.w * 0.5
++			var off: float = maxf(0.0, absf(float(q.z) - tz) - float(q.d) * 0.5)
++			var deg: float = atan2(off, maxf(along, 0.001)) * 180.0 / PI
++			worst = maxf(worst, deg)
++			if deg > 20.01:
++				wide += 1
++		SimCore.dispose(S)
++	wd["wallCone"] = keep[0]
++	wd["wallBy"] = keep[1]
++	return [k, aims, wide, worst]
++
++
++func _cone() -> void:
++	var on: Array = _coneRun(20.0, "trueDistance")
++	var off: Array = _coneRun(0.0, "line")
++	print("      knocks staged beside %d buildings: with the cone %d aimed, %d more than 20 degrees off the line (worst %.1f); today's rule %d aimed, %d more than 20 off (worst %.1f)" % [on[0], on[1], on[2], on[3], off[1], off[2], off[3]])
++	_expect(on[1] > 0 and on[2] == 0, "the cone: knocks aimed at a wall more than 20 degrees off the blow's line, 0 (Game Design's QA row; %d aimed)" % on[1])
++	_expect(off[2] > 0, "negative control, today's rule (no cone, along the line): some aim more than 20 degrees off (%d)" % off[2])
++
++
+ ## Puts the target `gap` from the building's near side, with the attacker behind him, side -1 or 1 the way he'd go.
+ func _place(S: SimState, i: int, gap: float, side: float, behind: bool = false) -> void:
+ 	var b = S.buildings[i]
+@@ -92,7 +151,10 @@ func _rows() -> void:
+ 	var reach: float = float(DirLaunch.data().knockBack.distBh[3]) * DirLaunch.BH
+ 	SimCore.dispose(S)
+ 	print("      the building: %d, its face %.0f off the plane; a tier-4 knock's reach %.0f" % [i, fz, reach])
+-	for row in [["off, in reach", 0, 80.0, false, false], ["on, in reach", 1, 80.0, false, true], ["on, past its reach", 1, 1800.0, false, false], ["on, 1,200 away at tier 4", 1, 1200.0, false, true], ["on, behind him", 1, 80.0, true, false]]:
++	var cone: float = float(DirLaunch.data().knockBack.wall.get("wallCone", 0.0)) * PI / 180.0
++	var inReach: float = maxf(80.0, fz / tan(cone) + 20.0) if cone > 0.0 else 80.0   # (Game Design's cone: a building fz deep is aimed at only from fz / tan(cone) along)
++	print("      in reach, inside the cone: %.0f from its near side" % inReach)
++	for row in [["off, in reach", 0, inReach, false, false], ["on, in reach", 1, inReach, false, true], ["on, past its reach", 1, 1800.0, false, false], ["on, 1,200 away at tier 4", 1, 1200.0, false, true], ["on, behind him", 1, 80.0, true, false]]:
+ 		DirLaunch.setWallForce(int(row[1]))
+ 		S = _start()
+ 		_place(S, i, float(row[2]), 1.0, bool(row[3]))
+@@ -103,7 +165,8 @@ func _rows() -> void:
+ 		DirLaunch.knock(S, A, D)
+ 		var aimed: bool = int(D.aimB) == i if String(row[0]) != "on, 1,200 away at tier 4" else int(D.aimB) >= 0   # at that range a nearer wall may take him
+ 		if String(row[0]) == "on, in reach":
+-			aimed = want >= 0 and int(D.aimB) == want   # (the nearest indexed wall along the line his flight reaches: the staged one, or a nearer one in another row)
++			aimed = int(D.aimB) == want   # (where the rule says: the nearest indexed wall by true distance inside the cone that a flight reaches, or none)
++			print("      on, in reach: the rule's wall %d, aimed at %d" % [want, int(D.aimB)])
+ 		var hit: int = 0
+ 		var guard: int = 0
+ 		while D.state == "launched" and guard < 600:
+@@ -115,7 +178,7 @@ func _rows() -> void:
+ 			S.out.fx.clear()
+ 			guard += 1
+ 		_expect(aimed == bool(row[4]), "%s: aimed %s" % [row[0], str(aimed)])
+-		if bool(row[4]):
++		if bool(row[4]) and int(D.aimB) >= 0:
+ 			_expect(hit > 0, "%s: the wall takes him (%d)" % [row[0], hit])
+ 		SimCore.dispose(S)
+ 	# a tier-1 body meets a tower and stays out of it

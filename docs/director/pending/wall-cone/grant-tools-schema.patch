@@ -1,0 +1,21 @@
+diff --git a/tools/schemas/director-launch.schema.json b/tools/schemas/director-launch.schema.json
+index 494a578..4fcc2be 100644
+--- a/tools/schemas/director-launch.schema.json
++++ b/tools/schemas/director-launch.schema.json
+@@ -532,6 +532,16 @@
+             "distMul": {
+               "type": "number",
+               "minimum": 0
++            },
++            "wallCone": {
++              "type": "number",
++              "minimum": 0,
++              "maximum": 90,
++              "description": "Degrees around the blow's line a knock may aim at a wall (Game Design, buildings.md section 10); 0: no cone."
++            },
++            "wallBy": {
++              "enum": ["trueDistance", "line"],
++              "description": "The order among walls in the cone: true distance, or along the line only (as before)."
+             }
+           },
+           "required": [

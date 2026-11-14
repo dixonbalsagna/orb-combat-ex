@@ -1,0 +1,59 @@
+wall-cone (GW1b rider) on main 4327cfbb + energy-on + gates-shipped + energy-on-pins + gw1a-pins + index-stage
+--- every director check, the 9 November data, with the rider:
+08:09:57 a_press_check exit 0: A PRESS: 0 check(s) failed
+08:10:14 arc_check exit 0: ARC: 0 check(s) failed
+08:10:53 arrive_check exit 0: ARRIVE: 0 check(s) failed
+08:17:31 bark_reads_check exit 0: bark_reads_check: passed
+08:17:38 beam_ai_check exit 0: BEAM AI: 0 check(s) failed
+08:17:46 beam_front_check exit 0: FRONT: 0 check(s) failed
+08:17:51 beam_move_check exit 0: BEAM MOVE: 0 check(s) failed
+08:17:56 carry_round_check exit 0: CARRY ROUND: 0 check(s) failed
+08:18:03 chase_tap_check exit 0: CHASE: 0 check(s) failed
+08:18:17 city_push_check exit 0: CITY PUSH: 0 check(s) failed
+08:18:29 driver_check exit 0: DRIVER: 0 check(s) failed
+08:18:40 ending_check exit 0: ENDING: 0 check(s) failed
+08:18:46 ending_team_check exit 0: ENDING TEAM: 0 check(s) failed
+08:18:51 flick_keep_check exit 0: FLICK KEEP: 0 check(s) failed
+08:18:59 flight_strike_check exit 0: FLIGHT STRIKE: 0 check(s) failed
+08:19:39 floorlift_check exit 0: FLOORLIFT: 0 check(s) failed
+08:19:58 follow_check exit 0: FOLLOW: 0 check(s) failed
+08:20:06 full_send_check exit 0: FULL SEND: 0 check(s) failed
+08:20:49 knock_wall_check exit 0: KNOCK WALL: 0 check(s) failed
+08:21:01 launch_cuts_check exit 0: LAUNCH CUTS: 0 check(s) failed
+08:21:10 location_check exit 0: LOCATION: 0 check(s) failed
+08:21:15 morning_fixes_check exit 0: MORNING FIXES: 0 check(s) failed
+08:21:20 outside_check exit 0: OUTSIDE: 0 check(s) failed
+08:21:25 pace_check exit 0: PACE: 0 check(s) failed
+08:21:32 phrase_check exit 0: PHRASE: 0 check(s) failed
+08:21:37 plane_check exit 0: PLANE: 0 check(s) failed
+08:21:42 press_answers_check exit 0: PRESS ANSWERS: 0 check(s) failed
+08:21:48 press_decides_check exit 0: PRESS: 0 check(s) failed
+08:21:53 push_mode_check exit 0: PUSH MODE: 0 check(s) failed
+08:21:59 reads_check exit 0: reads_check: 16 of 16 passed
+08:22:05 refusal_reasons_check exit 0: REFUSAL REASONS: 0 check(s) failed
+08:22:10 relief_check exit 0: RELIEF: 0 check(s) failed
+08:23:07 sigvariants_check exit 0: sigvariants check passed
+08:23:17 stance_check exit 0: STANCE: 0 check(s) failed
+08:23:29 stick_check exit 0: STICK: 0 check(s) failed
+08:23:34 stick_lunge_check exit 0: STICK LUNGE: 0 check(s) failed
+08:23:39 strike_stages_check exit 0: STRIKE STAGES: 0 check(s) failed
+08:23:44 sure_reach_check exit 0: sure_reach_check: passed
+08:24:28 swing_check exit 0: SWING: 0 check(s) failed
+08:25:50 swing_legal_check exit 0: SWING LEGAL: 0 check(s) failed
+08:26:25 walk_check exit 0: WALK: 0 check(s) failed
+lane 10 done
+--- the golden, the 9 November data, with and without the rider (both fail against main's golden: energy-on and the target data):
+ga0 import 0
+base parity 1: Orb Combat EX golden check   Godot 4.7.2-stable (official)   res://sim/core/test/golden.json
+golden check FAILED
+cone parity 1: Orb Combat EX golden check   Godot 4.7.2-stable (official)   res://sim/core/test/golden.json
+golden check FAILED
+SAME lines with and without the rider
+--- the re-cut checks, the 9 November data:
+08:33:12 knock_wall_check exit 0: KNOCK WALL: 0 check(s) failed
+08:33:45 walk_check exit 0: WALK: 0 check(s) failed
+lane 12 done
+--- the re-cut checks, main's data with the cone's data:
+08:34:08 knock_wall_check exit 0: KNOCK WALL: 0 check(s) failed
+08:34:25 walk_check exit 0: WALK: 0 check(s) failed
+lane 13 done
