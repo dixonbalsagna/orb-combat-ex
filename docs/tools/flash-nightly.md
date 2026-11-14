@@ -72,3 +72,19 @@ What it shows:
 - The collapse windows have still not been measured for where the clip is at its worst: they read from tick 1.
 
 **What this makes of the nightly:** the scheduled run will be red on the clash clips every night until the clip itself is fixed, because it truly reads over the line. That is the tripwire doing its job, not a lapse in the tool. The EP decides what goes to whom: this page and the numbers are for the EP only.
+
+## The measured windows for signature and collapse (14 November 2026, hardware, 960x540, export of main f1f91f45; for the EP, not for Orb)
+
+Full local readings of the four clips (the nightly's page words, one at a time, about 4 minutes each), then each clip's window read to see that it picks the same worst second:
+
+| Clip | Full clip (1500 ticks) | Worst second (event ticks) | The window now in `nightly-windows.json` | Window result |
+| :--- | :--- | :--- | :--- | :--- |
+| signature-normal | primary 3.5 (over the line of 3), memory 2.5 | 76, 82, 110, 114, 125, 127, 129 | 180 ticks from tick 1 | primary 3, memory 2.5 (3 and 2.5 and 2.5 on three runs) |
+| signature-reduced | primary 3.5 (over the line), memory 2.5 | 78, 81, 82, 86, 112, 115, 125 | 180 from tick 1 | same events, primary 3.5, memory 2.5: exact |
+| collapse-normal | PASS, primary 2, memory 2 | 1111, 1132, 1145, 1151 | 180 from 991 | same events, primary 2, memory 2: exact |
+| collapse-reduced | over our gate, primary 3, memory 2.5 | 1465, 1471, 1479, 1491, 1495, 1499: the end of the clip | 160 from 1341 | same events, primary 3, memory 2.5: exact |
+
+- **Signature is on the line and the reading moves.** The same full clip read 3.5 and, on a repeat, 3; the signature-normal window read 3, 2.5 and 2.5. The events at the edge of the threshold (the 129th, a one-tick shift of the 82nd) come and go from run to run, which is half a flash to one flash. The reduced window matched its full reading exactly. A nightly signature window is a tripwire within one flash of the line, not the clip's number: the verdict treats over 2.5 as a finding and over 3 as red, so a signature reading of 2.5 to 3 should be read as "at the line".
+- **Signature's worst moment is in the first two seconds**, which is why the earlier window of 120 ticks from tick 1 read 2 and 3. **Collapse-reduced's worst is the clip's last second**, which a window from tick 1 never reached; its window now ends at tick 1500 (the worst moment may run on past it, into time the clip does not play).
+- **Memory needs lead-in.** The two-second memory reading ignores the first 120 frames of a clip, so a window needs about 120 ticks before the moment: a window of 130 ticks from 1371 read the right primary but a memory of 1 for collapse-reduced; 160 from 1341 reads 2.5, as the full clip does.
+- **Costs on a runner** are not measured for these windows: collapse about 20 to 50 s a tick plus about 2 s a skipped tick, so collapse has a 210-minute cap (the job limit is 300); signature has 100 minutes.

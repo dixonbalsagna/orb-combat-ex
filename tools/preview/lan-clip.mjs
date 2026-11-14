@@ -36,6 +36,8 @@ export function reportMarks(doc) {
 }
 /** The commit a file was recorded on: Netcode's build.commit, a black box's build.commit, else a top-level `commit`. */
 /** The stamp the save's replay names as its build (SimReplay's "build"), or '' when it names none. Pure. */
+/** The home to pass to the page (B1 re-check, defect 2): none unless asked. `--home save` takes the save's own build (homeOf), `--home <id>` that id; with no --home the page's own build check applies as it does to any file. Pure. */
+export function homeFor(opt, doc) { if (opt === undefined || opt === null || opt === '') return ''; return opt === 'save' ? homeOf(doc) : String(opt); }
 export function homeOf(doc) { const rp = (doc && doc.replay) || doc || {}; return typeof rp.build === 'string' ? rp.build : ''; }
 export function commitOf(doc) { return (doc.build && doc.build.commit) || doc.commit || null; }
 /** Which PC: Netcode's `pc` ("main" or "old"), else `side`. */
@@ -92,7 +94,7 @@ addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();document.
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  if (!FILE || !OUT || (!DIR && !argv.includes('--dry'))) { console.error('usage: node tools/preview/lan-clip.mjs --file <lan-report json> --dir <kept web build folder> --out <folder> [--slot N] [--tick N] [--before 1800] [--after 120] [--every 6] [--dry]'); process.exit(2); }
+  if (!FILE || !OUT || (!DIR && !argv.includes('--dry'))) { console.error('usage: node tools/preview/lan-clip.mjs --file <lan-report json> --dir <kept web build folder> --out <folder> [--slot N] [--tick N] [--before 1800] [--after 120] [--every 6] [--home save|<build id>] [--dry]'); process.exit(2); }
   const out = resolve(OUT);
   mkdirSync(out, { recursive: true });
   const rec = { source: scrubPath(FILE), dir: DIR ? scrubPath(DIR) : null, made: false, reason: null };
@@ -113,7 +115,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (!existsSync(join(resolve(DIR), 'index.html'))) finish(3, `no index.html in ${DIR}`);
   const args = [join(HERE, 'blackbox-clip.mjs'), '--file', resolve(FILE), '--dir', resolve(DIR), '--out', out, '--width', String(WIDTH), '--height', String(HEIGHT), '--scale', '1', '--every', String(EVERY), '--from', String(w.from), '--to', String(w.to)];
   const q = opt('--query', null); if (q) args.push('--query', q);
-  const home = homeOf(doc); if (home) args.push('--home', home);   // the save's own stamp (A-NET-05): a LAN save is made by the kit's stamp, not the page's
+  const home = homeFor(opt('--home', null), doc); if (home) args.push('--home', home);   // only when asked (B1 re-check, defect 2): the build check is the page's own unless --home save or --home <id> waives it
   const limitS = Math.max(60, Number(opt('--limit', 1200)));
   const env = { ...process.env, MERIDIAN_SESSION: process.env.MERIDIAN_SESSION || 'tools-pipeline' };
   const child = spawn(process.execPath, args, { env, stdio: 'inherit', windowsHide: true });

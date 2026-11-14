@@ -3,16 +3,16 @@
   "defaultTicks": 120,
   "clips": {
     "collapse-normal": {
-      "skip": 0,
-      "ticks": 120,
-      "capMin": 110,
-      "from": "from tick 1, 120 ticks (the first 60 are the analyser's warm-up, so 60 are read): run 43580079641 read 60 ticks as \"no analysis file\" because the analyser needs more than 61 frames. The worst moment of collapse is not measured. About 21 s a tick on a runner: 42 minutes Run 43585295274: collapse-reduced read in 2412 s (40 min) but collapse-normal timed out at 84 of 120 ticks at the 75-minute cap, so both now have 110."
+      "skip": 990,
+      "ticks": 180,
+      "capMin": 210,
+      "from": "Measured 2026-11-14 (hardware, 960x540, f1f91f45): full clip PASS at primary 2, worst second events at ticks 1111, 1132, 1145, 1151; the window (180 ticks from 991, with the 120 ticks of lead the memory reading needs) read the same ticks, the same primary 2 and memory 2. Not measured on a runner: collapse costs 20 to 50 s a tick there plus about 2 s a skipped tick, so the cap is 210 minutes."
     },
     "collapse-reduced": {
-      "skip": 0,
-      "ticks": 120,
-      "capMin": 110,
-      "from": "as collapse-normal"
+      "skip": 1340,
+      "ticks": 160,
+      "capMin": 210,
+      "from": "Measured 2026-11-14 (hardware, 960x540, f1f91f45): full clip OVER our gate at primary 3 (memory 2.5), worst second events at ticks 1465 to 1499, the end of the clip (the worst moment may run on past tick 1500); the window (160 ticks from 1341) read the same ticks, primary 3 and memory 2.5. A window of 130 from 1371 read the same primary but a memory of 1: the memory reading ignores its first 120 frames. Not measured on a runner (cap 210 minutes)."
     },
     "clash-normal": {
       "skip": 950,
@@ -37,6 +37,18 @@
       "ticks": 170,
       "capMin": 150,
       "from": "as clash-normal (same scene and seed; the reduced mode and the night sky are assumed to peak at the same moment: not measured)"
+    },
+    "signature-normal": {
+      "skip": 0,
+      "ticks": 180,
+      "capMin": 100,
+      "from": "Measured 2026-11-14 (hardware, 960x540, export of f1f91f45): the full clip reads its worst second at ticks 76 to 129 (events 76, 82, 110, 114, 125, 127, 129), so the window starts at tick 1 and runs 180 ticks. The reading is on the line of 3 and moves by half a flash to one flash from run to run: the full clip read 3.5 and then 3, the window read 3, 2.5 and 2.5 (the reduced window matched its full reading exactly). Treat a signature window as a tripwire within one flash of the line, not as the clip's number."
+    },
+    "signature-reduced": {
+      "skip": 0,
+      "ticks": 180,
+      "capMin": 100,
+      "from": "Measured 2026-11-14 (hardware, 960x540, export of f1f91f45): the full clip reads its worst second at ticks 78 to 125 (events 78, 81, 82, 86, 112, 115, 125), so the window starts at tick 1 and runs 180 ticks. The reading is on the line of 3 and moves by half a flash to one flash from run to run: the full clip read 3.5 and then 3, the window read 3, 2.5 and 2.5 (the reduced window matched its full reading exactly). Treat a signature window as a tripwire within one flash of the line, not as the clip's number."
     }
   },
   "defaultCapMin": 45
