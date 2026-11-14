@@ -11,9 +11,11 @@ Sprint A1 wave 2, item 1 of `docs/ep/alpha/audit-2026-11-13/05-directives/A1/net
 
 `lan-stamp.patch`, sha1 5d7f7be0a7de319d576aca100a1580f57eec0cbb.
 
-**Apply it after Simulation's replay-build,** in one batch, on HEAD 97df40b8:
+**Apply it after Simulation's replay-build,** in one batch (B1). This applies to Simulation's re-cut (replay-build.patch 73b9862a, grant-netcode-build.patch 3cd1b355, Tools' grant withdrawn), on HEAD 00925b89, each patch in turn:
 
-`git -c core.autocrlf=false apply replay-build.patch grant-netcode-build.patch grant-tools-build.patch lan-stamp.patch`
+`git -c core.autocrlf=false apply replay-build.patch grant-netcode-build.patch lan-stamp.patch lan-hash.patch`
+
+The whole stack is proven in `docs/net/runs/00925b89/b1-stack/`.
 
 It touches no file the replay-build patches touch, so it also applies alone. But `lan_check` calls `SimReplay.refusal` and sets `SimReplay._bid`, so it fails to parse without replay-build. Don't land it first.
 

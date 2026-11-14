@@ -18,9 +18,11 @@
 
 The values and their order don't change, so a saved file is byte for byte what it was, and replays and Tools' verify are untouched.
 
-`lan-hash.patch`, sha1 29146f1a3efa70dc963f6edb8215cf74b867029e. **It rides B1, after lan-stamp** (its context includes lan-stamp's lines). Applied in sequence on HEAD 611c1c2b, all five apply:
+`lan-hash.patch`, sha1 29146f1a3efa70dc963f6edb8215cf74b867029e. **It rides B1, after lan-stamp** (its context includes lan-stamp's lines). On Simulation's re-cut (replay-build.patch 73b9862a, grant-netcode-build.patch 3cd1b355, Tools' grant withdrawn), applied in sequence on HEAD 00925b89, all four apply unchanged:
 
-`git -c core.autocrlf=false apply replay-build.patch grant-netcode-build.patch grant-tools-build.patch lan-stamp.patch lan-hash.patch` (each in turn: `git apply` checks a list of patches against the original tree, not stacked).
+`git -c core.autocrlf=false apply replay-build.patch grant-netcode-build.patch lan-stamp.patch lan-hash.patch` (each in turn: `git apply` checks a list of patches against the original tree, not stacked).
+
+The whole stack is proven in `docs/net/runs/00925b89/b1-stack/`.
 
 **Can a web build, or a desktop build without threads, reach the worker thread? No.** I checked by reading the code (EP's question for the B1 review):
 - Only `net/lan.gd:258` turns on `hashChecks`, and `_hashLater` runs only when it's on. No other script in the repository sets it: not rollback, desync, the spectator or any other check.

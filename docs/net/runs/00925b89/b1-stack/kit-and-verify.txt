@@ -1,0 +1,22 @@
+# Tools' stack tree of HEAD 00925b89 (stack key e4b7c09203dc), page stamp:
+{"commit":"00925b8","date":"2026-11-14","stack":1,"id":"00925b89-fbb7b255"}
+
+applied replay-build.patch: exit 0
+applied grant-netcode-build.patch: exit 0
+applied lan-stamp.patch: exit 0
+applied lan-hash.patch: exit 0
+kit exit 0: kit in <user>\AppData\Local\Temp\claude\bb5aa63790efa20b\879b4c35-3465-4ddb-bf73-1a63538915f3\scratchpad\kit22, build 00925b89-fbb7b255, host 10.0.0.135, rule for 10.0.0.0/24
+host-lan: exit 0, script errors 0
+join-lan: exit 0, script errors 0
+saved: lan-00925b89-main-20261114-043630-test.json, lan-00925b89-old-20261114-043657-test.json
+pg22 stamp: {"commit":"00925b8","date":"2026-11-14","stack":1,"id":"00925b89-fbb7b255"}
+ot22 stamp: {"commit":"00925b8","date":"2026-11-14","stack":1,"lan":true,"built":"2026-11-14T12:35:14.593Z","id":"00000000-00000000"}
+verify main on kit22\tree: exit 0 :: BLACKBOX OK ticks=600 final=092c6ec1aa260c6f
+verify old on kit22\tree: exit 0 :: BLACKBOX OK ticks=600 final=bf1d653f88326812
+verify main on pg22: exit 0 :: BLACKBOX OK ticks=600 final=092c6ec1aa260c6f
+verify main on ot22: exit 1 :: BLACKBOX FAILED: reason=build firstBadTick=-1
+
+# The saved files
+lan-00925b89-main-20261114-043630-test.json | build {"built": "2026-11-14T12:35:14.593Z", "commit": "00925b8", "date": "2026-11-14", "id": "00925b89-fbb7b255", "lan": true, "stack": 1.0} | replay.build 00925b89-fbb7b255 | ticks 600 | checkpoints 10 | header keys ['ai', 'build', 'checkpoints', 'data', 'final', 'format', 'inputs', 'intent', 'seed', 'setup', 'ticks', 'toggles', 'v']
+lan-00925b89-old-20261114-043657-test.json | build {"built": "2026-11-14T12:35:14.593Z", "commit": "00925b8", "date": "2026-11-14", "id": "00925b89-fbb7b255", "lan": true, "stack": 1.0} | replay.build 00925b89-fbb7b255 | ticks 600 | checkpoints 10 | header keys ['ai', 'build', 'checkpoints', 'data', 'final', 'format', 'inputs', 'intent', 'seed', 'setup', 'ticks', 'toggles', 'v']
+(the last verify's exit 1 is the refusal it should be: the other id)
