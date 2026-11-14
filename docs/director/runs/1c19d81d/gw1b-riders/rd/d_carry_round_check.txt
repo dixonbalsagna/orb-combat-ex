@@ -1,0 +1,4 @@
+ok    on, the stick toward him: he follows round, the sides swap
+ok    on, the stick let go: he stays on his side, the set piece ends at the follow (17 ticks against 75), and he's free
+ok    negative control, off: let go, he's carried round anyway
+CARRY ROUND: 0 check(s) failed

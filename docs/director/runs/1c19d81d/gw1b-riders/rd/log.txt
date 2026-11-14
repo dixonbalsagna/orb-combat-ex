@@ -1,0 +1,70 @@
+GW1b riders on main 1c19d81d + energy-on (both patches) + energy-on-pins; base worktree rd0 = the same without the riders
+05:36:09 a_press_check exit 0: A PRESS: 0 check(s) failed
+05:36:19 arc_check exit 0: ARC: 0 check(s) failed
+05:36:41 arrive_check exit 0: ARRIVE: 0 check(s) failed
+05:40:21 bark_reads_check exit 0: bark_reads_check: passed
+05:40:31 beam_ai_check exit 0: BEAM AI: 0 check(s) failed
+05:40:38 beam_front_check exit 0: FRONT: 0 check(s) failed
+05:40:45 beam_move_check exit 0: BEAM MOVE: 0 check(s) failed
+05:40:50 carry_round_check exit 0: CARRY ROUND: 0 check(s) failed
+05:40:57 chase_tap_check exit 0: CHASE: 0 check(s) failed
+05:41:05 city_push_check exit 0: CITY PUSH: 0 check(s) failed
+05:41:14 driver_check exit 0: DRIVER: 0 check(s) failed
+05:41:25 ending_check exit 0: ENDING: 0 check(s) failed
+05:41:31 ending_team_check exit 0: ENDING TEAM: 0 check(s) failed
+05:41:36 flick_keep_check exit 0: FLICK KEEP: 0 check(s) failed
+05:41:44 flight_strike_check exit 0: FLIGHT STRIKE: 0 check(s) failed
+05:42:16 floorlift_check exit 0: FLOORLIFT: 0 check(s) failed
+05:42:29 follow_check exit 0: FOLLOW: 0 check(s) failed
+05:42:35 full_send_check exit 0: FULL SEND: 0 check(s) failed
+05:42:43 knock_wall_check exit 0: KNOCK WALL: 0 check(s) failed
+05:42:53 launch_cuts_check exit 0: LAUNCH CUTS: 0 check(s) failed
+05:43:02 location_check exit 0: LOCATION: 0 check(s) failed
+05:43:08 morning_fixes_check exit 0: MORNING FIXES: 0 check(s) failed
+05:43:14 outside_check exit 0: OUTSIDE: 0 check(s) failed
+05:43:19 pace_check exit 0: PACE: 0 check(s) failed
+05:43:25 phrase_check exit 0: PHRASE: 0 check(s) failed
+05:43:30 plane_check exit 0: PLANE: 0 check(s) failed
+05:43:35 press_answers_check exit 0: PRESS ANSWERS: 0 check(s) failed
+05:43:41 press_decides_check exit 0: PRESS: 0 check(s) failed
+05:43:46 push_mode_check exit 0: PUSH MODE: 0 check(s) failed
+05:43:53 reads_check exit 0: reads_check: 16 of 16 passed
+05:43:58 refusal_reasons_check exit 0: REFUSAL REASONS: 0 check(s) failed
+05:44:03 relief_check exit 0: RELIEF: 0 check(s) failed
+05:44:49 sigvariants_check exit 0: sigvariants check passed
+05:44:57 stance_check exit 0: STANCE: 0 check(s) failed
+05:45:09 stick_check exit 0: STICK: 0 check(s) failed
+05:45:14 stick_lunge_check exit 0: STICK LUNGE: 0 check(s) failed
+05:45:19 strike_stages_check exit 0: STRIKE STAGES: 0 check(s) failed
+05:45:24 sure_reach_check exit 0: sure_reach_check: passed
+05:46:01 swing_check exit 0: SWING: 0 check(s) failed
+05:47:05 swing_legal_check exit 0: SWING LEGAL: 0 check(s) failed
+05:47:23 walk_check exit 0: WALK: 0 check(s) failed
+05:47:23 lane A done
+05:36:28 rd0 import exit 0
+05:41:41 parity riders exit 1: golden check FAILED
+05:46:46 parity base exit 1: golden check FAILED
+05:46:46 parity: riders and base give the same lines
+05:47:41 core two_states_check exit 0: PASS  0 failure(s)
+05:47:46 core load_split exit 0: 
+05:48:04 render after exit 1: after check FAILED (1)
+05:48:20 render depth exit 0: depth check passed
+05:49:18 render flash exit 0: flash check passed
+05:50:10 render flash_reg exit 0: flash register check passed
+05:51:17 render flight exit 0: flight check passed
+05:52:29 render ground exit 0: ground check passed
+05:52:38 render hud_words exit 0: hud words check passed
+05:52:52 render lane exit 0: lane check passed
+05:53:18 render open exit 0: open check passed
+05:53:42 render pane exit 0: pane check passed
+05:53:57 render patch exit 0: patch check passed
+05:54:13 render shape exit 0: shape check passed
+05:54:29 render sky exit 0: sky check passed
+05:54:43 render stage exit 0: stage check passed
+05:55:47 render cue exit 0: cue check passed
+05:56:31 validate: 321 files checked, 0 errors, 2 warnings; selftest: self-test: 10093 of 10093 checks passed
+05:56:31 ratchet exit 0: two-fighter ratchet ok: 365 against a baseline of 365
+05:56:31 lane B done
+render after on the base: FAIL  the match has a rush in it: the five are reached (0), so the limit is tried
+negative controls (pins off, code fixes out): arc_check: ARC: 1 check(s) failed; beam_ai_check: BEAM AI: 4 check(s) failed
+negative control (swing.json direction.anguish back to 2): SWING LEGAL: 3 check(s) failed

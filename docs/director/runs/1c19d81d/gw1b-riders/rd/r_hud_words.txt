@@ -1,0 +1,24 @@
+ok    the sim's fighters carry no title: the words are UI's
+ok    PROTAGONIST: the panel names him by his id ("Grist  (CPU)")
+ok    PROTAGONIST: the second line is his title, where UI has one, and his stance ("Martial Artist  ·  AGGRESSIVE")
+ok    PROTAGONIST: the label over his head uses the same name ("Grist ATK T1")
+ok    RIVAL: the panel names him by his id ("Loupe  (CPU)")
+ok    RIVAL: the second line is his title, where UI has one, and his stance ("Challenger  ·  AGGRESSIVE")
+ok    RIVAL: the label over his head uses the same name ("Loupe ATK T1")
+ok    SOMEONE: the panel names him by his id ("SOMEONE")
+ok    SOMEONE: the second line is his title, where UI has one, and his stance ("AGGRESSIVE")
+ok    SOMEONE: the label over his head uses the same name ("SOMEONE ATK T1")
+ok    SOMEONE_ELSE: the panel names him by his id ("SOMEONE_ELSE  (CPU)")
+ok    SOMEONE_ELSE: the second line is his title, where UI has one, and his stance ("AGGRESSIVE")
+ok    SOMEONE_ELSE: the label over his head uses the same name ("SOMEONE_ELSE ATK T1")
+ok    UI has a title for a roster fighter and none for an id it does not know
+ok    PROTAGONIST wears the protagonist outfit
+ok    PROTAGONIST has his outfit's seed (16 of 97)
+ok    RIVAL wears the empress outfit
+ok    RIVAL has his outfit's seed (48 of 97)
+ok    an id with no outfit of its own wears the default with a seed of its own
+ok    the roster's PROTAGONIST has an outfit of his own
+ok    the roster's RIVAL has an outfit of his own
+ok    a 720 screen has room for the three lines of key help it always had (5)
+ok    a 450 screen keeps one line and a 360 screen the prompt alone (1, 0)
+hud words check passed

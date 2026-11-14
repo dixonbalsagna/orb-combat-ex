@@ -1,0 +1,10 @@
+ok    the check: his guard's up through it, and it lands
+ok    the push: he's shoved back
+ok    at the same worth
+ok    and the brawl holds
+ok    plain X: the same side
+ok    the step strike: he comes out past him
+ok    at the same worth
+ok    and the brawl holds
+STANCE: 0 check(s) failed
+WARNING: 7 ObjectDB instances were leaked at exit (run with `--verbose` for details).

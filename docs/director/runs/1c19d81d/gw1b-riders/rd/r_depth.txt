@@ -1,0 +1,21 @@
+ok    depth off, a real match of 300 ticks: the pair's mark is never set
+ok    a beam with no depth is placed by the old formula, with VFX's widths, to the bit (3 layers)
+ok    a beam in depth (from -40 to -640) lies along its true line: each layer's middle and axis are the line's, its section square and across the screen
+ok    a particle made at depth -300: with depth off it is drawn on the plane as ever (10), with depth on at its depth (-290); the pane had depth off
+ok    a particle 700 units from the camera, where the plane's view ends at 580: with depth off it is not drawn (0); with depth on it is drawn at depth -300, where the view ends at 730 (1), and not at -100, where it ends at 630 (0)
+ok    the tool's match has depth on
+ok    depth on: each fighter is drawn at the sim's depth and his shadow lies at it (set to 18 and -18, drawn at 18.0 and -18.0 after the sim's own tick)
+ok    a close pair on the ground at different depths has the pair's mark from one fighter's place to the other's, quiet while their line is steady (strength 0.45)
+ok    it is drawn against its own ground: its core at most 0.09 of relative luminance from it at the nearer end and 0.02 at the farther, its rim 0.05 darker; no colour of its own is set
+ok    when the line turns by 5 degrees or more it is full for 0.6 s (1.00), then quiet again (0.45)
+ok    level in depth it stays 1.0 s (0.45), then goes over 0.5 s and not at once (0.36, then 0.00)
+ok    it comes up over 0.5 s (0.06 after four ticks, then 0.45); its half width is 2.73 pixels for a pair near the plane and 2.92 for one at the near kerb
+ok    with the lane cues' stripes up as well it is at 0.30, and back at 0.45 when they are gone
+ok    under reduced flashing it is steady at 0.60 with no fade (off at once: 0.00, on at once: 0.60), and quiet again without it (0.45)
+ok    it goes with one of them in the air (0.00) or the two apart (0.00)
+ok    over a roof (a house 225 units tall) his shadow lies on the roof, 227 above the ground under the building
+ok    two fighters at different depths each have a lane cue, at the depth he is drawn at
+ok    in the middle street (depth -1013) behind a tower both fighters count as hidden, so the pane opens it; in the crossing of the nearest avenue, seen down it, neither does
+depth check passed
+WARNING: 274 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+ERROR: 9 resources still in use at exit (run with --verbose for details).

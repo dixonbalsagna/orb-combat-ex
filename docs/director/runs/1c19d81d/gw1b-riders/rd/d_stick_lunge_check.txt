@@ -1,0 +1,7 @@
+ok    from the middle band the flick asks for the light lunge (off, the heavy one)
+ok    it lands sooner: 17 ticks against 22 at 6 bh
+ok    it's still the stick's strike: its cues and its stun
+ok    it lands as a light: 8.58 against the medium's 21.44 (a light unit is 8.06)
+ok    up close it's the stick's own blow, as before
+ok    held through the arrival it's the stick's charge, and it lands on the release (32 ticks, 36.88)
+STICK LUNGE: 0 check(s) failed

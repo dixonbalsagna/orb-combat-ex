@@ -1,0 +1,22 @@
+05:36:28 rd0 import exit 0
+05:41:41 parity riders exit 1: golden check FAILED
+05:46:46 parity base exit 1: golden check FAILED
+05:47:41 core two_states_check exit 0: PASS  0 failure(s)
+05:47:46 core load_split exit 0: 
+05:48:04 render after exit 1: after check FAILED (1)
+05:48:20 render depth exit 0: depth check passed
+05:49:18 render flash exit 0: flash check passed
+05:50:10 render flash_reg exit 0: flash register check passed
+05:51:17 render flight exit 0: flight check passed
+05:52:29 render ground exit 0: ground check passed
+05:52:38 render hud_words exit 0: hud words check passed
+05:52:52 render lane exit 0: lane check passed
+05:53:18 render open exit 0: open check passed
+05:53:42 render pane exit 0: pane check passed
+05:53:57 render patch exit 0: patch check passed
+05:54:13 render shape exit 0: shape check passed
+05:54:29 render sky exit 0: sky check passed
+05:54:43 render stage exit 0: stage check passed
+05:55:47 render cue exit 0: cue check passed
+05:56:31 validate: 321 files checked, 0 errors, 2 warnings; selftest: self-test: 10093 of 10093 checks passed
+05:56:31 ratchet exit 0: two-fighter ratchet ok: 365 against a baseline of 365

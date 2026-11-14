@@ -1,0 +1,117 @@
+diff --git a/data/director/swing.json b/data/director/swing.json
+index 973a4fd..7843ea0 100644
+--- a/data/director/swing.json
++++ b/data/director/swing.json
+@@ -160,7 +160,7 @@
+     "arriveTerrain": 4.0,
+     "buildingRef": 30.0,
+     "care": 4.0,
+-    "anguish": 2.0,
++    "anguish": 0.0,
+     "sameSize": 1.0,
+     "sameSide": 0.5,
+     "samePlace": 3.0,
+diff --git a/sim/director/arc.gd b/sim/director/arc.gd
+index e6c3df5..6a2d0d0 100644
+--- a/sim/director/arc.gd
++++ b/sim/director/arc.gd
+@@ -107,7 +107,7 @@ static func _impact(S: SimState, f, c: Dictionary, g: float) -> void:
+ 	var by = f.launchBy
+ 	var tier: float = float(by.tier) if by != null else 4.0
+ 	var n: int = S.craters.size()
+-	WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(float(c.landSpeed), tier, S), by, "impact", 0.0, 1.0, false, f.z, PackedFloat64Array(), true)
++	WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(float(c.landSpeed), tier), by, "impact", 0.0, 1.0, false, f.z, PackedFloat64Array(), true)   # (its landing speed is data, not a speed the energy model gave: the tier counts, model on or off, so the bowl is World's, meteor-crater.md)
+ 	f.hopped = true
+ 	if S.craters.size() > n:
+ 		_blast(S, f.x, f.z, float(S.craters[S.craters.size() - 1].r), by, c)
+diff --git a/sim/director/beam_move.gd b/sim/director/beam_move.gd
+index c7c1883..9f8c0a5 100644
+--- a/sim/director/beam_move.gd
++++ b/sim/director/beam_move.gd
+@@ -149,6 +149,8 @@ static func aiOn() -> bool:
+ static func aiStart(S: SimState, f, i) -> bool:
+ 	if not aiOn() or f.ai == null or DirStick._g(f, DirStick.ST_ON) != 0:
+ 		return false
++	if (f.state != "free" and f.state != "charging") or f.stunTicks > 0:
++		return false   # not while it can't act: locked in a brawl its hold never climbs a stage, and the beam is lost (its old press goes instead)
+ 	var lvName: String = DirAI.level if DirAI.level != "" else String(DirAI.skill().get("level", "medium"))
+ 	var n: int = stageCount(f)
+ 	var share: float = float(cfg().get("aiStage", {}).get(lvName, 1.0))
+diff --git a/sim/director/swing.gd b/sim/director/swing.gd
+index a0c030b..d3fc9f0 100644
+--- a/sim/director/swing.gd
++++ b/sim/director/swing.gd
+@@ -459,7 +459,7 @@ static func _timing(S: SimState, cause: String, A, D) -> Dictionary:
+ static func _tension(S: SimState, A, D) -> float:
+ 	if not bool(cfg().get("tension", {}).get("enabled", false)) or A == null or D == null:
+ 		return 0.0
+-	return clampf((maxf(float(A.anguish), float(D.anguish)) + maxf(float(A.menace), float(D.menace))) / 200.0 + float(S.mood.v) / 3600.0, 0.0, 1.0)
++	return clampf(float(S.mood.v) / 3600.0, 0.0, 1.0)   # (decision 6, A1: the old meters steer nothing; the tension was the higher of each meter, over 200, with the mood)
+ 
+ 
+ ## Where to (RL-215's second column). Fit, the place, personality in standing buildings, the hero's anguish, variety, lean,
+diff --git a/sim/director/tools/arc_check.gd b/sim/director/tools/arc_check.gd
+index 9837c70..c2502b5 100644
+--- a/sim/director/tools/arc_check.gd
++++ b/sim/director/tools/arc_check.gd
+@@ -477,7 +477,7 @@ func _brake() -> void:
+ 
+ ## The meteor's landing: World's bowl, a blast over it, and one a match.
+ func _meteorBowl() -> void:
+-	var S := _fresh(11, true)   # (the model off: with it on, World's impactEnergy drops the tier for the meteor's authored speed, a bowl of 4,571 against World's 6,046; the fix waits until after GW1a, docs/director/pending/power-on/)
++	var S := _fresh()
+ 	var A = S.fighters[0]
+ 	var D = S.fighters[1]
+ 	var cfg: Dictionary = DirArc.cfg()
+diff --git a/sim/director/tools/beam_ai_check.gd b/sim/director/tools/beam_ai_check.gd
+index b4429d6..e8cf629 100644
+--- a/sim/director/tools/beam_ai_check.gd
++++ b/sim/director/tools/beam_ai_check.gd
+@@ -34,7 +34,7 @@ func _expect(ok: bool, what: String) -> void:
+ 
+ func _match(seed: int) -> SimState:
+ 	var S := SimCore.createSim()
+-	SimCore.newMatch(S, seed, {"p1": true, "p2": false}, {"intro": false, "dash": false})   # (the dash off: with it on the computer closes fast and starts its hold while locked in an exchange, where it never climbs a stage; a finding for after GW1a)
++	SimCore.newMatch(S, seed, {"p1": true, "p2": false}, {"intro": false})
+ 	for f in S.fighters:
+ 		f.hp = 100000.0
+ 	S.fighters[1].ai = null
+diff --git a/sim/director/tools/swing_legal_check.gd b/sim/director/tools/swing_legal_check.gd
+index a95c823..db88219 100644
+--- a/sim/director/tools/swing_legal_check.gd
++++ b/sim/director/tools/swing_legal_check.gd
+@@ -55,8 +55,13 @@ func _lint() -> void:
+ 	for w in ["care", "anguish", "menace", "mood"]:
+ 		_ok(not nu.contains(w), "the nudge's scorer doesn't name %s" % w)
+ 	var tm: String = _func(src, "static func _tension(")
+-	for w in ["anguish", "menace", "mood"]:
+-		_ok(tm.contains(w), "timing's scalar %s is the one listed by name" % w)
++	_ok(tm.contains("mood"), "timing's scalar mood is the one listed by name")
++	var code: String = ""   # (its code lines: the next function's comment comes with the text)
++	for l in tm.split("\n"):
++		if not l.strip_edges().begins_with("##"):
++			code += l + "\n"
++	for w in ["anguish", "menace"]:
++		_ok(not code.contains(w), "timing reads no %s (decision 6: in A1 the old meters steer nothing; Legal's list is what it may read, at most)" % w)
+ 
+ 
+ func _func(src: String, head: String) -> String:
+@@ -92,6 +97,18 @@ func _blind(planet: int) -> void:
+ 	var a2: Array = _dirOnly(S, villain, o2, 1)
+ 	villain.menace = m0
+ 	_expect(a1 == a2, "planet %d: direction moved with his menace" % planet)
++	var hero = fs[1] if villain == fs[0] else fs[0]
++	var o3 = SimRoster.opp(S, hero)
++	var g0 = hero.anguish
++	var c0 = hero.care
++	hero.care = 1.0   # (the term reads the anguish only for a fighter who cares; main's Protagonist has care 0, so he gets some for the row)
++	hero.anguish = 0.0
++	var h1: Array = _dirOnly(S, hero, o3, 1)
++	hero.anguish = 100.0
++	var h2: Array = _dirOnly(S, hero, o3, 1)
++	hero.anguish = g0
++	hero.care = c0
++	_expect(h1 == h2, "planet %d: direction moved with his anguish (decision 6: in A1 the old meters steer nothing)" % planet)
+ 	var m1 = S.mood.v
+ 	S.mood.v = 0
+ 	var b1: Array = _dirOnly(S, villain, o2, 1)
