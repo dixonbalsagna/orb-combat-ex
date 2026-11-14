@@ -170,9 +170,9 @@
       "note": "Reported (EP status 4, Sat 14 Nov 04:50)."
     },
     "A-NET-05": {
-      "status": "reported",
-      "ref": "00925b89 (sim re-cut, B1); Netcode stack proof b0135850",
-      "note": "B1 is in the EP's gate (scratch; all passing so far; re-check review docs/ep/reviews/B1-recheck.md, no blockers) (EP status 5, Sat 14 Nov 05:50)."
+      "status": "landed",
+      "ref": "f068b697",
+      "note": "Batch B1 pushed: f068b697 (Simulation, replay-build), 39f03a97 (Netcode grant), 30d5922d (lan-stamp), f70afd08 (lan-hash); gated in scratch on every CI script with the golden unchanged, re-check review clean. CI on f70afd08 running (EP status 6, Sat 14 Nov 07:50)."
     },
     "A-CONTROLS-02": {
       "status": "reported",
@@ -422,6 +422,12 @@
       "count": 69,
       "of": 87,
       "note": "EP status 5 (Sat 05:50 PST): unchanged. GW1a blockers: Sim's gates park and VFX's hash_check grant approval"
+    },
+    {
+      "date": "2026-11-14",
+      "count": 69,
+      "of": 87,
+      "note": "EP status 6 (Sat 07:50 PST): unchanged, moves at GW1a. GW1a is being assembled: a manifest of 33 steps applies clean. Open gaps: Simulation's data-fight-gw1a (five fight rows, bisecting a residual golden difference, interrupts.json), Tools' switch-row retirement and ui-modes cases"
     }
   ],
   "switchRowsEveryDays": 2,
@@ -536,9 +542,9 @@
     }
   },
   "notes": [
-    "Spike S5 (the Linux picture) is landed: 1c3eebf3. Spike S3 (horde): design 50c41812, rulings 49db1eff and e5241f26, 8a233e6c, trials T1 to T6 reported (73fa513e, 1c19d81d); Encounter's S3 row stays briefed until the trial clip.",
-    "Main is 46048213 (14 commits pushed; CI on b0135850 green, the first run of the split); all parks or tools, nothing of the played game.",
-    "Also: GW1c fix and the wall-hold split (World); Tools' schema cases 1e37ad83, CI rebalance 4df76d53, nightly windows 8ad6286a; the owner-private notice dd4dca9a is part of A-TOOLS-01 and closes nothing.",
-    "Meters at EP status 5: all-models 70%, Fable 87% (the Fable reset waits on Orb)."
+    "Spike S5 (the Linux picture) is landed: 1c3eebf3. Spike S3 (horde): trials T1 to T6 reported; Encounter's S3 row stays briefed until the trial clip.",
+    "Main is at B1 (f70afd08); CI on f70afd08 is running. 8 local commits are held, all parks: Combat gw1a-rows fd5c1895, World water re-cut 31f6a8bd and bystanders bcb7e935, Audio sound-sets patch 26fd27b0, Camera READMEs, Rendering report 4 30930158.",
+    "Batch B1 (A-NET-05, the build id in a replay) has landed; it lands before GW1, as the path asks.",
+    "Meters at EP status 6: all-models 74%, Fable 87% (the Fable reset waits on Orb)."
   ]
 }
